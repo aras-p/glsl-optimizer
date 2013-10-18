@@ -848,10 +848,14 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    LLVMValueRef flt_width_vec;
    LLVMValueRef flt_height_vec;
    LLVMValueRef flt_depth_vec;
-   LLVMValueRef x0, y0 = NULL, z0 = NULL, x1, y1 = NULL, z1 = NULL;
+   LLVMValueRef z1 = NULL;
+   LLVMValueRef z00 = NULL, z01 = NULL, z10 = NULL, z11 = NULL;
+   LLVMValueRef x00 = NULL, x01 = NULL, x10 = NULL, x11 = NULL;
+   LLVMValueRef y00 = NULL, y01 = NULL, y10 = NULL, y11 = NULL;
    LLVMValueRef s_fpart, t_fpart = NULL, r_fpart = NULL;
+   LLVMValueRef xs[4], ys[4], zs[4];
    LLVMValueRef neighbors[2][2][4];
-   int chan;
+   int chan, texel_index;
 
    lp_build_extract_image_sizes(bld,
                                 &bld->int_size_bld,
@@ -870,39 +874,202 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    /*
     * Compute integer texcoords.
     */
-   lp_build_sample_wrap_linear(bld, coords[0], width_vec,
-                               flt_width_vec, offsets[0],
-                               bld->static_texture_state->pot_width,
-                               bld->static_sampler_state->wrap_s,
-                               &x0, &x1, &s_fpart);
-   lp_build_name(x0, "tex.x0.wrapped");
-   lp_build_name(x1, "tex.x1.wrapped");
 
-   if (dims >= 2) {
-      lp_build_sample_wrap_linear(bld, coords[1], height_vec,
-                                  flt_height_vec, offsets[1],
-                                  bld->static_texture_state->pot_height,
-                                  bld->static_sampler_state->wrap_t,
-                                  &y0, &y1, &t_fpart);
-      lp_build_name(y0, "tex.y0.wrapped");
-      lp_build_name(y1, "tex.y1.wrapped");
+   if (bld->static_texture_state->target != PIPE_TEXTURE_CUBE ||
+       !bld->static_sampler_state->seamless_cube_map) {
+      lp_build_sample_wrap_linear(bld, coords[0], width_vec,
+                                  flt_width_vec, offsets[0],
+                                  bld->static_texture_state->pot_width,
+                                  bld->static_sampler_state->wrap_s,
+                                  &x00, &x01, &s_fpart);
+      lp_build_name(x00, "tex.x0.wrapped");
+      lp_build_name(x01, "tex.x1.wrapped");
+      x10 = x00;
+      x11 = x01;
 
-      if (dims == 3) {
-         lp_build_sample_wrap_linear(bld, coords[2], depth_vec,
-                                     flt_depth_vec, offsets[2],
-                                     bld->static_texture_state->pot_depth,
-                                     bld->static_sampler_state->wrap_r,
-                                     &z0, &z1, &r_fpart);
-         lp_build_name(z0, "tex.z0.wrapped");
-         lp_build_name(z1, "tex.z1.wrapped");
+      if (dims >= 2) {
+         lp_build_sample_wrap_linear(bld, coords[1], height_vec,
+                                     flt_height_vec, offsets[1],
+                                     bld->static_texture_state->pot_height,
+                                     bld->static_sampler_state->wrap_t,
+                                     &y00, &y10, &t_fpart);
+         lp_build_name(y00, "tex.y0.wrapped");
+         lp_build_name(y10, "tex.y1.wrapped");
+         y01 = y00;
+         y11 = y10;
+
+         if (dims == 3) {
+            lp_build_sample_wrap_linear(bld, coords[2], depth_vec,
+                                        flt_depth_vec, offsets[2],
+                                        bld->static_texture_state->pot_depth,
+                                        bld->static_sampler_state->wrap_r,
+                                        &z00, &z1, &r_fpart);
+            z01 = z10 = z11 = z00;
+            lp_build_name(z00, "tex.z0.wrapped");
+            lp_build_name(z1, "tex.z1.wrapped");
+         }
+      }
+      if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
+          bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
+          bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
+         z00 = z01 = z10 = z11 = z1 = coords[2];  /* cube face or layer */
+         lp_build_name(z00, "tex.z0.layer");
+         lp_build_name(z1, "tex.z1.layer");
       }
    }
-   if (bld->static_texture_state->target == PIPE_TEXTURE_CUBE ||
-       bld->static_texture_state->target == PIPE_TEXTURE_1D_ARRAY ||
-       bld->static_texture_state->target == PIPE_TEXTURE_2D_ARRAY) {
-      z0 = z1 = coords[2];  /* cube face or layer */
-      lp_build_name(z0, "tex.z0.layer");
-      lp_build_name(z1, "tex.z1.layer");
+   else {
+      LLVMBuilderRef builder = bld->gallivm->builder;
+      struct lp_build_context *ivec_bld = &bld->int_coord_bld;
+      struct lp_build_context *coord_bld = &bld->coord_bld;
+      struct lp_build_if_state edge_if;
+      LLVMValueRef new_faces[4], new_xcoords[4][2], new_ycoords[4][2];
+      LLVMValueRef fall_off[4], coord, have_edge;
+      LLVMValueRef fall_off_ym_notxm, fall_off_ym_notxp;
+      LLVMValueRef fall_off_yp_notxm, fall_off_yp_notxp;
+      LLVMValueRef x0, x1, y0, y1, y0_clamped, y1_clamped;
+      LLVMValueRef face = coords[2];
+      LLVMValueRef half = lp_build_const_vec(bld->gallivm, coord_bld->type, 0.5f);
+      LLVMValueRef length_minus_one = lp_build_sub(ivec_bld, width_vec, ivec_bld->one);
+      /* XXX drop height calcs. Could (should) do this without seamless filtering too */
+      height_vec = width_vec;
+      flt_height_vec = flt_width_vec;
+
+      /* XXX the overflow logic is actually sort of duplicated with trilinear,
+       * since an overflow in one mip should also have a corresponding overflow
+       * in another.
+       */
+      /* should always have normalized coords, and offsets are undefined */
+      assert(bld->static_sampler_state->normalized_coords);
+      coord = lp_build_mul(coord_bld, coords[0], flt_width_vec);
+      /* instead of clamp, build mask if overflowed */
+      coord = lp_build_sub(coord_bld, coord, half);
+      /* convert to int, compute lerp weight */
+      /* not ideal with AVX (and no AVX2) */
+      lp_build_ifloor_fract(coord_bld, coord, &x0, &s_fpart);
+      x1 = lp_build_add(ivec_bld, x0, ivec_bld->one);
+      coord = lp_build_mul(coord_bld, coords[1], flt_height_vec);
+      coord = lp_build_sub(coord_bld, coord, half);
+      lp_build_ifloor_fract(coord_bld, coord, &y0, &t_fpart);
+      y1 = lp_build_add(ivec_bld, y0, ivec_bld->one);
+
+      fall_off[0] = lp_build_cmp(ivec_bld, PIPE_FUNC_LESS, x0, ivec_bld->zero);
+      fall_off[1] = lp_build_cmp(ivec_bld, PIPE_FUNC_GREATER, x1, length_minus_one);
+      fall_off[2] = lp_build_cmp(ivec_bld, PIPE_FUNC_LESS, y0, ivec_bld->zero);
+      fall_off[3] = lp_build_cmp(ivec_bld, PIPE_FUNC_GREATER, y1, length_minus_one);
+
+      have_edge = lp_build_or(ivec_bld, fall_off[0], fall_off[1]);
+      have_edge = lp_build_or(ivec_bld, have_edge, fall_off[2]);
+      have_edge = lp_build_or(ivec_bld, have_edge, fall_off[3]);
+
+      have_edge = lp_build_any_true_range(ivec_bld, ivec_bld->type.length, have_edge);
+
+      for (texel_index = 0; texel_index < 4; texel_index++) {
+         xs[texel_index] = lp_build_alloca(bld->gallivm, ivec_bld->vec_type, "xs");
+         ys[texel_index] = lp_build_alloca(bld->gallivm, ivec_bld->vec_type, "ys");
+         zs[texel_index] = lp_build_alloca(bld->gallivm, ivec_bld->vec_type, "zs");
+      }
+
+      lp_build_if(&edge_if, bld->gallivm, have_edge);
+
+      /*
+       * Need to feed clamped values here for cheap corner handling,
+       * but only for y coord (as when falling off both edges we only
+       * fall off the x one) - this should be sufficient.
+       */
+      y0_clamped = lp_build_max(ivec_bld, y0, ivec_bld->zero);
+      y1_clamped = lp_build_min(ivec_bld, y1, length_minus_one);
+
+      /*
+       * Get all possible new coords.
+       */
+      lp_build_cube_new_coords(ivec_bld, face,
+                               x0, x1, y0_clamped, y1_clamped,
+                               length_minus_one,
+                               new_faces, new_xcoords, new_ycoords);
+
+      /* handle fall off x-, x+ direction */
+      /* determine new coords, face (not both fall_off vars can be true at same time) */
+      x00 = lp_build_select(ivec_bld, fall_off[0], new_xcoords[0][0], x0);
+      y00 = lp_build_select(ivec_bld, fall_off[0], new_ycoords[0][0], y0_clamped);
+      x10 = lp_build_select(ivec_bld, fall_off[0], new_xcoords[0][1], x0);
+      y10 = lp_build_select(ivec_bld, fall_off[0], new_ycoords[0][1], y1_clamped);
+      x01 = lp_build_select(ivec_bld, fall_off[1], new_xcoords[1][0], x1);
+      y01 = lp_build_select(ivec_bld, fall_off[1], new_ycoords[1][0], y0_clamped);
+      x11 = lp_build_select(ivec_bld, fall_off[1], new_xcoords[1][1], x1);
+      y11 = lp_build_select(ivec_bld, fall_off[1], new_ycoords[1][1], y1_clamped);
+
+      z00 = z10 = lp_build_select(ivec_bld, fall_off[0], new_faces[0], face);
+      z01 = z11 = lp_build_select(ivec_bld, fall_off[1], new_faces[1], face);
+
+      /* handle fall off y-, y+ direction */
+      /*
+       * Cheap corner logic: just hack up things so a texel doesn't fall
+       * off both sides (which means filter weights will be wrong but we'll only
+       * use valid texels in the filter).
+       * This means however (y) coords must additionally be clamped (see above).
+       * This corner handling should be fully OpenGL (but not d3d10) compliant.
+       */
+      fall_off_ym_notxm = lp_build_andnot(ivec_bld, fall_off[2], fall_off[0]);
+      fall_off_ym_notxp = lp_build_andnot(ivec_bld, fall_off[2], fall_off[1]);
+      fall_off_yp_notxm = lp_build_andnot(ivec_bld, fall_off[3], fall_off[0]);
+      fall_off_yp_notxp = lp_build_andnot(ivec_bld, fall_off[3], fall_off[1]);
+
+      x00 = lp_build_select(ivec_bld, fall_off_ym_notxm, new_xcoords[2][0], x00);
+      y00 = lp_build_select(ivec_bld, fall_off_ym_notxm, new_ycoords[2][0], y00);
+      x01 = lp_build_select(ivec_bld, fall_off_ym_notxp, new_xcoords[2][1], x01);
+      y01 = lp_build_select(ivec_bld, fall_off_ym_notxp, new_ycoords[2][1], y01);
+      x10 = lp_build_select(ivec_bld, fall_off_yp_notxm, new_xcoords[3][0], x10);
+      y10 = lp_build_select(ivec_bld, fall_off_yp_notxm, new_ycoords[3][0], y10);
+      x11 = lp_build_select(ivec_bld, fall_off_yp_notxp, new_xcoords[3][1], x11);
+      y11 = lp_build_select(ivec_bld, fall_off_yp_notxp, new_ycoords[3][1], y11);
+
+      z00 = lp_build_select(ivec_bld, fall_off_ym_notxm, new_faces[2], z00);
+      z01 = lp_build_select(ivec_bld, fall_off_ym_notxp, new_faces[2], z01);
+      z10 = lp_build_select(ivec_bld, fall_off_yp_notxm, new_faces[3], z10);
+      z11 = lp_build_select(ivec_bld, fall_off_yp_notxp, new_faces[3], z11);
+
+      LLVMBuildStore(builder, x00, xs[0]);
+      LLVMBuildStore(builder, x01, xs[1]);
+      LLVMBuildStore(builder, x10, xs[2]);
+      LLVMBuildStore(builder, x11, xs[3]);
+      LLVMBuildStore(builder, y00, ys[0]);
+      LLVMBuildStore(builder, y01, ys[1]);
+      LLVMBuildStore(builder, y10, ys[2]);
+      LLVMBuildStore(builder, y11, ys[3]);
+      LLVMBuildStore(builder, z00, zs[0]);
+      LLVMBuildStore(builder, z01, zs[1]);
+      LLVMBuildStore(builder, z10, zs[2]);
+      LLVMBuildStore(builder, z11, zs[3]);
+
+      lp_build_else(&edge_if);
+
+      LLVMBuildStore(builder, x0, xs[0]);
+      LLVMBuildStore(builder, x1, xs[1]);
+      LLVMBuildStore(builder, x0, xs[2]);
+      LLVMBuildStore(builder, x1, xs[3]);
+      LLVMBuildStore(builder, y0, ys[0]);
+      LLVMBuildStore(builder, y0, ys[1]);
+      LLVMBuildStore(builder, y1, ys[2]);
+      LLVMBuildStore(builder, y1, ys[3]);
+      LLVMBuildStore(builder, face, zs[0]);
+      LLVMBuildStore(builder, face, zs[1]);
+      LLVMBuildStore(builder, face, zs[2]);
+      LLVMBuildStore(builder, face, zs[3]);
+
+      lp_build_endif(&edge_if);
+
+      x00 = LLVMBuildLoad(builder, xs[0], "");
+      x01 = LLVMBuildLoad(builder, xs[1], "");
+      x10 = LLVMBuildLoad(builder, xs[2], "");
+      x11 = LLVMBuildLoad(builder, xs[3], "");
+      y00 = LLVMBuildLoad(builder, ys[0], "");
+      y01 = LLVMBuildLoad(builder, ys[1], "");
+      y10 = LLVMBuildLoad(builder, ys[2], "");
+      y11 = LLVMBuildLoad(builder, ys[3], "");
+      z00 = LLVMBuildLoad(builder, zs[0], "");
+      z01 = LLVMBuildLoad(builder, zs[1], "");
+      z10 = LLVMBuildLoad(builder, zs[2], "");
+      z11 = LLVMBuildLoad(builder, zs[3], "");
    }
 
    if (linear_mask) {
@@ -937,12 +1104,12 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    /* get x0/x1 texels */
    lp_build_sample_texel_soa(bld,
                              width_vec, height_vec, depth_vec,
-                             x0, y0, z0,
+                             x00, y00, z00,
                              row_stride_vec, img_stride_vec,
                              data_ptr, mipoffsets, neighbors[0][0]);
    lp_build_sample_texel_soa(bld,
                              width_vec, height_vec, depth_vec,
-                             x1, y0, z0,
+                             x01, y01, z01,
                              row_stride_vec, img_stride_vec,
                              data_ptr, mipoffsets, neighbors[0][1]);
 
@@ -973,12 +1140,12 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       /* get x0/x1 texels at y1 */
       lp_build_sample_texel_soa(bld,
                                 width_vec, height_vec, depth_vec,
-                                x0, y1, z0,
+                                x10, y10, z10,
                                 row_stride_vec, img_stride_vec,
                                 data_ptr, mipoffsets, neighbors[1][0]);
       lp_build_sample_texel_soa(bld,
                                 width_vec, height_vec, depth_vec,
-                                x1, y1, z0,
+                                x11, y11, z11,
                                 row_stride_vec, img_stride_vec,
                                 data_ptr, mipoffsets, neighbors[1][1]);
 
@@ -1012,22 +1179,22 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
          /* get x0/x1/y0/y1 texels at z1 */
          lp_build_sample_texel_soa(bld,
                                    width_vec, height_vec, depth_vec,
-                                   x0, y0, z1,
+                                   x00, y00, z1,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, mipoffsets, neighbors1[0][0]);
          lp_build_sample_texel_soa(bld,
                                    width_vec, height_vec, depth_vec,
-                                   x1, y0, z1,
+                                   x01, y01, z1,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, mipoffsets, neighbors1[0][1]);
          lp_build_sample_texel_soa(bld,
                                    width_vec, height_vec, depth_vec,
-                                   x0, y1, z1,
+                                   x10, y10, z1,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, mipoffsets, neighbors1[1][0]);
          lp_build_sample_texel_soa(bld,
                                    width_vec, height_vec, depth_vec,
-                                   x1, y1, z1,
+                                   x11, y11, z1,
                                    row_stride_vec, img_stride_vec,
                                    data_ptr, mipoffsets, neighbors1[1][1]);
 
@@ -2306,15 +2473,25 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
             use_aos &= lp_is_simple_wrap_mode(derived_sampler_state.wrap_r);
          }
       }
+      if (static_texture_state->target == PIPE_TEXTURE_CUBE &&
+          derived_sampler_state.seamless_cube_map &&
+          (derived_sampler_state.min_img_filter == PIPE_TEX_FILTER_LINEAR ||
+           derived_sampler_state.mag_img_filter == PIPE_TEX_FILTER_LINEAR)) {
+         /* theoretically possible with AoS filtering but not implemented (complex!) */
+         use_aos = 0;
+      }
 
       if ((gallivm_debug & GALLIVM_DEBUG_PERF) &&
           !use_aos && util_format_fits_8unorm(bld.format_desc)) {
          debug_printf("%s: using floating point linear filtering for %s\n",
                       __FUNCTION__, bld.format_desc->short_name);
-         debug_printf("  min_img %d  mag_img %d  mip %d  wraps %d  wrapt %d  wrapr %d\n",
+         debug_printf("  min_img %d  mag_img %d  mip %d  target %d  seamless %d"
+                      "  wraps %d  wrapt %d  wrapr %d\n",
                       derived_sampler_state.min_img_filter,
                       derived_sampler_state.mag_img_filter,
                       derived_sampler_state.min_mip_filter,
+                      static_texture_state->target,
+                      derived_sampler_state.seamless_cube_map,
                       derived_sampler_state.wrap_s,
                       derived_sampler_state.wrap_t,
                       derived_sampler_state.wrap_r);

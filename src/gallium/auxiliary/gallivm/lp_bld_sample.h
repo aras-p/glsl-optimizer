@@ -464,6 +464,19 @@ lp_build_cube_lookup(struct lp_build_sample_context *bld,
 
 
 void
+lp_build_cube_new_coords(struct lp_build_context *ivec_bld,
+                         LLVMValueRef face,
+                         LLVMValueRef x0,
+                         LLVMValueRef x1,
+                         LLVMValueRef y0,
+                         LLVMValueRef y1,
+                         LLVMValueRef max_coord,
+                         LLVMValueRef new_faces[4],
+                         LLVMValueRef new_xcoords[4][2],
+                         LLVMValueRef new_ycoords[4][2]);
+
+
+void
 lp_build_sample_partial_offset(struct lp_build_context *bld,
                                unsigned block_length,
                                LLVMValueRef coord,

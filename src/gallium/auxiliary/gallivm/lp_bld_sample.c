@@ -1402,6 +1402,144 @@ lp_build_unnormalized_coords(struct lp_build_sample_context *bld,
    }
 }
 
+/**
+ * Generate new coords and faces for cubemap texels falling off the face.
+ *
+ * @param face   face (center) of the pixel
+ * @param x0     lower x coord
+ * @param x1     higher x coord (must be x0 + 1)
+ * @param y0     lower y coord
+ * @param y1     higher y coord (must be x0 + 1)
+ * @param max_coord     texture cube (level) size - 1
+ * @param next_faces    new face values when falling off
+ * @param next_xcoords  new x coord values when falling off
+ * @param next_ycoords  new y coord values when falling off
+ *
+ * The arrays hold the new values when under/overflow of
+ * lower x, higher x, lower y, higher y coord would occur (in this order).
+ * next_xcoords/next_ycoords have two entries each (for both new lower and
+ * higher coord).
+ */
+void
+lp_build_cube_new_coords(struct lp_build_context *ivec_bld,
+                        LLVMValueRef face,
+                        LLVMValueRef x0,
+                        LLVMValueRef x1,
+                        LLVMValueRef y0,
+                        LLVMValueRef y1,
+                        LLVMValueRef max_coord,
+                        LLVMValueRef next_faces[4],
+                        LLVMValueRef next_xcoords[4][2],
+                        LLVMValueRef next_ycoords[4][2])
+{
+   /*
+    * Lookup tables aren't nice for simd code hence try some logic here.
+    * (Note that while it would not be necessary to do per-sample (4) lookups
+    * when using a LUT as it's impossible that texels fall off of positive
+    * and negative edges simultaneously, it would however be necessary to
+    * do 2 lookups for corner handling as in this case texels both fall off
+    * of x and y axes.)
+    */
+   /*
+    * Next faces (for face 012345):
+    * x < 0.0  : 451110
+    * x >= 1.0 : 540001
+    * y < 0.0  : 225422
+    * y >= 1.0 : 334533
+    * Hence nfx+ (and nfy+) == nfx- (nfy-) xor 1
+    * nfx-: face > 1 ? (face == 5 ? 0 : 1) : (4 + face & 1)
+    * nfy+: face & ~4 > 1 ? face + 2 : 3;
+    * This could also use pshufb instead, but would need (manually coded)
+    * ssse3 intrinsic (llvm won't do non-constant shuffles).
+    */
+   struct gallivm_state *gallivm = ivec_bld->gallivm;
+   LLVMValueRef sel, sel_f2345, sel_f23, sel_f2, tmpsel, tmp;
+   LLVMValueRef faceand1, sel_fand1, maxmx0, maxmx1, maxmy0, maxmy1;
+   LLVMValueRef c2 = lp_build_const_int_vec(gallivm, ivec_bld->type, 2);
+   LLVMValueRef c3 = lp_build_const_int_vec(gallivm, ivec_bld->type, 3);
+   LLVMValueRef c4 = lp_build_const_int_vec(gallivm, ivec_bld->type, 4);
+   LLVMValueRef c5 = lp_build_const_int_vec(gallivm, ivec_bld->type, 5);
+
+   sel = lp_build_cmp(ivec_bld, PIPE_FUNC_EQUAL, face, c5);
+   tmpsel = lp_build_select(ivec_bld, sel, ivec_bld->zero, ivec_bld->one);
+   sel_f2345 = lp_build_cmp(ivec_bld, PIPE_FUNC_GREATER, face, ivec_bld->one);
+   faceand1 = lp_build_and(ivec_bld, face, ivec_bld->one);
+   tmp = lp_build_add(ivec_bld, faceand1, c4);
+   next_faces[0] = lp_build_select(ivec_bld, sel_f2345, tmpsel, tmp);
+   next_faces[1] = lp_build_xor(ivec_bld, next_faces[0], ivec_bld->one);
+
+   tmp = lp_build_andnot(ivec_bld, face, c4);
+   sel_f23 = lp_build_cmp(ivec_bld, PIPE_FUNC_GREATER, tmp, ivec_bld->one);
+   tmp = lp_build_add(ivec_bld, face, c2);
+   next_faces[3] = lp_build_select(ivec_bld, sel_f23, tmp, c3);
+   next_faces[2] = lp_build_xor(ivec_bld, next_faces[3], ivec_bld->one);
+
+   /*
+    * new xcoords (for face 012345):
+    * x < 0.0  : max   max   t     max-t max  max
+    * x >= 1.0 : 0     0     max-t t     0    0
+    * y < 0.0  : max   0     max-s s     s    max-s
+    * y >= 1.0 : max   0     s     max-s s    max-s
+    *
+    * ncx[1] = face & ~4 > 1 ? (face == 2 ? max-t : t) : 0
+    * ncx[0] = max - ncx[1]
+    * ncx[3] = face > 1 ? (face & 1 ? max-s : s) : (face & 1) ? 0 : max
+    * ncx[2] = face & ~4 > 1 ? max - ncx[3] : ncx[3]
+    */
+   sel_f2 = lp_build_cmp(ivec_bld, PIPE_FUNC_EQUAL, face, c2);
+   maxmy0 = lp_build_sub(ivec_bld, max_coord, y0);
+   tmp = lp_build_select(ivec_bld, sel_f2, maxmy0, y0);
+   next_xcoords[1][0] = lp_build_select(ivec_bld, sel_f23, tmp, ivec_bld->zero);
+   next_xcoords[0][0] = lp_build_sub(ivec_bld, max_coord, next_xcoords[1][0]);
+   maxmy1 = lp_build_sub(ivec_bld, max_coord, y1);
+   tmp = lp_build_select(ivec_bld, sel_f2, maxmy1, y1);
+   next_xcoords[1][1] = lp_build_select(ivec_bld, sel_f23, tmp, ivec_bld->zero);
+   next_xcoords[0][1] = lp_build_sub(ivec_bld, max_coord, next_xcoords[1][1]);
+
+   sel_fand1 = lp_build_cmp(ivec_bld, PIPE_FUNC_EQUAL, faceand1, ivec_bld->one);
+
+   tmpsel = lp_build_select(ivec_bld, sel_fand1, ivec_bld->zero, max_coord);
+   maxmx0 = lp_build_sub(ivec_bld, max_coord, x0);
+   tmp = lp_build_select(ivec_bld, sel_fand1, maxmx0, x0);
+   next_xcoords[3][0] = lp_build_select(ivec_bld, sel_f2345, tmp, tmpsel);
+   tmp = lp_build_sub(ivec_bld, max_coord, next_xcoords[3][0]);
+   next_xcoords[2][0] = lp_build_select(ivec_bld, sel_f23, tmp, next_xcoords[3][0]);
+   maxmx1 = lp_build_sub(ivec_bld, max_coord, x1);
+   tmp = lp_build_select(ivec_bld, sel_fand1, maxmx1, x1);
+   next_xcoords[3][1] = lp_build_select(ivec_bld, sel_f2345, tmp, tmpsel);
+   tmp = lp_build_sub(ivec_bld, max_coord, next_xcoords[3][1]);
+   next_xcoords[2][1] = lp_build_select(ivec_bld, sel_f23, tmp, next_xcoords[3][1]);
+
+   /*
+    * new ycoords (for face 012345):
+    * x < 0.0  : t     t     0     max   t    t
+    * x >= 1.0 : t     t     0     max   t    t
+    * y < 0.0  : max-s s     0     max   max  0
+    * y >= 1.0 : s     max-s 0     max   0    max
+    *
+    * ncy[0] = face & ~4 > 1 ? (face == 2 ? 0 : max) : t
+    * ncy[1] = ncy[0]
+    * ncy[3] = face > 1 ? (face & 1 ? max : 0) : (face & 1) ? max-s : max
+    * ncx[2] = face & ~4 > 1 ? max - ncx[3] : ncx[3]
+    */
+   tmp = lp_build_select(ivec_bld, sel_f2, ivec_bld->zero, max_coord);
+   next_ycoords[0][0] = lp_build_select(ivec_bld, sel_f23, tmp, y0);
+   next_ycoords[1][0] = next_ycoords[0][0];
+   next_ycoords[0][1] = lp_build_select(ivec_bld, sel_f23, tmp, y1);
+   next_ycoords[1][1] = next_ycoords[0][1];
+
+   tmpsel = lp_build_select(ivec_bld, sel_fand1, maxmx0, x0);
+   tmp = lp_build_select(ivec_bld, sel_fand1, max_coord, ivec_bld->zero);
+   next_ycoords[3][0] = lp_build_select(ivec_bld, sel_f2345, tmp, tmpsel);
+   tmp = lp_build_sub(ivec_bld, max_coord, next_ycoords[3][0]);
+   next_ycoords[2][0] = lp_build_select(ivec_bld, sel_f23, next_ycoords[3][0], tmp);
+   tmpsel = lp_build_select(ivec_bld, sel_fand1, maxmx1, x1);
+   tmp = lp_build_select(ivec_bld, sel_fand1, max_coord, ivec_bld->zero);
+   next_ycoords[3][1] = lp_build_select(ivec_bld, sel_f2345, tmp, tmpsel);
+   tmp = lp_build_sub(ivec_bld, max_coord, next_ycoords[3][1]);
+   next_ycoords[2][1] = lp_build_select(ivec_bld, sel_f23, next_ycoords[3][1], tmp);
+}
+
 
 /** Helper used by lp_build_cube_lookup() */
 static LLVMValueRef
