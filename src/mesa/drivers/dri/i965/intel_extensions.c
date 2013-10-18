@@ -126,7 +126,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.OES_EGL_image_external = true;
 
    if (brw->gen >= 7)
-      ctx->Const.GLSLVersion = 150;
+      ctx->Const.GLSLVersion = 330;
    else if (brw->gen >= 6)
       ctx->Const.GLSLVersion = 140;
    else
