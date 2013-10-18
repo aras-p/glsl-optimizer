@@ -27,6 +27,7 @@
  **************************************************************************/
 
 #include "main/bufferobj.h"
+#include "main/image.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/pbo.h"
@@ -532,6 +533,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_texture_image *image = intel_texture_image(texImage);
+   int src_pitch;
 
    /* The miptree's buffer. */
    drm_intel_bo *bo;
@@ -544,6 +546,11 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    /* This fastpath is restricted to specific texture types: level 0 of
     * a 2D BGRA, RGBA, L8 or A8 texture. It could be generalized to support
     * more types.
+    *
+    * FINISHME: The restrictions below on packing alignment and packing row
+    * length are likely unneeded now because we calculate the source stride
+    * with _mesa_image_row_stride. However, before removing the restrictions
+    * we need tests.
     */
    if (!brw->has_llc ||
        type != GL_UNSIGNED_BYTE ||
@@ -609,6 +616,8 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
       return false;
    }
 
+   src_pitch = _mesa_image_row_stride(packing, width, format, type);
+
    /* We postponed printing this message until having committed to executing
     * the function.
     */
@@ -618,8 +627,8 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    linear_to_tiled(
       xoffset * cpp, (xoffset + width) * cpp,
       yoffset, yoffset + height,
-      bo->virtual, pixels - (xoffset + yoffset * width) * cpp,
-      image->mt->region->pitch, width * cpp,
+      bo->virtual, pixels - yoffset * src_pitch - xoffset * cpp,
+      image->mt->region->pitch, src_pitch,
       brw->has_swizzling,
       image->mt->region->tiling,
       mem_copy
