@@ -77,9 +77,29 @@ is_expression(const fs_inst *const inst)
 }
 
 static bool
-operands_match(fs_reg *xs, fs_reg *ys)
+is_expression_commutative(enum opcode op)
 {
-   return xs[0].equals(ys[0]) && xs[1].equals(ys[1]) && xs[2].equals(ys[2]);
+   switch (op) {
+   case BRW_OPCODE_AND:
+   case BRW_OPCODE_OR:
+   case BRW_OPCODE_XOR:
+   case BRW_OPCODE_ADD:
+   case BRW_OPCODE_MUL:
+      return true;
+   default:
+      return false;
+   }
+}
+
+static bool
+operands_match(enum opcode op, fs_reg *xs, fs_reg *ys)
+{
+   if (!is_expression_commutative(op)) {
+      return xs[0].equals(ys[0]) && xs[1].equals(ys[1]) && xs[2].equals(ys[2]);
+   } else {
+      return (xs[0].equals(ys[0]) && xs[1].equals(ys[1])) ||
+             (xs[1].equals(ys[0]) && xs[0].equals(ys[1]));
+   }
 }
 
 bool
@@ -111,7 +131,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	    if (inst->opcode == entry->generator->opcode &&
 		inst->saturate == entry->generator->saturate &&
                 inst->dst.type == entry->generator->dst.type &&
-                operands_match(entry->generator->src, inst->src)) {
+                operands_match(inst->opcode, entry->generator->src, inst->src)) {
 
 	       found = true;
 	       progress = true;
