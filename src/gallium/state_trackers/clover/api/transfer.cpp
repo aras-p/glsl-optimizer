@@ -36,22 +36,121 @@ namespace {
       return range(p, 3);
    }
 
+   vector_t
+   pitch(const vector_t &region, vector_t pitch) {
+      for (auto x : zip(tail(pitch),
+                        map(multiplies(), region, pitch))) {
+         // The spec defines a value of zero as the natural pitch,
+         // i.e. the unaligned size of the previous dimension.
+         if (std::get<0>(x) == 0)
+            std::get<0>(x) = std::get<1>(x);
+      }
+
+      return pitch;
+   }
+
    ///
    /// Common argument checking shared by memory transfer commands.
    ///
    void
    validate_common(command_queue &q,
-                   std::initializer_list<std::reference_wrapper<memory_obj>> mems,
                    const ref_vector<event> &deps) {
       if (any_of([&](const event &ev) {
                return &ev.ctx != &q.ctx;
             }, deps))
          throw error(CL_INVALID_CONTEXT);
+   }
 
-      if (any_of([&](const memory_obj &mem) {
-               return &mem.ctx != &q.ctx;
-            }, mems))
+   ///
+   /// Common error checking for a buffer object argument.
+   ///
+   void
+   validate_object(command_queue &q, buffer &mem, const vector_t &origin,
+                   const vector_t &pitch, const vector_t &region) {
+      if (mem.ctx != q.ctx)
          throw error(CL_INVALID_CONTEXT);
+
+      // The region must fit within the specified pitch,
+      if (any_of(greater(), map(multiplies(), pitch, region), tail(pitch)))
+         throw error(CL_INVALID_VALUE);
+
+      // ...and within the specified object.
+      if (dot(pitch, origin) + pitch[2] * region[2] > mem.size())
+         throw error(CL_INVALID_VALUE);
+
+      if (any_of(is_zero(), region))
+         throw error(CL_INVALID_VALUE);
+   }
+
+   ///
+   /// Common error checking for an image argument.
+   ///
+   void
+   validate_object(command_queue &q, image &img,
+                   const vector_t &orig, const vector_t &region) {
+      vector_t size = { img.width(), img.height(), img.depth() };
+
+      if (img.ctx != q.ctx)
+         throw error(CL_INVALID_CONTEXT);
+
+      if (any_of(greater(), orig + region, size))
+         throw error(CL_INVALID_VALUE);
+
+      if (any_of(is_zero(), region))
+         throw error(CL_INVALID_VALUE);
+   }
+
+   ///
+   /// Common error checking for a host pointer argument.
+   ///
+   void
+   validate_object(command_queue &q, const void *ptr, const vector_t &orig,
+                   const vector_t &pitch, const vector_t &region) {
+      if (!ptr)
+         throw error(CL_INVALID_VALUE);
+
+      // The region must fit within the specified pitch.
+      if (any_of(greater(), map(multiplies(), pitch, region), tail(pitch)))
+         throw error(CL_INVALID_VALUE);
+   }
+
+   ///
+   /// Common argument checking for a copy between two buffer objects.
+   ///
+   void
+   validate_copy(command_queue &q, buffer &dst_mem,
+                 const vector_t &dst_orig, const vector_t &dst_pitch,
+                 buffer &src_mem,
+                 const vector_t &src_orig, const vector_t &src_pitch,
+                 const vector_t &region) {
+      if (dst_mem == src_mem) {
+         auto dst_offset = dot(dst_pitch, dst_orig);
+         auto src_offset = dot(src_pitch, src_orig);
+
+         if (interval_overlaps()(
+                dst_offset, dst_offset + dst_pitch[2] * region[2],
+                src_offset, src_offset + src_pitch[2] * region[2]))
+            throw error(CL_MEM_COPY_OVERLAP);
+      }
+   }
+
+   ///
+   /// Common argument checking for a copy between two image objects.
+   ///
+   void
+   validate_copy(command_queue &q,
+                 image &dst_img, const vector_t &dst_orig,
+                 image &src_img, const vector_t &src_orig,
+                 const vector_t &region) {
+      if (dst_img.format() != src_img.format())
+         throw error(CL_IMAGE_FORMAT_MISMATCH);
+
+      if (dst_img == src_img) {
+         if (all_of(interval_overlaps(),
+                    dst_orig, dst_orig + region,
+                    src_orig, src_orig + region))
+            throw error(CL_MEM_COPY_OVERLAP);
+      }
    }
 
    ///
@@ -137,20 +236,21 @@ clEnqueueReadBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                     cl_uint num_deps, const cl_event *d_deps,
                     cl_event *rd_ev) try {
    auto &q = obj(d_q);
-   auto &mem = obj(d_mem);
+   auto &mem = obj<buffer>(d_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   vector_t region = { size, 1, 1 };
+   vector_t obj_origin = { offset };
+   auto obj_pitch = pitch(region, {{ 1 }});
 
-   validate_common(q, { mem }, deps);
-
-   if (!ptr || offset > mem.size() || offset + size > mem.size())
-      throw error(CL_INVALID_VALUE);
+   validate_common(q, deps);
+   validate_object(q, ptr, {}, obj_pitch, region);
+   validate_object(q, mem, obj_origin, obj_pitch, region);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_READ_BUFFER, deps,
-      soft_copy_op(q,
-                   ptr, {{ 0 }}, {{ 1 }},
-                   &mem, {{ offset }}, {{ 1 }},
-                   {{ size, 1, 1 }}));
+      soft_copy_op(q, ptr, {}, obj_pitch,
+                   &mem, obj_origin, obj_pitch,
+                   region));
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -165,20 +265,21 @@ clEnqueueWriteBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                      cl_uint num_deps, const cl_event *d_deps,
                      cl_event *rd_ev) try {
    auto &q = obj(d_q);
-   auto &mem = obj(d_mem);
+   auto &mem = obj<buffer>(d_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   vector_t region = { size, 1, 1 };
+   vector_t obj_origin = { offset };
+   auto obj_pitch = pitch(region, {{ 1 }});
 
-   validate_common(q, { mem }, deps);
-
-   if (!ptr || offset > mem.size() || offset + size > mem.size())
-      throw error(CL_INVALID_VALUE);
+   validate_common(q, deps);
+   validate_object(q, mem, obj_origin, obj_pitch, region);
+   validate_object(q, ptr, {}, obj_pitch, region);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_WRITE_BUFFER, deps,
-      soft_copy_op(q,
-                   &mem, {{ offset }}, {{ 1 }},
-                   ptr, {{ 0 }}, {{ 1 }},
-                   {{ size, 1, 1 }}));
+      soft_copy_op(q, &mem, obj_origin, obj_pitch,
+                   ptr, {}, obj_pitch,
+                   region));
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -189,31 +290,32 @@ clEnqueueWriteBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
 
 CLOVER_API cl_int
 clEnqueueReadBufferRect(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
-                        const size_t *obj_origin,
-                        const size_t *host_origin,
-                        const size_t *region,
+                        const size_t *p_obj_origin,
+                        const size_t *p_host_origin,
+                        const size_t *p_region,
                         size_t obj_row_pitch, size_t obj_slice_pitch,
                         size_t host_row_pitch, size_t host_slice_pitch,
                         void *ptr,
                         cl_uint num_deps, const cl_event *d_deps,
                         cl_event *rd_ev) try {
    auto &q = obj(d_q);
-   auto &mem = obj(d_mem);
+   auto &mem = obj<buffer>(d_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   auto region = vector(p_region);
+   auto obj_origin = vector(p_obj_origin);
+   auto obj_pitch = pitch(region, {{ 1, obj_row_pitch, obj_slice_pitch }});
+   auto host_origin = vector(p_host_origin);
+   auto host_pitch = pitch(region, {{ 1, host_row_pitch, host_slice_pitch }});
 
-   validate_common(q, { mem }, deps);
-
-   if (!ptr)
-      throw error(CL_INVALID_VALUE);
+   validate_common(q, deps);
+   validate_object(q, ptr, host_origin, host_pitch, region);
+   validate_object(q, mem, obj_origin, obj_pitch, region);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_READ_BUFFER_RECT, deps,
-      soft_copy_op(q,
-                   ptr, vector(host_origin),
-                   {{ 1, host_row_pitch, host_slice_pitch }},
-                   &mem, vector(obj_origin),
-                   {{ 1, obj_row_pitch, obj_slice_pitch }},
-                   vector(region)));
+      soft_copy_op(q, ptr, host_origin, host_pitch,
+                   &mem, obj_origin, obj_pitch,
+                   region));
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -224,31 +326,32 @@ clEnqueueReadBufferRect(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
 
 CLOVER_API cl_int
 clEnqueueWriteBufferRect(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
-                         const size_t *obj_origin,
-                         const size_t *host_origin,
-                         const size_t *region,
+                         const size_t *p_obj_origin,
+                         const size_t *p_host_origin,
+                         const size_t *p_region,
                          size_t obj_row_pitch, size_t obj_slice_pitch,
                          size_t host_row_pitch, size_t host_slice_pitch,
                          const void *ptr,
                          cl_uint num_deps, const cl_event *d_deps,
                          cl_event *rd_ev) try {
    auto &q = obj(d_q);
-   auto &mem = obj(d_mem);
+   auto &mem = obj<buffer>(d_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   auto region = vector(p_region);
+   auto obj_origin = vector(p_obj_origin);
+   auto obj_pitch = pitch(region, {{ 1, obj_row_pitch, obj_slice_pitch }});
+   auto host_origin = vector(p_host_origin);
+   auto host_pitch = pitch(region, {{ 1, host_row_pitch, host_slice_pitch }});
 
-   validate_common(q, { mem }, deps);
-
-   if (!ptr)
-      throw error(CL_INVALID_VALUE);
+   validate_common(q, deps);
+   validate_object(q, mem, obj_origin, obj_pitch, region);
+   validate_object(q, ptr, host_origin, host_pitch, region);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_WRITE_BUFFER_RECT, deps,
-      soft_copy_op(q,
-                   &mem, vector(obj_origin),
-                   {{ 1, obj_row_pitch, obj_slice_pitch }},
-                   ptr, vector(host_origin),
-                   {{ 1, host_row_pitch, host_slice_pitch }},
-                   vector(region)));
+      soft_copy_op(q, &mem, obj_origin, obj_pitch,
+                   ptr, host_origin, host_pitch,
+                   region));
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -263,17 +366,25 @@ clEnqueueCopyBuffer(cl_command_queue d_q, cl_mem d_src_mem, cl_mem d_dst_mem,
                     cl_uint num_deps, const cl_event *d_deps,
                     cl_event *rd_ev) try {
    auto &q = obj(d_q);
-   auto &src_mem = obj(d_src_mem);
-   auto &dst_mem = obj(d_dst_mem);
+   auto &src_mem = obj<buffer>(d_src_mem);
+   auto &dst_mem = obj<buffer>(d_dst_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   vector_t region = { size, 1, 1 };
+   vector_t dst_origin = { dst_offset };
+   auto dst_pitch = pitch(region, {{ 1 }});
+   vector_t src_origin = { src_offset };
+   auto src_pitch = pitch(region, {{ 1 }});
 
-   validate_common(q, { src_mem, dst_mem }, deps);
+   validate_common(q, deps);
+   validate_object(q, dst_mem, dst_origin, dst_pitch, region);
+   validate_object(q, src_mem, src_origin, src_pitch, region);
+   validate_copy(q, dst_mem, dst_origin, dst_pitch,
+                 src_mem, src_origin, src_pitch, region);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_COPY_BUFFER, deps,
-      hard_copy_op(q, &dst_mem, {{ dst_offset }},
-                   &src_mem, {{ src_offset }},
-                   {{ size, 1, 1 }}));
+      hard_copy_op(q, &dst_mem, dst_origin,
+                   &src_mem, src_origin, region));
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -285,27 +396,33 @@ clEnqueueCopyBuffer(cl_command_queue d_q, cl_mem d_src_mem, cl_mem d_dst_mem,
 CLOVER_API cl_int
 clEnqueueCopyBufferRect(cl_command_queue d_q, cl_mem d_src_mem,
                         cl_mem d_dst_mem,
-                        const size_t *src_origin, const size_t *dst_origin,
-                        const size_t *region,
+                        const size_t *p_src_origin, const size_t *p_dst_origin,
+                        const size_t *p_region,
                         size_t src_row_pitch, size_t src_slice_pitch,
                         size_t dst_row_pitch, size_t dst_slice_pitch,
                         cl_uint num_deps, const cl_event *d_deps,
                         cl_event *rd_ev) try {
    auto &q = obj(d_q);
-   auto &src_mem = obj(d_src_mem);
-   auto &dst_mem = obj(d_dst_mem);
+   auto &src_mem = obj<buffer>(d_src_mem);
+   auto &dst_mem = obj<buffer>(d_dst_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   auto region = vector(p_region);
+   auto dst_origin = vector(p_dst_origin);
+   auto dst_pitch = pitch(region, {{ 1, dst_row_pitch, dst_slice_pitch }});
+   auto src_origin = vector(p_src_origin);
+   auto src_pitch = pitch(region, {{ 1, src_row_pitch, src_slice_pitch }});
 
-   validate_common(q, { src_mem, dst_mem }, deps);
+   validate_common(q, deps);
+   validate_object(q, dst_mem, dst_origin, dst_pitch, region);
+   validate_object(q, src_mem, src_origin, src_pitch, region);
+   validate_copy(q, dst_mem, dst_origin, dst_pitch,
+                 src_mem, src_origin, src_pitch, region);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_COPY_BUFFER_RECT, deps,
-      soft_copy_op(q,
-                   &dst_mem, vector(dst_origin),
-                   {{ 1, dst_row_pitch, dst_slice_pitch }},
-                   &src_mem, vector(src_origin),
-                   {{ 1, src_row_pitch, src_slice_pitch }},
-                   vector(region)));
+      soft_copy_op(q, &dst_mem, dst_origin, dst_pitch,
+                   &src_mem, src_origin, src_pitch,
+                   region));
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -316,27 +433,29 @@ clEnqueueCopyBufferRect(cl_command_queue d_q, cl_mem d_src_mem,
 
 CLOVER_API cl_int
 clEnqueueReadImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
-                   const size_t *origin, const size_t *region,
+                   const size_t *p_origin, const size_t *p_region,
                    size_t row_pitch, size_t slice_pitch, void *ptr,
                    cl_uint num_deps, const cl_event *d_deps,
                    cl_event *rd_ev) try {
    auto &q = obj(d_q);
    auto &img = obj<image>(d_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   auto region = vector(p_region);
+   auto dst_pitch = pitch(region, {{ img.pixel_size(),
+                                     row_pitch, slice_pitch }});
+   auto src_origin = vector(p_origin);
+   auto src_pitch = pitch(region, {{ img.pixel_size(),
+                                     img.row_pitch(), img.slice_pitch() }});
 
-   validate_common(q, { img }, deps);
-
-   if (!ptr)
-      throw error(CL_INVALID_VALUE);
+   validate_common(q, deps);
+   validate_object(q, ptr, {}, dst_pitch, region);
+   validate_object(q, img, src_origin, region);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_READ_IMAGE, deps,
-      soft_copy_op(q,
-                   ptr, {},
-                   {{ 1, row_pitch, slice_pitch }},
-                   &img, vector(origin),
-                   {{ 1, img.row_pitch(), img.slice_pitch() }},
-                   vector(region)));
+      soft_copy_op(q, ptr, {}, dst_pitch,
+                   &img, src_origin, src_pitch,
+                   region));
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -347,27 +466,29 @@ clEnqueueReadImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
 
 CLOVER_API cl_int
 clEnqueueWriteImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
-                    const size_t *origin, const size_t *region,
+                    const size_t *p_origin, const size_t *p_region,
                     size_t row_pitch, size_t slice_pitch, const void *ptr,
                     cl_uint num_deps, const cl_event *d_deps,
                     cl_event *rd_ev) try {
    auto &q = obj(d_q);
    auto &img = obj<image>(d_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   auto region = vector(p_region);
+   auto dst_origin = vector(p_origin);
+   auto dst_pitch = pitch(region, {{ img.pixel_size(),
+                                     img.row_pitch(), img.slice_pitch() }});
+   auto src_pitch = pitch(region, {{ img.pixel_size(),
+                                     row_pitch, slice_pitch }});
 
-   validate_common(q, { img }, deps);
-
-   if (!ptr)
-      throw error(CL_INVALID_VALUE);
+   validate_common(q, deps);
+   validate_object(q, img, dst_origin, region);
+   validate_object(q, ptr, {}, src_pitch, region);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_WRITE_IMAGE, deps,
-      soft_copy_op(q,
-                   &img, vector(origin),
-                   {{ 1, img.row_pitch(), img.slice_pitch() }},
-                   ptr, {},
-                   {{ 1, row_pitch, slice_pitch }},
-                   vector(region)));
+      soft_copy_op(q, &img, dst_origin, dst_pitch,
+                   ptr, {}, src_pitch,
+                   region));
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -378,23 +499,28 @@ clEnqueueWriteImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
 
 CLOVER_API cl_int
 clEnqueueCopyImage(cl_command_queue d_q, cl_mem d_src_mem, cl_mem d_dst_mem,
-                   const size_t *src_origin, const size_t *dst_origin,
-                   const size_t *region,
+                   const size_t *p_src_origin, const size_t *p_dst_origin,
+                   const size_t *p_region,
                    cl_uint num_deps, const cl_event *d_deps,
                    cl_event *rd_ev) try {
    auto &q = obj(d_q);
    auto &src_img = obj<image>(d_src_mem);
    auto &dst_img = obj<image>(d_dst_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   auto region = vector(p_region);
+   auto dst_origin = vector(p_dst_origin);
+   auto src_origin = vector(p_src_origin);
 
-   validate_common(q, { src_img, dst_img }, deps);
+   validate_common(q, deps);
+   validate_object(q, dst_img, dst_origin, region);
+   validate_object(q, src_img, src_origin, region);
+   validate_copy(q, dst_img, dst_origin, src_img, src_origin, region);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_COPY_IMAGE, deps,
-      hard_copy_op(q,
-                   &dst_img, vector(dst_origin),
-                   &src_img, vector(src_origin),
-                   vector(region)));
+      hard_copy_op(q, &dst_img, dst_origin,
+                   &src_img, src_origin,
+                   region));
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -406,25 +532,31 @@ clEnqueueCopyImage(cl_command_queue d_q, cl_mem d_src_mem, cl_mem d_dst_mem,
 CLOVER_API cl_int
 clEnqueueCopyImageToBuffer(cl_command_queue d_q,
                            cl_mem d_src_mem, cl_mem d_dst_mem,
-                           const size_t *src_origin, const size_t *region,
+                           const size_t *p_src_origin, const size_t *p_region,
                            size_t dst_offset,
                            cl_uint num_deps, const cl_event *d_deps,
                            cl_event *rd_ev) try {
    auto &q = obj(d_q);
    auto &src_img = obj<image>(d_src_mem);
-   auto &dst_mem = obj(d_dst_mem);
+   auto &dst_mem = obj<buffer>(d_dst_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   auto region = vector(p_region);
+   vector_t dst_origin = { dst_offset };
+   auto dst_pitch = pitch(region, {{ src_img.pixel_size() }});
+   auto src_origin = vector(p_src_origin);
+   auto src_pitch = pitch(region, {{ src_img.pixel_size(),
+                                     src_img.row_pitch(),
+                                     src_img.slice_pitch() }});
 
-   validate_common(q, { src_img, dst_mem }, deps);
+   validate_common(q, deps);
+   validate_object(q, dst_mem, dst_origin, dst_pitch, region);
+   validate_object(q, src_img, src_origin, region);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_COPY_IMAGE_TO_BUFFER, deps,
-      soft_copy_op(q,
-                   &dst_mem, {{ dst_offset }},
-                   {{ 0, 0, 0 }},
-                   &src_img, vector(src_origin),
-                   {{ 1, src_img.row_pitch(), src_img.slice_pitch() }},
-                   vector(region)));
+      soft_copy_op(q, &dst_mem, dst_origin, dst_pitch,
+                   &src_img, src_origin, src_pitch,
+                   region));
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -437,24 +569,30 @@ CLOVER_API cl_int
 clEnqueueCopyBufferToImage(cl_command_queue d_q,
                            cl_mem d_src_mem, cl_mem d_dst_mem,
                            size_t src_offset,
-                           const size_t *dst_origin, const size_t *region,
+                           const size_t *p_dst_origin, const size_t *p_region,
                            cl_uint num_deps, const cl_event *d_deps,
                            cl_event *rd_ev) try {
    auto &q = obj(d_q);
-   auto &src_mem = obj(d_src_mem);
+   auto &src_mem = obj<buffer>(d_src_mem);
    auto &dst_img = obj<image>(d_dst_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   auto region = vector(p_region);
+   auto dst_origin = vector(p_dst_origin);
+   auto dst_pitch = pitch(region, {{ dst_img.pixel_size(),
+                                     dst_img.row_pitch(),
+                                     dst_img.slice_pitch() }});
+   vector_t src_origin = { src_offset };
+   auto src_pitch = pitch(region, {{ dst_img.pixel_size() }});
 
-   validate_common(q, { src_mem, dst_img }, deps);
+   validate_common(q, deps);
+   validate_object(q, dst_img, dst_origin, region);
+   validate_object(q, src_mem, src_origin, src_pitch, region);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_COPY_BUFFER_TO_IMAGE, deps,
-      soft_copy_op(q,
-                   &dst_img, vector(dst_origin),
-                   {{ 1, dst_img.row_pitch(), dst_img.slice_pitch() }},
-                   &src_mem, {{ src_offset }},
-                   {{ 0, 0, 0 }},
-                   vector(region)));
+      soft_copy_op(q, &dst_img, dst_origin, dst_pitch,
+                   &src_mem, src_origin, src_pitch,
+                   region));
 
    ret_object(rd_ev, hev);
    return CL_SUCCESS;
@@ -469,16 +607,16 @@ clEnqueueMapBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                    cl_uint num_deps, const cl_event *d_deps,
                    cl_event *rd_ev, cl_int *r_errcode) try {
    auto &q = obj(d_q);
-   auto &mem = obj(d_mem);
+   auto &mem = obj<buffer>(d_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   vector_t region = { size, 1, 1 };
+   vector_t obj_origin = { offset };
+   auto obj_pitch = pitch(region, {{ 1 }});
 
-   validate_common(q, { mem }, deps);
+   validate_common(q, deps);
+   validate_object(q, mem, obj_origin, obj_pitch, region);
 
-   if (offset > mem.size() || offset + size > mem.size())
-      throw error(CL_INVALID_VALUE);
-
-   void *map = mem.resource(q).add_map(
-      q, flags, blocking, {{ offset }}, {{ size }});
+   void *map = mem.resource(q).add_map(q, flags, blocking, obj_origin, region);
 
    ret_object(rd_ev, new hard_event(q, CL_COMMAND_MAP_BUFFER, deps));
    ret_error(r_errcode, CL_SUCCESS);
@@ -492,18 +630,20 @@ clEnqueueMapBuffer(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
 CLOVER_API void *
 clEnqueueMapImage(cl_command_queue d_q, cl_mem d_mem, cl_bool blocking,
                   cl_map_flags flags,
-                  const size_t *origin, const size_t *region,
+                  const size_t *p_origin, const size_t *p_region,
                   size_t *row_pitch, size_t *slice_pitch,
                   cl_uint num_deps, const cl_event *d_deps,
                   cl_event *rd_ev, cl_int *r_errcode) try {
    auto &q = obj(d_q);
    auto &img = obj<image>(d_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   auto region = vector(p_region);
+   auto origin = vector(p_origin);
 
-   validate_common(q, { img }, deps);
+   validate_common(q, deps);
+   validate_object(q, img, origin, region);
 
-   void *map = img.resource(q).add_map(
-      q, flags, blocking, vector(origin), vector(region));
+   void *map = img.resource(q).add_map(q, flags, blocking, origin, region);
 
    ret_object(rd_ev, new hard_event(q, CL_COMMAND_MAP_IMAGE, deps));
    ret_error(r_errcode, CL_SUCCESS);
@@ -522,7 +662,7 @@ clEnqueueUnmapMemObject(cl_command_queue d_q, cl_mem d_mem, void *ptr,
    auto &mem = obj(d_mem);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
 
-   validate_common(q, { mem }, deps);
+   validate_common(q, deps);
 
    hard_event *hev = new hard_event(
       q, CL_COMMAND_UNMAP_MEM_OBJECT, deps,
