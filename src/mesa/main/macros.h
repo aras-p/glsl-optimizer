@@ -193,7 +193,7 @@ static INLINE uint32_t
 U_FIXED(float value, uint32_t frac_bits)
 {
    value *= (1 << frac_bits);
-   return value < 0 ? 0 : value;
+   return value < 0.0f ? 0 : (uint32_t) value;
 }
 
 /**
@@ -201,10 +201,10 @@ U_FIXED(float value, uint32_t frac_bits)
  *
  * \param frac_bits   The number of bits used to store the fractional part.
  */
-static INLINE uint32_t
+static INLINE int32_t
 S_FIXED(float value, uint32_t frac_bits)
 {
-   return value * (1 << frac_bits);
+   return (int32_t) (value * (1 << frac_bits));
 }
 /*@}*/
 
