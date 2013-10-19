@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /*
@@ -72,7 +72,7 @@ static GLboolean
 all_varyings_in_vbos(const struct gl_client_array *arrays[])
 {
    GLuint i;
-   
+
    for (i = 0; i < VERT_ATTRIB_MAX; i++)
       if (arrays[i]->StrideB &&
           !arrays[i]->InstanceDivisor &&
@@ -104,6 +104,7 @@ setup_index_buffer(struct st_context *st,
       ibuffer->offset = pointer_to_offset(ib->ptr);
    }
    else if (st->indexbuf_uploader) {
+      /* upload indexes from user memory into a real buffer */
       if (u_upload_data(st->indexbuf_uploader, 0,
                         ib->count * ibuffer->index_size, ib->ptr,
                         &ibuffer->offset, &ibuffer->buffer) != PIPE_OK) {
@@ -222,6 +223,7 @@ st_draw_vbo(struct gl_context *ctx,
    }
 
    util_draw_init_info(&info);
+
    if (ib) {
       /* Get index bounds for user buffers. */
       if (!index_bounds_valid)
@@ -256,7 +258,7 @@ st_draw_vbo(struct gl_context *ctx,
 
    /* do actual drawing */
    for (i = 0; i < nr_prims; i++) {
-      info.mode = translate_prim( ctx, prims[i].mode );
+      info.mode = translate_prim(ctx, prims[i].mode);
       info.start = prims[i].start;
       info.count = prims[i].count;
       info.start_instance = prims[i].base_instance;
@@ -282,8 +284,9 @@ st_draw_vbo(struct gl_context *ctx,
          /* don't trim, restarts might be inside index list */
          cso_draw_vbo(st->cso_context, &info);
       }
-      else if (u_trim_pipe_prim(prims[i].mode, &info.count))
+      else if (u_trim_pipe_prim(prims[i].mode, &info.count)) {
          cso_draw_vbo(st->cso_context, &info);
+      }
    }
 
    if (ib && st->indexbuf_uploader && !_mesa_is_bufferobj(ib->obj)) {
