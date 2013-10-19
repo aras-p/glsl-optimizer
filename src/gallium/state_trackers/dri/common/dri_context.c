@@ -39,8 +39,9 @@
 #include "pipe/p_context.h"
 #include "state_tracker/st_context.h"
 
-static void dri_fill_st_options(struct st_config_options *options,
-                                const struct driOptionCache * optionCache)
+static void
+dri_fill_st_options(struct st_config_options *options,
+                    const struct driOptionCache * optionCache)
 {
    options->disable_blend_func_extended =
       driQueryOptionb(optionCache, "disable_blend_func_extended");
@@ -179,7 +180,8 @@ dri_destroy_context(__DRIcontext * cPriv)
    ctx->st->flush(ctx->st, 0, NULL);
    ctx->st->destroy(ctx->st);
 
-   if (ctx->pp) pp_free(ctx->pp);
+   if (ctx->pp)
+      pp_free(ctx->pp);
 
    free(ctx);
 }
@@ -257,7 +259,7 @@ dri_get_current(__DRIscreen *sPriv)
 
    st = stapi->get_current(stapi);
 
-   return (struct dri_context *) (st) ? st->st_manager_private : NULL;
+   return (struct dri_context *) st ? st->st_manager_private : NULL;
 }
 
 /* vim: set sw=3 ts=8 sts=3 expandtab: */
