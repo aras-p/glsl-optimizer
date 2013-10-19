@@ -129,14 +129,15 @@ vec4_gs_visitor::emit_prolog()
     */
    this->current_annotation = "clear r0.2";
    dst_reg r0(retype(brw_vec4_grf(0, 0), BRW_REGISTER_TYPE_UD));
-   emit(GS_OPCODE_SET_DWORD_2_IMMED, r0, 0u);
+   vec4_instruction *inst = emit(GS_OPCODE_SET_DWORD_2_IMMED, r0, 0u);
+   inst->force_writemask_all = true;
 
    /* Create a virtual register to hold the vertex count */
    this->vertex_count = src_reg(this, glsl_type::uint_type);
 
    /* Initialize the vertex_count register to 0 */
    this->current_annotation = "initialize vertex_count";
-   vec4_instruction *inst = emit(MOV(dst_reg(this->vertex_count), 0u));
+   inst = emit(MOV(dst_reg(this->vertex_count), 0u));
    inst->force_writemask_all = true;
 
    if (c->control_data_header_size_bits > 0) {
