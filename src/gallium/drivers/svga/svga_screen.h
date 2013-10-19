@@ -30,8 +30,6 @@
 #include "pipe/p_screen.h"
 #include "os/os_thread.h"
 
-#include "util/u_double_list.h"
-
 #include "svga_screen_cache.h"
 
 
