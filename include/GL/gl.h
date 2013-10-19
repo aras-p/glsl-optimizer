@@ -2086,26 +2086,6 @@ typedef void (APIENTRYP PFNGLMULTITEXCOORD4SVARBPROC) (GLenum target, const GLsh
 
 
 
-#if GL_ARB_shader_objects
-
-#ifndef GL_MESA_shader_debug
-#define GL_MESA_shader_debug 1
-
-#define GL_DEBUG_OBJECT_MESA              0x8759
-#define GL_DEBUG_PRINT_MESA               0x875A
-#define GL_DEBUG_ASSERT_MESA              0x875B
-
-GLAPI GLhandleARB GLAPIENTRY glCreateDebugObjectMESA (void);
-GLAPI void GLAPIENTRY glClearDebugLogMESA (GLhandleARB obj, GLenum logType, GLenum shaderType);
-GLAPI void GLAPIENTRY glGetDebugLogMESA (GLhandleARB obj, GLenum logType, GLenum shaderType, GLsizei maxLength,
-                                         GLsizei *length, GLcharARB *debugLog);
-GLAPI GLsizei GLAPIENTRY glGetDebugLogLengthMESA (GLhandleARB obj, GLenum logType, GLenum shaderType);
-
-#endif /* GL_MESA_shader_debug */
-
-#endif /* GL_ARB_shader_objects */
-
-
 /*
  * ???. GL_MESA_packed_depth_stencil
  * XXX obsolete
