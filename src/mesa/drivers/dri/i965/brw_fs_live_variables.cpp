@@ -48,7 +48,7 @@ using namespace brw;
  * VGRF is ultimately used or defined.  Tracking individual components
  * allows us to easily assemble this information.
  *
- * See Muchnik's Advanced Compiler Design and Implementation, section
+ * See Muchnick's Advanced Compiler Design and Implementation, section
  * 14.1 (p444).
  */
 

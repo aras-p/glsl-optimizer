@@ -35,7 +35,7 @@ using namespace brw;
  * Support for computing at the basic block level which variables
  * (virtual GRFs in our case) are live at entry and exit.
  *
- * See Muchnik's Advanced Compiler Design and Implementation, section
+ * See Muchnick's Advanced Compiler Design and Implementation, section
  * 14.1 (p444).
  */
 

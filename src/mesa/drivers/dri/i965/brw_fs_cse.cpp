@@ -28,7 +28,7 @@
  *
  * Support for local common subexpression elimination.
  *
- * See Muchnik's Advanced Compiler Design and Implementation, section
+ * See Muchnick's Advanced Compiler Design and Implementation, section
  * 13.1 (p378).
  */
 

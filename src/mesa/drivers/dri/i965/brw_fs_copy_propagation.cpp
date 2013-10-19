@@ -28,7 +28,7 @@
  * dataflow analysis on the copies available at the end of each block to re-do
  * local copy propagation with more copies available.
  *
- * See Muchnik's Advanced Compiler Design and Implementation, section
+ * See Muchnick's Advanced Compiler Design and Implementation, section
  * 12.5 (p356).
  */
 
