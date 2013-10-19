@@ -2102,27 +2102,6 @@ typedef void (APIENTRYP PFNGLMULTITEXCOORD4SVARBPROC) (GLenum target, const GLsh
 #endif /* GL_MESA_packed_depth_stencil */
 
 
-#ifndef GL_MESA_program_debug
-#define GL_MESA_program_debug 1
-
-#define GL_FRAGMENT_PROGRAM_POSITION_MESA       0x8bb0
-#define GL_FRAGMENT_PROGRAM_CALLBACK_MESA       0x8bb1
-#define GL_FRAGMENT_PROGRAM_CALLBACK_FUNC_MESA  0x8bb2
-#define GL_FRAGMENT_PROGRAM_CALLBACK_DATA_MESA  0x8bb3
-#define GL_VERTEX_PROGRAM_POSITION_MESA         0x8bb4
-#define GL_VERTEX_PROGRAM_CALLBACK_MESA         0x8bb5
-#define GL_VERTEX_PROGRAM_CALLBACK_FUNC_MESA    0x8bb6
-#define GL_VERTEX_PROGRAM_CALLBACK_DATA_MESA    0x8bb7
-
-typedef void (*GLprogramcallbackMESA)(GLenum target, GLvoid *data);
-
-GLAPI void GLAPIENTRY glProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback, GLvoid *data);
-
-GLAPI void GLAPIENTRY glGetProgramRegisterfvMESA(GLenum target, GLsizei len, const GLubyte *name, GLfloat *v);
-
-#endif /* GL_MESA_program_debug */
-
-
 #ifndef GL_MESA_texture_array
 #define GL_MESA_texture_array 1
 
