@@ -2831,7 +2831,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
    if (inst->saturate)
       printf(".sat");
    if (inst->conditional_mod) {
-      printf(".cmod");
+      printf("%s", conditional_modifier[inst->conditional_mod]);
       if (!inst->predicate &&
           (brw->gen < 5 || (inst->opcode != BRW_OPCODE_SEL &&
                               inst->opcode != BRW_OPCODE_IF &&

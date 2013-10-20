@@ -1109,7 +1109,11 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst)
 {
    vec4_instruction *inst = (vec4_instruction *)be_inst;
 
-   printf("%s ", brw_instruction_name(inst->opcode));
+   printf("%s", brw_instruction_name(inst->opcode));
+   if (inst->conditional_mod) {
+      printf("%s", conditional_modifier[inst->conditional_mod]);
+   }
+   printf(" ");
 
    switch (inst->dst.file) {
    case GRF:
