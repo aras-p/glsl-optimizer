@@ -151,6 +151,9 @@ public:
    bool is_partial_write();
    int regs_read(fs_visitor *v, int arg);
 
+   bool reads_flag();
+   bool writes_flag();
+
    fs_reg dst;
    fs_reg src[3];
    bool saturate;

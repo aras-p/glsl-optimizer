@@ -732,6 +732,19 @@ fs_inst::regs_read(fs_visitor *v, int arg)
    return 1;
 }
 
+bool
+fs_inst::reads_flag()
+{
+   return predicate;
+}
+
+bool
+fs_inst::writes_flag()
+{
+   return (conditional_mod && opcode != BRW_OPCODE_SEL) ||
+          opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS;
+}
+
 /**
  * Returns how many MRFs an FS opcode will write over.
  *
