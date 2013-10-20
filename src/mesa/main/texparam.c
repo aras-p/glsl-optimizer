@@ -84,16 +84,22 @@ validate_texture_wrap_mode(struct gl_context * ctx, GLenum target, GLenum wrap)
       break;
 
    case GL_MIRROR_CLAMP_EXT:
+      supported = is_desktop_gl
+         && (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)
+         && (target != GL_TEXTURE_RECTANGLE_NV)
+         && (target != GL_TEXTURE_EXTERNAL_OES);
+      break;
+
    case GL_MIRROR_CLAMP_TO_EDGE_EXT:
       supported = is_desktop_gl 
-         && (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)
-	 && (target != GL_TEXTURE_RECTANGLE_NV)
+         && (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp || e->ARB_texture_mirror_clamp_to_edge)
+         && (target != GL_TEXTURE_RECTANGLE_NV)
          && (target != GL_TEXTURE_EXTERNAL_OES);
       break;
 
    case GL_MIRROR_CLAMP_TO_BORDER_EXT:
       supported = is_desktop_gl && e->EXT_texture_mirror_clamp
-	 && (target != GL_TEXTURE_RECTANGLE_NV)
+         && (target != GL_TEXTURE_RECTANGLE_NV)
          && (target != GL_TEXTURE_EXTERNAL_OES);
       break;
 

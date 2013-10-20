@@ -305,7 +305,7 @@ validate_texture_wrap_mode(struct gl_context *ctx, GLenum wrap)
    case GL_MIRROR_CLAMP_EXT:
       return e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp;
    case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-      return e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp;
+      return e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp || e->ARB_texture_mirror_clamp_to_edge;
    case GL_MIRROR_CLAMP_TO_BORDER_EXT:
       return e->EXT_texture_mirror_clamp;
    default:

@@ -144,6 +144,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_texture_float",                       o(ARB_texture_float),                       GL,             2004 },
    { "GL_ARB_texture_gather",                      o(ARB_texture_gather),                      GL,             2009 },
    { "GL_ARB_texture_mirrored_repeat",             o(dummy_true),                              GLL,            2001 },
+   { "GL_ARB_texture_mirror_clamp_to_edge",        o(ARB_texture_mirror_clamp_to_edge),        GL,             2013 },
    { "GL_ARB_texture_multisample",                 o(ARB_texture_multisample),                 GL,             2009 },
    { "GL_ARB_texture_non_power_of_two",            o(ARB_texture_non_power_of_two),            GL,             2003 },
    { "GL_ARB_texture_query_levels",                o(ARB_texture_query_levels),                GL,             2012 },
