@@ -1254,6 +1254,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	      if (extensions->ARB_texture_gather)
 	         add_builtin_define(parser, "GL_ARB_texture_gather", 1);
+
+	      if (extensions->ARB_shader_atomic_counters)
+	         add_builtin_define(parser, "GL_ARB_shader_atomic_counters", 1);
 	   }
 	}
 

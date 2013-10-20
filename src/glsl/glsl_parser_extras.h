@@ -229,6 +229,13 @@ struct _mesa_glsl_parse_state {
       unsigned MaxGeometryOutputVertices;
       unsigned MaxGeometryTotalOutputComponents;
       unsigned MaxGeometryUniformComponents;
+
+      /* ARB_shader_atomic_counters */
+      unsigned MaxVertexAtomicCounters;
+      unsigned MaxGeometryAtomicCounters;
+      unsigned MaxFragmentAtomicCounters;
+      unsigned MaxCombinedAtomicCounters;
+      unsigned MaxAtomicBufferBindings;
    } Const;
 
    /**

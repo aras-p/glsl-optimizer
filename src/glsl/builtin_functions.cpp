@@ -326,6 +326,13 @@ tex3d_lod(const _mesa_glsl_parse_state *state)
 {
    return tex3d(state) && lod_exists_in_stage(state);
 }
+
+static bool
+shader_atomic_counters(const _mesa_glsl_parse_state *state)
+{
+   return state->ARB_shader_atomic_counters_enable;
+}
+
 /** @} */
 
 /******************************************************************************/
@@ -556,6 +563,11 @@ private:
    B1(uaddCarry)
    B1(usubBorrow)
    B1(mulExtended)
+
+   ir_function_signature *_atomic_intrinsic(builtin_available_predicate avail);
+   ir_function_signature *_atomic_op(const char *intrinsic,
+                                     builtin_available_predicate avail);
+
 #undef B0
 #undef B1
 #undef B2
@@ -662,6 +674,15 @@ builtin_builder::create_shader()
 void
 builtin_builder::create_intrinsics()
 {
+   add_function("__intrinsic_atomic_read",
+                _atomic_intrinsic(shader_atomic_counters),
+                NULL);
+   add_function("__intrinsic_atomic_increment",
+                _atomic_intrinsic(shader_atomic_counters),
+                NULL);
+   add_function("__intrinsic_atomic_predecrement",
+                _atomic_intrinsic(shader_atomic_counters),
+                NULL);
 }
 
 /**
@@ -2070,6 +2091,20 @@ builtin_builder::create_builtins()
                 _mulExtended(glsl_type::uvec3_type),
                 _mulExtended(glsl_type::uvec4_type),
                 NULL);
+
+   add_function("atomicCounter",
+                _atomic_op("__intrinsic_atomic_read",
+                           shader_atomic_counters),
+                NULL);
+   add_function("atomicCounterIncrement",
+                _atomic_op("__intrinsic_atomic_increment",
+                           shader_atomic_counters),
+                NULL);
+   add_function("atomicCounterDecrement",
+                _atomic_op("__intrinsic_atomic_predecrement",
+                           shader_atomic_counters),
+                NULL);
+
 #undef F
 #undef FI
 #undef FIU
@@ -3932,6 +3967,29 @@ builtin_builder::_mulExtended(const glsl_type *type)
 
    return sig;
 }
+
+ir_function_signature *
+builtin_builder::_atomic_intrinsic(builtin_available_predicate avail)
+{
+   ir_variable *counter = in_var(glsl_type::atomic_uint_type, "counter");
+   MAKE_INTRINSIC(glsl_type::uint_type, avail, 1, counter);
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_atomic_op(const char *intrinsic,
+                            builtin_available_predicate avail)
+{
+   ir_variable *counter = in_var(glsl_type::atomic_uint_type, "atomic_counter");
+   MAKE_SIG(glsl_type::uint_type, avail, 1, counter);
+
+   ir_variable *retval = body.make_temp(glsl_type::uint_type, "atomic_retval");
+   body.emit(call(shader->symbols->get_function(intrinsic), retval,
+                  sig->parameters));
+   body.emit(ret(retval));
+   return sig;
+}
+
 /** @} */
 
 /******************************************************************************/

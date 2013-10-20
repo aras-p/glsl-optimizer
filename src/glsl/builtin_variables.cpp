@@ -638,6 +638,21 @@ builtin_variable_generator::generate_constants()
        */
       add_const("gl_MaxTextureCoords", state->Const.MaxTextureCoords);
    }
+
+   if (state->ARB_shader_atomic_counters_enable) {
+      add_const("gl_MaxVertexAtomicCounters",
+                state->Const.MaxVertexAtomicCounters);
+      add_const("gl_MaxGeometryAtomicCounters",
+                state->Const.MaxGeometryAtomicCounters);
+      add_const("gl_MaxFragmentAtomicCounters",
+                state->Const.MaxFragmentAtomicCounters);
+      add_const("gl_MaxCombinedAtomicCounters",
+                state->Const.MaxCombinedAtomicCounters);
+      add_const("gl_MaxAtomicCounterBindings",
+                state->Const.MaxAtomicBufferBindings);
+      add_const("gl_MaxTessControlAtomicCounters", 0);
+      add_const("gl_MaxTessEvaluationAtomicCounters", 0);
+   }
 }
 
 
