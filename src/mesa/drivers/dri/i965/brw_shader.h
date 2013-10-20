@@ -46,6 +46,13 @@ public:
    bool is_control_flow();
    bool can_do_source_mods();
 
+   /**
+    * True if the instruction has side effects other than writing to
+    * its destination registers.  You are expected not to reorder or
+    * optimize these out unless you know what you are doing.
+    */
+   bool has_side_effects() const;
+
    enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
 
    uint32_t predicate;

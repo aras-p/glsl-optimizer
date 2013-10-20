@@ -602,6 +602,17 @@ backend_instruction::can_do_source_mods()
    }
 }
 
+bool
+backend_instruction::has_side_effects() const
+{
+   switch (opcode) {
+   case SHADER_OPCODE_UNTYPED_ATOMIC:
+      return true;
+   default:
+      return false;
+   }
+}
+
 void
 backend_visitor::dump_instructions()
 {

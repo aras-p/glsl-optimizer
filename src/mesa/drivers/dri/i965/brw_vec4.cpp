@@ -318,7 +318,7 @@ vec4_visitor::dead_code_eliminate()
    foreach_list_safe(node, &this->instructions) {
       vec4_instruction *inst = (vec4_instruction *)node;
 
-      if (inst->dst.file == GRF) {
+      if (inst->dst.file == GRF && !inst->has_side_effects()) {
          assert(this->virtual_grf_end[inst->dst.reg] >= pc);
          if (this->virtual_grf_end[inst->dst.reg] == pc) {
             /* Don't dead code eliminate instructions that write to the

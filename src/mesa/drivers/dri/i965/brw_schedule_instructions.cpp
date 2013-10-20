@@ -603,7 +603,8 @@ fs_instruction_scheduler::calculate_deps()
       schedule_node *n = (schedule_node *)node;
       fs_inst *inst = (fs_inst *)n->inst;
 
-      if (inst->opcode == FS_OPCODE_PLACEHOLDER_HALT)
+      if (inst->opcode == FS_OPCODE_PLACEHOLDER_HALT ||
+         inst->has_side_effects())
          add_barrier_deps(n);
 
       /* read-after-write deps. */
@@ -831,6 +832,9 @@ vec4_instruction_scheduler::calculate_deps()
    foreach_list(node, &instructions) {
       schedule_node *n = (schedule_node *)node;
       vec4_instruction *inst = (vec4_instruction *)n->inst;
+
+      if (inst->has_side_effects())
+         add_barrier_deps(n);
 
       /* read-after-write deps. */
       for (int i = 0; i < 3; i++) {

@@ -2059,7 +2059,7 @@ fs_visitor::dead_code_eliminate()
    foreach_list_safe(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
-      if (inst->dst.file == GRF) {
+      if (inst->dst.file == GRF && !inst->has_side_effects()) {
          bool dead = true;
 
          for (int i = 0; i < inst->regs_written; i++) {
@@ -2220,31 +2220,26 @@ fs_visitor::dead_code_eliminate_local()
                get_dead_code_hash_entry(ht, inst->dst.reg,
                                         inst->dst.reg_offset);
 
-            if (inst->is_partial_write()) {
-               /* For a partial write, we can't remove any previous dead code
-                * candidate, since we're just modifying their result, but we can
-                * be dead code eliminiated ourselves.
-                */
-               if (entry) {
-                  entry->data = inst;
+            if (entry) {
+               if (inst->is_partial_write()) {
+                  /* For a partial write, we can't remove any previous dead code
+                   * candidate, since we're just modifying their result.
+                   */
                } else {
-                  insert_dead_code_hash(ht, inst->dst.reg, inst->dst.reg_offset,
-                                        inst);
-               }
-            } else {
-               if (entry) {
                   /* We're completely updating a channel, and there was a
                    * previous write to the channel that wasn't read.  Kill it!
                    */
                   fs_inst *inst = (fs_inst *)entry->data;
                   inst->remove();
                   progress = true;
-                  _mesa_hash_table_remove(ht, entry);
                }
 
+               _mesa_hash_table_remove(ht, entry);
+            }
+
+            if (!inst->has_side_effects())
                insert_dead_code_hash(ht, inst->dst.reg, inst->dst.reg_offset,
                                      inst);
-            }
          }
       }
    }
