@@ -243,4 +243,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.EXT_texture_compression_s3tc = true;
 
    ctx->Extensions.ANGLE_texture_compression_dxt = true;
+
+   if (brw->gen >= 7)
+      ctx->Extensions.ARB_shader_atomic_counters = true;
 }

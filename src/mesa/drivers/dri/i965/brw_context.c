@@ -443,6 +443,16 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.FragmentProgram.HighInt = ctx->Const.FragmentProgram.LowInt;
    ctx->Const.FragmentProgram.MediumInt = ctx->Const.FragmentProgram.LowInt;
 
+   if (brw->gen >= 7) {
+      ctx->Const.FragmentProgram.MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
+      ctx->Const.VertexProgram.MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
+      ctx->Const.GeometryProgram.MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
+      ctx->Const.FragmentProgram.MaxAtomicBuffers = BRW_MAX_ABO;
+      ctx->Const.VertexProgram.MaxAtomicBuffers = BRW_MAX_ABO;
+      ctx->Const.GeometryProgram.MaxAtomicBuffers = BRW_MAX_ABO;
+      ctx->Const.MaxCombinedAtomicBuffers = 3 * BRW_MAX_ABO;
+   }
+
    /* Gen6 converts quads to polygon in beginning of 3D pipeline,
     * but we're not sure how it's actually done for vertex order,
     * that affect provoking vertex decision. Always use last vertex
