@@ -144,6 +144,7 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
 %token SAMPLER2DMS ISAMPLER2DMS USAMPLER2DMS
 %token SAMPLER2DMSARRAY ISAMPLER2DMSARRAY USAMPLER2DMSARRAY
 %token SAMPLEREXTERNALOES
+%token ATOMIC_UINT
 %token STRUCT VOID_TOK WHILE
 %token <identifier> IDENTIFIER TYPE_IDENTIFIER NEW_IDENTIFIER
 %type <identifier> any_identifier
@@ -173,7 +174,7 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
 %token HVEC2 HVEC3 HVEC4 DVEC2 DVEC3 DVEC4 FVEC2 FVEC3 FVEC4
 %token SAMPLER3DRECT
 %token SIZEOF CAST NAMESPACE USING
-%token COHERENT RESTRICT READONLY WRITEONLY RESOURCE ATOMIC_UINT PATCH SAMPLE
+%token COHERENT RESTRICT READONLY WRITEONLY RESOURCE PATCH SAMPLE
 %token SUBROUTINE
 
 %token ERROR_TOK
@@ -1324,10 +1325,17 @@ layout_qualifier_id:
          }
       }
 
-      if (state->ARB_shading_language_420pack_enable &&
+      if ((state->ARB_shading_language_420pack_enable ||
+           state->ARB_shader_atomic_counters_enable) &&
           match_layout_qualifier("binding", $1, state) == 0) {
          $$.flags.q.explicit_binding = 1;
          $$.binding = $3;
+      }
+
+      if (state->ARB_shader_atomic_counters_enable &&
+          match_layout_qualifier("offset", $1, state) == 0) {
+         $$.flags.q.explicit_offset = 1;
+         $$.offset = $3;
       }
 
       if (match_layout_qualifier("max_vertices", $1, state) == 0) {
@@ -1703,6 +1711,7 @@ basic_type_specifier_nonarray:
    | SAMPLER2DMSARRAY       { $$ = "sampler2DMSArray"; }
    | ISAMPLER2DMSARRAY      { $$ = "isampler2DMSArray"; }
    | USAMPLER2DMSARRAY      { $$ = "usampler2DMSArray"; }
+   | ATOMIC_UINT            { $$ = "atomic_uint"; }
    ;
 
 precision_qualifier:
