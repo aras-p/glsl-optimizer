@@ -601,6 +601,7 @@ glsl_type::component_slots() const
       return this->length * this->fields.array->component_slots();
 
    case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_ATOMIC_UINT:
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
       break;
@@ -889,6 +890,7 @@ glsl_type::count_attribute_slots() const
       return this->length * this->fields.array->count_attribute_slots();
 
    case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_ATOMIC_UINT:
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
       break;

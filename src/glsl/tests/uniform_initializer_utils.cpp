@@ -92,6 +92,7 @@ generate_data_element(void *mem_ctx, const glsl_type *type,
       case GLSL_TYPE_BOOL:
 	 data.b[i] = bool(values[idx]);
 	 break;
+      case GLSL_TYPE_ATOMIC_UINT:
       case GLSL_TYPE_STRUCT:
       case GLSL_TYPE_ARRAY:
       case GLSL_TYPE_VOID:
@@ -119,6 +120,7 @@ generate_data_element(void *mem_ctx, const glsl_type *type,
       case GLSL_TYPE_BOOL:
 	 ASSERT_EQ(data.b[i], val->value.b[i]);
 	 break;
+      case GLSL_TYPE_ATOMIC_UINT:
       case GLSL_TYPE_STRUCT:
       case GLSL_TYPE_ARRAY:
       case GLSL_TYPE_VOID:
@@ -217,6 +219,7 @@ verify_data(gl_constant_value *storage, unsigned storage_array_size,
 	 case GLSL_TYPE_BOOL:
 	    EXPECT_EQ(int(val->value.b[i]), storage[i].i);
 	    break;
+         case GLSL_TYPE_ATOMIC_UINT:
 	 case GLSL_TYPE_STRUCT:
 	 case GLSL_TYPE_ARRAY:
 	 case GLSL_TYPE_VOID:

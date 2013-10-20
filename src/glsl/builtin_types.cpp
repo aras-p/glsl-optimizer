@@ -203,6 +203,8 @@ const static struct builtin_type_versions {
    T(sampler2DRectShadow,             140, 999)
 
    T(struct_gl_DepthRangeParameters,  110, 100)
+
+   T(atomic_uint,                     420, 999)
 };
 
 const glsl_type *const deprecated_types[] = {
@@ -283,6 +285,10 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 
    if (state->OES_texture_3D_enable) {
       add_type(symbols, glsl_type::sampler3D_type);
+   }
+
+   if (state->ARB_shader_atomic_counters_enable) {
+      add_type(symbols, glsl_type::atomic_uint_type);
    }
 }
 /** @} */

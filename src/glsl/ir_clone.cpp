@@ -57,6 +57,8 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->location = this->location;
    var->index = this->index;
    var->binding = this->binding;
+   var->atomic.buffer_index = this->atomic.buffer_index;
+   var->atomic.offset = this->atomic.offset;
    var->warn_extension = this->warn_extension;
    var->origin_upper_left = this->origin_upper_left;
    var->pixel_center_integer = this->pixel_center_integer;
@@ -395,6 +397,7 @@ ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
    }
 
    case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_ATOMIC_UINT:
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
    case GLSL_TYPE_INTERFACE:

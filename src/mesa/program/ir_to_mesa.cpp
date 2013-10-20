@@ -622,6 +622,7 @@ type_size(const struct glsl_type *type)
        * at link time.
        */
       return 1;
+   case GLSL_TYPE_ATOMIC_UINT:
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:
    case GLSL_TYPE_INTERFACE:
@@ -2601,6 +2602,7 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
 	    format = uniform_native;
 	    columns = 1;
 	    break;
+         case GLSL_TYPE_ATOMIC_UINT:
          case GLSL_TYPE_ARRAY:
          case GLSL_TYPE_VOID:
          case GLSL_TYPE_STRUCT:

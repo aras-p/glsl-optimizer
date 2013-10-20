@@ -639,6 +639,14 @@ public:
    int binding;
 
    /**
+    * Location an atomic counter is stored at.
+    */
+   struct {
+      unsigned buffer_index;
+      unsigned offset;
+   } atomic;
+
+   /**
     * Built-in state that backs this uniform
     *
     * Once set at variable creation, \c state_slots must remain invariant.

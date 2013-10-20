@@ -993,6 +993,7 @@ type_size(const struct glsl_type *type)
        * at link time.
        */
       return 1;
+   case GLSL_TYPE_ATOMIC_UINT:
    case GLSL_TYPE_INTERFACE:
    case GLSL_TYPE_VOID:
    case GLSL_TYPE_ERROR:

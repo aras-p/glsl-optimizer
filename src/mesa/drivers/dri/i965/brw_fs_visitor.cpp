@@ -808,6 +808,7 @@ fs_visitor::emit_assignment_writes(fs_reg &l, fs_reg &r,
       break;
 
    case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_ATOMIC_UINT:
       break;
 
    case GLSL_TYPE_VOID:
