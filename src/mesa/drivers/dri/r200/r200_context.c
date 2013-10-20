@@ -362,6 +362,7 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.ARB_texture_env_combine = true;
    ctx->Extensions.ARB_texture_env_dot3 = true;
    ctx->Extensions.ARB_texture_env_crossbar = true;
+   ctx->Extensions.ARB_texture_mirror_clamp_to_edge = true;
    ctx->Extensions.EXT_blend_color = true;
    ctx->Extensions.EXT_blend_minmax = true;
    ctx->Extensions.EXT_packed_depth_stencil = true;
