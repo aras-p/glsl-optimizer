@@ -3025,10 +3025,12 @@ fs_visitor::run()
          emit_shader_time_begin();
 
       calculate_urb_setup();
-      if (brw->gen < 6)
-	 emit_interpolation_setup_gen4();
-      else
-	 emit_interpolation_setup_gen6();
+      if (fp->Base.InputsRead > 0) {
+         if (brw->gen < 6)
+            emit_interpolation_setup_gen4();
+         else
+            emit_interpolation_setup_gen6();
+      }
 
       /* We handle discards by keeping track of the still-live pixels in f0.1.
        * Initialize it with the dispatched pixels.
