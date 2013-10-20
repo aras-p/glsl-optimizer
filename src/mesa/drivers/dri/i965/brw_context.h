@@ -181,6 +181,7 @@ enum brw_state_id {
    BRW_STATE_RASTERIZER_DISCARD,
    BRW_STATE_STATS_WM,
    BRW_STATE_UNIFORM_BUFFER,
+   BRW_STATE_ATOMIC_BUFFER,
    BRW_STATE_META_IN_PROGRESS,
    BRW_STATE_INTERPOLATION_MAP,
    BRW_STATE_PUSH_CONSTANT_ALLOCATION,
@@ -219,6 +220,7 @@ enum brw_state_id {
 #define BRW_NEW_RASTERIZER_DISCARD	(1 << BRW_STATE_RASTERIZER_DISCARD)
 #define BRW_NEW_STATS_WM		(1 << BRW_STATE_STATS_WM)
 #define BRW_NEW_UNIFORM_BUFFER          (1 << BRW_STATE_UNIFORM_BUFFER)
+#define BRW_NEW_ATOMIC_BUFFER           (1 << BRW_STATE_ATOMIC_BUFFER)
 #define BRW_NEW_META_IN_PROGRESS        (1 << BRW_STATE_META_IN_PROGRESS)
 #define BRW_NEW_INTERPOLATION_MAP       (1 << BRW_STATE_INTERPOLATION_MAP)
 #define BRW_NEW_PUSH_CONSTANT_ALLOCATION (1 << BRW_STATE_PUSH_CONSTANT_ALLOCATION)
@@ -344,6 +346,7 @@ struct brw_stage_prog_data {
       uint32_t texture_start;
       uint32_t gather_texture_start;
       uint32_t ubo_start;
+      uint32_t abo_start;
       uint32_t shader_time_start;
       /** @} */
    } binding_table;
@@ -655,6 +658,9 @@ struct brw_gs_prog_data
 /** Max number of render targets in a shader */
 #define BRW_MAX_DRAW_BUFFERS 8
 
+/** Max number of atomic counter buffer objects in a shader */
+#define BRW_MAX_ABO 4
+
 /**
  * Max number of binding table entries used for stream output.
  *
@@ -686,6 +692,7 @@ struct brw_gs_prog_data
 #define BRW_MAX_SURFACES   (BRW_MAX_DRAW_BUFFERS +                      \
                             BRW_MAX_TEX_UNIT * 2 + /* normal, gather */ \
                             12 + /* ubo */                              \
+                            BRW_MAX_ABO +                               \
                             2 /* shader time, pull constants */)
 
 #define SURF_INDEX_GEN6_SOL_BINDING(t) (t)
@@ -1539,6 +1546,10 @@ brw_update_sol_surface(struct brw_context *brw,
                        unsigned stride_dwords, unsigned offset_dwords);
 void brw_upload_ubo_surfaces(struct brw_context *brw,
 			     struct gl_shader *shader,
+                             struct brw_stage_state *stage_state,
+                             struct brw_stage_prog_data *prog_data);
+void brw_upload_abo_surfaces(struct brw_context *brw,
+                             struct gl_shader_program *prog,
                              struct brw_stage_state *stage_state,
                              struct brw_stage_prog_data *prog_data);
 

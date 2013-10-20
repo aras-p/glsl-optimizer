@@ -204,10 +204,13 @@ static const struct brw_tracked_state *gen7_atoms[] =
     */
    &brw_vs_pull_constants,
    &brw_vs_ubo_surfaces,
+   &brw_vs_abo_surfaces,
    &brw_gs_pull_constants,
    &brw_gs_ubo_surfaces,
+   &brw_gs_abo_surfaces,
    &brw_wm_pull_constants,
    &brw_wm_ubo_surfaces,
+   &brw_wm_abo_surfaces,
    &gen6_renderbuffer_surfaces,
    &brw_texture_surfaces,
    &brw_vs_binding_table,
@@ -304,6 +307,7 @@ void brw_init_state( struct brw_context *brw )
    ctx->DriverFlags.NewTransformFeedback = BRW_NEW_TRANSFORM_FEEDBACK;
    ctx->DriverFlags.NewRasterizerDiscard = BRW_NEW_RASTERIZER_DISCARD;
    ctx->DriverFlags.NewUniformBuffer = BRW_NEW_UNIFORM_BUFFER;
+   ctx->DriverFlags.NewAtomicBuffer = BRW_NEW_ATOMIC_BUFFER;
 }
 
 
@@ -411,6 +415,7 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_RASTERIZER_DISCARD),
    DEFINE_BIT(BRW_NEW_STATS_WM),
    DEFINE_BIT(BRW_NEW_UNIFORM_BUFFER),
+   DEFINE_BIT(BRW_NEW_ATOMIC_BUFFER),
    DEFINE_BIT(BRW_NEW_META_IN_PROGRESS),
    DEFINE_BIT(BRW_NEW_INTERPOLATION_MAP),
    DEFINE_BIT(BRW_NEW_PUSH_CONSTANT_ALLOCATION),

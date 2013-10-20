@@ -148,3 +148,26 @@ const struct brw_tracked_state brw_vs_ubo_surfaces = {
    },
    .emit = brw_upload_vs_ubo_surfaces,
 };
+
+static void
+brw_upload_vs_abo_surfaces(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->ctx;
+   /* _NEW_PROGRAM */
+   struct gl_shader_program *prog = ctx->Shader.CurrentVertexProgram;
+
+   if (prog) {
+      /* CACHE_NEW_VS_PROG */
+      brw_upload_abo_surfaces(brw, prog, &brw->vs.base,
+                              &brw->vs.prog_data->base.base);
+   }
+}
+
+const struct brw_tracked_state brw_vs_abo_surfaces = {
+   .dirty = {
+      .mesa = _NEW_PROGRAM,
+      .brw = BRW_NEW_BATCH | BRW_NEW_ATOMIC_BUFFER,
+      .cache = CACHE_NEW_VS_PROG,
+   },
+   .emit = brw_upload_vs_abo_surfaces,
+};

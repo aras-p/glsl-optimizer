@@ -870,6 +870,56 @@ const struct brw_tracked_state brw_wm_ubo_surfaces = {
 };
 
 void
+brw_upload_abo_surfaces(struct brw_context *brw,
+			struct gl_shader_program *prog,
+                        struct brw_stage_state *stage_state,
+                        struct brw_stage_prog_data *prog_data)
+{
+   struct gl_context *ctx = &brw->ctx;
+   uint32_t *surf_offsets =
+      &stage_state->surf_offset[prog_data->binding_table.abo_start];
+
+   for (int i = 0; i < prog->NumAtomicBuffers; i++) {
+      struct gl_atomic_buffer_binding *binding =
+         &ctx->AtomicBufferBindings[prog->AtomicBuffers[i].Binding];
+      struct intel_buffer_object *intel_bo =
+         intel_buffer_object(binding->BufferObject);
+      drm_intel_bo *bo = intel_bufferobj_buffer(
+         brw, intel_bo, binding->Offset, bo->size - binding->Offset);
+
+      brw->vtbl.create_raw_surface(brw, bo, binding->Offset,
+                                   bo->size - binding->Offset,
+                                   &surf_offsets[i], true);
+   }
+
+   if (prog->NumUniformBlocks)
+      brw->state.dirty.brw |= BRW_NEW_SURFACES;
+}
+
+static void
+brw_upload_wm_abo_surfaces(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->ctx;
+   /* _NEW_PROGRAM */
+   struct gl_shader_program *prog = ctx->Shader._CurrentFragmentProgram;
+
+   if (prog) {
+      /* CACHE_NEW_WM_PROG */
+      brw_upload_abo_surfaces(brw, prog, &brw->wm.base,
+                              &brw->wm.prog_data->base);
+   }
+}
+
+const struct brw_tracked_state brw_wm_abo_surfaces = {
+   .dirty = {
+      .mesa = _NEW_PROGRAM,
+      .brw = BRW_NEW_BATCH | BRW_NEW_ATOMIC_BUFFER,
+      .cache = CACHE_NEW_WM_PROG,
+   },
+   .emit = brw_upload_wm_abo_surfaces,
+};
+
+void
 gen4_init_vtable_surface_functions(struct brw_context *brw)
 {
    brw->vtbl.update_texture_surface = brw_update_texture_surface;
