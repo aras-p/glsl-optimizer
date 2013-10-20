@@ -209,8 +209,6 @@ void gen7_set_surface_mcs_info(struct brw_context *brw,
                                bool is_render_target);
 void gen7_check_surface_setup(uint32_t *surf, bool is_render_target);
 void gen7_init_vtable_surface_functions(struct brw_context *brw);
-void gen7_create_shader_time_surface(struct brw_context *brw,
-                                     uint32_t *out_offset);
 
 /* gen7_sol_state.c */
 void gen7_upload_3dstate_so_decl_list(struct brw_context *brw,

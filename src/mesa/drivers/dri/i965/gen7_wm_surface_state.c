@@ -442,23 +442,6 @@ gen7_create_raw_surface(struct brw_context *brw, drm_intel_bo *bo,
                                   true /* rw */);
 }
 
-/**
- * Create a surface for shader time.
- */
-void
-gen7_create_shader_time_surface(struct brw_context *brw, uint32_t *out_offset)
-{
-   gen7_emit_buffer_surface_state(brw,
-                                  out_offset,
-                                  brw->shader_time.bo,
-                                  0,
-                                  BRW_SURFACEFORMAT_RAW,
-                                  brw->shader_time.bo->size,
-                                  1,
-                                  0 /* mocs */,
-                                  true /* rw */);
-}
-
 static void
 gen7_update_null_renderbuffer_surface(struct brw_context *brw, unsigned unit)
 {
