@@ -71,7 +71,7 @@ Base vertex offset(GL_ARB_draw_elements_base_vertex)  DONE (i965, r300, r600, sw
 Frag shader coord (GL_ARB_fragment_coord_conventions) DONE (i965, r300, r600, swrast)
 Provoking vertex (GL_ARB_provoking_vertex)            DONE (i965, r300, r600, swrast)
 Seamless cubemaps (GL_ARB_seamless_cube_map)          DONE (i965, r600)
-Multisample textures (GL_ARB_texture_multisample)     DONE (i965)
+Multisample textures (GL_ARB_texture_multisample)     DONE (i965, r600)
 Frag depth clamp (GL_ARB_depth_clamp)                 DONE (i965, r600, swrast)
 Fence objects (GL_ARB_sync)                           DONE (i965, r300, r600, swrast)
 GLX_ARB_create_context_profile                        DONE
