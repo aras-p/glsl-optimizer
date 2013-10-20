@@ -507,7 +507,7 @@ def generate(env):
     if env['platform'] in ('linux',):
         libs += ['rt']
     if env['platform'] in ('haiku'):
-        libs += ['root', 'be', 'network']
+        libs += ['root', 'be', 'network', 'translation']
     env.Append(LIBS = libs)
 
     # OpenMP
