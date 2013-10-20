@@ -54,6 +54,8 @@ is_expression(const fs_inst *const inst)
    case BRW_OPCODE_SHR:
    case BRW_OPCODE_SHL:
    case BRW_OPCODE_ASR:
+   case BRW_OPCODE_CMP:
+   case BRW_OPCODE_CMPN:
    case BRW_OPCODE_ADD:
    case BRW_OPCODE_MUL:
    case BRW_OPCODE_FRC:
@@ -102,6 +104,18 @@ operands_match(enum opcode op, fs_reg *xs, fs_reg *ys)
    }
 }
 
+static bool
+instructions_match(fs_inst *a, fs_inst *b)
+{
+   return a->opcode == b->opcode &&
+          a->saturate == b->saturate &&
+          a->predicate == b->predicate &&
+          a->predicate_inverse == b->predicate_inverse &&
+          a->conditional_mod == b->conditional_mod &&
+          a->dst.type == b->dst.type &&
+          operands_match(a->opcode, a->src, b->src);
+}
+
 bool
 fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 {
@@ -115,11 +129,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	inst = (fs_inst *) inst->next) {
 
       /* Skip some cases. */
-      if (is_expression(inst) &&
-          !inst->predicate &&
-          !inst->is_partial_write() &&
-          !inst->conditional_mod &&
-          inst->dst.file != HW_REG)
+      if (is_expression(inst) && !inst->is_partial_write())
       {
 	 bool found = false;
 
@@ -128,11 +138,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	    entry = (aeb_entry *) entry_node;
 
 	    /* Match current instruction's expression against those in AEB. */
-	    if (inst->opcode == entry->generator->opcode &&
-		inst->saturate == entry->generator->saturate &&
-                inst->dst.type == entry->generator->dst.type &&
-                operands_match(inst->opcode, entry->generator->src, inst->src)) {
-
+	    if (instructions_match(inst, entry->generator)) {
 	       found = true;
 	       progress = true;
 	       break;
@@ -207,6 +213,19 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 
       foreach_list_safe(entry_node, aeb) {
 	 aeb_entry *entry = (aeb_entry *)entry_node;
+
+         /* Kill all AEB entries that write a different value to or read from
+          * the flag register if we just wrote it.
+          */
+         if (inst->writes_flag()) {
+            if (entry->generator->reads_flag() ||
+                (entry->generator->writes_flag() &&
+                 !instructions_match(inst, entry->generator))) {
+               entry->remove();
+               ralloc_free(entry);
+               continue;
+            }
+         }
 
 	 for (int i = 0; i < 3; i++) {
             fs_reg *src_reg = &entry->generator->src[i];
