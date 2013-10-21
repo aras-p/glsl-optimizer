@@ -415,9 +415,22 @@ static void llvm_emit_tex(
 		case TGSI_OPCODE_TXQ: {
 			struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
 			ctx->uses_tex_buffers = true;
-			LLVMValueRef offset = lp_build_const_int32(bld_base->base.gallivm, 0);
+			bool isEgPlus = (ctx->chip_class >= EVERGREEN);
+			LLVMValueRef offset = lp_build_const_int32(bld_base->base.gallivm,
+				isEgPlus ? 0 : 1);
 			LLVMValueRef cvecval = llvm_load_const_buffer(bld_base, offset,
 				LLVM_R600_BUFFER_INFO_CONST_BUFFER);
+			if (!isEgPlus) {
+				LLVMValueRef maskval[4] = {
+					lp_build_const_int32(gallivm, 1),
+					lp_build_const_int32(gallivm, 2),
+					lp_build_const_int32(gallivm, 3),
+					lp_build_const_int32(gallivm, 0),
+				};
+				LLVMValueRef mask = LLVMConstVector(maskval, 4);
+				cvecval = LLVMBuildShuffleVector(gallivm->builder, cvecval, cvecval,
+					mask, "");
+			}
 			emit_data->output[0] = cvecval;
 			return;
 		}
