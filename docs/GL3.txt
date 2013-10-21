@@ -173,7 +173,7 @@ ARB_clear_texture                                    not started
 ARB_enhanced_layouts                                 not started
 ARB_multi_bind                                       not started
 ARB_query_buffer_object                              not started
-ARB_texture_mirror_clamp_to_edge                     not started
+ARB_texture_mirror_clamp_to_edge                     DONE (i965, nv30, nv50, nvc0, r300, r600, radeonsi, swrast)
 ARB_texture_stencil8                                 not started
 ARB_vertex_type_10f_11f_11f_rev                      not started
 
