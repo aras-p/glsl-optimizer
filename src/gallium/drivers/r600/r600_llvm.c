@@ -427,6 +427,35 @@ static void llvm_emit_tex(
 			emit_data->output[0] = build_intrinsic(gallivm->builder,
 							"llvm.R600.load.texbuf",
 							emit_data->dst_type, args, 2, LLVMReadNoneAttribute);
+			if (ctx->chip_class >= EVERGREEN)
+				return;
+			ctx->uses_tex_buffers = true;
+			LLVMDumpValue(emit_data->output[0]);
+			emit_data->output[0] = LLVMBuildBitCast(gallivm->builder,
+				emit_data->output[0], LLVMVectorType(bld_base->base.int_elem_type, 4),
+				"");
+			LLVMValueRef Mask = llvm_load_const_buffer(bld_base,
+				lp_build_const_int32(gallivm, 0),
+				LLVM_R600_BUFFER_INFO_CONST_BUFFER);
+			Mask = LLVMBuildBitCast(gallivm->builder, Mask,
+				LLVMVectorType(bld_base->base.int_elem_type, 4), "");
+			emit_data->output[0] = lp_build_emit_llvm_binary(bld_base, TGSI_OPCODE_AND,
+				emit_data->output[0],
+				Mask);
+			LLVMValueRef WComponent = LLVMBuildExtractElement(gallivm->builder,
+				emit_data->output[0], lp_build_const_int32(gallivm, 3), "");
+			Mask = llvm_load_const_buffer(bld_base, lp_build_const_int32(gallivm, 1),
+				LLVM_R600_BUFFER_INFO_CONST_BUFFER);
+			Mask = LLVMBuildExtractElement(gallivm->builder, Mask,
+				lp_build_const_int32(gallivm, 0), "");
+			Mask = LLVMBuildBitCast(gallivm->builder, Mask,
+				bld_base->base.int_elem_type, "");
+			WComponent = lp_build_emit_llvm_binary(bld_base, TGSI_OPCODE_OR,
+				WComponent, Mask);
+			emit_data->output[0] = LLVMBuildInsertElement(gallivm->builder,
+				emit_data->output[0], WComponent, lp_build_const_int32(gallivm, 3), "");
+			emit_data->output[0] = LLVMBuildBitCast(gallivm->builder,
+				emit_data->output[0], LLVMVectorType(bld_base->base.elem_type, 4), "");
 		}
 			return;
 		default:
