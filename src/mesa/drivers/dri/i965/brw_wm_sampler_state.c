@@ -71,6 +71,8 @@ translate_wrap_mode(GLenum wrap, bool using_nearest)
       return BRW_TEXCOORDMODE_CLAMP_BORDER;
    case GL_MIRRORED_REPEAT: 
       return BRW_TEXCOORDMODE_MIRROR;
+   case GL_MIRROR_CLAMP_TO_EDGE:
+      return BRW_TEXCOORDMODE_MIRROR_ONCE;
    default: 
       return BRW_TEXCOORDMODE_WRAP;
    }

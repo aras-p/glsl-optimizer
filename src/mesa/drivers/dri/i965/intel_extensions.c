@@ -75,6 +75,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_texture_env_crossbar = true;
    ctx->Extensions.ARB_texture_env_dot3 = true;
    ctx->Extensions.ARB_texture_float = true;
+   ctx->Extensions.ARB_texture_mirror_clamp_to_edge = true;
    ctx->Extensions.ARB_texture_non_power_of_two = true;
    ctx->Extensions.ARB_texture_rg = true;
    ctx->Extensions.ARB_texture_rgb10_a2ui = true;
