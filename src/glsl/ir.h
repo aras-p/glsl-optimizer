@@ -581,6 +581,24 @@ public:
    unsigned location_frac:2;
 
    /**
+    * Non-zero if this variable was created by lowering a named interface
+    * block which was not an array.
+    *
+    * Note that this variable and \c from_named_ifc_block_array will never
+    * both be non-zero.
+    */
+   unsigned from_named_ifc_block_nonarray:1;
+
+   /**
+    * Non-zero if this variable was created by lowering a named interface
+    * block which was an array.
+    *
+    * Note that this variable and \c from_named_ifc_block_nonarray will never
+    * both be non-zero.
+    */
+   unsigned from_named_ifc_block_array:1;
+
+   /**
     * \brief Layout qualifier for gl_FragDepth.
     *
     * This is not equal to \c ir_depth_layout_none if and only if this

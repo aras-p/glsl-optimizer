@@ -140,6 +140,7 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
                   new(mem_ctx) ir_variable(iface_t->fields.structure[i].type,
                                            var_name,
                                            (ir_variable_mode) var->mode);
+               new_var->from_named_ifc_block_nonarray = 1;
             } else {
                const glsl_type *new_array_type =
                   glsl_type::get_array_instance(
@@ -149,6 +150,7 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
                   new(mem_ctx) ir_variable(new_array_type,
                                            var_name,
                                            (ir_variable_mode) var->mode);
+               new_var->from_named_ifc_block_array = 1;
             }
             new_var->location = iface_t->fields.structure[i].location;
             new_var->explicit_location = (new_var->location >= 0);
