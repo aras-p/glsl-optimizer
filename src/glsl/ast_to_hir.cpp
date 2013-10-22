@@ -2111,7 +2111,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
          _mesa_glsl_error(loc, state,
                           "interpolation qualifier `%s' can only be applied to "
                           "shader inputs or outputs.",
-                          var->interpolation_string());
+                          interpolation_string(var->interpolation));
 
       }
 
@@ -2120,7 +2120,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
          _mesa_glsl_error(loc, state,
                           "interpolation qualifier `%s' cannot be applied to "
                           "vertex shader inputs or fragment shader outputs",
-                          var->interpolation_string());
+                          interpolation_string(var->interpolation));
       }
    }
 

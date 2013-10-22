@@ -1616,9 +1616,9 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 
 
 const char *
-ir_variable::interpolation_string() const
+interpolation_string(unsigned interpolation)
 {
-   switch (this->interpolation) {
+   switch (interpolation) {
    case INTERP_QUALIFIER_NONE:          return "no";
    case INTERP_QUALIFIER_SMOOTH:        return "smooth";
    case INTERP_QUALIFIER_FLAT:          return "flat";

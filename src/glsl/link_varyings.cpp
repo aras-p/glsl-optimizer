@@ -125,9 +125,9 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
                    "interpolation qualifier\n",
                    _mesa_glsl_shader_target_name(producer_type),
                    output->name,
-                   output->interpolation_string(),
+                   interpolation_string(output->interpolation),
                    _mesa_glsl_shader_target_name(consumer_type),
-                   input->interpolation_string());
+                   interpolation_string(input->interpolation));
       return;
    }
 }

@@ -312,6 +312,22 @@ struct ir_state_slot {
    int swizzle;
 };
 
+
+/**
+ * Get the string value for an interpolation qualifier
+ *
+ * \return The string that would be used in a shader to specify \c
+ * mode will be returned.
+ *
+ * This function is used to generate error messages of the form "shader
+ * uses %s interpolation qualifier", so in the case where there is no
+ * interpolation qualifier, it returns "no".
+ *
+ * This function should only be used on a shader input or output variable.
+ */
+const char *interpolation_string(unsigned interpolation);
+
+
 class ir_variable : public ir_instruction {
 public:
    ir_variable(const struct glsl_type *, const char *, ir_variable_mode);
@@ -330,20 +346,6 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
-
-   /**
-    * Get the string value for the interpolation qualifier
-    *
-    * \return The string that would be used in a shader to specify \c
-    * mode will be returned.
-    *
-    * This function is used to generate error messages of the form "shader
-    * uses %s interpolation qualifier", so in the case where there is no
-    * interpolation qualifier, it returns "no".
-    *
-    * This function should only be used on a shader input or output variable.
-    */
-   const char *interpolation_string() const;
 
    /**
     * Determine how this variable should be interpolated based on its
