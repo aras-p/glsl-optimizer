@@ -4424,6 +4424,10 @@ ast_type_specifier::hir(exec_list *instructions,
  * AST for each can be processed the same way into a set of
  * \c glsl_struct_field to describe the members.
  *
+ * If we're processing an interface block, var_mode should be the type of the
+ * interface block (ir_var_shader_in, ir_var_shader_out, or ir_var_uniform).
+ * If we're processing a structure, var_mode should be ir_var_auto.
+ *
  * \return
  * The number of fields processed.  A pointer to the array structure fields is
  * stored in \c *fields_ret.
@@ -4436,7 +4440,8 @@ ast_process_structure_or_interface_block(exec_list *instructions,
 					 glsl_struct_field **fields_ret,
                                          bool is_interface,
                                          bool block_row_major,
-                                         bool allow_reserved_names)
+                                         bool allow_reserved_names,
+                                         ir_variable_mode var_mode)
 {
    unsigned decl_count = 0;
 
@@ -4598,7 +4603,8 @@ ast_struct_specifier::hir(exec_list *instructions,
 					       &fields,
                                                false,
                                                false,
-                                               false /* allow_reserved_names */);
+                                               false /* allow_reserved_names */,
+                                               ir_var_auto);
 
    validate_identifier(this->name, loc, state);
 
@@ -4679,20 +4685,6 @@ ast_interface_block::hir(exec_list *instructions,
       packing = GLSL_INTERFACE_PACKING_STD140;
    }
 
-   bool redeclaring_per_vertex = strcmp(this->block_name, "gl_PerVertex") == 0;
-   bool block_row_major = this->layout.flags.q.row_major;
-   exec_list declared_variables;
-   glsl_struct_field *fields;
-   unsigned int num_variables =
-      ast_process_structure_or_interface_block(&declared_variables,
-                                               state,
-                                               &this->declarations,
-                                               loc,
-                                               &fields,
-                                               true,
-                                               block_row_major,
-                                               redeclaring_per_vertex);
-
    ir_variable_mode var_mode;
    const char *iface_type_name;
    if (this->layout.flags.q.in) {
@@ -4709,6 +4701,21 @@ ast_interface_block::hir(exec_list *instructions,
       iface_type_name = "UNKNOWN";
       assert(!"interface block layout qualifier not found!");
    }
+
+   bool redeclaring_per_vertex = strcmp(this->block_name, "gl_PerVertex") == 0;
+   bool block_row_major = this->layout.flags.q.row_major;
+   exec_list declared_variables;
+   glsl_struct_field *fields;
+   unsigned int num_variables =
+      ast_process_structure_or_interface_block(&declared_variables,
+                                               state,
+                                               &this->declarations,
+                                               loc,
+                                               &fields,
+                                               true,
+                                               block_row_major,
+                                               redeclaring_per_vertex,
+                                               var_mode);
 
    if (!redeclaring_per_vertex)
       validate_identifier(this->block_name, loc, state);
