@@ -152,6 +152,9 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
             }
             new_var->location = iface_t->fields.structure[i].location;
             new_var->explicit_location = (new_var->location >= 0);
+            new_var->interpolation =
+               iface_t->fields.structure[i].interpolation;
+            new_var->centroid = iface_t->fields.structure[i].centroid;
 
             new_var->init_interface_type(iface_t);
             hash_table_insert(interface_namespace, new_var,

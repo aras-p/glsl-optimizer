@@ -590,6 +590,18 @@ struct glsl_struct_field {
     * Ignored for structs.
     */
    int location;
+
+   /**
+    * For interface blocks, the interpolation mode (as in
+    * ir_variable::interpolation).  0 otherwise.
+    */
+   unsigned interpolation:2;
+
+   /**
+    * For interface blocks, 1 if this variable uses centroid interpolation (as
+    * in ir_variable::centroid).  0 otherwise.
+    */
+   unsigned centroid:1;
 };
 
 static inline unsigned int

@@ -4525,6 +4525,9 @@ ast_process_structure_or_interface_block(exec_list *instructions,
          fields[i].type = field_type;
 	 fields[i].name = decl->identifier;
          fields[i].location = -1;
+         fields[i].interpolation =
+            interpret_interpolation_qualifier(qual, var_mode, state, &loc);
+         fields[i].centroid = qual->flags.q.centroid ? 1 : 0;
 
          if (qual->flags.q.row_major || qual->flags.q.column_major) {
             if (!qual->flags.q.uniform) {
@@ -4789,6 +4792,10 @@ ast_interface_block::hir(exec_list *instructions,
          } else {
             fields[i].location =
                earlier_per_vertex->fields.structure[j].location;
+            fields[i].interpolation =
+               earlier_per_vertex->fields.structure[j].interpolation;
+            fields[i].centroid =
+               earlier_per_vertex->fields.structure[j].centroid;
          }
       }
 
@@ -4924,6 +4931,8 @@ ast_interface_block::hir(exec_list *instructions,
             new(state) ir_variable(fields[i].type,
                                    ralloc_strdup(state, fields[i].name),
                                    var_mode);
+         var->interpolation = fields[i].interpolation;
+         var->centroid = fields[i].centroid;
          var->init_interface_type(block_type);
 
          if (redeclaring_per_vertex) {
