@@ -2372,6 +2372,7 @@ layout_defaults:
    | layout_qualifier IN_TOK ';'
    {
       void *ctx = state;
+      $$ = NULL;
       if (state->target != geometry_shader) {
          _mesa_glsl_error(& @1, state,
                           "input layout qualifiers only valid in "
@@ -2380,8 +2381,22 @@ layout_defaults:
          _mesa_glsl_error(& @1, state,
                           "input layout qualifiers must specify a primitive"
                           " type");
+      } else {
+         /* Make sure this is a valid input primitive type. */
+         switch ($1.prim_type) {
+         case GL_POINTS:
+         case GL_LINES:
+         case GL_LINES_ADJACENCY:
+         case GL_TRIANGLES:
+         case GL_TRIANGLES_ADJACENCY:
+            $$ = new(ctx) ast_gs_input_layout(@1, $1.prim_type);
+            break;
+         default:
+            _mesa_glsl_error(&@1, state,
+                             "invalid geometry shader input primitive type");
+            break;
+         }
       }
-      $$ = new(ctx) ast_gs_input_layout(@1, $1.prim_type);
    }
 
    | layout_qualifier OUT_TOK ';'
@@ -2390,8 +2405,22 @@ layout_defaults:
          _mesa_glsl_error(& @1, state,
                           "out layout qualifiers only valid in "
                           "geometry shaders");
-      } else if (!state->out_qualifier->merge_qualifier(& @1, state, $1)) {
-         YYERROR;
+      } else {
+         if ($1.flags.q.prim_type) {
+            /* Make sure this is a valid output primitive type. */
+            switch ($1.prim_type) {
+            case GL_POINTS:
+            case GL_LINE_STRIP:
+            case GL_TRIANGLE_STRIP:
+               break;
+            default:
+               _mesa_glsl_error(&@1, state, "invalid geometry shader output "
+                                "primitive type");
+               break;
+            }
+         }
+         if (!state->out_qualifier->merge_qualifier(& @1, state, $1))
+            YYERROR;
       }
       $$ = NULL;
    }
