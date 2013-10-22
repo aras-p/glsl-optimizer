@@ -208,6 +208,47 @@ util_format_is_supported(enum pipe_format format, unsigned bind)
 }
 
 
+/**
+ * Calculates the MRD for the depth format. MRD is used in depth bias
+ * for UNORM and unbound depth buffers. When the depth buffer is floating
+ * point, the depth bias calculation does not use the MRD. However, the
+ * default MRD will be 1.0 / ((1 << 24) - 1).
+ */
+double
+util_get_depth_format_mrd(enum pipe_format format)
+{
+   struct util_format_description *format_desc;
+   /*
+    * Depth buffer formats without a depth component OR scenarios
+    * without a bound depth buffer default to D24.
+    */
+   double mrd = 1.0 / ((1 << 24) - 1);
+   unsigned depth_channel;
+
+   format_desc = (struct util_format_description *)
+                     util_format_description(format);
+
+   assert(format_desc);
+
+   /*
+    * Some depth formats do not store the depth component in the first
+    * channel, detect the format and adjust the depth channel. Get the
+    * swizzled depth component channel.
+    */
+   depth_channel = format_desc->swizzle[0];
+
+   if (format_desc->channel[depth_channel].type == UTIL_FORMAT_TYPE_UNSIGNED &&
+       format_desc->channel[depth_channel].normalized) {
+      int depth_bits;
+
+      depth_bits = format_desc->channel[depth_channel].size;
+      mrd = 1.0 / ((1ULL << depth_bits) - 1);
+   }
+
+   return mrd;
+}
+
+
 void
 util_format_read_4f(enum pipe_format format,
                     float *dst, unsigned dst_stride,

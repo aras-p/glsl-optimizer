@@ -57,31 +57,24 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
    assert(fb->height <= LP_MAX_HEIGHT);
 
    if (changed) {
-
       util_copy_framebuffer_state(&lp->framebuffer, fb);
 
       if (LP_PERF & PERF_NO_DEPTH) {
 	 pipe_surface_reference(&lp->framebuffer.zsbuf, NULL);
       }
 
-      /* Tell draw module how deep the Z/depth buffer is */
-      /* FIXME: mrd constant isn't right should use a value derived from
-       * current primitive not a constant (for float depth buffers) */
-      if (lp->framebuffer.zsbuf) {
-         int depth_bits;
-         double mrd;
-         depth_bits = util_format_get_component_bits(lp->framebuffer.zsbuf->format,
-                                                     UTIL_FORMAT_COLORSPACE_ZS,
-                                                     0);
-         if (depth_bits > 16) {
-            mrd = 0.0000001;
-         }
-         else {
-            mrd = 0.00002;
-         }
-         lp->mrd = mrd;
-         draw_set_mrd(lp->draw, mrd);
-      }
+      /* Tell draw module how deep the Z/depth buffer is.
+       *
+       * If no depth buffer is bound, send the utility function the default
+       * format for no bound depth (PIPE_FORMAT_NONE).
+       *
+       * FIXME: mrd constant isn't right should use a value derived from
+       * current primitive not a constant (for float depth buffers)
+       */
+      lp->mrd = util_get_depth_format_mrd((lp->framebuffer.zsbuf) ?
+                  lp->framebuffer.zsbuf->format : PIPE_FORMAT_NONE);
+
+      draw_set_mrd(lp->draw, lp->mrd);
 
       lp_setup_bind_framebuffer( lp->setup, &lp->framebuffer );
 
