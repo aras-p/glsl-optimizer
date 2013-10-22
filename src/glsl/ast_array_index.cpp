@@ -143,7 +143,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 	    bound = array->type->vector_elements;
 	 }
       } else {
-	 /* glsl_type::array_size() returns 0 for non-array types.  This means
+	 /* glsl_type::array_size() returns -1 for non-array types.  This means
 	  * that we don't need to verify that the type is an array before
 	  * doing the bounds checking.
 	  */
