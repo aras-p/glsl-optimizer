@@ -111,6 +111,7 @@ ir_vector_reference_visitor::get_variable_entry(ir_variable *var)
    case ir_var_uniform:
    case ir_var_shader_in:
    case ir_var_shader_out:
+   case ir_var_system_value:
    case ir_var_function_in:
    case ir_var_function_out:
    case ir_var_function_inout:
