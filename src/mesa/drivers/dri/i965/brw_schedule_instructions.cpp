@@ -969,7 +969,7 @@ fs_instruction_scheduler::choose_instruction_to_schedule()
          fs_inst *inst = (fs_inst *)n->inst;
 
          chosen = n;
-         if (inst->regs_written <= 1)
+         if (v->brw->gen >= 7 || inst->regs_written <= 1)
             break;
       }
    }
