@@ -30,7 +30,6 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_bitmask.h"
-#include "util/u_upload_mgr.h"
 
 #include "svga_context.h"
 #include "svga_screen.h"
@@ -68,9 +67,6 @@ static void svga_destroy( struct pipe_context *pipe )
    svga->swc->destroy(svga->swc);
    
    svga_destroy_swtnl( svga );
-
-   u_upload_destroy( svga->upload_vb );
-   u_upload_destroy( svga->upload_ib );
 
    util_bitmask_destroy( svga->vs_bm );
    util_bitmask_destroy( svga->fs_bm );
@@ -136,23 +132,7 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    if (svga->vs_bm == NULL)
       goto no_vs_bm;
 
-   svga->upload_ib = u_upload_create( &svga->pipe,
-                                      32 * 1024,
-                                      16,
-                                      PIPE_BIND_INDEX_BUFFER );
-   if (svga->upload_ib == NULL)
-      goto no_upload_ib;
-
-   svga->upload_vb = u_upload_create( &svga->pipe,
-                                      128 * 1024,
-                                      16,
-                                      PIPE_BIND_VERTEX_BUFFER );
-   if (svga->upload_vb == NULL)
-      goto no_upload_vb;
-
-   svga->hwtnl = svga_hwtnl_create( svga,
-                                    svga->upload_ib,
-                                    svga->swc );
+   svga->hwtnl = svga_hwtnl_create(svga);
    if (svga->hwtnl == NULL)
       goto no_hwtnl;
 
@@ -184,10 +164,6 @@ no_state:
 no_swtnl:
    svga_hwtnl_destroy( svga->hwtnl );
 no_hwtnl:
-   u_upload_destroy( svga->upload_vb );
-no_upload_vb:
-   u_upload_destroy( svga->upload_ib );
-no_upload_ib:
    util_bitmask_destroy( svga->vs_bm );
 no_vs_bm:
    util_bitmask_destroy( svga->fs_bm );
@@ -207,14 +183,6 @@ void svga_context_flush( struct svga_context *svga,
    struct pipe_fence_handle *fence = NULL;
 
    svga->curr.nr_fbs = 0;
-
-   /* Flush the upload managers to ensure recycling of upload buffers
-    * without throttling. This should really be conditioned on
-    * pipe_buffer_map_range not supporting PIPE_TRANSFER_UNSYNCHRONIZED.
-    */
-
-   u_upload_flush(svga->upload_vb);
-   u_upload_flush(svga->upload_ib);
 
    /* Ensure that texture dma uploads are processed
     * before submitting commands.

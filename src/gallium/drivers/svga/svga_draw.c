@@ -42,18 +42,16 @@
 #include "svga_cmd.h"
 
 
-struct svga_hwtnl *svga_hwtnl_create( struct svga_context *svga,
-                                      struct u_upload_mgr *upload_ib,
-                                      struct svga_winsys_context *swc )
+struct svga_hwtnl *
+svga_hwtnl_create(struct svga_context *svga)
 {
    struct svga_hwtnl *hwtnl = CALLOC_STRUCT(svga_hwtnl);
    if (hwtnl == NULL)
       goto fail;
 
    hwtnl->svga = svga;
-   hwtnl->upload_ib = upload_ib;
    
-   hwtnl->cmd.swc = swc;
+   hwtnl->cmd.swc = svga->swc;
 
    return hwtnl;
 
@@ -177,10 +175,8 @@ svga_hwtnl_flush( struct svga_hwtnl *hwtnl )
       SVGA3dPrimitiveRange *prim;
       unsigned i;
 
-      /* Unmap upload manager vertex buffers */
-      u_upload_unmap(svga->upload_vb);
-
       for (i = 0; i < hwtnl->cmd.vdecl_count; i++) {
+         assert(!svga_buffer_is_user_buffer(hwtnl->cmd.vdecl_vb[i]));
          handle = svga_buffer_handle(svga, hwtnl->cmd.vdecl_vb[i]);
          if (handle == NULL)
             return PIPE_ERROR_OUT_OF_MEMORY;
@@ -188,11 +184,9 @@ svga_hwtnl_flush( struct svga_hwtnl *hwtnl )
          vb_handle[i] = handle;
       }
 
-      /* Unmap upload manager index buffers */
-      u_upload_unmap(svga->upload_ib);
-
       for (i = 0; i < hwtnl->cmd.prim_count; i++) {
          if (hwtnl->cmd.prim_ib[i]) {
+            assert(!svga_buffer_is_user_buffer(hwtnl->cmd.prim_ib[i]));
             handle = svga_buffer_handle(svga, hwtnl->cmd.prim_ib[i]);
             if (handle == NULL)
                return PIPE_ERROR_OUT_OF_MEMORY;

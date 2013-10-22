@@ -35,11 +35,9 @@ struct svga_winsys_context;
 struct svga_screen;
 struct svga_context;
 struct pipe_resource;
-struct u_upload_mgr;
 
-struct svga_hwtnl *svga_hwtnl_create( struct svga_context *svga,
-                                      struct u_upload_mgr *upload_ib,
-                                      struct svga_winsys_context *swc );
+struct svga_hwtnl *
+svga_hwtnl_create(struct svga_context *svga);
 
 void svga_hwtnl_destroy( struct svga_hwtnl *hwtnl );
 

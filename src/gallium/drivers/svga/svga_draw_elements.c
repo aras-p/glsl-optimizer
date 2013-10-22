@@ -24,7 +24,6 @@
  **********************************************************/
 
 #include "util/u_inlines.h"
-#include "util/u_upload_mgr.h"
 #include "indices/u_indices.h"
 
 #include "svga_cmd.h"
@@ -117,27 +116,11 @@ svga_hwtnl_simple_draw_range_elements( struct svga_hwtnl *hwtnl,
    if (hw_count == 0)
       goto done;
 
-   if (index_buffer &&
-       svga_buffer_is_user_buffer(index_buffer))
-   {
-      assert( index_buffer->width0 >= index_offset + count * index_size );
-
-      ret = u_upload_buffer( hwtnl->upload_ib,
-                             0,
-                             index_offset,
-                             count * index_size,
-                             index_buffer,
-                             &index_offset,
-                             &upload_buffer);
-      if (ret != PIPE_OK)
-         goto done;
-
-      /* Don't need to worry about refcounting index_buffer as this is
-       * just a stack variable without a counted reference of its own.
-       * The caller holds the reference.
-       */
-      index_buffer = upload_buffer;
-   }
+   /* We should never see user-space buffers in the driver.  The vbuf
+    * module should have converted them into real buffers.
+    */
+   if (index_buffer)
+      assert(!svga_buffer_is_user_buffer(index_buffer));
 
    range.primType = hw_prim;
    range.primitiveCount = hw_count;

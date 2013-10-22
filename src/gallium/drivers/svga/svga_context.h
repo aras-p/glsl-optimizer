@@ -53,7 +53,6 @@ struct draw_fragment_shader;
 struct svga_shader_result;
 struct SVGACmdMemory;
 struct util_bitmask;
-struct u_upload_mgr;
 
 
 struct svga_shader
@@ -367,8 +366,6 @@ struct svga_context
       unsigned texture_samplers:1;
    } rebind;
 
-   struct u_upload_mgr *upload_ib;
-   struct u_upload_mgr *upload_vb;
    struct svga_hwtnl *hwtnl;
 
    /** The occlusion query currently in progress */
