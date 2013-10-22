@@ -467,6 +467,14 @@ fs_reg::is_one() const
 }
 
 bool
+fs_reg::is_null() const
+{
+   return file == HW_REG &&
+          fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
+          fixed_hw_reg.nr == BRW_ARF_NULL;
+}
+
+bool
 fs_reg::is_valid_3src() const
 {
    return file == GRF || file == UNIFORM;
