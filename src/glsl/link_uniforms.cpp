@@ -75,7 +75,63 @@ program_resource_visitor::process(ir_variable *var)
     */
 
    /* Only strdup the name if we actually will need to modify it. */
-   if (t->is_record() || (t->is_array() && t->fields.array->is_record())) {
+   if (var->from_named_ifc_block_array) {
+      /* lower_named_interface_blocks created this variable by lowering an
+       * interface block array to an array variable.  For example if the
+       * original source code was:
+       *
+       *     out Blk { vec4 bar } foo[3];
+       *
+       * Then the variable is now:
+       *
+       *     out vec4 bar[3];
+       *
+       * We need to visit each array element using the names constructed like
+       * so:
+       *
+       *     Blk[0].bar
+       *     Blk[1].bar
+       *     Blk[2].bar
+       */
+      assert(t->is_array());
+      const glsl_type *ifc_type = var->get_interface_type();
+      char *name = ralloc_strdup(NULL, ifc_type->name);
+      size_t name_length = strlen(name);
+      for (unsigned i = 0; i < t->length; i++) {
+         size_t new_length = name_length;
+         ralloc_asprintf_rewrite_tail(&name, &new_length, "[%u].%s", i,
+                                      var->name);
+         /* Note: row_major is only meaningful for uniform blocks, and
+          * lowering is only applied to non-uniform interface blocks, so we
+          * can safely pass false for row_major.
+          */
+         recursion(var->type, &name, new_length, false, NULL);
+      }
+      ralloc_free(name);
+   } else if (var->from_named_ifc_block_nonarray) {
+      /* lower_named_interface_blocks created this variable by lowering a
+       * named interface block (non-array) to an ordinary variable.  For
+       * example if the original source code was:
+       *
+       *     out Blk { vec4 bar } foo;
+       *
+       * Then the variable is now:
+       *
+       *     out vec4 bar;
+       *
+       * We need to visit this variable using the name:
+       *
+       *     Blk.bar
+       */
+      const glsl_type *ifc_type = var->get_interface_type();
+      char *name = ralloc_asprintf(NULL, "%s.%s", ifc_type->name, var->name);
+      /* Note: row_major is only meaningful for uniform blocks, and lowering
+       * is only applied to non-uniform interface blocks, so we can safely
+       * pass false for row_major.
+       */
+      recursion(var->type, &name, strlen(name), false, NULL);
+      ralloc_free(name);
+   } else if (t->is_record() || (t->is_array() && t->fields.array->is_record())) {
       char *name = ralloc_strdup(NULL, var->name);
       recursion(var->type, &name, strlen(name), false, NULL);
       ralloc_free(name);
