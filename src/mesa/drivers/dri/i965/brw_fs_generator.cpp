@@ -640,6 +640,30 @@ fs_generator::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src
                          bool negate_value)
 {
    if (c->key.high_quality_derivatives) {
+      /* From the Ivy Bridge PRM, volume 4 part 3, section 3.3.9 (Register
+       * Region Restrictions):
+       *
+       *     In Align16 access mode, SIMD16 is not allowed for DW operations
+       *     and SIMD8 is not allowed for DF operations.
+       *
+       * In this context, "DW operations" means "operations acting on 32-bit
+       * values", so it includes operations on floats.
+       *
+       * Gen4 has a similar restriction.  From the i965 PRM, section 11.5.3
+       * (Instruction Compression -> Rules and Restrictions):
+       *
+       *     A compressed instruction must be in Align1 access mode. Align16
+       *     mode instructions cannot be compressed.
+       *
+       * Similar text exists in the g45 PRM.
+       *
+       * On these platforms, if we're building a SIMD16 shader, we need to
+       * manually unroll to a pair of SIMD8 instructions.
+       */
+      bool unroll_to_simd8 =
+         (dispatch_width == 16 &&
+          (brw->gen == 4 || (brw->gen == 7 && !brw->is_haswell)));
+
       /* produce accurate derivatives */
       struct brw_reg src0 = brw_reg(src.file, src.nr, 0,
                                     BRW_REGISTER_TYPE_F,
@@ -655,20 +679,13 @@ fs_generator::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src
                                     BRW_SWIZZLE_ZWZW, WRITEMASK_XYZW);
       brw_push_insn_state(p);
       brw_set_access_mode(p, BRW_ALIGN_16);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      if (unroll_to_simd8)
+         brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       if (negate_value)
          brw_ADD(p, dst, src1, negate(src0));
       else
          brw_ADD(p, dst, src0, negate(src1));
-      if (dispatch_width == 16) {
-         /* From page 340 of the i965 PRM:
-          *
-          *     "A compressed instruction must be in Align1 access
-          *     mode. Align16 mode instructions cannot be compressed."
-          *
-          * Therefore, when doing a 16-wide dispatch, we need to manually
-          * unroll to two instructions.
-          */
+      if (unroll_to_simd8) {
          brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
          src0 = sechalf(src0);
          src1 = sechalf(src1);
