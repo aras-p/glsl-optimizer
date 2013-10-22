@@ -964,9 +964,7 @@ fs_instruction_scheduler::choose_instruction_to_schedule()
        * but also the MRF setup for the next sampler message, which in turn
        * unblocks the next sampler message).
        */
-      for (schedule_node *node = (schedule_node *)instructions.get_tail();
-           node != instructions.get_head()->prev;
-           node = (schedule_node *)node->prev) {
+      foreach_list(node, &instructions) {
          schedule_node *n = (schedule_node *)node;
          fs_inst *inst = (fs_inst *)n->inst;
 
@@ -1059,7 +1057,7 @@ instruction_scheduler::schedule_instructions(backend_instruction *next_block_hea
        * be scheduled.  Update the children's unblocked time for this
        * DAG edge as we do so.
        */
-      for (int i = 0; i < chosen->child_count; i++) {
+      for (int i = chosen->child_count - 1; i >= 0; i--) {
 	 schedule_node *child = chosen->children[i];
 
 	 child->unblocked_time = MAX2(child->unblocked_time,
@@ -1075,7 +1073,7 @@ instruction_scheduler::schedule_instructions(backend_instruction *next_block_hea
             if (debug) {
                printf("\t\tnow available\n");
             }
-	    instructions.push_tail(child);
+	    instructions.push_head(child);
 	 }
       }
 
