@@ -150,7 +150,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	     * If we don't have a temporary already, make one.
 	     */
 	    bool no_existing_temp = entry->tmp.file == BAD_FILE;
-	    if (no_existing_temp) {
+	    if (no_existing_temp && !entry->generator->dst.is_null()) {
                int written = entry->generator->regs_written;
 
                fs_reg orig_dst = entry->generator->dst;
@@ -171,29 +171,37 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 	    }
 
 	    /* dest <- temp */
-            int written = inst->regs_written;
-            assert(written == entry->generator->regs_written);
-            assert(inst->dst.type == entry->tmp.type);
-            fs_reg dst = inst->dst;
-            fs_reg tmp = entry->tmp;
-            fs_inst *copy = NULL;
-            for (int i = 0; i < written; i++) {
-               copy = MOV(dst, tmp);
-               copy->force_writemask_all = inst->force_writemask_all;
-               inst->insert_before(copy);
+            if (!inst->dst.is_null()) {
+               int written = inst->regs_written;
+               assert(written == entry->generator->regs_written);
+               assert(inst->dst.type == entry->tmp.type);
+               fs_reg dst = inst->dst;
+               fs_reg tmp = entry->tmp;
+               fs_inst *copy = NULL;
+               for (int i = 0; i < written; i++) {
+                  copy = MOV(dst, tmp);
+                  copy->force_writemask_all = inst->force_writemask_all;
+                  inst->insert_before(copy);
 
-               dst.reg_offset++;
-               tmp.reg_offset++;
+                  dst.reg_offset++;
+                  tmp.reg_offset++;
+               }
             }
+
+            /* Set our iterator so that next time through the loop inst->next
+             * will get the instruction in the basic block after the one we've
+             * removed.
+             */
+            fs_inst *prev = (fs_inst *)inst->prev;
+
             inst->remove();
 
 	    /* Appending an instruction may have changed our bblock end. */
 	    if (inst == block->end) {
-	       block->end = copy;
+	       block->end = prev;
 	    }
 
-	    /* Continue iteration with copy->next */
-	    inst = copy;
+            inst = prev;
 	 }
       }
 
