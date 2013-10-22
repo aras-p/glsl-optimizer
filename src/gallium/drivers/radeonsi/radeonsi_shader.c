@@ -885,7 +885,6 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 	LLVMValueRef last_args[9] = { 0 };
 	LLVMValueRef pos_args[4][9] = { { 0 } };
 	unsigned semantic_name;
-	unsigned color_count = 0;
 	unsigned param_count = 0;
 	int depth_index = -1, stencil_index = -1;
 	int i;
@@ -960,15 +959,13 @@ handle_semantic:
 					shader->output[i].param_offset = param_count;
 					param_count++;
 				} else {
-					target = V_008DFC_SQ_EXP_MRT + color_count;
+					target = V_008DFC_SQ_EXP_MRT + shader->output[i].sid;
 					if (si_shader_ctx->shader->key.ps.alpha_to_one) {
 						si_alpha_to_one(bld_base, index);
 					}
-					if (color_count == 0 &&
+					if (shader->output[i].sid == 0 &&
 					    si_shader_ctx->shader->key.ps.alpha_func != PIPE_FUNC_ALWAYS)
 						si_alpha_test(bld_base, index);
-
-					color_count++;
 				}
 				break;
 			case TGSI_SEMANTIC_CLIPDIST:
