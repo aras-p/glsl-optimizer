@@ -20,8 +20,14 @@ extern "C" {
  * - Any state emitted by vtbl->finish_batch():
  *   - Gen4-5 record ending occlusion query values (4 * 4 = 16 bytes)
  *   - Disabling OA counters on Gen6+ (3 DWords = 12 bytes)
+ *   - Ending MI_REPORT_PERF_COUNT on Gen5+, plus associated PIPE_CONTROLs:
+ *     - Two sets of PIPE_CONTROLs, which become 3 PIPE_CONTROLs each on SNB,
+ *       which are 4 DWords each ==> 2 * 3 * 4 * 4 = 96 bytes
+ *     - 3 DWords for MI_REPORT_PERF_COUNT itself on Gen6+.  ==> 12 bytes.
+ *       On Ironlake, it's 6 DWords, but we have some slack due to the lack of
+ *       Sandybridge PIPE_CONTROL madness.
  */
-#define BATCH_RESERVED 36
+#define BATCH_RESERVED 146
 
 struct intel_batchbuffer;
 
