@@ -366,10 +366,10 @@ parse_program_resource_name(const GLchar *name,
 
 
 void
-link_invalidate_variable_locations(gl_shader *sh, int input_base,
+link_invalidate_variable_locations(exec_list *ir, int input_base,
                                    int output_base)
 {
-   foreach_list(node, sh->ir) {
+   foreach_list(node, ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if (var == NULL)
@@ -2217,17 +2217,17 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    /* Mark all generic shader inputs and outputs as unpaired. */
    if (prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL) {
       link_invalidate_variable_locations(
-            prog->_LinkedShaders[MESA_SHADER_VERTEX],
+            prog->_LinkedShaders[MESA_SHADER_VERTEX]->ir,
             VERT_ATTRIB_GENERIC0, VARYING_SLOT_VAR0);
    }
    if (prog->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL) {
       link_invalidate_variable_locations(
-            prog->_LinkedShaders[MESA_SHADER_GEOMETRY],
+            prog->_LinkedShaders[MESA_SHADER_GEOMETRY]->ir,
             VARYING_SLOT_VAR0, VARYING_SLOT_VAR0);
    }
    if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL) {
       link_invalidate_variable_locations(
-            prog->_LinkedShaders[MESA_SHADER_FRAGMENT],
+            prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->ir,
             VARYING_SLOT_VAR0, FRAG_RESULT_DATA0);
    }
 
