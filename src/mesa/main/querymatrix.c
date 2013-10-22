@@ -38,6 +38,7 @@
 #define FLOAT_TO_FIXED(x) ((GLfixed) ((x) * 65536.0))
 
 #if defined(_MSC_VER)
+#if _MSC_VER < 1800  /* Not required on VS2013 and above. */
 /* Oddly, the fpclassify() function doesn't exist in such a form
  * on MSVC.  This is an implementation using slightly different
  * lower-level Windows functions.
@@ -70,6 +71,7 @@ fpclassify(double x)
             return FP_NAN;
     }
 }
+#endif  /* _MSC_VER < 1800 */
 
 #elif defined(__APPLE__) || defined(__CYGWIN__) || defined(__FreeBSD__) || \
      defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || \
