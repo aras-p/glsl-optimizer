@@ -38,7 +38,6 @@
  * performance bottleneck, though.
  */
 
-#include "main/simple_list.h"
 #include "main/imports.h"
 
 #include "brw_context.h"

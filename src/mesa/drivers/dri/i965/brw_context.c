@@ -37,7 +37,6 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/points.h"
-#include "main/simple_list.h"
 #include "main/version.h"
 #include "main/vtxfmt.h"
 
