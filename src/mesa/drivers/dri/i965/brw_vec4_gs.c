@@ -307,6 +307,40 @@ const struct brw_tracked_state brw_gs_prog = {
 
 
 bool
+brw_gs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
+{
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_gs_prog_key key;
+   uint32_t old_prog_offset = brw->gs.base.prog_offset;
+   struct brw_gs_prog_data *old_prog_data = brw->gs.prog_data;
+   bool success;
+
+   if (!prog->_LinkedShaders[MESA_SHADER_GEOMETRY])
+      return true;
+
+   struct gl_geometry_program *gp = (struct gl_geometry_program *)
+      prog->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program;
+   struct brw_geometry_program *bgp = brw_geometry_program(gp);
+
+   memset(&key, 0, sizeof(key));
+
+   brw_vec4_setup_prog_key_for_precompile(ctx, &key.base, bgp->id, &gp->Base);
+
+   /* Assume that the set of varyings coming in from the vertex shader exactly
+    * matches what the geometry shader requires.
+    */
+   key.input_varyings = gp->Base.InputsRead;
+
+   success = do_gs_prog(brw, prog, bgp, &key);
+
+   brw->gs.base.prog_offset = old_prog_offset;
+   brw->gs.prog_data = old_prog_data;
+
+   return success;
+}
+
+
+bool
 brw_gs_prog_data_compare(const void *in_a, const void *in_b)
 {
    const struct brw_gs_prog_data *a = in_a;

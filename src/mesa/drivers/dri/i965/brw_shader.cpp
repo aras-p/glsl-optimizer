@@ -26,6 +26,7 @@ extern "C" {
 #include "brw_context.h"
 }
 #include "brw_vs.h"
+#include "brw_vec4_gs.h"
 #include "brw_fs.h"
 #include "glsl/ir_optimization.h"
 #include "glsl/glsl_parser_extras.h"
@@ -68,6 +69,9 @@ brw_shader_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    struct brw_context *brw = brw_context(ctx);
 
    if (brw->precompile && !brw_fs_precompile(ctx, prog))
+      return false;
+
+   if (brw->precompile && !brw_gs_precompile(ctx, prog))
       return false;
 
    if (brw->precompile && !brw_vs_precompile(ctx, prog))

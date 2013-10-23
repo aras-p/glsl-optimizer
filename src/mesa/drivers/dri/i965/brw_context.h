@@ -1630,6 +1630,12 @@ brw_vertex_program_const(const struct gl_vertex_program *p)
    return (const struct brw_vertex_program *) p;
 }
 
+static INLINE struct brw_geometry_program *
+brw_geometry_program(struct gl_geometry_program *p)
+{
+   return (struct brw_geometry_program *) p;
+}
+
 static INLINE struct brw_fragment_program *
 brw_fragment_program(struct gl_fragment_program *p)
 {
