@@ -1524,12 +1524,6 @@ AC_ARG_WITH([llvm-shared-libs],
         [link with LLVM shared libraries @<:@default=disabled@:>@])],
     [],
     [with_llvm_shared_libs=no])
-AS_IF([test x$enable_opencl = xyes],
-    [
-        if test "x$with_llvm_shared_libs" != xyes; then
-            AC_MSG_ERROR([OpenCL requires LLVM shared libraries])
-        fi
-    ])
 
 AC_ARG_WITH([llvm-prefix],
     [AS_HELP_STRING([--with-llvm-prefix],
