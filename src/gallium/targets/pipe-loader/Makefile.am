@@ -22,6 +22,8 @@
 
 include $(top_srcdir)/src/gallium/Automake.inc
 
+LDFLAGS += -Wl,$(top_srcdir)/src/gallium/targets/pipe-loader/pipe.link
+
 AM_CPPFLAGS = \
 	$(GALLIUM_CFLAGS) \
 	-I$(top_srcdir)/include \

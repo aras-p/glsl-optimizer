@@ -1,0 +1,3 @@
+VERSION {
+	{global: driver_descriptor; local: *;  };
+};
