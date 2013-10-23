@@ -240,9 +240,6 @@ static void si_delete_compute_state(struct pipe_context *ctx, void* state){}
 static void si_set_compute_resources(struct pipe_context * ctx_,
 		unsigned start, unsigned count,
 		struct pipe_surface ** surfaces) { }
-static void si_set_cs_sampler_view(struct pipe_context *ctx_,
-		unsigned start_slot, unsigned count,
-		struct pipe_sampler_view **views) { }
 
 void si_init_compute_functions(struct r600_context *rctx)
 {
@@ -251,7 +248,6 @@ void si_init_compute_functions(struct r600_context *rctx)
 	rctx->b.b.bind_compute_state = radeonsi_bind_compute_state;
 /*	 ctx->context.create_sampler_view = evergreen_compute_create_sampler_view; */
 	rctx->b.b.set_compute_resources = si_set_compute_resources;
-	rctx->b.b.set_compute_sampler_views = si_set_cs_sampler_view;
 	rctx->b.b.set_global_binding = radeonsi_set_global_binding;
 	rctx->b.b.launch_grid = radeonsi_launch_grid;
 }
