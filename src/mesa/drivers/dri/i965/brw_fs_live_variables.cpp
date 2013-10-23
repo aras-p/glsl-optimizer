@@ -246,7 +246,7 @@ fs_live_variables::var_from_reg(fs_reg *reg)
 fs_live_variables::fs_live_variables(fs_visitor *v, cfg_t *cfg)
    : v(v), cfg(cfg)
 {
-   mem_ctx = this;
+   mem_ctx = ralloc_context(NULL);
 
    num_vgrfs = v->virtual_grf_count;
    num_vars = 0;

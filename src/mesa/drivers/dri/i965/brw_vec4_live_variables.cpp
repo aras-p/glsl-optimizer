@@ -156,7 +156,7 @@ vec4_live_variables::compute_live_variables()
 vec4_live_variables::vec4_live_variables(vec4_visitor *v, cfg_t *cfg)
    : v(v), cfg(cfg)
 {
-   mem_ctx = ralloc_context(cfg->mem_ctx);
+   mem_ctx = ralloc_context(NULL);
 
    num_vars = v->virtual_grf_count * 4;
    bd = rzalloc_array(mem_ctx, struct block_data, cfg->num_blocks);

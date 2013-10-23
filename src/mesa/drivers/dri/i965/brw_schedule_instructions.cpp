@@ -347,7 +347,7 @@ public:
    instruction_scheduler(backend_visitor *v, int grf_count, bool post_reg_alloc)
    {
       this->bv = v;
-      this->mem_ctx = ralloc_context(v->mem_ctx);
+      this->mem_ctx = ralloc_context(NULL);
       this->grf_count = grf_count;
       this->instructions.make_empty();
       this->instructions_to_schedule = 0;

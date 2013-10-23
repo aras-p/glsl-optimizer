@@ -80,7 +80,7 @@ cfg_t::cfg_t(void *mem_ctx, exec_list *instructions)
 void
 cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
 {
-   mem_ctx = ralloc_context(parent_mem_ctx);
+   mem_ctx = ralloc_context(NULL);
    block_list.make_empty();
    blocks = NULL;
    num_blocks = 0;
