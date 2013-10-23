@@ -274,6 +274,7 @@ public:
    fs_inst *MAD(fs_reg dst, fs_reg c, fs_reg b, fs_reg a);
    fs_inst *ADDC(fs_reg dst, fs_reg src0, fs_reg src1);
    fs_inst *SUBB(fs_reg dst, fs_reg src0, fs_reg src1);
+   fs_inst *SEL(fs_reg dst, fs_reg src0, fs_reg src1);
 
    int type_size(const struct glsl_type *type);
    fs_inst *get_instruction_generating_reg(fs_inst *start,

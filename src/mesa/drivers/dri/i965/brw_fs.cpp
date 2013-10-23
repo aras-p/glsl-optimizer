@@ -184,6 +184,7 @@ ALU1(CBIT)
 ALU3(MAD)
 ALU2(ADDC)
 ALU2(SUBB)
+ALU2(SEL)
 
 /** Gen4 predicated IF. */
 fs_inst *
