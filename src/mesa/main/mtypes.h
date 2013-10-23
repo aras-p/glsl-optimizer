@@ -2476,6 +2476,12 @@ struct gl_shader_program
    unsigned NumUserUniformStorage;
    struct gl_uniform_storage *UniformStorage;
 
+   /**
+    * Size of the gl_ClipDistance array that is output from the last pipeline
+    * stage before the fragment shader.
+    */
+   unsigned LastClipDistanceArraySize;
+
    struct gl_uniform_block *UniformBlocks;
    unsigned NumUniformBlocks;
 

@@ -2100,6 +2100,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       validate_vertex_shader_executable(prog, sh);
       if (!prog->LinkStatus)
 	 goto done;
+      prog->LastClipDistanceArraySize = prog->Vert.ClipDistanceArraySize;
 
       _mesa_reference_shader(ctx, &prog->_LinkedShaders[MESA_SHADER_VERTEX],
 			     sh);
@@ -2132,6 +2133,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       validate_geometry_shader_executable(prog, sh);
       if (!prog->LinkStatus)
 	 goto done;
+      prog->LastClipDistanceArraySize = prog->Geom.ClipDistanceArraySize;
 
       _mesa_reference_shader(ctx, &prog->_LinkedShaders[MESA_SHADER_GEOMETRY],
 			     sh);

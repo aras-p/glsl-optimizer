@@ -328,7 +328,7 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
       const unsigned vector_elements =
          this->matched_candidate->type->fields.array->vector_elements;
       unsigned actual_array_size = this->is_clip_distance_mesa ?
-         prog->Vert.ClipDistanceArraySize :
+         prog->LastClipDistanceArraySize :
          this->matched_candidate->type->array_size();
 
       if (this->is_subscripted) {
