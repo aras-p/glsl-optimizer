@@ -363,6 +363,7 @@ public:
    bool try_emit_saturate(ir_expression *ir);
    bool try_emit_mad(ir_expression *ir, int mul_arg);
    void try_replace_with_sel();
+   bool opt_peephole_sel();
    void emit_bool_to_cond_code(ir_rvalue *condition);
    void emit_if_gen6(ir_if *ir);
    void emit_unspill(fs_inst *inst, fs_reg reg, uint32_t spill_offset,

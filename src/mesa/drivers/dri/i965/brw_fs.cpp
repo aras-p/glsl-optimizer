@@ -3171,6 +3171,7 @@ fs_visitor::run()
 	 progress = opt_algebraic() || progress;
 	 progress = opt_cse() || progress;
 	 progress = opt_copy_propagate() || progress;
+         progress = opt_peephole_sel() || progress;
 	 progress = dead_code_eliminate() || progress;
 	 progress = dead_code_eliminate_local() || progress;
          progress = dead_control_flow_eliminate(this) || progress;
