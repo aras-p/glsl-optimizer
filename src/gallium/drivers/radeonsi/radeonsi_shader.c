@@ -1076,6 +1076,19 @@ handle_semantic:
 	if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
 		unsigned pos_idx = 0;
 
+		/* We need to add the position output manually if it's missing. */
+		if (!pos_args[0][0]) {
+			pos_args[0][0] = lp_build_const_int32(base->gallivm, 0xf); /* writemask */
+			pos_args[0][1] = uint->zero; /* EXEC mask */
+			pos_args[0][2] = uint->zero; /* last export? */
+			pos_args[0][3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_POS);
+			pos_args[0][4] = uint->zero; /* COMPR flag */
+			pos_args[0][5] = base->zero; /* X */
+			pos_args[0][6] = base->zero; /* Y */
+			pos_args[0][7] = base->zero; /* Z */
+			pos_args[0][8] = base->one;  /* W */
+		}
+
 		for (i = 0; i < 4; i++)
 			if (pos_args[i][0])
 				shader->nr_pos_exports++;
