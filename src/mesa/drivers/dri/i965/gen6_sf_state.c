@@ -80,10 +80,23 @@ get_attr_override(const struct brw_vue_map *vue_map, int urb_entry_read_offset,
        * the vertex shader, so its value is undefined.  Therefore the
        * attribute override we supply doesn't matter.
        *
-       * In either case the attribute override we supply doesn't matter, so
-       * just reference the first available attribute.
+       * (c) This attribute is gl_PrimitiveID, and it wasn't written by the
+       * previous shader stage.
+       *
+       * Note that we don't have to worry about the cases where the attribute
+       * is gl_PointCoord or is undergoing point sprite coordinate
+       * replacement, because in those cases, this function isn't called.
+       *
+       * In case (c), we need to program the attribute overrides so that the
+       * primitive ID will be stored in this slot.  In every other case, the
+       * attribute override we supply doesn't matter.  So just go ahead and
+       * program primitive ID in every case.
        */
-      return 0;
+      return (ATTRIBUTE_0_OVERRIDE_W |
+              ATTRIBUTE_0_OVERRIDE_Z |
+              ATTRIBUTE_0_OVERRIDE_Y |
+              ATTRIBUTE_0_OVERRIDE_X |
+              (ATTRIBUTE_CONST_PRIM_ID << ATTRIBUTE_0_CONST_SOURCE_SHIFT));
    }
 
    /* Compute the location of the attribute relative to urb_entry_read_offset.
@@ -149,13 +162,17 @@ calculate_attr_overrides(const struct brw_context *brw,
 	 continue;
 
       /* _NEW_POINT */
+      bool point_sprite = false;
       if (brw->ctx.Point.PointSprite &&
 	  (attr >= VARYING_SLOT_TEX0 && attr <= VARYING_SLOT_TEX7) &&
 	  brw->ctx.Point.CoordReplace[attr - VARYING_SLOT_TEX0]) {
-	 *point_sprite_enables |= (1 << input_index);
+         point_sprite = true;
       }
 
       if (attr == VARYING_SLOT_PNTC)
+         point_sprite = true;
+
+      if (point_sprite)
 	 *point_sprite_enables |= (1 << input_index);
 
       /* flat shading */
@@ -165,7 +182,7 @@ calculate_attr_overrides(const struct brw_context *brw,
          *flat_enables |= (1 << input_index);
 
       /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_LIGHT | _NEW_PROGRAM */
-      uint16_t attr_override =
+      uint16_t attr_override = point_sprite ? 0 :
          get_attr_override(&brw->vue_map_geom_out,
 			   urb_entry_read_offset, attr,
                            brw->ctx.VertexProgram._TwoSideEnabled,
