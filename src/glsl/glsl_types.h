@@ -468,7 +468,6 @@ struct glsl_type {
 	 : error_type;
    }
 
-
    /**
     * Get the type of a structure field
     *
@@ -478,12 +477,10 @@ struct glsl_type {
     */
    const glsl_type *field_type(const char *name) const;
 
-
    /**
     * Get the location of a filed within a record type
     */
    int field_index(const char *name) const;
-
 
    /**
     * Query the number of elements in an array type
