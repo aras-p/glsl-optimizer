@@ -32,7 +32,10 @@
 #include "ir_visitor.h"
 #include "ir_rvalue_visitor.h"
 #include "ir_optimization.h"
+#include "ir_builder.h"
 #include "glsl_types.h"
+
+using namespace ir_builder;
 
 namespace {
 
@@ -436,6 +439,15 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
 	 this->progress = true;
 	 return new(mem_ctx) ir_constant(ir->type, &data);
+      } else if (op_expr[0] && op_expr[0]->operation == ir_unop_logic_not &&
+                 op_expr[1] && op_expr[1]->operation == ir_unop_logic_not) {
+         /* De Morgan's Law:
+          *    (not A) or (not B) === not (A and B)
+          */
+         temp = logic_not(logic_and(op_expr[0]->operands[0],
+                                    op_expr[1]->operands[0]));
+         this->progress = true;
+         return swizzle_if_required(ir, temp);
       }
       break;
 
