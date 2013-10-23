@@ -401,6 +401,15 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       } else if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1])) {
 	 this->progress = true;
 	 return ir_constant::zero(mem_ctx, ir->type);
+      } else if (op_expr[0] && op_expr[0]->operation == ir_unop_logic_not &&
+                 op_expr[1] && op_expr[1]->operation == ir_unop_logic_not) {
+         /* De Morgan's Law:
+          *    (not A) and (not B) === not (A or B)
+          */
+         temp = logic_not(logic_or(op_expr[0]->operands[0],
+                                   op_expr[1]->operands[0]));
+         this->progress = true;
+         return swizzle_if_required(ir, temp);
       }
       break;
 
