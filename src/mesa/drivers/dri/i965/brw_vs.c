@@ -420,7 +420,8 @@ static void brw_upload_vs_prog(struct brw_context *brw)
     * the inputs it asks for, whether they are varying or not.
     */
    key.base.program_string_id = vp->id;
-   brw_setup_vec4_key_clip_info(brw, &key.base, vp->program.UsesClipDistance);
+   brw_setup_vec4_key_clip_info(brw, &key.base,
+                                vp->program.Base.UsesClipDistanceOut);
 
    /* _NEW_POLYGON */
    if (brw->gen < 6) {

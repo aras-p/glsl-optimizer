@@ -267,7 +267,8 @@ brw_upload_gs_prog(struct brw_context *brw)
    memset(&key, 0, sizeof(key));
 
    key.base.program_string_id = gp->id;
-   brw_setup_vec4_key_clip_info(brw, &key.base, gp->program.UsesClipDistance);
+   brw_setup_vec4_key_clip_info(brw, &key.base,
+                                gp->program.Base.UsesClipDistanceOut);
 
    /* _NEW_LIGHT | _NEW_BUFFERS */
    key.base.clamp_vertex_color = ctx->Light._ClampVertexColor;

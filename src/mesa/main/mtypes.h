@@ -1965,6 +1965,12 @@ struct gl_program
 
    GLboolean UsesGather; /**< Does this program use gather4 at all? */
 
+   /**
+    * For vertex and geometry shaders, true if the program uses the
+    * gl_ClipDistance output.  Ignored for fragment shaders.
+    */
+   GLboolean UsesClipDistanceOut;
+
 
    /** Named parameters, constants, etc. from program text */
    struct gl_program_parameter_list *Parameters;
@@ -2009,7 +2015,6 @@ struct gl_vertex_program
 {
    struct gl_program Base;   /**< base class */
    GLboolean IsPositionInvariant;
-   GLboolean UsesClipDistance;
 };
 
 
@@ -2023,7 +2028,6 @@ struct gl_geometry_program
    GLenum InputType;  /**< GL_POINTS, GL_LINES, GL_LINES_ADJACENCY_ARB,
                            GL_TRIANGLES, or GL_TRIANGLES_ADJACENCY_ARB */
    GLenum OutputType; /**< GL_POINTS, GL_LINE_STRIP or GL_TRIANGLE_STRIP */
-   GLboolean UsesClipDistance;
    GLboolean UsesEndPrimitive;
 };
 

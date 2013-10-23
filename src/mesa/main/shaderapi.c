@@ -1855,10 +1855,8 @@ _mesa_copy_linked_program_data(gl_shader_type type,
                                struct gl_program *dst)
 {
    switch (type) {
-   case MESA_SHADER_VERTEX: {
-      struct gl_vertex_program *dst_vp = (struct gl_vertex_program *) dst;
-      dst_vp->UsesClipDistance = src->Vert.UsesClipDistance;
-   }
+   case MESA_SHADER_VERTEX:
+      dst->UsesClipDistanceOut = src->Vert.UsesClipDistance;
       break;
    case MESA_SHADER_GEOMETRY: {
       struct gl_geometry_program *dst_gp = (struct gl_geometry_program *) dst;
@@ -1866,7 +1864,7 @@ _mesa_copy_linked_program_data(gl_shader_type type,
       dst_gp->VerticesOut = src->Geom.VerticesOut;
       dst_gp->InputType = src->Geom.InputType;
       dst_gp->OutputType = src->Geom.OutputType;
-      dst_gp->UsesClipDistance = src->Geom.UsesClipDistance;
+      dst->UsesClipDistanceOut = src->Geom.UsesClipDistance;
       dst_gp->UsesEndPrimitive = src->Geom.UsesEndPrimitive;
    }
       break;
