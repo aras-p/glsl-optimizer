@@ -2789,7 +2789,7 @@ vec4_visitor::emit_vertex()
    }
 
    /* Lower legacy ff and ClipVertex clipping to clip distances */
-   if (key->userclip_active && !key->uses_clip_distance) {
+   if (key->userclip_active && !prog->UsesClipDistanceOut) {
       current_annotation = "user clip distances";
 
       output_reg[VARYING_SLOT_CLIP_DIST0] = dst_reg(this, glsl_type::vec4_type);

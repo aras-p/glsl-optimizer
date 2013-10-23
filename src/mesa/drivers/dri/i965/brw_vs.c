@@ -370,8 +370,6 @@ brw_vs_debug_recompile(struct brw_context *brw,
                       old_key->base.nr_userclip_plane_consts,
                       key->base.nr_userclip_plane_consts);
 
-   found |= key_debug(brw, "clip distance enable",
-                      old_key->base.uses_clip_distance, key->base.uses_clip_distance);
    found |= key_debug(brw, "copy edgeflag",
                       old_key->copy_edgeflag, key->copy_edgeflag);
    found |= key_debug(brw, "PointCoord replace",
@@ -396,8 +394,7 @@ brw_setup_vec4_key_clip_info(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
 
    key->userclip_active = (ctx->Transform.ClipPlanesEnabled != 0);
-   key->uses_clip_distance = program_uses_clip_distance;
-   if (key->userclip_active && !key->uses_clip_distance) {
+   if (key->userclip_active && !program_uses_clip_distance) {
       key->nr_userclip_plane_consts
          = _mesa_logbase2(ctx->Transform.ClipPlanesEnabled) + 1;
    }

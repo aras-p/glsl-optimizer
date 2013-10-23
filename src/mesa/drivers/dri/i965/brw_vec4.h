@@ -64,12 +64,6 @@ struct brw_vec4_prog_key {
     */
    GLuint nr_userclip_plane_consts:4;
 
-   /**
-    * True if the shader uses gl_ClipDistance, regardless of whether any clip
-    * flags are enabled.
-    */
-   GLuint uses_clip_distance:1;
-
    GLuint clamp_vertex_color:1;
 
    struct brw_sampler_prog_key_data tex;

@@ -1443,7 +1443,7 @@ vec4_visitor::run()
    }
    base_ir = NULL;
 
-   if (key->userclip_active && !key->uses_clip_distance)
+   if (key->userclip_active && !prog->UsesClipDistanceOut)
       setup_uniform_clipplane_values();
 
    emit_thread_end();
