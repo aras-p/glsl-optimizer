@@ -822,6 +822,12 @@ lp_build_masklerp2d(struct lp_build_context *bld,
    return lp_build_lerp(bld, weight1, val0, val1, 0);
 }
 
+/*
+ * this is a bit excessive code for something OpenGL just recommends
+ * but does not require.
+ */
+#define ACCURATE_CUBE_CORNERS 1
+
 /**
  * Generate code to sample a mipmap level with linear filtering.
  * If sampling a cube texture, r = cube face in [0,5].
@@ -840,6 +846,9 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              const LLVMValueRef *offsets,
                              LLVMValueRef colors_out[4])
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
+   struct lp_build_context *ivec_bld = &bld->int_coord_bld;
+   struct lp_build_context *coord_bld = &bld->coord_bld;
    const unsigned dims = bld->dims;
    LLVMValueRef width_vec;
    LLVMValueRef height_vec;
@@ -848,6 +857,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    LLVMValueRef flt_width_vec;
    LLVMValueRef flt_height_vec;
    LLVMValueRef flt_depth_vec;
+   LLVMValueRef fall_off[4], have_corners;
    LLVMValueRef z1 = NULL;
    LLVMValueRef z00 = NULL, z01 = NULL, z10 = NULL, z11 = NULL;
    LLVMValueRef x00 = NULL, x01 = NULL, x10 = NULL, x11 = NULL;
@@ -856,6 +866,11 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    LLVMValueRef xs[4], ys[4], zs[4];
    LLVMValueRef neighbors[2][2][4];
    int chan, texel_index;
+   boolean seamless_cube_filter, accurate_cube_corners;
+
+   seamless_cube_filter = bld->static_texture_state->target == PIPE_TEXTURE_CUBE &&
+                          bld->static_sampler_state->seamless_cube_map;
+   accurate_cube_corners = ACCURATE_CUBE_CORNERS && seamless_cube_filter;
 
    lp_build_extract_image_sizes(bld,
                                 &bld->int_size_bld,
@@ -875,8 +890,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
     * Compute integer texcoords.
     */
 
-   if (bld->static_texture_state->target != PIPE_TEXTURE_CUBE ||
-       !bld->static_sampler_state->seamless_cube_map) {
+   if (!seamless_cube_filter) {
       lp_build_sample_wrap_linear(bld, coords[0], width_vec,
                                   flt_width_vec, offsets[0],
                                   bld->static_texture_state->pot_width,
@@ -918,13 +932,11 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       }
    }
    else {
-      LLVMBuilderRef builder = bld->gallivm->builder;
-      struct lp_build_context *ivec_bld = &bld->int_coord_bld;
-      struct lp_build_context *coord_bld = &bld->coord_bld;
       struct lp_build_if_state edge_if;
+      LLVMTypeRef int1t;
       LLVMValueRef new_faces[4], new_xcoords[4][2], new_ycoords[4][2];
-      LLVMValueRef fall_off[4], coord, have_edge;
-      LLVMValueRef fall_off_ym_notxm, fall_off_ym_notxp;
+      LLVMValueRef coord, have_edge, have_corner;
+      LLVMValueRef fall_off_ym_notxm, fall_off_ym_notxp, fall_off_x, fall_off_y;
       LLVMValueRef fall_off_yp_notxm, fall_off_yp_notxp;
       LLVMValueRef x0, x1, y0, y1, y0_clamped, y1_clamped;
       LLVMValueRef face = coords[2];
@@ -957,11 +969,14 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       fall_off[2] = lp_build_cmp(ivec_bld, PIPE_FUNC_LESS, y0, ivec_bld->zero);
       fall_off[3] = lp_build_cmp(ivec_bld, PIPE_FUNC_GREATER, y1, length_minus_one);
 
-      have_edge = lp_build_or(ivec_bld, fall_off[0], fall_off[1]);
-      have_edge = lp_build_or(ivec_bld, have_edge, fall_off[2]);
-      have_edge = lp_build_or(ivec_bld, have_edge, fall_off[3]);
-
+      fall_off_x = lp_build_or(ivec_bld, fall_off[0], fall_off[1]);
+      fall_off_y = lp_build_or(ivec_bld, fall_off[2], fall_off[3]);
+      have_edge = lp_build_or(ivec_bld, fall_off_x, fall_off_y);
       have_edge = lp_build_any_true_range(ivec_bld, ivec_bld->type.length, have_edge);
+
+      /* needed for accurate corner filtering branch later, rely on 0 init */
+      int1t = LLVMInt1TypeInContext(bld->gallivm->context);
+      have_corners = lp_build_alloca(bld->gallivm, int1t, "have_corner");
 
       for (texel_index = 0; texel_index < 4; texel_index++) {
          xs[texel_index] = lp_build_alloca(bld->gallivm, ivec_bld->vec_type, "xs");
@@ -970,6 +985,10 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       }
 
       lp_build_if(&edge_if, bld->gallivm, have_edge);
+
+      have_corner = lp_build_and(ivec_bld, fall_off_x, fall_off_y);
+      have_corner = lp_build_any_true_range(ivec_bld, ivec_bld->type.length, have_corner);
+      LLVMBuildStore(builder, have_corner, have_corners);
 
       /*
        * Need to feed clamped values here for cheap corner handling,
@@ -1074,7 +1093,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
 
    if (linear_mask) {
       /*
-       * Whack filter weights into place. Whatever pixel had more weight is
+       * Whack filter weights into place. Whatever texel had more weight is
        * the one which should have been selected by nearest filtering hence
        * just use 100% weight for it.
        */
@@ -1135,7 +1154,8 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    }
    else {
       /* 2D/3D texture */
-      LLVMValueRef colors0[4];
+      struct lp_build_if_state corner_if;
+      LLVMValueRef colors0[4], colorss[4];
 
       /* get x0/x1 texels at y1 */
       lp_build_sample_texel_soa(bld,
@@ -1148,6 +1168,110 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                                 x11, y11, z11,
                                 row_stride_vec, img_stride_vec,
                                 data_ptr, mipoffsets, neighbors[1][1]);
+
+      /*
+       * To avoid having to duplicate linear_mask / fetch code use
+       * another branch (with corner condition though edge would work
+       * as well) here.
+       */
+      if (accurate_cube_corners) {
+         LLVMValueRef w00, w01, w10, w11, wx0, wy0;
+         LLVMValueRef c_weight, c00, c01, c10, c11;
+         LLVMValueRef have_corner, one_third, tmp;
+
+         colorss[0] = lp_build_alloca(bld->gallivm, coord_bld->vec_type, "cs");
+         colorss[1] = lp_build_alloca(bld->gallivm, coord_bld->vec_type, "cs");
+         colorss[2] = lp_build_alloca(bld->gallivm, coord_bld->vec_type, "cs");
+         colorss[3] = lp_build_alloca(bld->gallivm, coord_bld->vec_type, "cs");
+
+         have_corner = LLVMBuildLoad(builder, have_corners, "");
+
+         lp_build_if(&corner_if, bld->gallivm, have_corner);
+
+         /*
+          * we can't use standard 2d lerp as we need per-element weight
+          * in case of corners, so just calculate bilinear result as
+          * w00*s00 + w01*s01 + w10*s10 + w11*s11.
+          * (This is actually less work than using 2d lerp, 7 vs. 9 instructions,
+          * however calculating the weights needs another 6, so actually probably
+          * not slower than 2d lerp only for 4 channels as weights only need
+          * to be calculated once - of course fixing the weights has additional cost.)
+          */
+         wx0 = lp_build_sub(coord_bld, coord_bld->one, s_fpart);
+         wy0 = lp_build_sub(coord_bld, coord_bld->one, t_fpart);
+         w00 = lp_build_mul(coord_bld, wx0, wy0);
+         w01 = lp_build_mul(coord_bld, s_fpart, wy0);
+         w10 = lp_build_mul(coord_bld, wx0, t_fpart);
+         w11 = lp_build_mul(coord_bld, s_fpart, t_fpart);
+
+         /* find corner weight */
+         c00 = lp_build_and(ivec_bld, fall_off[0], fall_off[2]);
+         c_weight = lp_build_select(coord_bld, c00, w00, coord_bld->zero);
+         c01 = lp_build_and(ivec_bld, fall_off[1], fall_off[2]);
+         c_weight = lp_build_select(coord_bld, c01, w01, c_weight);
+         c10 = lp_build_and(ivec_bld, fall_off[0], fall_off[3]);
+         c_weight = lp_build_select(coord_bld, c10, w10, c_weight);
+         c11 = lp_build_and(ivec_bld, fall_off[1], fall_off[3]);
+         c_weight = lp_build_select(coord_bld, c11, w11, c_weight);
+
+         /*
+          * add 1/3 of the corner weight to each of the 3 other samples
+          * and null out corner weight
+          */
+         one_third = lp_build_const_vec(bld->gallivm, coord_bld->type, 1.0f/3.0f);
+         c_weight = lp_build_mul(coord_bld, c_weight, one_third);
+         w00 = lp_build_add(coord_bld, w00, c_weight);
+         c00 = LLVMBuildBitCast(builder, c00, coord_bld->vec_type, "");
+         w00 = lp_build_andnot(coord_bld, w00, c00);
+         w01 = lp_build_add(coord_bld, w01, c_weight);
+         c01 = LLVMBuildBitCast(builder, c01, coord_bld->vec_type, "");
+         w01 = lp_build_andnot(coord_bld, w01, c01);
+         w10 = lp_build_add(coord_bld, w10, c_weight);
+         c10 = LLVMBuildBitCast(builder, c10, coord_bld->vec_type, "");
+         w10 = lp_build_andnot(coord_bld, w10, c10);
+         w11 = lp_build_add(coord_bld, w11, c_weight);
+         c11 = LLVMBuildBitCast(builder, c11, coord_bld->vec_type, "");
+         w11 = lp_build_andnot(coord_bld, w11, c11);
+
+         if (bld->static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE) {
+            for (chan = 0; chan < 4; chan++) {
+               colors0[chan] = lp_build_mul(coord_bld, w00, neighbors[0][0][chan]);
+               tmp = lp_build_mul(coord_bld, w01, neighbors[0][1][chan]);
+               colors0[chan] = lp_build_add(coord_bld, tmp, colors0[chan]);
+               tmp = lp_build_mul(coord_bld, w10, neighbors[1][0][chan]);
+               colors0[chan] = lp_build_add(coord_bld, tmp, colors0[chan]);
+               tmp = lp_build_mul(coord_bld, w11, neighbors[1][1][chan]);
+               colors0[chan] = lp_build_add(coord_bld, tmp, colors0[chan]);
+            }
+         }
+         else {
+            LLVMValueRef cmpval00, cmpval01, cmpval10, cmpval11;
+            cmpval00 = lp_build_sample_comparefunc(bld, coords[4], neighbors[0][0][0]);
+            cmpval01 = lp_build_sample_comparefunc(bld, coords[4], neighbors[0][1][0]);
+            cmpval10 = lp_build_sample_comparefunc(bld, coords[4], neighbors[1][0][0]);
+            cmpval11 = lp_build_sample_comparefunc(bld, coords[4], neighbors[1][1][0]);
+            /* inputs to interpolation are just masks so just add masked weights together */
+            cmpval00 = LLVMBuildBitCast(builder, cmpval00, coord_bld->vec_type, "");
+            cmpval01 = LLVMBuildBitCast(builder, cmpval01, coord_bld->vec_type, "");
+            cmpval10 = LLVMBuildBitCast(builder, cmpval10, coord_bld->vec_type, "");
+            cmpval11 = LLVMBuildBitCast(builder, cmpval11, coord_bld->vec_type, "");
+            colors0[0] = lp_build_and(coord_bld, w00, cmpval00);
+            tmp = lp_build_and(coord_bld, w01, cmpval01);
+            colors0[0] = lp_build_add(coord_bld, tmp, colors0[0]);
+            tmp = lp_build_and(coord_bld, w10, cmpval10);
+            colors0[0] = lp_build_add(coord_bld, tmp, colors0[0]);
+            tmp = lp_build_and(coord_bld, w11, cmpval11);
+            colors0[0] = lp_build_add(coord_bld, tmp, colors0[0]);
+            colors0[1] = colors0[2] = colors0[3] = colors0[0];
+         }
+
+         LLVMBuildStore(builder, colors0[0], colorss[0]);
+         LLVMBuildStore(builder, colors0[1], colorss[1]);
+         LLVMBuildStore(builder, colors0[2], colorss[2]);
+         LLVMBuildStore(builder, colors0[3], colorss[3]);
+
+         lp_build_else(&corner_if);
+      }
 
       if (bld->static_sampler_state->compare_mode == PIPE_TEX_COMPARE_NONE) {
          /* Bilinear interpolate the four samples from the 2D image / 3D slice */
@@ -1170,6 +1294,20 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
          colors0[0] = lp_build_masklerp2d(&bld->texel_bld, s_fpart, t_fpart,
                                           cmpval00, cmpval01, cmpval10, cmpval11);
          colors0[1] = colors0[2] = colors0[3] = colors0[0];
+      }
+
+      if (accurate_cube_corners) {
+         LLVMBuildStore(builder, colors0[0], colorss[0]);
+         LLVMBuildStore(builder, colors0[1], colorss[1]);
+         LLVMBuildStore(builder, colors0[2], colorss[2]);
+         LLVMBuildStore(builder, colors0[3], colorss[3]);
+
+         lp_build_endif(&corner_if);
+
+         colors0[0] = LLVMBuildLoad(builder, colorss[0], "");
+         colors0[1] = LLVMBuildLoad(builder, colorss[1], "");
+         colors0[2] = LLVMBuildLoad(builder, colorss[2], "");
+         colors0[3] = LLVMBuildLoad(builder, colorss[3], "");
       }
 
       if (dims == 3) {
