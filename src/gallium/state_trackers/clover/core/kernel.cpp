@@ -81,8 +81,8 @@ kernel::launch(command_queue &q,
                                0, exec.samplers.size(),
                                exec.samplers.data());
 
-   q.pipe->set_compute_sampler_views(q.pipe, 0, exec.sviews.size(),
-                                     exec.sviews.data());
+   q.pipe->set_sampler_views(q.pipe, PIPE_SHADER_COMPUTE, 0,
+                             exec.sviews.size(), exec.sviews.data());
    q.pipe->set_compute_resources(q.pipe, 0, exec.resources.size(),
                                  exec.resources.data());
    q.pipe->set_global_binding(q.pipe, 0, exec.g_buffers.size(),
@@ -96,7 +96,8 @@ kernel::launch(command_queue &q,
 
    q.pipe->set_global_binding(q.pipe, 0, exec.g_buffers.size(), NULL, NULL);
    q.pipe->set_compute_resources(q.pipe, 0, exec.resources.size(), NULL);
-   q.pipe->set_compute_sampler_views(q.pipe, 0, exec.sviews.size(), NULL);
+   q.pipe->set_sampler_views(q.pipe, PIPE_SHADER_COMPUTE, 0,
+                             exec.sviews.size(), NULL);
    q.pipe->bind_sampler_states(q.pipe, PIPE_SHADER_COMPUTE, 0,
                                exec.samplers.size(), NULL);
    exec.unbind();
