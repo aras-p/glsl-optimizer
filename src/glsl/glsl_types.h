@@ -496,6 +496,14 @@ struct glsl_type {
    }
 
    /**
+    * Query whether the array size for all dimensions has been declared.
+    */
+   bool is_unsized_array() const
+   {
+      return is_array() && length == 0;
+   }
+
+   /**
     * Return the number of coordinate components needed for this sampler type.
     *
     * This is based purely on the sampler's dimensionality.  For example, this

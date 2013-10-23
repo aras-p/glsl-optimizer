@@ -689,16 +689,15 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
    if (rhs->type == lhs_type)
       return rhs;
 
-   /* If the array element types are the same and the size of the LHS is zero,
+   /* If the array element types are the same and the LHS is unsized,
     * the assignment is okay for initializers embedded in variable
     * declarations.
     *
     * Note: Whole-array assignments are not permitted in GLSL 1.10, but this
     * is handled by ir_dereference::is_lvalue.
     */
-   if (is_initializer && lhs_type->is_array() && rhs->type->is_array()
-       && (lhs_type->element_type() == rhs->type->element_type())
-       && (lhs_type->array_size() == 0)) {
+   if (is_initializer && lhs_type->is_unsized_array() && rhs->type->is_array()
+       && (lhs_type->element_type() == rhs->type->element_type())) {
       return rhs;
    }
 
@@ -805,7 +804,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
        * dereference of a variable.  Any other case would require that the LHS
        * is either not an l-value or not a whole array.
        */
-      if (lhs->type->array_size() == 0) {
+      if (lhs->type->is_unsized_array()) {
 	 ir_dereference *const d = lhs->as_dereference();
 
 	 assert(d != NULL);
@@ -2407,8 +2406,7 @@ get_variable_being_redeclared(ir_variable *var, YYLTYPE loc,
     *  later re-declare the same name as an array of the same
     *  type and specify a size."
     */
-   if ((earlier->type->array_size() == 0)
-       && var->type->is_array()
+   if (earlier->type->is_unsized_array() && var->type->is_array()
        && (var->type->element_type() == earlier->type->element_type())) {
       /* FINISHME: This doesn't match the qualifiers on the two
        * FINISHME: declarations.  It's not 100% clear whether this is
@@ -2660,7 +2658,7 @@ handle_geometry_shader_input_decl(struct _mesa_glsl_parse_state *state,
       return;
    }
 
-   if (var->type->length == 0) {
+   if (var->type->is_unsized_array()) {
       /* Section 4.3.8.1 (Input Layout Qualifiers) of the GLSL 1.50 spec says:
        *
        *   All geometry shader input unsized array declarations will be
@@ -3309,7 +3307,7 @@ ast_declarator_list::hir(exec_list *instructions,
 	 const glsl_type *const t = (earlier == NULL)
 	    ? var->type : earlier->type;
 
-         if (t->is_array() && t->length == 0)
+         if (t->is_unsized_array())
             /* Section 10.17 of the GLSL ES 1.00 specification states that
              * unsized array declarations have been removed from the language.
              * Arrays that are sized using an initializer are still explicitly
@@ -3442,7 +3440,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
       type = process_array_type(&loc, type, this->array_size, state);
    }
 
-   if (!type->is_error() && type->array_size() == 0) {
+   if (!type->is_error() && type->is_unsized_array()) {
       _mesa_glsl_error(&loc, state, "arrays passed as parameters must have "
 		       "a declared size");
       type = glsl_type::error_type;
@@ -3614,7 +3612,7 @@ ast_function::hir(exec_list *instructions,
     *     "Arrays are allowed as arguments and as the return type. In both
     *     cases, the array must be explicitly sized."
     */
-   if (return_type->is_array() && return_type->length == 0) {
+   if (return_type->is_unsized_array()) {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(& loc, state,
 		       "function `%s' return type array must be explicitly "
@@ -5100,10 +5098,8 @@ ast_gs_input_layout::hir(exec_list *instructions,
       /* Note: gl_PrimitiveIDIn has mode ir_var_shader_in, but it's not an
        * array; skip it.
        */
-      if (!var->type->is_array())
-         continue;
 
-      if (var->type->length == 0) {
+      if (var->type->is_unsized_array()) {
          if (var->max_array_access >= num_vertices) {
             _mesa_glsl_error(&loc, state,
                              "this geometry shader input layout implies %u"

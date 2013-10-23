@@ -132,7 +132,7 @@ ir_array_reference_visitor::get_variable_entry(ir_variable *var)
    /* If the array hasn't been sized yet, we can't split it.  After
     * linking, this should be resolved.
     */
-   if (var->type->is_array() && var->type->length == 0)
+   if (var->type->is_unsized_array())
       return NULL;
 
    foreach_iter(exec_list_iterator, iter, this->variable_list) {

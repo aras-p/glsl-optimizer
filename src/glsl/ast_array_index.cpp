@@ -165,7 +165,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
       if (array->type->is_array())
          update_max_array_access(array, idx, &loc, state);
    } else if (const_index == NULL && array->type->is_array()) {
-      if (array->type->array_size() == 0) {
+      if (array->type->is_unsized_array()) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
       } else if (array->type->fields.array->is_interface()
                  && array->variable_referenced()->mode == ir_var_uniform) {

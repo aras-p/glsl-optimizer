@@ -1108,7 +1108,7 @@ private:
     */
    static void fixup_type(const glsl_type **type, unsigned max_array_access)
    {
-      if ((*type)->is_array() && (*type)->length == 0) {
+      if ((*type)->is_unsized_array()) {
          *type = glsl_type::get_array_instance((*type)->fields.array,
                                                max_array_access + 1);
          assert(*type != NULL);
@@ -1123,7 +1123,7 @@ private:
    {
       for (unsigned i = 0; i < type->length; i++) {
          const glsl_type *elem_type = type->fields.structure[i].type;
-         if (elem_type->is_array() && elem_type->length == 0)
+         if (elem_type->is_unsized_array())
             return true;
       }
       return false;
