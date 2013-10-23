@@ -751,10 +751,6 @@ brwCreateContext(gl_api api,
    _mesa_initialize_dispatch_tables(ctx);
    _mesa_initialize_vbo_vtxfmt(ctx);
 
-   if (ctx->Extensions.AMD_performance_monitor) {
-      brw_init_performance_monitors(brw);
-   }
-
    return true;
 }
 

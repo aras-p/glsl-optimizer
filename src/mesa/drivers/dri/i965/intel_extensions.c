@@ -224,9 +224,6 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_texture_query_levels = ctx->Const.GLSLVersion >= 130;
    }
 
-   if (brw->gen == 5)
-      ctx->Extensions.AMD_performance_monitor = true;
-
    if (brw->gen >= 7) {
       ctx->Extensions.ARB_texture_gather = true;
       ctx->Extensions.ARB_conservative_depth = true;
