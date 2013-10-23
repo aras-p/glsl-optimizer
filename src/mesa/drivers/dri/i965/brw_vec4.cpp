@@ -1592,6 +1592,28 @@ brw_vs_emit(struct brw_context *brw,
 }
 
 
+void
+brw_vec4_setup_prog_key_for_precompile(struct gl_context *ctx,
+                                       struct brw_vec4_prog_key *key,
+                                       GLuint id, struct gl_program *prog)
+{
+   key->program_string_id = id;
+   key->clamp_vertex_color = ctx->API == API_OPENGL_COMPAT;
+
+   unsigned sampler_count = _mesa_fls(prog->SamplersUsed);
+   for (unsigned i = 0; i < sampler_count; i++) {
+      if (prog->ShadowSamplers & (1 << i)) {
+         /* Assume DEPTH_TEXTURE_MODE is the default: X, X, X, 1 */
+         key->tex.swizzles[i] =
+            MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_ONE);
+      } else {
+         /* Color sampler: assume no swizzling. */
+         key->tex.swizzles[i] = SWIZZLE_XYZW;
+      }
+   }
+}
+
+
 bool
 brw_vec4_prog_data_compare(const struct brw_vec4_prog_data *a,
                            const struct brw_vec4_prog_data *b)

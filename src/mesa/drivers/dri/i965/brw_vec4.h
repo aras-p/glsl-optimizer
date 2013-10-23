@@ -74,6 +74,10 @@ struct brw_vec4_prog_key {
 extern "C" {
 #endif
 
+void
+brw_vec4_setup_prog_key_for_precompile(struct gl_context *ctx,
+                                       struct brw_vec4_prog_key *key,
+                                       GLuint id, struct gl_program *prog);
 bool brw_vec4_prog_data_compare(const struct brw_vec4_prog_data *a,
                                 const struct brw_vec4_prog_data *b);
 void brw_vec4_prog_data_free(const struct brw_vec4_prog_data *prog_data);

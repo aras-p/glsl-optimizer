@@ -534,20 +534,7 @@ brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
    memset(&key, 0, sizeof(key));
 
-   key.base.program_string_id = bvp->id;
-   key.base.clamp_vertex_color = ctx->API == API_OPENGL_COMPAT;
-
-   unsigned sampler_count = _mesa_fls(vp->Base.SamplersUsed);
-   for (unsigned i = 0; i < sampler_count; i++) {
-      if (vp->Base.ShadowSamplers & (1 << i)) {
-         /* Assume DEPTH_TEXTURE_MODE is the default: X, X, X, 1 */
-         key.base.tex.swizzles[i] =
-            MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_ONE);
-      } else {
-         /* Color sampler: assume no swizzling. */
-         key.base.tex.swizzles[i] = SWIZZLE_XYZW;
-      }
-   }
+   brw_vec4_setup_prog_key_for_precompile(ctx, &key.base, bvp->id, &vp->Base);
 
    success = do_vs_prog(brw, prog, bvp, &key);
 
