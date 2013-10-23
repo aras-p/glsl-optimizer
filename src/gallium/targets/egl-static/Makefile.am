@@ -30,6 +30,8 @@
 #
 include $(top_srcdir)/src/gallium/Automake.inc
 
+LDFLAGS += -Wl,$(top_srcdir)/src/gallium/targets/egl-static/egl.link
+
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = \
 	$(GALLIUM_CFLAGS) \

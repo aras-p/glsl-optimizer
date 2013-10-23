@@ -1,0 +1,3 @@
+VERSION {
+{ global: _eglMain; local: *; };
+};
