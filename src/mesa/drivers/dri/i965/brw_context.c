@@ -279,9 +279,14 @@ brw_initialize_context_constants(struct brw_context *brw)
       MIN2(ctx->Const.MaxTextureCoordUnits,
            ctx->Const.FragmentProgram.MaxTextureImageUnits);
    ctx->Const.VertexProgram.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
+   if (brw->gen >= 7)
+      ctx->Const.GeometryProgram.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
+   else
+      ctx->Const.GeometryProgram.MaxTextureImageUnits = 0;
    ctx->Const.MaxCombinedTextureImageUnits =
       ctx->Const.VertexProgram.MaxTextureImageUnits +
-      ctx->Const.FragmentProgram.MaxTextureImageUnits;
+      ctx->Const.FragmentProgram.MaxTextureImageUnits +
+      ctx->Const.GeometryProgram.MaxTextureImageUnits;
 
    ctx->Const.MaxTextureLevels = 14; /* 8192 */
    if (ctx->Const.MaxTextureLevels > MAX_TEXTURE_LEVELS)
