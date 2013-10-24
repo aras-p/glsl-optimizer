@@ -383,6 +383,7 @@ struct brw_wm_prog_data {
    GLuint nr_params;       /**< number of float params/constants */
    GLuint nr_pull_params;
    bool dual_src_blend;
+   bool uses_pos_offset;
    uint32_t prog_offset_16;
 
    /**

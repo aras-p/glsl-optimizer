@@ -1145,6 +1145,78 @@ fs_visitor::emit_frontfacing_interpolation(ir_variable *ir)
    return reg;
 }
 
+void
+fs_visitor::compute_sample_position(fs_reg dst, fs_reg int_sample_pos)
+{
+   assert(dst.type == BRW_REGISTER_TYPE_F);
+
+   if (c->key.compute_pos_offset) {
+      /* Convert int_sample_pos to floating point */
+      emit(MOV(dst, int_sample_pos));
+      /* Scale to the range [0, 1] */
+      emit(MUL(dst, dst, fs_reg(1 / 16.0f)));
+   }
+   else {
+      /* From ARB_sample_shading specification:
+       * "When rendering to a non-multisample buffer, or if multisample
+       *  rasterization is disabled, gl_SamplePosition will always be
+       *  (0.5, 0.5).
+       */
+      emit(MOV(dst, fs_reg(0.5f)));
+   }
+}
+
+fs_reg *
+fs_visitor::emit_samplepos_setup(ir_variable *ir)
+{
+   assert(brw->gen >= 6);
+   assert(ir->type == glsl_type::vec2_type);
+
+   this->current_annotation = "compute sample position";
+   fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
+   fs_reg pos = *reg;
+   fs_reg int_sample_x = fs_reg(this, glsl_type::int_type);
+   fs_reg int_sample_y = fs_reg(this, glsl_type::int_type);
+
+   /* WM will be run in MSDISPMODE_PERSAMPLE. So, only one of SIMD8 or SIMD16
+    * mode will be enabled.
+    *
+    * From the Ivy Bridge PRM, volume 2 part 1, page 344:
+    * R31.1:0         Position Offset X/Y for Slot[3:0]
+    * R31.3:2         Position Offset X/Y for Slot[7:4]
+    * .....
+    *
+    * The X, Y sample positions come in as bytes in  thread payload. So, read
+    * the positions using vstride=16, width=8, hstride=2.
+    */
+   struct brw_reg sample_pos_reg =
+      stride(retype(brw_vec1_grf(c->sample_pos_reg, 0),
+                    BRW_REGISTER_TYPE_B), 16, 8, 2);
+
+   emit(MOV(int_sample_x, fs_reg(sample_pos_reg)));
+   if (dispatch_width == 16) {
+      int_sample_x.sechalf = true;
+      fs_inst *inst = emit(MOV(int_sample_x,
+                               fs_reg(suboffset(sample_pos_reg, 16))));
+      inst->force_sechalf = true;
+      int_sample_x.sechalf = false;
+   }
+   /* Compute gl_SamplePosition.x */
+   compute_sample_position(pos, int_sample_x);
+   pos.reg_offset++;
+   emit(MOV(int_sample_y, fs_reg(suboffset(sample_pos_reg, 1))));
+   if (dispatch_width == 16) {
+      int_sample_y.sechalf = true;
+      fs_inst *inst = emit(MOV(int_sample_y,
+                               fs_reg(suboffset(sample_pos_reg, 17))));
+      inst->force_sechalf = true;
+      int_sample_y.sechalf = false;
+   }
+   /* Compute gl_SamplePosition.y */
+   compute_sample_position(pos, int_sample_y);
+   return reg;
+}
+
 fs_reg
 fs_visitor::fix_math_operand(fs_reg src)
 {
@@ -3056,7 +3128,14 @@ fs_visitor::setup_payload_gen6()
          c->nr_payload_regs++;
       }
    }
+
+   c->prog_data.uses_pos_offset = c->key.compute_pos_offset;
    /* R31: MSAA position offsets. */
+   if (c->prog_data.uses_pos_offset) {
+      c->sample_pos_reg = c->nr_payload_regs;
+      c->nr_payload_regs++;
+   }
+
    /* R32-: bary for 32-pixel. */
    /* R58-59: interp W for 32-pixel. */
 

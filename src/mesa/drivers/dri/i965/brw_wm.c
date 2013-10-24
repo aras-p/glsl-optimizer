@@ -37,6 +37,7 @@
 #include "main/fbobject.h"
 #include "main/samplerobj.h"
 #include "program/prog_parameter.h"
+#include "program/program.h"
 
 #include "glsl/ralloc.h"
 
@@ -482,6 +483,11 @@ static void brw_wm_populate_key( struct brw_context *brw,
    /* _NEW_MULTISAMPLE, _NEW_COLOR, _NEW_BUFFERS */
    key->replicate_alpha = ctx->DrawBuffer->_NumColorDrawBuffers > 1 &&
       (ctx->Multisample.SampleAlphaToCoverage || ctx->Color.AlphaEnabled);
+
+   /* _NEW_BUFFERS _NEW_MULTISAMPLE */
+   key->compute_pos_offset =
+      _mesa_get_min_invocations_per_fragment(ctx, &fp->program) > 1 &&
+      fp->program.Base.SystemValuesRead & SYSTEM_BIT_SAMPLE_POS;
 
    /* BRW_NEW_VUE_MAP_GEOM_OUT */
    if (brw->gen < 6 || _mesa_bitcount_64(fp->program.Base.InputsRead &

@@ -125,6 +125,11 @@ fs_visitor::visit(ir_variable *ir)
 
       reg = new(this->mem_ctx) fs_reg(UNIFORM, param_index);
       reg->type = brw_type_for_base_type(ir->type);
+
+   } else if (ir->mode == ir_var_system_value) {
+      if (ir->location == SYSTEM_VALUE_SAMPLE_POS) {
+	 reg = emit_samplepos_setup(ir);
+      }
    }
 
    if (!reg)

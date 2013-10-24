@@ -340,9 +340,11 @@ public:
                          glsl_interp_qualifier interpolation_mode,
                          bool is_centroid);
    fs_reg *emit_frontfacing_interpolation(ir_variable *ir);
+   fs_reg *emit_samplepos_setup(ir_variable *ir);
    fs_reg *emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup_gen4();
    void emit_interpolation_setup_gen6();
+   void compute_sample_position(fs_reg dst, fs_reg int_sample_pos);
    fs_reg rescale_texcoord(ir_texture *ir, fs_reg coordinate,
                            bool is_rect, int sampler, int texunit);
    fs_inst *emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
