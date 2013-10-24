@@ -48,6 +48,10 @@ static void upload_drawing_rect(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
 
+   /* 3DSTATE_DRAWING_RECTANGLE is non-pipelined. */
+   if (brw->gen == 6)
+      intel_emit_post_sync_nonzero_flush(brw);
+
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_DRAWING_RECTANGLE << 16 | (4 - 2));
    OUT_BATCH(0); /* xmin, ymin */
