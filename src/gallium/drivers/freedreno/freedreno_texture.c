@@ -146,7 +146,7 @@ fd_verttex_set_sampler_views(struct pipe_context *pctx, unsigned nr,
 
 static void
 fd_set_sampler_views(struct pipe_context *pctx, unsigned shader,
-                     unsigne start, unsigned nr,
+                     unsigned start, unsigned nr,
                      struct pipe_sampler_view **views)
 {
    assert(start == 0);
