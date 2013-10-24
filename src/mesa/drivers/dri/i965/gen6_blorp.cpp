@@ -957,6 +957,9 @@ void
 gen6_blorp_emit_drawing_rectangle(struct brw_context *brw,
                                   const brw_blorp_params *params)
 {
+   if (brw->gen == 6)
+      intel_emit_post_sync_nonzero_flush(brw);
+
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_DRAWING_RECTANGLE << 16 | (4 - 2));
    OUT_BATCH(0);
