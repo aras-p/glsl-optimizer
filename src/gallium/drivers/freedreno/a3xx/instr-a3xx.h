@@ -232,13 +232,16 @@ typedef union PACKED {
 	/* normal gpr or const src register: */
 	struct PACKED {
 		uint32_t comp  : 2;
-		uint32_t num   : 9;
+		uint32_t num   : 10;
 	};
 	/* for immediate val: */
 	int32_t  iim_val   : 11;
 	/* to make compiler happy: */
 	uint32_t dummy32;
+	uint32_t dummy10   : 10;
 	uint32_t dummy11   : 11;
+	uint32_t dummy12   : 12;
+	uint32_t dummy13   : 13;
 	uint32_t dummy8    : 8;
 } reg_t;
 
@@ -276,12 +279,16 @@ typedef struct PACKED {
 		/* for normal src register: */
 		struct PACKED {
 			uint32_t src : 11;
+			/* at least low bit of pad must be zero or it will
+			 * look like a address relative src
+			 */
 			uint32_t pad : 21;
 		};
 		/* for address relative: */
 		struct PACKED {
 			int32_t  off : 10;
-			uint32_t must_be_3 : 2;
+			uint32_t src_rel_c : 1;
+			uint32_t src_rel : 1;
 			uint32_t unknown : 20;
 		};
 		/* for immediate: */
@@ -294,7 +301,7 @@ typedef struct PACKED {
 	uint32_t repeat     : 3;
 	uint32_t src_r      : 1;
 	uint32_t ss         : 1;
-	uint32_t src_rel    : 1;
+	uint32_t ul         : 1;
 	uint32_t dst_type   : 3;
 	uint32_t dst_rel    : 1;
 	uint32_t src_type   : 3;
@@ -310,19 +317,49 @@ typedef struct PACKED {
 
 typedef struct PACKED {
 	/* dword0: */
-	uint32_t src1     : 11;
-	uint32_t src1_rel : 1;   /* relative address */
-	uint32_t src1_c   : 1;   /* const */
-	uint32_t src1_im  : 1;   /* immediate */
-	uint32_t src1_neg : 1;   /* negate */
-	uint32_t src1_abs : 1;   /* absolute value */
+	union PACKED {
+		struct PACKED {
+			uint32_t src1         : 11;
+			uint32_t must_be_zero1: 2;
+			uint32_t src1_im      : 1;   /* immediate */
+			uint32_t src1_neg     : 1;   /* negate */
+			uint32_t src1_abs     : 1;   /* absolute value */
+		};
+		struct PACKED {
+			uint32_t src1         : 10;
+			uint32_t src1_c       : 1;   /* relative-const */
+			uint32_t src1_rel     : 1;   /* relative address */
+			uint32_t must_be_zero : 1;
+			uint32_t dummy        : 3;
+		} rel1;
+		struct PACKED {
+			uint32_t src1         : 12;
+			uint32_t src1_c       : 1;   /* const */
+			uint32_t dummy        : 3;
+		} c1;
+	};
 
-	uint32_t src2     : 11;
-	uint32_t src2_rel : 1;   /* relative address */
-	uint32_t src2_c   : 1;   /* const */
-	uint32_t src2_im  : 1;   /* immediate */
-	uint32_t src2_neg : 1;   /* negate */
-	uint32_t src2_abs : 1;   /* absolute value */
+	union PACKED {
+		struct PACKED {
+			uint32_t src2         : 11;
+			uint32_t must_be_zero2: 2;
+			uint32_t src2_im      : 1;   /* immediate */
+			uint32_t src2_neg     : 1;   /* negate */
+			uint32_t src2_abs     : 1;   /* absolute value */
+		};
+		struct PACKED {
+			uint32_t src2         : 10;
+			uint32_t src2_c       : 1;   /* relative-const */
+			uint32_t src2_rel     : 1;   /* relative address */
+			uint32_t must_be_zero : 1;
+			uint32_t dummy        : 3;
+		} rel2;
+		struct PACKED {
+			uint32_t src2         : 12;
+			uint32_t src2_c       : 1;   /* const */
+			uint32_t dummy        : 3;
+		} c2;
+	};
 
 	/* dword1: */
 	uint32_t dst      : 8;
@@ -343,18 +380,49 @@ typedef struct PACKED {
 
 typedef struct PACKED {
 	/* dword0: */
-	uint32_t src1     : 11;
-	uint32_t src1_rel : 1;
-	uint32_t src1_c   : 1;
-	uint32_t src2_c   : 1;
-	uint32_t src1_neg : 1;
-	uint32_t src2_r   : 1;
-	uint32_t src3     : 11;
-	uint32_t src3_rel : 1;
-	uint32_t src3_c   : 1;
-	uint32_t src3_r   : 1;
-	uint32_t src2_neg : 1;
-	uint32_t src3_neg : 1;
+	union PACKED {
+		struct PACKED {
+			uint32_t src1         : 11;
+			uint32_t must_be_zero1: 2;
+			uint32_t src2_c       : 1;
+			uint32_t src1_neg     : 1;
+			uint32_t src2_r       : 1;
+		};
+		struct PACKED {
+			uint32_t src1         : 10;
+			uint32_t src1_c       : 1;
+			uint32_t src1_rel     : 1;
+			uint32_t must_be_zero : 1;
+			uint32_t dummy        : 3;
+		} rel1;
+		struct PACKED {
+			uint32_t src1         : 12;
+			uint32_t src1_c       : 1;
+			uint32_t dummy        : 3;
+		} c1;
+	};
+
+	union PACKED {
+		struct PACKED {
+			uint32_t src3         : 11;
+			uint32_t must_be_zero2: 2;
+			uint32_t src3_r       : 1;
+			uint32_t src2_neg     : 1;
+			uint32_t src3_neg     : 1;
+		};
+		struct PACKED {
+			uint32_t src3         : 10;
+			uint32_t src3_c       : 1;
+			uint32_t src3_rel     : 1;
+			uint32_t must_be_zero : 1;
+			uint32_t dummy        : 3;
+		} rel2;
+		struct PACKED {
+			uint32_t src3         : 12;
+			uint32_t src3_c       : 1;
+			uint32_t dummy        : 3;
+		} c2;
+	};
 
 	/* dword1: */
 	uint32_t dst      : 8;
@@ -372,12 +440,27 @@ typedef struct PACKED {
 
 typedef struct PACKED {
 	/* dword0: */
-	uint32_t src      : 11;
-	uint32_t src_rel  : 1;
-	uint32_t src_c    : 1;
-	uint32_t src_im   : 1;
-	uint32_t src_neg  : 1;
-	uint32_t src_abs  : 1;
+	union PACKED {
+		struct PACKED {
+			uint32_t src          : 11;
+			uint32_t must_be_zero1: 2;
+			uint32_t src_im       : 1;   /* immediate */
+			uint32_t src_neg      : 1;   /* negate */
+			uint32_t src_abs      : 1;   /* absolute value */
+		};
+		struct PACKED {
+			uint32_t src          : 10;
+			uint32_t src_c        : 1;   /* relative-const */
+			uint32_t src_rel      : 1;   /* relative address */
+			uint32_t must_be_zero : 1;
+			uint32_t dummy        : 3;
+		} rel;
+		struct PACKED {
+			uint32_t src          : 12;
+			uint32_t src_c        : 1;   /* const */
+			uint32_t dummy        : 3;
+		} c;
+	};
 	uint32_t dummy1   : 16;  /* seem to be ignored */
 
 	/* dword1: */

@@ -111,7 +111,7 @@ static void print_reg(reg_t reg, bool full, bool r, bool c, bool im,
  * write-after-read (output.. but not 100%)..
  */
 
-#define MAX_REG 128
+#define MAX_REG 4096
 
 typedef struct {
 	uint8_t full[MAX_REG/8];
@@ -317,8 +317,7 @@ static void print_instr_cat1(instr_t *instr)
 {
 	instr_cat1_t *cat1 = &instr->cat1;
 
-	// XXX maybe a bug in libllvm disassembler?
-	if (cat1->src_rel)
+	if (cat1->ul)
 		printf("(ul)");
 
 	if (cat1->src_type == cat1->dst_type) {
@@ -355,10 +354,11 @@ static void print_instr_cat1(instr_t *instr)
 		/* I would just use %+d but trying to make it diff'able with
 		 * libllvm-a3xx...
 		 */
+		char type = cat1->src_rel_c ? 'c' : 'r';
 		if (cat1->off < 0)
-			printf("c<a0.x - %d>", -cat1->off);
+			printf("%c<a0.x - %d>", type, -cat1->off);
 		else if (cat1->off > 0)
-			printf("c<a0.x + %d>", cat1->off);
+			printf("%c<a0.x + %d>", type, cat1->off);
 		else
 			printf("c<a0.x>");
 	} else {
@@ -399,9 +399,21 @@ static void print_instr_cat2(instr_t *instr)
 		printf("(ei)");
 	print_reg_dst((reg_t)(cat2->dst), cat2->full ^ cat2->dst_half, false);
 	printf(", ");
-	print_reg_src((reg_t)(cat2->src1), cat2->full, cat2->src1_r,
-			cat2->src1_c, cat2->src1_im, cat2->src1_neg,
-			cat2->src1_abs, cat2->src1_rel);
+
+	if (cat2->c1.src1_c) {
+		print_reg_src((reg_t)(cat2->c1.src1), cat2->full, cat2->src1_r,
+				cat2->c1.src1_c, cat2->src1_im, cat2->src1_neg,
+				cat2->src1_abs, false);
+	} else if (cat2->rel1.src1_rel) {
+		print_reg_src((reg_t)(cat2->rel1.src1), cat2->full, cat2->src1_r,
+				cat2->rel1.src1_c, cat2->src1_im, cat2->src1_neg,
+				cat2->src1_abs, cat2->rel1.src1_rel);
+	} else {
+		print_reg_src((reg_t)(cat2->src1), cat2->full, cat2->src1_r,
+				false, cat2->src1_im, cat2->src1_neg,
+				cat2->src1_abs, false);
+	}
+
 	switch (cat2->opc) {
 	case OPC_ABSNEG_F:
 	case OPC_ABSNEG_S:
@@ -421,9 +433,19 @@ static void print_instr_cat2(instr_t *instr)
 		break;
 	default:
 		printf(", ");
-		print_reg_src((reg_t)(cat2->src2), cat2->full, cat2->src2_r,
-				cat2->src2_c, cat2->src2_im, cat2->src2_neg,
-				cat2->src2_abs, cat2->src2_rel);
+		if (cat2->c2.src2_c) {
+			print_reg_src((reg_t)(cat2->c2.src2), cat2->full, cat2->src2_r,
+					cat2->c2.src2_c, cat2->src2_im, cat2->src2_neg,
+					cat2->src2_abs, false);
+		} else if (cat2->rel2.src2_rel) {
+			print_reg_src((reg_t)(cat2->rel2.src2), cat2->full, cat2->src2_r,
+					cat2->rel2.src2_c, cat2->src2_im, cat2->src2_neg,
+					cat2->src2_abs, cat2->rel2.src2_rel);
+		} else {
+			print_reg_src((reg_t)(cat2->src2), cat2->full, cat2->src2_r,
+					false, cat2->src2_im, cat2->src2_neg,
+					cat2->src2_abs, false);
+		}
 		break;
 	}
 }
@@ -450,17 +472,37 @@ static void print_instr_cat3(instr_t *instr)
 	printf(" ");
 	print_reg_dst((reg_t)(cat3->dst), full ^ cat3->dst_half, false);
 	printf(", ");
-	print_reg_src((reg_t)(cat3->src1), full,
-			cat3->src1_r, cat3->src1_c, false, cat3->src1_neg,
-			false, cat3->src1_rel);
+	if (cat3->c1.src1_c) {
+		print_reg_src((reg_t)(cat3->c1.src1), full,
+				cat3->src1_r, cat3->c1.src1_c, false, cat3->src1_neg,
+				false, false);
+	} else if (cat3->rel1.src1_rel) {
+		print_reg_src((reg_t)(cat3->rel1.src1), full,
+				cat3->src1_r, cat3->rel1.src1_c, false, cat3->src1_neg,
+				false, cat3->rel1.src1_rel);
+	} else {
+		print_reg_src((reg_t)(cat3->src1), full,
+				cat3->src1_r, false, false, cat3->src1_neg,
+				false, false);
+	}
 	printf(", ");
 	print_reg_src((reg_t)cat3->src2, full,
 			cat3->src2_r, cat3->src2_c, false, cat3->src2_neg,
 			false, false);
 	printf(", ");
-	print_reg_src((reg_t)(cat3->src3), full,
-			cat3->src3_r, cat3->src3_c, false, cat3->src3_neg,
-			false, cat3->src3_rel);
+	if (cat3->c2.src3_c) {
+		print_reg_src((reg_t)(cat3->c2.src3), full,
+				cat3->src3_r, cat3->c2.src3_c, false, cat3->src3_neg,
+				false, false);
+	} else if (cat3->rel2.src3_rel) {
+		print_reg_src((reg_t)(cat3->rel2.src3), full,
+				cat3->src3_r, cat3->rel2.src3_c, false, cat3->src3_neg,
+				false, cat3->rel2.src3_rel);
+	} else {
+		print_reg_src((reg_t)(cat3->src3), full,
+				cat3->src3_r, false, false, cat3->src3_neg,
+				false, false);
+	}
 }
 
 static void print_instr_cat4(instr_t *instr)
@@ -470,9 +512,20 @@ static void print_instr_cat4(instr_t *instr)
 	printf(" ");
 	print_reg_dst((reg_t)(cat4->dst), cat4->full ^ cat4->dst_half, false);
 	printf(", ");
-	print_reg_src((reg_t)(cat4->src), cat4->full,
-			cat4->src_r, cat4->src_c, cat4->src_im,
-			cat4->src_neg, cat4->src_abs, cat4->src_rel);
+
+	if (cat4->c.src_c) {
+		print_reg_src((reg_t)(cat4->c.src), cat4->full,
+				cat4->src_r, cat4->c.src_c, cat4->src_im,
+				cat4->src_neg, cat4->src_abs, false);
+	} else if (cat4->rel.src_rel) {
+		print_reg_src((reg_t)(cat4->rel.src), cat4->full,
+				cat4->src_r, cat4->rel.src_c, cat4->src_im,
+				cat4->src_neg, cat4->src_abs, cat4->rel.src_rel);
+	} else {
+		print_reg_src((reg_t)(cat4->src), cat4->full,
+				cat4->src_r, false, cat4->src_im,
+				cat4->src_neg, cat4->src_abs, false);
+	}
 
 	if ((debug & PRINT_VERBOSE) && (cat4->dummy1|cat4->dummy2))
 		printf("\t{4: %x,%x}", cat4->dummy1, cat4->dummy2);
