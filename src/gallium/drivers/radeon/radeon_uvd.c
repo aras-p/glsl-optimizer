@@ -385,6 +385,21 @@ static struct ruvd_h264 get_h264_msg(struct ruvd_decoder *dec, struct pipe_h264_
 	result.sps_info_flags |= pic->frame_mbs_only_flag << 2;
 	result.sps_info_flags |= pic->delta_pic_order_always_zero_flag << 3;
 
+	switch (dec->base.chroma_format) {
+	case PIPE_VIDEO_CHROMA_FORMAT_400:
+		result.chroma_format = 0;
+		break;
+	case PIPE_VIDEO_CHROMA_FORMAT_420:
+		result.chroma_format = 1;
+		break;
+	case PIPE_VIDEO_CHROMA_FORMAT_422:
+		result.chroma_format = 2;
+		break;
+	case PIPE_VIDEO_CHROMA_FORMAT_444:
+		result.chroma_format = 3;
+		break;
+	}
+
 	result.pps_info_flags = 0;
 	result.pps_info_flags |= pic->transform_8x8_mode_flag << 0;
 	result.pps_info_flags |= pic->redundant_pic_cnt_present_flag << 1;
@@ -395,7 +410,6 @@ static struct ruvd_h264 get_h264_msg(struct ruvd_decoder *dec, struct pipe_h264_
 	result.pps_info_flags |= pic->pic_order_present_flag << 7;
 	result.pps_info_flags |= pic->entropy_coding_mode_flag << 8;
 
-	result.chroma_format = 0x1;
 	result.bit_depth_luma_minus8 = 0;
 	result.bit_depth_chroma_minus8 = 0;
 
