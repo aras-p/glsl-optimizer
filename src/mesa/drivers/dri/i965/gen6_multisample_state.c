@@ -83,6 +83,9 @@ gen6_emit_3dstate_multisample(struct brw_context *brw,
       break;
    }
 
+   /* 3DSTATE_MULTISAMPLE is nonpipelined. */
+   intel_emit_post_sync_nonzero_flush(brw);
+
    int len = brw->gen >= 7 ? 4 : 3;
    BEGIN_BATCH(len);
    OUT_BATCH(_3DSTATE_MULTISAMPLE << 16 | (len - 2));
@@ -137,9 +140,6 @@ static void upload_multisample_state(struct brw_context *brw)
          sample_mask = ctx->Multisample.SampleMaskValue;
       }
    }
-
-   /* 3DSTATE_MULTISAMPLE is nonpipelined. */
-   intel_emit_post_sync_nonzero_flush(brw);
 
    gen6_emit_3dstate_multisample(brw, num_samples);
    gen6_emit_3dstate_sample_mask(brw, num_samples, coverage,
