@@ -443,6 +443,7 @@ public:
 
    struct hash_table *variable_ht;
    fs_reg frag_depth;
+   fs_reg sample_mask;
    fs_reg outputs[BRW_MAX_DRAW_BUFFERS];
    unsigned output_components[BRW_MAX_DRAW_BUFFERS];
    fs_reg dual_src_output;
@@ -548,6 +549,10 @@ private:
                                                  struct brw_reg index,
                                                  struct brw_reg offset);
    void generate_mov_dispatch_to_flags(fs_inst *inst);
+
+   void generate_set_omask(fs_inst *inst,
+                           struct brw_reg dst,
+                           struct brw_reg sample_mask);
 
    void generate_set_sample_id(fs_inst *inst,
                                struct brw_reg dst,

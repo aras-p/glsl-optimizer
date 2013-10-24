@@ -82,6 +82,8 @@ fs_visitor::visit(ir_variable *ir)
 	 }
       } else if (ir->location == FRAG_RESULT_DEPTH) {
 	 this->frag_depth = *reg;
+      } else if (ir->location == FRAG_RESULT_SAMPLE_MASK) {
+         this->sample_mask = *reg;
       } else {
 	 /* gl_FragData or a user-defined FS output */
 	 assert(ir->location >= FRAG_RESULT_DATA0 &&
@@ -2524,6 +2526,16 @@ fs_visitor::emit_fb_writes()
       emit(MOV(fs_reg(MRF, nr++),
                fs_reg(brw_vec8_grf(c->aa_dest_stencil_reg, 0))));
       pop_force_uncompressed();
+   }
+
+   c->prog_data.uses_omask =
+      fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_SAMPLE_MASK);
+   if(c->prog_data.uses_omask) {
+      this->current_annotation = "FB write oMask";
+      assert(this->sample_mask.file != BAD_FILE);
+      /* Hand over gl_SampleMask. Only lower 16 bits are relevant. */
+      emit(FS_OPCODE_SET_OMASK, fs_reg(MRF, nr, BRW_REGISTER_TYPE_UW), this->sample_mask);
+      nr += 1;
    }
 
    /* Reserve space for color. It'll be filled in per MRT below. */

@@ -384,6 +384,7 @@ struct brw_wm_prog_data {
    GLuint nr_pull_params;
    bool dual_src_blend;
    bool uses_pos_offset;
+   bool uses_omask;
    uint32_t prog_offset_16;
 
    /**
