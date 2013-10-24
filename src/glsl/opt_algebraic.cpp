@@ -197,7 +197,6 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 {
    ir_constant *op_const[4] = {NULL, NULL, NULL, NULL};
    ir_expression *op_expr[4] = {NULL, NULL, NULL, NULL};
-   ir_expression *temp;
    unsigned int i;
 
    assert(ir->get_num_operands() <= 4);
@@ -220,12 +219,10 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       switch (op_expr[0]->operation) {
       case ir_unop_abs:
       case ir_unop_neg:
-         this->progress = true;
-         temp = new(mem_ctx) ir_expression(ir_unop_abs,
+         return new(mem_ctx) ir_expression(ir_unop_abs,
                                            ir->type,
                                            op_expr[0]->operands[0],
                                            NULL);
-         return swizzle_if_required(ir, temp);
       default:
          break;
       }
@@ -236,8 +233,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 	 break;
 
       if (op_expr[0]->operation == ir_unop_neg) {
-         this->progress = true;
-         return swizzle_if_required(ir, op_expr[0]->operands[0]);
+         return op_expr[0]->operands[0];
       }
       break;
 
@@ -264,7 +260,6 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       }
 
       if (new_op != ir_unop_logic_not) {
-	 this->progress = true;
 	 return new(mem_ctx) ir_expression(new_op,
 					   ir->type,
 					   op_expr[0]->operands[0],
@@ -275,14 +270,10 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    }
 
    case ir_binop_add:
-      if (is_vec_zero(op_const[0])) {
-	 this->progress = true;
-	 return swizzle_if_required(ir, ir->operands[1]);
-      }
-      if (is_vec_zero(op_const[1])) {
-	 this->progress = true;
-	 return swizzle_if_required(ir, ir->operands[0]);
-      }
+      if (is_vec_zero(op_const[0]))
+	 return ir->operands[1];
+      if (is_vec_zero(op_const[1]))
+	 return ir->operands[0];
 
       /* Reassociate addition of constants so that we can do constant
        * folding.
@@ -295,48 +286,35 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
    case ir_binop_sub:
       if (is_vec_zero(op_const[0])) {
-	 this->progress = true;
-	 temp = new(mem_ctx) ir_expression(ir_unop_neg,
+	 return new(mem_ctx) ir_expression(ir_unop_neg,
 					   ir->operands[1]->type,
 					   ir->operands[1],
 					   NULL);
-	 return swizzle_if_required(ir, temp);
       }
-      if (is_vec_zero(op_const[1])) {
-	 this->progress = true;
-	 return swizzle_if_required(ir, ir->operands[0]);
-      }
+      if (is_vec_zero(op_const[1]))
+	 return ir->operands[0];
       break;
 
    case ir_binop_mul:
-      if (is_vec_one(op_const[0])) {
-	 this->progress = true;
-	 return swizzle_if_required(ir, ir->operands[1]);
-      }
-      if (is_vec_one(op_const[1])) {
-	 this->progress = true;
-	 return swizzle_if_required(ir, ir->operands[0]);
-      }
+      if (is_vec_one(op_const[0]))
+	 return ir->operands[1];
+      if (is_vec_one(op_const[1]))
+	 return ir->operands[0];
 
-      if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1])) {
-	 this->progress = true;
+      if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1]))
 	 return ir_constant::zero(ir, ir->type);
-      }
+
       if (is_vec_negative_one(op_const[0])) {
-         this->progress = true;
-         temp = new(mem_ctx) ir_expression(ir_unop_neg,
+         return new(mem_ctx) ir_expression(ir_unop_neg,
                                            ir->operands[1]->type,
                                            ir->operands[1],
                                            NULL);
-         return swizzle_if_required(ir, temp);
       }
       if (is_vec_negative_one(op_const[1])) {
-         this->progress = true;
-         temp = new(mem_ctx) ir_expression(ir_unop_neg,
+         return new(mem_ctx) ir_expression(ir_unop_neg,
                                            ir->operands[0]->type,
                                            ir->operands[0],
                                            NULL);
-         return swizzle_if_required(ir, temp);
       }
 
 
@@ -352,26 +330,20 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
    case ir_binop_div:
       if (is_vec_one(op_const[0]) && ir->type->base_type == GLSL_TYPE_FLOAT) {
-	 this->progress = true;
-	 temp = new(mem_ctx) ir_expression(ir_unop_rcp,
+	 return new(mem_ctx) ir_expression(ir_unop_rcp,
 					   ir->operands[1]->type,
 					   ir->operands[1],
 					   NULL);
-	 return swizzle_if_required(ir, temp);
       }
-      if (is_vec_one(op_const[1])) {
-	 this->progress = true;
-	 return swizzle_if_required(ir, ir->operands[0]);
-      }
+      if (is_vec_one(op_const[1]))
+	 return ir->operands[0];
       break;
 
    case ir_binop_dot:
-      if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1])) {
-	 this->progress = true;
+      if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1]))
 	 return ir_constant::zero(mem_ctx, ir->type);
-      }
+
       if (is_vec_basis(op_const[0])) {
-	 this->progress = true;
 	 unsigned component = 0;
 	 for (unsigned c = 0; c < op_const[0]->type->vector_elements; c++) {
 	    if (op_const[0]->value.f[c] == 1.0)
@@ -380,7 +352,6 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 	 return new(mem_ctx) ir_swizzle(ir->operands[1], component, 0, 0, 0, 1);
       }
       if (is_vec_basis(op_const[1])) {
-	 this->progress = true;
 	 unsigned component = 0;
 	 for (unsigned c = 0; c < op_const[1]->type->vector_elements; c++) {
 	    if (op_const[1]->value.f[c] == 1.0)
@@ -393,40 +364,31 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    case ir_binop_logic_and:
       /* FINISHME: Also simplify (a && a) to (a). */
       if (is_vec_one(op_const[0])) {
-	 this->progress = true;
 	 return ir->operands[1];
       } else if (is_vec_one(op_const[1])) {
-	 this->progress = true;
 	 return ir->operands[0];
       } else if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1])) {
-	 this->progress = true;
 	 return ir_constant::zero(mem_ctx, ir->type);
       } else if (op_expr[0] && op_expr[0]->operation == ir_unop_logic_not &&
                  op_expr[1] && op_expr[1]->operation == ir_unop_logic_not) {
          /* De Morgan's Law:
           *    (not A) and (not B) === not (A or B)
           */
-         temp = logic_not(logic_or(op_expr[0]->operands[0],
+         return logic_not(logic_or(op_expr[0]->operands[0],
                                    op_expr[1]->operands[0]));
-         this->progress = true;
-         return swizzle_if_required(ir, temp);
       }
       break;
 
    case ir_binop_logic_xor:
       /* FINISHME: Also simplify (a ^^ a) to (false). */
       if (is_vec_zero(op_const[0])) {
-	 this->progress = true;
 	 return ir->operands[1];
       } else if (is_vec_zero(op_const[1])) {
-	 this->progress = true;
 	 return ir->operands[0];
       } else if (is_vec_one(op_const[0])) {
-	 this->progress = true;
 	 return new(mem_ctx) ir_expression(ir_unop_logic_not, ir->type,
 					   ir->operands[1], NULL);
       } else if (is_vec_one(op_const[1])) {
-	 this->progress = true;
 	 return new(mem_ctx) ir_expression(ir_unop_logic_not, ir->type,
 					   ir->operands[0], NULL);
       }
@@ -435,10 +397,8 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    case ir_binop_logic_or:
       /* FINISHME: Also simplify (a || a) to (a). */
       if (is_vec_zero(op_const[0])) {
-	 this->progress = true;
 	 return ir->operands[1];
       } else if (is_vec_zero(op_const[1])) {
-	 this->progress = true;
 	 return ir->operands[0];
       } else if (is_vec_one(op_const[0]) || is_vec_one(op_const[1])) {
 	 ir_constant_data data;
@@ -446,25 +406,20 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 	 for (unsigned i = 0; i < 16; i++)
 	    data.b[i] = true;
 
-	 this->progress = true;
 	 return new(mem_ctx) ir_constant(ir->type, &data);
       } else if (op_expr[0] && op_expr[0]->operation == ir_unop_logic_not &&
                  op_expr[1] && op_expr[1]->operation == ir_unop_logic_not) {
          /* De Morgan's Law:
           *    (not A) or (not B) === not (A and B)
           */
-         temp = logic_not(logic_and(op_expr[0]->operands[0],
+         return logic_not(logic_and(op_expr[0]->operands[0],
                                     op_expr[1]->operands[0]));
-         this->progress = true;
-         return swizzle_if_required(ir, temp);
       }
       break;
 
    case ir_unop_rcp:
-      if (op_expr[0] && op_expr[0]->operation == ir_unop_rcp) {
-	 this->progress = true;
+      if (op_expr[0] && op_expr[0]->operation == ir_unop_rcp)
 	 return op_expr[0]->operands[0];
-      }
 
       /* FINISHME: We should do rcp(rsq(x)) -> sqrt(x) for some
        * backends, except that some backends will have done sqrt ->
@@ -473,12 +428,10 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
       /* As far as we know, all backends are OK with rsq. */
       if (op_expr[0] && op_expr[0]->operation == ir_unop_sqrt) {
-	 this->progress = true;
-	 temp = new(mem_ctx) ir_expression(ir_unop_rsq,
+	 return new(mem_ctx) ir_expression(ir_unop_rsq,
 					   op_expr[0]->operands[0]->type,
 					   op_expr[0]->operands[0],
 					   NULL);
-	 return swizzle_if_required(ir, temp);
       }
 
       break;
@@ -486,11 +439,9 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    case ir_triop_lrp:
       /* Operands are (x, y, a). */
       if (is_vec_zero(op_const[2])) {
-         this->progress = true;
-         return swizzle_if_required(ir, ir->operands[0]);
+         return ir->operands[0];
       } else if (is_vec_one(op_const[2])) {
-         this->progress = true;
-         return swizzle_if_required(ir, ir->operands[1]);
+         return ir->operands[1];
       }
       break;
 
@@ -511,7 +462,17 @@ ir_algebraic_visitor::handle_rvalue(ir_rvalue **rvalue)
    if (!expr || expr->operation == ir_quadop_vector)
       return;
 
-   *rvalue = handle_expression(expr);
+   ir_rvalue *new_rvalue = handle_expression(expr);
+   if (new_rvalue == *rvalue)
+      return;
+
+   /* If the expr used to be some vec OP scalar returning a vector, and the
+    * optimization gave us back a scalar, we still need to turn it into a
+    * vector.
+    */
+   *rvalue = swizzle_if_required(expr, new_rvalue);
+
+   this->progress = true;
 }
 
 bool
