@@ -1535,7 +1535,7 @@ _mesa_make_current( struct gl_context *newCtx,
           * information.
           */
 	 if (_mesa_getenv("MESA_INFO")) {
-	    _mesa_print_info();
+	    _mesa_print_info(newCtx);
 	 }
 
 	 newCtx->FirstTimeCurrent = GL_FALSE;

@@ -103,7 +103,7 @@ _mesa_print_state( const char *msg, GLuint state )
 /**
  * Print information about this Mesa version and build options.
  */
-void _mesa_print_info( void )
+void _mesa_print_info( struct gl_context *ctx )
 {
    _mesa_debug(NULL, "Mesa GL_VERSION = %s\n",
 	   (char *) _mesa_GetString(GL_VERSION));
@@ -111,8 +111,12 @@ void _mesa_print_info( void )
 	   (char *) _mesa_GetString(GL_RENDERER));
    _mesa_debug(NULL, "Mesa GL_VENDOR = %s\n",
 	   (char *) _mesa_GetString(GL_VENDOR));
-   _mesa_debug(NULL, "Mesa GL_EXTENSIONS = %s\n",
-	   (char *) _mesa_GetString(GL_EXTENSIONS));
+
+   /* use ctx as GL_EXTENSIONS will not work on 3.0 or higher
+    * core contexts.
+    */
+   _mesa_debug(NULL, "Mesa GL_EXTENSIONS = %s\n", ctx->Extensions.String);
+
 #if defined(THREADS)
    _mesa_debug(NULL, "Mesa thread-safe: YES\n");
 #else
