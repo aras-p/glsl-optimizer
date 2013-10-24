@@ -368,6 +368,7 @@ enum pipe_format {
 
 enum pipe_video_chroma_format
 {
+   PIPE_VIDEO_CHROMA_FORMAT_400,
    PIPE_VIDEO_CHROMA_FORMAT_420,
    PIPE_VIDEO_CHROMA_FORMAT_422,
    PIPE_VIDEO_CHROMA_FORMAT_444
