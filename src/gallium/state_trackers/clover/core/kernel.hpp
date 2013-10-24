@@ -119,7 +119,6 @@ namespace clover {
 
       size_t mem_local() const;
       size_t mem_private() const;
-      size_t max_block_size() const;
 
       const std::string &name() const;
       std::vector<size_t> block_size() const;

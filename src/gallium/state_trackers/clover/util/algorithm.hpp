@@ -56,6 +56,18 @@ namespace clover {
    }
 
    ///
+   /// Return the only element in a range.
+   ///
+   template<typename R>
+   detail::preferred_reference_type<R>
+   unique(R &&r) {
+      if (r.size() != 1)
+         throw std::out_of_range("");
+
+      return r.front();
+   }
+
+   ///
    /// Combine a variable number of ranges element-wise in a single
    /// range of tuples.
    ///

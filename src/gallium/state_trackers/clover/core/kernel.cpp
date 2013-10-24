@@ -120,11 +120,6 @@ kernel::mem_private() const {
    return 0;
 }
 
-size_t
-kernel::max_block_size() const {
-   return std::numeric_limits<std::size_t>::max();
-}
-
 const std::string &
 kernel::name() const {
    return _name;

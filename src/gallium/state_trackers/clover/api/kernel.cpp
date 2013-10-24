@@ -148,15 +148,14 @@ clGetKernelWorkGroupInfo(cl_kernel d_kern, cl_device_id d_dev,
                          size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
    auto &kern = obj(d_kern);
-   auto pdev = pobj(d_dev);
+   auto &dev = (d_dev ? *pobj(d_dev) : unique(kern.prog.devices()));
 
-   if ((!pdev && kern.prog.devices().size() != 1) ||
-       (pdev && !count(*pdev, kern.prog.devices())))
+   if (!count(dev, kern.prog.devices()))
       throw error(CL_INVALID_DEVICE);
 
    switch (param) {
    case CL_KERNEL_WORK_GROUP_SIZE:
-      buf.as_scalar<size_t>() = kern.max_block_size();
+      buf.as_scalar<size_t>() = dev.max_threads_per_block();
       break;
 
    case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
@@ -183,6 +182,9 @@ clGetKernelWorkGroupInfo(cl_kernel d_kern, cl_device_id d_dev,
 
 } catch (error &e) {
    return e.get();
+
+} catch (std::out_of_range &e) {
+   return CL_INVALID_DEVICE;
 }
 
 namespace {
