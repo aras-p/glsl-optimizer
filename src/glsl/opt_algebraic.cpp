@@ -219,10 +219,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       switch (op_expr[0]->operation) {
       case ir_unop_abs:
       case ir_unop_neg:
-         return new(mem_ctx) ir_expression(ir_unop_abs,
-                                           ir->type,
-                                           op_expr[0]->operands[0],
-                                           NULL);
+         return abs(op_expr[0]->operands[0]);
       default:
          break;
       }
@@ -285,12 +282,8 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       break;
 
    case ir_binop_sub:
-      if (is_vec_zero(op_const[0])) {
-	 return new(mem_ctx) ir_expression(ir_unop_neg,
-					   ir->operands[1]->type,
-					   ir->operands[1],
-					   NULL);
-      }
+      if (is_vec_zero(op_const[0]))
+	 return neg(ir->operands[1]);
       if (is_vec_zero(op_const[1]))
 	 return ir->operands[0];
       break;
@@ -304,18 +297,10 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1]))
 	 return ir_constant::zero(ir, ir->type);
 
-      if (is_vec_negative_one(op_const[0])) {
-         return new(mem_ctx) ir_expression(ir_unop_neg,
-                                           ir->operands[1]->type,
-                                           ir->operands[1],
-                                           NULL);
-      }
-      if (is_vec_negative_one(op_const[1])) {
-         return new(mem_ctx) ir_expression(ir_unop_neg,
-                                           ir->operands[0]->type,
-                                           ir->operands[0],
-                                           NULL);
-      }
+      if (is_vec_negative_one(op_const[0]))
+         return neg(ir->operands[1]);
+      if (is_vec_negative_one(op_const[1]))
+         return neg(ir->operands[0]);
 
 
       /* Reassociate multiplication of constants so that we can do
@@ -386,11 +371,9 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       } else if (is_vec_zero(op_const[1])) {
 	 return ir->operands[0];
       } else if (is_vec_one(op_const[0])) {
-	 return new(mem_ctx) ir_expression(ir_unop_logic_not, ir->type,
-					   ir->operands[1], NULL);
+	 return logic_not(ir->operands[1]);
       } else if (is_vec_one(op_const[1])) {
-	 return new(mem_ctx) ir_expression(ir_unop_logic_not, ir->type,
-					   ir->operands[0], NULL);
+	 return logic_not(ir->operands[0]);
       }
       break;
 
@@ -428,10 +411,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
       /* As far as we know, all backends are OK with rsq. */
       if (op_expr[0] && op_expr[0]->operation == ir_unop_sqrt) {
-	 return new(mem_ctx) ir_expression(ir_unop_rsq,
-					   op_expr[0]->operands[0]->type,
-					   op_expr[0]->operands[0],
-					   NULL);
+	 return rsq(op_expr[0]->operands[0]);
       }
 
       break;
