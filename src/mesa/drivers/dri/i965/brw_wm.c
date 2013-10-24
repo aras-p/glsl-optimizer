@@ -367,6 +367,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
    GLuint lookup = 0;
    GLuint line_aa;
    bool program_uses_dfdy = fp->program.UsesDFdy;
+   bool multisample_fbo = ctx->DrawBuffer->Visual.samples > 1;
 
    memset(key, 0, sizeof(*key));
 
@@ -488,6 +489,11 @@ static void brw_wm_populate_key( struct brw_context *brw,
    key->compute_pos_offset =
       _mesa_get_min_invocations_per_fragment(ctx, &fp->program) > 1 &&
       fp->program.Base.SystemValuesRead & SYSTEM_BIT_SAMPLE_POS;
+
+   key->compute_sample_id =
+      multisample_fbo &&
+      ctx->Multisample.Enabled &&
+      (fp->program.Base.SystemValuesRead & SYSTEM_BIT_SAMPLE_ID);
 
    /* BRW_NEW_VUE_MAP_GEOM_OUT */
    if (brw->gen < 6 || _mesa_bitcount_64(fp->program.Base.InputsRead &

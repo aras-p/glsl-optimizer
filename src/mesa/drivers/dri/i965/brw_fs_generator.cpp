@@ -1068,6 +1068,31 @@ fs_generator::generate_set_simd4x2_offset(fs_inst *inst,
    brw_pop_insn_state(p);
 }
 
+/* Sets vstride=1, width=4, hstride=0 of register src1 during
+ * the ADD instruction.
+ */
+void
+fs_generator::generate_set_sample_id(fs_inst *inst,
+                                     struct brw_reg dst,
+                                     struct brw_reg src0,
+                                     struct brw_reg src1)
+{
+   assert(dst.type == BRW_REGISTER_TYPE_D ||
+          dst.type == BRW_REGISTER_TYPE_UD);
+   assert(src0.type == BRW_REGISTER_TYPE_D ||
+          src0.type == BRW_REGISTER_TYPE_UD);
+
+   brw_push_insn_state(p);
+   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   struct brw_reg reg = stride(retype(brw_vec1_reg(src1.file, src1.nr, 0),
+                                      BRW_REGISTER_TYPE_UW), 1, 4, 0);
+   brw_ADD(p, dst, src0, reg);
+   if (dispatch_width == 16)
+      brw_ADD(p, offset(dst, 1), offset(src0, 1), suboffset(reg, 2));
+   brw_pop_insn_state(p);
+}
+
 /**
  * Change the register's data type from UD to W, doubling the strides in order
  * to compensate for halving the data type width.
@@ -1639,6 +1664,10 @@ fs_generator::generate_code(exec_list *instructions)
 
       case FS_OPCODE_SET_SIMD4X2_OFFSET:
          generate_set_simd4x2_offset(inst, dst, src[0]);
+         break;
+
+      case FS_OPCODE_SET_SAMPLE_ID:
+         generate_set_sample_id(inst, dst, src[0], src[1]);
          break;
 
       case FS_OPCODE_PACK_HALF_2x16_SPLIT:

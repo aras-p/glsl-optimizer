@@ -341,6 +341,7 @@ public:
                          bool is_centroid);
    fs_reg *emit_frontfacing_interpolation(ir_variable *ir);
    fs_reg *emit_samplepos_setup(ir_variable *ir);
+   fs_reg *emit_sampleid_setup(ir_variable *ir);
    fs_reg *emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup_gen4();
    void emit_interpolation_setup_gen6();
@@ -547,6 +548,12 @@ private:
                                                  struct brw_reg index,
                                                  struct brw_reg offset);
    void generate_mov_dispatch_to_flags(fs_inst *inst);
+
+   void generate_set_sample_id(fs_inst *inst,
+                               struct brw_reg dst,
+                               struct brw_reg src0,
+                               struct brw_reg src1);
+
    void generate_set_simd4x2_offset(fs_inst *inst,
                                     struct brw_reg dst,
                                     struct brw_reg offset);

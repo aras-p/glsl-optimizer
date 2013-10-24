@@ -1217,6 +1217,54 @@ fs_visitor::emit_samplepos_setup(ir_variable *ir)
    return reg;
 }
 
+fs_reg *
+fs_visitor::emit_sampleid_setup(ir_variable *ir)
+{
+   assert(brw->gen >= 6);
+
+   this->current_annotation = "compute sample id";
+   fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
+
+   if (c->key.compute_sample_id) {
+      fs_reg t1 = fs_reg(this, glsl_type::int_type);
+      fs_reg t2 = fs_reg(this, glsl_type::int_type);
+      t2.type = BRW_REGISTER_TYPE_UW;
+
+      /* The PS will be run in MSDISPMODE_PERSAMPLE. For example with
+       * 8x multisampling, subspan 0 will represent sample N (where N
+       * is 0, 2, 4 or 6), subspan 1 will represent sample 1, 3, 5 or
+       * 7. We can find the value of N by looking at R0.0 bits 7:6
+       * ("Starting Sample Pair Index (SSPI)") and multiplying by two
+       * (since samples are always delivered in pairs). That is, we
+       * compute 2*((R0.0 & 0xc0) >> 6) == (R0.0 & 0xc0) >> 5. Then
+       * we need to add N to the sequence (0, 0, 0, 0, 1, 1, 1, 1) in
+       * case of SIMD8 and sequence (0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2,
+       * 2, 3, 3, 3, 3) in case of SIMD16. We compute this sequence by
+       * populating a temporary variable with the sequence (0, 1, 2, 3),
+       * and then reading from it using vstride=1, width=4, hstride=0.
+       * These computations hold good for 4x multisampling as well.
+       */
+      emit(BRW_OPCODE_AND, t1,
+           fs_reg(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_D)),
+           fs_reg(brw_imm_d(0xc0)));
+      emit(BRW_OPCODE_SHR, t1, t1, fs_reg(5));
+      /* This works for both SIMD8 and SIMD16 */
+      emit(MOV(t2, brw_imm_v(0x3210)));
+      /* This special instruction takes care of setting vstride=1,
+       * width=4, hstride=0 of t2 during an ADD instruction.
+       */
+      emit(FS_OPCODE_SET_SAMPLE_ID, *reg, t1, t2);
+   } else {
+      /* As per GL_ARB_sample_shading specification:
+       * "When rendering to a non-multisample buffer, or if multisample
+       *  rasterization is disabled, gl_SampleID will always be zero."
+       */
+      emit(BRW_OPCODE_MOV, *reg, fs_reg(0));
+   }
+
+   return reg;
+}
+
 fs_reg
 fs_visitor::fix_math_operand(fs_reg src)
 {

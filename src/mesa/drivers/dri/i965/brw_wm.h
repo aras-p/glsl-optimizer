@@ -66,6 +66,7 @@ struct brw_wm_prog_key {
    GLuint render_to_fbo:1;
    GLuint clamp_fragment_color:1;
    GLuint compute_pos_offset:1;
+   GLuint compute_sample_id:1;
    GLuint line_aa:2;
    GLuint high_quality_derivatives:1;
 
