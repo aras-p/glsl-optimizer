@@ -696,6 +696,9 @@ util_format_is_rgba8_variant(const struct util_format_description *desc)
       if(desc->channel[chan].type != UTIL_FORMAT_TYPE_UNSIGNED &&
          desc->channel[chan].type != UTIL_FORMAT_TYPE_VOID)
          return FALSE;
+      if(desc->channel[chan].type == UTIL_FORMAT_TYPE_UNSIGNED &&
+         !desc->channel[chan].normalized)
+         return FALSE;
       if(desc->channel[chan].size != 8)
          return FALSE;
    }
