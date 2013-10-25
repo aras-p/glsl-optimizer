@@ -205,17 +205,27 @@ _mesa_free_transform_feedback(struct gl_context *ctx)
 }
 
 
+/** Initialize the fields of a gl_transform_feedback_object. */
+void
+_mesa_init_transform_feedback_object(struct gl_transform_feedback_object *obj,
+                                     GLuint name)
+{
+   if (!obj)
+      return;
+
+   obj->Name = name;
+   obj->RefCount = 1;
+   obj->EverBound = GL_FALSE;
+}
+
+
 /** Default fallback for ctx->Driver.NewTransformFeedback() */
 static struct gl_transform_feedback_object *
 new_transform_feedback(struct gl_context *ctx, GLuint name)
 {
    struct gl_transform_feedback_object *obj;
    obj = CALLOC_STRUCT(gl_transform_feedback_object);
-   if (obj) {
-      obj->Name = name;
-      obj->RefCount = 1;
-      obj->EverBound = GL_FALSE;
-   }
+   _mesa_init_transform_feedback_object(obj, name);
    return obj;
 }
 

@@ -91,6 +91,9 @@ _mesa_GetTransformFeedbackVarying(GLuint program, GLuint index,
 
 
 /*** GL_ARB_transform_feedback2 ***/
+extern void
+_mesa_init_transform_feedback_object(struct gl_transform_feedback_object *obj,
+                                     GLuint name);
 
 struct gl_transform_feedback_object *
 _mesa_lookup_transform_feedback_object(struct gl_context *ctx, GLuint name);
