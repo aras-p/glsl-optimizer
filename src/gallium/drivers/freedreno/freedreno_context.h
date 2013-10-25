@@ -31,6 +31,7 @@
 
 #include "draw/draw_context.h"
 #include "pipe/p_context.h"
+#include "indices/u_primconvert.h"
 #include "util/u_blitter.h"
 #include "util/u_slab.h"
 #include "util/u_string.h"
@@ -93,8 +94,16 @@ struct fd_context {
 
 	struct fd_screen *screen;
 	struct blitter_context *blitter;
+	struct primconvert_context *primconvert;
 
 	struct util_slab_mempool transfer_pool;
+
+	/* table with PIPE_PRIM_MAX entries mapping PIPE_PRIM_x to
+	 * DI_PT_x value to use for draw initiator.  There are some
+	 * slight differences between generation:
+	 */
+	const uint8_t *primtypes;
+	uint32_t primtype_mask;
 
 	/* shaders used by clear, and gmem->mem blits: */
 	struct fd_program_stateobj solid_prog; // TODO move to screen?
@@ -244,8 +253,15 @@ fd_context_get_scissor(struct fd_context *ctx)
 	return &ctx->disabled_scissor;
 }
 
+static INLINE bool
+fd_supported_prim(struct fd_context *ctx, unsigned prim)
+{
+	return (1 << prim) & ctx->primtype_mask;
+}
+
 struct pipe_context * fd_context_init(struct fd_context *ctx,
-		struct pipe_screen *pscreen, void *priv);
+		struct pipe_screen *pscreen, const uint8_t *primtypes,
+		void *priv);
 
 void fd_context_render(struct pipe_context *pctx);
 

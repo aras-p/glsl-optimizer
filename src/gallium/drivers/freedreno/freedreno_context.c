@@ -123,6 +123,9 @@ fd_context_destroy(struct pipe_context *pctx)
 	if (ctx->blitter)
 		util_blitter_destroy(ctx->blitter);
 
+	if (ctx->primconvert)
+		util_primconvert_destroy(ctx->primconvert);
+
 	fd_ringmarker_del(ctx->draw_start);
 	fd_ringmarker_del(ctx->draw_end);
 	fd_ringbuffer_del(ctx->ring);
@@ -131,14 +134,20 @@ fd_context_destroy(struct pipe_context *pctx)
 }
 
 struct pipe_context *
-fd_context_init(struct fd_context *ctx,
-		struct pipe_screen *pscreen, void *priv)
+fd_context_init(struct fd_context *ctx, struct pipe_screen *pscreen,
+		const uint8_t *primtypes, void *priv)
 {
 	struct fd_screen *screen = fd_screen(pscreen);
 	struct pipe_context *pctx;
 	int i;
 
 	ctx->screen = screen;
+
+	ctx->primtypes = primtypes;
+	ctx->primtype_mask = 0;
+	for (i = 0; i < PIPE_PRIM_MAX; i++)
+		if (primtypes[i])
+			ctx->primtype_mask |= (1 << i);
 
 	/* need some sane default in case state tracker doesn't
 	 * set some state:
@@ -170,6 +179,9 @@ fd_context_init(struct fd_context *ctx,
 	if (!ctx->blitter)
 		goto fail;
 
+	ctx->primconvert = util_primconvert_create(pctx, ctx->primtype_mask);
+	if (!ctx->primconvert)
+		goto fail;
 
 	return pctx;
 

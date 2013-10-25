@@ -39,25 +39,6 @@
 #include "freedreno_util.h"
 
 
-static enum pc_di_primtype
-mode2primtype(unsigned mode)
-{
-	switch (mode) {
-	case PIPE_PRIM_POINTS:         return DI_PT_POINTLIST_A2XX;
-	case PIPE_PRIM_LINES:          return DI_PT_LINELIST;
-	case PIPE_PRIM_LINE_STRIP:     return DI_PT_LINESTRIP;
-	case PIPE_PRIM_TRIANGLES:      return DI_PT_TRILIST;
-	case PIPE_PRIM_TRIANGLE_STRIP: return DI_PT_TRISTRIP;
-	case PIPE_PRIM_TRIANGLE_FAN:   return DI_PT_TRIFAN;
-	case PIPE_PRIM_QUADS:          return DI_PT_QUADLIST;
-	case PIPE_PRIM_QUAD_STRIP:     return DI_PT_QUADSTRIP;
-	case PIPE_PRIM_POLYGON:        return DI_PT_POLYGON;
-	}
-	DBG("unsupported mode: (%s) %d", u_prim_name(mode), mode);
-	assert(0);
-	return DI_PT_NONE;
-}
-
 static enum pc_di_index_size
 size2indextype(unsigned index_size)
 {
@@ -97,7 +78,7 @@ fd_draw_emit(struct fd_context *ctx, const struct pipe_draw_info *info)
 		src_sel = DI_SRC_SEL_AUTO_INDEX;
 	}
 
-	fd_draw(ctx, mode2primtype(info->mode), src_sel, info->count,
+	fd_draw(ctx, ctx->primtypes[info->mode], src_sel, info->count,
 			idx_type, idx_size, idx_offset, idx_bo);
 }
 
@@ -112,6 +93,14 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 	/* if we supported transform feedback, we'd have to disable this: */
 	if (((scissor->maxx - scissor->minx) *
 			(scissor->maxy - scissor->miny)) == 0) {
+		return;
+	}
+
+	/* emulate unsupported primitives: */
+	if (!fd_supported_prim(ctx, info->mode)) {
+		util_primconvert_save_index_buffer(ctx->primconvert, &ctx->indexbuf);
+		util_primconvert_save_rasterizer_state(ctx->primconvert, ctx->rasterizer);
+		util_primconvert_draw_vbo(ctx->primconvert, info);
 		return;
 	}
 
