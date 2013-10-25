@@ -46,10 +46,11 @@ struct lp_scene;
 struct lp_fence;
 struct cmd_bin;
 
-#define FIXED_TYPE_WIDTH 32
+#define FIXED_TYPE_WIDTH 64
 /** For sub-pixel positioning */
-#define FIXED_ORDER 4
+#define FIXED_ORDER 8
 #define FIXED_ONE (1<<FIXED_ORDER)
+#define FIXED_SHIFT (FIXED_TYPE_WIDTH - 1)
 /** Maximum length of an edge in a primitive in pixels.
  *  If the framebuffer is large we have to think about fixed-point
  *  integer overflow. Coordinates need ((FIXED_TYPE_WIDTH/2) - 1) bits
@@ -59,11 +60,14 @@ struct cmd_bin;
  */
 #define MAX_FIXED_LENGTH (1 << (((FIXED_TYPE_WIDTH/2) - 1) - FIXED_ORDER))
 
+#define MAX_FIXED_LENGTH32 (1 << (((32/2) - 1) - FIXED_ORDER))
+
 /* Rasterizer output size going to jit fs, width/height */
 #define LP_RASTER_BLOCK_SIZE 4
 
 #define LP_MAX_ACTIVE_BINNED_QUERIES 16
 
+#define IMUL64(a, b) (((int64_t)(a)) * ((int64_t)(b)))
 
 struct lp_rasterizer_task;
 
@@ -102,18 +106,15 @@ struct lp_rast_shader_inputs {
    /* followed by a0, dadx, dady and planes[] */
 };
 
-/* Note: the order of these values is important as they are loaded by
- * sse code in rasterization:
- */
 struct lp_rast_plane {
    /* edge function values at minx,miny ?? */
-   int c;
+   int64_t c;
 
-   int dcdx;
-   int dcdy;
+   int32_t dcdx;
+   int32_t dcdy;
 
    /* one-pixel sized trivial reject offsets for each plane */
-   int eo;
+   int64_t eo;
 };
 
 /**
@@ -277,8 +278,19 @@ lp_rast_arg_null( void )
 #define LP_RAST_OP_BEGIN_QUERY       0xf
 #define LP_RAST_OP_END_QUERY         0x10
 #define LP_RAST_OP_SET_STATE         0x11
+#define LP_RAST_OP_TRIANGLE_32_1     0x12
+#define LP_RAST_OP_TRIANGLE_32_2     0x13
+#define LP_RAST_OP_TRIANGLE_32_3     0x14
+#define LP_RAST_OP_TRIANGLE_32_4     0x15
+#define LP_RAST_OP_TRIANGLE_32_5     0x16
+#define LP_RAST_OP_TRIANGLE_32_6     0x17
+#define LP_RAST_OP_TRIANGLE_32_7     0x18
+#define LP_RAST_OP_TRIANGLE_32_8     0x19
+#define LP_RAST_OP_TRIANGLE_32_3_4   0x1a
+#define LP_RAST_OP_TRIANGLE_32_3_16  0x1b
+#define LP_RAST_OP_TRIANGLE_32_4_16  0x1c
 
-#define LP_RAST_OP_MAX               0x12
+#define LP_RAST_OP_MAX               0x1d
 #define LP_RAST_OP_MASK              0xff
 
 void
@@ -288,5 +300,18 @@ lp_debug_draw_bins_by_cmd_length( struct lp_scene *scene );
 void
 lp_debug_draw_bins_by_coverage( struct lp_scene *scene );
 
+
+#ifdef PIPE_ARCH_SSE
+#include <emmintrin.h>
+#include "util/u_sse.h"
+
+static INLINE __m128i
+lp_plane_to_m128i(const struct lp_rast_plane *plane)
+{
+   return _mm_setr_epi32((int32_t)plane->c, (int32_t)plane->dcdx,
+                         (int32_t)plane->dcdy, (int32_t)plane->eo);
+}
+
+#endif
 
 #endif

@@ -641,7 +641,7 @@ try_setup_line( struct lp_setup_context *setup,
       /* half-edge constants, will be interated over the whole render
        * target.
        */
-      plane[i].c = plane[i].dcdx * x[i] - plane[i].dcdy * y[i];
+      plane[i].c = IMUL64(plane[i].dcdx, x[i]) - IMUL64(plane[i].dcdy, y[i]);
 
       
       /* correct for top-left vs. bottom-left fill convention.  

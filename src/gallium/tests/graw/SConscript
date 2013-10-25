@@ -29,6 +29,7 @@ progs = [
     'tex-srgb',
     'tex-swizzle',
     'tri',
+    'tri-large',
     'tri-gs',
     'tri-instanced',
     'vs-test',

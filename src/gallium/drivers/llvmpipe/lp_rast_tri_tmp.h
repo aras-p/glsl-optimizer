@@ -44,13 +44,13 @@ TAG(do_block_4)(struct lp_rasterizer_task *task,
                 const struct lp_rast_triangle *tri,
                 const struct lp_rast_plane *plane,
                 int x, int y,
-                const int *c)
+                const int64_t *c)
 {
    unsigned mask = 0xffff;
    int j;
 
    for (j = 0; j < NR_PLANES; j++) {
-      mask &= ~build_mask_linear(c[j] - 1, 
+      mask &= ~BUILD_MASK_LINEAR(c[j] - 1, 
 				 -plane[j].dcdx,
 				 plane[j].dcdy);
    }
@@ -70,7 +70,7 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
                  const struct lp_rast_triangle *tri,
                  const struct lp_rast_plane *plane,
                  int x, int y,
-                 const int *c)
+                 const int64_t *c)
 {
    unsigned outmask, inmask, partmask, partial_mask;
    unsigned j;
@@ -79,13 +79,13 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
    partmask = 0;                /* outside one or more trivial accept planes */
 
    for (j = 0; j < NR_PLANES; j++) {
-      const int dcdx = -plane[j].dcdx * 4;
-      const int dcdy = plane[j].dcdy * 4;
-      const int cox = plane[j].eo * 4;
-      const int ei = plane[j].dcdy - plane[j].dcdx - plane[j].eo;
-      const int cio = ei * 4 - 1;
+      const int64_t dcdx = -IMUL64(plane[j].dcdx, 4);
+      const int64_t dcdy = IMUL64(plane[j].dcdy, 4);
+      const int64_t cox = IMUL64(plane[j].eo, 4);
+      const int64_t ei = plane[j].dcdy - plane[j].dcdx - plane[j].eo;
+      const int64_t cio = IMUL64(ei, 4) - 1;
 
-      build_masks(c[j] + cox,
+      BUILD_MASKS(c[j] + cox,
 		  cio - cox,
 		  dcdx, dcdy, 
 		  &outmask,   /* sign bits from c[i][0..15] + cox */
@@ -116,7 +116,7 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
       int iy = (i >> 2) * 4;
       int px = x + ix;
       int py = y + iy; 
-      int cx[NR_PLANES];
+      int64_t cx[NR_PLANES];
 
       partial_mask &= ~(1 << i);
 
@@ -124,8 +124,8 @@ TAG(do_block_16)(struct lp_rasterizer_task *task,
 
       for (j = 0; j < NR_PLANES; j++)
          cx[j] = (c[j] 
-		  - plane[j].dcdx * ix
-		  + plane[j].dcdy * iy);
+                  - IMUL64(plane[j].dcdx, ix)
+                  + IMUL64(plane[j].dcdy, iy));
 
       TAG(do_block_4)(task, tri, plane, px, py, cx);
    }
@@ -160,7 +160,7 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
    const struct lp_rast_plane *tri_plane = GET_PLANES(tri);
    const int x = task->x, y = task->y;
    struct lp_rast_plane plane[NR_PLANES];
-   int c[NR_PLANES];
+   int64_t c[NR_PLANES];
    unsigned outmask, inmask, partmask, partial_mask;
    unsigned j = 0;
 
@@ -176,20 +176,20 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
       int i = ffs(plane_mask) - 1;
       plane[j] = tri_plane[i];
       plane_mask &= ~(1 << i);
-      c[j] = plane[j].c + plane[j].dcdy * y - plane[j].dcdx * x;
+      c[j] = plane[j].c + IMUL64(plane[j].dcdy, y) - IMUL64(plane[j].dcdx, x);
 
       {
-	 const int dcdx = -plane[j].dcdx * 16;
-	 const int dcdy = plane[j].dcdy * 16;
-	 const int cox = plane[j].eo * 16;
-         const int ei = plane[j].dcdy - plane[j].dcdx - plane[j].eo;
-         const int cio = ei * 16 - 1;
+         const int64_t dcdx = -IMUL64(plane[j].dcdx, 16);
+         const int64_t dcdy = IMUL64(plane[j].dcdy, 16);
+         const int64_t cox = IMUL64(plane[j].eo, 16);
+         const int64_t ei = plane[j].dcdy - plane[j].dcdx - plane[j].eo;
+         const int64_t cio = IMUL64(ei, 16) - 1;
 
-	 build_masks(c[j] + cox,
-		     cio - cox,
-		     dcdx, dcdy, 
-		     &outmask,   /* sign bits from c[i][0..15] + cox */
-		     &partmask); /* sign bits from c[i][0..15] + cio */
+         BUILD_MASKS(c[j] + cox,
+                     cio - cox,
+                     dcdx, dcdy,
+                     &outmask,   /* sign bits from c[i][0..15] + cox */
+                     &partmask); /* sign bits from c[i][0..15] + cio */
       }
 
       j++;
@@ -219,12 +219,12 @@ TAG(lp_rast_triangle)(struct lp_rasterizer_task *task,
       int iy = (i >> 2) * 16;
       int px = x + ix;
       int py = y + iy;
-      int cx[NR_PLANES];
+      int64_t cx[NR_PLANES];
 
       for (j = 0; j < NR_PLANES; j++)
          cx[j] = (c[j]
-		  - plane[j].dcdx * ix
-		  + plane[j].dcdy * iy);
+                  - IMUL64(plane[j].dcdx, ix)
+                  + IMUL64(plane[j].dcdy, iy));
 
       partial_mask &= ~(1 << i);
 
