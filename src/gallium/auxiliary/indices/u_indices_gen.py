@@ -153,6 +153,7 @@ def preamble(intype, outtype, inpv, outpv, prim):
     print 'static void ' + name( intype, outtype, inpv, outpv, prim ) + '('
     if intype != GENERATE:
         print '    const void * _in,'
+    print '    unsigned start,'
     print '    unsigned nr,'
     print '    void *_out )'
     print '{'
@@ -168,28 +169,28 @@ def postamble():
 
 def points(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='points')
-    print '  for (i = 0; i < nr; i++) { '
+    print '  for (i = start; i < (nr+start); i++) { '
     do_point( intype, outtype, 'out+i',  'i' );
     print '   }'
     postamble()
 
 def lines(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='lines')
-    print '  for (i = 0; i < nr; i+=2) { '
+    print '  for (i = start; i < (nr+start); i+=2) { '
     do_line( intype, outtype, 'out+i',  'i', 'i+1', inpv, outpv );
     print '   }'
     postamble()
 
 def linestrip(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='linestrip')
-    print '  for (j = i = 0; j < nr; j+=2, i++) { '
+    print '  for (i = start, j = 0; j < nr; j+=2, i++) { '
     do_line( intype, outtype, 'out+j',  'i', 'i+1', inpv, outpv );
     print '   }'
     postamble()
 
 def lineloop(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='lineloop')
-    print '  for (j = i = 0; j < nr - 2; j+=2, i++) { '
+    print '  for (i = start, j = 0; j < nr - 2; j+=2, i++) { '
     do_line( intype, outtype, 'out+j',  'i', 'i+1', inpv, outpv );
     print '   }'
     do_line( intype, outtype, 'out+j',  'i', '0', inpv, outpv );
@@ -197,7 +198,7 @@ def lineloop(intype, outtype, inpv, outpv):
 
 def tris(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='tris')
-    print '  for (i = 0; i < nr; i+=3) { '
+    print '  for (i = start; i < (nr+start); i+=3) { '
     do_tri( intype, outtype, 'out+i',  'i', 'i+1', 'i+2', inpv, outpv );
     print '   }'
     postamble()
@@ -205,7 +206,7 @@ def tris(intype, outtype, inpv, outpv):
 
 def tristrip(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='tristrip')
-    print '  for (j = i = 0; j < nr; j+=3, i++) { '
+    print '  for (i = start, j = 0; j < nr; j+=3, i++) { '
     if inpv == FIRST:
         do_tri( intype, outtype, 'out+j',  'i', 'i+1+(i&1)', 'i+2-(i&1)', inpv, outpv );
     else:
@@ -216,7 +217,7 @@ def tristrip(intype, outtype, inpv, outpv):
 
 def trifan(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='trifan')
-    print '  for (j = i = 0; j < nr; j+=3, i++) { '
+    print '  for (i = start, j = 0; j < nr; j+=3, i++) { '
     do_tri( intype, outtype, 'out+j',  '0', 'i+1', 'i+2', inpv, outpv );
     print '   }'
     postamble()
@@ -225,7 +226,7 @@ def trifan(intype, outtype, inpv, outpv):
 
 def polygon(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='polygon')
-    print '  for (j = i = 0; j < nr; j+=3, i++) { '
+    print '  for (i = start, j = 0; j < nr; j+=3, i++) { '
     if inpv == FIRST:
         do_tri( intype, outtype, 'out+j',  '0', 'i+1', 'i+2', inpv, outpv );
     else:
@@ -236,7 +237,7 @@ def polygon(intype, outtype, inpv, outpv):
 
 def quads(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='quads')
-    print '  for (j = i = 0; j < nr; j+=6, i+=4) { '
+    print '  for (i = start, j = 0; j < nr; j+=6, i+=4) { '
     do_quad( intype, outtype, 'out+j', 'i+0', 'i+1', 'i+2', 'i+3', inpv, outpv );
     print '   }'
     postamble()
@@ -244,7 +245,7 @@ def quads(intype, outtype, inpv, outpv):
 
 def quadstrip(intype, outtype, inpv, outpv):
     preamble(intype, outtype, inpv, outpv, prim='quadstrip')
-    print '  for (j = i = 0; j < nr; j+=6, i+=2) { '
+    print '  for (i = start, j = 0; j < nr; j+=6, i+=2) { '
     do_quad( intype, outtype, 'out+j', 'i+2', 'i+0', 'i+1', 'i+3', inpv, outpv );
     print '   }'
     postamble()

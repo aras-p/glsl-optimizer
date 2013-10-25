@@ -31,11 +31,30 @@
 #define PV_LAST       1
 #define PV_COUNT      2
 
+/**
+ * Index translator function (for glDrawElements() case)
+ *
+ * \param in     the input index buffer
+ * \param start  the index of the first vertex (pipe_draw_info::start)
+ * \param nr     the number of vertices (pipe_draw_info::count)
+ * \param out    output buffer big enough or nr vertices (of
+ *    @out_index_size bytes each)
+ */
 typedef void (*u_translate_func)( const void *in,
+                                  unsigned start,
                                   unsigned nr,
                                   void *out );
 
-typedef void (*u_generate_func)( unsigned nr,
+/**
+ * Index generator function (for glDrawArrays() case)
+ *
+ * \param start  the index of the first vertex (pipe_draw_info::start)
+ * \param nr     the number of vertices (pipe_draw_info::count)
+ * \param out    output buffer big enough or nr vertices (of
+ *    @out_index_size bytes each)
+ */
+typedef void (*u_generate_func)( unsigned start,
+                                 unsigned nr,
                                  void *out );
 
 

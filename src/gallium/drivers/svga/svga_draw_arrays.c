@@ -58,7 +58,7 @@ generate_indices(struct svga_hwtnl *hwtnl,
    if (dst_map == NULL)
       goto fail;
 
-   generate(nr, dst_map);
+   generate(0, nr, dst_map);
 
    pipe_buffer_unmap(pipe, transfer);
 

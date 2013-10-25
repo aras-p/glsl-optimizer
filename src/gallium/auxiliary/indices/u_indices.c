@@ -26,17 +26,19 @@
 #include "u_indices_priv.h"
 
 static void translate_memcpy_ushort( const void *in,
+                                     unsigned start,
                                      unsigned nr,
                                      void *out )
 {
-   memcpy(out, in, nr*sizeof(short));
+   memcpy(out, &((short *)in)[start], nr*sizeof(short));
 }
                               
 static void translate_memcpy_uint( const void *in,
+                                   unsigned start,
                                    unsigned nr,
                                    void *out )
 {
-   memcpy(out, in, nr*sizeof(int));
+   memcpy(out, &((int *)in)[start], nr*sizeof(int));
 }
                               
 
