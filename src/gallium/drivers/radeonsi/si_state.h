@@ -110,7 +110,8 @@ union si_state {
 #define NUM_SAMPLER_VIEWS	(FMASK_TEX_OFFSET+NUM_TEX_UNITS)
 #define NUM_SAMPLER_STATES	NUM_TEX_UNITS
 
-#define NUM_CONST_BUFFERS 2
+#define NUM_PIPE_CONST_BUFFERS 16
+#define NUM_CONST_BUFFERS 17
 
 /* This represents resource descriptors in memory, such as buffer resources,
  * image resources, and sampler states.
