@@ -10,10 +10,10 @@ git clone https://github.com/freedreno/envytools.git
 The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno.xml              (    327 bytes, from 2013-07-05 19:21:12)
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/a2xx/a2xx.xml           (  30005 bytes, from 2013-07-19 21:30:48)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   8983 bytes, from 2013-07-24 01:38:36)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (   9759 bytes, from 2013-09-06 12:50:15)
-- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  51983 bytes, from 2013-09-09 15:24:38)
+- /home/robclark/src/freedreno/envytools/rnndb/a2xx/a2xx.xml           (  32800 bytes, from 2013-10-22 23:57:49)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   8900 bytes, from 2013-10-22 23:57:49)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (  10345 bytes, from 2013-10-25 14:31:35)
+- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  52655 bytes, from 2013-10-25 14:43:32)
 
 Copyright (C) 2013 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -66,13 +66,15 @@ enum vgt_event_type {
 
 enum pc_di_primtype {
 	DI_PT_NONE = 0,
-	DI_PT_POINTLIST = 1,
+	DI_PT_POINTLIST_A2XX = 1,
 	DI_PT_LINELIST = 2,
 	DI_PT_LINESTRIP = 3,
 	DI_PT_TRILIST = 4,
 	DI_PT_TRIFAN = 5,
 	DI_PT_TRISTRIP = 6,
+	DI_PT_LINELOOP = 7,
 	DI_PT_RECTLIST = 8,
+	DI_PT_POINTLIST_A3XX = 9,
 	DI_PT_QUADLIST = 13,
 	DI_PT_QUADSTRIP = 14,
 	DI_PT_POLYGON = 15,
@@ -119,7 +121,7 @@ enum adreno_pm4_type3_packets {
 	CP_WAIT_FOR_IDLE = 38,
 	CP_WAIT_REG_MEM = 60,
 	CP_WAIT_REG_EQ = 82,
-	CP_WAT_REG_GTE = 83,
+	CP_WAIT_REG_GTE = 83,
 	CP_WAIT_UNTIL_READ = 92,
 	CP_WAIT_IB_PFD_COMPLETE = 93,
 	CP_REG_RMW = 33,
@@ -151,7 +153,6 @@ enum adreno_pm4_type3_packets {
 	CP_CONTEXT_UPDATE = 94,
 	CP_INTERRUPT = 64,
 	CP_IM_STORE = 44,
-	CP_SET_BIN_BASE_OFFSET = 75,
 	CP_SET_DRAW_INIT_FLAGS = 75,
 	CP_SET_PROTECTED_MODE = 95,
 	CP_LOAD_STATE = 48,
@@ -159,6 +160,14 @@ enum adreno_pm4_type3_packets {
 	CP_COND_INDIRECT_BUFFER_PFD = 50,
 	CP_INDIRECT_BUFFER_PFE = 63,
 	CP_SET_BIN = 76,
+	IN_IB_PREFETCH_END = 23,
+	IN_SUBBLK_PREFETCH = 31,
+	IN_INSTR_PREFETCH = 32,
+	IN_INSTR_MATCH = 71,
+	IN_CONST_PREFETCH = 73,
+	IN_INCR_UPDT_STATE = 85,
+	IN_INCR_UPDT_CONST = 86,
+	IN_INCR_UPDT_INSTR = 87,
 };
 
 enum adreno_state_block {

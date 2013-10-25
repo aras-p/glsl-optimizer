@@ -10,10 +10,10 @@ git clone https://github.com/freedreno/envytools.git
 The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno.xml              (    327 bytes, from 2013-07-05 19:21:12)
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/a2xx/a2xx.xml           (  30005 bytes, from 2013-07-19 21:30:48)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   8983 bytes, from 2013-07-24 01:38:36)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (   9759 bytes, from 2013-09-06 12:50:15)
-- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  51983 bytes, from 2013-09-09 15:24:38)
+- /home/robclark/src/freedreno/envytools/rnndb/a2xx/a2xx.xml           (  32800 bytes, from 2013-10-22 23:57:49)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   8900 bytes, from 2013-10-22 23:57:49)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (  10345 bytes, from 2013-10-25 14:31:35)
+- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  52655 bytes, from 2013-10-25 14:43:32)
 
 Copyright (C) 2013 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -292,6 +292,8 @@ enum a3xx_tex_type {
 #define A3XX_RBBM_STATUS_GPU_BUSY_NOHC				0x40000000
 #define A3XX_RBBM_STATUS_GPU_BUSY				0x80000000
 
+#define REG_A3XX_RBBM_NQWAIT_UNTIL				0x00000040
+
 #define REG_A3XX_RBBM_WAIT_IDLE_CLOCKS_CTL			0x00000033
 
 #define REG_A3XX_RBBM_INTERFACE_HANG_INT_CTL			0x00000050
@@ -303,6 +305,8 @@ enum a3xx_tex_type {
 #define REG_A3XX_RBBM_INTERFACE_HANG_MASK_CTL2			0x00000057
 
 #define REG_A3XX_RBBM_INTERFACE_HANG_MASK_CTL3			0x0000005a
+
+#define REG_A3XX_RBBM_INT_SET_CMD				0x00000060
 
 #define REG_A3XX_RBBM_INT_CLEAR_CMD				0x00000061
 
@@ -2087,6 +2091,12 @@ static inline uint32_t A3XX_UCHE_CACHE_INVALIDATE1_REG_OPCODE(enum a3xx_cache_op
 #define REG_A3XX_TP_PERFCOUNTER4_SELECT				0x00000f08
 
 #define REG_A3XX_TP_PERFCOUNTER5_SELECT				0x00000f09
+
+#define REG_A3XX_VGT_EVENT_INITIATOR				0x000021f9
+
+#define REG_A3XX_VGT_DRAW_INITIATOR				0x000021fc
+
+#define REG_A3XX_VGT_IMMED_DATA					0x000021fd
 
 #define REG_A3XX_TEX_SAMP_0					0x00000000
 #define A3XX_TEX_SAMP_0_MIPFILTER_LINEAR			0x00000002

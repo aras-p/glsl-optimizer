@@ -43,7 +43,7 @@ static enum pc_di_primtype
 mode2primtype(unsigned mode)
 {
 	switch (mode) {
-	case PIPE_PRIM_POINTS:         return DI_PT_POINTLIST;
+	case PIPE_PRIM_POINTS:         return DI_PT_POINTLIST_A2XX;
 	case PIPE_PRIM_LINES:          return DI_PT_LINELIST;
 	case PIPE_PRIM_LINE_STRIP:     return DI_PT_LINESTRIP;
 	case PIPE_PRIM_TRIANGLES:      return DI_PT_TRILIST;

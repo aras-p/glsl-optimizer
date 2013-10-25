@@ -234,7 +234,7 @@ emit_cache_flush(struct fd_ringbuffer *ring)
 
 	OUT_PKT3(ring, CP_DRAW_INDX, 3);
 	OUT_RING(ring, 0x00000000);
-	OUT_RING(ring, DRAW(DI_PT_POINTLIST, DI_SRC_SEL_AUTO_INDEX,
+	OUT_RING(ring, DRAW(1, DI_SRC_SEL_AUTO_INDEX,
 			INDEX_SIZE_IGN, IGNORE_VISIBILITY));
 	OUT_RING(ring, 0);					/* NumIndices */
 
