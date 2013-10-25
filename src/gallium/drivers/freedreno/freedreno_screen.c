@@ -315,7 +315,11 @@ fd_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
 	case PIPE_SHADER_CAP_SUBROUTINES:
 		return 0;
 	case PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED:
+		return 1;
 	case PIPE_SHADER_CAP_INTEGERS:
+		/* we should be able to support this on a3xx, but not
+		 * implemented yet:
+		 */
 		return 0;
 	case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
 		return 16;

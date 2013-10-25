@@ -1042,6 +1042,10 @@ translate_instruction(struct fd2_compile_context *ctx,
 		instr = ir2_instr_create_alu(cf, ~0, RECIPSQ_IEEE);
 		add_regs_scalar_1(ctx, inst, instr);
 		break;
+	case TGSI_OPCODE_SQRT:
+		instr = ir2_instr_create_alu(cf, ~0, SQRT_IEEE);
+		add_regs_scalar_1(ctx, inst, instr);
+		break;
 	case TGSI_OPCODE_MUL:
 		instr = ir2_instr_create_alu(cf, MULv, ~0);
 		add_regs_vector_2(ctx, inst, instr);
