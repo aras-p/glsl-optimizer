@@ -615,4 +615,5 @@ gen7_init_vtable_surface_functions(struct brw_context *brw)
       gen7_update_null_renderbuffer_surface;
    brw->vtbl.create_constant_surface = gen7_create_constant_surface;
    brw->vtbl.create_raw_surface = gen7_create_raw_surface;
+   brw->vtbl.emit_buffer_surface_state = gen7_emit_buffer_surface_state;
 }

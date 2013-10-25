@@ -989,6 +989,15 @@ struct brw_context
                                  uint32_t size,
                                  uint32_t *out_offset,
                                  bool rw);
+      void (*emit_buffer_surface_state)(struct brw_context *brw,
+                                        uint32_t *out_offset,
+                                        drm_intel_bo *bo,
+                                        unsigned buffer_offset,
+                                        unsigned surface_format,
+                                        unsigned buffer_size,
+                                        unsigned pitch,
+                                        unsigned mocs,
+                                        bool rw);
 
       /** Upload a SAMPLER_STATE table. */
       void (*upload_sampler_state_table)(struct brw_context *brw,

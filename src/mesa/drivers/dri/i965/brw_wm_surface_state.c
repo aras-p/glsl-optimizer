@@ -197,7 +197,9 @@ gen4_emit_buffer_surface_state(struct brw_context *brw,
                                unsigned buffer_offset,
                                unsigned surface_format,
                                unsigned buffer_size,
-                               unsigned pitch)
+                               unsigned pitch,
+                               unsigned mocs,
+                               bool rw)
 {
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
                                     6 * 4, 32, out_offset);
@@ -219,7 +221,8 @@ gen4_emit_buffer_surface_state(struct brw_context *brw,
    if (bo) {
       drm_intel_bo_emit_reloc(brw->batch.bo, *out_offset + 4,
                               bo, buffer_offset,
-                              I915_GEM_DOMAIN_SAMPLER, 0);
+                              I915_GEM_DOMAIN_SAMPLER,
+                              (rw ? I915_GEM_DOMAIN_SAMPLER : 0));
    }
 }
 
@@ -252,7 +255,9 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
                                   tObj->BufferOffset,
                                   brw_format,
                                   size / texel_size,
-                                  texel_size);
+                                  texel_size,
+                                  0,
+                                  false);
 }
 
 static void
@@ -329,7 +334,7 @@ brw_create_constant_surface(struct brw_context *brw,
 
    gen4_emit_buffer_surface_state(brw, out_offset, bo, offset,
                                   BRW_SURFACEFORMAT_R32G32B32A32_FLOAT,
-                                  elements, stride);
+                                  elements, stride, 0, false);
 }
 
 /**
@@ -927,4 +932,5 @@ gen4_init_vtable_surface_functions(struct brw_context *brw)
    brw->vtbl.update_null_renderbuffer_surface =
       brw_update_null_renderbuffer_surface;
    brw->vtbl.create_constant_surface = brw_create_constant_surface;
+   brw->vtbl.emit_buffer_surface_state = gen4_emit_buffer_surface_state;
 }
