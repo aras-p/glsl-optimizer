@@ -151,7 +151,6 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
 {
    const struct pipe_framebuffer_state *fb = &scene->fb;
    int i;
-   unsigned max_layer = ~0;
 
    //LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
 
@@ -162,7 +161,6 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
                                                            cbuf->u.tex.level);
          scene->cbufs[i].layer_stride = llvmpipe_layer_stride(cbuf->texture,
                                                               cbuf->u.tex.level);
-         max_layer = MIN2(max_layer, cbuf->u.tex.last_layer - cbuf->u.tex.first_layer);
 
          scene->cbufs[i].map = llvmpipe_resource_map(cbuf->texture,
                                                      cbuf->u.tex.level,
@@ -173,7 +171,6 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
          struct llvmpipe_resource *lpr = llvmpipe_resource(cbuf->texture);
          unsigned pixstride = util_format_get_blocksize(cbuf->format);
          scene->cbufs[i].stride = cbuf->texture->width0;
-         max_layer = 0;
 
          scene->cbufs[i].map = lpr->data;
          scene->cbufs[i].map += cbuf->u.buf.first_element * pixstride;
@@ -184,15 +181,12 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
       struct pipe_surface *zsbuf = scene->fb.zsbuf;
       scene->zsbuf.stride = llvmpipe_resource_stride(zsbuf->texture, zsbuf->u.tex.level);
       scene->zsbuf.layer_stride = llvmpipe_layer_stride(zsbuf->texture, zsbuf->u.tex.level);
-      max_layer = MIN2(max_layer, zsbuf->u.tex.last_layer - zsbuf->u.tex.first_layer);
 
       scene->zsbuf.map = llvmpipe_resource_map(zsbuf->texture,
                                                zsbuf->u.tex.level,
                                                zsbuf->u.tex.first_layer,
                                                LP_TEX_USAGE_READ_WRITE);
    }
-
-   scene->fb_max_layer = max_layer;
 }
 
 
@@ -506,6 +500,9 @@ end:
 void lp_scene_begin_binning( struct lp_scene *scene,
                              struct pipe_framebuffer_state *fb, boolean discard )
 {
+   int i;
+   unsigned max_layer = ~0;
+
    assert(lp_scene_is_empty(scene));
 
    scene->discard = discard;
@@ -513,9 +510,29 @@ void lp_scene_begin_binning( struct lp_scene *scene,
 
    scene->tiles_x = align(fb->width, TILE_SIZE) / TILE_SIZE;
    scene->tiles_y = align(fb->height, TILE_SIZE) / TILE_SIZE;
-
    assert(scene->tiles_x <= TILES_X);
    assert(scene->tiles_y <= TILES_Y);
+
+   /*
+    * Determine how many layers the fb has (used for clamping layer value).
+    * OpenGL (but not d3d10) permits different amount of layers per rt, however
+    * results are undefined if layer exceeds the amount of layers of ANY
+    * attachment hence don't need separate per cbuf and zsbuf max.
+    */
+   for (i = 0; i < scene->fb.nr_cbufs; i++) {
+      struct pipe_surface *cbuf = scene->fb.cbufs[i];
+      if (llvmpipe_resource_is_texture(cbuf->texture)) {
+         max_layer = MIN2(max_layer, cbuf->u.tex.last_layer - cbuf->u.tex.first_layer);
+      }
+      else {
+         max_layer = 0;
+      }
+   }
+   if (fb->zsbuf) {
+      struct pipe_surface *zsbuf = scene->fb.zsbuf;
+      max_layer = MIN2(max_layer, zsbuf->u.tex.last_layer - zsbuf->u.tex.first_layer);
+   }
+   scene->fb_max_layer = max_layer;
 }
 
 

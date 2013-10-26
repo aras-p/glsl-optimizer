@@ -144,7 +144,7 @@ struct lp_scene {
       unsigned layer_stride;
    } zsbuf, cbufs[PIPE_MAX_COLOR_BUFS];
 
-   /* OpenGL permits different amount of layers per rt, but rendering limited to minimum */
+   /* The amount of layers in the fb (minimum of all attachments) */
    unsigned fb_max_layer;
 
    /** the framebuffer to render the scene into */
