@@ -609,9 +609,11 @@ brwCreateContext(gl_api api,
    /* Reinitialize the context point state.  It depends on ctx->Const values. */
    _mesa_init_point(ctx);
 
-   intelInitExtensions(ctx);
-
    intel_batchbuffer_init(brw);
+
+   brw_init_state(brw);
+
+   intelInitExtensions(ctx);
 
    intel_fbo_init(brw);
 
@@ -670,8 +672,6 @@ brwCreateContext(gl_api api,
 
    brw->prim_restart.in_progress = false;
    brw->prim_restart.enable_cut_index = false;
-
-   brw_init_state( brw );
 
    if (brw->gen < 6) {
       brw->curbe.last_buf = calloc(1, 4096);
