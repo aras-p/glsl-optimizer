@@ -140,6 +140,7 @@ main_sources = [
     'main/uniform_query.cpp',
     'main/uniforms.c',
     'main/varray.c',
+    'main/vdpau.c',
     'main/version.c',
     'main/viewport.c',
     'main/vtxfmt.c',
@@ -287,6 +288,7 @@ statetracker_sources = [
     'state_tracker/st_mesa_to_tgsi.c',
     'state_tracker/st_program.c',
     'state_tracker/st_texture.c',
+    'state_tracker/st_vdpau.c',
 ]
 
 env.Append(YACCFLAGS = '-d -p "_mesa_program_"')
