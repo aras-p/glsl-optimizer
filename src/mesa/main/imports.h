@@ -141,6 +141,7 @@ static inline float acoshf(float x) { return logf(x + sqrtf(x * x - 1.0f)); }
 static inline float atanhf(float x) { return (logf(1.0f + x) - logf(1.0f - x)) / 2.0f; }
 static inline int isblank(int ch) { return ch == ' ' || ch == '\t'; }
 #define strtoll(p, e, b) _strtoi64(p, e, b)
+#define strcasecmp(s1, s2) _stricmp(s1, s2)
 #endif
 /*@}*/
 
