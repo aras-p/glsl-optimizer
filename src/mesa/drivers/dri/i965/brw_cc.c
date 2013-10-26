@@ -187,7 +187,8 @@ static void upload_cc_unit(struct brw_context *brw)
 				eqA != eqRGB);
    }
 
-   if (ctx->Color.AlphaEnabled) {
+   /* _NEW_BUFFERS */
+   if (ctx->Color.AlphaEnabled && ctx->DrawBuffer->_NumColorDrawBuffers <= 1) {
       cc->cc3.alpha_test = 1;
       cc->cc3.alpha_test_func =
 	 intel_translate_compare_func(ctx->Color.AlphaFunc);
