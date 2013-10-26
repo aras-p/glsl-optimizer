@@ -394,6 +394,7 @@ public:
                     fs_reg dst, fs_reg src0, fs_reg src1, fs_reg one);
 
    void emit_color_write(int target, int index, int first_color_mrf);
+   void emit_alpha_test();
    void emit_fb_writes();
 
    void emit_shader_time_begin();

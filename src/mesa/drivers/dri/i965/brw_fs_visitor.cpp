@@ -2610,6 +2610,60 @@ fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
    }
 }
 
+static int
+cond_for_alpha_func(GLenum func)
+{
+   switch(func) {
+      case GL_GREATER:
+         return BRW_CONDITIONAL_G;
+      case GL_GEQUAL:
+         return BRW_CONDITIONAL_GE;
+      case GL_LESS:
+         return BRW_CONDITIONAL_L;
+      case GL_LEQUAL:
+         return BRW_CONDITIONAL_LE;
+      case GL_EQUAL:
+         return BRW_CONDITIONAL_EQ;
+      case GL_NOTEQUAL:
+         return BRW_CONDITIONAL_NEQ;
+      default:
+         assert(!"Not reached");
+         return 0;
+   }
+}
+
+/**
+ * Alpha test support for when we compile it into the shader instead
+ * of using the normal fixed-function alpha test.
+ */
+void
+fs_visitor::emit_alpha_test()
+{
+   this->current_annotation = "Alpha test";
+
+   fs_inst *cmp;
+   if (c->key.alpha_test_func == GL_ALWAYS)
+      return;
+
+   if (c->key.alpha_test_func == GL_NEVER) {
+      /* f0.1 = 0 */
+      fs_reg some_reg = fs_reg(retype(brw_vec8_grf(0, 0),
+                                      BRW_REGISTER_TYPE_UW));
+      cmp = emit(CMP(reg_null_f, some_reg, some_reg,
+                     BRW_CONDITIONAL_NEQ));
+   } else {
+      /* RT0 alpha */
+      fs_reg color = outputs[0];
+      color.reg_offset += 3;
+
+      /* f0.1 &= func(color, ref) */
+      cmp = emit(CMP(reg_null_f, color, fs_reg(c->key.alpha_test_ref),
+                     cond_for_alpha_func(c->key.alpha_test_func)));
+   }
+   cmp->predicate = BRW_PREDICATE_NORMAL;
+   cmp->flag_subreg = 1;
+}
+
 void
 fs_visitor::emit_fb_writes()
 {
