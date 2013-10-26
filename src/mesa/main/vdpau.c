@@ -92,7 +92,7 @@ unregister_surface(struct set_entry *entry)
 }
 
 void GLAPIENTRY
-_mesa_VDPAUFiniNV()
+_mesa_VDPAUFiniNV(void)
 {
    GET_CURRENT_CONTEXT(ctx);
 
