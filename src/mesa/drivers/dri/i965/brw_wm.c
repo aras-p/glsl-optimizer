@@ -290,6 +290,10 @@ brw_wm_debug_recompile(struct brw_context *brw,
                       old_key->drawable_height, key->drawable_height);
    found |= key_debug(brw, "input slots valid",
                       old_key->input_slots_valid, key->input_slots_valid);
+   found |= key_debug(brw, "mrt alpha test function",
+                      old_key->alpha_test_func, key->alpha_test_func);
+   found |= key_debug(brw, "mrt alpha test reference value",
+                      old_key->alpha_test_ref, key->alpha_test_ref);
 
    found |= brw_debug_recompile_sampler_key(brw, &old_key->tex, &key->tex);
 
@@ -499,6 +503,18 @@ static void brw_wm_populate_key( struct brw_context *brw,
    if (brw->gen < 6 || _mesa_bitcount_64(fp->program.Base.InputsRead &
                                          BRW_FS_VARYING_INPUT_MASK) > 16)
       key->input_slots_valid = brw->vue_map_geom_out.slots_valid;
+
+
+   /* _NEW_COLOR | _NEW_BUFFERS */
+   /* Pre-gen6, the hardware alpha test always used each render
+    * target's alpha to do alpha test, as opposed to render target 0's alpha
+    * like GL requires.  Fix that by building the alpha test into the
+    * shader, and we'll skip enabling the fixed function alpha test.
+    */
+   if (brw->gen < 6 && ctx->DrawBuffer->_NumColorDrawBuffers > 1 && ctx->Color.AlphaEnabled) {
+      key->alpha_test_func = ctx->Color.AlphaFunc;
+      key->alpha_test_ref = ctx->Color.AlphaRef;
+   }
 
    /* The unique fragment program ID */
    key->program_string_id = fp->id;
