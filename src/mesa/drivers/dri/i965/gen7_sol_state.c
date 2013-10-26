@@ -122,12 +122,12 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
       int buffer = linked_xfb_info->Outputs[i].OutputBuffer;
       uint16_t decl = 0;
       int varying = linked_xfb_info->Outputs[i].OutputRegister;
-      unsigned component_mask =
-         (1 << linked_xfb_info->Outputs[i].NumComponents) - 1;
+      const unsigned components = linked_xfb_info->Outputs[i].NumComponents;
+      unsigned component_mask = (1 << components) - 1;
 
       /* gl_PointSize is stored in VARYING_SLOT_PSIZ.w. */
       if (varying == VARYING_SLOT_PSIZ) {
-         assert(linked_xfb_info->Outputs[i].NumComponents == 1);
+         assert(components == 1);
          component_mask <<= 3;
       } else {
          component_mask <<= linked_xfb_info->Outputs[i].ComponentOffset;
@@ -145,7 +145,7 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
        */
       assert(linked_xfb_info->Outputs[i].DstOffset == next_offset[buffer]);
 
-      next_offset[buffer] += linked_xfb_info->Outputs[i].NumComponents;
+      next_offset[buffer] += components;
 
       so_decl[i] = decl;
    }
