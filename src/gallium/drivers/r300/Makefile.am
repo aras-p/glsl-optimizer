@@ -3,7 +3,6 @@ include $(top_srcdir)/src/gallium/Automake.inc
 
 noinst_LTLIBRARIES = libr300.la libr300-helper.la
 check_PROGRAMS = r300_compiler_tests
-testdir = compiler/tests
 TESTS = r300_compiler_tests
 
 AM_CFLAGS = \
@@ -22,13 +21,7 @@ r300_compiler_tests_LDADD = libr300.la libr300-helper.la \
 	$(GALLIUM_DRI_LIB_DEPS)
 r300_compiler_tests_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers/r300/compiler
-r300_compiler_tests_SOURCES = \
-	$(testdir)/r300_compiler_tests.c \
-	$(testdir)/radeon_compiler_optimize_tests.c \
-	$(testdir)/radeon_compiler_regalloc_tests.c \
-	$(testdir)/radeon_compiler_util_tests.c \
-	$(testdir)/rc_test_helpers.c \
-	$(testdir)/unit_test.c
+r300_compiler_tests_SOURCES = $(COMPILER_TESTS_SOURCES)
 
 libr300_la_SOURCES = $(C_SOURCES)
 
@@ -39,6 +32,4 @@ libr300_la_SOURCES = $(C_SOURCES)
 #
 # Solve this by building them into a separate helper library that can be linked
 # in place of libmesagallium.
-libr300_helper_la_SOURCES = \
-	ralloc.c \
-	register_allocate.c
+libr300_helper_la_SOURCES = $(HELPER_SOURCES)

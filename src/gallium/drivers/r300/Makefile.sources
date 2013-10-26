@@ -1,4 +1,4 @@
-C_SOURCES = \
+C_SOURCES := \
 	r300_blit.c \
 	r300_chipset.c \
 	r300_context.c \
@@ -57,3 +57,15 @@ C_SOURCES = \
 	compiler/r3xx_vertprog.c \
 	compiler/r3xx_vertprog_dump.c \
 	compiler/memory_pool.c
+
+COMPILER_TESTS_SOURCES := \
+	compiler/tests/r300_compiler_tests.c \
+	compiler/tests/radeon_compiler_optimize_tests.c \
+	compiler/tests/radeon_compiler_regalloc_tests.c \
+	compiler/tests/radeon_compiler_util_tests.c \
+	compiler/tests/rc_test_helpers.c \
+	compiler/tests/unit_test.c
+
+HELPER_SOURCES := \
+	ralloc.c \
+	register_allocate.c
