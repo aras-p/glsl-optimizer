@@ -3151,7 +3151,12 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
 			   void *mem_ctx,
                            bool debug_flag,
                            bool no_spills)
-   : debug_flag(debug_flag), no_spills(no_spills)
+   : sanity_param_count(0),
+     fail_msg(NULL),
+     first_non_payload_grf(0),
+     need_all_constants_in_pull_buffer(false),
+     debug_flag(debug_flag),
+     no_spills(no_spills)
 {
    this->brw = brw;
    this->ctx = &brw->ctx;
