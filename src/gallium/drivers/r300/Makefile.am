@@ -8,7 +8,7 @@ TESTS = r300_compiler_tests
 
 AM_CFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
-	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/mesa/program \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/src/glsl \
 	-I$(top_srcdir)/src/mapi \
@@ -40,5 +40,5 @@ libr300_la_SOURCES = $(C_SOURCES)
 # Solve this by building them into a separate helper library that can be linked
 # in place of libmesagallium.
 libr300_helper_la_SOURCES = \
-	$(top_srcdir)/src/glsl/ralloc.c \
-	$(top_srcdir)/src/mesa/program/register_allocate.c
+	ralloc.c \
+	register_allocate.c
