@@ -140,9 +140,28 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
 	 SO_DECL_REGISTER_INDEX_SHIFT;
       decl |= component_mask << SO_DECL_COMPONENT_MASK_SHIFT;
 
-      /* This assert should be true until GL_ARB_transform_feedback_instanced
-       * is added and we start using the hole flag.
+      /* Mesa doesn't store entries for gl_SkipComponents in the Outputs[]
+       * array.  Instead, it simply increments DstOffset for the following
+       * input by the number of components that should be skipped.
+       *
+       * Our hardware is unusual in that it requires us to program SO_DECLs
+       * for fake "hole" components, rather than simply taking the offset
+       * for each real varying.  Each hole can have size 1, 2, 3, or 4; we
+       * program as many size = 4 holes as we can, then a final hole to
+       * accomodate the final 1, 2, or 3 remaining.
        */
+      int skip_components =
+         linked_xfb_info->Outputs[i].DstOffset - next_offset[buffer];
+
+      next_offset[buffer] += skip_components;
+
+      while (skip_components >= 4) {
+         so_decl[decls++] = SO_DECL_HOLE_FLAG | 0xf;
+         skip_components -= 4;
+      }
+      if (skip_components > 0)
+         so_decl[decls++] = SO_DECL_HOLE_FLAG | ((1 << skip_components) - 1);
+
       assert(linked_xfb_info->Outputs[i].DstOffset == next_offset[buffer]);
 
       next_offset[buffer] += components;
