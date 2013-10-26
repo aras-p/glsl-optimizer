@@ -231,6 +231,7 @@ intelInitExtensions(struct gl_context *ctx)
       if (can_do_pipelined_register_writes(brw)) {
          ctx->Extensions.ARB_transform_feedback2 = true;
          ctx->Extensions.ARB_transform_feedback3 = true;
+         ctx->Extensions.ARB_transform_feedback_instanced = true;
       }
    }
 
