@@ -230,6 +230,7 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_conservative_depth = true;
       if (can_do_pipelined_register_writes(brw)) {
          ctx->Extensions.ARB_transform_feedback2 = true;
+         ctx->Extensions.ARB_transform_feedback3 = true;
       }
    }
 
