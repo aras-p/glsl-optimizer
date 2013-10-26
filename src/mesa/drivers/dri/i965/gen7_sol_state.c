@@ -108,17 +108,17 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
    /* BRW_NEW_TRANSFORM_FEEDBACK */
    const struct gl_transform_feedback_info *linked_xfb_info =
       &vs_prog->LinkedTransformFeedback;
-   int i;
    uint16_t so_decl[128];
    int buffer_mask = 0;
    int next_offset[4] = {0, 0, 0, 0};
+   int decls = 0;
 
    STATIC_ASSERT(ARRAY_SIZE(so_decl) >= MAX_PROGRAM_OUTPUTS);
 
    /* Construct the list of SO_DECLs to be emitted.  The formatting of the
     * command is feels strange -- each dword pair contains a SO_DECL per stream.
     */
-   for (i = 0; i < linked_xfb_info->NumOutputs; i++) {
+   for (int i = 0; i < linked_xfb_info->NumOutputs; i++) {
       int buffer = linked_xfb_info->Outputs[i].OutputBuffer;
       uint16_t decl = 0;
       int varying = linked_xfb_info->Outputs[i].OutputRegister;
@@ -147,24 +147,23 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
 
       next_offset[buffer] += components;
 
-      so_decl[i] = decl;
+      so_decl[decls++] = decl;
    }
 
-   BEGIN_BATCH(linked_xfb_info->NumOutputs * 2 + 3);
-   OUT_BATCH(_3DSTATE_SO_DECL_LIST << 16 |
-	     (linked_xfb_info->NumOutputs * 2 + 1));
+   BEGIN_BATCH(decls * 2 + 3);
+   OUT_BATCH(_3DSTATE_SO_DECL_LIST << 16 | (decls * 2 + 1));
 
    OUT_BATCH((buffer_mask << SO_STREAM_TO_BUFFER_SELECTS_0_SHIFT) |
 	     (0 << SO_STREAM_TO_BUFFER_SELECTS_1_SHIFT) |
 	     (0 << SO_STREAM_TO_BUFFER_SELECTS_2_SHIFT) |
 	     (0 << SO_STREAM_TO_BUFFER_SELECTS_3_SHIFT));
 
-   OUT_BATCH((linked_xfb_info->NumOutputs << SO_NUM_ENTRIES_0_SHIFT) |
+   OUT_BATCH((decls << SO_NUM_ENTRIES_0_SHIFT) |
 	     (0 << SO_NUM_ENTRIES_1_SHIFT) |
 	     (0 << SO_NUM_ENTRIES_2_SHIFT) |
 	     (0 << SO_NUM_ENTRIES_3_SHIFT));
 
-   for (i = 0; i < linked_xfb_info->NumOutputs; i++) {
+   for (int i = 0; i < decls; i++) {
       OUT_BATCH(so_decl[i]);
       OUT_BATCH(0);
    }
