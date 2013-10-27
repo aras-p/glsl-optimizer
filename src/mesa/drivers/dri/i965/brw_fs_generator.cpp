@@ -116,7 +116,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
    brw_set_mask_control(p, BRW_MASK_DISABLE);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
-   if (fp->UsesKill) {
+   if (fp->UsesKill || c->key.alpha_test_func) {
       struct brw_reg pixel_mask;
 
       if (brw->gen >= 6)
