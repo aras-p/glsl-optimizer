@@ -45,9 +45,6 @@ if not env['embedded']:
     if env['dri']:
         SConscript('state_trackers/dri/SConscript')
 
-    if env['dri'] and env['xorg']:
-        SConscript('state_trackers/xorg/SConscript')
-
     if env['platform'] == 'windows':
         SConscript('state_trackers/wgl/SConscript')
 

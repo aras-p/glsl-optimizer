@@ -41,10 +41,6 @@ if HAVE_GALLIUM_GBM
 SUBDIRS += gbm
 endif
 
-if HAVE_ST_XORG
-SUBDIRS += xorg
-endif
-
 if HAVE_ST_XA
 SUBDIRS += xa
 endif
