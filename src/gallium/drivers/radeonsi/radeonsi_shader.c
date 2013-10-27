@@ -1425,7 +1425,7 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
 				struct lp_build_emit_data * emit_data)
 {
 	struct lp_build_context * base = &bld_base->base;
-	char intr_name[23];
+	char intr_name[127];
 
 	sprintf(intr_name, "%sv%ui32", action->intr_name,
 		LLVMGetVectorSize(LLVMTypeOf(emit_data->args[0])));
