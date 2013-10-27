@@ -433,6 +433,18 @@ is_const(struct tgsi_src_register *src)
 			(src->File == TGSI_FILE_IMMEDIATE);
 }
 
+static inline bool
+is_relative(struct tgsi_src_register *src)
+{
+	return src->Indirect;
+}
+
+static inline bool
+is_rel_or_const(struct tgsi_src_register *src)
+{
+	return is_relative(src) || is_const(src);
+}
+
 static type_t
 get_ftype(struct fd3_compile_context *ctx)
 {
@@ -467,7 +479,7 @@ get_unconst(struct fd3_compile_context *ctx, struct tgsi_src_register *src)
 	struct tgsi_dst_register tmp_dst;
 	struct tgsi_src_register *tmp_src;
 
-	compile_assert(ctx, is_const(src));
+	compile_assert(ctx, is_rel_or_const(src));
 
 	tmp_src = get_internal_temp(ctx, &tmp_dst);
 
@@ -845,8 +857,8 @@ trans_dotp(const struct instr_translater *t,
 
 	/* in particular, can't handle const for src1 for cat3/mad:
 	 */
-	if (is_const(src1)) {
-		if (!is_const(src0)) {
+	if (is_rel_or_const(src1)) {
+		if (!is_rel_or_const(src0)) {
 			struct tgsi_src_register *tmp;
 			tmp = src0;
 			src0 = src1;
@@ -1065,7 +1077,8 @@ trans_samp(const struct instr_translater *t,
 	struct tgsi_src_register *samp  = &inst->Src[1].Register;
 	unsigned tex = inst->Texture.Texture;
 	int8_t *order;
-	unsigned i, j, flags = 0;
+	unsigned i, flags = 0;
+	bool needs_mov = false;
 
 	switch (t->arg) {
 	case TGSI_OPCODE_TEX:
@@ -1089,38 +1102,44 @@ trans_samp(const struct instr_translater *t,
 		flags |= IR3_INSTR_3D;
 	}
 
+	/* cat5 instruction cannot seem to handle const or relative: */
+	if (is_rel_or_const(coord))
+		needs_mov = true;
+
 	/* The texture sample instructions need to coord in successive
 	 * registers/components (ie. src.xy but not src.yx).  And TXP
 	 * needs the .w component in .z for 2D..  so in some cases we
 	 * might need to emit some mov instructions to shuffle things
 	 * around:
 	 */
-	for (i = 1; (i < 4) && (order[i] >= 0); i++) {
-		if (src_swiz(coord, i) != (src_swiz(coord, 0) + order[i])) {
-			struct tgsi_dst_register tmp_dst;
-			struct tgsi_src_register *tmp_src;
+	for (i = 1; (i < 4) && (order[i] >= 0) && !needs_mov; i++)
+		if (src_swiz(coord, i) != (src_swiz(coord, 0) + order[i]))
+			needs_mov = true;
 
-			type_t type_mov = get_ftype(ctx);
+	if (needs_mov) {
+		struct tgsi_dst_register tmp_dst;
+		struct tgsi_src_register *tmp_src;
+		unsigned j;
 
-			/* need to move things around: */
-			tmp_src = get_internal_temp(ctx, &tmp_dst);
+		type_t type_mov = get_ftype(ctx);
 
-			for (j = 0; (j < 4) && (order[j] >= 0); j++) {
-				instr = ir3_instr_create(ctx->ir, 1, 0);
-				instr->cat1.src_type = type_mov;
-				instr->cat1.dst_type = type_mov;
-				add_dst_reg(ctx, instr, &tmp_dst, j);
-				add_src_reg(ctx, instr, coord,
-						src_swiz(coord, order[j]));
-			}
+		/* need to move things around: */
+		tmp_src = get_internal_temp(ctx, &tmp_dst);
 
-			coord = tmp_src;
-
-			if (j < 4)
-				ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 4 - j - 1;
-
-			break;
+		for (j = 0; (j < 4) && (order[j] >= 0); j++) {
+			instr = ir3_instr_create(ctx->ir, 1, 0);
+			instr->cat1.src_type = type_mov;
+			instr->cat1.dst_type = type_mov;
+			add_dst_reg(ctx, instr, &tmp_dst, j);
+			add_src_reg(ctx, instr, coord,
+					src_swiz(coord, order[j]));
 		}
+
+		coord = tmp_src;
+
+		if (j < 4)
+			ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 4 - j - 1;
+
 	}
 
 	instr = ir3_instr_create(ctx->ir, 5, t->opc);
@@ -1483,8 +1502,8 @@ instr_cat3(const struct instr_translater *t,
 	/* in particular, can't handle const for src1 for cat3..
 	 * for mad, we can swap first two src's if needed:
 	 */
-	if (is_const(src1)) {
-		if (is_mad(t->opc) && !is_const(src0)) {
+	if (is_rel_or_const(src1)) {
+		if (is_mad(t->opc) && !is_rel_or_const(src0)) {
 			struct tgsi_src_register *tmp;
 			tmp = src0;
 			src0 = src1;
@@ -1568,6 +1587,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(ELSE,         trans_else),
 	INSTR(ENDIF,        trans_endif),
 	INSTR(END,          instr_cat0, .opc = OPC_END),
+	INSTR(KILL,         instr_cat0, .opc = OPC_KILL),
 };
 
 static int
