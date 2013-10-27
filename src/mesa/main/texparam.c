@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/** 
+/**
  * \file texparam.c
  *
  * glTexParameter-related functions
@@ -52,7 +52,7 @@
  * Check if a coordinate wrap mode is supported for the texture target.
  * \return GL_TRUE if legal, GL_FALSE otherwise
  */
-static GLboolean 
+static GLboolean
 validate_texture_wrap_mode(struct gl_context * ctx, GLenum target, GLenum wrap)
 {
    const struct gl_extensions * const e = & ctx->Extensions;
@@ -91,7 +91,7 @@ validate_texture_wrap_mode(struct gl_context * ctx, GLenum target, GLenum wrap)
       break;
 
    case GL_MIRROR_CLAMP_TO_EDGE_EXT:
-      supported = is_desktop_gl 
+      supported = is_desktop_gl
          && (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp || e->ARB_texture_mirror_clamp_to_edge)
          && (target != GL_TEXTURE_RECTANGLE_NV)
          && (target != GL_TEXTURE_EXTERNAL_OES);
@@ -1787,7 +1787,7 @@ _mesa_GetTexParameterIiv(GLenum target, GLenum pname, GLint *params)
    texObj = get_texobj(ctx, target, GL_TRUE);
    if (!texObj)
       return;
-   
+
    switch (pname) {
    case GL_TEXTURE_BORDER_COLOR:
       COPY_4V(params, texObj->Sampler.BorderColor.i);
@@ -1808,7 +1808,7 @@ _mesa_GetTexParameterIuiv(GLenum target, GLenum pname, GLuint *params)
    texObj = get_texobj(ctx, target, GL_TRUE);
    if (!texObj)
       return;
-   
+
    switch (pname) {
    case GL_TEXTURE_BORDER_COLOR:
       COPY_4V(params, texObj->Sampler.BorderColor.i);
@@ -1818,7 +1818,7 @@ _mesa_GetTexParameterIuiv(GLenum target, GLenum pname, GLuint *params)
          GLint ip[4];
          _mesa_GetTexParameteriv(target, pname, ip);
          params[0] = ip[0];
-         if (pname == GL_TEXTURE_SWIZZLE_RGBA_EXT || 
+         if (pname == GL_TEXTURE_SWIZZLE_RGBA_EXT ||
              pname == GL_TEXTURE_CROP_RECT_OES) {
             params[1] = ip[1];
             params[2] = ip[2];
