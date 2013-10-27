@@ -921,6 +921,18 @@ const struct function gl_core_functions_possible[] = {
    { "glEndPerfMonitorAMD", 11, -1 },
    { "glGetPerfMonitorCounterDataAMD", 11, -1 },
 
+   /* GL_NV_vdpau_interop */
+   { "glVDPAUInitNV", 11, -1 },
+   { "glVDPAUFiniNV", 11, -1 },
+   { "glVDPAURegisterVideoSurfaceNV", 11, -1 },
+   { "glVDPAURegisterOutputSurfaceNV", 11, -1 },
+   { "glVDPAUIsSurfaceNV", 11, -1 },
+   { "glVDPAUUnregisterSurfaceNV", 11, -1 },
+   { "glVDPAUGetSurfaceivNV", 11, -1 },
+   { "glVDPAUSurfaceAccessNV", 11, -1 },
+   { "glVDPAUMapSurfacesNV", 11, -1 },
+   { "glVDPAUUnmapSurfacesNV", 11, -1 },
+
    { NULL, 0, -1 }
 };
 
