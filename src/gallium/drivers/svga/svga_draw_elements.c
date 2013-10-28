@@ -36,13 +36,9 @@
 
 
 static enum pipe_error
-translate_indices( struct svga_hwtnl *hwtnl,
-                   struct pipe_resource *src,
-                   unsigned offset,
-                   unsigned nr,
-                   unsigned index_size,
-                   u_translate_func translate,
-                   struct pipe_resource **out_buf )
+translate_indices(struct svga_hwtnl *hwtnl, struct pipe_resource *src,
+                  unsigned offset, unsigned nr, unsigned index_size,
+                  u_translate_func translate, struct pipe_resource **out_buf)
 {
    struct pipe_context *pipe = &hwtnl->svga->pipe;
    struct pipe_transfer *src_transfer = NULL;
@@ -52,58 +48,48 @@ translate_indices( struct svga_hwtnl *hwtnl,
    struct pipe_resource *dst = NULL;
    void *dst_map = NULL;
 
-   dst = pipe_buffer_create( pipe->screen,
-			     PIPE_BIND_INDEX_BUFFER,
-			     PIPE_USAGE_STATIC,
-			     size );
+   dst = pipe_buffer_create(pipe->screen,
+                            PIPE_BIND_INDEX_BUFFER, PIPE_USAGE_STATIC, size);
    if (dst == NULL)
       goto fail;
 
-   src_map = pipe_buffer_map( pipe, src, PIPE_TRANSFER_READ, &src_transfer );
+   src_map = pipe_buffer_map(pipe, src, PIPE_TRANSFER_READ, &src_transfer);
    if (src_map == NULL)
       goto fail;
 
-   dst_map = pipe_buffer_map( pipe, dst, PIPE_TRANSFER_WRITE, &dst_transfer );
+   dst_map = pipe_buffer_map(pipe, dst, PIPE_TRANSFER_WRITE, &dst_transfer);
    if (dst_map == NULL)
       goto fail;
 
-   translate( (const char *)src_map + offset,
-              nr,
-              dst_map );
+   translate((const char *) src_map + offset, nr, dst_map);
 
-   pipe_buffer_unmap( pipe, src_transfer );
-   pipe_buffer_unmap( pipe, dst_transfer );
+   pipe_buffer_unmap(pipe, src_transfer);
+   pipe_buffer_unmap(pipe, dst_transfer);
 
    *out_buf = dst;
    return PIPE_OK;
 
-fail:
+ fail:
    if (src_map)
-      pipe_buffer_unmap( pipe, src_transfer );
+      pipe_buffer_unmap(pipe, src_transfer);
 
    if (dst_map)
-      pipe_buffer_unmap( pipe, dst_transfer );
+      pipe_buffer_unmap(pipe, dst_transfer);
 
    if (dst)
-      pipe->screen->resource_destroy( pipe->screen, dst );
+      pipe->screen->resource_destroy(pipe->screen, dst);
 
    return PIPE_ERROR_OUT_OF_MEMORY;
 }
 
 
-
-
-
 enum pipe_error
-svga_hwtnl_simple_draw_range_elements( struct svga_hwtnl *hwtnl,
-                                       struct pipe_resource *index_buffer,
-                                       unsigned index_size,
-                                       int index_bias,
-                                       unsigned min_index,
-                                       unsigned max_index,
-                                       unsigned prim,
-                                       unsigned start,
-                                       unsigned count )
+svga_hwtnl_simple_draw_range_elements(struct svga_hwtnl *hwtnl,
+                                      struct pipe_resource *index_buffer,
+                                      unsigned index_size, int index_bias,
+                                      unsigned min_index, unsigned max_index,
+                                      unsigned prim, unsigned start,
+                                      unsigned count)
 {
    struct pipe_resource *upload_buffer = NULL;
    SVGA3dPrimitiveRange range;
@@ -129,68 +115,57 @@ svga_hwtnl_simple_draw_range_elements( struct svga_hwtnl *hwtnl,
    range.indexWidth = index_size;
    range.indexBias = index_bias;
 
-   ret = svga_hwtnl_prim( hwtnl, &range, min_index, max_index, index_buffer );
+   ret = svga_hwtnl_prim(hwtnl, &range, min_index, max_index, index_buffer);
    if (ret != PIPE_OK)
       goto done;
 
 done:
    if (upload_buffer)
-      pipe_resource_reference( &upload_buffer, NULL );
+      pipe_resource_reference(&upload_buffer, NULL);
 
    return ret;
 }
 
 
-
-
 enum pipe_error
-svga_hwtnl_draw_range_elements( struct svga_hwtnl *hwtnl,
-                                struct pipe_resource *index_buffer,
-                                unsigned index_size,
-                                int index_bias,
-                                unsigned min_index,
-                                unsigned max_index,
-                                unsigned prim, unsigned start, unsigned count)
+svga_hwtnl_draw_range_elements(struct svga_hwtnl *hwtnl,
+                               struct pipe_resource *index_buffer,
+                               unsigned index_size, int index_bias,
+                               unsigned min_index, unsigned max_index,
+                               unsigned prim, unsigned start, unsigned count)
 {
    unsigned gen_prim, gen_size, gen_nr, gen_type;
    u_translate_func gen_func;
    enum pipe_error ret = PIPE_OK;
 
    if (hwtnl->api_fillmode != PIPE_POLYGON_MODE_FILL &&
-       prim >= PIPE_PRIM_TRIANGLES)
-   {
-      gen_type = u_unfilled_translator( prim,
-                                        index_size,
-                                        count,
-                                        hwtnl->api_fillmode,
-                                        &gen_prim,
-                                        &gen_size,
-                                        &gen_nr,
-                                        &gen_func );
+       prim >= PIPE_PRIM_TRIANGLES) {
+      gen_type = u_unfilled_translator(prim,
+                                       index_size,
+                                       count,
+                                       hwtnl->api_fillmode,
+                                       &gen_prim,
+                                       &gen_size, &gen_nr, &gen_func);
    }
-   else
-   {
-      gen_type = u_index_translator( svga_hw_prims,
-                                     prim,
-                                     index_size,
-                                     count,
-                                     hwtnl->api_pv,
-                                     hwtnl->hw_pv,
-                                     &gen_prim,
-                                     &gen_size,
-                                     &gen_nr,
-                                     &gen_func );
+   else {
+      gen_type = u_index_translator(svga_hw_prims,
+                                    prim,
+                                    index_size,
+                                    count,
+                                    hwtnl->api_pv,
+                                    hwtnl->hw_pv,
+                                    &gen_prim, &gen_size, &gen_nr, &gen_func);
    }
 
    if (gen_type == U_TRANSLATE_MEMCPY) {
       /* No need for translation, just pass through to hardware:
        */
-      return svga_hwtnl_simple_draw_range_elements( hwtnl, index_buffer,
-                                                    index_size,
-                                                    index_bias,
-                                                    min_index,
-                                                    max_index,
-                                                    gen_prim, start, count );
+      return svga_hwtnl_simple_draw_range_elements(hwtnl, index_buffer,
+                                                   index_size,
+                                                   index_bias,
+                                                   min_index,
+                                                   max_index,
+                                                   gen_prim, start, count);
    }
    else {
       struct pipe_resource *gen_buf = NULL;
@@ -202,31 +177,26 @@ svga_hwtnl_draw_range_elements( struct svga_hwtnl *hwtnl,
        * GL though, as index buffers are typically used only once
        * there.
        */
-      ret = translate_indices( hwtnl,
-                               index_buffer,
-                               start * index_size,
-                               gen_nr,
-                               gen_size,
-                               gen_func,
-                               &gen_buf );
+      ret = translate_indices(hwtnl,
+                              index_buffer,
+                              start * index_size,
+                              gen_nr, gen_size, gen_func, &gen_buf);
       if (ret != PIPE_OK)
          goto done;
 
-      ret = svga_hwtnl_simple_draw_range_elements( hwtnl,
-                                                   gen_buf,
-                                                   gen_size,
-                                                   index_bias,
-                                                   min_index,
-                                                   max_index,
-                                                   gen_prim,
-                                                   0,
-                                                   gen_nr );
+      ret = svga_hwtnl_simple_draw_range_elements(hwtnl,
+                                                  gen_buf,
+                                                  gen_size,
+                                                  index_bias,
+                                                  min_index,
+                                                  max_index,
+                                                  gen_prim, 0, gen_nr);
       if (ret != PIPE_OK)
          goto done;
 
-   done:
+done:
       if (gen_buf)
-         pipe_resource_reference( &gen_buf, NULL );
+         pipe_resource_reference(&gen_buf, NULL);
 
       return ret;
    }
