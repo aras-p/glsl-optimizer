@@ -89,6 +89,12 @@ public:
    int child_array_size;
    int unblocked_time;
    int latency;
+
+   /**
+    * This is the sum of the instruction's latency plus the maximum delay of
+    * its children, or just the issue_time if it's a leaf node.
+    */
+   int delay;
 };
 
 void
@@ -365,6 +371,7 @@ public:
 
    void run(exec_list *instructions);
    void add_inst(backend_instruction *inst);
+   void compute_delay(schedule_node *node);
    virtual void calculate_deps() = 0;
    virtual schedule_node *choose_instruction_to_schedule() = 0;
 
@@ -437,6 +444,21 @@ instruction_scheduler::add_inst(backend_instruction *inst)
 
    inst->remove();
    instructions.push_tail(n);
+}
+
+/** Recursive computation of the delay member of a node. */
+void
+instruction_scheduler::compute_delay(schedule_node *n)
+{
+   if (!n->child_count) {
+      n->delay = issue_time(n->inst);
+   } else {
+      for (int i = 0; i < n->child_count; i++) {
+         if (!n->children[i]->delay)
+            compute_delay(n->children[i]);
+         n->delay = MAX2(n->delay, n->latency + n->children[i]->delay);
+      }
+   }
 }
 
 /**
@@ -1118,6 +1140,12 @@ instruction_scheduler::run(exec_list *all_instructions)
 	    break;
       }
       calculate_deps();
+
+      foreach_list(node, &instructions) {
+         schedule_node *n = (schedule_node *)node;
+         compute_delay(n);
+      }
+
       schedule_instructions(next_block_header);
    }
 
