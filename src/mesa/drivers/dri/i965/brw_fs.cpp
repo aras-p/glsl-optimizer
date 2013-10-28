@@ -1897,6 +1897,20 @@ fs_visitor::opt_algebraic()
                   break;
                }
                break;
+            case BRW_CONDITIONAL_GE:
+            case BRW_CONDITIONAL_G:
+               switch (inst->src[1].type) {
+               case BRW_REGISTER_TYPE_F:
+                  if (inst->src[1].imm.f <= 0.0f) {
+                     inst->opcode = BRW_OPCODE_MOV;
+                     inst->src[1] = reg_undef;
+                     inst->conditional_mod = BRW_CONDITIONAL_NONE;
+                     progress = true;
+                  }
+                  break;
+               default:
+                  break;
+               }
             default:
                break;
             }
