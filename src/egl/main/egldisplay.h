@@ -91,6 +91,7 @@ struct _egl_extensions
    EGLBoolean MESA_drm_image;
 
    EGLBoolean WL_bind_wayland_display;
+   EGLBoolean WL_create_wayland_buffer_from_image;
 
    EGLBoolean KHR_image_base;
    EGLBoolean KHR_image_pixmap;

@@ -134,6 +134,16 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYWAYLANDBUFFERWL) (EGLDisplay dpy, st
 
 #endif
 
+#ifndef EGL_WL_create_wayland_buffer_from_image
+#define EGL_WL_create_wayland_buffer_from_image 1
+
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI struct wl_buffer * EGLAPIENTRY eglCreateWaylandBufferFromImageWL(EGLDisplay dpy, EGLImageKHR image);
+#endif
+typedef struct wl_buffer * (EGLAPIENTRYP PFNEGLCREATEWAYLANDBUFFERFROMIMAGEWL) (EGLDisplay dpy, EGLImageKHR image);
+
+#endif
+
 #ifndef EGL_NOK_swap_region
 #define EGL_NOK_swap_region 1
 

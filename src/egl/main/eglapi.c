@@ -973,6 +973,9 @@ eglGetProcAddress(const char *procname)
       { "eglUnbindWaylandDisplayWL", (_EGLProc) eglUnbindWaylandDisplayWL },
       { "eglQueryWaylandBufferWL", (_EGLProc) eglQueryWaylandBufferWL },
 #endif
+#ifdef EGL_WL_create_wayland_buffer_from_image
+      { "eglCreateWaylandBufferFromImageWL", (_EGLProc) eglCreateWaylandBufferFromImageWL },
+#endif
       { "eglPostSubBufferNV", (_EGLProc) eglPostSubBufferNV },
 #ifdef EGL_EXT_swap_buffers_with_damage
       { "eglSwapBuffersWithDamageEXT", (_EGLProc) eglSwapBuffersWithDamageEXT },
@@ -1601,6 +1604,28 @@ eglQueryWaylandBufferWL(EGLDisplay dpy, struct wl_resource *buffer,
 }
 #endif
 
+#ifdef EGL_WL_create_wayland_buffer_from_image
+struct wl_buffer * EGLAPIENTRY
+eglCreateWaylandBufferFromImageWL(EGLDisplay dpy, EGLImageKHR image)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLImage *img;
+   _EGLDriver *drv;
+   struct wl_buffer *ret;
+
+   _EGL_CHECK_DISPLAY(disp, NULL, drv);
+   assert(disp->Extensions.WL_create_wayland_buffer_from_image);
+
+   img = _eglLookupImage(image, disp);
+
+   if (!img)
+      RETURN_EGL_ERROR(disp, EGL_BAD_PARAMETER, NULL);
+
+   ret = drv->API.CreateWaylandBufferFromImageWL(drv, disp, img);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+#endif
 
 EGLBoolean EGLAPIENTRY
 eglPostSubBufferNV(EGLDisplay dpy, EGLSurface surface,

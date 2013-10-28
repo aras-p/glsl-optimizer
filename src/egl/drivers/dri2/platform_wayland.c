@@ -651,6 +651,81 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    return dri2_swap_buffers_with_damage (drv, disp, draw, NULL, 0);
 }
 
+static struct wl_buffer *
+dri2_create_wayland_buffer_from_image_wl(_EGLDriver *drv,
+                                         _EGLDisplay *disp,
+                                         _EGLImage *img)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_image *dri2_img = dri2_egl_image(img);
+   __DRIimage *image = dri2_img->dri_image;
+   struct wl_buffer *buffer;
+   int width, height, format, pitch;
+   enum wl_drm_format wl_format;
+
+   dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_FORMAT, &format);
+
+   switch (format) {
+   case __DRI_IMAGE_FORMAT_ARGB8888:
+      if (!(dri2_dpy->formats & HAS_ARGB8888))
+         goto bad_format;
+      wl_format = WL_DRM_FORMAT_ARGB8888;
+      break;
+   case __DRI_IMAGE_FORMAT_XRGB8888:
+      if (!(dri2_dpy->formats & HAS_XRGB8888))
+         goto bad_format;
+      wl_format = WL_DRM_FORMAT_XRGB8888;
+      break;
+   default:
+      goto bad_format;
+   }
+
+   dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_WIDTH, &width);
+   dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_HEIGHT, &height);
+   dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_STRIDE, &pitch);
+
+   if (dri2_dpy->capabilities & WL_DRM_CAPABILITY_PRIME) {
+      int fd;
+
+      dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_FD, &fd);
+
+      buffer =
+         wl_drm_create_prime_buffer(dri2_dpy->wl_drm,
+                                    fd,
+                                    width, height,
+                                    wl_format,
+                                    0, pitch,
+                                    0, 0,
+                                    0, 0);
+
+      close(fd);
+   } else {
+      int name;
+
+      dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_NAME, &name);
+
+      buffer =
+         wl_drm_create_buffer(dri2_dpy->wl_drm,
+                              name,
+                              width, height,
+                              pitch,
+                              wl_format);
+   }
+
+   /* The buffer object will have been created with our internal event queue
+    * because it is using the wl_drm object as a proxy factory. We want the
+    * buffer to be used by the application so we'll reset it to the display's
+    * default event queue */
+   if (buffer)
+      wl_proxy_set_queue((struct wl_proxy *) buffer, NULL);
+
+   return buffer;
+
+bad_format:
+   _eglError(EGL_BAD_MATCH, "unsupported image format");
+   return NULL;
+}
+
 static int
 dri2_wayland_authenticate(_EGLDisplay *disp, uint32_t id)
 {
@@ -812,6 +887,8 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.SwapBuffersWithDamageEXT = dri2_swap_buffers_with_damage;
    drv->API.Terminate = dri2_terminate;
    drv->API.QueryBufferAge = dri2_query_buffer_age;
+   drv->API.CreateWaylandBufferFromImageWL =
+      dri2_create_wayland_buffer_from_image_wl;
 
    dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)
@@ -892,6 +969,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    }
 
    disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
+   disp->Extensions.WL_create_wayland_buffer_from_image = EGL_TRUE;
    disp->Extensions.EXT_buffer_age = EGL_TRUE;
    dri2_dpy->authenticate = dri2_wayland_authenticate;
 
