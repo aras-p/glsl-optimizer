@@ -308,84 +308,6 @@ ilo_bind_sampler_states(struct pipe_context *pipe, unsigned shader,
 }
 
 static void
-ilo_bind_fragment_sampler_states(struct pipe_context *pipe,
-                                 unsigned num_samplers,
-                                 void **samplers)
-{
-   struct ilo_context *ilo = ilo_context(pipe);
-
-   ilo_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT,
-         0, num_samplers, samplers);
-
-   if (ilo->sampler[PIPE_SHADER_FRAGMENT].count > num_samplers) {
-      ilo_bind_sampler_states(pipe, PIPE_SHADER_FRAGMENT, num_samplers,
-            ilo->sampler[PIPE_SHADER_FRAGMENT].count - num_samplers, NULL);
-   }
-}
-
-static void
-ilo_bind_vertex_sampler_states(struct pipe_context *pipe,
-                               unsigned num_samplers,
-                               void **samplers)
-{
-   struct ilo_context *ilo = ilo_context(pipe);
-
-   ilo_bind_sampler_states(pipe, PIPE_SHADER_VERTEX,
-         0, num_samplers, samplers);
-
-   if (ilo->sampler[PIPE_SHADER_VERTEX].count > num_samplers) {
-      ilo_bind_sampler_states(pipe, PIPE_SHADER_VERTEX, num_samplers,
-            ilo->sampler[PIPE_SHADER_VERTEX].count - num_samplers, NULL);
-   }
-}
-
-static void
-ilo_bind_geometry_sampler_states(struct pipe_context *pipe,
-                                 unsigned num_samplers,
-                                 void **samplers)
-{
-   struct ilo_context *ilo = ilo_context(pipe);
-
-   ilo_bind_sampler_states(pipe, PIPE_SHADER_GEOMETRY,
-            0, num_samplers, samplers);
-
-   if (ilo->sampler[PIPE_SHADER_GEOMETRY].count > num_samplers) {
-      ilo_bind_sampler_states(pipe, PIPE_SHADER_GEOMETRY, num_samplers,
-            ilo->sampler[PIPE_SHADER_GEOMETRY].count - num_samplers, NULL);
-   }
-}
-
-static void
-ilo_bind_compute_sampler_states(struct pipe_context *pipe,
-                                unsigned start_slot,
-                                unsigned num_samplers,
-                                void **samplers)
-{
-   ilo_bind_sampler_states(pipe, PIPE_SHADER_COMPUTE,
-            start_slot, num_samplers, samplers);
-}
-
-static void
-ilo_bind_sampler_states2(struct pipe_context *pipe, unsigned shader,
-                         unsigned start, unsigned count, void **samplers)
-{
-   switch (shader) {
-   case PIPE_SHADER_VERTEX:
-      ilo_bind_vertex_sampler_states(pipe, count, samplers);
-      break;
-   case PIPE_SHADER_GEOMETRY:
-      ilo_bind_geometry_sampler_states(pipe, count, samplers);
-      break;
-   case PIPE_SHADER_FRAGMENT:
-      ilo_bind_fragment_sampler_states(pipe, count, samplers);
-      break;
-   case PIPE_SHADER_COMPUTE:
-      ilo_bind_compute_sampler_states(pipe, start, count, samplers);
-      break;
-   }
-}
-
-static void
 ilo_delete_sampler_state(struct pipe_context *pipe, void *state)
 {
    FREE(state);
@@ -826,93 +748,22 @@ ilo_set_sampler_views(struct pipe_context *pipe, unsigned shader,
 
       dst->count = count;
    }
-}
 
-static void
-ilo_set_fragment_sampler_views(struct pipe_context *pipe,
-                               unsigned num_views,
-                               struct pipe_sampler_view **views)
-{
-   struct ilo_context *ilo = ilo_context(pipe);
-
-   ilo_set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, 0, num_views, views);
-
-   if (ilo->view[PIPE_SHADER_FRAGMENT].count > num_views) {
-      ilo_set_sampler_views(pipe, PIPE_SHADER_FRAGMENT, num_views,
-            ilo->view[PIPE_SHADER_FRAGMENT].count - num_views, NULL);
-   }
-
-   ilo->dirty |= ILO_DIRTY_VIEW_FS;
-}
-
-static void
-ilo_set_vertex_sampler_views(struct pipe_context *pipe,
-                             unsigned num_views,
-                             struct pipe_sampler_view **views)
-{
-   struct ilo_context *ilo = ilo_context(pipe);
-
-   ilo_set_sampler_views(pipe, PIPE_SHADER_VERTEX, 0, num_views, views);
-
-   if (ilo->view[PIPE_SHADER_VERTEX].count > num_views) {
-      ilo_set_sampler_views(pipe, PIPE_SHADER_VERTEX, num_views,
-            ilo->view[PIPE_SHADER_VERTEX].count - num_views, NULL);
-   }
-
-   ilo->dirty |= ILO_DIRTY_VIEW_VS;
-}
-
-static void
-ilo_set_geometry_sampler_views(struct pipe_context *pipe,
-                               unsigned num_views,
-                               struct pipe_sampler_view **views)
-{
-   struct ilo_context *ilo = ilo_context(pipe);
-
-   ilo_set_sampler_views(pipe, PIPE_SHADER_GEOMETRY, 0, num_views, views);
-
-   if (ilo->view[PIPE_SHADER_GEOMETRY].count > num_views) {
-      ilo_set_sampler_views(pipe, PIPE_SHADER_GEOMETRY, num_views,
-            ilo->view[PIPE_SHADER_GEOMETRY].count - num_views, NULL);
-   }
-
-   ilo->dirty |= ILO_DIRTY_VIEW_GS;
-}
-
-static void
-ilo_set_compute_sampler_views(struct pipe_context *pipe,
-                              unsigned start_slot, unsigned num_views,
-                              struct pipe_sampler_view **views)
-{
-   struct ilo_context *ilo = ilo_context(pipe);
-
-   ilo_set_sampler_views(pipe, PIPE_SHADER_COMPUTE,
-         start_slot, num_views, views);
-
-   ilo->dirty |= ILO_DIRTY_VIEW_CS;
-}
-
-static void
-ilo_set_sampler_views2(struct pipe_context *pipe, unsigned shader,
-                       unsigned start_slot, unsigned num_views,
-                       struct pipe_sampler_view **views)
-{
    switch (shader) {
    case PIPE_SHADER_VERTEX:
-      ilo_set_vertex_sampler_views(pipe, num_views, views);
+      ilo->dirty |= ILO_DIRTY_VIEW_VS;
       break;
    case PIPE_SHADER_GEOMETRY:
-      ilo_set_geometry_sampler_views(pipe, num_views, views);
+      ilo->dirty |= ILO_DIRTY_VIEW_GS;
       break;
    case PIPE_SHADER_FRAGMENT:
-      ilo_set_fragment_sampler_views(pipe, num_views, views);
+      ilo->dirty |= ILO_DIRTY_VIEW_FS;
       break;
    case PIPE_SHADER_COMPUTE:
-      ilo_set_compute_sampler_views(pipe, start_slot, num_views, views);
+      ilo->dirty |= ILO_DIRTY_VIEW_CS;
       break;
    }
 }
-
 
 static void
 ilo_set_shader_resources(struct pipe_context *pipe,
@@ -1281,7 +1132,7 @@ ilo_init_state_functions(struct ilo_context *ilo)
    ilo->base.bind_blend_state = ilo_bind_blend_state;
    ilo->base.delete_blend_state = ilo_delete_blend_state;
    ilo->base.create_sampler_state = ilo_create_sampler_state;
-   ilo->base.bind_sampler_states = ilo_bind_sampler_states2;
+   ilo->base.bind_sampler_states = ilo_bind_sampler_states;
    ilo->base.delete_sampler_state = ilo_delete_sampler_state;
    ilo->base.create_rasterizer_state = ilo_create_rasterizer_state;
    ilo->base.bind_rasterizer_state = ilo_bind_rasterizer_state;
@@ -1311,7 +1162,7 @@ ilo_init_state_functions(struct ilo_context *ilo)
    ilo->base.set_polygon_stipple = ilo_set_polygon_stipple;
    ilo->base.set_scissor_states = ilo_set_scissor_states;
    ilo->base.set_viewport_states = ilo_set_viewport_states;
-   ilo->base.set_sampler_views = ilo_set_sampler_views2;
+   ilo->base.set_sampler_views = ilo_set_sampler_views;
    ilo->base.set_shader_resources = ilo_set_shader_resources;
    ilo->base.set_vertex_buffers = ilo_set_vertex_buffers;
    ilo->base.set_index_buffer = ilo_set_index_buffer;

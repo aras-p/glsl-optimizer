@@ -589,6 +589,7 @@ ilo_translate_color_format(enum pipe_format format)
       [PIPE_FORMAT_R16A16_SINT]           = 0,
       [PIPE_FORMAT_R32A32_UINT]           = 0,
       [PIPE_FORMAT_R32A32_SINT]           = 0,
+      [PIPE_FORMAT_R10G10B10A2_UINT]      = BRW_SURFACEFORMAT_R10G10B10A2_UINT,
    };
    int sfmt = format_mapping[format];
 

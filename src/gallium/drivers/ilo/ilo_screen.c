@@ -286,7 +286,6 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
 
    switch (param) {
    case PIPE_CAP_NPOT_TEXTURES:
-   case PIPE_CAP_MIXED_FRAMEBUFFER_SIZES:
    case PIPE_CAP_TWO_SIDED_STENCIL:
       return true;
    case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
@@ -428,6 +427,8 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return ILO_MAX_VIEWPORTS;
    case PIPE_CAP_ENDIANNESS:
       return PIPE_ENDIAN_LITTLE;
+   case PIPE_CAP_MIXED_FRAMEBUFFER_SIZES:
+      return true;
 
    default:
       return 0;
