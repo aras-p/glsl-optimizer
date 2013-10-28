@@ -1872,6 +1872,14 @@ fs_visitor::opt_algebraic()
             break;
          }
          break;
+      case BRW_OPCODE_OR:
+         if (inst->src[0].equals(inst->src[1])) {
+            inst->opcode = BRW_OPCODE_MOV;
+            inst->src[1] = reg_undef;
+            progress = true;
+            break;
+         }
+         break;
       default:
 	 break;
       }
