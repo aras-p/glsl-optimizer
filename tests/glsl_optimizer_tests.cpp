@@ -3,6 +3,8 @@
 #include <time.h>
 #include "../src/glsl/glsl_optimizer.h"
 
+#define GL_GLEXT_PROTOTYPES 1
+
 #if __linux__
 #define GOT_GFX 0
 #else
