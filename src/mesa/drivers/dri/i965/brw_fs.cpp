@@ -1880,6 +1880,28 @@ fs_visitor::opt_algebraic()
             break;
          }
          break;
+      case BRW_OPCODE_SEL:
+         if (inst->saturate && inst->src[1].file == IMM) {
+            switch (inst->conditional_mod) {
+            case BRW_CONDITIONAL_LE:
+            case BRW_CONDITIONAL_L:
+               switch (inst->src[1].type) {
+               case BRW_REGISTER_TYPE_F:
+                  if (inst->src[1].imm.f >= 1.0f) {
+                     inst->opcode = BRW_OPCODE_MOV;
+                     inst->src[1] = reg_undef;
+                     progress = true;
+                  }
+                  break;
+               default:
+                  break;
+               }
+               break;
+            default:
+               break;
+            }
+         }
+         break;
       default:
 	 break;
       }
