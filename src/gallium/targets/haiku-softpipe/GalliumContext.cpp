@@ -73,10 +73,11 @@ hgl_fill_st_visual(gl_config* glVisual)
 	// Determine color format
 	if (glVisual->redBits == 8) {
 		if (glVisual->alphaBits == 8)
-			stVisual->color_format = PIPE_FORMAT_B8G8R8A8_UNORM;
+			stVisual->color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
 		else
-			stVisual->color_format = PIPE_FORMAT_B8G8R8X8_UNORM;
+			stVisual->color_format = PIPE_FORMAT_X8R8G8B8_UNORM;
 	} else {
+		// TODO: I think this should be RGB vs BGR
 		stVisual->color_format = PIPE_FORMAT_B5G6R5_UNORM;
 	}
 
@@ -91,11 +92,9 @@ hgl_fill_st_visual(gl_config* glVisual)
 			break;
 		case 24:
 			if (glVisual->stencilBits == 0) {
-				stVisual->depth_stencil_format = PIPE_FORMAT_Z24X8_UNORM;
-				// or PIPE_FORMAT_X8Z24_UNORM?
+				stVisual->depth_stencil_format = PIPE_FORMAT_X8Z24_UNORM;
 			} else {
-				stVisual->depth_stencil_format = PIPE_FORMAT_Z24_UNORM_S8_UINT;
-				// or PIPE_FORMAT_S8_UINT_Z24_UNORM?
+				stVisual->depth_stencil_format = PIPE_FORMAT_S8_UINT_Z24_UNORM;
 			}
 			break;
 		case 32:
@@ -123,13 +122,6 @@ hgl_fill_st_visual(gl_config* glVisual)
 		stVisual->buffer_mask |= ST_ATTACHMENT_DEPTH_STENCIL_MASK;
 
 	return stVisual;
-}
-
-
-static INLINE unsigned
-round_up(unsigned n, unsigned multiple)
-{
-	return (n + multiple - 1) & ~(multiple - 1);
 }
 
 
@@ -253,10 +245,10 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 	const GLboolean stereoFlag	= false;
 	const GLint depth			= (fOptions & BGL_DEPTH) ? 24 : 0;
 	const GLint stencil			= (fOptions & BGL_STENCIL) ? 8 : 0;
-	const GLint accum			= 0;		// (options & BGL_ACCUM) ? 16 : 0;
-	const GLint red				= rgbFlag ? 8 : 0;
-	const GLint green			= rgbFlag ? 8 : 0;
-	const GLint blue			= rgbFlag ? 8 : 0;
+	const GLint accum			= (fOptions & BGL_ACCUM) ? 16 : 0;
+	const GLint red				= rgbFlag ? 8 : 5;
+	const GLint green			= rgbFlag ? 8 : 5;
+	const GLint blue			= rgbFlag ? 8 : 5;
 	const GLint alpha			= alphaFlag ? 8 : 0;
 
 	TRACE("rgb      :\t%d\n", (bool)rgbFlag);
@@ -521,3 +513,4 @@ GalliumContext::SwapBuffers(context_id contextID)
 
 	return B_OK;
 }
+/* vim: set tabstop=4: */

@@ -116,9 +116,7 @@ SoftwareRenderer::LockGL()
 	BAutolock lock(fInfoLocker);
 	if (fDirectModeEnabled && fInfo != NULL) {
 		fNewWidth = fInfo->window_bounds.right - fInfo->window_bounds.left;
-			// + 1;
 		fNewHeight = fInfo->window_bounds.bottom - fInfo->window_bounds.top;
-			// + 1;
 	}
 
 	if (fBitmap && cs == fColorSpace && fNewWidth == fWidth
@@ -179,8 +177,10 @@ SoftwareRenderer::SwapBuffers(bool vsync)
 		ERROR("%s: Bitmap size doesn't match size!\n", __func__);
 		return;
 	}
-	uint8 bytesPerPixel = fInfo->bits_per_pixel / 8;
+
 	uint32 bytesPerRow = fBitmap->BytesPerRow();
+	uint8 bytesPerPixel = bytesPerRow / fBitmap->Bounds().IntegerWidth();
+
 	for (uint32 i = 0; i < fInfo->clip_list_count; i++) {
 		clipping_rect *clip = &fInfo->clip_list[i];
 		int32 height = clip->bottom - clip->top + 1;
