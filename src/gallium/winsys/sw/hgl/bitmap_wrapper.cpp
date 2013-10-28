@@ -77,10 +77,22 @@ void
 copy_bitmap_bits(const Bitmap* bitmap, void* data, int32 length)
 {
 	BBitmap *bb = (BBitmap*)bitmap;
-	if (bb) {
-		color_space cs = bb->ColorSpace();
-		bb->ImportBits(data, length, bb->BytesPerRow(), 0, cs);
-	}
+
+	// We assume the data is 1:1 the format of the bitmap
+	if (bb)
+		bb->ImportBits(data, length, bb->BytesPerRow(), 0, bb->ColorSpace());
+}
+
+
+void
+import_bitmap_bits(const Bitmap* bitmap, void* data, int32 length,
+	unsigned srcStride, color_space srcColorSpace)
+{
+	BBitmap *bb = (BBitmap*)bitmap;
+
+	// Import image and adjust image format from source to dest
+	if (bb)
+		bb->ImportBits(data, length, srcStride, 0, srcColorSpace);
 }
 
 

@@ -40,14 +40,17 @@ extern "C" {
 
 
 Bitmap* create_bitmap(int32 width, int32 height, color_space colorSpace);
+void delete_bitmap(Bitmap* bitmap);
+
 void copy_bitmap_bits(const Bitmap* bitmap, void* data, int32 length);
+void import_bitmap_bits(const Bitmap* bitmap, void* data, int32 length,
+	unsigned srcStride, color_space srcColorSpace);
 
 void get_bitmap_size(const Bitmap* bitmap, int32* width, int32* height);
 color_space get_bitmap_color_space(const Bitmap* bitmap);
 int32 get_bitmap_bytes_per_row(const Bitmap* bitmap);
 int32 get_bitmap_bits_length(const Bitmap* bitmap);
 
-void delete_bitmap(Bitmap* bitmap);
 void dump_bitmap(const Bitmap* bitmap);
 
 

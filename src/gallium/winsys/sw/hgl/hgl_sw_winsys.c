@@ -34,7 +34,6 @@
 #include "util/u_memory.h"
 
 #include "hgl_sw_winsys.h"
-#include "bitmap_wrapper.h"
 
 
 // Cast
@@ -60,6 +59,19 @@ hgl_winsys_is_displaytarget_format_supported(struct sw_winsys* winsys,
 	return true;
 }
 
+static color_space
+hgl_winsys_convert_cs(enum pipe_format format)
+{
+	// TODO: B_RGB24, B_RGB16, B_RGB15?
+	switch(format) {
+		case PIPE_FORMAT_B5G6R5_UNORM:
+			return B_CMAP8;
+		case PIPE_FORMAT_A8R8G8B8_UNORM:
+		case PIPE_FORMAT_X8R8G8B8_UNORM:
+		default:
+			return B_RGB32;
+	}
+}
 
 static struct sw_displaytarget*
 hgl_winsys_displaytarget_create(struct sw_winsys* winsys,
@@ -70,6 +82,7 @@ hgl_winsys_displaytarget_create(struct sw_winsys* winsys,
 		= CALLOC_STRUCT(haiku_displaytarget);
 	assert(haikuDisplayTarget);
 
+	haikuDisplayTarget->colorSpace = hgl_winsys_convert_cs(format);
 	haikuDisplayTarget->format = format;
 	haikuDisplayTarget->width = width;
 	haikuDisplayTarget->height = height;
@@ -156,8 +169,9 @@ hgl_winsys_displaytarget_display(struct sw_winsys* winsys,
 	struct haiku_displaytarget* haikuDisplayTarget
 		= hgl_sw_displaytarget(displayTarget);
 
-	copy_bitmap_bits(bitmap, haikuDisplayTarget->data,
-		haikuDisplayTarget->size);
+	import_bitmap_bits(bitmap, haikuDisplayTarget->data,
+		haikuDisplayTarget->size, haikuDisplayTarget->stride,
+		haikuDisplayTarget->colorSpace);
 
 	return;
 }
