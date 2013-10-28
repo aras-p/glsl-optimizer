@@ -210,7 +210,7 @@ brw_blorp_exec(struct brw_context *brw, const brw_blorp_params *params)
    intel_batchbuffer_emit_mi_flush(brw);
 
 retry:
-   intel_batchbuffer_require_space(brw, estimated_max_batch_usage, false);
+   intel_batchbuffer_require_space(brw, estimated_max_batch_usage, RENDER_RING);
    intel_batchbuffer_save_state(brw);
    drm_intel_bo *saved_bo = brw->batch.bo;
    uint32_t saved_used = brw->batch.used;

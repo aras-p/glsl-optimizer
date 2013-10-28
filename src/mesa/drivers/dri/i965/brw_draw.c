@@ -392,7 +392,7 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
        * we've got validated state that needs to be in the same batch as the
        * primitives.
        */
-      intel_batchbuffer_require_space(brw, estimated_max_prim_size, false);
+      intel_batchbuffer_require_space(brw, estimated_max_prim_size, RENDER_RING);
       intel_batchbuffer_save_state(brw);
 
       if (brw->num_instances != prims[i].num_instances) {

@@ -312,7 +312,7 @@ intelEmitCopyBlit(struct brw_context *brw,
    if (pass >= 2)
       return false;
 
-   intel_batchbuffer_require_space(brw, 8 * 4, true);
+   intel_batchbuffer_require_space(brw, 8 * 4, BLT_RING);
    DBG("%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__,
        src_buffer, src_pitch, src_offset, src_x, src_y,
@@ -427,7 +427,7 @@ intelEmitImmediateColorExpandBlit(struct brw_context *brw,
        __FUNCTION__,
        dst_buffer, dst_pitch, dst_offset, x, y, w, h, src_size, dwords);
 
-   intel_batchbuffer_require_space(brw, (8 * 4) + (3 * 4) + dwords * 4, true);
+   intel_batchbuffer_require_space(brw, (8 * 4) + (3 * 4) + dwords * 4, BLT_RING);
 
    opcode = XY_SETUP_BLT_CMD;
    if (cpp == 4)
@@ -461,7 +461,7 @@ intelEmitImmediateColorExpandBlit(struct brw_context *brw,
    OUT_BATCH(((y + h) << 16) | (x + w));
    ADVANCE_BATCH();
 
-   intel_batchbuffer_data(brw, src_bits, dwords * 4, true);
+   intel_batchbuffer_data(brw, src_bits, dwords * 4, BLT_RING);
 
    intel_batchbuffer_emit_mi_flush(brw);
 

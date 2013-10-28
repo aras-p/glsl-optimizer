@@ -861,6 +861,11 @@ struct intel_sync_object {
    drm_intel_bo *bo;
 };
 
+enum brw_gpu_ring {
+   RENDER_RING,
+   BLT_RING,
+};
+
 struct intel_batchbuffer {
    /** Current batchbuffer being queued up. */
    drm_intel_bo *bo;
@@ -879,7 +884,7 @@ struct intel_batchbuffer {
 #define BATCH_SZ (8192*sizeof(uint32_t))
 
    uint32_t state_batch_offset;
-   bool is_blit;
+   enum brw_gpu_ring ring;
    bool needs_sol_reset;
 
    struct {

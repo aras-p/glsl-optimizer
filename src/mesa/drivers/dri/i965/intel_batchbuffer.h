@@ -43,7 +43,8 @@ int _intel_batchbuffer_flush(struct brw_context *brw,
  * intel_buffer_dword() calls.
  */
 void intel_batchbuffer_data(struct brw_context *brw,
-                            const void *data, GLuint bytes, bool is_blit);
+                            const void *data, GLuint bytes,
+                            enum brw_gpu_ring ring);
 
 bool intel_batchbuffer_emit_reloc(struct brw_context *brw,
                                        drm_intel_bo *buffer,
@@ -101,14 +102,15 @@ intel_batchbuffer_emit_float(struct brw_context *brw, float f)
 }
 
 static INLINE void
-intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz, int is_blit)
+intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz,
+                                enum brw_gpu_ring ring)
 {
-   if (brw->gen >= 6 &&
-       brw->batch.is_blit != is_blit && brw->batch.used) {
+   /* If we're switching rings, implicitly flush the batch. */
+   if (unlikely(ring != brw->batch.ring) && brw->batch.used && brw->gen >= 6) {
       intel_batchbuffer_flush(brw);
    }
 
-   brw->batch.is_blit = is_blit;
+   brw->batch.ring = ring;
 
 #ifdef DEBUG
    assert(sz < BATCH_SZ - BATCH_RESERVED);
@@ -118,9 +120,9 @@ intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz, int is_blit)
 }
 
 static INLINE void
-intel_batchbuffer_begin(struct brw_context *brw, int n, bool is_blit)
+intel_batchbuffer_begin(struct brw_context *brw, int n, enum brw_gpu_ring ring)
 {
-   intel_batchbuffer_require_space(brw, n * 4, is_blit);
+   intel_batchbuffer_require_space(brw, n * 4, ring);
 
    brw->batch.emit = brw->batch.used;
 #ifdef DEBUG
@@ -146,8 +148,8 @@ intel_batchbuffer_advance(struct brw_context *brw)
 
 void intel_batchbuffer_cached_advance(struct brw_context *brw);
 
-#define BEGIN_BATCH(n) intel_batchbuffer_begin(brw, n, false)
-#define BEGIN_BATCH_BLT(n) intel_batchbuffer_begin(brw, n, true)
+#define BEGIN_BATCH(n) intel_batchbuffer_begin(brw, n, RENDER_RING)
+#define BEGIN_BATCH_BLT(n) intel_batchbuffer_begin(brw, n, BLT_RING)
 #define OUT_BATCH(d) intel_batchbuffer_emit_dword(brw, d)
 #define OUT_BATCH_F(f) intel_batchbuffer_emit_float(brw, f)
 #define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\

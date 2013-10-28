@@ -260,19 +260,18 @@ do_flush_locked(struct brw_context *brw)
    if (!brw->intelScreen->no_hw) {
       int flags;
 
-      if (brw->gen < 6 || !batch->is_blit) {
-	 flags = I915_EXEC_RENDER;
+      if (brw->gen >= 6 && batch->ring == BLT_RING) {
+         flags = I915_EXEC_BLT;
       } else {
-	 flags = I915_EXEC_BLT;
+         flags = I915_EXEC_RENDER;
       }
-
       if (batch->needs_sol_reset)
 	 flags |= I915_EXEC_GEN7_SOL_RESET;
 
       if (ret == 0) {
          if (unlikely(INTEL_DEBUG & DEBUG_AUB))
             brw_annotate_aub(brw);
-	 if (brw->hw_ctx == NULL || batch->is_blit) {
+	 if (brw->hw_ctx == NULL || batch->ring != RENDER_RING) {
 	    ret = drm_intel_bo_mrb_exec(batch->bo, 4 * batch->used, NULL, 0, 0,
 					flags);
 	 } else {
@@ -401,10 +400,10 @@ intel_batchbuffer_emit_reloc_fenced(struct brw_context *brw,
 
 void
 intel_batchbuffer_data(struct brw_context *brw,
-                       const void *data, GLuint bytes, bool is_blit)
+                       const void *data, GLuint bytes, enum brw_gpu_ring ring)
 {
    assert((bytes & 3) == 0);
-   intel_batchbuffer_require_space(brw, bytes, is_blit);
+   intel_batchbuffer_require_space(brw, bytes, ring);
    __memcpy(brw->batch.map + brw->batch.used, data, bytes);
    brw->batch.used += bytes >> 2;
 }
@@ -613,7 +612,7 @@ void
 intel_batchbuffer_emit_mi_flush(struct brw_context *brw)
 {
    if (brw->gen >= 6) {
-      if (brw->batch.is_blit) {
+      if (brw->batch.ring == BLT_RING) {
 	 BEGIN_BATCH_BLT(4);
 	 OUT_BATCH(MI_FLUSH_DW);
 	 OUT_BATCH(0);
