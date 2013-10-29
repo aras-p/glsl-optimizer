@@ -320,14 +320,18 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
 	}
 
 	if (rctx->b.chip_class >= CIK) {
+		struct si_state_rasterizer *rs = rctx->queued.named.rasterizer;
 		bool wd_switch_on_eop = prim == V_008958_DI_PT_POLYGON ||
 					prim == V_008958_DI_PT_LINELOOP ||
 					prim == V_008958_DI_PT_TRIFAN ||
 					prim == V_008958_DI_PT_TRISTRIP_ADJ ||
-					info->primitive_restart;
+					info->primitive_restart ||
+					(rs ? rs->line_stipple_enable : false);
+		/* If the WD switch is false, the IA switch must be false too. */
+		bool ia_switch_on_eop = wd_switch_on_eop;
 
 		si_pm4_set_reg(pm4, R_028AA8_IA_MULTI_VGT_PARAM,
-			       S_028AA8_SWITCH_ON_EOP(1) |
+			       S_028AA8_SWITCH_ON_EOP(ia_switch_on_eop) |
 			       S_028AA8_PARTIAL_VS_WAVE_ON(1) |
 			       S_028AA8_PRIMGROUP_SIZE(63) |
 			       S_028AA8_WD_SWITCH_ON_EOP(wd_switch_on_eop));

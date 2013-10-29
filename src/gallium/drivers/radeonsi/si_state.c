@@ -525,6 +525,7 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 	rs->two_side = state->light_twoside;
 	rs->multisample_enable = state->multisample;
 	rs->clip_plane_enable = state->clip_plane_enable;
+	rs->line_stipple_enable = state->line_stipple_enable;
 
 	polygon_dual_mode = (state->fill_front != PIPE_POLYGON_MODE_FILL ||
 				state->fill_back != PIPE_POLYGON_MODE_FILL);
