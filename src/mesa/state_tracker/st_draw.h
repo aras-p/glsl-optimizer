@@ -77,7 +77,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
 static INLINE unsigned
 pointer_to_offset(const void *ptr)
 {
-   return (unsigned) (((unsigned long) ptr) & 0xffffffffUL);
+   return (unsigned) (((GLsizeiptr) ptr) & 0xffffffffUL);
 }
 
 
