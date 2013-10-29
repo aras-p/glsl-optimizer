@@ -88,9 +88,11 @@ public:
     */
    int reg;
    /**
-    * For virtual registers, this is a hardware register offset from
-    * the start of the register block (for example, a constant index
-    * in an array access).
+    * Offset from the start of the contiguous register block.
+    *
+    * For pre-register-allocation GRFs, this is in units of a float per pixel
+    * (1 hardware register for SIMD8 mode, or 2 registers for SIMD16 mode).
+    * For uniforms, this is in units of 1 float.
     */
    int reg_offset;
    /** Register type.  BRW_REGISTER_TYPE_* */
