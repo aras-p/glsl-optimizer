@@ -24,6 +24,7 @@ extern "C" {
 
 struct intel_batchbuffer;
 
+void intel_batchbuffer_emit_render_ring_prelude(struct brw_context *brw);
 void intel_batchbuffer_init(struct brw_context *brw);
 void intel_batchbuffer_free(struct brw_context *brw);
 void intel_batchbuffer_save_state(struct brw_context *brw);
@@ -118,10 +119,14 @@ intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz,
    if (intel_batchbuffer_space(brw) < sz)
       intel_batchbuffer_flush(brw);
 
+   enum brw_gpu_ring prev_ring = brw->batch.ring;
    /* The intel_batchbuffer_flush() calls above might have changed
     * brw->batch.ring to UNKNOWN_RING, so we need to set it here at the end.
     */
    brw->batch.ring = ring;
+
+   if (unlikely(prev_ring == UNKNOWN_RING && ring == RENDER_RING))
+      intel_batchbuffer_emit_render_ring_prelude(brw);
 }
 
 static INLINE void

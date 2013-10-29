@@ -179,6 +179,11 @@ do_batch_dump(struct brw_context *brw)
    }
 }
 
+void
+intel_batchbuffer_emit_render_ring_prelude(struct brw_context *brw)
+{
+}
+
 /**
  * Called when starting a new batch buffer.
  */
