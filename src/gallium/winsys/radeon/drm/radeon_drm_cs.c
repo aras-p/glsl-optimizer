@@ -491,8 +491,13 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags, ui
 				    OUT_CS(&cs->base, 0xffff1000); /* type3 nop packet */
 		    }
 	    } else {
-		    while (rcs->cdw & 7)
-			    OUT_CS(&cs->base, 0x80000000); /* type2 nop packet */
+		    if (cs->ws->info.chip_class <= SI) {
+			    while (rcs->cdw & 7)
+				    OUT_CS(&cs->base, 0x80000000); /* type2 nop packet */
+		    } else {
+			    while (rcs->cdw & 7)
+				    OUT_CS(&cs->base, 0xffff1000); /* type3 nop packet */
+		    }
 	    }
 	    break;
     case RING_UVD:
