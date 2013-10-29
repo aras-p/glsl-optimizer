@@ -25,6 +25,7 @@ include $(top_srcdir)/src/gallium/Automake.inc
 AM_CFLAGS = \
 	$(GALLIUM_CFLAGS) \
 	$(PTHREAD_CFLAGS) \
+	$(EXPAT_CFLAGS) \
 	$(LIBDRM_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
 AM_CPPFLAGS = \

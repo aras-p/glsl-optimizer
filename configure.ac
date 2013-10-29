@@ -1005,21 +1005,9 @@ if test "x$enable_dri" = xyes; then
     DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
 
     # Check for expat
-    EXPAT_INCLUDES=""
-    EXPAT_LIB=-lexpat
-    AC_ARG_WITH([expat],
-        [AS_HELP_STRING([--with-expat=DIR],
-            [expat install directory])],[
-        EXPAT_INCLUDES="-I$withval/include"
-        CPPFLAGS="$CPPFLAGS $EXPAT_INCLUDES"
-        LDFLAGS="$LDFLAGS -L$withval/$LIB_DIR"
-        EXPAT_LIB="-L$withval/$LIB_DIR -lexpat"
-        ])
-    AC_CHECK_HEADER([expat.h],[],[AC_MSG_ERROR([Expat required for DRI.])])
-    save_LIBS="$LIBS"
-    AC_CHECK_LIB([expat],[XML_ParserCreate],[],
-        [AC_MSG_ERROR([Expat required for DRI.])])
-    LIBS="$save_LIBS"
+    PKG_CHECK_MODULES([EXPAT], [expat], [],
+                      AC_MSG_ERROR([Expat required for DRI.]))
+
 
     # If we are building any DRI driver other than swrast.
     if test -n "$DRI_DIRS"; then
@@ -1035,8 +1023,8 @@ if test "x$enable_dri" = xyes; then
     fi
 
     # put all the necessary libs together
-    DRI_LIB_DEPS="$DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm $PTHREAD_LIBS $DLOPEN_LIBS"
-    GALLIUM_DRI_LIB_DEPS="$GALLIUM_DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm $CLOCK_LIB $PTHREAD_LIBS $DLOPEN_LIBS"
+    DRI_LIB_DEPS="$DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIBS -lm $PTHREAD_LIBS $DLOPEN_LIBS"
+    GALLIUM_DRI_LIB_DEPS="$GALLIUM_DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIBS -lm $CLOCK_LIB $PTHREAD_LIBS $DLOPEN_LIBS"
 
     DRI_DRIVER_LDFLAGS="-module -avoid-version -shared -Wl,-Bsymbolic"
 fi
@@ -1045,7 +1033,6 @@ AM_CONDITIONAL(NEED_MEGADRIVER, test -n "$DRI_DIRS")
 AM_CONDITIONAL(NEED_LIBMESA, test "x$enable_xlib_glx" = xyes -o \
                                   "x$enable_osmesa" = xyes -o \
                                   -n "$DRI_DIRS")
-AC_SUBST([EXPAT_INCLUDES])
 AC_SUBST([DRI_LIB_DEPS])
 AC_SUBST([DRI_DRIVER_LDFLAGS])
 AC_SUBST([GALLIUM_DRI_LIB_DEPS])

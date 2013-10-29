@@ -27,6 +27,7 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa/ \
 	$(DEFINES) \
+	$(EXPAT_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
 
 noinst_LTLIBRARIES = \
