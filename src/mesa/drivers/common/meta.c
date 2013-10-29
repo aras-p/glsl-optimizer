@@ -1729,10 +1729,10 @@ blitframebuffer_texture(struct gl_context *ctx,
             }
             else {
                assert(target == GL_TEXTURE_RECTANGLE_ARB);
-               s0 = srcX0;
-               s1 = srcX1;
-               t0 = srcY0;
-               t1 = srcY1;
+               s0 = (float) srcX0;
+               s1 = (float) srcX1;
+               t0 = (float) srcY0;
+               t1 = (float) srcY1;
             }
 
             /* setup vertex positions */
@@ -2825,7 +2825,7 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
             _mesa_StencilMask(mask);
 
             _mesa_ProgramLocalParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,
-                                             255.0 / mask, 0.5, 0.0, 0.0);
+                                             255.0f / mask, 0.5f, 0.0f, 0.0f);
 
             _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
          }
@@ -3184,7 +3184,7 @@ setup_texture_coords(GLenum faceTarget,
          r = (slice + 0.5f) / depth;
       }
       else if (faceTarget == GL_TEXTURE_2D_ARRAY)
-         r = slice;
+         r = (float) slice;
       else
          r = 0.0F;
       coords0[0] = 0.0F; /* s */
@@ -3204,28 +3204,28 @@ setup_texture_coords(GLenum faceTarget,
       coords0[0] = 0.0F; /* s */
       coords0[1] = 0.0F; /* t */
       coords0[2] = 0.0F; /* r */
-      coords1[0] = width;
+      coords1[0] = (float) width;
       coords1[1] = 0.0F;
       coords1[2] = 0.0F;
-      coords2[0] = width;
-      coords2[1] = height;
+      coords2[0] = (float) width;
+      coords2[1] = (float) height;
       coords2[2] = 0.0F;
       coords3[0] = 0.0F;
-      coords3[1] = height;
+      coords3[1] = (float) height;
       coords3[2] = 0.0F;
       break;
    case GL_TEXTURE_1D_ARRAY:
       coords0[0] = 0.0F; /* s */
-      coords0[1] = slice; /* t */
+      coords0[1] = (float) slice; /* t */
       coords0[2] = 0.0F; /* r */
       coords1[0] = 1.0f;
-      coords1[1] = slice;
+      coords1[1] = (float) slice;
       coords1[2] = 0.0F;
       coords2[0] = 1.0F;
-      coords2[1] = slice;
+      coords2[1] = (float) slice;
       coords2[2] = 0.0F;
       coords3[0] = 0.0F;
-      coords3[1] = slice;
+      coords3[1] = (float) slice;
       coords3[2] = 0.0F;
       break;
 
