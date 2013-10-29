@@ -82,21 +82,14 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       /* update cache */
       sp_tile_cache_set_surface(sp->zsbuf_cache, fb->zsbuf);
 
-      /* Tell draw module how deep the Z/depth buffer is */
-      if (sp->framebuffer.zsbuf) {
-         int depth_bits;
-         double mrd;
-         depth_bits = util_format_get_component_bits(sp->framebuffer.zsbuf->format,
-                                                     UTIL_FORMAT_COLORSPACE_ZS,
-                                                     0);
-         if (depth_bits > 16) {
-            mrd = 0.0000001;
-         }
-         else {
-            mrd = 0.00002;
-         }
-         draw_set_mrd(sp->draw, mrd);
-      }
+      /* Tell draw module how deep the Z/depth buffer is
+       *
+       * If no depth buffer is bound, send the utility function the
+       * format for no bound depth (PIPE_FORMAT_NONE).
+       */
+      draw_set_zs_format(sp->draw,
+                         (sp->framebuffer.zsbuf) ?
+                            sp->framebuffer.zsbuf->format : PIPE_FORMAT_NONE);
    }
 
    sp->framebuffer.width = fb->width;

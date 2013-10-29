@@ -111,7 +111,7 @@ void draw_enable_line_stipple(struct draw_context *draw, boolean enable);
 
 void draw_enable_point_sprites(struct draw_context *draw, boolean enable);
 
-void draw_set_mrd(struct draw_context *draw, double mrd);
+void draw_set_zs_format(struct draw_context *draw, enum pipe_format format);
 
 boolean
 draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe);

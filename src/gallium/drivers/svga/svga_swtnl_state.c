@@ -121,9 +121,15 @@ update_swtnl_draw( struct svga_context *svga,
                                 &svga->curr.rast->templ,
                                 (void *) svga->curr.rast);
 
+   /* Tell the draw module how deep the Z/depth buffer is.
+    *
+    * If no depth buffer is bound, send the utility function the
+    * format for no bound depth (PIPE_FORMAT_NONE).
+    */
    if (dirty & SVGA_NEW_FRAME_BUFFER)
-      draw_set_mrd(svga->swtnl.draw, 
-                   svga->curr.depthscale);
+      draw_set_zs_format(svga->swtnl.draw, 
+         (svga->curr.framebuffer.zsbuf) ?
+             svga->curr.framebuffer.zsbuf->format : PIPE_FORMAT_NONE);
 
    return PIPE_OK;
 }

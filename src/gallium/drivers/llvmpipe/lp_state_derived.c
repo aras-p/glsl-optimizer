@@ -186,7 +186,8 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
       llvmpipe_update_fs( llvmpipe );
 
    if (llvmpipe->dirty & (LP_NEW_FS |
-			  LP_NEW_RASTERIZER))
+                          LP_NEW_FRAMEBUFFER |
+                          LP_NEW_RASTERIZER))
       llvmpipe_update_setup( llvmpipe );
 
    if (llvmpipe->dirty & LP_NEW_BLEND_COLOR)

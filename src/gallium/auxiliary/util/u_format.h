@@ -546,13 +546,29 @@ util_format_is_depth_and_stencil(enum pipe_format format)
 
 
 /**
+ * Calculates the depth format type based upon the incoming format description.
+ */
+static INLINE unsigned
+util_get_depth_format_type(const struct util_format_description *desc)
+{
+   unsigned depth_channel = desc->swizzle[0];
+   if (desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS &&
+       depth_channel != UTIL_FORMAT_SWIZZLE_NONE) {
+      return desc->channel[depth_channel].type;
+   } else {
+      return UTIL_FORMAT_TYPE_VOID;
+   }
+}
+
+
+/**
  * Calculates the MRD for the depth format. MRD is used in depth bias
  * for UNORM and unbound depth buffers. When the depth buffer is floating
  * point, the depth bias calculation does not use the MRD. However, the
  * default MRD will be 1.0 / ((1 << 24) - 1).
  */
 double
-util_get_depth_format_mrd(enum pipe_format format);
+util_get_depth_format_mrd(const struct util_format_description *desc);
 
 
 /**

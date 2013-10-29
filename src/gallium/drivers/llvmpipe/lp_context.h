@@ -124,9 +124,10 @@ struct llvmpipe_context {
    /** A fake frontface output for unfilled primitives */
    int face_slot;
 
-   /**< minimum resolvable depth value, for polygon offset */   
-   double mrd;
-   
+   /** Depth format and bias settings. */
+   boolean floating_point_depth;
+   double mrd;   /**< minimum resolvable depth value, for polygon offset */
+
    /** The tiling engine */
    struct lp_setup_context *setup;
    struct lp_setup_variant setup_variant;

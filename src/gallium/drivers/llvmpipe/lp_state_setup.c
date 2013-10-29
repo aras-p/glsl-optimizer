@@ -256,6 +256,7 @@ lp_do_offset_tri(struct gallivm_state *gallivm,
    LLVMBuilderRef b = gallivm->builder;
    struct lp_build_context bld;
    struct lp_build_context flt_scalar_bld;
+   struct lp_build_context int_scalar_bld;
    LLVMValueRef zoffset, mult;
    LLVMValueRef z0_new, z1_new, z2_new;
    LLVMValueRef dzdxdzdy, dzdx, dzdy, dzxyz20, dyzzx01, dyzzx01_dzxyz20, dzx01_dyz20;
@@ -267,6 +268,8 @@ lp_do_offset_tri(struct gallivm_state *gallivm,
    LLVMValueRef zeroi = lp_build_const_int32(gallivm, 0);
    LLVMValueRef twoi = lp_build_const_int32(gallivm, 2);
    LLVMValueRef threei  = lp_build_const_int32(gallivm, 3);
+   LLVMValueRef mantissa_bits, exp, bias;
+   LLVMValueRef maxz_value, maxz0z1_value;
 
    /* (res12) = cross(e,f).xy */
    shuffles[0] = twoi;
@@ -300,17 +303,56 @@ lp_do_offset_tri(struct gallivm_state *gallivm,
    dzdx = LLVMBuildExtractElement(b, dzdxdzdy, zeroi, "");
    dzdy = LLVMBuildExtractElement(b, dzdxdzdy, onei, "");
 
-   /* zoffset = pgon_offset_units + MAX2(dzdx, dzdy) * pgon_offset_scale */
+   /* mult = MAX2(dzdx, dzdy) * pgon_offset_scale */
    max = LLVMBuildFCmp(b, LLVMRealUGT, dzdx, dzdy, "");
    max_value = LLVMBuildSelect(b, max, dzdx, dzdy, "max"); 
 
    mult = LLVMBuildFMul(b, max_value,
                         lp_build_const_float(gallivm, key->pgon_offset_scale), "");
-   zoffset = LLVMBuildFAdd(b,
-                           lp_build_const_float(gallivm, key->pgon_offset_units),
-                           mult, "zoffset");
 
    lp_build_context_init(&flt_scalar_bld, gallivm, lp_type_float_vec(32, 32));
+
+   if (key->floating_point_depth) {
+      /*
+       * bias = pgon_offset_units * 2^(exponent(max(z0, z1, z2)) - mantissa_bits) +
+       *           MAX2(dzdx, dzdy) * pgon_offset_scale
+       *
+       * NOTE: Assumes IEEE float32.
+       */
+      lp_build_context_init(&int_scalar_bld, gallivm, lp_type_int_vec(32, 32));
+
+      mantissa_bits = lp_build_const_int32(gallivm, 23);
+
+      maxz0z1_value = lp_build_max(&flt_scalar_bld,
+                         LLVMBuildExtractElement(b, attribv[0], twoi, ""),
+                         LLVMBuildExtractElement(b, attribv[1], twoi, ""));
+
+      maxz_value = lp_build_max(&flt_scalar_bld,
+                      LLVMBuildExtractElement(b, attribv[2], twoi, ""),
+                      maxz0z1_value);
+
+      /**
+       * XXX: TODO optimize this to quickly resolve a pow2 number through
+       *      an exponent only operation.
+       */
+      exp = lp_build_extract_exponent(&flt_scalar_bld, maxz_value, 0);
+      exp = lp_build_sub(&int_scalar_bld, exp, mantissa_bits);
+      exp = lp_build_int_to_float(&flt_scalar_bld, exp);
+
+      bias = LLVMBuildFMul(b, lp_build_exp2(&flt_scalar_bld, exp),
+                           lp_build_const_float(gallivm, key->pgon_offset_units),
+                           "bias");
+
+      zoffset = LLVMBuildFAdd(b, bias, mult, "zoffset");
+   } else {
+      /*
+       * bias = pgon_offset_units + MAX2(dzdx, dzdy) * pgon_offset_scale
+       */
+      zoffset = LLVMBuildFAdd(b,
+                              lp_build_const_float(gallivm, key->pgon_offset_units),
+                              mult, "zoffset");
+   }
+
    if (key->pgon_offset_clamp > 0) {
       zoffset = lp_build_min(&flt_scalar_bld,
                              lp_build_const_float(gallivm, key->pgon_offset_clamp),
@@ -849,7 +891,20 @@ lp_make_setup_variant_key(struct llvmpipe_context *lp,
    assert(key->spec_slot   == lp->color_slot [1]);
    assert(key->bspec_slot  == lp->bcolor_slot[1]);
 
-   key->pgon_offset_units = (float) (lp->rasterizer->offset_units * lp->mrd);
+   /*
+    * If depth is floating point, depth bias is calculated with respect
+    * to the primitive's maximum Z value. Retain the original depth bias
+    * value until that stage.
+    */
+   key->floating_point_depth = lp->floating_point_depth;
+
+   if (key->floating_point_depth) {
+      key->pgon_offset_units = (float) lp->rasterizer->offset_units;
+   } else {
+      key->pgon_offset_units =
+         (float) (lp->rasterizer->offset_units * lp->mrd);
+   }
+
    key->pgon_offset_scale = lp->rasterizer->offset_scale;
    key->pgon_offset_clamp = lp->rasterizer->offset_clamp;
    key->pad = 0;

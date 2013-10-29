@@ -246,6 +246,19 @@ union di {
 
 
 /**
+ * Extract the IEEE float32 exponent.
+ */
+static INLINE signed
+util_get_float32_exponent(float x) {
+   union fi f;
+
+   f.f = x;
+
+   return ((f.ui >> 23) & 0xff) - 127;
+}
+
+
+/**
  * Fast version of 2^x
  * Identity: exp2(a + b) = exp2(a) * exp2(b)
  * Let ipart = int(x)

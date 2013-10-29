@@ -215,9 +215,8 @@ util_format_is_supported(enum pipe_format format, unsigned bind)
  * default MRD will be 1.0 / ((1 << 24) - 1).
  */
 double
-util_get_depth_format_mrd(enum pipe_format format)
+util_get_depth_format_mrd(const struct util_format_description *desc)
 {
-   struct util_format_description *format_desc;
    /*
     * Depth buffer formats without a depth component OR scenarios
     * without a bound depth buffer default to D24.
@@ -225,23 +224,20 @@ util_get_depth_format_mrd(enum pipe_format format)
    double mrd = 1.0 / ((1 << 24) - 1);
    unsigned depth_channel;
 
-   format_desc = (struct util_format_description *)
-                     util_format_description(format);
-
-   assert(format_desc);
+   assert(desc);
 
    /*
     * Some depth formats do not store the depth component in the first
     * channel, detect the format and adjust the depth channel. Get the
     * swizzled depth component channel.
     */
-   depth_channel = format_desc->swizzle[0];
+   depth_channel = desc->swizzle[0];
 
-   if (format_desc->channel[depth_channel].type == UTIL_FORMAT_TYPE_UNSIGNED &&
-       format_desc->channel[depth_channel].normalized) {
+   if (desc->channel[depth_channel].type == UTIL_FORMAT_TYPE_UNSIGNED &&
+       desc->channel[depth_channel].normalized) {
       int depth_bits;
 
-      depth_bits = format_desc->channel[depth_channel].size;
+      depth_bits = desc->channel[depth_channel].size;
       mrd = 1.0 / ((1ULL << depth_bits) - 1);
    }
 

@@ -38,6 +38,7 @@
 #include "util/u_inlines.h"
 #include "util/u_helpers.h"
 #include "util/u_prim.h"
+#include "util/u_format.h"
 #include "draw_context.h"
 #include "draw_pipe.h"
 #include "draw_prim_assembler.h"
@@ -164,6 +165,8 @@ boolean draw_init(struct draw_context *draw)
    draw->quads_always_flatshade_last = !draw->pipe->screen->get_param(
       draw->pipe->screen, PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION);
 
+   draw->floating_point_depth = false;
+
    return TRUE;
 }
 
@@ -233,15 +236,20 @@ void draw_flush( struct draw_context *draw )
 
 
 /**
- * Specify the Minimum Resolvable Depth factor for polygon offset.
+ * Specify the depth stencil format for the draw pipeline. This function
+ * determines the Minimum Resolvable Depth factor for polygon offset.
  * This factor potentially depends on the number of Z buffer bits,
  * the rasterization algorithm and the arithmetic performed on Z
- * values between vertex shading and rasterization.  It will vary
- * from one driver to another.
+ * values between vertex shading and rasterization.
  */
-void draw_set_mrd(struct draw_context *draw, double mrd)
+void draw_set_zs_format(struct draw_context *draw, enum pipe_format format)
 {
-   draw->mrd = mrd;
+   const struct util_format_description *desc = util_format_description(format);
+
+   draw->floating_point_depth =
+      (util_get_depth_format_type(desc) == UTIL_FORMAT_TYPE_FLOAT);
+
+   draw->mrd = util_get_depth_format_mrd(desc);
 }
 
 

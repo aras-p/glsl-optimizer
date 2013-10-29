@@ -236,6 +236,8 @@ struct draw_context
 
    boolean dump_vs;
 
+   /** Depth format and bias related settings. */
+   boolean floating_point_depth;
    double mrd;  /**< minimum resolvable depth value, for polygon offset */
 
    /** Current rasterizer state given to us by the driver */
