@@ -459,7 +459,7 @@ struct glsl_type {
     */
    bool contains_atomic() const
    {
-      return atomic_size();
+      return atomic_size() > 0;
    }
 
    /**
