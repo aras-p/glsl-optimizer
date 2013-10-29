@@ -347,18 +347,20 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
 }
 
 /**
- * Sets interference between virtual GRFs and usage of the high GRFs for SEND
- * messages (treated as MRFs in code generation).
+ * Sets the mrf_used array to indicate which MRFs are used by the shader IR
+ *
+ * This is used in assign_regs() to decide which of the GRFs that we use as
+ * MRFs on gen7 get normally register allocated, and in register spilling to
+ * see if we can actually use MRFs to do spills without overwriting normal MRF
+ * contents.
  */
 void
-fs_visitor::setup_mrf_hack_interference(struct ra_graph *g, int first_mrf_node)
+fs_visitor::get_used_mrfs(bool *mrf_used)
 {
-   int mrf_count = BRW_MAX_GRF - GEN7_MRF_HACK_START;
    int reg_width = dispatch_width / 8;
 
-   /* Identify all the MRFs used in the program. */
-   bool mrf_used[mrf_count];
-   memset(mrf_used, 0, sizeof(mrf_used));
+   memset(mrf_used, 0, BRW_MAX_MRF * sizeof(bool));
+
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
@@ -380,9 +382,22 @@ fs_visitor::setup_mrf_hack_interference(struct ra_graph *g, int first_mrf_node)
          }
       }
    }
+}
 
-   for (int i = 0; i < mrf_count; i++) {
-      /* Mark each payload reg node as being allocated to its physical register.
+/**
+ * Sets interference between virtual GRFs and usage of the high GRFs for SEND
+ * messages (treated as MRFs in code generation).
+ */
+void
+fs_visitor::setup_mrf_hack_interference(struct ra_graph *g, int first_mrf_node)
+{
+   int reg_width = dispatch_width / 8;
+
+   bool mrf_used[BRW_MAX_MRF];
+   get_used_mrfs(mrf_used);
+
+   for (int i = 0; i < BRW_MAX_MRF; i++) {
+      /* Mark each MRF reg node as being allocated to its physical register.
        *
        * The alternative would be to have per-physical-register classes, which
        * would just be silly.

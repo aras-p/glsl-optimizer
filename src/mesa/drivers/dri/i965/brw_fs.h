@@ -289,6 +289,7 @@ public:
    void assign_urb_setup();
    bool assign_regs();
    void assign_regs_trivial();
+   void get_used_mrfs(bool *mrf_used);
    void setup_payload_interference(struct ra_graph *g, int payload_reg_count,
                                    int first_payload_node);
    void setup_mrf_hack_interference(struct ra_graph *g,
