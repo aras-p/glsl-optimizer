@@ -3070,6 +3070,7 @@ fs_visitor::run()
       split_virtual_grfs();
 
       move_uniform_array_access_to_pull_constants();
+      remove_dead_constants();
       setup_pull_constants();
 
       bool progress;
@@ -3089,8 +3090,6 @@ fs_visitor::run()
 	 progress = register_coalesce_2() || progress;
 	 progress = compute_to_mrf() || progress;
       } while (progress);
-
-      remove_dead_constants();
 
       schedule_instructions(false);
 
