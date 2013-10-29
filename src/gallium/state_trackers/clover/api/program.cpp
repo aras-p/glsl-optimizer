@@ -222,7 +222,7 @@ clGetProgramBuildInfo(cl_program d_prog, cl_device_id d_dev,
    auto &prog = obj(d_prog);
    auto &dev = obj(d_dev);
 
-   if (!count(dev, prog.devices()))
+   if (!count(dev, prog.ctx.devs()))
       return CL_INVALID_DEVICE;
 
    switch (param) {
