@@ -127,7 +127,7 @@ _mesa_GetPerfMonitorGroupsAMD(GLint *numGroups, GLsizei groupsSize,
 
    if (groupsSize > 0 && groups != NULL) {
       unsigned i;
-      unsigned n = MIN2(groupsSize, ctx->PerfMonitor.NumGroups);
+      unsigned n = MIN2((GLuint) groupsSize, ctx->PerfMonitor.NumGroups);
 
       /* We just use the index in the Groups array as the ID. */
       for (i = 0; i < n; i++)
@@ -156,7 +156,7 @@ _mesa_GetPerfMonitorCountersAMD(GLuint group, GLint *numCounters,
 
    if (counters != NULL) {
       unsigned i;
-      unsigned n = MIN2(group_obj->NumCounters, countersSize);
+      unsigned n = MIN2(group_obj->NumCounters, (GLuint) countersSize);
       for (i = 0; i < n; i++) {
          /* We just use the index in the Counters array as the ID. */
          counters[i] = i;
@@ -379,7 +379,7 @@ _mesa_SelectPerfMonitorCountersAMD(GLuint monitor, GLboolean enable,
                                    GLuint *counterList)
 {
    GET_CURRENT_CONTEXT(ctx);
-   unsigned i;
+   int i;
    struct gl_perf_monitor_object *m;
    const struct gl_perf_monitor_group *group_obj;
 

@@ -853,7 +853,7 @@ _mesa_GetActiveAtomicCounterBufferiv(GLuint program, GLuint bufferIndex,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *shProg;
    struct gl_active_atomic_buffer *ab;
-   int i;
+   GLuint i;
 
    if (!ctx->Extensions.ARB_shader_atomic_counters) {
       _mesa_error(ctx, GL_INVALID_OPERATION,

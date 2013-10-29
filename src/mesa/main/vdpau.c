@@ -324,7 +324,7 @@ void GLAPIENTRY
 _mesa_VDPAUMapSurfacesNV(GLsizei numSurfaces, const GLintptr *surfaces)
 {
    GET_CURRENT_CONTEXT(ctx);
-   int i, j;
+   int i;
 
    if (!ctx->vdpDevice || !ctx->vdpGetProcAddress || !ctx->vdpSurfaces) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "VDPAUUnmapSurfacesNV");
@@ -348,6 +348,7 @@ _mesa_VDPAUMapSurfacesNV(GLsizei numSurfaces, const GLintptr *surfaces)
    for (i = 0; i < numSurfaces; ++i) {
       struct vdp_surface *surf = (struct vdp_surface *)surfaces[i];
       unsigned numTextureNames = surf->output ? 1 : 4;
+      unsigned j;
 
       for (j = 0; j < numTextureNames; ++j) {
          struct gl_texture_object *tex = surf->textures[j];
@@ -377,7 +378,7 @@ void GLAPIENTRY
 _mesa_VDPAUUnmapSurfacesNV(GLsizei numSurfaces, const GLintptr *surfaces)
 {
    GET_CURRENT_CONTEXT(ctx);
-   int i, j;
+   int i;
 
    if (!ctx->vdpDevice || !ctx->vdpGetProcAddress || !ctx->vdpSurfaces) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "VDPAUUnmapSurfacesNV");
@@ -401,6 +402,7 @@ _mesa_VDPAUUnmapSurfacesNV(GLsizei numSurfaces, const GLintptr *surfaces)
    for (i = 0; i < numSurfaces; ++i) {
       struct vdp_surface *surf = (struct vdp_surface *)surfaces[i];
       unsigned numTextureNames = surf->output ? 1 : 4;
+      unsigned j;
 
       for (j = 0; j < numTextureNames; ++j) {
          struct gl_texture_object *tex = surf->textures[j];
