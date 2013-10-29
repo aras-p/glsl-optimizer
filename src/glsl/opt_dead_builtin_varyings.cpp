@@ -512,7 +512,7 @@ do_dead_builtin_varyings(struct gl_context *ctx,
                          tfeedback_decl *tfeedback_decls)
 {
    /* Lower the gl_FragData array to separate variables. */
-   if (consumer->Type == GL_FRAGMENT_SHADER) {
+   if (consumer && consumer->Type == GL_FRAGMENT_SHADER) {
       lower_fragdata_array(consumer->ir);
    }
 
