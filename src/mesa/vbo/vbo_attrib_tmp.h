@@ -140,7 +140,7 @@ static inline float conv_i10_to_norm_float(const struct gl_context *ctx, int i10
        (ctx->API == API_OPENGL_CORE && ctx->Version >= 42)) {
       /* Equation 2.3 above. */
       float f = ((float) val.x) / 511.0F;
-      return MAX2(f, -1.0);
+      return MAX2(f, -1.0f);
    } else {
       /* Equation 2.2 above. */
       return (2.0F * (float)val.x + 1.0F) * (1.0F  / 1023.0F);
@@ -156,7 +156,7 @@ static inline float conv_i2_to_norm_float(const struct gl_context *ctx, int i2)
        (ctx->API == API_OPENGL_CORE && ctx->Version >= 42)) {
       /* Equation 2.3 above. */
       float f = (float) val.x;
-      return MAX2(f, -1.0);
+      return MAX2(f, -1.0f);
    } else {
       /* Equation 2.2 above. */
       return (2.0F * (float)val.x + 1.0F) * (1.0F / 3.0F);
