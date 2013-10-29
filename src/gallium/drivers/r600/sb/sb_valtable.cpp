@@ -255,8 +255,8 @@ void value::set_prealloc() {
 bool value::is_fixed() {
 	if (array && array->gpr)
 		return true;
-	if (chunk)
-		return chunk->is_fixed();
+	if (chunk && chunk->is_fixed())
+		return true;
 	return flags & VLF_FIXED;
 }
 
