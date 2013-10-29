@@ -643,6 +643,28 @@ fs_visitor::spill_reg(int spill_reg)
    unsigned int spill_offset = c->last_scratch;
    assert(ALIGN(spill_offset, 16) == spill_offset); /* oword read/write req. */
    c->last_scratch += size * REG_SIZE;
+   int spill_base_mrf = dispatch_width > 8 ? 13 : 14;
+
+   /* Spills may use MRFs 13-15 in the SIMD16 case.  Our texturing is done
+    * using up to 11 MRFs starting from either m1 or m2, and fb writes can use
+    * up to m13 (gen6+ simd16: 2 header + 8 color + 2 src0alpha + 2 omask) or
+    * m15 (gen4-5 simd16: 2 header + 8 color + 1 aads + 2 src depth + 2 dst
+    * depth), starting from m1.  In summary: We may not be able to spill in
+    * SIMD16 mode, because we'd stomp the FB writes.
+    */
+   if (!spilled_any_registers) {
+      bool mrf_used[BRW_MAX_MRF];
+      get_used_mrfs(mrf_used);
+
+      for (int i = spill_base_mrf; i < BRW_MAX_MRF; i++) {
+         if (mrf_used[i]) {
+            fail("Register spilling not supported with m%d used", i);
+          return;
+         }
+      }
+
+      spilled_any_registers = true;
+   }
 
    /* Generate spill/unspill instructions for the objects being
     * spilled.  Right now, we spill or unspill the whole thing to a

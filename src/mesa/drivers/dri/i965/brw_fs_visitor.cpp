@@ -2722,6 +2722,8 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->force_uncompressed_stack = 0;
    this->force_sechalf_stack = 0;
 
+   this->spilled_any_registers = false;
+
    memset(&this->param_size, 0, sizeof(this->param_size));
 }
 

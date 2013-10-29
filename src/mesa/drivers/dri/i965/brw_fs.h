@@ -466,6 +466,7 @@ public:
    fs_reg shader_start_time;
 
    int grf_used;
+   bool spilled_any_registers;
 
    const unsigned dispatch_width; /**< 8 or 16 */
 
