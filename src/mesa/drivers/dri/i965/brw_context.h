@@ -1475,7 +1475,7 @@ void intel_prepare_render(struct brw_context *brw);
 void intel_resolve_for_dri2_flush(struct brw_context *brw,
                                   __DRIdrawable *drawable);
 
-bool brwCreateContext(gl_api api,
+GLboolean brwCreateContext(gl_api api,
 		      const struct gl_config *mesaVis,
 		      __DRIcontext *driContextPriv,
                       unsigned major_version,

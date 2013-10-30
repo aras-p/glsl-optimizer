@@ -552,7 +552,7 @@ brw_process_driconf_options(struct brw_context *brw)
       driQueryOptionb(options, "disable_glsl_line_continuations");
 }
 
-bool
+GLboolean
 brwCreateContext(gl_api api,
 	         const struct gl_config *mesaVis,
 		 __DRIcontext *driContextPriv,
