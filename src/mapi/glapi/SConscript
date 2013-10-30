@@ -52,6 +52,7 @@ for s in mapi_sources:
 if (env['gcc'] or env['clang']) and \
    env['platform'] not in ('cygwin', 'darwin', 'windows'):
     GLAPI = '#src/mapi/glapi/'
+    sources = [GLAPI + 'gen/gl_and_es_API.xml'] + env.Glob(GLAPI + 'gen/*.xml')
 
     if env['machine'] == 'x86':
         env.Append(CPPDEFINES = [
@@ -63,7 +64,7 @@ if (env['gcc'] or env['clang']) and \
         env.CodeGenerate(
             target = 'glapi_x86.S',
             script = GLAPI + 'gen/gl_x86_asm.py',
-            source = GLAPI + 'gen/gl_and_es_API.xml',
+            source = sources,
             command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
             )
     elif env['machine'] == 'x86_64':
@@ -76,7 +77,7 @@ if (env['gcc'] or env['clang']) and \
         env.CodeGenerate(
             target = 'glapi_x86-64.S',
             script = GLAPI + 'gen/gl_x86-64_asm.py',
-            source = GLAPI + 'gen/gl_and_es_API.xml',
+            source = sources,
             command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
             )
     elif env['machine'] == 'sparc':
@@ -89,7 +90,7 @@ if (env['gcc'] or env['clang']) and \
         env.CodeGenerate(
             target = 'glapi_sparc.S',
             script = GLAPI + 'gen/gl_SPARC_asm.py',
-            source = GLAPI + 'gen/gl_and_es_API.xml',
+            source = sources,
             command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
             )
     else:
