@@ -49,6 +49,8 @@ static PFNGLGETOBJECTPARAMETERIVARBPROC glGetObjectParameterivARB;
 #include <OpenGL/CGLTypes.h>
 #include <dirent.h>
 static CGLContextObj s_GLContext;
+static CGLContextObj s_GLContext3;
+static bool s_GL3Active = false;
 
 #endif // ifdef __APPLE__
 
@@ -109,6 +111,12 @@ static bool InitializeOpenGL ()
 		kCGLPFAAccelerated,   // no software rendering
 		(CGLPixelFormatAttribute) 0
 	};
+	CGLPixelFormatAttribute attributes3[] = {
+		kCGLPFAAccelerated,   // no software rendering
+		kCGLPFAOpenGLProfile, // core profile with the version stated below
+		(CGLPixelFormatAttribute) kCGLOGLPVersion_3_2_Core,
+		(CGLPixelFormatAttribute) 0
+	};
 	GLint num;
 	CGLPixelFormatObj pix;
 	
@@ -121,6 +129,15 @@ static bool InitializeOpenGL ()
 		return false;
 	CGLDestroyPixelFormat(pix);
 	CGLSetCurrentContext(s_GLContext);
+	
+	// create core 3.2 context
+	CGLChoosePixelFormat(attributes3, &pix, &num);
+	if (pix == NULL)
+		return false;
+	CGLCreateContext(pix, NULL, &s_GLContext3);
+	if (s_GLContext3 == NULL)
+		return false;
+	CGLDestroyPixelFormat(pix);
 
 #endif
 
@@ -157,6 +174,8 @@ static void CleanupGL()
 	CGLSetCurrentContext(NULL);
 	if (s_GLContext)
 		CGLDestroyContext(s_GLContext);
+	if (s_GLContext3)
+		CGLDestroyContext(s_GLContext3);
 	#endif // #ifdef __APPLE__
 #endif // #if GOT_GFX
 }
@@ -184,6 +203,27 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 	if (source.find("#version 140") != std::string::npos)
 		return true;
 	#endif
+	
+#	ifdef __APPLE__
+	// Mac core context does not accept any older shader versions, so need to switch to
+	// either legacy context or core one.
+	const bool need3 =
+		(source.find("#version 150") != std::string::npos) ||
+		(source.find("#version 300") != std::string::npos);
+	if (need3)
+	{
+		if (!s_GL3Active)
+			CGLSetCurrentContext(s_GLContext3);
+		s_GL3Active = true;
+	}
+	else
+	{
+		if (s_GL3Active)
+			CGLSetCurrentContext(s_GLContext);
+		s_GL3Active = false;
+	}
+#	endif // ifdef __APPLE__
+	
 	
 	std::string src;
 	if (gles)
