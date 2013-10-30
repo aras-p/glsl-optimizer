@@ -1005,9 +1005,14 @@ if test "x$enable_dri" = xyes; then
     DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
 
     # Check for expat
-    PKG_CHECK_MODULES([EXPAT], [expat], [],
-                      AC_MSG_ERROR([Expat required for DRI.]))
-
+    PKG_CHECK_EXISTS([EXPAT], [have_expat=yes], [have_expat=no])
+    if test "x$have_expat" = "xyes"; then
+       PKG_CHECK_MODULES([EXPAT], [expat], [],
+                         AC_MSG_ERROR([Expat required for DRI.]))
+    else
+       # expat version 2.0 and earlier do not provide expat.pc
+       EXPAT_LIBS=-lexpat
+    fi
 
     # If we are building any DRI driver other than swrast.
     if test -n "$DRI_DIRS"; then
