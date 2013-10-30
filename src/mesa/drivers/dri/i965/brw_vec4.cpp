@@ -24,6 +24,7 @@
 #include "brw_vec4.h"
 #include "brw_cfg.h"
 #include "brw_vs.h"
+#include "brw_dead_control_flow.h"
 
 extern "C" {
 #include "main/macros.h"
@@ -1498,6 +1499,7 @@ vec4_visitor::run()
    do {
       progress = false;
       progress = dead_code_eliminate() || progress;
+      progress = dead_control_flow_eliminate(this) || progress;
       progress = opt_copy_propagation() || progress;
       progress = opt_algebraic() || progress;
       progress = opt_register_coalesce() || progress;

@@ -46,6 +46,7 @@ extern "C" {
 #include "brw_wm.h"
 }
 #include "brw_fs.h"
+#include "brw_dead_control_flow.h"
 #include "main/uniforms.h"
 #include "brw_fs_live_variables.h"
 #include "glsl/glsl_types.h"
@@ -3264,6 +3265,7 @@ fs_visitor::run()
 	 progress = opt_copy_propagate() || progress;
 	 progress = dead_code_eliminate() || progress;
 	 progress = dead_code_eliminate_local() || progress;
+         progress = dead_control_flow_eliminate(this) || progress;
 	 progress = register_coalesce() || progress;
 	 progress = register_coalesce_2() || progress;
 	 progress = compute_to_mrf() || progress;
