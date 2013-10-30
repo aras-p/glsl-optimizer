@@ -28,7 +28,7 @@
 #include "brw_fs.h"
 #include "brw_cfg.h"
 
-/** @file brw_cfg_t.cpp
+/** @file brw_cfg.cpp
  *
  * Walks the shader instructions generated and creates a set of basic
  * blocks with successor/predecessor edges connecting them.
@@ -52,6 +52,10 @@ bblock_t::bblock_t() :
 
    parents.make_empty();
    children.make_empty();
+
+   if_inst = NULL;
+   else_inst = NULL;
+   endif_inst = NULL;
 }
 
 void
@@ -155,7 +159,7 @@ cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
 	 set_next_block(next);
 	 break;
 
-      case BRW_OPCODE_ENDIF:
+      case BRW_OPCODE_ENDIF: {
 	 cur_endif->start = (backend_instruction *)inst->next;
 	 cur->add_successor(mem_ctx, cur_endif);
 	 set_next_block(cur_endif);
@@ -163,12 +167,33 @@ cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
 	 if (!cur_else)
 	    cur_if->add_successor(mem_ctx, cur_endif);
 
+         backend_instruction *else_inst = cur_else ?
+            (backend_instruction *) cur_else->start->prev : NULL;
+
+         assert(cur_if->end->opcode == BRW_OPCODE_IF);
+         assert(!else_inst || else_inst->opcode == BRW_OPCODE_ELSE);
+         assert(inst->opcode == BRW_OPCODE_ENDIF);
+
+         cur_if->if_inst = cur_if->end;
+         cur_if->else_inst = else_inst;
+         cur_if->endif_inst = inst;
+
+	 if (cur_else) {
+            cur_else->if_inst = cur_if->end;
+            cur_else->else_inst = else_inst;
+            cur_else->endif_inst = inst;
+         }
+
+         cur->if_inst = cur_if->end;
+         cur->else_inst = else_inst;
+         cur->endif_inst = inst;
+
 	 /* Pop the stack so we're in the previous if/else/endif */
 	 cur_if = pop_stack(&if_stack);
 	 cur_else = pop_stack(&else_stack);
 	 cur_endif = pop_stack(&endif_stack);
 	 break;
-
+      }
       case BRW_OPCODE_DO:
 	 /* Push our information onto a stack so we can recover from
 	  * nested loops.

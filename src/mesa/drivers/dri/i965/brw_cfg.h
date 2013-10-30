@@ -57,6 +57,16 @@ public:
    exec_list parents;
    exec_list children;
    int block_num;
+
+   /* If the current basic block ends in an IF, ELSE, or ENDIF instruction,
+    * these pointers will hold the locations of the other associated control
+    * flow instructions.
+    *
+    * Otherwise they are NULL.
+    */
+   backend_instruction *if_inst;
+   backend_instruction *else_inst;
+   backend_instruction *endif_inst;
 };
 
 class cfg_t {
