@@ -101,6 +101,7 @@ static void r600_destroy_context(struct pipe_context *context)
 
 	si_release_all_descriptors(rctx);
 
+	pipe_resource_reference(&rctx->null_const_buf.buffer, NULL);
 	r600_resource_reference(&rctx->border_color_table, NULL);
 
 	if (rctx->dummy_pixel_shader) {
@@ -131,6 +132,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 {
 	struct r600_context *rctx = CALLOC_STRUCT(r600_context);
 	struct r600_screen* rscreen = (struct r600_screen *)screen;
+	int shader, i;
 
 	if (rctx == NULL)
 		return NULL;
@@ -208,6 +210,26 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	/* these must be last */
 	si_begin_new_cs(rctx);
 	si_get_backend_mask(rctx);
+
+	/* CIK cannot unbind a constant buffer (S_BUFFER_LOAD is buggy
+	 * with a NULL buffer). We need to use a dummy buffer instead. */
+	if (rctx->b.chip_class == CIK) {
+		rctx->null_const_buf.buffer = pipe_buffer_create(screen, PIPE_BIND_CONSTANT_BUFFER,
+								 PIPE_USAGE_STATIC, 16);
+		rctx->null_const_buf.buffer_size = rctx->null_const_buf.buffer->width0;
+
+		for (shader = 0; shader < SI_NUM_SHADERS; shader++) {
+			for (i = 0; i < NUM_CONST_BUFFERS; i++) {
+				rctx->b.b.set_constant_buffer(&rctx->b.b, shader, i,
+							      &rctx->null_const_buf);
+			}
+		}
+
+		/* Clear the NULL constant buffer, because loads should return zeros. */
+		rctx->b.clear_buffer(&rctx->b.b, rctx->null_const_buf.buffer, 0,
+				     rctx->null_const_buf.buffer->width0, 0);
+	}
+
 	return &rctx->b.b;
 fail:
 	r600_destroy_context(&rctx->b.b);

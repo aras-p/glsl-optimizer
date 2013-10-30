@@ -171,6 +171,7 @@ struct r600_context {
 	 * In that case, we bind this one: */
 	struct si_pipe_shader	*dummy_pixel_shader;
 	struct r600_atom	cache_flush;
+	struct pipe_constant_buffer null_const_buf; /* used for set_constant_buffer(NULL) on CIK */
 
 	/* SI state handling */
 	union si_state	queued;

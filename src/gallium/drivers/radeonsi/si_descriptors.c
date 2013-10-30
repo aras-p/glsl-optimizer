@@ -412,6 +412,12 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint s
 	assert(slot < buffers->num_buffers);
 	pipe_resource_reference(&buffers->buffers[slot], NULL);
 
+	/* CIK cannot unbind a constant buffer (S_BUFFER_LOAD is buggy
+	 * with a NULL buffer). We need to use a dummy buffer instead. */
+	if (rctx->b.chip_class == CIK &&
+	    (!input || (!input->buffer && !input->user_buffer)))
+		input = &rctx->null_const_buf;
+
 	if (input && (input->buffer || input->user_buffer)) {
 		struct pipe_resource *buffer = NULL;
 		uint64_t va;
