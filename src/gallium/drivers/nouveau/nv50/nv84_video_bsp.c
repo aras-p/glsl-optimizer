@@ -67,10 +67,15 @@ struct iparm {
          uint32_t field_is_ref; // 04 // bit0: top, bit1: bottom
          uint8_t is_long_term; // 08
          uint8_t non_existing; // 09
+         uint8_t u0a; // 0a
+         uint8_t u0b; // 0b
          uint32_t frame_idx; // 0c
          uint32_t field_order_cnt[2]; // 10
          uint32_t mvidx; // 18
          uint8_t field_pic_flag; // 1c
+         uint8_t u1d; // 1d
+         uint8_t u1e; // 1e
+         uint8_t u1f; // 1f
          // 20
       } refs[0x10]; // 1e0
    } ipicparm; // 150
