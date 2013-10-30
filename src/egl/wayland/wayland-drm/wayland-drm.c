@@ -247,8 +247,6 @@ bind_drm(struct wl_client *client, void *data, uint32_t version, uint32_t id)
 struct wl_drm_buffer *
 wayland_drm_buffer_get(struct wl_drm *drm, struct wl_resource *resource)
 {
-	struct wl_drm_buffer *buffer;
-
 	if (resource == NULL)
 		return NULL;
 
