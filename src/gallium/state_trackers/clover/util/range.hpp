@@ -218,14 +218,6 @@ namespace clover {
    namespace detail {
       template<typename T>
       using preferred_iterator_type = decltype(std::declval<T>().begin());
-
-      template<typename F, typename... Os>
-      using adaptor_iterator = detail::iterator_adaptor<
-         F, preferred_iterator_type<Os>...>;
-
-      template<typename F, typename... Os>
-      using adaptor_const_iterator = detail::iterator_adaptor<
-         F, preferred_iterator_type<const Os>...>;
    }
 
    ///
@@ -236,12 +228,17 @@ namespace clover {
    template<typename F, typename... Os>
    class adaptor_range :
       public detail::basic_range<adaptor_range<F, Os...>,
-                                 detail::adaptor_iterator<F, Os...>,
-                                 detail::adaptor_const_iterator<F, Os...>> {
+                                 detail::iterator_adaptor<
+                                    F, detail::preferred_iterator_type<Os>...>,
+                                 detail::iterator_adaptor<
+                                    F, detail::preferred_iterator_type<const Os>...>
+                                 > {
    public:
       typedef detail::basic_range<adaptor_range<F, Os...>,
-                                  detail::adaptor_iterator<F, Os...>,
-                                  detail::adaptor_const_iterator<F, Os...>
+                                  detail::iterator_adaptor<
+                                     F, detail::preferred_iterator_type<Os>...>,
+                                  detail::iterator_adaptor<
+                                     F, detail::preferred_iterator_type<const Os>...>
                                   > super;
 
       template<typename G, typename... Rs>
@@ -254,23 +251,23 @@ namespace clover {
          return f == r.f && os == r.os;
       }
 
-      detail::adaptor_iterator<F, Os...>
+      typename super::iterator
       begin() {
          return { f, tuple::map(begins(), os) };
       }
 
-      detail::adaptor_iterator<F, Os...>
+      typename super::iterator
       end() {
          return { f, tuple::map(advances_by(size()),
                                 tuple::map(begins(), os)) };
       }
 
-      detail::adaptor_const_iterator<F, Os...>
+      typename super::const_iterator
       begin() const {
          return { f, tuple::map(begins(), os) };
       }
 
-      detail::adaptor_const_iterator<F, Os...>
+      typename super::const_iterator
       end() const {
          return { f, tuple::map(ends(), os) };
       }
