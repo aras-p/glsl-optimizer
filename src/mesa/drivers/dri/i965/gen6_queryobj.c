@@ -112,14 +112,11 @@ brw_store_register_mem64(struct brw_context *brw,
    /* MI_STORE_REGISTER_MEM only stores a single 32-bit value, so to
     * read a full 64-bit register, we need to do two of them.
     */
-   BEGIN_BATCH(3);
+   BEGIN_BATCH(6);
    OUT_BATCH(MI_STORE_REGISTER_MEM | (3 - 2));
    OUT_BATCH(reg);
    OUT_RELOC(bo, I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
              idx * sizeof(uint64_t));
-   ADVANCE_BATCH();
-
-   BEGIN_BATCH(3);
    OUT_BATCH(MI_STORE_REGISTER_MEM | (3 - 2));
    OUT_BATCH(reg + sizeof(uint32_t));
    OUT_RELOC(bo, I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
