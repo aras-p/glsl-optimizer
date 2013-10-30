@@ -147,7 +147,6 @@ fs_visitor::opt_peephole_sel()
 
       fs_inst *else_mov[MAX_MOVS] = { NULL };
       fs_inst *then_mov[MAX_MOVS] = { NULL };
-      bool malformed_mov_found = false;
 
       int movs = count_movs_from_if(then_mov, else_mov, if_inst, else_inst);
 
@@ -166,7 +165,7 @@ fs_visitor::opt_peephole_sel()
          if (!then_mov[i]->dst.equals(else_mov[i]->dst) ||
              then_mov[i]->is_partial_write() ||
              else_mov[i]->is_partial_write()) {
-            malformed_mov_found = true;
+            movs = i;
             break;
          }
 
@@ -193,7 +192,7 @@ fs_visitor::opt_peephole_sel()
          }
       }
 
-      if (malformed_mov_found)
+      if (movs == 0)
          continue;
 
       /* Emit a CMP if our IF used the embedded comparison */
