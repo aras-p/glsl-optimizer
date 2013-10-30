@@ -13,6 +13,7 @@
 
 #if GOT_GFX
 
+// ---- Windows GL bits
 #ifdef _MSC_VER
 #define GOT_MORE_THAN_GLSL_120 1
 #include <windows.h>
@@ -36,23 +37,32 @@ static PFNGLCOMPILESHADERARBPROC glCompileShaderARB;
 static PFNGLGETINFOLOGARBPROC glGetInfoLogARB;
 static PFNGLGETOBJECTPARAMETERIVARBPROC glGetObjectParameterivARB;
 }
-#else
+#endif // #ifdef _MSC_VER
+
+
+// ---- Apple GL bits
+#ifdef __APPLE__
+
 #define GOT_MORE_THAN_GLSL_120 0
 #include <OpenGL/OpenGL.h>
-#include <AGL/agl.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/CGLTypes.h>
 #include <dirent.h>
-static AGLPixelFormat s_GLPixelFormat;
-static AGLContext s_GLContext;
-#endif
+static CGLContextObj s_GLContext;
 
-#else // GOT_GFX
+#endif // ifdef __APPLE__
+
+
+#else // #if GOT_GFX
+
 #define GOT_MORE_THAN_GLSL_120 0
 #include <cstdio>
 #include <cstring>
 #include "dirent.h"
 #include "GL/gl.h"
 #include "GL/glext.h"
-#endif
+
+#endif // ! #if GOT_GFX
 
 
 #ifndef _MSC_VER
@@ -92,25 +102,37 @@ static bool InitializeOpenGL ()
 
 	HGLRC rc = wglCreateContext( dc );
 	wglMakeCurrent( dc, rc );
-
-#else
-	GLint attributes[16];
-	int i = 0;
-	attributes[i++]=AGL_RGBA;
-	attributes[i++]=AGL_PIXEL_SIZE;
-	attributes[i++]=32;
-	attributes[i++]=AGL_NO_RECOVERY;
-	attributes[i++]=AGL_NONE;
 	
-	s_GLPixelFormat = aglChoosePixelFormat(NULL,0,attributes);
-	s_GLContext = aglCreateContext(s_GLPixelFormat, NULL);
-	aglSetCurrentContext (s_GLContext);
+#elif defined(__APPLE__)
+	
+	CGLPixelFormatAttribute attributes[] = {
+		kCGLPFAAccelerated,   // no software rendering
+		(CGLPixelFormatAttribute) 0
+	};
+	GLint num;
+	CGLPixelFormatObj pix;
+	
+	// create legacy context
+	CGLChoosePixelFormat(attributes, &pix, &num);
+	if (pix == NULL)
+		return false;
+	CGLCreateContext(pix, NULL, &s_GLContext);
+	if (s_GLContext == NULL)
+		return false;
+	CGLDestroyPixelFormat(pix);
+	CGLSetCurrentContext(s_GLContext);
 
 #endif
 
 	// check if we have GLSL
 	const char* extensions = (const char*)glGetString(GL_EXTENSIONS);
-	hasGLSL = strstr(extensions, "GL_ARB_shader_objects") && strstr(extensions, "GL_ARB_vertex_shader") && strstr(extensions, "GL_ARB_fragment_shader");
+	hasGLSL = extensions != NULL && strstr(extensions, "GL_ARB_shader_objects") && strstr(extensions, "GL_ARB_vertex_shader") && strstr(extensions, "GL_ARB_fragment_shader");
+	
+	#if defined(__APPLE__)
+	// using core profile; always has GLSL
+	hasGLSL = true;
+	#endif
+	
 	
 #ifdef _MSC_VER
 	if (hasGLSL)
@@ -132,12 +154,9 @@ static void CleanupGL()
 {
 #if GOT_GFX
 	#ifdef __APPLE__
+	CGLSetCurrentContext(NULL);
 	if (s_GLContext)
-	{
-		aglSetCurrentContext(NULL);
-		aglDestroyContext(s_GLContext);
-		aglDestroyPixelFormat(s_GLPixelFormat);
-	}
+		CGLDestroyContext(s_GLContext);
 	#endif // #ifdef __APPLE__
 #endif // #if GOT_GFX
 }

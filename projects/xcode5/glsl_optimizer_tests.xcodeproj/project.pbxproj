@@ -8,9 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		2B47D9AB1209C6AC00937F2C /* glsl_optimizer_tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B47D9AA1209C6AC00937F2C /* glsl_optimizer_tests.cpp */; };
+		2B88BF721821AEBD007FEFD9 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2B88BF711821AEBD007FEFD9 /* OpenGL.framework */; };
 		2BBD9DA217193ABA00515007 /* libglsl_optimizer.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2BE167B6171937F4006A0537 /* libglsl_optimizer.a */; };
-		2BBD9DA417193AD000515007 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2BBD9DA317193AD000515007 /* AGL.framework */; };
-		2BBD9DA617193AEE00515007 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2BBD9DA517193AEE00515007 /* OpenGL.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,8 +51,7 @@
 /* Begin PBXFileReference section */
 		2B47D9AA1209C6AC00937F2C /* glsl_optimizer_tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glsl_optimizer_tests.cpp; path = ../../tests/glsl_optimizer_tests.cpp; sourceTree = "<group>"; };
 		2B47D9C51209C72F00937F2C /* glsl_optimizer_lib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = glsl_optimizer_lib.xcodeproj; sourceTree = SOURCE_ROOT; };
-		2BBD9DA317193AD000515007 /* AGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AGL.framework; path = System/Library/Frameworks/AGL.framework; sourceTree = SDKROOT; };
-		2BBD9DA517193AEE00515007 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		2B88BF711821AEBD007FEFD9 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		8DD76FB20486AB0100D96B5E /* glsl_optimizer_tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = glsl_optimizer_tests; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -62,9 +60,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2BBD9DA617193AEE00515007 /* OpenGL.framework in Frameworks */,
-				2BBD9DA417193AD000515007 /* AGL.framework in Frameworks */,
 				2BBD9DA217193ABA00515007 /* libglsl_optimizer.a in Frameworks */,
+				2B88BF721821AEBD007FEFD9 /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -76,8 +73,7 @@
 			children = (
 				08FB7795FE84155DC02AAC07 /* Source */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
-				2BBD9DA317193AD000515007 /* AGL.framework */,
-				2BBD9DA517193AEE00515007 /* OpenGL.framework */,
+				2B88BF711821AEBD007FEFD9 /* OpenGL.framework */,
 				2B47D9C51209C72F00937F2C /* glsl_optimizer_lib.xcodeproj */,
 			);
 			name = glsl_optimizer_tests;
