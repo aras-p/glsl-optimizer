@@ -60,6 +60,7 @@ struct radeon_llvm_context {
 	unsigned face_gpr;
 	unsigned two_side;
 	unsigned clip_vertex;
+	unsigned inputs_count;
 	struct r600_shader_io * r600_inputs;
 	struct r600_shader_io * r600_outputs;
 	struct pipe_stream_output_info *stream_outputs;

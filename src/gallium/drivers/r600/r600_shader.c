@@ -1102,6 +1102,7 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 		radeon_llvm_ctx.type = ctx.type;
 		radeon_llvm_ctx.two_side = shader->two_side;
 		radeon_llvm_ctx.face_gpr = ctx.face_gpr;
+		radeon_llvm_ctx.inputs_count = ctx.shader->ninput + 1;
 		radeon_llvm_ctx.r600_inputs = ctx.shader->input;
 		radeon_llvm_ctx.r600_outputs = ctx.shader->output;
 		radeon_llvm_ctx.color_buffer_count = max_color_exports;
