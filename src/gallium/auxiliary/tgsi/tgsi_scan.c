@@ -60,6 +60,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
    memset(info, 0, sizeof(*info));
    for (i = 0; i < TGSI_FILE_COUNT; i++)
       info->file_max[i] = -1;
+   for (i = 0; i < Elements(info->const_file_max); i++)
+      info->const_file_max[i] = -1;
 
    /**
     ** Setup to begin parsing input shader
@@ -172,7 +174,16 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                info->file_count[file]++;
                info->file_max[file] = MAX2(info->file_max[file], (int)reg);
 
-               if (file == TGSI_FILE_INPUT) {
+               if (file == TGSI_FILE_CONSTANT) {
+                  int buffer = 0;
+
+                  if (fulldecl->Declaration.Dimension)
+                     buffer = fulldecl->Dim.Index2D;
+
+                  info->const_file_max[buffer] =
+                        MAX2(info->const_file_max[buffer], (int)reg);
+               }
+               else if (file == TGSI_FILE_INPUT) {
                   info->input_semantic_name[reg] = (ubyte) semName;
                   info->input_semantic_index[reg] = (ubyte) semIndex;
                   info->input_interpolate[reg] = (ubyte)fulldecl->Interp.Interpolate;
