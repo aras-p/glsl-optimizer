@@ -139,6 +139,16 @@ public:
    virtual class ir_jump *              as_jump()             { return NULL; }
    /*@}*/
 
+   /**
+    * IR equality method: Return true if the referenced instruction would
+    * return the same value as this one.
+    *
+    * This intended to be used for CSE and algebraic optimizations, on rvalues
+    * in particular.  No support for other instruction types (assignments,
+    * jumps, calls, etc.) is planned.
+    */
+   virtual bool equals(ir_instruction *ir);
+
 protected:
    ir_instruction()
    {
@@ -1405,6 +1415,8 @@ public:
       return this;
    }
 
+   virtual bool equals(ir_instruction *ir);
+
    virtual ir_expression *clone(void *mem_ctx, struct hash_table *ht) const;
 
    /**
@@ -1739,6 +1751,8 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
+   virtual bool equals(ir_instruction *ir);
+
    /**
     * Return a string representing the ir_texture_opcode.
     */
@@ -1843,6 +1857,8 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
+   virtual bool equals(ir_instruction *ir);
+
    bool is_lvalue() const
    {
       return val->is_lvalue() && !mask.has_duplicates;
@@ -1907,6 +1923,8 @@ public:
       return this;
    }
 
+   virtual bool equals(ir_instruction *ir);
+
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
@@ -1964,6 +1982,8 @@ public:
    {
       return this;
    }
+
+   virtual bool equals(ir_instruction *ir);
 
    /**
     * Get the variable that is ultimately referenced by an r-value
@@ -2098,6 +2118,8 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   virtual bool equals(ir_instruction *ir);
 
    /**
     * Get a particular component of a constant as a specific type

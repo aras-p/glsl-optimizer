@@ -33,6 +33,7 @@ LIBGLSL_FILES = \
 	$(GLSL_SRCDIR)/ir_clone.cpp \
 	$(GLSL_SRCDIR)/ir_constant_expression.cpp \
 	$(GLSL_SRCDIR)/ir.cpp \
+	$(GLSL_SRCDIR)/ir_equals.cpp \
 	$(GLSL_SRCDIR)/ir_expression_flattening.cpp \
 	$(GLSL_SRCDIR)/ir_function_can_inline.cpp \
 	$(GLSL_SRCDIR)/ir_function_detect_recursion.cpp \
