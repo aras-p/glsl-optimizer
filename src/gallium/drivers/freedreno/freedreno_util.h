@@ -59,6 +59,8 @@ enum adreno_stencil_op fd_stencil_op(unsigned op);
 #define FD_DBG_DSCIS    0x10
 #define FD_DBG_DIRECT   0x20
 #define FD_DBG_DBYPASS  0x40
+#define FD_DBG_FRAGHALF 0x80
+
 extern int fd_mesa_debug;
 
 #define DBG(fmt, ...) \

@@ -98,15 +98,8 @@ create_shader(struct pipe_context *pctx, const struct pipe_shader_state *cso,
 		tgsi_dump(cso->tokens, 0);
 	}
 
-	if (type == SHADER_FRAGMENT) {
-		/* we seem to get wrong colors (maybe swap/endianess or hw issue?)
-		 * with full precision color reg.  And blob driver only seems to
-		 * use half precision register for color output (that I can find
-		 * so far), even with highp precision.  So for force half precision
-		 * for frag shader:
-		 */
+	if ((type == SHADER_FRAGMENT) && (fd_mesa_debug & FD_DBG_FRAGHALF))
 		so->half_precision = true;
-	}
 
 	ret = fd3_compile_shader(so, cso->tokens);
 	if (ret) {

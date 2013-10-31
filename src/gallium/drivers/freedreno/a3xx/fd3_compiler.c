@@ -153,7 +153,7 @@ static unsigned
 compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 		const struct tgsi_token *tokens)
 {
-	unsigned ret;
+	unsigned ret, base = 0;
 
 	ctx->tokens = tokens;
 	ctx->ir = so->ir;
@@ -175,11 +175,17 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 	ctx->base_reg[TGSI_FILE_IMMEDIATE] =
 			ctx->info.file_max[TGSI_FILE_CONSTANT] + 1;
 
+	/* if full precision and fragment shader, don't clobber
+	 * r0.x w/ bary fetch:
+	 */
+	if ((so->type == SHADER_FRAGMENT) && !so->half_precision)
+		base = 1;
+
 	/* Temporaries after outputs after inputs: */
-	ctx->base_reg[TGSI_FILE_INPUT]     = 0;
-	ctx->base_reg[TGSI_FILE_OUTPUT]    =
+	ctx->base_reg[TGSI_FILE_INPUT]     = base;
+	ctx->base_reg[TGSI_FILE_OUTPUT]    = base +
 			ctx->info.file_max[TGSI_FILE_INPUT] + 1;
-	ctx->base_reg[TGSI_FILE_TEMPORARY] =
+	ctx->base_reg[TGSI_FILE_TEMPORARY] = base +
 			ctx->info.file_max[TGSI_FILE_INPUT] + 1 +
 			ctx->info.file_max[TGSI_FILE_OUTPUT] + 1;
 
