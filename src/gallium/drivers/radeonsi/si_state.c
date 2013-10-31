@@ -1362,6 +1362,13 @@ static uint32_t si_translate_buffer_dataformat(struct pipe_screen *screen,
 	if (type == UTIL_FORMAT_TYPE_FIXED)
 		return V_008F0C_BUF_DATA_FORMAT_INVALID;
 
+	if (desc->nr_channels == 4 &&
+	    desc->channel[0].size == 10 &&
+	    desc->channel[1].size == 10 &&
+	    desc->channel[2].size == 10 &&
+	    desc->channel[3].size == 2)
+		return V_008F0C_BUF_DATA_FORMAT_2_10_10_10;
+
 	/* See whether the components are of the same size. */
 	for (i = 0; i < desc->nr_channels; i++) {
 		if (desc->channel[first_non_void].size != desc->channel[i].size)
