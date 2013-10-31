@@ -39,6 +39,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_BLIT	  0x8
 #define DEBUG_MIPTREE     0x10
 #define DEBUG_PERF	  0x20
+#define DEBUG_PERFMON     0x40
 #define DEBUG_BATCH       0x80
 #define DEBUG_PIXEL       0x100
 #define DEBUG_BUFMGR      0x200

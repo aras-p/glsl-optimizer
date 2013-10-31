@@ -43,6 +43,7 @@ static const struct dri_debug_control debug_control[] = {
    { "mip",   DEBUG_MIPTREE},
    { "fall",  DEBUG_PERF},
    { "perf",  DEBUG_PERF},
+   { "perfmon", DEBUG_PERFMON},
    { "bat",   DEBUG_BATCH},
    { "pix",   DEBUG_PIXEL},
    { "buf",   DEBUG_BUFMGR},
