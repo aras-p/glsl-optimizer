@@ -1497,9 +1497,14 @@ boolean si_is_format_supported(struct pipe_screen *screen,
 		}
 	}
 
-	if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
-	    si_is_sampler_format_supported(screen, format)) {
-		retval |= PIPE_BIND_SAMPLER_VIEW;
+	if (usage & PIPE_BIND_SAMPLER_VIEW) {
+		if (target == PIPE_BUFFER) {
+			if (si_is_vertex_format_supported(screen, format))
+				retval |= PIPE_BIND_SAMPLER_VIEW;
+		} else {
+			if (si_is_sampler_format_supported(screen, format))
+				retval |= PIPE_BIND_SAMPLER_VIEW;
+		}
 	}
 
 	if ((usage & (PIPE_BIND_RENDER_TARGET |
