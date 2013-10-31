@@ -609,6 +609,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
 static void brw_emit_vertices(struct brw_context *brw)
 {
+   struct gl_context *ctx = &brw->ctx;
    GLuint i, nr_elements;
 
    brw_prepare_vertices(brw);
@@ -680,6 +681,9 @@ static void brw_emit_vertices(struct brw_context *brw)
          if (brw->gen == 7)
 	    dw0 |= GEN7_MOCS_L3 << 16;
 
+         WARN_ONCE(buffer->stride >= (brw->gen >= 5 ? 2048 : 2047),
+                   "VBO stride %d too large, bad rendering may occur\n",
+                   buffer->stride);
 	 OUT_BATCH(dw0 | (buffer->stride << BRW_VB0_PITCH_SHIFT));
 	 OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->offset);
 	 if (brw->gen >= 5) {
