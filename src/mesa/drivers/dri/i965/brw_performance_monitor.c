@@ -50,6 +50,17 @@ struct brw_perf_monitor_object
 {
    /** The base class. */
    struct gl_perf_monitor_object base;
+
+   /**
+    * BO containing starting and ending snapshots for any active pipeline
+    * statistics counters.
+    */
+   drm_intel_bo *pipeline_stats_bo;
+
+   /**
+    * Storage for final pipeline statistics counter results.
+    */
+   uint64_t *pipeline_stats_results;
 };
 
 /** Downcasting convenience macro. */
@@ -58,6 +69,8 @@ brw_perf_monitor(struct gl_perf_monitor_object *m)
 {
    return (struct brw_perf_monitor_object *) m;
 }
+
+#define SECOND_SNAPSHOT_OFFSET_IN_BYTES 2048
 
 /******************************************************************************/
 
@@ -84,6 +97,11 @@ brw_perf_monitor(struct gl_perf_monitor_object *m)
       .Counters = counter_list,                \
       .NumCounters = ARRAY_SIZE(counter_list), \
    }
+
+/** Performance Monitor Group IDs */
+enum brw_counter_groups {
+   PIPELINE_STATS_COUNTERS, /* Pipeline Statistics Register Counters */
+};
 
 /**
  * Ironlake:
@@ -195,12 +213,14 @@ dump_perf_monitor_callback(GLuint name, void *monitor_void, void *brw_void)
 {
    struct gl_context *ctx = brw_void;
    struct gl_perf_monitor_object *m = monitor_void;
+   struct brw_perf_monitor_object *monitor = monitor_void;
 
-   DBG("%4d  %-7s %-6s %-11s\n",
+   DBG("%4d  %-7s %-6s %-11s  %-9s\n",
        name,
        m->Active ? "Active" : "",
        m->Ended ? "Ended" : "",
-       brw_is_perf_monitor_result_available(ctx, m) ? "Available" : "");
+       brw_is_perf_monitor_result_available(ctx, m) ? "Available" : "",
+       monitor->pipeline_stats_bo ? "Stats BO" : "");
 }
 
 void
@@ -213,6 +233,70 @@ brw_dump_perf_monitors(struct brw_context *brw)
 
 /******************************************************************************/
 
+static bool
+monitor_needs_statistics_registers(struct brw_context *brw,
+                                   struct gl_perf_monitor_object *m)
+{
+   return brw->gen >= 6 && m->ActiveGroups[PIPELINE_STATS_COUNTERS];
+}
+
+/**
+ * Take a snapshot of any monitored pipeline statistics counters.
+ */
+static void
+snapshot_statistics_registers(struct brw_context *brw,
+                              struct brw_perf_monitor_object *monitor,
+                              uint32_t offset_in_bytes)
+{
+   struct gl_context *ctx = &brw->ctx;
+   const int offset = offset_in_bytes / sizeof(uint64_t);
+   const int group = PIPELINE_STATS_COUNTERS;
+   const int num_counters = ctx->PerfMonitor.Groups[group].NumCounters;
+
+   intel_batchbuffer_emit_mi_flush(brw);
+
+   for (int i = 0; i < num_counters; i++) {
+      if (BITSET_TEST(monitor->base.ActiveCounters[group], i)) {
+         assert(ctx->PerfMonitor.Groups[group].Counters[i].Type ==
+                GL_UNSIGNED_INT64_AMD);
+
+         brw_store_register_mem64(brw, monitor->pipeline_stats_bo,
+                                  brw->perfmon.statistics_registers[i],
+                                  offset + i);
+      }
+   }
+}
+
+/**
+ * Gather results from pipeline_stats_bo, storing the final values.
+ *
+ * This allows us to free pipeline_stats_bo (which is 4K) in favor of a much
+ * smaller array of final results.
+ */
+static void
+gather_statistics_results(struct brw_context *brw,
+                          struct brw_perf_monitor_object *monitor)
+{
+   struct gl_context *ctx = &brw->ctx;
+   const int num_counters =
+      ctx->PerfMonitor.Groups[PIPELINE_STATS_COUNTERS].NumCounters;
+
+   monitor->pipeline_stats_results = calloc(num_counters, sizeof(uint64_t));
+
+   drm_intel_bo_map(monitor->pipeline_stats_bo, false);
+   uint64_t *start = monitor->pipeline_stats_bo->virtual;
+   uint64_t *end = start + (SECOND_SNAPSHOT_OFFSET_IN_BYTES / sizeof(uint64_t));
+
+   for (int i = 0; i < num_counters; i++) {
+      monitor->pipeline_stats_results[i] = end[i] - start[i];
+   }
+   drm_intel_bo_unmap(monitor->pipeline_stats_bo);
+   drm_intel_bo_unreference(monitor->pipeline_stats_bo);
+   monitor->pipeline_stats_bo = NULL;
+}
+
+/******************************************************************************/
+
 /**
  * Initialize a monitor to sane starting state; throw away old buffers.
  */
@@ -220,6 +304,13 @@ static void
 reinitialize_perf_monitor(struct brw_context *brw,
                           struct brw_perf_monitor_object *monitor)
 {
+   if (monitor->pipeline_stats_bo) {
+      drm_intel_bo_unreference(monitor->pipeline_stats_bo);
+      monitor->pipeline_stats_bo = NULL;
+   }
+
+   free(monitor->pipeline_stats_results);
+   monitor->pipeline_stats_results = NULL;
 }
 
 /**
@@ -236,6 +327,14 @@ brw_begin_perf_monitor(struct gl_context *ctx,
 
    reinitialize_perf_monitor(brw, monitor);
 
+   if (monitor_needs_statistics_registers(brw, m)) {
+      monitor->pipeline_stats_bo =
+         drm_intel_bo_alloc(brw->bufmgr, "perf. monitor stats bo", 4096, 64);
+
+      /* Take starting snapshots. */
+      snapshot_statistics_registers(brw, monitor, 0);
+   }
+
    return true;
 }
 
@@ -246,7 +345,16 @@ static void
 brw_end_perf_monitor(struct gl_context *ctx,
                      struct gl_perf_monitor_object *m)
 {
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_perf_monitor_object *monitor = brw_perf_monitor(m);
+
    DBG("End(%d)\n", m->Name);
+
+   if (monitor_needs_statistics_registers(brw, m)) {
+      /* Take ending snapshots. */
+      snapshot_statistics_registers(brw, monitor,
+                                    SECOND_SNAPSHOT_OFFSET_IN_BYTES);
+   }
 }
 
 /**
@@ -273,9 +381,18 @@ static GLboolean
 brw_is_perf_monitor_result_available(struct gl_context *ctx,
                                      struct gl_perf_monitor_object *m)
 {
-   /* ...need to actually check if counters are available, once we have some. */
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_perf_monitor_object *monitor = brw_perf_monitor(m);
 
-   return true;
+   bool stats_available = true;
+
+   if (monitor_needs_statistics_registers(brw, m)) {
+      stats_available = !monitor->pipeline_stats_bo ||
+         (!drm_intel_bo_references(brw->batch.bo, monitor->pipeline_stats_bo) &&
+          !drm_intel_bo_busy(monitor->pipeline_stats_bo));
+   }
+
+   return stats_available;
 }
 
 /**
@@ -288,7 +405,11 @@ brw_get_perf_monitor_result(struct gl_context *ctx,
                             GLuint *data,
                             GLint *bytes_written)
 {
+   struct brw_context *brw = brw_context(ctx);
+   struct brw_perf_monitor_object *monitor = brw_perf_monitor(m);
+
    DBG("GetResult(%d)\n", m->Name);
+   brw_dump_perf_monitors(brw);
 
    /* This hook should only be called when results are available. */
    assert(m->Ended);
@@ -300,7 +421,22 @@ brw_get_perf_monitor_result(struct gl_context *ctx,
     */
    GLsizei offset = 0;
 
-   /* ...but, we don't actually expose anything yet, so nothing to do here */
+   if (monitor_needs_statistics_registers(brw, m)) {
+      const int num_counters =
+         ctx->PerfMonitor.Groups[PIPELINE_STATS_COUNTERS].NumCounters;
+
+      if (!monitor->pipeline_stats_results)
+         gather_statistics_results(brw, monitor);
+
+      for (int i = 0; i < num_counters; i++) {
+         if (BITSET_TEST(m->ActiveCounters[PIPELINE_STATS_COUNTERS], i)) {
+            data[offset++] = PIPELINE_STATS_COUNTERS;
+            data[offset++] = i;
+            *((uint64_t *) (&data[offset])) = monitor->pipeline_stats_results[i];
+            offset += 2;
+         }
+      }
+   }
 
    if (bytes_written)
       *bytes_written = offset * sizeof(uint32_t);
