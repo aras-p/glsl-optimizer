@@ -61,6 +61,32 @@ brw_perf_monitor(struct gl_perf_monitor_object *m)
 
 /******************************************************************************/
 
+#define COUNTER(name)           \
+   {                            \
+      .Name = name,             \
+      .Type = GL_UNSIGNED_INT,  \
+      .Minimum = { .u32 =  0 }, \
+      .Maximum = { .u32 = ~0 }, \
+   }
+
+#define COUNTER64(name)              \
+   {                                 \
+      .Name = name,                  \
+      .Type = GL_UNSIGNED_INT64_AMD, \
+      .Minimum = { .u64 =  0 },      \
+      .Maximum = { .u64 = ~0 },      \
+   }
+
+#define GROUP(name, max_active, counter_list)  \
+   {                                           \
+      .Name = name,                            \
+      .MaxActiveCounters = max_active,         \
+      .Counters = counter_list,                \
+      .NumCounters = ARRAY_SIZE(counter_list), \
+   }
+
+/******************************************************************************/
+
 static GLboolean brw_is_perf_monitor_result_available(struct gl_context *, struct gl_perf_monitor_object *);
 
 static void
