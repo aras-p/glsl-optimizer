@@ -327,6 +327,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
 	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_COMPUTE:
+	case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
 		return 1;
 
 	case PIPE_CAP_TEXTURE_MULTISAMPLE:
@@ -342,7 +343,12 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 256;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
-		return 130;
+		return 140;
+
+	case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
+		return 1;
+	case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
+		return MIN2(rscreen->b.info.vram_size, 0xFFFFFFFF);
 
 	/* Unsupported features. */
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
@@ -355,9 +361,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_USER_VERTEX_BUFFERS:
 	case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
 	case PIPE_CAP_CUBE_MAP_ARRAY:
-	case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
-	case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
-        case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
 		return 0;
 
 	case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:

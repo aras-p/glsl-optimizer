@@ -1189,13 +1189,34 @@ static void tex_fetch_args(
 	const struct tgsi_full_instruction * inst = emit_data->inst;
 	unsigned opcode = inst->Instruction.Opcode;
 	unsigned target = inst->Texture.Texture;
-	unsigned sampler_src, sampler_index;
 	LLVMValueRef coords[4];
 	LLVMValueRef address[16];
 	int ref_pos;
 	unsigned num_coords = tgsi_util_get_texture_coord_dim(target, &ref_pos);
 	unsigned count = 0;
 	unsigned chan;
+	unsigned sampler_src = emit_data->inst->Instruction.NumSrcRegs - 1;
+	unsigned sampler_index = emit_data->inst->Src[sampler_src].Register.Index;
+
+	if (target == TGSI_TEXTURE_BUFFER) {
+		LLVMTypeRef i128 = LLVMIntTypeInContext(gallivm->context, 128);
+		LLVMTypeRef v2i128 = LLVMVectorType(i128, 2);
+		LLVMTypeRef i8 = LLVMInt8TypeInContext(gallivm->context);
+		LLVMTypeRef v16i8 = LLVMVectorType(i8, 16);
+
+		/* Truncate v32i8 to v16i8. */
+		LLVMValueRef res = si_shader_ctx->resources[sampler_index];
+		res = LLVMBuildBitCast(gallivm->builder, res, v2i128, "");
+		res = LLVMBuildExtractElement(gallivm->builder, res, bld_base->uint_bld.zero, "");
+		res = LLVMBuildBitCast(gallivm->builder, res, v16i8, "");
+
+		emit_data->dst_type = LLVMVectorType(bld_base->base.elem_type, 4);
+		emit_data->args[0] = res;
+		emit_data->args[1] = bld_base->uint_bld.zero;
+		emit_data->args[2] = lp_build_emit_fetch(bld_base, emit_data->inst, 0, 0);
+		emit_data->arg_count = 3;
+		return;
+	}
 
 	/* Fetch and project texture coordinates */
 	coords[3] = lp_build_emit_fetch(bld_base, emit_data->inst, 0, TGSI_CHAN_W);
@@ -1266,9 +1287,6 @@ static void tex_fetch_args(
 						 LLVMInt32TypeInContext(gallivm->context),
 						 "");
 	}
-
-	sampler_src = emit_data->inst->Instruction.NumSrcRegs - 1;
-	sampler_index = emit_data->inst->Src[sampler_src].Register.Index;
 
 	/* Adjust the sample index according to FMASK.
 	 *
@@ -1430,6 +1448,15 @@ static void build_tex_intrinsic(const struct lp_build_tgsi_action * action,
 	struct lp_build_context * base = &bld_base->base;
 	char intr_name[127];
 
+	if (emit_data->inst->Texture.Texture == TGSI_TEXTURE_BUFFER) {
+		emit_data->output[emit_data->chan] = build_intrinsic(
+			base->gallivm->builder,
+			"llvm.SI.vs.load.input", emit_data->dst_type,
+			emit_data->args, emit_data->arg_count,
+			LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
+		return;
+	}
+
 	sprintf(intr_name, "%sv%ui32", action->intr_name,
 		LLVMGetVectorSize(LLVMTypeOf(emit_data->args[0])));
 
@@ -1445,6 +1472,20 @@ static void txq_fetch_args(
 {
 	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
 	const struct tgsi_full_instruction *inst = emit_data->inst;
+	struct gallivm_state *gallivm = bld_base->base.gallivm;
+
+	if (inst->Texture.Texture == TGSI_TEXTURE_BUFFER) {
+		LLVMTypeRef i32 = LLVMInt32TypeInContext(gallivm->context);
+		LLVMTypeRef v8i32 = LLVMVectorType(i32, 8);
+
+		/* Read the size from the buffer descriptor directly. */
+		LLVMValueRef size = si_shader_ctx->resources[inst->Src[1].Register.Index];
+		size = LLVMBuildBitCast(gallivm->builder, size, v8i32, "");
+		size = LLVMBuildExtractElement(gallivm->builder, size,
+					      lp_build_const_int32(gallivm, 2), "");
+		emit_data->args[0] = size;
+		return;
+	}
 
 	/* Mip level */
 	emit_data->args[0] = lp_build_emit_fetch(bld_base, inst, 0, TGSI_CHAN_X);
@@ -1461,6 +1502,19 @@ static void txq_fetch_args(
 	emit_data->dst_type = LLVMVectorType(
 		LLVMInt32TypeInContext(bld_base->base.gallivm->context),
 		4);
+}
+
+static void build_txq_intrinsic(const struct lp_build_tgsi_action * action,
+				struct lp_build_tgsi_context * bld_base,
+				struct lp_build_emit_data * emit_data)
+{
+	if (emit_data->inst->Texture.Texture == TGSI_TEXTURE_BUFFER) {
+		/* Just return the buffer size. */
+		emit_data->output[emit_data->chan] = emit_data->args[0];
+		return;
+	}
+
+	build_tgsi_intrinsic_nomem(action, bld_base, emit_data);
 }
 
 #if HAVE_LLVM >= 0x0304
@@ -1569,7 +1623,7 @@ static const struct lp_build_tgsi_action txl_action = {
 
 static const struct lp_build_tgsi_action txq_action = {
 	.fetch_args = txq_fetch_args,
-	.emit = build_tgsi_intrinsic_nomem,
+	.emit = build_txq_intrinsic,
 	.intr_name = "llvm.SI.resinfo"
 };
 
