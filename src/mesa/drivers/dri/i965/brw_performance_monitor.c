@@ -98,7 +98,37 @@ const static struct gl_perf_monitor_group gen5_groups[] = {
  * Sandybridge:
  *  @{
  */
+const static struct gl_perf_monitor_counter gen6_statistics_counters[] = {
+   COUNTER64("IA_VERTICES_COUNT"),
+   COUNTER64("IA_PRIMITIVES_COUNT"),
+   COUNTER64("VS_INVOCATION_COUNT"),
+   COUNTER64("GS_INVOCATION_COUNT"),
+   COUNTER64("GS_PRIMITIVES_COUNT"),
+   COUNTER64("CL_INVOCATION_COUNT"),
+   COUNTER64("CL_PRIMITIVES_COUNT"),
+   COUNTER64("PS_INVOCATION_COUNT"),
+   COUNTER64("PS_DEPTH_COUNT"),
+   COUNTER64("SO_NUM_PRIMS_WRITTEN"),
+   COUNTER64("SO_PRIM_STORAGE_NEEDED"),
+};
+
+/** MMIO register addresses for each pipeline statistics counter. */
+const static int gen6_statistics_register_addresses[] = {
+   IA_VERTICES_COUNT,
+   IA_PRIMITIVES_COUNT,
+   VS_INVOCATION_COUNT,
+   GS_INVOCATION_COUNT,
+   GS_PRIMITIVES_COUNT,
+   CL_INVOCATION_COUNT,
+   CL_PRIMITIVES_COUNT,
+   PS_INVOCATION_COUNT,
+   PS_DEPTH_COUNT,
+   GEN6_SO_NUM_PRIMS_WRITTEN,
+   GEN6_SO_PRIM_STORAGE_NEEDED,
+};
+
 const static struct gl_perf_monitor_group gen6_groups[] = {
+   GROUP("Pipeline Statistics Registers", INT_MAX, gen6_statistics_counters),
 };
 /** @} */
 
@@ -106,7 +136,53 @@ const static struct gl_perf_monitor_group gen6_groups[] = {
  * Ivybridge/Baytrail/Haswell:
  *  @{
  */
+const static struct gl_perf_monitor_counter gen7_statistics_counters[] = {
+   COUNTER64("IA_VERTICES_COUNT"),
+   COUNTER64("IA_PRIMITIVES_COUNT"),
+   COUNTER64("VS_INVOCATION_COUNT"),
+   COUNTER64("HS_INVOCATION_COUNT"),
+   COUNTER64("DS_INVOCATION_COUNT"),
+   COUNTER64("GS_INVOCATION_COUNT"),
+   COUNTER64("GS_PRIMITIVES_COUNT"),
+   COUNTER64("CL_INVOCATION_COUNT"),
+   COUNTER64("CL_PRIMITIVES_COUNT"),
+   COUNTER64("PS_INVOCATION_COUNT"),
+   COUNTER64("PS_DEPTH_COUNT"),
+   COUNTER64("SO_NUM_PRIMS_WRITTEN (Stream 0)"),
+   COUNTER64("SO_NUM_PRIMS_WRITTEN (Stream 1)"),
+   COUNTER64("SO_NUM_PRIMS_WRITTEN (Stream 2)"),
+   COUNTER64("SO_NUM_PRIMS_WRITTEN (Stream 3)"),
+   COUNTER64("SO_PRIM_STORAGE_NEEDED (Stream 0)"),
+   COUNTER64("SO_PRIM_STORAGE_NEEDED (Stream 1)"),
+   COUNTER64("SO_PRIM_STORAGE_NEEDED (Stream 2)"),
+   COUNTER64("SO_PRIM_STORAGE_NEEDED (Stream 3)"),
+};
+
+/** MMIO register addresses for each pipeline statistics counter. */
+const static int gen7_statistics_register_addresses[] = {
+   IA_VERTICES_COUNT,
+   IA_PRIMITIVES_COUNT,
+   VS_INVOCATION_COUNT,
+   HS_INVOCATION_COUNT,
+   DS_INVOCATION_COUNT,
+   GS_INVOCATION_COUNT,
+   GS_PRIMITIVES_COUNT,
+   CL_INVOCATION_COUNT,
+   CL_PRIMITIVES_COUNT,
+   PS_INVOCATION_COUNT,
+   PS_DEPTH_COUNT,
+   GEN7_SO_NUM_PRIMS_WRITTEN(0),
+   GEN7_SO_NUM_PRIMS_WRITTEN(1),
+   GEN7_SO_NUM_PRIMS_WRITTEN(2),
+   GEN7_SO_NUM_PRIMS_WRITTEN(3),
+   GEN7_SO_PRIM_STORAGE_NEEDED(0),
+   GEN7_SO_PRIM_STORAGE_NEEDED(1),
+   GEN7_SO_PRIM_STORAGE_NEEDED(2),
+   GEN7_SO_PRIM_STORAGE_NEEDED(3),
+};
+
 const static struct gl_perf_monitor_group gen7_groups[] = {
+   GROUP("Pipeline Statistics Registers", INT_MAX, gen7_statistics_counters),
 };
 /** @} */
 
@@ -272,8 +348,10 @@ brw_init_performance_monitors(struct brw_context *brw)
    } else if (brw->gen == 6) {
       ctx->PerfMonitor.Groups = gen6_groups;
       ctx->PerfMonitor.NumGroups = ARRAY_SIZE(gen6_groups);
+      brw->perfmon.statistics_registers = gen6_statistics_register_addresses;
    } else if (brw->gen == 7) {
       ctx->PerfMonitor.Groups = gen7_groups;
       ctx->PerfMonitor.NumGroups = ARRAY_SIZE(gen7_groups);
+      brw->perfmon.statistics_registers = gen7_statistics_register_addresses;
    }
 }

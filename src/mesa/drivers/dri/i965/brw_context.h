@@ -1399,6 +1399,11 @@ struct brw_context
       bool begin_emitted;
    } query;
 
+   struct {
+      /** A map from pipeline statistics counter IDs to MMIO addresses. */
+      const int *statistics_registers;
+   } perfmon;
+
    int num_atoms;
    const struct brw_tracked_state **atoms;
 
