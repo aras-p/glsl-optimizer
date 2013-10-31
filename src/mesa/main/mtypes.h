@@ -1846,6 +1846,8 @@ struct gl_transform_feedback_state
  */
 struct gl_perf_monitor_object
 {
+   GLuint Name;
+
    GLboolean Active;
 
    /**
