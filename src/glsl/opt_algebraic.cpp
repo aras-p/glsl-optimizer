@@ -357,7 +357,6 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       break;
 
    case ir_binop_logic_and:
-      /* FINISHME: Also simplify (a && a) to (a). */
       if (is_vec_one(op_const[0])) {
 	 return ir->operands[1];
       } else if (is_vec_one(op_const[1])) {
@@ -371,6 +370,9 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
           */
          return logic_not(logic_or(op_expr[0]->operands[0],
                                    op_expr[1]->operands[0]));
+      } else if (ir->operands[0]->equals(ir->operands[1])) {
+         /* (a && a) == a */
+         return ir->operands[0];
       }
       break;
 
