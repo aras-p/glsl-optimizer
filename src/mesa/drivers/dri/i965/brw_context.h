@@ -1613,6 +1613,10 @@ bool brw_is_hiz_depth_format(struct brw_context *ctx, gl_format format);
 bool brw_render_target_supported(struct brw_context *brw,
                                  struct gl_renderbuffer *rb);
 
+/* brw_performance_monitor.c */
+void brw_init_performance_monitors(struct brw_context *brw);
+void brw_dump_perf_monitors(struct brw_context *brw);
+
 /* intel_extensions.c */
 extern void intelInitExtensions(struct gl_context *ctx);
 

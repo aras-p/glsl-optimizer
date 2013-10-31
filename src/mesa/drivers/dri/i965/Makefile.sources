@@ -73,6 +73,7 @@ i965_FILES = \
 	brw_lower_unnormalized_offset.cpp \
 	brw_misc_state.c \
 	brw_object_purgeable.c \
+	brw_performance_monitor.c \
 	brw_program.c \
 	brw_primitive_restart.c \
 	brw_queryobj.c \
