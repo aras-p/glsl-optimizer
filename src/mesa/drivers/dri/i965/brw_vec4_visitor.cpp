@@ -1569,7 +1569,7 @@ vec4_visitor::visit(ir_expression *ir)
       ir_constant *uniform_block = ir->operands[0]->as_constant();
       ir_constant *const_offset_ir = ir->operands[1]->as_constant();
       unsigned const_offset = const_offset_ir ? const_offset_ir->value.u[0] : 0;
-      src_reg offset = op[1];
+      src_reg offset;
 
       /* Now, load the vector from that offset. */
       assert(ir->type->is_vector() || ir->type->is_scalar());
@@ -1581,7 +1581,8 @@ vec4_visitor::visit(ir_expression *ir)
       if (const_offset_ir) {
          offset = src_reg(const_offset / 16);
       } else {
-         emit(SHR(dst_reg(offset), offset, src_reg(4)));
+         offset = src_reg(this, glsl_type::uint_type);
+         emit(SHR(dst_reg(offset), op[1], src_reg(4)));
       }
 
       vec4_instruction *pull =
