@@ -85,6 +85,31 @@ brw_perf_monitor(struct gl_perf_monitor_object *m)
       .NumCounters = ARRAY_SIZE(counter_list), \
    }
 
+/**
+ * Ironlake:
+ *  @{
+ */
+const static struct gl_perf_monitor_group gen5_groups[] = {
+   /* Our pipeline statistics counter handling requires hardware contexts. */
+};
+/** @} */
+
+/**
+ * Sandybridge:
+ *  @{
+ */
+const static struct gl_perf_monitor_group gen6_groups[] = {
+};
+/** @} */
+
+/**
+ * Ivybridge/Baytrail/Haswell:
+ *  @{
+ */
+const static struct gl_perf_monitor_group gen7_groups[] = {
+};
+/** @} */
+
 /******************************************************************************/
 
 static GLboolean brw_is_perf_monitor_result_available(struct gl_context *, struct gl_perf_monitor_object *);
@@ -241,5 +266,14 @@ brw_init_performance_monitors(struct brw_context *brw)
    ctx->Driver.IsPerfMonitorResultAvailable = brw_is_perf_monitor_result_available;
    ctx->Driver.GetPerfMonitorResult = brw_get_perf_monitor_result;
 
-   /* ...need to set ctx->PerfMonitor.Groups and ctx->PerfMonitor.NumGroups */
+   if (brw->gen == 5) {
+      ctx->PerfMonitor.Groups = gen5_groups;
+      ctx->PerfMonitor.NumGroups = ARRAY_SIZE(gen5_groups);
+   } else if (brw->gen == 6) {
+      ctx->PerfMonitor.Groups = gen6_groups;
+      ctx->PerfMonitor.NumGroups = ARRAY_SIZE(gen6_groups);
+   } else if (brw->gen == 7) {
+      ctx->PerfMonitor.Groups = gen7_groups;
+      ctx->PerfMonitor.NumGroups = ARRAY_SIZE(gen7_groups);
+   }
 }
