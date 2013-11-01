@@ -89,10 +89,6 @@ if HAVE_DRI
 SUBDIRS += r600/dri
 endif
 
-if HAVE_ST_XORG
-SUBDIRS += r600/xorg
-endif
-
 if HAVE_ST_XVMC
 SUBDIRS += r600/xvmc
 endif

@@ -1789,7 +1789,7 @@ if test "x$with_gallium_drivers" != x; then
             if test "x$enable_opencl" = xyes; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
-            gallium_check_st "radeon/drm" "r600/dri" "r600/xorg" "" "r600/xvmc" "r600/vdpau"
+            gallium_check_st "radeon/drm" "r600/dri" "" "" "r600/xvmc" "r600/vdpau"
             DRICOMMON_NEED_LIBDRM=yes
             ;;
         xradeonsi)
@@ -2050,7 +2050,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/r300/xvmc/Makefile
 		src/gallium/targets/r600/dri/Makefile
 		src/gallium/targets/r600/vdpau/Makefile
-		src/gallium/targets/r600/xorg/Makefile
 		src/gallium/targets/r600/xvmc/Makefile
 		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
