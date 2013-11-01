@@ -23,16 +23,9 @@
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
-noinst_LTLIBRARIES = librbug.la
-
-# GALLIUM_CFLAGS must appear before src/gallium/drivers
-# because there are stupidly two rbug_context.h files in
-# different directories, and which one is included by the
-# preprocessor is determined by the ordering of the -I flags.
 AM_CFLAGS = \
-	$(GALLIUM_CFLAGS) \
-	$(VISIBILITY_CFLAGS) \
-	-I$(top_srcdir)/src/gallium/drivers \
-	-I$(top_srcdir)/include
+	$(GALLIUM_DRIVER_CFLAGS)
+
+noinst_LTLIBRARIES = librbug.la
 
 librbug_la_SOURCES = $(C_SOURCES)

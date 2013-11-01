@@ -23,11 +23,8 @@
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/src/gallium/drivers \
-	-I$(top_srcdir)/include \
-	$(GALLIUM_CFLAGS) \
-	$(VISIBILITY_CFLAGS)
+AM_CFLAGS = \
+	$(GALLIUM_DRIVER_CFLAGS)
 
 noinst_LTLIBRARIES = libsoftpipe.la
 

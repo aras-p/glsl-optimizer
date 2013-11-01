@@ -3,20 +3,18 @@ AUTOMAKE_OPTIONS = subdir-objects
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
-noinst_LTLIBRARIES = libr300.la libr300-helper.la
-check_PROGRAMS = r300_compiler_tests
-TESTS = r300_compiler_tests
-
 AM_CFLAGS = \
-	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/src/mesa/program \
 	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/src/glsl \
 	-I$(top_srcdir)/src/mapi \
-	$(VISIBILITY_CFLAGS) \
-	$(GALLIUM_CFLAGS) \
+	$(GALLIUM_DRIVER_CFLAGS) \
 	$(LLVM_CFLAGS) \
 	$(RADEON_CFLAGS)
+
+noinst_LTLIBRARIES = libr300.la libr300-helper.la
+check_PROGRAMS = r300_compiler_tests
+TESTS = r300_compiler_tests
 
 r300_compiler_tests_LDADD = libr300.la libr300-helper.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \

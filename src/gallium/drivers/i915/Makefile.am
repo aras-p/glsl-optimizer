@@ -23,11 +23,9 @@
 include Makefile.sources
 include $(top_srcdir)/src/gallium/Automake.inc
 
-noinst_LTLIBRARIES = libi915.la
+AM_CFLAGS = \
+	$(GALLIUM_DRIVER_CFLAGS)
 
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/src/gallium/drivers \
-	-I$(top_srcdir)/include \
-	$(GALLIUM_CFLAGS)
+noinst_LTLIBRARIES = libi915.la
 
 libi915_la_SOURCES = $(C_SOURCES)
