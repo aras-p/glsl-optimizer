@@ -215,6 +215,16 @@ emit_shader(struct fd_ringbuffer *ring, struct fd3_shader_stateobj *so)
 	}
 }
 
+static int
+find_output(struct fd3_shader_stateobj *so, fd3_semantic semantic)
+{
+	int j;
+	for (j = 0; j < so->outputs_count; j++)
+		if (so->outputs[j].semantic == semantic)
+			return j;
+	return 0;
+}
+
 void
 fd3_program_emit(struct fd_ringbuffer *ring,
 		struct fd_program_stateobj *prog)
@@ -287,18 +297,19 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 			A3XX_SP_VS_PARAM_REG_PSIZEREGID(vp->psize_regid) |
 			A3XX_SP_VS_PARAM_REG_TOTALVSOUTVAR(fp->inputs_count));
 
-	assert(vp->outputs_count >= fp->inputs_count);
-
 	for (i = 0; i < fp->inputs_count; ) {
 		uint32_t reg = 0;
+		int j;
 
 		OUT_PKT0(ring, REG_A3XX_SP_VS_OUT_REG(i/2), 1);
 
-		reg |= A3XX_SP_VS_OUT_REG_A_REGID(vp->outputs[i].regid);
+		j = find_output(vp, fp->inputs[i].semantic);
+		reg |= A3XX_SP_VS_OUT_REG_A_REGID(vp->outputs[j].regid);
 		reg |= A3XX_SP_VS_OUT_REG_A_COMPMASK(fp->inputs[i].compmask);
 		i++;
 
-		reg |= A3XX_SP_VS_OUT_REG_B_REGID(vp->outputs[i].regid);
+		j = find_output(vp, fp->inputs[i].semantic);
+		reg |= A3XX_SP_VS_OUT_REG_B_REGID(vp->outputs[j].regid);
 		reg |= A3XX_SP_VS_OUT_REG_B_COMPMASK(fp->inputs[i].compmask);
 		i++;
 
@@ -507,6 +518,7 @@ create_blit_fp(struct pipe_context *pctx)
 	so->color_regid = regid(0,0);
 	so->half_precision = true;
 	so->inputs_count = 1;
+	so->inputs[0].semantic = fd3_semantic_name(TGSI_SEMANTIC_TEXCOORD, 0);
 	so->inputs[0].inloc = 8;
 	so->inputs[0].compmask = 0x3;
 	so->total_in = 2;
@@ -547,6 +559,7 @@ create_blit_vp(struct pipe_context *pctx)
 	so->inputs[1].compmask = 0xf;
 	so->total_in = 8;
 	so->outputs_count = 1;
+	so->outputs[0].semantic = fd3_semantic_name(TGSI_SEMANTIC_TEXCOORD, 0);
 	so->outputs[0].regid = regid(0,0);
 
 	fixup_vp_regfootprint(so);

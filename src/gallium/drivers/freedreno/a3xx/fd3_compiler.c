@@ -1596,6 +1596,12 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(KILL,         instr_cat0, .opc = OPC_KILL),
 };
 
+static fd3_semantic
+decl_semantic(const struct tgsi_declaration_semantic *sem)
+{
+	return fd3_semantic_name(sem->Name, sem->Index);
+}
+
 static int
 decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 {
@@ -1603,6 +1609,13 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 	unsigned base = ctx->base_reg[TGSI_FILE_INPUT];
 	unsigned i, flags = 0;
 	int nop = 0;
+
+	/* I don't think we should get frag shader input without
+	 * semantic info?  Otherwise how do inputs get linked to
+	 * vert outputs?
+	 */
+	compile_assert(ctx, (ctx->type == TGSI_PROCESSOR_VERTEX) ||
+			decl->Declaration.Semantic);
 
 	if (ctx->so->half_precision)
 		flags |= IR3_REG_HALF;
@@ -1617,6 +1630,7 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 
 		DBG("decl in -> r%d", i + base);   // XXX
 
+		so->inputs[n].semantic = decl_semantic(&decl->Semantic);
 		so->inputs[n].compmask = (1 << ncomp) - 1;
 		so->inputs[n].regid = r;
 		so->inputs[n].inloc = ctx->next_inloc;
@@ -1672,8 +1686,6 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 		case TGSI_SEMANTIC_GENERIC:
 		case TGSI_SEMANTIC_FOG:
 		case TGSI_SEMANTIC_TEXCOORD:
-			for (i = decl->Range.First; i <= decl->Range.Last; i++)
-				so->outputs[so->outputs_count++].regid = regid(i + base, 0);
 			break;
 		default:
 			compile_error(ctx, "unknown VS semantic name: %s\n",
@@ -1685,9 +1697,15 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 			so->color_regid = regid(decl->Range.First + base, 0);
 			break;
 		default:
-			compile_error(ctx, "unknown VS semantic name: %s\n",
+			compile_error(ctx, "unknown FS semantic name: %s\n",
 					tgsi_semantic_names[name]);
 		}
+	}
+
+	for (i = decl->Range.First; i <= decl->Range.Last; i++) {
+		unsigned n = so->outputs_count++;
+		so->outputs[n].semantic = decl_semantic(&decl->Semantic);
+		so->outputs[n].regid = regid(i + base, 0);
 	}
 }
 

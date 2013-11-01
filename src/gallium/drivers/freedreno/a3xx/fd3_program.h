@@ -36,6 +36,13 @@
 #include "ir-a3xx.h"
 #include "disasm.h"
 
+typedef uint16_t fd3_semantic;  /* semantic name + index */
+static inline fd3_semantic
+fd3_semantic_name(uint8_t name, uint16_t index)
+{
+	return (name << 8) | (index & 0xff);
+}
+
 struct fd3_shader_stateobj {
 	enum shader_t type;
 
@@ -74,12 +81,14 @@ struct fd3_shader_stateobj {
 	/* varyings/outputs: */
 	unsigned outputs_count;
 	struct {
+		fd3_semantic semantic;
 		uint8_t regid;
 	} outputs[16];
 
 	/* vertices/inputs: */
 	unsigned inputs_count;
 	struct {
+		fd3_semantic semantic;
 		uint8_t regid;
 		uint8_t compmask;
 		/* in theory inloc of fs should match outloc of vs: */
