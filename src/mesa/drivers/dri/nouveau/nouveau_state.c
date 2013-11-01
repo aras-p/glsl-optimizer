@@ -107,12 +107,6 @@ nouveau_depth_mask(struct gl_context *ctx, GLboolean flag)
 }
 
 static void
-nouveau_depth_range(struct gl_context *ctx, GLclampd nearval, GLclampd farval)
-{
-	context_dirty(ctx, VIEWPORT);
-}
-
-static void
 nouveau_read_buffer(struct gl_context *ctx, GLenum buffer)
 {
 	nouveau_validate_framebuffer(ctx);
@@ -429,12 +423,6 @@ nouveau_tex_parameter(struct gl_context *ctx, GLenum target,
 	}
 }
 
-static void
-nouveau_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
-{
-	context_dirty(ctx, VIEWPORT);
-}
-
 void
 nouveau_emit_nothing(struct gl_context *ctx, int emit)
 {
@@ -483,6 +471,9 @@ nouveau_update_state(struct gl_context *ctx, GLbitfield new_state)
 			context_dirty_i(ctx, TEX_MAT, i);
 	}
 
+	if (new_state & _NEW_VIEWPORT)
+		context_dirty(ctx, VIEWPORT);
+
 	if (new_state & _NEW_CURRENT_ATTRIB &&
 	    new_state & _NEW_LIGHT) {
 		context_dirty(ctx, MATERIAL_FRONT_AMBIENT);
@@ -524,7 +515,6 @@ nouveau_state_init(struct gl_context *ctx)
 	ctx->Driver.FrontFace = nouveau_front_face;
 	ctx->Driver.DepthFunc = nouveau_depth_func;
 	ctx->Driver.DepthMask = nouveau_depth_mask;
-	ctx->Driver.DepthRange = nouveau_depth_range;
 	ctx->Driver.ReadBuffer = nouveau_read_buffer;
 	ctx->Driver.DrawBuffers = nouveau_draw_buffers;
 	ctx->Driver.Enable = nouveau_enable;
@@ -548,7 +538,6 @@ nouveau_state_init(struct gl_context *ctx)
 	ctx->Driver.TexGen = nouveau_tex_gen;
 	ctx->Driver.TexEnv = nouveau_tex_env;
 	ctx->Driver.TexParameter = nouveau_tex_parameter;
-	ctx->Driver.Viewport = nouveau_viewport;
 
 	ctx->Driver.UpdateState = nouveau_update_state;
 
