@@ -99,12 +99,10 @@ fd3_sampler_state_create(struct pipe_context *pctx,
 			A3XX_TEX_SAMP_0_WRAP_T(tex_clamp(cso->wrap_t)) |
 			A3XX_TEX_SAMP_0_WRAP_R(tex_clamp(cso->wrap_r));
 
-	/* when mip-map is not disabled, this gets set.. I guess possibly
-	 * it is the LOD related params, but I think I need GLES3 blob driver
-	 * to be able to tell..
-	 */
 	if (cso->min_mip_filter != PIPE_TEX_MIPFILTER_NONE) {
-		so->texsamp1 = 0x003ff000;
+		so->texsamp1 =
+				A3XX_TEX_SAMP_1_MIN_LOD(cso->min_lod) |
+				A3XX_TEX_SAMP_1_MAX_LOD(cso->max_lod);
 	} else {
 		so->texsamp1 = 0x00000000;
 	}
