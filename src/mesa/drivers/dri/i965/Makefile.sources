@@ -145,5 +145,6 @@ i965_FILES = \
 	gen8_fs_generator.cpp \
 	gen8_generator.cpp \
 	gen8_instruction.c \
+	gen8_sf_state.c \
 	gen8_vec4_generator.cpp \
         $()

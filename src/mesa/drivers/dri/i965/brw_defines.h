@@ -1640,19 +1640,38 @@ enum brw_message_target {
 /* GEN7/DW2: */
 # define HSW_SF_LINE_STIPPLE_ENABLE			14
 
+# define GEN8_SF_SMOOTH_POINT_ENABLE                    (1 << 13)
+
 #define _3DSTATE_SBE				0x781F /* GEN7+ */
 /* DW1 */
+# define GEN8_SBE_FORCE_URB_ENTRY_READ_LENGTH           (1 << 29)
+# define GEN8_SBE_FORCE_URB_ENTRY_READ_OFFSET           (1 << 28)
 # define GEN7_SBE_SWIZZLE_CONTROL_MODE			(1 << 28)
 # define GEN7_SBE_NUM_OUTPUTS_SHIFT			22
 # define GEN7_SBE_SWIZZLE_ENABLE			(1 << 21)
 # define GEN7_SBE_POINT_SPRITE_LOWERLEFT		(1 << 20)
 # define GEN7_SBE_URB_ENTRY_READ_LENGTH_SHIFT		11
 # define GEN7_SBE_URB_ENTRY_READ_OFFSET_SHIFT		4
+# define GEN8_SBE_URB_ENTRY_READ_OFFSET_SHIFT		5
 /* DW2-9: Attribute setup (same as DW8-15 of gen6 _3DSTATE_SF) */
 /* DW10: Point sprite texture coordinate enables */
 /* DW11: Constant interpolation enables */
 /* DW12: attr 0-7 wrap shortest enables */
 /* DW13: attr 8-16 wrap shortest enables */
+
+#define _3DSTATE_SBE_SWIZ                       0x7851 /* GEN8+ */
+
+#define _3DSTATE_RASTER                         0x7850 /* GEN8+ */
+/* DW1 */
+# define GEN8_RASTER_FRONT_WINDING_CCW                  (1 << 21)
+# define GEN8_RASTER_CULL_BOTH                          (0 << 16)
+# define GEN8_RASTER_CULL_NONE                          (1 << 16)
+# define GEN8_RASTER_CULL_FRONT                         (2 << 16)
+# define GEN8_RASTER_CULL_BACK                          (3 << 16)
+# define GEN8_RASTER_SMOOTH_POINT_ENABLE                (1 << 13)
+# define GEN8_RASTER_LINE_AA_ENABLE                     (1 << 2)
+# define GEN8_RASTER_SCISSOR_ENABLE                     (1 << 1)
+# define GEN8_RASTER_VIEWPORT_Z_CLIP_TEST_ENABLE        (1 << 0)
 
 enum brw_wm_barycentric_interp_mode {
    BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC		= 0,
