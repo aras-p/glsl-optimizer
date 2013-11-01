@@ -1798,7 +1798,7 @@ if test "x$with_gallium_drivers" != x; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
             radeon_llvm_check
-            gallium_check_st "radeon/drm" "radeonsi/dri" "radeonsi/xorg" "" "" "radeonsi/vdpau" ""
+            gallium_check_st "radeon/drm" "radeonsi/dri" "" "" "" "radeonsi/vdpau" ""
             DRICOMMON_NEED_LIBDRM=yes
             ;;
         xnouveau)
@@ -2044,7 +2044,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/pipe-loader/Makefile
 		src/gallium/targets/radeonsi/dri/Makefile
 		src/gallium/targets/radeonsi/vdpau/Makefile
-		src/gallium/targets/radeonsi/xorg/Makefile
 		src/gallium/targets/r300/dri/Makefile
 		src/gallium/targets/r300/vdpau/Makefile
 		src/gallium/targets/r300/xvmc/Makefile
