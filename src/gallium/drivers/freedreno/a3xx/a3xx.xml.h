@@ -10,10 +10,10 @@ git clone https://github.com/freedreno/envytools.git
 The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno.xml              (    327 bytes, from 2013-07-05 19:21:12)
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/a2xx/a2xx.xml           (  32800 bytes, from 2013-10-22 23:57:49)
+- /home/robclark/src/freedreno/envytools/rnndb/a2xx/a2xx.xml           (  32800 bytes, from 2013-11-01 23:57:26)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   8900 bytes, from 2013-10-22 23:57:49)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (  10345 bytes, from 2013-10-25 14:31:35)
-- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  52655 bytes, from 2013-10-25 14:43:32)
+- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  52925 bytes, from 2013-11-01 23:57:26)
 
 Copyright (C) 2013 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -2092,6 +2092,8 @@ static inline uint32_t A3XX_UCHE_CACHE_INVALIDATE1_REG_OPCODE(enum a3xx_cache_op
 
 #define REG_A3XX_TP_PERFCOUNTER5_SELECT				0x00000f09
 
+#define REG_A3XX_VGT_CL_INITIATOR				0x000021f0
+
 #define REG_A3XX_VGT_EVENT_INITIATOR				0x000021f9
 
 #define REG_A3XX_VGT_DRAW_INITIATOR				0x000021fc
@@ -2133,6 +2135,18 @@ static inline uint32_t A3XX_TEX_SAMP_0_WRAP_R(enum a3xx_tex_clamp val)
 #define A3XX_TEX_SAMP_0_UNNORM_COORDS				0x80000000
 
 #define REG_A3XX_TEX_SAMP_1					0x00000001
+#define A3XX_TEX_SAMP_1_MAX_LOD__MASK				0x003ff000
+#define A3XX_TEX_SAMP_1_MAX_LOD__SHIFT				12
+static inline uint32_t A3XX_TEX_SAMP_1_MAX_LOD(float val)
+{
+	return ((((uint32_t)(val * 12.0))) << A3XX_TEX_SAMP_1_MAX_LOD__SHIFT) & A3XX_TEX_SAMP_1_MAX_LOD__MASK;
+}
+#define A3XX_TEX_SAMP_1_MIN_LOD__MASK				0xffc00000
+#define A3XX_TEX_SAMP_1_MIN_LOD__SHIFT				22
+static inline uint32_t A3XX_TEX_SAMP_1_MIN_LOD(float val)
+{
+	return ((((uint32_t)(val * 12.0))) << A3XX_TEX_SAMP_1_MIN_LOD__SHIFT) & A3XX_TEX_SAMP_1_MIN_LOD__MASK;
+}
 
 #define REG_A3XX_TEX_CONST_0					0x00000000
 #define A3XX_TEX_CONST_0_TILED					0x00000001
