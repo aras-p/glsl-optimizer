@@ -1529,7 +1529,6 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
    shader->CompileStatus = !state->error;
    shader->InfoLog = state->info_log;
    shader->Version = state->language_version;
-   shader->InfoLog = state->info_log;
    shader->IsES = state->es_shader;
 
    memcpy(shader->builtins_to_link, state->builtins_to_link,
