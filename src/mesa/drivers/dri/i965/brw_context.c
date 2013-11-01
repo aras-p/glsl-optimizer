@@ -130,8 +130,10 @@ intel_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
    struct brw_context *brw = brw_context(ctx);
    __DRIcontext *driContext = brw->driContext;
 
-   if (brw->saved_viewport)
-      brw->saved_viewport(ctx, x, y, w, h);
+   (void) x;
+   (void) y;
+   (void) w;
+   (void) h;
 
    if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       dri2InvalidateDrawable(driContext->driDrawablePriv);
@@ -220,10 +222,8 @@ brw_init_driver_functions(struct brw_context *brw,
     * So EGL still relies on viewport hacks to handle window resizing.
     * This should go away with DRI3000.
     */
-   if (!brw->driContext->driScreenPriv->dri2.useInvalidate) {
-      brw->saved_viewport = functions->Viewport;
+   if (!brw->driContext->driScreenPriv->dri2.useInvalidate)
       functions->Viewport = intel_viewport;
-   }
 
    functions->Flush = intel_glFlush;
    functions->Finish = intelFinish;

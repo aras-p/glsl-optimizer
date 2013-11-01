@@ -1442,8 +1442,6 @@ struct brw_context
 
    __DRIcontext *driContext;
    struct intel_screen *intelScreen;
-   void (*saved_viewport)(struct gl_context *ctx,
-                          GLint x, GLint y, GLsizei width, GLsizei height);
 };
 
 static INLINE bool
