@@ -12,11 +12,7 @@ AM_CFLAGS = \
 	$(FREEDRENO_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
 
-SUBDIRS = a2xx a3xx
-
-libfreedreno_la_SOURCES = $(C_SOURCES)
-
-libfreedreno_la_LIBADD = \
-	a3xx/libfd3xx.la \
-	a2xx/libfd2xx.la
-
+libfreedreno_la_SOURCES = \
+	$(C_SOURCES) \
+	$(a2xx_SOURCES) \
+	$(a3xx_SOURCES)

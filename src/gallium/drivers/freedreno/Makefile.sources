@@ -9,3 +9,35 @@ C_SOURCES := \
 	freedreno_context.c \
 	freedreno_screen.c \
 	freedreno_gmem.c
+
+a2xx_SOURCES := \
+	a2xx/fd2_blend.c \
+	a2xx/fd2_compiler.c \
+	a2xx/fd2_context.c \
+	a2xx/fd2_draw.c \
+	a2xx/fd2_emit.c \
+	a2xx/fd2_gmem.c \
+	a2xx/fd2_program.c \
+	a2xx/fd2_rasterizer.c \
+	a2xx/fd2_screen.c \
+	a2xx/fd2_texture.c \
+	a2xx/fd2_util.c \
+	a2xx/fd2_zsa.c \
+	a2xx/disasm-a2xx.c \
+	a2xx/ir-a2xx.c
+
+a3xx_SOURCES := \
+	a3xx/fd3_blend.c \
+	a3xx/fd3_compiler.c \
+	a3xx/fd3_context.c \
+	a3xx/fd3_draw.c \
+	a3xx/fd3_emit.c \
+	a3xx/fd3_gmem.c \
+	a3xx/fd3_program.c \
+	a3xx/fd3_rasterizer.c \
+	a3xx/fd3_screen.c \
+	a3xx/fd3_texture.c \
+	a3xx/fd3_util.c \
+	a3xx/fd3_zsa.c \
+	a3xx/disasm-a3xx.c \
+	a3xx/ir-a3xx.c
