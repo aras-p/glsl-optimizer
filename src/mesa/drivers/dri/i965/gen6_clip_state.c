@@ -36,6 +36,7 @@ static void
 upload_clip_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
+   /* BRW_NEW_META_IN_PROGRESS */
    uint32_t dw1 = brw->meta_in_progress ? 0 : GEN6_CLIP_STATISTICS_ENABLE;
    uint32_t dw2 = 0;
 
@@ -46,6 +47,33 @@ upload_clip_state(struct brw_context *brw)
    if (brw->wm.prog_data->barycentric_interp_modes &
        BRW_WM_NONPERSPECTIVE_BARYCENTRIC_BITS) {
       dw2 |= GEN6_CLIP_NON_PERSPECTIVE_BARYCENTRIC_ENABLE;
+   }
+
+   if (brw->gen >= 7) {
+      dw1 |= GEN7_CLIP_EARLY_CULL;
+
+      /* _NEW_POLYGON */
+      if ((ctx->Polygon.FrontFace == GL_CCW) ^ _mesa_is_user_fbo(fb))
+         dw1 |= GEN7_CLIP_WINDING_CCW;
+
+      if (ctx->Polygon.CullFlag) {
+         switch (ctx->Polygon.CullFaceMode) {
+         case GL_FRONT:
+            dw1 |= GEN7_CLIP_CULLMODE_FRONT;
+            break;
+         case GL_BACK:
+            dw1 |= GEN7_CLIP_CULLMODE_BACK;
+            break;
+         case GL_FRONT_AND_BACK:
+            dw1 |= GEN7_CLIP_CULLMODE_BOTH;
+            break;
+         default:
+            assert(!"Should not get here: invalid CullFlag");
+            break;
+         }
+      } else {
+         dw1 |= GEN7_CLIP_CULLMODE_NONE;
+      }
    }
 
    if (!ctx->Transform.DepthClamp)
@@ -79,7 +107,8 @@ upload_clip_state(struct brw_context *brw)
    if (ctx->RasterDiscard) {
       dw2 |= GEN6_CLIP_MODE_REJECT_ALL;
       perf_debug("Rasterizer discard is currently implemented via the clipper; "
-                 "having the GS not write primitives would likely be faster.");
+                 "%s be faster.", brw->gen >= 7 ? "using the SOL unit may" :
+                 "having the GS not write primitives would likely");
    }
 
    BEGIN_BATCH(4);
@@ -92,13 +121,24 @@ upload_clip_state(struct brw_context *brw)
 	     dw2);
    OUT_BATCH(U_FIXED(0.125, 3) << GEN6_CLIP_MIN_POINT_WIDTH_SHIFT |
              U_FIXED(255.875, 3) << GEN6_CLIP_MAX_POINT_WIDTH_SHIFT |
-             GEN6_CLIP_FORCE_ZERO_RTAINDEX);
+             (fb->Layered ? 0 : GEN6_CLIP_FORCE_ZERO_RTAINDEX));
    ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state gen6_clip_state = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_LIGHT | _NEW_BUFFERS,
+      .brw   = BRW_NEW_CONTEXT |
+               BRW_NEW_META_IN_PROGRESS |
+               BRW_NEW_RASTERIZER_DISCARD,
+      .cache = CACHE_NEW_WM_PROG
+   },
+   .emit = upload_clip_state,
+};
+
+const struct brw_tracked_state gen7_clip_state = {
+   .dirty = {
+      .mesa  = _NEW_BUFFERS | _NEW_LIGHT | _NEW_POLYGON | _NEW_TRANSFORM,
       .brw   = BRW_NEW_CONTEXT |
                BRW_NEW_META_IN_PROGRESS |
                BRW_NEW_RASTERIZER_DISCARD,
