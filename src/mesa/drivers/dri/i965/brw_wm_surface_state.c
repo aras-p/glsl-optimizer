@@ -467,37 +467,32 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    const int size = brw->wm.prog_data->base.nr_pull_params * sizeof(float);
    const int surf_index =
       brw->wm.prog_data->base.binding_table.pull_constants_start;
-   float *constants;
    unsigned int i;
 
    _mesa_load_state_parameters(ctx, params);
 
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->base.nr_pull_params == 0) {
-      if (brw->wm.base.const_bo) {
-	 drm_intel_bo_unreference(brw->wm.base.const_bo);
-	 brw->wm.base.const_bo = NULL;
+      if (brw->wm.base.surf_offset[surf_index]) {
 	 brw->wm.base.surf_offset[surf_index] = 0;
 	 brw->state.dirty.brw |= BRW_NEW_SURFACES;
       }
       return;
    }
 
-   drm_intel_bo_unreference(brw->wm.base.const_bo);
-   brw->wm.base.const_bo = drm_intel_bo_alloc(brw->bufmgr, "WM const bo",
-					 size, 64);
-
    /* _NEW_PROGRAM_CONSTANTS */
-   drm_intel_gem_bo_map_gtt(brw->wm.base.const_bo);
-   constants = brw->wm.base.const_bo->virtual;
+   drm_intel_bo *const_bo = NULL;
+   uint32_t const_offset;
+   float *constants = intel_upload_space(brw, size, 64,
+                                         &const_bo, &const_offset);
    for (i = 0; i < brw->wm.prog_data->base.nr_pull_params; i++) {
       constants[i] = *brw->wm.prog_data->base.pull_param[i];
    }
-   drm_intel_gem_bo_unmap_gtt(brw->wm.base.const_bo);
 
-   brw_create_constant_surface(brw, brw->wm.base.const_bo, 0, size,
+   brw_create_constant_surface(brw, const_bo, const_offset, size,
                                &brw->wm.base.surf_offset[surf_index],
                                true);
+   drm_intel_bo_unreference(const_bo);
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }

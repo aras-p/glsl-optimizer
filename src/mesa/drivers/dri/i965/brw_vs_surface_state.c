@@ -34,7 +34,7 @@
 
 #include "brw_context.h"
 #include "brw_state.h"
-
+#include "intel_buffer_objects.h"
 
 void
 brw_upload_vec4_pull_constants(struct brw_context *brw,
@@ -52,9 +52,7 @@ brw_upload_vec4_pull_constants(struct brw_context *brw,
    _mesa_load_state_parameters(&brw->ctx, prog->Parameters);
 
    if (!prog_data->base.nr_pull_params) {
-      if (stage_state->const_bo) {
-	 drm_intel_bo_unreference(stage_state->const_bo);
-	 stage_state->const_bo = NULL;
+      if (stage_state->surf_offset[surf_index]) {
 	 stage_state->surf_offset[surf_index] = 0;
 	 brw->state.dirty.brw |= brw_new_constbuf;
       }
@@ -62,32 +60,28 @@ brw_upload_vec4_pull_constants(struct brw_context *brw,
    }
 
    /* _NEW_PROGRAM_CONSTANTS */
-   drm_intel_bo_unreference(stage_state->const_bo);
    uint32_t size = prog_data->base.nr_pull_params * 4;
-   stage_state->const_bo = drm_intel_bo_alloc(brw->bufmgr, "vec4_const_buffer",
-                                           size, 64);
-
-   drm_intel_gem_bo_map_gtt(stage_state->const_bo);
+   drm_intel_bo *const_bo = NULL;
+   uint32_t const_offset;
+   float *constants = intel_upload_space(brw, size, 64,
+                                         &const_bo, &const_offset);
 
    for (i = 0; i < prog_data->base.nr_pull_params; i++) {
-      memcpy(stage_state->const_bo->virtual + i * 4,
-	     prog_data->base.pull_param[i],
-	     4);
+      constants[i] = *prog_data->base.pull_param[i];
    }
 
    if (0) {
       for (i = 0; i < ALIGN(prog_data->base.nr_pull_params, 4) / 4; i++) {
-	 float *row = (float *)stage_state->const_bo->virtual + i * 4;
+	 float *row = &constants[i * 4];
 	 fprintf(stderr, "const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
                  i, row[0], row[1], row[2], row[3]);
       }
    }
 
-   drm_intel_gem_bo_unmap_gtt(stage_state->const_bo);
-
-   brw_create_constant_surface(brw, stage_state->const_bo, 0, size,
+   brw_create_constant_surface(brw, const_bo, const_offset, size,
                                &stage_state->surf_offset[surf_index],
                                false);
+   drm_intel_bo_unreference(const_bo);
 
    brw->state.dirty.brw |= brw_new_constbuf;
 }

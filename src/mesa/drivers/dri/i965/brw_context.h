@@ -933,9 +933,6 @@ struct brw_stage_state
     */
    drm_intel_bo *scratch_bo;
 
-   /** Pull constant buffer */
-   drm_intel_bo *const_bo;
-
    /** Offset in the program cache to the program */
    uint32_t prog_offset;
 

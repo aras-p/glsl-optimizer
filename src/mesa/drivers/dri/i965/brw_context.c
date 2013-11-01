@@ -821,8 +821,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
    brw_draw_destroy(brw);
 
    drm_intel_bo_unreference(brw->curbe.curbe_bo);
-   drm_intel_bo_unreference(brw->vs.base.const_bo);
-   drm_intel_bo_unreference(brw->wm.base.const_bo);
 
    free(brw->curbe.last_buf);
    free(brw->curbe.next_buf);
