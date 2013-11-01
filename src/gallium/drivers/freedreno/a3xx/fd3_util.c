@@ -267,7 +267,7 @@ fd3_pipe2fetchsize(enum pipe_format format)
 	// TODO add more..
 
 	default:
-		return TFETCH_DISABLE;  /* save default */
+		return TFETCH_DISABLE;  /* safe default */
 	}
 }
 

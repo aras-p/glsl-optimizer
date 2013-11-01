@@ -163,65 +163,64 @@ emit_textures(struct fd_ringbuffer *ring,
 	};
 	unsigned i, j;
 
-	assert(tex->num_samplers == tex->num_textures);  // TODO check..
-
-	if (!tex->num_samplers)
-		return;
-
-	/* output sampler state: */
-	OUT_PKT3(ring, CP_LOAD_STATE, 2 + (2 * tex->num_samplers));
-	OUT_RING(ring, CP_LOAD_STATE_0_DST_OFF(tex_off[sb]) |
-			CP_LOAD_STATE_0_STATE_SRC(SS_DIRECT) |
-			CP_LOAD_STATE_0_STATE_BLOCK(sb) |
-			CP_LOAD_STATE_0_NUM_UNIT(tex->num_samplers));
-	OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_SHADER) |
-			CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
-	for (i = 0; i < tex->num_samplers; i++) {
-		struct fd3_sampler_stateobj *sampler =
-				fd3_sampler_stateobj(tex->samplers[i]);
-		OUT_RING(ring, sampler->texsamp0);
-		OUT_RING(ring, sampler->texsamp1);
+	if (tex->num_samplers > 0) {
+		/* output sampler state: */
+		OUT_PKT3(ring, CP_LOAD_STATE, 2 + (2 * tex->num_samplers));
+		OUT_RING(ring, CP_LOAD_STATE_0_DST_OFF(tex_off[sb]) |
+				CP_LOAD_STATE_0_STATE_SRC(SS_DIRECT) |
+				CP_LOAD_STATE_0_STATE_BLOCK(sb) |
+				CP_LOAD_STATE_0_NUM_UNIT(tex->num_samplers));
+		OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_SHADER) |
+				CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
+		for (i = 0; i < tex->num_samplers; i++) {
+			struct fd3_sampler_stateobj *sampler =
+					fd3_sampler_stateobj(tex->samplers[i]);
+			OUT_RING(ring, sampler->texsamp0);
+			OUT_RING(ring, sampler->texsamp1);
+		}
 	}
 
-	/* emit texture state: */
-	OUT_PKT3(ring, CP_LOAD_STATE, 2 + (4 * tex->num_textures));
-	OUT_RING(ring, CP_LOAD_STATE_0_DST_OFF(tex_off[sb]) |
-			CP_LOAD_STATE_0_STATE_SRC(SS_DIRECT) |
-			CP_LOAD_STATE_0_STATE_BLOCK(sb) |
-			CP_LOAD_STATE_0_NUM_UNIT(tex->num_textures));
-	OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_CONSTANTS) |
-			CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
-	for (i = 0; i < tex->num_textures; i++) {
-		struct fd3_pipe_sampler_view *view =
-				fd3_pipe_sampler_view(tex->textures[i]);
-		OUT_RING(ring, view->texconst0);
-		OUT_RING(ring, view->texconst1);
-		OUT_RING(ring, view->texconst2 |
-				A3XX_TEX_CONST_2_INDX(BASETABLE_SZ * i));
-		OUT_RING(ring, view->texconst3);
-	}
-
-	/* emit mipaddrs: */
-	OUT_PKT3(ring, CP_LOAD_STATE, 2 + (BASETABLE_SZ * tex->num_textures));
-	OUT_RING(ring, CP_LOAD_STATE_0_DST_OFF(BASETABLE_SZ * tex_off[sb]) |
-			CP_LOAD_STATE_0_STATE_SRC(SS_DIRECT) |
-			CP_LOAD_STATE_0_STATE_BLOCK(mipaddr[sb]) |
-			CP_LOAD_STATE_0_NUM_UNIT(BASETABLE_SZ * tex->num_textures));
-	OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_CONSTANTS) |
-			CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
-	for (i = 0; i < tex->num_textures; i++) {
-		struct fd3_pipe_sampler_view *view =
-				fd3_pipe_sampler_view(tex->textures[i]);
-		struct fd_resource *rsc = view->tex_resource;
-
-		for (j = 0; j < view->mipaddrs; j++) {
-			struct fd_resource_slice *slice = fd_resource_slice(rsc, j);
-			OUT_RELOC(ring, rsc->bo, slice->offset, 0, 0);
+	if (tex->num_textures > 0) {
+		/* emit texture state: */
+		OUT_PKT3(ring, CP_LOAD_STATE, 2 + (4 * tex->num_textures));
+		OUT_RING(ring, CP_LOAD_STATE_0_DST_OFF(tex_off[sb]) |
+				CP_LOAD_STATE_0_STATE_SRC(SS_DIRECT) |
+				CP_LOAD_STATE_0_STATE_BLOCK(sb) |
+				CP_LOAD_STATE_0_NUM_UNIT(tex->num_textures));
+		OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_CONSTANTS) |
+				CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
+		for (i = 0; i < tex->num_textures; i++) {
+			struct fd3_pipe_sampler_view *view =
+					fd3_pipe_sampler_view(tex->textures[i]);
+			OUT_RING(ring, view->texconst0);
+			OUT_RING(ring, view->texconst1);
+			OUT_RING(ring, view->texconst2 |
+					A3XX_TEX_CONST_2_INDX(BASETABLE_SZ * i));
+			OUT_RING(ring, view->texconst3);
 		}
 
-		/* pad the remaining entries w/ null: */
-		for (; j < BASETABLE_SZ; j++) {
-			OUT_RING(ring, 0x00000000);
+		/* emit mipaddrs: */
+		OUT_PKT3(ring, CP_LOAD_STATE, 2 + (BASETABLE_SZ * tex->num_textures));
+		OUT_RING(ring, CP_LOAD_STATE_0_DST_OFF(BASETABLE_SZ * tex_off[sb]) |
+				CP_LOAD_STATE_0_STATE_SRC(SS_DIRECT) |
+				CP_LOAD_STATE_0_STATE_BLOCK(mipaddr[sb]) |
+				CP_LOAD_STATE_0_NUM_UNIT(BASETABLE_SZ * tex->num_textures));
+		OUT_RING(ring, CP_LOAD_STATE_1_STATE_TYPE(ST_CONSTANTS) |
+				CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
+		for (i = 0; i < tex->num_textures; i++) {
+			struct fd3_pipe_sampler_view *view =
+					fd3_pipe_sampler_view(tex->textures[i]);
+			struct fd_resource *rsc = view->tex_resource;
+
+			for (j = 0; j < view->mipaddrs; j++) {
+				struct fd_resource_slice *slice = fd_resource_slice(rsc, j);
+				OUT_RELOC(ring, rsc->bo, slice->offset, 0, 0);
+			}
+
+			/* pad the remaining entries w/ null: */
+			for (; j < BASETABLE_SZ; j++) {
+				OUT_RING(ring, 0x00000000);
+			}
 		}
 	}
 }
