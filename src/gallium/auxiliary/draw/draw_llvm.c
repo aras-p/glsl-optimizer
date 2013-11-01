@@ -1036,6 +1036,9 @@ store_clip(struct gallivm_state *gallivm,
    LLVMValueRef io_ptrs[LP_MAX_VECTOR_WIDTH / 32];
    LLVMValueRef inds[LP_MAX_VECTOR_WIDTH / 32];
    LLVMValueRef clip_ptrs[LP_MAX_VECTOR_WIDTH / 32];
+   LLVMTypeRef clip_ptr_type =
+      LLVMPointerType(LLVMVectorType(LLVMFloatTypeInContext(gallivm->context),
+                                     4), 0);
    int i, j;
 
    indices[0] =
@@ -1070,7 +1073,6 @@ store_clip(struct gallivm_state *gallivm,
    }
 
    for (j = 0; j < vs_type.length; j++) {
-      LLVMTypeRef  clip_ptr_type = LLVMPointerType(LLVMVectorType(LLVMFloatTypeInContext(gallivm->context), 4), 0);
       LLVMValueRef clip_ptr;
 
       clip_ptr = LLVMBuildGEP(builder, clip_ptrs[j], indices, 2, "clipo");
