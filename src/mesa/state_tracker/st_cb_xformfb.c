@@ -74,7 +74,7 @@ st_new_transform_feedback(struct gl_context *ctx, GLuint name)
    if (!obj)
       return NULL;
 
-   _mesa_init_transform_feedback_object(obj, name);
+   _mesa_init_transform_feedback_object(&obj->base, name);
 
    return &obj->base;
 }
