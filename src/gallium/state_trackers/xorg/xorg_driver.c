@@ -1027,7 +1027,11 @@ drv_close_screen(CLOSE_SCREEN_ARGS_DECL)
 
 #ifdef DRM_MODE_FEATURE_DIRTYFB
     if (ms->damage) {
+#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,14,99,2,0)
+	DamageUnregister(ms->damage);
+#else
 	DamageUnregister(&pScreen->GetScreenPixmap(pScreen)->drawable, ms->damage);
+#endif
 	DamageDestroy(ms->damage);
 	ms->damage = NULL;
     }
