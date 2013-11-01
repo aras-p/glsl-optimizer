@@ -424,15 +424,6 @@ intelCalcViewport(struct gl_context * ctx)
 }
 
 
-/** Called from ctx->Driver.Viewport() */
-static void
-i915Viewport(struct gl_context * ctx,
-              GLint x, GLint y, GLsizei width, GLsizei height)
-{
-   intelCalcViewport(ctx);
-}
-
-
 /** Called from ctx->Driver.DepthRange() */
 static void
 i915DepthRange(struct gl_context * ctx, GLclampd nearval, GLclampd farval)
@@ -1091,7 +1082,6 @@ i915InitStateFunctions(struct dd_function_table *functions)
    functions->StencilMaskSeparate = i915StencilMaskSeparate;
    functions->StencilOpSeparate = i915StencilOpSeparate;
    functions->DepthRange = i915DepthRange;
-   functions->Viewport = i915Viewport;
 }
 
 

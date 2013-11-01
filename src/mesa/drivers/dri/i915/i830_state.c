@@ -451,15 +451,6 @@ i830DepthMask(struct gl_context * ctx, GLboolean flag)
       i830->state.Ctx[I830_CTXREG_ENABLES_2] |= DISABLE_DEPTH_WRITE;
 }
 
-/** Called from ctx->Driver.Viewport() */
-static void
-i830Viewport(struct gl_context * ctx,
-              GLint x, GLint y, GLsizei width, GLsizei height)
-{
-   intelCalcViewport(ctx);
-}
-
-
 /** Called from ctx->Driver.DepthRange() */
 static void
 i830DepthRange(struct gl_context * ctx, GLclampd nearval, GLclampd farval)
@@ -1136,7 +1127,6 @@ i830InitStateFuncs(struct dd_function_table *functions)
    functions->StencilMaskSeparate = i830StencilMaskSeparate;
    functions->StencilOpSeparate = i830StencilOpSeparate;
    functions->DepthRange = i830DepthRange;
-   functions->Viewport = i830Viewport;
 }
 
 void
