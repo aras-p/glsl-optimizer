@@ -407,7 +407,7 @@ void radeon_window_moved(radeonContextPtr radeon)
 	radeonSetCliprects(radeon);
 }
 
-void radeon_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei height)
+void radeon_viewport(struct gl_context *ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	__DRIcontext *driContext = radeon->dri.context;

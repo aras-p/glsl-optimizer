@@ -23,7 +23,7 @@ void radeon_window_moved(radeonContextPtr radeon);
 void radeon_draw_buffer(struct gl_context *ctx, struct gl_framebuffer *fb);
 void radeonDrawBuffer( struct gl_context *ctx, GLenum mode );
 void radeonReadBuffer( struct gl_context *ctx, GLenum mode );
-void radeon_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei height);
+void radeon_viewport(struct gl_context *ctx);
 void radeon_fbo_init(struct radeon_context *radeon);
 void
 radeon_renderbuffer_set_bo(struct radeon_renderbuffer *rb,

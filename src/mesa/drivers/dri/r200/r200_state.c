@@ -1603,13 +1603,18 @@ void r200_vtbl_update_scissor( struct gl_context *ctx )
 static void r200Viewport( struct gl_context *ctx, GLint x, GLint y,
 			    GLsizei width, GLsizei height )
 {
+   (void) x;
+   (void) y;
+   (void) width;
+   (void) height;
+
    /* Don't pipeline viewport changes, conflict with window offset
     * setting below.  Could apply deltas to rescue pipelined viewport
     * values, or keep the originals hanging around.
     */
    r200UpdateWindow( ctx );
 
-   radeon_viewport(ctx, x, y, width, height);
+   radeon_viewport(ctx);
 }
 
 static void r200DepthRange( struct gl_context *ctx, GLclampd nearval,
