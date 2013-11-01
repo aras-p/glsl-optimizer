@@ -337,12 +337,6 @@ nouveau_render_mode(struct gl_context *ctx, GLenum mode)
 }
 
 static void
-nouveau_scissor(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
-{
-	context_dirty(ctx, SCISSOR);
-}
-
-static void
 nouveau_shade_model(struct gl_context *ctx, GLenum mode)
 {
 	context_dirty(ctx, SHADE_MODEL);
@@ -471,6 +465,9 @@ nouveau_update_state(struct gl_context *ctx, GLbitfield new_state)
 			context_dirty_i(ctx, TEX_MAT, i);
 	}
 
+	if (new_state & _NEW_SCISSOR)
+		context_dirty(ctx, SCISSOR);
+
 	if (new_state & _NEW_VIEWPORT)
 		context_dirty(ctx, VIEWPORT);
 
@@ -530,7 +527,6 @@ nouveau_state_init(struct gl_context *ctx)
 	ctx->Driver.PolygonOffset = nouveau_polygon_offset;
 	ctx->Driver.PolygonStipple = nouveau_polygon_stipple;
 	ctx->Driver.RenderMode = nouveau_render_mode;
-	ctx->Driver.Scissor = nouveau_scissor;
 	ctx->Driver.ShadeModel = nouveau_shade_model;
 	ctx->Driver.StencilFuncSeparate = nouveau_stencil_func_separate;
 	ctx->Driver.StencilMaskSeparate = nouveau_stencil_mask_separate;
