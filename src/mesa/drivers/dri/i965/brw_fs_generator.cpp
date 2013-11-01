@@ -989,7 +989,7 @@ static uint32_t brw_file_from_reg(fs_reg *reg)
    }
 }
 
-static struct brw_reg
+struct brw_reg
 brw_reg_from_fs_reg(fs_reg *reg)
 {
    struct brw_reg brw_reg;
