@@ -1233,6 +1233,7 @@ set_max_gl_versions(struct intel_screen *screen)
    __DRIscreen *psp = screen->driScrnPriv;
 
    switch (screen->devinfo->gen) {
+   case 8:
    case 7:
       psp->max_gl_core_version = 33;
       psp->max_gl_compat_version = 30;
