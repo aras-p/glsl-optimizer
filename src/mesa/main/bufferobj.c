@@ -655,16 +655,17 @@ _mesa_free_buffer_objects( struct gl_context *ctx )
    }
 }
 
-static bool
-handle_bind_buffer_gen(struct gl_context *ctx,
-		       GLenum target,
-		       GLuint buffer,
-		       struct gl_buffer_object **buf_handle)
+bool
+_mesa_handle_bind_buffer_gen(struct gl_context *ctx,
+                             GLenum target,
+                             GLuint buffer,
+                             struct gl_buffer_object **buf_handle,
+                             const char *caller)
 {
    struct gl_buffer_object *buf = *buf_handle;
 
    if (!buf && ctx->API == API_OPENGL_CORE) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glBindBuffer(non-gen name)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(non-gen name)", caller);
       return false;
    }
 
@@ -675,7 +676,7 @@ handle_bind_buffer_gen(struct gl_context *ctx,
       ASSERT(ctx->Driver.NewBufferObject);
       buf = ctx->Driver.NewBufferObject(ctx, buffer, target);
       if (!buf) {
-	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindBufferARB");
+	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "%s", caller);
 	 return false;
       }
       _mesa_HashInsert(ctx->Shared->BufferObjects, buffer, buf);
@@ -719,7 +720,8 @@ bind_buffer_object(struct gl_context *ctx, GLenum target, GLuint buffer)
    else {
       /* non-default buffer object */
       newBufObj = _mesa_lookup_bufferobj(ctx, buffer);
-      if (!handle_bind_buffer_gen(ctx, target, buffer, &newBufObj))
+      if (!_mesa_handle_bind_buffer_gen(ctx, target, buffer,
+                                        &newBufObj, "glBindBuffer"))
          return;
    }
    
@@ -2181,7 +2183,8 @@ _mesa_BindBufferRange(GLenum target, GLuint index,
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
    }
-   if (!handle_bind_buffer_gen(ctx, target, buffer, &bufObj))
+   if (!_mesa_handle_bind_buffer_gen(ctx, target, buffer,
+                                     &bufObj, "glBindBufferRange"))
       return;
 
    if (!bufObj) {
@@ -2227,7 +2230,8 @@ _mesa_BindBufferBase(GLenum target, GLuint index, GLuint buffer)
    } else {
       bufObj = _mesa_lookup_bufferobj(ctx, buffer);
    }
-   if (!handle_bind_buffer_gen(ctx, target, buffer, &bufObj))
+   if (!_mesa_handle_bind_buffer_gen(ctx, target, buffer,
+                                     &bufObj, "glBindBufferBase"))
       return;
 
    if (!bufObj) {

@@ -28,7 +28,7 @@
 #ifndef BUFFEROBJ_H
 #define BUFFEROBJ_H
 
-
+#include <stdbool.h>
 #include "mtypes.h"
 
 
@@ -61,6 +61,13 @@ _mesa_init_buffer_objects( struct gl_context *ctx );
 
 extern void
 _mesa_free_buffer_objects( struct gl_context *ctx );
+
+extern bool
+_mesa_handle_bind_buffer_gen(struct gl_context *ctx,
+                             GLenum target,
+                             GLuint buffer,
+                             struct gl_buffer_object **buf_handle,
+                             const char *caller);
 
 extern void
 _mesa_update_default_objects_buffer_objects(struct gl_context *ctx);
