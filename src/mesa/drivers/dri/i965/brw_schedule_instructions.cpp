@@ -352,6 +352,45 @@ schedule_node::set_latency_gen7(bool is_haswell)
        * then around 140.  Presumably this is cache hit vs miss.
        */
       latency = 50;
+   case SHADER_OPCODE_UNTYPED_ATOMIC:
+      /* Test code:
+       *   mov(8)    g112<1>ud       0x00000000ud       { align1 WE_all 1Q };
+       *   mov(1)    g112.7<1>ud     g1.7<0,1,0>ud      { align1 WE_all };
+       *   mov(8)    g113<1>ud       0x00000000ud       { align1 WE_normal 1Q };
+       *   send(8)   g4<1>ud         g112<8,8,1>ud
+       *             data (38, 5, 6) mlen 2 rlen 1      { align1 WE_normal 1Q };
+       *
+       * Running it 100 times as fragment shader on a 128x128 quad
+       * gives an average latency of 13867 cycles per atomic op,
+       * standard deviation 3%.  Note that this is a rather
+       * pessimistic estimate, the actual latency in cases with few
+       * collisions between threads and favorable pipelining has been
+       * seen to be reduced by a factor of 100.
+       */
+      latency = 14000;
+      break;
+
+   case SHADER_OPCODE_UNTYPED_SURFACE_READ:
+      /* Test code:
+       *   mov(8)    g112<1>UD       0x00000000UD       { align1 WE_all 1Q };
+       *   mov(1)    g112.7<1>UD     g1.7<0,1,0>UD      { align1 WE_all };
+       *   mov(8)    g113<1>UD       0x00000000UD       { align1 WE_normal 1Q };
+       *   send(8)   g4<1>UD         g112<8,8,1>UD
+       *             data (38, 6, 5) mlen 2 rlen 1      { align1 WE_normal 1Q };
+       *   .
+       *   . [repeats 8 times]
+       *   .
+       *   mov(8)    g112<1>UD       0x00000000UD       { align1 WE_all 1Q };
+       *   mov(1)    g112.7<1>UD     g1.7<0,1,0>UD      { align1 WE_all };
+       *   mov(8)    g113<1>UD       0x00000000UD       { align1 WE_normal 1Q };
+       *   send(8)   g4<1>UD         g112<8,8,1>UD
+       *             data (38, 6, 5) mlen 2 rlen 1      { align1 WE_normal 1Q };
+       *
+       * Running it 100 times as fragment shader on a 128x128 quad
+       * gives an average latency of 583 cycles per surface read,
+       * standard deviation 0.9%.
+       */
+      latency = is_haswell ? 300 : 600;
       break;
 
    default:
