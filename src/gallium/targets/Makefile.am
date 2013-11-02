@@ -75,10 +75,6 @@ if HAVE_DRI
 SUBDIRS += r300/dri
 endif
 
-if HAVE_ST_XVMC
-SUBDIRS += r300/xvmc
-endif
-
 if HAVE_ST_VDPAU
 SUBDIRS += r300/vdpau
 endif

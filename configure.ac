@@ -1771,7 +1771,7 @@ if test "x$with_gallium_drivers" != x; then
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
             gallium_require_llvm "Gallium R300"
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-            gallium_check_st "radeon/drm" "r300/dri" "" "" "r300/xvmc" "r300/vdpau"
+            gallium_check_st "radeon/drm" "r300/dri" "" "" "" "r300/vdpau"
             DRICOMMON_NEED_LIBDRM=yes
             ;;
         xr600)
@@ -2046,7 +2046,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/radeonsi/vdpau/Makefile
 		src/gallium/targets/r300/dri/Makefile
 		src/gallium/targets/r300/vdpau/Makefile
-		src/gallium/targets/r300/xvmc/Makefile
 		src/gallium/targets/r600/dri/Makefile
 		src/gallium/targets/r600/vdpau/Makefile
 		src/gallium/targets/r600/xvmc/Makefile
