@@ -251,13 +251,13 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
 		    _mesa_get_format_name(format));
    }
 
-   gen4_emit_buffer_surface_state(brw, surf_offset, bo,
-                                  tObj->BufferOffset,
-                                  brw_format,
-                                  size / texel_size,
-                                  texel_size,
-                                  0,
-                                  false);
+   brw->vtbl.emit_buffer_surface_state(brw, surf_offset, bo,
+                                       tObj->BufferOffset,
+                                       brw_format,
+                                       size / texel_size,
+                                       texel_size,
+                                       0, /* mocs */
+                                       false /* rw */);
 }
 
 static void
@@ -332,9 +332,9 @@ brw_create_constant_surface(struct brw_context *brw,
    uint32_t stride = dword_pitch ? 4 : 16;
    uint32_t elements = ALIGN(size, stride) / stride;
 
-   gen4_emit_buffer_surface_state(brw, out_offset, bo, offset,
-                                  BRW_SURFACEFORMAT_R32G32B32A32_FLOAT,
-                                  elements, stride, 0, false);
+   brw->vtbl.emit_buffer_surface_state(brw, out_offset, bo, offset,
+                                       BRW_SURFACEFORMAT_R32G32B32A32_FLOAT,
+                                       elements, stride, 0, false);
 }
 
 /**
