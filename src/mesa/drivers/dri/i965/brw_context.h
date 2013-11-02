@@ -976,12 +976,6 @@ struct brw_context
 					  unsigned unit);
       void (*update_null_renderbuffer_surface)(struct brw_context *brw,
 					       unsigned unit);
-      void (*create_constant_surface)(struct brw_context *brw,
-				      drm_intel_bo *bo,
-				      uint32_t offset,
-				      uint32_t size,
-				      uint32_t *out_offset,
-                                      bool dword_pitch);
 
       void (*create_raw_surface)(struct brw_context *brw,
                                  drm_intel_bo *bo,
@@ -1577,6 +1571,12 @@ unsigned brw_get_index_type(GLenum type);
 
 /* brw_wm_surface_state.c */
 void brw_init_surface_formats(struct brw_context *brw);
+void brw_create_constant_surface(struct brw_context *brw,
+                                 drm_intel_bo *bo,
+                                 uint32_t offset,
+                                 uint32_t size,
+                                 uint32_t *out_offset,
+                                 bool dword_pitch);
 void
 brw_update_sol_surface(struct brw_context *brw,
                        struct gl_buffer_object *buffer_obj,

@@ -85,9 +85,9 @@ brw_upload_vec4_pull_constants(struct brw_context *brw,
 
    drm_intel_gem_bo_unmap_gtt(stage_state->const_bo);
 
-   brw->vtbl.create_constant_surface(brw, stage_state->const_bo, 0, size,
-                                     &stage_state->surf_offset[surf_index],
-                                     false);
+   brw_create_constant_surface(brw, stage_state->const_bo, 0, size,
+                               &stage_state->surf_offset[surf_index],
+                               false);
 
    brw->state.dirty.brw |= brw_new_constbuf;
 }

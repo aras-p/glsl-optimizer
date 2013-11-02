@@ -321,7 +321,7 @@ brw_update_texture_surface(struct gl_context *ctx,
  * Create the constant buffer surface.  Vertex/fragment shader constants will be
  * read from this buffer with Data Port Read instructions/messages.
  */
-static void
+void
 brw_create_constant_surface(struct brw_context *brw,
 			    drm_intel_bo *bo,
 			    uint32_t offset,
@@ -469,9 +469,9 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    }
    drm_intel_gem_bo_unmap_gtt(brw->wm.base.const_bo);
 
-   brw->vtbl.create_constant_surface(brw, brw->wm.base.const_bo, 0, size,
-                                     &brw->wm.base.surf_offset[surf_index],
-                                     true);
+   brw_create_constant_surface(brw, brw->wm.base.const_bo, 0, size,
+                               &brw->wm.base.surf_offset[surf_index],
+                               true);
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
@@ -840,10 +840,10 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
        * glBindBufferRange case is undefined, we can just bind the whole buffer
        * glBindBufferBase wants and be a correct implementation.
        */
-      brw->vtbl.create_constant_surface(brw, bo, binding->Offset,
-                                        bo->size - binding->Offset,
-                                        &surf_offsets[i],
-                                        shader->Type == GL_FRAGMENT_SHADER);
+      brw_create_constant_surface(brw, bo, binding->Offset,
+                                  bo->size - binding->Offset,
+                                  &surf_offsets[i],
+                                  shader->Type == GL_FRAGMENT_SHADER);
    }
 
    if (shader->NumUniformBlocks)
@@ -931,6 +931,5 @@ gen4_init_vtable_surface_functions(struct brw_context *brw)
    brw->vtbl.update_renderbuffer_surface = brw_update_renderbuffer_surface;
    brw->vtbl.update_null_renderbuffer_surface =
       brw_update_null_renderbuffer_surface;
-   brw->vtbl.create_constant_surface = brw_create_constant_surface;
    brw->vtbl.emit_buffer_surface_state = gen4_emit_buffer_surface_state;
 }

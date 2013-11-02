@@ -398,32 +398,6 @@ gen7_update_texture_surface(struct gl_context *ctx,
 }
 
 /**
- * Create the constant buffer surface.  Vertex/fragment shader constants will
- * be read from this buffer with Data Port Read instructions/messages.
- */
-static void
-gen7_create_constant_surface(struct brw_context *brw,
-			     drm_intel_bo *bo,
-			     uint32_t offset,
-			     uint32_t size,
-			     uint32_t *out_offset,
-                             bool dword_pitch)
-{
-   uint32_t stride = dword_pitch ? 4 : 16;
-   uint32_t elements = ALIGN(size, stride) / stride;
-
-   gen7_emit_buffer_surface_state(brw,
-                                  out_offset,
-                                  bo,
-                                  offset,
-                                  BRW_SURFACEFORMAT_R32G32B32A32_FLOAT,
-                                  elements,
-                                  stride,
-                                  0 /* mocs */,
-                                  false /* rw */);
-}
-
-/**
  * Create a raw surface for untyped R/W access.
  */
 static void
@@ -613,7 +587,6 @@ gen7_init_vtable_surface_functions(struct brw_context *brw)
    brw->vtbl.update_renderbuffer_surface = gen7_update_renderbuffer_surface;
    brw->vtbl.update_null_renderbuffer_surface =
       gen7_update_null_renderbuffer_surface;
-   brw->vtbl.create_constant_surface = gen7_create_constant_surface;
    brw->vtbl.create_raw_surface = gen7_create_raw_surface;
    brw->vtbl.emit_buffer_surface_state = gen7_emit_buffer_surface_state;
 }
