@@ -226,7 +226,7 @@ gen4_emit_buffer_surface_state(struct brw_context *brw,
    }
 }
 
-static void
+void
 brw_update_buffer_texture_surface(struct gl_context *ctx,
                                   unsigned unit,
                                   uint32_t *surf_offset)
