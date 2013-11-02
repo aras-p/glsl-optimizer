@@ -123,10 +123,6 @@ if HAVE_DRI
 SUBDIRS += dri-swrast
 endif
 
-if HAVE_ST_XVMC
-SUBDIRS += xvmc-softpipe
-endif
-
 if HAVE_ST_VDPAU
 SUBDIRS += vdpau-softpipe
 endif

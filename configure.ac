@@ -1831,9 +1831,6 @@ if test "x$with_gallium_drivers" != x; then
             if test "x$enable_vdpau" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS vdpau-softpipe"
             fi
-            if test "x$enable_xvmc" = xyes; then
-                GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS xvmc-softpipe"
-            fi
             if test "x$enable_vdpau" = xyes -o "x$enable_xvmc" = xyes; then
                 NEED_WINSYS_XLIB=yes
                 GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
@@ -2056,7 +2053,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/xorg-i915/Makefile
 		src/gallium/targets/xorg-nouveau/Makefile
 		src/gallium/targets/xvmc-nouveau/Makefile
-		src/gallium/targets/xvmc-softpipe/Makefile
 		src/gallium/tests/trivial/Makefile
 		src/gallium/tests/unit/Makefile
 		src/gallium/winsys/Makefile
