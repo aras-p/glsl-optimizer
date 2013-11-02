@@ -74,10 +74,6 @@ if HAVE_GALLIUM_R300
 if HAVE_DRI
 SUBDIRS += r300/dri
 endif
-
-if HAVE_ST_VDPAU
-SUBDIRS += r300/vdpau
-endif
 endif
 
 if HAVE_GALLIUM_R600
