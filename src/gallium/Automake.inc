@@ -26,6 +26,19 @@ GALLIUM_DRIVER_CXXFLAGS = \
 	$(DEFINES) \
 	$(VISIBILITY_CXXFLAGS)
 
+GALLIUM_DRI_CFLAGS = \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/gallium/include \
+	-I$(top_srcdir)/src/gallium/auxiliary \
+	-I$(top_srcdir)/src/gallium/drivers \
+	-I$(top_srcdir)/src/gallium/winsys \
+	-I$(top_srcdir)/src/mesa \
+	-I$(top_srcdir)/src/mapi \
+	$(DEFINES) \
+	$(PTHREAD_CFLAGS) \
+	$(LIBDRM_CFLAGS) \
+	$(VISIBILITY_CFLAGS)
+
 GALLIUM_VIDEO_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/gallium/include \
