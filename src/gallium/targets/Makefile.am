@@ -122,10 +122,6 @@ if HAVE_GALLIUM_SOFTPIPE
 if HAVE_DRI
 SUBDIRS += dri-swrast
 endif
-
-if HAVE_ST_VDPAU
-SUBDIRS += vdpau-softpipe
-endif
 endif
 
 if NEED_GALLIUM_LOADER

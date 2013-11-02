@@ -1828,13 +1828,6 @@ if test "x$with_gallium_drivers" != x; then
             if test "x$enable_dri" = xyes; then
                 GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
             fi
-            if test "x$enable_vdpau" = xyes; then
-                GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS vdpau-softpipe"
-            fi
-            if test "x$enable_vdpau" = xyes -o "x$enable_xvmc" = xyes; then
-                NEED_WINSYS_XLIB=yes
-                GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
-            fi
             ;;
         *)
             AC_MSG_ERROR([Unknown Gallium driver: $driver])
@@ -2047,7 +2040,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/r600/xvmc/Makefile
 		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
-		src/gallium/targets/vdpau-softpipe/Makefile
 		src/gallium/targets/xa-vmwgfx/Makefile
 		src/gallium/targets/xa-vmwgfx/xatracker.pc
 		src/gallium/targets/xorg-i915/Makefile
