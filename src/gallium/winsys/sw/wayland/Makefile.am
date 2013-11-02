@@ -22,8 +22,8 @@
 
 include $(top_srcdir)/src/gallium/Automake.inc
 
-AM_CPPFLAGS = \
-	$(GALLIUM_CFLAGS) \
+AM_CFLAGS = \
+	$(GALLIUM_WINSYS_CFLAGS) \
 	$(WAYLAND_CFLAGS)
 
 noinst_LTLIBRARIES = libws_wayland.la

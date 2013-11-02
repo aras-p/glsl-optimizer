@@ -50,3 +50,9 @@ GALLIUM_VDPAU_LIB_DEPS = \
 	$(VDPAU_LIBS) \
 	$(LIBDRM_LIBS)
 
+GALLIUM_WINSYS_CFLAGS = \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/gallium/include \
+	-I$(top_srcdir)/src/gallium/auxiliary \
+	$(DEFINES) \
+	$(VISIBILITY_CFLAGS)
