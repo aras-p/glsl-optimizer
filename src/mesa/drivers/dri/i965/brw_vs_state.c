@@ -79,7 +79,8 @@ brw_upload_vs_unit(struct brw_context *brw)
    */
    vs->thread1.single_program_flow = (brw->gen == 5);
 
-   vs->thread1.binding_table_entry_count = 0;
+   vs->thread1.binding_table_entry_count =
+      brw->vs.prog_data->base.base.binding_table.size_bytes / 4;
 
    if (brw->vs.prog_data->base.total_scratch != 0) {
       vs->thread2.scratch_space_base_pointer =

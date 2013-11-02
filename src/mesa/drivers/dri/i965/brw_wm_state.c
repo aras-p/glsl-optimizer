@@ -120,7 +120,8 @@ brw_upload_wm_unit(struct brw_context *brw)
    else
       wm->thread1.floating_point_mode = BRW_FLOATING_POINT_IEEE_754;
 
-   wm->thread1.binding_table_entry_count = 0;
+   wm->thread1.binding_table_entry_count =
+      brw->wm.prog_data->base.binding_table.size_bytes / 4;
 
    if (brw->wm.prog_data->total_scratch != 0) {
       wm->thread2.scratch_space_base_pointer =

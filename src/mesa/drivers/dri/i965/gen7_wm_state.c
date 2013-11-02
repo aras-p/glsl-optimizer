@@ -160,6 +160,10 @@ upload_ps_state(struct brw_context *brw)
    dw2 |=
       (ALIGN(brw->wm.base.sampler_count, 4) / 4) << GEN7_PS_SAMPLER_COUNT_SHIFT;
 
+   /* CACHE_NEW_WM_PROG */
+   dw2 |= ((brw->wm.prog_data->base.binding_table.size_bytes / 4) <<
+           GEN7_PS_BINDING_TABLE_ENTRY_COUNT_SHIFT);
+
    /* Use ALT floating point mode for ARB fragment programs, because they
     * require 0^0 == 1.  Even though _CurrentFragmentProgram is used for
     * rendering, CurrentFragmentProgram is used for this check to

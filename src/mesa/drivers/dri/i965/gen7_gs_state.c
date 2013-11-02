@@ -85,7 +85,9 @@ upload_gs_state(struct brw_context *brw)
       OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
       OUT_BATCH(stage_state->prog_offset);
       OUT_BATCH(((ALIGN(stage_state->sampler_count, 4)/4) <<
-                 GEN6_GS_SAMPLER_COUNT_SHIFT));
+                 GEN6_GS_SAMPLER_COUNT_SHIFT) |
+                ((brw->gs.prog_data->base.base.binding_table.size_bytes / 4) <<
+                 GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
 
       if (brw->gs.prog_data->base.total_scratch) {
          OUT_RELOC(stage_state->scratch_bo,
