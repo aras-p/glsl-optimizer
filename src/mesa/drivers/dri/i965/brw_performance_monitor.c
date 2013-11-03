@@ -596,6 +596,82 @@ monitor_needs_oa(struct brw_context *brw,
 }
 
 /**
+ * The amount of batch space it takes to emit an MI_REPORT_PERF_COUNT snapshot,
+ * including the required PIPE_CONTROL flushes.
+ *
+ * Sandybridge is the worst case scenario: intel_batchbuffer_emit_mi_flush
+ * expands to three PIPE_CONTROLs which are 4 DWords each.  We have to flush
+ * before and after MI_REPORT_PERF_COUNT, so multiply by two.  Finally, add
+ * the 3 DWords for MI_REPORT_PERF_COUNT itself.
+ */
+#define MI_REPORT_PERF_COUNT_BATCH_DWORDS (2 * (3 * 4) + 3)
+
+/**
+ * Emit an MI_REPORT_PERF_COUNT command packet.
+ *
+ * This writes the current OA counter values to buffer.
+ */
+static void
+emit_mi_report_perf_count(struct brw_context *brw,
+                          drm_intel_bo *bo,
+                          uint32_t offset_in_bytes,
+                          uint32_t report_id)
+{
+   assert(offset_in_bytes % 64 == 0);
+
+   /* Make sure the commands to take a snapshot fits in a single batch. */
+   intel_batchbuffer_require_space(brw, MI_REPORT_PERF_COUNT_BATCH_DWORDS * 4,
+                                   RENDER_RING);
+   int batch_used = brw->batch.used;
+
+   /* Reports apparently don't always get written unless we flush first. */
+   intel_batchbuffer_emit_mi_flush(brw);
+
+   if (brw->gen == 5) {
+      /* Ironlake requires two MI_REPORT_PERF_COUNT commands to write all
+       * the counters.  The report ID is ignored in the second set.
+       */
+      BEGIN_BATCH(6);
+      OUT_BATCH(GEN5_MI_REPORT_PERF_COUNT | GEN5_MI_COUNTER_SET_0);
+      OUT_RELOC(bo,
+                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                offset_in_bytes);
+      OUT_BATCH(report_id);
+
+      OUT_BATCH(GEN5_MI_REPORT_PERF_COUNT | GEN5_MI_COUNTER_SET_1);
+      OUT_RELOC(bo,
+                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                offset_in_bytes + 64);
+      OUT_BATCH(report_id);
+      ADVANCE_BATCH();
+   } else if (brw->gen == 6) {
+      BEGIN_BATCH(3);
+      OUT_BATCH(GEN6_MI_REPORT_PERF_COUNT);
+      OUT_RELOC(bo, I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                offset_in_bytes | MI_COUNTER_ADDRESS_GTT);
+      OUT_BATCH(report_id);
+      ADVANCE_BATCH();
+   } else if (brw->gen == 7) {
+      BEGIN_BATCH(3);
+      OUT_BATCH(GEN6_MI_REPORT_PERF_COUNT);
+      OUT_RELOC(bo, I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                offset_in_bytes);
+      OUT_BATCH(report_id);
+      ADVANCE_BATCH();
+   } else {
+      assert(!"Unsupported generation for performance counters.");
+   }
+
+   /* Reports apparently don't always get written unless we flush after. */
+   intel_batchbuffer_emit_mi_flush(brw);
+
+   (void) batch_used;
+   assert(brw->batch.used - batch_used <= MI_REPORT_PERF_COUNT_BATCH_DWORDS * 4);
+}
+
+/******************************************************************************/
+
+/**
  * Initialize a monitor to sane starting state; throw away old buffers.
  */
 static void
