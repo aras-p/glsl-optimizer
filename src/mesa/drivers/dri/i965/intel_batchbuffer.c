@@ -187,6 +187,9 @@ intel_batchbuffer_emit_render_ring_prelude(struct brw_context *brw)
     * what that batch contributed.  Emit state packets to write them to a BO.
     */
    brw_emit_query_begin(brw);
+
+   /* We may also need to enable OA counters. */
+   brw_perf_monitor_new_batch(brw);
 }
 
 /**
@@ -246,6 +249,10 @@ brw_finish_batch(struct brw_context *brw)
     * support query objects (in the non-hardware context world).
     */
    brw_emit_query_end(brw);
+
+   /* We may also need to disable OA counters. */
+   if (brw->batch.ring == RENDER_RING)
+      brw_perf_monitor_finish_batch(brw);
 
    if (brw->curbe.curbe_bo) {
       drm_intel_gem_bo_unmap_gtt(brw->curbe.curbe_bo);

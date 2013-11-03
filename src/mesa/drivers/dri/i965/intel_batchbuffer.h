@@ -19,8 +19,9 @@ extern "C" {
  * - Optional MI_NOOP for ensuring the batch length is qword aligned (4 bytes)
  * - Any state emitted by vtbl->finish_batch():
  *   - Gen4-5 record ending occlusion query values (4 * 4 = 16 bytes)
+ *   - Disabling OA counters on Gen6+ (3 DWords = 12 bytes)
  */
-#define BATCH_RESERVED 24
+#define BATCH_RESERVED 36
 
 struct intel_batchbuffer;
 

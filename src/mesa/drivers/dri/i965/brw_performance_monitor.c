@@ -766,6 +766,14 @@ brw_begin_perf_monitor(struct gl_context *ctx,
       drm_intel_bo_unmap(monitor->oa_bo);
 #endif
 
+      /* If the OA counters aren't already on, enable them. */
+      if (brw->perfmon.oa_users == 0) {
+         /* Ensure the OACONTROL enable and snapshot land in the same batch. */
+         int space = (MI_REPORT_PERF_COUNT_BATCH_DWORDS + 3) * 4;
+         intel_batchbuffer_require_space(brw, space, RENDER_RING);
+         start_oa_counters(brw);
+      }
+
       /* Take a starting OA counter snapshot. */
       emit_mi_report_perf_count(brw, monitor->oa_bo, 0, REPORT_ID);
 
@@ -801,6 +809,9 @@ brw_end_perf_monitor(struct gl_context *ctx,
                                 SECOND_SNAPSHOT_OFFSET_IN_BYTES, REPORT_ID);
 
       --brw->perfmon.oa_users;
+
+      if (brw->perfmon.oa_users == 0)
+         stop_oa_counters(brw);
    }
 
    if (monitor_needs_statistics_registers(brw, m)) {
@@ -921,6 +932,45 @@ brw_delete_perf_monitor(struct gl_context *ctx, struct gl_perf_monitor_object *m
    DBG("Delete(%d)\n", m->Name);
    reinitialize_perf_monitor(brw_context(ctx), monitor);
    free(monitor);
+}
+
+/******************************************************************************/
+
+/**
+ * Called at the start of every render ring batch.
+ *
+ * Enable the OA counters if required.
+ */
+void
+brw_perf_monitor_new_batch(struct brw_context *brw)
+{
+   assert(brw->batch.ring == RENDER_RING);
+   assert(brw->gen < 6 || brw->batch.used == 0);
+
+   if (brw->perfmon.oa_users == 0)
+      return;
+
+   if (brw->gen >= 6)
+      start_oa_counters(brw);
+}
+
+/**
+ * Called at the end of every render ring batch.
+ *
+ * Disable the OA counters.
+ *
+ * This relies on there being enough space in BATCH_RESERVED.
+ */
+void
+brw_perf_monitor_finish_batch(struct brw_context *brw)
+{
+   assert(brw->batch.ring == RENDER_RING);
+
+   if (brw->perfmon.oa_users == 0)
+      return;
+
+   if (brw->gen >= 6)
+      stop_oa_counters(brw);
 }
 
 /******************************************************************************/

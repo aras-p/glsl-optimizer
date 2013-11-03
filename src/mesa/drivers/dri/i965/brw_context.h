@@ -1633,6 +1633,8 @@ bool brw_render_target_supported(struct brw_context *brw,
 /* brw_performance_monitor.c */
 void brw_init_performance_monitors(struct brw_context *brw);
 void brw_dump_perf_monitors(struct brw_context *brw);
+void brw_perf_monitor_new_batch(struct brw_context *brw);
+void brw_perf_monitor_finish_batch(struct brw_context *brw);
 
 /* intel_extensions.c */
 extern void intelInitExtensions(struct gl_context *ctx);
