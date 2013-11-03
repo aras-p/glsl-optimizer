@@ -417,8 +417,7 @@ intelEmitImmediateColorExpandBlit(struct brw_context *brw,
 	 return false;
    }
 
-   assert( logic_op - GL_CLEAR >= 0 );
-   assert( logic_op - GL_CLEAR < 0x10 );
+   assert((logic_op >= GL_CLEAR) && (logic_op <= (GL_CLEAR + 0x0f)));
    assert(dst_pitch > 0);
 
    if (w < 0 || h < 0)
