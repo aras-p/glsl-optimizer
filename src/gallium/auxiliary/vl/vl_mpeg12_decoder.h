@@ -44,6 +44,7 @@ struct pipe_context;
 struct vl_mpeg12_decoder
 {
    struct pipe_video_codec base;
+   struct pipe_context *context;
 
    unsigned chroma_width, chroma_height;
 
