@@ -518,7 +518,7 @@ void
 brw_dump_perf_monitors(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
-   DBG("Monitors:\n");
+   DBG("Monitors: (OA users = %d)\n", brw->perfmon.oa_users);
    _mesa_HashWalk(ctx->PerfMonitor.Monitors, dump_perf_monitor_callback, brw);
 }
 
@@ -588,6 +588,13 @@ gather_statistics_results(struct brw_context *brw,
 
 /******************************************************************************/
 
+static bool
+monitor_needs_oa(struct brw_context *brw,
+                 struct gl_perf_monitor_object *m)
+{
+   return m->ActiveGroups[OA_COUNTERS];
+}
+
 /**
  * Initialize a monitor to sane starting state; throw away old buffers.
  */
@@ -618,6 +625,10 @@ brw_begin_perf_monitor(struct gl_context *ctx,
 
    reinitialize_perf_monitor(brw, monitor);
 
+   if (monitor_needs_oa(brw, m)) {
+      ++brw->perfmon.oa_users;
+   }
+
    if (monitor_needs_statistics_registers(brw, m)) {
       monitor->pipeline_stats_bo =
          drm_intel_bo_alloc(brw->bufmgr, "perf. monitor stats bo", 4096, 64);
@@ -640,6 +651,10 @@ brw_end_perf_monitor(struct gl_context *ctx,
    struct brw_perf_monitor_object *monitor = brw_perf_monitor(m);
 
    DBG("End(%d)\n", m->Name);
+
+   if (monitor_needs_oa(brw, m)) {
+      --brw->perfmon.oa_users;
+   }
 
    if (monitor_needs_statistics_registers(brw, m)) {
       /* Take ending snapshots. */

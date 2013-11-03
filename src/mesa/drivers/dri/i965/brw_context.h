@@ -1403,6 +1403,9 @@ struct brw_context
       /** A map from pipeline statistics counter IDs to MMIO addresses. */
       const int *statistics_registers;
 
+      /** The number of active monitors using OA counters. */
+      unsigned oa_users;
+
       /**
        * Mapping from a uint32_t offset within an OA snapshot to the ID of
        * the counter which MI_REPORT_PERF_COUNT stores there.
