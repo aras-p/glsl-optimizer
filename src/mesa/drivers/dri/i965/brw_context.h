@@ -1402,6 +1402,15 @@ struct brw_context
    struct {
       /** A map from pipeline statistics counter IDs to MMIO addresses. */
       const int *statistics_registers;
+
+      /**
+       * Mapping from a uint32_t offset within an OA snapshot to the ID of
+       * the counter which MI_REPORT_PERF_COUNT stores there.
+       */
+      const int *oa_snapshot_layout;
+
+      /** Number of 32-bit entries in a hardware counter snapshot. */
+      int entries_per_oa_snapshot;
    } perfmon;
 
    int num_atoms;
