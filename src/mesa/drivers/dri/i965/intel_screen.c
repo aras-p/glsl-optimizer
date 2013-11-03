@@ -63,11 +63,17 @@ DRI_CONF_BEGIN
       DRI_CONF_OPT_BEGIN_B(disable_derivative_optimization, "false")
 	 DRI_CONF_DESC(en, "Derivatives with finer granularity by default")
       DRI_CONF_OPT_END
-
    DRI_CONF_SECTION_END
+
    DRI_CONF_SECTION_QUALITY
       DRI_CONF_FORCE_S3TC_ENABLE("false")
+
+      DRI_CONF_OPT_BEGIN(clamp_max_samples, int, -1)
+              DRI_CONF_DESC(en, "Clamp the value of GL_MAX_SAMPLES to the "
+                            "given integer. If negative, then do not clamp.")
+      DRI_CONF_OPT_END
    DRI_CONF_SECTION_END
+
    DRI_CONF_SECTION_DEBUG
       DRI_CONF_NO_RAST("false")
       DRI_CONF_ALWAYS_FLUSH_BATCH("false")

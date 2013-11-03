@@ -268,6 +268,53 @@ brw_init_driver_functions(struct brw_context *brw,
       functions->GetSamplePosition = gen6_get_sample_position;
 }
 
+/**
+ * Return array of MSAA modes supported by the hardware. The array is
+ * zero-terminated and sorted in decreasing order.
+ */
+static const int*
+brw_supported_msaa_modes(const struct brw_context *brw)
+{
+   if (brw->gen >= 7) {
+      return (int[]){8, 4, 0};
+   } else if (brw->gen == 6) {
+      return (int[]){4, 0};
+   } else {
+      return (int[]){0};
+   }
+}
+
+/**
+ * Override GL_MAX_SAMPLES and related constants according to value of driconf
+ * option 'clamp_max_samples'.
+ */
+static void
+brw_override_max_samples(struct brw_context *brw)
+{
+   const int clamp_max_samples = driQueryOptioni(&brw->optionCache,
+                                                 "clamp_max_samples");
+   if (clamp_max_samples < 0)
+      return;
+
+   const int *supported_msaa_modes = brw_supported_msaa_modes(brw);
+   int max_samples = 0;
+
+   /* Select the largest supported MSAA mode that does not exceed
+    * clamp_max_samples.
+    */
+   for (int i = 0; supported_msaa_modes[i] != 0; ++i) {
+      if (supported_msaa_modes[i] <= clamp_max_samples) {
+         max_samples = supported_msaa_modes[i];
+         break;
+      }
+   }
+
+   brw->ctx.Const.MaxSamples = max_samples;
+   brw->ctx.Const.MaxColorTextureSamples = max_samples;
+   brw->ctx.Const.MaxDepthTextureSamples = max_samples;
+   brw->ctx.Const.MaxIntegerSamples = max_samples;
+}
+
 static void
 brw_initialize_context_constants(struct brw_context *brw)
 {
@@ -333,18 +380,14 @@ brw_initialize_context_constants(struct brw_context *brw)
 
    ctx->Const.AlwaysUseGetTransformFeedbackVertexCount = true;
 
-   if (brw->gen == 6) {
-      ctx->Const.MaxSamples = 4;
-      ctx->Const.MaxColorTextureSamples = 4;
-      ctx->Const.MaxDepthTextureSamples = 4;
-      ctx->Const.MaxIntegerSamples = 4;
-   } else if (brw->gen >= 7) {
-      ctx->Const.MaxSamples = 8;
-      ctx->Const.MaxColorTextureSamples = 8;
-      ctx->Const.MaxDepthTextureSamples = 8;
-      ctx->Const.MaxIntegerSamples = 8;
+   const int max_samples = brw_supported_msaa_modes(brw)[0];
+   ctx->Const.MaxSamples = max_samples;
+   ctx->Const.MaxColorTextureSamples = max_samples;
+   ctx->Const.MaxDepthTextureSamples = max_samples;
+   ctx->Const.MaxIntegerSamples = max_samples;
+
+   if (brw->gen >= 7)
       ctx->Const.MaxProgramTextureGatherComponents = 4;
-   }
 
    ctx->Const.MinLineWidth = 1.0;
    ctx->Const.MinLineWidthAA = 1.0;
@@ -695,6 +738,12 @@ brwCreateContext(gl_api api,
       brw_init_shader_time(brw);
 
    _mesa_compute_version(ctx);
+
+   /* Here we override context constants. We apply the overrides after
+    * calculation of the context version because we do not want the overridden
+    * constants to change the version.
+    */
+   brw_override_max_samples(brw);
 
    _mesa_initialize_dispatch_tables(ctx);
    _mesa_initialize_vbo_vtxfmt(ctx);
