@@ -269,8 +269,10 @@ static void r600_bind_dsa_state(struct pipe_context *ctx, void *state)
 	struct r600_dsa_state *dsa = state;
 	struct r600_stencil_ref ref;
 
-	if (state == NULL)
+	if (state == NULL) {
+		r600_set_cso_state_with_cb(&rctx->dsa_state, NULL, NULL);
 		return;
+	}
 
 	r600_set_cso_state_with_cb(&rctx->dsa_state, dsa, &dsa->buffer);
 
@@ -458,7 +460,12 @@ static void r600_delete_blend_state(struct pipe_context *ctx, void *state)
 
 static void r600_delete_dsa_state(struct pipe_context *ctx, void *state)
 {
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_dsa_state *dsa = (struct r600_dsa_state *)state;
+
+	if (rctx->dsa_state.cso == state) {
+		ctx->bind_depth_stencil_alpha_state(ctx, NULL);
+	}
 
 	r600_release_command_buffer(&dsa->buffer);
 	free(dsa);

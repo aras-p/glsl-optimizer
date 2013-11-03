@@ -538,7 +538,7 @@ static INLINE void r600_set_cso_state_with_cb(struct r600_cso_state *state, void
 					      struct r600_command_buffer *cb)
 {
 	state->cb = cb;
-	state->atom.num_dw = cb->num_dw;
+	state->atom.num_dw = cb ? cb->num_dw : 0;
 	r600_set_cso_state(state, cso);
 }
 
