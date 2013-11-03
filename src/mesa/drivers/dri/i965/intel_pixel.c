@@ -115,6 +115,11 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
       return false;
    }
 
+   if (ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F) {
+      DBG("fallback due to pixel zoom\n");
+      return false;
+   }
+
    if (ctx->RenderMode != GL_RENDER) {
       DBG("fallback due to render mode\n");
       return false;
