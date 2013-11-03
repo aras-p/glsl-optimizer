@@ -67,6 +67,11 @@ struct brw_perf_monitor_object
    struct gl_perf_monitor_object base;
 
    /**
+    * BO containing OA counter snapshots at monitor Begin/End time.
+    */
+   drm_intel_bo *oa_bo;
+
+   /**
     * BO containing starting and ending snapshots for any active pipeline
     * statistics counters.
     */
@@ -86,6 +91,9 @@ brw_perf_monitor(struct gl_perf_monitor_object *m)
 }
 
 #define SECOND_SNAPSHOT_OFFSET_IN_BYTES 2048
+
+/* A random value used to ensure we're getting valid snapshots. */
+#define REPORT_ID 0xd2e9c607
 
 /******************************************************************************/
 
@@ -678,6 +686,11 @@ static void
 reinitialize_perf_monitor(struct brw_context *brw,
                           struct brw_perf_monitor_object *monitor)
 {
+   if (monitor->oa_bo) {
+      drm_intel_bo_unreference(monitor->oa_bo);
+      monitor->oa_bo = NULL;
+   }
+
    if (monitor->pipeline_stats_bo) {
       drm_intel_bo_unreference(monitor->pipeline_stats_bo);
       monitor->pipeline_stats_bo = NULL;
@@ -702,6 +715,18 @@ brw_begin_perf_monitor(struct gl_context *ctx,
    reinitialize_perf_monitor(brw, monitor);
 
    if (monitor_needs_oa(brw, m)) {
+      monitor->oa_bo =
+         drm_intel_bo_alloc(brw->bufmgr, "perf. monitor OA bo", 4096, 64);
+#ifdef DEBUG
+      /* Pre-filling the BO helps debug whether writes landed. */
+      drm_intel_bo_map(monitor->oa_bo, true);
+      memset((char *) monitor->oa_bo->virtual, 0xff, 4096);
+      drm_intel_bo_unmap(monitor->oa_bo);
+#endif
+
+      /* Take a starting OA counter snapshot. */
+      emit_mi_report_perf_count(brw, monitor->oa_bo, 0, REPORT_ID);
+
       ++brw->perfmon.oa_users;
    }
 
@@ -729,6 +754,10 @@ brw_end_perf_monitor(struct gl_context *ctx,
    DBG("End(%d)\n", m->Name);
 
    if (monitor_needs_oa(brw, m)) {
+      /* Take an ending OA counter snapshot. */
+      emit_mi_report_perf_count(brw, monitor->oa_bo,
+                                SECOND_SNAPSHOT_OFFSET_IN_BYTES, REPORT_ID);
+
       --brw->perfmon.oa_users;
    }
 
@@ -766,7 +795,14 @@ brw_is_perf_monitor_result_available(struct gl_context *ctx,
    struct brw_context *brw = brw_context(ctx);
    struct brw_perf_monitor_object *monitor = brw_perf_monitor(m);
 
+   bool oa_available = true;
    bool stats_available = true;
+
+   if (monitor_needs_oa(brw, m)) {
+      oa_available = !monitor->oa_bo ||
+         (!drm_intel_bo_references(brw->batch.bo, monitor->oa_bo) &&
+          !drm_intel_bo_busy(monitor->oa_bo));
+   }
 
    if (monitor_needs_statistics_registers(brw, m)) {
       stats_available = !monitor->pipeline_stats_bo ||
@@ -774,7 +810,7 @@ brw_is_perf_monitor_result_available(struct gl_context *ctx,
           !drm_intel_bo_busy(monitor->pipeline_stats_bo));
    }
 
-   return stats_available;
+   return oa_available && stats_available;
 }
 
 /**
