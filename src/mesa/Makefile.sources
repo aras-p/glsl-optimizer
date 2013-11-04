@@ -103,6 +103,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/texstate.c \
 	$(SRCDIR)main/texstorage.c \
 	$(SRCDIR)main/texstore.c \
+        $(SRCDIR)main/textureview.c \
 	$(SRCDIR)main/texturebarrier.c \
 	$(SRCDIR)main/transformfeedback.c \
 	$(SRCDIR)main/uniforms.c \

@@ -102,6 +102,7 @@ header = """/**
 #include "main/texstate.h"
 #include "main/texstorage.h"
 #include "main/texturebarrier.h"
+#include "main/textureview.h"
 #include "main/transformfeedback.h"
 #include "main/mtypes.h"
 #include "main/varray.h"

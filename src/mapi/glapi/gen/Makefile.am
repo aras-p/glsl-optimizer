@@ -125,6 +125,7 @@ API_XML = \
 	ARB_texture_rg.xml \
 	ARB_texture_storage_multisample.xml \
 	ARB_texture_storage.xml \
+	ARB_texture_view.xml \
 	ARB_vertex_array_object.xml \
 	ARB_vertex_attrib_binding.xml \
 	AMD_draw_buffers_blend.xml \

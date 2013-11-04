@@ -8460,8 +8460,10 @@
 
 </category>
 
-<!-- ARB extensions #120...#124 -->
 
+<!-- ARB extensions #120...#123 -->
+
+<xi:include href="ARB_texture_view.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 <xi:include href="ARB_vertex_attrib_binding.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <!-- ARB extension #126 -->
