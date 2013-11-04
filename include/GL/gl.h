@@ -113,10 +113,6 @@
 #define GLAPIENTRYP GLAPIENTRY *
 #endif
 
-#ifdef CENTERLINE_CLPP
-#define signed
-#endif
-
 #if defined(PRAGMA_EXPORT_SUPPORTED)
 #pragma export on
 #endif
