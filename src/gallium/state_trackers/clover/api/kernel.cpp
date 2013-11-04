@@ -159,7 +159,7 @@ clGetKernelWorkGroupInfo(cl_kernel d_kern, cl_device_id d_dev,
       break;
 
    case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
-      buf.as_vector<size_t>() = kern.block_size();
+      buf.as_vector<size_t>() = kern.required_block_size();
       break;
 
    case CL_KERNEL_LOCAL_MEM_SIZE:
@@ -220,6 +220,24 @@ namespace {
       if (!d_grid_size || any_of(is_zero(), grid_size))
          throw error(CL_INVALID_GLOBAL_WORK_SIZE);
 
+      return grid_size;
+   }
+
+   std::vector<size_t>
+   validate_grid_offset(const command_queue &q, cl_uint dims,
+                        const size_t *d_grid_offset) {
+      if (d_grid_offset)
+         return range(d_grid_offset, dims);
+      else
+         return std::vector<size_t>(dims, 0);
+   }
+
+   std::vector<size_t>
+   validate_block_size(const command_queue &q, const kernel &kern,
+                       cl_uint dims, const size_t *d_grid_size,
+                       const size_t *d_block_size) {
+      auto grid_size = range(d_grid_size, dims);
+
       if (d_block_size) {
          auto block_size = range(d_block_size, dims);
 
@@ -233,15 +251,12 @@ namespace {
          if (fold(multiplies(), 1u, block_size) >
              q.dev.max_threads_per_block())
             throw error(CL_INVALID_WORK_GROUP_SIZE);
-      }
-   }
 
-   std::vector<size_t>
-   pad_vector(const size_t *p, unsigned n, size_t x) {
-      if (p)
-         return { p, p + n };
-      else
-         return { n, x };
+         return block_size;
+
+      } else {
+         return kern.optimal_block_size(q, grid_size);
+      }
    }
 }
 
@@ -254,13 +269,13 @@ clEnqueueNDRangeKernel(cl_command_queue d_q, cl_kernel d_kern,
    auto &q = obj(d_q);
    auto &kern = obj(d_kern);
    auto deps = objs<wait_list_tag>(d_deps, num_deps);
+   auto grid_size = validate_grid_size(q, dims, d_grid_size);
+   auto grid_offset = validate_grid_offset(q, dims, d_grid_offset);
+   auto block_size = validate_block_size(q, kern, dims,
+                                         d_grid_size, d_block_size);
 
    validate_common(q, kern, deps);
-   validate_grid(q, dims, d_grid_size, d_block_size);
 
-   auto grid_offset = pad_vector(d_grid_offset, dims, 0);
-   auto grid_size = pad_vector(d_grid_size, dims, 1);
-   auto block_size = pad_vector(d_block_size, dims, 1);
    hard_event *hev = new hard_event(
       q, CL_COMMAND_NDRANGE_KERNEL, deps,
       [=, &kern, &q](event &) {

@@ -4,6 +4,7 @@ CPP_SOURCES := \
 	util/algorithm.hpp \
 	util/compat.cpp \
 	util/compat.hpp \
+	util/factor.hpp \
 	util/functional.hpp \
 	util/lazy.hpp \
 	util/pointer.hpp \

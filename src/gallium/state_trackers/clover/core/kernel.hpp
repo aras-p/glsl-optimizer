@@ -121,7 +121,12 @@ namespace clover {
       size_t mem_private() const;
 
       const std::string &name() const;
-      std::vector<size_t> block_size() const;
+
+      std::vector<size_t>
+      optimal_block_size(const command_queue &q,
+                         const std::vector<size_t> &grid_size) const;
+      std::vector<size_t>
+      required_block_size() const;
 
       argument_range args();
       const_argument_range args() const;

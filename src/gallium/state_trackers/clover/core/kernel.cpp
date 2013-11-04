@@ -22,6 +22,7 @@
 
 #include "core/kernel.hpp"
 #include "core/resource.hpp"
+#include "util/factor.hpp"
 #include "util/u_math.h"
 #include "pipe/p_context.h"
 
@@ -126,7 +127,15 @@ kernel::name() const {
 }
 
 std::vector<size_t>
-kernel::block_size() const {
+kernel::optimal_block_size(const command_queue &q,
+                           const std::vector<size_t> &grid_size) const {
+   return factor::find_grid_optimal_factor<size_t>(
+      q.dev.max_threads_per_block(), q.dev.max_block_size(),
+      grid_size);
+}
+
+std::vector<size_t>
+kernel::required_block_size() const {
    return { 0, 0, 0 };
 }
 
