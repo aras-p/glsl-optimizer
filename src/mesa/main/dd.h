@@ -375,6 +375,11 @@ struct dd_function_table {
                                     GLsizei levels, GLsizei width,
                                     GLsizei height, GLsizei depth);
 
+   /** Called as part of glTextureView to add views to origTexObj */
+   GLboolean (*TextureView)(struct gl_context *ctx,
+                            struct gl_texture_object *texObj,
+                            struct gl_texture_object *origTexObj);
+
    /**
     * Map a renderbuffer into user space.
     * \param mode  bitmask of GL_MAP_READ_BIT, GL_MAP_WRITE_BIT and

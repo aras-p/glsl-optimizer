@@ -211,6 +211,9 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    /* GL_ARB_texture_storage */
    driver->AllocTextureStorage = _mesa_alloc_texture_storage;
 
+   /* GL_ARB_texture_view */
+   driver->TextureView = NULL;
+
    /* GL_ARB_texture_multisample */
    driver->GetSamplePosition = NULL;
 }
