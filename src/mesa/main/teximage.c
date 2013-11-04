@@ -48,6 +48,7 @@
 #include "texobj.h"
 #include "texstate.h"
 #include "texstorage.h"
+#include "textureview.h"
 #include "mtypes.h"
 #include "glformats.h"
 
@@ -4335,6 +4336,11 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
       }
 
       texObj->Immutable = immutable;
+
+      if (immutable) {
+         _mesa_set_texture_view_state(ctx, texObj, target, 1);
+      }
+
       _mesa_update_fbo_texture(ctx, texObj, 0, 0);
    }
 }
