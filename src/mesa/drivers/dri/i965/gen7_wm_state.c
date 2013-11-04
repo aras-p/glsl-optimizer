@@ -234,16 +234,21 @@ upload_ps_state(struct brw_context *brw)
 
    if (brw->wm.prog_data->prog_offset_16) {
       dw4 |= GEN7_PS_16_DISPATCH_ENABLE;
-      if (min_inv_per_frag == 1)
+      if (min_inv_per_frag == 1) {
          dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
+         dw5 |= (brw->wm.prog_data->first_curbe_grf <<
+                 GEN7_PS_DISPATCH_START_GRF_SHIFT_0);
+         dw5 |= (brw->wm.prog_data->first_curbe_grf_16 <<
+                 GEN7_PS_DISPATCH_START_GRF_SHIFT_2);
+      } else
+         dw5 |= (brw->wm.prog_data->first_curbe_grf_16 <<
+                 GEN7_PS_DISPATCH_START_GRF_SHIFT_0);
    }
-   else
+   else {
       dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
-
-   dw5 |= (brw->wm.prog_data->first_curbe_grf <<
-	   GEN7_PS_DISPATCH_START_GRF_SHIFT_0);
-   dw5 |= (brw->wm.prog_data->first_curbe_grf_16 <<
-	   GEN7_PS_DISPATCH_START_GRF_SHIFT_2);
+      dw5 |= (brw->wm.prog_data->first_curbe_grf <<
+              GEN7_PS_DISPATCH_START_GRF_SHIFT_0);
+   }
 
    BEGIN_BATCH(8);
    OUT_BATCH(_3DSTATE_PS << 16 | (8 - 2));

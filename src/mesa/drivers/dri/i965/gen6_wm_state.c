@@ -151,11 +151,6 @@ upload_wm_state(struct brw_context *brw)
    dw2 |= ((brw->wm.prog_data->base.binding_table.size_bytes / 4) <<
            GEN6_WM_BINDING_TABLE_ENTRY_COUNT_SHIFT);
 
-   dw4 |= (brw->wm.prog_data->first_curbe_grf <<
-	   GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
-   dw4 |= (brw->wm.prog_data->first_curbe_grf_16 <<
-	   GEN6_WM_DISPATCH_START_GRF_SHIFT_2);
-
    dw5 |= (brw->max_wm_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
@@ -171,11 +166,22 @@ upload_wm_state(struct brw_context *brw)
 
    if (brw->wm.prog_data->prog_offset_16) {
       dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
-      if (min_inv_per_frag == 1)
+
+      if (min_inv_per_frag == 1) {
          dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
+         dw4 |= (brw->wm.prog_data->first_curbe_grf <<
+                 GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
+         dw4 |= (brw->wm.prog_data->first_curbe_grf_16 <<
+                 GEN6_WM_DISPATCH_START_GRF_SHIFT_2);
+      } else
+         dw4 |= (brw->wm.prog_data->first_curbe_grf_16 <<
+                GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
    }
-   else
+   else {
       dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
+      dw4 |= (brw->wm.prog_data->first_curbe_grf <<
+              GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
+   }
 
    /* CACHE_NEW_WM_PROG | _NEW_COLOR */
    if (brw->wm.prog_data->dual_src_blend &&
