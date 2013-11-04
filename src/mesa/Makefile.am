@@ -85,8 +85,7 @@ if HAVE_GALLIUM
 noinst_LTLIBRARIES += libmesagallium.la
 endif
 
-SRCDIR = $(top_srcdir)/src/mesa/
-BUILDDIR = $(top_builddir)/src/mesa/
+BUILDDIR = $(builddir)/
 include Makefile.sources
 
 AM_CPPFLAGS = $(DEFINES) $(INCLUDE_DIRS)
@@ -97,21 +96,15 @@ MESA_ASM_FILES_FOR_ARCH =
 
 if HAVE_X86_ASM
 MESA_ASM_FILES_FOR_ARCH += $(X86_FILES)
-AM_CPPFLAGS += \
-        -I$(top_builddir)/src/mesa/x86 \
-        -I$(top_srcdir)/src/mesa/x86
+AM_CPPFLAGS += -I$(builddir)/x86 -I$(srcdir)/x86
 endif
 if HAVE_X86_64_ASM
 MESA_ASM_FILES_FOR_ARCH += $(X86_64_FILES)
-AM_CPPFLAGS += \
-        -I$(top_builddir)/src/mesa/x86-64 \
-        -I$(top_srcdir)/src/mesa/x86-64
+AM_CPPFLAGS += -I$(builddir)/x86-64 -I$(srcdir)/x86-64
 endif
 if HAVE_SPARC_ASM
 MESA_ASM_FILES_FOR_ARCH += $(SPARC_FILES)
-AM_CPPFLAGS += \
-        -I$(top_builddir)/src/mesa/sparc \
-        -I$(top_srcdir)/src/mesa/sparc
+AM_CPPFLAGS += -I$(builddir)/sparc -I$(srcdir)/sparc
 endif
 
 libmesa_la_SOURCES = \
