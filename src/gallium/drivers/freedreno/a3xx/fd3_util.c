@@ -228,6 +228,7 @@ fd3_pipe2tex(enum pipe_format format)
 
 	case PIPE_FORMAT_B8G8R8A8_UNORM:
 	case PIPE_FORMAT_B8G8R8X8_UNORM:
+	case PIPE_FORMAT_R8G8B8A8_UNORM:
 		return TFMT_NORM_UINT_8_8_8_8;
 
 	case PIPE_FORMAT_Z24X8_UNORM:
@@ -278,6 +279,7 @@ fd3_pipe2color(enum pipe_format format)
 	switch (format) {
 	case PIPE_FORMAT_B8G8R8A8_UNORM:
 	case PIPE_FORMAT_B8G8R8X8_UNORM:
+	case PIPE_FORMAT_R8G8B8A8_UNORM:
 		return RB_R8G8B8A8_UNORM;
 
 	case PIPE_FORMAT_Z16_UNORM:
@@ -290,6 +292,7 @@ fd3_pipe2color(enum pipe_format format)
 
 	case PIPE_FORMAT_R8_UNORM:
 	case PIPE_FORMAT_L8_UNORM:
+	case PIPE_FORMAT_A8_UNORM:
 		return RB_A8_UNORM;
 
 	// TODO add more..
