@@ -192,7 +192,7 @@ namespace {
    /// Common argument checking shared by kernel invocation commands.
    ///
    void
-   validate_common(command_queue &q, kernel &kern,
+   validate_common(const command_queue &q, kernel &kern,
                    const ref_vector<event> &deps) {
       if (kern.prog.ctx != q.ctx ||
           any_of([&](const event &ev) {
@@ -209,9 +209,9 @@ namespace {
          throw error(CL_INVALID_PROGRAM_EXECUTABLE);
    }
 
-   void
-   validate_grid(command_queue &q, cl_uint dims,
-                 const size_t *d_grid_size, const size_t *d_block_size) {
+   std::vector<size_t>
+   validate_grid_size(const command_queue &q, cl_uint dims,
+                      const size_t *d_grid_size) {
       auto grid_size = range(d_grid_size, dims);
 
       if (dims < 1 || dims > q.dev.max_block_size().size())
