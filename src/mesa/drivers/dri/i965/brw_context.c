@@ -275,12 +275,15 @@ brw_init_driver_functions(struct brw_context *brw,
 static const int*
 brw_supported_msaa_modes(const struct brw_context *brw)
 {
+   static const int gen7_samples[] = {8, 4, 0};
+   static const int gen6_samples[] = {4, 0};
+   static const int gen4_samples[] = {0};
    if (brw->gen >= 7) {
-      return (int[]){8, 4, 0};
+      return gen7_samples;
    } else if (brw->gen == 6) {
-      return (int[]){4, 0};
+      return gen6_samples;
    } else {
-      return (int[]){0};
+      return gen4_samples;
    }
 }
 
