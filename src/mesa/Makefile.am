@@ -19,7 +19,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-SUBDIRS = program x86 x86-64 . main/tests
+SUBDIRS = x86 x86-64 . main/tests
 
 if HAVE_X11_DRIVER
 SUBDIRS += drivers/x11
@@ -59,11 +59,17 @@ main/git_sha1.h: main/git_sha1.h.tmp
 GLAPI = $(top_srcdir)/src/mapi/glapi/gen
 include $(GLAPI)/glapi_gen.mk
 
+BUILDDIR = $(builddir)/
+include Makefile.sources
+
 BUILT_SOURCES = \
 	main/git_sha1.h \
-	main/get_hash.h
+	main/get_hash.h \
+	$(BUILDDIR)program/program_parse.tab.c \
+	$(BUILDDIR)program/lex.yy.c
 CLEANFILES = \
 	$(BUILT_SOURCES) \
+	$(BUILDDIR)program/program_parse.tab.h \
 	git_sha1.h.tmp
 
 GET_HASH_GEN = main/get_hash_generator.py
@@ -84,9 +90,6 @@ endif
 if HAVE_GALLIUM
 noinst_LTLIBRARIES += libmesagallium.la
 endif
-
-BUILDDIR = $(builddir)/
-include Makefile.sources
 
 AM_CPPFLAGS = $(DEFINES) $(INCLUDE_DIRS)
 AM_CFLAGS = $(LLVM_CFLAGS) $(VISIBILITY_CFLAGS)
@@ -109,25 +112,32 @@ endif
 
 libmesa_la_SOURCES = \
 	$(MESA_FILES) \
+	$(PROGRAM_FILES) \
         $(MESA_ASM_FILES_FOR_ARCH)
 
 libmesa_la_LIBADD = \
         $(top_builddir)/src/glsl/libglsl.la \
-        $(top_builddir)/src/mesa/program/libprogram.la \
         $()
-libmesa_la_LDFLAGS =
 
 libmesagallium_la_SOURCES = \
 	$(MESA_GALLIUM_FILES) \
+	$(PROGRAM_FILES) \
         $(MESA_ASM_FILES_FOR_ARCH)
 
 libmesagallium_la_LIBADD = \
         $(top_builddir)/src/glsl/libglsl.la \
-        $(top_builddir)/src/mesa/program/libprogram.la \
         $()
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gl.pc
+
+$(BUILDDIR)program/lex.yy.c: program/program_lexer.l
+	$(MKDIR_P) $(builddir)/program
+	$(AM_V_GEN) $(LEX) --never-interactive --outfile=$@ $<
+
+$(BUILDDIR)program/program_parse.tab.c $(BUILDDIR)program/program_parse.tab.h: program/program_parse.y
+	$(MKDIR_P) $(builddir)/program
+	$(AM_V_GEN) $(YACC) -p "_mesa_program_" -v -d --output=$(BUILDDIR)program/program_parse.tab.c $<
 
 # Emacs tags
 tags:

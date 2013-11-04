@@ -2096,7 +2096,6 @@ AC_CONFIG_FILES([Makefile
 		src/mesa/drivers/x11/Makefile
 		src/mesa/main/tests/Makefile
 		src/mesa/main/tests/hash_table/Makefile
-		src/mesa/program/Makefile
 		src/mesa/x86-64/Makefile
 		src/mesa/x86/Makefile])
 
