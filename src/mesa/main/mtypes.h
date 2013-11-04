@@ -1193,6 +1193,11 @@ struct gl_texture_object
                                     pressure? */
    GLboolean Immutable;        /**< GL_ARB_texture_storage */
 
+   GLuint MinLevel;            /**< GL_ARB_texture_view */
+   GLuint MinLayer;            /**< GL_ARB_texture_view */
+   GLuint NumLevels;           /**< GL_ARB_texture_view */
+   GLuint NumLayers;           /**< GL_ARB_texture_view */
+
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
 
