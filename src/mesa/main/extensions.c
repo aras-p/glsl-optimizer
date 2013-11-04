@@ -158,6 +158,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_texture_rg",                          o(ARB_texture_rg),                          GL,             2008 },
    { "GL_ARB_texture_storage",                     o(dummy_true),                              GL,             2011 },
    { "GL_ARB_texture_storage_multisample",         o(ARB_texture_multisample),                 GL,             2012 },
+   { "GL_ARB_texture_view",                        o(ARB_texture_view),                        GL,             2012 },
    { "GL_ARB_texture_swizzle",                     o(EXT_texture_swizzle),                     GL,             2008 },
    { "GL_ARB_timer_query",                         o(ARB_timer_query),                         GL,             2010 },
    { "GL_ARB_transform_feedback2",                 o(ARB_transform_feedback2),                 GL,             2010 },
