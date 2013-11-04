@@ -44,6 +44,7 @@
 #include "main/glformats.h"
 #include "main/texcompress_etc.h"
 #include "main/teximage.h"
+#include "main/streaming-load-memcpy.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
@@ -1774,6 +1775,82 @@ intel_miptree_unmap_blit(struct brw_context *brw,
    intel_miptree_release(&map->mt);
 }
 
+#ifdef __SSE4_1__
+/**
+ * "Map" a buffer by copying it to an untiled temporary using MOVNTDQA.
+ */
+static void
+intel_miptree_map_movntdqa(struct brw_context *brw,
+                           struct intel_mipmap_tree *mt,
+                           struct intel_miptree_map *map,
+                           unsigned int level, unsigned int slice)
+{
+   assert(map->mode & GL_MAP_READ_BIT);
+   assert(!(map->mode & GL_MAP_WRITE_BIT));
+
+   DBG("%s: %d,%d %dx%d from mt %p (%s) %d,%d = %p/%d\n", __FUNCTION__,
+       map->x, map->y, map->w, map->h,
+       mt, _mesa_get_format_name(mt->format),
+       level, slice, map->ptr, map->stride);
+
+   /* Map the original image */
+   uint32_t image_x;
+   uint32_t image_y;
+   intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
+   image_x += map->x;
+   image_y += map->y;
+
+   void *src = intel_miptree_map_raw(brw, mt);
+   if (!src)
+      return;
+   src += image_y * mt->region->pitch;
+   src += image_x * mt->region->cpp;
+
+   /* Due to the pixel offsets for the particular image being mapped, our
+    * src pointer may not be 16-byte aligned.  However, if the pitch is
+    * divisible by 16, then the amount by which it's misaligned will remain
+    * consistent from row to row.
+    */
+   assert((mt->region->pitch % 16) == 0);
+   const int misalignment = ((uintptr_t) src) & 15;
+
+   /* Create an untiled temporary buffer for the mapping. */
+   const unsigned width_bytes = _mesa_format_row_stride(mt->format, map->w);
+
+   map->stride = ALIGN(misalignment + width_bytes, 16);
+
+   map->buffer = malloc(map->stride * map->h);
+   /* Offset the destination so it has the same misalignment as src. */
+   map->ptr = map->buffer + misalignment;
+
+   assert((((uintptr_t) map->ptr) & 15) == misalignment);
+
+   for (uint32_t y = 0; y < map->h; y++) {
+      void *dst_ptr = map->ptr + y * map->stride;
+      void *src_ptr = src + y * mt->region->pitch;
+
+      _mesa_streaming_load_memcpy(dst_ptr, src_ptr, width_bytes);
+
+      dst_ptr += width_bytes;
+      src_ptr += width_bytes;
+   }
+
+   intel_miptree_unmap_raw(brw, mt);
+}
+
+static void
+intel_miptree_unmap_movntdqa(struct brw_context *brw,
+                             struct intel_mipmap_tree *mt,
+                             struct intel_miptree_map *map,
+                             unsigned int level,
+                             unsigned int slice)
+{
+   free(map->buffer);
+   map->buffer = NULL;
+   map->ptr = NULL;
+}
+#endif
+
 static void
 intel_miptree_map_s8(struct brw_context *brw,
 		     struct intel_mipmap_tree *mt,
@@ -2137,6 +2214,10 @@ intel_miptree_map_singlesample(struct brw_context *brw,
               mt->region->bo->size >= brw->max_gtt_map_object_size) {
       assert(mt->region->pitch < 32768);
       intel_miptree_map_blit(brw, mt, map, level, slice);
+#ifdef __SSE4_1__
+   } else if (!(mode & GL_MAP_WRITE_BIT) && !mt->compressed) {
+      intel_miptree_map_movntdqa(brw, mt, map, level, slice);
+#endif
    } else {
       intel_miptree_map_gtt(brw, mt, map, level, slice);
    }
@@ -2173,6 +2254,10 @@ intel_miptree_unmap_singlesample(struct brw_context *brw,
       intel_miptree_unmap_depthstencil(brw, mt, map, level, slice);
    } else if (map->mt) {
       intel_miptree_unmap_blit(brw, mt, map, level, slice);
+#ifdef __SSE4_1__
+   } else if (map->buffer) {
+      intel_miptree_unmap_movntdqa(brw, mt, map, level, slice);
+#endif
    } else {
       intel_miptree_unmap_gtt(brw, mt, map, level, slice);
    }
