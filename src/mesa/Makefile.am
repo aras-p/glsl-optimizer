@@ -81,7 +81,7 @@ main/get_hash.h: $(GLAPI)/gl_and_es_API.xml main/get_hash_params.py 	\
 		-f $< > $@.tmp;						\
 	mv $@.tmp $@;
 
-noinst_LTLIBRARIES =
+noinst_LTLIBRARIES = $(ARCH_LIBS)
 if NEED_LIBMESA
 noinst_LTLIBRARIES += libmesa.la
 else
@@ -103,6 +103,8 @@ noinst_PROGRAMS = gen_matypes
 gen_matypes_SOURCES = x86/gen_matypes.c
 BUILT_SOURCES += matypes.h
 
+ARCH_LIBS = libmesa_sse41.la
+
 if HAVE_X86_64_ASM
 MESA_ASM_FILES_FOR_ARCH += $(X86_64_FILES)
 AM_CPPFLAGS += -I$(builddir)/x86-64 -I$(srcdir)/x86-64
@@ -123,6 +125,7 @@ libmesa_la_SOURCES = \
 
 libmesa_la_LIBADD = \
         $(top_builddir)/src/glsl/libglsl.la \
+	$(ARCH_LIBS) \
         $()
 
 libmesagallium_la_SOURCES = \
@@ -132,7 +135,12 @@ libmesagallium_la_SOURCES = \
 
 libmesagallium_la_LIBADD = \
         $(top_builddir)/src/glsl/libglsl.la \
+	$(ARCH_LIBS) \
         $()
+
+libmesa_sse41_la_SOURCES = \
+	main/streaming-load-memcpy.c
+libmesa_sse41_la_CFLAGS = $(AM_CFLAGS) -msse4.1
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gl.pc
