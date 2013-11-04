@@ -174,12 +174,14 @@ lp_set_target_options(void)
    }
 #endif
 
+#if HAVE_LLVM < 0x0304
    /*
     * By default LLVM adds a signal handler to output a pretty stack trace.
     * This signal handler is never removed, causing problems when unloading the
     * shared object where the gallium driver resides.
     */
    llvm::DisablePrettyStackTrace = true;
+#endif
 
    // If we have a native target, initialize it to ensure it is linked in and
    // usable by the JIT.
