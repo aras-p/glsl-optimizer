@@ -84,8 +84,6 @@ extern "C" {
  */
 #if defined(_MSC_VER)
 #  define finite _finite
-#elif defined(__WATCOMC__)
-#  define finite _finite
 #endif
 
 
@@ -106,9 +104,6 @@ extern "C" {
 #      pragma warning( disable : 4761 ) /* integral size mismatch in argument; conversion supplied */
 #    endif
 #  endif
-#endif
-#if defined(__WATCOMC__)
-#  pragma disable_message(201) /* Disable unreachable code warnings */
 #endif
 
 
@@ -380,36 +375,6 @@ do {									\
 do {									\
    __asm__ ( "fnclex ; fldcw %0" : : "m" (*&(x)) );			\
 } while (0)
-
-#elif defined(__WATCOMC__) && defined(__386__)
-#define DEFAULT_X86_FPU		0x037f /* See GCC comments above */
-#define FAST_X86_FPU		0x003f /* See GCC comments above */
-void _watcom_start_fast_math(unsigned short *x,unsigned short *mask);
-#pragma aux _watcom_start_fast_math =                                   \
-   "fnstcw  word ptr [eax]"                                             \
-   "fldcw   word ptr [ecx]"                                             \
-   parm [eax] [ecx]                                                     \
-   modify exact [];
-void _watcom_end_fast_math(unsigned short *x);
-#pragma aux _watcom_end_fast_math =                                     \
-   "fnclex"                                                             \
-   "fldcw   word ptr [eax]"                                             \
-   parm [eax]                                                           \
-   modify exact [];
-#if defined(NO_FAST_MATH)
-#define START_FAST_MATH(x)                                              \
-do {                                                                    \
-   static GLushort mask = DEFAULT_X86_FPU;	                        \
-   _watcom_start_fast_math(&x,&mask);                                   \
-} while (0)
-#else
-#define START_FAST_MATH(x)                                              \
-do {                                                                    \
-   static GLushort mask = FAST_X86_FPU;                                 \
-   _watcom_start_fast_math(&x,&mask);                                   \
-} while (0)
-#endif
-#define END_FAST_MATH(x)  _watcom_end_fast_math(&x)
 
 #elif defined(_MSC_VER) && defined(_M_IX86)
 #define DEFAULT_X86_FPU		0x037f /* See GCC comments above */

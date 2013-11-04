@@ -920,17 +920,9 @@
 #define D_BYTE		db
 /* #define SPACE */
 /* #define COMM */
-#if defined(__WATCOMC__)
-SECTION _TEXT public align=16 class=CODE use32 flat
-SECTION _DATA public align=16 class=DATA use32 flat
-#define SEG_TEXT	SECTION _TEXT
-#define SEG_DATA	SECTION _DATA
-#define SEG_BSS		SECTION .bss
-#else
 #define SEG_DATA	SECTION .data
 #define SEG_TEXT	SECTION .text
 #define SEG_BSS		SECTION .bss
-#endif
 
 #define D_SPACE(n)	db n REP 0
 
