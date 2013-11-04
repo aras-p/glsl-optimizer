@@ -285,6 +285,58 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 	 reassociate_constant(ir, 0, op_const[0], op_expr[1]);
       if (op_const[1] && !op_const[0])
 	 reassociate_constant(ir, 1, op_const[1], op_expr[0]);
+
+      /* Replace (-x + y) * a + x and commutative variations with lrp(x, y, a).
+       *
+       * (-x + y) * a + x
+       * (x * -a) + (y * a) + x
+       * x + (x * -a) + (y * a)
+       * x * (1 - a) + y * a
+       * lrp(x, y, a)
+       */
+      for (int mul_pos = 0; mul_pos < 2; mul_pos++) {
+         ir_expression *mul = op_expr[mul_pos];
+
+         if (!mul || mul->operation != ir_binop_mul)
+            continue;
+
+         /* Multiply found on one of the operands. Now check for an
+          * inner addition operation.
+          */
+         for (int inner_add_pos = 0; inner_add_pos < 2; inner_add_pos++) {
+            ir_expression *inner_add =
+               mul->operands[inner_add_pos]->as_expression();
+
+            if (!inner_add || inner_add->operation != ir_binop_add)
+               continue;
+
+            /* Inner addition found on one of the operands. Now check for
+             * one of the operands of the inner addition to be the negative
+             * of x_operand.
+             */
+            for (int neg_pos = 0; neg_pos < 2; neg_pos++) {
+               ir_expression *neg =
+                  inner_add->operands[neg_pos]->as_expression();
+
+               if (!neg || neg->operation != ir_unop_neg)
+                  continue;
+
+               ir_rvalue *x_operand = ir->operands[1 - mul_pos];
+
+               if (!neg->operands[0]->equals(x_operand))
+                  continue;
+
+               ir_rvalue *y_operand = inner_add->operands[1 - neg_pos];
+               ir_rvalue *a_operand = mul->operands[1 - inner_add_pos];
+
+               if (x_operand->type != y_operand->type ||
+                   x_operand->type != a_operand->type)
+                  continue;
+
+               return lrp(x_operand, y_operand, a_operand);
+            }
+         }
+      }
       break;
 
    case ir_binop_sub:
