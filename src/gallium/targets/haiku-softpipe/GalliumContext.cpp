@@ -18,6 +18,7 @@ extern "C" {
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
+#include "main/viewport.h"
 #include "pipe/p_format.h"
 #include "state_tracker/st_cb_fbo.h"
 #include "state_tracker/st_cb_flush.h"
@@ -49,11 +50,11 @@ hgl_viewport(struct gl_context* glContext, GLint x, GLint y,
 	TRACE("%s(glContext: %p, x: %d, y: %d, w: %d, h: %d\n", __func__,
 		glContext, x, y, width, height);
 
+	_mesa_check_init_viewport(glContext, width, height);
+
 	struct gl_framebuffer *draw = glContext->WinSysDrawBuffer;
 	struct gl_framebuffer *read = glContext->WinSysReadBuffer;
 
-	// TODO: SLOW! We need to check for changes in bitmap vs gl_framebuffer
-	// size before doing a _mesa_resize_framebuffer.
 	if (draw)
 		_mesa_resize_framebuffer(glContext, draw, width, height);
 	if (read)
@@ -145,8 +146,8 @@ hook_stm_get_param(struct st_manager *smapi, enum st_manager_param param)
 GalliumContext::GalliumContext(ulong options)
 	:
 	fOptions(options),
-	fCurrentContext(0),
-	fScreen(NULL)
+	fScreen(NULL),
+	fCurrentContext(0)
 {
 	CALLED();
 
@@ -165,10 +166,10 @@ GalliumContext::~GalliumContext()
 	CALLED();
 
 	// Destroy our contexts
-	pipe_mutex_lock(fMutex);
+	Lock();
 	for (context_id i = 0; i < CONTEXT_MAX; i++)
 		DestroyContext(i);
-	pipe_mutex_unlock(fMutex);
+	Unlock();
 
 	pipe_mutex_destroy(fMutex);
 
@@ -337,20 +338,20 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 		return -1;
 	}
 
-	// Init Gallium3D Post Processing
-	//context->postProcess = pp_init(fScreen, context->postProcessEnable);
-
 	assert(!context->st->st_manager_private);
-	context->st->st_manager_private = (void*)this;
+	context->st->st_manager_private = (void*)context;
 
 	struct st_context *stContext = (struct st_context*)context->st;
 	
 	stContext->ctx->Driver.Viewport = hgl_viewport;
 
-	// TODO: Closely review this next context logic...
-	context_id contextNext = -1;
+	// Init Gallium3D Post Processing
+	// TODO: no pp filters are enabled yet through postProcessEnable
+	context->postProcess = pp_init(stContext->pipe, context->postProcessEnable,
+		stContext->cso_context);
 
-	pipe_mutex_lock(fMutex);
+	context_id contextNext = -1;
+	Lock();
 	for (context_id i = 0; i < CONTEXT_MAX; i++) {
 		if (fContext[i] == NULL) {
 			fContext[i] = context;
@@ -358,7 +359,7 @@ GalliumContext::CreateContext(Bitmap *bitmap)
 			break;
 		}
 	}
-	pipe_mutex_unlock(fMutex);
+	Unlock();
 
 	if (contextNext < 0) {
 		ERROR("%s: The next context is invalid... something went wrong!\n",
@@ -419,10 +420,10 @@ GalliumContext::SetCurrentContext(Bitmap *bitmap, context_id contextID)
 		return B_ERROR;
 	}
 
-	pipe_mutex_lock(fMutex);
+	Lock();
 	context_id oldContextID = fCurrentContext;
 	struct hgl_context* context = fContext[contextID];
-	pipe_mutex_unlock(fMutex);
+	Unlock();
 
 	if (!context) {
 		ERROR("%s: Invalid context provided (#%" B_PRIu64 ")!\n",
@@ -453,12 +454,14 @@ GalliumContext::SetCurrentContext(Bitmap *bitmap, context_id contextID)
 	context->draw->Unlock();
 	context->read->Unlock();
 
-	// TODO: Init textures before post-processing them
-	#if 0
-	pp_init_fbos(context->postProcess,
-		context->textures[ST_ATTACHMENT_BACK_LEFT]->width0,
-		context->textures[ST_ATTACHMENT_BACK_LEFT]->height0);
-	#endif
+	if (context->textures[ST_ATTACHMENT_BACK_LEFT]
+		&& context->textures[ST_ATTACHMENT_DEPTH_STENCIL]
+		&& context->postProcess) {
+		TRACE("Postprocessing textures...\n");
+		pp_init_fbos(context->postProcess,
+			context->textures[ST_ATTACHMENT_BACK_LEFT]->width0,
+			context->textures[ST_ATTACHMENT_BACK_LEFT]->height0);
+	}
 
 	context->bitmap = bitmap;
 	//context->st->pipe->priv = context;
@@ -472,9 +475,9 @@ GalliumContext::SwapBuffers(context_id contextID)
 {
 	CALLED();
 
-	pipe_mutex_lock(fMutex);
+	Lock();
 	struct hgl_context *context = fContext[contextID];
-	pipe_mutex_unlock(fMutex);
+	Unlock();
 
 	if (!context) {
 		ERROR("%s: context not found\n", __func__);
@@ -507,10 +510,40 @@ GalliumContext::SwapBuffers(context_id contextID)
 	#if 0
 	// TODO... should we flush the z stencil buffer?
 	pipe_surface* zSurface = stContext->state.framebuffer.zsbuf;
-	fScreen->flush_frontbuffer(fScreen, surface->texture, 0, 0,
+	fScreen->flush_frontbuffer(fScreen, zSurface->texture, 0, 0,
 		context->bitmap);
 	#endif
 
 	return B_OK;
+}
+
+
+void
+GalliumContext::ResizeViewport(int32 width, int32 height)
+{
+	CALLED();
+	for (context_id i = 0; i < CONTEXT_MAX; i++) {
+		if (fContext[i] && fContext[i]->st) {
+			struct st_context *stContext = (struct st_context*)fContext[i]->st;
+			_mesa_set_viewport(stContext->ctx, 0, 0, width, height);
+        		st_manager_validate_framebuffers(stContext);
+		}
+	}
+}
+
+
+void
+GalliumContext::Lock()
+{
+	CALLED();
+	pipe_mutex_lock(fMutex);
+}
+
+
+void
+GalliumContext::Unlock()
+{
+	CALLED();
+	pipe_mutex_unlock(fMutex);
 }
 /* vim: set tabstop=4: */

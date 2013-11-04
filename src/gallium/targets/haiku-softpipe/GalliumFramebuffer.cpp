@@ -15,7 +15,10 @@ extern "C" {
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "pipe/p_format.h"
+#include "state_tracker/st_manager.h"
 }
+
+#include "GalliumContext.h"
 
 
 #ifdef DEBUG
@@ -33,7 +36,13 @@ hgl_framebuffer_flush_front(struct st_context_iface *stctx,
 	struct st_framebuffer_iface* stfb, enum st_attachment_type statt)
 {
 	CALLED();
-	// TODO: I have *NO* idea how we are going to access this data...
+
+	hgl_context* context = (hgl_context*)stfb->st_manager_private;
+
+	if (!context) {
+		ERROR("%s: Couldn't obtain valid hgl_context!\n", __func__);
+		return FALSE;
+	}
 
 	#if 0
 	struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
@@ -55,6 +64,63 @@ hgl_framebuffer_validate(struct st_context_iface* stctx,
 	struct pipe_resource** out)
 {
 	CALLED();
+
+	if (!stfb) {
+		ERROR("%s: Invalid st framebuffer interface!\n", __func__);
+		return FALSE;
+	}
+
+	hgl_context* context = (hgl_context*)stfb->st_manager_private;
+
+	if (!context) {
+		ERROR("%s: Couldn't obtain valid hgl_context!\n", __func__);
+		return FALSE;
+	}
+
+	int32 width = 0;
+	int32 height = 0;
+	get_bitmap_size(context->bitmap, &width, &height);
+
+	struct pipe_resource templat;
+	memset(&templat, 0, sizeof(templat));
+	templat.target = PIPE_TEXTURE_RECT;
+	templat.width0 = width;
+	templat.height0 = height;
+	templat.depth0 = 1;
+	templat.array_size = 1;
+	templat.usage = PIPE_USAGE_DEFAULT;
+
+	if (context->stVisual && context->manager && context->manager->screen) {
+		TRACE("%s: Updating resources\n", __func__);
+		int i;
+		for (i = 0; i < count; i++) {
+			enum pipe_format format = PIPE_FORMAT_NONE;
+			unsigned bind = 0;
+	
+			switch(statts[i]) {
+				case ST_ATTACHMENT_FRONT_LEFT:
+					format = context->stVisual->color_format;
+					bind = PIPE_BIND_RENDER_TARGET;
+					break;
+				case ST_ATTACHMENT_DEPTH_STENCIL:
+					format = context->stVisual->depth_stencil_format;
+					bind = PIPE_BIND_DEPTH_STENCIL;
+					break;
+				case ST_ATTACHMENT_ACCUM:
+					format = context->stVisual->accum_format;
+					bind = PIPE_BIND_RENDER_TARGET;
+					break;
+				default:
+					ERROR("%s: Unexpected attachment type!\n", __func__);
+			}
+			templat.format = format;
+			templat.bind = bind;
+
+			struct pipe_screen* screen = context->manager->screen;
+			context->textures[i] = screen->resource_create(screen, &templat);
+			out[i] = context->textures[i];
+		}
+	}
 
 	return TRUE;
 }

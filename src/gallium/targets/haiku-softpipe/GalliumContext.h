@@ -58,6 +58,9 @@ public:
 							GalliumContext(ulong options);
 							~GalliumContext();
 
+		void				Lock();
+		void				Unlock();
+
 		context_id			CreateContext(Bitmap* bitmap);
 		void				DestroyContext(context_id contextID);
 		context_id			GetCurrentContext() { return fCurrentContext; };
@@ -65,17 +68,18 @@ public:
 								context_id contextID);
 
 		status_t			SwapBuffers(context_id contextID);
+		void				ResizeViewport(int32 width, int32 height);
 
 private:
 		status_t			CreateScreen();
 		void				Flush();
 
 		ulong				fOptions;
+		struct pipe_screen*	fScreen;
 
+		// Context Management
 		struct hgl_context*	fContext[CONTEXT_MAX];
 		context_id			fCurrentContext;
-		
-		struct pipe_screen*	fScreen;
 		pipe_mutex			fMutex;
 };
 	

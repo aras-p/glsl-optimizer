@@ -326,7 +326,8 @@ SoftwareRenderer::DirectConnected(direct_buffer_info *info)
 void
 SoftwareRenderer::FrameResized(float width, float height)
 {
-//	CALLED();
+	TRACE("%s: %f x %f\n", __func__, width, height);
+
 	BAutolock lock(fInfoLocker);
 	fNewWidth = (GLuint)width;
 	fNewHeight = (GLuint)height;
@@ -353,6 +354,11 @@ SoftwareRenderer::_AllocateBitmap()
 		TRACE("%s: Can't create bitmap!\n", __func__);
 		return;
 	}
+
+	TRACE("%s: New bitmap size: %d x %d\n", __func__,
+		fBitmap->Bounds().IntegerWidth(), fBitmap->Bounds().IntegerHeight());
+
+	fContextObj->ResizeViewport(fWidth, fHeight);
 
 #if 0
 	// debug..
