@@ -42,6 +42,10 @@
 static bool
 can_do_pipelined_register_writes(struct brw_context *brw)
 {
+   /* Supposedly, Broadwell just works. */
+   if (brw->gen >= 8)
+      return true;
+
    /* We use SO_WRITE_OFFSET0 since you're supposed to write it (unlike the
     * statistics registers), and we already reset it to zero before using it.
     */
@@ -50,7 +54,7 @@ can_do_pipelined_register_writes(struct brw_context *brw)
    const int offset = 100;
 
    /* The register we picked only exists on Gen7+. */
-   assert(brw->gen >= 7);
+   assert(brw->gen == 7);
 
    uint32_t *data;
    /* Set a value in a BO to a known quantity.  The workaround BO already
