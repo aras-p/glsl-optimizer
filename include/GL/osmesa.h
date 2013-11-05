@@ -101,11 +101,6 @@ extern "C" {
 typedef struct osmesa_context *OSMesaContext;
 
 
-#if defined(__QUICKDRAW__)
-#pragma export on
-#endif
-
-
 /*
  * Create an Off-Screen Mesa rendering context.  The only attribute needed is
  * an RGBA vs Color-Index mode flag.
