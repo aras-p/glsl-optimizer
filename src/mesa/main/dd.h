@@ -525,7 +525,7 @@ struct dd_function_table {
    /** Set rasterization mode */
    void (*RenderMode)(struct gl_context *ctx, GLenum mode );
    /** Define the scissor box */
-   void (*Scissor)(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+   void (*Scissor)(struct gl_context *ctx);
    /** Select flat or smooth shading */
    void (*ShadeModel)(struct gl_context *ctx, GLenum mode);
    /** OpenGL 2.0 two-sided StencilFunc */

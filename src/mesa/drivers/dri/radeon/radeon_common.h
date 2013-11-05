@@ -8,7 +8,7 @@
 void radeonUserClear(struct gl_context *ctx, GLuint mask);
 void radeonSetCliprects(radeonContextPtr radeon);
 void radeonUpdateScissor( struct gl_context *ctx );
-void radeonScissor(struct gl_context* ctx, GLint x, GLint y, GLsizei w, GLsizei h);
+void radeonScissor(struct gl_context *ctx);
 
 extern uint32_t radeonGetAge(radeonContextPtr radeon);
 

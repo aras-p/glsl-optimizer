@@ -809,8 +809,7 @@ i915_update_draw_buffer(struct intel_context *intel)
    /* Set state we know depends on drawable parameters:
     */
    intelCalcViewport(ctx);
-   ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
-		       ctx->Scissor.Width, ctx->Scissor.Height);
+   ctx->Driver.Scissor(ctx);
 
    /* Update culling direction which changes depending on the
     * orientation of the buffer:

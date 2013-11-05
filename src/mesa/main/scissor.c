@@ -79,7 +79,7 @@ _mesa_set_scissor(struct gl_context *ctx,
    ctx->Scissor.Height = height;
 
    if (ctx->Driver.Scissor)
-      ctx->Driver.Scissor( ctx, x, y, width, height );
+      ctx->Driver.Scissor(ctx);
 }
 
 
