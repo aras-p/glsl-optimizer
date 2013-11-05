@@ -484,9 +484,7 @@ wmesa_resize_buffers(struct gl_context *ctx, struct gl_framebuffer *buffer,
  * we get the viewport set correctly, even if the app does not call
  * glViewport and relies on the defaults.
  */
-static void wmesa_viewport(struct gl_context *ctx, 
-			   GLint x, GLint y, 
-			   GLsizei width, GLsizei height)
+static void wmesa_viewport(struct gl_context *ctx)
 {
     GLuint new_width, new_height;
 

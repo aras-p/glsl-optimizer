@@ -134,15 +134,10 @@ intelGetString(struct gl_context * ctx, GLenum name)
 }
 
 static void
-intel_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+intel_viewport(struct gl_context *ctx)
 {
    struct brw_context *brw = brw_context(ctx);
    __DRIcontext *driContext = brw->driContext;
-
-   (void) x;
-   (void) y;
-   (void) w;
-   (void) h;
 
    if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       dri2InvalidateDrawable(driContext->driDrawablePriv);

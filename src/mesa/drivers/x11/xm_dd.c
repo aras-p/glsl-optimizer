@@ -750,17 +750,13 @@ xmesa_update_state( struct gl_context *ctx, GLbitfield new_state )
  * That problem led to the GLX_MESA_resize_buffers extension.
  */
 static void
-xmesa_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+xmesa_viewport(struct gl_context *ctx)
 {
    XMesaContext xmctx = XMESA_CONTEXT(ctx);
    XMesaBuffer xmdrawbuf = XMESA_BUFFER(ctx->WinSysDrawBuffer);
    XMesaBuffer xmreadbuf = XMESA_BUFFER(ctx->WinSysReadBuffer);
    xmesa_check_and_update_buffer_size(xmctx, xmdrawbuf);
    xmesa_check_and_update_buffer_size(xmctx, xmreadbuf);
-   (void) x;
-   (void) y;
-   (void) w;
-   (void) h;
 }
 
 

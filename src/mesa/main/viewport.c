@@ -99,7 +99,7 @@ _mesa_set_viewport(struct gl_context *ctx, GLint x, GLint y,
       /* Many drivers will use this call to check for window size changes
        * and reallocate the z/stencil/accum/etc buffers if needed.
        */
-      ctx->Driver.Viewport(ctx, x, y, width, height);
+      ctx->Driver.Viewport(ctx);
    }
 }
 
