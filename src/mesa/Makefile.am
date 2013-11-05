@@ -19,7 +19,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-SUBDIRS = x86 x86-64 . main/tests
+SUBDIRS = . main/tests
 
 if HAVE_X11_DRIVER
 SUBDIRS += drivers/x11
@@ -98,6 +98,11 @@ AM_CXXFLAGS = $(LLVM_CFLAGS) $(VISIBILITY_CXXFLAGS)
 MESA_ASM_FILES_FOR_ARCH =
 
 if HAVE_X86_ASM
+noinst_PROGRAMS = gen_matypes
+
+gen_matypes_SOURCES = x86/gen_matypes.c
+BUILT_SOURCES += matypes.h
+
 if HAVE_X86_64_ASM
 MESA_ASM_FILES_FOR_ARCH += $(X86_64_FILES)
 AM_CPPFLAGS += -I$(builddir)/x86-64 -I$(srcdir)/x86-64
@@ -139,6 +144,15 @@ $(BUILDDIR)program/lex.yy.c: program/program_lexer.l
 $(BUILDDIR)program/program_parse.tab.c $(BUILDDIR)program/program_parse.tab.h: program/program_parse.y
 	$(MKDIR_P) $(builddir)/program
 	$(AM_V_GEN) $(YACC) -p "_mesa_program_" -v -d --output=$(BUILDDIR)program/program_parse.tab.c $<
+
+if GEN_ASM_OFFSETS
+matypes.h: $(gen_matypes_SOURCES)
+	$(AM_V_GEN)$(COMPILE) $< -DASM_OFFSETS -S -o - | \
+		sed -n '/^->/{s:^->::;/[$$]/{s:^:#define :;s:[$$]::};p}' > $@
+else
+matypes.h: gen_matypes
+	$(AM_V_GEN)./gen_matypes > $@
+endif
 
 # Emacs tags
 tags:

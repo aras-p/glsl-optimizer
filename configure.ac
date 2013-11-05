@@ -2091,9 +2091,7 @@ AC_CONFIG_FILES([Makefile
 		src/mesa/drivers/osmesa/osmesa.pc
 		src/mesa/drivers/x11/Makefile
 		src/mesa/main/tests/Makefile
-		src/mesa/main/tests/hash_table/Makefile
-		src/mesa/x86-64/Makefile
-		src/mesa/x86/Makefile])
+		src/mesa/main/tests/hash_table/Makefile])
 
 dnl Sort the dirs alphabetically
 GALLIUM_TARGET_DIRS=`echo $GALLIUM_TARGET_DIRS|tr " " "\n"|sort -u|tr "\n" " "`
