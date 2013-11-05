@@ -47,6 +47,16 @@ _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glViewport %d %d %d %d\n", x, y, width, height);
+
+   if (width < 0 || height < 0) {
+      _mesa_error(ctx,  GL_INVALID_VALUE,
+                   "glViewport(%d, %d, %d, %d)", x, y, width, height);
+      return;
+   }
+
    _mesa_set_viewport(ctx, x, y, width, height);
 }
 
@@ -64,15 +74,6 @@ void
 _mesa_set_viewport(struct gl_context *ctx, GLint x, GLint y,
                     GLsizei width, GLsizei height)
 {
-   if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glViewport %d %d %d %d\n", x, y, width, height);
-
-   if (width < 0 || height < 0) {
-      _mesa_error(ctx,  GL_INVALID_VALUE,
-                   "glViewport(%d, %d, %d, %d)", x, y, width, height);
-      return;
-   }
-
    /* clamp width and height to the implementation dependent range */
    width  = MIN2(width, (GLsizei) ctx->Const.MaxViewportWidth);
    height = MIN2(height, (GLsizei) ctx->Const.MaxViewportHeight);
