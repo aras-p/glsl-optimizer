@@ -248,6 +248,21 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
       (void) sizeof(char [1 - 2*!(COND)]); \
    } while (0)
 
+/**
+ * Unreachable macro. Useful for suppressing "control reaches end of non-void
+ * function" warnings.
+ */
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 5
+#define unreachable() __builtin_unreachable()
+#elif (defined(__clang__) && defined(__has_builtin))
+# if __has_builtin(__builtin_unreachable)
+#  define unreachable() __builtin_unreachable()
+# endif
+#endif
+
+#ifndef unreachable
+#define unreachable()
+#endif
 
 #if (__GNUC__ >= 3)
 #define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
