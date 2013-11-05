@@ -734,5 +734,9 @@ struct pipe_resource *vlVdpOutputSurfaceGallium(VdpOutputSurface surface)
    if (!vlsurface || !vlsurface->surface)
       return NULL;
 
+   pipe_mutex_lock(vlsurface->device->mutex);
+   vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
+   pipe_mutex_unlock(vlsurface->device->mutex);
+
    return vlsurface->surface->texture;
 }
