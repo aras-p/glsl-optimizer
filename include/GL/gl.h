@@ -36,10 +36,6 @@
  * Begin system-specific stuff.
  */
 
-#if defined(__BEOS__)
-#include <stdlib.h>     /* to get some BeOS-isms */
-#endif
-
 #if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__)
 #define __WIN32__
 #endif
@@ -64,10 +60,6 @@
 #  define GLAPI __attribute__((visibility("default")))
 #  define GLAPIENTRY
 #endif /* WIN32 && !CYGWIN */
-
-#if (defined(__BEOS__) && defined(__POWERPC__))
-#  define PRAGMA_EXPORT_SUPPORTED		1
-#endif
 
 /*
  * WINDOWS: Include windows.h here to define APIENTRY.
