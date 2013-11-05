@@ -40,15 +40,11 @@
 #include <stdlib.h>     /* to get some BeOS-isms */
 #endif
 
-#if !defined(OPENSTEP) && (defined(NeXT) || defined(NeXT_PDO))
-#define OPENSTEP
-#endif
-
 #if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__)
 #define __WIN32__
 #endif
 
-#if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__))
+#if defined(__WIN32__) && !defined(__CYGWIN__)
 #  if (defined(_MSC_VER) || defined(__MINGW32__)) && defined(BUILD_GL32) /* tag specify we're building mesa as a DLL */
 #    define GLAPI __declspec(dllexport)
 #  elif (defined(_MSC_VER) || defined(__MINGW32__)) && defined(_DLL) /* tag specifying we're building for DLL runtime support */

@@ -90,7 +90,7 @@ extern "C" {
 /**
  * Disable assorted warnings
  */
-#if !defined(OPENSTEP) && (defined(_WIN32) && !defined(__CYGWIN__))
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #  if !defined(__GNUC__) /* mingw environment */
 #    pragma warning( disable : 4068 ) /* unknown pragma */
 #    pragma warning( disable : 4710 ) /* function 'foo' not inlined */
