@@ -764,6 +764,7 @@ brwCreateContext(gl_api api,
 
    brw->prim_restart.in_progress = false;
    brw->prim_restart.enable_cut_index = false;
+   brw->gs.enabled = false;
 
    if (brw->gen < 6) {
       brw->curbe.last_buf = calloc(1, 4096);

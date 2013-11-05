@@ -122,28 +122,8 @@ gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,
     *
     * No such restriction exists for Haswell.
     */
-   if (!brw->is_haswell) {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-      /* From p61 of the Ivy Bridge PRM (1.10.4 PIPE_CONTROL Command: DW1[20]
-       * CS Stall):
-       *
-       *     One of the following must also be set:
-       *     - Render Target Cache Flush Enable ([12] of DW1)
-       *     - Depth Cache Flush Enable ([0] of DW1)
-       *     - Stall at Pixel Scoreboard ([1] of DW1)
-       *     - Depth Stall ([13] of DW1)
-       *     - Post-Sync Operation ([13] of DW1)
-       *
-       * We choose to do a Post-Sync Operation (Write Immediate Data), since
-       * it seems like it will incur the least additional performance penalty.
-       */
-      OUT_BATCH(PIPE_CONTROL_CS_STALL | PIPE_CONTROL_WRITE_IMMEDIATE);
-      OUT_RELOC(brw->batch.workaround_bo,
-                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION, 0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+   if (!brw->is_haswell)
+      gen7_emit_cs_stall_flush(brw);
 }
 
 const struct brw_tracked_state gen7_push_constant_space = {

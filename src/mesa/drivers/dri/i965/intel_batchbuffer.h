@@ -59,6 +59,7 @@ void intel_batchbuffer_emit_mi_flush(struct brw_context *brw);
 void intel_emit_post_sync_nonzero_flush(struct brw_context *brw);
 void intel_emit_depth_stall_flushes(struct brw_context *brw);
 void gen7_emit_vs_workaround_flush(struct brw_context *brw);
+void gen7_emit_cs_stall_flush(struct brw_context *brw);
 
 static INLINE uint32_t float_as_int(float f)
 {

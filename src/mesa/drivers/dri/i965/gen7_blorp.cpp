@@ -402,6 +402,21 @@ gen7_blorp_emit_gs_disable(struct brw_context *brw,
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
+   /**
+    * From Graphics BSpec: 3D-Media-GPGPU Engine > 3D Pipeline Stages >
+    * Geometry > Geometry Shader > State:
+    *
+    *     "Note: Because of corruption in IVB:GT2, software needs to flush the
+    *     whole fixed function pipeline when the GS enable changes value in
+    *     the 3DSTATE_GS."
+    *
+    * The hardware architects have clarified that in this context "flush the
+    * whole fixed function pipeline" means to emit a PIPE_CONTROL with the "CS
+    * Stall" bit set.
+    */
+   if (!brw->is_haswell && brw->gt == 2 && brw->gs.enabled)
+      gen7_emit_cs_stall_flush(brw);
+
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
    OUT_BATCH(0);
@@ -411,6 +426,7 @@ gen7_blorp_emit_gs_disable(struct brw_context *brw,
    OUT_BATCH(0);
    OUT_BATCH(0);
    ADVANCE_BATCH();
+   brw->gs.enabled = false;
 }
 
 /* 3DSTATE_STREAMOUT

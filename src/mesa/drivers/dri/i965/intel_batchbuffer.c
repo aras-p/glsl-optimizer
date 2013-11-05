@@ -511,6 +511,36 @@ gen7_emit_vs_workaround_flush(struct brw_context *brw)
    ADVANCE_BATCH();
 }
 
+
+/**
+ * Emit a PIPE_CONTROL command for gen7 with the CS Stall bit set.
+ */
+void
+gen7_emit_cs_stall_flush(struct brw_context *brw)
+{
+   BEGIN_BATCH(4);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+   /* From p61 of the Ivy Bridge PRM (1.10.4 PIPE_CONTROL Command: DW1[20]
+    * CS Stall):
+    *
+    *     One of the following must also be set:
+    *     - Render Target Cache Flush Enable ([12] of DW1)
+    *     - Depth Cache Flush Enable ([0] of DW1)
+    *     - Stall at Pixel Scoreboard ([1] of DW1)
+    *     - Depth Stall ([13] of DW1)
+    *     - Post-Sync Operation ([13] of DW1)
+    *
+    * We choose to do a Post-Sync Operation (Write Immediate Data), since
+    * it seems like it will incur the least additional performance penalty.
+    */
+   OUT_BATCH(PIPE_CONTROL_CS_STALL | PIPE_CONTROL_WRITE_IMMEDIATE);
+   OUT_RELOC(brw->batch.workaround_bo,
+             I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION, 0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+
 /**
  * Emits a PIPE_CONTROL with a non-zero post-sync operation, for
  * implementing two workarounds on gen6.  From section 1.4.7.1
