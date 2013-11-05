@@ -825,6 +825,8 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
          fprintf(stderr, "GLSL source for %s shader %d:\n",
                  _mesa_glsl_shader_target_name(sh->Type), sh->Name);
          fprintf(stderr, "%s\n", sh->Source);
+         fprintf(stderr, "Info Log:\n%s\n", sh->InfoLog);
+         fflush(stderr);
       }
 
       if (ctx->Shader.Flags & GLSL_REPORT_ERRORS) {
