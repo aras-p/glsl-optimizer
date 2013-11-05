@@ -60,7 +60,7 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points4)( GLvector4f *clip_vec,
       const GLfloat cy = from[1];
       const GLfloat cz = from[2];
       const GLfloat cw = from[3];
-#if defined(macintosh) || defined(__powerpc__)
+#if defined(__powerpc__)
       /* on powerpc cliptest is 17% faster in this way. */
       GLuint mask;
       mask = (((cw < cx) << CLIP_RIGHT_SHIFT));
@@ -71,7 +71,7 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points4)( GLvector4f *clip_vec,
 	 mask |= (((cw < cz) << CLIP_FAR_SHIFT));
 	 mask |= (((cw < -cz) << CLIP_NEAR_SHIFT));
       }
-#else /* !defined(macintosh)) */
+#else
       GLubyte mask = 0;
       if (-cx + cw < 0) mask |= CLIP_RIGHT_BIT;
       if ( cx + cw < 0) mask |= CLIP_LEFT_BIT;
@@ -81,7 +81,7 @@ static GLvector4f * _XFORMAPI TAG(cliptest_points4)( GLvector4f *clip_vec,
 	 if (-cz + cw < 0) mask |= CLIP_FAR_BIT;
 	 if ( cz + cw < 0) mask |= CLIP_NEAR_BIT;
       }
-#endif /* defined(macintosh) */
+#endif
 
       clipMask[i] = mask;
       if (mask) {
@@ -140,7 +140,7 @@ static GLvector4f * _XFORMAPI TAG(cliptest_np_points4)( GLvector4f *clip_vec,
       const GLfloat cy = from[1];
       const GLfloat cz = from[2];
       const GLfloat cw = from[3];
-#if defined(macintosh) || defined(__powerpc__)
+#if defined(__powerpc__)
       /* on powerpc cliptest is 17% faster in this way. */
       GLuint mask;
       mask = (((cw < cx) << CLIP_RIGHT_SHIFT));
@@ -151,7 +151,7 @@ static GLvector4f * _XFORMAPI TAG(cliptest_np_points4)( GLvector4f *clip_vec,
 	 mask |= (((cw < cz) << CLIP_FAR_SHIFT));
 	 mask |= (((cw < -cz) << CLIP_NEAR_SHIFT));
       }
-#else /* !defined(macintosh)) */
+#else
       GLubyte mask = 0;
       if (-cx + cw < 0) mask |= CLIP_RIGHT_BIT;
       if ( cx + cw < 0) mask |= CLIP_LEFT_BIT;
@@ -161,7 +161,7 @@ static GLvector4f * _XFORMAPI TAG(cliptest_np_points4)( GLvector4f *clip_vec,
 	 if (-cz + cw < 0) mask |= CLIP_FAR_BIT;
 	 if ( cz + cw < 0) mask |= CLIP_NEAR_BIT;
       }
-#endif /* defined(macintosh) */
+#endif
 
       clipMask[i] = mask;
       if (mask) {

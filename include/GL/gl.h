@@ -88,10 +88,6 @@
 #include <windows.h>
 #endif
 
-#if defined(macintosh) && PRAGMA_IMPORT_SUPPORTED
-#pragma import on
-#endif
-
 #ifndef GLAPI
 #define GLAPI extern
 #endif
@@ -2169,9 +2165,6 @@ typedef void (APIENTRYP PFNGLEGLIMAGETARGETRENDERBUFFERSTORAGEOESPROC) (GLenum t
 #pragma export off
 #endif
 
-#if defined(macintosh) && PRAGMA_IMPORT_SUPPORTED
-#pragma import off
-#endif
 /*
  * End system-specific stuff
  **********************************************************************/
