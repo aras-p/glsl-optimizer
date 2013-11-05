@@ -392,7 +392,6 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 		const uint *grid_layout)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
-	unsigned flush_flags = 0;
 	int i;
 
 	/* make sure that the gfx ring is only one active */
