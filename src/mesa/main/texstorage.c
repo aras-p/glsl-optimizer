@@ -365,6 +365,13 @@ texstorage(GLuint dims, GLenum target, GLsizei levels, GLenum internalformat,
 
    GET_CURRENT_CONTEXT(ctx);
 
+   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+      _mesa_debug(ctx, "glTexStorage%uD %s %d %s %d %d %d\n",
+                  dims,
+                  _mesa_lookup_enum_by_nr(target), levels,
+                  _mesa_lookup_enum_by_nr(internalformat),
+                  width, height, depth);
+
    if (tex_storage_error_check(ctx, dims, target, levels,
                                internalformat, width, height, depth)) {
       return; /* error was recorded */
