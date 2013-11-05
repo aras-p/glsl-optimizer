@@ -33,22 +33,6 @@
 #define GLHEADER_H
 
 
-#ifdef WGLAPI
-#undef WGLAPI
-#endif
-
-
-#if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__))
-#  if (defined(_MSC_VER) || defined(__MINGW32__)) && defined(BUILD_GL32) /* tag specify we're building mesa as a DLL */
-#    define WGLAPI __declspec(dllexport)
-#  elif (defined(_MSC_VER) || defined(__MINGW32__)) && defined(_DLL) /* tag specifying we're building for DLL runtime support */
-#    define WGLAPI __declspec(dllimport)
-#  else /* for use with static link lib build of Win32 edition only */
-#    define WGLAPI __declspec(dllimport)
-#  endif /* _STATIC_MESA support */
-#endif /* WIN32 / CYGWIN bracket */
-
-
 #define GL_GLEXT_PROTOTYPES
 #include "GL/gl.h"
 #include "GL/glext.h"
