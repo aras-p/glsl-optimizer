@@ -273,6 +273,12 @@ struct __DRIdrawableRec {
     } dri2;
 };
 
+extern uint32_t
+driGLFormatToImageFormat(gl_format format);
+
+extern gl_format
+driImageFormatToGLFormat(uint32_t image_format);
+
 extern void
 dri2InvalidateDrawable(__DRIdrawable *drawable);
 

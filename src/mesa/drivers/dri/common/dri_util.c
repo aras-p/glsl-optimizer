@@ -797,3 +797,65 @@ driUpdateFramebufferSize(struct gl_context *ctx, const __DRIdrawable *dPriv)
       assert(fb->Height == dPriv->h);
    }
 }
+
+uint32_t
+driGLFormatToImageFormat(gl_format format)
+{
+   switch (format) {
+   case MESA_FORMAT_RGB565:
+      return __DRI_IMAGE_FORMAT_RGB565;
+   case MESA_FORMAT_XRGB8888:
+      return __DRI_IMAGE_FORMAT_XRGB8888;
+   case MESA_FORMAT_ARGB2101010:
+      return __DRI_IMAGE_FORMAT_ARGB2101010;
+   case MESA_FORMAT_XRGB2101010_UNORM:
+      return __DRI_IMAGE_FORMAT_XRGB2101010;
+   case MESA_FORMAT_ARGB8888:
+      return __DRI_IMAGE_FORMAT_ARGB8888;
+   case MESA_FORMAT_RGBA8888_REV:
+      return __DRI_IMAGE_FORMAT_ABGR8888;
+   case MESA_FORMAT_RGBX8888_REV:
+      return __DRI_IMAGE_FORMAT_XBGR8888;
+   case MESA_FORMAT_R8:
+      return __DRI_IMAGE_FORMAT_R8;
+   case MESA_FORMAT_GR88:
+      return __DRI_IMAGE_FORMAT_GR88;
+   case MESA_FORMAT_NONE:
+      return __DRI_IMAGE_FORMAT_NONE;
+   case MESA_FORMAT_SARGB8:
+      return __DRI_IMAGE_FORMAT_SARGB8;
+   default:
+      return 0;
+   }
+}
+
+gl_format
+driImageFormatToGLFormat(uint32_t image_format)
+{
+   switch (image_format) {
+   case __DRI_IMAGE_FORMAT_RGB565:
+      return MESA_FORMAT_RGB565;
+   case __DRI_IMAGE_FORMAT_XRGB8888:
+      return MESA_FORMAT_XRGB8888;
+   case __DRI_IMAGE_FORMAT_ARGB2101010:
+      return MESA_FORMAT_ARGB2101010;
+   case __DRI_IMAGE_FORMAT_XRGB2101010:
+      return MESA_FORMAT_XRGB2101010_UNORM;
+   case __DRI_IMAGE_FORMAT_ARGB8888:
+      return MESA_FORMAT_ARGB8888;
+   case __DRI_IMAGE_FORMAT_ABGR8888:
+      return MESA_FORMAT_RGBA8888_REV;
+   case __DRI_IMAGE_FORMAT_XBGR8888:
+      return MESA_FORMAT_RGBX8888_REV;
+   case __DRI_IMAGE_FORMAT_R8:
+      return MESA_FORMAT_R8;
+   case __DRI_IMAGE_FORMAT_GR88:
+      return MESA_FORMAT_GR88;
+   case __DRI_IMAGE_FORMAT_SARGB8:
+      return MESA_FORMAT_SARGB8;
+   case __DRI_IMAGE_FORMAT_NONE:
+      return MESA_FORMAT_NONE;
+   default:
+      return MESA_FORMAT_NONE;
+   }
+}
