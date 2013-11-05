@@ -78,6 +78,8 @@ setupLoaderExtensions(__DRIscreen *psp,
 	    psp->dri2.useInvalidate = (__DRIuseInvalidateExtension *) extensions[i];
 	if (strcmp(extensions[i]->name, __DRI_SWRAST_LOADER) == 0)
 	    psp->swrast_loader = (__DRIswrastLoaderExtension *) extensions[i];
+        if (strcmp(extensions[i]->name, __DRI_IMAGE_LOADER) == 0)
+           psp->image.loader = (__DRIimageLoaderExtension *) extensions[i];
     }
 }
 
@@ -859,3 +861,14 @@ driImageFormatToGLFormat(uint32_t image_format)
       return MESA_FORMAT_NONE;
    }
 }
+
+/** Image driver interface */
+const __DRIimageDriverExtension driImageDriverExtension = {
+    .base = { __DRI_IMAGE_DRIVER, __DRI_IMAGE_DRIVER_VERSION },
+
+    .createNewScreen2           = driCreateNewScreen2,
+    .createNewDrawable          = driCreateNewDrawable,
+    .createNewContext           = driCreateNewContext,
+    .getAPIMask                 = driGetAPIMask,
+    .createContextAttribs       = driCreateContextAttribs,
+};

@@ -726,6 +726,67 @@ intel_miptree_create_for_dri2_buffer(struct brw_context *brw,
    return multisample_mt;
 }
 
+/**
+ * For a singlesample image buffer, this simply wraps the given region with a miptree.
+ *
+ * For a multisample image buffer, this wraps the given region with
+ * a singlesample miptree, then creates a multisample miptree into which the
+ * singlesample miptree is embedded as a child.
+ */
+struct intel_mipmap_tree*
+intel_miptree_create_for_image_buffer(struct brw_context *intel,
+                                      enum __DRIimageBufferMask buffer_type,
+                                      gl_format format,
+                                      uint32_t num_samples,
+                                      struct intel_region *region)
+{
+   struct intel_mipmap_tree *singlesample_mt = NULL;
+   struct intel_mipmap_tree *multisample_mt = NULL;
+
+   /* Only the front and back buffers, which are color buffers, are allocated
+    * through the image loader.
+    */
+   assert(_mesa_get_format_base_format(format) == GL_RGB ||
+          _mesa_get_format_base_format(format) == GL_RGBA);
+
+   singlesample_mt = intel_miptree_create_for_bo(intel,
+                                                 region->bo,
+                                                 format,
+                                                 0,
+                                                 region->width,
+                                                 region->height,
+                                                 region->pitch,
+                                                 region->tiling);
+   if (!singlesample_mt)
+      return NULL;
+
+   intel_region_reference(&singlesample_mt->region, region);
+
+   if (num_samples == 0)
+      return singlesample_mt;
+
+   multisample_mt = intel_miptree_create_for_renderbuffer(intel,
+                                                          format,
+                                                          region->width,
+                                                          region->height,
+                                                          num_samples);
+   if (!multisample_mt) {
+      intel_miptree_release(&singlesample_mt);
+      return NULL;
+   }
+
+   multisample_mt->singlesample_mt = singlesample_mt;
+   multisample_mt->need_downsample = false;
+
+   intel_region_reference(&multisample_mt->region, region);
+
+   if (intel->is_front_buffer_rendering && buffer_type == __DRI_IMAGE_BUFFER_FRONT) {
+      intel_miptree_upsample(intel, multisample_mt);
+   }
+
+   return multisample_mt;
+}
+
 struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct brw_context *brw,
                                       gl_format format,

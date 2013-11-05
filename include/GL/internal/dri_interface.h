@@ -86,6 +86,10 @@ typedef struct __DRIdri2LoaderExtensionRec	__DRIdri2LoaderExtension;
 typedef struct __DRI2flushExtensionRec	__DRI2flushExtension;
 typedef struct __DRI2throttleExtensionRec	__DRI2throttleExtension;
 
+
+typedef struct __DRIimageLoaderExtensionRec     __DRIimageLoaderExtension;
+typedef struct __DRIimageDriverExtensionRec     __DRIimageDriverExtension;
+
 /*@}*/
 
 
@@ -1332,6 +1336,78 @@ struct __DRI2rendererQueryExtensionRec {
 
    int (*queryInteger)(__DRIscreen *screen, int attribute, unsigned int *val);
    int (*queryString)(__DRIscreen *screen, int attribute, const char **val);
+};
+
+/**
+ * Image Loader extension. Drivers use this to allocate color buffers
+ */
+
+enum __DRIimageBufferMask {
+   __DRI_IMAGE_BUFFER_BACK = (1 << 0),
+   __DRI_IMAGE_BUFFER_FRONT = (1 << 1)
+};
+
+struct __DRIimageList {
+   uint32_t image_mask;
+   __DRIimage *back;
+   __DRIimage *front;
+};
+
+#define __DRI_IMAGE_LOADER "DRI_IMAGE_LOADER"
+#define __DRI_IMAGE_LOADER_VERSION 1
+
+struct __DRIimageLoaderExtensionRec {
+    __DRIextension base;
+
+   /**
+    * Allocate color buffers.
+    *
+    * \param driDrawable
+    * \param width              Width of allocated buffers
+    * \param height             Height of allocated buffers
+    * \param format             one of __DRI_IMAGE_FORMAT_*
+    * \param stamp              Address of variable to be updated when
+    *                           getBuffers must be called again
+    * \param loaderPrivate      The loaderPrivate for driDrawable
+    * \param buffer_mask        Set of buffers to allocate
+    * \param buffers            Returned buffers
+    */
+   int (*getBuffers)(__DRIdrawable *driDrawable,
+                     unsigned int format,
+                     uint32_t *stamp,
+                     void *loaderPrivate,
+                     uint32_t buffer_mask,
+                     struct __DRIimageList *buffers);
+
+    /**
+     * Flush pending front-buffer rendering
+     *
+     * Any rendering that has been performed to the
+     * fake front will be flushed to the front
+     *
+     * \param driDrawable    Drawable whose front-buffer is to be flushed
+     * \param loaderPrivate  Loader's private data that was previously passed
+     *                       into __DRIdri2ExtensionRec::createNewDrawable
+     */
+    void (*flushFrontBuffer)(__DRIdrawable *driDrawable, void *loaderPrivate);
+};
+
+/**
+ * DRI extension.
+ */
+
+#define __DRI_IMAGE_DRIVER           "DRI_IMAGE_DRIVER"
+#define __DRI_IMAGE_DRIVER_VERSION   1
+
+struct __DRIimageDriverExtensionRec {
+   __DRIextension               base;
+
+   /* Common DRI functions, shared with DRI2 */
+   __DRIcreateNewScreen2Func            createNewScreen2;
+   __DRIcreateNewDrawableFunc           createNewDrawable;
+   __DRIcreateNewContextFunc            createNewContext;
+   __DRIcreateContextAttribsFunc        createContextAttribs;
+   __DRIgetAPIMaskFunc                  getAPIMask;
 };
 
 #endif

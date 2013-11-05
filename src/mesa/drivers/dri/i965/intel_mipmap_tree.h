@@ -32,6 +32,7 @@
 
 #include "intel_regions.h"
 #include "intel_resolve_map.h"
+#include <GL/internal/dri_interface.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -525,6 +526,13 @@ intel_miptree_create_for_bo(struct brw_context *brw,
 struct intel_mipmap_tree*
 intel_miptree_create_for_dri2_buffer(struct brw_context *brw,
                                      unsigned dri_attachment,
+                                     gl_format format,
+                                     uint32_t num_samples,
+                                     struct intel_region *region);
+
+struct intel_mipmap_tree*
+intel_miptree_create_for_image_buffer(struct brw_context *intel,
+                                     enum __DRIimageBufferMask buffer_type,
                                      gl_format format,
                                      uint32_t num_samples,
                                      struct intel_region *region);

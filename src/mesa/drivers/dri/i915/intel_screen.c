@@ -1258,6 +1258,7 @@ static const struct __DRIDriverVtableExtensionRec i915_vtable = {
 /* This is the table of extensions that the loader will dlsym() for. */
 static const __DRIextension *i915_driver_extensions[] = {
     &driCoreExtension.base,
+    &driImageDriverExtension.base,
     &driDRI2Extension.base,
     &i915_vtable.base,
     &i915_config_options.base,

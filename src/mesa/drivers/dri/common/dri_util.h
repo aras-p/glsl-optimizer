@@ -176,6 +176,10 @@ struct __DRIscreenRec {
 	__DRIuseInvalidateExtension *useInvalidate;
     } dri2;
 
+    struct {
+        __DRIimageLoaderExtension *loader;
+    } image;
+
     driOptionCache optionInfo;
     driOptionCache optionCache;
 
@@ -284,5 +288,7 @@ dri2InvalidateDrawable(__DRIdrawable *drawable);
 
 extern void
 driUpdateFramebufferSize(struct gl_context *ctx, const __DRIdrawable *dPriv);
+
+extern const __DRIimageDriverExtension driImageDriverExtension;
 
 #endif /* _DRI_UTIL_H_ */

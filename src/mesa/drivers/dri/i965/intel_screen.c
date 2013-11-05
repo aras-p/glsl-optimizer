@@ -1264,7 +1264,8 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 {
    struct intel_screen *intelScreen;
 
-   if (psp->dri2.loader->base.version <= 2 ||
+   if (psp->image.loader) {
+   } else if (psp->dri2.loader->base.version <= 2 ||
        psp->dri2.loader->getBuffersWithFormat == NULL) {
       fprintf(stderr,
 	      "\nERROR!  DRI2 loader with getBuffersWithFormat() "
@@ -1352,7 +1353,6 @@ intelReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
    free(intelBuffer);
 }
 
-
 static const struct __DriverAPIRec brw_driver_api = {
    .InitScreen		 = intelInitScreen2,
    .DestroyScreen	 = intelDestroyScreen,
@@ -1373,6 +1373,7 @@ static const struct __DRIDriverVtableExtensionRec brw_vtable = {
 
 static const __DRIextension *brw_driver_extensions[] = {
     &driCoreExtension.base,
+    &driImageDriverExtension.base,
     &driDRI2Extension.base,
     &brw_vtable.base,
     &brw_config_options.base,

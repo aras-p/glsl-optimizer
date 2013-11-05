@@ -322,6 +322,39 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
    return mt;
 }
 
+/**
+ * For a singlesample image buffer, this simply wraps the given region with a miptree.
+ *
+ * For a multisample image buffer, this wraps the given region with
+ * a singlesample miptree, then creates a multisample miptree into which the
+ * singlesample miptree is embedded as a child.
+ */
+struct intel_mipmap_tree*
+intel_miptree_create_for_image_buffer(struct intel_context *intel,
+                                      enum __DRIimageBufferMask buffer_type,
+                                      gl_format format,
+                                      uint32_t num_samples,
+                                      struct intel_region *region)
+{
+   struct intel_mipmap_tree *mt = NULL;
+
+   /* Only the front and back buffers, which are color buffers, are allocated
+    * through the image loader.
+    */
+   assert(_mesa_get_format_base_format(format) == GL_RGB ||
+          _mesa_get_format_base_format(format) == GL_RGBA);
+
+   mt = intel_miptree_create_for_bo(intel,
+                                    region->bo,
+                                    format,
+                                    0,
+                                    region->width,
+                                    region->height,
+                                    region->pitch,
+                                    region->tiling);
+   return mt;
+}
+
 struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct intel_context *intel,
                                       gl_format format,
