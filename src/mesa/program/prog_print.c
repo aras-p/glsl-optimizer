@@ -144,8 +144,9 @@ arb_input_attrib_string(GLint index, GLenum progType)
       "fragment.(eighteen)", /* VARYING_SLOT_CLIP_DIST1 */
       "fragment.(nineteen)", /* VARYING_SLOT_PRIMITIVE_ID */
       "fragment.(twenty)", /* VARYING_SLOT_LAYER */
-      "fragment.(twenty-one)", /* VARYING_SLOT_FACE */
-      "fragment.(twenty-two)", /* VARYING_SLOT_PNTC */
+      "fragment.(twenty-one)", /* VARYING_SLOT_VIEWPORT */
+      "fragment.(twenty-two)", /* VARYING_SLOT_FACE */
+      "fragment.(twenty-three)", /* VARYING_SLOT_PNTC */
       "fragment.varying[0]",
       "fragment.varying[1]",
       "fragment.varying[2]",
@@ -268,8 +269,9 @@ arb_output_attrib_string(GLint index, GLenum progType)
       "result.(eighteen)", /* VARYING_SLOT_CLIP_DIST1 */
       "result.(nineteen)", /* VARYING_SLOT_PRIMITIVE_ID */
       "result.(twenty)", /* VARYING_SLOT_LAYER */
-      "result.(twenty-one)", /* VARYING_SLOT_FACE */
-      "result.(twenty-two)", /* VARYING_SLOT_PNTC */
+      "result.(twenty-one)", /* VARYING_SLOT_VIEWPORT */
+      "result.(twenty-two)", /* VARYING_SLOT_FACE */
+      "result.(twenty-three)", /* VARYING_SLOT_PNTC */
       "result.varying[0]",
       "result.varying[1]",
       "result.varying[2]",
