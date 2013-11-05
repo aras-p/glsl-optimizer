@@ -94,6 +94,8 @@ libglx_la_SOURCES = \
 	  dri2_glx.c \
 	  dri2.c \
 	  dri2_query_renderer.c \
+          dri3_glx.c \
+          dri3_common.c \
 	  applegl_glx.c
 
 GL_LIBS = \

@@ -34,6 +34,9 @@ LIBDRM_NVVIEUX_REQUIRED=2.4.33
 LIBDRM_NOUVEAU_REQUIRED="2.4.33 libdrm >= 2.4.41"
 LIBDRM_FREEDRENO_REQUIRED=2.4.39
 DRI2PROTO_REQUIRED=2.6
+DRI3PROTO_REQUIRED=1.0
+PRESENTPROTO_REQUIRED=1.0
+LIBUDEV_REQUIRED=151
 GLPROTO_REQUIRED=1.4.14
 
 dnl Check for progs
@@ -808,10 +811,13 @@ xyesno)
         fi
         PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
         GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV libdrm >= $LIBDRM_REQUIRED"
+        PKG_CHECK_MODULES([DRI3PROTO], [dri3proto >= $DRI3PROTO_REQUIRED])
+        PKG_CHECK_MODULES([PRESENTPROTO], [presentproto >= $PRESENTPROTO_REQUIRED])
+        PKG_CHECK_MODULES([LIBUDEV], [libudev >= $LIBUDEV_REQUIRED])
     fi
 
     # find the DRI deps for libGL
-    dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx >= 1.8.1 xcb-dri2 >= 1.8"
+    dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx >= 1.8.1 xcb-dri2 >= 1.8 xcb-dri3 xcb-present xcb-sync xshmfence"
 
     # add xf86vidmode if available
     PKG_CHECK_MODULES([XF86VIDMODE], [xxf86vm], HAVE_XF86VIDMODE=yes, HAVE_XF86VIDMODE=no)
@@ -821,8 +827,8 @@ xyesno)
 
     PKG_CHECK_MODULES([DRIGL], [$dri_modules])
     GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV $dri_modules"
-    X11_INCLUDES="$X11_INCLUDES $DRIGL_CFLAGS"
-    GL_LIB_DEPS="$DRIGL_LIBS"
+    X11_INCLUDES="$X11_INCLUDES $DRIGL_CFLAGS $LIBUDEV_CFLAGS"
+    GL_LIB_DEPS="$DRIGL_LIBS $LIBUDEV_LIBS"
 
     # need DRM libs, $PTHREAD_LIBS, etc.
     GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm $PTHREAD_LIBS $DLOPEN_LIBS"
