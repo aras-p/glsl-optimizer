@@ -757,7 +757,7 @@ fs_generator::generate_scratch_write(fs_inst *inst, struct brw_reg src)
 	   retype(brw_message_reg(inst->base_mrf + 1), BRW_REGISTER_TYPE_UD),
 	   retype(src, BRW_REGISTER_TYPE_UD));
    brw_oword_block_write_scratch(p, brw_message_reg(inst->base_mrf),
-                                 inst->mlen, inst->offset);
+                                 dispatch_width / 8, inst->offset);
 }
 
 void
