@@ -426,7 +426,7 @@ intelCalcViewport(struct gl_context * ctx)
 
 /** Called from ctx->Driver.DepthRange() */
 static void
-i915DepthRange(struct gl_context * ctx, GLclampd nearval, GLclampd farval)
+i915DepthRange(struct gl_context *ctx)
 {
    intelCalcViewport(ctx);
 }

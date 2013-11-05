@@ -485,7 +485,7 @@ struct dd_function_table {
    /** Enable or disable writing into the depth buffer */
    void (*DepthMask)(struct gl_context *ctx, GLboolean flag);
    /** Specify mapping of depth values from NDC to window coordinates */
-   void (*DepthRange)(struct gl_context *ctx, GLclampd nearval, GLclampd farval);
+   void (*DepthRange)(struct gl_context *ctx);
    /** Specify the current buffer for writing */
    void (*DrawBuffer)( struct gl_context *ctx, GLenum buffer );
    /** Specify the buffers for writing for fragment programs*/

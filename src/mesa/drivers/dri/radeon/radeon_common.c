@@ -325,9 +325,7 @@ void radeon_draw_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	radeon->NewGLState |= _NEW_SCISSOR;
 
 	if (ctx->Driver.DepthRange)
-		ctx->Driver.DepthRange(ctx,
-				       ctx->Viewport.Near,
-				       ctx->Viewport.Far);
+		ctx->Driver.DepthRange(ctx);
 
 	/* Update culling direction which changes depending on the
 	 * orientation of the buffer:

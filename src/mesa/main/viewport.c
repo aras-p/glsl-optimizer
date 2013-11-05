@@ -143,7 +143,7 @@ _mesa_DepthRange(GLclampd nearval, GLclampd farval)
 #endif
 
    if (ctx->Driver.DepthRange) {
-      ctx->Driver.DepthRange(ctx, nearval, farval);
+      ctx->Driver.DepthRange(ctx);
    }
 }
 

@@ -453,7 +453,7 @@ i830DepthMask(struct gl_context * ctx, GLboolean flag)
 
 /** Called from ctx->Driver.DepthRange() */
 static void
-i830DepthRange(struct gl_context * ctx, GLclampd nearval, GLclampd farval)
+i830DepthRange(struct gl_context *ctx)
 {
    intelCalcViewport(ctx);
 }
