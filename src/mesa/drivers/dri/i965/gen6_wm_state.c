@@ -234,8 +234,40 @@ upload_wm_state(struct brw_context *brw)
 
       if (min_inv_per_frag > 1)
          dw6 |= GEN6_WM_MSDISPMODE_PERSAMPLE;
-      else
+      else {
          dw6 |= GEN6_WM_MSDISPMODE_PERPIXEL;
+
+         /* From the Sandy Bridge PRM, Vol 2 part 1, 7.7.1 ("Pixel Grouping
+          * (Dispatch Size) Control"), p.334:
+          *
+          *     Note: in the table below, the Valid column indicates which
+          *     products that combination is supported on. Combinations of
+          *     dispatch enables not listed in the table are not available on
+          *     any product.
+          *
+          *     A: Valid on all products
+          *
+          *     B: Not valid on [DevSNB] if 4x PERPIXEL mode with pixel shader
+          *     computed depth.
+          *
+          *     D: Valid on all products, except when in non-1x PERSAMPLE mode
+          *     (applies to [DevSNB+] only). Not valid on [DevSNB] if 4x
+          *     PERPIXEL mode with pixel shader computed depth.
+          *
+          *     E: Not valid on [DevSNB] if 4x PERPIXEL mode with pixel shader
+          *     computed depth.
+          *
+          *     F: Valid on all products, except not valid on [DevSNB] if 4x
+          *     PERPIXEL mode with pixel shader computed depth.
+          *
+          * In the table that follows, the only entry with "A" in the Valid
+          * column is the entry where only 8 pixel dispatch is enabled.
+          * Therefore, when we are in PERPIXEL mode with pixel shader computed
+          * depth, we need to disable SIMD16 dispatch.
+          */
+         if (dw5 & GEN6_WM_COMPUTED_DEPTH)
+            dw5 &= ~GEN6_WM_16_DISPATCH_ENABLE;
+      }
    } else {
       dw6 |= GEN6_WM_MSRAST_OFF_PIXEL;
       dw6 |= GEN6_WM_MSDISPMODE_PERSAMPLE;
