@@ -161,7 +161,7 @@ GL_ARB_texture_buffer_range                          DONE (nv50, nvc0, i965, r60
 GL_ARB_texture_query_levels                          DONE (i965)
 GL_ARB_texture_storage_multisample                   DONE (all drivers that support GL_ARB_texture_multisample)
 GL_ARB_texture_view                                  not started
-GL_ARB_vertex_attrib_binding                         started (Fredrik)
+GL_ARB_vertex_attrib_binding                         DONE (all drivers)
 
 
 GL 4.4:
