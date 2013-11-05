@@ -1530,6 +1530,11 @@ enum brw_message_target {
 # define GEN6_GS_SVBI_POSTINCREMENT_VALUE_MASK		INTEL_MASK(25, 16)
 # define GEN6_GS_ENABLE					(1 << 15)
 
+/* Gen8+ DW9 */
+# define GEN8_GS_URB_ENTRY_OUTPUT_OFFSET_SHIFT          21
+# define GEN8_GS_URB_OUTPUT_LENGTH_SHIFT                16
+# define GEN8_GS_USER_CLIP_DISTANCE_SHIFT               8
+
 # define BRW_GS_EDGE_INDICATOR_0			(1 << 8)
 # define BRW_GS_EDGE_INDICATOR_1			(1 << 9)
 
