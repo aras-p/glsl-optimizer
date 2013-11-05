@@ -326,7 +326,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
     defined(ia64) || defined(__ia64__) || \
     defined(__hppa__) || defined(hpux) || \
     defined(__mips) || defined(_MIPS_ARCH) || \
-    defined(__arm__) || \
+    defined(__arm__) || defined(__aarch64__) || \
     defined(__sh__) || defined(__m32r__) || \
     (defined(__sun) && defined(_IEEE_754)) || \
     defined(__alpha__)
