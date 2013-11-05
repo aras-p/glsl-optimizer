@@ -832,15 +832,11 @@ i830_update_draw_buffer(struct intel_context *intel)
                                fb->_NumColorDrawBuffers);
    intel->NewGLState |= _NEW_BUFFERS;
 
-   /* update viewport since it depends on window size */
-   intelCalcViewport(ctx);
-
    /* Set state we know depends on drawable parameters:
     */
+   intelCalcViewport(ctx);
    ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
 		       ctx->Scissor.Width, ctx->Scissor.Height);
-
-   ctx->Driver.DepthRange(ctx, ctx->Viewport.Near, ctx->Viewport.Far);
 
    /* Update culling direction which changes depending on the
     * orientation of the buffer:
