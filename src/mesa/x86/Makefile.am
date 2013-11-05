@@ -20,6 +20,7 @@
 # IN THE SOFTWARE.
 
 if HAVE_X86_ASM
+if !HAVE_X86_64_ASM
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
@@ -46,4 +47,5 @@ matypes.h: gen_matypes
 
 endif
 
+endif
 endif
