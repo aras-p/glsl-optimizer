@@ -245,32 +245,8 @@ intel_allocate_image(int dri_format, void *loaderPrivate)
     image->dri_format = dri_format;
     image->offset = 0;
 
-    switch (dri_format) {
-    case __DRI_IMAGE_FORMAT_RGB565:
-       image->format = MESA_FORMAT_RGB565;
-       break;
-    case __DRI_IMAGE_FORMAT_XRGB8888:
-       image->format = MESA_FORMAT_XRGB8888;
-       break;
-    case __DRI_IMAGE_FORMAT_ARGB8888:
-       image->format = MESA_FORMAT_ARGB8888;
-       break;
-    case __DRI_IMAGE_FORMAT_ABGR8888:
-       image->format = MESA_FORMAT_RGBA8888_REV;
-       break;
-    case __DRI_IMAGE_FORMAT_XBGR8888:
-       image->format = MESA_FORMAT_RGBX8888_REV;
-       break;
-    case __DRI_IMAGE_FORMAT_R8:
-       image->format = MESA_FORMAT_R8;
-       break;
-    case __DRI_IMAGE_FORMAT_GR88:
-       image->format = MESA_FORMAT_GR88;
-       break;
-    case __DRI_IMAGE_FORMAT_NONE:
-       image->format = MESA_FORMAT_NONE;
-       break;
-    default:
+    image->format = driImageFormatToGLFormat(dri_format);
+    if (image->format == 0) {
        free(image);
        return NULL;
     }
@@ -317,27 +293,6 @@ intel_setup_image_from_dimensions(__DRIimage *image)
    image->height   = image->region->height;
    image->tile_x = 0;
    image->tile_y = 0;
-}
-
-static inline uint32_t
-intel_dri_format(GLuint format)
-{
-   switch (format) {
-   case MESA_FORMAT_RGB565:
-      return __DRI_IMAGE_FORMAT_RGB565;
-   case MESA_FORMAT_XRGB8888:
-      return __DRI_IMAGE_FORMAT_XRGB8888;
-   case MESA_FORMAT_ARGB8888:
-      return __DRI_IMAGE_FORMAT_ARGB8888;
-   case MESA_FORMAT_RGBA8888_REV:
-      return __DRI_IMAGE_FORMAT_ABGR8888;
-   case MESA_FORMAT_R8:
-      return __DRI_IMAGE_FORMAT_R8;
-   case MESA_FORMAT_RG88:
-      return __DRI_IMAGE_FORMAT_GR88;
-   }
-
-   return MESA_FORMAT_NONE;
 }
 
 static __DRIimage *
@@ -397,7 +352,7 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
    image->data = loaderPrivate;
    intel_region_reference(&image->region, irb->mt->region);
    intel_setup_image_from_dimensions(image);
-   image->dri_format = intel_dri_format(image->format);
+   image->dri_format = driGLFormatToImageFormat(image->format);
 
    rb->NeedsFinishRenderTexture = true;
    return image;
@@ -451,7 +406,7 @@ intel_create_image_from_texture(__DRIcontext *context, int target,
    image->format = obj->Image[face][level]->TexFormat;
    image->data = loaderPrivate;
    intel_setup_image_from_mipmap_tree(intel, image, iobj->mt, level, zoffset);
-   image->dri_format = intel_dri_format(image->format);
+   image->dri_format = driGLFormatToImageFormat(image->format);
    if (image->dri_format == MESA_FORMAT_NONE) {
       *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
       free(image);
