@@ -60,10 +60,10 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
    vue_map->slots_valid = slots_valid;
    int i;
 
-   /* gl_Layer doesn't get its own varying slot--it's stored in the virst VUE
-    * slot (VARYING_SLOT_PSIZ).
+   /* gl_Layer and gl_ViewportIndex don't get their own varying slots -- they
+    * are stored in the virst VUE slot (VARYING_SLOT_PSIZ).
     */
-   slots_valid &= ~VARYING_BIT_LAYER;
+   slots_valid &= ~(VARYING_BIT_LAYER | VARYING_BIT_VIEWPORT);
 
    /* Make sure that the values we store in vue_map->varying_to_slot and
     * vue_map->slot_to_varying won't overflow the signed chars that are used
