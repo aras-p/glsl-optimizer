@@ -1938,9 +1938,9 @@ AM_CONDITIONAL(HAVE_X11_DRIVER, test "x$enable_xlib_glx" = xyes)
 AM_CONDITIONAL(HAVE_OSMESA, test "x$enable_osmesa" = xyes)
 AM_CONDITIONAL(HAVE_GALLIUM_OSMESA, test "x$enable_gallium_osmesa" = xyes)
 
-AM_CONDITIONAL(HAVE_X86_ASM, echo "$DEFINES" | grep 'X86_ASM' >/dev/null 2>&1)
-AM_CONDITIONAL(HAVE_X86_64_ASM, echo "$DEFINES" | grep 'X86_64_ASM' >/dev/null 2>&1)
-AM_CONDITIONAL(HAVE_SPARC_ASM, echo "$DEFINES" | grep 'SPARC_ASM' >/dev/null 2>&1)
+AM_CONDITIONAL(HAVE_X86_ASM, test "x$asm_arch" = xx86)
+AM_CONDITIONAL(HAVE_X86_64_ASM, test "x$asm_arch" = xx86_64)
+AM_CONDITIONAL(HAVE_SPARC_ASM, test "x$asm_arch" = xsparc)
 
 AC_SUBST([VDPAU_MAJOR], 1)
 AC_SUBST([VDPAU_MINOR], 0)
