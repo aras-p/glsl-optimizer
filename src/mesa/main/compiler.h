@@ -36,11 +36,7 @@
 
 #include <assert.h>
 #include <ctype.h>
-#if defined(__alpha__) && defined(CCPML)
-#include <cpml.h> /* use Compaq's Fast Math Library on Alpha */
-#else
 #include <math.h>
-#endif
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
