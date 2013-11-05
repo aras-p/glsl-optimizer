@@ -317,15 +317,6 @@ void radeon_draw_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	_mesa_reference_renderbuffer(&radeon->state.color.rb, &rrbColor->base.Base);
 	radeon->state.color.draw_offset = offset;
 
-#if 0
-	/* update viewport since it depends on window size */
-	if (ctx->Driver.Viewport) {
-		ctx->Driver.Viewport(ctx, ctx->Viewport.X, ctx->Viewport.Y,
-				     ctx->Viewport.Width, ctx->Viewport.Height);
-	} else {
-
-	}
-#endif
 	ctx->NewState |= _NEW_VIEWPORT;
 
 	/* Set state we know depends on drawable parameters:
