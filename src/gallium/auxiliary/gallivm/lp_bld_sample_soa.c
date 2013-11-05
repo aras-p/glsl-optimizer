@@ -2940,7 +2940,7 @@ lp_build_size_query_soa(struct gallivm_state *gallivm,
                                     lp_build_const_int32(gallivm, 2), "");
    }
 
-   size = lp_build_minify(&bld_int_vec4, size, lod);
+   size = lp_build_minify(&bld_int_vec4, size, lod, TRUE);
 
    if (has_array)
       size = LLVMBuildInsertElement(gallivm->builder, size,

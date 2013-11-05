@@ -36,6 +36,7 @@
 #include "pipe/p_state.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
+#include "util/u_cpu_detect.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_const.h"
 #include "lp_bld_debug.h"
@@ -248,7 +249,7 @@ lp_build_rho(struct lp_build_sample_context *bld,
    first_level = bld->dynamic_state->first_level(bld->dynamic_state,
                                                  bld->gallivm, texture_unit);
    first_level_vec = lp_build_broadcast_scalar(int_size_bld, first_level);
-   int_size = lp_build_minify(int_size_bld, bld->int_size, first_level_vec);
+   int_size = lp_build_minify(int_size_bld, bld->int_size, first_level_vec, TRUE);
    float_size = lp_build_int_to_float(float_size_bld, int_size);
 
    if (cube_rho) {
@@ -1089,12 +1090,14 @@ lp_build_get_mip_offsets(struct lp_build_sample_context *bld,
 
 /**
  * Codegen equivalent for u_minify().
+ * @param lod_scalar  if lod is a (broadcasted) scalar
  * Return max(1, base_size >> level);
  */
 LLVMValueRef
 lp_build_minify(struct lp_build_context *bld,
                 LLVMValueRef base_size,
-                LLVMValueRef level)
+                LLVMValueRef level,
+                boolean lod_scalar)
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
    assert(lp_check_value(bld->type, base_size));
@@ -1105,10 +1108,49 @@ lp_build_minify(struct lp_build_context *bld,
       return base_size;
    }
    else {
-      LLVMValueRef size =
-         LLVMBuildLShr(builder, base_size, level, "minify");
+      LLVMValueRef size;
       assert(bld->type.sign);
-      size = lp_build_max(bld, size, bld->one);
+      if (lod_scalar ||
+         (util_cpu_caps.has_avx2 || !util_cpu_caps.has_sse)) {
+         size = LLVMBuildLShr(builder, base_size, level, "minify");
+         size = lp_build_max(bld, size, bld->one);
+      }
+      else {
+         /*
+          * emulate shift with float mul, since intel "forgot" shifts with
+          * per-element shift count until avx2, which results in terrible
+          * scalar extraction (both count and value), scalar shift,
+          * vector reinsertion. Should not be an issue on any non-x86 cpu
+          * with a vector instruction set.
+          * On cpus with AMD's XOP this should also be unnecessary but I'm
+          * not sure if llvm would emit this with current flags.
+          */
+         LLVMValueRef const127, const23, lf;
+         struct lp_type ftype;
+         struct lp_build_context fbld;
+         ftype = lp_type_float_vec(32, bld->type.length * bld->type.width);
+         lp_build_context_init(&fbld, bld->gallivm, ftype);
+         const127 = lp_build_const_int_vec(bld->gallivm, bld->type, 127);
+         const23 = lp_build_const_int_vec(bld->gallivm, bld->type, 23);
+
+         /* calculate 2^(-level) float */
+         lf = lp_build_sub(bld, const127, level);
+         lf = lp_build_shl(bld, lf, const23);
+         lf = LLVMBuildBitCast(builder, lf, fbld.vec_type, "");
+
+         /* finish shift operation by doing float mul */
+         base_size = lp_build_int_to_float(&fbld, base_size);
+         size = lp_build_mul(&fbld, base_size, lf);
+         /*
+          * do the max also with floats because
+          * a) non-emulated int max requires sse41
+          *    (this is actually a lie as we could cast to 16bit values
+          *    as 16bit is sufficient and 16bit int max is sse2)
+          * b) with avx we can do int max 4-wide but float max 8-wide
+          */
+         size = lp_build_max(&fbld, size, fbld.one);
+         size = lp_build_itrunc(&fbld, size);
+      }
       return size;
    }
 }
@@ -1185,7 +1227,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
     */
    if (bld->num_mips == 1) {
       ilevel_vec = lp_build_broadcast_scalar(&bld->int_size_bld, ilevel);
-      *out_size = lp_build_minify(&bld->int_size_bld, bld->int_size, ilevel_vec);
+      *out_size = lp_build_minify(&bld->int_size_bld, bld->int_size, ilevel_vec, TRUE);
    }
    else {
       LLVMValueRef int_size_vec;
@@ -1229,7 +1271,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
                                                  bld4.type,
                                                  ilevel,
                                                  indexi);
-            tmp[i] = lp_build_minify(&bld4, int_size_vec, ileveli);
+            tmp[i] = lp_build_minify(&bld4, int_size_vec, ileveli, TRUE);
          }
          /*
           * out_size is [w0, h0, d0, _, w1, h1, d1, _, ...] vector for dims > 1,
@@ -1248,7 +1290,6 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
          * with 4-wide vector pack all elements into a 8xi16 vector
          * (on which we can still do useful math) instead of using a 16xi32
          * vector.
-         * FIXME: some callers can't handle this yet.
          * For dims == 1 this will create [w0, w1, w2, w3, ...] vector.
          * For dims > 1 this will create [w0, h0, d0, _, w1, h1, d1, _, ...] vector.
          */
@@ -1257,8 +1298,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
             assert(bld->int_size_in_bld.type.length == 1);
             int_size_vec = lp_build_broadcast_scalar(&bld->int_coord_bld,
                                                      bld->int_size);
-            /* vector shift with variable shift count alert... */
-            *out_size = lp_build_minify(&bld->int_coord_bld, int_size_vec, ilevel);
+            *out_size = lp_build_minify(&bld->int_coord_bld, int_size_vec, ilevel, FALSE);
          }
          else {
             LLVMValueRef ilevel1;
@@ -1267,7 +1307,7 @@ lp_build_mipmap_level_sizes(struct lp_build_sample_context *bld,
                ilevel1 = lp_build_extract_broadcast(bld->gallivm, bld->int_coord_type,
                                                     bld->int_size_in_bld.type, ilevel, indexi);
                tmp[i] = bld->int_size;
-               tmp[i] = lp_build_minify(&bld->int_size_in_bld, tmp[i], ilevel1);
+               tmp[i] = lp_build_minify(&bld->int_size_in_bld, tmp[i], ilevel1, TRUE);
             }
             *out_size = lp_build_concat(bld->gallivm, tmp,
                                         bld->int_size_in_bld.type,

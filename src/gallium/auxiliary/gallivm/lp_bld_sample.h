@@ -547,7 +547,8 @@ lp_build_sample_nop(struct gallivm_state *gallivm,
 LLVMValueRef
 lp_build_minify(struct lp_build_context *bld,
                 LLVMValueRef base_size,
-                LLVMValueRef level);
+                LLVMValueRef level,
+                boolean lod_scalar);
 
 
 #endif /* LP_BLD_SAMPLE_H */
