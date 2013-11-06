@@ -890,7 +890,7 @@ brw_upload_abo_surfaces(struct brw_context *brw,
       struct intel_buffer_object *intel_bo =
          intel_buffer_object(binding->BufferObject);
       drm_intel_bo *bo = intel_bufferobj_buffer(
-         brw, intel_bo, binding->Offset, bo->size - binding->Offset);
+         brw, intel_bo, binding->Offset, intel_bo->Base.Size - binding->Offset);
 
       brw->vtbl.create_raw_surface(brw, bo, binding->Offset,
                                    bo->size - binding->Offset,
