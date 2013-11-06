@@ -108,6 +108,43 @@ _mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLint x, GLint y,
    }
 }
 
+static void
+set_depth_range_no_notify(struct gl_context *ctx, unsigned idx,
+                          GLclampd nearval, GLclampd farval)
+{
+   if (ctx->ViewportArray[idx].Near == nearval &&
+       ctx->ViewportArray[idx].Far == farval)
+      return;
+
+   ctx->ViewportArray[idx].Near = CLAMP(nearval, 0.0, 1.0);
+   ctx->ViewportArray[idx].Far = CLAMP(farval, 0.0, 1.0);
+   ctx->NewState |= _NEW_VIEWPORT;
+
+#if 1
+   /* XXX remove this someday.  Currently the DRI drivers rely on
+    * the WindowMap matrix being up to date in the driver's Viewport
+    * and DepthRange functions.
+    */
+   _math_matrix_viewport(&ctx->ViewportArray[idx]._WindowMap,
+                         ctx->ViewportArray[idx].X,
+                         ctx->ViewportArray[idx].Y,
+                         ctx->ViewportArray[idx].Width,
+                         ctx->ViewportArray[idx].Height,
+                         ctx->ViewportArray[idx].Near,
+                         ctx->ViewportArray[idx].Far,
+                         ctx->DrawBuffer->_DepthMaxF);
+#endif
+}
+
+void
+_mesa_set_depth_range(struct gl_context *ctx, unsigned idx,
+                      GLclampd nearval, GLclampd farval)
+{
+   set_depth_range_no_notify(ctx, idx, nearval, farval);
+
+   if (ctx->Driver.DepthRange)
+      ctx->Driver.DepthRange(ctx);
+}
 
 /**
  * Called by glDepthRange
@@ -127,25 +164,7 @@ _mesa_DepthRange(GLclampd nearval, GLclampd farval)
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glDepthRange %f %f\n", nearval, farval);
 
-   if (ctx->ViewportArray[0].Near == nearval &&
-       ctx->ViewportArray[0].Far == farval)
-      return;
-
-   ctx->ViewportArray[0].Near = CLAMP(nearval, 0.0, 1.0);
-   ctx->ViewportArray[0].Far = CLAMP(farval, 0.0, 1.0);
-   ctx->NewState |= _NEW_VIEWPORT;
-
-#if 1
-   /* XXX remove this someday.  Currently the DRI drivers rely on
-    * the WindowMap matrix being up to date in the driver's Viewport
-    * and DepthRange functions.
-    */
-   _math_matrix_viewport(&ctx->ViewportArray[0]._WindowMap,
-                         ctx->ViewportArray[0].X, ctx->ViewportArray[0].Y,
-                         ctx->ViewportArray[0].Width, ctx->ViewportArray[0].Height,
-                         ctx->ViewportArray[0].Near, ctx->ViewportArray[0].Far,
-                         ctx->DrawBuffer->_DepthMaxF);
-#endif
+   set_depth_range_no_notify(ctx, 0, nearval, farval);
 
    if (ctx->Driver.DepthRange) {
       ctx->Driver.DepthRange(ctx);

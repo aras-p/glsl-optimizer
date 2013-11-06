@@ -46,6 +46,9 @@ _mesa_DepthRange(GLclampd nearval, GLclampd farval);
 extern void GLAPIENTRY
 _mesa_DepthRangef(GLclampf nearval, GLclampf farval);
 
+extern void
+_mesa_set_depth_range(struct gl_context *ctx, unsigned idx,
+                      GLclampd nearval, GLclampd farval);
 
 extern void 
 _mesa_init_viewport(struct gl_context *ctx);
