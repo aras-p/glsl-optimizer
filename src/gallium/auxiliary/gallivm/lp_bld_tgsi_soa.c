@@ -993,11 +993,11 @@ emit_fetch_immediate(
       LLVMValueRef length_vec =
          lp_build_const_int_vec(bld->bld_base.base.gallivm, uint_bld->type,
                                 bld->bld_base.base.type.length);
-      LLVMValueRef index_vec;  /* index into the const buffer */
+      LLVMValueRef index_vec;  /* index into the immediate register array */
       LLVMValueRef imms_array;
       LLVMValueRef pixel_offsets;
       LLVMValueRef offsets[LP_MAX_VECTOR_LENGTH];
-      LLVMTypeRef float4_ptr_type;
+      LLVMTypeRef float_ptr_type;
       int i;
 
       /* build pixel offset vector: {0, 1, 2, 3, ...} */
@@ -1013,12 +1013,12 @@ emit_fetch_immediate(
       index_vec = lp_build_add(uint_bld, index_vec, pixel_offsets);
 
       /* cast imms_array pointer to float* */
-      float4_ptr_type = LLVMPointerType(
+      float_ptr_type = LLVMPointerType(
          LLVMFloatTypeInContext(bld->bld_base.base.gallivm->context), 0);
       imms_array = LLVMBuildBitCast(builder, bld->imms_array,
-                                    float4_ptr_type, "");
+                                    float_ptr_type, "");
 
-      /* Gather values from the temporary register array */
+      /* Gather values from the immediate register array */
       res = build_gather(&bld_base->base, imms_array, index_vec);
    }
    else {
@@ -1044,6 +1044,7 @@ emit_fetch_input(
    struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
    LLVMBuilderRef builder = gallivm->builder;
    struct lp_build_context *uint_bld = &bld_base->uint_bld;
+   struct lp_build_context *float_bld = &bld_base->base;
    LLVMValueRef indirect_index = NULL;
    LLVMValueRef res;
 
@@ -1059,21 +1060,31 @@ emit_fetch_input(
          lp_build_const_int_vec(gallivm, uint_bld->type, swizzle);
       LLVMValueRef length_vec =
          lp_build_const_int_vec(gallivm, uint_bld->type, bld->bld_base.base.type.length);
-      LLVMValueRef index_vec;  /* index into the const buffer */
+      LLVMValueRef index_vec;  /* index into the input reg array */
       LLVMValueRef inputs_array;
-      LLVMTypeRef float4_ptr_type;
+      LLVMValueRef pixel_offsets;
+      LLVMValueRef offsets[LP_MAX_VECTOR_LENGTH];
+      LLVMTypeRef float_ptr_type;
+      int i;
+
+      /* build pixel offset vector: {0, 1, 2, 3, ...} */
+      for (i = 0; i < float_bld->type.length; i++) {
+         offsets[i] = lp_build_const_int32(gallivm, i);
+      }
+      pixel_offsets = LLVMConstVector(offsets, float_bld->type.length);
 
       /* index_vec = (indirect_index * 4 + swizzle) * length */
       index_vec = lp_build_shl_imm(uint_bld, indirect_index, 2);
       index_vec = lp_build_add(uint_bld, index_vec, swizzle_vec);
       index_vec = lp_build_mul(uint_bld, index_vec, length_vec);
+      index_vec = lp_build_add(uint_bld, index_vec, pixel_offsets);
 
       /* cast inputs_array pointer to float* */
-      float4_ptr_type = LLVMPointerType(LLVMFloatTypeInContext(gallivm->context), 0);
+      float_ptr_type = LLVMPointerType(LLVMFloatTypeInContext(gallivm->context), 0);
       inputs_array = LLVMBuildBitCast(builder, bld->inputs_array,
-                                         float4_ptr_type, "");
+                                      float_ptr_type, "");
 
-      /* Gather values from the temporary register array */
+      /* Gather values from the input register array */
       res = build_gather(&bld_base->base, inputs_array, index_vec);
    } else {
       if (bld->indirect_files & (1 << TGSI_FILE_INPUT)) {
@@ -1117,9 +1128,9 @@ emit_fetch_gs_input(
 
    if (reg->Register.Indirect) {
       attrib_index = get_indirect_index(bld,
-                                          reg->Register.File,
-                                          reg->Register.Index,
-                                          &reg->Indirect);
+                                        reg->Register.File,
+                                        reg->Register.Index,
+                                        &reg->Indirect);
    } else {
       attrib_index = lp_build_const_int32(gallivm, reg->Register.Index);
    }
@@ -1179,11 +1190,11 @@ emit_fetch_temporary(
       LLVMValueRef length_vec =
          lp_build_const_int_vec(bld->bld_base.base.gallivm, uint_bld->type,
                                 bld->bld_base.base.type.length);
-      LLVMValueRef index_vec;  /* index into the const buffer */
+      LLVMValueRef index_vec;  /* index into the temp reg array */
       LLVMValueRef temps_array;
       LLVMValueRef pixel_offsets;
       LLVMValueRef offsets[LP_MAX_VECTOR_LENGTH];
-      LLVMTypeRef float4_ptr_type;
+      LLVMTypeRef float_ptr_type;
       int i;
 
       /* build pixel offset vector: {0, 1, 2, 3, ...} */
@@ -1199,9 +1210,9 @@ emit_fetch_temporary(
       index_vec = lp_build_add(uint_bld, index_vec, pixel_offsets);
 
       /* cast temps_array pointer to float* */
-      float4_ptr_type = LLVMPointerType(LLVMFloatTypeInContext(bld->bld_base.base.gallivm->context), 0);
+      float_ptr_type = LLVMPointerType(LLVMFloatTypeInContext(bld->bld_base.base.gallivm->context), 0);
       temps_array = LLVMBuildBitCast(builder, bld->temps_array,
-                                     float4_ptr_type, "");
+                                     float_ptr_type, "");
 
       /* Gather values from the temporary register array */
       res = build_gather(&bld_base->base, temps_array, index_vec);
