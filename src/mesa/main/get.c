@@ -375,6 +375,7 @@ EXTRA_EXT(ARB_texture_buffer_range);
 EXTRA_EXT(ARB_texture_multisample);
 EXTRA_EXT(ARB_texture_gather);
 EXTRA_EXT(ARB_shader_atomic_counters);
+EXTRA_EXT(ARB_draw_indirect);
 
 static const int
 extra_ARB_color_buffer_float_or_glcore[] = {
