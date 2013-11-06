@@ -34,46 +34,9 @@
 #include "mtypes.h"
 #include "viewport.h"
 
-
-/**
- * Set the viewport.
- * \sa Called via glViewport() or display list execution.
- *
- * Flushes the vertices and calls _mesa_set_viewport() with the given
- * parameters.
- */
-void GLAPIENTRY
-_mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, 0);
-
-   if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glViewport %d %d %d %d\n", x, y, width, height);
-
-   if (width < 0 || height < 0) {
-      _mesa_error(ctx,  GL_INVALID_VALUE,
-                   "glViewport(%d, %d, %d, %d)", x, y, width, height);
-      return;
-   }
-
-   _mesa_set_viewport(ctx, 0, x, y, width, height);
-}
-
-
-/**
- * Set new viewport parameters and update derived state (the _WindowMap
- * matrix).  Usually called from _mesa_Viewport().
- * 
- * \param ctx GL context.
- * \param idx    Index of the viewport to be updated.
- * \param x, y coordinates of the lower left corner of the viewport rectangle.
- * \param width width of the viewport rectangle.
- * \param height height of the viewport rectangle.
- */
-void
-_mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLint x, GLint y,
-                    GLsizei width, GLsizei height)
+static void
+set_viewport_no_notify(struct gl_context *ctx, unsigned idx, GLint x, GLint y,
+                       GLsizei width, GLsizei height)
 {
    /* clamp width and height to the implementation dependent range */
    width  = MIN2(width, (GLsizei) ctx->Const.MaxViewportWidth);
@@ -99,6 +62,56 @@ _mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLint x, GLint y,
                          ctx->ViewportArray[idx].Far,
                          ctx->DrawBuffer->_DepthMaxF);
 #endif
+}
+
+/**
+ * Set the viewport.
+ * \sa Called via glViewport() or display list execution.
+ *
+ * Flushes the vertices and calls _mesa_set_viewport() with the given
+ * parameters.
+ */
+void GLAPIENTRY
+_mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glViewport %d %d %d %d\n", x, y, width, height);
+
+   if (width < 0 || height < 0) {
+      _mesa_error(ctx,  GL_INVALID_VALUE,
+                   "glViewport(%d, %d, %d, %d)", x, y, width, height);
+      return;
+   }
+
+   set_viewport_no_notify(ctx, 0, x, y, width, height);
+
+   if (ctx->Driver.Viewport) {
+      /* Many drivers will use this call to check for window size changes
+       * and reallocate the z/stencil/accum/etc buffers if needed.
+       */
+      ctx->Driver.Viewport(ctx);
+   }
+}
+
+
+/**
+ * Set new viewport parameters and update derived state (the _WindowMap
+ * matrix).  Usually called from _mesa_Viewport().
+ * 
+ * \param ctx GL context.
+ * \param idx    Index of the viewport to be updated.
+ * \param x, y coordinates of the lower left corner of the viewport rectangle.
+ * \param width width of the viewport rectangle.
+ * \param height height of the viewport rectangle.
+ */
+void
+_mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLint x, GLint y,
+                    GLsizei width, GLsizei height)
+{
+   set_viewport_no_notify(ctx, idx, x, y, width, height);
 
    if (ctx->Driver.Viewport) {
       /* Many drivers will use this call to check for window size changes
