@@ -914,6 +914,10 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
    case GL_ATOMIC_COUNTER_BUFFER_BINDING:
       v->value_int = ctx->AtomicBuffer->Name;
       break;
+   /* GL_ARB_draw_indirect */
+   case GL_DRAW_INDIRECT_BUFFER_BINDING:
+      v->value_int = ctx->DrawIndirectBuffer->Name;
+      break;
    }
 }
 

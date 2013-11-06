@@ -3903,6 +3903,8 @@ struct gl_context
 
    struct gl_perf_monitor_state PerfMonitor;
 
+   struct gl_buffer_object *DrawIndirectBuffer; /** < GL_ARB_draw_indirect */
+
    struct gl_buffer_object *CopyReadBuffer; /**< GL_ARB_copy_buffer */
    struct gl_buffer_object *CopyWriteBuffer; /**< GL_ARB_copy_buffer */
 
