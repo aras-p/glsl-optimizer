@@ -36,4 +36,8 @@ _mesa_TextureView(GLuint texture, GLenum target, GLuint origtexture,
                   GLuint minlevel, GLuint numlevels,
                   GLuint minlayer, GLuint numlayers);
 
+extern void
+_mesa_set_texture_view_state(struct gl_context *ctx, struct gl_texture_object *texObj,
+                       GLenum target, GLuint levels);
+
 #endif /* TEXTUREVIEW_H */

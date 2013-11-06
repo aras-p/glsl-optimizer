@@ -346,6 +346,67 @@ compatible_format(struct gl_context *ctx, const struct gl_texture_object *origTe
                _mesa_lookup_enum_by_nr(origInternalFormat));
    return false;
 }
+/**
+ * Helper function for TexStorage and teximagemultisample to set immutable
+ * texture state needed by ARB_texture_view.
+ */
+void
+_mesa_set_texture_view_state(struct gl_context *ctx,
+                             struct gl_texture_object *texObj,
+                             GLenum target, GLuint levels)
+{
+   struct gl_texture_image *texImage;
+
+   /* Get a reference to what will become this View's base level */
+   texImage = _mesa_select_tex_image(ctx, texObj, target, 0);
+
+   /* When an immutable texture is created via glTexStorage or glTexImageMultisample,
+    * TEXTURE_IMMUTABLE_FORMAT becomes TRUE.
+    * TEXTURE_IMMUTABLE_LEVELS and TEXTURE_VIEW_NUM_LEVELS become levels.
+    * If the texture target is TEXTURE_1D_ARRAY then
+    * TEXTURE_VIEW_NUM_LAYERS becomes height.
+    * If the texture target is TEXTURE_2D_ARRAY, TEXTURE_CUBE_MAP_ARRAY,
+    * or TEXTURE_2D_MULTISAMPLE_ARRAY then TEXTURE_VIEW_NUM_LAYERS becomes depth.
+    * If the texture target is TEXTURE_CUBE_MAP, then
+    * TEXTURE_VIEW_NUM_LAYERS becomes 6.
+    * For any other texture target, TEXTURE_VIEW_NUM_LAYERS becomes 1.
+    * 
+    * ARB_texture_multisample: Multisample textures do
+    * not have multiple image levels.
+    */
+
+   texObj->Immutable = GL_TRUE;
+   texObj->ImmutableLevels = levels;
+   texObj->MinLevel = 0;
+   texObj->NumLevels = levels;
+   texObj->MinLayer = 0;
+   texObj->NumLayers = 1;
+   switch (target) {
+   case GL_TEXTURE_1D_ARRAY:
+      texObj->NumLayers = texImage->Height;
+      break;
+
+   case GL_TEXTURE_2D_MULTISAMPLE:
+      texObj->NumLevels = 1;
+      texObj->ImmutableLevels = 1;
+      break;
+
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+      texObj->NumLevels = 1;
+      texObj->ImmutableLevels = 1;
+      /* fall through to set NumLayers */
+
+   case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+      texObj->NumLayers = texImage->Depth;
+      break;
+
+   case GL_TEXTURE_CUBE_MAP:
+      texObj->NumLayers = 6;
+      break;
+
+   }
+}
 
 /**
  * glTextureView (ARB_texture_view)
