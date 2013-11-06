@@ -970,7 +970,7 @@ if test "x$enable_dri" = xyes; then
             ;;
         esac
         ;;
-    freebsd* | dragonfly* | *netbsd* | openbsd*)
+    *freebsd* | dragonfly* | *netbsd* | openbsd*)
         DEFINES="$DEFINES -DHAVE_PTHREAD -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DHAVE_ALIAS"
 
