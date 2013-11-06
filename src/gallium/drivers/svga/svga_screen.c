@@ -232,10 +232,12 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
       return 0;
 
+   case PIPE_CAP_SM3:
+      return 1;
+
    /* Unsupported features */
    case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
-   case PIPE_CAP_SM3:
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
    case PIPE_CAP_DEPTH_CLIP_DISABLE:
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
