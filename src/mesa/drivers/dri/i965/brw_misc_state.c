@@ -338,7 +338,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
          rebase_depth = true;
 
       /* We didn't even have intra-tile offsets before g45. */
-      if (brw->gen == 4 && !brw->is_g4x) {
+      if (!brw->has_surface_tile_offset) {
          if (tile_x || tile_y)
             rebase_depth = true;
       }
@@ -397,7 +397,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
       if (stencil_tile_x & 7 || stencil_tile_y & 7)
          rebase_stencil = true;
 
-      if (brw->gen == 4 && !brw->is_g4x) {
+      if (!brw->has_surface_tile_offset) {
          if (stencil_tile_x || stencil_tile_y)
             rebase_stencil = true;
       }
