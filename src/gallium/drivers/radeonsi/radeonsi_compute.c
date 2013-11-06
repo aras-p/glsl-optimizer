@@ -49,6 +49,7 @@ static void *radeonsi_create_compute_state(
 		LLVMModuleRef mod = radeon_llvm_get_kernel_module(i, code,
 							header->num_bytes);
 		si_compile_llvm(rctx, &program->kernels[i], mod);
+		LLVMDisposeModule(mod);
 	}
 
 	return program;
