@@ -56,29 +56,12 @@ using namespace brw;
 
 static bool debug = false;
 
+class instruction_scheduler;
+
 class schedule_node : public exec_node
 {
 public:
-   schedule_node(backend_instruction *inst, const struct brw_context *brw)
-   {
-      this->inst = inst;
-      this->child_array_size = 0;
-      this->children = NULL;
-      this->child_latency = NULL;
-      this->child_count = 0;
-      this->parent_count = 0;
-      this->unblocked_time = 0;
-      this->cand_generation = 0;
-
-      /* We can't measure Gen6 timings directly but expect them to be much
-       * closer to Gen7 than Gen4.
-       */
-      if (brw->gen >= 6)
-         set_latency_gen7(brw->is_haswell);
-      else
-         set_latency_gen4();
-   }
-
+   schedule_node(backend_instruction *inst, instruction_scheduler *sched);
    void set_latency_gen4();
    void set_latency_gen7(bool is_haswell);
 
@@ -607,10 +590,35 @@ vec4_instruction_scheduler::get_register_pressure_benefit(backend_instruction *b
    return 0;
 }
 
+schedule_node::schedule_node(backend_instruction *inst,
+                             instruction_scheduler *sched)
+{
+   struct brw_context *brw = sched->bv->brw;
+
+   this->inst = inst;
+   this->child_array_size = 0;
+   this->children = NULL;
+   this->child_latency = NULL;
+   this->child_count = 0;
+   this->parent_count = 0;
+   this->unblocked_time = 0;
+   this->cand_generation = 0;
+
+   /* We can't measure Gen6 timings directly but expect them to be much
+    * closer to Gen7 than Gen4.
+    */
+   if (!sched->post_reg_alloc)
+      this->latency = 1;
+   else if (brw->gen >= 6)
+      set_latency_gen7(brw->is_haswell);
+   else
+      set_latency_gen4();
+}
+
 void
 instruction_scheduler::add_inst(backend_instruction *inst)
 {
-   schedule_node *n = new(mem_ctx) schedule_node(inst, bv->brw);
+   schedule_node *n = new(mem_ctx) schedule_node(inst, this);
 
    assert(!inst->is_head_sentinel());
    assert(!inst->is_tail_sentinel());
