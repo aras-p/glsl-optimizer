@@ -74,6 +74,7 @@ set_viewport_no_notify(struct gl_context *ctx, unsigned idx, GLint x, GLint y,
 void GLAPIENTRY
 _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
+   unsigned i;
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_VERTICES(ctx, 0);
 
@@ -86,7 +87,19 @@ _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
       return;
    }
 
-   set_viewport_no_notify(ctx, 0, x, y, width, height);
+   /* The GL_ARB_viewport_array spec says:
+    *
+    *     "Viewport sets the parameters for all viewports to the same values
+    *     and is equivalent (assuming no errors are generated) to:
+    *
+    *     for (uint i = 0; i < MAX_VIEWPORTS; i++)
+    *         ViewportIndexedf(i, 1, (float)x, (float)y, (float)w, (float)h);"
+    *
+    * Set all of the viewports supported by the implementation, but only
+    * signal the driver once at the end.
+    */
+   for (i = 0; i < ctx->Const.MaxViewports; i++)
+      set_viewport_no_notify(ctx, i, x, y, width, height);
 
    if (ctx->Driver.Viewport) {
       /* Many drivers will use this call to check for window size changes
@@ -170,6 +183,7 @@ _mesa_set_depth_range(struct gl_context *ctx, unsigned idx,
 void GLAPIENTRY
 _mesa_DepthRange(GLclampd nearval, GLclampd farval)
 {
+   unsigned i;
    GET_CURRENT_CONTEXT(ctx);
 
    FLUSH_VERTICES(ctx, 0);
@@ -177,7 +191,19 @@ _mesa_DepthRange(GLclampd nearval, GLclampd farval)
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glDepthRange %f %f\n", nearval, farval);
 
-   set_depth_range_no_notify(ctx, 0, nearval, farval);
+   /* The GL_ARB_viewport_array spec says:
+    *
+    *     "DepthRange sets the depth range for all viewports to the same
+    *     values and is equivalent (assuming no errors are generated) to:
+    *
+    *     for (uint i = 0; i < MAX_VIEWPORTS; i++)
+    *         DepthRangeIndexed(i, n, f);"
+    *
+    * Set the depth range for all of the viewports supported by the
+    * implementation, but only signal the driver once at the end.
+    */
+   for (i = 0; i < ctx->Const.MaxViewports; i++)
+      set_depth_range_no_notify(ctx, i, nearval, farval);
 
    if (ctx->Driver.DepthRange) {
       ctx->Driver.DepthRange(ctx);
