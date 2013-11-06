@@ -245,7 +245,21 @@ static void radeonsi_launch_grid(
 }
 
 
-static void si_delete_compute_state(struct pipe_context *ctx, void* state){}
+static void si_delete_compute_state(struct pipe_context *ctx, void* state){
+	struct si_pipe_compute *program = (struct si_pipe_compute *)state;
+
+	if (!state) {
+		return;
+	}
+
+	if (program->kernels) {
+		FREE(program->kernels);
+	}
+
+	//And then free the program itself.
+	FREE(program);
+}
+
 static void si_set_compute_resources(struct pipe_context * ctx_,
 		unsigned start, unsigned count,
 		struct pipe_surface ** surfaces) { }
