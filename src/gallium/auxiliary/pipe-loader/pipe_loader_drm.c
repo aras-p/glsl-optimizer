@@ -88,6 +88,9 @@ find_drm_pci_id(struct pipe_loader_drm_device *ddev)
               &ddev->base.u.pci.chip_id) != 2)
       goto fail;
 
+   udev_device_unref(device);
+   udev_unref(udev);
+
    return TRUE;
 
   fail:
