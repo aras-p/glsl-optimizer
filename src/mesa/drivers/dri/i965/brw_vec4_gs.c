@@ -194,6 +194,12 @@ do_gs_prog(struct brw_context *brw,
       c.prog_data.output_vertex_size_hwords * 32 * gp->program.VerticesOut;
    output_size_bytes += 32 * c.prog_data.control_data_header_size_hwords;
 
+   /* Broadwell stores "Vertex Count" as a full 8 DWord (32 byte) URB output,
+    * which comes before the control header.
+    */
+   if (brw->gen >= 8)
+      output_size_bytes += 32;
+
    assert(output_size_bytes >= 1);
    if (output_size_bytes > GEN7_MAX_GS_URB_ENTRY_SIZE_BYTES)
       return false;

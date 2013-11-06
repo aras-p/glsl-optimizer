@@ -267,6 +267,13 @@ vec4_gs_visitor::emit_urb_write_opcode(bool complete)
 
    vec4_instruction *inst = emit(GS_OPCODE_URB_WRITE);
    inst->offset = c->prog_data.control_data_header_size_hwords;
+
+   /* We need to increment Global Offset by 1 to make room for Broadwell's
+    * extra "Vertex Count" payload at the beginning of the URB entry.
+    */
+   if (brw->gen >= 8)
+      inst->offset++;
+
    inst->urb_write_flags = BRW_URB_WRITE_PER_SLOT_OFFSET;
    return inst;
 }
