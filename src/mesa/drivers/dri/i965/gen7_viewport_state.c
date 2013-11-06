@@ -34,33 +34,13 @@ gen7_upload_sf_clip_viewport(struct brw_context *brw)
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    GLfloat y_scale, y_bias;
    const bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
-   const GLfloat *v = ctx->ViewportArray[0]._WindowMap.m;
    struct gen7_sf_clip_viewport *vp;
 
    vp = brw_state_batch(brw, AUB_TRACE_SF_VP_STATE,
-			sizeof(*vp), 64, &brw->sf.vp_offset);
+                        sizeof(*vp) * ctx->Const.MaxViewports, 64,
+                        &brw->sf.vp_offset);
    /* Also assign to clip.vp_offset in case something uses it. */
    brw->clip.vp_offset = brw->sf.vp_offset;
-
-   /* According to the "Vertex X,Y Clamping and Quantization" section of the
-    * Strips and Fans documentation, objects must not have a screen-space
-    * extents of over 8192 pixels, or they may be mis-rasterized.  The maximum
-    * screen space coordinates of a small object may larger, but we have no
-    * way to enforce the object size other than through clipping.
-    *
-    * If you're surprised that we set clip to -gbx to +gbx and it seems like
-    * we'll end up with 16384 wide, note that for a 8192-wide render target,
-    * we'll end up with a normal (-1, 1) clip volume that just covers the
-    * drawable.
-    */
-   const float maximum_guardband_extent = 8192;
-   float gbx = maximum_guardband_extent / ctx->ViewportArray[0].Width;
-   float gby = maximum_guardband_extent / ctx->ViewportArray[0].Height;
-
-   vp->guardband.xmin = -gbx;
-   vp->guardband.xmax = gbx;
-   vp->guardband.ymin = -gby;
-   vp->guardband.ymax = gby;
 
    /* _NEW_BUFFERS */
    if (render_to_fbo) {
@@ -71,13 +51,38 @@ gen7_upload_sf_clip_viewport(struct brw_context *brw)
       y_bias = ctx->DrawBuffer->Height;
    }
 
-   /* _NEW_VIEWPORT */
-   vp->viewport.m00 = v[MAT_SX];
-   vp->viewport.m11 = v[MAT_SY] * y_scale;
-   vp->viewport.m22 = v[MAT_SZ] * depth_scale;
-   vp->viewport.m30 = v[MAT_TX];
-   vp->viewport.m31 = v[MAT_TY] * y_scale + y_bias;
-   vp->viewport.m32 = v[MAT_TZ] * depth_scale;
+   for (unsigned i = 0; i < ctx->Const.MaxViewports; i++) {
+      const GLfloat *const v = ctx->ViewportArray[i]._WindowMap.m;
+
+      /* According to the "Vertex X,Y Clamping and Quantization" section of
+       * the Strips and Fans documentation, objects must not have a
+       * screen-space extents of over 8192 pixels, or they may be
+       * mis-rasterized.  The maximum screen space coordinates of a small
+       * object may larger, but we have no way to enforce the object size
+       * other than through clipping.
+       *
+       * If you're surprised that we set clip to -gbx to +gbx and it seems
+       * like we'll end up with 16384 wide, note that for a 8192-wide render
+       * target, we'll end up with a normal (-1, 1) clip volume that just
+       * covers the drawable.
+       */
+      const float maximum_guardband_extent = 8192;
+      const float gbx = maximum_guardband_extent / ctx->ViewportArray[i].Width;
+      const float gby = maximum_guardband_extent / ctx->ViewportArray[i].Height;
+
+      vp[i].guardband.xmin = -gbx;
+      vp[i].guardband.xmax = gbx;
+      vp[i].guardband.ymin = -gby;
+      vp[i].guardband.ymax = gby;
+
+      /* _NEW_VIEWPORT */
+      vp[i].viewport.m00 = v[MAT_SX];
+      vp[i].viewport.m11 = v[MAT_SY] * y_scale;
+      vp[i].viewport.m22 = v[MAT_SZ] * depth_scale;
+      vp[i].viewport.m30 = v[MAT_TX];
+      vp[i].viewport.m31 = v[MAT_TY] * y_scale + y_bias;
+      vp[i].viewport.m32 = v[MAT_TZ] * depth_scale;
+   }
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_VIEWPORT_STATE_POINTERS_SF_CL << 16 | (2 - 2));

@@ -45,16 +45,21 @@ brw_upload_cc_vp(struct brw_context *brw)
    struct brw_cc_viewport *ccv;
 
    ccv = brw_state_batch(brw, AUB_TRACE_CC_VP_STATE,
-			 sizeof(*ccv), 32, &brw->cc.vp_offset);
+			 sizeof(*ccv) * ctx->Const.MaxViewports, 32,
+                         &brw->cc.vp_offset);
 
    /* _NEW_TRANSFORM */
-   if (ctx->Transform.DepthClamp) {
-      /* _NEW_VIEWPORT */
-      ccv->min_depth = MIN2(ctx->ViewportArray[0].Near, ctx->ViewportArray[0].Far);
-      ccv->max_depth = MAX2(ctx->ViewportArray[0].Near, ctx->ViewportArray[0].Far);
-   } else {
-      ccv->min_depth = 0.0;
-      ccv->max_depth = 1.0;
+   for (unsigned i = 0; i < ctx->Const.MaxViewports; i++) {
+      if (ctx->Transform.DepthClamp) {
+         /* _NEW_VIEWPORT */
+         ccv[i].min_depth = MIN2(ctx->ViewportArray[i].Near,
+                                 ctx->ViewportArray[i].Far);
+         ccv[i].max_depth = MAX2(ctx->ViewportArray[i].Near,
+                                 ctx->ViewportArray[i].Far);
+      } else {
+         ccv[i].min_depth = 0.0;
+         ccv[i].max_depth = 1.0;
+      }
    }
 
    brw->state.dirty.cache |= CACHE_NEW_CC_VP;
