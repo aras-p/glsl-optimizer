@@ -1564,6 +1564,34 @@ vbo_exec_DrawTransformFeedbackStreamInstanced(GLenum mode, GLuint name,
    vbo_draw_transform_feedback(ctx, mode, obj, stream, primcount);
 }
 
+/**
+ * Like [Multi]DrawArrays/Elements, but they take most arguments from
+ * a buffer object.
+ */
+static void GLAPIENTRY
+vbo_exec_DrawArraysIndirect(GLenum mode, const GLvoid *indirect)
+{
+}
+
+static void GLAPIENTRY
+vbo_exec_DrawElementsIndirect(GLenum mode, GLenum type,
+                              const GLvoid *indirect)
+{
+}
+
+static void GLAPIENTRY
+vbo_exec_MultiDrawArraysIndirect(GLenum mode,
+                                 const GLvoid *indirect,
+                                 GLsizei primcount, GLsizei stride)
+{
+}
+
+static void GLAPIENTRY
+vbo_exec_MultiDrawElementsIndirect(GLenum mode, GLenum type,
+                                   const GLvoid *indirect,
+                                   GLsizei primcount, GLsizei stride)
+{
+}
 
 /**
  * Initialize the dispatch table with the VBO functions for drawing.
@@ -1595,6 +1623,13 @@ vbo_initialize_exec_dispatch(const struct gl_context *ctx,
       SET_DrawElementsInstancedBaseInstance(exec, vbo_exec_DrawElementsInstancedBaseInstance);
       SET_DrawElementsInstancedBaseVertex(exec, vbo_exec_DrawElementsInstancedBaseVertex);
       SET_DrawElementsInstancedBaseVertexBaseInstance(exec, vbo_exec_DrawElementsInstancedBaseVertexBaseInstance);
+   }
+
+   if (ctx->API == API_OPENGL_CORE) {
+      SET_DrawArraysIndirect(exec, vbo_exec_DrawArraysIndirect);
+      SET_DrawElementsIndirect(exec, vbo_exec_DrawElementsIndirect);
+      SET_MultiDrawArraysIndirect(exec, vbo_exec_MultiDrawArraysIndirect);
+      SET_MultiDrawElementsIndirect(exec, vbo_exec_MultiDrawElementsIndirect);
    }
 
    if (_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx)) {

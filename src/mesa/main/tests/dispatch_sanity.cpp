@@ -667,8 +667,8 @@ const struct function gl_core_functions_possible[] = {
    { "glVertexAttribP3uiv", 43, -1 },
    { "glVertexAttribP4ui", 43, -1 },
    { "glVertexAttribP4uiv", 43, -1 },
-// { "glDrawArraysIndirect", 43, -1 },                  // XXX: Add to xml
-// { "glDrawElementsIndirect", 43, -1 },                // XXX: Add to xml
+   { "glDrawArraysIndirect", 43, -1 },
+   { "glDrawElementsIndirect", 43, -1 },
 // { "glUniform1d", 43, -1 },                           // XXX: Add to xml
 // { "glUniform2d", 43, -1 },                           // XXX: Add to xml
 // { "glUniform3d", 43, -1 },                           // XXX: Add to xml
@@ -877,8 +877,8 @@ const struct function gl_core_functions_possible[] = {
    { "glInvalidateBufferData", 43, -1 },
    { "glInvalidateFramebuffer", 43, -1 },
    { "glInvalidateSubFramebuffer", 43, -1 },
-// { "glMultiDrawArraysIndirect", 43, -1 },             // XXX: Add to xml
-// { "glMultiDrawElementsIndirect", 43, -1 },           // XXX: Add to xml
+   { "glMultiDrawArraysIndirect", 43, -1 },
+   { "glMultiDrawElementsIndirect", 43, -1 },
 // { "glGetProgramInterfaceiv", 43, -1 },               // XXX: Add to xml
 // { "glGetProgramResourceIndex", 43, -1 },             // XXX: Add to xml
 // { "glGetProgramResourceName", 43, -1 },              // XXX: Add to xml
