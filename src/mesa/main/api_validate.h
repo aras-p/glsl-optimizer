@@ -87,5 +87,31 @@ _mesa_validate_DrawTransformFeedback(struct gl_context *ctx,
                                      GLuint stream,
                                      GLsizei numInstances);
 
+extern GLboolean
+_mesa_validate_DrawArraysIndirect(struct gl_context *ctx,
+                                  GLenum mode,
+                                  const GLvoid *indirect);
+
+extern GLboolean
+_mesa_validate_DrawElementsIndirect(struct gl_context *ctx,
+                                    GLenum mode,
+                                    GLenum type,
+                                    const GLvoid *indirect);
+
+extern GLboolean
+_mesa_validate_MultiDrawArraysIndirect(struct gl_context *ctx,
+                                       GLenum mode,
+                                       const GLvoid *indirect,
+                                       GLsizei primcount,
+                                       GLsizei stride);
+
+extern GLboolean
+_mesa_validate_MultiDrawElementsIndirect(struct gl_context *ctx,
+                                         GLenum mode,
+                                         GLenum type,
+                                         const GLvoid *indirect,
+                                         GLsizei primcount,
+                                         GLsizei stride);
+
 
 #endif
