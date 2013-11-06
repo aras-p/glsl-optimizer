@@ -197,18 +197,24 @@ _mesa_DepthRangef(GLclampf nearval, GLclampf farval)
 void _mesa_init_viewport(struct gl_context *ctx)
 {
    GLfloat depthMax = 65535.0F; /* sorf of arbitrary */
+   unsigned i;
 
-   /* Viewport group */
-   ctx->ViewportArray[0].X = 0;
-   ctx->ViewportArray[0].Y = 0;
-   ctx->ViewportArray[0].Width = 0;
-   ctx->ViewportArray[0].Height = 0;
-   ctx->ViewportArray[0].Near = 0.0;
-   ctx->ViewportArray[0].Far = 1.0;
-   _math_matrix_ctr(&ctx->ViewportArray[0]._WindowMap);
+   /* Note: ctx->Const.MaxViewports may not have been set by the driver yet,
+    * so just initialize all of them.
+    */
+   for (i = 0; i < MAX_VIEWPORTS; i++) {
+      /* Viewport group */
+      ctx->ViewportArray[i].X = 0;
+      ctx->ViewportArray[i].Y = 0;
+      ctx->ViewportArray[i].Width = 0;
+      ctx->ViewportArray[i].Height = 0;
+      ctx->ViewportArray[i].Near = 0.0;
+      ctx->ViewportArray[i].Far = 1.0;
+      _math_matrix_ctr(&ctx->ViewportArray[i]._WindowMap);
 
-   _math_matrix_viewport(&ctx->ViewportArray[0]._WindowMap, 0, 0, 0, 0,
-                         0.0F, 1.0F, depthMax);
+      _math_matrix_viewport(&ctx->ViewportArray[i]._WindowMap, 0, 0, 0, 0,
+                            0.0F, 1.0F, depthMax);
+   }
 }
 
 
@@ -218,6 +224,9 @@ void _mesa_init_viewport(struct gl_context *ctx)
  */
 void _mesa_free_viewport_data(struct gl_context *ctx)
 {
-   _math_matrix_dtr(&ctx->ViewportArray[0]._WindowMap);
+   unsigned i;
+
+   for (i = 0; i < MAX_VIEWPORTS; i++)
+      _math_matrix_dtr(&ctx->ViewportArray[i]._WindowMap);
 }
 

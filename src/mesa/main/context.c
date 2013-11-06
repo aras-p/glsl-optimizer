@@ -1357,14 +1357,17 @@ _mesa_copy_context( const struct gl_context *src, struct gl_context *dst,
    }
    if (mask & GL_VIEWPORT_BIT) {
       /* Cannot use memcpy, because of pointers in GLmatrix _WindowMap */
-      dst->ViewportArray[0].X = src->ViewportArray[0].X;
-      dst->ViewportArray[0].Y = src->ViewportArray[0].Y;
-      dst->ViewportArray[0].Width = src->ViewportArray[0].Width;
-      dst->ViewportArray[0].Height = src->ViewportArray[0].Height;
-      dst->ViewportArray[0].Near = src->ViewportArray[0].Near;
-      dst->ViewportArray[0].Far = src->ViewportArray[0].Far;
-      _math_matrix_copy(&dst->ViewportArray[0]._WindowMap,
-                        &src->ViewportArray[0]._WindowMap);
+      unsigned i;
+      for (i = 0; i < src->Const.MaxViewports; i++) {
+         dst->ViewportArray[i].X = src->ViewportArray[i].X;
+         dst->ViewportArray[i].Y = src->ViewportArray[i].Y;
+         dst->ViewportArray[i].Width = src->ViewportArray[i].Width;
+         dst->ViewportArray[i].Height = src->ViewportArray[i].Height;
+         dst->ViewportArray[i].Near = src->ViewportArray[i].Near;
+         dst->ViewportArray[i].Far = src->ViewportArray[i].Far;
+         _math_matrix_copy(&dst->ViewportArray[i]._WindowMap,
+                           &src->ViewportArray[i]._WindowMap);
+      }
    }
 
    /* XXX FIXME:  Call callbacks?
@@ -1433,11 +1436,19 @@ void
 _mesa_check_init_viewport(struct gl_context *ctx, GLuint width, GLuint height)
 {
    if (!ctx->ViewportInitialized && width > 0 && height > 0) {
+      unsigned i;
+
       /* Note: set flag here, before calling _mesa_set_viewport(), to prevent
        * potential infinite recursion.
        */
       ctx->ViewportInitialized = GL_TRUE;
-      _mesa_set_viewport(ctx, 0, 0, 0, width, height);
+
+      /* Note: ctx->Const.MaxViewports may not have been set by the driver
+       * yet, so just initialize all of them.
+       */
+      for (i = 0; i < MAX_VIEWPORTS; i++) {
+         _mesa_set_viewport(ctx, i, 0, 0, width, height);
+      }
       _mesa_set_scissor(ctx, 0, 0, 0, width, height);
    }
 }
