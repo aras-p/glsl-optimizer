@@ -42,6 +42,7 @@ LLVMModuleRef radeon_llvm_parse_bitcode(const unsigned char * bitcode,
 	buf = LLVMCreateMemoryBufferWithMemoryRangeCopy((const char*)bitcode,
 							bitcode_len, "radeon");
 	LLVMParseBitcodeInContext(ctx, buf, &module, NULL);
+	LLVMDisposeMemoryBuffer(buf);
 	return module;
 }
 
