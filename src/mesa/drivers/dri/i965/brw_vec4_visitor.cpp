@@ -53,7 +53,6 @@ vec4_instruction::vec4_instruction(vec4_visitor *v,
    this->mlen = 0;
    this->base_mrf = 0;
    this->offset = 0;
-   this->ir = NULL;
    this->annotation = v->current_annotation;
 }
 
