@@ -60,6 +60,7 @@ set_scissor_no_notify(struct gl_context *ctx, unsigned idx,
 void GLAPIENTRY
 _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
 {
+   unsigned i;
    GET_CURRENT_CONTEXT(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
@@ -70,7 +71,23 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
       return;
    }
 
-   _mesa_set_scissor(ctx, 0, x, y, width, height);
+   /* The GL_ARB_viewport_array spec says:
+    *
+    *     "Scissor sets the scissor rectangle for all viewports to the same
+    *     values and is equivalent (assuming no errors are generated) to:
+    *
+    *     for (uint i = 0; i < MAX_VIEWPORTS; i++) {
+    *         ScissorIndexed(i, left, bottom, width, height);
+    *     }"
+    *
+    * Set the scissor rectangle for all of the viewports supported by the
+    * implementation, but only signal the driver once at the end.
+    */
+   for (i = 0; i < ctx->Const.MaxViewports; i++)
+      set_scissor_no_notify(ctx, i, x, y, width, height);
+
+   if (ctx->Driver.Scissor)
+      ctx->Driver.Scissor(ctx);
 }
 
 
@@ -105,7 +122,14 @@ _mesa_set_scissor(struct gl_context *ctx, unsigned idx,
 void
 _mesa_init_scissor(struct gl_context *ctx)
 {
+   unsigned i;
+
    /* Scissor group */
-   ctx->Scissor.EnableFlags = GL_FALSE;
-   set_scissor_no_notify(ctx, 0, 0, 0, 0, 0);
+   ctx->Scissor.EnableFlags = 0;
+
+   /* Note: ctx->Const.MaxViewports may not have been set by the driver yet,
+    * so just initialize all of them.
+    */
+   for (i = 0; i < MAX_VIEWPORTS; i++)
+      set_scissor_no_notify(ctx, i, 0, 0, 0, 0);
 }
