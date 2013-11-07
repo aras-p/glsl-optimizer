@@ -80,6 +80,7 @@ public:
 	ir_print_glsl_visitor(char* buf, global_print_tracker* globals_, PrintGlslMode mode_, bool use_precision_, const _mesa_glsl_parse_state* state_)
 	{
 		indentation = 0;
+		expression_depth = 0;
 		buffer = buf;
 		globals = globals_;
 		mode = mode_;
@@ -93,6 +94,8 @@ public:
 
 
 	void indent(void);
+	void newline_indent();
+	void newline_deindent();
 	void print_var_name (ir_variable* v);
 	void print_precision (ir_instruction* ir, const glsl_type* type);
 
@@ -121,6 +124,7 @@ public:
 	void emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
 	
 	int indentation;
+	int expression_depth;
 	char* buffer;
 	global_print_tracker* globals;
 	const _mesa_glsl_parse_state* state;
@@ -185,6 +189,26 @@ void ir_print_glsl_visitor::indent(void)
    for (int i = 0; i < indentation; i++)
       ralloc_asprintf_append (&buffer, "  ");
 }
+
+void ir_print_glsl_visitor::newline_indent()
+{
+	if (expression_depth % 4 == 0)
+	{
+		++indentation;
+		ralloc_asprintf_append (&buffer, "\n");
+		indent();
+	}
+}
+void ir_print_glsl_visitor::newline_deindent()
+{
+	if (expression_depth % 4 == 0)
+	{
+		--indentation;
+		ralloc_asprintf_append (&buffer, "\n");
+		indent();
+	}
+}
+
 
 void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 {
@@ -548,6 +572,9 @@ static bool is_binop_func_like(ir_expression_operation op, const glsl_type* type
 
 void ir_print_glsl_visitor::visit(ir_expression *ir)
 {
+	++this->expression_depth;
+	newline_indent();
+	
 	if (ir->get_num_operands() == 1) {
 		if (ir->operation >= ir_unop_f2i && ir->operation < ir_unop_any) {
 			buffer = print_type(buffer, ir->type, true);
@@ -623,6 +650,9 @@ void ir_print_glsl_visitor::visit(ir_expression *ir)
 			ir->operands[2]->accept(this);
 		ralloc_asprintf_append (&buffer, ")");
 	}
+	
+	newline_deindent();
+	--this->expression_depth;
 }
 
 // [glsl_sampler_dim]
