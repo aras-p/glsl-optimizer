@@ -52,7 +52,9 @@ void main ()
   float tmpvar_26;
   tmpvar_26 = max (max (tmpvar_22.w, tmpvar_24.w), max (tmpvar_19.w, max (tmpvar_17.w, tmpvar_15.w)));
   float tmpvar_27;
-  tmpvar_27 = (tmpvar_26 - min (min (tmpvar_22.w, tmpvar_24.w), min (tmpvar_19.w, min (tmpvar_17.w, tmpvar_15.w))));
+  tmpvar_27 = (tmpvar_26 - min (min (tmpvar_22.w, tmpvar_24.w), min (tmpvar_19.w, 
+    min (tmpvar_17.w, tmpvar_15.w)
+  )));
   if ((tmpvar_27 < max (0.0833, (tmpvar_26 * 0.166)))) {
     tmpvar_2 = tmpvar_15;
   } else {
@@ -88,7 +90,19 @@ void main ()
     tmpvar_40 = (tmpvar_29.w + tmpvar_35.w);
     lengthSign_11 = fxaaQualityRcpFrame_1.x;
     bool tmpvar_41;
-    tmpvar_41 = ((abs(((-2.0 * tmpvar_24.w) + tmpvar_40)) + ((abs(((-2.0 * tmpvar_15.w) + tmpvar_36)) * 2.0) + abs(((-2.0 * tmpvar_19.w) + tmpvar_39)))) >= (abs(((-2.0 * tmpvar_17.w) + (tmpvar_35.w + tmpvar_31.w))) + ((abs(((-2.0 * tmpvar_15.w) + tmpvar_37)) * 2.0) + abs(((-2.0 * tmpvar_22.w) + (tmpvar_29.w + tmpvar_33.w))))));
+    tmpvar_41 = ((abs(
+      ((-2.0 * tmpvar_24.w) + tmpvar_40)
+    ) + (
+      (abs(((-2.0 * tmpvar_15.w) + tmpvar_36)) * 2.0)
+     + 
+      abs(((-2.0 * tmpvar_19.w) + tmpvar_39))
+    )) >= (abs(
+      ((-2.0 * tmpvar_17.w) + (tmpvar_35.w + tmpvar_31.w))
+    ) + (
+      (abs(((-2.0 * tmpvar_15.w) + tmpvar_37)) * 2.0)
+     + 
+      abs(((-2.0 * tmpvar_22.w) + (tmpvar_29.w + tmpvar_33.w)))
+    )));
     float tmpvar_42;
     tmpvar_42 = (((tmpvar_36 + tmpvar_37) * 2.0) + (tmpvar_40 + tmpvar_39));
     if (!(tmpvar_41)) {

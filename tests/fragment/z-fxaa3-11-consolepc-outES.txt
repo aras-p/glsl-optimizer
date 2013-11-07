@@ -62,7 +62,9 @@ void main ()
     tmpvar_26.zw = vec2(0.0, 0.0);
     tmpvar_26.xy = (xlv_TEXCOORD0 + (tmpvar_24 * fxaaConsoleRcpFrameOpt_1.zw));
     highp vec2 tmpvar_27;
-    tmpvar_27 = clamp ((tmpvar_24 / (min (abs(tmpvar_24.x), abs(tmpvar_24.y)) * 8.0)), vec2(-2.0, -2.0), vec2(2.0, 2.0));
+    tmpvar_27 = clamp ((tmpvar_24 / (
+      min (abs(tmpvar_24.x), abs(tmpvar_24.y))
+     * 8.0)), vec2(-2.0, -2.0), vec2(2.0, 2.0));
     highp vec4 tmpvar_28;
     tmpvar_28.zw = vec2(0.0, 0.0);
     tmpvar_28.xy = (xlv_TEXCOORD0 - (tmpvar_27 * fxaaConsoleRcpFrameOpt2_2.zw));

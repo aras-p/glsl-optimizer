@@ -53,7 +53,9 @@ void main ()
   tmpvar_18 = texture2D (_LightTextureB0, tmpvar_17).w;
   atten_4 = tmpvar_18;
   highp float tmpvar_19;
-  tmpvar_19 = ((sqrt(dot (tmpvar_15, tmpvar_15)) * _LightPositionRange.w) * 0.97);
+  tmpvar_19 = ((sqrt(
+    dot (tmpvar_15, tmpvar_15)
+  ) * _LightPositionRange.w) * 0.97);
   mediump vec4 shadows_20;
   highp vec4 shadowVals_21;
   highp vec3 vec_22;
@@ -133,7 +135,9 @@ void main ()
   mediump float tmpvar_46;
   tmpvar_46 = max (0.0, dot (lightDir_5, normal_7));
   highp vec3 tmpvar_47;
-  tmpvar_47 = normalize((lightDir_5 - normalize((tmpvar_14 - _WorldSpaceCameraPos))));
+  tmpvar_47 = normalize((lightDir_5 - normalize(
+    (tmpvar_14 - _WorldSpaceCameraPos)
+  )));
   h_3 = tmpvar_47;
   mediump float tmpvar_48;
   tmpvar_48 = pow (max (0.0, dot (h_3, normal_7)), (nspec_8.w * 128.0));
@@ -152,7 +156,9 @@ void main ()
   tmpvar_53 = (tmpvar_49 * tmpvar_52);
   res_1.w = tmpvar_53;
   highp float tmpvar_54;
-  tmpvar_54 = clamp ((1.0 - ((tmpvar_13.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.0, 1.0);
+  tmpvar_54 = clamp ((1.0 - (
+    (tmpvar_13.z * unity_LightmapFade.z)
+   + unity_LightmapFade.w)), 0.0, 1.0);
   mediump vec4 tmpvar_55;
   tmpvar_55 = (res_1 * tmpvar_54);
   res_1 = tmpvar_55;

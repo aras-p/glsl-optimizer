@@ -13,7 +13,11 @@ void main ()
   float tmpvar_4;
   tmpvar_4 = tmpvar_3.w;
   vec4 c_5;
-  c_5.xyz = ((tmpvar_3.xyz * _LightColor0.xyz) * ((max (0.0, dot (gl_TexCoord[1].xyz, normalize(gl_TexCoord[2].xyz))) * (texture2D (_LightTextureB0, vec2(dot (tmpvar_1, tmpvar_1))).w * textureCube (_LightTexture0, tmpvar_1).w)) * 2.0));
+  c_5.xyz = ((tmpvar_3.xyz * _LightColor0.xyz) * ((
+    max (0.0, dot (gl_TexCoord[1].xyz, normalize(gl_TexCoord[2].xyz)))
+   * 
+    (texture2D (_LightTextureB0, vec2(dot (tmpvar_1, tmpvar_1))).w * textureCube (_LightTexture0, tmpvar_1).w)
+  ) * 2.0));
   c_5.w = tmpvar_4;
   c_2.xyz = c_5.xyz;
   c_2.w = tmpvar_4;

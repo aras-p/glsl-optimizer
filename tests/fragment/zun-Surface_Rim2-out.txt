@@ -18,7 +18,9 @@ void main ()
   c_5.xyz = (texture2D (_MainTex, gl_TexCoord[0].xy).xyz * light_3.xyz);
   c_5.w = 0.0;
   col_2.w = c_5.w;
-  col_2.xyz = (c_5.xyz + (_RimColor.xyz * pow ((1.0 - clamp (dot (normalize(gl_TexCoord[1].xyz), gl_TexCoord[3].xyz), 0.0, 1.0)), _RimPower)));
+  col_2.xyz = (c_5.xyz + (_RimColor.xyz * pow (
+    (1.0 - clamp (dot (normalize(gl_TexCoord[1].xyz), gl_TexCoord[3].xyz), 0.0, 1.0))
+  , _RimPower)));
   gl_FragData[0] = col_2;
 }
 

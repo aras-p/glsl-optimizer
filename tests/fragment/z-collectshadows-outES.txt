@@ -41,7 +41,13 @@ void main ()
   tmpvar_14 = (near_9 * far_8);
   highp vec4 tmpvar_15;
   tmpvar_15.w = 1.0;
-  tmpvar_15.xyz = (((((_View2Shadow * tmpvar_6).xyz * tmpvar_14.x) + ((_View2Shadow1 * tmpvar_6).xyz * tmpvar_14.y)) + ((_View2Shadow2 * tmpvar_6).xyz * tmpvar_14.z)) + ((_View2Shadow3 * tmpvar_6).xyz * tmpvar_14.w));
+  tmpvar_15.xyz = (((
+    ((_View2Shadow * tmpvar_6).xyz * tmpvar_14.x)
+   + 
+    ((_View2Shadow1 * tmpvar_6).xyz * tmpvar_14.y)
+  ) + (
+    (_View2Shadow2 * tmpvar_6)
+  .xyz * tmpvar_14.z)) + ((_View2Shadow3 * tmpvar_6).xyz * tmpvar_14.w));
   lowp vec4 tmpvar_16;
   tmpvar_16 = texture2D (_ShadowMapTexture, tmpvar_15.xy);
   highp float tmpvar_17;

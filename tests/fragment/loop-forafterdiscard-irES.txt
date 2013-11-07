@@ -32,7 +32,9 @@ lowp vec4 xlat_main (
       break;
     };
     highp vec3 tmpvar_9;
-    tmpvar_9 = (light_3 + ((col_4.xyz * i_1.nl[j_2]) * _TerrainTreeLightColors[j_2].xyz));
+    tmpvar_9 = (light_3 + ((col_4.xyz * 
+      i_1.nl[j_2]
+    ) * _TerrainTreeLightColors[j_2].xyz));
     light_3 = tmpvar_9;
     int tmpvar_10;
     tmpvar_10 = (j_2 + 1);

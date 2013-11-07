@@ -95,7 +95,11 @@ vec4 frag (
     tmpvar_34 = (tmpvar_33 * gloss_12);
     spec_4 = tmpvar_34;
     vec3 tmpvar_35;
-    tmpvar_35 = (light_11 + (((albedo_15 * (translucencyColor_7 + nl_6)) + (_SpecColor.xyz * spec_4)) * lightColor_8));
+    tmpvar_35 = (light_11 + ((
+      (albedo_15 * (translucencyColor_7 + nl_6))
+     + 
+      (_SpecColor.xyz * spec_4)
+    ) * lightColor_8));
     light_11 = tmpvar_35;
     int _post_incdec_tmp_36;
     _post_incdec_tmp_36 = j_9;

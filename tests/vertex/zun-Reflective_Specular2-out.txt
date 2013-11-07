@@ -37,7 +37,9 @@ void main ()
   gl_TexCoord[0] = tmpvar_9;
   vec4 tmpvar_10;
   tmpvar_10.w = 0.0;
-  tmpvar_10.xyz = (tmpvar_4 * (tmpvar_3 - (2.0 * (dot (gl_Normal, tmpvar_3) * gl_Normal))));
+  tmpvar_10.xyz = (tmpvar_4 * (tmpvar_3 - (2.0 * 
+    (dot (gl_Normal, tmpvar_3) * gl_Normal)
+  )));
   gl_TexCoord[1] = tmpvar_10;
   gl_TexCoord[2] = o_5;
 }

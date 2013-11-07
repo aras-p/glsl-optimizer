@@ -127,10 +127,16 @@ vec4 LightingBlinnPhong (
   tmpvar_41 = (tmpvar_40 * s_23.Gloss);
   spec_28 = tmpvar_41;
   vec3 tmpvar_42;
-  tmpvar_42 = ((((s_23.Albedo * _LightColor0.xyz) * diff_30) + ((_LightColor0.xyz * _SpecColor.xyz) * spec_28)) * (atten_26 * 2.0));
+  tmpvar_42 = (((
+    (s_23.Albedo * _LightColor0.xyz)
+   * diff_30) + (
+    (_LightColor0.xyz * _SpecColor.xyz)
+   * spec_28)) * (atten_26 * 2.0));
   c_27.xyz = tmpvar_42.xyz.xyz;
   float tmpvar_43;
-  tmpvar_43 = (s_23.Alpha + (((_LightColor0.w * _SpecColor.w) * spec_28) * atten_26));
+  tmpvar_43 = (s_23.Alpha + ((
+    (_LightColor0.w * _SpecColor.w)
+   * spec_28) * atten_26));
   c_27.w = vec4(tmpvar_43).w;
   return c_27;
 }

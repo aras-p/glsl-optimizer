@@ -63,7 +63,9 @@ void main ()
   gl_TexCoord[0] = tmpvar_1;
   vec4 tmpvar_13;
   tmpvar_13.w = 0.0;
-  tmpvar_13.xyz = (tmpvar_6 * (((_World2Object * tmpvar_7).xyz * unity_Scale.w) - gl_Vertex.xyz));
+  tmpvar_13.xyz = (tmpvar_6 * ((
+    (_World2Object * tmpvar_7)
+  .xyz * unity_Scale.w) - gl_Vertex.xyz));
   gl_TexCoord[1] = tmpvar_13;
   vec4 tmpvar_14;
   tmpvar_14.w = 0.0;
@@ -71,7 +73,11 @@ void main ()
   gl_TexCoord[2] = tmpvar_14;
   vec4 tmpvar_15;
   tmpvar_15.w = 0.0;
-  tmpvar_15.xyz = ((x1_10 + x2_9) + (unity_SHC.xyz * ((tmpvar_4.x * tmpvar_4.x) - (tmpvar_4.y * tmpvar_4.y))));
+  tmpvar_15.xyz = ((x1_10 + x2_9) + (unity_SHC.xyz * (
+    (tmpvar_4.x * tmpvar_4.x)
+   - 
+    (tmpvar_4.y * tmpvar_4.y)
+  )));
   gl_TexCoord[3] = tmpvar_15;
 }
 

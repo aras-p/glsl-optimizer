@@ -55,7 +55,11 @@ void main ()
   highp float tmpvar_20;
   tmpvar_20 = xlv_TEXCOORD4.x;
   nh_2 = tmpvar_20;
-  light_6 = (light_6 + (((albedo_9 * ((backContribs_5.x * _TranslucencyColor) + nl_3)) + (_SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))) * lightColor_4));
+  light_6 = (light_6 + ((
+    (albedo_9 * ((backContribs_5.x * _TranslucencyColor) + nl_3))
+   + 
+    (_SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))
+  ) * lightColor_4));
   highp vec3 tmpvar_21;
   tmpvar_21 = _TerrainTreeLightColors[1].xyz;
   lightColor_4 = tmpvar_21;
@@ -65,7 +69,11 @@ void main ()
   highp float tmpvar_23;
   tmpvar_23 = xlv_TEXCOORD4.y;
   nh_2 = tmpvar_23;
-  light_6 = (light_6 + (((albedo_9 * ((backContribs_5.y * _TranslucencyColor) + nl_3)) + (_SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))) * lightColor_4));
+  light_6 = (light_6 + ((
+    (albedo_9 * ((backContribs_5.y * _TranslucencyColor) + nl_3))
+   + 
+    (_SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))
+  ) * lightColor_4));
   highp vec3 tmpvar_24;
   tmpvar_24 = _TerrainTreeLightColors[2].xyz;
   lightColor_4 = tmpvar_24;
@@ -75,7 +83,11 @@ void main ()
   highp float tmpvar_26;
   tmpvar_26 = xlv_TEXCOORD4.z;
   nh_2 = tmpvar_26;
-  light_6 = (light_6 + (((albedo_9 * ((backContribs_5.z * _TranslucencyColor) + nl_3)) + (_SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))) * lightColor_4));
+  light_6 = (light_6 + ((
+    (albedo_9 * ((backContribs_5.z * _TranslucencyColor) + nl_3))
+   + 
+    (_SpecColor.xyz * (pow (nh_2, specular_8) * gloss_7))
+  ) * lightColor_4));
   mediump vec3 tmpvar_27;
   tmpvar_27 = (light_6 * 2.0);
   c_1.xyz = tmpvar_27;

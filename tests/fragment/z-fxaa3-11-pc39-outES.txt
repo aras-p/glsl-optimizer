@@ -62,7 +62,9 @@ void main ()
   highp float tmpvar_31;
   tmpvar_31 = max (max (rgba_26.w, rgba_30.w), max (rgba_23.w, max (rgba_19.w, rgbyM_14.w)));
   highp float tmpvar_32;
-  tmpvar_32 = (tmpvar_31 - min (min (rgba_26.w, rgba_30.w), min (rgba_23.w, min (rgba_19.w, rgbyM_14.w))));
+  tmpvar_32 = (tmpvar_31 - min (min (rgba_26.w, rgba_30.w), min (rgba_23.w, 
+    min (rgba_19.w, rgbyM_14.w)
+  )));
   if ((tmpvar_32 < max (0.0833, (tmpvar_31 * 0.166)))) {
     tmpvar_2 = rgbyM_14;
   } else {
@@ -106,7 +108,19 @@ void main ()
     tmpvar_49 = (rgba_35.w + rgba_44.w);
     lengthSign_11 = fxaaQualityRcpFrame_1.x;
     bool tmpvar_50;
-    tmpvar_50 = ((abs(((-2.0 * rgba_30.w) + tmpvar_49)) + ((abs(((-2.0 * rgbyM_14.w) + tmpvar_45)) * 2.0) + abs(((-2.0 * rgba_23.w) + tmpvar_48)))) >= (abs(((-2.0 * rgba_19.w) + (rgba_44.w + rgba_38.w))) + ((abs(((-2.0 * rgbyM_14.w) + tmpvar_46)) * 2.0) + abs(((-2.0 * rgba_26.w) + (rgba_35.w + rgba_41.w))))));
+    tmpvar_50 = ((abs(
+      ((-2.0 * rgba_30.w) + tmpvar_49)
+    ) + (
+      (abs(((-2.0 * rgbyM_14.w) + tmpvar_45)) * 2.0)
+     + 
+      abs(((-2.0 * rgba_23.w) + tmpvar_48))
+    )) >= (abs(
+      ((-2.0 * rgba_19.w) + (rgba_44.w + rgba_38.w))
+    ) + (
+      (abs(((-2.0 * rgbyM_14.w) + tmpvar_46)) * 2.0)
+     + 
+      abs(((-2.0 * rgba_26.w) + (rgba_35.w + rgba_41.w)))
+    )));
     highp float tmpvar_51;
     tmpvar_51 = (((tmpvar_45 + tmpvar_46) * 2.0) + (tmpvar_49 + tmpvar_48));
     if (!(tmpvar_50)) {

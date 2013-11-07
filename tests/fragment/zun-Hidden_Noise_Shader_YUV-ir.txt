@@ -44,7 +44,11 @@ vec4 frag (
   tmpvar_15 = ((yuv_4.z * 1.14) + yuv_4.x);
   col_5.x = tmpvar_15;
   float tmpvar_16;
-  tmpvar_16 = (((yuv_4.z * -(0.581)) + (yuv_4.y * -(0.395))) + yuv_4.x);
+  tmpvar_16 = (((yuv_4.z * 
+    -(0.581)
+  ) + (yuv_4.y * 
+    -(0.395)
+  )) + yuv_4.x);
   col_5.y = vec2(tmpvar_16).y;
   float tmpvar_17;
   tmpvar_17 = ((yuv_4.y * 2.032) + yuv_4.x);

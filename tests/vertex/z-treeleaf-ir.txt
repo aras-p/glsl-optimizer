@@ -214,7 +214,11 @@ vec4 AnimateVertex (
   tmpvar_73 = (animParams_47.w * fBranchAmp_55);
   bend_48.y = vec2(tmpvar_73).y;
   vec3 tmpvar_74;
-  tmpvar_74 = (pos_45.xyz + (((vWavesSum_49.xyx * bend_48) + ((_Wind.xyz * vWavesSum_49.y) * animParams_47.w)) * _Wind.w));
+  tmpvar_74 = (pos_45.xyz + ((
+    (vWavesSum_49.xyx * bend_48)
+   + 
+    ((_Wind.xyz * vWavesSum_49.y) * animParams_47.w)
+  ) * _Wind.w));
   pos_45.xyz = tmpvar_74.xyz.xyz;
   vec3 tmpvar_75;
   tmpvar_75 = (pos_45.xyz + (animParams_47.z * _Wind.xyz));

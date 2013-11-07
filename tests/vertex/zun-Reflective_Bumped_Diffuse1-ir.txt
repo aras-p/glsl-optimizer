@@ -187,7 +187,9 @@ v2f_surf vert_surf (
   tmpvar_57 = ((v_24.texcoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
   o_29.hip_lmapFade.xy = tmpvar_57.xy.xy;
   float tmpvar_58;
-  tmpvar_58 = ((-((gl_ModelViewMatrix * v_24.vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w);
+  tmpvar_58 = ((-(
+    (gl_ModelViewMatrix * v_24.vertex)
+  .z) * unity_LightmapFade.z) + unity_LightmapFade.w);
   o_29.hip_lmapFade.z = vec3(tmpvar_58).z;
   return o_29;
 }

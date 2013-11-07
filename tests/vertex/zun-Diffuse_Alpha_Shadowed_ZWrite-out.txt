@@ -47,7 +47,11 @@ void main ()
   gl_TexCoord[1] = tmpvar_10;
   vec4 tmpvar_11;
   tmpvar_11.w = 0.0;
-  tmpvar_11.xyz = ((x1_6 + x2_5) + (unity_SHC.xyz * ((tmpvar_3.x * tmpvar_3.x) - (tmpvar_3.y * tmpvar_3.y))));
+  tmpvar_11.xyz = ((x1_6 + x2_5) + (unity_SHC.xyz * (
+    (tmpvar_3.x * tmpvar_3.x)
+   - 
+    (tmpvar_3.y * tmpvar_3.y)
+  )));
   gl_TexCoord[2] = tmpvar_11;
 }
 

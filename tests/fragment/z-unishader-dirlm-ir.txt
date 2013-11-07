@@ -401,7 +401,11 @@ vec3 BRDF_Disney_PBS (
   tmpvar_139 = tmpvar_138;
   nvPow_95 = tmpvar_139;
   float tmpvar_140;
-  tmpvar_140 = ((1.0 + ((Fd90_97 - 1.0) * nlPow_96)) * (1.0 + ((Fd90_97 - 1.0) * nvPow_95)));
+  tmpvar_140 = ((1.0 + (
+    (Fd90_97 - 1.0)
+   * nlPow_96)) * (1.0 + (
+    (Fd90_97 - 1.0)
+   * nvPow_95)));
   disneyDiffuse_94 = tmpvar_140;
   float tmpvar_141;
   tmpvar_141 = max (0.0, (((F_100 * G_99) * R_98) / ((4.0 * nv_104) + 1e-05)));
@@ -419,7 +423,13 @@ vec3 BRDF_Disney_PBS (
   float tmpvar_146;
   tmpvar_146 = FresnelTerm (0.0, nv_104);
   vec3 tmpvar_147;
-  tmpvar_147 = (((diffuseColor_91 * (ambient_88 + (diffuseTerm_92 * lightColor_81))) + (specColor_82 * (env_89 + (lightColor_81 * specularTerm_93)))) + ((((1.0 - tmpvar_145) * (1.0 - roughness_84)) * tmpvar_146) * env_89));
+  tmpvar_147 = (((diffuseColor_91 * 
+    (ambient_88 + (diffuseTerm_92 * lightColor_81))
+  ) + (specColor_82 * 
+    (env_89 + (lightColor_81 * specularTerm_93))
+  )) + ((
+    ((1.0 - tmpvar_145) * (1.0 - roughness_84))
+   * tmpvar_146) * env_89));
   color_90 = tmpvar_147;
   return color_90;
 }

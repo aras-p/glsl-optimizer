@@ -21,7 +21,9 @@ void main ()
   o_4.xy = (tmpvar_6 + tmpvar_5.w);
   o_4.zw = tmpvar_3.zw;
   tmpvar_2.xy = ((gl_MultiTexCoord1.xy * unity_LightmapST.xy) + unity_LightmapST.zw);
-  tmpvar_2.z = ((-((gl_ModelViewMatrix * gl_Vertex).z) * unity_LightmapFade.z) + unity_LightmapFade.w);
+  tmpvar_2.z = ((-(
+    (gl_ModelViewMatrix * gl_Vertex)
+  .z) * unity_LightmapFade.z) + unity_LightmapFade.w);
   gl_Position = tmpvar_3;
   vec4 tmpvar_7;
   tmpvar_7.yzw = vec3(0.0, 0.0, 0.0);

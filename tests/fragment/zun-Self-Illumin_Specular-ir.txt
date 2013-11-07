@@ -123,10 +123,16 @@ vec4 LightingBlinnPhong (
   tmpvar_39 = (tmpvar_38 * s_21.Gloss);
   spec_26 = tmpvar_39;
   vec3 tmpvar_40;
-  tmpvar_40 = ((((s_21.Albedo * _LightColor0.xyz) * diff_28) + ((_LightColor0.xyz * _SpecColor.xyz) * spec_26)) * (atten_24 * 2.0));
+  tmpvar_40 = (((
+    (s_21.Albedo * _LightColor0.xyz)
+   * diff_28) + (
+    (_LightColor0.xyz * _SpecColor.xyz)
+   * spec_26)) * (atten_24 * 2.0));
   c_25.xyz = tmpvar_40.xyz.xyz;
   float tmpvar_41;
-  tmpvar_41 = (s_21.Alpha + (((_LightColor0.w * _SpecColor.w) * spec_26) * atten_24));
+  tmpvar_41 = (s_21.Alpha + ((
+    (_LightColor0.w * _SpecColor.w)
+   * spec_26) * atten_24));
   c_25.w = vec4(tmpvar_41).w;
   return c_25;
 }
@@ -178,7 +184,9 @@ vec4 frag_surf (
   float tmpvar_60;
   tmpvar_60 = UnitySpotAttenuate (IN_42._LightCoord.xyz);
   vec4 tmpvar_61;
-  tmpvar_61 = LightingBlinnPhong (o_45, lightDir_44, tmpvar_58, ((float((IN_42._LightCoord.z > 0.0)) * tmpvar_59) * tmpvar_60));
+  tmpvar_61 = LightingBlinnPhong (o_45, lightDir_44, tmpvar_58, ((float(
+    (IN_42._LightCoord.z > 0.0)
+  ) * tmpvar_59) * tmpvar_60));
   vec4 tmpvar_62;
   tmpvar_62 = tmpvar_61;
   c_43 = tmpvar_62;

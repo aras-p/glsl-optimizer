@@ -43,7 +43,9 @@ void main ()
   tmpvar_10.w = 1.0;
   tmpvar_10.xyz = _WorldSpaceCameraPos;
   highp vec3 tmpvar_11;
-  tmpvar_11 = normalize((tmpvar_9 + normalize((tmpvar_8 * (((_World2Object * tmpvar_10).xyz * unity_Scale.w) - attrVertex.xyz)))));
+  tmpvar_11 = normalize((tmpvar_9 + normalize(
+    (tmpvar_8 * (((_World2Object * tmpvar_10).xyz * unity_Scale.w) - attrVertex.xyz))
+  )));
   tmpvar_2 = tmpvar_11;
   gl_Position = (glstate_matrix_mvp * attrVertex);
   varWorldN = tmpvar_3;

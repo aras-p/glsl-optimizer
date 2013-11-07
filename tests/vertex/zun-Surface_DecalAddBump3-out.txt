@@ -72,7 +72,11 @@ void main ()
   gl_TexCoord[1] = tmpvar_15;
   vec4 tmpvar_16;
   tmpvar_16.w = 0.0;
-  tmpvar_16.xyz = ((x1_9 + x2_8) + (unity_SHC.xyz * ((tmpvar_4.x * tmpvar_4.x) - (tmpvar_4.y * tmpvar_4.y))));
+  tmpvar_16.xyz = ((x1_9 + x2_8) + (unity_SHC.xyz * (
+    (tmpvar_4.x * tmpvar_4.x)
+   - 
+    (tmpvar_4.y * tmpvar_4.y)
+  )));
   gl_TexCoord[2] = tmpvar_16;
   gl_TexCoord[3] = o_11;
 }

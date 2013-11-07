@@ -142,7 +142,9 @@ vec4 frag_surf (
   float tmpvar_44;
   tmpvar_44 = UnitySpotAttenuate (IN_28._LightCoord.xyz);
   vec4 tmpvar_45;
-  tmpvar_45 = LightingLambert (o_31, lightDir_30, ((float((IN_28._LightCoord.z > 0.0)) * tmpvar_43) * tmpvar_44));
+  tmpvar_45 = LightingLambert (o_31, lightDir_30, ((float(
+    (IN_28._LightCoord.z > 0.0)
+  ) * tmpvar_43) * tmpvar_44));
   vec4 tmpvar_46;
   tmpvar_46 = tmpvar_45;
   c_29 = tmpvar_46;

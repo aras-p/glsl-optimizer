@@ -123,7 +123,9 @@ vec4 LightingTreeBark (
   tmpvar_42 = (tmpvar_41 * s_24.Gloss);
   spec_29 = tmpvar_42;
   vec3 tmpvar_43;
-  tmpvar_43 = ((((s_24.Albedo * _LightColor0.xyz) * diff_31) + (_LightColor0.xyz * spec_29)) * (atten_27 * 2.0));
+  tmpvar_43 = (((
+    (s_24.Albedo * _LightColor0.xyz)
+   * diff_31) + (_LightColor0.xyz * spec_29)) * (atten_27 * 2.0));
   c_28.xyz = tmpvar_43.xyz.xyz;
   float tmpvar_44;
   tmpvar_44 = (((_LightColor0.w * spec_29) * atten_27) * s_24.Alpha);

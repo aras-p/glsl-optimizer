@@ -291,7 +291,11 @@ vec4 frag_surf (
   weights_71 = tmpvar_91;
   vec4 tmpvar_92;
   tmpvar_92.w = 1.0;
-  tmpvar_92.xyz = ((((IN_66._ShadowCoord0 * weights_71.x) + (IN_66._ShadowCoord1 * weights_71.y)) + (IN_66._ShadowCoord2 * weights_71.z)) + (IN_66._ShadowCoord3 * weights_71.w)).xyz;
+  tmpvar_92.xyz = (((
+    (IN_66._ShadowCoord0 * weights_71.x)
+   + 
+    (IN_66._ShadowCoord1 * weights_71.y)
+  ) + (IN_66._ShadowCoord2 * weights_71.z)) + (IN_66._ShadowCoord3 * weights_71.w)).xyz;
   vec4 tmpvar_93;
   tmpvar_93 = tmpvar_92;
   coord_70 = tmpvar_93;

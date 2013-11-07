@@ -16,6 +16,8 @@ void main ()
   col.x = trunc(position.x);
   col.y = roundEven(position.y);
   col.z = roundEven(position.y);
-  col.w = (0.5 * (exp(position.w) + exp(-(position.w))));
+  col.w = (0.5 * (exp(position.w) + exp(
+    -(position.w)
+  )));
 }
 

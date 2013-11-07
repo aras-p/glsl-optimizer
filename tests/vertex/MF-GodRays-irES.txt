@@ -434,7 +434,11 @@ v2f xlat_main (
   tmpvar_137 = ((rightLocal_118 * v_106.normal.x) + (upLocal_117 * v_106.normal.y));
   BBNormal_115 = tmpvar_137;
   highp vec3 tmpvar_138;
-  tmpvar_138 = ((centerLocal_122 - ((rightLocal_118 * centerOffs_123.x) + (upLocal_117 * centerOffs_123.y))) + (BBNormal_115 * distScale_116));
+  tmpvar_138 = ((centerLocal_122 - (
+    (rightLocal_118 * centerOffs_123.x)
+   + 
+    (upLocal_117 * centerOffs_123.y)
+  )) + (BBNormal_115 * distScale_116));
   BBLocalPos_114 = tmpvar_138;
   highp float tmpvar_139;
   tmpvar_139 = (_Time.y + (_BlinkingTimeOffsScale * v_106.color.z));

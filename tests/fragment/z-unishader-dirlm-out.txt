@@ -42,11 +42,15 @@ void main ()
   vec3 normal_4;
   normal_4.xy = ((texture2D (_BumpMap, xlv_TEXCOORD0.xy).wy * 2.0) - 1.0);
   normal_4.xy = (normal_4.xy * _BumpScale);
-  normal_4.z = sqrt((1.0 - clamp (dot (normal_4.xy, normal_4.xy), 0.0, 1.0)));
+  normal_4.z = sqrt((1.0 - clamp (
+    dot (normal_4.xy, normal_4.xy)
+  , 0.0, 1.0)));
   vec3 normal_5;
   normal_5.xy = ((texture2D (_DetailNormalMap, xlv_TEXCOORD0.zw).wy * 2.0) - 1.0);
   normal_5.xy = (normal_5.xy * _DetailNormalMapScale);
-  normal_5.z = sqrt((1.0 - clamp (dot (normal_5.xy, normal_5.xy), 0.0, 1.0)));
+  normal_5.z = sqrt((1.0 - clamp (
+    dot (normal_5.xy, normal_5.xy)
+  , 0.0, 1.0)));
   vec3 tmpvar_6;
   tmpvar_6.xy = (normal_4.xy + normal_5.xy);
   tmpvar_6.z = (normal_4.z * normal_5.z);
@@ -63,7 +67,9 @@ void main ()
   float tmpvar_12;
   tmpvar_12 = (1.0 - tmpvar_10.w);
   vec4 tmpvar_13;
-  tmpvar_13.xyz = (tmpvar_9 - (2.0 * (dot (tmpvar_8, tmpvar_9) * tmpvar_8)));
+  tmpvar_13.xyz = (tmpvar_9 - (2.0 * (
+    dot (tmpvar_8, tmpvar_9)
+   * tmpvar_8)));
   tmpvar_13.w = (tmpvar_12 * 5.0);
   vec4 tmpvar_14;
   tmpvar_14 = textureCubeLod (_SpecCube, tmpvar_13.xyz, tmpvar_13.w);
@@ -73,7 +79,9 @@ void main ()
   tmpvar_16.x = tmpvar_15;
   tmpvar_16.y = (tmpvar_14.w * tmpvar_15);
   vec3 tmpvar_17;
-  tmpvar_17 = (((tmpvar_14.xyz * dot (vec2(0.7532, 0.2468), tmpvar_16)) * _Exposure) * texture2D (_Occlusion, xlv_TEXCOORD0.xy).x);
+  tmpvar_17 = (((tmpvar_14.xyz * 
+    dot (vec2(0.7532, 0.2468), tmpvar_16)
+  ) * _Exposure) * texture2D (_Occlusion, xlv_TEXCOORD0.xy).x);
   vec4 tmpvar_18;
   tmpvar_18 = texture2D (unity_Lightmap, xlv_TEXCOORD4.xy);
   vec4 tmpvar_19;
@@ -103,9 +111,15 @@ void main ()
   v_24.y = tmpvar_20[1].z;
   v_24.z = tmpvar_20[2].z;
   vec3 tmpvar_25;
-  tmpvar_25 = normalize((normalize((((tmpvar_21.x * v_22) + (tmpvar_21.y * v_23)) + (tmpvar_21.z * v_24))) * tmpvar_3));
+  tmpvar_25 = normalize((normalize(
+    (((tmpvar_21.x * v_22) + (tmpvar_21.y * v_23)) + (tmpvar_21.z * v_24))
+  ) * tmpvar_3));
   vec3 lightColor_26;
-  lightColor_26 = (texture2DProj (_ShadowMapTexture, xlv_TEXCOORD5).x * (((8.0 * tmpvar_18.w) * tmpvar_18.xyz) * dot (clamp ((tmpvar_20 * tmpvar_7), 0.0, 1.0), tmpvar_21)));
+  lightColor_26 = (texture2DProj (_ShadowMapTexture, xlv_TEXCOORD5).x * ((
+    (8.0 * tmpvar_18.w)
+   * tmpvar_18.xyz) * dot (
+    clamp ((tmpvar_20 * tmpvar_7), 0.0, 1.0)
+  , tmpvar_21)));
   vec3 viewDir_27;
   viewDir_27 = -(tmpvar_9);
   vec3 tmpvar_28;
@@ -121,11 +135,35 @@ void main ()
   float tmpvar_33;
   tmpvar_33 = (tmpvar_32 + 1e-05);
   float tmpvar_34;
-  tmpvar_34 = ((1.0/((pow (tmpvar_12, 4.0) + 1e-05))) - 2.0);
+  tmpvar_34 = ((1.0/((
+    pow (tmpvar_12, 4.0)
+   + 1e-05))) - 2.0);
   float tmpvar_35;
-  tmpvar_35 = (0.5 + ((2.0 * pow (max (0.0, dot (tmpvar_25, tmpvar_28)), 2.0)) * tmpvar_12));
+  tmpvar_35 = (0.5 + ((2.0 * 
+    pow (max (0.0, dot (tmpvar_25, tmpvar_28)), 2.0)
+  ) * tmpvar_12));
   vec4 tmpvar_36;
-  tmpvar_36.xyz = ((((min (((_Color.xyz * texture2D (_MainTex, xlv_TEXCOORD0.xy).xyz) * (2.0 * texture2D (_DetailAlbedoMap, xlv_TEXCOORD0.zw).xyz)), (vec3(1.0, 1.0, 1.0) - tmpvar_11)) * ((((1.0 + ((tmpvar_35 - 1.0) * pow ((1.00001 - tmpvar_29), 5.0))) * (1.0 + ((tmpvar_35 - 1.0) * pow ((1.00001 - tmpvar_31), 5.0)))) * tmpvar_29) * lightColor_26)) + (tmpvar_10.xyz * (tmpvar_17 + (lightColor_26 * max (0.0, ((((tmpvar_11 + ((1.0 - tmpvar_11) * pow (abs((1.0 - tmpvar_32)), 5.0))) * min (1.0, min ((((2.0 * tmpvar_30) * tmpvar_31) / tmpvar_33), (((2.0 * tmpvar_30) * tmpvar_29) / tmpvar_33)))) * max (0.0, (pow (tmpvar_30, tmpvar_34) * ((tmpvar_34 + 1.0) / 6.28318)))) / ((4.0 * tmpvar_31) + 1e-05))))))) + ((((1.0 - dot (tmpvar_10.xyz, vec3(0.299, 0.587, 0.114))) * (1.0 - tmpvar_12)) * pow (abs((1.0 - tmpvar_31)), 5.0)) * tmpvar_17)) + (texture2D (_SelfIllum, xlv_TEXCOORD0.xy).xyz * _SelfIllumScale));
+  tmpvar_36.xyz = (((
+    (min (((_Color.xyz * texture2D (_MainTex, xlv_TEXCOORD0.xy).xyz) * (2.0 * texture2D (_DetailAlbedoMap, xlv_TEXCOORD0.zw).xyz)), (vec3(1.0, 1.0, 1.0) - tmpvar_11)) * (((
+      (1.0 + ((tmpvar_35 - 1.0) * pow ((1.00001 - tmpvar_29), 5.0)))
+     * 
+      (1.0 + ((tmpvar_35 - 1.0) * pow ((1.00001 - tmpvar_31), 5.0)))
+    ) * tmpvar_29) * lightColor_26))
+   + 
+    (tmpvar_10.xyz * (tmpvar_17 + (lightColor_26 * max (0.0, 
+      ((((tmpvar_11 + 
+        ((1.0 - tmpvar_11) * pow (abs((1.0 - tmpvar_32)), 5.0))
+      ) * min (1.0, 
+        min ((((2.0 * tmpvar_30) * tmpvar_31) / tmpvar_33), (((2.0 * tmpvar_30) * tmpvar_29) / tmpvar_33))
+      )) * max (0.0, (
+        pow (tmpvar_30, tmpvar_34)
+       * 
+        ((tmpvar_34 + 1.0) / 6.28318)
+      ))) / ((4.0 * tmpvar_31) + 1e-05))
+    ))))
+  ) + (
+    (((1.0 - dot (tmpvar_10.xyz, vec3(0.299, 0.587, 0.114))) * (1.0 - tmpvar_12)) * pow (abs((1.0 - tmpvar_31)), 5.0))
+   * tmpvar_17)) + (texture2D (_SelfIllum, xlv_TEXCOORD0.xy).xyz * _SelfIllumScale));
   tmpvar_36.w = (texture2D (_AlphaMap, xlv_TEXCOORD0.xy).w * _Color.w);
   gl_FragData[0] = tmpvar_36;
 }

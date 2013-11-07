@@ -55,7 +55,9 @@ lowp vec4 frag_surf (
   lowp vec3 tmpvar_20;
   tmpvar_20 = tex_7.xyz;
   lowp vec3 tmpvar_21;
-  tmpvar_21 = ((tmpvar_20 * ((_LightColor0.xyz * diff_5) + IN_1.vlight)) + (_LightColor0.xyz * spec_3));
+  tmpvar_21 = ((tmpvar_20 * (
+    (_LightColor0.xyz * diff_5)
+   + IN_1.vlight)) + (_LightColor0.xyz * spec_3));
   c_2.xyz = tmpvar_21.xyz.xyz;
   float tmpvar_22;
   tmpvar_22 = 0.0;

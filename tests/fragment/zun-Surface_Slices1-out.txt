@@ -7,7 +7,9 @@ void main ()
   tmpvar_1 = gl_TexCoord[1].xyz;
   vec4 light_2;
   float x_3;
-  x_3 = (fract(((tmpvar_1.y + (tmpvar_1.z * 0.1)) * 5.0)) - 0.5);
+  x_3 = (fract((
+    (tmpvar_1.y + (tmpvar_1.z * 0.1))
+   * 5.0)) - 0.5);
   if ((x_3 < 0.0)) {
     discard;
   };

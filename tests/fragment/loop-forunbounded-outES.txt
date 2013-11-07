@@ -22,7 +22,9 @@ void main ()
       break;
     };
     highp vec3 tmpvar_8;
-    tmpvar_8 = (light_5 + ((col_6.xyz * tmpvar_2[j_3]) * _TerrainTreeLightColors[j_3].xyz));
+    tmpvar_8 = (light_5 + ((col_6.xyz * 
+      tmpvar_2[j_3]
+    ) * _TerrainTreeLightColors[j_3].xyz));
     light_5 = tmpvar_8;
     j_3 = (j_3 + 1);
   };

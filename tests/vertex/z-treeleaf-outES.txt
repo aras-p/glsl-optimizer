@@ -63,17 +63,27 @@ void main ()
   tmpvar_16.x = dot (tmpvar_3.xyz, vec3((tmpvar_2.y + tmpvar_15)));
   tmpvar_16.y = tmpvar_15;
   highp vec4 tmpvar_17;
-  tmpvar_17 = abs(((fract((((fract(((_Time.yy + tmpvar_16).xxyy * vec4(1.975, 0.793, 0.375, 0.193))) * 2.0) - 1.0) + 0.5)) * 2.0) - 1.0));
+  tmpvar_17 = abs(((
+    fract((((
+      fract(((_Time.yy + tmpvar_16).xxyy * vec4(1.975, 0.793, 0.375, 0.193)))
+     * 2.0) - 1.0) + 0.5))
+   * 2.0) - 1.0));
   highp vec4 tmpvar_18;
   tmpvar_18 = ((tmpvar_17 * tmpvar_17) * (3.0 - (2.0 * tmpvar_17)));
   highp vec2 tmpvar_19;
   tmpvar_19 = (tmpvar_18.xz + tmpvar_18.yw);
   bend_14.xz = ((tmpvar_2.y * 0.1) * tmpvar_10).xz;
   bend_14.y = (_glesMultiTexCoord1.y * 0.3);
-  pos_13.xyz = (tmpvar_3.xyz + (((tmpvar_19.xyx * bend_14) + ((_Wind.xyz * tmpvar_19.y) * _glesMultiTexCoord1.y)) * _Wind.w));
+  pos_13.xyz = (tmpvar_3.xyz + ((
+    (tmpvar_19.xyx * bend_14)
+   + 
+    ((_Wind.xyz * tmpvar_19.y) * _glesMultiTexCoord1.y)
+  ) * _Wind.w));
   pos_13.xyz = (pos_13.xyz + (_glesMultiTexCoord1.x * _Wind.xyz));
   highp vec3 tmpvar_20;
-  tmpvar_20 = mix ((pos_13.xyz - ((dot (_SquashPlaneNormal.xyz, pos_13.xyz) + _SquashPlaneNormal.w) * _SquashPlaneNormal.xyz)), pos_13.xyz, vec3(_SquashAmount));
+  tmpvar_20 = mix ((pos_13.xyz - (
+    (dot (_SquashPlaneNormal.xyz, pos_13.xyz) + _SquashPlaneNormal.w)
+   * _SquashPlaneNormal.xyz)), pos_13.xyz, vec3(_SquashAmount));
   highp vec4 tmpvar_21;
   tmpvar_21.w = 1.0;
   tmpvar_21.xyz = tmpvar_20;
@@ -103,7 +113,9 @@ void main ()
   xlv_TEXCOORD0 = ((_glesMultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   xlv_COLOR0 = tmpvar_22;
   xlv_TEXCOORD1 = (tmpvar_25 * (_World2Object * _WorldSpaceLightPos0).xyz);
-  xlv_TEXCOORD2 = (tmpvar_25 * (((_World2Object * tmpvar_26).xyz * unity_Scale.w) - tmpvar_20));
+  xlv_TEXCOORD2 = (tmpvar_25 * ((
+    (_World2Object * tmpvar_26)
+  .xyz * unity_Scale.w) - tmpvar_20));
   xlv_TEXCOORD3 = (_LightMatrix0 * (_Object2World * tmpvar_21)).xy;
 }
 
