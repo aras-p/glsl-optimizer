@@ -25,6 +25,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
+#include "util/u_format_r11g11b10f.h"
+
 /* float */
 #define ATTR1FV( A, V ) ATTR( A, 1, GL_FLOAT, (V)[0], 0, 0, 1 )
 #define ATTR2FV( A, V ) ATTR( A, 2, GL_FLOAT, (V)[0], (V)[1], 0, 1 )
@@ -205,6 +207,10 @@ static inline float conv_i2_to_norm_float(const struct gl_context *ctx, int i2)
       } else {							\
 	 ATTRI10_##val((attr), (arg));				\
       }								\
+   } else if ((type) == GL_UNSIGNED_INT_10F_11F_11F_REV) {	\
+      float res[4];						\
+      r11g11b10f_to_float3((arg), res);				\
+      ATTR##val##FV((attr), res);				\
    } else							\
       ERROR(GL_INVALID_VALUE);					\
    } while(0)
@@ -835,8 +841,22 @@ TAG(VertexAttrib4fvNV)(GLuint index, const GLfloat * v)
       ATTR4FV(index, v);
 }
 
+
 #define ERROR_IF_NOT_PACKED_TYPE(ctx, type, func) \
    if (type != GL_INT_2_10_10_10_REV && type != GL_UNSIGNED_INT_2_10_10_10_REV) { \
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(type)", func); \
+      return; \
+   }
+
+/* Extended version of ERROR_IF_NOT_PACKED_TYPE which also
+ * accepts GL_UNSIGNED_INT_10F_11F_11F_REV.
+ *
+ * Only used for VertexAttribP[123]ui[v]; VertexAttribP4* cannot use this type,
+ * and neither can legacy vertex attribs.
+ */
+#define ERROR_IF_NOT_PACKED_TYPE_EXT(ctx, type, func) \
+   if (type != GL_INT_2_10_10_10_REV && type != GL_UNSIGNED_INT_2_10_10_10_REV && \
+       type != GL_UNSIGNED_INT_10F_11F_11F_REV) { \
       _mesa_error(ctx, GL_INVALID_ENUM, "%s(type)", func); \
       return; \
    }
@@ -1094,7 +1114,7 @@ TAG(VertexAttribP1ui)(GLuint index, GLenum type, GLboolean normalized,
 		      GLuint value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glVertexAttribP1ui");
+   ERROR_IF_NOT_PACKED_TYPE_EXT(ctx, type, "glVertexAttribP1ui");
    ATTR_UI_INDEX(ctx, 1, type, normalized, index, value);
 }
 
@@ -1103,7 +1123,7 @@ TAG(VertexAttribP2ui)(GLuint index, GLenum type, GLboolean normalized,
 		      GLuint value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glVertexAttribP2ui");
+   ERROR_IF_NOT_PACKED_TYPE_EXT(ctx, type, "glVertexAttribP2ui");
    ATTR_UI_INDEX(ctx, 2, type, normalized, index, value);
 }
 
@@ -1112,7 +1132,7 @@ TAG(VertexAttribP3ui)(GLuint index, GLenum type, GLboolean normalized,
 		      GLuint value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glVertexAttribP3ui");
+   ERROR_IF_NOT_PACKED_TYPE_EXT(ctx, type, "glVertexAttribP3ui");
    ATTR_UI_INDEX(ctx, 3, type, normalized, index, value);
 }
 
@@ -1130,7 +1150,7 @@ TAG(VertexAttribP1uiv)(GLuint index, GLenum type, GLboolean normalized,
 		       const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glVertexAttribP1uiv");
+   ERROR_IF_NOT_PACKED_TYPE_EXT(ctx, type, "glVertexAttribP1uiv");
    ATTR_UI_INDEX(ctx, 1, type, normalized, index, *value);
 }
 
@@ -1139,7 +1159,7 @@ TAG(VertexAttribP2uiv)(GLuint index, GLenum type, GLboolean normalized,
 		       const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glVertexAttribP2uiv");
+   ERROR_IF_NOT_PACKED_TYPE_EXT(ctx, type, "glVertexAttribP2uiv");
    ATTR_UI_INDEX(ctx, 2, type, normalized, index, *value);
 }
 
@@ -1148,7 +1168,7 @@ TAG(VertexAttribP3uiv)(GLuint index, GLenum type, GLboolean normalized,
 		       const GLuint *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ERROR_IF_NOT_PACKED_TYPE(ctx, type, "glVertexAttribP3uiv");
+   ERROR_IF_NOT_PACKED_TYPE_EXT(ctx, type, "glVertexAttribP3uiv");
    ATTR_UI_INDEX(ctx, 3, type, normalized, index, *value);
 }
 
