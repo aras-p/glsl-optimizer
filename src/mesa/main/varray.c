@@ -315,13 +315,13 @@ update_array_format(struct gl_context *ctx,
                   "%s(relativeOffset=%d > "
                   "GL_MAX_VERTEX_ATTRIB_RELATIVE_OFFSET)",
                   func, relativeOffset);
-      return GL_FALSE;
+      return false;
    }
 
    if (ctx->Extensions.ARB_vertex_type_10f_11f_11f_rev &&
          type == GL_UNSIGNED_INT_10F_11F_11F_REV && size != 3) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(size=%d)", func, size);
-      return;
+      return false;
    }
 
    ASSERT(size <= 4);
