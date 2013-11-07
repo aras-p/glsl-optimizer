@@ -14,8 +14,10 @@ void main ()
   colint.z = (gl_InstanceID << 2);
   colint.w = (gl_VertexID + colint.y);
   col.x = trunc(position.x);
-  col.y = roundEven(position.y);
-  col.z = roundEven(position.y);
+  float cse_2;
+  cse_2 = roundEven(position.y);
+  col.y = cse_2;
+  col.z = cse_2;
   col.w = (0.5 * (exp(position.w) + exp(
     -(position.w)
   )));
