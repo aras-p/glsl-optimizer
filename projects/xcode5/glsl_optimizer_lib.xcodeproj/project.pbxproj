@@ -64,6 +64,8 @@
 		2B6AC7BB161EC99C0094FD86 /* prog_statevars.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B6AC7B7161EC99C0094FD86 /* prog_statevars.h */; };
 		2B6AC7BD161EC9D40094FD86 /* ir_uniform.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B6AC7BC161EC9D40094FD86 /* ir_uniform.h */; };
 		2B6AC8AD161ED9080094FD86 /* glminimal.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B6AC8AC161ED9080094FD86 /* glminimal.h */; };
+		2B8979DE182C0C4700718F8A /* builtin_functions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B8979DD182C0C4700718F8A /* builtin_functions.cpp */; };
+		2B8979E0182C195C00718F8A /* opt_cse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B8979DF182C195C00718F8A /* opt_cse.cpp */; };
 		2B92A05D15F9FF4700CFED4A /* builtin_variables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B92A05C15F9FF4700CFED4A /* builtin_variables.cpp */; };
 		2B92A05E15F9FF4700CFED4A /* builtin_variables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B92A05C15F9FF4700CFED4A /* builtin_variables.cpp */; };
 		2BA07FAB1352E7BB00A1C074 /* ralloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2BA07FA91352E7BB00A1C074 /* ralloc.c */; };
@@ -298,6 +300,8 @@
 		2B6AC7B7161EC99C0094FD86 /* prog_statevars.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = prog_statevars.h; path = ../../src/mesa/program/prog_statevars.h; sourceTree = SOURCE_ROOT; };
 		2B6AC7BC161EC9D40094FD86 /* ir_uniform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_uniform.h; path = ../../src/glsl/ir_uniform.h; sourceTree = SOURCE_ROOT; };
 		2B6AC8AC161ED9080094FD86 /* glminimal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = glminimal.h; path = ../../src/mesa/main/glminimal.h; sourceTree = SOURCE_ROOT; };
+		2B8979DD182C0C4700718F8A /* builtin_functions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = builtin_functions.cpp; path = ../../src/glsl/builtin_functions.cpp; sourceTree = "<group>"; };
+		2B8979DF182C195C00718F8A /* opt_cse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_cse.cpp; path = ../../src/glsl/opt_cse.cpp; sourceTree = "<group>"; };
 		2B92A05C15F9FF4700CFED4A /* builtin_variables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = builtin_variables.cpp; path = ../../src/glsl/builtin_variables.cpp; sourceTree = SOURCE_ROOT; };
 		2BA07FA91352E7BB00A1C074 /* ralloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ralloc.c; path = ../../src/glsl/ralloc.c; sourceTree = SOURCE_ROOT; };
 		2BA07FAA1352E7BB00A1C074 /* ralloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ralloc.h; path = ../../src/glsl/ralloc.h; sourceTree = SOURCE_ROOT; };
@@ -491,6 +495,7 @@
 				2BA55A541207FEA6002DC82D /* ast_type.cpp */,
 				2BBD9DA8171968C300515007 /* builtin_compiler */,
 				2BA55A561207FEA6002DC82D /* builtin_function.cpp */,
+				2B8979DD182C0C4700718F8A /* builtin_functions.cpp */,
 				2BA7E13817D0AEB200D5C475 /* builtin_type_macros.h */,
 				2BA7E13917D0AEB200D5C475 /* builtin_types.cpp */,
 				2B92A05C15F9FF4700CFED4A /* builtin_variables.cpp */,
@@ -585,6 +590,7 @@
 				2B3854521293BE5000F3E692 /* opt_constant_variable.cpp */,
 				2B3854531293BE5000F3E692 /* opt_copy_propagation.cpp */,
 				2BEC22CB1356E94E00B5E301 /* opt_copy_propagation_elements.cpp */,
+				2B8979DF182C195C00718F8A /* opt_cse.cpp */,
 				2BA7E13D17D0AEB200D5C475 /* opt_dead_builtin_varyings.cpp */,
 				2B3854551293BE5000F3E692 /* opt_dead_code.cpp */,
 				2B3854541293BE5000F3E692 /* opt_dead_code_local.cpp */,
@@ -953,6 +959,7 @@
 				2B3854711293BE5000F3E692 /* opt_structure_splitting.cpp in Sources */,
 				2B3854721293BE5000F3E692 /* opt_swizzle_swizzle.cpp in Sources */,
 				2B3854731293BE5000F3E692 /* opt_tree_grafting.cpp in Sources */,
+				2B8979DE182C0C4700718F8A /* builtin_functions.cpp in Sources */,
 				2BB2F5B012B8F1580052C6B0 /* lower_discard.cpp in Sources */,
 				2BB2F5B112B8F1580052C6B0 /* lower_instructions.cpp in Sources */,
 				2BB2F5B212B8F1580052C6B0 /* lower_vector.cpp in Sources */,
@@ -960,6 +967,7 @@
 				2BA07FAB1352E7BB00A1C074 /* ralloc.c in Sources */,
 				2BA7E14017D0AEB200D5C475 /* builtin_types.cpp in Sources */,
 				2BEC22EA1356E98300B5E301 /* opt_copy_propagation_elements.cpp in Sources */,
+				2B8979E0182C195C00718F8A /* opt_cse.cpp in Sources */,
 				2B655A7313E0322E00B5278F /* ir_function_detect_recursion.cpp in Sources */,
 				2B655A7913E0324F00B5278F /* standalone_scaffolding.cpp in Sources */,
 				2BA7E14A17D0AEB200D5C475 /* opt_flip_matrices.cpp in Sources */,
