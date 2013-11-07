@@ -420,10 +420,11 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       if (op_expr[0] && op_expr[0]->operation == ir_unop_rcp)
 	 return op_expr[0]->operands[0];
 
-      /* FINISHME: We should do rcp(rsq(x)) -> sqrt(x) for some
-       * backends, except that some backends will have done sqrt ->
-       * rcp(rsq(x)) and we don't want to undo it for them.
+      /* While ir_to_mesa.cpp will lower sqrt(x) to rcp(rsq(x)), it does so at
+       * its IR level, so we can always apply this transformation.
        */
+      if (op_expr[0] && op_expr[0]->operation == ir_unop_rsq)
+         return sqrt(op_expr[0]->operands[0]);
 
       /* As far as we know, all backends are OK with rsq. */
       if (op_expr[0] && op_expr[0]->operation == ir_unop_sqrt) {
