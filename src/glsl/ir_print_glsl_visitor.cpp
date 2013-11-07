@@ -279,6 +279,13 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	
 	const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
 	
+	if (this->state->language_version >= 300 && ir->explicit_location)
+	{
+		const int binding_base = (this->state->target == vertex_shader ? (int)VERT_ATTRIB_GENERIC0 : (int)FRAG_RESULT_DATA0);
+		const int location = ir->location - binding_base;
+		ralloc_asprintf_append (&buffer, "layout(location=%d) ", location);
+	}
+	
 	int decormode = this->mode;
 	// GLSL 1.30 and up use "in" and "out" for everything
 	if (this->state->language_version >= 130)
