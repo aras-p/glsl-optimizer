@@ -58,10 +58,6 @@ if HAVE_GALLIUM_I915
 if HAVE_DRI
 SUBDIRS += dri-i915
 endif
-
-if HAVE_ST_XORG
-SUBDIRS += xorg-i915
-endif
 endif
 
 if HAVE_GALLIUM_ILO

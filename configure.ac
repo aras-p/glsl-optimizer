@@ -1751,7 +1751,7 @@ if test "x$with_gallium_drivers" != x; then
                 GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
             fi
             GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS i915/sw"
-            gallium_check_st "i915/drm" "dri-i915" "xorg-i915"
+            gallium_check_st "i915/drm" "dri-i915"
             DRICOMMON_NEED_LIBDRM=yes
             ;;
         xilo)
@@ -2038,7 +2038,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
 		src/gallium/targets/xa-vmwgfx/Makefile
 		src/gallium/targets/xa-vmwgfx/xatracker.pc
-		src/gallium/targets/xorg-i915/Makefile
 		src/gallium/targets/xorg-nouveau/Makefile
 		src/gallium/targets/xvmc-nouveau/Makefile
 		src/gallium/tests/trivial/Makefile

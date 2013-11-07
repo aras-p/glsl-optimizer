@@ -136,11 +136,6 @@ if not env['embedded']:
                 'targets/dri-i915/SConscript',
             ])
 
-    if env['xorg'] and env['drm']:
-        SConscript([
-            #'targets/xorg-i915/SConscript',
-        ])
-
 
 #
 # Unit tests & tools
