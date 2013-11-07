@@ -345,6 +345,11 @@ _mesa_bytes_per_vertex_attrib(GLint comps, GLenum type)
          return sizeof(GLuint);
       else
          return -1;
+   case GL_UNSIGNED_INT_10F_11F_11F_REV:
+      if (comps == 3)
+         return sizeof(GLuint);
+      else
+         return -1;
    default:
       return -1;
    }
