@@ -1579,6 +1579,7 @@ static const struct glx_screen_vtable dri3_screen_vtable = {
 static struct glx_screen *
 dri3_create_screen(int screen, struct glx_display * priv)
 {
+   xcb_connection_t *c = XGetXCBConnection(priv->dpy);
    const __DRIconfig **driver_configs;
    const __DRIextension **extensions;
    const struct dri3_display *const pdp = (struct dri3_display *)
@@ -1602,9 +1603,15 @@ dri3_create_screen(int screen, struct glx_display * priv)
 
    psc->fd = dri3_open(priv->dpy, RootWindow(priv->dpy, screen), None);
    if (psc->fd < 0) {
+      int conn_error = xcb_connection_has_error(c);
+
       glx_screen_cleanup(&psc->base);
       free(psc);
       InfoMessageF("screen %d does not appear to be DRI3 capable\n", screen);
+
+      if (conn_error)
+         ErrorMessageF("Connection closed during DRI3 initialization failure");
+
       return NULL;
    }
    deviceName = NULL;
