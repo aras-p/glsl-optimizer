@@ -142,7 +142,6 @@
 		2BA55A9E1207FEA6002DC82D /* ast_to_hir.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A531207FEA6002DC82D /* ast_to_hir.cpp */; };
 		2BA55A9F1207FEA6002DC82D /* ast_type.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A541207FEA6002DC82D /* ast_type.cpp */; };
 		2BA55AA01207FEA6002DC82D /* ast.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A551207FEA6002DC82D /* ast.h */; };
-		2BA55AA11207FEA6002DC82D /* builtin_function.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A561207FEA6002DC82D /* builtin_function.cpp */; };
 		2BA55AA41207FEA6002DC82D /* glsl_lexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A591207FEA6002DC82D /* glsl_lexer.cpp */; };
 		2BA55AA61207FEA6002DC82D /* glsl_optimizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A5B1207FEA6002DC82D /* glsl_optimizer.cpp */; };
 		2BA55AA71207FEA6002DC82D /* glsl_optimizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A5C1207FEA6002DC82D /* glsl_optimizer.h */; };
@@ -313,7 +312,6 @@
 		2BA55A531207FEA6002DC82D /* ast_to_hir.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ast_to_hir.cpp; path = ../../src/glsl/ast_to_hir.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A541207FEA6002DC82D /* ast_type.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ast_type.cpp; path = ../../src/glsl/ast_type.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A551207FEA6002DC82D /* ast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ast.h; path = ../../src/glsl/ast.h; sourceTree = SOURCE_ROOT; };
-		2BA55A561207FEA6002DC82D /* builtin_function.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = builtin_function.cpp; path = ../../src/glsl/builtin_function.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A591207FEA6002DC82D /* glsl_lexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glsl_lexer.cpp; path = ../../src/glsl/glsl_lexer.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A5A1207FEA6002DC82D /* glsl_lexer.ll */ = {isa = PBXFileReference; explicitFileType = sourcecode.lex; fileEncoding = 4; name = glsl_lexer.ll; path = ../../src/glsl/glsl_lexer.ll; sourceTree = SOURCE_ROOT; };
 		2BA55A5B1207FEA6002DC82D /* glsl_optimizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glsl_optimizer.cpp; path = ../../src/glsl/glsl_optimizer.cpp; sourceTree = SOURCE_ROOT; };
@@ -494,7 +492,6 @@
 				2BA55A531207FEA6002DC82D /* ast_to_hir.cpp */,
 				2BA55A541207FEA6002DC82D /* ast_type.cpp */,
 				2BBD9DA8171968C300515007 /* builtin_compiler */,
-				2BA55A561207FEA6002DC82D /* builtin_function.cpp */,
 				2B8979DD182C0C4700718F8A /* builtin_functions.cpp */,
 				2BA7E13817D0AEB200D5C475 /* builtin_type_macros.h */,
 				2BA7E13917D0AEB200D5C475 /* builtin_types.cpp */,
@@ -899,7 +896,6 @@
 				2BA55A9E1207FEA6002DC82D /* ast_to_hir.cpp in Sources */,
 				2BA7E14417D0AEB200D5C475 /* lower_named_interface_blocks.cpp in Sources */,
 				2BA55A9F1207FEA6002DC82D /* ast_type.cpp in Sources */,
-				2BA55AA11207FEA6002DC82D /* builtin_function.cpp in Sources */,
 				2BA55AA41207FEA6002DC82D /* glsl_lexer.cpp in Sources */,
 				2BA55AA61207FEA6002DC82D /* glsl_optimizer.cpp in Sources */,
 				2BA55AA81207FEA6002DC82D /* glsl_parser_extras.cpp in Sources */,

@@ -453,6 +453,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1,
 
    switch (this->operation) {
    case ir_triop_fma:
+   case ir_triop_clamp:
    case ir_triop_lrp:
    case ir_triop_bitfield_extract:
    case ir_triop_vector_insert:
