@@ -70,7 +70,7 @@ void main ()
   } else {
     highp vec4 tmpvar_33;
     tmpvar_33.zw = vec2(0.0, 0.0);
-    tmpvar_33.xy = (xlv_TEXCOORD0 + (vec2(-1.0, -1.0) * _MainTex_TexelSize.xy));
+    tmpvar_33.xy = (xlv_TEXCOORD0 - _MainTex_TexelSize.xy);
     lowp vec4 tmpvar_34;
     tmpvar_34 = texture2DLodEXT (_MainTex, tmpvar_33.xy, 0.0);
     highp vec4 rgba_35;
@@ -214,7 +214,7 @@ void main ()
       posN_8.y = (posN_8.y - tmpvar_60);
     };
     bool tmpvar_74;
-    tmpvar_74 = (!(tmpvar_72) || !(tmpvar_73));
+    tmpvar_74 = !((tmpvar_72 && tmpvar_73));
     if (!(tmpvar_73)) {
       posP_7.x = (posP_7.x + tmpvar_59);
     };
@@ -253,7 +253,7 @@ void main ()
         posN_8.y = (posN_8.y - tmpvar_60);
       };
       bool tmpvar_81;
-      tmpvar_81 = (!(tmpvar_79) || !(tmpvar_80));
+      tmpvar_81 = !((tmpvar_79 && tmpvar_80));
       if (!(tmpvar_80)) {
         posP_7.x = (posP_7.x + tmpvar_59);
       };
@@ -292,7 +292,7 @@ void main ()
           posN_8.y = (posN_8.y - tmpvar_60);
         };
         bool tmpvar_88;
-        tmpvar_88 = (!(tmpvar_86) || !(tmpvar_87));
+        tmpvar_88 = !((tmpvar_86 && tmpvar_87));
         if (!(tmpvar_87)) {
           posP_7.x = (posP_7.x + tmpvar_59);
         };
@@ -331,7 +331,7 @@ void main ()
             posN_8.y = (posN_8.y - tmpvar_60);
           };
           bool tmpvar_95;
-          tmpvar_95 = (!(tmpvar_93) || !(tmpvar_94));
+          tmpvar_95 = !((tmpvar_93 && tmpvar_94));
           if (!(tmpvar_94)) {
             posP_7.x = (posP_7.x + tmpvar_59);
           };
@@ -370,7 +370,7 @@ void main ()
               posN_8.y = (posN_8.y - (tmpvar_60 * 1.5));
             };
             bool tmpvar_102;
-            tmpvar_102 = (!(tmpvar_100) || !(tmpvar_101));
+            tmpvar_102 = !((tmpvar_100 && tmpvar_101));
             if (!(tmpvar_101)) {
               posP_7.x = (posP_7.x + (tmpvar_59 * 1.5));
             };
@@ -409,7 +409,7 @@ void main ()
                 posN_8.y = (posN_8.y - (tmpvar_60 * 2.0));
               };
               bool tmpvar_109;
-              tmpvar_109 = (!(tmpvar_107) || !(tmpvar_108));
+              tmpvar_109 = !((tmpvar_107 && tmpvar_108));
               if (!(tmpvar_108)) {
                 posP_7.x = (posP_7.x + (tmpvar_59 * 2.0));
               };
@@ -448,7 +448,7 @@ void main ()
                   posN_8.y = (posN_8.y - (tmpvar_60 * 2.0));
                 };
                 bool tmpvar_116;
-                tmpvar_116 = (!(tmpvar_114) || !(tmpvar_115));
+                tmpvar_116 = !((tmpvar_114 && tmpvar_115));
                 if (!(tmpvar_115)) {
                   posP_7.x = (posP_7.x + (tmpvar_59 * 2.0));
                 };
@@ -487,7 +487,7 @@ void main ()
                     posN_8.y = (posN_8.y - (tmpvar_60 * 2.0));
                   };
                   bool tmpvar_123;
-                  tmpvar_123 = (!(tmpvar_121) || !(tmpvar_122));
+                  tmpvar_123 = !((tmpvar_121 && tmpvar_122));
                   if (!(tmpvar_122)) {
                     posP_7.x = (posP_7.x + (tmpvar_59 * 2.0));
                   };
@@ -526,7 +526,7 @@ void main ()
                       posN_8.y = (posN_8.y - (tmpvar_60 * 2.0));
                     };
                     bool tmpvar_130;
-                    tmpvar_130 = (!(tmpvar_128) || !(tmpvar_129));
+                    tmpvar_130 = !((tmpvar_128 && tmpvar_129));
                     if (!(tmpvar_129)) {
                       posP_7.x = (posP_7.x + (tmpvar_59 * 2.0));
                     };
@@ -565,7 +565,7 @@ void main ()
                         posN_8.y = (posN_8.y - (tmpvar_60 * 4.0));
                       };
                       bool tmpvar_137;
-                      tmpvar_137 = (!(tmpvar_135) || !(tmpvar_136));
+                      tmpvar_137 = !((tmpvar_135 && tmpvar_136));
                       if (!(tmpvar_136)) {
                         posP_7.x = (posP_7.x + (tmpvar_59 * 4.0));
                       };

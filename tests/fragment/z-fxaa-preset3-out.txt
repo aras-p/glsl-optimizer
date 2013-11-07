@@ -74,7 +74,7 @@ void main ()
     ) * 1.33333));
     vec4 tmpvar_33;
     tmpvar_33.zw = vec2(0.0, 0.0);
-    tmpvar_33.xy = (xlv_TEXCOORD0 + (vec2(-1.0, -1.0) * _MainTex_TexelSize.xy));
+    tmpvar_33.xy = (xlv_TEXCOORD0 - _MainTex_TexelSize.xy);
     vec4 tmpvar_34;
     tmpvar_34 = texture2DLod (_MainTex, tmpvar_33.xy, 0.0);
     vec4 tmpvar_35;
@@ -110,13 +110,13 @@ void main ()
     tmpvar_46 = (((
       abs((((0.25 * tmpvar_42) + (-0.5 * tmpvar_25)) + (0.25 * tmpvar_44)))
      + 
-      abs((((0.5 * tmpvar_24) + (-1.0 * tmpvar_26)) + (0.5 * tmpvar_28)))
+      abs((((0.5 * tmpvar_24) - tmpvar_26) + (0.5 * tmpvar_28)))
     ) + abs(
       (((0.25 * tmpvar_43) + (-0.5 * tmpvar_27)) + (0.25 * tmpvar_45))
     )) >= ((
       abs((((0.25 * tmpvar_42) + (-0.5 * tmpvar_24)) + (0.25 * tmpvar_43)))
      + 
-      abs((((0.5 * tmpvar_25) + (-1.0 * tmpvar_26)) + (0.5 * tmpvar_27)))
+      abs((((0.5 * tmpvar_25) - tmpvar_26) + (0.5 * tmpvar_27)))
     ) + abs(
       (((0.25 * tmpvar_44) + (-0.5 * tmpvar_28)) + (0.25 * tmpvar_45))
     )));
@@ -151,7 +151,7 @@ void main ()
       gradientN_11 = tmpvar_49;
     };
     if (!(tmpvar_51)) {
-      lengthSign_12 = (tmpvar_47 * -1.0);
+      lengthSign_12 = -(tmpvar_47);
     };
     float tmpvar_52;
     if (tmpvar_46) {
@@ -186,7 +186,7 @@ void main ()
     lumaEndP_6 = lumaN_14;
     doneN_5 = bool(0);
     doneP_4 = bool(0);
-    posN_10 = (posN_10 + (tmpvar_54 * vec2(-1.0, -1.0)));
+    posN_10 = (posN_10 - tmpvar_54);
     posP_9 = (posP_9 + tmpvar_54);
     i_3 = 0;
     for (int i_3 = 0; i_3 < 16; ) {
