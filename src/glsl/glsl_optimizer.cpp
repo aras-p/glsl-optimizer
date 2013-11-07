@@ -20,29 +20,36 @@ static void DeleteShader(struct gl_context *ctx, struct gl_shader *shader)
 
 
 static void
-initialize_mesa_context(struct gl_context *ctx, gl_api api)
+initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 {
    memset(ctx, 0, sizeof(*ctx));
 
-   ctx->API = api;
+	switch(api)
+	{
+	default:
+	case kGlslTargetOpenGL:
+		ctx->API = API_OPENGL_COMPAT;
+		ctx->Const.GLSLVersion = 140;
+		break;
+	case kGlslTargetOpenGLES20:
+		ctx->API = API_OPENGLES2;
+		ctx->Const.GLSLVersion = 110;
+		ctx->Extensions.OES_standard_derivatives = GL_TRUE;
+		ctx->Extensions.EXT_shadow_samplers = GL_TRUE;
+		ctx->Extensions.EXT_frag_depth = GL_TRUE;
+		break;
+	case kGlslTargetOpenGLES30:
+		ctx->API = API_OPENGL_CORE;
+		ctx->Const.GLSLVersion = 300;
+		ctx->Extensions.ARB_ES3_compatibility = true;
+		break;
+	}
+	
 
    ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
    ctx->Extensions.EXT_texture_array = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
    ctx->Extensions.ARB_shader_texture_lod = GL_TRUE;
-
-   // Enable opengl es extensions we care about here
-   if (api == API_OPENGLES2)
-   {
-	   ctx->Extensions.OES_standard_derivatives = GL_TRUE;
-	   ctx->Extensions.EXT_shadow_samplers = GL_TRUE;
-	   ctx->Extensions.EXT_frag_depth = GL_TRUE;
-   }
-
-   ctx->Const.GLSLVersion = 140;
-
-   if(api == API_OPENGL_CORE)
-	   ctx->Extensions.ARB_ES3_compatibility = true;
 
    /* 1.20 minimums. */
    ctx->Const.MaxLights = 8;
@@ -71,19 +78,7 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
 struct glslopt_ctx {
 	glslopt_ctx (glslopt_target target) {
 		mem_ctx = ralloc_context (NULL);
-		switch(target)
-		{
-		default:
-		case kGlslTargetOpenGL:
-			initialize_mesa_context (&mesa_ctx, API_OPENGL_COMPAT);
-			break;
-		case kGlslTargetOpenGLES20:
-			initialize_mesa_context (&mesa_ctx, API_OPENGLES2);
-			break;
-		case kGlslTargetOpenGLES30:
-			initialize_mesa_context (&mesa_ctx, API_OPENGL_CORE);
-			break;
-		}
+		initialize_mesa_context (&mesa_ctx, target);
 	}
 	~glslopt_ctx() {
 		ralloc_free (mem_ctx);
