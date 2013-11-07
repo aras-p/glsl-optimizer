@@ -214,7 +214,8 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
    assert((type >= GL_BYTE && type <= GL_DOUBLE) ||
           type == GL_FIXED || type == GL_HALF_FLOAT ||
           type == GL_INT_2_10_10_10_REV ||
-          type == GL_UNSIGNED_INT_2_10_10_10_REV);
+          type == GL_UNSIGNED_INT_2_10_10_10_REV ||
+          type == GL_UNSIGNED_INT_10F_11F_11F_REV);
    assert(size >= 1);
    assert(size <= 4);
    assert(format == GL_RGBA || format == GL_BGRA);
@@ -249,6 +250,14 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
                return PIPE_FORMAT_R10G10B10A2_USCALED;
          }
       }
+   }
+
+   if (type == GL_UNSIGNED_INT_10F_11F_11F_REV) {
+      assert(size == 3);
+      assert(!integer);
+      assert(format == GL_RGBA);
+
+      return PIPE_FORMAT_R11G11B10_FLOAT;
    }
 
    if (format == GL_BGRA) {

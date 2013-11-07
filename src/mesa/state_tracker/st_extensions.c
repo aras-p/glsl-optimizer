@@ -507,6 +507,8 @@ void st_init_extensions(struct st_context *st)
           PIPE_FORMAT_B10G10R10A2_USCALED,
           PIPE_FORMAT_R10G10B10A2_SSCALED,
           PIPE_FORMAT_B10G10R10A2_SSCALED } },
+      { { o(ARB_vertex_type_10f_11f_11f_rev) },
+        { PIPE_FORMAT_R11G11B10_FLOAT } },
    };
 
    static const struct st_extension_format_mapping tbo_rgb32[] = {
