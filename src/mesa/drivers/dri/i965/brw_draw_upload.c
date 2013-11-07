@@ -244,6 +244,8 @@ brw_get_vertex_surface_type(struct brw_context *brw,
       case GL_UNSIGNED_BYTE: return ubyte_types_direct[size];
       default: assert(0); return 0;
       }
+   } else if (glarray->Type == GL_UNSIGNED_INT_10F_11F_11F_REV) {
+      return BRW_SURFACEFORMAT_R11G11B10_FLOAT;
    } else if (glarray->Normalized) {
       switch (glarray->Type) {
       case GL_DOUBLE: return double_types[size];
