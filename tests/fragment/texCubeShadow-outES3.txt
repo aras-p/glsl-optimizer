@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 uniform lowp samplerCubeShadow shadowmap;
 in mediump vec4 uv;
 out mediump vec4 _fragColor;

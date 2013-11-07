@@ -1,4 +1,5 @@
 #version 300 es
+precision mediump float;
 uniform lowp sampler2DShadow shadowmap;
 in highp vec4 xlv_TEXCOORD0;
 out lowp vec4 _fragColor;

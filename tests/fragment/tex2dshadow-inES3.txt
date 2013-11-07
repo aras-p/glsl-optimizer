@@ -1,4 +1,6 @@
 #version 300 es
+precision mediump float;
+
 float xll_shadow2D(sampler2DShadow s, vec3 coord) { return texture (s, coord); }
 float xll_shadow2Dproj(sampler2DShadow s, vec4 coord) { return textureProj (s, coord); }
 uniform sampler2DShadow shadowmap;
