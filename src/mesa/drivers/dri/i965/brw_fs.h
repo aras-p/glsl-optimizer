@@ -291,7 +291,7 @@ public:
    void assign_curb_setup();
    void calculate_urb_setup();
    void assign_urb_setup();
-   bool assign_regs();
+   bool assign_regs(bool allow_spilling);
    void assign_regs_trivial();
    void get_used_mrfs(bool *mrf_used);
    void setup_payload_interference(struct ra_graph *g, int payload_reg_count,
@@ -322,7 +322,7 @@ public:
    bool remove_dead_constants();
    bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);
-   void schedule_instructions(bool post_reg_alloc);
+   void schedule_instructions(instruction_scheduler_mode mode);
    void insert_gen4_send_dependency_workarounds();
    void insert_gen4_pre_send_dependency_workarounds(fs_inst *inst);
    void insert_gen4_post_send_dependency_workarounds(fs_inst *inst);

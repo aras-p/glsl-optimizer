@@ -417,7 +417,7 @@ fs_visitor::setup_mrf_hack_interference(struct ra_graph *g, int first_mrf_node)
 }
 
 bool
-fs_visitor::assign_regs()
+fs_visitor::assign_regs(bool allow_spilling)
 {
    /* Most of this allocation was written for a reg_width of 1
     * (dispatch_width == 8).  In extending to 16-wide, the code was
@@ -496,13 +496,9 @@ fs_visitor::assign_regs()
       if (reg == -1) {
          fail("no register to spill:\n");
          dump_instructions();
-      } else if (dispatch_width == 16) {
-	 fail("Failure to register allocate.  Reduce number of live scalar "
-              "values to avoid this.");
-      } else {
-	 spill_reg(reg);
+      } else if (allow_spilling) {
+         spill_reg(reg);
       }
-
 
       ralloc_free(g);
 

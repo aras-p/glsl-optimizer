@@ -59,6 +59,12 @@ public:
    bool predicate_inverse;
 };
 
+enum instruction_scheduler_mode {
+   SCHEDULE_PRE_NON_LIFO,
+   SCHEDULE_PRE_LIFO,
+   SCHEDULE_POST,
+};
+
 class backend_visitor : public ir_visitor {
 public:
 

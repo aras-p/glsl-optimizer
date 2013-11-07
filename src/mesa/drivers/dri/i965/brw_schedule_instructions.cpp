@@ -391,14 +391,16 @@ schedule_node::set_latency_gen7(bool is_haswell)
 
 class instruction_scheduler {
 public:
-   instruction_scheduler(backend_visitor *v, int grf_count, bool post_reg_alloc)
+   instruction_scheduler(backend_visitor *v, int grf_count,
+                         instruction_scheduler_mode mode)
    {
       this->bv = v;
       this->mem_ctx = ralloc_context(NULL);
       this->grf_count = grf_count;
       this->instructions.make_empty();
       this->instructions_to_schedule = 0;
-      this->post_reg_alloc = post_reg_alloc;
+      this->post_reg_alloc = (mode == SCHEDULE_POST);
+      this->mode = mode;
       this->time = 0;
       if (!post_reg_alloc) {
          this->remaining_grf_uses = rzalloc_array(mem_ctx, int, grf_count);
@@ -447,6 +449,8 @@ public:
    exec_list instructions;
    backend_visitor *bv;
 
+   instruction_scheduler_mode mode;
+
    /**
     * Number of instructions left to schedule that reference each vgrf.
     *
@@ -467,7 +471,8 @@ public:
 class fs_instruction_scheduler : public instruction_scheduler
 {
 public:
-   fs_instruction_scheduler(fs_visitor *v, int grf_count, bool post_reg_alloc);
+   fs_instruction_scheduler(fs_visitor *v, int grf_count,
+                            instruction_scheduler_mode mode);
    void calculate_deps();
    bool is_compressed(fs_inst *inst);
    schedule_node *choose_instruction_to_schedule();
@@ -481,8 +486,8 @@ public:
 
 fs_instruction_scheduler::fs_instruction_scheduler(fs_visitor *v,
                                                    int grf_count,
-                                                   bool post_reg_alloc)
-   : instruction_scheduler(v, grf_count, post_reg_alloc),
+                                                   instruction_scheduler_mode mode)
+   : instruction_scheduler(v, grf_count, mode),
      v(v)
 {
 }
@@ -569,7 +574,7 @@ public:
 
 vec4_instruction_scheduler::vec4_instruction_scheduler(vec4_visitor *v,
                                                        int grf_count)
-   : instruction_scheduler(v, grf_count, true),
+   : instruction_scheduler(v, grf_count, SCHEDULE_POST),
      v(v)
 {
 }
@@ -1179,39 +1184,41 @@ fs_instruction_scheduler::choose_instruction_to_schedule()
             continue;
          }
 
-         /* Prefer instructions that recently became available for scheduling.
-          * These are the things that are most likely to (eventually) make a
-          * variable dead and reduce register pressure.  Typical register
-          * pressure estimates don't work for us because most of our pressure
-          * comes from texturing, where no single instruction to schedule will
-          * make a vec4 value dead.
-          */
-         if (n->cand_generation > chosen->cand_generation) {
-            chosen = n;
-            continue;
-         } else if (n->cand_generation < chosen->cand_generation) {
-            continue;
-         }
-
-         /* On MRF-using chips, prefer non-SEND instructions.  If we don't do
-          * this, then because we prefer instructions that just became
-          * candidates, we'll end up in a pattern of scheduling a SEND, then
-          * the MRFs for the next SEND, then the next SEND, then the MRFs,
-          * etc., without ever consuming the results of a send.
-          */
-         if (v->brw->gen < 7) {
-            fs_inst *chosen_inst = (fs_inst *)chosen->inst;
-
-            /* We use regs_written > 1 as our test for the kind of send
-             * instruction to avoid -- only sends generate many regs, and a
-             * single-result send is probably actually reducing register
-             * pressure.
+         if (mode == SCHEDULE_PRE_LIFO) {
+            /* Prefer instructions that recently became available for
+             * scheduling.  These are the things that are most likely to
+             * (eventually) make a variable dead and reduce register pressure.
+             * Typical register pressure estimates don't work for us because
+             * most of our pressure comes from texturing, where no single
+             * instruction to schedule will make a vec4 value dead.
              */
-            if (inst->regs_written <= 1 && chosen_inst->regs_written > 1) {
+            if (n->cand_generation > chosen->cand_generation) {
                chosen = n;
                continue;
-            } else if (inst->regs_written > chosen_inst->regs_written) {
+            } else if (n->cand_generation < chosen->cand_generation) {
                continue;
+            }
+
+            /* On MRF-using chips, prefer non-SEND instructions.  If we don't
+             * do this, then because we prefer instructions that just became
+             * candidates, we'll end up in a pattern of scheduling a SEND,
+             * then the MRFs for the next SEND, then the next SEND, then the
+             * MRFs, etc., without ever consuming the results of a send.
+             */
+            if (v->brw->gen < 7) {
+               fs_inst *chosen_inst = (fs_inst *)chosen->inst;
+
+               /* We use regs_written > 1 as our test for the kind of send
+                * instruction to avoid -- only sends generate many regs, and a
+                * single-result send is probably actually reducing register
+                * pressure.
+                */
+               if (inst->regs_written <= 1 && chosen_inst->regs_written > 1) {
+                  chosen = n;
+                  continue;
+               } else if (inst->regs_written > chosen_inst->regs_written) {
+                  continue;
+               }
             }
          }
 
@@ -1407,18 +1414,18 @@ instruction_scheduler::run(exec_list *all_instructions)
 }
 
 void
-fs_visitor::schedule_instructions(bool post_reg_alloc)
+fs_visitor::schedule_instructions(instruction_scheduler_mode mode)
 {
    int grf_count;
-   if (post_reg_alloc)
+   if (mode == SCHEDULE_POST)
       grf_count = grf_used;
    else
       grf_count = virtual_grf_count;
 
-   fs_instruction_scheduler sched(this, grf_count, post_reg_alloc);
+   fs_instruction_scheduler sched(this, grf_count, mode);
    sched.run(&instructions);
 
-   if (unlikely(INTEL_DEBUG & DEBUG_WM) && post_reg_alloc) {
+   if (unlikely(INTEL_DEBUG & DEBUG_WM) && mode == SCHEDULE_POST) {
       printf("fs%d estimated execution time: %d cycles\n",
              dispatch_width, sched.time);
    }

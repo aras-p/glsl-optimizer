@@ -3286,15 +3286,28 @@ fs_visitor::run()
       assign_curb_setup();
       assign_urb_setup();
 
-      schedule_instructions(false);
+      schedule_instructions(SCHEDULE_PRE_NON_LIFO);
 
       if (0)
 	 assign_regs_trivial();
       else {
-	 while (!assign_regs()) {
-	    if (failed)
-	       break;
-	 }
+         if (!assign_regs(false)) {
+            /* Try a non-spilling register allocation again with a different
+             * scheduling heuristic.
+             */
+            schedule_instructions(SCHEDULE_PRE_LIFO);
+            if (!assign_regs(false)) {
+               if (dispatch_width == 16) {
+                  fail("Failure to register allocate.  Reduce number of "
+                       "live scalar values to avoid this.");
+               } else {
+                  while (!assign_regs(true)) {
+                     if (failed)
+                        break;
+                  }
+               }
+            }
+         }
       }
    }
    assert(force_uncompressed_stack == 0);
@@ -3309,7 +3322,7 @@ fs_visitor::run()
    if (failed)
       return false;
 
-   schedule_instructions(true);
+   schedule_instructions(SCHEDULE_POST);
 
    if (dispatch_width == 8) {
       c->prog_data.reg_blocks = brw_register_blocks(grf_used);
