@@ -60,6 +60,7 @@
 #define FIXED_GL_BIT         0x800
 #define UNSIGNED_INT_2_10_10_10_REV_BIT 0x1000
 #define INT_2_10_10_10_REV_BIT 0x2000
+#define UNSIGNED_INT_10F_11F_11F_REV_BIT 0x4000
 
 
 /** Convert GL datatype enum into a <type>_BIT value seen above */
@@ -96,6 +97,8 @@ type_to_bit(const struct gl_context *ctx, GLenum type)
       return UNSIGNED_INT_2_10_10_10_REV_BIT;
    case GL_INT_2_10_10_10_REV:
       return INT_2_10_10_10_REV_BIT;
+   case GL_UNSIGNED_INT_10F_11F_11F_REV:
+      return UNSIGNED_INT_10F_11F_11F_REV_BIT;
    default:
       return 0;
    }
@@ -206,7 +209,7 @@ update_array_format(struct gl_context *ctx,
    GLenum format = GL_RGBA;
 
    if (_mesa_is_gles(ctx)) {
-      legalTypesMask &= ~(FIXED_GL_BIT | DOUBLE_BIT);
+      legalTypesMask &= ~(FIXED_GL_BIT | DOUBLE_BIT | UNSIGNED_INT_10F_11F_11F_REV_BIT);
 
       /* GL_INT and GL_UNSIGNED_INT data is not allowed in OpenGL ES until
        * 3.0.  The 2_10_10_10 types are added in OpenGL ES 3.0 or
@@ -236,6 +239,9 @@ update_array_format(struct gl_context *ctx,
       if (!ctx->Extensions.ARB_vertex_type_2_10_10_10_rev)
          legalTypesMask &= ~(UNSIGNED_INT_2_10_10_10_REV_BIT |
                              INT_2_10_10_10_REV_BIT);
+
+      if (!ctx->Extensions.ARB_vertex_type_10f_11f_11f_rev)
+         legalTypesMask &= ~UNSIGNED_INT_10F_11F_11F_REV_BIT;
    }
 
    typeBit = type_to_bit(ctx, type);
@@ -310,6 +316,12 @@ update_array_format(struct gl_context *ctx,
                   "GL_MAX_VERTEX_ATTRIB_RELATIVE_OFFSET)",
                   func, relativeOffset);
       return GL_FALSE;
+   }
+
+   if (ctx->Extensions.ARB_vertex_type_10f_11f_11f_rev &&
+         type == GL_UNSIGNED_INT_10F_11F_11F_REV && size != 3) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(size=%d)", func, size);
+      return;
    }
 
    ASSERT(size <= 4);
@@ -605,7 +617,8 @@ _mesa_VertexAttribPointer(GLuint index, GLint size, GLenum type,
                                   HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
                                   FIXED_ES_BIT | FIXED_GL_BIT |
                                   UNSIGNED_INT_2_10_10_10_REV_BIT |
-                                  INT_2_10_10_10_REV_BIT);
+                                  INT_2_10_10_10_REV_BIT |
+                                  UNSIGNED_INT_10F_11F_11F_REV_BIT);
    GET_CURRENT_CONTEXT(ctx);
 
    if (index >= ctx->Const.VertexProgram.MaxAttribs) {
@@ -1441,7 +1454,8 @@ _mesa_VertexAttribFormat(GLuint attribIndex, GLint size, GLenum type,
                                    HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
                                    FIXED_GL_BIT |
                                    UNSIGNED_INT_2_10_10_10_REV_BIT |
-                                   INT_2_10_10_10_REV_BIT);
+                                   INT_2_10_10_10_REV_BIT |
+                                   UNSIGNED_INT_10F_11F_11F_REV_BIT);
 
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
