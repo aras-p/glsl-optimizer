@@ -101,10 +101,6 @@ if HAVE_DRI
 SUBDIRS += dri-nouveau
 endif
 
-if HAVE_ST_XORG
-SUBDIRS += xorg-nouveau
-endif
-
 if HAVE_ST_XVMC
 SUBDIRS += xvmc-nouveau
 endif
