@@ -137,7 +137,9 @@ typedef void *GLeglImageOES;
 #define GL_REQUIRED_TEXTURE_IMAGE_UNITS_OES                     0x8D68
 #endif
 
+#define GL_UNSIGNED_INT_ATOMIC_COUNTER                      0x92DB
 
+	
 #ifndef GL_OES_point_size_array
 #define GL_POINT_SIZE_ARRAY_OES                                 0x8B9C
 #define GL_POINT_SIZE_ARRAY_TYPE_OES                            0x898A

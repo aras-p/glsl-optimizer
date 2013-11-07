@@ -301,7 +301,7 @@ ir_constant_propagation_visitor::visit_enter(ir_call *ir)
     * this call.  So kill all copies. Except if it's a built-in; we know
 	* they are side effect free.
     */
-   if (!ir->callee->is_builtin) {
+   if (!ir->callee->is_builtin()) {
       acp->make_empty();
       this->killed_all = true;
    }

@@ -351,13 +351,13 @@ public:
                snprintf(name, 32, "gl_%s_%s%i_dummy", mode_str, var_name, i);
                new_var[i] =
                   new (ctx) ir_variable(glsl_type::vec4_type, name,
-                                        ir_var_temporary);
+                                        ir_var_temporary, glsl_precision_undefined);
             }
             else {
                snprintf(name, 32, "gl_%s_%s%i", mode_str, var_name, i);
                new_var[i] =
                   new(ctx) ir_variable(glsl_type::vec4_type, name,
-                                       this->info->mode);
+                                       this->info->mode, glsl_precision_undefined);
                new_var[i]->location = start_location + i;
                new_var[i]->explicit_location = true;
                new_var[i]->explicit_index = 0;

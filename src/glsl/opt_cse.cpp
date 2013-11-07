@@ -321,11 +321,13 @@ equals(ir_texture *a, ir_texture *b)
    if (!equals(a->coordinate, b->coordinate))
       return false;
 
+#if 0
    if (!equals(a->projector, b->projector))
       return false;
 
    if (!equals(a->shadow_comparitor, b->shadow_comparitor))
       return false;
+#endif // #if 0
 
    if (!equals(a->offset, b->offset))
       return false;
@@ -456,7 +458,7 @@ cse_visitor::try_cse(ir_rvalue *rvalue)
 
          ir_variable *var = new(rvalue) ir_variable(rvalue->type,
                                                     "cse",
-                                                    ir_var_auto);
+                                                    ir_var_auto, rvalue->get_precision());
 
          /* Write the previous expression result into a new variable. */
          base_ir->insert_before(var);

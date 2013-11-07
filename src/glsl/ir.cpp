@@ -439,7 +439,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
 
 ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1,
                              ir_rvalue *op2)
-: ir_rvalue(higher_precision(op0,higher_precision(op1,op2)))
+: ir_rvalue(higher_precision(precision_from_ir(op0),higher_precision(op1,op2)))
 {
    this->ir_type = ir_type_expression;
 
@@ -684,7 +684,7 @@ ir_constant::ir_constant(int i, unsigned vector_elements)
    this->ir_type = ir_type_constant;
    this->type = glsl_type::get_instance(GLSL_TYPE_INT, vector_elements, 1);
    for (unsigned i = 0; i < vector_elements; i++) {
-      this->value.i[i] = integer;
+      this->value.i[i] = i;
    }
    for (unsigned i = vector_elements; i < 16; i++) {
       this->value.i[i] = 0;
@@ -1685,7 +1685,7 @@ ir_variable::determine_interpolation_mode(bool flat_shade)
 
 
 ir_function_signature::ir_function_signature(const glsl_type *return_type,
-                                             builtin_available_predicate b, glsl_precision precision)
+                                             glsl_precision precision, builtin_available_predicate b)
    : return_type(return_type), precision(precision), is_defined(false), is_intrinsic(false),
      builtin_avail(b), _function(NULL)
 {

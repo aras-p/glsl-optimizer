@@ -573,21 +573,12 @@ public:
 
 class ast_fully_specified_type : public ast_node {
 public:
-   ast_fully_specified_type ()
-   {
-	   union {
-		   ast_type_qualifier q;
-		   unsigned i;
-	   } q;
-	   q.i = 0;
-	   q.q.precision = ast_precision_none;
-	   qualifier = q.q;
-   }
    virtual void print(void) const;
    bool has_qualifiers() const;
 
    ast_fully_specified_type() : qualifier(), specifier(NULL)
    {
+	   qualifier.precision = ast_precision_none;
    }
 
    const struct glsl_type *glsl_type(const char **name,

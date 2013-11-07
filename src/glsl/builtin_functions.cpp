@@ -56,7 +56,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "main/core.h" /* for struct gl_shader */
-#include "main/shaderobj.h"
+#include "standalone_scaffolding.h"
 #include "ir_builder.h"
 #include "glsl_parser_extras.h"
 #include "program/prog_instruction.h"
@@ -657,7 +657,7 @@ builtin_builder::create_shader()
    gl_ModelViewProjectionMatrix =
       new(mem_ctx) ir_variable(glsl_type::mat4_type,
                                "gl_ModelViewProjectionMatrix",
-                               ir_var_uniform);
+                               ir_var_uniform, glsl_precision_high);
 
    shader->symbols->add_variable(gl_ModelViewProjectionMatrix);
 
@@ -2141,13 +2141,13 @@ builtin_builder::add_function(const char *name, ...)
 ir_variable *
 builtin_builder::in_var(const glsl_type *type, const char *name)
 {
-   return new(mem_ctx) ir_variable(type, name, ir_var_function_in);
+   return new(mem_ctx) ir_variable(type, name, ir_var_function_in, glsl_precision_undefined);
 }
 
 ir_variable *
 builtin_builder::out_var(const glsl_type *type, const char *name)
 {
-   return new(mem_ctx) ir_variable(type, name, ir_var_function_out);
+   return new(mem_ctx) ir_variable(type, name, ir_var_function_out, glsl_precision_undefined);
 }
 
 ir_constant *
@@ -2206,7 +2206,7 @@ builtin_builder::new_sig(const glsl_type *return_type,
    va_list ap;
 
    ir_function_signature *sig =
-      new(mem_ctx) ir_function_signature(return_type, avail);
+      new(mem_ctx) ir_function_signature(return_type, glsl_precision_undefined, avail);
 
    exec_list plist;
    va_start(ap, num_params);
@@ -3498,6 +3498,7 @@ builtin_builder::_texture(ir_texture_opcode opcode,
       tex->coordinate = swizzle_for_size(P, coord_size);
    }
 
+#if 0 // removed for glsl optimizer
    /* The projector is always in the last component. */
    if (flags & TEX_PROJECT)
       tex->projector = swizzle(P, coord_type->vector_elements - 1, 1);
@@ -3517,6 +3518,7 @@ builtin_builder::_texture(ir_texture_opcode opcode,
          tex->shadow_comparitor = swizzle(P, MAX2(coord_size, SWIZZLE_Z), 1);
       }
    }
+#endif // #if 0
 
    if (opcode == ir_txl) {
       ir_variable *lod = in_var(glsl_type::float_type, "lod");
@@ -3536,7 +3538,7 @@ builtin_builder::_texture(ir_texture_opcode opcode,
       int offset_size = coord_size - (sampler_type->sampler_array ? 1 : 0);
       ir_variable *offset =
          new(mem_ctx) ir_variable(glsl_type::ivec(offset_size), "offset",
-                                  (flags & TEX_OFFSET) ? ir_var_const_in : ir_var_function_in);
+                                  (flags & TEX_OFFSET) ? ir_var_const_in : ir_var_function_in, glsl_precision_undefined);
       sig->parameters.push_tail(offset);
       tex->offset = var_ref(offset);
    }
@@ -3544,7 +3546,7 @@ builtin_builder::_texture(ir_texture_opcode opcode,
    if (flags & TEX_OFFSET_ARRAY) {
       ir_variable *offsets =
          new(mem_ctx) ir_variable(glsl_type::get_array_instance(glsl_type::ivec2_type, 4),
-                                  "offsets", ir_var_const_in);
+                                  "offsets", ir_var_const_in, glsl_precision_undefined);
       sig->parameters.push_tail(offsets);
       tex->offset = var_ref(offsets);
    }
@@ -3552,7 +3554,7 @@ builtin_builder::_texture(ir_texture_opcode opcode,
    if (opcode == ir_tg4) {
       if (flags & TEX_COMPONENT) {
          ir_variable *component =
-            new(mem_ctx) ir_variable(glsl_type::int_type, "comp", ir_var_const_in);
+            new(mem_ctx) ir_variable(glsl_type::int_type, "comp", ir_var_const_in, glsl_precision_undefined);
          sig->parameters.push_tail(component);
          tex->lod_info.component = var_ref(component);
       }
@@ -3587,7 +3589,7 @@ builtin_builder::_textureCubeArrayShadow()
    tex->set_sampler(var_ref(s), glsl_type::float_type);
 
    tex->coordinate = var_ref(P);
-   tex->shadow_comparitor = var_ref(compare);
+   //tex->shadow_comparitor = var_ref(compare); //@TODO ?
 
    body.emit(ret(tex));
 
@@ -3625,7 +3627,7 @@ builtin_builder::_texelFetch(builtin_available_predicate avail,
 
    if (offset_type != NULL) {
       ir_variable *offset =
-         new(mem_ctx) ir_variable(offset_type, "offset", ir_var_const_in);
+         new(mem_ctx) ir_variable(offset_type, "offset", ir_var_const_in, glsl_precision_undefined);
       sig->parameters.push_tail(offset);
       tex->offset = var_ref(offset);
    }

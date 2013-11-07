@@ -29,10 +29,6 @@
 #include "program/prog_statevars.h"
 #include "program/prog_instruction.h"
 
-static struct gl_builtin_uniform_element gl_NumSamples_elements[] = {
-   {NULL, {STATE_NUM_SAMPLES, 0, 0}, SWIZZLE_XXXX}
-};
-
 // these two are ripped from mesa/main/uniforms.h in upstream
 struct gl_builtin_uniform_element {
 	const char *field;
@@ -45,6 +41,10 @@ struct gl_builtin_uniform_desc {
 	unsigned int num_elements;
 };
 
+
+static struct gl_builtin_uniform_element gl_NumSamples_elements[] = {
+	{NULL, {STATE_NUM_SAMPLES, 0, 0}, SWIZZLE_XXXX}
+};
 
 
 static struct gl_builtin_uniform_element gl_DepthRange_elements[] = {
@@ -318,7 +318,7 @@ class per_vertex_accumulator
 {
 public:
    per_vertex_accumulator();
-   void add_field(int slot, const glsl_type *type, const char *name);
+   void add_field(int slot, const glsl_type *type, const char *name, glsl_precision prec);
    const glsl_type *construct_interface_instance() const;
 
 private:
@@ -336,12 +336,13 @@ per_vertex_accumulator::per_vertex_accumulator()
 
 void
 per_vertex_accumulator::add_field(int slot, const glsl_type *type,
-                                  const char *name)
+                                  const char *name, glsl_precision prec)
 {
    assert(this->num_fields < ARRAY_SIZE(this->fields));
    this->fields[this->num_fields].type = type;
    this->fields[this->num_fields].name = name;
    this->fields[this->num_fields].row_major = false;
+   this->fields[this->num_fields].precision = prec;
    this->fields[this->num_fields].location = slot;
    this->fields[this->num_fields].interpolation = INTERP_QUALIFIER_NONE;
    this->fields[this->num_fields].centroid = 0;
@@ -682,7 +683,7 @@ builtin_variable_generator::generate_constants()
 void
 builtin_variable_generator::generate_uniforms()
 {
-   add_uniform(int_t, "gl_NumSamples");
+   add_uniform(int_t, "gl_NumSamples", glsl_precision_undefined);
    add_uniform(type("gl_DepthRangeParameters"), "gl_DepthRange", glsl_precision_undefined);
    add_uniform(array(vec4_t, VERT_ATTRIB_MAX), "gl_CurrentAttribVertMESA", glsl_precision_undefined);
    add_uniform(array(vec4_t, VARYING_SLOT_MAX), "gl_CurrentAttribFragMESA", glsl_precision_undefined);
@@ -869,8 +870,8 @@ builtin_variable_generator::generate_fs_special_vars()
 	}
 
    if (state->ARB_sample_shading_enable) {
-      add_system_value(SYSTEM_VALUE_SAMPLE_ID, int_t, "gl_SampleID");
-      add_system_value(SYSTEM_VALUE_SAMPLE_POS, vec2_t, "gl_SamplePosition");
+      add_system_value(SYSTEM_VALUE_SAMPLE_ID, int_t, "gl_SampleID", glsl_precision_high);
+      add_system_value(SYSTEM_VALUE_SAMPLE_POS, vec2_t, "gl_SamplePosition", glsl_precision_high);
       /* From the ARB_sample_shading specification:
        *    "The number of elements in the array is ceil(<s>/32), where
        *    <s> is the maximum number of color samples supported by the
@@ -878,7 +879,7 @@ builtin_variable_generator::generate_fs_special_vars()
        * Since no drivers expose more than 32x MSAA, we can simply set
        * the array size to 1 rather than computing it.
        */
-      add_output(FRAG_RESULT_SAMPLE_MASK, array(int_t, 1), "gl_SampleMask");
+      add_output(FRAG_RESULT_SAMPLE_MASK, array(int_t, 1), "gl_SampleMask", glsl_precision_high);
    }
 }
 
@@ -949,7 +950,7 @@ builtin_variable_generator::generate_varyings()
       const glsl_type *per_vertex_in_type =
          this->per_vertex_in.construct_interface_instance();
       add_variable("gl_in", array(per_vertex_in_type, 0),
-                   ir_var_shader_in, -1);
+                   ir_var_shader_in, -1, glsl_precision_undefined);
    }
    if (state->target == vertex_shader || state->target == geometry_shader) {
       const glsl_type *per_vertex_out_type =
@@ -958,7 +959,7 @@ builtin_variable_generator::generate_varyings()
       for (unsigned i = 0; i < per_vertex_out_type->length; i++) {
          ir_variable *var =
             add_variable(fields[i].name, fields[i].type, ir_var_shader_out,
-                         fields[i].location);
+                         fields[i].location, fields[i].precision);
          var->interpolation = fields[i].interpolation;
          var->centroid = fields[i].centroid;
          var->init_interface_type(per_vertex_out_type);

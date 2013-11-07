@@ -104,7 +104,7 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, glsl
 		return glsl_precision_low;
 	
 	// if it's a built-in texture function, precision comes from sampler (1st param) precision
-	if (sig->is_builtin)
+	if (sig->is_builtin())
 	{
 		if (strncmp (sig->function_name(), "texture", 7) == 0)
 			return first_prec;
@@ -113,7 +113,7 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, glsl
 	}
 	
 	// other built-in: max precision of parameters
-	if (sig->is_builtin)
+	if (sig->is_builtin())
 		return max_prec;
 	
 	// otherwise: undefined

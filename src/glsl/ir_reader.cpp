@@ -267,7 +267,6 @@ ir_reader::read_function_sig(ir_function *f, s_expression *expr, bool skip_body)
        * guarantee the right built-ins are available.
        */
       sig = new(mem_ctx) ir_function_signature(return_type, glsl_precision_undefined, always_available);
-      sig->is_builtin = true;
       f->add_signature(sig);
    } else if (sig != NULL) {
       const char *badvar = sig->qualifiers_match(&hir_parameters);
@@ -1014,33 +1013,6 @@ ir_reader::read_texture(s_expression *expr)
                return NULL;
             }
          }
-      }
-   }
-
-   if (op != ir_txf && op != ir_txf_ms &&
-       op != ir_txs && op != ir_lod && op != ir_tg4 &&
-       op != ir_query_levels) {
-      s_int *proj_as_int = SX_AS_INT(s_proj);
-      if (proj_as_int && proj_as_int->value() == 1) {
-	 tex->projector = NULL;
-      } else {
-	 tex->projector = read_rvalue(s_proj);
-	 if (tex->projector == NULL) {
-	    ir_read_error(NULL, "when reading projective divide in (%s ..)",
-	                  tex->opcode_string());
-	    return NULL;
-	 }
-      }
-
-      if (s_shadow->subexpressions.is_empty()) {
-	 tex->shadow_comparitor = NULL;
-      } else {
-	 tex->shadow_comparitor = read_rvalue(s_shadow);
-	 if (tex->shadow_comparitor == NULL) {
-	    ir_read_error(NULL, "when reading shadow comparitor in (%s ..)",
-			  tex->opcode_string());
-	    return NULL;
-	 }
       }
    }
 

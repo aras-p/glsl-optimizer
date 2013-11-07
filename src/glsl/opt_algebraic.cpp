@@ -238,6 +238,14 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       if (op_expr[0]->operation == ir_unop_neg) {
          return op_expr[0]->operands[0];
       }
+	   if (op_expr[0] && op_expr[0]->operation == ir_binop_sub) {
+		   // -(A-B) => (B-A)
+		   this->progress = true;
+		   return new(mem_ctx) ir_expression(ir_binop_sub,
+											 ir->type,
+											 op_expr[0]->operands[1],
+											 op_expr[0]->operands[0]);
+	   }
       break;
 
    case ir_unop_logic_not: {
@@ -271,18 +279,6 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
       break;
    }
-
-	case ir_unop_neg: {
-		if (op_expr[0] && op_expr[0]->operation == ir_binop_sub) {
-			// -(A-B) => (B-A)
-			this->progress = true;
-			return new(mem_ctx) ir_expression(ir_binop_sub,
-											  ir->type,
-											  op_expr[0]->operands[1],
-											  op_expr[0]->operands[0]);
-		}
-		break;
-	}  
 
    case ir_binop_add:
       if (is_vec_zero(op_const[0]))

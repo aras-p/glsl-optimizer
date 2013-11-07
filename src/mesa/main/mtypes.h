@@ -932,9 +932,6 @@ struct gl_program_constants
    GLuint MaxOutputComponents;
    /*@}*/
 
-   /* ES 2.0 and GL_ARB_ES2_compatibility */
-   struct gl_precision LowFloat, MediumFloat, HighFloat;
-   struct gl_precision LowInt, MediumInt, HighInt;
    /* GL_ARB_uniform_buffer_object */
    GLuint MaxUniformBlocks;
    GLuint MaxCombinedUniformComponents;
