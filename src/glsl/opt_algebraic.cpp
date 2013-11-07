@@ -293,7 +293,13 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 	 reassociate_constant(ir, 0, op_const[0], op_expr[1]);
       if (op_const[1] && !op_const[0])
 	 reassociate_constant(ir, 1, op_const[1], op_expr[0]);
-      break;
+		   
+		// A + (-B) => A-B
+	   if (op_expr[1] && op_expr[1]->operation == ir_unop_neg) {
+		   this->progress = true;
+		   return sub(ir->operands[0], op_expr[1]->operands[0]);
+	   }
+	   break;
 
    case ir_binop_sub:
       if (is_vec_zero(op_const[0]))
