@@ -1,0 +1,9 @@
+#version 300
+uniform lowp sampler2DShadow shadowmap;
+in highp vec4 xlv_TEXCOORD0;
+out lowp vec4 _fragColor;
+void main ()
+{
+  _fragColor = vec4((texture (shadowmap, xlv_TEXCOORD0.xyz) + textureProj (shadowmap, xlv_TEXCOORD0)));
+}
+

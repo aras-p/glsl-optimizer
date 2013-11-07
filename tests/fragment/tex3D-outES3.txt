@@ -1,0 +1,9 @@
+#version 300
+uniform sampler3D tex;
+in vec3 uv;
+out lowp vec4 _fragColor;
+void main ()
+{
+  _fragColor = texture (tex, uv);
+}
+

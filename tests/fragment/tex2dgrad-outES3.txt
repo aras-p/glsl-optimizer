@@ -1,0 +1,10 @@
+#version 300
+uniform sampler2D tex;
+uniform samplerCube cub;
+in vec3 uv;
+out lowp vec4 _fragColor;
+void main ()
+{
+  _fragColor = (textureGrad (tex, uv.xy, dFdx(uv.xy), dFdy(uv.xy)) + textureGrad (cub, uv, dFdx(uv), dFdy(uv)));
+}
+
