@@ -77,4 +77,7 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
 double get_time(void);
 void aub_dump_bmp(struct gl_context *ctx);
 
+const int*
+intel_supported_msaa_modes(const struct intel_screen  *screen);
+
 #endif

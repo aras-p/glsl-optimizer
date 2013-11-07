@@ -1092,6 +1092,26 @@ intel_detect_swizzling(struct intel_screen *screen)
       return true;
 }
 
+/**
+ * Return array of MSAA modes supported by the hardware. The array is
+ * zero-terminated and sorted in decreasing order.
+ */
+const int*
+intel_supported_msaa_modes(const struct intel_screen  *screen)
+{
+   static const int gen7_modes[] = {8, 4, 0, -1};
+   static const int gen6_modes[] = {4, 0, -1};
+   static const int gen4_modes[] = {0, -1};
+
+   if (screen->devinfo->gen >= 7) {
+      return gen7_modes;
+   } else if (screen->devinfo->gen == 6) {
+      return gen6_modes;
+   } else {
+      return gen4_modes;
+   }
+}
+
 static __DRIconfig**
 intel_screen_make_configs(__DRIscreen *dri_screen)
 {

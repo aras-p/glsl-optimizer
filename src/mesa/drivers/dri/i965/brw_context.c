@@ -278,26 +278,6 @@ brw_init_driver_functions(struct brw_context *brw,
 }
 
 /**
- * Return array of MSAA modes supported by the hardware. The array is
- * terminated by -1 and sorted in decreasing order.
- */
-static const int*
-brw_supported_msaa_modes(const struct brw_context *brw)
-{
-   static const int gen7_samples[] = {8, 4, 0, -1};
-   static const int gen6_samples[] = {4, 0, -1};
-   static const int gen4_samples[] = {0, -1};
-
-   if (brw->gen >= 7) {
-      return gen7_samples;
-   } else if (brw->gen == 6) {
-      return gen6_samples;
-   } else {
-      return gen4_samples;
-   }
-}
-
-/**
  * Override GL_MAX_SAMPLES and related constants according to value of driconf
  * option 'clamp_max_samples'.
  */
@@ -309,7 +289,8 @@ brw_override_max_samples(struct brw_context *brw)
    if (clamp_max_samples < 0)
       return;
 
-   const int *supported_msaa_modes = brw_supported_msaa_modes(brw);
+   const int *supported_msaa_modes =
+      intel_supported_msaa_modes(brw->intelScreen);
    int max_samples = 0;
 
    /* Select the largest supported MSAA mode that does not exceed
@@ -393,7 +374,8 @@ brw_initialize_context_constants(struct brw_context *brw)
 
    ctx->Const.AlwaysUseGetTransformFeedbackVertexCount = true;
 
-   const int max_samples = brw_supported_msaa_modes(brw)[0];
+   const int max_samples =
+      intel_supported_msaa_modes(brw->intelScreen)[0];
    ctx->Const.MaxSamples = max_samples;
    ctx->Const.MaxColorTextureSamples = max_samples;
    ctx->Const.MaxDepthTextureSamples = max_samples;

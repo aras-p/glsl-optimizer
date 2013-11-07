@@ -46,6 +46,7 @@
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
+#include "intel_screen.h"
 #include "intel_tex.h"
 #include "brw_context.h"
 
@@ -159,26 +160,17 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
 unsigned
 intel_quantize_num_samples(struct intel_screen *intel, unsigned num_samples)
 {
-   switch (intel->devinfo->gen) {
-   case 6:
-      /* Gen6 supports only 4x multisampling. */
-      if (num_samples > 0)
-         return 4;
+   const int *msaa_modes = intel_supported_msaa_modes(intel);
+   int quantized_samples = 0;
+
+   for (int i = 0; msaa_modes[i] != -1; ++i) {
+      if (msaa_modes[i] >= num_samples)
+         quantized_samples = msaa_modes[i];
       else
-         return 0;
-   case 7:
-      /* Gen7 supports 4x and 8x multisampling. */
-      if (num_samples > 4)
-         return 8;
-      else if (num_samples > 0)
-         return 4;
-      else
-         return 0;
-      return 0;
-   default:
-      /* MSAA unsupported. */
-      return 0;
+         break;
    }
+
+   return quantized_samples;
 }
 
 
