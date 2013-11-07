@@ -100,8 +100,7 @@ glslopt_ctx* glslopt_initialize (glslopt_target target)
 void glslopt_cleanup (glslopt_ctx* ctx)
 {
 	delete ctx;
-	_mesa_glsl_release_types();
-	_mesa_glsl_release_functions();
+	_mesa_destroy_shader_compiler();
 }
 
 struct glslopt_shader_input

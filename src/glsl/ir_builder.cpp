@@ -260,7 +260,7 @@ ir_expression *dotlike(operand a, operand b)
 ir_expression*
 clamp(operand a, operand b, operand c)
 {
-   return expr(ir_binop_min, expr(ir_binop_max, a, b), c);
+   return expr(ir_triop_clamp, a, b, c);
 }
 
 ir_expression *

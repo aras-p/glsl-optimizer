@@ -677,14 +677,14 @@ ir_constant::ir_constant(unsigned int u, unsigned vector_elements)
    }
 }
 
-ir_constant::ir_constant(int i, unsigned vector_elements)
+ir_constant::ir_constant(int integer, unsigned vector_elements)
 : ir_rvalue(glsl_precision_undefined)
 {
    assert(vector_elements <= 4);
    this->ir_type = ir_type_constant;
    this->type = glsl_type::get_instance(GLSL_TYPE_INT, vector_elements, 1);
    for (unsigned i = 0; i < vector_elements; i++) {
-      this->value.i[i] = i;
+      this->value.i[i] = integer;
    }
    for (unsigned i = vector_elements; i < 16; i++) {
       this->value.i[i] = 0;

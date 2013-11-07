@@ -2879,7 +2879,7 @@ builtin_builder::_normalize(const glsl_type *type)
    if (type->vector_elements == 1) {
       body.emit(ret(sign(x)));
    } else {
-      body.emit(ret(mul(x, rsq(dot(x, x)))));
+      body.emit(ret(expr(ir_unop_normalize, x)));
    }
 
    return sig;
@@ -3489,14 +3489,15 @@ builtin_builder::_texture(ir_texture_opcode opcode,
 
    const int coord_size = sampler_type->sampler_coordinate_components();
 
-   if (coord_size == coord_type->vector_elements) {
+   // removed for glsl optimizer
+   //if (coord_size == coord_type->vector_elements) {
       tex->coordinate = var_ref(P);
-   } else {
-      /* The incoming coordinate also has the projector or shadow comparitor,
-       * so we need to swizzle those away.
-       */
-      tex->coordinate = swizzle_for_size(P, coord_size);
-   }
+   //} else {
+   //   /* The incoming coordinate also has the projector or shadow comparitor,
+   //    * so we need to swizzle those away.
+   //    */
+   //   tex->coordinate = swizzle_for_size(P, coord_size);
+   //}
 
 #if 0 // removed for glsl optimizer
    /* The projector is always in the last component. */
