@@ -106,8 +106,8 @@ GL_ARB_tessellation_shader                           not started
 GL_ARB_texture_buffer_object_rgb32                   DONE (i965, r600, radeonsi, softpipe)
 GL_ARB_texture_cube_map_array                        DONE (i965, r600, softpipe)
 GL_ARB_texture_gather                                DONE (i965)
-GL_ARB_transform_feedback2                           DONE (r600, radeonsi)
-GL_ARB_transform_feedback3                           DONE (r600, radeonsi)
+GL_ARB_transform_feedback2                           DONE (i965, r600, radeonsi)
+GL_ARB_transform_feedback3                           DONE (i965, r600, radeonsi)
 
 
 GL 4.1:
@@ -128,7 +128,7 @@ GL_ARB_texture_compression_bptc                      not started
 GL_ARB_compressed_texture_pixel_storage              not started
 GL_ARB_shader_atomic_counters                        in progress (Curro)
 GL_ARB_texture_storage                               DONE (all drivers)
-GL_ARB_transform_feedback_instanced                  DONE (r600, radeonsi)
+GL_ARB_transform_feedback_instanced                  DONE (i965, r600, radeonsi)
 GL_ARB_base_instance                                 DONE (i965, nv50, nvc0, r600, radeonsi)
 GL_ARB_shader_image_load_store                       not started
 GL_ARB_conservative_depth                            DONE (all drivers that support GLSL 1.30)
