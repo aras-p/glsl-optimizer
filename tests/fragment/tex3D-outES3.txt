@@ -1,4 +1,4 @@
-#version 300
+#version 300 es
 uniform sampler3D tex;
 in vec3 uv;
 out lowp vec4 _fragColor;

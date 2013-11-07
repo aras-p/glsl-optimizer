@@ -1,4 +1,4 @@
-#version 300
+#version 300 es
 uniform sampler2D tex;
 in highp vec4 xlv_TEXCOORD0;
 out mediump vec4 _fragColor;

@@ -1,4 +1,4 @@
-#version 300
+#version 300 es
 uniform sampler2D tex;
 uniform samplerCube cub;
 in vec3 uv;
