@@ -1,6 +1,14 @@
 GLSL optimizer Change Log
 =========================
 
+2013 11
+-------
+
+Fixes:
+
+* Fixed location qualifiers, ES3.0 version printing, samplerCubeShadow sampling operations.
+
+
 2013 10
 -------
 
