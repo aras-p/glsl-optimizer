@@ -319,7 +319,9 @@ static bool
 fs_oes_derivatives(const _mesa_glsl_parse_state *state)
 {
    return state->target == fragment_shader &&
-          (!state->es_shader || state->OES_standard_derivatives_enable);
+          (!state->es_shader ||
+		   state->OES_standard_derivatives_enable ||
+		   state->language_version==300);
 }
 
 static bool
