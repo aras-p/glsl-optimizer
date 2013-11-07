@@ -69,26 +69,15 @@ typedef struct YYLTYPE {
 # define YYLTYPE_IS_DECLARED 1
 # define YYLTYPE_IS_TRIVIAL 1
 
+extern void _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
+			     const char *fmt, ...);
+
+
 struct _mesa_glsl_parse_state {
    _mesa_glsl_parse_state(struct gl_context *_ctx, GLenum target,
 			  void *mem_ctx);
 
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *mem = rzalloc_size(ctx, size);
-      assert(mem != NULL);
-
-      return mem;
-   }
-
-   /* If the user *does* call delete, that's OK, we will just
-    * ralloc_free in that case. */
-   static void operator delete(void *mem)
-   {
-      ralloc_free(mem);
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(_mesa_glsl_parse_state);
 
    /**
     * Generate a string representing the GLSL version currently being compiled
@@ -113,7 +102,7 @@ struct _mesa_glsl_parse_state {
     * feature.
     */
    bool is_version(unsigned required_glsl_version,
-                   unsigned required_glsl_es_version)
+                   unsigned required_glsl_es_version) const
    {
       unsigned required_version = this->es_shader ?
          required_glsl_es_version : required_glsl_version;
@@ -134,6 +123,32 @@ struct _mesa_glsl_parse_state {
    bool check_bitwise_operations_allowed(YYLTYPE *locp)
    {
       return check_version(130, 300, locp, "bit-wise operations are forbidden");
+   }
+
+   bool check_explicit_attrib_location_allowed(YYLTYPE *locp,
+                                               const ir_variable *var)
+   {
+      if (!this->has_explicit_attrib_location()) {
+         const char *const requirement = this->es_shader
+            ? "GLSL ES 300"
+            : "GL_ARB_explicit_attrib_location extension or GLSL 330";
+
+         _mesa_glsl_error(locp, this, "%s explicit location requires %s",
+                          mode_string(var), requirement);
+         return false;
+      }
+
+      return true;
+   }
+
+   bool has_explicit_attrib_location() const
+   {
+      return ARB_explicit_attrib_location_enable || is_version(330, 300);
+   }
+
+   bool has_uniform_buffer_objects() const
+   {
+      return ARB_uniform_buffer_object_enable || is_version(140, 300);
    }
 
    void process_version_directive(YYLTYPE *locp, int version,
@@ -214,7 +229,6 @@ struct _mesa_glsl_parse_state {
       unsigned MaxTextureCoords;
       unsigned MaxVertexAttribs;
       unsigned MaxVertexUniformComponents;
-      unsigned MaxVaryingFloats;
       unsigned MaxVertexTextureImageUnits;
       unsigned MaxCombinedTextureImageUnits;
       unsigned MaxTextureImageUnits;
@@ -226,6 +240,23 @@ struct _mesa_glsl_parse_state {
       /* 3.00 ES */
       int MinProgramTexelOffset;
       int MaxProgramTexelOffset;
+
+      /* 1.50 */
+      unsigned MaxVertexOutputComponents;
+      unsigned MaxGeometryInputComponents;
+      unsigned MaxGeometryOutputComponents;
+      unsigned MaxFragmentInputComponents;
+      unsigned MaxGeometryTextureImageUnits;
+      unsigned MaxGeometryOutputVertices;
+      unsigned MaxGeometryTotalOutputComponents;
+      unsigned MaxGeometryUniformComponents;
+
+      /* ARB_shader_atomic_counters */
+      unsigned MaxVertexAtomicCounters;
+      unsigned MaxGeometryAtomicCounters;
+      unsigned MaxFragmentAtomicCounters;
+      unsigned MaxCombinedAtomicCounters;
+      unsigned MaxAtomicBufferBindings;
    } Const;
 
    /**
@@ -280,6 +311,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_fragment_coord_conventions_warn;
    bool ARB_texture_rectangle_enable;
    bool ARB_texture_rectangle_warn;
+   bool ARB_texture_gather_enable;
+   bool ARB_texture_gather_warn;
    bool EXT_texture_array_enable;
    bool EXT_texture_array_warn;
    bool ARB_shader_texture_lod_enable;
@@ -314,6 +347,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_shading_language_packing_warn;
    bool ARB_texture_multisample_enable;
    bool ARB_texture_multisample_warn;
+   bool ARB_texture_query_levels_enable;
+   bool ARB_texture_query_levels_warn;
    bool ARB_texture_query_lod_enable;
    bool ARB_texture_query_lod_warn;
    bool ARB_gpu_shader5_enable;
@@ -322,6 +357,12 @@ struct _mesa_glsl_parse_state {
    bool AMD_vertex_shader_layer_warn;
    bool ARB_shading_language_420pack_enable;
    bool ARB_shading_language_420pack_warn;
+   bool ARB_sample_shading_enable;
+   bool ARB_sample_shading_warn;
+   bool EXT_shader_integer_mix_enable;
+   bool EXT_shader_integer_mix_warn;
+   bool ARB_shader_atomic_counters_enable;
+   bool ARB_shader_atomic_counters_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
@@ -359,9 +400,6 @@ do {								\
    }								\
    (Current).source = 0;					\
 } while (0)
-
-extern void _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
-			     const char *fmt, ...);
 
 /**
  * Emit a warning to the shader log

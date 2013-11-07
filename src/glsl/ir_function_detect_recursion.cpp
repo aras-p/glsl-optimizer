@@ -127,6 +127,8 @@
 #include "program/hash_table.h"
 #include "program.h"
 
+namespace {
+
 struct call_node : public exec_node {
    class function *func;
 };
@@ -139,25 +141,7 @@ public:
       /* empty */
    }
 
-
-   /* Callers of this ralloc-based new need not call delete. It's
-    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
-   static void* operator new(size_t size, void *ctx)
-   {
-      void *node;
-
-      node = ralloc_size(ctx, size);
-      assert(node != NULL);
-
-      return node;
-   }
-
-   /* If the user *does* call delete, that's OK, we will just
-    * ralloc_free in that case. */
-   static void operator delete(void *node)
-   {
-      ralloc_free(node);
-   }
+   DECLARE_RALLOC_CXX_OPERATORS(function)
 
    ir_function_signature *sig;
 
@@ -239,6 +223,8 @@ public:
    void *mem_ctx;
    bool progress;
 };
+
+} /* anonymous namespace */
 
 static void
 destroy_links(exec_list *list, function *f)

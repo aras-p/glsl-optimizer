@@ -29,6 +29,8 @@
 #include "main/hash_table.h"
 #include "program.h"
 
+namespace {
+
 class ubo_visitor : public program_resource_visitor {
 public:
    ubo_visitor(void *mem_ctx, gl_uniform_buffer_variable *variables,
@@ -146,6 +148,8 @@ private:
       this->num_active_uniforms++;
    }
 };
+
+} /* anonymous namespace */
 
 struct block {
    const glsl_type *type;

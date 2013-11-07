@@ -91,8 +91,7 @@ struct tfeedback_candidate
 class tfeedback_decl
 {
 public:
-   void init(struct gl_context *ctx, struct gl_shader_program *prog,
-             const void *mem_ctx, const char *input);
+   void init(struct gl_context *ctx, const void *mem_ctx, const char *input);
    static bool is_same(const tfeedback_decl &x, const tfeedback_decl &y);
    bool assign_location(struct gl_context *ctx,
                         struct gl_shader_program *prog);
@@ -238,8 +237,13 @@ assign_varying_locations(struct gl_context *ctx,
                          unsigned gs_input_vertices);
 
 bool
-check_against_varying_limit(struct gl_context *ctx,
-                            struct gl_shader_program *prog,
-                            gl_shader *consumer);
+check_against_output_limit(struct gl_context *ctx,
+                           struct gl_shader_program *prog,
+                           gl_shader *producer);
+
+bool
+check_against_input_limit(struct gl_context *ctx,
+                          struct gl_shader_program *prog,
+                          gl_shader *consumer);
 
 #endif /* GLSL_LINK_VARYINGS_H */

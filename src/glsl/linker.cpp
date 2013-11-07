@@ -81,6 +81,8 @@ extern "C" {
 
 void linker_error(gl_shader_program *, const char *, ...);
 
+namespace {
+
 /**
  * Visitor that determines whether or not a variable is ever written.
  */
@@ -248,6 +250,34 @@ public:
 };
 
 
+/**
+ * Visitor that determines whether or not a shader uses ir_end_primitive.
+ */
+class find_end_primitive_visitor : public ir_hierarchical_visitor {
+public:
+   find_end_primitive_visitor()
+      : found(false)
+   {
+      /* empty */
+   }
+
+   virtual ir_visitor_status visit(ir_end_primitive *)
+   {
+      found = true;
+      return visit_stop;
+   }
+
+   bool end_primitive_found()
+   {
+      return found;
+   }
+
+private:
+   bool found;
+};
+
+} /* anonymous namespace */
+
 void
 linker_error(gl_shader_program *prog, const char *fmt, ...)
 {
@@ -335,35 +365,38 @@ parse_program_resource_name(const GLchar *name,
 
 
 void
-link_invalidate_variable_locations(gl_shader *sh, int input_base,
-                                   int output_base)
+link_invalidate_variable_locations(exec_list *ir)
 {
-   foreach_list(node, sh->ir) {
+   foreach_list(node, ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if (var == NULL)
          continue;
 
-      int base;
-      switch (var->mode) {
-      case ir_var_shader_in:
-         base = input_base;
-         break;
-      case ir_var_shader_out:
-         base = output_base;
-         break;
-      default:
-         continue;
+      /* Only assign locations for variables that lack an explicit location.
+       * Explicit locations are set for all built-in variables, generic vertex
+       * shader inputs (via layout(location=...)), and generic fragment shader
+       * outputs (also via layout(location=...)).
+       */
+      if (!var->explicit_location) {
+         var->location = -1;
+         var->location_frac = 0;
       }
 
-      /* Only assign locations for generic attributes / varyings / etc.
+      /* ir_variable::is_unmatched_generic_inout is used by the linker while
+       * connecting outputs from one stage to inputs of the next stage.
+       *
+       * There are two implicit assumptions here.  First, we assume that any
+       * built-in variable (i.e., non-generic in or out) will have
+       * explicit_location set.  Second, we assume that any generic in or out
+       * will not have explicit_location set.
+       *
+       * This second assumption will only be valid until
+       * GL_ARB_separate_shader_objects is supported.  When that extension is
+       * implemented, this function will need some modifications.
        */
-      if ((var->location >= base) && !var->explicit_location)
-         var->location = -1;
-
-      if ((var->location == -1) && !var->explicit_location) {
+      if (!var->explicit_location) {
          var->is_unmatched_generic_inout = 1;
-         var->location_frac = 0;
       } else {
          var->is_unmatched_generic_inout = 0;
       }
@@ -516,29 +549,10 @@ validate_geometry_shader_executable(struct gl_shader_program *prog,
 
    analyze_clip_usage("geometry", prog, shader, &prog->Geom.UsesClipDistance,
                       &prog->Geom.ClipDistanceArraySize);
-}
 
-
-/**
- * Generate a string describing the mode of a variable
- */
-static const char *
-mode_string(const ir_variable *var)
-{
-   switch (var->mode) {
-   case ir_var_auto:
-      return (var->read_only) ? "global constant" : "global variable";
-
-   case ir_var_uniform:    return "uniform";
-   case ir_var_shader_in:  return "shader input";
-   case ir_var_shader_out: return "shader output";
-
-   case ir_var_const_in:
-   case ir_var_temporary:
-   default:
-      assert(!"Should not get here.");
-      return "invalid variable";
-   }
+   find_end_primitive_visitor end_primitive;
+   end_primitive.run(shader->ir);
+   prog->Geom.UsesEndPrimitive = end_primitive.end_primitive_found();
 }
 
 
@@ -986,7 +1000,7 @@ get_main_function_signature(gl_shader *sh)
        * We don't have to check for multiple definitions of main (in multiple
        * shaders) because that would have already been caught above.
        */
-      ir_function_signature *sig = f->matching_signature(&void_parameters);
+      ir_function_signature *sig = f->matching_signature(NULL, &void_parameters);
       if ((sig != NULL) && sig->is_defined) {
 	 return sig;
       }
@@ -1003,17 +1017,167 @@ get_main_function_signature(gl_shader *sh)
  */
 class array_sizing_visitor : public ir_hierarchical_visitor {
 public:
+   array_sizing_visitor()
+      : mem_ctx(ralloc_context(NULL)),
+        unnamed_interfaces(hash_table_ctor(0, hash_table_pointer_hash,
+                                           hash_table_pointer_compare))
+   {
+   }
+
+   ~array_sizing_visitor()
+   {
+      hash_table_dtor(this->unnamed_interfaces);
+      ralloc_free(this->mem_ctx);
+   }
+
    virtual ir_visitor_status visit(ir_variable *var)
    {
-      if (var->type->is_array() && (var->type->length == 0)) {
-         const glsl_type *type =
-            glsl_type::get_array_instance(var->type->fields.array,
-                                          var->max_array_access + 1);
-         assert(type != NULL);
-         var->type = type;
+      fixup_type(&var->type, var->max_array_access);
+      if (var->type->is_interface()) {
+         if (interface_contains_unsized_arrays(var->type)) {
+            const glsl_type *new_type =
+               resize_interface_members(var->type, var->max_ifc_array_access);
+            var->type = new_type;
+            var->change_interface_type(new_type);
+         }
+      } else if (var->type->is_array() &&
+                 var->type->fields.array->is_interface()) {
+         if (interface_contains_unsized_arrays(var->type->fields.array)) {
+            const glsl_type *new_type =
+               resize_interface_members(var->type->fields.array,
+                                        var->max_ifc_array_access);
+            var->change_interface_type(new_type);
+            var->type =
+               glsl_type::get_array_instance(new_type, var->type->length);
+         }
+      } else if (const glsl_type *ifc_type = var->get_interface_type()) {
+         /* Store a pointer to the variable in the unnamed_interfaces
+          * hashtable.
+          */
+         ir_variable **interface_vars = (ir_variable **)
+            hash_table_find(this->unnamed_interfaces, ifc_type);
+         if (interface_vars == NULL) {
+            interface_vars = rzalloc_array(mem_ctx, ir_variable *,
+                                           ifc_type->length);
+            hash_table_insert(this->unnamed_interfaces, interface_vars,
+                              ifc_type);
+         }
+         unsigned index = ifc_type->field_index(var->name);
+         assert(index < ifc_type->length);
+         assert(interface_vars[index] == NULL);
+         interface_vars[index] = var;
       }
       return visit_continue;
    }
+
+   /**
+    * For each unnamed interface block that was discovered while running the
+    * visitor, adjust the interface type to reflect the newly assigned array
+    * sizes, and fix up the ir_variable nodes to point to the new interface
+    * type.
+    */
+   void fixup_unnamed_interface_types()
+   {
+      hash_table_call_foreach(this->unnamed_interfaces,
+                              fixup_unnamed_interface_type, NULL);
+   }
+
+private:
+   /**
+    * If the type pointed to by \c type represents an unsized array, replace
+    * it with a sized array whose size is determined by max_array_access.
+    */
+   static void fixup_type(const glsl_type **type, unsigned max_array_access)
+   {
+      if ((*type)->is_unsized_array()) {
+         *type = glsl_type::get_array_instance((*type)->fields.array,
+                                               max_array_access + 1);
+         assert(*type != NULL);
+      }
+   }
+
+   /**
+    * Determine whether the given interface type contains unsized arrays (if
+    * it doesn't, array_sizing_visitor doesn't need to process it).
+    */
+   static bool interface_contains_unsized_arrays(const glsl_type *type)
+   {
+      for (unsigned i = 0; i < type->length; i++) {
+         const glsl_type *elem_type = type->fields.structure[i].type;
+         if (elem_type->is_unsized_array())
+            return true;
+      }
+      return false;
+   }
+
+   /**
+    * Create a new interface type based on the given type, with unsized arrays
+    * replaced by sized arrays whose size is determined by
+    * max_ifc_array_access.
+    */
+   static const glsl_type *
+   resize_interface_members(const glsl_type *type,
+                            const unsigned *max_ifc_array_access)
+   {
+      unsigned num_fields = type->length;
+      glsl_struct_field *fields = new glsl_struct_field[num_fields];
+      memcpy(fields, type->fields.structure,
+             num_fields * sizeof(*fields));
+      for (unsigned i = 0; i < num_fields; i++) {
+         fixup_type(&fields[i].type, max_ifc_array_access[i]);
+      }
+      glsl_interface_packing packing =
+         (glsl_interface_packing) type->interface_packing;
+      const glsl_type *new_ifc_type =
+         glsl_type::get_interface_instance(fields, num_fields,
+                                           packing, type->name);
+      delete [] fields;
+      return new_ifc_type;
+   }
+
+   static void fixup_unnamed_interface_type(const void *key, void *data,
+                                            void *)
+   {
+      const glsl_type *ifc_type = (const glsl_type *) key;
+      ir_variable **interface_vars = (ir_variable **) data;
+      unsigned num_fields = ifc_type->length;
+      glsl_struct_field *fields = new glsl_struct_field[num_fields];
+      memcpy(fields, ifc_type->fields.structure,
+             num_fields * sizeof(*fields));
+      bool interface_type_changed = false;
+      for (unsigned i = 0; i < num_fields; i++) {
+         if (interface_vars[i] != NULL &&
+             fields[i].type != interface_vars[i]->type) {
+            fields[i].type = interface_vars[i]->type;
+            interface_type_changed = true;
+         }
+      }
+      if (!interface_type_changed) {
+         delete [] fields;
+         return;
+      }
+      glsl_interface_packing packing =
+         (glsl_interface_packing) ifc_type->interface_packing;
+      const glsl_type *new_ifc_type =
+         glsl_type::get_interface_instance(fields, num_fields, packing,
+                                           ifc_type->name);
+      delete [] fields;
+      for (unsigned i = 0; i < num_fields; i++) {
+         if (interface_vars[i] != NULL)
+            interface_vars[i]->change_interface_type(new_ifc_type);
+      }
+   }
+
+   /**
+    * Memory context used to allocate the data in \c unnamed_interfaces.
+    */
+   void *mem_ctx;
+
+   /**
+    * Hash table from const glsl_type * to an array of ir_variable *'s
+    * pointing to the ir_variables constituting each unnamed interface block.
+    */
+   hash_table *unnamed_interfaces;
 };
 
 /**
@@ -1167,14 +1331,14 @@ link_intrastage_shaders(void *mem_ctx,
 	       ir_function_signature *sig =
 		  (ir_function_signature *) iter.get();
 
-	       if (!sig->is_defined || sig->is_builtin)
+	       if (!sig->is_defined || sig->is_builtin())
 		  continue;
 
 	       ir_function_signature *other_sig =
-		  other->exact_matching_signature(& sig->parameters);
+		  other->exact_matching_signature(NULL, &sig->parameters);
 
 	       if ((other_sig != NULL) && other_sig->is_defined
-		   && !other_sig->is_builtin) {
+		   && !other_sig->is_builtin()) {
 		  linker_error(prog, "function `%s' is multiply defined",
 			       f->name);
 		  return NULL;
@@ -1288,6 +1452,7 @@ link_intrastage_shaders(void *mem_ctx,
     */
    array_sizing_visitor v;
    v.run(linked->ir);
+   v.fixup_unnamed_interface_types();
 
    return linked;
 }
@@ -1876,14 +2041,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       }
    }
 
-   /* Previous to GLSL version 1.30, different compilation units could mix and
-    * match shading language versions.  With GLSL 1.30 and later, the versions
-    * of all shaders must match.
-    *
-    * GLSL ES has never allowed mixing of shading language versions.
+   /* In desktop GLSL, different shader versions may be linked together.  In
+    * GLSL ES, all shader versions must be the same.
     */
-   if ((is_es_prog || max_version >= 130)
-       && min_version != max_version) {
+   if (is_es_prog && min_version != max_version) {
       linker_error(prog, "all shaders must use same shading "
 		   "language version\n");
       goto done;
@@ -1920,6 +2081,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       validate_vertex_shader_executable(prog, sh);
       if (!prog->LinkStatus)
 	 goto done;
+      prog->LastClipDistanceArraySize = prog->Vert.ClipDistanceArraySize;
 
       _mesa_reference_shader(ctx, &prog->_LinkedShaders[MESA_SHADER_VERTEX],
 			     sh);
@@ -1952,6 +2114,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       validate_geometry_shader_executable(prog, sh);
       if (!prog->LinkStatus)
 	 goto done;
+      prog->LastClipDistanceArraySize = prog->Geom.ClipDistanceArraySize;
 
       _mesa_reference_shader(ctx, &prog->_LinkedShaders[MESA_SHADER_GEOMETRY],
 			     sh);
@@ -2040,18 +2203,15 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    /* Mark all generic shader inputs and outputs as unpaired. */
    if (prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL) {
       link_invalidate_variable_locations(
-            prog->_LinkedShaders[MESA_SHADER_VERTEX],
-            VERT_ATTRIB_GENERIC0, VARYING_SLOT_VAR0);
+            prog->_LinkedShaders[MESA_SHADER_VERTEX]->ir);
    }
    if (prog->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL) {
       link_invalidate_variable_locations(
-            prog->_LinkedShaders[MESA_SHADER_GEOMETRY],
-            VARYING_SLOT_VAR0, VARYING_SLOT_VAR0);
+            prog->_LinkedShaders[MESA_SHADER_GEOMETRY]->ir);
    }
    if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL) {
       link_invalidate_variable_locations(
-            prog->_LinkedShaders[MESA_SHADER_FRAGMENT],
-            VARYING_SLOT_VAR0, FRAG_RESULT_DATA0);
+            prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->ir);
    }
 
    /* FINISHME: The value of the max_attribute_index parameter is
@@ -2173,7 +2333,9 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
          ;
 
       /* This must be done after all dead varyings are eliminated. */
-      if (!check_against_varying_limit(ctx, prog, sh_next))
+      if (!check_against_output_limit(ctx, prog, sh_i))
+         goto done;
+      if (!check_against_input_limit(ctx, prog, sh_next))
          goto done;
 
       next = i;

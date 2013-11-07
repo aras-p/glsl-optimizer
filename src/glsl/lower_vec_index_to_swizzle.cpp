@@ -39,6 +39,8 @@
  * Visitor class for replacing expressions with ir_constant values.
  */
 
+namespace {
+
 class ir_vec_index_to_swizzle_visitor : public ir_hierarchical_visitor {
 public:
    ir_vec_index_to_swizzle_visitor()
@@ -57,6 +59,8 @@ public:
 
    bool progress;
 };
+
+} /* anonymous namespace */
 
 ir_rvalue *
 ir_vec_index_to_swizzle_visitor::convert_vector_extract_to_swizzle(ir_rvalue *ir)

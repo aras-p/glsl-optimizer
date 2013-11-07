@@ -25,6 +25,8 @@
 #include "loop_analysis.h"
 #include "ir_hierarchical_visitor.h"
 
+namespace {
+
 class loop_unroll_visitor : public ir_hierarchical_visitor {
 public:
    loop_unroll_visitor(loop_state *state, unsigned max_iterations)
@@ -42,6 +44,7 @@ public:
    unsigned max_iterations;
 };
 
+} /* anonymous namespace */
 
 static bool
 is_break(ir_instruction *ir)

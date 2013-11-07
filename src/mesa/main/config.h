@@ -170,6 +170,11 @@
 #define MAX_UNIFORM_BUFFERS            15 /* + 1 default uniform buffer */
 /* 6 is for vertex, hull, domain, geometry, fragment, and compute shader. */
 #define MAX_COMBINED_UNIFORM_BUFFERS   (MAX_UNIFORM_BUFFERS * 6)
+#define MAX_ATOMIC_COUNTERS            4096
+/* 6 is for vertex, hull, domain, geometry, fragment, and compute shader. */
+#define MAX_COMBINED_ATOMIC_BUFFERS    (MAX_UNIFORM_BUFFERS * 6)
+/* Size of an atomic counter in bytes according to ARB_shader_atomic_counters */
+#define ATOMIC_COUNTER_SIZE            4
 /*@}*/
 
 /**
@@ -249,12 +254,17 @@
 #define MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS         1024
 /*@}*/
 
-/** For GL_ARB_debug_output */
+/** For GL_ARB_debug_output and GL_KHR_debug */
 /*@{*/
 #define MAX_DEBUG_LOGGED_MESSAGES   10
 #define MAX_DEBUG_MESSAGE_LENGTH    4096
 /*@}*/
 
+/** For GL_KHR_debug */
+/*@{*/
+#define MAX_LABEL_LENGTH 256
+#define MAX_DEBUG_GROUP_STACK_DEPTH 64
+/*@}*/
 
 /*
  * Color channel component order

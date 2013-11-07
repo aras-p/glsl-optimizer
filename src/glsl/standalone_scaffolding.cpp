@@ -90,21 +90,34 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
 
    ctx->Extensions.dummy_false = false;
    ctx->Extensions.dummy_true = true;
-   ctx->Extensions.ARB_ES2_compatibility = true;
-   ctx->Extensions.ARB_ES3_compatibility = false;
+   ctx->Extensions.ARB_conservative_depth = true;
    ctx->Extensions.ARB_draw_instanced = true;
+   ctx->Extensions.ARB_ES2_compatibility = true;
+   ctx->Extensions.ARB_ES3_compatibility = true;
+   ctx->Extensions.ARB_explicit_attrib_location = true;
    ctx->Extensions.ARB_fragment_coord_conventions = true;
-   ctx->Extensions.EXT_texture_array = true;
-   ctx->Extensions.NV_texture_rectangle = true;
-   ctx->Extensions.EXT_texture3D = true;
-   ctx->Extensions.OES_EGL_image_external = true;
-   ctx->Extensions.ARB_shader_bit_encoding = true;
-   ctx->Extensions.ARB_shading_language_packing = true;
-   ctx->Extensions.OES_standard_derivatives = true;
-   ctx->Extensions.ARB_texture_cube_map_array = true;
-   ctx->Extensions.ARB_texture_multisample = true;
-   ctx->Extensions.ARB_texture_query_lod = true;
    ctx->Extensions.ARB_gpu_shader5 = true;
+   ctx->Extensions.ARB_sample_shading = true;
+   ctx->Extensions.ARB_shader_bit_encoding = true;
+   ctx->Extensions.ARB_shader_stencil_export = true;
+   ctx->Extensions.ARB_shader_texture_lod = true;
+   ctx->Extensions.ARB_shading_language_420pack = true;
+   ctx->Extensions.ARB_shading_language_packing = true;
+   ctx->Extensions.ARB_texture_cube_map_array = true;
+   ctx->Extensions.ARB_texture_gather = true;
+   ctx->Extensions.ARB_texture_multisample = true;
+   ctx->Extensions.ARB_texture_query_levels = true;
+   ctx->Extensions.ARB_texture_query_lod = true;
+   ctx->Extensions.ARB_uniform_buffer_object = true;
+
+   ctx->Extensions.OES_EGL_image_external = true;
+   ctx->Extensions.OES_standard_derivatives = true;
+
+   ctx->Extensions.EXT_shader_integer_mix = true;
+   ctx->Extensions.EXT_texture3D = true;
+   ctx->Extensions.EXT_texture_array = true;
+
+   ctx->Extensions.NV_texture_rectangle = true;
 
    ctx->Const.GLSLVersion = 120;
 
@@ -116,11 +129,13 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Const.VertexProgram.MaxAttribs = 16;
 
    ctx->Const.VertexProgram.MaxUniformComponents = 512;
+   ctx->Const.VertexProgram.MaxOutputComponents = 32;
    ctx->Const.MaxVarying = 8; /* == gl_MaxVaryingFloats / 4 */
    ctx->Const.VertexProgram.MaxTextureImageUnits = 0;
    ctx->Const.MaxCombinedTextureImageUnits = 2;
    ctx->Const.FragmentProgram.MaxTextureImageUnits = 2;
    ctx->Const.FragmentProgram.MaxUniformComponents = 64;
+   ctx->Const.FragmentProgram.MaxInputComponents = 32;
 
    ctx->Const.MaxDrawBuffers = 1;
 

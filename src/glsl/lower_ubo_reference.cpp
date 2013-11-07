@@ -132,7 +132,8 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
    mem_ctx = ralloc_parent(*rvalue);
 
    const char *const field_name =
-      interface_field_name(mem_ctx, (char *) var->interface_type->name, deref);
+      interface_field_name(mem_ctx, (char *) var->get_interface_type()->name,
+                           deref);
 
    this->uniform_block = -1;
    for (unsigned i = 0; i < shader->NumUniformBlocks; i++) {

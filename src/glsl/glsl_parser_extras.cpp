@@ -55,7 +55,7 @@ static unsigned known_desktop_glsl_versions[] =
 
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 					       GLenum target, void *mem_ctx)
- : ctx(_ctx)
+   : ctx(_ctx), switch_state()
 {
    switch (target) {
    case GL_VERTEX_SHADER:   this->target = vertex_shader; break;
@@ -66,10 +66,14 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->scanner = NULL;
    this->translation_unit.make_empty();
    this->symbols = new(mem_ctx) glsl_symbol_table;
+
+   this->num_uniform_blocks = 0;
+   this->uniform_block_array_size = 0;
+   this->uniform_blocks = NULL;
+
    this->info_log = ralloc_strdup(mem_ctx, "");
    this->error = false;
    this->loop_nesting_ast = NULL;
-   this->switch_state.switch_nesting_ast = NULL;
 
    this->struct_specifier_depth = 0;
    this->num_builtins_to_link = 0;
@@ -96,7 +100,6 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
    this->Const.MaxVertexAttribs = ctx->Const.VertexProgram.MaxAttribs;
    this->Const.MaxVertexUniformComponents = ctx->Const.VertexProgram.MaxUniformComponents;
-   this->Const.MaxVaryingFloats = ctx->Const.MaxVarying * 4;
    this->Const.MaxVertexTextureImageUnits = ctx->Const.VertexProgram.MaxTextureImageUnits;
    this->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxCombinedTextureImageUnits;
    this->Const.MaxTextureImageUnits = ctx->Const.FragmentProgram.MaxTextureImageUnits;
@@ -105,6 +108,29 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->Const.MaxProgramTexelOffset = ctx->Const.MaxProgramTexelOffset;
 
    this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
+
+   /* 1.50 constants */
+   this->Const.MaxVertexOutputComponents = ctx->Const.VertexProgram.MaxOutputComponents;
+   this->Const.MaxGeometryInputComponents = ctx->Const.GeometryProgram.MaxInputComponents;
+   this->Const.MaxGeometryOutputComponents = ctx->Const.GeometryProgram.MaxOutputComponents;
+   this->Const.MaxFragmentInputComponents = ctx->Const.FragmentProgram.MaxInputComponents;
+   this->Const.MaxGeometryTextureImageUnits = ctx->Const.GeometryProgram.MaxTextureImageUnits;
+   this->Const.MaxGeometryOutputVertices = ctx->Const.MaxGeometryOutputVertices;
+   this->Const.MaxGeometryTotalOutputComponents = ctx->Const.MaxGeometryTotalOutputComponents;
+   this->Const.MaxGeometryUniformComponents = ctx->Const.GeometryProgram.MaxUniformComponents;
+
+   this->Const.MaxVertexAtomicCounters = ctx->Const.VertexProgram.MaxAtomicCounters;
+   this->Const.MaxGeometryAtomicCounters = ctx->Const.GeometryProgram.MaxAtomicCounters;
+   this->Const.MaxFragmentAtomicCounters = ctx->Const.FragmentProgram.MaxAtomicCounters;
+   this->Const.MaxCombinedAtomicCounters = ctx->Const.MaxCombinedAtomicCounters;
+   this->Const.MaxAtomicBufferBindings = ctx->Const.MaxAtomicBufferBindings;
+
+   this->current_function = NULL;
+   this->toplevel_ir = NULL;
+   this->found_return = false;
+   this->all_invariant = false;
+   this->user_structures = NULL;
+   this->num_user_structures = 0;
 
    /* Populate the list of supported GLSL versions */
    /* FINISHME: Once the OpenGL 3.0 'forward compatible' context or
@@ -164,6 +190,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 
    this->gs_input_prim_type_specified = false;
    this->gs_input_prim_type = GL_POINTS;
+   this->gs_input_size = 0;
    this->out_qualifier = new(this) ast_type_qualifier();
 }
 
@@ -300,14 +327,6 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
 	 this->language_version = 100;
 	 break;
       }
-   }
-
-   if (this->language_version >= 140) {
-      this->ARB_uniform_buffer_object_enable = true;
-   }
-
-   if (this->language_version == 300 && this->es_shader) {
-      this->ARB_explicit_attrib_location_enable = true;
    }
 }
 
@@ -517,9 +536,14 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_shading_language_packing,   true,  false,     ARB_shading_language_packing),
    EXT(ARB_shading_language_420pack,   true,  false,     ARB_shading_language_420pack),
    EXT(ARB_texture_multisample,        true,  false,     ARB_texture_multisample),
+   EXT(ARB_texture_query_levels,       true,  false,     ARB_texture_query_levels),
    EXT(ARB_texture_query_lod,          true,  false,     ARB_texture_query_lod),
    EXT(ARB_gpu_shader5,                true,  false,     ARB_gpu_shader5),
    EXT(AMD_vertex_shader_layer,        true,  false,     AMD_vertex_shader_layer),
+   EXT(EXT_shader_integer_mix,         true,  true,      EXT_shader_integer_mix),
+   EXT(ARB_texture_gather,             true,  false,     ARB_texture_gather),
+   EXT(ARB_shader_atomic_counters,     true,  false,     ARB_shader_atomic_counters),
+   EXT(ARB_sample_shading,             true,  false,     ARB_sample_shading),
 };
 
 #undef EXT
@@ -1048,7 +1072,8 @@ ast_expression::print(void) const
 ast_expression::ast_expression(int oper,
 			       ast_expression *ex0,
 			       ast_expression *ex1,
-			       ast_expression *ex2)
+			       ast_expression *ex2) :
+   primary_expression()
 {
    this->oper = ast_operators(oper);
    this->subexpressions[0] = ex0;
@@ -1583,6 +1608,7 @@ do_common_optimization(exec_list *ir, bool linked,
    else
       progress = do_constant_variable_unlinked(ir) || progress;
    progress = do_constant_folding(ir) || progress;
+   progress = do_cse(ir) || progress;
    progress = do_algebraic(ir) || progress;
    progress = do_lower_jumps(ir) || progress;
    progress = do_vec_index_to_swizzle(ir) || progress;
@@ -1628,7 +1654,7 @@ _mesa_destroy_shader_compiler(void)
 void
 _mesa_destroy_shader_compiler_caches(void)
 {
-   _mesa_glsl_release_functions();
+   _mesa_glsl_release_builtin_functions();
 }
 
 }

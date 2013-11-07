@@ -148,6 +148,8 @@
 #include "ir.h"
 #include "ir_optimization.h"
 
+namespace {
+
 /**
  * Visitor that performs varying packing.  For each varying declared in the
  * shader, this visitor determines whether it needs to be packed.  If so, it
@@ -229,6 +231,8 @@ private:
     */
    exec_list *out_instructions;
 };
+
+} /* anonymous namespace */
 
 lower_packed_varyings_visitor::lower_packed_varyings_visitor(
       void *mem_ctx, unsigned location_base, unsigned locations_used,
@@ -502,17 +506,16 @@ lower_packed_varyings_visitor::lower_arraylike(ir_rvalue *rvalue,
       ir_constant *constant = new(this->mem_ctx) ir_constant(i);
       ir_dereference_array *dereference_array = new(this->mem_ctx)
          ir_dereference_array(rvalue, constant);
-      char *subscripted_name
-         = ralloc_asprintf(this->mem_ctx, "%s[%d]", name, i);
       if (gs_input_toplevel) {
          /* Geometry shader inputs are a special case.  Instead of storing
           * each element of the array at a different location, all elements
           * are at the same location, but with a different vertex index.
           */
          (void) this->lower_rvalue(dereference_array, fine_location,
-                                   unpacked_var, subscripted_name,
-                                   false, i);
+                                   unpacked_var, name, false, i);
       } else {
+         char *subscripted_name
+            = ralloc_asprintf(this->mem_ctx, "%s[%d]", name, i);
          fine_location =
             this->lower_rvalue(dereference_array, fine_location,
                                unpacked_var, subscripted_name,
@@ -658,7 +661,7 @@ lower_packed_varyings(void *mem_ctx, unsigned location_base,
    ir_function *main_func = shader->symbols->get_function("main");
    exec_list void_parameters;
    ir_function_signature *main_func_sig
-      = main_func->matching_signature(&void_parameters);
+      = main_func->matching_signature(NULL, &void_parameters);
    exec_list new_instructions;
    lower_packed_varyings_visitor visitor(mem_ctx, location_base,
                                          locations_used, mode,

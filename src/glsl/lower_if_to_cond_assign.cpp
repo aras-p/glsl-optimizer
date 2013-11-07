@@ -49,6 +49,8 @@
 #include "ir.h"
 #include "program/hash_table.h"
 
+namespace {
+
 class ir_if_to_cond_assign_visitor : public ir_hierarchical_visitor {
 public:
    ir_if_to_cond_assign_visitor(unsigned max_depth)
@@ -75,6 +77,8 @@ public:
 
    struct hash_table *condition_variables;
 };
+
+} /* anonymous namespace */
 
 bool
 lower_if_to_cond_assign(exec_list *instructions, unsigned max_depth)

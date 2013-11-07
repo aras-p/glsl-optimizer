@@ -404,4 +404,42 @@ bool ralloc_vasprintf_append(char **str, const char *fmt, va_list args);
 } /* end of extern "C" */
 #endif
 
+/**
+ * Declare C++ new and delete operators which use ralloc.
+ *
+ * Placing this macro in the body of a class makes it possible to do:
+ *
+ * TYPE *var = new(mem_ctx) TYPE(...);
+ * delete var;
+ *
+ * which is more idiomatic in C++ than calling ralloc.
+ */
+#define DECLARE_RALLOC_CXX_OPERATORS(TYPE)                               \
+private:                                                                 \
+   static void _ralloc_destructor(void *p)                               \
+   {                                                                     \
+      reinterpret_cast<TYPE *>(p)->~TYPE();                              \
+   }                                                                     \
+public:                                                                  \
+   static void* operator new(size_t size, void *mem_ctx)                 \
+   {                                                                     \
+      void *p = ralloc_size(mem_ctx, size);                              \
+      assert(p != NULL);                                                 \
+      if (!HAS_TRIVIAL_DESTRUCTOR(TYPE))                                 \
+         ralloc_set_destructor(p, _ralloc_destructor);                   \
+      return p;                                                          \
+   }                                                                     \
+                                                                         \
+   static void operator delete(void *p)                                  \
+   {                                                                     \
+      /* The object's destructor is guaranteed to have already been      \
+       * called by the delete operator at this point -- Make sure it's   \
+       * not called again.                                               \
+       */                                                                \
+      if (!HAS_TRIVIAL_DESTRUCTOR(TYPE))                                 \
+         ralloc_set_destructor(p, NULL);                                 \
+      ralloc_free(p);                                                    \
+   }
+
+
 #endif

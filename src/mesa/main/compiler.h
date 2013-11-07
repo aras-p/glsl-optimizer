@@ -36,11 +36,7 @@
 
 #include <assert.h>
 #include <ctype.h>
-#if defined(__alpha__) && defined(CCPML)
-#include <cpml.h> /* use Compaq's Fast Math Library on Alpha */
-#else
 #include <math.h>
-#endif
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -84,15 +80,13 @@ extern "C" {
  */
 #if defined(_MSC_VER)
 #  define finite _finite
-#elif defined(__WATCOMC__)
-#  define finite _finite
 #endif
 
 
 /**
  * Disable assorted warnings
  */
-#if !defined(OPENSTEP) && (defined(_WIN32) && !defined(__CYGWIN__)) && !defined(BUILD_FOR_SNAP)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #  if !defined(__GNUC__) /* mingw environment */
 #    pragma warning( disable : 4068 ) /* unknown pragma */
 #    pragma warning( disable : 4710 ) /* function 'foo' not inlined */
@@ -106,9 +100,6 @@ extern "C" {
 #      pragma warning( disable : 4761 ) /* integral size mismatch in argument; conversion supplied */
 #    endif
 #  endif
-#endif
-#if defined(__WATCOMC__)
-#  pragma disable_message(201) /* Disable unreachable code warnings */
 #endif
 
 
@@ -198,7 +189,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 
 
 
-#if !defined(CAPI) && defined(_WIN32) && !defined(BUILD_FOR_SNAP)
+#if !defined(CAPI) && defined(_WIN32)
 #define CAPI _cdecl
 #endif
 
@@ -208,7 +199,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
  * than GNU C
  */
 #ifndef _ASMAPI
-#if defined(_WIN32) && !defined(BUILD_FOR_SNAP)/* was: !defined( __GNUC__ ) && !defined( VMS ) && !defined( __INTEL_COMPILER )*/
+#if defined(_WIN32)
 #define _ASMAPI __cdecl
 #else
 #define _ASMAPI
@@ -239,9 +230,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
  * ASSERT macro
  */
 #if !defined(_WIN32_WCE)
-#if defined(BUILD_FOR_SNAP) && defined(CHECKED)
-#  define ASSERT(X)   _CHECK(X) 
-#elif defined(DEBUG)
+#if defined(DEBUG)
 #  define ASSERT(X)   assert(X)
 #else
 #  define ASSERT(X)
@@ -259,6 +248,21 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
       (void) sizeof(char [1 - 2*!(COND)]); \
    } while (0)
 
+/**
+ * Unreachable macro. Useful for suppressing "control reaches end of non-void
+ * function" warnings.
+ */
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 5
+#define unreachable() __builtin_unreachable()
+#elif (defined(__clang__) && defined(__has_builtin))
+# if __has_builtin(__builtin_unreachable)
+#  define unreachable() __builtin_unreachable()
+# endif
+#endif
+
+#ifndef unreachable
+#define unreachable()
+#endif
 
 #if (__GNUC__ >= 3)
 #define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
@@ -268,6 +272,15 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 
 #ifndef NULL
 #define NULL 0
+#endif
+
+/* Used to optionally mark structures with misaligned elements or size as
+ * packed, to trade off performance for space.
+ */
+#if (__GNUC__ >= 3)
+#define PACKED __attribute__((__packed__))
+#else
+#define PACKED
 #endif
 
 
@@ -313,7 +326,7 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
     defined(ia64) || defined(__ia64__) || \
     defined(__hppa__) || defined(hpux) || \
     defined(__mips) || defined(_MIPS_ARCH) || \
-    defined(__arm__) || \
+    defined(__arm__) || defined(__aarch64__) || \
     defined(__sh__) || defined(__m32r__) || \
     (defined(__sun) && defined(_IEEE_754)) || \
     defined(__alpha__)
@@ -374,36 +387,6 @@ do {									\
    __asm__ ( "fnclex ; fldcw %0" : : "m" (*&(x)) );			\
 } while (0)
 
-#elif defined(__WATCOMC__) && defined(__386__)
-#define DEFAULT_X86_FPU		0x037f /* See GCC comments above */
-#define FAST_X86_FPU		0x003f /* See GCC comments above */
-void _watcom_start_fast_math(unsigned short *x,unsigned short *mask);
-#pragma aux _watcom_start_fast_math =                                   \
-   "fnstcw  word ptr [eax]"                                             \
-   "fldcw   word ptr [ecx]"                                             \
-   parm [eax] [ecx]                                                     \
-   modify exact [];
-void _watcom_end_fast_math(unsigned short *x);
-#pragma aux _watcom_end_fast_math =                                     \
-   "fnclex"                                                             \
-   "fldcw   word ptr [eax]"                                             \
-   parm [eax]                                                           \
-   modify exact [];
-#if defined(NO_FAST_MATH)
-#define START_FAST_MATH(x)                                              \
-do {                                                                    \
-   static GLushort mask = DEFAULT_X86_FPU;	                        \
-   _watcom_start_fast_math(&x,&mask);                                   \
-} while (0)
-#else
-#define START_FAST_MATH(x)                                              \
-do {                                                                    \
-   static GLushort mask = FAST_X86_FPU;                                 \
-   _watcom_start_fast_math(&x,&mask);                                   \
-} while (0)
-#endif
-#define END_FAST_MATH(x)  _watcom_end_fast_math(&x)
-
 #elif defined(_MSC_VER) && defined(_M_IX86)
 #define DEFAULT_X86_FPU		0x037f /* See GCC comments above */
 #define FAST_X86_FPU		0x003f /* See GCC comments above */
@@ -435,7 +418,29 @@ do {                                                                    \
 #define Elements(x) (sizeof(x)/sizeof(*(x)))
 #endif
 
-
+#ifdef __cplusplus
+/**
+ * Macro function that evaluates to true if T is a trivially
+ * destructible type -- that is, if its (non-virtual) destructor
+ * performs no action and all member variables and base classes are
+ * trivially destructible themselves.
+ */
+#   if defined(__GNUC__)
+#      if ((__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 3)))
+#         define HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
+#      endif
+#   elif (defined(__clang__) && defined(__has_feature))
+#      if __has_feature(has_trivial_destructor)
+#         define HAS_TRIVIAL_DESTRUCTOR(T) __has_trivial_destructor(T)
+#      endif
+#   endif
+#   ifndef HAS_TRIVIAL_DESTRUCTOR
+       /* It's always safe (if inefficient) to assume that a
+        * destructor is non-trivial.
+        */
+#      define HAS_TRIVIAL_DESTRUCTOR(T) (false)
+#   endif
+#endif
 
 #ifdef __cplusplus
 }

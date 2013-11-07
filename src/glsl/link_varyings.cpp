@@ -41,6 +41,118 @@
 
 
 /**
+ * Validate the types and qualifiers of an output from one stage against the
+ * matching input to another stage.
+ */
+static void
+cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
+                                    const ir_variable *input,
+                                    const ir_variable *output,
+                                    GLenum consumer_type,
+                                    GLenum producer_type)
+{
+   /* Check that the types match between stages.
+    */
+   const glsl_type *type_to_match = input->type;
+   if (consumer_type == GL_GEOMETRY_SHADER) {
+      assert(type_to_match->is_array()); /* Enforced by ast_to_hir */
+      type_to_match = type_to_match->element_type();
+   }
+   if (type_to_match != output->type) {
+      /* There is a bit of a special case for gl_TexCoord.  This
+       * built-in is unsized by default.  Applications that variable
+       * access it must redeclare it with a size.  There is some
+       * language in the GLSL spec that implies the fragment shader
+       * and vertex shader do not have to agree on this size.  Other
+       * driver behave this way, and one or two applications seem to
+       * rely on it.
+       *
+       * Neither declaration needs to be modified here because the array
+       * sizes are fixed later when update_array_sizes is called.
+       *
+       * From page 48 (page 54 of the PDF) of the GLSL 1.10 spec:
+       *
+       *     "Unlike user-defined varying variables, the built-in
+       *     varying variables don't have a strict one-to-one
+       *     correspondence between the vertex language and the
+       *     fragment language."
+       */
+      if (!output->type->is_array()
+          || (strncmp("gl_", output->name, 3) != 0)) {
+         linker_error(prog,
+                      "%s shader output `%s' declared as type `%s', "
+                      "but %s shader input declared as type `%s'\n",
+                      _mesa_glsl_shader_target_name(producer_type),
+                      output->name,
+                      output->type->name,
+                      _mesa_glsl_shader_target_name(consumer_type),
+                      input->type->name);
+         return;
+      }
+   }
+
+   /* Check that all of the qualifiers match between stages.
+    */
+   if (input->centroid != output->centroid) {
+      linker_error(prog,
+                   "%s shader output `%s' %s centroid qualifier, "
+                   "but %s shader input %s centroid qualifier\n",
+                   _mesa_glsl_shader_target_name(producer_type),
+                   output->name,
+                   (output->centroid) ? "has" : "lacks",
+                   _mesa_glsl_shader_target_name(consumer_type),
+                   (input->centroid) ? "has" : "lacks");
+      return;
+   }
+
+   if (input->invariant != output->invariant) {
+      linker_error(prog,
+                   "%s shader output `%s' %s invariant qualifier, "
+                   "but %s shader input %s invariant qualifier\n",
+                   _mesa_glsl_shader_target_name(producer_type),
+                   output->name,
+                   (output->invariant) ? "has" : "lacks",
+                   _mesa_glsl_shader_target_name(consumer_type),
+                   (input->invariant) ? "has" : "lacks");
+      return;
+   }
+
+   if (input->interpolation != output->interpolation) {
+      linker_error(prog,
+                   "%s shader output `%s' specifies %s "
+                   "interpolation qualifier, "
+                   "but %s shader input specifies %s "
+                   "interpolation qualifier\n",
+                   _mesa_glsl_shader_target_name(producer_type),
+                   output->name,
+                   interpolation_string(output->interpolation),
+                   _mesa_glsl_shader_target_name(consumer_type),
+                   interpolation_string(input->interpolation));
+      return;
+   }
+}
+
+/**
+ * Validate front and back color outputs against single color input
+ */
+static void
+cross_validate_front_and_back_color(struct gl_shader_program *prog,
+                                    const ir_variable *input,
+                                    const ir_variable *front_color,
+                                    const ir_variable *back_color,
+                                    GLenum consumer_type,
+                                    GLenum producer_type)
+{
+   if (front_color != NULL && front_color->assigned)
+      cross_validate_types_and_qualifiers(prog, input, front_color,
+                                          consumer_type, producer_type);
+
+   if (back_color != NULL && back_color->assigned)
+      cross_validate_types_and_qualifiers(prog, input, back_color,
+                                          consumer_type, producer_type);
+}
+
+/**
  * Validate that outputs from one stage match inputs of another
  */
 void
@@ -48,10 +160,6 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 				 gl_shader *producer, gl_shader *consumer)
 {
    glsl_symbol_table parameters;
-   const char *const producer_stage =
-      _mesa_glsl_shader_target_name(producer->Type);
-   const char *const consumer_stage =
-      _mesa_glsl_shader_target_name(consumer->Type);
 
    /* Find all shader outputs in the "producer" stage.
     */
@@ -79,85 +187,32 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
       if ((input == NULL) || (input->mode != ir_var_shader_in))
 	 continue;
 
-      ir_variable *const output = parameters.get_variable(input->name);
-      if (output != NULL) {
-	 /* Check that the types match between stages.
-	  */
-         const glsl_type *type_to_match = input->type;
-         if (consumer->Type == GL_GEOMETRY_SHADER) {
-            assert(type_to_match->is_array()); /* Enforced by ast_to_hir */
-            type_to_match = type_to_match->element_type();
+      if (strcmp(input->name, "gl_Color") == 0 && input->used) {
+         const ir_variable *const front_color =
+            parameters.get_variable("gl_FrontColor");
+
+         const ir_variable *const back_color =
+            parameters.get_variable("gl_BackColor");
+
+         cross_validate_front_and_back_color(prog, input,
+                                             front_color, back_color,
+                                             consumer->Type, producer->Type);
+      } else if (strcmp(input->name, "gl_SecondaryColor") == 0 && input->used) {
+         const ir_variable *const front_color =
+            parameters.get_variable("gl_FrontSecondaryColor");
+
+         const ir_variable *const back_color =
+            parameters.get_variable("gl_BackSecondaryColor");
+
+         cross_validate_front_and_back_color(prog, input,
+                                             front_color, back_color,
+                                             consumer->Type, producer->Type);
+      } else {
+         ir_variable *const output = parameters.get_variable(input->name);
+         if (output != NULL) {
+            cross_validate_types_and_qualifiers(prog, input, output,
+                                                consumer->Type, producer->Type);
          }
-	 if (type_to_match != output->type) {
-	    /* There is a bit of a special case for gl_TexCoord.  This
-	     * built-in is unsized by default.  Applications that variable
-	     * access it must redeclare it with a size.  There is some
-	     * language in the GLSL spec that implies the fragment shader
-	     * and vertex shader do not have to agree on this size.  Other
-	     * driver behave this way, and one or two applications seem to
-	     * rely on it.
-	     *
-	     * Neither declaration needs to be modified here because the array
-	     * sizes are fixed later when update_array_sizes is called.
-	     *
-	     * From page 48 (page 54 of the PDF) of the GLSL 1.10 spec:
-	     *
-	     *     "Unlike user-defined varying variables, the built-in
-	     *     varying variables don't have a strict one-to-one
-	     *     correspondence between the vertex language and the
-	     *     fragment language."
-	     */
-	    if (!output->type->is_array()
-		|| (strncmp("gl_", output->name, 3) != 0)) {
-	       linker_error(prog,
-			    "%s shader output `%s' declared as type `%s', "
-			    "but %s shader input declared as type `%s'\n",
-			    producer_stage, output->name,
-			    output->type->name,
-			    consumer_stage, input->type->name);
-	       return;
-	    }
-	 }
-
-	 /* Check that all of the qualifiers match between stages.
-	  */
-	 if (input->centroid != output->centroid) {
-	    linker_error(prog,
-			 "%s shader output `%s' %s centroid qualifier, "
-			 "but %s shader input %s centroid qualifier\n",
-			 producer_stage,
-			 output->name,
-			 (output->centroid) ? "has" : "lacks",
-			 consumer_stage,
-			 (input->centroid) ? "has" : "lacks");
-	    return;
-	 }
-
-	 if (input->invariant != output->invariant) {
-	    linker_error(prog,
-			 "%s shader output `%s' %s invariant qualifier, "
-			 "but %s shader input %s invariant qualifier\n",
-			 producer_stage,
-			 output->name,
-			 (output->invariant) ? "has" : "lacks",
-			 consumer_stage,
-			 (input->invariant) ? "has" : "lacks");
-	    return;
-	 }
-
-	 if (input->interpolation != output->interpolation) {
-	    linker_error(prog,
-			 "%s shader output `%s' specifies %s "
-			 "interpolation qualifier, "
-			 "but %s shader input specifies %s "
-			 "interpolation qualifier\n",
-			 producer_stage,
-			 output->name,
-			 output->interpolation_string(),
-			 consumer_stage,
-			 input->interpolation_string());
-	    return;
-	 }
       }
    }
 }
@@ -172,8 +227,8 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
  * will fail to find any matching variable.
  */
 void
-tfeedback_decl::init(struct gl_context *ctx, struct gl_shader_program *prog,
-                     const void *mem_ctx, const char *input)
+tfeedback_decl::init(struct gl_context *ctx, const void *mem_ctx,
+                     const char *input)
 {
    /* We don't have to be pedantic about what is a valid GLSL variable name,
     * because any variable with an invalid name can't exist in the IR anyway.
@@ -273,7 +328,7 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
       const unsigned vector_elements =
          this->matched_candidate->type->fields.array->vector_elements;
       unsigned actual_array_size = this->is_clip_distance_mesa ?
-         prog->Vert.ClipDistanceArraySize :
+         prog->LastClipDistanceArraySize :
          this->matched_candidate->type->array_size();
 
       if (this->is_subscripted) {
@@ -443,7 +498,7 @@ parse_tfeedback_decls(struct gl_context *ctx, struct gl_shader_program *prog,
                       char **varying_names, tfeedback_decl *decls)
 {
    for (unsigned i = 0; i < num_names; ++i) {
-      decls[i].init(ctx, prog, mem_ctx, varying_names[i]);
+      decls[i].init(ctx, mem_ctx, varying_names[i]);
 
       if (!decls[i].is_varying())
          continue;
@@ -542,6 +597,7 @@ store_tfeedback_info(struct gl_context *ctx, struct gl_shader_program *prog,
    return true;
 }
 
+namespace {
 
 /**
  * Data structure recording the relationship between outputs of one shader
@@ -634,6 +690,7 @@ private:
    const bool consumer_is_fs;
 };
 
+} /* anonymous namespace */
 
 varying_matches::varying_matches(bool disable_varying_packing,
                                  bool consumer_is_fs)
@@ -915,8 +972,8 @@ public:
       this->toplevel_var = var;
       this->varying_floats = 0;
       if (var->is_interface_instance())
-         program_resource_visitor::process(var->interface_type,
-                                           var->interface_type->name);
+         program_resource_visitor::process(var->get_interface_type(),
+                                           var->get_interface_type()->name);
       else
          program_resource_visitor::process(var);
    }
@@ -1026,10 +1083,10 @@ assign_varying_locations(struct gl_context *ctx,
             ((ir_instruction *) node)->as_variable();
 
          if ((input_var != NULL) && (input_var->mode == ir_var_shader_in)) {
-            if (input_var->interface_type != NULL) {
+            if (input_var->get_interface_type() != NULL) {
                char *const iface_field_name =
                   ralloc_asprintf(mem_ctx, "%s.%s",
-                                  input_var->interface_type->name,
+                                  input_var->get_interface_type()->name,
                                   input_var->name);
                hash_table_insert(consumer_interface_inputs, input_var,
                                  iface_field_name);
@@ -1051,10 +1108,10 @@ assign_varying_locations(struct gl_context *ctx,
       g.process(output_var);
 
       ir_variable *input_var;
-      if (output_var->interface_type != NULL) {
+      if (output_var->get_interface_type() != NULL) {
          char *const iface_field_name =
             ralloc_asprintf(mem_ctx, "%s.%s",
-                            output_var->interface_type->name,
+                            output_var->get_interface_type()->name,
                             output_var->name);
          input_var =
             (ir_variable *) hash_table_find(consumer_interface_inputs,
@@ -1163,39 +1220,98 @@ assign_varying_locations(struct gl_context *ctx,
 }
 
 bool
-check_against_varying_limit(struct gl_context *ctx,
-                            struct gl_shader_program *prog,
-                            gl_shader *consumer)
+check_against_output_limit(struct gl_context *ctx,
+                           struct gl_shader_program *prog,
+                           gl_shader *producer)
 {
-   unsigned varying_vectors = 0;
+   unsigned output_vectors = 0;
+
+   foreach_list(node, producer->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var && var->mode == ir_var_shader_out &&
+          is_varying_var(producer->Type, var)) {
+         output_vectors += var->type->count_attribute_slots();
+      }
+   }
+
+   unsigned max_output_components;
+   switch (producer->Type) {
+   case GL_VERTEX_SHADER:
+      max_output_components = ctx->Const.VertexProgram.MaxOutputComponents;
+      break;
+   case GL_GEOMETRY_SHADER:
+      max_output_components = ctx->Const.GeometryProgram.MaxOutputComponents;
+      break;
+   case GL_FRAGMENT_SHADER:
+   default:
+      assert(!"Should not get here.");
+      return false;
+   }
+
+   const unsigned output_components = output_vectors * 4;
+   if (output_components > max_output_components) {
+      if (ctx->API == API_OPENGLES2 || prog->IsES)
+         linker_error(prog, "shader uses too many output vectors "
+                      "(%u > %u)\n",
+                      output_vectors,
+                      max_output_components / 4);
+      else
+         linker_error(prog, "shader uses too many output components "
+                      "(%u > %u)\n",
+                      output_components,
+                      max_output_components);
+
+      return false;
+   }
+
+   return true;
+}
+
+bool
+check_against_input_limit(struct gl_context *ctx,
+                          struct gl_shader_program *prog,
+                          gl_shader *consumer)
+{
+   unsigned input_vectors = 0;
 
    foreach_list(node, consumer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if (var && var->mode == ir_var_shader_in &&
           is_varying_var(consumer->Type, var)) {
-         /* The packing rules used for vertex shader inputs are also
-          * used for fragment shader inputs.
-          */
-         varying_vectors += var->type->count_attribute_slots();
+         input_vectors += var->type->count_attribute_slots();
       }
    }
 
-   if (ctx->API == API_OPENGLES2 || prog->IsES) {
-      if (varying_vectors > ctx->Const.MaxVarying) {
-         linker_error(prog, "shader uses too many varying vectors "
+   unsigned max_input_components;
+   switch (consumer->Type) {
+   case GL_GEOMETRY_SHADER:
+      max_input_components = ctx->Const.GeometryProgram.MaxInputComponents;
+      break;
+   case GL_FRAGMENT_SHADER:
+      max_input_components = ctx->Const.FragmentProgram.MaxInputComponents;
+      break;
+   case GL_VERTEX_SHADER:
+   default:
+      assert(!"Should not get here.");
+      return false;
+   }
+
+   const unsigned input_components = input_vectors * 4;
+   if (input_components > max_input_components) {
+      if (ctx->API == API_OPENGLES2 || prog->IsES)
+         linker_error(prog, "shader uses too many input vectors "
                       "(%u > %u)\n",
-                      varying_vectors, ctx->Const.MaxVarying);
-         return false;
-      }
-   } else {
-      const unsigned float_components = varying_vectors * 4;
-      if (float_components > ctx->Const.MaxVarying * 4) {
-         linker_error(prog, "shader uses too many varying components "
+                      input_vectors,
+                      max_input_components / 4);
+      else
+         linker_error(prog, "shader uses too many input components "
                       "(%u > %u)\n",
-                      float_components, ctx->Const.MaxVarying * 4);
-         return false;
-      }
+                      input_components,
+                      max_input_components);
+
+      return false;
    }
 
    return true;

@@ -75,7 +75,63 @@ program_resource_visitor::process(ir_variable *var)
     */
 
    /* Only strdup the name if we actually will need to modify it. */
-   if (t->is_record() || (t->is_array() && t->fields.array->is_record())) {
+   if (var->from_named_ifc_block_array) {
+      /* lower_named_interface_blocks created this variable by lowering an
+       * interface block array to an array variable.  For example if the
+       * original source code was:
+       *
+       *     out Blk { vec4 bar } foo[3];
+       *
+       * Then the variable is now:
+       *
+       *     out vec4 bar[3];
+       *
+       * We need to visit each array element using the names constructed like
+       * so:
+       *
+       *     Blk[0].bar
+       *     Blk[1].bar
+       *     Blk[2].bar
+       */
+      assert(t->is_array());
+      const glsl_type *ifc_type = var->get_interface_type();
+      char *name = ralloc_strdup(NULL, ifc_type->name);
+      size_t name_length = strlen(name);
+      for (unsigned i = 0; i < t->length; i++) {
+         size_t new_length = name_length;
+         ralloc_asprintf_rewrite_tail(&name, &new_length, "[%u].%s", i,
+                                      var->name);
+         /* Note: row_major is only meaningful for uniform blocks, and
+          * lowering is only applied to non-uniform interface blocks, so we
+          * can safely pass false for row_major.
+          */
+         recursion(var->type, &name, new_length, false, NULL);
+      }
+      ralloc_free(name);
+   } else if (var->from_named_ifc_block_nonarray) {
+      /* lower_named_interface_blocks created this variable by lowering a
+       * named interface block (non-array) to an ordinary variable.  For
+       * example if the original source code was:
+       *
+       *     out Blk { vec4 bar } foo;
+       *
+       * Then the variable is now:
+       *
+       *     out vec4 bar;
+       *
+       * We need to visit this variable using the name:
+       *
+       *     Blk.bar
+       */
+      const glsl_type *ifc_type = var->get_interface_type();
+      char *name = ralloc_asprintf(NULL, "%s.%s", ifc_type->name, var->name);
+      /* Note: row_major is only meaningful for uniform blocks, and lowering
+       * is only applied to non-uniform interface blocks, so we can safely
+       * pass false for row_major.
+       */
+      recursion(var->type, &name, strlen(name), false, NULL);
+      ralloc_free(name);
+   } else if (t->is_record() || (t->is_array() && t->fields.array->is_record())) {
       char *name = ralloc_strdup(NULL, var->name);
       recursion(var->type, &name, strlen(name), false, NULL);
       ralloc_free(name);
@@ -140,8 +196,8 @@ program_resource_visitor::recursion(const glsl_type *t, char **name,
 	 /* Append the subscript to the current variable name */
 	 ralloc_asprintf_rewrite_tail(name, &new_length, "[%u]", i);
 
-         recursion(t->fields.array, name, new_length,
-                   t->fields.structure[i].row_major, record_type);
+         recursion(t->fields.array, name, new_length, row_major,
+                   record_type);
 
          /* Only the first leaf-field of the record gets called with the
           * record type pointer.
@@ -167,6 +223,8 @@ program_resource_visitor::visit_field(const glsl_struct_field *field)
    (void) field;
    /* empty */
 }
+
+namespace {
 
 /**
  * Class to help calculate the storage requirements for a set of uniforms
@@ -197,8 +255,8 @@ public:
    {
       this->is_ubo_var = var->is_in_uniform_block();
       if (var->is_interface_instance())
-         program_resource_visitor::process(var->interface_type,
-                                           var->interface_type->name);
+         program_resource_visitor::process(var->get_interface_type(),
+                                           var->get_interface_type()->name);
       else
          program_resource_visitor::process(var);
    }
@@ -272,6 +330,8 @@ private:
    struct string_to_uint_map *map;
 };
 
+} /* anonymous namespace */
+
 /**
  * Class to help parcel out pieces of backing storage to uniforms
  *
@@ -313,10 +373,10 @@ public:
       ubo_block_index = -1;
       if (var->is_in_uniform_block()) {
          if (var->is_interface_instance() && var->type->is_array()) {
-            unsigned l = strlen(var->interface_type->name);
+            unsigned l = strlen(var->get_interface_type()->name);
 
             for (unsigned i = 0; i < prog->NumUniformBlocks; i++) {
-               if (strncmp(var->interface_type->name,
+               if (strncmp(var->get_interface_type()->name,
                            prog->UniformBlocks[i].Name,
                            l) == 0
                    && prog->UniformBlocks[i].Name[l] == '[') {
@@ -326,7 +386,7 @@ public:
             }
          } else {
             for (unsigned i = 0; i < prog->NumUniformBlocks; i++) {
-               if (strcmp(var->interface_type->name,
+               if (strcmp(var->get_interface_type()->name,
                           prog->UniformBlocks[i].Name) == 0) {
                   ubo_block_index = i;
                   break;
@@ -358,7 +418,8 @@ public:
          }
 
          if (var->is_interface_instance())
-            process(var->interface_type, var->interface_type->name);
+            process(var->get_interface_type(),
+                    var->get_interface_type()->name);
          else
             process(var);
       } else
@@ -452,6 +513,7 @@ private:
       this->uniforms[id].num_driver_storage = 0;
       this->uniforms[id].driver_storage = NULL;
       this->uniforms[id].storage = this->values;
+      this->uniforms[id].atomic_buffer_index = -1;
       if (this->ubo_block_index != -1) {
 	 this->uniforms[id].block_index = this->ubo_block_index;
 

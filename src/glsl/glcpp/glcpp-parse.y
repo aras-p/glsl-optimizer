@@ -1234,6 +1234,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	      if (extensions->ARB_texture_multisample)
 	         add_builtin_define(parser, "GL_ARB_texture_multisample", 1);
 
+              if (extensions->ARB_texture_query_levels)
+                 add_builtin_define(parser, "GL_ARB_texture_query_levels", 1);
+
 	      if (extensions->ARB_texture_query_lod)
 	         add_builtin_define(parser, "GL_ARB_texture_query_lod", 1);
 
@@ -1245,6 +1248,18 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	      if (extensions->ARB_shading_language_420pack)
 	         add_builtin_define(parser, "GL_ARB_shading_language_420pack", 1);
+
+	      if (extensions->ARB_sample_shading)
+	         add_builtin_define(parser, "GL_ARB_sample_shading", 1);
+
+	      if (extensions->EXT_shader_integer_mix)
+	         add_builtin_define(parser, "GL_EXT_shader_integer_mix", 1);
+
+	      if (extensions->ARB_texture_gather)
+	         add_builtin_define(parser, "GL_ARB_texture_gather", 1);
+
+	      if (extensions->ARB_shader_atomic_counters)
+	         add_builtin_define(parser, "GL_ARB_shader_atomic_counters", 1);
 	   }
 	}
 

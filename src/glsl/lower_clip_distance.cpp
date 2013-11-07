@@ -50,16 +50,21 @@
 #include "ir.h"
 #include "program/prog_instruction.h" /* For WRITEMASK_* */
 
+namespace {
+
 class lower_clip_distance_visitor : public ir_rvalue_visitor {
 public:
-   lower_clip_distance_visitor()
-      : progress(false), old_clip_distance_var(NULL),
-        new_clip_distance_var(NULL)
+   explicit lower_clip_distance_visitor(GLenum shader_type)
+      : progress(false), old_clip_distance_1d_var(NULL),
+        old_clip_distance_2d_var(NULL), new_clip_distance_1d_var(NULL),
+        new_clip_distance_2d_var(NULL), shader_type(shader_type)
    {
    }
 
    virtual ir_visitor_status visit(ir_variable *);
    void create_indices(ir_rvalue*, ir_rvalue *&, ir_rvalue *&);
+   bool is_clip_distance_vec8(ir_rvalue *ir);
+   ir_rvalue *lower_clip_distance_vec8(ir_rvalue *ir);
    virtual ir_visitor_status visit_leave(ir_assignment *);
    void visit_new_assignment(ir_assignment *ir);
    virtual ir_visitor_status visit_leave(ir_call *);
@@ -72,15 +77,31 @@ public:
 
    /**
     * Pointer to the declaration of gl_ClipDistance, if found.
+    *
+    * Note:
+    *
+    * - the 2d_var is for geometry shader input only.
+    *
+    * - since gl_ClipDistance is available in geometry shaders as both an
+    *   input and an output, it's possible for both old_clip_distance_1d_var
+    *   and old_clip_distance_2d_var to be non-null.
     */
-   ir_variable *old_clip_distance_var;
+   ir_variable *old_clip_distance_1d_var;
+   ir_variable *old_clip_distance_2d_var;
 
    /**
     * Pointer to the newly-created gl_ClipDistanceMESA variable.
     */
-   ir_variable *new_clip_distance_var;
+   ir_variable *new_clip_distance_1d_var;
+   ir_variable *new_clip_distance_2d_var;
+
+   /**
+    * Type of shader we are compiling (e.g. GL_VERTEX_SHADER)
+    */
+   const GLenum shader_type;
 };
 
+} /* anonymous namespace */
 
 /**
  * Replace any declaration of gl_ClipDistance as an array of floats with a
@@ -89,30 +110,61 @@ public:
 ir_visitor_status
 lower_clip_distance_visitor::visit(ir_variable *ir)
 {
-   /* No point in looking for the declaration of gl_ClipDistance if
-    * we've already found it.
-    */
-   if (this->old_clip_distance_var)
+   if (!ir->name || strcmp(ir->name, "gl_ClipDistance") != 0)
       return visit_continue;
+   assert (ir->type->is_array());
 
-   if (ir->name && strcmp(ir->name, "gl_ClipDistance") == 0) {
+   if (!ir->type->element_type()->is_array()) {
+      /* 1D gl_ClipDistance (used for vertex and geometry output, and fragment
+       * input).
+       */
+      if (this->old_clip_distance_1d_var)
+         return visit_continue;
+
       this->progress = true;
-      this->old_clip_distance_var = ir;
-      assert (ir->type->is_array());
+      this->old_clip_distance_1d_var = ir;
       assert (ir->type->element_type() == glsl_type::float_type);
       unsigned new_size = (ir->type->array_size() + 3) / 4;
 
       /* Clone the old var so that we inherit all of its properties */
-      this->new_clip_distance_var = ir->clone(ralloc_parent(ir), NULL);
+      this->new_clip_distance_1d_var = ir->clone(ralloc_parent(ir), NULL);
 
       /* And change the properties that we need to change */
-      this->new_clip_distance_var->name
-         = ralloc_strdup(this->new_clip_distance_var, "gl_ClipDistanceMESA");
-      this->new_clip_distance_var->type
+      this->new_clip_distance_1d_var->name
+         = ralloc_strdup(this->new_clip_distance_1d_var,
+                         "gl_ClipDistanceMESA");
+      this->new_clip_distance_1d_var->type
          = glsl_type::get_array_instance(glsl_type::vec4_type, new_size);
-      this->new_clip_distance_var->max_array_access = ir->max_array_access / 4;
+      this->new_clip_distance_1d_var->max_array_access
+         = ir->max_array_access / 4;
 
-      ir->replace_with(this->new_clip_distance_var);
+      ir->replace_with(this->new_clip_distance_1d_var);
+   } else {
+      /* 2D gl_ClipDistance (used for geometry input). */
+      assert(ir->mode == ir_var_shader_in &&
+             this->shader_type == GL_GEOMETRY_SHADER_ARB);
+      if (this->old_clip_distance_2d_var)
+         return visit_continue;
+
+      this->progress = true;
+      this->old_clip_distance_2d_var = ir;
+      assert (ir->type->element_type()->element_type() == glsl_type::float_type);
+      unsigned new_size = (ir->type->element_type()->array_size() + 3) / 4;
+
+      /* Clone the old var so that we inherit all of its properties */
+      this->new_clip_distance_2d_var = ir->clone(ralloc_parent(ir), NULL);
+
+      /* And change the properties that we need to change */
+      this->new_clip_distance_2d_var->name
+         = ralloc_strdup(this->new_clip_distance_2d_var, "gl_ClipDistanceMESA");
+      this->new_clip_distance_2d_var->type = glsl_type::get_array_instance(
+         glsl_type::get_array_instance(glsl_type::vec4_type,
+            new_size),
+         ir->type->array_size());
+      this->new_clip_distance_2d_var->max_array_access
+         = ir->max_array_access / 4;
+
+      ir->replace_with(this->new_clip_distance_2d_var);
    }
    return visit_continue;
 }
@@ -177,39 +229,111 @@ lower_clip_distance_visitor::create_indices(ir_rvalue *old_index,
 }
 
 
+/**
+ * Determine whether the given rvalue describes an array of 8 floats that
+ * needs to be lowered to an array of 2 vec4's; that is, determine whether it
+ * matches one of the following patterns:
+ *
+ * - gl_ClipDistance (if gl_ClipDistance is 1D)
+ * - gl_ClipDistance[i] (if gl_ClipDistance is 2D)
+ */
+bool
+lower_clip_distance_visitor::is_clip_distance_vec8(ir_rvalue *ir)
+{
+   /* Note that geometry shaders contain gl_ClipDistance both as an input
+    * (which is a 2D array) and an output (which is a 1D array), so it's
+    * possible for both this->old_clip_distance_1d_var and
+    * this->old_clip_distance_2d_var to be non-NULL in the same shader.
+    */
+
+   if (this->old_clip_distance_1d_var) {
+      ir_dereference_variable *var_ref = ir->as_dereference_variable();
+      if (var_ref && var_ref->var == this->old_clip_distance_1d_var)
+         return true;
+   }
+   if (this->old_clip_distance_2d_var) {
+      /* 2D clip distance is only possible as a geometry input */
+      assert(this->shader_type == GL_GEOMETRY_SHADER_ARB);
+
+      ir_dereference_array *array_ref = ir->as_dereference_array();
+      if (array_ref) {
+         ir_dereference_variable *var_ref =
+            array_ref->array->as_dereference_variable();
+         if (var_ref && var_ref->var == this->old_clip_distance_2d_var)
+            return true;
+      }
+   }
+   return false;
+}
+
+
+/**
+ * If the given ir satisfies is_clip_distance_vec8(), return new ir
+ * representing its lowered equivalent.  That is, map:
+ *
+ * - gl_ClipDistance    => gl_ClipDistanceMESA    (if gl_ClipDistance is 1D)
+ * - gl_ClipDistance[i] => gl_ClipDistanceMESA[i] (if gl_ClipDistance is 2D)
+ *
+ * Otherwise return NULL.
+ */
+ir_rvalue *
+lower_clip_distance_visitor::lower_clip_distance_vec8(ir_rvalue *ir)
+{
+   if (this->old_clip_distance_1d_var) {
+      ir_dereference_variable *var_ref = ir->as_dereference_variable();
+      if (var_ref && var_ref->var == this->old_clip_distance_1d_var) {
+         return new(ralloc_parent(ir))
+            ir_dereference_variable(this->new_clip_distance_1d_var);
+      }
+   }
+   if (this->old_clip_distance_2d_var) {
+      /* 2D clip distance is only possible as a geometry input */
+      assert(this->shader_type == GL_GEOMETRY_SHADER_ARB);
+
+      ir_dereference_array *array_ref = ir->as_dereference_array();
+      if (array_ref) {
+         ir_dereference_variable *var_ref =
+            array_ref->array->as_dereference_variable();
+         if (var_ref && var_ref->var == this->old_clip_distance_2d_var) {
+            return new(ralloc_parent(ir))
+               ir_dereference_array(this->new_clip_distance_2d_var,
+                                    array_ref->array_index);
+         }
+      }
+   }
+   return NULL;
+}
+
+
 void
 lower_clip_distance_visitor::handle_rvalue(ir_rvalue **rv)
 {
-   /* If the gl_ClipDistance var hasn't been declared yet, then
-    * there's no way this deref can refer to it.
-    */
-   if (!this->old_clip_distance_var || *rv == NULL)
+   if (*rv == NULL)
       return;
 
    ir_dereference_array *const array_deref = (*rv)->as_dereference_array();
    if (array_deref == NULL)
       return;
 
-   /* Replace any expression that indexes into the gl_ClipDistance array
+   /* Replace any expression that indexes one of the floats in gl_ClipDistance
     * with an expression that indexes into one of the vec4's in
     * gl_ClipDistanceMESA and accesses the appropriate component.
     */
-   ir_dereference_variable *old_var_ref =
-      array_deref->array->as_dereference_variable();
-   if (old_var_ref && old_var_ref->var == this->old_clip_distance_var) {
+   ir_rvalue *lowered_vec8 =
+      this->lower_clip_distance_vec8(array_deref->array);
+   if (lowered_vec8 != NULL) {
       this->progress = true;
       ir_rvalue *array_index;
       ir_rvalue *swizzle_index;
       this->create_indices(array_deref->array_index, array_index, swizzle_index);
       void *mem_ctx = ralloc_parent(array_deref);
 
-      ir_dereference_array *const ClipDistanceMESA_deref =
-         new(mem_ctx) ir_dereference_array(this->new_clip_distance_var,
-                                           array_index);
+      ir_dereference_array *const new_array_deref =
+         new(mem_ctx) ir_dereference_array(lowered_vec8, array_index);
 
       ir_expression *const expr =
          new(mem_ctx) ir_expression(ir_binop_vector_extract,
-                                    ClipDistanceMESA_deref,
+                                    new_array_deref,
                                     swizzle_index);
 
       *rv = expr;
@@ -243,30 +367,34 @@ lower_clip_distance_visitor::fix_lhs(ir_assignment *ir)
 }
 
 /**
- * Replace any assignment having gl_ClipDistance (undereferenced) as its LHS
- * or RHS with a sequence of assignments, one for each component of the array.
- * Each of these assignments is lowered to refer to gl_ClipDistanceMESA as
- * appropriate.
+ * Replace any assignment having the 1D gl_ClipDistance (undereferenced) as
+ * its LHS or RHS with a sequence of assignments, one for each component of
+ * the array.  Each of these assignments is lowered to refer to
+ * gl_ClipDistanceMESA as appropriate.
+ *
+ * We need to do a similar replacement for 2D gl_ClipDistance, however since
+ * it's an input, the only case we need to address is where a 1D slice of it
+ * is the entire RHS of an assignment, e.g.:
+ *
+ *     foo = gl_in[i].gl_ClipDistance
  */
 ir_visitor_status
 lower_clip_distance_visitor::visit_leave(ir_assignment *ir)
 {
-   ir_dereference_variable *lhs_var = ir->lhs->as_dereference_variable();
-   ir_dereference_variable *rhs_var = ir->rhs->as_dereference_variable();
-   if ((lhs_var && lhs_var->var == this->old_clip_distance_var)
-       || (rhs_var && rhs_var->var == this->old_clip_distance_var)) {
-      /* LHS or RHS of the assignment is the entire gl_ClipDistance array.
-       * Since we are reshaping gl_ClipDistance from an array of floats to an
-       * array of vec4's, this isn't going to work as a bulk assignment
-       * anymore, so unroll it to element-by-element assignments and lower
-       * each of them.
+   if (this->is_clip_distance_vec8(ir->lhs) ||
+       this->is_clip_distance_vec8(ir->rhs)) {
+      /* LHS or RHS of the assignment is the entire 1D gl_ClipDistance array
+       * (or a 1D slice of a 2D gl_ClipDistance input array).  Since we are
+       * reshaping gl_ClipDistance from an array of floats to an array of
+       * vec4's, this isn't going to work as a bulk assignment anymore, so
+       * unroll it to element-by-element assignments and lower each of them.
        *
        * Note: to unroll into element-by-element assignments, we need to make
        * clones of the LHS and RHS.  This is safe because expressions and
        * l-values are side-effect free.
        */
       void *ctx = ralloc_parent(ir);
-      int array_size = this->old_clip_distance_var->type->array_size();
+      int array_size = ir->lhs->type->array_size();
       for (int i = 0; i < array_size; ++i) {
          ir_dereference_array *new_lhs = new(ctx) ir_dereference_array(
             ir->lhs->clone(ctx, NULL), new(ctx) ir_constant(i));
@@ -326,11 +454,17 @@ lower_clip_distance_visitor::visit_new_assignment(ir_assignment *ir)
 
 
 /**
- * If gl_ClipDistance appears as an argument in an ir_call expression, replace
- * it with a temporary variable, and make sure the ir_call is preceded and/or
- * followed by assignments that copy the contents of the temporary variable to
- * and/or from gl_ClipDistance.  Each of these assignments is then lowered to
- * refer to gl_ClipDistanceMESA.
+ * If a 1D gl_ClipDistance variable appears as an argument in an ir_call
+ * expression, replace it with a temporary variable, and make sure the ir_call
+ * is preceded and/or followed by assignments that copy the contents of the
+ * temporary variable to and/or from gl_ClipDistance.  Each of these
+ * assignments is then lowered to refer to gl_ClipDistanceMESA.
+ *
+ * We need to do a similar replacement for 2D gl_ClipDistance, however since
+ * it's an input, the only case we need to address is where a 1D slice of it
+ * is passed as an "in" parameter to an ir_call, e.g.:
+ *
+ *     foo(gl_in[i].gl_ClipDistance)
  */
 ir_visitor_status
 lower_clip_distance_visitor::visit_leave(ir_call *ir)
@@ -349,12 +483,12 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
       formal_param_node = formal_param_node->next;
       actual_param_node = actual_param_node->next;
 
-      ir_dereference_variable *deref = actual_param->as_dereference_variable();
-      if (deref && deref->var == this->old_clip_distance_var) {
-         /* User is trying to pass the whole gl_ClipDistance array to a
-          * function call.  Since we are reshaping gl_ClipDistance from an
-          * array of floats to an array of vec4's, this isn't going to work
-          * anymore, so use a temporary array instead.
+      if (this->is_clip_distance_vec8(actual_param)) {
+         /* User is trying to pass the whole 1D gl_ClipDistance array (or a 1D
+          * slice of a 2D gl_ClipDistance array) to a function call.  Since we
+          * are reshaping gl_ClipDistance from an array of floats to an array
+          * of vec4's, this isn't going to work anymore, so use a temporary
+          * array instead.
           */
          ir_variable *temp_clip_distance = new(ctx) ir_variable(
             actual_param->type, "temp_clip_distance", ir_var_temporary, actual_param->get_precision());
@@ -370,7 +504,7 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
              */
             ir_assignment *new_assignment = new(ctx) ir_assignment(
                new(ctx) ir_dereference_variable(temp_clip_distance),
-               new(ctx) ir_dereference_variable(old_clip_distance_var));
+               actual_param->clone(ctx, NULL));
             this->base_ir->insert_before(new_assignment);
             this->visit_new_assignment(new_assignment);
          }
@@ -382,7 +516,7 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
              * afterwards to make sure it gets lowered.
              */
             ir_assignment *new_assignment = new(ctx) ir_assignment(
-               new(ctx) ir_dereference_variable(old_clip_distance_var),
+               actual_param->clone(ctx, NULL),
                new(ctx) ir_dereference_variable(temp_clip_distance));
             this->base_ir->insert_after(new_assignment);
             this->visit_new_assignment(new_assignment);
@@ -397,12 +531,14 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
 bool
 lower_clip_distance(gl_shader *shader)
 {
-   lower_clip_distance_visitor v;
+   lower_clip_distance_visitor v(shader->Type);
 
    visit_list_elements(&v, shader->ir);
 
-   if (v.new_clip_distance_var)
-      shader->symbols->add_variable(v.new_clip_distance_var);
+   if (v.new_clip_distance_1d_var)
+      shader->symbols->add_variable(v.new_clip_distance_1d_var);
+   if (v.new_clip_distance_2d_var)
+      shader->symbols->add_variable(v.new_clip_distance_2d_var);
 
    return v.progress;
 }

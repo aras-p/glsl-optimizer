@@ -53,6 +53,7 @@ enum glsl_base_type {
    GLSL_TYPE_FLOAT,
    GLSL_TYPE_BOOL,
    GLSL_TYPE_SAMPLER,
+   GLSL_TYPE_ATOMIC_UINT,
    GLSL_TYPE_STRUCT,
    GLSL_TYPE_INTERFACE,
    GLSL_TYPE_ARRAY,
@@ -241,7 +242,7 @@ struct glsl_type {
    static const glsl_type *get_interface_instance(const glsl_struct_field *fields,
 						  unsigned num_fields,
 						  enum glsl_interface_packing packing,
-						  const char *name);
+						  const char *block_name);
 
    /**
     * Query the total number of scalars that make up a scalar, vector or matrix
@@ -448,6 +449,32 @@ struct glsl_type {
    }
 
    /**
+    * Return the amount of atomic counter storage required for a type.
+    */
+   unsigned atomic_size() const
+   {
+      if (base_type == GLSL_TYPE_ATOMIC_UINT)
+         return ATOMIC_COUNTER_SIZE;
+      else if (is_array())
+         return length * element_type()->atomic_size();
+      else
+         return 0;
+   }
+
+   /**
+    * Return whether a type contains any atomic counters.
+    */
+   bool contains_atomic() const
+   {
+      return atomic_size() > 0;
+   }
+
+   /**
+    * Return whether a type contains any opaque types.
+    */
+   bool contains_opaque() const;
+
+   /**
     * Query the full type of a matrix row
     *
     * \return
@@ -475,7 +502,6 @@ struct glsl_type {
 	 : error_type;
    }
 
-
    /**
     * Get the type of a structure field
     *
@@ -493,7 +519,6 @@ struct glsl_type {
     */
    int field_index(const char *name) const;
 
-
    /**
     * Query the number of elements in an array type
     *
@@ -506,6 +531,26 @@ struct glsl_type {
    {
       return is_array() ? length : -1;
    }
+
+   /**
+    * Query whether the array size for all dimensions has been declared.
+    */
+   bool is_unsized_array() const
+   {
+      return is_array() && length == 0;
+   }
+
+   /**
+    * Return the number of coordinate components needed for this sampler type.
+    *
+    * This is based purely on the sampler's dimensionality.  For example, this
+    * returns 1 for sampler1D, and 3 for sampler2DArray.
+    *
+    * Note that this is often different than actual coordinate type used in
+    * a texturing built-in function, since those pack additional values (such
+    * as the shadow comparitor or projector) into the coordinate type.
+    */
+   int sampler_coordinate_components() const;
 
 private:
    /**
@@ -579,6 +624,27 @@ struct glsl_struct_field {
    const char *name;
    bool row_major;
    glsl_precision precision;
+
+   /**
+    * For interface blocks, gl_varying_slot corresponding to the input/output
+    * if this is a built-in input/output (i.e. a member of the built-in
+    * gl_PerVertex interface block); -1 otherwise.
+    *
+    * Ignored for structs.
+    */
+   int location;
+
+   /**
+    * For interface blocks, the interpolation mode (as in
+    * ir_variable::interpolation).  0 otherwise.
+    */
+   unsigned interpolation:2;
+
+   /**
+    * For interface blocks, 1 if this variable uses centroid interpolation (as
+    * in ir_variable::centroid).  0 otherwise.
+    */
+   unsigned centroid:1;
 };
 
 static inline unsigned int

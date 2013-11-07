@@ -33,8 +33,6 @@
 #define GLHEADER_H
 
 
-
-
 #define GL_GLEXT_PROTOTYPES
 #include "glminimal.h"
 
@@ -173,12 +171,6 @@ typedef void *GLeglImageOES;
 #define GL_PALETTE8_R5_G6_B5_OES                                0x8B97
 #define GL_PALETTE8_RGBA4_OES                                   0x8B98
 #define GL_PALETTE8_RGB5_A1_OES                                 0x8B99
-#endif
-
-#ifndef GL_OES_matrix_get
-#define GL_MODELVIEW_MATRIX_FLOAT_AS_INT_BITS_OES               0x898D
-#define GL_PROJECTION_MATRIX_FLOAT_AS_INT_BITS_OES              0x898E
-#define GL_TEXTURE_MATRIX_FLOAT_AS_INT_BITS_OES                 0x898F
 #endif
 
 #ifndef GL_ES_VERSION_2_0

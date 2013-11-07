@@ -42,9 +42,11 @@
  * If any texture coordinate slots can be eliminated, the gl_TexCoord array is
  * broken down into separate vec4 variables with locations equal to
  * VARYING_SLOT_TEX0 + i.
+ *
+ * The same is done for the gl_FragData fragment shader output.
  */
 
-#include "main/imports.h" /* for snprintf */
+#include "main/core.h" /* for snprintf and ARRAY_SIZE */
 #include "ir.h"
 #include "ir_rvalue_visitor.h"
 #include "ir_optimization.h"
@@ -52,6 +54,7 @@
 #include "glsl_types.h"
 #include "link_varyings.h"
 
+namespace {
 
 /**
  * This obtains detailed information about built-in varyings from shader code.
@@ -59,10 +62,14 @@
 class varying_info_visitor : public ir_hierarchical_visitor {
 public:
    /* "mode" can be either ir_var_shader_in or ir_var_shader_out */
-   varying_info_visitor(ir_variable_mode mode)
+   varying_info_visitor(ir_variable_mode mode, bool find_frag_outputs = false)
       : lower_texcoord_array(true),
         texcoord_array(NULL),
         texcoord_usage(0),
+        find_frag_outputs(find_frag_outputs),
+        lower_fragdata_array(true),
+        fragdata_array(NULL),
+        fragdata_usage(0),
         color_usage(0),
         tfeedback_color_usage(0),
         fog(NULL),
@@ -78,8 +85,27 @@ public:
    {
       ir_variable *var = ir->variable_referenced();
 
-      if (var && var->mode == this->mode &&
-          var->location == VARYING_SLOT_TEX0) {
+      if (!var || var->mode != this->mode)
+         return visit_continue;
+
+      if (this->find_frag_outputs && var->location == FRAG_RESULT_DATA0) {
+         this->fragdata_array = var;
+
+         ir_constant *index = ir->array_index->as_constant();
+         if (index == NULL) {
+            /* This is variable indexing. */
+            this->fragdata_usage |= (1 << var->type->array_size()) - 1;
+            this->lower_fragdata_array = false;
+         }
+         else {
+            this->fragdata_usage |= 1 << index->get_uint_component(0);
+         }
+
+         /* Don't visit the leaves of ir_dereference_array. */
+         return visit_continue_with_parent;
+      }
+
+      if (!this->find_frag_outputs && var->location == VARYING_SLOT_TEX0) {
          this->texcoord_array = var;
 
          ir_constant *index = ir->array_index->as_constant();
@@ -104,8 +130,17 @@ public:
    {
       ir_variable *var = ir->variable_referenced();
 
-      if (var->mode == this->mode && var->type->is_array() &&
-          var->location == VARYING_SLOT_TEX0) {
+      if (var->mode != this->mode || !var->type->is_array())
+         return visit_continue;
+
+      if (this->find_frag_outputs && var->location == FRAG_RESULT_DATA0) {
+         /* This is a whole array dereference. */
+         this->fragdata_usage |= (1 << var->type->array_size()) - 1;
+         this->lower_fragdata_array = false;
+         return visit_continue;
+      }
+
+      if (!this->find_frag_outputs && var->location == VARYING_SLOT_TEX0) {
          /* This is a whole array dereference like "gl_TexCoord = x;",
           * there's probably no point in lowering that.
           */
@@ -118,6 +153,10 @@ public:
    virtual ir_visitor_status visit(ir_variable *var)
    {
       if (var->mode != this->mode)
+         return visit_continue;
+
+      /* Nothing to do here for fragment outputs. */
+      if (this->find_frag_outputs)
          return visit_continue;
 
       /* Handle colors and fog. */
@@ -184,11 +223,19 @@ public:
       if (!this->texcoord_array) {
          this->lower_texcoord_array = false;
       }
+      if (!this->fragdata_array) {
+         this->lower_fragdata_array = false;
+      }
    }
 
    bool lower_texcoord_array;
    ir_variable *texcoord_array;
    unsigned texcoord_usage; /* bitmask */
+
+   bool find_frag_outputs; /* false if it's looking for varyings */
+   bool lower_fragdata_array;
+   ir_variable *fragdata_array;
+   unsigned fragdata_usage; /* bitmask */
 
    ir_variable *color[2];
    ir_variable *backcolor[2];
@@ -221,6 +268,7 @@ public:
    {
       void *const ctx = ir;
 
+      memset(this->new_fragdata, 0, sizeof(this->new_fragdata));
       memset(this->new_texcoord, 0, sizeof(this->new_texcoord));
       memset(this->new_color, 0, sizeof(this->new_color));
       memset(this->new_backcolor, 0, sizeof(this->new_backcolor));
@@ -235,31 +283,16 @@ public:
        * occurences of gl_TexCoord will be replaced with.
        */
       if (info->lower_texcoord_array) {
-         for (int i = MAX_TEXTURE_COORD_UNITS-1; i >= 0; i--) {
-            if (info->texcoord_usage & (1 << i)) {
-               char name[32];
+         prepare_array(ir, this->new_texcoord, ARRAY_SIZE(this->new_texcoord),
+                       VARYING_SLOT_TEX0, "TexCoord", mode_str,
+                       info->texcoord_usage, external_texcoord_usage);
+      }
 
-               if (!(external_texcoord_usage & (1 << i))) {
-                  /* This varying is unused in the next stage. Declare
-                   * a temporary instead of an output. */
-                  snprintf(name, 32, "gl_%s_TexCoord%i_dummy", mode_str, i);
-                  this->new_texcoord[i] =
-                     new (ctx) ir_variable(glsl_type::vec4_type, name,
-                                           ir_var_temporary, glsl_precision_undefined);
-               }
-               else {
-                  snprintf(name, 32, "gl_%s_TexCoord%i", mode_str, i);
-                  this->new_texcoord[i] =
-                     new(ctx) ir_variable(glsl_type::vec4_type, name,
-                                          info->mode, glsl_precision_undefined);
-                  this->new_texcoord[i]->location = VARYING_SLOT_TEX0 + i;
-                  this->new_texcoord[i]->explicit_location = true;
-                  this->new_texcoord[i]->explicit_index = 0;
-               }
-
-               ir->head->insert_before(new_texcoord[i]);
-            }
-         }
+      /* Handle gl_FragData in the same way like gl_TexCoord. */
+      if (info->lower_fragdata_array) {
+         prepare_array(ir, this->new_fragdata, ARRAY_SIZE(this->new_fragdata),
+                       FRAG_RESULT_DATA0, "FragData", mode_str,
+                       info->fragdata_usage, (1 << MAX_DRAW_BUFFERS) - 1);
       }
 
       /* Create dummy variables which will replace set-but-unused color and
@@ -300,11 +333,52 @@ public:
       visit_list_elements(this, ir);
    }
 
+   void prepare_array(exec_list *ir,
+                      struct ir_variable **new_var,
+                      int max_elements, unsigned start_location,
+                      const char *var_name, const char *mode_str,
+                      unsigned usage, unsigned external_usage)
+   {
+      void *const ctx = ir;
+
+      for (int i = max_elements-1; i >= 0; i--) {
+         if (usage & (1 << i)) {
+            char name[32];
+
+            if (!(external_usage & (1 << i))) {
+               /* This varying is unused in the next stage. Declare
+                * a temporary instead of an output. */
+               snprintf(name, 32, "gl_%s_%s%i_dummy", mode_str, var_name, i);
+               new_var[i] =
+                  new (ctx) ir_variable(glsl_type::vec4_type, name,
+                                        ir_var_temporary);
+            }
+            else {
+               snprintf(name, 32, "gl_%s_%s%i", mode_str, var_name, i);
+               new_var[i] =
+                  new(ctx) ir_variable(glsl_type::vec4_type, name,
+                                       this->info->mode);
+               new_var[i]->location = start_location + i;
+               new_var[i]->explicit_location = true;
+               new_var[i]->explicit_index = 0;
+            }
+
+            ir->head->insert_before(new_var[i]);
+         }
+      }
+   }
+
    virtual ir_visitor_status visit(ir_variable *var)
    {
       /* Remove the gl_TexCoord array. */
       if (this->info->lower_texcoord_array &&
           var == this->info->texcoord_array) {
+         var->remove();
+      }
+
+      /* Remove the gl_FragData array. */
+      if (this->info->lower_fragdata_array &&
+          var == this->info->fragdata_array) {
          var->remove();
       }
 
@@ -345,6 +419,19 @@ public:
             unsigned i = da->array_index->as_constant()->get_uint_component(0);
 
             *rvalue = new(ctx) ir_dereference_variable(this->new_texcoord[i]);
+            return;
+         }
+      }
+
+      /* Same for gl_FragData. */
+      if (this->info->lower_fragdata_array) {
+         /* gl_FragData[i] occurence */
+         ir_dereference_array *const da = (*rvalue)->as_dereference_array();
+
+         if (da && da->variable_referenced() == this->info->fragdata_array) {
+            unsigned i = da->array_index->as_constant()->get_uint_component(0);
+
+            *rvalue = new(ctx) ir_dereference_variable(this->new_fragdata[i]);
             return;
          }
       }
@@ -391,12 +478,14 @@ public:
 
 private:
    const varying_info_visitor *info;
-   class ir_variable *new_texcoord[MAX_TEXTURE_COORD_UNITS];
-   class ir_variable *new_color[2];
-   class ir_variable *new_backcolor[2];
-   class ir_variable *new_fog;
+   ir_variable *new_fragdata[MAX_DRAW_BUFFERS];
+   ir_variable *new_texcoord[MAX_TEXTURE_COORD_UNITS];
+   ir_variable *new_color[2];
+   ir_variable *new_backcolor[2];
+   ir_variable *new_fog;
 };
 
+} /* anonymous namespace */
 
 static void
 lower_texcoord_array(exec_list *ir, const varying_info_visitor *info)
@@ -406,6 +495,15 @@ lower_texcoord_array(exec_list *ir, const varying_info_visitor *info)
                             1 | 2, true);
 }
 
+static void
+lower_fragdata_array(exec_list *ir)
+{
+   varying_info_visitor info(ir_var_shader_out, true);
+   info.get(ir, 0, NULL);
+
+   replace_varyings_visitor(ir, &info, 0, 0, 0);
+}
+
 
 void
 do_dead_builtin_varyings(struct gl_context *ctx,
@@ -413,8 +511,13 @@ do_dead_builtin_varyings(struct gl_context *ctx,
                          unsigned num_tfeedback_decls,
                          tfeedback_decl *tfeedback_decls)
 {
-   /* This optimization has no effect with the core context and GLES2, because
-    * the built-in varyings we're eliminating here are not available there.
+   /* Lower the gl_FragData array to separate variables. */
+   if (consumer && consumer->Type == GL_FRAGMENT_SHADER) {
+      lower_fragdata_array(consumer->ir);
+   }
+
+   /* Lowering of built-in varyings has no effect with the core context and
+    * GLES2, because they are not available there.
     *
     * EXT_separate_shader_objects doesn't allow this optimization,
     * because a program object can be bound partially (e.g. only one

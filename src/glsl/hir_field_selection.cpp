@@ -72,7 +72,7 @@ _mesa_ast_field_selection_to_hir(const ast_expression *expr,
             _mesa_glsl_error(&loc, state, "length method takes no arguments");
 
          if (op->type->is_array()) {
-            if (op->type->array_size() == 0)
+            if (op->type->is_unsized_array())
                _mesa_glsl_error(&loc, state, "length called on unsized array");
 
             result = new(ctx) ir_constant(op->type->array_size());

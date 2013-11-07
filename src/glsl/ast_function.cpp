@@ -448,7 +448,8 @@ match_function_by_name(const char *name,
    if (f != NULL) {
       /* Look for a match in the local shader.  If exact, we're done. */
       bool is_exact = false;
-      sig = local_sig = f->matching_signature(actual_parameters, &is_exact);
+      sig = local_sig = f->matching_signature(state, actual_parameters,
+                                              &is_exact);
       if (is_exact)
 	 goto done;
 
@@ -462,33 +463,8 @@ match_function_by_name(const char *name,
    }
 
    /* Local shader has no exact candidates; check the built-ins. */
-   _mesa_glsl_initialize_functions(state);
-   for (unsigned i = 0; i < state->num_builtins_to_link; i++) {
-      ir_function *builtin =
-	 state->builtins_to_link[i]->symbols->get_function(name);
-      if (builtin == NULL)
-	 continue;
-
-      bool is_exact = false;
-      ir_function_signature *builtin_sig =
-	 builtin->matching_signature(actual_parameters, &is_exact);
-
-      if (builtin_sig == NULL)
-	 continue;
-
-      /* If the built-in signature is exact, we can stop. */
-      if (is_exact) {
-	 sig = builtin_sig;
-	 goto done;
-      }
-
-      if (sig == NULL) {
-	 /* We found an inexact match, which is better than nothing.  However,
-	  * we should keep searching for an exact match.
-	  */
-	 sig = builtin_sig;
-      }
-   }
+   _mesa_glsl_initialize_builtin_functions();
+   sig = _mesa_glsl_find_builtin_function(state, name, actual_parameters);
 
 done:
    if (sig != NULL) {
@@ -530,6 +506,9 @@ no_matching_function_error(const char *name,
 
       foreach_list (node, &f->signatures) {
 	 ir_function_signature *sig = (ir_function_signature *) node;
+
+         if (sig->is_builtin() && !sig->is_builtin_available(state))
+            continue;
 
 	 str = prototype_string(sig->return_type, f->name, &sig->parameters);
 	 _mesa_glsl_error(loc, state, "%s%s", prefix, str);
@@ -813,21 +792,21 @@ process_array_constructor(exec_list *instructions,
    exec_list actual_parameters;
    const unsigned parameter_count =
       process_parameters(instructions, &actual_parameters, parameters, state);
+   bool is_unsized_array = constructor_type->is_unsized_array();
 
-   if ((parameter_count == 0)
-       || ((constructor_type->length != 0)
-	   && (constructor_type->length != parameter_count))) {
-      const unsigned min_param = (constructor_type->length == 0)
-	 ? 1 : constructor_type->length;
+   if ((parameter_count == 0) ||
+       (!is_unsized_array && (constructor_type->length != parameter_count))) {
+      const unsigned min_param = is_unsized_array
+         ? 1 : constructor_type->length;
 
       _mesa_glsl_error(loc, state, "array constructor must have %s %u "
 		       "parameter%s",
-		       (constructor_type->length == 0) ? "at least" : "exactly",
+		       is_unsized_array ? "at least" : "exactly",
 		       min_param, (min_param <= 1) ? "" : "s");
       return ir_rvalue::error_value(ctx);
    }
 
-   if (constructor_type->length == 0) {
+   if (is_unsized_array) {
       constructor_type =
 	 glsl_type::get_array_instance(constructor_type->element_type(),
 				       parameter_count);

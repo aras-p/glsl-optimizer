@@ -35,6 +35,8 @@
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
 
+namespace {
+
 class ir_mat_op_to_vec_visitor : public ir_hierarchical_visitor {
 public:
    ir_mat_op_to_vec_visitor()
@@ -62,6 +64,8 @@ public:
    void *mem_ctx;
    bool made_progress;
 };
+
+} /* anonymous namespace */
 
 static bool
 mat_op_to_vec_predicate(ir_instruction *ir)

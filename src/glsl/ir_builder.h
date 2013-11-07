@@ -82,9 +82,9 @@ public:
 
 class ir_factory {
 public:
-   ir_factory()
-      : instructions(NULL),
-        mem_ctx(NULL)
+   ir_factory(exec_list *instructions = NULL, void *mem_ctx = NULL)
+      : instructions(instructions),
+        mem_ctx(mem_ctx)
    {
       return;
    }
@@ -122,18 +122,35 @@ public:
 
 ir_assignment *assign(deref lhs, operand rhs);
 ir_assignment *assign(deref lhs, operand rhs, int writemask);
+ir_assignment *assign(deref lhs, operand rhs, operand condition);
+ir_assignment *assign(deref lhs, operand rhs, operand condition, int writemask);
+
+ir_return *ret(operand retval);
 
 ir_expression *expr(ir_expression_operation op, operand a);
 ir_expression *expr(ir_expression_operation op, operand a, operand b);
+ir_expression *expr(ir_expression_operation op, operand a, operand b, operand c);
 ir_expression *add(operand a, operand b);
 ir_expression *sub(operand a, operand b);
 ir_expression *mul(operand a, operand b);
+ir_expression *imul_high(operand a, operand b);
 ir_expression *div(operand a, operand b);
+ir_expression *carry(operand a, operand b);
+ir_expression *borrow(operand a, operand b);
 ir_expression *round_even(operand a);
 ir_expression *dot(operand a, operand b);
+ir_expression *dotlike(operand a, operand b);
 ir_expression *clamp(operand a, operand b, operand c);
 ir_expression *saturate(operand a);
 ir_expression *abs(operand a);
+ir_expression *neg(operand a);
+ir_expression *sin(operand a);
+ir_expression *cos(operand a);
+ir_expression *exp(operand a);
+ir_expression *rsq(operand a);
+ir_expression *sqrt(operand a);
+ir_expression *log(operand a);
+ir_expression *sign(operand a);
 
 ir_expression *equal(operand a, operand b);
 ir_expression *nequal(operand a, operand b);
@@ -164,7 +181,15 @@ ir_expression *i2u(operand a);
 ir_expression *u2i(operand a);
 ir_expression *b2i(operand a);
 ir_expression *i2b(operand a);
+ir_expression *f2b(operand a);
+ir_expression *b2f(operand a);
 
+ir_expression *fma(operand a, operand b, operand c);
+ir_expression *lrp(operand x, operand y, operand a);
+ir_expression *csel(operand a, operand b, operand c);
+ir_expression *bitfield_insert(operand a, operand b, operand c, operand d);
+
+ir_swizzle *swizzle(operand a, int swizzle, int components);
 /**
  * Swizzle away later components, but preserve the ordering.
  */

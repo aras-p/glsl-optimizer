@@ -25,6 +25,71 @@
 #include "glsl_types.h"
 #include "ir.h"
 
+
+/**
+ * If \c ir is a reference to an array for which we are tracking the max array
+ * element accessed, track that the given element has been accessed.
+ * Otherwise do nothing.
+ *
+ * This function also checks whether the array is a built-in array whose
+ * maximum size is too small to accommodate the given index, and if so uses
+ * loc and state to report the error.
+ */
+static void
+update_max_array_access(ir_rvalue *ir, unsigned idx, YYLTYPE *loc,
+                        struct _mesa_glsl_parse_state *state)
+{
+   if (ir_dereference_variable *deref_var = ir->as_dereference_variable()) {
+      ir_variable *var = deref_var->var;
+      if (idx > var->max_array_access) {
+         var->max_array_access = idx;
+
+         /* Check whether this access will, as a side effect, implicitly cause
+          * the size of a built-in array to be too large.
+          */
+         check_builtin_array_max_size(var->name, idx+1, *loc, state);
+      }
+   } else if (ir_dereference_record *deref_record =
+              ir->as_dereference_record()) {
+      /* There are two possibilities we need to consider:
+       *
+       * - Accessing an element of an array that is a member of a named
+       *   interface block (e.g. ifc.foo[i])
+       *
+       * - Accessing an element of an array that is a member of a named
+       *   interface block array (e.g. ifc[j].foo[i]).
+       */
+      ir_dereference_variable *deref_var =
+         deref_record->record->as_dereference_variable();
+      if (deref_var == NULL) {
+         if (ir_dereference_array *deref_array =
+             deref_record->record->as_dereference_array()) {
+            deref_var = deref_array->array->as_dereference_variable();
+         }
+      }
+
+      if (deref_var != NULL) {
+         if (deref_var->var->is_interface_instance()) {
+            const glsl_type *interface_type =
+               deref_var->var->get_interface_type();
+            unsigned field_index =
+               deref_record->record->type->field_index(deref_record->field);
+            assert(field_index < interface_type->length);
+            if (idx > deref_var->var->max_ifc_array_access[field_index]) {
+               deref_var->var->max_ifc_array_access[field_index] = idx;
+
+               /* Check whether this access will, as a side effect, implicitly
+                * cause the size of a built-in array to be too large.
+                */
+               check_builtin_array_max_size(deref_record->field, idx+1, *loc,
+                                            state);
+            }
+         }
+      }
+   }
+}
+
+
 ir_rvalue *
 _mesa_ast_array_index_to_hir(void *mem_ctx,
 			     struct _mesa_glsl_parse_state *state,
@@ -78,7 +143,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 	    bound = array->type->vector_elements;
 	 }
       } else {
-	 /* glsl_type::array_size() returns 0 for non-array types.  This means
+	 /* glsl_type::array_size() returns -1 for non-array types.  This means
 	  * that we don't need to verify that the type is an array before
 	  * doing the bounds checking.
 	  */
@@ -97,25 +162,10 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 			  type_name);
       }
 
-      if (array->type->is_array()) {
-	 /* If the array is a variable dereference, it dereferences the
-	  * whole array, by definition.  Use this to get the variable.
-	  *
-	  * FINISHME: Should some methods for getting / setting / testing
-	  * FINISHME: array access limits be added to ir_dereference?
-	  */
-	 ir_variable *const v = array->whole_variable_referenced();
-	 if ((v != NULL) && (unsigned(idx) > v->max_array_access)) {
-	    v->max_array_access = idx;
-
-	    /* Check whether this access will, as a side effect, implicitly
-	     * cause the size of a built-in array to be too large.
-	     */
-	    check_builtin_array_max_size(v->name, idx+1, loc, state);
-	 }
-      }
+      if (array->type->is_array())
+         update_max_array_access(array, idx, &loc, state);
    } else if (const_index == NULL && array->type->is_array()) {
-      if (array->type->array_size() == 0) {
+      if (array->type->is_unsized_array()) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
       } else if (array->type->fields.array->is_interface()
                  && array->variable_referenced()->mode == ir_var_uniform) {

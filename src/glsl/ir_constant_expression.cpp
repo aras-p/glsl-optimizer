@@ -40,6 +40,26 @@
 #include "glsl_types.h"
 #include "program/hash_table.h"
 
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
+static int isnormal(double x)
+{
+   return _fpclass(x) == _FPCLASS_NN || _fpclass(x) == _FPCLASS_PN;
+}
+#elif defined(__SUNPRO_CC)
+#include <ieeefp.h>
+static int isnormal(double x)
+{
+   return fpclass(x) == FP_NORMAL;
+}
+#endif
+
+#if defined(_MSC_VER)
+static double copysign(double x, double y)
+{
+   return _copysign(x, y);
+}
+#endif
+
 static float
 dot(ir_constant *op0, ir_constant *op1)
 {
@@ -394,7 +414,9 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       switch (this->operation) {
       case ir_binop_lshift:
       case ir_binop_rshift:
+      case ir_binop_ldexp:
       case ir_binop_vector_extract:
+      case ir_triop_csel:
       case ir_triop_bitfield_extract:
          break;
 
@@ -1392,6 +1414,15 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       break;
    }
 
+   case ir_binop_ldexp:
+      for (unsigned c = 0; c < components; c++) {
+         data.f[c] = ldexp(op[0]->value.f[c], op[1]->value.i[c]);
+         /* Flush subnormal values to zero. */
+         if (!isnormal(data.f[c]))
+            data.f[c] = copysign(0.0, op[0]->value.f[c]);
+      }
+      break;
+
    case ir_triop_fma:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       assert(op[1]->type->base_type == GLSL_TYPE_FLOAT);
@@ -1415,6 +1446,13 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       }
       break;
    }
+
+   case ir_triop_csel:
+      for (unsigned c = 0; c < components; c++) {
+         data.u[c] = op[0]->value.b[c] ? op[1]->value.u[c]
+                                       : op[2]->value.u[c];
+      }
+      break;
 
    case ir_triop_vector_insert: {
       const unsigned idx = op[2]->value.u[0];
@@ -1857,7 +1895,7 @@ ir_function_signature::constant_expression_value(exec_list *actual_parameters, s
     * "Function calls to user-defined functions (non-built-in functions)
     *  cannot be used to form constant expressions."
     */
-   if (!this->is_builtin)
+   if (!this->is_builtin())
       return NULL;
 
    /*

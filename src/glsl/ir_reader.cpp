@@ -28,6 +28,8 @@
 
 const static bool debug = false;
 
+namespace {
+
 class ir_reader {
 public:
    ir_reader(_mesa_glsl_parse_state *);
@@ -65,6 +67,8 @@ private:
    ir_dereference *read_dereference(s_expression *);
    ir_dereference_variable *read_var_ref(s_expression *);
 };
+
+} /* anonymous namespace */
 
 ir_reader::ir_reader(_mesa_glsl_parse_state *state) : state(state)
 {
@@ -211,6 +215,12 @@ ir_reader::read_function(s_expression *expr, bool skip_body)
    return added ? f : NULL;
 }
 
+static bool
+always_available(const _mesa_glsl_parse_state *)
+{
+   return true;
+}
+
 void
 ir_reader::read_function_sig(ir_function *f, s_expression *expr, bool skip_body)
 {
@@ -248,10 +258,15 @@ ir_reader::read_function_sig(ir_function *f, s_expression *expr, bool skip_body)
       hir_parameters.push_tail(var);
    }
 
-   ir_function_signature *sig = f->exact_matching_signature(&hir_parameters);
+   ir_function_signature *sig =
+      f->exact_matching_signature(state, &hir_parameters);
    if (sig == NULL && skip_body) {
       /* If scanning for prototypes, generate a new signature. */
-      sig = new(mem_ctx) ir_function_signature(return_type, glsl_precision_undefined);
+      /* ir_reader doesn't know what languages support a given built-in, so
+       * just say that they're always available.  For now, other mechanisms
+       * guarantee the right built-ins are available.
+       */
+      sig = new(mem_ctx) ir_function_signature(return_type, glsl_precision_undefined, always_available);
       sig->is_builtin = true;
       f->add_signature(sig);
    } else if (sig != NULL) {
@@ -659,7 +674,7 @@ ir_reader::read_call(s_expression *expr)
       return NULL;
    }
 
-   ir_function_signature *callee = f->matching_signature(&parameters);
+   ir_function_signature *callee = f->matching_signature(state, &parameters);
    if (callee == NULL) {
       ir_read_error(expr, "couldn't find matching signature for function "
                     "%s", name->value());
@@ -918,6 +933,7 @@ ir_reader::read_texture(s_expression *expr)
    s_expression *s_offset = NULL;
    s_expression *s_lod = NULL;
    s_expression *s_sample_index = NULL;
+   s_expression *s_component = NULL;
 
    ir_texture_opcode op = ir_tex; /* silence warning */
 
@@ -931,6 +947,10 @@ ir_reader::read_texture(s_expression *expr)
       { "txf_ms", s_type, s_sampler, s_coord, s_sample_index };
    s_pattern txs_pattern[] =
       { "txs", s_type, s_sampler, s_lod };
+   s_pattern tg4_pattern[] =
+      { "tg4", s_type, s_sampler, s_coord, s_offset, s_component };
+   s_pattern query_levels_pattern[] =
+      { "query_levels", s_type, s_sampler };
    s_pattern other_pattern[] =
       { tag, s_type, s_sampler, s_coord, s_offset, s_lod };
 
@@ -944,6 +964,10 @@ ir_reader::read_texture(s_expression *expr)
       op = ir_txf_ms;
    } else if (MATCH(expr, txs_pattern)) {
       op = ir_txs;
+   } else if (MATCH(expr, tg4_pattern)) {
+      op = ir_tg4;
+   } else if (MATCH(expr, query_levels_pattern)) {
+      op = ir_query_levels;
    } else if (MATCH(expr, other_pattern)) {
       op = ir_texture::get_opcode(tag->value());
       if (op == -1)
@@ -993,6 +1017,33 @@ ir_reader::read_texture(s_expression *expr)
       }
    }
 
+   if (op != ir_txf && op != ir_txf_ms &&
+       op != ir_txs && op != ir_lod && op != ir_tg4 &&
+       op != ir_query_levels) {
+      s_int *proj_as_int = SX_AS_INT(s_proj);
+      if (proj_as_int && proj_as_int->value() == 1) {
+	 tex->projector = NULL;
+      } else {
+	 tex->projector = read_rvalue(s_proj);
+	 if (tex->projector == NULL) {
+	    ir_read_error(NULL, "when reading projective divide in (%s ..)",
+	                  tex->opcode_string());
+	    return NULL;
+	 }
+      }
+
+      if (s_shadow->subexpressions.is_empty()) {
+	 tex->shadow_comparitor = NULL;
+      } else {
+	 tex->shadow_comparitor = read_rvalue(s_shadow);
+	 if (tex->shadow_comparitor == NULL) {
+	    ir_read_error(NULL, "when reading shadow comparitor in (%s ..)",
+			  tex->opcode_string());
+	    return NULL;
+	 }
+      }
+   }
+
    switch (op) {
    case ir_txb:
       tex->lod_info.bias = read_rvalue(s_lod);
@@ -1037,6 +1088,13 @@ ir_reader::read_texture(s_expression *expr)
       }
       break;
    }
+   case ir_tg4:
+      tex->lod_info.component = read_rvalue(s_component);
+      if (tex->lod_info.component == NULL) {
+         ir_read_error(NULL, "when reading component in (tg4 ...)");
+         return NULL;
+      }
+      break;
    default:
       // tex and lod don't have any extra parameters.
       break;

@@ -102,6 +102,7 @@ loop_variable_state::insert(ir_if *if_stmt)
    return t;
 }
 
+namespace {
 
 class loop_analysis : public ir_hierarchical_visitor {
 public:
@@ -128,6 +129,7 @@ public:
    exec_list state;
 };
 
+} /* anonymous namespace */
 
 loop_analysis::loop_analysis(loop_state *loops)
    : loops(loops), if_statement_depth(0), current_assignment(NULL)
