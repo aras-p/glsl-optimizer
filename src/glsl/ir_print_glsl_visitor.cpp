@@ -242,17 +242,17 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 static char*
 print_type(char* buffer, const glsl_type *t, bool arraySize)
 {
-   if (t->base_type == GLSL_TYPE_ARRAY) {
-      buffer = print_type(buffer, t->fields.array, true);
-      if (arraySize)
-         ralloc_asprintf_append (&buffer, "[%u]", t->length);
-   } else if ((t->base_type == GLSL_TYPE_STRUCT)
-	      && (strncmp("gl_", t->name, 3) != 0)) {
-      ralloc_asprintf_append (&buffer, "%s", t->name);
-   } else {
-      ralloc_asprintf_append (&buffer, "%s", t->name);
-   }
-   return buffer;
+	if (t->base_type == GLSL_TYPE_ARRAY) {
+		buffer = print_type(buffer, t->fields.array, true);
+		if (arraySize)
+			ralloc_asprintf_append (&buffer, "[%u]", t->length);
+	} else if ((t->base_type == GLSL_TYPE_STRUCT)
+			   && (strncmp("gl_", t->name, 3) != 0)) {
+		ralloc_asprintf_append (&buffer, "%s", t->name);
+	} else {
+		ralloc_asprintf_append (&buffer, "%s", t->name);
+	}
+	return buffer;
 }
 
 static char*
@@ -268,16 +268,16 @@ print_type_post(char* buffer, const glsl_type *t, bool arraySize)
 
 void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
-   const char *const cent = (ir->centroid) ? "centroid " : "";
-   const char *const inv = (ir->invariant) ? "invariant " : "";
-   const char *const mode[3][ir_var_mode_count] = 
-   {
-	{ "", "uniform ", "in ",        "out ",     "in ", "out ", "inout ", "", "", "" },
-	{ "", "uniform ", "attribute ", "varying ", "in ", "out ", "inout ", "", "", "" },
-	{ "", "uniform ", "varying ",   "out ",     "in ", "out ", "inout ", "", "", "" },
-   };
+	const char *const cent = (ir->centroid) ? "centroid " : "";
+	const char *const inv = (ir->invariant) ? "invariant " : "";
+	const char *const mode[3][ir_var_mode_count] =
+	{
+		{ "", "uniform ", "in ",        "out ",     "in ", "out ", "inout ", "", "", "" },
+		{ "", "uniform ", "attribute ", "varying ", "in ", "out ", "inout ", "", "", "" },
+		{ "", "uniform ", "varying ",   "out ",     "in ", "out ", "inout ", "", "", "" },
+	};
 	
-   const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
+	const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
 	
 	int decormode = this->mode;
 	// GLSL 1.30 and up use "in" and "out" for everything
@@ -285,32 +285,32 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	{
 		decormode = 0;
 	}
-
-   // give an id to any variable defined in a function that is not an uniform
-   if ((this->mode == kPrintGlslNone && ir->mode != ir_var_uniform))
-   {
-     long id = (long)hash_table_find (globals->var_hash, ir);
-     if (id == 0)
-     {
-       id = ++globals->var_counter;
-       hash_table_insert (globals->var_hash, (void*)id, ir);
-     }
-   }
-
-   // keep invariant declaration for builtin variables
-   if (strstr(ir->name, "gl_") == ir->name) {
-      ralloc_asprintf_append (&buffer, "%s", inv);
-      print_var_name (ir);
-      return;
-   }
 	
-   ralloc_asprintf_append (&buffer, "%s%s%s%s",
-	  cent, inv, interp[ir->interpolation], mode[decormode][ir->mode]);
-   print_precision (ir, ir->type);
-   buffer = print_type(buffer, ir->type, false);
-   ralloc_asprintf_append (&buffer, " ");
-   print_var_name (ir);
-   buffer = print_type_post(buffer, ir->type, false);
+	// give an id to any variable defined in a function that is not an uniform
+	if ((this->mode == kPrintGlslNone && ir->mode != ir_var_uniform))
+	{
+		long id = (long)hash_table_find (globals->var_hash, ir);
+		if (id == 0)
+		{
+			id = ++globals->var_counter;
+			hash_table_insert (globals->var_hash, (void*)id, ir);
+		}
+	}
+	
+	// keep invariant declaration for builtin variables
+	if (strstr(ir->name, "gl_") == ir->name) {
+		ralloc_asprintf_append (&buffer, "%s", inv);
+		print_var_name (ir);
+		return;
+	}
+	
+	ralloc_asprintf_append (&buffer, "%s%s%s%s",
+							cent, inv, interp[ir->interpolation], mode[decormode][ir->mode]);
+	print_precision (ir, ir->type);
+	buffer = print_type(buffer, ir->type, false);
+	ralloc_asprintf_append (&buffer, " ");
+	print_var_name (ir);
+	buffer = print_type_post(buffer, ir->type, false);
 	
 	if (ir->constant_value &&
 		ir->mode != ir_var_shader_in &&
