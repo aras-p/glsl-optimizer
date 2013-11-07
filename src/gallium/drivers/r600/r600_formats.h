@@ -87,6 +87,9 @@ static INLINE bool r600_is_vertex_format_supported(enum pipe_format format)
 	const struct util_format_description *desc = util_format_description(format);
 	unsigned i;
 
+	if (format == PIPE_FORMAT_R11G11B10_FLOAT)
+		return true;
+
 	if (!desc)
 		return false;
 

@@ -2134,6 +2134,12 @@ void r600_vertex_data_type(enum pipe_format pformat,
 	*format_comp = 0;
 	*endian = ENDIAN_NONE;
 
+	if (pformat == PIPE_FORMAT_R11G11B10_FLOAT) {
+		*format = FMT_10_11_11_FLOAT;
+		*endian = r600_endian_swap(32);
+		return;
+	}
+
 	desc = util_format_description(pformat);
 	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
 		goto out_unknown;
