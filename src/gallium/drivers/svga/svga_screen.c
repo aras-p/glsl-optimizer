@@ -154,11 +154,10 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_TEXCOORD:
       return 0;
    case PIPE_CAP_MAX_RENDER_TARGETS:
-      if(!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_RENDER_TARGETS, &result))
-         return 1;
-      if(!result.u)
-         return 1;
-      return MIN2(result.u, PIPE_MAX_COLOR_BUFS);
+      /* The SVGA3D device always supports 4 targets at this time, regardless
+       * of what querying SVGA3D_DEVCAP_MAX_RENDER_TARGETS might return.
+       */
+      return 4;
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
    case PIPE_CAP_QUERY_TIME_ELAPSED:
