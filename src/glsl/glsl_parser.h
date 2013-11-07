@@ -484,7 +484,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 70 "src/glsl/glsl_parser.yy"
+#line 96 "src/glsl/glsl_parser.yy"
 {
    int n;
    float real;
