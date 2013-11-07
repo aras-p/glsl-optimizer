@@ -634,7 +634,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	const int uv_dim = uv_type->vector_elements;
 	int sampler_uv_dim = tex_sampler_dim_size[sampler_dim];
 	if (is_shadow)
-		sampler_uv_dim = 3;
+		sampler_uv_dim += 1;
 	const bool is_proj = (uv_dim > sampler_uv_dim);
 	
     // texture function name

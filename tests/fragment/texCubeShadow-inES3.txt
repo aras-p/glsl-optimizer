@@ -1,0 +1,12 @@
+#version 300 es
+
+uniform samplerCubeShadow shadowmap;
+
+in mediump vec4 uv;
+out mediump vec4 _fragColor;
+
+void main()
+{
+	float s = texture (shadowmap, uv);
+    _fragColor = vec4(s);
+}
