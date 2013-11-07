@@ -250,6 +250,7 @@ static bool CheckGLSL (bool vertex, bool gles, const std::string& testName, cons
 		replace_string (src, "#extension GL_EXT_shadow_samplers : enable", "", 0);
 		replace_string (src, "#extension GL_EXT_frag_depth : enable", "", 0);
 		replace_string (src, "precision ", "// precision ", 0);
+		replace_string (src, "#version 300 es", "#version 330", 0);
 	}
 	const char* sourcePtr = src.c_str();
 
