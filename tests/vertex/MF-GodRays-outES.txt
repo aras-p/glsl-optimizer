@@ -91,23 +91,17 @@ void main ()
   } else {
     tmpvar_22 = -(tmpvar_21);
   };
-  highp float t_23;
-  t_23 = max (min ((tmpvar_22 / 
-    (_TimeOnDuration * 0.25)
-  ), 1.0), 0.0);
+  highp float tmpvar_23;
+  tmpvar_23 = clamp ((tmpvar_22 / (_TimeOnDuration * 0.25)), 0.0, 1.0);
   highp float edge0_24;
   edge0_24 = (_TimeOnDuration * 0.75);
-  highp float t_25;
-  t_25 = max (min ((
-    (tmpvar_22 - edge0_24)
-   / 
-    (_TimeOnDuration - edge0_24)
-  ), 1.0), 0.0);
+  highp float tmpvar_25;
+  tmpvar_25 = clamp (((tmpvar_22 - edge0_24) / (_TimeOnDuration - edge0_24)), 0.0, 1.0);
   highp float tmpvar_26;
-  tmpvar_26 = ((t_23 * (t_23 * 
-    (3.0 - (2.0 * t_23))
-  )) * (1.0 - (t_25 * 
-    (t_25 * (3.0 - (2.0 * t_25)))
+  tmpvar_26 = ((tmpvar_23 * (tmpvar_23 * 
+    (3.0 - (2.0 * tmpvar_23))
+  )) * (1.0 - (tmpvar_25 * 
+    (tmpvar_25 * (3.0 - (2.0 * tmpvar_25)))
   )));
   highp float tmpvar_27;
   tmpvar_27 = (tmpvar_18 * (6.28319 / _TimeOnDuration));
