@@ -474,8 +474,9 @@ int main (int argc, const char** argv)
 	}
 
 	bool hasOpenGL = InitializeOpenGL ();
-	glslopt_ctx* ctx[2] = {
+	glslopt_ctx* ctx[3] = {
 		glslopt_initialize(kGlslTargetOpenGLES20),
+		glslopt_initialize(kGlslTargetOpenGLES30),
 		glslopt_initialize(kGlslTargetOpenGL),
 	};
 
@@ -490,11 +491,11 @@ int main (int argc, const char** argv)
 	{
 		std::string testFolder = baseFolder + "/" + kTypeName[type];
 
-		static const char* kAPIName[2] = { "OpenGL ES 2.0", "OpenGL" };
-		static const char* kApiIn [2] = {"-inES.txt", "-in.txt"};
-		static const char* kApiIR [2] = {"-irES.txt", "-ir.txt"};
-		static const char* kApiOut[2] = {"-outES.txt", "-out.txt"};
-		for (int api = 0; api < 2; ++api)
+		static const char* kAPIName[3] = { "OpenGL ES 2.0", "OpenGL ES 3.0", "OpenGL" };
+		static const char* kApiIn [3] = {"-inES.txt", "-inES3.txt", "-in.txt"};
+		static const char* kApiIR [3] = {"-irES.txt", "-irES3.txt", "-ir.txt"};
+		static const char* kApiOut[3] = {"-outES.txt", "-outES3.txt", "-out.txt"};
+		for (int api = 0; api < 3; ++api)
 		{
 			printf ("\n** running %s tests for %s...\n", kTypeName[type], kAPIName[api]);
 			StringVector inputFiles = GetFiles (testFolder, kApiIn[api]);
