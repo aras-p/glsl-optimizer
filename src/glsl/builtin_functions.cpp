@@ -193,6 +193,12 @@ es_shader_texture_lod(const _mesa_glsl_parse_state *state)
 }
 
 static bool
+es_shadow_samplers(const _mesa_glsl_parse_state *state)
+{
+	return state->EXT_shadow_samplers_enable;
+}
+
+static bool
 shader_texture_lod_and_rect(const _mesa_glsl_parse_state *state)
 {
    return state->ARB_shader_texture_lod_enable &&
@@ -1846,6 +1852,9 @@ builtin_builder::create_builtins()
                 _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec3_type),
                 _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec3_type),
                 NULL);
+	add_function("shadow2DEXT",
+				 _texture(ir_tex, es_shadow_samplers, glsl_type::float_type,  glsl_type::sampler2DShadow_type, glsl_type::vec3_type),
+				 NULL);
 
    add_function("shadow2DArray",
                 _texture(ir_tex, texture_array,    glsl_type::vec4_type,  glsl_type::sampler2DArrayShadow_type, glsl_type::vec4_type),
@@ -1861,6 +1870,9 @@ builtin_builder::create_builtins()
                 _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
+	add_function("shadow2DProjEXT",
+				 _texture(ir_tex, es_shadow_samplers, glsl_type::float_type,  glsl_type::sampler2DShadow_type, glsl_type::vec4_type, TEX_PROJECT),
+				 NULL);
 
    add_function("shadow1DLod",
                 _texture(ir_txl, v110_lod, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec3_type),
