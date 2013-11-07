@@ -3281,12 +3281,12 @@ fs_visitor::run()
 	 progress = compute_to_mrf() || progress;
       } while (progress);
 
-      schedule_instructions(false);
-
       lower_uniform_pull_constant_loads();
 
       assign_curb_setup();
       assign_urb_setup();
+
+      schedule_instructions(false);
 
       if (0)
 	 assign_regs_trivial();
