@@ -88,7 +88,8 @@ util_copy_framebuffer_state(struct pipe_framebuffer_state *dst,
    for (i = 0; i < src->nr_cbufs; i++)
       pipe_surface_reference(&dst->cbufs[i], src->cbufs[i]);
 
-   for (i = src->nr_cbufs; i < dst->nr_cbufs; i++)
+   /* Set remaining dest cbuf pointers to NULL */
+   for ( ; i < Elements(dst->cbufs); i++)
       pipe_surface_reference(&dst->cbufs[i], NULL);
 
    dst->nr_cbufs = src->nr_cbufs;
