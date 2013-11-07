@@ -161,6 +161,20 @@ lod_exists_in_stage(const _mesa_glsl_parse_state *state)
 }
 
 static bool
+es_lod_exists_in_stage(const _mesa_glsl_parse_state *state)
+{
+	/* Texturing functions with "LodEXT" in their name exist:
+	 * In the fragment shader, for ES1 shader, when EXT_shader_texture_lod
+	 * is enabled.
+	 */
+	return
+		state->target == fragment_shader &&
+		state->es_shader &&
+		state->is_version(110, 100) &&
+		state->EXT_shader_texture_lod_enable;
+}
+
+static bool
 v110_lod(const _mesa_glsl_parse_state *state)
 {
    return !state->es_shader && lod_exists_in_stage(state);
@@ -170,6 +184,12 @@ static bool
 shader_texture_lod(const _mesa_glsl_parse_state *state)
 {
    return state->ARB_shader_texture_lod_enable;
+}
+
+static bool
+es_shader_texture_lod(const _mesa_glsl_parse_state *state)
+{
+	return state->EXT_shader_texture_lod_enable;
 }
 
 static bool
@@ -1801,6 +1821,17 @@ builtin_builder::create_builtins()
                 _texture(ir_tex, texture_rectangle, glsl_type::vec4_type,  glsl_type::sampler2DRect_type, glsl_type::vec4_type, TEX_PROJECT),
                 NULL);
 
+	add_function("texture2DLodEXT",
+				 _texture(ir_txl, es_lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec2_type),
+				 NULL);
+	add_function("texture2DProjLodEXT",
+				 _texture(ir_txl, es_lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+				 _texture(ir_txl, es_lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
+				 NULL);
+	add_function("textureCubeLodEXT",
+				 _texture(ir_txl, es_lod_exists_in_stage, glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
+				 NULL);
+	
    add_function("shadow1D",
                 _texture(ir_tex, v110,         glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec3_type),
                 _texture(ir_txb, v110_fs_only, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec3_type),
@@ -1888,7 +1919,18 @@ builtin_builder::create_builtins()
    add_function("textureCubeGradARB",
                 _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
                 NULL);
-
+	
+	add_function("texture2DGradEXT",
+				 _texture(ir_txd, es_shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec2_type),
+				 NULL);
+	add_function("texture2DProjGradEXT",
+				 _texture(ir_txd, es_shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec3_type, TEX_PROJECT),
+				 _texture(ir_txd, es_shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler2D_type, glsl_type::vec4_type, TEX_PROJECT),
+				 NULL);
+	add_function("textureCubeGradEXT",
+				 _texture(ir_txd, es_shader_texture_lod, glsl_type::vec4_type,  glsl_type::samplerCube_type, glsl_type::vec3_type),
+				 NULL);
+	
    add_function("shadow1DGradARB",
                 _texture(ir_txd, shader_texture_lod, glsl_type::vec4_type,  glsl_type::sampler1DShadow_type, glsl_type::vec3_type),
                 NULL);
