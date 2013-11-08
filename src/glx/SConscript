@@ -63,6 +63,7 @@ sources = [
     'indirect_vertex_program.c',
     'pixel.c',
     'pixelstore.c',
+    'query_renderer.c',
     'render2.c',
     'renderpix.c',
     'single2.c',
@@ -79,6 +80,8 @@ sources = [
     'dri2_glx.c',
     'dri2.c',
     'dri2_query_renderer.c',
+    #'dri3_glx.c',
+    #'dri3_common.c',
     'applegl_glx.c',
 ]
 
