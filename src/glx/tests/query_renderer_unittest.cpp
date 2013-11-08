@@ -56,7 +56,8 @@ static bool query_renderer_string_called = false;
 static bool query_renderer_integer_called = false;
 
 static int
-fake_query_renderer_integer(struct glx_screen *psc, int attribute, int *value)
+fake_query_renderer_integer(struct glx_screen *psc, int attribute,
+                            unsigned int *value)
 {
    (void) psc;
    (void) attribute;

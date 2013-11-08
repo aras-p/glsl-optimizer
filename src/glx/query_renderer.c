@@ -30,7 +30,7 @@ __glXQueryRendererInteger(struct glx_screen *psc, int attribute,
                           unsigned int *value)
 {
    unsigned int values_for_query = 0;
-   int buffer[32];
+   unsigned int buffer[32];
    int err;
 
    /* This probably means the caller is trying to use an extension function
