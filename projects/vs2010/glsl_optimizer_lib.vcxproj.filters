@@ -263,6 +263,9 @@
     <ClCompile Include="..\..\src\glsl\ir_variable_refcount.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\glsl\link_atomics.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\glsl\link_functions.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>

@@ -75,6 +75,7 @@
         'glsl/ir_variable_refcount.cpp',
         'glsl/ir_variable_refcount.h',
         'glsl/ir_visitor.h',
+        'glsl/link_atomics.cpp',
         'glsl/link_functions.cpp',
         'glsl/link_uniform_block_active_visitor.cpp',
         'glsl/link_uniform_block_active_visitor.h',
