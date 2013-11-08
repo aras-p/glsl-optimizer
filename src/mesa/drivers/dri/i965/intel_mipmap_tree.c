@@ -1891,9 +1891,6 @@ intel_miptree_map_movntdqa(struct brw_context *brw,
       void *src_ptr = src + y * mt->region->pitch;
 
       _mesa_streaming_load_memcpy(dst_ptr, src_ptr, width_bytes);
-
-      dst_ptr += width_bytes;
-      src_ptr += width_bytes;
    }
 
    intel_miptree_unmap_raw(brw, mt);
