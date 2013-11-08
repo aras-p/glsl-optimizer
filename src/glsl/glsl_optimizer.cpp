@@ -287,6 +287,52 @@ static bool propagate_precision(exec_list* list)
 }
 
 
+static void lower_assign(ir_instruction *ir, void *data)
+{
+	ir_assignment* assignment = ir->as_assignment();
+	if (!assignment)
+		return;
+
+	const glsl_type* lhsType = assignment->lhs->type;
+	const glsl_type* rhsType = assignment->rhs->type;
+
+	if (lhsType->array_size()>1 && rhsType->array_size()>1)
+	{
+		if (lhsType->array_size() == rhsType->array_size())
+		{
+			void *mem_ctx = ralloc_parent(ir);
+
+			unsigned int array_size = lhsType->array_size();
+			for (unsigned i = 0; i < array_size; i++) {				
+				ir_dereference_array *new_lhs = new(mem_ctx) ir_dereference_array(
+					assignment->lhs->clone(mem_ctx, NULL), new(mem_ctx) ir_constant(i));
+				ir_dereference_array *new_rhs = new(mem_ctx) ir_dereference_array(
+					assignment->rhs->clone(mem_ctx, NULL), new(mem_ctx) ir_constant(i));
+				ir_assignment *element_assign = new(mem_ctx) ir_assignment(new_lhs, new_rhs);
+				ir->insert_before(element_assign);
+			}
+
+			ir->remove();
+		}
+	}
+}
+
+static bool do_lower_assigns(exec_list *list)
+{
+	bool anyProgress = false;
+	bool res;
+	do {
+		res = false;
+		foreach_iter(exec_list_iterator, iter, *list) {
+			ir_instruction* ir = (ir_instruction*)iter.get();
+			visit_tree (ir, lower_assign, &res);
+		}
+		anyProgress |= res;
+	} while (res);
+	return anyProgress;
+}
+
+
 static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_state* state, void* mem_ctx)
 {
 	bool progress;
@@ -304,6 +350,11 @@ static void do_optimization_passes(exec_list* ir, bool linked, _mesa_glsl_parse_
 		progress2 = propagate_precision (ir); progress |= progress2; if (progress2) debug_print_ir ("After prec propagation", ir, state, mem_ctx);
 		progress2 = do_copy_propagation(ir); progress |= progress2; if (progress2) debug_print_ir ("After copy propagation", ir, state, mem_ctx);
 		progress2 = do_copy_propagation_elements(ir); progress |= progress2; if (progress2) debug_print_ir ("After copy propagation elems", ir, state, mem_ctx);
+
+		if (state->es_shader) {
+			progress2 = do_lower_assigns(ir); progress |= progress2; if (progress2) debug_print_ir ("After lower assigns", ir, state, mem_ctx);
+		}
+
 		if (linked) {
 			progress2 = do_dead_code(ir,false); progress |= progress2; if (progress2) debug_print_ir ("After dead code", ir, state, mem_ctx);
 		} else {
