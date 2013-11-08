@@ -180,7 +180,6 @@
     <ClInclude Include="..\..\src\glsl\ir_optimization.h" />
     <ClInclude Include="..\..\src\glsl\ir_print_glsl_visitor.h" />
     <ClInclude Include="..\..\src\glsl\ir_print_visitor.h" />
-    <ClInclude Include="..\..\src\glsl\ir_reader.h" />
     <ClInclude Include="..\..\src\glsl\ir_rvalue_visitor.h" />
     <ClInclude Include="..\..\src\glsl\ir_uniform.h" />
     <ClInclude Include="..\..\src\glsl\ir_unused_structs.h" />
@@ -199,7 +198,6 @@
     <ClInclude Include="..\..\src\glsl\glcpp\glcpp-parse.h" />
     <ClInclude Include="..\..\src\glsl\glcpp\glcpp.h" />
     <ClInclude Include="..\..\src\mesa\main\hash_table.h" />
-    <ClInclude Include="..\..\src\mesa\main\set.h" />
     <ClInclude Include="..\..\src\mesa\program\hash_table.h" />
     <ClInclude Include="..\..\src\mesa\program\prog_instruction.h" />
     <ClInclude Include="..\..\src\mesa\program\prog_parameter.h" />
@@ -223,7 +221,7 @@
     <ClCompile Include="..\..\src\glsl\ast_function.cpp" />
     <ClCompile Include="..\..\src\glsl\ast_to_hir.cpp" />
     <ClCompile Include="..\..\src\glsl\ast_type.cpp" />
-    <ClCompile Include="..\..\src\glsl\builtin_function.cpp" />
+    <ClCompile Include="..\..\src\glsl\builtin_functions.cpp" />
     <ClCompile Include="..\..\src\glsl\builtin_types.cpp" />
     <ClCompile Include="..\..\src\glsl\builtin_variables.cpp" />
     <ClCompile Include="..\..\src\glsl\glsl_lexer.cpp" />
@@ -247,7 +245,6 @@
     <ClCompile Include="..\..\src\glsl\ir_import_prototypes.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_print_glsl_visitor.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_print_visitor.cpp" />
-    <ClCompile Include="..\..\src\glsl\ir_reader.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_rvalue_visitor.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_unused_structs.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_validate.cpp" />
@@ -294,6 +291,7 @@
     <ClCompile Include="..\..\src\glsl\opt_constant_variable.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_copy_propagation.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_copy_propagation_elements.cpp" />
+    <ClCompile Include="..\..\src\glsl\opt_cse.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_dead_builtin_varyings.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_dead_code.cpp" />
     <ClCompile Include="..\..\src\glsl\opt_dead_code_local.cpp" />
@@ -322,7 +320,6 @@
     <ClCompile Include="..\..\src\glsl\glcpp\pp.c" />
     <ClCompile Include="..\..\src\mesa\main\hash_table.c" />
     <ClCompile Include="..\..\src\mesa\main\imports.c" />
-    <ClCompile Include="..\..\src\mesa\main\set.c" />
     <ClCompile Include="..\..\src\mesa\program\prog_hash_table.c" />
     <ClCompile Include="..\..\src\mesa\program\symbol_table.c" />
   </ItemGroup>

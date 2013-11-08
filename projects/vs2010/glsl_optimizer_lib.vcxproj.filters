@@ -63,9 +63,6 @@
     <ClInclude Include="..\..\src\glsl\ir_print_visitor.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\glsl\ir_reader.h">
-      <Filter>src\glsl</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\glsl\ir_rvalue_visitor.h">
       <Filter>src\glsl</Filter>
     </ClInclude>
@@ -159,9 +156,6 @@
     <ClInclude Include="..\..\src\mesa\main\hash_table.h">
       <Filter>src\mesa\main</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\mesa\main\set.h">
-      <Filter>src\mesa\main</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\mesa\program\hash_table.h">
       <Filter>src\mesa\program</Filter>
     </ClInclude>
@@ -191,7 +185,7 @@
     <ClCompile Include="..\..\src\glsl\ast_type.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\glsl\builtin_function.cpp">
+    <ClCompile Include="..\..\src\glsl\builtin_functions.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\glsl\builtin_variables.cpp">
@@ -255,9 +249,6 @@
       <Filter>src\glsl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\glsl\ir_print_visitor.cpp">
-      <Filter>src\glsl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\glsl\ir_reader.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\glsl\ir_rvalue_visitor.cpp">
@@ -353,6 +344,9 @@
     <ClCompile Include="..\..\src\glsl\opt_copy_propagation_elements.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\glsl\opt_cse.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\glsl\opt_dead_code.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
@@ -414,9 +408,6 @@
       <Filter>src\mesa\main</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\mesa\main\imports.c">
-      <Filter>src\mesa\main</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\mesa\main\set.c">
       <Filter>src\mesa\main</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\mesa\program\prog_hash_table.c">
