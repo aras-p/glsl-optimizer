@@ -2427,7 +2427,7 @@ builtin_builder::_atan2(const glsl_type *type)
 
    ir_variable *vec_result = body.make_temp(type, "vec_result");
    ir_variable *r = body.make_temp(glsl_type::float_type, "r");
-   for (int i = 0; i < type->vector_elements; i++) {
+   for (unsigned i = 0; i < type->vector_elements; i++) {
       ir_variable *y = body.make_temp(glsl_type::float_type, "y");
       ir_variable *x = body.make_temp(glsl_type::float_type, "x");
       body.emit(assign(y, swizzle(vec_y, i, 1)));
@@ -2677,12 +2677,12 @@ builtin_builder::_step(const glsl_type *edge_type, const glsl_type *x_type)
       body.emit(assign(t, b2f(gequal(x, edge))));
    } else if (edge_type->vector_elements == 1) {
       /* x is a vector but edge is a float */
-      for (int i = 0; i < x_type->vector_elements; i++) {
+      for (unsigned i = 0; i < x_type->vector_elements; i++) {
          body.emit(assign(t, b2f(gequal(swizzle(x, i, 1), edge)), 1 << i));
       }
    } else {
       /* Both are vectors */
-      for (int i = 0; i < x_type->vector_elements; i++) {
+      for (unsigned i = 0; i < x_type->vector_elements; i++) {
          body.emit(assign(t, b2f(gequal(swizzle(x, i, 1), swizzle(edge, i, 1))),
                           1 << i));
       }
@@ -2734,7 +2734,7 @@ builtin_builder::_isinf(const glsl_type *type)
    MAKE_SIG(glsl_type::bvec(type->vector_elements), v130, 1, x);
 
    ir_constant_data infinities;
-   for (int i = 0; i < type->vector_elements; i++) {
+   for (unsigned i = 0; i < type->vector_elements; i++) {
       infinities.f[i] = std::numeric_limits<float>::infinity();
    }
 
@@ -3023,7 +3023,7 @@ builtin_builder::_matrixCompMult(const glsl_type *type)
    MAKE_SIG(type, always_available, 2, x, y);
 
    ir_variable *z = body.make_temp(type, "z");
-   for (int i = 0; i < type->matrix_columns; i++) {
+   for (unsigned i = 0; i < type->matrix_columns; i++) {
       body.emit(assign(array_ref(z, i), mul(array_ref(x, i), array_ref(y, i))));
    }
    body.emit(ret(z));
@@ -3039,7 +3039,7 @@ builtin_builder::_outerProduct(const glsl_type *type)
    MAKE_SIG(type, v120, 2, c, r);
 
    ir_variable *m = body.make_temp(type, "m");
-   for (int i = 0; i < type->matrix_columns; i++) {
+   for (unsigned i = 0; i < type->matrix_columns; i++) {
       body.emit(assign(array_ref(m, i), mul(c, swizzle(r, i, 1))));
    }
    body.emit(ret(m));
@@ -3059,8 +3059,8 @@ builtin_builder::_transpose(const glsl_type *orig_type)
    MAKE_SIG(transpose_type, v120, 1, m);
 
    ir_variable *t = body.make_temp(transpose_type, "t");
-   for (int i = 0; i < orig_type->matrix_columns; i++) {
-      for (int j = 0; j < orig_type->vector_elements; j++) {
+   for (unsigned i = 0; i < orig_type->matrix_columns; i++) {
+      for (unsigned j = 0; j < orig_type->vector_elements; j++) {
          body.emit(assign(array_ref(t, j),
                           matrix_elt(m, i, j),
                           1 << i));
