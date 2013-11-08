@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = main/gbm.pc
 
