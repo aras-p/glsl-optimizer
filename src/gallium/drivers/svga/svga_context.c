@@ -246,6 +246,7 @@ void svga_hwtnl_flush_buffer( struct svga_context *svga,
  */ 
 void svga_surfaces_flush(struct svga_context *svga)
 {
+   struct svga_screen *svgascreen = svga_screen(svga->pipe.screen);
    unsigned i;
 
    /* Emit buffered drawing commands.
@@ -254,7 +255,7 @@ void svga_surfaces_flush(struct svga_context *svga)
 
    /* Emit back-copy from render target view to texture.
     */
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+   for (i = 0; i < svgascreen->max_color_buffers; i++) {
       if (svga->curr.framebuffer.cbufs[i])
          svga_propagate_surface(svga, svga->curr.framebuffer.cbufs[i]);
    }

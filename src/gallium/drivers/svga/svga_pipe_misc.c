@@ -28,6 +28,7 @@
 #include "util/u_inlines.h"
 
 #include "svga_context.h"
+#include "svga_screen.h"
 #include "svga_surface.h"
 
 
@@ -52,11 +53,12 @@ static void svga_set_polygon_stipple( struct pipe_context *pipe,
 
 void svga_cleanup_framebuffer(struct svga_context *svga)
 {
+   struct svga_screen *svgascreen = svga_screen(svga->pipe.screen);
    struct pipe_framebuffer_state *curr = &svga->curr.framebuffer;
    struct pipe_framebuffer_state *hw = &svga->state.hw_clear.framebuffer;
-   int i;
+   unsigned i;
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+   for (i = 0; i < svgascreen->max_color_buffers; i++) {
       pipe_surface_reference(&curr->cbufs[i], NULL);
       pipe_surface_reference(&hw->cbufs[i], NULL);
    }

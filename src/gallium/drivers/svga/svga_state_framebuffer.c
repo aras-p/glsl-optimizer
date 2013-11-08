@@ -31,6 +31,7 @@
 #include "svga_state.h"
 #include "svga_cmd.h"
 #include "svga_debug.h"
+#include "svga_screen.h"
 
 
 /*
@@ -54,6 +55,7 @@ static enum pipe_error
 emit_framebuffer( struct svga_context *svga,
                   unsigned dirty )
 {
+   struct svga_screen *svgascreen = svga_screen(svga->pipe.screen);
    const struct pipe_framebuffer_state *curr = &svga->curr.framebuffer;
    struct pipe_framebuffer_state *hw = &svga->state.hw_clear.framebuffer;
    boolean reemit = svga->rebind.rendertargets;
@@ -65,7 +67,7 @@ emit_framebuffer( struct svga_context *svga,
     * dirty, to ensure that the resources are paged in.
     */
    
-   for(i = 0; i < PIPE_MAX_COLOR_BUFS; ++i) {
+   for (i = 0; i < svgascreen->max_color_buffers; i++) {
       if (curr->cbufs[i] != hw->cbufs[i] ||
           (reemit && hw->cbufs[i])) {
          if (svga->curr.nr_fbs++ > MAX_RT_PER_BATCH)
@@ -118,13 +120,14 @@ emit_framebuffer( struct svga_context *svga,
 enum pipe_error
 svga_reemit_framebuffer_bindings(struct svga_context *svga)
 {
+   struct svga_screen *svgascreen = svga_screen(svga->pipe.screen);
    struct pipe_framebuffer_state *hw = &svga->state.hw_clear.framebuffer;
    unsigned i;
    enum pipe_error ret;
 
    assert(svga->rebind.rendertargets);
 
-   for (i = 0; i < MIN2(PIPE_MAX_COLOR_BUFS, 8); ++i) {
+   for (i = 0; i < svgascreen->max_color_buffers; i++) {
       if (hw->cbufs[i]) {
          ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_COLOR0 + i, hw->cbufs[i]);
          if (ret != PIPE_OK) {

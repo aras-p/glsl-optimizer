@@ -154,10 +154,7 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_TEXCOORD:
       return 0;
    case PIPE_CAP_MAX_RENDER_TARGETS:
-      /* The SVGA3D device always supports 4 targets at this time, regardless
-       * of what querying SVGA3D_DEVCAP_MAX_RENDER_TARGETS might return.
-       */
-      return 4;
+      return svgascreen->max_color_buffers;
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
    case PIPE_CAP_QUERY_TIME_ELAPSED:
@@ -660,6 +657,11 @@ svga_screen_create(struct svga_winsys_screen *sws)
        */
       svgascreen->maxPointSize = MIN2(result.f, 80.0f);
    }
+
+   /* The SVGA3D device always supports 4 targets at this time, regardless
+    * of what querying SVGA3D_DEVCAP_MAX_RENDER_TARGETS might return.
+    */
+   svgascreen->max_color_buffers = 4;
 
    pipe_mutex_init(svgascreen->tex_mutex);
    pipe_mutex_init(svgascreen->swc_mutex);

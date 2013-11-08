@@ -323,9 +323,10 @@ svga_mark_surface_dirty(struct pipe_surface *surf)
 void
 svga_mark_surfaces_dirty(struct svga_context *svga)
 {
+   struct svga_screen *svgascreen = svga_screen(svga->pipe.screen);
    unsigned i;
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+   for (i = 0; i < svgascreen->max_color_buffers; i++) {
       if (svga->curr.framebuffer.cbufs[i])
          svga_mark_surface_dirty(svga->curr.framebuffer.cbufs[i]);
    }
