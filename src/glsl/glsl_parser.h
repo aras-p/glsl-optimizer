@@ -127,101 +127,101 @@
      ISAMPLER2DMSARRAY = 343,
      USAMPLER2DMSARRAY = 344,
      SAMPLEREXTERNALOES = 345,
-     STRUCT = 346,
-     VOID_TOK = 347,
-     WHILE = 348,
-     IDENTIFIER = 349,
-     TYPE_IDENTIFIER = 350,
-     NEW_IDENTIFIER = 351,
-     FLOATCONSTANT = 352,
-     INTCONSTANT = 353,
-     UINTCONSTANT = 354,
-     BOOLCONSTANT = 355,
-     FIELD_SELECTION = 356,
-     LEFT_OP = 357,
-     RIGHT_OP = 358,
-     INC_OP = 359,
-     DEC_OP = 360,
-     LE_OP = 361,
-     GE_OP = 362,
-     EQ_OP = 363,
-     NE_OP = 364,
-     AND_OP = 365,
-     OR_OP = 366,
-     XOR_OP = 367,
-     MUL_ASSIGN = 368,
-     DIV_ASSIGN = 369,
-     ADD_ASSIGN = 370,
-     MOD_ASSIGN = 371,
-     LEFT_ASSIGN = 372,
-     RIGHT_ASSIGN = 373,
-     AND_ASSIGN = 374,
-     XOR_ASSIGN = 375,
-     OR_ASSIGN = 376,
-     SUB_ASSIGN = 377,
-     INVARIANT = 378,
-     LOWP = 379,
-     MEDIUMP = 380,
-     HIGHP = 381,
-     SUPERP = 382,
-     PRECISION = 383,
-     VERSION_TOK = 384,
-     EXTENSION = 385,
-     LINE = 386,
-     COLON = 387,
-     EOL = 388,
-     INTERFACE = 389,
-     OUTPUT = 390,
-     PRAGMA_DEBUG_ON = 391,
-     PRAGMA_DEBUG_OFF = 392,
-     PRAGMA_OPTIMIZE_ON = 393,
-     PRAGMA_OPTIMIZE_OFF = 394,
-     PRAGMA_INVARIANT_ALL = 395,
-     LAYOUT_TOK = 396,
-     ASM = 397,
-     CLASS = 398,
-     UNION = 399,
-     ENUM = 400,
-     TYPEDEF = 401,
-     TEMPLATE = 402,
-     THIS = 403,
-     PACKED_TOK = 404,
-     GOTO = 405,
-     INLINE_TOK = 406,
-     NOINLINE = 407,
-     VOLATILE = 408,
-     PUBLIC_TOK = 409,
-     STATIC = 410,
-     EXTERN = 411,
-     EXTERNAL = 412,
-     LONG_TOK = 413,
-     SHORT_TOK = 414,
-     DOUBLE_TOK = 415,
-     HALF = 416,
-     FIXED_TOK = 417,
-     UNSIGNED = 418,
-     INPUT_TOK = 419,
-     OUPTUT = 420,
-     HVEC2 = 421,
-     HVEC3 = 422,
-     HVEC4 = 423,
-     DVEC2 = 424,
-     DVEC3 = 425,
-     DVEC4 = 426,
-     FVEC2 = 427,
-     FVEC3 = 428,
-     FVEC4 = 429,
-     SAMPLER3DRECT = 430,
-     SIZEOF = 431,
-     CAST = 432,
-     NAMESPACE = 433,
-     USING = 434,
-     COHERENT = 435,
-     RESTRICT = 436,
-     READONLY = 437,
-     WRITEONLY = 438,
-     RESOURCE = 439,
-     ATOMIC_UINT = 440,
+     ATOMIC_UINT = 346,
+     STRUCT = 347,
+     VOID_TOK = 348,
+     WHILE = 349,
+     IDENTIFIER = 350,
+     TYPE_IDENTIFIER = 351,
+     NEW_IDENTIFIER = 352,
+     FLOATCONSTANT = 353,
+     INTCONSTANT = 354,
+     UINTCONSTANT = 355,
+     BOOLCONSTANT = 356,
+     FIELD_SELECTION = 357,
+     LEFT_OP = 358,
+     RIGHT_OP = 359,
+     INC_OP = 360,
+     DEC_OP = 361,
+     LE_OP = 362,
+     GE_OP = 363,
+     EQ_OP = 364,
+     NE_OP = 365,
+     AND_OP = 366,
+     OR_OP = 367,
+     XOR_OP = 368,
+     MUL_ASSIGN = 369,
+     DIV_ASSIGN = 370,
+     ADD_ASSIGN = 371,
+     MOD_ASSIGN = 372,
+     LEFT_ASSIGN = 373,
+     RIGHT_ASSIGN = 374,
+     AND_ASSIGN = 375,
+     XOR_ASSIGN = 376,
+     OR_ASSIGN = 377,
+     SUB_ASSIGN = 378,
+     INVARIANT = 379,
+     LOWP = 380,
+     MEDIUMP = 381,
+     HIGHP = 382,
+     SUPERP = 383,
+     PRECISION = 384,
+     VERSION_TOK = 385,
+     EXTENSION = 386,
+     LINE = 387,
+     COLON = 388,
+     EOL = 389,
+     INTERFACE = 390,
+     OUTPUT = 391,
+     PRAGMA_DEBUG_ON = 392,
+     PRAGMA_DEBUG_OFF = 393,
+     PRAGMA_OPTIMIZE_ON = 394,
+     PRAGMA_OPTIMIZE_OFF = 395,
+     PRAGMA_INVARIANT_ALL = 396,
+     LAYOUT_TOK = 397,
+     ASM = 398,
+     CLASS = 399,
+     UNION = 400,
+     ENUM = 401,
+     TYPEDEF = 402,
+     TEMPLATE = 403,
+     THIS = 404,
+     PACKED_TOK = 405,
+     GOTO = 406,
+     INLINE_TOK = 407,
+     NOINLINE = 408,
+     VOLATILE = 409,
+     PUBLIC_TOK = 410,
+     STATIC = 411,
+     EXTERN = 412,
+     EXTERNAL = 413,
+     LONG_TOK = 414,
+     SHORT_TOK = 415,
+     DOUBLE_TOK = 416,
+     HALF = 417,
+     FIXED_TOK = 418,
+     UNSIGNED = 419,
+     INPUT_TOK = 420,
+     OUPTUT = 421,
+     HVEC2 = 422,
+     HVEC3 = 423,
+     HVEC4 = 424,
+     DVEC2 = 425,
+     DVEC3 = 426,
+     DVEC4 = 427,
+     FVEC2 = 428,
+     FVEC3 = 429,
+     FVEC4 = 430,
+     SAMPLER3DRECT = 431,
+     SIZEOF = 432,
+     CAST = 433,
+     NAMESPACE = 434,
+     USING = 435,
+     COHERENT = 436,
+     RESTRICT = 437,
+     READONLY = 438,
+     WRITEONLY = 439,
+     RESOURCE = 440,
      PATCH = 441,
      SAMPLE = 442,
      SUBROUTINE = 443,
@@ -348,101 +348,101 @@
 #define ISAMPLER2DMSARRAY 343
 #define USAMPLER2DMSARRAY 344
 #define SAMPLEREXTERNALOES 345
-#define STRUCT 346
-#define VOID_TOK 347
-#define WHILE 348
-#define IDENTIFIER 349
-#define TYPE_IDENTIFIER 350
-#define NEW_IDENTIFIER 351
-#define FLOATCONSTANT 352
-#define INTCONSTANT 353
-#define UINTCONSTANT 354
-#define BOOLCONSTANT 355
-#define FIELD_SELECTION 356
-#define LEFT_OP 357
-#define RIGHT_OP 358
-#define INC_OP 359
-#define DEC_OP 360
-#define LE_OP 361
-#define GE_OP 362
-#define EQ_OP 363
-#define NE_OP 364
-#define AND_OP 365
-#define OR_OP 366
-#define XOR_OP 367
-#define MUL_ASSIGN 368
-#define DIV_ASSIGN 369
-#define ADD_ASSIGN 370
-#define MOD_ASSIGN 371
-#define LEFT_ASSIGN 372
-#define RIGHT_ASSIGN 373
-#define AND_ASSIGN 374
-#define XOR_ASSIGN 375
-#define OR_ASSIGN 376
-#define SUB_ASSIGN 377
-#define INVARIANT 378
-#define LOWP 379
-#define MEDIUMP 380
-#define HIGHP 381
-#define SUPERP 382
-#define PRECISION 383
-#define VERSION_TOK 384
-#define EXTENSION 385
-#define LINE 386
-#define COLON 387
-#define EOL 388
-#define INTERFACE 389
-#define OUTPUT 390
-#define PRAGMA_DEBUG_ON 391
-#define PRAGMA_DEBUG_OFF 392
-#define PRAGMA_OPTIMIZE_ON 393
-#define PRAGMA_OPTIMIZE_OFF 394
-#define PRAGMA_INVARIANT_ALL 395
-#define LAYOUT_TOK 396
-#define ASM 397
-#define CLASS 398
-#define UNION 399
-#define ENUM 400
-#define TYPEDEF 401
-#define TEMPLATE 402
-#define THIS 403
-#define PACKED_TOK 404
-#define GOTO 405
-#define INLINE_TOK 406
-#define NOINLINE 407
-#define VOLATILE 408
-#define PUBLIC_TOK 409
-#define STATIC 410
-#define EXTERN 411
-#define EXTERNAL 412
-#define LONG_TOK 413
-#define SHORT_TOK 414
-#define DOUBLE_TOK 415
-#define HALF 416
-#define FIXED_TOK 417
-#define UNSIGNED 418
-#define INPUT_TOK 419
-#define OUPTUT 420
-#define HVEC2 421
-#define HVEC3 422
-#define HVEC4 423
-#define DVEC2 424
-#define DVEC3 425
-#define DVEC4 426
-#define FVEC2 427
-#define FVEC3 428
-#define FVEC4 429
-#define SAMPLER3DRECT 430
-#define SIZEOF 431
-#define CAST 432
-#define NAMESPACE 433
-#define USING 434
-#define COHERENT 435
-#define RESTRICT 436
-#define READONLY 437
-#define WRITEONLY 438
-#define RESOURCE 439
-#define ATOMIC_UINT 440
+#define ATOMIC_UINT 346
+#define STRUCT 347
+#define VOID_TOK 348
+#define WHILE 349
+#define IDENTIFIER 350
+#define TYPE_IDENTIFIER 351
+#define NEW_IDENTIFIER 352
+#define FLOATCONSTANT 353
+#define INTCONSTANT 354
+#define UINTCONSTANT 355
+#define BOOLCONSTANT 356
+#define FIELD_SELECTION 357
+#define LEFT_OP 358
+#define RIGHT_OP 359
+#define INC_OP 360
+#define DEC_OP 361
+#define LE_OP 362
+#define GE_OP 363
+#define EQ_OP 364
+#define NE_OP 365
+#define AND_OP 366
+#define OR_OP 367
+#define XOR_OP 368
+#define MUL_ASSIGN 369
+#define DIV_ASSIGN 370
+#define ADD_ASSIGN 371
+#define MOD_ASSIGN 372
+#define LEFT_ASSIGN 373
+#define RIGHT_ASSIGN 374
+#define AND_ASSIGN 375
+#define XOR_ASSIGN 376
+#define OR_ASSIGN 377
+#define SUB_ASSIGN 378
+#define INVARIANT 379
+#define LOWP 380
+#define MEDIUMP 381
+#define HIGHP 382
+#define SUPERP 383
+#define PRECISION 384
+#define VERSION_TOK 385
+#define EXTENSION 386
+#define LINE 387
+#define COLON 388
+#define EOL 389
+#define INTERFACE 390
+#define OUTPUT 391
+#define PRAGMA_DEBUG_ON 392
+#define PRAGMA_DEBUG_OFF 393
+#define PRAGMA_OPTIMIZE_ON 394
+#define PRAGMA_OPTIMIZE_OFF 395
+#define PRAGMA_INVARIANT_ALL 396
+#define LAYOUT_TOK 397
+#define ASM 398
+#define CLASS 399
+#define UNION 400
+#define ENUM 401
+#define TYPEDEF 402
+#define TEMPLATE 403
+#define THIS 404
+#define PACKED_TOK 405
+#define GOTO 406
+#define INLINE_TOK 407
+#define NOINLINE 408
+#define VOLATILE 409
+#define PUBLIC_TOK 410
+#define STATIC 411
+#define EXTERN 412
+#define EXTERNAL 413
+#define LONG_TOK 414
+#define SHORT_TOK 415
+#define DOUBLE_TOK 416
+#define HALF 417
+#define FIXED_TOK 418
+#define UNSIGNED 419
+#define INPUT_TOK 420
+#define OUPTUT 421
+#define HVEC2 422
+#define HVEC3 423
+#define HVEC4 424
+#define DVEC2 425
+#define DVEC3 426
+#define DVEC4 427
+#define FVEC2 428
+#define FVEC3 429
+#define FVEC4 430
+#define SAMPLER3DRECT 431
+#define SIZEOF 432
+#define CAST 433
+#define NAMESPACE 434
+#define USING 435
+#define COHERENT 436
+#define RESTRICT 437
+#define READONLY 438
+#define WRITEONLY 439
+#define RESOURCE 440
 #define PATCH 441
 #define SAMPLE 442
 #define SUBROUTINE 443
