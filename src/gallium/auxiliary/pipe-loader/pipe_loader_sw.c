@@ -95,8 +95,11 @@ pipe_loader_sw_create_screen(struct pipe_loader_device *dev,
       return NULL;
 
    init = (void *)util_dl_get_proc_address(sdev->lib, "swrast_create_screen");
-   if (!init)
+   if (!init){
+      util_dl_close(sdev->lib);
+      sdev->lib = NULL;
       return NULL;
+   }
 
    return init(sdev->ws);
 }
