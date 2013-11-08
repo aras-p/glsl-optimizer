@@ -945,7 +945,7 @@ dri3_get_pixmap_buffer(__DRIdrawable *driDrawable,
                        void *loaderPrivate)
 {
    struct dri3_drawable                 *pdraw = loaderPrivate;
-   int                                  buf_id = buffer_type == dri3_pixmap_buf_id(buffer_type);
+   int                                  buf_id = dri3_pixmap_buf_id(buffer_type);
    struct dri3_buffer                   *buffer = pdraw->buffers[buf_id];
    Pixmap                               pixmap;
    xcb_dri3_buffer_from_pixmap_cookie_t bp_cookie;
