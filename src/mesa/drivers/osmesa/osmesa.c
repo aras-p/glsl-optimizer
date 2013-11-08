@@ -197,6 +197,14 @@ osmesa_choose_line_function( struct gl_context *ctx )
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
+   if (ctx->DrawBuffer &&
+       ctx->DrawBuffer->Visual.redBits == 32) {
+      /* the special-case line functions in this file don't work
+       * for float color channels.
+       */
+      return NULL;
+   }
+
    if (ctx->RenderMode != GL_RENDER)      return NULL;
    if (ctx->Line.SmoothFlag)              return NULL;
    if (ctx->Texture._EnabledUnits)        return NULL;
@@ -297,6 +305,14 @@ osmesa_choose_triangle_function( struct gl_context *ctx )
 {
    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+   if (ctx->DrawBuffer &&
+       ctx->DrawBuffer->Visual.redBits == 32) {
+      /* the special-case triangle functions in this file don't work
+       * for float color channels.
+       */
+      return (swrast_tri_func) NULL;
+   }
 
    if (ctx->RenderMode != GL_RENDER)    return (swrast_tri_func) NULL;
    if (ctx->Polygon.SmoothFlag)         return (swrast_tri_func) NULL;
