@@ -89,6 +89,7 @@ dri_create_context(gl_api api,
 		   unsigned major_version,
 		   unsigned minor_version,
 		   uint32_t flags,
+		   bool notify_reset,
 		   unsigned *error,
 		   void *sharedContextPrivate);
 
