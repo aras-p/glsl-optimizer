@@ -669,6 +669,26 @@ struct gl_uniform_block
    enum gl_uniform_block_packing _Packing;
 };
 
+/**
+ * Structure that represents a reference to an atomic buffer from some
+ * shader program.
+ */
+struct gl_active_atomic_buffer
+{
+   /** Uniform indices of the atomic counters declared within it. */
+   GLuint *Uniforms;
+   GLuint NumUniforms;
+
+   /** Binding point index associated with it. */
+   GLuint Binding;
+
+   /** Minimum reasonable size it is expected to have. */
+   GLuint MinimumSize;
+
+   /** Shader stages making use of it. */
+   GLboolean StageReferences[MESA_SHADER_TYPES];
+};
+
 
 /**
  * A GLSL program object.
@@ -1141,6 +1161,10 @@ struct gl_constants
    GLuint MaxAtomicBufferSize;
    GLuint MaxCombinedAtomicBuffers;
    GLuint MaxCombinedAtomicCounters;
+
+   /** GL_ARB_vertex_attrib_binding */
+   GLint MaxVertexAttribRelativeOffset;
+   GLint MaxVertexAttribBindings;
 };
 
 
@@ -1219,6 +1243,7 @@ struct gl_extensions
    GLboolean ARB_uniform_buffer_object;
    GLboolean ARB_vertex_program;
    GLboolean ARB_vertex_shader;
+   GLboolean ARB_vertex_type_10f_11f_11f_rev;
    GLboolean ARB_vertex_type_2_10_10_10_rev;
    GLboolean EXT_blend_color;
    GLboolean EXT_blend_equation_separate;

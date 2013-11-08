@@ -385,6 +385,12 @@ struct ast_type_qualifier {
           */
          unsigned explicit_binding:1;
 
+         /**
+          * Flag set if GL_ARB_shader_atomic counter "offset" layout
+          * qualifier is used.
+          */
+         unsigned explicit_offset:1;
+
          /** \name Layout qualifiers for GL_AMD_conservative_depth */
          /** \{ */
          unsigned depth_any:1;
@@ -446,6 +452,15 @@ struct ast_type_qualifier {
     * This field is only valid if \c explicit_binding is set.
     */
    int binding;
+
+   /**
+    * Offset specified via GL_ARB_shader_atomic_counter's "offset"
+    * keyword.
+    *
+    * \note
+    * This field is only valid if \c explicit_offset is set.
+    */
+   int offset;
 
    /**
     * Return true if and only if an interpolation qualifier is present.

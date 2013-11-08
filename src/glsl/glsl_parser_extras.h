@@ -380,6 +380,9 @@ struct _mesa_glsl_parse_state {
     * Unused for other shader types.
     */
    unsigned gs_input_size;
+
+   /** Atomic counter offsets by binding */
+   unsigned atomic_counter_offsets[MAX_COMBINED_ATOMIC_BUFFERS];
 };
 
 # define YYLLOC_DEFAULT(Current, Rhs, N)			\

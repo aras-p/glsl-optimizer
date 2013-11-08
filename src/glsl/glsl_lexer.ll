@@ -343,6 +343,7 @@ samplerExternalOES		{
 			     return IDENTIFIER;
 		}
 
+atomic_uint     KEYWORD_WITH_ALT(420, 300, 420, 0, yyextra->ARB_shader_atomic_counters_enable, ATOMIC_UINT);
 
 struct		return STRUCT;
 void		return VOID_TOK;
@@ -524,7 +525,6 @@ restrict	KEYWORD(0, 300, 0, 0, RESTRICT);
 readonly	KEYWORD(0, 300, 0, 0, READONLY);
 writeonly	KEYWORD(0, 300, 0, 0, WRITEONLY);
 resource	KEYWORD(0, 300, 0, 0, RESOURCE);
-atomic_uint	KEYWORD(0, 300, 0, 0, ATOMIC_UINT);
 patch		KEYWORD(0, 300, 0, 0, PATCH);
 sample		KEYWORD(0, 300, 0, 0, SAMPLE);
 subroutine	KEYWORD(0, 300, 0, 0, SUBROUTINE);

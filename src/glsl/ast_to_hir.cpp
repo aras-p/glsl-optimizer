@@ -2028,10 +2028,20 @@ validate_binding_qualifier(struct _mesa_glsl_parse_state *state,
 
          return false;
       }
+   } else if (var->type->contains_atomic()) {
+      assert(ctx->Const.MaxAtomicBufferBindings <= MAX_COMBINED_ATOMIC_BUFFERS);
+      if (unsigned(qual->binding) >= ctx->Const.MaxAtomicBufferBindings) {
+         _mesa_glsl_error(loc, state, "layout(binding = %d) exceeds the "
+                          " maximum number of atomic counter buffer bindings"
+                          "(%d)", qual->binding,
+                          ctx->Const.MaxAtomicBufferBindings);
+
+         return false;
+      }
    } else {
       _mesa_glsl_error(loc, state,
                        "the \"binding\" qualifier only applies to uniform "
-                       "blocks, samplers, or arrays of samplers");
+                       "blocks, samplers, atomic counters, or arrays thereof");
       return false;
    }
 
@@ -2329,6 +2339,29 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
        validate_binding_qualifier(state, loc, var, qual)) {
       var->explicit_binding = true;
       var->binding = qual->binding;
+   }
+
+   if (var->type->contains_atomic()) {
+      if (var->mode == ir_var_uniform) {
+         if (var->explicit_binding) {
+            unsigned *offset = &state->atomic_counter_offsets[var->binding];
+
+            if (*offset % ATOMIC_COUNTER_SIZE)
+               _mesa_glsl_error(loc, state,
+                                "misaligned atomic counter offset");
+
+            var->atomic.offset = *offset;
+            *offset += var->type->atomic_size();
+
+         } else {
+            _mesa_glsl_error(loc, state,
+                             "atomic counters require explicit binding point");
+         }
+      } else if (var->mode != ir_var_function_in) {
+         _mesa_glsl_error(loc, state, "atomic counters may only be declared as "
+                          "function parameters or uniform-qualified "
+                          "global variables");
+      }
    }
 
    /* Does the declaration use the deprecated 'attribute' or 'varying'
@@ -2879,6 +2912,18 @@ ast_declarator_list::hir(exec_list *instructions,
    (void) this->type->specifier->hir(instructions, state);
 
    decl_type = this->type->glsl_type(& type_name, state);
+
+   /* An offset-qualified atomic counter declaration sets the default
+    * offset for the next declaration within the same atomic counter
+    * buffer.
+    */
+   if (decl_type && decl_type->contains_atomic()) {
+      if (type->qualifier.flags.q.explicit_binding &&
+          type->qualifier.flags.q.explicit_offset)
+         state->atomic_counter_offsets[type->qualifier.binding] =
+            type->qualifier.offset;
+   }
+
    if (this->declarations.is_empty()) {
       /* If there is no structure involved in the program text, there are two
        * possible scenarios:
@@ -2908,6 +2953,11 @@ ast_declarator_list::hir(exec_list *instructions,
          _mesa_glsl_error(&loc, state,
                           "invalid type `%s' in empty declaration",
                           type_name);
+      } else if (decl_type->base_type == GLSL_TYPE_ATOMIC_UINT) {
+         /* Empty atomic counter declarations are allowed and useful
+          * to set the default offset qualifier.
+          */
+         return NULL;
       } else if (this->type->qualifier.precision != ast_precision_none) {
          if (this->type->specifier->structure != NULL) {
             _mesa_glsl_error(&loc, state,
@@ -4634,6 +4684,17 @@ ast_process_structure_or_interface_block(exec_list *instructions,
             YYLTYPE loc = decl_list->get_location();
             _mesa_glsl_error(&loc, state,
                              "uniform in non-default uniform block contains sampler");
+         }
+
+         if (field_type->contains_atomic()) {
+            /* FINISHME: Add a spec quotation here once updated spec
+             * FINISHME: language is available.  See Khronos bug #10903
+             * FINISHME: on whether atomic counters are allowed in
+             * FINISHME: structures.
+             */
+            YYLTYPE loc = decl_list->get_location();
+            _mesa_glsl_error(&loc, state, "atomic counter in structure or "
+                             "uniform block");
          }
 
          const struct ast_type_qualifier *const qual =
