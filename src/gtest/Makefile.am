@@ -19,6 +19,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 AM_CFLAGS = $(DEFINES) -I$(top_srcdir)/src/gtest/include
 AM_CXXFLAGS = $(DEFINES) -I$(top_srcdir)/src/gtest/include
 
