@@ -117,7 +117,6 @@ namespace {
            const std::string &opts, clang::LangAS::Map& address_spaces) {
 
       clang::CompilerInstance c;
-      clang::CompilerInvocation invocation;
       clang::EmitLLVMOnlyAction act(&llvm::getGlobalContext());
       std::string log;
       llvm::raw_string_ostream s_log(log);
