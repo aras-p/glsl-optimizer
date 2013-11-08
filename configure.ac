@@ -536,6 +536,11 @@ AC_ARG_ENABLE([dri],
         [enable DRI modules @<:@default=enabled@:>@])],
     [enable_dri="$enableval"],
     [enable_dri=yes])
+AC_ARG_ENABLE([dri3],
+    [AS_HELP_STRING([--enable-dri3],
+        [enable DRI3 @<:@default=enabled@:>@])],
+    [enable_dri3="$enableval"],
+    [enable_dri3=yes])
 AC_ARG_ENABLE([glx],
     [AS_HELP_STRING([--enable-glx],
         [enable GLX library @<:@default=enabled@:>@])],
@@ -702,6 +707,7 @@ fi
 AM_CONDITIONAL(HAVE_DRI_GLX, test "x$enable_glx" = xyes -a \
                                   "x$enable_dri" = xyes)
 AM_CONDITIONAL(HAVE_DRI, test "x$enable_dri" = xyes)
+AM_CONDITIONAL(HAVE_DRI3, test "x$enable_dri3" = xyes)
 
 AC_ARG_ENABLE([shared-glapi],
     [AS_HELP_STRING([--enable-shared-glapi],
@@ -755,6 +761,9 @@ AC_SUBST([MESA_LLVM])
 # Check for libdrm
 PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED],
                   [have_libdrm=yes], [have_libdrm=no])
+
+PKG_CHECK_MODULES([LIBUDEV], [libudev >= $LIBUDEV_REQUIRED],
+                  have_libudev=yes, have_libudev=no)
 
 if test "x$enable_dri" = xyes; then
     # DRI must be shared, I think
@@ -811,13 +820,21 @@ xyesno)
         fi
         PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
         GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV libdrm >= $LIBDRM_REQUIRED"
-        PKG_CHECK_MODULES([DRI3PROTO], [dri3proto >= $DRI3PROTO_REQUIRED])
-        PKG_CHECK_MODULES([PRESENTPROTO], [presentproto >= $PRESENTPROTO_REQUIRED])
-        PKG_CHECK_MODULES([LIBUDEV], [libudev >= $LIBUDEV_REQUIRED])
+        if test x"$enable_dri3" = xyes; then
+            if test x"$have_libudev" != xyes; then
+              AC_MSG_ERROR([DRI3 requires libudev >= $LIBUDEV_REQUIRED])
+            fi
+            PKG_CHECK_MODULES([DRI3PROTO], [dri3proto >= $DRI3PROTO_REQUIRED])
+            PKG_CHECK_MODULES([PRESENTPROTO], [presentproto >= $PRESENTPROTO_REQUIRED])
+        fi
     fi
 
     # find the DRI deps for libGL
-    dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx >= 1.8.1 xcb-dri2 >= 1.8 xcb-dri3 xcb-present xcb-sync xshmfence"
+    dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx >= 1.8.1 xcb-dri2 >= 1.8"
+
+    if test x"$enable_dri3" = xyes; then
+        dri_modules="$dri_modules xcb-dri3 xcb-present xcb-sync xshmfence"
+    fi
 
     # add xf86vidmode if available
     PKG_CHECK_MODULES([XF86VIDMODE], [xxf86vm], HAVE_XF86VIDMODE=yes, HAVE_XF86VIDMODE=no)
@@ -827,8 +844,13 @@ xyesno)
 
     PKG_CHECK_MODULES([DRIGL], [$dri_modules])
     GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV $dri_modules"
-    X11_INCLUDES="$X11_INCLUDES $DRIGL_CFLAGS $LIBUDEV_CFLAGS"
-    GL_LIB_DEPS="$DRIGL_LIBS $LIBUDEV_LIBS"
+    X11_INCLUDES="$X11_INCLUDES $DRIGL_CFLAGS"
+    GL_LIB_DEPS="$DRIGL_LIBS"
+
+    if test x"$enable_dri3$have_libudev" = xyesyes; then
+        X11_INCLUDES="$X11_INCLUDES $LIBUDEV_CFLAGS"
+        GL_LIB_DEPS="$GL_LIB_DEPS $LIBUDEV_LIBS"
+    fi
 
     # need DRM libs, $PTHREAD_LIBS, etc.
     GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm $PTHREAD_LIBS $DLOPEN_LIBS"
@@ -947,6 +969,9 @@ if test "x$enable_dri" = xyes; then
     linux*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DHAVE_ALIAS"
+        if test "x$enable_dri3" = xyes; then
+            DEFINES="$DEFINES -DHAVE_DRI3"
+        fi
 
         case "$host_cpu" in
         x86_64|amd64)
@@ -1142,8 +1167,9 @@ if test "x$enable_gbm" = xauto; then
     esac
 fi
 if test "x$enable_gbm" = xyes; then
-    PKG_CHECK_MODULES([LIBUDEV], [libudev], [],
-                      AC_MSG_ERROR([gbm needs udev]))
+    if test x"$have_libudev" != xyes; then
+        AC_MSG_ERROR([gbm needs udev])
+    fi
 
     if test "x$enable_dri" = xyes; then
         GBM_BACKEND_DIRS="$GBM_BACKEND_DIRS dri"
@@ -1170,8 +1196,6 @@ if test "x$enable_egl" = xyes; then
 
     if test "$enable_static" != yes; then
         # build egl_glx when libGL is built
-        PKG_CHECK_MODULES([LIBUDEV], [libudev > 150],
-                          [have_libudev=yes],[have_libudev=no])
         if test "$have_libudev" = yes; then
             DEFINES="$DEFINES -DHAVE_LIBUDEV"
         fi

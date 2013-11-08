@@ -770,8 +770,10 @@ AllocAndFetchScreenConfigs(Display * dpy, struct glx_display * priv)
    for (i = 0; i < screens; i++, psc++) {
       psc = NULL;
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#if defined(HAVE_DRI3)
       if (priv->dri3Display)
          psc = (*priv->dri3Display->createScreen) (i, priv);
+#endif
       if (psc == NULL && priv->dri2Display)
 	 psc = (*priv->dri2Display->createScreen) (i, priv);
       if (psc == NULL && priv->driDisplay)
@@ -865,8 +867,10 @@ __glXInitialize(Display * dpy)
     ** (e.g., those called in AllocAndFetchScreenConfigs).
     */
    if (glx_direct && glx_accel) {
+#if defined(HAVE_DRI3)
       if (!getenv("LIBGL_DRI3_DISABLE"))
          dpyPriv->dri3Display = dri3_create_display(dpy);
+#endif
       dpyPriv->dri2Display = dri2CreateDisplay(dpy);
       dpyPriv->driDisplay = driCreateDisplay(dpy);
    }
