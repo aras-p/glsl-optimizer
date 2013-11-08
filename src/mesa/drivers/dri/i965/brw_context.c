@@ -714,12 +714,10 @@ brwCreateContext(gl_api api,
    }
 
    /* Notification of GPU resets requires hardware contexts and a kernel new
-    * enough to support DRM_IOCTL_I915_GET_RESET_STATS.
+    * enough to support DRM_IOCTL_I915_GET_RESET_STATS, which isn't upstream
+    * yet.
     */
-   if (notify_reset &&
-       (brw->hw_ctx == NULL
-        || drm_intel_get_reset_stats(brw->hw_ctx, &brw->reset_count, NULL,
-                                     NULL))) {
+   if (notify_reset) {
       /* This is the wrong error code, but the correct error code (one that
        * will cause EGL to generate EGL_BAD_MATCH) doesn't seem to exist.
        */
