@@ -1403,10 +1403,6 @@ brw_blorp_blit_program::kill_if_outside_dst_rect()
    brw_pop_insn_state(&func);
 }
 
-#define X_f retype(X, BRW_REGISTER_TYPE_F)
-#define Y_f retype(Y, BRW_REGISTER_TYPE_F)
-#define Xp_f retype(Xp, BRW_REGISTER_TYPE_F)
-#define Yp_f retype(Yp, BRW_REGISTER_TYPE_F)
 /**
  * Emit code to translate from destination (X, Y) coordinates to source (X, Y)
  * coordinates.
@@ -1414,6 +1410,11 @@ brw_blorp_blit_program::kill_if_outside_dst_rect()
 void
 brw_blorp_blit_program::translate_dst_to_src()
 {
+   struct brw_reg X_f = retype(X, BRW_REGISTER_TYPE_F);
+   struct brw_reg Y_f = retype(Y, BRW_REGISTER_TYPE_F);
+   struct brw_reg Xp_f = retype(Xp, BRW_REGISTER_TYPE_F);
+   struct brw_reg Yp_f = retype(Yp, BRW_REGISTER_TYPE_F);
+
    brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    /* Move the UD coordinates to float registers. */
    brw_MOV(&func, Xp_f, X);
@@ -1489,10 +1490,6 @@ brw_blorp_blit_program::clamp_tex_coords(struct brw_reg regX,
    brw_MOV(&func, regY, clampY1);
    brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
 }
-#undef X_f
-#undef Y_f
-#undef Xp_f
-#undef Yp_f
 
 /**
  * Emit code to transform the X and Y coordinates as needed for blending
