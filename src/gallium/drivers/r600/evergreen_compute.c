@@ -246,7 +246,7 @@ void evergreen_delete_compute_state(struct pipe_context *ctx, void* state)
 	}
 #endif
 
-	free(shader);
+	FREE(shader);
 }
 
 static void evergreen_bind_compute_state(struct pipe_context *ctx_, void *state)
