@@ -84,6 +84,7 @@ static void radeon_llvm_optimize(LLVMModuleRef mod)
 	LLVMRunPassManager(pass_manager, mod);
 	LLVMPassManagerBuilderDispose(builder);
 	LLVMDisposePassManager(pass_manager);
+	LLVMDisposeTargetData(TD);
 }
 
 LLVMModuleRef radeon_llvm_get_kernel_module(LLVMContextRef ctx, unsigned index,
