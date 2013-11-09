@@ -39,16 +39,13 @@ libvdpau_radeonsi_la_LDFLAGS = \
 	$(GALLIUM_VDPAU_LINKER_FLAGS)
 
 libvdpau_radeonsi_la_LIBADD = \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
-	$(top_builddir)/src/gallium/state_trackers/vdpau/libvdpautracker.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(top_builddir)/src/gallium/drivers/noop/libnoop.la \
+	$(GALLIUM_VDPAU_LIB_DEPS) \
 	$(GALLIUM_DRI_LIB_DEPS) \
-	$(VDPAU_LIBS) \
-	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
 
 if HAVE_MESA_LLVM

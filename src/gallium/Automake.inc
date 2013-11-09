@@ -43,3 +43,10 @@ GALLIUM_VDPAU_LINKER_FLAGS = \
 	-export-symbols-regex $(VDPAU_EXPORTS) \
 	-shared \
 	-no-undefined
+
+GALLIUM_VDPAU_LIB_DEPS = \
+	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(top_builddir)/src/gallium/state_trackers/vdpau/libvdpautracker.la \
+	$(VDPAU_LIBS) \
+	$(LIBDRM_LIBS)
+

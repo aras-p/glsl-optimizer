@@ -39,14 +39,11 @@ libvdpau_nouveau_la_LDFLAGS = \
 	$(GALLIUM_VDPAU_LINKER_FLAGS)
 
 libvdpau_nouveau_la_LIBADD = \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(top_builddir)/src/gallium/state_trackers/vdpau/libvdpautracker.la \
 	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
 	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
+	$(GALLIUM_VDPAU_LIB_DEPS) \
 	$(GALLIUM_DRI_LIB_DEPS) \
-	$(VDPAU_LIBS) \
-	$(LIBDRM_LIBS) \
 	$(NOUVEAU_LIBS)
 
 if HAVE_MESA_LLVM

@@ -38,14 +38,11 @@ libvdpau_r600_la_LDFLAGS = \
 	$(GALLIUM_VDPAU_LINKER_FLAGS)
 
 libvdpau_r600_la_LIBADD = \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
-	$(top_builddir)/src/gallium/state_trackers/vdpau/libvdpautracker.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
+	$(GALLIUM_VDPAU_LIB_DEPS) \
 	$(GALLIUM_DRI_LIB_DEPS) \
-	$(VDPAU_LIBS) \
-	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
 
 if HAVE_MESA_LLVM
