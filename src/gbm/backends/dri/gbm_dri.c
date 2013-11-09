@@ -104,6 +104,24 @@ dri_get_buffers_with_format(__DRIdrawable * driDrawable,
                                    count, out_count, surf->dri_private);
 }
 
+static int
+image_get_buffers(__DRIdrawable *driDrawable,
+                  unsigned int format,
+                  uint32_t *stamp,
+                  void *loaderPrivate,
+                  uint32_t buffer_mask,
+                  struct __DRIimageList *buffers)
+{
+   struct gbm_dri_surface *surf = loaderPrivate;
+   struct gbm_dri_device *dri = gbm_dri_device(surf->base.gbm);
+
+   if (dri->image_get_buffers == NULL)
+      return 0;
+
+   return dri->image_get_buffers(driDrawable, format, stamp,
+                                 surf->dri_private, buffer_mask, buffers);
+}
+
 static const __DRIuseInvalidateExtension use_invalidate = {
    { __DRI_USE_INVALIDATE, 1 }
 };
@@ -119,6 +137,13 @@ const __DRIdri2LoaderExtension dri2_loader_extension = {
    dri_flush_front_buffer,
    dri_get_buffers_with_format,
 };
+
+const __DRIimageLoaderExtension image_loader_extension = {
+   { __DRI_IMAGE_LOADER, 1 },
+   image_get_buffers,
+   dri_flush_front_buffer,
+};
+
 
 struct dri_extension_match {
    const char *name;
@@ -258,7 +283,8 @@ dri_screen_create(struct gbm_dri_device *dri)
    dri->extensions[0] = &image_lookup_extension.base;
    dri->extensions[1] = &use_invalidate.base;
    dri->extensions[2] = &dri2_loader_extension.base;
-   dri->extensions[3] = NULL;
+   dri->extensions[3] = &image_loader_extension.base;
+   dri->extensions[4] = NULL;
 
    if (dri->dri2 == NULL)
       return -1;

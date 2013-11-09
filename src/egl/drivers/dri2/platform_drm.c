@@ -175,13 +175,12 @@ dri2_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 }
 
 static int
-get_back_bo(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
+get_back_bo(struct dri2_egl_surface *dri2_surf)
 {
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
-   struct gbm_dri_bo *bo;
    struct gbm_dri_surface *surf = dri2_surf->gbm_surf;
-   int i, name, pitch;
+   int i;
 
    if (dri2_surf->back == NULL) {
       for (i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
@@ -201,6 +200,17 @@ get_back_bo(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
    if (dri2_surf->back->bo == NULL)
       return -1;
 
+   return 0;
+}
+
+static void
+back_bo_to_dri_buffer(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
+{
+   struct dri2_egl_display *dri2_dpy =
+      dri2_egl_display(dri2_surf->base.Resource.Display);
+   struct gbm_dri_bo *bo;
+   int name, pitch;
+
    bo = (struct gbm_dri_bo *) dri2_surf->back->bo;
 
    dri2_dpy->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_NAME, &name);
@@ -211,8 +221,6 @@ get_back_bo(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
    buffer->pitch = pitch;
    buffer->cpp = 4;
    buffer->flags = 0;
-
-   return 0;
 }
 
 static int
@@ -254,10 +262,11 @@ dri2_get_buffers_with_format(__DRIdrawable *driDrawable,
 
       switch (attachments[i]) {
       case __DRI_BUFFER_BACK_LEFT:
-	 if (get_back_bo(dri2_surf, &dri2_surf->buffers[j]) < 0) {
+	 if (get_back_bo(dri2_surf) < 0) {
 	    _eglError(EGL_BAD_ALLOC, "failed to allocate color buffer");
 	    return NULL;
 	 }
+         back_bo_to_dri_buffer(dri2_surf, &dri2_surf->buffers[j]);
 	 break;
       default:
 	 if (get_aux_bo(dri2_surf, attachments[i], attachments[i + 1],
@@ -312,6 +321,27 @@ dri2_get_buffers(__DRIdrawable * driDrawable,
    return buffer;
 }
 
+static int
+dri_image_get_buffers(__DRIdrawable *driDrawable,
+                      unsigned int format,
+                      uint32_t *stamp,
+                      void *loaderPrivate,
+                      uint32_t buffer_mask,
+                      struct __DRIimageList *buffers)
+{
+   struct dri2_egl_surface *dri2_surf = loaderPrivate;
+   struct gbm_dri_bo *bo;
+
+   if (get_back_bo(dri2_surf) < 0)
+      return 0;
+
+   bo = (struct gbm_dri_bo *) dri2_surf->back->bo;
+   buffers->image_mask = __DRI_IMAGE_BUFFER_BACK;
+   buffers->back = bo->image;
+
+   return 1;
+}
+
 static void
 dri2_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 {
@@ -348,9 +378,8 @@ dri2_query_buffer_age(_EGLDriver *drv,
                       _EGLDisplay *disp, _EGLSurface *surface)
 {
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surface);
-   __DRIbuffer buffer;
 
-   if (get_back_bo(dri2_surf, &buffer) < 0) {
+   if (get_back_bo(dri2_surf) < 0) {
       _eglError(EGL_BAD_ALLOC, "dri2_query_buffer_age");
       return 0;
    }
@@ -469,6 +498,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    dri2_dpy->gbm_dri->get_buffers = dri2_get_buffers;
    dri2_dpy->gbm_dri->flush_front_buffer = dri2_flush_front_buffer;
    dri2_dpy->gbm_dri->get_buffers_with_format = dri2_get_buffers_with_format;
+   dri2_dpy->gbm_dri->image_get_buffers = dri_image_get_buffers;
 
    dri2_dpy->gbm_dri->base.base.surface_lock_front_buffer = lock_front_buffer;
    dri2_dpy->gbm_dri->base.base.surface_release_buffer = release_buffer;
