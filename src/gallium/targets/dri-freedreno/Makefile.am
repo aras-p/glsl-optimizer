@@ -32,7 +32,7 @@ AM_CPPFLAGS = \
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = kgsl_dri.la msm_dri.la
 
-COMMON_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
+COMMON_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
 
 COMMON_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \

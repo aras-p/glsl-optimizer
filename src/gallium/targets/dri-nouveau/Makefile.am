@@ -34,7 +34,7 @@ dri_LTLIBRARIES = nouveau_dri.la
 nodist_EXTRA_nouveau_dri_la_SOURCES = dummy.cpp
 nouveau_dri_la_SOURCES = target.c
 
-nouveau_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
+nouveau_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
 
 nouveau_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \

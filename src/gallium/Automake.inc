@@ -50,6 +50,14 @@ GALLIUM_VIDEO_CFLAGS = \
 	$(LIBDRM_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
 
+
+# TODO: add -export-symbols-regex
+GALLIUM_DRI_LINKER_FLAGS = \
+	-module \
+	-avoid-version \
+	-shared \
+	-Wl,-Bsymbolic
+
 GALLIUM_VDPAU_LINKER_FLAGS = \
 	-module \
 	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \

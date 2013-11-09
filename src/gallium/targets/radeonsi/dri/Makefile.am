@@ -36,7 +36,7 @@ nodist_EXTRA_radeonsi_dri_la_SOURCES = dummy.cpp
 radeonsi_dri_la_SOURCES = \
 	drm_target.c
 
-radeonsi_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
+radeonsi_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
 
 radeonsi_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \

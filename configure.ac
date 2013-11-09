@@ -1050,7 +1050,6 @@ if test "x$enable_dri" = xyes; then
     DRI_LIB_DEPS="$DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIBS -lm $PTHREAD_LIBS $DLOPEN_LIBS"
     GALLIUM_DRI_LIB_DEPS="$GALLIUM_DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIBS -lm $CLOCK_LIB $PTHREAD_LIBS $DLOPEN_LIBS"
 
-    DRI_DRIVER_LDFLAGS="-module -avoid-version -shared -Wl,-Bsymbolic"
 fi
 
 AM_CONDITIONAL(NEED_MEGADRIVER, test -n "$DRI_DIRS")
@@ -1058,7 +1057,6 @@ AM_CONDITIONAL(NEED_LIBMESA, test "x$enable_xlib_glx" = xyes -o \
                                   "x$enable_osmesa" = xyes -o \
                                   -n "$DRI_DIRS")
 AC_SUBST([DRI_LIB_DEPS])
-AC_SUBST([DRI_DRIVER_LDFLAGS])
 AC_SUBST([GALLIUM_DRI_LIB_DEPS])
 
 case $DRI_DIRS in

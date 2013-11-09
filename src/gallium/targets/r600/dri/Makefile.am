@@ -35,7 +35,7 @@ dri_LTLIBRARIES = r600_dri.la
 r600_dri_la_SOURCES = \
 	drm_target.c
 
-r600_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
+r600_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
 
 r600_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \

@@ -35,7 +35,7 @@ dri_LTLIBRARIES = i915_dri.la
 
 i915_dri_la_SOURCES = target.c
 
-i915_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
+i915_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
 
 i915_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
