@@ -35,7 +35,7 @@ xvmcdir = $(XVMC_LIB_INSTALL_DIR)
 xvmc_LTLIBRARIES = libXvMCr600.la
 
 libXvMCr600_la_SOURCES = \
-	../drm_target.c \
+	drm_target.c \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
 libXvMCr600_la_LDFLAGS = \

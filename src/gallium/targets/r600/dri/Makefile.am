@@ -41,7 +41,7 @@ dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = r600_dri.la
 
 r600_dri_la_SOURCES = \
-	../drm_target.c
+	drm_target.c
 
 r600_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
 
