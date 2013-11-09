@@ -122,7 +122,7 @@ gen7_emit_push_constant_state(struct brw_context *brw, unsigned vs_size,
     *
     * No such restriction exists for Haswell.
     */
-   if (!brw->is_haswell)
+   if (brw->gen < 8 && !brw->is_haswell)
       gen7_emit_cs_stall_flush(brw);
 }
 
