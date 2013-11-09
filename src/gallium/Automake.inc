@@ -57,6 +57,12 @@ GALLIUM_VDPAU_LIB_DEPS = \
 	$(VDPAU_LIBS) \
 	$(LIBDRM_LIBS)
 
+GALLIUM_XVMC_LIB_DEPS = \
+	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(top_builddir)/src/gallium/state_trackers/xvmc/libxvmctracker.la \
+	$(XVMC_LIBS) \
+	$(LIBDRM_LIBS)
+
 GALLIUM_WINSYS_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/gallium/include \
