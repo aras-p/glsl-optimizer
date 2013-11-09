@@ -519,7 +519,7 @@ nouveau_create_decoder(struct pipe_context *context,
       goto vl;
    if (screen->device->chipset >= 0x98 && screen->device->chipset != 0xa0)
       goto vl;
-   if (screen->device->chipset < 0x31 || screen->device->chipset == 0x35)
+   if (screen->device->chipset < 0x40)
       goto vl;
 
    dec = CALLOC_STRUCT(nouveau_decoder);
@@ -782,7 +782,7 @@ nouveau_video_buffer_create(struct pipe_context *pipe,
     */
    if (templat->buffer_format != PIPE_FORMAT_NV12 || getenv("XVMC_VL") ||
        (screen->device->chipset >= 0x98 && screen->device->chipset != 0xa0) ||
-       screen->device->chipset < 0x31 || screen->device->chipset == 0x35)
+       screen->device->chipset < 0x40)
       return vl_video_buffer_create(pipe, templat);
 
    assert(templat->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
