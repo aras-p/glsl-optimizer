@@ -42,7 +42,7 @@ dri_LTLIBRARIES = r300_dri.la
 
 nodist_EXTRA_r300_dri_la_SOURCES = dummy.cpp
 r300_dri_la_SOURCES = \
-	../drm_target.c
+	drm_target.c
 
 r300_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
 
