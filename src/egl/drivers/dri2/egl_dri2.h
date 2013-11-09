@@ -117,7 +117,7 @@ struct dri2_egl_display
 
    __DRIdri2LoaderExtension    dri2_loader_extension;
    __DRIswrastLoaderExtension  swrast_loader_extension;
-   const __DRIextension     *extensions[4];
+   const __DRIextension     *extensions[5];
    const __DRIextension    **driver_extensions;
 
 #ifdef HAVE_X11_PLATFORM
@@ -189,7 +189,6 @@ struct dri2_egl_surface
 #ifdef HAVE_WAYLAND_PLATFORM
       struct wl_buffer   *wl_buffer;
       __DRIimage         *dri_image;
-      int                 pitch, name;
 #endif
 #ifdef HAVE_DRM_PLATFORM
       struct gbm_bo       *bo;

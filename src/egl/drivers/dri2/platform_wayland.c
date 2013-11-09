@@ -257,12 +257,11 @@ dri2_release_buffers(struct dri2_egl_surface *dri2_surf)
 }
 
 static int
-get_back_bo(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
+get_back_bo(struct dri2_egl_surface *dri2_surf)
 {
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
-   __DRIimage *image;
-   int i, name, pitch;
+   int i;
 
    /* There might be a buffer release already queued that wasn't processed */
    wl_display_dispatch_queue_pending(dri2_dpy->wl_dpy, dri2_dpy->wl_queue);
@@ -295,23 +294,30 @@ get_back_bo(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
    if (dri2_surf->back->dri_image == NULL)
       return -1;
 
+   dri2_surf->back->locked = 1;
+
+   return 0;
+}
+
+
+static void
+back_bo_to_dri_buffer(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
+{
+   struct dri2_egl_display *dri2_dpy =
+      dri2_egl_display(dri2_surf->base.Resource.Display);
+   __DRIimage *image;
+   int name, pitch;
+
    image = dri2_surf->back->dri_image;
 
    dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_NAME, &name);
    dri2_dpy->image->queryImage(image, __DRI_IMAGE_ATTRIB_STRIDE, &pitch);
-
-   dri2_surf->back->name = name;
-   dri2_surf->back->pitch = pitch;
 
    buffer->attachment = __DRI_BUFFER_BACK_LEFT;
    buffer->name = name;
    buffer->pitch = pitch;
    buffer->cpp = 4;
    buffer->flags = 0;
-
-   dri2_surf->back->locked = 1;
-
-   return 0;
 }
 
 static int
@@ -337,16 +343,12 @@ get_aux_bo(struct dri2_egl_surface *dri2_surf,
    return 0;
 }
 
-static __DRIbuffer *
-dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
-			     int *width, int *height,
-			     unsigned int *attachments, int count,
-			     int *out_count, void *loaderPrivate)
+static int
+update_buffers(struct dri2_egl_surface *dri2_surf)
 {
-   struct dri2_egl_surface *dri2_surf = loaderPrivate;
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
-   int i, j;
+   int i;
 
    if (dri2_surf->base.Type == EGL_WINDOW_BIT &&
        (dri2_surf->base.Width != dri2_surf->wl_win->width || 
@@ -360,22 +362,9 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
       dri2_surf->dy = dri2_surf->wl_win->dy;
    }
 
-   for (i = 0, j = 0; i < 2 * count; i += 2, j++) {
-      switch (attachments[i]) {
-      case __DRI_BUFFER_BACK_LEFT:
-	 if (get_back_bo(dri2_surf, &dri2_surf->buffers[j]) < 0) {
-	    _eglError(EGL_BAD_ALLOC, "failed to allocate color buffer");
-	    return NULL;
-	 }
-	 break;
-      default:
-	 if (get_aux_bo(dri2_surf, attachments[i], attachments[i + 1],
-			&dri2_surf->buffers[j]) < 0) {
-	    _eglError(EGL_BAD_ALLOC, "failed to allocate aux buffer");
-	    return NULL;
-	 }
-	 break;
-      }
+   if (get_back_bo(dri2_surf) < 0) {
+      _eglError(EGL_BAD_ALLOC, "failed to allocate color buffer");
+      return -1;
    }
 
    /* If we have an extra unlocked buffer at this point, we had to do triple
@@ -388,6 +377,36 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
          dri2_dpy->image->destroyImage(dri2_surf->color_buffers[i].dri_image);
          dri2_surf->color_buffers[i].wl_buffer = NULL;
          dri2_surf->color_buffers[i].dri_image = NULL;
+      }
+   }
+
+   return 0;
+}
+
+static __DRIbuffer *
+dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
+			     int *width, int *height,
+			     unsigned int *attachments, int count,
+			     int *out_count, void *loaderPrivate)
+{
+   struct dri2_egl_surface *dri2_surf = loaderPrivate;
+   int i, j;
+
+   if (update_buffers(dri2_surf) < 0)
+      return NULL;
+
+   for (i = 0, j = 0; i < 2 * count; i += 2, j++) {
+      switch (attachments[i]) {
+      case __DRI_BUFFER_BACK_LEFT:
+         back_bo_to_dri_buffer(dri2_surf, &dri2_surf->buffers[j]);
+	 break;
+      default:
+	 if (get_aux_bo(dri2_surf, attachments[i], attachments[i + 1],
+			&dri2_surf->buffers[j]) < 0) {
+	    _eglError(EGL_BAD_ALLOC, "failed to allocate aux buffer");
+	    return NULL;
+	 }
+	 break;
       }
    }
 
@@ -434,12 +453,37 @@ dri2_get_buffers(__DRIdrawable * driDrawable,
    return buffer;
 }
 
+static int
+image_get_buffers(__DRIdrawable *driDrawable,
+                  unsigned int format,
+                  uint32_t *stamp,
+                  void *loaderPrivate,
+                  uint32_t buffer_mask,
+                  struct __DRIimageList *buffers)
+{
+   struct dri2_egl_surface *dri2_surf = loaderPrivate;
+
+   if (update_buffers(dri2_surf) < 0)
+      return 0;
+
+   buffers->image_mask = __DRI_IMAGE_BUFFER_BACK;
+   buffers->back = dri2_surf->back->dri_image;
+
+   return 1;
+}
+
 static void
 dri2_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 {
    (void) driDrawable;
    (void) loaderPrivate;
 }
+
+static const __DRIimageLoaderExtension image_loader_extension = {
+   { __DRI_IMAGE_LOADER, 1 },
+   image_get_buffers,
+   dri2_flush_front_buffer
+};
 
 static void
 wayland_frame_callback(void *data, struct wl_callback *callback, uint32_t time)
@@ -459,7 +503,7 @@ create_wl_buffer(struct dri2_egl_surface *dri2_surf)
 {
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
-   int fd;
+   int fd, stride, name;
 
    if (dri2_surf->current->wl_buffer != NULL)
       return;
@@ -467,6 +511,8 @@ create_wl_buffer(struct dri2_egl_surface *dri2_surf)
    if (dri2_dpy->capabilities & WL_DRM_CAPABILITY_PRIME) {
       dri2_dpy->image->queryImage(dri2_surf->current->dri_image,
                                   __DRI_IMAGE_ATTRIB_FD, &fd);
+      dri2_dpy->image->queryImage(dri2_surf->current->dri_image,
+                                  __DRI_IMAGE_ATTRIB_STRIDE, &stride);
 
       dri2_surf->current->wl_buffer =
          wl_drm_create_prime_buffer(dri2_dpy->wl_drm,
@@ -474,17 +520,22 @@ create_wl_buffer(struct dri2_egl_surface *dri2_surf)
                                     dri2_surf->base.Width,
                                     dri2_surf->base.Height,
                                     dri2_surf->format,
-                                    0, dri2_surf->current->pitch,
+                                    0, stride,
                                     0, 0,
                                     0, 0);
       close(fd);
    } else {
+      dri2_dpy->image->queryImage(dri2_surf->current->dri_image,
+                                  __DRI_IMAGE_ATTRIB_NAME, &name);
+      dri2_dpy->image->queryImage(dri2_surf->current->dri_image,
+                                  __DRI_IMAGE_ATTRIB_STRIDE, &stride);
+
       dri2_surf->current->wl_buffer =
          wl_drm_create_buffer(dri2_dpy->wl_drm,
-                              dri2_surf->current->name,
+                              name,
                               dri2_surf->base.Width,
                               dri2_surf->base.Height,
-                              dri2_surf->current->pitch,
+                              stride,
                               dri2_surf->format);
    }
 
@@ -506,7 +557,6 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
-   __DRIbuffer buffer;
    int i, ret = 0;
 
    while (dri2_surf->frame_callback && ret != -1)
@@ -526,7 +576,7 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
 
    /* Make sure we have a back buffer in case we're swapping without ever
     * rendering. */
-   if (get_back_bo(dri2_surf, &buffer) < 0) {
+   if (get_back_bo(dri2_surf) < 0) {
       _eglError(EGL_BAD_ALLOC, "dri2_swap_buffers");
       return EGL_FALSE;
    }
@@ -573,9 +623,8 @@ dri2_query_buffer_age(_EGLDriver *drv,
                       _EGLDisplay *disp, _EGLSurface *surface)
 {
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surface);
-   __DRIbuffer buffer;
 
-   if (get_back_bo(dri2_surf, &buffer) < 0) {
+   if (get_back_bo(dri2_surf) < 0) {
       _eglError(EGL_BAD_ALLOC, "dri2_query_buffer_age");
       return 0;
    }
@@ -799,11 +848,12 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    dri2_dpy->dri2_loader_extension.flushFrontBuffer = dri2_flush_front_buffer;
    dri2_dpy->dri2_loader_extension.getBuffersWithFormat =
       dri2_get_buffers_with_format;
-      
+
    dri2_dpy->extensions[0] = &dri2_dpy->dri2_loader_extension.base;
-   dri2_dpy->extensions[1] = &image_lookup_extension.base;
-   dri2_dpy->extensions[2] = &use_invalidate.base;
-   dri2_dpy->extensions[3] = NULL;
+   dri2_dpy->extensions[1] = &image_loader_extension.base;
+   dri2_dpy->extensions[2] = &image_lookup_extension.base;
+   dri2_dpy->extensions[3] = &use_invalidate.base;
+   dri2_dpy->extensions[4] = NULL;
 
    if (!dri2_create_screen(disp))
       goto cleanup_driver;
