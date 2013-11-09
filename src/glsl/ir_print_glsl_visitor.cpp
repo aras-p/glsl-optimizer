@@ -143,7 +143,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		if (state->had_version_string)
 		{
 			ralloc_asprintf_append (&buffer, "#version %i", state->language_version);
-			if (state->es_shader)
+			if (state->es_shader && state->language_version >= 300)
 				ralloc_asprintf_append (&buffer, " es");
 			ralloc_asprintf_append (&buffer, "\n");
 		}
