@@ -611,7 +611,6 @@ nouveau_create_decoder(struct pipe_context *context,
    BEGIN_NV04(push, NV31_MPEG(FORMAT), 2);
    PUSH_DATA (push, 0);
    switch (templ->entrypoint) {
-      case PIPE_VIDEO_ENTRYPOINT_BITSTREAM: PUSH_DATA (push, 0x100); break;
       case PIPE_VIDEO_ENTRYPOINT_IDCT: PUSH_DATA (push, 1); break;
       case PIPE_VIDEO_ENTRYPOINT_MC: PUSH_DATA (push, 0); break;
       default: assert(0);
@@ -839,7 +838,8 @@ nouveau_screen_get_video_param(struct pipe_screen *pscreen,
 {
    switch (param) {
    case PIPE_VIDEO_CAP_SUPPORTED:
-      return vl_profile_supported(pscreen, profile, entrypoint);
+      return entrypoint >= PIPE_VIDEO_ENTRYPOINT_IDCT &&
+         u_reduce_video_profile(profile) == PIPE_VIDEO_FORMAT_MPEG12;
    case PIPE_VIDEO_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_VIDEO_CAP_MAX_WIDTH:
