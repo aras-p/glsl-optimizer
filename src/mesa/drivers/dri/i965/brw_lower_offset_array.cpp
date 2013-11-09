@@ -34,26 +34,31 @@
 #include "glsl/glsl_types.h"
 #include "glsl/ir.h"
 #include "glsl/ir_builder.h"
+#include "glsl/ir_rvalue_visitor.h"
 
 using namespace ir_builder;
 
-class brw_lower_offset_array_visitor : public ir_hierarchical_visitor {
+class brw_lower_offset_array_visitor : public ir_rvalue_visitor {
 public:
    brw_lower_offset_array_visitor()
    {
       progress = false;
    }
 
-   ir_visitor_status visit_leave(ir_texture *ir);
+   void handle_rvalue(ir_rvalue **rv);
 
    bool progress;
 };
 
-ir_visitor_status
-brw_lower_offset_array_visitor::visit_leave(ir_texture *ir)
+void
+brw_lower_offset_array_visitor::handle_rvalue(ir_rvalue **rv)
 {
+   if (*rv == NULL || (*rv)->ir_type != ir_type_texture)
+      return;
+
+   ir_texture *ir = (ir_texture *) *rv;
    if (ir->op != ir_tg4 || !ir->offset || !ir->offset->type->is_array())
-      return visit_continue;
+      return;
 
    void *mem_ctx = ralloc_parent(ir);
 
@@ -68,10 +73,9 @@ brw_lower_offset_array_visitor::visit_leave(ir_texture *ir)
       base_ir->insert_before(assign(var, swizzle_w(tex), 1 << i));
    }
 
-   base_ir->replace_with(new (mem_ctx) ir_dereference_variable(var));
+   *rv = new (mem_ctx) ir_dereference_variable(var);
 
    progress = true;
-   return visit_continue;
 }
 
 extern "C" {
