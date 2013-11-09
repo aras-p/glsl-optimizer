@@ -38,7 +38,7 @@ EXPORTS = '^(vdp_imp_device_create_x11|radeon_drm_winsys_create)$$'
 
 nodist_EXTRA_libvdpau_radeonsi_la_SOURCES = dummy.cpp
 libvdpau_radeonsi_la_SOURCES = \
-	../drm_target.c \
+	drm_target.c \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
 libvdpau_radeonsi_la_LDFLAGS = \

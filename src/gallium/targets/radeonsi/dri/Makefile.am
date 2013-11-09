@@ -42,7 +42,7 @@ dri_LTLIBRARIES = radeonsi_dri.la
 
 nodist_EXTRA_radeonsi_dri_la_SOURCES = dummy.cpp
 radeonsi_dri_la_SOURCES = \
-	../drm_target.c
+	drm_target.c
 
 radeonsi_dri_la_LDFLAGS = $(DRI_DRIVER_LDFLAGS)
 
