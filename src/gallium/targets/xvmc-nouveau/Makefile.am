@@ -34,10 +34,7 @@ libXvMCnouveau_la_SOURCES = \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
 libXvMCnouveau_la_LDFLAGS = \
-	-module \
-	-version-number $(XVMC_MAJOR):$(XVMC_MINOR)
-	-shared \
-	-no-undefined
+	$(GALLIUM_XVMC_LINKER_FLAGS)
 
 libXvMCnouveau_la_LIBADD = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \

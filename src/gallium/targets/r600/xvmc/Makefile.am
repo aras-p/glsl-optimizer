@@ -33,10 +33,7 @@ libXvMCr600_la_SOURCES = \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
 libXvMCr600_la_LDFLAGS = \
-	-module \
-	-version-number $(XVMC_MAJOR):$(XVMC_MINOR) \
-	-shared \
-	-no-undefined
+	$(GALLIUM_XVMC_LINKER_FLAGS)
 
 libXvMCr600_la_LIBADD = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
