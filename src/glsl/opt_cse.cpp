@@ -352,6 +352,7 @@ equals(ir_texture *a, ir_texture *b)
       if (!equals(a->lod_info.grad.dPdx, b->lod_info.grad.dPdx) ||
           !equals(a->lod_info.grad.dPdy, b->lod_info.grad.dPdy))
          return false;
+      break;
    case ir_txf_ms:
       if (!equals(a->lod_info.sample_index, b->lod_info.sample_index))
          return false;
@@ -359,6 +360,7 @@ equals(ir_texture *a, ir_texture *b)
    case ir_tg4:
       if (!equals(a->lod_info.component, b->lod_info.component))
          return false;
+      break;
    default:
       assert(!"Unrecognized texture op");
    }
