@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+# Note: Make sure VDPAU_EXPORTS is defined before including Automake.inc
+VDPAU_EXPORTS = '^(vdp_imp_device_create_x11|radeon_drm_winsys_create)$$'
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
@@ -28,19 +30,13 @@ AM_CFLAGS = \
 vdpaudir = $(VDPAU_LIB_INSTALL_DIR)
 vdpau_LTLIBRARIES = libvdpau_radeonsi.la
 
-EXPORTS = '^(vdp_imp_device_create_x11|radeon_drm_winsys_create)$$'
-
 nodist_EXTRA_libvdpau_radeonsi_la_SOURCES = dummy.cpp
 libvdpau_radeonsi_la_SOURCES = \
 	drm_target.c \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
 libvdpau_radeonsi_la_LDFLAGS = \
-	-module \
-	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
-	-export-symbols-regex $(EXPORTS) \
-	-shared \
-	-no-undefined
+	$(GALLIUM_VDPAU_LINKER_FLAGS)
 
 libvdpau_radeonsi_la_LIBADD = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \

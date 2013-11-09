@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+# Note: Make sure VDPAU_EXPORTS is defined before including Automake.inc
+VDPAU_EXPORTS = '^(vdp_imp_device_create_x11|nouveau_drm_screen_create)$$'
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
@@ -34,10 +36,7 @@ libvdpau_nouveau_la_SOURCES = \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
 libvdpau_nouveau_la_LDFLAGS = \
-	-module \
-	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
-	-shared \
-	-no-undefined
+	$(GALLIUM_VDPAU_LINKER_FLAGS)
 
 libvdpau_nouveau_la_LIBADD = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \

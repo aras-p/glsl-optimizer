@@ -36,3 +36,10 @@ GALLIUM_VIDEO_CFLAGS = \
 	$(PTHREAD_CFLAGS) \
 	$(LIBDRM_CFLAGS) \
 	$(VISIBILITY_CFLAGS)
+
+GALLIUM_VDPAU_LINKER_FLAGS = \
+	-module \
+	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
+	-export-symbols-regex $(VDPAU_EXPORTS) \
+	-shared \
+	-no-undefined
