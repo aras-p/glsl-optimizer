@@ -33,7 +33,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#ifdef HAVE_DRM_PLATFORM
 #include <xf86drm.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -606,6 +608,7 @@ dri2_x11_authenticate(_EGLDisplay *disp, uint32_t id)
 static EGLBoolean
 dri2_authenticate(_EGLDisplay *disp)
 {
+#ifdef HAVE_DRM_PLATFORM
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    drm_magic_t magic;
 
@@ -620,6 +623,9 @@ dri2_authenticate(_EGLDisplay *disp)
    }
 
    return EGL_TRUE;
+#else
+   return EGL_FALSE;
+#endif
 }
 
 static EGLBoolean

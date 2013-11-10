@@ -33,8 +33,10 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#ifdef HAVE_DRM_PLATFORM
 #include <xf86drm.h>
 #include <drm_fourcc.h>
+#endif
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 #include <sys/types.h>
@@ -520,10 +522,12 @@ dri2_setup_screen(_EGLDisplay *disp)
          disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
          disp->Extensions.KHR_gl_texture_cubemap_image = EGL_TRUE;
       }
+#ifdef HAVE_DRM_PLATFORM
       if (dri2_dpy->image->base.version >= 8 &&
           dri2_dpy->image->createImageFromDmaBufs) {
          disp->Extensions.EXT_image_dma_buf_import = EGL_TRUE;
       }
+#endif
    }
 }
 
@@ -1158,6 +1162,7 @@ dri2_create_image_khr_renderbuffer(_EGLDisplay *disp, _EGLContext *ctx,
    return dri2_create_image(disp, dri_image);
 }
 
+#ifdef HAVE_DRM_PLATFORM
 static _EGLImage *
 dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 				  EGLClientBuffer buffer, const EGLint *attr_list)
@@ -1202,6 +1207,7 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 
    return dri2_create_image(disp, dri_image);
 }
+#endif
 
 #ifdef HAVE_WAYLAND_PLATFORM
 
@@ -1375,6 +1381,7 @@ dri2_create_image_khr_texture(_EGLDisplay *disp, _EGLContext *ctx,
    return &dri2_img->base;
 }
 
+#ifdef HAVE_DRM_PLATFORM
 static EGLBoolean
 dri2_check_dma_buf_attribs(const _EGLImageAttribs *attrs)
 {
@@ -1629,6 +1636,7 @@ dri2_create_image_dma_buf(_EGLDisplay *disp, _EGLContext *ctx,
 
    return res;
 }
+#endif
 
 _EGLImage *
 dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
@@ -1648,14 +1656,18 @@ dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
       return dri2_create_image_khr_texture(disp, ctx, target, buffer, attr_list);
    case EGL_GL_RENDERBUFFER_KHR:
       return dri2_create_image_khr_renderbuffer(disp, ctx, buffer, attr_list);
+#ifdef HAVE_DRM_PLATFORM
    case EGL_DRM_BUFFER_MESA:
       return dri2_create_image_mesa_drm_buffer(disp, ctx, buffer, attr_list);
+#endif
 #ifdef HAVE_WAYLAND_PLATFORM
    case EGL_WAYLAND_BUFFER_WL:
       return dri2_create_image_wayland_wl_buffer(disp, ctx, buffer, attr_list);
 #endif
+#ifdef HAVE_DRM_PLATFORM
    case EGL_LINUX_DMA_BUF_EXT:
       return dri2_create_image_dma_buf(disp, ctx, buffer, attr_list);
+#endif
    default:
       _eglError(EGL_BAD_PARAMETER, "dri2_create_image_khr");
       return EGL_NO_IMAGE_KHR;
@@ -1676,6 +1688,7 @@ dri2_destroy_image_khr(_EGLDriver *drv, _EGLDisplay *disp, _EGLImage *image)
    return EGL_TRUE;
 }
 
+#ifdef HAVE_DRM_PLATFORM
 static _EGLImage *
 dri2_create_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp,
 			   const EGLint *attr_list)
@@ -1786,6 +1799,7 @@ dri2_export_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp, _EGLImage *img,
 
    return EGL_TRUE;
 }
+#endif
 
 #ifdef HAVE_WAYLAND_PLATFORM
 
@@ -2020,8 +2034,10 @@ _eglBuiltInDriverDRI2(const char *args)
    dri2_drv->base.API.ReleaseTexImage = dri2_release_tex_image;
    dri2_drv->base.API.CreateImageKHR = dri2_create_image_khr;
    dri2_drv->base.API.DestroyImageKHR = dri2_destroy_image_khr;
+#ifdef HAVE_DRM_PLATFORM
    dri2_drv->base.API.CreateDRMImageMESA = dri2_create_drm_image_mesa;
    dri2_drv->base.API.ExportDRMImageMESA = dri2_export_drm_image_mesa;
+#endif
 #ifdef HAVE_WAYLAND_PLATFORM
    dri2_drv->base.API.BindWaylandDisplayWL = dri2_bind_wayland_display_wl;
    dri2_drv->base.API.UnbindWaylandDisplayWL = dri2_unbind_wayland_display_wl;
