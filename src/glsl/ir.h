@@ -1240,9 +1240,16 @@ enum ir_expression_operation {
    ir_unop_noise,
 
    /**
+    * Interpolate fs input at centroid
+    *
+    * operand0 is the fs input.
+    */
+   ir_unop_interpolate_at_centroid,
+
+   /**
     * A sentinel marking the last of the unary operations.
     */
-   ir_last_unop = ir_unop_noise,
+   ir_last_unop = ir_unop_interpolate_at_centroid,
 
    ir_binop_add,
    ir_binop_sub,
@@ -1361,9 +1368,25 @@ enum ir_expression_operation {
    ir_binop_vector_extract,
 
    /**
+    * Interpolate fs input at offset
+    *
+    * operand0 is the fs input
+    * operand1 is the offset from the pixel center
+    */
+   ir_binop_interpolate_at_offset,
+
+   /**
+    * Interpolate fs input at sample position
+    *
+    * operand0 is the fs input
+    * operand1 is the sample ID
+    */
+   ir_binop_interpolate_at_sample,
+
+   /**
     * A sentinel marking the last of the binary operations.
     */
-   ir_last_binop = ir_binop_vector_extract,
+   ir_last_binop = ir_binop_interpolate_at_sample,
 
    /**
     * \name Fused floating-point multiply-add, part of ARB_gpu_shader5.

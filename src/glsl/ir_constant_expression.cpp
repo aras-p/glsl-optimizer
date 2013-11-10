@@ -510,6 +510,8 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
       case ir_binop_lshift:
       case ir_binop_rshift:
       case ir_binop_ldexp:
+      case ir_binop_interpolate_at_offset:
+      case ir_binop_interpolate_at_sample:
       case ir_binop_vector_extract:
       case ir_triop_csel:
       case ir_triop_bitfield_extract:

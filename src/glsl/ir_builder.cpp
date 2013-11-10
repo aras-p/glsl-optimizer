@@ -501,6 +501,24 @@ b2f(operand a)
 }
 
 ir_expression *
+interpolate_at_centroid(operand a)
+{
+   return expr(ir_unop_interpolate_at_centroid, a);
+}
+
+ir_expression *
+interpolate_at_offset(operand a, operand b)
+{
+   return expr(ir_binop_interpolate_at_offset, a, b);
+}
+
+ir_expression *
+interpolate_at_sample(operand a, operand b)
+{
+   return expr(ir_binop_interpolate_at_sample, a, b);
+}
+
+ir_expression *
 fma(operand a, operand b, operand c)
 {
    return expr(ir_triop_fma, a, b, c);

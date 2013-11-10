@@ -186,6 +186,10 @@ ir_expression *b2f(operand a);
 ir_expression *min2(operand a, operand b);
 ir_expression *max2(operand a, operand b);
 
+ir_expression *interpolate_at_centroid(operand a);
+ir_expression *interpolate_at_offset(operand a, operand b);
+ir_expression *interpolate_at_sample(operand a, operand b);
+
 ir_expression *fma(operand a, operand b, operand c);
 ir_expression *lrp(operand x, operand y, operand a);
 ir_expression *csel(operand a, operand b, operand c);

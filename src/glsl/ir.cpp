@@ -250,6 +250,7 @@ ir_expression::ir_expression(int op, ir_rvalue *op0)
    case ir_unop_dFdx:
    case ir_unop_dFdy:
    case ir_unop_bitfield_reverse:
+   case ir_unop_interpolate_at_centroid:
       this->type = op0->type;
       break;
 
@@ -403,6 +404,8 @@ ir_expression::ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1)
    case ir_binop_rshift:
    case ir_binop_bfm:
    case ir_binop_ldexp:
+   case ir_binop_interpolate_at_offset:
+   case ir_binop_interpolate_at_sample:
       this->type = op0->type;
       break;
 
@@ -524,6 +527,7 @@ static const char *const operator_strs[] = {
    "find_msb",
    "find_lsb",
    "noise",
+   "interpolate_at_centroid",
    "+",
    "-",
    "*",
@@ -557,6 +561,8 @@ static const char *const operator_strs[] = {
    "ubo_load",
    "ldexp",
    "vector_extract",
+   "interpolate_at_offset",
+   "interpolate_at_sample",
    "fma",
    "lrp",
    "csel",

@@ -2049,6 +2049,9 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    case ir_binop_ldexp:
    case ir_binop_carry:
    case ir_binop_borrow:
+   case ir_unop_interpolate_at_centroid:
+   case ir_binop_interpolate_at_offset:
+   case ir_binop_interpolate_at_sample:
       /* This operation is not supported, or should have already been handled.
        */
       assert(!"Invalid ir opcode in glsl_to_tgsi_visitor::visit()");
