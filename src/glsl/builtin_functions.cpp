@@ -226,6 +226,14 @@ shader_packing_or_gpu_shader5(const _mesa_glsl_parse_state *state)
 }
 
 static bool
+fs_gpu_shader5(const _mesa_glsl_parse_state *state)
+{
+   return state->stage == MESA_SHADER_FRAGMENT &&
+          (state->is_version(400, 0) || state->ARB_gpu_shader5_enable);
+}
+
+
+static bool
 texture_array_lod(const _mesa_glsl_parse_state *state)
 {
    return lod_exists_in_stage(state) &&
@@ -627,6 +635,9 @@ private:
    B1(uaddCarry)
    B1(usubBorrow)
    B1(mulExtended)
+   B1(interpolateAtCentroid)
+   B1(interpolateAtOffset)
+   B1(interpolateAtSample)
 
    ir_function_signature *_atomic_intrinsic(builtin_available_predicate avail);
    ir_function_signature *_atomic_op(const char *intrinsic,
@@ -2185,6 +2196,24 @@ builtin_builder::create_builtins()
                 _mulExtended(glsl_type::uvec2_type),
                 _mulExtended(glsl_type::uvec3_type),
                 _mulExtended(glsl_type::uvec4_type),
+                NULL);
+   add_function("interpolateAtCentroid",
+                _interpolateAtCentroid(glsl_type::float_type),
+                _interpolateAtCentroid(glsl_type::vec2_type),
+                _interpolateAtCentroid(glsl_type::vec3_type),
+                _interpolateAtCentroid(glsl_type::vec4_type),
+                NULL);
+   add_function("interpolateAtOffset",
+                _interpolateAtOffset(glsl_type::float_type),
+                _interpolateAtOffset(glsl_type::vec2_type),
+                _interpolateAtOffset(glsl_type::vec3_type),
+                _interpolateAtOffset(glsl_type::vec4_type),
+                NULL);
+   add_function("interpolateAtSample",
+                _interpolateAtSample(glsl_type::float_type),
+                _interpolateAtSample(glsl_type::vec2_type),
+                _interpolateAtSample(glsl_type::vec3_type),
+                _interpolateAtSample(glsl_type::vec4_type),
                 NULL);
 
    add_function("atomicCounter",
@@ -4255,6 +4284,44 @@ builtin_builder::_mulExtended(const glsl_type *type)
 
    body.emit(assign(msb, imul_high(x, y)));
    body.emit(assign(lsb, mul(x, y)));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_interpolateAtCentroid(const glsl_type *type)
+{
+   ir_variable *interpolant = in_var(type, "interpolant");
+   interpolant->data.must_be_shader_input = 1;
+   MAKE_SIG(type, fs_gpu_shader5, 1, interpolant);
+
+   body.emit(ret(interpolate_at_centroid(interpolant)));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_interpolateAtOffset(const glsl_type *type)
+{
+   ir_variable *interpolant = in_var(type, "interpolant");
+   interpolant->data.must_be_shader_input = 1;
+   ir_variable *offset = in_var(glsl_type::vec2_type, "offset");
+   MAKE_SIG(type, fs_gpu_shader5, 2, interpolant, offset);
+
+   body.emit(ret(interpolate_at_offset(interpolant, offset)));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_interpolateAtSample(const glsl_type *type)
+{
+   ir_variable *interpolant = in_var(type, "interpolant");
+   interpolant->data.must_be_shader_input = 1;
+   ir_variable *sample_num = in_var(glsl_type::int_type, "sample_num");
+   MAKE_SIG(type, fs_gpu_shader5, 2, interpolant, sample_num);
+
+   body.emit(ret(interpolate_at_sample(interpolant, sample_num)));
 
    return sig;
 }
