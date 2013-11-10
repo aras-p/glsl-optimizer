@@ -43,15 +43,4 @@ enum a3xx_color_swap fd3_pipe2swap(enum pipe_format format);
 uint32_t fd3_tex_swiz(enum pipe_format format, unsigned swizzle_r,
 		unsigned swizzle_g, unsigned swizzle_b, unsigned swizzle_a);
 
-/* comp:
- *   0 - x
- *   1 - y
- *   2 - z
- *   3 - w
- */
-static inline uint32_t regid(int num, int comp)
-{
-	return (num << 2) | (comp & 0x3);
-}
-
 #endif /* FD3_UTIL_H_ */

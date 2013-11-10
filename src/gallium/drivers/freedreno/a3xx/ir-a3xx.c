@@ -517,12 +517,9 @@ void * ir3_shader_assemble(struct ir3_shader *shader, struct ir3_shader_info *in
 
 	/* need a integer number of instruction "groups" (sets of four
 	 * instructions), so pad out w/ NOPs if needed:
+	 * (each instruction is 64bits)
 	 */
-	while (shader->instrs_count != align(shader->instrs_count, 4))
-		ir3_instr_create(shader, 0, OPC_NOP);
-
-	/* each instruction is 64bits: */
-	info->sizedwords = 2 * shader->instrs_count;
+	info->sizedwords = 2 * align(shader->instrs_count, 4);
 
 	ptr = dwords = calloc(1, 4 * info->sizedwords);
 
@@ -546,6 +543,7 @@ static struct ir3_register * reg_create(struct ir3_shader *shader,
 {
 	struct ir3_register *reg =
 			ir3_alloc(shader, sizeof(struct ir3_register));
+	reg->wrmask = 1;
 	reg->flags = flags;
 	reg->num = num;
 	return reg;

@@ -63,20 +63,24 @@ struct ir3_register {
 		IR3_REG_EI     = 0x200,
 	} flags;
 	union {
-		/* normal registers: */
-		struct {
-			/* the component is in the low two bits of the reg #, so
-			 * rN.x becomes: (n << 2) | x
-			 */
-			int num;
-			int wrmask;
-		};
+		/* normal registers:
+		 * the component is in the low two bits of the reg #, so
+		 * rN.x becomes: (N << 2) | x
+		 */
+		int num;
 		/* immediate: */
 		int     iim_val;
 		float   fim_val;
 		/* relative: */
 		int offset;
 	};
+
+	/* used for cat5 instructions, but also for internal/IR level
+	 * tracking of what registers are read/written by an instruction.
+	 * wrmask may be a bad name since it is used to represent both
+	 * src and dst that touch multiple adjacent registers.
+	 */
+	int wrmask;
 };
 
 struct ir3_instruction {
@@ -180,7 +184,8 @@ void ir3_shader_destroy(struct ir3_shader *shader);
 void * ir3_shader_assemble(struct ir3_shader *shader,
 		struct ir3_shader_info *info);
 
-struct ir3_instruction * ir3_instr_create(struct ir3_shader *shader, int category, opc_t opc);
+struct ir3_instruction * ir3_instr_create(struct ir3_shader *shader,
+		int category, opc_t opc);
 struct ir3_instruction * ir3_instr_clone(struct ir3_instruction *instr);
 
 struct ir3_register * ir3_reg_create(struct ir3_instruction *instr,

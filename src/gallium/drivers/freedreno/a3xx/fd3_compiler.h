@@ -32,6 +32,62 @@
 #include "fd3_program.h"
 #include "fd3_util.h"
 
+
+/* ************************************************************************* */
+/* split this out or find some helper to use.. like main/bitset.h.. */
+
+#define MAX_REG 256
+
+typedef uint8_t regmask_t[2 * MAX_REG / 8];
+
+static inline unsigned regmask_idx(struct ir3_register *reg)
+{
+	unsigned num = reg->num;
+	assert(num < MAX_REG);
+	if (reg->flags & IR3_REG_HALF)
+		num += MAX_REG;
+	return num;
+}
+
+static inline void regmask_init(regmask_t *regmask)
+{
+	memset(regmask, 0, sizeof(*regmask));
+}
+
+static inline void regmask_set(regmask_t *regmask, struct ir3_register *reg)
+{
+	unsigned idx = regmask_idx(reg);
+	unsigned i;
+	for (i = 0; i < 4; i++, idx++)
+		if (reg->wrmask & (1 << i))
+			(*regmask)[idx / 8] |= 1 << (idx % 8);
+}
+
+static inline unsigned regmask_get(regmask_t *regmask,
+		struct ir3_register *reg)
+{
+	unsigned idx = regmask_idx(reg);
+	unsigned i;
+	for (i = 0; i < 4; i++, idx++)
+		if (reg->wrmask & (1 << i))
+			if ((*regmask)[idx / 8] & (1 << (idx % 8)))
+				return true;
+	return false;
+}
+
+/* comp:
+ *   0 - x
+ *   1 - y
+ *   2 - z
+ *   3 - w
+ */
+static inline uint32_t regid(int num, int comp)
+{
+	return (num << 2) | (comp & 0x3);
+}
+
+/* ************************************************************************* */
+
 int fd3_compile_shader(struct fd3_shader_stateobj *so,
 		const struct tgsi_token *tokens);
 

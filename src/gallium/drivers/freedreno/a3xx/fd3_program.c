@@ -229,6 +229,16 @@ find_output(const struct fd3_shader_stateobj *so, fd3_semantic semantic)
 	return 0;
 }
 
+static uint32_t
+find_regid(const struct fd3_shader_stateobj *so, fd3_semantic semantic)
+{
+	int j;
+	for (j = 0; j < so->outputs_count; j++)
+		if (so->outputs[j].semantic == semantic)
+			return so->outputs[j].regid;
+	return regid(63, 0);
+}
+
 void
 fd3_program_emit(struct fd_ringbuffer *ring,
 		struct fd_program_stateobj *prog, bool binning)
@@ -237,6 +247,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	const struct fd3_shader_stateobj *fp = prog->fp;
 	const struct ir3_shader_info *vsi = &vp->info;
 	const struct ir3_shader_info *fsi = &fp->info;
+	uint32_t pos_regid, psize_regid, color_regid;
 	int i;
 
 	if (binning) {
@@ -245,6 +256,13 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 		fp = &binning_fp;
 		fsi = &fp->info;
 	}
+
+	pos_regid = find_regid(vp,
+		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0));
+	psize_regid = find_regid(vp,
+		fd3_semantic_name(TGSI_SEMANTIC_PSIZE, 0));
+	color_regid = find_regid(fp,
+		fd3_semantic_name(TGSI_SEMANTIC_COLOR, 0));
 
 	/* we could probably divide this up into things that need to be
 	 * emitted if frag-prog is dirty vs if vert-prog is dirty..
@@ -292,8 +310,8 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	OUT_RING(ring, A3XX_SP_VS_CTRL_REG1_CONSTLENGTH(vp->constlen) |
 			A3XX_SP_VS_CTRL_REG1_INITIALOUTSTANDING(vp->total_in) |
 			A3XX_SP_VS_CTRL_REG1_CONSTFOOTPRINT(MAX2(vsi->max_const, 0)));
-	OUT_RING(ring, A3XX_SP_VS_PARAM_REG_POSREGID(vp->pos_regid) |
-			A3XX_SP_VS_PARAM_REG_PSIZEREGID(vp->psize_regid) |
+	OUT_RING(ring, A3XX_SP_VS_PARAM_REG_POSREGID(pos_regid) |
+			A3XX_SP_VS_PARAM_REG_PSIZEREGID(psize_regid) |
 			A3XX_SP_VS_PARAM_REG_TOTALVSOUTVAR(fp->inputs_count));
 
 	for (i = 0; i < fp->inputs_count; ) {
@@ -374,7 +392,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	OUT_RING(ring, 0x00000000);        /* SP_FS_OUTPUT_REG */
 
 	OUT_PKT0(ring, REG_A3XX_SP_FS_MRT_REG(0), 4);
-	OUT_RING(ring, A3XX_SP_FS_MRT_REG_REGID(fp->color_regid) |
+	OUT_RING(ring, A3XX_SP_FS_MRT_REG_REGID(color_regid) |
 			COND(fp->half_precision, A3XX_SP_FS_MRT_REG_HALF_PRECISION));
 	OUT_RING(ring, A3XX_SP_FS_MRT_REG_REGID(0));
 	OUT_RING(ring, A3XX_SP_FS_MRT_REG_REGID(0));
@@ -519,13 +537,17 @@ create_blit_fp(struct pipe_context *pctx)
 	if (!so)
 		return NULL;
 
-	so->color_regid = regid(0,0);
 	so->half_precision = true;
 	so->inputs_count = 1;
-	so->inputs[0].semantic = fd3_semantic_name(TGSI_SEMANTIC_TEXCOORD, 0);
+	so->inputs[0].semantic =
+		fd3_semantic_name(TGSI_SEMANTIC_TEXCOORD, 0);
 	so->inputs[0].inloc = 8;
 	so->inputs[0].compmask = 0x3;
 	so->total_in = 2;
+	so->outputs_count = 1;
+	so->outputs[0].semantic =
+		fd3_semantic_name(TGSI_SEMANTIC_COLOR, 0);
+	so->outputs[0].regid = regid(0,0);
 	so->samplers_count = 1;
 
 	so->vpsrepl[0] = 0x99999999;
@@ -554,17 +576,19 @@ create_blit_vp(struct pipe_context *pctx)
 	if (!so)
 		return NULL;
 
-	so->pos_regid = regid(1,0);
-	so->psize_regid = regid(63,0);
 	so->inputs_count = 2;
 	so->inputs[0].regid = regid(0,0);
 	so->inputs[0].compmask = 0xf;
 	so->inputs[1].regid = regid(1,0);
 	so->inputs[1].compmask = 0xf;
 	so->total_in = 8;
-	so->outputs_count = 1;
-	so->outputs[0].semantic = fd3_semantic_name(TGSI_SEMANTIC_TEXCOORD, 0);
+	so->outputs_count = 2;
+	so->outputs[0].semantic =
+		fd3_semantic_name(TGSI_SEMANTIC_TEXCOORD, 0);
 	so->outputs[0].regid = regid(0,0);
+	so->outputs[1].semantic =
+		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0);
+	so->outputs[1].regid = regid(1,0);
 
 	fixup_vp_regfootprint(so);
 
@@ -600,9 +624,12 @@ create_solid_fp(struct pipe_context *pctx)
 	if (!so)
 		return NULL;
 
-	so->color_regid = regid(0,0);
 	so->half_precision = true;
 	so->inputs_count = 0;
+	so->outputs_count = 1;
+	so->outputs[0].semantic =
+		fd3_semantic_name(TGSI_SEMANTIC_COLOR, 0);
+	so->outputs[0].regid = regid(0, 0);
 	so->total_in = 0;
 
 	return so;
@@ -627,13 +654,15 @@ create_solid_vp(struct pipe_context *pctx)
 	if (!so)
 		return NULL;
 
-	so->pos_regid = regid(0,0);
-	so->psize_regid = regid(63,0);
 	so->inputs_count = 1;
 	so->inputs[0].regid = regid(0,0);
 	so->inputs[0].compmask = 0xf;
 	so->total_in = 4;
-	so->outputs_count = 0;
+
+	so->outputs_count = 1;
+	so->outputs[0].semantic =
+		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0);
+	so->outputs[0].regid = regid(0,0);
 
 	fixup_vp_regfootprint(so);
 

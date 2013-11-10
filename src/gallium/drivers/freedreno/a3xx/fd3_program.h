@@ -56,9 +56,6 @@ struct fd3_shader_stateobj {
 	 */
 	bool half_precision;
 
-	/* special output register locations: */
-	uint8_t pos_regid, psize_regid, color_regid;
-
 	/* the instructions length is in units of instruction groups
 	 * (4 instructions, 8 dwords):
 	 */
