@@ -13,7 +13,6 @@ CPP_SOURCES := \
 	core/object.hpp \
 	core/error.hpp \
 	core/compiler.hpp \
-	core/geometry.hpp \
 	core/device.hpp \
 	core/device.cpp \
 	core/context.hpp \
