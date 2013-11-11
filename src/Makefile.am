@@ -59,3 +59,5 @@ SUBDIRS +=			\
 	gallium/tests/unit
 endif
 endif
+
+EXTRA_DIST = getopt
