@@ -36,6 +36,7 @@ AM_CFLAGS = \
 noinst_LTLIBRARIES = libegl_dri2.la
 
 libegl_dri2_la_SOURCES = \
+	egl_dri2.h \
 	egl_dri2.c
 
 libegl_dri2_la_LIBADD = \

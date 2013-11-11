@@ -37,7 +37,9 @@ lib_LTLIBRARIES = libEGL.la
 
 libEGL_la_SOURCES = \
 	eglapi.c \
+	eglapi.h \
 	eglarray.c \
+	eglarray.h \
 	eglconfig.c \
 	eglcontext.c \
 	eglcurrent.c \
@@ -69,7 +71,8 @@ libEGL_la_SOURCES = \
 	eglscreen.h \
 	eglstring.h \
 	eglsurface.h \
-	eglsync.h
+	eglsync.h \
+	egltypedefs.h
 
 libEGL_la_LIBADD = \
 	$(EGL_LIB_DEPS)
