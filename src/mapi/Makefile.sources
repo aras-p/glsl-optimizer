@@ -15,22 +15,36 @@
 #    this mode, compile MAPI_BRIDGE_FILES with MAPI_MODE_BRIDGE defined.
 
 MAPI_UTIL_FILES = \
+	$(TOP)/src/mapi/u_compiler.h \
 	$(TOP)/src/mapi/u_current.c \
-	$(TOP)/src/mapi/u_execmem.c
+	$(TOP)/src/mapi/u_current.h \
+	$(TOP)/src/mapi/u_execmem.c \
+	$(TOP)/src/mapi/u_execmem.h \
+	$(TOP)/src/mapi/u_macros.h \
+	$(TOP)/src/mapi/u_thread.h
+
+MAPI_BRIDGE_FILES = \
+	$(TOP)/src/mapi/entry.c \
+	$(TOP)/src/mapi/entry.h \
+	$(TOP)/src/mapi/entry_x86-64_tls.h \
+	$(TOP)/src/mapi/entry_x86_tls.h \
+	$(TOP)/src/mapi/entry_x86_tsd.h \
+	$(TOP)/src/mapi/mapi_tmp.h
 
 MAPI_FILES = \
-	$(TOP)/src/mapi/entry.c \
 	$(TOP)/src/mapi/mapi.c \
+	$(TOP)/src/mapi/mapi.h \
 	$(TOP)/src/mapi/stub.c \
+	$(TOP)/src/mapi/stub.h \
 	$(TOP)/src/mapi/table.c \
+	$(TOP)/src/mapi/table.h \
 	$(MAPI_UTIL_FILES)
 
 MAPI_GLAPI_FILES = \
-	$(TOP)/src/mapi/entry.c \
 	$(TOP)/src/mapi/mapi_glapi.c \
 	$(TOP)/src/mapi/stub.c \
+	$(TOP)/src/mapi/stub.h \
 	$(TOP)/src/mapi/table.c \
+	$(TOP)/src/mapi/table.h \
 	$(MAPI_UTIL_FILES)
 
-MAPI_BRIDGE_FILES = \
-	$(TOP)/src/mapi/entry.c

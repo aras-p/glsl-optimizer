@@ -6,7 +6,9 @@ GLAPI_SOURCES = \
 	glapi_gentable.c \
 	glapi_getproc.c \
 	glapi_nop.c \
-	glapi.c
+	glapi.c \
+	glapi.h \
+	glapi_priv.h
 
 X86_API =			\
 	glapi_x86.S
