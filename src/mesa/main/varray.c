@@ -390,11 +390,6 @@ update_array(struct gl_context *ctx,
       return;
    }
 
-   if (!update_array_format(ctx, func, attrib, legalTypesMask, sizeMin, sizeMax,
-                            size, type, normalized, integer, 0)) {
-      return;
-   }
-
    if (stride < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "%s(stride=%d)", func, stride );
       return;
@@ -415,6 +410,11 @@ update_array(struct gl_context *ctx,
    if (ptr != NULL && ctx->Array.ArrayObj->ARBsemantics &&
        !_mesa_is_bufferobj(ctx->Array.ArrayBufferObj)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(non-VBO array)", func);
+      return;
+   }
+
+   if (!update_array_format(ctx, func, attrib, legalTypesMask, sizeMin,
+                            sizeMax, size, type, normalized, integer, 0)) {
       return;
    }
 
