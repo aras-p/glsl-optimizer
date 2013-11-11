@@ -266,6 +266,12 @@ vec4_visitor::calculate_live_intervals()
    this->live_intervals_valid = true;
 }
 
+void
+vec4_visitor::invalidate_live_intervals()
+{
+   live_intervals_valid = false;
+}
+
 bool
 vec4_visitor::virtual_grf_interferes(int a, int b)
 {

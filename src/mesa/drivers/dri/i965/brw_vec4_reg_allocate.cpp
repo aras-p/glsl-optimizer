@@ -359,7 +359,7 @@ vec4_visitor::spill_reg(int spill_reg_nr)
       }
    }
 
-   this->live_intervals_valid = false;
+   invalidate_live_intervals();
 }
 
 } /* namespace brw */

@@ -343,7 +343,7 @@ vec4_visitor::dead_code_eliminate()
    }
 
    if (progress)
-      live_intervals_valid = false;
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -554,7 +554,7 @@ vec4_visitor::opt_algebraic()
    }
 
    if (progress)
-      this->live_intervals_valid = false;
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -1017,7 +1017,7 @@ vec4_visitor::opt_register_coalesce()
    }
 
    if (progress)
-      live_intervals_valid = false;
+      invalidate_live_intervals();
 
    return progress;
 }
@@ -1100,7 +1100,7 @@ vec4_visitor::split_virtual_grfs()
          }
       }
    }
-   this->live_intervals_valid = false;
+   invalidate_live_intervals();
 }
 
 void

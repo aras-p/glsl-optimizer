@@ -1446,5 +1446,5 @@ vec4_visitor::opt_schedule_instructions()
       printf("vec4 estimated execution time: %d cycles\n", sched.time);
    }
 
-   this->live_intervals_valid = false;
+   invalidate_live_intervals();
 }
