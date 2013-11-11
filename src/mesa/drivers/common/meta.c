@@ -1515,6 +1515,9 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
                                    sizeof(struct vertex), OFFSET(x));
       _mesa_VertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
                                    sizeof(struct vertex), OFFSET(s));
+
+      _mesa_EnableVertexAttribArray(0);
+      _mesa_EnableVertexAttribArray(1);
    }
 
    /* Generate a relevant fragment shader program for the texture target */
@@ -1591,8 +1594,6 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
    _mesa_DeleteObjectARB(vs);
    _mesa_BindAttribLocation(ShaderProg, 0, "position");
    _mesa_BindAttribLocation(ShaderProg, 1, "texcoords");
-   _mesa_EnableVertexAttribArray(0);
-   _mesa_EnableVertexAttribArray(1);
    link_program_with_debug(ctx, ShaderProg);
    ralloc_free(mem_ctx);
    if (texture_2d)
