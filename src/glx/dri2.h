@@ -45,6 +45,8 @@ typedef struct
    unsigned int flags;
 } DRI2Buffer;
 
+struct glx_screen;
+
 extern Bool
 DRI2QueryExtension(Display * display, int *eventBase, int *errorBase);
 
