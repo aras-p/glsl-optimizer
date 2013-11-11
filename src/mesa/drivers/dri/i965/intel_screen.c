@@ -824,10 +824,14 @@ brw_query_renderer_integer(__DRIscreen *psp, int param, int *value)
       /* Once a batch uses more than 75% of the maximum mappable size, we
        * assume that there's some fragmentation, and we start doing extra
        * flushing, etc.  That's the big cliff apps will care about.
-       *
-       * Can only map 2G onto the GPU through the GTT.
        */
-      const unsigned gpu_mappable_megabytes = 2 * 1024 * 3 / 4;
+      size_t aper_size;
+      size_t mappable_size;
+
+      drm_intel_get_aperture_sizes(psp->fd, &mappable_size, &aper_size);
+
+      const unsigned gpu_mappable_megabytes =
+         (aper_size / (1024 * 1024)) * 3 / 4;
 
       const long system_memory_pages = sysconf(_SC_PHYS_PAGES);
       const long system_page_size = sysconf(_SC_PAGE_SIZE);
