@@ -73,8 +73,8 @@ _mesa_update_array_max_element(struct gl_client_array *array)
  * a vertex buffer.
  */
 static inline const GLubyte *
-_mesa_vertex_attrib_address(struct gl_vertex_attrib_array *array,
-                            struct gl_vertex_buffer_binding *binding)
+_mesa_vertex_attrib_address(const struct gl_vertex_attrib_array *array,
+                            const struct gl_vertex_buffer_binding *binding)
 {
    return (binding->BufferObj->Name == 0 ?
            array->Ptr :
@@ -88,8 +88,8 @@ _mesa_vertex_attrib_address(struct gl_vertex_attrib_array *array,
 static inline void
 _mesa_update_client_array(struct gl_context *ctx,
                           struct gl_client_array *dst,
-                          struct gl_vertex_attrib_array *src,
-                          struct gl_vertex_buffer_binding *binding)
+                          const struct gl_vertex_attrib_array *src,
+                          const struct gl_vertex_buffer_binding *binding)
 {
    dst->Size = src->Size;
    dst->Type = src->Type;
