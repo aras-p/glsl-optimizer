@@ -142,9 +142,11 @@ enum gallivm_nan_behavior {
    GALLIVM_NAN_RETURN_NAN,
    /* If one of the inputs is NaN, the other operand is returned */
    GALLIVM_NAN_RETURN_OTHER,
-   /* If one of the inputs is NaN, the second operand is returned.
-    * In min/max it will be as fast as undefined with sse opcodes */
-   GALLIVM_NAN_RETURN_SECOND
+   /* If one of the inputs is NaN, the other operand is returned,
+    * but we guarantee the second operand is not a NaN.
+    * In min/max it will be as fast as undefined with sse opcodes,
+    * and archs having native return_other can benefit too. */
+   GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN
 };
 
 LLVMValueRef
@@ -174,6 +176,10 @@ lp_build_clamp(struct lp_build_context *bld,
                LLVMValueRef a,
                LLVMValueRef min,
                LLVMValueRef max);
+
+LLVMValueRef
+lp_build_clamp_zero_one_nanzero(struct lp_build_context *bld,
+                                LLVMValueRef a);
 
 LLVMValueRef
 lp_build_abs(struct lp_build_context *bld,

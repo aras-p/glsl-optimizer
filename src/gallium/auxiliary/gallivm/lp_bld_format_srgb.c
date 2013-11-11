@@ -326,7 +326,7 @@ lp_build_float_to_srgb_packed(struct gallivm_state *gallivm,
     * can't use lp_build_conv since we want to keep values as 32bit
     * here so we can interleave with rgb to go from SoA->AoS.
     */
-   alpha = lp_build_clamp(&f32_bld, src[3], f32_bld.zero, f32_bld.one);
+   alpha = lp_build_clamp_zero_one_nanzero(&f32_bld, src[3]);
    alpha = lp_build_mul(&f32_bld, alpha,
                         lp_build_const_vec(gallivm, src_type, 255.0f));
    tmpsrgb[3] = lp_build_iround(&f32_bld, alpha);

@@ -123,8 +123,10 @@ lp_build_min_simple(struct lp_build_context *bld,
       }
    }
    else if (type.floating && util_cpu_caps.has_altivec) {
-      debug_printf("%s: altivec doesn't support nan behavior modes\n",
-                   __FUNCTION__);
+      if (nan_behavior == GALLIVM_NAN_RETURN_NAN) {
+         debug_printf("%s: altivec doesn't support nan return nan behavior\n",
+                      __FUNCTION__);
+      }
       if (type.width == 32 && type.length == 4) {
          intrinsic = "llvm.ppc.altivec.vminfp";
          intr_size = 128;
@@ -159,8 +161,6 @@ lp_build_min_simple(struct lp_build_context *bld,
       }
    } else if (util_cpu_caps.has_altivec) {
       intr_size = 128;
-      debug_printf("%s: altivec doesn't support nan behavior modes\n",
-                   __FUNCTION__);
       if (type.width == 8) {
          if (!type.sign) {
             intrinsic = "llvm.ppc.altivec.vminub";
@@ -191,7 +191,7 @@ lp_build_min_simple(struct lp_build_context *bld,
        */
       if (util_cpu_caps.has_sse && type.floating &&
           nan_behavior != GALLIVM_NAN_BEHAVIOR_UNDEFINED &&
-          nan_behavior != GALLIVM_NAN_RETURN_SECOND) {
+          nan_behavior != GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN) {
          LLVMValueRef isnan, max;
          max = lp_build_intrinsic_binary_anylength(bld->gallivm, intrinsic,
                                                    type,
@@ -227,7 +227,7 @@ lp_build_min_simple(struct lp_build_context *bld,
          return lp_build_select(bld, cond, a, b);
       }
          break;
-      case GALLIVM_NAN_RETURN_SECOND:
+      case GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN:
          cond = lp_build_cmp_ordered(bld, PIPE_FUNC_LESS, a, b);
          return lp_build_select(bld, cond, a, b);
       case GALLIVM_NAN_BEHAVIOR_UNDEFINED:
@@ -299,8 +299,10 @@ lp_build_max_simple(struct lp_build_context *bld,
       }
    }
    else if (type.floating && util_cpu_caps.has_altivec) {
-      debug_printf("%s: altivec doesn't support nan behavior modes\n",
-                   __FUNCTION__);
+      if (nan_behavior == GALLIVM_NAN_RETURN_NAN) {
+         debug_printf("%s: altivec doesn't support nan return nan behavior\n",
+                      __FUNCTION__);
+      }
       if (type.width == 32 || type.length == 4) {
          intrinsic = "llvm.ppc.altivec.vmaxfp";
          intr_size = 128;
@@ -336,8 +338,6 @@ lp_build_max_simple(struct lp_build_context *bld,
       }
    } else if (util_cpu_caps.has_altivec) {
      intr_size = 128;
-     debug_printf("%s: altivec doesn't support nan behavior modes\n",
-                  __FUNCTION__);
      if (type.width == 8) {
        if (!type.sign) {
          intrinsic = "llvm.ppc.altivec.vmaxub";
@@ -362,7 +362,7 @@ lp_build_max_simple(struct lp_build_context *bld,
    if(intrinsic) {
       if (util_cpu_caps.has_sse && type.floating &&
           nan_behavior != GALLIVM_NAN_BEHAVIOR_UNDEFINED &&
-          nan_behavior != GALLIVM_NAN_RETURN_SECOND) {
+          nan_behavior != GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN) {
          LLVMValueRef isnan, min;
          min = lp_build_intrinsic_binary_anylength(bld->gallivm, intrinsic,
                                                    type,
@@ -398,7 +398,7 @@ lp_build_max_simple(struct lp_build_context *bld,
          return lp_build_select(bld, cond, a, b);
       }
          break;
-      case GALLIVM_NAN_RETURN_SECOND:
+      case GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN:
          cond = lp_build_cmp_ordered(bld, PIPE_FUNC_GREATER, a, b);
          return lp_build_select(bld, cond, a, b);
       case GALLIVM_NAN_BEHAVIOR_UNDEFINED:
@@ -1399,6 +1399,7 @@ lp_build_max_ext(struct lp_build_context *bld,
 
 /**
  * Generate clamp(a, min, max)
+ * NaN behavior (for any of a, min, max) is undefined.
  * Do checks for special cases.
  */
 LLVMValueRef
@@ -1413,6 +1414,20 @@ lp_build_clamp(struct lp_build_context *bld,
 
    a = lp_build_min(bld, a, max);
    a = lp_build_max(bld, a, min);
+   return a;
+}
+
+
+/**
+ * Generate clamp(a, 0, 1)
+ * A NaN will get converted to zero.
+ */
+LLVMValueRef
+lp_build_clamp_zero_one_nanzero(struct lp_build_context *bld,
+                                LLVMValueRef a)
+{
+   a = lp_build_max_ext(bld, a, bld->zero, GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN);
+   a = lp_build_min(bld, a, bld->one);
    return a;
 }
 
@@ -3029,9 +3044,8 @@ lp_build_exp2(struct lp_build_context *bld,
    /* We want to preserve NaN and make sure than for exp2 if x > 128,
     * the result is INF  and if it's smaller than -126.9 the result is 0 */
    x = lp_build_min_ext(bld, lp_build_const_vec(bld->gallivm, type,  128.0), x,
-                        GALLIVM_NAN_RETURN_SECOND);
-   x = lp_build_max_ext(bld, lp_build_const_vec(bld->gallivm, type, -126.99999), x,
-                        GALLIVM_NAN_RETURN_SECOND);
+                        GALLIVM_NAN_RETURN_OTHER_SECOND_NONNAN);
+   x = lp_build_max(bld, lp_build_const_vec(bld->gallivm, type, -126.99999), x);
 
    /* ipart = floor(x) */
    /* fpart = x - ipart */

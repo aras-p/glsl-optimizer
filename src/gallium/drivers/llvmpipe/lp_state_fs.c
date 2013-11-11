@@ -1760,11 +1760,11 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
       assert(row_type.floating);
       lp_build_context_init(&f32_bld, gallivm, row_type);
       for (i = 0; i < src_count; i++) {
-         src[i] = lp_build_clamp(&f32_bld, src[i], f32_bld.zero, f32_bld.one);
+         src[i] = lp_build_clamp_zero_one_nanzero(&f32_bld, src[i]);
       }
       if (dual_source_blend) {
          for (i = 0; i < src_count; i++) {
-            src1[i] = lp_build_clamp(&f32_bld, src1[i], f32_bld.zero, f32_bld.one);
+            src1[i] = lp_build_clamp_zero_one_nanzero(&f32_bld, src1[i]);
          }
       }
       /* probably can't be different than row_type but better safe than sorry... */
