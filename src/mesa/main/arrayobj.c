@@ -53,7 +53,7 @@
 
 /**
  * Look up the array object for the given ID.
- * 
+ *
  * \returns
  * Either a pointer to the array object with the specified ID or \c NULL for
  * a non-existent ID.  The spec defines ID 0 as being technically
@@ -91,7 +91,7 @@ unbind_array_object_vbos(struct gl_context *ctx, struct gl_array_object *obj)
 
 /**
  * Allocate and initialize a new vertex array object.
- * 
+ *
  * This function is intended to be called via
  * \c dd_function_table::NewArrayObject.
  */
@@ -107,7 +107,7 @@ _mesa_new_array_object( struct gl_context *ctx, GLuint name )
 
 /**
  * Delete an array object.
- * 
+ *
  * This function is intended to be called via
  * \c dd_function_table::DeleteArrayObject.
  */
@@ -298,18 +298,18 @@ static GLuint
 compute_max_element(struct gl_array_object *arrayObj, GLbitfield64 enabled)
 {
    GLuint min = ~((GLuint)0);
-   
+
    while (enabled) {
       struct gl_client_array *client_array;
       GLint attrib = ffsll(enabled) - 1;
       enabled ^= BITFIELD64_BIT(attrib);
-      
+
       client_array = &arrayObj->_VertexAttrib[attrib];
       assert(client_array->Enabled);
       _mesa_update_array_max_element(client_array);
       min = MIN2(min, client_array->_MaxElement);
    }
-   
+
    return min;
 }
 
@@ -340,7 +340,8 @@ _mesa_update_array_object_max_element(struct gl_context *ctx,
  * or a gl_vertex_buffer_binding has changed.
  */
 void
-_mesa_update_array_object_client_arrays(struct gl_context *ctx, struct gl_array_object *arrayObj)
+_mesa_update_array_object_client_arrays(struct gl_context *ctx,
+                                        struct gl_array_object *arrayObj)
 {
    GLbitfield64 arrays = arrayObj->NewArrays;
 
@@ -356,7 +357,8 @@ _mesa_update_array_object_client_arrays(struct gl_context *ctx, struct gl_array_
       buffer_binding = &arrayObj->VertexBinding[attrib_array->VertexBinding];
       client_array = &arrayObj->_VertexAttrib[attrib];
 
-      _mesa_update_client_array(ctx, client_array, attrib_array, buffer_binding);
+      _mesa_update_client_array(ctx, client_array, attrib_array,
+                                buffer_binding);
    }
 }
 
@@ -396,7 +398,8 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
       newObj = _mesa_lookup_arrayobj(ctx, id);
       if (!newObj) {
          if (genRequired) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glBindVertexArray(non-gen name)");
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glBindVertexArray(non-gen name)");
             return;
          }
 
@@ -463,7 +466,7 @@ _mesa_BindVertexArrayAPPLE( GLuint id )
 
 /**
  * Delete a set of array objects.
- * 
+ *
  * \param n      Number of array objects to delete.
  * \param ids    Array of \c n array object IDs.
  */
@@ -511,7 +514,7 @@ _mesa_DeleteVertexArrays(GLsizei n, const GLuint *ids)
  * \param arrays  Array of \c n locations to store the IDs.
  * \param vboOnly Will arrays have to reside in VBOs?
  */
-static void 
+static void
 gen_vertex_arrays(struct gl_context *ctx, GLsizei n, GLuint *arrays)
 {
    GLuint first;
@@ -570,9 +573,9 @@ _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
 
 /**
  * Determine if ID is the name of an array object.
- * 
+ *
  * \param id  ID of the potential array object.
- * \return  \c GL_TRUE if \c id is the name of a array object, 
+ * \return  \c GL_TRUE if \c id is the name of a array object,
  *          \c GL_FALSE otherwise.
  */
 GLboolean GLAPIENTRY
