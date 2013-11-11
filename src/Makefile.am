@@ -33,12 +33,16 @@ if HAVE_EGL_PLATFORM_WAYLAND
 SUBDIRS += egl/wayland
 endif
 
+if HAVE_EGL_DRIVER_DRI2
+SUBDIRS += egl/drivers/dri2
+endif
+
 if HAVE_GBM
 SUBDIRS += gbm
 endif
 
 if HAVE_EGL
-SUBDIRS += egl
+SUBDIRS += egl/main
 endif
 
 if HAVE_GALLIUM
