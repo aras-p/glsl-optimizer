@@ -31,6 +31,7 @@
 #include "util/u_simple_list.h"
 #include "os/os_time.h"
 #include "gallivm/lp_bld_arit.h"
+#include "gallivm/lp_bld_bitarit.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_init.h"
@@ -268,8 +269,6 @@ lp_do_offset_tri(struct gallivm_state *gallivm,
    LLVMValueRef zeroi = lp_build_const_int32(gallivm, 0);
    LLVMValueRef twoi = lp_build_const_int32(gallivm, 2);
    LLVMValueRef threei  = lp_build_const_int32(gallivm, 3);
-   LLVMValueRef mantissa_bits, exp, bias;
-   LLVMValueRef maxz_value, maxz0z1_value;
 
    /* (res12) = cross(e,f).xy */
    shuffles[0] = twoi;
@@ -319,9 +318,13 @@ lp_do_offset_tri(struct gallivm_state *gallivm,
        *
        * NOTE: Assumes IEEE float32.
        */
+      LLVMValueRef c23_shifted, exp_mask, bias, exp;
+      LLVMValueRef maxz_value, maxz0z1_value;
+
       lp_build_context_init(&int_scalar_bld, gallivm, lp_type_int_vec(32, 32));
 
-      mantissa_bits = lp_build_const_int32(gallivm, 23);
+      c23_shifted = lp_build_const_int32(gallivm, 23 << 23);
+      exp_mask = lp_build_const_int32(gallivm, 0xff << 23);
 
       maxz0z1_value = lp_build_max(&flt_scalar_bld,
                          LLVMBuildExtractElement(b, attribv[0], twoi, ""),
@@ -331,15 +334,16 @@ lp_do_offset_tri(struct gallivm_state *gallivm,
                       LLVMBuildExtractElement(b, attribv[2], twoi, ""),
                       maxz0z1_value);
 
-      /**
-       * XXX: TODO optimize this to quickly resolve a pow2 number through
-       *      an exponent only operation.
-       */
-      exp = lp_build_extract_exponent(&flt_scalar_bld, maxz_value, 0);
-      exp = lp_build_sub(&int_scalar_bld, exp, mantissa_bits);
-      exp = lp_build_int_to_float(&flt_scalar_bld, exp);
+      exp = LLVMBuildBitCast(b, maxz_value, int_scalar_bld.vec_type, "");
+      exp = lp_build_and(&int_scalar_bld, exp, exp_mask);
+      exp = lp_build_sub(&int_scalar_bld, exp, c23_shifted);
+      /* Clamping to zero means mrd will be zero for very small numbers,
+       * but specs do not indicate this should be prevented by clamping
+       * mrd to smallest normal number instead. */
+      exp = lp_build_max(&int_scalar_bld, exp, int_scalar_bld.zero);
+      exp = LLVMBuildBitCast(b, exp, flt_scalar_bld.vec_type, "");
 
-      bias = LLVMBuildFMul(b, lp_build_exp2(&flt_scalar_bld, exp),
+      bias = LLVMBuildFMul(b, exp,
                            lp_build_const_float(gallivm, key->pgon_offset_units),
                            "bias");
 
