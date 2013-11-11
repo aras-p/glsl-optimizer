@@ -1502,6 +1502,12 @@ struct gl_vertex_attrib_array
    GLuint VertexBinding;    /**< Vertex buffer binding */
 };
 
+
+/**
+ * This describes the buffer object used for a vertex array (or
+ * multiple vertex arrays).  If BufferObj points to the default/null
+ * buffer object, then the vertex array lives in user memory and not a VBO.
+ */
 struct gl_vertex_buffer_binding
 {
    GLintptr Offset;                    /**< User-specified offset */
