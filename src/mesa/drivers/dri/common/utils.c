@@ -494,7 +494,7 @@ driIndexConfigAttrib(const __DRIconfig *config, int index,
  * Zero if a recognized value of \c param is supplied, -1 otherwise.
  */
 int
-driQueryRendererIntegerCommon(__DRIscreen *psp, int param, int *value)
+driQueryRendererIntegerCommon(__DRIscreen *psp, int param, unsigned int *value)
 {
    switch (param) {
    case __DRI2_RENDERER_VERSION: {

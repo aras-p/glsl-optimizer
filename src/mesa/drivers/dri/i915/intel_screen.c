@@ -703,7 +703,7 @@ static struct __DRIimageExtensionRec intelImageExtension = {
 };
 
 static int
-i915_query_renderer_integer(__DRIscreen *psp, int param, int *value)
+i915_query_renderer_integer(__DRIscreen *psp, int param, unsigned int *value)
 {
    const struct intel_screen *const intelScreen =
       (struct intel_screen *) psp->driverPrivate;
