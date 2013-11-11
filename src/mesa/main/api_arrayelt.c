@@ -1469,6 +1469,18 @@ check_vbo(AEcontext *actx, struct gl_buffer_object *vbo)
 }
 
 
+static inline void
+update_derived_client_arrays(struct gl_context *ctx)
+{
+   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
+
+   if (arrayObj->NewArrays) {
+      _mesa_update_array_object_client_arrays(ctx, arrayObj);
+      arrayObj->NewArrays = 0;
+   }
+}
+
+
 /**
  * Make a list of per-vertex functions to call for each glArrayElement call.
  * These functions access the array data (i.e. glVertex, glColor, glNormal,
@@ -1485,12 +1497,6 @@ _ae_update_state(struct gl_context *ctx)
    struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
 
    actx->nr_vbos = 0;
-
-   if (arrayObj->NewArrays) {
-      /* update the derived client arrays */
-      _mesa_update_array_object_client_arrays(ctx, arrayObj);
-      arrayObj->NewArrays = 0;
-   }
 
    /* conventional vertex arrays */
    if (arrayObj->_VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
@@ -1618,6 +1624,8 @@ _ae_map_vbos(struct gl_context *ctx)
    if (actx->mapped_vbos)
       return;
 
+   update_derived_client_arrays(ctx);
+
    if (actx->NewState)
       _ae_update_state(ctx);
 
@@ -1668,6 +1676,8 @@ _ae_ArrayElement(GLint elt)
    const AEattrib *at;
    const struct _glapi_table * const disp = GET_DISPATCH();
    GLboolean do_map;
+
+   update_derived_client_arrays(ctx);
 
    /* If PrimitiveRestart is enabled and the index is the RestartIndex
     * then we call PrimitiveRestartNV and return.
