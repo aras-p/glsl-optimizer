@@ -832,6 +832,7 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    if (nvc0->state.vbo_mode) {
       nvc0_push_vbo(nvc0, info);
       push->kick_notify = nvc0_default_kick_notify;
+      nouveau_pushbuf_bufctx(push, NULL);
       return;
    }
 
@@ -888,4 +889,6 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    push->kick_notify = nvc0_default_kick_notify;
 
    nvc0_release_user_vbufs(nvc0);
+
+   nouveau_pushbuf_bufctx(push, NULL);
 }
