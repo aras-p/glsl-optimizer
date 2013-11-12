@@ -1370,6 +1370,9 @@ struct gl_texture_unit
 
    /** Points to highest priority, complete and enabled texture object */
    struct gl_texture_object *_Current;
+
+   /** Texture targets that have a non-default texture bound */
+   GLbitfield _BoundTextures;
 };
 
 

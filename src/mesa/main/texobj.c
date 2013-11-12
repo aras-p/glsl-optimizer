@@ -1102,6 +1102,7 @@ unbind_texobj_from_texunits(struct gl_context *ctx,
             _mesa_reference_texobj(&unit->CurrentTex[tex],
                                    ctx->Shared->DefaultTex[tex]);
             ASSERT(unit->CurrentTex[tex]);
+            unit->_BoundTextures &= ~(1 << tex);
             break;
          }
       }
@@ -1358,6 +1359,11 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    ctx->Texture.NumCurrentTexUsed = MAX2(ctx->Texture.NumCurrentTexUsed,
                                          ctx->Texture.CurrentUnit + 1);
    ASSERT(texUnit->CurrentTex[targetIndex]);
+
+   if (texName != 0)
+      texUnit->_BoundTextures |= (1 << targetIndex);
+   else
+      texUnit->_BoundTextures &= ~(1 << targetIndex);
 
    /* Pass BindTexture call to device driver */
    if (ctx->Driver.BindTexture)

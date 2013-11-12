@@ -113,6 +113,7 @@ _mesa_copy_texture_state( const struct gl_context *src, struct gl_context *dst )
                   MAX2(dst->Texture.NumCurrentTexUsed, u + 1);
             }
          }
+         dst->Texture.Unit[u]._BoundTextures = src->Texture.Unit[u]._BoundTextures;
          _mesa_unlock_context_textures(dst);
       }
    }
@@ -877,6 +878,8 @@ init_texture_unit( struct gl_context *ctx, GLuint unit )
       _mesa_reference_texobj(&texUnit->CurrentTex[tex],
                              ctx->Shared->DefaultTex[tex]);
    }
+
+   texUnit->_BoundTextures = 0;
 }
 
 
