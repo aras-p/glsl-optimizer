@@ -246,7 +246,8 @@ intel_allocate_image(int dri_format, void *loaderPrivate)
     image->offset = 0;
 
     image->format = driImageFormatToGLFormat(dri_format);
-    if (image->format == 0) {
+    if (dri_format != __DRI_IMAGE_FORMAT_NONE &&
+        image->format == MESA_FORMAT_NONE) {
        free(image);
        return NULL;
     }
