@@ -269,7 +269,8 @@ namespace clover {
 
       typename super::const_iterator
       end() const {
-         return { f, tuple::map(ends(), os) };
+         return { f, tuple::map(advances_by(size()),
+                                tuple::map(begins(), os)) };
       }
 
       typename super::size_type
