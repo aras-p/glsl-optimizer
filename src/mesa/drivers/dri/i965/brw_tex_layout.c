@@ -86,7 +86,7 @@ intel_horizontal_texture_alignment_unit(struct brw_context *brw,
 
 static unsigned int
 intel_vertical_texture_alignment_unit(struct brw_context *brw,
-                                     gl_format format)
+                                      gl_format format, bool multisampled)
 {
    /**
     * From the "Alignment Unit Size" section of various specs, namely:
@@ -110,14 +110,15 @@ intel_vertical_texture_alignment_unit(struct brw_context *brw,
     *
     * On SNB+, non-special cases can be overridden by setting the SURFACE_STATE
     * "Surface Vertical Alignment" field to VALIGN_2 or VALIGN_4.
-    *
-    * We currently don't support multisampling.
     */
    if (_mesa_is_format_compressed(format))
       return 4;
 
    if (format == MESA_FORMAT_S8)
       return brw->gen >= 7 ? 8 : 4;
+
+   if (multisampled)
+      return 4;
 
    GLenum base_format = _mesa_get_format_base_format(format);
 
@@ -276,8 +277,10 @@ brw_miptree_layout_texture_3d(struct brw_context *brw,
 void
 brw_miptree_layout(struct brw_context *brw, struct intel_mipmap_tree *mt)
 {
+   bool multisampled = mt->num_samples > 1;
    mt->align_w = intel_horizontal_texture_alignment_unit(brw, mt->format);
-   mt->align_h = intel_vertical_texture_alignment_unit(brw, mt->format);
+   mt->align_h =
+      intel_vertical_texture_alignment_unit(brw, mt->format, multisampled);
 
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP:
