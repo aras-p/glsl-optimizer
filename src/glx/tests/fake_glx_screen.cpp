@@ -76,3 +76,11 @@ indirect_create_context_attribs(struct glx_screen *base,
 }
 
 __thread void *__glX_tls_Context = NULL;
+
+#if defined(HAVE_PTHREAD) && !defined(GLX_USE_TLS)
+extern "C" struct glx_context *
+__glXGetCurrentContext()
+{
+ return (struct glx_context *) __glX_tls_Context;
+}
+#endif
