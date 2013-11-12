@@ -110,12 +110,6 @@ extern void GLAPIENTRY
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride,
                     const GLvoid *ptr);
 
-extern void GLAPIENTRY
-_mesa_UnlockArraysEXT( void );
-
-extern void GLAPIENTRY
-_mesa_LockArraysEXT(GLint first, GLsizei count);
-
 
 extern void GLAPIENTRY
 _mesa_NormalPointer(GLenum type, GLsizei stride, const GLvoid *ptr);
