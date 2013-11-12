@@ -78,7 +78,7 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
 
    /* The registers used to make up almost all values handled in the compiler
     * are a scalar value occupying a single register (or 2 registers in the
-    * case of 16-wide, which is handled by dividing base_reg_count by 2 and
+    * case of SIMD16, which is handled by dividing base_reg_count by 2 and
     * multiplying allocated register numbers by 2).  Things that were
     * aggregates of scalar values at the GLSL level were split to scalar
     * values by split_virtual_grfs().
@@ -225,7 +225,7 @@ count_to_loop_end(fs_inst *do_inst)
  * nr_payload_regs+curb_read_lengh..first_non_payload_grf-1: setup coefficients.
  *
  * And we have payload_node_count nodes covering these registers in order
- * (note that in 16-wide, a node is two registers).
+ * (note that in SIMD16, a node is two registers).
  */
 void
 fs_visitor::setup_payload_interference(struct ra_graph *g,
@@ -295,7 +295,7 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
          break;
 
       case FS_OPCODE_LINTERP:
-         /* On gen6+ in 16-wide, there are 4 adjacent registers (so 2 nodes)
+         /* On gen6+ in SIMD16, there are 4 adjacent registers (so 2 nodes)
           * used by PLN's sourcing of the deltas, while we list only the first
           * two in the arguments (1 node).  Pre-gen6, the deltas are computed
           * in normal VGRFs.
@@ -420,7 +420,7 @@ bool
 fs_visitor::assign_regs(bool allow_spilling)
 {
    /* Most of this allocation was written for a reg_width of 1
-    * (dispatch_width == 8).  In extending to 16-wide, the code was
+    * (dispatch_width == 8).  In extending to SIMD16, the code was
     * left in place and it was converted to have the hardware
     * registers it's allocating be contiguous physical pairs of regs
     * for reg_width == 2.

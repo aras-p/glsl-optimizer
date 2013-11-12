@@ -431,8 +431,8 @@ public:
     * Returns how many cycles it takes the instruction to issue.
     *
     * Instructions in gen hardware are handled one simd4 vector at a time,
-    * with 1 cycle per vector dispatched.  Thus 8-wide pixel shaders take 2
-    * cycles to dispatch and 16-wide (compressed) instructions take 4.
+    * with 1 cycle per vector dispatched.  Thus SIMD8 pixel shaders take 2
+    * cycles to dispatch and SIMD16 (compressed) instructions take 4.
     */
    virtual int issue_time(backend_instruction *inst) = 0;
 
@@ -1157,7 +1157,7 @@ fs_instruction_scheduler::choose_instruction_to_schedule()
    } else {
       /* Before register allocation, we don't care about the latencies of
        * instructions.  All we care about is reducing live intervals of
-       * variables so that we can avoid register spilling, or get 16-wide
+       * variables so that we can avoid register spilling, or get SIMD16
        * shaders which naturally do a better job of hiding instruction
        * latency.
        */

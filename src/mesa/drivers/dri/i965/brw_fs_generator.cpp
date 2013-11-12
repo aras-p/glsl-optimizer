@@ -215,8 +215,8 @@ fs_generator::generate_pixel_xy(struct brw_reg dst, bool is_x)
       dst = vec16(dst);
    }
 
-   /* We do this 8 or 16-wide, but since the destination is UW we
-    * don't do compression in the 16-wide case.
+   /* We do this SIMD8 or SIMD16, but since the destination is UW we
+    * don't do compression in the SIMD16 case.
     */
    brw_push_insn_state(p);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
@@ -521,7 +521,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
    }
 
    if (brw->gen >= 7 && inst->header_present && dispatch_width == 16) {
-      /* The send-from-GRF for 16-wide texturing with a header has an extra
+      /* The send-from-GRF for SIMD16 texturing with a header has an extra
        * hardware register allocated to it, which we need to skip over (since
        * our coordinates in the payload are in the even-numbered registers,
        * and the header comes right before the first one).
@@ -1302,13 +1302,13 @@ fs_generator::generate_code(exec_list *instructions)
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       if (shader) {
-         printf("Native code for fragment shader %d (%d-wide dispatch):\n",
+         printf("Native code for fragment shader %d (SIMD%d dispatch):\n",
                 prog->Name, dispatch_width);
       } else if (fp) {
-         printf("Native code for fragment program %d (%d-wide dispatch):\n",
+         printf("Native code for fragment program %d (SIMD%d dispatch):\n",
                 fp->Base.Id, dispatch_width);
       } else {
-         printf("Native code for blorp program (%d-wide dispatch):\n",
+         printf("Native code for blorp program (SIMD%d dispatch):\n",
                 dispatch_width);
       }
    }
@@ -1831,7 +1831,7 @@ fs_generator::generate_assembly(exec_list *simd8_instructions,
          brw_NOP(p);
       }
 
-      /* Save off the start of this 16-wide program */
+      /* Save off the start of this SIMD16 program */
       c->prog_data.prog_offset_16 = p->nr_insn * sizeof(struct brw_instruction);
 
       brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);

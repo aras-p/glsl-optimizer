@@ -856,7 +856,7 @@ import_uniforms_callback(const void *key,
    hash_table_insert(dst_ht, data, key);
 }
 
-/* For 16-wide, we need to follow from the uniform setup of 8-wide dispatch.
+/* For SIMD16, we need to follow from the uniform setup of SIMD8 dispatch.
  * This brings in those uniform definitions
  */
 void
@@ -1340,7 +1340,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    case SHADER_OPCODE_INT_QUOTIENT:
    case SHADER_OPCODE_INT_REMAINDER:
       if (brw->gen >= 7 && dispatch_width == 16)
-	 fail("16-wide INTDIV unsupported\n");
+	 fail("SIMD16 INTDIV unsupported\n");
       break;
    case SHADER_OPCODE_POW:
       break;
@@ -1764,7 +1764,7 @@ fs_visitor::remove_dead_constants()
 
       c->prog_data.nr_params = new_nr_params;
    } else {
-      /* This should have been generated in the 8-wide pass already. */
+      /* This should have been generated in the SIMD8 pass already. */
       assert(this->params_remap);
    }
 
@@ -1883,7 +1883,7 @@ fs_visitor::setup_pull_constants()
       return;
 
    if (dispatch_width == 16) {
-      fail("Pull constants not supported in 16-wide\n");
+      fail("Pull constants not supported in SIMD16\n");
       return;
    }
 
@@ -2557,7 +2557,7 @@ static void
 clear_deps_for_inst_src(fs_inst *inst, int dispatch_width, bool *deps,
                         int first_grf, int grf_len)
 {
-   bool inst_16wide = (dispatch_width > 8 &&
+   bool inst_simd16 = (dispatch_width > 8 &&
                        !inst->force_uncompressed &&
                        !inst->force_sechalf);
 
@@ -2576,7 +2576,7 @@ clear_deps_for_inst_src(fs_inst *inst, int dispatch_width, bool *deps,
       if (grf >= first_grf &&
           grf < first_grf + grf_len) {
          deps[grf - first_grf] = false;
-         if (inst_16wide)
+         if (inst_simd16)
             deps[grf - first_grf + 1] = false;
       }
    }
@@ -2634,7 +2634,7 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
          return;
       }
 
-      bool scan_inst_16wide = (dispatch_width > 8 &&
+      bool scan_inst_simd16 = (dispatch_width > 8 &&
                                !scan_inst->force_uncompressed &&
                                !scan_inst->force_sechalf);
 
@@ -2651,7 +2651,7 @@ fs_visitor::insert_gen4_pre_send_dependency_workarounds(fs_inst *inst)
                 needs_dep[reg - first_write_grf]) {
                inst->insert_before(DEP_RESOLVE_MOV(reg));
                needs_dep[reg - first_write_grf] = false;
-               if (scan_inst_16wide)
+               if (scan_inst_simd16)
                   needs_dep[reg - first_write_grf + 1] = false;
             }
          }
@@ -3062,7 +3062,7 @@ fs_visitor::setup_payload_gen6()
       c->source_depth_reg = c->nr_payload_regs;
       c->nr_payload_regs++;
       if (dispatch_width == 16) {
-         /* R28: interpolated depth if not 8-wide. */
+         /* R28: interpolated depth if not SIMD8. */
          c->nr_payload_regs++;
       }
    }
@@ -3071,7 +3071,7 @@ fs_visitor::setup_payload_gen6()
       c->source_w_reg = c->nr_payload_regs;
       c->nr_payload_regs++;
       if (dispatch_width == 16) {
-         /* R30: interpolated W if not 8-wide. */
+         /* R30: interpolated W if not SIMD8. */
          c->nr_payload_regs++;
       }
    }
@@ -3089,7 +3089,7 @@ fs_visitor::setup_payload_gen6()
       c->sample_mask_reg = c->nr_payload_regs;
       c->nr_payload_regs++;
       if (dispatch_width == 16) {
-         /* R33: input coverage mask if not 8-wide. */
+         /* R33: input coverage mask if not SIMD8. */
          c->nr_payload_regs++;
       }
    }
@@ -3333,16 +3333,16 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    fs_visitor v2(brw, c, prog, fp, 16);
    if (brw->gen >= 5 && likely(!(INTEL_DEBUG & DEBUG_NO16))) {
       if (c->prog_data.nr_pull_params == 0) {
-         /* Try a 16-wide compile */
+         /* Try a SIMD16 compile */
          v2.import_uniforms(&v);
          if (!v2.run()) {
-            perf_debug("16-wide shader failed to compile, falling back to "
-                       "8-wide at a 10-20%% performance cost: %s", v2.fail_msg);
+            perf_debug("SIMD16 shader failed to compile, falling back to "
+                       "SIMD8 at a 10-20%% performance cost: %s", v2.fail_msg);
          } else {
             simd16_instructions = &v2.instructions;
          }
       } else {
-         perf_debug("Skipping 16-wide due to pull parameters.\n");
+         perf_debug("Skipping SIMD16 due to pull parameters.\n");
       }
    }
 
