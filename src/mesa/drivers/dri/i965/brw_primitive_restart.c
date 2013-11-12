@@ -191,7 +191,7 @@ haswell_upload_cut_index(struct brw_context *brw)
    struct gl_context *ctx = &brw->ctx;
 
    /* Don't trigger on Ivybridge */
-   if (!brw->is_haswell)
+   if (brw->gen < 8 && !brw->is_haswell)
       return;
 
    const unsigned cut_index_setting =
