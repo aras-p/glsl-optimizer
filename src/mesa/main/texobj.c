@@ -1093,18 +1093,20 @@ static void
 unbind_texobj_from_texunits(struct gl_context *ctx,
                             struct gl_texture_object *texObj)
 {
-   GLuint u, tex;
+   const gl_texture_index index = texObj->TargetIndex;
+   GLuint u;
+
+   if (texObj->Target == 0)
+      return;
 
    for (u = 0; u < ctx->Texture.NumCurrentTexUsed; u++) {
       struct gl_texture_unit *unit = &ctx->Texture.Unit[u];
-      for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
-         if (texObj == unit->CurrentTex[tex]) {
-            _mesa_reference_texobj(&unit->CurrentTex[tex],
-                                   ctx->Shared->DefaultTex[tex]);
-            ASSERT(unit->CurrentTex[tex]);
-            unit->_BoundTextures &= ~(1 << tex);
-            break;
-         }
+
+      if (texObj == unit->CurrentTex[index]) {
+         /* Bind the default texture for this unit/target */
+         _mesa_reference_texobj(&unit->CurrentTex[index],
+                                ctx->Shared->DefaultTex[index]);
+         unit->_BoundTextures &= ~(1 << index);
       }
    }
 }
