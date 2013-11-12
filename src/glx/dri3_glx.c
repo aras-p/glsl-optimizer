@@ -160,51 +160,6 @@ dri3_unbind_context(struct glx_context *context, struct glx_context *new)
 }
 
 static struct glx_context *
-dri3_create_context(struct glx_screen *base,
-                    struct glx_config *config_base,
-                    struct glx_context *shareList, int renderType)
-{
-   struct dri3_context *pcp, *pcp_shared;
-   struct dri3_screen *psc = (struct dri3_screen *) base;
-   __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) config_base;
-   __DRIcontext *shared = NULL;
-
-   if (shareList) {
-      /* If the shareList context is not a DRI3 context, we cannot possibly
-       * create a DRI3 context that shares it.
-       */
-      if (shareList->vtable->destroy != dri3_destroy_context) {
-         return NULL;
-      }
-
-      pcp_shared = (struct dri3_context *) shareList;
-      shared = pcp_shared->driContext;
-   }
-
-   pcp = calloc(1, sizeof *pcp);
-   if (pcp == NULL)
-      return NULL;
-
-   if (!glx_context_init(&pcp->base, &psc->base, &config->base)) {
-      free(pcp);
-      return NULL;
-   }
-
-   pcp->driContext =
-      (*psc->image_driver->createNewContext) (psc->driScreen,
-                                              config->driConfig, shared, pcp);
-
-   if (pcp->driContext == NULL) {
-      free(pcp);
-      return NULL;
-   }
-
-   pcp->base.vtable = &dri3_context_vtable;
-
-   return &pcp->base;
-}
-
-static struct glx_context *
 dri3_create_context_attribs(struct glx_screen *base,
                             struct glx_config *config_base,
                             struct glx_context *shareList,
@@ -297,6 +252,17 @@ error_exit:
    free(pcp);
 
    return NULL;
+}
+
+static struct glx_context *
+dri3_create_context(struct glx_screen *base,
+                    struct glx_config *config_base,
+                    struct glx_context *shareList, int renderType)
+{
+   unsigned int error;
+
+   return dri3_create_context_attribs(base, config_base, shareList,
+                                      0, NULL, &error);
 }
 
 static void

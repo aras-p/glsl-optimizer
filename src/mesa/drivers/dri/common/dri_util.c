@@ -868,7 +868,6 @@ const __DRIimageDriverExtension driImageDriverExtension = {
 
     .createNewScreen2           = driCreateNewScreen2,
     .createNewDrawable          = driCreateNewDrawable,
-    .createNewContext           = driCreateNewContext,
     .getAPIMask                 = driGetAPIMask,
     .createContextAttribs       = driCreateContextAttribs,
 };

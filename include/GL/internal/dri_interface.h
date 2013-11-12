@@ -783,12 +783,6 @@ typedef __DRIdrawable *
                               void *loaderPrivate);
 
 typedef __DRIcontext *
-(*__DRIcreateNewContextFunc)(__DRIscreen *screen,
-                             const __DRIconfig *config,
-                             __DRIcontext *shared,
-                             void *loaderPrivate);
-
-typedef __DRIcontext *
 (*__DRIcreateContextAttribsFunc)(__DRIscreen *screen,
                                  int api,
                                  const __DRIconfig *config,
@@ -949,7 +943,10 @@ struct __DRIdri2ExtensionRec {
 				    void *loaderPrivate);
 
    __DRIcreateNewDrawableFunc   createNewDrawable;
-   __DRIcreateNewContextFunc    createNewContext;
+   __DRIcontext *(*createNewContext)(__DRIscreen *screen,
+                                     const __DRIconfig *config,
+                                     __DRIcontext *shared,
+                                     void *loaderPrivate);
 
    /* Since version 2 */
    __DRIgetAPIMaskFunc          getAPIMask;
@@ -1405,7 +1402,6 @@ struct __DRIimageDriverExtensionRec {
    /* Common DRI functions, shared with DRI2 */
    __DRIcreateNewScreen2Func            createNewScreen2;
    __DRIcreateNewDrawableFunc           createNewDrawable;
-   __DRIcreateNewContextFunc            createNewContext;
    __DRIcreateContextAttribsFunc        createContextAttribs;
    __DRIgetAPIMaskFunc                  getAPIMask;
 };
