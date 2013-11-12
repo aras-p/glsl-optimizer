@@ -260,6 +260,7 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
                            const struct gl_texture_object *src )
 {
    dest->Target = src->Target;
+   dest->TargetIndex = src->TargetIndex;
    dest->Name = src->Name;
    dest->Priority = src->Priority;
    dest->Sampler.BorderColor.f[0] = src->Sampler.BorderColor.f[0];
@@ -1327,6 +1328,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          mtx_unlock(&ctx->Shared->Mutex);
       }
       newTexObj->Target = target;
+      newTexObj->TargetIndex = targetIndex;
    }
 
    assert(valid_texture_object(newTexObj));
