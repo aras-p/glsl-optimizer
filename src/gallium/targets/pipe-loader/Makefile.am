@@ -22,7 +22,7 @@
 
 include $(top_srcdir)/src/gallium/Automake.inc
 
-LDFLAGS += -Wl,$(top_srcdir)/src/gallium/targets/pipe-loader/pipe.link
+LDFLAGS += -Wl,--version-script=$(top_srcdir)/src/gallium/targets/pipe-loader/pipe.link
 
 AM_CPPFLAGS = \
 	$(GALLIUM_CFLAGS) \
