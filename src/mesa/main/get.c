@@ -1730,6 +1730,31 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
       v->value_int_4[3] = ctx->Color.ColorMask[index][ACOMP] ? 1 : 0;
       return TYPE_INT_4;
 
+   case GL_SCISSOR_BOX:
+      if (index >= ctx->Const.MaxViewports)
+         goto invalid_value;
+      v->value_int_4[0] = ctx->Scissor.ScissorArray[index].X;
+      v->value_int_4[1] = ctx->Scissor.ScissorArray[index].Y;
+      v->value_int_4[2] = ctx->Scissor.ScissorArray[index].Width;
+      v->value_int_4[3] = ctx->Scissor.ScissorArray[index].Height;
+      return TYPE_INT_4;
+
+   case GL_VIEWPORT:
+      if (index >= ctx->Const.MaxViewports)
+         goto invalid_value;
+      v->value_float_4[0] = ctx->ViewportArray[index].X;
+      v->value_float_4[1] = ctx->ViewportArray[index].Y;
+      v->value_float_4[2] = ctx->ViewportArray[index].Width;
+      v->value_float_4[3] = ctx->ViewportArray[index].Height;
+      return TYPE_FLOAT_4;
+
+   case GL_DEPTH_RANGE:
+      if (index >= ctx->Const.MaxViewports)
+         goto invalid_value;
+      v->value_double_2[0] = ctx->ViewportArray[index].Near;
+      v->value_double_2[1] = ctx->ViewportArray[index].Far;
+      return TYPE_DOUBLEN_2;
+
    case GL_TRANSFORM_FEEDBACK_BUFFER_START:
       if (index >= ctx->Const.MaxTransformFeedbackBuffers)
 	 goto invalid_value;
@@ -1938,6 +1963,26 @@ _mesa_GetIntegeri_v( GLenum pname, GLuint index, GLint *params )
       find_value_indexed("glGetIntegeri_v", pname, index, &v);
 
    switch (type) {
+   case TYPE_FLOAT_4:
+   case TYPE_FLOATN_4:
+      params[3] = IROUND(v.value_float_4[3]);
+   case TYPE_FLOAT_3:
+   case TYPE_FLOATN_3:
+      params[2] = IROUND(v.value_float_4[2]);
+   case TYPE_FLOAT_2:
+   case TYPE_FLOATN_2:
+      params[1] = IROUND(v.value_float_4[1]);
+   case TYPE_FLOAT:
+   case TYPE_FLOATN:
+      params[0] = IROUND(v.value_float_4[0]);
+      break;
+
+   case TYPE_DOUBLEN_2:
+      params[1] = IROUND(v.value_double_2[1]);
+   case TYPE_DOUBLEN:
+      params[0] = IROUND(v.value_double_2[0]);
+      break;
+
    case TYPE_INT:
       params[0] = v.value_int;
       break;
@@ -1977,6 +2022,150 @@ _mesa_GetInteger64i_v( GLenum pname, GLuint index, GLint64 *params )
       break;
    default:
       ; /* nothing - GL error was recorded */
+   }
+}
+
+void GLAPIENTRY
+_mesa_GetFloati_v(GLenum pname, GLuint index, GLfloat *params)
+{
+   int i;
+   GLmatrix *m;
+   union value v;
+   enum value_type type =
+      find_value_indexed("glGetFloati_v", pname, index, &v);
+
+   switch (type) {
+   case TYPE_FLOAT_4:
+   case TYPE_FLOATN_4:
+      params[3] = v.value_float_4[3];
+   case TYPE_FLOAT_3:
+   case TYPE_FLOATN_3:
+      params[2] = v.value_float_4[2];
+   case TYPE_FLOAT_2:
+   case TYPE_FLOATN_2:
+      params[1] = v.value_float_4[1];
+   case TYPE_FLOAT:
+   case TYPE_FLOATN:
+      params[0] = v.value_float_4[0];
+      break;
+
+   case TYPE_DOUBLEN_2:
+      params[1] = (GLfloat) v.value_double_2[1];
+   case TYPE_DOUBLEN:
+      params[0] = (GLfloat) v.value_double_2[0];
+      break;
+
+   case TYPE_INT_4:
+      params[3] = (GLfloat) v.value_int_4[3];
+   case TYPE_INT_3:
+      params[2] = (GLfloat) v.value_int_4[2];
+   case TYPE_INT_2:
+   case TYPE_ENUM_2:
+      params[1] = (GLfloat) v.value_int_4[1];
+   case TYPE_INT:
+   case TYPE_ENUM:
+      params[0] = (GLfloat) v.value_int_4[0];
+      break;
+
+   case TYPE_INT_N:
+      for (i = 0; i < v.value_int_n.n; i++)
+	 params[i] = INT_TO_FLOAT(v.value_int_n.ints[i]);
+      break;
+
+   case TYPE_INT64:
+      params[0] = (GLfloat) v.value_int64;
+      break;
+
+   case TYPE_BOOLEAN:
+      params[0] = BOOLEAN_TO_FLOAT(v.value_bool);
+      break;
+
+   case TYPE_MATRIX:
+      m = *(GLmatrix **) &v;
+      for (i = 0; i < 16; i++)
+	 params[i] = m->m[i];
+      break;
+
+   case TYPE_MATRIX_T:
+      m = *(GLmatrix **) &v;
+      for (i = 0; i < 16; i++)
+	 params[i] = m->m[transpose[i]];
+      break;
+
+   default:
+      ;
+   }
+}
+
+void GLAPIENTRY
+_mesa_GetDoublei_v(GLenum pname, GLuint index, GLdouble *params)
+{
+   int i;
+   GLmatrix *m;
+   union value v;
+   enum value_type type =
+      find_value_indexed("glGetDoublei_v", pname, index, &v);
+
+   switch (type) {
+   case TYPE_FLOAT_4:
+   case TYPE_FLOATN_4:
+      params[3] = (GLdouble) v.value_float_4[3];
+   case TYPE_FLOAT_3:
+   case TYPE_FLOATN_3:
+      params[2] = (GLdouble) v.value_float_4[2];
+   case TYPE_FLOAT_2:
+   case TYPE_FLOATN_2:
+      params[1] = (GLdouble) v.value_float_4[1];
+   case TYPE_FLOAT:
+   case TYPE_FLOATN:
+      params[0] = (GLdouble) v.value_float_4[0];
+      break;
+
+   case TYPE_DOUBLEN_2:
+      params[1] = v.value_double_2[1];
+   case TYPE_DOUBLEN:
+      params[0] = v.value_double_2[0];
+      break;
+
+   case TYPE_INT_4:
+      params[3] = (GLdouble) v.value_int_4[3];
+   case TYPE_INT_3:
+      params[2] = (GLdouble) v.value_int_4[2];
+   case TYPE_INT_2:
+   case TYPE_ENUM_2:
+      params[1] = (GLdouble) v.value_int_4[1];
+   case TYPE_INT:
+   case TYPE_ENUM:
+      params[0] = (GLdouble) v.value_int_4[0];
+      break;
+
+   case TYPE_INT_N:
+      for (i = 0; i < v.value_int_n.n; i++)
+	 params[i] = (GLdouble) INT_TO_FLOAT(v.value_int_n.ints[i]);
+      break;
+
+   case TYPE_INT64:
+      params[0] = (GLdouble) v.value_int64;
+      break;
+
+   case TYPE_BOOLEAN:
+      params[0] = (GLdouble) BOOLEAN_TO_FLOAT(v.value_bool);
+      break;
+
+   case TYPE_MATRIX:
+      m = *(GLmatrix **) &v;
+      for (i = 0; i < 16; i++)
+	 params[i] = (GLdouble) m->m[i];
+      break;
+
+   case TYPE_MATRIX_T:
+      m = *(GLmatrix **) &v;
+      for (i = 0; i < 16; i++)
+	 params[i] = (GLdouble) m->m[transpose[i]];
+      break;
+
+   default:
+      ;
    }
 }
 
