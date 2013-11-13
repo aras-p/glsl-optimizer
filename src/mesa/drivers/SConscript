@@ -10,3 +10,6 @@ if env['dri']:
 
 if env['platform'] == 'windows':
     SConscript('windows/gdi/SConscript')
+
+if env['platform'] == 'haiku':
+    SConscript('haiku/swrast/SConscript')

@@ -1,0 +1,28 @@
+Import('*')
+
+env = env.Clone()
+
+env.Append(CPPPATH = [
+    '#/src/mapi',
+    '#/src/mesa',
+    '#/src/mesa/main',
+    '/boot/system/develop/headers/private',
+    Dir('../../../mapi'), # src/mapi build path for python-generated GL API files/headers
+])
+
+env.Prepend(LIBS = [
+    glsl,
+    mesa,
+])
+
+sources = [
+	'SoftwareRast.cpp'
+]
+
+# Disallow undefined symbols
+#env.Append(SHLINKFLAGS = ['-Wl,-z,defs'])
+
+libswrast = env.SharedLibrary(
+    target = 'swrast',
+    source = sources
+)
