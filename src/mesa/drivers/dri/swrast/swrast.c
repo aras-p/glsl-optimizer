@@ -406,8 +406,8 @@ swrast_map_renderbuffer(struct gl_context *ctx,
 				     (char *) xrb->Base.Buffer,
 				     dPriv->loaderPrivate);
 
-      *out_map = xrb->Base.Buffer;
-      *out_stride = stride;
+      *out_map = xrb->Base.Buffer + (h - 1) * stride;
+      *out_stride = -stride;
       return;
    }
 
