@@ -54,8 +54,8 @@ gen7_upload_sf_clip_viewport(struct brw_context *brw)
     * drawable.
     */
    const float maximum_guardband_extent = 8192;
-   float gbx = maximum_guardband_extent / (float) ctx->Viewport.Width;
-   float gby = maximum_guardband_extent / (float) ctx->Viewport.Height;
+   float gbx = maximum_guardband_extent / ctx->Viewport.Width;
+   float gby = maximum_guardband_extent / ctx->Viewport.Height;
 
    vp->guardband.xmin = -gbx;
    vp->guardband.xmax = gbx;

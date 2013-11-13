@@ -75,9 +75,9 @@ _swrast_update_rasterflags( struct gl_context *ctx )
    if (ctx->Color.ColorLogicOpEnabled) rasterMask |= LOGIC_OP_BIT;
    if (ctx->Texture._EnabledUnits)     rasterMask |= TEXTURE_BIT;
    if (   ctx->Viewport.X < 0
-       || ctx->Viewport.X + ctx->Viewport.Width > (GLint) ctx->DrawBuffer->Width
+       || ctx->Viewport.X + ctx->Viewport.Width > (GLfloat) ctx->DrawBuffer->Width
        || ctx->Viewport.Y < 0
-       || ctx->Viewport.Y + ctx->Viewport.Height > (GLint) ctx->DrawBuffer->Height) {
+       || ctx->Viewport.Y + ctx->Viewport.Height > (GLfloat) ctx->DrawBuffer->Height) {
       rasterMask |= CLIP_BIT;
    }
 

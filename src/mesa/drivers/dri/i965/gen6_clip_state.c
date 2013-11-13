@@ -98,8 +98,8 @@ upload_clip_state(struct brw_context *brw)
 
    if (ctx->Viewport.X == 0 &&
        ctx->Viewport.Y == 0 &&
-       ctx->Viewport.Width == fb->Width &&
-       ctx->Viewport.Height == fb->Height) {
+       ctx->Viewport.Width == (float) fb->Width &&
+       ctx->Viewport.Height == (float) fb->Height) {
       dw2 |= GEN6_CLIP_GB_TEST;
    }
 

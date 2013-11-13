@@ -691,10 +691,10 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
 
    case GL_VIEWPORT:
-      v->value_int_4[0] = ctx->Viewport.X;
-      v->value_int_4[1] = ctx->Viewport.Y;
-      v->value_int_4[2] = ctx->Viewport.Width;
-      v->value_int_4[3] = ctx->Viewport.Height;
+      v->value_float_4[0] = ctx->Viewport.X;
+      v->value_float_4[1] = ctx->Viewport.Y;
+      v->value_float_4[2] = ctx->Viewport.Width;
+      v->value_float_4[3] = ctx->Viewport.Height;
       break;
 
    case GL_DEPTH_RANGE:

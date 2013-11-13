@@ -122,7 +122,7 @@ _math_matrix_frustum( GLmatrix *mat,
 		      GLfloat nearval, GLfloat farval );
 
 extern void
-_math_matrix_viewport(GLmatrix *m, GLint x, GLint y, GLint width, GLint height,
+_math_matrix_viewport(GLmatrix *m, GLfloat x, GLfloat y, GLfloat width, GLfloat height,
                       GLdouble zNear, GLdouble zFar, GLdouble depthMax);
 
 extern void

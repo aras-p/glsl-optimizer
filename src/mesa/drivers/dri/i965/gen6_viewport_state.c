@@ -55,8 +55,8 @@ gen6_upload_clip_vp(struct brw_context *brw)
     * drawable.
     */
    const float maximum_post_clamp_delta = 8192;
-   float gbx = maximum_post_clamp_delta / (float) ctx->Viewport.Width;
-   float gby = maximum_post_clamp_delta / (float) ctx->Viewport.Height;
+   float gbx = maximum_post_clamp_delta / ctx->Viewport.Width;
+   float gby = maximum_post_clamp_delta / ctx->Viewport.Height;
 
    vp->xmin = -gbx;
    vp->xmax = gbx;

@@ -1110,12 +1110,13 @@ _math_matrix_translate( GLmatrix *mat, GLfloat x, GLfloat y, GLfloat z )
  * Transforms Normalized Device Coords to window/Z values.
  */
 void
-_math_matrix_viewport(GLmatrix *m, GLint x, GLint y, GLint width, GLint height,
+_math_matrix_viewport(GLmatrix *m, GLfloat x, GLfloat y,
+                      GLfloat width, GLfloat height,
                       GLdouble zNear, GLdouble zFar, GLdouble depthMax)
 {
-   m->m[MAT_SX] = (GLfloat) width / 2.0F;
+   m->m[MAT_SX] = width / 2.0F;
    m->m[MAT_TX] = m->m[MAT_SX] + x;
-   m->m[MAT_SY] = (GLfloat) height / 2.0F;
+   m->m[MAT_SY] = height / 2.0F;
    m->m[MAT_TY] = m->m[MAT_SY] + y;
    m->m[MAT_SZ] = (GLfloat) (depthMax * ((zFar - zNear) / 2.0));
    m->m[MAT_TZ] = (GLfloat) (depthMax * ((zFar - zNear) / 2.0 + zNear));

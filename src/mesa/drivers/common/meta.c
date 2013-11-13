@@ -170,7 +170,7 @@ struct save_state
    struct gl_buffer_object *ArrayBufferObj;
 
    /** MESA_META_VIEWPORT */
-   GLint ViewportX, ViewportY, ViewportW, ViewportH;
+   GLfloat ViewportX, ViewportY, ViewportW, ViewportH;
    GLclampd DepthNear, DepthFar;
 
    /** MESA_META_CLAMP_FRAGMENT_COLOR */
@@ -744,8 +744,8 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       /* set viewport to match window size */
       if (ctx->Viewport.X != 0 ||
           ctx->Viewport.Y != 0 ||
-          ctx->Viewport.Width != ctx->DrawBuffer->Width ||
-          ctx->Viewport.Height != ctx->DrawBuffer->Height) {
+          ctx->Viewport.Width != (float) ctx->DrawBuffer->Width ||
+          ctx->Viewport.Height != (float) ctx->DrawBuffer->Height) {
          _mesa_set_viewport(ctx, 0, 0,
                             ctx->DrawBuffer->Width, ctx->DrawBuffer->Height);
       }
