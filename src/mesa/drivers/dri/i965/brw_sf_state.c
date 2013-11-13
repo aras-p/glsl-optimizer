@@ -179,7 +179,7 @@ static void upload_sf_unit( struct brw_context *brw )
    sf->sf5.viewport_transform = 1;
 
    /* _NEW_SCISSOR */
-   if (ctx->Scissor.Enabled)
+   if (ctx->Scissor.EnableFlags)
       sf->sf6.scissor = 1;
 
    /* _NEW_POLYGON */

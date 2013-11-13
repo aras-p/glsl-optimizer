@@ -274,7 +274,7 @@ _mesa_init_driver_state(struct gl_context *ctx)
    ctx->Driver.Enable(ctx, GL_LIGHTING, ctx->Light.Enabled);
    ctx->Driver.Enable(ctx, GL_LINE_SMOOTH, ctx->Line.SmoothFlag);
    ctx->Driver.Enable(ctx, GL_POLYGON_STIPPLE, ctx->Polygon.StippleFlag);
-   ctx->Driver.Enable(ctx, GL_SCISSOR_TEST, ctx->Scissor.Enabled);
+   ctx->Driver.Enable(ctx, GL_SCISSOR_TEST, ctx->Scissor.EnableFlags);
    ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil._Enabled);
    ctx->Driver.Enable(ctx, GL_TEXTURE_1D, GL_FALSE);
    ctx->Driver.Enable(ctx, GL_TEXTURE_2D, GL_FALSE);

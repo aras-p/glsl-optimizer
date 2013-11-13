@@ -186,7 +186,7 @@ upload_sf_state(struct brw_context *brw)
    }
 
    /* _NEW_SCISSOR */
-   if (ctx->Scissor.Enabled)
+   if (ctx->Scissor.EnableFlags)
       dw2 |= GEN6_SF_SCISSOR_ENABLE;
 
    /* _NEW_LINE */

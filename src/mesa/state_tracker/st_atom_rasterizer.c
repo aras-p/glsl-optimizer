@@ -223,7 +223,7 @@ static void update_raster_state( struct st_context *st )
    raster->multisample = ctx->Multisample._Enabled;
 
    /* _NEW_SCISSOR */
-   raster->scissor = ctx->Scissor.Enabled;
+   raster->scissor = ctx->Scissor.EnableFlags;
 
    /* _NEW_FRAG_CLAMP */
    raster->clamp_fragment_color = !st->clamp_frag_color_in_shader &&

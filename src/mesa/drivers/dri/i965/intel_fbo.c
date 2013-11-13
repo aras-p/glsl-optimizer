@@ -715,7 +715,7 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
             srcY0 >= 0 && srcY1 <= readFb->Height &&
             dstX0 >= 0 && dstX1 <= drawFb->Width &&
             dstY0 >= 0 && dstY1 <= drawFb->Height &&
-            !ctx->Scissor.Enabled)) {
+            !(ctx->Scissor.EnableFlags))) {
          perf_debug("glBlitFramebuffer(): non-1:1 blit.  "
                     "Falling back to software rendering.\n");
          return mask;

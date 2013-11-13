@@ -112,7 +112,7 @@ struct gl_enable_attrib
    GLboolean PolygonSmooth;
    GLboolean PolygonStipple;
    GLboolean RescaleNormals;
-   GLboolean Scissor;
+   GLbitfield Scissor;
    GLboolean Stencil;
    GLboolean StencilTwoSide;          /* GL_EXT_stencil_two_side */
    GLboolean MultisampleEnabled;      /* GL_ARB_multisample */
@@ -354,7 +354,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->PolygonSmooth = ctx->Polygon.SmoothFlag;
       attr->PolygonStipple = ctx->Polygon.StippleFlag;
       attr->RescaleNormals = ctx->Transform.RescaleNormals;
-      attr->Scissor = ctx->Scissor.Enabled;
+      attr->Scissor = ctx->Scissor.EnableFlags;
       attr->Stencil = ctx->Stencil.Enabled;
       attr->StencilTwoSide = ctx->Stencil.TestTwoSide;
       attr->MultisampleEnabled = ctx->Multisample.Enabled;
@@ -658,7 +658,13 @@ pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
                    GL_POLYGON_SMOOTH);
    TEST_AND_UPDATE(ctx->Polygon.StippleFlag, enable->PolygonStipple,
                    GL_POLYGON_STIPPLE);
-   TEST_AND_UPDATE(ctx->Scissor.Enabled, enable->Scissor, GL_SCISSOR_TEST);
+   if (ctx->Scissor.EnableFlags != enable->Scissor) {
+      unsigned i;
+
+      for (i = 0; i < ctx->Const.MaxViewports; i++) {
+         _mesa_set_enablei(ctx, GL_SCISSOR_TEST, i, (enable->Scissor >> i) & 1);
+      }
+   }
    TEST_AND_UPDATE(ctx->Stencil.Enabled, enable->Stencil, GL_STENCIL_TEST);
    if (ctx->Extensions.EXT_stencil_two_side) {
       TEST_AND_UPDATE(ctx->Stencil.TestTwoSide, enable->StencilTwoSide, GL_STENCIL_TEST_TWO_SIDE_EXT);
@@ -1264,9 +1270,13 @@ _mesa_PopAttrib(void)
             {
                const struct gl_scissor_attrib *scissor;
                scissor = (const struct gl_scissor_attrib *) attr->data;
-               _mesa_Scissor(scissor->X, scissor->Y,
-                             scissor->Width, scissor->Height);
-               _mesa_set_enable(ctx, GL_SCISSOR_TEST, scissor->Enabled);
+               _mesa_set_scissor(ctx,
+                                 scissor->ScissorArray[0].X,
+                                 scissor->ScissorArray[0].Y,
+                                 scissor->ScissorArray[0].Width,
+                                 scissor->ScissorArray[0].Height);
+               _mesa_set_enable(ctx, GL_SCISSOR_TEST, scissor->EnableFlags & 1);
+
             }
             break;
          case GL_STENCIL_BUFFER_BIT:

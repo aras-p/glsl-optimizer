@@ -66,17 +66,17 @@ void
 _mesa_set_scissor(struct gl_context *ctx, 
                   GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   if (x == ctx->Scissor.X &&
-       y == ctx->Scissor.Y &&
-       width == ctx->Scissor.Width &&
-       height == ctx->Scissor.Height)
+   if (x == ctx->Scissor.ScissorArray[0].X &&
+       y == ctx->Scissor.ScissorArray[0].Y &&
+       width == ctx->Scissor.ScissorArray[0].Width &&
+       height == ctx->Scissor.ScissorArray[0].Height)
       return;
 
    FLUSH_VERTICES(ctx, _NEW_SCISSOR);
-   ctx->Scissor.X = x;
-   ctx->Scissor.Y = y;
-   ctx->Scissor.Width = width;
-   ctx->Scissor.Height = height;
+   ctx->Scissor.ScissorArray[0].X = x;
+   ctx->Scissor.ScissorArray[0].Y = y;
+   ctx->Scissor.ScissorArray[0].Width = width;
+   ctx->Scissor.ScissorArray[0].Height = height;
 
    if (ctx->Driver.Scissor)
       ctx->Driver.Scissor(ctx);
@@ -91,9 +91,9 @@ void
 _mesa_init_scissor(struct gl_context *ctx)
 {
    /* Scissor group */
-   ctx->Scissor.Enabled = GL_FALSE;
-   ctx->Scissor.X = 0;
-   ctx->Scissor.Y = 0;
-   ctx->Scissor.Width = 0;
-   ctx->Scissor.Height = 0;
+   ctx->Scissor.EnableFlags = GL_FALSE;
+   ctx->Scissor.ScissorArray[0].X = 0;
+   ctx->Scissor.ScissorArray[0].Y = 0;
+   ctx->Scissor.ScissorArray[0].Width = 0;
+   ctx->Scissor.ScissorArray[0].Height = 0;
 }

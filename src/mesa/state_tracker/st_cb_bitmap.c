@@ -457,7 +457,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_save_aux_vertex_buffer_slot(cso);
 
    /* rasterizer state: just scissor */
-   st->bitmap.rasterizer.scissor = ctx->Scissor.Enabled;
+   st->bitmap.rasterizer.scissor = ctx->Scissor.EnableFlags & 1;
    cso_set_rasterizer(cso, &st->bitmap.rasterizer);
 
    /* fragment shader state: TEX lookup program */

@@ -659,10 +659,15 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Transform.RescaleNormals = state;
          break;
       case GL_SCISSOR_TEST:
-         if (ctx->Scissor.Enabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_SCISSOR);
-         ctx->Scissor.Enabled = state;
+         {
+            /* Must expand glEnable to all scissors */
+            GLbitfield newEnabled =
+               state * ((1 << ctx->Const.MaxViewports) - 1);
+            if (newEnabled != ctx->Scissor.EnableFlags) {
+               FLUSH_VERTICES(ctx, _NEW_SCISSOR);
+               ctx->Scissor.EnableFlags = newEnabled;
+            }
+         }
          break;
       case GL_STENCIL_TEST:
          if (ctx->Stencil.Enabled == state)
@@ -1076,6 +1081,20 @@ _mesa_set_enablei(struct gl_context *ctx, GLenum cap,
             ctx->Color.BlendEnabled &= ~(1 << index);
       }
       break;
+   case GL_SCISSOR_TEST:
+      if (index >= ctx->Const.MaxViewports) {
+         _mesa_error(ctx, GL_INVALID_VALUE, "%s(index=%u)",
+                     state ? "glEnablei" : "glDisablei", index);
+         return;
+      }
+      if (((ctx->Scissor.EnableFlags >> index) & 1) != state) {
+         FLUSH_VERTICES(ctx, _NEW_SCISSOR);
+         if (state)
+            ctx->Scissor.EnableFlags |= (1 << index);
+         else
+            ctx->Scissor.EnableFlags &= ~(1 << index);
+      }
+      break;
    default:
       goto invalid_enum_error;
    }
@@ -1349,7 +1368,7 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
          return ctx->Transform.RescaleNormals;
       case GL_SCISSOR_TEST:
-	 return ctx->Scissor.Enabled;
+	 return ctx->Scissor.EnableFlags & 1;  /* return state for index 0 */
       case GL_STENCIL_TEST:
 	 return ctx->Stencil.Enabled;
       case GL_TEXTURE_1D:

@@ -933,9 +933,9 @@ _mesa_meta_end(struct gl_context *ctx)
    }
 
    if (state & MESA_META_SCISSOR) {
-      _mesa_set_enable(ctx, GL_SCISSOR_TEST, save->Scissor.Enabled);
-      _mesa_Scissor(save->Scissor.X, save->Scissor.Y,
-                    save->Scissor.Width, save->Scissor.Height);
+      _mesa_set_enable(ctx, GL_SCISSOR_TEST, save->Scissor.EnableFlags);
+      _mesa_Scissor(save->Scissor.ScissorArray[0].X, save->Scissor.ScissorArray[0].Y,
+                    save->Scissor.ScissorArray[0].Width, save->Scissor.ScissorArray[0].Height);
    }
 
    if (state & MESA_META_SHADER) {

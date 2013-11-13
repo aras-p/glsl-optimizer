@@ -536,23 +536,27 @@ i830Scissor(struct gl_context * ctx)
       return;
 
    DBG("%s %d,%d %dx%d\n", __FUNCTION__,
-       ctx->Scissor.X,     ctx->Scissor.Y,
-       ctx->Scissor.Width, ctx->Scissor.Height);
+       ctx->Scissor.ScissorArray[0].X,     ctx->Scissor.ScissorArray[0].Y,
+       ctx->Scissor.ScissorArray[0].Width, ctx->Scissor.ScissorArray[0].Height);
 
    if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
-      x1 = ctx->Scissor.X;
-      y1 = ctx->DrawBuffer->Height - (ctx->Scissor.Y + ctx->Scissor.Height);
-      x2 = ctx->Scissor.X + ctx->Scissor.Width - 1;
-      y2 = y1 + ctx->Scissor.Height - 1;
+      x1 = ctx->Scissor.ScissorArray[0].X;
+      y1 = ctx->DrawBuffer->Height - (ctx->Scissor.ScissorArray[0].Y
+                                      + ctx->Scissor.ScissorArray[0].Height);
+      x2 = ctx->Scissor.ScissorArray[0].X
+         + ctx->Scissor.ScissorArray[0].Width - 1;
+      y2 = y1 + ctx->Scissor.ScissorArray[0].Height - 1;
       DBG("%s %d..%d,%d..%d (inverted)\n", __FUNCTION__, x1, x2, y1, y2);
    }
    else {
       /* FBO - not inverted
        */
-      x1 = ctx->Scissor.X;
-      y1 = ctx->Scissor.Y;
-      x2 = ctx->Scissor.X + ctx->Scissor.Width - 1;
-      y2 = ctx->Scissor.Y + ctx->Scissor.Height - 1;
+      x1 = ctx->Scissor.ScissorArray[0].X;
+      y1 = ctx->Scissor.ScissorArray[0].Y;
+      x2 = ctx->Scissor.ScissorArray[0].X
+         + ctx->Scissor.ScissorArray[0].Width - 1;
+      y2 = ctx->Scissor.ScissorArray[0].Y
+         + ctx->Scissor.ScissorArray[0].Height - 1;
       DBG("%s %d..%d,%d..%d (not inverted)\n", __FUNCTION__, x1, x2, y1, y2);
    }
 

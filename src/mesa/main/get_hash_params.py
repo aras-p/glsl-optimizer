@@ -30,7 +30,7 @@ descriptor=[
   [ "POLYGON_OFFSET_FILL", "CONTEXT_BOOL(Polygon.OffsetFill), NO_EXTRA" ],
   [ "RED_BITS", "BUFFER_INT(Visual.redBits), extra_new_buffers" ],
   [ "SCISSOR_BOX", "LOC_CUSTOM, TYPE_INT_4, 0, NO_EXTRA" ],
-  [ "SCISSOR_TEST", "CONTEXT_BOOL(Scissor.Enabled), NO_EXTRA" ],
+  [ "SCISSOR_TEST", "LOC_CUSTOM, TYPE_BOOLEAN, NO_OFFSET, NO_EXTRA" ],
   [ "STENCIL_BITS", "BUFFER_INT(Visual.stencilBits), extra_new_buffers" ],
   [ "STENCIL_CLEAR_VALUE", "CONTEXT_INT(Stencil.Clear), NO_EXTRA" ],
   [ "STENCIL_FAIL", "LOC_CUSTOM, TYPE_ENUM, NO_OFFSET, NO_EXTRA" ],

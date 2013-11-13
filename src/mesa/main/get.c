@@ -665,10 +665,14 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
 
    case GL_SCISSOR_BOX:
-      v->value_int_4[0] = ctx->Scissor.X;
-      v->value_int_4[1] = ctx->Scissor.Y;
-      v->value_int_4[2] = ctx->Scissor.Width;
-      v->value_int_4[3] = ctx->Scissor.Height;
+      v->value_int_4[0] = ctx->Scissor.ScissorArray[0].X;
+      v->value_int_4[1] = ctx->Scissor.ScissorArray[0].Y;
+      v->value_int_4[2] = ctx->Scissor.ScissorArray[0].Width;
+      v->value_int_4[3] = ctx->Scissor.ScissorArray[0].Height;
+      break;
+
+   case GL_SCISSOR_TEST:
+      v->value_bool = ctx->Scissor.EnableFlags & 1;
       break;
 
    case GL_LIST_INDEX:

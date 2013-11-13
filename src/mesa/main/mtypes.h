@@ -1009,11 +1009,15 @@ struct gl_polygon_attrib
 /**
  * Scissor attributes (GL_SCISSOR_BIT).
  */
-struct gl_scissor_attrib
+struct gl_scissor_rect
 {
-   GLboolean Enabled;		/**< Scissor test enabled? */
    GLint X, Y;			/**< Lower left corner of box */
    GLsizei Width, Height;	/**< Size of box */
+};
+struct gl_scissor_attrib
+{
+   GLbitfield EnableFlags;	/**< Scissor test enabled? */
+   struct gl_scissor_rect ScissorArray[MAX_VIEWPORTS];
 };
 
 

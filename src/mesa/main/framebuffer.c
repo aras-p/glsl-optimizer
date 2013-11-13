@@ -380,18 +380,19 @@ _mesa_update_draw_buffer_bounds(struct gl_context *ctx)
    buffer->_Xmax = buffer->Width;
    buffer->_Ymax = buffer->Height;
 
-   if (ctx->Scissor.Enabled) {
-      if (ctx->Scissor.X > buffer->_Xmin) {
-	 buffer->_Xmin = ctx->Scissor.X;
+   /* Default to the first scissor as that's always valid */
+   if (ctx->Scissor.EnableFlags & 1) {
+      if (ctx->Scissor.ScissorArray[0].X > buffer->_Xmin) {
+	 buffer->_Xmin = ctx->Scissor.ScissorArray[0].X;
       }
-      if (ctx->Scissor.Y > buffer->_Ymin) {
-	 buffer->_Ymin = ctx->Scissor.Y;
+      if (ctx->Scissor.ScissorArray[0].Y > buffer->_Ymin) {
+	 buffer->_Ymin = ctx->Scissor.ScissorArray[0].Y;
       }
-      if (ctx->Scissor.X + ctx->Scissor.Width < buffer->_Xmax) {
-	 buffer->_Xmax = ctx->Scissor.X + ctx->Scissor.Width;
+      if (ctx->Scissor.ScissorArray[0].X + ctx->Scissor.ScissorArray[0].Width < buffer->_Xmax) {
+	 buffer->_Xmax = ctx->Scissor.ScissorArray[0].X + ctx->Scissor.ScissorArray[0].Width;
       }
-      if (ctx->Scissor.Y + ctx->Scissor.Height < buffer->_Ymax) {
-	 buffer->_Ymax = ctx->Scissor.Y + ctx->Scissor.Height;
+      if (ctx->Scissor.ScissorArray[0].Y + ctx->Scissor.ScissorArray[0].Height < buffer->_Ymax) {
+	 buffer->_Ymax = ctx->Scissor.ScissorArray[0].Y + ctx->Scissor.ScissorArray[0].Height;
       }
       /* finally, check for empty region */
       if (buffer->_Xmin > buffer->_Xmax) {

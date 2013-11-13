@@ -61,7 +61,7 @@ _swrast_update_rasterflags( struct gl_context *ctx )
    if (ctx->Color.BlendEnabled)           rasterMask |= BLEND_BIT;
    if (ctx->Depth.Test)                   rasterMask |= DEPTH_BIT;
    if (swrast->_FogEnabled)               rasterMask |= FOG_BIT;
-   if (ctx->Scissor.Enabled)              rasterMask |= CLIP_BIT;
+   if (ctx->Scissor.EnableFlags)          rasterMask |= CLIP_BIT;
    if (ctx->Stencil._Enabled)             rasterMask |= STENCIL_BIT;
    for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
       if (!ctx->Color.ColorMask[i][0] ||

@@ -83,10 +83,10 @@ debug_mask(const char *name, GLbitfield mask)
 static bool
 noop_scissor(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
-   return ctx->Scissor.X <= 0 &&
-          ctx->Scissor.Y <= 0 &&
-          ctx->Scissor.Width >= fb->Width &&
-          ctx->Scissor.Height >= fb->Height;
+   return ctx->Scissor.ScissorArray[0].X <= 0 &&
+          ctx->Scissor.ScissorArray[0].Y <= 0 &&
+          ctx->Scissor.ScissorArray[0].Width >= fb->Width &&
+          ctx->Scissor.ScissorArray[0].Height >= fb->Height;
 }
 
 /**
@@ -121,7 +121,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
     * a previous clear had happened at a different clear value and resolve it
     * first.
     */
-   if (ctx->Scissor.Enabled && !noop_scissor(ctx, fb)) {
+   if (ctx->Scissor.EnableFlags && !noop_scissor(ctx, fb)) {
       perf_debug("Failed to fast clear depth due to scissor being enabled.  "
                  "Possible 5%% performance win if avoided.\n");
       return false;
@@ -218,7 +218,7 @@ brw_clear(struct gl_context *ctx, GLbitfield mask)
 {
    struct brw_context *brw = brw_context(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   bool partial_clear = ctx->Scissor.Enabled && !noop_scissor(ctx, fb);
+   bool partial_clear = ctx->Scissor.EnableFlags && !noop_scissor(ctx, fb);
 
    if (!_mesa_check_conditional_render(ctx))
       return;

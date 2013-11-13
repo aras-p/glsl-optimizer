@@ -105,8 +105,8 @@ void radeonSetCliprects(radeonContextPtr radeon)
 void radeonUpdateScissor( struct gl_context *ctx )
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
-	GLint x = ctx->Scissor.X, y = ctx->Scissor.Y;
-	GLsizei w = ctx->Scissor.Width, h = ctx->Scissor.Height;
+	GLint x = ctx->Scissor.ScissorArray[0].X, y = ctx->Scissor.ScissorArray[0].Y;
+	GLsizei w = ctx->Scissor.ScissorArray[0].Width, h = ctx->Scissor.ScissorArray[0].Height;
 	int x1, y1, x2, y2;
 	int min_x, min_y, max_x, max_y;
 
@@ -145,7 +145,7 @@ void radeonUpdateScissor( struct gl_context *ctx )
 void radeonScissor(struct gl_context *ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-	if (ctx->Scissor.Enabled) {
+	if (ctx->Scissor.EnableFlags) {
 		/* We don't pipeline cliprect changes */
 		radeon_firevertices(radeon);
 		radeonUpdateScissor(ctx);

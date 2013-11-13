@@ -364,11 +364,11 @@ clear_with_quad(struct gl_context *ctx, unsigned clear_buffers)
 static INLINE GLboolean
 is_scissor_enabled(struct gl_context *ctx, struct gl_renderbuffer *rb)
 {
-   return ctx->Scissor.Enabled &&
-          (ctx->Scissor.X > 0 ||
-           ctx->Scissor.Y > 0 ||
-           (unsigned) ctx->Scissor.Width < rb->Width ||
-           (unsigned) ctx->Scissor.Height < rb->Height);
+   return (ctx->Scissor.EnableFlags & 1) &&
+          (ctx->Scissor.ScissorArray[0].X > 0 ||
+           ctx->Scissor.ScissorArray[0].Y > 0 ||
+           (unsigned) ctx->Scissor.ScissorArray[0].Width < rb->Width ||
+           (unsigned) ctx->Scissor.ScissorArray[0].Height < rb->Height);
 }
 
 
