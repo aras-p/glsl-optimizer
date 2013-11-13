@@ -42,8 +42,6 @@ shading_language_version(struct gl_context *ctx)
    case API_OPENGL_COMPAT:
    case API_OPENGL_CORE:
       switch (ctx->Const.GLSLVersion) {
-      case 110:
-         return (const GLubyte *) "1.10";
       case 120:
          return (const GLubyte *) "1.20";
       case 130:

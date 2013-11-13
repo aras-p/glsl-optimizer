@@ -224,7 +224,6 @@ compute_version(struct gl_context *ctx)
 			      (ctx->Extensions.EXT_stencil_two_side
 			       || ctx->Extensions.ATI_separate_stencil));
    const GLboolean ver_2_1 = (ver_2_0 &&
-                              ctx->Const.GLSLVersion >= 120 &&
                               ctx->Extensions.EXT_pixel_buffer_object &&
                               ctx->Extensions.EXT_texture_sRGB);
    const GLboolean ver_3_0 = (ver_2_1 &&
