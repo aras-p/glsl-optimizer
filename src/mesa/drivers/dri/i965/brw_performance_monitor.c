@@ -71,10 +71,18 @@ struct brw_perf_monitor_object
     */
    drm_intel_bo *oa_bo;
 
+   /** Indexes into bookend_bo (snapshot numbers) for various segments. */
+   int oa_head_end;
+   int oa_middle_start;
+   int oa_tail_start;
+
    /**
     * Storage for OA results accumulated so far.
     *
     * An array indexed by the counter ID in the OA_COUNTERS group.
+    *
+    * When we run out of space in bookend_bo, we compute the results so far
+    * and add them to the value stored here.  Then, we can discard bookend_bo.
     */
    uint32_t *oa_results;
 
@@ -517,15 +525,29 @@ static GLboolean brw_is_perf_monitor_result_available(struct gl_context *, struc
 static void
 dump_perf_monitor_callback(GLuint name, void *monitor_void, void *brw_void)
 {
+   struct brw_context *brw = brw_void;
    struct gl_context *ctx = brw_void;
    struct gl_perf_monitor_object *m = monitor_void;
    struct brw_perf_monitor_object *monitor = monitor_void;
 
-   DBG("%4d  %-7s %-6s %-11s  %-9s\n",
+   const char *resolved = "";
+   for (int i = 0; i < brw->perfmon.unresolved_elements; i++) {
+      if (brw->perfmon.unresolved[i] == monitor) {
+         resolved = "Unresolved";
+         break;
+      }
+   }
+
+   DBG("%4d  %-7s %-6s %-10s %-11s <%3d, %3d, %3d>  %-6s %-9s\n",
        name,
        m->Active ? "Active" : "",
        m->Ended ? "Ended" : "",
+       resolved,
        brw_is_perf_monitor_result_available(ctx, m) ? "Available" : "",
+       monitor->oa_head_end,
+       monitor->oa_middle_start,
+       monitor->oa_tail_start,
+       monitor->oa_bo ? "OA BO" : "",
        monitor->pipeline_stats_bo ? "Stats BO" : "");
 }
 
@@ -727,6 +749,72 @@ emit_mi_report_perf_count(struct brw_context *brw,
 }
 
 /**
+ * Add a monitor to the global list of "unresolved monitors."
+ *
+ * Monitors are "unresolved" if they refer to OA counter snapshots in
+ * bookend_bo.  Results (even partial ones) must be gathered for all
+ * unresolved monitors before it's safe to discard bookend_bo.
+ */
+static void
+add_to_unresolved_monitor_list(struct brw_context *brw,
+                               struct brw_perf_monitor_object *monitor)
+{
+   if (brw->perfmon.unresolved_elements >=
+       brw->perfmon.unresolved_array_size) {
+      brw->perfmon.unresolved_array_size *= 2;
+      brw->perfmon.unresolved = reralloc(brw, brw->perfmon.unresolved,
+                                         struct brw_perf_monitor_object *,
+                                         brw->perfmon.unresolved_array_size);
+   }
+
+   brw->perfmon.unresolved[brw->perfmon.unresolved_elements++] = monitor;
+}
+
+/**
+ * If possible, throw away the contents of bookend BO.
+ *
+ * When all monitoring stops, and no monitors need data from bookend_bo to
+ * compute results, we can discard it and start writing snapshots at the
+ * beginning again.  This helps reduce the amount of buffer wraparound.
+ */
+static void
+clean_bookend_bo(struct brw_context *brw)
+{
+   if (brw->perfmon.unresolved_elements == 0) {
+      DBG("***Resetting bookend snapshots to 0\n");
+      brw->perfmon.bookend_snapshots = 0;
+   }
+}
+
+/**
+ * Remove a monitor from the global list of "unresolved monitors."
+ *
+ * This can happen when:
+ * - We finish computing a completed monitor's results.
+ * - We discard unwanted monitor results.
+ * - A monitor's results can be computed without relying on bookend_bo.
+ */
+static void
+drop_from_unresolved_monitor_list(struct brw_context *brw,
+                                  struct brw_perf_monitor_object *monitor)
+{
+   for (int i = 0; i < brw->perfmon.unresolved_elements; i++) {
+      if (brw->perfmon.unresolved[i] == monitor) {
+         int last_elt = --brw->perfmon.unresolved_elements;
+
+         if (i == last_elt) {
+            brw->perfmon.unresolved[i] = NULL;
+         } else {
+            brw->perfmon.unresolved[i] = brw->perfmon.unresolved[last_elt];
+         }
+
+         clean_bookend_bo(brw);
+         return;
+      }
+   }
+}
+
+/**
  * Given pointers to starting and ending OA snapshots, add the deltas for each
  * counter to the results.
  */
@@ -768,17 +856,40 @@ add_deltas(struct brw_context *brw,
  *
  * Monitoring can start or stop at any time, likely at some point mid-batch.
  * We write snapshots for both events, storing them in monitor->oa_bo.
+ *
+ * Ideally, we would simply subtract those two snapshots to obtain the final
+ * counter results.  Unfortunately, our hardware doesn't preserve their values
+ * across context switches or GPU sleep states.  In order to support multiple
+ * concurrent OA clients, as well as reliable data across power management,
+ * we have to take snapshots at the start and end of batches as well.
+ *
+ * This results in a three-part sequence of (start, end) intervals:
+ * - The "head" is from the BeginPerfMonitor snapshot to the end of the first
+ *   batchbuffer.
+ * - The "middle" is a series of (batch start, batch end) snapshots which
+ *   bookend any batchbuffers between the ones which start/end monitoring.
+ * - The "tail" is from the start of the last batch where monitoring was
+ *   active to the EndPerfMonitor snapshot.
+ *
+ * Due to wrapping in the bookend BO, we may have to accumulate partial results.
+ * If so, we handle the "head" and any "middle" results so far.  When monitoring
+ * eventually ends, we handle additional "middle" batches and the "tail."
  */
 static void
 gather_oa_results(struct brw_context *brw,
-                  struct brw_perf_monitor_object *monitor)
+                  struct brw_perf_monitor_object *monitor,
+                  uint32_t *bookend_buffer)
 {
+   struct gl_perf_monitor_object *m = &monitor->base;
    assert(monitor->oa_bo != NULL);
 
    drm_intel_bo_map(monitor->oa_bo, false);
    uint32_t *monitor_buffer = monitor->oa_bo->virtual;
 
-   if (true) { /* if only it actually were! */
+   /* If monitoring was entirely contained within a single batch, then the
+    * bookend BO is irrelevant.  Just subtract monitor->bo's two snapshots.
+    */
+   if (monitor->oa_middle_start == -1) {
       add_deltas(brw, monitor,
                  monitor_buffer,
                  monitor_buffer + (SECOND_SNAPSHOT_OFFSET_IN_BYTES /
@@ -786,6 +897,148 @@ gather_oa_results(struct brw_context *brw,
       drm_intel_bo_unmap(monitor->oa_bo);
       return;
    }
+
+   const int snapshot_size = brw->perfmon.entries_per_oa_snapshot;
+
+   /* First, add the contributions from the "head" interval:
+    * (snapshot taken at BeginPerfMonitor time,
+    *  snapshot taken at the end of the first batch after monitoring began)
+    */
+   if (monitor->oa_head_end != -1) {
+      assert(monitor->oa_head_end < brw->perfmon.bookend_snapshots);
+      add_deltas(brw, monitor,
+                 monitor_buffer,
+                 bookend_buffer + snapshot_size * monitor->oa_head_end);
+
+      /* Make sure we don't count the "head" again in the future. */
+      monitor->oa_head_end = -1;
+   }
+
+   /* Next, count the contributions from the "middle" batches.  These are
+    * (batch begin, batch end) deltas while monitoring was active.
+    */
+   int last_snapshot;
+   if (m->Ended)
+      last_snapshot = monitor->oa_tail_start;
+   else
+      last_snapshot = brw->perfmon.bookend_snapshots;
+
+   for (int s = monitor->oa_middle_start; s < last_snapshot; s += 2) {
+      add_deltas(brw, monitor,
+                 bookend_buffer + snapshot_size * s,
+                 bookend_buffer + snapshot_size * (s + 1));
+   }
+
+   /* Finally, if the monitor has ended, we need to count the contributions of
+    * the "tail" interval:
+    * (start of the batch where monitoring ended, EndPerfMonitor snapshot)
+    */
+   if (m->Ended) {
+      assert(monitor->oa_tail_start != -1);
+      add_deltas(brw, monitor,
+                 bookend_buffer + snapshot_size * monitor->oa_tail_start,
+                 monitor_buffer + (SECOND_SNAPSHOT_OFFSET_IN_BYTES /
+                                   sizeof(uint32_t)));
+   }
+
+   drm_intel_bo_unmap(monitor->oa_bo);
+
+   /* If the monitor has ended, then we've gathered all the results, and
+    * can free the monitor's OA BO.
+    */
+   if (m->Ended) {
+      drm_intel_bo_unreference(monitor->oa_bo);
+      monitor->oa_bo = NULL;
+
+      /* The monitor's OA result is now resolved. */
+      DBG("Marking %d resolved - results gathered\n", m->Name);
+      drop_from_unresolved_monitor_list(brw, monitor);
+   }
+}
+
+/**
+ * Handle running out of space in the bookend BO.
+ *
+ * When we run out of space in the bookend BO, we need to gather up partial
+ * results for every unresolved monitor.  This allows us to free the snapshot
+ * data in bookend_bo, freeing up the space for reuse.  We call this "wrapping."
+ *
+ * This will completely compute the result for any unresolved monitors that
+ * have ended.
+ */
+static void
+wrap_bookend_bo(struct brw_context *brw)
+{
+   DBG("****Wrap bookend BO****\n");
+   /* Note that wrapping will only occur at the start of a batch, since that's
+    * where we reserve space.  So the current batch won't reference bookend_bo
+    * or any monitor BOs.  This means we don't need to worry about
+    * synchronization.
+    *
+    * Also, EndPerfMonitor guarantees that only monitors which span multiple
+    * batches exist in the unresolved monitor list.
+    */
+   assert(brw->perfmon.oa_users > 0);
+
+   drm_intel_bo_map(brw->perfmon.bookend_bo, false);
+   uint32_t *bookend_buffer = brw->perfmon.bookend_bo->virtual;
+   for (int i = 0; i < brw->perfmon.unresolved_elements; i++) {
+      struct brw_perf_monitor_object *monitor = brw->perfmon.unresolved[i];
+      struct gl_perf_monitor_object *m = &monitor->base;
+
+      gather_oa_results(brw, monitor, bookend_buffer);
+
+      if (m->Ended) {
+         /* gather_oa_results() dropped the monitor from the unresolved list,
+          * throwing our indices off by one.
+          */
+         --i;
+      } else {
+         /* When we create the new bookend_bo, snapshot #0 will be the
+          * beginning of another "middle" BO.
+          */
+         monitor->oa_middle_start = 0;
+         assert(monitor->oa_head_end == -1);
+         assert(monitor->oa_tail_start == -1);
+      }
+   }
+   drm_intel_bo_unmap(brw->perfmon.bookend_bo);
+
+   brw->perfmon.bookend_snapshots = 0;
+}
+
+/* This is fairly arbitrary; the trade off is memory usage vs. extra overhead
+ * from wrapping.  On Gen7, 32768 should be enough for for 128 snapshots before
+ * wrapping (since each is 256 bytes).
+ */
+#define BOOKEND_BO_SIZE_BYTES 32768
+
+/**
+ * Check whether bookend_bo has space for a given number of snapshots.
+ */
+static bool
+has_space_for_bookend_snapshots(struct brw_context *brw, int snapshots)
+{
+   int snapshot_bytes = brw->perfmon.entries_per_oa_snapshot * sizeof(uint32_t);
+
+   /* There are brw->perfmon.bookend_snapshots - 1 existing snapshots. */
+   int total_snapshots = (brw->perfmon.bookend_snapshots - 1) + snapshots;
+
+   return total_snapshots * snapshot_bytes < BOOKEND_BO_SIZE_BYTES;
+}
+
+/**
+ * Write an OA counter snapshot to bookend_bo.
+ */
+static void
+emit_bookend_snapshot(struct brw_context *brw)
+{
+   int snapshot_bytes = brw->perfmon.entries_per_oa_snapshot * sizeof(uint32_t);
+   int offset_in_bytes = brw->perfmon.bookend_snapshots * snapshot_bytes;
+
+   emit_mi_report_perf_count(brw, brw->perfmon.bookend_bo, offset_in_bytes,
+                             REPORT_ID);
+   ++brw->perfmon.bookend_snapshots;
 }
 
 /******************************************************************************/
@@ -801,6 +1054,18 @@ reinitialize_perf_monitor(struct brw_context *brw,
       drm_intel_bo_unreference(monitor->oa_bo);
       monitor->oa_bo = NULL;
    }
+
+   /* Since the results are now invalid, we don't need to hold on to any
+    * snapshots in bookend_bo.  The monitor is effectively "resolved."
+    */
+   drop_from_unresolved_monitor_list(brw, monitor);
+
+   monitor->oa_head_end = -1;
+   monitor->oa_middle_start = -1;
+   monitor->oa_tail_start = -1;
+
+   free(monitor->oa_results);
+   monitor->oa_results = NULL;
 
    if (monitor->pipeline_stats_bo) {
       drm_intel_bo_unreference(monitor->pipeline_stats_bo);
@@ -826,6 +1091,16 @@ brw_begin_perf_monitor(struct gl_context *ctx,
    reinitialize_perf_monitor(brw, monitor);
 
    if (monitor_needs_oa(brw, m)) {
+      /* If the global OA bookend BO doesn't exist, allocate it.  This should
+       * only happen once, but we delay until BeginPerfMonitor time to avoid
+       * wasting memory for contexts that don't use performance monitors.
+       */
+      if (!brw->perfmon.bookend_bo) {
+         brw->perfmon.bookend_bo = drm_intel_bo_alloc(brw->bufmgr,
+                                                      "OA bookend BO",
+                                                      BOOKEND_BO_SIZE_BYTES, 64);
+      }
+
       monitor->oa_bo =
          drm_intel_bo_alloc(brw->bufmgr, "perf. monitor OA bo", 4096, 64);
 #ifdef DEBUG
@@ -834,6 +1109,10 @@ brw_begin_perf_monitor(struct gl_context *ctx,
       memset((char *) monitor->oa_bo->virtual, 0xff, 4096);
       drm_intel_bo_unmap(monitor->oa_bo);
 #endif
+
+      /* Allocate storage for accumulated OA counter values. */
+      monitor->oa_results =
+         calloc(brw->perfmon.entries_per_oa_snapshot, sizeof(uint32_t));
 
       /* If the OA counters aren't already on, enable them. */
       if (brw->perfmon.oa_users == 0) {
@@ -845,6 +1124,13 @@ brw_begin_perf_monitor(struct gl_context *ctx,
 
       /* Take a starting OA counter snapshot. */
       emit_mi_report_perf_count(brw, monitor->oa_bo, 0, REPORT_ID);
+
+      monitor->oa_head_end = brw->perfmon.bookend_snapshots;
+      monitor->oa_middle_start = brw->perfmon.bookend_snapshots + 1;
+      monitor->oa_tail_start = -1;
+
+      /* Add the monitor to the unresolved list. */
+      add_to_unresolved_monitor_list(brw, monitor);
 
       ++brw->perfmon.oa_users;
    }
@@ -881,6 +1167,28 @@ brw_end_perf_monitor(struct gl_context *ctx,
 
       if (brw->perfmon.oa_users == 0)
          stop_oa_counters(brw);
+
+      if (monitor->oa_head_end == brw->perfmon.bookend_snapshots) {
+         assert(monitor->oa_head_end != -1);
+         /* We never actually wrote the snapshot for the end of the first batch
+          * after BeginPerfMonitor.  This means that monitoring was contained
+          * entirely within a single batch, so we can ignore bookend_bo and
+          * just compare the monitor's begin/end snapshots directly.
+          */
+         monitor->oa_head_end = -1;
+         monitor->oa_middle_start = -1;
+         monitor->oa_tail_start = -1;
+
+         /* We can also mark it resolved since it won't depend on bookend_bo. */
+         DBG("Marking %d resolved - entirely in one batch\n", m->Name);
+         drop_from_unresolved_monitor_list(brw, monitor);
+      } else {
+         /* We've written at least one batch end snapshot, so the monitoring
+          * spanned multiple batches.  Mark which snapshot corresponds to the
+          * start of the current batch.
+          */
+         monitor->oa_tail_start = brw->perfmon.bookend_snapshots - 1;
+      }
    }
 
    if (monitor_needs_statistics_registers(brw, m)) {
@@ -962,9 +1270,24 @@ brw_get_perf_monitor_result(struct gl_context *ctx,
    GLsizei offset = 0;
 
    if (monitor_needs_oa(brw, m)) {
-      /* Gather up the results from the BO. */
+      /* Gather up the results from the BO, unless we already did due to the
+       * bookend BO wrapping.
+       */
       if (monitor->oa_bo) {
-         gather_oa_results(brw, monitor);
+         /* Since the result is available, all the necessary snapshots will
+          * have been written to the bookend BO.  If other monitors are
+          * active, the bookend BO may be busy or referenced by the current
+          * batch, but only for writing snapshots beyond oa_tail_start,
+          * which we don't care about.
+          *
+          * Using an unsynchronized mapping avoids stalling for an
+          * indeterminate amount of time.
+          */
+         drm_intel_gem_bo_map_unsynchronized(brw->perfmon.bookend_bo);
+
+         gather_oa_results(brw, monitor, brw->perfmon.bookend_bo->virtual);
+
+         drm_intel_bo_unmap(brw->perfmon.bookend_bo);
       }
 
       for (int i = 0; i < brw->perfmon.entries_per_oa_snapshot; i++) {
@@ -981,6 +1304,8 @@ brw_get_perf_monitor_result(struct gl_context *ctx,
          data[offset++] = counter;
          data[offset++] = monitor->oa_results[i];
       }
+
+      clean_bookend_bo(brw);
    }
 
    if (monitor_needs_statistics_registers(brw, m)) {
@@ -1030,7 +1355,8 @@ brw_delete_perf_monitor(struct gl_context *ctx, struct gl_perf_monitor_object *m
 /**
  * Called at the start of every render ring batch.
  *
- * Enable the OA counters if required.
+ * Enable OA counters and emit the "start of batchbuffer" bookend OA snapshot.
+ * Since it's a new batch, there will be plenty of space for the commands.
  */
 void
 brw_perf_monitor_new_batch(struct brw_context *brw)
@@ -1043,12 +1369,24 @@ brw_perf_monitor_new_batch(struct brw_context *brw)
 
    if (brw->gen >= 6)
       start_oa_counters(brw);
+
+   /* Make sure bookend_bo has enough space for a pair of snapshots.
+    * If not, "wrap" the BO: gather up any results so far, and start from
+    * the beginning of the buffer.  Reserving a pair guarantees that wrapping
+    * will only happen at the beginning of a batch, where it's safe to map BOs
+    * (as the batch is empty and can't refer to any of them yet).
+    */
+   if (!has_space_for_bookend_snapshots(brw, 2))
+      wrap_bookend_bo(brw);
+
+   DBG("Bookend Begin Snapshot (%d)\n", brw->perfmon.bookend_snapshots);
+   emit_bookend_snapshot(brw);
 }
 
 /**
  * Called at the end of every render ring batch.
  *
- * Disable the OA counters.
+ * Emit the "end of batchbuffer" bookend OA snapshot and disable the counters.
  *
  * This relies on there being enough space in BATCH_RESERVED.
  */
@@ -1059,6 +1397,13 @@ brw_perf_monitor_finish_batch(struct brw_context *brw)
 
    if (brw->perfmon.oa_users == 0)
       return;
+
+   DBG("Bookend End Snapshot (%d)\n", brw->perfmon.bookend_snapshots);
+
+   /* Not safe to wrap; should've reserved space already. */
+   assert(has_space_for_bookend_snapshots(brw, 1));
+
+   emit_bookend_snapshot(brw);
 
    if (brw->gen >= 6)
       stop_oa_counters(brw);
@@ -1097,4 +1442,9 @@ brw_init_performance_monitors(struct brw_context *brw)
       brw->perfmon.entries_per_oa_snapshot = ARRAY_SIZE(gen7_oa_snapshot_layout);
       brw->perfmon.statistics_registers = gen7_statistics_register_addresses;
    }
+
+   brw->perfmon.unresolved =
+      ralloc_array(brw, struct brw_perf_monitor_object *, 1);
+   brw->perfmon.unresolved_elements = 0;
+   brw->perfmon.unresolved_array_size = 1;
 }

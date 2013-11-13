@@ -1407,6 +1407,26 @@ struct brw_context
       unsigned oa_users;
 
       /**
+       * A buffer object storing OA counter snapshots taken at the start and
+       * end of each batch (creating "bookends" around the batch).
+       */
+      drm_intel_bo *bookend_bo;
+
+      /** The number of snapshots written to bookend_bo. */
+      int bookend_snapshots;
+
+      /**
+       * An array of monitors whose results haven't yet been assembled based on
+       * the data in buffer objects.
+       *
+       * These may be active, or have already ended.  However, the results
+       * have not been requested.
+       */
+      struct brw_perf_monitor_object **unresolved;
+      int unresolved_elements;
+      int unresolved_array_size;
+
+      /**
        * Mapping from a uint32_t offset within an OA snapshot to the ID of
        * the counter which MI_REPORT_PERF_COUNT stores there.
        */

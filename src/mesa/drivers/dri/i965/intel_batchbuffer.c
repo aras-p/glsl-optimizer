@@ -188,7 +188,7 @@ intel_batchbuffer_emit_render_ring_prelude(struct brw_context *brw)
     */
    brw_emit_query_begin(brw);
 
-   /* We may also need to enable OA counters. */
+   /* We may also need to enable and snapshot OA counters. */
    brw_perf_monitor_new_batch(brw);
 }
 
@@ -250,7 +250,7 @@ brw_finish_batch(struct brw_context *brw)
     */
    brw_emit_query_end(brw);
 
-   /* We may also need to disable OA counters. */
+   /* We may also need to snapshot and disable OA counters. */
    if (brw->batch.ring == RENDER_RING)
       brw_perf_monitor_finish_batch(brw);
 
