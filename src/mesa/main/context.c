@@ -494,7 +494,7 @@ init_program_limits(struct gl_context *ctx, GLenum type,
       prog->MaxParameters = MAX_VERTEX_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_VERTEX_GENERIC_ATTRIBS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
-      prog->MaxUniformComponents = MAX_GEOMETRY_UNIFORM_COMPONENTS;
+      prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
       prog->MaxInputComponents = 16 * 4; /* old limit not to break tnl and swrast */
       prog->MaxOutputComponents = 16 * 4; /* old limit not to break tnl and swrast */
       break;
