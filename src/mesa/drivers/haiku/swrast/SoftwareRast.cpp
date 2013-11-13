@@ -72,7 +72,6 @@ MesaSoftwareRast::MesaSoftwareRast(BGLView* view, ulong options,
 	fDirectModeEnabled(false),
 	fInfo(NULL),
 	fInfoLocker("info locker"),
-	fContext(NULL),
 	fVisual(NULL),
 	fFrameBuffer(NULL),
 	fFrontRenderBuffer(NULL),
@@ -114,34 +113,27 @@ MesaSoftwareRast::MesaSoftwareRast(BGLView* view, ulong options,
 	functions.Flush = _Flush;
 
 	// create core context
-	fContext = _mesa_create_context(API_OPENGL_COMPAT, fVisual, NULL,
+	// We inherit gl_context to this class
+	_mesa_initialize_context(this, API_OPENGL_COMPAT, fVisual, NULL,
 		&functions);
 
-	if (!fContext) {
-		ERROR("%s: Failed to create Mesa context!\n", __func__);
-		_mesa_destroy_visual(fVisual);
-		return;
-	}
-
-	fContext->DriverCtx = (void*)this;
-
 	/* Initialize the software rasterizer and helper modules. */
-	_swrast_CreateContext(fContext);
-	_vbo_CreateContext(fContext);
-	_tnl_CreateContext(fContext);
-	_swsetup_CreateContext(fContext);
-	_swsetup_Wakeup(fContext);
+	_swrast_CreateContext(this);
+	_vbo_CreateContext(this);
+	_tnl_CreateContext(this);
+	_swsetup_CreateContext(this);
+	_swsetup_Wakeup(this);
 
 	// Use default TCL pipeline
-	TNL_CONTEXT(fContext)->Driver.RunPipeline = _tnl_run_pipeline;
+	TNL_CONTEXT(this)->Driver.RunPipeline = _tnl_run_pipeline;
 
-	_mesa_meta_init(fContext);
-	_mesa_enable_sw_extensions(fContext);
+	_mesa_meta_init(this);
+	_mesa_enable_sw_extensions(this);
 
-	_mesa_compute_version(fContext);
+	_mesa_compute_version(this);
 
-	_mesa_initialize_dispatch_tables(fContext);
-	_mesa_initialize_vbo_vtxfmt(fContext);
+	_mesa_initialize_dispatch_tables(this);
+	_mesa_initialize_vbo_vtxfmt(this);
 
 	// create core framebuffer
 	fFrameBuffer = _mesa_create_framebuffer(fVisual);
@@ -199,13 +191,13 @@ MesaSoftwareRast::MesaSoftwareRast(BGLView* view, ulong options,
 MesaSoftwareRast::~MesaSoftwareRast()
 {
 	CALLED();
-	_swsetup_DestroyContext(fContext);
-	_swrast_DestroyContext(fContext);
-	_tnl_DestroyContext(fContext);
-	_vbo_DestroyContext(fContext);
+	_swsetup_DestroyContext(this);
+	_swrast_DestroyContext(this);
+	_tnl_DestroyContext(this);
+	_vbo_DestroyContext(this);
 	_mesa_destroy_visual(fVisual);
 	_mesa_destroy_framebuffer(fFrameBuffer);
-	_mesa_destroy_context(fContext);
+	_mesa_destroy_context(this);
 
 	free(fInfo);
 	free(fFrameBuffer);
@@ -220,7 +212,7 @@ MesaSoftwareRast::LockGL()
 	CALLED();
 	BGLRenderer::LockGL();
 
-	_mesa_make_current(fContext, fFrameBuffer, fFrameBuffer);
+	_mesa_make_current(this, fFrameBuffer, fFrameBuffer);
 
 	color_space colorSpace = BScreen(GLView()->Window()).ColorSpace();
 
@@ -250,7 +242,7 @@ void
 MesaSoftwareRast::UnlockGL()
 {
 	CALLED();
-	_mesa_make_current(fContext, NULL, NULL);
+	_mesa_make_current(this, NULL, NULL);
 	BGLRenderer::UnlockGL();
 }
 
@@ -264,7 +256,7 @@ MesaSoftwareRast::SwapBuffers(bool VSync)
 		return;
 
 	if (fVisual->doubleBufferMode)
-		_mesa_notifySwapBuffers(fContext);
+		_mesa_notifySwapBuffers(this);
 
 	if (!fDirectModeEnabled || fInfo == NULL) {
 		if (GLView()->LockLooperWithTimeout(1000) == B_OK) {
@@ -416,7 +408,7 @@ MesaSoftwareRast::_CheckResize(GLuint newWidth, GLuint newHeight)
 		return;
 	}
 
-	_mesa_resize_framebuffer(fContext, fFrameBuffer, newWidth, newHeight);
+	_mesa_resize_framebuffer(this, fFrameBuffer, newWidth, newHeight);
 	fHeight = newHeight;
 	fWidth = newWidth;
 
@@ -546,17 +538,15 @@ void
 MesaSoftwareRast::_Flush(gl_context* ctx)
 {
 	CALLED();
-	// TODO: We may want to add the void* DriverCtx back into mtypes.h for
-	// gl_context someday...
-	#if 0
-	MesaSoftwareRast* driverContext = (MesaSoftwareRast*)ctx->DriverCtx;
+	MesaSoftwareRast* driverContext = static_cast<MesaSoftwareRast*>(ctx);
+
+	//MesaSoftwareRast* driverContext = (MesaSoftwareRast*)ctx->DriverCtx;
 	if ((driverContext->fOptions & BGL_DOUBLE) == 0) {
 		// TODO: SwapBuffers() can call _CopyToDirect(), which should
 		// be always called with with the BGLView drawlocked.
 		// This is not always the case if called from here.
 		driverContext->SwapBuffers();
 	}
-	#endif
 }
 
 

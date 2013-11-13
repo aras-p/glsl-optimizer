@@ -24,7 +24,7 @@ extern "C" {
 }
 
 
-class MesaSoftwareRast : public BGLRenderer {
+class MesaSoftwareRast : public BGLRenderer, public gl_context {
 public:
 							MesaSoftwareRast(BGLView* view,
 								ulong bgl_options,
@@ -79,7 +79,6 @@ private:
 			BLocker			fInfoLocker;
 			ulong			fOptions;
 
-			gl_context*		fContext;
 			gl_config*		fVisual;
 
 			struct gl_framebuffer* fFrameBuffer;
