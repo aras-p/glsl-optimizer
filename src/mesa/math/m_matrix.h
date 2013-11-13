@@ -123,7 +123,7 @@ _math_matrix_frustum( GLmatrix *mat,
 
 extern void
 _math_matrix_viewport(GLmatrix *m, GLint x, GLint y, GLint width, GLint height,
-                      GLfloat zNear, GLfloat zFar, GLfloat depthMax);
+                      GLdouble zNear, GLdouble zFar, GLdouble depthMax);
 
 extern void
 _math_matrix_set_identity( GLmatrix *dest );

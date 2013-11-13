@@ -1434,7 +1434,7 @@ struct gl_viewport_attrib
 {
    GLint X, Y;			/**< position */
    GLsizei Width, Height;	/**< size */
-   GLfloat Near, Far;		/**< Depth buffer range */
+   GLdouble Near, Far;		/**< Depth buffer range */
    GLmatrix _WindowMap;		/**< Mapping transformation as a matrix. */
 };
 

@@ -1111,14 +1111,14 @@ _math_matrix_translate( GLmatrix *mat, GLfloat x, GLfloat y, GLfloat z )
  */
 void
 _math_matrix_viewport(GLmatrix *m, GLint x, GLint y, GLint width, GLint height,
-                      GLfloat zNear, GLfloat zFar, GLfloat depthMax)
+                      GLdouble zNear, GLdouble zFar, GLdouble depthMax)
 {
    m->m[MAT_SX] = (GLfloat) width / 2.0F;
    m->m[MAT_TX] = m->m[MAT_SX] + x;
    m->m[MAT_SY] = (GLfloat) height / 2.0F;
    m->m[MAT_TY] = m->m[MAT_SY] + y;
-   m->m[MAT_SZ] = depthMax * ((zFar - zNear) / 2.0F);
-   m->m[MAT_TZ] = depthMax * ((zFar - zNear) / 2.0F + zNear);
+   m->m[MAT_SZ] = (GLfloat) (depthMax * ((zFar - zNear) / 2.0));
+   m->m[MAT_TZ] = (GLfloat) (depthMax * ((zFar - zNear) / 2.0 + zNear));
    m->flags = MAT_FLAG_GENERAL_SCALE | MAT_FLAG_TRANSLATION;
    m->type = MATRIX_3D_NO_ROT;
 }

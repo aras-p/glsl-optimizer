@@ -697,6 +697,11 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       v->value_int_4[3] = ctx->Viewport.Height;
       break;
 
+   case GL_DEPTH_RANGE:
+      v->value_double_2[0] = ctx->Viewport.Near;
+      v->value_double_2[1] = ctx->Viewport.Far;
+      break;
+
    case GL_ACTIVE_STENCIL_FACE_EXT:
       v->value_enum = ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT;
       break;

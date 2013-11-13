@@ -11,7 +11,7 @@ descriptor=[
   [ "DEPTH_BITS", "BUFFER_INT(Visual.depthBits), extra_new_buffers" ],
   [ "DEPTH_CLEAR_VALUE", "CONTEXT_FIELD(Depth.Clear, TYPE_DOUBLEN), NO_EXTRA" ],
   [ "DEPTH_FUNC", "CONTEXT_ENUM(Depth.Func), NO_EXTRA" ],
-  [ "DEPTH_RANGE", "CONTEXT_FIELD(Viewport.Near, TYPE_FLOATN_2), NO_EXTRA" ],
+  [ "DEPTH_RANGE", "LOC_CUSTOM, TYPE_DOUBLEN_2, 0, NO_EXTRA" ],
   [ "DEPTH_TEST", "CONTEXT_BOOL(Depth.Test), NO_EXTRA" ],
   [ "DEPTH_WRITEMASK", "CONTEXT_BOOL(Depth.Mask), NO_EXTRA" ],
   [ "DITHER", "CONTEXT_BOOL(Color.DitherFlag), NO_EXTRA" ],
