@@ -691,15 +691,15 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
 
    case GL_VIEWPORT:
-      v->value_float_4[0] = ctx->Viewport.X;
-      v->value_float_4[1] = ctx->Viewport.Y;
-      v->value_float_4[2] = ctx->Viewport.Width;
-      v->value_float_4[3] = ctx->Viewport.Height;
+      v->value_float_4[0] = ctx->ViewportArray[0].X;
+      v->value_float_4[1] = ctx->ViewportArray[0].Y;
+      v->value_float_4[2] = ctx->ViewportArray[0].Width;
+      v->value_float_4[3] = ctx->ViewportArray[0].Height;
       break;
 
    case GL_DEPTH_RANGE:
-      v->value_double_2[0] = ctx->Viewport.Near;
-      v->value_double_2[1] = ctx->Viewport.Far;
+      v->value_double_2[0] = ctx->ViewportArray[0].Near;
+      v->value_double_2[1] = ctx->ViewportArray[0].Far;
       break;
 
    case GL_ACTIVE_STENCIL_FACE_EXT:

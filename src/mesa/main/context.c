@@ -594,6 +594,9 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.ViewportBounds.Min = 0;
    ctx->Const.ViewportBounds.Max = 0;
 
+   /* Driver must override if it supports ARB_viewport_array */
+   ctx->Const.MaxViewports = 1;
+
    /** GL_ARB_uniform_buffer_object */
    ctx->Const.MaxCombinedUniformBlocks = 36;
    ctx->Const.MaxUniformBufferBindings = 36;
@@ -1354,13 +1357,14 @@ _mesa_copy_context( const struct gl_context *src, struct gl_context *dst,
    }
    if (mask & GL_VIEWPORT_BIT) {
       /* Cannot use memcpy, because of pointers in GLmatrix _WindowMap */
-      dst->Viewport.X = src->Viewport.X;
-      dst->Viewport.Y = src->Viewport.Y;
-      dst->Viewport.Width = src->Viewport.Width;
-      dst->Viewport.Height = src->Viewport.Height;
-      dst->Viewport.Near = src->Viewport.Near;
-      dst->Viewport.Far = src->Viewport.Far;
-      _math_matrix_copy(&dst->Viewport._WindowMap, &src->Viewport._WindowMap);
+      dst->ViewportArray[0].X = src->ViewportArray[0].X;
+      dst->ViewportArray[0].Y = src->ViewportArray[0].Y;
+      dst->ViewportArray[0].Width = src->ViewportArray[0].Width;
+      dst->ViewportArray[0].Height = src->ViewportArray[0].Height;
+      dst->ViewportArray[0].Near = src->ViewportArray[0].Near;
+      dst->ViewportArray[0].Far = src->ViewportArray[0].Far;
+      _math_matrix_copy(&dst->ViewportArray[0]._WindowMap,
+                        &src->ViewportArray[0]._WindowMap);
    }
 
    /* XXX FIXME:  Call callbacks?

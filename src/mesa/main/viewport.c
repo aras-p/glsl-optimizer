@@ -78,10 +78,10 @@ _mesa_set_viewport(struct gl_context *ctx, GLint x, GLint y,
    width  = MIN2(width, (GLsizei) ctx->Const.MaxViewportWidth);
    height = MIN2(height, (GLsizei) ctx->Const.MaxViewportHeight);
 
-   ctx->Viewport.X = x;
-   ctx->Viewport.Width = width;
-   ctx->Viewport.Y = y;
-   ctx->Viewport.Height = height;
+   ctx->ViewportArray[0].X = x;
+   ctx->ViewportArray[0].Width = width;
+   ctx->ViewportArray[0].Y = y;
+   ctx->ViewportArray[0].Height = height;
    ctx->NewState |= _NEW_VIEWPORT;
 
 #if 1
@@ -89,10 +89,10 @@ _mesa_set_viewport(struct gl_context *ctx, GLint x, GLint y,
     * the WindowMap matrix being up to date in the driver's Viewport
     * and DepthRange functions.
     */
-   _math_matrix_viewport(&ctx->Viewport._WindowMap,
-                         ctx->Viewport.X, ctx->Viewport.Y,
-                         ctx->Viewport.Width, ctx->Viewport.Height,
-                         ctx->Viewport.Near, ctx->Viewport.Far,
+   _math_matrix_viewport(&ctx->ViewportArray[0]._WindowMap,
+                         ctx->ViewportArray[0].X, ctx->ViewportArray[0].Y,
+                         ctx->ViewportArray[0].Width, ctx->ViewportArray[0].Height,
+                         ctx->ViewportArray[0].Near, ctx->ViewportArray[0].Far,
                          ctx->DrawBuffer->_DepthMaxF);
 #endif
 
@@ -123,12 +123,12 @@ _mesa_DepthRange(GLclampd nearval, GLclampd farval)
    if (MESA_VERBOSE&VERBOSE_API)
       _mesa_debug(ctx, "glDepthRange %f %f\n", nearval, farval);
 
-   if (ctx->Viewport.Near == nearval &&
-       ctx->Viewport.Far == farval)
+   if (ctx->ViewportArray[0].Near == nearval &&
+       ctx->ViewportArray[0].Far == farval)
       return;
 
-   ctx->Viewport.Near = CLAMP(nearval, 0.0, 1.0);
-   ctx->Viewport.Far = CLAMP(farval, 0.0, 1.0);
+   ctx->ViewportArray[0].Near = CLAMP(nearval, 0.0, 1.0);
+   ctx->ViewportArray[0].Far = CLAMP(farval, 0.0, 1.0);
    ctx->NewState |= _NEW_VIEWPORT;
 
 #if 1
@@ -136,10 +136,10 @@ _mesa_DepthRange(GLclampd nearval, GLclampd farval)
     * the WindowMap matrix being up to date in the driver's Viewport
     * and DepthRange functions.
     */
-   _math_matrix_viewport(&ctx->Viewport._WindowMap,
-                         ctx->Viewport.X, ctx->Viewport.Y,
-                         ctx->Viewport.Width, ctx->Viewport.Height,
-                         ctx->Viewport.Near, ctx->Viewport.Far,
+   _math_matrix_viewport(&ctx->ViewportArray[0]._WindowMap,
+                         ctx->ViewportArray[0].X, ctx->ViewportArray[0].Y,
+                         ctx->ViewportArray[0].Width, ctx->ViewportArray[0].Height,
+                         ctx->ViewportArray[0].Near, ctx->ViewportArray[0].Far,
                          ctx->DrawBuffer->_DepthMaxF);
 #endif
 
@@ -163,15 +163,15 @@ void _mesa_init_viewport(struct gl_context *ctx)
    GLfloat depthMax = 65535.0F; /* sorf of arbitrary */
 
    /* Viewport group */
-   ctx->Viewport.X = 0;
-   ctx->Viewport.Y = 0;
-   ctx->Viewport.Width = 0;
-   ctx->Viewport.Height = 0;
-   ctx->Viewport.Near = 0.0;
-   ctx->Viewport.Far = 1.0;
-   _math_matrix_ctr(&ctx->Viewport._WindowMap);
+   ctx->ViewportArray[0].X = 0;
+   ctx->ViewportArray[0].Y = 0;
+   ctx->ViewportArray[0].Width = 0;
+   ctx->ViewportArray[0].Height = 0;
+   ctx->ViewportArray[0].Near = 0.0;
+   ctx->ViewportArray[0].Far = 1.0;
+   _math_matrix_ctr(&ctx->ViewportArray[0]._WindowMap);
 
-   _math_matrix_viewport(&ctx->Viewport._WindowMap, 0, 0, 0, 0,
+   _math_matrix_viewport(&ctx->ViewportArray[0]._WindowMap, 0, 0, 0, 0,
                          0.0F, 1.0F, depthMax);
 }
 
@@ -182,6 +182,6 @@ void _mesa_init_viewport(struct gl_context *ctx)
  */
 void _mesa_free_viewport_data(struct gl_context *ctx)
 {
-   _math_matrix_dtr(&ctx->Viewport._WindowMap);
+   _math_matrix_dtr(&ctx->ViewportArray[0]._WindowMap);
 }
 

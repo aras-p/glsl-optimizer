@@ -43,8 +43,8 @@ upload_clip_vp(struct brw_context *brw)
                         sizeof(*vp), 32, &brw->clip.vp_offset);
 
    const float maximum_post_clamp_delta = 4096;
-   float gbx = maximum_post_clamp_delta / ctx->Viewport.Width;
-   float gby = maximum_post_clamp_delta / ctx->Viewport.Height;
+   float gbx = maximum_post_clamp_delta / ctx->ViewportArray[0].Width;
+   float gby = maximum_post_clamp_delta / ctx->ViewportArray[0].Height;
 
    vp->xmin = -gbx;
    vp->xmax = gbx;
@@ -125,10 +125,10 @@ brw_upload_clip_unit(struct brw_context *brw)
    clip->clip5.userclip_must_clip = 1;
 
    /* enable guardband clipping if we can */
-   if (ctx->Viewport.X == 0 &&
-       ctx->Viewport.Y == 0 &&
-       ctx->Viewport.Width == (float) fb->Width &&
-       ctx->Viewport.Height == (float) fb->Height)
+   if (ctx->ViewportArray[0].X == 0 &&
+       ctx->ViewportArray[0].Y == 0 &&
+       ctx->ViewportArray[0].Width == (float) fb->Width &&
+       ctx->ViewportArray[0].Height == (float) fb->Height)
    {
       clip->clip5.guard_band_enable = 1;
       clip->clip6.clipper_viewport_state_ptr =

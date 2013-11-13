@@ -409,19 +409,19 @@ _tnl_RasterPos(struct gl_context *ctx, const GLfloat vObj[4])
       ndc[1] = clip[1] * d;
       ndc[2] = clip[2] * d;
       /* wincoord = viewport_mapping(ndc) */
-      ctx->Current.RasterPos[0] = (ndc[0] * ctx->Viewport._WindowMap.m[MAT_SX]
-                                   + ctx->Viewport._WindowMap.m[MAT_TX]);
-      ctx->Current.RasterPos[1] = (ndc[1] * ctx->Viewport._WindowMap.m[MAT_SY]
-                                   + ctx->Viewport._WindowMap.m[MAT_TY]);
-      ctx->Current.RasterPos[2] = (ndc[2] * ctx->Viewport._WindowMap.m[MAT_SZ]
-                                   + ctx->Viewport._WindowMap.m[MAT_TZ])
+      ctx->Current.RasterPos[0] = (ndc[0] * ctx->ViewportArray[0]._WindowMap.m[MAT_SX]
+                                   + ctx->ViewportArray[0]._WindowMap.m[MAT_TX]);
+      ctx->Current.RasterPos[1] = (ndc[1] * ctx->ViewportArray[0]._WindowMap.m[MAT_SY]
+                                   + ctx->ViewportArray[0]._WindowMap.m[MAT_TY]);
+      ctx->Current.RasterPos[2] = (ndc[2] * ctx->ViewportArray[0]._WindowMap.m[MAT_SZ]
+                                   + ctx->ViewportArray[0]._WindowMap.m[MAT_TZ])
                                   / ctx->DrawBuffer->_DepthMaxF;
       ctx->Current.RasterPos[3] = clip[3];
 
       if (ctx->Transform.DepthClamp) {
 	 ctx->Current.RasterPos[3] = CLAMP(ctx->Current.RasterPos[3],
-					   ctx->Viewport.Near,
-					   ctx->Viewport.Far);
+					   ctx->ViewportArray[0].Near,
+					   ctx->ViewportArray[0].Far);
       }
 
       /* compute raster distance */

@@ -140,7 +140,7 @@ get_scissors(struct gl_framebuffer *fb, int *x, int *y, int *w, int *h)
 static inline void
 get_viewport_scale(struct gl_context *ctx, float a[16])
 {
-	struct gl_viewport_attrib *vp = &ctx->Viewport;
+	struct gl_viewport_attrib *vp = &ctx->ViewportArray[0];
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 
 	a[MAT_SX] = (float)vp->Width / 2;
@@ -157,7 +157,7 @@ get_viewport_scale(struct gl_context *ctx, float a[16])
 static inline void
 get_viewport_translate(struct gl_context *ctx, float a[4])
 {
-	struct gl_viewport_attrib *vp = &ctx->Viewport;
+	struct gl_viewport_attrib *vp = &ctx->ViewportArray[0];
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 
 	a[0] = (float)vp->Width / 2 + vp->X;

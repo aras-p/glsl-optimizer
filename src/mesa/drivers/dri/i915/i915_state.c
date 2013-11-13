@@ -404,21 +404,21 @@ intelCalcViewport(struct gl_context * ctx)
 
    if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
       _math_matrix_viewport(&intel->ViewportMatrix,
-			    ctx->Viewport.X,
-			    ctx->DrawBuffer->Height - ctx->Viewport.Y,
-			    ctx->Viewport.Width,
-			    -ctx->Viewport.Height,
-			    ctx->Viewport.Near,
-			    ctx->Viewport.Far,
+			    ctx->ViewportArray[0].X,
+			    ctx->DrawBuffer->Height - ctx->ViewportArray[0].Y,
+			    ctx->ViewportArray[0].Width,
+			    -ctx->ViewportArray[0].Height,
+			    ctx->ViewportArray[0].Near,
+			    ctx->ViewportArray[0].Far,
 			    1.0);
    } else {
       _math_matrix_viewport(&intel->ViewportMatrix,
-			    ctx->Viewport.X,
-			    ctx->Viewport.Y,
-			    ctx->Viewport.Width,
-			    ctx->Viewport.Height,
-			    ctx->Viewport.Near,
-			    ctx->Viewport.Far,
+			    ctx->ViewportArray[0].X,
+			    ctx->ViewportArray[0].Y,
+			    ctx->ViewportArray[0].Width,
+			    ctx->ViewportArray[0].Height,
+			    ctx->ViewportArray[0].Near,
+			    ctx->ViewportArray[0].Far,
 			    1.0);
    }
 }

@@ -55,8 +55,8 @@ gen6_upload_clip_vp(struct brw_context *brw)
     * drawable.
     */
    const float maximum_post_clamp_delta = 8192;
-   float gbx = maximum_post_clamp_delta / ctx->Viewport.Width;
-   float gby = maximum_post_clamp_delta / ctx->Viewport.Height;
+   float gbx = maximum_post_clamp_delta / ctx->ViewportArray[0].Width;
+   float gby = maximum_post_clamp_delta / ctx->ViewportArray[0].Height;
 
    vp->xmin = -gbx;
    vp->xmax = gbx;
@@ -83,7 +83,7 @@ gen6_upload_sf_vp(struct brw_context *brw)
    struct brw_sf_viewport *sfv;
    GLfloat y_scale, y_bias;
    const bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
-   const GLfloat *v = ctx->Viewport._WindowMap.m;
+   const GLfloat *v = ctx->ViewportArray[0]._WindowMap.m;
 
    sfv = brw_state_batch(brw, AUB_TRACE_SF_VP_STATE,
 			 sizeof(*sfv), 32, &brw->sf.vp_offset);

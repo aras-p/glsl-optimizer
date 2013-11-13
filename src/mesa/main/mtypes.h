@@ -3983,7 +3983,7 @@ struct gl_context
    struct gl_stencil_attrib	Stencil;	/**< Stencil buffer attributes */
    struct gl_texture_attrib	Texture;	/**< Texture attributes */
    struct gl_transform_attrib	Transform;	/**< Transformation attributes */
-   struct gl_viewport_attrib	Viewport;	/**< Viewport attributes */
+   struct gl_viewport_attrib	ViewportArray[MAX_VIEWPORTS];	/**< Viewport attributes */
    /*@}*/
 
    /** \name Client attribute stack */

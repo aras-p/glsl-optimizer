@@ -1352,7 +1352,7 @@ void radeonUpdateWindow( struct gl_context *ctx )
    __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLfloat xoffset = 0.0;
    GLfloat yoffset = dPriv ? (GLfloat) dPriv->h : 0;
-   const GLfloat *v = ctx->Viewport._WindowMap.m;
+   const GLfloat *v = ctx->ViewportArray[0]._WindowMap.m;
    const GLboolean render_to_fbo = (ctx->DrawBuffer ? _mesa_is_user_fbo(ctx->DrawBuffer) : 0);
    const GLfloat depthScale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    GLfloat y_scale, y_bias;
@@ -1405,7 +1405,7 @@ void radeonUpdateViewportOffset( struct gl_context *ctx )
    __DRIdrawable *dPriv = radeon_get_drawable(&rmesa->radeon);
    GLfloat xoffset = 0.0;
    GLfloat yoffset = (GLfloat)dPriv->h;
-   const GLfloat *v = ctx->Viewport._WindowMap.m;
+   const GLfloat *v = ctx->ViewportArray[0]._WindowMap.m;
 
    float_ui32_type tx;
    float_ui32_type ty;

@@ -737,21 +737,21 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 
    if (state & MESA_META_VIEWPORT) {
       /* save viewport state */
-      save->ViewportX = ctx->Viewport.X;
-      save->ViewportY = ctx->Viewport.Y;
-      save->ViewportW = ctx->Viewport.Width;
-      save->ViewportH = ctx->Viewport.Height;
+      save->ViewportX = ctx->ViewportArray[0].X;
+      save->ViewportY = ctx->ViewportArray[0].Y;
+      save->ViewportW = ctx->ViewportArray[0].Width;
+      save->ViewportH = ctx->ViewportArray[0].Height;
       /* set viewport to match window size */
-      if (ctx->Viewport.X != 0 ||
-          ctx->Viewport.Y != 0 ||
-          ctx->Viewport.Width != (float) ctx->DrawBuffer->Width ||
-          ctx->Viewport.Height != (float) ctx->DrawBuffer->Height) {
+      if (ctx->ViewportArray[0].X != 0 ||
+          ctx->ViewportArray[0].Y != 0 ||
+          ctx->ViewportArray[0].Width != (float) ctx->DrawBuffer->Width ||
+          ctx->ViewportArray[0].Height != (float) ctx->DrawBuffer->Height) {
          _mesa_set_viewport(ctx, 0, 0,
                             ctx->DrawBuffer->Width, ctx->DrawBuffer->Height);
       }
       /* save depth range state */
-      save->DepthNear = ctx->Viewport.Near;
-      save->DepthFar = ctx->Viewport.Far;
+      save->DepthNear = ctx->ViewportArray[0].Near;
+      save->DepthFar = ctx->ViewportArray[0].Far;
       /* set depth range to default */
       _mesa_DepthRange(0.0, 1.0);
    }
@@ -1089,10 +1089,10 @@ _mesa_meta_end(struct gl_context *ctx)
    }
 
    if (state & MESA_META_VIEWPORT) {
-      if (save->ViewportX != ctx->Viewport.X ||
-          save->ViewportY != ctx->Viewport.Y ||
-          save->ViewportW != ctx->Viewport.Width ||
-          save->ViewportH != ctx->Viewport.Height) {
+      if (save->ViewportX != ctx->ViewportArray[0].X ||
+          save->ViewportY != ctx->ViewportArray[0].Y ||
+          save->ViewportW != ctx->ViewportArray[0].Width ||
+          save->ViewportH != ctx->ViewportArray[0].Height) {
          _mesa_set_viewport(ctx, save->ViewportX, save->ViewportY,
                             save->ViewportW, save->ViewportH);
       }

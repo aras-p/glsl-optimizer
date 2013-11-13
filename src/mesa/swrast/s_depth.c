@@ -171,12 +171,12 @@ _swrast_depth_clamp_span( struct gl_context *ctx, SWspan *span )
    GLfloat min_f, max_f;
    GLuint i;
 
-   if (ctx->Viewport.Near < ctx->Viewport.Far) {
-      min_f = ctx->Viewport.Near;
-      max_f = ctx->Viewport.Far;
+   if (ctx->ViewportArray[0].Near < ctx->ViewportArray[0].Far) {
+      min_f = ctx->ViewportArray[0].Near;
+      max_f = ctx->ViewportArray[0].Far;
    } else {
-      min_f = ctx->Viewport.Far;
-      max_f = ctx->Viewport.Near;
+      min_f = ctx->ViewportArray[0].Far;
+      max_f = ctx->ViewportArray[0].Near;
    }
 
    /* Convert floating point values in [0,1] to device Z coordinates in

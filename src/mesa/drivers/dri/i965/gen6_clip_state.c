@@ -96,10 +96,10 @@ upload_clip_state(struct brw_context *brw)
    dw2 |= (ctx->Transform.ClipPlanesEnabled <<
            GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT);
 
-   if (ctx->Viewport.X == 0 &&
-       ctx->Viewport.Y == 0 &&
-       ctx->Viewport.Width == (float) fb->Width &&
-       ctx->Viewport.Height == (float) fb->Height) {
+   if (ctx->ViewportArray[0].X == 0 &&
+       ctx->ViewportArray[0].Y == 0 &&
+       ctx->ViewportArray[0].Width == (float) fb->Width &&
+       ctx->ViewportArray[0].Height == (float) fb->Height) {
       dw2 |= GEN6_CLIP_GB_TEST;
    }
 

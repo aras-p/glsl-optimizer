@@ -62,12 +62,12 @@ update_viewport( struct st_context *st )
    /* _NEW_VIEWPORT 
     */
    {
-      GLfloat x = ctx->Viewport.X;
-      GLfloat y = ctx->Viewport.Y;
-      GLfloat z = ctx->Viewport.Near;
-      GLfloat half_width = ctx->Viewport.Width * 0.5f;
-      GLfloat half_height = ctx->Viewport.Height * 0.5f;
-      GLfloat half_depth = (GLfloat)(ctx->Viewport.Far - ctx->Viewport.Near) * 0.5f;
+      GLfloat x = ctx->ViewportArray[0].X;
+      GLfloat y = ctx->ViewportArray[0].Y;
+      GLfloat z = ctx->ViewportArray[0].Near;
+      GLfloat half_width = ctx->ViewportArray[0].Width * 0.5f;
+      GLfloat half_height = ctx->ViewportArray[0].Height * 0.5f;
+      GLfloat half_depth = (GLfloat)(ctx->ViewportArray[0].Far - ctx->ViewportArray[0].Near) * 0.5f;
       
       st->state.viewport.scale[0] = half_width;
       st->state.viewport.scale[1] = half_height * yScale;

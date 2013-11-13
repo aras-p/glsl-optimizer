@@ -276,10 +276,10 @@ update_viewport_matrix(struct gl_context *ctx)
     * and should be maintained elsewhere if at all.
     * NOTE: RasterPos uses this.
     */
-   _math_matrix_viewport(&ctx->Viewport._WindowMap,
-                         ctx->Viewport.X, ctx->Viewport.Y,
-                         ctx->Viewport.Width, ctx->Viewport.Height,
-                         ctx->Viewport.Near, ctx->Viewport.Far,
+   _math_matrix_viewport(&ctx->ViewportArray[0]._WindowMap,
+                         ctx->ViewportArray[0].X, ctx->ViewportArray[0].Y,
+                         ctx->ViewportArray[0].Width, ctx->ViewportArray[0].Height,
+                         ctx->ViewportArray[0].Near, ctx->ViewportArray[0].Far,
                          depthMax);
 }
 

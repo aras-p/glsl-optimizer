@@ -50,8 +50,8 @@ brw_upload_cc_vp(struct brw_context *brw)
    /* _NEW_TRANSFORM */
    if (ctx->Transform.DepthClamp) {
       /* _NEW_VIEWPORT */
-      ccv->min_depth = MIN2(ctx->Viewport.Near, ctx->Viewport.Far);
-      ccv->max_depth = MAX2(ctx->Viewport.Near, ctx->Viewport.Far);
+      ccv->min_depth = MIN2(ctx->ViewportArray[0].Near, ctx->ViewportArray[0].Far);
+      ccv->max_depth = MAX2(ctx->ViewportArray[0].Near, ctx->ViewportArray[0].Far);
    } else {
       ccv->min_depth = 0.0;
       ccv->max_depth = 1.0;

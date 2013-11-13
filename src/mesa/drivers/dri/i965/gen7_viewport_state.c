@@ -34,7 +34,7 @@ gen7_upload_sf_clip_viewport(struct brw_context *brw)
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    GLfloat y_scale, y_bias;
    const bool render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
-   const GLfloat *v = ctx->Viewport._WindowMap.m;
+   const GLfloat *v = ctx->ViewportArray[0]._WindowMap.m;
    struct gen7_sf_clip_viewport *vp;
 
    vp = brw_state_batch(brw, AUB_TRACE_SF_VP_STATE,
@@ -54,8 +54,8 @@ gen7_upload_sf_clip_viewport(struct brw_context *brw)
     * drawable.
     */
    const float maximum_guardband_extent = 8192;
-   float gbx = maximum_guardband_extent / ctx->Viewport.Width;
-   float gby = maximum_guardband_extent / ctx->Viewport.Height;
+   float gbx = maximum_guardband_extent / ctx->ViewportArray[0].Width;
+   float gby = maximum_guardband_extent / ctx->ViewportArray[0].Height;
 
    vp->guardband.xmin = -gbx;
    vp->guardband.xmax = gbx;

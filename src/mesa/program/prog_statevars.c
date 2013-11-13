@@ -353,9 +353,9 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
       ((int *)value)[0] = ctx->DrawBuffer->Visual.samples;
       return;
    case STATE_DEPTH_RANGE:
-      value[0] = ctx->Viewport.Near;                     /* near       */
-      value[1] = ctx->Viewport.Far;                      /* far        */
-      value[2] = ctx->Viewport.Far - ctx->Viewport.Near; /* far - near */
+      value[0] = ctx->ViewportArray[0].Near;                /* near       */
+      value[1] = ctx->ViewportArray[0].Far;                 /* far        */
+      value[2] = ctx->ViewportArray[0].Far - ctx->ViewportArray[0].Near; /* far - near */
       value[3] = 1.0;
       return;
    case STATE_FRAGMENT_PROGRAM:

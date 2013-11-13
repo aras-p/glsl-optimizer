@@ -533,8 +533,9 @@ _mesa_PushAttrib(GLbitfield mask)
 
    if (mask & GL_VIEWPORT_BIT) {
       if (!push_attrib(ctx, &head, GL_VIEWPORT_BIT,
-                       sizeof(struct gl_viewport_attrib),
-                       (void*)&ctx->Viewport))
+                       sizeof(struct gl_viewport_attrib)
+                       * ctx->Const.MaxViewports,
+                       (void*)&ctx->ViewportArray))
          goto end;
    }
 

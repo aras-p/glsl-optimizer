@@ -227,8 +227,9 @@ window_pos3f(GLfloat x, GLfloat y, GLfloat z)
    FLUSH_VERTICES(ctx, 0);
    FLUSH_CURRENT(ctx, 0);
 
-   z2 = CLAMP(z, 0.0F, 1.0F) * (ctx->Viewport.Far - ctx->Viewport.Near)
-      + ctx->Viewport.Near;
+   z2 = CLAMP(z, 0.0F, 1.0F)
+      * (ctx->ViewportArray[0].Far - ctx->ViewportArray[0].Near)
+      + ctx->ViewportArray[0].Near;
 
    /* set raster position */
    ctx->Current.RasterPos[0] = x;

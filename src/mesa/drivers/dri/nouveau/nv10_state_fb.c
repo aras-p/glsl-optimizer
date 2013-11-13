@@ -176,7 +176,7 @@ void
 nv10_emit_viewport(struct gl_context *ctx, int emit)
 {
 	struct nouveau_pushbuf *push = context_push(ctx);
-	struct gl_viewport_attrib *vp = &ctx->Viewport;
+	struct gl_viewport_attrib *vp = &ctx->ViewportArray[0];
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	float a[4] = {};
 
