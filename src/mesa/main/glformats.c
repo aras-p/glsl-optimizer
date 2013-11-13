@@ -1301,9 +1301,6 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
       return GL_INVALID_OPERATION;
 
    case GL_UNSIGNED_INT_24_8:
-      if (!ctx->Extensions.EXT_packed_depth_stencil) {
-         return GL_INVALID_ENUM;
-      }
       if (format != GL_DEPTH_STENCIL) {
          return GL_INVALID_OPERATION;
       }
@@ -1485,8 +1482,7 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             return GL_INVALID_OPERATION;
 
       case GL_DEPTH_STENCIL_EXT:
-         if (ctx->Extensions.EXT_packed_depth_stencil &&
-             type == GL_UNSIGNED_INT_24_8)
+         if (type == GL_UNSIGNED_INT_24_8)
             return GL_NO_ERROR;
          else if (ctx->Extensions.ARB_depth_buffer_float &&
              type == GL_FLOAT_32_UNSIGNED_INT_24_8_REV)

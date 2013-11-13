@@ -201,7 +201,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_gpu_shader4",                         o(EXT_gpu_shader4),                         GL,             2006 },
    { "GL_EXT_map_buffer_range",                    o(ARB_map_buffer_range),                          ES1 | ES2, 2012 },
    { "GL_EXT_multi_draw_arrays",                   o(dummy_true),                              GLL | ES1 | ES2, 1999 },
-   { "GL_EXT_packed_depth_stencil",                o(EXT_packed_depth_stencil),                GL,             2005 },
+   { "GL_EXT_packed_depth_stencil",                o(dummy_true),                              GL,             2005 },
    { "GL_EXT_packed_float",                        o(EXT_packed_float),                        GL,             2004 },
    { "GL_EXT_packed_pixels",                       o(dummy_true),                              GLL,            1997 },
    { "GL_EXT_pixel_buffer_object",                 o(EXT_pixel_buffer_object),                 GL,             2004 },
@@ -274,7 +274,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_framebuffer_object",                  o(dummy_true),                                   ES1,       2005 },
    { "GL_OES_get_program_binary",                  o(dummy_true),                                         ES2, 2008 },
    { "GL_OES_mapbuffer",                           o(dummy_true),                                   ES1 | ES2, 2005 },
-   { "GL_OES_packed_depth_stencil",                o(EXT_packed_depth_stencil),                     ES1 | ES2, 2007 },
+   { "GL_OES_packed_depth_stencil",                o(dummy_true),                                   ES1 | ES2, 2007 },
    { "GL_OES_point_size_array",                    o(dummy_true),                                   ES1,       2004 },
    { "GL_OES_point_sprite",                        o(ARB_point_sprite),                             ES1,       2004 },
    { "GL_OES_query_matrix",                        o(dummy_true),                                   ES1,       2003 },
@@ -334,7 +334,7 @@ static const struct extension extension_table[] = {
    { "GL_NV_fog_distance",                         o(NV_fog_distance),                         GLL,            2001 },
    { "GL_NV_fragment_program_option",              o(NV_fragment_program_option),              GLL,            2005 },
    { "GL_NV_light_max_exponent",                   o(dummy_true),                              GLL,            1999 },
-   { "GL_NV_packed_depth_stencil",                 o(EXT_packed_depth_stencil),                GL,             2000 },
+   { "GL_NV_packed_depth_stencil",                 o(dummy_true),                              GL,             2000 },
    { "GL_NV_point_sprite",                         o(NV_point_sprite),                         GL,             2001 },
    { "GL_NV_primitive_restart",                    o(NV_primitive_restart),                    GLL,            2002 },
    { "GL_NV_read_buffer",                          o(dummy_true),                              ES2,            2011 },
@@ -437,7 +437,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_depth_bounds_test = GL_TRUE;
    ctx->Extensions.EXT_draw_buffers2 = GL_TRUE;
    ctx->Extensions.EXT_framebuffer_blit = GL_TRUE;
-   ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
    ctx->Extensions.EXT_provoking_vertex = GL_TRUE;

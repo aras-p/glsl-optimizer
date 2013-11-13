@@ -443,11 +443,6 @@ void st_init_extensions(struct st_context *st)
       { { o(ARB_depth_buffer_float) },
         { PIPE_FORMAT_Z32_FLOAT,
           PIPE_FORMAT_Z32_FLOAT_S8X24_UINT } },
-
-      { { o(EXT_packed_depth_stencil) },
-        { PIPE_FORMAT_S8_UINT_Z24_UNORM,
-          PIPE_FORMAT_Z24_UNORM_S8_UINT },
-        GL_TRUE }, /* at least one format must be supported */
    };
 
    /* Required: sampler support */
@@ -764,8 +759,7 @@ void st_init_extensions(struct st_context *st)
                              PIPE_BUFFER, PIPE_BIND_SAMPLER_VIEW);
    }
 
-   if (screen->get_param(screen, PIPE_CAP_MIXED_FRAMEBUFFER_SIZES) &&
-       ctx->Extensions.EXT_packed_depth_stencil) {
+   if (screen->get_param(screen, PIPE_CAP_MIXED_FRAMEBUFFER_SIZES)) {
       ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
    }
 

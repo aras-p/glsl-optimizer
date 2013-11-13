@@ -65,7 +65,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_blend_minmax = true;
    ctx->Extensions.EXT_framebuffer_blit = true;
    ctx->Extensions.EXT_gpu_program_parameters = true;
-   ctx->Extensions.EXT_packed_depth_stencil = true;
    ctx->Extensions.EXT_pixel_buffer_object = true;
    ctx->Extensions.EXT_point_parameters = true;
    ctx->Extensions.EXT_provoking_vertex = true;

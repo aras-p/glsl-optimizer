@@ -383,7 +383,6 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.EXT_blend_func_separate = true;
    ctx->Extensions.EXT_blend_minmax = true;
    ctx->Extensions.EXT_gpu_program_parameters = true;
-   ctx->Extensions.EXT_packed_depth_stencil = true;
    ctx->Extensions.EXT_point_parameters = true;
    ctx->Extensions.EXT_texture_env_dot3 = true;
    ctx->Extensions.EXT_texture_filter_anisotropic = true;

@@ -301,7 +301,6 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.EXT_packed_depth_stencil) {
       switch (internalFormat) {
          case GL_DEPTH_STENCIL_EXT:
          case GL_DEPTH24_STENCIL8_EXT:
@@ -309,7 +308,6 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
          default:
             ; /* fallthrough */
       }
-   }
 
    if (ctx->Extensions.EXT_texture_sRGB) {
       switch (internalFormat) {

@@ -1163,9 +1163,6 @@ get_tex_level_parameter_image(struct gl_context *ctx,
          *params = _mesa_get_format_bits(texFormat, pname);
          break;
       case GL_TEXTURE_STENCIL_SIZE_EXT:
-         if (!ctx->Extensions.EXT_packed_depth_stencil &&
-             !ctx->Extensions.ARB_framebuffer_object)
-            goto invalid_pname;
          *params = _mesa_get_format_bits(texFormat, pname);
          break;
       case GL_TEXTURE_SHARED_SIZE:

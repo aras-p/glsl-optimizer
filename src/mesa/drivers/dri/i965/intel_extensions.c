@@ -209,7 +209,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.EXT_framebuffer_blit = true;
    ctx->Extensions.EXT_framebuffer_sRGB = true;
    ctx->Extensions.EXT_gpu_program_parameters = true;
-   ctx->Extensions.EXT_packed_depth_stencil = true;
    ctx->Extensions.EXT_packed_float = true;
    ctx->Extensions.EXT_pixel_buffer_object = true;
    ctx->Extensions.EXT_point_parameters = true;
