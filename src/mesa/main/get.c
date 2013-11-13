@@ -113,6 +113,7 @@ enum value_type {
    TYPE_FLOATN_3,
    TYPE_FLOATN_4,
    TYPE_DOUBLEN,
+   TYPE_DOUBLEN_2,
    TYPE_MATRIX,
    TYPE_MATRIX_T,
    TYPE_CONST
@@ -162,6 +163,7 @@ struct value_desc {
 union value {
    GLfloat value_float;
    GLfloat value_float_4[4];
+   GLdouble value_double_2[2];
    GLmatrix *value_matrix;
    GLint value_int;
    GLint value_int_4[4];
