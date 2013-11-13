@@ -604,6 +604,48 @@ monitor_needs_oa(struct brw_context *brw,
 }
 
 /**
+ * Enable the Observability Architecture counters by whacking OACONTROL.
+ */
+static void
+start_oa_counters(struct brw_context *brw)
+{
+   unsigned counter_format;
+
+   /* Pick the counter format which gives us all the counters. */
+   switch (brw->gen) {
+   case 6:
+      counter_format = 1; /* 0b001 */
+      break;
+   case 7:
+      counter_format = 5; /* 0b101 */
+      break;
+   default:
+      assert(!"Tried to enable OA counters on an unsupported generation.");
+      return;
+   }
+
+   BEGIN_BATCH(3);
+   OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
+   OUT_BATCH(OACONTROL);
+   OUT_BATCH(counter_format << OACONTROL_COUNTER_SELECT_SHIFT |
+             OACONTROL_ENABLE_COUNTERS);
+   ADVANCE_BATCH();
+}
+
+/**
+ * Disable OA counters.
+ */
+static void
+stop_oa_counters(struct brw_context *brw)
+{
+   BEGIN_BATCH(3);
+   OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
+   OUT_BATCH(OACONTROL);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+}
+
+/**
  * The amount of batch space it takes to emit an MI_REPORT_PERF_COUNT snapshot,
  * including the required PIPE_CONTROL flushes.
  *
