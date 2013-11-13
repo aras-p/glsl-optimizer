@@ -382,7 +382,6 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Extensions.EXT_blend_equation_separate = true;
    ctx->Extensions.EXT_blend_func_separate = true;
    ctx->Extensions.EXT_blend_minmax = true;
-   ctx->Extensions.EXT_framebuffer_blit = true;
    ctx->Extensions.EXT_gpu_program_parameters = true;
    ctx->Extensions.EXT_point_parameters = true;
    ctx->Extensions.EXT_texture_env_dot3 = true;

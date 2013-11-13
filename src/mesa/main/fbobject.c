@@ -163,8 +163,7 @@ invalidate_framebuffer(struct gl_framebuffer *fb)
 static struct gl_framebuffer *
 get_framebuffer_target(struct gl_context *ctx, GLenum target)
 {
-   bool have_fb_blit = _mesa_is_gles3(ctx) ||
-      (ctx->Extensions.EXT_framebuffer_blit && _mesa_is_desktop_gl(ctx));
+   bool have_fb_blit = _mesa_is_gles3(ctx) || _mesa_is_desktop_gl(ctx);
    switch (target) {
    case GL_DRAW_FRAMEBUFFER:
       return have_fb_blit ? ctx->DrawBuffer : NULL;
@@ -2037,26 +2036,12 @@ bind_framebuffer(GLenum target, GLuint framebuffer, bool allow_user_names)
    GLboolean bindReadBuf, bindDrawBuf;
    GET_CURRENT_CONTEXT(ctx);
 
-#ifdef DEBUG
-   if (ctx->Extensions.ARB_framebuffer_object) {
-      ASSERT(ctx->Extensions.EXT_framebuffer_blit);
-   }
-#endif
-
    switch (target) {
    case GL_DRAW_FRAMEBUFFER_EXT:
-      if (!ctx->Extensions.EXT_framebuffer_blit) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glBindFramebufferEXT(target)");
-         return;
-      }
       bindDrawBuf = GL_TRUE;
       bindReadBuf = GL_FALSE;
       break;
    case GL_READ_FRAMEBUFFER_EXT:
-      if (!ctx->Extensions.EXT_framebuffer_blit) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glBindFramebufferEXT(target)");
-         return;
-      }
       bindDrawBuf = GL_FALSE;
       bindReadBuf = GL_TRUE;
       break;
@@ -2190,7 +2175,7 @@ _mesa_DeleteFramebuffers(GLsizei n, const GLuint *framebuffers)
             ASSERT(fb == &DummyFramebuffer || fb->Name == framebuffers[i]);
 
             /* check if deleting currently bound framebuffer object */
-            if (ctx->Extensions.EXT_framebuffer_blit) {
+
                /* separate draw/read binding points */
                if (fb == ctx->DrawBuffer) {
                   /* bind default */
@@ -2202,15 +2187,7 @@ _mesa_DeleteFramebuffers(GLsizei n, const GLuint *framebuffers)
                   ASSERT(fb->RefCount >= 2);
                   _mesa_BindFramebuffer(GL_READ_FRAMEBUFFER_EXT, 0);
                }
-            }
-            else {
-               /* only one binding point for read/draw buffers */
-               if (fb == ctx->DrawBuffer || fb == ctx->ReadBuffer) {
-                  /* bind default */
-                  ASSERT(fb->RefCount >= 2);
-                  _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
-               }
-            }
+
 
 	    /* remove from hash table immediately, to free the ID */
 	    _mesa_HashRemove(ctx->Shared->FrameBuffers, framebuffers[i]);
@@ -3494,11 +3471,6 @@ _mesa_BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
             return;
          }
       }
-   }
-
-   if (!ctx->Extensions.EXT_framebuffer_blit) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glBlitFramebufferEXT");
-      return;
    }
 
    /* Debug code */
