@@ -327,20 +327,22 @@ r100CreateContext( gl_api api,
       _math_matrix_set_identity( &rmesa->tmpmat[i] );
    }
 
+   ctx->Extensions.ARB_occlusion_query = true;
    ctx->Extensions.ARB_texture_border_clamp = true;
+   ctx->Extensions.ARB_texture_cube_map = true;
    ctx->Extensions.ARB_texture_env_combine = true;
    ctx->Extensions.ARB_texture_env_crossbar = true;
    ctx->Extensions.ARB_texture_env_dot3 = true;
    ctx->Extensions.ARB_texture_mirror_clamp_to_edge = true;
+   ctx->Extensions.ATI_texture_env_combine3 = true;
+   ctx->Extensions.ATI_texture_mirror_once = true;
    ctx->Extensions.EXT_packed_depth_stencil = true;
    ctx->Extensions.EXT_texture_env_dot3 = true;
    ctx->Extensions.EXT_texture_filter_anisotropic = true;
    ctx->Extensions.EXT_texture_mirror_clamp = true;
-   ctx->Extensions.ATI_texture_env_combine3 = true;
-   ctx->Extensions.ATI_texture_mirror_once = true;
    ctx->Extensions.MESA_ycbcr_texture = true;
+   ctx->Extensions.NV_texture_rectangle = true;
    ctx->Extensions.OES_EGL_image = true;
-   ctx->Extensions.ARB_texture_cube_map = true;
 
    if (rmesa->radeon.glCtx.Mesa_DXTn) {
       ctx->Extensions.EXT_texture_compression_s3tc = true;
@@ -350,9 +352,6 @@ r100CreateContext( gl_api api,
       ctx->Extensions.EXT_texture_compression_s3tc = true;
       ctx->Extensions.ANGLE_texture_compression_dxt = true;
    }
-
-   ctx->Extensions.NV_texture_rectangle = true;
-   ctx->Extensions.ARB_occlusion_query = true;
 
    /* XXX these should really go right after _mesa_init_driver_functions() */
    radeon_fbo_init(&rmesa->radeon);
