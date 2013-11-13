@@ -118,11 +118,6 @@ get_src_register_pointer(const struct prog_src_register *source,
          return ZeroVec;
       return machine->Outputs[reg];
 
-   case PROGRAM_ENV_PARAM:
-      if (reg >= MAX_PROGRAM_ENV_PARAMS)
-         return ZeroVec;
-      return machine->EnvParams[reg];
-
    case PROGRAM_STATE_VAR:
       /* Fallthrough */
    case PROGRAM_CONSTANT:

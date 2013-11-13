@@ -1930,10 +1930,9 @@ struct gl_perf_monitor_state
  * NOTE: first four tokens must fit into 2 bits (see t_vb_arbprogram.c)
  * All values should fit in a 4-bit field.
  *
- * NOTE: PROGRAM_ENV_PARAM, PROGRAM_STATE_VAR,
- * PROGRAM_CONSTANT, and PROGRAM_UNIFORM can all be considered to
- * be "uniform" variables since they can only be set outside glBegin/End.
- * They're also all stored in the same Parameters array.
+ * NOTE: PROGRAM_STATE_VAR, PROGRAM_CONSTANT, and PROGRAM_UNIFORM can all be
+ * considered to be "uniform" variables since they can only be set outside
+ * glBegin/End.  They're also all stored in the same Parameters array.
  */
 typedef enum
 {
@@ -1941,7 +1940,6 @@ typedef enum
    PROGRAM_ARRAY,       /**< Arrays & Matrixes */
    PROGRAM_INPUT,       /**< machine->Inputs[] */
    PROGRAM_OUTPUT,      /**< machine->Outputs[] */
-   PROGRAM_ENV_PARAM,   /**< gl_program->Parameters[] */
    PROGRAM_STATE_VAR,   /**< gl_program->Parameters[] */
    PROGRAM_CONSTANT,    /**< gl_program->Parameters[] */
    PROGRAM_UNIFORM,     /**< gl_program->Parameters[] */

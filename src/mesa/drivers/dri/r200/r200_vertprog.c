@@ -210,7 +210,6 @@ static unsigned long t_src_class(gl_register_file file)
    case PROGRAM_INPUT:
       return VSF_IN_CLASS_ATTR;
 
-   case PROGRAM_ENV_PARAM:
    case PROGRAM_CONSTANT:
    case PROGRAM_STATE_VAR:
       return VSF_IN_CLASS_PARAM;
