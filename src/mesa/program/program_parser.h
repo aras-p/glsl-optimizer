@@ -44,7 +44,7 @@ struct asm_symbol {
    unsigned output_binding;   /**< Output / result register number. */
 
    /**
-    * One of PROGRAM_STATE_VAR, PROGRAM_LOCAL_PARAM, or PROGRAM_ENV_PARAM.
+    * One of PROGRAM_STATE_VAR or PROGRAM_CONSTANT.
     */
    unsigned param_binding_type;
 
