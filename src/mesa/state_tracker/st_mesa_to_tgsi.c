@@ -46,8 +46,7 @@
 #include "util/u_memory.h"
 
 
-#define PROGRAM_ANY_CONST ((1 << PROGRAM_LOCAL_PARAM) |  \
-                           (1 << PROGRAM_ENV_PARAM) |    \
+#define PROGRAM_ANY_CONST ((1 << PROGRAM_ENV_PARAM) |    \
                            (1 << PROGRAM_STATE_VAR) |    \
                            (1 << PROGRAM_CONSTANT) |     \
                            (1 << PROGRAM_UNIFORM))
@@ -215,7 +214,6 @@ src_register( struct st_translate *t,
       return ureg_src(t->temps[index]);
 
    case PROGRAM_ENV_PARAM:
-   case PROGRAM_LOCAL_PARAM:
    case PROGRAM_UNIFORM:
       assert(index >= 0);
       return t->constants[index];
@@ -1196,7 +1194,6 @@ st_translate_mesa_program(
       for (i = 0; i < program->Parameters->NumParameters; i++) {
          switch (program->Parameters->Parameters[i].Type) {
          case PROGRAM_ENV_PARAM:
-         case PROGRAM_LOCAL_PARAM:
          case PROGRAM_STATE_VAR:
          case PROGRAM_UNIFORM:
             t->constants[i] = ureg_DECL_constant( ureg, i );

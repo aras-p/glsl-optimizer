@@ -1941,7 +1941,6 @@ typedef enum
    PROGRAM_ARRAY,       /**< Arrays & Matrixes */
    PROGRAM_INPUT,       /**< machine->Inputs[] */
    PROGRAM_OUTPUT,      /**< machine->Outputs[] */
-   PROGRAM_LOCAL_PARAM, /**< gl_program->LocalParams[] */
    PROGRAM_ENV_PARAM,   /**< gl_program->Parameters[] */
    PROGRAM_STATE_VAR,   /**< gl_program->Parameters[] */
    PROGRAM_CONSTANT,    /**< gl_program->Parameters[] */

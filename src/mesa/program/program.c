@@ -912,9 +912,6 @@ _mesa_valid_register_index(const struct gl_context *ctx,
    case PROGRAM_ENV_PARAM:
       return index >= 0 && index < (GLint) c->MaxEnvParams;
 
-   case PROGRAM_LOCAL_PARAM:
-      return index >= 0 && index < (GLint) c->MaxLocalParams;
-
    case PROGRAM_UNIFORM:
    case PROGRAM_STATE_VAR:
       /* aka constant buffer */
