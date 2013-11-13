@@ -1481,7 +1481,7 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
          else
             return GL_INVALID_OPERATION;
 
-      case GL_DEPTH_STENCIL_EXT:
+      case GL_DEPTH_STENCIL:
          if (type == GL_UNSIGNED_INT_24_8)
             return GL_NO_ERROR;
          else if (ctx->Extensions.ARB_depth_buffer_float &&

@@ -1162,7 +1162,7 @@ get_tex_level_parameter_image(struct gl_context *ctx,
             goto invalid_pname;
          *params = _mesa_get_format_bits(texFormat, pname);
          break;
-      case GL_TEXTURE_STENCIL_SIZE_EXT:
+      case GL_TEXTURE_STENCIL_SIZE:
          *params = _mesa_get_format_bits(texFormat, pname);
          break;
       case GL_TEXTURE_SHARED_SIZE:

@@ -301,13 +301,13 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
-      switch (internalFormat) {
-         case GL_DEPTH_STENCIL_EXT:
-         case GL_DEPTH24_STENCIL8_EXT:
-            return GL_DEPTH_STENCIL_EXT;
-         default:
-            ; /* fallthrough */
-      }
+   switch (internalFormat) {
+   case GL_DEPTH_STENCIL:
+   case GL_DEPTH24_STENCIL8:
+      return GL_DEPTH_STENCIL;
+   default:
+      ; /* fallthrough */
+   }
 
    if (ctx->Extensions.EXT_texture_sRGB) {
       switch (internalFormat) {
