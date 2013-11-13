@@ -194,23 +194,61 @@ _mesa_HashLookup(struct _mesa_HashTable *table, GLuint key)
 
 
 /**
- * Insert a key/pointer pair into the hash table.  
- * If an entry with this key already exists we'll replace the existing entry.
- * 
+ * Lookup an entry in the hash table without locking the mutex.
+ *
+ * The hash table mutex must be locked manually by calling
+ * _mesa_HashLockMutex() before calling this function.
+ *
  * \param table the hash table.
- * \param key the key (not zero).
- * \param data pointer to user data.
+ * \param key the key.
+ *
+ * \return pointer to user's data or NULL if key not in table
+ */
+void *
+_mesa_HashLookupLocked(struct _mesa_HashTable *table, GLuint key)
+{
+   return _mesa_HashLookup_unlocked(table, key);
+}
+
+
+/**
+ * Lock the hash table mutex.
+ *
+ * This function should be used when multiple objects need
+ * to be looked up in the hash table, to avoid having to lock
+ * and unlock the mutex each time.
+ *
+ * \param table the hash table.
  */
 void
-_mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
+_mesa_HashLockMutex(struct _mesa_HashTable *table)
+{
+   assert(table);
+   mtx_lock(&table->Mutex);
+}
+
+
+/**
+ * Unlock the hash table mutex.
+ *
+ * \param table the hash table.
+ */
+void
+_mesa_HashUnlockMutex(struct _mesa_HashTable *table)
+{
+   assert(table);
+   mtx_unlock(&table->Mutex);
+}
+
+
+static inline void
+_mesa_HashInsert_unlocked(struct _mesa_HashTable *table, GLuint key, void *data)
 {
    uint32_t hash = uint_hash(key);
    struct hash_entry *entry;
 
    assert(table);
    assert(key);
-
-   mtx_lock(&table->Mutex);
 
    if (key > table->MaxKey)
       table->MaxKey = key;
@@ -225,10 +263,43 @@ _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
          _mesa_hash_table_insert(table->ht, hash, uint_key(key), data);
       }
    }
-
-   mtx_unlock(&table->Mutex);
 }
 
+
+/**
+ * Insert a key/pointer pair into the hash table without locking the mutex.
+ * If an entry with this key already exists we'll replace the existing entry.
+ *
+ * The hash table mutex must be locked manually by calling
+ * _mesa_HashLockMutex() before calling this function.
+ *
+ * \param table the hash table.
+ * \param key the key (not zero).
+ * \param data pointer to user data.
+ */
+void
+_mesa_HashInsertLocked(struct _mesa_HashTable *table, GLuint key, void *data)
+{
+   _mesa_HashInsert_unlocked(table, key, data);
+}
+
+
+/**
+ * Insert a key/pointer pair into the hash table.
+ * If an entry with this key already exists we'll replace the existing entry.
+ *
+ * \param table the hash table.
+ * \param key the key (not zero).
+ * \param data pointer to user data.
+ */
+void
+_mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
+{
+   assert(table);
+   mtx_lock(&table->Mutex);
+   _mesa_HashInsert_unlocked(table, key, data);
+   mtx_unlock(&table->Mutex);
+}
 
 
 /**
