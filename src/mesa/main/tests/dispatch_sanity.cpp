@@ -882,6 +882,14 @@ const struct function gl_core_functions_possible[] = {
    /* GL_ARB_internalformat_query */
    { "glGetInternalformativ", 30, -1 },
 
+   /* GL_ARB_multi_bind */
+   { "glBindBuffersBase", 44, -1 },
+   { "glBindBuffersRange", 44, -1 },
+   { "glBindTextures", 44, -1 },
+   { "glBindSamplers", 44, -1 },
+   { "glBindImageTextures", 44, -1 },
+   { "glBindVertexBuffers", 44, -1 },
+
    /* GL_KHR_debug/GL_ARB_debug_output */
    { "glPushDebugGroup", 11, -1 },
    { "glPopDebugGroup", 11, -1 },

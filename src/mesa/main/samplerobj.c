@@ -285,6 +285,12 @@ _mesa_BindSampler(GLuint unit, GLuint sampler)
 }
 
 
+void GLAPIENTRY
+_mesa_BindSamplers(GLuint first, GLsizei count, const GLuint *samplers)
+{
+}
+
+
 /**
  * Check if a coordinate wrap mode is legal.
  * \return GL_TRUE if legal, GL_FALSE otherwise

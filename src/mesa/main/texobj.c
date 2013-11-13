@@ -1373,6 +1373,12 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 }
 
 
+void GLAPIENTRY
+_mesa_BindTextures(GLuint first, GLsizei count, const GLuint *textures)
+{
+}
+
+
 /**
  * Set texture priorities.
  * 

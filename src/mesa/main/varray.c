@@ -1440,6 +1440,13 @@ _mesa_BindVertexBuffer(GLuint bindingIndex, GLuint buffer, GLintptr offset,
 
 
 void GLAPIENTRY
+_mesa_BindVertexBuffers(GLuint first, GLsizei count, const GLuint *buffers,
+                        const GLintptr *offsets, const GLsizei *strides)
+{
+}
+
+
+void GLAPIENTRY
 _mesa_VertexAttribFormat(GLuint attribIndex, GLint size, GLenum type,
                          GLboolean normalized, GLuint relativeOffset)
 {

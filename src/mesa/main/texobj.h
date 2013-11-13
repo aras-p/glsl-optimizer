@@ -177,6 +177,10 @@ _mesa_BindTexture( GLenum target, GLuint texture );
 
 
 extern void GLAPIENTRY
+_mesa_BindTextures( GLuint first, GLsizei count, const GLuint *textures );
+
+
+extern void GLAPIENTRY
 _mesa_PrioritizeTextures( GLsizei n, const GLuint *textures,
                           const GLclampf *priorities );
 
