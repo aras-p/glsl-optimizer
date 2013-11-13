@@ -478,6 +478,23 @@ intel_miptree_choose_tiling(struct brw_context *brw,
    if (brw->gen != 7 && mt->cpp >= 16)
       return I915_TILING_X;
 
+   /* From the Ivy Bridge PRM, Vol4 Part1 2.12.2.1 (SURFACE_STATE for most
+    * messages), on p64, under the heading "Surface Vertical Alignment":
+    *
+    *     This field must be set to VALIGN_4 for all tiled Y Render Target
+    *     surfaces.
+    *
+    * So if the surface is renderable and uses a vertical alignment of 2,
+    * force it to be X tiled.  This is somewhat conservative (it's possible
+    * that the client won't ever render to this surface), but it's difficult
+    * to know that ahead of time.  And besides, since we use a vertical
+    * alignment of 4 as often as we can, this shouldn't happen very often.
+    */
+   if (brw->gen == 7 && mt->align_h == 2 &&
+       brw->format_supported_as_render_target[format]) {
+      return I915_TILING_X;
+   }
+
    return I915_TILING_Y | I915_TILING_X;
 }
 
