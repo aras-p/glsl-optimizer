@@ -367,23 +367,30 @@ GLboolean r200CreateContext( gl_api api,
 
    ctx->Extensions.ARB_half_float_pixel = true;
    ctx->Extensions.ARB_occlusion_query = true;
+   ctx->Extensions.ARB_point_sprite = true;
    ctx->Extensions.ARB_texture_border_clamp = true;
+   ctx->Extensions.ARB_texture_cube_map = true;
    ctx->Extensions.ARB_texture_env_combine = true;
    ctx->Extensions.ARB_texture_env_dot3 = true;
    ctx->Extensions.ARB_texture_env_crossbar = true;
    ctx->Extensions.ARB_texture_mirror_clamp_to_edge = true;
+   ctx->Extensions.ARB_vertex_program = true;
+   ctx->Extensions.ATI_fragment_shader = (ctx->Const.MaxTextureUnits == 6);
+   ctx->Extensions.ATI_texture_env_combine3 = true;
+   ctx->Extensions.ATI_texture_mirror_once = true;
    ctx->Extensions.EXT_blend_color = true;
+   ctx->Extensions.EXT_blend_equation_separate = true;
+   ctx->Extensions.EXT_blend_func_separate = true;
    ctx->Extensions.EXT_blend_minmax = true;
+   ctx->Extensions.EXT_gpu_program_parameters = true;
    ctx->Extensions.EXT_packed_depth_stencil = true;
+   ctx->Extensions.EXT_point_parameters = true;
    ctx->Extensions.EXT_texture_env_dot3 = true;
    ctx->Extensions.EXT_texture_filter_anisotropic = true;
    ctx->Extensions.EXT_texture_mirror_clamp = true;
-   ctx->Extensions.ATI_texture_env_combine3 = true;
-   ctx->Extensions.ATI_texture_mirror_once = true;
    ctx->Extensions.MESA_pack_invert = true;
    ctx->Extensions.NV_texture_rectangle = true;
    ctx->Extensions.OES_EGL_image = true;
-   ctx->Extensions.ARB_occlusion_query = true;
 
    if (!(rmesa->radeon.radeonScreen->chip_flags & R200_CHIPSET_YCBCR_BROKEN)) {
      /* yuv textures don't work with some chips - R200 / rv280 okay so far
@@ -398,19 +405,6 @@ GLboolean r200CreateContext( gl_api api,
       ctx->Extensions.EXT_texture_compression_s3tc = true;
       ctx->Extensions.ANGLE_texture_compression_dxt = true;
    }
-
-   ctx->Extensions.ARB_texture_cube_map = true;
-
-   ctx->Extensions.EXT_blend_equation_separate = true;
-   ctx->Extensions.EXT_blend_func_separate = true;
-
-   ctx->Extensions.ARB_vertex_program = true;
-   ctx->Extensions.EXT_gpu_program_parameters = true;
-
-   ctx->Extensions.ATI_fragment_shader = (ctx->Const.MaxTextureUnits == 6);
-
-   ctx->Extensions.ARB_point_sprite = true;
-   ctx->Extensions.EXT_point_parameters = true;
 
 #if 0
    r200InitDriverFuncs( ctx );
