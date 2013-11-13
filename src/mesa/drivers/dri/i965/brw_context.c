@@ -474,6 +474,17 @@ brw_initialize_context_constants(struct brw_context *brw)
    }
 
    ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].PreferDP4 = true;
+
+   /* ARB_viewport_array */
+   if (brw->gen >= 7 && ctx->API == API_OPENGL_CORE) {
+      ctx->Const.MaxViewports = GEN7_NUM_VIEWPORTS;
+      ctx->Const.ViewportSubpixelBits = 0;
+
+      /* Cast to float before negating becuase MaxViewportWidth is unsigned.
+       */
+      ctx->Const.ViewportBounds.Min = -(float)ctx->Const.MaxViewportWidth;
+      ctx->Const.ViewportBounds.Max = ctx->Const.MaxViewportWidth;
+   }
 }
 
 /**

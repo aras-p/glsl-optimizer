@@ -294,6 +294,12 @@ intelInitExtensions(struct gl_context *ctx)
          ctx->Extensions.ARB_transform_feedback_instanced = true;
          ctx->Extensions.ARB_draw_indirect = true;
       }
+
+      /* Only enable this in core profile because other parts of Mesa behave
+       * slightly differently when the extension is enabled.
+       */
+      if (ctx->API == API_OPENGL_CORE)
+         ctx->Extensions.ARB_viewport_array = true;
    }
 
    if (brw->gen == 5 || can_write_oacontrol(brw))
