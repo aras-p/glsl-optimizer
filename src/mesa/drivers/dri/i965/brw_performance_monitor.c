@@ -72,6 +72,13 @@ struct brw_perf_monitor_object
    drm_intel_bo *oa_bo;
 
    /**
+    * Storage for OA results accumulated so far.
+    *
+    * An array indexed by the counter ID in the OA_COUNTERS group.
+    */
+   uint32_t *oa_results;
+
+   /**
     * BO containing starting and ending snapshots for any active pipeline
     * statistics counters.
     */
@@ -719,6 +726,68 @@ emit_mi_report_perf_count(struct brw_context *brw,
    assert(brw->batch.used - batch_used <= MI_REPORT_PERF_COUNT_BATCH_DWORDS * 4);
 }
 
+/**
+ * Given pointers to starting and ending OA snapshots, add the deltas for each
+ * counter to the results.
+ */
+static void
+add_deltas(struct brw_context *brw,
+           struct brw_perf_monitor_object *monitor,
+           uint32_t *start, uint32_t *end)
+{
+   /* Look for expected report ID values to ensure data is present. */
+   assert(start[0] == REPORT_ID);
+   assert(end[0] == REPORT_ID);
+
+   /* Subtract each counter's ending and starting values, then add the
+    * difference to the counter's value so far.
+    */
+   for (int i = 3; i < brw->perfmon.entries_per_oa_snapshot; i++) {
+      /* When debugging, it's useful to note when the ending value is less than
+       * the starting value; aggregating counters should always increase in
+       * value (or remain unchanged).  This happens periodically due to
+       * wraparound, but can also indicate serious problems.
+       */
+#ifdef DEBUG
+      if (end[i] < start[i]) {
+         int counter = brw->perfmon.oa_snapshot_layout[i];
+         if (counter >= 0) {
+            DBG("WARNING: \"%s\" ending value was less than the starting "
+                "value: %u < %u (end - start = %u)\n",
+                brw->ctx.PerfMonitor.Groups[0].Counters[counter].Name,
+                end[i], start[i], end[i] - start[i]);
+         }
+      }
+#endif
+      monitor->oa_results[i] += end[i] - start[i];
+   }
+}
+
+/**
+ * Gather OA counter results (partial or full) from a series of snapshots.
+ *
+ * Monitoring can start or stop at any time, likely at some point mid-batch.
+ * We write snapshots for both events, storing them in monitor->oa_bo.
+ */
+static void
+gather_oa_results(struct brw_context *brw,
+                  struct brw_perf_monitor_object *monitor)
+{
+   assert(monitor->oa_bo != NULL);
+
+   drm_intel_bo_map(monitor->oa_bo, false);
+   uint32_t *monitor_buffer = monitor->oa_bo->virtual;
+
+   if (true) { /* if only it actually were! */
+      add_deltas(brw, monitor,
+                 monitor_buffer,
+                 monitor_buffer + (SECOND_SNAPSHOT_OFFSET_IN_BYTES /
+                                   sizeof(uint32_t)));
+      drm_intel_bo_unmap(monitor->oa_bo);
+      return;
+   }
+}
+
 /******************************************************************************/
 
 /**
@@ -891,6 +960,28 @@ brw_get_perf_monitor_result(struct gl_context *ctx,
     * active counter.  The API allows counters to appear in any order.
     */
    GLsizei offset = 0;
+
+   if (monitor_needs_oa(brw, m)) {
+      /* Gather up the results from the BO. */
+      if (monitor->oa_bo) {
+         gather_oa_results(brw, monitor);
+      }
+
+      for (int i = 0; i < brw->perfmon.entries_per_oa_snapshot; i++) {
+         int group = OA_COUNTERS;
+         int counter = brw->perfmon.oa_snapshot_layout[i];
+
+         /* We always capture all the OA counters, but the application may
+          * have only asked for a subset.  Skip unwanted counters.
+          */
+         if (counter < 0 || !BITSET_TEST(m->ActiveCounters[group], counter))
+            continue;
+
+         data[offset++] = group;
+         data[offset++] = counter;
+         data[offset++] = monitor->oa_results[i];
+      }
+   }
 
    if (monitor_needs_statistics_registers(brw, m)) {
       const int num_counters =
