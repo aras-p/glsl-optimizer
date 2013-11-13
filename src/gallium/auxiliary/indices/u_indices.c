@@ -42,6 +42,27 @@ static void translate_memcpy_uint( const void *in,
 }
                               
 
+/**
+ * Translate indexes when a driver can't support certain types
+ * of drawing.  Example include:
+ * - Translate 1-byte indexes into 2-byte indexes
+ * - Translate PIPE_PRIM_QUADS into PIPE_PRIM_TRIANGLES when the hardware
+ *   doesn't support the former.
+ * - Translate from first provoking vertex to last provoking vertex and
+ *   vice versa.
+ *
+ * \param hw_mask  mask of (1 << PIPE_PRIM_x) flags indicating which types
+ *                 of primitives are supported by the hardware.
+ * \param prim  incoming PIPE_PRIM_x
+ * \param in_index_size  bytes per index value (1, 2 or 4)
+ * \param nr  number of incoming vertices
+ * \param in_pv  incoming provoking vertex convention (PV_FIRST or PV_LAST)
+ * \param out_pv  desired provoking vertex convention (PV_FIRST or PV_LAST)
+ * \param out_prim  returns new PIPE_PRIM_x we'll translate to
+ * \param out_index_size  returns bytes per new index value (2 or 4)
+ * \param out_nr  returns number of new vertices
+ * \param out_translate  returns the translation function to use by the caller
+ */
 int u_index_translator( unsigned hw_mask,
                         unsigned prim,
                         unsigned in_index_size,
@@ -57,6 +78,10 @@ int u_index_translator( unsigned hw_mask,
    unsigned out_idx;
    int ret = U_TRANSLATE_NORMAL;
 
+   assert(in_index_size == 1 ||
+          in_index_size == 2 ||
+          in_index_size == 4);
+
    u_index_init();
 
    in_idx = in_size_idx(in_index_size);
@@ -67,6 +92,7 @@ int u_index_translator( unsigned hw_mask,
        in_index_size == *out_index_size &&
        in_pv == out_pv) 
    {
+      /* Index translation not really needed */
       if (in_index_size == 4)
          *out_translate = translate_memcpy_uint;
       else
