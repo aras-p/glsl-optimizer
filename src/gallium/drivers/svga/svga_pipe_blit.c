@@ -148,6 +148,8 @@ static void svga_surface_copy(struct pipe_context *pipe,
 
 #endif
 
+   /* Mark the destination image as being defined */
+   svga_define_texture_level(dtex, dst_face, dst_level);
 }
 
 
