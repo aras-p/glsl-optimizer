@@ -107,6 +107,10 @@ translate_dst_register( struct svga_shader_emitter *emit,
       break;
    }
 
+   if (reg->Register.Indirect) {
+      debug_warning("Indirect indexing of dest registers is not supported!\n");
+   }
+
    dest.mask = reg->Register.WriteMask;
    assert(dest.mask);
 
