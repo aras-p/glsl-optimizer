@@ -176,6 +176,7 @@ unsigned radeon_llvm_compile(LLVMModuleRef M, struct radeon_llvm_binary *binary,
 	if (elf){
 		elf_end(elf);
 	}
+	FREE(elf_buffer);
 	LLVMDisposeMemoryBuffer(out_buffer);
 	LLVMDisposeTargetMachine(tm);
 	return 0;
