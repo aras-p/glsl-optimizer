@@ -47,6 +47,7 @@
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_scan.h"
+#include "tgsi/tgsi_strings.h"
 #include "lp_bld_tgsi_action.h"
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
@@ -66,6 +67,37 @@
 #include "lp_bld_struct.h"
 
 #define DUMP_GS_EMITS 0
+
+/*
+ * If non-zero, the generated LLVM IR will print intermediate results on every TGSI
+ * instruction.
+ *
+ * TODO:
+ * - take execution masks in consideration
+ * - debug control-flow instructions
+ */
+#define DEBUG_EXECUTION 0
+
+
+/*
+ * Emit code to print a register value.
+ */
+static void
+emit_dump_reg(struct gallivm_state *gallivm,
+              unsigned file,
+              unsigned index,
+              unsigned chan,
+              LLVMValueRef value)
+{
+   char buf[32];
+
+   util_snprintf(buf, sizeof buf, "    %s[%u].%c = ",
+                 tgsi_file_name(file),
+                 index, "xyzw"[chan]);
+
+   lp_build_print_value(gallivm, buf, value);
+}
+
 
 static void lp_exec_mask_init(struct lp_exec_mask *mask, struct lp_build_context *bld)
 {
@@ -664,6 +696,43 @@ static void lp_exec_mask_endsub(struct lp_exec_mask *mask, int *pc)
 }
 
 
+static LLVMValueRef
+get_file_ptr(struct lp_build_tgsi_soa_context *bld,
+             unsigned file,
+             unsigned index,
+             unsigned chan)
+{
+   LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
+   LLVMValueRef (*array_of_vars)[TGSI_NUM_CHANNELS];
+   LLVMValueRef var_of_array;
+
+   switch (file) {
+   case TGSI_FILE_TEMPORARY:
+      array_of_vars = bld->temps;
+      var_of_array = bld->temps_array;
+      break;
+   case TGSI_FILE_OUTPUT:
+      array_of_vars = bld->outputs;
+      var_of_array = bld->outputs_array;
+      break;
+   default:
+      assert(0);
+      return NULL;
+   }
+
+   assert(chan < 4);
+
+   if (bld->indirect_files & (1 << file)) {
+      LLVMValueRef lindex = lp_build_const_int32(bld->bld_base.base.gallivm, index * 4 + chan);
+      return LLVMBuildGEP(builder, var_of_array, &lindex, 1, "");
+   }
+   else {
+      assert(index <= bld->bld_base.info->file_max[file]);
+      return array_of_vars[index][chan];
+   }
+}
+
+
 /**
  * Return pointer to a temporary register channel (src or dest).
  * Note that indirect addressing cannot be handled here.
@@ -675,15 +744,7 @@ lp_get_temp_ptr_soa(struct lp_build_tgsi_soa_context *bld,
              unsigned index,
              unsigned chan)
 {
-   LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
-   assert(chan < 4);
-   if (bld->indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
-      LLVMValueRef lindex = lp_build_const_int32(bld->bld_base.base.gallivm, index * 4 + chan);
-      return LLVMBuildGEP(builder, bld->temps_array, &lindex, 1, "");
-   }
-   else {
-      return bld->temps[index][chan];
-   }
+   return get_file_ptr(bld, TGSI_FILE_TEMPORARY, index, chan);
 }
 
 /**
@@ -697,16 +758,7 @@ lp_get_output_ptr(struct lp_build_tgsi_soa_context *bld,
                unsigned index,
                unsigned chan)
 {
-   LLVMBuilderRef builder = bld->bld_base.base.gallivm->builder;
-   assert(chan < 4);
-   if (bld->indirect_files & (1 << TGSI_FILE_OUTPUT)) {
-      LLVMValueRef lindex = lp_build_const_int32(bld->bld_base.base.gallivm,
-                                                 index * 4 + chan);
-      return LLVMBuildGEP(builder, bld->outputs_array, &lindex, 1, "");
-   }
-   else {
-      return bld->outputs[index][chan];
-   }
+   return get_file_ptr(bld, TGSI_FILE_OUTPUT, index, chan);
 }
 
 /*
@@ -1412,6 +1464,10 @@ emit_store_chan(
                              bld_base->info->file_max[reg->Register.File]);
    }
 
+   if (DEBUG_EXECUTION) {
+      emit_dump_reg(gallivm, reg->Register.File, reg->Register.Index, chan_index, value);
+   }
+
    switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
       /* Outputs are always stored as floats */
@@ -1489,6 +1545,39 @@ emit_store_chan(
    }
 
    (void)dtype;
+}
+
+/*
+ * Called at the beginning of the translation of each TGSI instruction, to
+ * emit some debug code.
+ */
+static void
+emit_debug(
+   struct lp_build_tgsi_context * bld_base,
+   const struct tgsi_full_instruction * inst,
+   const struct tgsi_opcode_info * info)
+
+{
+   struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
+
+   if (DEBUG_EXECUTION) {
+      /*
+       * Dump the TGSI instruction.
+       */
+
+      struct gallivm_state *gallivm = bld_base->base.gallivm;
+      char buf[512];
+      buf[0] = '$';
+      buf[1] = ' ';
+      tgsi_dump_instruction_str(inst, bld_base->pc, &buf[2], sizeof buf - 2);
+      lp_build_printf(gallivm, buf);
+
+      /* Dump the execution mask.
+       */
+      if (bld->exec_mask.has_mask) {
+         lp_build_print_value(gallivm, "    mask = ", bld->exec_mask.exec_mask);
+      }
+   }
 }
 
 static void
@@ -2250,42 +2339,78 @@ emit_kill(struct lp_build_tgsi_soa_context *bld,
  * to stdout.
  */
 static void
-emit_dump_temps(struct lp_build_tgsi_soa_context *bld)
+emit_dump_file(struct lp_build_tgsi_soa_context *bld,
+               unsigned file)
 {
+   const struct tgsi_shader_info *info = bld->bld_base.info;
    struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
    LLVMBuilderRef builder = gallivm->builder;
-   LLVMValueRef temp_ptr;
-   LLVMValueRef i0 = lp_build_const_int32(gallivm, 0);
-   LLVMValueRef i1 = lp_build_const_int32(gallivm, 1);
-   LLVMValueRef i2 = lp_build_const_int32(gallivm, 2);
-   LLVMValueRef i3 = lp_build_const_int32(gallivm, 3);
+   LLVMValueRef reg_ptr;
    int index;
-   int n = bld->bld_base.info->file_max[TGSI_FILE_TEMPORARY];
+   int max_index = info->file_max[file];
 
-   for (index = 0; index < n; index++) {
-      LLVMValueRef idx = lp_build_const_int32(gallivm, index);
-      LLVMValueRef v[4][4], res;
+   /*
+    * Some register files, particularly constants, can be very large,
+    * and dumping everything could make this unusably slow.
+    */
+   max_index = MIN2(max_index, 32);
+
+   for (index = 0; index <= max_index; index++) {
+      LLVMValueRef res;
+      unsigned mask;
       int chan;
 
-      lp_build_printf(gallivm, "TEMP[%d]:\n", idx);
-
-      for (chan = 0; chan < 4; chan++) {
-         temp_ptr = lp_get_temp_ptr_soa(bld, index, chan);
-         res = LLVMBuildLoad(builder, temp_ptr, "");
-         v[chan][0] = LLVMBuildExtractElement(builder, res, i0, "");
-         v[chan][1] = LLVMBuildExtractElement(builder, res, i1, "");
-         v[chan][2] = LLVMBuildExtractElement(builder, res, i2, "");
-         v[chan][3] = LLVMBuildExtractElement(builder, res, i3, "");
+      if (index < 8 * sizeof(unsigned) &&
+          (info->file_mask[file] & (1 << index)) == 0)  {
+         /* This was not declared.*/
+         continue;
       }
 
-      lp_build_printf(gallivm, "  X: %f %f %f %f\n",
-                      v[0][0], v[0][1], v[0][2], v[0][3]);
-      lp_build_printf(gallivm, "  Y: %f %f %f %f\n",
-                      v[1][0], v[1][1], v[1][2], v[1][3]);
-      lp_build_printf(gallivm, "  Z: %f %f %f %f\n",
-                      v[2][0], v[2][1], v[2][2], v[2][3]);
-      lp_build_printf(gallivm, "  W: %f %f %f %f\n",
-                      v[3][0], v[3][1], v[3][2], v[3][3]);
+      if (file == TGSI_FILE_INPUT) {
+         mask = info->input_usage_mask[index];
+      } else {
+         mask = TGSI_WRITEMASK_XYZW;
+      }
+
+      for (chan = 0; chan < 4; chan++) {
+         if ((mask & (1 << chan)) == 0) {
+            /* This channel is not used.*/
+            continue;
+         }
+
+         if (file == TGSI_FILE_CONSTANT) {
+            struct tgsi_full_src_register reg;
+            memset(&reg, 0, sizeof reg);
+            reg.Register.File = file;
+            reg.Register.Index = index;
+            reg.Register.SwizzleX = 0;
+            reg.Register.SwizzleY = 1;
+            reg.Register.SwizzleZ = 2;
+            reg.Register.SwizzleW = 3;
+
+            res = bld->bld_base.emit_fetch_funcs[file](&bld->bld_base, &reg, TGSI_TYPE_FLOAT, chan);
+            if (!res) {
+               continue;
+            }
+         } else if (file == TGSI_FILE_INPUT) {
+            res = bld->inputs[index][chan];
+            if (!res) {
+               continue;
+            }
+         } else if (file == TGSI_FILE_TEMPORARY) {
+            reg_ptr = lp_get_temp_ptr_soa(bld, index, chan);
+            assert(reg_ptr);
+            res = LLVMBuildLoad(builder, reg_ptr, "");
+         } else if (file == TGSI_FILE_OUTPUT) {
+            reg_ptr = lp_get_output_ptr(bld, index, chan);
+            assert(reg_ptr);
+            res = LLVMBuildLoad(builder, reg_ptr, "");
+         } else {
+            assert(0);
+         }
+
+         emit_dump_reg(gallivm, file, index, chan, res);
+      }
    }
 }
 
@@ -3171,6 +3296,12 @@ static void emit_prologue(struct lp_build_tgsi_context * bld_base)
       LLVMBuildStore(gallivm->builder, uint_bld->zero,
                      bld->total_emitted_vertices_vec_ptr);
    }
+
+   if (DEBUG_EXECUTION) {
+      lp_build_printf(gallivm, "\n");
+      emit_dump_file(bld, TGSI_FILE_CONSTANT);
+      emit_dump_file(bld, TGSI_FILE_INPUT);
+   }
 }
 
 static void emit_epilogue(struct lp_build_tgsi_context * bld_base)
@@ -3178,9 +3309,13 @@ static void emit_epilogue(struct lp_build_tgsi_context * bld_base)
    struct lp_build_tgsi_soa_context * bld = lp_soa_context(bld_base);
    LLVMBuilderRef builder = bld_base->base.gallivm->builder;
 
-   if (0) {
+   if (DEBUG_EXECUTION) {
       /* for debugging */
-      emit_dump_temps(bld);
+      if (0) {
+         emit_dump_file(bld, TGSI_FILE_TEMPORARY);
+      }
+      emit_dump_file(bld, TGSI_FILE_OUTPUT);
+      lp_build_printf(bld_base->base.gallivm, "\n");
    }
 
    /* If we have indirect addressing in outputs we need to copy our alloca array
@@ -3245,6 +3380,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.indirect_files = info->indirect_files;
 
    bld.bld_base.soa = TRUE;
+   bld.bld_base.emit_debug = emit_debug;
    bld.bld_base.emit_fetch_funcs[TGSI_FILE_CONSTANT] = emit_fetch_constant;
    bld.bld_base.emit_fetch_funcs[TGSI_FILE_IMMEDIATE] = emit_fetch_immediate;
    bld.bld_base.emit_fetch_funcs[TGSI_FILE_INPUT] = emit_fetch_input;

@@ -721,3 +721,26 @@ tgsi_dump_str(
 
    tgsi_iterate_shader( tokens, &ctx.base.iter );
 }
+
+void
+tgsi_dump_instruction_str(
+   const struct tgsi_full_instruction *inst,
+   uint instno,
+   char *str,
+   size_t size)
+{
+   struct str_dump_ctx ctx;
+
+   ctx.base.instno = instno;
+   ctx.base.immno = instno;
+   ctx.base.indent = 0;
+   ctx.base.dump_printf = &str_dump_ctx_printf;
+   ctx.base.indentation = 0;
+
+   ctx.str = str;
+   ctx.str[0] = 0;
+   ctx.ptr = str;
+   ctx.left = (int)size;
+
+   iter_instruction( &ctx.base.iter, (struct tgsi_full_instruction *)inst );
+}

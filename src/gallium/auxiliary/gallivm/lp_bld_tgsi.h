@@ -352,6 +352,11 @@ struct lp_build_tgsi_context
    LLVMValueRef (*emit_swizzle)(struct lp_build_tgsi_context *,
                          LLVMValueRef, unsigned, unsigned, unsigned, unsigned);
 
+
+   void (*emit_debug)(struct lp_build_tgsi_context *,
+                      const struct tgsi_full_instruction *,
+                      const struct tgsi_opcode_info *);
+
    void (*emit_store)(struct lp_build_tgsi_context *,
                       const struct tgsi_full_instruction *,
                       const struct tgsi_opcode_info *,

@@ -200,6 +200,10 @@ lp_build_tgsi_inst_llvm(
 
    bld_base->pc++;
 
+   if (bld_base->emit_debug) {
+      bld_base->emit_debug(bld_base, inst, info);
+   }
+
    /* Ignore deprecated instructions */
    switch (inst->Instruction.Opcode) {
 

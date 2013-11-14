@@ -58,6 +58,13 @@ tgsi_dump_immediate(
    const struct tgsi_full_immediate *imm );
 
 void
+tgsi_dump_instruction_str(
+   const struct tgsi_full_instruction *inst,
+   uint instno,
+   char *str,
+   size_t size);
+
+void
 tgsi_dump_instruction(
    const struct tgsi_full_instruction *inst,
    uint instno );
