@@ -9926,7 +9926,7 @@
 </category>
 
 <!-- Extension number 99 is not listed in the extension registry. -->
-<!-- Extension number 100 is a GLU extension. -->
+<xi:include href="ARB_viewport_array.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <!-- Shouldn't this be EXT_fragment_lighting? -->
 <category name="GL_SGIX_fragment_lighting" number="102">

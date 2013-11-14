@@ -391,6 +391,7 @@ EXTRA_EXT(ARB_texture_gather);
 EXTRA_EXT(ARB_shader_atomic_counters);
 EXTRA_EXT(ARB_draw_indirect);
 EXTRA_EXT(ARB_shader_image_load_store);
+EXTRA_EXT(ARB_viewport_array);
 
 static const int
 extra_ARB_color_buffer_float_or_glcore[] = {

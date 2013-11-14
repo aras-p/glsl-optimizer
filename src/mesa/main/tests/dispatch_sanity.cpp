@@ -786,16 +786,16 @@ const struct function gl_core_functions_possible[] = {
 // { "glVertexAttribL4dv", 43, -1 },                    // XXX: Add to xml
 // { "glVertexAttribLPointer", 43, -1 },                // XXX: Add to xml
 // { "glGetVertexAttribLdv", 43, -1 },                  // XXX: Add to xml
-// { "glViewportArrayv", 43, -1 },                      // XXX: Add to xml
-// { "glViewportIndexedf", 43, -1 },                    // XXX: Add to xml
-// { "glViewportIndexedfv", 43, -1 },                   // XXX: Add to xml
-// { "glScissorArrayv", 43, -1 },                       // XXX: Add to xml
-// { "glScissorIndexed", 43, -1 },                      // XXX: Add to xml
-// { "glScissorIndexedv", 43, -1 },                     // XXX: Add to xml
-// { "glDepthRangeArrayv", 43, -1 },                    // XXX: Add to xml
-// { "glDepthRangeIndexed", 43, -1 },                   // XXX: Add to xml
-// { "glGetFloati_v", 43, -1 },                         // XXX: Add to xml
-// { "glGetDoublei_v", 43, -1 },                        // XXX: Add to xml
+   { "glViewportArrayv", 43, -1 },
+   { "glViewportIndexedf", 43, -1 },
+   { "glViewportIndexedfv", 43, -1 },
+   { "glScissorArrayv", 43, -1 },
+   { "glScissorIndexed", 43, -1 },
+   { "glScissorIndexedv", 43, -1 },
+   { "glDepthRangeArrayv", 43, -1 },
+   { "glDepthRangeIndexed", 43, -1 },
+   { "glGetFloati_v", 43, -1 },
+   { "glGetDoublei_v", 43, -1 },
 // { "glCreateSyncFromCLeventARB", 43, -1 },            // XXX: Add to xml
    { "glDebugMessageControlARB", 43, -1 },
    { "glDebugMessageInsertARB", 43, -1 },

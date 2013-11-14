@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<!DOCTYPE OpenGLAPI SYSTEM "gl_API.dtd">
+
+<!-- Note: no GLX protocol info yet. -->
+
+<OpenGLAPI>
+
+<category name="GL_ARB_viewport_array" number="100">
+
+    <enum name="MAX_VIEWPORTS" value="0x825B"/>
+    <enum name="VIEWPORT_SUBPIXEL_BITS" value="0x825C"/>
+    <enum name="VIEWPORT_BOUNDS_RANGE" value="0x825D"/>
+    <enum name="LAYER_PROVOKING_VERTEX" value="0x825E"/>
+    <enum name="VIEWPORT_INDEX_PROVOKING_VERTEX" value="0x825F"/>
+    <enum name="SCISSOR_BOX" value="0x0C10"/>
+    <enum name="VIEWPORT" value="0x0BA2"/>
+    <enum name="DEPTH_RANGE" value="0x0B70"/>
+    <enum name="SCISSOR_TEST" value="0x0C11"/>
+    <enum name="FIRST_VERTEX_CONVENTION" value="0x8E4D"/>
+    <enum name="LAST_VERTEX_CONVENTION" value="0x8E4E"/>
+    <enum name="PROVOKING_VERTEX" value="0x8E4F"/>
+    <enum name="UNDEFINED_VERTEX" value="0x8260"/>
+
+    <function name="ViewportArrayv" offset="assign">
+        <param name="first" type="GLuint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="v" type="const GLfloat *"/>
+    </function>
+    <function name="ViewportIndexedf" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="x" type="GLfloat"/>
+        <param name="y" type="GLfloat"/>
+        <param name="w" type="GLfloat"/>
+        <param name="h" type="GLfloat"/>
+    </function>
+    <function name="ViewportIndexedfv" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLfloat *"/>
+    </function>
+    <function name="ScissorArrayv" offset="assign">
+        <param name="first" type="GLuint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="v" type="const int *"/>
+    </function>
+    <function name="ScissorIndexed" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="left" type="GLint"/>
+        <param name="bottom" type="GLint"/>
+        <param name="width" type="GLsizei"/>
+        <param name="height" type="GLsizei"/>
+    </function>
+    <function name="ScissorIndexedv" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLint *"/>
+    </function>
+    <function name="DepthRangeArrayv" offset="assign">
+        <param name="first" type="GLuint"/>
+        <param name="count" type="GLsizei"/>
+        <param name="v" type="const GLclampd *"/>
+    </function>
+    <function name="DepthRangeIndexed" offset="assign">
+        <param name="index" type="GLuint"/>
+        <param name="n" type="GLclampd"/>
+        <param name="f" type="GLclampd"/>
+    </function>
+    <function name="GetFloati_v" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="index" type="GLuint"/>
+        <param name="data" type="GLfloat *"/>
+    </function>
+    <function name="GetDoublei_v" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="index" type="GLuint"/>
+        <param name="data" type="GLdouble *"/>
+    </function>
+
+</category>
+
+</OpenGLAPI>
