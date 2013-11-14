@@ -193,11 +193,11 @@ fs_visitor::IF(uint32_t predicate)
    return inst;
 }
 
-/** Gen6+ IF with embedded comparison. */
+/** Gen6 IF with embedded comparison. */
 fs_inst *
 fs_visitor::IF(fs_reg src0, fs_reg src1, uint32_t condition)
 {
-   assert(brw->gen >= 6);
+   assert(brw->gen == 6);
    fs_inst *inst = new(mem_ctx) fs_inst(BRW_OPCODE_IF,
                                         reg_null_d, src0, src1);
    inst->conditional_mod = condition;

@@ -177,11 +177,11 @@ vec4_visitor::IF(uint32_t predicate)
    return inst;
 }
 
-/** Gen6+ IF with embedded comparison. */
+/** Gen6 IF with embedded comparison. */
 vec4_instruction *
 vec4_visitor::IF(src_reg src0, src_reg src1, uint32_t condition)
 {
-   assert(brw->gen >= 6);
+   assert(brw->gen == 6);
 
    vec4_instruction *inst;
 
