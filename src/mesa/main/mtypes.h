@@ -1848,7 +1848,15 @@ struct gl_perf_monitor_object
 {
    GLuint Name;
 
+   /** True if the monitor is currently active (Begin called but not End). */
    GLboolean Active;
+
+   /**
+    * True if the monitor has ended.
+    *
+    * This is distinct from !Active because it may never have began.
+    */
+   GLboolean Ended;
 
    /**
     * A list of groups with currently active counters.

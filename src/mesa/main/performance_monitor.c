@@ -359,8 +359,10 @@ _mesa_DeletePerfMonitorsAMD(GLsizei n, GLuint *monitors)
 
       if (m) {
          /* Give the driver a chance to stop the monitor if it's active. */
-         if (m->Active)
+         if (m->Active) {
             ctx->Driver.ResetPerfMonitor(ctx, m);
+            m->Ended = false;
+         }
 
          _mesa_HashRemove(ctx->PerfMonitor.Monitors, monitors[i]);
          ralloc_free(m->ActiveGroups);
@@ -478,6 +480,7 @@ _mesa_BeginPerfMonitorAMD(GLuint monitor)
     */
    if (ctx->Driver.BeginPerfMonitor(ctx, m)) {
       m->Active = true;
+      m->Ended = false;
    } else {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBeginPerfMonitor(driver unable to begin monitoring)");
@@ -507,6 +510,7 @@ _mesa_EndPerfMonitorAMD(GLuint monitor)
    ctx->Driver.EndPerfMonitor(ctx, m);
 
    m->Active = false;
+   m->Ended = true;
 }
 
 /**
