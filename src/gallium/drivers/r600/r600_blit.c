@@ -619,6 +619,36 @@ void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst, unsig
 	}
 }
 
+/**
+ * Global buffers are not really resources, they are are actually offsets
+ * into a single global resource (r600_screen::global_pool).  The means
+ * they don't have their own cs_buf handle, so they cannot be passed
+ * to r600_copy_buffer() and must be handled separately.
+ *
+ * XXX: It should be possible to implement this function using
+ * r600_copy_buffer() by passing the memory_pool resource as both src
+ * and dst and updating dstx and src_box to point to the correct offsets.
+ * This would likely perform better than the current implementation.
+ */
+static void r600_copy_global_buffer(struct pipe_context *ctx,
+				    struct pipe_resource *dst, unsigned
+				    dstx, struct pipe_resource *src,
+				    const struct pipe_box *src_box)
+{
+	struct pipe_box dst_box; struct pipe_transfer *src_pxfer,
+	*dst_pxfer;
+
+	u_box_1d(dstx, src_box->width, &dst_box);
+	void *src_ptr = ctx->transfer_map(ctx, src, 0, PIPE_TRANSFER_READ,
+					  src_box, &src_pxfer);
+	void *dst_ptr = ctx->transfer_map(ctx, dst, 0, PIPE_TRANSFER_WRITE,
+					  &dst_box, &dst_pxfer);
+	memcpy(dst_ptr, src_ptr, src_box->width);
+
+	ctx->transfer_unmap(ctx, src_pxfer);
+	ctx->transfer_unmap(ctx, dst_pxfer);
+}
+
 static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
 			      unsigned offset, unsigned size, unsigned value)
 {
@@ -671,7 +701,12 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 	/* Handle buffers first. */
 	if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
-		r600_copy_buffer(ctx, dst, dstx, src, src_box);
+		if ((src->bind & PIPE_BIND_GLOBAL) ||
+					(dst->bind & PIPE_BIND_GLOBAL)) {
+			r600_copy_global_buffer(ctx, dst, dstx, src, src_box);
+		} else {
+			r600_copy_buffer(ctx, dst, dstx, src, src_box);
+		}
 		return;
 	}
 
