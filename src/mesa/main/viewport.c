@@ -43,6 +43,21 @@ set_viewport_no_notify(struct gl_context *ctx, unsigned idx,
    width  = MIN2(width, (GLfloat) ctx->Const.MaxViewportWidth);
    height = MIN2(height, (GLfloat) ctx->Const.MaxViewportHeight);
 
+   /* The GL_ARB_viewport_array spec says:
+    *
+    *     "The location of the viewport's bottom-left corner, given by (x,y),
+    *     are clamped to be within the implementation-dependent viewport
+    *     bounds range.  The viewport bounds range [min, max] tuple may be
+    *     determined by calling GetFloatv with the symbolic constant
+    *     VIEWPORT_BOUNDS_RANGE (see section 6.1)."
+    */
+   if (ctx->Extensions.ARB_viewport_array) {
+      x = CLAMP(x,
+                ctx->Const.ViewportBounds.Min, ctx->Const.ViewportBounds.Max);
+      y = CLAMP(y,
+                ctx->Const.ViewportBounds.Min, ctx->Const.ViewportBounds.Max);
+   }
+
    ctx->ViewportArray[idx].X = x;
    ctx->ViewportArray[idx].Width = width;
    ctx->ViewportArray[idx].Y = y;
@@ -64,6 +79,15 @@ set_viewport_no_notify(struct gl_context *ctx, unsigned idx,
                          ctx->DrawBuffer->_DepthMaxF);
 #endif
 }
+
+struct gl_viewport_inputs {
+   GLfloat X, Y;                /**< position */
+   GLfloat Width, Height;       /**< size */
+};
+
+struct gl_depthrange_inputs {
+   GLdouble Near, Far;          /**< Depth buffer range */
+};
 
 /**
  * Set the viewport.
@@ -133,6 +157,85 @@ _mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLfloat x, GLfloat y,
        */
       ctx->Driver.Viewport(ctx);
    }
+}
+
+void GLAPIENTRY
+_mesa_ViewportArrayv(GLuint first, GLsizei count, const GLfloat *v)
+{
+   int i;
+   const struct gl_viewport_inputs *const p = (struct gl_viewport_inputs *) v;
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glViewportArrayv %d %d\n", first, count);
+
+   if ((first + count) > ctx->Const.MaxViewports) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glViewportArrayv: first (%d) + count (%d) > MaxViewports "
+                  "(%d)",
+                  first, count, ctx->Const.MaxViewports);
+      return;
+   }
+
+   /* Verify width & height */
+   for (i = 0; i < count; i++) {
+      if (p[i].Width < 0 || p[i].Height < 0) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glViewportArrayv: index (%d) width or height < 0 "
+                     "(%f, %f)",
+                     i + first, p[i].Width, p[i].Height);
+         return;
+      }
+   }
+
+   for (i = 0; i < count; i++)
+      set_viewport_no_notify(ctx, i + first,
+                             p[i].X, p[i].Y,
+                             p[i].Width, p[i].Height);
+
+   if (ctx->Driver.Viewport)
+      ctx->Driver.Viewport(ctx);
+}
+
+static void
+ViewportIndexedf(GLuint index, GLfloat x, GLfloat y,
+                 GLfloat w, GLfloat h, const char *function)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "%s(%d, %f, %f, %f, %f)\n",
+                  function, index, x, y, w, h);
+
+   if (index >= ctx->Const.MaxViewports) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "%s: index (%d) >= MaxViewports (%d)",
+                  function, index, ctx->Const.MaxViewports);
+      return;
+   }
+
+   /* Verify width & height */
+   if (w < 0 || h < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "%s: index (%d) width or height < 0 (%f, %f)",
+                  function, index, w, h);
+      return;
+   }
+
+   _mesa_set_viewport(ctx, index, x, y, w, h);
+}
+
+void GLAPIENTRY
+_mesa_ViewportIndexedf(GLuint index, GLfloat x, GLfloat y,
+                       GLfloat w, GLfloat h)
+{
+   ViewportIndexedf(index, x, y, w, h, "glViewportIndexedf");
+}
+
+void GLAPIENTRY
+_mesa_ViewportIndexedfv(GLuint index, const GLfloat *v)
+{
+   ViewportIndexedf(index, v[0], v[1], v[2], v[3], "glViewportIndexedfv");
 }
 
 static void
@@ -215,6 +318,67 @@ void GLAPIENTRY
 _mesa_DepthRangef(GLclampf nearval, GLclampf farval)
 {
    _mesa_DepthRange(nearval, farval);
+}
+
+/**
+ * Update a range DepthRange values
+ *
+ * \param first   starting array index
+ * \param count   count of DepthRange items to update
+ * \param v       pointer to memory containing
+ *                GLclampd near and far clip-plane values
+ */
+void GLAPIENTRY
+_mesa_DepthRangeArrayv(GLuint first, GLsizei count, const GLclampd *v)
+{
+   int i;
+   const struct gl_depthrange_inputs *const p =
+      (struct gl_depthrange_inputs *) v;
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glDepthRangeArrayv %d %d\n", first, count);
+
+   if ((first + count) > ctx->Const.MaxViewports) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glDepthRangev: first (%d) + count (%d) >= MaxViewports (%d)",
+                  first, count, ctx->Const.MaxViewports);
+      return;
+   }
+
+   for (i = 0; i < count; i++)
+      set_depth_range_no_notify(ctx, i + first, p[i].Near, p[i].Far);
+
+   if (ctx->Driver.DepthRange)
+      ctx->Driver.DepthRange(ctx);
+}
+
+/**
+ * Update a single DepthRange
+ *
+ * \param index    array index to update
+ * \param nearval  specifies the Z buffer value which should correspond to
+ *                 the near clip plane
+ * \param farval   specifies the Z buffer value which should correspond to
+ *                 the far clip plane
+ */
+void GLAPIENTRY
+_mesa_DepthRangeIndexed(GLuint index, GLclampd nearval, GLclampd farval)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glDepthRangeIndexed(%d, %f, %f)\n",
+                  index, nearval, farval);
+
+   if (index >= ctx->Const.MaxViewports) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glDepthRangeIndexed: index (%d) >= MaxViewports (%d)",
+                  index, ctx->Const.MaxViewports);
+      return;
+   }
+
+   _mesa_set_depth_range(ctx, index, nearval, farval);
 }
 
 /** 
