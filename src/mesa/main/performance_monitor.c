@@ -568,8 +568,12 @@ _mesa_GetPerfMonitorCounterDataAMD(GLuint monitor, GLenum pname,
       return;
    }
 
+   /* If the monitor has never ended, there is no result. */
+   bool result_available = m->Ended &&
+      ctx->Driver.IsPerfMonitorResultAvailable(ctx, m);
+
    /* AMD appears to return 0 for all queries unless a result is available. */
-   if (!ctx->Driver.IsPerfMonitorResultAvailable(ctx, m)) {
+   if (!result_available) {
       *data = 0;
       if (bytesWritten != NULL)
          *bytesWritten = sizeof(GLuint);
