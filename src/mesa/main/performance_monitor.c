@@ -64,6 +64,8 @@ new_performance_monitor(struct gl_context *ctx, GLuint index)
 
    m->Name = index;
 
+   m->Active = false;
+
    m->ActiveGroups =
       rzalloc_array(NULL, unsigned, ctx->PerfMonitor.NumGroups);
 
