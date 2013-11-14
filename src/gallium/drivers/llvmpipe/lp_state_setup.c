@@ -627,6 +627,7 @@ init_args(struct gallivm_state *gallivm,
    struct lp_build_context bld;
 
    lp_build_context_init(&bld, gallivm, typef4);
+   args->bld = bld;
 
    /* The internal position input is in slot zero:
     */
@@ -675,8 +676,6 @@ init_args(struct gallivm_state *gallivm,
 
    args->x0_center = lp_build_extract_broadcast(gallivm, typef4, typef4, xy0_center, zeroi);
    args->y0_center = lp_build_extract_broadcast(gallivm, typef4, typef4, xy0_center, onei);
-
-   args->bld = bld;
 
    emit_linear_coef(gallivm, args, 0, attr_pos);
 }
