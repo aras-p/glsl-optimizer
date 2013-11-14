@@ -30,6 +30,7 @@
 #include <llvm-c/BitReader.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/Target.h>
+#include <llvm-c/Transforms/IPO.h>
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 
 LLVMModuleRef radeon_llvm_parse_bitcode(const unsigned char * bitcode,
@@ -59,9 +60,26 @@ static void radeon_llvm_optimize(LLVMModuleRef mod)
 	LLVMTargetDataRef TD = LLVMCreateTargetData(data_layout);
 	LLVMPassManagerBuilderRef builder = LLVMPassManagerBuilderCreate();
 	LLVMPassManagerRef pass_manager = LLVMCreatePassManager();
-	LLVMAddTargetData(TD, pass_manager);
 
-	LLVMPassManagerBuilderUseInlinerWithThreshold(builder, 1000000000);
+	/* Functions calls are not supported yet, so we need to inline
+	 * everything.  The most efficient way to do this is to add
+	 * the always_inline attribute to all non-kernel functions
+	 * and then run the Always Inline pass.  The Always Inline
+	 * pass will automaically inline functions with this attribute
+	 * and does not perform the expensive cost analysis that the normal
+	 * inliner does.
+	 */
+
+	LLVMValueRef fn;
+	for (fn = LLVMGetFirstFunction(mod); fn; fn = LLVMGetNextFunction(fn)) {
+		/* All the non-kernel functions have internal linkage */
+		if (LLVMGetLinkage(fn) == LLVMInternalLinkage) {
+			LLVMAddFunctionAttr(fn, LLVMAlwaysInlineAttribute);
+		}
+	}
+
+	LLVMAddTargetData(TD, pass_manager);
+	LLVMAddAlwaysInlinerPass(pass_manager);
 	LLVMPassManagerBuilderPopulateModulePassManager(builder, pass_manager);
 
 	LLVMRunPassManager(pass_manager, mod);
