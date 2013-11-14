@@ -434,6 +434,7 @@ builtin_variable_generator::add_variable(const char *name,
                                          enum ir_variable_mode mode, int slot)
 {
    ir_variable *var = new(symtab) ir_variable(type, name, mode);
+   var->how_declared = ir_var_declared_implicitly;
 
    switch (var->mode) {
    case ir_var_auto:

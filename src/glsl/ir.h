@@ -294,6 +294,34 @@ enum ir_variable_mode {
 };
 
 /**
+ * Enum keeping track of how a variable was declared.  For error checking of
+ * the gl_PerVertex redeclaration rules.
+ */
+enum ir_var_declaration_type {
+   /**
+    * Normal declaration (for most variables, this means an explicit
+    * declaration.  Exception: temporaries are always implicitly declared, but
+    * they still use ir_var_declared_normally).
+    *
+    * Note: an ir_variable that represents a named interface block uses
+    * ir_var_declared_normally.
+    */
+   ir_var_declared_normally = 0,
+
+   /**
+    * Variable was explicitly declared (or re-declared) in an unnamed
+    * interface block.
+    */
+   ir_var_declared_in_block,
+
+   /**
+    * Variable is an implicitly declared built-in that has not been explicitly
+    * re-declared by the shader.
+    */
+   ir_var_declared_implicitly,
+};
+
+/**
  * \brief Layout qualifiers for gl_FragDepth.
  *
  * The AMD/ARB_conservative_depth extensions allow gl_FragDepth to be redeclared
@@ -524,6 +552,14 @@ public:
     * non-ast_to_hir.cpp (GLSL parsing) paths.
     */
    unsigned assigned:1;
+
+   /**
+    * Enum indicating how the variable was declared.  See
+    * ir_var_declaration_type.
+    *
+    * This is used to detect certain kinds of illegal variable redeclarations.
+    */
+   unsigned how_declared:2;
 
    /**
     * Storage class of the variable.

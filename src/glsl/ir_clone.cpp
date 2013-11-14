@@ -68,6 +68,7 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->has_initializer = this->has_initializer;
    var->depth_layout = this->depth_layout;
    var->assigned = this->assigned;
+   var->how_declared = this->how_declared;
    var->used = this->used;
 
    var->num_state_slots = this->num_state_slots;
