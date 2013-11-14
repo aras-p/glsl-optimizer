@@ -2295,12 +2295,15 @@ emit_kill_if(
       }
    }
 
-   if(mask) {
-      lp_build_mask_update(bld->mask, mask);
-
-      if (!near_end_of_shader(bld, pc))
-	 lp_build_mask_check(bld->mask);
+   if (bld->exec_mask.has_mask) {
+      LLVMValueRef invmask;
+      invmask = LLVMBuildNot(builder, bld->exec_mask.exec_mask, "kilp");
+      mask = LLVMBuildOr(builder, mask, invmask, "");
    }
+
+   lp_build_mask_update(bld->mask, mask);
+   if (!near_end_of_shader(bld, pc))
+      lp_build_mask_check(bld->mask);
 }
 
 
