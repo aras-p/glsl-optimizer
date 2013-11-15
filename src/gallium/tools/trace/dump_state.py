@@ -104,7 +104,7 @@ class Struct:
         return obj
 
     def __repr__(self):
-        return repr(self.__json__)
+        return repr(self.__json__())
 
 
 class Translator(model.Visitor):
@@ -239,11 +239,12 @@ class Context(Dispatcher):
         self._state.vs.shader = None
         self._state.gs.shader = None
         self._state.fs.shader = None
-        self._state.sampler = {}
         self._state.vs.sampler = []
         self._state.gs.sampler = []
         self._state.fs.sampler = []
-        self._state.sampler_views = {}
+        self._state.vs.sampler_views = []
+        self._state.gs.sampler_views = []
+        self._state.fs.sampler_views = []
         self._state.vs.constant_buffer = []
         self._state.gs.constant_buffer = []
         self._state.fs.constant_buffer = []
@@ -280,7 +281,21 @@ class Context(Dispatcher):
         pass
 
     def bind_sampler_states(self, shader, start, num_states, states):
-        self._state.sampler[shader] = states
+        # FIXME: Handle non-zero start
+        assert start == 0
+        self._get_stage_state(shader).sampler = states
+
+    def bind_vertex_sampler_states(self, num_states, states):
+        # XXX: deprecated method
+        self._state.vs.sampler = states
+
+    def bind_geometry_sampler_states(self, num_states, states):
+        # XXX: deprecated method
+        self._state.gs.sampler = states
+
+    def bind_fragment_sampler_states(self, num_states, states):
+        # XXX: deprecated method
+        self._state.fs.sampler = states
         
     def create_rasterizer_state(self, state):
         return state
@@ -399,7 +414,21 @@ class Context(Dispatcher):
         pass
 
     def set_sampler_views(self, shader, start, num, views):
-        self._state.sampler_views[shader] = views
+        # FIXME: Handle non-zero start
+        assert start == 0
+        self._get_stage_state(shader).sampler_views = views
+
+    def set_fragment_sampler_views(self, num, views):
+        # XXX: deprecated
+        self._state.fs.sampler_views = views
+
+    def set_geometry_sampler_views(self, num, views):
+        # XXX: deprecated
+        self._state.gs.sampler_views = views
+
+    def set_vertex_sampler_views(self, num, views):
+        # XXX: deprecated
+        self._state.vs.sampler_views = views
 
     def set_vertex_buffers(self, start_slot, num_buffers, buffers):
         self._update(self._state.vertex_buffers, start_slot, num_buffers, buffers)
@@ -431,6 +460,10 @@ class Context(Dispatcher):
         }[index_size]
 
         assert struct.calcsize(format) == index_size
+
+        if self._state.index_buffer.buffer is None:
+            # Could happen with index in user memory
+            return 0, 0
 
         data = self._state.index_buffer.buffer.data
         max_index, min_index = 0, 0xffffffff
@@ -535,8 +568,11 @@ class Context(Dispatcher):
                 register = registers.setdefault(file_, set())
                 register.add(int(index))
 
+        if 'SAMP' in registers and 'SVIEW' not in registers:
+            registers['SVIEW'] = registers['SAMP']
+
         mapping = [
-            ("CONST", "constant_buffer"),
+            #("CONST", "constant_buffer"),
             ("SAMP", "sampler"),
             ("SVIEW", "sampler_views"),
         ]
@@ -599,9 +635,9 @@ class Context(Dispatcher):
     def transfer_inline_write(self, resource, level, usage, box, stride, layer_stride, data):
         if resource is not None and resource.target == PIPE_BUFFER:
             data = data.getValue()
-            assert len(data) == box.width
+            assert len(data) >= box.width
             assert box.x + box.width <= len(resource.data)
-            resource.data[box.x : box.x + box.width] = data
+            resource.data[box.x : box.x + box.width] = data[:box.width]
 
     def flush(self, flags):
         # Return a fake fence
@@ -667,7 +703,11 @@ class Interpreter(parser.TraceDumper):
         pass
 
     def lookup_object(self, address):
-        return self.objects[address]
+        try:
+            return self.objects[address]
+        except KeyError:
+            # Could happen, e.g., with user memory pointers
+            return address
     
     def interpret(self, trace):
         for call in trace.calls:
