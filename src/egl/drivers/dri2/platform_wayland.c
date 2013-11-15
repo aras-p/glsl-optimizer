@@ -263,8 +263,21 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
       dri2_egl_display(dri2_surf->base.Resource.Display);
    int i;
 
-   /* There might be a buffer release already queued that wasn't processed */
-   wl_display_dispatch_queue_pending(dri2_dpy->wl_dpy, dri2_dpy->wl_queue);
+   if (dri2_surf->frame_callback == NULL) {
+      /* There might be a buffer release already queued that wasn't processed
+       */
+      wl_display_dispatch_queue_pending(dri2_dpy->wl_dpy, dri2_dpy->wl_queue);
+   } else {
+      /* We throttle to the frame callback here so that we can be sure to have
+       * received any release events before trying to decide whether to
+       * allocate a new buffer */
+      do {
+         if (wl_display_dispatch_queue(dri2_dpy->wl_dpy,
+                                       dri2_dpy->wl_queue) == -1)
+            return EGL_FALSE;
+      } while (dri2_surf->frame_callback != NULL);
+   }
+
 
    if (dri2_surf->back == NULL) {
       for (i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
@@ -559,18 +572,7 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
    struct dri2_egl_context *dri2_ctx;
    _EGLContext *ctx;
-   int i, ret = 0;
-
-   while (dri2_surf->frame_callback && ret != -1)
-      ret = wl_display_dispatch_queue(dri2_dpy->wl_dpy, dri2_dpy->wl_queue);
-   if (ret < 0)
-      return EGL_FALSE;
-
-   dri2_surf->frame_callback = wl_surface_frame(dri2_surf->wl_win->surface);
-   wl_callback_add_listener(dri2_surf->frame_callback,
-                            &frame_listener, dri2_surf);
-   wl_proxy_set_queue((struct wl_proxy *) dri2_surf->frame_callback,
-                      dri2_dpy->wl_queue);
+   int i;
 
    for (i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++)
       if (dri2_surf->color_buffers[i].age > 0)
@@ -582,6 +584,12 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
       _eglError(EGL_BAD_ALLOC, "dri2_swap_buffers");
       return EGL_FALSE;
    }
+
+   dri2_surf->frame_callback = wl_surface_frame(dri2_surf->wl_win->surface);
+   wl_callback_add_listener(dri2_surf->frame_callback,
+                            &frame_listener, dri2_surf);
+   wl_proxy_set_queue((struct wl_proxy *) dri2_surf->frame_callback,
+                      dri2_dpy->wl_queue);
 
    dri2_surf->back->age = 1;
    dri2_surf->current = dri2_surf->back;
