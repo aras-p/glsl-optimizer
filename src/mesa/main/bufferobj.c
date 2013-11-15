@@ -2601,17 +2601,45 @@ _mesa_GetObjectParameterivAPPLE(GLenum objectType, GLuint name, GLenum pname,
    }
 }
 
+/**
+ * Binds a buffer object to a uniform buffer binding point.
+ *
+ * The caller is responsible for flushing vertices and updating
+ * NewDriverState.
+ */
 static void
 set_ubo_binding(struct gl_context *ctx,
-		int index,
-		struct gl_buffer_object *bufObj,
-		GLintptr offset,
-		GLsizeiptr size,
-		GLboolean autoSize)
+                struct gl_uniform_buffer_binding *binding,
+                struct gl_buffer_object *bufObj,
+                GLintptr offset,
+                GLsizeiptr size,
+                GLboolean autoSize)
 {
-   struct gl_uniform_buffer_binding *binding;
+   _mesa_reference_buffer_object(ctx, &binding->BufferObject, bufObj);
 
-   binding = &ctx->UniformBufferBindings[index];
+   binding->Offset = offset;
+   binding->Size = size;
+   binding->AutomaticSize = autoSize;
+}
+
+/**
+ * Binds a buffer object to a uniform buffer binding point.
+ *
+ * Unlike set_ubo_binding(), this function also flushes vertices
+ * and updates NewDriverState.  It also checks if the binding
+ * has actually changed before updating it.
+ */
+static void
+bind_uniform_buffer(struct gl_context *ctx,
+                    GLuint index,
+                    struct gl_buffer_object *bufObj,
+                    GLintptr offset,
+                    GLsizeiptr size,
+                    GLboolean autoSize)
+{
+   struct gl_uniform_buffer_binding *binding =
+      &ctx->UniformBufferBindings[index];
+
    if (binding->BufferObject == bufObj &&
        binding->Offset == offset &&
        binding->Size == size &&
@@ -2622,10 +2650,7 @@ set_ubo_binding(struct gl_context *ctx,
    FLUSH_VERTICES(ctx, 0);
    ctx->NewDriverState |= ctx->DriverFlags.NewUniformBuffer;
 
-   _mesa_reference_buffer_object(ctx, &binding->BufferObject, bufObj);
-   binding->Offset = offset;
-   binding->Size = size;
-   binding->AutomaticSize = autoSize;
+   set_ubo_binding(ctx, binding, bufObj, offset, size, autoSize);
 }
 
 /**
@@ -2660,7 +2685,7 @@ bind_buffer_range_uniform_buffer(struct gl_context *ctx,
    }
 
    _mesa_reference_buffer_object(ctx, &ctx->UniformBuffer, bufObj);
-   set_ubo_binding(ctx, index, bufObj, offset, size, GL_FALSE);
+   bind_uniform_buffer(ctx, index, bufObj, offset, size, GL_FALSE);
 }
 
 
@@ -2679,10 +2704,11 @@ bind_buffer_base_uniform_buffer(struct gl_context *ctx,
    }
 
    _mesa_reference_buffer_object(ctx, &ctx->UniformBuffer, bufObj);
+
    if (bufObj == ctx->Shared->NullBufferObj)
-      set_ubo_binding(ctx, index, bufObj, -1, -1, GL_TRUE);
+      bind_uniform_buffer(ctx, index, bufObj, -1, -1, GL_TRUE);
    else
-      set_ubo_binding(ctx, index, bufObj, 0, 0, GL_TRUE);
+      bind_uniform_buffer(ctx, index, bufObj, 0, 0, GL_TRUE);
 }
 
 /**
