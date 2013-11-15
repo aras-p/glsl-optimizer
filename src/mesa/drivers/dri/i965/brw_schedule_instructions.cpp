@@ -608,6 +608,7 @@ schedule_node::schedule_node(backend_instruction *inst,
    this->parent_count = 0;
    this->unblocked_time = 0;
    this->cand_generation = 0;
+   this->delay = 0;
 
    /* We can't measure Gen6 timings directly but expect them to be much
     * closer to Gen7 than Gen4.
