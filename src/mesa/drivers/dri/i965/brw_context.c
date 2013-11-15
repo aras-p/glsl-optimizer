@@ -279,14 +279,15 @@ brw_init_driver_functions(struct brw_context *brw,
 
 /**
  * Return array of MSAA modes supported by the hardware. The array is
- * zero-terminated and sorted in decreasing order.
+ * terminated by -1 and sorted in decreasing order.
  */
 static const int*
 brw_supported_msaa_modes(const struct brw_context *brw)
 {
-   static const int gen7_samples[] = {8, 4, 0};
-   static const int gen6_samples[] = {4, 0};
-   static const int gen4_samples[] = {0};
+   static const int gen7_samples[] = {8, 4, 0, -1};
+   static const int gen6_samples[] = {4, 0, -1};
+   static const int gen4_samples[] = {0, -1};
+
    if (brw->gen >= 7) {
       return gen7_samples;
    } else if (brw->gen == 6) {
@@ -314,7 +315,7 @@ brw_override_max_samples(struct brw_context *brw)
    /* Select the largest supported MSAA mode that does not exceed
     * clamp_max_samples.
     */
-   for (int i = 0; supported_msaa_modes[i] != 0; ++i) {
+   for (int i = 0; supported_msaa_modes[i] != -1; ++i) {
       if (supported_msaa_modes[i] <= clamp_max_samples) {
          max_samples = supported_msaa_modes[i];
          break;
