@@ -86,6 +86,20 @@ _mesa_update_default_objects_buffer_objects(struct gl_context *ctx);
 extern struct gl_buffer_object *
 _mesa_lookup_bufferobj(struct gl_context *ctx, GLuint buffer);
 
+extern struct gl_buffer_object *
+_mesa_lookup_bufferobj_locked(struct gl_context *ctx, GLuint buffer);
+
+extern void
+_mesa_begin_bufferobj_lookups(struct gl_context *ctx);
+
+extern void
+_mesa_end_bufferobj_lookups(struct gl_context *ctx);
+
+extern struct gl_buffer_object *
+_mesa_multi_bind_lookup_bufferobj(struct gl_context *ctx,
+                                  const GLuint *buffers,
+                                  GLuint index, const char *caller);
+
 extern void
 _mesa_initialize_buffer_object(struct gl_context *ctx,
                                struct gl_buffer_object *obj,

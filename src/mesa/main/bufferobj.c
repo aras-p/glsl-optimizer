@@ -975,6 +975,78 @@ _mesa_lookup_bufferobj(struct gl_context *ctx, GLuint buffer)
 }
 
 
+struct gl_buffer_object *
+_mesa_lookup_bufferobj_locked(struct gl_context *ctx, GLuint buffer)
+{
+   return (struct gl_buffer_object *)
+      _mesa_HashLookupLocked(ctx->Shared->BufferObjects, buffer);
+}
+
+
+void
+_mesa_begin_bufferobj_lookups(struct gl_context *ctx)
+{
+   _mesa_HashLockMutex(ctx->Shared->BufferObjects);
+}
+
+
+void
+_mesa_end_bufferobj_lookups(struct gl_context *ctx)
+{
+   _mesa_HashUnlockMutex(ctx->Shared->BufferObjects);
+}
+
+
+/**
+ * Look up a buffer object for a multi-bind function.
+ *
+ * Unlike _mesa_lookup_bufferobj(), this function also takes care
+ * of generating an error if the buffer ID is not zero or the name
+ * of an existing buffer object.
+ *
+ * If the buffer ID refers to an existing buffer object, a pointer
+ * to the buffer object is returned.  If the ID is zero, a pointer
+ * to the shared NullBufferObj is returned.  If the ID is not zero
+ * and does not refer to a valid buffer object, this function
+ * returns NULL.
+ *
+ * This function assumes that the caller has already locked the
+ * hash table mutex by calling _mesa_begin_bufferobj_lookups().
+ */
+struct gl_buffer_object *
+_mesa_multi_bind_lookup_bufferobj(struct gl_context *ctx,
+                                  const GLuint *buffers,
+                                  GLuint index, const char *caller)
+{
+   struct gl_buffer_object *bufObj;
+
+   if (buffers[index] != 0) {
+      bufObj = _mesa_lookup_bufferobj_locked(ctx, buffers[index]);
+
+      /* The multi-bind functions don't create the buffer objects
+         when they don't exist. */
+      if (bufObj == &DummyBufferObject)
+         bufObj = NULL;
+   } else
+      bufObj = ctx->Shared->NullBufferObj;
+
+   if (!bufObj) {
+      /* The ARB_multi_bind spec says:
+       *
+       *    "An INVALID_OPERATION error is generated if any value
+       *     in <buffers> is not zero or the name of an existing
+       *     buffer object (per binding)."
+       */
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "%s(buffers[%u]=%u is not zero or the name "
+                  "of an existing buffer object)",
+                  caller, index, buffers[index]);
+   }
+
+   return bufObj;
+}
+
+
 /**
  * If *ptr points to obj, set ptr = the Null/default buffer object.
  * This is a helper for buffer object deletion.
