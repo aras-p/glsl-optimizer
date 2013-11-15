@@ -308,57 +308,78 @@ validate_intrastage_interface_blocks(struct gl_shader_program *prog,
 }
 
 void
-validate_interstage_interface_blocks(struct gl_shader_program *prog,
-                                     const gl_shader *producer,
-                                     const gl_shader *consumer)
+validate_interstage_inout_blocks(struct gl_shader_program *prog,
+                                 const gl_shader *producer,
+                                 const gl_shader *consumer)
 {
-   interface_block_definitions inout_interfaces;
-   interface_block_definitions uniform_interfaces;
+   interface_block_definitions definitions;
    const bool extra_array_level = consumer->Type == GL_GEOMETRY_SHADER;
 
-   /* Add non-output interfaces from the consumer to the symbol table. */
+   /* Add input interfaces from the consumer to the symbol table. */
    foreach_list(node, consumer->ir) {
       ir_variable *var = ((ir_instruction *) node)->as_variable();
-      if (!var || !var->get_interface_type() || var->mode == ir_var_shader_out)
+      if (!var || !var->get_interface_type() || var->mode != ir_var_shader_in)
          continue;
 
-      interface_block_definitions *definitions = var->mode == ir_var_uniform ?
-         &uniform_interfaces : &inout_interfaces;
-      definitions->store(interface_block_definition(var));
+      definitions.store(interface_block_definition(var));
    }
 
-   /* Verify that the producer's interfaces match. */
+   /* Verify that the producer's output interfaces match. */
    foreach_list(node, producer->ir) {
       ir_variable *var = ((ir_instruction *) node)->as_variable();
-      if (!var || !var->get_interface_type() || var->mode == ir_var_shader_in)
+      if (!var || !var->get_interface_type() || var->mode != ir_var_shader_out)
          continue;
 
-      interface_block_definitions *definitions = var->mode == ir_var_uniform ?
-         &uniform_interfaces : &inout_interfaces;
       interface_block_definition *consumer_def =
-         definitions->lookup(var->get_interface_type()->name);
+         definitions.lookup(var->get_interface_type()->name);
 
       /* The consumer doesn't use this output block.  Ignore it. */
       if (consumer_def == NULL)
          continue;
 
       const interface_block_definition producer_def(var);
-      bool match;
-      if (var->mode == ir_var_uniform) {
-         /* Uniform matching rules are the same for interstage and intrastage
-          * linking.
-          */
-         match = intrastage_match(consumer_def, &producer_def,
-                                  (ir_variable_mode) var->mode);
-      } else {
-         match = interstage_match(&producer_def, consumer_def,
-                                  extra_array_level);
-      }
 
-      if (!match) {
+      if (!interstage_match(&producer_def, consumer_def, extra_array_level)) {
          linker_error(prog, "definitions of interface block `%s' do not "
                       "match\n", var->get_interface_type()->name);
          return;
+      }
+   }
+}
+
+
+void
+validate_interstage_uniform_blocks(struct gl_shader_program *prog,
+                                   gl_shader **stages, int num_stages)
+{
+   interface_block_definitions definitions;
+
+   for (int i = 0; i < num_stages; i++) {
+      if (stages[i] == NULL)
+         continue;
+
+      const gl_shader *stage = stages[i];
+      foreach_list(node, stage->ir) {
+         ir_variable *var = ((ir_instruction *) node)->as_variable();
+         if (!var || !var->get_interface_type() || var->mode != ir_var_uniform)
+            continue;
+
+         interface_block_definition *old_def =
+            definitions.lookup(var->get_interface_type()->name);
+         const interface_block_definition new_def(var);
+         if (old_def == NULL) {
+            definitions.store(new_def);
+         } else {
+            /* Interstage uniform matching rules are the same as intrastage
+             * uniform matchin rules (for uniforms, it is as though all
+             * shaders are in the same shader stage).
+             */
+            if (!intrastage_match(old_def, &new_def, ir_var_uniform)) {
+               linker_error(prog, "definitions of interface block `%s' do not "
+                            "match\n", var->get_interface_type()->name);
+               return;
+            }
+         }
       }
    }
 }

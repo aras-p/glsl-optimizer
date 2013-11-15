@@ -2154,8 +2154,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       if (prog->_LinkedShaders[i] == NULL)
          continue;
 
-      validate_interstage_interface_blocks(prog, prog->_LinkedShaders[prev],
-                                           prog->_LinkedShaders[i]);
+      validate_interstage_inout_blocks(prog, prog->_LinkedShaders[prev],
+                                       prog->_LinkedShaders[i]);
       if (!prog->LinkStatus)
          goto done;
 
@@ -2168,6 +2168,11 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       prev = i;
    }
 
+   /* Cross-validate uniform blocks between shader stages */
+   validate_interstage_uniform_blocks(prog, prog->_LinkedShaders,
+                                      MESA_SHADER_TYPES);
+   if (!prog->LinkStatus)
+      goto done;
 
    for (unsigned int i = 0; i < MESA_SHADER_TYPES; i++) {
       if (prog->_LinkedShaders[i] != NULL)
