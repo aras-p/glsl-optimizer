@@ -2429,6 +2429,7 @@ fs_visitor::register_coalesce()
 		scan_inst->src[i].reg == inst->dst.reg &&
 		scan_inst->src[i].reg_offset == inst->dst.reg_offset) {
 	       fs_reg new_src = inst->src[0];
+               new_src.type = scan_inst->src[i].type;
                if (scan_inst->src[i].abs) {
                   new_src.negate = 0;
                   new_src.abs = 1;
