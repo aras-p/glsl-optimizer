@@ -700,7 +700,10 @@ enum node_flags {
 	NF_DONT_MOVE = (1 << 8),
 
 	// for KILLxx - we want to schedule them as early as possible
-	NF_SCHEDULE_EARLY = (1 << 9)
+	NF_SCHEDULE_EARLY = (1 << 9),
+
+	// for ALU_PUSH_BEFORE - when set, replace with PUSH + ALU
+	NF_ALU_STACK_WORKAROUND = (1 << 10)
 };
 
 inline node_flags operator |(node_flags l, node_flags r) {

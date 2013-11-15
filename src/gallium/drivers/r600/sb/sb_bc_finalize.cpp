@@ -40,8 +40,9 @@ namespace r600_sb {
 
 int bc_finalizer::run() {
 
-	regions_vec &rv = sh.get_regions();
+	run_on(sh.root);
 
+	regions_vec &rv = sh.get_regions();
 	for (regions_vec::reverse_iterator I = rv.rbegin(), E = rv.rend(); I != E;
 			++I) {
 		region_node *r = *I;
@@ -57,8 +58,6 @@ int bc_finalizer::run() {
 
 		r->expand();
 	}
-
-	run_on(sh.root);
 
 	cf_peephole();
 
@@ -213,18 +212,36 @@ void bc_finalizer::run_on(container_node* c) {
 		if (n->is_alu_group()) {
 			finalize_alu_group(static_cast<alu_group_node*>(n));
 		} else {
-			if (n->is_fetch_inst()) {
+			if (n->is_alu_clause()) {
+				cf_node *c = static_cast<cf_node*>(n);
+
+				if (c->bc.op == CF_OP_ALU_PUSH_BEFORE && ctx.is_egcm()) {
+					if (ctx.stack_workaround_8xx) {
+						region_node *r = c->get_parent_region();
+						if (r) {
+							unsigned ifs, loops;
+							unsigned elems = get_stack_depth(r, loops, ifs);
+							unsigned dmod1 = elems % ctx.stack_entry_size;
+							unsigned dmod2 = (elems + 1) % ctx.stack_entry_size;
+
+							if (elems && (!dmod1 || !dmod2))
+								c->flags |= NF_ALU_STACK_WORKAROUND;
+						}
+					} else if (ctx.stack_workaround_9xx) {
+						region_node *r = c->get_parent_region();
+						if (r) {
+							unsigned ifs, loops;
+							get_stack_depth(r, loops, ifs);
+							if (loops >= 2)
+								c->flags |= NF_ALU_STACK_WORKAROUND;
+						}
+					}
+				}
+			} else if (n->is_fetch_inst()) {
 				finalize_fetch(static_cast<fetch_node*>(n));
 			} else if (n->is_cf_inst()) {
 				finalize_cf(static_cast<cf_node*>(n));
-			} else if (n->is_alu_clause()) {
-
-			} else if (n->is_fetch_clause()) {
-
-			} else {
-				assert(!"unexpected node");
 			}
-
 			if (n->is_container())
 				run_on(static_cast<container_node*>(n));
 		}
@@ -578,10 +595,6 @@ void bc_finalizer::finalize_cf(cf_node* c) {
 
 	unsigned flags = c->bc.op_ptr->flags;
 
-	if (flags & CF_CALL) {
-		update_nstack(c->get_parent_region(), ctx.is_cayman() ? 1 : 2);
-	}
-
 	c->bc.end_of_program = 0;
 	last_cf = c;
 
@@ -715,17 +728,8 @@ void bc_finalizer::finalize_cf(cf_node* c) {
 
 			c->bc.index_gpr = reg >= 0 ? reg : 0;
 		}
-
-
-
-	} else {
-
-#if 0
-		if ((flags & (CF_BRANCH | CF_LOOP)) && !sh.uses_gradients) {
-			c->bc.valid_pixel_mode = 1;
-		}
-#endif
-
+	} else if (flags & CF_CALL) {
+		update_nstack(c->get_parent_region(), ctx.wavefront_size == 16 ? 2 : 1);
 	}
 }
 
@@ -763,37 +767,78 @@ void bc_finalizer::update_ngpr(unsigned gpr) {
 		ngpr = gpr + 1;
 }
 
+unsigned bc_finalizer::get_stack_depth(node *n, unsigned &loops,
+                                           unsigned &ifs, unsigned add) {
+	unsigned stack_elements = add;
+	bool has_non_wqm_push_with_loops_on_stack = false;
+	bool has_non_wqm_push = (add != 0);
+	region_node *r = n->is_region() ?
+			static_cast<region_node*>(n) : n->get_parent_region();
+
+	loops = 0;
+	ifs = 0;
+
+	while (r) {
+		if (r->is_loop()) {
+			++loops;
+			if (has_non_wqm_push)
+				has_non_wqm_push_with_loops_on_stack = true;
+		} else {
+			++ifs;
+			has_non_wqm_push = true;
+		}
+		r = r->get_parent_region();
+	}
+	stack_elements += (loops * ctx.stack_entry_size) + ifs;
+
+	// reserve additional elements in some cases
+	switch (ctx.hw_class) {
+	case HW_CLASS_R600:
+	case HW_CLASS_R700:
+		if (has_non_wqm_push)
+			stack_elements += 2;
+		break;
+	case HW_CLASS_CAYMAN:
+		if (stack_elements)
+			stack_elements += 2;
+		break;
+	case HW_CLASS_EVERGREEN:
+		if (has_non_wqm_push_with_loops_on_stack)
+			++stack_elements;
+		break;
+	}
+	return stack_elements;
+}
+
 void bc_finalizer::update_nstack(region_node* r, unsigned add) {
 	unsigned loops = 0;
 	unsigned ifs = 0;
+	unsigned elems = r ? get_stack_depth(r, loops, ifs, add) : add;
 
-	while (r) {
-		if (r->is_loop())
-			++loops;
-		else
-			++ifs;
-
-		r = r->get_parent_region();
-	}
-
-	unsigned stack_elements = (loops * ctx.stack_entry_size) + ifs + add;
-
-	// FIXME calculate more precisely
-	if (ctx.is_evergreen()) {
-		++stack_elements;
-	} else {
-		stack_elements += 2;
-		if (ctx.is_cayman())
-			++stack_elements;
-	}
-
-	unsigned stack_entries = (stack_elements + 3) >> 2;
+	// XXX all chips expect this value to be computed using 4 as entry size,
+	// not the real entry size
+	unsigned stack_entries = (elems + 3) >> 2;
 
 	if (nstack < stack_entries)
 		nstack = stack_entries;
 }
 
 void bc_finalizer::cf_peephole() {
+	if (ctx.stack_workaround_8xx || ctx.stack_workaround_9xx) {
+		for (node_iterator N, I = sh.root->begin(), E = sh.root->end(); I != E;
+				I = N) {
+			N = I; ++N;
+			cf_node *c = static_cast<cf_node*>(*I);
+
+			if (c->bc.op == CF_OP_ALU_PUSH_BEFORE &&
+					(c->flags & NF_ALU_STACK_WORKAROUND)) {
+				cf_node *push = sh.create_cf(CF_OP_PUSH);
+				c->insert_before(push);
+				push->jump(c);
+				c->bc.set_op(CF_OP_ALU);
+			}
+		}
+	}
 
 	for (node_iterator N, I = sh.root->begin(), E = sh.root->end(); I != E;
 			I = N) {

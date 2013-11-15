@@ -708,6 +708,9 @@ public:
 	void update_ngpr(unsigned gpr);
 	void update_nstack(region_node *r, unsigned add = 0);
 
+	unsigned get_stack_depth(node *n, unsigned &loops, unsigned &ifs,
+	                         unsigned add = 0);
+
 	void cf_peephole();
 
 };

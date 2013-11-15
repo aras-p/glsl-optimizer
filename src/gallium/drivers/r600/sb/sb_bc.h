@@ -614,6 +614,10 @@ public:
 	unsigned num_slots;
 	bool uses_mova_gpr;
 
+	bool stack_workaround_8xx;
+	bool stack_workaround_9xx;
+
+	unsigned wavefront_size;
 	unsigned stack_entry_size;
 
 	static unsigned dump_pass;
@@ -637,6 +641,23 @@ public:
 	bool is_evergreen() {return hw_class == HW_CLASS_EVERGREEN;}
 	bool is_cayman() {return hw_class == HW_CLASS_CAYMAN;}
 	bool is_egcm() {return hw_class >= HW_CLASS_EVERGREEN;}
+
+	bool needs_8xx_stack_workaround() {
+		if (!is_evergreen())
+			return false;
+
+		switch (hw_chip) {
+		case HW_CHIP_CYPRESS:
+		case HW_CHIP_JUNIPER:
+			return false;
+		default:
+			return true;
+		}
+	}
+
+	bool needs_9xx_stack_workaround() {
+		return is_cayman();
+	}
 
 	sb_hw_class_bits hw_class_bit() {
 		switch (hw_class) {
