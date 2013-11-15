@@ -27,6 +27,7 @@
 #define TRANSFORM_FEEDBACK_H
 
 #include <stdbool.h>
+#include "bufferobj.h"
 #include "compiler.h"
 #include "glheader.h"
 #include "mtypes.h"
@@ -126,5 +127,18 @@ _mesa_is_xfb_active_and_unpaused(const struct gl_context *ctx)
 extern bool
 _mesa_transform_feedback_is_using_program(struct gl_context *ctx,
                                           struct gl_shader_program *shProg);
+
+static inline void
+_mesa_set_transform_feedback_binding(struct gl_context *ctx,
+                                     struct gl_transform_feedback_object *tfObj, GLuint index,
+                                     struct gl_buffer_object *bufObj,
+                                     GLintptr offset, GLsizeiptr size)
+{
+   _mesa_reference_buffer_object(ctx, &tfObj->Buffers[index], bufObj);
+
+   tfObj->BufferNames[index]   = bufObj->Name;
+   tfObj->Offset[index]        = offset;
+   tfObj->RequestedSize[index] = size;
+}
 
 #endif /* TRANSFORM_FEEDBACK_H */

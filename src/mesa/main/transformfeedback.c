@@ -32,7 +32,6 @@
 
 
 #include "buffers.h"
-#include "bufferobj.h"
 #include "context.h"
 #include "hash.h"
 #include "macros.h"
@@ -533,14 +532,7 @@ bind_buffer_range(struct gl_context *ctx, GLuint index,
                                  bufObj);
 
    /* The per-attribute binding point */
-   _mesa_reference_buffer_object(ctx,
-                                 &obj->Buffers[index],
-                                 bufObj);
-
-   obj->BufferNames[index] = bufObj->Name;
-
-   obj->Offset[index] = offset;
-   obj->RequestedSize[index] = size;
+   _mesa_set_transform_feedback_binding(ctx, obj, index, bufObj, offset, size);
 }
 
 
