@@ -114,6 +114,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_invalidate_subdata",                  o(dummy_true),                              GL,             2012 },
    { "GL_ARB_map_buffer_alignment",                o(dummy_true),                              GL,             2011 },
    { "GL_ARB_map_buffer_range",                    o(ARB_map_buffer_range),                    GL,             2008 },
+   { "GL_ARB_multi_bind",                          o(dummy_true),                              GL,             2013 },
    { "GL_ARB_multi_draw_indirect",                 o(ARB_draw_indirect),                       GLC,            2012 },
    { "GL_ARB_multisample",                         o(dummy_true),                              GLL,            1994 },
    { "GL_ARB_multitexture",                        o(dummy_true),                              GLL,            1998 },
