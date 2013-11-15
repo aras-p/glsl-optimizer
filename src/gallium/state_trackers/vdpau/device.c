@@ -86,6 +86,7 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
    return VDP_STATUS_OK;
 
 no_handle:
+   dev->context->destroy(dev->context);
    /* Destroy vscreen */
 no_context:
    vl_screen_destroy(dev->vscreen);
