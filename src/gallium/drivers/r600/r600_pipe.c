@@ -192,6 +192,8 @@ static void r600_destroy_context(struct pipe_context *context)
 		rctx->b.ws->cs_destroy(rctx->b.rings.dma.cs);
 	}
 
+	FREE(rctx->start_compute_cs_cmd.buf);
+
 	r600_common_context_cleanup(&rctx->b);
 	FREE(rctx);
 }
