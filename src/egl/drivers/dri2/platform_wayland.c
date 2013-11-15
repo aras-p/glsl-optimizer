@@ -183,8 +183,16 @@ dri2_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 			   _EGLConfig *conf, EGLNativeWindowType window,
 			   const EGLint *attrib_list)
 {
-   return dri2_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   _EGLSurface *surf;
+
+   surf = dri2_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
 			      window, attrib_list);
+
+   if (surf != NULL)
+      drv->API.SwapInterval(drv, disp, surf, dri2_dpy->default_swap_interval);
+
+   return surf;
 }
 
 /**
@@ -217,8 +225,8 @@ dri2_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
          dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
                                        dri2_surf->dri_buffers[i]);
 
-   if (dri2_surf->frame_callback)
-      wl_callback_destroy(dri2_surf->frame_callback);
+   if (dri2_surf->throttle_callback)
+      wl_callback_destroy(dri2_surf->throttle_callback);
 
    if (dri2_surf->base.Type == EGL_WINDOW_BIT) {
       dri2_surf->wl_win->private = NULL;
@@ -263,32 +271,25 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
       dri2_egl_display(dri2_surf->base.Resource.Display);
    int i;
 
-   if (dri2_surf->frame_callback == NULL) {
-      /* There might be a buffer release already queued that wasn't processed
-       */
-      wl_display_dispatch_queue_pending(dri2_dpy->wl_dpy, dri2_dpy->wl_queue);
-   } else {
-      /* We throttle to the frame callback here so that we can be sure to have
-       * received any release events before trying to decide whether to
-       * allocate a new buffer */
-      do {
-         if (wl_display_dispatch_queue(dri2_dpy->wl_dpy,
-                                       dri2_dpy->wl_queue) == -1)
-            return EGL_FALSE;
-      } while (dri2_surf->frame_callback != NULL);
-   }
-
+   /* We always want to throttle to some event (either a frame callback or
+    * a sync request) after the commit so that we can be sure the
+    * compositor has had a chance to handle it and send us a release event
+    * before we look for a free buffer */
+   while (dri2_surf->throttle_callback != NULL)
+      if (wl_display_dispatch_queue(dri2_dpy->wl_dpy,
+                                    dri2_dpy->wl_queue) == -1)
+         return EGL_FALSE;
 
    if (dri2_surf->back == NULL) {
       for (i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
-         /* Get an unlocked buffer, preferrably one with a dri_buffer already
-          * allocated. */
-	 if (dri2_surf->color_buffers[i].locked)
+         /* Get an unlocked buffer, preferrably one with a dri_buffer
+          * already allocated. */
+         if (dri2_surf->color_buffers[i].locked)
             continue;
          if (dri2_surf->back == NULL)
-	    dri2_surf->back = &dri2_surf->color_buffers[i];
+            dri2_surf->back = &dri2_surf->color_buffers[i];
          else if (dri2_surf->back->dri_image == NULL)
-	    dri2_surf->back = &dri2_surf->color_buffers[i];
+            dri2_surf->back = &dri2_surf->color_buffers[i];
       }
    }
 
@@ -499,16 +500,18 @@ static const __DRIimageLoaderExtension image_loader_extension = {
 };
 
 static void
-wayland_frame_callback(void *data, struct wl_callback *callback, uint32_t time)
+wayland_throttle_callback(void *data,
+                          struct wl_callback *callback,
+                          uint32_t time)
 {
    struct dri2_egl_surface *dri2_surf = data;
 
-   dri2_surf->frame_callback = NULL;
+   dri2_surf->throttle_callback = NULL;
    wl_callback_destroy(callback);
 }
 
-static const struct wl_callback_listener frame_listener = {
-	wayland_frame_callback
+static const struct wl_callback_listener throttle_listener = {
+   wayland_throttle_callback
 };
 
 static void
@@ -585,11 +588,14 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
       return EGL_FALSE;
    }
 
-   dri2_surf->frame_callback = wl_surface_frame(dri2_surf->wl_win->surface);
-   wl_callback_add_listener(dri2_surf->frame_callback,
-                            &frame_listener, dri2_surf);
-   wl_proxy_set_queue((struct wl_proxy *) dri2_surf->frame_callback,
-                      dri2_dpy->wl_queue);
+   if (draw->SwapInterval > 0) {
+      dri2_surf->throttle_callback =
+         wl_surface_frame(dri2_surf->wl_win->surface);
+      wl_callback_add_listener(dri2_surf->throttle_callback,
+                               &throttle_listener, dri2_surf);
+      wl_proxy_set_queue((struct wl_proxy *) dri2_surf->throttle_callback,
+                         dri2_dpy->wl_queue);
+   }
 
    dri2_surf->back->age = 1;
    dri2_surf->current = dri2_surf->back;
@@ -634,6 +640,19 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
    (*dri2_dpy->flush->invalidate)(dri2_surf->dri_drawable);
 
    wl_surface_commit(dri2_surf->wl_win->surface);
+
+   /* If we're not waiting for a frame callback then we'll at least throttle
+    * to a sync callback so that we always give a chance for the compositor to
+    * handle the commit and send a release event before checking for a free
+    * buffer */
+   if (dri2_surf->throttle_callback == NULL) {
+      dri2_surf->throttle_callback = wl_display_sync(dri2_dpy->wl_dpy);
+      wl_callback_add_listener(dri2_surf->throttle_callback,
+                               &throttle_listener, dri2_surf);
+      wl_proxy_set_queue((struct wl_proxy *) dri2_surf->throttle_callback,
+                         dri2_dpy->wl_queue);
+   }
+
    wl_display_flush(dri2_dpy->wl_dpy);
 
    return EGL_TRUE;
@@ -877,6 +896,60 @@ static const struct wl_registry_listener registry_listener = {
    registry_handle_global_remove
 };
 
+static EGLBoolean
+dri2_swap_interval(_EGLDriver *drv,
+                   _EGLDisplay *disp,
+                   _EGLSurface *surf,
+                   EGLint interval)
+{
+   if (interval > surf->Config->MaxSwapInterval)
+      interval = surf->Config->MaxSwapInterval;
+   else if (interval < surf->Config->MinSwapInterval)
+      interval = surf->Config->MinSwapInterval;
+
+   surf->SwapInterval = interval;
+
+   return EGL_TRUE;
+}
+
+static void
+dri2_setup_swap_interval(struct dri2_egl_display *dri2_dpy)
+{
+   GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
+
+   /* We can't use values greater than 1 on Wayland because we are using the
+    * frame callback to synchronise the frame and the only way we be sure to
+    * get a frame callback is to attach a new buffer. Therefore we can't just
+    * sit drawing nothing to wait until the next ‘n’ frame callbacks */
+
+   if (dri2_dpy->config)
+      dri2_dpy->config->configQueryi(dri2_dpy->dri_screen,
+                                     "vblank_mode", &vblank_mode);
+   switch (vblank_mode) {
+   case DRI_CONF_VBLANK_NEVER:
+      dri2_dpy->min_swap_interval = 0;
+      dri2_dpy->max_swap_interval = 0;
+      dri2_dpy->default_swap_interval = 0;
+      break;
+   case DRI_CONF_VBLANK_ALWAYS_SYNC:
+      dri2_dpy->min_swap_interval = 1;
+      dri2_dpy->max_swap_interval = 1;
+      dri2_dpy->default_swap_interval = 1;
+      break;
+   case DRI_CONF_VBLANK_DEF_INTERVAL_0:
+      dri2_dpy->min_swap_interval = 0;
+      dri2_dpy->max_swap_interval = 1;
+      dri2_dpy->default_swap_interval = 0;
+      break;
+   default:
+   case DRI_CONF_VBLANK_DEF_INTERVAL_1:
+      dri2_dpy->min_swap_interval = 0;
+      dri2_dpy->max_swap_interval = 1;
+      dri2_dpy->default_swap_interval = 1;
+      break;
+   }
+}
+
 EGLBoolean
 dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 {
@@ -893,8 +966,10 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.DestroySurface = dri2_destroy_surface;
    drv->API.SwapBuffers = dri2_swap_buffers;
    drv->API.SwapBuffersWithDamageEXT = dri2_swap_buffers_with_damage;
+   drv->API.SwapInterval = dri2_swap_interval;
    drv->API.Terminate = dri2_terminate;
    drv->API.QueryBufferAge = dri2_query_buffer_age;
+
    drv->API.CreateWaylandBufferFromImageWL =
       dri2_create_wayland_buffer_from_image_wl;
 
@@ -953,8 +1028,12 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    dri2_dpy->extensions[3] = &use_invalidate.base;
    dri2_dpy->extensions[4] = NULL;
 
+   dri2_dpy->swap_available = EGL_TRUE;
+
    if (!dri2_create_screen(disp))
       goto cleanup_driver;
+
+   dri2_setup_swap_interval(dri2_dpy);
 
    /* The server shouldn't advertise WL_DRM_CAPABILITY_PRIME if the driver
     * doesn't have createImageFromFds, since we're using the same driver on

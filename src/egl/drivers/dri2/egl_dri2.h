@@ -175,7 +175,7 @@ struct dri2_egl_surface
    struct wl_egl_window  *wl_win;
    int                    dx;
    int                    dy;
-   struct wl_callback    *frame_callback;
+   struct wl_callback    *throttle_callback;
    int			  format;
 #endif
 
@@ -195,7 +195,7 @@ struct dri2_egl_surface
 #endif
       int                 locked;
       int                 age;
-   } color_buffers[3], *back, *current;
+   } color_buffers[4], *back, *current;
 #endif
 
 #ifdef HAVE_ANDROID_PLATFORM
@@ -220,6 +220,12 @@ struct dri2_egl_image
    _EGLImage   base;
    __DRIimage *dri_image;
 };
+
+/* From xmlpool/options.h, user exposed so should be stable */
+#define DRI_CONF_VBLANK_NEVER 0
+#define DRI_CONF_VBLANK_DEF_INTERVAL_0 1
+#define DRI_CONF_VBLANK_DEF_INTERVAL_1 2
+#define DRI_CONF_VBLANK_ALWAYS_SYNC 3
 
 /* standard typecasts */
 _EGL_DRIVER_STANDARD_TYPECASTS(dri2_egl)
