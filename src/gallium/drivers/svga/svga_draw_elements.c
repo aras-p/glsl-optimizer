@@ -100,16 +100,14 @@ svga_hwtnl_simple_draw_range_elements(struct svga_hwtnl *hwtnl,
                                       unsigned prim, unsigned start,
                                       unsigned count)
 {
-   struct pipe_resource *upload_buffer = NULL;
    SVGA3dPrimitiveRange range;
    unsigned hw_prim;
    unsigned hw_count;
    unsigned index_offset = start * index_size;
-   enum pipe_error ret = PIPE_OK;
 
    hw_prim = svga_translate_prim(prim, count, &hw_count);
    if (hw_count == 0)
-      goto done;
+      return PIPE_OK; /* nothing to draw */
 
    /* We should never see user-space buffers in the driver.  The vbuf
     * module should have converted them into real buffers.
@@ -124,15 +122,7 @@ svga_hwtnl_simple_draw_range_elements(struct svga_hwtnl *hwtnl,
    range.indexWidth = index_size;
    range.indexBias = index_bias;
 
-   ret = svga_hwtnl_prim(hwtnl, &range, min_index, max_index, index_buffer);
-   if (ret != PIPE_OK)
-      goto done;
-
-done:
-   if (upload_buffer)
-      pipe_resource_reference(&upload_buffer, NULL);
-
-   return ret;
+   return svga_hwtnl_prim(hwtnl, &range, min_index, max_index, index_buffer);
 }
 
 
