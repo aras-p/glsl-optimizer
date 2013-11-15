@@ -173,11 +173,15 @@ clGetProgramInfo(cl_program d_prog, cl_program_info param,
       break;
 
    case CL_PROGRAM_NUM_DEVICES:
-      buf.as_scalar<cl_uint>() = prog.devices().size();
+      buf.as_scalar<cl_uint>() = prog.devices().size() ?
+                                 prog.devices().size() :
+                                 prog.ctx.devs().size();
       break;
 
    case CL_PROGRAM_DEVICES:
-      buf.as_vector<cl_device_id>() = descs(prog.devices());
+      buf.as_vector<cl_device_id>() = prog.devices().size() ?
+                                      descs(prog.devices()) :
+                                      descs(prog.ctx.devs());
       break;
 
    case CL_PROGRAM_SOURCE:
