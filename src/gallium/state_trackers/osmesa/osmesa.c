@@ -59,8 +59,12 @@
 
 #include "util/u_atomic.h"
 #include "util/u_box.h"
+#include "util/u_debug.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
+
+#include "postprocess/filters.h"
+#include "postprocess/postprocess.h"
 
 #include "state_tracker/st_api.h"
 #include "state_tracker/st_gl_api.h"
@@ -90,6 +94,8 @@ struct osmesa_context
 {
    struct st_context_iface *stctx;
 
+   boolean ever_used;     /*< Has this context ever been current? */
+
    struct osmesa_buffer *current_buffer;
 
    enum pipe_format depth_stencil_format, accum_format;
@@ -99,6 +105,10 @@ struct osmesa_context
    GLint user_row_length; /*< user-specified number of pixels per row */
    GLboolean y_up;        /*< TRUE  -> Y increases upward */
                           /*< FALSE -> Y increases downward */
+
+   /** Which postprocessing filters are enabled. */
+   unsigned pp_enabled[PP_FILTERS];
+   struct pp_queue_t *pp;
 };
 
 
@@ -264,6 +274,12 @@ osmesa_init_st_visual(struct st_visual *vis,
                       enum pipe_format accum_format)
 {
    vis->buffer_mask = ST_ATTACHMENT_FRONT_LEFT_MASK;
+
+   if (ds_format != PIPE_FORMAT_NONE)
+      vis->buffer_mask |= ST_ATTACHMENT_DEPTH_STENCIL_MASK;
+   if (accum_format != PIPE_FORMAT_NONE)
+      vis->buffer_mask |= ST_ATTACHMENT_ACCUM;
+
    vis->color_format = color_format;
    vis->depth_stencil_format = ds_format;
    vis->accum_format = accum_format;
@@ -301,6 +317,28 @@ osmesa_st_framebuffer_flush_front(struct st_context_iface *stctx,
    ubyte *src, *dst;
    unsigned y, bytes, bpp;
    int dst_stride;
+
+   if (osmesa->pp) {
+      struct pipe_resource *zsbuf = NULL;
+      unsigned i;
+
+      /* Find the z/stencil buffer if there is one */
+      for (i = 0; i < Elements(osbuffer->textures); i++) {
+         struct pipe_resource *res = osbuffer->textures[i];
+         if (res) {
+            const struct util_format_description *desc =
+               util_format_description(res->format);
+
+            if (util_format_has_depth(desc)) {
+               zsbuf = res;
+               break;
+            }
+         }
+      }
+
+      /* run the postprocess stage(s) */
+      pp_run(osmesa->pp, res, res, zsbuf);
+   }
 
    u_box_2d(0, 0, res->width0, res->height0, &box);
 
@@ -581,6 +619,7 @@ GLAPI void GLAPIENTRY
 OSMesaDestroyContext(OSMesaContext osmesa)
 {
    if (osmesa) {
+      pp_free(osmesa->pp);
       osmesa->stctx->destroy(osmesa->stctx);
       FREE(osmesa);
    }
@@ -653,6 +692,29 @@ OSMesaMakeCurrent(OSMesaContext osmesa, void *buffer, GLenum type,
    osmesa->type = type;
 
    stapi->make_current(stapi, osmesa->stctx, osbuffer->stfb, osbuffer->stfb);
+
+   if (!osmesa->ever_used) {
+      /* one-time init, just postprocessing for now */
+      boolean any_pp_enabled = FALSE;
+      unsigned i;
+
+      for (i = 0; i < Elements(osmesa->pp_enabled); i++) {
+         if (osmesa->pp_enabled[i]) {
+            any_pp_enabled = TRUE;
+            break;
+         }
+      }
+
+      if (any_pp_enabled) {
+         osmesa->pp = pp_init(osmesa->stctx->pipe,
+                              osmesa->pp_enabled,
+                              osmesa->stctx->cso_context);
+
+         pp_init_fbos(osmesa->pp, width, height);
+      }
+
+      osmesa->ever_used = TRUE;
+   }
 
    return GL_TRUE;
 }
@@ -826,6 +888,7 @@ static struct name_function functions[] = {
    { "OSMesaGetColorBuffer", (OSMESAproc) OSMesaGetColorBuffer },
    { "OSMesaGetProcAddress", (OSMESAproc) OSMesaGetProcAddress },
    { "OSMesaColorClamp", (OSMESAproc) OSMesaColorClamp },
+   { "OSMesaPostprocess", (OSMESAproc) OSMesaPostprocess },
    { NULL, NULL }
 };
 
@@ -849,4 +912,28 @@ OSMesaColorClamp(GLboolean enable)
 
    _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR_ARB,
                     enable ? GL_TRUE : GL_FIXED_ONLY_ARB);
+}
+
+
+GLAPI void GLAPIENTRY
+OSMesaPostprocess(OSMesaContext osmesa, const char *filter,
+                  unsigned enable_value)
+{
+   if (!osmesa->ever_used) {
+      /* We can only enable/disable postprocess filters before a context
+       * is made current for the first time.
+       */
+      unsigned i;
+
+      for (i = 0; i < PP_FILTERS; i++) {
+         if (strcmp(pp_filters[i].name, filter) == 0) {
+            osmesa->pp_enabled[i] = enable_value;
+            return;
+         }
+      }
+      debug_warning("OSMesaPostprocess(unknown filter)\n");
+   }
+   else {
+      debug_warning("Calling OSMesaPostprocess() after OSMesaMakeCurrent()\n");
+   }
 }

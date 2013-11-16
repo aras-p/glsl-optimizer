@@ -1129,6 +1129,7 @@ static struct name_function functions[] = {
    { "OSMesaGetColorBuffer", (OSMESAproc) OSMesaGetColorBuffer },
    { "OSMesaGetProcAddress", (OSMESAproc) OSMesaGetProcAddress },
    { "OSMesaColorClamp", (OSMESAproc) OSMesaColorClamp },
+   { "OSMesaPostprocess" (OSMESAproc) OSMesaPostprocess },
    { NULL, NULL }
 };
 
@@ -1157,6 +1158,16 @@ OSMesaColorClamp(GLboolean enable)
       osmesa->mesa.Color.ClampFragmentColor = GL_FIXED_ONLY_ARB;
    }
 }
+
+
+GLAPI void GLAPIENTRY
+OSMesaPostprocess(OSMesaContext osmesa, const char *filter,
+                  unsigned enable_value)
+{
+   fprintf(stderr,
+           "OSMesaPostProcess() is only available with gallium drivers\n");
+}
+
 
 
 /**

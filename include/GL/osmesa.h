@@ -60,8 +60,8 @@ extern "C" {
 #include <GL/gl.h>
 
 
-#define OSMESA_MAJOR_VERSION 6
-#define OSMESA_MINOR_VERSION 5
+#define OSMESA_MAJOR_VERSION 10
+#define OSMESA_MINOR_VERSION 0
 #define OSMESA_PATCH_VERSION 0
 
 
@@ -269,6 +269,21 @@ OSMesaGetProcAddress( const char *funcName );
  */
 GLAPI void GLAPIENTRY
 OSMesaColorClamp(GLboolean enable);
+
+
+/**
+ * Enable/disable Gallium post-process filters.
+ * This should be called after a context is created, but before it is
+ * made current for the first time.  After a context has been made
+ * current, this function has no effect.
+ * If the enable_value param is zero, the filter is disabled.  Otherwise
+ * the filter is enabled, and the value may control the filter's quality.
+ * New in Mesa 10.0
+ */
+GLAPI void GLAPIENTRY
+OSMesaPostprocess(OSMesaContext osmesa, const char *filter,
+                  unsigned enable_value);
+
 
 #ifdef __cplusplus
 }
