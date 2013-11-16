@@ -65,11 +65,11 @@ GALLIUM_VDPAU_LINKER_FLAGS = \
 	-shared \
 	-no-undefined
 
-# TODO: add -export-symbols-regex
 GALLIUM_XVMC_LINKER_FLAGS = \
 	-module \
 	-version-number $(XVMC_MAJOR):$(XVMC_MINOR) \
 	-shared \
+	-export-symbols-regex '^XvMC' \
 	-no-undefined
 
 GALLIUM_VDPAU_LIB_DEPS = \
