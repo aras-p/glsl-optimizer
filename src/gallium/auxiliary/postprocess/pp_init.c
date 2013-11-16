@@ -28,6 +28,7 @@
 #include "pipe/p_compiler.h"
 
 #include "postprocess/filters.h"
+#include "postprocess/pp_private.h"
 
 #include "pipe/p_screen.h"
 #include "util/u_inlines.h"

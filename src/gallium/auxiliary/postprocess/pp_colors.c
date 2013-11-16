@@ -28,6 +28,7 @@
 #include "postprocess/postprocess.h"
 #include "postprocess/pp_colors.h"
 #include "postprocess/pp_filters.h"
+#include "postprocess/pp_private.h"
 
 /** The run function of the color filters */
 void

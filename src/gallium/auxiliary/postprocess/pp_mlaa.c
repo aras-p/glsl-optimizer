@@ -43,6 +43,8 @@
 #include "postprocess/postprocess.h"
 #include "postprocess/pp_mlaa.h"
 #include "postprocess/pp_filters.h"
+#include "postprocess/pp_private.h"
+
 #include "util/u_box.h"
 #include "util/u_sampler.h"
 #include "util/u_inlines.h"

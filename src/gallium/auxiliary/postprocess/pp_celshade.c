@@ -28,6 +28,7 @@
 #include "postprocess/postprocess.h"
 #include "postprocess/pp_celshade.h"
 #include "postprocess/pp_filters.h"
+#include "postprocess/pp_private.h"
 
 /** Init function */
 bool

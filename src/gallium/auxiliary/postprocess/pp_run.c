@@ -26,12 +26,14 @@
  **************************************************************************/
 
 #include "postprocess.h"
-
 #include "postprocess/pp_filters.h"
+#include "postprocess/pp_private.h"
+
 #include "util/u_inlines.h"
 #include "util/u_sampler.h"
 
 #include "tgsi/tgsi_parse.h"
+
 
 void
 pp_blit(struct pipe_context *pipe,

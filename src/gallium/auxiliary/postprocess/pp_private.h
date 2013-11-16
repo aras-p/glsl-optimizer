@@ -1,6 +1,5 @@
 /**************************************************************************
  *
- * Copyright 2010 Jakob Bornecrantz
  * Copyright 2011 Lauri Kasanen
  * All Rights Reserved.
  *
@@ -26,14 +25,16 @@
  *
  **************************************************************************/
 
-#ifndef PP_PROGRAM_H
-#define PP_PROGRAM_H
+#ifndef PP_PRIVATE_H
+#define PP_PRIVATE_H
 
-#include "pipe/p_state.h"
+
+#include "postprocess.h"
+
 
 /**
-*	Internal control details.
-*/
+ * Internal control details.
+ */
 struct pp_program
 {
    struct pipe_screen *screen;
@@ -59,4 +60,50 @@ struct pp_program
 };
 
 
-#endif
+
+/**
+ * The main post-processing queue.
+ */
+struct pp_queue_t
+{
+   pp_func *pp_queue;           /* An array of pp_funcs */
+   unsigned int n_filters;      /* Number of enabled filters */
+
+   struct pipe_resource *tmp[2];        /* Two temp FBOs for the queue */
+   struct pipe_resource *inner_tmp[3];  /* Three for filter use */
+
+   unsigned int n_tmp, n_inner_tmp;
+
+   struct pipe_resource *depth; /* depth of original input */
+   struct pipe_resource *stencil;       /* stencil shared by inner_tmps */
+   struct pipe_resource *constbuf;      /* MLAA constant buffer */
+   struct pipe_resource *areamaptex;    /* MLAA area map texture */
+
+   struct pipe_surface *tmps[2], *inner_tmps[3], *stencils;
+
+   void ***shaders;             /* Shaders in TGSI form */
+   unsigned int *filters;       /* Active filter to filters.h mapping. */
+   struct pp_program *p;
+
+   bool fbos_init;
+};
+
+
+void pp_free_fbos(struct pp_queue_t *);
+
+void pp_debug(const char *, ...);
+
+struct pp_program *pp_init_prog(struct pp_queue_t *, struct pipe_context *pipe,
+                                struct cso_context *);
+
+void pp_blit(struct pipe_context *pipe,
+             struct pipe_resource *src_tex,
+             int srcX0, int srcY0,
+             int srcX1, int srcY1,
+             int srcZ0,
+             struct pipe_surface *dst,
+             int dstX0, int dstY0,
+             int dstX1, int dstY1);
+
+
+#endif /* PP_PRIVATE_H */

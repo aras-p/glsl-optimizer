@@ -27,6 +27,8 @@
  **************************************************************************/
 
 #include "postprocess/postprocess.h"
+#include "postprocess/pp_private.h"
+
 #include "cso_cache/cso_context.h"
 #include "pipe/p_screen.h"
 #include "pipe/p_context.h"
