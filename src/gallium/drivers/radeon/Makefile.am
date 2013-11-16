@@ -15,15 +15,11 @@ if NEED_RADEON_LLVM
 
 noinst_LTLIBRARIES += libllvmradeon.la
 
-libllvmradeon_la_CXXFLAGS = \
-	$(GALLIUM_DRIVER_CXXFLAGS)
-
 libllvmradeon_la_CFLAGS = \
 	$(GALLIUM_DRIVER_CFLAGS) \
 	$(LLVM_CFLAGS)
 
 libllvmradeon_la_SOURCES = \
-	$(LLVM_CPP_FILES) \
 	$(LLVM_C_FILES)
 
 libllvmradeon_la_LIBADD = \
