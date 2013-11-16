@@ -41,8 +41,15 @@ typedef void (*pp_func) (struct pp_queue_t *, struct pipe_resource *,
 
 /* Main functions */
 
-struct pp_queue_t *pp_init(struct pipe_context *pipe, const unsigned int *,
+/**
+ * Note enabled is an array of values, one per filter stage.
+ * Zero indicates the stage is disabled.  Non-zero indicates the
+ * stage is enabled.  For some stages, the value controls quality.
+ */
+struct pp_queue_t *pp_init(struct pipe_context *pipe,
+                           const unsigned int *enabled,
                            struct cso_context *);
+
 void pp_run(struct pp_queue_t *, struct pipe_resource *,
             struct pipe_resource *, struct pipe_resource *);
 void pp_free(struct pp_queue_t *);
