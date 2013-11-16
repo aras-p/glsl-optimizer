@@ -75,8 +75,8 @@ const struct opcode_desc opcode_descs[128] = {
     [BRW_OPCODE_CMP] = { .name = "cmp", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_CMPN] = { .name = "cmpn", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_BFE] = { .name = "bfe", .nsrc = 3, .ndst = 1},
-    [BRW_OPCODE_BFI1] = { .name = "bfe1", .nsrc = 2, .ndst = 1},
-    [BRW_OPCODE_BFI2] = { .name = "bfe2", .nsrc = 3, .ndst = 1},
+    [BRW_OPCODE_BFI1] = { .name = "bfi1", .nsrc = 2, .ndst = 1},
+    [BRW_OPCODE_BFI2] = { .name = "bfi2", .nsrc = 3, .ndst = 1},
     [BRW_OPCODE_ADDC] = { .name = "addc", .nsrc = 2, .ndst = 1},
     [BRW_OPCODE_SUBB] = { .name = "subb", .nsrc = 2, .ndst = 1},
 
