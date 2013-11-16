@@ -1530,11 +1530,32 @@ fs_generator::generate_code(exec_list *instructions)
 
       case BRW_OPCODE_BFI1:
          assert(brw->gen >= 7);
-         brw_BFI1(p, dst, src[0], src[1]);
+         /* The Haswell WaForceSIMD8ForBFIInstruction workaround says that we
+          * should
+          *
+          *    "Force BFI instructions to be executed always in SIMD8."
+          */
+         if (dispatch_width == 16 && brw->is_haswell) {
+            brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+            brw_BFI1(p, dst, src[0], src[1]);
+            brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+            brw_BFI1(p, sechalf(dst), sechalf(src[0]), sechalf(src[1]));
+            brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+         } else {
+            brw_BFI1(p, dst, src[0], src[1]);
+         }
          break;
       case BRW_OPCODE_BFI2:
          assert(brw->gen >= 7);
          brw_set_access_mode(p, BRW_ALIGN_16);
+         /* The Haswell WaForceSIMD8ForBFIInstruction workaround says that we
+          * should
+          *
+          *    "Force BFI instructions to be executed always in SIMD8."
+          *
+          * Otherwise we would be able to emit compressed instructions like we
+          * do for the other three-source instructions.
+          */
          if (dispatch_width == 16) {
             brw_set_compression_control(p, BRW_COMPRESSION_NONE);
             brw_BFI2(p, dst, src[0], src[1], src[2]);
