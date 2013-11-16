@@ -30,9 +30,6 @@
 
 #include "pipe/p_state.h"
 
-#define PP_FILTERS 6            /* Increment this if you add filters */
-#define PP_MAX_PASSES 6
-
 struct cso_context;
 
 struct pp_queue_t;              /* Forward definition */

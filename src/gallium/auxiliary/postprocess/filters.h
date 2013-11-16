@@ -30,6 +30,10 @@
 
 #include "postprocess/postprocess.h"
 
+#define PP_FILTERS 6            /* Increment this if you add filters */
+#define PP_MAX_PASSES 6
+
+
 typedef bool (*pp_init_func) (struct pp_queue_t *, unsigned int,
                               unsigned int);
 typedef void (*pp_free_func) (struct pp_queue_t *, unsigned int);
