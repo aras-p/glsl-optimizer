@@ -1404,7 +1404,7 @@ fs_generator::generate_code(exec_list *instructions)
       case BRW_OPCODE_MAD:
          assert(brw->gen >= 6);
 	 brw_set_access_mode(p, BRW_ALIGN_16);
-	 if (dispatch_width == 16) {
+         if (dispatch_width == 16 && !brw->is_haswell) {
 	    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 	    brw_MAD(p, dst, src[0], src[1], src[2]);
 	    brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
@@ -1419,7 +1419,7 @@ fs_generator::generate_code(exec_list *instructions)
       case BRW_OPCODE_LRP:
          assert(brw->gen >= 6);
 	 brw_set_access_mode(p, BRW_ALIGN_16);
-	 if (dispatch_width == 16) {
+         if (dispatch_width == 16 && !brw->is_haswell) {
 	    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 	    brw_LRP(p, dst, src[0], src[1], src[2]);
 	    brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
@@ -1516,7 +1516,7 @@ fs_generator::generate_code(exec_list *instructions)
       case BRW_OPCODE_BFE:
          assert(brw->gen >= 7);
          brw_set_access_mode(p, BRW_ALIGN_16);
-         if (dispatch_width == 16) {
+         if (dispatch_width == 16 && !brw->is_haswell) {
             brw_set_compression_control(p, BRW_COMPRESSION_NONE);
             brw_BFE(p, dst, src[0], src[1], src[2]);
             brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
