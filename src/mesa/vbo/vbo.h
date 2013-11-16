@@ -46,13 +46,16 @@ struct _mesa_prim {
    GLuint end:1;
    GLuint weak:1;
    GLuint no_current_update:1;
-   GLuint pad:19;
+   GLuint is_indirect:1;
+   GLuint pad:18;
 
    GLuint start;
    GLuint count;
    GLint basevertex;
    GLuint num_instances;
    GLuint base_instance;
+
+   GLsizeiptr indirect_offset;
 };
 
 /* Would like to call this a "vbo_index_buffer", but this would be

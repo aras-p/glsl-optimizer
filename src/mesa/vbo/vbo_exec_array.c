@@ -611,6 +611,7 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
    prim[0].mode = mode;
    prim[0].num_instances = numInstances;
    prim[0].base_instance = baseInstance;
+   prim[0].is_indirect = 0;
 
    /* Implement the primitive restart index */
    if (ctx->Array.PrimitiveRestart && ctx->Array.RestartIndex < count) {
@@ -965,6 +966,7 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
    prim[0].start = 0;
    prim[0].count = count;
    prim[0].indexed = 1;
+   prim[0].is_indirect = 0;
    prim[0].basevertex = basevertex;
    prim[0].num_instances = numInstances;
    prim[0].base_instance = baseInstance;
@@ -1368,6 +1370,7 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 	 prim[i].indexed = 1;
          prim[i].num_instances = 1;
          prim[i].base_instance = 0;
+         prim[i].is_indirect = 0;
 	 if (basevertex != NULL)
 	    prim[i].basevertex = basevertex[i];
 	 else
@@ -1397,6 +1400,7 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 	 prim[0].indexed = 1;
          prim[0].num_instances = 1;
          prim[0].base_instance = 0;
+         prim[0].is_indirect = 0;
 	 if (basevertex != NULL)
 	    prim[0].basevertex = basevertex[i];
 	 else
@@ -1483,6 +1487,7 @@ vbo_draw_transform_feedback(struct gl_context *ctx, GLenum mode,
    prim[0].mode = mode;
    prim[0].num_instances = numInstances;
    prim[0].base_instance = 0;
+   prim[0].is_indirect = 0;
 
    /* Maybe we should do some primitive splitting for primitive restart
     * (like in DrawArrays), but we have no way to know how many vertices

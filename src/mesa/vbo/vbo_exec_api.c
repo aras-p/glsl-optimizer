@@ -702,6 +702,7 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
    exec->vtx.prim[i].count = 0;
    exec->vtx.prim[i].num_instances = 1;
    exec->vtx.prim[i].base_instance = 0;
+   exec->vtx.prim[i].is_indirect = 0;
 
    ctx->Driver.CurrentExecPrimitive = mode;
 
