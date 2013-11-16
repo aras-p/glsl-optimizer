@@ -34,7 +34,7 @@
 /**
 *	Internal control details.
 */
-struct program
+struct pp_program
 {
    struct pipe_screen *screen;
    struct pipe_context *pipe;

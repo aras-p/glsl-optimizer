@@ -60,7 +60,7 @@ struct pp_queue_t
 
    void ***shaders;             /* Shaders in TGSI form */
    unsigned int *filters;       /* Active filter to filters.h mapping. */
-   struct program *p;
+   struct pp_program *p;
 
    bool fbos_init;
 };
@@ -74,7 +74,7 @@ void pp_run(struct pp_queue_t *, struct pipe_resource *,
 void pp_free(struct pp_queue_t *);
 void pp_free_fbos(struct pp_queue_t *);
 void pp_debug(const char *, ...);
-struct program *pp_init_prog(struct pp_queue_t *, struct pipe_context *pipe,
+struct pp_program *pp_init_prog(struct pp_queue_t *, struct pipe_context *pipe,
                              struct cso_context *);
 void pp_init_fbos(struct pp_queue_t *, unsigned int, unsigned int);
 void pp_blit(struct pipe_context *pipe,

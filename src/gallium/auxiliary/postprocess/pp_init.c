@@ -255,7 +255,7 @@ pp_init_fbos(struct pp_queue_t *ppq, unsigned int w,
              unsigned int h)
 {
 
-   struct program *p = ppq->p;  /* The lazy will inherit the earth */
+   struct pp_program *p = ppq->p;  /* The lazy will inherit the earth */
 
    unsigned int i;
    struct pipe_resource tmp_res;

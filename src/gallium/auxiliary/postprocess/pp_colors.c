@@ -35,7 +35,7 @@ pp_nocolor(struct pp_queue_t *ppq, struct pipe_resource *in,
            struct pipe_resource *out, unsigned int n)
 {
 
-   struct program *p = ppq->p;
+   struct pp_program *p = ppq->p;
 
    pp_filter_setup_in(p, in);
    pp_filter_setup_out(p, out);

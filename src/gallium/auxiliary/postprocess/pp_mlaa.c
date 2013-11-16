@@ -75,7 +75,7 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
                    struct pipe_resource *out, unsigned int n, bool iscolor)
 {
 
-   struct program *p = ppq->p;
+   struct pp_program *p = ppq->p;
 
    struct pipe_depth_stencil_alpha_state mstencil;
    struct pipe_sampler_view v_tmp, *arr[3];
