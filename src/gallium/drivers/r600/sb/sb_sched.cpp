@@ -527,7 +527,7 @@ bool alu_group_tracker::try_reserve(alu_node* n) {
 				forced_swz_slots |= (1 << i);
 				a->bc.bank_swizzle = VEC_210;
 				if (!gpr.try_reserve(a))
-					assert("!internal reservation error");
+					assert(!"internal reservation error");
 			} else {
 				if (first_nf == ~0)
 					first_nf = i;
