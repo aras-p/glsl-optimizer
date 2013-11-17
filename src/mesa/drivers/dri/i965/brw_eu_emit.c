@@ -2633,6 +2633,34 @@ brw_untyped_surface_read(struct brw_compile *p,
       brw_inst_access_mode(brw, insn) == BRW_ALIGN_1);
 }
 
+void
+brw_pixel_interpolator_query(struct brw_compile *p,
+                             struct brw_reg dest,
+                             struct brw_reg mrf,
+                             bool noperspective,
+                             unsigned mode,
+                             unsigned data,
+                             unsigned msg_length,
+                             unsigned response_length)
+{
+   const struct brw_context *brw = p->brw;
+   struct brw_inst *insn = next_insn(p, BRW_OPCODE_SEND);
+
+   brw_set_dest(p, insn, dest);
+   brw_set_src0(p, insn, mrf);
+   brw_set_message_descriptor(p, insn, GEN7_SFID_PIXEL_INTERPOLATOR,
+                              msg_length, response_length,
+                              false /* header is never present for PI */,
+                              false);
+
+   brw_inst_set_pi_simd_mode(
+         brw, insn, brw_inst_exec_size(brw, insn) == BRW_EXECUTE_16);
+   brw_inst_set_pi_slot_group(brw, insn, 0); /* zero unless 32/64px dispatch */
+   brw_inst_set_pi_nopersp(brw, insn, noperspective);
+   brw_inst_set_pi_message_type(brw, insn, mode);
+   brw_inst_set_pi_message_data(brw, insn, data);
+}
+
 /**
  * This instruction is generated as a single-channel align1 instruction by
  * both the VS and FS stages when using INTEL_DEBUG=shader_time.
