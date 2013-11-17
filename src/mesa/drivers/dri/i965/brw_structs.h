@@ -1377,6 +1377,27 @@ struct brw_instruction
 	 unsigned pad2:2;
 	 unsigned end_of_thread:1;
       } gen7_dp;
+
+      /**
+       * Message for the Gen7 Pixel Interpolator.
+       *
+       * Defined in the Ivybridge PRM, Volume 4 Part 2,
+       * section 4.1.1.1.
+       */
+      struct {
+         GLuint msg_data:8;
+         GLuint pad1:3;
+         GLuint slot_group:1;
+         GLuint msg_type:2;
+         GLuint interpolation_mode:1;
+         GLuint pad2:1;
+         GLuint simd_mode:1;
+         GLuint pad3:1;
+         GLuint response_length:5;
+         GLuint msg_length:4;
+         GLuint pad4:2;
+         GLuint end_of_thread:1;
+      } gen7_pi;
       /** @} */
 
       struct {
