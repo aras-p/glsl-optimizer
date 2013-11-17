@@ -439,6 +439,8 @@ public:
    void emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
                                   fs_reg offset);
 
+   void emit_interpolate_expression(ir_expression *ir);
+
    bool try_rewrite_rhs_to_dst(ir_assignment *ir,
 			       fs_reg dst,
 			       fs_reg src,
