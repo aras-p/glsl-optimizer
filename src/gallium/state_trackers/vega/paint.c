@@ -516,7 +516,7 @@ void paint_set_pattern_tiling(struct vg_paint *paint,
       paint->pattern.sampler.wrap_t = PIPE_TEX_WRAP_MIRROR_REPEAT;
       break;
    default:
-      debug_assert("!Unknown tiling mode");
+      debug_assert(!"Unknown tiling mode");
    }
 }
 
