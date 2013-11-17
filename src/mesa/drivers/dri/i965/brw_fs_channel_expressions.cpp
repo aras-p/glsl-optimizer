@@ -75,6 +75,18 @@ channel_expressions_predicate(ir_instruction *ir)
    if (!expr)
       return false;
 
+   switch (expr->operation) {
+      /* these opcodes need to act on the whole vector,
+       * just like texturing.
+       */
+      case ir_unop_interpolate_at_centroid:
+      case ir_binop_interpolate_at_offset:
+      case ir_binop_interpolate_at_sample:
+         return false;
+      default:
+         break;
+   }
+
    for (i = 0; i < expr->get_num_operands(); i++) {
       if (expr->operands[i]->type->is_vector())
 	 return true;
@@ -152,6 +164,16 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    }
    if (!found_vector)
       return visit_continue;
+
+   switch (expr->operation) {
+      case ir_unop_interpolate_at_centroid:
+      case ir_binop_interpolate_at_offset:
+      case ir_binop_interpolate_at_sample:
+         return visit_continue;
+
+      default:
+         break;
+   }
 
    /* Store the expression operands in temps so we can use them
     * multiple times.
@@ -414,6 +436,9 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_unop_unpack_half_2x16_split_x:
    case ir_unop_unpack_half_2x16_split_y:
    case ir_binop_pack_half_2x16_split:
+   case ir_unop_interpolate_at_centroid:
+   case ir_binop_interpolate_at_offset:
+   case ir_binop_interpolate_at_sample:
       unreachable("not reached: expression operates on scalars only");
    }
 
