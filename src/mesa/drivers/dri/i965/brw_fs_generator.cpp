@@ -995,6 +995,26 @@ fs_generator::generate_mov_dispatch_to_flags(fs_inst *inst)
    brw_pop_insn_state(p);
 }
 
+void
+fs_generator::generate_pixel_interpolator_query(fs_inst *inst,
+                                                struct brw_reg dst,
+                                                struct brw_reg src,
+                                                struct brw_reg msg_data,
+                                                unsigned msg_type)
+{
+   assert(msg_data.file == BRW_IMMEDIATE_VALUE &&
+          msg_data.type == BRW_REGISTER_TYPE_UD);
+
+   brw_pixel_interpolator_query(p,
+         retype(dst, BRW_REGISTER_TYPE_UW),
+         src,
+         inst->pi_noperspective,
+         msg_type,
+         msg_data.dw1.ud,
+         inst->mlen,
+         inst->regs_written);
+}
+
 
 static uint32_t brw_file_from_reg(fs_reg *reg)
 {
@@ -1728,6 +1748,26 @@ fs_generator::generate_code(exec_list *instructions)
                annotation.ann_count--;
             }
          }
+         break;
+
+      case FS_OPCODE_INTERPOLATE_AT_CENTROID:
+         generate_pixel_interpolator_query(inst, dst, src[0], src[1],
+                                           GEN7_PIXEL_INTERPOLATOR_LOC_CENTROID);
+         break;
+
+      case FS_OPCODE_INTERPOLATE_AT_SAMPLE:
+         generate_pixel_interpolator_query(inst, dst, src[0], src[1],
+                                           GEN7_PIXEL_INTERPOLATOR_LOC_SAMPLE);
+         break;
+
+      case FS_OPCODE_INTERPOLATE_AT_SHARED_OFFSET:
+         generate_pixel_interpolator_query(inst, dst, src[0], src[1],
+                                           GEN7_PIXEL_INTERPOLATOR_LOC_SHARED_OFFSET);
+         break;
+
+      case FS_OPCODE_INTERPOLATE_AT_PER_SLOT_OFFSET:
+         generate_pixel_interpolator_query(inst, dst, src[0], src[1],
+                                           GEN7_PIXEL_INTERPOLATOR_LOC_PER_SLOT_OFFSET);
          break;
 
       default:

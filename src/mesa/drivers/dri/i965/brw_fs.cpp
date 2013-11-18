@@ -370,6 +370,10 @@ fs_inst::is_send_from_grf() const
 {
    return (opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7 ||
            opcode == SHADER_OPCODE_SHADER_TIME_ADD ||
+           opcode == FS_OPCODE_INTERPOLATE_AT_CENTROID ||
+           opcode == FS_OPCODE_INTERPOLATE_AT_SAMPLE ||
+           opcode == FS_OPCODE_INTERPOLATE_AT_SHARED_OFFSET ||
+           opcode == FS_OPCODE_INTERPOLATE_AT_PER_SLOT_OFFSET ||
            (opcode == FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD &&
             src[1].file == GRF) ||
            (is_tex() && src[0].file == GRF));
@@ -837,6 +841,10 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
       return 2;
    case SHADER_OPCODE_UNTYPED_ATOMIC:
    case SHADER_OPCODE_UNTYPED_SURFACE_READ:
+   case FS_OPCODE_INTERPOLATE_AT_CENTROID:
+   case FS_OPCODE_INTERPOLATE_AT_SAMPLE:
+   case FS_OPCODE_INTERPOLATE_AT_SHARED_OFFSET:
+   case FS_OPCODE_INTERPOLATE_AT_PER_SLOT_OFFSET:
       return 0;
    default:
       unreachable("not reached");

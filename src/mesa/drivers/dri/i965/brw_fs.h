@@ -196,6 +196,7 @@ public:
    bool shadow_compare:1;
    bool force_uncompressed:1;
    bool force_sechalf:1;
+   bool pi_noperspective:1;   /**< Pixel interpolator noperspective flag */
 };
 
 /**
@@ -622,6 +623,12 @@ private:
                                                  struct brw_reg index,
                                                  struct brw_reg offset);
    void generate_mov_dispatch_to_flags(fs_inst *inst);
+
+   void generate_pixel_interpolator_query(fs_inst *inst,
+                                          struct brw_reg dst,
+                                          struct brw_reg src,
+                                          struct brw_reg msg_data,
+                                          unsigned msg_type);
 
    void generate_set_omask(fs_inst *inst,
                            struct brw_reg dst,
