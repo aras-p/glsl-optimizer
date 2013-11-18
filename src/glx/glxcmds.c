@@ -183,7 +183,7 @@ GetGLXPrivScreenConfig(Display * dpy, int scrn, struct glx_display ** ppriv,
 
    /* Check to see if the GL is supported on this screen */
    *ppsc = (*ppriv)->screens[scrn];
-   if ((*ppsc)->configs == NULL) {
+   if ((*ppsc)->configs == NULL && (*ppsc)->visuals == NULL) {
       /* No support for GL on this screen regardless of visual */
       return GLX_BAD_VISUAL;
    }
