@@ -23,6 +23,7 @@
  *
  **********************************************************/
 
+#include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "util/u_string.h"
@@ -446,6 +447,11 @@ svga_is_format_supported( struct pipe_screen *screen,
       }
    }
    
+   if (target == PIPE_TEXTURE_3D && util_format_is_compressed(format)) {
+      /* we don't support compressed 3D textures at this time */
+      return FALSE;
+   }
+
    /*
     * Query the host capabilities.
     */
