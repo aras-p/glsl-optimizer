@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/imports.h"
 #include "program/program.h"
@@ -2559,12 +2558,6 @@ initialize_symbol_from_param(struct gl_program *prog,
     */
    param_var->type = at_param;
    param_var->param_binding_type = PROGRAM_STATE_VAR;
-
-   /* Dynamically allocate LocalParams, since it's a large array to have
-    * statically in every gl_program otherwise.
-    */
-   if (state_tokens[1] == STATE_LOCAL && !prog->LocalParams)
-      prog->LocalParams = calloc(MAX_PROGRAM_LOCAL_PARAMS, sizeof(float[4]));
 
    /* If we are adding a STATE_ENV or STATE_LOCAL that has multiple elements,
     * we need to unroll it and call add_state_reference() for each row

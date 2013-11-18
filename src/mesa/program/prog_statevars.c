@@ -368,6 +368,13 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
                COPY_4V(value, ctx->FragmentProgram.Parameters[idx]);
                return;
             case STATE_LOCAL:
+               if (!ctx->FragmentProgram.Current->Base.LocalParams) {
+                  ctx->FragmentProgram.Current->Base.LocalParams =
+                     calloc(MAX_PROGRAM_LOCAL_PARAMS, sizeof(float[4]));
+                  if (!ctx->FragmentProgram.Current->Base.LocalParams)
+                     return;
+               }
+
                COPY_4V(value, ctx->FragmentProgram.Current->Base.LocalParams[idx]);
                return;
             default:
@@ -387,6 +394,13 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
                COPY_4V(value, ctx->VertexProgram.Parameters[idx]);
                return;
             case STATE_LOCAL:
+               if (!ctx->VertexProgram.Current->Base.LocalParams) {
+                  ctx->VertexProgram.Current->Base.LocalParams =
+                     calloc(MAX_PROGRAM_LOCAL_PARAMS, sizeof(float[4]));
+                  if (!ctx->VertexProgram.Current->Base.LocalParams)
+                     return;
+               }
+
                COPY_4V(value, ctx->VertexProgram.Current->Base.LocalParams[idx]);
                return;
             default:
