@@ -88,6 +88,7 @@ protected:
    virtual vec4_instruction *emit_urb_write_opcode(bool complete)
    {
       assert(!"Not reached");
+      unreachable();
    }
 };
 
