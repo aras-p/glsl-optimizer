@@ -547,6 +547,7 @@ _mesa_GetPerfMonitorCounterDataAMD(GLuint monitor, GLenum pname,
    GET_CURRENT_CONTEXT(ctx);
 
    struct gl_perf_monitor_object *m = lookup_monitor(ctx, monitor);
+   bool result_available;
 
    if (m == NULL) {
       _mesa_error(ctx, GL_INVALID_VALUE,
@@ -569,7 +570,7 @@ _mesa_GetPerfMonitorCounterDataAMD(GLuint monitor, GLenum pname,
    }
 
    /* If the monitor has never ended, there is no result. */
-   bool result_available = m->Ended &&
+   result_available = m->Ended &&
       ctx->Driver.IsPerfMonitorResultAvailable(ctx, m);
 
    /* AMD appears to return 0 for all queries unless a result is available. */
