@@ -473,6 +473,13 @@ static const char *const aop[16] = {
    [BRW_AOP_PREDEC] = "predec",
 };
 
+static const char * const pixel_interpolator_msg_types[4] = {
+    [GEN7_PIXEL_INTERPOLATOR_LOC_SHARED_OFFSET] = "per_message_offset",
+    [GEN7_PIXEL_INTERPOLATOR_LOC_SAMPLE] = "sample_position",
+    [GEN7_PIXEL_INTERPOLATOR_LOC_CENTROID] = "centroid",
+    [GEN7_PIXEL_INTERPOLATOR_LOC_PER_SLOT_OFFSET] = "per_slot_offset",
+};
+
 static const char *const math_function[16] = {
    [BRW_MATH_FUNCTION_INV]    = "inv",
    [BRW_MATH_FUNCTION_LOG]    = "log",
@@ -1472,6 +1479,16 @@ brw_disassemble_inst(FILE *file, struct brw_context *brw, brw_inst *inst,
             }
             /* FALLTHROUGH */
          }
+
+         case GEN7_SFID_PIXEL_INTERPOLATOR:
+            if (brw->gen >= 7) {
+               format(file, " (%s, %s, 0x%02x)",
+                      brw_inst_pi_nopersp(brw, inst) ? "linear" : "persp",
+                      pixel_interpolator_msg_types[brw_inst_pi_message_type(brw, inst)],
+                      brw_inst_pi_message_data(brw, inst));
+               break;
+            }
+            /* FALLTHROUGH */
 
          default:
             format(file, "unsupported shared function ID %d", sfid);
