@@ -1129,7 +1129,7 @@ static struct name_function functions[] = {
    { "OSMesaGetColorBuffer", (OSMESAproc) OSMesaGetColorBuffer },
    { "OSMesaGetProcAddress", (OSMESAproc) OSMesaGetProcAddress },
    { "OSMesaColorClamp", (OSMESAproc) OSMesaColorClamp },
-   { "OSMesaPostprocess" (OSMESAproc) OSMesaPostprocess },
+   { "OSMesaPostprocess", (OSMESAproc) OSMesaPostprocess },
    { NULL, NULL }
 };
 
