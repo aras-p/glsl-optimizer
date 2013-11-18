@@ -42,17 +42,10 @@ brw_get_graphics_reset_status(struct gl_context *ctx)
     */
    assert(brw->hw_ctx != NULL);
 
-#if 0
-   /* This is waiting until the kernel code can be merged and a new libdrm
-    * actually released.
-    */
    err = drm_intel_get_reset_stats(brw->hw_ctx, &reset_count, &active,
                                    &pending);
    if (err)
       return GL_NO_ERROR;
-#else
-   return GL_NO_ERROR;
-#endif
 
    /* A reset was observed while a batch from this context was executing.
     * Assume that this context was at fault.
