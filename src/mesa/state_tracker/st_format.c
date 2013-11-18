@@ -45,6 +45,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "util/u_format.h"
+#include "st_cb_texture.h"
 #include "st_context.h"
 #include "st_format.h"
 
@@ -1726,6 +1727,7 @@ st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
    struct st_context *st = st_context(ctx);
    enum pipe_format pFormat;
    unsigned bindings;
+   enum pipe_texture_target pTarget = gl_target_to_pipe(target);
 
    if (target == GL_TEXTURE_1D || target == GL_TEXTURE_1D_ARRAY) {
       /* We don't do compression for these texture targets because of
@@ -1782,12 +1784,12 @@ st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
    }
 
    pFormat = st_choose_format(st, internalFormat, format, type,
-                              PIPE_TEXTURE_2D, 0, bindings, ctx->Mesa_DXTn);
+                              pTarget, 0, bindings, ctx->Mesa_DXTn);
 
    if (pFormat == PIPE_FORMAT_NONE) {
       /* try choosing format again, this time without render target bindings */
       pFormat = st_choose_format(st, internalFormat, format, type,
-                                 PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW,
+                                 pTarget, 0, PIPE_BIND_SAMPLER_VIEW,
                                  ctx->Mesa_DXTn);
    }
 
