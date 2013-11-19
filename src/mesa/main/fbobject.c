@@ -905,6 +905,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       struct gl_renderbuffer_attachment *att;
       GLenum f;
       gl_format attFormat;
+      GLenum att_tex_target = GL_NONE;
 
       /*
        * XXX for ARB_fbo, only check color buffers that are named by
@@ -945,6 +946,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
        */
       if (att->Type == GL_TEXTURE) {
          const struct gl_texture_image *texImg = att->Renderbuffer->TexImage;
+         att_tex_target = att->Texture->Target;
          minWidth = MIN2(minWidth, texImg->Width);
          maxWidth = MAX2(maxWidth, texImg->Width);
          minHeight = MIN2(minHeight, texImg->Height);
@@ -1057,7 +1059,14 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       }
 
       /* Check that layered rendering is consistent. */
-      att_layer_count = att->Layered ? att->Renderbuffer->Depth : 0;
+      if (att->Layered) {
+         if (att_tex_target == GL_TEXTURE_CUBE_MAP)
+            att_layer_count = 6;
+         else
+            att_layer_count = att->Renderbuffer->Depth;
+      } else {
+         att_layer_count = 0;
+      }
       if (!layer_count_valid) {
          layer_count = att_layer_count;
          layer_count_valid = true;
@@ -1073,7 +1082,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       }
    }
 
-   fb->Layered = layer_count > 0;
+   fb->NumLayers = layer_count;
 
    if (_mesa_is_desktop_gl(ctx) && !ctx->Extensions.ARB_ES2_compatibility) {
       /* Check that all DrawBuffers are present */
