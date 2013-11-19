@@ -1140,10 +1140,10 @@ fs_instruction_scheduler::choose_instruction_to_schedule()
 {
    schedule_node *chosen = NULL;
 
-   if (post_reg_alloc) {
+   if (mode == SCHEDULE_PRE || mode == SCHEDULE_POST) {
       int chosen_time = 0;
 
-      /* Of the instructions closest ready to execute or the closest to
+      /* Of the instructions ready to execute or the closest to
        * being ready, choose the oldest one.
        */
       foreach_list(node, &instructions) {

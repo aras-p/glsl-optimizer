@@ -3192,6 +3192,7 @@ fs_visitor::run()
 {
    sanity_param_count = fp->Base.Parameters->NumParameters;
    uint32_t orig_nr_params = c->prog_data.nr_params;
+   bool allocated_without_spills;
 
    assign_binding_table_offsets();
 
@@ -3276,27 +3277,45 @@ fs_visitor::run()
       assign_curb_setup();
       assign_urb_setup();
 
-      schedule_instructions(SCHEDULE_PRE_NON_LIFO);
+      static enum instruction_scheduler_mode pre_modes[] = {
+         SCHEDULE_PRE,
+         SCHEDULE_PRE_NON_LIFO,
+         SCHEDULE_PRE_LIFO,
+      };
 
-      if (0)
-	 assign_regs_trivial();
-      else {
-         if (!assign_regs(false)) {
-            /* Try a non-spilling register allocation again with a different
-             * scheduling heuristic.
-             */
-            schedule_instructions(SCHEDULE_PRE_LIFO);
-            if (!assign_regs(false)) {
-               if (dispatch_width == 16) {
-                  fail("Failure to register allocate.  Reduce number of "
-                       "live scalar values to avoid this.");
-               } else {
-                  while (!assign_regs(true)) {
-                     if (failed)
-                        break;
-                  }
-               }
-            }
+      /* Try each scheduling heuristic to see if it can successfully register
+       * allocate without spilling.  They should be ordered by decreasing
+       * performance but increasing likelihood of allocating.
+       */
+      for (unsigned i = 0; i < ARRAY_SIZE(pre_modes); i++) {
+         schedule_instructions(pre_modes[i]);
+
+         if (0) {
+            assign_regs_trivial();
+            allocated_without_spills = true;
+         } else {
+            allocated_without_spills = assign_regs(false);
+         }
+         if (allocated_without_spills)
+            break;
+      }
+
+      if (!allocated_without_spills) {
+         /* We assume that any spilling is worse than just dropping back to
+          * SIMD8.  There's probably actually some intermediate point where
+          * SIMD16 with a couple of spills is still better.
+          */
+         if (dispatch_width == 16) {
+            fail("Failure to register allocate.  Reduce number of "
+                 "live scalar values to avoid this.");
+         }
+
+         /* Since we're out of heuristics, just go spill registers until we
+          * get an allocation.
+          */
+         while (!assign_regs(true)) {
+            if (failed)
+               break;
          }
       }
    }
@@ -3311,7 +3330,8 @@ fs_visitor::run()
    if (failed)
       return false;
 
-   schedule_instructions(SCHEDULE_POST);
+   if (!allocated_without_spills)
+      schedule_instructions(SCHEDULE_POST);
 
    if (dispatch_width == 8) {
       c->prog_data.reg_blocks = brw_register_blocks(grf_used);

@@ -60,6 +60,7 @@ public:
 };
 
 enum instruction_scheduler_mode {
+   SCHEDULE_PRE,
    SCHEDULE_PRE_NON_LIFO,
    SCHEDULE_PRE_LIFO,
    SCHEDULE_POST,
