@@ -447,11 +447,6 @@ svga_is_format_supported( struct pipe_screen *screen,
       }
    }
    
-   if (target == PIPE_TEXTURE_3D && util_format_is_compressed(format)) {
-      /* we don't support compressed 3D textures at this time */
-      return FALSE;
-   }
-
    /*
     * Query the host capabilities.
     */
@@ -467,6 +462,13 @@ svga_is_format_supported( struct pipe_screen *screen,
    }
    if (tex_usage & PIPE_BIND_SAMPLER_VIEW) {
       mask.texture = 1;
+   }
+
+   if (target == PIPE_TEXTURE_CUBE) {
+      mask.cubeTexture = 1;
+   }
+   if (target == PIPE_TEXTURE_3D) {
+      mask.volumeTexture = 1;
    }
 
    return (caps.value & mask.value) == mask.value;
