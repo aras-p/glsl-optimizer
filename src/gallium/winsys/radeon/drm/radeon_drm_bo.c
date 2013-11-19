@@ -202,15 +202,15 @@ static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size, ui
     struct radeon_bo_va_hole *hole, *n;
     uint64_t offset = 0, waste = 0;
 
+    alignment = MAX2(alignment, 4096);
+    size = align(size, 4096);
+
     pipe_mutex_lock(mgr->bo_va_mutex);
     /* first look for a hole */
     LIST_FOR_EACH_ENTRY_SAFE(hole, n, &mgr->va_holes, list) {
         offset = hole->offset;
-        waste = 0;
-        if (alignment) {
-            waste = offset % alignment;
-            waste = waste ? alignment - waste : 0;
-        }
+        waste = offset % alignment;
+        waste = waste ? alignment - waste : 0;
         offset += waste;
         if (offset >= (hole->offset + hole->size)) {
             continue;
@@ -242,11 +242,8 @@ static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size, ui
     }
 
     offset = mgr->va_offset;
-    waste = 0;
-    if (alignment) {
-        waste = offset % alignment;
-        waste = waste ? alignment - waste : 0;
-    }
+    waste = offset % alignment;
+    waste = waste ? alignment - waste : 0;
     if (waste) {
         n = CALLOC_STRUCT(radeon_bo_va_hole);
         n->size = waste;
@@ -261,6 +258,8 @@ static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size, ui
 
 static void radeon_bomgr_force_va(struct radeon_bomgr *mgr, uint64_t va, uint64_t size)
 {
+    size = align(size, 4096);
+
     pipe_mutex_lock(mgr->bo_va_mutex);
     if (va >= mgr->va_offset) {
         if (va > mgr->va_offset) {
@@ -302,6 +301,8 @@ static void radeon_bomgr_force_va(struct radeon_bomgr *mgr, uint64_t va, uint64_
 static void radeon_bomgr_free_va(struct radeon_bomgr *mgr, uint64_t va, uint64_t size)
 {
     struct radeon_bo_va_hole *hole;
+
+    size = align(size, 4096);
 
     pipe_mutex_lock(mgr->bo_va_mutex);
     if ((va + size) == mgr->va_offset) {
@@ -385,7 +386,7 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
     drmIoctl(bo->rws->fd, DRM_IOCTL_GEM_CLOSE, &args);
 
     if (mgr->va) {
-        radeon_bomgr_free_va(mgr, bo->va, bo->va_size);
+        radeon_bomgr_free_va(mgr, bo->va, bo->base.size);
     }
 
     pipe_mutex_destroy(bo->map_mutex);
@@ -600,8 +601,7 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     if (mgr->va) {
         struct drm_radeon_gem_va va;
 
-        bo->va_size = align(size,  4096);
-        bo->va = radeon_bomgr_find_va(mgr, bo->va_size, desc->alignment);
+        bo->va = radeon_bomgr_find_va(mgr, size, desc->alignment);
 
         va.handle = bo->handle;
         va.vm_id = 0;
@@ -621,9 +621,9 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
             return NULL;
         }
         if (va.operation == RADEON_VA_RESULT_VA_EXIST) {
-            radeon_bomgr_free_va(mgr, bo->va, bo->va_size);
+            radeon_bomgr_free_va(mgr, bo->va, size);
             bo->va = va.offset;
-            radeon_bomgr_force_va(mgr, bo->va, bo->va_size);
+            radeon_bomgr_force_va(mgr, bo->va, size);
         }
     }
 
@@ -931,8 +931,7 @@ done:
     if (mgr->va && !bo->va) {
         struct drm_radeon_gem_va va;
 
-        bo->va_size = ((bo->base.size + 4095) & ~4095);
-        bo->va = radeon_bomgr_find_va(mgr, bo->va_size, 1 << 20);
+        bo->va = radeon_bomgr_find_va(mgr, bo->base.size, 1 << 20);
 
         va.handle = bo->handle;
         va.operation = RADEON_VA_MAP;
@@ -949,9 +948,9 @@ done:
             return NULL;
         }
         if (va.operation == RADEON_VA_RESULT_VA_EXIST) {
-            radeon_bomgr_free_va(mgr, bo->va, bo->va_size);
+            radeon_bomgr_free_va(mgr, bo->va, bo->base.size);
             bo->va = va.offset;
-            radeon_bomgr_force_va(mgr, bo->va, bo->va_size);
+            radeon_bomgr_force_va(mgr, bo->va, bo->base.size);
         }
     }
 
