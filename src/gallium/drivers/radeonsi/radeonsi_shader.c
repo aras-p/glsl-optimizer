@@ -889,7 +889,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 	LLVMValueRef pos_args[4][9] = { { 0 } };
 	unsigned semantic_name;
 	unsigned param_count = 0;
-	int depth_index = -1, stencil_index = -1;
+	int depth_index = -1, stencil_index = -1, psize_index = -1, edgeflag_index = -1;
 	int i;
 
 	if (si_shader_ctx->shader->selector->so.num_outputs) {
@@ -940,10 +940,15 @@ handle_semantic:
 			/* Select the correct target */
 			switch(semantic_name) {
 			case TGSI_SEMANTIC_PSIZE:
-				shader->vs_out_misc_write = 1;
-				shader->vs_out_point_size = 1;
-				target = V_008DFC_SQ_EXP_POS + 1;
-				break;
+				shader->vs_out_misc_write = true;
+				shader->vs_out_point_size = true;
+				psize_index = index;
+				continue;
+			case TGSI_SEMANTIC_EDGEFLAG:
+				shader->vs_out_misc_write = true;
+				shader->vs_out_edgeflag = true;
+				edgeflag_index = index;
+				continue;
 			case TGSI_SEMANTIC_POSITION:
 				if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
 					target = V_008DFC_SQ_EXP_POS;
@@ -1018,7 +1023,6 @@ handle_semantic:
 						   LLVMVoidTypeInContext(base->gallivm->context),
 						   args, 9);
 			}
-
 		}
 
 		if (semantic_name == TGSI_SEMANTIC_CLIPDIST) {
@@ -1090,6 +1094,42 @@ handle_semantic:
 			pos_args[0][6] = base->zero; /* Y */
 			pos_args[0][7] = base->zero; /* Z */
 			pos_args[0][8] = base->one;  /* W */
+		}
+
+		/* Write the misc vector (point size, edgeflag, layer, viewport). */
+		if (shader->vs_out_misc_write) {
+			pos_args[1][0] = lp_build_const_int32(base->gallivm, /* writemask */
+							      shader->vs_out_point_size |
+							      (shader->vs_out_edgeflag << 1));
+			pos_args[1][1] = uint->zero; /* EXEC mask */
+			pos_args[1][2] = uint->zero; /* last export? */
+			pos_args[1][3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_POS + 1);
+			pos_args[1][4] = uint->zero; /* COMPR flag */
+			pos_args[1][5] = base->zero; /* X */
+			pos_args[1][6] = base->zero; /* Y */
+			pos_args[1][7] = base->zero; /* Z */
+			pos_args[1][8] = base->zero; /* W */
+
+			if (shader->vs_out_point_size) {
+				pos_args[1][5] = LLVMBuildLoad(base->gallivm->builder,
+					si_shader_ctx->radeon_bld.soa.outputs[psize_index][0], "");
+			}
+
+			if (shader->vs_out_edgeflag) {
+				LLVMValueRef output = LLVMBuildLoad(base->gallivm->builder,
+					si_shader_ctx->radeon_bld.soa.outputs[edgeflag_index][0], "");
+
+				/* The output is a float, but the hw expects an integer
+				 * with the first bit containing the edge flag. */
+				output = LLVMBuildFPToUI(base->gallivm->builder, output,
+							 bld_base->uint_bld.elem_type, "");
+
+				output = lp_build_min(&bld_base->int_bld, output, bld_base->int_bld.one);
+
+				/* The LLVM intrinsic expects a float. */
+				pos_args[1][6] = LLVMBuildBitCast(base->gallivm->builder, output,
+								  base->elem_type, "");
+			}
 		}
 
 		for (i = 0; i < 4; i++)
