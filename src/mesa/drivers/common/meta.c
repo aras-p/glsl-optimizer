@@ -241,9 +241,11 @@ struct clear_state
    GLuint VBO;
    GLuint ShaderProg;
    GLint ColorLocation;
+   GLint LayerLocation;
 
    GLuint IntegerShaderProg;
    GLint IntegerColorLocation;
+   GLint IntegerLayerLocation;
 };
 
 
@@ -2145,6 +2147,19 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       "{\n"
       "   gl_Position = position;\n"
       "}\n";
+   const char *gs_source =
+      "#version 150\n"
+      "layout(triangles) in;\n"
+      "layout(triangle_strip, max_vertices = 4) out;\n"
+      "uniform int layer;\n"
+      "void main()\n"
+      "{\n"
+      "  for (int i = 0; i < 3; i++) {\n"
+      "    gl_Layer = layer;\n"
+      "    gl_Position = gl_in[i].gl_Position;\n"
+      "    EmitVertex();\n"
+      "  }\n"
+      "}\n";
    const char *fs_source =
       "#ifdef GL_ES\n"
       "precision highp float;\n"
@@ -2154,7 +2169,7 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       "{\n"
       "   gl_FragColor = color;\n"
       "}\n";
-   GLuint vs, fs;
+   GLuint vs, gs = 0, fs;
    bool has_integer_textures;
 
    if (clear->ArrayObj != 0)
@@ -2176,6 +2191,12 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
    _mesa_ShaderSource(vs, 1, &vs_source, NULL);
    _mesa_CompileShader(vs);
 
+   if (_mesa_has_geometry_shaders(ctx)) {
+      gs = _mesa_CreateShaderObjectARB(GL_GEOMETRY_SHADER);
+      _mesa_ShaderSource(gs, 1, &gs_source, NULL);
+      _mesa_CompileShader(gs);
+   }
+
    fs = _mesa_CreateShaderObjectARB(GL_FRAGMENT_SHADER);
    _mesa_ShaderSource(fs, 1, &fs_source, NULL);
    _mesa_CompileShader(fs);
@@ -2183,6 +2204,8 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
    clear->ShaderProg = _mesa_CreateProgramObjectARB();
    _mesa_AttachShader(clear->ShaderProg, fs);
    _mesa_DeleteObjectARB(fs);
+   if (gs != 0)
+      _mesa_AttachShader(clear->ShaderProg, gs);
    _mesa_AttachShader(clear->ShaderProg, vs);
    _mesa_DeleteObjectARB(vs);
    _mesa_BindAttribLocation(clear->ShaderProg, 0, "position");
@@ -2190,6 +2213,10 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
 
    clear->ColorLocation = _mesa_GetUniformLocation(clear->ShaderProg,
 						      "color");
+   if (gs != 0) {
+      clear->LayerLocation = _mesa_GetUniformLocation(clear->ShaderProg,
+						      "layer");
+   }
 
    has_integer_textures = _mesa_is_gles3(ctx) ||
       (_mesa_is_desktop_gl(ctx) && ctx->Const.GLSLVersion >= 130);
@@ -2227,6 +2254,8 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       clear->IntegerShaderProg = _mesa_CreateProgramObjectARB();
       _mesa_AttachShader(clear->IntegerShaderProg, fs);
       _mesa_DeleteObjectARB(fs);
+      if (gs != 0)
+         _mesa_AttachShader(clear->IntegerShaderProg, gs);
       _mesa_AttachShader(clear->IntegerShaderProg, vs);
       _mesa_DeleteObjectARB(vs);
       _mesa_BindAttribLocation(clear->IntegerShaderProg, 0, "position");
@@ -2240,7 +2269,13 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
 
       clear->IntegerColorLocation =
 	 _mesa_GetUniformLocation(clear->IntegerShaderProg, "color");
+      if (gs != 0) {
+         clear->IntegerLayerLocation =
+            _mesa_GetUniformLocation(clear->IntegerShaderProg, "layer");
+      }
    }
+   if (gs != 0)
+      _mesa_DeleteObjectARB(gs);
 }
 
 static void
@@ -2371,8 +2406,18 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
    _mesa_BufferData(GL_ARRAY_BUFFER_ARB, sizeof(verts), verts,
 		       GL_DYNAMIC_DRAW_ARB);
 
-   /* draw quad */
-   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+   /* draw quad(s) */
+   if (fb->NumLayers > 0) {
+      for (unsigned layer = 0; layer < fb->NumLayers; layer++) {
+         if (fb->_IntegerColor)
+            _mesa_Uniform1i(clear->IntegerLayerLocation, layer);
+         else
+            _mesa_Uniform1i(clear->LayerLocation, layer);
+         _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+      }
+   } else {
+      _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+   }
 
    _mesa_meta_end(ctx);
 }
