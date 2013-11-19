@@ -67,7 +67,8 @@ public:
                           struct gl_framebuffer *fb,
                           struct gl_renderbuffer *rb,
                           GLubyte *color_mask,
-                          bool partial_clear);
+                          bool partial_clear,
+                          unsigned layer);
 };
 
 
@@ -183,12 +184,13 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
                                                struct gl_framebuffer *fb,
                                                struct gl_renderbuffer *rb,
                                                GLubyte *color_mask,
-                                               bool partial_clear)
+                                               bool partial_clear,
+                                               unsigned layer)
 {
    struct gl_context *ctx = &brw->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
-   dst.set(brw, irb->mt, irb->mt_level, irb->mt_layer, true);
+   dst.set(brw, irb->mt, irb->mt_level, layer, true);
 
    /* Override the surface format according to the context's sRGB rules. */
    gl_format format = _mesa_get_render_format(ctx, irb->mt->format);
@@ -443,13 +445,13 @@ brw_blorp_const_color_program::compile(struct brw_context *brw,
 bool
 do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
                       struct gl_renderbuffer *rb, unsigned buf,
-                      bool partial_clear)
+                      bool partial_clear, unsigned layer)
 {
    struct gl_context *ctx = &brw->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    brw_blorp_clear_params params(brw, fb, rb, ctx->Color.ColorMask[buf],
-                                 partial_clear);
+                                 partial_clear, layer);
 
    bool is_fast_clear =
       (params.fast_clear_op == GEN7_FAST_CLEAR_OP_FAST_CLEAR);
@@ -525,6 +527,7 @@ brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
 
    for (unsigned buf = 0; buf < fb->_NumColorDrawBuffers; buf++) {
       struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[buf];
+      struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
       /* If this is an ES2 context or GL_ARB_ES2_compatibility is supported,
        * the framebuffer can be complete with some attachments missing.  In
@@ -533,8 +536,17 @@ brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
       if (rb == NULL)
          continue;
 
-      if (!do_single_blorp_clear(brw, fb, rb, buf, partial_clear))
-         return false;
+      if (fb->NumLayers > 0) {
+         assert(fb->NumLayers == irb->mt->level[irb->mt_level].depth);
+         for (unsigned layer = 0; layer < fb->NumLayers; layer++) {
+            if (!do_single_blorp_clear(brw, fb, rb, buf, partial_clear, layer))
+               return false;
+         }
+      } else {
+         unsigned layer = irb->mt_layer;
+         if (!do_single_blorp_clear(brw, fb, rb, buf, partial_clear, layer))
+            return false;
+      }
    }
 
    return true;
