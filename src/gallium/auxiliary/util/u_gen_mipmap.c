@@ -1409,7 +1409,8 @@ set_vertex_data(struct gen_mipmap_state *ctx,
       };
 
       util_map_texcoords2d_onto_cubemap(layer, &st[0][0], 2,
-                                        &ctx->vertices[0][1][0], 8);
+                                        &ctx->vertices[0][1][0], 8,
+                                        FALSE);
    }
    else if (tex_target == PIPE_TEXTURE_1D_ARRAY) {
       /* 1D texture array  */

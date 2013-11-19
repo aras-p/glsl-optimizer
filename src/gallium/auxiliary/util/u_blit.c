@@ -272,7 +272,8 @@ setup_vertex_data_tex(struct blit_state *ctx,
       const unsigned stride = sizeof ctx->vertices[0] / sizeof ctx->vertices[0][0][0];
       util_map_texcoords2d_onto_cubemap(src_face,
                                         &ctx->vertices[0][1][0], stride,
-                                        &ctx->vertices[0][1][0], stride);
+                                        &ctx->vertices[0][1][0], stride,
+                                        TRUE);
    }
 
    offset = get_next_slot( ctx );

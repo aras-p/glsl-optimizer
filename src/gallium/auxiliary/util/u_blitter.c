@@ -659,7 +659,8 @@ static void blitter_set_texcoords(struct blitter_context_priv *ctx,
       util_map_texcoords2d_onto_cubemap(layer % 6,
                                         /* pointer, stride in floats */
                                         &face_coord[0][0], 2,
-                                        &ctx->vertices[0][1][0], 8);
+                                        &ctx->vertices[0][1][0], 8,
+                                        TRUE);
    } else {
       set_texcoords_in_vertices(coord, &ctx->vertices[0][1][0], 8);
    }
