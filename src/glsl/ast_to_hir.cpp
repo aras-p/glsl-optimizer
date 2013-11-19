@@ -696,9 +696,15 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
     * Note: Whole-array assignments are not permitted in GLSL 1.10, but this
     * is handled by ir_dereference::is_lvalue.
     */
-   if (is_initializer && lhs_type->is_unsized_array() && rhs->type->is_array()
+   if (lhs_type->is_unsized_array() && rhs->type->is_array()
        && (lhs_type->element_type() == rhs->type->element_type())) {
-      return rhs;
+      if (is_initializer) {
+         return rhs;
+      } else {
+         _mesa_glsl_error(&loc, state,
+                          "implicitly sized arrays cannot be assigned");
+         return NULL;
+      }
    }
 
    /* Check for implicit conversion in GLSL 1.20 */
