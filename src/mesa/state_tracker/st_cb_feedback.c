@@ -85,9 +85,11 @@ feedback_vertex(struct gl_context *ctx, const struct draw_context *draw,
    const GLfloat *color, *texcoord;
    GLuint slot;
 
-   /* Recall that Y=0=Top of window for Gallium wincoords */
    win[0] = v->data[0][0];
-   win[1] = ctx->DrawBuffer->Height - v->data[0][1];
+   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP)
+      win[1] = ctx->DrawBuffer->Height - v->data[0][1];
+   else
+      win[1] = v->data[0][1];
    win[2] = v->data[0][2];
    win[3] = 1.0F / v->data[0][3];
 
