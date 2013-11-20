@@ -675,10 +675,6 @@ static unsigned r600_choose_tiling(struct r600_common_screen *rscreen,
 	if (templ->width0 <= 16 || templ->height0 <= 16)
 		return RADEON_SURF_MODE_1D;
 
-	/* XXX 2D tiling is currently unimplemented on CIK */
-	if (rscreen->chip_class >= CIK)
-		return RADEON_SURF_MODE_1D;
-
 	/* The allocator will switch to 1D if needed. */
 	return RADEON_SURF_MODE_2D;
 }
