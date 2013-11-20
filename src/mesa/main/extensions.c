@@ -176,6 +176,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_vertex_shader",                       o(ARB_vertex_shader),                       GL,             2002 },
    { "GL_ARB_vertex_type_10f_11f_11f_rev",         o(ARB_vertex_type_10f_11f_11f_rev),         GL,             2013 },
    { "GL_ARB_vertex_type_2_10_10_10_rev",          o(ARB_vertex_type_2_10_10_10_rev),          GL,             2009 },
+   { "GL_ARB_viewport_array",                      o(ARB_viewport_array),                      GLC,            2010 },
    { "GL_ARB_window_pos",                          o(dummy_true),                              GLL,            2001 },
    /* EXT extensions */
    { "GL_EXT_abgr",                                o(dummy_true),                              GL,             1995 },
