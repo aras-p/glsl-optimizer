@@ -2964,6 +2964,18 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
                        " invalid FBO attachment structure");
       }
       return;
+   case GL_FRAMEBUFFER_ATTACHMENT_LAYERED:
+      if (!_mesa_has_geometry_shaders(ctx)) {
+         goto invalid_pname_enum;
+      } else if (att->Type == GL_TEXTURE) {
+         *params = att->Layered;
+      } else if (att->Type == GL_NONE) {
+         _mesa_error(ctx, err,
+                     "glGetFramebufferAttachmentParameteriv(pname)");
+      } else {
+         goto invalid_pname_enum;
+      }
+      return;
    default:
       goto invalid_pname_enum;
    }
