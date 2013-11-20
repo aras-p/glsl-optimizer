@@ -474,6 +474,10 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	r600_flush_emit(ctx);
 	ctx->b.flags = 0;
 
+	if (ctx->b.chip_class >= CAYMAN) {
+		ctx->skip_surface_sync_on_next_cs_flush = true;
+	}
+
 #if 0
 	COMPUTE_DBG(ctx->screen, "cdw: %i\n", cs->cdw);
 	for (i = 0; i < cs->cdw; i++) {
