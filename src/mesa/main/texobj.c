@@ -552,7 +552,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 
    t->_MaxLevel = MIN3(t->MaxLevel,
                        /* 'p' in the GL spec */
-                       baseLevel + baseImage->MaxNumLevels - 1,
+                       (int) (baseLevel + baseImage->MaxNumLevels - 1),
                        /* 'q' in the GL spec */
                        maxLevels - 1);
 
