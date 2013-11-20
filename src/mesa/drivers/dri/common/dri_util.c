@@ -407,8 +407,10 @@ driCreateContextAttribs(__DRIscreen *screen, int api,
        mesa_api = API_OPENGL_CORE;
     }
 
-    if ((flags & ~(__DRI_CTX_FLAG_DEBUG | __DRI_CTX_FLAG_FORWARD_COMPATIBLE))
-        != 0) {
+    const uint32_t allowed_flags = (__DRI_CTX_FLAG_DEBUG
+                                    | __DRI_CTX_FLAG_FORWARD_COMPATIBLE
+                                    | __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS);
+    if (flags & ~allowed_flags) {
 	*error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
 	return NULL;
     }
