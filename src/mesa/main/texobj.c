@@ -1173,7 +1173,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
  * \return TEXTURE_x_INDEX or -1 if target is invalid
  */
 static GLint
-target_enum_to_index(struct gl_context *ctx, GLenum target)
+target_enum_to_index(const struct gl_context *ctx, GLenum target)
 {
    switch (target) {
    case GL_TEXTURE_1D:
@@ -1182,24 +1182,24 @@ target_enum_to_index(struct gl_context *ctx, GLenum target)
       return TEXTURE_2D_INDEX;
    case GL_TEXTURE_3D:
       return ctx->API != API_OPENGLES ? TEXTURE_3D_INDEX : -1;
-   case GL_TEXTURE_CUBE_MAP_ARB:
+   case GL_TEXTURE_CUBE_MAP:
       return ctx->Extensions.ARB_texture_cube_map
          ? TEXTURE_CUBE_INDEX : -1;
-   case GL_TEXTURE_RECTANGLE_NV:
+   case GL_TEXTURE_RECTANGLE:
       return _mesa_is_desktop_gl(ctx) && ctx->Extensions.NV_texture_rectangle
          ? TEXTURE_RECT_INDEX : -1;
-   case GL_TEXTURE_1D_ARRAY_EXT:
+   case GL_TEXTURE_1D_ARRAY:
       return _mesa_is_desktop_gl(ctx)
          && (ctx->Extensions.EXT_texture_array
              || ctx->Extensions.MESA_texture_array)
          ? TEXTURE_1D_ARRAY_INDEX : -1;
-   case GL_TEXTURE_2D_ARRAY_EXT:
+   case GL_TEXTURE_2D_ARRAY:
       return (_mesa_is_desktop_gl(ctx)
               && (ctx->Extensions.EXT_texture_array
                   || ctx->Extensions.MESA_texture_array))
          || _mesa_is_gles3(ctx)
          ? TEXTURE_2D_ARRAY_INDEX : -1;
-   case GL_TEXTURE_BUFFER_ARB:
+   case GL_TEXTURE_BUFFER:
       return ctx->API == API_OPENGL_CORE &&
              ctx->Extensions.ARB_texture_buffer_object ?
              TEXTURE_BUFFER_INDEX : -1;
