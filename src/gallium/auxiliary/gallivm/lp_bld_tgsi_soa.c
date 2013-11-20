@@ -2410,6 +2410,7 @@ emit_dump_file(struct lp_build_tgsi_soa_context *bld,
             res = LLVMBuildLoad(builder, reg_ptr, "");
          } else {
             assert(0);
+            continue;
          }
 
          emit_dump_reg(gallivm, file, index, chan, res);
