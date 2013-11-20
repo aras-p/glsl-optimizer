@@ -641,12 +641,6 @@ pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
             _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP,
                              !!(enabled & TEXTURE_CUBE_BIT));
          }
-         if (ctx->Extensions.EXT_texture_array) {
-            _mesa_set_enable(ctx, GL_TEXTURE_1D_ARRAY_EXT,
-                             !!(enabled & TEXTURE_1D_ARRAY_BIT));
-            _mesa_set_enable(ctx, GL_TEXTURE_2D_ARRAY_EXT,
-                             !!(enabled & TEXTURE_2D_ARRAY_BIT));
-         }
       }
 
       if (ctx->Texture.Unit[i].TexGenEnabled != genEnabled) {
@@ -687,12 +681,6 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
       if (ctx->Extensions.NV_texture_rectangle) {
          _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE_NV,
                           !!(unit->Enabled & TEXTURE_RECT_BIT));
-      }
-      if (ctx->Extensions.EXT_texture_array) {
-         _mesa_set_enable(ctx, GL_TEXTURE_1D_ARRAY_EXT,
-                          !!(unit->Enabled & TEXTURE_1D_ARRAY_BIT));
-         _mesa_set_enable(ctx, GL_TEXTURE_2D_ARRAY_EXT,
-                          !!(unit->Enabled & TEXTURE_2D_ARRAY_BIT));
       }
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, unit->EnvMode);
       _mesa_TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, unit->EnvColor);

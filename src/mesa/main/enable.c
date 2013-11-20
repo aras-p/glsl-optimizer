@@ -934,25 +934,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 	ctx->ATIFragmentShader.Enabled = state;
         break;
 
-      /* GL_MESA_texture_array */
-      case GL_TEXTURE_1D_ARRAY_EXT:
-         if (ctx->API != API_OPENGL_COMPAT)
-            goto invalid_enum_error;
-         CHECK_EXTENSION(EXT_texture_array, cap);
-         if (!enable_texture(ctx, state, TEXTURE_1D_ARRAY_BIT)) {
-            return;
-         }
-         break;
-
-      case GL_TEXTURE_2D_ARRAY_EXT:
-         if (ctx->API != API_OPENGL_COMPAT)
-            goto invalid_enum_error;
-         CHECK_EXTENSION(EXT_texture_array, cap);
-         if (!enable_texture(ctx, state, TEXTURE_2D_ARRAY_BIT)) {
-            return;
-         }
-         break;
-
       case GL_TEXTURE_CUBE_MAP_SEAMLESS:
          if (!_mesa_is_desktop_gl(ctx))
             goto invalid_enum_error;
