@@ -2420,13 +2420,10 @@ TGSI_SEMANTIC_FOG
 
 Vertex shader inputs and outputs and fragment shader inputs may be
 labeled with TGSI_SEMANTIC_FOG to indicate that the register contains
-a fog coordinate in the form (F, 0, 0, 1).  Typically, the fragment
-shader will use the fog coordinate to compute a fog blend factor which
-is used to blend the normal fragment color with a constant fog color.
-
-Only the first component matters when writing from the vertex shader;
-the driver will ensure that the coordinate is in this format when used
-as a fragment shader input.
+a fog coordinate.  Typically, the fragment shader will use the fog coordinate
+to compute a fog blend factor which is used to blend the normal fragment color
+with a constant fog color.  But fog coord really is just an ordinary vec4
+register like regular semantics.
 
 
 TGSI_SEMANTIC_PSIZE

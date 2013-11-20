@@ -659,12 +659,6 @@ generate_vs(struct draw_llvm_variant *variant,
                      LLVMBuildStore(builder, out, outputs[attrib][chan]);
                   }
                   break;
-               case TGSI_SEMANTIC_FOG:
-                  if (chan == 1 || chan == 2)
-                     LLVMBuildStore(builder, bld.zero, outputs[attrib][chan]);
-                  else if (chan == 3)
-                     LLVMBuildStore(builder, bld.one, outputs[attrib][chan]);
-                  break;
                }
             }
          }

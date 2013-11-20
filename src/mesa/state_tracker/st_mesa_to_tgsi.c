@@ -1121,6 +1121,13 @@ st_translate_mesa_program(
          t->outputs[i] = ureg_DECL_output( ureg,
                                            outputSemanticName[i],
                                            outputSemanticIndex[i] );
+         if (outputSemanticName[i] == TGSI_SEMANTIC_FOG) {
+            /* force register to contain a fog coordinate in the form (F, 0, 0, 1). */
+            ureg_MOV(ureg,
+                     ureg_writemask(t->outputs[i], TGSI_WRITEMASK_XYZW & ~TGSI_WRITEMASK_X),
+                     ureg_imm4f(ureg, 0.0f, 0.0f, 0.0f, 1.0f));
+            t->outputs[i] = ureg_writemask(t->outputs[i], TGSI_WRITEMASK_X);
+	 }
       }
       if (passthrough_edgeflags)
          emit_edgeflags( t, program );
