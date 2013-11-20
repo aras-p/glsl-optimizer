@@ -1610,6 +1610,9 @@ exec_kill_if(struct tgsi_exec_machine *mach,
             kilmask |= 1 << i;
    }
 
+   /* restrict to fragments currently executing */
+   kilmask &= mach->ExecMask;
+
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
 }
 
