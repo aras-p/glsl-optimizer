@@ -49,6 +49,15 @@
 #include "lp_state_fs.h"
 #include "lp_state_setup.h"
 
+/*
+ * Set if the start point for interpolation should be calculated with a
+ * more accurate method (barycentric interpolation).
+ * Unfortunately, actual interpolation results of small tris with steep
+ * gradients far away from the origin are still very busted, this does
+ * nothing to change that (in fact it may make it worse), but some tests
+ * (don't ask) really want accurate values at origin (and ONLY origin).
+ */
+#define ACCURATE_A0 1
 
 
 /* currently organized to interpolate full float[4] attributes even
@@ -77,6 +86,9 @@ struct lp_setup_args
    LLVMValueRef dy01_ooa;
    LLVMValueRef dx20_ooa;
    LLVMValueRef dx01_ooa;
+   LLVMValueRef e01o;
+   LLVMValueRef e20o;
+   LLVMValueRef e12o;
    struct lp_build_context bld;
 };
 
@@ -376,6 +388,19 @@ load_attribute(struct gallivm_state *gallivm,
    }
 }
 
+/*
+ * FIXME: interpolation is always done wrt fb origin (0/0).
+ * However, if some (small) tri is far away from the origin and gradients
+ * are large, this can lead to HUGE errors, since the a0 value calculated
+ * here can get very large (with the actual values inside the triangle way
+ * smaller), leading to complete loss of accuracy. This could be prevented
+ * by using some point inside (or at corner) of the tri as interpolation
+ * origin, or just use barycentric interpolation (which GL suggests and is
+ * what real hw does - you can get the barycentric coordinates from the
+ * edge functions in rasterization in principle (though we skip these
+ * sometimes completely in case of tris covering a block fully,
+ * which obviously wouldn't work)).
+ */
 static void 
 emit_coef4( struct gallivm_state *gallivm,
             struct lp_setup_args *args,
@@ -385,6 +410,8 @@ emit_coef4( struct gallivm_state *gallivm,
             LLVMValueRef a2)
 {
    LLVMBuilderRef b = gallivm->builder;
+   bool accurate_a0 = ACCURATE_A0;
+   LLVMValueRef attr_0;
    LLVMValueRef dy20_ooa = args->dy20_ooa;
    LLVMValueRef dy01_ooa = args->dy01_ooa;
    LLVMValueRef dx20_ooa = args->dx20_ooa;
@@ -408,10 +435,19 @@ emit_coef4( struct gallivm_state *gallivm,
 
    /* Calculate a0 - the attribute value at the origin
     */
-   LLVMValueRef dadx_x0       = LLVMBuildFMul(b, dadx, x0_center, "dadx_x0");
-   LLVMValueRef dady_y0       = LLVMBuildFMul(b, dady, y0_center, "dady_y0"); 
-   LLVMValueRef attr_v0       = LLVMBuildFAdd(b, dadx_x0, dady_y0, "attr_v0");
-   LLVMValueRef attr_0        = LLVMBuildFSub(b, a0, attr_v0, "attr_0");
+   if (!accurate_a0) {
+      LLVMValueRef dadx_x0    = LLVMBuildFMul(b, dadx, x0_center, "dadx_x0");
+      LLVMValueRef dady_y0    = LLVMBuildFMul(b, dady, y0_center, "dady_y0");
+      LLVMValueRef attr_v0    = LLVMBuildFAdd(b, dadx_x0, dady_y0, "attr_v0");
+      attr_0                  = LLVMBuildFSub(b, a0, attr_v0, "attr_0");
+   }
+   else {
+      LLVMValueRef ao2 = LLVMBuildFMul(b, args->e01o, a2, "");
+      LLVMValueRef ao1 = LLVMBuildFMul(b, args->e20o, a1, "");
+      LLVMValueRef ao0 = LLVMBuildFMul(b, args->e12o, a0, "");
+      attr_0 = LLVMBuildFAdd(b, ao0, ao1, "");
+      attr_0 = LLVMBuildFAdd(b, attr_0, ao2, "");
+   }
 
    store_coef(gallivm, args, slot, attr_0, dadx, dady);
 }
@@ -623,10 +659,11 @@ init_args(struct gallivm_state *gallivm,
    LLVMValueRef zeroi = lp_build_const_int32(gallivm, 0);
    LLVMValueRef pixel_center, xy0_center, dxy01, dxy20, dyx20;
    LLVMValueRef e, f, ef, ooa;
-   LLVMValueRef shuffles[4];
+   LLVMValueRef shuffles[4], shuf10;
    LLVMValueRef attr_pos[3];
    struct lp_type typef4 = lp_type_float_vec(32, 128);
    struct lp_build_context bld;
+   bool accurate_a0 = ACCURATE_A0;
 
    lp_build_context_init(&bld, gallivm, typef4);
    args->bld = bld;
@@ -651,8 +688,9 @@ init_args(struct gallivm_state *gallivm,
    shuffles[1] = zeroi;
    shuffles[2] = LLVMGetUndef(shuf_type);
    shuffles[3] = LLVMGetUndef(shuf_type);
+   shuf10 = LLVMConstVector(shuffles, 4);
 
-   dyx20 = LLVMBuildShuffleVector(b, dxy20, dxy20, LLVMConstVector(shuffles, 4), "");
+   dyx20 = LLVMBuildShuffleVector(b, dxy20, dxy20, shuf10, "");
 
    ef = LLVMBuildFMul(b, dxy01, dyx20, "ef");
    e = LLVMBuildExtractElement(b, ef, zeroi, "");
@@ -669,6 +707,44 @@ init_args(struct gallivm_state *gallivm,
 
    dxy20 = LLVMBuildFMul(b, dxy20, ooa, "");
    dxy01 = LLVMBuildFMul(b, dxy01, ooa, "");
+
+   if (accurate_a0) {
+      LLVMValueRef xy1xy2, xy1xy2_center, dxy12, dyx01, dyx12yx20;
+      LLVMValueRef p0, p1p2, tmp0, tmp1, shuf0145, shuf1054, shuf1u3u;
+
+      shuffles[0] = zeroi;
+      shuffles[1] = onei;
+      shuffles[2] = lp_build_const_int32(gallivm, 4);
+      shuffles[3] = lp_build_const_int32(gallivm, 5);
+      shuf0145 = LLVMConstVector(shuffles, 4);
+      shuffles[0] = onei;
+      shuffles[1] = zeroi;
+      shuffles[2] = lp_build_const_int32(gallivm, 5);
+      shuffles[3] = lp_build_const_int32(gallivm, 4);
+      shuf1054 = LLVMConstVector(shuffles, 4);
+      shuffles[0] = onei;
+      shuffles[1] = LLVMGetUndef(shuf_type);
+      shuffles[2] = lp_build_const_int32(gallivm, 3);
+      shuffles[3] = LLVMGetUndef(shuf_type);
+      shuf1u3u = LLVMConstVector(shuffles, 4);
+
+      xy1xy2 = LLVMBuildShuffleVector(b, attr_pos[1], attr_pos[2], shuf0145, "");
+      xy1xy2_center = LLVMBuildFSub(b, xy1xy2, pixel_center, "");
+      dxy12 = LLVMBuildFSub(b, attr_pos[1], attr_pos[2], "dxy12");
+      dxy12 = LLVMBuildFMul(b, dxy12, ooa, "");
+      dyx12yx20 = LLVMBuildShuffleVector(b, dxy12, dxy20, shuf1054, "dyx12yx20");
+      dyx01 = LLVMBuildShuffleVector(b, dxy01, dxy01, shuf10, "");
+      p0 = LLVMBuildFMul(b, dyx01, xy0_center, "");
+      p1p2 = LLVMBuildFMul(b, dyx12yx20, xy1xy2_center, "");
+      tmp0 = LLVMBuildExtractElement(b, p0, zeroi, "");
+      tmp1 = LLVMBuildExtractElement(b, p0, onei, "");
+      args->e01o = lp_build_broadcast_scalar(&bld, LLVMBuildFSub(b, tmp0, tmp1, "e01o"));
+      tmp1 = LLVMBuildShuffleVector(b, p1p2, p1p2, shuf1u3u, "");
+      tmp0 = LLVMBuildFSub(b, p1p2, tmp1, "e12o20o");
+      args->e12o = lp_build_extract_broadcast(gallivm, typef4, typef4, tmp0, zeroi);
+      args->e20o = lp_build_extract_broadcast(gallivm, typef4, typef4, tmp0,
+                                              lp_build_const_int32(gallivm, 2));
+   }
 
    args->dy20_ooa  = lp_build_extract_broadcast(gallivm, typef4, typef4, dxy20, onei);
    args->dy01_ooa  = lp_build_extract_broadcast(gallivm, typef4, typef4, dxy01, onei);
