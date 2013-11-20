@@ -682,21 +682,6 @@ brwCreateContext(gl_api api,
       }
    }
 
-   /* Notification of GPU resets requires hardware contexts and a kernel new
-    * enough to support DRM_IOCTL_I915_GET_RESET_STATS.
-    */
-   if (notify_reset &&
-       (brw->hw_ctx == NULL
-        || drm_intel_get_reset_stats(brw->hw_ctx, &brw->reset_count, NULL,
-                                     NULL))) {
-      /* This is the wrong error code, but the correct error code (one that
-       * will cause EGL to generate EGL_BAD_MATCH) doesn't seem to exist.
-       */
-      *dri_ctx_error = __DRI_CTX_ERROR_UNKNOWN_ATTRIBUTE;
-      intelDestroyContext(driContextPriv);
-      return false;
-   }
-
    brw_init_surface_formats(brw);
 
    if (brw->is_g4x || brw->gen >= 5) {

@@ -899,6 +899,15 @@ static const __DRIextension *intelScreenExtensions[] = {
     &intelImageExtension.base,
     &intelRendererQueryExtension.base,
     &dri2ConfigQueryExtension.base,
+    NULL
+};
+
+static const __DRIextension *intelRobustScreenExtensions[] = {
+    &intelTexBufferExtension.base,
+    &intelFlushExtension.base,
+    &intelImageExtension.base,
+    &intelRendererQueryExtension.base,
+    &dri2ConfigQueryExtension.base,
     &dri2Robustness.base,
     NULL
 };
@@ -1323,7 +1332,20 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 
    set_max_gl_versions(intelScreen);
 
-   psp->extensions = intelScreenExtensions;
+   /* Notification of GPU resets requires hardware contexts and a kernel new
+    * enough to support DRM_IOCTL_I915_GET_RESET_STATS.  If the ioctl is
+    * supported, calling it with a context of 0 will either generate EPERM or
+    * no error.  If the ioctl is not supported, it always generate EINVAL.
+    * Use this to determine whether to advertise the __DRI2_ROBUSTNESS
+    * extension to the loader.
+    */
+   struct drm_i915_reset_stats stats;
+   memset(&stats, 0, sizeof(stats));
+
+   const int ret = drmIoctl(psp->fd, DRM_IOCTL_I915_GET_RESET_STATS, &stats);
+
+   psp->extensions = (ret == -1 && errno == EINVAL)
+      ? intelScreenExtensions : intelRobustScreenExtensions;
 
    return (const __DRIconfig**) intel_screen_make_configs(psp);
 }
