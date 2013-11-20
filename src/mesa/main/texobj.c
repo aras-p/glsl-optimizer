@@ -1205,7 +1205,8 @@ target_enum_to_index(struct gl_context *ctx, GLenum target)
       return _mesa_is_gles(ctx) && ctx->Extensions.OES_EGL_image_external
          ? TEXTURE_EXTERNAL_INDEX : -1;
    case GL_TEXTURE_CUBE_MAP_ARRAY:
-      return TEXTURE_CUBE_ARRAY_INDEX;
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_texture_cube_map_array
+         ? TEXTURE_CUBE_ARRAY_INDEX : -1;
    case GL_TEXTURE_2D_MULTISAMPLE:
       return _mesa_is_desktop_gl(ctx) && ctx->Extensions.ARB_texture_multisample
          ? TEXTURE_2D_MULTISAMPLE_INDEX: -1;
