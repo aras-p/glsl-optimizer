@@ -60,6 +60,7 @@ struct interface_block_definition
          if (var->type->is_array())
             array_size = var->type->length;
       }
+      explicitly_declared = (var->how_declared != ir_var_declared_implicitly);
    }
 
    /**
@@ -77,6 +78,12 @@ struct interface_block_definition
     * Otherwise -1.
     */
    int array_size;
+
+   /**
+    * True if this interface block was explicitly declared in the shader;
+    * false if it was an implicitly declared built-in interface block.
+    */
+   bool explicitly_declared;
 };
 
 
@@ -91,8 +98,14 @@ intrastage_match(interface_block_definition *a,
                  ir_variable_mode mode)
 {
    /* Types must match. */
-   if (a->type != b->type)
-      return false;
+   if (a->type != b->type) {
+      /* Exception: if both the interface blocks are implicitly declared,
+       * don't force their types to match.  They might mismatch due to the two
+       * shaders using different GLSL versions, and that's ok.
+       */
+      if (a->explicitly_declared || b->explicitly_declared)
+         return false;
+   }
 
    /* Presence/absence of interface names must match. */
    if ((a->instance_name == NULL) != (b->instance_name == NULL))
@@ -144,8 +157,14 @@ interstage_match(const interface_block_definition *producer,
    assert(producer->array_size != 0);
 
    /* Types must match. */
-   if (consumer->type != producer->type)
-      return false;
+   if (consumer->type != producer->type) {
+      /* Exception: if both the interface blocks are implicitly declared,
+       * don't force their types to match.  They might mismatch due to the two
+       * shaders using different GLSL versions, and that's ok.
+       */
+      if (consumer->explicitly_declared || producer->explicitly_declared)
+         return false;
+   }
    if (extra_array_level) {
       /* Consumer must be an array, and producer must not. */
       if (consumer->array_size == -1)
