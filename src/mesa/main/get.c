@@ -327,8 +327,8 @@ static const int extra_EXT_framebuffer_sRGB_and_new_buffers[] = {
    EXTRA_END
 };
 
-static const int extra_MESA_texture_array_es3[] = {
-   EXT(MESA_texture_array),
+static const int extra_EXT_texture_array_es3[] = {
+   EXT(EXT_texture_array),
    EXTRA_API_ES3,
    EXTRA_END
 };
@@ -339,7 +339,7 @@ static const int extra_ARB_shader_atomic_counters_and_geometry_shader[] = {
 };
 
 EXTRA_EXT(ARB_texture_cube_map);
-EXTRA_EXT(MESA_texture_array);
+EXTRA_EXT(EXT_texture_array);
 EXTRA_EXT(NV_fog_distance);
 EXTRA_EXT(EXT_texture_filter_anisotropic);
 EXTRA_EXT(NV_point_sprite);

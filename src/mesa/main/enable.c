@@ -938,7 +938,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
       case GL_TEXTURE_1D_ARRAY_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         CHECK_EXTENSION(MESA_texture_array, cap);
+         CHECK_EXTENSION(EXT_texture_array, cap);
          if (!enable_texture(ctx, state, TEXTURE_1D_ARRAY_BIT)) {
             return;
          }
@@ -947,7 +947,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
       case GL_TEXTURE_2D_ARRAY_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         CHECK_EXTENSION(MESA_texture_array, cap);
+         CHECK_EXTENSION(EXT_texture_array, cap);
          if (!enable_texture(ctx, state, TEXTURE_2D_ARRAY_BIT)) {
             return;
          }

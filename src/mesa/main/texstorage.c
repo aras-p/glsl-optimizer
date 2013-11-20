@@ -73,8 +73,7 @@ legal_texobj_target(struct gl_context *ctx, GLuint dims, GLenum target)
          return ctx->Extensions.NV_texture_rectangle;
       case GL_TEXTURE_1D_ARRAY:
       case GL_PROXY_TEXTURE_1D_ARRAY:
-         return (ctx->Extensions.MESA_texture_array ||
-                 ctx->Extensions.EXT_texture_array);
+         return ctx->Extensions.EXT_texture_array;
       default:
          return GL_FALSE;
       }
@@ -85,8 +84,7 @@ legal_texobj_target(struct gl_context *ctx, GLuint dims, GLenum target)
          return GL_TRUE;
       case GL_TEXTURE_2D_ARRAY:
       case GL_PROXY_TEXTURE_2D_ARRAY:
-         return (ctx->Extensions.MESA_texture_array ||
-                 ctx->Extensions.EXT_texture_array);
+         return ctx->Extensions.EXT_texture_array;
       case GL_TEXTURE_CUBE_MAP_ARRAY:
       case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
          return ctx->Extensions.ARB_texture_cube_map_array;

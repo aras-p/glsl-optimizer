@@ -260,7 +260,7 @@ _mesa_ARBfp_parse_option(struct asm_parser_state *state, const char *option)
       option += 5;
 
       if (strcmp(option, "texture_array") == 0) {
-	 if (state->ctx->Extensions.MESA_texture_array) {
+	 if (state->ctx->Extensions.EXT_texture_array) {
 	    state->option.TexArray = 1;
 	    return 1;
 	 }

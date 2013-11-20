@@ -1189,14 +1189,10 @@ target_enum_to_index(const struct gl_context *ctx, GLenum target)
       return _mesa_is_desktop_gl(ctx) && ctx->Extensions.NV_texture_rectangle
          ? TEXTURE_RECT_INDEX : -1;
    case GL_TEXTURE_1D_ARRAY:
-      return _mesa_is_desktop_gl(ctx)
-         && (ctx->Extensions.EXT_texture_array
-             || ctx->Extensions.MESA_texture_array)
+      return _mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_array
          ? TEXTURE_1D_ARRAY_INDEX : -1;
    case GL_TEXTURE_2D_ARRAY:
-      return (_mesa_is_desktop_gl(ctx)
-              && (ctx->Extensions.EXT_texture_array
-                  || ctx->Extensions.MESA_texture_array))
+      return (_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_array)
          || _mesa_is_gles3(ctx)
          ? TEXTURE_2D_ARRAY_INDEX : -1;
    case GL_TEXTURE_BUFFER:

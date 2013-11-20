@@ -158,16 +158,13 @@ get_texobj(struct gl_context *ctx, GLenum target, GLboolean get)
       }
       break;
    case GL_TEXTURE_1D_ARRAY_EXT:
-      if (_mesa_is_desktop_gl(ctx)
-          && (ctx->Extensions.MESA_texture_array ||
-              ctx->Extensions.EXT_texture_array)) {
+      if (_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_array) {
          return texUnit->CurrentTex[TEXTURE_1D_ARRAY_INDEX];
       }
       break;
    case GL_TEXTURE_2D_ARRAY_EXT:
       if ((_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx))
-          && (ctx->Extensions.MESA_texture_array ||
-              ctx->Extensions.EXT_texture_array)) {
+          && ctx->Extensions.EXT_texture_array) {
          return texUnit->CurrentTex[TEXTURE_2D_ARRAY_INDEX];
       }
       break;
@@ -1046,8 +1043,7 @@ legal_get_tex_level_parameter_target(struct gl_context *ctx, GLenum target)
    case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
    case GL_TEXTURE_2D_ARRAY_EXT:
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
-      return (ctx->Extensions.MESA_texture_array ||
-              ctx->Extensions.EXT_texture_array);
+      return ctx->Extensions.EXT_texture_array;
    case GL_TEXTURE_BUFFER:
       /* GetTexLevelParameter accepts GL_TEXTURE_BUFFER in GL 3.1+ contexts,
        * but not in earlier versions that expose ARB_texture_buffer_object.

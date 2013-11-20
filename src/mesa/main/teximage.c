@@ -752,8 +752,7 @@ _mesa_select_tex_object(struct gl_context *ctx,
                         const struct gl_texture_unit *texUnit,
                         GLenum target)
 {
-   const GLboolean arrayTex = (ctx->Extensions.MESA_texture_array ||
-                               ctx->Extensions.EXT_texture_array);
+   const GLboolean arrayTex = ctx->Extensions.EXT_texture_array;
 
    switch (target) {
       case GL_TEXTURE_1D:
@@ -1018,8 +1017,7 @@ _mesa_max_texture_levels(struct gl_context *ctx, GLenum target)
    case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
    case GL_TEXTURE_2D_ARRAY_EXT:
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
-      return (ctx->Extensions.MESA_texture_array ||
-              ctx->Extensions.EXT_texture_array)
+      return ctx->Extensions.EXT_texture_array
          ? ctx->Const.MaxTextureLevels : 0;
    case GL_TEXTURE_CUBE_MAP_ARRAY:
    case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
@@ -1726,8 +1724,7 @@ target_can_be_compressed(const struct gl_context *ctx, GLenum target,
       return ctx->Extensions.ARB_texture_cube_map;
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
    case GL_TEXTURE_2D_ARRAY_EXT:
-      return (ctx->Extensions.MESA_texture_array ||
-              ctx->Extensions.EXT_texture_array);
+      return ctx->Extensions.EXT_texture_array;
    case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
    case GL_TEXTURE_CUBE_MAP_ARRAY:
       return ctx->Extensions.ARB_texture_cube_map_array;
@@ -1775,9 +1772,7 @@ legal_teximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
             && ctx->Extensions.NV_texture_rectangle;
       case GL_TEXTURE_1D_ARRAY_EXT:
       case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
-         return _mesa_is_desktop_gl(ctx)
-            && (ctx->Extensions.MESA_texture_array ||
-                ctx->Extensions.EXT_texture_array);
+         return _mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_array;
       default:
          return GL_FALSE;
       }
@@ -1788,14 +1783,10 @@ legal_teximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
       case GL_PROXY_TEXTURE_3D:
          return _mesa_is_desktop_gl(ctx);
       case GL_TEXTURE_2D_ARRAY_EXT:
-         return (_mesa_is_desktop_gl(ctx)
-                 && (ctx->Extensions.MESA_texture_array ||
-                     ctx->Extensions.EXT_texture_array))
+         return (_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_array)
             || _mesa_is_gles3(ctx);
       case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
-         return _mesa_is_desktop_gl(ctx)
-            && (ctx->Extensions.MESA_texture_array ||
-                ctx->Extensions.EXT_texture_array);
+         return _mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_array;
       case GL_TEXTURE_CUBE_MAP_ARRAY:
       case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
          return ctx->Extensions.ARB_texture_cube_map_array;
@@ -1836,9 +1827,7 @@ legal_texsubimage_target(struct gl_context *ctx, GLuint dims, GLenum target)
          return _mesa_is_desktop_gl(ctx)
             && ctx->Extensions.NV_texture_rectangle;
       case GL_TEXTURE_1D_ARRAY_EXT:
-         return _mesa_is_desktop_gl(ctx)
-            && (ctx->Extensions.MESA_texture_array ||
-                ctx->Extensions.EXT_texture_array);
+         return _mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_array;
       default:
          return GL_FALSE;
       }
@@ -1847,9 +1836,7 @@ legal_texsubimage_target(struct gl_context *ctx, GLuint dims, GLenum target)
       case GL_TEXTURE_3D:
          return GL_TRUE;
       case GL_TEXTURE_2D_ARRAY_EXT:
-         return (_mesa_is_desktop_gl(ctx)
-                 && (ctx->Extensions.MESA_texture_array ||
-                     ctx->Extensions.EXT_texture_array))
+         return (_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_array)
             || _mesa_is_gles3(ctx);
       case GL_TEXTURE_CUBE_MAP_ARRAY:
       case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:

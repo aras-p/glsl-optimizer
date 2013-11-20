@@ -641,7 +641,7 @@ pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
             _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP,
                              !!(enabled & TEXTURE_CUBE_BIT));
          }
-         if (ctx->Extensions.MESA_texture_array) {
+         if (ctx->Extensions.EXT_texture_array) {
             _mesa_set_enable(ctx, GL_TEXTURE_1D_ARRAY_EXT,
                              !!(enabled & TEXTURE_1D_ARRAY_BIT));
             _mesa_set_enable(ctx, GL_TEXTURE_2D_ARRAY_EXT,
@@ -688,7 +688,7 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
          _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE_NV,
                           !!(unit->Enabled & TEXTURE_RECT_BIT));
       }
-      if (ctx->Extensions.MESA_texture_array) {
+      if (ctx->Extensions.EXT_texture_array) {
          _mesa_set_enable(ctx, GL_TEXTURE_1D_ARRAY_EXT,
                           !!(unit->Enabled & TEXTURE_1D_ARRAY_BIT));
          _mesa_set_enable(ctx, GL_TEXTURE_2D_ARRAY_EXT,
@@ -768,7 +768,7 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
          }
          else if ((obj->Target == GL_TEXTURE_1D_ARRAY_EXT ||
                    obj->Target == GL_TEXTURE_2D_ARRAY_EXT) &&
-                  !ctx->Extensions.MESA_texture_array) {
+                  !ctx->Extensions.EXT_texture_array) {
             continue;
          }
          else if (obj->Target == GL_TEXTURE_CUBE_MAP_ARRAY &&
