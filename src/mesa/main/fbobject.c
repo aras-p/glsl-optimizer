@@ -2307,8 +2307,13 @@ reuse_framebuffer_texture_attachment(struct gl_framebuffer *fb,
 /**
  * Common code called by glFramebufferTexture1D/2D/3DEXT() and
  * glFramebufferTextureLayerEXT().
- * Note: glFramebufferTextureLayerEXT() has no textarget parameter so we'll
- * get textarget=0 in that case.
+ *
+ * \param textarget is the textarget that was passed to the
+ * glFramebufferTexture...() function, or 0 if the corresponding function
+ * doesn't have a textarget parameter.
+ *
+ * \param layered is true if this function was called from
+ * glFramebufferTexture(), false otherwise.
  */
 static void
 framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target, 
@@ -2343,16 +2348,46 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
       texObj = _mesa_lookup_texture(ctx, texture);
       if (texObj != NULL) {
          if (textarget == 0) {
-            /* If textarget == 0 it means we're being called by
-             * glFramebufferTextureLayer() and textarget is not used.
-             * The only legal texture types for that function are 3D and
-             * 1D/2D arrays textures.
-             */
-            err = (texObj->Target != GL_TEXTURE_3D) &&
-                (texObj->Target != GL_TEXTURE_1D_ARRAY_EXT) &&
-                (texObj->Target != GL_TEXTURE_2D_ARRAY_EXT) &&
-                (texObj->Target != GL_TEXTURE_CUBE_MAP_ARRAY) &&
-                (texObj->Target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY);
+            if (layered) {
+               /* We're being called by glFramebufferTexture() and textarget
+                * is not used.
+                */
+               switch (texObj->Target) {
+               case GL_TEXTURE_3D:
+               case GL_TEXTURE_1D_ARRAY_EXT:
+               case GL_TEXTURE_2D_ARRAY_EXT:
+               case GL_TEXTURE_CUBE_MAP:
+               case GL_TEXTURE_CUBE_MAP_ARRAY:
+               case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+                  err = false;
+                  break;
+               case GL_TEXTURE_1D:
+               case GL_TEXTURE_2D:
+               case GL_TEXTURE_RECTANGLE:
+               case GL_TEXTURE_2D_MULTISAMPLE:
+                  /* These texture types are valid to pass to
+                   * glFramebufferTexture(), but since they aren't layered, it
+                   * is equivalent to calling glFramebufferTexture{1D,2D}().
+                   */
+                  err = false;
+                  layered = false;
+                  textarget = texObj->Target;
+                  break;
+               default:
+                  err = true;
+                  break;
+               }
+            } else {
+               /* We're being called by glFramebufferTextureLayer() and
+                * textarget is not used.  The only legal texture types for
+                * that function are 3D and 1D/2D arrays textures.
+                */
+               err = (texObj->Target != GL_TEXTURE_3D) &&
+                  (texObj->Target != GL_TEXTURE_1D_ARRAY_EXT) &&
+                  (texObj->Target != GL_TEXTURE_2D_ARRAY_EXT) &&
+                  (texObj->Target != GL_TEXTURE_CUBE_MAP_ARRAY) &&
+                  (texObj->Target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY);
+            }
          }
          else {
             /* Make sure textarget is consistent with the texture's type */
