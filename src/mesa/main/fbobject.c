@@ -877,8 +877,9 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    GLint fixedSampleLocations = -1;
    GLint i;
    GLuint j;
-   bool layer_count_valid = false;
+   bool layer_info_valid = false; /* Covers layer_count and layer_tex_target */
    GLuint layer_count = 0, att_layer_count;
+   GLenum layer_tex_target = 0;
 
    assert(_mesa_is_user_fbo(fb));
 
@@ -1062,9 +1063,14 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       } else {
          att_layer_count = 0;
       }
-      if (!layer_count_valid) {
+      if (!layer_info_valid) {
          layer_count = att_layer_count;
-         layer_count_valid = true;
+         layer_tex_target = att_tex_target;
+         layer_info_valid = true;
+      } else if (layer_count > 0 && layer_tex_target != att_tex_target) {
+         fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS;
+         fbo_incomplete(ctx, "layered framebuffer has mismatched targets", i);
+         return;
       } else if (layer_count != att_layer_count) {
          if (layer_count == 0 || att_layer_count == 0) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS;
