@@ -266,7 +266,6 @@ retry:
     */
    brw->state.dirty.brw = ~0;
    brw->state.dirty.cache = ~0;
-   brw->state_batch_count = 0;
    brw->batch.need_workaround_flush = true;
    brw->ib.type = -1;
    intel_batchbuffer_clear_cache(brw);
