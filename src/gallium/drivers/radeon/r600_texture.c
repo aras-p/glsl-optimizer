@@ -403,6 +403,10 @@ static void si_texture_get_cmask_info(struct r600_common_screen *rscreen,
 		cl_width = 64;
 		cl_height = 32;
 		break;
+	case 16: /* Hawaii */
+		cl_width = 64;
+		cl_height = 64;
+		break;
 	default:
 		assert(0);
 		return;
@@ -585,15 +589,15 @@ r600_texture_create_object(struct pipe_screen *screen,
 	    (rtex->resource.b.b.last_level > 0 && rscreen->debug_flags & DBG_TEXMIP)) {
 		printf("Texture: npix_x=%u, npix_y=%u, npix_z=%u, blk_w=%u, "
 		       "blk_h=%u, blk_d=%u, array_size=%u, last_level=%u, "
-		       "bpe=%u, nsamples=%u, flags=%u\n",
+		       "bpe=%u, nsamples=%u, flags=0x%x, %s\n",
 		       rtex->surface.npix_x, rtex->surface.npix_y,
 		       rtex->surface.npix_z, rtex->surface.blk_w,
 		       rtex->surface.blk_h, rtex->surface.blk_d,
 		       rtex->surface.array_size, rtex->surface.last_level,
 		       rtex->surface.bpe, rtex->surface.nsamples,
-		       rtex->surface.flags);
+		       rtex->surface.flags, util_format_short_name(base->format));
 		for (int i = 0; i <= rtex->surface.last_level; i++) {
-			printf("  Z %i: offset=%llu, slice_size=%llu, npix_x=%u, "
+			printf("  L %i: offset=%llu, slice_size=%llu, npix_x=%u, "
 			       "npix_y=%u, npix_z=%u, nblk_x=%u, nblk_y=%u, "
 			       "nblk_z=%u, pitch_bytes=%u, mode=%u\n",
 			       i, rtex->surface.level[i].offset,

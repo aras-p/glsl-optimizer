@@ -1491,7 +1491,11 @@ boolean si_is_format_supported(struct pipe_screen *screen,
 		return FALSE;
 
 	if (sample_count > 1) {
-		if (HAVE_LLVM < 0x0304 || rscreen->b.chip_class != SI)
+		if (HAVE_LLVM < 0x0304)
+			return FALSE;
+
+		/* 2D tiling on CIK is supported since DRM 2.35.0 */
+		if (rscreen->b.chip_class >= CIK && rscreen->b.info.drm_minor < 35)
 			return FALSE;
 
 		switch (sample_count) {
@@ -1567,7 +1571,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
-	unsigned color_info, color_attrib;
+	unsigned color_info, color_attrib, color_pitch;
 	unsigned tile_mode_index;
 	unsigned format, swap, ntype, endian;
 	uint64_t offset;
@@ -1655,6 +1659,8 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 		S_028C70_NUMBER_TYPE(ntype) |
 		S_028C70_ENDIAN(endian);
 
+	color_pitch = S_028C64_TILE_MAX(pitch);
+
 	color_attrib = S_028C74_TILE_MODE_INDEX(tile_mode_index) |
 		S_028C74_FORCE_DST_ALPHA_1(desc->swizzle[3] == UTIL_FORMAT_SWIZZLE_1);
 
@@ -1668,9 +1674,15 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 			color_info |= S_028C70_COMPRESSION(1);
 			unsigned fmask_bankh = util_logbase2(rtex->fmask.bank_height);
 
-			/* due to a bug in the hw, FMASK_BANK_HEIGHT must be set on SI too */
-			color_attrib |= S_028C74_FMASK_TILE_MODE_INDEX(rtex->fmask.tile_mode_index) |
-					S_028C74_FMASK_BANK_HEIGHT(fmask_bankh);
+			color_attrib |= S_028C74_FMASK_TILE_MODE_INDEX(rtex->fmask.tile_mode_index);
+
+			if (rctx->b.chip_class == SI) {
+				/* due to a hw bug, FMASK_BANK_HEIGHT must be set on SI too */
+				color_attrib |= S_028C74_FMASK_BANK_HEIGHT(fmask_bankh);
+			}
+			if (rctx->b.chip_class >= CIK) {
+				color_pitch |= S_028C64_FMASK_TILE_MAX(rtex->fmask.pitch / 8 - 1);
+			}
 		}
 	}
 
@@ -1681,10 +1693,9 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	offset += r600_resource_va(rctx->b.b.screen, state->cbufs[cb]->texture);
 	offset >>= 8;
 
-	/* FIXME handle enabling of CB beyond BASE8 which has different offset */
 	si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE);
 	si_pm4_set_reg(pm4, R_028C60_CB_COLOR0_BASE + cb * 0x3C, offset);
-	si_pm4_set_reg(pm4, R_028C64_CB_COLOR0_PITCH + cb * 0x3C, S_028C64_TILE_MAX(pitch));
+	si_pm4_set_reg(pm4, R_028C64_CB_COLOR0_PITCH + cb * 0x3C, color_pitch);
 	si_pm4_set_reg(pm4, R_028C68_CB_COLOR0_SLICE + cb * 0x3C, S_028C68_TILE_MAX(slice));
 
 	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {

@@ -333,7 +333,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 1;
 
 	case PIPE_CAP_TEXTURE_MULTISAMPLE:
-		return HAVE_LLVM >= 0x0304 && rscreen->b.chip_class == SI;
+		/* 2D tiling on CIK is supported since DRM 2.35.0 */
+		return HAVE_LLVM >= 0x0304 && (rscreen->b.chip_class < CIK ||
+					       rscreen->b.info.drm_minor >= 35);
 
 	case PIPE_CAP_TGSI_TEXCOORD:
 		return 0;
