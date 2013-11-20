@@ -889,6 +889,8 @@ count_tex_size(GLuint key, void *data, void *userData)
       (const struct gl_texture_object *) data;
    GLuint *total = (GLuint *) userData;
 
+   (void) key;
+
    *total = *total + texture_size(texObj);
 }
 
