@@ -684,11 +684,8 @@ set_tex_parameterf(struct gl_context *ctx,
       return GL_FALSE;
 
    case GL_TEXTURE_LOD_BIAS:
-      /* NOTE: this is really part of OpenGL 1.4, not EXT_texture_lod_bias.
-       * It was removed in core-profile, and it has never existed in OpenGL
-       * ES.
-       */
-      if (ctx->API != API_OPENGL_COMPAT)
+      /* NOTE: this is really part of OpenGL 1.4, not EXT_texture_lod_bias. */
+      if (_mesa_is_gles(ctx))
          goto invalid_pname;
 
       if (!target_allows_setting_sampler_parameters(texObj->Target))
@@ -1513,7 +1510,7 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          *params = (GLfloat) obj->DepthMode;
          break;
       case GL_TEXTURE_LOD_BIAS:
-         if (ctx->API != API_OPENGL_COMPAT)
+         if (_mesa_is_gles(ctx))
             goto invalid_pname;
 
          *params = obj->Sampler.LodBias;
@@ -1701,10 +1698,13 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          *params = (GLint) obj->DepthMode;
          break;
       case GL_TEXTURE_LOD_BIAS:
-         if (ctx->API != API_OPENGL_COMPAT)
+         if (_mesa_is_gles(ctx))
             goto invalid_pname;
 
-         *params = (GLint) obj->Sampler.LodBias;
+         /* GL spec 'Data Conversions' section specifies that floating-point
+          * value in integer Get function is rounded to nearest integer
+          */
+         *params = (GLint) roundf(obj->Sampler.LodBias);
          break;
       case GL_TEXTURE_CROP_RECT_OES:
          if (ctx->API != API_OPENGLES || !ctx->Extensions.OES_draw_texture)
