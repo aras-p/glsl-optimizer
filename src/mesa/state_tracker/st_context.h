@@ -178,6 +178,7 @@ struct st_context
       struct pipe_viewport_state viewport;
       void *vs;
       void *fs;
+      void *vs_layered;
    } clear;
 
    /** used for anything using util_draw_vertex_buffer */

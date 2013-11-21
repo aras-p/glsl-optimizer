@@ -1416,3 +1416,23 @@ cso_draw_arrays(struct cso_context *cso, uint mode, uint start, uint count)
 
    cso_draw_vbo(cso, &info);
 }
+
+void
+cso_draw_arrays_instanced(struct cso_context *cso, uint mode,
+                          uint start, uint count,
+                          uint start_instance, uint instance_count)
+{
+   struct pipe_draw_info info;
+
+   util_draw_init_info(&info);
+
+   info.mode = mode;
+   info.start = start;
+   info.count = count;
+   info.min_index = start;
+   info.max_index = start + count - 1;
+   info.start_instance = start_instance;
+   info.instance_count = instance_count;
+
+   cso_draw_vbo(cso, &info);
+}

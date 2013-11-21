@@ -51,6 +51,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_format.h"
+#include "util/u_framebuffer.h"
 #include "util/u_inlines.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_draw_quad.h"
@@ -129,6 +130,26 @@ set_vertex_shader(struct st_context *st)
 }
 
 
+static void
+set_vertex_shader_layered(struct st_context *st)
+{
+   struct pipe_context *pipe = st->pipe;
+
+   if (!pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_INSTANCEID) ||
+       !pipe->screen->get_param(pipe->screen, PIPE_CAP_TGSI_VS_LAYER)) {
+      assert(!"Got layered clear, but the VS layer output is unsupported");
+      set_vertex_shader(st);
+      return;
+   }
+
+   if (!st->clear.vs_layered) {
+      st->clear.vs_layered = util_make_layered_clear_vertex_shader(pipe);
+   }
+
+   cso_set_vertex_shader_handle(st->cso_context, st->clear.vs_layered);
+}
+
+
 /**
  * Draw a screen-aligned quadrilateral.
  * Coords are clip coords with y=0=bottom.
@@ -136,15 +157,19 @@ set_vertex_shader(struct st_context *st)
 static void
 draw_quad(struct st_context *st,
           float x0, float y0, float x1, float y1, GLfloat z,
+          unsigned num_instances,
           const union pipe_color_union *color)
 {
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_resource *vbuf = NULL;
-   GLuint i, offset;
+   struct cso_context *cso = st->cso_context;
+   struct pipe_vertex_buffer vb = {0};
+   GLuint i;
    float (*vertices)[2][4];  /**< vertex pos + color */
 
+   vb.stride = 8 * sizeof(float);
+
    if (u_upload_alloc(st->uploader, 0, 4 * sizeof(vertices[0]),
-                      &offset, &vbuf, (void **) &vertices) != PIPE_OK) {
+                      &vb.buffer_offset, &vb.buffer,
+                      (void **) &vertices) != PIPE_OK) {
       return;
    }
 
@@ -174,16 +199,10 @@ draw_quad(struct st_context *st,
    u_upload_unmap(st->uploader);
 
    /* draw */
-   util_draw_vertex_buffer(pipe,
-                           st->cso_context,
-                           vbuf,
-                           cso_get_aux_vertex_buffer_slot(st->cso_context),
-                           offset,
-                           PIPE_PRIM_TRIANGLE_FAN,
-                           4,  /* verts */
-                           2); /* attribs/vert */
-
-   pipe_resource_reference(&vbuf, NULL);
+   cso_set_vertex_buffers(cso, cso_get_aux_vertex_buffer_slot(cso), 1, &vb);
+   cso_draw_arrays_instanced(cso, PIPE_PRIM_TRIANGLE_FAN, 0, 4,
+                             0, num_instances);
+   pipe_resource_reference(&vb.buffer, NULL);
 }
 
 
@@ -206,6 +225,8 @@ clear_with_quad(struct gl_context *ctx,
    const GLfloat y0 = (GLfloat) ctx->DrawBuffer->_Ymin / fb_height * 2.0f - 1.0f;
    const GLfloat y1 = (GLfloat) ctx->DrawBuffer->_Ymax / fb_height * 2.0f - 1.0f;
    union pipe_color_union clearColor;
+   unsigned num_layers =
+      util_framebuffer_get_num_layers(&st->state.framebuffer);
 
    /*
    printf("%s %s%s%s %f,%f %f,%f\n", __FUNCTION__, 
@@ -305,8 +326,12 @@ clear_with_quad(struct gl_context *ctx,
    }
 
    set_fragment_shader(st);
-   set_vertex_shader(st);
    cso_set_geometry_shader_handle(st->cso_context, NULL);
+
+   if (num_layers > 1)
+      set_vertex_shader_layered(st);
+   else
+      set_vertex_shader(st);
 
    if (ctx->DrawBuffer->_ColorDrawBuffers[0]) {
       struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
@@ -319,7 +344,8 @@ clear_with_quad(struct gl_context *ctx,
    }
 
    /* draw quad matching scissor rect */
-   draw_quad(st, x0, y0, x1, y1, (GLfloat) ctx->Depth.Clear, &clearColor);
+   draw_quad(st, x0, y0, x1, y1, (GLfloat) ctx->Depth.Clear, num_layers,
+             &clearColor);
 
    /* Restore pipe state */
    cso_restore_blend(st->cso_context);

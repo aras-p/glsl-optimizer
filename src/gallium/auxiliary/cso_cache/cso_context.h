@@ -228,6 +228,11 @@ void
 cso_draw_vbo(struct cso_context *cso,
              const struct pipe_draw_info *info);
 
+void
+cso_draw_arrays_instanced(struct cso_context *cso, uint mode,
+                          uint start, uint count,
+                          uint start_instance, uint instance_count);
+
 /* helper drawing function */
 void
 cso_draw_arrays(struct cso_context *cso, uint mode, uint start, uint count);
