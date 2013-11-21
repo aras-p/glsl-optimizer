@@ -1391,10 +1391,6 @@ emit_kill_if(struct svga_shader_emitter *emit,
 {
    const struct tgsi_full_src_register *reg = &insn->Src[0];
    struct src_register src0, srcIn;
-   /* is the W component tested in another position? */
-   const boolean w_tested = (reg->Register.SwizzleW == reg->Register.SwizzleX ||
-                             reg->Register.SwizzleW == reg->Register.SwizzleY ||
-                             reg->Register.SwizzleW == reg->Register.SwizzleZ);
    const boolean special = (reg->Register.Absolute ||
                             reg->Register.Negate ||
                             reg->Register.Indirect ||
@@ -1406,37 +1402,24 @@ emit_kill_if(struct svga_shader_emitter *emit,
 
    src0 = srcIn = translate_src_register( emit, reg );
 
-   if (special || !w_tested) {
+   if (special) {
       /* need a temp reg */
       temp = get_temp( emit );
    }
 
    if (special) {
       /* move the source into a temp register */
-      submit_op1( emit, inst_token( SVGA3DOP_MOV ),
-                  writemask( temp, TGSI_WRITEMASK_XYZ ),
-                  src0 );
+      submit_op1(emit, inst_token(SVGA3DOP_MOV), temp, src0);
 
       src0 = src( temp );
    }
 
-   /* do the texkill (on the xyz components) */
+   /* Do the texkill by checking if any of the XYZW components are < 0.
+    * Note that ps_2_0 and later take XYZW in consideration, while ps_1_x
+    * only used XYZ.  The MSDN documentation about this is incorrect.
+    */
    if (!submit_op0( emit, inst_token( SVGA3DOP_TEXKILL ), dst(src0) ))
       return FALSE;
-
-   if (!w_tested) {
-      /* need to emit a second texkill to test the W component */
-      /* put src.wwww into temp register */
-      if (!submit_op1(emit,
-                      inst_token( SVGA3DOP_MOV ),
-                      writemask( temp, TGSI_WRITEMASK_XYZ ),
-                      scalar(srcIn, TGSI_SWIZZLE_W)))
-         return FALSE;
-
-      /* second texkill */
-      if (!submit_op0( emit, inst_token( SVGA3DOP_TEXKILL ), temp ))
-         return FALSE;
-   }
 
    return TRUE;
 }
