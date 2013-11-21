@@ -2183,6 +2183,8 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 			key->vs.ucps_enabled |= 0x2;
 		if (sctx->queued.named.rasterizer->clip_plane_enable & 0xf)
 			key->vs.ucps_enabled |= 0x1;
+
+		key->vs.as_es = sctx->gs_shader != NULL;
 	} else if (sel->type == PIPE_SHADER_FRAGMENT) {
 		if (sel->fs_write_all)
 			key->ps.nr_cbufs = sctx->framebuffer.nr_cbufs;
@@ -2247,11 +2249,16 @@ int si_shader_select(struct pipe_context *ctx,
 		}
 	}
 
-	if (unlikely(!shader)) {
+	if (shader) {
+		shader->next_variant = sel->current;
+		sel->current = shader;
+	} else {
 		shader = CALLOC(1, sizeof(struct si_pipe_shader));
 		shader->selector = sel;
 		shader->key = key;
 
+		shader->next_variant = sel->current;
+		sel->current = shader;
 		r = si_pipe_shader_create(ctx, shader);
 		if (unlikely(r)) {
 			R600_ERR("Failed to build shader variant (type=%u) %d\n",
@@ -2266,8 +2273,6 @@ int si_shader_select(struct pipe_context *ctx,
 	if (dirty)
 		*dirty = 1;
 
-	shader->next_variant = sel->current;
-	sel->current = shader;
 
 	return 0;
 }
@@ -2305,6 +2310,16 @@ static void *si_create_fs_state(struct pipe_context *ctx,
 	return si_create_shader_state(ctx, state, PIPE_SHADER_FRAGMENT);
 }
 
+#if HAVE_LLVM >= 0x0305
+
+static void *si_create_gs_state(struct pipe_context *ctx,
+				const struct pipe_shader_state *state)
+{
+	return si_create_shader_state(ctx, state, PIPE_SHADER_GEOMETRY);
+}
+
+#endif
+
 static void *si_create_vs_state(struct pipe_context *ctx,
 				const struct pipe_shader_state *state)
 {
@@ -2327,6 +2342,27 @@ static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 	sctx->b.streamout.stride_in_dw = sel->so.stride;
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
+
+#if HAVE_LLVM >= 0x0305
+
+static void si_bind_gs_shader(struct pipe_context *ctx, void *state)
+{
+	struct si_context *sctx = (struct si_context *)ctx;
+	struct si_pipe_shader_selector *sel = state;
+
+	if (sctx->gs_shader == sel)
+		return;
+
+	sctx->gs_shader = sel;
+
+	if (sel && sel->current) {
+		si_pm4_bind_state(sctx, gs, sel->current->pm4);
+		sctx->b.streamout.stride_in_dw = sel->so.stride;
+		sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
+	}
+}
+
+#endif
 
 static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 {
@@ -2373,6 +2409,22 @@ static void si_delete_vs_shader(struct pipe_context *ctx, void *state)
 
 	si_delete_shader_selector(ctx, sel);
 }
+
+#if HAVE_LLVM >= 0x0305
+
+static void si_delete_gs_shader(struct pipe_context *ctx, void *state)
+{
+	struct si_context *sctx = (struct si_context *)ctx;
+	struct si_pipe_shader_selector *sel = (struct si_pipe_shader_selector *)state;
+
+	if (sctx->gs_shader == sel) {
+		sctx->gs_shader = NULL;
+	}
+
+	si_delete_shader_selector(ctx, sel);
+}
+
+#endif
 
 static void si_delete_ps_shader(struct pipe_context *ctx, void *state)
 {
@@ -2718,7 +2770,7 @@ static void si_set_sampler_views(struct pipe_context *ctx,
 	struct si_pipe_sampler_view **rviews = (struct si_pipe_sampler_view **)views;
 	int i;
 
-	if (shader != PIPE_SHADER_VERTEX && shader != PIPE_SHADER_FRAGMENT)
+	if (shader >= SI_NUM_SHADERS)
 		return;
 
 	assert(start == 0);
@@ -2855,6 +2907,16 @@ static void si_bind_vs_sampler_states(struct pipe_context *ctx, unsigned count, 
 	si_pm4_set_state(sctx, vs_sampler, pm4);
 }
 
+static void si_bind_gs_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
+{
+	struct si_context *sctx = (struct si_context *)ctx;
+	struct si_pm4_state *pm4;
+
+	pm4 = si_set_sampler_states(sctx, count, states, &sctx->samplers[PIPE_SHADER_GEOMETRY],
+			      R_00B230_SPI_SHADER_USER_DATA_GS_0);
+	si_pm4_set_state(sctx, gs_sampler, pm4);
+}
+
 static void si_bind_ps_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
@@ -2875,6 +2937,9 @@ static void si_bind_sampler_states(struct pipe_context *ctx, unsigned shader,
    switch (shader) {
    case PIPE_SHADER_VERTEX:
       si_bind_vs_sampler_states(ctx, count, states);
+      break;
+   case PIPE_SHADER_GEOMETRY:
+      si_bind_gs_sampler_states(ctx, count, states);
       break;
    case PIPE_SHADER_FRAGMENT:
       si_bind_ps_sampler_states(ctx, count, states);
@@ -3108,6 +3173,11 @@ void si_init_state_functions(struct si_context *sctx)
 	sctx->b.b.bind_fs_state = si_bind_ps_shader;
 	sctx->b.b.delete_vs_state = si_delete_vs_shader;
 	sctx->b.b.delete_fs_state = si_delete_ps_shader;
+#if HAVE_LLVM >= 0x0305
+	sctx->b.b.create_gs_state = si_create_gs_state;
+	sctx->b.b.bind_gs_state = si_bind_gs_shader;
+	sctx->b.b.delete_gs_state = si_delete_gs_shader;
+#endif
 
 	sctx->b.b.create_sampler_state = si_create_sampler_state;
 	sctx->b.b.bind_sampler_states = si_bind_sampler_states;
@@ -3159,10 +3229,22 @@ void si_init_config(struct si_context *sctx)
 	si_pm4_set_reg(pm4, R_028A34_VGT_GROUP_VECT_1_CNTL, 0x0);
 	si_pm4_set_reg(pm4, R_028A38_VGT_GROUP_VECT_0_FMT_CNTL, 0x0);
 	si_pm4_set_reg(pm4, R_028A3C_VGT_GROUP_VECT_1_FMT_CNTL, 0x0);
-	si_pm4_set_reg(pm4, R_028A40_VGT_GS_MODE, 0x0);
+
+	/* FIXME calculate these values somehow ??? */
+	si_pm4_set_reg(pm4, R_028A54_VGT_GS_PER_ES, 0x80);
+	si_pm4_set_reg(pm4, R_028A58_VGT_ES_PER_GS, 0x40);
+	si_pm4_set_reg(pm4, R_028A5C_VGT_GS_PER_VS, 0x2);
+
 	si_pm4_set_reg(pm4, R_028A84_VGT_PRIMITIVEID_EN, 0x0);
 	si_pm4_set_reg(pm4, R_028A8C_VGT_PRIMITIVEID_RESET, 0x0);
+	si_pm4_set_reg(pm4, R_028AB8_VGT_VTX_CNT_EN, 0);
 	si_pm4_set_reg(pm4, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);
+
+	si_pm4_set_reg(pm4, R_028B60_VGT_GS_VERT_ITEMSIZE_1, 0);
+	si_pm4_set_reg(pm4, R_028B64_VGT_GS_VERT_ITEMSIZE_2, 0);
+	si_pm4_set_reg(pm4, R_028B68_VGT_GS_VERT_ITEMSIZE_3, 0);
+	si_pm4_set_reg(pm4, R_028B90_VGT_GS_INSTANCE_CNT, 0);
+
 	si_pm4_set_reg(pm4, R_028B94_VGT_STRMOUT_CONFIG, 0x0);
 	si_pm4_set_reg(pm4, R_028B98_VGT_STRMOUT_BUFFER_CONFIG, 0x0);
 	if (sctx->b.chip_class == SI) {
@@ -3177,7 +3259,6 @@ void si_init_config(struct si_context *sctx)
 		si_pm4_set_reg(pm4, R_008A14_PA_CL_ENHANCE, S_008A14_NUM_CLIP_SEQ(3) |
 			       S_008A14_CLIP_VTX_REORDER_ENA(1));
 
-	si_pm4_set_reg(pm4, R_028B54_VGT_SHADER_STAGES_EN, 0);
 	si_pm4_set_reg(pm4, R_028BD4_PA_SC_CENTROID_PRIORITY_0, 0x76543210);
 	si_pm4_set_reg(pm4, R_028BD8_PA_SC_CENTROID_PRIORITY_1, 0xfedcba98);
 

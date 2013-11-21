@@ -67,6 +67,7 @@
 #define R600_CONTEXT_PS_PARTIAL_FLUSH		(1 << 16)
 #define R600_CONTEXT_WAIT_3D_IDLE		(1 << 17)
 #define R600_CONTEXT_WAIT_CP_DMA_IDLE		(1 << 18)
+#define R600_CONTEXT_VGT_FLUSH			(1 << 19)
 
 /* Debug flags. */
 /* logging */

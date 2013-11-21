@@ -1426,4 +1426,5 @@ void radeon_llvm_dispose(struct radeon_llvm_context * ctx)
 	LLVMDisposeModule(ctx->soa.bld_base.base.gallivm->module);
 	LLVMContextDispose(ctx->soa.bld_base.base.gallivm->context);
 	FREE(ctx->temps);
+	ctx->temps = NULL;
 }

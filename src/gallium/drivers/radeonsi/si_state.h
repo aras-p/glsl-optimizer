@@ -88,6 +88,11 @@ union si_state {
 		struct si_pm4_state		*fb_rs;
 		struct si_pm4_state		*fb_blend;
 		struct si_pm4_state		*dsa_stencil_ref;
+		struct si_pm4_state		*es;
+		struct si_pm4_state		*gs;
+		struct si_pm4_state		*gs_rings;
+		struct si_pm4_state		*gs_sampler;
+		struct si_pm4_state		*gs_onoff;
 		struct si_pm4_state		*vs;
 		struct si_pm4_state		*vs_sampler;
 		struct si_pm4_state		*ps;
@@ -110,7 +115,7 @@ union si_state {
 #define NUM_SAMPLER_STATES	NUM_TEX_UNITS
 
 #define NUM_PIPE_CONST_BUFFERS 16
-#define NUM_CONST_BUFFERS 17
+#define NUM_CONST_BUFFERS 19
 
 /* This represents resource descriptors in memory, such as buffer resources,
  * image resources, and sampler states.
@@ -193,6 +198,11 @@ struct si_buffer_resources {
 void si_set_sampler_view(struct si_context *sctx, unsigned shader,
 			 unsigned slot, struct pipe_sampler_view *view,
 			 unsigned *view_desc);
+void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,
+			struct pipe_constant_buffer *input,
+			unsigned stride, unsigned num_records,
+			bool add_tid, bool swizzle,
+			unsigned element_size, unsigned index_stride);
 void si_init_all_descriptors(struct si_context *sctx);
 void si_release_all_descriptors(struct si_context *sctx);
 void si_all_descriptors_begin_new_cs(struct si_context *sctx);

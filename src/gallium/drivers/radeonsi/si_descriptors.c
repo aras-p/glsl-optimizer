@@ -242,6 +242,8 @@ static void si_emit_descriptors(struct si_context *sctx,
 static unsigned si_get_shader_user_data_base(unsigned shader)
 {
 	switch (shader) {
+	case SI_SHADER_EXPORT:
+		return R_00B330_SPI_SHADER_USER_DATA_ES_0;
 	case PIPE_SHADER_VERTEX:
 		return R_00B130_SPI_SHADER_USER_DATA_VS_0;
 	case PIPE_SHADER_GEOMETRY:
@@ -478,6 +480,100 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint s
 		buffers->buffers[slot] = buffer;
 		r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx,
 				      (struct r600_resource*)buffer, buffers->shader_usage);
+		buffers->desc.enabled_mask |= 1 << slot;
+	} else {
+		/* Clear the descriptor. */
+		memset(buffers->desc_data[slot], 0, sizeof(uint32_t) * 4);
+		buffers->desc.enabled_mask &= ~(1 << slot);
+	}
+
+	buffers->desc.dirty_mask |= 1 << slot;
+	si_update_descriptors(sctx, &buffers->desc);
+}
+
+/* RING BUFFERS */
+
+void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,
+			struct pipe_constant_buffer *input,
+			unsigned stride, unsigned num_records,
+			bool add_tid, bool swizzle,
+			unsigned element_size, unsigned index_stride)
+{
+	struct si_context *sctx = (struct si_context *)ctx;
+	struct si_buffer_resources *buffers = &sctx->const_buffers[shader];
+
+	if (shader >= SI_NUM_SHADERS)
+		return;
+
+	/* The stride field in the resource descriptor has 14 bits */
+	assert(stride < (1 << 14));
+
+	slot += NUM_PIPE_CONST_BUFFERS + 1;
+	assert(slot < buffers->num_buffers);
+	pipe_resource_reference(&buffers->buffers[slot], NULL);
+
+	if (input && input->buffer) {
+		uint64_t va;
+
+		va = r600_resource_va(ctx->screen, input->buffer);
+
+		switch (element_size) {
+		default:
+			assert(!"Unsupported ring buffer element size");
+		case 0:
+		case 2:
+			element_size = 0;
+			break;
+		case 4:
+			element_size = 1;
+			break;
+		case 8:
+			element_size = 2;
+			break;
+		case 16:
+			element_size = 3;
+			break;
+		}
+
+		switch (index_stride) {
+		default:
+			assert(!"Unsupported ring buffer index stride");
+		case 0:
+		case 8:
+			index_stride = 0;
+			break;
+		case 16:
+			index_stride = 1;
+			break;
+		case 32:
+			index_stride = 2;
+			break;
+		case 64:
+			index_stride = 3;
+			break;
+		}
+
+		/* Set the descriptor. */
+		uint32_t *desc = buffers->desc_data[slot];
+		desc[0] = va;
+		desc[1] = S_008F04_BASE_ADDRESS_HI(va >> 32) |
+			  S_008F04_STRIDE(stride) |
+			  S_008F04_SWIZZLE_ENABLE(swizzle);
+		desc[2] = num_records;
+		desc[3] = S_008F0C_DST_SEL_X(V_008F0C_SQ_SEL_X) |
+			  S_008F0C_DST_SEL_Y(V_008F0C_SQ_SEL_Y) |
+			  S_008F0C_DST_SEL_Z(V_008F0C_SQ_SEL_Z) |
+			  S_008F0C_DST_SEL_W(V_008F0C_SQ_SEL_W) |
+			  S_008F0C_NUM_FORMAT(V_008F0C_BUF_NUM_FORMAT_FLOAT) |
+			  S_008F0C_DATA_FORMAT(V_008F0C_BUF_DATA_FORMAT_32) |
+			  S_008F0C_ELEMENT_SIZE(element_size) |
+			  S_008F0C_INDEX_STRIDE(index_stride) |
+			  S_008F0C_ADD_TID_ENABLE(add_tid);
+
+		pipe_resource_reference(&buffers->buffers[slot], input->buffer);
+		r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx,
+				      (struct r600_resource*)input->buffer,
+				      buffers->shader_usage);
 		buffers->desc.enabled_mask |= 1 << slot;
 	} else {
 		/* Clear the descriptor. */
@@ -825,7 +921,7 @@ void si_init_all_descriptors(struct si_context *sctx)
 	for (i = 0; i < SI_NUM_SHADERS; i++) {
 		si_init_buffer_resources(sctx, &sctx->const_buffers[i],
 					 NUM_CONST_BUFFERS, i, SI_SGPR_CONST,
-					 RADEON_USAGE_READ);
+					 RADEON_USAGE_READWRITE);
 
 		si_init_sampler_views(sctx, &sctx->samplers[i].views, i);
 

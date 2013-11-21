@@ -39,6 +39,120 @@
  * Shaders
  */
 
+static void si_pipe_shader_es(struct pipe_context *ctx, struct si_pipe_shader *shader)
+{
+	struct si_context *sctx = (struct si_context *)ctx;
+	struct si_pm4_state *pm4;
+	unsigned num_sgprs, num_user_sgprs;
+	unsigned vgpr_comp_cnt;
+	uint64_t va;
+
+	si_pm4_delete_state(sctx, es, shader->pm4);
+	pm4 = shader->pm4 = si_pm4_alloc_state(sctx);
+
+	if (pm4 == NULL)
+		return;
+
+	va = r600_resource_va(ctx->screen, (void *)shader->bo);
+	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
+
+	vgpr_comp_cnt = shader->shader.uses_instanceid ? 3 : 0;
+
+	num_user_sgprs = SI_VS_NUM_USER_SGPR;
+	num_sgprs = shader->num_sgprs;
+	/* One SGPR after user SGPRs is pre-loaded with es2gs_offset */
+	if ((num_user_sgprs + 1) > num_sgprs) {
+		/* Last 2 reserved SGPRs are used for VCC */
+		num_sgprs = num_user_sgprs + 1 + 2;
+	}
+	assert(num_sgprs <= 104);
+
+	si_pm4_set_reg(pm4, R_00B320_SPI_SHADER_PGM_LO_ES, va >> 8);
+	si_pm4_set_reg(pm4, R_00B324_SPI_SHADER_PGM_HI_ES, va >> 40);
+	si_pm4_set_reg(pm4, R_00B328_SPI_SHADER_PGM_RSRC1_ES,
+		       S_00B328_VGPRS((shader->num_vgprs - 1) / 4) |
+		       S_00B328_SGPRS((num_sgprs - 1) / 8) |
+		       S_00B328_VGPR_COMP_CNT(vgpr_comp_cnt));
+	si_pm4_set_reg(pm4, R_00B32C_SPI_SHADER_PGM_RSRC2_ES,
+		       S_00B32C_USER_SGPR(num_user_sgprs));
+
+	si_pm4_bind_state(sctx, es, shader->pm4);
+	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
+}
+
+static void si_pipe_shader_gs(struct pipe_context *ctx, struct si_pipe_shader *shader)
+{
+	struct si_context *sctx = (struct si_context *)ctx;
+	unsigned gs_vert_itemsize = shader->shader.noutput * (16 >> 2);
+	unsigned gs_max_vert_out = shader->shader.gs_max_out_vertices;
+	unsigned gsvs_itemsize = gs_vert_itemsize * gs_max_vert_out;
+	unsigned cut_mode;
+	struct si_pm4_state *pm4;
+	unsigned num_sgprs, num_user_sgprs;
+	uint64_t va;
+
+	/* The GSVS_RING_ITEMSIZE register takes 15 bits */
+	assert(gsvs_itemsize < (1 << 15));
+
+	si_pm4_delete_state(sctx, gs, shader->pm4);
+	pm4 = shader->pm4 = si_pm4_alloc_state(sctx);
+
+	if (pm4 == NULL)
+		return;
+
+	if (gs_max_vert_out <= 128) {
+		cut_mode = V_028A40_GS_CUT_128;
+	} else if (gs_max_vert_out <= 256) {
+		cut_mode = V_028A40_GS_CUT_256;
+	} else if (gs_max_vert_out <= 512) {
+		cut_mode = V_028A40_GS_CUT_512;
+	} else {
+		assert(gs_max_vert_out <= 1024);
+		cut_mode = V_028A40_GS_CUT_1024;
+	}
+
+	si_pm4_set_reg(pm4, R_028A40_VGT_GS_MODE,
+		       S_028A40_MODE(V_028A40_GS_SCENARIO_G) |
+		       S_028A40_CUT_MODE(cut_mode)|
+		       S_028A40_ES_WRITE_OPTIMIZE(1) |
+		       S_028A40_GS_WRITE_OPTIMIZE(1));
+
+	si_pm4_set_reg(pm4, R_028A60_VGT_GSVS_RING_OFFSET_1, gsvs_itemsize);
+	si_pm4_set_reg(pm4, R_028A64_VGT_GSVS_RING_OFFSET_2, gsvs_itemsize);
+	si_pm4_set_reg(pm4, R_028A68_VGT_GSVS_RING_OFFSET_3, gsvs_itemsize);
+
+	si_pm4_set_reg(pm4, R_028AAC_VGT_ESGS_RING_ITEMSIZE,
+		       shader->shader.ninput * (16 >> 2));
+	si_pm4_set_reg(pm4, R_028AB0_VGT_GSVS_RING_ITEMSIZE, gsvs_itemsize);
+
+	si_pm4_set_reg(pm4, R_028B38_VGT_GS_MAX_VERT_OUT, gs_max_vert_out);
+
+	si_pm4_set_reg(pm4, R_028B5C_VGT_GS_VERT_ITEMSIZE, gs_vert_itemsize);
+
+	va = r600_resource_va(ctx->screen, (void *)shader->bo);
+	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
+	si_pm4_set_reg(pm4, R_00B220_SPI_SHADER_PGM_LO_GS, va >> 8);
+	si_pm4_set_reg(pm4, R_00B224_SPI_SHADER_PGM_HI_GS, va >> 40);
+
+	num_user_sgprs = SI_GS_NUM_USER_SGPR;
+	num_sgprs = shader->num_sgprs;
+	/* Two SGPRs after user SGPRs are pre-loaded with gs2vs_offset, gs_wave_id */
+	if ((num_user_sgprs + 2) > num_sgprs) {
+		/* Last 2 reserved SGPRs are used for VCC */
+		num_sgprs = num_user_sgprs + 2 + 2;
+	}
+	assert(num_sgprs <= 104);
+
+	si_pm4_set_reg(pm4, R_00B228_SPI_SHADER_PGM_RSRC1_GS,
+		       S_00B228_VGPRS((shader->num_vgprs - 1) / 4) |
+		       S_00B228_SGPRS((num_sgprs - 1) / 8));
+	si_pm4_set_reg(pm4, R_00B22C_SPI_SHADER_PGM_RSRC2_GS,
+		       S_00B22C_USER_SGPR(num_user_sgprs));
+
+	si_pm4_bind_state(sctx, gs, shader->pm4);
+	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
+}
+
 static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
@@ -52,6 +166,19 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	if (pm4 == NULL)
 		return;
+
+	va = r600_resource_va(ctx->screen, (void *)shader->bo);
+	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
+
+	vgpr_comp_cnt = shader->shader.uses_instanceid ? 3 : 0;
+
+	num_user_sgprs = SI_VS_NUM_USER_SGPR;
+	num_sgprs = shader->num_sgprs;
+	if (num_user_sgprs > num_sgprs) {
+		/* Last 2 reserved SGPRs are used for VCC */
+		num_sgprs = num_user_sgprs + 2;
+	}
+	assert(num_sgprs <= 104);
 
 	/* Certain attributes (position, psize, etc.) don't count as params.
 	 * VS is required to export at least one param and r600_shader_from_tgsi()
@@ -85,21 +212,8 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 						   V_02870C_SPI_SHADER_4COMP :
 						   V_02870C_SPI_SHADER_NONE));
 
-	va = r600_resource_va(ctx->screen, (void *)shader->bo);
-	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
 	si_pm4_set_reg(pm4, R_00B120_SPI_SHADER_PGM_LO_VS, va >> 8);
 	si_pm4_set_reg(pm4, R_00B124_SPI_SHADER_PGM_HI_VS, va >> 40);
-
-	num_user_sgprs = SI_VS_NUM_USER_SGPR;
-	num_sgprs = shader->num_sgprs;
-	if (num_user_sgprs > num_sgprs) {
-		/* Last 2 reserved SGPRs are used for VCC */
-		num_sgprs = num_user_sgprs + 2;
-	}
-	assert(num_sgprs <= 104);
-
-	vgpr_comp_cnt = shader->shader.uses_instanceid ? 3 : 0;
-
 	si_pm4_set_reg(pm4, R_00B128_SPI_SHADER_PGM_RSRC1_VS,
 		       S_00B128_VGPRS((shader->num_vgprs - 1) / 4) |
 		       S_00B128_SGPRS((num_sgprs - 1) / 8) |
@@ -291,7 +405,10 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
 	struct si_shader *vs = &sctx->vs_shader->current->shader;
 	unsigned prim = si_conv_pipe_prim(info->mode);
-	unsigned gs_out_prim = si_conv_prim_to_gs_out(info->mode);
+	unsigned gs_out_prim =
+		si_conv_prim_to_gs_out(sctx->gs_shader ?
+				       sctx->gs_shader->current->shader.gs_output_prim :
+				       info->mode);
 	unsigned ls_mask = 0;
 
 	if (pm4 == NULL)
@@ -331,7 +448,9 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 		       info->indexed ? info->index_bias : info->start);
 	si_pm4_set_reg(pm4, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info->restart_index);
 	si_pm4_set_reg(pm4, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info->primitive_restart);
-	si_pm4_set_reg(pm4, R_00B130_SPI_SHADER_USER_DATA_VS_0 + SI_SGPR_START_INSTANCE * 4,
+	si_pm4_set_reg(pm4, SI_SGPR_START_INSTANCE * 4 +
+		       (sctx->gs_shader ? R_00B330_SPI_SHADER_USER_DATA_ES_0 :
+			R_00B130_SPI_SHADER_USER_DATA_VS_0),
 		       info->start_instance);
 
         if (prim == V_008958_DI_PT_LINELIST)
@@ -423,6 +542,45 @@ bcolor:
 	si_pm4_set_state(sctx, spi, pm4);
 }
 
+/* Initialize state related to ESGS / GSVS ring buffers */
+static void si_init_gs_rings(struct si_context *sctx)
+{
+	unsigned size = 128 * 1024;
+
+	assert(!sctx->gs_rings);
+	sctx->gs_rings = si_pm4_alloc_state(sctx);
+
+	sctx->esgs_ring.buffer =
+		pipe_buffer_create(sctx->b.b.screen, PIPE_BIND_CUSTOM,
+				   PIPE_USAGE_STATIC, size);
+	sctx->esgs_ring.buffer_size = size;
+
+	size = 64 * 1024 * 1024;
+	sctx->gsvs_ring.buffer =
+		pipe_buffer_create(sctx->b.b.screen, PIPE_BIND_CUSTOM,
+				   PIPE_USAGE_STATIC, size);
+	sctx->gsvs_ring.buffer_size = size;
+
+	if (sctx->b.chip_class >= CIK) {
+		si_pm4_set_reg(sctx->gs_rings, R_030900_VGT_ESGS_RING_SIZE,
+			       sctx->esgs_ring.buffer_size / 256);
+		si_pm4_set_reg(sctx->gs_rings, R_030904_VGT_GSVS_RING_SIZE,
+			       sctx->gsvs_ring.buffer_size / 256);
+	} else {
+		si_pm4_set_reg(sctx->gs_rings, R_0088C8_VGT_ESGS_RING_SIZE,
+			       sctx->esgs_ring.buffer_size / 256);
+		si_pm4_set_reg(sctx->gs_rings, R_0088CC_VGT_GSVS_RING_SIZE,
+			       sctx->gsvs_ring.buffer_size / 256);
+	}
+
+	si_set_ring_buffer(&sctx->b.b, SI_SHADER_EXPORT, 0, &sctx->esgs_ring,
+			   0, sctx->esgs_ring.buffer_size, true, true, 4, 64);
+	si_set_ring_buffer(&sctx->b.b, PIPE_SHADER_GEOMETRY, 0, &sctx->esgs_ring,
+			   0, sctx->esgs_ring.buffer_size, false, false, 0, 0);
+	si_set_ring_buffer(&sctx->b.b, PIPE_SHADER_VERTEX, 0, &sctx->gsvs_ring,
+			   0, sctx->gsvs_ring.buffer_size, false, false, 0, 0);
+}
+
 static void si_update_derived_state(struct si_context *sctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)sctx;
@@ -440,17 +598,78 @@ static void si_update_derived_state(struct si_context *sctx)
 		}
 	}
 
-	si_shader_select(ctx, sctx->vs_shader, &vs_dirty);
+	if (sctx->gs_shader) {
+		unsigned es_dirty = 0, gs_dirty = 0;
 
-	if (!sctx->vs_shader->current->pm4) {
-		si_pipe_shader_vs(ctx, sctx->vs_shader->current);
-		vs_dirty = 0;
+		si_shader_select(ctx, sctx->gs_shader, &gs_dirty);
+
+		if (!sctx->gs_shader->current->pm4) {
+			si_pipe_shader_gs(ctx, sctx->gs_shader->current);
+			si_pipe_shader_vs(ctx,
+					  sctx->gs_shader->current->gs_copy_shader);
+			gs_dirty = 0;
+		}
+
+		if (gs_dirty) {
+			si_pm4_bind_state(sctx, gs, sctx->gs_shader->current->pm4);
+			si_pm4_bind_state(sctx, vs,
+					  sctx->gs_shader->current->gs_copy_shader->pm4);
+		}
+
+		si_shader_select(ctx, sctx->vs_shader, &es_dirty);
+
+		if (!sctx->vs_shader->current->pm4) {
+			si_pipe_shader_es(ctx, sctx->vs_shader->current);
+			es_dirty = 0;
+		}
+
+		if (es_dirty) {
+			si_pm4_bind_state(sctx, es, sctx->vs_shader->current->pm4);
+		}
+
+		if (!sctx->gs_rings)
+			si_init_gs_rings(sctx);
+		if (sctx->emitted.named.gs_rings != sctx->gs_rings)
+			sctx->b.flags |= R600_CONTEXT_VGT_FLUSH;
+		si_pm4_bind_state(sctx, gs_rings, sctx->gs_rings);
+
+		si_set_ring_buffer(ctx, PIPE_SHADER_GEOMETRY, 1, &sctx->gsvs_ring,
+				   sctx->gs_shader->current->shader.gs_max_out_vertices *
+				   sctx->gs_shader->current->shader.noutput * 16,
+				   64, true, true, 4, 16);
+
+		if (!sctx->gs_on) {
+			sctx->gs_on = si_pm4_alloc_state(sctx);
+
+			si_pm4_set_reg(sctx->gs_on, R_028B54_VGT_SHADER_STAGES_EN,
+				       S_028B54_ES_EN(V_028B54_ES_STAGE_REAL) |
+				       S_028B54_GS_EN(1) |
+				       S_028B54_VS_EN(V_028B54_VS_STAGE_COPY_SHADER));
+		}
+		si_pm4_bind_state(sctx, gs_onoff, sctx->gs_on);
+	} else {
+		si_shader_select(ctx, sctx->vs_shader, &vs_dirty);
+
+		if (!sctx->vs_shader->current->pm4) {
+			si_pipe_shader_vs(ctx, sctx->vs_shader->current);
+			vs_dirty = 0;
+		}
+
+		if (vs_dirty) {
+			si_pm4_bind_state(sctx, vs, sctx->vs_shader->current->pm4);
+		}
+
+		if (!sctx->gs_off) {
+			sctx->gs_off = si_pm4_alloc_state(sctx);
+
+			si_pm4_set_reg(sctx->gs_off, R_028A40_VGT_GS_MODE, 0);
+			si_pm4_set_reg(sctx->gs_off, R_028B54_VGT_SHADER_STAGES_EN, 0);
+		}
+		si_pm4_bind_state(sctx, gs_onoff, sctx->gs_off);
+		si_pm4_bind_state(sctx, gs_rings, NULL);
+		si_pm4_bind_state(sctx, gs, NULL);
+		si_pm4_bind_state(sctx, es, NULL);
 	}
-
-	if (vs_dirty) {
-		si_pm4_bind_state(sctx, vs, sctx->vs_shader->current->pm4);
-	}
-
 
 	si_shader_select(ctx, sctx->ps_shader, &ps_dirty);
 
@@ -531,7 +750,10 @@ static void si_vertex_buffer_update(struct si_context *sctx)
 			bound[ve->vertex_buffer_index] = true;
 		}
 	}
-	si_pm4_sh_data_end(pm4, R_00B130_SPI_SHADER_USER_DATA_VS_0, SI_SGPR_VERTEX_BUFFER);
+	si_pm4_sh_data_end(pm4, sctx->gs_shader ?
+			   R_00B330_SPI_SHADER_USER_DATA_ES_0 :
+			   R_00B130_SPI_SHADER_USER_DATA_VS_0,
+			   SI_SGPR_VERTEX_BUFFER);
 	si_pm4_set_state(sctx, vertex_buffers, pm4);
 }
 
@@ -689,6 +911,11 @@ void si_emit_cache_flush(struct r600_common_context *sctx, struct r600_atom *ato
 		/* Needed if streamout buffers are going to be used as a source. */
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 		radeon_emit(cs, EVENT_TYPE(V_028A90_VS_PARTIAL_FLUSH) | EVENT_INDEX(4));
+	}
+
+	if (sctx->flags & R600_CONTEXT_VGT_FLUSH) {
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+		radeon_emit(cs, EVENT_TYPE(V_028A90_VGT_FLUSH) | EVENT_INDEX(0));
 	}
 
 	sctx->flags = 0;

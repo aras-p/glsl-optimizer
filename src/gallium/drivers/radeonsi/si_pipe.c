@@ -83,6 +83,16 @@ static void si_destroy_context(struct pipe_context *context)
 	pipe_resource_reference(&sctx->null_const_buf.buffer, NULL);
 	r600_resource_reference(&sctx->border_color_table, NULL);
 
+	if (sctx->gs_on) {
+		si_pm4_free_state(sctx, sctx->gs_on, 0);
+	}
+	if (sctx->gs_off) {
+		si_pm4_free_state(sctx, sctx->gs_off, 0);
+	}
+	if (sctx->gs_rings) {
+		si_pm4_free_state(sctx, sctx->gs_rings, 0);
+	}
+
 	if (sctx->dummy_pixel_shader) {
 		sctx->b.b.delete_fs_state(&sctx->b.b, sctx->dummy_pixel_shader);
 	}

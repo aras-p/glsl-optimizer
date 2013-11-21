@@ -75,7 +75,9 @@ struct si_surface {
 };
 
 #define SI_NUM_ATOMS(sctx) (sizeof((sctx)->atoms)/sizeof((sctx)->atoms.array[0]))
-#define SI_NUM_SHADERS (PIPE_SHADER_FRAGMENT+1)
+
+#define SI_SHADER_EXPORT (PIPE_SHADER_GEOMETRY+1)
+#define SI_NUM_SHADERS (SI_SHADER_EXPORT+1)
 
 struct si_context {
 	struct r600_common_context	b;
@@ -112,6 +114,7 @@ struct si_context {
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;
 	struct si_pipe_shader_selector	*ps_shader;
+	struct si_pipe_shader_selector	*gs_shader;
 	struct si_pipe_shader_selector	*vs_shader;
 	struct si_cs_shader_state	cs_shader_state;
 	/* shader information */
@@ -138,8 +141,13 @@ struct si_context {
 	/* With rasterizer discard, there doesn't have to be a pixel shader.
 	 * In that case, we bind this one: */
 	void			*dummy_pixel_shader;
+	struct si_pm4_state	*gs_on;
+	struct si_pm4_state	*gs_off;
+	struct si_pm4_state	*gs_rings;
 	struct r600_atom	cache_flush;
 	struct pipe_constant_buffer null_const_buf; /* used for set_constant_buffer(NULL) on CIK */
+	struct pipe_constant_buffer esgs_ring;
+	struct pipe_constant_buffer gsvs_ring;
 
 	/* SI state handling */
 	union si_state	queued;

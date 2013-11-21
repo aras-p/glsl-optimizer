@@ -40,6 +40,7 @@
 #define SI_SGPR_ALPHA_REF	6  /* PS only */
 
 #define SI_VS_NUM_USER_SGPR	11
+#define SI_GS_NUM_USER_SGPR	6
 #define SI_PS_NUM_USER_SGPR	7
 
 /* LLVM function parameter indices */
@@ -52,6 +53,21 @@
 #define SI_PARAM_SO_BUFFER	4
 #define SI_PARAM_START_INSTANCE	5
 /* the other VS parameters are assigned dynamically */
+
+/* ES only parameters */
+#define SI_PARAM_ES2GS_OFFSET	6
+
+/* GS only parameters */
+#define SI_PARAM_GS2VS_OFFSET	3
+#define SI_PARAM_GS_WAVE_ID	4
+#define SI_PARAM_VTX0_OFFSET	5
+#define SI_PARAM_VTX1_OFFSET	6
+#define SI_PARAM_PRIMITIVE_ID	7
+#define SI_PARAM_VTX2_OFFSET	8
+#define SI_PARAM_VTX3_OFFSET	9
+#define SI_PARAM_VTX4_OFFSET	10
+#define SI_PARAM_VTX5_OFFSET	11
+#define SI_PARAM_GS_INSTANCE_ID	12
 
 /* PS only parameters */
 #define SI_PARAM_ALPHA_REF		3
@@ -73,12 +89,20 @@
 #define SI_PARAM_SAMPLE_COVERAGE	19
 #define SI_PARAM_POS_FIXED_PT		20
 
-struct si_shader_io {
+struct si_shader_input {
 	unsigned		name;
 	int			sid;
 	unsigned		param_offset;
 	unsigned		interpolate;
 	bool			centroid;
+};
+
+struct si_shader_output {
+	unsigned		name;
+	int			sid;
+	unsigned		param_offset;
+	unsigned		index;
+	unsigned		usage;
 };
 
 struct si_pipe_shader;
@@ -102,10 +126,15 @@ struct si_pipe_shader_selector {
 
 struct si_shader {
 	unsigned		ninput;
-	struct si_shader_io	input[40];
+	struct si_shader_input	input[40];
 
 	unsigned		noutput;
-	struct si_shader_io	output[40];
+	struct si_shader_output	output[40];
+
+	/* geometry shader properties */
+	unsigned		gs_input_prim;
+	unsigned		gs_output_prim;
+	unsigned		gs_max_out_vertices;
 
 	unsigned		ninterp;
 	bool			uses_kill;
@@ -131,12 +160,14 @@ union si_shader_key {
 	struct {
 		unsigned	instance_divisors[PIPE_MAX_ATTRIBS];
 		unsigned	ucps_enabled:2;
+		unsigned	as_es:1;
 	} vs;
 };
 
 struct si_pipe_shader {
 	struct si_pipe_shader_selector	*selector;
 	struct si_pipe_shader		*next_variant;
+	struct si_pipe_shader		*gs_copy_shader;
 	struct si_shader		shader;
 	struct si_pm4_state		*pm4;
 	struct r600_resource		*bo;
