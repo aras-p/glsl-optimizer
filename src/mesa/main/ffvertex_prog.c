@@ -1306,20 +1306,22 @@ static void build_fog( struct tnl_program *p )
 
       switch (p->state->fog_distance_mode) {
       case FDM_EYE_RADIAL: /* Z = sqrt(Xe*Xe + Ye*Ye + Ze*Ze) */
-	input = get_eye_position(p);
-	emit_op2(p, OPCODE_DP3, fog, WRITEMASK_X, input, input);
-	emit_op1(p, OPCODE_RSQ, fog, WRITEMASK_X, fog);
-	emit_op1(p, OPCODE_RCP, fog, WRITEMASK_X, fog);
-	break;
+         input = get_eye_position(p);
+         emit_op2(p, OPCODE_DP3, fog, WRITEMASK_X, input, input);
+         emit_op1(p, OPCODE_RSQ, fog, WRITEMASK_X, fog);
+         emit_op1(p, OPCODE_RCP, fog, WRITEMASK_X, fog);
+         break;
       case FDM_EYE_PLANE: /* Z = Ze */
-	input = get_eye_position_z(p);
-	emit_op1(p, OPCODE_MOV, fog, WRITEMASK_X, input);
-	break;
+         input = get_eye_position_z(p);
+         emit_op1(p, OPCODE_MOV, fog, WRITEMASK_X, input);
+         break;
       case FDM_EYE_PLANE_ABS: /* Z = abs(Ze) */
-	input = get_eye_position_z(p);
-	emit_op1(p, OPCODE_ABS, fog, WRITEMASK_X, input);
-	break;
-      default: assert(0); break; /* can't happen */
+         input = get_eye_position_z(p);
+         emit_op1(p, OPCODE_ABS, fog, WRITEMASK_X, input);
+         break;
+      default:
+         assert(!"Bad fog mode in build_fog()");
+         break;
       }
 
    }
