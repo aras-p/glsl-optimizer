@@ -431,6 +431,8 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return PIPE_ENDIAN_LITTLE;
    case PIPE_CAP_MIXED_FRAMEBUFFER_SIZES:
       return true;
+   case PIPE_CAP_TGSI_VS_LAYER:
+      return 0;
 
    default:
       return 0;

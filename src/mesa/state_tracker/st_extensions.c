@@ -605,6 +605,13 @@ void st_init_extensions(struct st_context *st)
       ctx->Const.ForceGLSLVersion = st->options.force_glsl_version;
    }
 
+   /* This extension needs full OpenGL 3.2, but we don't know if that's
+    * supported at this point. Only check the GLSL version. */
+   if (ctx->Const.GLSLVersion >= 150 &&
+       screen->get_param(screen, PIPE_CAP_TGSI_VS_LAYER)) {
+      ctx->Extensions.AMD_vertex_shader_layer = GL_TRUE;
+   }
+
    if (ctx->Const.GLSLVersion >= 130) {
       ctx->Const.NativeIntegers = GL_TRUE;
       ctx->Const.MaxClipPlanes = 8;
