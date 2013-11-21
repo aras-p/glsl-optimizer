@@ -1704,7 +1704,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          /* GL spec 'Data Conversions' section specifies that floating-point
           * value in integer Get function is rounded to nearest integer
           */
-         *params = (GLint) roundf(obj->Sampler.LodBias);
+         *params = IROUND(obj->Sampler.LodBias);
          break;
       case GL_TEXTURE_CROP_RECT_OES:
          if (ctx->API != API_OPENGLES || !ctx->Extensions.OES_draw_texture)
