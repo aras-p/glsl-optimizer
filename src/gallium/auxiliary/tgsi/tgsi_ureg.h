@@ -454,6 +454,16 @@ ureg_imm1i( struct ureg_program *ureg,
    return ureg_DECL_immediate_int( ureg, &a, 1 );
 }
 
+/* Where the destination register has a valid file, but an empty
+ * writemask.
+ */
+static INLINE boolean
+ureg_dst_is_empty( struct ureg_dst dst )
+{
+   return dst.File != TGSI_FILE_NULL &&
+          dst.WriteMask == 0;
+}
+
 /***********************************************************************
  * Functions for patching up labels
  */
@@ -650,6 +660,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \
@@ -673,6 +685,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \
@@ -697,6 +711,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \
@@ -723,6 +739,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \
@@ -750,6 +768,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    unsigned target = TGSI_TEXTURE_UNKNOWN;                              \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \
@@ -777,6 +797,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \
@@ -805,6 +827,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    unsigned target = TGSI_TEXTURE_UNKNOWN;                              \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \
@@ -835,6 +859,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \
@@ -866,6 +892,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    unsigned target = TGSI_TEXTURE_UNKNOWN;                              \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \
@@ -897,6 +925,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \
@@ -928,6 +958,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
 {                                                                       \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \
@@ -960,6 +992,8 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
    unsigned opcode = TGSI_OPCODE_##op;                                  \
    unsigned target = TGSI_TEXTURE_UNKNOWN;                              \
    struct ureg_emit_insn_result insn;                                   \
+   if (ureg_dst_is_empty(dst))                                          \
+      return;                                                           \
    insn = ureg_emit_insn(ureg,                                          \
                          opcode,                                        \
                          dst.Saturate,                                  \

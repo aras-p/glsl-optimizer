@@ -1113,6 +1113,10 @@ ureg_insn(struct ureg_program *ureg,
    boolean negate = FALSE;
    unsigned swizzle[4] = { 0 };
 
+   if (nr_dst && ureg_dst_is_empty(dst[0])) {
+      return;
+   }
+
    saturate = nr_dst ? dst[0].Saturate : FALSE;
    predicate = nr_dst ? dst[0].Predicate : FALSE;
    if (predicate) {
@@ -1161,6 +1165,10 @@ ureg_tex_insn(struct ureg_program *ureg,
    boolean predicate;
    boolean negate = FALSE;
    unsigned swizzle[4] = { 0 };
+
+   if (nr_dst && ureg_dst_is_empty(dst[0])) {
+      return;
+   }
 
    saturate = nr_dst ? dst[0].Saturate : FALSE;
    predicate = nr_dst ? dst[0].Predicate : FALSE;
