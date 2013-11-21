@@ -890,6 +890,7 @@ static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 	unsigned semantic_name;
 	unsigned param_count = 0;
 	int depth_index = -1, stencil_index = -1, psize_index = -1, edgeflag_index = -1;
+	int layer_index = -1;
 	int i;
 
 	if (si_shader_ctx->shader->selector->so.num_outputs) {
@@ -948,6 +949,11 @@ handle_semantic:
 				shader->vs_out_misc_write = true;
 				shader->vs_out_edgeflag = true;
 				edgeflag_index = index;
+				continue;
+			case TGSI_SEMANTIC_LAYER:
+				shader->vs_out_misc_write = true;
+				shader->vs_out_layer = true;
+				layer_index = index;
 				continue;
 			case TGSI_SEMANTIC_POSITION:
 				if (si_shader_ctx->type == TGSI_PROCESSOR_VERTEX) {
@@ -1100,7 +1106,8 @@ handle_semantic:
 		if (shader->vs_out_misc_write) {
 			pos_args[1][0] = lp_build_const_int32(base->gallivm, /* writemask */
 							      shader->vs_out_point_size |
-							      (shader->vs_out_edgeflag << 1));
+							      (shader->vs_out_edgeflag << 1) |
+							      (shader->vs_out_layer << 2));
 			pos_args[1][1] = uint->zero; /* EXEC mask */
 			pos_args[1][2] = uint->zero; /* last export? */
 			pos_args[1][3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_POS + 1);
@@ -1129,6 +1136,11 @@ handle_semantic:
 				/* The LLVM intrinsic expects a float. */
 				pos_args[1][6] = LLVMBuildBitCast(base->gallivm->builder, output,
 								  base->elem_type, "");
+			}
+
+			if (shader->vs_out_layer) {
+				pos_args[1][7] = LLVMBuildLoad(base->gallivm->builder,
+					si_shader_ctx->radeon_bld.soa.outputs[layer_index][0], "");
 			}
 		}
 

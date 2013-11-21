@@ -370,6 +370,7 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
 	si_pm4_set_reg(pm4, R_02881C_PA_CL_VS_OUT_CNTL,
 		       S_02881C_USE_VTX_POINT_SIZE(vs->vs_out_point_size) |
 		       S_02881C_USE_VTX_EDGE_FLAG(vs->vs_out_edgeflag) |
+		       S_02881C_USE_VTX_RENDER_TARGET_INDX(vs->vs_out_layer) |
 		       S_02881C_VS_OUT_CCDIST0_VEC_ENA((vs->clip_dist_write & 0x0F) != 0) |
 		       S_02881C_VS_OUT_CCDIST1_VEC_ENA((vs->clip_dist_write & 0xF0) != 0) |
 		       S_02881C_VS_OUT_MISC_VEC_ENA(vs->vs_out_misc_write) |

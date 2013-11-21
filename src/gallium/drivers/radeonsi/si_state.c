@@ -1571,7 +1571,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	struct r600_surface *surf;
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
-	unsigned color_info, color_attrib, color_pitch;
+	unsigned color_info, color_attrib, color_pitch, color_view;
 	unsigned tile_mode_index;
 	unsigned format, swap, ntype, endian;
 	uint64_t offset;
@@ -1584,10 +1584,19 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	rtex = (struct r600_texture*)state->cbufs[cb]->texture;
 
 	offset = rtex->surface.level[level].offset;
-	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
+
+	/* Layered rendering doesn't work with LINEAR_GENERAL.
+	 * (LINEAR_ALIGNED and others work) */
+	if (rtex->surface.level[level].mode == RADEON_SURF_MODE_LINEAR) {
+		assert(state->cbufs[cb]->u.tex.first_layer == state->cbufs[cb]->u.tex.last_layer);
 		offset += rtex->surface.level[level].slice_size *
 			  state->cbufs[cb]->u.tex.first_layer;
+		color_view = 0;
+	} else {
+		color_view = S_028C6C_SLICE_START(state->cbufs[cb]->u.tex.first_layer) |
+			     S_028C6C_SLICE_MAX(state->cbufs[cb]->u.tex.last_layer);
 	}
+
 	pitch = (rtex->surface.level[level].nblk_x) / 8 - 1;
 	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
 	if (slice) {
@@ -1697,14 +1706,7 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	si_pm4_set_reg(pm4, R_028C60_CB_COLOR0_BASE + cb * 0x3C, offset);
 	si_pm4_set_reg(pm4, R_028C64_CB_COLOR0_PITCH + cb * 0x3C, color_pitch);
 	si_pm4_set_reg(pm4, R_028C68_CB_COLOR0_SLICE + cb * 0x3C, S_028C68_TILE_MAX(slice));
-
-	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
-		si_pm4_set_reg(pm4, R_028C6C_CB_COLOR0_VIEW + cb * 0x3C, 0x00000000);
-	} else {
-		si_pm4_set_reg(pm4, R_028C6C_CB_COLOR0_VIEW + cb * 0x3C,
-			       S_028C6C_SLICE_START(state->cbufs[cb]->u.tex.first_layer) |
-			       S_028C6C_SLICE_MAX(state->cbufs[cb]->u.tex.last_layer));
-	}
+	si_pm4_set_reg(pm4, R_028C6C_CB_COLOR0_VIEW + cb * 0x3C, color_view);
 	si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + cb * 0x3C, color_info);
 	si_pm4_set_reg(pm4, R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C, color_attrib);
 
@@ -2993,7 +2995,6 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 
 	assert(surf_tmpl->u.tex.first_layer <= util_max_layer(texture, surf_tmpl->u.tex.level));
 	assert(surf_tmpl->u.tex.last_layer <= util_max_layer(texture, surf_tmpl->u.tex.level));
-	assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
 
 	pipe_reference_init(&surface->base.reference, 1);
 	pipe_resource_reference(&surface->base.texture, texture);

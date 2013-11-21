@@ -114,6 +114,7 @@ struct si_shader {
 	bool			vs_out_misc_write;
 	bool			vs_out_point_size;
 	bool			vs_out_edgeflag;
+	bool			vs_out_layer;
 	unsigned		nr_cbufs;
 	unsigned		nr_pos_exports;
 	unsigned		clip_dist_write;
