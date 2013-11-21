@@ -40,6 +40,7 @@
 #include <xf86drm.h>
 
 #include <stdio.h>
+#include <fcntl.h>
 
 struct dri1_api_version {
    int major;
@@ -160,37 +161,57 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
     union drm_vmw_surface_reference_arg arg;
     struct drm_vmw_surface_arg *req = &arg.req;
     struct drm_vmw_surface_create_req *rep = &arg.rep;
+    uint32_t handle = 0;
     int ret;
     int i;
 
-    if (whandle->type != DRM_API_HANDLE_TYPE_SHARED) {
-        vmw_error("Attempt to import unknown handle type %d\n",
-                  whandle->type);
-        return NULL;
+    switch (whandle->type) {
+    case DRM_API_HANDLE_TYPE_SHARED:
+    case DRM_API_HANDLE_TYPE_KMS:
+       handle = whandle->handle;
+       break;
+    case DRM_API_HANDLE_TYPE_FD:
+       ret = drmPrimeFDToHandle(vws->ioctl.drm_fd, whandle->handle,
+                                &handle);
+       if (ret) {
+	  vmw_error("Failed to get handle from prime fd %d.\n",
+		    (int) whandle->handle);
+	  return NULL;
+       }
+       break;
+    default:
+       vmw_error("Attempt to import unsupported handle type %d.\n",
+                 whandle->type);
+       return NULL;
     }
 
-    /**
-     * The vmware device specific handle is the hardware SID.
-     * FIXME: We probably want to move this to the ioctl implementations.
-     */
-
     memset(&arg, 0, sizeof(arg));
-    req->sid = whandle->handle;
+    req->sid = handle;
 
     ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_REF_SURFACE,
 			      &arg, sizeof(arg));
 
+    /*
+     * Need to close the handle we got from prime.
+     */
+    if (whandle->type == DRM_API_HANDLE_TYPE_FD)
+       vmw_ioctl_surface_destroy(vws, handle);
+
     if (ret) {
-        vmw_error("Failed referencing shared surface. SID %d.\n"
-                  "Error %d (%s).\n",
-                  whandle->handle, ret, strerror(-ret));
-	return NULL;
+       /*
+        * Any attempt to share something other than a surface, like a dumb
+        * kms buffer, should fail here.
+        */
+       vmw_error("Failed referencing shared surface. SID %d.\n"
+                 "Error %d (%s).\n",
+                 handle, ret, strerror(-ret));
+       return NULL;
     }
 
     if (rep->mip_levels[0] != 1) {
         vmw_error("Incorrect number of mipmap levels on shared surface."
                   " SID %d, levels %d\n",
-                  whandle->handle, rep->mip_levels[0]);
+                  handle, rep->mip_levels[0]);
 	goto out_mip;
     }
 
@@ -198,7 +219,7 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
 	if (rep->mip_levels[i] != 0) {
             vmw_error("Incorrect number of faces levels on shared surface."
                       " SID %d, face %d present.\n",
-                      whandle->handle, i);
+                      handle, i);
 	    goto out_mip;
 	}
    }
@@ -210,14 +231,15 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
     pipe_reference_init(&vsrf->refcnt, 1);
     p_atomic_set(&vsrf->validated, 0);
     vsrf->screen = vws;
-    vsrf->sid = whandle->handle;
+    vsrf->sid = handle;
     ssrf = svga_winsys_surface(vsrf);
     *format = rep->format;
 
     return ssrf;
 
 out_mip:
-    vmw_ioctl_surface_destroy(vws, whandle->handle);
+    vmw_ioctl_surface_destroy(vws, handle);
+
     return NULL;
 }
 
@@ -227,7 +249,9 @@ vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
 			   unsigned stride,
 			   struct winsys_handle *whandle)
 {
+    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
     struct vmw_svga_winsys_surface *vsrf;
+    int ret;
 
     if (!surface)
 	return FALSE;
@@ -235,6 +259,25 @@ vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
     vsrf = vmw_svga_winsys_surface(surface);
     whandle->handle = vsrf->sid;
     whandle->stride = stride;
+
+    switch (whandle->type) {
+    case DRM_API_HANDLE_TYPE_SHARED:
+    case DRM_API_HANDLE_TYPE_KMS:
+       whandle->handle = vsrf->sid;
+       break;
+    case DRM_API_HANDLE_TYPE_FD:
+       ret = drmPrimeHandleToFD(vws->ioctl.drm_fd, vsrf->sid, DRM_CLOEXEC,
+				(int *)&whandle->handle);
+       if (ret) {
+	  vmw_error("Failed to get file descriptor from prime.\n");
+	  return FALSE;
+       }
+       break;
+    default:
+       vmw_error("Attempt to export unsupported handle type %d.\n",
+		 whandle->type);
+       return FALSE;
+    }
 
     return TRUE;
 }
