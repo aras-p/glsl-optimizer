@@ -17,4 +17,20 @@ create_screen(int fd)
    return screen;
 }
 
-DRM_DRIVER_DESCRIPTOR("nouveau", "nouveau", create_screen, NULL)
+static const struct drm_conf_ret share_fd_ret = {
+   .type = DRM_CONF_BOOL,
+   .val.val_int = true,
+};
+
+static const struct drm_conf_ret *drm_configuration(enum drm_conf conf)
+{
+   switch (conf) {
+   case DRM_CONF_SHARE_FD:
+      return &share_fd_ret;
+   default:
+      break;
+   }
+   return NULL;
+}
+
+DRM_DRIVER_DESCRIPTOR("nouveau", "nouveau", create_screen, drm_configuration)

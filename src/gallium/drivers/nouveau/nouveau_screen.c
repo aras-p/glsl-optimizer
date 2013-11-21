@@ -86,13 +86,18 @@ nouveau_screen_bo_from_handle(struct pipe_screen *pscreen,
 	struct nouveau_bo *bo = 0;
 	int ret;
 
-	if (whandle->type != DRM_API_HANDLE_TYPE_SHARED) {
+	if (whandle->type != DRM_API_HANDLE_TYPE_SHARED &&
+	    whandle->type != DRM_API_HANDLE_TYPE_FD) {
 		debug_printf("%s: attempt to import unsupported handle type %d\n",
 			     __FUNCTION__, whandle->type);
 		return NULL;
 	}
 
-	ret = nouveau_bo_name_ref(dev, whandle->handle, &bo);
+	if (whandle->type == DRM_API_HANDLE_TYPE_SHARED)
+		ret = nouveau_bo_name_ref(dev, whandle->handle, &bo);
+	else
+		ret = nouveau_bo_prime_handle_ref(dev, whandle->handle, &bo);
+
 	if (ret) {
 		debug_printf("%s: ref name 0x%08x failed with %d\n",
 			     __FUNCTION__, whandle->handle, ret);
@@ -117,6 +122,8 @@ nouveau_screen_bo_get_handle(struct pipe_screen *pscreen,
 	} else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
 		whandle->handle = bo->handle;
 		return TRUE;
+	} else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
+		return nouveau_bo_set_prime(bo, &whandle->handle) == 0;
 	} else {
 		return FALSE;
 	}
