@@ -257,7 +257,6 @@ intel_winsys_import_handle(struct intel_winsys *winsys,
                name, gem_name);
       }
       break;
-#if 0
    case DRM_API_HANDLE_TYPE_FD:
       {
          const int fd = (int) handle->handle;
@@ -265,7 +264,6 @@ intel_winsys_import_handle(struct intel_winsys *winsys,
                fd, height * handle->stride);
       }
       break;
-#endif
    default:
       bo = NULL;
       break;
