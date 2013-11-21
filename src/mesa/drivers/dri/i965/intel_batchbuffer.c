@@ -100,6 +100,11 @@ intel_batchbuffer_reset(struct brw_context *brw)
    brw->batch.state_batch_offset = brw->batch.bo->size;
    brw->batch.used = 0;
    brw->batch.needs_sol_reset = false;
+
+   /* We don't know what ring the new batch will be sent to until we see the
+    * first BEGIN_BATCH or BEGIN_BATCH_BLT.  Mark it as unknown.
+    */
+   brw->batch.ring = UNKNOWN_RING;
 }
 
 void
@@ -116,6 +121,8 @@ intel_batchbuffer_reset_to_saved(struct brw_context *brw)
    drm_intel_gem_bo_clear_relocs(brw->batch.bo, brw->batch.saved.reloc_count);
 
    brw->batch.used = brw->batch.saved.used;
+   if (brw->batch.used == 0)
+      brw->batch.ring = UNKNOWN_RING;
 
    /* Cached batch state is dead, since we just cleared some unknown part of the
     * batchbuffer.  Assume that the caller resets any other state necessary.
@@ -429,6 +436,7 @@ intel_batchbuffer_cached_advance(struct brw_context *brw)
 	       brw->batch.cached_items = item;
 	    }
 	    brw->batch.used = brw->batch.emit;
+            assert(brw->batch.used > 0);
 	    return;
 	 }
 

@@ -93,6 +93,7 @@ intel_batchbuffer_emit_dword(struct brw_context *brw, GLuint dword)
    assert(intel_batchbuffer_space(brw) >= 4);
 #endif
    brw->batch.map[brw->batch.used++] = dword;
+   assert(brw->batch.ring != UNKNOWN_RING);
 }
 
 static INLINE void
@@ -106,17 +107,21 @@ intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz,
                                 enum brw_gpu_ring ring)
 {
    /* If we're switching rings, implicitly flush the batch. */
-   if (unlikely(ring != brw->batch.ring) && brw->batch.used && brw->gen >= 6) {
+   if (unlikely(ring != brw->batch.ring) && brw->batch.ring != UNKNOWN_RING &&
+       brw->gen >= 6) {
       intel_batchbuffer_flush(brw);
    }
-
-   brw->batch.ring = ring;
 
 #ifdef DEBUG
    assert(sz < BATCH_SZ - BATCH_RESERVED);
 #endif
    if (intel_batchbuffer_space(brw) < sz)
       intel_batchbuffer_flush(brw);
+
+   /* The intel_batchbuffer_flush() calls above might have changed
+    * brw->batch.ring to UNKNOWN_RING, so we need to set it here at the end.
+    */
+   brw->batch.ring = ring;
 }
 
 static INLINE void

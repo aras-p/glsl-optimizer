@@ -862,6 +862,7 @@ struct intel_sync_object {
 };
 
 enum brw_gpu_ring {
+   UNKNOWN_RING,
    RENDER_RING,
    BLT_RING,
 };
