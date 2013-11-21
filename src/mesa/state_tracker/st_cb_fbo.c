@@ -389,6 +389,72 @@ st_bind_framebuffer(struct gl_context *ctx, GLenum target,
 
 
 /**
+ * Create or update the pipe_surface of a FBO renderbuffer.
+ * This is usually called after st_finalize_texture.
+ */
+void
+st_update_renderbuffer_surface(struct st_context *st,
+                               struct st_renderbuffer *strb)
+{
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_resource *resource = strb->texture;
+   int rtt_width = strb->Base.Width;
+   int rtt_height = strb->Base.Height;
+   int rtt_depth = strb->Base.Depth;
+   enum pipe_format format = st->ctx->Color.sRGBEnabled ? resource->format :
+         util_format_linear(resource->format);
+   unsigned first_layer, last_layer, level;
+
+   if (resource->target == PIPE_TEXTURE_1D_ARRAY) {
+      rtt_depth = rtt_height;
+      rtt_height = 1;
+   }
+
+   /* find matching mipmap level size */
+   for (level = 0; level <= resource->last_level; level++) {
+      if (u_minify(resource->width0, level) == rtt_width &&
+          u_minify(resource->height0, level) == rtt_height &&
+          (resource->target != PIPE_TEXTURE_3D ||
+           u_minify(resource->depth0, level) == rtt_depth)) {
+         break;
+      }
+   }
+   assert(level <= resource->last_level);
+
+   /* determine the layer bounds */
+   if (strb->rtt_layered) {
+      first_layer = 0;
+      last_layer = util_max_layer(strb->texture, level);
+   }
+   else {
+      first_layer =
+      last_layer = strb->rtt_face + strb->rtt_slice;
+   }
+
+   if (!strb->surface ||
+       strb->surface->texture->nr_samples != strb->Base.NumSamples ||
+       strb->surface->format != format ||
+       strb->surface->texture != resource ||
+       strb->surface->width != rtt_width ||
+       strb->surface->height != rtt_height ||
+       strb->surface->u.tex.level != level ||
+       strb->surface->u.tex.first_layer != first_layer ||
+       strb->surface->u.tex.last_layer != last_layer) {
+      /* create a new pipe_surface */
+      struct pipe_surface surf_tmpl;
+      memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+      surf_tmpl.format = format;
+      surf_tmpl.u.tex.level = level;
+      surf_tmpl.u.tex.first_layer = first_layer;
+      surf_tmpl.u.tex.last_layer = last_layer;
+
+      pipe_surface_reference(&strb->surface, NULL);
+
+      strb->surface = pipe->create_surface(pipe, resource, &surf_tmpl);
+   }
+}
+
+/**
  * Called by ctx->Driver.RenderTexture
  */
 static void
@@ -401,8 +467,6 @@ st_render_texture(struct gl_context *ctx,
    struct gl_renderbuffer *rb = att->Renderbuffer;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    struct pipe_resource *pt;
-   struct st_texture_object *stObj;
-   struct pipe_surface surf_tmpl;
 
    if (!st_finalize_texture(ctx, pipe, att->Texture))
       return;
@@ -410,31 +474,16 @@ st_render_texture(struct gl_context *ctx,
    pt = st_get_texobj_resource(att->Texture);
    assert(pt);
 
-   /* get the texture for the texture object */
-   stObj = st_texture_object(att->Texture);
-
    /* point renderbuffer at texobject */
-   strb->rtt = stObj;
-   strb->rtt_level = att->TextureLevel;
+   strb->is_rtt = TRUE;
    strb->rtt_face = att->CubeMapFace;
    strb->rtt_slice = att->Zoffset;
-
-   pipe_resource_reference( &strb->texture, pt );
+   strb->rtt_layered = att->Layered;
+   pipe_resource_reference(&strb->texture, pt);
 
    pipe_surface_release(pipe, &strb->surface);
 
-   assert(strb->rtt_level <= strb->texture->last_level);
-
-   /* new surface for rendering into the texture */
-   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   surf_tmpl.format = ctx->Color.sRGBEnabled
-      ? strb->texture->format : util_format_linear(strb->texture->format);
-   surf_tmpl.u.tex.level = strb->rtt_level;
-   surf_tmpl.u.tex.first_layer = strb->rtt_face + strb->rtt_slice;
-   surf_tmpl.u.tex.last_layer = strb->rtt_face + strb->rtt_slice;
-   strb->surface = pipe->create_surface(pipe,
-                                        strb->texture,
-                                        &surf_tmpl);
+   st_update_renderbuffer_surface(st, strb);
 
    strb->Base.Format = st_pipe_format_to_mesa_format(pt->format);
 
@@ -464,7 +513,7 @@ st_finish_render_texture(struct gl_context *ctx, struct gl_renderbuffer *rb)
    if (!strb)
       return;
 
-   strb->rtt = NULL;
+   strb->is_rtt = FALSE;
 
    /* restore previous framebuffer state */
    st_invalidate_state(ctx, _NEW_BUFFERS);
@@ -706,8 +755,8 @@ st_MapRenderbuffer(struct gl_context *ctx,
 
     map = pipe_transfer_map(pipe,
                             strb->texture,
-                            strb->rtt_level,
-                            strb->rtt_face + strb->rtt_slice,
+                            strb->surface->u.tex.level,
+                            strb->surface->u.tex.first_layer,
                             usage, x, y2, w, h, &strb->transfer);
    if (map) {
       if (invert) {

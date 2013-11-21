@@ -878,7 +878,8 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    }
 
    stmap = pipe_transfer_map(pipe, strb->texture,
-                             strb->rtt_level, strb->rtt_face + strb->rtt_slice,
+                             strb->surface->u.tex.level,
+                             strb->surface->u.tex.first_layer,
                              usage, x, y,
                              width, height, &pt);
 
@@ -1263,8 +1264,8 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    /* map the stencil buffer */
    drawMap = pipe_transfer_map(pipe,
                                rbDraw->texture,
-                               rbDraw->rtt_level,
-                               rbDraw->rtt_face + rbDraw->rtt_slice,
+                               rbDraw->surface->u.tex.level,
+                               rbDraw->surface->u.tex.first_layer,
                                usage, dstx, dsty,
                                width, height, &ptDraw);
 
@@ -1422,20 +1423,20 @@ blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
 
          memset(&blit, 0, sizeof(blit));
          blit.src.resource = rbRead->texture;
-         blit.src.level = rbRead->rtt_level;
+         blit.src.level = rbRead->surface->u.tex.level;
          blit.src.format = rbRead->texture->format;
          blit.src.box.x = readX;
          blit.src.box.y = readY;
-         blit.src.box.z = rbRead->rtt_face + rbRead->rtt_slice;
+         blit.src.box.z = rbRead->surface->u.tex.first_layer;
          blit.src.box.width = readW;
          blit.src.box.height = readH;
          blit.src.box.depth = 1;
          blit.dst.resource = rbDraw->texture;
-         blit.dst.level = rbDraw->rtt_level;
+         blit.dst.level = rbDraw->surface->u.tex.level;
          blit.dst.format = rbDraw->texture->format;
          blit.dst.box.x = drawX;
          blit.dst.box.y = drawY;
-         blit.dst.box.z = rbDraw->rtt_face + rbDraw->rtt_slice;
+         blit.dst.box.z = rbDraw->surface->u.tex.first_layer;
          blit.dst.box.width = drawW;
          blit.dst.box.height = drawH;
          blit.dst.box.depth = 1;
@@ -1633,11 +1634,11 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
 
       memset(&blit, 0, sizeof(blit));
       blit.src.resource = rbRead->texture;
-      blit.src.level = rbRead->rtt_level;
+      blit.src.level = rbRead->surface->u.tex.level;
       blit.src.format = rbRead->texture->format;
       blit.src.box.x = readX;
       blit.src.box.y = readY;
-      blit.src.box.z = rbRead->rtt_face + rbRead->rtt_slice;
+      blit.src.box.z = rbRead->surface->u.tex.first_layer;
       blit.src.box.width = readW;
       blit.src.box.height = readH;
       blit.src.box.depth = 1;

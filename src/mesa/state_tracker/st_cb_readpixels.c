@@ -166,7 +166,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y,
    }
 
    blit.src.resource = src;
-   blit.src.level = strb->rtt_level;
+   blit.src.level = strb->surface->u.tex.level;
    blit.src.format = src_format;
    blit.dst.resource = dst;
    blit.dst.level = 0;
@@ -175,7 +175,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y,
    blit.dst.box.x = 0;
    blit.src.box.y = y;
    blit.dst.box.y = 0;
-   blit.src.box.z = strb->rtt_face + strb->rtt_slice;
+   blit.src.box.z = strb->surface->u.tex.first_layer;
    blit.dst.box.z = 0;
    blit.src.box.width = blit.dst.box.width = width;
    blit.src.box.height = blit.dst.box.height = height;

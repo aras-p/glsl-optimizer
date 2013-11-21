@@ -58,8 +58,10 @@ struct st_renderbuffer
    boolean software;
    void *data;
 
-   struct st_texture_object *rtt;  /**< GL render to texture's texture */
-   unsigned rtt_level, rtt_face, rtt_slice;
+   /* Inputs from Driver.RenderTexture, don't use directly. */
+   boolean is_rtt; /**< whether Driver.RenderTexture was called */
+   unsigned rtt_face, rtt_slice;
+   boolean rtt_layered; /**< whether glFramebufferTexture was called */
 };
 
 
@@ -72,6 +74,10 @@ st_renderbuffer(struct gl_renderbuffer *rb)
 
 extern struct gl_renderbuffer *
 st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw);
+
+extern void
+st_update_renderbuffer_surface(struct st_context *st,
+                               struct st_renderbuffer *strb);
 
 extern void
 st_init_fbo_functions(struct dd_function_table *functions);

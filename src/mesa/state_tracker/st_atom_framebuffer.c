@@ -44,56 +44,6 @@
 
 
 /**
- * When doing GL render to texture, we have to be sure that finalize_texture()
- * didn't yank out the pipe_resource that we earlier created a surface for.
- * Check for that here and create a new surface if needed.
- */
-static void
-update_renderbuffer_surface(struct st_context *st,
-                            struct st_renderbuffer *strb)
-{
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_resource *resource = strb->rtt ? strb->rtt->pt : strb->texture;
-   int rtt_width = strb->Base.Width;
-   int rtt_height = strb->Base.Height;
-   enum pipe_format format = st->ctx->Color.sRGBEnabled ? resource->format : util_format_linear(resource->format);
-
-   if (!strb->surface ||
-       strb->surface->texture->nr_samples != strb->Base.NumSamples ||
-       strb->surface->format != format ||
-       strb->surface->texture != resource ||
-       strb->surface->width != rtt_width ||
-       strb->surface->height != rtt_height) {
-      GLuint level;
-      /* find matching mipmap level size */
-      for (level = 0; level <= resource->last_level; level++) {
-         if (u_minify(resource->width0, level) == rtt_width &&
-             u_minify(resource->height0, level) == rtt_height) {
-            struct pipe_surface surf_tmpl;
-            memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-            surf_tmpl.format = format;
-            surf_tmpl.u.tex.level = level;
-            surf_tmpl.u.tex.first_layer = strb->rtt_face + strb->rtt_slice;
-            surf_tmpl.u.tex.last_layer = strb->rtt_face + strb->rtt_slice;
-
-            pipe_surface_reference(&strb->surface, NULL);
-
-            strb->surface = pipe->create_surface(pipe,
-                                                 resource,
-                                                 &surf_tmpl);
-#if 0
-            printf("-- alloc new surface %d x %d into tex %p\n",
-                   strb->surface->width, strb->surface->height,
-                   texture);
-#endif
-            break;
-         }
-      }
-   }
-}
-
-
-/**
  * Update framebuffer state (color, depth, stencil, etc. buffers)
  */
 static void
@@ -121,10 +71,10 @@ update_framebuffer_state( struct st_context *st )
 
       if (strb) {
          /*printf("--------- framebuffer surface rtt %p\n", strb->rtt);*/
-         if (strb->rtt ||
+         if (strb->is_rtt ||
              (strb->texture && util_format_is_srgb(strb->texture->format))) {
             /* rendering to a GL texture, may have to update surface */
-            update_renderbuffer_surface(st, strb);
+            st_update_renderbuffer_surface(st, strb);
          }
 
          if (strb->surface) {
@@ -144,9 +94,9 @@ update_framebuffer_state( struct st_context *st )
     */
    strb = st_renderbuffer(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
    if (strb) {
-      if (strb->rtt) {
+      if (strb->is_rtt) {
          /* rendering to a GL texture, may have to update surface */
-         update_renderbuffer_surface(st, strb);
+         st_update_renderbuffer_surface(st, strb);
       }
       pipe_surface_reference(&framebuffer->zsbuf, strb->surface);
    }
