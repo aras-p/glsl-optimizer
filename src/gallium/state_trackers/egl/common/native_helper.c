@@ -427,6 +427,7 @@ drm_display_import_native_buffer(struct native_display *ndpy,
 
          memset(&wsh, 0, sizeof(wsh));
          wsh.handle = nbuf->u.drm.name;
+         wsh.type = DRM_API_HANDLE_TYPE_SHARED;
          wsh.stride = nbuf->u.drm.stride;
 
          res = screen->resource_from_handle(screen, &nbuf->u.drm.templ, &wsh);

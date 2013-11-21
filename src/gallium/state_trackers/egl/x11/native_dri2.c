@@ -173,6 +173,7 @@ dri2_surface_process_drawable_buffers(struct native_surface *nsurf,
       }
 
       memset(&whandle, 0, sizeof(whandle));
+      whandle.type = DRM_API_HANDLE_TYPE_SHARED;
       whandle.stride = xbuf->pitch;
       whandle.handle = xbuf->name;
       dri2surf->textures[natt] = dri2dpy->base.screen->resource_from_handle(

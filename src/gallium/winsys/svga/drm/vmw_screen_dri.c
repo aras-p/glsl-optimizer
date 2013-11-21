@@ -163,6 +163,12 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
     int ret;
     int i;
 
+    if (whandle->type != DRM_API_HANDLE_TYPE_SHARED) {
+        vmw_error("Attempt to import unknown handle type %d\n",
+                  whandle->type);
+        return NULL;
+    }
+
     /**
      * The vmware device specific handle is the hardware SID.
      * FIXME: We probably want to move this to the ioctl implementations.

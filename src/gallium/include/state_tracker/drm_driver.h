@@ -10,6 +10,8 @@ struct pipe_resource;
 
 #define DRM_API_HANDLE_TYPE_SHARED 0
 #define DRM_API_HANDLE_TYPE_KMS    1
+#define DRM_API_HANDLE_TYPE_FD     2
+
 
 /**
  * For use with pipe_screen::{texture_from_handle|texture_get_handle}.
@@ -17,9 +19,10 @@ struct pipe_resource;
 struct winsys_handle
 {
    /**
-    * Unused for texture_from_handle, always
-    * DRM_API_HANDLE_TYPE_SHARED.  Input to texture_get_handle,
-    * use TEXTURE_USAGE to select handle for kms or ipc.
+    * Input for texture_from_handle, valid values are
+    * DRM_API_HANDLE_TYPE_SHARED or DRM_API_HANDLE_TYPE_FD.
+    * Input to texture_get_handle,
+    * to select handle for kms, flink, or prime.
     */
    unsigned type;
    /**

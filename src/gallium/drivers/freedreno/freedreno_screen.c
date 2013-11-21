@@ -361,6 +361,11 @@ fd_screen_bo_from_handle(struct pipe_screen *pscreen,
 	struct fd_screen *screen = fd_screen(pscreen);
 	struct fd_bo *bo;
 
+	if (whandle->type != DRM_API_HANDLE_TYPE_SHARED) {
+		DBG("Attempt to import unsupported handle type %d", whandle->type);
+		return NULL;
+	}
+
 	bo = fd_bo_from_name(screen->dev, whandle->handle);
 	if (!bo) {
 		DBG("ref name 0x%08x failed", whandle->handle);

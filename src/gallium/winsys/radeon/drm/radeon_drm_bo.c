@@ -877,6 +877,9 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
 
     memset(&open_arg, 0, sizeof(open_arg));
 
+    if (whandle->type != DRM_API_HANDLE_TYPE_SHARED)
+        return NULL;
+
     /* We must maintain a list of pairs <handle, bo>, so that we always return
      * the same BO for one particular handle. If we didn't do that and created
      * more than one BO for the same handle and then relocated them in a CS,
@@ -991,6 +994,9 @@ static boolean radeon_winsys_bo_get_handle(struct pb_buffer *buffer,
         whandle->handle = bo->flink;
     } else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
         whandle->handle = bo->handle;
+    } else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
+        /* TODO: Implement */
+        return FALSE;
     }
 
     whandle->stride = stride;

@@ -95,9 +95,13 @@ i915_drm_buffer_from_handle(struct i915_winsys *iws,
                             unsigned *stride)
 {
    struct i915_drm_winsys *idws = i915_drm_winsys(iws);
-   struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
+   struct i915_drm_buffer *buf;
    uint32_t tile = 0, swizzle = 0;
 
+   if (whandle->type != DRM_API_HANDLE_TYPE_SHARED)
+      return NULL;
+
+   buf = CALLOC_STRUCT(i915_drm_buffer);
    if (!buf)
       return NULL;
 

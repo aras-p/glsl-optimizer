@@ -86,6 +86,12 @@ nouveau_screen_bo_from_handle(struct pipe_screen *pscreen,
 	struct nouveau_bo *bo = 0;
 	int ret;
 
+	if (whandle->type != DRM_API_HANDLE_TYPE_SHARED) {
+		debug_printf("%s: attempt to import unsupported handle type %d\n",
+			     __FUNCTION__, whandle->type);
+		return NULL;
+	}
+
 	ret = nouveau_bo_name_ref(dev, whandle->handle, &bo);
 	if (ret) {
 		debug_printf("%s: ref name 0x%08x failed with %d\n",
