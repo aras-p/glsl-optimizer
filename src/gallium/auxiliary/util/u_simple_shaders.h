@@ -56,6 +56,8 @@ util_make_vertex_passthrough_shader_with_so(struct pipe_context *pipe,
                                     const uint *semantic_indexes,
                                     const struct pipe_stream_output_info *so);
 
+extern void *
+util_make_layered_clear_vertex_shader(struct pipe_context *pipe);
 
 extern void *
 util_make_fragment_tex_shader_writemask(struct pipe_context *pipe, 

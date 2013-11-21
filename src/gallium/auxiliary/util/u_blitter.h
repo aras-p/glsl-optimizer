@@ -183,7 +183,7 @@ void util_blitter_draw_rectangle(struct blitter_context *blitter,
  * - blend state
  */
 void util_blitter_clear(struct blitter_context *blitter,
-                        unsigned width, unsigned height,
+                        unsigned width, unsigned height, unsigned num_layers,
                         unsigned clear_buffers,
                         const union pipe_color_union *color,
                         double depth, unsigned stencil);

@@ -55,6 +55,11 @@ util_framebuffer_min_size(const struct pipe_framebuffer_state *fb,
                           unsigned *width,
                           unsigned *height);
 
+
+extern unsigned
+util_framebuffer_get_num_layers(const struct pipe_framebuffer_state *fb);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -220,7 +220,7 @@ ilo_blitter_pipe_clear_fb(struct ilo_blitter *blitter,
    ilo_blitter_pipe_begin(blitter, ILO_BLITTER_PIPE_CLEAR_FB, false);
 
    util_blitter_clear(blitter->pipe_blitter,
-         blitter->ilo->fb.state.width, blitter->ilo->fb.state.height,
+         blitter->ilo->fb.state.width, blitter->ilo->fb.state.height, 1,
          buffers, color, depth, stencil);
 
    ilo_blitter_pipe_end(blitter);

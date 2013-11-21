@@ -99,6 +99,32 @@ util_make_vertex_passthrough_shader_with_so(struct pipe_context *pipe,
 }
 
 
+void *util_make_layered_clear_vertex_shader(struct pipe_context *pipe)
+{
+   static const char text[] =
+         "VERT\n"
+         "DCL IN[0]\n"
+         "DCL IN[1]\n"
+         "DCL SV[0], INSTANCEID\n"
+         "DCL OUT[0], POSITION\n"
+         "DCL OUT[1], GENERIC[0]\n"
+         "DCL OUT[2], LAYER\n"
+
+         "MOV OUT[0], IN[0]\n"
+         "MOV OUT[1], IN[1]\n"
+         "MOV OUT[2], SV[0]\n"
+         "END\n";
+   struct tgsi_token tokens[1000];
+   struct pipe_shader_state state = {tokens};
+
+   if (!tgsi_text_translate(text, tokens, Elements(tokens))) {
+      assert(0);
+      return NULL;
+   }
+   return pipe->create_vs_state(pipe, &state);
+}
+
+
 /**
  * Make simple fragment texture shader:
  *  IMM {0,0,0,1}                         // (if writemask != 0xf)

@@ -147,3 +147,27 @@ util_framebuffer_min_size(const struct pipe_framebuffer_state *fb,
       return TRUE;
    }
 }
+
+
+/**
+ * Return the number of layers set in the framebuffer state.
+ */
+unsigned
+util_framebuffer_get_num_layers(const struct pipe_framebuffer_state *fb)
+{
+	unsigned i, num_layers = 0;
+
+	for (i = 0; i < fb->nr_cbufs; i++) {
+		if (fb->cbufs[i]) {
+			unsigned num = fb->cbufs[i]->u.tex.last_layer -
+				       fb->cbufs[i]->u.tex.first_layer + 1;
+			num_layers = MAX2(num_layers, num);
+		}
+	}
+	if (fb->zsbuf) {
+		unsigned num = fb->zsbuf->u.tex.last_layer -
+			       fb->zsbuf->u.tex.first_layer + 1;
+		num_layers = MAX2(num_layers, num);
+	}
+	return num_layers;
+}

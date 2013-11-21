@@ -558,7 +558,7 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 	}
 
 	r600_blitter_begin(ctx, R600_CLEAR);
-	util_blitter_clear(rctx->blitter, fb->width, fb->height,
+	util_blitter_clear(rctx->blitter, fb->width, fb->height, 1,
 			   buffers, color, depth, stencil);
 	r600_blitter_end(ctx);
 
