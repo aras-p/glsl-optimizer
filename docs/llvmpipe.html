@@ -203,9 +203,63 @@ for posterior analysis, e.g.:
   We use LLVM-C bindings for now. They are not documented, but follow the C++
   interfaces very closely, and appear to be complete enough for code
   generation. See 
-  http://npcontemplation.blogspot.com/2008/06/secret-of-llvm-c-bindings.html
-  for a stand-alone example.  See the llvm-c/Core.h file for reference.
+  <a href="http://npcontemplation.blogspot.com/2008/06/secret-of-llvm-c-bindings.html">
+  this stand-alone example</a>.  See the llvm-c/Core.h file for reference.
 </li>
+</ul>
+
+<h1 id="recommended_reading">Recommended Reading</h1>
+
+<ul>
+  <li>
+    <p>Rasterization</p>
+    <ul>
+      <li><a href="http://www.cs.unc.edu/~olano/papers/2dh-tri/">Triangle Scan Conversion using 2D Homogeneous Coordinates</a></li>
+      <li><a href="http://www.drdobbs.com/parallel/rasterization-on-larrabee/217200602">Rasterization on Larrabee</a> (<a href="http://devmaster.net/posts/2887/rasterization-on-larrabee">DevMaster copy</a>)</li>
+      <li><a href="http://devmaster.net/posts/6133/rasterization-using-half-space-functions">Rasterization using half-space functions</a></li>
+      <li><a href="http://devmaster.net/posts/6145/advanced-rasterization">Advanced Rasterization</a></li>
+      <li><a href="http://fgiesen.wordpress.com/2013/02/17/optimizing-sw-occlusion-culling-index/">Optimizing Software Occlusion Culling</a></li>
+    </ul>
+  </li>
+  <li>
+    <p>Texture sampling</p>
+    <ul>
+      <li><a href="http://chrishecker.com/Miscellaneous_Technical_Articles#Perspective_Texture_Mapping">Perspective Texture Mapping</a></li>
+      <li><a href="http://www.flipcode.com/archives/Texturing_As_In_Unreal.shtml">Texturing As In Unreal</a></li>
+      <li><a href="http://www.gamasutra.com/view/feature/3301/runtime_mipmap_filtering.php">Run-Time MIP-Map Filtering</a></li>
+      <li><a href="http://alt.3dcenter.org/artikel/2003/10-26_a_english.php">Will "brilinear" filtering persist?</a></li>
+      <li><a href="http://ixbtlabs.com/articles2/gffx/nv40-rx800-3.html">Trilinear filtering</a></li>
+      <li><a href="http://devmaster.net/posts/12785/texture-swizzling">Texture Swizzling</a></li>
+    </ul>
+  </li>
+  <li>
+    <p>SIMD</p>
+    <ul>
+      <li><a href="http://www.cdl.uni-saarland.de/projects/wfv/#header4">Whole-Function Vectorization</a></li>
+    </ul>
+  </li>
+  <li>
+    <p>Optimization</p>
+    <ul>
+      <li><a href="http://www.drdobbs.com/optimizing-pixomatic-for-modern-x86-proc/184405807">Optimizing Pixomatic For Modern x86 Processors</a></li>
+      <li><a href="http://www.intel.com/content/www/us/en/architecture-and-technology/64-ia-32-architectures-optimization-manual.html">Intel 64 and IA-32 Architectures Optimization Reference Manual</a></li>
+      <li><a href="http://www.agner.org/optimize/">Software optimization resources</a></li>
+      <li><a href="http://software.intel.com/en-us/articles/intel-intrinsics-guide">Intel Intrinsics Guide</a><li>
+    </ul>
+  </li>
+  <li>
+    <p>LLVM</p>
+    <ul>
+      <li><a href="http://llvm.org/docs/LangRef.html">LLVM Language Reference Manual</a></li>
+      <li><a href="http://npcontemplation.blogspot.co.uk/2008/06/secret-of-llvm-c-bindings.html">The secret of LLVM C bindings</a></li>
+    </ul>
+  </li>
+  <li>
+    <p>Misc</p>
+    <ul>
+      <li><a href="http://msdn.microsoft.com/en-us/library/gg615082.aspx#architecture">WARP Architecture and Performance</a></li>
+    </ul>
+  </li>
 </ul>
 
 </div>
