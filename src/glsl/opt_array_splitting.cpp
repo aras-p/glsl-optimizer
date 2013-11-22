@@ -224,8 +224,8 @@ ir_array_reference_visitor::get_split_list(exec_list *instructions,
    }
 
    /* Trim out variables we found that we can't split. */
-   foreach_iter(exec_list_iterator, iter, variable_list) {
-      variable_entry *entry = (variable_entry *)iter.get();
+   foreach_list_safe(n, &variable_list) {
+      variable_entry *entry = (variable_entry *) n;
 
       if (debug) {
 	 printf("array %s@%p: decl %d, split %d\n",

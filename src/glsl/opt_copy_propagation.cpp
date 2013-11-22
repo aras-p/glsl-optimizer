@@ -292,8 +292,8 @@ ir_copy_propagation_visitor::kill(ir_variable *var)
    assert(var != NULL);
 
    /* Remove any entries currently in the ACP for this kill. */
-   foreach_iter(exec_list_iterator, iter, *acp) {
-      acp_entry *entry = (acp_entry *)iter.get();
+   foreach_list_safe(n, acp) {
+      acp_entry *entry = (acp_entry *) n;
 
       if (entry->lhs == var || entry->rhs == var) {
 	 entry->remove();

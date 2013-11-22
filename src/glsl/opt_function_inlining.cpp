@@ -349,8 +349,8 @@ ir_variable_replacement_visitor::visit_leave(ir_dereference_record *ir)
 ir_visitor_status
 ir_variable_replacement_visitor::visit_leave(ir_call *ir)
 {
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param = (ir_rvalue *)iter.get();
+   foreach_list_safe(n, &ir->actual_parameters) {
+      ir_rvalue *param = (ir_rvalue *) n;
       ir_rvalue *new_param = param;
       replace_rvalue(&new_param);
 

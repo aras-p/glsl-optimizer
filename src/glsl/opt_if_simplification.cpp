@@ -90,13 +90,13 @@ ir_if_simplification_visitor::visit_leave(ir_if *ir)
        * that matters out.
        */
       if (condition_constant->value.b[0]) {
-	 foreach_iter(exec_list_iterator, then_iter, ir->then_instructions) {
-	    ir_instruction *then_ir = (ir_instruction *)then_iter.get();
+	 foreach_list_safe(n, &ir->then_instructions) {
+	    ir_instruction *then_ir = (ir_instruction *) n;
 	    ir->insert_before(then_ir);
 	 }
       } else {
-	 foreach_iter(exec_list_iterator, else_iter, ir->else_instructions) {
-	    ir_instruction *else_ir = (ir_instruction *)else_iter.get();
+	 foreach_list_safe(n, &ir->else_instructions) {
+	    ir_instruction *else_ir = (ir_instruction *) n;
 	    ir->insert_before(else_ir);
 	 }
       }

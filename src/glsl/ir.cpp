@@ -1717,8 +1717,8 @@ ir_rvalue::error_value(void *mem_ctx)
 void
 visit_exec_list(exec_list *list, ir_visitor *visitor)
 {
-   foreach_iter(exec_list_iterator, iter, *list) {
-      ((ir_instruction *)iter.get())->accept(visitor);
+   foreach_list_safe(n, list) {
+      ((ir_instruction *) n)->accept(visitor);
    }
 }
 
