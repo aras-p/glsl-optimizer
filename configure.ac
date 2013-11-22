@@ -836,7 +836,7 @@ xyesno)
     dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx >= 1.8.1 xcb-dri2 >= 1.8"
 
     if test x"$enable_dri3" = xyes; then
-        dri_modules="$dri_modules xcb-dri3 xcb-present xcb-sync xshmfence"
+        dri_modules="$dri_modules xcb-dri3 xcb-present xcb-sync xshmfence >= 1.1"
     fi
 
     # add xf86vidmode if available

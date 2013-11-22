@@ -87,7 +87,7 @@ struct dri3_buffer {
     */
 
    uint32_t     sync_fence;     /* XID of X SyncFence object */
-   int32_t      *shm_fence;     /* pointer to xshmfence object */
+   struct xshmfence *shm_fence; /* pointer to xshmfence object */
    GLboolean    busy;           /* Set on swap, cleared on IdleNotify */
    void         *driverPrivate;
 

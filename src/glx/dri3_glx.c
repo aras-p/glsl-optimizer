@@ -676,7 +676,7 @@ dri3_alloc_render_buffer(struct glx_screen *glx_screen, Drawable draw,
    xcb_connection_t *c = XGetXCBConnection(dpy);
    xcb_pixmap_t pixmap;
    xcb_sync_fence_t sync_fence;
-   int32_t *shm_fence;
+   struct xshmfence *shm_fence;
    int buffer_fd, fence_fd;
    int stride;
 
@@ -921,7 +921,7 @@ dri3_get_pixmap_buffer(__DRIdrawable *driDrawable,
    struct dri3_screen                   *psc;
    xcb_connection_t                     *c;
    xcb_sync_fence_t                     sync_fence;
-   int32_t                              *shm_fence;
+   struct xshmfence                     *shm_fence;
    int                                  fence_fd;
    __DRIimage                           *image_planar;
    int                                  stride, offset;
