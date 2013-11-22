@@ -1303,10 +1303,21 @@ intel_update_image_buffer(struct brw_context *intel,
 
    unsigned num_samples = rb->Base.Base.NumSamples;
 
-   if (rb->mt &&
-       rb->mt->region &&
-       rb->mt->region == region)
-      return;
+   /* Check and see if we're already bound to the right
+    * buffer object
+    */
+   if (num_samples == 0) {
+       if (rb->mt &&
+           rb->mt->region &&
+           rb->mt->region->bo == region->bo)
+          return;
+   } else {
+       if (rb->mt &&
+           rb->mt->singlesample_mt &&
+           rb->mt->singlesample_mt->region &&
+           rb->mt->singlesample_mt->region->bo == region->bo)
+          return;
+   }
 
    intel_miptree_release(&rb->mt);
    rb->mt = intel_miptree_create_for_image_buffer(intel,
