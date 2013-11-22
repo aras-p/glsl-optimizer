@@ -771,7 +771,13 @@ intel_miptree_create_for_image_buffer(struct brw_context *intel,
    if (!singlesample_mt)
       return NULL;
 
-   intel_region_reference(&singlesample_mt->region, region);
+   /* If this miptree is capable of supporting fast color clears, set
+    * mcs_state appropriately to ensure that fast clears will occur.
+    * Allocation of the MCS miptree will be deferred until the first fast
+    * clear actually occurs.
+    */
+   if (intel_is_non_msrt_mcs_buffer_supported(intel, singlesample_mt))
+      singlesample_mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_RESOLVED;
 
    if (num_samples == 0)
       return singlesample_mt;
@@ -788,8 +794,6 @@ intel_miptree_create_for_image_buffer(struct brw_context *intel,
 
    multisample_mt->singlesample_mt = singlesample_mt;
    multisample_mt->need_downsample = false;
-
-   intel_region_reference(&multisample_mt->region, region);
 
    if (intel->is_front_buffer_rendering && buffer_type == __DRI_IMAGE_BUFFER_FRONT) {
       intel_miptree_upsample(intel, multisample_mt);
