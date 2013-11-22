@@ -224,7 +224,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
               vec1(t_nopersp),
               brw_imm_f(0));
       brw_IF(p, BRW_EXECUTE_1);
-      brw_MOV(p, t_nopersp, brw_imm_vf4(VF_ONE, VF_ZERO, VF_ZERO, VF_ZERO));
+      brw_MOV(p, t_nopersp, brw_imm_vf4(1, 0, 0, 0));
       brw_ENDIF(p);
 
       /* Now compute t_nopersp = t_nopersp.y/t_nopersp.x and broadcast it. */
