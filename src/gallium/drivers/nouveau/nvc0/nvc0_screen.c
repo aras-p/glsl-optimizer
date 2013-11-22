@@ -743,6 +743,8 @@ nvc0_screen_create(struct nouveau_device *dev)
    if (ret)
       goto fail;
 
+   PUSH_REFN (push, screen->uniform_bo, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+
    for (i = 0; i < 5; ++i) {
       /* TIC and TSC entries for each unit (nve4+ only) */
       /* auxiliary constants (6 user clip planes, base instance id) */
