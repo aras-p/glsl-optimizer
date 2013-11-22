@@ -108,6 +108,7 @@ header = """/**
 #include "main/varray.h"
 #include "main/viewport.h"
 #include "main/shaderapi.h"
+#include "main/shaderimage.h"
 #include "main/uniforms.h"
 #include "main/syncobj.h"
 #include "main/formatquery.h"

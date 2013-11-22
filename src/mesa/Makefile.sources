@@ -81,6 +81,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/scissor.c \
 	$(SRCDIR)main/set.c \
 	$(SRCDIR)main/shaderapi.c \
+	$(SRCDIR)main/shaderimage.c \
 	$(SRCDIR)main/shaderobj.c \
 	$(SRCDIR)main/shader_query.cpp \
 	$(SRCDIR)main/shared.c \
