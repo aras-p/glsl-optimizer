@@ -53,8 +53,10 @@ _CRTIMP int _vscprintf(const char *format, va_list argptr);
 
 struct ralloc_header
 {
+#ifdef DEBUG
    /* A canary value used to determine whether a pointer is ralloc'd. */
    unsigned canary;
+#endif
 
    struct ralloc_header *parent;
 
@@ -78,7 +80,9 @@ get_header(const void *ptr)
 {
    ralloc_header *info = (ralloc_header *) (((char *) ptr) -
 					    sizeof(ralloc_header));
+#ifdef DEBUG
    assert(info->canary == CANARY);
+#endif
    return info;
 }
 
@@ -117,7 +121,9 @@ ralloc_size(const void *ctx, size_t size)
 
    add_child(parent, info);
 
+#ifdef DEBUG
    info->canary = CANARY;
+#endif
 
    return PTR_FROM_HEADER(info);
 }
