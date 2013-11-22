@@ -1198,8 +1198,8 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
  * Note that proxy targets are not valid here.
  * \return TEXTURE_x_INDEX or -1 if target is invalid
  */
-static GLint
-target_enum_to_index(const struct gl_context *ctx, GLenum target)
+int
+_mesa_tex_target_to_index(const struct gl_context *ctx, GLenum target)
 {
    switch (target) {
    case GL_TEXTURE_1D:
@@ -1270,7 +1270,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       _mesa_debug(ctx, "glBindTexture %s %d\n",
                   _mesa_lookup_enum_by_nr(target), (GLint) texName);
 
-   targetIndex = target_enum_to_index(ctx, target);
+   targetIndex = _mesa_tex_target_to_index(ctx, target);
    if (targetIndex < 0) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glBindTexture(target)");
       return;

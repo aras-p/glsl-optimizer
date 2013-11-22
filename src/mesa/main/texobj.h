@@ -54,6 +54,9 @@ _mesa_initialize_texture_object( struct gl_context *ctx,
                                  struct gl_texture_object *obj,
                                  GLuint name, GLenum target );
 
+extern int
+_mesa_tex_target_to_index(const struct gl_context *ctx, GLenum target);
+
 extern void
 _mesa_delete_texture_object( struct gl_context *ctx,
                              struct gl_texture_object *obj );
