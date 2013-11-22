@@ -2408,7 +2408,8 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
 
    /* draw quad(s) */
    if (fb->NumLayers > 0) {
-      for (unsigned layer = 0; layer < fb->NumLayers; layer++) {
+      unsigned layer;
+      for (layer = 0; layer < fb->NumLayers; layer++) {
          if (fb->_IntegerColor)
             _mesa_Uniform1i(clear->IntegerLayerLocation, layer);
          else
