@@ -206,61 +206,7 @@ struct exec_node {
 
 #ifdef __cplusplus
 struct exec_node;
-
-class iterator {
-public:
-   void next()
-   {
-   }
-
-   void *get()
-   {
-      return NULL;
-   }
-
-   bool has_next() const
-   {
-      return false;
-   }
-};
-
-class exec_list_iterator : public iterator {
-public:
-   exec_list_iterator(exec_node *n) : node(n), _next(n->next)
-   {
-      /* empty */
-   }
-
-   void next()
-   {
-      node = _next;
-      _next = node->next;
-   }
-
-   void remove()
-   {
-      node->remove();
-   }
-
-   exec_node *get()
-   {
-      return node;
-   }
-
-   bool has_next() const
-   {
-      return _next != NULL;
-   }
-
-private:
-   exec_node *node;
-   exec_node *_next;
-};
-
-#define foreach_iter(iter_type, iter, container) \
-   for (iter_type iter = (container) . iterator(); iter.has_next(); iter.next())
 #endif
-
 
 struct exec_list {
    struct exec_node *head;
@@ -403,16 +349,6 @@ struct exec_list {
       /* Make the source list empty for good measure.
        */
       source->make_empty();
-   }
-
-   exec_list_iterator iterator()
-   {
-      return exec_list_iterator(head);
-   }
-
-   exec_list_iterator iterator() const
-   {
-      return exec_list_iterator((exec_node *) head);
    }
 #endif
 };

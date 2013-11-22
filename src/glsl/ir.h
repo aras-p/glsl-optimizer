@@ -914,14 +914,6 @@ public:
    }
 
    /**
-    * Get an iterator for the set of function signatures
-    */
-   exec_list_iterator iterator()
-   {
-      return signatures.iterator();
-   }
-
-   /**
     * Find a signature that matches a set of actual parameters, taking implicit
     * conversions into account.  Also flags whether the match was exact.
     */
@@ -1016,14 +1008,6 @@ public:
    virtual ir_loop *as_loop()
    {
       return this;
-   }
-
-   /**
-    * Get an iterator for the instructions of the loop body
-    */
-   exec_list_iterator iterator()
-   {
-      return body_instructions.iterator();
    }
 
    /** List of ir_instruction that make up the body of the loop. */
@@ -1519,14 +1503,6 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
-
-   /**
-    * Get an iterator for the set of acutal parameters
-    */
-   exec_list_iterator iterator()
-   {
-      return actual_parameters.iterator();
-   }
 
    /**
     * Get the name of the function being called.
