@@ -57,7 +57,7 @@
  * nothing to change that (in fact it may make it worse), but some tests
  * (don't ask) really want accurate values at origin (and ONLY origin).
  */
-#define ACCURATE_A0 1
+#define ACCURATE_A0 0
 
 
 /* currently organized to interpolate full float[4] attributes even
