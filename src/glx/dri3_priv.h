@@ -89,6 +89,7 @@ struct dri3_buffer {
    uint32_t     sync_fence;     /* XID of X SyncFence object */
    struct xshmfence *shm_fence; /* pointer to xshmfence object */
    GLboolean    busy;           /* Set on swap, cleared on IdleNotify */
+   GLboolean    own_pixmap;     /* We allocated the pixmap ID, free on destroy */
    void         *driverPrivate;
 
    uint32_t     size;
@@ -171,6 +172,8 @@ dri3_pixmap_buf_id(enum dri3_buffer_type buffer_type)
       return DRI3_FRONT_ID;
 }
 
+#define DRI3_NUM_BUFFERS        (1 + DRI3_MAX_BACK)
+
 struct dri3_drawable {
    __GLXDRIdrawable base;
    __DRIdrawable *driDrawable;
@@ -194,7 +197,7 @@ struct dri3_drawable {
    uint64_t previous_time;
    unsigned frames;
 
-   struct dri3_buffer *buffers[1 + DRI3_MAX_BACK];
+   struct dri3_buffer *buffers[DRI3_NUM_BUFFERS];
    int cur_back;
    int depth;
 
