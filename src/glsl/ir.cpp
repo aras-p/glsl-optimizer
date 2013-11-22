@@ -1729,12 +1729,6 @@ ir_function_signature::replace_parameters(exec_list *new_params)
     * parameter information comes from the function prototype, it may either
     * specify incorrect parameter names or not have names at all.
     */
-   foreach_iter(exec_list_iterator, iter, parameters) {
-      assert(((ir_instruction *) iter.get())->as_variable() != NULL);
-
-      iter.remove();
-   }
-
    new_params->move_nodes_to(&parameters);
 }
 
