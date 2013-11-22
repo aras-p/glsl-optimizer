@@ -8312,6 +8312,8 @@
 
 <xi:include href="ARB_shader_atomic_counters.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="ARB_shader_image_load_store.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <xi:include href="ARB_texture_storage.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <!-- ARB extension #118 -->
