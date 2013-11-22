@@ -240,7 +240,8 @@ class count_uniform_size : public program_resource_visitor {
 public:
    count_uniform_size(struct string_to_uint_map *map)
       : num_active_uniforms(0), num_values(0), num_shader_samplers(0),
-	num_shader_uniform_components(0), is_ubo_var(false), map(map)
+        num_shader_images(0), num_shader_uniform_components(0),
+        is_ubo_var(false), map(map)
    {
       /* empty */
    }
@@ -248,6 +249,7 @@ public:
    void start_shader()
    {
       this->num_shader_samplers = 0;
+      this->num_shader_images = 0;
       this->num_shader_uniform_components = 0;
    }
 
@@ -277,6 +279,11 @@ public:
    unsigned num_shader_samplers;
 
    /**
+    * Number of images used
+    */
+   unsigned num_shader_images;
+
+   /**
     * Number of uniforms used in the current shader
     */
    unsigned num_shader_uniform_components;
@@ -303,6 +310,15 @@ private:
       if (type->contains_sampler()) {
 	 this->num_shader_samplers +=
 	    type->is_array() ? type->array_size() : 1;
+      } else if (type->contains_image()) {
+         this->num_shader_images += values;
+
+         /* As drivers are likely to represent image uniforms as
+          * scalar indices, count them against the limit of uniform
+          * components in the default block.  The spec allows image
+          * uniforms to use up no more than one scalar slot.
+          */
+         this->num_shader_uniform_components += values;
       } else {
 	 /* Accumulate the total number of uniform slots used by this shader.
 	  * Note that samplers do not count against this limit because they
@@ -782,6 +798,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
       }
 
       sh->num_samplers = uniform_size.num_shader_samplers;
+      sh->NumImages = uniform_size.num_shader_images;
       sh->num_uniform_components = uniform_size.num_shader_uniform_components;
 
       sh->num_combined_uniform_components = sh->num_uniform_components;

@@ -2031,6 +2031,46 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 }
 
+/**
+ * Validate shader image resources.
+ */
+static void
+check_image_resources(struct gl_context *ctx, struct gl_shader_program *prog)
+{
+   unsigned total_image_units = 0;
+   unsigned fragment_outputs = 0;
+
+   if (!ctx->Extensions.ARB_shader_image_load_store)
+      return;
+
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
+      struct gl_shader *sh = prog->_LinkedShaders[i];
+
+      if (sh) {
+         if (sh->NumImages > ctx->Const.Program[i].MaxImageUniforms)
+            linker_error(prog, "Too many %s shader image uniforms",
+                         _mesa_shader_stage_to_string(i));
+
+         total_image_units += sh->NumImages;
+
+         if (i == MESA_SHADER_FRAGMENT) {
+            foreach_list(node, sh->ir) {
+               ir_variable *var = ((ir_instruction *)node)->as_variable();
+               if (var && var->data.mode == ir_var_shader_out)
+                  fragment_outputs += var->type->count_attribute_slots();
+            }
+         }
+      }
+   }
+
+   if (total_image_units > ctx->Const.MaxCombinedImageUniforms)
+      linker_error(prog, "Too many combined image uniforms");
+
+   if (total_image_units + fragment_outputs >
+       ctx->Const.MaxCombinedImageUnitsAndFragmentOutputs)
+      linker_error(prog, "Too many combined image uniforms and fragment outputs");
+}
+
 void
 link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 {
@@ -2394,6 +2434,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    store_fragdepth_layout(prog);
 
    check_resources(ctx, prog);
+   check_image_resources(ctx, prog);
    link_check_atomic_counter_resources(ctx, prog);
 
    if (!prog->LinkStatus)
