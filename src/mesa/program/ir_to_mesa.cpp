@@ -665,8 +665,8 @@ ir_to_mesa_visitor::find_variable_storage(ir_variable *var)
    
    variable_storage *entry;
 
-   foreach_iter(exec_list_iterator, iter, this->variables) {
-      entry = (variable_storage *)iter.get();
+   foreach_list(node, &this->variables) {
+      entry = (variable_storage *) node;
 
       if (entry->var == var)
 	 return entry;
@@ -801,8 +801,8 @@ ir_to_mesa_visitor::visit(ir_function *ir)
 
       assert(sig);
 
-      foreach_iter(exec_list_iterator, iter, sig->body) {
-	 ir_instruction *ir = (ir_instruction *)iter.get();
+      foreach_list(node, &sig->body) {
+	 ir_instruction *ir = (ir_instruction *) node;
 
 	 ir->accept(this);
       }
@@ -1868,8 +1868,8 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
       src_reg temp_base = get_temp(ir->type);
       dst_reg temp = dst_reg(temp_base);
 
-      foreach_iter(exec_list_iterator, iter, ir->components) {
-	 ir_constant *field_value = (ir_constant *)iter.get();
+      foreach_list(node, &ir->components) {
+	 ir_constant *field_value = (ir_constant *) node;
 	 int size = type_size(field_value->type);
 
 	 assert(size > 0);
@@ -2338,8 +2338,8 @@ set_branchtargets(ir_to_mesa_visitor *v,
 	 mesa_instructions[loop_stack[loop_stack_pos]].BranchTarget = i;
 	 break;
       case OPCODE_CAL:
-	 foreach_iter(exec_list_iterator, iter, v->function_signatures) {
-	    function_entry *entry = (function_entry *)iter.get();
+	 foreach_list(n, &v->function_signatures) {
+	    function_entry *entry = (function_entry *) n;
 
 	    if (entry->sig_id == mesa_instructions[i].BranchTarget) {
 	       mesa_instructions[i].BranchTarget = entry->inst;
@@ -2620,8 +2620,8 @@ ir_to_mesa_visitor::copy_propagate(void)
    int *acp_level = rzalloc_array(mem_ctx, int, this->next_temp * 4);
    int level = 0;
 
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
+   foreach_list(node, &this->instructions) {
+      ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *) node;
 
       assert(inst->dst.file != PROGRAM_TEMPORARY
 	     || inst->dst.index < this->next_temp);
@@ -2825,7 +2825,7 @@ get_mesa_program(struct gl_context *ctx,
    prog->NumTemporaries = v.next_temp;
 
    int num_instructions = 0;
-   foreach_iter(exec_list_iterator, iter, v.instructions) {
+   foreach_list(node, &v.instructions) {
       num_instructions++;
    }
 
@@ -2841,8 +2841,8 @@ get_mesa_program(struct gl_context *ctx,
     */
    mesa_inst = mesa_instructions;
    i = 0;
-   foreach_iter(exec_list_iterator, iter, v.instructions) {
-      const ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
+   foreach_list(node, &v.instructions) {
+      const ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *) node;
 
       mesa_inst->Opcode = inst->op;
       mesa_inst->CondUpdate = inst->cond_update;

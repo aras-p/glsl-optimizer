@@ -1739,8 +1739,8 @@ steal_memory(ir_instruction *ir, void *new_ctx)
     */
    if (constant != NULL) {
       if (constant->type->is_record()) {
-	 foreach_iter(exec_list_iterator, iter, constant->components) {
-	    ir_constant *field = (ir_constant *)iter.get();
+	 foreach_list(n, &constant->components) {
+	    ir_constant *field = (ir_constant *) n;
 	    steal_memory(field, ir);
 	 }
       } else if (constant->type->is_array()) {

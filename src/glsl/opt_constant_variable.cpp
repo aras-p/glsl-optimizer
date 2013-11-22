@@ -194,13 +194,12 @@ do_constant_variable_unlinked(exec_list *instructions)
 {
    bool progress = false;
 
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
       ir_function *f = ir->as_function();
       if (f) {
-	 foreach_iter(exec_list_iterator, sigiter, *f) {
-	    ir_function_signature *sig =
-	       (ir_function_signature *) sigiter.get();
+	 foreach_list(signode, &f->signatures) {
+	    ir_function_signature *sig = (ir_function_signature *) signode;
 	    if (do_constant_variable(&sig->body))
 	       progress = true;
 	 }

@@ -172,8 +172,8 @@ ir_constant_propagation_visitor::handle_rvalue(ir_rvalue **rvalue)
 	 channel = i;
       }
 
-      foreach_iter(exec_list_iterator, iter, *this->acp) {
-	 acp_entry *entry = (acp_entry *)iter.get();
+      foreach_list(n, this->acp) {
+	 acp_entry *entry = (acp_entry *) n;
 	 if (entry->var == deref->var && entry->write_mask & (1 << channel)) {
 	    found = entry;
 	    break;
@@ -318,8 +318,8 @@ ir_constant_propagation_visitor::handle_if_block(exec_list *instructions)
    this->killed_all = false;
 
    /* Populate the initial acp with a constant of the original */
-   foreach_iter(exec_list_iterator, iter, *orig_acp) {
-      acp_entry *a = (acp_entry *)iter.get();
+   foreach_list(n, orig_acp) {
+      acp_entry *a = (acp_entry *) n;
       this->acp->push_tail(new(this->mem_ctx) acp_entry(a));
    }
 
@@ -334,8 +334,8 @@ ir_constant_propagation_visitor::handle_if_block(exec_list *instructions)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_iter(exec_list_iterator, iter, *new_kills) {
-      kill_entry *k = (kill_entry *)iter.get();
+   foreach_list(n, new_kills) {
+      kill_entry *k = (kill_entry *) n;
       kill(k->var, k->write_mask);
    }
 }
@@ -379,8 +379,8 @@ ir_constant_propagation_visitor::visit_enter(ir_loop *ir)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_iter(exec_list_iterator, iter, *new_kills) {
-      kill_entry *k = (kill_entry *)iter.get();
+   foreach_list(n, new_kills) {
+      kill_entry *k = (kill_entry *) n;
       kill(k->var, k->write_mask);
    }
 
@@ -411,8 +411,8 @@ ir_constant_propagation_visitor::kill(ir_variable *var, unsigned write_mask)
    /* Add this writemask of the variable to the list of killed
     * variables in this block.
     */
-   foreach_iter(exec_list_iterator, iter, *this->kills) {
-      kill_entry *entry = (kill_entry *)iter.get();
+   foreach_list(n, this->kills) {
+      kill_entry *entry = (kill_entry *) n;
 
       if (entry->var == var) {
 	 entry->write_mask |= write_mask;

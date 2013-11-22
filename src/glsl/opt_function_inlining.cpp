@@ -107,7 +107,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
    ht = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 
    num_parameters = 0;
-   foreach_iter(exec_list_iterator, iter_sig, this->callee->parameters)
+   foreach_list(n, &this->callee->parameters)
       num_parameters++;
 
    parameters = new ir_variable *[num_parameters];
@@ -161,8 +161,8 @@ ir_call::generate_inline(ir_instruction *next_ir)
    exec_list new_instructions;
 
    /* Generate the inlined body of the function to a new list */
-   foreach_iter(exec_list_iterator, iter, callee->body) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, &callee->body) {
+      ir_instruction *ir = (ir_instruction *) n;
       ir_instruction *new_ir = ir->clone(ctx, ht);
 
       new_instructions.push_tail(new_ir);

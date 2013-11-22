@@ -167,8 +167,8 @@ ir_copy_propagation_visitor::visit(ir_dereference_variable *ir)
 
    ir_variable *var = ir->var;
 
-   foreach_iter(exec_list_iterator, iter, *this->acp) {
-      acp_entry *entry = (acp_entry *)iter.get();
+   foreach_list(n, this->acp) {
+      acp_entry *entry = (acp_entry *) n;
 
       if (var == entry->lhs) {
 	 ir->var = entry->rhs;
@@ -217,8 +217,8 @@ ir_copy_propagation_visitor::handle_if_block(exec_list *instructions)
    this->killed_all = false;
 
    /* Populate the initial acp with a copy of the original */
-   foreach_iter(exec_list_iterator, iter, *orig_acp) {
-      acp_entry *a = (acp_entry *)iter.get();
+   foreach_list(n, orig_acp) {
+      acp_entry *a = (acp_entry *) n;
       this->acp->push_tail(new(this->mem_ctx) acp_entry(a->lhs, a->rhs));
    }
 
@@ -233,8 +233,8 @@ ir_copy_propagation_visitor::handle_if_block(exec_list *instructions)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_iter(exec_list_iterator, iter, *new_kills) {
-      kill_entry *k = (kill_entry *)iter.get();
+   foreach_list(n, new_kills) {
+      kill_entry *k = (kill_entry *) n;
       kill(k->var);
    }
 }
@@ -277,8 +277,8 @@ ir_copy_propagation_visitor::visit_enter(ir_loop *ir)
    this->acp = orig_acp;
    this->killed_all = this->killed_all || orig_killed_all;
 
-   foreach_iter(exec_list_iterator, iter, *new_kills) {
-      kill_entry *k = (kill_entry *)iter.get();
+   foreach_list(n, new_kills) {
+      kill_entry *k = (kill_entry *) n;
       kill(k->var);
    }
 

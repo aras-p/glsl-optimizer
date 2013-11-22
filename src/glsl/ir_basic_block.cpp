@@ -58,8 +58,8 @@ void call_for_basic_blocks(exec_list *instructions,
    ir_instruction *leader = NULL;
    ir_instruction *last = NULL;
 
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
       ir_if *ir_if;
       ir_loop *ir_loop;
       ir_function *ir_function;
@@ -90,10 +90,8 @@ void call_for_basic_blocks(exec_list *instructions,
 	  * and the body of main().  Perhaps those instructions ought
 	  * to live inside of main().
 	  */
-	 foreach_iter(exec_list_iterator, fun_iter, *ir_function) {
-	    ir_function_signature *ir_sig;
-
-	    ir_sig = (ir_function_signature *)fun_iter.get();
+	 foreach_list(func_node, &ir_function->signatures) {
+	    ir_function_signature *ir_sig = (ir_function_signature *) func_node;
 
 	    call_for_basic_blocks(&ir_sig->body, callback, data);
 	 }

@@ -280,8 +280,8 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
       printf("add %s\n", var->name);
 
       printf("current entries\n");
-      foreach_iter(exec_list_iterator, iter, *assignments) {
-	 assignment_entry *entry = (assignment_entry *)iter.get();
+      foreach_list(n, assignments) {
+	 assignment_entry *entry = (assignment_entry *) n;
 
 	 printf("    %s (0x%01x)\n", entry->lhs->name, entry->available);
       }

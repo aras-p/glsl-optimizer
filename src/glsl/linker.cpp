@@ -1338,9 +1338,8 @@ link_intrastage_shaders(void *mem_ctx,
 	    if (other == NULL)
 	       continue;
 
-	    foreach_iter (exec_list_iterator, iter, *f) {
-	       ir_function_signature *sig =
-		  (ir_function_signature *) iter.get();
+	    foreach_list(n, &f->signatures) {
+	       ir_function_signature *sig = (ir_function_signature *) n;
 
 	       if (!sig->is_defined || sig->is_builtin())
 		  continue;
@@ -1453,8 +1452,8 @@ link_intrastage_shaders(void *mem_ctx,
    if (linked->Stage == MESA_SHADER_GEOMETRY) {
       unsigned num_vertices = vertices_per_prim(prog->Geom.InputType);
       geom_array_resize_visitor input_resize_visitor(num_vertices, prog);
-      foreach_iter(exec_list_iterator, iter, *linked->ir) {
-         ir_instruction *ir = (ir_instruction *)iter.get();
+      foreach_list(n, linked->ir) {
+         ir_instruction *ir = (ir_instruction *) n;
          ir->accept(&input_resize_visitor);
       }
    }
