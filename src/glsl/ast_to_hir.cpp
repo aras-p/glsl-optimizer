@@ -4777,6 +4777,16 @@ ast_process_structure_or_interface_block(exec_list *instructions,
                              "uniform block");
          }
 
+         if (field_type->contains_image()) {
+            /* FINISHME: Same problem as with atomic counters.
+             * FINISHME: Request clarification from Khronos and add
+             * FINISHME: spec quotation here.
+             */
+            YYLTYPE loc = decl_list->get_location();
+            _mesa_glsl_error(&loc, state,
+                             "image in structure or uniform block");
+         }
+
          const struct ast_type_qualifier *const qual =
             & decl_list->type->qualifier;
          if (qual->flags.q.std140 ||
