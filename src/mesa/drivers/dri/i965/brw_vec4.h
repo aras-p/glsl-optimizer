@@ -126,6 +126,7 @@ public:
    src_reg(float f);
    src_reg(uint32_t u);
    src_reg(int32_t i);
+   src_reg(struct brw_reg reg);
 
    bool equals(src_reg *r);
    bool is_zero() const;

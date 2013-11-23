@@ -112,6 +112,14 @@ src_reg::src_reg(int32_t i)
    this->imm.i = i;
 }
 
+src_reg::src_reg(struct brw_reg reg)
+{
+   init();
+
+   this->file = HW_REG;
+   this->fixed_hw_reg = reg;
+}
+
 src_reg::src_reg(dst_reg reg)
 {
    init();
