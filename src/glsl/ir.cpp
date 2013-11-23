@@ -1554,6 +1554,11 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->data.max_array_access = 0;
    this->data.atomic.buffer_index = 0;
    this->data.atomic.offset = 0;
+   this->data.image.read_only = false;
+   this->data.image.write_only = false;
+   this->data.image.coherent = false;
+   this->data.image._volatile = false;
+   this->data.image._restrict = false;
 
    if (type != NULL) {
       if (type->base_type == GLSL_TYPE_SAMPLER)

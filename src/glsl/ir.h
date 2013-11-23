@@ -691,6 +691,20 @@ public:
       } atomic;
 
       /**
+       * ARB_shader_image_load_store qualifiers.
+       */
+      struct {
+         bool read_only; /**< "readonly" qualifier. */
+         bool write_only; /**< "writeonly" qualifier. */
+         bool coherent;
+         bool _volatile;
+         bool _restrict;
+
+         /** Image internal format if specified explicitly, otherwise GL_NONE. */
+         GLenum format;
+      } image;
+
+      /**
        * Highest element accessed with a constant expression array index
        *
        * Not used for non-array variables.
