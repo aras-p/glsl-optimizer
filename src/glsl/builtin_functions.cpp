@@ -357,8 +357,6 @@ public:
    ir_function_signature *find(_mesa_glsl_parse_state *state,
                                const char *name, exec_list *actual_parameters);
 
-private:
-   void *mem_ctx;
    /**
     * A shader to hold all the built-in signatures; created by this module.
     *
@@ -367,6 +365,9 @@ private:
     * signature allows matching_signature() to filter out the irrelevant ones.
     */
    gl_shader *shader;
+
+private:
+   void *mem_ctx;
 
    /** Global variables used by built-in functions. */
    ir_variable *gl_ModelViewProjectionMatrix;
@@ -4020,4 +4021,11 @@ _mesa_glsl_find_builtin_function(_mesa_glsl_parse_state *state,
 {
    return builtins.find(state, name, actual_parameters);
 }
+
+gl_shader *
+_mesa_glsl_get_builtin_function_shader()
+{
+   return builtins.shader;
+}
+
 /** @} */
