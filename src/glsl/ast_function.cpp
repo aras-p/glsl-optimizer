@@ -274,19 +274,19 @@ fix_parameter(void *mem_ctx, ir_rvalue *actual, const glsl_type *formal_type,
 }
 
 /**
- * If a function call is generated, \c call_ir will point to it on exit.
- * Otherwise \c call_ir will be set to \c NULL.
+ * Generate a function call.
+ *
+ * For non-void functions, this returns a dereference of the temporary variable
+ * which stores the return value for the call.  For void functions, this returns
+ * NULL.
  */
 static ir_rvalue *
 generate_call(exec_list *instructions, ir_function_signature *sig,
 	      exec_list *actual_parameters,
-	      ir_call **call_ir,
 	      struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
    exec_list post_call_conversions;
-
-   *call_ir = NULL;
 
    /* Perform implicit conversion of arguments.  For out parameters, we need
     * to place them in a temporary variable and do the conversion after the
@@ -1660,7 +1660,6 @@ ast_function_expression::hir(exec_list *instructions,
       ir_function_signature *sig =
 	 match_function_by_name(func_name, &actual_parameters, state);
 
-      ir_call *call = NULL;
       ir_rvalue *value = NULL;
       if (sig == NULL) {
 	 no_matching_function_error(func_name, &loc, &actual_parameters, state);
@@ -1669,8 +1668,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 /* an error has already been emitted */
 	 value = ir_rvalue::error_value(ctx);
       } else {
-	 value = generate_call(instructions, sig, &actual_parameters,
-			       &call, state);
+	 value = generate_call(instructions, sig, &actual_parameters, state);
       }
 
       return value;
