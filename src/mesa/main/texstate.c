@@ -35,6 +35,7 @@
 #include "context.h"
 #include "enums.h"
 #include "macros.h"
+#include "shaderimage.h"
 #include "texobj.h"
 #include "teximage.h"
 #include "texstate.h"
@@ -674,6 +675,8 @@ update_texture_state( struct gl_context *ctx )
 
    if (!fprog || !vprog)
       update_texgen(ctx);
+
+   _mesa_validate_image_units(ctx);
 }
 
 

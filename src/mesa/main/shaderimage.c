@@ -380,6 +380,17 @@ validate_image_unit(struct gl_context *ctx, struct gl_image_unit *u)
    return GL_TRUE;
 }
 
+void
+_mesa_validate_image_units(struct gl_context *ctx)
+{
+   int i;
+
+   for (i = 0; i < ctx->Const.MaxImageUnits; ++i) {
+      struct gl_image_unit *u = &ctx->ImageUnits[i];
+      u->_Valid = validate_image_unit(ctx, u);
+   }
+}
+
 static GLboolean
 validate_bind_image_texture(struct gl_context *ctx, GLuint unit,
                             GLuint texture, GLint level, GLboolean layered,
