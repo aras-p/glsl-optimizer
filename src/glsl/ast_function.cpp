@@ -432,10 +432,10 @@ no_matching_function_error(const char *name,
 			   _mesa_glsl_parse_state *state)
 {
    char *str = prototype_string(NULL, name, actual_parameters);
-   _mesa_glsl_error(loc, state, "no matching function for call to `%s'", str);
+   _mesa_glsl_error(loc, state,
+                    "no matching function for call to `%s'; candidates are:",
+                    str);
    ralloc_free(str);
-
-   const char *prefix = "candidates are: ";
 
    for (int i = -1; i < (int) state->num_builtins_to_link; i++) {
       glsl_symbol_table *syms = i >= 0 ? state->builtins_to_link[i]->symbols
@@ -451,10 +451,8 @@ no_matching_function_error(const char *name,
             continue;
 
 	 str = prototype_string(sig->return_type, f->name, &sig->parameters);
-	 _mesa_glsl_error(loc, state, "%s%s", prefix, str);
+	 _mesa_glsl_error(loc, state, "   %s", str);
 	 ralloc_free(str);
-
-	 prefix = "                ";
       }
    }
 }
