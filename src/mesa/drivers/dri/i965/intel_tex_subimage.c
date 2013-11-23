@@ -331,6 +331,12 @@ ytile_copy(
    }
 }
 
+#ifdef __GNUC__
+#define FLATTEN __attribute__((flatten))
+#else
+#define FLATTEN
+#endif
+
 /**
  * Copy texture data from linear to X tile layout, faster.
  *
@@ -340,7 +346,7 @@ ytile_copy(
  *
  * \copydoc tile_copy_fn
  */
-static void
+static FLATTEN void
 xtile_copy_faster(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
                   uint32_t y0, uint32_t y1,
                   char *dst, const char *src,
@@ -376,7 +382,7 @@ xtile_copy_faster(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
  *
  * \copydoc tile_copy_fn
  */
-static void
+static FLATTEN void
 ytile_copy_faster(uint32_t x0, uint32_t x1, uint32_t x2, uint32_t x3,
                   uint32_t y0, uint32_t y1,
                   char *dst, const char *src,
