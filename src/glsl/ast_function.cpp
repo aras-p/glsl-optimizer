@@ -421,6 +421,25 @@ done:
    return sig;
 }
 
+static void
+print_function_prototypes(_mesa_glsl_parse_state *state, YYLTYPE *loc,
+                          ir_function *f)
+{
+   if (f == NULL)
+      return;
+
+   foreach_list (node, &f->signatures) {
+      ir_function_signature *sig = (ir_function_signature *) node;
+
+      if (sig->is_builtin() && !sig->is_builtin_available(state))
+         continue;
+
+      char *str = prototype_string(sig->return_type, f->name, &sig->parameters);
+      _mesa_glsl_error(loc, state, "   %s", str);
+      ralloc_free(str);
+   }
+}
+
 /**
  * Raise a "no matching function" error, listing all possible overloads the
  * compiler considered so developers can figure out what went wrong.
@@ -437,23 +456,11 @@ no_matching_function_error(const char *name,
                     str);
    ralloc_free(str);
 
-   for (int i = -1; i < (int) state->num_builtins_to_link; i++) {
-      glsl_symbol_table *syms = i >= 0 ? state->builtins_to_link[i]->symbols
-				       : state->symbols;
-      ir_function *f = syms->get_function(name);
-      if (f == NULL)
-	 continue;
+   print_function_prototypes(state, loc, state->symbols->get_function(name));
 
-      foreach_list (node, &f->signatures) {
-	 ir_function_signature *sig = (ir_function_signature *) node;
-
-         if (sig->is_builtin() && !sig->is_builtin_available(state))
-            continue;
-
-	 str = prototype_string(sig->return_type, f->name, &sig->parameters);
-	 _mesa_glsl_error(loc, state, "   %s", str);
-	 ralloc_free(str);
-      }
+   if (state->num_builtins_to_link) {
+      gl_shader *sh = state->builtins_to_link[0];
+      print_function_prototypes(state, loc, sh->symbols->get_function(name));
    }
 }
 
