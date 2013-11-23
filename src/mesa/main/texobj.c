@@ -1179,7 +1179,7 @@ target_enum_to_index(struct gl_context *ctx, GLenum target)
    case GL_TEXTURE_2D:
       return TEXTURE_2D_INDEX;
    case GL_TEXTURE_3D:
-      return TEXTURE_3D_INDEX;
+      return ctx->API != API_OPENGLES ? TEXTURE_3D_INDEX : -1;
    case GL_TEXTURE_CUBE_MAP_ARB:
       return ctx->Extensions.ARB_texture_cube_map
          ? TEXTURE_CUBE_INDEX : -1;
