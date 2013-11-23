@@ -660,7 +660,7 @@ struct brw_gs_prog_data
 #define BRW_MAX_DRAW_BUFFERS 8
 
 /** Max number of atomic counter buffer objects in a shader */
-#define BRW_MAX_ABO 4
+#define BRW_MAX_ABO 16
 
 /**
  * Max number of binding table entries used for stream output.
