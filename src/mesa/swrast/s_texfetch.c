@@ -1292,6 +1292,18 @@ texfetch_funcs[] =
       NULL,
       NULL
    },
+   {
+      MESA_FORMAT_SIGNED_RG88,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_SIGNED_RG1616,
+      NULL,
+      NULL,
+      NULL
+   },
 };
 
 

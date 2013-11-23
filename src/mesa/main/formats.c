@@ -1772,6 +1772,24 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0, 0,
       1, 1, 4
    },
+   {
+      MESA_FORMAT_SIGNED_RG88,
+      "MESA_FORMAT_SIGNED_RG88",
+      GL_RG,
+      GL_SIGNED_NORMALIZED,
+      8, 8, 0, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 2
+   },
+   {
+      MESA_FORMAT_SIGNED_RG1616,
+      "MESA_FORMAT_SIGNED_RG1616",
+      GL_RG,
+      GL_SIGNED_NORMALIZED,
+      16, 16, 0, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 4
+   },
 };
 
 
@@ -2855,6 +2873,16 @@ _mesa_format_to_type_and_comps(gl_format format,
       *comps = 4;
       return;
 
+   case MESA_FORMAT_SIGNED_RG88:
+      *datatype = GL_BYTE;
+      *comps = 2;
+      return;
+
+   case MESA_FORMAT_SIGNED_RG1616:
+      *datatype = GL_SHORT;
+      *comps = 2;
+      return;
+
    case MESA_FORMAT_COUNT:
       assert(0);
       return;
@@ -3401,6 +3429,13 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
       return format == GL_RGBA && type == GL_UNSIGNED_INT_2_10_10_10_REV &&
          !swapBytes;
 
+   case MESA_FORMAT_SIGNED_RG88:
+      return format == GL_RG && type == GL_BYTE && !littleEndian &&
+         !swapBytes;
+
+   case MESA_FORMAT_SIGNED_RG1616:
+      return format == GL_RG && type == GL_SHORT && !littleEndian &&
+         !swapBytes;
    }
 
    return GL_FALSE;

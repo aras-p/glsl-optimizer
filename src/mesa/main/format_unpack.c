@@ -2281,6 +2281,32 @@ unpack_ABGR2101010(const void *src, GLfloat dst[][4], GLuint n)
    }
 }
 
+static void
+unpack_SIGNED_RG88(const void *src, GLfloat dst[][4], GLuint n)
+{
+   const GLushort *s = ((const GLushort *) src);
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      dst[i][RCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s[i] >> 8) );
+      dst[i][GCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s[i] & 0xff) );
+      dst[i][BCOMP] = 0.0F;
+      dst[i][ACOMP] = 1.0F;
+   }
+}
+
+static void
+unpack_SIGNED_RG1616(const void *src, GLfloat dst[][4], GLuint n)
+{
+   const GLuint *s = ((const GLuint *) src);
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      dst[i][RCOMP] = SHORT_TO_FLOAT_TEX( (GLshort) (s[i] >> 16) );
+      dst[i][GCOMP] = SHORT_TO_FLOAT_TEX( (GLshort) (s[i] & 0xffff) );
+      dst[i][BCOMP] = 0.0F;
+      dst[i][ACOMP] = 1.0F;
+   }
+}
+
 /**
  * Return the unpacker function for the given format.
  */
@@ -2494,6 +2520,9 @@ get_unpack_rgba_function(gl_format format)
       table[MESA_FORMAT_XBGR32323232_SINT] = unpack_XBGR32323232_SINT;
 
       table[MESA_FORMAT_ABGR2101010] = unpack_ABGR2101010;
+
+      table[MESA_FORMAT_SIGNED_RG88] = unpack_SIGNED_RG88;
+      table[MESA_FORMAT_SIGNED_RG1616] = unpack_SIGNED_RG1616;
 
       initialized = GL_TRUE;
    }
