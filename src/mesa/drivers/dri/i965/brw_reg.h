@@ -182,6 +182,34 @@ type_sz(unsigned type)
    }
 }
 
+static inline bool
+type_is_signed(unsigned type)
+{
+   switch(type) {
+   case BRW_REGISTER_TYPE_D:
+   case BRW_REGISTER_TYPE_W:
+   case BRW_REGISTER_TYPE_F:
+   case BRW_REGISTER_TYPE_B:
+   case BRW_REGISTER_TYPE_V:
+   case BRW_REGISTER_TYPE_VF:
+   case BRW_REGISTER_TYPE_DF:
+   case BRW_REGISTER_TYPE_HF:
+   case BRW_REGISTER_TYPE_Q:
+      return true;
+
+   case BRW_REGISTER_TYPE_UD:
+   case BRW_REGISTER_TYPE_UW:
+   case BRW_REGISTER_TYPE_UB:
+   case BRW_REGISTER_TYPE_UV:
+   case BRW_REGISTER_TYPE_UQ:
+      return false;
+
+   default:
+      assert(!"Unreachable.");
+      return false;
+   }
+}
+
 /**
  * Construct a brw_reg.
  * \param file      one of the BRW_x_REGISTER_FILE values
