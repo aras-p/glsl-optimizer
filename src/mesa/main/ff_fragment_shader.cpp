@@ -1344,7 +1344,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
 
    p.shader->CompileStatus = true;
    p.shader->Version = state->language_version;
-   p.shader->num_builtins_to_link = state->num_builtins_to_link;
+   p.shader->uses_builtin_functions = state->uses_builtin_functions;
    p.shader_program->Shaders =
       (gl_shader **)malloc(sizeof(*p.shader_program->Shaders));
    p.shader_program->Shaders[0] = p.shader;

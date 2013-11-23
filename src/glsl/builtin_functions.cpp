@@ -609,8 +609,7 @@ builtin_builder::find(_mesa_glsl_parse_state *state,
     * that the "no matching signature" error will list potential candidates
     * from the available built-ins.
     */
-   state->builtins_to_link[0] = shader;
-   state->num_builtins_to_link = 1;
+   state->uses_builtin_functions = true;
 
    ir_function *f = shader->symbols->get_function(name);
    if (f == NULL)

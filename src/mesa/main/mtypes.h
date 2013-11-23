@@ -2352,9 +2352,7 @@ struct gl_shader
    struct exec_list *ir;
    struct glsl_symbol_table *symbols;
 
-   /** Shaders containing built-in functions that are used for linking. */
-   struct gl_shader *builtins_to_link[16];
-   unsigned num_builtins_to_link;
+   bool uses_builtin_functions;
 
    /**
     * Geometry shader state from GLSL 1.50 layout qualifiers.

@@ -458,8 +458,8 @@ no_matching_function_error(const char *name,
 
    print_function_prototypes(state, loc, state->symbols->get_function(name));
 
-   if (state->num_builtins_to_link) {
-      gl_shader *sh = state->builtins_to_link[0];
+   if (state->uses_builtin_functions) {
+      gl_shader *sh = _mesa_glsl_get_builtin_function_shader();
       print_function_prototypes(state, loc, sh->symbols->get_function(name));
    }
 }
