@@ -57,9 +57,6 @@ AC_CHECK_PROGS([PYTHON2], [python2 python])
 AC_PROG_SED
 AC_PROG_MKDIR_P
 
-LT_PREREQ([2.2])
-LT_INIT([disable-static])
-
 AX_PROG_BISON([],
               AS_IF([test ! -f "$srcdir/src/glsl/glcpp/glcpp-parse.c"],
                     [AC_MSG_ERROR([bison not found - unable to compile glcpp-parse.y])]))
@@ -2189,6 +2186,14 @@ fi
 dnl Add user CFLAGS and CXXFLAGS
 CFLAGS="$CFLAGS $USER_CFLAGS"
 CXXFLAGS="$CXXFLAGS $USER_CXXFLAGS"
+
+dnl
+dnl LT_INIT adds tests to determine host based on some variables like (AM_)C(XX)FLAGS and (AM_)LDFLAGS.
+dnl They need to be set before calling LT_INIT so the macro can configure things correctly when cross_compiling.
+dnl This will allow --enable-xx-bit to work as expected.
+dnl
+LT_PREREQ([2.2])
+LT_INIT([disable-static])
 
 dnl Substitute the config
 AC_CONFIG_FILES([Makefile
