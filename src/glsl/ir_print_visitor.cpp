@@ -441,9 +441,9 @@ ir_print_visitor::visit(ir_call *ir)
       ir->return_deref->accept(this);
    printf(" (");
    foreach_list(n, &ir->actual_parameters) {
-      ir_instruction *const inst = (ir_instruction *) n;
+      ir_rvalue *const param = (ir_rvalue *) n;
 
-      inst->accept(this);
+      param->accept(this);
    }
    printf("))\n");
 }

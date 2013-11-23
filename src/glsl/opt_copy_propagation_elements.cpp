@@ -296,7 +296,7 @@ ir_copy_propagation_elements_visitor::visit_enter(ir_call *ir)
    exec_list_iterator sig_param_iter = ir->callee->parameters.iterator();
    foreach_iter(exec_list_iterator, iter, ir->actual_parameters) {
       ir_variable *sig_param = (ir_variable *)sig_param_iter.get();
-      ir_instruction *ir = (ir_instruction *)iter.get();
+      ir_rvalue *ir = (ir_rvalue *) iter.get();
       if (sig_param->data.mode != ir_var_function_out
           && sig_param->data.mode != ir_var_function_inout) {
          ir->accept(this);
