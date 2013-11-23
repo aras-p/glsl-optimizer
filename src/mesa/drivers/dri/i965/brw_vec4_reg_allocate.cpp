@@ -121,7 +121,7 @@ brw_vec4_alloc_reg_set(struct brw_context *brw)
    if (brw->gen >= 6)
       ra_set_allocate_round_robin(brw->vec4.regs);
    ralloc_free(brw->vec4.classes);
-   brw->vec4.classes = ralloc_array(brw, int, class_count + 1);
+   brw->vec4.classes = ralloc_array(brw, int, class_count);
 
    /* Now, add the registers to their classes, and add the conflicts
     * between them and the base GRF registers (and also each other).
