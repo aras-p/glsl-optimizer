@@ -126,6 +126,7 @@ static struct gl_texture_object *
 get_texobj(struct gl_context *ctx, GLenum target, GLboolean get)
 {
    struct gl_texture_unit *texUnit;
+   int targetIndex;
 
    if (ctx->Texture.CurrentUnit >= ctx->Const.MaxCombinedTextureImageUnits) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -135,66 +136,15 @@ get_texobj(struct gl_context *ctx, GLenum target, GLboolean get)
 
    texUnit = _mesa_get_current_tex_unit(ctx);
 
-   switch (target) {
-   case GL_TEXTURE_1D:
-      if (_mesa_is_desktop_gl(ctx))
-         return texUnit->CurrentTex[TEXTURE_1D_INDEX];
-      break;
-   case GL_TEXTURE_2D:
-      return texUnit->CurrentTex[TEXTURE_2D_INDEX];
-   case GL_TEXTURE_3D:
-      if (ctx->API != API_OPENGLES)
-         return texUnit->CurrentTex[TEXTURE_3D_INDEX];
-      break;
-   case GL_TEXTURE_CUBE_MAP:
-      if (ctx->Extensions.ARB_texture_cube_map) {
-         return texUnit->CurrentTex[TEXTURE_CUBE_INDEX];
-      }
-      break;
-   case GL_TEXTURE_RECTANGLE_NV:
-      if (_mesa_is_desktop_gl(ctx)
-          && ctx->Extensions.NV_texture_rectangle) {
-         return texUnit->CurrentTex[TEXTURE_RECT_INDEX];
-      }
-      break;
-   case GL_TEXTURE_1D_ARRAY_EXT:
-      if (_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_texture_array) {
-         return texUnit->CurrentTex[TEXTURE_1D_ARRAY_INDEX];
-      }
-      break;
-   case GL_TEXTURE_2D_ARRAY_EXT:
-      if ((_mesa_is_desktop_gl(ctx) || _mesa_is_gles3(ctx))
-          && ctx->Extensions.EXT_texture_array) {
-         return texUnit->CurrentTex[TEXTURE_2D_ARRAY_INDEX];
-      }
-      break;
-   case GL_TEXTURE_EXTERNAL_OES:
-      if (_mesa_is_gles(ctx) && ctx->Extensions.OES_EGL_image_external) {
-         return texUnit->CurrentTex[TEXTURE_EXTERNAL_INDEX];
-      }
-      break;
-   case GL_TEXTURE_CUBE_MAP_ARRAY:
-      if (ctx->Extensions.ARB_texture_cube_map_array) {
-         return texUnit->CurrentTex[TEXTURE_CUBE_ARRAY_INDEX];
-      }
-      break;
-   case GL_TEXTURE_2D_MULTISAMPLE:
-      if (ctx->Extensions.ARB_texture_multisample) {
-         return texUnit->CurrentTex[TEXTURE_2D_MULTISAMPLE_INDEX];
-      }
-      break;
-   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
-      if (ctx->Extensions.ARB_texture_multisample) {
-         return texUnit->CurrentTex[TEXTURE_2D_MULTISAMPLE_ARRAY_INDEX];
-      }
-      break;
-   default:
-      ;
-   }
-
-   _mesa_error(ctx, GL_INVALID_ENUM,
+   targetIndex = _mesa_tex_target_to_index(ctx, target);
+   if (targetIndex < 0 || targetIndex == TEXTURE_BUFFER_INDEX) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
                   "gl%sTexParameter(target)", get ? "Get" : "");
-   return NULL;
+      return NULL;
+   }
+   assert(targetIndex < NUM_TEXTURE_TARGETS);
+
+   return texUnit->CurrentTex[targetIndex];
 }
 
 
