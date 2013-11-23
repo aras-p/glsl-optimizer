@@ -416,7 +416,7 @@ fs_reg::fs_reg(uint32_t u)
    this->imm.u = u;
 }
 
-/** Fixed brw_reg Immediate value constructor. */
+/** Fixed brw_reg. */
 fs_reg::fs_reg(struct brw_reg fixed_hw_reg)
 {
    init();
