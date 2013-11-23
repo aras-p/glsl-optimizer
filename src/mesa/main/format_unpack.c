@@ -2268,6 +2268,18 @@ unpack_XBGR32323232_SINT(const void *src, GLfloat dst[][4], GLuint n)
    }
 }
 
+static void
+unpack_ABGR2101010(const void *src, GLfloat dst[][4], GLuint n)
+{
+   const GLuint *s = ((const GLuint *) src);
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      dst[i][RCOMP] = ((s[i] >> 0) & 0x3ff) * (1.0F / 1023.0F);
+      dst[i][GCOMP] = ((s[i] >> 10) & 0x3ff) * (1.0F / 1023.0F);
+      dst[i][BCOMP] = ((s[i] >> 20) & 0x3ff) * (1.0F / 1023.0F);
+      dst[i][ACOMP] = ((s[i] >> 30) &  0x03) * (1.0F / 3.0F);
+   }
+}
 
 /**
  * Return the unpacker function for the given format.
@@ -2480,6 +2492,8 @@ get_unpack_rgba_function(gl_format format)
       table[MESA_FORMAT_XBGR32323232_FLOAT] = unpack_XBGR32323232_FLOAT;
       table[MESA_FORMAT_XBGR32323232_UINT] = unpack_XBGR32323232_UINT;
       table[MESA_FORMAT_XBGR32323232_SINT] = unpack_XBGR32323232_SINT;
+
+      table[MESA_FORMAT_ABGR2101010] = unpack_ABGR2101010;
 
       initialized = GL_TRUE;
    }
@@ -3582,6 +3596,20 @@ unpack_int_rgba_XBGR32323232_UINT(const GLuint *src, GLuint dst[][4], GLuint n)
    }
 }
 
+static void
+unpack_int_rgba_ABGR2101010(const GLuint *src, GLuint dst[][4], GLuint n)
+{
+   unsigned int i;
+
+   for (i = 0; i < n; i++) {
+      GLuint tmp = src[i];
+      dst[i][0] = (tmp >> 0) & 0x3ff;
+      dst[i][1] = (tmp >> 10) & 0x3ff;
+      dst[i][2] = (tmp >> 20) & 0x3ff;
+      dst[i][3] = (tmp >> 30) & 0x3;
+   }
+}
+
 void
 _mesa_unpack_uint_rgba_row(gl_format format, GLuint n,
                            const void *src, GLuint dst[][4])
@@ -3780,6 +3808,10 @@ _mesa_unpack_uint_rgba_row(gl_format format, GLuint n,
    case MESA_FORMAT_XBGR32323232_UINT:
    case MESA_FORMAT_XBGR32323232_SINT:
       unpack_int_rgba_XBGR32323232_UINT(src, dst, n);
+      break;
+
+   case MESA_FORMAT_ABGR2101010:
+      unpack_int_rgba_ABGR2101010(src, dst, n);
       break;
 
    default:

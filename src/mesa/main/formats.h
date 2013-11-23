@@ -304,6 +304,8 @@ typedef enum
    MESA_FORMAT_XBGR32323232_UINT, /* ... */
    MESA_FORMAT_XBGR32323232_SINT, /* ... */
 
+   MESA_FORMAT_ABGR2101010,
+
    MESA_FORMAT_COUNT
 } gl_format;
 

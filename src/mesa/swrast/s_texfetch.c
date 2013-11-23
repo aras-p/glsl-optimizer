@@ -1286,6 +1286,12 @@ texfetch_funcs[] =
       NULL,
       NULL
    },
+   {
+      MESA_FORMAT_ABGR2101010,
+      NULL,
+      NULL,
+      NULL
+   },
 };
 
 

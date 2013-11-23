@@ -1763,6 +1763,15 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0, 0,
       1, 1, 16
    },
+   {
+      MESA_FORMAT_ABGR2101010,
+      "MESA_FORMAT_ABGR2101010",
+      GL_RGBA,
+      GL_UNSIGNED_NORMALIZED,
+      10, 10, 10, 2,
+      0, 0, 0, 0, 0,
+      1, 1, 4
+   },
 };
 
 
@@ -2841,6 +2850,11 @@ _mesa_format_to_type_and_comps(gl_format format,
       *comps = 4;
       return;
 
+   case MESA_FORMAT_ABGR2101010:
+      *datatype = GL_UNSIGNED_INT_2_10_10_10_REV;
+      *comps = 4;
+      return;
+
    case MESA_FORMAT_COUNT:
       assert(0);
       return;
@@ -3382,6 +3396,11 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
    case MESA_FORMAT_XBGR32323232_UINT:
    case MESA_FORMAT_XBGR32323232_SINT:
       return GL_FALSE;
+
+   case MESA_FORMAT_ABGR2101010:
+      return format == GL_RGBA && type == GL_UNSIGNED_INT_2_10_10_10_REV &&
+         !swapBytes;
+
    }
 
    return GL_FALSE;

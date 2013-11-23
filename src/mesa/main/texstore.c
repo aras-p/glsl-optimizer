@@ -3559,6 +3559,50 @@ _mesa_texstore_abgr2101010_uint(TEXSTORE_PARAMS)
 }
 
 static GLboolean
+_mesa_texstore_abgr2101010(TEXSTORE_PARAMS)
+{
+   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
+
+   ASSERT(dstFormat == MESA_FORMAT_ABGR2101010);
+   ASSERT(_mesa_get_format_bytes(dstFormat) == 4);
+
+   {
+      /* general path */
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
+      const GLfloat *src = tempImage;
+      GLint img, row, col;
+      if (!tempImage)
+         return GL_FALSE;
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = dstSlices[img];
+
+         for (row = 0; row < srcHeight; row++) {
+            GLuint *dstUI = (GLuint *) dstRow;
+            for (col = 0; col < srcWidth; col++) {
+               GLushort a,r,g,b;
+
+               UNCLAMPED_FLOAT_TO_USHORT(a, src[ACOMP]);
+               UNCLAMPED_FLOAT_TO_USHORT(r, src[RCOMP]);
+               UNCLAMPED_FLOAT_TO_USHORT(g, src[GCOMP]);
+               UNCLAMPED_FLOAT_TO_USHORT(b, src[BCOMP]);
+               dstUI[col] = PACK_COLOR_2101010_US(a, b, g, r);
+               src += 4;
+            }
+            dstRow += dstRowStride;
+         }
+      }
+      free((void *) tempImage);
+   }
+   return GL_TRUE;
+}
+
+static GLboolean
 _mesa_texstore_null(TEXSTORE_PARAMS)
 {
    (void) ctx; (void) dims;
@@ -3781,6 +3825,8 @@ _mesa_get_texstore_func(gl_format format)
       table[MESA_FORMAT_XBGR32323232_FLOAT] = _mesa_texstore_rgba_float32;
       table[MESA_FORMAT_XBGR32323232_UINT] = _mesa_texstore_rgba_uint32;
       table[MESA_FORMAT_XBGR32323232_SINT] = _mesa_texstore_rgba_int32;
+
+      table[MESA_FORMAT_ABGR2101010] = _mesa_texstore_abgr2101010;
 
       initialized = GL_TRUE;
    }
