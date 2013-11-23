@@ -1230,6 +1230,9 @@ struct gl_texture_object
 
    /** GL_OES_EGL_image_external */
    GLint RequiredTextureImageUnits;
+
+   /** GL_ARB_shader_image_load_store */
+   GLenum ImageFormatCompatibilityType;
 };
 
 
@@ -2402,6 +2405,32 @@ struct gl_shader
         */
       GLenum OutputType;
    } Geom;
+
+   /**
+    * Map from image uniform index to image unit (set by glUniform1i())
+    *
+    * An image uniform index is associated with each image uniform by
+    * the linker.  The image index associated with each uniform is
+    * stored in the \c gl_uniform_storage::image field.
+    */
+   GLubyte ImageUnits[MAX_IMAGE_UNIFORMS];
+
+   /**
+    * Access qualifier specified in the shader for each image uniform
+    * index.  Either \c GL_READ_ONLY, \c GL_WRITE_ONLY or \c
+    * GL_READ_WRITE.
+    *
+    * It may be different, though only more strict than the value of
+    * \c gl_image_unit::Access for the corresponding image unit.
+    */
+   GLenum ImageAccess[MAX_IMAGE_UNIFORMS];
+
+   /**
+    * Number of image uniforms defined in the shader.  It specifies
+    * the number of valid elements in the \c ImageUnits and \c
+    * ImageAccess arrays above.
+    */
+   GLuint NumImages;
 };
 
 
@@ -3089,9 +3118,13 @@ struct gl_program_constants
    GLuint MaxUniformBlocks;
    GLuint MaxCombinedUniformComponents;
    GLuint MaxTextureImageUnits;
+
    /* GL_ARB_shader_atomic_counters */
    GLuint MaxAtomicBuffers;
    GLuint MaxAtomicCounters;
+
+   /* GL_ARB_shader_image_load_store */
+   GLuint MaxImageUniforms;
 };
 
 
@@ -3312,6 +3345,12 @@ struct gl_constants
    /** GL_ARB_vertex_attrib_binding */
    GLint MaxVertexAttribRelativeOffset;
    GLint MaxVertexAttribBindings;
+
+   /* GL_ARB_shader_image_load_store */
+   GLuint MaxImageUnits;
+   GLuint MaxCombinedImageUnitsAndFragmentOutputs;
+   GLuint MaxImageSamples;
+   GLuint MaxCombinedImageUniforms;
 };
 
 
@@ -3737,6 +3776,11 @@ struct gl_driver_flags
     * gl_context::AtomicBufferBindings
     */
    GLbitfield NewAtomicBuffer;
+
+   /**
+    * gl_context::ImageUnits
+    */
+   GLbitfield NewImageUnits;
 };
 
 struct gl_uniform_buffer_binding
@@ -3751,6 +3795,60 @@ struct gl_uniform_buffer_binding
     * limited by the current size of the BufferObject.
     */
    GLboolean AutomaticSize;
+};
+
+/**
+ * ARB_shader_image_load_store image unit.
+ */
+struct gl_image_unit
+{
+   /**
+    * Texture object bound to this unit.
+    */
+   struct gl_texture_object *TexObj;
+
+   /**
+    * Level of the texture object bound to this unit.
+    */
+   GLuint Level;
+
+   /**
+    * \c GL_TRUE if the whole level is bound as an array of layers, \c
+    * GL_FALSE if only some specific layer of the texture is bound.
+    * \sa Layer
+    */
+   GLboolean Layered;
+
+   /**
+    * Layer of the texture object bound to this unit, or zero if the
+    * whole level is bound.
+    */
+   GLuint Layer;
+
+   /**
+    * Access allowed to this texture image.  Either \c GL_READ_ONLY,
+    * \c GL_WRITE_ONLY or \c GL_READ_WRITE.
+    */
+   GLenum Access;
+
+   /**
+    * GL internal format that determines the interpretation of the
+    * image memory when shader image operations are performed through
+    * this unit.
+    */
+   GLenum Format;
+
+   /**
+    * Mesa format corresponding to \c Format.
+    */
+   gl_format _ActualFormat;
+
+   /**
+    * GL_TRUE if the state of this image unit is valid and access from
+    * the shader is allowed.  Otherwise loads from this unit should
+    * return zero and stores should have no effect.
+    */
+   GLboolean _Valid;
 };
 
 /**
@@ -3944,6 +4042,11 @@ struct gl_context
     */
    struct gl_atomic_buffer_binding
       AtomicBufferBindings[MAX_COMBINED_ATOMIC_BUFFERS];
+
+   /**
+    * Array of image units for ARB_shader_image_load_store.
+    */
+   struct gl_image_unit ImageUnits[MAX_IMAGE_UNITS];
 
    /*@}*/
 

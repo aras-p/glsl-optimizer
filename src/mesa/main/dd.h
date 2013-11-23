@@ -39,6 +39,7 @@ struct gl_buffer_object;
 struct gl_context;
 struct gl_display_list;
 struct gl_framebuffer;
+struct gl_image_unit;
 struct gl_pixelstore_attrib;
 struct gl_program;
 struct gl_renderbuffer;
