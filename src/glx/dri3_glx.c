@@ -1034,7 +1034,7 @@ dri3_find_back(xcb_connection_t *c, struct dri3_drawable *priv)
 
    for (;;) {
 
-      for (b = 0; b < DRI3_MAX_BACK; b++) {
+      for (b = 0; b < DRI3_NUM_BACK; b++) {
          int                    id = DRI3_BACK_ID(b);
          struct dri3_buffer        *buffer = priv->buffers[id];
 
@@ -1150,7 +1150,7 @@ dri3_free_buffers(__DRIdrawable *driDrawable,
    switch (buffer_type) {
    case dri3_buffer_back:
       first_id = DRI3_BACK_ID(0);
-      n_id = DRI3_MAX_BACK;
+      n_id = DRI3_NUM_BACK;
       break;
    case dri3_buffer_front:
       first_id = DRI3_FRONT_ID;
