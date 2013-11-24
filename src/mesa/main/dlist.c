@@ -1067,6 +1067,37 @@ alloc_instruction(struct gl_context *ctx, OpCode opcode, GLuint nparams)
 }
 
 
+/**
+ * Called by EndList to try to reduce memory used for the list.
+ */
+static void
+trim_list(struct gl_context *ctx)
+{
+   /* If the list we're ending only has one allocated block of nodes/tokens
+    * and its size isn't a full block size, realloc the block to use less
+    * memory.  This is important for apps that create many small display
+    * lists and apps that use glXUseXFont (many lists each containing one
+    * glBitmap call).
+    * Note: we currently only trim display lists that allocated one block
+    * of tokens.  That hits the short list case which is what we're mainly
+    * concerned with.  Trimming longer lists would involve traversing the
+    * linked list of blocks.
+    */
+   struct gl_dlist_state *list = &ctx->ListState;
+
+   if ((list->CurrentList->Head == list->CurrentBlock) &&
+       (list->CurrentPos < BLOCK_SIZE)) {
+      /* There's only one block and it's not full, so realloc */
+      GLuint newSize = list->CurrentPos * sizeof(Node);
+      list->CurrentList->Head =
+      list->CurrentBlock = realloc(list->CurrentBlock, newSize);
+      if (!list->CurrentBlock) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glEndList");
+      }
+   }
+}
+
+
 
 /*
  * Display List compilation functions
@@ -8242,6 +8273,8 @@ _mesa_EndList(void)
 
    (void) alloc_instruction(ctx, OPCODE_END_OF_LIST, 0);
 
+   trim_list(ctx);
+
    /* Destroy old list, if any */
    destroy_list(ctx, ctx->ListState.CurrentList->Name);
 
@@ -8255,6 +8288,8 @@ _mesa_EndList(void)
       mesa_print_display_list(ctx->ListState.CurrentList->Name);
 
    ctx->ListState.CurrentList = NULL;
+   ctx->ListState.CurrentBlock = NULL;
+   ctx->ListState.CurrentPos = 0;
    ctx->ExecuteFlag = GL_TRUE;
    ctx->CompileFlag = GL_FALSE;
 
