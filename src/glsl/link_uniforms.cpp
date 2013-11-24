@@ -757,6 +757,40 @@ link_assign_uniform_block_offsets(struct gl_shader *shader)
    }
 }
 
+/**
+ * Scan the program for image uniforms and store image unit access
+ * information into the gl_shader data structure.
+ */
+static void
+link_set_image_access_qualifiers(struct gl_shader_program *prog)
+{
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
+      gl_shader *sh = prog->_LinkedShaders[i];
+
+      if (sh == NULL)
+	 continue;
+
+      foreach_list(node, sh->ir) {
+	 ir_variable *var = ((ir_instruction *) node)->as_variable();
+
+         if (var && var->data.mode == ir_var_uniform &&
+             var->type->contains_image()) {
+            unsigned id;
+            bool found = prog->UniformHash->get(id, var->name);
+            assert(found);
+            const gl_uniform_storage *storage = &prog->UniformStorage[id];
+            const unsigned index = storage->image[i].index;
+            const GLenum access = (var->data.image.read_only ? GL_READ_ONLY :
+                                   var->data.image.write_only ? GL_WRITE_ONLY :
+                                   GL_READ_WRITE);
+
+            for (unsigned j = 0; j < MAX2(1, storage->array_elements); ++j)
+               sh->ImageAccess[index + j] = access;
+         }
+      }
+   }
+}
+
 void
 link_assign_uniform_locations(struct gl_shader_program *prog)
 {
@@ -901,6 +935,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
    prog->NumUserUniformStorage = num_user_uniforms;
    prog->UniformStorage = uniforms;
 
+   link_set_image_access_qualifiers(prog);
    link_set_uniform_initializers(prog);
 
    return;
