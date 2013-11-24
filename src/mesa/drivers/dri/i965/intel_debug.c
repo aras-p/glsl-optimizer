@@ -38,7 +38,6 @@ int INTEL_DEBUG = 0;
 static const struct dri_debug_control debug_control[] = {
    { "tex",   DEBUG_TEXTURE},
    { "state", DEBUG_STATE},
-   { "ioctl", DEBUG_IOCTL},
    { "blit",  DEBUG_BLIT},
    { "mip",   DEBUG_MIPTREE},
    { "fall",  DEBUG_PERF},

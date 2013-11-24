@@ -35,7 +35,6 @@ extern int INTEL_DEBUG;
 
 #define DEBUG_TEXTURE	  0x1
 #define DEBUG_STATE	  0x2
-#define DEBUG_IOCTL	  0x4
 #define DEBUG_BLIT	  0x8
 #define DEBUG_MIPTREE     0x10
 #define DEBUG_PERF	  0x20
