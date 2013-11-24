@@ -282,7 +282,7 @@ void radeonEmitVertexAOS( r100ContextPtr rmesa,
 #else
    BATCH_LOCALS(&rmesa->radeon);
 
-   if (RADEON_DEBUG & (RADEON_PRIMS|DEBUG_IOCTL))
+   if (RADEON_DEBUG & (RADEON_PRIMS|RADEON_IOCTL))
       fprintf(stderr, "%s:  vertex_size 0x%x offset 0x%x \n",
 	      __FUNCTION__, vertex_size, offset);
 
