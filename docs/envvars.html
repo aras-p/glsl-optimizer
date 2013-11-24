@@ -121,6 +121,38 @@ See the <a href="xlibdriver.html">Xlib software driver page</a> for details.
 <h2>i945/i965 driver environment variables (non-Gallium)</h2>
 
 <ul>
+<li>INTEL_NO_HW - if set to 1, prevents batches from being submitted to the hardware.
+   This is useful for debugging hangs, etc.</li>
+<li>INTEL_DEBUG - a comma-separated list of named flags, which do various things:
+<ul>
+   <li>tex - emit messages about textures.</li>
+   <li>state - emit messages about state flag tracking</li>
+   <li>blit - emit messages about blit operations</li>
+   <li>miptree - emit messages about miptrees</li>
+   <li>perf - emit messages about performance issues</li>
+   <li>perfmon - emit messages about AMD_performance_monitor</li>
+   <li>bat - emit batch information</li>
+   <li>pix - emit messages about pixel operations</li>
+   <li>buf - emit messages about buffer objects</li>
+   <li>reg - emit messages about regions</li>
+   <li>fbo - emit messages about framebuffers</li>
+   <li>fs - dump shader assembly for fragment shaders</li>
+   <li>gs - dump shader assembly for geometry shaders</li>
+   <li>sync - emit messages about synchronization</li>
+   <li>prim - emit messages about drawing primitives</li>
+   <li>vert - emit messages about vertex assembly</li>
+   <li>dri - emit messages about the DRI interface</li>
+   <li>sf - emit messages about the strips &amp; fans unit (for old gens, includes the SF program)</li>
+   <li>stats - enable statistics counters. you probably actually want perfmon or intel_gpu_top instead.</li>
+   <li>urb - emit messages about URB setup</li>
+   <li>vs - dump shader assembly for vertex shaders</li>
+   <li>clip - emit messages about the clip unit (for old gens, includes the CLIP program)</li>
+   <li>aub - dump batches into an AUB trace for use with simulation tools</li>
+   <li>shader_time - record how much GPU time is spent in each shader</li>
+   <li>no16 - suppress generation of 16-wide fragment shaders. useful for debugging broken shaders</li>
+   <li>blorp - emit messages about the blorp operations (blits &amp; clears)</li>
+   <li>nodualobj - suppress generation of dual-object geometry shader code</li>
+</ul>
 </ul>
 
 
