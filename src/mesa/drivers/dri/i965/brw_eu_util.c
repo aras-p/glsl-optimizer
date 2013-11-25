@@ -53,16 +53,16 @@ void brw_math_invert( struct brw_compile *p,
 void brw_copy4(struct brw_compile *p,
 	       struct brw_reg dst,
 	       struct brw_reg src,
-	       GLuint count)
+	       unsigned count)
 {
-   GLuint i;
+   unsigned i;
 
    dst = vec4(dst);
    src = vec4(src);
 
    for (i = 0; i < count; i++)
    {
-      GLuint delta = i*32;
+      unsigned delta = i*32;
       brw_MOV(p, byte_offset(dst, delta),    byte_offset(src, delta));
       brw_MOV(p, byte_offset(dst, delta+16), byte_offset(src, delta+16));
    }
@@ -72,16 +72,16 @@ void brw_copy4(struct brw_compile *p,
 void brw_copy8(struct brw_compile *p,
 	       struct brw_reg dst,
 	       struct brw_reg src,
-	       GLuint count)
+	       unsigned count)
 {
-   GLuint i;
+   unsigned i;
 
    dst = vec8(dst);
    src = vec8(src);
 
    for (i = 0; i < count; i++)
    {
-      GLuint delta = i*32;
+      unsigned delta = i*32;
       brw_MOV(p, byte_offset(dst, delta),    byte_offset(src, delta));
    }
 }
@@ -90,13 +90,13 @@ void brw_copy8(struct brw_compile *p,
 void brw_copy_indirect_to_indirect(struct brw_compile *p,
 				   struct brw_indirect dst_ptr,
 				   struct brw_indirect src_ptr,
-				   GLuint count)
+				   unsigned count)
 {
-   GLuint i;
+   unsigned i;
 
    for (i = 0; i < count; i++)
    {
-      GLuint delta = i*32;
+      unsigned delta = i*32;
       brw_MOV(p, deref_4f(dst_ptr, delta),    deref_4f(src_ptr, delta));
       brw_MOV(p, deref_4f(dst_ptr, delta+16), deref_4f(src_ptr, delta+16));
    }
@@ -106,15 +106,15 @@ void brw_copy_indirect_to_indirect(struct brw_compile *p,
 void brw_copy_from_indirect(struct brw_compile *p,
 			    struct brw_reg dst,
 			    struct brw_indirect ptr,
-			    GLuint count)
+			    unsigned count)
 {
-   GLuint i;
+   unsigned i;
 
    dst = vec4(dst);
 
    for (i = 0; i < count; i++)
    {
-      GLuint delta = i*32;
+      unsigned delta = i*32;
       brw_MOV(p, byte_offset(dst, delta),    deref_4f(ptr, delta));
       brw_MOV(p, byte_offset(dst, delta+16), deref_4f(ptr, delta+16));
    }

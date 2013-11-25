@@ -63,7 +63,7 @@ brw_swap_cmod(uint32_t cmod)
 /* How does predicate control work when execution_size != 8?  Do I
  * need to test/set for 0xffff when execution_size is 16?
  */
-void brw_set_predicate_control_flag_value( struct brw_compile *p, GLuint value )
+void brw_set_predicate_control_flag_value( struct brw_compile *p, unsigned value )
 {
    p->current->header.predicate_control = BRW_PREDICATE_NONE;
 
@@ -79,7 +79,7 @@ void brw_set_predicate_control_flag_value( struct brw_compile *p, GLuint value )
    }
 }
 
-void brw_set_predicate_control( struct brw_compile *p, GLuint pc )
+void brw_set_predicate_control( struct brw_compile *p, unsigned pc )
 {
    p->current->header.predicate_control = pc;
 }
@@ -89,7 +89,7 @@ void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse)
    p->current->header.predicate_inverse = predicate_inverse;
 }
 
-void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional )
+void brw_set_conditionalmod( struct brw_compile *p, unsigned conditional )
 {
    p->current->header.destreg__conditionalmod = conditional;
 }
@@ -100,7 +100,7 @@ void brw_set_flag_reg(struct brw_compile *p, int reg, int subreg)
    p->current->bits2.da1.flag_subreg_nr = subreg;
 }
 
-void brw_set_access_mode( struct brw_compile *p, GLuint access_mode )
+void brw_set_access_mode( struct brw_compile *p, unsigned access_mode )
 {
    p->current->header.access_mode = access_mode;
 }
@@ -142,7 +142,7 @@ brw_set_compression_control(struct brw_compile *p,
    }
 }
 
-void brw_set_mask_control( struct brw_compile *p, GLuint value )
+void brw_set_mask_control( struct brw_compile *p, unsigned value )
 {
    p->current->header.mask_control = value;
 }
@@ -152,7 +152,7 @@ void brw_set_saturate( struct brw_compile *p, bool enable )
    p->current->header.saturate = enable;
 }
 
-void brw_set_acc_write_control(struct brw_compile *p, GLuint value)
+void brw_set_acc_write_control(struct brw_compile *p, unsigned value)
 {
    if (p->brw->gen >= 6)
       p->current->header.acc_wr_control = value;
@@ -217,13 +217,13 @@ brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
 }
 
 
-const GLuint *brw_get_program( struct brw_compile *p,
-			       GLuint *sz )
+const unsigned *brw_get_program( struct brw_compile *p,
+			       unsigned *sz )
 {
    brw_compact_instructions(p);
 
    *sz = p->next_insn_offset;
-   return (const GLuint *)p->store;
+   return (const unsigned *)p->store;
 }
 
 void

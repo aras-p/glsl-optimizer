@@ -48,7 +48,7 @@ extern "C" {
 struct brw_compile {
    struct brw_instruction *store;
    int store_size;
-   GLuint nr_insn;
+   unsigned nr_insn;
    unsigned int next_insn_offset;
 
    void *mem_ctx;
@@ -59,7 +59,7 @@ struct brw_compile {
    bool compressed_stack[BRW_EU_MAX_INSN_STACK];
    struct brw_instruction *current;
 
-   GLuint flag_value;
+   unsigned flag_value;
    bool single_program_flow;
    bool compressed;
    struct brw_context *brw;
@@ -97,23 +97,23 @@ static INLINE struct brw_instruction *current_insn( struct brw_compile *p)
 
 void brw_pop_insn_state( struct brw_compile *p );
 void brw_push_insn_state( struct brw_compile *p );
-void brw_set_mask_control( struct brw_compile *p, GLuint value );
+void brw_set_mask_control( struct brw_compile *p, unsigned value );
 void brw_set_saturate( struct brw_compile *p, bool enable );
-void brw_set_access_mode( struct brw_compile *p, GLuint access_mode );
+void brw_set_access_mode( struct brw_compile *p, unsigned access_mode );
 void brw_set_compression_control(struct brw_compile *p, enum brw_compression c);
-void brw_set_predicate_control_flag_value( struct brw_compile *p, GLuint value );
-void brw_set_predicate_control( struct brw_compile *p, GLuint pc );
+void brw_set_predicate_control_flag_value( struct brw_compile *p, unsigned value );
+void brw_set_predicate_control( struct brw_compile *p, unsigned pc );
 void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse);
-void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional );
+void brw_set_conditionalmod( struct brw_compile *p, unsigned conditional );
 void brw_set_flag_reg(struct brw_compile *p, int reg, int subreg);
-void brw_set_acc_write_control(struct brw_compile *p, GLuint value);
+void brw_set_acc_write_control(struct brw_compile *p, unsigned value);
 
 void brw_init_compile(struct brw_context *, struct brw_compile *p,
 		      void *mem_ctx);
 void brw_dump_compile(struct brw_compile *p, FILE *out, int start, int end);
-const GLuint *brw_get_program( struct brw_compile *p, GLuint *sz );
+const unsigned *brw_get_program( struct brw_compile *p, unsigned *sz );
 
-struct brw_instruction *brw_next_insn(struct brw_compile *p, GLuint opcode);
+struct brw_instruction *brw_next_insn(struct brw_compile *p, unsigned opcode);
 void brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
 		  struct brw_reg dest);
 void brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
@@ -121,7 +121,7 @@ void brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
 
 void gen6_resolve_implied_move(struct brw_compile *p,
 			       struct brw_reg *src,
-			       GLuint msg_reg_nr);
+			       unsigned msg_reg_nr);
 
 /* Helpers for regular instructions:
  */
@@ -197,97 +197,97 @@ ROUND(RNDE)
  */
 void brw_set_sampler_message(struct brw_compile *p,
                              struct brw_instruction *insn,
-                             GLuint binding_table_index,
-                             GLuint sampler,
-                             GLuint msg_type,
-                             GLuint response_length,
-                             GLuint msg_length,
-                             GLuint header_present,
-                             GLuint simd_mode,
-                             GLuint return_format);
+                             unsigned binding_table_index,
+                             unsigned sampler,
+                             unsigned msg_type,
+                             unsigned response_length,
+                             unsigned msg_length,
+                             unsigned header_present,
+                             unsigned simd_mode,
+                             unsigned return_format);
 
 void brw_set_dp_read_message(struct brw_compile *p,
 			     struct brw_instruction *insn,
-			     GLuint binding_table_index,
-			     GLuint msg_control,
-			     GLuint msg_type,
-			     GLuint target_cache,
-			     GLuint msg_length,
+			     unsigned binding_table_index,
+			     unsigned msg_control,
+			     unsigned msg_type,
+			     unsigned target_cache,
+			     unsigned msg_length,
                              bool header_present,
-			     GLuint response_length);
+			     unsigned response_length);
 
 void brw_set_dp_write_message(struct brw_compile *p,
 			      struct brw_instruction *insn,
-			      GLuint binding_table_index,
-			      GLuint msg_control,
-			      GLuint msg_type,
-			      GLuint msg_length,
+			      unsigned binding_table_index,
+			      unsigned msg_control,
+			      unsigned msg_type,
+			      unsigned msg_length,
 			      bool header_present,
-			      GLuint last_render_target,
-			      GLuint response_length,
-			      GLuint end_of_thread,
-			      GLuint send_commit_msg);
+			      unsigned last_render_target,
+			      unsigned response_length,
+			      unsigned end_of_thread,
+			      unsigned send_commit_msg);
 
 void brw_urb_WRITE(struct brw_compile *p,
 		   struct brw_reg dest,
-		   GLuint msg_reg_nr,
+		   unsigned msg_reg_nr,
 		   struct brw_reg src0,
                    enum brw_urb_write_flags flags,
-		   GLuint msg_length,
-		   GLuint response_length,
-		   GLuint offset,
-		   GLuint swizzle);
+		   unsigned msg_length,
+		   unsigned response_length,
+		   unsigned offset,
+		   unsigned swizzle);
 
 void brw_ff_sync(struct brw_compile *p,
 		   struct brw_reg dest,
-		   GLuint msg_reg_nr,
+		   unsigned msg_reg_nr,
 		   struct brw_reg src0,
 		   bool allocate,
-		   GLuint response_length,
+		   unsigned response_length,
 		   bool eot);
 
 void brw_svb_write(struct brw_compile *p,
                    struct brw_reg dest,
-                   GLuint msg_reg_nr,
+                   unsigned msg_reg_nr,
                    struct brw_reg src0,
-                   GLuint binding_table_index,
+                   unsigned binding_table_index,
                    bool   send_commit_msg);
 
 void brw_fb_WRITE(struct brw_compile *p,
 		  int dispatch_width,
-		   GLuint msg_reg_nr,
+		   unsigned msg_reg_nr,
 		   struct brw_reg src0,
-		   GLuint msg_control,
-		   GLuint binding_table_index,
-		   GLuint msg_length,
-		   GLuint response_length,
+		   unsigned msg_control,
+		   unsigned binding_table_index,
+		   unsigned msg_length,
+		   unsigned response_length,
 		   bool eot,
 		   bool header_present);
 
 void brw_SAMPLE(struct brw_compile *p,
 		struct brw_reg dest,
-		GLuint msg_reg_nr,
+		unsigned msg_reg_nr,
 		struct brw_reg src0,
-		GLuint binding_table_index,
-		GLuint sampler,
-		GLuint msg_type,
-		GLuint response_length,
-		GLuint msg_length,
-		GLuint header_present,
-		GLuint simd_mode,
-		GLuint return_format);
+		unsigned binding_table_index,
+		unsigned sampler,
+		unsigned msg_type,
+		unsigned response_length,
+		unsigned msg_length,
+		unsigned header_present,
+		unsigned simd_mode,
+		unsigned return_format);
 
 void brw_math( struct brw_compile *p,
 	       struct brw_reg dest,
-	       GLuint function,
-	       GLuint msg_reg_nr,
+	       unsigned function,
+	       unsigned msg_reg_nr,
 	       struct brw_reg src,
-	       GLuint data_type,
-	       GLuint precision );
+	       unsigned data_type,
+	       unsigned precision );
 
 void brw_math2(struct brw_compile *p,
 	       struct brw_reg dest,
-	       GLuint function,
+	       unsigned function,
 	       struct brw_reg src0,
 	       struct brw_reg src1);
 
@@ -301,17 +301,17 @@ void brw_oword_block_read_scratch(struct brw_compile *p,
 				  struct brw_reg dest,
 				  struct brw_reg mrf,
 				  int num_regs,
-				  GLuint offset);
+				  unsigned offset);
 
 void brw_oword_block_write_scratch(struct brw_compile *p,
 				   struct brw_reg mrf,
 				   int num_regs,
-				   GLuint offset);
+				   unsigned offset);
 
 void gen7_block_read_scratch(struct brw_compile *p,
                              struct brw_reg dest,
                              int num_regs,
-                             GLuint offset);
+                             unsigned offset);
 
 void brw_shader_time_add(struct brw_compile *p,
                          struct brw_reg payload,
@@ -321,7 +321,7 @@ void brw_shader_time_add(struct brw_compile *p,
  * channel.
  */
 struct brw_instruction *brw_IF(struct brw_compile *p,
-			       GLuint execute_size);
+			       unsigned execute_size);
 struct brw_instruction *gen6_IF(struct brw_compile *p, uint32_t conditional,
 				struct brw_reg src0, struct brw_reg src1);
 
@@ -331,7 +331,7 @@ void brw_ENDIF(struct brw_compile *p);
 /* DO/WHILE loops:
  */
 struct brw_instruction *brw_DO(struct brw_compile *p,
-			       GLuint execute_size);
+			       unsigned execute_size);
 
 struct brw_instruction *brw_WHILE(struct brw_compile *p);
 
@@ -354,7 +354,7 @@ void brw_WAIT(struct brw_compile *p);
  */
 void brw_CMP(struct brw_compile *p,
 	     struct brw_reg dest,
-	     GLuint conditional,
+	     unsigned conditional,
 	     struct brw_reg src0,
 	     struct brw_reg src1);
 
@@ -362,18 +362,18 @@ void
 brw_untyped_atomic(struct brw_compile *p,
                    struct brw_reg dest,
                    struct brw_reg mrf,
-                   GLuint atomic_op,
-                   GLuint bind_table_index,
-                   GLuint msg_length,
-                   GLuint response_length);
+                   unsigned atomic_op,
+                   unsigned bind_table_index,
+                   unsigned msg_length,
+                   unsigned response_length);
 
 void
 brw_untyped_surface_read(struct brw_compile *p,
                          struct brw_reg dest,
                          struct brw_reg mrf,
-                         GLuint bind_table_index,
-                         GLuint msg_length,
-                         GLuint response_length);
+                         unsigned bind_table_index,
+                         unsigned msg_length,
+                         unsigned response_length);
 
 /***********************************************************************
  * brw_eu_util.c:
@@ -382,22 +382,22 @@ brw_untyped_surface_read(struct brw_compile *p,
 void brw_copy_indirect_to_indirect(struct brw_compile *p,
 				   struct brw_indirect dst_ptr,
 				   struct brw_indirect src_ptr,
-				   GLuint count);
+				   unsigned count);
 
 void brw_copy_from_indirect(struct brw_compile *p,
 			    struct brw_reg dst,
 			    struct brw_indirect ptr,
-			    GLuint count);
+			    unsigned count);
 
 void brw_copy4(struct brw_compile *p,
 	       struct brw_reg dst,
 	       struct brw_reg src,
-	       GLuint count);
+	       unsigned count);
 
 void brw_copy8(struct brw_compile *p,
 	       struct brw_reg dst,
 	       struct brw_reg src,
-	       GLuint count);
+	       unsigned count);
 
 void brw_math_invert( struct brw_compile *p,
 		      struct brw_reg dst,
