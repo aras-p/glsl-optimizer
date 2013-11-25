@@ -173,10 +173,6 @@ void intel_batchbuffer_cached_advance(struct brw_context *brw);
    intel_batchbuffer_emit_reloc(brw, buf,			\
 				read_domains, write_domain, delta);	\
 } while (0)
-#define OUT_RELOC_FENCED(buf, read_domains, write_domain, delta) do {	\
-   intel_batchbuffer_emit_reloc_fenced(brw, buf,		\
-				       read_domains, write_domain, delta); \
-} while (0)
 
 #define ADVANCE_BATCH() intel_batchbuffer_advance(brw);
 #define CACHED_BATCH() intel_batchbuffer_cached_advance(brw);
