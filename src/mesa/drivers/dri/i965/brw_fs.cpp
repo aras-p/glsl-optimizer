@@ -2868,7 +2868,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
    }
    printf(", ");
 
-   for (int i = 0; i < 3; i++) {
+   for (int i = 0; i < 3 && inst->src[i].file != BAD_FILE; i++) {
       if (inst->src[i].negate)
          printf("-");
       if (inst->src[i].abs)
@@ -2924,7 +2924,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
       if (inst->src[i].abs)
          printf("|");
 
-      if (i < 3)
+      if (i < 2 && inst->src[i + 1].file != BAD_FILE)
          printf(", ");
    }
 

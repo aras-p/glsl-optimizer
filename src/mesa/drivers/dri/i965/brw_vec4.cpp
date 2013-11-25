@@ -1138,7 +1138,7 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst)
    }
    printf(", ");
 
-   for (int i = 0; i < 3; i++) {
+   for (int i = 0; i < 3 && inst->src[i].file != BAD_FILE; i++) {
       switch (inst->src[i].file) {
       case GRF:
          printf("vgrf%d", inst->src[i].reg);
@@ -1182,7 +1182,7 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst)
          printf("%s", chans[BRW_GET_SWZ(inst->src[i].swizzle, c)]);
       }
 
-      if (i < 3)
+      if (i < 2 && inst->src[i + 1].file != BAD_FILE)
          printf(", ");
    }
 
