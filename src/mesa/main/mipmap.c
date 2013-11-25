@@ -1767,8 +1767,8 @@ _mesa_generate_mipmap_level(GLenum target,
  * compute next (level+1) image size
  * \return GL_FALSE if no smaller size can be generated (eg. src is 1x1x1 size)
  */
-static GLboolean
-next_mipmap_level_size(GLenum target, GLint border,
+GLboolean
+_mesa_next_mipmap_level_size(GLenum target, GLint border,
                        GLint srcWidth, GLint srcHeight, GLint srcDepth,
                        GLint *dstWidth, GLint *dstHeight, GLint *dstDepth)
 {
@@ -1911,7 +1911,7 @@ generate_mipmap_uncompressed(struct gl_context *ctx, GLenum target,
       srcDepth = srcImage->Depth;
       border = srcImage->Border;
 
-      nextLevel = next_mipmap_level_size(target, border,
+      nextLevel = _mesa_next_mipmap_level_size(target, border,
                                          srcWidth, srcHeight, srcDepth,
                                          &dstWidth, &dstHeight, &dstDepth);
       if (!nextLevel)
@@ -2102,7 +2102,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
       srcDepth = srcImage->Depth;
       border = srcImage->Border;
 
-      nextLevel = next_mipmap_level_size(target, border,
+      nextLevel = _mesa_next_mipmap_level_size(target, border,
                                          srcWidth, srcHeight, srcDepth,
                                          &dstWidth, &dstHeight, &dstDepth);
       if (!nextLevel)

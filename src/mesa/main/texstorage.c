@@ -37,6 +37,7 @@
 #include "macros.h"
 #include "teximage.h"
 #include "texobj.h"
+#include "mipmap.h"
 #include "texstorage.h"
 #include "mtypes.h"
 
@@ -98,27 +99,6 @@ legal_texobj_target(struct gl_context *ctx, GLuint dims, GLenum target)
 }
 
 
-/**
- * Compute the size of the next mipmap level.
- */
-static void
-next_mipmap_level_size(GLenum target,
-                       GLint *width, GLint *height, GLint *depth)
-{
-   if (*width > 1) {
-      *width /= 2;
-   }
-
-   if ((*height > 1) && (target != GL_TEXTURE_1D_ARRAY)) {
-      *height /= 2;
-   }
-
-   if ((*depth > 1) && (target != GL_TEXTURE_2D_ARRAY)) {
-      *depth /= 2;
-   }
-}
-
-
 /** Helper to get a particular texture image in a texture object */
 static struct gl_texture_image *
 get_tex_image(struct gl_context *ctx, 
@@ -162,7 +142,8 @@ initialize_texture_fields(struct gl_context *ctx,
                                     0, internalFormat, texFormat);
       }
 
-      next_mipmap_level_size(target, &levelWidth, &levelHeight, &levelDepth);
+      _mesa_next_mipmap_level_size(target, 0, levelWidth, levelHeight, levelDepth,
+                                   &levelWidth, &levelHeight, &levelDepth);
    }
    return GL_TRUE;
 }

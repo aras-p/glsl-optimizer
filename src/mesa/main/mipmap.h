@@ -51,5 +51,9 @@ extern void
 _mesa_generate_mipmap(struct gl_context *ctx, GLenum target,
                       struct gl_texture_object *texObj);
 
+extern GLboolean
+_mesa_next_mipmap_level_size(GLenum target, GLint border,
+                       GLint srcWidth, GLint srcHeight, GLint srcDepth,
+                       GLint *dstWidth, GLint *dstHeight, GLint *dstDepth);
 
 #endif /* MIPMAP_H */
