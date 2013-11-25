@@ -382,18 +382,34 @@ fs_visitor::visit(ir_expression *ir)
       emit(MOV(this->result, op[0]));
       break;
    case ir_unop_sign:
-      temp = fs_reg(this, ir->type);
+      if (ir->type->is_float()) {
+         /* AND(val, 0x80000000) gives the sign bit.
+          *
+          * Predicated OR ORs 1.0 (0x3f800000) with the sign bit if val is not
+          * zero.
+          */
+         emit(CMP(reg_null_f, op[0], fs_reg(0.0f), BRW_CONDITIONAL_NZ));
 
-      emit(MOV(this->result, fs_reg(0.0f)));
+         op[0].type = BRW_REGISTER_TYPE_UD;
+         this->result.type = BRW_REGISTER_TYPE_UD;
+         emit(AND(this->result, op[0], fs_reg(0x80000000u)));
 
-      emit(CMP(reg_null_f, op[0], fs_reg(0.0f), BRW_CONDITIONAL_G));
-      inst = emit(MOV(this->result, fs_reg(1.0f)));
-      inst->predicate = BRW_PREDICATE_NORMAL;
+         inst = emit(OR(this->result, this->result, fs_reg(0x3f800000u)));
+         inst->predicate = BRW_PREDICATE_NORMAL;
 
-      emit(CMP(reg_null_f, op[0], fs_reg(0.0f), BRW_CONDITIONAL_L));
-      inst = emit(MOV(this->result, fs_reg(-1.0f)));
-      inst->predicate = BRW_PREDICATE_NORMAL;
+         this->result.type = BRW_REGISTER_TYPE_F;
+      } else {
+         /*  ASR(val, 31) -> negative val generates 0xffffffff (signed -1).
+          *               -> non-negative val generates 0x00000000.
+          *  Predicated OR sets 1 if val is positive.
+          */
+         emit(CMP(reg_null_d, op[0], fs_reg(0), BRW_CONDITIONAL_G));
 
+         emit(ASR(this->result, op[0], fs_reg(31)));
+
+         inst = emit(OR(this->result, this->result, fs_reg(1)));
+         inst->predicate = BRW_PREDICATE_NORMAL;
+      }
       break;
    case ir_unop_rcp:
       emit_math(SHADER_OPCODE_RCP, this->result, op[0]);

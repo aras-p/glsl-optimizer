@@ -1259,16 +1259,34 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_sign:
-      emit(MOV(result_dst, src_reg(0.0f)));
+      if (ir->type->is_float()) {
+         /* AND(val, 0x80000000) gives the sign bit.
+          *
+          * Predicated OR ORs 1.0 (0x3f800000) with the sign bit if val is not
+          * zero.
+          */
+         emit(CMP(dst_null_f(), op[0], src_reg(0.0f), BRW_CONDITIONAL_NZ));
 
-      emit(CMP(dst_null_d(), op[0], src_reg(0.0f), BRW_CONDITIONAL_G));
-      inst = emit(MOV(result_dst, src_reg(1.0f)));
-      inst->predicate = BRW_PREDICATE_NORMAL;
+         op[0].type = BRW_REGISTER_TYPE_UD;
+         result_dst.type = BRW_REGISTER_TYPE_UD;
+         emit(AND(result_dst, op[0], src_reg(0x80000000u)));
 
-      emit(CMP(dst_null_d(), op[0], src_reg(0.0f), BRW_CONDITIONAL_L));
-      inst = emit(MOV(result_dst, src_reg(-1.0f)));
-      inst->predicate = BRW_PREDICATE_NORMAL;
+         inst = emit(OR(result_dst, src_reg(result_dst), src_reg(0x3f800000u)));
+         inst->predicate = BRW_PREDICATE_NORMAL;
 
+         this->result.type = BRW_REGISTER_TYPE_F;
+      } else {
+         /*  ASR(val, 31) -> negative val generates 0xffffffff (signed -1).
+          *               -> non-negative val generates 0x00000000.
+          *  Predicated OR sets 1 if val is positive.
+          */
+         emit(CMP(dst_null_d(), op[0], src_reg(0), BRW_CONDITIONAL_G));
+
+         emit(ASR(result_dst, op[0], src_reg(31)));
+
+         inst = emit(OR(result_dst, src_reg(result_dst), src_reg(1)));
+         inst->predicate = BRW_PREDICATE_NORMAL;
+      }
       break;
 
    case ir_unop_rcp:
