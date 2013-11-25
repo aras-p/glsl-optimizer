@@ -53,6 +53,7 @@ enum glsl_base_type {
    GLSL_TYPE_FLOAT,
    GLSL_TYPE_BOOL,
    GLSL_TYPE_SAMPLER,
+   GLSL_TYPE_IMAGE,
    GLSL_TYPE_ATOMIC_UINT,
    GLSL_TYPE_STRUCT,
    GLSL_TYPE_INTERFACE,
@@ -89,8 +90,9 @@ struct glsl_type {
    unsigned sampler_dimensionality:3; /**< \see glsl_sampler_dim */
    unsigned sampler_shadow:1;
    unsigned sampler_array:1;
-   unsigned sampler_type:2;    /**< Type of data returned using this sampler.
-				* only \c GLSL_TYPE_FLOAT, \c GLSL_TYPE_INT,
+   unsigned sampler_type:2;    /**< Type of data returned using this
+				* sampler or image.  Only \c
+				* GLSL_TYPE_FLOAT, \c GLSL_TYPE_INT,
 				* and \c GLSL_TYPE_UINT are valid.
 				*/
    unsigned interface_packing:2;
@@ -564,8 +566,8 @@ private:
 	     glsl_base_type base_type, unsigned vector_elements,
 	     unsigned matrix_columns, const char *name);
 
-   /** Constructor for sampler types */
-   glsl_type(GLenum gl_type,
+   /** Constructor for sampler or image types */
+   glsl_type(GLenum gl_type, glsl_base_type base_type,
 	     enum glsl_sampler_dim dim, bool shadow, bool array,
 	     unsigned type, const char *name);
 

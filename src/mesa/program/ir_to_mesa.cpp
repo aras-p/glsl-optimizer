@@ -618,6 +618,7 @@ type_size(const struct glsl_type *type)
       }
       return size;
    case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_IMAGE:
       /* Samplers take up one slot in UNIFORMS[], but they're baked in
        * at link time.
        */
@@ -2559,6 +2560,7 @@ _mesa_associate_uniform_storage(struct gl_context *ctx,
 	    columns = 1;
 	    break;
 	 case GLSL_TYPE_SAMPLER:
+	 case GLSL_TYPE_IMAGE:
 	    format = uniform_native;
 	    columns = 1;
 	    break;
