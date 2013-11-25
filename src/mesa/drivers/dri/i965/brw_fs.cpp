@@ -2858,7 +2858,29 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
       printf("***u%d***", inst->dst.reg);
       break;
    case HW_REG:
-      printf("hw_reg%d", inst->dst.fixed_hw_reg.nr);
+      if (inst->dst.fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE) {
+         switch (inst->dst.fixed_hw_reg.nr) {
+         case BRW_ARF_NULL:
+            printf("null");
+            break;
+         case BRW_ARF_ADDRESS:
+            printf("a0.%d", inst->dst.fixed_hw_reg.subnr);
+            break;
+         case BRW_ARF_ACCUMULATOR:
+            printf("acc%d", inst->dst.fixed_hw_reg.subnr);
+            break;
+         case BRW_ARF_FLAG:
+            printf("f%d.%d", inst->dst.fixed_hw_reg.nr & 0xf,
+                             inst->dst.fixed_hw_reg.subnr);
+            break;
+         default:
+            printf("arf%d.%d", inst->dst.fixed_hw_reg.nr & 0xf,
+                               inst->dst.fixed_hw_reg.subnr);
+            break;
+         }
+      } else {
+         printf("hw_reg%d", inst->dst.fixed_hw_reg.nr);
+      }
       if (inst->dst.fixed_hw_reg.subnr)
          printf("+%d", inst->dst.fixed_hw_reg.subnr);
       break;
@@ -2911,7 +2933,29 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
             printf("-");
          if (inst->src[i].fixed_hw_reg.abs)
             printf("|");
-         printf("hw_reg%d", inst->src[i].fixed_hw_reg.nr);
+         if (inst->src[i].fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE) {
+            switch (inst->src[i].fixed_hw_reg.nr) {
+            case BRW_ARF_NULL:
+               printf("null");
+               break;
+            case BRW_ARF_ADDRESS:
+               printf("a0.%d", inst->src[i].fixed_hw_reg.subnr);
+               break;
+            case BRW_ARF_ACCUMULATOR:
+               printf("acc%d", inst->src[i].fixed_hw_reg.subnr);
+               break;
+            case BRW_ARF_FLAG:
+               printf("f%d.%d", inst->src[i].fixed_hw_reg.nr & 0xf,
+                                inst->src[i].fixed_hw_reg.subnr);
+               break;
+            default:
+               printf("arf%d.%d", inst->src[i].fixed_hw_reg.nr & 0xf,
+                                  inst->src[i].fixed_hw_reg.subnr);
+               break;
+            }
+         } else {
+            printf("hw_reg%d", inst->src[i].fixed_hw_reg.nr);
+         }
          if (inst->src[i].fixed_hw_reg.subnr)
             printf("+%d", inst->src[i].fixed_hw_reg.subnr);
          if (inst->src[i].fixed_hw_reg.abs)
