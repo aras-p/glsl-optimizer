@@ -259,6 +259,13 @@ brw_upload_gs_prog(struct brw_context *brw)
          brw->vue_map_geom_out = brw->vue_map_vs;
          brw->state.dirty.brw |= BRW_NEW_VUE_MAP_GEOM_OUT;
       }
+
+      /* Other state atoms had better not try to access prog_data, since
+       * there's no GS program.
+       */
+      brw->gs.prog_data = NULL;
+      brw->gs.base.prog_data = NULL;
+
       return;
    }
 
