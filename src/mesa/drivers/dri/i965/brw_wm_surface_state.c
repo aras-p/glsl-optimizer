@@ -2,7 +2,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,13 +22,13 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-                   
+
 
 #include "main/context.h"
 #include "main/blend.h"
@@ -51,29 +51,29 @@ GLuint
 translate_tex_target(GLenum target)
 {
    switch (target) {
-   case GL_TEXTURE_1D: 
+   case GL_TEXTURE_1D:
    case GL_TEXTURE_1D_ARRAY_EXT:
       return BRW_SURFACE_1D;
 
-   case GL_TEXTURE_RECTANGLE_NV: 
+   case GL_TEXTURE_RECTANGLE_NV:
       return BRW_SURFACE_2D;
 
-   case GL_TEXTURE_2D: 
+   case GL_TEXTURE_2D:
    case GL_TEXTURE_2D_ARRAY_EXT:
    case GL_TEXTURE_EXTERNAL_OES:
    case GL_TEXTURE_2D_MULTISAMPLE:
    case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
       return BRW_SURFACE_2D;
 
-   case GL_TEXTURE_3D: 
+   case GL_TEXTURE_3D:
       return BRW_SURFACE_3D;
 
-   case GL_TEXTURE_CUBE_MAP: 
+   case GL_TEXTURE_CUBE_MAP:
    case GL_TEXTURE_CUBE_MAP_ARRAY:
       return BRW_SURFACE_CUBE;
 
-   default: 
-      assert(0); 
+   default:
+      assert(0);
       return 0;
    }
 }

@@ -2,7 +2,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,13 +22,13 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-   
+
 
 
 #include "main/mtypes.h"
@@ -114,7 +114,7 @@ static void upload_sf_vp(struct brw_context *brw)
 
 const struct brw_tracked_state brw_sf_vp = {
    .dirty = {
-      .mesa  = (_NEW_VIEWPORT | 
+      .mesa  = (_NEW_VIEWPORT |
 		_NEW_SCISSOR |
 		_NEW_BUFFERS),
       .brw   = BRW_NEW_BATCH,
@@ -238,7 +238,7 @@ static void upload_sf_unit( struct brw_context *brw )
        * "Intel® 965 Express Chipset Family and Intel® G35 Express
        * Chipset Graphics Controller Programmer's Reference Manual,
        * Volume 2: 3D/Media", Revision 1.0b as of January 2008,
-       * available at 
+       * available at
        *     http://intellinuxgraphics.org/documentation.html
        * at the time of this writing).
        *
@@ -298,11 +298,11 @@ static void upload_sf_unit( struct brw_context *brw )
 
 const struct brw_tracked_state brw_sf_unit = {
    .dirty = {
-      .mesa  = (_NEW_POLYGON | 
+      .mesa  = (_NEW_POLYGON |
 		_NEW_PROGRAM |
 		_NEW_LIGHT |
-		_NEW_LINE | 
-		_NEW_POINT | 
+		_NEW_LINE |
+		_NEW_POINT |
 		_NEW_SCISSOR |
 		_NEW_BUFFERS),
       .brw   = (BRW_NEW_BATCH |

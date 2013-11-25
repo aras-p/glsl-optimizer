@@ -2,7 +2,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,13 +22,13 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
- 
+
 
 #include "main/glheader.h"
 #include "main/macros.h"
@@ -81,7 +81,7 @@ static void brw_ff_gs_alloc_regs(struct brw_ff_gs_compile *c,
          retype(brw_vec4_grf(i++, 0), BRW_REGISTER_TYPE_UD);
    }
 
-   c->prog_data.urb_read_length = c->nr_regs; 
+   c->prog_data.urb_read_length = c->nr_regs;
    c->prog_data.total_grf = i;
 }
 
@@ -164,7 +164,7 @@ static void brw_ff_gs_offset_header_dw2(struct brw_ff_gs_compile *c,
  * will be stored in DWORD 0 of c->reg.header for use in the next URB_WRITE
  * message.
  */
-static void brw_ff_gs_emit_vue(struct brw_ff_gs_compile *c, 
+static void brw_ff_gs_emit_vue(struct brw_ff_gs_compile *c,
                                struct brw_reg vert,
                                bool last)
 {
@@ -288,7 +288,7 @@ brw_ff_gs_quad_strip(struct brw_ff_gs_compile *c,
 
    brw_ff_gs_alloc_regs(c, 4, false);
    brw_ff_gs_initialize_header(c);
-   
+
    if (brw->gen == 5)
       brw_ff_gs_ff_sync(c, 1);
    brw_ff_gs_overwrite_header_dw2(

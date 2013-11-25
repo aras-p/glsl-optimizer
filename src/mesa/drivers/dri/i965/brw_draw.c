@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #include <sys/errno.h>
@@ -73,7 +73,7 @@ const GLuint prim_to_hw_prim[GL_TRIANGLE_STRIP_ADJACENCY+1] = {
 };
 
 
-static const GLenum reduced_prim[GL_POLYGON+1] = {  
+static const GLenum reduced_prim[GL_POLYGON+1] = {
    GL_POINTS,
    GL_LINES,
    GL_LINES,
@@ -156,7 +156,7 @@ static GLuint trim(GLenum prim, GLuint length)
       return length > 3 ? (length - length % 2) : 0;
    else if (prim == GL_QUADS)
       return length - length % 4;
-   else 
+   else
       return length;
 }
 
@@ -401,7 +401,7 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
    /* We have to validate the textures *before* checking for fallbacks;
     * otherwise, the software fallback won't be able to rely on the
     * texture state, the firstLevel and lastLevel fields won't be
-    * set in the intel texture object (they'll both be 0), and the 
+    * set in the intel texture object (they'll both be 0), and the
     * software fallback will segfault if it attempts to access any
     * texture level other than level 0.
     */
@@ -569,7 +569,7 @@ void brw_draw_init( struct brw_context *brw )
    struct vbo_context *vbo = vbo_context(ctx);
    int i;
 
-   /* Register our drawing function: 
+   /* Register our drawing function:
     */
    vbo->draw_prims = brw_draw_prims;
 

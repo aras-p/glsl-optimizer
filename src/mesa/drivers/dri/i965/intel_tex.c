@@ -46,7 +46,7 @@ intelNewTextureObject(struct gl_context * ctx, GLuint name, GLenum target)
    return &obj->base;
 }
 
-static void 
+static void
 intelDeleteTextureObject(struct gl_context *ctx,
 			 struct gl_texture_object *texObj)
 {

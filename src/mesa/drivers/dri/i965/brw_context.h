@@ -2,7 +2,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,7 +22,7 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
@@ -74,7 +74,7 @@ extern "C" {
  *
  * VUE - vertex URB entry.  An urb entry holding a vertex and usually
  * a vertex header.  The header contains control information and
- * things like primitive type, Begin/end flags and clip codes.  
+ * things like primitive type, Begin/end flags and clip codes.
  *
  * PUE - primitive URB entry.  An urb entry produced by the setup (SF)
  * unit holding rasterization and interpolation parameters.
@@ -747,7 +747,7 @@ struct brw_cache_item {
    uint32_t size;
 
    struct brw_cache_item *next;
-};   
+};
 
 
 typedef bool (*cache_aux_compare_func)(const void *a, const void *b);
@@ -824,7 +824,7 @@ struct brw_cached_batch_item {
    GLuint sz;
    struct brw_cached_batch_item *next;
 };
-   
+
 struct brw_vertex_buffer {
    /** Buffer object containing the uploaded vertex data */
    drm_intel_bo *bo;
@@ -965,7 +965,7 @@ struct brw_stage_state
 /**
  * brw_context is derived from gl_context.
  */
-struct brw_context 
+struct brw_context
 {
    struct gl_context ctx; /**< base class, must be first field */
 
@@ -1178,7 +1178,7 @@ struct brw_context
       unsigned int start_vertex_offset;
    } ib;
 
-   /* Active vertex program: 
+   /* Active vertex program:
     */
    const struct gl_vertex_program *vertex_program;
    const struct gl_geometry_program *geometry_program;
@@ -1229,8 +1229,8 @@ struct brw_context
       bool gen6_gs_previously_active;
    } urb;
 
-   
-   /* BRW_NEW_CURBE_OFFSETS: 
+
+   /* BRW_NEW_CURBE_OFFSETS:
     */
    struct {
       GLuint wm_start;  /**< pos of first wm const in CURBE buffer */

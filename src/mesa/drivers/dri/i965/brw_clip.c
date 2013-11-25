@@ -2,7 +2,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,7 +22,7 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
@@ -60,7 +60,7 @@ static void compile_clip_prog( struct brw_context *brw,
    memset(&c, 0, sizeof(c));
 
    mem_ctx = ralloc_context(NULL);
-   
+
    /* Begin the compilation:
     */
    brw_init_compile(brw, &c.func, mem_ctx);
@@ -85,7 +85,7 @@ static void compile_clip_prog( struct brw_context *brw,
    c.prog_data.clip_mode = c.key.clip_mode; /* XXX */
 
    /* For some reason the thread is spawned with only 4 channels
-    * unmasked.  
+    * unmasked.
     */
    brw_set_mask_control(&c.func, BRW_MASK_DISABLE);
 
@@ -94,7 +94,7 @@ static void compile_clip_prog( struct brw_context *brw,
     * do all three:
     */
    switch (key->primitive) {
-   case GL_TRIANGLES: 
+   case GL_TRIANGLES:
       if (key->do_unfilled)
 	 brw_emit_unfilled_clip( &c );
       else
@@ -111,7 +111,7 @@ static void compile_clip_prog( struct brw_context *brw,
       return;
    }
 
-	 
+	
 
    /* get the program
     */
@@ -180,8 +180,8 @@ brw_upload_clip_prog(struct brw_context *brw)
 	 if (!ctx->Polygon.CullFlag ||
 	     ctx->Polygon.CullFaceMode != GL_FRONT) {
 	    switch (ctx->Polygon.FrontMode) {
-	    case GL_FILL: 
-	       fill_front = CLIP_FILL; 
+	    case GL_FILL:
+	       fill_front = CLIP_FILL;
 	       offset_front = 0;
 	       break;
 	    case GL_LINE:
@@ -198,8 +198,8 @@ brw_upload_clip_prog(struct brw_context *brw)
 	 if (!ctx->Polygon.CullFlag ||
 	     ctx->Polygon.CullFaceMode != GL_BACK) {
 	    switch (ctx->Polygon.BackMode) {
-	    case GL_FILL: 
-	       fill_back = CLIP_FILL; 
+	    case GL_FILL:
+	       fill_back = CLIP_FILL;
 	       offset_back = 0;
 	       break;
 	    case GL_LINE:
@@ -235,7 +235,7 @@ brw_upload_clip_prog(struct brw_context *brw)
 	       key.offset_ccw = offset_front;
 	       key.offset_cw = offset_back;
 	       if (ctx->Light.Model.TwoSide &&
-		   key.fill_cw != CLIP_CULL) 
+		   key.fill_cw != CLIP_CULL)
 		  key.copy_bfc_cw = 1;
 	       break;
 	    case GL_CW:
@@ -244,7 +244,7 @@ brw_upload_clip_prog(struct brw_context *brw)
 	       key.offset_cw = offset_front;
 	       key.offset_ccw = offset_back;
 	       if (ctx->Light.Model.TwoSide &&
-		   key.fill_ccw != CLIP_CULL) 
+		   key.fill_ccw != CLIP_CULL)
 		  key.copy_bfc_ccw = 1;
 	       break;
 	    }
@@ -262,9 +262,9 @@ brw_upload_clip_prog(struct brw_context *brw)
 
 const struct brw_tracked_state brw_clip_prog = {
    .dirty = {
-      .mesa  = (_NEW_LIGHT | 
+      .mesa  = (_NEW_LIGHT |
 		_NEW_TRANSFORM |
-		_NEW_POLYGON | 
+		_NEW_POLYGON |
 		_NEW_BUFFERS),
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE |
                 BRW_NEW_VUE_MAP_GEOM_OUT |

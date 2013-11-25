@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 
@@ -41,21 +41,21 @@ int
 intel_translate_shadow_compare_func(GLenum func)
 {
    switch (func) {
-   case GL_NEVER: 
+   case GL_NEVER:
        return BRW_COMPAREFUNCTION_ALWAYS;
-   case GL_LESS: 
+   case GL_LESS:
        return BRW_COMPAREFUNCTION_LEQUAL;
-   case GL_LEQUAL: 
+   case GL_LEQUAL:
        return BRW_COMPAREFUNCTION_LESS;
-   case GL_GREATER: 
+   case GL_GREATER:
        return BRW_COMPAREFUNCTION_GEQUAL;
-   case GL_GEQUAL: 
+   case GL_GEQUAL:
       return BRW_COMPAREFUNCTION_GREATER;
-   case GL_NOTEQUAL: 
+   case GL_NOTEQUAL:
       return BRW_COMPAREFUNCTION_EQUAL;
-   case GL_EQUAL: 
+   case GL_EQUAL:
       return BRW_COMPAREFUNCTION_NOTEQUAL;
-   case GL_ALWAYS: 
+   case GL_ALWAYS:
        return BRW_COMPAREFUNCTION_NEVER;
    }
 

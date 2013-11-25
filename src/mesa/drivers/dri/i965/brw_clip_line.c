@@ -2,7 +2,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,7 +22,7 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
@@ -81,7 +81,7 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
    i++;
 
    if (!c->key.nr_userclip) {
-      c->reg.fixed_planes = brw_vec8_grf(i, 0); 
+      c->reg.fixed_planes = brw_vec8_grf(i, 0);
       i++;
    }
 
@@ -116,7 +116,7 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
  *           GLfloat t = dp0 / (dp0 - dp1);
  *           if (t > t0) t0 = t;
  *        }
- *  
+ *
  *        if (t0 + t1 >= 1.0)
  *           return;
  *     }
@@ -147,7 +147,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
    brw_MOV(p, get_addr_reg(newvtx1),   brw_address(c->reg.vertex[3]));
    brw_MOV(p, get_addr_reg(plane_ptr), brw_clip_plane0_address(c));
 
-   /* Note: init t0, t1 together: 
+   /* Note: init t0, t1 together:
     */
    brw_MOV(p, vec2(c->reg.t0), brw_imm_f(0));
 
@@ -230,7 +230,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
              brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_G, c->reg.t, c->reg.t1 );
              brw_MOV(p, c->reg.t1, c->reg.t);
              brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-	 } 
+	 }
 	 brw_ELSE(p);
 	 {
              /* Coming back in.  We know that both cannot be negative
@@ -261,7 +261,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
 	 brw_ENDIF(p);
       }
       brw_ENDIF(p);
-      
+
       /* plane_ptr++;
        */
       brw_ADD(p, get_addr_reg(plane_ptr), get_addr_reg(plane_ptr), brw_clip_plane_stride(c));
@@ -306,6 +306,6 @@ void brw_emit_line_clip( struct brw_clip_compile *c )
       else
          brw_clip_copy_flatshaded_attributes(c, 0, 1);
    }
-                
+
    clip_and_emit_line(c);
 }

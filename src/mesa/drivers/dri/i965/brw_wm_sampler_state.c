@@ -2,7 +2,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,13 +22,13 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-                   
+
 
 #include "brw_context.h"
 #include "brw_state.h"
@@ -49,7 +49,7 @@ uint32_t
 translate_wrap_mode(GLenum wrap, bool using_nearest)
 {
    switch( wrap ) {
-   case GL_REPEAT: 
+   case GL_REPEAT:
       return BRW_TEXCOORDMODE_WRAP;
    case GL_CLAMP:
       /* GL_CLAMP is the weird mode where coordinates are clamped to
@@ -65,15 +65,15 @@ translate_wrap_mode(GLenum wrap, bool using_nearest)
 	 return BRW_TEXCOORDMODE_CLAMP;
       else
 	 return BRW_TEXCOORDMODE_CLAMP_BORDER;
-   case GL_CLAMP_TO_EDGE: 
+   case GL_CLAMP_TO_EDGE:
       return BRW_TEXCOORDMODE_CLAMP;
-   case GL_CLAMP_TO_BORDER: 
+   case GL_CLAMP_TO_BORDER:
       return BRW_TEXCOORDMODE_CLAMP_BORDER;
-   case GL_MIRRORED_REPEAT: 
+   case GL_MIRRORED_REPEAT:
       return BRW_TEXCOORDMODE_MIRROR;
    case GL_MIRROR_CLAMP_TO_EDGE:
       return BRW_TEXCOORDMODE_MIRROR_ONCE;
-   default: 
+   default:
       return BRW_TEXCOORDMODE_WRAP;
    }
 }
@@ -251,10 +251,10 @@ static void brw_update_sampler_state(struct brw_context *brw,
       break;
    }
 
-   /* Set Anisotropy: 
+   /* Set Anisotropy:
     */
    if (gl_sampler->MaxAnisotropy > 1.0) {
-      sampler->ss0.min_filter = BRW_MAPFILTER_ANISOTROPIC; 
+      sampler->ss0.min_filter = BRW_MAPFILTER_ANISOTROPIC;
       sampler->ss0.mag_filter = BRW_MAPFILTER_ANISOTROPIC;
 
       if (gl_sampler->MaxAnisotropy > 2.0) {
@@ -273,7 +273,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
 	 break;
       default:
 	 break;
-      }  
+      }
    }
 
    sampler->ss1.r_wrap_mode = translate_wrap_mode(gl_sampler->WrapR,
@@ -313,7 +313,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
    }
 
 
-   /* Set shadow function: 
+   /* Set shadow function:
     */
    if (gl_sampler->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
       /* Shadowing is "enabled" by emitting a particular sampler
@@ -324,7 +324,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
 	 intel_translate_shadow_compare_func(gl_sampler->CompareFunc);
    }
 
-   /* Set LOD bias: 
+   /* Set LOD bias:
     */
    sampler->ss0.lod_bias = S_FIXED(CLAMP(texUnit->LodBias +
 					 gl_sampler->LodBias, -16, 15), 6);

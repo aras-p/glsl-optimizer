@@ -2,7 +2,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,7 +22,7 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
@@ -92,7 +92,7 @@ void brw_clip_project_position(struct brw_clip_compile *c, struct brw_reg pos )
 {
    struct brw_compile *p = &c->func;
 
-   /* calc rhw 
+   /* calc rhw
     */
    brw_math_invert(p, get_element(pos, W), get_element(pos, W));
 
@@ -104,7 +104,7 @@ void brw_clip_project_position(struct brw_clip_compile *c, struct brw_reg pos )
 }
 
 
-static void brw_clip_project_vertex( struct brw_clip_compile *c, 
+static void brw_clip_project_vertex( struct brw_clip_compile *c,
 				     struct brw_indirect vert_addr )
 {
    struct brw_compile *p = &c->func;
@@ -119,14 +119,14 @@ static void brw_clip_project_vertex( struct brw_clip_compile *c,
    brw_MOV(p, tmp, deref_4f(vert_addr, hpos_offset));
    brw_clip_project_position(c, tmp);
    brw_MOV(p, deref_4f(vert_addr, ndc_offset), tmp);
-	 
+	
    release_tmp(c, tmp);
 }
 
 
 
 
-/* Interpolate between two vertices and put the result into a0.0.  
+/* Interpolate between two vertices and put the result into a0.0.
  * Increment a0.0 accordingly.
  *
  * Beware that dest_ptr can be equal to v0_ptr!
@@ -149,7 +149,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
     * back on Ironlake, so needn't change it
     */
    brw_copy_indirect_to_indirect(p, dest_ptr, v0_ptr, 1);
-      
+
 
    /* First handle the 3D and NDC interpolation, in case we
     * need noperspective interpolation. Doing it early has no
@@ -252,7 +252,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 
 
       if (varying == VARYING_SLOT_EDGE) {
-	 if (force_edgeflag) 
+	 if (force_edgeflag)
 	    brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(1));
 	 else
 	    brw_MOV(p, deref_4f(dest_ptr, delta), deref_4f(v0_ptr, delta));
@@ -311,7 +311,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
       release_tmp(c, t_nopersp);
 }
 
-void brw_clip_emit_vue(struct brw_clip_compile *c, 
+void brw_clip_emit_vue(struct brw_clip_compile *c,
 		       struct brw_indirect vert,
                        enum brw_urb_write_flags flags,
 		       GLuint header)
@@ -342,13 +342,13 @@ void brw_clip_emit_vue(struct brw_clip_compile *c,
     * entry.  Each of these writes instantiates a seperate
     * urb entry - (I think... what about 'allocate'?)
     */
-   brw_urb_WRITE(p, 
+   brw_urb_WRITE(p,
 		 allocate ? c->reg.R0 : retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
 		 0,
 		 c->reg.R0,
                  flags,
 		 c->nr_regs + 1, /* msg length */
-		 allocate ? 1 : 0, /* response_length */ 
+		 allocate ? 1 : 0, /* response_length */
 		 0,		/* urb offset */
 		 BRW_URB_SWIZZLE_NONE);
 }
@@ -363,7 +363,7 @@ void brw_clip_kill_thread(struct brw_clip_compile *c)
    /* Send an empty message to kill the thread and release any
     * allocated urb entry:
     */
-   brw_urb_WRITE(p, 
+   brw_urb_WRITE(p,
 		 retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
 		 0,
 		 c->reg.R0,
@@ -418,8 +418,8 @@ void brw_clip_init_clipmask( struct brw_clip_compile *c )
    struct brw_compile *p = &c->func;
    struct brw_reg incoming = get_element_ud(c->reg.R0, 2);
    struct brw_context *brw = p->brw;
-   
-   /* Shift so that lowest outcode bit is rightmost: 
+
+   /* Shift so that lowest outcode bit is rightmost:
     */
    brw_SHR(p, c->reg.planemask, incoming, brw_imm_ud(26));
 
@@ -436,7 +436,7 @@ void brw_clip_init_clipmask( struct brw_clip_compile *c )
 
       brw_SHR(p, tmp, tmp, brw_imm_ud(8));
       brw_OR(p, c->reg.planemask, c->reg.planemask, tmp);
-      
+
       release_tmp(c, tmp);
    }
 }
@@ -471,7 +471,7 @@ void brw_clip_init_ff_sync(struct brw_clip_compile *c)
 
     if (brw->gen == 5) {
 	struct brw_compile *p = &c->func;
-        
+
         brw_MOV(p, c->reg.ff_sync, brw_imm_ud(0));
     }
 }

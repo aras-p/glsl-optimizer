@@ -248,14 +248,14 @@ gen7_blorp_emit_sampler_state(struct brw_context *brw,
 
    //   sampler->ss0.min_mag_neq = 1;
 
-   /* Set LOD bias: 
+   /* Set LOD bias:
     */
    sampler->ss0.lod_bias = 0;
 
    sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
    sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
 
-   /* Set BaseMipLevel, MaxLOD, MinLOD: 
+   /* Set BaseMipLevel, MaxLOD, MinLOD:
     *
     * XXX: I don't think that using firstLevel, lastLevel works,
     * because we always setup the surface state as if firstLevel ==
