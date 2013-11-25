@@ -2212,6 +2212,54 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
 }
 
 static void
+apply_image_qualifier_to_variable(const struct ast_type_qualifier *qual,
+                                  ir_variable *var,
+                                  struct _mesa_glsl_parse_state *state,
+                                  YYLTYPE *loc)
+{
+   const glsl_type *base_type =
+      (var->type->is_array() ? var->type->element_type() : var->type);
+
+   if (base_type->is_image()) {
+      if (var->data.mode != ir_var_uniform &&
+          var->data.mode != ir_var_function_in) {
+         _mesa_glsl_error(loc, state, "image variables may only be declared as "
+                          "function parameters or uniform-qualified "
+                          "global variables");
+      }
+
+      var->data.image.read_only |= qual->flags.q.read_only;
+      var->data.image.write_only |= qual->flags.q.write_only;
+      var->data.image.coherent |= qual->flags.q.coherent;
+      var->data.image._volatile |= qual->flags.q._volatile;
+      var->data.image._restrict |= qual->flags.q._restrict;
+      var->data.read_only = true;
+
+      if (qual->flags.q.explicit_image_format) {
+         if (var->data.mode == ir_var_function_in) {
+            _mesa_glsl_error(loc, state, "format qualifiers cannot be "
+                             "used on image function parameters");
+         }
+
+         if (qual->image_base_type != base_type->sampler_type) {
+            _mesa_glsl_error(loc, state, "format qualifier doesn't match the "
+                             "base data type of the image");
+         }
+
+         var->data.image.format = qual->image_format;
+      } else {
+         if (var->data.mode == ir_var_uniform && !qual->flags.q.write_only) {
+            _mesa_glsl_error(loc, state, "uniforms not qualified with "
+                             "`writeonly' must have a format layout "
+                             "qualifier");
+         }
+
+         var->data.image.format = GL_NONE;
+      }
+   }
+}
+
+static void
 apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 				 ir_variable *var,
 				 struct _mesa_glsl_parse_state *state,
@@ -2501,6 +2549,9 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    if (qual->flags.q.row_major || qual->flags.q.column_major) {
       validate_matrix_layout_for_type(state, loc, var->type, var);
    }
+
+   if (var->type->contains_image())
+      apply_image_qualifier_to_variable(qual, var, state, loc);
 }
 
 /**
