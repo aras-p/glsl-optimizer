@@ -45,6 +45,8 @@ struct winsys_handle
 enum drm_conf {
    /* How many frames to allow before throttling. Or -1 to indicate any number */
    DRM_CONF_THROTTLE, /* DRM_CONF_INT. */
+   /* Can this driver, running on this kernel, import and export dma-buf fds? */
+   DRM_CONF_SHARE_FD, /* DRM_CONF_BOOL. */
    DRM_CONF_MAX
 };
 
