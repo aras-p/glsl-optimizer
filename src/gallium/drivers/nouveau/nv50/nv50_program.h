@@ -87,8 +87,8 @@ struct nv50_program {
    } fp;
 
    struct {
+      uint32_t vert_count;
       ubyte primid; /* primitive id output register */
-      uint8_t vert_count;
       uint8_t prim_type; /* point, line strip or tri strip */
    } gp;
 
