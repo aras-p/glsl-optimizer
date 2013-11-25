@@ -128,7 +128,7 @@ static void
 brw_gs_upload_binding_table(struct brw_context *brw)
 {
    /* If there's no GS, skip changing anything. */
-   if (!brw->gs.prog_data)
+   if (brw->geometry_program == NULL)
       return;
 
    brw_upload_binding_table(brw, BRW_NEW_GS_BINDING_TABLE, &brw->gs.base);
