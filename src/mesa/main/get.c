@@ -145,6 +145,7 @@ enum value_extra {
    EXTRA_GLSL_130,
    EXTRA_EXT_UBO_GS4,
    EXTRA_EXT_ATOMICS_GS4,
+   EXTRA_EXT_SHADER_IMAGE_GS4,
 };
 
 #define NO_EXTRA NULL
@@ -344,6 +345,11 @@ static const int extra_ARB_shader_atomic_counters_and_geometry_shader[] = {
    EXTRA_END
 };
 
+static const int extra_ARB_shader_image_load_store_and_geometry_shader[] = {
+   EXTRA_EXT_SHADER_IMAGE_GS4,
+   EXTRA_END
+};
+
 EXTRA_EXT(ARB_texture_cube_map);
 EXTRA_EXT(EXT_texture_array);
 EXTRA_EXT(NV_fog_distance);
@@ -382,6 +388,7 @@ EXTRA_EXT(ARB_texture_multisample);
 EXTRA_EXT(ARB_texture_gather);
 EXTRA_EXT(ARB_shader_atomic_counters);
 EXTRA_EXT(ARB_draw_indirect);
+EXTRA_EXT(ARB_shader_image_load_store);
 
 static const int
 extra_ARB_color_buffer_float_or_glcore[] = {
@@ -1069,6 +1076,11 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
       case EXTRA_EXT_ATOMICS_GS4:
          api_check = GL_TRUE;
          api_found = (ctx->Extensions.ARB_shader_atomic_counters &&
+                      _mesa_has_geometry_shaders(ctx));
+         break;
+      case EXTRA_EXT_SHADER_IMAGE_GS4:
+         api_check = GL_TRUE;
+         api_found = (ctx->Extensions.ARB_shader_image_load_store &&
                       _mesa_has_geometry_shaders(ctx));
          break;
       case EXTRA_END:
@@ -1811,6 +1823,64 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
       if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs)
           goto invalid_value;
       v->value_int = ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_GENERIC(index)].Stride;
+
+   /* ARB_shader_image_load_store */
+   case GL_IMAGE_BINDING_NAME: {
+      struct gl_texture_object *t;
+
+      if (!ctx->Extensions.ARB_shader_image_load_store)
+         goto invalid_enum;
+      if (index >= ctx->Const.MaxImageUnits)
+         goto invalid_value;
+
+      t = ctx->ImageUnits[index].TexObj;
+      v->value_int = (t ? t->Name : 0);
+      return TYPE_INT;
+   }
+
+   case GL_IMAGE_BINDING_LEVEL:
+      if (!ctx->Extensions.ARB_shader_image_load_store)
+         goto invalid_enum;
+      if (index >= ctx->Const.MaxImageUnits)
+         goto invalid_value;
+
+      v->value_int = ctx->ImageUnits[index].Level;
+      return TYPE_INT;
+
+   case GL_IMAGE_BINDING_LAYERED:
+      if (!ctx->Extensions.ARB_shader_image_load_store)
+         goto invalid_enum;
+      if (index >= ctx->Const.MaxImageUnits)
+         goto invalid_value;
+
+      v->value_int = ctx->ImageUnits[index].Layered;
+      return TYPE_INT;
+
+   case GL_IMAGE_BINDING_LAYER:
+      if (!ctx->Extensions.ARB_shader_image_load_store)
+         goto invalid_enum;
+      if (index >= ctx->Const.MaxImageUnits)
+         goto invalid_value;
+
+      v->value_int = ctx->ImageUnits[index].Layer;
+      return TYPE_INT;
+
+   case GL_IMAGE_BINDING_ACCESS:
+      if (!ctx->Extensions.ARB_shader_image_load_store)
+         goto invalid_enum;
+      if (index >= ctx->Const.MaxImageUnits)
+         goto invalid_value;
+
+      v->value_int = ctx->ImageUnits[index].Access;
+      return TYPE_INT;
+
+   case GL_IMAGE_BINDING_FORMAT:
+      if (!ctx->Extensions.ARB_shader_image_load_store)
+         goto invalid_enum;
+      if (index >= ctx->Const.MaxImageUnits)
+         goto invalid_value;
+
+      v->value_int = ctx->ImageUnits[index].Format;
       return TYPE_INT;
    }
 

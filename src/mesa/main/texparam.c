@@ -1808,6 +1808,12 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          *params = obj->Sampler.sRGBDecode;
          break;
 
+      case GL_IMAGE_FORMAT_COMPATIBILITY_TYPE:
+         if (!ctx->Extensions.ARB_shader_image_load_store)
+            goto invalid_pname;
+         *params = obj->ImageFormatCompatibilityType;
+         break;
+
       default:
          goto invalid_pname;
    }
