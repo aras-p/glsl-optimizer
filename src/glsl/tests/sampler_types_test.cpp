@@ -47,7 +47,7 @@ TEST(sampler_types, TYPE)                                   \
    EXPECT_EQ(DATA_TYPE, type->sampler_type);                \
    ARR;                                                     \
    SHAD;                                                    \
-   EXPECT_EQ(COMPS, type->sampler_coordinate_components()); \
+   EXPECT_EQ(COMPS, type->coordinate_components());         \
 }
 
 T( sampler1D,        GLSL_SAMPLER_DIM_1D,   GLSL_TYPE_FLOAT, NONARRAY, COLOR,  1)

@@ -3549,7 +3549,7 @@ builtin_builder::_texture(ir_texture_opcode opcode,
    ir_texture *tex = new(mem_ctx) ir_texture(opcode);
    tex->set_sampler(var_ref(s), return_type);
 
-   const int coord_size = sampler_type->sampler_coordinate_components();
+   const int coord_size = sampler_type->coordinate_components();
 
    if (coord_size == coord_type->vector_elements) {
       tex->coordinate = var_ref(P);

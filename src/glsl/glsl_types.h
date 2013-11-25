@@ -404,6 +404,20 @@ struct glsl_type {
    gl_texture_index sampler_index() const;
 
    /**
+    * Query whether or not type is an image, or for struct and array
+    * types, contains an image.
+    */
+   bool contains_image() const;
+
+   /**
+    * Query whether or not a type is an image
+    */
+   bool is_image() const
+   {
+      return base_type == GLSL_TYPE_IMAGE;
+   }
+
+   /**
     * Query whether or not a type is an array
     */
    bool is_array() const
@@ -533,7 +547,8 @@ struct glsl_type {
    }
 
    /**
-    * Return the number of coordinate components needed for this sampler type.
+    * Return the number of coordinate components needed for this
+    * sampler or image type.
     *
     * This is based purely on the sampler's dimensionality.  For example, this
     * returns 1 for sampler1D, and 3 for sampler2DArray.
@@ -542,7 +557,7 @@ struct glsl_type {
     * a texturing built-in function, since those pack additional values (such
     * as the shadow comparitor or projector) into the coordinate type.
     */
-   int sampler_coordinate_components() const;
+   int coordinate_components() const;
 
    /**
     * Compare a record type against another record type.

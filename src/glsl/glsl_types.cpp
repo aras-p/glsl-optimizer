@@ -226,6 +226,21 @@ glsl_type::sampler_index() const
    }
 }
 
+bool
+glsl_type::contains_image() const
+{
+   if (this->is_array()) {
+      return this->fields.array->contains_image();
+   } else if (this->is_record()) {
+      for (unsigned int i = 0; i < this->length; i++) {
+	 if (this->fields.structure[i].type->contains_image())
+	    return true;
+      }
+      return false;
+   } else {
+      return this->is_image();
+   }
+}
 
 const glsl_type *glsl_type::get_base_type() const
 {
@@ -955,10 +970,8 @@ glsl_type::count_attribute_slots() const
 }
 
 int
-glsl_type::sampler_coordinate_components() const
+glsl_type::coordinate_components() const
 {
-   assert(is_sampler());
-
    int size;
 
    switch (sampler_dimensionality) {
