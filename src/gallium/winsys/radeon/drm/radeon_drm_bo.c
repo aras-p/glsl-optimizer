@@ -40,6 +40,7 @@
 #include <sys/ioctl.h>
 #include <xf86drm.h>
 #include <errno.h>
+#include <fcntl.h>
 
 /*
  * this are copy from radeon_drm, once an updated libdrm is released
@@ -116,6 +117,8 @@ struct radeon_bomgr {
 
     /* List of buffer GEM names. Protected by bo_handles_mutex. */
     struct util_hash_table *bo_names;
+    /* List of buffer handles. Protectded by bo_handles_mutex. */
+    struct util_hash_table *bo_handles;
     pipe_mutex bo_handles_mutex;
     pipe_mutex bo_va_mutex;
 
@@ -371,12 +374,13 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
 
     memset(&args, 0, sizeof(args));
 
+    pipe_mutex_lock(bo->mgr->bo_handles_mutex);
+    util_hash_table_remove(bo->mgr->bo_handles, (void*)(uintptr_t)bo->handle);
     if (bo->name) {
-        pipe_mutex_lock(bo->mgr->bo_handles_mutex);
         util_hash_table_remove(bo->mgr->bo_names,
                                (void*)(uintptr_t)bo->name);
-        pipe_mutex_unlock(bo->mgr->bo_handles_mutex);
     }
+    pipe_mutex_unlock(bo->mgr->bo_handles_mutex);
 
     if (bo->ptr)
         os_munmap(bo->ptr, bo->base.size);
@@ -661,6 +665,7 @@ static void radeon_bomgr_destroy(struct pb_manager *_mgr)
 {
     struct radeon_bomgr *mgr = radeon_bomgr(_mgr);
     util_hash_table_destroy(mgr->bo_names);
+    util_hash_table_destroy(mgr->bo_handles);
     pipe_mutex_destroy(mgr->bo_handles_mutex);
     pipe_mutex_destroy(mgr->bo_va_mutex);
     FREE(mgr);
@@ -693,6 +698,7 @@ struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws)
 
     mgr->rws = rws;
     mgr->bo_names = util_hash_table_create(handle_hash, handle_compare);
+    mgr->bo_handles = util_hash_table_create(handle_hash, handle_compare);
     pipe_mutex_init(mgr->bo_handles_mutex);
     pipe_mutex_init(mgr->bo_va_mutex);
 
@@ -841,6 +847,7 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
                         enum radeon_bo_domain domain)
 {
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
+    struct radeon_bomgr *mgr = radeon_bomgr(ws->kman);
     struct radeon_bo_desc desc;
     struct pb_manager *provider;
     struct pb_buffer *buffer;
@@ -862,6 +869,10 @@ radeon_winsys_bo_create(struct radeon_winsys *rws,
     if (!buffer)
         return NULL;
 
+    pipe_mutex_lock(mgr->bo_handles_mutex);
+    util_hash_table_set(mgr->bo_handles, (void*)(uintptr_t)get_radeon_bo(buffer)->handle, buffer);
+    pipe_mutex_unlock(mgr->bo_handles_mutex);
+
     return (struct pb_buffer*)buffer;
 }
 
@@ -872,13 +883,10 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
     struct radeon_bo *bo;
     struct radeon_bomgr *mgr = radeon_bomgr(ws->kman);
-    struct drm_gem_open open_arg = {};
+    struct drm_radeon_gem_busy args;
     int r;
-
-    memset(&open_arg, 0, sizeof(open_arg));
-
-    if (whandle->type != DRM_API_HANDLE_TYPE_SHARED)
-        return NULL;
+    unsigned handle;
+    uint64_t size;
 
     /* We must maintain a list of pairs <handle, bo>, so that we always return
      * the same BO for one particular handle. If we didn't do that and created
@@ -888,8 +896,20 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
      * The list of pairs is guarded by a mutex, of course. */
     pipe_mutex_lock(mgr->bo_handles_mutex);
 
-    /* First check if there already is an existing bo for the handle. */
-    bo = util_hash_table_get(mgr->bo_names, (void*)(uintptr_t)whandle->handle);
+    if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
+        /* First check if there already is an existing bo for the handle. */
+        bo = util_hash_table_get(mgr->bo_names, (void*)(uintptr_t)whandle->handle);
+    } else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
+        /* We must first get the GEM handle, as fds are unreliable keys */
+        r = drmPrimeFDToHandle(ws->fd, whandle->handle, &handle);
+        if (r)
+            goto fail;
+        bo = util_hash_table_get(mgr->bo_handles, (void*)(uintptr_t)handle);
+    } else {
+        /* Unknown handle type */
+        goto fail;
+    }
+
     if (bo) {
         /* Increase the refcount. */
         struct pb_buffer *b = NULL;
@@ -903,27 +923,48 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
         goto fail;
     }
 
-    /* Open the BO. */
-    open_arg.name = whandle->handle;
-    if (drmIoctl(ws->fd, DRM_IOCTL_GEM_OPEN, &open_arg)) {
-        FREE(bo);
-        goto fail;
+    if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
+        struct drm_gem_open open_arg = {};
+        memset(&open_arg, 0, sizeof(open_arg));
+        /* Open the BO. */
+        open_arg.name = whandle->handle;
+        if (drmIoctl(ws->fd, DRM_IOCTL_GEM_OPEN, &open_arg)) {
+            FREE(bo);
+            goto fail;
+        }
+        handle = open_arg.handle;
+        size = open_arg.size;
+        bo->name = whandle->handle;
+    } else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
+        size = lseek(whandle->handle, 0, SEEK_END);
+        /* 
+         * Could check errno to determine whether the kernel is new enough, but
+         * it doesn't really matter why this failed, just that it failed.
+         */
+        if (size == (off_t)-1) {
+            FREE(bo);
+            goto fail;
+        }
+        lseek(whandle->handle, 0, SEEK_SET);
     }
-    bo->handle = open_arg.handle;
-    bo->name = whandle->handle;
+
+    bo->handle = handle;
 
     /* Initialize it. */
     pipe_reference_init(&bo->base.reference, 1);
     bo->base.alignment = 0;
     bo->base.usage = PB_USAGE_GPU_WRITE | PB_USAGE_GPU_READ;
-    bo->base.size = open_arg.size;
+    bo->base.size = (unsigned) size;
     bo->base.vtbl = &radeon_bo_vtbl;
     bo->mgr = mgr;
     bo->rws = mgr->rws;
     bo->va = 0;
     pipe_mutex_init(bo->map_mutex);
 
-    util_hash_table_set(mgr->bo_names, (void*)(uintptr_t)whandle->handle, bo);
+    if (bo->name)
+        util_hash_table_set(mgr->bo_names, (void*)(uintptr_t)bo->name, bo);
+
+    util_hash_table_set(mgr->bo_handles, (void*)(uintptr_t)bo->handle, bo);
 
 done:
     pipe_mutex_unlock(mgr->bo_handles_mutex);
@@ -957,8 +998,27 @@ done:
         }
     }
 
-    ws->allocated_vram += align(open_arg.size, 4096);
-    bo->initial_domain = RADEON_DOMAIN_VRAM;
+    memset(&args, 0, sizeof(args));
+
+    args.handle = bo->handle;
+    r = drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY, &args, sizeof(args));
+    /* We don't mind if the bo is busy; we're just after the memory domain */
+    if (r && r != -EBUSY) {
+        fprintf(stderr, "radeon: Failed to find initial domain for imported bo\n");
+        radeon_bo_destroy(&bo->base);
+        return NULL;
+    }
+    bo->initial_domain = args.domain;
+
+    switch (bo->initial_domain) {
+    case RADEON_DOMAIN_GTT:
+        ws->allocated_gtt += align(size, 4096);
+        break;
+    case RADEON_DOMAIN_VRAM:
+        ws->allocated_vram += align(size, 4096);
+        break;
+    }
+
 
     return (struct pb_buffer*)bo;
 
@@ -995,8 +1055,8 @@ static boolean radeon_winsys_bo_get_handle(struct pb_buffer *buffer,
     } else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
         whandle->handle = bo->handle;
     } else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
-        /* TODO: Implement */
-        return FALSE;
+        if (drmPrimeHandleToFD(bo->rws->fd, bo->handle, DRM_CLOEXEC, (int*)&whandle->handle))
+            return FALSE;
     }
 
     whandle->stride = stride;

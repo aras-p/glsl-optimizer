@@ -51,4 +51,29 @@ create_screen(int fd)
    return sws->screen;
 }
 
-DRM_DRIVER_DESCRIPTOR("r300", "radeon", create_screen, NULL)
+/* Technically this is only true for kernels >= 3.12, which
+ * support lseek on dma-buf fds.
+ *
+ * We could check for this in create_screen and return the correct
+ * value, but for now just return true in all cases.
+ * 
+ * createImageFromFds fails gracefully on kernel < 3.12, so this
+ * shouldn't be a huge problem.
+ */
+static const struct drm_conf_ret share_fd_ret = {
+   .type = DRM_CONF_BOOL,
+   .val.val_int = true,
+};
+
+static const struct drm_conf_ret *drm_configuration(enum drm_conf conf)
+{
+   switch (conf) {
+   case DRM_CONF_SHARE_FD:
+      return &share_fd_ret;
+   default:
+      break;
+   }
+   return NULL;
+}
+
+DRM_DRIVER_DESCRIPTOR("r300", "radeon", create_screen, drm_configuration)
