@@ -130,7 +130,8 @@ void TargetNV50::initOpInfo()
    };
    static const operation noPredList[] =
    {
-      OP_CALL, OP_PREBREAK, OP_PRERET, OP_QUADON, OP_QUADPOP, OP_JOINAT
+      OP_CALL, OP_PREBREAK, OP_PRERET, OP_QUADON, OP_QUADPOP, OP_JOINAT,
+      OP_EMIT, OP_RESTART
    };
 
    for (i = 0; i < DATA_FILE_COUNT; ++i)
