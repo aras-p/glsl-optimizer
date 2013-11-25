@@ -1234,6 +1234,63 @@ layout_qualifier_id:
       /* Layout qualifiers for ARB_shader_image_load_store. */
       if (state->ARB_shader_image_load_store_enable ||
           state->is_version(420, 0)) {
+         if (!$$.flags.i) {
+            static const struct {
+               const char *name;
+               GLenum format;
+               glsl_base_type base_type;
+            } map[] = {
+               { "rgba32f", GL_RGBA32F, GLSL_TYPE_FLOAT },
+               { "rgba16f", GL_RGBA16F, GLSL_TYPE_FLOAT },
+               { "rg32f", GL_RG32F, GLSL_TYPE_FLOAT },
+               { "rg16f", GL_RG16F, GLSL_TYPE_FLOAT },
+               { "r11f_g11f_b10f", GL_R11F_G11F_B10F, GLSL_TYPE_FLOAT },
+               { "r32f", GL_R32F, GLSL_TYPE_FLOAT },
+               { "r16f", GL_R16F, GLSL_TYPE_FLOAT },
+               { "rgba32ui", GL_RGBA32UI, GLSL_TYPE_UINT },
+               { "rgba16ui", GL_RGBA16UI, GLSL_TYPE_UINT },
+               { "rgb10_a2ui", GL_RGB10_A2UI, GLSL_TYPE_UINT },
+               { "rgba8ui", GL_RGBA8UI, GLSL_TYPE_UINT },
+               { "rg32ui", GL_RG32UI, GLSL_TYPE_UINT },
+               { "rg16ui", GL_RG16UI, GLSL_TYPE_UINT },
+               { "rg8ui", GL_RG8UI, GLSL_TYPE_UINT },
+               { "r32ui", GL_R32UI, GLSL_TYPE_UINT },
+               { "r16ui", GL_R16UI, GLSL_TYPE_UINT },
+               { "r8ui", GL_R8UI, GLSL_TYPE_UINT },
+               { "rgba32i", GL_RGBA32I, GLSL_TYPE_INT },
+               { "rgba16i", GL_RGBA16I, GLSL_TYPE_INT },
+               { "rgba8i", GL_RGBA8I, GLSL_TYPE_INT },
+               { "rg32i", GL_RG32I, GLSL_TYPE_INT },
+               { "rg16i", GL_RG16I, GLSL_TYPE_INT },
+               { "rg8i", GL_RG8I, GLSL_TYPE_INT },
+               { "r32i", GL_R32I, GLSL_TYPE_INT },
+               { "r16i", GL_R16I, GLSL_TYPE_INT },
+               { "r8i", GL_R8I, GLSL_TYPE_INT },
+               { "rgba16", GL_RGBA16, GLSL_TYPE_FLOAT },
+               { "rgb10_a2", GL_RGB10_A2, GLSL_TYPE_FLOAT },
+               { "rgba8", GL_RGBA8, GLSL_TYPE_FLOAT },
+               { "rg16", GL_RG16, GLSL_TYPE_FLOAT },
+               { "rg8", GL_RG8, GLSL_TYPE_FLOAT },
+               { "r16", GL_R16, GLSL_TYPE_FLOAT },
+               { "r8", GL_R8, GLSL_TYPE_FLOAT },
+               { "rgba16_snorm", GL_RGBA16_SNORM, GLSL_TYPE_FLOAT },
+               { "rgba8_snorm", GL_RGBA8_SNORM, GLSL_TYPE_FLOAT },
+               { "rg16_snorm", GL_RG16_SNORM, GLSL_TYPE_FLOAT },
+               { "rg8_snorm", GL_RG8_SNORM, GLSL_TYPE_FLOAT },
+               { "r16_snorm", GL_R16_SNORM, GLSL_TYPE_FLOAT },
+               { "r8_snorm", GL_R8_SNORM, GLSL_TYPE_FLOAT }
+            };
+
+            for (unsigned i = 0; i < Elements(map); i++) {
+               if (match_layout_qualifier($1, map[i].name, state) == 0) {
+                  $$.flags.q.explicit_image_format = 1;
+                  $$.image_format = map[i].format;
+                  $$.image_base_type = map[i].base_type;
+                  break;
+               }
+            }
+         }
+
          if (!$$.flags.i &&
              match_layout_qualifier($1, "early_fragment_tests", state) == 0) {
             $$.flags.q.early_fragment_tests = 1;
@@ -1583,6 +1640,32 @@ storage_qualifier:
    {
       memset(& $$, 0, sizeof($$));
       $$.flags.q.uniform = 1;
+   }
+   | COHERENT
+   {
+      memset(& $$, 0, sizeof($$));
+      $$.flags.q.coherent = 1;
+   }
+   | VOLATILE
+   {
+      memset(& $$, 0, sizeof($$));
+      $$.flags.q._volatile = 1;
+   }
+   | RESTRICT
+   {
+      STATIC_ASSERT(sizeof($$.flags.q) <= sizeof($$.flags.i));
+      memset(& $$, 0, sizeof($$));
+      $$.flags.q._restrict = 1;
+   }
+   | READONLY
+   {
+      memset(& $$, 0, sizeof($$));
+      $$.flags.q.read_only = 1;
+   }
+   | WRITEONLY
+   {
+      memset(& $$, 0, sizeof($$));
+      $$.flags.q.write_only = 1;
    }
    ;
 
