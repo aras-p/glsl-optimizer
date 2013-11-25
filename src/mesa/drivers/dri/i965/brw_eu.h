@@ -2,7 +2,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,13 +22,13 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-   
+
 
 #ifndef BRW_EU_H
 #define BRW_EU_H
@@ -320,7 +320,7 @@ void brw_shader_time_add(struct brw_compile *p,
 /* If/else/endif.  Works by manipulating the execution flags on each
  * channel.
  */
-struct brw_instruction *brw_IF(struct brw_compile *p, 
+struct brw_instruction *brw_IF(struct brw_compile *p,
 			       GLuint execute_size);
 struct brw_instruction *gen6_IF(struct brw_compile *p, uint32_t conditional,
 				struct brw_reg src0, struct brw_reg src1);
@@ -375,7 +375,7 @@ brw_untyped_surface_read(struct brw_compile *p,
                          GLuint msg_length,
                          GLuint response_length);
 
-/*********************************************************************** 
+/***********************************************************************
  * brw_eu_util.c:
  */
 
@@ -399,7 +399,7 @@ void brw_copy8(struct brw_compile *p,
 	       struct brw_reg src,
 	       GLuint count);
 
-void brw_math_invert( struct brw_compile *p, 
+void brw_math_invert( struct brw_compile *p,
 		      struct brw_reg dst,
 		      struct brw_reg src);
 

@@ -2,7 +2,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,13 +22,13 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-     
+
 
 #include "brw_context.h"
 #include "brw_defines.h"
@@ -114,7 +114,7 @@ brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
    insn->bits1.da1.dest_reg_type = dest.type;
    insn->bits1.da1.dest_address_mode = dest.address_mode;
 
-   if (dest.address_mode == BRW_ADDRESS_DIRECT) {   
+   if (dest.address_mode == BRW_ADDRESS_DIRECT) {
       insn->bits1.da1.dest_reg_nr = dest.nr;
 
       if (insn->header.access_mode == BRW_ALIGN_1) {
@@ -271,13 +271,13 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
 
    if (reg.file == BRW_IMMEDIATE_VALUE) {
       insn->bits3.ud = reg.dw1.ud;
-   
+
       /* Required to set some fields in src1 as well:
        */
       insn->bits1.da1.src1_reg_file = 0; /* arf */
       insn->bits1.da1.src1_reg_type = reg.type;
    }
-   else 
+   else
    {
       if (reg.address_mode == BRW_ADDRESS_DIRECT) {
 	 if (insn->header.access_mode == BRW_ALIGN_1) {
@@ -293,7 +293,7 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
 	 insn->bits2.ia1.src0_subreg_nr = reg.subnr;
 
 	 if (insn->header.access_mode == BRW_ALIGN_1) {
-	    insn->bits2.ia1.src0_indirect_offset = reg.dw1.bits.indirect_offset; 
+	    insn->bits2.ia1.src0_indirect_offset = reg.dw1.bits.indirect_offset;
 	 }
 	 else {
 	    insn->bits2.ia16.src0_subreg_nr = reg.dw1.bits.indirect_offset;
@@ -301,7 +301,7 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
       }
 
       if (insn->header.access_mode == BRW_ALIGN_1) {
-	 if (reg.width == BRW_WIDTH_1 && 
+	 if (reg.width == BRW_WIDTH_1 &&
 	     insn->header.execution_size == BRW_EXECUTE_1) {
 	    insn->bits2.da1.src0_horiz_stride = BRW_HORIZONTAL_STRIDE_0;
 	    insn->bits2.da1.src0_width = BRW_WIDTH_1;
@@ -373,7 +373,7 @@ void brw_set_src1(struct brw_compile *p,
       }
 
       if (insn->header.access_mode == BRW_ALIGN_1) {
-	 if (reg.width == BRW_WIDTH_1 && 
+	 if (reg.width == BRW_WIDTH_1 &&
 	     insn->header.execution_size == BRW_EXECUTE_1) {
 	    insn->bits3.da1.src1_horiz_stride = BRW_HORIZONTAL_STRIDE_0;
 	    insn->bits3.da1.src1_width = BRW_WIDTH_1;
@@ -735,7 +735,7 @@ brw_next_insn(struct brw_compile *p, GLuint opcode)
    insn = &p->store[p->nr_insn++];
    memcpy(insn, p->current, sizeof(*insn));
 
-   /* Reset this one-shot flag: 
+   /* Reset this one-shot flag:
     */
 
    if (p->current->header.destreg__conditionalmod) {
@@ -764,7 +764,7 @@ static struct brw_instruction *brw_alu2(struct brw_compile *p,
 					struct brw_reg src0,
 					struct brw_reg src1 )
 {
-   struct brw_instruction *insn = next_insn(p, opcode);   
+   struct brw_instruction *insn = next_insn(p, opcode);
    brw_set_dest(p, insn, dest);
    brw_set_src0(p, insn, src0);
    brw_set_src1(p, insn, src1);
@@ -1058,7 +1058,7 @@ struct brw_instruction *brw_MUL(struct brw_compile *p,
 
 void brw_NOP(struct brw_compile *p)
 {
-   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_NOP);   
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_NOP);
    brw_set_dest(p, insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
    brw_set_src0(p, insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
    brw_set_src1(p, insn, brw_imm_ud(0x0));
@@ -1072,7 +1072,7 @@ void brw_NOP(struct brw_compile *p)
  * Comparisons, if/else/endif
  */
 
-struct brw_instruction *brw_JMPI(struct brw_compile *p, 
+struct brw_instruction *brw_JMPI(struct brw_compile *p,
                                  struct brw_reg dest,
                                  struct brw_reg src0,
                                  struct brw_reg src1)
@@ -1711,7 +1711,7 @@ void brw_CMP(struct brw_compile *p,
 
    /* Make it so that future instructions will use the computed flag
     * value until brw_set_predicate_control_flag_value() is called
-    * again.  
+    * again.
     */
    if (dest.file == BRW_ARCHITECTURE_REGISTER_FILE &&
        dest.nr == 0) {
@@ -2318,7 +2318,7 @@ void brw_urb_WRITE(struct brw_compile *p,
 		       insn,
 		       flags,
 		       msg_length,
-		       response_length, 
+		       response_length,
 		       offset,
 		       swizzle);
 }

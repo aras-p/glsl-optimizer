@@ -2,7 +2,7 @@
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
  develop this 3D driver.
- 
+
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the
  "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  distribute, sublicense, and/or sell copies of the Software, and to
  permit persons to whom the Software is furnished to do so, subject to
  the following conditions:
- 
+
  The above copyright notice and this permission notice (including the
  next paragraph) shall be included in all copies or substantial
  portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -22,13 +22,13 @@
  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- 
+
  **********************************************************************/
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-  
+
 
 #include "brw_context.h"
 #include "brw_defines.h"
@@ -76,7 +76,7 @@ void brw_set_predicate_control_flag_value( struct brw_compile *p, GLuint value )
       }
 
       p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
-   }   
+   }
 }
 
 void brw_set_predicate_control( struct brw_compile *p, GLuint pc )
@@ -163,7 +163,7 @@ void brw_push_insn_state( struct brw_compile *p )
    assert(p->current != &p->stack[BRW_EU_MAX_INSN_STACK-1]);
    memcpy(p->current+1, p->current, sizeof(struct brw_instruction));
    p->compressed_stack[p->current - p->stack] = p->compressed;
-   p->current++;   
+   p->current++;
 }
 
 void brw_pop_insn_state( struct brw_compile *p )
@@ -201,7 +201,7 @@ brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
    brw_set_mask_control(p, BRW_MASK_ENABLE); /* what does this do? */
    brw_set_saturate(p, 0);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_set_predicate_control_flag_value(p, 0xff); 
+   brw_set_predicate_control_flag_value(p, 0xff);
 
    /* Set up control flow stack */
    p->if_stack_depth = 0;
