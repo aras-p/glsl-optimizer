@@ -70,6 +70,13 @@ struct lp_jit_sampler
 };
 
 
+struct lp_jit_viewport
+{
+   float min_depth;
+   float max_depth;
+};
+
+
 enum {
    LP_JIT_TEXTURE_WIDTH = 0,
    LP_JIT_TEXTURE_HEIGHT,
@@ -90,6 +97,13 @@ enum {
    LP_JIT_SAMPLER_LOD_BIAS,
    LP_JIT_SAMPLER_BORDER_COLOR,
    LP_JIT_SAMPLER_NUM_FIELDS  /* number of fields above */
+};
+
+
+enum {
+   LP_JIT_VIEWPORT_MIN_DEPTH,
+   LP_JIT_VIEWPORT_MAX_DEPTH,
+   LP_JIT_VIEWPORT_NUM_FIELDS /* number of fields above */
 };
 
 
@@ -115,6 +129,8 @@ struct lp_jit_context
    uint8_t *u8_blend_color;
    float *f_blend_color;
 
+   struct lp_jit_viewport *viewports;
+
    struct lp_jit_texture textures[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    struct lp_jit_sampler samplers[PIPE_MAX_SAMPLERS];
 };
@@ -131,6 +147,7 @@ enum {
    LP_JIT_CTX_STENCIL_REF_BACK,
    LP_JIT_CTX_U8_BLEND_COLOR,
    LP_JIT_CTX_F_BLEND_COLOR,
+   LP_JIT_CTX_VIEWPORTS,
    LP_JIT_CTX_TEXTURES,
    LP_JIT_CTX_SAMPLERS,
    LP_JIT_CTX_COUNT
@@ -155,6 +172,9 @@ enum {
 #define lp_jit_context_f_blend_color(_gallivm, _ptr) \
    lp_build_struct_get(_gallivm, _ptr, LP_JIT_CTX_F_BLEND_COLOR, "f_blend_color")
 
+#define lp_jit_context_viewports(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, LP_JIT_CTX_VIEWPORTS, "viewports")
+
 #define lp_jit_context_textures(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, LP_JIT_CTX_TEXTURES, "textures")
 
@@ -165,11 +185,19 @@ enum {
 struct lp_jit_thread_data
 {
    uint64_t vis_counter;
+
+   /*
+    * Non-interpolated rasterizer state passed through to the fragment shader.
+    */
+   struct {
+      uint32_t viewport_index;
+   } raster_state;
 };
 
 
 enum {
    LP_JIT_THREAD_DATA_COUNTER = 0,
+   LP_JIT_THREAD_DATA_RASTER_STATE_VIEWPORT_INDEX,
    LP_JIT_THREAD_DATA_COUNT
 };
 
@@ -177,7 +205,11 @@ enum {
 #define lp_jit_thread_data_counter(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, LP_JIT_THREAD_DATA_COUNTER, "counter")
 
-
+#define lp_jit_thread_data_raster_state_viewport_index(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, \
+                       LP_JIT_THREAD_DATA_RASTER_STATE_VIEWPORT_INDEX, \
+                       "raster_state.viewport_index")
+ 
 /**
  * typedef for fragment shader function
  *

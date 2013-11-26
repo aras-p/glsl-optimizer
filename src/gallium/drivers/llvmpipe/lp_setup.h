@@ -121,6 +121,11 @@ lp_setup_set_scissors( struct lp_setup_context *setup,
                        const struct pipe_scissor_state *scissors );
 
 void
+lp_setup_set_viewports(struct lp_setup_context *setup,
+                       unsigned num_viewports,
+                       const struct pipe_viewport_state *viewports);
+
+void
 lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                                     unsigned num,
                                     struct pipe_sampler_view **views);
@@ -155,7 +160,7 @@ lp_setup_end_query(struct lp_setup_context *setup,
                    struct llvmpipe_query *pq);
 
 static INLINE unsigned
-lp_clamp_scissor_idx(int idx)
+lp_clamp_viewport_idx(int idx)
 {
    return (PIPE_MAX_VIEWPORTS > idx && idx >= 0) ? idx : 0;
 }

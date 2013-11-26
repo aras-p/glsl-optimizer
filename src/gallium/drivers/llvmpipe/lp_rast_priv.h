@@ -97,7 +97,7 @@ struct lp_rasterizer_task
    /** "my" index */
    unsigned thread_index;
 
-   /* occlude counter for visible pixels */
+   /** Non-interpolated passthru state and occlude counter for visible pixels */
    struct lp_jit_thread_data thread_data;
    uint64_t ps_invocations;
    uint8_t ps_inv_multiplier;
@@ -310,6 +310,9 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
       /* not very accurate would need a popcount on the mask */
       /* always count this not worth bothering? */
       task->ps_invocations += 1 * variant->ps_inv_multiplier;
+
+      /* Propagate non-interpolated raster state. */
+      task->thread_data.raster_state.viewport_index = inputs->viewport_index;
 
       /* run shader on 4x4 block */
       BEGIN_JIT_CALL(state, task);

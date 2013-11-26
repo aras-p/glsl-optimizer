@@ -367,6 +367,9 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
             depth_stride = scene->zsbuf.stride;
          }
 
+         /* Propagate non-interpolated raster state. */
+         task->thread_data.raster_state.viewport_index = inputs->viewport_index;
+
          /* run shader on 4x4 block */
          BEGIN_JIT_CALL(state, task);
          variant->jit_function[RAST_WHOLE]( &state->jit_context,
@@ -461,6 +464,9 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
       /* not very accurate would need a popcount on the mask */
       /* always count this not worth bothering? */
       task->ps_invocations += 1 * variant->ps_inv_multiplier;
+
+      /* Propagate non-interpolated raster state. */
+      task->thread_data.raster_state.viewport_index = inputs->viewport_index;
 
       /* run shader on 4x4 block */
       BEGIN_JIT_CALL(state, task);

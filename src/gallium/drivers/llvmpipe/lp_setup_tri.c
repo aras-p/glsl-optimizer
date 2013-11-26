@@ -274,7 +274,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    struct u_rect bbox;
    unsigned tri_bytes;
    int nr_planes = 3;
-   unsigned scissor_index = 0;
+   unsigned viewport_index = 0;
    unsigned layer = 0;
 
    /* Area should always be positive here */
@@ -287,7 +287,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       nr_planes = 7;
       if (setup->viewport_index_slot > 0) {
          unsigned *udata = (unsigned*)v0[setup->viewport_index_slot];
-         scissor_index = lp_clamp_scissor_idx(*udata);
+         viewport_index = lp_clamp_viewport_idx(*udata);
       }
    }
    else {
@@ -323,7 +323,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       return TRUE;
    }
 
-   if (!u_rect_test_intersection(&setup->draw_regions[scissor_index], &bbox)) {
+   if (!u_rect_test_intersection(&setup->draw_regions[viewport_index], &bbox)) {
       if (0) debug_printf("offscreen\n");
       LP_COUNT(nr_culled_tris);
       return TRUE;
@@ -368,6 +368,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
    tri->inputs.disable = FALSE;
    tri->inputs.opaque = setup->fs.current.variant->opaque;
    tri->inputs.layer = layer;
+   tri->inputs.viewport_index = viewport_index;
 
    if (0)
       lp_dump_setup_coef(&setup->setup.variant->key,
@@ -547,7 +548,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
     * these planes elsewhere.
     */
    if (nr_planes == 7) {
-      const struct u_rect *scissor = &setup->scissors[scissor_index];
+      const struct u_rect *scissor = &setup->scissors[viewport_index];
 
       plane[3].dcdx = -1;
       plane[3].dcdy = 0;
@@ -570,7 +571,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
       plane[6].eo = 0;
    }
 
-   return lp_setup_bin_triangle(setup, tri, &bbox, nr_planes, scissor_index);
+   return lp_setup_bin_triangle(setup, tri, &bbox, nr_planes, viewport_index);
 }
 
 /*
@@ -605,7 +606,7 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
                        struct lp_rast_triangle *tri,
                        const struct u_rect *bbox,
                        int nr_planes,
-                       unsigned scissor_index )
+                       unsigned viewport_index )
 {
    struct lp_scene *scene = setup->scene;
    struct u_rect trimmed_box = *bbox;   
@@ -628,7 +629,7 @@ lp_setup_bin_triangle( struct lp_setup_context *setup,
     * the rasterizer to also respect scissor, etc, just for the rare
     * cases where a small triangle extends beyond the scissor.
     */
-   u_rect_find_intersection(&setup->draw_regions[scissor_index],
+   u_rect_find_intersection(&setup->draw_regions[viewport_index],
                             &trimmed_box);
 
    /* Determine which tile(s) intersect the triangle's bounding box

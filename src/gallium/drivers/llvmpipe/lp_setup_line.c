@@ -294,7 +294,7 @@ try_setup_line( struct lp_setup_context *setup,
    int y[4];
    int i;
    int nr_planes = 4;
-   unsigned scissor_index = 0;
+   unsigned viewport_index = 0;
    unsigned layer = 0;
    
    /* linewidth should be interpreted as integer */
@@ -324,7 +324,7 @@ try_setup_line( struct lp_setup_context *setup,
       nr_planes = 8;
       if (setup->viewport_index_slot > 0) {
          unsigned *udata = (unsigned*)v1[setup->viewport_index_slot];
-         scissor_index = lp_clamp_scissor_idx(*udata);
+         viewport_index = lp_clamp_viewport_idx(*udata);
       }
    }
    else {
@@ -573,7 +573,7 @@ try_setup_line( struct lp_setup_context *setup,
       return TRUE;
    }
 
-   if (!u_rect_test_intersection(&setup->draw_regions[scissor_index], &bbox)) {
+   if (!u_rect_test_intersection(&setup->draw_regions[viewport_index], &bbox)) {
       if (0) debug_printf("offscreen\n");
       LP_COUNT(nr_culled_tris);
       return TRUE;
@@ -635,6 +635,7 @@ try_setup_line( struct lp_setup_context *setup,
    line->inputs.disable = FALSE;
    line->inputs.opaque = FALSE;
    line->inputs.layer = layer;
+   line->inputs.viewport_index = viewport_index;
 
    for (i = 0; i < 4; i++) {
 
@@ -697,7 +698,7 @@ try_setup_line( struct lp_setup_context *setup,
     */
    if (nr_planes == 8) {
       const struct u_rect *scissor =
-         &setup->scissors[scissor_index];
+         &setup->scissors[viewport_index];
 
       plane[4].dcdx = -1;
       plane[4].dcdy = 0;
@@ -720,7 +721,7 @@ try_setup_line( struct lp_setup_context *setup,
       plane[7].eo = 0;
    }
 
-   return lp_setup_bin_triangle(setup, line, &bbox, nr_planes, scissor_index);
+   return lp_setup_bin_triangle(setup, line, &bbox, nr_planes, viewport_index);
 }
 
 

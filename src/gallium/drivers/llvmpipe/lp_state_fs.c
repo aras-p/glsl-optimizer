@@ -215,6 +215,30 @@ find_output_by_semantic( const struct tgsi_shader_info *info,
 
 
 /**
+ * Fetch the specified lp_jit_viewport structure for a given viewport_index.
+ */
+static LLVMValueRef
+lp_llvm_viewport(LLVMValueRef context_ptr,
+                 struct gallivm_state *gallivm,
+                 LLVMValueRef viewport_index)
+{
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef ptr;
+   LLVMValueRef res;
+   struct lp_type viewport_type =
+      lp_type_float_vec(32, 32 * LP_JIT_VIEWPORT_NUM_FIELDS);
+
+   ptr = lp_jit_context_viewports(gallivm, context_ptr);
+   ptr = LLVMBuildPointerCast(builder, ptr,
+            LLVMPointerType(lp_build_vec_type(gallivm, viewport_type), 0), "");
+
+   res = lp_build_pointer_get(builder, ptr, viewport_index);
+
+   return res;
+}
+
+
+/**
  * Generate the fragment shader, depth/stencil test, and alpha tests.
  */
 static void
@@ -421,7 +445,47 @@ generate_fs_loop(struct gallivm_state *gallivm,
                                          0);
 
       if (pos0 != -1 && outputs[pos0][2]) {
+         LLVMValueRef viewport, min_depth, max_depth;
+         LLVMValueRef viewport_index;
+         struct lp_build_context f32_bld;
+
+         assert(type.floating);
+         lp_build_context_init(&f32_bld, gallivm, type);
+
+         /*
+          * Assumes clamping of the viewport index will occur in setup/gs. Value
+          * is passed through the rasterization stage via lp_rast_shader_inputs.
+          *
+          * See: draw_clamp_viewport_idx and lp_clamp_viewport_idx for clamping
+          *      semantics.
+          */
+         viewport_index = lp_jit_thread_data_raster_state_viewport_index(gallivm,
+                             thread_data_ptr);
+
+         /*
+          * Load the min and max depth from the lp_jit_context.viewports
+          * array of lp_jit_viewport structures.
+          */
+         viewport = lp_llvm_viewport(context_ptr, gallivm, viewport_index);
+
+         /* viewports[viewport_index].min_depth */
+         min_depth = LLVMBuildExtractElement(builder, viewport,
+                        lp_build_const_int32(gallivm, LP_JIT_VIEWPORT_MIN_DEPTH),
+                        "");
+         min_depth = lp_build_broadcast_scalar(&f32_bld, min_depth);
+
+         /* viewports[viewport_index].max_depth */
+         max_depth = LLVMBuildExtractElement(builder, viewport,
+                        lp_build_const_int32(gallivm, LP_JIT_VIEWPORT_MAX_DEPTH),
+                        "");
+         max_depth = lp_build_broadcast_scalar(&f32_bld, max_depth);
+
          z = LLVMBuildLoad(builder, outputs[pos0][2], "output.z");
+
+         /*
+          * Clamp to the min and max depth values for the given viewport.
+          */
+         z = lp_build_clamp(&f32_bld, z, min_depth, max_depth);
       }
 
       lp_build_depth_stencil_load_swizzled(gallivm, type,

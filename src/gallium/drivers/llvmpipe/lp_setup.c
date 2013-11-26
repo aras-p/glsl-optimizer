@@ -649,6 +649,41 @@ lp_setup_set_vertex_info( struct lp_setup_context *setup,
 
 
 /**
+ * Called during state validation when LP_NEW_VIEWPORT is set.
+ */
+void
+lp_setup_set_viewports(struct lp_setup_context *setup,
+                       unsigned num_viewports,
+                       const struct pipe_viewport_state *viewports)
+{
+   unsigned i;
+
+   LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
+
+   assert(num_viewports <= PIPE_MAX_VIEWPORTS);
+   assert(viewports);
+
+   /*
+    * For use in lp_state_fs.c, propagate the viewport values for all viewports.
+    */
+   for (i = 0; i < num_viewports; i++) {
+      float min_depth;
+      float max_depth;
+
+      min_depth = viewports[i].translate[2];
+      max_depth = viewports[i].translate[2] + viewports[i].scale[2];
+
+      if (setup->viewports[i].min_depth != min_depth ||
+          setup->viewports[i].max_depth != max_depth) {
+          setup->viewports[i].min_depth = min_depth;
+          setup->viewports[i].max_depth = max_depth;
+          setup->dirty |= LP_SETUP_NEW_VIEWPORTS;
+      }
+   }
+}
+
+
+/**
  * Called during state validation when LP_NEW_SAMPLER_VIEW is set.
  */
 void
@@ -863,6 +898,15 @@ lp_setup_is_resource_referenced( const struct lp_setup_context *setup,
 
 /**
  * Called by vbuf code when we're about to draw something.
+ *
+ * This function stores all dirty state in the current scene's display list
+ * memory, via lp_scene_alloc().  We can not pass pointers of mutable state to
+ * the JIT functions, as the JIT functions will be called later on, most likely
+ * on a different thread.
+ *
+ * When processing dirty state it is imperative that we don't refer to any
+ * pointers previously allocated with lp_scene_alloc() in this function (or any
+ * function) as they may belong to a scene freed since then.
  */
 static boolean
 try_update_scene_state( struct lp_setup_context *setup )
@@ -872,6 +916,29 @@ try_update_scene_state( struct lp_setup_context *setup )
    unsigned i;
 
    assert(scene);
+
+   if (setup->dirty & LP_SETUP_NEW_VIEWPORTS) {
+      /*
+       * Record new depth range state for changes due to viewport updates.
+       *
+       * TODO: Collapse the existing viewport and depth range information
+       *       into one structure, for access by JIT.
+       */
+      struct lp_jit_viewport *stored;
+
+      stored = (struct lp_jit_viewport *)
+         lp_scene_alloc(scene, sizeof setup->viewports);
+
+      if (!stored) {
+         assert(!new_scene);
+         return FALSE;
+      }
+
+      memcpy(stored, setup->viewports, sizeof setup->viewports);
+
+      setup->fs.current.jit_context.viewports = stored;
+      setup->dirty |= LP_SETUP_NEW_FS;
+   }
 
    if(setup->dirty & LP_SETUP_NEW_BLEND_COLOR) {
       uint8_t *stored;
