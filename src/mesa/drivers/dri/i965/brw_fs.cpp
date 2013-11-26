@@ -3181,8 +3181,11 @@ fs_visitor::assign_binding_table_offsets()
 {
    uint32_t next_binding_table_offset = 0;
 
+   /* If there are no color regions, we still perform an FB write to a null
+    * renderbuffer, which we place at surface index 0.
+    */
    c->prog_data.binding_table.render_target_start = next_binding_table_offset;
-   next_binding_table_offset += c->key.nr_color_regions;
+   next_binding_table_offset += MAX2(c->key.nr_color_regions, 1);
 
    assign_common_binding_table_offsets(next_binding_table_offset);
 }
