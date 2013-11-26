@@ -416,9 +416,9 @@ void ir_print_visitor::visit(ir_constant *ir)
             if (ir->value.f[i] == 0.0f)
                /* 0.0 == -0.0, so print with %f to get the proper sign. */
                printf("%.1f", ir->value.f[i]);
-            else if (abs(ir->value.f[i]) < 0.000001f)
+            else if (fabs(ir->value.f[i]) < 0.000001f)
                printf("%a", ir->value.f[i]);
-            else if (abs(ir->value.f[i]) > 1000000.0f)
+            else if (fabs(ir->value.f[i]) > 1000000.0f)
                printf("%e", ir->value.f[i]);
             else
                printf("%f", ir->value.f[i]);
