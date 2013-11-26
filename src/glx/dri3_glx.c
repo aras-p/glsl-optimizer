@@ -398,14 +398,33 @@ dri3_handle_present_event(struct dri3_drawable *priv, xcb_present_generic_event_
    free(ge);
 }
 
+static bool
+dri3_wait_for_event(__GLXDRIdrawable *pdraw)
+{
+   xcb_connection_t *c = XGetXCBConnection(pdraw->psc->dpy);
+   struct dri3_drawable *priv = (struct dri3_drawable *) pdraw;
+   xcb_generic_event_t *ev;
+   xcb_present_generic_event_t *ge;
+
+   ev = xcb_wait_for_special_event(c, priv->special_event);
+   if (!ev)
+      return false;
+   ge = (void *) ev;
+   dri3_handle_present_event(priv, ge);
+   return true;
+}
+
+/** dri3_wait_for_msc
+ *
+ * Get the X server to send an event when the target msc/divisor/remainder is
+ * reached.
+ */
 static int
 dri3_wait_for_msc(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
                   int64_t remainder, int64_t *ust, int64_t *msc, int64_t *sbc)
 {
    xcb_connection_t *c = XGetXCBConnection(pdraw->psc->dpy);
    struct dri3_drawable *priv = (struct dri3_drawable *) pdraw;
-   xcb_generic_event_t *ev;
-   xcb_present_generic_event_t *ge;
    uint32_t msc_serial;
 
    /* Ask for the an event for the target MSC */
@@ -422,11 +441,8 @@ dri3_wait_for_msc(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
    /* Wait for the event */
    if (priv->special_event) {
       while ((int32_t) (msc_serial - priv->recv_msc_serial) > 0) {
-         ev = xcb_wait_for_special_event(c, priv->special_event);
-         if (!ev)
-            break;
-         ge = (void *) ev;
-         dri3_handle_present_event(priv, ge);
+         if (!dri3_wait_for_event(pdraw))
+            return 0;
       }
    }
 
@@ -437,6 +453,11 @@ dri3_wait_for_msc(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
    return 1;
 }
 
+/** dri3_drawable_get_msc
+ *
+ * Return the current UST/MSC/SBC triplet by asking the server
+ * for an event
+ */
 static int
 dri3_drawable_get_msc(struct glx_screen *psc, __GLXDRIdrawable *pdraw,
                       int64_t *ust, int64_t *msc, int64_t *sbc)
@@ -446,12 +467,9 @@ dri3_drawable_get_msc(struct glx_screen *psc, __GLXDRIdrawable *pdraw,
 
 /** dri3_wait_for_sbc
  *
- * Wait for the swap buffer count to increase. The only way this
- * can happen is if some other thread is doing swap buffers as
- * we no longer share swap buffer counts with other processes.
- *
- * I'm not sure this is actually useful as such, and so this
- * implementation is a kludge that just polls once a second
+ * Wait for the completed swap buffer count to reach the specified
+ * target. Presumably the application knows that this will be reached with
+ * outstanding complete events, or we're going to be here awhile.
  */
 static int
 dri3_wait_for_sbc(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
@@ -459,10 +477,15 @@ dri3_wait_for_sbc(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
 {
    struct dri3_drawable *priv = (struct dri3_drawable *) pdraw;
 
-   while (priv->send_sbc < target_sbc) {
-      sleep(1);
+   while (priv->recv_sbc < target_sbc) {
+      if (!dri3_wait_for_event(pdraw))
+         return 0;
    }
-   return dri3_wait_for_msc(pdraw, 0, 0, 0, ust, msc, sbc);
+
+   *ust = priv->ust;
+   *msc = priv->msc;
+   *sbc = priv->recv_sbc;
+   return 1;
 }
 
 /**
