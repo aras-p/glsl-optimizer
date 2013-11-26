@@ -609,6 +609,10 @@ cross_validate_globals(struct gl_shader_program *prog,
 		  if (var->type->length != 0) {
 		     existing->type = var->type;
 		  }
+               } else if (var->type->is_record()
+		   && existing->type->is_record()
+		   && existing->type->record_compare(var->type)) {
+		  existing->type = var->type;
 	       } else {
 		  linker_error(prog, "%s `%s' declared as type "
 			       "`%s' and type `%s'\n",
