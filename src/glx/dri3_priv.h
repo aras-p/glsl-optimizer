@@ -177,7 +177,7 @@ dri3_pixmap_buf_id(enum dri3_buffer_type buffer_type)
 struct dri3_drawable {
    __GLXDRIdrawable base;
    __DRIdrawable *driDrawable;
-   int width, height;
+   int width, height, depth;
    int swap_interval;
    uint8_t have_back;
    uint8_t have_fake_front;
@@ -193,13 +193,9 @@ struct dri3_drawable {
    /* For WaitMSC */
    uint32_t present_msc_request_serial;
    uint32_t present_msc_event_serial;
-   
-   uint64_t previous_time;
-   unsigned frames;
 
    struct dri3_buffer *buffers[DRI3_NUM_BUFFERS];
    int cur_back;
-   int depth;
 
    uint32_t *stamp;
 
