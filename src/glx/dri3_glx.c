@@ -365,10 +365,17 @@ dri3_handle_present_event(struct dri3_drawable *priv, xcb_present_generic_event_
    case XCB_PRESENT_COMPLETE_NOTIFY: {
       xcb_present_complete_notify_event_t *ce = (void *) ge;
 
-      if (ce->kind == XCB_PRESENT_COMPLETE_KIND_PIXMAP)
-         priv->present_event_serial = ce->serial;
-      else
-         priv->present_msc_event_serial = ce->serial;
+      /* Compute the processed SBC number from the received 32-bit serial number merged
+       * with the upper 32-bits of the sent 64-bit serial number while checking for
+       * wrap
+       */
+      if (ce->kind == XCB_PRESENT_COMPLETE_KIND_PIXMAP) {
+         priv->recv_sbc = (priv->send_sbc & 0xffffffff00000000LL) | ce->serial;
+         if (priv->recv_sbc > priv->send_sbc)
+            priv->recv_sbc -= 0x100000000;
+      } else {
+         priv->recv_msc_serial = ce->serial;
+      }
       priv->ust = ce->ust;
       priv->msc = ce->msc;
       break;
@@ -399,12 +406,13 @@ dri3_wait_for_msc(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
    struct dri3_drawable *priv = (struct dri3_drawable *) pdraw;
    xcb_generic_event_t *ev;
    xcb_present_generic_event_t *ge;
+   uint32_t msc_serial;
 
    /* Ask for the an event for the target MSC */
-   ++priv->present_msc_request_serial;
+   msc_serial = ++priv->send_msc_serial;
    xcb_present_notify_msc(c,
                           priv->base.xDrawable,
-                          priv->present_msc_request_serial,
+                          msc_serial,
                           target_msc,
                           divisor,
                           remainder);
@@ -413,7 +421,7 @@ dri3_wait_for_msc(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 
    /* Wait for the event */
    if (priv->special_event) {
-      while (priv->present_msc_request_serial != priv->present_msc_event_serial) {
+      while ((int32_t) (msc_serial - priv->recv_msc_serial) > 0) {
          ev = xcb_wait_for_special_event(c, priv->special_event);
          if (!ev)
             break;
@@ -424,7 +432,7 @@ dri3_wait_for_msc(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
 
    *ust = priv->ust;
    *msc = priv->msc;
-   *sbc = priv->sbc;
+   *sbc = priv->recv_sbc;
 
    return 1;
 }
@@ -451,7 +459,7 @@ dri3_wait_for_sbc(__GLXDRIdrawable *pdraw, int64_t target_sbc, int64_t *ust,
 {
    struct dri3_drawable *priv = (struct dri3_drawable *) pdraw;
 
-   while (priv->sbc < target_sbc) {
+   while (priv->send_sbc < target_sbc) {
       sleep(1);
    }
    return dri3_wait_for_msc(pdraw, 0, 0, 0, ust, msc, sbc);
@@ -1282,15 +1290,15 @@ dri3_swap_buffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
       /* Compute when we want the frame shown by taking the last known successful
        * MSC and adding in a swap interval for each outstanding swap request
        */
-      ++priv->present_request_serial;
+      ++priv->send_sbc;
       if (target_msc == 0)
-         target_msc = priv->msc + priv->swap_interval * (priv->present_request_serial - priv->present_event_serial);
+         target_msc = priv->msc + priv->swap_interval * (priv->send_sbc - priv->recv_sbc);
 
       priv->buffers[buf_id]->busy = 1;
       xcb_present_pixmap(c,
                          priv->base.xDrawable,
                          priv->buffers[buf_id]->pixmap,
-                         priv->present_request_serial,
+                         (uint32_t) priv->send_sbc,
                          0,                                    /* valid */
                          0,                                    /* update */
                          0,                                    /* x_off */
@@ -1302,7 +1310,7 @@ dri3_swap_buffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
                          target_msc,
                          divisor,
                          remainder, 0, NULL);
-      ret = ++priv->sbc;
+      ret = (int64_t) priv->send_sbc;
 
       /* If there's a fake front, then copy the source back buffer
        * to the fake front to keep it up to date. This needs

@@ -183,16 +183,18 @@ struct dri3_drawable {
    uint8_t have_fake_front;
    uint8_t is_pixmap;
 
-   uint32_t present_request_serial;
-   uint32_t present_event_serial;
+   /* SBC numbers are tracked by using the serial numbers
+    * in the present request and complete events
+    */
+   uint64_t send_sbc;
+   uint64_t recv_sbc;
 
-   uint64_t sbc;
-
+   /* Last received UST/MSC values */
    uint64_t ust, msc;
 
-   /* For WaitMSC */
-   uint32_t present_msc_request_serial;
-   uint32_t present_msc_event_serial;
+   /* Serial numbers for tracking wait_for_msc events */
+   uint32_t send_msc_serial;
+   uint32_t recv_msc_serial;
 
    struct dri3_buffer *buffers[DRI3_NUM_BUFFERS];
    int cur_back;
