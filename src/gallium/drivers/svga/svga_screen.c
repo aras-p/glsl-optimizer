@@ -332,6 +332,7 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       case PIPE_SHADER_CAP_INTEGERS:
          return 0;
       case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+      case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
          return 16;
       default:
          debug_printf("Unexpected fragment shader query %u\n", param);
@@ -382,6 +383,7 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
       case PIPE_SHADER_CAP_INTEGERS:
          return 0;
       case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+      case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
          return 0;
       default:
          debug_printf("Unexpected vertex shader query %u\n", param);

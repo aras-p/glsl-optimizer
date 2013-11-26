@@ -253,10 +253,8 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
       return 1;
    case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
       return 16; /* would be 32 in linked (OpenGL-style) mode */
-      /*
-   case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLER_VIEWS:
-      return 32;
-      */
+   case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
+      return 16; /* XXX not sure if more are really safe */
    default:
       NOUVEAU_ERR("unknown PIPE_SHADER_CAP %d\n", param);
       return 0;

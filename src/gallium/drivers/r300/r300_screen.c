@@ -238,6 +238,7 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_MAX_PREDS:
             return is_r500 ? 1 : 0;
         case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+        case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
            return r300screen->caps.num_tex_units;
         case PIPE_SHADER_CAP_MAX_ADDRS:
         case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
@@ -257,6 +258,7 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         switch (param)
         {
         case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+        case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
         case PIPE_SHADER_CAP_SUBROUTINES:
             return 0;
         default:;
@@ -297,6 +299,7 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_SUBROUTINES:
         case PIPE_SHADER_CAP_INTEGERS:
         case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+        case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
             return 0;
         case PIPE_SHADER_CAP_PREFERRED_IR:
             return PIPE_SHADER_IR_TGSI;

@@ -597,6 +597,7 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_INTEGERS:
 		return 1;
 	case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+	case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
 		return 16;
         case PIPE_SHADER_CAP_PREFERRED_IR:
 		if (shader == PIPE_SHADER_COMPUTE) {

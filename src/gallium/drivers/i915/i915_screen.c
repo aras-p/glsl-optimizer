@@ -106,6 +106,7 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
    case PIPE_SHADER_VERTEX:
       switch (cap) {
       case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+      case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
          if (debug_get_bool_option("DRAW_USE_LLVM", TRUE))
             return PIPE_MAX_SAMPLERS;
          else
@@ -151,6 +152,7 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
       case PIPE_SHADER_CAP_INTEGERS:
          return 0;
       case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+      case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
          return I915_TEX_UNITS;
       default:
          debug_printf("%s: Unknown cap %u.\n", __FUNCTION__, cap);

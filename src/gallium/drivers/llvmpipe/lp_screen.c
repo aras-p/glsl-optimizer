@@ -262,6 +262,11 @@ llvmpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe
             return PIPE_MAX_SAMPLERS;
          else
             return 0;
+      case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
+         if (debug_get_bool_option("DRAW_USE_LLVM", TRUE))
+            return PIPE_MAX_SHADER_SAMPLER_VIEWS;
+         else
+            return 0;
       default:
          return draw_get_shader_param(shader, param);
       }

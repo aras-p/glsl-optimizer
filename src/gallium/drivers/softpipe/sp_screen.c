@@ -204,13 +204,14 @@ softpipe_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe
    case PIPE_SHADER_GEOMETRY:
       switch (param) {
       case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
+      case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
          if (sp_screen->use_llvm)
             /* Softpipe doesn't yet know how to tell draw/llvm about textures */
             return 0;
-	 else
+         else
             return PIPE_MAX_SAMPLERS;
       default:
-	 if (sp_screen->use_llvm)
+         if (sp_screen->use_llvm)
             return draw_get_shader_param(shader, param);
          else
             return draw_get_shader_param_no_llvm(shader, param);
