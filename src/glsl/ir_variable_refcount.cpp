@@ -132,3 +132,24 @@ ir_variable_refcount_visitor::visit_leave(ir_assignment *ir)
 
    return visit_continue;
 }
+
+
+ir_visitor_status
+ir_variable_refcount_visitor::visit_leave(ir_loop *ir)
+{
+   /* If the loop has a counter variable, it is implicitly referenced and
+    * assigned to.  Note that since the LHS of an assignment is counted as a
+    * reference, we actually have to increment referenced_count by 2 so that
+    * later code will know that the variable isn't just assigned to.
+    */
+   if (ir->counter != NULL) {
+      ir_variable_refcount_entry *entry =
+         this->get_variable_entry(ir->counter);
+      if (entry) {
+         entry->referenced_count += 2;
+         entry->assigned_count++;
+      }
+   }
+
+   return visit_continue;
+}

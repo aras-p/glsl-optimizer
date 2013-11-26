@@ -60,6 +60,7 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_function_signature *);
    virtual ir_visitor_status visit_leave(ir_assignment *);
+   virtual ir_visitor_status visit_leave(ir_loop *);
 
    ir_variable_refcount_entry *get_variable_entry(ir_variable *var);
 
