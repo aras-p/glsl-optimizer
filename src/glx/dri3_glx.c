@@ -406,6 +406,7 @@ dri3_wait_for_event(__GLXDRIdrawable *pdraw)
    xcb_generic_event_t *ev;
    xcb_present_generic_event_t *ge;
 
+   xcb_flush(c);
    ev = xcb_wait_for_special_event(c, priv->special_event);
    if (!ev)
       return false;
@@ -1075,6 +1076,7 @@ dri3_find_back(xcb_connection_t *c, struct dri3_drawable *priv)
          if (!buffer->busy)
             return b;
       }
+      xcb_flush(c);
       ev = xcb_wait_for_special_event(c, priv->special_event);
       if (!ev)
          return -1;
