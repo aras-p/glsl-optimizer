@@ -1524,23 +1524,7 @@ dri3_bind_extensions(struct dri3_screen *psc, struct glx_display * priv,
    __glXEnableDirectExtension(&psc->base, "GLX_SGI_swap_control");
    __glXEnableDirectExtension(&psc->base, "GLX_MESA_swap_control");
    __glXEnableDirectExtension(&psc->base, "GLX_SGI_make_current_read");
-
-   /*
-    * GLX_INTEL_swap_event is broken on the server side, where it's
-    * currently unconditionally enabled. This completely breaks
-    * systems running on drivers which don't support that extension.
-    * There's no way to test for its presence on this side, so instead
-    * of disabling it unconditionally, just disable it for drivers
-    * which are known to not support it, or for DDX drivers supporting
-    * only an older (pre-ScheduleSwap) version of DRI2.
-    *
-    * This is a hack which is required until:
-    * http://lists.x.org/archives/xorg-devel/2013-February/035449.html
-    * is merged and updated xserver makes it's way into distros:
-    */
-//   if (pdp->swapAvailable && strcmp(driverName, "vmwgfx") != 0) {
-//      __glXEnableDirectExtension(&psc->base, "GLX_INTEL_swap_event");
-//   }
+   __glXEnableDirectExtension(&psc->base, "GLX_INTEL_swap_event");
 
    mask = psc->image_driver->getAPIMask(psc->driScreen);
 
