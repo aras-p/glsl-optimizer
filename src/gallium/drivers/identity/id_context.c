@@ -485,7 +485,7 @@ identity_set_sampler_views(struct pipe_context *_pipe,
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    unsigned i;
 
    for (i = 0; i < num; i++)

@@ -891,7 +891,7 @@ trace_context_set_sampler_views(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct trace_sampler_view *tr_view;
    struct pipe_context *pipe = tr_ctx->pipe;
-   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    unsigned i;
 
    /* remove this when we have pipe->set_sampler_views(..., start, ...) */

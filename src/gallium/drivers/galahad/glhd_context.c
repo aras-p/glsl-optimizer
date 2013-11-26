@@ -518,7 +518,7 @@ galahad_context_set_sampler_views(struct pipe_context *_pipe,
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
-   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *unwrapped_views[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    unsigned i;
 
    for (i = 0; i < num; i++)

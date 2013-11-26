@@ -48,8 +48,8 @@ struct rbug_context {
    struct {
       struct rbug_shader *shader[PIPE_SHADER_TYPES];
 
-      struct rbug_sampler_view *views[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
-      struct rbug_resource *texs[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+      struct rbug_sampler_view *views[PIPE_SHADER_TYPES][PIPE_MAX_SHADER_SAMPLER_VIEWS];
+      struct rbug_resource *texs[PIPE_SHADER_TYPES][PIPE_MAX_SHADER_SAMPLER_VIEWS];
       unsigned num_views[PIPE_SHADER_TYPES];
 
       unsigned nr_cbufs;
