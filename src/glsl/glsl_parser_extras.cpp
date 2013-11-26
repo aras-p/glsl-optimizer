@@ -191,6 +191,8 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->gs_input_prim_type = GL_POINTS;
    this->gs_input_size = 0;
    this->out_qualifier = new(this) ast_type_qualifier();
+   memset(this->atomic_counter_offsets, 0,
+          sizeof(this->atomic_counter_offsets));
 }
 
 /**
