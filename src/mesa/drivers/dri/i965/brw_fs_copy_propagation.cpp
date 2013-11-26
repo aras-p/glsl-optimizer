@@ -344,6 +344,8 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
          progress = true;
          break;
 
+      case BRW_OPCODE_BFI1:
+      case BRW_OPCODE_ASR:
       case BRW_OPCODE_SHL:
       case BRW_OPCODE_SHR:
       case BRW_OPCODE_ADDC:
