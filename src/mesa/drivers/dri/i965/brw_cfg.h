@@ -43,8 +43,6 @@ class bblock_t {
 public:
    DECLARE_RALLOC_CXX_OPERATORS(bblock_t)
 
-   bblock_link *make_list(void *mem_ctx);
-
    bblock_t();
 
    void add_successor(void *mem_ctx, bblock_t *successor);

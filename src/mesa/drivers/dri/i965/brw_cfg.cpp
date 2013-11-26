@@ -60,14 +60,8 @@ bblock_t::bblock_t() :
 void
 bblock_t::add_successor(void *mem_ctx, bblock_t *successor)
 {
-   successor->parents.push_tail(this->make_list(mem_ctx));
-   children.push_tail(successor->make_list(mem_ctx));
-}
-
-bblock_link *
-bblock_t::make_list(void *mem_ctx)
-{
-   return new(mem_ctx) bblock_link(this);
+   successor->parents.push_tail(new(mem_ctx) bblock_link(this));
+   children.push_tail(new(mem_ctx) bblock_link(successor));
 }
 
 void
@@ -126,8 +120,8 @@ cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
 	 /* Push our information onto a stack so we can recover from
 	  * nested ifs.
 	  */
-	 if_stack.push_tail(cur_if->make_list(mem_ctx));
-	 else_stack.push_tail(cur_else->make_list(mem_ctx));
+	 if_stack.push_tail(new(mem_ctx) bblock_link(cur_if));
+	 else_stack.push_tail(new(mem_ctx) bblock_link(cur_else));
 
 	 cur_if = cur;
 	 cur_else = NULL;
@@ -205,8 +199,8 @@ cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
 	 /* Push our information onto a stack so we can recover from
 	  * nested loops.
 	  */
-	 do_stack.push_tail(cur_do->make_list(mem_ctx));
-	 while_stack.push_tail(cur_while->make_list(mem_ctx));
+	 do_stack.push_tail(new(mem_ctx) bblock_link(cur_do));
+	 while_stack.push_tail(new(mem_ctx) bblock_link(cur_while));
 
 	 /* Set up the block just after the while.  Don't know when exactly
 	  * it will start, yet.
@@ -290,7 +284,7 @@ cfg_t::set_next_block(bblock_t *block)
 
    block->start_ip = ip;
    block->block_num = num_blocks++;
-   block_list.push_tail(block->make_list(mem_ctx));
+   block_list.push_tail(new(mem_ctx) bblock_link(block));
    cur = block;
 }
 
