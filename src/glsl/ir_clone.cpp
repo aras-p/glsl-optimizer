@@ -163,7 +163,8 @@ ir_loop::clone(void *mem_ctx, struct hash_table *ht) const
       new_loop->to = this->to->clone(mem_ctx, ht);
    if (this->increment)
       new_loop->increment = this->increment->clone(mem_ctx, ht);
-   new_loop->counter = counter;
+   if (this->counter)
+      new_loop->counter = this->counter->clone(mem_ctx, ht);
 
    foreach_iter(exec_list_iterator, iter, this->body_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();

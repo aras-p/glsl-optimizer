@@ -254,7 +254,7 @@ loop_control_visitor::visit_leave(ir_loop *ir)
 		     ir->from = init->clone(ir, NULL);
 		     ir->to = limit->clone(ir, NULL);
 		     ir->increment = lv->increment->clone(ir, NULL);
-		     ir->counter = lv->var;
+		     ir->counter = lv->var->clone(ir, NULL);
 		     ir->cmp = cmp;
 
 		     max_iterations = iterations;
