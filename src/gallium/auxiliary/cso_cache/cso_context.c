@@ -67,10 +67,10 @@ struct sampler_info
    void *samplers_saved[PIPE_MAX_SAMPLERS];
    unsigned nr_samplers_saved;
 
-   struct pipe_sampler_view *views[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *views[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    unsigned nr_views;
 
-   struct pipe_sampler_view *views_saved[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *views_saved[PIPE_MAX_SHADER_SAMPLER_VIEWS];
    unsigned nr_views_saved;
 };
 
@@ -306,17 +306,22 @@ void cso_release_all( struct cso_context *ctx )
       ctx->pipe->bind_rasterizer_state( ctx->pipe, NULL );
 
       {
-         static struct pipe_sampler_view *views[PIPE_MAX_SAMPLERS] = { NULL };
+         static struct pipe_sampler_view *views[PIPE_MAX_SHADER_SAMPLER_VIEWS] = { NULL };
          static void *zeros[PIPE_MAX_SAMPLERS] = { NULL };
          struct pipe_screen *scr = ctx->pipe->screen;
          unsigned sh;
          for (sh = 0; sh < PIPE_SHADER_TYPES; sh++) {
-            int max = scr->get_shader_param(scr, sh,
-                                      PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS);
-            assert(max <= PIPE_MAX_SAMPLERS);
-            if (max > 0) {
-               ctx->pipe->bind_sampler_states(ctx->pipe, sh, 0, max, zeros);
-               ctx->pipe->set_sampler_views(ctx->pipe, sh, 0, max, views);
+            int maxsam = scr->get_shader_param(scr, sh,
+                                               PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS);
+            int maxview = scr->get_shader_param(scr, sh,
+                                                PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS);
+            assert(maxsam <= PIPE_MAX_SAMPLERS);
+            assert(maxview <= PIPE_MAX_SHADER_SAMPLER_VIEWS);
+            if (maxsam > 0) {
+               ctx->pipe->bind_sampler_states(ctx->pipe, sh, 0, maxsam, zeros);
+            }
+            if (maxview > 0) {
+               ctx->pipe->set_sampler_views(ctx->pipe, sh, 0, maxview, views);
             }
          }
       }
@@ -330,10 +335,10 @@ void cso_release_all( struct cso_context *ctx )
          ctx->pipe->set_stream_output_targets(ctx->pipe, 0, NULL, 0);
    }
 
-   /* free fragment samplers, views */
+   /* free fragment sampler views */
    for (shader = 0; shader < Elements(ctx->samplers); shader++) {
       struct sampler_info *info = &ctx->samplers[shader];
-      for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      for (i = 0; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
          pipe_sampler_view_reference(&info->views[i], NULL);
          pipe_sampler_view_reference(&info->views_saved[i], NULL);
       }
