@@ -1,4 +1,5 @@
 C_SOURCES := \
+	r600_buffer_common.c \
 	r600_pipe_common.c \
 	r600_streamout.c \
         r600_texture.c \

@@ -255,6 +255,18 @@ struct r600_common_context {
 				      unsigned first_sample, unsigned last_sample);
 };
 
+/* r600_buffer.c */
+boolean r600_rings_is_buffer_referenced(struct r600_common_context *ctx,
+					struct radeon_winsys_cs_handle *buf,
+					enum radeon_bo_usage usage);
+void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
+                                      struct r600_resource *resource,
+                                      unsigned usage);
+bool r600_init_resource(struct r600_common_screen *rscreen,
+			struct r600_resource *res,
+			unsigned size, unsigned alignment,
+			bool use_reusable_pool, unsigned usage);
+
 /* r600_common_pipe.c */
 bool r600_common_screen_init(struct r600_common_screen *rscreen,
 			     struct radeon_winsys *ws);
@@ -267,16 +279,6 @@ bool r600_can_dump_shader(struct r600_common_screen *rscreen,
 			  const struct tgsi_token *tokens);
 void r600_screen_clear_buffer(struct r600_common_screen *rscreen, struct pipe_resource *dst,
 			      unsigned offset, unsigned size, unsigned value);
-boolean r600_rings_is_buffer_referenced(struct r600_common_context *ctx,
-					struct radeon_winsys_cs_handle *buf,
-					enum radeon_bo_usage usage);
-void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
-                                      struct r600_resource *resource,
-                                      unsigned usage);
-bool r600_init_resource(struct r600_common_screen *rscreen,
-			struct r600_resource *res,
-			unsigned size, unsigned alignment,
-			bool use_reusable_pool, unsigned usage);
 
 /* r600_streamout.c */
 void r600_streamout_buffers_dirty(struct r600_common_context *rctx);
