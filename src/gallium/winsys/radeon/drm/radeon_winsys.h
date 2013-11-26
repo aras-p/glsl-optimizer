@@ -311,7 +311,8 @@ struct radeon_winsys {
                               unsigned *bankw, unsigned *bankh,
                               unsigned *tile_split,
                               unsigned *stencil_tile_split,
-                              unsigned *mtilea);
+                              unsigned *mtilea,
+                              bool *scanout);
 
     /**
      * Set tiling flags describing a memory layout of a buffer object.
@@ -332,7 +333,8 @@ struct radeon_winsys {
                               unsigned tile_split,
                               unsigned stencil_tile_split,
                               unsigned mtilea,
-                              unsigned stride);
+                              unsigned stride,
+                              bool scanout);
 
     /**
      * Get a winsys buffer from a winsys handle. The internal structure

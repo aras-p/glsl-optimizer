@@ -744,7 +744,8 @@ static void radeon_bo_get_tiling(struct pb_buffer *_buf,
                                  unsigned *bankw, unsigned *bankh,
                                  unsigned *tile_split,
                                  unsigned *stencil_tile_split,
-                                 unsigned *mtilea)
+                                 unsigned *mtilea,
+                                 bool *scanout)
 {
     struct radeon_bo *bo = get_radeon_bo(_buf);
     struct drm_radeon_gem_set_tiling args;
@@ -773,6 +774,8 @@ static void radeon_bo_get_tiling(struct pb_buffer *_buf,
         *mtilea = (args.tiling_flags >> RADEON_TILING_EG_MACRO_TILE_ASPECT_SHIFT) & RADEON_TILING_EG_MACRO_TILE_ASPECT_MASK;
         *tile_split = eg_tile_split(*tile_split);
     }
+    if (scanout)
+        *scanout = bo->rws->gen >= DRV_SI && !(args.tiling_flags & RADEON_TILING_R600_NO_SCANOUT);
 }
 
 static void radeon_bo_set_tiling(struct pb_buffer *_buf,
@@ -783,7 +786,8 @@ static void radeon_bo_set_tiling(struct pb_buffer *_buf,
                                  unsigned tile_split,
                                  unsigned stencil_tile_split,
                                  unsigned mtilea,
-                                 uint32_t pitch)
+                                 uint32_t pitch,
+                                 bool scanout)
 {
     struct radeon_bo *bo = get_radeon_bo(_buf);
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
@@ -823,6 +827,9 @@ static void radeon_bo_set_tiling(struct pb_buffer *_buf,
         RADEON_TILING_EG_STENCIL_TILE_SPLIT_SHIFT;
     args.tiling_flags |= (mtilea & RADEON_TILING_EG_MACRO_TILE_ASPECT_MASK) <<
         RADEON_TILING_EG_MACRO_TILE_ASPECT_SHIFT;
+
+    if (bo->rws->gen >= DRV_SI && !scanout)
+        args.tiling_flags |= RADEON_TILING_R600_NO_SCANOUT;
 
     args.handle = bo->handle;
     args.pitch = pitch;

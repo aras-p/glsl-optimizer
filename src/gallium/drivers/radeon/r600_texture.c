@@ -254,7 +254,8 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 				       surface->tile_split,
 				       surface->stencil_tile_split,
 				       surface->mtilea,
-				       surface->level[0].pitch_bytes);
+				       surface->level[0].pitch_bytes,
+				       (surface->flags & RADEON_SURF_SCANOUT) != 0);
 
 	return rscreen->ws->buffer_get_handle(resource->buf,
 						surface->level[0].pitch_bytes, whandle);
@@ -715,6 +716,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 	unsigned array_mode;
 	enum radeon_bo_layout micro, macro;
 	struct radeon_surface surface;
+	bool scanout;
 	int r;
 
 	/* Support only 2D textures without mipmaps */
@@ -730,7 +732,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 				       &surface.bankw, &surface.bankh,
 				       &surface.tile_split,
 				       &surface.stencil_tile_split,
-				       &surface.mtilea);
+				       &surface.mtilea, &scanout);
 
 	if (macro == RADEON_LAYOUT_TILED)
 		array_mode = RADEON_SURF_MODE_2D;
@@ -744,8 +746,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 		return NULL;
 	}
 
-	/* always set the scanout flags on SI */
-	if (rscreen->chip_class >= SI)
+	if (scanout)
 		surface.flags |= RADEON_SURF_SCANOUT;
 
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ,
