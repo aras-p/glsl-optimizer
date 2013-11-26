@@ -2711,9 +2711,15 @@ process_initializer(ir_variable *var, ast_declaration *decl,
                            "cannot initialize uniforms");
    }
 
-   if (var->type->is_sampler()) {
+   /* From section 4.1.7 of the GLSL 4.40 spec:
+    *
+    *    "Opaque variables [...] are initialized only through the
+    *     OpenGL API; they cannot be declared with an initializer in a
+    *     shader."
+    */
+   if (var->type->contains_opaque()) {
       _mesa_glsl_error(& initializer_loc, state,
-		       "cannot initialize samplers");
+		       "cannot initialize opaque variable");
    }
 
    if ((var->data.mode == ir_var_shader_in) && (state->current_function == NULL)) {
@@ -3473,15 +3479,15 @@ ast_declarator_list::hir(exec_list *instructions,
                           ", integer and sampler types");
       }
 
-      /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
+      /* From section 4.1.7 of the GLSL 4.40 spec:
        *
-       *    "[Sampler types] can only be declared as function
-       *    parameters or uniform variables (see Section 4.3.5
-       *    "Uniform")".
+       *    "[Opaque types] can only be declared as function
+       *     parameters or uniform-qualified variables."
        */
-      if (var_type->contains_sampler() &&
+      if (var_type->contains_opaque() &&
           !this->type->qualifier.flags.q.uniform) {
-         _mesa_glsl_error(&loc, state, "samplers must be declared uniform");
+         _mesa_glsl_error(&loc, state,
+                          "opaque variables must be declared uniform");
       }
 
       /* Process the initializer and add its instructions to a temporary
@@ -3673,15 +3679,16 @@ ast_parameter_declarator::hir(exec_list *instructions,
    apply_type_qualifier_to_variable(& this->type->qualifier, var, state, & loc,
 				    true);
 
-   /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
+   /* From section 4.1.7 of the GLSL 4.40 spec:
     *
-    *    "Samplers cannot be treated as l-values; hence cannot be used
-    *    as out or inout function parameters, nor can they be assigned
-    *    into."
+    *   "Opaque variables cannot be treated as l-values; hence cannot
+    *    be used as out or inout function parameters, nor can they be
+    *    assigned into."
     */
    if ((var->data.mode == ir_var_function_inout || var->data.mode == ir_var_function_out)
-       && type->contains_sampler()) {
-      _mesa_glsl_error(&loc, state, "out and inout parameters cannot contain samplers");
+       && type->contains_opaque()) {
+      _mesa_glsl_error(&loc, state, "out and inout parameters cannot "
+                       "contain opaque variables");
       type = glsl_type::error_type;
    }
 
@@ -3836,15 +3843,15 @@ ast_function::hir(exec_list *instructions,
 		       "sized", name);
    }
 
-   /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
+   /* From section 4.1.7 of the GLSL 4.40 spec:
     *
-    *    "[Sampler types] can only be declared as function parameters
-    *    or uniform variables (see Section 4.3.5 "Uniform")".
+    *    "[Opaque types] can only be declared as function parameters
+    *     or uniform-qualified variables."
     */
-   if (return_type->contains_sampler()) {
+   if (return_type->contains_opaque()) {
       YYLTYPE loc = this->get_location();
       _mesa_glsl_error(&loc, state,
-                       "function `%s' return type can't contain a sampler",
+                       "function `%s' return type can't contain an opaque type",
                        name);
    }
 
@@ -4745,12 +4752,9 @@ ast_process_structure_or_interface_block(exec_list *instructions,
          if (!allow_reserved_names)
             validate_identifier(decl->identifier, loc, state);
 
-         /* From the GL_ARB_uniform_buffer_object spec:
+         /* From section 4.3.9 of the GLSL 4.40 spec:
           *
-          *     "Sampler types are not allowed inside of uniform
-          *      blocks. All other types, arrays, and structures
-          *      allowed for uniforms are allowed within a uniform
-          *      block."
+          *    "[In interface blocks] opaque types are not allowed."
           *
           * It should be impossible for decl_type to be NULL here.  Cases that
           * might naturally lead to decl_type being NULL, especially for the
@@ -4760,10 +4764,11 @@ ast_process_structure_or_interface_block(exec_list *instructions,
          const struct glsl_type *field_type =
             decl_type != NULL ? decl_type : glsl_type::error_type;
 
-         if (is_interface && field_type->contains_sampler()) {
+         if (is_interface && field_type->contains_opaque()) {
             YYLTYPE loc = decl_list->get_location();
             _mesa_glsl_error(&loc, state,
-                             "uniform in non-default uniform block contains sampler");
+                             "uniform in non-default uniform block contains "
+                             "opaque variable");
          }
 
          if (field_type->contains_atomic()) {

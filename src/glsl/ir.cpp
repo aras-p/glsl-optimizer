@@ -1311,13 +1311,13 @@ ir_dereference::is_lvalue() const
    if ((var == NULL) || var->data.read_only)
       return false;
 
-   /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
+   /* From section 4.1.7 of the GLSL 4.40 spec:
     *
-    *    "Samplers cannot be treated as l-values; hence cannot be used
-    *     as out or inout function parameters, nor can they be
-    *     assigned into."
+    *   "Opaque variables cannot be treated as l-values; hence cannot
+    *    be used as out or inout function parameters, nor can they be
+    *    assigned into."
     */
-   if (this->type->contains_sampler())
+   if (this->type->contains_opaque())
       return false;
 
    return true;
