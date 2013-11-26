@@ -33,6 +33,9 @@
 #include "util/u_format.h"
 #include "util/u_debug.h"
 #include "state_tracker/drm_driver.h"
+#include "state_tracker/st_texture.h"
+#include "state_tracker/st_context.h"
+#include "main/texobj.h"
 
 #include "dri_screen.h"
 #include "dri_context.h"
@@ -825,6 +828,72 @@ dri2_from_planar(__DRIimage *image, int plane, void *loaderPrivate)
    return img;
 }
 
+static __DRIimage *
+dri2_create_from_texture(__DRIcontext *context, int target, unsigned texture,
+                         int depth, int level, unsigned *error,
+                         void *loaderPrivate)
+{
+   __DRIimage *img;
+   struct gl_context *ctx = ((struct st_context *)dri_context(context)->st)->ctx;
+   struct gl_texture_object *obj;
+   struct pipe_resource *tex;
+   GLuint face = 0;
+
+   obj = _mesa_lookup_texture(ctx, texture);
+   if (!obj || obj->Target != target) {
+      *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
+      return NULL;
+   }
+
+   tex = st_get_texobj_resource(obj);
+   if (!tex) {
+      *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
+      return NULL;
+   }
+
+   if (target == GL_TEXTURE_CUBE_MAP)
+      face = depth;
+
+   _mesa_test_texobj_completeness(ctx, obj);
+   if (!obj->_BaseComplete || (level > 0 && !obj->_MipmapComplete)) {
+      *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
+      return NULL;
+   }
+
+   if (level < obj->BaseLevel || level > obj->_MaxLevel) {
+      *error = __DRI_IMAGE_ERROR_BAD_MATCH;
+      return NULL;
+   }
+
+   if (target == GL_TEXTURE_3D && obj->Image[face][level]->Depth < depth) {
+      *error = __DRI_IMAGE_ERROR_BAD_MATCH;
+      return NULL;
+   }
+
+   img = CALLOC_STRUCT(__DRIimageRec);
+   if (!img) {
+      *error = __DRI_IMAGE_ERROR_BAD_ALLOC;
+      return NULL;
+   }
+
+   img->level = level;
+   img->layer = depth;
+   img->dri_format = driGLFormatToImageFormat(obj->Image[face][level]->TexFormat);
+
+   img->loader_private = loaderPrivate;
+
+   if (img->dri_format == __DRI_IMAGE_FORMAT_NONE) {
+      *error = __DRI_IMAGE_ERROR_BAD_PARAMETER;
+      free(img);
+      return NULL;
+   }
+
+   pipe_resource_reference(&img->texture, tex);
+
+   *error = __DRI_IMAGE_ERROR_SUCCESS;
+   return img;
+}
+
 static void
 dri2_destroy_image(__DRIimage *img)
 {
@@ -833,7 +902,7 @@ dri2_destroy_image(__DRIimage *img)
 }
 
 static struct __DRIimageExtensionRec dri2ImageExtension = {
-    { __DRI_IMAGE, 5 },
+    { __DRI_IMAGE, 6 },
     dri2_create_image_from_name,
     dri2_create_image_from_renderbuffer,
     dri2_destroy_image,
@@ -843,6 +912,7 @@ static struct __DRIimageExtensionRec dri2ImageExtension = {
     dri2_validate_usage,
     dri2_from_names,
     dri2_from_planar,
+    dri2_create_from_texture,
 };
 
 /*
