@@ -598,8 +598,6 @@ void evergreen_init_color_surface_rat(struct r600_context *rctx,
 void evergreen_update_db_shader_control(struct r600_context * rctx);
 
 /* r600_blit.c */
-void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst, unsigned dstx,
-		      struct pipe_resource *src, const struct pipe_box *src_box);
 void r600_init_blit_functions(struct r600_context *rctx);
 void r600_decompress_depth_textures(struct r600_context *rctx,
 				    struct r600_samplerview_state *textures);

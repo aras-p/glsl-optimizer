@@ -196,24 +196,22 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 	if (rtransfer->staging) {
 		struct pipe_resource *dst, *src;
 		unsigned soffset, doffset, size;
+		struct pipe_box box;
 
 		dst = transfer->resource;
 		src = &rtransfer->staging->b.b;
 		size = transfer->box.width;
 		doffset = transfer->box.x;
 		soffset = rtransfer->offset + transfer->box.x % R600_MAP_BUFFER_ALIGNMENT;
-		/* Copy the staging buffer into the original one. */
-		if (rctx->b.rings.dma.cs && !(size % 4) && !(doffset % 4) && !(soffset % 4)) {
-			if (rctx->screen->b.chip_class >= EVERGREEN) {
-				evergreen_dma_copy(rctx, dst, src, doffset, soffset, size);
-			} else {
-				r600_dma_copy(rctx, dst, src, doffset, soffset, size);
-			}
-		} else {
-			struct pipe_box box;
 
-			u_box_1d(soffset, size, &box);
-			r600_copy_buffer(pipe, dst, doffset, src, &box);
+		u_box_1d(soffset, size, &box);
+
+		/* Copy the staging buffer into the original one. */
+		if (!(size % 4) && !(doffset % 4) && !(soffset % 4) &&
+		    rctx->b.dma_copy(pipe, dst, 0, doffset, 0, 0, src, 0, &box)) {
+			/* DONE. */
+		} else {
+			pipe->resource_copy_region(pipe, dst, 0, doffset, 0, 0, src, 0, &box);
 		}
 		pipe_resource_reference((struct pipe_resource**)&rtransfer->staging, NULL);
 	}

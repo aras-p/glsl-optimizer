@@ -3769,6 +3769,12 @@ static boolean evergreen_dma_blit(struct pipe_context *ctx,
 	if (rctx->b.rings.dma.cs == NULL) {
 		return FALSE;
 	}
+
+	if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+		evergreen_dma_copy(rctx, dst, src, dst_x, src_box->x, src_box->width);
+		return TRUE;
+	}
+
 	if (src->format != dst->format) {
 		return FALSE;
 	}
