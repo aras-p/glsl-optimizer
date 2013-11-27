@@ -40,7 +40,29 @@
 #include "tr_context.h"
 
 
+struct trace_query
+{
+   unsigned type;
 
+   struct pipe_query *query;
+};
+
+
+static INLINE struct trace_query *
+trace_query(struct pipe_query *query) {
+   return (struct trace_query *)query;
+}
+
+
+static INLINE struct pipe_query *
+trace_query_unwrap(struct pipe_query *query)
+{
+   if (query) {
+      return trace_query(query)->query;
+   } else {
+      return NULL;
+   }
+}
 
 
 static INLINE struct pipe_resource *
@@ -108,29 +130,46 @@ trace_context_create_query(struct pipe_context *_pipe,
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
-   struct pipe_query *result;
+   struct pipe_query *query;
 
    trace_dump_call_begin("pipe_context", "create_query");
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, query_type);
 
-   result = pipe->create_query(pipe, query_type);
+   query = pipe->create_query(pipe, query_type);
 
-   trace_dump_ret(ptr, result);
+   trace_dump_ret(ptr, query);
 
    trace_dump_call_end();
 
-   return result;
+   /* Wrap query object. */
+   if (query) {
+      struct trace_query *tr_query = CALLOC_STRUCT(trace_query);
+      if (tr_query) {
+         tr_query->type = query_type;
+         tr_query->query = query;
+         query = (struct pipe_query *)tr_query;
+      } else {
+         pipe->destroy_query(pipe, query);
+         query = NULL;
+      }
+   }
+
+   return query;
 }
 
 
 static INLINE void
 trace_context_destroy_query(struct pipe_context *_pipe,
-                            struct pipe_query *query)
+                            struct pipe_query *_query)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
+   struct trace_query *tr_query = trace_query(_query);
+   struct pipe_query *query = tr_query->query;
+
+   FREE(tr_query);
 
    trace_dump_call_begin("pipe_context", "destroy_query");
 
@@ -150,6 +189,8 @@ trace_context_begin_query(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
+   query = trace_query_unwrap(query);
+
    trace_dump_call_begin("pipe_context", "begin_query");
 
    trace_dump_arg(ptr, pipe);
@@ -168,6 +209,8 @@ trace_context_end_query(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
+   query = trace_query_unwrap(query);
+
    trace_dump_call_begin("pipe_context", "end_query");
 
    trace_dump_arg(ptr, pipe);
@@ -181,29 +224,36 @@ trace_context_end_query(struct pipe_context *_pipe,
 
 static INLINE boolean
 trace_context_get_query_result(struct pipe_context *_pipe,
-                               struct pipe_query *query,
+                               struct pipe_query *_query,
                                boolean wait,
-                               union pipe_query_result *presult)
+                               union pipe_query_result *result)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
-   uint64_t result;
-   boolean _result;
+   struct trace_query *tr_query = trace_query(_query);
+   struct pipe_query *query = tr_query->query;
+   boolean ret;
 
    trace_dump_call_begin("pipe_context", "get_query_result");
 
    trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, query);
 
-   _result = pipe->get_query_result(pipe, query, wait, presult);
-   /* XXX this depends on the query type */
-   result = *((uint64_t*)presult);
+   ret = pipe->get_query_result(pipe, query, wait, result);
 
-   trace_dump_arg(uint, result);
-   trace_dump_ret(bool, _result);
+   trace_dump_arg_begin("result");
+   if (ret) {
+      trace_dump_query_result(tr_query->type, result);
+   } else {
+      trace_dump_null();
+   }
+   trace_dump_arg_end();
+
+   trace_dump_ret(bool, ret);
 
    trace_dump_call_end();
 
-   return _result;
+   return ret;
 }
 
 
@@ -1407,6 +1457,8 @@ static void trace_context_render_condition(struct pipe_context *_context,
 {
    struct trace_context *tr_context = trace_context(_context);
    struct pipe_context *context = tr_context->pipe;
+
+   query = trace_query_unwrap(query);
 
    trace_dump_call_begin("pipe_context", "render_condition");
 

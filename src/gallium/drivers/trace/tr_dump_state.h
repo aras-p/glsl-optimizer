@@ -85,5 +85,7 @@ void trace_dump_draw_info(const struct pipe_draw_info *state);
 
 void trace_dump_blit_info(const struct pipe_blit_info *);
 
+void trace_dump_query_result(unsigned query_type,
+                             const union pipe_query_result *result);
 
 #endif /* TR_STATE_H */

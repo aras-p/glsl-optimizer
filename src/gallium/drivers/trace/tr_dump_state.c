@@ -775,3 +775,67 @@ void trace_dump_blit_info(const struct pipe_blit_info *info)
 
    trace_dump_struct_end();
 }
+
+void
+trace_dump_query_result(unsigned query_type,
+                        const union pipe_query_result *result)
+{
+   if (!trace_dumping_enabled_locked())
+      return;
+
+   if (!result) {
+      trace_dump_null();
+      return;
+   }
+
+   switch (query_type) {
+   case PIPE_QUERY_OCCLUSION_PREDICATE:
+   case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
+   case PIPE_QUERY_GPU_FINISHED:
+      trace_dump_bool(result->b);
+      break;
+
+   case PIPE_QUERY_OCCLUSION_COUNTER:
+   case PIPE_QUERY_TIMESTAMP:
+   case PIPE_QUERY_TIME_ELAPSED:
+   case PIPE_QUERY_PRIMITIVES_GENERATED:
+   case PIPE_QUERY_PRIMITIVES_EMITTED:
+      trace_dump_uint(result->u64);
+      break;
+
+   case PIPE_QUERY_SO_STATISTICS:
+      trace_dump_struct_begin("pipe_query_data_so_statistics");
+      trace_dump_member(uint, &result->so_statistics, num_primitives_written);
+      trace_dump_member(uint, &result->so_statistics, primitives_storage_needed);
+      trace_dump_struct_end();
+      break;
+
+   case PIPE_QUERY_TIMESTAMP_DISJOINT:
+      trace_dump_struct_begin("pipe_query_data_timestamp_disjoint");
+      trace_dump_member(uint, &result->timestamp_disjoint, frequency);
+      trace_dump_member(bool, &result->timestamp_disjoint, disjoint);
+      trace_dump_struct_end();
+      break;
+
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      trace_dump_struct_begin("pipe_query_data_pipeline_statistics");
+      trace_dump_member(uint, &result->pipeline_statistics, ia_vertices);
+      trace_dump_member(uint, &result->pipeline_statistics, ia_primitives);
+      trace_dump_member(uint, &result->pipeline_statistics, vs_invocations);
+      trace_dump_member(uint, &result->pipeline_statistics, gs_invocations);
+      trace_dump_member(uint, &result->pipeline_statistics, gs_primitives);
+      trace_dump_member(uint, &result->pipeline_statistics, c_invocations);
+      trace_dump_member(uint, &result->pipeline_statistics, c_primitives);
+      trace_dump_member(uint, &result->pipeline_statistics, ps_invocations);
+      trace_dump_member(uint, &result->pipeline_statistics, hs_invocations);
+      trace_dump_member(uint, &result->pipeline_statistics, ds_invocations);
+      trace_dump_member(uint, &result->pipeline_statistics, cs_invocations);
+      trace_dump_struct_end();
+      break;
+
+   default:
+      assert(query_type >= PIPE_QUERY_DRIVER_SPECIFIC);
+      trace_dump_uint(result->u64);
+      break;
+   }
+}
