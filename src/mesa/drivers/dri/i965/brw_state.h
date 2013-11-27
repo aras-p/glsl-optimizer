@@ -173,8 +173,8 @@ void brw_destroy_caches( struct brw_context *brw );
 /***********************************************************************
  * brw_state_batch.c
  */
-#define BRW_BATCH_STRUCT(brw, s) intel_batchbuffer_data(brw, (s), \
-							sizeof(*(s)), false)
+#define BRW_BATCH_STRUCT(brw, s) \
+   intel_batchbuffer_data(brw, (s), sizeof(*(s)), RENDER_RING)
 
 void *brw_state_batch(struct brw_context *brw,
 		      enum state_struct_type type,
