@@ -2099,6 +2099,21 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
       src.brw_surfaceformat = dst.brw_surfaceformat;
    }
 
+   /* When doing a multisample resolve of a GL_LUMINANCE32F or GL_INTENSITY32F
+    * texture, the above code configures the source format for L32_FLOAT or
+    * I32_FLOAT, and the destination format for R32_FLOAT.  On Sandy Bridge,
+    * the SAMPLE message appears to handle multisampled L32_FLOAT and
+    * I32_FLOAT textures incorrectly, resulting in blocky artifacts.  So work
+    * around the problem by using a source format of R32_FLOAT.  This
+    * shouldn't affect rendering correctness, since the destination format is
+    * R32_FLOAT, so only the contents of the red channel matters.
+    */
+   if (brw->gen == 6 && src.num_samples > 1 && dst.num_samples <= 1 &&
+       src_mt->format == dst_mt->format &&
+       dst.brw_surfaceformat == BRW_SURFACEFORMAT_R32_FLOAT) {
+      src.brw_surfaceformat = dst.brw_surfaceformat;
+   }
+
    use_wm_prog = true;
    memset(&wm_prog_key, 0, sizeof(wm_prog_key));
 
