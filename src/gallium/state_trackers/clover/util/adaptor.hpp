@@ -111,7 +111,7 @@ namespace clover {
 
          iterator_adaptor &
          operator-=(difference_type n) {
-            tuple::map(advances_by(n), its);
+            tuple::map(advances_by(-n), its);
             return *this;
          }
 
