@@ -558,9 +558,16 @@ brwCreateContext(gl_api api,
    struct dd_function_table functions;
    struct gl_config visual;
 
-   if (flags & ~(__DRI_CTX_FLAG_DEBUG
-                 | __DRI_CTX_FLAG_FORWARD_COMPATIBLE
-                 | __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS)) {
+   /* Only allow the __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS flag if the kernel
+    * provides us with context reset notifications.
+    */
+   uint32_t allowed_flags = __DRI_CTX_FLAG_DEBUG
+      | __DRI_CTX_FLAG_FORWARD_COMPATIBLE;
+
+   if (screen->has_context_reset_notification)
+      allowed_flags |= __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS;
+
+   if (flags & ~allowed_flags) {
       *dri_ctx_error = __DRI_CTX_ERROR_UNKNOWN_FLAG;
       return false;
    }

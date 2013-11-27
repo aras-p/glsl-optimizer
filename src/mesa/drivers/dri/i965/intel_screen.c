@@ -1344,7 +1344,9 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 
    const int ret = drmIoctl(psp->fd, DRM_IOCTL_I915_GET_RESET_STATS, &stats);
 
-   psp->extensions = (ret == -1 && errno == EINVAL)
+   intelScreen->has_context_reset_notification = (ret != -1 || errno != EINVAL);
+
+   psp->extensions = !intelScreen->has_context_reset_notification
       ? intelScreenExtensions : intelRobustScreenExtensions;
 
    return (const __DRIconfig**) intel_screen_make_configs(psp);

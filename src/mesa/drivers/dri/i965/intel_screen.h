@@ -50,6 +50,11 @@ struct intel_screen
 
    bool hw_has_swizzling;
 
+   /**
+    * Does the kernel support context reset notifications?
+    */
+   bool has_context_reset_notification;
+
    dri_bufmgr *bufmgr;
 
    /**
