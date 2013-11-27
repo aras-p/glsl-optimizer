@@ -1809,8 +1809,12 @@ fs_generator::generate_assembly(exec_list *simd8_instructions,
                                 exec_list *simd16_instructions,
                                 unsigned *assembly_size)
 {
-   dispatch_width = 8;
-   generate_code(simd8_instructions);
+   assert(simd8_instructions || simd16_instructions);
+
+   if (simd8_instructions) {
+      dispatch_width = 8;
+      generate_code(simd8_instructions);
+   }
 
    if (simd16_instructions) {
       /* We have to do a compaction pass now, or the one at the end of
