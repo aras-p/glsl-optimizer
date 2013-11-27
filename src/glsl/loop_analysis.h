@@ -71,11 +71,6 @@ public:
 
 
    /**
-    * Loop whose variable state is being tracked by this structure
-    */
-   ir_loop *loop;
-
-   /**
     * Variables that have not yet been classified
     */
    exec_list variables;
