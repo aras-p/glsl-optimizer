@@ -642,6 +642,8 @@ start_oa_counters(struct brw_context *brw)
 
    /* Pick the counter format which gives us all the counters. */
    switch (brw->gen) {
+   case 5:
+      return; /* Ironlake counters are always running. */
    case 6:
       counter_format = 1; /* 0b001 */
       break;
@@ -667,6 +669,10 @@ start_oa_counters(struct brw_context *brw)
 static void
 stop_oa_counters(struct brw_context *brw)
 {
+   /* Ironlake counters never stop. */
+   if (brw->gen == 5)
+      return;
+
    BEGIN_BATCH(3);
    OUT_BATCH(MI_LOAD_REGISTER_IMM | (3 - 2));
    OUT_BATCH(OACONTROL);
@@ -1367,8 +1373,7 @@ brw_perf_monitor_new_batch(struct brw_context *brw)
    if (brw->perfmon.oa_users == 0)
       return;
 
-   if (brw->gen >= 6)
-      start_oa_counters(brw);
+   start_oa_counters(brw);
 
    /* Make sure bookend_bo has enough space for a pair of snapshots.
     * If not, "wrap" the BO: gather up any results so far, and start from
@@ -1405,8 +1410,7 @@ brw_perf_monitor_finish_batch(struct brw_context *brw)
 
    emit_bookend_snapshot(brw);
 
-   if (brw->gen >= 6)
-      stop_oa_counters(brw);
+   stop_oa_counters(brw);
 }
 
 /******************************************************************************/
