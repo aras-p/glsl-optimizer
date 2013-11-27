@@ -197,6 +197,9 @@ void si_set_sampler_view(struct r600_context *rctx, unsigned shader,
 void si_init_all_descriptors(struct r600_context *rctx);
 void si_release_all_descriptors(struct r600_context *rctx);
 void si_all_descriptors_begin_new_cs(struct r600_context *rctx);
+void si_copy_buffer(struct r600_context *rctx,
+		    struct pipe_resource *dst, struct pipe_resource *src,
+		    uint64_t dst_offset, uint64_t src_offset, unsigned size);
 
 /* si_state.c */
 struct si_pipe_shader_selector;

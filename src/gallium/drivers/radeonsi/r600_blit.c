@@ -496,14 +496,13 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	const struct pipe_box *psbox = src_box;
 	boolean restore_orig[2];
 
-	memset(orig_info, 0, sizeof(orig_info));
-
 	/* Fallback for buffers. */
 	if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
-		util_resource_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
-                                          src, src_level, src_box);
+		si_copy_buffer(rctx, dst, src, dstx, src_box->x, src_box->width);
 		return;
 	}
+
+	memset(orig_info, 0, sizeof(orig_info));
 
 	/* The driver doesn't decompress resources automatically while
 	 * u_blitter is rendering. */

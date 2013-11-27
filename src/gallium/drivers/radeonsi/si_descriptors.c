@@ -605,6 +605,64 @@ static void si_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
 		       offset + size);
 }
 
+void si_copy_buffer(struct r600_context *rctx,
+		    struct pipe_resource *dst, struct pipe_resource *src,
+		    uint64_t dst_offset, uint64_t src_offset, unsigned size)
+{
+	if (!size)
+		return;
+
+	dst_offset += r600_resource_va(&rctx->screen->b.b, dst);
+	src_offset += r600_resource_va(&rctx->screen->b.b, src);
+
+	/* Flush the caches where the resource is bound. */
+	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE |
+			 R600_CONTEXT_INV_CONST_CACHE |
+			 R600_CONTEXT_FLUSH_AND_INV_CB |
+			 R600_CONTEXT_FLUSH_AND_INV_DB |
+			 R600_CONTEXT_FLUSH_AND_INV_CB_META |
+			 R600_CONTEXT_FLUSH_AND_INV_DB_META |
+			 R600_CONTEXT_WAIT_3D_IDLE;
+
+	while (size) {
+		unsigned sync_flags = 0;
+		unsigned byte_count = MIN2(size, CP_DMA_MAX_BYTE_COUNT);
+
+		si_need_cs_space(rctx, 7 + (rctx->b.flags ? rctx->cache_flush.num_dw : 0), FALSE);
+
+		/* Flush the caches for the first copy only. Also wait for old CP DMA packets to complete. */
+		if (rctx->b.flags) {
+			si_emit_cache_flush(&rctx->b, NULL);
+			sync_flags |= SI_CP_DMA_RAW_WAIT;
+		}
+
+		/* Do the synchronization after the last copy, so that all data is written to memory. */
+		if (size == byte_count) {
+			sync_flags |= R600_CP_DMA_SYNC;
+		}
+
+		/* This must be done after r600_need_cs_space. */
+		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, (struct r600_resource*)src, RADEON_USAGE_READ);
+		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, (struct r600_resource*)dst, RADEON_USAGE_WRITE);
+
+		si_emit_cp_dma_copy_buffer(rctx, dst_offset, src_offset, byte_count, sync_flags);
+
+		size -= byte_count;
+		src_offset += byte_count;
+		dst_offset += byte_count;
+	}
+
+	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE |
+			 R600_CONTEXT_INV_CONST_CACHE |
+			 R600_CONTEXT_FLUSH_AND_INV_CB |
+			 R600_CONTEXT_FLUSH_AND_INV_DB |
+			 R600_CONTEXT_FLUSH_AND_INV_CB_META |
+			 R600_CONTEXT_FLUSH_AND_INV_DB_META;
+
+	util_range_add(&r600_resource(dst)->valid_buffer_range, dst_offset,
+		       dst_offset + size);
+}
+
 /* INIT/DEINIT */
 
 void si_init_all_descriptors(struct r600_context *rctx)
