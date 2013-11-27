@@ -56,6 +56,17 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
         struct r600_resource *rbuffer = r600_resource(resource);
         uint8_t *data;
 
+	if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE &&
+	    !(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
+		assert(usage & PIPE_TRANSFER_WRITE);
+
+		/* Check if mapping this buffer would cause waiting for the GPU. */
+		if (r600_rings_is_buffer_referenced(&rctx->b, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
+		    rctx->b.ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
+			si_invalidate_buffer(&rctx->b.b, &rbuffer->b.b);
+		}
+	}
+
 	data = rctx->b.ws->buffer_map(rbuffer->cs_buf, rctx->b.rings.gfx.cs, usage);
         if (!data) {
 		return NULL;

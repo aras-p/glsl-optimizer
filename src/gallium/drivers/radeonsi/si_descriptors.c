@@ -523,6 +523,129 @@ static void si_set_streamout_targets(struct pipe_context *ctx,
 	si_update_descriptors(rctx, &buffers->desc);
 }
 
+static void si_desc_reset_buffer_offset(struct pipe_context *ctx,
+					uint32_t *desc, uint64_t old_buf_va,
+					struct pipe_resource *new_buf)
+{
+	/* Retrieve the buffer offset from the descriptor. */
+	uint64_t old_desc_va =
+		desc[0] | ((uint64_t)G_008F04_BASE_ADDRESS_HI(desc[1]) << 32);
+
+	assert(old_buf_va <= old_desc_va);
+	uint64_t offset_within_buffer = old_desc_va - old_buf_va;
+
+	/* Update the descriptor. */
+	uint64_t va = r600_resource_va(ctx->screen, new_buf) + offset_within_buffer;
+
+	desc[0] = va;
+	desc[1] = (desc[1] & C_008F04_BASE_ADDRESS_HI) |
+		  S_008F04_BASE_ADDRESS_HI(va >> 32);
+}
+
+/* BUFFER DISCARD/INVALIDATION */
+
+/* Reallocate a buffer a update all resource bindings where the buffer is
+ * bound.
+ *
+ * This is used to avoid CPU-GPU synchronizations, because it makes the buffer
+ * idle by discarding its contents. Apps usually tell us when to do this using
+ * map_buffer flags, for example.
+ */
+void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource *buf)
+{
+	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct r600_resource *rbuffer = r600_resource(buf);
+	unsigned i, shader, alignment = rbuffer->buf->alignment;
+	uint64_t old_va = r600_resource_va(ctx->screen, buf);
+
+	/* Discard the buffer. */
+	pb_reference(&rbuffer->buf, NULL);
+
+	/* Create a new one in the same pipe_resource. */
+	r600_init_resource(&rctx->screen->b, rbuffer, rbuffer->b.b.width0, alignment,
+			   TRUE, rbuffer->b.b.usage);
+
+	/* We changed the buffer, now we need to bind it where the old one
+	 * was bound. This consists of 2 things:
+	 *   1) Updating the resource descriptor and dirtying it.
+	 *   2) Adding a relocation to the CS, so that it's usable.
+	 */
+
+	/* Vertex buffers. */
+	/* Nothing to do. Vertex buffer bindings are updated before every draw call. */
+
+	/* Streamout buffers. */
+	for (i = 0; i < rctx->streamout_buffers.num_buffers; i++) {
+		if (rctx->streamout_buffers.buffers[i] == buf) {
+			/* Update the descriptor. */
+			si_desc_reset_buffer_offset(ctx, rctx->streamout_buffers.desc_data[i],
+						    old_va, buf);
+
+			r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx,
+					      (struct r600_resource*)buf,
+					      rctx->streamout_buffers.shader_usage);
+			rctx->streamout_buffers.desc.dirty_mask |= 1 << i;
+			si_update_descriptors(rctx, &rctx->streamout_buffers.desc);
+
+			/* Update the streamout state. */
+			if (rctx->b.streamout.begin_emitted) {
+				r600_emit_streamout_end(&rctx->b);
+			}
+			rctx->b.streamout.append_bitmask = rctx->b.streamout.enabled_mask;
+			r600_streamout_buffers_dirty(&rctx->b);
+		}
+	}
+
+	/* Constant buffers. */
+	for (shader = 0; shader < SI_NUM_SHADERS; shader++) {
+		struct si_buffer_resources *buffers = &rctx->const_buffers[shader];
+		bool found = false;
+		uint32_t mask = buffers->desc.enabled_mask;
+
+		while (mask) {
+			unsigned i = u_bit_scan(&mask);
+			if (buffers->buffers[i] == buf) {
+				si_desc_reset_buffer_offset(ctx, buffers->desc_data[i],
+							    old_va, buf);
+
+				r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx,
+						      rbuffer, buffers->shader_usage);
+
+				buffers->desc.dirty_mask |= 1 << i;
+				found = true;
+			}
+		}
+		if (found) {
+			si_update_descriptors(rctx, &buffers->desc);
+		}
+	}
+
+	/* Texture buffers. */
+	for (shader = 0; shader < SI_NUM_SHADERS; shader++) {
+		struct si_sampler_views *views = &rctx->samplers[shader].views;
+		bool found = false;
+		uint32_t mask = views->desc.enabled_mask;
+
+		while (mask) {
+			unsigned i = u_bit_scan(&mask);
+			if (views->views[i]->texture == buf) {
+				/* This updates the sampler view directly. */
+				si_desc_reset_buffer_offset(ctx, views->desc_data[i],
+							    old_va, buf);
+
+				r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx,
+						      rbuffer, RADEON_USAGE_READ);
+
+				views->desc.dirty_mask |= 1 << i;
+				found = true;
+			}
+		}
+		if (found) {
+			si_update_descriptors(rctx, &views->desc);
+		}
+	}
+}
+
 /* CP DMA */
 
 /* The max number of bytes to copy per packet. */
