@@ -265,13 +265,19 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
       x_align *= 16;
       y_align *= 32;
 
-      if (brw->is_haswell && brw->gt == 3) {
+      if (brw->is_haswell) {
          /* From BSpec: 3D-Media-GPGPU Engine > 3D Pipeline > Pixel > Pixel
-          * Backend > MCS Buffer for Render Target(s) [DevIVB+]:
-          * [DevHSW:GT3]: Clear rectangle must be aligned to two times the
-          * number of pixels in the table shown below...
-          * x_align, y_align values computed above are the relevant entries
-          * in the referred table.
+          * Backend > MCS Buffer for Render Target(s) [DevIVB+] > Table "Color
+          * Clear of Non-MultiSampled Render Target Restrictions":
+          *
+          *   [IVB, VLVT, HSW]: Clear rectangle must be aligned to two times
+          *   the number of pixels in the table shown below...  x_align,
+          *   y_align values computed above are the relevant entries in the
+          *   referred table.
+          *
+          * We apply the workaround to only Haswell because (a) we suspect that
+          * is the only hardware where it is actually required and (b) we
+          * haven't yet validated the workaround for the other hardware.
           */
          x0 = ROUND_DOWN_TO(x0, 2 * x_align);
          y0 = ROUND_DOWN_TO(y0, 2 * y_align);
