@@ -182,13 +182,7 @@ do_batch_dump(struct brw_context *brw)
 void
 intel_batchbuffer_emit_render_ring_prelude(struct brw_context *brw)
 {
-   /* Without hardware contexts, we need to capture the pipeline statistics
-    * registers at the start and end of each render ring batch, so we can see
-    * what that batch contributed.  Emit state packets to write them to a BO.
-    */
-   brw_emit_query_begin(brw);
-
-   /* We may also need to enable and snapshot OA counters. */
+   /* We may need to enable and snapshot OA counters. */
    brw_perf_monitor_new_batch(brw);
 }
 
