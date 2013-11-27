@@ -33,6 +33,7 @@
 #include "pipe/p_screen.h"
 
 #include "tr_dump.h"
+#include "tr_dump_defines.h"
 #include "tr_dump_state.h"
 #include "tr_public.h"
 #include "tr_screen.h"
@@ -135,7 +136,7 @@ trace_context_create_query(struct pipe_context *_pipe,
    trace_dump_call_begin("pipe_context", "create_query");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(uint, query_type);
+   trace_dump_arg(query_type, query_type);
 
    query = pipe->create_query(pipe, query_type);
 

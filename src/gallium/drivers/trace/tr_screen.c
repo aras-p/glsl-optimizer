@@ -30,13 +30,12 @@
 #include "util/u_simple_list.h"
 
 #include "tr_dump.h"
+#include "tr_dump_defines.h"
 #include "tr_dump_state.h"
 #include "tr_texture.h"
 #include "tr_context.h"
 #include "tr_screen.h"
 #include "tr_public.h"
-
-#include "pipe/p_format.h"
 
 
 static boolean trace = FALSE;

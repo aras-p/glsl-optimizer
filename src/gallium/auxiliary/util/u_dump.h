@@ -85,6 +85,9 @@ util_dump_tex_mipfilter(unsigned value, boolean shortened);
 const char *
 util_dump_tex_filter(unsigned value, boolean shortened);
 
+const char *
+util_dump_query_type(unsigned value, boolean shortened);
+
 
 /*
  * p_state.h, through a FILE

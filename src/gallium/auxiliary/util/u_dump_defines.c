@@ -359,3 +359,36 @@ util_dump_tex_filter_short_names[] = {
 };
 
 DEFINE_UTIL_DUMP_CONTINUOUS(tex_filter)
+
+
+static const char *
+util_dump_query_type_names[] = {
+   "PIPE_QUERY_OCCLUSION_COUNTER",
+   "PIPE_QUERY_OCCLUSION_PREDICATE",
+   "PIPE_QUERY_TIMESTAMP",
+   "PIPE_QUERY_TIMESTAMP_DISJOINT",
+   "PIPE_QUERY_TIME_ELAPSED",
+   "PIPE_QUERY_PRIMITIVES_GENERATED",
+   "PIPE_QUERY_PRIMITIVES_EMITTED",
+   "PIPE_QUERY_SO_STATISTICS",
+   "PIPE_QUERY_SO_OVERFLOW_PREDICATE",
+   "PIPE_QUERY_GPU_FINISHED",
+   "PIPE_QUERY_PIPELINE_STATISTICS",
+};
+
+static const char *
+util_dump_query_type_short_names[] = {
+   "occlusion_counter",
+   "occlusion_predicate",
+   "timestamp",
+   "timestamp_disjoint",
+   "time_elapsed",
+   "primitives_generated",
+   "primitives_emitted",
+   "so_statistics",
+   "so_overflow_predicate",
+   "gpu_finished",
+   "pipeline_statistics",
+};
+
+DEFINE_UTIL_DUMP_CONTINUOUS(query_type)

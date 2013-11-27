@@ -28,12 +28,9 @@
 #ifndef TR_DUMP_STATE_H_
 #define TR_DUMP_STATE_H_
 
-#include "pipe/p_format.h"
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
 
-
-void trace_dump_format(enum pipe_format format);
 
 void trace_dump_resource_template(const struct pipe_resource *templat);
 

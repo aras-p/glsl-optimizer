@@ -32,16 +32,8 @@
 #include "tgsi/tgsi_dump.h"
 
 #include "tr_dump.h"
+#include "tr_dump_defines.h"
 #include "tr_dump_state.h"
-
-
-void trace_dump_format(enum pipe_format format)
-{
-   if (!trace_dumping_enabled_locked())
-      return;
-
-   trace_dump_enum(util_format_name(format) );
-}
 
 
 void trace_dump_resource_template(const struct pipe_resource *templat)
