@@ -63,6 +63,7 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_if *ir);
 
+   virtual ir_visitor_status visit_enter(ir_loop *ir);
    virtual ir_visitor_status visit_leave(ir_loop *ir);
    virtual ir_visitor_status visit_enter(ir_function *ir);
    virtual ir_visitor_status visit_leave(ir_function *ir);
@@ -144,6 +145,18 @@ ir_validate::visit_enter(ir_if *ir)
       abort();
    }
 
+   return visit_continue;
+}
+
+
+ir_visitor_status
+ir_validate::visit_enter(ir_loop *ir)
+{
+   if (ir->counter != NULL && hash_table_find(ht, ir->counter) != NULL) {
+      printf("ir_loop @ %p specifies already-declared variable `%s' @ %p\n",
+             (void *) ir, ir->counter->name, (void *) ir->counter);
+      abort();
+   }
    return visit_continue;
 }
 
