@@ -116,7 +116,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
    brw_set_mask_control(p, BRW_MASK_DISABLE);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
-   if (fp->UsesKill || c->key.alpha_test_func) {
+   if ((fp && fp->UsesKill) || c->key.alpha_test_func) {
       struct brw_reg pixel_mask;
 
       if (brw->gen >= 6)
@@ -1304,9 +1304,12 @@ fs_generator::generate_code(exec_list *instructions)
       if (shader) {
          printf("Native code for fragment shader %d (%d-wide dispatch):\n",
                 prog->Name, dispatch_width);
-      } else {
+      } else if (fp) {
          printf("Native code for fragment program %d (%d-wide dispatch):\n",
                 fp->Base.Id, dispatch_width);
+      } else {
+         printf("Native code for blorp program (%d-wide dispatch):\n",
+                dispatch_width);
       }
    }
 
@@ -1344,7 +1347,7 @@ fs_generator::generate_code(exec_list *instructions)
                else {
                   const prog_instruction *fpi;
                   fpi = (const prog_instruction *)inst->ir;
-                  printf("%d: ", (int)(fpi - fp->Base.Instructions));
+                  printf("%d: ", (int)(fpi - (fp ? fp->Base.Instructions : 0)));
                   _mesa_fprint_instruction_opt(stdout,
                                                fpi,
                                                0, PROG_PRINT_DEBUG, NULL);
