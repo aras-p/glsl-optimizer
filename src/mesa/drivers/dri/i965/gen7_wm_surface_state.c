@@ -291,7 +291,6 @@ gen7_update_texture_surface(struct gl_context *ctx,
 
    uint32_t tex_format = translate_tex_format(brw,
                                               mt->format,
-                                              tObj->DepthMode,
                                               sampler->sRGBDecode);
 
    if (for_gather && tex_format == BRW_SURFACEFORMAT_R32G32_FLOAT)

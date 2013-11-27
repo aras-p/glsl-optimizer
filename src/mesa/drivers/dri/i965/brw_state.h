@@ -193,7 +193,6 @@ GLuint translate_tex_target(GLenum target);
 
 GLuint translate_tex_format(struct brw_context *brw,
                             gl_format mesa_format,
-			    GLenum depth_mode,
 			    GLenum srgb_decode);
 
 int brw_get_texture_swizzle(const struct gl_context *ctx,

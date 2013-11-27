@@ -289,7 +289,6 @@ brw_update_texture_surface(struct gl_context *ctx,
 	      BRW_SURFACE_CUBEFACE_ENABLES |
 	      (translate_tex_format(brw,
                                     mt->format,
-				    tObj->DepthMode,
 				    sampler->sRGBDecode) <<
 	       BRW_SURFACE_FORMAT_SHIFT));
 

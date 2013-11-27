@@ -686,7 +686,6 @@ brw_render_target_supported(struct brw_context *brw,
 GLuint
 translate_tex_format(struct brw_context *brw,
                      gl_format mesa_format,
-		     GLenum depth_mode,
 		     GLenum srgb_decode)
 {
    struct gl_context *ctx = &brw->ctx;
