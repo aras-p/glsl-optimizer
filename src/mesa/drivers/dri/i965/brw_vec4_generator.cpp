@@ -151,15 +151,6 @@ vec4_generator::~vec4_generator()
 }
 
 void
-vec4_generator::mark_surface_used(unsigned surf_index)
-{
-   assert(surf_index < BRW_MAX_SURFACES);
-
-   prog_data->base.binding_table.size_bytes =
-      MAX2(prog_data->base.binding_table.size_bytes, (surf_index + 1) * 4);
-}
-
-void
 vec4_generator::generate_math1_gen4(vec4_instruction *inst,
                                     struct brw_reg dst,
                                     struct brw_reg src)
@@ -438,7 +429,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
 	      BRW_SAMPLER_SIMD_MODE_SIMD4X2,
 	      return_format);
 
-   mark_surface_used(surface_index);
+   brw_mark_surface_used(&prog_data->base, surface_index);
 }
 
 void
@@ -850,7 +841,7 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
                            true, /* header_present */
 			   1 /* rlen */);
 
-   mark_surface_used(surf_index);
+   brw_mark_surface_used(&prog_data->base, surf_index);
 }
 
 void
@@ -875,7 +866,7 @@ vec4_generator::generate_pull_constant_load_gen7(vec4_instruction *inst,
                            BRW_SAMPLER_SIMD_MODE_SIMD4X2,
                            0);
 
-   mark_surface_used(surf_index.dw1.ud);
+   brw_mark_surface_used(&prog_data->base, surf_index.dw1.ud);
 }
 
 void
@@ -893,7 +884,7 @@ vec4_generator::generate_untyped_atomic(vec4_instruction *inst,
                       atomic_op.dw1.ud, surf_index.dw1.ud,
                       inst->mlen, 1);
 
-   mark_surface_used(surf_index.dw1.ud);
+   brw_mark_surface_used(&prog_data->base, surf_index.dw1.ud);
 }
 
 void
@@ -908,7 +899,7 @@ vec4_generator::generate_untyped_surface_read(vec4_instruction *inst,
                             surf_index.dw1.ud,
                             inst->mlen, 1);
 
-   mark_surface_used(surf_index.dw1.ud);
+   brw_mark_surface_used(&prog_data->base, surf_index.dw1.ud);
 }
 
 /**
@@ -1221,7 +1212,8 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
    case SHADER_OPCODE_SHADER_TIME_ADD:
       brw_shader_time_add(p, src[0],
                           prog_data->base.binding_table.shader_time_start);
-      mark_surface_used(prog_data->base.binding_table.shader_time_start);
+      brw_mark_surface_used(&prog_data->base,
+                            prog_data->base.binding_table.shader_time_start);
       break;
 
    case SHADER_OPCODE_UNTYPED_ATOMIC:

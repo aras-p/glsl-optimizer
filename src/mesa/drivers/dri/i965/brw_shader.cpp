@@ -722,5 +722,5 @@ backend_visitor::assign_common_binding_table_offsets(uint32_t next_binding_table
 
    assert(next_binding_table_offset <= BRW_MAX_SURFACES);
 
-   /* prog_data->base.binding_table.size will be set by mark_surface_used. */
+   /* prog_data->base.binding_table.size will be set by brw_mark_surface_used. */
 }
