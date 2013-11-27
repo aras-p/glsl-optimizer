@@ -696,17 +696,17 @@ translate_tex_format(struct brw_context *brw,
    switch( mesa_format ) {
 
    case MESA_FORMAT_Z16:
-      return BRW_SURFACEFORMAT_I16_UNORM;
+      return BRW_SURFACEFORMAT_R16_UNORM;
 
    case MESA_FORMAT_S8_Z24:
    case MESA_FORMAT_X8_Z24:
-      return BRW_SURFACEFORMAT_I24X8_UNORM;
+      return BRW_SURFACEFORMAT_R24_UNORM_X8_TYPELESS;
 
    case MESA_FORMAT_Z32_FLOAT:
-      return BRW_SURFACEFORMAT_I32_FLOAT;
+      return BRW_SURFACEFORMAT_R32_FLOAT;
 
    case MESA_FORMAT_Z32_FLOAT_X24S8:
-      return BRW_SURFACEFORMAT_R32G32_FLOAT;
+      return BRW_SURFACEFORMAT_R32_FLOAT_X8X24_TYPELESS;
 
    case MESA_FORMAT_RGBA_FLOAT32:
       /* The value of this BRW_SURFACEFORMAT is 0, which tricks the
