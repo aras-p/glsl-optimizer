@@ -728,6 +728,13 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.EXT_framebuffer_multisample_blit_scaled = GL_TRUE;
    }
 
+   if (ctx->Const.MaxSamples == 0 && screen->get_param(screen, PIPE_CAP_FAKE_SW_MSAA)) {
+	ctx->Const.FakeSWMSAA = GL_TRUE;
+        ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
+        ctx->Extensions.EXT_framebuffer_multisample_blit_scaled = GL_TRUE;
+        ctx->Extensions.ARB_texture_multisample = GL_TRUE;
+   }
+
    if (ctx->Const.MaxDualSourceDrawBuffers > 0 &&
        !st->options.disable_blend_func_extended)
       ctx->Extensions.ARB_blend_func_extended = GL_TRUE;

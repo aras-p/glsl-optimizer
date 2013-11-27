@@ -3471,6 +3471,8 @@ struct gl_constants
    /** GL_ARB_gpu_shader5 */
    GLfloat MinFragmentInterpolationOffset;
    GLfloat MaxFragmentInterpolationOffset;
+
+   GLboolean FakeSWMSAA;
 };
 
 

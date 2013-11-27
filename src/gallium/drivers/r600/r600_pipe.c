@@ -333,6 +333,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_TEXCOORD:
 		return 0;
 
+	case PIPE_CAP_FAKE_SW_MSAA:
+		return 0;
+
 	case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
 		return MIN2(rscreen->b.info.vram_size, 0xFFFFFFFF);
 
