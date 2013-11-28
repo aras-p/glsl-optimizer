@@ -1007,8 +1007,10 @@ vec4_visitor::visit(ir_variable *ir)
 void
 vec4_visitor::visit(ir_loop *ir)
 {
-   /* Any bounded loops should have been lowered by lower_bounded_loops(). */
-   assert(ir->counter == NULL);
+   /* Any normative loop bounds should have been lowered by
+    * lower_bounded_loops().
+    */
+   assert(ir->normative_bound < 0);
 
    /* We don't want debugging output to print the whole body of the
     * loop as the annotation.

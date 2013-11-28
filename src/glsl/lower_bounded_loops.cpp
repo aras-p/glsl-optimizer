@@ -72,34 +72,34 @@ public:
 ir_visitor_status
 lower_bounded_loops_visitor::visit_leave(ir_loop *ir)
 {
-   if (ir->counter == NULL)
+   if (ir->normative_bound < 0)
       return visit_continue;
 
    exec_list new_instructions;
    ir_factory f(&new_instructions, ralloc_parent(ir));
 
-   /* Before the loop, declare the counter and initialize it to "from". */
-   f.emit(ir->counter);
-   f.emit(assign(ir->counter, ir->from));
+   /* Before the loop, declare the counter and initialize it to zero. */
+   ir_variable *counter = f.make_temp(glsl_type::uint_type, "counter");
+   f.emit(assign(counter, f.constant(0u)));
    ir->insert_before(&new_instructions);
 
-   /* At the top of the loop, compare the counter to "to", and break if the
-    * comparison succeeds.
+   /* At the top of the loop, compare the counter to normative_bound, and
+    * break if the comparison succeeds.
     */
    ir_loop_jump *brk = new(f.mem_ctx) ir_loop_jump(ir_loop_jump::jump_break);
-   ir_expression_operation cmp = (ir_expression_operation) ir->cmp;
-   ir->body_instructions.push_head(if_tree(expr(cmp, ir->counter, ir->to),
-                                           brk));
+   ir_if *if_inst = if_tree(gequal(counter,
+                                   f.constant((unsigned) ir->normative_bound)),
+                            brk);
+   ir->body_instructions.push_head(if_inst);
 
    /* At the bottom of the loop, increment the counter. */
-   ir->body_instructions.push_tail(assign(ir->counter,
-                                          add(ir->counter, ir->increment)));
+   ir->body_instructions.push_tail(assign(counter,
+                                          add(counter, f.constant(1u))));
 
-   /* NULL out the counter, from, to, and increment variables. */
-   ir->counter = NULL;
-   ir->from = NULL;
-   ir->to = NULL;
-   ir->increment = NULL;
+   /* Since we've explicitly added instructions to terminate the loop, we no
+    * longer need it to have a normative bound.
+    */
+   ir->normative_bound = -1;
 
    this->progress = true;
    return visit_continue;

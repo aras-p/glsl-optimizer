@@ -1137,8 +1137,10 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
 void
 glsl_to_tgsi_visitor::visit(ir_loop *ir)
 {
-   /* Any bounded loops should have been lowered by lower_bounded_loops(). */
-   assert(ir->counter == NULL);
+   /* Any normative loop bounds should have been lowered by
+    * lower_bounded_loops().
+    */
+   assert(ir->normative_bound < 0);
 
    emit(NULL, TGSI_OPCODE_BGNLOOP);
 

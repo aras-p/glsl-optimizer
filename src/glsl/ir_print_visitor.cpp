@@ -524,17 +524,8 @@ void
 ir_print_visitor::visit(ir_loop *ir)
 {
    printf("(loop (");
-   if (ir->counter != NULL)
-      ir->counter->accept(this);
-   printf(") (");
-   if (ir->from != NULL)
-      ir->from->accept(this);
-   printf(") (");
-   if (ir->to != NULL)
-      ir->to->accept(this);
-   printf(") (");
-   if (ir->increment != NULL)
-      ir->increment->accept(this);
+   if (ir->normative_bound >= 0)
+      printf("%d", ir->normative_bound);
    printf(") (\n");
    indentation++;
 

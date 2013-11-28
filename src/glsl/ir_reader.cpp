@@ -488,18 +488,34 @@ ir_reader::read_if(s_expression *expr, ir_loop *loop_ctx)
 ir_loop *
 ir_reader::read_loop(s_expression *expr)
 {
-   s_expression *s_counter, *s_from, *s_to, *s_inc, *s_body;
+   s_expression *s_bound_expr, *s_body, *s_bound;
 
-   s_pattern pat[] = { "loop", s_counter, s_from, s_to, s_inc, s_body };
-   if (!MATCH(expr, pat)) {
-      ir_read_error(expr, "expected (loop <counter> <from> <to> "
-			  "<increment> <body>)");
+   s_pattern loop_pat[] = { "loop", s_bound_expr, s_body };
+   s_pattern no_bound_pat[] = { };
+   s_pattern bound_pat[] = { s_bound };
+   if (!MATCH(expr, loop_pat)) {
+      ir_read_error(expr, "expected (loop <bound> <body>)");
       return NULL;
    }
 
-   // FINISHME: actually read the count/from/to fields.
-
    ir_loop *loop = new(mem_ctx) ir_loop;
+
+   if (MATCH(s_bound_expr, no_bound_pat)) {
+      loop->normative_bound = -1;
+   } else if (MATCH(s_bound_expr, bound_pat)) {
+      s_int *value = SX_AS_INT(s_bound);
+      if (value == NULL) {
+         ir_read_error(s_bound_expr, "malformed loop bound");
+         delete loop;
+         return NULL;
+      }
+      loop->normative_bound = value->value();
+   } else {
+      ir_read_error(s_bound_expr, "malformed loop bound");
+      delete loop;
+      return NULL;
+   }
+
    read_instructions(&loop->body_instructions, s_body, loop);
    if (state->error) {
       delete loop;

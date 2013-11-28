@@ -1277,11 +1277,7 @@ ir_constant::is_basis() const
 ir_loop::ir_loop()
 {
    this->ir_type = ir_type_loop;
-   this->cmp = ir_unop_neg;
-   this->from = NULL;
-   this->to = NULL;
-   this->increment = NULL;
-   this->counter = NULL;
+   this->normative_bound = -1;
 }
 
 

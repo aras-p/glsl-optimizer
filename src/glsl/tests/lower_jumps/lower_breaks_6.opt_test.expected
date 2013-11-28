@@ -5,7 +5,7 @@
   (signature void (parameters)
    ((declare (temporary) bool break_flag)
     (assign (x) (var_ref break_flag) (constant bool (0)))
-    (loop () () () ()
+    (loop ()
      ((declare (temporary) bool execute_flag)
       (assign (x) (var_ref execute_flag) (constant bool (1)))
       (if (expression bool > (var_ref a) (constant float (0.0)))

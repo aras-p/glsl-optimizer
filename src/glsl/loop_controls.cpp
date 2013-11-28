@@ -187,13 +187,11 @@ loop_control_visitor::visit_leave(ir_loop *ir)
     * i is a loop induction variable, c is a constant, and < is any relative
     * operator.
     */
-   int max_iterations = ls->max_iterations;
+   unsigned max_iterations =
+      ls->max_iterations < 0 ? INT_MAX : ls->max_iterations;
 
-   if(ir->from && ir->to && ir->increment)
-      max_iterations = calculate_iterations(ir->from, ir->to, ir->increment, (ir_expression_operation)ir->cmp);
-
-   if(max_iterations < 0)
-      max_iterations = INT_MAX;
+   if (ir->normative_bound >= 0)
+      max_iterations = ir->normative_bound;
 
    foreach_list(node, &ls->terminators) {
       loop_terminator *t = (loop_terminator *) node;
@@ -248,14 +246,11 @@ loop_control_visitor::visit_leave(ir_loop *ir)
 							   cmp);
 	       if (iterations >= 0) {
 		  /* If the new iteration count is lower than the previously
-		   * believed iteration count, update the loop control values.
+		   * believed iteration count, then add a normative bound to
+		   * this loop.
 		   */
-		  if (iterations < max_iterations) {
-		     ir->from = init->clone(ir, NULL);
-		     ir->to = limit->clone(ir, NULL);
-		     ir->increment = lv->increment->clone(ir, NULL);
-		     ir->counter = lv->var->clone(ir, NULL);
-		     ir->cmp = cmp;
+		  if ((unsigned) iterations < max_iterations) {
+                     ir->normative_bound = iterations;
 
 		     max_iterations = iterations;
 		  }

@@ -759,8 +759,10 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 void
 ir_to_mesa_visitor::visit(ir_loop *ir)
 {
-   /* Any bounded loops should have been lowered by lower_bounded_loops(). */
-   assert(ir->counter == NULL);
+   /* Any normative loop bounds should have been lowered by
+    * lower_bounded_loops().
+    */
+   assert(ir->normative_bound < 0);
 
    emit(NULL, OPCODE_BGNLOOP);
 

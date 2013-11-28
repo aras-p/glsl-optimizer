@@ -44,8 +44,7 @@ analyze_loop_variables(exec_list *instructions);
  *
  *  (if (expression bool ...) (break))
  *
- * and fill in the \c ir_loop::from, \c ir_loop::to, and \c ir_loop::counter
- * fields of the \c ir_loop.
+ * and fill in the \c normative_bound field of the \c ir_loop.
  *
  * In this process, some conditional break-statements may be eliminated
  * altogether.  For example, if it is provable that one loop exit condition will

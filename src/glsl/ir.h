@@ -86,6 +86,7 @@ enum ir_node_type {
    ir_type_max /**< maximum ir_type enum number, for validation */
 };
 
+
 /**
  * Base class of all IR instructions
  */
@@ -1025,54 +1026,11 @@ public:
    exec_list body_instructions;
 
    /**
-    * \name Loop counter and controls
-    *
-    * Represents a loop like a FORTRAN \c do-loop.
-    *
-    * \note
-    * If \c from and \c to are the same value, the loop will execute once.
+    * Normative bound for the loop.  If this value is >= 0, the back-end
+    * should generate instructions to ensure that the loop executes no more
+    * than this many times.
     */
-   /*@{*/
-
-   /**
-    * Value which should be assigned to \c counter before the first iteration
-    * of the loop.  Must be non-null whenever \c counter is non-null, and vice
-    * versa.
-    */
-   ir_rvalue *from;
-
-   /**
-    * Value which \c counter should be compared to in order to determine
-    * whether to exit the loop.  Must be non-null whenever \c counter is
-    * non-null, and vice versa.
-    */
-   ir_rvalue *to;
-
-   /**
-    * Value which should be added to \c counter at the end of each loop
-    * iteration.  Must be non-null whenever \c counter is non-null, and vice
-    * versa.
-    */
-   ir_rvalue *increment;
-
-   /**
-    * Variable which counts loop iterations.  This is a brand new ir_variable
-    * declaration (not a reference to a previously declared ir_variable, as in
-    * ir_dereference_variable).
-    */
-   ir_variable *counter;
-
-   /**
-    * Comparison operation in the loop terminator.
-    *
-    * If any of the loop control fields are non-\c NULL, this field must be
-    * one of \c ir_binop_less, \c ir_binop_greater, \c ir_binop_lequal,
-    * \c ir_binop_gequal, \c ir_binop_equal, or \c ir_binop_nequal.
-    *
-    * Ignored if \c counter is NULL.
-    */
-   int cmp;
-   /*@}*/
+   int normative_bound;
 };
 
 
