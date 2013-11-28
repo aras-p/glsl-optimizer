@@ -103,7 +103,7 @@ radeonBufferData(struct gl_context * ctx,
         radeon_obj->bo = radeon_bo_open(radeon->radeonScreen->bom,
                                         0,
                                         size,
-                                        32,
+                                        ctx->Const.MinMapBufferAlignment,
                                         RADEON_GEM_DOMAIN_GTT,
                                         0);
 
