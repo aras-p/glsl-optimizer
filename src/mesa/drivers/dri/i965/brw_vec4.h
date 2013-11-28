@@ -135,7 +135,7 @@ public:
 
    explicit src_reg(dst_reg reg);
 
-   GLuint swizzle; /**< SWIZZLE_XYZW swizzles from Mesa. */
+   GLuint swizzle; /**< BRW_SWIZZLE_XYZW macros from brw_reg.h. */
    bool negate;
    bool abs;
 

@@ -76,7 +76,7 @@ src_reg::src_reg(register_file file, int reg, const glsl_type *type)
    if (type && (type->is_scalar() || type->is_vector() || type->is_matrix()))
       this->swizzle = swizzle_for_size(type->vector_elements);
    else
-      this->swizzle = SWIZZLE_XYZW;
+      this->swizzle = BRW_SWIZZLE_XYZW;
 }
 
 /** Generic unset register constructor. */

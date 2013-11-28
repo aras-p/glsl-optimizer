@@ -473,14 +473,14 @@ vec4_visitor::emit_pack_half_2x16(dst_reg dst, src_reg src0)
    /* Give the write-channels of dst the form:
     *   0xhhhh0000
     */
-   tmp_src.swizzle = SWIZZLE_Y;
+   tmp_src.swizzle = BRW_SWIZZLE_YYYY;
    emit(SHL(dst, tmp_src, src_reg(16u)));
 
    /* Finally, give the write-channels of dst the form of packHalf2x16's
     * output:
     *   0xhhhhllll
     */
-   tmp_src.swizzle = SWIZZLE_X;
+   tmp_src.swizzle = BRW_SWIZZLE_XXXX;
    emit(OR(dst, src_reg(dst), tmp_src));
 }
 
