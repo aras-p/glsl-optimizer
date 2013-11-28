@@ -382,7 +382,6 @@ EXTRA_EXT(OES_EGL_image_external);
 EXTRA_EXT(ARB_blend_func_extended);
 EXTRA_EXT(ARB_uniform_buffer_object);
 EXTRA_EXT(ARB_timer_query);
-EXTRA_EXT(ARB_map_buffer_alignment);
 EXTRA_EXT(ARB_texture_cube_map_array);
 EXTRA_EXT(ARB_texture_buffer_range);
 EXTRA_EXT(ARB_texture_multisample);

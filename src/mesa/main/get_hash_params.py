@@ -716,7 +716,7 @@ descriptor=[
   [ "TIMESTAMP", "LOC_CUSTOM, TYPE_INT64, 0, extra_ARB_timer_query" ],
 
 # GL_ARB_map_buffer_alignment
-  [ "MIN_MAP_BUFFER_ALIGNMENT", "CONTEXT_INT(Const.MinMapBufferAlignment), extra_ARB_map_buffer_alignment" ],
+  [ "MIN_MAP_BUFFER_ALIGNMENT", "CONTEXT_INT(Const.MinMapBufferAlignment), NO_EXTRA" ],
 
 # GL_ARB_texture_cube_map_array
   [ "TEXTURE_BINDING_CUBE_MAP_ARRAY_ARB", "LOC_CUSTOM, TYPE_INT, TEXTURE_CUBE_ARRAY_INDEX, extra_ARB_texture_cube_map_array" ],
