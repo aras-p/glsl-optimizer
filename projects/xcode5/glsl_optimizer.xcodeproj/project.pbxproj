@@ -1,0 +1,301 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A514CB1981A48C8DCD7AE746 /* libglsl_optimizer_lib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 32BAFCBCEBA868385D56A34D /* libglsl_optimizer_lib.a */; };
+		C713BBF1D94FA650231FE31D /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28E4D57BABA16C60E910F60F /* OpenGL.framework */; };
+		D84BCE27C05991B648A76BAF /* glsl_optimizer_tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3AEF2AD10B3DA0DC3DD50A5D /* glsl_optimizer_tests.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8B96F22E4EDFEE84D868C019 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 24224163C3FB511CD4D2835E /* glsl_optimizer_lib.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = B6239DDEED00C7BE359B0DA3;
+			remoteInfo = glsl_optimizer_lib;
+		};
+		FC041E7A63E41BCE982CC122 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 24224163C3FB511CD4D2835E /* glsl_optimizer_lib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D0FF9161D853D15F42BAF456;
+			remoteInfo = glsl_optimizer_lib;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		24224163C3FB511CD4D2835E /* glsl_optimizer_lib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = glsl_optimizer_lib.xcodeproj; path = projects/xcode5/glsl_optimizer_lib.xcodeproj; sourceTree = SOURCE_ROOT; };
+		28E4D57BABA16C60E910F60F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		3AEF2AD10B3DA0DC3DD50A5D /* glsl_optimizer_tests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = glsl_optimizer_tests.cpp; sourceTree = "<group>"; };
+		55930C8C7DD6723FC7A9B767 /* glsl_optimizer.gyp */ = {isa = PBXFileReference; explicitFileType = sourcecode; path = glsl_optimizer.gyp; sourceTree = "<group>"; };
+		7955B71B1A0D26AC546930A1 /* glsl_optimizer_tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = glsl_optimizer_tests; sourceTree = BUILT_PRODUCTS_DIR; };
+		88E79912270DCCF0C7E63997 /* target_defaults.gypi */ = {isa = PBXFileReference; explicitFileType = sourcecode; path = target_defaults.gypi; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A4637D041804284E62C918A9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A514CB1981A48C8DCD7AE746 /* libglsl_optimizer_lib.a in Frameworks */,
+				C713BBF1D94FA650231FE31D /* OpenGL.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1402E5BE9BC678040F223E11 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7955B71B1A0D26AC546930A1 /* glsl_optimizer_tests */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1FD3B3846708D7FE1B4706F8 /* Build */ = {
+			isa = PBXGroup;
+			children = (
+				55930C8C7DD6723FC7A9B767 /* glsl_optimizer.gyp */,
+				88E79912270DCCF0C7E63997 /* target_defaults.gypi */,
+			);
+			name = Build;
+			sourceTree = "<group>";
+		};
+		238A030B271DE0357C74C2D7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				28E4D57BABA16C60E910F60F /* OpenGL.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		595ACF9BED77D9FDAB73FDE9 = {
+			isa = PBXGroup;
+			children = (
+				6D1722539136ABE904729FA5 /* Source */,
+				EE26D97E594F2433FAE12DEB /* Projects */,
+				238A030B271DE0357C74C2D7 /* Frameworks */,
+				1402E5BE9BC678040F223E11 /* Products */,
+				1FD3B3846708D7FE1B4706F8 /* Build */,
+			);
+			sourceTree = "<group>";
+		};
+		6D1722539136ABE904729FA5 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				3AEF2AD10B3DA0DC3DD50A5D /* glsl_optimizer_tests.cpp */,
+			);
+			name = Source;
+			path = tests;
+			sourceTree = "<group>";
+		};
+		9AA4D7909B9D13277842EA55 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				32BAFCBCEBA868385D56A34D /* libglsl_optimizer_lib.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		EE26D97E594F2433FAE12DEB /* Projects */ = {
+			isa = PBXGroup;
+			children = (
+				24224163C3FB511CD4D2835E /* glsl_optimizer_lib.xcodeproj */,
+			);
+			name = Projects;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FADBCA04D03D20663DD26CB2 /* glsl_optimizer_tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7886A9B860F1ABEFB6F7C883 /* Build configuration list for PBXNativeTarget "glsl_optimizer_tests" */;
+			buildPhases = (
+				12A01578D847269D796B0E16 /* Sources */,
+				A4637D041804284E62C918A9 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6DE5DCCB7D5596E1E5931847 /* PBXTargetDependency */,
+			);
+			name = glsl_optimizer_tests;
+			productName = glsl_optimizer_tests;
+			productReference = 7955B71B1A0D26AC546930A1 /* glsl_optimizer_tests */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		807261020F4D0FC9F4663E01 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+			};
+			buildConfigurationList = 964486F5BBC157BD64223101 /* Build configuration list for PBXProject "glsl_optimizer" */;
+			compatibilityVersion = "Xcode 3.2";
+			hasScannedForEncodings = 1;
+			mainGroup = 595ACF9BED77D9FDAB73FDE9;
+			projectDirPath = ../..;
+			projectReferences = (
+				{
+					ProductGroup = 9AA4D7909B9D13277842EA55 /* Products */;
+					ProjectRef = 24224163C3FB511CD4D2835E /* glsl_optimizer_lib.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				FADBCA04D03D20663DD26CB2 /* glsl_optimizer_tests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		32BAFCBCEBA868385D56A34D /* libglsl_optimizer_lib.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libglsl_optimizer_lib.a;
+			remoteRef = FC041E7A63E41BCE982CC122 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXSourcesBuildPhase section */
+		12A01578D847269D796B0E16 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D84BCE27C05991B648A76BAF /* glsl_optimizer_tests.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6DE5DCCB7D5596E1E5931847 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = glsl_optimizer_lib;
+			targetProxy = 8B96F22E4EDFEE84D868C019 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		2471FA23EB3C4C077792AE83 /* Release64 */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INTERMEDIATE_DIR = "$(PROJECT_DERIVED_FILE_DIR)/$(CONFIGURATION)";
+				SHARED_INTERMEDIATE_DIR = "$(SYMROOT)/DerivedSources/$(CONFIGURATION)";
+			};
+			name = Release64;
+		};
+		57236A7F427EDFC77BC5DB79 /* Release64 */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXECUTABLE_PREFIX = "";
+				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
+				HEADER_SEARCH_PATHS = src/glsl;
+				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/System/Library/Frameworks";
+				PRODUCT_NAME = glsl_optimizer_tests;
+			};
+			name = Release64;
+		};
+		78D78FA3BA283F49C8536551 /* Debug64 */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INTERMEDIATE_DIR = "$(PROJECT_DERIVED_FILE_DIR)/$(CONFIGURATION)";
+				SHARED_INTERMEDIATE_DIR = "$(SYMROOT)/DerivedSources/$(CONFIGURATION)";
+			};
+			name = Debug64;
+		};
+		C3E3C0CBE370CD5C750A6DCE /* Debug32 */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXECUTABLE_PREFIX = "";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					DEBUG,
+					_DEBUG,
+				);
+				HEADER_SEARCH_PATHS = src/glsl;
+				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/System/Library/Frameworks";
+				PRODUCT_NAME = glsl_optimizer_tests;
+			};
+			name = Debug32;
+		};
+		D2866D43D61D1B6FDAF30635 /* Release32 */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXECUTABLE_PREFIX = "";
+				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
+				HEADER_SEARCH_PATHS = src/glsl;
+				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/System/Library/Frameworks";
+				PRODUCT_NAME = glsl_optimizer_tests;
+			};
+			name = Release32;
+		};
+		D532A81A3002D55BE5F7E494 /* Debug64 */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				EXECUTABLE_PREFIX = "";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					DEBUG,
+					_DEBUG,
+				);
+				HEADER_SEARCH_PATHS = src/glsl;
+				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/System/Library/Frameworks";
+				PRODUCT_NAME = glsl_optimizer_tests;
+			};
+			name = Debug64;
+		};
+		D8CB14646DB0F361DA3E83BD /* Debug32 */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INTERMEDIATE_DIR = "$(PROJECT_DERIVED_FILE_DIR)/$(CONFIGURATION)";
+				SHARED_INTERMEDIATE_DIR = "$(SYMROOT)/DerivedSources/$(CONFIGURATION)";
+			};
+			name = Debug32;
+		};
+		E461B9FFC1472340143F5B63 /* Release32 */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INTERMEDIATE_DIR = "$(PROJECT_DERIVED_FILE_DIR)/$(CONFIGURATION)";
+				SHARED_INTERMEDIATE_DIR = "$(SYMROOT)/DerivedSources/$(CONFIGURATION)";
+			};
+			name = Release32;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7886A9B860F1ABEFB6F7C883 /* Build configuration list for PBXNativeTarget "glsl_optimizer_tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C3E3C0CBE370CD5C750A6DCE /* Debug32 */,
+				D532A81A3002D55BE5F7E494 /* Debug64 */,
+				D2866D43D61D1B6FDAF30635 /* Release32 */,
+				57236A7F427EDFC77BC5DB79 /* Release64 */,
+			);
+			defaultConfigurationIsVisible = 1;
+			defaultConfigurationName = Debug32;
+		};
+		964486F5BBC157BD64223101 /* Build configuration list for PBXProject "glsl_optimizer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D8CB14646DB0F361DA3E83BD /* Debug32 */,
+				78D78FA3BA283F49C8536551 /* Debug64 */,
+				E461B9FFC1472340143F5B63 /* Release32 */,
+				2471FA23EB3C4C077792AE83 /* Release64 */,
+			);
+			defaultConfigurationIsVisible = 1;
+			defaultConfigurationName = Debug32;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 807261020F4D0FC9F4663E01 /* Project object */;
+}

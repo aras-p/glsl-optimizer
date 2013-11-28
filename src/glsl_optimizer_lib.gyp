@@ -29,7 +29,7 @@
         'glsl/ast_to_hir.cpp',
         'glsl/ast_type.cpp',
         'glsl/builtin_functions.cpp',
-        'glsl/builtin_types.h',
+        'glsl/builtin_types.cpp',
         'glsl/builtin_variables.cpp',
         'glsl/glsl_lexer.cpp',
         'glsl/glsl_optimizer.cpp',
@@ -77,6 +77,7 @@
         'glsl/ir_visitor.h',
         'glsl/link_atomics.cpp',
         'glsl/link_functions.cpp',
+        'glsl/link_interface_blocks.cpp',
         'glsl/link_uniform_block_active_visitor.cpp',
         'glsl/link_uniform_block_active_visitor.h',
         'glsl/link_uniform_blocks.cpp',
@@ -98,6 +99,7 @@
         'glsl/lower_instructions.cpp',
         'glsl/lower_jumps.cpp',
         'glsl/lower_mat_op_to_vec.cpp',
+        'glsl/lower_named_interface_blocks.cpp',
         'glsl/lower_noise.cpp',
         'glsl/lower_packed_varyings.cpp',
         'glsl/lower_packing_builtins.cpp',
@@ -105,6 +107,7 @@
         'glsl/lower_vec_index_to_cond_assign.cpp',
         'glsl/lower_vec_index_to_swizzle.cpp',
         'glsl/lower_vector.cpp',
+        'glsl/lower_vector_insert.cpp',
         'glsl/opt_algebraic.cpp',
         'glsl/opt_array_splitting.cpp',
         'glsl/opt_constant_folding.cpp',
@@ -113,10 +116,12 @@
         'glsl/opt_copy_propagation.cpp',
         'glsl/opt_copy_propagation_elements.cpp',
         'glsl/opt_cse.cpp',
+        'glsl/opt_dead_builtin_varyings.cpp',
         'glsl/opt_dead_code.cpp',
         'glsl/opt_dead_code_local.cpp',
         'glsl/opt_dead_functions.cpp',
         'glsl/opt_flatten_nested_if_blocks.cpp',
+        'glsl/opt_flip_matrices.cpp',
         'glsl/opt_function_inlining.cpp',
         'glsl/opt_if_simplification.cpp',
         'glsl/opt_noop_swizzle.cpp',
@@ -158,7 +163,7 @@
       'conditions': [
         ['OS=="win"', {
           'include_dirs': [
-            '../include/c99',          
+            '../include/c99',
           ],
           'defines': [
             '_LIB',
@@ -169,9 +174,9 @@
             '__STDC__',
             'strdup=_strdup',
           ],
-          'msvs_disabled_warnings': [4028, 4244, 4267, 4996],
+          'msvs_disabled_warnings': [4028, 4244, 4267, 4996, 4291, 4351],
         }],
-      ],        
+      ],
     }
   ]
 }

@@ -1,0 +1,31 @@
+From 64e436a3ac56af61ad84bb89dd4617eb14e86f78 Mon Sep 17 00:00:00 2001
+From: Ray Donnelly <mingw.android@gmail.com>
+Date: Wed, 27 Nov 2013 19:09:53 +0000
+Subject: [PATCH] Add config_conditions as PHASE_LATELATE conditions
+
+This is so that changes to the configuration can be made
+after the configuration blocks have been merged in.
+
+A concrete example would be setting bitness=32 for Debug32
+and picking up on that: 'msvs_configuration_platform': 'x64'
+in e.g. target_defaults.
+---
+ pylib/gyp/input.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pylib/gyp/input.py b/pylib/gyp/input.py
+index 9bc449d..b3ac242 100644
+--- a/pylib/gyp/input.py
++++ b/pylib/gyp/input.py
+@@ -1027,7 +1027,7 @@ def ProcessConditionsInDict(the_dict, phase, variables, build_file):
+   elif phase == PHASE_LATE:
+     conditions_key = 'target_conditions'
+   elif phase == PHASE_LATELATE:
+-    return
++    conditions_key = 'config_conditions'
+   else:
+     assert False
+ 
+-- 
+1.8.3.4 (Apple Git-47)
+

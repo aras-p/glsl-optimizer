@@ -1,0 +1,145 @@
+From a98edaea82b4ea7732b205e6efcf8ce3a6b02984 Mon Sep 17 00:00:00 2001
+From: Ray Donnelly <mingw.android@gmail.com>
+Date: Wed, 27 Nov 2013 19:12:16 +0000
+Subject: [PATCH] Add --generator-output-flat option
+
+So that generated output files can live in a single folder.
+
+While doing this, I created generator_output.py to squirrel
+the logic of --generator-output* into one place.
+---
+ pylib/gyp/__init__.py                   |  4 ++++
+ pylib/gyp/generator/generator_output.py | 18 ++++++++++++++++++
+ pylib/gyp/generator/msvs.py             | 16 ++++++++--------
+ pylib/gyp/generator/xcode.py            | 11 +++++------
+ 4 files changed, 35 insertions(+), 14 deletions(-)
+ create mode 100644 pylib/gyp/generator/generator_output.py
+
+diff --git a/pylib/gyp/__init__.py b/pylib/gyp/__init__.py
+index 30edea5..daf7594 100755
+--- a/pylib/gyp/__init__.py
++++ b/pylib/gyp/__init__.py
+@@ -308,6 +308,10 @@ def gyp_main(args):
+                     action='store', default=None, metavar='DIR', type='path',
+                     env_name='GYP_GENERATOR_OUTPUT',
+                     help='puts generated build files under DIR')
++  parser.add_option('--generator-output-flat', dest='generator_output_flat',
++                    action='store_true', regenerate=False,
++                    env_name='GYP_GENERATOR_OUTPUT_FLAT',
++                    help='puts generated build files directly under DIR')
+   parser.add_option('--ignore-environment', dest='use_environment',
+                     action='store_false', default=True, regenerate=False,
+                     help='do not read options from environment variables')
+diff --git a/pylib/gyp/generator/generator_output.py b/pylib/gyp/generator/generator_output.py
+new file mode 100644
+index 0000000..3bd9f65
+--- /dev/null
++++ b/pylib/gyp/generator/generator_output.py
+@@ -0,0 +1,18 @@
++# Copyright (c) 2013 Ray Donnelly. All rights reserved.
++# Use of this source code is governed by a BSD-style license that can be
++# found in the LICENSE file.
++import os
++
++def GeneratorOutputPath(path, options):
++  ''' Takes a path to an output file and modifies it according to
++      generator_output and generator_output_flat '''
++
++  if not options.generator_output:
++    return path
++
++  if options.generator_output_flat:
++    path = os.path.basename(path)
++
++  path = os.path.join(options.generator_output, path)
++
++  return path
+diff --git a/pylib/gyp/generator/msvs.py b/pylib/gyp/generator/msvs.py
+index 2f2c3cf..8f64f16 100644
+--- a/pylib/gyp/generator/msvs.py
++++ b/pylib/gyp/generator/msvs.py
+@@ -20,6 +20,7 @@ import gyp.MSVSUserFile as MSVSUserFile
+ import gyp.MSVSUtil as MSVSUtil
+ import gyp.MSVSVersion as MSVSVersion
+ from gyp.common import GypError
++import generator_output as gen_out
+ 
+ 
+ # Regular expression for validating Visual Studio GUIDs.  If the GUID
+@@ -1674,11 +1675,11 @@ def _GetPathOfProject(qualified_target, spec, options, msvs_version):
+                      msvs_version.ProjectExtension())
+ 
+   build_file = gyp.common.BuildFile(qualified_target)
+-  proj_path = os.path.join(os.path.dirname(build_file), proj_filename)
++  in_proj_path = os.path.join(os.path.dirname(build_file), proj_filename)
++  proj_path = gen_out.GeneratorOutputPath(in_proj_path, options)
+   fix_prefix = None
+   if options.generator_output:
+-    project_dir_path = os.path.dirname(os.path.abspath(proj_path))
+-    proj_path = os.path.join(options.generator_output, proj_path)
++    project_dir_path = os.path.dirname(os.path.abspath(in_proj_path))
+     fix_prefix = gyp.common.RelativePath(project_dir_path,
+                                          os.path.dirname(proj_path))
+   return proj_path, fix_prefix
+@@ -1825,9 +1826,9 @@ def PerformBuild(data, configurations, params):
+     (build_file_root, build_file_ext) = os.path.splitext(build_file)
+     if build_file_ext != '.gyp':
+       continue
+-    sln_path = build_file_root + options.suffix + '.sln'
+-    if options.generator_output:
+-      sln_path = os.path.join(options.generator_output, sln_path)
++    sln_path = gen_out.GeneratorOutputPath(
++                 build_file_root + options.suffix + '.sln',
++                 options)
+ 
+   for config in configurations:
+     arguments = [devenv, sln_path, '/Build', config]
+@@ -1891,8 +1892,7 @@ def GenerateOutput(target_list, target_dicts, data, params):
+     if not build_file.endswith('.gyp'):
+       continue
+     sln_path = os.path.splitext(build_file)[0] + options.suffix + '.sln'
+-    if options.generator_output:
+-      sln_path = os.path.join(options.generator_output, sln_path)
++    sln_path = gen_out.GeneratorOutputPath(sln_path, options)
+     # Get projects in the solution, and their dependents.
+     sln_projects = gyp.common.BuildFileTargets(target_list, build_file)
+     sln_projects += gyp.common.DeepDependencyTargets(target_dicts, sln_projects)
+diff --git a/pylib/gyp/generator/xcode.py b/pylib/gyp/generator/xcode.py
+index 331e78b..c21641c 100644
+--- a/pylib/gyp/generator/xcode.py
++++ b/pylib/gyp/generator/xcode.py
+@@ -5,6 +5,7 @@
+ import filecmp
+ import gyp.common
+ import gyp.xcodeproj_file
++import generator_output as gen_out
+ import errno
+ import os
+ import sys
+@@ -563,9 +564,8 @@ def PerformBuild(data, configurations, params):
+     (build_file_root, build_file_ext) = os.path.splitext(build_file)
+     if build_file_ext != '.gyp':
+       continue
+-    xcodeproj_path = build_file_root + options.suffix + '.xcodeproj'
+-    if options.generator_output:
+-      xcodeproj_path = os.path.join(options.generator_output, xcodeproj_path)
++    xcodeproj_path = gen_out.GeneratorOutputPath(
++                               build_file_root + options.suffix + '.xcodeproj')
+ 
+   for config in configurations:
+     arguments = ['xcodebuild', '-project', xcodeproj_path]
+@@ -588,9 +588,8 @@ def GenerateOutput(target_list, target_dicts, data, params):
+     (build_file_root, build_file_ext) = os.path.splitext(build_file)
+     if build_file_ext != '.gyp':
+       continue
+-    xcodeproj_path = build_file_root + options.suffix + '.xcodeproj'
+-    if options.generator_output:
+-      xcodeproj_path = os.path.join(options.generator_output, xcodeproj_path)
++    xcodeproj_path = gen_out.GeneratorOutputPath(build_file_root +
++                            options.suffix + '.xcodeproj', options)
+     xcp = XcodeProject(build_file, xcodeproj_path, build_file_dict)
+     xcode_projects[build_file] = xcp
+     pbxp = xcp.project
+-- 
+1.8.3.4 (Apple Git-47)
+
