@@ -95,7 +95,8 @@ nouveau_bufferobj_data(struct gl_context *ctx, GLenum target, GLsizeiptrARB size
 	} else {
 		/* Get a hardware BO */
 		ret = nouveau_bo_new(context_dev(ctx),
-				     NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
+				     NOUVEAU_BO_GART | NOUVEAU_BO_MAP,
+				     ctx->Const.MinMapBufferAlignment,
 				     size, NULL, &nbo->bo);
 		assert(!ret);
 	}
