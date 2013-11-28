@@ -223,14 +223,14 @@ loop_analysis::visit(ir_loop_jump *ir)
 ir_visitor_status
 loop_analysis::visit_enter(ir_call *ir)
 {
-   /* If we're not somewhere inside a loop, there's nothing to do. */
-   if (this->state.is_empty())
-      return visit_continue;
+   /* Mark every loop that we're currently analyzing as containing an ir_call
+    * (even those at outer nesting levels).
+    */
+   foreach_list(node, &this->state) {
+      loop_variable_state *const ls = (loop_variable_state *) node;
+      ls->contains_calls = true;
+   }
 
-   loop_variable_state *const ls =
-      (loop_variable_state *) this->state.get_head();
-
-   ls->contains_calls = true;
    return visit_continue_with_parent;
 }
 
