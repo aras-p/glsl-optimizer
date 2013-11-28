@@ -134,7 +134,7 @@ loop_terminator *
 loop_variable_state::insert(ir_if *if_stmt)
 {
    void *mem_ctx = ralloc_parent(this);
-   loop_terminator *t = rzalloc(mem_ctx, loop_terminator);
+   loop_terminator *t = new(mem_ctx) loop_terminator();
 
    t->ir = if_stmt;
    this->terminators.push_tail(t);
