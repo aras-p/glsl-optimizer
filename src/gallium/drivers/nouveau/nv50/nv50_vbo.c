@@ -597,6 +597,15 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
 
       assert(nouveau_resource_mapped_by_gpu(nv50->idxbuf.buffer));
 
+      /* This shouldn't have to be here. The going theory is that the buffer
+       * is being filled in by PGRAPH, and it's not done yet by the time it
+       * gets submitted to PFIFO, which in turn starts immediately prefetching
+       * the not-yet-written data. Ideally this wait would only happen on
+       * pushbuf submit, but it's probably not a big performance difference.
+       */
+      if (buf->fence_wr && !nouveau_fence_signalled(buf->fence_wr))
+         nouveau_fence_wait(buf->fence_wr);
+
       while (instance_count--) {
          BEGIN_NV04(push, NV50_3D(VERTEX_BEGIN_GL), 1);
          PUSH_DATA (push, prim);

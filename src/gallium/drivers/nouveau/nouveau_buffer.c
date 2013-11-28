@@ -205,6 +205,9 @@ nouveau_transfer_write(struct nouveau_context *nv, struct nouveau_transfer *tx,
                   base, size / 4, (const uint32_t *)data);
    else
       nv->push_data(nv, buf->bo, buf->offset + base, buf->domain, size, data);
+
+   nouveau_fence_ref(nv->screen->fence.current, &buf->fence);
+   nouveau_fence_ref(nv->screen->fence.current, &buf->fence_wr);
 }
 
 
