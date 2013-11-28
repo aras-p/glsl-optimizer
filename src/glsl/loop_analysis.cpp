@@ -52,9 +52,10 @@ loop_variable::record_reference(bool in_assignee,
    if (in_assignee) {
       assert(current_assignment != NULL);
 
-      this->conditional_or_nested_assignment =
-         in_conditional_code_or_nested_loop
-         || current_assignment->condition != NULL;
+      if (in_conditional_code_or_nested_loop ||
+          current_assignment->condition != NULL) {
+         this->conditional_or_nested_assignment = true;
+      }
 
       if (this->first_assignment == NULL) {
          assert(this->num_assignments == 0);
