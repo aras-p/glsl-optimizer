@@ -604,10 +604,10 @@ static void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 
-	if (rctx->screen->has_cp_dma) {
+	if (rctx->screen->b.has_cp_dma) {
 		r600_cp_dma_copy_buffer(rctx, dst, dstx, src, src_box->x, src_box->width);
 	}
-	else if (rctx->screen->has_streamout &&
+	else if (rctx->screen->b.has_streamout &&
 		 /* Require 4-byte alignment. */
 		 dstx % 4 == 0 && src_box->x % 4 == 0 && src_box->width % 4 == 0) {
 
@@ -654,11 +654,11 @@ static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *ds
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 
-	if (rctx->screen->has_cp_dma &&
+	if (rctx->screen->b.has_cp_dma &&
 	    rctx->b.chip_class >= EVERGREEN &&
 	    offset % 4 == 0 && size % 4 == 0) {
 		evergreen_cp_dma_clear_buffer(rctx, dst, offset, size, value);
-	} else if (rctx->screen->has_streamout && offset % 4 == 0 && size % 4 == 0) {
+	} else if (rctx->screen->b.has_streamout && offset % 4 == 0 && size % 4 == 0) {
 		union pipe_color_union clear_value;
 		clear_value.ui[0] = value;
 

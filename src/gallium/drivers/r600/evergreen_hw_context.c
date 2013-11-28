@@ -86,7 +86,7 @@ void evergreen_cp_dma_clear_buffer(struct r600_context *rctx,
 	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
 
 	assert(size);
-	assert(rctx->screen->has_cp_dma);
+	assert(rctx->screen->b.has_cp_dma);
 
 	offset += r600_resource_va(&rctx->screen->b.b, dst);
 

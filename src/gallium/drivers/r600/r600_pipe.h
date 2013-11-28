@@ -205,9 +205,7 @@ struct r600_viewport_state {
 
 struct r600_screen {
 	struct r600_common_screen	b;
-	bool				has_streamout;
 	bool				has_msaa;
-	bool				has_cp_dma;
 	bool				has_compressed_msaa_texturing;
 
 	/*for compute global memory binding, we allocate stuff here, instead of

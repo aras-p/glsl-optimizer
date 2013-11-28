@@ -161,6 +161,8 @@ struct r600_common_screen {
 	struct radeon_info		info;
 	struct r600_tiling_info		tiling_info;
 	unsigned			debug_flags;
+	bool				has_cp_dma;
+	bool				has_streamout;
 
 	/* Auxiliary context. Mainly used to initialize resources.
 	 * It must be locked prior to using and flushed before unlocking. */

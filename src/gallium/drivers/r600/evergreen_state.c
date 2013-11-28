@@ -2880,7 +2880,7 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0);
 	r600_store_value(cb, 0);
 
-	if (rctx->screen->has_streamout) {
+	if (rctx->screen->b.has_streamout) {
 		r600_store_context_reg(cb, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);
 	}
 
@@ -3337,7 +3337,7 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028B94_VGT_STRMOUT_CONFIG */
 	r600_store_value(cb, 0); /* R_028B98_VGT_STRMOUT_BUFFER_CONFIG */
 
-	if (rctx->screen->has_streamout) {
+	if (rctx->screen->b.has_streamout) {
 		r600_store_context_reg(cb, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);
 	}
 

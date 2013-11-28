@@ -469,9 +469,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Stream output. */
 	case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-		return rscreen->has_streamout ? 4 : 0;
+		return rscreen->b.has_streamout ? 4 : 0;
 	case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
-		return rscreen->has_streamout ? 1 : 0;
+		return rscreen->b.has_streamout ? 1 : 0;
 	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
 	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
 		return 32*4;
@@ -914,20 +914,20 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	switch (rscreen->b.chip_class) {
 	case R600:
 		if (rscreen->b.family < CHIP_RS780) {
-			rscreen->has_streamout = rscreen->b.info.drm_minor >= 14;
+			rscreen->b.has_streamout = rscreen->b.info.drm_minor >= 14;
 		} else {
-			rscreen->has_streamout = rscreen->b.info.drm_minor >= 23;
+			rscreen->b.has_streamout = rscreen->b.info.drm_minor >= 23;
 		}
 		break;
 	case R700:
-		rscreen->has_streamout = rscreen->b.info.drm_minor >= 17;
+		rscreen->b.has_streamout = rscreen->b.info.drm_minor >= 17;
 		break;
 	case EVERGREEN:
 	case CAYMAN:
-		rscreen->has_streamout = rscreen->b.info.drm_minor >= 14;
+		rscreen->b.has_streamout = rscreen->b.info.drm_minor >= 14;
 		break;
 	default:
-		rscreen->has_streamout = FALSE;
+		rscreen->b.has_streamout = FALSE;
 		break;
 	}
 
@@ -951,7 +951,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		rscreen->has_compressed_msaa_texturing = false;
 	}
 
-	rscreen->has_cp_dma = rscreen->b.info.drm_minor >= 27 &&
+	rscreen->b.has_cp_dma = rscreen->b.info.drm_minor >= 27 &&
 			      !(rscreen->b.debug_flags & DBG_NO_CP_DMA);
 
 	rscreen->global_pool = compute_memory_pool_new(rscreen);

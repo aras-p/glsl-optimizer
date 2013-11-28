@@ -445,7 +445,7 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
 
 	assert(size);
-	assert(rctx->screen->has_cp_dma);
+	assert(rctx->screen->b.has_cp_dma);
 
 	dst_offset += r600_resource_va(&rctx->screen->b.b, dst);
 	src_offset += r600_resource_va(&rctx->screen->b.b, src);

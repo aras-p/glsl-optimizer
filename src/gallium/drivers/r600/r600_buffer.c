@@ -151,8 +151,8 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 	else if ((usage & PIPE_TRANSFER_DISCARD_RANGE) &&
 		 !(usage & PIPE_TRANSFER_UNSYNCHRONIZED) &&
 		 !(rctx->screen->b.debug_flags & DBG_NO_DISCARD_RANGE) &&
-		 (rctx->screen->has_cp_dma ||
-		  (rctx->screen->has_streamout &&
+		 (rctx->screen->b.has_cp_dma ||
+		  (rctx->screen->b.has_streamout &&
 		   /* The buffer range must be aligned to 4 with streamout. */
 		   box->x % 4 == 0 && box->width % 4 == 0))) {
 		assert(usage & PIPE_TRANSFER_WRITE);

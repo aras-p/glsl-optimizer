@@ -290,7 +290,6 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
 	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
-	bool has_streamout = HAVE_LLVM >= 0x0304;
 
 	switch (param) {
 	/* Supported features (boolean caps). */
@@ -373,12 +372,12 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Stream output. */
 	case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-		return has_streamout ? 4 : 0;
+		return rscreen->b.has_streamout ? 4 : 0;
 	case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
-		return has_streamout ? 1 : 0;
+		return rscreen->b.has_streamout ? 1 : 0;
 	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
 	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
-		return has_streamout ? 32*4 : 0;
+		return rscreen->b.has_streamout ? 32*4 : 0;
 
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
@@ -665,6 +664,9 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 		FREE(rscreen);
 		return NULL;
 	}
+
+	rscreen->b.has_cp_dma = true;
+	rscreen->b.has_streamout = HAVE_LLVM >= 0x0304;
 
 	if (debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE))
 		rscreen->b.debug_flags |= DBG_FS | DBG_VS | DBG_GS | DBG_PS | DBG_CS;
