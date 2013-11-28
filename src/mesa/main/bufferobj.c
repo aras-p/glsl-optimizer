@@ -560,9 +560,12 @@ _mesa_buffer_data( struct gl_context *ctx, GLenum target, GLsizeiptrARB size,
 {
    void * new_data;
 
-   (void) ctx; (void) target;
+   (void) target;
 
-   new_data = _mesa_realloc( bufObj->Data, bufObj->Size, size );
+   if (bufObj->Data)
+      _mesa_align_free( bufObj->Data );
+
+   new_data = _mesa_align_malloc( size, ctx->Const.MinMapBufferAlignment );
    if (new_data) {
       bufObj->Data = (GLubyte *) new_data;
       bufObj->Size = size;
