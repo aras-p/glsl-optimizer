@@ -115,7 +115,7 @@ static void
 vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
                           struct pipe_resource *resource,
                           unsigned level, unsigned layer,
-                          void *context_private)
+                          void *context_private, struct pipe_box *sub_box)
 {
    struct vl_dri_screen *scrn = (struct vl_dri_screen*)context_private;
    uint32_t msc_hi, msc_lo;

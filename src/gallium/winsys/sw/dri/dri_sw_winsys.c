@@ -166,24 +166,32 @@ dri_sw_displaytarget_get_handle(struct sw_winsys *winsys,
 static void
 dri_sw_displaytarget_display(struct sw_winsys *ws,
                              struct sw_displaytarget *dt,
-                             void *context_private)
+                             void *context_private,
+                             struct pipe_box *box)
 {
    struct dri_sw_winsys *dri_sw_ws = dri_sw_winsys(ws);
    struct dri_sw_displaytarget *dri_sw_dt = dri_sw_displaytarget(dt);
    struct dri_drawable *dri_drawable = (struct dri_drawable *)context_private;
    unsigned width, height;
+   unsigned blsize = util_format_get_blocksize(dri_sw_dt->format);
 
    /* Set the width to 'stride / cpp'.
     *
     * PutImage correctly clips to the width of the dst drawable.
     */
-   width = dri_sw_dt->stride / util_format_get_blocksize(dri_sw_dt->format);
+   width = dri_sw_dt->stride / blsize;
 
    height = dri_sw_dt->height;
 
-   dri_sw_ws->lf->put_image(dri_drawable, dri_sw_dt->data, width, height);
+   if (box) {
+       void *data;
+       data = dri_sw_dt->data + (dri_sw_dt->stride * box->y) + box->x * blsize;
+       dri_sw_ws->lf->put_image2(dri_drawable, data,
+                                 box->x, box->y, box->width, box->height, dri_sw_dt->stride);
+   } else {
+       dri_sw_ws->lf->put_image(dri_drawable, dri_sw_dt->data, width, height);
+   }
 }
-
 
 static void
 dri_destroy_sw_winsys(struct sw_winsys *winsys)

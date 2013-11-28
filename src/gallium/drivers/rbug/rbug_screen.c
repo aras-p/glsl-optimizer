@@ -190,7 +190,7 @@ static void
 rbug_screen_flush_frontbuffer(struct pipe_screen *_screen,
                               struct pipe_resource *_resource,
                               unsigned level, unsigned layer,
-                              void *context_private)
+                              void *context_private, struct pipe_box *sub_box)
 {
    struct rbug_screen *rb_screen = rbug_screen(_screen);
    struct rbug_resource *rb_resource = rbug_resource(_resource);
@@ -200,7 +200,7 @@ rbug_screen_flush_frontbuffer(struct pipe_screen *_screen,
    screen->flush_frontbuffer(screen,
                              resource,
                              level, layer,
-                             context_private);
+                             context_private, sub_box);
 }
 
 static void

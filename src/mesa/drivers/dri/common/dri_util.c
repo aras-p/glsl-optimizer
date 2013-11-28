@@ -873,3 +873,18 @@ const __DRIimageDriverExtension driImageDriverExtension = {
     .getAPIMask                 = driGetAPIMask,
     .createContextAttribs       = driCreateContextAttribs,
 };
+
+/* swrast copy sub buffer entrypoint. */
+static void driCopySubBuffer(__DRIdrawable *pdp, int x, int y,
+                             int w, int h)
+{
+    assert(pdp->driScreenPriv->swrast_loader);
+
+    pdp->driScreenPriv->driver->CopySubBuffer(pdp, x, y, w, h);
+}
+
+/* for swrast only */
+const __DRIcopySubBufferExtension driCopySubBufferExtension = {
+   { __DRI_COPY_SUB_BUFFER, 1 },
+   .copySubBuffer = driCopySubBuffer,
+};

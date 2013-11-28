@@ -296,7 +296,7 @@ static struct pipe_context *noop_create_context(struct pipe_screen *screen, void
 static void noop_flush_frontbuffer(struct pipe_screen *_screen,
 				   struct pipe_resource *resource,
 				   unsigned level, unsigned layer,
-				   void *context_private)
+				   void *context_private, struct pipe_box *box)
 {
 }
 

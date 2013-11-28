@@ -369,7 +369,8 @@ static void
 softpipe_flush_frontbuffer(struct pipe_screen *_screen,
                            struct pipe_resource *resource,
                            unsigned level, unsigned layer,
-                           void *context_private)
+                           void *context_private,
+                           struct pipe_box *sub_box)
 {
    struct softpipe_screen *screen = softpipe_screen(_screen);
    struct sw_winsys *winsys = screen->winsys;
@@ -377,7 +378,7 @@ softpipe_flush_frontbuffer(struct pipe_screen *_screen,
 
    assert(texture->dt);
    if (texture->dt)
-      winsys->displaytarget_display(winsys, texture->dt, context_private);
+      winsys->displaytarget_display(winsys, texture->dt, context_private, sub_box);
 }
 
 static uint64_t

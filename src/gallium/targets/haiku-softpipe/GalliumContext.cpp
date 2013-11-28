@@ -504,14 +504,14 @@ GalliumContext::SwapBuffers(context_id contextID)
 		// We pass our destination bitmap to flush_fronbuffer which passes it
 		// to the private winsys display call.
 		fScreen->flush_frontbuffer(fScreen, surface->texture, 0, 0,
-			context->bitmap);
+			context->bitmap, NULL);
 	}
 
 	#if 0
 	// TODO... should we flush the z stencil buffer?
 	pipe_surface* zSurface = stContext->state.framebuffer.zsbuf;
 	fScreen->flush_frontbuffer(fScreen, zSurface->texture, 0, 0,
-		context->bitmap);
+		context->bitmap, NULL);
 	#endif
 
 	return B_OK;

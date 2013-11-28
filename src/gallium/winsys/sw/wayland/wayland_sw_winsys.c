@@ -75,7 +75,8 @@ wayland_sw_winsys(struct sw_winsys *ws)
 static void
 wayland_displaytarget_display(struct sw_winsys *ws,
                               struct sw_displaytarget *dt,
-                              void *context_private)
+                              void *context_private,
+                              struct pipe_box *box)
 {
 }
 

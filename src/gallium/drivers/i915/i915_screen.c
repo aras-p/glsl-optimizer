@@ -423,7 +423,8 @@ static void
 i915_flush_frontbuffer(struct pipe_screen *screen,
                        struct pipe_resource *resource,
                        unsigned level, unsigned layer,
-                       void *winsys_drawable_handle)
+                       void *winsys_drawable_handle,
+                       struct pipe_box *sub_box)
 {
    /* XXX: Dummy right now. */
    (void)screen;
@@ -431,6 +432,7 @@ i915_flush_frontbuffer(struct pipe_screen *screen,
    (void)level;
    (void)layer;
    (void)winsys_drawable_handle;
+   (void)sub_box;
 }
 
 static void

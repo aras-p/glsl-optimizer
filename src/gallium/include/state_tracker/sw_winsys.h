@@ -48,7 +48,7 @@ struct winsys_handle;
 struct pipe_screen;
 struct pipe_context;
 struct pipe_resource;
-
+struct pipe_box;
 
 /**
  * Opaque pointer.
@@ -129,7 +129,8 @@ struct sw_winsys
    void
    (*displaytarget_display)( struct sw_winsys *ws, 
                              struct sw_displaytarget *dt,
-                             void *context_private );
+                             void *context_private,
+                             struct pipe_box *box );
 
    void 
    (*displaytarget_destroy)( struct sw_winsys *ws, 

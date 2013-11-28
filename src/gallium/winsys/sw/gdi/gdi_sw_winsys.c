@@ -207,7 +207,8 @@ gdi_sw_display( struct sw_winsys *winsys,
 static void
 gdi_sw_displaytarget_display(struct sw_winsys *winsys, 
                              struct sw_displaytarget *dt,
-                             void *context_private)
+                             void *context_private,
+                             struct pipe_box *box)
 {
     /* nasty:
      */

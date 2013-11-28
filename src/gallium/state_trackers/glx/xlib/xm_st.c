@@ -74,7 +74,7 @@ xmesa_st_framebuffer_display(struct st_framebuffer_iface *stfbi,
       pres = xstfb->display_resource;
    }
 
-   xstfb->screen->flush_frontbuffer(xstfb->screen, pres, 0, 0, &xstfb->buffer->ws);
+   xstfb->screen->flush_frontbuffer(xstfb->screen, pres, 0, 0, &xstfb->buffer->ws, NULL);
    return TRUE;
 }
 

@@ -447,7 +447,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    pipe->screen->flush_frontbuffer
    (
       pipe->screen, tex, 0, 0,
-      vl_screen_get_private(context_priv->vscreen)
+      vl_screen_get_private(context_priv->vscreen), NULL
    );
 
    if(dump_window == -1) {

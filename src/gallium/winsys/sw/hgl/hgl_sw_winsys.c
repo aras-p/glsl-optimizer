@@ -160,7 +160,8 @@ hgl_winsys_displaytarget_unmap(struct sw_winsys* winsys,
 
 static void
 hgl_winsys_displaytarget_display(struct sw_winsys* winsys,
-	struct sw_displaytarget* displayTarget, void* contextPrivate)
+	struct sw_displaytarget* displayTarget, void* contextPrivate,
+	struct pipe_box *box)
 {
 	assert(contextPrivate);
 

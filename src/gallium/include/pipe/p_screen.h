@@ -56,6 +56,7 @@ struct pipe_fence_handle;
 struct pipe_resource;
 struct pipe_surface;
 struct pipe_transfer;
+struct pipe_box;
 
 
 /**
@@ -181,13 +182,13 @@ struct pipe_screen {
     * displayed, eg copy fake frontbuffer.
     * \param winsys_drawable_handle  an opaque handle that the calling context
     *                                gets out-of-band
+    * \param subbox an optional sub region to flush
     */
    void (*flush_frontbuffer)( struct pipe_screen *screen,
                               struct pipe_resource *resource,
                               unsigned level, unsigned layer,
-                              void *winsys_drawable_handle );
-
-
+                              void *winsys_drawable_handle,
+                              struct pipe_box *subbox );
 
    /** Set ptr = fence, with reference counting */
    void (*fence_reference)( struct pipe_screen *screen,

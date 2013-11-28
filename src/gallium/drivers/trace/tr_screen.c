@@ -209,7 +209,8 @@ static void
 trace_screen_flush_frontbuffer(struct pipe_screen *_screen,
                                struct pipe_resource *_resource,
                                unsigned level, unsigned layer,
-                               void *context_private)
+                               void *context_private,
+                               struct pipe_box *sub_box)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
    struct trace_resource *tr_res = trace_resource(_resource);
@@ -226,7 +227,7 @@ trace_screen_flush_frontbuffer(struct pipe_screen *_screen,
    trace_dump_arg(ptr, context_private);
    */
 
-   screen->flush_frontbuffer(screen, resource, level, layer, context_private);
+   screen->flush_frontbuffer(screen, resource, level, layer, context_private, sub_box);
 
    trace_dump_call_end();
 }

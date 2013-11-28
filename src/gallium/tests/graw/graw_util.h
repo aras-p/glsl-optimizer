@@ -211,7 +211,7 @@ static INLINE void
 graw_util_flush_front(const struct graw_info *info)
 {
    info->screen->flush_frontbuffer(info->screen, info->color_buf[0],
-                                   0, 0, info->window);
+                                   0, 0, info->window, NULL);
 }
 
 

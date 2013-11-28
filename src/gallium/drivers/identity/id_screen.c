@@ -192,7 +192,8 @@ static void
 identity_screen_flush_frontbuffer(struct pipe_screen *_screen,
                                   struct pipe_resource *_resource,
                                   unsigned level, unsigned layer,
-                                  void *context_private)
+                                  void *context_private,
+                                  struct pipe_box *sub_box)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
    struct identity_resource *id_resource = identity_resource(_resource);
@@ -202,7 +203,7 @@ identity_screen_flush_frontbuffer(struct pipe_screen *_screen,
    screen->flush_frontbuffer(screen,
                              resource,
                              level, layer,
-                             context_private);
+                             context_private, sub_box);
 }
 
 static void

@@ -376,7 +376,8 @@ xlib_sw_display(struct xlib_drawable *xlib_drawable,
 static void
 xlib_displaytarget_display(struct sw_winsys *ws,
                            struct sw_displaytarget *dt,
-                           void *context_private)
+                           void *context_private,
+                           struct pipe_box *box)
 {
    struct xlib_drawable *xlib_drawable = (struct xlib_drawable *)context_private;
    xlib_sw_display(xlib_drawable, dt);

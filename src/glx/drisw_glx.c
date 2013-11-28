@@ -49,6 +49,7 @@ struct drisw_screen
    const __DRIcoreExtension *core;
    const __DRIswrastExtension *swrast;
    const __DRItexBufferExtension *texBuffer;
+   const __DRIcopySubBufferExtension *copySubBuffer;
 
    const __DRIconfig **driver_configs;
 
@@ -171,9 +172,9 @@ bytes_per_line(unsigned pitch_bits, unsigned mul)
 }
 
 static void
-swrastPutImage(__DRIdrawable * draw, int op,
-               int x, int y, int w, int h,
-               char *data, void *loaderPrivate)
+swrastPutImage2(__DRIdrawable * draw, int op,
+                int x, int y, int w, int h, int stride,
+                char *data, void *loaderPrivate)
 {
    struct drisw_drawable *pdp = loaderPrivate;
    __GLXDRIdrawable *pdraw = &(pdp->base);
@@ -199,11 +200,19 @@ swrastPutImage(__DRIdrawable * draw, int op,
    ximage->data = data;
    ximage->width = w;
    ximage->height = h;
-   ximage->bytes_per_line = bytes_per_line(w * ximage->bits_per_pixel, 32);
+   ximage->bytes_per_line = stride ? stride : bytes_per_line(w * ximage->bits_per_pixel, 32);
 
    XPutImage(dpy, drawable, gc, ximage, 0, 0, x, y, w, h);
 
    ximage->data = NULL;
+}
+
+static void
+swrastPutImage(__DRIdrawable * draw, int op,
+               int x, int y, int w, int h,
+               char *data, void *loaderPrivate)
+{
+   swrastPutImage2(draw, op, x, y, w, h, 0, data, loaderPrivate);
 }
 
 static void
@@ -234,7 +243,8 @@ static const __DRIswrastLoaderExtension swrastLoaderExtension = {
    {__DRI_SWRAST_LOADER, __DRI_SWRAST_LOADER_VERSION},
    swrastGetDrawableInfo,
    swrastPutImage,
-   swrastGetImage
+   swrastGetImage,
+   swrastPutImage2,
 };
 
 static const __DRIextension *loader_extensions[] = {
@@ -585,6 +595,21 @@ driswSwapBuffers(__GLXDRIdrawable * pdraw,
 }
 
 static void
+driswCopySubBuffer(__GLXDRIdrawable * pdraw,
+                   int x, int y, int width, int height, Bool flush)
+{
+   struct drisw_drawable *pdp = (struct drisw_drawable *) pdraw;
+   struct drisw_screen *psc = (struct drisw_screen *) pdp->base.psc;
+
+   if (flush) {
+      glFlush();
+   }
+
+   (*psc->copySubBuffer->copySubBuffer) (pdp->driDrawable,
+					    x, y, width, height);
+}
+
+static void
 driswDestroyScreen(struct glx_screen *base)
 {
    struct drisw_screen *psc = (struct drisw_screen *) base;
@@ -632,6 +657,9 @@ driswBindExtensions(struct drisw_screen *psc, const __DRIextension **extensions)
 				 "GLX_EXT_create_context_es2_profile");
    }
 
+   if (psc->copySubBuffer)
+      __glXEnableDirectExtension(&psc->base, "GLX_MESA_copy_sub_buffer");      
+
    /* FIXME: Figure out what other extensions can be ported here from dri2. */
    for (i = 0; extensions[i]; i++) {
       if ((strcmp(extensions[i]->name, __DRI_TEX_BUFFER) == 0)) {
@@ -673,6 +701,8 @@ driswCreateScreen(int screen, struct glx_display *priv)
 	 psc->core = (__DRIcoreExtension *) extensions[i];
       if (strcmp(extensions[i]->name, __DRI_SWRAST) == 0)
 	 psc->swrast = (__DRIswrastExtension *) extensions[i];
+      if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0)
+	 psc->copySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
    }
 
    if (psc->core == NULL || psc->swrast == NULL) {
@@ -717,6 +747,9 @@ driswCreateScreen(int screen, struct glx_display *priv)
    psp->destroyScreen = driswDestroyScreen;
    psp->createDrawable = driswCreateDrawable;
    psp->swapBuffers = driswSwapBuffers;
+
+   if (psc->copySubBuffer)
+      psp->copySubBuffer = driswCopySubBuffer;
 
    return &psc->base;
 

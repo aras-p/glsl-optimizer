@@ -476,7 +476,7 @@ ximage_display_copy_to_pixmap(struct native_display *ndpy,
       xdraw.drawable = (Drawable) pix;
 
       xdpy->base.screen->flush_frontbuffer(xdpy->base.screen,
-            src, 0, 0, &xdraw);
+            src, 0, 0, &xdraw, NULL);
 
       return TRUE;
    }

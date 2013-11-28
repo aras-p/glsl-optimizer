@@ -234,7 +234,7 @@ static void draw( void )
 
    graw_save_surface_to_file(ctx, surf, NULL);
 
-   screen->flush_frontbuffer(screen, rttex, 0, 0, window);
+   screen->flush_frontbuffer(screen, rttex, 0, 0, window, NULL);
 }
 
 #define SIZE 16

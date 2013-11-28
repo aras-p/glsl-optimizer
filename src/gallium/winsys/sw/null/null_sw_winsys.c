@@ -114,7 +114,8 @@ null_sw_displaytarget_get_handle(struct sw_winsys *winsys,
 static void
 null_sw_displaytarget_display(struct sw_winsys *winsys,
                               struct sw_displaytarget *dt,
-                              void *context_private)
+                              void *context_private,
+                              struct pipe_box *box)
 {
    assert(0);
 }
