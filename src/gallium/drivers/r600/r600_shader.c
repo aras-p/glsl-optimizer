@@ -158,6 +158,9 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		return r;
 	}
 
+	/* disable SB for geom shaders - it can't handle the CF_EMIT instructions */
+	use_sb &= (shader->shader.processor_type != TGSI_PROCESSOR_GEOMETRY);
+
 	/* Check if the bytecode has already been built.  When using the llvm
 	 * backend, r600_shader_from_tgsi() will take care of building the
 	 * bytecode.
