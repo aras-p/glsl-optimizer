@@ -1137,52 +1137,12 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
 void
 glsl_to_tgsi_visitor::visit(ir_loop *ir)
 {
-   ir_dereference_variable *counter = NULL;
-
-   if (ir->counter != NULL)
-      counter = new(ir) ir_dereference_variable(ir->counter);
-
-   if (ir->from != NULL) {
-      assert(ir->counter != NULL);
-
-      ir_assignment *a = new(ir) ir_assignment(counter, ir->from, NULL);
-
-      a->accept(this);
-      delete a;
-   }
+   /* Any bounded loops should have been lowered by lower_bounded_loops(). */
+   assert(ir->counter == NULL);
 
    emit(NULL, TGSI_OPCODE_BGNLOOP);
 
-   if (ir->to) {
-      ir_expression *e =
-         new(ir) ir_expression(ir->cmp, glsl_type::bool_type,
-        		       counter, ir->to);
-      ir_if *if_stmt =  new(ir) ir_if(e);
-
-      ir_loop_jump *brk = new(ir) ir_loop_jump(ir_loop_jump::jump_break);
-
-      if_stmt->then_instructions.push_tail(brk);
-
-      if_stmt->accept(this);
-
-      delete if_stmt;
-      delete e;
-      delete brk;
-   }
-
    visit_exec_list(&ir->body_instructions, this);
-
-   if (ir->increment) {
-      ir_expression *e =
-         new(ir) ir_expression(ir_binop_add, counter->type,
-        		       counter, ir->increment);
-
-      ir_assignment *a = new(ir) ir_assignment(counter, e, NULL);
-
-      a->accept(this);
-      delete a;
-      delete e;
-   }
 
    emit(NULL, TGSI_OPCODE_ENDLOOP);
 }
@@ -5344,6 +5304,8 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
          progress = lower_if_to_cond_assign(ir, options->MaxIfDepth) || progress;
 
       } while (progress);
+
+      lower_bounded_loops(ir);
 
       validate_ir_tree(ir);
    }

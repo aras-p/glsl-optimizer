@@ -1007,47 +1007,17 @@ vec4_visitor::visit(ir_variable *ir)
 void
 vec4_visitor::visit(ir_loop *ir)
 {
-   dst_reg counter;
+   /* Any bounded loops should have been lowered by lower_bounded_loops(). */
+   assert(ir->counter == NULL);
 
    /* We don't want debugging output to print the whole body of the
     * loop as the annotation.
     */
    this->base_ir = NULL;
 
-   if (ir->counter != NULL) {
-      this->base_ir = ir->counter;
-      ir->counter->accept(this);
-      counter = *(variable_storage(ir->counter));
-
-      if (ir->from != NULL) {
-	 this->base_ir = ir->from;
-	 ir->from->accept(this);
-
-	 emit(MOV(counter, this->result));
-      }
-   }
-
    emit(BRW_OPCODE_DO);
 
-   if (ir->to) {
-      this->base_ir = ir->to;
-      ir->to->accept(this);
-
-      emit(CMP(dst_null_d(), src_reg(counter), this->result,
-	       brw_conditional_for_comparison(ir->cmp)));
-
-      vec4_instruction *inst = emit(BRW_OPCODE_BREAK);
-      inst->predicate = BRW_PREDICATE_NORMAL;
-   }
-
    visit_instructions(&ir->body_instructions);
-
-
-   if (ir->increment) {
-      this->base_ir = ir->increment;
-      ir->increment->accept(this);
-      emit(ADD(counter, src_reg(counter), this->result));
-   }
 
    emit(BRW_OPCODE_WHILE);
 }

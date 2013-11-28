@@ -2181,50 +2181,21 @@ fs_visitor::visit(ir_if *ir)
 void
 fs_visitor::visit(ir_loop *ir)
 {
-   fs_reg counter = reg_undef;
+   /* Any bounded loops should have been lowered by lower_bounded_loops(). */
+   assert(ir->counter == NULL);
 
    if (brw->gen < 6 && dispatch_width == 16) {
       fail("Can't support (non-uniform) control flow on 16-wide\n");
    }
 
-   if (ir->counter) {
-      this->base_ir = ir->counter;
-      ir->counter->accept(this);
-      counter = *(variable_storage(ir->counter));
-
-      if (ir->from) {
-	 this->base_ir = ir->from;
-	 ir->from->accept(this);
-
-	 emit(MOV(counter, this->result));
-      }
-   }
-
    this->base_ir = NULL;
    emit(BRW_OPCODE_DO);
-
-   if (ir->to) {
-      this->base_ir = ir->to;
-      ir->to->accept(this);
-
-      emit(CMP(reg_null_d, counter, this->result,
-               brw_conditional_for_comparison(ir->cmp)));
-
-      fs_inst *inst = emit(BRW_OPCODE_BREAK);
-      inst->predicate = BRW_PREDICATE_NORMAL;
-   }
 
    foreach_list(node, &ir->body_instructions) {
       ir_instruction *ir = (ir_instruction *)node;
 
       this->base_ir = ir;
       ir->accept(this);
-   }
-
-   if (ir->increment) {
-      this->base_ir = ir->increment;
-      ir->increment->accept(this);
-      emit(ADD(counter, counter, this->result));
    }
 
    this->base_ir = NULL;

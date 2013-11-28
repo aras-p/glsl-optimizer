@@ -759,48 +759,12 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 void
 ir_to_mesa_visitor::visit(ir_loop *ir)
 {
-   ir_dereference_variable *counter = NULL;
-
-   if (ir->counter != NULL)
-      counter = new(mem_ctx) ir_dereference_variable(ir->counter);
-
-   if (ir->from != NULL) {
-      assert(ir->counter != NULL);
-
-      ir_assignment *a =
-	new(mem_ctx) ir_assignment(counter, ir->from, NULL);
-
-      a->accept(this);
-   }
+   /* Any bounded loops should have been lowered by lower_bounded_loops(). */
+   assert(ir->counter == NULL);
 
    emit(NULL, OPCODE_BGNLOOP);
 
-   if (ir->to) {
-      ir_expression *e =
-	 new(mem_ctx) ir_expression(ir->cmp, glsl_type::bool_type,
-					  counter, ir->to);
-      ir_if *if_stmt =  new(mem_ctx) ir_if(e);
-
-      ir_loop_jump *brk =
-	new(mem_ctx) ir_loop_jump(ir_loop_jump::jump_break);
-
-      if_stmt->then_instructions.push_tail(brk);
-
-      if_stmt->accept(this);
-   }
-
    visit_exec_list(&ir->body_instructions, this);
-
-   if (ir->increment) {
-      ir_expression *e =
-	 new(mem_ctx) ir_expression(ir_binop_add, counter->type,
-					  counter, ir->increment);
-
-      ir_assignment *a =
-	new(mem_ctx) ir_assignment(counter, e, NULL);
-
-      a->accept(this);
-   }
 
    emit(NULL, OPCODE_ENDLOOP);
 }
@@ -3090,6 +3054,8 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	 progress = do_vec_index_to_cond_assign(ir) || progress;
          progress = lower_vector_insert(ir, true) || progress;
       } while (progress);
+
+      lower_bounded_loops(ir);
 
       validate_ir_tree(ir);
    }

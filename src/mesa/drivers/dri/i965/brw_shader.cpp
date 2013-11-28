@@ -213,6 +213,8 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 	   || progress;
       } while (progress);
 
+      lower_bounded_loops(shader->ir);
+
       /* Make a pass over the IR to add state references for any built-in
        * uniforms that are used.  This has to be done now (during linking).
        * Code generation doesn't happen until the first time this shader is
