@@ -3156,7 +3156,7 @@ fs_visitor::run()
        * functions called "main").
        */
       if (shader) {
-         foreach_list(node, &*shader->ir) {
+         foreach_list(node, &*shader->base.ir) {
             ir_instruction *ir = (ir_instruction *)node;
             base_ir = ir;
             this->result = reg_undef;
@@ -3305,7 +3305,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       if (prog) {
          printf("GLSL IR for native fragment shader %d:\n", prog->Name);
-         _mesa_print_ir(shader->ir, NULL);
+         _mesa_print_ir(shader->base.ir, NULL);
          printf("\n\n");
       } else {
          printf("ARB_fragment_program %d ir for native fragment shader\n",

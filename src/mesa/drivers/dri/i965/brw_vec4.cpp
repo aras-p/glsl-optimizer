@@ -1540,7 +1540,7 @@ vec4_visitor::run()
     * functions called "main").
     */
    if (shader) {
-      visit_instructions(shader->ir);
+      visit_instructions(shader->base.ir);
    } else {
       emit_program_code();
    }
@@ -1654,7 +1654,7 @@ brw_vs_emit(struct brw_context *brw,
    if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
       if (prog) {
          printf("GLSL IR for native vertex shader %d:\n", prog->Name);
-         _mesa_print_ir(shader->ir, NULL);
+         _mesa_print_ir(shader->base.ir, NULL);
          printf("\n\n");
       } else {
          printf("ARB_vertex_program %d for native vertex shader\n",

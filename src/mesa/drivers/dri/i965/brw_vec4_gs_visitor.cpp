@@ -546,7 +546,7 @@ brw_gs_emit(struct brw_context *brw,
 
    if (unlikely(INTEL_DEBUG & DEBUG_GS)) {
       printf("GLSL IR for native geometry shader %d:\n", prog->Name);
-      _mesa_print_ir(shader->ir, NULL);
+      _mesa_print_ir(shader->base.ir, NULL);
       printf("\n\n");
    }
 

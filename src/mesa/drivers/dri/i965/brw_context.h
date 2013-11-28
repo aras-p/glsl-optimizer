@@ -320,9 +320,6 @@ struct brw_shader {
    struct gl_shader base;
 
    bool compiled_once;
-
-   /** Shader IR transformed for native compile, at link time. */
-   struct exec_list *ir;
 };
 
 /* Note: If adding fields that need anything besides a normal memcmp() for

@@ -135,24 +135,18 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 
       _mesa_copy_linked_program_data((gl_shader_stage) stage, shProg, prog);
 
-      void *mem_ctx = ralloc_context(NULL);
       bool progress;
-
-      if (shader->ir)
-	 ralloc_free(shader->ir);
-      shader->ir = new(shader) exec_list;
-      clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
 
       /* lower_packing_builtins() inserts arithmetic instructions, so it
        * must precede lower_instructions().
        */
-      brw_lower_packing_builtins(brw, (gl_shader_stage) stage, shader->ir);
-      do_mat_op_to_vec(shader->ir);
+      brw_lower_packing_builtins(brw, (gl_shader_stage) stage, shader->base.ir);
+      do_mat_op_to_vec(shader->base.ir);
       const int bitfield_insert = brw->gen >= 7
                                   ? BITFIELD_INSERT_TO_BFM_BFI
                                   : 0;
       const int lrp_to_arith = brw->gen < 6 ? LRP_TO_ARITH : 0;
-      lower_instructions(shader->ir,
+      lower_instructions(shader->base.ir,
 			 MOD_TO_FRACT |
 			 DIV_TO_MUL_RCP |
 			 SUB_TO_ADD_NEG |
@@ -166,17 +160,17 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
        * if-statements need to be flattened.
        */
       if (brw->gen < 6)
-	 lower_if_to_cond_assign(shader->ir, 16);
+	 lower_if_to_cond_assign(shader->base.ir, 16);
 
-      do_lower_texture_projection(shader->ir);
-      brw_lower_texture_gradients(brw, shader->ir);
-      do_vec_index_to_cond_assign(shader->ir);
-      lower_vector_insert(shader->ir, true);
-      brw_do_cubemap_normalize(shader->ir);
-      brw_do_lower_offset_arrays(shader->ir);
-      brw_do_lower_unnormalized_offset(shader->ir);
-      lower_noise(shader->ir);
-      lower_quadop_vector(shader->ir, false);
+      do_lower_texture_projection(shader->base.ir);
+      brw_lower_texture_gradients(brw, shader->base.ir);
+      do_vec_index_to_cond_assign(shader->base.ir);
+      lower_vector_insert(shader->base.ir, true);
+      brw_do_cubemap_normalize(shader->base.ir);
+      brw_do_lower_offset_arrays(shader->base.ir);
+      brw_do_lower_unnormalized_offset(shader->base.ir);
+      lower_noise(shader->base.ir);
+      lower_quadop_vector(shader->base.ir, false);
 
       bool input = true;
       bool output = stage == MESA_SHADER_FRAGMENT;
@@ -184,7 +178,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       bool uniform = false;
 
       bool lowered_variable_indexing =
-         lower_variable_index_to_cond_assign(shader->ir,
+         lower_variable_index_to_cond_assign(shader->base.ir,
                                              input, output, temp, uniform);
 
       if (unlikely(brw->perf_debug && lowered_variable_indexing)) {
@@ -193,23 +187,23 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       }
 
       /* FINISHME: Do this before the variable index lowering. */
-      lower_ubo_reference(&shader->base, shader->ir);
+      lower_ubo_reference(&shader->base, shader->base.ir);
 
       do {
 	 progress = false;
 
 	 if (stage == MESA_SHADER_FRAGMENT) {
-	    brw_do_channel_expressions(shader->ir);
-	    brw_do_vector_splitting(shader->ir);
+	    brw_do_channel_expressions(shader->base.ir);
+	    brw_do_vector_splitting(shader->base.ir);
 	 }
 
-	 progress = do_lower_jumps(shader->ir, true, true,
+	 progress = do_lower_jumps(shader->base.ir, true, true,
 				   true, /* main return */
 				   false, /* continue */
 				   false /* loops */
 				   ) || progress;
 
-	 progress = do_common_optimization(shader->ir, true, true, 32,
+	 progress = do_common_optimization(shader->base.ir, true, true, 32,
                                            &ctx->ShaderCompilerOptions[stage])
 	   || progress;
       } while (progress);
@@ -221,7 +215,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
        * too late.  At that point, the values for the built-in uniforms won't
        * get sent to the shader.
        */
-      foreach_list(node, shader->ir) {
+      foreach_list(node, shader->base.ir) {
 	 ir_variable *var = ((ir_instruction *) node)->as_variable();
 
 	 if ((var == NULL) || (var->data.mode != ir_var_uniform)
@@ -237,12 +231,9 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 	 }
       }
 
-      validate_ir_tree(shader->ir);
+      validate_ir_tree(shader->base.ir);
 
-      reparent_ir(shader->ir, shader->ir);
-      ralloc_free(mem_ctx);
-
-      do_set_program_inouts(shader->ir, prog, shader->base.Stage);
+      do_set_program_inouts(shader->base.ir, prog, shader->base.Stage);
 
       prog->SamplersUsed = shader->base.active_samplers;
       _mesa_update_shader_textures_used(shProg, prog);
