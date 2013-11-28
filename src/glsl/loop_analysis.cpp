@@ -389,8 +389,6 @@ loop_analysis::visit_leave(ir_loop *ir)
       ir_rvalue *const inc =
 	 get_basic_induction_increment(lv->first_assignment, ls->var_hash);
       if (inc != NULL) {
-	 lv->iv_scale = NULL;
-	 lv->biv = lv->var;
 	 lv->increment = inc;
 
 	 lv->remove();

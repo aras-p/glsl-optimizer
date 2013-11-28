@@ -179,20 +179,14 @@ public:
    unsigned num_assignments;
 
    /**
-    * Increment values for loop induction variables
+    * Increment value for a loop induction variable
     *
-    * Loop induction variables have a single increment of the form
-    * \c b * \c biv + \c c, where \c b and \c c are loop constants and \c i
-    * is a basic loop induction variable.
+    * If this is a loop induction variable, the amount by which the variable
+    * is incremented on each iteration through the loop.
     *
-    * If \c iv_scale is \c NULL, 1 is used.  If \c biv is the same as \c var,
-    * then \c var is a basic loop induction variable.
+    * If this is not a loop induction variable, NULL.
     */
-   /*@{*/
-   ir_rvalue *iv_scale;
-   ir_variable *biv;
    ir_rvalue *increment;
-   /*@}*/
 
 
    inline bool is_loop_constant() const
