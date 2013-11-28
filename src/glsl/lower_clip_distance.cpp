@@ -141,8 +141,10 @@ lower_clip_distance_visitor::visit(ir_variable *ir)
       ir->replace_with(this->new_clip_distance_1d_var);
    } else {
       /* 2D gl_ClipDistance (used for geometry input). */
+#ifdef GL_GEOMETRY_SHADER_ARB
       assert(ir->mode == ir_var_shader_in &&
              this->shader_type == GL_GEOMETRY_SHADER_ARB);
+#endif
       if (this->old_clip_distance_2d_var)
          return visit_continue;
 
@@ -253,7 +255,9 @@ lower_clip_distance_visitor::is_clip_distance_vec8(ir_rvalue *ir)
    }
    if (this->old_clip_distance_2d_var) {
       /* 2D clip distance is only possible as a geometry input */
+#ifdef GL_GEOMETRY_SHADER_ARB
       assert(this->shader_type == GL_GEOMETRY_SHADER_ARB);
+#endif
 
       ir_dereference_array *array_ref = ir->as_dereference_array();
       if (array_ref) {
@@ -288,7 +292,9 @@ lower_clip_distance_visitor::lower_clip_distance_vec8(ir_rvalue *ir)
    }
    if (this->old_clip_distance_2d_var) {
       /* 2D clip distance is only possible as a geometry input */
+#ifdef GL_GEOMETRY_SHADER_ARB
       assert(this->shader_type == GL_GEOMETRY_SHADER_ARB);
+#endif
 
       ir_dereference_array *array_ref = ir->as_dereference_array();
       if (array_ref) {
