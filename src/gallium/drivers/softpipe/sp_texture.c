@@ -88,7 +88,7 @@ softpipe_resource_layout(struct pipe_screen *screen,
       return FALSE;
 
    if (allocate) {
-      spr->data = align_malloc(buffer_size, 16);
+      spr->data = align_malloc(buffer_size, 64);
       return spr->data != NULL;
    }
    else {
@@ -128,7 +128,7 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
                                           spr->base.format,
                                           spr->base.width0, 
                                           spr->base.height0,
-                                          16,
+                                          64,
                                           &spr->stride[0] );
 
    return spr->dt != NULL;
