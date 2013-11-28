@@ -214,8 +214,14 @@ offset(dst_reg reg, unsigned delta)
    return reg;
 }
 
-dst_reg
-with_writemask(dst_reg const &r, int mask);
+static inline dst_reg
+writemask(dst_reg reg, unsigned mask)
+{
+   assert(reg.file != HW_REG && reg.file != IMM);
+   assert((reg.writemask & mask) != 0);
+   reg.writemask &= mask;
+   return reg;
+}
 
 class vec4_instruction : public backend_instruction {
 public:

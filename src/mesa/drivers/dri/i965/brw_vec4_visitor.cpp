@@ -929,15 +929,6 @@ vec4_visitor::emit_if_gen6(ir_if *ir)
    emit(IF(this->result, src_reg(0), BRW_CONDITIONAL_NZ));
 }
 
-dst_reg
-with_writemask(dst_reg const & r, int mask)
-{
-   dst_reg result = r;
-   result.writemask = mask;
-   return result;
-}
-
-
 void
 vec4_visitor::visit(ir_variable *ir)
 {
@@ -2495,7 +2486,7 @@ vec4_visitor::visit(ir_texture *ir)
       if (type->sampler_dimensionality == GLSL_SAMPLER_DIM_CUBE &&
           type->sampler_array) {
          emit_math(SHADER_OPCODE_INT_QUOTIENT,
-                   with_writemask(inst->dst, WRITEMASK_Z),
+                   writemask(inst->dst, WRITEMASK_Z),
                    src_reg(inst->dst), src_reg(6));
       }
    }

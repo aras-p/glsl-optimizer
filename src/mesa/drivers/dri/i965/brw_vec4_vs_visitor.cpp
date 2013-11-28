@@ -59,8 +59,8 @@ vec4_vs_visitor::emit_prolog()
             if (sign_recovery_shift.file == BAD_FILE) {
                /* shift constant: <22,22,22,30> */
                sign_recovery_shift = dst_reg(this, glsl_type::uvec4_type);
-               emit(MOV(with_writemask(sign_recovery_shift, WRITEMASK_XYZ), src_reg(22u)));
-               emit(MOV(with_writemask(sign_recovery_shift, WRITEMASK_W), src_reg(30u)));
+               emit(MOV(writemask(sign_recovery_shift, WRITEMASK_XYZ), src_reg(22u)));
+               emit(MOV(writemask(sign_recovery_shift, WRITEMASK_W), src_reg(30u)));
             }
 
             emit(SHL(reg_ud, src_reg(reg_ud), src_reg(sign_recovery_shift)));
@@ -87,9 +87,9 @@ vec4_vs_visitor::emit_prolog()
                if (es3_normalize_factor.file == BAD_FILE) {
                   /* mul constant: 1 / (2^(b-1) - 1) */
                   es3_normalize_factor = dst_reg(this, glsl_type::vec4_type);
-                  emit(MOV(with_writemask(es3_normalize_factor, WRITEMASK_XYZ),
+                  emit(MOV(writemask(es3_normalize_factor, WRITEMASK_XYZ),
                            src_reg(1.0f / ((1<<9) - 1))));
-                  emit(MOV(with_writemask(es3_normalize_factor, WRITEMASK_W),
+                  emit(MOV(writemask(es3_normalize_factor, WRITEMASK_W),
                            src_reg(1.0f / ((1<<1) - 1))));
                }
 
@@ -113,9 +113,9 @@ vec4_vs_visitor::emit_prolog()
                if (normalize_factor.file == BAD_FILE) {
                   /* 1 / (2^b - 1) for b=<10,10,10,2> */
                   normalize_factor = dst_reg(this, glsl_type::vec4_type);
-                  emit(MOV(with_writemask(normalize_factor, WRITEMASK_XYZ),
+                  emit(MOV(writemask(normalize_factor, WRITEMASK_XYZ),
                            src_reg(1.0f / ((1<<10) - 1))));
-                  emit(MOV(with_writemask(normalize_factor, WRITEMASK_W),
+                  emit(MOV(writemask(normalize_factor, WRITEMASK_W),
                            src_reg(1.0f / ((1<<2) - 1))));
                }
 
