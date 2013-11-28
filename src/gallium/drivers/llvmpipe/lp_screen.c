@@ -217,9 +217,10 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 16;
    case PIPE_CAP_START_INSTANCE:
    case PIPE_CAP_TEXTURE_MULTISAMPLE:
-   case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
    case PIPE_CAP_CUBE_MAP_ARRAY:
       return 0;
+   case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
+      return 64;
    case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
