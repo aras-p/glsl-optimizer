@@ -348,7 +348,6 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
       case BRW_OPCODE_ASR:
       case BRW_OPCODE_SHL:
       case BRW_OPCODE_SHR:
-      case BRW_OPCODE_ADDC:
       case BRW_OPCODE_SUBB:
          if (i == 1) {
             inst->src[i] = entry->src;
@@ -362,6 +361,7 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
       case BRW_OPCODE_OR:
       case BRW_OPCODE_AND:
       case BRW_OPCODE_XOR:
+      case BRW_OPCODE_ADDC:
          if (i == 1) {
             inst->src[i] = entry->src;
             progress = true;

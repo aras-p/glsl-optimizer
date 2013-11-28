@@ -99,7 +99,6 @@ try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
    case BRW_OPCODE_ASR:
    case BRW_OPCODE_SHL:
    case BRW_OPCODE_SHR:
-   case BRW_OPCODE_ADDC:
    case BRW_OPCODE_SUBB:
       if (arg == 1) {
          inst->src[arg] = value;
@@ -113,6 +112,7 @@ try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
    case BRW_OPCODE_OR:
    case BRW_OPCODE_AND:
    case BRW_OPCODE_XOR:
+   case BRW_OPCODE_ADDC:
       if (arg == 1) {
 	 inst->src[arg] = value;
 	 return true;
