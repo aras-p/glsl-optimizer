@@ -1,0 +1,25 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsl_optimizer_lib", "glsl_optimizer_lib.vcxproj", "{32C0A930-D0F2-297A-3D32-FD08291769BC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug64|x64 = Debug64|x64
+		Debug32|Win32 = Debug32|Win32
+		Release64|x64 = Release64|x64
+		Release32|Win32 = Release32|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Debug64|x64.ActiveCfg = Debug64|x64
+		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Debug64|x64.Build.0 = Debug64|x64
+		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Debug32|Win32.ActiveCfg = Debug32|Win32
+		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Debug32|Win32.Build.0 = Debug32|Win32
+		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Release64|x64.ActiveCfg = Release64|x64
+		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Release64|x64.Build.0 = Release64|x64
+		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Release32|Win32.ActiveCfg = Release32|Win32
+		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Release32|Win32.Build.0 = Release32|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,13 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "(src)", "..\..\src", "{607B4E81-FB72-43DF-177C-C1403E500480}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsl_optimizer_lib", "glsl_optimizer_lib.vcxproj", "{4B2E47A4-529E-2259-5B6A-4666301D7F27}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsl_optimizer_tests", "glsl_optimizer_tests.vcxproj", "{E33FBAE4-2F96-AC80-E76D-4123EA14D57D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{4B2E47A4-529E-2259-5B6A-4666301D7F27} = {4B2E47A4-529E-2259-5B6A-4666301D7F27}
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,19 +18,8 @@ Global
 		{4B2E47A4-529E-2259-5B6A-4666301D7F27}.Release64|x64.Build.0 = Release64|x64
 		{4B2E47A4-529E-2259-5B6A-4666301D7F27}.Release32|Win32.ActiveCfg = Release32|Win32
 		{4B2E47A4-529E-2259-5B6A-4666301D7F27}.Release32|Win32.Build.0 = Release32|Win32
-		{E33FBAE4-2F96-AC80-E76D-4123EA14D57D}.Debug64|x64.ActiveCfg = Debug64|x64
-		{E33FBAE4-2F96-AC80-E76D-4123EA14D57D}.Debug64|x64.Build.0 = Debug64|x64
-		{E33FBAE4-2F96-AC80-E76D-4123EA14D57D}.Debug32|Win32.ActiveCfg = Debug32|Win32
-		{E33FBAE4-2F96-AC80-E76D-4123EA14D57D}.Debug32|Win32.Build.0 = Debug32|Win32
-		{E33FBAE4-2F96-AC80-E76D-4123EA14D57D}.Release64|x64.ActiveCfg = Release64|x64
-		{E33FBAE4-2F96-AC80-E76D-4123EA14D57D}.Release64|x64.Build.0 = Release64|x64
-		{E33FBAE4-2F96-AC80-E76D-4123EA14D57D}.Release32|Win32.ActiveCfg = Release32|Win32
-		{E33FBAE4-2F96-AC80-E76D-4123EA14D57D}.Release32|Win32.Build.0 = Release32|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{4B2E47A4-529E-2259-5B6A-4666301D7F27} = {607B4E81-FB72-43DF-177C-C1403E500480}
 	EndGlobalSection
 EndGlobal

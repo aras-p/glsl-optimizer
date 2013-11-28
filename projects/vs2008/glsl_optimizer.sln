@@ -1,0 +1,43 @@
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "(src)", "..\..\src", "{607B4E81-FB72-43DF-177C-C1403E500480}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsl_optimizer_lib", "glsl_optimizer_lib.vcproj", "{285B5E89-931E-BD5A-5116-7916C4B43A24}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsl_optimizer_tests", "glsl_optimizer_tests.vcproj", "{EC8E3C18-B41C-FF1F-DFBE-2BD36AA9C657}"
+	ProjectSection(ProjectDependencies) = postProject
+		{285B5E89-931E-BD5A-5116-7916C4B43A24} = {285B5E89-931E-BD5A-5116-7916C4B43A24}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug64|x64 = Debug64|x64
+		Debug32|Win32 = Debug32|Win32
+		Release64|x64 = Release64|x64
+		Release32|Win32 = Release32|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{285B5E89-931E-BD5A-5116-7916C4B43A24}.Debug64|x64.ActiveCfg = Debug64|x64
+		{285B5E89-931E-BD5A-5116-7916C4B43A24}.Debug64|x64.Build.0 = Debug64|x64
+		{285B5E89-931E-BD5A-5116-7916C4B43A24}.Debug32|Win32.ActiveCfg = Debug32|Win32
+		{285B5E89-931E-BD5A-5116-7916C4B43A24}.Debug32|Win32.Build.0 = Debug32|Win32
+		{285B5E89-931E-BD5A-5116-7916C4B43A24}.Release64|x64.ActiveCfg = Release64|x64
+		{285B5E89-931E-BD5A-5116-7916C4B43A24}.Release64|x64.Build.0 = Release64|x64
+		{285B5E89-931E-BD5A-5116-7916C4B43A24}.Release32|Win32.ActiveCfg = Release32|Win32
+		{285B5E89-931E-BD5A-5116-7916C4B43A24}.Release32|Win32.Build.0 = Release32|Win32
+		{EC8E3C18-B41C-FF1F-DFBE-2BD36AA9C657}.Debug64|x64.ActiveCfg = Debug64|x64
+		{EC8E3C18-B41C-FF1F-DFBE-2BD36AA9C657}.Debug64|x64.Build.0 = Debug64|x64
+		{EC8E3C18-B41C-FF1F-DFBE-2BD36AA9C657}.Debug32|Win32.ActiveCfg = Debug32|Win32
+		{EC8E3C18-B41C-FF1F-DFBE-2BD36AA9C657}.Debug32|Win32.Build.0 = Debug32|Win32
+		{EC8E3C18-B41C-FF1F-DFBE-2BD36AA9C657}.Release64|x64.ActiveCfg = Release64|x64
+		{EC8E3C18-B41C-FF1F-DFBE-2BD36AA9C657}.Release64|x64.Build.0 = Release64|x64
+		{EC8E3C18-B41C-FF1F-DFBE-2BD36AA9C657}.Release32|Win32.ActiveCfg = Release32|Win32
+		{EC8E3C18-B41C-FF1F-DFBE-2BD36AA9C657}.Release32|Win32.Build.0 = Release32|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{285B5E89-931E-BD5A-5116-7916C4B43A24} = {607B4E81-FB72-43DF-177C-C1403E500480}
+	EndGlobalSection
+EndGlobal

@@ -19,13 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E33FBAE4-2F96-AC80-E76D-4123EA14D57D}</ProjectGuid>
+    <ProjectGuid>{72003D33-A201-D7DE-A600-5C22E63094E5}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>glsl_optimizer_tests</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Label="Locals">
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
   <ImportGroup Label="ExtensionSettings"/>
@@ -116,7 +119,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="glsl_optimizer_lib.vcxproj">
-      <Project>{4B2E47A4-529E-2259-5B6A-4666301D7F27}</Project>
+      <Project>{32C0A930-D0F2-297A-3D32-FD08291769BC}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
