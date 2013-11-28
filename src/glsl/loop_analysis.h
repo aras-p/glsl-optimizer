@@ -167,8 +167,11 @@ public:
    /** Are all variables in the RHS of the assignment loop constants? */
    bool rhs_clean;
 
-   /** Is there an assignment to the variable that is conditional? */
-   bool conditional_assignment;
+   /**
+    * Is there an assignment to the variable that is conditional, or inside a
+    * nested loop?
+    */
+   bool conditional_or_nested_assignment;
 
    /** Reference to the first assignment to the variable in the loop body. */
    ir_assignment *first_assignment;
@@ -197,7 +200,7 @@ public:
    {
       const bool is_const = (this->num_assignments == 0)
 	 || ((this->num_assignments == 1)
-	     && !this->conditional_assignment
+	     && !this->conditional_or_nested_assignment
 	     && !this->read_before_write
 	     && this->rhs_clean);
 
@@ -214,7 +217,8 @@ public:
       return is_const;
    }
 
-   void record_reference(bool in_assignee, bool in_conditional_code,
+   void record_reference(bool in_assignee,
+                         bool in_conditional_code_or_nested_loop,
                          ir_assignment *current_assignment);
 };
 

@@ -38,20 +38,22 @@ static ir_rvalue *get_basic_induction_increment(ir_assignment *, hash_table *);
  *
  * \arg in_assignee is true if the reference was on the LHS of an assignment.
  *
- * \arg in_conditional_code is true if the reference occurred inside an if
- * statement.
+ * \arg in_conditional_code_or_nested_loop is true if the reference occurred
+ * inside an if statement or a nested loop.
  *
  * \arg current_assignment is the ir_assignment node that the loop variable is
  * on the LHS of, if any (ignored if \c in_assignee is false).
  */
 void
-loop_variable::record_reference(bool in_assignee, bool in_conditional_code,
+loop_variable::record_reference(bool in_assignee,
+                                bool in_conditional_code_or_nested_loop,
                                 ir_assignment *current_assignment)
 {
    if (in_assignee) {
       assert(current_assignment != NULL);
 
-      this->conditional_assignment = in_conditional_code
+      this->conditional_or_nested_assignment =
+         in_conditional_code_or_nested_loop
          || current_assignment->condition != NULL;
 
       if (this->first_assignment == NULL) {
@@ -241,14 +243,19 @@ loop_analysis::visit(ir_dereference_variable *ir)
    if (this->state.is_empty())
       return visit_continue;
 
-   loop_variable_state *const ls =
-      (loop_variable_state *) this->state.get_head();
+   bool nested = false;
 
-   ir_variable *var = ir->variable_referenced();
-   loop_variable *lv = ls->get_or_insert(var, this->in_assignee);
+   foreach_list(node, &this->state) {
+      loop_variable_state *const ls = (loop_variable_state *) node;
 
-   lv->record_reference(this->in_assignee, this->if_statement_depth > 0,
-                        this->current_assignment);
+      ir_variable *var = ir->variable_referenced();
+      loop_variable *lv = ls->get_or_insert(var, this->in_assignee);
+
+      lv->record_reference(this->in_assignee,
+                           nested || this->if_statement_depth > 0,
+                           this->current_assignment);
+      nested = true;
+   }
 
    return visit_continue;
 }
@@ -328,7 +335,7 @@ loop_analysis::visit_leave(ir_loop *ir)
       foreach_list_safe(node, &ls->variables) {
 	 loop_variable *lv = (loop_variable *) node;
 
-	 if (lv->conditional_assignment || (lv->num_assignments > 1))
+	 if (lv->conditional_or_nested_assignment || (lv->num_assignments > 1))
 	    continue;
 
 	 /* Process the RHS of the assignment.  If all of the variables
@@ -368,9 +375,10 @@ loop_analysis::visit_leave(ir_loop *ir)
       assert(lv->num_assignments == 1);
       assert(lv->first_assignment != NULL);
 
-      /* The assignmnet to the variable in the loop must be unconditional.
+      /* The assignment to the variable in the loop must be unconditional and
+       * not inside a nested loop.
        */
-      if (lv->conditional_assignment)
+      if (lv->conditional_or_nested_assignment)
 	 continue;
 
       /* Basic loop induction variables have a single assignment in the loop
