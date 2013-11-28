@@ -67,6 +67,19 @@ bblock_t::make_list(void *mem_ctx)
    return new(mem_ctx) bblock_link(this);
 }
 
+void
+bblock_t::dump(backend_visitor *v)
+{
+   int ip = this->start_ip;
+   for (backend_instruction *inst = (backend_instruction *)this->start;
+	inst != this->end->next;
+	inst = (backend_instruction *) inst->next) {
+      printf("%5d: ", ip);
+      v->dump_instruction(inst);
+      ip++;
+   }
+}
+
 cfg_t::cfg_t(backend_visitor *v)
 {
    create(v->mem_ctx, &v->instructions);
@@ -260,4 +273,25 @@ cfg_t::make_block_array()
       blocks[i++] = link->block;
    }
    assert(i == num_blocks);
+}
+
+void
+cfg_t::dump(backend_visitor *v)
+{
+   for (int b = 0; b < this->num_blocks; b++) {
+        bblock_t *block = this->blocks[b];
+      printf("START B%d", b);
+      foreach_list(node, &block->parents) {
+         bblock_link *link = (bblock_link *)node;
+         printf(" <-B%d", link->block->block_num);
+      }
+      printf("\n");
+      block->dump(v);
+      printf("END B%d", b);
+      foreach_list(node, &block->children) {
+         bblock_link *link = (bblock_link *)node;
+         printf(" ->B%d", link->block->block_num);
+      }
+      printf("\n");
+   }
 }

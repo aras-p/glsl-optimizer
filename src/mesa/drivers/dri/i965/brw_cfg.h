@@ -46,6 +46,7 @@ public:
    bblock_t();
 
    void add_successor(void *mem_ctx, bblock_t *successor);
+   void dump(backend_visitor *v);
 
    backend_instruction *start;
    backend_instruction *end;
@@ -71,6 +72,8 @@ public:
    bblock_t *new_block();
    void set_next_block(bblock_t *block);
    void make_block_array();
+
+   void dump(backend_visitor *v);
 
    /** @{
     *
