@@ -189,6 +189,15 @@ public:
    ir_rvalue *increment;
 
 
+   inline bool is_induction_var() const
+   {
+      /* Induction variables always have a non-null increment, and vice
+       * versa.
+       */
+      return this->increment != NULL;
+   }
+
+
    inline bool is_loop_constant() const
    {
       const bool is_const = (this->num_assignments == 0)

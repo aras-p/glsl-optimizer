@@ -237,39 +237,36 @@ loop_control_visitor::visit_leave(ir_loop *ir)
 
 	 ir_rvalue *init = find_initial_value(ir, var);
 
-	 foreach_list(iv_node, &ls->induction_variables) {
-	    loop_variable *lv = (loop_variable *) iv_node;
+         loop_variable *lv = ls->get(var);
+         if (lv != NULL && lv->is_induction_var()) {
+            const int iterations = calculate_iterations(init, limit,
+                                                        lv->increment,
+                                                        cmp);
+            if (iterations >= 0) {
+               /* If the new iteration count is lower than the previously
+                * believed iteration count, then add a normative bound to
+                * this loop.
+                */
+               if ((unsigned) iterations < max_iterations) {
+                  ir->normative_bound = iterations;
 
-	    if (lv->var == var) {
-	       const int iterations = calculate_iterations(init, limit,
-							   lv->increment,
-							   cmp);
-	       if (iterations >= 0) {
-		  /* If the new iteration count is lower than the previously
-		   * believed iteration count, then add a normative bound to
-		   * this loop.
-		   */
-		  if ((unsigned) iterations < max_iterations) {
-                     ir->normative_bound = iterations;
+                  max_iterations = iterations;
+               }
 
-		     max_iterations = iterations;
-		  }
+               /* Remove the conditional break statement.  The loop
+                * controls are now set such that the exit condition will be
+                * satisfied.
+                */
+               if_stmt->remove();
 
-		  /* Remove the conditional break statement.  The loop
-		   * controls are now set such that the exit condition will be
-		   * satisfied.
-		   */
-		  if_stmt->remove();
+               assert(ls->num_loop_jumps > 0);
+               ls->num_loop_jumps--;
 
-		  assert(ls->num_loop_jumps > 0);
-		  ls->num_loop_jumps--;
+               this->progress = true;
+            }
 
-		  this->progress = true;
-	       }
-
-	       break;
-	    }
-	 }
+            break;
+         }
 	 break;
       }
 
