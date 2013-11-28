@@ -33,6 +33,43 @@ static bool all_expression_operands_are_loop_constant(ir_rvalue *,
 static ir_rvalue *get_basic_induction_increment(ir_assignment *, hash_table *);
 
 
+/**
+ * Record the fact that the given loop variable was referenced inside the loop.
+ *
+ * \arg in_assignee is true if the reference was on the LHS of an assignment.
+ *
+ * \arg in_conditional_code is true if the reference occurred inside an if
+ * statement.
+ *
+ * \arg current_assignment is the ir_assignment node that the loop variable is
+ * on the LHS of, if any (ignored if \c in_assignee is false).
+ */
+void
+loop_variable::record_reference(bool in_assignee, bool in_conditional_code,
+                                ir_assignment *current_assignment)
+{
+   if (in_assignee) {
+      assert(current_assignment != NULL);
+
+      this->conditional_assignment = in_conditional_code
+         || current_assignment->condition != NULL;
+
+      if (this->first_assignment == NULL) {
+         assert(this->num_assignments == 0);
+
+         this->first_assignment = current_assignment;
+      }
+
+      this->num_assignments++;
+   } else if (this->first_assignment == current_assignment) {
+      /* This catches the case where the variable is used in the RHS of an
+       * assignment where it is also in the LHS.
+       */
+      this->read_before_write = true;
+   }
+}
+
+
 loop_state::loop_state()
 {
    this->ht = hash_table_ctor(0, hash_table_pointer_hash,
@@ -101,6 +138,33 @@ loop_variable_state::insert(ir_if *if_stmt)
 
    return t;
 }
+
+
+/**
+ * If the given variable already is recorded in the state for this loop,
+ * return the corresponding loop_variable object that records information
+ * about it.
+ *
+ * Otherwise, create a new loop_variable object to record information about
+ * the variable, and set its \c read_before_write field appropriately based on
+ * \c in_assignee.
+ *
+ * \arg in_assignee is true if this variable was encountered on the LHS of an
+ * assignment.
+ */
+loop_variable *
+loop_variable_state::get_or_insert(ir_variable *var, bool in_assignee)
+{
+   loop_variable *lv = this->get(var);
+
+   if (lv == NULL) {
+      lv = this->insert(var);
+      lv->read_before_write = !in_assignee;
+   }
+
+   return lv;
+}
+
 
 namespace {
 
@@ -181,32 +245,10 @@ loop_analysis::visit(ir_dereference_variable *ir)
       (loop_variable_state *) this->state.get_head();
 
    ir_variable *var = ir->variable_referenced();
-   loop_variable *lv = ls->get(var);
+   loop_variable *lv = ls->get_or_insert(var, this->in_assignee);
 
-   if (lv == NULL) {
-      lv = ls->insert(var);
-      lv->read_before_write = !this->in_assignee;
-   }
-
-   if (this->in_assignee) {
-      assert(this->current_assignment != NULL);
-
-      lv->conditional_assignment = (this->if_statement_depth > 0)
-	 || (this->current_assignment->condition != NULL);
-
-      if (lv->first_assignment == NULL) {
-	 assert(lv->num_assignments == 0);
-
-	 lv->first_assignment = this->current_assignment;
-      }
-
-      lv->num_assignments++;
-   } else if (lv->first_assignment == this->current_assignment) {
-      /* This catches the case where the variable is used in the RHS of an
-       * assignment where it is also in the LHS.
-       */
-      lv->read_before_write = true;
-   }
+   lv->record_reference(this->in_assignee, this->if_statement_depth > 0,
+                        this->current_assignment);
 
    return visit_continue;
 }

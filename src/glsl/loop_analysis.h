@@ -67,6 +67,7 @@ class loop_variable_state : public exec_node {
 public:
    class loop_variable *get(const ir_variable *);
    class loop_variable *insert(ir_variable *);
+   class loop_variable *get_or_insert(ir_variable *, bool in_assignee);
    class loop_terminator *insert(ir_if *);
 
 
@@ -212,6 +213,9 @@ public:
 
       return is_const;
    }
+
+   void record_reference(bool in_assignee, bool in_conditional_code,
+                         ir_assignment *current_assignment);
 };
 
 
