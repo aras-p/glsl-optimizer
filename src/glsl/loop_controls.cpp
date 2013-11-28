@@ -183,9 +183,9 @@ loop_control_visitor::visit_leave(ir_loop *ir)
       return visit_continue;
    }
 
-   /* Search the loop terminating conditions for one of the form 'i < c' where
-    * i is a loop induction variable, c is a constant, and < is any relative
-    * operator.
+   /* Figure out how many times the loop will run based on the iteration count
+    * annotations made by loop analysis, and give the loop a normative bound
+    * if possible.
     */
    unsigned max_iterations =
       ls->max_iterations < 0 ? INT_MAX : ls->max_iterations;
@@ -193,86 +193,32 @@ loop_control_visitor::visit_leave(ir_loop *ir)
    if (ir->normative_bound >= 0)
       max_iterations = ir->normative_bound;
 
+   /* If the limiting terminator has a lower iteration count than we'd
+    * previously inferred for this loop, then make the new iteration count the
+    * normative bound for this loop.
+    */
+   if (ls->limiting_terminator != NULL &&
+       (unsigned) ls->limiting_terminator->iterations < max_iterations) {
+      ir->normative_bound = ls->limiting_terminator->iterations;
+      max_iterations = ls->limiting_terminator->iterations;
+   }
+
+   /* Remove the conditional break statements associated with all terminators
+    * that are associated with a fixed iteration count; the normative bound
+    * will take care of terminating the loop.
+    */
    foreach_list(node, &ls->terminators) {
       loop_terminator *t = (loop_terminator *) node;
-      ir_if *if_stmt = t->ir;
 
-      /* If-statements can be either 'if (expr)' or 'if (deref)'.  We only care
-       * about the former here.
-       */
-      ir_expression *cond = if_stmt->condition->as_expression();
-      if (cond == NULL)
-	 continue;
+      if (t->iterations < 0)
+         continue;
 
-      switch (cond->operation) {
-      case ir_binop_less:
-      case ir_binop_greater:
-      case ir_binop_lequal:
-      case ir_binop_gequal: {
-	 /* The expressions that we care about will either be of the form
-	  * 'counter < limit' or 'limit < counter'.  Figure out which is
-	  * which.
-	  */
-	 ir_rvalue *counter = cond->operands[0]->as_dereference_variable();
-	 ir_constant *limit = cond->operands[1]->as_constant();
-	 enum ir_expression_operation cmp = cond->operation;
+      t->ir->remove();
 
-	 if (limit == NULL) {
-	    counter = cond->operands[1]->as_dereference_variable();
-	    limit = cond->operands[0]->as_constant();
+      assert(ls->num_loop_jumps > 0);
+      ls->num_loop_jumps--;
 
-	    switch (cmp) {
-	    case ir_binop_less:    cmp = ir_binop_greater; break;
-	    case ir_binop_greater: cmp = ir_binop_less;    break;
-	    case ir_binop_lequal:  cmp = ir_binop_gequal;  break;
-	    case ir_binop_gequal:  cmp = ir_binop_lequal;  break;
-	    default: assert(!"Should not get here.");
-	    }
-	 }
-
-	 if ((counter == NULL) || (limit == NULL))
-	    break;
-
-	 ir_variable *var = counter->variable_referenced();
-
-	 ir_rvalue *init = find_initial_value(ir, var);
-
-         loop_variable *lv = ls->get(var);
-         if (lv != NULL && lv->is_induction_var()) {
-            const int iterations = calculate_iterations(init, limit,
-                                                        lv->increment,
-                                                        cmp);
-            if (iterations >= 0) {
-               /* If the new iteration count is lower than the previously
-                * believed iteration count, then add a normative bound to
-                * this loop.
-                */
-               if ((unsigned) iterations < max_iterations) {
-                  ir->normative_bound = iterations;
-
-                  max_iterations = iterations;
-               }
-
-               /* Remove the conditional break statement.  The loop
-                * controls are now set such that the exit condition will be
-                * satisfied.
-                */
-               if_stmt->remove();
-
-               assert(ls->num_loop_jumps > 0);
-               ls->num_loop_jumps--;
-
-               this->progress = true;
-            }
-
-            break;
-         }
-	 break;
-      }
-
-      default:
-	 break;
-      }
+      this->progress = true;
    }
 
    /* If we have proven the one of the loop exit conditions is satisifed before

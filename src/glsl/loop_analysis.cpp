@@ -396,6 +396,75 @@ loop_analysis::visit_leave(ir_loop *ir)
       }
    }
 
+   /* Search the loop terminating conditions for those of the form 'i < c'
+    * where i is a loop induction variable, c is a constant, and < is any
+    * relative operator.  From each of these we can infer an iteration count.
+    * Also figure out which terminator (if any) produces the smallest
+    * iteration count--this is the limiting terminator.
+    */
+   foreach_list(node, &ls->terminators) {
+      loop_terminator *t = (loop_terminator *) node;
+      ir_if *if_stmt = t->ir;
+
+      /* If-statements can be either 'if (expr)' or 'if (deref)'.  We only care
+       * about the former here.
+       */
+      ir_expression *cond = if_stmt->condition->as_expression();
+      if (cond == NULL)
+	 continue;
+
+      switch (cond->operation) {
+      case ir_binop_less:
+      case ir_binop_greater:
+      case ir_binop_lequal:
+      case ir_binop_gequal: {
+	 /* The expressions that we care about will either be of the form
+	  * 'counter < limit' or 'limit < counter'.  Figure out which is
+	  * which.
+	  */
+	 ir_rvalue *counter = cond->operands[0]->as_dereference_variable();
+	 ir_constant *limit = cond->operands[1]->as_constant();
+	 enum ir_expression_operation cmp = cond->operation;
+
+	 if (limit == NULL) {
+	    counter = cond->operands[1]->as_dereference_variable();
+	    limit = cond->operands[0]->as_constant();
+
+	    switch (cmp) {
+	    case ir_binop_less:    cmp = ir_binop_greater; break;
+	    case ir_binop_greater: cmp = ir_binop_less;    break;
+	    case ir_binop_lequal:  cmp = ir_binop_gequal;  break;
+	    case ir_binop_gequal:  cmp = ir_binop_lequal;  break;
+	    default: assert(!"Should not get here.");
+	    }
+	 }
+
+	 if ((counter == NULL) || (limit == NULL))
+	    break;
+
+	 ir_variable *var = counter->variable_referenced();
+
+	 ir_rvalue *init = find_initial_value(ir, var);
+
+         loop_variable *lv = ls->get(var);
+         if (lv != NULL && lv->is_induction_var()) {
+            t->iterations = calculate_iterations(init, limit, lv->increment,
+                                                 cmp);
+
+            if (t->iterations >= 0 &&
+                (ls->limiting_terminator == NULL ||
+                 t->iterations < ls->limiting_terminator->iterations)) {
+               ls->limiting_terminator = t;
+            }
+         }
+         break;
+      }
+
+      default:
+         break;
+      }
+   }
+
    return visit_continue;
 }
 

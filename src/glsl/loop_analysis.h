@@ -58,6 +58,13 @@ set_loop_controls(exec_list *instructions, loop_state *ls);
 extern bool
 unroll_loops(exec_list *instructions, loop_state *ls, unsigned max_iterations);
 
+ir_rvalue *
+find_initial_value(ir_loop *loop, ir_variable *var);
+
+int
+calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
+		     enum ir_expression_operation op);
+
 
 /**
  * Tracking for all variables used in a loop
@@ -99,6 +106,14 @@ public:
    exec_list terminators;
 
    /**
+    * If any of the terminators in \c terminators leads to termination of the
+    * loop after a constant number of iterations, this is the terminator that
+    * leads to termination after the smallest number of iterations.  Otherwise
+    * NULL.
+    */
+   loop_terminator *limiting_terminator;
+
+   /**
     * Hash table containing all variables accessed in this loop
     */
    hash_table *var_hash;
@@ -129,6 +144,7 @@ public:
       this->contains_calls = false;
       this->var_hash = hash_table_ctor(0, hash_table_pointer_hash,
 				       hash_table_pointer_compare);
+      this->limiting_terminator = NULL;
    }
 
    ~loop_variable_state()
@@ -227,7 +243,21 @@ public:
 
 class loop_terminator : public exec_node {
 public:
+   loop_terminator()
+      : ir(NULL), iterations(-1)
+   {
+   }
+
+   /**
+    * Statement which terminates the loop.
+    */
    ir_if *ir;
+
+   /**
+    * The number of iterations after which the terminator is known to
+    * terminate the loop (if that is a fixed value).  Otherwise -1.
+    */
+   int iterations;
 };
 
 
