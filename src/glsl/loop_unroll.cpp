@@ -37,6 +37,10 @@ public:
    }
 
    virtual ir_visitor_status visit_leave(ir_loop *ir);
+   void simple_unroll(ir_loop *ir, int iterations);
+   void complex_unroll(ir_loop *ir, int iterations,
+                       bool continue_from_then_branch);
+   void splice_post_if_instructions(ir_if *ir_if, exec_list *splice_dest);
 
    loop_state *state;
 
@@ -86,6 +90,138 @@ public:
 };
 
 
+/**
+ * Unroll a loop which does not contain any jumps.  For example, if the input
+ * is:
+ *
+ *     (loop (...) ...instrs...)
+ *
+ * And the iteration count is 3, the output will be:
+ *
+ *     ...instrs... ...instrs... ...instrs...
+ */
+void
+loop_unroll_visitor::simple_unroll(ir_loop *ir, int iterations)
+{
+   void *const mem_ctx = ralloc_parent(ir);
+
+   for (int i = 0; i < iterations; i++) {
+      exec_list copy_list;
+
+      copy_list.make_empty();
+      clone_ir_list(mem_ctx, &copy_list, &ir->body_instructions);
+
+      ir->insert_before(&copy_list);
+   }
+
+   /* The loop has been replaced by the unrolled copies.  Remove the original
+    * loop from the IR sequence.
+    */
+   ir->remove();
+
+   this->progress = true;
+}
+
+
+/**
+ * Unroll a loop whose last statement is an ir_if.  If \c
+ * continue_from_then_branch is true, the loop is repeated only when the
+ * "then" branch of the if is taken; otherwise it is repeated only when the
+ * "else" branch of the if is taken.
+ *
+ * For example, if the input is:
+ *
+ *     (loop (...)
+ *      ...body...
+ *      (if (cond)
+ *          (...then_instrs...)
+ *        (...else_instrs...)))
+ *
+ * And the iteration count is 3, and \c continue_from_then_branch is true,
+ * then the output will be:
+ *
+ *     ...body...
+ *     (if (cond)
+ *         (...then_instrs...
+ *          ...body...
+ *          (if (cond)
+ *              (...then_instrs...
+ *               ...body...
+ *               (if (cond)
+ *                   (...then_instrs...)
+ *                 (...else_instrs...)))
+ *            (...else_instrs...)))
+ *       (...else_instrs))
+ */
+void
+loop_unroll_visitor::complex_unroll(ir_loop *ir, int iterations,
+                                    bool continue_from_then_branch)
+{
+   void *const mem_ctx = ralloc_parent(ir);
+   ir_instruction *ir_to_replace = ir;
+
+   for (int i = 0; i < iterations; i++) {
+      exec_list copy_list;
+
+      copy_list.make_empty();
+      clone_ir_list(mem_ctx, &copy_list, &ir->body_instructions);
+
+      ir_if *ir_if = ((ir_instruction *) copy_list.get_tail())->as_if();
+      assert(ir_if != NULL);
+
+      ir_to_replace->insert_before(&copy_list);
+      ir_to_replace->remove();
+
+      /* placeholder that will be removed in the next iteration */
+      ir_to_replace =
+         new(mem_ctx) ir_loop_jump(ir_loop_jump::jump_continue);
+
+      exec_list *const list = (continue_from_then_branch)
+         ? &ir_if->then_instructions : &ir_if->else_instructions;
+
+      list->push_tail(ir_to_replace);
+   }
+
+   ir_to_replace->remove();
+
+   this->progress = true;
+}
+
+
+/**
+ * Move all of the instructions which follow \c ir_if to the end of
+ * \c splice_dest.
+ *
+ * For example, in the code snippet:
+ *
+ *     (if (cond)
+ *         (...then_instructions...
+ *          break)
+ *       (...else_instructions...))
+ *     ...post_if_instructions...
+ *
+ * If \c ir_if points to the "if" instruction, and \c splice_dest points to
+ * (...else_instructions...), the code snippet is transformed into:
+ *
+ *     (if (cond)
+ *         (...then_instructions...
+ *          break)
+ *       (...else_instructions...
+ *        ...post_if_instructions...))
+ */
+void
+loop_unroll_visitor::splice_post_if_instructions(ir_if *ir_if,
+                                                 exec_list *splice_dest)
+{
+   while (!ir_if->get_next()->is_tail_sentinel()) {
+      ir_instruction *move_ir = (ir_instruction *) ir_if->get_next();
+
+      move_ir->remove();
+      splice_dest->push_tail(move_ir);
+   }
+}
+
+
 ir_visitor_status
 loop_unroll_visitor::visit_leave(ir_loop *ir)
 {
@@ -122,125 +258,65 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 
    if (ls->num_loop_jumps > 1)
       return visit_continue;
-   else if (ls->num_loop_jumps) {
-      ir_instruction *last_ir = (ir_instruction *) ir->body_instructions.get_tail();
-      assert(last_ir != NULL);
 
-      if (is_break(last_ir)) {
-         /* If the only loop-jump is a break at the end of the loop, the loop
-          * will execute exactly once.  Remove the break, set the iteration
-          * count, and fall through to the normal unroller.
+   if (ls->num_loop_jumps == 0) {
+      simple_unroll(ir, iterations);
+      return visit_continue;
+   }
+
+   ir_instruction *last_ir = (ir_instruction *) ir->body_instructions.get_tail();
+   assert(last_ir != NULL);
+
+   if (is_break(last_ir)) {
+      /* If the only loop-jump is a break at the end of the loop, the loop
+       * will execute exactly once.  Remove the break and use the simple
+       * unroller with an iteration count of 1.
+       */
+      last_ir->remove();
+
+      simple_unroll(ir, 1);
+      return visit_continue;
+   }
+
+   foreach_list(node, &ir->body_instructions) {
+      /* recognize loops in the form produced by ir_lower_jumps */
+      ir_instruction *cur_ir = (ir_instruction *) node;
+
+      ir_if *ir_if = cur_ir->as_if();
+      if (ir_if != NULL) {
+         /* Determine which if-statement branch, if any, ends with a
+          * break.  The branch that did *not* have the break will get a
+          * temporary continue inserted in each iteration of the loop
+          * unroll.
+          *
+          * Note that since ls->num_loop_jumps is <= 1, it is impossible
+          * for both branches to end with a break.
           */
-         last_ir->remove();
-         iterations = 1;
+         ir_instruction *ir_if_last =
+            (ir_instruction *) ir_if->then_instructions.get_tail();
 
-         this->progress = true;
-      } else {
-         ir_if *ir_if = NULL;
-         ir_instruction *break_ir = NULL;
-         bool continue_from_then_branch = false;
+         if (is_break(ir_if_last)) {
+            splice_post_if_instructions(ir_if, &ir_if->else_instructions);
+            ir_if_last->remove();
+            complex_unroll(ir, iterations, false);
+            return visit_continue;
+         } else {
+            ir_if_last =
+               (ir_instruction *) ir_if->else_instructions.get_tail();
 
-         foreach_list(node, &ir->body_instructions) {
-            /* recognize loops in the form produced by ir_lower_jumps */
-            ir_instruction *cur_ir = (ir_instruction *) node;
-
-            ir_if = cur_ir->as_if();
-            if (ir_if != NULL) {
-	       /* Determine which if-statement branch, if any, ends with a
-		* break.  The branch that did *not* have the break will get a
-		* temporary continue inserted in each iteration of the loop
-		* unroll.
-		*
-		* Note that since ls->num_loop_jumps is <= 1, it is impossible
-		* for both branches to end with a break.
-		*/
-               ir_instruction *ir_if_last =
-                  (ir_instruction *) ir_if->then_instructions.get_tail();
-
-               if (is_break(ir_if_last)) {
-                  continue_from_then_branch = false;
-                  break_ir = ir_if_last;
-                  break;
-               } else {
-                  ir_if_last =
-		     (ir_instruction *) ir_if->else_instructions.get_tail();
-
-                  if (is_break(ir_if_last)) {
-                     break_ir = ir_if_last;
-                     continue_from_then_branch = true;
-                     break;
-                  }
-               }
+            if (is_break(ir_if_last)) {
+               splice_post_if_instructions(ir_if, &ir_if->then_instructions);
+               ir_if_last->remove();
+               complex_unroll(ir, iterations, true);
+               return visit_continue;
             }
          }
-
-         if (break_ir == NULL)
-            return visit_continue;
-
-         /* move instructions after then if in the continue branch */
-         while (!ir_if->get_next()->is_tail_sentinel()) {
-            ir_instruction *move_ir = (ir_instruction *) ir_if->get_next();
-
-            move_ir->remove();
-            if (continue_from_then_branch)
-               ir_if->then_instructions.push_tail(move_ir);
-            else
-               ir_if->else_instructions.push_tail(move_ir);
-         }
-
-         /* Remove the break from the if-statement.
-          */
-         break_ir->remove();
-
-         void *const mem_ctx = ralloc_parent(ir);
-         ir_instruction *ir_to_replace = ir;
-
-         for (int i = 0; i < iterations; i++) {
-            exec_list copy_list;
-
-            copy_list.make_empty();
-            clone_ir_list(mem_ctx, &copy_list, &ir->body_instructions);
-
-            ir_if = ((ir_instruction *) copy_list.get_tail())->as_if();
-            assert(ir_if != NULL);
-
-            ir_to_replace->insert_before(&copy_list);
-            ir_to_replace->remove();
-
-            /* placeholder that will be removed in the next iteration */
-            ir_to_replace =
-	       new(mem_ctx) ir_loop_jump(ir_loop_jump::jump_continue);
-
-            exec_list *const list = (continue_from_then_branch)
-               ? &ir_if->then_instructions : &ir_if->else_instructions;
-
-            list->push_tail(ir_to_replace);
-         }
-
-         ir_to_replace->remove();
-
-         this->progress = true;
-         return visit_continue;
       }
    }
 
-   void *const mem_ctx = ralloc_parent(ir);
-
-   for (int i = 0; i < iterations; i++) {
-      exec_list copy_list;
-
-      copy_list.make_empty();
-      clone_ir_list(mem_ctx, &copy_list, &ir->body_instructions);
-
-      ir->insert_before(&copy_list);
-   }
-
-   /* The loop has been replaced by the unrolled copies.  Remove the original
-    * loop from the IR sequence.
+   /* Did not find the break statement.  It must be in a complex if-nesting,
+    * so don't try to unroll.
     */
-   ir->remove();
-
-   this->progress = true;
    return visit_continue;
 }
 
