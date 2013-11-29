@@ -86,6 +86,13 @@ protected:
       brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    }
 
+   inline void emit_and(const struct brw_reg& dst,
+                        const struct brw_reg& src1,
+                        const struct brw_reg& src2)
+   {
+      brw_AND(&func, dst, src1, src2);
+   }
+
    void *mem_ctx;
    struct brw_compile func;
 };

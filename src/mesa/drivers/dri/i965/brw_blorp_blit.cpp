@@ -1086,7 +1086,7 @@ brw_blorp_blit_program::compute_frag_coords()
          struct brw_reg t1_ud1 = vec1(retype(t1, BRW_REGISTER_TYPE_UD));
          struct brw_reg t2_uw1 = retype(t2, BRW_REGISTER_TYPE_UW);
          struct brw_reg r0_ud1 = vec1(retype(R0, BRW_REGISTER_TYPE_UD));
-         brw_AND(&func, t1_ud1, r0_ud1, brw_imm_ud(0xc0));
+         emit_and(t1_ud1, r0_ud1, brw_imm_ud(0xc0));
          brw_SHR(&func, t1_ud1, t1_ud1, brw_imm_ud(5));
          emit_mov(vec16(t2_uw1), brw_imm_v(0x3210));
          brw_ADD(&func, vec16(S), retype(t1_ud1, BRW_REGISTER_TYPE_UW),
@@ -1165,19 +1165,19 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
        *   X' = (X & ~0b1011) >> 1 | (Y & 0b1) << 2 | X & 0b1         (4)
        *   Y' = (Y & ~0b1) << 1 | (X & 0b1000) >> 2 | (X & 0b10) >> 1
        */
-      brw_AND(&func, t1, X, brw_imm_uw(0xfff4)); /* X & ~0b1011 */
+      emit_and(t1, X, brw_imm_uw(0xfff4)); /* X & ~0b1011 */
       brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b1011) >> 1 */
-      brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
+      emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
       brw_SHL(&func, t2, t2, brw_imm_uw(2)); /* (Y & 0b1) << 2 */
       brw_OR(&func, t1, t1, t2); /* (X & ~0b1011) >> 1 | (Y & 0b1) << 2 */
-      brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+      emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
       brw_OR(&func, Xp, t1, t2);
-      brw_AND(&func, t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
+      emit_and(t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
       brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
-      brw_AND(&func, t2, X, brw_imm_uw(8)); /* X & 0b1000 */
+      emit_and(t2, X, brw_imm_uw(8)); /* X & 0b1000 */
       brw_SHR(&func, t2, t2, brw_imm_uw(2)); /* (X & 0b1000) >> 2 */
       brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (X & 0b1000) >> 2 */
-      brw_AND(&func, t2, X, brw_imm_uw(2)); /* X & 0b10 */
+      emit_and(t2, X, brw_imm_uw(2)); /* X & 0b10 */
       brw_SHR(&func, t2, t2, brw_imm_uw(1)); /* (X & 0b10) >> 1 */
       brw_OR(&func, Yp, t1, t2);
       SWAP_XY_AND_XPYP();
@@ -1188,20 +1188,20 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
        * X' = (X & ~0b101) << 1 | (Y & 0b10) << 2 | (Y & 0b1) << 1 | X & 0b1
        * Y' = (Y & ~0b11) >> 1 | (X & 0b100) >> 2
        */
-      brw_AND(&func, t1, X, brw_imm_uw(0xfffa)); /* X & ~0b101 */
+      emit_and(t1, X, brw_imm_uw(0xfffa)); /* X & ~0b101 */
       brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b101) << 1 */
-      brw_AND(&func, t2, Y, brw_imm_uw(2)); /* Y & 0b10 */
+      emit_and(t2, Y, brw_imm_uw(2)); /* Y & 0b10 */
       brw_SHL(&func, t2, t2, brw_imm_uw(2)); /* (Y & 0b10) << 2 */
       brw_OR(&func, t1, t1, t2); /* (X & ~0b101) << 1 | (Y & 0b10) << 2 */
-      brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
+      emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
       brw_SHL(&func, t2, t2, brw_imm_uw(1)); /* (Y & 0b1) << 1 */
       brw_OR(&func, t1, t1, t2); /* (X & ~0b101) << 1 | (Y & 0b10) << 2
                                     | (Y & 0b1) << 1 */
-      brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+      emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
       brw_OR(&func, Xp, t1, t2);
-      brw_AND(&func, t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
+      emit_and(t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
       brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b11) >> 1 */
-      brw_AND(&func, t2, X, brw_imm_uw(4)); /* X & 0b100 */
+      emit_and(t2, X, brw_imm_uw(4)); /* X & 0b100 */
       brw_SHR(&func, t2, t2, brw_imm_uw(2)); /* (X & 0b100) >> 2 */
       brw_OR(&func, Yp, t1, t2);
       SWAP_XY_AND_XPYP();
@@ -1243,22 +1243,22 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples,
           *   where X' = (X & ~0b1) << 1 | (S & 0b1) << 1 | (X & 0b1)
           *         Y' = (Y & ~0b1) << 1 | (S & 0b10) | (Y & 0b1)
           */
-         brw_AND(&func, t1, X, brw_imm_uw(0xfffe)); /* X & ~0b1 */
+         emit_and(t1, X, brw_imm_uw(0xfffe)); /* X & ~0b1 */
          if (!s_is_zero) {
-            brw_AND(&func, t2, S, brw_imm_uw(1)); /* S & 0b1 */
+            emit_and(t2, S, brw_imm_uw(1)); /* S & 0b1 */
             brw_OR(&func, t1, t1, t2); /* (X & ~0b1) | (S & 0b1) */
          }
          brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b1) << 1
                                                    | (S & 0b1) << 1 */
-         brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+         emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
          brw_OR(&func, Xp, t1, t2);
-         brw_AND(&func, t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
+         emit_and(t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
          brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
          if (!s_is_zero) {
-            brw_AND(&func, t2, S, brw_imm_uw(2)); /* S & 0b10 */
+            emit_and(t2, S, brw_imm_uw(2)); /* S & 0b10 */
             brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
          }
-         brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
+         emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
          brw_OR(&func, Yp, t1, t2);
          break;
       case 8:
@@ -1267,25 +1267,25 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples,
           *              | (X & 0b1)
           *         Y' = (Y & ~0b1) << 1 | (S & 0b10) | (Y & 0b1)
           */
-         brw_AND(&func, t1, X, brw_imm_uw(0xfffe)); /* X & ~0b1 */
+         emit_and(t1, X, brw_imm_uw(0xfffe)); /* X & ~0b1 */
          brw_SHL(&func, t1, t1, brw_imm_uw(2)); /* (X & ~0b1) << 2 */
          if (!s_is_zero) {
-            brw_AND(&func, t2, S, brw_imm_uw(4)); /* S & 0b100 */
+            emit_and(t2, S, brw_imm_uw(4)); /* S & 0b100 */
             brw_OR(&func, t1, t1, t2); /* (X & ~0b1) << 2 | (S & 0b100) */
-            brw_AND(&func, t2, S, brw_imm_uw(1)); /* S & 0b1 */
+            emit_and(t2, S, brw_imm_uw(1)); /* S & 0b1 */
             brw_SHL(&func, t2, t2, brw_imm_uw(1)); /* (S & 0b1) << 1 */
             brw_OR(&func, t1, t1, t2); /* (X & ~0b1) << 2 | (S & 0b100)
                                           | (S & 0b1) << 1 */
          }
-         brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+         emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
          brw_OR(&func, Xp, t1, t2);
-         brw_AND(&func, t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
+         emit_and(t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
          brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
          if (!s_is_zero) {
-            brw_AND(&func, t2, S, brw_imm_uw(2)); /* S & 0b10 */
+            emit_and(t2, S, brw_imm_uw(2)); /* S & 0b10 */
             brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
          }
-         brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
+         emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
          brw_OR(&func, Yp, t1, t2);
          break;
       }
@@ -1332,16 +1332,16 @@ brw_blorp_blit_program::decode_msaa(unsigned num_samples,
           *         Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
           *         S = (Y & 0b10) | (X & 0b10) >> 1
           */
-         brw_AND(&func, t1, X, brw_imm_uw(0xfffc)); /* X & ~0b11 */
+         emit_and(t1, X, brw_imm_uw(0xfffc)); /* X & ~0b11 */
          brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b11) >> 1 */
-         brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+         emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
          brw_OR(&func, Xp, t1, t2);
-         brw_AND(&func, t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
+         emit_and(t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
          brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b11) >> 1 */
-         brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
+         emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
          brw_OR(&func, Yp, t1, t2);
-         brw_AND(&func, t1, Y, brw_imm_uw(2)); /* Y & 0b10 */
-         brw_AND(&func, t2, X, brw_imm_uw(2)); /* X & 0b10 */
+         emit_and(t1, Y, brw_imm_uw(2)); /* Y & 0b10 */
+         emit_and(t2, X, brw_imm_uw(2)); /* X & 0b10 */
          brw_SHR(&func, t2, t2, brw_imm_uw(1)); /* (X & 0b10) >> 1 */
          brw_OR(&func, S, t1, t2);
          break;
@@ -1351,18 +1351,18 @@ brw_blorp_blit_program::decode_msaa(unsigned num_samples,
           *         Y' = (Y & ~0b11) >> 1 | (Y & 0b1)
           *         S = (X & 0b100) | (Y & 0b10) | (X & 0b10) >> 1
           */
-         brw_AND(&func, t1, X, brw_imm_uw(0xfff8)); /* X & ~0b111 */
+         emit_and(t1, X, brw_imm_uw(0xfff8)); /* X & ~0b111 */
          brw_SHR(&func, t1, t1, brw_imm_uw(2)); /* (X & ~0b111) >> 2 */
-         brw_AND(&func, t2, X, brw_imm_uw(1)); /* X & 0b1 */
+         emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
          brw_OR(&func, Xp, t1, t2);
-         brw_AND(&func, t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
+         emit_and(t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
          brw_SHR(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b11) >> 1 */
-         brw_AND(&func, t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
+         emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
          brw_OR(&func, Yp, t1, t2);
-         brw_AND(&func, t1, X, brw_imm_uw(4)); /* X & 0b100 */
-         brw_AND(&func, t2, Y, brw_imm_uw(2)); /* Y & 0b10 */
+         emit_and(t1, X, brw_imm_uw(4)); /* X & 0b100 */
+         emit_and(t2, Y, brw_imm_uw(2)); /* Y & 0b10 */
          brw_OR(&func, t1, t1, t2); /* (X & 0b100) | (Y & 0b10) */
-         brw_AND(&func, t2, X, brw_imm_uw(2)); /* X & 0b10 */
+         emit_and(t2, X, brw_imm_uw(2)); /* X & 0b10 */
          brw_SHR(&func, t2, t2, brw_imm_uw(1)); /* (X & 0b10) >> 1 */
          brw_OR(&func, S, t1, t2);
          break;
