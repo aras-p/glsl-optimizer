@@ -143,6 +143,12 @@ protected:
       brw_FRC(&func, dst, src);
    }
 
+   inline void emit_rndd(const struct brw_reg& dst,
+                         const struct brw_reg& src)
+   {
+      brw_RNDD(&func, dst, src);
+   }
+
    void *mem_ctx;
    struct brw_compile func;
 };

@@ -1417,8 +1417,8 @@ brw_blorp_blit_program::translate_dst_to_src()
       emit_frc(y_frac, Y_f);
 
       /* Round the float coordinates down to nearest integer */
-      brw_RNDD(&func, Xp_f, X_f);
-      brw_RNDD(&func, Yp_f, Y_f);
+      emit_rndd(Xp_f, X_f);
+      emit_rndd(Yp_f, Y_f);
       emit_mul(X_f, Xp_f, brw_imm_f(1 / key->x_scale));
       emit_mul(Y_f, Yp_f, brw_imm_f(1 / key->y_scale));
       SWAP_XY_AND_XPYP();
