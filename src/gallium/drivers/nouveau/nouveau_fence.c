@@ -189,16 +189,15 @@ nouveau_fence_wait(struct nouveau_fence *fence)
    /* wtf, someone is waiting on a fence in flush_notify handler? */
    assert(fence->state != NOUVEAU_FENCE_STATE_EMITTING);
 
-   if (fence->state < NOUVEAU_FENCE_STATE_EMITTED) {
+   if (fence->state < NOUVEAU_FENCE_STATE_EMITTED)
       nouveau_fence_emit(fence);
 
-      if (fence == screen->fence.current)
-         nouveau_fence_new(screen, &screen->fence.current, FALSE);
-   }
-   if (fence->state < NOUVEAU_FENCE_STATE_FLUSHED) {
+   if (fence->state < NOUVEAU_FENCE_STATE_FLUSHED)
       if (nouveau_pushbuf_kick(screen->pushbuf, screen->pushbuf->channel))
          return FALSE;
-   }
+
+   if (fence == screen->fence.current)
+      nouveau_fence_next(screen);
 
    do {
       nouveau_fence_update(screen, FALSE);
