@@ -90,7 +90,8 @@ ast_type_qualifier::has_storage() const
 bool
 ast_type_qualifier::has_auxiliary_storage() const
 {
-   return this->flags.q.centroid;
+   return this->flags.q.centroid
+          || this->flags.q.sample;
 }
 
 const char*

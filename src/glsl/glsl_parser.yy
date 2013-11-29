@@ -1521,7 +1521,7 @@ type_qualifier:
    {
       if ($2.has_auxiliary_storage()) {
          _mesa_glsl_error(&@1, state,
-                          "duplicate auxiliary storage qualifier (centroid)");
+                          "duplicate auxiliary storage qualifier (centroid or sample)");
       }
 
       if (!state->ARB_shading_language_420pack_enable &&
@@ -1571,7 +1571,12 @@ auxiliary_storage_qualifier:
       memset(& $$, 0, sizeof($$));
       $$.flags.q.centroid = 1;
    }
-   /* TODO: "sample" and "patch" also go here someday. */
+   | SAMPLE
+   {
+      memset(& $$, 0, sizeof($$));
+      $$.flags.q.sample = 1;
+   }
+   /* TODO: "patch" also goes here someday. */
 
 storage_qualifier:
    CONST_TOK
