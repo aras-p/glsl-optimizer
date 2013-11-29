@@ -887,7 +887,7 @@ varying_matches::compute_packing_class(ir_variable *var)
     *
     * Therefore, the packing class depends only on the interpolation type.
     */
-   unsigned packing_class = var->centroid ? 1 : 0;
+   unsigned packing_class = var->centroid | (var->sample << 1);
    packing_class *= 4;
    packing_class += var->interpolation;
    return packing_class;
