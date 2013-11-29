@@ -529,6 +529,7 @@ public:
     */
    unsigned read_only:1;
    unsigned centroid:1;
+   unsigned sample:1;
    unsigned invariant:1;
 
    /**

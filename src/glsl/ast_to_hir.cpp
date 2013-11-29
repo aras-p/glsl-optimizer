@@ -2180,6 +2180,9 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    if (qual->flags.q.centroid)
       var->centroid = 1;
 
+   if (qual->flags.q.sample)
+      var->sample = 1;
+
    if (qual->flags.q.attribute && state->target != vertex_shader) {
       var->type = glsl_type::error_type;
       _mesa_glsl_error(loc, state,
@@ -3275,6 +3278,14 @@ ast_declarator_list::hir(exec_list *instructions,
 
          _mesa_glsl_error(&loc, state,
                           "'centroid in' cannot be used in a vertex shader");
+      }
+
+      if (state->target == vertex_shader
+          && this->type->qualifier.flags.q.sample
+          && this->type->qualifier.flags.q.in) {
+
+         _mesa_glsl_error(&loc, state,
+                        "'sample in' cannot be used in a vertex shader");
       }
 
       /* Section 4.3.6 of the GLSL 1.30 specification states:
@@ -4662,6 +4673,7 @@ ast_process_structure_or_interface_block(exec_list *instructions,
          fields[i].interpolation =
             interpret_interpolation_qualifier(qual, var_mode, state, &loc);
          fields[i].centroid = qual->flags.q.centroid ? 1 : 0;
+         fields[i].sample = qual->flags.q.sample ? 1 : 0;
 
          if (qual->flags.q.row_major || qual->flags.q.column_major) {
             if (!qual->flags.q.uniform) {
@@ -4930,6 +4942,8 @@ ast_interface_block::hir(exec_list *instructions,
                earlier_per_vertex->fields.structure[j].interpolation;
             fields[i].centroid =
                earlier_per_vertex->fields.structure[j].centroid;
+            fields[i].sample =
+               earlier_per_vertex->fields.structure[j].sample;
          }
       }
 
@@ -5084,6 +5098,7 @@ ast_interface_block::hir(exec_list *instructions,
                                    var_mode);
          var->interpolation = fields[i].interpolation;
          var->centroid = fields[i].centroid;
+         var->sample = fields[i].sample;
          var->init_interface_type(block_type);
 
          if (redeclaring_per_vertex) {

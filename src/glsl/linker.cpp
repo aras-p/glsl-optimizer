@@ -765,6 +765,12 @@ cross_validate_globals(struct gl_shader_program *prog,
 			    mode_string(var), var->name);
                return;
             }
+            if (existing->sample != var->sample) {
+               linker_error(prog, "declarations for %s `%s` have "
+                            "mismatching sample qualifiers\n",
+                            mode_string(var), var->name);
+               return;
+            }
 	 } else
 	    variables.add_variable(var);
       }

@@ -1585,7 +1585,7 @@ ir_swizzle::variable_referenced() const
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode)
    : max_array_access(0), max_ifc_array_access(NULL),
-     read_only(false), centroid(false), invariant(false),
+     read_only(false), centroid(false), sample(false), invariant(false),
      how_declared(ir_var_declared_normally), mode(mode),
      interpolation(INTERP_QUALIFIER_NONE), atomic()
 {
@@ -1709,7 +1709,8 @@ ir_function_signature::qualifiers_match(exec_list *params)
       if (a->read_only != b->read_only ||
 	  !modes_match(a->mode, b->mode) ||
 	  a->interpolation != b->interpolation ||
-	  a->centroid != b->centroid) {
+	  a->centroid != b->centroid ||
+         a->sample != b->sample) {
 
 	 /* parameter a's qualifiers don't match */
 	 return a->name;

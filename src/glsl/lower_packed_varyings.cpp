@@ -565,6 +565,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
          packed_var->max_array_access = this->gs_input_vertices - 1;
       }
       packed_var->centroid = unpacked_var->centroid;
+      packed_var->sample = unpacked_var->sample;
       packed_var->interpolation = unpacked_var->interpolation;
       packed_var->location = location;
       unpacked_var->insert_before(packed_var);

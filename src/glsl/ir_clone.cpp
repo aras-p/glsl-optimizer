@@ -52,6 +52,7 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    }
    var->read_only = this->read_only;
    var->centroid = this->centroid;
+   var->sample = this->sample;
    var->invariant = this->invariant;
    var->interpolation = this->interpolation;
    var->location = this->location;

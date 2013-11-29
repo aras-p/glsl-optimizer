@@ -149,6 +149,7 @@ void ir_print_visitor::visit(ir_variable *ir)
    printf("(declare ");
 
    const char *const cent = (ir->centroid) ? "centroid " : "";
+   const char *const samp = (ir->sample) ? "sample " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
    const char *const mode[] = { "", "uniform ", "shader_in ", "shader_out ",
                                 "in ", "out ", "inout ",
@@ -157,8 +158,8 @@ void ir_print_visitor::visit(ir_variable *ir)
    const char *const interp[] = { "", "smooth", "flat", "noperspective" };
    STATIC_ASSERT(ARRAY_SIZE(interp) == INTERP_QUALIFIER_COUNT);
 
-   printf("(%s%s%s%s) ",
-	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
+   printf("(%s%s%s%s%s) ",
+	  cent, samp, inv, mode[ir->mode], interp[ir->interpolation]);
 
    print_type(ir->type);
    printf(" %s)", unique_name(ir));

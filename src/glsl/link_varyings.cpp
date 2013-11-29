@@ -105,6 +105,18 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
       return;
    }
 
+   if (input->sample != output->sample) {
+      linker_error(prog,
+                   "%s shader output `%s' %s sample qualifier, "
+                   "but %s shader input %s sample qualifier\n",
+                   _mesa_glsl_shader_target_name(producer_type),
+                   output->name,
+                   (output->sample) ? "has" : "lacks",
+                   _mesa_glsl_shader_target_name(consumer_type),
+                   (input->sample) ? "has" : "lacks");
+      return;
+   }
+
    if (input->invariant != output->invariant) {
       linker_error(prog,
                    "%s shader output `%s' %s invariant qualifier, "
@@ -753,10 +765,12 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
        * requirement by changing the interpolation type to flat here.
        */
       producer_var->centroid = false;
+      producer_var->sample = false;
       producer_var->interpolation = INTERP_QUALIFIER_FLAT;
 
       if (consumer_var) {
          consumer_var->centroid = false;
+         consumer_var->sample = false;
          consumer_var->interpolation = INTERP_QUALIFIER_FLAT;
       }
    }
