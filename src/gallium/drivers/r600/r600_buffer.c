@@ -39,29 +39,6 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 	FREE(rbuffer);
 }
 
-static void r600_set_constants_dirty_if_bound(struct r600_context *rctx,
-					      struct r600_resource *rbuffer)
-{
-	unsigned shader;
-
-	for (shader = 0; shader < PIPE_SHADER_TYPES; shader++) {
-		struct r600_constbuf_state *state = &rctx->constbuf_state[shader];
-		bool found = false;
-		uint32_t mask = state->enabled_mask;
-
-		while (mask) {
-			unsigned i = u_bit_scan(&mask);
-			if (state->cb[i].buffer == &rbuffer->b.b) {
-				found = true;
-				state->dirty_mask |= 1 << i;
-			}
-		}
-		if (found) {
-			r600_constant_buffers_dirty(rctx, state);
-		}
-	}
-}
-
 static void *r600_buffer_get_transfer(struct pipe_context *ctx,
 				      struct pipe_resource *resource,
                                       unsigned level,
@@ -114,38 +91,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 		/* Check if mapping this buffer would cause waiting for the GPU. */
 		if (r600_rings_is_buffer_referenced(&rctx->b, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
 		    rctx->b.ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
-			unsigned i, mask;
-
-			/* Discard the buffer. */
-			pb_reference(&rbuffer->buf, NULL);
-
-			/* Create a new one in the same pipe_resource. */
-			/* XXX We probably want a different alignment for buffers and textures. */
-			r600_init_resource(&rctx->screen->b, rbuffer, rbuffer->b.b.width0, 4096,
-					   TRUE, rbuffer->b.b.usage);
-
-			/* We changed the buffer, now we need to bind it where the old one was bound. */
-			/* Vertex buffers. */
-			mask = rctx->vertex_buffer_state.enabled_mask;
-			while (mask) {
-				i = u_bit_scan(&mask);
-				if (rctx->vertex_buffer_state.vb[i].buffer == &rbuffer->b.b) {
-					rctx->vertex_buffer_state.dirty_mask |= 1 << i;
-					r600_vertex_buffers_dirty(rctx);
-				}
-			}
-			/* Streamout buffers. */
-			for (i = 0; i < rctx->b.streamout.num_targets; i++) {
-				if (rctx->b.streamout.targets[i]->b.buffer == &rbuffer->b.b) {
-					if (rctx->b.streamout.begin_emitted) {
-						r600_emit_streamout_end(&rctx->b);
-					}
-					rctx->b.streamout.append_bitmask = rctx->b.streamout.enabled_mask;
-					r600_streamout_buffers_dirty(&rctx->b);
-				}
-			}
-			/* Constant buffers. */
-			r600_set_constants_dirty_if_bound(rctx, rbuffer);
+			r600_invalidate_buffer(&rctx->b.b, &rbuffer->b.b);
 		}
 	}
 	else if ((usage & PIPE_TRANSFER_DISCARD_RANGE) &&

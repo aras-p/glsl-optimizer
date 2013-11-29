@@ -2072,6 +2072,61 @@ out_unknown:
 	return ~0;
 }
 
+void r600_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource *buf)
+{
+	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct r600_resource *rbuffer = r600_resource(buf);
+	unsigned i, shader, mask, alignment = rbuffer->buf->alignment;
+
+	/* Discard the buffer. */
+	pb_reference(&rbuffer->buf, NULL);
+
+	/* Create a new one in the same pipe_resource. */
+	r600_init_resource(&rctx->screen->b, rbuffer, rbuffer->b.b.width0, alignment,
+			   TRUE, rbuffer->b.b.usage);
+
+	/* We changed the buffer, now we need to bind it where the old one was bound. */
+	/* Vertex buffers. */
+	mask = rctx->vertex_buffer_state.enabled_mask;
+	while (mask) {
+		i = u_bit_scan(&mask);
+		if (rctx->vertex_buffer_state.vb[i].buffer == &rbuffer->b.b) {
+			rctx->vertex_buffer_state.dirty_mask |= 1 << i;
+			r600_vertex_buffers_dirty(rctx);
+		}
+	}
+	/* Streamout buffers. */
+	for (i = 0; i < rctx->b.streamout.num_targets; i++) {
+		if (rctx->b.streamout.targets[i]->b.buffer == &rbuffer->b.b) {
+			if (rctx->b.streamout.begin_emitted) {
+				r600_emit_streamout_end(&rctx->b);
+			}
+			rctx->b.streamout.append_bitmask = rctx->b.streamout.enabled_mask;
+			r600_streamout_buffers_dirty(&rctx->b);
+		}
+	}
+
+	/* Constant buffers. */
+	for (shader = 0; shader < PIPE_SHADER_TYPES; shader++) {
+		struct r600_constbuf_state *state = &rctx->constbuf_state[shader];
+		bool found = false;
+		uint32_t mask = state->enabled_mask;
+
+		while (mask) {
+			unsigned i = u_bit_scan(&mask);
+			if (state->cb[i].buffer == &rbuffer->b.b) {
+				found = true;
+				state->dirty_mask |= 1 << i;
+			}
+		}
+		if (found) {
+			r600_constant_buffers_dirty(rctx, state);
+		}
+	}
+
+	/* XXX TODO: texture buffer objects */
+}
+
 /* keep this at the end of this file, please */
 void r600_init_common_state_functions(struct r600_context *rctx)
 {
