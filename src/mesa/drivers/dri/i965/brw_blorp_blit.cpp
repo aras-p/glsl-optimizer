@@ -1387,16 +1387,16 @@ brw_blorp_blit_program::translate_dst_to_src()
    emit_mov(Xp_f, X);
    emit_mov(Yp_f, Y);
    /* Scale and offset */
-   brw_MUL(&func, X_f, Xp_f, x_transform.multiplier);
-   brw_MUL(&func, Y_f, Yp_f, y_transform.multiplier);
+   emit_mul(X_f, Xp_f, x_transform.multiplier);
+   emit_mul(Y_f, Yp_f, y_transform.multiplier);
    emit_add(X_f, X_f, x_transform.offset);
    emit_add(Y_f, Y_f, y_transform.offset);
    if (key->blit_scaled && key->blend) {
       /* Translate coordinates to lay out the samples in a rectangular  grid
        * roughly corresponding to sample locations.
        */
-      brw_MUL(&func, X_f, X_f, brw_imm_f(key->x_scale));
-      brw_MUL(&func, Y_f, Y_f, brw_imm_f(key->y_scale));
+      emit_mul(X_f, X_f, brw_imm_f(key->x_scale));
+      emit_mul(Y_f, Y_f, brw_imm_f(key->y_scale));
      /* Adjust coordinates so that integers represent pixel centers rather
       * than pixel edges.
       */
@@ -1419,8 +1419,8 @@ brw_blorp_blit_program::translate_dst_to_src()
       /* Round the float coordinates down to nearest integer */
       brw_RNDD(&func, Xp_f, X_f);
       brw_RNDD(&func, Yp_f, Y_f);
-      brw_MUL(&func, X_f, Xp_f, brw_imm_f(1 / key->x_scale));
-      brw_MUL(&func, Y_f, Yp_f, brw_imm_f(1 / key->y_scale));
+      emit_mul(X_f, Xp_f, brw_imm_f(1 / key->x_scale));
+      emit_mul(Y_f, Yp_f, brw_imm_f(1 / key->y_scale));
       SWAP_XY_AND_XPYP();
    } else if (!key->bilinear_filter) {
       /* Round the float coordinates down to nearest integer by moving to
@@ -1576,7 +1576,7 @@ brw_blorp_blit_program::manual_blend_average(unsigned num_samples)
       /* Scale the result down by a factor of num_samples */
       /* TODO: should use a smaller loop bound for non-RGBA formats */
       for (int j = 0; j < 4; ++j) {
-         brw_MUL(&func, offset(texture_data[0], 2*j),
+         emit_mul(offset(texture_data[0], 2*j),
                  offset(vec8(texture_data[0]), 2*j),
                  brw_imm_f(1.0/num_samples));
       }
@@ -1666,8 +1666,8 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
       */
       brw_FRC(&func, vec16(t1_f), x_sample_coords);
       brw_FRC(&func, vec16(t2_f), y_sample_coords);
-      brw_MUL(&func, vec16(t1_f), t1_f, brw_imm_f(key->x_scale));
-      brw_MUL(&func, vec16(t2_f), t2_f, brw_imm_f(key->x_scale * key->y_scale));
+      emit_mul(vec16(t1_f), t1_f, brw_imm_f(key->x_scale));
+      emit_mul(vec16(t2_f), t2_f, brw_imm_f(key->x_scale * key->y_scale));
       emit_add(vec16(t1_f), t1_f, t2_f);
       emit_mov(vec16(S), t1_f);
 
