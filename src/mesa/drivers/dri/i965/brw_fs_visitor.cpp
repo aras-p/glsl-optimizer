@@ -1239,7 +1239,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 fs_inst *
 fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_c, fs_reg lod, fs_reg lod2,
-                              fs_reg sample_index)
+                              fs_reg sample_index, fs_reg mcs)
 {
    int reg_width = dispatch_width / 8;
    bool header_present = false;
@@ -1338,11 +1338,8 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       emit(MOV(next.retype(BRW_REGISTER_TYPE_UD), sample_index));
       next.reg_offset++;
 
-      /* constant zero MCS; we arrange to never actually have a compressed
-       * multisample surface here for now. TODO: issue ld_mcs to get this first,
-       * if we ever support texturing from compressed multisample surfaces
-       */
-      emit(MOV(next.retype(BRW_REGISTER_TYPE_UD), fs_reg(0u)));
+      /* data from the multisample control surface */
+      emit(MOV(next.retype(BRW_REGISTER_TYPE_UD), mcs));
       next.reg_offset++;
 
       /* there is no offsetting for this message; just copy in the integer
@@ -1533,6 +1530,34 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
    return coordinate;
 }
 
+/* Sample from the MCS surface attached to this multisample texture. */
+fs_reg
+fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, int sampler)
+{
+   int reg_width = dispatch_width / 8;
+   fs_reg payload = fs_reg(this, glsl_type::float_type);
+   fs_reg dest = fs_reg(this, glsl_type::uvec4_type);
+   fs_reg next = payload;
+
+   /* parameters are: u, v, r, lod; missing parameters are treated as zero */
+   for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
+      emit(MOV(next.retype(BRW_REGISTER_TYPE_D), coordinate));
+      coordinate.reg_offset++;
+      next.reg_offset++;
+   }
+
+   fs_inst *inst = emit(SHADER_OPCODE_TXF_MCS, dest, payload);
+   inst->base_mrf = -1;
+   inst->mlen = next.reg_offset * reg_width;
+   inst->header_present = false;
+   inst->regs_written = 4 * reg_width; /* we only care about one reg of response,
+                                        * but the sampler always writes 4/8
+                                        */
+   inst->sampler = sampler;
+
+   return dest;
+}
+
 void
 fs_visitor::visit(ir_texture *ir)
 {
@@ -1591,7 +1616,7 @@ fs_visitor::visit(ir_texture *ir)
       shadow_comparitor = this->result;
    }
 
-   fs_reg lod, lod2, sample_index;
+   fs_reg lod, lod2, sample_index, mcs;
    switch (ir->op) {
    case ir_tex:
    case ir_lod:
@@ -1618,6 +1643,11 @@ fs_visitor::visit(ir_texture *ir)
    case ir_txf_ms:
       ir->lod_info.sample_index->accept(this);
       sample_index = this->result;
+
+      if (brw->gen >= 7 && c->key.tex.compressed_multisample_layout_mask & (1<<sampler))
+         mcs = emit_mcs_fetch(ir, coordinate, sampler);
+      else
+         mcs = fs_reg(0u);
       break;
    default:
       assert(!"Unrecognized texture opcode");
@@ -1630,7 +1660,7 @@ fs_visitor::visit(ir_texture *ir)
 
    if (brw->gen >= 7) {
       inst = emit_texture_gen7(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2, sample_index);
+                               lod, lod2, sample_index, mcs);
    } else if (brw->gen >= 5) {
       inst = emit_texture_gen5(ir, dst, coordinate, shadow_comparitor,
                                lod, lod2, sample_index);
