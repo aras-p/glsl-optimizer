@@ -1166,12 +1166,12 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
       emit_and(t1, X, brw_imm_uw(0xfff4)); /* X & ~0b1011 */
       emit_shr(t1, t1, brw_imm_uw(1)); /* (X & ~0b1011) >> 1 */
       emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
-      brw_SHL(&func, t2, t2, brw_imm_uw(2)); /* (Y & 0b1) << 2 */
+      emit_shl(t2, t2, brw_imm_uw(2)); /* (Y & 0b1) << 2 */
       brw_OR(&func, t1, t1, t2); /* (X & ~0b1011) >> 1 | (Y & 0b1) << 2 */
       emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
       brw_OR(&func, Xp, t1, t2);
       emit_and(t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
-      brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
+      emit_shl(t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
       emit_and(t2, X, brw_imm_uw(8)); /* X & 0b1000 */
       emit_shr(t2, t2, brw_imm_uw(2)); /* (X & 0b1000) >> 2 */
       brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (X & 0b1000) >> 2 */
@@ -1187,12 +1187,12 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
        * Y' = (Y & ~0b11) >> 1 | (X & 0b100) >> 2
        */
       emit_and(t1, X, brw_imm_uw(0xfffa)); /* X & ~0b101 */
-      brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b101) << 1 */
+      emit_shl(t1, t1, brw_imm_uw(1)); /* (X & ~0b101) << 1 */
       emit_and(t2, Y, brw_imm_uw(2)); /* Y & 0b10 */
-      brw_SHL(&func, t2, t2, brw_imm_uw(2)); /* (Y & 0b10) << 2 */
+      emit_shl(t2, t2, brw_imm_uw(2)); /* (Y & 0b10) << 2 */
       brw_OR(&func, t1, t1, t2); /* (X & ~0b101) << 1 | (Y & 0b10) << 2 */
       emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
-      brw_SHL(&func, t2, t2, brw_imm_uw(1)); /* (Y & 0b1) << 1 */
+      emit_shl(t2, t2, brw_imm_uw(1)); /* (Y & 0b1) << 1 */
       brw_OR(&func, t1, t1, t2); /* (X & ~0b101) << 1 | (Y & 0b10) << 2
                                     | (Y & 0b1) << 1 */
       emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
@@ -1246,12 +1246,12 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples,
             emit_and(t2, S, brw_imm_uw(1)); /* S & 0b1 */
             brw_OR(&func, t1, t1, t2); /* (X & ~0b1) | (S & 0b1) */
          }
-         brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (X & ~0b1) << 1
+         emit_shl(t1, t1, brw_imm_uw(1)); /* (X & ~0b1) << 1
                                                    | (S & 0b1) << 1 */
          emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
          brw_OR(&func, Xp, t1, t2);
          emit_and(t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
-         brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
+         emit_shl(t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
          if (!s_is_zero) {
             emit_and(t2, S, brw_imm_uw(2)); /* S & 0b10 */
             brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
@@ -1266,19 +1266,19 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples,
           *         Y' = (Y & ~0b1) << 1 | (S & 0b10) | (Y & 0b1)
           */
          emit_and(t1, X, brw_imm_uw(0xfffe)); /* X & ~0b1 */
-         brw_SHL(&func, t1, t1, brw_imm_uw(2)); /* (X & ~0b1) << 2 */
+         emit_shl(t1, t1, brw_imm_uw(2)); /* (X & ~0b1) << 2 */
          if (!s_is_zero) {
             emit_and(t2, S, brw_imm_uw(4)); /* S & 0b100 */
             brw_OR(&func, t1, t1, t2); /* (X & ~0b1) << 2 | (S & 0b100) */
             emit_and(t2, S, brw_imm_uw(1)); /* S & 0b1 */
-            brw_SHL(&func, t2, t2, brw_imm_uw(1)); /* (S & 0b1) << 1 */
+            emit_shl(t2, t2, brw_imm_uw(1)); /* (S & 0b1) << 1 */
             brw_OR(&func, t1, t1, t2); /* (X & ~0b1) << 2 | (S & 0b100)
                                           | (S & 0b1) << 1 */
          }
          emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
          brw_OR(&func, Xp, t1, t2);
          emit_and(t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
-         brw_SHL(&func, t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
+         emit_shl(t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
          if (!s_is_zero) {
             emit_and(t2, S, brw_imm_uw(2)); /* S & 0b10 */
             brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
@@ -1459,8 +1459,8 @@ brw_blorp_blit_program::single_to_blend()
     * that maxe up a pixel).  So we need to multiply our X and Y coordinates
     * each by 2 and then add 1.
     */
-   brw_SHL(&func, t1, X, brw_imm_w(1));
-   brw_SHL(&func, t2, Y, brw_imm_w(1));
+   emit_shl(t1, X, brw_imm_w(1));
+   emit_shl(t2, Y, brw_imm_w(1));
    emit_add(Xp, t1, brw_imm_w(1));
    emit_add(Yp, t2, brw_imm_w(1));
    SWAP_XY_AND_XPYP();

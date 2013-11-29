@@ -116,6 +116,13 @@ protected:
       brw_SHR(&func, dst, src1, src2);
    }
 
+   inline void emit_shl(const struct brw_reg& dst,
+                        const struct brw_reg& src1,
+                        const struct brw_reg& src2)
+   {
+      brw_SHL(&func, dst, src1, src2);
+   }
+
    void *mem_ctx;
    struct brw_compile func;
 };
