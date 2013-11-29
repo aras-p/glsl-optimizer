@@ -107,7 +107,7 @@ cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
    bblock_t *entry = new_block();
    bblock_t *cur_if = NULL, *cur_else = NULL, *cur_endif = NULL;
    bblock_t *cur_do = NULL, *cur_while = NULL;
-   exec_list if_stack, else_stack, endif_stack, do_stack, while_stack;
+   exec_list if_stack, else_stack, do_stack, while_stack;
    bblock_t *next;
 
    set_next_block(entry);
@@ -129,7 +129,6 @@ cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
 	  */
 	 if_stack.push_tail(cur_if->make_list(mem_ctx));
 	 else_stack.push_tail(cur_else->make_list(mem_ctx));
-	 endif_stack.push_tail(cur_endif->make_list(mem_ctx));
 
 	 cur_if = cur;
 	 cur_else = NULL;
@@ -201,7 +200,6 @@ cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
 	 /* Pop the stack so we're in the previous if/else/endif */
 	 cur_if = pop_stack(&if_stack);
 	 cur_else = pop_stack(&else_stack);
-	 cur_endif = pop_stack(&endif_stack);
 	 break;
       }
       case BRW_OPCODE_DO:
