@@ -45,7 +45,7 @@ _mesa_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width, G
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter1D");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glConvolutionFilter1D");
 }
 
 void GLAPIENTRY
@@ -53,7 +53,7 @@ _mesa_ConvolutionFilter2D(GLenum target, GLenum internalFormat, GLsizei width, G
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionFilter2D");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glConvolutionFilter2D");
 }
 
 
@@ -62,7 +62,7 @@ _mesa_ConvolutionParameterf(GLenum target, GLenum pname, GLfloat param)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterf");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glConvolutionParameterf");
 }
 
 
@@ -71,7 +71,7 @@ _mesa_ConvolutionParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameterfv");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glConvolutionParameterfv");
 }
 
 
@@ -80,7 +80,7 @@ _mesa_ConvolutionParameteri(GLenum target, GLenum pname, GLint param)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteri");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glConvolutionParameteri");
 }
 
 
@@ -89,7 +89,7 @@ _mesa_ConvolutionParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glConvolutionParameteriv");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glConvolutionParameteriv");
 }
 
 
@@ -98,7 +98,7 @@ _mesa_CopyConvolutionFilter1D(GLenum target, GLenum internalFormat, GLint x, GLi
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter1D");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glCopyConvolutionFilter1D");
 }
 
 
@@ -107,7 +107,7 @@ _mesa_CopyConvolutionFilter2D(GLenum target, GLenum internalFormat, GLint x, GLi
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glCopyConvolutionFilter2D");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glCopyConvolutionFilter2D");
 }
 
 
@@ -134,7 +134,7 @@ _mesa_GetConvolutionParameterfv(GLenum target, GLenum pname, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameterfv");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glGetConvolutionParameterfv");
 }
 
 
@@ -143,7 +143,7 @@ _mesa_GetConvolutionParameteriv(GLenum target, GLenum pname, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glGetConvolutionParameteriv");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glGetConvolutionParameteriv");
 }
 
 
@@ -155,7 +155,7 @@ _mesa_GetnSeparableFilterARB(GLenum target, GLenum format, GLenum type,
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glGetSeparableFilter");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glGetSeparableFilter");
 }
 
 
@@ -173,5 +173,5 @@ _mesa_SeparableFilter2D(GLenum target, GLenum internalFormat, GLsizei width, GLs
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   _mesa_error(ctx, GL_INVALID_ENUM, "glSeparableFilter2D");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glSeparableFilter2D");
 }
