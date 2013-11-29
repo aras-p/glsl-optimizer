@@ -1167,17 +1167,17 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
       emit_shr(t1, t1, brw_imm_uw(1)); /* (X & ~0b1011) >> 1 */
       emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
       emit_shl(t2, t2, brw_imm_uw(2)); /* (Y & 0b1) << 2 */
-      brw_OR(&func, t1, t1, t2); /* (X & ~0b1011) >> 1 | (Y & 0b1) << 2 */
+      emit_or(t1, t1, t2); /* (X & ~0b1011) >> 1 | (Y & 0b1) << 2 */
       emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
-      brw_OR(&func, Xp, t1, t2);
+      emit_or(Xp, t1, t2);
       emit_and(t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
       emit_shl(t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
       emit_and(t2, X, brw_imm_uw(8)); /* X & 0b1000 */
       emit_shr(t2, t2, brw_imm_uw(2)); /* (X & 0b1000) >> 2 */
-      brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (X & 0b1000) >> 2 */
+      emit_or(t1, t1, t2); /* (Y & ~0b1) << 1 | (X & 0b1000) >> 2 */
       emit_and(t2, X, brw_imm_uw(2)); /* X & 0b10 */
       emit_shr(t2, t2, brw_imm_uw(1)); /* (X & 0b10) >> 1 */
-      brw_OR(&func, Yp, t1, t2);
+      emit_or(Yp, t1, t2);
       SWAP_XY_AND_XPYP();
    } else {
       /* Applying the same logic as above, but in reverse, we obtain the
@@ -1190,18 +1190,18 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
       emit_shl(t1, t1, brw_imm_uw(1)); /* (X & ~0b101) << 1 */
       emit_and(t2, Y, brw_imm_uw(2)); /* Y & 0b10 */
       emit_shl(t2, t2, brw_imm_uw(2)); /* (Y & 0b10) << 2 */
-      brw_OR(&func, t1, t1, t2); /* (X & ~0b101) << 1 | (Y & 0b10) << 2 */
+      emit_or(t1, t1, t2); /* (X & ~0b101) << 1 | (Y & 0b10) << 2 */
       emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
       emit_shl(t2, t2, brw_imm_uw(1)); /* (Y & 0b1) << 1 */
-      brw_OR(&func, t1, t1, t2); /* (X & ~0b101) << 1 | (Y & 0b10) << 2
+      emit_or(t1, t1, t2); /* (X & ~0b101) << 1 | (Y & 0b10) << 2
                                     | (Y & 0b1) << 1 */
       emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
-      brw_OR(&func, Xp, t1, t2);
+      emit_or(Xp, t1, t2);
       emit_and(t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
       emit_shr(t1, t1, brw_imm_uw(1)); /* (Y & ~0b11) >> 1 */
       emit_and(t2, X, brw_imm_uw(4)); /* X & 0b100 */
       emit_shr(t2, t2, brw_imm_uw(2)); /* (X & 0b100) >> 2 */
-      brw_OR(&func, Yp, t1, t2);
+      emit_or(Yp, t1, t2);
       SWAP_XY_AND_XPYP();
    }
 }
@@ -1244,20 +1244,20 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples,
          emit_and(t1, X, brw_imm_uw(0xfffe)); /* X & ~0b1 */
          if (!s_is_zero) {
             emit_and(t2, S, brw_imm_uw(1)); /* S & 0b1 */
-            brw_OR(&func, t1, t1, t2); /* (X & ~0b1) | (S & 0b1) */
+            emit_or(t1, t1, t2); /* (X & ~0b1) | (S & 0b1) */
          }
          emit_shl(t1, t1, brw_imm_uw(1)); /* (X & ~0b1) << 1
                                                    | (S & 0b1) << 1 */
          emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
-         brw_OR(&func, Xp, t1, t2);
+         emit_or(Xp, t1, t2);
          emit_and(t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
          emit_shl(t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
          if (!s_is_zero) {
             emit_and(t2, S, brw_imm_uw(2)); /* S & 0b10 */
-            brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
+            emit_or(t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
          }
          emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
-         brw_OR(&func, Yp, t1, t2);
+         emit_or(Yp, t1, t2);
          break;
       case 8:
          /* encode_msaa(8, IMS, X, Y, S) = (X', Y', 0)
@@ -1269,22 +1269,22 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples,
          emit_shl(t1, t1, brw_imm_uw(2)); /* (X & ~0b1) << 2 */
          if (!s_is_zero) {
             emit_and(t2, S, brw_imm_uw(4)); /* S & 0b100 */
-            brw_OR(&func, t1, t1, t2); /* (X & ~0b1) << 2 | (S & 0b100) */
+            emit_or(t1, t1, t2); /* (X & ~0b1) << 2 | (S & 0b100) */
             emit_and(t2, S, brw_imm_uw(1)); /* S & 0b1 */
             emit_shl(t2, t2, brw_imm_uw(1)); /* (S & 0b1) << 1 */
-            brw_OR(&func, t1, t1, t2); /* (X & ~0b1) << 2 | (S & 0b100)
+            emit_or(t1, t1, t2); /* (X & ~0b1) << 2 | (S & 0b100)
                                           | (S & 0b1) << 1 */
          }
          emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
-         brw_OR(&func, Xp, t1, t2);
+         emit_or(Xp, t1, t2);
          emit_and(t1, Y, brw_imm_uw(0xfffe)); /* Y & ~0b1 */
          emit_shl(t1, t1, brw_imm_uw(1)); /* (Y & ~0b1) << 1 */
          if (!s_is_zero) {
             emit_and(t2, S, brw_imm_uw(2)); /* S & 0b10 */
-            brw_OR(&func, t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
+            emit_or(t1, t1, t2); /* (Y & ~0b1) << 1 | (S & 0b10) */
          }
          emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
-         brw_OR(&func, Yp, t1, t2);
+         emit_or(Yp, t1, t2);
          break;
       }
       SWAP_XY_AND_XPYP();
@@ -1333,15 +1333,15 @@ brw_blorp_blit_program::decode_msaa(unsigned num_samples,
          emit_and(t1, X, brw_imm_uw(0xfffc)); /* X & ~0b11 */
          emit_shr(t1, t1, brw_imm_uw(1)); /* (X & ~0b11) >> 1 */
          emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
-         brw_OR(&func, Xp, t1, t2);
+         emit_or(Xp, t1, t2);
          emit_and(t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
          emit_shr(t1, t1, brw_imm_uw(1)); /* (Y & ~0b11) >> 1 */
          emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
-         brw_OR(&func, Yp, t1, t2);
+         emit_or(Yp, t1, t2);
          emit_and(t1, Y, brw_imm_uw(2)); /* Y & 0b10 */
          emit_and(t2, X, brw_imm_uw(2)); /* X & 0b10 */
          emit_shr(t2, t2, brw_imm_uw(1)); /* (X & 0b10) >> 1 */
-         brw_OR(&func, S, t1, t2);
+         emit_or(S, t1, t2);
          break;
       case 8:
          /* decode_msaa(8, IMS, X, Y, 0) = (X', Y', S)
@@ -1352,17 +1352,17 @@ brw_blorp_blit_program::decode_msaa(unsigned num_samples,
          emit_and(t1, X, brw_imm_uw(0xfff8)); /* X & ~0b111 */
          emit_shr(t1, t1, brw_imm_uw(2)); /* (X & ~0b111) >> 2 */
          emit_and(t2, X, brw_imm_uw(1)); /* X & 0b1 */
-         brw_OR(&func, Xp, t1, t2);
+         emit_or(Xp, t1, t2);
          emit_and(t1, Y, brw_imm_uw(0xfffc)); /* Y & ~0b11 */
          emit_shr(t1, t1, brw_imm_uw(1)); /* (Y & ~0b11) >> 1 */
          emit_and(t2, Y, brw_imm_uw(1)); /* Y & 0b1 */
-         brw_OR(&func, Yp, t1, t2);
+         emit_or(Yp, t1, t2);
          emit_and(t1, X, brw_imm_uw(4)); /* X & 0b100 */
          emit_and(t2, Y, brw_imm_uw(2)); /* Y & 0b10 */
-         brw_OR(&func, t1, t1, t2); /* (X & 0b100) | (Y & 0b10) */
+         emit_or(t1, t1, t2); /* (X & 0b100) | (Y & 0b10) */
          emit_and(t2, X, brw_imm_uw(2)); /* X & 0b10 */
          emit_shr(t2, t2, brw_imm_uw(1)); /* (X & 0b10) >> 1 */
-         brw_OR(&func, S, t1, t2);
+         emit_or(S, t1, t2);
          break;
       }
       s_is_zero = false;
