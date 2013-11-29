@@ -2271,7 +2271,8 @@ fs_visitor::register_coalesce_2()
       int var_from = live_intervals->var_from_reg(&inst->src[0]);
       int var_to = live_intervals->var_from_reg(&inst->dst);
 
-      if (live_intervals->vars_interfere(var_from, var_to))
+      if (live_intervals->vars_interfere(var_from, var_to) &&
+          !inst->dst.equals(inst->src[0]))
          continue;
 
       int reg_from = inst->src[0].reg;
