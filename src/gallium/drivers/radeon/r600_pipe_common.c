@@ -45,6 +45,10 @@ static const struct debug_named_value common_debug_options[] = {
 	{ "ps", DBG_PS, "Print pixel shaders" },
 	{ "cs", DBG_CS, "Print compute shaders" },
 
+	{ "nohyperz", DBG_NO_HYPERZ, "Disable Hyper-Z" },
+	/* GL uses the word INVALIDATE, gallium uses the word DISCARD */
+	{ "noinvalrange", DBG_NO_DISCARD_RANGE, "Disable handling of INVALIDATE_RANGE map flags" },
+
 	DEBUG_NAMED_VALUE_END /* must be last */
 };
 

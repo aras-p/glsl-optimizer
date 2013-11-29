@@ -43,14 +43,11 @@
 
 static const struct debug_named_value r600_debug_options[] = {
 	/* features */
-	{ "nohyperz", DBG_NO_HYPERZ, "Disable Hyper-Z" },
 #if defined(R600_USE_LLVM)
 	{ "nollvm", DBG_NO_LLVM, "Disable the LLVM shader compiler" },
 #endif
 	{ "nocpdma", DBG_NO_CP_DMA, "Disable CP DMA" },
 	{ "nodma", DBG_NO_ASYNC_DMA, "Disable asynchronous DMA" },
-	/* GL uses the word INVALIDATE, gallium uses the word DISCARD */
-	{ "noinvalrange", DBG_NO_DISCARD_RANGE, "Disable handling of INVALIDATE_RANGE map flags" },
 
 	/* shader backend */
 	{ "nosb", DBG_NO_SB, "Disable sb backend for graphics shaders" },
