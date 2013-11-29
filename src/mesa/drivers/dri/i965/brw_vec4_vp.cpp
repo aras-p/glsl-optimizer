@@ -50,21 +50,6 @@ vec4_visitor::emit_vp_sop(uint32_t conditional_mod,
    inst->predicate = BRW_PREDICATE_NORMAL;
 }
 
-/**
- * Reswizzle a given source register.
- * \sa brw_swizzle().
- */
-static inline src_reg
-reswizzle(src_reg orig, unsigned x, unsigned y, unsigned z, unsigned w)
-{
-   src_reg t = orig;
-   t.swizzle = BRW_SWIZZLE4(BRW_GET_SWZ(orig.swizzle, x),
-                            BRW_GET_SWZ(orig.swizzle, y),
-                            BRW_GET_SWZ(orig.swizzle, z),
-                            BRW_GET_SWZ(orig.swizzle, w));
-   return t;
-}
-
 void
 vec4_vs_visitor::emit_program_code()
 {
@@ -161,7 +146,7 @@ vec4_vs_visitor::emit_program_code()
             /* tmp_d = floor(src[0].x) */
             src_reg tmp_d = src_reg(this, glsl_type::ivec4_type);
             assert(tmp_d.type == BRW_REGISTER_TYPE_D);
-            emit(RNDD(dst_reg(tmp_d), reswizzle(src[0], 0, 0, 0, 0)));
+            emit(RNDD(dst_reg(tmp_d), swizzle(src[0], BRW_SWIZZLE_XXXX)));
 
             /* result[0] = 2.0 ^ tmp */
             /* Adjust exponent for floating point: exp += 127 */
@@ -228,7 +213,7 @@ vec4_vs_visitor::emit_program_code()
             result.writemask = WRITEMASK_YZ;
             emit(MOV(result, src_reg(0.0f)));
 
-            src_reg tmp_x = reswizzle(src[0], 0, 0, 0, 0);
+            src_reg tmp_x = swizzle(src[0], BRW_SWIZZLE_XXXX);
 
             emit(CMP(dst_null_d(), tmp_x, src_reg(0.0f), BRW_CONDITIONAL_G));
             emit(IF(BRW_PREDICATE_NORMAL));
@@ -240,14 +225,14 @@ vec4_vs_visitor::emit_program_code()
 
             if (vpi->DstReg.WriteMask & WRITEMASK_Z) {
                /* if (tmp.y < 0) tmp.y = 0; */
-               src_reg tmp_y = reswizzle(src[0], 1, 1, 1, 1);
+               src_reg tmp_y = swizzle(src[0], BRW_SWIZZLE_YYYY);
                result.writemask = WRITEMASK_Z;
                emit_minmax(BRW_CONDITIONAL_G, result, tmp_y, src_reg(0.0f));
 
                src_reg clamped_y(result);
                clamped_y.swizzle = BRW_SWIZZLE_ZZZZ;
 
-               src_reg tmp_w = reswizzle(src[0], 3, 3, 3, 3);
+               src_reg tmp_w = swizzle(src[0], BRW_SWIZZLE_WWWW);
 
                emit_math(SHADER_OPCODE_POW, result, clamped_y, tmp_w);
             }
@@ -261,7 +246,7 @@ vec4_vs_visitor::emit_program_code()
          result.type = BRW_REGISTER_TYPE_UD;
          src_reg result_src = src_reg(result);
 
-         src_reg arg0_ud = reswizzle(src[0], 0, 0, 0, 0);
+         src_reg arg0_ud = swizzle(src[0], BRW_SWIZZLE_XXXX);
          arg0_ud.type = BRW_REGISTER_TYPE_UD;
 
          /* Perform mant = frexpf(fabsf(x), &exp), adjust exp and mnt
@@ -383,11 +368,11 @@ vec4_vs_visitor::emit_program_code()
          src_reg t2 = src_reg(this, glsl_type::vec4_type);
 
          emit(MUL(dst_reg(t1),
-                  reswizzle(src[0], 1, 2, 0, 3),
-                  reswizzle(src[1], 2, 0, 1, 3)));
+                  swizzle(src[0], BRW_SWIZZLE_YZXW),
+                  swizzle(src[1], BRW_SWIZZLE_ZXYW)));
          emit(MUL(dst_reg(t2),
-                  reswizzle(src[0], 2, 0, 1, 3),
-                  reswizzle(src[1], 1, 2, 0, 3)));
+                  swizzle(src[0], BRW_SWIZZLE_ZXYW),
+                  swizzle(src[1], BRW_SWIZZLE_YZXW)));
          t2.negate = true;
          emit(ADD(dst, t1, t2));
          break;
