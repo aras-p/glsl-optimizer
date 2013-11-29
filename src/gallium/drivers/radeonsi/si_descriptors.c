@@ -551,7 +551,7 @@ static void si_desc_reset_buffer_offset(struct pipe_context *ctx,
  * idle by discarding its contents. Apps usually tell us when to do this using
  * map_buffer flags, for example.
  */
-void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource *buf)
+static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource *buf)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct r600_resource *rbuffer = r600_resource(buf);
@@ -811,6 +811,7 @@ void si_init_all_descriptors(struct r600_context *rctx)
 	rctx->b.b.set_constant_buffer = si_set_constant_buffer;
 	rctx->b.b.set_stream_output_targets = si_set_streamout_targets;
 	rctx->b.clear_buffer = si_clear_buffer;
+	rctx->b.invalidate_buffer = si_invalidate_buffer;
 }
 
 void si_release_all_descriptors(struct r600_context *rctx)

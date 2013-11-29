@@ -91,7 +91,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 		/* Check if mapping this buffer would cause waiting for the GPU. */
 		if (r600_rings_is_buffer_referenced(&rctx->b, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
 		    rctx->b.ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
-			r600_invalidate_buffer(&rctx->b.b, &rbuffer->b.b);
+			rctx->b.invalidate_buffer(&rctx->b.b, &rbuffer->b.b);
 		}
 	}
 	else if ((usage & PIPE_TRANSFER_DISCARD_RANGE) &&

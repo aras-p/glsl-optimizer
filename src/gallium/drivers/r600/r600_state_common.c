@@ -2072,7 +2072,7 @@ out_unknown:
 	return ~0;
 }
 
-void r600_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource *buf)
+static void r600_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource *buf)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 	struct r600_resource *rbuffer = r600_resource(buf);
@@ -2162,6 +2162,7 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->b.b.create_surface = r600_create_surface;
 	rctx->b.b.surface_destroy = r600_surface_destroy;
 	rctx->b.b.draw_vbo = r600_draw_vbo;
+	rctx->b.invalidate_buffer = r600_invalidate_buffer;
 }
 
 void r600_trace_emit(struct r600_context *rctx)

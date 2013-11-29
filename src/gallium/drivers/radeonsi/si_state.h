@@ -200,7 +200,6 @@ void si_all_descriptors_begin_new_cs(struct r600_context *rctx);
 void si_copy_buffer(struct r600_context *rctx,
 		    struct pipe_resource *dst, struct pipe_resource *src,
 		    uint64_t dst_offset, uint64_t src_offset, unsigned size);
-void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource *buf);
 
 /* si_state.c */
 struct si_pipe_shader_selector;

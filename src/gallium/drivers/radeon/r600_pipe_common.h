@@ -256,6 +256,10 @@ struct r600_common_context {
 				      unsigned first_level, unsigned last_level,
 				      unsigned first_layer, unsigned last_layer,
 				      unsigned first_sample, unsigned last_sample);
+
+	/* Reallocate the buffer and update all resource bindings where
+	 * the buffer is bound, including all resource descriptors. */
+	void (*invalidate_buffer)(struct pipe_context *ctx, struct pipe_resource *buf);
 };
 
 /* r600_buffer.c */
