@@ -1049,6 +1049,14 @@ _mesa_get_min_invocations_per_fragment(struct gl_context *ctx,
     *  has no effect."
     */
    if (ctx->Multisample.Enabled) {
+      /* The ARB_gpu_shader5 specification says:
+       *
+       * "Use of the "sample" qualifier on a fragment shader input
+       *  forces per-sample shading"
+       */
+      if (prog->IsSample)
+         return MAX2(ctx->DrawBuffer->Visual.samples, 1);
+
       if (prog->Base.SystemValuesRead & (SYSTEM_BIT_SAMPLE_ID |
                                          SYSTEM_BIT_SAMPLE_POS))
          return MAX2(ctx->DrawBuffer->Visual.samples, 1);
