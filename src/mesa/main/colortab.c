@@ -44,7 +44,7 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
                   const GLvoid *data )
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_ENUM, "glColorTable(target)");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glColorTable");
 }
 
 
@@ -55,7 +55,7 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
                      const GLvoid *data )
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_ENUM, "glColorSubTable(target)");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glColorSubTable");
 }
 
 
@@ -65,7 +65,7 @@ _mesa_CopyColorTable(GLenum target, GLenum internalformat,
                      GLint x, GLint y, GLsizei width)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_ENUM, "glCopyColorTable(target)");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glCopyColorTable");
 }
 
 
@@ -75,7 +75,7 @@ _mesa_CopyColorSubTable(GLenum target, GLsizei start,
                         GLint x, GLint y, GLsizei width)
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_ENUM, "glCopyColorSubTable(target)");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glCopyColorSubTable");
 }
 
 
@@ -85,7 +85,7 @@ _mesa_GetnColorTableARB( GLenum target, GLenum format, GLenum type,
                          GLsizei bufSize, GLvoid *data )
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_ENUM, "glGetnColorTableARB(target)");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glGetnColorTableARB");
 }
 
 
@@ -94,7 +94,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
                      GLenum type, GLvoid *data )
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTable(target)");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glGetColorTable");
 }
 
 
@@ -103,7 +103,7 @@ _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
    /* no extensions use this function */
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(target)");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glColorTableParameterfv");
 }
 
 
@@ -113,7 +113,7 @@ _mesa_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    /* no extensions use this function */
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_ENUM, "glColorTableParameteriv(target)");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glColorTableParameteriv");
 }
 
 
@@ -122,7 +122,7 @@ void GLAPIENTRY
 _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameterfv(target)");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glGetColorTableParameterfv");
 }
 
 
@@ -131,5 +131,5 @@ void GLAPIENTRY
 _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
 {
    GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameteriv(target)");
+   _mesa_error(ctx, GL_INVALID_OPERATION, "glGetColorTableParameteriv");
 }
