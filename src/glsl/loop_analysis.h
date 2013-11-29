@@ -39,15 +39,12 @@ analyze_loop_variables(exec_list *instructions);
 /**
  * Fill in loop control fields
  *
- * Based on analysis of loop variables, this function tries to remove sequences
- * in the loop of the form
+ * Based on analysis of loop variables, this function tries to remove
+ * redundant sequences in the loop of the form
  *
  *  (if (expression bool ...) (break))
  *
- * and fill in the \c normative_bound field of the \c ir_loop.
- *
- * In this process, some conditional break-statements may be eliminated
- * altogether.  For example, if it is provable that one loop exit condition will
+ * For example, if it is provable that one loop exit condition will
  * always be satisfied before another, the unnecessary exit condition will be
  * removed.
  */

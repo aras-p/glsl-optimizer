@@ -228,6 +228,9 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
    loop_variable_state *const ls = this->state->get(ir);
    int iterations;
 
+   /* Note: normatively-bounded loops aren't created anymore. */
+   assert(ir->normative_bound < 0);
+
    /* If we've entered a loop that hasn't been analyzed, something really,
     * really bad has happened.
     */
@@ -239,10 +242,10 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
    /* Don't try to unroll loops where the number of iterations is not known
     * at compile-time.
     */
-   if (ir->normative_bound < 0)
+   if (ls->limiting_terminator == NULL)
       return visit_continue;
 
-   iterations = ir->normative_bound;
+   iterations = ls->limiting_terminator->iterations;
 
    /* Don't try to unroll loops that have zillions of iterations either.
     */
@@ -256,10 +259,17 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
    if (count.fail || count.nodes * iterations > (int)max_iterations * 5)
       return visit_continue;
 
-   if (ls->num_loop_jumps > 1)
+   /* Note: the limiting terminator contributes 1 to ls->num_loop_jumps.
+    * We'll be removing the limiting terminator before we unroll.
+    */
+   assert(ls->num_loop_jumps > 0);
+   unsigned predicted_num_loop_jumps = ls->num_loop_jumps - 1;
+
+   if (predicted_num_loop_jumps > 1)
       return visit_continue;
 
-   if (ls->num_loop_jumps == 0) {
+   if (predicted_num_loop_jumps == 0) {
+      ls->limiting_terminator->ir->remove();
       simple_unroll(ir, iterations);
       return visit_continue;
    }
@@ -274,6 +284,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
        */
       last_ir->remove();
 
+      ls->limiting_terminator->ir->remove();
       simple_unroll(ir, 1);
       return visit_continue;
    }
@@ -281,6 +292,12 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
    foreach_list(node, &ir->body_instructions) {
       /* recognize loops in the form produced by ir_lower_jumps */
       ir_instruction *cur_ir = (ir_instruction *) node;
+
+      /* Skip the limiting terminator, since it will go away when we
+       * unroll.
+       */
+      if (cur_ir == ls->limiting_terminator->ir)
+         continue;
 
       ir_if *ir_if = cur_ir->as_if();
       if (ir_if != NULL) {
@@ -296,6 +313,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
             (ir_instruction *) ir_if->then_instructions.get_tail();
 
          if (is_break(ir_if_last)) {
+            ls->limiting_terminator->ir->remove();
             splice_post_if_instructions(ir_if, &ir_if->else_instructions);
             ir_if_last->remove();
             complex_unroll(ir, iterations, false);
@@ -305,6 +323,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
                (ir_instruction *) ir_if->else_instructions.get_tail();
 
             if (is_break(ir_if_last)) {
+               ls->limiting_terminator->ir->remove();
                splice_post_if_instructions(ir_if, &ir_if->then_instructions);
                ir_if_last->remove();
                complex_unroll(ir, iterations, true);

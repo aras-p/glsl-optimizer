@@ -195,16 +195,19 @@ loop_control_visitor::visit_leave(ir_loop *ir)
       }
 
       /* If the limiting terminator has a lower iteration count than the
-       * normative loop bound (if any), then make this a normatively bounded
-       * loop with the new iteration count.
+       * normative loop bound (if any), then the loop doesn't need a normative
+       * bound anymore.
        */
-      if (ir->normative_bound < 0 || iterations < ir->normative_bound)
-         ir->normative_bound = iterations;
+      if (ir->normative_bound >= 0 && iterations < ir->normative_bound)
+         ir->normative_bound = -1;
    }
 
    /* Remove the conditional break statements associated with all terminators
-    * that are associated with a fixed iteration count; the normative bound
-    * will take care of terminating the loop.
+    * that are associated with a fixed iteration count, except for the one
+    * associated with the limiting terminator--that one needs to stay, since
+    * it terminates the loop.  Exception: if the loop still has a normative
+    * bound, then that terminates the loop, so we don't even need the limiting
+    * terminator.
     */
    foreach_list(node, &ls->terminators) {
       loop_terminator *t = (loop_terminator *) node;
@@ -212,12 +215,14 @@ loop_control_visitor::visit_leave(ir_loop *ir)
       if (t->iterations < 0)
          continue;
 
-      t->ir->remove();
+      if (ir->normative_bound >= 0 || t != ls->limiting_terminator) {
+         t->ir->remove();
 
-      assert(ls->num_loop_jumps > 0);
-      ls->num_loop_jumps--;
+         assert(ls->num_loop_jumps > 0);
+         ls->num_loop_jumps--;
 
-      this->progress = true;
+         this->progress = true;
+      }
    }
 
    return visit_continue;
