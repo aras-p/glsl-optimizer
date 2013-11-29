@@ -719,6 +719,9 @@ _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
             free(n[4].data);
             n += InstSize[n[0].opcode];
             break;
+         case OPCODE_PIXEL_MAP:
+            free(n[3].data);
+            break;
 
          case OPCODE_CONTINUE:
             n = (Node *) n[1].next;
@@ -896,6 +899,18 @@ unpack_image(struct gl_context *ctx, GLuint dimensions,
    _mesa_error(ctx, GL_INVALID_OPERATION, "invalid PBO access");
    return NULL;
 }
+
+
+/** Return copy of memory */
+static void *
+memdup(const void *src, GLsizei bytes)
+{
+   void *b = bytes >= 0 ? malloc(bytes) : NULL;
+   if (b)
+      memcpy(b, src, bytes);
+   return b;
+}
+
 
 /**
  * Allocate space for a display list instruction (opcode + payload space).
@@ -2781,8 +2796,7 @@ save_PixelMapfv(GLenum map, GLint mapsize, const GLfloat *values)
    if (n) {
       n[1].e = map;
       n[2].i = mapsize;
-      n[3].data = malloc(mapsize * sizeof(GLfloat));
-      memcpy(n[3].data, (void *) values, mapsize * sizeof(GLfloat));
+      n[3].data = memdup(values, mapsize * sizeof(GLfloat));
    }
    if (ctx->ExecuteFlag) {
       CALL_PixelMapfv(ctx->Exec, (map, mapsize, values));
@@ -5870,17 +5884,6 @@ save_Uniform4fARB(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    if (ctx->ExecuteFlag) {
       CALL_Uniform4f(ctx->Exec, (location, x, y, z, w));
    }
-}
-
-
-/** Return copy of memory */
-static void *
-memdup(const void *src, GLsizei bytes)
-{
-   void *b = bytes >= 0 ? malloc(bytes) : NULL;
-   if (b)
-      memcpy(b, src, bytes);
-   return b;
 }
 
 
