@@ -575,14 +575,16 @@ NV50LoweringPreSSA::handleTEX(TexInstruction *i)
       if (i->op == OP_TXB || i->op == OP_TXL)
          i->swapSources(dref, lod);
 
-   // array index must be converted to u32
    if (i->tex.target.isArray()) {
-      Value *layer = i->getSrc(arg - 1);
-      LValue *src = new_LValue(func, FILE_GPR);
-      bld.mkCvt(OP_CVT, TYPE_U32, src, TYPE_F32, layer);
-      bld.mkOp2(OP_MIN, TYPE_U32, src, src, bld.loadImm(NULL, 511));
-      i->setSrc(arg - 1, src);
-
+      if (i->op != OP_TXF) {
+         // array index must be converted to u32, but it's already an integer
+         // for TXF
+         Value *layer = i->getSrc(arg - 1);
+         LValue *src = new_LValue(func, FILE_GPR);
+         bld.mkCvt(OP_CVT, TYPE_U32, src, TYPE_F32, layer);
+         bld.mkOp2(OP_MIN, TYPE_U32, src, src, bld.loadImm(NULL, 511));
+         i->setSrc(arg - 1, src);
+      }
       if (i->tex.target.isCube()) {
          std::vector<Value *> acube, a2d;
          int c;
