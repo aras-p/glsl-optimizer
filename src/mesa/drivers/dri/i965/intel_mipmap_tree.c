@@ -99,23 +99,7 @@ compute_msaa_layout(struct brw_context *brw, gl_format format, GLenum target)
          assert(brw->gen == 7);
          return INTEL_MSAA_LAYOUT_UMS;
       } else {
-         /* For now, if we're going to be texturing from this surface,
-          * force UMS, so that the shader doesn't have to do different things
-          * based on whether there's a multisample control surface needing sampled first.
-          * We can't just blindly read the MCS surface in all cases because:
-          *
-          * From the Ivy Bridge PRM, Vol4 Part1 p77 ("MCS Enable"):
-          *
-          *    If this field is disabled and the sampling engine <ld_mcs> message
-          *    is issued on this surface, the MCS surface may be accessed. Software
-          *    must ensure that the surface is defined to avoid GTT errors.
-          */
-         if (target == GL_TEXTURE_2D_MULTISAMPLE ||
-             target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
-            return INTEL_MSAA_LAYOUT_UMS;
-         } else {
-            return INTEL_MSAA_LAYOUT_CMS;
-         }
+         return INTEL_MSAA_LAYOUT_CMS;
       }
    }
 }
