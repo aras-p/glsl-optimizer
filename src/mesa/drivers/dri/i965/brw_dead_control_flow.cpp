@@ -39,7 +39,7 @@ dead_control_flow_eliminate(backend_visitor *v)
 {
    bool progress = false;
 
-   cfg_t cfg(v);
+   cfg_t cfg(&v->instructions);
 
    for (int b = 0; b < cfg.num_blocks; b++) {
       bblock_t *block = cfg.blocks[b];

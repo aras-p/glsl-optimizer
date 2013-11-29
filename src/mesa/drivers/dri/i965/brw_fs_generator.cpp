@@ -1308,7 +1308,7 @@ fs_generator::generate_code(exec_list *instructions)
 
    cfg_t *cfg = NULL;
    if (unlikely(INTEL_DEBUG & DEBUG_WM))
-      cfg = new(mem_ctx) cfg_t(mem_ctx, instructions);
+      cfg = new(mem_ctx) cfg_t(instructions);
 
    foreach_list(node, instructions) {
       fs_inst *inst = (fs_inst *)node;

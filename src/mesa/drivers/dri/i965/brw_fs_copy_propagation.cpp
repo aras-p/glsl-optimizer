@@ -525,7 +525,7 @@ fs_visitor::opt_copy_propagate()
 {
    bool progress = false;
    void *mem_ctx = ralloc_context(this->mem_ctx);
-   cfg_t cfg(this);
+   cfg_t cfg(&instructions);
    exec_list *out_acp[cfg.num_blocks];
    for (int i = 0; i < cfg.num_blocks; i++)
       out_acp[i] = new exec_list [ACP_HASH_SIZE];

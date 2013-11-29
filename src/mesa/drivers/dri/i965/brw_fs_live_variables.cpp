@@ -320,7 +320,7 @@ fs_visitor::calculate_live_intervals()
       virtual_grf_end[i] = -1;
    }
 
-   cfg_t cfg(this);
+   cfg_t cfg(&instructions);
    this->live_intervals = new(mem_ctx) fs_live_variables(this, &cfg);
 
    /* Merge the per-component live ranges to whole VGRF live ranges. */

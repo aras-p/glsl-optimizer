@@ -668,7 +668,7 @@ vec4_visitor::opt_set_dependency_control()
    vec4_instruction *last_mrf_write[BRW_MAX_GRF];
    uint8_t mrf_channels_written[BRW_MAX_GRF];
 
-   cfg_t cfg(this);
+   cfg_t cfg(&instructions);
 
    assert(prog_data->total_grf ||
           !"Must be called after register allocation");

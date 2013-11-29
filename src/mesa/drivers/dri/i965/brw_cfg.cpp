@@ -77,18 +77,7 @@ bblock_t::dump(backend_visitor *v)
    }
 }
 
-cfg_t::cfg_t(backend_visitor *v)
-{
-   create(v->mem_ctx, &v->instructions);
-}
-
-cfg_t::cfg_t(void *mem_ctx, exec_list *instructions)
-{
-   create(mem_ctx, instructions);
-}
-
-void
-cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
+cfg_t::cfg_t(exec_list *instructions)
 {
    mem_ctx = ralloc_context(NULL);
    block_list.make_empty();
