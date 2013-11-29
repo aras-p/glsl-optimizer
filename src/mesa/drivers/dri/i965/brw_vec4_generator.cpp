@@ -305,6 +305,10 @@ vec4_generator::generate_tex(vec4_instruction *inst,
          else
             msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
          break;
+      case SHADER_OPCODE_TXF_MCS:
+         assert(brw->gen >= 7);
+         msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD_MCS;
+         break;
       case SHADER_OPCODE_TXS:
 	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_RESINFO;
 	 break;
@@ -1138,6 +1142,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
    case SHADER_OPCODE_TXD:
    case SHADER_OPCODE_TXF:
    case SHADER_OPCODE_TXF_MS:
+   case SHADER_OPCODE_TXF_MCS:
    case SHADER_OPCODE_TXL:
    case SHADER_OPCODE_TXS:
    case SHADER_OPCODE_TG4:

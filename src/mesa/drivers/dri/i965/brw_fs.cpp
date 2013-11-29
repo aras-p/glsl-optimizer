@@ -767,6 +767,7 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case SHADER_OPCODE_TXD:
    case SHADER_OPCODE_TXF:
    case SHADER_OPCODE_TXF_MS:
+   case SHADER_OPCODE_TXF_MCS:
    case SHADER_OPCODE_TG4:
    case SHADER_OPCODE_TG4_OFFSET:
    case SHADER_OPCODE_TXL:
