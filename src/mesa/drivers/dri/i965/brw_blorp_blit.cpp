@@ -1031,7 +1031,7 @@ brw_blorp_blit_program::compute_frag_coords()
     * Then, we need to add the repeating sequence (0, 1, 0, 1, ...) to the
     * result, since pixels n+1 and n+3 are in the right half of the subspan.
     */
-   brw_ADD(&func, vec16(retype(X, BRW_REGISTER_TYPE_UW)),
+   emit_add(vec16(retype(X, BRW_REGISTER_TYPE_UW)),
            stride(suboffset(R1, 4), 2, 4, 0), brw_imm_v(0x10101010));
 
    /* Similarly, Y coordinates for subspans come from R1.2[31:16] through
@@ -1042,7 +1042,7 @@ brw_blorp_blit_program::compute_frag_coords()
     * And we need to add the repeating sequence (0, 0, 1, 1, ...), since
     * pixels n+2 and n+3 are in the bottom half of the subspan.
     */
-   brw_ADD(&func, vec16(retype(Y, BRW_REGISTER_TYPE_UW)),
+   emit_add(vec16(retype(Y, BRW_REGISTER_TYPE_UW)),
            stride(suboffset(R1, 5), 2, 4, 0), brw_imm_v(0x11001100));
 
    /* Move the coordinates to UD registers. */
@@ -1089,13 +1089,11 @@ brw_blorp_blit_program::compute_frag_coords()
          emit_and(t1_ud1, r0_ud1, brw_imm_ud(0xc0));
          brw_SHR(&func, t1_ud1, t1_ud1, brw_imm_ud(5));
          emit_mov(vec16(t2_uw1), brw_imm_v(0x3210));
-         brw_ADD(&func, vec16(S), retype(t1_ud1, BRW_REGISTER_TYPE_UW),
-                 stride(t2_uw1, 1, 4, 0));
-         brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
-         brw_ADD(&func, offset(S, 1),
-                 retype(t1_ud1, BRW_REGISTER_TYPE_UW),
-                 suboffset(stride(t2_uw1, 1, 4, 0), 2));
-         brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
+         emit_add(vec16(S), retype(t1_ud1, BRW_REGISTER_TYPE_UW),
+                  stride(t2_uw1, 1, 4, 0));
+         emit_add_8(offset(S, 1),
+                    retype(t1_ud1, BRW_REGISTER_TYPE_UW),
+                    suboffset(stride(t2_uw1, 1, 4, 0), 2));
          break;
       }
       default:
@@ -1391,8 +1389,8 @@ brw_blorp_blit_program::translate_dst_to_src()
    /* Scale and offset */
    brw_MUL(&func, X_f, Xp_f, x_transform.multiplier);
    brw_MUL(&func, Y_f, Yp_f, y_transform.multiplier);
-   brw_ADD(&func, X_f, X_f, x_transform.offset);
-   brw_ADD(&func, Y_f, Y_f, y_transform.offset);
+   emit_add(X_f, X_f, x_transform.offset);
+   emit_add(Y_f, Y_f, y_transform.offset);
    if (key->blit_scaled && key->blend) {
       /* Translate coordinates to lay out the samples in a rectangular  grid
        * roughly corresponding to sample locations.
@@ -1402,8 +1400,8 @@ brw_blorp_blit_program::translate_dst_to_src()
      /* Adjust coordinates so that integers represent pixel centers rather
       * than pixel edges.
       */
-      brw_ADD(&func, X_f, X_f, brw_imm_f(-0.5));
-      brw_ADD(&func, Y_f, Y_f, brw_imm_f(-0.5));
+      emit_add(X_f, X_f, brw_imm_f(-0.5));
+      emit_add(Y_f, Y_f, brw_imm_f(-0.5));
 
       /* Clamp the X, Y texture coordinates to properly handle the sampling of
        *  texels on texture edges.
@@ -1463,8 +1461,8 @@ brw_blorp_blit_program::single_to_blend()
     */
    brw_SHL(&func, t1, X, brw_imm_w(1));
    brw_SHL(&func, t2, Y, brw_imm_w(1));
-   brw_ADD(&func, Xp, t1, brw_imm_w(1));
-   brw_ADD(&func, Yp, t2, brw_imm_w(1));
+   emit_add(Xp, t1, brw_imm_w(1));
+   emit_add(Yp, t2, brw_imm_w(1));
    SWAP_XY_AND_XPYP();
 }
 
@@ -1627,9 +1625,9 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
       s_is_zero = false;
 
       /* Compute pixel coordinates */
-      brw_ADD(&func, vec16(x_sample_coords), Xp_f,
+      emit_add(vec16(x_sample_coords), Xp_f,
               brw_imm_f((float)(i & 0x1) * (1.0 / key->x_scale)));
-      brw_ADD(&func, vec16(y_sample_coords), Yp_f,
+      emit_add(vec16(y_sample_coords), Yp_f,
               brw_imm_f((float)((i >> 1) & 0x1) * (1.0 / key->y_scale)));
       emit_mov(vec16(X), x_sample_coords);
       emit_mov(vec16(Y), y_sample_coords);
@@ -1670,7 +1668,7 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
       brw_FRC(&func, vec16(t2_f), y_sample_coords);
       brw_MUL(&func, vec16(t1_f), t1_f, brw_imm_f(key->x_scale));
       brw_MUL(&func, vec16(t2_f), t2_f, brw_imm_f(key->x_scale * key->y_scale));
-      brw_ADD(&func, vec16(t1_f), t1_f, t2_f);
+      emit_add(vec16(t1_f), t1_f, t2_f);
       emit_mov(vec16(S), t1_f);
 
       if (num_samples == 8) {

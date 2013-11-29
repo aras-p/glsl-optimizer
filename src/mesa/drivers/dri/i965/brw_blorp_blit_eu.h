@@ -93,6 +93,22 @@ protected:
       brw_AND(&func, dst, src1, src2);
    }
 
+   inline void emit_add(const struct brw_reg& dst,
+                        const struct brw_reg& src1,
+                        const struct brw_reg& src2)
+   {
+      brw_ADD(&func, dst, src1, src2);
+   }
+
+   inline void emit_add_8(const struct brw_reg& dst,
+                          const struct brw_reg& src1,
+                          const struct brw_reg& src2)
+   {
+      brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
+      emit_add(dst, src1, src2);
+      brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
+   }
+
    void *mem_ctx;
    struct brw_compile func;
 };
