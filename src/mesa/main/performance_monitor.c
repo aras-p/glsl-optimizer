@@ -93,6 +93,25 @@ fail:
    return NULL;
 }
 
+static void
+free_performance_monitor(GLuint key, void *data, void *user)
+{
+   struct gl_perf_monitor_object *m = data;
+   struct gl_context *ctx = user;
+
+   ralloc_free(m->ActiveGroups);
+   ralloc_free(m->ActiveCounters);
+   ctx->Driver.DeletePerfMonitor(ctx, m);
+}
+
+void
+_mesa_free_performance_monitors(struct gl_context *ctx)
+{
+   _mesa_HashDeleteAll(ctx->PerfMonitor.Monitors,
+                       free_performance_monitor, ctx);
+   _mesa_DeleteHashTable(ctx->PerfMonitor.Monitors);
+}
+
 static inline struct gl_perf_monitor_object *
 lookup_monitor(struct gl_context *ctx, GLuint id)
 {

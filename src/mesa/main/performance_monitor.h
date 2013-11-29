@@ -35,6 +35,9 @@
 extern void
 _mesa_init_performance_monitors(struct gl_context *ctx);
 
+extern void
+_mesa_free_performance_monitors(struct gl_context *ctx);
+
 extern void GLAPIENTRY
 _mesa_GetPerfMonitorGroupsAMD(GLint *numGroups, GLsizei groupsSize,
                               GLuint *groups);

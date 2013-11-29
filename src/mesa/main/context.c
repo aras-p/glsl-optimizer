@@ -1194,6 +1194,7 @@ _mesa_free_context_data( struct gl_context *ctx )
    _mesa_free_sync_data(ctx);
    _mesa_free_varray_data(ctx);
    _mesa_free_transform_feedback(ctx);
+   _mesa_free_performance_monitors(ctx);
 
    _mesa_reference_buffer_object(ctx, &ctx->Pack.BufferObj, NULL);
    _mesa_reference_buffer_object(ctx, &ctx->Unpack.BufferObj, NULL);
