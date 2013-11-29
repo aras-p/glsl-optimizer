@@ -30,6 +30,7 @@ i965_FILES = \
 	brw_binding_tables.c \
 	brw_blorp.cpp \
 	brw_blorp_blit.cpp \
+	brw_blorp_blit_eu.cpp \
 	brw_blorp_clear.cpp \
 	brw_cc.c \
 	brw_cfg.cpp \

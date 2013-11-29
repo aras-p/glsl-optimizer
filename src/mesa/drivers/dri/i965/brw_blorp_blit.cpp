@@ -25,13 +25,11 @@
 #include "main/fbobject.h"
 #include "main/renderbuffer.h"
 
-#include "glsl/ralloc.h"
-
 #include "intel_fbo.h"
 
 #include "brw_blorp.h"
 #include "brw_context.h"
-#include "brw_eu.h"
+#include "brw_blorp_blit_eu.h"
 #include "brw_state.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLORP
@@ -624,12 +622,11 @@ enum sampler_message_arg
  * (In these formulas, pitch is the number of bytes occupied by a single row
  * of samples).
  */
-class brw_blorp_blit_program
+class brw_blorp_blit_program : public brw_blorp_eu_emitter
 {
 public:
    brw_blorp_blit_program(struct brw_context *brw,
                           const brw_blorp_blit_prog_key *key);
-   ~brw_blorp_blit_program();
 
    const GLuint *compile(struct brw_context *brw, GLuint *program_size,
                          FILE *dump_file = stdout);
@@ -668,10 +665,8 @@ private:
     */
    static const unsigned LOG2_MAX_BLEND_SAMPLES = 3;
 
-   void *mem_ctx;
    struct brw_context *brw;
    const brw_blorp_blit_prog_key *key;
-   struct brw_compile func;
 
    /* Thread dispatch header */
    struct brw_reg R0;
@@ -745,16 +740,10 @@ private:
 brw_blorp_blit_program::brw_blorp_blit_program(
       struct brw_context *brw,
       const brw_blorp_blit_prog_key *key)
-   : mem_ctx(ralloc_context(NULL)),
+   : brw_blorp_eu_emitter(brw),
      brw(brw),
      key(key)
 {
-   brw_init_compile(brw, &func, mem_ctx);
-}
-
-brw_blorp_blit_program::~brw_blorp_blit_program()
-{
-   ralloc_free(mem_ctx);
 }
 
 const GLuint *
@@ -805,21 +794,6 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
    /* Set up prog_data */
    memset(&prog_data, 0, sizeof(prog_data));
    prog_data.persample_msaa_dispatch = key->persample_msaa_dispatch;
-
-   /*
-    * By default everything is emitted as 16-wide with only a few exceptions
-    * handled explicitly either here in the compiler or by one of the specific
-    * code emission calls.
-    * It should be also noted that here in this file any alterations of the
-    * compression control settings are only used to affect the execution size
-    * of the instructions. The instruction template used to initialise all the
-    * instructions is effectively not altered -- the value stays at zero
-    * representing either GEN6_COMPRESSION_1Q or GEN6_COMPRESSION_1H depending
-    * on the context.
-    * If any other settings are used in the instruction headers, they are set
-    * elsewhere by the individual code emission calls.
-    */
-   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
 
    alloc_regs();
    compute_frag_coords();
@@ -928,14 +902,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
     */
    render_target_write();
 
-   brw_set_uip_jip(&func);
-
-   if (unlikely(INTEL_DEBUG & DEBUG_BLORP)) {
-      printf("Native code for BLORP blit:\n");
-      brw_dump_compile(&func, dump_file, 0, func.next_insn_offset);
-      printf("\n");
-   }
-   return brw_get_program(&func, program_size);
+   return get_program(program_size, dump_file);
 }
 
 void
@@ -2385,7 +2352,7 @@ brw_blorp_blit_params::get_wm_prog(struct brw_context *brw,
                          &prog_offset, prog_data)) {
       brw_blorp_blit_program prog(brw, &this->wm_prog_key);
       GLuint program_size;
-      const GLuint *program = prog.compile(brw, &program_size);
+      const GLuint *program = prog.compile(brw, &program_size, stdout);
       brw_upload_cache(&brw->cache, BRW_BLORP_BLIT_PROG,
                        &this->wm_prog_key, sizeof(this->wm_prog_key),
                        program, program_size,
