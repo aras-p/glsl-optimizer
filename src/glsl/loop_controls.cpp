@@ -183,24 +183,23 @@ loop_control_visitor::visit_leave(ir_loop *ir)
       return visit_continue;
    }
 
-   /* Figure out how many times the loop will run based on the iteration count
-    * annotations made by loop analysis, and give the loop a normative bound
-    * if possible.
-    */
-   unsigned max_iterations =
-      ls->max_iterations < 0 ? INT_MAX : ls->max_iterations;
+   if (ls->limiting_terminator != NULL) {
+      /* If the limiting terminator has an iteration count of zero, then we've
+       * proven that the loop cannot run, so delete it.
+       */
+      int iterations = ls->limiting_terminator->iterations;
+      if (iterations == 0) {
+         ir->remove();
+         this->progress = true;
+         return visit_continue;
+      }
 
-   if (ir->normative_bound >= 0)
-      max_iterations = ir->normative_bound;
-
-   /* If the limiting terminator has a lower iteration count than we'd
-    * previously inferred for this loop, then make the new iteration count the
-    * normative bound for this loop.
-    */
-   if (ls->limiting_terminator != NULL &&
-       (unsigned) ls->limiting_terminator->iterations < max_iterations) {
-      ir->normative_bound = ls->limiting_terminator->iterations;
-      max_iterations = ls->limiting_terminator->iterations;
+      /* If the limiting terminator has a lower iteration count than the
+       * normative loop bound (if any), then make this a normatively bounded
+       * loop with the new iteration count.
+       */
+      if (ir->normative_bound < 0 || iterations < ir->normative_bound)
+         ir->normative_bound = iterations;
    }
 
    /* Remove the conditional break statements associated with all terminators
@@ -220,14 +219,6 @@ loop_control_visitor::visit_leave(ir_loop *ir)
 
       this->progress = true;
    }
-
-   /* If we have proven the one of the loop exit conditions is satisifed before
-    * running the loop once, remove the loop.
-    */
-   if (max_iterations == 0)
-      ir->remove();
-   else
-      ls->max_iterations = max_iterations;
 
    return visit_continue;
 }

@@ -236,13 +236,13 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
       return visit_continue;
    }
 
-   iterations = ls->max_iterations;
-
    /* Don't try to unroll loops where the number of iterations is not known
     * at compile-time.
     */
-   if (iterations < 0)
+   if (ir->normative_bound < 0)
       return visit_continue;
+
+   iterations = ir->normative_bound;
 
    /* Don't try to unroll loops that have zillions of iterations either.
     */
