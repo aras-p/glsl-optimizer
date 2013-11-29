@@ -1413,8 +1413,8 @@ brw_blorp_blit_program::translate_dst_to_src()
       /* Store the fractional parts to be used as bilinear interpolation
        *  coefficients.
       */
-      brw_FRC(&func, x_frac, X_f);
-      brw_FRC(&func, y_frac, Y_f);
+      emit_frc(x_frac, X_f);
+      emit_frc(y_frac, Y_f);
 
       /* Round the float coordinates down to nearest integer */
       brw_RNDD(&func, Xp_f, X_f);
@@ -1664,8 +1664,8 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
       *                        | 6 | 7 |                            | 7 | 1 |
       *                        ---------                            ---------
       */
-      brw_FRC(&func, vec16(t1_f), x_sample_coords);
-      brw_FRC(&func, vec16(t2_f), y_sample_coords);
+      emit_frc(vec16(t1_f), x_sample_coords);
+      emit_frc(vec16(t2_f), y_sample_coords);
       emit_mul(vec16(t1_f), t1_f, brw_imm_f(key->x_scale));
       emit_mul(vec16(t2_f), t2_f, brw_imm_f(key->x_scale * key->y_scale));
       emit_add(vec16(t1_f), t1_f, t2_f);

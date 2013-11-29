@@ -137,6 +137,12 @@ protected:
       brw_OR(&func, dst, src1, src2);
    }
 
+   inline void emit_frc(const struct brw_reg& dst,
+                        const struct brw_reg& src)
+   {
+      brw_FRC(&func, dst, src);
+   }
+
    void *mem_ctx;
    struct brw_compile func;
 };
