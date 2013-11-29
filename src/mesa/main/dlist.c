@@ -6775,7 +6775,7 @@ save_WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
       union uint64_pair p;
       p.uint64 = timeout;
       n[1].data = sync;
-      n[2].e = flags;
+      n[2].bf = flags;
       n[3].ui = p.uint32[0];
       n[4].ui = p.uint32[1];
    }
