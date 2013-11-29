@@ -2181,11 +2181,6 @@ fs_visitor::visit(ir_if *ir)
 void
 fs_visitor::visit(ir_loop *ir)
 {
-   /* Any normative loop bounds should have been lowered by
-    * lower_bounded_loops().
-    */
-   assert(ir->normative_bound < 0);
-
    if (brw->gen < 6 && dispatch_width == 16) {
       fail("Can't support (non-uniform) control flow on 16-wide\n");
    }

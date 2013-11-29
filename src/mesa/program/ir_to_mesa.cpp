@@ -759,11 +759,6 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 void
 ir_to_mesa_visitor::visit(ir_loop *ir)
 {
-   /* Any normative loop bounds should have been lowered by
-    * lower_bounded_loops().
-    */
-   assert(ir->normative_bound < 0);
-
    emit(NULL, OPCODE_BGNLOOP);
 
    visit_exec_list(&ir->body_instructions, this);
@@ -3056,8 +3051,6 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	 progress = do_vec_index_to_cond_assign(ir) || progress;
          progress = lower_vector_insert(ir, true) || progress;
       } while (progress);
-
-      lower_bounded_loops(ir);
 
       validate_ir_tree(ir);
    }

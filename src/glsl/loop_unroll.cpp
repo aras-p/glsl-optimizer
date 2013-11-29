@@ -228,9 +228,6 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
    loop_variable_state *const ls = this->state->get(ir);
    int iterations;
 
-   /* Note: normatively-bounded loops aren't created anymore. */
-   assert(ir->normative_bound < 0);
-
    /* If we've entered a loop that hasn't been analyzed, something really,
     * really bad has happened.
     */

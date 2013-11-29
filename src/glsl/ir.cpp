@@ -1277,7 +1277,6 @@ ir_constant::is_basis() const
 ir_loop::ir_loop()
 {
    this->ir_type = ir_type_loop;
-   this->normative_bound = -1;
 }
 
 

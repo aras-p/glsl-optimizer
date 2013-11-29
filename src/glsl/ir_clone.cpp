@@ -158,8 +158,6 @@ ir_loop::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_loop *new_loop = new(mem_ctx) ir_loop();
 
-   new_loop->normative_bound = this->normative_bound;
-
    foreach_iter(exec_list_iterator, iter, this->body_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
       new_loop->body_instructions.push_tail(ir->clone(mem_ctx, ht));

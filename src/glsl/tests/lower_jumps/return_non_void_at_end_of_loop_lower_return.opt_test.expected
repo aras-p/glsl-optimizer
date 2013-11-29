@@ -6,7 +6,7 @@
     (declare (temporary) float return_value)
     (declare (temporary) bool return_flag)
     (assign (x) (var_ref return_flag) (constant bool (0)))
-    (loop ()
+    (loop
      ((assign (x) (var_ref a) (constant float (1.000000)))
       (assign (x) (var_ref return_value) (constant float (2.000000)))
       (assign (x) (var_ref return_flag) (constant bool (1)))

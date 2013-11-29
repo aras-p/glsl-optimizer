@@ -193,13 +193,6 @@ loop_control_visitor::visit_leave(ir_loop *ir)
          this->progress = true;
          return visit_continue;
       }
-
-      /* If the limiting terminator has a lower iteration count than the
-       * normative loop bound (if any), then the loop doesn't need a normative
-       * bound anymore.
-       */
-      if (ir->normative_bound >= 0 && iterations < ir->normative_bound)
-         ir->normative_bound = -1;
    }
 
    /* Remove the conditional break statements associated with all terminators
@@ -215,7 +208,7 @@ loop_control_visitor::visit_leave(ir_loop *ir)
       if (t->iterations < 0)
          continue;
 
-      if (ir->normative_bound >= 0 || t != ls->limiting_terminator) {
+      if (t != ls->limiting_terminator) {
          t->ir->remove();
 
          assert(ls->num_loop_jumps > 0);

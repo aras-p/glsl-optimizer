@@ -1024,13 +1024,6 @@ public:
 
    /** List of ir_instruction that make up the body of the loop. */
    exec_list body_instructions;
-
-   /**
-    * Normative bound for the loop.  If this value is >= 0, the back-end
-    * should generate instructions to ensure that the loop executes no more
-    * than this many times.
-    */
-   int normative_bound;
 };
 
 

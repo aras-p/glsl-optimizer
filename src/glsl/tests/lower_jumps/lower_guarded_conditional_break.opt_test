@@ -10,7 +10,7 @@
 ((declare (in) float aa) (declare (in) float ab) (declare (in) float b)
  (function main
   (signature void (parameters)
-   ((loop ()
+   ((loop
      ((if (expression bool > (var_ref aa) (constant float (0.000000)))
        ((if (expression bool > (var_ref ab) (constant float (0.000000)))
          (continue)

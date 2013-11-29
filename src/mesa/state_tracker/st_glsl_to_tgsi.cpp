@@ -1137,11 +1137,6 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
 void
 glsl_to_tgsi_visitor::visit(ir_loop *ir)
 {
-   /* Any normative loop bounds should have been lowered by
-    * lower_bounded_loops().
-    */
-   assert(ir->normative_bound < 0);
-
    emit(NULL, TGSI_OPCODE_BGNLOOP);
 
    visit_exec_list(&ir->body_instructions, this);
@@ -5306,8 +5301,6 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
          progress = lower_if_to_cond_assign(ir, options->MaxIfDepth) || progress;
 
       } while (progress);
-
-      lower_bounded_loops(ir);
 
       validate_ir_tree(ir);
    }

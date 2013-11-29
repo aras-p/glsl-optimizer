@@ -59,7 +59,6 @@ LIBGLSL_FILES = \
 	$(GLSL_SRCDIR)/loop_analysis.cpp \
 	$(GLSL_SRCDIR)/loop_controls.cpp \
 	$(GLSL_SRCDIR)/loop_unroll.cpp \
-	$(GLSL_SRCDIR)/lower_bounded_loops.cpp \
 	$(GLSL_SRCDIR)/lower_clip_distance.cpp \
 	$(GLSL_SRCDIR)/lower_discard.cpp \
 	$(GLSL_SRCDIR)/lower_discard_flow.cpp \

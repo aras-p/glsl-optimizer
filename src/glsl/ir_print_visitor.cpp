@@ -523,10 +523,7 @@ ir_print_visitor::visit(ir_if *ir)
 void
 ir_print_visitor::visit(ir_loop *ir)
 {
-   printf("(loop (");
-   if (ir->normative_bound >= 0)
-      printf("%d", ir->normative_bound);
-   printf(") (\n");
+   printf("(loop (\n");
    indentation++;
 
    foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
