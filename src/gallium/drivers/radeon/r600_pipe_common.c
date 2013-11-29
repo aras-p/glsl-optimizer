@@ -28,6 +28,7 @@
 #include "r600_cs.h"
 #include "tgsi/tgsi_parse.h"
 #include "util/u_format_s3tc.h"
+#include "util/u_upload_mgr.h"
 #include <inttypes.h>
 
 static const struct debug_named_value common_debug_options[] = {
@@ -223,6 +224,10 @@ void r600_common_screen_cleanup(struct r600_common_screen *rscreen)
 bool r600_common_context_init(struct r600_common_context *rctx,
 			      struct r600_common_screen *rscreen)
 {
+	util_slab_create(&rctx->pool_transfers,
+			 sizeof(struct r600_transfer), 64,
+			 UTIL_SLAB_SINGLETHREADED);
+
 	rctx->ws = rscreen->ws;
 	rctx->family = rscreen->family;
 	rctx->chip_class = rscreen->chip_class;
@@ -234,11 +239,23 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 	if (!rctx->allocator_so_filled_size)
 		return false;
 
+	rctx->uploader = u_upload_create(&rctx->b, 1024 * 1024, 256,
+					PIPE_BIND_INDEX_BUFFER |
+					PIPE_BIND_CONSTANT_BUFFER);
+	if (!rctx->uploader)
+		return false;
+
 	return true;
 }
 
 void r600_common_context_cleanup(struct r600_common_context *rctx)
 {
+	if (rctx->uploader) {
+		u_upload_destroy(rctx->uploader);
+	}
+
+	util_slab_destroy(&rctx->pool_transfers);
+
 	if (rctx->allocator_so_filled_size) {
 		u_suballocator_destroy(rctx->allocator_so_filled_size);
 	}

@@ -25,6 +25,8 @@
  */
 
 #include "r600_cs.h"
+#include "util/u_memory.h"
+#include "util/u_upload_mgr.h"
 #include <inttypes.h>
 
 boolean r600_rings_is_buffer_referenced(struct r600_common_context *ctx,
@@ -145,4 +147,176 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 			res->buf->size);
 	}
 	return true;
+}
+
+static void r600_buffer_destroy(struct pipe_screen *screen,
+				struct pipe_resource *buf)
+{
+	struct r600_resource *rbuffer = r600_resource(buf);
+
+	util_range_destroy(&rbuffer->valid_buffer_range);
+	pb_reference(&rbuffer->buf, NULL);
+	FREE(rbuffer);
+}
+
+static void *r600_buffer_get_transfer(struct pipe_context *ctx,
+				      struct pipe_resource *resource,
+                                      unsigned level,
+                                      unsigned usage,
+                                      const struct pipe_box *box,
+				      struct pipe_transfer **ptransfer,
+				      void *data, struct r600_resource *staging,
+				      unsigned offset)
+{
+	struct r600_common_context *rctx = (struct r600_common_context*)ctx;
+	struct r600_transfer *transfer = util_slab_alloc(&rctx->pool_transfers);
+
+	transfer->transfer.resource = resource;
+	transfer->transfer.level = level;
+	transfer->transfer.usage = usage;
+	transfer->transfer.box = *box;
+	transfer->transfer.stride = 0;
+	transfer->transfer.layer_stride = 0;
+	transfer->offset = offset;
+	transfer->staging = staging;
+	*ptransfer = &transfer->transfer;
+	return data;
+}
+
+static void *r600_buffer_transfer_map(struct pipe_context *ctx,
+                                      struct pipe_resource *resource,
+                                      unsigned level,
+                                      unsigned usage,
+                                      const struct pipe_box *box,
+                                      struct pipe_transfer **ptransfer)
+{
+	struct r600_common_context *rctx = (struct r600_common_context*)ctx;
+	struct r600_common_screen *rscreen = (struct r600_common_screen*)ctx->screen;
+        struct r600_resource *rbuffer = r600_resource(resource);
+        uint8_t *data;
+
+	assert(box->x + box->width <= resource->width0);
+
+	/* See if the buffer range being mapped has never been initialized,
+	 * in which case it can be mapped unsynchronized. */
+	if (!(usage & PIPE_TRANSFER_UNSYNCHRONIZED) &&
+	    usage & PIPE_TRANSFER_WRITE &&
+	    !util_ranges_intersect(&rbuffer->valid_buffer_range, box->x, box->x + box->width)) {
+		usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
+	}
+
+	if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE &&
+	    !(usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
+		assert(usage & PIPE_TRANSFER_WRITE);
+
+		/* Check if mapping this buffer would cause waiting for the GPU. */
+		if (r600_rings_is_buffer_referenced(rctx, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
+		    rctx->ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
+			rctx->invalidate_buffer(&rctx->b, &rbuffer->b.b);
+		}
+	}
+	else if ((usage & PIPE_TRANSFER_DISCARD_RANGE) &&
+		 !(usage & PIPE_TRANSFER_UNSYNCHRONIZED) &&
+		 !(rscreen->debug_flags & DBG_NO_DISCARD_RANGE) &&
+		 (rscreen->has_cp_dma ||
+		  (rscreen->has_streamout &&
+		   /* The buffer range must be aligned to 4 with streamout. */
+		   box->x % 4 == 0 && box->width % 4 == 0))) {
+		assert(usage & PIPE_TRANSFER_WRITE);
+
+		/* Check if mapping this buffer would cause waiting for the GPU. */
+		if (r600_rings_is_buffer_referenced(rctx, rbuffer->cs_buf, RADEON_USAGE_READWRITE) ||
+		    rctx->ws->buffer_is_busy(rbuffer->buf, RADEON_USAGE_READWRITE)) {
+			/* Do a wait-free write-only transfer using a temporary buffer. */
+			unsigned offset;
+			struct r600_resource *staging = NULL;
+
+			u_upload_alloc(rctx->uploader, 0, box->width + (box->x % R600_MAP_BUFFER_ALIGNMENT),
+				       &offset, (struct pipe_resource**)&staging, (void**)&data);
+
+			if (staging) {
+				data += box->x % R600_MAP_BUFFER_ALIGNMENT;
+				return r600_buffer_get_transfer(ctx, resource, level, usage, box,
+								ptransfer, data, staging, offset);
+			}
+		}
+	}
+
+	data = r600_buffer_map_sync_with_rings(rctx, rbuffer, usage);
+	if (!data) {
+		return NULL;
+	}
+	data += box->x;
+
+	return r600_buffer_get_transfer(ctx, resource, level, usage, box,
+					ptransfer, data, NULL, 0);
+}
+
+static void r600_buffer_transfer_unmap(struct pipe_context *ctx,
+				       struct pipe_transfer *transfer)
+{
+	struct r600_common_context *rctx = (struct r600_common_context*)ctx;
+	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
+	struct r600_resource *rbuffer = r600_resource(transfer->resource);
+
+	if (rtransfer->staging) {
+		struct pipe_resource *dst, *src;
+		unsigned soffset, doffset, size;
+		struct pipe_box box;
+
+		dst = transfer->resource;
+		src = &rtransfer->staging->b.b;
+		size = transfer->box.width;
+		doffset = transfer->box.x;
+		soffset = rtransfer->offset + transfer->box.x % R600_MAP_BUFFER_ALIGNMENT;
+
+		u_box_1d(soffset, size, &box);
+
+		/* Copy the staging buffer into the original one. */
+		if (!(size % 4) && !(doffset % 4) && !(soffset % 4) &&
+		    rctx->dma_copy(ctx, dst, 0, doffset, 0, 0, src, 0, &box)) {
+			/* DONE. */
+		} else {
+			ctx->resource_copy_region(ctx, dst, 0, doffset, 0, 0, src, 0, &box);
+		}
+		pipe_resource_reference((struct pipe_resource**)&rtransfer->staging, NULL);
+	}
+
+	if (transfer->usage & PIPE_TRANSFER_WRITE) {
+		util_range_add(&rbuffer->valid_buffer_range, transfer->box.x,
+			       transfer->box.x + transfer->box.width);
+	}
+	util_slab_free(&rctx->pool_transfers, transfer);
+}
+
+static const struct u_resource_vtbl r600_buffer_vtbl =
+{
+	NULL,				/* get_handle */
+	r600_buffer_destroy,		/* resource_destroy */
+	r600_buffer_transfer_map,	/* transfer_map */
+	NULL,				/* transfer_flush_region */
+	r600_buffer_transfer_unmap,	/* transfer_unmap */
+	NULL				/* transfer_inline_write */
+};
+
+struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
+					 const struct pipe_resource *templ,
+					 unsigned alignment)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
+	struct r600_resource *rbuffer;
+
+	rbuffer = MALLOC_STRUCT(r600_resource);
+
+	rbuffer->b.b = *templ;
+	pipe_reference_init(&rbuffer->b.b.reference, 1);
+	rbuffer->b.b.screen = screen;
+	rbuffer->b.vtbl = &r600_buffer_vtbl;
+	util_range_init(&rbuffer->valid_buffer_range);
+
+	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, TRUE, templ->usage)) {
+		FREE(rbuffer);
+		return NULL;
+	}
+	return &rbuffer->b.b;
 }

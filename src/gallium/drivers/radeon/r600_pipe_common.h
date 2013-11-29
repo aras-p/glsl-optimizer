@@ -35,6 +35,7 @@
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 
 #include "util/u_range.h"
+#include "util/u_slab.h"
 #include "util/u_suballoc.h"
 #include "util/u_transfer.h"
 
@@ -76,6 +77,8 @@
 #define DBG_NO_HYPERZ		(1 << 13)
 #define DBG_NO_DISCARD_RANGE	(1 << 14)
 /* The maximum allowed bit is 15. */
+
+#define R600_MAP_BUFFER_ALIGNMENT 64
 
 struct r600_common_context;
 
@@ -225,7 +228,9 @@ struct r600_common_context {
 	enum chip_class			chip_class;
 	struct r600_rings		rings;
 
+	struct u_upload_mgr		*uploader;
 	struct u_suballocator		*allocator_so_filled_size;
+	struct util_slab_mempool	pool_transfers;
 
 	/* Current unaccounted memory usage. */
 	uint64_t			vram;
@@ -273,6 +278,9 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 			struct r600_resource *res,
 			unsigned size, unsigned alignment,
 			bool use_reusable_pool, unsigned usage);
+struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
+					 const struct pipe_resource *templ,
+					 unsigned alignment);
 
 /* r600_common_pipe.c */
 bool r600_common_screen_init(struct r600_common_screen *rscreen,

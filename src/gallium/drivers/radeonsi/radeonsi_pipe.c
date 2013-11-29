@@ -119,11 +119,6 @@ static void r600_destroy_context(struct pipe_context *context)
 
 	util_blitter_destroy(rctx->blitter);
 
-	if (rctx->uploader) {
-		u_upload_destroy(rctx->uploader);
-	}
-	util_slab_destroy(&rctx->pool_transfers);
-
 	r600_common_context_cleanup(&rctx->b);
 	FREE(rctx);
 }
@@ -186,16 +181,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	}
 
 	rctx->b.ws->cs_set_flush_callback(rctx->b.rings.gfx.cs, r600_flush_from_winsys, rctx);
-
-	util_slab_create(&rctx->pool_transfers,
-			 sizeof(struct pipe_transfer), 64,
-			 UTIL_SLAB_SINGLETHREADED);
-
-        rctx->uploader = u_upload_create(&rctx->b.b, 1024 * 1024, 256,
-                                         PIPE_BIND_INDEX_BUFFER |
-                                         PIPE_BIND_CONSTANT_BUFFER);
-        if (!rctx->uploader)
-		goto fail;
 
 	rctx->blitter = util_blitter_create(&rctx->b.b);
 	if (rctx->blitter == NULL)

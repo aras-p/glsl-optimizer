@@ -27,7 +27,7 @@ static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
 	if (templ->target == PIPE_BUFFER) {
-		return si_buffer_create(screen, templ);
+		return r600_buffer_create(screen, templ, 4096);
 	} else {
 		return r600_texture_create(screen, templ);
 	}
@@ -55,7 +55,7 @@ void r600_init_screen_resource_functions(struct pipe_screen *screen)
 void r600_init_context_resource_functions(struct r600_context *r600)
 {
 	r600->b.b.transfer_map = u_transfer_map_vtbl;
-	r600->b.b.transfer_flush_region = u_transfer_flush_region_vtbl;
+	r600->b.b.transfer_flush_region = u_default_transfer_flush_region;
 	r600->b.b.transfer_unmap = u_transfer_unmap_vtbl;
 	r600->b.b.transfer_inline_write = u_default_transfer_inline_write;
 }

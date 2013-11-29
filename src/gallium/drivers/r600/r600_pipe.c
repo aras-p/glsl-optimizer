@@ -179,13 +179,9 @@ static void r600_destroy_context(struct pipe_context *context)
 	if (rctx->blitter) {
 		util_blitter_destroy(rctx->blitter);
 	}
-	if (rctx->uploader) {
-		u_upload_destroy(rctx->uploader);
-	}
 	if (rctx->allocator_fetch_shader) {
 		u_suballocator_destroy(rctx->allocator_fetch_shader);
 	}
-	util_slab_destroy(&rctx->pool_transfers);
 
 	r600_release_command_buffer(&rctx->start_cs_cmd);
 
@@ -207,10 +203,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	if (rctx == NULL)
 		return NULL;
-
-	util_slab_create(&rctx->pool_transfers,
-			 sizeof(struct r600_transfer), 64,
-			 UTIL_SLAB_SINGLETHREADED);
 
 	rctx->b.b.screen = screen;
 	rctx->b.b.priv = priv;
@@ -294,12 +286,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		rctx->b.ws->cs_set_flush_callback(rctx->b.rings.dma.cs, r600_flush_dma_from_winsys, rctx);
 		rctx->b.rings.dma.flushing = false;
 	}
-
-	rctx->uploader = u_upload_create(&rctx->b.b, 1024 * 1024, 256,
-					PIPE_BIND_INDEX_BUFFER |
-					PIPE_BIND_CONSTANT_BUFFER);
-	if (!rctx->uploader)
-		goto fail;
 
 	rctx->allocator_fetch_shader = u_suballocator_create(&rctx->b.b, 64 * 1024, 256,
 							     0, PIPE_USAGE_STATIC, FALSE);
