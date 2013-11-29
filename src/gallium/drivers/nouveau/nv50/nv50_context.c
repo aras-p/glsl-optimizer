@@ -114,6 +114,8 @@ nv50_destroy(struct pipe_context *pipe)
    draw_destroy(nv50->draw);
 #endif
 
+   FREE(nv50->blit);
+
    nouveau_context_destroy(&nv50->base);
 }
 
