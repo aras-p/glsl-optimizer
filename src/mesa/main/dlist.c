@@ -6845,6 +6845,10 @@ save_error(struct gl_context *ctx, GLenum error, const char *s)
    if (n) {
       n[1].e = error;
       n[2].data = (void *) s;
+      /* note: the data/string here doesn't have to be freed in
+       * _mesa_delete_list() since the string is never dynamically
+       * allocated.
+       */
    }
 }
 
