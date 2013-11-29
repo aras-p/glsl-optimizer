@@ -45,6 +45,11 @@ struct brw_sampler_prog_key_data {
     * For RG32F, gather4's channel select is broken.
     */
    uint16_t gather_channel_quirk_mask;
+
+   /**
+    * Whether this sampler uses the compressed multisample surface layout.
+    */
+   uint16_t compressed_multisample_layout_mask;
 };
 
 #ifdef __cplusplus

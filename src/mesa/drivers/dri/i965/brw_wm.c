@@ -38,6 +38,7 @@
 #include "main/samplerobj.h"
 #include "program/prog_parameter.h"
 #include "program/program.h"
+#include "intel_mipmap_tree.h"
 
 #include "glsl/ralloc.h"
 
@@ -355,6 +356,18 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
          if (brw->gen >= 7 && !brw->is_haswell && prog->UsesGather) {
             if (img->InternalFormat == GL_RG32F)
                key->gather_channel_quirk_mask |= 1 << s;
+         }
+
+         /* If this is a multisample sampler, and uses the CMS MSAA layout,
+          * then we need to emit slightly different code to first sample the
+          * MCS surface.
+          */
+         struct intel_texture_object *intel_tex =
+            intel_texture_object((struct gl_texture_object *)t);
+
+         if (brw->gen >= 7 &&
+             intel_tex->mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
+            key->compressed_multisample_layout_mask |= 1 << s;
          }
       }
    }
