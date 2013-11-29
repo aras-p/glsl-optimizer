@@ -1046,8 +1046,8 @@ brw_blorp_blit_program::compute_frag_coords()
            stride(suboffset(R1, 5), 2, 4, 0), brw_imm_v(0x11001100));
 
    /* Move the coordinates to UD registers. */
-   brw_MOV(&func, vec16(Xp), retype(X, BRW_REGISTER_TYPE_UW));
-   brw_MOV(&func, vec16(Yp), retype(Y, BRW_REGISTER_TYPE_UW));
+   emit_mov(vec16(Xp), retype(X, BRW_REGISTER_TYPE_UW));
+   emit_mov(vec16(Yp), retype(Y, BRW_REGISTER_TYPE_UW));
    SWAP_XY_AND_XPYP();
 
    if (key->persample_msaa_dispatch) {
@@ -1063,12 +1063,10 @@ brw_blorp_blit_program::compute_frag_coords()
           * then copy from it using vstride=1, width=4, hstride=0.
           */
          struct brw_reg t1_uw1 = retype(t1, BRW_REGISTER_TYPE_UW);
-         brw_MOV(&func, vec16(t1_uw1), brw_imm_v(0x3210));
+         emit_mov(vec16(t1_uw1), brw_imm_v(0x3210));
          /* Move to UD sample_index register. */
-         brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
-         brw_MOV(&func, S, stride(t1_uw1, 1, 4, 0));
-         brw_MOV(&func, offset(S, 1), suboffset(stride(t1_uw1, 1, 4, 0), 2));
-         brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
+         emit_mov_8(S, stride(t1_uw1, 1, 4, 0));
+         emit_mov_8(offset(S, 1), suboffset(stride(t1_uw1, 1, 4, 0), 2));
          break;
       }
       case 8: {
@@ -1090,7 +1088,7 @@ brw_blorp_blit_program::compute_frag_coords()
          struct brw_reg r0_ud1 = vec1(retype(R0, BRW_REGISTER_TYPE_UD));
          brw_AND(&func, t1_ud1, r0_ud1, brw_imm_ud(0xc0));
          brw_SHR(&func, t1_ud1, t1_ud1, brw_imm_ud(5));
-         brw_MOV(&func, vec16(t2_uw1), brw_imm_v(0x3210));
+         emit_mov(vec16(t2_uw1), brw_imm_v(0x3210));
          brw_ADD(&func, vec16(S), retype(t1_ud1, BRW_REGISTER_TYPE_UW),
                  stride(t2_uw1, 1, 4, 0));
          brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
@@ -1388,8 +1386,8 @@ brw_blorp_blit_program::translate_dst_to_src()
    struct brw_reg Yp_f = retype(Yp, BRW_REGISTER_TYPE_F);
 
    /* Move the UD coordinates to float registers. */
-   brw_MOV(&func, Xp_f, X);
-   brw_MOV(&func, Yp_f, Y);
+   emit_mov(Xp_f, X);
+   emit_mov(Yp_f, Y);
    /* Scale and offset */
    brw_MUL(&func, X_f, Xp_f, x_transform.multiplier);
    brw_MUL(&func, Y_f, Yp_f, y_transform.multiplier);
@@ -1430,8 +1428,8 @@ brw_blorp_blit_program::translate_dst_to_src()
       /* Round the float coordinates down to nearest integer by moving to
        * UD registers.
        */
-      brw_MOV(&func, Xp, X_f);
-      brw_MOV(&func, Yp, Y_f);
+      emit_mov(Xp, X_f);
+      emit_mov(Yp, Y_f);
       SWAP_XY_AND_XPYP();
    }
 }
@@ -1533,7 +1531,7 @@ brw_blorp_blit_program::manual_blend_average(unsigned num_samples)
          s_is_zero = true;
       } else {
          s_is_zero = false;
-         brw_MOV(&func, vec16(S), brw_imm_ud(i));
+         emit_mov(vec16(S), brw_imm_ud(i));
       }
       texel_fetch(texture_data[stack_depth++]);
 
@@ -1633,8 +1631,8 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
               brw_imm_f((float)(i & 0x1) * (1.0 / key->x_scale)));
       brw_ADD(&func, vec16(y_sample_coords), Yp_f,
               brw_imm_f((float)((i >> 1) & 0x1) * (1.0 / key->y_scale)));
-      brw_MOV(&func, vec16(X), x_sample_coords);
-      brw_MOV(&func, vec16(Y), y_sample_coords);
+      emit_mov(vec16(X), x_sample_coords);
+      emit_mov(vec16(Y), y_sample_coords);
 
       /* The MCS value we fetch has to match up with the pixel that we're
        * sampling from. Since we sample from different pixels in each
@@ -1673,7 +1671,7 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
       brw_MUL(&func, vec16(t1_f), t1_f, brw_imm_f(key->x_scale));
       brw_MUL(&func, vec16(t2_f), t2_f, brw_imm_f(key->x_scale * key->y_scale));
       brw_ADD(&func, vec16(t1_f), t1_f, t2_f);
-      brw_MOV(&func, vec16(S), t1_f);
+      emit_mov(vec16(S), t1_f);
 
       if (num_samples == 8) {
          /* Map the sample index to a sample number */
@@ -1681,20 +1679,20 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
                  S, brw_imm_d(4));
          brw_IF(&func, BRW_EXECUTE_16);
          {
-            brw_MOV(&func, vec16(t2), brw_imm_d(5));
+            emit_mov(vec16(t2), brw_imm_d(5));
             emit_if_eq_mov(S, 1, vec16(t2), 2);
             emit_if_eq_mov(S, 2, vec16(t2), 4);
             emit_if_eq_mov(S, 3, vec16(t2), 6);
          }
          brw_ELSE(&func);
          {
-            brw_MOV(&func, vec16(t2), brw_imm_d(0));
+            emit_mov(vec16(t2), brw_imm_d(0));
             emit_if_eq_mov(S, 5, vec16(t2), 3);
             emit_if_eq_mov(S, 6, vec16(t2), 7);
             emit_if_eq_mov(S, 7, vec16(t2), 1);
          }
          brw_ENDIF(&func);
-         brw_MOV(&func, vec16(S), t2);
+         emit_mov(vec16(S), t2);
       }
       texel_fetch(texture_data[i]);
    }
@@ -1827,23 +1825,23 @@ brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
       switch (args[arg]) {
       case SAMPLER_MESSAGE_ARG_U_FLOAT:
          if (key->bilinear_filter)
-            brw_MOV(&func, retype(mrf, BRW_REGISTER_TYPE_F),
-                    retype(X, BRW_REGISTER_TYPE_F));
+            emit_mov(retype(mrf, BRW_REGISTER_TYPE_F),
+                     retype(X, BRW_REGISTER_TYPE_F));
          else
-            brw_MOV(&func, retype(mrf, BRW_REGISTER_TYPE_F), X);
+            emit_mov(retype(mrf, BRW_REGISTER_TYPE_F), X);
          break;
       case SAMPLER_MESSAGE_ARG_V_FLOAT:
          if (key->bilinear_filter)
-            brw_MOV(&func, retype(mrf, BRW_REGISTER_TYPE_F),
-                    retype(Y, BRW_REGISTER_TYPE_F));
+            emit_mov(retype(mrf, BRW_REGISTER_TYPE_F),
+                     retype(Y, BRW_REGISTER_TYPE_F));
          else
-            brw_MOV(&func, retype(mrf, BRW_REGISTER_TYPE_F), Y);
+            emit_mov(retype(mrf, BRW_REGISTER_TYPE_F), Y);
          break;
       case SAMPLER_MESSAGE_ARG_U_INT:
-         brw_MOV(&func, mrf, X);
+         emit_mov(mrf, X);
          break;
       case SAMPLER_MESSAGE_ARG_V_INT:
-         brw_MOV(&func, mrf, Y);
+         emit_mov(mrf, Y);
          break;
       case SAMPLER_MESSAGE_ARG_SI_INT:
          /* Note: on Gen7, this code may be reached with s_is_zero==true
@@ -1852,14 +1850,14 @@ brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
           * appropriate message register.
           */
          if (s_is_zero)
-            brw_MOV(&func, mrf, brw_imm_ud(0));
+            emit_mov(mrf, brw_imm_ud(0));
          else
-            brw_MOV(&func, mrf, S);
+            emit_mov(mrf, S);
          break;
       case SAMPLER_MESSAGE_ARG_MCS_INT:
          switch (key->tex_layout) {
          case INTEL_MSAA_LAYOUT_CMS:
-            brw_MOV(&func, mrf, mcs_data);
+            emit_mov(mrf, mcs_data);
             break;
          case INTEL_MSAA_LAYOUT_IMS:
             /* When sampling from an IMS surface, MCS data is not relevant,
@@ -1875,7 +1873,7 @@ brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
          }
          break;
       case SAMPLER_MESSAGE_ARG_ZERO_INT:
-         brw_MOV(&func, mrf, brw_imm_ud(0));
+         emit_mov(mrf, brw_imm_ud(0));
          break;
       }
       mrf.nr += 2;
@@ -1907,16 +1905,16 @@ brw_blorp_blit_program::render_target_write()
    bool use_header = key->use_kill;
    if (use_header) {
       /* Copy R0/1 to MRF */
-      brw_MOV(&func, retype(mrf_rt_write, BRW_REGISTER_TYPE_UD),
-              retype(R0, BRW_REGISTER_TYPE_UD));
+      emit_mov(retype(mrf_rt_write, BRW_REGISTER_TYPE_UD),
+               retype(R0, BRW_REGISTER_TYPE_UD));
       mrf_offset += 2;
    }
 
    /* Copy texture data to MRFs */
    for (int i = 0; i < 4; ++i) {
       /* E.g. mov(16) m2.0<1>:f r2.0<8;8,1>:f { Align1, H1 } */
-      brw_MOV(&func, offset(mrf_rt_write, mrf_offset),
-              offset(vec8(texture_data[0]), 2*i));
+      emit_mov(offset(mrf_rt_write, mrf_offset),
+               offset(vec8(texture_data[0]), 2*i));
       mrf_offset += 2;
    }
 

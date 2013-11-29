@@ -74,6 +74,18 @@ protected:
       emit_cond_mov(x, brw_imm_d(y), BRW_CONDITIONAL_EQ, dst, brw_imm_d(src));
    }
 
+   inline void emit_mov(const struct brw_reg& dst, const struct brw_reg& src)
+   {
+      brw_MOV(&func, dst, src);
+   }
+
+   inline void emit_mov_8(const struct brw_reg& dst, const struct brw_reg& src)
+   {
+      brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
+      emit_mov(dst, src);
+      brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
+   }
+
    void *mem_ctx;
    struct brw_compile func;
 };
