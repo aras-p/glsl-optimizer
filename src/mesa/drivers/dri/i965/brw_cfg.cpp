@@ -133,10 +133,7 @@ cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
 
 	 cur_if = cur;
 	 cur_else = NULL;
-	 /* Set up the block just after the endif.  Don't know when exactly
-	  * it will start, yet.
-	  */
-	 cur_endif = new_block();
+         cur_endif = NULL;
 
 	 /* Set up our immediately following block, full of "then"
 	  * instructions.
@@ -149,26 +146,39 @@ cfg_t::create(void *parent_mem_ctx, exec_list *instructions)
 	 break;
 
       case BRW_OPCODE_ELSE:
-	 cur->add_successor(mem_ctx, cur_endif);
+         cur_else = cur;
 
 	 next = new_block();
 	 next->start = (backend_instruction *)inst->next;
 	 cur_if->add_successor(mem_ctx, next);
-	 cur_else = next;
 
 	 set_next_block(next);
 	 break;
 
       case BRW_OPCODE_ENDIF: {
-	 cur_endif->start = (backend_instruction *)inst->next;
-	 cur->add_successor(mem_ctx, cur_endif);
-	 set_next_block(cur_endif);
+         if (cur->start == inst) {
+            /* New block was just created; use it. */
+            cur_endif = cur;
+         } else {
+            cur_endif = new_block();
+            cur_endif->start = inst;
 
-	 if (!cur_else)
-	    cur_if->add_successor(mem_ctx, cur_endif);
+            cur->end = (backend_instruction *)inst->prev;
+            cur->add_successor(mem_ctx, cur_endif);
 
-         backend_instruction *else_inst = cur_else ?
-            (backend_instruction *) cur_else->start->prev : NULL;
+            ip--;
+            set_next_block(cur_endif);
+            ip++;
+         }
+
+         backend_instruction *else_inst = NULL;
+         if (cur_else) {
+            else_inst = (backend_instruction *)cur_else->end;
+
+            cur_else->add_successor(mem_ctx, cur_endif);
+         } else {
+            cur_if->add_successor(mem_ctx, cur_endif);
+         }
 
          assert(cur_if->end->opcode == BRW_OPCODE_IF);
          assert(!else_inst || else_inst->opcode == BRW_OPCODE_ELSE);

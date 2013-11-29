@@ -45,10 +45,10 @@ dead_control_flow_eliminate(backend_visitor *v)
       bblock_t *block = cfg.blocks[b];
       bool found = false;
 
-      /* ENDIF instructions, by definition, can only be found at the ends of
+      /* ENDIF instructions, by definition, can only be found at the start of
        * basic blocks.
        */
-      backend_instruction *endif_inst = block->end;
+      backend_instruction *endif_inst = block->start;
       if (endif_inst->opcode != BRW_OPCODE_ENDIF)
          continue;
 
