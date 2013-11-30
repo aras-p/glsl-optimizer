@@ -1682,34 +1682,16 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
          brw_IF(&func, BRW_EXECUTE_16);
          {
             brw_MOV(&func, vec16(t2), brw_imm_d(5));
-            brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_EQ,
-                    S, brw_imm_d(1));
-            brw_MOV(&func, vec16(t2), brw_imm_d(2));
-            brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-            brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_EQ,
-                    S, brw_imm_d(2));
-            brw_MOV(&func, vec16(t2), brw_imm_d(4));
-            brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-            brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_EQ,
-                    S, brw_imm_d(3));
-            brw_MOV(&func, vec16(t2), brw_imm_d(6));
-            brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
+            emit_if_eq_mov(S, 1, vec16(t2), 2);
+            emit_if_eq_mov(S, 2, vec16(t2), 4);
+            emit_if_eq_mov(S, 3, vec16(t2), 6);
          }
          brw_ELSE(&func);
          {
             brw_MOV(&func, vec16(t2), brw_imm_d(0));
-            brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_EQ,
-                    S, brw_imm_d(5));
-            brw_MOV(&func, vec16(t2), brw_imm_d(3));
-            brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-            brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_EQ,
-                    S, brw_imm_d(6));
-            brw_MOV(&func, vec16(t2), brw_imm_d(7));
-            brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-            brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_EQ,
-                    S, brw_imm_d(7));
-            brw_MOV(&func, vec16(t2), brw_imm_d(1));
-            brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
+            emit_if_eq_mov(S, 5, vec16(t2), 3);
+            emit_if_eq_mov(S, 6, vec16(t2), 7);
+            emit_if_eq_mov(S, 7, vec16(t2), 1);
          }
          brw_ENDIF(&func);
          brw_MOV(&func, vec16(S), t2);

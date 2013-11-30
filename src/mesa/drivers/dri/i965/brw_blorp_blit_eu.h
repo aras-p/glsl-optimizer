@@ -68,6 +68,12 @@ protected:
       brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
    }
 
+   inline void emit_if_eq_mov(const struct brw_reg &x, unsigned y,
+                              const struct brw_reg &dst, unsigned src)
+   {
+      emit_cond_mov(x, brw_imm_d(y), BRW_CONDITIONAL_EQ, dst, brw_imm_d(src));
+   }
+
    void *mem_ctx;
    struct brw_compile func;
 };
