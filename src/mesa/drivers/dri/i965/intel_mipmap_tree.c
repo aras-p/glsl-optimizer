@@ -611,6 +611,14 @@ intel_miptree_create(struct brw_context *brw,
        return NULL;
    }
 
+
+   if (mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
+      if (!intel_miptree_alloc_mcs(brw, mt, num_samples)) {
+         intel_miptree_release(&mt);
+         return NULL;
+      }
+   }
+
    /* If this miptree is capable of supporting fast color clears, set
     * mcs_state appropriately to ensure that fast clears will occur.
     * Allocation of the MCS miptree will be deferred until the first fast
@@ -825,12 +833,6 @@ intel_miptree_create_for_renderbuffer(struct brw_context *brw,
 
    if (brw_is_hiz_depth_format(brw, format)) {
       ok = intel_miptree_alloc_hiz(brw, mt);
-      if (!ok)
-         goto fail;
-   }
-
-   if (mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
-      ok = intel_miptree_alloc_mcs(brw, mt, num_samples);
       if (!ok)
          goto fail;
    }
