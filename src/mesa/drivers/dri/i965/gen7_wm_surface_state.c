@@ -349,6 +349,11 @@ gen7_update_texture_surface(struct gl_context *ctx,
          SET_FIELD(brw_swizzle_to_scs(GET_SWZ(swizzle, 3), need_scs_green_to_blue), GEN7_SURFACE_SCS_A);
    }
 
+   if (mt->mcs_mt) {
+      gen7_set_surface_mcs_info(brw, surf, *surf_offset,
+                                mt->mcs_mt, false /* is RT */);
+   }
+
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->batch.bo,
 			   *surf_offset + 4,
