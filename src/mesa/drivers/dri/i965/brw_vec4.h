@@ -477,6 +477,7 @@ public:
    void emit_unpack_half_2x16(dst_reg dst, src_reg src0);
 
    uint32_t gather_channel(ir_texture *ir, int sampler);
+   src_reg emit_mcs_fetch(ir_texture *ir, src_reg coordinate, int sampler);
    void swizzle_result(ir_texture *ir, src_reg orig_val, int sampler);
 
    void emit_ndc_computation();

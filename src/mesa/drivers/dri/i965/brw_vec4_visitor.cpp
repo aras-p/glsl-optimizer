@@ -2242,6 +2242,31 @@ vec4_visitor::visit(ir_call *ir)
    }
 }
 
+src_reg
+vec4_visitor::emit_mcs_fetch(ir_texture *ir, src_reg coordinate, int sampler)
+{
+   vec4_instruction *inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXF_MCS);
+   inst->base_mrf = 2;
+   inst->mlen = 1;
+   inst->sampler = sampler;
+   inst->dst = dst_reg(this, glsl_type::uvec4_type);
+   inst->dst.writemask = WRITEMASK_XYZW;
+
+   /* parameters are: u, v, r, lod; lod will always be zero due to api restrictions */
+   int param_base = inst->base_mrf;
+   int coord_mask = (1 << ir->coordinate->type->vector_elements) - 1;
+   int zero_mask = 0xf & ~coord_mask;
+
+   emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, coord_mask),
+            coordinate));
+
+   emit(MOV(dst_reg(MRF, param_base, ir->coordinate->type, zero_mask),
+            src_reg(0)));
+
+   emit(inst);
+   return src_reg(inst->dst);
+}
+
 void
 vec4_visitor::visit(ir_texture *ir)
 {
@@ -2292,7 +2317,7 @@ vec4_visitor::visit(ir_texture *ir)
    }
 
    const glsl_type *lod_type = NULL, *sample_index_type = NULL;
-   src_reg lod, dPdx, dPdy, sample_index;
+   src_reg lod, dPdx, dPdy, sample_index, mcs;
    switch (ir->op) {
    case ir_tex:
       lod = src_reg(0.0f);
@@ -2313,6 +2338,11 @@ vec4_visitor::visit(ir_texture *ir)
       ir->lod_info.sample_index->accept(this);
       sample_index = this->result;
       sample_index_type = ir->lod_info.sample_index->type;
+
+      if (brw->gen >= 7 && key->tex.compressed_multisample_layout_mask & (1<<sampler))
+         mcs = emit_mcs_fetch(ir, coordinate, sampler);
+      else
+         mcs = src_reg(0u);
       break;
    case ir_txd:
       ir->lod_info.grad.dPdx->accept(this);
@@ -2433,13 +2463,15 @@ vec4_visitor::visit(ir_texture *ir)
       } else if (ir->op == ir_txf_ms) {
          emit(MOV(dst_reg(MRF, param_base + 1, sample_index_type, WRITEMASK_X),
                   sample_index));
+         if (brw->gen >= 7)
+            /* MCS data is in the first channel of `mcs`, but we need to get it into
+             * the .y channel of the second vec4 of params, so replicate .x across
+             * the whole vec4 and then mask off everything except .y
+             */
+            mcs.swizzle = BRW_SWIZZLE_XXXX;
+            emit(MOV(dst_reg(MRF, param_base + 1, glsl_type::uint_type, WRITEMASK_Y),
+                     mcs));
          inst->mlen++;
-
-         /* on Gen7, there is an additional MCS parameter here after SI,
-          * but we don't bother to emit it since it's always zero. If
-          * we start supporting texturing from CMS surfaces, this will have
-          * to change
-          */
       } else if (ir->op == ir_txd) {
 	 const glsl_type *type = lod_type;
 
