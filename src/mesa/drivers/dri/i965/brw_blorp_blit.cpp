@@ -1444,21 +1444,10 @@ brw_blorp_blit_program::clamp_tex_coords(struct brw_reg regX,
                                          struct brw_reg clampX1,
                                          struct brw_reg clampY1)
 {
-   brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_L, regX, clampX0);
-   brw_MOV(&func, regX, clampX0);
-   brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-
-   brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_G, regX, clampX1);
-   brw_MOV(&func, regX, clampX1);
-   brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-
-   brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_L, regY, clampY0);
-   brw_MOV(&func, regY, clampY0);
-   brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-
-   brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_G, regY, clampY1);
-   brw_MOV(&func, regY, clampY1);
-   brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
+   emit_cond_mov(regX, clampX0, BRW_CONDITIONAL_L, regX, clampX0);
+   emit_cond_mov(regX, clampX1, BRW_CONDITIONAL_G, regX, clampX1);
+   emit_cond_mov(regY, clampY0, BRW_CONDITIONAL_L, regY, clampY0);
+   emit_cond_mov(regY, clampY1, BRW_CONDITIONAL_G, regY, clampY1);
 }
 
 /**

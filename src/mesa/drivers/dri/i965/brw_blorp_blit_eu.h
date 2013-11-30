@@ -57,6 +57,17 @@ protected:
                      const struct brw_reg &src_1,
                      const struct brw_reg &src_2);
 
+   inline void emit_cond_mov(const struct brw_reg &x,
+                             const struct brw_reg &y,
+                             int op,
+                             const struct brw_reg &dst,
+                             const struct brw_reg &src)
+   {
+      brw_CMP(&func, vec16(brw_null_reg()), op, x, y);
+      brw_MOV(&func, dst, src);
+      brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
+   }
+
    void *mem_ctx;
    struct brw_compile func;
 };
