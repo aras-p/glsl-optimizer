@@ -2241,12 +2241,12 @@ fs_visitor::dead_code_eliminate_local()
 }
 
 /**
- * Implements a second type of register coalescing: This one checks if
- * the two regs involved in a raw move don't interfere, in which case
- * they can both by stored in the same place and the MOV removed.
+ * Implements register coalescing: Checks if the two registers involved in a
+ * raw move don't interfere, in which case they can both be stored in the same
+ * place and the MOV removed.
  */
 bool
-fs_visitor::register_coalesce_2()
+fs_visitor::register_coalesce()
 {
    bool progress = false;
 
@@ -3125,7 +3125,7 @@ fs_visitor::run()
 	 progress = dead_code_eliminate() || progress;
 	 progress = dead_code_eliminate_local() || progress;
          progress = dead_control_flow_eliminate(this) || progress;
-	 progress = register_coalesce_2() || progress;
+         progress = register_coalesce() || progress;
 	 progress = compute_to_mrf() || progress;
       } while (progress);
 
