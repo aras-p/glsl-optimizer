@@ -314,7 +314,6 @@ public:
    bool try_constant_propagate(fs_inst *inst, acp_entry *entry);
    bool opt_copy_propagate_local(void *mem_ctx, bblock_t *block,
                                  exec_list *acp);
-   bool register_coalesce();
    bool register_coalesce_2();
    bool compute_to_mrf();
    bool dead_code_eliminate();
