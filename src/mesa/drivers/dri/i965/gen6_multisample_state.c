@@ -97,40 +97,16 @@ gen6_emit_3dstate_multisample(struct brw_context *brw,
 }
 
 
-/**
- * 3DSTATE_SAMPLE_MASK
- */
-void
-gen6_emit_3dstate_sample_mask(struct brw_context *brw,
-                              unsigned num_samples, float coverage,
-                              bool coverage_invert, unsigned sample_mask)
-{
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_SAMPLE_MASK << 16 | (2 - 2));
-   if (num_samples > 1) {
-      int coverage_int = (int) (num_samples * coverage + 0.5);
-      uint32_t coverage_bits = (1 << coverage_int) - 1;
-      if (coverage_invert)
-         coverage_bits ^= (1 << num_samples) - 1;
-      OUT_BATCH(coverage_bits & sample_mask);
-   } else {
-      OUT_BATCH(1);
-   }
-   ADVANCE_BATCH();
-}
-
-
-static void upload_multisample_state(struct brw_context *brw)
+unsigned
+gen6_determine_sample_mask(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
    float coverage = 1.0;
    float coverage_invert = false;
    unsigned sample_mask = ~0u;
 
-   /* _NEW_BUFFERS */
    unsigned num_samples = ctx->DrawBuffer->Visual.samples;
 
-   /* _NEW_MULTISAMPLE */
    if (ctx->Multisample._Enabled) {
       if (ctx->Multisample.SampleCoverage) {
          coverage = ctx->Multisample.SampleCoverageValue;
@@ -141,9 +117,40 @@ static void upload_multisample_state(struct brw_context *brw)
       }
    }
 
+   if (num_samples > 1) {
+      int coverage_int = (int) (num_samples * coverage + 0.5);
+      uint32_t coverage_bits = (1 << coverage_int) - 1;
+      if (coverage_invert)
+         coverage_bits ^= (1 << num_samples) - 1;
+      return coverage_bits & sample_mask;
+   } else {
+      return 1;
+   }
+}
+
+
+/**
+ * 3DSTATE_SAMPLE_MASK
+ */
+void
+gen6_emit_3dstate_sample_mask(struct brw_context *brw, unsigned mask)
+{
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_SAMPLE_MASK << 16 | (2 - 2));
+   OUT_BATCH(mask);
+   ADVANCE_BATCH();
+}
+
+
+static void upload_multisample_state(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->ctx;
+
+   /* _NEW_BUFFERS, _NEW_MULTISAMPLE */
+   unsigned num_samples = ctx->DrawBuffer->Visual.samples;
+
    gen6_emit_3dstate_multisample(brw, num_samples);
-   gen6_emit_3dstate_sample_mask(brw, num_samples, coverage,
-         coverage_invert, sample_mask);
+   gen6_emit_3dstate_sample_mask(brw, gen6_determine_sample_mask(brw));
 }
 
 
