@@ -29,6 +29,7 @@
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include <errno.h>
+#include <inttypes.h>
 
 /* Same as resource_copy_region, except that both upsampling and downsampling are allowed. */
 static void r600_copy_region_with_blit(struct pipe_context *pipe,
@@ -578,7 +579,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	}
 
 	if (rscreen->debug_flags & DBG_VM) {
-		fprintf(stderr, "VM start=0x%llX  end=0x%llX | Texture %ix%ix%i, %i levels, %i samples, %s\n",
+		fprintf(stderr, "VM start=0x%"PRIu64"  end=0x%"PRIu64" | Texture %ix%ix%i, %i levels, %i samples, %s\n",
 			r600_resource_va(screen, &rtex->resource.b.b),
 			r600_resource_va(screen, &rtex->resource.b.b) + rtex->resource.buf->size,
 			base->width0, base->height0, util_max_layer(base, 0)+1, base->last_level+1,
@@ -597,7 +598,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 		       rtex->surface.bpe, rtex->surface.nsamples,
 		       rtex->surface.flags, util_format_short_name(base->format));
 		for (int i = 0; i <= rtex->surface.last_level; i++) {
-			printf("  L %i: offset=%llu, slice_size=%llu, npix_x=%u, "
+			printf("  L %i: offset=%"PRIu64", slice_size=%"PRIu64", npix_x=%u, "
 			       "npix_y=%u, npix_z=%u, nblk_x=%u, nblk_y=%u, "
 			       "nblk_z=%u, pitch_bytes=%u, mode=%u\n",
 			       i, rtex->surface.level[i].offset,
@@ -613,7 +614,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 		}
 		if (rtex->surface.flags & RADEON_SURF_SBUFFER) {
 			for (int i = 0; i <= rtex->surface.last_level; i++) {
-				printf("  S %i: offset=%llu, slice_size=%llu, npix_x=%u, "
+				printf("  S %i: offset=%"PRIu64", slice_size=%"PRIu64", npix_x=%u, "
 				       "npix_y=%u, npix_z=%u, nblk_x=%u, nblk_y=%u, "
 				       "nblk_z=%u, pitch_bytes=%u, mode=%u\n",
 				       i, rtex->surface.stencil_level[i].offset,
