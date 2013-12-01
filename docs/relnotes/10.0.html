@@ -14,7 +14,7 @@
 <iframe src="../contents.html"></iframe>
 <div class="content">
 
-<h1>Mesa 10.0 Release Notes / TBD</h1>
+<h1>Mesa 10.0 Release Notes / (November 30th, 2013)</h1>
 
 <p>
 Mesa 10.0 is a new development release.
@@ -33,7 +33,9 @@ because compatibility contexts are not supported.
 
 <h2>MD5 checksums</h2>
 <pre>
-TBD.
+b38626b96c664db67a534d7859682436  MesaLib-10.0.0.tar.gz
+f3fe55d9735bea158bbe97ed9a0da819  MesaLib-10.0.0.tar.bz2
+c6ee1ce51e3bf35947d2978b872daf51  MesaLib-10.0.0.zip
 </pre>
 
 
@@ -61,7 +63,75 @@ Note: some of the new features are only available with certain drivers.
 
 <h2>Bug fixes</h2>
 
-TBD.
+<p>Attempts have been made to <b>not</b> include bugs fixed in previous 9.2
+releases or bugs that were regressions during 10.0 development. This list is
+likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=47755">Bug 47755</a> - [glsl-compiler] no error checking when Interpolation qualifier for built-in variable is different in vertex and fragment shader</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=52171">Bug 52171</a> - [gallium/r600/clover] Simple benchmarks failed to run</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=53077">Bug 53077</a> - [IVB] Output error with msaa when both of framebuffer and source color's alpha are not 1</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=54867">Bug 54867</a> - bug in r300 compiler</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=60929">Bug 60929</a> - [r600-llvm] mono games with opengl are blocking on start</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=62142">Bug 62142</a> - Mesa/demo mipmap_limits upside down with running by SOFTWARE</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=62698">Bug 62698</a> - [bisected] WebGL demo &quot;Consumed&quot;: texstate.c:628: update_texture_state: Assertion „__builtin_popcount(enabledTargets) == 1“ failed.</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=64225">Bug 64225</a> - bfgminer --scyte generates Segmentation Fault on Northern Island</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=64226">Bug 64226</a> - python-opencl package generate segmentation fault at pipe_r600.so</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=64261">Bug 64261</a> - [SNB Bisected]Ogles3conform GL3Tests_color_buffer_float_color_buffer_float_clamp_fixed.test fail</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=66213">Bug 66213</a> - Certain Mesa Demos Rendering Inverted (vertically)</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=66806">Bug 66806</a> - [softpipe] glxgears floating point exception</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=67921">Bug 67921</a> - [bisected commit 883987] crosscompiling fails with util/u_cpu_detect.c:247:4: error: 'asm' undeclared (first use in this function)</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=68162">Bug 68162</a> - [radeonsi] texture rendering is broken in Source-Engine games</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=68451">Bug 68451</a> - Texture flicker in native Dota2 in mesa 9.2.0rc1</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=68503">Bug 68503</a> - Graphical glitches in Serious Sam 3 when SB is enabled</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=68792">Bug 68792</a> - Problems during playback of h264 files using UVD and VLC on AMD E-350 CPU</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=68845">Bug 68845</a> - VDPAU/UVD regression</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=69078">Bug 69078</a> - Modern Warfare (1, 2 and 3) broken in Wine on SNB</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=69321">Bug 69321</a> - starting openCL crashes/boots system</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=70042">Bug 70042</a> - Major texture flickering in Dota 2 (r600g on HD 6950)</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=70088">Bug 70088</a> - Glamor on r600g crashes Xserver</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=70123">Bug 70123</a> - Freeze caused by 'winsys/radeon: remove cs_queue_empty' commit</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=70327">Bug 70327</a> - Casting floating point variable to integer not working properly while constant gets converted properly</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=70891">Bug 70891</a> - CL_INVALID_BUILD_OPTIONS results in CL_INVALID_DEVICE when asking for build log</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=70913">Bug 70913</a> - [PIGLIT,radeonsi] crash in &quot;spec/EXT_framebuffer_multisample/sample-alpha-to-coverage 4 depth&quot; (buffer overflow)</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=71022">Bug 71022</a> - configure: error: Expat required for DRI.</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=71110">Bug 71110</a> - xorg_driver.c:1030:2: error: too many arguments to function ‘DamageUnregister’</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=71172">Bug 71172</a> - Segfault when running glxinfo. NV25GL [Quadro4 900 XGL]</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=71512">Bug 71512</a> - dlopen.h:54: undefined reference to `dlopen'</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=71870">Bug 71870</a> - Metro: Last Light rendering issues</li>
+
+</ul>
 
 <h2>Changes</h2>
 
