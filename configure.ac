@@ -761,6 +761,9 @@ AC_SUBST([MESA_LLVM])
 # Check for libdrm
 PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED],
                   [have_libdrm=yes], [have_libdrm=no])
+if test "x$have_libdrm" = xyes; then
+	DEFINES="$DEFINES -DHAVE_LIBDRM"
+fi
 
 PKG_CHECK_MODULES([LIBUDEV], [libudev >= $LIBUDEV_REQUIRED],
                   have_libudev=yes, have_libudev=no)
@@ -1439,6 +1442,8 @@ for plat in $egl_platforms; do
 	drm)
 		test "x$enable_gbm" = "xno" &&
 			AC_MSG_ERROR([EGL platform drm needs gbm])
+		test "x$have_libdrm" != xyes &&
+			AC_MSG_ERROR([EGL platform drm requires libdrm >= $LIBDRM_REQUIRED])
 		;;
 
 	android|fbdev|gdi|null)
