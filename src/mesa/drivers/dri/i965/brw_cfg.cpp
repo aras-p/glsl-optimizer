@@ -25,7 +25,6 @@
  *
  */
 
-#include "brw_fs.h"
 #include "brw_cfg.h"
 
 /** @file brw_cfg.cpp

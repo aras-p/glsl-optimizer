@@ -25,7 +25,9 @@
  *
  */
 
-#include "brw_fs.h"
+#include "brw_shader.h"
+
+class bblock_t;
 
 class bblock_link : public exec_node {
 public:
