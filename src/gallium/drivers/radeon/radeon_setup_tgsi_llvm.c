@@ -142,6 +142,13 @@ emit_array_fetch(
 	return result;
 }
 
+static bool uses_temp_indirect_addressing(
+	struct lp_build_tgsi_context *bld_base)
+{
+	struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
+	return (bld->indirect_files & (1 << TGSI_FILE_TEMPORARY));
+}
+
 static LLVMValueRef
 emit_fetch(
 	struct lp_build_tgsi_context *bld_base,
@@ -184,7 +191,11 @@ emit_fetch(
 		break;
 
 	case TGSI_FILE_TEMPORARY:
-		ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index, swizzle);
+		if (uses_temp_indirect_addressing(bld_base)) {
+			ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index, swizzle);
+			break;
+		}
+		ptr = ctx->temps[reg->Register.Index * TGSI_NUM_CHANNELS + swizzle];
 		result = LLVMBuildLoad(builder, ptr, "");
 		break;
 
@@ -216,6 +227,7 @@ static void emit_declaration(
 	const struct tgsi_full_declaration *decl)
 {
 	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
+	unsigned first, last, i, idx;
 	switch(decl->Declaration.File) {
 	case TGSI_FILE_ADDRESS:
 	{
@@ -234,7 +246,23 @@ static void emit_declaration(
 	case TGSI_FILE_TEMPORARY:
 		if (decl->Declaration.Array && decl->Array.ArrayID <= RADEON_LLVM_MAX_ARRAYS)
 			ctx->arrays[decl->Array.ArrayID - 1] = decl->Range;
-		lp_emit_declaration_soa(bld_base, decl);
+		if (uses_temp_indirect_addressing(bld_base)) {
+			lp_emit_declaration_soa(bld_base, decl);
+			break;
+		}
+		first = decl->Range.First;
+		last = decl->Range.Last;
+		if (!ctx->temps_count) {
+			ctx->temps_count = bld_base->info->file_max[TGSI_FILE_TEMPORARY] + 1;
+			ctx->temps = MALLOC(TGSI_NUM_CHANNELS * ctx->temps_count * sizeof(LLVMValueRef));
+		}
+		for (idx = first; idx <= last; idx++) {
+			for (i = 0; i < TGSI_NUM_CHANNELS; i++) {
+				ctx->temps[idx * TGSI_NUM_CHANNELS + i] =
+					lp_build_alloca(bld_base->base.gallivm, bld_base->base.vec_type,
+						"temp");
+			}
+		}
 		break;
 
 	case TGSI_FILE_INPUT:
@@ -284,6 +312,7 @@ emit_store(
 	const struct tgsi_opcode_info * info,
 	LLVMValueRef dst[4])
 {
+	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
 	struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
 	struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
 	struct lp_build_context base = bld->bld_base.base;
@@ -359,7 +388,10 @@ emit_store(
 					break;
 
 				case TGSI_FILE_TEMPORARY:
-					temp_ptr = lp_get_temp_ptr_soa(bld, i + range.First, chan_index);
+					if (uses_temp_indirect_addressing(bld_base))
+						temp_ptr = lp_get_temp_ptr_soa(bld, i + range.First, chan_index);
+					else
+						temp_ptr = ctx->temps[(i + range.First) * TGSI_NUM_CHANNELS + chan_index];
 					break;
 
 				default:
@@ -377,7 +409,9 @@ emit_store(
 				break;
 
 			case TGSI_FILE_TEMPORARY:
-				temp_ptr = lp_get_temp_ptr_soa(bld, reg->Register.Index, chan_index);
+				if (uses_temp_indirect_addressing(bld_base))
+					break;
+				temp_ptr = ctx->temps[ TGSI_NUM_CHANNELS * reg->Register.Index + chan_index];
 				break;
 
 			default:
@@ -1391,4 +1425,5 @@ void radeon_llvm_dispose(struct radeon_llvm_context * ctx)
 {
 	LLVMDisposeModule(ctx->soa.bld_base.base.gallivm->module);
 	LLVMContextDispose(ctx->soa.bld_base.base.gallivm->context);
+	FREE(ctx->temps);
 }

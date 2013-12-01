@@ -112,6 +112,12 @@ struct radeon_llvm_context {
 	LLVMValueRef outputs[RADEON_LLVM_MAX_OUTPUTS][TGSI_NUM_CHANNELS];
 	unsigned output_reg_count;
 
+	/** This pointer is used to contain the temporary values.
+	  * The amount of temporary used in tgsi can't be bound to a max value and
+	  * thus we must allocate this array at runtime.
+	  */
+	LLVMValueRef *temps;
+	unsigned temps_count;
 	LLVMValueRef system_values[RADEON_LLVM_MAX_SYSTEM_VALUES];
 
 	/*=== Private Members ===*/
