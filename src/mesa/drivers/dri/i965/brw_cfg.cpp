@@ -83,8 +83,9 @@ cfg_t::cfg_t(exec_list *instructions)
    block_list.make_empty();
    blocks = NULL;
    num_blocks = 0;
-   ip = 0;
-   cur = NULL;
+
+   bblock_t *cur = NULL;
+   int ip = 0;
 
    bblock_t *entry = new_block();
    bblock_t *cur_if = NULL, *cur_else = NULL, *cur_endif = NULL;
@@ -92,7 +93,7 @@ cfg_t::cfg_t(exec_list *instructions)
    exec_list if_stack, else_stack, do_stack, while_stack;
    bblock_t *next;
 
-   set_next_block(entry);
+   set_next_block(&cur, entry, ip);
 
    entry->start = (backend_instruction *) instructions->get_head();
 
@@ -123,7 +124,7 @@ cfg_t::cfg_t(exec_list *instructions)
 	 next->start = (backend_instruction *)inst->next;
 	 cur_if->add_successor(mem_ctx, next);
 
-	 set_next_block(next);
+	 set_next_block(&cur, next, ip);
 	 break;
 
       case BRW_OPCODE_ELSE:
@@ -133,7 +134,7 @@ cfg_t::cfg_t(exec_list *instructions)
 	 next->start = (backend_instruction *)inst->next;
 	 cur_if->add_successor(mem_ctx, next);
 
-	 set_next_block(next);
+	 set_next_block(&cur, next, ip);
 	 break;
 
       case BRW_OPCODE_ENDIF: {
@@ -147,9 +148,7 @@ cfg_t::cfg_t(exec_list *instructions)
             cur->end = (backend_instruction *)inst->prev;
             cur->add_successor(mem_ctx, cur_endif);
 
-            ip--;
-            set_next_block(cur_endif);
-            ip++;
+            set_next_block(&cur, cur_endif, ip - 1);
          }
 
          backend_instruction *else_inst = NULL;
@@ -204,7 +203,7 @@ cfg_t::cfg_t(exec_list *instructions)
 	 cur->add_successor(mem_ctx, next);
 	 cur_do = next;
 
-	 set_next_block(next);
+	 set_next_block(&cur, next, ip);
 	 break;
 
       case BRW_OPCODE_CONTINUE:
@@ -215,7 +214,7 @@ cfg_t::cfg_t(exec_list *instructions)
 	 if (inst->predicate)
 	    cur->add_successor(mem_ctx, next);
 
-	 set_next_block(next);
+	 set_next_block(&cur, next, ip);
 	 break;
 
       case BRW_OPCODE_BREAK:
@@ -226,14 +225,14 @@ cfg_t::cfg_t(exec_list *instructions)
 	 if (inst->predicate)
 	    cur->add_successor(mem_ctx, next);
 
-	 set_next_block(next);
+	 set_next_block(&cur, next, ip);
 	 break;
 
       case BRW_OPCODE_WHILE:
 	 cur_while->start = (backend_instruction *)inst->next;
 
 	 cur->add_successor(mem_ctx, cur_do);
-	 set_next_block(cur_while);
+	 set_next_block(&cur, cur_while, ip);
 
 	 /* Pop the stack so we're in the previous loop */
 	 cur_do = pop_stack(&do_stack);
@@ -264,17 +263,17 @@ cfg_t::new_block()
 }
 
 void
-cfg_t::set_next_block(bblock_t *block)
+cfg_t::set_next_block(bblock_t **cur, bblock_t *block, int ip)
 {
-   if (cur) {
-      assert(cur->end->next == block->start);
-      cur->end_ip = ip - 1;
+   if (*cur) {
+      assert((*cur)->end->next == block->start);
+      (*cur)->end_ip = ip - 1;
    }
 
    block->start_ip = ip;
    block->block_num = num_blocks++;
    block_list.push_tail(new(mem_ctx) bblock_link(block));
-   cur = block;
+   *cur = block;
 }
 
 void

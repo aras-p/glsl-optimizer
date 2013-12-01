@@ -77,18 +77,10 @@ public:
    ~cfg_t();
 
    bblock_t *new_block();
-   void set_next_block(bblock_t *block);
+   void set_next_block(bblock_t **cur, bblock_t *block, int ip);
    void make_block_array();
 
    void dump(backend_visitor *v);
-
-   /** @{
-    *
-    * Used while generating the block list.
-    */
-   bblock_t *cur;
-   int ip;
-   /** @} */
 
    void *mem_ctx;
 
