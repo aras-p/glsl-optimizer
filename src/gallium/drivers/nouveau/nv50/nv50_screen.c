@@ -226,7 +226,7 @@ nv50_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
    case PIPE_SHADER_CAP_MAX_INPUTS:
       if (shader == PIPE_SHADER_VERTEX)
          return 32;
-      return 0x300 / 16;
+      return 15;
    case PIPE_SHADER_CAP_MAX_CONSTS:
       return 65536 / 16;
    case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
