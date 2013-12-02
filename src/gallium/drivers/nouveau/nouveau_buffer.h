@@ -33,9 +33,9 @@ struct nv04_resource {
 
    uint64_t address; /* virtual address (nv50+) */
 
-   uint8_t *data;
+   uint8_t *data; /* resource's contents, if domain == 0, or cached */
    struct nouveau_bo *bo;
-   uint32_t offset;
+   uint32_t offset; /* offset into the data/bo */
 
    uint8_t status;
    uint8_t domain;
