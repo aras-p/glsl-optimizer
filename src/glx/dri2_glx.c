@@ -676,6 +676,10 @@ dri2FlushFrontBuffer(__DRIdrawable *driDrawable, void *loaderPrivate)
    psc = (struct dri2_screen *) pdraw->base.psc;
 
    priv = __glXInitialize(psc->base.dpy);
+
+   if (priv == NULL)
+       return;
+
    pdp = (struct dri2_display *) priv->dri2Display;
    gc = __glXGetCurrentContext();
 
