@@ -42,6 +42,11 @@ protected:
                                   const struct brw_reg &dst_y0,
                                   const struct brw_reg &dst_y1);
 
+   void emit_texture_lookup(const struct brw_reg &dst,
+                            enum opcode op,
+                            unsigned base_mrf,
+                            unsigned msg_length);
+
    void *mem_ctx;
    struct brw_compile func;
 };

@@ -650,7 +650,7 @@ private:
    void sample(struct brw_reg dst);
    void texel_fetch(struct brw_reg dst);
    void mcs_fetch();
-   void texture_lookup(struct brw_reg dst, GLuint msg_type,
+   void texture_lookup(struct brw_reg dst, enum opcode op,
                        const sampler_message_arg *args, int num_args);
    void render_target_write();
 
@@ -1765,8 +1765,7 @@ brw_blorp_blit_program::sample(struct brw_reg dst)
       SAMPLER_MESSAGE_ARG_V_FLOAT
    };
 
-   texture_lookup(dst, GEN5_SAMPLER_MESSAGE_SAMPLE, args,
-                  ARRAY_SIZE(args));
+   texture_lookup(dst, SHADER_OPCODE_TEX, args, ARRAY_SIZE(args));
 }
 
 /**
@@ -1802,8 +1801,7 @@ brw_blorp_blit_program::texel_fetch(struct brw_reg dst)
 
    switch (brw->gen) {
    case 6:
-      texture_lookup(dst, GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen6_args,
-                     s_is_zero ? 2 : 5);
+      texture_lookup(dst, SHADER_OPCODE_TXF, gen6_args, s_is_zero ? 2 : 5);
       break;
    case 7:
       switch (key->tex_layout) {
@@ -1819,16 +1817,16 @@ brw_blorp_blit_program::texel_fetch(struct brw_reg dst)
           * INTEL_MSAA_LAYOUT_CMS.
           */
       case INTEL_MSAA_LAYOUT_CMS:
-         texture_lookup(dst, GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DMS,
+         texture_lookup(dst, SHADER_OPCODE_TXF_CMS,
                         gen7_ld2dms_args, ARRAY_SIZE(gen7_ld2dms_args));
          break;
       case INTEL_MSAA_LAYOUT_UMS:
-         texture_lookup(dst, GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS,
+         texture_lookup(dst, SHADER_OPCODE_TXF_UMS,
                         gen7_ld2dss_args, ARRAY_SIZE(gen7_ld2dss_args));
          break;
       case INTEL_MSAA_LAYOUT_NONE:
          assert(s_is_zero);
-         texture_lookup(dst, GEN5_SAMPLER_MESSAGE_SAMPLE_LD, gen7_ld_args,
+         texture_lookup(dst, SHADER_OPCODE_TXF, gen7_ld_args,
                         ARRAY_SIZE(gen7_ld_args));
          break;
       }
@@ -1846,13 +1844,13 @@ brw_blorp_blit_program::mcs_fetch()
       SAMPLER_MESSAGE_ARG_U_INT,
       SAMPLER_MESSAGE_ARG_V_INT
    };
-   texture_lookup(vec16(mcs_data), GEN7_SAMPLER_MESSAGE_SAMPLE_LD_MCS,
+   texture_lookup(vec16(mcs_data), SHADER_OPCODE_TXF_MCS,
                   gen7_ld_mcs_args, ARRAY_SIZE(gen7_ld_mcs_args));
 }
 
 void
 brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
-                                       GLuint msg_type,
+                                       enum opcode op,
                                        const sampler_message_arg *args,
                                        int num_args)
 {
@@ -1916,18 +1914,10 @@ brw_blorp_blit_program::texture_lookup(struct brw_reg dst,
       mrf.nr += 2;
    }
 
-   brw_SAMPLE(&func,
-              retype(dst, BRW_REGISTER_TYPE_UW) /* dest */,
-              base_mrf /* msg_reg_nr */,
-              brw_message_reg(base_mrf) /* src0 */,
-              BRW_BLORP_TEXTURE_BINDING_TABLE_INDEX,
-              0 /* sampler */,
-              msg_type,
-              8 /* response_length.  TODO: should be smaller for non-RGBA formats? */,
-              mrf.nr - base_mrf /* msg_length */,
-              0 /* header_present */,
-              BRW_SAMPLER_SIMD_MODE_SIMD16,
-              BRW_SAMPLER_RETURN_FORMAT_FLOAT32);
+   emit_texture_lookup(retype(dst, BRW_REGISTER_TYPE_UW) /* dest */,
+                       op,
+                       base_mrf,
+                       mrf.nr - base_mrf /* msg_length */);
 }
 
 #undef X

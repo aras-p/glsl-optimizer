@@ -23,6 +23,7 @@
 
 #include "glsl/ralloc.h"
 #include "brw_blorp_blit_eu.h"
+#include "brw_blorp.h"
 
 brw_blorp_eu_emitter::brw_blorp_eu_emitter(struct brw_context *brw)
    : mem_ctx(ralloc_context(NULL))
@@ -90,4 +91,46 @@ brw_blorp_eu_emitter::emit_kill_if_outside_rect(const struct brw_reg &x,
 
    struct brw_instruction *inst = brw_AND(&func, g1, f0, g1);
    inst->header.mask_control = BRW_MASK_DISABLE;
+}
+
+void
+brw_blorp_eu_emitter::emit_texture_lookup(const struct brw_reg &dst,
+                                          enum opcode op,
+                                          unsigned base_mrf,
+                                          unsigned msg_length)
+{
+   unsigned msg_type;
+
+   switch (op) {
+   case SHADER_OPCODE_TEX:
+      msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE;
+      break;
+   case SHADER_OPCODE_TXF:
+      msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
+      break;
+   case SHADER_OPCODE_TXF_CMS:
+      msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DMS;
+      break;
+   case SHADER_OPCODE_TXF_UMS:
+      msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS;
+      break;
+   case SHADER_OPCODE_TXF_MCS:
+      msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD_MCS;
+      break;
+   default:
+      assert(!"Unsupported texture lookup operation");
+   }
+
+   brw_SAMPLE(&func,
+              retype(dst, BRW_REGISTER_TYPE_UW) /* dest */,
+              base_mrf /* msg_reg_nr */,
+              brw_message_reg(base_mrf) /* src0 */,
+              BRW_BLORP_TEXTURE_BINDING_TABLE_INDEX,
+              0 /* sampler */,
+              msg_type,
+              8 /* response_length.  TODO: should be smaller for non-RGBA formats? */,
+              msg_length,
+              0 /* header_present */,
+              BRW_SAMPLER_SIMD_MODE_SIMD16,
+              BRW_SAMPLER_RETURN_FORMAT_FLOAT32);
 }
