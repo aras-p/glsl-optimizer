@@ -152,3 +152,17 @@ brw_blorp_eu_emitter::emit_render_target_write(const struct brw_reg &src0,
                 true /* eot */,
                 use_header);
 }
+
+void
+brw_blorp_eu_emitter::emit_combine(enum opcode combine_opcode,
+                                   const struct brw_reg &dst,
+                                   const struct brw_reg &src_1,
+                                   const struct brw_reg &src_2)
+{
+   assert(combine_opcode == BRW_OPCODE_ADD || combine_opcode == BRW_OPCODE_AVG);
+
+   if (combine_opcode == BRW_OPCODE_ADD)
+      brw_ADD(&func, dst, src_1, src_2);
+   else
+      brw_AVG(&func, dst, src_1, src_2);
+}

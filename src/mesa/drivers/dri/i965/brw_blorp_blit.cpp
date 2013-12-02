@@ -1534,12 +1534,6 @@ brw_blorp_blit_program::manual_blend_average(unsigned num_samples)
     * For integer formats, we replace the add operations with average
     * operations and skip the final division.
     */
-   typedef struct brw_instruction *(*brw_op2_ptr)(struct brw_compile *,
-                                                  struct brw_reg,
-                                                  struct brw_reg,
-                                                  struct brw_reg);
-   brw_op2_ptr combine_op =
-      key->texture_data_type == BRW_REGISTER_TYPE_F ? brw_ADD : brw_AVG;
    unsigned stack_depth = 0;
    for (unsigned i = 0; i < num_samples; ++i) {
       assert(stack_depth == _mesa_bitcount(i)); /* Loop invariant */
@@ -1581,9 +1575,11 @@ brw_blorp_blit_program::manual_blend_average(unsigned num_samples)
 
          /* TODO: should use a smaller loop bound for non_RGBA formats */
          for (int k = 0; k < 4; ++k) {
-            combine_op(&func, offset(texture_data[stack_depth - 1], 2*k),
-                       offset(vec8(texture_data[stack_depth - 1]), 2*k),
-                       offset(vec8(texture_data[stack_depth]), 2*k));
+            emit_combine(key->texture_data_type == BRW_REGISTER_TYPE_F ?
+                            BRW_OPCODE_ADD : BRW_OPCODE_AVG,
+                         offset(texture_data[stack_depth - 1], 2*k),
+                         offset(vec8(texture_data[stack_depth - 1]), 2*k),
+                         offset(vec8(texture_data[stack_depth]), 2*k));
          }
       }
    }

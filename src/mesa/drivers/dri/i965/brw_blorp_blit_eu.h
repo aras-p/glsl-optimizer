@@ -52,6 +52,11 @@ protected:
                                  unsigned msg_length,
                                  bool use_header);
 
+   void emit_combine(enum opcode combine_opcode,
+                     const struct brw_reg &dst,
+                     const struct brw_reg &src_1,
+                     const struct brw_reg &src_2);
+
    void *mem_ctx;
    struct brw_compile func;
 };
