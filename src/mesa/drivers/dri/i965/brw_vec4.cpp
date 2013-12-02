@@ -1240,10 +1240,12 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst)
       if (inst->src[i].reg_offset)
          printf(".%d", inst->src[i].reg_offset);
 
-      static const char *chans[4] = {"x", "y", "z", "w"};
-      printf(".");
-      for (int c = 0; c < 4; c++) {
-         printf("%s", chans[BRW_GET_SWZ(inst->src[i].swizzle, c)]);
+      if (inst->src[i].file != IMM) {
+         static const char *chans[4] = {"x", "y", "z", "w"};
+         printf(".");
+         for (int c = 0; c < 4; c++) {
+            printf("%s", chans[BRW_GET_SWZ(inst->src[i].swizzle, c)]);
+         }
       }
 
       if (inst->src[i].abs)
