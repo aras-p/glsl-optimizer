@@ -134,3 +134,21 @@ brw_blorp_eu_emitter::emit_texture_lookup(const struct brw_reg &dst,
               BRW_SAMPLER_SIMD_MODE_SIMD16,
               BRW_SAMPLER_RETURN_FORMAT_FLOAT32);
 }
+
+void
+brw_blorp_eu_emitter::emit_render_target_write(const struct brw_reg &src0,
+                                               unsigned msg_reg_nr,
+                                               unsigned msg_length,
+                                               bool use_header)
+{
+   brw_fb_WRITE(&func,
+                16 /* dispatch_width */,
+                msg_reg_nr,
+                src0,
+                BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE,
+                BRW_BLORP_RENDERBUFFER_BINDING_TABLE_INDEX,
+                msg_length,
+                0 /* response_length */,
+                true /* eot */,
+                use_header);
+}

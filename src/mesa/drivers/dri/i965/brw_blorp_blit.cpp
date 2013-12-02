@@ -1954,16 +1954,11 @@ brw_blorp_blit_program::render_target_write()
    }
 
    /* Now write to the render target and terminate the thread */
-   brw_fb_WRITE(&func,
-                16 /* dispatch_width */,
-                base_mrf /* msg_reg_nr */,
-                mrf_rt_write /* src0 */,
-                BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE,
-                BRW_BLORP_RENDERBUFFER_BINDING_TABLE_INDEX,
-                mrf_offset /* msg_length.  TODO: Should be smaller for non-RGBA formats. */,
-                0 /* response_length */,
-                true /* eot */,
-                use_header);
+   emit_render_target_write(
+      mrf_rt_write,
+      base_mrf, 
+      mrf_offset /* msg_length.  TODO: Should be smaller for non-RGBA formats. */,
+      use_header);
 }
 
 
