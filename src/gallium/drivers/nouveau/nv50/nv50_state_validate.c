@@ -61,7 +61,7 @@ nv50_validate_fb(struct nv50_context *nv50)
       if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
          nv50->state.rt_serialize = TRUE;
       mt->base.status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
-      mt->base.status &= NOUVEAU_BUFFER_STATUS_GPU_READING;
+      mt->base.status &= ~NOUVEAU_BUFFER_STATUS_GPU_READING;
 
       /* only register for writing, otherwise we'd always serialize here */
       BCTX_REFN(nv50->bufctx_3d, FB, &mt->base, WR);
@@ -91,7 +91,7 @@ nv50_validate_fb(struct nv50_context *nv50)
       if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
          nv50->state.rt_serialize = TRUE;
       mt->base.status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
-      mt->base.status &= NOUVEAU_BUFFER_STATUS_GPU_READING;
+      mt->base.status &= ~NOUVEAU_BUFFER_STATUS_GPU_READING;
 
       BCTX_REFN(nv50->bufctx_3d, FB, &mt->base, WR);
    } else {

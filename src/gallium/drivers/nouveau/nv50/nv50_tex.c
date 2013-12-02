@@ -271,7 +271,7 @@ nv50_validate_tic(struct nv50_context *nv50, int s)
 
       nv50->screen->tic.lock[tic->id / 32] |= 1 << (tic->id % 32);
 
-      res->status &= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+      res->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
       res->status |= NOUVEAU_BUFFER_STATUS_GPU_READING;
 
       BCTX_REFN(nv50->bufctx_3d, TEXTURES, res, RD);
