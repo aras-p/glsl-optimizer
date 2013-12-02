@@ -149,6 +149,24 @@ protected:
       brw_RNDD(&func, dst, src);
    }
 
+   inline void emit_cmp_if(int op,
+                           const struct brw_reg &x,
+                           const struct brw_reg &y)
+   {
+      brw_CMP(&func, vec16(brw_null_reg()), op, x, y);
+      brw_IF(&func, BRW_EXECUTE_16);
+   }
+
+   inline void emit_else(void)
+   {
+      brw_ELSE(&func);
+   }
+
+   inline void emit_endif(void)
+   {
+      brw_ENDIF(&func);
+   }
+
    void *mem_ctx;
    struct brw_compile func;
 };

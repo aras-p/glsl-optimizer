@@ -1548,9 +1548,7 @@ brw_blorp_blit_program::manual_blend_average(unsigned num_samples)
           * Since we have already sampled from sample 0, all we need to do is
           * skip the remaining fetches and averaging if MCS is zero.
           */
-         brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_NZ,
-                 mcs_data, brw_imm_ud(0));
-         brw_IF(&func, BRW_EXECUTE_16);
+         emit_cmp_if(BRW_CONDITIONAL_NZ, mcs_data, brw_imm_ud(0));
       }
 
       /* Do count_trailing_one_bits(i) times */
@@ -1583,7 +1581,7 @@ brw_blorp_blit_program::manual_blend_average(unsigned num_samples)
    }
 
    if (key->tex_layout == INTEL_MSAA_LAYOUT_CMS)
-      brw_ENDIF(&func);
+      emit_endif();
 }
 
 void
@@ -1673,23 +1671,21 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
 
       if (num_samples == 8) {
          /* Map the sample index to a sample number */
-         brw_CMP(&func, vec16(brw_null_reg()), BRW_CONDITIONAL_L,
-                 S, brw_imm_d(4));
-         brw_IF(&func, BRW_EXECUTE_16);
+         emit_cmp_if(BRW_CONDITIONAL_L, S, brw_imm_d(4));
          {
             emit_mov(vec16(t2), brw_imm_d(5));
             emit_if_eq_mov(S, 1, vec16(t2), 2);
             emit_if_eq_mov(S, 2, vec16(t2), 4);
             emit_if_eq_mov(S, 3, vec16(t2), 6);
          }
-         brw_ELSE(&func);
+         emit_else();
          {
             emit_mov(vec16(t2), brw_imm_d(0));
             emit_if_eq_mov(S, 5, vec16(t2), 3);
             emit_if_eq_mov(S, 6, vec16(t2), 7);
             emit_if_eq_mov(S, 7, vec16(t2), 1);
          }
-         brw_ENDIF(&func);
+         emit_endif();
          emit_mov(vec16(S), t2);
       }
       texel_fetch(texture_data[i]);
