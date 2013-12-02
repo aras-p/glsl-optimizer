@@ -1827,6 +1827,7 @@ struct opcode_desc {
 };
 
 extern const struct opcode_desc opcode_descs[128];
+extern const char * const reg_encoding[8];
 
 void
 brw_emit_depthbuffer(struct brw_context *brw);
