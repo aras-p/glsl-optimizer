@@ -88,8 +88,11 @@ cfg_t::cfg_t(exec_list *instructions)
    int ip = 0;
 
    bblock_t *entry = new_block();
-   bblock_t *cur_if = NULL, *cur_else = NULL, *cur_endif = NULL;
-   bblock_t *cur_do = NULL, *cur_while = NULL;
+   bblock_t *cur_if = NULL;    /**< BB ending with IF. */
+   bblock_t *cur_else = NULL;  /**< BB ending with ELSE. */
+   bblock_t *cur_endif = NULL; /**< BB starting with ENDIF. */
+   bblock_t *cur_do = NULL;    /**< BB ending with DO. */
+   bblock_t *cur_while = NULL; /**< BB immediately following WHILE. */
    exec_list if_stack, else_stack, do_stack, while_stack;
    bblock_t *next;
 
