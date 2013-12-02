@@ -1827,6 +1827,7 @@ struct opcode_desc {
 };
 
 extern const struct opcode_desc opcode_descs[128];
+extern const char * const conditional_modifier[16];
 extern const char * const reg_encoding[8];
 
 void

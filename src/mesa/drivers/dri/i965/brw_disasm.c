@@ -101,7 +101,7 @@ const struct opcode_desc opcode_descs[128] = {
 };
 static const struct opcode_desc *opcode = opcode_descs;
 
-static const char * const conditional_modifier[16] = {
+const char * const conditional_modifier[16] = {
     [BRW_CONDITIONAL_NONE] = "",
     [BRW_CONDITIONAL_Z] = ".e",
     [BRW_CONDITIONAL_NZ] = ".ne",
