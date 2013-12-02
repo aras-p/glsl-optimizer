@@ -70,7 +70,7 @@ void intel_emit_depth_stall_flushes(struct brw_context *brw);
 void gen7_emit_vs_workaround_flush(struct brw_context *brw);
 void gen7_emit_cs_stall_flush(struct brw_context *brw);
 
-static INLINE uint32_t float_as_int(float f)
+static inline uint32_t float_as_int(float f)
 {
    union {
       float f;
@@ -86,7 +86,7 @@ static INLINE uint32_t float_as_int(float f)
  * be passed as structs rather than dwords, but that's a little bit of
  * work...
  */
-static INLINE unsigned
+static inline unsigned
 intel_batchbuffer_space(struct brw_context *brw)
 {
    return (brw->batch.state_batch_offset - brw->batch.reserved_space)
@@ -94,7 +94,7 @@ intel_batchbuffer_space(struct brw_context *brw)
 }
 
 
-static INLINE void
+static inline void
 intel_batchbuffer_emit_dword(struct brw_context *brw, GLuint dword)
 {
 #ifdef DEBUG
@@ -104,13 +104,13 @@ intel_batchbuffer_emit_dword(struct brw_context *brw, GLuint dword)
    assert(brw->batch.ring != UNKNOWN_RING);
 }
 
-static INLINE void
+static inline void
 intel_batchbuffer_emit_float(struct brw_context *brw, float f)
 {
    intel_batchbuffer_emit_dword(brw, float_as_int(f));
 }
 
-static INLINE void
+static inline void
 intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz,
                                 enum brw_gpu_ring ring)
 {
@@ -136,7 +136,7 @@ intel_batchbuffer_require_space(struct brw_context *brw, GLuint sz,
       intel_batchbuffer_emit_render_ring_prelude(brw);
 }
 
-static INLINE void
+static inline void
 intel_batchbuffer_begin(struct brw_context *brw, int n, enum brw_gpu_ring ring)
 {
    intel_batchbuffer_require_space(brw, n * 4, ring);
@@ -147,7 +147,7 @@ intel_batchbuffer_begin(struct brw_context *brw, int n, enum brw_gpu_ring ring)
 #endif
 }
 
-static INLINE void
+static inline void
 intel_batchbuffer_advance(struct brw_context *brw)
 {
 #ifdef DEBUG

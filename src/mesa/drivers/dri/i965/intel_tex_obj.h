@@ -72,13 +72,13 @@ struct intel_texture_image
    struct intel_mipmap_tree *mt;
 };
 
-static INLINE struct intel_texture_object *
+static inline struct intel_texture_object *
 intel_texture_object(struct gl_texture_object *obj)
 {
    return (struct intel_texture_object *) obj;
 }
 
-static INLINE struct intel_texture_image *
+static inline struct intel_texture_image *
 intel_texture_image(struct gl_texture_image *img)
 {
    return (struct intel_texture_image *) img;

@@ -84,7 +84,7 @@ struct intel_renderbuffer
  * NULL will be returned if the rb isn't really an intel_renderbuffer.
  * This is determined by checking the ClassID.
  */
-static INLINE struct intel_renderbuffer *
+static inline struct intel_renderbuffer *
 intel_renderbuffer(struct gl_renderbuffer *rb)
 {
    struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
@@ -105,7 +105,7 @@ intel_renderbuffer(struct gl_renderbuffer *rb)
  * If the attached renderbuffer is a wrapper, then return wrapped
  * renderbuffer.
  */
-static INLINE struct intel_renderbuffer *
+static inline struct intel_renderbuffer *
 intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
 {
    struct gl_renderbuffer *rb;
@@ -120,7 +120,7 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
 }
 
 
-static INLINE gl_format
+static inline gl_format
 intel_rb_format(const struct intel_renderbuffer *rb)
 {
    return rb->Base.Base.Format;

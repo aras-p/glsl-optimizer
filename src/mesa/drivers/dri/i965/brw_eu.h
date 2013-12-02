@@ -90,7 +90,7 @@ struct brw_compile {
    int loop_stack_array_size;
 };
 
-static INLINE struct brw_instruction *current_insn( struct brw_compile *p)
+static inline struct brw_instruction *current_insn( struct brw_compile *p)
 {
    return &p->store[p->nr_insn];
 }

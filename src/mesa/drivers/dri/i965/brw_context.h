@@ -1493,7 +1493,7 @@ struct brw_context
    struct intel_screen *intelScreen;
 };
 
-static INLINE bool
+static inline bool
 is_power_of_two(uint32_t value)
 {
    return (value & (value - 1)) == 0;
@@ -1749,37 +1749,37 @@ brw_get_graphics_reset_status(struct gl_context *ctx);
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:
  */
-static INLINE struct brw_context *
+static inline struct brw_context *
 brw_context( struct gl_context *ctx )
 {
    return (struct brw_context *)ctx;
 }
 
-static INLINE struct brw_vertex_program *
+static inline struct brw_vertex_program *
 brw_vertex_program(struct gl_vertex_program *p)
 {
    return (struct brw_vertex_program *) p;
 }
 
-static INLINE const struct brw_vertex_program *
+static inline const struct brw_vertex_program *
 brw_vertex_program_const(const struct gl_vertex_program *p)
 {
    return (const struct brw_vertex_program *) p;
 }
 
-static INLINE struct brw_geometry_program *
+static inline struct brw_geometry_program *
 brw_geometry_program(struct gl_geometry_program *p)
 {
    return (struct brw_geometry_program *) p;
 }
 
-static INLINE struct brw_fragment_program *
+static inline struct brw_fragment_program *
 brw_fragment_program(struct gl_fragment_program *p)
 {
    return (struct brw_fragment_program *) p;
 }
 
-static INLINE const struct brw_fragment_program *
+static inline const struct brw_fragment_program *
 brw_fragment_program_const(const struct gl_fragment_program *p)
 {
    return (const struct brw_fragment_program *) p;
@@ -1873,7 +1873,7 @@ gen6_upload_vec4_push_constants(struct brw_context *brw,
  * XXX Put this in src/mesa/main/imports.h ???
  */
 #if defined(i386) || defined(__i386__)
-static INLINE void * __memcpy(void * to, const void * from, size_t n)
+static inline void * __memcpy(void * to, const void * from, size_t n)
 {
    int d0, d1, d2;
    __asm__ __volatile__(
