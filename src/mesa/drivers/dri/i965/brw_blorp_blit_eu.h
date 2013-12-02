@@ -35,6 +35,13 @@ protected:
 
    const unsigned *get_program(unsigned *program_size, FILE *dump_file);
 
+   void emit_kill_if_outside_rect(const struct brw_reg &x,
+                                  const struct brw_reg &y,
+                                  const struct brw_reg &dst_x0,
+                                  const struct brw_reg &dst_x1,
+                                  const struct brw_reg &dst_y0,
+                                  const struct brw_reg &dst_y1);
+
    void *mem_ctx;
    struct brw_compile func;
 };

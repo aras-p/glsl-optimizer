@@ -63,3 +63,31 @@ brw_blorp_eu_emitter::get_program(unsigned *program_size, FILE *dump_file)
 
    return brw_get_program(&func, program_size);
 }
+
+/**
+ * Emit code that kills pixels whose X and Y coordinates are outside the
+ * boundary of the rectangle defined by the push constants (dst_x0, dst_y0,
+ * dst_x1, dst_y1).
+ */
+void
+brw_blorp_eu_emitter::emit_kill_if_outside_rect(const struct brw_reg &x,
+                                                const struct brw_reg &y,
+                                                const struct brw_reg &dst_x0,
+                                                const struct brw_reg &dst_x1,
+                                                const struct brw_reg &dst_y0,
+                                                const struct brw_reg &dst_y1)
+{
+   struct brw_reg f0 = brw_flag_reg(0, 0);
+   struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
+   struct brw_reg null32 = vec16(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
+
+   brw_CMP(&func, null32, BRW_CONDITIONAL_GE, x, dst_x0);
+   brw_CMP(&func, null32, BRW_CONDITIONAL_GE, y, dst_y0);
+   brw_CMP(&func, null32, BRW_CONDITIONAL_L, x, dst_x1);
+   brw_CMP(&func, null32, BRW_CONDITIONAL_L, y, dst_y1);
+
+   brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
+
+   struct brw_instruction *inst = brw_AND(&func, g1, f0, g1);
+   inst->header.mask_control = BRW_MASK_DISABLE;
+}

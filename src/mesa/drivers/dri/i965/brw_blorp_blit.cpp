@@ -640,7 +640,6 @@ private:
    void translate_tiling(bool old_tiled_w, bool new_tiled_w);
    void encode_msaa(unsigned num_samples, intel_msaa_layout layout);
    void decode_msaa(unsigned num_samples, intel_msaa_layout layout);
-   void kill_if_outside_dst_rect();
    void translate_dst_to_src();
    void clamp_tex_coords(struct brw_reg regX, struct brw_reg regY,
                          struct brw_reg clampX0, struct brw_reg clampY0,
@@ -833,7 +832,9 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
     */
 
    if (key->use_kill)
-      kill_if_outside_dst_rect();
+      emit_kill_if_outside_rect(x_coords[xy_coord_index],
+                                y_coords[xy_coord_index],
+                                dst_x0, dst_x1, dst_y0, dst_y1);
 
    /* Next, apply a translation to obtain coordinates in the source image. */
    translate_dst_to_src();
@@ -1372,29 +1373,6 @@ brw_blorp_blit_program::decode_msaa(unsigned num_samples,
       SWAP_XY_AND_XPYP();
       break;
    }
-}
-
-/**
- * Emit code that kills pixels whose X and Y coordinates are outside the
- * boundary of the rectangle defined by the push constants (dst_x0, dst_y0,
- * dst_x1, dst_y1).
- */
-void
-brw_blorp_blit_program::kill_if_outside_dst_rect()
-{
-   struct brw_reg f0 = brw_flag_reg(0, 0);
-   struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
-   struct brw_reg null32 = vec16(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
-
-   brw_CMP(&func, null32, BRW_CONDITIONAL_GE, X, dst_x0);
-   brw_CMP(&func, null32, BRW_CONDITIONAL_GE, Y, dst_y0);
-   brw_CMP(&func, null32, BRW_CONDITIONAL_L, X, dst_x1);
-   brw_CMP(&func, null32, BRW_CONDITIONAL_L, Y, dst_y1);
-
-   brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-
-   struct brw_instruction *inst = brw_AND(&func, g1, f0, g1);
-   inst->header.mask_control = BRW_MASK_DISABLE;
 }
 
 /**
