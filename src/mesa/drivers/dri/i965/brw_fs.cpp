@@ -2888,7 +2888,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
       printf("???");
       break;
    }
-   printf(", ");
+   printf(":%s, ", reg_encoding[inst->dst.type]);
 
    for (int i = 0; i < 3 && inst->src[i].file != BAD_FILE; i++) {
       if (inst->src[i].negate)
@@ -2967,6 +2967,10 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
       }
       if (inst->src[i].abs)
          printf("|");
+
+      if (inst->src[i].file != IMM) {
+         printf(":%s", reg_encoding[inst->src[i].type]);
+      }
 
       if (i < 2 && inst->src[i + 1].file != BAD_FILE)
          printf(", ");
