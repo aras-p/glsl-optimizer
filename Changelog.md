@@ -1,6 +1,15 @@
 GLSL optimizer Change Log
 =========================
 
+2013 12
+-------
+
+Goodies:
+
+* Optimized performance; was spending half of the time in stupid string code.
+* Added glslopt_shader_get_stats to get *very* approximate shader complexity stats.
+
+
 2013 11
 -------
 
