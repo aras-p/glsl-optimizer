@@ -77,7 +77,7 @@ struct ir_stats_counter_visitor : public ir_hierarchical_visitor {
 	}
 	virtual ir_visitor_status visit_leave(class ir_discard *)
 	{
-		++flow;
+		++tex;
 		return visit_continue;
 	}
 	virtual ir_visitor_status visit_leave(class ir_if *)
@@ -99,6 +99,5 @@ void calculate_shader_stats(exec_list* instructions, int* outMath, int* outTex, 
 	*outTex = v.tex;
 	*outFlow = v.flow;
 	*outMath = 0;
-	*outTex = 0;
 	*outFlow = 0;
 }
