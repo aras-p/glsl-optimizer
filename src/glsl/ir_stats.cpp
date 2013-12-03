@@ -89,5 +89,4 @@ void calculate_shader_stats(exec_list* instructions, int* outMath, int* outTex, 
 	*outMath = v.math;
 	*outTex = v.tex;
 	*outFlow = v.flow;
-	*outMath = 0;
 }
