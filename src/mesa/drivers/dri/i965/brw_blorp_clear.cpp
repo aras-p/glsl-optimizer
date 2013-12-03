@@ -257,6 +257,11 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
       memset(push_consts, 0xff, 4*sizeof(float));
       fast_clear_op = GEN7_FAST_CLEAR_OP_FAST_CLEAR;
 
+      /* Figure out what the clear rectangle needs to be aligned to, and how
+       * much it needs to be scaled down.
+       */
+      unsigned x_align, y_align, x_scaledown, y_scaledown;
+
       /* From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render
        * Target(s)", beneath the "Fast Color Clear" bullet (p327):
        *
@@ -272,22 +277,9 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
        * alignment size returned by intel_get_non_msrt_mcs_alignment(), but
        * with X alignment multiplied by 16 and Y alignment multiplied by 32.
        */
-      unsigned x_align, y_align;
       intel_get_non_msrt_mcs_alignment(brw, irb->mt, &x_align, &y_align);
       x_align *= 16;
       y_align *= 32;
-
-      /* From BSpec: 3D-Media-GPGPU Engine > 3D Pipeline > Pixel > Pixel
-       * Backend > MCS Buffer for Render Target(s) [DevIVB+] > Table "Color
-       * Clear of Non-MultiSampled Render Target Restrictions":
-       *
-       *   Clear rectangle must be aligned to two times the number of pixels in
-       *   the table shown below due to 16x16 hashing across the slice.
-       */
-      x0 = ROUND_DOWN_TO(x0, 2 * x_align);
-      y0 = ROUND_DOWN_TO(y0, 2 * y_align);
-      x1 = ALIGN(x1, 2 * x_align);
-      y1 = ALIGN(y1, 2 * y_align);
 
       /* From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render
        * Target(s)", beneath the "Fast Color Clear" bullet (p327):
@@ -300,12 +292,24 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
        * The X and Y scale down factors in the table that follows are each
        * equal to half the alignment value computed above.
        */
-      unsigned x_scaledown = x_align / 2;
-      unsigned y_scaledown = y_align / 2;
-      x0 /= x_scaledown;
-      y0 /= y_scaledown;
-      x1 /= x_scaledown;
-      y1 /= y_scaledown;
+      x_scaledown = x_align / 2;
+      y_scaledown = y_align / 2;
+
+      /* From BSpec: 3D-Media-GPGPU Engine > 3D Pipeline > Pixel > Pixel
+       * Backend > MCS Buffer for Render Target(s) [DevIVB+] > Table "Color
+       * Clear of Non-MultiSampled Render Target Restrictions":
+       *
+       *   Clear rectangle must be aligned to two times the number of pixels in
+       *   the table shown below due to 16x16 hashing across the slice.
+       */
+      x_align *= 2;
+      y_align *= 2;
+
+      /* Do the alignment and scaledown. */
+      x0 = ROUND_DOWN_TO(x0,  x_align) / x_scaledown;
+      y0 = ROUND_DOWN_TO(y0, y_align) / y_scaledown;
+      x1 = ALIGN(x1, x_align) / x_scaledown;
+      y1 = ALIGN(y1, y_align) / y_scaledown;
    }
 }
 
