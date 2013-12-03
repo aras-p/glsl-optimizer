@@ -234,7 +234,6 @@ public:
    brw_blorp_surface_info dst;
    enum gen6_hiz_op hiz_op;
    enum gen7_fast_clear_op fast_clear_op;
-   unsigned num_samples;
    bool use_wm_prog;
    brw_blorp_wm_push_constants wm_push_consts;
    bool color_write_disable[4];

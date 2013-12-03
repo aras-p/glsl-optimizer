@@ -664,7 +664,7 @@ gen6_blorp_emit_sf_config(struct brw_context *brw,
              1 << GEN6_SF_URB_ENTRY_READ_LENGTH_SHIFT |
              0 << GEN6_SF_URB_ENTRY_READ_OFFSET_SHIFT);
    OUT_BATCH(0); /* dw2 */
-   OUT_BATCH(params->num_samples > 1 ? GEN6_SF_MSRAST_ON_PATTERN : 0);
+   OUT_BATCH(params->dst.num_samples > 1 ? GEN6_SF_MSRAST_ON_PATTERN : 0);
    for (int i = 0; i < 16; ++i)
       OUT_BATCH(0);
    ADVANCE_BATCH();
@@ -721,7 +721,7 @@ gen6_blorp_emit_wm_config(struct brw_context *brw,
       dw5 |= GEN6_WM_DISPATCH_ENABLE; /* We are rendering */
    }
 
-   if (params->num_samples > 1) {
+   if (params->dst.num_samples > 1) {
       dw6 |= GEN6_WM_MSRAST_ON_PATTERN;
       if (prog_data && prog_data->persample_msaa_dispatch)
          dw6 |= GEN6_WM_MSDISPMODE_PERSAMPLE;
@@ -1034,8 +1034,10 @@ gen6_blorp_exec(struct brw_context *brw,
    uint32_t wm_bind_bo_offset = 0;
 
    uint32_t prog_offset = params->get_wm_prog(brw, &prog_data);
-   gen6_emit_3dstate_multisample(brw, params->num_samples);
-   gen6_emit_3dstate_sample_mask(brw, params->num_samples > 1 ? (1 << params->num_samples) - 1 : 1);
+   gen6_emit_3dstate_multisample(brw, params->dst.num_samples);
+   gen6_emit_3dstate_sample_mask(brw,
+                                 params->dst.num_samples > 1 ?
+                                 (1 << params->dst.num_samples) - 1 : 1);
    gen6_blorp_emit_state_base_address(brw, params);
    gen6_blorp_emit_vertices(brw, params);
    gen6_blorp_emit_urb_config(brw, params);

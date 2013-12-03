@@ -2194,11 +2194,6 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    if (filter == GL_LINEAR && src.num_samples <= 1 && dst.num_samples <= 1)
       wm_prog_key.bilinear_filter = true;
 
-   /* The render path must be configured to use the same number of samples as
-    * the destination buffer.
-    */
-   num_samples = dst.num_samples;
-
    GLenum base_format = _mesa_get_format_base_format(src_mt->format);
    if (base_format != GL_DEPTH_COMPONENT && /* TODO: what about depth/stencil? */
        base_format != GL_STENCIL_INDEX &&
