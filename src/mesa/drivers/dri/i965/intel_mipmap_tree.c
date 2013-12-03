@@ -250,7 +250,7 @@ intel_miptree_create_layout(struct brw_context *brw,
    mt->logical_width0 = width0;
    mt->logical_height0 = height0;
    mt->logical_depth0 = depth0;
-   mt->mcs_state = INTEL_MCS_STATE_NONE;
+   mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_NO_MCS;
 
    /* The cpp is bytes per (1, blockheight)-sized block for compressed
     * textures.  This is why you'll see divides by blockheight all over
@@ -604,12 +604,12 @@ intel_miptree_create(struct brw_context *brw,
    }
 
    /* If this miptree is capable of supporting fast color clears, set
-    * mcs_state appropriately to ensure that fast clears will occur.
+    * fast_clear_state appropriately to ensure that fast clears will occur.
     * Allocation of the MCS miptree will be deferred until the first fast
     * clear actually occurs.
     */
    if (intel_is_non_msrt_mcs_buffer_supported(brw, mt))
-      mt->mcs_state = INTEL_MCS_STATE_RESOLVED;
+      mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_RESOLVED;
 
    return mt;
 }
@@ -705,12 +705,12 @@ intel_miptree_create_for_dri2_buffer(struct brw_context *brw,
    singlesample_mt->region->name = region->name;
 
    /* If this miptree is capable of supporting fast color clears, set
-    * mcs_state appropriately to ensure that fast clears will occur.
+    * fast_clear_state appropriately to ensure that fast clears will occur.
     * Allocation of the MCS miptree will be deferred until the first fast
     * clear actually occurs.
     */
    if (intel_is_non_msrt_mcs_buffer_supported(brw, singlesample_mt))
-      singlesample_mt->mcs_state = INTEL_MCS_STATE_RESOLVED;
+      singlesample_mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_RESOLVED;
 
    if (num_samples == 0)
       return singlesample_mt;
@@ -1233,7 +1233,6 @@ intel_miptree_alloc_mcs(struct brw_context *brw,
     *
     *     "The MCS surface must be stored as Tile Y."
     */
-   mt->mcs_state = INTEL_MCS_STATE_MSAA;
    mt->mcs_mt = intel_miptree_create(brw,
                                      mt->target,
                                      format,
@@ -1259,6 +1258,7 @@ intel_miptree_alloc_mcs(struct brw_context *brw,
    void *data = intel_miptree_map_raw(brw, mt->mcs_mt);
    memset(data, 0xff, mt->mcs_mt->region->bo->size);
    intel_miptree_unmap_raw(brw, mt->mcs_mt);
+   mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_CLEAR;
 
    return mt->mcs_mt;
 }
@@ -1511,15 +1511,16 @@ void
 intel_miptree_resolve_color(struct brw_context *brw,
                             struct intel_mipmap_tree *mt)
 {
-   switch (mt->mcs_state) {
-   case INTEL_MCS_STATE_NONE:
-   case INTEL_MCS_STATE_MSAA:
-   case INTEL_MCS_STATE_RESOLVED:
+   switch (mt->fast_clear_state) {
+   case INTEL_FAST_CLEAR_STATE_NO_MCS:
+   case INTEL_FAST_CLEAR_STATE_RESOLVED:
       /* No resolve needed */
       break;
-   case INTEL_MCS_STATE_UNRESOLVED:
-   case INTEL_MCS_STATE_CLEAR:
-      brw_blorp_resolve_color(brw, mt);
+   case INTEL_FAST_CLEAR_STATE_UNRESOLVED:
+   case INTEL_FAST_CLEAR_STATE_CLEAR:
+      /* Fast color clear resolves only make sense for non-MSAA buffers. */
+      if (mt->msaa_layout == INTEL_MSAA_LAYOUT_NONE)
+         brw_blorp_resolve_color(brw, mt);
       break;
    }
 }
@@ -1530,9 +1531,9 @@ intel_miptree_resolve_color(struct brw_context *brw,
  * process or another miptree.
  *
  * Fast color clears are unsafe with shared buffers, so we need to resolve and
- * then discard the MCS buffer, if present.  We also set the mcs_state to
- * INTEL_MCS_STATE_NONE to ensure that no MCS buffer gets allocated in the
- * future.
+ * then discard the MCS buffer, if present.  We also set the fast_clear_state
+ * to INTEL_FAST_CLEAR_STATE_NO_MCS to ensure that no MCS buffer gets
+ * allocated in the future.
  */
 void
 intel_miptree_make_shareable(struct brw_context *brw,
@@ -1548,7 +1549,7 @@ intel_miptree_make_shareable(struct brw_context *brw,
    if (mt->mcs_mt) {
       intel_miptree_resolve_color(brw, mt);
       intel_miptree_release(&mt->mcs_mt);
-      mt->mcs_state = INTEL_MCS_STATE_NONE;
+      mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_NO_MCS;
    }
 }
 

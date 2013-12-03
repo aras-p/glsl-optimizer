@@ -250,8 +250,8 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
     * never larger than the size of a tile, so there is no danger of
     * overflowing beyond the memory belonging to the region.
     */
-   if (irb->mt->mcs_state != INTEL_MCS_STATE_NONE && !partial_clear &&
-       wm_prog_key.use_simd16_replicated_data &&
+   if (irb->mt->fast_clear_state != INTEL_FAST_CLEAR_STATE_NO_MCS &&
+       !partial_clear && wm_prog_key.use_simd16_replicated_data &&
        is_color_fast_clear_compatible(brw, format, &ctx->Color.ClearColor)) {
       memset(push_consts, 0xff, 4*sizeof(float));
       fast_clear_op = GEN7_FAST_CLEAR_OP_FAST_CLEAR;
@@ -471,10 +471,10 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
          brw->state.dirty.brw |= BRW_NEW_SURFACES;
       }
 
-      /* If the buffer is already in INTEL_MCS_STATE_CLEAR, the clear is
-       * redundant and can be skipped.
+      /* If the buffer is already in INTEL_FAST_CLEAR_STATE_CLEAR, the clear
+       * is redundant and can be skipped.
        */
-      if (irb->mt->mcs_state == INTEL_MCS_STATE_CLEAR)
+      if (irb->mt->fast_clear_state == INTEL_FAST_CLEAR_STATE_CLEAR)
          return true;
 
       /* If the MCS buffer hasn't been allocated yet, we need to allocate
@@ -499,10 +499,10 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
 
    if (is_fast_clear) {
       /* Now that the fast clear has occurred, put the buffer in
-       * INTEL_MCS_STATE_CLEAR so that we won't waste time doing redundant
-       * clears.
+       * INTEL_FAST_CLEAR_STATE_CLEAR so that we won't waste time doing
+       * redundant clears.
        */
-      irb->mt->mcs_state = INTEL_MCS_STATE_CLEAR;
+      irb->mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_CLEAR;
    }
 
    return true;
@@ -563,7 +563,7 @@ brw_blorp_resolve_color(struct brw_context *brw, struct intel_mipmap_tree *mt)
 
    brw_blorp_rt_resolve_params params(brw, mt);
    brw_blorp_exec(brw, &params);
-   mt->mcs_state = INTEL_MCS_STATE_RESOLVED;
+   mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_RESOLVED;
 }
 
 } /* extern "C" */

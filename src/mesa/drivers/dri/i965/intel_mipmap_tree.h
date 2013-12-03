@@ -203,8 +203,8 @@ enum intel_msaa_layout
 
 
 /**
- * Enum for keeping track of the state of an MCS buffer associated with a
- * miptree.  This determines when fast clear related operations are needed.
+ * Enum for keeping track of the fast clear state of a buffer associated with
+ * a miptree.
  *
  * Fast clear works by deferring the memory writes that would be used to clear
  * the buffer, so that instead of performing them at the time of the clear
@@ -212,23 +212,18 @@ enum intel_msaa_layout
  * buffer is later accessed for rendering.  The MCS buffer keeps track of
  * which regions of the buffer still have pending clear writes.
  *
- * This enum keeps track of the driver's knowledge of the state of the MCS
- * buffer.
+ * This enum keeps track of the driver's knowledge of pending fast clears in
+ * the MCS buffer.
  *
  * MCS buffers only exist on Gen7+.
  */
-enum intel_mcs_state
+enum intel_fast_clear_state
 {
    /**
     * There is no MCS buffer for this miptree, and one should never be
     * allocated.
     */
-   INTEL_MCS_STATE_NONE,
-
-   /**
-    * An MCS buffer exists for this miptree, and it is used for MSAA purposes.
-    */
-   INTEL_MCS_STATE_MSAA,
+   INTEL_FAST_CLEAR_STATE_NO_MCS,
 
    /**
     * No deferred clears are pending for this miptree, and the contents of the
@@ -239,8 +234,11 @@ enum intel_mcs_state
     *
     * In this state, the color buffer can be used for purposes other than
     * rendering without needing a render target resolve.
+    *
+    * Since there is no such thing as a "fast color clear resolve" for MSAA
+    * buffers, an MSAA buffer will never be in this state.
     */
-   INTEL_MCS_STATE_RESOLVED,
+   INTEL_FAST_CLEAR_STATE_RESOLVED,
 
    /**
     * An MCS buffer exists for this miptree, and deferred clears are pending
@@ -248,23 +246,23 @@ enum intel_mcs_state
     * The contents of the color buffer are only correct for the regions where
     * the MCS buffer doesn't indicate a deferred clear.
     *
-    * In this state, a render target resolve must be performed before the
-    * color buffer can be used for purposes other than rendering.
+    * If a single-sample buffer is in this state, a render target resolve must
+    * be performed before it can be used for purposes other than rendering.
     */
-   INTEL_MCS_STATE_UNRESOLVED,
+   INTEL_FAST_CLEAR_STATE_UNRESOLVED,
 
    /**
     * An MCS buffer exists for this miptree, and deferred clears are pending
     * for the entire color buffer, and the contents of the MCS buffer reflect
     * this.  The contents of the color buffer are undefined.
     *
-    * In this state, a render target resolve must be performed before the
-    * color buffer can be used for purposes other than rendering.
+    * If a single-sample buffer is in this state, a render target resolve must
+    * be performed before it can be used for purposes other than rendering.
     *
     * If the client attempts to clear a buffer which is already in this state,
     * the clear can be safely skipped, since the buffer is already clear.
     */
-   INTEL_MCS_STATE_CLEAR,
+   INTEL_FAST_CLEAR_STATE_CLEAR,
 };
 
 struct intel_mipmap_tree
@@ -452,9 +450,9 @@ struct intel_mipmap_tree
    struct intel_mipmap_tree *mcs_mt;
 
    /**
-    * MCS state for this buffer.
+    * Fast clear state for this buffer.
     */
-   enum intel_mcs_state mcs_state;
+   enum intel_fast_clear_state fast_clear_state;
 
    /**
     * The SURFACE_STATE bits associated with the last fast color clear to this
@@ -687,8 +685,8 @@ intel_miptree_used_for_rendering(struct intel_mipmap_tree *mt)
     * unresolved state, since it won't be guaranteed to be clear after
     * rendering occurs.
     */
-   if (mt->mcs_state == INTEL_MCS_STATE_CLEAR)
-      mt->mcs_state = INTEL_MCS_STATE_UNRESOLVED;
+   if (mt->fast_clear_state == INTEL_FAST_CLEAR_STATE_CLEAR)
+      mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_UNRESOLVED;
 }
 
 void
