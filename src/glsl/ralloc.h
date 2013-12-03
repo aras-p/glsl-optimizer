@@ -400,6 +400,10 @@ bool ralloc_asprintf_append (char **str, const char *fmt, ...)
 bool ralloc_vasprintf_append(char **str, const char *fmt, va_list args);
 /// @}
 
+
+size_t printf_length(const char *fmt, va_list untouched_args);
+
+
 #ifdef __cplusplus
 } /* end of extern "C" */
 #endif
