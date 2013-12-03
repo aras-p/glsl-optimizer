@@ -151,6 +151,8 @@
 		2BBD9DC4171969F700515007 /* hash_table.c in Sources */ = {isa = PBXBuildFile; fileRef = 2BBD9DC2171969F700515007 /* hash_table.c */; };
 		2BBD9DC6171969F700515007 /* hash_table.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BBD9DC3171969F700515007 /* hash_table.h */; };
 		2BBD9DC817196A3B00515007 /* imports.c in Sources */ = {isa = PBXBuildFile; fileRef = 2BBD9DC717196A3B00515007 /* imports.c */; };
+		2BDCB95D184E182B0075CE6F /* ir_stats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BDCB95B184E182B0075CE6F /* ir_stats.cpp */; };
+		2BDCB95E184E182B0075CE6F /* ir_stats.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BDCB95C184E182B0075CE6F /* ir_stats.h */; };
 		2BEC22EA1356E98300B5E301 /* opt_copy_propagation_elements.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BEC22CB1356E94E00B5E301 /* opt_copy_propagation_elements.cpp */; };
 /* End PBXBuildFile section */
 
@@ -305,6 +307,8 @@
 		2BBD9DC2171969F700515007 /* hash_table.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hash_table.c; path = ../../src/mesa/main/hash_table.c; sourceTree = "<group>"; };
 		2BBD9DC3171969F700515007 /* hash_table.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hash_table.h; path = ../../src/mesa/main/hash_table.h; sourceTree = "<group>"; };
 		2BBD9DC717196A3B00515007 /* imports.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = imports.c; path = ../../src/mesa/main/imports.c; sourceTree = "<group>"; };
+		2BDCB95B184E182B0075CE6F /* ir_stats.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_stats.cpp; path = ../../src/glsl/ir_stats.cpp; sourceTree = "<group>"; };
+		2BDCB95C184E182B0075CE6F /* ir_stats.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_stats.h; path = ../../src/glsl/ir_stats.h; sourceTree = "<group>"; };
 		2BEC22CB1356E94E00B5E301 /* opt_copy_propagation_elements.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_copy_propagation_elements.cpp; path = ../../src/glsl/opt_copy_propagation_elements.cpp; sourceTree = SOURCE_ROOT; };
 		D2AAC046055464E500DB518D /* libglsl_optimizer.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libglsl_optimizer.a; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -429,6 +433,8 @@
 				2BA55A841207FEA6002DC82D /* ir_print_visitor.h */,
 				2B62490D12191339003F6EEE /* ir_rvalue_visitor.cpp */,
 				2B62490E12191339003F6EEE /* ir_rvalue_visitor.h */,
+				2BDCB95B184E182B0075CE6F /* ir_stats.cpp */,
+				2BDCB95C184E182B0075CE6F /* ir_stats.h */,
 				2B6AC7BC161EC9D40094FD86 /* ir_uniform.h */,
 				2BA55A8A1207FEA6002DC82D /* ir_unused_structs.cpp */,
 				2BA55A8B1207FEA6002DC82D /* ir_unused_structs.h */,
@@ -572,6 +578,7 @@
 				2BB725B1135094BE0057D8B5 /* macros.h in Headers */,
 				2BB725B3135094BE0057D8B5 /* mtypes.h in Headers */,
 				2BA7E13F17D0AEB200D5C475 /* builtin_type_macros.h in Headers */,
+				2BDCB95E184E182B0075CE6F /* ir_stats.h in Headers */,
 				2BB725B5135094BE0057D8B5 /* simple_list.h in Headers */,
 				2BA07FAC1352E7BB00A1C074 /* ralloc.h in Headers */,
 				2B655A7A13E0324F00B5278F /* standalone_scaffolding.h in Headers */,
@@ -645,6 +652,7 @@
 				2BA7E14417D0AEB200D5C475 /* lower_named_interface_blocks.cpp in Sources */,
 				2BA55A9F1207FEA6002DC82D /* ast_type.cpp in Sources */,
 				2BA55AA41207FEA6002DC82D /* glsl_lexer.cpp in Sources */,
+				2BDCB95D184E182B0075CE6F /* ir_stats.cpp in Sources */,
 				2BA55AA61207FEA6002DC82D /* glsl_optimizer.cpp in Sources */,
 				2BA55AA81207FEA6002DC82D /* glsl_parser_extras.cpp in Sources */,
 				2BA55AAA1207FEA6002DC82D /* glsl_parser.cpp in Sources */,

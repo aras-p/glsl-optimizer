@@ -48,7 +48,7 @@ public:
 
 	const char* c_str() const { return m_Ptr; }
 
-	void asprintf_append(const char *fmt, ...) PRINTFLIKE(1, 2)
+	void asprintf_append(const char *fmt, ...) PRINTFLIKE(2, 3)
 	{
 		va_list args;
 		va_start(args, fmt);
