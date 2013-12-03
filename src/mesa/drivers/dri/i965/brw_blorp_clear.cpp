@@ -250,8 +250,7 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
     * never larger than the size of a tile, so there is no danger of
     * overflowing beyond the memory belonging to the region.
     */
-   if (irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_NONE &&
-       irb->mt->fast_clear_state != INTEL_FAST_CLEAR_STATE_NO_MCS &&
+   if (irb->mt->fast_clear_state != INTEL_FAST_CLEAR_STATE_NO_MCS &&
        !partial_clear && wm_prog_key.use_simd16_replicated_data &&
        is_color_fast_clear_compatible(brw, format, &ctx->Color.ClearColor)) {
       memset(push_consts, 0xff, 4*sizeof(float));
@@ -262,48 +261,92 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
        */
       unsigned x_align, y_align, x_scaledown, y_scaledown;
 
-      /* From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render
-       * Target(s)", beneath the "Fast Color Clear" bullet (p327):
-       *
-       *     Clear pass must have a clear rectangle that must follow alignment
-       *     rules in terms of pixels and lines as shown in the table
-       *     below. Further, the clear-rectangle height and width must be
-       *     multiple of the following dimensions. If the height and width of
-       *     the render target being cleared do not meet these requirements,
-       *     an MCS buffer can be created such that it follows the requirement
-       *     and covers the RT.
-       *
-       * The alignment size in the table that follows is related to the
-       * alignment size returned by intel_get_non_msrt_mcs_alignment(), but
-       * with X alignment multiplied by 16 and Y alignment multiplied by 32.
-       */
-      intel_get_non_msrt_mcs_alignment(brw, irb->mt, &x_align, &y_align);
-      x_align *= 16;
-      y_align *= 32;
+      if (irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_NONE) {
+         /* From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render
+          * Target(s)", beneath the "Fast Color Clear" bullet (p327):
+          *
+          *     Clear pass must have a clear rectangle that must follow
+          *     alignment rules in terms of pixels and lines as shown in the
+          *     table below. Further, the clear-rectangle height and width
+          *     must be multiple of the following dimensions. If the height
+          *     and width of the render target being cleared do not meet these
+          *     requirements, an MCS buffer can be created such that it
+          *     follows the requirement and covers the RT.
+          *
+          * The alignment size in the table that follows is related to the
+          * alignment size returned by intel_get_non_msrt_mcs_alignment(), but
+          * with X alignment multiplied by 16 and Y alignment multiplied by 32.
+          */
+         intel_get_non_msrt_mcs_alignment(brw, irb->mt, &x_align, &y_align);
+         x_align *= 16;
+         y_align *= 32;
 
-      /* From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render
-       * Target(s)", beneath the "Fast Color Clear" bullet (p327):
-       *
-       *     In order to optimize the performance MCS buffer (when bound to 1X
-       *     RT) clear similarly to MCS buffer clear for MSRT case, clear rect
-       *     is required to be scaled by the following factors in the
-       *     horizontal and vertical directions:
-       *
-       * The X and Y scale down factors in the table that follows are each
-       * equal to half the alignment value computed above.
-       */
-      x_scaledown = x_align / 2;
-      y_scaledown = y_align / 2;
+         /* From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render
+          * Target(s)", beneath the "Fast Color Clear" bullet (p327):
+          *
+          *     In order to optimize the performance MCS buffer (when bound to
+          *     1X RT) clear similarly to MCS buffer clear for MSRT case,
+          *     clear rect is required to be scaled by the following factors
+          *     in the horizontal and vertical directions:
+          *
+          * The X and Y scale down factors in the table that follows are each
+          * equal to half the alignment value computed above.
+          */
+         x_scaledown = x_align / 2;
+         y_scaledown = y_align / 2;
 
-      /* From BSpec: 3D-Media-GPGPU Engine > 3D Pipeline > Pixel > Pixel
-       * Backend > MCS Buffer for Render Target(s) [DevIVB+] > Table "Color
-       * Clear of Non-MultiSampled Render Target Restrictions":
-       *
-       *   Clear rectangle must be aligned to two times the number of pixels in
-       *   the table shown below due to 16x16 hashing across the slice.
-       */
-      x_align *= 2;
-      y_align *= 2;
+         /* From BSpec: 3D-Media-GPGPU Engine > 3D Pipeline > Pixel > Pixel
+          * Backend > MCS Buffer for Render Target(s) [DevIVB+] > Table "Color
+          * Clear of Non-MultiSampled Render Target Restrictions":
+          *
+          *   Clear rectangle must be aligned to two times the number of
+          *   pixels in the table shown below due to 16x16 hashing across the
+          *   slice.
+          */
+         x_align *= 2;
+         y_align *= 2;
+      } else {
+         /* From the Ivy Bridge PRM, Vol2 Part1 11.7 "MCS Buffer for Render
+          * Target(s)", beneath the "MSAA Compression" bullet (p326):
+          *
+          *     Clear pass for this case requires that scaled down primitive
+          *     is sent down with upper left co-ordinate to coincide with
+          *     actual rectangle being cleared. For MSAA, clear rectangle’s
+          *     height and width need to as show in the following table in
+          *     terms of (width,height) of the RT.
+          *
+          *     MSAA  Width of Clear Rect  Height of Clear Rect
+          *      4X     Ceil(1/8*width)      Ceil(1/2*height)
+          *      8X     Ceil(1/2*width)      Ceil(1/2*height)
+          *
+          * The text "with upper left co-ordinate to coincide with actual
+          * rectangle being cleared" is a little confusing--it seems to imply
+          * that to clear a rectangle from (x,y) to (x+w,y+h), one needs to
+          * feed the pipeline using the rectangle (x,y) to
+          * (x+Ceil(w/N),y+Ceil(h/2)), where N is either 2 or 8 depending on
+          * the number of samples.  Experiments indicate that this is not
+          * quite correct; actually, what the hardware appears to do is to
+          * align whatever rectangle is sent down the pipeline to the nearest
+          * multiple of 2x2 blocks, and then scale it up by a factor of N
+          * horizontally and 2 vertically.  So the resulting alignment is 4
+          * vertically and either 4 or 16 horizontally, and the scaledown
+          * factor is 2 vertically and either 2 or 8 horizontally.
+          */
+         switch (irb->mt->num_samples) {
+         case 4:
+            x_scaledown = 8;
+            break;
+         case 8:
+            x_scaledown = 2;
+            break;
+         default:
+            assert(!"Unexpected sample count for fast clear");
+            break;
+         }
+         y_scaledown = 2;
+         x_align = x_scaledown * 2;
+         y_align = y_scaledown * 2;
+      }
 
       /* Do the alignment and scaledown. */
       x0 = ROUND_DOWN_TO(x0,  x_align) / x_scaledown;
