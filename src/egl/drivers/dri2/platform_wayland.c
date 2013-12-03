@@ -557,6 +557,8 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
+   struct dri2_egl_context *dri2_ctx;
+   _EGLContext *ctx;
    int i, ret = 0;
 
    while (dri2_surf->frame_callback && ret != -1)
@@ -610,7 +612,17 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
       }
    }
 
-   (*dri2_dpy->flush->flush)(dri2_surf->dri_drawable);
+   if (dri2_dpy->flush->base.version >= 4) {
+      ctx = _eglGetCurrentContext();
+      dri2_ctx = dri2_egl_context(ctx);
+      (*dri2_dpy->flush->flush_with_flags)(dri2_ctx->dri_context,
+                                           dri2_surf->dri_drawable,
+                                           __DRI2_FLUSH_DRAWABLE,
+                                           __DRI2_THROTTLE_SWAPBUFFER);
+   } else {
+      (*dri2_dpy->flush->flush)(dri2_surf->dri_drawable);
+   }
+
    (*dri2_dpy->flush->invalidate)(dri2_surf->dri_drawable);
 
    wl_surface_commit(dri2_surf->wl_win->surface);
