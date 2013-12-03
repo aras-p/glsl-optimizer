@@ -542,6 +542,7 @@ unsigned load_program(
 	char **string_store;
 	unsigned i = 0;
 
+	memset(line, 0, sizeof(line));
 	snprintf(path, MAX_PATH_LENGTH, "compiler/tests/%s", filename);
 	file = fopen(path, "r");
 	if (!file) {
@@ -552,7 +553,8 @@ unsigned load_program(
 	count = &test->num_input_lines;
 
 	while (fgets(line, MAX_LINE_LENGTH, file)){
-		if (line[MAX_LINE_LENGTH - 2] == '\n') {
+		char last_char = line[MAX_LINE_LENGTH - 1];
+		if (last_char && last_char != '\n') {
 			fprintf(stderr, "Error line cannot be longer than 100 "
 				"characters:\n%s\n", line);
 			return 0;
