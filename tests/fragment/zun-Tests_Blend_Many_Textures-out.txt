@@ -27,3 +27,5 @@ void main ()
    + texture2D (_MainTex13, tmpvar_1)) + texture2D (_MainTex14, tmpvar_1)) + texture2D (_MainTex15, tmpvar_1));
 }
 
+
+// inputs: 1, stats: 0 alu 0 tex 0 flow

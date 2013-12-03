@@ -6,3 +6,5 @@ void main ()
   gl_FragData[0] = (xlv_COLOR * texture2D (_MainTex, xlv_TEXCOORD0));
 }
 
+
+// inputs: 2, stats: 0 alu 0 tex 0 flow

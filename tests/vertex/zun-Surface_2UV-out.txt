@@ -35,3 +35,5 @@ void main ()
   gl_TexCoord[3] = (_LightMatrix0 * cse_7);
 }
 
+
+// inputs: 4, stats: 0 alu 0 tex 0 flow

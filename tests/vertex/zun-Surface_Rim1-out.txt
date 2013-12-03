@@ -54,3 +54,5 @@ void main ()
   gl_TexCoord[3] = tmpvar_11;
 }
 
+
+// inputs: 4, stats: 0 alu 0 tex 0 flow

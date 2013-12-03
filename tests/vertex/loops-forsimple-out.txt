@@ -11,3 +11,5 @@ void main ()
   varColor = col_1;
 }
 
+
+// inputs: 1, stats: 0 alu 0 tex 0 flow

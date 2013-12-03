@@ -140,3 +140,5 @@ void main ()
   xlv_TEXCOORD1 = tmpvar_3;
 }
 
+
+// inputs: 5, stats: 0 alu 0 tex 0 flow

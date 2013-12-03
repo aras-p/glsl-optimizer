@@ -9,3 +9,5 @@ void main ()
   _fragColor = (textureGrad (tex, uv.xy, dFdx(uv.xy), dFdy(uv.xy)) + textureGrad (cub, uv, dFdx(uv), dFdy(uv)));
 }
 
+
+// inputs: 1, stats: 0 alu 0 tex 0 flow

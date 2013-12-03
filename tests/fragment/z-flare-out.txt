@@ -4,3 +4,5 @@ void main ()
   gl_FragData[0] = (texture2D (_FlareTexture, gl_TexCoord[0].xy) * gl_Color);
 }
 
+
+// inputs: 2, stats: 0 alu 0 tex 0 flow

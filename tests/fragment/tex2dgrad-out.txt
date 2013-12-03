@@ -7,3 +7,5 @@ void main ()
   gl_FragColor = (texture2DGradARB (tex, uv.xy, dFdx(uv.xy), dFdy(uv.xy)) + textureCubeGradARB (cub, uv, dFdx(uv), dFdy(uv)));
 }
 
+
+// inputs: 1, stats: 0 alu 0 tex 0 flow

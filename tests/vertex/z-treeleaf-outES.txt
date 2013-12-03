@@ -119,3 +119,5 @@ void main ()
   xlv_TEXCOORD3 = (_LightMatrix0 * (_Object2World * tmpvar_21)).xy;
 }
 
+
+// inputs: 6, stats: 0 alu 0 tex 0 flow

@@ -47,3 +47,5 @@ void main ()
   gl_FragData[0] = res_3;
 }
 
+
+// inputs: 1, stats: 0 alu 0 tex 0 flow

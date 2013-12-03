@@ -71,3 +71,5 @@ void main ()
   gl_FrontColor = outColor_8;
 }
 
+
+// inputs: 4, stats: 0 alu 0 tex 0 flow

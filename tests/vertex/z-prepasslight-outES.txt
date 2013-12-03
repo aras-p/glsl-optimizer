@@ -24,3 +24,5 @@ void main ()
   xlv_TEXCOORD1 = mix (((glstate_matrix_modelview0 * _glesVertex).xyz * vec3(-1.0, -1.0, 1.0)), tmpvar_1, vec3(float((tmpvar_1.z != 0.0))));
 }
 
+
+// inputs: 2, stats: 0 alu 0 tex 0 flow

@@ -74,3 +74,5 @@ void main ()
   gl_FragData[0] = vec4((mask_2.x / mask_2.y));
 }
 
+
+// inputs: 1, stats: 0 alu 0 tex 0 flow

@@ -9,3 +9,5 @@ void main ()
   xlv_TEXCOORD0 = ((gl_MultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
 }
 
+
+// inputs: 3, stats: 0 alu 0 tex 0 flow

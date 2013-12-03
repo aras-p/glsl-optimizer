@@ -20,3 +20,5 @@ void main ()
   gl_FragData[0] = (texture2DProj (_GrabTexture, tmpvar_2) * texture2D (_MainTex, gl_TexCoord[2].xy));
 }
 
+
+// inputs: 1, stats: 0 alu 0 tex 0 flow

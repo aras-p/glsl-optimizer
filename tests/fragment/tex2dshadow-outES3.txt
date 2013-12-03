@@ -8,3 +8,5 @@ void main ()
   _fragColor = vec4((texture (shadowmap, xlv_TEXCOORD0.xyz) + textureProj (shadowmap, xlv_TEXCOORD0)));
 }
 
+
+// inputs: 1, stats: 0 alu 0 tex 0 flow
