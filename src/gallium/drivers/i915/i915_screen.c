@@ -211,7 +211,6 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_QUERY_TIMESTAMP:
    case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
    case PIPE_CAP_TEXTURE_MULTISAMPLE:
-   case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
    case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
    case PIPE_CAP_CUBE_MAP_ARRAY:
    case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
@@ -226,6 +225,9 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_TGSI_VS_LAYER:
       return 0;
+
+   case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
+      return 64;
 
    case PIPE_CAP_GLSL_FEATURE_LEVEL:
       return 120;
