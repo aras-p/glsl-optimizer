@@ -45,4 +45,4 @@ void main ()
 }
 
 
-// inputs: 1, stats: 0 alu 3 tex 0 flow
+// inputs: 1, stats: 30 alu 3 tex 0 flow

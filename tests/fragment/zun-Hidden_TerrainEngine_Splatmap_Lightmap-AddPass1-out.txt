@@ -29,4 +29,4 @@ void main ()
 }
 
 
-// inputs: 1, stats: 0 alu 6 tex 0 flow
+// inputs: 1, stats: 11 alu 6 tex 0 flow
