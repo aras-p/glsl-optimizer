@@ -79,14 +79,13 @@ static void test_runner_rc_regalloc(
 
 static void tex_1d_swizzle(struct test_result *result)
 {
-	struct radeon_compiler c;
+	struct r300_fragment_program_compiler c;
 
-	init_compiler(&c, RC_FRAGMENT_PROGRAM, 0, 0);
-	struct r300_fragment_program_compiler *cc =
-		(struct r300_fragment_program_compiler*)&c;
-	cc->AllocateHwInputs = dummy_allocate_hw_inputs;
+	memset(&c, 0, sizeof(c));
+	init_compiler(&c.Base, RC_FRAGMENT_PROGRAM, 0, 0);
+	c.AllocateHwInputs = dummy_allocate_hw_inputs;
 
-	test_runner_rc_regalloc(result, &c, "regalloc_tex_1d_swizzle.test");
+	test_runner_rc_regalloc(result, &c.Base, "regalloc_tex_1d_swizzle.test");
 }
 
 unsigned radeon_compiler_regalloc_run_tests()
