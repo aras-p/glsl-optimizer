@@ -9,26 +9,9 @@ struct ir_stats_counter_visitor : public ir_hierarchical_visitor {
 	{
 	}
 
-	virtual ir_visitor_status visit(class ir_rvalue *)
-	{
-		return visit_continue;
-	}
-	virtual ir_visitor_status visit(class ir_variable *)
-	{
-		return visit_continue;
-	}
-	virtual ir_visitor_status visit(class ir_constant *)
-	{
-		return visit_continue;
-	}
-	virtual ir_visitor_status visit(class ir_dereference_variable *) { return visit_continue; }
 	virtual ir_visitor_status visit_leave(class ir_loop *)
 	{
 		++flow;
-		return visit_continue;
-	}
-	virtual ir_visitor_status visit_enter(class ir_expression *)
-	{
 		return visit_continue;
 	}
 	virtual ir_visitor_status visit_leave(class ir_expression *)
@@ -36,31 +19,20 @@ struct ir_stats_counter_visitor : public ir_hierarchical_visitor {
 		++math;
 		return visit_continue;
 	}
-	virtual ir_visitor_status visit_enter(class ir_texture *)
-	{
-		return visit_continue;
-	}
 	virtual ir_visitor_status visit_leave(class ir_texture *)
 	{
 		++tex;
 		return visit_continue;
 	}
-	virtual ir_visitor_status visit_enter(class ir_swizzle *)
+	virtual ir_visitor_status visit_leave(ir_assignment *ir)
 	{
+		if (ir && ir->rhs)
+		{
+			if (ir->rhs->as_constant())
+				++math;
+		}
 		return visit_continue;
 	}
-	virtual ir_visitor_status visit_leave(class ir_swizzle *)
-	{
-		return visit_continue;
-	}
-	//virtual ir_visitor_status visit_enter(class ir_dereference_array *);
-	//virtual ir_visitor_status visit_leave(class ir_dereference_array *);
-	//virtual ir_visitor_status visit_enter(class ir_dereference_record *);
-	//virtual ir_visitor_status visit_leave(class ir_dereference_record *);
-	//virtual ir_visitor_status visit_enter(class ir_assignment *);
-	//virtual ir_visitor_status visit_leave(class ir_assignment *);
-	//virtual ir_visitor_status visit_enter(class ir_call *);
-	//virtual ir_visitor_status visit_leave(class ir_call *);
 	virtual ir_visitor_status visit_leave(class ir_return *)
 	{
 		++flow;

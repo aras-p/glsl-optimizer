@@ -85,4 +85,4 @@ void main ()
 }
 
 
-// inputs: 2, stats: 43 alu 9 tex 2 flow
+// inputs: 2, stats: 47 alu 9 tex 2 flow
