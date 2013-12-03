@@ -97,7 +97,7 @@ void vegaClear(VGint x, VGint y,
       clear_color.f[1] = ctx->state.vg.clear_color[1];
       clear_color.f[2] = ctx->state.vg.clear_color[2];
       clear_color.f[3] = ctx->state.vg.clear_color[3];
-      ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_COLOR | PIPE_CLEAR_DEPTHSTENCIL,
+      ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_COLOR0 | PIPE_CLEAR_DEPTHSTENCIL,
                        &clear_color, 1., 0);
    } else if (renderer_clear_begin(ctx->renderer)) {
       /* XXX verify coord round-off */

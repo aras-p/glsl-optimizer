@@ -138,7 +138,7 @@ pp_jimenezmlaa_run(struct pp_queue_t *ppq, struct pipe_resource *in,
    pp_filter_set_fb(p);
    pp_filter_misc_state(p);
    cso_set_depth_stencil_alpha(p->cso, &mstencil);
-   p->pipe->clear(p->pipe, PIPE_CLEAR_STENCIL | PIPE_CLEAR_COLOR,
+   p->pipe->clear(p->pipe, PIPE_CLEAR_STENCIL | PIPE_CLEAR_COLOR0,
                   &p->clear_color, 0, 0);
 
    cso_single_sampler(p->cso, PIPE_SHADER_FRAGMENT, 0, &p->sampler_point);

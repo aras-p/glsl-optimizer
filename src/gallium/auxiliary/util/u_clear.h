@@ -42,9 +42,10 @@ util_clear(struct pipe_context *pipe,
            struct pipe_framebuffer_state *framebuffer, unsigned buffers,
            const union pipe_color_union *color, double depth, unsigned stencil)
 {
-   if (buffers & PIPE_CLEAR_COLOR) {
-      unsigned i;
-      for (i = 0; i < framebuffer->nr_cbufs; i++) {
+   unsigned i;
+
+   for (i = 0; i < framebuffer->nr_cbufs; i++) {
+      if (buffers & (PIPE_CLEAR_COLOR0 << i)) {
          struct pipe_surface *ps = framebuffer->cbufs[i];
          pipe->clear_render_target(pipe, ps, color, 0, 0, ps->width, ps->height);
       }

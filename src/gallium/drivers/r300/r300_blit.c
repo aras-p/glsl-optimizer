@@ -130,7 +130,7 @@ static boolean r300_cbzb_clear_allowed(struct r300_context *r300,
         (struct pipe_framebuffer_state*)r300->fb_state.state;
 
     /* Only color clear allowed, and only one colorbuffer. */
-    if (clear_buffers != PIPE_CLEAR_COLOR || fb->nr_cbufs != 1)
+    if ((clear_buffers & ~PIPE_CLEAR_COLOR) != 0 || fb->nr_cbufs != 1)
         return FALSE;
 
     return r300_surface(fb->cbufs[0])->cbzb_allowed;
