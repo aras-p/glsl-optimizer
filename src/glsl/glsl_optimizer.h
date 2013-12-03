@@ -55,5 +55,7 @@ void glslopt_shader_delete (glslopt_shader* shader);
 int glslopt_shader_get_input_count (glslopt_shader* shader);
 const char* glslopt_shader_get_input_name (glslopt_shader* shader, int index);
 
+void glslopt_shader_get_stats (glslopt_shader* shader, int* approxMath, int* approxTex, int* approxFlow);
+
 
 #endif /* GLSL_OPTIMIZER_H */

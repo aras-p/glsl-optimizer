@@ -411,6 +411,14 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 	{
 		std::string textHir = glslopt_get_raw_output (shader);
 		std::string textOpt = glslopt_get_output (shader);
+
+		char buffer[200];
+		int statsAlu, statsTex, statsFlow;
+		glslopt_shader_get_stats (shader, &statsAlu, &statsTex, &statsFlow);
+		int inputCount = glslopt_shader_get_input_count (shader);
+		sprintf(buffer, "\n// inputs: %i, stats: %i alu %i tex %i flow\n", inputCount, statsAlu, statsTex, statsFlow);
+		textOpt += buffer;
+
 		std::string outputHir;
 		ReadStringFromFile (hirPath.c_str(), outputHir);
 		std::string outputOpt;
@@ -484,6 +492,9 @@ int main (int argc, const char** argv)
 	std::string baseFolder = argv[1];
 
 	clock_t time0 = clock();
+
+	// 2.39s
+	// ralloc fix 256 initial: 1.35s
 
 	static const char* kTypeName[2] = { "vertex", "fragment" };
 	size_t tests = 0;

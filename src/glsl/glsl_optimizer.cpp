@@ -5,6 +5,7 @@
 #include "ir_optimization.h"
 #include "ir_print_glsl_visitor.h"
 #include "ir_print_visitor.h"
+#include "ir_stats.h"
 #include "loop_analysis.h"
 #include "program.h"
 #include "linker.h"
@@ -122,6 +123,9 @@ struct glslopt_shader
 		, optimizedOutput(0)
 		, status(false)
 		, inputCount(0)
+		, statsMath(0)
+		, statsTex(0)
+		, statsFlow(0)
 	{
 		infoLog = "Shader not compiled yet";
 		
@@ -154,6 +158,7 @@ struct glslopt_shader
 	static const int kMaxShaderInputs = 128;
 	glslopt_shader_input inputs[kMaxShaderInputs];
 	int inputCount;
+	int statsMath, statsTex, statsFlow;
 
 	char*	rawOutput;
 	char*	optimizedOutput;
@@ -449,6 +454,8 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	shader->infoLog = state->info_log;
 
 	find_shader_inputs(shader, ir);
+	if (!state->error)
+		calculate_shader_stats (ir, &shader->statsMath, &shader->statsTex, &shader->statsFlow);
 
 	ralloc_free (ir);
 	ralloc_free (state);
@@ -492,4 +499,11 @@ int glslopt_shader_get_input_count (glslopt_shader* shader)
 const char* glslopt_shader_get_input_name (glslopt_shader* shader, int index)
 {
 	return shader->inputs[index].name;
+}
+
+void glslopt_shader_get_stats (glslopt_shader* shader, int* approxMath, int* approxTex, int* approxFlow)
+{
+	*approxMath = shader->statsMath;
+	*approxTex = shader->statsTex;
+	*approxFlow = shader->statsFlow;
 }
