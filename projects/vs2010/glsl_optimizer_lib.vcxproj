@@ -181,6 +181,7 @@
     <ClInclude Include="..\..\src\glsl\ir_print_glsl_visitor.h" />
     <ClInclude Include="..\..\src\glsl\ir_print_visitor.h" />
     <ClInclude Include="..\..\src\glsl\ir_rvalue_visitor.h" />
+    <ClInclude Include="..\..\src\glsl\ir_stats.h" />
     <ClInclude Include="..\..\src\glsl\ir_uniform.h" />
     <ClInclude Include="..\..\src\glsl\ir_unused_structs.h" />
     <ClInclude Include="..\..\src\glsl\ir_variable_refcount.h" />
@@ -246,6 +247,7 @@
     <ClCompile Include="..\..\src\glsl\ir_print_glsl_visitor.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_print_visitor.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_rvalue_visitor.cpp" />
+    <ClCompile Include="..\..\src\glsl\ir_stats.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_unused_structs.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_validate.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_variable_refcount.cpp" />
