@@ -21,15 +21,6 @@ struct ir_stats_counter_visitor : public ir_hierarchical_visitor {
 	{
 		return visit_continue;
 	}
-	virtual ir_visitor_status visit(class ir_loop_jump *)
-	{
-		++flow;
-		return visit_continue;
-	}
-	virtual ir_visitor_status visit(class ir_precision_statement *) { return visit_continue; }
-	virtual ir_visitor_status visit(class ir_typedecl_statement *) { return visit_continue; }
-	virtual ir_visitor_status visit(class ir_emit_vertex *) { return visit_continue; }
-	virtual ir_visitor_status visit(class ir_end_primitive *) { return visit_continue; }
 	virtual ir_visitor_status visit(class ir_dereference_variable *) { return visit_continue; }
 	virtual ir_visitor_status visit_leave(class ir_loop *)
 	{
@@ -99,5 +90,4 @@ void calculate_shader_stats(exec_list* instructions, int* outMath, int* outTex, 
 	*outTex = v.tex;
 	*outFlow = v.flow;
 	*outMath = 0;
-	*outFlow = 0;
 }
