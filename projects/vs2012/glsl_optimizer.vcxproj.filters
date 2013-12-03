@@ -27,7 +27,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\src\glsl_optimizer_lib.gyp">
+    <None Include="..\..\src\glsl_optimizer.gyp">
       <Filter>..\..\src</Filter>
     </None>
     <ClCompile Include="..\..\src\glsl\opt_flip_matrices.cpp">

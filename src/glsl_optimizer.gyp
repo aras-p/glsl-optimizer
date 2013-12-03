@@ -4,7 +4,7 @@
   ],
   'targets': [
     {
-      'target_name': 'glsl_optimizer_lib',
+      'target_name': 'glsl_optimizer',
       'type': 'static_library',
       'include_dirs': [
         'glsl',

@@ -19,16 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{32C0A930-D0F2-297A-3D32-FD08291769BC}</ProjectGuid>
+    <ProjectGuid>{2F7360EE-E4DC-6990-CD6A-66B367890188}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>glsl_optimizer_lib</RootNamespace>
+    <RootNamespace>glsl_optimizer</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
   <PropertyGroup Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-  </PropertyGroup>
-  <PropertyGroup Label="Locals">
-    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
   <ImportGroup Label="ExtensionSettings"/>
@@ -46,10 +43,12 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug32|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\src\glsl;..\..\src\mesa;..\..\src\..\include;..\..\src\..\include\c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4028;4244;4267;4996;4291;4351;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <ProgramDataBaseFileName>$(OutDir)lib\$(TargetName).pdb</ProgramDataBaseFileName>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)lib\$(ProjectName)$(TargetExt)</OutputFile>
@@ -57,6 +56,7 @@
     <Link>
       <AdditionalDependencies></AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)lib\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>..\..\src\glsl;..\..\src\mesa;..\..\src\..\include;..\..\src\..\include\c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -66,10 +66,12 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug64|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\..\src\glsl;..\..\src\mesa;..\..\src\..\include;..\..\src\..\include\c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4028;4244;4267;4996;4291;4351;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <ProgramDataBaseFileName>$(OutDir)lib\$(TargetName).pdb</ProgramDataBaseFileName>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)lib\$(ProjectName)$(TargetExt)</OutputFile>
@@ -77,6 +79,7 @@
     <Link>
       <AdditionalDependencies></AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)lib\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>..\..\src\glsl;..\..\src\mesa;..\..\src\..\include;..\..\src\..\include\c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -88,7 +91,7 @@
       <AdditionalIncludeDirectories>..\..\src\glsl;..\..\src\mesa;..\..\src\..\include;..\..\src\..\include\c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4028;4244;4267;4996;4291;4351;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <PreprocessorDefinitions>_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)lib\$(ProjectName)$(TargetExt)</OutputFile>
@@ -106,7 +109,7 @@
       <AdditionalIncludeDirectories>..\..\src\glsl;..\..\src\mesa;..\..\src\..\include;..\..\src\..\include\c99;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4028;4244;4267;4996;4291;4351;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <PreprocessorDefinitions>_LIB;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;__STDC_VERSION__=199901L;__STDC__;strdup=_strdup;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)lib\$(ProjectName)$(TargetExt)</OutputFile>
@@ -120,7 +123,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\..\src\glsl_optimizer_lib.gyp"/>
+    <None Include="..\..\src\glsl_optimizer.gyp"/>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\glsl\linker.h"/>

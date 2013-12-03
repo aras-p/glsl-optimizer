@@ -12,7 +12,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\glsl_optimizer.gyp">
+    <None Include="..\..\glsl_optimizer_lib.gyp">
       <Filter>..\..</Filter>
     </None>
     <ClCompile Include="..\..\tests\glsl_optimizer_tests.cpp">

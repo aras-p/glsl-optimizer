@@ -7,7 +7,7 @@
       'target_name': 'glsl_optimizer_tests',
       'type': 'executable',
       'dependencies': [
-        'src/glsl_optimizer_lib.gyp:glsl_optimizer_lib',
+        'src/glsl_optimizer.gyp:glsl_optimizer',
       ],
       'sources': [
         'tests/glsl_optimizer_tests.cpp',

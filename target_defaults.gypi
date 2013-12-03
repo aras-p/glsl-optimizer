@@ -10,18 +10,21 @@
       ['_debugging==0', {
         'msvs_settings': {
           'VCCLCompilerTool': {
-            'RuntimeLibrary': '2',
+            'RuntimeLibrary': '0',
           },
         },
       }],
       ['_debugging==1', {
         'msvs_settings': {
           'VCCLCompilerTool': {
-            'RuntimeLibrary': '3',
+            'RuntimeLibrary': '1',
             'Optimization': '0',
+            'DebugInformationFormat': '3',
+            'ProgramDataBaseFileName': '$(OutDir)\\lib\\$(TargetName).pdb',
           },
           'VCLinkerTool': {
             'GenerateDebugInformation': 'true',
+            'ProgramDatabaseFile': '$(OutDir)\\lib\\$(TargetName).pdb',
           },
         },
       }],

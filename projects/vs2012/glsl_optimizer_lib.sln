@@ -1,6 +1,13 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsl_optimizer_lib", "glsl_optimizer_lib.vcxproj", "{32C0A930-D0F2-297A-3D32-FD08291769BC}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "(src)", "..\..\src", "{607B4E81-FB72-43DF-177C-C1403E500480}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsl_optimizer", "glsl_optimizer.vcxproj", "{5F40152A-AA05-92FF-9828-CDFA8482DB23}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glsl_optimizer_tests", "glsl_optimizer_tests.vcxproj", "{72003D33-A201-D7DE-A600-5C22E63094E5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5F40152A-AA05-92FF-9828-CDFA8482DB23} = {5F40152A-AA05-92FF-9828-CDFA8482DB23}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,16 +17,27 @@ Global
 		Release32|Win32 = Release32|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Debug64|x64.ActiveCfg = Debug64|x64
-		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Debug64|x64.Build.0 = Debug64|x64
-		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Debug32|Win32.ActiveCfg = Debug32|Win32
-		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Debug32|Win32.Build.0 = Debug32|Win32
-		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Release64|x64.ActiveCfg = Release64|x64
-		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Release64|x64.Build.0 = Release64|x64
-		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Release32|Win32.ActiveCfg = Release32|Win32
-		{32C0A930-D0F2-297A-3D32-FD08291769BC}.Release32|Win32.Build.0 = Release32|Win32
+		{5F40152A-AA05-92FF-9828-CDFA8482DB23}.Debug64|x64.ActiveCfg = Debug64|x64
+		{5F40152A-AA05-92FF-9828-CDFA8482DB23}.Debug64|x64.Build.0 = Debug64|x64
+		{5F40152A-AA05-92FF-9828-CDFA8482DB23}.Debug32|Win32.ActiveCfg = Debug32|Win32
+		{5F40152A-AA05-92FF-9828-CDFA8482DB23}.Debug32|Win32.Build.0 = Debug32|Win32
+		{5F40152A-AA05-92FF-9828-CDFA8482DB23}.Release64|x64.ActiveCfg = Release64|x64
+		{5F40152A-AA05-92FF-9828-CDFA8482DB23}.Release64|x64.Build.0 = Release64|x64
+		{5F40152A-AA05-92FF-9828-CDFA8482DB23}.Release32|Win32.ActiveCfg = Release32|Win32
+		{5F40152A-AA05-92FF-9828-CDFA8482DB23}.Release32|Win32.Build.0 = Release32|Win32
+		{72003D33-A201-D7DE-A600-5C22E63094E5}.Debug64|x64.ActiveCfg = Debug64|x64
+		{72003D33-A201-D7DE-A600-5C22E63094E5}.Debug64|x64.Build.0 = Debug64|x64
+		{72003D33-A201-D7DE-A600-5C22E63094E5}.Debug32|Win32.ActiveCfg = Debug32|Win32
+		{72003D33-A201-D7DE-A600-5C22E63094E5}.Debug32|Win32.Build.0 = Debug32|Win32
+		{72003D33-A201-D7DE-A600-5C22E63094E5}.Release64|x64.ActiveCfg = Release64|x64
+		{72003D33-A201-D7DE-A600-5C22E63094E5}.Release64|x64.Build.0 = Release64|x64
+		{72003D33-A201-D7DE-A600-5C22E63094E5}.Release32|Win32.ActiveCfg = Release32|Win32
+		{72003D33-A201-D7DE-A600-5C22E63094E5}.Release32|Win32.Build.0 = Release32|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5F40152A-AA05-92FF-9828-CDFA8482DB23} = {607B4E81-FB72-43DF-177C-C1403E500480}
 	EndGlobalSection
 EndGlobal
