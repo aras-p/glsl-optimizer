@@ -30,14 +30,15 @@ GL 3.0 --- all DONE: i965, nv50, nvc0, r600, radeonsi
   GL_EXT_texture_shared_exponent                        DONE (swrast)
   Float depth buffers (GL_ARB_depth_buffer_float)       DONE ()
   Framebuffer objects (GL_ARB_framebuffer_object)       DONE (r300, swrast)
-  Half-float                                            DONE (r300, swrast)
-  Non-normalized Integer texture/framebuffer formats    DONE ()
-  1D/2D Texture arrays                                  DONE ()
+  GL_ARB_half_float_pixel                               DONE (r300, swrast)
+  GL_ARB_half_float_vertex                              DONE (r300, swrast)
+  GL_EXT_texture_integer                                DONE ()
+  GL_EXT_texture_array                                  DONE ()
   Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE (swrast)
   GL_EXT_texture_compression_rgtc                       DONE (r300, swrast)
-  Red and red/green texture formats                     DONE (r300, swrast)
+  GL_ARB_texture_rg                                     DONE (r300, swrast)
   Transform feedback (GL_EXT_transform_feedback)        DONE ()
-  Vertex array objects (GL_APPLE_vertex_array_object)   DONE
+  Vertex array objects (GL_ARB_vertex_array_object)     DONE (all drivers)
   sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     DONE ()
   glClearBuffer commands                                DONE
   glGetStringi command                                  DONE
@@ -45,6 +46,7 @@ GL 3.0 --- all DONE: i965, nv50, nvc0, r600, radeonsi
   glVertexAttribI commands                              DONE
   Depth format cube textures                            DONE ()
   GLX_ARB_create_context (GLX 1.4 is required)          DONE
+  Multisample anti-aliasing                             DONE (r300)
 
 
 GL 3.1 --- all DONE: i965, nv50, nvc0, r600, radeonsi
