@@ -102,6 +102,11 @@ do_blit_copypixels(struct gl_context * ctx,
       return false;
    }
 
+   if (draw_irb->mt->num_samples > 1 || read_irb->mt->num_samples > 1) {
+      perf_debug("glCopyPixels() fallback: multisampled buffers\n");
+      return false;
+   }
+
    if (ctx->_ImageTransferState) {
       perf_debug("glCopyPixels(): Unsupported image transfer state\n");
       return false;
