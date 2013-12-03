@@ -250,7 +250,8 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
     * never larger than the size of a tile, so there is no danger of
     * overflowing beyond the memory belonging to the region.
     */
-   if (irb->mt->fast_clear_state != INTEL_FAST_CLEAR_STATE_NO_MCS &&
+   if (irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_NONE &&
+       irb->mt->fast_clear_state != INTEL_FAST_CLEAR_STATE_NO_MCS &&
        !partial_clear && wm_prog_key.use_simd16_replicated_data &&
        is_color_fast_clear_compatible(brw, format, &ctx->Color.ClearColor)) {
       memset(push_consts, 0xff, 4*sizeof(float));
@@ -514,21 +515,6 @@ bool
 brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
                       bool partial_clear)
 {
-   /* The constant color clear code doesn't work for multisampled surfaces, so
-    * we need to support falling back to other clear mechanisms.
-    * Unfortunately, our clear code is based on a bitmask that doesn't
-    * distinguish individual color attachments, so we walk the attachments to
-    * see if any require fallback, and fall back for all if any of them need
-    * to.
-    */
-   for (unsigned buf = 0; buf < fb->_NumColorDrawBuffers; buf++) {
-      struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[buf];
-      struct intel_renderbuffer *irb = intel_renderbuffer(rb);
-
-      if (irb && irb->mt->msaa_layout != INTEL_MSAA_LAYOUT_NONE)
-         return false;
-   }
-
    for (unsigned buf = 0; buf < fb->_NumColorDrawBuffers; buf++) {
       struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[buf];
       struct intel_renderbuffer *irb = intel_renderbuffer(rb);
@@ -541,16 +527,25 @@ brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
          continue;
 
       if (fb->NumLayers > 0) {
-         assert(fb->NumLayers == irb->mt->level[irb->mt_level].depth);
+         unsigned layer_multiplier =
+            (irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_UMS ||
+             irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) ?
+            irb->mt->num_samples : 1;
+         assert(fb->NumLayers * layer_multiplier ==
+                irb->mt->level[irb->mt_level].depth);
          for (unsigned layer = 0; layer < fb->NumLayers; layer++) {
-            if (!do_single_blorp_clear(brw, fb, rb, buf, partial_clear, layer))
+            if (!do_single_blorp_clear(brw, fb, rb, buf, partial_clear,
+                                       layer * layer_multiplier)) {
                return false;
+            }
          }
       } else {
          unsigned layer = irb->mt_layer;
          if (!do_single_blorp_clear(brw, fb, rb, buf, partial_clear, layer))
             return false;
       }
+
+      intel_renderbuffer_set_needs_downsample(irb);
    }
 
    return true;
