@@ -615,6 +615,8 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
    (*dri2_dpy->flush->flush)(dri2_surf->dri_drawable);
    (*dri2_dpy->flush->invalidate)(dri2_surf->dri_drawable);
 
+   wl_display_flush(dri2_dpy->wl_dpy);
+
    return EGL_TRUE;
 }
 
