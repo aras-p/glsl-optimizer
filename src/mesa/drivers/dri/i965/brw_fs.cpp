@@ -2857,7 +2857,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
    switch (inst->dst.file) {
    case GRF:
       printf("vgrf%d", inst->dst.reg);
-      if (inst->dst.reg_offset)
+      if (virtual_grf_sizes[inst->dst.reg] != 1)
          printf("+%d", inst->dst.reg_offset);
       break;
    case MRF:
@@ -2910,7 +2910,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
       switch (inst->src[i].file) {
       case GRF:
          printf("vgrf%d", inst->src[i].reg);
-         if (inst->src[i].reg_offset)
+         if (virtual_grf_sizes[inst->src[i].reg] != 1)
             printf("+%d", inst->src[i].reg_offset);
          break;
       case MRF:
@@ -2918,7 +2918,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
          break;
       case UNIFORM:
          printf("u%d", inst->src[i].reg);
-         if (inst->src[i].reg_offset)
+         if (virtual_grf_sizes[inst->src[i].reg] != 1)
             printf(".%d", inst->src[i].reg_offset);
          break;
       case BAD_FILE:

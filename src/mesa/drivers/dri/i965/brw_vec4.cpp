@@ -1242,7 +1242,7 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst)
          break;
       }
 
-      if (inst->src[i].reg_offset)
+      if (virtual_grf_sizes[inst->src[i].reg] != 1)
          printf(".%d", inst->src[i].reg_offset);
 
       if (inst->src[i].file != IMM) {
