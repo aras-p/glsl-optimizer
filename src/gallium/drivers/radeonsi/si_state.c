@@ -2335,15 +2335,12 @@ static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 	if (rctx->vs_shader == sel)
 		return;
 
+	if (!sel || !sel->current)
+		return;
+
 	rctx->vs_shader = sel;
-
-	if (sel && sel->current) {
-		si_pm4_bind_state(rctx, vs, sel->current->pm4);
-		rctx->b.streamout.stride_in_dw = sel->so.stride;
-	} else {
-		si_pm4_bind_state(rctx, vs, rctx->dummy_pixel_shader->pm4);
-	}
-
+	si_pm4_bind_state(rctx, vs, sel->current->pm4);
+	rctx->b.streamout.stride_in_dw = sel->so.stride;
 	rctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
@@ -2355,13 +2352,11 @@ static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 	if (rctx->ps_shader == sel)
 		return;
 
+	if (!sel || !sel->current)
+		sel = rctx->dummy_pixel_shader;
+
 	rctx->ps_shader = sel;
-
-	if (sel && sel->current)
-		si_pm4_bind_state(rctx, ps, sel->current->pm4);
-	else
-		si_pm4_bind_state(rctx, ps, rctx->dummy_pixel_shader->pm4);
-
+	si_pm4_bind_state(rctx, ps, sel->current->pm4);
 	rctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 

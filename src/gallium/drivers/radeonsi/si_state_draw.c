@@ -470,17 +470,9 @@ static void si_update_derived_state(struct r600_context *rctx)
 		si_pipe_shader_ps(ctx, rctx->ps_shader->current);
 		ps_dirty = 0;
 	}
-	if (!rctx->ps_shader->current->bo) {
-		if (!rctx->dummy_pixel_shader->pm4)
-			si_pipe_shader_ps(ctx, rctx->dummy_pixel_shader);
-		else
-			si_pm4_bind_state(rctx, vs, rctx->dummy_pixel_shader->pm4);
-
-		ps_dirty = 0;
-	}
 	if (rctx->ps_shader->current->cb0_is_integer != rctx->fb_cb0_is_integer) {
 		si_pipe_shader_ps(ctx, rctx->ps_shader->current);
-		ps_dirty = 1;
+		ps_dirty = 0;
 	}
 
 	if (ps_dirty) {
