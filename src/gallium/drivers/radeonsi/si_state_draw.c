@@ -126,7 +126,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct si_pm4_state *pm4;
-	unsigned i, exports_ps, num_cout, spi_ps_in_control, db_shader_control;
+	unsigned i, exports_ps, spi_ps_in_control, db_shader_control;
 	unsigned num_sgprs, num_user_sgprs;
 	unsigned spi_baryc_cntl = 0, spi_ps_input_ena, spi_shader_z_format;
 	uint64_t va;
@@ -169,17 +169,10 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		db_shader_control |= S_02880C_KILL_ENABLE(1);
 
 	exports_ps = 0;
-	num_cout = 0;
 	for (i = 0; i < shader->shader.noutput; i++) {
 		if (shader->shader.output[i].name == TGSI_SEMANTIC_POSITION ||
 		    shader->shader.output[i].name == TGSI_SEMANTIC_STENCIL)
 			exports_ps |= 1;
-		else if (shader->shader.output[i].name == TGSI_SEMANTIC_COLOR) {
-			if (shader->shader.fs_write_all)
-				num_cout = shader->shader.nr_cbufs;
-			else
-				num_cout++;
-		}
 	}
 	if (!exports_ps) {
 		/* always at least export 1 component per pixel */
