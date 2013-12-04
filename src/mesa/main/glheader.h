@@ -41,6 +41,7 @@
 #define GL_FRAGMENT_SHADER                0x8B30
 #define GL_VERTEX_SHADER                  0x8B31
 #define GL_GEOMETRY_SHADER                0x8DD9
+#define GL_GEOMETRY_SHADER_ARB            0x8DD9
 
 #define GL_DEBUG_TYPE_ERROR_ARB           0x824C
 #define GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB 0x824D
