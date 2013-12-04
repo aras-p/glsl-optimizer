@@ -555,9 +555,9 @@ union uint64_pair
 
 
 /**
- * How many nodes to allocate at a time.
- *
- * \note Reduced now that we hold vertices etc. elsewhere.
+ * How many nodes to allocate at a time.  Note that bulk vertex data
+ * from glBegin/glVertex/glEnd primitives will typically wind up in
+ * a VBO, and not directly in the display list itself.
  */
 #define BLOCK_SIZE 256
 
@@ -573,14 +573,9 @@ static GLuint InstSize[OPCODE_END_OF_LIST + 1];
 void mesa_print_display_list(GLuint list);
 
 
-/**********************************************************************/
-/*****                           Private                          *****/
-/**********************************************************************/
-
-
 /**
- * Make an empty display list.  This is used by glGenLists() to
- * reserve display list IDs.
+ * Allocate a gl_display_list object with an initial block of storage.
+ * \param count  how many display list nodes/tokes to allocate
  */
 static struct gl_display_list *
 make_list(GLuint name, GLuint count)
@@ -873,12 +868,6 @@ translate_id(GLsizei n, GLenum type, const GLvoid * list)
    }
 }
 
-
-
-
-/**********************************************************************/
-/*****                        Public                              *****/
-/**********************************************************************/
 
 /**
  * Wrapper for _mesa_unpack_image/bitmap() that handles pixel buffer objects.
