@@ -470,6 +470,10 @@ typedef enum
  * Each instruction in the display list is stored as a sequence of
  * contiguous nodes in memory.
  * Each node is the union of a variety of data types.
+ *
+ * Note, all of these members should be 4 bytes in size or less for the
+ * sake of compact display lists.  We store 8-byte pointers in a pair of
+ * these nodes using the save/get_pointer() functions below.
  */
 union gl_dlist_node
 {
@@ -484,7 +488,6 @@ union gl_dlist_node
    GLenum e;
    GLfloat f;
    GLsizei si;
-   void *next;                  /* If prev node's opcode==OPCODE_CONTINUE */
 };
 
 
@@ -515,9 +518,7 @@ save_pointer(union gl_dlist_node *dest, void *src)
    unsigned i;
 
    STATIC_ASSERT(POINTER_DWORDS == 1 || POINTER_DWORDS == 2);
-   /* XXX enable this when work is done:
    STATIC_ASSERT(sizeof(union gl_dlist_node) == 4);
-   */
 
    p.ptr = src;
 
@@ -774,7 +775,7 @@ _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
             break;
 
          case OPCODE_CONTINUE:
-            n = (Node *) n[1].next;
+            n = (Node *) get_pointer(&n[1]);
             free(block);
             block = n;
             break;
@@ -972,6 +973,7 @@ static Node *
 dlist_alloc(struct gl_context *ctx, OpCode opcode, GLuint bytes)
 {
    const GLuint numNodes = 1 + (bytes + sizeof(Node) - 1) / sizeof(Node);
+   const GLuint contNodes = 1 + POINTER_DWORDS;  /* size of continue info */
    Node *n;
 
    if (opcode < (GLuint) OPCODE_EXT_0) {
@@ -985,7 +987,7 @@ dlist_alloc(struct gl_context *ctx, OpCode opcode, GLuint bytes)
       }
    }
 
-   if (ctx->ListState.CurrentPos + numNodes + 2 > BLOCK_SIZE) {
+   if (ctx->ListState.CurrentPos + numNodes + contNodes > BLOCK_SIZE) {
       /* This block is full.  Allocate a new block and chain to it */
       Node *newblock;
       n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
@@ -995,7 +997,7 @@ dlist_alloc(struct gl_context *ctx, OpCode opcode, GLuint bytes)
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "Building display list");
          return NULL;
       }
-      n[1].next = (Node *) newblock;
+      save_pointer(&n[1], newblock);
       ctx->ListState.CurrentBlock = newblock;
       ctx->ListState.CurrentPos = 0;
    }
@@ -8062,7 +8064,7 @@ execute_list(struct gl_context *ctx, GLuint list)
             break;
 
          case OPCODE_CONTINUE:
-            n = (Node *) n[1].next;
+            n = (Node *) get_pointer(&n[1]);
             break;
          case OPCODE_END_OF_LIST:
             done = GL_TRUE;
@@ -9066,7 +9068,7 @@ print_list(struct gl_context *ctx, GLuint list)
             break;
          case OPCODE_CONTINUE:
             printf("DISPLAY-LIST-CONTINUE\n");
-            n = (Node *) n[1].next;
+            n = (Node *) get_pointer(&n[1]);
             break;
          case OPCODE_END_OF_LIST:
             printf("END-LIST %u\n", list);
