@@ -610,11 +610,10 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
       }
    }
 
-   wl_surface_commit(dri2_surf->wl_win->surface);
-
    (*dri2_dpy->flush->flush)(dri2_surf->dri_drawable);
    (*dri2_dpy->flush->invalidate)(dri2_surf->dri_drawable);
 
+   wl_surface_commit(dri2_surf->wl_win->surface);
    wl_display_flush(dri2_dpy->wl_dpy);
 
    return EGL_TRUE;
