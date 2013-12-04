@@ -123,6 +123,14 @@ find_miptree(GLbitfield buffer_bit, struct intel_renderbuffer *irb)
    return mt;
 }
 
+
+/**
+ * Note: if the src (or dst) is a 2D multisample array texture on Gen7+ using
+ * INTEL_MSAA_LAYOUT_UMS or INTEL_MSAA_LAYOUT_CMS, src_layer (dst_layer) is
+ * the physical layer holding sample 0.  So, for example, if
+ * src_mt->num_samples == 4, then logical layer n corresponds to src_layer ==
+ * 4*n.
+ */
 void
 brw_blorp_blit_miptrees(struct brw_context *brw,
                         struct intel_mipmap_tree *src_mt,

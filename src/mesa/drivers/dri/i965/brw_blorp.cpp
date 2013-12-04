@@ -54,6 +54,15 @@ void
 brw_blorp_mip_info::set(struct intel_mipmap_tree *mt,
                         unsigned int level, unsigned int layer)
 {
+   /* Layer is a physical layer, so if this is a 2D multisample array texture
+    * using INTEL_MSAA_LAYOUT_UMS or INTEL_MSAA_LAYOUT_CMS, then it had better
+    * be a multiple of num_samples.
+    */
+   if (mt->msaa_layout == INTEL_MSAA_LAYOUT_UMS ||
+       mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) {
+      assert(layer % mt->num_samples == 0);
+   }
+
    intel_miptree_check_level_layer(mt, level, layer);
 
    this->mt = mt;

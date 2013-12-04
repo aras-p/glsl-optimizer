@@ -85,6 +85,11 @@ public:
    /**
     * The 2D layer within the miplevel. Combined, level and layer define the
     * 2D miptree slice to use.
+    *
+    * Note: if mt is a 2D multisample array texture on Gen7+ using
+    * INTEL_MSAA_LAYOUT_UMS or INTEL_MSAA_LAYOUT_CMS, layer is the physical
+    * layer holding sample 0.  So, for example, if mt->num_samples == 4, then
+    * logical layer n corresponds to layer == 4*n.
     */
    uint32_t layer;
 

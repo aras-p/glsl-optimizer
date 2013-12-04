@@ -63,6 +63,11 @@ struct intel_renderbuffer
     *
     * For renderbuffers not created with glFramebufferTexture*(), mt_level and
     * mt_layer are 0.
+    *
+    * Note: for a 2D multisample array texture on Gen7+ using
+    * INTEL_MSAA_LAYOUT_UMS or INTEL_MSAA_LAYOUT_CMS, mt_layer is the physical
+    * layer holding sample 0.  So, for example, if mt->num_samples == 4, then
+    * logical layer n corresponds to mt_layer == 4*n.
     */
    unsigned int mt_level;
    unsigned int mt_layer;
