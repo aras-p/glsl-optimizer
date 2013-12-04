@@ -1488,14 +1488,11 @@ _math_matrix_ctr( GLmatrix *m )
 void
 _math_matrix_dtr( GLmatrix *m )
 {
-   if (m->m) {
-      _mesa_align_free( m->m );
-      m->m = NULL;
-   }
-   if (m->inv) {
-      _mesa_align_free( m->inv );
-      m->inv = NULL;
-   }
+   _mesa_align_free( m->m );
+   m->m = NULL;
+
+   _mesa_align_free( m->inv );
+   m->inv = NULL;
 }
 
 /*@}*/

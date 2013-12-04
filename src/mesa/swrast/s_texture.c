@@ -164,10 +164,9 @@ _swrast_free_texture_image_buffer(struct gl_context *ctx,
                                   struct gl_texture_image *texImage)
 {
    struct swrast_texture_image *swImage = swrast_texture_image(texImage);
-   if (swImage->Buffer) {
-      _mesa_align_free(swImage->Buffer);
-      swImage->Buffer = NULL;
-   }
+
+   _mesa_align_free(swImage->Buffer);
+   swImage->Buffer = NULL;
 
    free(swImage->ImageSlices);
    swImage->ImageSlices = NULL;

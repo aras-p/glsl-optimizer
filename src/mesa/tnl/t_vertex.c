@@ -546,10 +546,8 @@ void _tnl_free_vertices( struct gl_context *ctx )
       struct tnl_clipspace *vtx = GET_VERTEX_STATE(ctx);
       struct tnl_clipspace_fastpath *fp, *tmp;
 
-      if (vtx->vertex_buf) {
-         _mesa_align_free(vtx->vertex_buf);
-         vtx->vertex_buf = NULL;
-      }
+      _mesa_align_free(vtx->vertex_buf);
+      vtx->vertex_buf = NULL;
 
       for (fp = vtx->fastpath ; fp ; fp = tmp) {
          tmp = fp->next;

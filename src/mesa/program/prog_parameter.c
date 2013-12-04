@@ -83,8 +83,7 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
       free((void *)paramList->Parameters[i].Name);
    }
    free(paramList->Parameters);
-   if (paramList->ParameterValues)
-      _mesa_align_free(paramList->ParameterValues);
+   _mesa_align_free(paramList->ParameterValues);
    free(paramList);
 }
 

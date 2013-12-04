@@ -990,11 +990,10 @@ void vbo_use_buffer_objects(struct gl_context *ctx)
 
    /* Make sure this func is only used once */
    assert(exec->vtx.bufferobj == ctx->Shared->NullBufferObj);
-   if (exec->vtx.buffer_map) {
-      _mesa_align_free(exec->vtx.buffer_map);
-      exec->vtx.buffer_map = NULL;
-      exec->vtx.buffer_ptr = NULL;
-   }
+
+   _mesa_align_free(exec->vtx.buffer_map);
+   exec->vtx.buffer_map = NULL;
+   exec->vtx.buffer_ptr = NULL;
 
    /* Allocate a real buffer object now */
    _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);

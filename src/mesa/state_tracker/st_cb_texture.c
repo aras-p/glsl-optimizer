@@ -175,10 +175,8 @@ st_FreeTextureImageBuffer(struct gl_context *ctx,
       pipe_resource_reference(&stImage->pt, NULL);
    }
 
-   if (stImage->TexData) {
-      _mesa_align_free(stImage->TexData);
-      stImage->TexData = NULL;
-   }
+   _mesa_align_free(stImage->TexData);
+   stImage->TexData = NULL;
 }
 
 
