@@ -159,7 +159,7 @@ if HAVE_GALLIUM_LLVMPIPE
 nodist_EXTRA_pipe_swrast_la_SOURCES = dummy.cpp
 
 pipe_swrast_la_LIBADD += \
-	$(top_builddir)/src/gallium/drivers/softpipe/libllvmpipe.la \
+	$(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la \
 	$(LLVM_LIBS)
 pipe_swrast_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
