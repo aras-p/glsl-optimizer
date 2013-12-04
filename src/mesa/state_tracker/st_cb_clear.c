@@ -213,8 +213,7 @@ draw_quad(struct st_context *st,
  * ctx->DrawBuffer->_X/Ymin/max fields.
  */
 static void
-clear_with_quad(struct gl_context *ctx,
-                GLboolean color, GLboolean depth, GLboolean stencil)
+clear_with_quad(struct gl_context *ctx, unsigned clear_buffers)
 {
    struct st_context *st = st_context(ctx);
    const struct gl_framebuffer *fb = ctx->DrawBuffer;
@@ -253,7 +252,7 @@ clear_with_quad(struct gl_context *ctx,
    {
       struct pipe_blend_state blend;
       memset(&blend, 0, sizeof(blend));
-      if (color) {
+      if (clear_buffers & PIPE_CLEAR_COLOR) {
          int num_buffers = ctx->Extensions.EXT_draw_buffers2 ?
                            ctx->DrawBuffer->_NumColorDrawBuffers : 1;
          int i;
@@ -261,6 +260,9 @@ clear_with_quad(struct gl_context *ctx,
          blend.independent_blend_enable = num_buffers > 1;
 
          for (i = 0; i < num_buffers; i++) {
+            if (!(clear_buffers & (PIPE_CLEAR_COLOR0 << i)))
+               continue;
+
             if (ctx->Color.ColorMask[i][0])
                blend.rt[i].colormask |= PIPE_MASK_R;
             if (ctx->Color.ColorMask[i][1])
@@ -281,13 +283,13 @@ clear_with_quad(struct gl_context *ctx,
    {
       struct pipe_depth_stencil_alpha_state depth_stencil;
       memset(&depth_stencil, 0, sizeof(depth_stencil));
-      if (depth) {
+      if (clear_buffers & PIPE_CLEAR_DEPTH) {
          depth_stencil.depth.enabled = 1;
          depth_stencil.depth.writemask = 1;
          depth_stencil.depth.func = PIPE_FUNC_ALWAYS;
       }
 
-      if (stencil) {
+      if (clear_buffers & PIPE_CLEAR_STENCIL) {
          struct pipe_stencil_ref stencil_ref;
          memset(&stencil_ref, 0, sizeof(stencil_ref));
          depth_stencil.stencil[0].enabled = 1;
@@ -371,6 +373,19 @@ is_scissor_enabled(struct gl_context *ctx, struct gl_renderbuffer *rb)
 
 
 /**
+ * Return if all of the color channels are masked.
+ */
+static INLINE GLboolean
+is_color_disabled(struct gl_context *ctx, int i)
+{
+   return !ctx->Color.ColorMask[i][0] &&
+          !ctx->Color.ColorMask[i][1] &&
+          !ctx->Color.ColorMask[i][2] &&
+          !ctx->Color.ColorMask[i][3];
+}
+
+
+/**
  * Return if any of the color channels are masked.
  */
 static INLINE GLboolean
@@ -427,11 +442,14 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
             if (!strb || !strb->surface)
                continue;
 
+            if (is_color_disabled(ctx, colormask_index))
+               continue;
+
             if (is_scissor_enabled(ctx, rb) ||
                 is_color_masked(ctx, colormask_index))
-               quad_buffers |= PIPE_CLEAR_COLOR;
+               quad_buffers |= PIPE_CLEAR_COLOR0 << i;
             else
-               clear_buffers |= PIPE_CLEAR_COLOR;
+               clear_buffers |= PIPE_CLEAR_COLOR0 << i;
          }
       }
    }
@@ -464,10 +482,7 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
     */
    if (quad_buffers) {
       quad_buffers |= clear_buffers;
-      clear_with_quad(ctx,
-                      quad_buffers & PIPE_CLEAR_COLOR,
-                      quad_buffers & PIPE_CLEAR_DEPTH,
-                      quad_buffers & PIPE_CLEAR_STENCIL);
+      clear_with_quad(ctx, quad_buffers);
    } else if (clear_buffers) {
       /* We can't translate the clear color to the colorbuffer format,
        * because different colorbuffers may have different formats.
