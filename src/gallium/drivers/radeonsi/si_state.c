@@ -33,6 +33,7 @@
 #include "util/u_upload_mgr.h"
 #include "util/u_format_s3tc.h"
 #include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_scan.h"
 #include "radeonsi_pipe.h"
 #include "radeonsi_shader.h"
 #include "si_state.h"
@@ -2278,17 +2279,6 @@ int si_shader_select(struct pipe_context *ctx,
 			FREE(shader);
 			return r;
 		}
-
-		/* We don't know the value of fs_write_all property until we built
-		 * at least one variant, so we may need to recompute the key (include
-		 * rctx->framebuffer.nr_cbufs) after building first variant. */
-		if (sel->type == PIPE_SHADER_FRAGMENT &&
-		    sel->num_shaders == 0 &&
-		    shader->shader.fs_write_all) {
-			sel->fs_write_all = 1;
-			si_shader_selector_key(ctx, sel, &shader->key);
-		}
-
 		sel->num_shaders++;
 	}
 
@@ -2307,10 +2297,14 @@ static void *si_create_shader_state(struct pipe_context *ctx,
 {
 	struct si_pipe_shader_selector *sel = CALLOC_STRUCT(si_pipe_shader_selector);
 	int r;
+	struct tgsi_shader_info info;
+
+	tgsi_scan_shader(state->tokens, &info);
 
 	sel->type = pipe_shader_type;
 	sel->tokens = tgsi_dup_tokens(state->tokens);
 	sel->so = state->stream_output;
+	sel->fs_write_all = info.color0_writes_all_cbufs;
 
 	r = si_shader_select(ctx, sel, NULL);
 	if (r) {

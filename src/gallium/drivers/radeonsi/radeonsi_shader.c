@@ -1188,13 +1188,13 @@ handle_semantic:
 		/* Specify whether the EXEC mask represents the valid mask */
 		last_args[1] = uint->one;
 
-		if (shader->fs_write_all && shader->nr_cbufs > 1) {
+		if (shader->fs_write_all && si_shader_ctx->shader->key.ps.nr_cbufs > 1) {
 			int i;
 
 			/* Specify that this is not yet the last export */
 			last_args[2] = lp_build_const_int32(base->gallivm, 0);
 
-			for (i = 1; i < shader->nr_cbufs; i++) {
+			for (i = 1; i < si_shader_ctx->shader->key.ps.nr_cbufs; i++) {
 				/* Specify the target we are exporting */
 				last_args[3] = lp_build_const_int32(base->gallivm,
 								    V_008DFC_SQ_EXP_MRT + i);
@@ -2029,8 +2029,6 @@ int si_pipe_shader_create(
 	preload_constants(&si_shader_ctx);
 	preload_samplers(&si_shader_ctx);
 	preload_streamout_buffers(&si_shader_ctx);
-
-	shader->shader.nr_cbufs = rctx->framebuffer.nr_cbufs;
 
 	/* Dump TGSI code before doing TGSI->LLVM conversion in case the
 	 * conversion fails. */
