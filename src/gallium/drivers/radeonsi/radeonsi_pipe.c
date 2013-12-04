@@ -392,7 +392,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Render targets. */
 	case PIPE_CAP_MAX_RENDER_TARGETS:
-		/* FIXME some r6xx are buggy and can only do 4 */
 		return 8;
 
 	case PIPE_CAP_MAX_VIEWPORTS:

@@ -281,7 +281,6 @@ static void declare_input_fs(
 	attr_number = lp_build_const_int32(gallivm,
 					   shader->input[input_index].param_offset);
 
-	/* XXX: Handle all possible interpolation modes */
 	switch (decl->Interp.Interpolate) {
 	case TGSI_INTERPOLATE_COLOR:
 		if (si_shader_ctx->shader->key.ps.flatshade) {
@@ -875,7 +874,7 @@ static void si_llvm_emit_streamout(struct si_shader_context *shader)
 	lp_build_endif(&if_ctx);
 }
 
-/* XXX: This is partially implemented for VS only at this point.  It is not complete */
+
 static void si_llvm_emit_epilogue(struct lp_build_tgsi_context * bld_base)
 {
 	struct si_shader_context * si_shader_ctx = si_shader_context(bld_base);
@@ -1222,8 +1221,6 @@ handle_semantic:
 				   LLVMVoidTypeInContext(base->gallivm->context),
 				   last_args, 9);
 	}
-/* XXX: Look up what this function does */
-/*		ctx->shader->output[i].spi_sid = r600_spi_sid(&ctx->shader->output[i]);*/
 }
 
 static const struct lp_build_tgsi_action txf_action;
