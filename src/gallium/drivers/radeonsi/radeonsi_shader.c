@@ -1014,6 +1014,7 @@ handle_semantic:
 				       args, sizeof(args));
 			} else if (si_shader_ctx->type == TGSI_PROCESSOR_FRAGMENT &&
 				   semantic_name == TGSI_SEMANTIC_COLOR) {
+				/* If there is an export instruction waiting to be emitted, do so now. */
 				if (last_args[0]) {
 					lp_build_intrinsic(base->gallivm->builder,
 							   "llvm.SI.export",
@@ -1021,7 +1022,21 @@ handle_semantic:
 							   last_args, 9);
 				}
 
+				/* This instruction will be emitted at the end of the shader. */
 				memcpy(last_args, args, sizeof(args));
+
+				/* Handle FS_COLOR0_WRITES_ALL_CBUFS. */
+				if (shader->fs_write_all && shader->output[i].sid == 0 &&
+				    si_shader_ctx->shader->key.ps.nr_cbufs > 1) {
+					for (int c = 1; c < si_shader_ctx->shader->key.ps.nr_cbufs; c++) {
+						si_llvm_init_export_args(bld_base, d, index,
+									 V_008DFC_SQ_EXP_MRT + c, args);
+						lp_build_intrinsic(base->gallivm->builder,
+								   "llvm.SI.export",
+								   LLVMVoidTypeInContext(base->gallivm->context),
+								   args, 9);
+					}
+				}
 			} else {
 				lp_build_intrinsic(base->gallivm->builder,
 						   "llvm.SI.export",
@@ -1187,31 +1202,6 @@ handle_semantic:
 
 		/* Specify whether the EXEC mask represents the valid mask */
 		last_args[1] = uint->one;
-
-		if (shader->fs_write_all && si_shader_ctx->shader->key.ps.nr_cbufs > 1) {
-			int i;
-
-			/* Specify that this is not yet the last export */
-			last_args[2] = lp_build_const_int32(base->gallivm, 0);
-
-			for (i = 1; i < si_shader_ctx->shader->key.ps.nr_cbufs; i++) {
-				/* Specify the target we are exporting */
-				last_args[3] = lp_build_const_int32(base->gallivm,
-								    V_008DFC_SQ_EXP_MRT + i);
-
-				lp_build_intrinsic(base->gallivm->builder,
-						   "llvm.SI.export",
-						   LLVMVoidTypeInContext(base->gallivm->context),
-						   last_args, 9);
-
-				si_shader_ctx->shader->spi_shader_col_format |=
-					si_shader_ctx->shader->spi_shader_col_format << 4;
-				si_shader_ctx->shader->cb_shader_mask |=
-					si_shader_ctx->shader->cb_shader_mask << 4;
-			}
-
-			last_args[3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_MRT);
-		}
 
 		/* Specify that this is the last export */
 		last_args[2] = lp_build_const_int32(base->gallivm, 1);
