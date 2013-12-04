@@ -447,6 +447,12 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 	assert(size);
 	assert(rctx->screen->b.has_cp_dma);
 
+	/* Mark the buffer range of destination as valid (initialized),
+	 * so that transfer_map knows it should wait for the GPU when mapping
+	 * that range. */
+	util_range_add(&r600_resource(dst)->valid_buffer_range, dst_offset,
+		       dst_offset + size);
+
 	dst_offset += r600_resource_va(&rctx->screen->b.b, dst);
 	src_offset += r600_resource_va(&rctx->screen->b.b, src);
 
@@ -506,9 +512,6 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 	rctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE |
 			 R600_CONTEXT_INV_VERTEX_CACHE |
 			 R600_CONTEXT_INV_TEX_CACHE;
-
-	util_range_add(&r600_resource(dst)->valid_buffer_range, dst_offset,
-		       dst_offset + size);
 }
 
 void r600_need_dma_space(struct r600_context *ctx, unsigned num_dw)
@@ -533,6 +536,12 @@ void r600_dma_copy(struct r600_context *rctx,
 	struct r600_resource *rdst = (struct r600_resource*)dst;
 	struct r600_resource *rsrc = (struct r600_resource*)src;
 
+	/* Mark the buffer range of destination as valid (initialized),
+	 * so that transfer_map knows it should wait for the GPU when mapping
+	 * that range. */
+	util_range_add(&rdst->valid_buffer_range, dst_offset,
+		       dst_offset + size);
+
 	/* make sure that the dma ring is only one active */
 	rctx->b.rings.gfx.flush(rctx, RADEON_FLUSH_ASYNC);
 
@@ -555,7 +564,4 @@ void r600_dma_copy(struct r600_context *rctx,
 		src_offset += csize << shift;
 		size -= csize;
 	}
-
-	util_range_add(&rdst->valid_buffer_range, dst_offset,
-		       dst_offset + size);
 }

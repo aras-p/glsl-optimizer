@@ -659,6 +659,12 @@ static void si_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
 	if (!size)
 		return;
 
+	/* Mark the buffer range of destination as valid (initialized),
+	 * so that transfer_map knows it should wait for the GPU when mapping
+	 * that range. */
+	util_range_add(&r600_resource(dst)->valid_buffer_range, offset,
+		       offset + size);
+
 	/* Fallback for unaligned clears. */
 	if (offset % 4 != 0 || size % 4 != 0) {
 		uint32_t *map = rctx->b.ws->buffer_map(r600_resource(dst)->cs_buf,
@@ -667,9 +673,6 @@ static void si_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
 		size /= 4;
 		for (unsigned i = 0; i < size; i++)
 			*map++ = value;
-
-		util_range_add(&r600_resource(dst)->valid_buffer_range, offset,
-			       offset + size);
 		return;
 	}
 
@@ -723,9 +726,6 @@ static void si_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
 			 R600_CONTEXT_FLUSH_AND_INV_DB |
 			 R600_CONTEXT_FLUSH_AND_INV_CB_META |
 			 R600_CONTEXT_FLUSH_AND_INV_DB_META;
-
-	util_range_add(&r600_resource(dst)->valid_buffer_range, offset,
-		       offset + size);
 }
 
 void si_copy_buffer(struct r600_context *rctx,
@@ -734,6 +734,12 @@ void si_copy_buffer(struct r600_context *rctx,
 {
 	if (!size)
 		return;
+
+	/* Mark the buffer range of destination as valid (initialized),
+	 * so that transfer_map knows it should wait for the GPU when mapping
+	 * that range. */
+	util_range_add(&r600_resource(dst)->valid_buffer_range, dst_offset,
+		       dst_offset + size);
 
 	dst_offset += r600_resource_va(&rctx->screen->b.b, dst);
 	src_offset += r600_resource_va(&rctx->screen->b.b, src);
@@ -781,9 +787,6 @@ void si_copy_buffer(struct r600_context *rctx,
 			 R600_CONTEXT_FLUSH_AND_INV_DB |
 			 R600_CONTEXT_FLUSH_AND_INV_CB_META |
 			 R600_CONTEXT_FLUSH_AND_INV_DB_META;
-
-	util_range_add(&r600_resource(dst)->valid_buffer_range, dst_offset,
-		       dst_offset + size);
 }
 
 /* INIT/DEINIT */
