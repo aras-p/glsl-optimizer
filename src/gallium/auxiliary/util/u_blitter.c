@@ -51,6 +51,9 @@
 
 #define INVALID_PTR ((void*)~0)
 
+#define GET_CLEAR_BLEND_STATE_IDX(clear_buffers) \
+   ((clear_buffers) / PIPE_CLEAR_COLOR0)
+
 struct blitter_context_priv
 {
    struct blitter_context base;
@@ -90,6 +93,7 @@ struct blitter_context_priv
 
    /* Blend state. */
    void *blend[PIPE_MASK_RGBA+1]; /**< blend state with writemask */
+   void *blend_clear[GET_CLEAR_BLEND_STATE_IDX(PIPE_CLEAR_COLOR)+1];
 
    /* Depth stencil alpha state. */
    void *dsa_write_depth_stencil;
@@ -334,6 +338,10 @@ void util_blitter_destroy(struct blitter_context *blitter)
 
    for (i = 0; i <= PIPE_MASK_RGBA; i++) {
       pipe->delete_blend_state(pipe, ctx->blend[i]);
+   }
+   for (i = 0; i < Elements(ctx->blend_clear); i++) {
+      if (ctx->blend_clear[i])
+         pipe->delete_blend_state(pipe, ctx->blend_clear[i]);
    }
    pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
    pipe->delete_depth_stencil_alpha_state(pipe,
@@ -965,6 +973,39 @@ void util_blitter_draw_rectangle(struct blitter_context *blitter,
    blitter_draw(ctx, x1, y1, x2, y2, depth, 1);
 }
 
+static void *get_clear_blend_state(struct blitter_context_priv *ctx,
+                                   unsigned clear_buffers)
+{
+   struct pipe_context *pipe = ctx->base.pipe;
+   int index;
+
+   clear_buffers &= PIPE_CLEAR_COLOR;
+
+   /* Return an existing blend state. */
+   if (!clear_buffers)
+      return ctx->blend[0];
+
+   index = GET_CLEAR_BLEND_STATE_IDX(clear_buffers);
+
+   if (ctx->blend_clear[index])
+      return ctx->blend_clear[index];
+
+   /* Create a new one. */
+   {
+      struct pipe_blend_state blend = {0};
+      blend.independent_blend_enable = 1;
+
+      for (int i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+         if (clear_buffers & (PIPE_CLEAR_COLOR0 << i)) {
+            blend.rt[i].colormask = PIPE_MASK_RGBA;
+         }
+      }
+
+      ctx->blend_clear[index] = pipe->create_blend_state(pipe, &blend);
+   }
+   return ctx->blend_clear[index];
+}
+
 static void util_blitter_clear_custom(struct blitter_context *blitter,
                                       unsigned width, unsigned height,
                                       unsigned num_layers,
@@ -987,10 +1028,8 @@ static void util_blitter_clear_custom(struct blitter_context *blitter,
    /* bind states */
    if (custom_blend) {
       pipe->bind_blend_state(pipe, custom_blend);
-   } else if (clear_buffers & PIPE_CLEAR_COLOR) {
-      pipe->bind_blend_state(pipe, ctx->blend[PIPE_MASK_RGBA]);
    } else {
-      pipe->bind_blend_state(pipe, ctx->blend[0]);
+      pipe->bind_blend_state(pipe, get_clear_blend_state(ctx, clear_buffers));
    }
 
    if (custom_dsa) {
