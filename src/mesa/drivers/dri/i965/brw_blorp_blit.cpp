@@ -631,7 +631,8 @@ public:
                           const brw_blorp_blit_prog_key *key);
    ~brw_blorp_blit_program();
 
-   const GLuint *compile(struct brw_context *brw, GLuint *program_size);
+   const GLuint *compile(struct brw_context *brw, GLuint *program_size,
+                         FILE *dump_file = stdout);
 
    brw_blorp_prog_data prog_data;
 
@@ -753,7 +754,8 @@ brw_blorp_blit_program::~brw_blorp_blit_program()
 
 const GLuint *
 brw_blorp_blit_program::compile(struct brw_context *brw,
-                                GLuint *program_size)
+                                GLuint *program_size,
+                                FILE *dump_file)
 {
    /* Sanity checks */
    if (key->dst_tiled_w && key->rt_samples > 0) {
@@ -910,7 +912,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
 
    if (unlikely(INTEL_DEBUG & DEBUG_BLORP)) {
       printf("Native code for BLORP blit:\n");
-      brw_dump_compile(&func, stdout, 0, func.next_insn_offset);
+      brw_dump_compile(&func, dump_file, 0, func.next_insn_offset);
       printf("\n");
    }
    return brw_get_program(&func, program_size);
@@ -2367,4 +2369,15 @@ brw_blorp_blit_params::get_wm_prog(struct brw_context *brw,
                        &prog_offset, prog_data);
    }
    return prog_offset;
+}
+
+void
+brw_blorp_blit_test_compile(struct brw_context *brw,
+                            const brw_blorp_blit_prog_key *key,
+                            FILE *out)
+{
+   GLuint program_size;
+   brw_blorp_blit_program prog(brw, key);
+   INTEL_DEBUG |= DEBUG_BLORP;
+   prog.compile(brw, &program_size, out);
 }
