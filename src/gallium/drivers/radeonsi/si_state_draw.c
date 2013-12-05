@@ -111,13 +111,6 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 		       S_00B12C_SO_BASE3_EN(!!shader->selector->so.stride[3]) |
 		       S_00B12C_SO_EN(!!shader->selector->so.num_outputs));
 
-	if (rctx->b.chip_class >= CIK) {
-		si_pm4_set_reg(pm4, R_00B118_SPI_SHADER_PGM_RSRC3_VS,
-			       S_00B118_CU_EN(0xffff));
-		si_pm4_set_reg(pm4, R_00B11C_SPI_SHADER_LATE_ALLOC_VS,
-			       S_00B11C_LIMIT(0));
-	}
-
 	si_pm4_bind_state(rctx, vs, shader->pm4);
 	rctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
@@ -229,10 +222,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_00B02C_SPI_SHADER_PGM_RSRC2_PS,
 		       S_00B02C_EXTRA_LDS_SIZE(shader->lds_size) |
 		       S_00B02C_USER_SGPR(num_user_sgprs));
-	if (rctx->b.chip_class >= CIK) {
-		si_pm4_set_reg(pm4, R_00B01C_SPI_SHADER_PGM_RSRC3_PS,
-			       S_00B01C_CU_EN(0xffff));
-	}
 
 	si_pm4_set_reg(pm4, R_02880C_DB_SHADER_CONTROL, db_shader_control);
 
@@ -337,8 +326,6 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
 	}
 
 	si_pm4_set_reg(pm4, R_028A6C_VGT_GS_OUT_PRIM_TYPE, gs_out_prim);
-	si_pm4_set_reg(pm4, R_028400_VGT_MAX_VTX_INDX, ~0);
-	si_pm4_set_reg(pm4, R_028404_VGT_MIN_VTX_INDX, 0);
 	si_pm4_set_reg(pm4, R_028408_VGT_INDX_OFFSET,
 		       info->indexed ? info->index_bias : info->start);
 	si_pm4_set_reg(pm4, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info->restart_index);
