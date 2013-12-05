@@ -134,11 +134,12 @@ extern Target *getTargetNV50(unsigned int chipset);
 
 Target *Target::create(unsigned int chipset)
 {
-   switch (chipset & 0xf0) {
+   switch (chipset & ~0xf) {
    case 0xc0:
    case 0xd0:
    case 0xe0:
-   case NVISA_GK110_CHIPSET:
+   case 0xf0:
+   case 0x100:
       return getTargetNVC0(chipset);
    case 0x50:
    case 0x80:

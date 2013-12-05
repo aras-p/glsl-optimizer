@@ -35,7 +35,7 @@ nvc0_screen_compute_setup(struct nvc0_screen *screen,
    int ret;
    int i;
 
-   switch (dev->chipset & 0xf0) {
+   switch (dev->chipset & ~0xf) {
    case 0xc0:
       if (dev->chipset == 0xc8)
          obj_class = NVC8_COMPUTE_CLASS;

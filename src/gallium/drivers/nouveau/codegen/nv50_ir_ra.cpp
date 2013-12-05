@@ -851,6 +851,8 @@ GCRA::coalesce(ArrayList& insns)
    case 0xc0:
    case 0xd0:
    case 0xe0:
+   case 0xf0:
+   case 0x100:
       ret = doCoalesce(insns, JOIN_MASK_UNION);
       break;
    default:
@@ -1952,7 +1954,8 @@ RegAlloc::InsertConstraintsPass::visit(BasicBlock *bb)
             texConstraintNVC0(tex);
             break;
          case 0xe0:
-         case NVISA_GK110_CHIPSET:
+         case 0xf0:
+         case 0x100:
             texConstraintNVE0(tex);
             break;
          default:

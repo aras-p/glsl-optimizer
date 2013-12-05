@@ -43,7 +43,8 @@ nve4_screen_compute_setup(struct nvc0_screen *screen,
    int ret;
    uint32_t obj_class;
 
-   switch (dev->chipset & 0xf0) {
+   switch (dev->chipset & ~0xf) {
+   case 0x100:
    case 0xf0:
       obj_class = NVF0_COMPUTE_CLASS; /* GK110 */
       break;

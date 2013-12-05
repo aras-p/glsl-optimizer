@@ -46,12 +46,13 @@ TargetNVC0::TargetNVC0(unsigned int card) : Target(false, card >= 0xe4)
 void
 TargetNVC0::getBuiltinCode(const uint32_t **code, uint32_t *size) const
 {
-   switch (chipset & 0xf0) {
+   switch (chipset & ~0xf) {
    case 0xe0:
       *code = (const uint32_t *)&nve4_builtin_code[0];
       *size = sizeof(nve4_builtin_code);
       break;
    case 0xf0:
+   case 0x100:
       *code = (const uint32_t *)&nvf0_builtin_code[0];
       *size = sizeof(nvf0_builtin_code);
       break;
@@ -67,9 +68,12 @@ TargetNVC0::getBuiltinOffset(int builtin) const
 {
    assert(builtin < NVC0_BUILTIN_COUNT);
 
-   switch (chipset & 0xf0) {
-   case 0xe0: return nve4_builtin_offsets[builtin];
-   case 0xf0: return nvf0_builtin_offsets[builtin];
+   switch (chipset & ~0xf) {
+   case 0xe0:
+      return nve4_builtin_offsets[builtin];
+   case 0xf0:
+   case 0x100:
+      return nvf0_builtin_offsets[builtin];
    default:
       return nvc0_builtin_offsets[builtin];
    }

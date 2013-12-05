@@ -20,7 +20,7 @@ nouveau_drm_screen_create(int fd)
 	if (ret)
 		return NULL;
 
-	switch (dev->chipset & 0xf0) {
+	switch (dev->chipset & ~0xf) {
 	case 0x30:
 	case 0x40:
 	case 0x60:
@@ -36,6 +36,7 @@ nouveau_drm_screen_create(int fd)
 	case 0xd0:
 	case 0xe0:
 	case 0xf0:
+	case 0x100:
 		init = nvc0_screen_create;
 		break;
 	default:
