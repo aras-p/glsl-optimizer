@@ -238,7 +238,18 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
       }
    }
 
-   /* If we can do this as a fast color clear, do so. */
+   /* If we can do this as a fast color clear, do so.
+    *
+    * Note that the condition "!partial_clear" means we only try to do full
+    * buffer clears using fast color clear logic.  This is necessary because
+    * the fast color clear alignment requirements mean that we typically have
+    * to clear a larger rectangle than (x0, y0) to (x1, y1).  Restricting fast
+    * color clears to the full-buffer condition guarantees that the extra
+    * memory locations that get written to are outside the image boundary (and
+    * hence irrelevant).  Note that the rectangle alignment requirements are
+    * never larger than the size of a tile, so there is no danger of
+    * overflowing beyond the memory belonging to the region.
+    */
    if (irb->mt->mcs_state != INTEL_MCS_STATE_NONE && !partial_clear &&
        wm_prog_key.use_simd16_replicated_data &&
        is_color_fast_clear_compatible(brw, format, &ctx->Color.ClearColor)) {
