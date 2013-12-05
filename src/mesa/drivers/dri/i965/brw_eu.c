@@ -236,14 +236,14 @@ brw_dump_compile(struct brw_compile *p, FILE *out, int start, int end)
    for (int offset = start; offset < end;) {
       struct brw_instruction *insn = store + offset;
       struct brw_instruction uncompacted;
-      printf("0x%08x: ", offset);
+      fprintf(out, "0x%08x: ", offset);
 
       if (insn->header.cmpt_control) {
 	 struct brw_compact_instruction *compacted = (void *)insn;
 	 if (dump_hex) {
-	    printf("0x%08x 0x%08x                       ",
-		   ((uint32_t *)insn)[1],
-		   ((uint32_t *)insn)[0]);
+	    fprintf(out, "0x%08x 0x%08x                       ",
+		    ((uint32_t *)insn)[1],
+		    ((uint32_t *)insn)[0]);
 	 }
 
 	 brw_uncompact_instruction(brw, &uncompacted, compacted);
@@ -251,15 +251,15 @@ brw_dump_compile(struct brw_compile *p, FILE *out, int start, int end)
 	 offset += 8;
       } else {
 	 if (dump_hex) {
-	    printf("0x%08x 0x%08x 0x%08x 0x%08x ",
-		   ((uint32_t *)insn)[3],
-		   ((uint32_t *)insn)[2],
-		   ((uint32_t *)insn)[1],
-		   ((uint32_t *)insn)[0]);
+	    fprintf(out, "0x%08x 0x%08x 0x%08x 0x%08x ",
+		    ((uint32_t *)insn)[3],
+		    ((uint32_t *)insn)[2],
+		    ((uint32_t *)insn)[1],
+		    ((uint32_t *)insn)[0]);
 	 }
 	 offset += 16;
       }
 
-      brw_disasm(stdout, insn, p->brw->gen);
+      brw_disasm(out, insn, p->brw->gen);
    }
 }
