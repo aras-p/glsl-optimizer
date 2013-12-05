@@ -402,7 +402,7 @@ swrast_map_renderbuffer(struct gl_context *ctx,
       stride = w * cpp;
       xrb->Base.Buffer = malloc(h * stride);
 
-      sPriv->swrast_loader->getImage(dPriv, x, y, w, h,
+      sPriv->swrast_loader->getImage(dPriv, x, rb->Height - y - h, w, h,
 				     (char *) xrb->Base.Buffer,
 				     dPriv->loaderPrivate);
 
