@@ -199,9 +199,8 @@ class Screen(Dispatcher):
         if resource.target == PIPE_BUFFER:
             # We will keep track of buffer contents
             resource.data = bytearray(resource.width)
-        if resource.width == 1 and resource.height == 1 and resource.depth == 1:
-            # Ignore dummy texture
-            return None
+            # Ignore format
+            del resource.format
         return resource
 
     def resource_destroy(self, resource):
@@ -233,6 +232,7 @@ class Context(Dispatcher):
         self._state.scissors = []
         self._state.viewports = []
         self._state.vertex_buffers = []
+        self._state.vertex_elements = []
         self._state.vs = Struct()
         self._state.gs = Struct()
         self._state.fs = Struct()
@@ -248,6 +248,8 @@ class Context(Dispatcher):
         self._state.vs.constant_buffer = []
         self._state.gs.constant_buffer = []
         self._state.fs.constant_buffer = []
+        self._state.render_condition_condition = 0
+        self._state.render_condition_mode = 0
 
         self._draw_no = 0
 
@@ -653,6 +655,7 @@ class Context(Dispatcher):
         pass
 
     def create_surface(self, resource, surf_tmpl):
+        assert resource is not None
         surf_tmpl.resource = resource
         return surf_tmpl
 
@@ -663,6 +666,12 @@ class Context(Dispatcher):
         return query_type
     
     def destroy_query(self, query):
+        pass
+
+    def begin_query(self, query):
+        pass
+
+    def end_query(self, query):
         pass
 
     def create_stream_output_target(self, res, buffer_offset, buffer_size):
