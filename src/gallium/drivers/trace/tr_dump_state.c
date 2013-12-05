@@ -127,23 +127,31 @@ void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state)
    trace_dump_member(bool, state, poly_smooth);
    trace_dump_member(bool, state, poly_stipple_enable);
    trace_dump_member(bool, state, point_smooth);
-   trace_dump_member(uint, state, sprite_coord_enable);
    trace_dump_member(bool, state, sprite_coord_mode);
    trace_dump_member(bool, state, point_quad_rasterization);
    trace_dump_member(bool, state, point_size_per_vertex);
    trace_dump_member(bool, state, multisample);
    trace_dump_member(bool, state, line_smooth);
    trace_dump_member(bool, state, line_stipple_enable);
-   trace_dump_member(uint, state, line_stipple_factor);
-   trace_dump_member(uint, state, line_stipple_pattern);
    trace_dump_member(bool, state, line_last_pixel);
+
    trace_dump_member(bool, state, flatshade_first);
+
    trace_dump_member(bool, state, half_pixel_center);
    trace_dump_member(bool, state, bottom_edge_rule);
+
    trace_dump_member(bool, state, rasterizer_discard);
+
    trace_dump_member(bool, state, depth_clip);
+
    trace_dump_member(bool, state, clip_halfz);
+
    trace_dump_member(uint, state, clip_plane_enable);
+
+   trace_dump_member(uint, state, line_stipple_factor);
+   trace_dump_member(uint, state, line_stipple_pattern);
+
+   trace_dump_member(uint, state, sprite_coord_enable);
 
    trace_dump_member(float, state, line_width);
    trace_dump_member(float, state, point_size);
