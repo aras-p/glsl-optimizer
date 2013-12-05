@@ -600,8 +600,8 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
    dri2_surf->dy = 0;
 
    if (n_rects == 0) {
-      wl_surface_damage(dri2_surf->wl_win->surface, 0, 0,
-                        dri2_surf->base.Width, dri2_surf->base.Height);
+      wl_surface_damage(dri2_surf->wl_win->surface,
+                        0, 0, INT32_MAX, INT32_MAX);
    } else {
       for (i = 0; i < n_rects; i++) {
          const int *rect = &rects[i * 4];
