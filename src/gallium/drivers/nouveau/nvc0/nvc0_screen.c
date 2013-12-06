@@ -656,10 +656,11 @@ nvc0_screen_create(struct nouveau_device *dev)
       obj_class = NVE4_3D_CLASS;
       break;
    case 0xd0:
+      obj_class = NVC8_3D_CLASS;
+      break;
    case 0xc0:
    default:
       switch (dev->chipset) {
-      case 0xd9:
       case 0xc8:
          obj_class = NVC8_3D_CLASS;
          break;
