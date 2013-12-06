@@ -1202,11 +1202,10 @@ static boolean is_blit_generic_supported(struct blitter_context *blitter,
 
 boolean util_blitter_is_copy_supported(struct blitter_context *blitter,
                                        const struct pipe_resource *dst,
-                                       const struct pipe_resource *src,
-                                       unsigned mask)
+                                       const struct pipe_resource *src)
 {
    return is_blit_generic_supported(blitter, dst, dst->format,
-                                    src, src->format, mask);
+                                    src, src->format, PIPE_MASK_RGBAZS);
 }
 
 boolean util_blitter_is_blit_supported(struct blitter_context *blitter,
@@ -1224,8 +1223,7 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
                                unsigned dstx, unsigned dsty, unsigned dstz,
                                struct pipe_resource *src,
                                unsigned src_level,
-                               const struct pipe_box *srcbox, unsigned mask,
-                               boolean copy_all_samples)
+                               const struct pipe_box *srcbox)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
@@ -1250,8 +1248,7 @@ void util_blitter_copy_texture(struct blitter_context *blitter,
    /* Copy. */
    util_blitter_blit_generic(blitter, dst_view, &dstbox,
                              src_view, srcbox, src->width0, src->height0,
-                             mask, PIPE_TEX_FILTER_NEAREST, NULL,
-                             copy_all_samples);
+                             PIPE_MASK_RGBAZS, PIPE_TEX_FILTER_NEAREST, NULL);
 
    pipe_surface_reference(&dst_view, NULL);
    pipe_sampler_view_reference(&src_view, NULL);
@@ -1264,14 +1261,14 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
                                const struct pipe_box *srcbox,
                                unsigned src_width0, unsigned src_height0,
                                unsigned mask, unsigned filter,
-                               const struct pipe_scissor_state *scissor,
-                               boolean copy_all_samples)
+                               const struct pipe_scissor_state *scissor)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
    struct pipe_framebuffer_state fb_state;
    enum pipe_texture_target src_target = src->texture->target;
    unsigned src_samples = src->texture->nr_samples;
+   unsigned dst_samples = dst->texture->nr_samples;
    boolean has_depth, has_stencil, has_color;
    boolean blit_stencil, blit_depth, blit_color;
    void *sampler_state;
@@ -1453,10 +1450,9 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
          pipe->set_framebuffer_state(pipe, &fb_state);
 
          /* See if we need to blit a multisample or singlesample buffer. */
-         if (copy_all_samples &&
-             src_samples == dst->texture->nr_samples &&
-             dst->texture->nr_samples > 1) {
-            unsigned i, max_sample = MAX2(dst->texture->nr_samples, 1) - 1;
+         if (src_samples == dst_samples && dst_samples > 1) {
+            /* MSAA copy. */
+            unsigned i, max_sample = dst_samples - 1;
 
             for (i = 0; i <= max_sample; i++) {
                pipe->set_sample_mask(pipe, 1 << i);
@@ -1530,7 +1526,7 @@ util_blitter_blit(struct blitter_context *blitter,
    util_blitter_blit_generic(blitter, dst_view, &info->dst.box,
                              src_view, &info->src.box, src->width0, src->height0,
                              info->mask, info->filter,
-                             info->scissor_enable ? &info->scissor : NULL, TRUE);
+                             info->scissor_enable ? &info->scissor : NULL);
 
    pipe_surface_reference(&dst_view, NULL);
    pipe_sampler_view_reference(&src_view, NULL);

@@ -84,8 +84,7 @@ i915_surface_copy_render(struct pipe_context *pipe,
       return;
    }
 
-   if (!util_blitter_is_copy_supported(i915->blitter, dst, src,
-                                       PIPE_MASK_RGBAZS)) {
+   if (!util_blitter_is_copy_supported(i915->blitter, dst, src)) {
       util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
                                 src, src_level, src_box);
       return;
@@ -94,7 +93,7 @@ i915_surface_copy_render(struct pipe_context *pipe,
    i915_util_blitter_save_states(i915);
 
    util_blitter_copy_texture(i915->blitter, dst, dst_level, dstx, dsty, dstz,
-                            src, src_level, src_box, PIPE_MASK_RGBAZS, TRUE);
+                            src, src_level, src_box);
 }
 
 static void

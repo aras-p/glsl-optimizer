@@ -755,8 +755,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		sbox.height = util_format_get_nblocksy(src->format, src_box->height);
 		sbox.depth = src_box->depth;
 		src_box = &sbox;
-	} else if (!util_blitter_is_copy_supported(rctx->blitter, dst, src,
-						   PIPE_MASK_RGBAZS)) {
+	} else if (!util_blitter_is_copy_supported(rctx->blitter, dst, src)) {
 		if (util_format_is_subsampled_2x1_32bpp(src->format)) {
 
 			src_templ.format = PIPE_FORMAT_R8G8B8A8_UINT;
@@ -821,8 +820,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	r600_blitter_begin(ctx, R600_COPY_TEXTURE);
 	util_blitter_blit_generic(rctx->blitter, dst_view, &dstbox,
 				  src_view, src_box, src_width0, src_height0,
-				  PIPE_MASK_RGBAZS, PIPE_TEX_FILTER_NEAREST, NULL,
-				  TRUE);
+				  PIPE_MASK_RGBAZS, PIPE_TEX_FILTER_NEAREST, NULL);
 	r600_blitter_end(ctx);
 
 	pipe_surface_reference(&dst_view, NULL);

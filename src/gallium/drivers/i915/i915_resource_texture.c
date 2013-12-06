@@ -742,8 +742,7 @@ i915_texture_transfer_map(struct pipe_context *pipe,
    /* if we use staging transfers, only support textures we can render to,
     * because we need that for u_blitter */
    if (i915->blitter &&
-       util_blitter_is_copy_supported(i915->blitter, resource, resource,
-				      PIPE_MASK_RGBAZS) &&
+       util_blitter_is_copy_supported(i915->blitter, resource, resource) &&
        (usage & PIPE_TRANSFER_WRITE) &&
        !(usage & (PIPE_TRANSFER_READ | PIPE_TRANSFER_DONTBLOCK | PIPE_TRANSFER_UNSYNCHRONIZED)))
       use_staging_texture = TRUE;

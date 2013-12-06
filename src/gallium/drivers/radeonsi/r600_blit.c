@@ -528,8 +528,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		/* translate the dst box as well */
 		dstx = util_format_get_nblocksx(orig_info[1].format, dstx);
 		dsty = util_format_get_nblocksy(orig_info[1].format, dsty);
-	} else if (!util_blitter_is_copy_supported(rctx->blitter, dst, src,
-						   PIPE_MASK_RGBAZS)) {
+	} else if (!util_blitter_is_copy_supported(rctx->blitter, dst, src)) {
 		unsigned blocksize = util_format_get_blocksize(src->format);
 
 		switch (blocksize) {
@@ -574,7 +573,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 	r600_blitter_begin(ctx, R600_COPY);
 	util_blitter_copy_texture(rctx->blitter, dst, dst_level, dstx, dsty, dstz,
-				  src, src_level, psbox, PIPE_MASK_RGBAZS, TRUE);
+				  src, src_level, psbox);
 	r600_blitter_end(ctx);
 
 	if (restore_orig[0])
