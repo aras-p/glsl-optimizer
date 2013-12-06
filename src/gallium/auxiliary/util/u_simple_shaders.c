@@ -553,3 +553,62 @@ util_make_fs_blit_msaa_depthstencil(struct pipe_context *pipe,
 
    return pipe->create_fs_state(pipe, &state);
 }
+
+
+void *
+util_make_fs_msaa_resolve(struct pipe_context *pipe,
+                          unsigned tgsi_tex, unsigned nr_samples,
+                          boolean is_uint, boolean is_sint)
+{
+   struct ureg_program *ureg;
+   struct ureg_src sampler, coord;
+   struct ureg_dst out, tmp_sum, tmp_coord, tmp;
+   int i;
+
+   ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!ureg)
+      return NULL;
+
+   /* Declarations. */
+   sampler = ureg_DECL_sampler(ureg, 0);
+   coord = ureg_DECL_fs_input(ureg, TGSI_SEMANTIC_GENERIC, 0,
+                              TGSI_INTERPOLATE_LINEAR);
+   out = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
+   tmp_sum = ureg_DECL_temporary(ureg);
+   tmp_coord = ureg_DECL_temporary(ureg);
+   tmp = ureg_DECL_temporary(ureg);
+
+   /* Instructions. */
+   ureg_MOV(ureg, tmp_sum, ureg_imm1f(ureg, 0));
+   ureg_F2U(ureg, tmp_coord, coord);
+
+   for (i = 0; i < nr_samples; i++) {
+      /* Read one sample. */
+      ureg_MOV(ureg, ureg_writemask(tmp_coord, TGSI_WRITEMASK_W),
+               ureg_imm1u(ureg, i));
+      ureg_TXF(ureg, tmp, tgsi_tex, ureg_src(tmp_coord), sampler);
+
+      if (is_uint)
+         ureg_U2F(ureg, tmp, ureg_src(tmp));
+      else if (is_sint)
+         ureg_I2F(ureg, tmp, ureg_src(tmp));
+
+      /* Add it to the sum.*/
+      ureg_ADD(ureg, tmp_sum, ureg_src(tmp_sum), ureg_src(tmp));
+   }
+
+   /* Calculate the average and return. */
+   ureg_MUL(ureg, tmp_sum, ureg_src(tmp_sum),
+            ureg_imm1f(ureg, 1.0 / nr_samples));
+
+   if (is_uint)
+      ureg_F2U(ureg, out, ureg_src(tmp_sum));
+   else if (is_sint)
+      ureg_F2I(ureg, out, ureg_src(tmp_sum));
+   else
+      ureg_MOV(ureg, out, ureg_src(tmp_sum));
+
+   ureg_END(ureg);
+
+   return ureg_create_shader_and_destroy(ureg, pipe);
+}
