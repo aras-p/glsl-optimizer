@@ -64,6 +64,17 @@
 #include "lp_bld_arit.h"
 #include "lp_bld_flow.h"
 
+#if defined(PIPE_ARCH_SSE)
+#include <xmmintrin.h>
+#endif
+
+#ifndef _MM_DENORMALS_ZERO_MASK
+#define _MM_DENORMALS_ZERO_MASK 0x0040
+#endif
+
+#ifndef _MM_FLUSH_ZERO_MASK
+#define _MM_FLUSH_ZERO_MASK 0x8000
+#endif
 
 #define EXP_POLY_DEGREE 5
 
@@ -3489,3 +3500,63 @@ lp_build_is_inf_or_nan(struct gallivm_state *gallivm,
    return ret;
 }
 
+
+LLVMValueRef
+lp_build_fpstate_get(struct gallivm_state *gallivm)
+{
+   if (util_cpu_caps.has_sse) {
+      LLVMBuilderRef builder = gallivm->builder;
+      LLVMValueRef mxcsr_ptr = lp_build_alloca(
+         gallivm,
+         LLVMInt32TypeInContext(gallivm->context),
+         "mxcsr_ptr");
+      lp_build_intrinsic(builder,
+                         "llvm.x86.sse.stmxcsr",
+                         LLVMVoidTypeInContext(gallivm->context),
+                         &mxcsr_ptr, 1);
+      return mxcsr_ptr;
+   }
+   return 0;
+}
+
+void
+lp_build_fpstate_set_denorms_zero(struct gallivm_state *gallivm,
+                                  boolean zero)
+{
+   if (util_cpu_caps.has_sse) {
+      /* turn on DAZ (64) | FTZ (32768) = 32832 if available */
+      int daz_ftz = _MM_FLUSH_ZERO_MASK;
+
+      LLVMBuilderRef builder = gallivm->builder;
+      LLVMValueRef mxcsr_ptr = lp_build_fpstate_get(gallivm);
+      LLVMValueRef mxcsr =
+         LLVMBuildLoad(builder, mxcsr_ptr, "mxcsr");
+
+      if (util_cpu_caps.has_daz) {
+         /* Enable denormals are zero mode */
+         daz_ftz |= _MM_DENORMALS_ZERO_MASK;
+      }
+      if (zero) {
+         mxcsr = LLVMBuildOr(builder, mxcsr,
+                             LLVMConstInt(LLVMTypeOf(mxcsr), daz_ftz, 0), "");
+      } else {
+         mxcsr = LLVMBuildAnd(builder, mxcsr,
+                              LLVMConstInt(LLVMTypeOf(mxcsr), ~daz_ftz, 0), "");
+      }
+
+      LLVMBuildStore(builder, mxcsr, mxcsr_ptr);
+      lp_build_fpstate_set(gallivm, mxcsr_ptr);
+   }
+}
+
+void
+lp_build_fpstate_set(struct gallivm_state *gallivm,
+                     LLVMValueRef mxcsr_ptr)
+{
+   if (util_cpu_caps.has_sse) {
+      lp_build_intrinsic(gallivm->builder,
+                         "llvm.x86.sse.ldmxcsr",
+                         LLVMVoidTypeInContext(gallivm->context),
+                         &mxcsr_ptr, 1);
+   }
+}

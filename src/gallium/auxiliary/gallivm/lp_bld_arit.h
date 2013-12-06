@@ -358,4 +358,15 @@ lp_build_is_inf_or_nan(struct gallivm_state *gallivm,
                        const struct lp_type type,
                        LLVMValueRef x);
 
+
+LLVMValueRef
+lp_build_fpstate_get(struct gallivm_state *gallivm);
+
+void
+lp_build_fpstate_set_denorms_zero(struct gallivm_state *gallivm,
+                                  boolean zero);
+void
+lp_build_fpstate_set(struct gallivm_state *gallivm,
+                     LLVMValueRef mxcsr);
+
 #endif /* !LP_BLD_ARIT_H */

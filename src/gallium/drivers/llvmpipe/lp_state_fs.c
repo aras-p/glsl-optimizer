@@ -1554,6 +1554,28 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
 
    const boolean is_1d = variant->key.resource_1d;
    unsigned num_fullblock_fs = is_1d ? 2 * num_fs : num_fs;
+   LLVMValueRef fpstate = 0;
+
+   /* Get type from output format */
+   lp_blend_type_from_format_desc(out_format_desc, &row_type);
+   lp_mem_type_from_format_desc(out_format_desc, &dst_type);
+
+   /*
+    * Technically this code should go into lp_build_smallfloat_to_float
+    * and lp_build_float_to_smallfloat but due to the
+    * http://llvm.org/bugs/show_bug.cgi?id=6393
+    * llvm reorders the mxcsr intrinsics in a way that breaks the code.
+    * So the ordering is important here and there shouldn't be any
+    * llvm ir instrunctions in this function before
+    * this, otherwise half-float format conversions won't work
+    * (again due to llvm bug #6393).
+    */
+   if (dst_type.floating && dst_type.width != 32) {
+      /* We need to make sure that denorms are ok for half float
+         conversions */
+      fpstate = lp_build_fpstate_get(gallivm);
+      lp_build_fpstate_set_denorms_zero(gallivm, FALSE);
+   }
 
    mask_type = lp_int32_vec4_type();
    mask_type.length = fs_type.length;
@@ -1586,11 +1608,6 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
 #else
    undef_src_val = lp_build_undef(gallivm, fs_type);
 #endif
-
-
-   /* Get type from output format */
-   lp_blend_type_from_format_desc(out_format_desc, &row_type);
-   lp_mem_type_from_format_desc(out_format_desc, &dst_type);
 
    row_type.length = fs_type.length;
    vector_width    = dst_type.floating ? lp_native_vector_width : lp_integer_vector_width;
@@ -2049,6 +2066,10 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
    else {
       store_unswizzled_block(gallivm, color_ptr, stride, block_width, block_height,
                              dst, dst_type, dst_count, dst_alignment);
+   }
+
+   if (dst_type.floating && dst_type.width != 32) {
+      lp_build_fpstate_set(gallivm, fpstate);
    }
 
    if (do_branch) {
