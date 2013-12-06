@@ -476,14 +476,23 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
       }
    }
 
-   /*
-    * If we're going to use clear_with_quad() for any reason, use it for
-    * everything possible.
+   /* Always clear depth and stencil together.
+    * This can only happen when the stencil writemask is not a full mask.
+    */
+   if (quad_buffers & PIPE_CLEAR_DEPTHSTENCIL &&
+       clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) {
+      quad_buffers |= clear_buffers & PIPE_CLEAR_DEPTHSTENCIL;
+      clear_buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
+   }
+
+   /* Only use quad-based clearing for the renderbuffers which cannot
+    * use pipe->clear. We want to always use pipe->clear for the other
+    * renderbuffers, because it's likely to be faster.
     */
    if (quad_buffers) {
-      quad_buffers |= clear_buffers;
       clear_with_quad(ctx, quad_buffers);
-   } else if (clear_buffers) {
+   }
+   if (clear_buffers) {
       /* We can't translate the clear color to the colorbuffer format,
        * because different colorbuffers may have different formats.
        */
