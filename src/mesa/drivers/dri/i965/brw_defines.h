@@ -1752,6 +1752,8 @@ enum brw_message_target {
 #define GEN8_BLEND_PRE_BLEND_COLOR_CLAMP_ENABLE         (1 << 1)
 #define GEN8_BLEND_POST_BLEND_COLOR_CLAMP_ENABLE        (1 << 0)
 
+#define _3DSTATE_WM_HZ_OP                       0x7852 /* GEN8+ */
+
 #define _3DSTATE_PS_BLEND                       0x784D /* GEN8+ */
 /* DW1 */
 # define GEN8_PS_BLEND_ALPHA_TO_COVERAGE_ENABLE         (1 << 31)

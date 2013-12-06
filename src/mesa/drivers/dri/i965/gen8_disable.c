@@ -29,6 +29,14 @@
 static void
 disable_stages(struct brw_context *brw)
 {
+   BEGIN_BATCH(5);
+   OUT_BATCH(_3DSTATE_WM_HZ_OP << 16 | (5 - 2));
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+
    /* Disable the HS Unit */
    BEGIN_BATCH(11);
    OUT_BATCH(_3DSTATE_CONSTANT_HS << 16 | (11 - 2));
