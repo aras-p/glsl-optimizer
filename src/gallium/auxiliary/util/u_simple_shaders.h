@@ -130,6 +130,12 @@ util_make_fs_msaa_resolve(struct pipe_context *pipe,
                           unsigned tgsi_tex, unsigned nr_samples,
                           boolean is_uint, boolean is_sint);
 
+
+void *
+util_make_fs_msaa_resolve_bilinear(struct pipe_context *pipe,
+                                   unsigned tgsi_tex, unsigned nr_samples,
+                                   boolean is_uint, boolean is_sint);
+
 #ifdef __cplusplus
 }
 #endif

@@ -95,9 +95,9 @@ struct blitter_context_priv
    void *fs_texfetch_stencil_msaa[PIPE_MAX_TEXTURE_TYPES];
 
    /* FS which outputs an average of all samples. */
-   void *fs_resolve[PIPE_MAX_TEXTURE_TYPES][NUM_RESOLVE_FRAG_SHADERS];
-   void *fs_resolve_sint[PIPE_MAX_TEXTURE_TYPES][NUM_RESOLVE_FRAG_SHADERS];
-   void *fs_resolve_uint[PIPE_MAX_TEXTURE_TYPES][NUM_RESOLVE_FRAG_SHADERS];
+   void *fs_resolve[PIPE_MAX_TEXTURE_TYPES][NUM_RESOLVE_FRAG_SHADERS][2];
+   void *fs_resolve_sint[PIPE_MAX_TEXTURE_TYPES][NUM_RESOLVE_FRAG_SHADERS][2];
+   void *fs_resolve_uint[PIPE_MAX_TEXTURE_TYPES][NUM_RESOLVE_FRAG_SHADERS][2];
 
    /* Blend state. */
    void *blend[PIPE_MASK_RGBA+1]; /**< blend state with writemask */
@@ -342,7 +342,7 @@ void util_blitter_destroy(struct blitter_context *blitter)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = blitter->pipe;
-   int i, j;
+   int i, j, f;
 
    for (i = 0; i <= PIPE_MASK_RGBA; i++) {
       pipe->delete_blend_state(pipe, ctx->blend[i]);
@@ -382,16 +382,19 @@ void util_blitter_destroy(struct blitter_context *blitter)
          ctx->delete_fs_state(pipe, ctx->fs_texfetch_stencil[i]);
 
       for (j = 0; j< Elements(ctx->fs_resolve[i]); j++)
-         if (ctx->fs_resolve[i][j])
-            ctx->delete_fs_state(pipe, ctx->fs_resolve[i][j]);
+         for (f = 0; f < 2; f++)
+            if (ctx->fs_resolve[i][j][f])
+               ctx->delete_fs_state(pipe, ctx->fs_resolve[i][j][f]);
 
       for (j = 0; j< Elements(ctx->fs_resolve_sint[i]); j++)
-         if (ctx->fs_resolve_sint[i][j])
-            ctx->delete_fs_state(pipe, ctx->fs_resolve_sint[i][j]);
+         for (f = 0; f < 2; f++)
+            if (ctx->fs_resolve_sint[i][j][f])
+               ctx->delete_fs_state(pipe, ctx->fs_resolve_sint[i][j][f]);
 
       for (j = 0; j< Elements(ctx->fs_resolve_uint[i]); j++)
-         if (ctx->fs_resolve_uint[i][j])
-            ctx->delete_fs_state(pipe, ctx->fs_resolve_uint[i][j]);
+         for (f = 0; f < 2; f++)
+            if (ctx->fs_resolve_uint[i][j][f])
+               ctx->delete_fs_state(pipe, ctx->fs_resolve_uint[i][j][f]);
    }
 
    ctx->delete_fs_state(pipe, ctx->fs_empty);
@@ -750,7 +753,8 @@ static void *blitter_get_fs_texfetch_col(struct blitter_context_priv *ctx,
                                          enum pipe_format format,
                                          enum pipe_texture_target target,
                                          unsigned src_nr_samples,
-                                         unsigned dst_nr_samples)
+                                         unsigned dst_nr_samples,
+                                         unsigned filter)
 {
    struct pipe_context *pipe = ctx->base.pipe;
    unsigned tgsi_tex = util_pipe_tex_to_tgsi_tex(target, src_nr_samples);
@@ -768,17 +772,26 @@ static void *blitter_get_fs_texfetch_col(struct blitter_context_priv *ctx,
          is_uint = util_format_is_pure_uint(format);
          is_sint = util_format_is_pure_sint(format);
 
+         assert(filter < 2);
+
          if (is_uint)
-            shader = &ctx->fs_resolve_uint[target][index];
+            shader = &ctx->fs_resolve_uint[target][index][filter];
          else if (is_sint)
-            shader = &ctx->fs_resolve_sint[target][index];
+            shader = &ctx->fs_resolve_sint[target][index][filter];
          else
-            shader = &ctx->fs_resolve[target][index];
+            shader = &ctx->fs_resolve[target][index][filter];
 
          if (!*shader) {
-            *shader = util_make_fs_msaa_resolve(pipe, tgsi_tex,
-                                                src_nr_samples,
-                                                is_uint, is_sint);
+            if (filter == PIPE_TEX_FILTER_LINEAR) {
+               *shader = util_make_fs_msaa_resolve_bilinear(pipe, tgsi_tex,
+                                                   src_nr_samples,
+                                                   is_uint, is_sint);
+            }
+            else {
+               *shader = util_make_fs_msaa_resolve(pipe, tgsi_tex,
+                                                   src_nr_samples,
+                                                   is_uint, is_sint);
+            }
          }
       }
       else {
@@ -925,7 +938,7 @@ void util_blitter_cache_all_shaders(struct blitter_context *blitter)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_screen *screen = blitter->pipe->screen;
-   unsigned samples, j, target, max_samples;
+   unsigned samples, j, f, target, max_samples;
    boolean has_arraytex, has_cubearraytex;
 
    max_samples = ctx->has_texture_multisample ? 2 : 1;
@@ -955,7 +968,7 @@ void util_blitter_cache_all_shaders(struct blitter_context *blitter)
           * they read one sample.
           */
          blitter_get_fs_texfetch_col(ctx, PIPE_FORMAT_R32_FLOAT, target,
-                                     samples, samples);
+                                     samples, samples, 0);
          blitter_get_fs_texfetch_depth(ctx, target, samples);
          if (ctx->has_stencil_export) {
             blitter_get_fs_texfetch_depthstencil(ctx, target, samples);
@@ -973,12 +986,14 @@ void util_blitter_cache_all_shaders(struct blitter_context *blitter)
                continue;
             }
 
-            blitter_get_fs_texfetch_col(ctx, PIPE_FORMAT_R32_FLOAT, target,
-                                        j, 1);
-            blitter_get_fs_texfetch_col(ctx, PIPE_FORMAT_R32_UINT, target,
-                                        j, 1);
-            blitter_get_fs_texfetch_col(ctx, PIPE_FORMAT_R32_SINT, target,
-                                        j, 1);
+            for (f = 0; f < 2; f++) {
+               blitter_get_fs_texfetch_col(ctx, PIPE_FORMAT_R32_FLOAT, target,
+                                           j, 1, f);
+               blitter_get_fs_texfetch_col(ctx, PIPE_FORMAT_R32_UINT, target,
+                                           j, 1, f);
+               blitter_get_fs_texfetch_col(ctx, PIPE_FORMAT_R32_SINT, target,
+                                           j, 1, f);
+            }
          }
       }
    }
@@ -1362,6 +1377,12 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
       return;
    }
 
+   if (blit_stencil ||
+       (dstbox->width == abs(srcbox->width) &&
+        dstbox->height == abs(srcbox->height))) {
+      filter = PIPE_TEX_FILTER_NEAREST;
+   }
+
    /* Check whether the states are properly saved. */
    blitter_set_running_flag(ctx);
    blitter_check_saved_vertex_states(ctx);
@@ -1405,15 +1426,11 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
       ctx->bind_fs_state(pipe,
             blitter_get_fs_texfetch_col(ctx, src->format, src_target,
-                                        src_samples, dst_samples));
+                                        src_samples, dst_samples, filter));
    }
 
    /* Set the linear filter only for scaled color non-MSAA blits. */
-   if (filter == PIPE_TEX_FILTER_LINEAR &&
-       !blit_depth && !blit_stencil &&
-       src_samples <= 1 &&
-       (dstbox->width != abs(srcbox->width) ||
-        dstbox->height != abs(srcbox->height))) {
+   if (filter == PIPE_TEX_FILTER_LINEAR) {
       if (src_target == PIPE_TEXTURE_RECT) {
          sampler_state = ctx->sampler_state_rect_linear;
       } else {

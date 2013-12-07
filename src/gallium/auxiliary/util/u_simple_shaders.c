@@ -612,3 +612,98 @@ util_make_fs_msaa_resolve(struct pipe_context *pipe,
 
    return ureg_create_shader_and_destroy(ureg, pipe);
 }
+
+
+void *
+util_make_fs_msaa_resolve_bilinear(struct pipe_context *pipe,
+                                   unsigned tgsi_tex, unsigned nr_samples,
+                                   boolean is_uint, boolean is_sint)
+{
+   struct ureg_program *ureg;
+   struct ureg_src sampler, coord;
+   struct ureg_dst out, tmp, top, bottom;
+   struct ureg_dst tmp_coord[4], tmp_sum[4];
+   int i, c;
+
+   ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!ureg)
+      return NULL;
+
+   /* Declarations. */
+   sampler = ureg_DECL_sampler(ureg, 0);
+   coord = ureg_DECL_fs_input(ureg, TGSI_SEMANTIC_GENERIC, 0,
+                              TGSI_INTERPOLATE_LINEAR);
+   out = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
+   for (c = 0; c < 4; c++)
+      tmp_sum[c] = ureg_DECL_temporary(ureg);
+   for (c = 0; c < 4; c++)
+      tmp_coord[c] = ureg_DECL_temporary(ureg);
+   tmp = ureg_DECL_temporary(ureg);
+   top = ureg_DECL_temporary(ureg);
+   bottom = ureg_DECL_temporary(ureg);
+
+   /* Instructions. */
+   for (c = 0; c < 4; c++)
+      ureg_MOV(ureg, tmp_sum[c], ureg_imm1f(ureg, 0));
+
+   /* Get 4 texture coordinates for the bilinear filter. */
+   ureg_F2U(ureg, tmp_coord[0], coord); /* top-left */
+   ureg_UADD(ureg, tmp_coord[1], ureg_src(tmp_coord[0]),
+             ureg_imm4u(ureg, 1, 0, 0, 0)); /* top-right */
+   ureg_UADD(ureg, tmp_coord[2], ureg_src(tmp_coord[0]),
+             ureg_imm4u(ureg, 0, 1, 0, 0)); /* bottom-left */
+   ureg_UADD(ureg, tmp_coord[3], ureg_src(tmp_coord[0]),
+             ureg_imm4u(ureg, 1, 1, 0, 0)); /* bottom-right */
+
+   for (i = 0; i < nr_samples; i++) {
+      for (c = 0; c < 4; c++) {
+         /* Read one sample. */
+         ureg_MOV(ureg, ureg_writemask(tmp_coord[c], TGSI_WRITEMASK_W),
+                  ureg_imm1u(ureg, i));
+         ureg_TXF(ureg, tmp, tgsi_tex, ureg_src(tmp_coord[c]), sampler);
+
+         if (is_uint)
+            ureg_U2F(ureg, tmp, ureg_src(tmp));
+         else if (is_sint)
+            ureg_I2F(ureg, tmp, ureg_src(tmp));
+
+         /* Add it to the sum.*/
+         ureg_ADD(ureg, tmp_sum[c], ureg_src(tmp_sum[c]), ureg_src(tmp));
+      }
+   }
+
+   /* Calculate the average. */
+   for (c = 0; c < 4; c++)
+      ureg_MUL(ureg, tmp_sum[c], ureg_src(tmp_sum[c]),
+               ureg_imm1f(ureg, 1.0 / nr_samples));
+
+   /* Take the 4 average values and apply a standard bilinear filter. */
+   ureg_FRC(ureg, tmp, coord);
+
+   ureg_LRP(ureg, top,
+            ureg_scalar(ureg_src(tmp), 0),
+            ureg_src(tmp_sum[1]),
+            ureg_src(tmp_sum[0]));
+
+   ureg_LRP(ureg, bottom,
+            ureg_scalar(ureg_src(tmp), 0),
+            ureg_src(tmp_sum[3]),
+            ureg_src(tmp_sum[2]));
+
+   ureg_LRP(ureg, tmp,
+            ureg_scalar(ureg_src(tmp), 1),
+            ureg_src(bottom),
+            ureg_src(top));
+
+   /* Convert to the texture format and return. */
+   if (is_uint)
+      ureg_F2U(ureg, out, ureg_src(tmp));
+   else if (is_sint)
+      ureg_F2I(ureg, out, ureg_src(tmp));
+   else
+      ureg_MOV(ureg, out, ureg_src(tmp));
+
+   ureg_END(ureg);
+
+   return ureg_create_shader_and_destroy(ureg, pipe);
+}
