@@ -708,7 +708,7 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 	struct si_state_dsa *dsa = CALLOC_STRUCT(si_state_dsa);
 	struct si_pm4_state *pm4 = &dsa->pm4;
 	unsigned db_depth_control;
-	unsigned db_render_override, db_render_control;
+	unsigned db_render_control;
 	uint32_t db_stencil_control = 0;
 
 	if (dsa == NULL) {
@@ -754,10 +754,6 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 
 	/* misc */
 	db_render_control = 0;
-	db_render_override = S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE) |
-		S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
-		S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
-	/* TODO db_render_override depends on query */
 	si_pm4_set_reg(pm4, R_028020_DB_DEPTH_BOUNDS_MIN, 0x00000000);
 	si_pm4_set_reg(pm4, R_028024_DB_DEPTH_BOUNDS_MAX, 0x00000000);
 	si_pm4_set_reg(pm4, R_028028_DB_STENCIL_CLEAR, 0x00000000);
@@ -765,12 +761,10 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 	//si_pm4_set_reg(pm4, R_028410_SX_ALPHA_TEST_CONTROL, alpha_test_control);
 	si_pm4_set_reg(pm4, R_028800_DB_DEPTH_CONTROL, db_depth_control);
 	si_pm4_set_reg(pm4, R_028000_DB_RENDER_CONTROL, db_render_control);
-	si_pm4_set_reg(pm4, R_02800C_DB_RENDER_OVERRIDE, db_render_override);
 	si_pm4_set_reg(pm4, R_02842C_DB_STENCIL_CONTROL, db_stencil_control);
 	si_pm4_set_reg(pm4, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 0x0);
 	si_pm4_set_reg(pm4, R_028AC4_DB_SRESULTS_COMPARE_STATE1, 0x0);
 	si_pm4_set_reg(pm4, R_028AC8_DB_PRELOAD_CONTROL, 0x0);
-	dsa->db_render_override = db_render_override;
 
 	return dsa;
 }
@@ -1742,6 +1736,47 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	}
 }
 
+/* Update register(s) containing depth buffer and draw state. */
+void si_update_db_draw_state(struct r600_context *rctx, struct r600_surface *zsbuf)
+{
+	struct si_pm4_state *pm4;
+	uint32_t db_render_override;
+	boolean hiz_enable = false;
+
+	pm4 = si_pm4_alloc_state(rctx);
+	if (pm4 == NULL) {
+		return;
+	}
+
+	/* db */
+
+	/* TODO HiS aka stencil buffer htile goes here */
+	db_render_override = S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
+			     S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
+
+	/* HiZ aka depth buffer htile */
+	if (zsbuf && zsbuf->base.texture) {
+		struct r600_texture *rtex = (struct r600_texture*)zsbuf->base.texture;
+		uint level = zsbuf->base.u.tex.level;
+		/* use htile only for first level */
+		hiz_enable = rtex->htile_buffer && !level;
+	}
+	if (hiz_enable) {
+		db_render_override |= S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_OFF);
+	} else {
+		db_render_override |= S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE);
+	}
+
+	/* draw */
+
+	if (rctx->num_cs_dw_nontimer_queries_suspend) {
+		db_render_override |= S_02800C_NOOP_CULL_DISABLE(1);
+	}
+
+	si_pm4_set_reg(pm4, R_02800C_DB_RENDER_OVERRIDE, db_render_override);
+	si_pm4_set_state(rctx, db_draw, pm4);
+}
+
 static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		  const struct pipe_framebuffer_state *state)
 {
@@ -1752,6 +1787,7 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	unsigned macro_aspect, tile_split, stile_split, bankh, bankw, nbanks, pipe_config;
 	uint32_t z_info, s_info, db_depth_info;
 	uint64_t z_offs, s_offs;
+	uint32_t db_htile_data_base, db_htile_surface;
 
 	if (state->zsbuf == NULL) {
 		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, S_028040_FORMAT(V_028040_Z_INVALID));
@@ -1836,9 +1872,23 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		s_info |= S_028044_TILE_MODE_INDEX(tile_mode_index);
 	}
 
+	/* HiZ aka depth buffer htile */
+	/* use htile only for first level */
+	if (rtex->htile_buffer && !level) {
+		z_info |= S_028040_TILE_SURFACE_ENABLE(1);
+		/* Force off means no force, DB_SHADER_CONTROL decides */
+		uint64_t va = r600_resource_va(&rctx->screen->b.b, &rtex->htile_buffer->b.b);
+		db_htile_data_base = va >> 8;
+		db_htile_surface = S_028ABC_FULL_CACHE(1);
+	} else {
+		db_htile_data_base = 0;
+		db_htile_surface = 0;
+	}
+
 	si_pm4_set_reg(pm4, R_028008_DB_DEPTH_VIEW,
 		       S_028008_SLICE_START(state->zsbuf->u.tex.first_layer) |
 		       S_028008_SLICE_MAX(state->zsbuf->u.tex.last_layer));
+	si_pm4_set_reg(pm4, R_028014_DB_HTILE_DATA_BASE, db_htile_data_base);
 
 	si_pm4_set_reg(pm4, R_02803C_DB_DEPTH_INFO, db_depth_info);
 	si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, z_info);
@@ -1852,6 +1902,8 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 
 	si_pm4_set_reg(pm4, R_028058_DB_DEPTH_SIZE, S_028058_PITCH_TILE_MAX(pitch));
 	si_pm4_set_reg(pm4, R_02805C_DB_DEPTH_SLICE, S_02805C_SLICE_TILE_MAX(slice));
+
+	si_pm4_set_reg(pm4, R_028ABC_DB_HTILE_SURFACE, db_htile_surface);
 }
 
 #define FILL_SREG(s0x, s0y, s1x, s1y, s2x, s2y, s3x, s3y)  \
@@ -2122,6 +2174,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	si_pm4_set_state(rctx, framebuffer, pm4);
 	si_update_fb_rs_state(rctx);
 	si_update_fb_blend_state(rctx);
+	si_update_db_draw_state(rctx, (struct r600_surface *)state->zsbuf);
 }
 
 /*

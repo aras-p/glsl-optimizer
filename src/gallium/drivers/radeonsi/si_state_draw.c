@@ -574,8 +574,6 @@ static void si_state_draw(struct r600_context *rctx,
 	/* queries need some special values
 	 * (this is non-zero if any query is active) */
 	if (rctx->num_cs_dw_nontimer_queries_suspend) {
-		struct si_state_dsa *dsa = rctx->queued.named.dsa;
-
 		if (rctx->b.chip_class >= CIK) {
 			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,
 				       S_028004_PERFECT_ZPASS_COUNTS(1) |
@@ -588,9 +586,6 @@ static void si_state_draw(struct r600_context *rctx,
 				       S_028004_PERFECT_ZPASS_COUNTS(1) |
 				       S_028004_SAMPLE_RATE(rctx->fb_log_samples));
 		}
-		si_pm4_set_reg(pm4, R_02800C_DB_RENDER_OVERRIDE,
-			       dsa->db_render_override |
-			       S_02800C_NOOP_CULL_DISABLE(1));
 	}
 
 	if (info->count_from_stream_output) {
@@ -647,7 +642,9 @@ static void si_state_draw(struct r600_context *rctx,
 		initiator |= S_0287F0_USE_OPAQUE(!!info->count_from_stream_output);
 		si_cmd_draw_index_auto(pm4, info->count, initiator, rctx->predicate_drawing);
 	}
+
 	si_pm4_set_state(rctx, draw, pm4);
+	si_update_db_draw_state(rctx, (struct r600_surface *)rctx->framebuffer.zsbuf);
 }
 
 void si_emit_cache_flush(struct r600_common_context *rctx, struct r600_atom *atom)

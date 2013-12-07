@@ -61,7 +61,6 @@ struct si_state_dsa {
 	struct si_pm4_state	pm4;
 	float			alpha_ref;
 	unsigned		alpha_func;
-	unsigned		db_render_override;
 	unsigned		db_render_control;
 	uint8_t			valuemask[2];
 	uint8_t			writemask[2];
@@ -88,6 +87,7 @@ union si_state {
 		struct si_state_dsa		*dsa;
 		struct si_pm4_state		*fb_rs;
 		struct si_pm4_state		*fb_blend;
+		struct si_pm4_state		*db_draw;
 		struct si_pm4_state		*dsa_stencil_ref;
 		struct si_pm4_state		*vs;
 		struct si_pm4_state		*vs_sampler;
@@ -203,12 +203,14 @@ void si_copy_buffer(struct r600_context *rctx,
 
 /* si_state.c */
 struct si_pipe_shader_selector;
+struct r600_surface;
 
 boolean si_is_format_supported(struct pipe_screen *screen,
                                enum pipe_format format,
                                enum pipe_texture_target target,
                                unsigned sample_count,
                                unsigned usage);
+void si_update_db_draw_state(struct r600_context *rctx, struct r600_surface *zsbuf);
 int si_shader_select(struct pipe_context *ctx,
 		     struct si_pipe_shader_selector *sel,
 		     unsigned *dirty);
