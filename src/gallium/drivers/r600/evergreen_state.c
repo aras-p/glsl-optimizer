@@ -1696,8 +1696,8 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 
 	surf->htile_enabled = 0;
 	/* use htile only for first level */
-	if (rtex->htile && !level) {
-		uint64_t va = r600_resource_va(&rctx->screen->b.b, &rtex->htile->b.b);
+	if (rtex->htile_buffer && !level) {
+		uint64_t va = r600_resource_va(&rctx->screen->b.b, &rtex->htile_buffer->b.b);
 		surf->htile_enabled = 1;
 		surf->db_htile_data_base = va >> 8;
 		surf->db_htile_surface = S_028ABC_HTILE_WIDTH(1) |
@@ -1732,7 +1732,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 		rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_DB;
 
 		rtex = (struct r600_texture*)rctx->framebuffer.state.zsbuf->texture;
-		if (rtex->htile) {
+		if (rtex->htile_buffer) {
 			rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_DB_META;
 		}
 	}
@@ -2362,11 +2362,11 @@ static void evergreen_emit_db_state(struct r600_context *rctx, struct r600_atom 
 		struct r600_texture *rtex = (struct r600_texture *)a->rsurf->base.texture;
 		unsigned reloc_idx;
 
-		r600_write_context_reg(cs, R_02802C_DB_DEPTH_CLEAR, fui(rtex->depth_clear));
+		r600_write_context_reg(cs, R_02802C_DB_DEPTH_CLEAR, fui(rtex->depth_clear_value));
 		r600_write_context_reg(cs, R_028ABC_DB_HTILE_SURFACE, a->rsurf->db_htile_surface);
 		r600_write_context_reg(cs, R_028AC8_DB_PRELOAD_CONTROL, a->rsurf->db_preload_control);
 		r600_write_context_reg(cs, R_028014_DB_HTILE_DATA_BASE, a->rsurf->db_htile_data_base);
-		reloc_idx = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rtex->htile, RADEON_USAGE_READWRITE);
+		reloc_idx = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rtex->htile_buffer, RADEON_USAGE_READWRITE);
 		cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
 		cs->buf[cs->cdw++] = reloc_idx;
 	} else {

@@ -547,9 +547,9 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		 * disable fast clear for texture array.
 		 */
 		/* Only use htile for first level */
-		if (rtex->htile && !level && rtex->surface.array_size == 1) {
-			if (rtex->depth_clear != depth) {
-				rtex->depth_clear = depth;
+		if (rtex->htile_buffer && !level && rtex->surface.array_size == 1) {
+			if (rtex->depth_clear_value != depth) {
+				rtex->depth_clear_value = depth;
 				rctx->db_state.atom.dirty = true;
 			}
 			rctx->db_misc_state.htile_clear = true;

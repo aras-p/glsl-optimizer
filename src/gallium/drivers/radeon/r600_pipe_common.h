@@ -140,12 +140,12 @@ struct r600_texture {
 	/* Colorbuffer compression and fast clear. */
 	struct r600_fmask_info		fmask;
 	struct r600_cmask_info		cmask;
-
-	struct r600_resource		*htile;
-	float				depth_clear; /* use htile only for first level */
-
 	struct r600_resource		*cmask_buffer;
 	unsigned			color_clear_value[2];
+
+	/* Depth buffer compression and fast clear. */
+	struct r600_resource		*htile_buffer;
+	float				depth_clear_value;
 
 	bool				non_disp_tiling; /* R600-Cayman only */
 	unsigned			mipmap_shift;

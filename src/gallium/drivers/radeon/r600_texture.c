@@ -270,7 +270,7 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	if (rtex->flushed_depth_texture)
 		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 
-	pipe_resource_reference((struct pipe_resource**)&rtex->htile, NULL);
+	pipe_resource_reference((struct pipe_resource**)&rtex->htile_buffer, NULL);
 	if (rtex->cmask_buffer != &rtex->resource) {
 	    pipe_resource_reference((struct pipe_resource**)&rtex->cmask_buffer, NULL);
 	}
@@ -483,18 +483,19 @@ static void r600_texture_allocate_htile(struct r600_common_screen *rscreen,
 	htile_size = align(htile_size, (2 << 10) * npipes);
 
 	/* XXX don't allocate it separately */
-	rtex->htile = (struct r600_resource*)pipe_buffer_create(&rscreen->b, PIPE_BIND_CUSTOM,
-								PIPE_USAGE_STATIC, htile_size);
-	if (rtex->htile == NULL) {
+	rtex->htile_buffer = (struct r600_resource*)pipe_buffer_create(&rscreen->b, PIPE_BIND_CUSTOM,
+								       PIPE_USAGE_STATIC, htile_size);
+	if (rtex->htile_buffer == NULL) {
 		/* this is not a fatal error as we can still keep rendering
 		 * without htile buffer
 		 */
 		R600_ERR("r600: failed to create bo for htile buffers\n");
 	} else {
-		r600_screen_clear_buffer(rscreen, &rtex->htile->b.b, 0, htile_size, 0);
+		r600_screen_clear_buffer(rscreen, &rtex->htile_buffer->b.b, 0, htile_size, 0);
 	}
 }
 
+/* Common processing for r600_texture_create and r600_texture_from_handle */
 static struct r600_texture *
 r600_texture_create_object(struct pipe_screen *screen,
 			   const struct pipe_resource *base,
@@ -505,7 +506,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 	struct r600_texture *rtex;
 	struct r600_resource *resource;
 	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
-	int r;
 
 	rtex = CALLOC_STRUCT(r600_texture);
 	if (rtex == NULL)
@@ -522,8 +522,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	rtex->is_depth = util_format_has_depth(util_format_description(rtex->resource.b.b.format));
 
 	rtex->surface = *surface;
-	r = r600_setup_surface(screen, rtex, pitch_in_bytes_override);
-	if (r) {
+	if (r600_setup_surface(screen, rtex, pitch_in_bytes_override)) {
 		FREE(rtex);
 		return NULL;
 	}
@@ -533,27 +532,28 @@ r600_texture_create_object(struct pipe_screen *screen,
 	 * Applies to R600-Cayman. */
 	rtex->non_disp_tiling = rtex->is_depth && rtex->surface.level[0].mode >= RADEON_SURF_MODE_1D;
 
-	if (base->nr_samples > 1 && !rtex->is_depth && !buf) {
-		r600_texture_allocate_fmask(rscreen, rtex);
-		r600_texture_allocate_cmask(rscreen, rtex);
-		rtex->cmask_buffer = &rtex->resource;
-	}
-
-	if (!rtex->is_depth && base->nr_samples > 1 &&
-	    (!rtex->fmask.size || !rtex->cmask.size)) {
-		FREE(rtex);
-		return NULL;
-	}
-
-	if (rtex->is_depth &&
-	    !(base->flags & (R600_RESOURCE_FLAG_TRANSFER |
-			     R600_RESOURCE_FLAG_FLUSHED_DEPTH)) &&
-	    !(rscreen->debug_flags & DBG_NO_HYPERZ)) {
-		if (rscreen->chip_class >= SI) {
-			/* XXX implement Hyper-Z for SI.
-			 * Reuse the CMASK allocator, which is almost the same as HTILE. */
-		} else {
-			r600_texture_allocate_htile(rscreen, rtex);
+	if (rtex->is_depth) {
+		if (!(base->flags & (R600_RESOURCE_FLAG_TRANSFER |
+				     R600_RESOURCE_FLAG_FLUSHED_DEPTH)) &&
+		    !(rscreen->debug_flags & DBG_NO_HYPERZ)) {
+			if (rscreen->chip_class >= SI) {
+				/* XXX implement Hyper-Z for SI.
+				 * Reuse the CMASK allocator, which is almost the same as HTILE. */
+			} else {
+				r600_texture_allocate_htile(rscreen, rtex);
+			}
+		}
+	} else {
+		if (base->nr_samples > 1) {
+			if (!buf) {
+				r600_texture_allocate_fmask(rscreen, rtex);
+				r600_texture_allocate_cmask(rscreen, rtex);
+				rtex->cmask_buffer = &rtex->resource;
+			}
+			if (!rtex->fmask.size || !rtex->cmask.size) {
+				FREE(rtex);
+				return NULL;
+			}
 		}
 	}
 
