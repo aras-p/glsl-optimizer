@@ -583,35 +583,6 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		r600_reset_blittable_to_orig(dst, dst_level, &orig_info[1]);
 }
 
-static boolean is_simple_msaa_resolve(const struct pipe_blit_info *info)
-{
-	unsigned dst_width = u_minify(info->dst.resource->width0, info->dst.level);
-	unsigned dst_height = u_minify(info->dst.resource->height0, info->dst.level);
-	struct r600_texture *dst = (struct r600_texture*)info->dst.resource;
-	unsigned dst_tile_mode = dst->surface.level[info->dst.level].mode;
-	bool dst_is_scanout = (dst->surface.flags & RADEON_SURF_SCANOUT) != 0;
-
-	return info->dst.resource->format == info->src.resource->format &&
-		info->dst.resource->format == info->dst.format &&
-		info->src.resource->format == info->src.format &&
-		!info->scissor_enable &&
-		info->mask == PIPE_MASK_RGBA &&
-		dst_width == info->src.resource->width0 &&
-		dst_height == info->src.resource->height0 &&
-		info->dst.box.x == 0 &&
-		info->dst.box.y == 0 &&
-		info->dst.box.width == dst_width &&
-		info->dst.box.height == dst_height &&
-		info->src.box.x == 0 &&
-		info->src.box.y == 0 &&
-		info->src.box.width == dst_width &&
-		info->src.box.height == dst_height &&
-		/* Dst must be tiled. If it's not, we have to use a temporary
-		 * resource which is tiled. */
-		dst_tile_mode >= RADEON_SURF_MODE_1D &&
-		!dst_is_scanout;
-}
-
 /* For MSAA integer resolving to work, we change the format to NORM using this function. */
 static enum pipe_format int_to_norm_format(enum pipe_format format)
 {
@@ -648,77 +619,58 @@ static enum pipe_format int_to_norm_format(enum pipe_format format)
 	}
 }
 
-static void si_msaa_color_resolve(struct pipe_context *ctx,
-				  const struct pipe_blit_info *info)
+static bool do_hardware_msaa_resolve(struct pipe_context *ctx,
+				     const struct pipe_blit_info *info)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct pipe_screen *screen = ctx->screen;
-	struct pipe_resource *tmp, templ;
-	struct pipe_blit_info blit;
+	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct r600_texture *dst = (struct r600_texture*)info->dst.resource;
+	unsigned dst_width = u_minify(info->dst.resource->width0, info->dst.level);
+	unsigned dst_height = u_minify(info->dst.resource->height0, info->dst.level);
+	enum pipe_format format = int_to_norm_format(info->dst.format);
 	unsigned sample_mask = ~0;
 
-	assert(info->src.level == 0);
-	assert(info->src.box.depth == 1);
-	assert(info->dst.box.depth == 1);
-
-	if (is_simple_msaa_resolve(info)) {
+	if (info->src.resource->nr_samples > 1 &&
+	    info->dst.resource->nr_samples <= 1 &&
+	    util_max_layer(info->src.resource, 0) == 0 &&
+	    util_max_layer(info->dst.resource, info->dst.level) == 0 &&
+	    info->dst.format == info->src.format &&
+	    !util_format_is_pure_integer(format) &&
+	    !util_format_is_depth_or_stencil(format) &&
+	    !info->scissor_enable &&
+	    (info->mask & PIPE_MASK_RGBA) == PIPE_MASK_RGBA &&
+	    dst_width == info->src.resource->width0 &&
+	    dst_height == info->src.resource->height0 &&
+	    info->dst.box.x == 0 &&
+	    info->dst.box.y == 0 &&
+	    info->dst.box.width == dst_width &&
+	    info->dst.box.height == dst_height &&
+	    info->dst.box.depth == 1 &&
+	    info->src.box.x == 0 &&
+	    info->src.box.y == 0 &&
+	    info->src.box.width == dst_width &&
+	    info->src.box.height == dst_height &&
+	    info->src.box.depth == 1 &&
+	    dst->surface.level[info->dst.level].mode >= RADEON_SURF_MODE_1D &&
+	    !(dst->surface.flags & RADEON_SURF_SCANOUT)) {
 		r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
 		util_blitter_custom_resolve_color(rctx->blitter,
 						  info->dst.resource, info->dst.level,
 						  info->dst.box.z,
 						  info->src.resource, info->src.box.z,
 						  sample_mask, rctx->custom_blend_resolve,
-                                                  int_to_norm_format(info->dst.format));
+						  format);
 		r600_blitter_end(ctx);
-		return;
+		return true;
 	}
-
-	/* resolve into a temporary texture, then blit */
-	templ.target = PIPE_TEXTURE_2D;
-	templ.format = info->src.resource->format;
-	templ.width0 = info->src.resource->width0;
-	templ.height0 = info->src.resource->height0;
-	templ.depth0 = 1;
-	templ.array_size = 1;
-	templ.last_level = 0;
-	templ.nr_samples = 0;
-	templ.usage = PIPE_USAGE_STATIC;
-	templ.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
-	templ.flags = R600_RESOURCE_FLAG_FORCE_TILING; /* dst must not have a linear layout */
-
-	tmp = screen->resource_create(screen, &templ);
-
-	/* resolve */
-	r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
-	util_blitter_custom_resolve_color(rctx->blitter,
-					  tmp, 0, 0,
-					  info->src.resource, info->src.box.z,
-					  sample_mask, rctx->custom_blend_resolve,
-                                          int_to_norm_format(tmp->format));
-	r600_blitter_end(ctx);
-
-	/* blit */
-	blit = *info;
-	blit.src.resource = tmp;
-	blit.src.box.z = 0;
-
-	r600_blitter_begin(ctx, R600_BLIT);
-	util_blitter_blit(rctx->blitter, &blit);
-	r600_blitter_end(ctx);
-
-	pipe_resource_reference(&tmp, NULL);
+	return false;
 }
 
 static void si_blit(struct pipe_context *ctx,
-                      const struct pipe_blit_info *info)
+		    const struct pipe_blit_info *info)
 {
 	struct r600_context *rctx = (struct r600_context*)ctx;
 
-	if (info->src.resource->nr_samples > 1 &&
-	    info->dst.resource->nr_samples <= 1 &&
-	    !util_format_is_depth_or_stencil(info->src.resource->format) &&
-	    !util_format_is_pure_integer(info->src.resource->format)) {
-		si_msaa_color_resolve(ctx, info);
+	if (do_hardware_msaa_resolve(ctx, info)) {
 		return;
 	}
 
