@@ -1573,6 +1573,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(LRP,          trans_lrp),
 	INSTR(FRC,          trans_frac),
 	INSTR(FLR,          instr_cat2, .opc = OPC_FLOOR_F),
+	INSTR(ROUND,        instr_cat2, .opc = OPC_RNDNE_F),
 	INSTR(ARL,          trans_arl),
 	INSTR(EX2,          instr_cat4, .opc = OPC_EXP2),
 	INSTR(LG2,          instr_cat4, .opc = OPC_LOG2),
