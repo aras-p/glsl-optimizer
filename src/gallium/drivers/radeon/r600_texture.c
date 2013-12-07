@@ -459,20 +459,61 @@ void r600_texture_init_cmask(struct r600_common_screen *rscreen,
 	}
 }
 
-static void r600_texture_allocate_htile(struct r600_common_screen *rscreen,
-					struct r600_texture *rtex)
+static unsigned si_texture_htile_alloc_size(struct r600_common_screen *rscreen,
+					    struct r600_texture *rtex)
+{
+	unsigned cl_width, cl_height, width, height;
+	unsigned slice_elements, slice_bytes, pipe_interleave_bytes, base_align;
+	unsigned num_pipes = rscreen->tiling_info.num_channels;
+
+	switch (num_pipes) {
+	case 2:
+		cl_width = 32;
+		cl_height = 32;
+		break;
+	case 4:
+		cl_width = 64;
+		cl_height = 32;
+		break;
+	case 8:
+		cl_width = 64;
+		cl_height = 64;
+		break;
+	case 16:
+		cl_width = 128;
+		cl_height = 64;
+		break;
+	default:
+		assert(0);
+		return 0;
+	}
+
+	width = align(rtex->surface.npix_x, cl_width * 8);
+	height = align(rtex->surface.npix_y, cl_height * 8);
+
+	slice_elements = (width * height) / (8 * 8);
+	slice_bytes = slice_elements * 4;
+
+	pipe_interleave_bytes = rscreen->tiling_info.group_bytes;
+	base_align = num_pipes * pipe_interleave_bytes;
+
+	return rtex->surface.array_size * align(slice_bytes, base_align);
+}
+
+static unsigned r600_texture_htile_alloc_size(struct r600_common_screen *rscreen,
+					      struct r600_texture *rtex)
 {
 	unsigned sw = rtex->surface.level[0].nblk_x * rtex->surface.blk_w;
 	unsigned sh = rtex->surface.level[0].nblk_y * rtex->surface.blk_h;
-	unsigned htile_size;
 	unsigned npipes = rscreen->info.r600_num_tile_pipes;
+	unsigned htile_size;
 
 	/* XXX also use it for other texture targets */
 	if (rscreen->info.drm_minor < 26 ||
 	    rtex->resource.b.b.target != PIPE_TEXTURE_2D ||
 	    rtex->surface.level[0].nblk_x < 32 ||
 	    rtex->surface.level[0].nblk_y < 32) {
-		return;
+		return 0;
 	}
 
 	/* this alignment and htile size only apply to linear htile buffer */
@@ -481,15 +522,30 @@ static void r600_texture_allocate_htile(struct r600_common_screen *rscreen,
 	htile_size = (sw >> 3) * (sh >> 3) * 4;
 	/* must be aligned with 2K * npipes */
 	htile_size = align(htile_size, (2 << 10) * npipes);
+	return htile_size;
+}
+
+static void r600_texture_allocate_htile(struct r600_common_screen *rscreen,
+					struct r600_texture *rtex)
+{
+	unsigned htile_size;
+	if (rscreen->chip_class >= SI) {
+		htile_size = si_texture_htile_alloc_size(rscreen, rtex);
+	} else {
+		htile_size = r600_texture_htile_alloc_size(rscreen, rtex);
+	}
+
+	if (!htile_size)
+		return;
 
 	/* XXX don't allocate it separately */
-	rtex->htile_buffer = (struct r600_resource*)pipe_buffer_create(&rscreen->b, PIPE_BIND_CUSTOM,
-								       PIPE_USAGE_STATIC, htile_size);
+	rtex->htile_buffer = (struct r600_resource*)
+			     pipe_buffer_create(&rscreen->b, PIPE_BIND_CUSTOM,
+						PIPE_USAGE_STATIC, htile_size);
 	if (rtex->htile_buffer == NULL) {
 		/* this is not a fatal error as we can still keep rendering
-		 * without htile buffer
-		 */
-		R600_ERR("r600: failed to create bo for htile buffers\n");
+		 * without htile buffer */
+		R600_ERR("Failed to create buffer object for htile buffer.\n");
 	} else {
 		r600_screen_clear_buffer(rscreen, &rtex->htile_buffer->b.b, 0, htile_size, 0);
 	}
@@ -536,12 +592,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 		if (!(base->flags & (R600_RESOURCE_FLAG_TRANSFER |
 				     R600_RESOURCE_FLAG_FLUSHED_DEPTH)) &&
 		    !(rscreen->debug_flags & DBG_NO_HYPERZ)) {
-			if (rscreen->chip_class >= SI) {
-				/* XXX implement Hyper-Z for SI.
-				 * Reuse the CMASK allocator, which is almost the same as HTILE. */
-			} else {
-				r600_texture_allocate_htile(rscreen, rtex);
-			}
+
+			r600_texture_allocate_htile(rscreen, rtex);
 		}
 	} else {
 		if (base->nr_samples > 1) {
