@@ -200,7 +200,7 @@ nv98_create_decoder(struct pipe_context *context,
    dec->ref_stride = mb(templ->width)*16 * (mb_half(templ->height)*32 + nouveau_vp3_video_align(templ->height)/2);
    ret = nouveau_bo_new(screen->device, NOUVEAU_BO_VRAM, 0,
                         dec->ref_stride * (templ->max_references+2) + tmp_size,
-                        &cfg, &dec->ref_bo);
+                        NULL, &dec->ref_bo);
    if (ret)
       goto fail;
 

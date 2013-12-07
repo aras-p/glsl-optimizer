@@ -362,12 +362,7 @@ nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
    enum pipe_video_format codec = u_reduce_video_profile(profile);
    switch (param) {
    case PIPE_VIDEO_CAP_SUPPORTED:
-      /* For now, h264 and mpeg4 don't work on pre-nvc0. */
-      if (chipset < 0xc0)
-         return codec == PIPE_VIDEO_FORMAT_MPEG12 ||
-            codec == PIPE_VIDEO_FORMAT_VC1;
-      /* In the general case, this should work, once the pre-nvc0 problems are
-       * resolved. */
+      /* VP3 does not support MPEG4, VP4+ do. */
       return profile >= PIPE_VIDEO_PROFILE_MPEG1 && (
             !vp3 || codec != PIPE_VIDEO_FORMAT_MPEG4);
    case PIPE_VIDEO_CAP_NPOT_TEXTURES:
