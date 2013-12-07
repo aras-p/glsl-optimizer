@@ -491,10 +491,12 @@ fd3_emit_restore(struct fd_context *ctx)
 	struct fd_ringbuffer *ring = ctx->ring;
 	int i;
 
-	OUT_PKT3(ring, CP_REG_RMW, 3);
-	OUT_RING(ring, REG_A3XX_RBBM_CLOCK_CTL);
-	OUT_RING(ring, 0xfffcffff);
-	OUT_RING(ring, 0x00000000);
+	if (ctx->screen->gpu_id == 320) {
+		OUT_PKT3(ring, CP_REG_RMW, 3);
+		OUT_RING(ring, REG_A3XX_RBBM_CLOCK_CTL);
+		OUT_RING(ring, 0xfffcffff);
+		OUT_RING(ring, 0x00000000);
+	}
 
 	OUT_PKT3(ring, CP_INVALIDATE_STATE, 1);
 	OUT_RING(ring, 0x00007fff);
