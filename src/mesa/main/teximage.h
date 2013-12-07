@@ -138,6 +138,12 @@ _mesa_tex_target_to_face(GLenum target);
 extern GLint
 _mesa_get_texture_dimensions(GLenum target);
 
+extern GLboolean
+_mesa_tex_target_is_layered(GLenum target);
+
+extern GLuint
+_mesa_get_texture_layers(const struct gl_texture_object *texObj, GLint level);
+
 extern GLsizei
 _mesa_get_tex_max_num_levels(GLenum target, GLsizei width, GLsizei height,
                              GLsizei depth);

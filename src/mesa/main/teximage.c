@@ -1088,6 +1088,93 @@ _mesa_get_texture_dimensions(GLenum target)
 
 
 /**
+ * Check if a texture target can have more than one layer.
+ */
+GLboolean
+_mesa_tex_target_is_layered(GLenum target)
+{
+   switch (target) {
+   case GL_TEXTURE_1D:
+   case GL_PROXY_TEXTURE_1D:
+   case GL_TEXTURE_2D:
+   case GL_PROXY_TEXTURE_2D:
+   case GL_TEXTURE_RECTANGLE:
+   case GL_PROXY_TEXTURE_RECTANGLE:
+   case GL_TEXTURE_2D_MULTISAMPLE:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE:
+   case GL_TEXTURE_BUFFER:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+   case GL_TEXTURE_EXTERNAL_OES:
+      return GL_FALSE;
+
+   case GL_TEXTURE_3D:
+   case GL_PROXY_TEXTURE_3D:
+   case GL_TEXTURE_CUBE_MAP:
+   case GL_PROXY_TEXTURE_CUBE_MAP:
+   case GL_TEXTURE_1D_ARRAY:
+   case GL_PROXY_TEXTURE_1D_ARRAY:
+   case GL_TEXTURE_2D_ARRAY:
+   case GL_PROXY_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
+   case GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY:
+      return GL_TRUE;
+
+   default:
+      assert(!"Invalid texture target.");
+      return GL_FALSE;
+   }
+}
+
+
+/**
+ * Return the number of layers present in the given level of an array,
+ * cubemap or 3D texture.  If the texture is not layered return zero.
+ */
+GLuint
+_mesa_get_texture_layers(const struct gl_texture_object *texObj, GLint level)
+{
+   assert(level >= 0 && level < MAX_TEXTURE_LEVELS);
+
+   switch (texObj->Target) {
+   case GL_TEXTURE_1D:
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_RECTANGLE:
+   case GL_TEXTURE_2D_MULTISAMPLE:
+   case GL_TEXTURE_BUFFER:
+   case GL_TEXTURE_EXTERNAL_OES:
+      return 0;
+
+   case GL_TEXTURE_CUBE_MAP:
+      return 6;
+
+   case GL_TEXTURE_1D_ARRAY: {
+      struct gl_texture_image *img = texObj->Image[0][level];
+      return img ? img->Height : 0;
+   }
+
+   case GL_TEXTURE_3D:
+   case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY: {
+      struct gl_texture_image *img = texObj->Image[0][level];
+      return img ? img->Depth : 0;
+   }
+
+   default:
+      assert(!"Invalid texture target.");
+      return 0;
+   }
+}
+
+
+/**
  * Return the maximum number of mipmap levels for the given target
  * and the dimensions.
  * The dimensions are expected not to include the border.
