@@ -64,18 +64,18 @@ fs_live_variables::setup_one_read(bblock_t *block, fs_inst *inst,
     * destination starts (naturally).  This gets more complicated for
     * simd16, because the instruction:
     *
-    * mov(16)      g4<1>F      g4<8,8,1>F   g6<8,8,1>F
+    * add(16)      g4<1>F      g4<8,8,1>F   g6<8,8,1>F
     *
     * is actually decoded in hardware as:
     *
-    * mov(8)       g4<1>F      g4<8,8,1>F   g6<8,8,1>F
-    * mov(8)       g5<1>F      g5<8,8,1>F   g7<8,8,1>F
+    * add(8)       g4<1>F      g4<8,8,1>F   g6<8,8,1>F
+    * add(8)       g5<1>F      g5<8,8,1>F   g7<8,8,1>F
     *
     * Which is safe.  However, if we have uniform accesses
     * happening, we get into trouble:
     *
-    * mov(8)       g4<1>F      g4<0,1,0>F   g6<8,8,1>F
-    * mov(8)       g5<1>F      g4<0,1,0>F   g7<8,8,1>F
+    * add(8)       g4<1>F      g4<0,1,0>F   g6<8,8,1>F
+    * add(8)       g5<1>F      g4<0,1,0>F   g7<8,8,1>F
     *
     * Now our destination for the first instruction overwrote the
     * second instruction's src0, and we get garbage for those 8
