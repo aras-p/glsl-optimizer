@@ -1317,24 +1317,24 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       break;
    }
    case ir_txs:
-      emit(MOV(next.retype(BRW_REGISTER_TYPE_UD), lod));
+      emit(MOV(retype(next, BRW_REGISTER_TYPE_UD), lod));
       next.reg_offset++;
       break;
    case ir_query_levels:
-      emit(MOV(next.retype(BRW_REGISTER_TYPE_UD), fs_reg(0u)));
+      emit(MOV(retype(next, BRW_REGISTER_TYPE_UD), fs_reg(0u)));
       next.reg_offset++;
       break;
    case ir_txf:
       /* Unfortunately, the parameters for LD are intermixed: u, lod, v, r. */
-      emit(MOV(next.retype(BRW_REGISTER_TYPE_D), coordinate));
+      emit(MOV(retype(next, BRW_REGISTER_TYPE_D), coordinate));
       coordinate.reg_offset++;
       next.reg_offset++;
 
-      emit(MOV(next.retype(BRW_REGISTER_TYPE_D), lod));
+      emit(MOV(retype(next, BRW_REGISTER_TYPE_D), lod));
       next.reg_offset++;
 
       for (int i = 1; i < ir->coordinate->type->vector_elements; i++) {
-	 emit(MOV(next.retype(BRW_REGISTER_TYPE_D), coordinate));
+	 emit(MOV(retype(next, BRW_REGISTER_TYPE_D), coordinate));
 	 coordinate.reg_offset++;
 	 next.reg_offset++;
       }
@@ -1342,18 +1342,18 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       coordinate_done = true;
       break;
    case ir_txf_ms:
-      emit(MOV(next.retype(BRW_REGISTER_TYPE_UD), sample_index));
+      emit(MOV(retype(next, BRW_REGISTER_TYPE_UD), sample_index));
       next.reg_offset++;
 
       /* data from the multisample control surface */
-      emit(MOV(next.retype(BRW_REGISTER_TYPE_UD), mcs));
+      emit(MOV(retype(next, BRW_REGISTER_TYPE_UD), mcs));
       next.reg_offset++;
 
       /* there is no offsetting for this message; just copy in the integer
        * texture coordinates
        */
       for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-         emit(MOV(next.retype(BRW_REGISTER_TYPE_D), coordinate));
+         emit(MOV(retype(next, BRW_REGISTER_TYPE_D), coordinate));
          coordinate.reg_offset++;
          next.reg_offset++;
       }
@@ -1376,7 +1376,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
          }
 
          for (int i = 0; i < 2; i++) { /* offu, offv */
-            emit(MOV(next.retype(BRW_REGISTER_TYPE_D), offset_value));
+            emit(MOV(retype(next, BRW_REGISTER_TYPE_D), offset_value));
             offset_value.reg_offset++;
             next.reg_offset++;
          }
@@ -1549,7 +1549,7 @@ fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, int sampler)
 
    /* parameters are: u, v, r, lod; missing parameters are treated as zero */
    for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-      emit(MOV(next.retype(BRW_REGISTER_TYPE_D), coordinate));
+      emit(MOV(retype(next, BRW_REGISTER_TYPE_D), coordinate));
       coordinate.reg_offset++;
       next.reg_offset++;
    }
@@ -1719,7 +1719,7 @@ fs_visitor::emit_gen6_gather_wa(uint8_t wa, fs_reg dst)
    int width = (wa & WA_8BIT) ? 8 : 16;
 
    for (int i = 0; i < 4; i++) {
-      fs_reg dst_f = dst.retype(BRW_REGISTER_TYPE_F);
+      fs_reg dst_f = retype(dst, BRW_REGISTER_TYPE_F);
       /* Convert from UNORM to UINT */
       emit(MUL(dst_f, dst_f, fs_reg((float)((1 << width) - 1))));
       emit(MOV(dst, dst_f));

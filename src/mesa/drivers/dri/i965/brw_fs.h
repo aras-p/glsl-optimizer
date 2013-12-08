@@ -83,7 +83,7 @@ public:
    bool is_null() const;
    bool is_valid_3src() const;
    bool is_contiguous() const;
-   fs_reg retype(uint32_t type);
+
    fs_reg &apply_stride(unsigned stride);
 
    /** Register file: GRF, MRF, IMM. */

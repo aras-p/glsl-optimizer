@@ -443,14 +443,6 @@ fs_reg::equals(const fs_reg &r) const
            imm.u == r.imm.u);
 }
 
-fs_reg
-fs_reg::retype(uint32_t type)
-{
-   fs_reg result = *this;
-   result.type = type;
-   return result;
-}
-
 fs_reg &
 fs_reg::apply_stride(unsigned stride)
 {
