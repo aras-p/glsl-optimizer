@@ -57,6 +57,7 @@ fs_live_variables::setup_one_read(bblock_t *block, fs_inst *inst,
                                   int ip, fs_reg reg)
 {
    int var = var_from_vgrf[reg.reg] + reg.reg_offset;
+   assert(var < num_vars);
 
    /* In most cases, a register can be written over safely by the
     * same instruction that is its last use.  For a single
@@ -106,6 +107,7 @@ fs_live_variables::setup_one_write(bblock_t *block, fs_inst *inst,
                                    int ip, fs_reg reg)
 {
    int var = var_from_vgrf[reg.reg] + reg.reg_offset;
+   assert(var < num_vars);
 
    start[var] = MIN2(start[var], ip);
    end[var] = MAX2(end[var], ip);
