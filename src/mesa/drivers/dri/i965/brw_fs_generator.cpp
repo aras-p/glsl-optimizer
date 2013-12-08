@@ -1030,11 +1030,13 @@ brw_reg_from_fs_reg(fs_reg *reg)
    switch (reg->file) {
    case GRF:
    case MRF:
-      if (reg->smear == -1) {
-	 brw_reg = brw_vec8_reg(brw_file_from_reg(reg), reg->reg, 0);
+      if (reg->stride == 0 || reg->smear >= 0) {
+         brw_reg = brw_vec1_reg(brw_file_from_reg(reg), reg->reg, reg->smear);
       } else {
-	 brw_reg = brw_vec1_reg(brw_file_from_reg(reg), reg->reg, reg->smear);
+         brw_reg = brw_vec8_reg(brw_file_from_reg(reg), reg->reg, 0);
+         brw_reg = stride(brw_reg, 8 * reg->stride, 8, reg->stride);
       }
+
       brw_reg = retype(brw_reg, reg->type);
       if (reg->sechalf)
 	 brw_reg = sechalf(brw_reg);

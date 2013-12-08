@@ -381,6 +381,7 @@ fs_reg::init()
 {
    memset(this, 0, sizeof(*this));
    this->smear = -1;
+   stride = 1;
 }
 
 /** Generic unset register constructor. */
@@ -440,6 +441,7 @@ fs_reg::equals(const fs_reg &r) const
            memcmp(&fixed_hw_reg, &r.fixed_hw_reg,
                   sizeof(fixed_hw_reg)) == 0 &&
            smear == r.smear &&
+           stride == r.stride &&
            imm.u == r.imm.u);
 }
 
@@ -449,6 +451,22 @@ fs_reg::retype(uint32_t type)
    fs_reg result = *this;
    result.type = type;
    return result;
+}
+
+fs_reg &
+fs_reg::apply_stride(unsigned stride)
+{
+   assert((this->stride * stride) <= 4 &&
+          (is_power_of_two(stride) || stride == 0) &&
+          file != HW_REG && file != IMM);
+   this->stride *= stride;
+   return *this;
+}
+
+bool
+fs_reg::is_contiguous() const
+{
+   return stride == 1;
 }
 
 bool
@@ -708,7 +726,7 @@ fs_inst::is_partial_write()
 {
    return ((this->predicate && this->opcode != BRW_OPCODE_SEL) ||
            this->force_uncompressed ||
-           this->force_sechalf);
+           this->force_sechalf || !this->dst.is_contiguous());
 }
 
 int
@@ -2317,6 +2335,7 @@ fs_visitor::register_coalesce()
 	  inst->src[0].negate ||
 	  inst->src[0].abs ||
 	  inst->src[0].smear != -1 ||
+          !inst->src[0].is_contiguous() ||
 	  inst->dst.file != GRF ||
 	  inst->dst.type != inst->src[0].type) {
 	 continue;
@@ -2477,7 +2496,8 @@ fs_visitor::compute_to_mrf()
 	  inst->dst.file != MRF || inst->src[0].file != GRF ||
 	  inst->dst.type != inst->src[0].type ||
 	  inst->src[0].abs || inst->src[0].negate ||
-          inst->src[0].smear != -1 || inst->src[0].subreg_offset)
+          inst->src[0].smear != -1 || !inst->src[0].is_contiguous() ||
+          inst->src[0].subreg_offset)
 	 continue;
 
       /* Work out which hardware MRF registers are written by this

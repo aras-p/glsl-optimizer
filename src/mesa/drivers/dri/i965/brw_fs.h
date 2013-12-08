@@ -82,7 +82,9 @@ public:
    bool is_one() const;
    bool is_null() const;
    bool is_valid_3src() const;
+   bool is_contiguous() const;
    fs_reg retype(uint32_t type);
+   fs_reg &apply_stride(unsigned stride);
 
    /** Register file: GRF, MRF, IMM. */
    enum register_file file;
@@ -119,6 +121,9 @@ public:
     * backend_reg::reg_offset unit are valid.
     */
    int subreg_offset;
+
+   /** Register region horizontal stride */
+   int stride;
 
    fs_reg *reladdr;
 };

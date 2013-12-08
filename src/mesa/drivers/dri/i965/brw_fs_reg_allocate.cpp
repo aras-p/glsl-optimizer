@@ -592,7 +592,7 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
              * loading pull constants, so spilling them is unlikely to reduce
              * register pressure anyhow.
              */
-            if (inst->src[i].smear >= 0) {
+            if (inst->src[i].smear >= 0 || !inst->src[i].is_contiguous()) {
                no_spill[inst->src[i].reg] = true;
             }
 	 }
@@ -601,7 +601,7 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
       if (inst->dst.file == GRF) {
 	 spill_costs[inst->dst.reg] += inst->regs_written * loop_scale;
 
-         if (inst->dst.smear >= 0) {
+         if (inst->dst.smear >= 0 || !inst->dst.is_contiguous()) {
             no_spill[inst->dst.reg] = true;
          }
       }
