@@ -858,6 +858,10 @@ builtin_variable_generator::generate_fs_special_vars()
        */
       add_output(FRAG_RESULT_SAMPLE_MASK, array(int_t, 1), "gl_SampleMask");
    }
+
+   if (state->ARB_gpu_shader5_enable) {
+      add_system_value(SYSTEM_VALUE_SAMPLE_MASK_IN, array(int_t, 1), "gl_SampleMaskIn");
+   }
 }
 
 
