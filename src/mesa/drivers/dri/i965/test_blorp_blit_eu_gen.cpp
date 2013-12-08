@@ -827,6 +827,54 @@ test_gen7_simple_src_samples_zero(struct brw_context *brw)
    return check(brw, &key, expected, sizeof(expected) - 1);
 }
 
+static bool
+test_gen7_bilinear(struct brw_context *brw)
+{
+   static const char expected[] =
+      "0x00000000: add(16)         g44<1>UW        g1.4<2,4,0>UW   0x10101010V     { align1 WE_normal 1H };\n"
+      "0x00000010: add(16)         g46<1>UW        g1.5<2,4,0>UW   0x11001100V     { align1 WE_normal 1H };\n"
+      "0x00000020: mov(16)         g48<1>UD        g44<8,8,1>UW                    { align1 WE_normal 1H };\n"
+      "0x00000030: mov(16)         g50<1>UD        g46<8,8,1>UW                    { align1 WE_normal 1H };\n"
+      "0x00000040: mov(16)         g44<1>F         g48<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000050: mov(16)         g46<1>F         g50<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000060: mul(16)         g48<1>F         g44<8,8,1>F     g2.6<0,1,0>F    { align1 WE_normal 1H };\n"
+      "0x00000070: mul(16)         g50<1>F         g46<8,8,1>F     g3<0,1,0>F      { align1 WE_normal 1H };\n"
+      "0x00000080: add(16)         g48<1>F         g48<8,8,1>F     g2.7<0,1,0>F    { align1 WE_normal 1H };\n"
+      "0x00000090: add(16)         g50<1>F         g50<8,8,1>F     g3.1<0,1,0>F    { align1 WE_normal 1H };\n"
+      "0x000000a0: mov(16)         g114<1>F        g48<8,8,1>F                     { align1 WE_normal 1H };\n"
+      "0x000000b0: mov(16)         g116<1>F        g50<8,8,1>F                     { align1 WE_normal 1H };\n"
+      "0x000000c0: send(16)        g4<1>UW         g114<8,8,1>F\n"
+      "                sampler (0, 0, 0, 2) mlen 4 rlen 8              { align1 WE_normal 1H };\n"
+      "0x000000d0: mov(16)         g114<1>F        g4<8,8,1>F                      { align1 WE_normal 1H };\n"
+      "0x000000e0: mov(16)         g116<1>F        g6<8,8,1>F                      { align1 WE_normal 1H };\n"
+      "0x000000f0: mov(16)         g118<1>F        g8<8,8,1>F                      { align1 WE_normal 1H };\n"
+      "0x00000100: mov(16)         g120<1>F        g10<8,8,1>F                     { align1 WE_normal 1H };\n"
+      "0x00000110: sendc(16)       null            g114<8,8,1>F\n"
+      "                render ( RT write, 1, 0, 12) mlen 8 rlen 0      { align1 WE_normal 1H EOT };\n";
+   struct brw_blorp_blit_prog_key key;
+
+   key.tex_samples = 0;
+   key.tex_layout = INTEL_MSAA_LAYOUT_NONE;
+   key.src_samples = 0;
+   key.src_layout = INTEL_MSAA_LAYOUT_NONE;
+   key.rt_samples = 0;
+   key.rt_layout = INTEL_MSAA_LAYOUT_NONE;
+   key.dst_samples = 0;
+   key.dst_layout = INTEL_MSAA_LAYOUT_NONE;
+   key.texture_data_type = BRW_REGISTER_TYPE_F;
+   key.src_tiled_w = false;
+   key.dst_tiled_w = false;
+   key.blend = false;
+   key.use_kill = false;
+   key.persample_msaa_dispatch = false;
+   key.blit_scaled = true;
+   key.x_scale = 2.000000;
+   key.y_scale = 0.000000;
+   key.bilinear_filter = true;
+
+   return check(brw, &key, expected, sizeof(expected) - 1);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -843,6 +891,7 @@ main(int argc, char **argv)
    pass = test_gen7_alpha_blend(&brw) && pass;
    pass = test_gen7_unaligned_8_msaa(&brw) && pass;
    pass = test_gen7_simple_src_samples_zero(&brw) && pass;
+   pass = test_gen7_bilinear(&brw) && pass;
 
    /* Test suite expects zero for success */
    return !pass;
