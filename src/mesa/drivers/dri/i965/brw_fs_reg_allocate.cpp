@@ -686,11 +686,12 @@ fs_visitor::spill_reg(int spill_reg)
             int regs_read = inst->regs_read(this, i);
             int subset_spill_offset = (spill_offset +
                                        reg_size * inst->src[i].reg_offset);
+            fs_reg unspill_dst(GRF, virtual_grf_alloc(regs_read));
 
-            inst->src[i].reg = virtual_grf_alloc(regs_read);
+            inst->src[i].reg = unspill_dst.reg;
             inst->src[i].reg_offset = 0;
 
-            emit_unspill(inst, inst->src[i], subset_spill_offset, regs_read);
+            emit_unspill(inst, unspill_dst, subset_spill_offset, regs_read);
 	 }
       }
 
@@ -698,23 +699,20 @@ fs_visitor::spill_reg(int spill_reg)
 	  inst->dst.reg == spill_reg) {
          int subset_spill_offset = (spill_offset +
                                     reg_size * inst->dst.reg_offset);
-         inst->dst.reg = virtual_grf_alloc(inst->regs_written);
+         fs_reg spill_src(GRF, virtual_grf_alloc(inst->regs_written));
+
+         inst->dst.reg = spill_src.reg;
          inst->dst.reg_offset = 0;
 
 	 /* If our write is going to affect just part of the
           * inst->regs_written(), then we need to unspill the destination
           * since we write back out all of the regs_written().
 	  */
-	 if (inst->predicate || inst->force_uncompressed || inst->force_sechalf) {
-            emit_unspill(inst, inst->dst, subset_spill_offset,
+	 if (inst->predicate || inst->force_uncompressed ||
+             inst->force_sechalf || inst->dst.subreg_offset) {
+            emit_unspill(inst, spill_src, subset_spill_offset,
                          inst->regs_written);
 	 }
-
-	 fs_reg spill_src = inst->dst;
-	 spill_src.reg_offset = 0;
-	 spill_src.abs = false;
-	 spill_src.negate = false;
-	 spill_src.smear = -1;
 
 	 for (int chan = 0; chan < inst->regs_written; chan++) {
 	    fs_inst *spill_inst =

@@ -284,7 +284,8 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
 
    if (inst->src[arg].file != entry->dst.file ||
        inst->src[arg].reg != entry->dst.reg ||
-       inst->src[arg].reg_offset != entry->dst.reg_offset) {
+       inst->src[arg].reg_offset != entry->dst.reg_offset ||
+       inst->src[arg].subreg_offset != entry->dst.subreg_offset) {
       return false;
    }
 
@@ -308,6 +309,7 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
    inst->src[arg].reg_offset = entry->src.reg_offset;
    if (entry->src.smear != -1)
       inst->src[arg].smear = entry->src.smear;
+   inst->src[arg].subreg_offset = entry->src.subreg_offset;
 
    if (!inst->src[arg].abs) {
       inst->src[arg].abs = entry->src.abs;
@@ -329,7 +331,8 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
    for (int i = 2; i >= 0; i--) {
       if (inst->src[i].file != entry->dst.file ||
           inst->src[i].reg != entry->dst.reg ||
-          inst->src[i].reg_offset != entry->dst.reg_offset)
+          inst->src[i].reg_offset != entry->dst.reg_offset ||
+          inst->src[i].subreg_offset != entry->dst.subreg_offset)
          continue;
 
       /* Don't bother with cases that should have been taken care of by the

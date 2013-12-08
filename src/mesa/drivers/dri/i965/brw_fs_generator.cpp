@@ -1038,6 +1038,7 @@ brw_reg_from_fs_reg(fs_reg *reg)
       brw_reg = retype(brw_reg, reg->type);
       if (reg->sechalf)
 	 brw_reg = sechalf(brw_reg);
+      brw_reg = byte_offset(brw_reg, reg->subreg_offset);
       break;
    case IMM:
       switch (reg->type) {

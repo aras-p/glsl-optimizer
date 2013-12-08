@@ -114,8 +114,22 @@ public:
       float f;
    } imm;
 
+   /**
+    * Offset in bytes from the start of the register.  Values up to a
+    * backend_reg::reg_offset unit are valid.
+    */
+   int subreg_offset;
+
    fs_reg *reladdr;
 };
+
+static inline fs_reg
+byte_offset(fs_reg reg, unsigned delta)
+{
+   assert(delta == 0 || (reg.file != HW_REG && reg.file != IMM));
+   reg.subreg_offset += delta;
+   return reg;
+}
 
 static const fs_reg reg_undef;
 static const fs_reg reg_null_f(retype(brw_null_reg(), BRW_REGISTER_TYPE_F));
