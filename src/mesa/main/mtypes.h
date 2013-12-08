@@ -280,6 +280,7 @@ typedef enum
  */
 #define SYSTEM_BIT_SAMPLE_ID BITFIELD64_BIT(SYSTEM_VALUE_SAMPLE_ID)
 #define SYSTEM_BIT_SAMPLE_POS BITFIELD64_BIT(SYSTEM_VALUE_SAMPLE_POS)
+#define SYSTEM_BIT_SAMPLE_MASK_IN BITFIELD64_BIT(SYSTEM_VALUE_SAMPLE_MASK_IN)
 
 /**
  * Determine if the given gl_varying_slot appears in the fragment shader.
@@ -1973,12 +1974,13 @@ typedef enum
  */
 typedef enum
 {
-   SYSTEM_VALUE_FRONT_FACE,  /**< Fragment shader only (not done yet) */
-   SYSTEM_VALUE_VERTEX_ID,   /**< Vertex shader only */
-   SYSTEM_VALUE_INSTANCE_ID, /**< Vertex shader only */
-   SYSTEM_VALUE_SAMPLE_ID,   /**< Fragment shader only */
-   SYSTEM_VALUE_SAMPLE_POS,  /**< Fragment shader only */
-   SYSTEM_VALUE_MAX          /**< Number of values */
+   SYSTEM_VALUE_FRONT_FACE,     /**< Fragment shader only (not done yet) */
+   SYSTEM_VALUE_VERTEX_ID,      /**< Vertex shader only */
+   SYSTEM_VALUE_INSTANCE_ID,    /**< Vertex shader only */
+   SYSTEM_VALUE_SAMPLE_ID,      /**< Fragment shader only */
+   SYSTEM_VALUE_SAMPLE_POS,     /**< Fragment shader only */
+   SYSTEM_VALUE_SAMPLE_MASK_IN, /**< Fragment shader only */
+   SYSTEM_VALUE_MAX             /**< Number of values */
 } gl_system_value;
 
 
