@@ -136,6 +136,8 @@ fs_visitor::visit(ir_variable *ir)
 	 reg = emit_samplepos_setup(ir);
       } else if (ir->data.location == SYSTEM_VALUE_SAMPLE_ID) {
 	 reg = emit_sampleid_setup(ir);
+      } else if (ir->data.location == SYSTEM_VALUE_SAMPLE_MASK_IN) {
+         reg = emit_samplemaskin_setup(ir);
       }
    }
 
