@@ -208,8 +208,13 @@ initialize_texture_fields(struct gl_context *ctx,
    /* Set up all the texture object's gl_texture_images */
    for (level = 0; level < levels; level++) {
       for (face = 0; face < numFaces; face++) {
-         struct gl_texture_image *texImage =
-                 _mesa_get_tex_image(ctx, texObj, face, level);
+         struct gl_texture_image *texImage;
+         GLenum faceTarget = target;
+
+         if (target == GL_TEXTURE_CUBE_MAP)
+            faceTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
+
+         texImage = _mesa_get_tex_image(ctx, texObj, faceTarget, level);
 
          if (!texImage) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexStorage");
