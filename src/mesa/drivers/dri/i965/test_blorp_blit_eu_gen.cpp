@@ -494,6 +494,150 @@ test_gen7_msaa_4_ums_to_cms(struct brw_context *brw)
    return check(brw, &key, expected, sizeof(expected) - 1);
 }
 
+/**
+ * Gotten when running piglit test:
+ * "ext_framebuffer_multisample-alpha-blending"
+ */
+static bool
+test_gen7_alpha_blend(struct brw_context *brw)
+{
+   static const char expected[] =
+      "0x00000000: add(16)         g44<1>UW        g1.4<2,4,0>UW   0x10101010V     { align1 WE_normal 1H };\n"
+      "0x00000010: add(16)         g46<1>UW        g1.5<2,4,0>UW   0x11001100V     { align1 WE_normal 1H };\n"
+      "0x00000020: mov(16)         g48<1>UD        g44<8,8,1>UW                    { align1 WE_normal 1H };\n"
+      "0x00000030: mov(16)         g50<1>UD        g46<8,8,1>UW                    { align1 WE_normal 1H };\n"
+      "0x00000040: mov(16)         g44<1>F         g48<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000050: mov(16)         g46<1>F         g50<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000060: mul(16)         g48<1>F         g44<8,8,1>F     g2.6<0,1,0>F    { align1 WE_normal 1H };\n"
+      "0x00000070: mul(16)         g50<1>F         g46<8,8,1>F     g3<0,1,0>F      { align1 WE_normal 1H };\n"
+      "0x00000080: add(16)         g48<1>F         g48<8,8,1>F     g2.7<0,1,0>F    { align1 WE_normal 1H };\n"
+      "0x00000090: add(16)         g50<1>F         g50<8,8,1>F     g3.1<0,1,0>F    { align1 WE_normal 1H };\n"
+      "0x000000a0: mov(16)         g44<1>UD        g48<8,8,1>F                     { align1 WE_normal 1H };\n"
+      "0x000000b0: mov(16)         g46<1>UD        g50<8,8,1>F                     { align1 WE_normal 1H };\n"
+      "0x000000c0: mov(16)         g114<1>UD       g44<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000000d0: mov(16)         g116<1>UD       g46<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000000e0: send(16)        g36<1>UW        g114<8,8,1>F\n"
+      "                sampler (0, 0, 29, 2) mlen 4 rlen 8             { align1 WE_normal 1H };\n"
+      "0x000000f0: mov(16)         g114<1>UD       0x00000000UD                    { align1 WE_normal 1H };\n"
+      "0x00000100: mov(16)         g116<1>UD       g36<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000110: mov(16)         g118<1>UD       g44<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000120: mov(16)         g120<1>UD       g46<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000130: send(16)        g4<1>UW         g114<8,8,1>F\n"
+      "                sampler (0, 0, 30, 2) mlen 8 rlen 8             { align1 WE_normal 1H };\n"
+      "0x00000140: cmp.ne.f0(16)   null            g36<8,8,1>UD    0x00000000UD    { align1 WE_normal 1H switch };\n"
+      "0x00000150: (+f0) if(16) 150 150            null            0x00960096UD    { align1 WE_normal 1H switch };\n"
+      "0x00000160: mov(16)         g52<1>UD        0x00000001UD                    { align1 WE_normal 1H };\n"
+      "0x00000170: mov(16)         g114<1>UD       g52<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000180: mov(16)         g116<1>UD       g36<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000190: mov(16)         g118<1>UD       g44<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000001a0: mov(16)         g120<1>UD       g46<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000001b0: send(16)        g12<1>UW        g114<8,8,1>F\n"
+      "                sampler (0, 0, 30, 2) mlen 8 rlen 8             { align1 WE_normal 1H };\n"
+      "0x000001c0: add(16)         g4<1>F          g4<8,8,1>F      g12<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x000001d0: add(16)         g6<1>F          g6<8,8,1>F      g14<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x000001e0: add(16)         g8<1>F          g8<8,8,1>F      g16<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x000001f0: add(16)         g10<1>F         g10<8,8,1>F     g18<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000200: mov(16)         g52<1>UD        0x00000002UD                    { align1 WE_normal 1H };\n"
+      "0x00000210: mov(16)         g114<1>UD       g52<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000220: mov(16)         g116<1>UD       g36<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000230: mov(16)         g118<1>UD       g44<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000240: mov(16)         g120<1>UD       g46<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000250: send(16)        g12<1>UW        g114<8,8,1>F\n"
+      "                sampler (0, 0, 30, 2) mlen 8 rlen 8             { align1 WE_normal 1H };\n"
+      "0x00000260: mov(16)         g52<1>UD        0x00000003UD                    { align1 WE_normal 1H };\n"
+      "0x00000270: mov(16)         g114<1>UD       g52<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000280: mov(16)         g116<1>UD       g36<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000290: mov(16)         g118<1>UD       g44<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000002a0: mov(16)         g120<1>UD       g46<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000002b0: send(16)        g20<1>UW        g114<8,8,1>F\n"
+      "                sampler (0, 0, 30, 2) mlen 8 rlen 8             { align1 WE_normal 1H };\n"
+      "0x000002c0: add(16)         g12<1>F         g12<8,8,1>F     g20<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x000002d0: add(16)         g14<1>F         g14<8,8,1>F     g22<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x000002e0: add(16)         g16<1>F         g16<8,8,1>F     g24<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x000002f0: add(16)         g18<1>F         g18<8,8,1>F     g26<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000300: add(16)         g4<1>F          g4<8,8,1>F      g12<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000310: add(16)         g6<1>F          g6<8,8,1>F      g14<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000320: add(16)         g8<1>F          g8<8,8,1>F      g16<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000330: add(16)         g10<1>F         g10<8,8,1>F     g18<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000340: mov(16)         g52<1>UD        0x00000004UD                    { align1 WE_normal 1H };\n"
+      "0x00000350: mov(16)         g114<1>UD       g52<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000360: mov(16)         g116<1>UD       g36<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000370: mov(16)         g118<1>UD       g44<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000380: mov(16)         g120<1>UD       g46<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000390: send(16)        g12<1>UW        g114<8,8,1>F\n"
+      "                sampler (0, 0, 30, 2) mlen 8 rlen 8             { align1 WE_normal 1H };\n"
+      "0x000003a0: mov(16)         g52<1>UD        0x00000005UD                    { align1 WE_normal 1H };\n"
+      "0x000003b0: mov(16)         g114<1>UD       g52<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000003c0: mov(16)         g116<1>UD       g36<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000003d0: mov(16)         g118<1>UD       g44<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000003e0: mov(16)         g120<1>UD       g46<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000003f0: send(16)        g20<1>UW        g114<8,8,1>F\n"
+      "                sampler (0, 0, 30, 2) mlen 8 rlen 8             { align1 WE_normal 1H };\n"
+      "0x00000400: add(16)         g12<1>F         g12<8,8,1>F     g20<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000410: add(16)         g14<1>F         g14<8,8,1>F     g22<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000420: add(16)         g16<1>F         g16<8,8,1>F     g24<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000430: add(16)         g18<1>F         g18<8,8,1>F     g26<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000440: mov(16)         g52<1>UD        0x00000006UD                    { align1 WE_normal 1H };\n"
+      "0x00000450: mov(16)         g114<1>UD       g52<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000460: mov(16)         g116<1>UD       g36<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000470: mov(16)         g118<1>UD       g44<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000480: mov(16)         g120<1>UD       g46<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000490: send(16)        g20<1>UW        g114<8,8,1>F\n"
+      "                sampler (0, 0, 30, 2) mlen 8 rlen 8             { align1 WE_normal 1H };\n"
+      "0x000004a0: mov(16)         g52<1>UD        0x00000007UD                    { align1 WE_normal 1H };\n"
+      "0x000004b0: mov(16)         g114<1>UD       g52<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000004c0: mov(16)         g116<1>UD       g36<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000004d0: mov(16)         g118<1>UD       g44<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000004e0: mov(16)         g120<1>UD       g46<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000004f0: send(16)        g28<1>UW        g114<8,8,1>F\n"
+      "                sampler (0, 0, 30, 2) mlen 8 rlen 8             { align1 WE_normal 1H };\n"
+      "0x00000500: add(16)         g20<1>F         g20<8,8,1>F     g28<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000510: add(16)         g22<1>F         g22<8,8,1>F     g30<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000520: add(16)         g24<1>F         g24<8,8,1>F     g32<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000530: add(16)         g26<1>F         g26<8,8,1>F     g34<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000540: add(16)         g12<1>F         g12<8,8,1>F     g20<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000550: add(16)         g14<1>F         g14<8,8,1>F     g22<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000560: add(16)         g16<1>F         g16<8,8,1>F     g24<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000570: add(16)         g18<1>F         g18<8,8,1>F     g26<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000580: add(16)         g4<1>F          g4<8,8,1>F      g12<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x00000590: add(16)         g6<1>F          g6<8,8,1>F      g14<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x000005a0: add(16)         g8<1>F          g8<8,8,1>F      g16<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x000005b0: add(16)         g10<1>F         g10<8,8,1>F     g18<8,8,1>F     { align1 WE_normal 1H };\n"
+      "0x000005c0: mul(16)         g4<1>F          g4<8,8,1>F      0.125F          { align1 WE_normal 1H };\n"
+      "0x000005d0: mul(16)         g6<1>F          g6<8,8,1>F      0.125F          { align1 WE_normal 1H };\n"
+      "0x000005e0: mul(16)         g8<1>F          g8<8,8,1>F      0.125F          { align1 WE_normal 1H };\n"
+      "0x000005f0: mul(16)         g10<1>F         g10<8,8,1>F     0.125F          { align1 WE_normal 1H };\n"
+      "0x00000600: endif(16) 2                     null            0x00000002UD    { align1 WE_normal 1H switch };\n"
+      "0x00000610: mov(16)         g114<1>F        g4<8,8,1>F                      { align1 WE_normal 1H };\n"
+      "0x00000620: mov(16)         g116<1>F        g6<8,8,1>F                      { align1 WE_normal 1H };\n"
+      "0x00000630: mov(16)         g118<1>F        g8<8,8,1>F                      { align1 WE_normal 1H };\n"
+      "0x00000640: mov(16)         g120<1>F        g10<8,8,1>F                     { align1 WE_normal 1H };\n"
+      "0x00000650: sendc(16)       null            g114<8,8,1>F\n"
+      "                render ( RT write, 1, 0, 12) mlen 8 rlen 0      { align1 WE_normal 1H EOT };\n";
+   struct brw_blorp_blit_prog_key key;
+
+   key.tex_samples = 8;
+   key.tex_layout = INTEL_MSAA_LAYOUT_CMS;
+   key.src_samples = 8;
+   key.src_layout = INTEL_MSAA_LAYOUT_CMS;
+   key.rt_samples = 0;
+   key.rt_layout = INTEL_MSAA_LAYOUT_NONE;
+   key.dst_samples = 0;
+   key.dst_layout = INTEL_MSAA_LAYOUT_NONE;
+   key.texture_data_type = BRW_REGISTER_TYPE_F;
+   key.src_tiled_w = false;
+   key.dst_tiled_w = false;
+   key.blend = true;
+   key.use_kill = false;
+   key.persample_msaa_dispatch = false;
+   key.blit_scaled = false;
+   key.x_scale = 2.000000;
+   key.y_scale = 4.000000;
+   key.bilinear_filter = false;
+
+   return check(brw, &key, expected, sizeof(expected) - 1);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -507,6 +651,7 @@ main(int argc, char **argv)
    pass = test_gen7_msaa_8_ums_to_cms(&brw) && pass;
    pass = test_gen7_msaa_8_cms_to_cms(&brw) && pass;
    pass = test_gen7_msaa_4_ums_to_cms(&brw) && pass;
+   pass = test_gen7_alpha_blend(&brw) && pass;
 
    /* Test suite expects zero for success */
    return !pass;
