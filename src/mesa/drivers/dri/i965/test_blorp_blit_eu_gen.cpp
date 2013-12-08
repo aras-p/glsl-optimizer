@@ -638,6 +638,140 @@ test_gen7_alpha_blend(struct brw_context *brw)
    return check(brw, &key, expected, sizeof(expected) - 1);
 }
 
+/**
+ * Gotten when running piglit test:
+ * "ext_framebuffer_multisample-unaligned-blit 8 stencil msaa"
+ */
+static bool
+test_gen7_unaligned_8_msaa(struct brw_context *brw)
+{
+   static const char expected[] =
+      "0x00000000: add(16)         g44<1>UW        g1.4<2,4,0>UW   0x10101010V     { align1 WE_normal 1H };\n"
+      "0x00000010: add(16)         g46<1>UW        g1.5<2,4,0>UW   0x11001100V     { align1 WE_normal 1H };\n"
+      "0x00000020: mov(16)         g48<1>UD        g44<8,8,1>UW                    { align1 WE_normal 1H };\n"
+      "0x00000030: mov(16)         g50<1>UD        g46<8,8,1>UW                    { align1 WE_normal 1H };\n"
+      "0x00000040: and(16)         g54<1>UD        g48<8,8,1>UD    0xfff4UW        { align1 WE_normal 1H };\n"
+      "0x00000050: shr(16)         g54<1>UD        g54<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000060: and(16)         g56<1>UD        g50<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000070: shl(16)         g56<1>UD        g56<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x00000080: or(16)          g54<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000090: and(16)         g56<1>UD        g48<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x000000a0: or(16)          g44<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x000000b0: and(16)         g54<1>UD        g50<8,8,1>UD    0xfffeUW        { align1 WE_normal 1H };\n"
+      "0x000000c0: shl(16)         g54<1>UD        g54<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x000000d0: and(16)         g56<1>UD        g48<8,8,1>UD    0x0008UW        { align1 WE_normal 1H };\n"
+      "0x000000e0: shr(16)         g56<1>UD        g56<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x000000f0: or(16)          g54<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000100: and(16)         g56<1>UD        g48<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x00000110: shr(16)         g56<1>UD        g56<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000120: or(16)          g46<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000130: and(16)         g54<1>UD        g44<8,8,1>UD    0xfff8UW        { align1 WE_normal 1H };\n"
+      "0x00000140: shr(16)         g54<1>UD        g54<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x00000150: and(16)         g56<1>UD        g44<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000160: or(16)          g48<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000170: and(16)         g54<1>UD        g46<8,8,1>UD    0xfffcUW        { align1 WE_normal 1H };\n"
+      "0x00000180: shr(16)         g54<1>UD        g54<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000190: and(16)         g56<1>UD        g46<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x000001a0: or(16)          g50<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x000001b0: and(16)         g54<1>UD        g44<8,8,1>UD    0x0004UW        { align1 WE_normal 1H };\n"
+      "0x000001c0: and(16)         g56<1>UD        g46<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x000001d0: or(16)          g54<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x000001e0: and(16)         g56<1>UD        g44<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x000001f0: shr(16)         g56<1>UD        g56<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000200: or(16)          g52<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000210: cmp.ge.f0(16)   null            g48<8,8,1>UD    g2<0,1,0>UD     { align1 WE_normal 1H switch };\n"
+      "0x00000220: (+f0) cmp.ge.f0(16) null        g50<8,8,1>UD    g2.2<0,1,0>UD   { align1 WE_normal 1H switch };\n"
+      "0x00000230: (+f0) cmp.l.f0(16) null         g48<8,8,1>UD    g2.1<0,1,0>UD   { align1 WE_normal 1H switch };\n"
+      "0x00000240: (+f0) cmp.l.f0(16) null         g50<8,8,1>UD    g2.3<0,1,0>UD   { align1 WE_normal 1H switch };\n"
+      "0x00000250: and(1)          g1.14<1>UW      f0<0,1,0>UW     g1.14<0,1,0>UW  { align1 WE_all };\n"
+      "0x00000260: mov(16)         g44<1>F         g48<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000270: mov(16)         g46<1>F         g50<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x00000280: mul(16)         g48<1>F         g44<8,8,1>F     g2.6<0,1,0>F    { align1 WE_normal 1H };\n"
+      "0x00000290: mul(16)         g50<1>F         g46<8,8,1>F     g3<0,1,0>F      { align1 WE_normal 1H };\n"
+      "0x000002a0: add(16)         g48<1>F         g48<8,8,1>F     g2.7<0,1,0>F    { align1 WE_normal 1H };\n"
+      "0x000002b0: add(16)         g50<1>F         g50<8,8,1>F     g3.1<0,1,0>F    { align1 WE_normal 1H };\n"
+      "0x000002c0: mov(16)         g44<1>UD        g48<8,8,1>F                     { align1 WE_normal 1H };\n"
+      "0x000002d0: mov(16)         g46<1>UD        g50<8,8,1>F                     { align1 WE_normal 1H };\n"
+      "0x000002e0: and(16)         g54<1>UD        g44<8,8,1>UD    0xfffeUW        { align1 WE_normal 1H };\n"
+      "0x000002f0: shl(16)         g54<1>UD        g54<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x00000300: and(16)         g56<1>UD        g52<8,8,1>UD    0x0004UW        { align1 WE_normal 1H };\n"
+      "0x00000310: or(16)          g54<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000320: and(16)         g56<1>UD        g52<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000330: shl(16)         g56<1>UD        g56<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000340: or(16)          g54<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000350: and(16)         g56<1>UD        g44<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000360: or(16)          g48<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000370: and(16)         g54<1>UD        g46<8,8,1>UD    0xfffeUW        { align1 WE_normal 1H };\n"
+      "0x00000380: shl(16)         g54<1>UD        g54<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000390: and(16)         g56<1>UD        g52<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x000003a0: or(16)          g54<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x000003b0: and(16)         g56<1>UD        g46<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x000003c0: or(16)          g50<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x000003d0: and(16)         g54<1>UD        g48<8,8,1>UD    0xfffaUW        { align1 WE_normal 1H };\n"
+      "0x000003e0: shl(16)         g54<1>UD        g54<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x000003f0: and(16)         g56<1>UD        g50<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x00000400: shl(16)         g56<1>UD        g56<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x00000410: or(16)          g54<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000420: and(16)         g56<1>UD        g50<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000430: shl(16)         g56<1>UD        g56<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000440: or(16)          g54<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000450: and(16)         g56<1>UD        g48<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000460: or(16)          g44<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000470: and(16)         g54<1>UD        g50<8,8,1>UD    0xfffcUW        { align1 WE_normal 1H };\n"
+      "0x00000480: shr(16)         g54<1>UD        g54<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000490: and(16)         g56<1>UD        g48<8,8,1>UD    0x0004UW        { align1 WE_normal 1H };\n"
+      "0x000004a0: shr(16)         g56<1>UD        g56<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x000004b0: or(16)          g46<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x000004c0: and(16)         g54<1>UD        g44<8,8,1>UD    0xfff8UW        { align1 WE_normal 1H };\n"
+      "0x000004d0: shr(16)         g54<1>UD        g54<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x000004e0: and(16)         g56<1>UD        g44<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x000004f0: or(16)          g48<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000500: and(16)         g54<1>UD        g46<8,8,1>UD    0xfffcUW        { align1 WE_normal 1H };\n"
+      "0x00000510: shr(16)         g54<1>UD        g54<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000520: and(16)         g56<1>UD        g46<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000530: or(16)          g50<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000540: and(16)         g54<1>UD        g44<8,8,1>UD    0x0004UW        { align1 WE_normal 1H };\n"
+      "0x00000550: and(16)         g56<1>UD        g46<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x00000560: or(16)          g54<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x00000570: and(16)         g56<1>UD        g44<8,8,1>UD    0x0002UW        { align1 WE_normal 1H };\n"
+      "0x00000580: shr(16)         g56<1>UD        g56<8,8,1>UD    0x0001UW        { align1 WE_normal 1H };\n"
+      "0x00000590: or(16)          g52<1>UD        g54<8,8,1>UD    g56<8,8,1>UD    { align1 WE_normal 1H };\n"
+      "0x000005a0: mov(16)         g114<1>UD       g52<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000005b0: mov(16)         g118<1>UD       g48<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000005c0: mov(16)         g120<1>UD       g50<8,8,1>UD                    { align1 WE_normal 1H };\n"
+      "0x000005d0: send(16)        g4<1>UW         g114<8,8,1>F\n"
+      "                sampler (0, 0, 30, 2) mlen 8 rlen 8             { align1 WE_normal 1H };\n"
+      "0x000005e0: mov(16)         g114<1>UD       g0<8,8,1>UD                     { align1 WE_normal 1H };\n"
+      "0x000005f0: mov(16)         g116<1>F        g4<8,8,1>F                      { align1 WE_normal 1H };\n"
+      "0x00000600: mov(16)         g118<1>F        g6<8,8,1>F                      { align1 WE_normal 1H };\n"
+      "0x00000610: mov(16)         g120<1>F        g8<8,8,1>F                      { align1 WE_normal 1H };\n"
+      "0x00000620: mov(16)         g122<1>F        g10<8,8,1>F                     { align1 WE_normal 1H };\n"
+      "0x00000630: sendc(16)       null            g114<8,8,1>F\n"
+      "                render ( RT write, 1, 0, 12) mlen 10 rlen 0     { align1 WE_normal 1H EOT };\n";
+   struct brw_blorp_blit_prog_key key;
+
+   key.tex_samples = 8;
+   key.tex_layout = INTEL_MSAA_LAYOUT_IMS;
+   key.src_samples = 8;
+   key.src_layout = INTEL_MSAA_LAYOUT_IMS;
+   key.rt_samples = 0;
+   key.rt_layout = INTEL_MSAA_LAYOUT_NONE;
+   key.dst_samples = 8;
+   key.dst_layout = INTEL_MSAA_LAYOUT_IMS;
+   key.texture_data_type = BRW_REGISTER_TYPE_F;
+   key.src_tiled_w = true;
+   key.dst_tiled_w = true;
+   key.blend = false;
+   key.use_kill = true;
+   key.persample_msaa_dispatch = false;
+   key.blit_scaled = false;
+   key.x_scale = 2.000000;
+   key.y_scale = 4.000000;
+   key.bilinear_filter = false;
+
+   return check(brw, &key, expected, sizeof(expected) - 1);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -652,6 +786,7 @@ main(int argc, char **argv)
    pass = test_gen7_msaa_8_cms_to_cms(&brw) && pass;
    pass = test_gen7_msaa_4_ums_to_cms(&brw) && pass;
    pass = test_gen7_alpha_blend(&brw) && pass;
+   pass = test_gen7_unaligned_8_msaa(&brw) && pass;
 
    /* Test suite expects zero for success */
    return !pass;
