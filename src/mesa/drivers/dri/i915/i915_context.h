@@ -324,6 +324,7 @@ extern bool i915CreateContext(int api,
 			      __DRIcontext * driContextPriv,
                               unsigned major_version,
                               unsigned minor_version,
+                              uint32_t flags,
                               unsigned *error,
 			      void *sharedContextPrivate);
 

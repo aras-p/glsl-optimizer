@@ -931,6 +931,7 @@ i830CreateContext(int api,
 		  __DRIcontext *driContextPriv,
 		  unsigned major_version,
 		  unsigned minor_version,
+                  uint32_t flags,
 		  unsigned *error,
 		  void *sharedContextPrivate);
 
@@ -940,6 +941,7 @@ i915CreateContext(int api,
 		  __DRIcontext *driContextPriv,
                   unsigned major_version,
                   unsigned minor_version,
+                  uint32_t flags,
                   unsigned *error,
 		  void *sharedContextPrivate);
 
@@ -971,13 +973,13 @@ intelCreateContext(gl_api api,
 
    if (IS_9XX(intelScreen->deviceID)) {
       success = i915CreateContext(api, mesaVis, driContextPriv,
-                                  major_version, minor_version, error,
-                                  sharedContextPrivate);
+                                  major_version, minor_version, flags,
+                                  error, sharedContextPrivate);
    } else {
       intelScreen->no_vbo = true;
       success = i830CreateContext(api, mesaVis, driContextPriv,
-                                  major_version, minor_version, error,
-                                  sharedContextPrivate);
+                                  major_version, minor_version, flags,
+                                  error, sharedContextPrivate);
    }
 
    if (success)

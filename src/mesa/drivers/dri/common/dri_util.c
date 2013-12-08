@@ -438,16 +438,19 @@ driCreateContextAttribs(__DRIscreen *screen, int api,
         return NULL;
     }
 
-    struct gl_context *ctx = context->driverPrivate;
+    *error = __DRI_CTX_ERROR_SUCCESS;
+    return context;
+}
+
+void
+driContextSetFlags(struct gl_context *ctx, uint32_t flags)
+{
     if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0)
         ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;
     if ((flags & __DRI_CTX_FLAG_DEBUG) != 0) {
         ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_DEBUG_BIT;
         ctx->Debug.DebugOutput = GL_TRUE;
     }
-
-    *error = __DRI_CTX_ERROR_SUCCESS;
-    return context;
 }
 
 static __DRIcontext *

@@ -631,6 +631,8 @@ brwCreateContext(gl_api api,
       return false;
    }
 
+   driContextSetFlags(ctx, flags);
+
    /* Initialize the software rasterizer and helper modules.
     *
     * As of GL 3.1 core, the gen4+ driver doesn't need the swrast context for

@@ -151,6 +151,7 @@ i915CreateContext(int api,
                   __DRIcontext * driContextPriv,
                   unsigned major_version,
                   unsigned minor_version,
+                  uint32_t flags,
                   unsigned *error,
                   void *sharedContextPrivate)
 {
@@ -168,7 +169,7 @@ i915CreateContext(int api,
 
    i915InitDriverFunctions(&functions);
 
-   if (!intelInitContext(intel, api, major_version, minor_version,
+   if (!intelInitContext(intel, api, major_version, minor_version, flags,
                          mesaVis, driContextPriv,
                          sharedContextPrivate, &functions,
                          error)) {

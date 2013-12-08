@@ -56,6 +56,7 @@ i830CreateContext(int api,
                   __DRIcontext * driContextPriv,
                   unsigned major_version,
                   unsigned minor_version,
+                  uint32_t flags,
                   unsigned *error,
                   void *sharedContextPrivate)
 {
@@ -73,7 +74,7 @@ i830CreateContext(int api,
    i830InitDriverFunctions(&functions);
 
    if (!intelInitContext(intel, __DRI_API_OPENGL,
-                         major_version, minor_version,
+                         major_version, minor_version, flags,
                          mesaVis, driContextPriv,
                          sharedContextPrivate, &functions,
                          error)) {

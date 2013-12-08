@@ -242,6 +242,8 @@ r100CreateContext( gl_api api,
      return GL_FALSE;
    }
 
+   driContextSetFlags(ctx, flags);
+
    rmesa->radeon.swtcl.RenderIndex = ~0;
    rmesa->radeon.hw.all_dirty = GL_TRUE;
 

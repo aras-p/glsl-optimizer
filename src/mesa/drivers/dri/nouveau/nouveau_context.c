@@ -78,6 +78,8 @@ nouveau_context_create(gl_api api,
 		return GL_FALSE;
 	}
 
+	driContextSetFlags(ctx, flags);
+
 	nctx = to_nouveau_context(ctx);
 	nctx->dri_context = dri_ctx;
 	dri_ctx->driverPrivate = ctx;
