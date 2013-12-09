@@ -4,6 +4,7 @@ Project {
 
     StaticLibrary {
         name: "glsl-optimizer"
+        cpp.debugInformation: true
         Depends { name: "cpp" }
         property bool minGW: {
             if (qbs.targetOS.contains("windows")) {
@@ -181,7 +182,6 @@ Project {
                                         "-Wno-reorder",
                                         "-Wno-format"]);
             cpp.cFlags: outer.concat(["-Wno-format"]);
-            cpp.debugInformation: true
         }
 
         Properties {

@@ -14,7 +14,7 @@
 #if GOT_GFX
 
 // ---- Windows GL bits
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define GOT_MORE_THAN_GLSL_120 1
 #include <windows.h>
 #include <gl/GL.h>
@@ -311,7 +311,7 @@ static StringVector GetFiles (const std::string& folder, const std::string& ends
 {
 	StringVector res;
 
-	#ifdef _MSC_VER
+	#ifdef _WIN32
 	WIN32_FIND_DATAA FindFileData;
 	HANDLE hFind = FindFirstFileA ((folder+"/*"+endsWith).c_str(), &FindFileData);
 	if (hFind == INVALID_HANDLE_VALUE)
