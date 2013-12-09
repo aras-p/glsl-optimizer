@@ -58,10 +58,6 @@ upload_sbe_state(struct brw_context *brw)
    }
    dw1 |= point_sprite_origin;
 
-
-   dw10 = 0;
-   dw11 = 0;
-
    /* BRW_NEW_VUE_MAP_GEOM_OUT | _NEW_POINT | _NEW_LIGHT | _NEW_PROGRAM |
     * CACHE_NEW_WM_PROG
     */

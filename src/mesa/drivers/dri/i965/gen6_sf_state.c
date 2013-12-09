@@ -143,6 +143,9 @@ calculate_attr_overrides(const struct brw_context *brw,
    const int urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
    uint32_t max_source_attr = 0;
 
+   *point_sprite_enables = 0;
+   *flat_enables = 0;
+
    /* _NEW_LIGHT */
    bool shade_model_flat = brw->ctx.Light.ShadeModel == GL_FLAT;
 
@@ -242,8 +245,6 @@ upload_sf_state(struct brw_context *brw)
 
    dw3 = 0;
    dw4 = 0;
-   dw16 = 0;
-   dw17 = 0;
 
    /* _NEW_POLYGON */
    if ((ctx->Polygon.FrontFace == GL_CCW) ^ render_to_fbo)
