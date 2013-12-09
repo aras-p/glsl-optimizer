@@ -1656,7 +1656,7 @@ ast_function_expression::hir(exec_list *instructions,
    } else {
       const ast_expression *id = subexpressions[0];
       const char *func_name = id->primary_expression.identifier;
-      YYLTYPE loc = id->get_location();
+      YYLTYPE loc = get_location();
       exec_list actual_parameters;
 
       process_parameters(instructions, &actual_parameters, &this->expressions,
