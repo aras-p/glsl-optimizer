@@ -33,6 +33,7 @@
 #include "svga_context.h"
 #include "svga_state.h"
 #include "svga_cmd.h"
+#include "svga_resource_texture.h"
 #include "svga_tgsi.h"
 
 #include "svga_hw_reg.h"
@@ -226,9 +227,43 @@ make_fs_key(const struct svga_context *svga,
 
    idx = 0;
    for (i = 0; i < svga->curr.num_samplers; ++i) {
-      if (svga->curr.sampler[i]) {
-         key->tex[i].compare_mode = svga->curr.sampler[i]->compare_mode;
-         key->tex[i].compare_func = svga->curr.sampler[i]->compare_func;
+      if (svga->curr.sampler_views[i]) {
+         struct pipe_resource *tex = svga->curr.sampler_views[i]->texture;
+         struct svga_texture *stex = svga_texture(tex);
+         SVGA3dSurfaceFormat format = stex->key.format;
+
+         if (format == SVGA3D_Z_D16 ||
+             format == SVGA3D_Z_D24X8 ||
+             format == SVGA3D_Z_D24S8) {
+            /* If we're sampling from a SVGA3D_Z_D16, SVGA3D_Z_D24X8,
+             * or SVGA3D_Z_D24S8 surface, we'll automatically get
+             * shadow comparison.  But we only get LEQUAL mode.
+             * Set TEX_COMPARE_NONE here so we don't emit the extra FS
+             * code for shadow comparison.
+             */
+            key->tex[i].compare_mode = PIPE_TEX_COMPARE_NONE;
+            key->tex[i].compare_func = PIPE_FUNC_NEVER;
+            /* These depth formats _only_ support comparison mode and
+             * not ordinary sampling so warn if the later is expected.
+             */
+            if (svga->curr.sampler[i]->compare_mode !=
+                PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+               debug_warn_once("Unsupported shadow compare mode");
+            }                   
+            /* The only supported comparison mode is LEQUAL */
+            if (svga->curr.sampler[i]->compare_func != PIPE_FUNC_LEQUAL) {
+               debug_warn_once("Unsupported shadow compare function");
+            }
+         }
+         else {
+            /* For other texture formats, just use the compare func/mode
+             * as-is.  Should be no-ops for color textures.  For depth
+             * textures, we do not get automatic depth compare.  We have
+             * to do it ourselves in the shader.  And we don't get PCF.
+             */
+            key->tex[i].compare_mode = svga->curr.sampler[i]->compare_mode;
+            key->tex[i].compare_func = svga->curr.sampler[i]->compare_func;
+         }
       }
    }
 
