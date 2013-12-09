@@ -103,9 +103,9 @@ svga_get_paramf(struct pipe_screen *screen, enum pipe_capf param)
 
    switch (param) {
    case PIPE_CAPF_MAX_LINE_WIDTH:
-      /* fall-through */
+      return svgascreen->maxLineWidth;
    case PIPE_CAPF_MAX_LINE_WIDTH_AA:
-      return 7.0;
+      return svgascreen->maxLineWidthAA;
 
    case PIPE_CAPF_MAX_POINT_WIDTH:
       /* fall-through */
@@ -659,6 +659,34 @@ svga_screen_create(struct svga_winsys_screen *sws)
          svgascreen->depth.s8z24 = SVGA3D_Z_D24S8_INT;
       }
    }
+
+   /* Query device caps
+    */
+   if (!sws->get_cap(sws, SVGA3D_DEVCAP_LINE_STIPPLE, &result))
+      svgascreen->haveLineStipple = FALSE;
+   else
+      svgascreen->haveLineStipple = result.u;
+
+   if (!sws->get_cap(sws, SVGA3D_DEVCAP_LINE_AA, &result))
+      svgascreen->haveLineSmooth = FALSE;
+   else
+      svgascreen->haveLineSmooth = result.u;
+
+   if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_LINE_WIDTH, &result))
+      svgascreen->maxLineWidth = 1.0F;
+   else
+      svgascreen->maxLineWidth = result.f;
+
+   if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_AA_LINE_WIDTH, &result))
+      svgascreen->maxLineWidthAA = 1.0F;
+   else
+      svgascreen->maxLineWidthAA = result.f;
+
+   if (0)
+      debug_printf("svga: haveLineStip %u  "
+                   "haveLineSmooth %u  maxLineWidth %f\n",
+                   svgascreen->haveLineStipple, svgascreen->haveLineSmooth,
+                   svgascreen->maxLineWidth);
 
    if (!sws->get_cap(sws, SVGA3D_DEVCAP_MAX_POINT_SIZE, &result)) {
       svgascreen->maxPointSize = 1.0F;

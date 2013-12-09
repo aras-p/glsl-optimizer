@@ -221,11 +221,18 @@ emit_rss(struct svga_context *svga, unsigned dirty)
       EMIT_RS( svga, curr->scissortestenable, SCISSORTESTENABLE, fail );
       EMIT_RS( svga, curr->multisampleantialias, MULTISAMPLEANTIALIAS, fail );
       EMIT_RS( svga, curr->lastpixel, LASTPIXEL, fail );
-      EMIT_RS( svga, curr->linepattern, LINEPATTERN, fail );
       EMIT_RS_FLOAT( svga, curr->pointsize, POINTSIZE, fail );
       EMIT_RS_FLOAT( svga, point_size_min, POINTSIZEMIN, fail );
       EMIT_RS_FLOAT( svga, screen->maxPointSize, POINTSIZEMAX, fail );
       EMIT_RS( svga, curr->pointsprite, POINTSPRITEENABLE, fail);
+
+      /* Emit line state, when the device understands it */
+      if (screen->haveLineStipple)
+         EMIT_RS( svga, curr->linepattern, LINEPATTERN, fail );
+      if (screen->haveLineSmooth)
+         EMIT_RS( svga, curr->antialiasedlineenable, ANTIALIASEDLINEENABLE, fail );
+      if (screen->maxLineWidth > 1.0F)
+         EMIT_RS_FLOAT( svga, curr->linewidth, LINEWIDTH, fail );
    }
 
    if (dirty & (SVGA_NEW_RAST | SVGA_NEW_FRAME_BUFFER | SVGA_NEW_NEED_PIPELINE))

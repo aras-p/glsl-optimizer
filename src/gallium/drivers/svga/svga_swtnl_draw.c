@@ -29,6 +29,7 @@
 #include "pipe/p_state.h"
 
 #include "svga_context.h"
+#include "svga_screen.h"
 #include "svga_swtnl.h"
 #include "svga_state.h"
 #include "svga_swtnl_private.h"
@@ -137,6 +138,8 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
 
 boolean svga_init_swtnl( struct svga_context *svga )
 {
+   struct svga_screen *screen = svga_screen(svga->pipe.screen);
+
    svga->swtnl.backend = svga_vbuf_render_create(svga);
    if(!svga->swtnl.backend)
       goto fail;
@@ -161,9 +164,23 @@ boolean svga_init_swtnl( struct svga_context *svga )
    /* must be done before installing Draw stages */
    util_blitter_cache_all_shaders(svga->blitter);
 
-   draw_install_aaline_stage(svga->swtnl.draw, &svga->pipe);
-   draw_install_aapoint_stage(svga->swtnl.draw, &svga->pipe);
+   if (!screen->haveLineSmooth)
+      draw_install_aaline_stage(svga->swtnl.draw, &svga->pipe);
+
+   /* always install polygon stipple stage */
    draw_install_pstipple_stage(svga->swtnl.draw, &svga->pipe);
+
+   /* enable/disable line stipple stage depending on device caps */
+   draw_enable_line_stipple(svga->swtnl.draw, !screen->haveLineStipple);
+
+   /* always install AA point stage */
+   draw_install_aapoint_stage(svga->swtnl.draw, &svga->pipe);
+
+   /* Set wide line threshold above device limit (so we'll never really use it)
+    */
+   draw_wide_line_threshold(svga->swtnl.draw,
+                            MAX2(screen->maxLineWidth,
+                                 screen->maxLineWidthAA));
 
    if (debug_get_bool_option("SVGA_SWTNL_FSE", FALSE))
       draw_set_driver_clipping(svga->swtnl.draw, TRUE, TRUE, TRUE);

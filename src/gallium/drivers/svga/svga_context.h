@@ -160,6 +160,7 @@ struct svga_rasterizer_state {
    float slopescaledepthbias;
    float depthbias;
    float pointsize;
+   float linewidth;
    
    unsigned hw_unfilled:16;         /* PIPE_POLYGON_MODE_x */
 

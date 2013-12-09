@@ -432,8 +432,7 @@ typedef enum {
    SVGA3D_RS_DSTBLENDALPHA             = 95,    /* SVGA3dBlendOp */
    SVGA3D_RS_BLENDEQUATIONALPHA        = 96,    /* SVGA3dBlendEquation */
    SVGA3D_RS_TRANSPARENCYANTIALIAS     = 97,    /* SVGA3dTransparencyAntialiasType */
-   SVGA3D_RS_LINEAA                    = 98,    /* SVGA3dBool */
-   SVGA3D_RS_LINEWIDTH                 = 99,    /* float */
+   SVGA3D_RS_LINEWIDTH                 = 98,    /* float */
    SVGA3D_RS_MAX
 } SVGA3dRenderStateName;
 
@@ -1878,6 +1877,15 @@ typedef enum {
 
    SVGA3D_DEVCAP_SURFACEFMT_BC4_UNORM              = 82,
    SVGA3D_DEVCAP_SURFACEFMT_BC5_UNORM              = 83,
+
+   SVGA3D_DEVCAP_DEAD1                             = 84,
+   SVGA3D_DEVCAP_85                                = 85,
+   SVGA3D_DEVCAP_86                                = 86,
+
+   SVGA3D_DEVCAP_LINE_AA                           = 87,  /* boolean */
+   SVGA3D_DEVCAP_LINE_STIPPLE                      = 88,  /* boolean */
+   SVGA3D_DEVCAP_MAX_LINE_WIDTH                    = 89,  /* float */
+   SVGA3D_DEVCAP_MAX_AA_LINE_WIDTH                 = 90,  /* float */
 
    /*
     * Don't add new caps into the previous section; the values in this
