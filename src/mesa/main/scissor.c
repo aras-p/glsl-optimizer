@@ -30,6 +30,31 @@
 
 
 /**
+ * Set scissor rectangle data directly in ScissorArray
+ *
+ * This is an internal function that performs no error checking on the
+ * supplied data.  It also does \b not call \c dd_function_table::Scissor.
+ *
+ * \sa _mesa_set_scissor
+ */
+static void
+set_scissor_no_notify(struct gl_context *ctx, unsigned idx,
+                      GLint x, GLint y, GLsizei width, GLsizei height)
+{
+   if (x == ctx->Scissor.ScissorArray[idx].X &&
+       y == ctx->Scissor.ScissorArray[idx].Y &&
+       width == ctx->Scissor.ScissorArray[idx].Width &&
+       height == ctx->Scissor.ScissorArray[idx].Height)
+      return;
+
+   FLUSH_VERTICES(ctx, _NEW_SCISSOR);
+   ctx->Scissor.ScissorArray[idx].X = x;
+   ctx->Scissor.ScissorArray[idx].Y = y;
+   ctx->Scissor.ScissorArray[idx].Width = width;
+   ctx->Scissor.ScissorArray[idx].Height = height;
+}
+
+/**
  * Called via glScissor
  */
 void GLAPIENTRY
@@ -66,17 +91,7 @@ void
 _mesa_set_scissor(struct gl_context *ctx, 
                   GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   if (x == ctx->Scissor.ScissorArray[0].X &&
-       y == ctx->Scissor.ScissorArray[0].Y &&
-       width == ctx->Scissor.ScissorArray[0].Width &&
-       height == ctx->Scissor.ScissorArray[0].Height)
-      return;
-
-   FLUSH_VERTICES(ctx, _NEW_SCISSOR);
-   ctx->Scissor.ScissorArray[0].X = x;
-   ctx->Scissor.ScissorArray[0].Y = y;
-   ctx->Scissor.ScissorArray[0].Width = width;
-   ctx->Scissor.ScissorArray[0].Height = height;
+   set_scissor_no_notify(ctx, 0, x, y, width, height);
 
    if (ctx->Driver.Scissor)
       ctx->Driver.Scissor(ctx);
@@ -92,8 +107,5 @@ _mesa_init_scissor(struct gl_context *ctx)
 {
    /* Scissor group */
    ctx->Scissor.EnableFlags = GL_FALSE;
-   ctx->Scissor.ScissorArray[0].X = 0;
-   ctx->Scissor.ScissorArray[0].Y = 0;
-   ctx->Scissor.ScissorArray[0].Width = 0;
-   ctx->Scissor.ScissorArray[0].Height = 0;
+   set_scissor_no_notify(ctx, 0, 0, 0, 0, 0);
 }
