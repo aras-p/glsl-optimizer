@@ -450,17 +450,24 @@ no_matching_function_error(const char *name,
 			   exec_list *actual_parameters,
 			   _mesa_glsl_parse_state *state)
 {
-   char *str = prototype_string(NULL, name, actual_parameters);
-   _mesa_glsl_error(loc, state,
-                    "no matching function for call to `%s'; candidates are:",
-                    str);
-   ralloc_free(str);
+   gl_shader *sh = _mesa_glsl_get_builtin_function_shader();
 
-   print_function_prototypes(state, loc, state->symbols->get_function(name));
+   if (state->symbols->get_function(name) == NULL
+      && (!state->uses_builtin_functions
+          || sh->symbols->get_function(name) == NULL)) {
+      _mesa_glsl_error(loc, state, "no function with name '%s'", name);
+   } else {
+      char *str = prototype_string(NULL, name, actual_parameters);
+      _mesa_glsl_error(loc, state,
+                       "no matching function for call to `%s'; candidates are:",
+                       str);
+      ralloc_free(str);
 
-   if (state->uses_builtin_functions) {
-      gl_shader *sh = _mesa_glsl_get_builtin_function_shader();
-      print_function_prototypes(state, loc, sh->symbols->get_function(name));
+      print_function_prototypes(state, loc, state->symbols->get_function(name));
+
+      if (state->uses_builtin_functions) {
+         print_function_prototypes(state, loc, sh->symbols->get_function(name));
+      }
    }
 }
 
