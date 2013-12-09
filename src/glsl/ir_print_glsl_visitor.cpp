@@ -212,7 +212,7 @@ void ir_print_glsl_visitor::newline_deindent()
 
 void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 {
-    long id = (long)hash_table_find (globals->var_hash, v);
+    intptr_t id = (intptr_t)hash_table_find (globals->var_hash, v);
 	if (!id && v->mode == ir_var_temporary)
 	{
         id = ++globals->var_counter;
@@ -320,7 +320,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	// give an id to any variable defined in a function that is not an uniform
 	if ((this->mode == kPrintGlslNone && ir->mode != ir_var_uniform))
 	{
-		long id = (long)hash_table_find (globals->var_hash, ir);
+		intptr_t id = (intptr_t)hash_table_find (globals->var_hash, ir);
 		if (id == 0)
 		{
 			id = ++globals->var_counter;
