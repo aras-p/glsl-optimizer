@@ -1092,6 +1092,7 @@ enum brw_message_target {
    BRW_SFID_DATAPORT_WRITE           = 5,
    BRW_SFID_URB                      = 6,
    BRW_SFID_THREAD_SPAWNER           = 7,
+   BRW_SFID_VME                      = 8,
 
    GEN6_SFID_DATAPORT_SAMPLER_CACHE  = 4,
    GEN6_SFID_DATAPORT_RENDER_CACHE   = 5,
@@ -1100,6 +1101,7 @@ enum brw_message_target {
    GEN7_SFID_DATAPORT_DATA_CACHE     = 10,
    GEN7_SFID_PIXEL_INTERPOLATOR      = 11,
    HSW_SFID_DATAPORT_DATA_CACHE_1    = 12,
+   HSW_SFID_CRE                      = 13,
 };
 
 #define GEN7_MESSAGE_TARGET_DP_DATA_CACHE     10
