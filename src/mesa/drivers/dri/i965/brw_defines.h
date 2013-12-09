@@ -1288,6 +1288,8 @@ enum brw_message_target {
 #define BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER   11
 #define BRW_MATH_FUNCTION_INT_DIV_QUOTIENT                 12
 #define BRW_MATH_FUNCTION_INT_DIV_REMAINDER                13
+#define GEN8_MATH_FUNCTION_INVM                            14
+#define GEN8_MATH_FUNCTION_RSQRTM                          15
 
 #define BRW_MATH_INTEGER_UNSIGNED     0
 #define BRW_MATH_INTEGER_SIGNED       1
