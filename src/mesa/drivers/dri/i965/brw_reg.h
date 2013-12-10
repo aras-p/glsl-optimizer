@@ -88,6 +88,28 @@ brw_is_single_value_swizzle(int swiz)
            swiz == BRW_SWIZZLE_WWWW);
 }
 
+enum brw_reg_type {
+   BRW_REGISTER_TYPE_UD = 0,
+   BRW_REGISTER_TYPE_D,
+   BRW_REGISTER_TYPE_UW,
+   BRW_REGISTER_TYPE_W,
+   BRW_REGISTER_TYPE_F,
+
+   /** Non-immediates only: @{ */
+   BRW_REGISTER_TYPE_UB,
+   BRW_REGISTER_TYPE_B,
+   /** @} */
+
+   /** Immediates only: @{ */
+   BRW_REGISTER_TYPE_UV,
+   BRW_REGISTER_TYPE_V,
+   BRW_REGISTER_TYPE_VF,
+   /** @} */
+};
+
+unsigned brw_reg_type_to_hw_type(const struct brw_context *brw,
+                                 enum brw_reg_type type, unsigned file);
+
 #define REG_SIZE (8*4)
 
 /* These aren't hardware structs, just something useful for us to pass around:

@@ -877,28 +877,28 @@ static int src2_3src (FILE *file, struct brw_instruction *inst)
 
 static int imm (FILE *file, unsigned type, struct brw_instruction *inst) {
     switch (type) {
-    case BRW_REGISTER_TYPE_UD:
+    case BRW_HW_REG_TYPE_UD:
 	format (file, "0x%08xUD", inst->bits3.ud);
 	break;
-    case BRW_REGISTER_TYPE_D:
+    case BRW_HW_REG_TYPE_D:
 	format (file, "%dD", inst->bits3.d);
 	break;
-    case BRW_REGISTER_TYPE_UW:
+    case BRW_HW_REG_TYPE_UW:
 	format (file, "0x%04xUW", (uint16_t) inst->bits3.ud);
 	break;
-    case BRW_REGISTER_TYPE_W:
+    case BRW_HW_REG_TYPE_W:
 	format (file, "%dW", (int16_t) inst->bits3.d);
 	break;
-    case BRW_REGISTER_TYPE_UV:
+    case BRW_HW_REG_IMM_TYPE_UV:
 	format (file, "0x%08xUV", inst->bits3.ud);
 	break;
-    case BRW_REGISTER_TYPE_VF:
+    case BRW_HW_REG_IMM_TYPE_VF:
 	format (file, "Vector Float");
 	break;
-    case BRW_REGISTER_TYPE_V:
+    case BRW_HW_REG_IMM_TYPE_V:
 	format (file, "0x%08xV", inst->bits3.ud);
 	break;
-    case BRW_REGISTER_TYPE_F:
+    case BRW_HW_REG_TYPE_F:
 	format (file, "%-gF", inst->bits3.f);
     }
     return 0;

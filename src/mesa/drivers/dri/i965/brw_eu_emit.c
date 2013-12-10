@@ -99,6 +99,52 @@ gen7_convert_mrf_to_grf(struct brw_compile *p, struct brw_reg *reg)
    }
 }
 
+/**
+ * Convert a brw_reg_type enumeration value into the hardware representation.
+ *
+ * The hardware encoding may depend on whether the value is an immediate.
+ */
+unsigned
+brw_reg_type_to_hw_type(const struct brw_context *brw,
+                        enum brw_reg_type type, unsigned file)
+{
+   bool imm = file == BRW_IMMEDIATE_VALUE;
+
+   if (file == BRW_IMMEDIATE_VALUE) {
+      const static int imm_hw_types[] = {
+         [BRW_REGISTER_TYPE_UD] = BRW_HW_REG_TYPE_UD,
+         [BRW_REGISTER_TYPE_D]  = BRW_HW_REG_TYPE_D,
+         [BRW_REGISTER_TYPE_UW] = BRW_HW_REG_TYPE_UW,
+         [BRW_REGISTER_TYPE_W]  = BRW_HW_REG_TYPE_W,
+         [BRW_REGISTER_TYPE_F]  = BRW_HW_REG_TYPE_F,
+         [BRW_REGISTER_TYPE_UB] = -1,
+         [BRW_REGISTER_TYPE_B]  = -1,
+         [BRW_REGISTER_TYPE_UV] = BRW_HW_REG_IMM_TYPE_UV,
+         [BRW_REGISTER_TYPE_VF] = BRW_HW_REG_IMM_TYPE_VF,
+         [BRW_REGISTER_TYPE_V]  = BRW_HW_REG_IMM_TYPE_V,
+      };
+      assert(type < ARRAY_SIZE(imm_hw_types));
+      assert(imm_hw_types[type] != -1);
+      return imm_hw_types[type];
+   } else {
+      /* Non-immediate registers */
+      const static int hw_types[] = {
+         [BRW_REGISTER_TYPE_UD] = BRW_HW_REG_TYPE_UD,
+         [BRW_REGISTER_TYPE_D]  = BRW_HW_REG_TYPE_D,
+         [BRW_REGISTER_TYPE_UW] = BRW_HW_REG_TYPE_UW,
+         [BRW_REGISTER_TYPE_W]  = BRW_HW_REG_TYPE_W,
+         [BRW_REGISTER_TYPE_UB] = BRW_HW_REG_NON_IMM_TYPE_UB,
+         [BRW_REGISTER_TYPE_B]  = BRW_HW_REG_NON_IMM_TYPE_B,
+         [BRW_REGISTER_TYPE_F]  = BRW_HW_REG_TYPE_F,
+         [BRW_REGISTER_TYPE_UV] = -1,
+         [BRW_REGISTER_TYPE_VF] = -1,
+         [BRW_REGISTER_TYPE_V]  = -1,
+      };
+      assert(type < ARRAY_SIZE(hw_types));
+      assert(hw_types[type] != -1);
+      return hw_types[type];
+   }
+}
 
 void
 brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
@@ -111,7 +157,8 @@ brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
    gen7_convert_mrf_to_grf(p, &dest);
 
    insn->bits1.da1.dest_reg_file = dest.file;
-   insn->bits1.da1.dest_reg_type = dest.type;
+   insn->bits1.da1.dest_reg_type =
+      brw_reg_type_to_hw_type(p->brw, dest.type, dest.file);
    insn->bits1.da1.dest_address_mode = dest.address_mode;
 
    if (dest.address_mode == BRW_ADDRESS_DIRECT) {
@@ -264,7 +311,8 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
    validate_reg(insn, reg);
 
    insn->bits1.da1.src0_reg_file = reg.file;
-   insn->bits1.da1.src0_reg_type = reg.type;
+   insn->bits1.da1.src0_reg_type =
+      brw_reg_type_to_hw_type(brw, reg.type, reg.file);
    insn->bits2.da1.src0_abs = reg.abs;
    insn->bits2.da1.src0_negate = reg.negate;
    insn->bits2.da1.src0_address_mode = reg.address_mode;
@@ -275,7 +323,7 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
       /* Required to set some fields in src1 as well:
        */
       insn->bits1.da1.src1_reg_file = 0; /* arf */
-      insn->bits1.da1.src1_reg_type = reg.type;
+      insn->bits1.da1.src1_reg_type = insn->bits1.da1.src0_reg_type;
    }
    else
    {
@@ -345,7 +393,8 @@ void brw_set_src1(struct brw_compile *p,
    validate_reg(insn, reg);
 
    insn->bits1.da1.src1_reg_file = reg.file;
-   insn->bits1.da1.src1_reg_type = reg.type;
+   insn->bits1.da1.src1_reg_type =
+      brw_reg_type_to_hw_type(p->brw, reg.type, reg.file);
    insn->bits3.da1.src1_abs = reg.abs;
    insn->bits3.da1.src1_negate = reg.negate;
 
