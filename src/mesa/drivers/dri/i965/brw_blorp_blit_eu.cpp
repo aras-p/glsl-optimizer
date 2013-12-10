@@ -26,24 +26,9 @@
 #include "brw_blorp.h"
 
 brw_blorp_eu_emitter::brw_blorp_eu_emitter(struct brw_context *brw)
-   : mem_ctx(ralloc_context(NULL))
+   : mem_ctx(ralloc_context(NULL)), c(rzalloc(mem_ctx, struct brw_wm_compile)),
+     generator(brw, c, NULL, NULL, false)
 {
-   brw_init_compile(brw, &func, mem_ctx);
-
-   /*
-    * By default everything is emitted as 16-wide with only a few expections
-    * handled explicitly either here in the compiler or by one of the specific
-    * code emission calls.
-    * It should be also noted that here in this file any alterations of the
-    * compression control settings are only used to affect the execution size
-    * of the instructions. The instruction template used to initialise all the
-    * instructions is effectively not altered -- the value stays at zero
-    * representing either GEN6_COMPRESSION_1Q or GEN6_COMPRESSION_1H depending
-    * on the context.
-    * If any other settings are used in the instruction headers, they are set
-    * elsewhere by the individual code emission calls.
-    */
-   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
 }
 
 brw_blorp_eu_emitter::~brw_blorp_eu_emitter()
@@ -54,15 +39,17 @@ brw_blorp_eu_emitter::~brw_blorp_eu_emitter()
 const unsigned *
 brw_blorp_eu_emitter::get_program(unsigned *program_size, FILE *dump_file)
 {
-   brw_set_uip_jip(&func);
+   const unsigned *res;
 
    if (unlikely(INTEL_DEBUG & DEBUG_BLORP)) {
       printf("Native code for BLORP blit:\n");
-      brw_dump_compile(&func, dump_file, 0, func.next_insn_offset);
+      res = generator.generate_assembly(NULL, &insts, program_size, dump_file);
       printf("\n");
+   } else {
+      res = generator.generate_assembly(NULL, &insts, program_size);
    }
 
-   return brw_get_program(&func, program_size);
+   return res;
 }
 
 /**
@@ -80,17 +67,15 @@ brw_blorp_eu_emitter::emit_kill_if_outside_rect(const struct brw_reg &x,
 {
    struct brw_reg f0 = brw_flag_reg(0, 0);
    struct brw_reg g1 = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
-   struct brw_reg null32 = vec16(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
 
-   brw_CMP(&func, null32, BRW_CONDITIONAL_GE, x, dst_x0);
-   brw_CMP(&func, null32, BRW_CONDITIONAL_GE, y, dst_y0);
-   brw_CMP(&func, null32, BRW_CONDITIONAL_L, x, dst_x1);
-   brw_CMP(&func, null32, BRW_CONDITIONAL_L, y, dst_y1);
+   emit_cmp(BRW_CONDITIONAL_GE, x, dst_x0);
+   emit_cmp(BRW_CONDITIONAL_GE, y, dst_y0)->predicate = BRW_PREDICATE_NORMAL;
+   emit_cmp(BRW_CONDITIONAL_L, x, dst_x1)->predicate = BRW_PREDICATE_NORMAL;
+   emit_cmp(BRW_CONDITIONAL_L, y, dst_y1)->predicate = BRW_PREDICATE_NORMAL;
 
-   brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-
-   struct brw_instruction *inst = brw_AND(&func, g1, f0, g1);
-   inst->header.mask_control = BRW_MASK_DISABLE;
+   fs_inst *inst = new (mem_ctx) fs_inst(BRW_OPCODE_AND, g1, f0, g1);
+   inst->force_writemask_all = true;
+   insts.push_tail(inst);
 }
 
 void
@@ -99,40 +84,14 @@ brw_blorp_eu_emitter::emit_texture_lookup(const struct brw_reg &dst,
                                           unsigned base_mrf,
                                           unsigned msg_length)
 {
-   unsigned msg_type;
+   fs_inst *inst = new (mem_ctx) fs_inst(op, dst, brw_message_reg(base_mrf));
 
-   switch (op) {
-   case SHADER_OPCODE_TEX:
-      msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE;
-      break;
-   case SHADER_OPCODE_TXF:
-      msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
-      break;
-   case SHADER_OPCODE_TXF_CMS:
-      msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DMS;
-      break;
-   case SHADER_OPCODE_TXF_UMS:
-      msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS;
-      break;
-   case SHADER_OPCODE_TXF_MCS:
-      msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD_MCS;
-      break;
-   default:
-      assert(!"Unsupported texture lookup operation");
-   }
+   inst->base_mrf = base_mrf;
+   inst->mlen = msg_length;
+   inst->sampler = 0;
+   inst->header_present = false;
 
-   brw_SAMPLE(&func,
-              retype(dst, BRW_REGISTER_TYPE_UW) /* dest */,
-              base_mrf /* msg_reg_nr */,
-              brw_message_reg(base_mrf) /* src0 */,
-              BRW_BLORP_TEXTURE_BINDING_TABLE_INDEX,
-              0 /* sampler */,
-              msg_type,
-              8 /* response_length.  TODO: should be smaller for non-RGBA formats? */,
-              msg_length,
-              0 /* header_present */,
-              BRW_SAMPLER_SIMD_MODE_SIMD16,
-              BRW_SAMPLER_RETURN_FORMAT_FLOAT32);
+   insts.push_tail(inst);
 }
 
 void
@@ -141,16 +100,15 @@ brw_blorp_eu_emitter::emit_render_target_write(const struct brw_reg &src0,
                                                unsigned msg_length,
                                                bool use_header)
 {
-   brw_fb_WRITE(&func,
-                16 /* dispatch_width */,
-                msg_reg_nr,
-                src0,
-                BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE,
-                BRW_BLORP_RENDERBUFFER_BINDING_TABLE_INDEX,
-                msg_length,
-                0 /* response_length */,
-                true /* eot */,
-                use_header);
+   fs_inst *inst = new (mem_ctx) fs_inst(FS_OPCODE_BLORP_FB_WRITE);
+
+   inst->src[0] = src0;
+   inst->base_mrf = msg_reg_nr;
+   inst->mlen = msg_length;
+   inst->header_present = use_header;
+   inst->target = BRW_BLORP_RENDERBUFFER_BINDING_TABLE_INDEX;
+
+   insts.push_tail(inst);
 }
 
 void
@@ -161,8 +119,18 @@ brw_blorp_eu_emitter::emit_combine(enum opcode combine_opcode,
 {
    assert(combine_opcode == BRW_OPCODE_ADD || combine_opcode == BRW_OPCODE_AVG);
 
-   if (combine_opcode == BRW_OPCODE_ADD)
-      brw_ADD(&func, dst, src_1, src_2);
-   else
-      brw_AVG(&func, dst, src_1, src_2);
+   insts.push_tail(new (mem_ctx) fs_inst(combine_opcode, dst, src_1, src_2));
 }
+
+fs_inst *
+brw_blorp_eu_emitter::emit_cmp(int op,
+                               const struct brw_reg &x,
+                               const struct brw_reg &y)
+{
+   fs_inst *cmp = new (mem_ctx) fs_inst(BRW_OPCODE_CMP,
+                                        vec16(brw_null_reg()), x, y);
+   cmp->conditional_mod = op;
+   insts.push_tail(cmp);
+   return cmp;
+}
+

@@ -654,11 +654,6 @@ private:
                        const sampler_message_arg *args, int num_args);
    void render_target_write();
 
-   void emit_lrp(const struct brw_reg &dst,
-                 const struct brw_reg &src1,
-                 const struct brw_reg &src2,
-                 const struct brw_reg &src3);
-
    /**
     * Base-2 logarithm of the maximum number of samples that can be blended.
     */
@@ -1582,21 +1577,6 @@ brw_blorp_blit_program::manual_blend_average(unsigned num_samples)
 
    if (key->tex_layout == INTEL_MSAA_LAYOUT_CMS)
       emit_endif();
-}
-
-void
-brw_blorp_blit_program::emit_lrp(const struct brw_reg &dst,
-                                 const struct brw_reg &src1,
-                                 const struct brw_reg &src2,
-                                 const struct brw_reg &src3)
-{
-   brw_set_access_mode(&func, BRW_ALIGN_16);
-   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
-   brw_LRP(&func, dst, src1, src2, src3);
-   brw_set_compression_control(&func, BRW_COMPRESSION_2NDHALF);
-   brw_LRP(&func, sechalf(dst), sechalf(src1), sechalf(src2), sechalf(src3));
-   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
-   brw_set_access_mode(&func, BRW_ALIGN_1);
 }
 
 void
