@@ -122,6 +122,7 @@ brw_reg_type_to_hw_type(const struct brw_context *brw,
          [BRW_REGISTER_TYPE_UV] = BRW_HW_REG_IMM_TYPE_UV,
          [BRW_REGISTER_TYPE_VF] = BRW_HW_REG_IMM_TYPE_VF,
          [BRW_REGISTER_TYPE_V]  = BRW_HW_REG_IMM_TYPE_V,
+         [BRW_REGISTER_TYPE_DF] = -1,
       };
       assert(type < ARRAY_SIZE(imm_hw_types));
       assert(imm_hw_types[type] != -1);
@@ -139,9 +140,11 @@ brw_reg_type_to_hw_type(const struct brw_context *brw,
          [BRW_REGISTER_TYPE_UV] = -1,
          [BRW_REGISTER_TYPE_VF] = -1,
          [BRW_REGISTER_TYPE_V]  = -1,
+         [BRW_REGISTER_TYPE_DF] = GEN7_HW_REG_NON_IMM_TYPE_DF,
       };
       assert(type < ARRAY_SIZE(hw_types));
       assert(hw_types[type] != -1);
+      assert(brw->gen >= 7 || type < BRW_REGISTER_TYPE_DF);
       return hw_types[type];
    }
 }

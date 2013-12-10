@@ -990,6 +990,7 @@ operator|(brw_urb_write_flags x, brw_urb_write_flags y)
 
 #define BRW_HW_REG_NON_IMM_TYPE_UB  4
 #define BRW_HW_REG_NON_IMM_TYPE_B   5
+#define GEN7_HW_REG_NON_IMM_TYPE_DF 6
 
 #define BRW_HW_REG_IMM_TYPE_UV  4 /* Gen6+ packed unsigned immediate vector */
 #define BRW_HW_REG_IMM_TYPE_VF  5 /* packed float immediate vector */
