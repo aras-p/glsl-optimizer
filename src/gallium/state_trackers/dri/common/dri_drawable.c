@@ -371,17 +371,38 @@ dri_pipe_blit(struct pipe_context *pipe,
    if (!dst || !src)
       return;
 
+   /* From the GL spec, version 4.2, section 4.1.11 (Additional Multisample
+    *  Fragment Operations):
+    *
+    *      If a framebuffer object is not bound, after all operations have
+    *      been completed on the multisample buffer, the sample values for
+    *      each color in the multisample buffer are combined to produce a
+    *      single color value, and that value is written into the
+    *      corresponding color buffers selected by DrawBuffer or
+    *      DrawBuffers. An implementation may defer the writing of the color
+    *      buffers until a later time, but the state of the framebuffer must
+    *      behave as if the color buffers were updated as each fragment was
+    *      processed. The method of combination is not specified. If the
+    *      framebuffer contains sRGB values, then it is recommended that the
+    *      an average of sample values is computed in a linearized space, as
+    *      for blending (see section 4.1.7).
+    *
+    * In other words, to do a resolve operation in a linear space, we have
+    * to set sRGB formats if the original resources were sRGB, so don't use
+    * util_format_linear.
+    */
+
    memset(&blit, 0, sizeof(blit));
    blit.dst.resource = dst;
    blit.dst.box.width = dst->width0;
    blit.dst.box.height = dst->height0;
    blit.dst.box.depth = 1;
-   blit.dst.format = util_format_linear(dst->format);
+   blit.dst.format = dst->format;
    blit.src.resource = src;
    blit.src.box.width = src->width0;
    blit.src.box.height = src->height0;
    blit.src.box.depth = 1;
-   blit.src.format = util_format_linear(src->format);
+   blit.src.format = src->format;
    blit.mask = PIPE_MASK_RGBA;
    blit.filter = PIPE_TEX_FILTER_NEAREST;
 
