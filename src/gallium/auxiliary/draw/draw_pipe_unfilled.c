@@ -81,6 +81,7 @@ inject_front_face_info(struct draw_stage *stage,
       v->data[slot][1] = is_front_face;
       v->data[slot][2] = is_front_face;
       v->data[slot][3] = is_front_face;
+      v->vertex_id = UNDEFINED_VERTEX_ID;
    }
 }
 
