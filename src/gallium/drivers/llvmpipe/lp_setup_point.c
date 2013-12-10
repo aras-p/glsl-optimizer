@@ -302,6 +302,23 @@ subpixel_snap(float a)
    return util_iround(FIXED_ONE * a);
 }
 
+/**
+ * Print point vertex attribs (for debug).
+ */
+static void
+print_point(struct lp_setup_context *setup,
+            const float (*v0)[4])
+{
+   const struct lp_setup_variant_key *key = &setup->setup.variant->key;
+   uint i;
+
+   debug_printf("llvmpipe point\n");
+   for (i = 0; i < 1 + key->num_inputs; i++) {
+      debug_printf("  v0[%d]:  %f %f %f %f\n", i,
+                   v0[i][0], v0[i][1], v0[i][2], v0[i][3]);
+   }
+}
+
 
 static boolean
 try_setup_point( struct lp_setup_context *setup,
@@ -341,6 +358,9 @@ try_setup_point( struct lp_setup_context *setup,
       layer = *(unsigned*)v0[setup->layer_slot];
       layer = MIN2(layer, scene->fb_max_layer);
    }
+
+   if (0)
+      print_point(setup, v0);
 
    /* Bounding rectangle (in pixels) */
    {
