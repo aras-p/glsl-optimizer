@@ -272,7 +272,7 @@ vec4_visitor::implied_mrf_writes(vec4_instruction *inst)
    case SHADER_OPCODE_TXL:
    case SHADER_OPCODE_TXD:
    case SHADER_OPCODE_TXF:
-   case SHADER_OPCODE_TXF_MS:
+   case SHADER_OPCODE_TXF_CMS:
    case SHADER_OPCODE_TXF_MCS:
    case SHADER_OPCODE_TXS:
    case SHADER_OPCODE_TG4:

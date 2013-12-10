@@ -1214,7 +1214,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       /* sample index */
       emit(MOV(fs_reg(MRF, base_mrf + mlen, BRW_REGISTER_TYPE_UD), sample_index));
       mlen += reg_width;
-      inst = emit(SHADER_OPCODE_TXF_MS, dst);
+      inst = emit(SHADER_OPCODE_TXF_CMS, dst);
       break;
    case ir_lod:
       inst = emit(SHADER_OPCODE_LOD, dst);
@@ -1408,7 +1408,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txl: inst = emit(SHADER_OPCODE_TXL, dst, payload); break;
    case ir_txd: inst = emit(SHADER_OPCODE_TXD, dst, payload); break;
    case ir_txf: inst = emit(SHADER_OPCODE_TXF, dst, payload); break;
-   case ir_txf_ms: inst = emit(SHADER_OPCODE_TXF_MS, dst, payload); break;
+   case ir_txf_ms: inst = emit(SHADER_OPCODE_TXF_CMS, dst, payload); break;
    case ir_txs: inst = emit(SHADER_OPCODE_TXS, dst, payload); break;
    case ir_query_levels: inst = emit(SHADER_OPCODE_TXS, dst, payload); break;
    case ir_lod: inst = emit(SHADER_OPCODE_LOD, dst, payload); break;

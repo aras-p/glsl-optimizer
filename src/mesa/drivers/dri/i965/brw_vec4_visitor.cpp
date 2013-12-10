@@ -2339,7 +2339,7 @@ vec4_visitor::visit(ir_texture *ir)
       inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXF);
       break;
    case ir_txf_ms:
-      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXF_MS);
+      inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXF_CMS);
       break;
    case ir_txs:
       inst = new(mem_ctx) vec4_instruction(this, SHADER_OPCODE_TXS);
