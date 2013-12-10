@@ -35,7 +35,9 @@ upload_sbe_state(struct brw_context *brw)
    struct gl_context *ctx = &brw->ctx;
    /* CACHE_NEW_WM_PROG */
    uint32_t num_outputs = brw->wm.prog_data->num_varying_inputs;
-   uint32_t dw1, dw10, dw11;
+   uint32_t dw1;
+   uint32_t point_sprite_enables;
+   uint32_t flat_enables;
    int i;
    const int urb_entry_read_offset = BRW_SF_URB_ENTRY_READ_OFFSET;
    uint16_t attr_overrides[16];
@@ -62,8 +64,8 @@ upload_sbe_state(struct brw_context *brw)
     * CACHE_NEW_WM_PROG
     */
    uint32_t urb_entry_read_length;
-   calculate_attr_overrides(brw, attr_overrides, &dw10, &dw11,
-                            &urb_entry_read_length);
+   calculate_attr_overrides(brw, attr_overrides, &point_sprite_enables,
+                            &flat_enables, &urb_entry_read_length);
    dw1 |= urb_entry_read_length << GEN7_SBE_URB_ENTRY_READ_LENGTH_SHIFT |
           urb_entry_read_offset << GEN7_SBE_URB_ENTRY_READ_OFFSET_SHIFT;
 
@@ -76,8 +78,8 @@ upload_sbe_state(struct brw_context *brw)
       OUT_BATCH(attr_overrides[i * 2] | attr_overrides[i * 2 + 1] << 16);
    }
 
-   OUT_BATCH(dw10); /* point sprite texcoord bitmask */
-   OUT_BATCH(dw11); /* constant interp bitmask */
+   OUT_BATCH(point_sprite_enables); /* dw10 */
+   OUT_BATCH(flat_enables);
    OUT_BATCH(0); /* wrapshortest enables 0-7 */
    OUT_BATCH(0); /* wrapshortest enables 8-15 */
    ADVANCE_BATCH();
