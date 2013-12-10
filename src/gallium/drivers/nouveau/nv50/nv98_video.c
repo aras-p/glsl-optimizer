@@ -64,10 +64,6 @@ nv98_create_decoder(struct pipe_context *context,
    struct nouveau_vp3_decoder *dec;
    struct nouveau_pushbuf **push;
    struct nv04_fifo nv04_data = {.vram = 0xbeef0201, .gart = 0xbeef0202};
-   union nouveau_bo_config cfg;
-
-   cfg.nv50.tile_mode = 0x20;
-   cfg.nv50.memtype = 0x70;
 
    int ret, i;
    uint32_t codec = 1, ppp_codec = 3;
