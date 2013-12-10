@@ -122,10 +122,14 @@ brw_reg_type_to_hw_type(const struct brw_context *brw,
          [BRW_REGISTER_TYPE_UV] = BRW_HW_REG_IMM_TYPE_UV,
          [BRW_REGISTER_TYPE_VF] = BRW_HW_REG_IMM_TYPE_VF,
          [BRW_REGISTER_TYPE_V]  = BRW_HW_REG_IMM_TYPE_V,
-         [BRW_REGISTER_TYPE_DF] = -1,
+         [BRW_REGISTER_TYPE_DF] = GEN8_HW_REG_IMM_TYPE_DF,
+         [BRW_REGISTER_TYPE_HF] = GEN8_HW_REG_IMM_TYPE_HF,
+         [BRW_REGISTER_TYPE_UQ] = GEN8_HW_REG_TYPE_UQ,
+         [BRW_REGISTER_TYPE_Q]  = GEN8_HW_REG_TYPE_Q,
       };
       assert(type < ARRAY_SIZE(imm_hw_types));
       assert(imm_hw_types[type] != -1);
+      assert(brw->gen >= 8 || type < BRW_REGISTER_TYPE_DF);
       return imm_hw_types[type];
    } else {
       /* Non-immediate registers */
@@ -141,10 +145,14 @@ brw_reg_type_to_hw_type(const struct brw_context *brw,
          [BRW_REGISTER_TYPE_VF] = -1,
          [BRW_REGISTER_TYPE_V]  = -1,
          [BRW_REGISTER_TYPE_DF] = GEN7_HW_REG_NON_IMM_TYPE_DF,
+         [BRW_REGISTER_TYPE_HF] = GEN8_HW_REG_NON_IMM_TYPE_HF,
+         [BRW_REGISTER_TYPE_UQ] = GEN8_HW_REG_TYPE_UQ,
+         [BRW_REGISTER_TYPE_Q]  = GEN8_HW_REG_TYPE_Q,
       };
       assert(type < ARRAY_SIZE(hw_types));
       assert(hw_types[type] != -1);
       assert(brw->gen >= 7 || type < BRW_REGISTER_TYPE_DF);
+      assert(brw->gen >= 8 || type < BRW_REGISTER_TYPE_HF);
       return hw_types[type];
    }
 }

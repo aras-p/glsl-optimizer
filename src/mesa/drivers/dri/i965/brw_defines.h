@@ -987,14 +987,19 @@ operator|(brw_urb_write_flags x, brw_urb_write_flags y)
 #define BRW_HW_REG_TYPE_UW  2
 #define BRW_HW_REG_TYPE_W   3
 #define BRW_HW_REG_TYPE_F   7
+#define GEN8_HW_REG_TYPE_UQ 8
+#define GEN8_HW_REG_TYPE_Q  9
 
 #define BRW_HW_REG_NON_IMM_TYPE_UB  4
 #define BRW_HW_REG_NON_IMM_TYPE_B   5
 #define GEN7_HW_REG_NON_IMM_TYPE_DF 6
+#define GEN8_HW_REG_NON_IMM_TYPE_HF 10
 
 #define BRW_HW_REG_IMM_TYPE_UV  4 /* Gen6+ packed unsigned immediate vector */
 #define BRW_HW_REG_IMM_TYPE_VF  5 /* packed float immediate vector */
 #define BRW_HW_REG_IMM_TYPE_V   6 /* packed int imm. vector; uword dest only */
+#define GEN8_HW_REG_IMM_TYPE_DF 10
+#define GEN8_HW_REG_IMM_TYPE_HF 11
 
 /* SNB adds 3-src instructions (MAD and LRP) that only operate on floats, so
  * the types were implied. IVB adds BFE and BFI2 that operate on doublewords

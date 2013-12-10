@@ -107,6 +107,11 @@ enum brw_reg_type {
    /** @} */
 
    BRW_REGISTER_TYPE_DF, /* Gen7+ (no immediates until Gen8+) */
+
+   /* Gen8+ */
+   BRW_REGISTER_TYPE_HF,
+   BRW_REGISTER_TYPE_UQ,
+   BRW_REGISTER_TYPE_Q,
 };
 
 unsigned brw_reg_type_to_hw_type(const struct brw_context *brw,
