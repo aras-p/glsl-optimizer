@@ -442,6 +442,8 @@ brw_instruction_name(enum opcode op)
       return "txb";
    case SHADER_OPCODE_TXF_CMS:
       return "txf_cms";
+   case SHADER_OPCODE_TXF_UMS:
+      return "txf_ums";
    case SHADER_OPCODE_TXF_MCS:
       return "txf_mcs";
    case SHADER_OPCODE_TG4:
@@ -539,6 +541,7 @@ backend_instruction::is_tex()
            opcode == SHADER_OPCODE_TXD ||
            opcode == SHADER_OPCODE_TXF ||
            opcode == SHADER_OPCODE_TXF_CMS ||
+           opcode == SHADER_OPCODE_TXF_UMS ||
            opcode == SHADER_OPCODE_TXF_MCS ||
            opcode == SHADER_OPCODE_TXL ||
            opcode == SHADER_OPCODE_TXS ||

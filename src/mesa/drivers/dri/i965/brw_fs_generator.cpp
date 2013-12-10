@@ -431,6 +431,10 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
          else
             msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LD;
          break;
+      case SHADER_OPCODE_TXF_UMS:
+         assert(brw->gen >= 7);
+         msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS;
+         break;
       case SHADER_OPCODE_TXF_MCS:
          assert(brw->gen >= 7);
          msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD_MCS;
@@ -1670,6 +1674,7 @@ fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_TXD:
       case SHADER_OPCODE_TXF:
       case SHADER_OPCODE_TXF_CMS:
+      case SHADER_OPCODE_TXF_UMS:
       case SHADER_OPCODE_TXF_MCS:
       case SHADER_OPCODE_TXL:
       case SHADER_OPCODE_TXS:

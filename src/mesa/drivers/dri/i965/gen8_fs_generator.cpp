@@ -197,6 +197,9 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
    case SHADER_OPCODE_TXF_CMS:
       msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DMS;
       break;
+   case SHADER_OPCODE_TXF_UMS:
+      msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD2DSS;
+      break;
    case SHADER_OPCODE_TXF_MCS:
       msg_type = GEN7_SAMPLER_MESSAGE_SAMPLE_LD_MCS;
       break;
@@ -864,6 +867,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_TXD:
       case SHADER_OPCODE_TXF:
       case SHADER_OPCODE_TXF_CMS:
+      case SHADER_OPCODE_TXF_UMS:
       case SHADER_OPCODE_TXF_MCS:
       case SHADER_OPCODE_TXL:
       case SHADER_OPCODE_TXS:
