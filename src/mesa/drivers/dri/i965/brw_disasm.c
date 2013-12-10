@@ -900,8 +900,8 @@ static int imm (FILE *file, unsigned type, struct brw_instruction *inst) {
     case BRW_REGISTER_TYPE_W:
 	format (file, "%dW", (int16_t) inst->bits3.d);
 	break;
-    case BRW_REGISTER_TYPE_UB:
-	format (file, "0x%02xUB", (int8_t) inst->bits3.ud);
+    case BRW_REGISTER_TYPE_UV:
+	format (file, "0x%08xUV", inst->bits3.ud);
 	break;
     case BRW_REGISTER_TYPE_VF:
 	format (file, "Vector Float");
