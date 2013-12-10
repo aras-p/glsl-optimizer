@@ -988,6 +988,7 @@ operator|(brw_urb_write_flags x, brw_urb_write_flags y)
 #define BRW_REGISTER_TYPE_W   3
 #define BRW_REGISTER_TYPE_UB  4
 #define BRW_REGISTER_TYPE_B   5
+#define BRW_REGISTER_TYPE_UV  4	/* Gen6+ packed unsigned immediate vector */
 #define BRW_REGISTER_TYPE_VF  5	/* packed float vector, immediates only? */
 #define BRW_REGISTER_TYPE_V   6	/* packed int vector, immediates only, uword dest only */
 #define BRW_REGISTER_TYPE_F   7
