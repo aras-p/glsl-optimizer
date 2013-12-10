@@ -414,7 +414,7 @@ detach_shader(struct gl_context *ctx, GLuint program, GLuint shader)
          err = GL_INVALID_OPERATION;
       else
          err = GL_INVALID_VALUE;
-      _mesa_error(ctx, err, "glDetachProgram(shader)");
+      _mesa_error(ctx, err, "glDetachShader(shader)");
       return;
    }
 }
