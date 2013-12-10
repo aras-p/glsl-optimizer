@@ -278,7 +278,7 @@ get_back_bo(struct dri2_egl_surface *dri2_surf)
    while (dri2_surf->throttle_callback != NULL)
       if (wl_display_dispatch_queue(dri2_dpy->wl_dpy,
                                     dri2_dpy->wl_queue) == -1)
-         return EGL_FALSE;
+         return -1;
 
    if (dri2_surf->back == NULL) {
       for (i = 0; i < ARRAY_SIZE(dri2_surf->color_buffers); i++) {
