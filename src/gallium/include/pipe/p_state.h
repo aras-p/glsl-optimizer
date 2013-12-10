@@ -130,6 +130,8 @@ struct pipe_rasterizer_state
    /**
     * When true clip space in the z axis goes from [0..1] (D3D).  When false
     * [-1, 1] (GL).
+    *
+    * NOTE: D3D will always use depth clamping.
     */
    unsigned clip_halfz:1;
 

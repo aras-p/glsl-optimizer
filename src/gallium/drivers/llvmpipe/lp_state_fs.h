@@ -76,6 +76,7 @@ struct lp_fragment_shader_variant_key
    unsigned flatshade:1;
    unsigned occlusion_count:1;
    unsigned resource_1d:1;
+   unsigned depth_clamp:1;
 
    enum pipe_format zsbuf_format;
    enum pipe_format cbuf_format[PIPE_MAX_COLOR_BUFS];

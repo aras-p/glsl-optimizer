@@ -656,6 +656,7 @@ lp_setup_set_viewports(struct lp_setup_context *setup,
                        unsigned num_viewports,
                        const struct pipe_viewport_state *viewports)
 {
+   struct llvmpipe_context *lp = llvmpipe_context(setup->pipe);
    unsigned i;
 
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
@@ -670,8 +671,14 @@ lp_setup_set_viewports(struct lp_setup_context *setup,
       float min_depth;
       float max_depth;
 
-      min_depth = viewports[i].translate[2];
-      max_depth = viewports[i].translate[2] + viewports[i].scale[2];
+      if (lp->rasterizer->clip_halfz == 0) {
+         float half_depth = viewports[i].scale[2];
+         min_depth = viewports[i].translate[2] - half_depth;
+         max_depth = min_depth + half_depth * 2.0f;
+      } else {
+         min_depth = viewports[i].translate[2];
+         max_depth = min_depth + viewports[i].scale[2];
+      }
 
       if (setup->viewports[i].min_depth != min_depth ||
           setup->viewports[i].max_depth != max_depth) {

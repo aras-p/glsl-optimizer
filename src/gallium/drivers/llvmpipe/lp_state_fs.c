@@ -445,47 +445,52 @@ generate_fs_loop(struct gallivm_state *gallivm,
                                          0);
 
       if (pos0 != -1 && outputs[pos0][2]) {
-         LLVMValueRef viewport, min_depth, max_depth;
-         LLVMValueRef viewport_index;
-         struct lp_build_context f32_bld;
-
-         assert(type.floating);
-         lp_build_context_init(&f32_bld, gallivm, type);
-
-         /*
-          * Assumes clamping of the viewport index will occur in setup/gs. Value
-          * is passed through the rasterization stage via lp_rast_shader_inputs.
-          *
-          * See: draw_clamp_viewport_idx and lp_clamp_viewport_idx for clamping
-          *      semantics.
-          */
-         viewport_index = lp_jit_thread_data_raster_state_viewport_index(gallivm,
-                             thread_data_ptr);
-
-         /*
-          * Load the min and max depth from the lp_jit_context.viewports
-          * array of lp_jit_viewport structures.
-          */
-         viewport = lp_llvm_viewport(context_ptr, gallivm, viewport_index);
-
-         /* viewports[viewport_index].min_depth */
-         min_depth = LLVMBuildExtractElement(builder, viewport,
-                        lp_build_const_int32(gallivm, LP_JIT_VIEWPORT_MIN_DEPTH),
-                        "");
-         min_depth = lp_build_broadcast_scalar(&f32_bld, min_depth);
-
-         /* viewports[viewport_index].max_depth */
-         max_depth = LLVMBuildExtractElement(builder, viewport,
-                        lp_build_const_int32(gallivm, LP_JIT_VIEWPORT_MAX_DEPTH),
-                        "");
-         max_depth = lp_build_broadcast_scalar(&f32_bld, max_depth);
-
          z = LLVMBuildLoad(builder, outputs[pos0][2], "output.z");
 
          /*
-          * Clamp to the min and max depth values for the given viewport.
+          * Clamp according to ARB_depth_clamp semantics.
           */
-         z = lp_build_clamp(&f32_bld, z, min_depth, max_depth);
+         if (key->depth_clamp) {
+            LLVMValueRef viewport, min_depth, max_depth;
+            LLVMValueRef viewport_index;
+            struct lp_build_context f32_bld;
+
+            assert(type.floating);
+            lp_build_context_init(&f32_bld, gallivm, type);
+
+            /*
+             * Assumes clamping of the viewport index will occur in setup/gs. Value
+             * is passed through the rasterization stage via lp_rast_shader_inputs.
+             *
+             * See: draw_clamp_viewport_idx and lp_clamp_viewport_idx for clamping
+             *      semantics.
+             */
+            viewport_index = lp_jit_thread_data_raster_state_viewport_index(gallivm,
+                                thread_data_ptr);
+
+            /*
+             * Load the min and max depth from the lp_jit_context.viewports
+             * array of lp_jit_viewport structures.
+             */
+            viewport = lp_llvm_viewport(context_ptr, gallivm, viewport_index);
+
+            /* viewports[viewport_index].min_depth */
+            min_depth = LLVMBuildExtractElement(builder, viewport,
+                           lp_build_const_int32(gallivm, LP_JIT_VIEWPORT_MIN_DEPTH),
+                           "");
+            min_depth = lp_build_broadcast_scalar(&f32_bld, min_depth);
+
+            /* viewports[viewport_index].max_depth */
+            max_depth = LLVMBuildExtractElement(builder, viewport,
+                           lp_build_const_int32(gallivm, LP_JIT_VIEWPORT_MAX_DEPTH),
+                           "");
+            max_depth = lp_build_broadcast_scalar(&f32_bld, max_depth);
+
+            /*
+             * Clamp to the min and max depth values for the given viewport.
+             */
+            z = lp_build_clamp(&f32_bld, z, min_depth, max_depth);
+         }
       }
 
       lp_build_depth_stencil_load_swizzled(gallivm, type,
@@ -2858,6 +2863,18 @@ make_variant_key(struct llvmpipe_context *lp,
       if (llvmpipe_resource_is_1d(lp->framebuffer.zsbuf->texture)) {
          key->resource_1d = TRUE;
       }
+   }
+
+   /*
+    * Propagate the depth clamp setting from the rasterizer state.
+    * depth_clip == 0 implies depth clamping is enabled.
+    *
+    * When clip_halfz is enabled, then always clamp the depth values.
+    */
+   if (lp->rasterizer->clip_halfz) {
+      key->depth_clamp = 1;
+   } else {
+      key->depth_clamp = (lp->rasterizer->depth_clip == 0) ? 1 : 0;
    }
 
    /* alpha test only applies if render buffer 0 is non-integer (or does not exist) */
