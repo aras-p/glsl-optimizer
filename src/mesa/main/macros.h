@@ -809,5 +809,7 @@ DIFFERENT_SIGNS(GLfloat x, GLfloat y)
 /* Compute the size of an array */
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
+/* Stringify */
+#define STRINGIFY(x) #x
 
 #endif
