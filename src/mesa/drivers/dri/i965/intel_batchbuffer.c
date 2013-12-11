@@ -440,7 +440,16 @@ intel_batchbuffer_data(struct brw_context *brw,
 void
 brw_emit_pipe_control_flush(struct brw_context *brw, uint32_t flags)
 {
-   if (brw->gen >= 6) {
+   if (brw->gen >= 8) {
+      BEGIN_BATCH(6);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (6 - 2));
+      OUT_BATCH(flags);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else if (brw->gen >= 6) {
       BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
       OUT_BATCH(flags);
@@ -471,7 +480,16 @@ brw_emit_pipe_control_write(struct brw_context *brw, uint32_t flags,
                             drm_intel_bo *bo, uint32_t offset,
                             uint32_t imm_lower, uint32_t imm_upper)
 {
-   if (brw->gen >= 6) {
+   if (brw->gen >= 8) {
+      BEGIN_BATCH(6);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (6 - 2));
+      OUT_BATCH(flags);
+      OUT_RELOC64(bo, I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                  offset);
+      OUT_BATCH(imm_lower);
+      OUT_BATCH(imm_upper);
+      ADVANCE_BATCH();
+   } else if (brw->gen >= 6) {
       /* PPGTT/GGTT is selected by DW2 bit 2 on Sandybridge, but DW1 bit 24
        * on later platforms.  We always use PPGTT on Gen7+.
        */
