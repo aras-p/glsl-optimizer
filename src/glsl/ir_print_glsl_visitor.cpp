@@ -1090,7 +1090,16 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
 	    buffer.asprintf_append (", ");
 	 ir->get_array_element(i)->accept(this);
       }
-   } else {
+   } else if (ir->type->is_record()) {
+      bool first = true;
+      foreach_iter(exec_list_iterator, iter, ir->components) {
+	 if (!first)
+	    ralloc_asprintf_append (&buffer, ", ");
+	 first = false;
+	 ir_constant* inst = (ir_constant*)iter.get();
+	 inst->accept(this);
+     } 
+   }else {
       bool first = true;
       for (unsigned i = 0; i < ir->type->components(); i++) {
 	 if (!first)
