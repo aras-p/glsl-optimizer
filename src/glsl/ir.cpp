@@ -1308,11 +1308,6 @@ ir_constant::is_basis() const
 ir_loop::ir_loop()
 {
    this->ir_type = ir_type_loop;
-   this->cmp = ir_unop_neg;
-   this->from = NULL;
-   this->to = NULL;
-   this->increment = NULL;
-   this->counter = NULL;
 }
 
 
@@ -1625,8 +1620,9 @@ ir_swizzle::variable_referenced() const
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode, glsl_precision precision)
    : max_array_access(0), max_ifc_array_access(NULL),
-     read_only(false), centroid(false), invariant(false),
-        mode(mode), interpolation(INTERP_QUALIFIER_NONE), atomic(), precision(precision)
+     read_only(false), centroid(false), sample(false), invariant(false),
+     how_declared(ir_var_declared_normally), mode(mode),
+     interpolation(INTERP_QUALIFIER_NONE), atomic(), precision(precision)
 {
    this->ir_type = ir_type_variable;
    this->type = type;
@@ -1749,7 +1745,8 @@ ir_function_signature::qualifiers_match(exec_list *params)
       if (a->read_only != b->read_only ||
 	  !modes_match(a->mode, b->mode) ||
 	  a->interpolation != b->interpolation ||
-	  a->centroid != b->centroid) {
+	  a->centroid != b->centroid ||
+         a->sample != b->sample) {
 
 	 /* parameter a's qualifiers don't match */
 	 return a->name;
@@ -1769,12 +1766,6 @@ ir_function_signature::replace_parameters(exec_list *new_params)
     * parameter information comes from the function prototype, it may either
     * specify incorrect parameter names or not have names at all.
     */
-   foreach_iter(exec_list_iterator, iter, parameters) {
-      assert(((ir_instruction *) iter.get())->as_variable() != NULL);
-
-      iter.remove();
-   }
-
    new_params->move_nodes_to(&parameters);
 }
 

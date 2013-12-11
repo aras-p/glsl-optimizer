@@ -63,7 +63,6 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_if *ir);
 
-   virtual ir_visitor_status visit_leave(ir_loop *ir);
    virtual ir_visitor_status visit_enter(ir_function *ir);
    virtual ir_visitor_status visit_leave(ir_function *ir);
    virtual ir_visitor_status visit_enter(ir_function_signature *ir);
@@ -142,42 +141,6 @@ ir_validate::visit_enter(ir_if *ir)
       ir->print();
       printf("\n");
       abort();
-   }
-
-   return visit_continue;
-}
-
-
-ir_visitor_status
-ir_validate::visit_leave(ir_loop *ir)
-{
-   if (ir->counter != NULL) {
-      if ((ir->from == NULL) || (ir->to == NULL) || (ir->increment == NULL)) {
-	 printf("ir_loop has invalid loop controls:\n"
-		"    counter:   %p\n"
-		"    from:      %p\n"
-		"    to:        %p\n"
-		"    increment: %p\n",
-		(void *) ir->counter, (void *) ir->from, (void *) ir->to,
-                (void *) ir->increment);
-	 abort();
-      }
-
-      if ((ir->cmp < ir_binop_less) || (ir->cmp > ir_binop_nequal)) {
-	 printf("ir_loop has invalid comparitor %d\n", ir->cmp);
-	 abort();
-      }
-   } else {
-      if ((ir->from != NULL) || (ir->to != NULL) || (ir->increment != NULL)) {
-	 printf("ir_loop has invalid loop controls:\n"
-		"    counter:   %p\n"
-		"    from:      %p\n"
-		"    to:        %p\n"
-		"    increment: %p\n",
-		(void *) ir->counter, (void *) ir->from, (void *) ir->to,
-                (void *) ir->increment);
-	 abort();
-      }
    }
 
    return visit_continue;

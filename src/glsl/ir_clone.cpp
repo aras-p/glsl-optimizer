@@ -52,6 +52,7 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    }
    var->read_only = this->read_only;
    var->centroid = this->centroid;
+   var->sample = this->sample;
    var->invariant = this->invariant;
    var->interpolation = this->interpolation;
    var->location = this->location;
@@ -68,6 +69,7 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->has_initializer = this->has_initializer;
    var->depth_layout = this->depth_layout;
    var->assigned = this->assigned;
+   var->how_declared = this->how_declared;
    var->used = this->used;
 
    var->num_state_slots = this->num_state_slots;
@@ -158,27 +160,11 @@ ir_loop::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_loop *new_loop = new(mem_ctx) ir_loop();
 
-   if (this->from)
-      new_loop->from = this->from->clone(mem_ctx, ht);
-   if (this->to)
-      new_loop->to = this->to->clone(mem_ctx, ht);
-   if (this->increment)
-      new_loop->increment = this->increment->clone(mem_ctx, ht);
-
-   if (ht) {
-	   new_loop->counter = (ir_variable *)hash_table_find(ht, this->counter);
-	   if (!new_loop->counter)
-		   new_loop->counter = this->counter;
-   } else {
-	   new_loop->counter = this->counter;
-   }
-
    foreach_iter(exec_list_iterator, iter, this->body_instructions) {
       ir_instruction *ir = (ir_instruction *)iter.get();
       new_loop->body_instructions.push_tail(ir->clone(mem_ctx, ht));
    }
 
-   new_loop->cmp = this->cmp;
    return new_loop;
 }
 

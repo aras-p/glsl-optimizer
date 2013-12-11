@@ -381,6 +381,11 @@ lower_clip_distance_visitor::fix_lhs(ir_assignment *ir)
 ir_visitor_status
 lower_clip_distance_visitor::visit_leave(ir_assignment *ir)
 {
+   /* First invoke the base class visitor.  This causes handle_rvalue() to be
+    * called on ir->rhs and ir->condition.
+    */
+   ir_rvalue_visitor::visit_leave(ir);
+
    if (this->is_clip_distance_vec8(ir->lhs) ||
        this->is_clip_distance_vec8(ir->rhs)) {
       /* LHS or RHS of the assignment is the entire 1D gl_ClipDistance array

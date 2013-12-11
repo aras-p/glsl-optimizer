@@ -383,7 +383,6 @@ lower_instructions_visitor::ldexp_to_arith(ir_expression *ir)
 
    /* Constants */
    ir_constant *zeroi = ir_constant::zero(ir, ivec);
-   ir_constant *zerof = ir_constant::zero(ir, ir->type);
 
    ir_constant *sign_mantissa_mask = new(ir) ir_constant(0x807fffffu, vec_elem);
    ir_constant *sign_mask = new(ir) ir_constant(0x80000000u, vec_elem);
@@ -430,8 +429,7 @@ lower_instructions_visitor::ldexp_to_arith(ir_expression *ir)
     */
    i.insert_before(zero_sign_x);
    i.insert_before(assign(zero_sign_x,
-                          bitcast_u2f(bit_or(bit_and(bitcast_f2u(x), sign_mask),
-                                             bitcast_f2u(zerof)))));
+                          bitcast_u2f(bit_and(bitcast_f2u(x), sign_mask))));
 
    i.insert_before(is_not_zero_or_underflow);
    i.insert_before(assign(is_not_zero_or_underflow,

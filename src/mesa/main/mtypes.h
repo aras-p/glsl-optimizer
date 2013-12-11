@@ -363,10 +363,9 @@ struct gl_transform_feedback_info
  * NOTE: first four tokens must fit into 2 bits (see t_vb_arbprogram.c)
  * All values should fit in a 4-bit field.
  *
- * NOTE: PROGRAM_ENV_PARAM, PROGRAM_STATE_VAR,
- * PROGRAM_CONSTANT, and PROGRAM_UNIFORM can all be considered to
- * be "uniform" variables since they can only be set outside glBegin/End.
- * They're also all stored in the same Parameters array.
+ * NOTE: PROGRAM_STATE_VAR, PROGRAM_CONSTANT, and PROGRAM_UNIFORM can all be
+ * considered to be "uniform" variables since they can only be set outside
+ * glBegin/End.  They're also all stored in the same Parameters array.
  */
 typedef enum
 {
@@ -374,8 +373,6 @@ typedef enum
    PROGRAM_ARRAY,       /**< Arrays & Matrixes */
    PROGRAM_INPUT,       /**< machine->Inputs[] */
    PROGRAM_OUTPUT,      /**< machine->Outputs[] */
-   PROGRAM_LOCAL_PARAM, /**< gl_program->LocalParams[] */
-   PROGRAM_ENV_PARAM,   /**< gl_program->Parameters[] */
    PROGRAM_STATE_VAR,   /**< gl_program->Parameters[] */
    PROGRAM_CONSTANT,    /**< gl_program->Parameters[] */
    PROGRAM_UNIFORM,     /**< gl_program->Parameters[] */
@@ -449,8 +446,14 @@ struct gl_program
    GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB, GL_GEOMETRY_PROGRAM_NV */
    GLenum Format;    /**< String encoding format */
 
-   /** Numbered local parameters */
-   GLfloat LocalParams[MAX_PROGRAM_LOCAL_PARAMS][4];
+   /**
+    * Local parameters used by the program.
+    *
+    * It's dynamically allocated because it is rarely used (just
+    * assembly-style programs), and MAX_PROGRAM_LOCAL_PARAMS entries once it's
+    * allocated.
+    */
+   GLfloat (*LocalParams)[4];
 
    /** Map from sampler unit to texture unit (set by glUniform1i()) */
    GLubyte SamplerUnits[MAX_SAMPLERS];
@@ -483,7 +486,6 @@ struct gl_program
    GLuint NumNativeTexIndirections;
    /*@}*/
 };
-
 
 
 /** Set by #pragma directives */
@@ -568,9 +570,7 @@ struct gl_shader
    struct exec_list *ir;
    struct glsl_symbol_table *symbols;
 
-   /** Shaders containing built-in functions that are used for linking. */
-   struct gl_shader *builtins_to_link[16];
-   unsigned num_builtins_to_link;
+   bool uses_builtin_functions;
 
    /**
     * Geometry shader state from GLSL 1.50 layout qualifiers.
@@ -1189,6 +1189,7 @@ struct gl_extensions
    GLboolean ARB_depth_texture;
    GLboolean ARB_draw_buffers_blend;
    GLboolean ARB_draw_elements_base_vertex;
+   GLboolean ARB_draw_indirect;
    GLboolean ARB_draw_instanced;
    GLboolean ARB_fragment_coord_conventions;
    GLboolean ARB_fragment_program;
@@ -1296,7 +1297,6 @@ struct gl_extensions
    GLboolean ATI_fragment_shader;
    GLboolean ATI_separate_stencil;
    GLboolean MESA_pack_invert;
-   GLboolean MESA_texture_array;
    GLboolean MESA_ycbcr_texture;
    GLboolean NV_conditional_render;
    GLboolean NV_fog_distance;
@@ -1398,7 +1398,6 @@ struct gl_context
    struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_TYPES];
 
    GLenum ErrorValue;        /**< Last error code */
-
 };
 
 

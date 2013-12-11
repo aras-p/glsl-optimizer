@@ -368,9 +368,7 @@ struct _mesa_glsl_parse_state {
    /** Extensions supported by the OpenGL implementation. */
    const struct gl_extensions *extensions;
 
-   /** Shaders containing built-in functions that are used for linking. */
-   struct gl_shader *builtins_to_link[16];
-   unsigned num_builtins_to_link;
+   bool uses_builtin_functions;
 
    /**
     * For geometry shaders, size of the most recently seen input declaration

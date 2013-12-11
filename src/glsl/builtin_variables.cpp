@@ -346,6 +346,7 @@ per_vertex_accumulator::add_field(int slot, const glsl_type *type,
    this->fields[this->num_fields].location = slot;
    this->fields[this->num_fields].interpolation = INTERP_QUALIFIER_NONE;
    this->fields[this->num_fields].centroid = 0;
+   this->fields[this->num_fields].sample = 0;
    this->num_fields++;
 }
 
@@ -451,6 +452,7 @@ builtin_variable_generator::add_variable(const char *name,
    if (!this->state->es_shader)
       prec = glsl_precision_undefined;
    ir_variable *var = new(symtab) ir_variable(type, name, mode, prec);
+   var->how_declared = ir_var_declared_implicitly;
 
    switch (var->mode) {
    case ir_var_auto:
@@ -962,6 +964,7 @@ builtin_variable_generator::generate_varyings()
                          fields[i].location, fields[i].precision);
          var->interpolation = fields[i].interpolation;
          var->centroid = fields[i].centroid;
+         var->sample = fields[i].sample;
          var->init_interface_type(per_vertex_out_type);
       }
    }

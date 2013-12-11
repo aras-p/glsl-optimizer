@@ -645,6 +645,12 @@ struct glsl_struct_field {
     * in ir_variable::centroid).  0 otherwise.
     */
    unsigned centroid:1;
+
+   /**
+    * For interface blocks, 1 if this variable uses sample interpolation (as
+    * in ir_variable::sample). 0 otherwise.
+    */
+   unsigned sample:1;
 };
 
 static inline unsigned int

@@ -357,6 +357,7 @@ struct ast_type_qualifier {
 	 unsigned in:1;
 	 unsigned out:1;
 	 unsigned centroid:1;
+         unsigned sample:1;
 	 unsigned uniform:1;
 	 unsigned smooth:1;
 	 unsigned flat:1;

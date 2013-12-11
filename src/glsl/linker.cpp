@@ -764,6 +764,12 @@ cross_validate_globals(struct gl_shader_program *prog,
 			    mode_string(var), var->name);
                return;
             }
+            if (existing->sample != var->sample) {
+               linker_error(prog, "declarations for %s `%s` have "
+                            "mismatching sample qualifiers\n",
+                            mode_string(var), var->name);
+               return;
+            }
 	 } else
 	    variables.add_variable(var);
       }
@@ -1409,35 +1415,37 @@ link_intrastage_shaders(void *mem_ctx,
 					      insertion_point, true, linked);
    }
 
-   /* Resolve initializers for global variables in the linked shader.
-    */
-   unsigned num_linking_shaders = num_shaders;
-   for (unsigned i = 0; i < num_shaders; i++)
-      num_linking_shaders += shader_list[i]->num_builtins_to_link;
-
-   gl_shader **linking_shaders =
-      (gl_shader **) calloc(num_linking_shaders, sizeof(gl_shader *));
-
-   memcpy(linking_shaders, shader_list,
-	  sizeof(linking_shaders[0]) * num_shaders);
-
-   unsigned idx = num_shaders;
+   /* Check if any shader needs built-in functions. */
+   bool need_builtins = false;
    for (unsigned i = 0; i < num_shaders; i++) {
-      memcpy(&linking_shaders[idx], shader_list[i]->builtins_to_link,
-	     sizeof(linking_shaders[0]) * shader_list[i]->num_builtins_to_link);
-      idx += shader_list[i]->num_builtins_to_link;
+      if (shader_list[i]->uses_builtin_functions) {
+         need_builtins = true;
+         break;
+      }
    }
 
-   assert(idx == num_linking_shaders);
+   bool ok;
+   if (need_builtins) {
+      /* Make a temporary array one larger than shader_list, which will hold
+       * the built-in function shader as well.
+       */
+      gl_shader **linking_shaders = (gl_shader **)
+         calloc(num_shaders + 1, sizeof(gl_shader *));
+      memcpy(linking_shaders, shader_list, num_shaders * sizeof(gl_shader *));
+      linking_shaders[num_shaders] = _mesa_glsl_get_builtin_function_shader();
 
-   if (!link_function_calls(prog, linked, linking_shaders,
-			    num_linking_shaders)) {
-      ctx->Driver.DeleteShader(ctx, linked);
+      ok = link_function_calls(prog, linked, linking_shaders, num_shaders + 1);
+
       free(linking_shaders);
+   } else {
+      ok = link_function_calls(prog, linked, shader_list, num_shaders);
+   }
+
+
+   if (!ok) {
+      ctx->Driver.DeleteShader(ctx, linked);
       return NULL;
    }
-
-   free(linking_shaders);
 
    /* At this point linked should contain all of the linked IR, so
     * validate it to make sure nothing went wrong.
@@ -2158,8 +2166,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       if (prog->_LinkedShaders[i] == NULL)
          continue;
 
-      validate_interstage_interface_blocks(prog, prog->_LinkedShaders[prev],
-                                           prog->_LinkedShaders[i]);
+      validate_interstage_inout_blocks(prog, prog->_LinkedShaders[prev],
+                                       prog->_LinkedShaders[i]);
       if (!prog->LinkStatus)
          goto done;
 
@@ -2172,6 +2180,11 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       prev = i;
    }
 
+   /* Cross-validate uniform blocks between shader stages */
+   validate_interstage_uniform_blocks(prog, prog->_LinkedShaders,
+                                      MESA_SHADER_TYPES);
+   if (!prog->LinkStatus)
+      goto done;
 
    for (unsigned int i = 0; i < MESA_SHADER_TYPES; i++) {
       if (prog->_LinkedShaders[i] != NULL)
@@ -2394,6 +2407,11 @@ done:
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
+
+      /* Do a final validation step to make sure that the IR wasn't
+       * invalidated by any modifications performed after intrastage linking.
+       */
+      validate_ir_tree(prog->_LinkedShaders[i]->ir);
 
       /* Retain any live IR, but trash the rest. */
       reparent_ir(prog->_LinkedShaders[i]->ir, prog->_LinkedShaders[i]->ir);

@@ -333,19 +333,19 @@ fix_parameter(void *mem_ctx, ir_rvalue *actual, const glsl_type *formal_type,
 }
 
 /**
- * If a function call is generated, \c call_ir will point to it on exit.
- * Otherwise \c call_ir will be set to \c NULL.
+ * Generate a function call.
+ *
+ * For non-void functions, this returns a dereference of the temporary variable
+ * which stores the return value for the call.  For void functions, this returns
+ * NULL.
  */
 static ir_rvalue *
 generate_call(exec_list *instructions, ir_function_signature *sig,
 	      exec_list *actual_parameters,
-	      ir_call **call_ir,
 	      struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
    exec_list post_call_conversions;
-
-   *call_ir = NULL;
 
    /* Perform implicit conversion of arguments.  For out parameters, we need
     * to place them in a temporary variable and do the conversion after the
@@ -481,6 +481,25 @@ done:
    return sig;
 }
 
+static void
+print_function_prototypes(_mesa_glsl_parse_state *state, YYLTYPE *loc,
+                          ir_function *f)
+{
+   if (f == NULL)
+      return;
+
+   foreach_list (node, &f->signatures) {
+      ir_function_signature *sig = (ir_function_signature *) node;
+
+      if (sig->is_builtin() && !sig->is_builtin_available(state))
+         continue;
+
+      char *str = prototype_string(sig->return_type, f->name, &sig->parameters);
+      _mesa_glsl_error(loc, state, "   %s", str);
+      ralloc_free(str);
+   }
+}
+
 /**
  * Raise a "no matching function" error, listing all possible overloads the
  * compiler considered so developers can figure out what went wrong.
@@ -492,30 +511,16 @@ no_matching_function_error(const char *name,
 			   _mesa_glsl_parse_state *state)
 {
    char *str = prototype_string(NULL, name, actual_parameters);
-   _mesa_glsl_error(loc, state, "no matching function for call to `%s'", str);
+   _mesa_glsl_error(loc, state,
+                    "no matching function for call to `%s'; candidates are:",
+                    str);
    ralloc_free(str);
 
-   const char *prefix = "candidates are: ";
+   print_function_prototypes(state, loc, state->symbols->get_function(name));
 
-   for (int i = -1; i < (int) state->num_builtins_to_link; i++) {
-      glsl_symbol_table *syms = i >= 0 ? state->builtins_to_link[i]->symbols
-				       : state->symbols;
-      ir_function *f = syms->get_function(name);
-      if (f == NULL)
-	 continue;
-
-      foreach_list (node, &f->signatures) {
-	 ir_function_signature *sig = (ir_function_signature *) node;
-
-         if (sig->is_builtin() && !sig->is_builtin_available(state))
-            continue;
-
-	 str = prototype_string(sig->return_type, f->name, &sig->parameters);
-	 _mesa_glsl_error(loc, state, "%s%s", prefix, str);
-	 ralloc_free(str);
-
-	 prefix = "                ";
-      }
+   if (state->uses_builtin_functions) {
+      gl_shader *sh = _mesa_glsl_get_builtin_function_shader();
+      print_function_prototypes(state, loc, sh->symbols->get_function(name));
    }
 }
 
@@ -1722,7 +1727,6 @@ ast_function_expression::hir(exec_list *instructions,
       ir_function_signature *sig =
 	 match_function_by_name(func_name, &actual_parameters, state);
 
-      ir_call *call = NULL;
       ir_rvalue *value = NULL;
       if (sig == NULL) {
 	 no_matching_function_error(func_name, &loc, &actual_parameters, state);
@@ -1731,8 +1735,7 @@ ast_function_expression::hir(exec_list *instructions,
 	 /* an error has already been emitted */
 	 value = ir_rvalue::error_value(ctx);
       } else {
-	 value = generate_call(instructions, sig, &actual_parameters,
-			       &call, state);
+	 value = generate_call(instructions, sig, &actual_parameters, state);
       }
 
       return value;

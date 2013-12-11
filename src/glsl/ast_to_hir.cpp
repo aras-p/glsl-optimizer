@@ -710,9 +710,15 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
     * Note: Whole-array assignments are not permitted in GLSL 1.10, but this
     * is handled by ir_dereference::is_lvalue.
     */
-   if (is_initializer && lhs_type->is_unsized_array() && rhs->type->is_array()
+   if (lhs_type->is_unsized_array() && rhs->type->is_array()
        && (lhs_type->element_type() == rhs->type->element_type())) {
-      return rhs;
+      if (is_initializer) {
+         return rhs;
+      } else {
+         _mesa_glsl_error(&loc, state,
+                          "implicitly sized arrays cannot be assigned");
+         return NULL;
+      }
    }
 
    /* Check for implicit conversion in GLSL 1.20 */
@@ -2205,6 +2211,9 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    if (qual->flags.q.centroid)
       var->centroid = 1;
 
+   if (qual->flags.q.sample)
+      var->sample = 1;
+
    if (qual->flags.q.attribute && state->target != vertex_shader) {
       var->type = glsl_type::error_type;
       _mesa_glsl_error(loc, state,
@@ -2978,7 +2987,7 @@ ast_declarator_list::hir(exec_list *instructions,
                                precision_names[this->type->qualifier.precision],
                                type_name);
          }
-      } else {
+      } else if (this->type->specifier->structure == NULL) {
          _mesa_glsl_warning(&loc, state, "empty declaration");
       }
    }
@@ -3316,6 +3325,14 @@ ast_declarator_list::hir(exec_list *instructions,
                           "'centroid in' cannot be used in a vertex shader");
       }
 
+      if (state->target == vertex_shader
+          && this->type->qualifier.flags.q.sample
+          && this->type->qualifier.flags.q.in) {
+
+         _mesa_glsl_error(&loc, state,
+                        "'sample in' cannot be used in a vertex shader");
+      }
+
       /* Section 4.3.6 of the GLSL 1.30 specification states:
        * "It is an error to use centroid out in a fragment shader."
        *
@@ -3400,6 +3417,15 @@ ast_declarator_list::hir(exec_list *instructions,
       ir_variable *earlier =
          get_variable_being_redeclared(var, decl->get_location(), state,
                                        false /* allow_all_redeclarations */);
+      if (earlier != NULL) {
+         if (strncmp(var->name, "gl_", 3) == 0 &&
+             earlier->how_declared == ir_var_declared_in_block) {
+            _mesa_glsl_error(&loc, state,
+                             "`%s' has already been redeclared using "
+                             "gl_PerVertex", var->name);
+         }
+         earlier->how_declared = ir_var_declared_normally;
+      }
 
       if (decl->initializer != NULL) {
 	 result = process_initializer((earlier == NULL) ? var : earlier,
@@ -4719,6 +4745,7 @@ ast_process_structure_or_interface_block(exec_list *instructions,
          fields[i].interpolation =
             interpret_interpolation_qualifier(qual, var_mode, state, &loc);
          fields[i].centroid = qual->flags.q.centroid ? 1 : 0;
+         fields[i].sample = qual->flags.q.sample ? 1 : 0;
 
          if (qual->flags.q.row_major || qual->flags.q.column_major) {
             if (!qual->flags.q.uniform) {
@@ -5002,6 +5029,8 @@ ast_interface_block::hir(exec_list *instructions,
                earlier_per_vertex->fields.structure[j].interpolation;
             fields[i].centroid =
                earlier_per_vertex->fields.structure[j].centroid;
+            fields[i].sample =
+               earlier_per_vertex->fields.structure[j].sample;
          }
       }
 
@@ -5135,6 +5164,7 @@ ast_interface_block::hir(exec_list *instructions,
             _mesa_glsl_error(&loc, state, "`%s' redeclared",
                              this->instance_name);
          }
+         earlier->how_declared = ir_var_declared_normally;
          earlier->type = var->type;
          earlier->reinit_interface_type(block_type);
          delete var;
@@ -5155,6 +5185,7 @@ ast_interface_block::hir(exec_list *instructions,
                                    var_mode, fields[i].precision);
          var->interpolation = fields[i].interpolation;
          var->centroid = fields[i].centroid;
+         var->sample = fields[i].sample;
          var->init_interface_type(block_type);
 
          if (redeclaring_per_vertex) {
@@ -5165,7 +5196,11 @@ ast_interface_block::hir(exec_list *instructions,
                _mesa_glsl_error(&loc, state,
                                 "redeclaration of gl_PerVertex can only "
                                 "include built-in variables");
+            } else if (earlier->how_declared == ir_var_declared_normally) {
+               _mesa_glsl_error(&loc, state,
+                                "`%s' has already been redeclared", var->name);
             } else {
+               earlier->how_declared = ir_var_declared_in_block;
                earlier->reinit_interface_type(block_type);
             }
             continue;
@@ -5212,6 +5247,12 @@ ast_interface_block::hir(exec_list *instructions,
             if (var != NULL &&
                 var->get_interface_type() == earlier_per_vertex &&
                 var->mode == var_mode) {
+               if (var->how_declared == ir_var_declared_normally) {
+                  _mesa_glsl_error(&loc, state,
+                                   "redeclaration of gl_PerVertex cannot "
+                                   "follow a redeclaration of `%s'",
+                                   var->name);
+               }
                state->symbols->disable_variable(var->name);
                var->remove();
             }

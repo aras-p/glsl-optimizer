@@ -149,6 +149,7 @@ void ir_print_visitor::visit(ir_variable *ir)
    printf("(declare ");
 
    const char *const cent = (ir->centroid) ? "centroid " : "";
+   const char *const samp = (ir->sample) ? "sample " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
    const char *const mode[] = { "", "uniform ", "shader_in ", "shader_out ",
                                 "in ", "out ", "inout ",
@@ -157,8 +158,8 @@ void ir_print_visitor::visit(ir_variable *ir)
    const char *const interp[] = { "", "smooth", "flat", "noperspective" };
    STATIC_ASSERT(ARRAY_SIZE(interp) == INTERP_QUALIFIER_COUNT);
 
-   printf("(%s%s%s%s) ",
-	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
+   printf("(%s%s%s%s%s) ",
+	  cent, samp, inv, mode[ir->mode], interp[ir->interpolation]);
 
    print_type(ir->type);
    printf(" %s)", unique_name(ir));
@@ -400,9 +401,9 @@ void ir_print_visitor::visit(ir_constant *ir)
             if (ir->value.f[i] == 0.0f)
                /* 0.0 == -0.0, so print with %f to get the proper sign. */
                printf("%.1f", ir->value.f[i]);
-            else if (abs(ir->value.f[i]) < 0.000001f)
+            else if (fabs(ir->value.f[i]) < 0.000001f)
                printf("%a", ir->value.f[i]);
-            else if (abs(ir->value.f[i]) > 1000000.0f)
+            else if (fabs(ir->value.f[i]) > 1000000.0f)
                printf("%e", ir->value.f[i]);
             else
                printf("%f", ir->value.f[i]);
@@ -506,19 +507,7 @@ ir_print_visitor::visit(ir_if *ir)
 void
 ir_print_visitor::visit(ir_loop *ir)
 {
-   printf("(loop (");
-   if (ir->counter != NULL)
-      ir->counter->accept(this);
-   printf(") (");
-   if (ir->from != NULL)
-      ir->from->accept(this);
-   printf(") (");
-   if (ir->to != NULL)
-      ir->to->accept(this);
-   printf(") (");
-   if (ir->increment != NULL)
-      ir->increment->accept(this);
-   printf(") (\n");
+   printf("(loop (\n");
    indentation++;
 
    foreach_iter(exec_list_iterator, iter, ir->body_instructions) {

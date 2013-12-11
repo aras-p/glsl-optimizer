@@ -143,6 +143,16 @@ public:
    virtual class ir_jump *              as_jump()             { return NULL; }
    /*@}*/
 
+   /**
+    * IR equality method: Return true if the referenced instruction would
+    * return the same value as this one.
+    *
+    * This intended to be used for CSE and algebraic optimizations, on rvalues
+    * in particular.  No support for other instruction types (assignments,
+    * jumps, calls, etc.) is planned.
+    */
+   virtual bool equals(ir_instruction *ir);
+
 protected:
    ir_instruction()
    {
@@ -290,6 +300,34 @@ enum ir_variable_mode {
    ir_var_system_value, /**< Ex: front-face, instance-id, etc. */
    ir_var_temporary,	/**< Temporary variable generated during compilation. */
    ir_var_mode_count	/**< Number of variable modes */
+};
+
+/**
+ * Enum keeping track of how a variable was declared.  For error checking of
+ * the gl_PerVertex redeclaration rules.
+ */
+enum ir_var_declaration_type {
+   /**
+    * Normal declaration (for most variables, this means an explicit
+    * declaration.  Exception: temporaries are always implicitly declared, but
+    * they still use ir_var_declared_normally).
+    *
+    * Note: an ir_variable that represents a named interface block uses
+    * ir_var_declared_normally.
+    */
+   ir_var_declared_normally = 0,
+
+   /**
+    * Variable was explicitly declared (or re-declared) in an unnamed
+    * interface block.
+    */
+   ir_var_declared_in_block,
+
+   /**
+    * Variable is an implicitly declared built-in that has not been explicitly
+    * re-declared by the shader.
+    */
+   ir_var_declared_implicitly,
 };
 
 /**
@@ -500,6 +538,7 @@ public:
     */
    unsigned read_only:1;
    unsigned centroid:1;
+   unsigned sample:1;
    unsigned invariant:1;
 
    /**
@@ -523,6 +562,14 @@ public:
     * non-ast_to_hir.cpp (GLSL parsing) paths.
     */
    unsigned assigned:1;
+
+   /**
+    * Enum indicating how the variable was declared.  See
+    * ir_var_declaration_type.
+    *
+    * This is used to detect certain kinds of illegal variable redeclarations.
+    */
+   unsigned how_declared:2;
 
    /**
     * Storage class of the variable.
@@ -987,34 +1034,6 @@ public:
 
    /** List of ir_instruction that make up the body of the loop. */
    exec_list body_instructions;
-
-   /**
-    * \name Loop counter and controls
-    *
-    * Represents a loop like a FORTRAN \c do-loop.
-    *
-    * \note
-    * If \c from and \c to are the same value, the loop will execute once.
-    */
-   /*@{*/
-   ir_rvalue *from;             /** Value of the loop counter on the first
-				 * iteration of the loop.
-				 */
-   ir_rvalue *to;               /** Value of the loop counter on the last
-				 * iteration of the loop.
-				 */
-   ir_rvalue *increment;
-   ir_variable *counter;
-
-   /**
-    * Comparison operation in the loop terminator.
-    *
-    * If any of the loop control fields are non-\c NULL, this field must be
-    * one of \c ir_binop_less, \c ir_binop_greater, \c ir_binop_lequal,
-    * \c ir_binop_gequal, \c ir_binop_equal, or \c ir_binop_nequal.
-    */
-   int cmp;
-   /*@}*/
 };
 
 
@@ -1418,6 +1437,8 @@ public:
       return this;
    }
 
+   virtual bool equals(ir_instruction *ir);
+
    virtual ir_expression *clone(void *mem_ctx, struct hash_table *ht) const;
 
    /**
@@ -1750,6 +1771,8 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
+   virtual bool equals(ir_instruction *ir);
+
    /**
     * Return a string representing the ir_texture_opcode.
     */
@@ -1837,6 +1860,8 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
+   virtual bool equals(ir_instruction *ir);
+
    bool is_lvalue() const
    {
       return val->is_lvalue() && !mask.has_duplicates;
@@ -1904,6 +1929,8 @@ public:
       return this;
    }
 
+   virtual bool equals(ir_instruction *ir);
+
    /**
     * Get the variable that is ultimately referenced by an r-value
     */
@@ -1961,6 +1988,8 @@ public:
    {
       return this;
    }
+
+   virtual bool equals(ir_instruction *ir);
 
    /**
     * Get the variable that is ultimately referenced by an r-value
@@ -2095,6 +2124,8 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   virtual bool equals(ir_instruction *ir);
 
    /**
     * Get a particular component of a constant as a specific type
@@ -2326,6 +2357,9 @@ _mesa_glsl_initialize_builtin_functions();
 extern ir_function_signature *
 _mesa_glsl_find_builtin_function(_mesa_glsl_parse_state *state,
                                  const char *name, exec_list *actual_parameters);
+
+extern gl_shader *
+_mesa_glsl_get_builtin_function_shader(void);
 
 extern void
 _mesa_glsl_release_builtin_functions(void);

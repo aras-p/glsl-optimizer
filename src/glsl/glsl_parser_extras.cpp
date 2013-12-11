@@ -76,7 +76,8 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->loop_nesting_ast = NULL;
 
    this->struct_specifier_depth = 0;
-   this->num_builtins_to_link = 0;
+
+   this->uses_builtin_functions = false;
 
    /* Set default language version and extensions */
    this->language_version = ctx->Const.ForceGLSLVersion ?
@@ -192,6 +193,8 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->gs_input_prim_type = GL_POINTS;
    this->gs_input_size = 0;
    this->out_qualifier = new(this) ast_type_qualifier();
+   memset(this->atomic_counter_offsets, 0,
+          sizeof(this->atomic_counter_offsets));
 }
 
 /**
@@ -878,6 +881,8 @@ _mesa_ast_type_qualifier_print(const struct ast_type_qualifier *q)
 
    if (q->flags.q.centroid)
       printf("centroid ");
+   if (q->flags.q.sample)
+      printf("sample ");
    if (q->flags.q.uniform)
       printf("uniform ");
    if (q->flags.q.smooth)
@@ -1532,12 +1537,8 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
    shader->CompileStatus = !state->error;
    shader->InfoLog = state->info_log;
    shader->Version = state->language_version;
-   shader->InfoLog = state->info_log;
    shader->IsES = state->es_shader;
-
-   memcpy(shader->builtins_to_link, state->builtins_to_link,
-          sizeof(shader->builtins_to_link[0]) * state->num_builtins_to_link);
-   shader->num_builtins_to_link = state->num_builtins_to_link;
+   shader->uses_builtin_functions = state->uses_builtin_functions;
 
    if (shader->UniformBlocks)
       ralloc_free(shader->UniformBlocks);

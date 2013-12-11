@@ -526,7 +526,7 @@ readonly	KEYWORD(0, 300, 0, 0, READONLY);
 writeonly	KEYWORD(0, 300, 0, 0, WRITEONLY);
 resource	KEYWORD(0, 300, 0, 0, RESOURCE);
 patch		KEYWORD(0, 300, 0, 0, PATCH);
-sample		KEYWORD(0, 300, 0, 0, SAMPLE);
+sample		KEYWORD_WITH_ALT(400, 300, 400, 0, yyextra->ARB_gpu_shader5_enable, SAMPLE);
 subroutine	KEYWORD(0, 300, 0, 0, SUBROUTINE);
 
 
