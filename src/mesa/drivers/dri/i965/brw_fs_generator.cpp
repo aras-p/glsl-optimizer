@@ -1310,7 +1310,7 @@ fs_generator::generate_untyped_surface_read(fs_inst *inst, struct brw_reg dst,
 }
 
 void
-fs_generator::generate_code(exec_list *instructions)
+fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
 {
    int last_native_insn_offset = p->next_insn_offset;
    const char *last_annotation_string = NULL;
@@ -1819,21 +1819,22 @@ fs_generator::generate_code(exec_list *instructions)
     * which is often something we want to debug.  So this is here in
     * case you're doing that.
     */
-   if (0) {
-      brw_dump_compile(p, stdout, 0, p->next_insn_offset);
+   if (dump_file) {
+      brw_dump_compile(p, dump_file, 0, p->next_insn_offset);
    }
 }
 
 const unsigned *
 fs_generator::generate_assembly(exec_list *simd8_instructions,
                                 exec_list *simd16_instructions,
-                                unsigned *assembly_size)
+                                unsigned *assembly_size,
+                                FILE *dump_file)
 {
    assert(simd8_instructions || simd16_instructions);
 
    if (simd8_instructions) {
       dispatch_width = 8;
-      generate_code(simd8_instructions);
+      generate_code(simd8_instructions, dump_file);
    }
 
    if (simd16_instructions) {
@@ -1854,7 +1855,7 @@ fs_generator::generate_assembly(exec_list *simd8_instructions,
       brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
 
       dispatch_width = 16;
-      generate_code(simd16_instructions);
+      generate_code(simd16_instructions, dump_file);
    }
 
    return brw_get_program(p, assembly_size);

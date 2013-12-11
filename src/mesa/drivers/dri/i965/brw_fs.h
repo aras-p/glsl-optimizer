@@ -517,10 +517,11 @@ public:
 
    const unsigned *generate_assembly(exec_list *simd8_instructions,
                                      exec_list *simd16_instructions,
-                                     unsigned *assembly_size);
+                                     unsigned *assembly_size,
+                                     FILE *dump_file = NULL);
 
 private:
-   void generate_code(exec_list *instructions);
+   void generate_code(exec_list *instructions, FILE *dump_file);
    void generate_fb_write(fs_inst *inst);
    void generate_pixel_xy(struct brw_reg dst, bool is_x);
    void generate_linterp(fs_inst *inst, struct brw_reg dst,
