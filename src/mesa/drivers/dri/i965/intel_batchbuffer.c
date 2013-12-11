@@ -493,11 +493,12 @@ gen7_emit_vs_workaround_flush(struct brw_context *brw)
 {
    assert(brw->gen == 7);
 
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+   BEGIN_BATCH(5);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
    OUT_BATCH(PIPE_CONTROL_DEPTH_STALL | PIPE_CONTROL_WRITE_IMMEDIATE);
    OUT_RELOC(brw->batch.workaround_bo,
 	     I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION, 0);
+   OUT_BATCH(0); /* write data */
    OUT_BATCH(0); /* write data */
    ADVANCE_BATCH();
 }
@@ -509,8 +510,8 @@ gen7_emit_vs_workaround_flush(struct brw_context *brw)
 void
 gen7_emit_cs_stall_flush(struct brw_context *brw)
 {
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+   BEGIN_BATCH(5);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
    /* From p61 of the Ivy Bridge PRM (1.10.4 PIPE_CONTROL Command: DW1[20]
     * CS Stall):
     *
@@ -527,6 +528,7 @@ gen7_emit_cs_stall_flush(struct brw_context *brw)
    OUT_BATCH(PIPE_CONTROL_CS_STALL | PIPE_CONTROL_WRITE_IMMEDIATE);
    OUT_RELOC(brw->batch.workaround_bo,
              I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION, 0);
+   OUT_BATCH(0);
    OUT_BATCH(0);
    ADVANCE_BATCH();
 }
@@ -579,11 +581,12 @@ intel_emit_post_sync_nonzero_flush(struct brw_context *brw)
                                PIPE_CONTROL_CS_STALL |
                                PIPE_CONTROL_STALL_AT_SCOREBOARD);
 
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+   BEGIN_BATCH(5);
+   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
    OUT_BATCH(PIPE_CONTROL_WRITE_IMMEDIATE);
    OUT_RELOC(brw->batch.workaround_bo,
 	     I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION, 0);
+   OUT_BATCH(0); /* write data */
    OUT_BATCH(0); /* write data */
    ADVANCE_BATCH();
 
