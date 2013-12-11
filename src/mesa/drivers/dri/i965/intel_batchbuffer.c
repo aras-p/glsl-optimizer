@@ -441,9 +441,10 @@ void
 brw_emit_pipe_control_flush(struct brw_context *brw, uint32_t flags)
 {
    if (brw->gen >= 6) {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+      BEGIN_BATCH(5);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
       OUT_BATCH(flags);
+      OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);
       ADVANCE_BATCH();
