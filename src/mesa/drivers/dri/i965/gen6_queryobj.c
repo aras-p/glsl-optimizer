@@ -40,38 +40,6 @@
 #include "intel_reg.h"
 
 /**
- * Emit PIPE_CONTROLs to write the current GPU timestamp into a buffer.
- */
-static void
-write_timestamp(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
-{
-   /* Emit workaround flushes: */
-   if (brw->gen == 6) {
-      /* The timestamp write below is a non-zero post-sync op, which on
-       * Gen6 necessitates a CS stall.  CS stalls need stall at scoreboard
-       * set.  See the comments for intel_emit_post_sync_nonzero_flush().
-       */
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-      OUT_BATCH(PIPE_CONTROL_CS_STALL | PIPE_CONTROL_STALL_AT_SCOREBOARD);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
-
-   BEGIN_BATCH(5);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
-   OUT_BATCH(PIPE_CONTROL_WRITE_TIMESTAMP);
-   OUT_RELOC(query_bo,
-             I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-             PIPE_CONTROL_GLOBAL_GTT_WRITE |
-             idx * sizeof(uint64_t));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-}
-
-/**
  * Emit PIPE_CONTROLs to write the PS_DEPTH_COUNT register into a buffer.
  */
 static void
@@ -272,7 +240,7 @@ gen6_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        * obtain the time elapsed.  Notably, this includes time elapsed while
        * the system was doing other work, such as running other applications.
        */
-      write_timestamp(brw, query->bo, 0);
+      brw_write_timestamp(brw, query->bo, 0);
       break;
 
    case GL_ANY_SAMPLES_PASSED:
@@ -311,7 +279,7 @@ gen6_end_query(struct gl_context *ctx, struct gl_query_object *q)
 
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED:
-      write_timestamp(brw, query->bo, 1);
+      brw_write_timestamp(brw, query->bo, 1);
       break;
 
    case GL_ANY_SAMPLES_PASSED:

@@ -46,8 +46,8 @@
 /**
  * Emit PIPE_CONTROLs to write the current GPU timestamp into a buffer.
  */
-static void
-write_timestamp(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
+void
+brw_write_timestamp(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 {
    if (brw->gen >= 6) {
       /* Emit workaround flushes: */
@@ -269,7 +269,7 @@ brw_begin_query(struct gl_context *ctx, struct gl_query_object *q)
        */
       drm_intel_bo_unreference(query->bo);
       query->bo = drm_intel_bo_alloc(brw->bufmgr, "timer query", 4096, 4096);
-      write_timestamp(brw, query->bo, 0);
+      brw_write_timestamp(brw, query->bo, 0);
       break;
 
    case GL_ANY_SAMPLES_PASSED:
@@ -321,7 +321,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
    switch (query->Base.Target) {
    case GL_TIME_ELAPSED_EXT:
       /* Write the final timestamp. */
-      write_timestamp(brw, query->bo, 1);
+      brw_write_timestamp(brw, query->bo, 1);
       break;
 
    case GL_ANY_SAMPLES_PASSED:
@@ -515,7 +515,7 @@ brw_query_counter(struct gl_context *ctx, struct gl_query_object *q)
 
    drm_intel_bo_unreference(query->bo);
    query->bo = drm_intel_bo_alloc(brw->bufmgr, "timestamp query", 4096, 4096);
-   write_timestamp(brw, query->bo, 0);
+   brw_write_timestamp(brw, query->bo, 0);
 }
 
 /**
