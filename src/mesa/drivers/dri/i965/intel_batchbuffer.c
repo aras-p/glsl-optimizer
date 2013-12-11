@@ -432,6 +432,32 @@ intel_batchbuffer_data(struct brw_context *brw,
 }
 
 /**
+ * Emit a PIPE_CONTROL with various flushing flags.
+ *
+ * The caller is responsible for deciding what flags are appropriate for the
+ * given generation.
+ */
+void
+brw_emit_pipe_control_flush(struct brw_context *brw, uint32_t flags)
+{
+   if (brw->gen >= 6) {
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
+      OUT_BATCH(flags);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | flags | (4 - 2));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   }
+}
+
+/**
  * Restriction [DevSNB, DevIVB]:
  *
  * Prior to changing Depth/Stencil Buffer state (i.e. any combination of
@@ -448,26 +474,9 @@ intel_emit_depth_stall_flushes(struct brw_context *brw)
 {
    assert(brw->gen >= 6 && brw->gen <= 7);
 
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-   OUT_BATCH(PIPE_CONTROL_DEPTH_STALL);
-   OUT_BATCH(0); /* address */
-   OUT_BATCH(0); /* write data */
-   ADVANCE_BATCH()
-
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-   OUT_BATCH(PIPE_CONTROL_DEPTH_CACHE_FLUSH);
-   OUT_BATCH(0); /* address */
-   OUT_BATCH(0); /* write data */
-   ADVANCE_BATCH();
-
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-   OUT_BATCH(PIPE_CONTROL_DEPTH_STALL);
-   OUT_BATCH(0); /* address */
-   OUT_BATCH(0); /* write data */
-   ADVANCE_BATCH();
+   brw_emit_pipe_control_flush(brw, PIPE_CONTROL_DEPTH_STALL);
+   brw_emit_pipe_control_flush(brw, PIPE_CONTROL_DEPTH_CACHE_FLUSH);
+   brw_emit_pipe_control_flush(brw, PIPE_CONTROL_DEPTH_STALL);
 }
 
 /**
@@ -565,13 +574,9 @@ intel_emit_post_sync_nonzero_flush(struct brw_context *brw)
    if (!brw->batch.need_workaround_flush)
       return;
 
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-   OUT_BATCH(PIPE_CONTROL_CS_STALL |
-	     PIPE_CONTROL_STALL_AT_SCOREBOARD);
-   OUT_BATCH(0); /* address */
-   OUT_BATCH(0); /* write data */
-   ADVANCE_BATCH();
+   brw_emit_pipe_control_flush(brw,
+                               PIPE_CONTROL_CS_STALL |
+                               PIPE_CONTROL_STALL_AT_SCOREBOARD);
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
@@ -593,46 +598,32 @@ intel_emit_post_sync_nonzero_flush(struct brw_context *brw)
 void
 intel_batchbuffer_emit_mi_flush(struct brw_context *brw)
 {
-   if (brw->gen >= 6) {
-      if (brw->batch.ring == BLT_RING) {
-	 BEGIN_BATCH_BLT(4);
-	 OUT_BATCH(MI_FLUSH_DW);
-	 OUT_BATCH(0);
-	 OUT_BATCH(0);
-	 OUT_BATCH(0);
-	 ADVANCE_BATCH();
-      } else {
-	 if (brw->gen == 6) {
-	    /* Hardware workaround: SNB B-Spec says:
-	     *
-	     * [Dev-SNB{W/A}]: Before a PIPE_CONTROL with Write Cache
-	     * Flush Enable =1, a PIPE_CONTROL with any non-zero
-	     * post-sync-op is required.
-	     */
-	    intel_emit_post_sync_nonzero_flush(brw);
-	 }
-
-	 BEGIN_BATCH(4);
-	 OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-	 OUT_BATCH(PIPE_CONTROL_INSTRUCTION_FLUSH |
-		   PIPE_CONTROL_WRITE_FLUSH |
-		   PIPE_CONTROL_DEPTH_CACHE_FLUSH |
-                   PIPE_CONTROL_VF_CACHE_INVALIDATE |
-		   PIPE_CONTROL_TC_FLUSH |
-		   PIPE_CONTROL_NO_WRITE |
-                   PIPE_CONTROL_CS_STALL);
-	 OUT_BATCH(0); /* write address */
-	 OUT_BATCH(0); /* write data */
-	 ADVANCE_BATCH();
-      }
-   } else {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
-		PIPE_CONTROL_WRITE_FLUSH |
-		PIPE_CONTROL_NO_WRITE);
-      OUT_BATCH(0); /* write address */
-      OUT_BATCH(0); /* write data */
-      OUT_BATCH(0); /* write data */
+   if (brw->batch.ring == BLT_RING && brw->gen >= 6) {
+      BEGIN_BATCH_BLT(4);
+      OUT_BATCH(MI_FLUSH_DW);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
       ADVANCE_BATCH();
+   } else {
+      int flags = PIPE_CONTROL_NO_WRITE | PIPE_CONTROL_WRITE_FLUSH;
+      if (brw->gen >= 6) {
+         flags |= PIPE_CONTROL_INSTRUCTION_FLUSH |
+                  PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+                  PIPE_CONTROL_VF_CACHE_INVALIDATE |
+                  PIPE_CONTROL_TC_FLUSH |
+                  PIPE_CONTROL_CS_STALL;
+
+         if (brw->gen == 6) {
+            /* Hardware workaround: SNB B-Spec says:
+             *
+             * [Dev-SNB{W/A}]: Before a PIPE_CONTROL with Write Cache
+             * Flush Enable =1, a PIPE_CONTROL with any non-zero
+             * post-sync-op is required.
+             */
+            intel_emit_post_sync_nonzero_flush(brw);
+         }
+      }
+      brw_emit_pipe_control_flush(brw, flags);
    }
 }

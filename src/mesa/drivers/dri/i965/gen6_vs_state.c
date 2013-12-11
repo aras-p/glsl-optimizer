@@ -205,15 +205,10 @@ upload_vs_state(struct brw_context *brw)
     * what is strictly required to avoid the issue.
     */
    intel_emit_post_sync_nonzero_flush(brw);
-
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2));
-   OUT_BATCH(PIPE_CONTROL_DEPTH_STALL |
-	     PIPE_CONTROL_INSTRUCTION_FLUSH |
-	     PIPE_CONTROL_STATE_CACHE_INVALIDATE);
-   OUT_BATCH(0); /* address */
-   OUT_BATCH(0); /* write data */
-   ADVANCE_BATCH();
+   brw_emit_pipe_control_flush(brw,
+                               PIPE_CONTROL_DEPTH_STALL |
+                               PIPE_CONTROL_INSTRUCTION_FLUSH |
+                               PIPE_CONTROL_STATE_CACHE_INVALIDATE);
 }
 
 const struct brw_tracked_state gen6_vs_state = {
