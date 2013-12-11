@@ -2256,6 +2256,18 @@ fs_visitor::dead_code_eliminate_local()
  * Implements register coalescing: Checks if the two registers involved in a
  * raw move don't interfere, in which case they can both be stored in the same
  * place and the MOV removed.
+ *
+ * To do this, all uses of the source of the MOV in the shader are replaced
+ * with the destination of the MOV. For example:
+ *
+ * add vgrf3:F, vgrf1:F, vgrf2:F
+ * mov vgrf4:F, vgrf3:F
+ * mul vgrf5:F, vgrf5:F, vgrf4:F
+ *
+ * becomes
+ *
+ * add vgrf4:F, vgrf1:F, vgrf2:F
+ * mul vgrf5:F, vgrf5:F, vgrf4:F
  */
 bool
 fs_visitor::register_coalesce()
