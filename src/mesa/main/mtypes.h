@@ -570,7 +570,7 @@ struct gl_shader
    struct exec_list *ir;
    struct glsl_symbol_table *symbols;
 
-   bool uses_builtin_functions;
+   int uses_builtin_functions;
 
    /**
     * Geometry shader state from GLSL 1.50 layout qualifiers.

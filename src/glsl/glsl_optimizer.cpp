@@ -413,8 +413,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	
 	// Link built-in functions
 	shader->shader->symbols = state->symbols;
-	memcpy(shader->shader->builtins_to_link, state->builtins_to_link, sizeof(shader->shader->builtins_to_link[0]) * state->num_builtins_to_link);
-	shader->shader->num_builtins_to_link = state->num_builtins_to_link;
+	shader->shader->uses_builtin_functions = state->uses_builtin_functions;
 	
 	struct gl_shader* linked_shader = NULL;
 

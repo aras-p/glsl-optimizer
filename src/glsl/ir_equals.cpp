@@ -129,11 +129,13 @@ ir_texture::equals(ir_instruction *ir)
    if (!possibly_null_equals(coordinate, other->coordinate))
       return false;
 
+#if 0 // Note: glsl optimizer removed projector & shadow_comparitor fields
    if (!possibly_null_equals(projector, other->projector))
       return false;
 
    if (!possibly_null_equals(shadow_comparitor, other->shadow_comparitor))
       return false;
+#endif
 
    if (!possibly_null_equals(offset, other->offset))
       return false;

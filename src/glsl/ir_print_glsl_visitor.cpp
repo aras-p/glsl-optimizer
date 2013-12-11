@@ -1217,22 +1217,22 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 void
 ir_print_glsl_visitor::visit(ir_loop *ir)
 {
-	bool noData = (ir->counter == NULL && ir->from == NULL && ir->to == NULL && ir->increment == NULL);
-	if (noData) {
-		buffer.asprintf_append ("while (true) {\n");
-		indentation++;
-		foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
-			ir_instruction *const inst = (ir_instruction *) iter.get();
-			indent();
-			inst->accept(this);
-			buffer.asprintf_append (";\n");
-		}
-		indentation--;
+	buffer.asprintf_append ("while (true) {\n");
+	indentation++;
+	foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
+		ir_instruction *const inst = (ir_instruction *) iter.get();
 		indent();
-		buffer.asprintf_append ("}");
-		return;
+		inst->accept(this);
+		buffer.asprintf_append (";\n");
 	}
+	indentation--;
+	indent();
+	buffer.asprintf_append ("}");
+	return;
 
+	/*
+	 //@TODO: somehow detect a "canonical for loop"?
+	 
 	bool canonicalFor = (ir->counter && ir->from && ir->to && ir->increment);
 	if (canonicalFor)
 	{
@@ -1278,33 +1278,7 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 		buffer.asprintf_append ("}");
 		return;
 	}
-
-
-   buffer.asprintf_append ("( TODO loop (");
-   if (ir->counter != NULL)
-      ir->counter->accept(this);
-   buffer.asprintf_append (") (");
-   if (ir->from != NULL)
-      ir->from->accept(this);
-   buffer.asprintf_append (") (");
-   if (ir->to != NULL)
-      ir->to->accept(this);
-   buffer.asprintf_append (") (");
-   if (ir->increment != NULL)
-      ir->increment->accept(this);
-   buffer.asprintf_append (") (\n");
-   indentation++;
-
-   foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
-      ir_instruction *const inst = (ir_instruction *) iter.get();
-
-      indent();
-      inst->accept(this);
-      buffer.asprintf_append (";\n");
-   }
-   indentation--;
-   indent();
-   buffer.asprintf_append ("))\n");
+	 */
 }
 
 
