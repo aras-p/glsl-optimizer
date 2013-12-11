@@ -19,6 +19,8 @@ starting with Unity 3.0.
 
 GLSL Optimizer is licensed according to the terms of the MIT license.
 
+See badly maintained [change log](Changelog.md).
+
 
 Usage
 -----
@@ -65,7 +67,7 @@ Notes
 
 * GLSL versions 1.10 and 1.20 are supported. 1.10 is the default, use #version 120 to specify 
 1.20.
-* GLSL ES version 1.00 is supported.
+* GLSL ES versions 1.00 and 3.00 are supported.
 
 
 Dev Notes
