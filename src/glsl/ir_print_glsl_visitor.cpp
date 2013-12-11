@@ -1094,7 +1094,7 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
       bool first = true;
       foreach_iter(exec_list_iterator, iter, ir->components) {
 	 if (!first)
-	    ralloc_asprintf_append (&buffer, ", ");
+	    buffer.asprintf_append (", ");
 	 first = false;
 	 ir_constant* inst = (ir_constant*)iter.get();
 	 inst->accept(this);
