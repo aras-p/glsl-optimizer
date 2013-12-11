@@ -103,7 +103,8 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
    int class_sizes[BRW_MAX_MRF];
 
    if (brw->gen >= 7) {
-      for (class_count = 0; class_count < 11; class_count++)
+      for (class_count = 0; class_count < MAX_SAMPLER_MESSAGE_SIZE;
+           class_count++)
          class_sizes[class_count] = class_count + 1;
    } else {
       for (class_count = 0; class_count < 4; class_count++)

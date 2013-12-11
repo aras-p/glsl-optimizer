@@ -1231,8 +1231,9 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    inst->header_present = header_present;
    inst->regs_written = 4;
 
-   if (mlen > 11) {
-      fail("Message length >11 disallowed by hardware\n");
+   if (mlen > MAX_SAMPLER_MESSAGE_SIZE) {
+      fail("Message length >" STRINGIFY(MAX_SAMPLER_MESSAGE_SIZE)
+           " disallowed by hardware\n");
    }
 
    return inst;
@@ -1424,8 +1425,9 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    inst->regs_written = 4;
 
    virtual_grf_sizes[payload.reg] = next.reg_offset;
-   if (inst->mlen > 11) {
-      fail("Message length >11 disallowed by hardware\n");
+   if (inst->mlen > MAX_SAMPLER_MESSAGE_SIZE) {
+      fail("Message length >" STRINGIFY(MAX_SAMPLER_MESSAGE_SIZE)
+           " disallowed by hardware\n");
    }
 
    return inst;

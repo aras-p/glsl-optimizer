@@ -51,6 +51,8 @@ extern "C" {
 #include "glsl/glsl_types.h"
 #include "glsl/ir.h"
 
+#define MAX_SAMPLER_MESSAGE_SIZE 11
+
 class bblock_t;
 namespace {
    struct acp_entry;
