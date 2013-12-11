@@ -102,6 +102,8 @@ DRI2WireToEvent(Display *dpy, XEvent *event, xEvent *wire)
       __GLXDRIdrawable *pdraw;
 
       pdraw = dri2GetGlxDrawableFromXDrawableId(dpy, awire->drawable);
+      if (pdraw == NULL)
+         return False;
 
       /* Ignore swap events if we're not looking for them */
       aevent->type = dri2GetSwapEventType(dpy, awire->drawable);
