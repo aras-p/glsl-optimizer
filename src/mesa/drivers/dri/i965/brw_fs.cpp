@@ -2276,6 +2276,12 @@ fs_visitor::register_coalesce()
 
    calculate_live_intervals();
 
+   int src_size = 0;
+   int channels_remaining = 0;
+   int reg_from = -1, reg_to = -1;
+   int reg_to_offset[MAX_SAMPLER_MESSAGE_SIZE];
+   fs_inst *mov[MAX_SAMPLER_MESSAGE_SIZE];
+
    foreach_list_safe(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
@@ -2287,10 +2293,13 @@ fs_visitor::register_coalesce()
 	  inst->src[0].abs ||
 	  inst->src[0].smear != -1 ||
 	  inst->dst.file != GRF ||
-	  inst->dst.type != inst->src[0].type ||
-	  virtual_grf_sizes[inst->src[0].reg] != 1) {
+	  inst->dst.type != inst->src[0].type) {
 	 continue;
       }
+
+      if (virtual_grf_sizes[inst->src[0].reg] >
+          virtual_grf_sizes[inst->dst.reg])
+         continue;
 
       int var_from = live_intervals->var_from_reg(&inst->src[0]);
       int var_to = live_intervals->var_from_reg(&inst->dst);
@@ -2299,31 +2308,58 @@ fs_visitor::register_coalesce()
           !inst->dst.equals(inst->src[0]))
          continue;
 
-      int reg_from = inst->src[0].reg;
-      assert(inst->src[0].reg_offset == 0);
-      int reg_to = inst->dst.reg;
-      int reg_to_offset = inst->dst.reg_offset;
+      if (reg_from != inst->src[0].reg) {
+         reg_from = inst->src[0].reg;
 
-      foreach_list(node, &this->instructions) {
-	 fs_inst *scan_inst = (fs_inst *)node;
+         src_size = virtual_grf_sizes[inst->src[0].reg];
+         assert(src_size <= MAX_SAMPLER_MESSAGE_SIZE);
 
-	 if (scan_inst->dst.file == GRF &&
-	     scan_inst->dst.reg == reg_from) {
-	    scan_inst->dst.reg = reg_to;
-	    scan_inst->dst.reg_offset = reg_to_offset;
-	 }
-	 for (int i = 0; i < 3; i++) {
-	    if (scan_inst->src[i].file == GRF &&
-		scan_inst->src[i].reg == reg_from) {
-	       scan_inst->src[i].reg = reg_to;
-	       scan_inst->src[i].reg_offset = reg_to_offset;
-	    }
-	 }
+         channels_remaining = src_size;
+         memset(mov, 0, sizeof(mov));
+
+         reg_to = inst->dst.reg;
       }
 
-      inst->remove();
-      progress = true;
-      continue;
+      if (reg_to != inst->dst.reg)
+         continue;
+
+      const int offset = inst->src[0].reg_offset;
+      reg_to_offset[offset] = inst->dst.reg_offset;
+      mov[offset] = inst;
+      channels_remaining--;
+
+      if (channels_remaining)
+         continue;
+
+      for (int i = 0; i < src_size; i++) {
+         if (mov[i])
+            mov[i]->remove();
+      }
+
+      foreach_list(node, &this->instructions) {
+         fs_inst *scan_inst = (fs_inst *)node;
+
+         for (int i = 0; i < src_size; i++) {
+            if (mov[i]) {
+               if (scan_inst->dst.file == GRF &&
+                   scan_inst->dst.reg == reg_from &&
+                   scan_inst->dst.reg_offset == i) {
+                  scan_inst->dst.reg = reg_to;
+                  scan_inst->dst.reg_offset = reg_to_offset[i];
+               }
+               for (int j = 0; j < 3; j++) {
+                  if (scan_inst->src[j].file == GRF &&
+                      scan_inst->src[j].reg == reg_from &&
+                      scan_inst->src[j].reg_offset == i) {
+                     scan_inst->src[j].reg = reg_to;
+                     scan_inst->src[j].reg_offset = reg_to_offset[i];
+                  }
+               }
+
+               progress = true;
+            }
+         }
+      }
    }
 
    if (progress)
