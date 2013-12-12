@@ -238,6 +238,8 @@ void evergreen_delete_compute_state(struct pipe_context *ctx, void* state)
 	if (!shader)
 		return;
 
+	FREE(shader->kernels);
+
 #ifdef HAVE_OPENCL
 	if (shader->llvm_ctx){
 		LLVMContextDispose(shader->llvm_ctx);
