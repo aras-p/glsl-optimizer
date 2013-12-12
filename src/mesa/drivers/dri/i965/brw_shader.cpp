@@ -604,6 +604,50 @@ backend_instruction::can_do_source_mods()
 }
 
 bool
+backend_instruction::can_do_saturate()
+{
+   switch (opcode) {
+   case BRW_OPCODE_ADD:
+   case BRW_OPCODE_ASR:
+   case BRW_OPCODE_AVG:
+   case BRW_OPCODE_DP2:
+   case BRW_OPCODE_DP3:
+   case BRW_OPCODE_DP4:
+   case BRW_OPCODE_DPH:
+   case BRW_OPCODE_F16TO32:
+   case BRW_OPCODE_F32TO16:
+   case BRW_OPCODE_LINE:
+   case BRW_OPCODE_LRP:
+   case BRW_OPCODE_MAC:
+   case BRW_OPCODE_MACH:
+   case BRW_OPCODE_MAD:
+   case BRW_OPCODE_MATH:
+   case BRW_OPCODE_MOV:
+   case BRW_OPCODE_MUL:
+   case BRW_OPCODE_PLN:
+   case BRW_OPCODE_RNDD:
+   case BRW_OPCODE_RNDE:
+   case BRW_OPCODE_RNDU:
+   case BRW_OPCODE_RNDZ:
+   case BRW_OPCODE_SEL:
+   case BRW_OPCODE_SHL:
+   case BRW_OPCODE_SHR:
+   case FS_OPCODE_LINTERP:
+   case SHADER_OPCODE_COS:
+   case SHADER_OPCODE_EXP2:
+   case SHADER_OPCODE_LOG2:
+   case SHADER_OPCODE_POW:
+   case SHADER_OPCODE_RCP:
+   case SHADER_OPCODE_RSQ:
+   case SHADER_OPCODE_SIN:
+   case SHADER_OPCODE_SQRT:
+      return true;
+   default:
+      return false;
+   }
+}
+
+bool
 backend_instruction::has_side_effects() const
 {
    switch (opcode) {

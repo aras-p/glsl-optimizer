@@ -45,6 +45,7 @@ public:
    bool is_math();
    bool is_control_flow();
    bool can_do_source_mods();
+   bool can_do_saturate();
 
    /**
     * True if the instruction has side effects other than writing to
