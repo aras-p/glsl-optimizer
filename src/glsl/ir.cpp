@@ -1579,21 +1579,21 @@ ir_swizzle::variable_referenced() const
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode)
-   : max_array_access(0), max_ifc_array_access(NULL), atomic()
+   : max_ifc_array_access(NULL)
 {
    this->ir_type = ir_type_variable;
    this->type = type;
    this->name = ralloc_strdup(this, name);
-   this->explicit_location = false;
-   this->has_initializer = false;
-   this->location = -1;
-   this->location_frac = 0;
+   this->data.explicit_location = false;
+   this->data.has_initializer = false;
+   this->data.location = -1;
+   this->data.location_frac = 0;
    this->warn_extension = NULL;
    this->constant_value = NULL;
    this->constant_initializer = NULL;
    this->data.origin_upper_left = false;
    this->data.pixel_center_integer = false;
-   this->depth_layout = ir_depth_layout_none;
+   this->data.depth_layout = ir_depth_layout_none;
    this->data.used = false;
    this->data.read_only = false;
    this->data.centroid = false;
@@ -1602,6 +1602,9 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->data.how_declared = ir_var_declared_normally;
    this->data.mode = mode;
    this->data.interpolation = INTERP_QUALIFIER_NONE;
+   this->data.max_array_access = 0;
+   this->data.atomic.buffer_index = 0;
+   this->data.atomic.offset = 0;
 
    if (type != NULL) {
       if (type->base_type == GLSL_TYPE_SAMPLER)
@@ -1635,7 +1638,7 @@ ir_variable::determine_interpolation_mode(bool flat_shade)
 {
    if (this->data.interpolation != INTERP_QUALIFIER_NONE)
       return (glsl_interp_qualifier) this->data.interpolation;
-   int location = this->location;
+   int location = this->data.location;
    bool is_gl_Color =
       location == VARYING_SLOT_COL0 || location == VARYING_SLOT_COL1;
    if (flat_shade && is_gl_Color)

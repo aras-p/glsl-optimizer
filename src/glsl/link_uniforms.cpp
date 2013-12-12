@@ -75,7 +75,7 @@ program_resource_visitor::process(ir_variable *var)
     */
 
    /* Only strdup the name if we actually will need to modify it. */
-   if (var->from_named_ifc_block_array) {
+   if (var->data.from_named_ifc_block_array) {
       /* lower_named_interface_blocks created this variable by lowering an
        * interface block array to an array variable.  For example if the
        * original source code was:
@@ -108,7 +108,7 @@ program_resource_visitor::process(ir_variable *var)
          recursion(var->type, &name, new_length, false, NULL);
       }
       ralloc_free(name);
-   } else if (var->from_named_ifc_block_nonarray) {
+   } else if (var->data.from_named_ifc_block_nonarray) {
       /* lower_named_interface_blocks created this variable by lowering a
        * named interface block (non-array) to an ordinary variable.  For
        * example if the original source code was:
@@ -408,10 +408,10 @@ public:
             const struct gl_uniform_block *const block =
                &prog->UniformBlocks[ubo_block_index];
 
-            assert(var->location != -1);
+            assert(var->data.location != -1);
 
             const struct gl_uniform_buffer_variable *const ubo_var =
-               &block->Uniforms[var->location];
+               &block->Uniforms[var->data.location];
 
             ubo_row_major = ubo_var->RowMajor;
             ubo_byte_offset = ubo_var->Offset;
@@ -640,7 +640,7 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
       assert(var->data.mode == ir_var_uniform);
 
       if (var->is_interface_instance()) {
-         var->location = 0;
+         var->data.location = 0;
          continue;
       }
 
@@ -669,13 +669,13 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
 
                if (strncmp(var->name, begin, l) == 0) {
                   found = true;
-                  var->location = j;
+                  var->data.location = j;
                   break;
                }
             } else if (!strcmp(var->name,
                                shader->UniformBlocks[i].Uniforms[j].Name)) {
 	       found = true;
-	       var->location = j;
+	       var->data.location = j;
 	       break;
 	    }
 	 }

@@ -93,12 +93,14 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len,
     */
 
    for (int i = 0; i < len; i++) {
-      GLbitfield64 bitfield = BITFIELD64_BIT(var->location + var->index + offset + i);
+      GLbitfield64 bitfield =
+         BITFIELD64_BIT(var->data.location + var->data.index + offset + i);
       if (var->data.mode == ir_var_shader_in) {
 	 prog->InputsRead |= bitfield;
          if (is_fragment_shader) {
             gl_fragment_program *fprog = (gl_fragment_program *) prog;
-            fprog->InterpQualifier[var->location + var->index + offset + i] =
+            fprog->InterpQualifier[var->data.location +
+                                   var->data.index + offset + i] =
                (glsl_interp_qualifier) var->data.interpolation;
             if (var->data.centroid)
                fprog->IsCentroid |= bitfield;

@@ -107,7 +107,7 @@ _mesa_GetActiveAttrib(GLhandleARB program, GLuint desired_index,
 
       if (var == NULL
 	  || var->data.mode != ir_var_shader_in
-	  || var->location == -1)
+	  || var->data.location == -1)
 	 continue;
 
       if (current_index == desired_index) {
@@ -170,12 +170,12 @@ _mesa_GetAttribLocation(GLhandleARB program, const GLcharARB * name)
        */
       if (var == NULL
 	  || var->data.mode != ir_var_shader_in
-	  || var->location == -1
-	  || var->location < VERT_ATTRIB_GENERIC0)
+	  || var->data.location == -1
+	  || var->data.location < VERT_ATTRIB_GENERIC0)
 	 continue;
 
       if (strcmp(var->name, name) == 0)
-	 return var->location - VERT_ATTRIB_GENERIC0;
+	 return var->data.location - VERT_ATTRIB_GENERIC0;
    }
 
    return -1;
@@ -198,7 +198,7 @@ _mesa_count_active_attribs(struct gl_shader_program *shProg)
 
       if (var == NULL
 	  || var->data.mode != ir_var_shader_in
-	  || var->location == -1)
+	  || var->data.location == -1)
 	 continue;
 
       i++;
@@ -224,7 +224,7 @@ _mesa_longest_attribute_name_length(struct gl_shader_program *shProg)
 
       if (var == NULL
 	  || var->data.mode != ir_var_shader_in
-	  || var->location == -1)
+	  || var->data.location == -1)
 	 continue;
 
       const size_t len = strlen(var->name);
@@ -334,12 +334,12 @@ _mesa_GetFragDataIndex(GLuint program, const GLchar *name)
        */
       if (var == NULL
           || var->data.mode != ir_var_shader_out
-          || var->location == -1
-          || var->location < FRAG_RESULT_DATA0)
+          || var->data.location == -1
+          || var->data.location < FRAG_RESULT_DATA0)
          continue;
 
       if (strcmp(var->name, name) == 0)
-         return var->index;
+         return var->data.index;
    }
 
    return -1;
@@ -390,12 +390,12 @@ _mesa_GetFragDataLocation(GLuint program, const GLchar *name)
        */
       if (var == NULL
 	  || var->data.mode != ir_var_shader_out
-	  || var->location == -1
-	  || var->location < FRAG_RESULT_DATA0)
+	  || var->data.location == -1
+	  || var->data.location < FRAG_RESULT_DATA0)
 	 continue;
 
       if (strcmp(var->name, name) == 0)
-	 return var->location - FRAG_RESULT_DATA0;
+	 return var->data.location - FRAG_RESULT_DATA0;
    }
 
    return -1;

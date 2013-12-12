@@ -608,7 +608,7 @@ fs_visitor::setup_fp_regs()
          ir_variable *ir = new(mem_ctx) ir_variable(glsl_type::vec4_type,
                                                     "fp_input",
                                                     ir_var_shader_in);
-         ir->location = i;
+         ir->data.location = i;
 
          this->current_annotation = ralloc_asprintf(ctx, "interpolate input %d",
                                                     i);

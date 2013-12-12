@@ -455,9 +455,9 @@ builtin_variable_generator::add_variable(const char *name,
       break;
    }
 
-   var->location = slot;
-   var->explicit_location = (slot >= 0);
-   var->explicit_index = 0;
+   var->data.location = slot;
+   var->data.explicit_location = (slot >= 0);
+   var->data.explicit_index = 0;
 
    /* Once the variable is created an initialized, add it to the symbol table
     * and add the declaration to the IR stream.
@@ -524,7 +524,7 @@ builtin_variable_generator::add_const(const char *name, int value)
 					 ir_var_auto, -1);
    var->constant_value = new(var) ir_constant(value);
    var->constant_initializer = new(var) ir_constant(value);
-   var->has_initializer = true;
+   var->data.has_initializer = true;
    return var;
 }
 

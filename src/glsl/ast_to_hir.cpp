@@ -728,7 +728,7 @@ mark_whole_array_access(ir_rvalue *access)
    ir_dereference_variable *deref = access->as_dereference_variable();
 
    if (deref && deref->var) {
-      deref->var->max_array_access = deref->type->length - 1;
+      deref->var->data.max_array_access = deref->type->length - 1;
    }
 }
 
@@ -819,11 +819,11 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 
 	 assert(var != NULL);
 
-	 if (var->max_array_access >= unsigned(rhs->type->array_size())) {
+	 if (var->data.max_array_access >= unsigned(rhs->type->array_size())) {
 	    /* FINISHME: This should actually log the location of the RHS. */
 	    _mesa_glsl_error(& lhs_loc, state, "array size must be > %u due to "
 			     "previous access",
-			     var->max_array_access);
+			     var->data.max_array_access);
 	 }
 
 	 var->type = glsl_type::get_array_instance(lhs->type->element_type(),
@@ -2112,7 +2112,7 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
                        mode_string(var),
 		       _mesa_glsl_shader_target_name(state->target));
    } else {
-      var->explicit_location = true;
+      var->data.explicit_location = true;
 
       /* This bit of silliness is needed because invalid explicit locations
        * are supposed to be flagged during linking.  Small negative values
@@ -2122,11 +2122,11 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
        * ensures that negative values stay negative.
        */
       if (qual->location >= 0) {
-         var->location = (state->target == vertex_shader)
+         var->data.location = (state->target == vertex_shader)
             ? (qual->location + VERT_ATTRIB_GENERIC0)
             : (qual->location + FRAG_RESULT_DATA0);
       } else {
-         var->location = qual->location;
+         var->data.location = qual->location;
       }
 
       if (qual->flags.q.explicit_index) {
@@ -2143,8 +2143,8 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
             _mesa_glsl_error(loc, state,
                              "explicit index may only be 0 or 1");
          } else {
-            var->explicit_index = true;
-            var->index = qual->index;
+            var->data.explicit_index = true;
+            var->data.index = qual->index;
          }
       }
    }
@@ -2315,20 +2315,21 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 
    if (qual->flags.q.explicit_binding &&
        validate_binding_qualifier(state, loc, var, qual)) {
-      var->explicit_binding = true;
-      var->binding = qual->binding;
+      var->data.explicit_binding = true;
+      var->data.binding = qual->binding;
    }
 
    if (var->type->contains_atomic()) {
       if (var->data.mode == ir_var_uniform) {
-         if (var->explicit_binding) {
-            unsigned *offset = &state->atomic_counter_offsets[var->binding];
+         if (var->data.explicit_binding) {
+            unsigned *offset =
+               &state->atomic_counter_offsets[var->data.binding];
 
             if (*offset % ATOMIC_COUNTER_SIZE)
                _mesa_glsl_error(loc, state,
                                 "misaligned atomic counter offset");
 
-            var->atomic.offset = *offset;
+            var->data.atomic.offset = *offset;
             *offset += var->type->atomic_size();
 
          } else {
@@ -2409,15 +2410,15 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
                        "gl_FragDepth");
    }
    if (qual->flags.q.depth_any)
-      var->depth_layout = ir_depth_layout_any;
+      var->data.depth_layout = ir_depth_layout_any;
    else if (qual->flags.q.depth_greater)
-      var->depth_layout = ir_depth_layout_greater;
+      var->data.depth_layout = ir_depth_layout_greater;
    else if (qual->flags.q.depth_less)
-      var->depth_layout = ir_depth_layout_less;
+      var->data.depth_layout = ir_depth_layout_less;
    else if (qual->flags.q.depth_unchanged)
-       var->depth_layout = ir_depth_layout_unchanged;
+       var->data.depth_layout = ir_depth_layout_unchanged;
    else
-       var->depth_layout = ir_depth_layout_none;
+       var->data.depth_layout = ir_depth_layout_none;
 
    if (qual->flags.q.std140 ||
        qual->flags.q.packed ||
@@ -2478,10 +2479,10 @@ get_variable_being_redeclared(ir_variable *var, YYLTYPE loc,
 
       const unsigned size = unsigned(var->type->array_size());
       check_builtin_array_max_size(var->name, size, loc, state);
-      if ((size > 0) && (size <= earlier->max_array_access)) {
+      if ((size > 0) && (size <= earlier->data.max_array_access)) {
 	 _mesa_glsl_error(& loc, state, "array size must be > %u due to "
 			  "previous access",
-			  earlier->max_array_access);
+			  earlier->data.max_array_access);
       }
 
       earlier->type = var->type;
@@ -2537,17 +2538,17 @@ get_variable_being_redeclared(ir_variable *var, YYLTYPE loc,
       }
 
       /* Prevent inconsistent redeclaration of depth layout qualifier. */
-      if (earlier->depth_layout != ir_depth_layout_none
-	  && earlier->depth_layout != var->depth_layout) {
+      if (earlier->data.depth_layout != ir_depth_layout_none
+	  && earlier->data.depth_layout != var->data.depth_layout) {
 	 _mesa_glsl_error(&loc, state,
 			  "gl_FragDepth: depth layout is declared here "
 			  "as '%s, but it was previously declared as "
 			  "'%s'",
-			  depth_layout_string(var->depth_layout),
-			  depth_layout_string(earlier->depth_layout));
+			  depth_layout_string(var->data.depth_layout),
+			  depth_layout_string(earlier->data.depth_layout));
       }
 
-      earlier->depth_layout = var->depth_layout;
+      earlier->data.depth_layout = var->data.depth_layout;
 
    } else if (allow_all_redeclarations) {
       if (earlier->data.mode != var->data.mode) {
@@ -2667,7 +2668,7 @@ process_initializer(ir_variable *var, ast_declaration *decl,
 	 initializer_type = rhs->type;
 
       var->constant_initializer = rhs->constant_expression_value();
-      var->has_initializer = true;
+      var->data.has_initializer = true;
 
       /* If the declared variable is an unsized array, it must inherrit
        * its full type from the initializer.  A declaration such as
@@ -5126,8 +5127,8 @@ ast_interface_block::hir(exec_list *instructions,
           * the UBO declaration itself doesn't get an ir_variable unless it
           * has an instance name.  This is ugly.
           */
-         var->explicit_binding = this->layout.flags.q.explicit_binding;
-         var->binding = this->layout.binding;
+         var->data.explicit_binding = this->layout.flags.q.explicit_binding;
+         var->data.binding = this->layout.binding;
 
          state->symbols->add_variable(var);
          instructions->push_tail(var);
@@ -5223,12 +5224,12 @@ ast_gs_input_layout::hir(exec_list *instructions,
        */
 
       if (var->type->is_unsized_array()) {
-         if (var->max_array_access >= num_vertices) {
+         if (var->data.max_array_access >= num_vertices) {
             _mesa_glsl_error(&loc, state,
                              "this geometry shader input layout implies %u"
                              " vertices, but an access to element %u of input"
                              " `%s' already exists", num_vertices,
-                             var->max_array_access, var->name);
+                             var->data.max_array_access, var->name);
          } else {
             var->type = glsl_type::get_array_instance(var->type->fields.array,
                                                       num_vertices);

@@ -135,8 +135,8 @@ lower_clip_distance_visitor::visit(ir_variable *ir)
                          "gl_ClipDistanceMESA");
       this->new_clip_distance_1d_var->type
          = glsl_type::get_array_instance(glsl_type::vec4_type, new_size);
-      this->new_clip_distance_1d_var->max_array_access
-         = ir->max_array_access / 4;
+      this->new_clip_distance_1d_var->data.max_array_access
+         = ir->data.max_array_access / 4;
 
       ir->replace_with(this->new_clip_distance_1d_var);
    } else {
@@ -161,8 +161,8 @@ lower_clip_distance_visitor::visit(ir_variable *ir)
          glsl_type::get_array_instance(glsl_type::vec4_type,
             new_size),
          ir->type->array_size());
-      this->new_clip_distance_2d_var->max_array_access
-         = ir->max_array_access / 4;
+      this->new_clip_distance_2d_var->data.max_array_access
+         = ir->data.max_array_access / 4;
 
       ir->replace_with(this->new_clip_distance_2d_var);
    }

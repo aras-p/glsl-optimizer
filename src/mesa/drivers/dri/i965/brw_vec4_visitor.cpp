@@ -947,18 +947,18 @@ vec4_visitor::visit(ir_variable *ir)
 
    switch (ir->data.mode) {
    case ir_var_shader_in:
-      reg = new(mem_ctx) dst_reg(ATTR, ir->location);
+      reg = new(mem_ctx) dst_reg(ATTR, ir->data.location);
       break;
 
    case ir_var_shader_out:
       reg = new(mem_ctx) dst_reg(this, ir->type);
 
       for (int i = 0; i < type_size(ir->type); i++) {
-	 output_reg[ir->location + i] = *reg;
-	 output_reg[ir->location + i].reg_offset = i;
-	 output_reg[ir->location + i].type =
+	 output_reg[ir->data.location + i] = *reg;
+	 output_reg[ir->data.location + i].reg_offset = i;
+	 output_reg[ir->data.location + i].type =
             brw_type_for_base_type(ir->type->get_scalar_type());
-	 output_reg_annotation[ir->location + i] = ir->name;
+	 output_reg_annotation[ir->data.location + i] = ir->name;
       }
       break;
 
@@ -2163,7 +2163,7 @@ vec4_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
       ir->actual_parameters.get_head());
    ir_variable *location = deref->variable_referenced();
    unsigned surf_index = (prog_data->base.binding_table.abo_start +
-                          location->atomic.buffer_index);
+                          location->data.atomic.buffer_index);
 
    /* Calculate the surface offset */
    src_reg offset(this, glsl_type::uint_type);
@@ -2173,9 +2173,9 @@ vec4_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
 
       src_reg tmp(this, glsl_type::uint_type);
       emit(MUL(dst_reg(tmp), this->result, ATOMIC_COUNTER_SIZE));
-      emit(ADD(dst_reg(offset), tmp, location->atomic.offset));
+      emit(ADD(dst_reg(offset), tmp, location->data.atomic.offset));
    } else {
-      offset = location->atomic.offset;
+      offset = location->data.atomic.offset;
    }
 
    /* Emit the appropriate machine instruction */

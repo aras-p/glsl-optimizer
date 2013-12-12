@@ -70,24 +70,24 @@ fs_visitor::visit(ir_variable *ir)
    } else if (ir->data.mode == ir_var_shader_out) {
       reg = new(this->mem_ctx) fs_reg(this, ir->type);
 
-      if (ir->index > 0) {
-	 assert(ir->location == FRAG_RESULT_DATA0);
-	 assert(ir->index == 1);
+      if (ir->data.index > 0) {
+	 assert(ir->data.location == FRAG_RESULT_DATA0);
+	 assert(ir->data.index == 1);
 	 this->dual_src_output = *reg;
-      } else if (ir->location == FRAG_RESULT_COLOR) {
+      } else if (ir->data.location == FRAG_RESULT_COLOR) {
 	 /* Writing gl_FragColor outputs to all color regions. */
 	 for (unsigned int i = 0; i < MAX2(c->key.nr_color_regions, 1); i++) {
 	    this->outputs[i] = *reg;
 	    this->output_components[i] = 4;
 	 }
-      } else if (ir->location == FRAG_RESULT_DEPTH) {
+      } else if (ir->data.location == FRAG_RESULT_DEPTH) {
 	 this->frag_depth = *reg;
-      } else if (ir->location == FRAG_RESULT_SAMPLE_MASK) {
+      } else if (ir->data.location == FRAG_RESULT_SAMPLE_MASK) {
          this->sample_mask = *reg;
       } else {
 	 /* gl_FragData or a user-defined FS output */
-	 assert(ir->location >= FRAG_RESULT_DATA0 &&
-		ir->location < FRAG_RESULT_DATA0 + BRW_MAX_DRAW_BUFFERS);
+	 assert(ir->data.location >= FRAG_RESULT_DATA0 &&
+		ir->data.location < FRAG_RESULT_DATA0 + BRW_MAX_DRAW_BUFFERS);
 
 	 int vector_elements =
 	    ir->type->is_array() ? ir->type->fields.array->vector_elements
@@ -95,7 +95,7 @@ fs_visitor::visit(ir_variable *ir)
 
 	 /* General color output. */
 	 for (unsigned int i = 0; i < MAX2(1, ir->type->length); i++) {
-	    int output = ir->location - FRAG_RESULT_DATA0 + i;
+	    int output = ir->data.location - FRAG_RESULT_DATA0 + i;
 	    this->outputs[output] = *reg;
 	    this->outputs[output].reg_offset += vector_elements * i;
 	    this->output_components[output] = vector_elements;
@@ -132,9 +132,9 @@ fs_visitor::visit(ir_variable *ir)
       reg->type = brw_type_for_base_type(ir->type);
 
    } else if (ir->data.mode == ir_var_system_value) {
-      if (ir->location == SYSTEM_VALUE_SAMPLE_POS) {
+      if (ir->data.location == SYSTEM_VALUE_SAMPLE_POS) {
 	 reg = emit_samplepos_setup(ir);
-      } else if (ir->location == SYSTEM_VALUE_SAMPLE_ID) {
+      } else if (ir->data.location == SYSTEM_VALUE_SAMPLE_ID) {
 	 reg = emit_sampleid_setup(ir);
       }
    }
@@ -2219,7 +2219,7 @@ fs_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
       ir->actual_parameters.get_head());
    ir_variable *location = deref->variable_referenced();
    unsigned surf_index = (c->prog_data.base.binding_table.abo_start +
-                          location->atomic.buffer_index);
+                          location->data.atomic.buffer_index);
 
    /* Calculate the surface offset */
    fs_reg offset(this, glsl_type::uint_type);
@@ -2230,9 +2230,9 @@ fs_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
 
       fs_reg tmp(this, glsl_type::uint_type);
       emit(MUL(tmp, this->result, ATOMIC_COUNTER_SIZE));
-      emit(ADD(offset, tmp, location->atomic.offset));
+      emit(ADD(offset, tmp, location->data.atomic.offset));
    } else {
-      offset = location->atomic.offset;
+      offset = location->data.atomic.offset;
    }
 
    /* Emit the appropriate machine instruction */

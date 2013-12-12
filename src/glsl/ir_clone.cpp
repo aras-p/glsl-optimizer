@@ -43,7 +43,7 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    ir_variable *var = new(mem_ctx) ir_variable(this->type, this->name,
 					       (ir_variable_mode) this->data.mode);
 
-   var->max_array_access = this->max_array_access;
+   var->data.max_array_access = this->data.max_array_access;
    if (this->is_interface_instance()) {
       var->max_ifc_array_access =
          rzalloc_array(var, unsigned, this->interface_type->length);
@@ -55,19 +55,19 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->data.sample = this->data.sample;
    var->data.invariant = this->data.invariant;
    var->data.interpolation = this->data.interpolation;
-   var->location = this->location;
-   var->index = this->index;
-   var->binding = this->binding;
-   var->atomic.buffer_index = this->atomic.buffer_index;
-   var->atomic.offset = this->atomic.offset;
+   var->data.location = this->data.location;
+   var->data.index = this->data.index;
+   var->data.binding = this->data.binding;
+   var->data.atomic.buffer_index = this->data.atomic.buffer_index;
+   var->data.atomic.offset = this->data.atomic.offset;
    var->warn_extension = this->warn_extension;
    var->data.origin_upper_left = this->data.origin_upper_left;
    var->data.pixel_center_integer = this->data.pixel_center_integer;
-   var->explicit_location = this->explicit_location;
-   var->explicit_index = this->explicit_index;
-   var->explicit_binding = this->explicit_binding;
-   var->has_initializer = this->has_initializer;
-   var->depth_layout = this->depth_layout;
+   var->data.explicit_location = this->data.explicit_location;
+   var->data.explicit_index = this->data.explicit_index;
+   var->data.explicit_binding = this->data.explicit_binding;
+   var->data.has_initializer = this->data.has_initializer;
+   var->data.depth_layout = this->data.depth_layout;
    var->data.assigned = this->data.assigned;
    var->data.how_declared = this->data.how_declared;
    var->data.used = this->data.used;

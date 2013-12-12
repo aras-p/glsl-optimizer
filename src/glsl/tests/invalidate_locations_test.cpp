@@ -64,20 +64,20 @@ TEST_F(invalidate_locations, simple_vertex_in_generic)
                                "a",
                                ir_var_shader_in);
 
-   EXPECT_FALSE(var->explicit_location);
-   EXPECT_EQ(-1, var->location);
+   EXPECT_FALSE(var->data.explicit_location);
+   EXPECT_EQ(-1, var->data.location);
 
-   var->location = VERT_ATTRIB_GENERIC0;
-   var->location_frac = 2;
+   var->data.location = VERT_ATTRIB_GENERIC0;
+   var->data.location_frac = 2;
 
    ir.push_tail(var);
 
    link_invalidate_variable_locations(&ir);
 
-   EXPECT_EQ(-1, var->location);
-   EXPECT_EQ(0u, var->location_frac);
-   EXPECT_FALSE(var->explicit_location);
-   EXPECT_TRUE(var->is_unmatched_generic_inout);
+   EXPECT_EQ(-1, var->data.location);
+   EXPECT_EQ(0u, var->data.location_frac);
+   EXPECT_FALSE(var->data.explicit_location);
+   EXPECT_TRUE(var->data.is_unmatched_generic_inout);
 }
 
 TEST_F(invalidate_locations, explicit_location_vertex_in_generic)
@@ -87,20 +87,20 @@ TEST_F(invalidate_locations, explicit_location_vertex_in_generic)
                                "a",
                                ir_var_shader_in);
 
-   EXPECT_FALSE(var->explicit_location);
-   EXPECT_EQ(-1, var->location);
+   EXPECT_FALSE(var->data.explicit_location);
+   EXPECT_EQ(-1, var->data.location);
 
-   var->location = VERT_ATTRIB_GENERIC0;
-   var->explicit_location = true;
+   var->data.location = VERT_ATTRIB_GENERIC0;
+   var->data.explicit_location = true;
 
    ir.push_tail(var);
 
    link_invalidate_variable_locations(&ir);
 
-   EXPECT_EQ(VERT_ATTRIB_GENERIC0, var->location);
-   EXPECT_EQ(0u, var->location_frac);
-   EXPECT_TRUE(var->explicit_location);
-   EXPECT_FALSE(var->is_unmatched_generic_inout);
+   EXPECT_EQ(VERT_ATTRIB_GENERIC0, var->data.location);
+   EXPECT_EQ(0u, var->data.location_frac);
+   EXPECT_TRUE(var->data.explicit_location);
+   EXPECT_FALSE(var->data.is_unmatched_generic_inout);
 }
 
 TEST_F(invalidate_locations, explicit_location_frac_vertex_in_generic)
@@ -110,21 +110,21 @@ TEST_F(invalidate_locations, explicit_location_frac_vertex_in_generic)
                                "a",
                                ir_var_shader_in);
 
-   EXPECT_FALSE(var->explicit_location);
-   EXPECT_EQ(-1, var->location);
+   EXPECT_FALSE(var->data.explicit_location);
+   EXPECT_EQ(-1, var->data.location);
 
-   var->location = VERT_ATTRIB_GENERIC0;
-   var->location_frac = 2;
-   var->explicit_location = true;
+   var->data.location = VERT_ATTRIB_GENERIC0;
+   var->data.location_frac = 2;
+   var->data.explicit_location = true;
 
    ir.push_tail(var);
 
    link_invalidate_variable_locations(&ir);
 
-   EXPECT_EQ(VERT_ATTRIB_GENERIC0, var->location);
-   EXPECT_EQ(2u, var->location_frac);
-   EXPECT_TRUE(var->explicit_location);
-   EXPECT_FALSE(var->is_unmatched_generic_inout);
+   EXPECT_EQ(VERT_ATTRIB_GENERIC0, var->data.location);
+   EXPECT_EQ(2u, var->data.location_frac);
+   EXPECT_TRUE(var->data.explicit_location);
+   EXPECT_FALSE(var->data.is_unmatched_generic_inout);
 }
 
 TEST_F(invalidate_locations, vertex_in_builtin)
@@ -134,20 +134,20 @@ TEST_F(invalidate_locations, vertex_in_builtin)
                                "gl_Vertex",
                                ir_var_shader_in);
 
-   EXPECT_FALSE(var->explicit_location);
-   EXPECT_EQ(-1, var->location);
+   EXPECT_FALSE(var->data.explicit_location);
+   EXPECT_EQ(-1, var->data.location);
 
-   var->location = VERT_ATTRIB_POS;
-   var->explicit_location = true;
+   var->data.location = VERT_ATTRIB_POS;
+   var->data.explicit_location = true;
 
    ir.push_tail(var);
 
    link_invalidate_variable_locations(&ir);
 
-   EXPECT_EQ(VERT_ATTRIB_POS, var->location);
-   EXPECT_EQ(0u, var->location_frac);
-   EXPECT_TRUE(var->explicit_location);
-   EXPECT_FALSE(var->is_unmatched_generic_inout);
+   EXPECT_EQ(VERT_ATTRIB_POS, var->data.location);
+   EXPECT_EQ(0u, var->data.location_frac);
+   EXPECT_TRUE(var->data.explicit_location);
+   EXPECT_FALSE(var->data.is_unmatched_generic_inout);
 }
 
 TEST_F(invalidate_locations, simple_vertex_out_generic)
@@ -157,19 +157,19 @@ TEST_F(invalidate_locations, simple_vertex_out_generic)
                                "a",
                                ir_var_shader_out);
 
-   EXPECT_FALSE(var->explicit_location);
-   EXPECT_EQ(-1, var->location);
+   EXPECT_FALSE(var->data.explicit_location);
+   EXPECT_EQ(-1, var->data.location);
 
-   var->location = VARYING_SLOT_VAR0;
+   var->data.location = VARYING_SLOT_VAR0;
 
    ir.push_tail(var);
 
    link_invalidate_variable_locations(&ir);
 
-   EXPECT_EQ(-1, var->location);
-   EXPECT_EQ(0u, var->location_frac);
-   EXPECT_FALSE(var->explicit_location);
-   EXPECT_TRUE(var->is_unmatched_generic_inout);
+   EXPECT_EQ(-1, var->data.location);
+   EXPECT_EQ(0u, var->data.location_frac);
+   EXPECT_FALSE(var->data.explicit_location);
+   EXPECT_TRUE(var->data.is_unmatched_generic_inout);
 }
 
 TEST_F(invalidate_locations, vertex_out_builtin)
@@ -179,18 +179,18 @@ TEST_F(invalidate_locations, vertex_out_builtin)
                                "gl_FrontColor",
                                ir_var_shader_out);
 
-   EXPECT_FALSE(var->explicit_location);
-   EXPECT_EQ(-1, var->location);
+   EXPECT_FALSE(var->data.explicit_location);
+   EXPECT_EQ(-1, var->data.location);
 
-   var->location = VARYING_SLOT_COL0;
-   var->explicit_location = true;
+   var->data.location = VARYING_SLOT_COL0;
+   var->data.explicit_location = true;
 
    ir.push_tail(var);
 
    link_invalidate_variable_locations(&ir);
 
-   EXPECT_EQ(VARYING_SLOT_COL0, var->location);
-   EXPECT_EQ(0u, var->location_frac);
-   EXPECT_TRUE(var->explicit_location);
-   EXPECT_FALSE(var->is_unmatched_generic_inout);
+   EXPECT_EQ(VARYING_SLOT_COL0, var->data.location);
+   EXPECT_EQ(0u, var->data.location_frac);
+   EXPECT_TRUE(var->data.explicit_location);
+   EXPECT_FALSE(var->data.is_unmatched_generic_inout);
 }

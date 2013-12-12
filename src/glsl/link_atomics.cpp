@@ -73,16 +73,16 @@ namespace {
       const active_atomic_counter *const first = (active_atomic_counter *) a;
       const active_atomic_counter *const second = (active_atomic_counter *) b;
 
-      return int(first->var->atomic.offset) - int(second->var->atomic.offset);
+      return int(first->var->data.atomic.offset) - int(second->var->data.atomic.offset);
    }
 
    bool
    check_atomic_counters_overlap(const ir_variable *x, const ir_variable *y)
    {
-      return ((x->atomic.offset >= y->atomic.offset &&
-               x->atomic.offset < y->atomic.offset + y->type->atomic_size()) ||
-              (y->atomic.offset >= x->atomic.offset &&
-               y->atomic.offset < x->atomic.offset + x->type->atomic_size()));
+      return ((x->data.atomic.offset >= y->data.atomic.offset &&
+               x->data.atomic.offset < y->data.atomic.offset + y->type->atomic_size()) ||
+              (y->data.atomic.offset >= x->data.atomic.offset &&
+               y->data.atomic.offset < x->data.atomic.offset + x->type->atomic_size()));
    }
 
    active_atomic_buffer *
@@ -107,7 +107,7 @@ namespace {
                unsigned id;
                bool found = prog->UniformHash->get(id, var->name);
                assert(found);
-               active_atomic_buffer *buf = &buffers[var->binding];
+               active_atomic_buffer *buf = &buffers[var->data.binding];
 
                /* If this is the first time the buffer is used, increment
                 * the counter of buffers used.
@@ -118,7 +118,7 @@ namespace {
                buf->push_back(id, var);
 
                buf->stage_references[i]++;
-               buf->size = MAX2(buf->size, var->atomic.offset +
+               buf->size = MAX2(buf->size, var->data.atomic.offset +
                                 var->type->atomic_size());
             }
          }
@@ -143,7 +143,7 @@ namespace {
                linker_error(prog, "Atomic counter %s declared at offset %d "
                             "which is already in use.",
                             buffers[i].counters[j].var->name,
-                            buffers[i].counters[j].var->atomic.offset);
+                            buffers[i].counters[j].var->data.atomic.offset);
             }
          }
       }
@@ -190,9 +190,9 @@ link_assign_atomic_counter_resources(struct gl_context *ctx,
          gl_uniform_storage *const storage = &prog->UniformStorage[id];
 
          mab.Uniforms[j] = id;
-         var->atomic.buffer_index = i;
+         var->data.atomic.buffer_index = i;
          storage->atomic_buffer_index = i;
-         storage->offset = var->atomic.offset;
+         storage->offset = var->data.atomic.offset;
          storage->array_stride = (var->type->is_array() ?
                                   var->type->element_type()->atomic_size() : 0);
       }

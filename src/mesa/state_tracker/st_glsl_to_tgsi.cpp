@@ -2023,7 +2023,7 @@ glsl_to_tgsi_visitor::visit(ir_dereference_variable *ir)
       switch (var->data.mode) {
       case ir_var_uniform:
          entry = new(mem_ctx) variable_storage(var, PROGRAM_UNIFORM,
-        				       var->location);
+        				       var->data.location);
          this->variables.push_tail(entry);
          break;
       case ir_var_shader_in:
@@ -2032,21 +2032,22 @@ glsl_to_tgsi_visitor::visit(ir_dereference_variable *ir)
           * generic attributes (glBindVertexLocation), and
           * user-defined varyings.
           */
-         assert(var->location != -1);
+         assert(var->data.location != -1);
          entry = new(mem_ctx) variable_storage(var,
                                                PROGRAM_INPUT,
-                                               var->location);
+                                               var->data.location);
          break;
       case ir_var_shader_out:
-         assert(var->location != -1);
+         assert(var->data.location != -1);
          entry = new(mem_ctx) variable_storage(var,
                                                PROGRAM_OUTPUT,
-                                               var->location + var->index);
+                                               var->data.location
+                                               + var->data.index);
          break;
       case ir_var_system_value:
          entry = new(mem_ctx) variable_storage(var,
                                                PROGRAM_SYSTEM_VALUE,
-                                               var->location);
+                                               var->data.location);
          break;
       case ir_var_auto:
       case ir_var_temporary:

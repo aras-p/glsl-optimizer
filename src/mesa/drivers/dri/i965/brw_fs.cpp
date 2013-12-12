@@ -1049,7 +1049,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
    glsl_interp_qualifier interpolation_mode =
       ir->determine_interpolation_mode(c->key.flat_shade);
 
-   int location = ir->location;
+   int location = ir->data.location;
    for (unsigned int i = 0; i < array_elements; i++) {
       for (unsigned int j = 0; j < type->matrix_columns; j++) {
 	 if (c->prog_data.urb_setup[location] == -1) {

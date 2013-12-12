@@ -259,7 +259,7 @@ lower_packed_varyings_visitor::run(exec_list *instructions)
          continue;
 
       if (var->data.mode != this->mode ||
-          var->location < (int) this->location_base ||
+          var->data.location < (int) this->location_base ||
           !this->needs_lowering(var))
          continue;
 
@@ -279,7 +279,7 @@ lower_packed_varyings_visitor::run(exec_list *instructions)
          = new(this->mem_ctx) ir_dereference_variable(var);
 
       /* Recursively pack or unpack it. */
-      this->lower_rvalue(deref, var->location * 4 + var->location_frac, var,
+      this->lower_rvalue(deref, var->data.location * 4 + var->data.location_frac, var,
                          var->name, this->gs_input_vertices != 0, 0);
    }
 }
@@ -562,12 +562,12 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
          /* Prevent update_array_sizes() from messing with the size of the
           * array.
           */
-         packed_var->max_array_access = this->gs_input_vertices - 1;
+         packed_var->data.max_array_access = this->gs_input_vertices - 1;
       }
       packed_var->data.centroid = unpacked_var->data.centroid;
       packed_var->data.sample = unpacked_var->data.sample;
       packed_var->data.interpolation = unpacked_var->data.interpolation;
-      packed_var->location = location;
+      packed_var->data.location = location;
       unpacked_var->insert_before(packed_var);
       this->packed_varyings[slot] = packed_var;
    } else {

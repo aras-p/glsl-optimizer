@@ -503,13 +503,6 @@ public:
    const char *name;
 
    /**
-    * Highest element accessed with a constant expression array index
-    *
-    * Not used for non-array variables.
-    */
-   unsigned max_array_access;
-
-   /**
     * For variables which satisfy the is_interface_instance() predicate, this
     * points to an array of integers such that if the ith member of the
     * interface block is an array, max_ifc_array_access[i] is the maximum
@@ -587,117 +580,124 @@ public:
       unsigned pixel_center_integer:1;
       /*@}*/
 
+      /**
+       * Was the location explicitly set in the shader?
+       *
+       * If the location is explicitly set in the shader, it \b cannot be changed
+       * by the linker or by the API (e.g., calls to \c glBindAttribLocation have
+       * no effect).
+       */
+      unsigned explicit_location:1;
+      unsigned explicit_index:1;
+
+      /**
+       * Was an initial binding explicitly set in the shader?
+       *
+       * If so, constant_value contains an integer ir_constant representing the
+       * initial binding point.
+       */
+      unsigned explicit_binding:1;
+
+      /**
+       * Does this variable have an initializer?
+       *
+       * This is used by the linker to cross-validiate initializers of global
+       * variables.
+       */
+      unsigned has_initializer:1;
+
+      /**
+       * Is this variable a generic output or input that has not yet been matched
+       * up to a variable in another stage of the pipeline?
+       *
+       * This is used by the linker as scratch storage while assigning locations
+       * to generic inputs and outputs.
+       */
+      unsigned is_unmatched_generic_inout:1;
+
+      /**
+       * If non-zero, then this variable may be packed along with other variables
+       * into a single varying slot, so this offset should be applied when
+       * accessing components.  For example, an offset of 1 means that the x
+       * component of this variable is actually stored in component y of the
+       * location specified by \c location.
+       */
+      unsigned location_frac:2;
+
+      /**
+       * Non-zero if this variable was created by lowering a named interface
+       * block which was not an array.
+       *
+       * Note that this variable and \c from_named_ifc_block_array will never
+       * both be non-zero.
+       */
+      unsigned from_named_ifc_block_nonarray:1;
+
+      /**
+       * Non-zero if this variable was created by lowering a named interface
+       * block which was an array.
+       *
+       * Note that this variable and \c from_named_ifc_block_nonarray will never
+       * both be non-zero.
+       */
+      unsigned from_named_ifc_block_array:1;
+
+      /**
+       * \brief Layout qualifier for gl_FragDepth.
+       *
+       * This is not equal to \c ir_depth_layout_none if and only if this
+       * variable is \c gl_FragDepth and a layout qualifier is specified.
+       */
+      ir_depth_layout depth_layout;
+
+      /**
+       * Storage location of the base of this variable
+       *
+       * The precise meaning of this field depends on the nature of the variable.
+       *
+       *   - Vertex shader input: one of the values from \c gl_vert_attrib.
+       *   - Vertex shader output: one of the values from \c gl_varying_slot.
+       *   - Geometry shader input: one of the values from \c gl_varying_slot.
+       *   - Geometry shader output: one of the values from \c gl_varying_slot.
+       *   - Fragment shader input: one of the values from \c gl_varying_slot.
+       *   - Fragment shader output: one of the values from \c gl_frag_result.
+       *   - Uniforms: Per-stage uniform slot number for default uniform block.
+       *   - Uniforms: Index within the uniform block definition for UBO members.
+       *   - Other: This field is not currently used.
+       *
+       * If the variable is a uniform, shader input, or shader output, and the
+       * slot has not been assigned, the value will be -1.
+       */
+      int location;
+
+      /**
+       * output index for dual source blending.
+       */
+      int index;
+
+      /**
+       * Initial binding point for a sampler or UBO.
+       *
+       * For array types, this represents the binding point for the first element.
+       */
+      int binding;
+
+      /**
+       * Location an atomic counter is stored at.
+       */
+      struct {
+         unsigned buffer_index;
+         unsigned offset;
+      } atomic;
+
+      /**
+       * Highest element accessed with a constant expression array index
+       *
+       * Not used for non-array variables.
+       */
+      unsigned max_array_access;
+
    } data;
-
-   /**
-    * Was the location explicitly set in the shader?
-    *
-    * If the location is explicitly set in the shader, it \b cannot be changed
-    * by the linker or by the API (e.g., calls to \c glBindAttribLocation have
-    * no effect).
-    */
-   unsigned explicit_location:1;
-   unsigned explicit_index:1;
-
-   /**
-    * Was an initial binding explicitly set in the shader?
-    *
-    * If so, constant_value contains an integer ir_constant representing the
-    * initial binding point.
-    */
-   unsigned explicit_binding:1;
-
-   /**
-    * Does this variable have an initializer?
-    *
-    * This is used by the linker to cross-validiate initializers of global
-    * variables.
-    */
-   unsigned has_initializer:1;
-
-   /**
-    * Is this variable a generic output or input that has not yet been matched
-    * up to a variable in another stage of the pipeline?
-    *
-    * This is used by the linker as scratch storage while assigning locations
-    * to generic inputs and outputs.
-    */
-   unsigned is_unmatched_generic_inout:1;
-
-   /**
-    * If non-zero, then this variable may be packed along with other variables
-    * into a single varying slot, so this offset should be applied when
-    * accessing components.  For example, an offset of 1 means that the x
-    * component of this variable is actually stored in component y of the
-    * location specified by \c location.
-    */
-   unsigned location_frac:2;
-
-   /**
-    * Non-zero if this variable was created by lowering a named interface
-    * block which was not an array.
-    *
-    * Note that this variable and \c from_named_ifc_block_array will never
-    * both be non-zero.
-    */
-   unsigned from_named_ifc_block_nonarray:1;
-
-   /**
-    * Non-zero if this variable was created by lowering a named interface
-    * block which was an array.
-    *
-    * Note that this variable and \c from_named_ifc_block_nonarray will never
-    * both be non-zero.
-    */
-   unsigned from_named_ifc_block_array:1;
-
-   /**
-    * \brief Layout qualifier for gl_FragDepth.
-    *
-    * This is not equal to \c ir_depth_layout_none if and only if this
-    * variable is \c gl_FragDepth and a layout qualifier is specified.
-    */
-   ir_depth_layout depth_layout;
-
-   /**
-    * Storage location of the base of this variable
-    *
-    * The precise meaning of this field depends on the nature of the variable.
-    *
-    *   - Vertex shader input: one of the values from \c gl_vert_attrib.
-    *   - Vertex shader output: one of the values from \c gl_varying_slot.
-    *   - Geometry shader input: one of the values from \c gl_varying_slot.
-    *   - Geometry shader output: one of the values from \c gl_varying_slot.
-    *   - Fragment shader input: one of the values from \c gl_varying_slot.
-    *   - Fragment shader output: one of the values from \c gl_frag_result.
-    *   - Uniforms: Per-stage uniform slot number for default uniform block.
-    *   - Uniforms: Index within the uniform block definition for UBO members.
-    *   - Other: This field is not currently used.
-    *
-    * If the variable is a uniform, shader input, or shader output, and the
-    * slot has not been assigned, the value will be -1.
-    */
-   int location;
-
-   /**
-    * output index for dual source blending.
-    */
-   int index;
-
-   /**
-    * Initial binding point for a sampler or UBO.
-    *
-    * For array types, this represents the binding point for the first element.
-    */
-   int binding;
-
-   /**
-    * Location an atomic counter is stored at.
-    */
-   struct {
-      unsigned buffer_index;
-      unsigned offset;
-   } atomic;
 
    /**
     * Built-in state that backs this uniform

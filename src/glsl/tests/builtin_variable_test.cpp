@@ -113,8 +113,8 @@ common_builtin::uniforms_and_system_values_dont_have_explicit_location()
       if (var->data.mode != ir_var_uniform && var->data.mode != ir_var_system_value)
          continue;
 
-      EXPECT_FALSE(var->explicit_location);
-      EXPECT_EQ(-1, var->location);
+      EXPECT_FALSE(var->data.explicit_location);
+      EXPECT_EQ(-1, var->data.location);
    }
 }
 
@@ -127,8 +127,8 @@ common_builtin::constants_are_constant()
       if (var->data.mode != ir_var_auto)
          continue;
 
-      EXPECT_FALSE(var->explicit_location);
-      EXPECT_EQ(-1, var->location);
+      EXPECT_FALSE(var->data.explicit_location);
+      EXPECT_EQ(-1, var->data.location);
       EXPECT_TRUE(var->data.read_only);
    }
 }
@@ -179,10 +179,10 @@ TEST_F(vertex_builtin, inputs_have_explicit_location)
       if (var->data.mode != ir_var_shader_in)
          continue;
 
-      EXPECT_TRUE(var->explicit_location);
-      EXPECT_NE(-1, var->location);
-      EXPECT_GT(VERT_ATTRIB_GENERIC0, var->location);
-      EXPECT_EQ(0u, var->location_frac);
+      EXPECT_TRUE(var->data.explicit_location);
+      EXPECT_NE(-1, var->data.location);
+      EXPECT_GT(VERT_ATTRIB_GENERIC0, var->data.location);
+      EXPECT_EQ(0u, var->data.location_frac);
    }
 }
 
@@ -194,17 +194,17 @@ TEST_F(vertex_builtin, outputs_have_explicit_location)
       if (var->data.mode != ir_var_shader_out)
          continue;
 
-      EXPECT_TRUE(var->explicit_location);
-      EXPECT_NE(-1, var->location);
-      EXPECT_GT(VARYING_SLOT_VAR0, var->location);
-      EXPECT_EQ(0u, var->location_frac);
+      EXPECT_TRUE(var->data.explicit_location);
+      EXPECT_NE(-1, var->data.location);
+      EXPECT_GT(VARYING_SLOT_VAR0, var->data.location);
+      EXPECT_EQ(0u, var->data.location_frac);
 
       /* Several varyings only exist in the fragment shader.  Be sure that no
        * outputs with these locations exist.
        */
-      EXPECT_NE(VARYING_SLOT_PNTC, var->location);
-      EXPECT_NE(VARYING_SLOT_FACE, var->location);
-      EXPECT_NE(VARYING_SLOT_PRIMITIVE_ID, var->location);
+      EXPECT_NE(VARYING_SLOT_PNTC, var->data.location);
+      EXPECT_NE(VARYING_SLOT_FACE, var->data.location);
+      EXPECT_NE(VARYING_SLOT_PRIMITIVE_ID, var->data.location);
    }
 }
 
@@ -247,15 +247,15 @@ TEST_F(fragment_builtin, inputs_have_explicit_location)
       if (var->data.mode != ir_var_shader_in)
 	 continue;
 
-      EXPECT_TRUE(var->explicit_location);
-      EXPECT_NE(-1, var->location);
-      EXPECT_GT(VARYING_SLOT_VAR0, var->location);
-      EXPECT_EQ(0u, var->location_frac);
+      EXPECT_TRUE(var->data.explicit_location);
+      EXPECT_NE(-1, var->data.location);
+      EXPECT_GT(VARYING_SLOT_VAR0, var->data.location);
+      EXPECT_EQ(0u, var->data.location_frac);
 
       /* Several varyings only exist in the vertex / geometry shader.  Be sure
        * that no inputs with these locations exist.
        */
-      EXPECT_TRUE(_mesa_varying_slot_in_fs((gl_varying_slot) var->location));
+      EXPECT_TRUE(_mesa_varying_slot_in_fs((gl_varying_slot) var->data.location));
    }
 }
 
@@ -267,15 +267,15 @@ TEST_F(fragment_builtin, outputs_have_explicit_location)
       if (var->data.mode != ir_var_shader_out)
 	 continue;
 
-      EXPECT_TRUE(var->explicit_location);
-      EXPECT_NE(-1, var->location);
+      EXPECT_TRUE(var->data.explicit_location);
+      EXPECT_NE(-1, var->data.location);
 
       /* gl_FragData[] has location FRAG_RESULT_DATA0.  Locations beyond that
        * are invalid.
        */
-      EXPECT_GE(FRAG_RESULT_DATA0, var->location);
+      EXPECT_GE(FRAG_RESULT_DATA0, var->data.location);
 
-      EXPECT_EQ(0u, var->location_frac);
+      EXPECT_EQ(0u, var->data.location_frac);
    }
 }
 
@@ -320,8 +320,8 @@ TEST_F(geometry_builtin, inputs_have_explicit_location)
 
       if (var->is_interface_instance()) {
          EXPECT_STREQ("gl_in", var->name);
-         EXPECT_FALSE(var->explicit_location);
-         EXPECT_EQ(-1, var->location);
+         EXPECT_FALSE(var->data.explicit_location);
+         EXPECT_EQ(-1, var->data.location);
 
          ASSERT_TRUE(var->type->is_array());
 
@@ -342,17 +342,17 @@ TEST_F(geometry_builtin, inputs_have_explicit_location)
             EXPECT_NE(VARYING_SLOT_FACE, input->location);
          }
       } else {
-         EXPECT_TRUE(var->explicit_location);
-         EXPECT_NE(-1, var->location);
-         EXPECT_GT(VARYING_SLOT_VAR0, var->location);
-         EXPECT_EQ(0u, var->location_frac);
+         EXPECT_TRUE(var->data.explicit_location);
+         EXPECT_NE(-1, var->data.location);
+         EXPECT_GT(VARYING_SLOT_VAR0, var->data.location);
+         EXPECT_EQ(0u, var->data.location_frac);
       }
 
       /* Several varyings only exist in the fragment shader.  Be sure that no
        * inputs with these locations exist.
        */
-      EXPECT_NE(VARYING_SLOT_PNTC, var->location);
-      EXPECT_NE(VARYING_SLOT_FACE, var->location);
+      EXPECT_NE(VARYING_SLOT_PNTC, var->data.location);
+      EXPECT_NE(VARYING_SLOT_FACE, var->data.location);
    }
 }
 
@@ -364,16 +364,16 @@ TEST_F(geometry_builtin, outputs_have_explicit_location)
       if (var->data.mode != ir_var_shader_out)
 	 continue;
 
-      EXPECT_TRUE(var->explicit_location);
-      EXPECT_NE(-1, var->location);
-      EXPECT_GT(VARYING_SLOT_VAR0, var->location);
-      EXPECT_EQ(0u, var->location_frac);
+      EXPECT_TRUE(var->data.explicit_location);
+      EXPECT_NE(-1, var->data.location);
+      EXPECT_GT(VARYING_SLOT_VAR0, var->data.location);
+      EXPECT_EQ(0u, var->data.location_frac);
 
       /* Several varyings only exist in the fragment shader.  Be sure that no
        * outputs with these locations exist.
        */
-      EXPECT_NE(VARYING_SLOT_PNTC, var->location);
-      EXPECT_NE(VARYING_SLOT_FACE, var->location);
+      EXPECT_NE(VARYING_SLOT_PNTC, var->data.location);
+      EXPECT_NE(VARYING_SLOT_FACE, var->data.location);
    }
 }
 

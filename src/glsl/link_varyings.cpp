@@ -329,8 +329,8 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
    assert(this->is_varying());
 
    unsigned fine_location
-      = this->matched_candidate->toplevel_var->location * 4
-      + this->matched_candidate->toplevel_var->location_frac
+      = this->matched_candidate->toplevel_var->data.location * 4
+      + this->matched_candidate->toplevel_var->data.location_frac
       + this->matched_candidate->offset;
 
    if (this->matched_candidate->type->is_array()) {
@@ -746,7 +746,7 @@ varying_matches::~varying_matches()
 void
 varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
 {
-   if (!producer_var->is_unmatched_generic_inout) {
+   if (!producer_var->data.is_unmatched_generic_inout) {
       /* Either a location already exists for this variable (since it is part
        * of fixed functionality), or it has already been recorded as part of a
        * previous match.
@@ -798,9 +798,9 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
    this->matches[this->num_matches].producer_var = producer_var;
    this->matches[this->num_matches].consumer_var = consumer_var;
    this->num_matches++;
-   producer_var->is_unmatched_generic_inout = 0;
+   producer_var->data.is_unmatched_generic_inout = 0;
    if (consumer_var)
-      consumer_var->is_unmatched_generic_inout = 0;
+      consumer_var->data.is_unmatched_generic_inout = 0;
 }
 
 
@@ -852,12 +852,12 @@ varying_matches::store_locations(unsigned producer_base,
       unsigned slot = generic_location / 4;
       unsigned offset = generic_location % 4;
 
-      producer_var->location = producer_base + slot;
-      producer_var->location_frac = offset;
+      producer_var->data.location = producer_base + slot;
+      producer_var->data.location_frac = offset;
       if (consumer_var) {
-         assert(consumer_var->location == -1);
-         consumer_var->location = consumer_base + slot;
-         consumer_var->location_frac = offset;
+         assert(consumer_var->data.location == -1);
+         consumer_var->data.location = consumer_base + slot;
+         consumer_var->data.location_frac = offset;
       }
    }
 }
@@ -948,7 +948,7 @@ is_varying_var(GLenum shaderType, const ir_variable *var)
    /* Only fragment shaders will take a varying variable as an input */
    if (shaderType == GL_FRAGMENT_SHADER &&
        var->data.mode == ir_var_shader_in) {
-      switch (var->location) {
+      switch (var->data.location) {
       case VARYING_SLOT_POS:
       case VARYING_SLOT_FACE:
       case VARYING_SLOT_PNTC:
@@ -1157,7 +1157,7 @@ assign_varying_locations(struct gl_context *ctx,
          return false;
       }
 
-      if (matched_candidate->toplevel_var->is_unmatched_generic_inout)
+      if (matched_candidate->toplevel_var->data.is_unmatched_generic_inout)
          matches.record(matched_candidate->toplevel_var, NULL);
    }
 
@@ -1200,7 +1200,7 @@ assign_varying_locations(struct gl_context *ctx,
          ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
          if (var && var->data.mode == ir_var_shader_in &&
-             var->is_unmatched_generic_inout) {
+             var->data.is_unmatched_generic_inout) {
             if (prog->Version <= 120) {
                /* On page 25 (page 31 of the PDF) of the GLSL 1.20 spec:
                 *

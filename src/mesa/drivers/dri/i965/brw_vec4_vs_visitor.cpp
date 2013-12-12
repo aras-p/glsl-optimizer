@@ -153,7 +153,7 @@ vec4_vs_visitor::make_reg_for_system_value(ir_variable *ir)
    dst_reg *reg = new(mem_ctx) dst_reg(ATTR, VERT_ATTRIB_MAX);
    vs_prog_data->uses_vertexid = true;
 
-   switch (ir->location) {
+   switch (ir->data.location) {
    case SYSTEM_VALUE_VERTEX_ID:
       reg->writemask = WRITEMASK_X;
       break;
