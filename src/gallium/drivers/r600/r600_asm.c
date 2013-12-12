@@ -387,7 +387,7 @@ static int reserve_cfile(struct r600_bytecode *bc, struct alu_bank_swizzle *bs, 
 
 static int is_gpr(unsigned sel)
 {
-	return (sel >= 0 && sel <= 127);
+	return (sel <= 127);
 }
 
 /* CB constants start at 512, and get translated to a kcache index when ALU
