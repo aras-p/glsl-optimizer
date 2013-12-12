@@ -26,6 +26,7 @@
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
 #include "ir_unused_structs.h"
+#include "loop_analysis.h"
 #include "program/hash_table.h"
 #include <math.h>
 
@@ -137,6 +138,7 @@ class ir_print_glsl_visitor : public ir_visitor {
 public:
 	ir_print_glsl_visitor(string_buffer& buf, global_print_tracker* globals_, PrintGlslMode mode_, bool use_precision_, const _mesa_glsl_parse_state* state_)
 		: buffer(buf)
+		, loopstate(NULL)
 	{
 		indentation = 0;
 		expression_depth = 0;
@@ -180,6 +182,7 @@ public:
 	virtual void visit(ir_end_primitive *);
 	
 	void emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
+	bool emit_canonical_for (ir_loop* ir);
 	
 	int indentation;
 	int expression_depth;
@@ -187,6 +190,7 @@ public:
 	global_print_tracker* globals;
 	const _mesa_glsl_parse_state* state;
 	PrintGlslMode mode;
+	loop_state* loopstate;
 	bool	use_precision;
 };
 
@@ -223,23 +227,32 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	do_remove_unused_typedecls(instructions);
 	
 	global_print_tracker gtracker;
+	
+	loop_state* ls = analyze_loop_variables(instructions);
+	if (ls->loop_found)
+		set_loop_controls(instructions, ls);
 
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
-	  if (ir->ir_type == ir_type_variable) {
-		ir_variable *var = static_cast<ir_variable*>(ir);
-		if ((strstr(var->name, "gl_") == var->name)
+	foreach_iter(exec_list_iterator, iter, *instructions)
+	{
+		ir_instruction *ir = (ir_instruction *)iter.get();
+		if (ir->ir_type == ir_type_variable) {
+			ir_variable *var = static_cast<ir_variable*>(ir);
+			if ((strstr(var->name, "gl_") == var->name)
 			  && !var->invariant)
-			continue;
-	  }
+				continue;
+		}
 
-	  ir_print_glsl_visitor v (str, &gtracker, mode, state->es_shader, state);
-	  ir->accept(&v);
-      if (ir->ir_type != ir_type_function)
-		str.asprintf_append (";\n");
-   }
+		ir_print_glsl_visitor v (str, &gtracker, mode, state->es_shader, state);
+		v.loopstate = ls;
 
-   return ralloc_strdup(buffer, str.c_str());
+		ir->accept(&v);
+		if (ir->ir_type != ir_type_function)
+			str.asprintf_append (";\n");
+	}
+	
+	delete ls;
+
+	return ralloc_strdup(buffer, str.c_str());
 }
 
 
@@ -1214,9 +1227,115 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 }
 
 
+bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
+{
+	loop_variable_state* const ls = this->loopstate->get(ir);
+	if (ls == NULL)
+		return false;
+	
+	if (ls->induction_variables.is_empty())
+		return false;
+	
+	if (ls->terminators.is_empty())
+		return false;
+	
+	hash_table* terminator_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
+	hash_table* induction_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
+	
+	buffer.asprintf_append("for ( ; ");
+	
+	// emit loop terminating conditions
+	bool first = true;
+	foreach_list(node, &ls->terminators)
+	{
+		loop_terminator* term = (loop_terminator *) node;
+		hash_table_insert(terminator_hash, term, term->ir);
+		if (!first)
+			buffer.asprintf_append(" && ");
+		
+		bool handled = false;
+		ir_expression* term_expr = term->ir->condition->as_expression();
+		if (term_expr)
+		{
+			const char* termOp = NULL;
+			switch (term_expr->operation)
+			{
+				case ir_binop_less: termOp = ">="; break;
+				case ir_binop_greater: termOp = "<="; break;
+				case ir_binop_lequal: termOp = ">"; break;
+				case ir_binop_gequal: termOp = "<"; break;
+				case ir_binop_equal: termOp = "!="; break;
+				case ir_binop_nequal: termOp = "=="; break;
+				default: break;
+			}
+			if (termOp != NULL)
+			{
+				buffer.asprintf_append("(");
+				term_expr->operands[0]->accept(this);
+				buffer.asprintf_append(" %s ", termOp);
+				term_expr->operands[1]->accept(this);
+				buffer.asprintf_append(")");
+				handled = true;
+			}
+		}
+		
+		if (!handled)
+		{
+			buffer.asprintf_append("!(");
+			term->ir->condition->accept(this);
+			buffer.asprintf_append(")");
+		}
+		first = false;
+	}
+	buffer.asprintf_append("; ");
+	
+	// emit loop induction variable updates
+	first = true;
+	foreach_list(node, &ls->induction_variables)
+	{
+		loop_variable* indvar = (loop_variable *) node;
+		hash_table_insert(induction_hash, indvar, indvar->first_assignment);
+		if (!first)
+			buffer.asprintf_append(", ");
+		visit(indvar->first_assignment);
+		first = false;
+	}
+	buffer.asprintf_append(") {\n");
+	
+	// emit loop body
+	indentation++;
+	foreach_list(node, &ir->body_instructions) {
+		ir_instruction *const inst = (ir_instruction *)node;
+		
+		// skip termination & induction statements,
+		// they are part of "for" clause
+		if (hash_table_find(terminator_hash, inst))
+			continue;
+		if (hash_table_find(induction_hash, inst))
+			continue;
+		
+		indent();
+		inst->accept(this);
+		buffer.asprintf_append (";\n");
+	}
+	indentation--;
+	
+	indent();
+	buffer.asprintf_append("}");
+	
+	hash_table_dtor (terminator_hash);
+	hash_table_dtor (induction_hash);
+	
+	return true;
+}
+
+
 void
 ir_print_glsl_visitor::visit(ir_loop *ir)
 {
+	if (emit_canonical_for(ir))
+		return;
+	
 	buffer.asprintf_append ("while (true) {\n");
 	indentation++;
 	foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
@@ -1228,57 +1347,6 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 	indentation--;
 	indent();
 	buffer.asprintf_append ("}");
-	return;
-
-	/*
-	 //@TODO: somehow detect a "canonical for loop"?
-	 
-	bool canonicalFor = (ir->counter && ir->from && ir->to && ir->increment);
-	if (canonicalFor)
-	{
-		buffer.asprintf_append ("for (");
-		ir->counter->accept (this);
-		buffer.asprintf_append (" = ");
-		ir->from->accept (this);
-		buffer.asprintf_append ("; ");
-		print_var_name (ir->counter);
-
-		// IR cmp operator is when to terminate loop; whereas GLSL for loop syntax
-		// is while to continue the loop. Invert the meaning of operator when outputting.
-		const char* termOp = NULL;
-		switch (ir->cmp) {
-		case ir_binop_less: termOp = ">="; break;
-		case ir_binop_greater: termOp = "<="; break;
-		case ir_binop_lequal: termOp = ">"; break;
-		case ir_binop_gequal: termOp = "<"; break;
-		case ir_binop_equal: termOp = "!="; break;
-		case ir_binop_nequal: termOp = "=="; break;
-		default: assert(false);
-		}
-		buffer.asprintf_append (" %s ", termOp);
-		ir->to->accept (this);
-		buffer.asprintf_append ("; ");
-		// IR already has instructions that modify the loop counter in the body
-		//print_var_name (ir->counter);
-		//buffer.asprintf_append (" = ");
-		//print_var_name (ir->counter);
-		//buffer.asprintf_append ("+(");
-		//ir->increment->accept (this);
-		//buffer.asprintf_append (")");
-		buffer.asprintf_append (") {\n");
-		indentation++;
-		foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
-			ir_instruction *const inst = (ir_instruction *) iter.get();
-			indent();
-			inst->accept(this);
-			buffer.asprintf_append (";\n");
-		}
-		indentation--;
-		indent();
-		buffer.asprintf_append ("}");
-		return;
-	}
-	 */
 }
 
 
