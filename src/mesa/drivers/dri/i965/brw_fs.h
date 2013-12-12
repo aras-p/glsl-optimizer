@@ -371,6 +371,7 @@ public:
    void try_replace_with_sel();
    bool opt_peephole_sel();
    bool opt_peephole_predicated_break();
+   bool opt_saturate_propagation();
    void emit_bool_to_cond_code(ir_rvalue *condition);
    void emit_if_gen6(ir_if *ir);
    void emit_unspill(fs_inst *inst, fs_reg reg, uint32_t spill_offset,

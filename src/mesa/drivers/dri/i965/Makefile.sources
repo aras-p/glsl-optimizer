@@ -63,6 +63,7 @@ i965_FILES = \
 	brw_fs_live_variables.cpp \
 	brw_fs_peephole_predicated_break.cpp \
 	brw_fs_reg_allocate.cpp \
+	brw_fs_saturate_propagation.cpp \
 	brw_fs_sel_peephole.cpp \
 	brw_fs_vector_splitting.cpp \
 	brw_fs_visitor.cpp \

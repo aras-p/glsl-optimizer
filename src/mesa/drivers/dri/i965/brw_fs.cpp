@@ -3362,6 +3362,7 @@ fs_visitor::run()
 	 progress = dead_code_eliminate_local() || progress;
          progress = opt_peephole_sel() || progress;
          progress = dead_control_flow_eliminate(this) || progress;
+         progress = opt_saturate_propagation() || progress;
          progress = register_coalesce() || progress;
 	 progress = compute_to_mrf() || progress;
       } while (progress);
