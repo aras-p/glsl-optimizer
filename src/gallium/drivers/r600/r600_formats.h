@@ -110,6 +110,7 @@ static INLINE bool r600_is_vertex_format_supported(enum pipe_format format)
 
 	/* No scaled/norm formats with 32 bits per channel. */
 	if (desc->channel[i].size == 32 &&
+	    !desc->channel[i].pure_integer &&
 	    (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED ||
 	     desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED))
 		return false;
