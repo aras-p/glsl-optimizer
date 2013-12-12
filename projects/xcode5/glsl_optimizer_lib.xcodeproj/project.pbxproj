@@ -54,6 +54,7 @@
 		2B6AC7BB161EC99C0094FD86 /* prog_statevars.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B6AC7B7161EC99C0094FD86 /* prog_statevars.h */; };
 		2B6AC7BD161EC9D40094FD86 /* ir_uniform.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B6AC7BC161EC9D40094FD86 /* ir_uniform.h */; };
 		2B6AC8AD161ED9080094FD86 /* glminimal.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B6AC8AC161ED9080094FD86 /* glminimal.h */; };
+		2B78C91D1858B052007F5D2A /* ir_equals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B78C91C1858B052007F5D2A /* ir_equals.cpp */; };
 		2B8979DE182C0C4700718F8A /* builtin_functions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B8979DD182C0C4700718F8A /* builtin_functions.cpp */; };
 		2B8979E0182C195C00718F8A /* opt_cse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B8979DF182C195C00718F8A /* opt_cse.cpp */; };
 		2B8979E2182CB62900718F8A /* link_atomics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B8979E1182CB62900718F8A /* link_atomics.cpp */; };
@@ -206,6 +207,7 @@
 		2B6AC7B7161EC99C0094FD86 /* prog_statevars.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = prog_statevars.h; path = ../../src/mesa/program/prog_statevars.h; sourceTree = SOURCE_ROOT; };
 		2B6AC7BC161EC9D40094FD86 /* ir_uniform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ir_uniform.h; path = ../../src/glsl/ir_uniform.h; sourceTree = SOURCE_ROOT; };
 		2B6AC8AC161ED9080094FD86 /* glminimal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = glminimal.h; path = ../../src/mesa/main/glminimal.h; sourceTree = SOURCE_ROOT; };
+		2B78C91C1858B052007F5D2A /* ir_equals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ir_equals.cpp; path = ../../src/glsl/ir_equals.cpp; sourceTree = "<group>"; };
 		2B8979DD182C0C4700718F8A /* builtin_functions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = builtin_functions.cpp; path = ../../src/glsl/builtin_functions.cpp; sourceTree = "<group>"; };
 		2B8979DF182C195C00718F8A /* opt_cse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_cse.cpp; path = ../../src/glsl/opt_cse.cpp; sourceTree = "<group>"; };
 		2B8979E1182CB62900718F8A /* link_atomics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = link_atomics.cpp; path = ../../src/glsl/link_atomics.cpp; sourceTree = "<group>"; };
@@ -418,6 +420,7 @@
 				2BA55A6A1207FEA6002DC82D /* ir_constant_expression.cpp */,
 				2BA55A711207FEA6002DC82D /* ir_expression_flattening.cpp */,
 				2BA55A721207FEA6002DC82D /* ir_expression_flattening.h */,
+				2B78C91C1858B052007F5D2A /* ir_equals.cpp */,
 				2BA55A761207FEA6002DC82D /* ir_function.cpp */,
 				2BA55A731207FEA6002DC82D /* ir_function_can_inline.cpp */,
 				2B655A7113E0322E00B5278F /* ir_function_detect_recursion.cpp */,
@@ -682,6 +685,7 @@
 				2B47DA031209C87B00937F2C /* symbol_table.c in Sources */,
 				2B62491112191339003F6EEE /* ir_rvalue_visitor.cpp in Sources */,
 				2B6A99F41223B1670059FBED /* glcpp-lex.c in Sources */,
+				2B78C91D1858B052007F5D2A /* ir_equals.cpp in Sources */,
 				2B6A99F61223B1670059FBED /* glcpp-parse.c in Sources */,
 				2B6A99FB1223B1670059FBED /* pp.c in Sources */,
 				2BBA49281254706A00D42573 /* glsl_symbol_table.cpp in Sources */,
