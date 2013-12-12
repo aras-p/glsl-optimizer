@@ -33,7 +33,7 @@ extern "C" {
 ** used to make the header, and the header can be found at
 **   http://www.opengl.org/registry/
 **
-** Khronos $Revision: 23422 $ on $Date: 2013-10-08 15:40:45 -0700 (Tue, 08 Oct 2013) $
+** Khronos $Revision: 24502 $ on $Date: 2013-12-12 13:14:39 -0800 (Thu, 12 Dec 2013) $
 */
 
 #if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
@@ -53,7 +53,7 @@ extern "C" {
 #define GLAPI extern
 #endif
 
-#define GL_GLEXT_VERSION 20131008
+#define GL_GLEXT_VERSION 20131212
 
 /* Generated C header for:
  * API: gl
@@ -1477,7 +1477,7 @@ typedef GLboolean (APIENTRYP PFNGLISSYNCPROC) (GLsync sync);
 typedef void (APIENTRYP PFNGLDELETESYNCPROC) (GLsync sync);
 typedef GLenum (APIENTRYP PFNGLCLIENTWAITSYNCPROC) (GLsync sync, GLbitfield flags, GLuint64 timeout);
 typedef void (APIENTRYP PFNGLWAITSYNCPROC) (GLsync sync, GLbitfield flags, GLuint64 timeout);
-typedef void (APIENTRYP PFNGLGETINTEGER64VPROC) (GLenum pname, GLint64 *params);
+typedef void (APIENTRYP PFNGLGETINTEGER64VPROC) (GLenum pname, GLint64 *data);
 typedef void (APIENTRYP PFNGLGETSYNCIVPROC) (GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length, GLint *values);
 typedef void (APIENTRYP PFNGLGETINTEGER64I_VPROC) (GLenum target, GLuint index, GLint64 *data);
 typedef void (APIENTRYP PFNGLGETBUFFERPARAMETERI64VPROC) (GLenum target, GLenum pname, GLint64 *params);
@@ -1497,7 +1497,7 @@ GLAPI GLboolean APIENTRY glIsSync (GLsync sync);
 GLAPI void APIENTRY glDeleteSync (GLsync sync);
 GLAPI GLenum APIENTRY glClientWaitSync (GLsync sync, GLbitfield flags, GLuint64 timeout);
 GLAPI void APIENTRY glWaitSync (GLsync sync, GLbitfield flags, GLuint64 timeout);
-GLAPI void APIENTRY glGetInteger64v (GLenum pname, GLint64 *params);
+GLAPI void APIENTRY glGetInteger64v (GLenum pname, GLint64 *data);
 GLAPI void APIENTRY glGetSynciv (GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length, GLint *values);
 GLAPI void APIENTRY glGetInteger64i_v (GLenum target, GLuint index, GLint64 *data);
 GLAPI void APIENTRY glGetBufferParameteri64v (GLenum target, GLenum pname, GLint64 *params);
@@ -2144,6 +2144,10 @@ GLAPI void APIENTRY glGetDoublei_v (GLenum target, GLuint index, GLdouble *data)
 #define GL_MAX_GEOMETRY_IMAGE_UNIFORMS    0x90CD
 #define GL_MAX_FRAGMENT_IMAGE_UNIFORMS    0x90CE
 #define GL_MAX_COMBINED_IMAGE_UNIFORMS    0x90CF
+#define GL_COMPRESSED_RGBA_BPTC_UNORM     0x8E8C
+#define GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM 0x8E8D
+#define GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT 0x8E8E
+#define GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT 0x8E8F
 #define GL_TEXTURE_IMMUTABLE_FORMAT       0x912F
 typedef void (APIENTRYP PFNGLDRAWARRAYSINSTANCEDBASEINSTANCEPROC) (GLenum mode, GLint first, GLsizei count, GLsizei instancecount, GLuint baseinstance);
 typedef void (APIENTRYP PFNGLDRAWELEMENTSINSTANCEDBASEINSTANCEPROC) (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount, GLuint baseinstance);
@@ -4836,6 +4840,20 @@ GLAPI GLboolean APIENTRY glIsNameAMD (GLenum identifier, GLuint name);
 #endif
 #endif /* GL_AMD_name_gen_delete */
 
+#ifndef GL_AMD_occlusion_query_event
+#define GL_AMD_occlusion_query_event 1
+#define GL_OCCLUSION_QUERY_EVENT_MASK_AMD 0x874F
+#define GL_QUERY_DEPTH_PASS_EVENT_BIT_AMD 0x00000001
+#define GL_QUERY_DEPTH_FAIL_EVENT_BIT_AMD 0x00000002
+#define GL_QUERY_STENCIL_FAIL_EVENT_BIT_AMD 0x00000004
+#define GL_QUERY_DEPTH_BOUNDS_FAIL_EVENT_BIT_AMD 0x00000008
+#define GL_QUERY_ALL_EVENT_BITS_AMD       0xFFFFFFFF
+typedef void (APIENTRYP PFNGLQUERYOBJECTPARAMETERUIAMDPROC) (GLenum target, GLuint id, GLenum pname, GLuint param);
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glQueryObjectParameteruiAMD (GLenum target, GLuint id, GLenum pname, GLuint param);
+#endif
+#endif /* GL_AMD_occlusion_query_event */
+
 #ifndef GL_AMD_performance_monitor
 #define GL_AMD_performance_monitor 1
 #define GL_COUNTER_TYPE_AMD               0x8BC0
@@ -5900,6 +5918,34 @@ GLAPI void APIENTRY glCullParameterfvEXT (GLenum pname, GLfloat *params);
 #endif
 #endif /* GL_EXT_cull_vertex */
 
+#ifndef GL_EXT_debug_label
+#define GL_EXT_debug_label 1
+#define GL_PROGRAM_PIPELINE_OBJECT_EXT    0x8A4F
+#define GL_PROGRAM_OBJECT_EXT             0x8B40
+#define GL_SHADER_OBJECT_EXT              0x8B48
+#define GL_BUFFER_OBJECT_EXT              0x9151
+#define GL_QUERY_OBJECT_EXT               0x9153
+#define GL_VERTEX_ARRAY_OBJECT_EXT        0x9154
+typedef void (APIENTRYP PFNGLLABELOBJECTEXTPROC) (GLenum type, GLuint object, GLsizei length, const GLchar *label);
+typedef void (APIENTRYP PFNGLGETOBJECTLABELEXTPROC) (GLenum type, GLuint object, GLsizei bufSize, GLsizei *length, GLchar *label);
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glLabelObjectEXT (GLenum type, GLuint object, GLsizei length, const GLchar *label);
+GLAPI void APIENTRY glGetObjectLabelEXT (GLenum type, GLuint object, GLsizei bufSize, GLsizei *length, GLchar *label);
+#endif
+#endif /* GL_EXT_debug_label */
+
+#ifndef GL_EXT_debug_marker
+#define GL_EXT_debug_marker 1
+typedef void (APIENTRYP PFNGLINSERTEVENTMARKEREXTPROC) (GLsizei length, const GLchar *marker);
+typedef void (APIENTRYP PFNGLPUSHGROUPMARKEREXTPROC) (GLsizei length, const GLchar *marker);
+typedef void (APIENTRYP PFNGLPOPGROUPMARKEREXTPROC) (void);
+#ifdef GL_GLEXT_PROTOTYPES
+GLAPI void APIENTRY glInsertEventMarkerEXT (GLsizei length, const GLchar *marker);
+GLAPI void APIENTRY glPushGroupMarkerEXT (GLsizei length, const GLchar *marker);
+GLAPI void APIENTRY glPopGroupMarkerEXT (void);
+#endif
+#endif /* GL_EXT_debug_marker */
+
 #ifndef GL_EXT_depth_bounds_test
 #define GL_EXT_depth_bounds_test 1
 #define GL_DEPTH_BOUNDS_TEST_EXT          0x8890
@@ -6135,7 +6181,7 @@ typedef void *(APIENTRYP PFNGLMAPNAMEDBUFFERRANGEEXTPROC) (GLuint buffer, GLintp
 typedef void (APIENTRYP PFNGLFLUSHMAPPEDNAMEDBUFFERRANGEEXTPROC) (GLuint buffer, GLintptr offset, GLsizeiptr length);
 typedef void (APIENTRYP PFNGLNAMEDBUFFERSTORAGEEXTPROC) (GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags);
 typedef void (APIENTRYP PFNGLCLEARNAMEDBUFFERDATAEXTPROC) (GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void *data);
-typedef void (APIENTRYP PFNGLCLEARNAMEDBUFFERSUBDATAEXTPROC) (GLuint buffer, GLenum internalformat, GLenum format, GLenum type, GLsizeiptr offset, GLsizeiptr size, const void *data);
+typedef void (APIENTRYP PFNGLCLEARNAMEDBUFFERSUBDATAEXTPROC) (GLuint buffer, GLenum internalformat, GLsizeiptr offset, GLsizeiptr size, GLenum format, GLenum type, const void *data);
 typedef void (APIENTRYP PFNGLNAMEDFRAMEBUFFERPARAMETERIEXTPROC) (GLuint framebuffer, GLenum pname, GLint param);
 typedef void (APIENTRYP PFNGLGETNAMEDFRAMEBUFFERPARAMETERIVEXTPROC) (GLuint framebuffer, GLenum pname, GLint *params);
 typedef void (APIENTRYP PFNGLPROGRAMUNIFORM1DEXTPROC) (GLuint program, GLint location, GLdouble x);
@@ -6391,7 +6437,7 @@ GLAPI void *APIENTRY glMapNamedBufferRangeEXT (GLuint buffer, GLintptr offset, G
 GLAPI void APIENTRY glFlushMappedNamedBufferRangeEXT (GLuint buffer, GLintptr offset, GLsizeiptr length);
 GLAPI void APIENTRY glNamedBufferStorageEXT (GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags);
 GLAPI void APIENTRY glClearNamedBufferDataEXT (GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void *data);
-GLAPI void APIENTRY glClearNamedBufferSubDataEXT (GLuint buffer, GLenum internalformat, GLenum format, GLenum type, GLsizeiptr offset, GLsizeiptr size, const void *data);
+GLAPI void APIENTRY glClearNamedBufferSubDataEXT (GLuint buffer, GLenum internalformat, GLsizeiptr offset, GLsizeiptr size, GLenum format, GLenum type, const void *data);
 GLAPI void APIENTRY glNamedFramebufferParameteriEXT (GLuint framebuffer, GLenum pname, GLint param);
 GLAPI void APIENTRY glGetNamedFramebufferParameterivEXT (GLuint framebuffer, GLenum pname, GLint *params);
 GLAPI void APIENTRY glProgramUniform1dEXT (GLuint program, GLint location, GLdouble x);
@@ -8041,6 +8087,10 @@ GLAPI void APIENTRY glBlendFuncSeparateINGR (GLenum sfactorRGB, GLenum dfactorRG
 #define GL_INTERLACE_READ_INGR            0x8568
 #endif /* GL_INGR_interlace_read */
 
+#ifndef GL_INTEL_fragment_shader_ordering
+#define GL_INTEL_fragment_shader_ordering 1
+#endif /* GL_INTEL_fragment_shader_ordering */
+
 #ifndef GL_INTEL_map_texture
 #define GL_INTEL_map_texture 1
 #define GL_TEXTURE_MEMORY_LAYOUT_INTEL    0x83FF
@@ -8214,9 +8264,9 @@ GLAPI GLboolean APIENTRY glIsImageHandleResidentNV (GLuint64 handle);
 
 #ifndef GL_NV_blend_equation_advanced
 #define GL_NV_blend_equation_advanced 1
-#define GL_BLEND_ADVANCED_COHERENT_NV     0x9285
 #define GL_BLEND_OVERLAP_NV               0x9281
 #define GL_BLEND_PREMULTIPLIED_SRC_NV     0x9280
+#define GL_BLUE_NV                        0x1905
 #define GL_COLORBURN_NV                   0x929A
 #define GL_COLORDODGE_NV                  0x9299
 #define GL_CONJOINT_NV                    0x9284
@@ -8230,6 +8280,7 @@ GLAPI GLboolean APIENTRY glIsImageHandleResidentNV (GLuint64 handle);
 #define GL_DST_OUT_NV                     0x928D
 #define GL_DST_OVER_NV                    0x9289
 #define GL_EXCLUSION_NV                   0x92A0
+#define GL_GREEN_NV                       0x1904
 #define GL_HARDLIGHT_NV                   0x929B
 #define GL_HARDMIX_NV                     0x92A9
 #define GL_HSL_COLOR_NV                   0x92AF
@@ -8251,6 +8302,7 @@ GLAPI GLboolean APIENTRY glIsImageHandleResidentNV (GLuint64 handle);
 #define GL_PLUS_CLAMPED_NV                0x92B1
 #define GL_PLUS_DARKER_NV                 0x9292
 #define GL_PLUS_NV                        0x9291
+#define GL_RED_NV                         0x1903
 #define GL_SCREEN_NV                      0x9295
 #define GL_SOFTLIGHT_NV                   0x929C
 #define GL_SRC_ATOP_NV                    0x928E
@@ -8260,6 +8312,7 @@ GLAPI GLboolean APIENTRY glIsImageHandleResidentNV (GLuint64 handle);
 #define GL_SRC_OVER_NV                    0x9288
 #define GL_UNCORRELATED_NV                0x9282
 #define GL_VIVIDLIGHT_NV                  0x92A6
+#define GL_XOR_NV                         0x1506
 typedef void (APIENTRYP PFNGLBLENDPARAMETERINVPROC) (GLenum pname, GLint value);
 typedef void (APIENTRYP PFNGLBLENDBARRIERNVPROC) (void);
 #ifdef GL_GLEXT_PROTOTYPES
@@ -8270,6 +8323,7 @@ GLAPI void APIENTRY glBlendBarrierNV (void);
 
 #ifndef GL_NV_blend_equation_advanced_coherent
 #define GL_NV_blend_equation_advanced_coherent 1
+#define GL_BLEND_ADVANCED_COHERENT_NV     0x9285
 #endif /* GL_NV_blend_equation_advanced_coherent */
 
 #ifndef GL_NV_blend_square
