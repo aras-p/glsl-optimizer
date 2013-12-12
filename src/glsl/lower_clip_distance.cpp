@@ -141,7 +141,7 @@ lower_clip_distance_visitor::visit(ir_variable *ir)
       ir->replace_with(this->new_clip_distance_1d_var);
    } else {
       /* 2D gl_ClipDistance (used for geometry input). */
-      assert(ir->mode == ir_var_shader_in &&
+      assert(ir->data.mode == ir_var_shader_in &&
              this->shader_type == GL_GEOMETRY_SHADER_ARB);
       if (this->old_clip_distance_2d_var)
          return visit_continue;
@@ -500,8 +500,8 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
          this->base_ir->insert_before(temp_clip_distance);
          actual_param->replace_with(
             new(ctx) ir_dereference_variable(temp_clip_distance));
-         if (formal_param->mode == ir_var_function_in
-             || formal_param->mode == ir_var_function_inout) {
+         if (formal_param->data.mode == ir_var_function_in
+             || formal_param->data.mode == ir_var_function_inout) {
             /* Copy from gl_ClipDistance to the temporary before the call.
              * Since we are going to insert this copy before the current
              * instruction, we need to visit it afterwards to make sure it
@@ -513,8 +513,8 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
             this->base_ir->insert_before(new_assignment);
             this->visit_new_assignment(new_assignment);
          }
-         if (formal_param->mode == ir_var_function_out
-             || formal_param->mode == ir_var_function_inout) {
+         if (formal_param->data.mode == ir_var_function_out
+             || formal_param->data.mode == ir_var_function_inout) {
             /* Copy from the temporary to gl_ClipDistance after the call.
              * Since visit_list_elements() has already decided which
              * instruction it's going to visit next, we need to visit

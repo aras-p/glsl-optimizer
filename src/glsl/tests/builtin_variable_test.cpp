@@ -110,7 +110,7 @@ common_builtin::uniforms_and_system_values_dont_have_explicit_location()
    foreach_list(node, &this->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var->mode != ir_var_uniform && var->mode != ir_var_system_value)
+      if (var->data.mode != ir_var_uniform && var->data.mode != ir_var_system_value)
          continue;
 
       EXPECT_FALSE(var->explicit_location);
@@ -124,7 +124,7 @@ common_builtin::constants_are_constant()
    foreach_list(node, &this->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var->mode != ir_var_auto)
+      if (var->data.mode != ir_var_auto)
          continue;
 
       EXPECT_FALSE(var->explicit_location);
@@ -139,7 +139,7 @@ common_builtin::no_invalid_variable_modes()
    foreach_list(node, &this->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      switch (var->mode) {
+      switch (var->data.mode) {
       case ir_var_auto:
       case ir_var_uniform:
       case ir_var_shader_in:
@@ -149,7 +149,7 @@ common_builtin::no_invalid_variable_modes()
 
       default:
          ADD_FAILURE() << "Built-in variable " << var->name
-                       << " has an invalid mode " << int(var->mode);
+                       << " has an invalid mode " << int(var->data.mode);
          break;
       }
    }
@@ -176,7 +176,7 @@ TEST_F(vertex_builtin, inputs_have_explicit_location)
    foreach_list(node, &this->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var->mode != ir_var_shader_in)
+      if (var->data.mode != ir_var_shader_in)
          continue;
 
       EXPECT_TRUE(var->explicit_location);
@@ -191,7 +191,7 @@ TEST_F(vertex_builtin, outputs_have_explicit_location)
    foreach_list(node, &this->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var->mode != ir_var_shader_out)
+      if (var->data.mode != ir_var_shader_out)
          continue;
 
       EXPECT_TRUE(var->explicit_location);
@@ -244,7 +244,7 @@ TEST_F(fragment_builtin, inputs_have_explicit_location)
    foreach_list(node, &this->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var->mode != ir_var_shader_in)
+      if (var->data.mode != ir_var_shader_in)
 	 continue;
 
       EXPECT_TRUE(var->explicit_location);
@@ -264,7 +264,7 @@ TEST_F(fragment_builtin, outputs_have_explicit_location)
    foreach_list(node, &this->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var->mode != ir_var_shader_out)
+      if (var->data.mode != ir_var_shader_out)
 	 continue;
 
       EXPECT_TRUE(var->explicit_location);
@@ -315,7 +315,7 @@ TEST_F(geometry_builtin, inputs_have_explicit_location)
    foreach_list(node, &this->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var->mode != ir_var_shader_in)
+      if (var->data.mode != ir_var_shader_in)
 	 continue;
 
       if (var->is_interface_instance()) {
@@ -361,7 +361,7 @@ TEST_F(geometry_builtin, outputs_have_explicit_location)
    foreach_list(node, &this->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var->mode != ir_var_shader_out)
+      if (var->data.mode != ir_var_shader_out)
 	 continue;
 
       EXPECT_TRUE(var->explicit_location);

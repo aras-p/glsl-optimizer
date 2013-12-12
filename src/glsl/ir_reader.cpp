@@ -418,29 +418,29 @@ ir_reader::read_declaration(s_expression *expr)
       } else if (strcmp(qualifier->value(), "invariant") == 0) {
 	 var->data.invariant = 1;
       } else if (strcmp(qualifier->value(), "uniform") == 0) {
-	 var->mode = ir_var_uniform;
+	 var->data.mode = ir_var_uniform;
       } else if (strcmp(qualifier->value(), "auto") == 0) {
-	 var->mode = ir_var_auto;
+	 var->data.mode = ir_var_auto;
       } else if (strcmp(qualifier->value(), "in") == 0) {
-	 var->mode = ir_var_function_in;
+	 var->data.mode = ir_var_function_in;
       } else if (strcmp(qualifier->value(), "shader_in") == 0) {
-         var->mode = ir_var_shader_in;
+         var->data.mode = ir_var_shader_in;
       } else if (strcmp(qualifier->value(), "const_in") == 0) {
-	 var->mode = ir_var_const_in;
+	 var->data.mode = ir_var_const_in;
       } else if (strcmp(qualifier->value(), "out") == 0) {
-	 var->mode = ir_var_function_out;
+	 var->data.mode = ir_var_function_out;
       } else if (strcmp(qualifier->value(), "shader_out") == 0) {
-	 var->mode = ir_var_shader_out;
+	 var->data.mode = ir_var_shader_out;
       } else if (strcmp(qualifier->value(), "inout") == 0) {
-	 var->mode = ir_var_function_inout;
+	 var->data.mode = ir_var_function_inout;
       } else if (strcmp(qualifier->value(), "temporary") == 0) {
-	 var->mode = ir_var_temporary;
+	 var->data.mode = ir_var_temporary;
       } else if (strcmp(qualifier->value(), "smooth") == 0) {
-	 var->interpolation = INTERP_QUALIFIER_SMOOTH;
+	 var->data.interpolation = INTERP_QUALIFIER_SMOOTH;
       } else if (strcmp(qualifier->value(), "flat") == 0) {
-	 var->interpolation = INTERP_QUALIFIER_FLAT;
+	 var->data.interpolation = INTERP_QUALIFIER_FLAT;
       } else if (strcmp(qualifier->value(), "noperspective") == 0) {
-	 var->interpolation = INTERP_QUALIFIER_NOPERSPECTIVE;
+	 var->data.interpolation = INTERP_QUALIFIER_NOPERSPECTIVE;
       } else {
 	 ir_read_error(expr, "unknown qualifier: %s", qualifier->value());
 	 return NULL;

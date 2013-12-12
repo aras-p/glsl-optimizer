@@ -108,7 +108,7 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
        * but, this will require changes to the other uniform block
        * support code.
        */
-      if (var->mode == ir_var_uniform)
+      if (var->data.mode == ir_var_uniform)
          continue;
 
       const glsl_type * iface_t = var->type;
@@ -139,7 +139,7 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
                new_var =
                   new(mem_ctx) ir_variable(iface_t->fields.structure[i].type,
                                            var_name,
-                                           (ir_variable_mode) var->mode);
+                                           (ir_variable_mode) var->data.mode);
                new_var->from_named_ifc_block_nonarray = 1;
             } else {
                const glsl_type *new_array_type =
@@ -149,12 +149,12 @@ flatten_named_interface_blocks_declarations::run(exec_list *instructions)
                new_var =
                   new(mem_ctx) ir_variable(new_array_type,
                                            var_name,
-                                           (ir_variable_mode) var->mode);
+                                           (ir_variable_mode) var->data.mode);
                new_var->from_named_ifc_block_array = 1;
             }
             new_var->location = iface_t->fields.structure[i].location;
             new_var->explicit_location = (new_var->location >= 0);
-            new_var->interpolation =
+            new_var->data.interpolation =
                iface_t->fields.structure[i].interpolation;
             new_var->data.centroid = iface_t->fields.structure[i].centroid;
             new_var->data.sample = iface_t->fields.structure[i].sample;
@@ -212,7 +212,7 @@ flatten_named_interface_blocks_declarations::handle_rvalue(ir_rvalue **rvalue)
     * but, this will require changes to the other uniform block
     * support code.
     */
-   if (var->mode == ir_var_uniform)
+   if (var->data.mode == ir_var_uniform)
       return;
 
    if (var->get_interface_type() != NULL) {

@@ -159,7 +159,7 @@ void ir_print_visitor::visit(ir_variable *ir)
    STATIC_ASSERT(ARRAY_SIZE(interp) == INTERP_QUALIFIER_COUNT);
 
    printf("(%s%s%s%s%s) ",
-	  cent, samp, inv, mode[ir->mode], interp[ir->interpolation]);
+	  cent, samp, inv, mode[ir->data.mode], interp[ir->data.interpolation]);
 
    print_type(ir->type);
    printf(" %s)", unique_name(ir));

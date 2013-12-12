@@ -752,8 +752,8 @@ ir_validate::visit_enter(ir_call *ir)
          printf("ir_call parameter type mismatch:\n");
          goto dump_ir;
       }
-      if (formal_param->mode == ir_var_function_out
-          || formal_param->mode == ir_var_function_inout) {
+      if (formal_param->data.mode == ir_var_function_out
+          || formal_param->data.mode == ir_var_function_inout) {
          if (!actual_param->is_lvalue()) {
             printf("ir_call out/inout parameters must be lvalues:\n");
             goto dump_ir;

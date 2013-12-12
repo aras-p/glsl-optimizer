@@ -952,10 +952,10 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 {
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
    fs_reg wpos = *reg;
-   bool flip = !ir->origin_upper_left ^ c->key.render_to_fbo;
+   bool flip = !ir->data.origin_upper_left ^ c->key.render_to_fbo;
 
    /* gl_FragCoord.x */
-   if (ir->pixel_center_integer) {
+   if (ir->data.pixel_center_integer) {
       emit(MOV(wpos, this->pixel_x));
    } else {
       emit(ADD(wpos, this->pixel_x, fs_reg(0.5f)));
@@ -963,11 +963,11 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    wpos.reg_offset++;
 
    /* gl_FragCoord.y */
-   if (!flip && ir->pixel_center_integer) {
+   if (!flip && ir->data.pixel_center_integer) {
       emit(MOV(wpos, this->pixel_y));
    } else {
       fs_reg pixel_y = this->pixel_y;
-      float offset = (ir->pixel_center_integer ? 0.0 : 0.5);
+      float offset = (ir->data.pixel_center_integer ? 0.0 : 0.5);
 
       if (flip) {
 	 pixel_y.negate = true;

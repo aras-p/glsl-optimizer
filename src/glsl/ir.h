@@ -403,7 +403,7 @@ public:
     */
    inline bool is_in_uniform_block() const
    {
-      return this->mode == ir_var_uniform && this->interface_type != NULL;
+      return this->data.mode == ir_var_uniform && this->interface_type != NULL;
    }
 
    /**
@@ -535,59 +535,59 @@ public:
       unsigned sample:1;
       unsigned invariant:1;
 
+      /**
+       * Has this variable been used for reading or writing?
+       *
+       * Several GLSL semantic checks require knowledge of whether or not a
+       * variable has been used.  For example, it is an error to redeclare a
+       * variable as invariant after it has been used.
+       *
+       * This is only maintained in the ast_to_hir.cpp path, not in
+       * Mesa's fixed function or ARB program paths.
+       */
+      unsigned used:1;
+
+      /**
+       * Has this variable been statically assigned?
+       *
+       * This answers whether the variable was assigned in any path of
+       * the shader during ast_to_hir.  This doesn't answer whether it is
+       * still written after dead code removal, nor is it maintained in
+       * non-ast_to_hir.cpp (GLSL parsing) paths.
+       */
+      unsigned assigned:1;
+
+      /**
+       * Enum indicating how the variable was declared.  See
+       * ir_var_declaration_type.
+       *
+       * This is used to detect certain kinds of illegal variable redeclarations.
+       */
+      unsigned how_declared:2;
+
+      /**
+       * Storage class of the variable.
+       *
+       * \sa ir_variable_mode
+       */
+      unsigned mode:4;
+
+      /**
+       * Interpolation mode for shader inputs / outputs
+       *
+       * \sa ir_variable_interpolation
+       */
+      unsigned interpolation:2;
+
+      /**
+       * \name ARB_fragment_coord_conventions
+       * @{
+       */
+      unsigned origin_upper_left:1;
+      unsigned pixel_center_integer:1;
+      /*@}*/
+
    } data;
-
-   /**
-    * Has this variable been used for reading or writing?
-    *
-    * Several GLSL semantic checks require knowledge of whether or not a
-    * variable has been used.  For example, it is an error to redeclare a
-    * variable as invariant after it has been used.
-    *
-    * This is only maintained in the ast_to_hir.cpp path, not in
-    * Mesa's fixed function or ARB program paths.
-    */
-   unsigned used:1;
-
-   /**
-    * Has this variable been statically assigned?
-    *
-    * This answers whether the variable was assigned in any path of
-    * the shader during ast_to_hir.  This doesn't answer whether it is
-    * still written after dead code removal, nor is it maintained in
-    * non-ast_to_hir.cpp (GLSL parsing) paths.
-    */
-   unsigned assigned:1;
-
-   /**
-    * Enum indicating how the variable was declared.  See
-    * ir_var_declaration_type.
-    *
-    * This is used to detect certain kinds of illegal variable redeclarations.
-    */
-   unsigned how_declared:2;
-
-   /**
-    * Storage class of the variable.
-    *
-    * \sa ir_variable_mode
-    */
-   unsigned mode:4;
-
-   /**
-    * Interpolation mode for shader inputs / outputs
-    *
-    * \sa ir_variable_interpolation
-    */
-   unsigned interpolation:2;
-
-   /**
-    * \name ARB_fragment_coord_conventions
-    * @{
-    */
-   unsigned origin_upper_left:1;
-   unsigned pixel_center_integer:1;
-   /*@}*/
 
    /**
     * Was the location explicitly set in the shader?

@@ -258,7 +258,7 @@ lower_packed_varyings_visitor::run(exec_list *instructions)
       if (var == NULL)
          continue;
 
-      if (var->mode != this->mode ||
+      if (var->data.mode != this->mode ||
           var->location < (int) this->location_base ||
           !this->needs_lowering(var))
          continue;
@@ -268,11 +268,11 @@ lower_packed_varyings_visitor::run(exec_list *instructions)
        * safe, caller should ensure that integral varyings always use flat
        * interpolation, even when this is not required by GLSL.
        */
-      assert(var->interpolation == INTERP_QUALIFIER_FLAT ||
+      assert(var->data.interpolation == INTERP_QUALIFIER_FLAT ||
              !var->type->contains_integer());
 
       /* Change the old varying into an ordinary global. */
-      var->mode = ir_var_auto;
+      var->data.mode = ir_var_auto;
 
       /* Create a reference to the old varying. */
       ir_dereference_variable *deref
@@ -547,7 +547,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
    if (this->packed_varyings[slot] == NULL) {
       char *packed_name = ralloc_asprintf(this->mem_ctx, "packed:%s", name);
       const glsl_type *packed_type;
-      if (unpacked_var->interpolation == INTERP_QUALIFIER_FLAT)
+      if (unpacked_var->data.interpolation == INTERP_QUALIFIER_FLAT)
          packed_type = glsl_type::ivec4_type;
       else
          packed_type = glsl_type::vec4_type;
@@ -566,7 +566,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
       }
       packed_var->data.centroid = unpacked_var->data.centroid;
       packed_var->data.sample = unpacked_var->data.sample;
-      packed_var->interpolation = unpacked_var->interpolation;
+      packed_var->data.interpolation = unpacked_var->data.interpolation;
       packed_var->location = location;
       unpacked_var->insert_before(packed_var);
       this->packed_varyings[slot] = packed_var;

@@ -283,7 +283,7 @@ vec4_gs_visitor::compute_array_stride(ir_dereference_array *ir)
     * setup_attributes() will remap our accesses to the actual input array.
     */
    ir_dereference_variable *deref_var = ir->array->as_dereference_variable();
-   if (deref_var && deref_var->var->mode == ir_var_shader_in)
+   if (deref_var && deref_var->var->data.mode == ir_var_shader_in)
       return BRW_VARYING_SLOT_COUNT;
    else
       return vec4_visitor::compute_array_stride(ir);

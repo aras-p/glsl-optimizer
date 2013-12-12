@@ -1579,9 +1579,7 @@ ir_swizzle::variable_referenced() const
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode)
-   : max_array_access(0), max_ifc_array_access(NULL),
-     how_declared(ir_var_declared_normally), mode(mode),
-     interpolation(INTERP_QUALIFIER_NONE), atomic()
+   : max_array_access(0), max_ifc_array_access(NULL), atomic()
 {
    this->ir_type = ir_type_variable;
    this->type = type;
@@ -1593,14 +1591,17 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->warn_extension = NULL;
    this->constant_value = NULL;
    this->constant_initializer = NULL;
-   this->origin_upper_left = false;
-   this->pixel_center_integer = false;
+   this->data.origin_upper_left = false;
+   this->data.pixel_center_integer = false;
    this->depth_layout = ir_depth_layout_none;
-   this->used = false;
+   this->data.used = false;
    this->data.read_only = false;
    this->data.centroid = false;
    this->data.sample = false;
    this->data.invariant = false;
+   this->data.how_declared = ir_var_declared_normally;
+   this->data.mode = mode;
+   this->data.interpolation = INTERP_QUALIFIER_NONE;
 
    if (type != NULL) {
       if (type->base_type == GLSL_TYPE_SAMPLER)
@@ -1632,8 +1633,8 @@ interpolation_string(unsigned interpolation)
 glsl_interp_qualifier
 ir_variable::determine_interpolation_mode(bool flat_shade)
 {
-   if (this->interpolation != INTERP_QUALIFIER_NONE)
-      return (glsl_interp_qualifier) this->interpolation;
+   if (this->data.interpolation != INTERP_QUALIFIER_NONE)
+      return (glsl_interp_qualifier) this->data.interpolation;
    int location = this->location;
    bool is_gl_Color =
       location == VARYING_SLOT_COL0 || location == VARYING_SLOT_COL1;
@@ -1705,8 +1706,8 @@ ir_function_signature::qualifiers_match(exec_list *params)
       ir_variable *b = (ir_variable *)iter_b.get();
 
       if (a->data.read_only != b->data.read_only ||
-	  !modes_match(a->mode, b->mode) ||
-	  a->interpolation != b->interpolation ||
+	  !modes_match(a->data.mode, b->data.mode) ||
+	  a->data.interpolation != b->data.interpolation ||
 	  a->data.centroid != b->data.centroid ||
          a->data.sample != b->data.sample) {
 
@@ -1892,7 +1893,7 @@ vertices_per_prim(GLenum prim)
 const char *
 mode_string(const ir_variable *var)
 {
-   switch (var->mode) {
+   switch (var->data.mode) {
    case ir_var_auto:
       return (var->data.read_only) ? "global constant" : "global variable";
 

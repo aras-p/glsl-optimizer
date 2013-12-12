@@ -637,7 +637,7 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
       if ((var == NULL) || !var->is_in_uniform_block())
 	 continue;
 
-      assert(var->mode == ir_var_uniform);
+      assert(var->data.mode == ir_var_uniform);
 
       if (var->is_interface_instance()) {
          var->location = 0;
@@ -767,7 +767,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
       foreach_list(node, sh->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform))
+	 if ((var == NULL) || (var->data.mode != ir_var_uniform))
 	    continue;
 
 	 /* FINISHME: Update code to process built-in uniforms!
@@ -818,7 +818,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
       foreach_list(node, prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform))
+	 if ((var == NULL) || (var->data.mode != ir_var_uniform))
 	    continue;
 
 	 /* FINISHME: Update code to process built-in uniforms!

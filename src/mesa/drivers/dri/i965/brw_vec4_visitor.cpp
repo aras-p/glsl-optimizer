@@ -945,7 +945,7 @@ vec4_visitor::visit(ir_variable *ir)
    if (variable_storage(ir))
       return;
 
-   switch (ir->mode) {
+   switch (ir->data.mode) {
    case ir_var_shader_in:
       reg = new(mem_ctx) dst_reg(ATTR, ir->location);
       break;
@@ -1752,7 +1752,7 @@ vec4_visitor::visit(ir_dereference_variable *ir)
    this->result = src_reg(*reg);
 
    /* System values get their swizzle from the dst_reg writemask */
-   if (ir->var->mode == ir_var_system_value)
+   if (ir->var->data.mode == ir_var_system_value)
       return;
 
    if (type->is_scalar() || type->is_vector() || type->is_matrix())

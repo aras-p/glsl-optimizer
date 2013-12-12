@@ -129,7 +129,7 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
       return;
    }
 
-   if (input->interpolation != output->interpolation) {
+   if (input->data.interpolation != output->data.interpolation) {
       linker_error(prog,
                    "%s shader output `%s' specifies %s "
                    "interpolation qualifier, "
@@ -137,9 +137,9 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
                    "interpolation qualifier\n",
                    _mesa_glsl_shader_target_name(producer_type),
                    output->name,
-                   interpolation_string(output->interpolation),
+                   interpolation_string(output->data.interpolation),
                    _mesa_glsl_shader_target_name(consumer_type),
-                   interpolation_string(input->interpolation));
+                   interpolation_string(input->data.interpolation));
       return;
    }
 }
@@ -155,11 +155,11 @@ cross_validate_front_and_back_color(struct gl_shader_program *prog,
                                     GLenum consumer_type,
                                     GLenum producer_type)
 {
-   if (front_color != NULL && front_color->assigned)
+   if (front_color != NULL && front_color->data.assigned)
       cross_validate_types_and_qualifiers(prog, input, front_color,
                                           consumer_type, producer_type);
 
-   if (back_color != NULL && back_color->assigned)
+   if (back_color != NULL && back_color->data.assigned)
       cross_validate_types_and_qualifiers(prog, input, back_color,
                                           consumer_type, producer_type);
 }
@@ -178,7 +178,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
    foreach_list(node, producer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if ((var == NULL) || (var->mode != ir_var_shader_out))
+      if ((var == NULL) || (var->data.mode != ir_var_shader_out))
 	 continue;
 
       parameters.add_variable(var);
@@ -196,10 +196,10 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
    foreach_list(node, consumer->ir) {
       ir_variable *const input = ((ir_instruction *) node)->as_variable();
 
-      if ((input == NULL) || (input->mode != ir_var_shader_in))
+      if ((input == NULL) || (input->data.mode != ir_var_shader_in))
 	 continue;
 
-      if (strcmp(input->name, "gl_Color") == 0 && input->used) {
+      if (strcmp(input->name, "gl_Color") == 0 && input->data.used) {
          const ir_variable *const front_color =
             parameters.get_variable("gl_FrontColor");
 
@@ -209,7 +209,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
          cross_validate_front_and_back_color(prog, input,
                                              front_color, back_color,
                                              consumer->Type, producer->Type);
-      } else if (strcmp(input->name, "gl_SecondaryColor") == 0 && input->used) {
+      } else if (strcmp(input->name, "gl_SecondaryColor") == 0 && input->data.used) {
          const ir_variable *const front_color =
             parameters.get_variable("gl_FrontSecondaryColor");
 
@@ -766,12 +766,12 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
        */
       producer_var->data.centroid = false;
       producer_var->data.sample = false;
-      producer_var->interpolation = INTERP_QUALIFIER_FLAT;
+      producer_var->data.interpolation = INTERP_QUALIFIER_FLAT;
 
       if (consumer_var) {
          consumer_var->data.centroid = false;
          consumer_var->data.sample = false;
-         consumer_var->interpolation = INTERP_QUALIFIER_FLAT;
+         consumer_var->data.interpolation = INTERP_QUALIFIER_FLAT;
       }
    }
 
@@ -889,7 +889,7 @@ varying_matches::compute_packing_class(ir_variable *var)
     */
    unsigned packing_class = var->data.centroid | (var->data.sample << 1);
    packing_class *= 4;
-   packing_class += var->interpolation;
+   packing_class += var->data.interpolation;
    return packing_class;
 }
 
@@ -947,7 +947,7 @@ is_varying_var(GLenum shaderType, const ir_variable *var)
 {
    /* Only fragment shaders will take a varying variable as an input */
    if (shaderType == GL_FRAGMENT_SHADER &&
-       var->mode == ir_var_shader_in) {
+       var->data.mode == ir_var_shader_in) {
       switch (var->location) {
       case VARYING_SLOT_POS:
       case VARYING_SLOT_FACE:
@@ -1096,7 +1096,7 @@ assign_varying_locations(struct gl_context *ctx,
          ir_variable *const input_var =
             ((ir_instruction *) node)->as_variable();
 
-         if ((input_var != NULL) && (input_var->mode == ir_var_shader_in)) {
+         if ((input_var != NULL) && (input_var->data.mode == ir_var_shader_in)) {
             if (input_var->get_interface_type() != NULL) {
                char *const iface_field_name =
                   ralloc_asprintf(mem_ctx, "%s.%s",
@@ -1115,7 +1115,7 @@ assign_varying_locations(struct gl_context *ctx,
    foreach_list(node, producer->ir) {
       ir_variable *const output_var = ((ir_instruction *) node)->as_variable();
 
-      if ((output_var == NULL) || (output_var->mode != ir_var_shader_out))
+      if ((output_var == NULL) || (output_var->data.mode != ir_var_shader_out))
 	 continue;
 
       tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates);
@@ -1135,7 +1135,7 @@ assign_varying_locations(struct gl_context *ctx,
             (ir_variable *) hash_table_find(consumer_inputs, output_var->name);
       }
 
-      if (input_var && input_var->mode != ir_var_shader_in)
+      if (input_var && input_var->data.mode != ir_var_shader_in)
          input_var = NULL;
 
       if (input_var) {
@@ -1199,7 +1199,7 @@ assign_varying_locations(struct gl_context *ctx,
       foreach_list(node, consumer->ir) {
          ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-         if (var && var->mode == ir_var_shader_in &&
+         if (var && var->data.mode == ir_var_shader_in &&
              var->is_unmatched_generic_inout) {
             if (prog->Version <= 120) {
                /* On page 25 (page 31 of the PDF) of the GLSL 1.20 spec:
@@ -1225,7 +1225,7 @@ assign_varying_locations(struct gl_context *ctx,
             /* An 'in' variable is only really a shader input if its
              * value is written by the previous stage.
              */
-            var->mode = ir_var_auto;
+            var->data.mode = ir_var_auto;
          }
       }
    }
@@ -1243,7 +1243,7 @@ check_against_output_limit(struct gl_context *ctx,
    foreach_list(node, producer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var && var->mode == ir_var_shader_out &&
+      if (var && var->data.mode == ir_var_shader_out &&
           is_varying_var(producer->Type, var)) {
          output_vectors += var->type->count_attribute_slots();
       }
@@ -1292,7 +1292,7 @@ check_against_input_limit(struct gl_context *ctx,
    foreach_list(node, consumer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var && var->mode == ir_var_shader_in &&
+      if (var && var->data.mode == ir_var_shader_in &&
           is_varying_var(consumer->Type, var)) {
          input_vectors += var->type->count_attribute_slots();
       }

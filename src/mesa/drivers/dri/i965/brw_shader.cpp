@@ -223,7 +223,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       foreach_list(node, shader->ir) {
 	 ir_variable *var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform)
+	 if ((var == NULL) || (var->data.mode != ir_var_uniform)
 	     || (strncmp(var->name, "gl_", 3) != 0))
 	    continue;
 

@@ -435,9 +435,9 @@ builtin_variable_generator::add_variable(const char *name,
                                          enum ir_variable_mode mode, int slot)
 {
    ir_variable *var = new(symtab) ir_variable(type, name, mode);
-   var->how_declared = ir_var_declared_implicitly;
+   var->data.how_declared = ir_var_declared_implicitly;
 
-   switch (var->mode) {
+   switch (var->data.mode) {
    case ir_var_auto:
    case ir_var_shader_in:
    case ir_var_uniform:
@@ -793,9 +793,9 @@ builtin_variable_generator::generate_gs_special_vars()
     */
    ir_variable *var;
    var = add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveIDIn");
-   var->interpolation = INTERP_QUALIFIER_FLAT;
+   var->data.interpolation = INTERP_QUALIFIER_FLAT;
    var = add_output(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID");
-   var->interpolation = INTERP_QUALIFIER_FLAT;
+   var->data.interpolation = INTERP_QUALIFIER_FLAT;
 }
 
 
@@ -813,7 +813,7 @@ builtin_variable_generator::generate_fs_special_vars()
    if (state->is_version(150, 0)) {
       ir_variable *var =
          add_input(VARYING_SLOT_PRIMITIVE_ID, int_t, "gl_PrimitiveID");
-      var->interpolation = INTERP_QUALIFIER_FLAT;
+      var->data.interpolation = INTERP_QUALIFIER_FLAT;
    }
 
    /* gl_FragColor and gl_FragData were deprecated starting in desktop GLSL
@@ -936,7 +936,7 @@ builtin_variable_generator::generate_varyings()
          ir_variable *var =
             add_variable(fields[i].name, fields[i].type, ir_var_shader_out,
                          fields[i].location);
-         var->interpolation = fields[i].interpolation;
+         var->data.interpolation = fields[i].interpolation;
          var->data.centroid = fields[i].centroid;
          var->data.sample = fields[i].sample;
          var->init_interface_type(per_vertex_out_type);

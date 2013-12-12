@@ -114,8 +114,8 @@ public:
 	 ir_rvalue *param_rval = (ir_rvalue *)iter.get();
 	 ir_variable *sig_param = (ir_variable *)sig_iter.get();
 
-	 if (sig_param->mode == ir_var_function_out ||
-	     sig_param->mode == ir_var_function_inout) {
+	 if (sig_param->data.mode == ir_var_function_out ||
+	     sig_param->data.mode == ir_var_function_inout) {
 	    ir_variable *var = param_rval->variable_referenced();
 	    if (var && strcmp(name, var->name) == 0) {
 	       found = true;
@@ -198,7 +198,7 @@ public:
 
    virtual ir_visitor_status visit(ir_variable *var)
    {
-      if (!var->type->is_array() || var->mode != ir_var_shader_in)
+      if (!var->type->is_array() || var->data.mode != ir_var_shader_in)
          return visit_continue;
 
       unsigned size = var->type->length;
@@ -580,13 +580,13 @@ cross_validate_globals(struct gl_shader_program *prog,
 	 if (var == NULL)
 	    continue;
 
-	 if (uniforms_only && (var->mode != ir_var_uniform))
+	 if (uniforms_only && (var->data.mode != ir_var_uniform))
 	    continue;
 
 	 /* Don't cross validate temporaries that are at global scope.  These
 	  * will eventually get pulled into the shaders 'main'.
 	  */
-	 if (var->mode == ir_var_temporary)
+	 if (var->data.mode == ir_var_temporary)
 	    continue;
 
 	 /* If a global with this name has already been seen, verify that the
@@ -682,7 +682,7 @@ cross_validate_globals(struct gl_shader_program *prog,
 			       "the same set of qualifiers.");
 	       }
 
-	       if (var->used && layout_differs) {
+	       if (var->data.used && layout_differs) {
 		  linker_error(prog,
 			       "If gl_FragDepth is redeclared with a layout "
 			       "qualifier in any fragment shader, it must be "
@@ -890,7 +890,7 @@ remap_variables(ir_instruction *inst, struct gl_shader *target,
 
       virtual ir_visitor_status visit(ir_dereference_variable *ir)
       {
-	 if (ir->var->mode == ir_var_temporary) {
+	 if (ir->var->data.mode == ir_var_temporary) {
 	    ir_variable *var = (ir_variable *) hash_table_find(temps, ir->var);
 
 	    assert(var != NULL);
@@ -964,13 +964,13 @@ move_non_declarations(exec_list *instructions, exec_node *last,
 	 continue;
 
       ir_variable *var = inst->as_variable();
-      if ((var != NULL) && (var->mode != ir_var_temporary))
+      if ((var != NULL) && (var->data.mode != ir_var_temporary))
 	 continue;
 
       assert(inst->as_assignment()
              || inst->as_call()
              || inst->as_if() /* for initializers with the ?: operator */
-	     || ((var != NULL) && (var->mode == ir_var_temporary)));
+	     || ((var != NULL) && (var->data.mode == ir_var_temporary)));
 
       if (make_copies) {
 	 inst = inst->clone(target, NULL);
@@ -1494,7 +1494,7 @@ update_array_sizes(struct gl_shader_program *prog)
       foreach_list(node, prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform) ||
+	 if ((var == NULL) || (var->data.mode != ir_var_uniform) ||
 	     !var->type->is_array())
 	    continue;
 
@@ -1660,7 +1660,7 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
    foreach_list(node, sh->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if ((var == NULL) || (var->mode != (unsigned) direction))
+      if ((var == NULL) || (var->data.mode != (unsigned) direction))
 	 continue;
 
       if (var->explicit_location) {
@@ -1821,7 +1821,7 @@ demote_shader_inputs_and_outputs(gl_shader *sh, enum ir_variable_mode mode)
    foreach_list(node, sh->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if ((var == NULL) || (var->mode != int(mode)))
+      if ((var == NULL) || (var->data.mode != int(mode)))
 	 continue;
 
       /* A shader 'in' or 'out' variable is only really an input or output if
@@ -1829,7 +1829,7 @@ demote_shader_inputs_and_outputs(gl_shader *sh, enum ir_variable_mode mode)
        * to have a location assigned.
        */
       if (var->is_unmatched_generic_inout) {
-	 var->mode = ir_var_auto;
+	 var->data.mode = ir_var_auto;
       }
    }
 }
@@ -1857,7 +1857,7 @@ store_fragdepth_layout(struct gl_shader_program *prog)
    foreach_list(node, ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var == NULL || var->mode != ir_var_shader_out) {
+      if (var == NULL || var->data.mode != ir_var_shader_out) {
          continue;
       }
 

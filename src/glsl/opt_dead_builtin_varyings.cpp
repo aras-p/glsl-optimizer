@@ -85,7 +85,7 @@ public:
    {
       ir_variable *var = ir->variable_referenced();
 
-      if (!var || var->mode != this->mode)
+      if (!var || var->data.mode != this->mode)
          return visit_continue;
 
       if (this->find_frag_outputs && var->location == FRAG_RESULT_DATA0) {
@@ -130,7 +130,7 @@ public:
    {
       ir_variable *var = ir->variable_referenced();
 
-      if (var->mode != this->mode || !var->type->is_array())
+      if (var->data.mode != this->mode || !var->type->is_array())
          return visit_continue;
 
       if (this->find_frag_outputs && var->location == FRAG_RESULT_DATA0) {
@@ -152,7 +152,7 @@ public:
 
    virtual ir_visitor_status visit(ir_variable *var)
    {
-      if (var->mode != this->mode)
+      if (var->data.mode != this->mode)
          return visit_continue;
 
       /* Nothing to do here for fragment outputs. */

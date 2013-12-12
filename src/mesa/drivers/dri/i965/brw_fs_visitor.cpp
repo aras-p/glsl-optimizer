@@ -56,7 +56,7 @@ fs_visitor::visit(ir_variable *ir)
    if (variable_storage(ir))
       return;
 
-   if (ir->mode == ir_var_shader_in) {
+   if (ir->data.mode == ir_var_shader_in) {
       if (!strcmp(ir->name, "gl_FragCoord")) {
 	 reg = emit_fragcoord_interpolation(ir);
       } else if (!strcmp(ir->name, "gl_FrontFacing")) {
@@ -67,7 +67,7 @@ fs_visitor::visit(ir_variable *ir)
       assert(reg);
       hash_table_insert(this->variable_ht, reg, ir);
       return;
-   } else if (ir->mode == ir_var_shader_out) {
+   } else if (ir->data.mode == ir_var_shader_out) {
       reg = new(this->mem_ctx) fs_reg(this, ir->type);
 
       if (ir->index > 0) {
@@ -101,7 +101,7 @@ fs_visitor::visit(ir_variable *ir)
 	    this->output_components[output] = vector_elements;
 	 }
       }
-   } else if (ir->mode == ir_var_uniform) {
+   } else if (ir->data.mode == ir_var_uniform) {
       int param_index = c->prog_data.nr_params;
 
       /* Thanks to the lower_ubo_reference pass, we will see only
@@ -131,7 +131,7 @@ fs_visitor::visit(ir_variable *ir)
       reg = new(this->mem_ctx) fs_reg(UNIFORM, param_index);
       reg->type = brw_type_for_base_type(ir->type);
 
-   } else if (ir->mode == ir_var_system_value) {
+   } else if (ir->data.mode == ir_var_system_value) {
       if (ir->location == SYSTEM_VALUE_SAMPLE_POS) {
 	 reg = emit_samplepos_setup(ir);
       } else if (ir->location == SYSTEM_VALUE_SAMPLE_ID) {

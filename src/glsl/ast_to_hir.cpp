@@ -767,7 +767,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 
    ir_variable *lhs_var = lhs->variable_referenced();
    if (lhs_var)
-      lhs_var->assigned = true;
+      lhs_var->data.assigned = true;
 
    if (!error_emitted) {
       if (non_lvalue_description != NULL) {
@@ -866,7 +866,7 @@ get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
    var = new(ctx) ir_variable(lvalue->type, "_post_incdec_tmp",
 			      ir_var_temporary);
    instructions->push_tail(var);
-   var->mode = ir_var_auto;
+   var->data.mode = ir_var_auto;
 
    instructions->push_tail(new(ctx) ir_assignment(new(ctx) ir_dereference_variable(var),
 						  lvalue));
@@ -1639,7 +1639,7 @@ ast_expression::hir(exec_list *instructions,
 	 state->symbols->get_variable(this->primary_expression.identifier);
 
       if (var != NULL) {
-	 var->used = true;
+	 var->data.used = true;
 	 result = new(ctx) ir_dereference_variable(var);
       } else {
 	 _mesa_glsl_error(& loc, state, "`%s' undeclared",
@@ -1886,11 +1886,11 @@ is_varying_var(ir_variable *var, _mesa_glsl_parser_targets target)
 {
    switch (target) {
    case vertex_shader:
-      return var->mode == ir_var_shader_out;
+      return var->data.mode == ir_var_shader_out;
    case fragment_shader:
-      return var->mode == ir_var_shader_in;
+      return var->data.mode == ir_var_shader_in;
    default:
-      return var->mode == ir_var_shader_out || var->mode == ir_var_shader_in;
+      return var->data.mode == ir_var_shader_out || var->data.mode == ir_var_shader_in;
    }
 }
 
@@ -1941,7 +1941,7 @@ validate_binding_qualifier(struct _mesa_glsl_parse_state *state,
                            ir_variable *var,
                            const ast_type_qualifier *qual)
 {
-   if (var->mode != ir_var_uniform) {
+   if (var->data.mode != ir_var_uniform) {
       _mesa_glsl_error(loc, state,
                        "the \"binding\" qualifier only applies to uniforms");
       return false;
@@ -2078,7 +2078,7 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
     */
    switch (state->target) {
    case vertex_shader:
-      if (var->mode == ir_var_shader_in) {
+      if (var->data.mode == ir_var_shader_in) {
          if (!state->check_explicit_attrib_location_allowed(loc, var))
             return;
 
@@ -2095,7 +2095,7 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
       return;
 
    case fragment_shader:
-      if (var->mode == ir_var_shader_out) {
+      if (var->data.mode == ir_var_shader_out) {
          if (!state->check_explicit_attrib_location_allowed(loc, var))
             return;
 
@@ -2162,7 +2162,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    STATIC_ASSERT(sizeof(qual->flags.q) <= sizeof(qual->flags.i));
 
    if (qual->flags.q.invariant) {
-      if (var->used) {
+      if (var->data.used) {
 	 _mesa_glsl_error(loc, state,
 			  "variable `%s' may not be redeclared "
 			  "`invariant' after being used",
@@ -2210,18 +2210,18 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
     * the setting alone.
     */
    if (qual->flags.q.in && qual->flags.q.out)
-      var->mode = ir_var_function_inout;
+      var->data.mode = ir_var_function_inout;
    else if (qual->flags.q.in)
-      var->mode = is_parameter ? ir_var_function_in : ir_var_shader_in;
+      var->data.mode = is_parameter ? ir_var_function_in : ir_var_shader_in;
    else if (qual->flags.q.attribute
 	    || (qual->flags.q.varying && (state->target == fragment_shader)))
-      var->mode = ir_var_shader_in;
+      var->data.mode = ir_var_shader_in;
    else if (qual->flags.q.out)
-      var->mode = is_parameter ? ir_var_function_out : ir_var_shader_out;
+      var->data.mode = is_parameter ? ir_var_function_out : ir_var_shader_out;
    else if (qual->flags.q.varying && (state->target == vertex_shader))
-      var->mode = ir_var_shader_out;
+      var->data.mode = ir_var_shader_out;
    else if (qual->flags.q.uniform)
-      var->mode = ir_var_uniform;
+      var->data.mode = ir_var_uniform;
 
    if (!is_parameter && is_varying_var(var, state->target)) {
       /* This variable is being used to link data between shader stages (in
@@ -2274,27 +2274,27 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    if (state->all_invariant && (state->current_function == NULL)) {
       switch (state->target) {
       case vertex_shader:
-	 if (var->mode == ir_var_shader_out)
+	 if (var->data.mode == ir_var_shader_out)
 	    var->data.invariant = true;
 	 break;
       case geometry_shader:
-	 if ((var->mode == ir_var_shader_in)
-             || (var->mode == ir_var_shader_out))
+	 if ((var->data.mode == ir_var_shader_in)
+             || (var->data.mode == ir_var_shader_out))
 	    var->data.invariant = true;
 	 break;
       case fragment_shader:
-	 if (var->mode == ir_var_shader_in)
+	 if (var->data.mode == ir_var_shader_in)
 	    var->data.invariant = true;
 	 break;
       }
    }
 
-   var->interpolation =
-      interpret_interpolation_qualifier(qual, (ir_variable_mode) var->mode,
+   var->data.interpolation =
+      interpret_interpolation_qualifier(qual, (ir_variable_mode) var->data.mode,
                                         state, loc);
 
-   var->pixel_center_integer = qual->flags.q.pixel_center_integer;
-   var->origin_upper_left = qual->flags.q.origin_upper_left;
+   var->data.pixel_center_integer = qual->flags.q.pixel_center_integer;
+   var->data.origin_upper_left = qual->flags.q.origin_upper_left;
    if ((qual->flags.q.origin_upper_left || qual->flags.q.pixel_center_integer)
        && (strcmp(var->name, "gl_FragCoord") != 0)) {
       const char *const qual_string = (qual->flags.q.origin_upper_left)
@@ -2320,7 +2320,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    }
 
    if (var->type->contains_atomic()) {
-      if (var->mode == ir_var_uniform) {
+      if (var->data.mode == ir_var_uniform) {
          if (var->explicit_binding) {
             unsigned *offset = &state->atomic_counter_offsets[var->binding];
 
@@ -2335,7 +2335,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
             _mesa_glsl_error(loc, state,
                              "atomic counters require explicit binding point");
          }
-      } else if (var->mode != ir_var_function_in) {
+      } else if (var->data.mode != ir_var_function_in) {
          _mesa_glsl_error(loc, state, "atomic counters may only be declared as "
                           "function parameters or uniform-qualified "
                           "global variables");
@@ -2491,12 +2491,12 @@ get_variable_being_redeclared(ir_variable *var, YYLTYPE loc,
                state->is_version(150, 0))
 	      && strcmp(var->name, "gl_FragCoord") == 0
 	      && earlier->type == var->type
-	      && earlier->mode == var->mode) {
+	      && earlier->data.mode == var->data.mode) {
       /* Allow redeclaration of gl_FragCoord for ARB_fcc layout
        * qualifiers.
        */
-      earlier->origin_upper_left = var->origin_upper_left;
-      earlier->pixel_center_integer = var->pixel_center_integer;
+      earlier->data.origin_upper_left = var->data.origin_upper_left;
+      earlier->data.pixel_center_integer = var->data.pixel_center_integer;
 
       /* According to section 4.3.7 of the GLSL 1.30 spec,
        * the following built-in varaibles can be redeclared with an
@@ -2516,21 +2516,21 @@ get_variable_being_redeclared(ir_variable *var, YYLTYPE loc,
 		  || strcmp(var->name, "gl_Color") == 0
 		  || strcmp(var->name, "gl_SecondaryColor") == 0)
 	      && earlier->type == var->type
-	      && earlier->mode == var->mode) {
-      earlier->interpolation = var->interpolation;
+	      && earlier->data.mode == var->data.mode) {
+      earlier->data.interpolation = var->data.interpolation;
 
       /* Layout qualifiers for gl_FragDepth. */
    } else if ((state->AMD_conservative_depth_enable ||
                state->ARB_conservative_depth_enable)
 	      && strcmp(var->name, "gl_FragDepth") == 0
 	      && earlier->type == var->type
-	      && earlier->mode == var->mode) {
+	      && earlier->data.mode == var->data.mode) {
 
       /** From the AMD_conservative_depth spec:
        *     Within any shader, the first redeclarations of gl_FragDepth
        *     must appear before any use of gl_FragDepth.
        */
-      if (earlier->used) {
+      if (earlier->data.used) {
 	 _mesa_glsl_error(&loc, state,
 			  "the first redeclaration of gl_FragDepth "
 			  "must appear before any use of gl_FragDepth");
@@ -2550,7 +2550,7 @@ get_variable_being_redeclared(ir_variable *var, YYLTYPE loc,
       earlier->depth_layout = var->depth_layout;
 
    } else if (allow_all_redeclarations) {
-      if (earlier->mode != var->mode) {
+      if (earlier->data.mode != var->data.mode) {
          _mesa_glsl_error(&loc, state,
                           "redeclaration of `%s' with incorrect qualifiers",
                           var->name);
@@ -2585,7 +2585,7 @@ process_initializer(ir_variable *var, ast_declaration *decl,
     *    directly by an application via API commands, or indirectly by
     *    OpenGL."
     */
-   if (var->mode == ir_var_uniform) {
+   if (var->data.mode == ir_var_uniform) {
       state->check_version(120, 0, &initializer_loc,
                            "cannot initialize uniforms");
    }
@@ -2595,7 +2595,7 @@ process_initializer(ir_variable *var, ast_declaration *decl,
 		       "cannot initialize samplers");
    }
 
-   if ((var->mode == ir_var_shader_in) && (state->current_function == NULL)) {
+   if ((var->data.mode == ir_var_shader_in) && (state->current_function == NULL)) {
       _mesa_glsl_error(& initializer_loc, state,
 		       "cannot initialize %s shader input / %s",
 		       _mesa_glsl_shader_target_name(state->target),
@@ -2844,16 +2844,16 @@ ast_declarator_list::hir(exec_list *instructions,
 			     "undeclared variable `%s' cannot be marked "
 			     "invariant", decl->identifier);
 	 } else if ((state->target == vertex_shader)
-	       && (earlier->mode != ir_var_shader_out)) {
+	       && (earlier->data.mode != ir_var_shader_out)) {
 	    _mesa_glsl_error(& loc, state,
 			     "`%s' cannot be marked invariant, vertex shader "
 			     "outputs only", decl->identifier);
 	 } else if ((state->target == fragment_shader)
-	       && (earlier->mode != ir_var_shader_in)) {
+	       && (earlier->data.mode != ir_var_shader_in)) {
 	    _mesa_glsl_error(& loc, state,
 			     "`%s' cannot be marked invariant, fragment shader "
 			     "inputs only", decl->identifier);
-	 } else if (earlier->used) {
+	 } else if (earlier->data.used) {
 	    _mesa_glsl_error(& loc, state,
 			     "variable `%s' may not be redeclared "
 			     "`invariant' after being used",
@@ -3034,12 +3034,12 @@ ast_declarator_list::hir(exec_list *instructions,
 
       if (this->type->qualifier.flags.q.invariant) {
 	 if ((state->target == vertex_shader) &&
-             var->mode != ir_var_shader_out) {
+             var->data.mode != ir_var_shader_out) {
 	    _mesa_glsl_error(& loc, state,
 			     "`%s' cannot be marked invariant, vertex shader "
 			     "outputs only", var->name);
 	 } else if ((state->target == fragment_shader) &&
-		    var->mode != ir_var_shader_in) {
+		    var->data.mode != ir_var_shader_in) {
 	    /* FINISHME: Note that this doesn't work for invariant on
 	     * a function signature inval
 	     */
@@ -3076,7 +3076,7 @@ ast_declarator_list::hir(exec_list *instructions,
 			     "global scope%s",
 			     mode, var->name, extra);
 	 }
-      } else if (var->mode == ir_var_shader_in) {
+      } else if (var->data.mode == ir_var_shader_in) {
          var->data.read_only = true;
 
 	 if (state->target == vertex_shader) {
@@ -3183,9 +3183,9 @@ ast_declarator_list::hir(exec_list *instructions,
        */
       if (state->is_version(130, 300) &&
           var->type->contains_integer() &&
-          var->interpolation != INTERP_QUALIFIER_FLAT &&
-          ((state->target == fragment_shader && var->mode == ir_var_shader_in)
-           || (state->target == vertex_shader && var->mode == ir_var_shader_out
+          var->data.interpolation != INTERP_QUALIFIER_FLAT &&
+          ((state->target == fragment_shader && var->data.mode == ir_var_shader_in)
+           || (state->target == vertex_shader && var->data.mode == ir_var_shader_out
                && state->es_shader))) {
          const char *var_type = (state->target == vertex_shader) ?
             "vertex output" : "fragment input";
@@ -3374,12 +3374,12 @@ ast_declarator_list::hir(exec_list *instructions,
                                        false /* allow_all_redeclarations */);
       if (earlier != NULL) {
          if (strncmp(var->name, "gl_", 3) == 0 &&
-             earlier->how_declared == ir_var_declared_in_block) {
+             earlier->data.how_declared == ir_var_declared_in_block) {
             _mesa_glsl_error(&loc, state,
                              "`%s' has already been redeclared using "
                              "gl_PerVertex", var->name);
          }
-         earlier->how_declared = ir_var_declared_normally;
+         earlier->data.how_declared = ir_var_declared_normally;
       }
 
       if (decl->initializer != NULL) {
@@ -3559,7 +3559,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
     *    as out or inout function parameters, nor can they be assigned
     *    into."
     */
-   if ((var->mode == ir_var_function_inout || var->mode == ir_var_function_out)
+   if ((var->data.mode == ir_var_function_inout || var->data.mode == ir_var_function_out)
        && type->contains_sampler()) {
       _mesa_glsl_error(&loc, state, "out and inout parameters cannot contain samplers");
       type = glsl_type::error_type;
@@ -3579,7 +3579,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
     * So for GLSL 1.10, passing an array as an out or inout parameter is not
     * allowed.  This restriction is removed in GLSL 1.20, and in GLSL ES.
     */
-   if ((var->mode == ir_var_function_inout || var->mode == ir_var_function_out)
+   if ((var->data.mode == ir_var_function_inout || var->data.mode == ir_var_function_out)
        && type->is_array()
        && !state->check_version(120, 100, &loc,
                                 "arrays cannot be out or inout parameters")) {
@@ -4794,7 +4794,7 @@ public:
 
    virtual ir_visitor_status visit(ir_dereference_variable *ir)
    {
-      if (ir->var->mode == mode && ir->var->get_interface_type() == block) {
+      if (ir->var->data.mode == mode && ir->var->get_interface_type() == block) {
          found = true;
          return visit_stop;
       }
@@ -5077,7 +5077,7 @@ ast_interface_block::hir(exec_list *instructions,
             _mesa_glsl_error(&loc, state, "`%s' redeclared",
                              this->instance_name);
          }
-         earlier->how_declared = ir_var_declared_normally;
+         earlier->data.how_declared = ir_var_declared_normally;
          earlier->type = var->type;
          earlier->reinit_interface_type(block_type);
          delete var;
@@ -5096,7 +5096,7 @@ ast_interface_block::hir(exec_list *instructions,
             new(state) ir_variable(fields[i].type,
                                    ralloc_strdup(state, fields[i].name),
                                    var_mode);
-         var->interpolation = fields[i].interpolation;
+         var->data.interpolation = fields[i].interpolation;
          var->data.centroid = fields[i].centroid;
          var->data.sample = fields[i].sample;
          var->init_interface_type(block_type);
@@ -5109,11 +5109,11 @@ ast_interface_block::hir(exec_list *instructions,
                _mesa_glsl_error(&loc, state,
                                 "redeclaration of gl_PerVertex can only "
                                 "include built-in variables");
-            } else if (earlier->how_declared == ir_var_declared_normally) {
+            } else if (earlier->data.how_declared == ir_var_declared_normally) {
                _mesa_glsl_error(&loc, state,
                                 "`%s' has already been redeclared", var->name);
             } else {
-               earlier->how_declared = ir_var_declared_in_block;
+               earlier->data.how_declared = ir_var_declared_in_block;
                earlier->reinit_interface_type(block_type);
             }
             continue;
@@ -5159,8 +5159,8 @@ ast_interface_block::hir(exec_list *instructions,
             ir_variable *const var = ((ir_instruction *) node)->as_variable();
             if (var != NULL &&
                 var->get_interface_type() == earlier_per_vertex &&
-                var->mode == var_mode) {
-               if (var->how_declared == ir_var_declared_normally) {
+                var->data.mode == var_mode) {
+               if (var->data.how_declared == ir_var_declared_normally) {
                   _mesa_glsl_error(&loc, state,
                                    "redeclaration of gl_PerVertex cannot "
                                    "follow a redeclaration of `%s'",
@@ -5215,7 +5215,7 @@ ast_gs_input_layout::hir(exec_list *instructions,
     */
    foreach_list (node, instructions) {
       ir_variable *var = ((ir_instruction *) node)->as_variable();
-      if (var == NULL || var->mode != ir_var_shader_in)
+      if (var == NULL || var->data.mode != ir_var_shader_in)
          continue;
 
       /* Note: gl_PrimitiveIDIn has mode ir_var_shader_in, but it's not an
@@ -5256,7 +5256,7 @@ detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
    foreach_list(node, instructions) {
       ir_variable *var = ((ir_instruction *)node)->as_variable();
 
-      if (!var || !var->assigned)
+      if (!var || !var->data.assigned)
 	 continue;
 
       if (strcmp(var->name, "gl_FragColor") == 0)
@@ -5265,7 +5265,7 @@ detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
 	 gl_FragData_assigned = true;
       else if (strncmp(var->name, "gl_", 3) != 0) {
 	 if (state->target == fragment_shader &&
-	     var->mode == ir_var_shader_out) {
+	     var->data.mode == ir_var_shader_out) {
 	    user_defined_fs_output_assigned = true;
 	    user_defined_fs_output = var;
 	 }
@@ -5346,7 +5346,7 @@ remove_per_vertex_blocks(exec_list *instructions,
    foreach_list_safe(node, instructions) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
       if (var != NULL && var->get_interface_type() == per_vertex &&
-          var->mode == mode) {
+          var->data.mode == mode) {
          state->symbols->disable_variable(var->name);
          var->remove();
       }
