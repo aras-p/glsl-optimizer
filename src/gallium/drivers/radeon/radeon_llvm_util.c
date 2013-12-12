@@ -33,11 +33,10 @@
 #include <llvm-c/Transforms/IPO.h>
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 
-LLVMModuleRef radeon_llvm_parse_bitcode(const unsigned char * bitcode,
-							unsigned bitcode_len)
+LLVMModuleRef radeon_llvm_parse_bitcode(LLVMContextRef ctx,
+							const unsigned char * bitcode, unsigned bitcode_len)
 {
 	LLVMMemoryBufferRef buf;
-	LLVMContextRef ctx = LLVMContextCreate();
 	LLVMModuleRef module;
 
 	buf = LLVMCreateMemoryBufferWithMemoryRangeCopy((const char*)bitcode,
@@ -47,10 +46,10 @@ LLVMModuleRef radeon_llvm_parse_bitcode(const unsigned char * bitcode,
 	return module;
 }
 
-unsigned radeon_llvm_get_num_kernels(const unsigned char *bitcode,
-				unsigned bitcode_len)
+unsigned radeon_llvm_get_num_kernels(LLVMContextRef ctx,
+				const unsigned char *bitcode, unsigned bitcode_len)
 {
-	LLVMModuleRef mod = radeon_llvm_parse_bitcode(bitcode, bitcode_len);
+	LLVMModuleRef mod = radeon_llvm_parse_bitcode(ctx, bitcode, bitcode_len);
 	return LLVMGetNamedMetadataNumOperands(mod, "opencl.kernels");
 }
 
@@ -87,7 +86,7 @@ static void radeon_llvm_optimize(LLVMModuleRef mod)
 	LLVMDisposePassManager(pass_manager);
 }
 
-LLVMModuleRef radeon_llvm_get_kernel_module(unsigned index,
+LLVMModuleRef radeon_llvm_get_kernel_module(LLVMContextRef ctx, unsigned index,
 		const unsigned char *bitcode, unsigned bitcode_len)
 {
 	LLVMModuleRef mod;
@@ -95,7 +94,7 @@ LLVMModuleRef radeon_llvm_get_kernel_module(unsigned index,
 	LLVMValueRef *kernel_metadata;
 	unsigned i;
 
-	mod = radeon_llvm_parse_bitcode(bitcode, bitcode_len);
+	mod = radeon_llvm_parse_bitcode(ctx, bitcode, bitcode_len);
 	num_kernels = LLVMGetNamedMetadataNumOperands(mod, "opencl.kernels");
 	kernel_metadata = MALLOC(num_kernels * sizeof(LLVMValueRef));
 	LLVMGetNamedMetadataOperands(mod, "opencl.kernels", kernel_metadata);

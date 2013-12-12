@@ -47,6 +47,10 @@ struct r600_pipe_compute {
 	unsigned private_size;
 	unsigned input_size;
 	struct r600_resource *kernel_param;
+
+#ifdef HAVE_OPENCL
+	LLVMContextRef llvm_ctx;
+#endif
 };
 
 struct r600_resource* r600_compute_buffer_alloc_vram(struct r600_screen *screen, unsigned size);

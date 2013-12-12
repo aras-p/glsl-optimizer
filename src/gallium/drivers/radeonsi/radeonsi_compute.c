@@ -20,6 +20,7 @@ struct si_pipe_compute {
 
         struct pipe_resource *global_buffers[MAX_GLOBAL_BUFFERS];
 
+	LLVMContextRef llvm_ctx;
 };
 
 static void *radeonsi_create_compute_state(
@@ -33,6 +34,8 @@ static void *radeonsi_create_compute_state(
 	const unsigned char *code;
 	unsigned i;
 
+	program->llvm_ctx = LLVMContextCreate();
+
 	header = cso->prog;
 	code = cso->prog + sizeof(struct pipe_llvm_program_header);
 
@@ -41,13 +44,13 @@ static void *radeonsi_create_compute_state(
 	program->private_size = cso->req_private_mem;
 	program->input_size = cso->req_input_mem;
 
-	program->num_kernels = radeon_llvm_get_num_kernels(code,
+	program->num_kernels = radeon_llvm_get_num_kernels(program->llvm_ctx, code,
 							header->num_bytes);
 	program->kernels = CALLOC(sizeof(struct si_pipe_shader),
 							program->num_kernels);
 	for (i = 0; i < program->num_kernels; i++) {
-		LLVMModuleRef mod = radeon_llvm_get_kernel_module(i, code,
-							header->num_bytes);
+		LLVMModuleRef mod = radeon_llvm_get_kernel_module(program->llvm_ctx, i,
+							code, header->num_bytes);
 		si_compile_llvm(rctx, &program->kernels[i], mod);
 		LLVMDisposeModule(mod);
 	}
@@ -270,6 +273,10 @@ static void si_delete_compute_state(struct pipe_context *ctx, void* state){
 
 	if (program->kernels) {
 		FREE(program->kernels);
+	}
+
+	if (program->llvm_ctx){
+		LLVMContextDispose(program->llvm_ctx);
 	}
 
 	//And then free the program itself.

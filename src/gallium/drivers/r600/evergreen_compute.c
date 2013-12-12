@@ -204,6 +204,8 @@ void *evergreen_create_compute_state(
 	const unsigned char * code;
 	unsigned i;
 
+	shader->llvm_ctx = LLVMContextCreate();
+
 	COMPUTE_DBG(ctx->screen, "*** evergreen_create_compute_state\n");
 
 	header = cso->prog;
@@ -216,13 +218,14 @@ void *evergreen_create_compute_state(
 	shader->input_size = cso->req_input_mem;
 
 #ifdef HAVE_OPENCL 
-	shader->num_kernels = radeon_llvm_get_num_kernels(code, header->num_bytes);
+	shader->num_kernels = radeon_llvm_get_num_kernels(shader->llvm_ctx, code,
+							header->num_bytes);
 	shader->kernels = CALLOC(sizeof(struct r600_kernel), shader->num_kernels);
 
 	for (i = 0; i < shader->num_kernels; i++) {
 		struct r600_kernel *kernel = &shader->kernels[i];
-		kernel->llvm_module = radeon_llvm_get_kernel_module(i, code,
-							header->num_bytes);
+		kernel->llvm_module = radeon_llvm_get_kernel_module(shader->llvm_ctx, i,
+							code, header->num_bytes);
 	}
 #endif
 	return shader;
@@ -231,6 +234,15 @@ void *evergreen_create_compute_state(
 void evergreen_delete_compute_state(struct pipe_context *ctx, void* state)
 {
 	struct r600_pipe_compute *shader = (struct r600_pipe_compute *)state;
+
+	if (!shader)
+		return;
+
+#ifdef HAVE_OPENCL
+	if (shader->llvm_ctx){
+		LLVMContextDispose(shader->llvm_ctx);
+	}
+#endif
 
 	free(shader);
 }
