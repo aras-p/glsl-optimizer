@@ -50,27 +50,10 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
       memcpy(var->max_ifc_array_access, this->max_ifc_array_access,
              this->interface_type->length * sizeof(unsigned));
    }
-   var->data.read_only = this->data.read_only;
-   var->data.centroid = this->data.centroid;
-   var->data.sample = this->data.sample;
-   var->data.invariant = this->data.invariant;
-   var->data.interpolation = this->data.interpolation;
-   var->data.location = this->data.location;
-   var->data.index = this->data.index;
-   var->data.binding = this->data.binding;
-   var->data.atomic.buffer_index = this->data.atomic.buffer_index;
-   var->data.atomic.offset = this->data.atomic.offset;
+
+   memcpy(&var->data, &this->data, sizeof(var->data));
+
    var->warn_extension = this->warn_extension;
-   var->data.origin_upper_left = this->data.origin_upper_left;
-   var->data.pixel_center_integer = this->data.pixel_center_integer;
-   var->data.explicit_location = this->data.explicit_location;
-   var->data.explicit_index = this->data.explicit_index;
-   var->data.explicit_binding = this->data.explicit_binding;
-   var->data.has_initializer = this->data.has_initializer;
-   var->data.depth_layout = this->data.depth_layout;
-   var->data.assigned = this->data.assigned;
-   var->data.how_declared = this->data.how_declared;
-   var->data.used = this->data.used;
 
    var->num_state_slots = this->num_state_slots;
    if (this->state_slots) {
