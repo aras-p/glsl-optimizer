@@ -72,7 +72,9 @@ _mesa_BeginConditionalRender(GLuint queryId, GLenum mode)
    }
    ASSERT(q->Id == queryId);
 
-   if (q->Target != GL_SAMPLES_PASSED || q->Active) {
+   if ((q->Target != GL_SAMPLES_PASSED &&
+        q->Target != GL_ANY_SAMPLES_PASSED &&
+        q->Target != GL_ANY_SAMPLES_PASSED_CONSERVATIVE) || q->Active) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginConditionalRender()");
       return;
    }
