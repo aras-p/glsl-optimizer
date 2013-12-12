@@ -193,7 +193,7 @@ is_cse_candidate_visitor::visit(ir_dereference_variable *ir)
    /* Currently, since we don't handle kills of the ae based on variables
     * getting assigned, we can only handle constant variables.
     */
-   if (ir->var->read_only) {
+   if (ir->var->data.read_only) {
       return visit_continue;
    } else {
       ok = false;

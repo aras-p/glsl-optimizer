@@ -50,10 +50,10 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
       memcpy(var->max_ifc_array_access, this->max_ifc_array_access,
              this->interface_type->length * sizeof(unsigned));
    }
-   var->read_only = this->read_only;
-   var->centroid = this->centroid;
-   var->sample = this->sample;
-   var->invariant = this->invariant;
+   var->data.read_only = this->data.read_only;
+   var->data.centroid = this->data.centroid;
+   var->data.sample = this->data.sample;
+   var->data.invariant = this->data.invariant;
    var->interpolation = this->interpolation;
    var->location = this->location;
    var->index = this->index;

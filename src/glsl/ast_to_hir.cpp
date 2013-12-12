@@ -776,7 +776,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 			  non_lvalue_description);
 	 error_emitted = true;
       } else if (lhs->variable_referenced() != NULL
-		 && lhs->variable_referenced()->read_only) {
+		 && lhs->variable_referenced()->data.read_only) {
          _mesa_glsl_error(&lhs_loc, state,
                           "assignment to read-only variable '%s'",
                           lhs->variable_referenced()->name);
@@ -2168,20 +2168,20 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 			  "`invariant' after being used",
 			  var->name);
       } else {
-	 var->invariant = 1;
+	 var->data.invariant = 1;
       }
    }
 
    if (qual->flags.q.constant || qual->flags.q.attribute
        || qual->flags.q.uniform
        || (qual->flags.q.varying && (state->target == fragment_shader)))
-      var->read_only = 1;
+      var->data.read_only = 1;
 
    if (qual->flags.q.centroid)
-      var->centroid = 1;
+      var->data.centroid = 1;
 
    if (qual->flags.q.sample)
-      var->sample = 1;
+      var->data.sample = 1;
 
    if (qual->flags.q.attribute && state->target != vertex_shader) {
       var->type = glsl_type::error_type;
@@ -2275,16 +2275,16 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       switch (state->target) {
       case vertex_shader:
 	 if (var->mode == ir_var_shader_out)
-	    var->invariant = true;
+	    var->data.invariant = true;
 	 break;
       case geometry_shader:
 	 if ((var->mode == ir_var_shader_in)
              || (var->mode == ir_var_shader_out))
-	    var->invariant = true;
+	    var->data.invariant = true;
 	 break;
       case fragment_shader:
 	 if (var->mode == ir_var_shader_in)
-	    var->invariant = true;
+	    var->data.invariant = true;
 	 break;
       }
    }
@@ -2650,9 +2650,9 @@ process_initializer(ir_variable *var, ast_declaration *decl,
    }
 
    if (rhs && !rhs->type->is_error()) {
-      bool temp = var->read_only;
+      bool temp = var->data.read_only;
       if (type->qualifier.flags.q.constant)
-	 var->read_only = false;
+	 var->data.read_only = false;
 
       /* Never emit code to initialize a uniform.
        */
@@ -2691,7 +2691,7 @@ process_initializer(ir_variable *var, ast_declaration *decl,
        */
       var->type = initializer_type;
 
-      var->read_only = temp;
+      var->data.read_only = temp;
    }
 
    return result;
@@ -2859,7 +2859,7 @@ ast_declarator_list::hir(exec_list *instructions,
 			     "`invariant' after being used",
 			     earlier->name);
 	 } else {
-	    earlier->invariant = true;
+	    earlier->data.invariant = true;
 	 }
       }
 
@@ -3077,7 +3077,7 @@ ast_declarator_list::hir(exec_list *instructions,
 			     mode, var->name, extra);
 	 }
       } else if (var->mode == ir_var_shader_in) {
-         var->read_only = true;
+         var->data.read_only = true;
 
 	 if (state->target == vertex_shader) {
 	    bool error_emitted = false;
@@ -5097,8 +5097,8 @@ ast_interface_block::hir(exec_list *instructions,
                                    ralloc_strdup(state, fields[i].name),
                                    var_mode);
          var->interpolation = fields[i].interpolation;
-         var->centroid = fields[i].centroid;
-         var->sample = fields[i].sample;
+         var->data.centroid = fields[i].centroid;
+         var->data.sample = fields[i].sample;
          var->init_interface_type(block_type);
 
          if (redeclaring_per_vertex) {

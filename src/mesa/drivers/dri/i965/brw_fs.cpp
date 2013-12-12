@@ -1084,8 +1084,8 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 		*/
                struct brw_reg interp = interp_reg(location, k);
                emit_linterp(attr, fs_reg(interp), interpolation_mode,
-                            ir->centroid);
-               if (brw->needs_unlit_centroid_workaround && ir->centroid) {
+                            ir->data.centroid);
+               if (brw->needs_unlit_centroid_workaround && ir->data.centroid) {
                   /* Get the pixel/sample mask into f0 so that we know
                    * which pixels are lit.  Then, for each channel that is
                    * unlit, replace the centroid data with non-centroid

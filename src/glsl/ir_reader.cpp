@@ -412,11 +412,11 @@ ir_reader::read_declaration(s_expression *expr)
 
       // FINISHME: Check for duplicate/conflicting qualifiers.
       if (strcmp(qualifier->value(), "centroid") == 0) {
-	 var->centroid = 1;
+	 var->data.centroid = 1;
       } else if (strcmp(qualifier->value(), "sample") == 0) {
-         var->sample = 1;
+         var->data.sample = 1;
       } else if (strcmp(qualifier->value(), "invariant") == 0) {
-	 var->invariant = 1;
+	 var->data.invariant = 1;
       } else if (strcmp(qualifier->value(), "uniform") == 0) {
 	 var->mode = ir_var_uniform;
       } else if (strcmp(qualifier->value(), "auto") == 0) {

@@ -753,19 +753,19 @@ cross_validate_globals(struct gl_shader_program *prog,
 	       existing->has_initializer = true;
 	    }
 
-	    if (existing->invariant != var->invariant) {
+	    if (existing->data.invariant != var->data.invariant) {
 	       linker_error(prog, "declarations for %s `%s' have "
 			    "mismatching invariant qualifiers\n",
 			    mode_string(var), var->name);
 	       return;
 	    }
-            if (existing->centroid != var->centroid) {
+            if (existing->data.centroid != var->data.centroid) {
                linker_error(prog, "declarations for %s `%s' have "
 			    "mismatching centroid qualifiers\n",
 			    mode_string(var), var->name);
                return;
             }
-            if (existing->sample != var->sample) {
+            if (existing->data.sample != var->data.sample) {
                linker_error(prog, "declarations for %s `%s` have "
                             "mismatching sample qualifiers\n",
                             mode_string(var), var->name);

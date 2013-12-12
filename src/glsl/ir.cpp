@@ -1359,7 +1359,7 @@ ir_dereference::is_lvalue() const
 
    /* Every l-value derference chain eventually ends in a variable.
     */
-   if ((var == NULL) || var->read_only)
+   if ((var == NULL) || var->data.read_only)
       return false;
 
    /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
@@ -1580,7 +1580,6 @@ ir_swizzle::variable_referenced() const
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode)
    : max_array_access(0), max_ifc_array_access(NULL),
-     read_only(false), centroid(false), sample(false), invariant(false),
      how_declared(ir_var_declared_normally), mode(mode),
      interpolation(INTERP_QUALIFIER_NONE), atomic()
 {
@@ -1598,10 +1597,14 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->pixel_center_integer = false;
    this->depth_layout = ir_depth_layout_none;
    this->used = false;
+   this->data.read_only = false;
+   this->data.centroid = false;
+   this->data.sample = false;
+   this->data.invariant = false;
 
    if (type != NULL) {
       if (type->base_type == GLSL_TYPE_SAMPLER)
-         this->read_only = true;
+         this->data.read_only = true;
 
       if (type->is_interface())
          this->init_interface_type(type);
@@ -1701,11 +1704,11 @@ ir_function_signature::qualifiers_match(exec_list *params)
       ir_variable *a = (ir_variable *)iter_a.get();
       ir_variable *b = (ir_variable *)iter_b.get();
 
-      if (a->read_only != b->read_only ||
+      if (a->data.read_only != b->data.read_only ||
 	  !modes_match(a->mode, b->mode) ||
 	  a->interpolation != b->interpolation ||
-	  a->centroid != b->centroid ||
-         a->sample != b->sample) {
+	  a->data.centroid != b->data.centroid ||
+         a->data.sample != b->data.sample) {
 
 	 /* parameter a's qualifiers don't match */
 	 return a->name;
@@ -1891,7 +1894,7 @@ mode_string(const ir_variable *var)
 {
    switch (var->mode) {
    case ir_var_auto:
-      return (var->read_only) ? "global constant" : "global variable";
+      return (var->data.read_only) ? "global constant" : "global variable";
 
    case ir_var_uniform:
       return "uniform";

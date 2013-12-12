@@ -100,9 +100,9 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len,
             gl_fragment_program *fprog = (gl_fragment_program *) prog;
             fprog->InterpQualifier[var->location + var->index + offset + i] =
                (glsl_interp_qualifier) var->interpolation;
-            if (var->centroid)
+            if (var->data.centroid)
                fprog->IsCentroid |= bitfield;
-            if (var->sample)
+            if (var->data.sample)
                fprog->IsSample |= bitfield;
          }
       } else if (var->mode == ir_var_system_value) {

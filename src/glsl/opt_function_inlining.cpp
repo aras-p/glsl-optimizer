@@ -139,7 +139,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	  * read-only and the inlined function is inside a loop, the loop
 	  * analysis code will get confused.
 	  */
-	 parameters[i]->read_only = false;
+	 parameters[i]->data.read_only = false;
 	 next_ir->insert_before(parameters[i]);
       }
 

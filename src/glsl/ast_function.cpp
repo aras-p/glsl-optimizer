@@ -157,7 +157,7 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
 	 if (var)
 	    var->assigned = true;
 
-	 if (var && var->read_only) {
+	 if (var && var->data.read_only) {
 	    _mesa_glsl_error(&loc, state,
 			     "function parameter '%s %s' references the "
 			     "read-only variable '%s'",

@@ -129,7 +129,7 @@ common_builtin::constants_are_constant()
 
       EXPECT_FALSE(var->explicit_location);
       EXPECT_EQ(-1, var->location);
-      EXPECT_TRUE(var->read_only);
+      EXPECT_TRUE(var->data.read_only);
    }
 }
 

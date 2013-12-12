@@ -522,16 +522,20 @@ public:
     */
    unsigned *max_ifc_array_access;
 
-   /**
-    * Is the variable read-only?
-    *
-    * This is set for variables declared as \c const, shader inputs,
-    * and uniforms.
-    */
-   unsigned read_only:1;
-   unsigned centroid:1;
-   unsigned sample:1;
-   unsigned invariant:1;
+   struct ir_variable_data {
+
+      /**
+       * Is the variable read-only?
+       *
+       * This is set for variables declared as \c const, shader inputs,
+       * and uniforms.
+       */
+      unsigned read_only:1;
+      unsigned centroid:1;
+      unsigned sample:1;
+      unsigned invariant:1;
+
+   } data;
 
    /**
     * Has this variable been used for reading or writing?

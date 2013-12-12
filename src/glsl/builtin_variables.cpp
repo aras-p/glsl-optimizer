@@ -442,7 +442,7 @@ builtin_variable_generator::add_variable(const char *name,
    case ir_var_shader_in:
    case ir_var_uniform:
    case ir_var_system_value:
-      var->read_only = true;
+      var->data.read_only = true;
       break;
    case ir_var_shader_out:
       break;
@@ -937,8 +937,8 @@ builtin_variable_generator::generate_varyings()
             add_variable(fields[i].name, fields[i].type, ir_var_shader_out,
                          fields[i].location);
          var->interpolation = fields[i].interpolation;
-         var->centroid = fields[i].centroid;
-         var->sample = fields[i].sample;
+         var->data.centroid = fields[i].centroid;
+         var->data.sample = fields[i].sample;
          var->init_interface_type(per_vertex_out_type);
       }
    }
