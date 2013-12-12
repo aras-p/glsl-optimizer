@@ -1407,10 +1407,9 @@ brw_blorp_blit_program::kill_if_outside_dst_rect()
    brw_CMP(&func, null32, BRW_CONDITIONAL_L, Y, dst_y1);
 
    brw_set_predicate_control(&func, BRW_PREDICATE_NONE);
-   brw_push_insn_state(&func);
-   brw_set_mask_control(&func, BRW_MASK_DISABLE);
-   brw_AND(&func, g1, f0, g1);
-   brw_pop_insn_state(&func);
+
+   struct brw_instruction *inst = brw_AND(&func, g1, f0, g1);
+   inst->header.mask_control = BRW_MASK_DISABLE;
 }
 
 /**
