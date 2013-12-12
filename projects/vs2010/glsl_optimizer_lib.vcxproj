@@ -237,6 +237,7 @@
     <ClCompile Include="..\..\src\glsl\ir_builder.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_clone.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_constant_expression.cpp" />
+    <ClCompile Include="..\..\src\glsl\ir_equals.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_expression_flattening.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_function.cpp" />
     <ClCompile Include="..\..\src\glsl\ir_function_can_inline.cpp" />

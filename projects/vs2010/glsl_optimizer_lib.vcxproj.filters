@@ -227,6 +227,9 @@
     <ClCompile Include="..\..\src\glsl\ir_constant_expression.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\glsl\ir_equals.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\glsl\ir_expression_flattening.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>

@@ -24,6 +24,7 @@ SRC = ast_expr.cpp \
 	ir_basic_block.cpp \
 	ir_clone.cpp \
 	ir_constant_expression.cpp \
+	ir_equals.cpp \
 	ir_expression_flattening.cpp \
 	ir_function.cpp \
 	ir_function_can_inline.cpp \

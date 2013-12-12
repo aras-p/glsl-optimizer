@@ -51,6 +51,7 @@
         'glsl/ir_builder.h',
         'glsl/ir_clone.cpp',
         'glsl/ir_constant_expression.cpp',
+        'glsl/ir_equals.cpp',
         'glsl/ir_expression_flattening.cpp',
         'glsl/ir_expression_flattening.h',
         'glsl/ir_function.cpp',
