@@ -7,9 +7,7 @@ void main ()
   };
   a_2 = 4.0;
   i_1 = 0;
-  for (int i_1 = 0; i_1 < 10; ) {
-    a_2 = (a_2 + 1.0);
-    i_1 = (i_1 + 1);
+  for ( ; i_1 < 10; i_1 = (i_1 + 1), a_2 = (a_2 + 1.0)) {
   };
   while (true) {
     a_2 = (a_2 + 2.0);
@@ -26,4 +24,4 @@ void main ()
 }
 
 
-// inputs: 1, stats: 11 alu 1 tex 3 flow
+// inputs: 1, stats: 12 alu 1 tex 4 flow

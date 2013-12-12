@@ -189,7 +189,7 @@ void main ()
     posN_10 = (posN_10 - tmpvar_54);
     posP_9 = (posP_9 + tmpvar_54);
     i_3 = 0;
-    for (int i_3 = 0; i_3 < 16; ) {
+    for ( ; i_3 < 16; i_3 = (i_3 + 1)) {
       if (!(doneN_5)) {
         vec4 tmpvar_57;
         tmpvar_57 = texture2DLod (_MainTex, posN_10, 0.0);
@@ -223,7 +223,6 @@ void main ()
       if (!(tmpvar_60)) {
         posP_9 = (posP_9 + offNP_8);
       };
-      i_3 = (i_3 + 1);
     };
     float tmpvar_61;
     if (tmpvar_46) {
@@ -291,4 +290,4 @@ void main ()
 }
 
 
-// inputs: 1, stats: 190 alu 12 tex 25 flow
+// inputs: 1, stats: 191 alu 12 tex 26 flow

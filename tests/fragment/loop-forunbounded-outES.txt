@@ -17,16 +17,12 @@ void main ()
   light_5 = vec3(0.0, 0.0, 0.0);
   loopCount_4 = int((tmpvar_7.w * 10.0));
   j_3 = 0;
-  while (true) {
-    if ((j_3 >= loopCount_4)) {
-      break;
-    };
+  for ( ; j_3 < loopCount_4; j_3 = (j_3 + 1)) {
     highp vec3 tmpvar_8;
     tmpvar_8 = (light_5 + ((col_6.xyz * 
       tmpvar_2[j_3]
     ) * _TerrainTreeLightColors[j_3].xyz));
     light_5 = tmpvar_8;
-    j_3 = (j_3 + 1);
   };
   mediump vec4 tmpvar_9;
   tmpvar_9.w = 1.0;
