@@ -38,14 +38,6 @@
 
 /* 3D state:
  */
-#define PIPE_CONTROL_NOWRITE          0x00
-#define PIPE_CONTROL_WRITEIMMEDIATE   0x01
-#define PIPE_CONTROL_WRITEDEPTH       0x02
-#define PIPE_CONTROL_WRITETIMESTAMP   0x03
-
-#define PIPE_CONTROL_GTTWRITE_PROCESS_LOCAL 0x00
-#define PIPE_CONTROL_GTTWRITE_GLOBAL        0x01
-
 #define CMD_3D_PRIM                                 0x7b00 /* 3DPRIMITIVE */
 /* DW0 */
 # define GEN4_3DPRIM_TOPOLOGY_TYPE_SHIFT            10
@@ -1918,8 +1910,6 @@ enum brw_wm_barycentric_interp_mode {
 # define SO_BUFFER_PITCH_MASK				INTEL_MASK(11, 0)
 /* DW2: start address */
 /* DW3: end address. */
-
-#define CMD_PIPE_CONTROL              0x7a00
 
 #define CMD_MI_FLUSH                  0x0200
 
