@@ -1,0 +1,67 @@
+uniform sampler2D mainTex;
+varying vec2 uv;
+void main ()
+{
+  int j_1;
+  int i_2;
+  int i_3;
+  int n_4;
+  int i_5;
+  int i_6;
+  int i_7;
+  vec4 c_8;
+  c_8 = vec4(0.0, 0.0, 0.0, 0.0);
+  i_7 = 0;
+  for (int i_7 = 0; i_7 < 100; ) {
+    vec2 tmpvar_9;
+    tmpvar_9.x = float(i_7);
+    tmpvar_9.y = float(i_7);
+    c_8.x = (c_8.x + texture2D (mainTex, (uv + tmpvar_9)).x);
+    i_7 = (i_7 + 1);
+  };
+  i_6 = 0;
+  for (int i_6 = 0; i_6 <= 100; ) {
+    vec2 tmpvar_10;
+    tmpvar_10.x = float(i_6);
+    tmpvar_10.y = float(i_6);
+    c_8.x = (c_8.x + texture2D (mainTex, (uv + tmpvar_10)).x);
+    i_6 = (i_6 + 3);
+  };
+  i_5 = 100;
+  for (int i_5 = 100; i_5 >= 0; ) {
+    vec2 tmpvar_11;
+    tmpvar_11.x = float(i_5);
+    tmpvar_11.y = float(i_5);
+    c_8.x = (c_8.x + texture2D (mainTex, (uv + tmpvar_11)).x);
+    i_5 = (i_5 - 1);
+  };
+  n_4 = int((c_8.x * 10.0));
+  i_3 = 3;
+  while (true) {
+    if ((i_3 >= n_4)) {
+      break;
+    };
+    vec2 tmpvar_12;
+    tmpvar_12.x = float(i_3);
+    tmpvar_12.y = float(i_3);
+    c_8.x = (c_8.x + texture2D (mainTex, (uv + tmpvar_12)).x);
+    i_3 = (i_3 + 1);
+  };
+  i_2 = 1;
+  j_1 = 2;
+  while (true) {
+    if (!(((i_2 < 100) && (j_1 < 50)))) {
+      break;
+    };
+    vec2 tmpvar_13;
+    tmpvar_13.x = float(i_2);
+    tmpvar_13.y = float(j_1);
+    c_8.x = (c_8.x + texture2D (mainTex, (uv + tmpvar_13)).x);
+    i_2 = (i_2 + 2);
+    j_1 = (j_1 + 3);
+  };
+  gl_FragColor = c_8;
+}
+
+
+// inputs: 1, stats: 41 alu 5 tex 7 flow
