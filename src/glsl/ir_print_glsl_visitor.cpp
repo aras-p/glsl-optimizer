@@ -1239,24 +1239,34 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	if (ls->terminators.is_empty())
 		return false;
 	
+	// only support for loops with one terminator condition
+	int terminatorCount = 0;
+	foreach_list(node, &ls->terminators) {
+		++terminatorCount;
+	}
+	if (terminatorCount != 1)
+		return false;
+	
 	hash_table* terminator_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 	hash_table* induction_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 	
 	buffer.asprintf_append("for ( ; ");
 	
 	// emit loop terminating conditions
-	bool first = true;
 	foreach_list(node, &ls->terminators)
 	{
 		loop_terminator* term = (loop_terminator *) node;
 		hash_table_insert(terminator_hash, term, term->ir);
-		if (!first)
-			buffer.asprintf_append(" && ");
 		
+		// IR has conditions in the form of "if (x) break",
+		// whereas for loop needs them negated, in the form
+		// if "while (x) continue the loop".
+		// See if we can print them using syntax that reads nice.
 		bool handled = false;
 		ir_expression* term_expr = term->ir->condition->as_expression();
 		if (term_expr)
 		{
+			// Binary comparison conditions
 			const char* termOp = NULL;
 			switch (term_expr->operation)
 			{
@@ -1270,27 +1280,32 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 			}
 			if (termOp != NULL)
 			{
-				buffer.asprintf_append("(");
 				term_expr->operands[0]->accept(this);
 				buffer.asprintf_append(" %s ", termOp);
 				term_expr->operands[1]->accept(this);
-				buffer.asprintf_append(")");
+				handled = true;
+			}
+			
+			// Unary logic not
+			if (!handled && term_expr->operation == ir_unop_logic_not)
+			{
+				term_expr->operands[0]->accept(this);
 				handled = true;
 			}
 		}
 		
+		// More complex condition, print as "!(x)"
 		if (!handled)
 		{
 			buffer.asprintf_append("!(");
 			term->ir->condition->accept(this);
 			buffer.asprintf_append(")");
 		}
-		first = false;
 	}
 	buffer.asprintf_append("; ");
 	
 	// emit loop induction variable updates
-	first = true;
+	bool first = true;
 	foreach_list(node, &ls->induction_variables)
 	{
 		loop_variable* indvar = (loop_variable *) node;
