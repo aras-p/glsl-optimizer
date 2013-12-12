@@ -39,22 +39,6 @@
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
 
-/**
- * Emit PIPE_CONTROLs to write the PS_DEPTH_COUNT register into a buffer.
- */
-static void
-write_depth_count(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
-{
-   /* Emit Sandybridge workaround flush: */
-   if (brw->gen == 6)
-      intel_emit_post_sync_nonzero_flush(brw);
-
-   brw_emit_pipe_control_write(brw,
-                               PIPE_CONTROL_WRITE_DEPTH_COUNT
-                               | PIPE_CONTROL_DEPTH_STALL,
-                               query_bo, idx * sizeof(uint64_t), 0, 0);
-}
-
 /*
  * Write an arbitrary 64-bit register to a buffer via MI_STORE_REGISTER_MEM.
  *
@@ -252,7 +236,7 @@ gen6_begin_query(struct gl_context *ctx, struct gl_query_object *q)
    case GL_ANY_SAMPLES_PASSED:
    case GL_ANY_SAMPLES_PASSED_CONSERVATIVE:
    case GL_SAMPLES_PASSED_ARB:
-      write_depth_count(brw, query->bo, 0);
+      brw_write_depth_count(brw, query->bo, 0);
       break;
 
    case GL_PRIMITIVES_GENERATED:
@@ -291,7 +275,7 @@ gen6_end_query(struct gl_context *ctx, struct gl_query_object *q)
    case GL_ANY_SAMPLES_PASSED:
    case GL_ANY_SAMPLES_PASSED_CONSERVATIVE:
    case GL_SAMPLES_PASSED_ARB:
-      write_depth_count(brw, query->bo, 1);
+      brw_write_depth_count(brw, query->bo, 1);
       break;
 
    case GL_PRIMITIVES_GENERATED:

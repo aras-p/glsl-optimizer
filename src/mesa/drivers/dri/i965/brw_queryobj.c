@@ -63,10 +63,12 @@ brw_write_timestamp(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 /**
  * Emit PIPE_CONTROLs to write the PS_DEPTH_COUNT register into a buffer.
  */
-static void
-write_depth_count(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
+void
+brw_write_depth_count(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 {
-   assert(brw->gen < 6);
+   /* Emit Sandybridge workaround flush: */
+   if (brw->gen == 6)
+      intel_emit_post_sync_nonzero_flush(brw);
 
    brw_emit_pipe_control_write(brw,
                                PIPE_CONTROL_WRITE_DEPTH_COUNT
@@ -431,7 +433,7 @@ brw_emit_query_begin(struct brw_context *brw)
 
    ensure_bo_has_space(ctx, query);
 
-   write_depth_count(brw, query->bo, query->last_index * 2);
+   brw_write_depth_count(brw, query->bo, query->last_index * 2);
 
    brw->query.begin_emitted = true;
 }
@@ -453,7 +455,7 @@ brw_emit_query_end(struct brw_context *brw)
    if (!brw->query.begin_emitted)
       return;
 
-   write_depth_count(brw, query->bo, query->last_index * 2 + 1);
+   brw_write_depth_count(brw, query->bo, query->last_index * 2 + 1);
 
    brw->query.begin_emitted = false;
    query->last_index++;
