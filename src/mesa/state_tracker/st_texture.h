@@ -112,6 +112,12 @@ st_texture_object(struct gl_texture_object *obj)
    return (struct st_texture_object *) obj;
 }
 
+static INLINE const struct st_texture_object *
+st_texture_object_const(const struct gl_texture_object *obj)
+{
+   return (const struct st_texture_object *) obj;
+}
+
 
 static INLINE struct pipe_resource *
 st_get_texobj_resource(struct gl_texture_object *texObj)

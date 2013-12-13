@@ -130,7 +130,7 @@ convert_sampler(struct st_context *st,
                 struct pipe_sampler_state *sampler,
                 GLuint texUnit)
 {
-   struct gl_texture_object *texobj;
+   const struct gl_texture_object *texobj;
    struct gl_context *ctx = st->ctx;
    struct gl_sampler_object *msamp;
 
@@ -175,8 +175,8 @@ convert_sampler(struct st_context *st,
        msamp->BorderColor.ui[1] ||
        msamp->BorderColor.ui[2] ||
        msamp->BorderColor.ui[3]) {
-      struct st_texture_object *stobj = st_texture_object(texobj);
-      struct gl_texture_image *teximg;
+      const struct st_texture_object *stobj = st_texture_object_const(texobj);
+      const struct gl_texture_image *teximg;
       const GLboolean is_integer = texobj->_IsIntegerFormat;
       union pipe_color_union border_color;
 
