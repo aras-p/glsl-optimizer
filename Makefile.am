@@ -45,6 +45,7 @@ EXTRA_FILES = \
 	bin/ltmain.sh					\
 	bin/missing					\
 	bin/ylwrap					\
+        bin/test-driver					\
 	src/glsl/glsl_parser.cpp			\
 	src/glsl/glsl_parser.h				\
 	src/glsl/glsl_lexer.cpp				\
