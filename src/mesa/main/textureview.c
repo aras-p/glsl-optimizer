@@ -169,7 +169,7 @@ static const struct internal_format_class_info s3tc_compatible_internal_formats[
 static GLenum
 lookup_view_class(struct gl_context *ctx, GLenum internalformat)
 {
-   uint i;
+   GLuint i;
 
    for (i = 0; i < ARRAY_SIZE(compatible_internal_formats); i++) {
       if (compatible_internal_formats[i].internal_format == internalformat)
