@@ -705,7 +705,7 @@ dri_create_context(gl_api api,
 	goto context_fail;
     }
 
-    driContextSetFlags(ctx, flags);
+    driContextSetFlags(mesaCtx, flags);
 
     /* do bounds checking to prevent segfaults and server crashes! */
     mesaCtx->Const.CheckArrayBounds = GL_TRUE;
