@@ -170,20 +170,17 @@ convert_sampler(struct st_context *st,
       assert(sampler->min_lod <= sampler->max_lod);
    }
 
+   /* For non-black borders... */
    if (msamp->BorderColor.ui[0] ||
        msamp->BorderColor.ui[1] ||
        msamp->BorderColor.ui[2] ||
        msamp->BorderColor.ui[3]) {
       struct st_texture_object *stobj = st_texture_object(texobj);
       struct gl_texture_image *teximg;
-      GLboolean is_integer = GL_FALSE;
+      const GLboolean is_integer = texobj->_IsIntegerFormat;
       union pipe_color_union border_color;
 
       teximg = texobj->Image[0][texobj->BaseLevel];
-
-      if (teximg) {
-         is_integer = _mesa_is_enum_format_integer(teximg->InternalFormat);
-      }
 
       if (st->apply_texture_swizzle_to_border_color && stobj->sampler_view) {
          const unsigned char swz[4] =
