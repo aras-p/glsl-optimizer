@@ -3510,10 +3510,12 @@ lp_build_fpstate_get(struct gallivm_state *gallivm)
          gallivm,
          LLVMInt32TypeInContext(gallivm->context),
          "mxcsr_ptr");
+      LLVMValueRef mxcsr_ptr8 = LLVMBuildPointerCast(builder, mxcsr_ptr,
+          LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0), "");
       lp_build_intrinsic(builder,
                          "llvm.x86.sse.stmxcsr",
                          LLVMVoidTypeInContext(gallivm->context),
-                         &mxcsr_ptr, 1);
+                         &mxcsr_ptr8, 1);
       return mxcsr_ptr;
    }
    return 0;
@@ -3554,7 +3556,10 @@ lp_build_fpstate_set(struct gallivm_state *gallivm,
                      LLVMValueRef mxcsr_ptr)
 {
    if (util_cpu_caps.has_sse) {
-      lp_build_intrinsic(gallivm->builder,
+      LLVMBuilderRef builder = gallivm->builder;
+      mxcsr_ptr = LLVMBuildPointerCast(builder, mxcsr_ptr,
+                     LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0), "");
+      lp_build_intrinsic(builder,
                          "llvm.x86.sse.ldmxcsr",
                          LLVMVoidTypeInContext(gallivm->context),
                          &mxcsr_ptr, 1);
