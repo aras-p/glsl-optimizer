@@ -549,7 +549,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    uint32_t cpp;
    mem_copy_fn mem_copy = NULL;
 
-   /* This fastpath is restricted to specific texture types: level 0 of
+   /* This fastpath is restricted to specific texture types:
     * a 2D BGRA, RGBA, L8 or A8 texture. It could be generalized to support
     * more types.
     *
@@ -561,7 +561,6 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    if (!brw->has_llc ||
        type != GL_UNSIGNED_BYTE ||
        texImage->TexObject->Target != GL_TEXTURE_2D ||
-       texImage->Level != 0 ||
        pixels == NULL ||
        _mesa_is_bufferobj(packing->BufferObj) ||
        packing->Alignment > 4 ||
@@ -636,6 +635,10 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
        format, type, texImage->TexFormat, image->mt->region->tiling,
        packing->Alignment, packing->RowLength, packing->SkipPixels,
        packing->SkipRows, for_glTexImage);
+
+   /* Adjust x and y offset based on miplevel */
+   xoffset += image->mt->level[texImage->Level].level_x;
+   yoffset += image->mt->level[texImage->Level].level_y;
 
    linear_to_tiled(
       xoffset * cpp, (xoffset + width) * cpp,
