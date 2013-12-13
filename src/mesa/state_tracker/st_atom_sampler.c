@@ -133,11 +133,16 @@ convert_sampler(struct st_context *st,
    const struct gl_texture_object *texobj;
    struct gl_context *ctx = st->ctx;
    struct gl_sampler_object *msamp;
+   const struct gl_texture_image *teximg;
+   GLenum texBaseFormat;
 
    texobj = ctx->Texture.Unit[texUnit]._Current;
    if (!texobj) {
       texobj = _mesa_get_fallback_texture(ctx, TEXTURE_2D_INDEX);
    }
+
+   teximg = texobj->Image[0][texobj->BaseLevel];
+   texBaseFormat = teximg ? teximg->_BaseFormat : GL_RGBA;
 
    msamp = _mesa_get_samplerobj(ctx, texUnit);
 
@@ -176,11 +181,8 @@ convert_sampler(struct st_context *st,
        msamp->BorderColor.ui[2] ||
        msamp->BorderColor.ui[3]) {
       const struct st_texture_object *stobj = st_texture_object_const(texobj);
-      const struct gl_texture_image *teximg;
       const GLboolean is_integer = texobj->_IsIntegerFormat;
       union pipe_color_union border_color;
-
-      teximg = texobj->Image[0][texobj->BaseLevel];
 
       if (st->apply_texture_swizzle_to_border_color && stobj->sampler_view) {
          const unsigned char swz[4] =
@@ -193,25 +195,26 @@ convert_sampler(struct st_context *st,
 
          st_translate_color(&msamp->BorderColor,
                             &border_color,
-                            teximg ? teximg->_BaseFormat : GL_RGBA, is_integer);
+                            texBaseFormat, is_integer);
 
          util_format_apply_color_swizzle(&sampler->border_color,
                                          &border_color, swz, is_integer);
       } else {
          st_translate_color(&msamp->BorderColor,
                             &sampler->border_color,
-                            teximg ? teximg->_BaseFormat : GL_RGBA, is_integer);
+                            texBaseFormat, is_integer);
       }
    }
 
    sampler->max_anisotropy = (msamp->MaxAnisotropy == 1.0 ?
                               0 : (GLuint) msamp->MaxAnisotropy);
 
-   /* only care about ARB_shadow, not SGI shadow */
-   if (msamp->CompareMode == GL_COMPARE_R_TO_TEXTURE) {
+   /* If sampling a depth texture and using shadow comparison */
+   if ((texBaseFormat == GL_DEPTH_COMPONENT ||
+        texBaseFormat == GL_DEPTH_STENCIL) &&
+       msamp->CompareMode == GL_COMPARE_R_TO_TEXTURE) {
       sampler->compare_mode = PIPE_TEX_COMPARE_R_TO_TEXTURE;
-      sampler->compare_func
-         = st_compare_func_to_pipe(msamp->CompareFunc);
+      sampler->compare_func = st_compare_func_to_pipe(msamp->CompareFunc);
    }
 
    sampler->seamless_cube_map =
