@@ -355,6 +355,7 @@ static void cleanup_temp_texture(struct gl_context *ctx, struct temp_texture *te
 static void meta_glsl_clear_cleanup(struct gl_context *ctx, struct clear_state *clear);
 static void meta_glsl_generate_mipmap_cleanup(struct gl_context *ctx,
                                               struct gen_mipmap_state *mipmap);
+static void meta_decompress_cleanup(struct decompress_state *decompress);
 
 static GLuint
 compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB *source)
@@ -449,6 +450,7 @@ _mesa_meta_free(struct gl_context *ctx)
    meta_glsl_clear_cleanup(ctx, &ctx->Meta->Clear);
    meta_glsl_generate_mipmap_cleanup(ctx, &ctx->Meta->Mipmap);
    cleanup_temp_texture(ctx, &ctx->Meta->TempTex);
+   meta_decompress_cleanup(&ctx->Meta->Decompress);
    if (old_context)
       _mesa_make_current(old_context, old_context->WinSysDrawBuffer, old_context->WinSysReadBuffer);
    else
@@ -3944,6 +3946,25 @@ _mesa_meta_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    free(buf);
 }
 
+
+static void
+meta_decompress_cleanup(struct decompress_state *decompress)
+{
+   if (decompress->FBO != 0) {
+      _mesa_DeleteFramebuffers(1, &decompress->FBO);
+      _mesa_DeleteRenderbuffers(1, &decompress->RBO);
+   }
+
+   if (decompress->ArrayObj != 0) {
+      _mesa_DeleteVertexArrays(1, &decompress->ArrayObj);
+      _mesa_DeleteBuffers(1, &decompress->VBO);
+   }
+
+   if (decompress->Sampler != 0)
+      _mesa_DeleteSamplers(1, &decompress->Sampler);
+
+   memset(decompress, 0, sizeof(*decompress));
+}
 
 /**
  * Decompress a texture image by drawing a quad with the compressed
