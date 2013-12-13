@@ -1081,14 +1081,8 @@ try_update_scene_state( struct lp_setup_context *setup )
                                          &setup->draw_regions[i]);
          }
       }
-      /*
-       * Subdivide triangles if the framebuffer is larger than the
-       * MAX_FIXED_LENGTH.
-       */
-      setup->subdivide_large_triangles = (setup->fb.width > MAX_FIXED_LENGTH ||
-                                          setup->fb.height > MAX_FIXED_LENGTH);
    }
-                                      
+
    setup->dirty = 0;
 
    assert(setup->fs.stored);
