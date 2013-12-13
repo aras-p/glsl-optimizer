@@ -4021,11 +4021,28 @@ decompress_texture_image(struct gl_context *ctx,
              target == GL_TEXTURE_2D_ARRAY);
    }
 
-   if (target == GL_TEXTURE_CUBE_MAP) {
+   switch (target) {
+   case GL_TEXTURE_1D:
+   case GL_TEXTURE_1D_ARRAY:
+      assert(!"No compressed 1D textures.");
+      return;
+
+   case GL_TEXTURE_3D:
+      assert(!"No compressed 3D textures.");
+      return;
+
+   case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+      /* These targets are just broken currently. */
+      return;
+
+   case GL_TEXTURE_CUBE_MAP:
       faceTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + texImage->Face;
-   }
-   else {
+      break;
+
+   default:
       faceTarget = target;
+      break;
    }
 
    /* save fbo bindings (not saved by _mesa_meta_begin()) */
