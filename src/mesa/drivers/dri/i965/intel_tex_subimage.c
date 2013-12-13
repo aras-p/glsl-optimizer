@@ -577,7 +577,8 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
        (texImage->TexFormat == MESA_FORMAT_A8 && format == GL_ALPHA)) {
       cpp = 1;
       mem_copy = memcpy;
-   } else if (texImage->TexFormat == MESA_FORMAT_ARGB8888) {
+   } else if ((texImage->TexFormat == MESA_FORMAT_ARGB8888) ||
+              (texImage->TexFormat == MESA_FORMAT_XRGB8888)) {
       cpp = 4;
       if (format == GL_BGRA) {
          mem_copy = memcpy;
