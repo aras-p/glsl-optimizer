@@ -1854,12 +1854,12 @@ st_QuerySamplesForFormat(struct gl_context *ctx, GLenum target,
  * Similarly for texture border colors.
  */
 void
-st_translate_color(union gl_color_union *colorIn,
+st_translate_color(const union gl_color_union *colorIn,
                    union pipe_color_union *colorOut,
                    GLenum baseFormat, GLboolean is_integer)
 {
    if (is_integer) {
-      int *in = colorIn->i;
+      const int *in = colorIn->i;
       int *out = colorOut->i;
 
       switch (baseFormat) {
@@ -1901,7 +1901,7 @@ st_translate_color(union gl_color_union *colorIn,
       }
    }
    else {
-      float *in = colorIn->f;
+      const float *in = colorIn->f;
       float *out = colorOut->f;
 
       switch (baseFormat) {
