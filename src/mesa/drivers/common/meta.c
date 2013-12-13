@@ -4219,7 +4219,8 @@ _mesa_meta_GetTexImage(struct gl_context *ctx,
     * unsigned, normalized values.  We could handle signed and unnormalized 
     * with floating point renderbuffers...
     */
-   if (_mesa_is_format_compressed(texImage->TexFormat) &&
+   if (texImage->TexObject->Target != GL_TEXTURE_CUBE_MAP_ARRAY
+       && _mesa_is_format_compressed(texImage->TexFormat) &&
        _mesa_get_format_datatype(texImage->TexFormat)
        == GL_UNSIGNED_NORMALIZED) {
       struct gl_texture_object *texObj = texImage->TexObject;
