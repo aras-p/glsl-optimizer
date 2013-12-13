@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 9.2.5 Release Notes / (December 12, 2013)</h1>
+
+<p>
+Mesa 9.2.5 is a bug fix release which fixes bugs found since the 9.2.4 release.
+</p>
+<p>
+Mesa 9.2 implements the OpenGL 3.1 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.1.  OpenGL
+3.1 is <strong>only</strong> available if requested at context creation
+because GL_ARB_compatibility is not supported.
+</p>
+
+
+<h2>MD5 checksums</h2>
+<pre>
+9fb4de29ca1d9cfd03cbdefa123ba336  MesaLib-9.2.5.tar.bz2
+1146c7c332767174f3de782b88d8e8ca  MesaLib-9.2.5.tar.gz
+a9a6c46dac7ea26fd272bf14894d95f3  MesaLib-9.2.5.zip
+</pre>
+
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=62142">Bug 62142</a> - Mesa/demo mipmap_limits upside down with running by SOFTWARE</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=64323">Bug 64323</a> - Severe misrendering in Left 4 Dead 2</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=66213">Bug 66213</a> - Certain Mesa Demos Rendering Inverted (vertically)</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=68838">Bug 68838</a> - GLSL: struct declarations produce a &quot;empty declaration warning&quot; in 9.2</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=69155">Bug 69155</a> - [NV50 gallium] [piglit] bin/varying-packing-simple triggers memory corruption/failures</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=72325">Bug 72325</a> - [swrast] piglit glean fbo regression</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=72327">Bug 72327</a> - [swrast] piglit glean pointSprite regression</li>
+
+</ul>
+
+<h2>Changes</h2>
+
+<p>The full set of changes can be viewed by using the following GIT command:</p>
+
+<pre>
+  git log mesa-9.2.4..mesa-9.2.5
+</pre>
+
+<p>Chad Versace (2):</p>
+<ul>
+  <li>i965/hsw: Apply non-msrt fast color clear w/a to all HSW GTs</li>
+  <li>i965: Add extra-alignment for non-msrt fast color clear for all hw (v2)</li>
+</ul>
+
+<p>Chris Forbes (4):</p>
+<ul>
+  <li>i965: Gen4-5: Don't enable hardware alpha test with MRT</li>
+  <li>i965: Gen4-5: Include alpha func/ref in program key</li>
+  <li>i965/fs: Gen4-5: Setup discard masks for MRT alpha test</li>
+  <li>i965/fs: Gen4-5: Implement alpha test in shader for MRT</li>
+</ul>
+
+<p>Chí-Thanh Christopher Nguyễn (1):</p>
+<ul>
+  <li>st/xorg: Handle new DamageUnregister API which has only one argument</li>
+</ul>
+
+<p>Dave Airlie (3):</p>
+<ul>
+  <li>mesa/swrast: fix inverted front buffer rendering with old-school swrast</li>
+  <li>glx: don't fail out when no configs if we have visuals</li>
+  <li>swrast: fix readback regression since inversion fix</li>
+</ul>
+
+<p>Ian Romanick (1):</p>
+<ul>
+  <li>glsl: Don't emit empty declaration warning for a struct specifier</li>
+</ul>
+
+<p>Ilia Mirkin (4):</p>
+<ul>
+  <li>nv50: Fix GPU_READING/WRITING bit removal</li>
+  <li>nouveau: avoid leaking fences while waiting</li>
+  <li>nv50: wait on the buf's fence before sticking it into pushbuf</li>
+  <li>nv50: report 15 max inputs for fragment programs</li>
+</ul>
+
+<p>Tom Stellard (2):</p>
+<ul>
+  <li>r300/compiler/tests: Fix segfault</li>
+  <li>r300/compiler/tests: Fix line length check in test parser</li>
+</ul>
+
+</div>
+</body>
+</html>
