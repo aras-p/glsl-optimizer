@@ -2451,7 +2451,7 @@ _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
    struct copypix_state *copypix = &ctx->Meta->CopyPix;
    struct temp_texture *tex = get_temp_texture(ctx);
    struct vertex {
-      GLfloat x, y, z, s, t;
+      GLfloat x, y, z, tex[4];
    };
    struct vertex verts[4];
    GLboolean newTex;
@@ -2493,7 +2493,7 @@ _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
 
       /* setup vertex arrays */
       _mesa_VertexPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
-      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(s));
+      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(tex));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
    }
@@ -2503,6 +2503,9 @@ _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
    }
 
    newTex = alloc_texture(tex, width, height, intFormat);
+
+   /* Silence valgrind warnings about reading uninitialized stack. */
+   memset(verts, 0, sizeof(verts));
 
    /* vertex positions, texcoords (after texture allocation!) */
    {
@@ -2515,23 +2518,23 @@ _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
       verts[0].x = dstX0;
       verts[0].y = dstY0;
       verts[0].z = z;
-      verts[0].s = 0.0F;
-      verts[0].t = 0.0F;
+      verts[0].tex[0] = 0.0F;
+      verts[0].tex[1] = 0.0F;
       verts[1].x = dstX1;
       verts[1].y = dstY0;
       verts[1].z = z;
-      verts[1].s = tex->Sright;
-      verts[1].t = 0.0F;
+      verts[1].tex[0] = tex->Sright;
+      verts[1].tex[1] = 0.0F;
       verts[2].x = dstX1;
       verts[2].y = dstY1;
       verts[2].z = z;
-      verts[2].s = tex->Sright;
-      verts[2].t = tex->Ttop;
+      verts[2].tex[0] = tex->Sright;
+      verts[2].tex[1] = tex->Ttop;
       verts[3].x = dstX0;
       verts[3].y = dstY1;
       verts[3].z = z;
-      verts[3].s = 0.0F;
-      verts[3].t = tex->Ttop;
+      verts[3].tex[0] = 0.0F;
+      verts[3].tex[1] = tex->Ttop;
 
       /* upload new vertex data */
       _mesa_BufferSubData(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
