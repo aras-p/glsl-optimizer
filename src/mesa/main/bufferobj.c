@@ -186,25 +186,56 @@ simplified_access_mode(struct gl_context *ctx, GLbitfield access)
 
 
 /**
+ * Test if the buffer is mapped, and if so, if the mapped range overlaps the
+ * given range.
+ * The regions do not overlap if and only if the end of the given
+ * region is before the mapped region or the start of the given region
+ * is after the mapped region.
+ *
+ * \param obj     Buffer object target on which to operate.
+ * \param offset  Offset of the first byte of the subdata range.
+ * \param size    Size, in bytes, of the subdata range.
+ * \return   true if ranges overlap, false otherwise
+ *
+ */
+static bool
+bufferobj_range_mapped(const struct gl_buffer_object *obj,
+                       GLintptr offset, GLsizeiptr size)
+{
+   if (_mesa_bufferobj_mapped(obj)) {
+      const GLintptr end = offset + size;
+      const GLintptr mapEnd = obj->Offset + obj->Length;
+
+      if (!(end <= obj->Offset || offset >= mapEnd)) {
+         return true;
+      }
+   }
+   return false;
+}
+
+
+/**
  * Tests the subdata range parameters and sets the GL error code for
- * \c glBufferSubDataARB and \c glGetBufferSubDataARB.
+ * \c glBufferSubDataARB, \c glGetBufferSubDataARB and
+ * \c glClearBufferSubData.
  *
  * \param ctx     GL context.
  * \param target  Buffer object target on which to operate.
  * \param offset  Offset of the first byte of the subdata range.
  * \param size    Size, in bytes, of the subdata range.
+ * \param mappedRange  If true, checks if an overlapping range is mapped.
+ *                     If false, checks if buffer is mapped.
  * \param caller  Name of calling function for recording errors.
  * \return   A pointer to the buffer object bound to \c target in the
  *           specified context or \c NULL if any of the parameter or state
- *           conditions for \c glBufferSubDataARB or \c glGetBufferSubDataARB
- *           are invalid.
+ *           conditions are invalid.
  *
- * \sa glBufferSubDataARB, glGetBufferSubDataARB
+ * \sa glBufferSubDataARB, glGetBufferSubDataARB, glClearBufferSubData
  */
 static struct gl_buffer_object *
-buffer_object_subdata_range_good( struct gl_context * ctx, GLenum target, 
-                                  GLintptrARB offset, GLsizeiptrARB size,
-                                  const char *caller )
+buffer_object_subdata_range_good(struct gl_context * ctx, GLenum target,
+                                 GLintptrARB offset, GLsizeiptrARB size,
+                                 bool mappedRange, const char *caller)
 {
    struct gl_buffer_object *bufObj;
 
@@ -224,16 +255,24 @@ buffer_object_subdata_range_good( struct gl_context * ctx, GLenum target,
 
    if (offset + size > bufObj->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-		  "%s(offset %lu + size %lu > buffer size %lu)", caller,
+                  "%s(offset %lu + size %lu > buffer size %lu)", caller,
                   (unsigned long) offset,
                   (unsigned long) size,
                   (unsigned long) bufObj->Size);
       return NULL;
    }
-   if (_mesa_bufferobj_mapped(bufObj)) {
-      /* Buffer is currently mapped */
-      _mesa_error(ctx, GL_INVALID_OPERATION, "%s", caller);
-      return NULL;
+
+   if (mappedRange) {
+      if (bufferobj_range_mapped(bufObj, offset, size)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "%s", caller);
+         return NULL;
+      }
+   }
+   else {
+      if (_mesa_bufferobj_mapped(bufObj)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "%s", caller);
+         return NULL;
+      }
    }
 
    return bufObj;
@@ -1103,7 +1142,7 @@ _mesa_BufferSubData(GLenum target, GLintptrARB offset,
    struct gl_buffer_object *bufObj;
 
    bufObj = buffer_object_subdata_range_good( ctx, target, offset, size,
-                                              "glBufferSubDataARB" );
+                                              false, "glBufferSubDataARB");
    if (!bufObj) {
       /* error already recorded */
       return;
@@ -1126,8 +1165,8 @@ _mesa_GetBufferSubData(GLenum target, GLintptrARB offset,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
 
-   bufObj = buffer_object_subdata_range_good( ctx, target, offset, size,
-                                              "glGetBufferSubDataARB" );
+   bufObj = buffer_object_subdata_range_good(ctx, target, offset, size,
+                                             false, "glGetBufferSubDataARB");
    if (!bufObj) {
       /* error already recorded */
       return;
@@ -2331,23 +2370,11 @@ _mesa_InvalidateBufferSubData(GLuint buffer, GLintptr offset,
     *     mapped by MapBuffer, or if the invalidate range intersects the range
     *     currently mapped by MapBufferRange."
     */
-   if (_mesa_bufferobj_mapped(bufObj)) {
-      const GLintptr mapEnd = bufObj->Offset + bufObj->Length;
-
-      /* The regions do not overlap if and only if the end of the discard
-       * region is before the mapped region or the start of the discard region
-       * is after the mapped region.
-       *
-       * Note that 'end' and 'mapEnd' are the first byte *after* the discard
-       * region and the mapped region, repsectively.  It is okay for that byte
-       * to be mapped (for 'end') or discarded (for 'mapEnd').
-       */
-      if (!(end <= bufObj->Offset || offset >= mapEnd)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glInvalidateBufferSubData(intersection with mapped "
-                     "range)");
-         return;
-      }
+   if (bufferobj_range_mapped(bufObj, offset, length)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glInvalidateBufferSubData(intersection with mapped "
+                  "range)");
+      return;
    }
 
    /* We don't actually do anything for this yet.  Just return after
