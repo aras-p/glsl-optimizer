@@ -2037,7 +2037,7 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
 {
    struct clear_state *clear = &ctx->Meta->Clear;
    struct vertex {
-      GLfloat x, y, z, r, g, b, a;
+      GLfloat x, y, z, tex[4];
    };
    struct vertex verts[4];
    /* save all state but scissor, pixel pack/unpack */
@@ -2068,7 +2068,7 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
 
       /* setup vertex arrays */
       _mesa_VertexPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
-      _mesa_ColorPointer(4, GL_FLOAT, sizeof(struct vertex), OFFSET(r));
+      _mesa_ColorPointer(4, GL_FLOAT, sizeof(struct vertex), OFFSET(tex));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_COLOR_ARRAY);
    }
@@ -2137,10 +2137,10 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
 
       /* vertex colors */
       for (i = 0; i < 4; i++) {
-         verts[i].r = ctx->Color.ClearColor.f[0];
-         verts[i].g = ctx->Color.ClearColor.f[1];
-         verts[i].b = ctx->Color.ClearColor.f[2];
-         verts[i].a = ctx->Color.ClearColor.f[3];
+         verts[i].tex[0] = ctx->Color.ClearColor.f[0];
+         verts[i].tex[1] = ctx->Color.ClearColor.f[1];
+         verts[i].tex[2] = ctx->Color.ClearColor.f[2];
+         verts[i].tex[3] = ctx->Color.ClearColor.f[3];
       }
 
       /* upload new vertex data */
@@ -2200,7 +2200,8 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
    _mesa_BindBuffer(GL_ARRAY_BUFFER_ARB, clear->VBO);
 
    /* setup vertex arrays */
-   _mesa_VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+   _mesa_VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7,
+                             (void *)0);
    _mesa_EnableVertexAttribArray(0);
 
    vs = _mesa_CreateShaderObjectARB(GL_VERTEX_SHADER);
@@ -2328,7 +2329,7 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
    const float y1 = ((float)fb->_Ymax / fb->Height) * 2.0f - 1.0f;
    const float z = -invert_z(ctx->Depth.Clear);
    struct vertex {
-      GLfloat x, y, z;
+      GLfloat x, y, z, tex[4];
    } verts[4];
 
    metaSave = (MESA_META_ALPHA_TEST |
