@@ -2726,7 +2726,7 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
    const struct gl_pixelstore_attrib unpackSave = ctx->Unpack;
    const GLuint origStencilMask = ctx->Stencil.WriteMask[0];
    struct vertex {
-      GLfloat x, y, z, s, t;
+      GLfloat x, y, z, tex[4];
    };
    struct vertex verts[4];
    GLenum texIntFormat;
@@ -2824,6 +2824,9 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
 
    newTex = alloc_texture(tex, width, height, texIntFormat);
 
+   /* Silence valgrind warnings about reading uninitialized stack. */
+   memset(verts, 0, sizeof(verts));
+
    /* vertex positions, texcoords (after texture allocation!) */
    {
       const GLfloat x0 = (GLfloat) x;
@@ -2835,23 +2838,23 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
       verts[0].x = x0;
       verts[0].y = y0;
       verts[0].z = z;
-      verts[0].s = 0.0F;
-      verts[0].t = 0.0F;
+      verts[0].tex[0] = 0.0F;
+      verts[0].tex[1] = 0.0F;
       verts[1].x = x1;
       verts[1].y = y0;
       verts[1].z = z;
-      verts[1].s = tex->Sright;
-      verts[1].t = 0.0F;
+      verts[1].tex[0] = tex->Sright;
+      verts[1].tex[1] = 0.0F;
       verts[2].x = x1;
       verts[2].y = y1;
       verts[2].z = z;
-      verts[2].s = tex->Sright;
-      verts[2].t = tex->Ttop;
+      verts[2].tex[0] = tex->Sright;
+      verts[2].tex[1] = tex->Ttop;
       verts[3].x = x0;
       verts[3].y = y1;
       verts[3].z = z;
-      verts[3].s = 0.0F;
-      verts[3].t = tex->Ttop;
+      verts[3].tex[0] = 0.0F;
+      verts[3].tex[1] = tex->Ttop;
    }
 
    if (drawpix->VAO == 0) {
@@ -2868,7 +2871,7 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
 
    /* setup vertex arrays */
    _mesa_VertexPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
-   _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(s));
+   _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(tex));
    _mesa_EnableClientState(GL_VERTEX_ARRAY);
    _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
 
