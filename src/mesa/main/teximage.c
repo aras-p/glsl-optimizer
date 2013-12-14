@@ -4037,8 +4037,9 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
 }
 
 
-static gl_format
-validate_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
+gl_format
+_mesa_validate_texbuffer_format(const struct gl_context *ctx,
+                                GLenum internalFormat)
 {
    gl_format format = get_texbuffer_format(ctx, internalFormat);
    GLenum datatype;
@@ -4088,7 +4089,7 @@ texbufferrange(struct gl_context *ctx, GLenum target, GLenum internalFormat,
       return;
    }
 
-   format = validate_texbuffer_format(ctx, internalFormat);
+   format = _mesa_validate_texbuffer_format(ctx, internalFormat);
    if (format == MESA_FORMAT_NONE) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glTexBuffer(internalFormat 0x%x)",
                   internalFormat);

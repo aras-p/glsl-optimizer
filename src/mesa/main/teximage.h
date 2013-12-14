@@ -147,6 +147,10 @@ _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
                                GLint level, GLint width, GLint height,
                                GLint depth, GLint border);
 
+extern gl_format
+_mesa_validate_texbuffer_format(const struct gl_context *ctx,
+                                GLenum internalFormat);
+
 /**
  * Lock a texture for updating.  See also _mesa_lock_context_textures().
  */
