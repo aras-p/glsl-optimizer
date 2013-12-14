@@ -255,7 +255,7 @@ update_single_texture(struct st_context *st,
 				stObj->base.DepthMode) ||
 	  (view_format != stObj->sampler_view->format) ||
 	  stObj->base.BaseLevel != stObj->sampler_view->u.tex.first_level) {
-	 pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+	 pipe_sampler_view_release(pipe, &stObj->sampler_view);
       }
    }
 
