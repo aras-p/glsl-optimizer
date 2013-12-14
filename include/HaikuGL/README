@@ -1,0 +1,28 @@
+These headers make up the Haiku Op*nGL kit.
+
+Headers in this directory preserve some BeOS™ compatibility
+compatibility, so changes should be mentioned to the Haiku
+project mailing list.
+
+http://haiku-os.org
+
+Normal Haiku Op*enGL layout:
+
+  * headers/os/OpenGLKit.h
+  * headers/os/opengl/GLView.h
+  * headers/os/opengl/GLRenderer.h
+  * headers/os/opengl/GL/gl.h
+  * headers/os/opengl/GL/gl_mangle.h
+  * headers/os/opengl/GL/glext.h
+  * headers/os/opengl/GL/osmesa.h (needed?)
+
+Extras:
+
+  * headers/os/opengl/GL/glu.h
+  * headers/os/opengl/GL/glut.h
+
+OpenGL™ is a trademark of SGI. The usage of this trademark
+in the Haiku GL Kit is not a sign of any certification or
+endorsement by SGI or its affiliates. Usage is purely to
+allow legacy compatibility with the BeOS™ and its 3D GL
+rendering subsystem.
