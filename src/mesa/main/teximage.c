@@ -4054,15 +4054,10 @@ _mesa_validate_texbuffer_format(const struct gl_context *ctx,
    if (datatype == GL_HALF_FLOAT && !ctx->Extensions.ARB_half_float_pixel)
       return MESA_FORMAT_NONE;
 
-   /* The GL_ARB_texture_rg and GL_ARB_texture_buffer_object specs don't make
-    * any mention of R/RG formats, but they appear in the GL 3.1 core
-    * specification.
-    */
-   if (ctx->Version <= 30) {
+   if (!ctx->Extensions.ARB_texture_rg) {
       GLenum base_format = _mesa_get_format_base_format(format);
-
       if (base_format == GL_R || base_format == GL_RG)
-	 return MESA_FORMAT_NONE;
+         return MESA_FORMAT_NONE;
    }
 
    if (!ctx->Extensions.ARB_texture_buffer_object_rgb32) {
