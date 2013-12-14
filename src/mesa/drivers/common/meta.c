@@ -356,6 +356,7 @@ static void meta_glsl_clear_cleanup(struct gl_context *ctx, struct clear_state *
 static void meta_glsl_generate_mipmap_cleanup(struct gl_context *ctx,
                                               struct gen_mipmap_state *mipmap);
 static void meta_decompress_cleanup(struct decompress_state *decompress);
+static void meta_drawpix_cleanup(struct drawpix_state *drawpix);
 
 static GLuint
 compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB *source)
@@ -451,6 +452,7 @@ _mesa_meta_free(struct gl_context *ctx)
    meta_glsl_generate_mipmap_cleanup(ctx, &ctx->Meta->Mipmap);
    cleanup_temp_texture(ctx, &ctx->Meta->TempTex);
    meta_decompress_cleanup(&ctx->Meta->Decompress);
+   meta_drawpix_cleanup(&ctx->Meta->DrawPix);
    if (old_context)
       _mesa_make_current(old_context, old_context->WinSysDrawBuffer, old_context->WinSysReadBuffer);
    else
@@ -2545,7 +2547,24 @@ _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
    _mesa_meta_end(ctx);
 }
 
+static void
+meta_drawpix_cleanup(struct drawpix_state *drawpix)
+{
+   if (drawpix->ArrayObj != 0) {
+      _mesa_DeleteVertexArrays(1, &drawpix->ArrayObj);
+      drawpix->ArrayObj = 0;
+   }
 
+   if (drawpix->StencilFP != 0) {
+      _mesa_DeleteProgramsARB(1, &drawpix->StencilFP);
+      drawpix->StencilFP = 0;
+   }
+
+   if (drawpix->DepthFP != 0) {
+      _mesa_DeleteProgramsARB(1, &drawpix->DepthFP);
+      drawpix->DepthFP = 0;
+   }
+}
 
 /**
  * When the glDrawPixels() image size is greater than the max rectangle
