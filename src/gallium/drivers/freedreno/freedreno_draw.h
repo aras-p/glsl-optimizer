@@ -59,6 +59,21 @@ fd_draw(struct fd_context *ctx, enum pc_di_primtype primtype,
 	 */
 	emit_marker(ring, 7);
 
+	if (ctx->screen->gpu_id == 320) {
+		/* dummy-draw workaround: */
+		OUT_PKT3(ring, CP_DRAW_INDX, 3);
+		OUT_RING(ring, 0x00000000);
+		OUT_RING(ring, DRAW(1, DI_SRC_SEL_AUTO_INDEX,
+				INDEX_SIZE_IGN, IGNORE_VISIBILITY));
+		OUT_RING(ring, 0);             /* NumIndices */
+
+		/* ugg, hard-code register offset to avoid pulling in the
+		 * a3xx register headers into something #included from a2xx
+		 */
+		OUT_PKT0(ring, 0x2206, 1);     /* A3XX_HLSQ_CONST_VSPRESV_RANGE_REG */
+		OUT_RING(ring, 0);
+	}
+
 	OUT_PKT3(ring, CP_DRAW_INDX, idx_bo ? 5 : 3);
 	OUT_RING(ring, 0x00000000);        /* viz query info. */
 	OUT_RING(ring, DRAW(primtype, src_sel,

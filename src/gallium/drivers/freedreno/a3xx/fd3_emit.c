@@ -231,6 +231,7 @@ emit_cache_flush(struct fd_ringbuffer *ring)
 	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
 	OUT_RING(ring, CACHE_FLUSH);
 
+	/* probably only really needed on a320: */
 	OUT_PKT3(ring, CP_DRAW_INDX, 3);
 	OUT_RING(ring, 0x00000000);
 	OUT_RING(ring, DRAW(1, DI_SRC_SEL_AUTO_INDEX,
@@ -523,7 +524,7 @@ fd3_emit_restore(struct fd_context *ctx)
 	OUT_RING(ring, A3XX_RB_MSAA_CONTROL_DISABLE |
 			A3XX_RB_MSAA_CONTROL_SAMPLES(MSAA_ONE) |
 			A3XX_RB_MSAA_CONTROL_SAMPLE_MASK(0xffff));
-	OUT_RING(ring, 0x00000000);        /* UNKNOWN_20C3 */
+	OUT_RING(ring, 0x00000000);        /* RB_ALPHA_REF */
 
 	OUT_PKT0(ring, REG_A3XX_GRAS_CL_GB_CLIP_ADJ, 1);
 	OUT_RING(ring, A3XX_GRAS_CL_GB_CLIP_ADJ_HORZ(0) |
