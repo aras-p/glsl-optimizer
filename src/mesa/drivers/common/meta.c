@@ -1459,7 +1459,7 @@ static void
 setup_ff_blit_framebuffer(struct blit_state *blit)
 {
    struct vertex {
-      GLfloat x, y, s, t;
+      GLfloat x, y, z, tex[4];
    };
    struct vertex verts[4];
 
@@ -1478,7 +1478,7 @@ setup_ff_blit_framebuffer(struct blit_state *blit)
 
       /* setup vertex arrays */
       _mesa_VertexPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
-      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(s));
+      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(tex));
       _mesa_EnableClientState(GL_VERTEX_ARRAY);
       _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
    }
@@ -1496,7 +1496,7 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
                             GLenum target)
 {
    struct vertex {
-      GLfloat x, y, s, t;
+      GLfloat x, y, z, tex[4];
    };
    struct vertex verts[4];
    const char *vs_source;
@@ -1526,7 +1526,7 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
       _mesa_VertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
                                    sizeof(struct vertex), OFFSET(x));
       _mesa_VertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
-                                   sizeof(struct vertex), OFFSET(s));
+                                   sizeof(struct vertex), OFFSET(tex));
 
       _mesa_EnableVertexAttribArray(0);
       _mesa_EnableVertexAttribArray(1);
@@ -1727,7 +1727,7 @@ blitframebuffer_texture(struct gl_context *ctx,
          /* Prepare vertex data (the VBO was previously created and bound) */
          {
             struct vertex {
-               GLfloat x, y, s, t;
+               GLfloat x, y, z, tex[4];
             };
             struct vertex verts[4];
             GLfloat s0, t0, s1, t1;
@@ -1748,6 +1748,9 @@ blitframebuffer_texture(struct gl_context *ctx,
                t1 = (float) srcY1;
             }
 
+            /* Silence valgrind warnings about reading uninitialized stack. */
+            memset(verts, 0, sizeof(verts));
+
             /* setup vertex positions */
             verts[0].x = -1.0F * flipX;
             verts[0].y = -1.0F * flipY;
@@ -1758,14 +1761,14 @@ blitframebuffer_texture(struct gl_context *ctx,
             verts[3].x = -1.0F * flipX;
             verts[3].y =  1.0F * flipY;
 
-            verts[0].s = s0;
-            verts[0].t = t0;
-            verts[1].s = s1;
-            verts[1].t = t0;
-            verts[2].s = s1;
-            verts[2].t = t1;
-            verts[3].s = s0;
-            verts[3].t = t1;
+            verts[0].tex[0] = s0;
+            verts[0].tex[1] = t0;
+            verts[1].tex[0] = s1;
+            verts[1].tex[1] = t0;
+            verts[2].tex[0] = s1;
+            verts[2].tex[1] = t1;
+            verts[3].tex[0] = s0;
+            verts[3].tex[1] = t1;
 
             _mesa_BufferSubData(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
          }
@@ -1826,7 +1829,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    const GLint flipY = srcFlipY * dstFlipY;
 
    struct vertex {
-      GLfloat x, y, s, t;
+      GLfloat x, y, z, tex[4];
    };
    struct vertex verts[4];
    GLboolean newTex;
@@ -1875,6 +1878,9 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    _mesa_BindVertexArray(blit->VAO);
    _mesa_BindBuffer(GL_ARRAY_BUFFER_ARB, blit->VBO);
 
+   /* Silence valgrind warnings about reading uninitialized stack. */
+   memset(verts, 0, sizeof(verts));
+
    /* Continue with "normal" approach which involves copying the src rect
     * into a temporary texture and is "blitted" by drawing a textured quad.
     */
@@ -1913,14 +1919,14 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
                             rb_base_format, filter);
       /* texcoords (after texture allocation!) */
       {
-         verts[0].s = 1.0F;
-         verts[0].t = 1.0F;
-         verts[1].s = tex->Sright - 1.0F;
-         verts[1].t = 1.0F;
-         verts[2].s = tex->Sright - 1.0F;
-         verts[2].t = tex->Ttop - 1.0F;
-         verts[3].s = 1.0F;
-         verts[3].t = tex->Ttop - 1.0F;
+         verts[0].tex[0] = 1.0F;
+         verts[0].tex[1] = 1.0F;
+         verts[1].tex[0] = tex->Sright - 1.0F;
+         verts[1].tex[1] = 1.0F;
+         verts[2].tex[0] = tex->Sright - 1.0F;
+         verts[2].tex[1] = tex->Ttop - 1.0F;
+         verts[3].tex[0] = 1.0F;
+         verts[3].tex[1] = tex->Ttop - 1.0F;
 
          /* upload new vertex data */
          _mesa_BufferSubData(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
@@ -1952,14 +1958,14 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
 
          /* texcoords (after texture allocation!) */
          {
-            verts[0].s = 0.0F;
-            verts[0].t = 0.0F;
-            verts[1].s = depthTex->Sright;
-            verts[1].t = 0.0F;
-            verts[2].s = depthTex->Sright;
-            verts[2].t = depthTex->Ttop;
-            verts[3].s = 0.0F;
-            verts[3].t = depthTex->Ttop;
+            verts[0].tex[0] = 0.0F;
+            verts[0].tex[1] = 0.0F;
+            verts[1].tex[0] = depthTex->Sright;
+            verts[1].tex[1] = 0.0F;
+            verts[2].tex[0] = depthTex->Sright;
+            verts[2].tex[1] = depthTex->Ttop;
+            verts[3].tex[0] = 0.0F;
+            verts[3].tex[1] = depthTex->Ttop;
 
             /* upload new vertex data */
             _mesa_BufferSubData(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
