@@ -334,6 +334,11 @@ struct intel_mipmap_tree
    bool array_spacing_lod0;
 
    /**
+    * The distance in rows between array slices.
+    */
+   uint32_t qpitch;
+
+   /**
     * MSAA layout used by this buffer.
     */
    enum intel_msaa_layout msaa_layout;
