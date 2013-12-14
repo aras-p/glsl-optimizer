@@ -3864,6 +3864,7 @@ _mesa_texstore_memcpy(TEXSTORE_PARAMS)
 /**
  * Store user data into texture memory.
  * Called via glTex[Sub]Image1/2/3D()
+ * \return GL_TRUE for success, GL_FALSE for failure (out of memory).
  */
 GLboolean
 _mesa_texstore(TEXSTORE_PARAMS)
