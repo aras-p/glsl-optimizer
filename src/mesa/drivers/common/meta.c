@@ -1543,15 +1543,13 @@ init_blit_depth_pixels(struct gl_context *ctx)
 }
 
 static void
-setup_ff_blit_framebuffer(struct blit_state *blit)
+setup_ff_tnl_for_blit(GLuint *VAO, GLuint *VBO, unsigned texcoord_size)
 {
-   setup_vertex_objects(&blit->VAO, &blit->VBO, false, 2, 2, 0);
+   setup_vertex_objects(VAO, VBO, false, 2, texcoord_size, 0);
 
    /* setup projection matrix */
    _mesa_MatrixMode(GL_PROJECTION);
    _mesa_LoadIdentity();
-   _mesa_Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-
 }
 
 static void
@@ -1723,7 +1721,9 @@ blitframebuffer_texture(struct gl_context *ctx,
                _mesa_UseProgram(blit->RectShaderProg);
          }
          else {
-            setup_ff_blit_framebuffer(&ctx->Meta->Blit);
+            setup_ff_tnl_for_blit(&ctx->Meta->Blit.VAO,
+                                  &ctx->Meta->Blit.VBO,
+                                  2);
          }
 
          _mesa_GenSamplers(1, &sampler);
@@ -1902,7 +1902,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
          _mesa_UseProgram(blit->RectShaderProg);
    }
    else {
-      setup_ff_blit_framebuffer(blit);
+      setup_ff_tnl_for_blit(&blit->VAO, &blit->VBO, 2);
    }
 
    /* Silence valgrind warnings about reading uninitialized stack. */
@@ -3346,19 +3346,6 @@ setup_texture_coords(GLenum faceTarget,
    }
 }
 
-
-static void
-setup_ff_generate_mipmap(struct gen_mipmap_state *mipmap)
-{
-   setup_vertex_objects(&mipmap->VAO, &mipmap->VBO, false, 2, 3, 0);
-
-   /* setup projection matrix */
-   _mesa_MatrixMode(GL_PROJECTION);
-   _mesa_LoadIdentity();
-   _mesa_Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-}
-
-
 static struct glsl_sampler *
 setup_texture_sampler(GLenum target, struct gen_mipmap_state *mipmap)
 {
@@ -3573,7 +3560,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       _mesa_UseProgram(mipmap->ShaderProg);
    }
    else {
-      setup_ff_generate_mipmap(mipmap);
+      setup_ff_tnl_for_blit(&mipmap->VAO, &mipmap->VBO, 3);
       _mesa_set_enable(ctx, target, GL_TRUE);
    }
 
@@ -4004,7 +3991,7 @@ decompress_texture_image(struct gl_context *ctx,
       decompress->Height = height;
    }
 
-   setup_vertex_objects(&decompress->VAO, &decompress->VBO, false, 2, 3, 0);
+   setup_ff_tnl_for_blit(&decompress->VAO, &decompress->VBO, 3);
 
    if (!decompress->Sampler) {
       _mesa_GenSamplers(1, &decompress->Sampler);
@@ -4041,8 +4028,6 @@ decompress_texture_image(struct gl_context *ctx,
    verts[3].x = -1.0F;
    verts[3].y =  1.0F;
 
-   _mesa_MatrixMode(GL_PROJECTION);
-   _mesa_LoadIdentity();
    _mesa_set_viewport(ctx, 0, 0, 0, width, height);
 
    /* upload new vertex data */
