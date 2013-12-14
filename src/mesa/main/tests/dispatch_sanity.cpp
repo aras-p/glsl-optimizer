@@ -846,8 +846,8 @@ const struct function gl_core_functions_possible[] = {
 // { "glGetObjectLabel", 43, -1 },                      // XXX: Add to xml
 // { "glObjectPtrLabel", 43, -1 },                      // XXX: Add to xml
 // { "glGetObjectPtrLabel", 43, -1 },                   // XXX: Add to xml
-// { "glClearBufferData", 43, -1 },                     // XXX: Add to xml
-// { "glClearBufferSubData", 43, -1 },                  // XXX: Add to xml
+   { "glClearBufferData", 43, -1 },
+   { "glClearBufferSubData", 43, -1 },
 // { "glClearNamedBufferDataEXT", 43, -1 },             // XXX: Add to xml
 // { "glClearNamedBufferSubDataEXT", 43, -1 },          // XXX: Add to xml
 // { "glDispatchCompute", 43, -1 },                     // XXX: Add to xml

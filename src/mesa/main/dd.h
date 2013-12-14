@@ -574,6 +574,12 @@ struct dd_function_table {
 			     GLintptrARB offset, GLsizeiptrARB size,
 			     GLvoid *data, struct gl_buffer_object *obj );
 
+   void (*ClearBufferSubData)( struct gl_context *ctx,
+                               GLintptr offset, GLsizeiptr size,
+                               const GLvoid *clearValue,
+                               GLsizeiptr clearValueSize,
+                               struct gl_buffer_object *obj );
+
    void (*CopyBufferSubData)( struct gl_context *ctx,
                               struct gl_buffer_object *src,
                               struct gl_buffer_object *dst,
