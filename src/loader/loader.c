@@ -267,8 +267,20 @@ loader_get_driver_for_fd(int fd, unsigned driver_types)
       driver_types = _LOADER_GALLIUM | _LOADER_DRI;
 
    if (!loader_get_pci_id_for_fd(fd, &vendor_id, &chip_id)) {
-      log(_LOADER_WARNING, "failed to get driver name for fd %d", fd);
-      return NULL;
+      /* fallback to drmGetVersion(): */
+      drmVersionPtr version = drmGetVersion(fd);
+
+      if (!version) {
+         log(_LOADER_WARNING, "failed to get driver name for fd %d", fd);
+         return NULL;
+      }
+
+      driver = strndup(version->name, version->name_len);
+      log(_LOADER_INFO, "using driver %s for %d", driver, fd);
+
+      drmFreeVersion(version);
+
+      return driver;
    }
 
    for (i = 0; driver_map[i].driver; i++) {
