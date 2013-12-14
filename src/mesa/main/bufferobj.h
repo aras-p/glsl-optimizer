@@ -120,6 +120,10 @@ void GLAPIENTRY
 _mesa_BufferSubData(GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid * data);
 void GLAPIENTRY
 _mesa_GetBufferSubData(GLenum target, GLintptrARB offset, GLsizeiptrARB size, void * data);
+void GLAPIENTRY
+_mesa_ClearBufferData(GLenum target, GLenum internalformat, GLenum format, GLenum type, const GLvoid * data);
+void GLAPIENTRY
+_mesa_ClearBufferSubData(GLenum target, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const GLvoid * data);
 void * GLAPIENTRY
 _mesa_MapBuffer(GLenum target, GLenum access);
 GLboolean GLAPIENTRY

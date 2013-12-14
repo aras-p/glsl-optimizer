@@ -41,6 +41,9 @@
 #include "fbobject.h"
 #include "mtypes.h"
 #include "texobj.h"
+#include "teximage.h"
+#include "glformats.h"
+#include "texstore.h"
 #include "transformfeedback.h"
 #include "dispatch.h"
 
@@ -280,6 +283,98 @@ buffer_object_subdata_range_good(struct gl_context * ctx, GLenum target,
    }
 
    return bufObj;
+}
+
+
+/**
+ * Test the format and type parameters and set the GL error code for
+ * \c glClearBufferData and \c glClearBufferSubData.
+ *
+ * \param ctx             GL context.
+ * \param internalformat  Format to which the data is to be converted.
+ * \param format          Format of the supplied data.
+ * \param type            Type of the supplied data.
+ * \param caller          Name of calling function for recording errors.
+ * \return   If internalformat, format and type are legal the gl_format
+ *           corresponding to internalformat, otherwise MESA_FORMAT_NONE.
+ *
+ * \sa glClearBufferData and glClearBufferSubData
+ */
+static gl_format
+validate_clear_buffer_format(struct gl_context *ctx,
+                             GLenum internalformat,
+                             GLenum format, GLenum type,
+                             const char *caller)
+{
+   gl_format mesaFormat;
+   GLenum errorFormatType;
+
+   mesaFormat = _mesa_validate_texbuffer_format(ctx, internalformat);
+   if (mesaFormat == MESA_FORMAT_NONE) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "%s(invalid internalformat)", caller);
+      return MESA_FORMAT_NONE;
+   }
+
+   /* NOTE: not mentioned in ARB_clear_buffer_object but according to
+    * EXT_texture_integer there is no conversion between integer and
+    * non-integer formats
+   */
+   if (_mesa_is_enum_format_signed_int(format) !=
+       _mesa_is_format_integer_color(mesaFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "%s(integer vs non-integer)", caller);
+      return MESA_FORMAT_NONE;
+   }
+
+   if (!_mesa_is_color_format(format)) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "%s(format is not a color format)", caller);
+      return MESA_FORMAT_NONE;
+   }
+
+   errorFormatType = _mesa_error_check_format_and_type(ctx, format, type);
+   if (errorFormatType != GL_NO_ERROR) {
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "%s(invalid format or type)", caller);
+      return MESA_FORMAT_NONE;
+   }
+
+   return mesaFormat;
+}
+
+
+/**
+ * Convert user-specified clear value to the specified internal format.
+ *
+ * \param ctx             GL context.
+ * \param internalformat  Format to which the data is converted.
+ * \param clearValue      Points to the converted clear value.
+ * \param format          Format of the supplied data.
+ * \param type            Type of the supplied data.
+ * \param data            Data which is to be converted to internalformat.
+ * \param caller          Name of calling function for recording errors.
+ * \return   true if data could be converted, false otherwise.
+ *
+ * \sa glClearBufferData, glClearBufferSubData
+ */
+static bool
+convert_clear_buffer_data(struct gl_context *ctx,
+                          gl_format internalformat,
+                          GLubyte *clearValue, GLenum format, GLenum type,
+                          const GLvoid *data, const char *caller)
+{
+   GLenum internalformatBase = _mesa_get_format_base_format(internalformat);
+
+   if (_mesa_texstore(ctx, 1, internalformatBase, internalformat,
+                      0, &clearValue, 1, 1, 1,
+                      format, type, data, &ctx->Unpack)) {
+      return true;
+   }
+   else {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "%s", caller);
+      return false;
+   }
 }
 
 
@@ -544,6 +639,82 @@ _mesa_buffer_get_subdata( struct gl_context *ctx, GLintptrARB offset,
    if (bufObj->Data && ((GLsizeiptrARB) (size + offset) <= bufObj->Size)) {
       memcpy( data, (GLubyte *) bufObj->Data + offset, size );
    }
+}
+
+
+/**
+ * Clear a subrange of the buffer object with copies of the supplied data.
+ * If data is NULL the buffer is filled with zeros.
+ *
+ * This is the default callback for \c dd_function_table::ClearBufferSubData()
+ * Note that all GL error checking will have been done already.
+ *
+ * \param ctx             GL context.
+ * \param offset          Offset of the first byte to be cleared.
+ * \param size            Size, in bytes, of the to be cleared range.
+ * \param clearValue      Source of the data.
+ * \param clearValueSize  Size, in bytes, of the supplied data.
+ * \param bufObj          Object to be cleared.
+ *
+ * \sa glClearBufferSubData, glClearBufferData and
+ * dd_function_table::ClearBufferSubData.
+ */
+static void
+_mesa_buffer_clear_subdata(struct gl_context *ctx,
+                           GLintptr offset, GLsizeiptr size,
+                           const GLvoid *clearValue,
+                           GLsizeiptr clearValueSize,
+                           struct gl_buffer_object *bufObj)
+{
+   GLsizeiptr i;
+   GLubyte *dest;
+
+   if (_mesa_bufferobj_mapped(bufObj)) {
+      GLubyte *data = malloc(size);
+      GLubyte *dataStart = data;
+      if (data == NULL) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glClearBuffer[Sub]Data");
+         return;
+      }
+
+      if (clearValue == NULL) {
+         /* Clear with zeros, per the spec */
+         memset(data, 0, size);
+      }
+      else {
+         for (i = 0; i < size/clearValueSize; ++i) {
+            memcpy(data, clearValue, clearValueSize);
+            data += clearValueSize;
+         }
+      }
+      ctx->Driver.BufferSubData(ctx, offset, size, dataStart, bufObj);
+      return;
+   }
+
+   ASSERT(ctx->Driver.MapBufferRange);
+   dest = ctx->Driver.MapBufferRange(ctx, offset, size,
+                                     GL_MAP_WRITE_BIT |
+                                     GL_MAP_INVALIDATE_RANGE_BIT,
+                                     bufObj);
+
+   if (!dest) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glClearBuffer[Sub]Data");
+      return;
+   }
+
+   if (clearValue == NULL) {
+      /* Clear with zeros, per the spec */
+      memset(dest, 0, size);
+      ctx->Driver.UnmapBuffer(ctx, bufObj);
+      return;
+   }
+
+   for (i = 0; i < size/clearValueSize; ++i) {
+      memcpy(dest, clearValue, clearValueSize);
+      dest += clearValueSize;
+   }
+
+   ctx->Driver.UnmapBuffer(ctx, bufObj);
 }
 
 
@@ -852,6 +1023,9 @@ _mesa_init_buffer_object_functions(struct dd_function_table *driver)
    driver->BufferSubData = _mesa_buffer_subdata;
    driver->GetBufferSubData = _mesa_buffer_get_subdata;
    driver->UnmapBuffer = _mesa_buffer_unmap;
+
+   /* GL_ARB_clear_buffer_object */
+   driver->ClearBufferSubData = _mesa_buffer_clear_subdata;
 
    /* GL_ARB_map_buffer_range */
    driver->MapBufferRange = _mesa_buffer_map_range;
@@ -1180,6 +1354,111 @@ _mesa_GetBufferSubData(GLenum target, GLintptrARB offset,
 
    ASSERT(ctx->Driver.GetBufferSubData);
    ctx->Driver.GetBufferSubData( ctx, offset, size, data, bufObj );
+}
+
+
+void GLAPIENTRY
+_mesa_ClearBufferData(GLenum target, GLenum internalformat, GLenum format,
+                      GLenum type, const GLvoid* data)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_buffer_object* bufObj;
+   gl_format mesaFormat;
+   GLubyte clearValue[MAX_PIXEL_BYTES];
+   GLsizeiptr clearValueSize;
+
+   bufObj = get_buffer(ctx, "glClearBufferData", target, GL_INVALID_VALUE);
+   if (!bufObj) {
+      return;
+   }
+
+   if (_mesa_bufferobj_mapped(bufObj)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glClearBufferData(buffer currently mapped)");
+      return;
+   }
+
+   mesaFormat = validate_clear_buffer_format(ctx, internalformat,
+                                             format, type,
+                                             "glClearBufferData");
+   if (mesaFormat == MESA_FORMAT_NONE) {
+      return;
+   }
+
+   clearValueSize = _mesa_get_format_bytes(mesaFormat);
+   if (bufObj->Size % clearValueSize != 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glClearBufferData(size is not a multiple of "
+                  "internalformat size)");
+      return;
+   }
+
+   if (data == NULL) {
+      /* clear to zeros, per the spec */
+      ctx->Driver.ClearBufferSubData(ctx, 0, bufObj->Size,
+                                     NULL, 0, bufObj);
+      return;
+   }
+
+   if (!convert_clear_buffer_data(ctx, mesaFormat, clearValue,
+                                  format, type, data, "glClearBufferData")) {
+      return;
+   }
+
+   ctx->Driver.ClearBufferSubData(ctx, 0, bufObj->Size,
+                                  clearValue, clearValueSize, bufObj);
+}
+
+
+void GLAPIENTRY
+_mesa_ClearBufferSubData(GLenum target, GLenum internalformat,
+                         GLintptr offset, GLsizeiptr size,
+                         GLenum format, GLenum type,
+                         const GLvoid* data)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_buffer_object* bufObj;
+   gl_format mesaFormat;
+   GLubyte clearValue[MAX_PIXEL_BYTES];
+   GLsizeiptr clearValueSize;
+
+   bufObj = buffer_object_subdata_range_good(ctx, target, offset, size,
+                                             true, GL_INVALID_VALUE,
+                                             "glClearBufferSubData");
+   if (!bufObj) {
+      return;
+   }
+
+   mesaFormat = validate_clear_buffer_format(ctx, internalformat,
+                                             format, type,
+                                             "glClearBufferSubData");
+   if (mesaFormat == MESA_FORMAT_NONE) {
+      return;
+   }
+
+   clearValueSize = _mesa_get_format_bytes(mesaFormat);
+   if (offset % clearValueSize != 0 || size % clearValueSize != 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glClearBufferSubData(offset or size is not a multiple of "
+                  "internalformat size)");
+      return;
+   }
+
+   if (data == NULL) {
+      /* clear to zeros, per the spec */
+      ctx->Driver.ClearBufferSubData(ctx, offset, size,
+                                     NULL, 0, bufObj);
+      return;
+   }
+
+   if (!convert_clear_buffer_data(ctx, mesaFormat, clearValue,
+                                  format, type, data,
+                                  "glClearBufferSubData")) {
+      return;
+   }
+
+   ctx->Driver.ClearBufferSubData(ctx, offset, size,
+                                  clearValue, clearValueSize, bufObj);
 }
 
 
