@@ -124,11 +124,13 @@ get_buffer_target(struct gl_context *ctx, GLenum target)
  * Get the buffer object bound to the specified target in a GL context.
  * \param ctx  the GL context
  * \param target  the buffer object target to be retrieved.
+ * \param error  the GL error to record if target is illegal.
  * \return   pointer to the buffer object bound to \c target in the
  *           specified context or \c NULL if \c target is invalid.
  */
 static inline struct gl_buffer_object *
-get_buffer(struct gl_context *ctx, const char *func, GLenum target)
+get_buffer(struct gl_context *ctx, const char *func, GLenum target,
+           GLenum error)
 {
    struct gl_buffer_object **bufObj = get_buffer_target(ctx, target);
 
@@ -138,7 +140,7 @@ get_buffer(struct gl_context *ctx, const char *func, GLenum target)
    }
 
    if (!_mesa_is_bufferobj(*bufObj)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "%s(buffer 0)", func);
+      _mesa_error(ctx, error, "%s(no buffer bound)", func);
       return NULL;
    }
 
@@ -225,6 +227,7 @@ bufferobj_range_mapped(const struct gl_buffer_object *obj,
  * \param size    Size, in bytes, of the subdata range.
  * \param mappedRange  If true, checks if an overlapping range is mapped.
  *                     If false, checks if buffer is mapped.
+ * \param errorNoBuffer  Error code if no buffer is bound to target.
  * \param caller  Name of calling function for recording errors.
  * \return   A pointer to the buffer object bound to \c target in the
  *           specified context or \c NULL if any of the parameter or state
@@ -235,7 +238,8 @@ bufferobj_range_mapped(const struct gl_buffer_object *obj,
 static struct gl_buffer_object *
 buffer_object_subdata_range_good(struct gl_context * ctx, GLenum target,
                                  GLintptrARB offset, GLsizeiptrARB size,
-                                 bool mappedRange, const char *caller)
+                                 bool mappedRange, GLenum errorNoBuffer,
+                                 const char *caller)
 {
    struct gl_buffer_object *bufObj;
 
@@ -249,7 +253,7 @@ buffer_object_subdata_range_good(struct gl_context * ctx, GLenum target,
       return NULL;
    }
 
-   bufObj = get_buffer(ctx, caller, target);
+   bufObj = get_buffer(ctx, caller, target, errorNoBuffer);
    if (!bufObj)
       return NULL;
 
@@ -1103,7 +1107,7 @@ _mesa_BufferData(GLenum target, GLsizeiptrARB size,
       return;
    }
 
-   bufObj = get_buffer(ctx, "glBufferDataARB", target);
+   bufObj = get_buffer(ctx, "glBufferDataARB", target, GL_INVALID_OPERATION);
    if (!bufObj)
       return;
 
@@ -1142,7 +1146,8 @@ _mesa_BufferSubData(GLenum target, GLintptrARB offset,
    struct gl_buffer_object *bufObj;
 
    bufObj = buffer_object_subdata_range_good( ctx, target, offset, size,
-                                              false, "glBufferSubDataARB");
+                                              false, GL_INVALID_OPERATION,
+                                              "glBufferSubDataARB" );
    if (!bufObj) {
       /* error already recorded */
       return;
@@ -1166,7 +1171,8 @@ _mesa_GetBufferSubData(GLenum target, GLintptrARB offset,
    struct gl_buffer_object *bufObj;
 
    bufObj = buffer_object_subdata_range_good(ctx, target, offset, size,
-                                             false, "glGetBufferSubDataARB");
+                                             false, GL_INVALID_OPERATION,
+                                             "glGetBufferSubDataARB");
    if (!bufObj) {
       /* error already recorded */
       return;
@@ -1211,7 +1217,7 @@ _mesa_MapBuffer(GLenum target, GLenum access)
       return NULL;
    }
 
-   bufObj = get_buffer(ctx, "glMapBufferARB", target);
+   bufObj = get_buffer(ctx, "glMapBufferARB", target, GL_INVALID_OPERATION);
    if (!bufObj)
       return NULL;
 
@@ -1280,7 +1286,7 @@ _mesa_UnmapBuffer(GLenum target)
    GLboolean status = GL_TRUE;
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   bufObj = get_buffer(ctx, "glUnmapBufferARB", target);
+   bufObj = get_buffer(ctx, "glUnmapBufferARB", target, GL_INVALID_OPERATION);
    if (!bufObj)
       return GL_FALSE;
 
@@ -1341,7 +1347,8 @@ _mesa_GetBufferParameteriv(GLenum target, GLenum pname, GLint *params)
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
 
-   bufObj = get_buffer(ctx, "glGetBufferParameterivARB", target);
+   bufObj = get_buffer(ctx, "glGetBufferParameterivARB", target,
+                       GL_INVALID_OPERATION);
    if (!bufObj)
       return;
 
@@ -1394,7 +1401,8 @@ _mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params)
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
 
-   bufObj = get_buffer(ctx, "glGetBufferParameteri64v", target);
+   bufObj = get_buffer(ctx, "glGetBufferParameteri64v", target,
+                       GL_INVALID_OPERATION);
    if (!bufObj)
       return;
 
@@ -1447,7 +1455,8 @@ _mesa_GetBufferPointerv(GLenum target, GLenum pname, GLvoid **params)
       return;
    }
 
-   bufObj = get_buffer(ctx, "glGetBufferPointervARB", target);
+   bufObj = get_buffer(ctx, "glGetBufferPointervARB", target,
+                       GL_INVALID_OPERATION);
    if (!bufObj)
       return;
 
@@ -1463,11 +1472,13 @@ _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *src, *dst;
 
-   src = get_buffer(ctx, "glCopyBufferSubData", readTarget);
+   src = get_buffer(ctx, "glCopyBufferSubData", readTarget,
+                    GL_INVALID_OPERATION);
    if (!src)
       return;
 
-   dst = get_buffer(ctx, "glCopyBufferSubData", writeTarget);
+   dst = get_buffer(ctx, "glCopyBufferSubData", writeTarget,
+                    GL_INVALID_OPERATION);
    if (!dst)
       return;
 
@@ -1611,7 +1622,7 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
       return NULL;
    }
 
-   bufObj = get_buffer(ctx, "glMapBufferRange", target);
+   bufObj = get_buffer(ctx, "glMapBufferRange", target, GL_INVALID_OPERATION);
    if (!bufObj)
       return NULL;
 
@@ -1690,7 +1701,8 @@ _mesa_FlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length)
       return;
    }
 
-   bufObj = get_buffer(ctx, "glFlushMappedBufferRange", target);
+   bufObj = get_buffer(ctx, "glFlushMappedBufferRange", target,
+                       GL_INVALID_OPERATION);
    if (!bufObj)
       return;
 
