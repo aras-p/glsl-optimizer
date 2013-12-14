@@ -350,11 +350,10 @@ struct gl_meta_state
    struct drawtex_state DrawTex;  /**< For _mesa_meta_DrawTex() */
 };
 
-static void meta_glsl_blit_cleanup(struct gl_context *ctx, struct blit_state *blit);
-static void cleanup_temp_texture(struct gl_context *ctx, struct temp_texture *tex);
-static void meta_glsl_clear_cleanup(struct gl_context *ctx, struct clear_state *clear);
-static void meta_glsl_generate_mipmap_cleanup(struct gl_context *ctx,
-                                              struct gen_mipmap_state *mipmap);
+static void meta_glsl_blit_cleanup(struct blit_state *blit);
+static void cleanup_temp_texture(struct temp_texture *tex);
+static void meta_glsl_clear_cleanup(struct clear_state *clear);
+static void meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap);
 static void meta_decompress_cleanup(struct decompress_state *decompress);
 static void meta_drawpix_cleanup(struct drawpix_state *drawpix);
 
@@ -447,10 +446,10 @@ _mesa_meta_free(struct gl_context *ctx)
 {
    GET_CURRENT_CONTEXT(old_context);
    _mesa_make_current(ctx, NULL, NULL);
-   meta_glsl_blit_cleanup(ctx, &ctx->Meta->Blit);
-   meta_glsl_clear_cleanup(ctx, &ctx->Meta->Clear);
-   meta_glsl_generate_mipmap_cleanup(ctx, &ctx->Meta->Mipmap);
-   cleanup_temp_texture(ctx, &ctx->Meta->TempTex);
+   meta_glsl_blit_cleanup(&ctx->Meta->Blit);
+   meta_glsl_clear_cleanup(&ctx->Meta->Clear);
+   meta_glsl_generate_mipmap_cleanup(&ctx->Meta->Mipmap);
+   cleanup_temp_texture(&ctx->Meta->TempTex);
    meta_decompress_cleanup(&ctx->Meta->Decompress);
    meta_drawpix_cleanup(&ctx->Meta->DrawPix);
    if (old_context)
@@ -1212,7 +1211,7 @@ init_temp_texture(struct gl_context *ctx, struct temp_texture *tex)
 }
 
 static void
-cleanup_temp_texture(struct gl_context *ctx, struct temp_texture *tex)
+cleanup_temp_texture(struct temp_texture *tex)
 {
    if (!tex->TexObj)
      return;
@@ -1457,8 +1456,7 @@ init_blit_depth_pixels(struct gl_context *ctx)
 }
 
 static void
-setup_ff_blit_framebuffer(struct gl_context *ctx,
-                          struct blit_state *blit)
+setup_ff_blit_framebuffer(struct blit_state *blit)
 {
    struct vertex {
       GLfloat x, y, s, t;
@@ -1686,7 +1684,7 @@ blitframebuffer_texture(struct gl_context *ctx,
                _mesa_UseProgram(blit->RectShaderProg);
          }
          else {
-            setup_ff_blit_framebuffer(ctx, &ctx->Meta->Blit);
+            setup_ff_blit_framebuffer(&ctx->Meta->Blit);
          }
 
          _mesa_BindVertexArray(blit->ArrayObj);
@@ -1871,7 +1869,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
          _mesa_UseProgram(blit->RectShaderProg);
    }
    else {
-      setup_ff_blit_framebuffer(ctx, blit);
+      setup_ff_blit_framebuffer(blit);
    }
 
    _mesa_BindVertexArray(blit->ArrayObj);
@@ -2002,7 +2000,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
 }
 
 static void
-meta_glsl_blit_cleanup(struct gl_context *ctx, struct blit_state *blit)
+meta_glsl_blit_cleanup(struct blit_state *blit)
 {
    if (blit->ArrayObj) {
       _mesa_DeleteVertexArrays(1, &blit->ArrayObj);
@@ -2291,7 +2289,7 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
 }
 
 static void
-meta_glsl_clear_cleanup(struct gl_context *ctx, struct clear_state *clear)
+meta_glsl_clear_cleanup(struct clear_state *clear)
 {
    if (clear->ArrayObj == 0)
       return;
@@ -3382,8 +3380,7 @@ setup_texture_coords(GLenum faceTarget,
 
 
 static void
-setup_ff_generate_mipmap(struct gl_context *ctx,
-                         struct gen_mipmap_state *mipmap)
+setup_ff_generate_mipmap(struct gen_mipmap_state *mipmap)
 {
    struct vertex {
       GLfloat x, y, tex[3];
@@ -3573,8 +3570,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
 
 
 static void
-meta_glsl_generate_mipmap_cleanup(struct gl_context *ctx,
-                                 struct gen_mipmap_state *mipmap)
+meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap)
 {
    if (mipmap->ArrayObj == 0)
       return;
@@ -3651,7 +3647,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       _mesa_UseProgram(mipmap->ShaderProg);
    }
    else {
-      setup_ff_generate_mipmap(ctx, mipmap);
+      setup_ff_generate_mipmap(mipmap);
       _mesa_set_enable(ctx, target, GL_TRUE);
    }
 
