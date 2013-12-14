@@ -3026,8 +3026,8 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
       /* one-time setup */
 
       /* create vertex array object */
-      _mesa_GenVertexArraysAPPLE(1, &bitmap->ArrayObj);
-      _mesa_BindVertexArrayAPPLE(bitmap->ArrayObj);
+      _mesa_GenVertexArrays(1, &bitmap->ArrayObj);
+      _mesa_BindVertexArray(bitmap->ArrayObj);
 
       /* create vertex array buffer */
       _mesa_GenBuffers(1, &bitmap->VBO);
@@ -3392,8 +3392,8 @@ setup_ff_generate_mipmap(struct gl_context *ctx,
    if (mipmap->ArrayObj == 0) {
       /* one-time setup */
       /* create vertex array object */
-      _mesa_GenVertexArraysAPPLE(1, &mipmap->ArrayObj);
-      _mesa_BindVertexArrayAPPLE(mipmap->ArrayObj);
+      _mesa_GenVertexArrays(1, &mipmap->ArrayObj);
+      _mesa_BindVertexArray(mipmap->ArrayObj);
 
       /* create vertex array buffer */
       _mesa_GenBuffers(1, &mipmap->VBO);
