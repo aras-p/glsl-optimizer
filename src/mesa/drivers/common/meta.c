@@ -3249,16 +3249,23 @@ setup_texture_coords(GLenum faceTarget,
                      GLint width,
                      GLint height,
                      GLint depth,
-                     GLfloat coords0[3],
-                     GLfloat coords1[3],
-                     GLfloat coords2[3],
-                     GLfloat coords3[3])
+                     GLfloat coords0[4],
+                     GLfloat coords1[4],
+                     GLfloat coords2[4],
+                     GLfloat coords3[4])
 {
    static const GLfloat st[4][2] = {
       {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
    };
    GLuint i;
    GLfloat r;
+
+   /* Currently all texture targets want the W component to be 1.0.
+    */
+   coords0[3] = 1.0F;
+   coords1[3] = 1.0F;
+   coords2[3] = 1.0F;
+   coords3[3] = 1.0F;
 
    switch (faceTarget) {
    case GL_TEXTURE_1D:
@@ -3396,7 +3403,7 @@ static void
 setup_ff_generate_mipmap(struct gen_mipmap_state *mipmap)
 {
    struct vertex {
-      GLfloat x, y, tex[3];
+      GLfloat x, y, z, tex[4];
    };
 
    if (mipmap->VAO == 0) {
@@ -3473,7 +3480,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
                            GLenum target)
 {
    struct vertex {
-      GLfloat x, y, tex[3];
+      GLfloat x, y, z, tex[4];
    };
    struct glsl_sampler *sampler;
    const char *vs_source;
@@ -3619,7 +3626,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 {
    struct gen_mipmap_state *mipmap = &ctx->Meta->Mipmap;
    struct vertex {
-      GLfloat x, y, tex[3];
+      GLfloat x, y, z, tex[4];
    };
    struct vertex verts[4];
    const GLuint baseLevel = texObj->BaseLevel;
@@ -3708,6 +3715,9 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
    else
       assert(!genMipmapSave);
+
+   /* Silence valgrind warnings about reading uninitialized stack. */
+   memset(verts, 0, sizeof(verts));
 
    /* Setup texture coordinates */
    setup_texture_coords(faceTarget,
@@ -4018,7 +4028,7 @@ decompress_texture_image(struct gl_context *ctx,
    const GLenum target = texObj->Target;
    GLenum faceTarget;
    struct vertex {
-      GLfloat x, y, tex[3];
+      GLfloat x, y, z, tex[4];
    };
    struct vertex verts[4];
    GLuint fboDrawSave, fboReadSave;
@@ -4126,6 +4136,9 @@ decompress_texture_image(struct gl_context *ctx,
    } else {
       _mesa_BindSampler(ctx->Texture.CurrentUnit, decompress->Sampler);
    }
+
+   /* Silence valgrind warnings about reading uninitialized stack. */
+   memset(verts, 0, sizeof(verts));
 
    setup_texture_coords(faceTarget, slice, width, height, depth,
                         verts[0].tex,
