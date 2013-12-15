@@ -146,6 +146,7 @@ src_vector(struct i915_fragment_program *p,
    case PROGRAM_OUTPUT:
       switch (source->Index) {
       case FRAG_RESULT_COLOR:
+      case FRAG_RESULT_DATA0:
 	 src = UREG(REG_TYPE_OC, 0);
 	 break;
       case FRAG_RESULT_DEPTH:
