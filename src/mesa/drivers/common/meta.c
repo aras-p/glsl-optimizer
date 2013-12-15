@@ -353,6 +353,7 @@ struct gl_meta_state
 
 struct vertex {
    GLfloat x, y, z, tex[4];
+   GLfloat r, g, b, a;
 };
 
 static void meta_glsl_blit_cleanup(struct blit_state *blit);
@@ -451,9 +452,6 @@ link_program_with_debug(struct gl_context *ctx, GLuint program)
  * \param color_size  Number of components for attribute 1 / primary color.
  *                  If this is 0, attribute 1 will not be set or enabled.
  *
- * \note Either \c texcoord_size or \c color_size \b must be zero!  The same
- * data location is used for both values, so only one can be active at a time.
- *
  * \note If \c use_generic_attributes is \c true, \c color_size must be zero.
  * Use \c texcoord_size instead.
  */
@@ -464,7 +462,6 @@ setup_vertex_objects(GLuint *VAO, GLuint *VBO, bool use_generic_attributes,
 {
    if (*VAO == 0) {
       assert(*VBO == 0);
-      assert(color_size == 0 || texcoord_size == 0);
 
       /* create vertex array object */
       _mesa_GenVertexArrays(1, VAO);
@@ -502,7 +499,7 @@ setup_vertex_objects(GLuint *VAO, GLuint *VBO, bool use_generic_attributes,
 
          if (color_size > 0) {
             _mesa_ColorPointer(color_size, GL_FLOAT,
-                               sizeof(struct vertex), OFFSET(tex));
+                               sizeof(struct vertex), OFFSET(r));
             _mesa_EnableClientState(GL_COLOR_ARRAY);
          }
       }
@@ -2141,10 +2138,10 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
 
       /* vertex colors */
       for (i = 0; i < 4; i++) {
-         verts[i].tex[0] = ctx->Color.ClearColor.f[0];
-         verts[i].tex[1] = ctx->Color.ClearColor.f[1];
-         verts[i].tex[2] = ctx->Color.ClearColor.f[2];
-         verts[i].tex[3] = ctx->Color.ClearColor.f[3];
+         verts[i].r = ctx->Color.ClearColor.f[0];
+         verts[i].g = ctx->Color.ClearColor.f[1];
+         verts[i].b = ctx->Color.ClearColor.f[2];
+         verts[i].a = ctx->Color.ClearColor.f[3];
       }
 
       /* upload new vertex data */
