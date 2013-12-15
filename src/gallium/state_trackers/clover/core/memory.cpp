@@ -31,7 +31,7 @@ memory_obj::memory_obj(context &ctx, cl_mem_flags flags,
    ctx(ctx), _flags(flags),
    _size(size), _host_ptr(host_ptr),
    _destroy_notify([]{}) {
-   if (flags & CL_MEM_COPY_HOST_PTR)
+   if (flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR))
       data.append((char *)host_ptr, size);
 }
 
