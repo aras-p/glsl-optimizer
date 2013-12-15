@@ -2282,7 +2282,7 @@ fs_visitor::register_coalesce()
    int reg_to_offset[MAX_SAMPLER_MESSAGE_SIZE];
    fs_inst *mov[MAX_SAMPLER_MESSAGE_SIZE];
 
-   foreach_list_safe(node, &this->instructions) {
+   foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
@@ -2305,8 +2305,49 @@ fs_visitor::register_coalesce()
       int var_to = live_intervals->var_from_reg(&inst->dst);
 
       if (live_intervals->vars_interfere(var_from, var_to) &&
-          !inst->dst.equals(inst->src[0]))
-         continue;
+          !inst->dst.equals(inst->src[0])) {
+
+         /* We know that the live ranges of A (var_from) and B (var_to)
+          * interfere because of the ->vars_interfere() call above. If the end
+          * of B's live range is after the end of A's range, then we know two
+          * things:
+          *  - the start of B's live range must be in A's live range (since we
+          *    already know the two ranges interfere, this is the only remaining
+          *    possibility)
+          *  - the interference isn't of the form we're looking for (where B is
+          *    entirely inside A)
+          */
+         if (live_intervals->end[var_to] > live_intervals->end[var_from])
+            continue;
+
+         bool overwritten = false;
+         int scan_ip = -1;
+
+         foreach_list(n, &this->instructions) {
+            fs_inst *scan_inst = (fs_inst *)n;
+            scan_ip++;
+
+            if (scan_inst->is_control_flow()) {
+               overwritten = true;
+               break;
+            }
+
+            if (scan_ip <= live_intervals->start[var_to])
+               continue;
+
+            if (scan_ip > live_intervals->end[var_to])
+               break;
+
+            if (scan_inst->dst.equals(inst->dst) ||
+                scan_inst->dst.equals(inst->src[0])) {
+               overwritten = true;
+               break;
+            }
+         }
+
+         if (overwritten)
+            continue;
+      }
 
       if (reg_from != inst->src[0].reg) {
          reg_from = inst->src[0].reg;
@@ -2331,9 +2372,18 @@ fs_visitor::register_coalesce()
       if (channels_remaining)
          continue;
 
+      bool removed = false;
       for (int i = 0; i < src_size; i++) {
-         if (mov[i])
-            mov[i]->remove();
+         if (mov[i]) {
+            removed = true;
+
+            mov[i]->opcode = BRW_OPCODE_NOP;
+            mov[i]->conditional_mod = BRW_CONDITIONAL_NONE;
+            mov[i]->dst = reg_undef;
+            mov[i]->src[0] = reg_undef;
+            mov[i]->src[1] = reg_undef;
+            mov[i]->src[2] = reg_undef;
+         }
       }
 
       foreach_list(node, &this->instructions) {
@@ -2355,10 +2405,25 @@ fs_visitor::register_coalesce()
                      scan_inst->src[j].reg_offset = reg_to_offset[i];
                   }
                }
-
-               progress = true;
             }
          }
+      }
+
+      if (removed) {
+         live_intervals->start[var_to] = MIN2(live_intervals->start[var_to],
+                                              live_intervals->start[var_from]);
+         live_intervals->end[var_to] = MAX2(live_intervals->end[var_to],
+                                            live_intervals->end[var_from]);
+         reg_from = -1;
+      }
+   }
+
+   foreach_list_safe(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
+
+      if (inst->opcode == BRW_OPCODE_NOP) {
+         inst->remove();
+         progress = true;
       }
    }
 
