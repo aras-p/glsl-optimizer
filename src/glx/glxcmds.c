@@ -2095,16 +2095,14 @@ __glXGetSyncValuesOML(Display * dpy, GLXDrawable drawable,
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 _X_HIDDEN GLboolean
-__glxGetMscRate(__GLXDRIdrawable *glxDraw,
+__glxGetMscRate(struct glx_screen *psc,
 		int32_t * numerator, int32_t * denominator)
 {
 #ifdef XF86VIDMODE
-   struct glx_screen *psc;
    XF86VidModeModeLine mode_line;
    int dot_clock;
    int i;
 
-   psc = glxDraw->psc;
    if (XF86VidModeQueryVersion(psc->dpy, &i, &i) &&
        XF86VidModeGetModeLine(psc->dpy, psc->scr, &dot_clock, &mode_line)) {
       unsigned n = dot_clock * 1000;
@@ -2180,7 +2178,7 @@ __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
    if (draw == NULL)
       return False;
 
-   return __glxGetMscRate(draw, numerator, denominator);
+   return __glxGetMscRate(draw->psc, numerator, denominator);
 #else
    (void) dpy;
    (void) drawable;

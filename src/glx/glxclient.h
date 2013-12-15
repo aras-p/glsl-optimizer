@@ -781,7 +781,7 @@ extern GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 extern GLboolean
-__glxGetMscRate(__GLXDRIdrawable *glxDraw,
+__glxGetMscRate(struct glx_screen *psc,
 		int32_t * numerator, int32_t * denominator);
 
 /* So that dri2.c:DRI2WireToEvent() can access

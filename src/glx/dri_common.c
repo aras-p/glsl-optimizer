@@ -223,7 +223,7 @@ __driGetMSCRate(__DRIdrawable *draw,
 {
    __GLXDRIdrawable *glxDraw = loaderPrivate;
 
-   return __glxGetMscRate(glxDraw, numerator, denominator);
+   return __glxGetMscRate(glxDraw->psc, numerator, denominator);
 }
 
 _X_HIDDEN const __DRIsystemTimeExtension systemTimeExtension = {
