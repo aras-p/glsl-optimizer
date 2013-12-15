@@ -2946,13 +2946,15 @@ fs_visitor::dump_instructions()
 {
    calculate_register_pressure();
 
-   int ip = 0;
+   int ip = 0, max_pressure = 0;
    foreach_list(node, &this->instructions) {
       backend_instruction *inst = (backend_instruction *)node;
+      max_pressure = MAX2(max_pressure, regs_live_at_ip[ip]);
       printf("{%3d} %4d: ", regs_live_at_ip[ip], ip);
       dump_instruction(inst);
       ++ip;
    }
+   printf("Maximum %3d registers live at once.\n", max_pressure);
 }
 
 void
