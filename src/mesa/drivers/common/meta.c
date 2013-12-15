@@ -2942,9 +2942,6 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
    const GLenum texIntFormat = GL_ALPHA;
    const struct gl_pixelstore_attrib unpackSave = *unpack;
    GLubyte fg, bg;
-   struct vertex {
-      GLfloat x, y, z, s, t, r, g, b, a;
-   };
    struct vertex verts[4];
    GLboolean newTex;
    GLubyte *bitmap8;
@@ -2978,33 +2975,12 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
                           MESA_META_VERTEX |
                           MESA_META_VIEWPORT));
 
-   if (bitmap->VAO == 0) {
-      /* one-time setup */
-
-      /* create vertex array object */
-      _mesa_GenVertexArrays(1, &bitmap->VAO);
-      _mesa_BindVertexArray(bitmap->VAO);
-
-      /* create vertex array buffer */
-      _mesa_GenBuffers(1, &bitmap->VBO);
-      _mesa_BindBuffer(GL_ARRAY_BUFFER_ARB, bitmap->VBO);
-      _mesa_BufferData(GL_ARRAY_BUFFER_ARB, sizeof(verts),
-                          NULL, GL_DYNAMIC_DRAW_ARB);
-
-      /* setup vertex arrays */
-      _mesa_VertexPointer(3, GL_FLOAT, sizeof(struct vertex), OFFSET(x));
-      _mesa_TexCoordPointer(2, GL_FLOAT, sizeof(struct vertex), OFFSET(s));
-      _mesa_ColorPointer(4, GL_FLOAT, sizeof(struct vertex), OFFSET(r));
-      _mesa_EnableClientState(GL_VERTEX_ARRAY);
-      _mesa_EnableClientState(GL_TEXTURE_COORD_ARRAY);
-      _mesa_EnableClientState(GL_COLOR_ARRAY);
-   }
-   else {
-      _mesa_BindVertexArray(bitmap->VAO);
-      _mesa_BindBuffer(GL_ARRAY_BUFFER_ARB, bitmap->VBO);
-   }
+   setup_vertex_objects(&bitmap->VAO, &bitmap->VBO, false, 3, 2, 4);
 
    newTex = alloc_texture(tex, width, height, texIntFormat);
+
+   /* Silence valgrind warnings about reading uninitialized stack. */
+   memset(verts, 0, sizeof(verts));
 
    /* vertex positions, texcoords, colors (after texture allocation!) */
    {
@@ -3018,23 +2994,23 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
       verts[0].x = x0;
       verts[0].y = y0;
       verts[0].z = z;
-      verts[0].s = 0.0F;
-      verts[0].t = 0.0F;
+      verts[0].tex[0] = 0.0F;
+      verts[0].tex[1] = 0.0F;
       verts[1].x = x1;
       verts[1].y = y0;
       verts[1].z = z;
-      verts[1].s = tex->Sright;
-      verts[1].t = 0.0F;
+      verts[1].tex[0] = tex->Sright;
+      verts[1].tex[1] = 0.0F;
       verts[2].x = x1;
       verts[2].y = y1;
       verts[2].z = z;
-      verts[2].s = tex->Sright;
-      verts[2].t = tex->Ttop;
+      verts[2].tex[0] = tex->Sright;
+      verts[2].tex[1] = tex->Ttop;
       verts[3].x = x0;
       verts[3].y = y1;
       verts[3].z = z;
-      verts[3].s = 0.0F;
-      verts[3].t = tex->Ttop;
+      verts[3].tex[0] = 0.0F;
+      verts[3].tex[1] = tex->Ttop;
 
       for (i = 0; i < 4; i++) {
          verts[i].r = ctx->Current.RasterColor[0];
