@@ -58,9 +58,9 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    : ctx(_ctx), switch_state()
 {
    switch (target) {
-   case GL_VERTEX_SHADER:   this->target = vertex_shader; break;
-   case GL_FRAGMENT_SHADER: this->target = fragment_shader; break;
-   case GL_GEOMETRY_SHADER: this->target = geometry_shader; break;
+   case GL_VERTEX_SHADER:   this->target = MESA_SHADER_VERTEX; break;
+   case GL_FRAGMENT_SHADER: this->target = MESA_SHADER_FRAGMENT; break;
+   case GL_GEOMETRY_SHADER: this->target = MESA_SHADER_GEOMETRY; break;
    }
 
    this->scanner = NULL;
@@ -367,12 +367,12 @@ _mesa_glsl_shader_target_name(GLenum type)
  * our internal enum into short stage names.
  */
 const char *
-_mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
+_mesa_glsl_shader_target_name(gl_shader_type target)
 {
    switch (target) {
-   case vertex_shader:   return "vertex";
-   case fragment_shader: return "fragment";
-   case geometry_shader: return "geometry";
+   case MESA_SHADER_VERTEX:   return "vertex";
+   case MESA_SHADER_FRAGMENT: return "fragment";
+   case MESA_SHADER_GEOMETRY: return "geometry";
    }
 
    assert(!"Should not get here.");

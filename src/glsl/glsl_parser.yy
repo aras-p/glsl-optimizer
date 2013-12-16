@@ -2219,11 +2219,11 @@ basic_interface_block:
        * "It is illegal to have an input block in a vertex shader
        *  or an output block in a fragment shader"
        */
-      if ((state->target == vertex_shader) && $1.flags.q.in) {
+      if ((state->target == MESA_SHADER_VERTEX) && $1.flags.q.in) {
          _mesa_glsl_error(& @1, state,
                           "`in' interface block is not allowed for "
                           "a vertex shader");
-      } else if ((state->target == fragment_shader) && $1.flags.q.out) {
+      } else if ((state->target == MESA_SHADER_FRAGMENT) && $1.flags.q.out) {
          _mesa_glsl_error(& @1, state,
                           "`out' interface block is not allowed for "
                           "a fragment shader");
@@ -2377,7 +2377,7 @@ layout_defaults:
    {
       void *ctx = state;
       $$ = NULL;
-      if (state->target != geometry_shader) {
+      if (state->target != MESA_SHADER_GEOMETRY) {
          _mesa_glsl_error(& @1, state,
                           "input layout qualifiers only valid in "
                           "geometry shaders");
@@ -2405,7 +2405,7 @@ layout_defaults:
 
    | layout_qualifier OUT_TOK ';'
    {
-      if (state->target != geometry_shader) {
+      if (state->target != MESA_SHADER_GEOMETRY) {
          _mesa_glsl_error(& @1, state,
                           "out layout qualifiers only valid in "
                           "geometry shaders");
