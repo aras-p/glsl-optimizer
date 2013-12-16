@@ -233,6 +233,7 @@ struct sampler_table {
    struct glsl_sampler sampler_1d;
    struct glsl_sampler sampler_2d;
    struct glsl_sampler sampler_3d;
+   struct glsl_sampler sampler_rect;
    struct glsl_sampler sampler_cubemap;
    struct glsl_sampler sampler_1d_array;
    struct glsl_sampler sampler_2d_array;
@@ -3434,6 +3435,11 @@ setup_texture_sampler(GLenum target, struct sampler_table *table)
       table->sampler_2d.func = "texture2D";
       table->sampler_2d.texcoords = "texCoords.xy";
       return &table->sampler_2d;
+   case GL_TEXTURE_RECTANGLE:
+      table->sampler_rect.type = "sampler2DRect";
+      table->sampler_rect.func = "texture2DRect";
+      table->sampler_rect.texcoords = "texCoords.xy";
+      return &table->sampler_rect;
    case GL_TEXTURE_3D:
       /* Code for mipmap generation with 3D textures is not used yet.
        * It's a sw fallback.
@@ -3470,6 +3476,7 @@ sampler_table_cleanup(struct sampler_table *table)
    _mesa_DeleteObjectARB(table->sampler_1d.shader_prog);
    _mesa_DeleteObjectARB(table->sampler_2d.shader_prog);
    _mesa_DeleteObjectARB(table->sampler_3d.shader_prog);
+   _mesa_DeleteObjectARB(table->sampler_rect.shader_prog);
    _mesa_DeleteObjectARB(table->sampler_cubemap.shader_prog);
    _mesa_DeleteObjectARB(table->sampler_1d_array.shader_prog);
    _mesa_DeleteObjectARB(table->sampler_2d_array.shader_prog);
@@ -3477,6 +3484,7 @@ sampler_table_cleanup(struct sampler_table *table)
    table->sampler_1d.shader_prog = 0;
    table->sampler_2d.shader_prog = 0;
    table->sampler_3d.shader_prog = 0;
+   table->sampler_rect.shader_prog = 0;
    table->sampler_cubemap.shader_prog = 0;
    table->sampler_1d_array.shader_prog = 0;
    table->sampler_2d_array.shader_prog = 0;
