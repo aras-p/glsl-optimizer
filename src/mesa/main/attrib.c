@@ -182,7 +182,7 @@ struct texture_state
  * Allocate new attribute node of given type/kind.  Attach payload data.
  * Insert it into the linked list named by 'head'.
  */
-static void
+static bool
 save_attrib_data(struct gl_attrib_node **head,
                  GLbitfield kind, void *payload)
 {
@@ -196,7 +196,9 @@ save_attrib_data(struct gl_attrib_node **head,
    }
    else {
       /* out of memory! */
+      return false;
    }
+   return true;
 }
 
 
