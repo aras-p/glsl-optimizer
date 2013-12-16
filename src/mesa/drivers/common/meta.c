@@ -215,6 +215,28 @@ struct temp_texture
    GLfloat Sright, Ttop;  /**< right, top texcoords */
 };
 
+/**
+ * State for GLSL texture sampler which is used to generate fragment
+ * shader in _mesa_meta_generate_mipmap().
+ */
+struct glsl_sampler {
+   const char *type;
+   const char *func;
+   const char *texcoords;
+   GLuint shader_prog;
+};
+
+/**
+ * Table of all sampler types and shaders for accessing them.
+ */
+struct sampler_table {
+   struct glsl_sampler sampler_1d;
+   struct glsl_sampler sampler_2d;
+   struct glsl_sampler sampler_3d;
+   struct glsl_sampler sampler_cubemap;
+   struct glsl_sampler sampler_1d_array;
+   struct glsl_sampler sampler_2d_array;
+};
 
 /**
  * State for glBlitFramebufer()
@@ -281,17 +303,6 @@ struct bitmap_state
 };
 
 /**
- * State for GLSL texture sampler which is used to generate fragment
- * shader in _mesa_meta_generate_mipmap().
- */
-struct glsl_sampler {
-   const char *type;
-   const char *func;
-   const char *texcoords;
-   GLuint shader_prog;
-};
-
-/**
  * State for _mesa_meta_generate_mipmap()
  */
 struct gen_mipmap_state
@@ -301,12 +312,8 @@ struct gen_mipmap_state
    GLuint FBO;
    GLuint Sampler;
    GLuint ShaderProg;
-   struct glsl_sampler sampler_1d;
-   struct glsl_sampler sampler_2d;
-   struct glsl_sampler sampler_3d;
-   struct glsl_sampler sampler_cubemap;
-   struct glsl_sampler sampler_1d_array;
-   struct glsl_sampler sampler_2d_array;
+
+   struct sampler_table samplers;
 };
 
 /**
@@ -356,12 +363,16 @@ struct vertex {
    GLfloat r, g, b, a;
 };
 
+static struct glsl_sampler *
+setup_texture_sampler(GLenum target, struct sampler_table *table);
+
 static void meta_glsl_blit_cleanup(struct blit_state *blit);
 static void cleanup_temp_texture(struct temp_texture *tex);
 static void meta_glsl_clear_cleanup(struct clear_state *clear);
 static void meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap);
 static void meta_decompress_cleanup(struct decompress_state *decompress);
 static void meta_drawpix_cleanup(struct drawpix_state *drawpix);
+static void sampler_table_cleanup(struct sampler_table *table);
 
 static GLuint
 compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB *source)
@@ -3320,42 +3331,42 @@ setup_texture_coords(GLenum faceTarget,
 }
 
 static struct glsl_sampler *
-setup_texture_sampler(GLenum target, struct gen_mipmap_state *mipmap)
+setup_texture_sampler(GLenum target, struct sampler_table *table)
 {
    switch(target) {
    case GL_TEXTURE_1D:
-      mipmap->sampler_1d.type = "sampler1D";
-      mipmap->sampler_1d.func = "texture1D";
-      mipmap->sampler_1d.texcoords = "texCoords.x";
-      return &mipmap->sampler_1d;
+      table->sampler_1d.type = "sampler1D";
+      table->sampler_1d.func = "texture1D";
+      table->sampler_1d.texcoords = "texCoords.x";
+      return &table->sampler_1d;
    case GL_TEXTURE_2D:
-      mipmap->sampler_2d.type = "sampler2D";
-      mipmap->sampler_2d.func = "texture2D";
-      mipmap->sampler_2d.texcoords = "texCoords.xy";
-      return &mipmap->sampler_2d;
+      table->sampler_2d.type = "sampler2D";
+      table->sampler_2d.func = "texture2D";
+      table->sampler_2d.texcoords = "texCoords.xy";
+      return &table->sampler_2d;
    case GL_TEXTURE_3D:
       /* Code for mipmap generation with 3D textures is not used yet.
        * It's a sw fallback.
        */
-      mipmap->sampler_3d.type = "sampler3D";
-      mipmap->sampler_3d.func = "texture3D";
-      mipmap->sampler_3d.texcoords = "texCoords";
-      return &mipmap->sampler_3d;
+      table->sampler_3d.type = "sampler3D";
+      table->sampler_3d.func = "texture3D";
+      table->sampler_3d.texcoords = "texCoords";
+      return &table->sampler_3d;
    case GL_TEXTURE_CUBE_MAP:
-      mipmap->sampler_cubemap.type = "samplerCube";
-      mipmap->sampler_cubemap.func = "textureCube";
-      mipmap->sampler_cubemap.texcoords = "texCoords";
-      return &mipmap->sampler_cubemap;
+      table->sampler_cubemap.type = "samplerCube";
+      table->sampler_cubemap.func = "textureCube";
+      table->sampler_cubemap.texcoords = "texCoords";
+      return &table->sampler_cubemap;
    case GL_TEXTURE_1D_ARRAY:
-      mipmap->sampler_1d_array.type = "sampler1DArray";
-      mipmap->sampler_1d_array.func = "texture1DArray";
-      mipmap->sampler_1d_array.texcoords = "texCoords.xy";
-      return &mipmap->sampler_1d_array;
+      table->sampler_1d_array.type = "sampler1DArray";
+      table->sampler_1d_array.func = "texture1DArray";
+      table->sampler_1d_array.texcoords = "texCoords.xy";
+      return &table->sampler_1d_array;
    case GL_TEXTURE_2D_ARRAY:
-      mipmap->sampler_2d_array.type = "sampler2DArray";
-      mipmap->sampler_2d_array.func = "texture2DArray";
-      mipmap->sampler_2d_array.texcoords = "texCoords";
-      return &mipmap->sampler_2d_array;
+      table->sampler_2d_array.type = "sampler2DArray";
+      table->sampler_2d_array.func = "texture2DArray";
+      table->sampler_2d_array.texcoords = "texCoords";
+      return &table->sampler_2d_array;
    default:
       _mesa_problem(NULL, "Unexpected texture target 0x%x in"
                     " setup_texture_sampler()\n", target);
@@ -3363,6 +3374,23 @@ setup_texture_sampler(GLenum target, struct gen_mipmap_state *mipmap)
    }
 }
 
+static void
+sampler_table_cleanup(struct sampler_table *table)
+{
+   _mesa_DeleteObjectARB(table->sampler_1d.shader_prog);
+   _mesa_DeleteObjectARB(table->sampler_2d.shader_prog);
+   _mesa_DeleteObjectARB(table->sampler_3d.shader_prog);
+   _mesa_DeleteObjectARB(table->sampler_cubemap.shader_prog);
+   _mesa_DeleteObjectARB(table->sampler_1d_array.shader_prog);
+   _mesa_DeleteObjectARB(table->sampler_2d_array.shader_prog);
+
+   table->sampler_1d.shader_prog = 0;
+   table->sampler_2d.shader_prog = 0;
+   table->sampler_3d.shader_prog = 0;
+   table->sampler_cubemap.shader_prog = 0;
+   table->sampler_1d_array.shader_prog = 0;
+   table->sampler_2d_array.shader_prog = 0;
+}
 
 static void
 setup_glsl_generate_mipmap(struct gl_context *ctx,
@@ -3378,7 +3406,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
    setup_vertex_objects(&mipmap->VAO, &mipmap->VBO, true, 2, 3, 0);
 
    /* Generate a fragment shader program appropriate for the texture target */
-   sampler = setup_texture_sampler(target, mipmap);
+   sampler = setup_texture_sampler(target, &mipmap->samplers);
    assert(sampler != NULL);
    if (sampler->shader_prog != 0) {
       mipmap->ShaderProg = sampler->shader_prog;
@@ -3468,19 +3496,7 @@ meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap)
    _mesa_DeleteBuffers(1, &mipmap->VBO);
    mipmap->VBO = 0;
 
-   _mesa_DeleteObjectARB(mipmap->sampler_1d.shader_prog);
-   _mesa_DeleteObjectARB(mipmap->sampler_2d.shader_prog);
-   _mesa_DeleteObjectARB(mipmap->sampler_3d.shader_prog);
-   _mesa_DeleteObjectARB(mipmap->sampler_cubemap.shader_prog);
-   _mesa_DeleteObjectARB(mipmap->sampler_1d_array.shader_prog);
-   _mesa_DeleteObjectARB(mipmap->sampler_2d_array.shader_prog);
-
-   mipmap->sampler_1d.shader_prog = 0;
-   mipmap->sampler_2d.shader_prog = 0;
-   mipmap->sampler_3d.shader_prog = 0;
-   mipmap->sampler_cubemap.shader_prog = 0;
-   mipmap->sampler_1d_array.shader_prog = 0;
-   mipmap->sampler_2d_array.shader_prog = 0;
+   sampler_table_cleanup(&mipmap->samplers);
 }
 
 
