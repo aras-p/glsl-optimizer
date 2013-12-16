@@ -247,8 +247,7 @@ struct blit_state
    GLuint VAO;
    GLuint VBO;
    GLuint DepthFP;
-   GLuint ShaderProg;
-   GLuint RectShaderProg;
+   struct sampler_table samplers;
    struct temp_texture depthTex;
 };
 
@@ -487,6 +486,7 @@ setup_shader_for_sampler(struct gl_context *ctx, struct glsl_sampler *sampler)
                                   "void main()\n"
                                   "{\n"
                                   "   gl_FragColor = %s(texSampler, %s);\n"
+                                  "   gl_FragDepth = gl_FragColor.x;\n"
                                   "}\n",
                                   sampler->type,
                                   sampler->func, sampler->texcoords);
@@ -515,6 +515,7 @@ setup_shader_for_sampler(struct gl_context *ctx, struct glsl_sampler *sampler)
                                   "void main()\n"
                                   "{\n"
                                   "   out_color = texture(texSampler, %s);\n"
+                                  "   gl_FragDepth = out_color.x;\n"
                                   "}\n",
                                   _mesa_is_desktop_gl(ctx) ? "130" : "300 es",
                                   sampler->type,
@@ -1661,98 +1662,18 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
                             struct blit_state *blit,
                             GLenum target)
 {
-   const char *vs_source;
-   char *fs_source;
-   GLuint vs, fs;
-   void *mem_ctx;
-   GLuint ShaderProg;
-   GLboolean texture_2d = (target == GL_TEXTURE_2D);
+   struct glsl_sampler *sampler;
 
    /* target = GL_TEXTURE_RECTANGLE is not supported in GLES 3.0 */
-   assert(_mesa_is_desktop_gl(ctx) || texture_2d);
+   assert(_mesa_is_desktop_gl(ctx) || target == GL_TEXTURE_2D);
 
    setup_vertex_objects(&blit->VAO, &blit->VBO, true, 2, 2, 0);
 
    /* Generate a relevant fragment shader program for the texture target */
-   if ((target == GL_TEXTURE_2D && blit->ShaderProg != 0) ||
-       (target == GL_TEXTURE_RECTANGLE && blit->RectShaderProg != 0)) {
-      return;
-   }
+   sampler = setup_texture_sampler(target, &blit->samplers);
+   assert(sampler != NULL);
 
-   mem_ctx = ralloc_context(NULL);
-
-   if (ctx->Const.GLSLVersion < 130) {
-      vs_source =
-         "attribute vec2 position;\n"
-         "attribute vec2 textureCoords;\n"
-         "varying vec2 texCoords;\n"
-         "void main()\n"
-         "{\n"
-         "   texCoords = textureCoords;\n"
-         "   gl_Position = vec4(position, 0.0, 1.0);\n"
-         "}\n";
-
-      fs_source = ralloc_asprintf(mem_ctx,
-                                  "#ifdef GL_ES\n"
-                                  "precision highp float;\n"
-                                  "#endif\n"
-                                  "uniform %s texSampler;\n"
-                                  "varying vec2 texCoords;\n"
-                                  "void main()\n"
-                                  "{\n"
-                                  "   gl_FragColor = %s(texSampler, texCoords);\n"
-                                  "   gl_FragDepth = gl_FragColor.r;\n"
-                                  "}\n",
-                                  texture_2d ? "sampler2D" : "sampler2DRect",
-                                  texture_2d ? "texture2D" : "texture2DRect");
-   }
-   else {
-      vs_source = ralloc_asprintf(mem_ctx,
-                                  "#version %s\n"
-                                  "in vec2 position;\n"
-                                  "in vec2 textureCoords;\n"
-                                  "out vec2 texCoords;\n"
-                                  "void main()\n"
-                                  "{\n"
-                                  "   texCoords = textureCoords;\n"
-                                  "   gl_Position = vec4(position, 0.0, 1.0);\n"
-                                  "}\n",
-                                  _mesa_is_desktop_gl(ctx) ? "130" : "300 es");
-      fs_source = ralloc_asprintf(mem_ctx,
-                                  "#version %s\n"
-                                  "#ifdef GL_ES\n"
-                                  "precision highp float;\n"
-                                  "#endif\n"
-                                  "uniform %s texSampler;\n"
-                                  "in vec2 texCoords;\n"
-                                  "out vec4 out_color;\n"
-                                  "\n"
-                                  "void main()\n"
-                                  "{\n"
-                                  "   out_color = %s(texSampler, texCoords);\n"
-                                  "   gl_FragDepth = out_color.r;\n"
-                                  "}\n",
-                                  _mesa_is_desktop_gl(ctx) ? "130" : "300 es",
-                                  texture_2d ? "sampler2D" : "sampler2DRect",
-                                  texture_2d ? "texture" : "texture2DRect");
-   }
-
-   vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
-   fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
-
-   ShaderProg = _mesa_CreateProgramObjectARB();
-   _mesa_AttachShader(ShaderProg, fs);
-   _mesa_DeleteObjectARB(fs);
-   _mesa_AttachShader(ShaderProg, vs);
-   _mesa_DeleteObjectARB(vs);
-   _mesa_BindAttribLocation(ShaderProg, 0, "position");
-   _mesa_BindAttribLocation(ShaderProg, 1, "texcoords");
-   link_program_with_debug(ctx, ShaderProg);
-   ralloc_free(mem_ctx);
-   if (texture_2d)
-      blit->ShaderProg = ShaderProg;
-   else
-      blit->RectShaderProg = ShaderProg;
+   setup_shader_for_sampler(ctx, sampler);
 }
 
 /**
@@ -1820,9 +1741,9 @@ blitframebuffer_texture(struct gl_context *ctx,
          if (glsl_version) {
             setup_glsl_blit_framebuffer(ctx, blit, target);
             if (target == GL_TEXTURE_2D)
-               _mesa_UseProgram(blit->ShaderProg);
+               _mesa_UseProgram(blit->samplers.sampler_2d.shader_prog);
             else
-               _mesa_UseProgram(blit->RectShaderProg);
+               _mesa_UseProgram(blit->samplers.sampler_rect.shader_prog);
          }
          else {
             setup_ff_tnl_for_blit(&ctx->Meta->Blit.VAO,
@@ -2001,9 +1922,9 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    if (use_glsl_version) {
       setup_glsl_blit_framebuffer(ctx, blit, tex->Target);
       if (tex->Target == GL_TEXTURE_2D)
-         _mesa_UseProgram(blit->ShaderProg);
+         _mesa_UseProgram(blit->samplers.sampler_2d.shader_prog);
       else
-         _mesa_UseProgram(blit->RectShaderProg);
+         _mesa_UseProgram(blit->samplers.sampler_rect.shader_prog);
    }
    else {
       setup_ff_tnl_for_blit(&blit->VAO, &blit->VBO, 2);
@@ -2150,10 +2071,7 @@ meta_glsl_blit_cleanup(struct blit_state *blit)
       blit->DepthFP = 0;
    }
 
-   _mesa_DeleteObjectARB(blit->ShaderProg);
-   blit->ShaderProg = 0;
-   _mesa_DeleteObjectARB(blit->RectShaderProg);
-   blit->RectShaderProg = 0;
+   sampler_table_cleanup(&blit->samplers);
 
    _mesa_DeleteTextures(1, &blit->depthTex.TexObj);
    blit->depthTex.TexObj = 0;
