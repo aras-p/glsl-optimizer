@@ -2399,8 +2399,9 @@ typedef enum
    MESA_SHADER_VERTEX = 0,
    MESA_SHADER_GEOMETRY = 1,
    MESA_SHADER_FRAGMENT = 2,
-   MESA_SHADER_TYPES = 3
 } gl_shader_type;
+
+#define MESA_SHADER_TYPES (MESA_SHADER_FRAGMENT + 1)
 
 
 struct gl_uniform_buffer_variable
