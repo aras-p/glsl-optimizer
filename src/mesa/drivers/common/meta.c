@@ -461,7 +461,12 @@ setup_shader_for_sampler(struct gl_context *ctx, struct glsl_sampler *sampler)
    if (sampler->shader_prog != 0)
       return sampler->shader_prog;
 
-   if (ctx->API == API_OPENGLES2 || ctx->Const.GLSLVersion < 130) {
+   /* The version check is a little tricky.  API is set to API_OPENGLES2 even
+    * for OpenGL ES 3.0 contexts, and GLSLVersion may be set to 140, for
+    * example, in an OpenGL ES 2.0 context.
+    */
+   if ((ctx->API == API_OPENGLES2 && ctx->Version < 30)
+       || ctx->Const.GLSLVersion < 130) {
       vs_source =
          "attribute vec2 position;\n"
          "attribute vec3 textureCoords;\n"
