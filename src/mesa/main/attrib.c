@@ -1472,13 +1472,20 @@ restore_array_attrib(struct gl_context *ctx,
  * init/alloc the fields of 'attrib'.
  * Needs to the init part matching free_array_attrib_data below.
  */
-static void
+static bool
 init_array_attrib_data(struct gl_context *ctx,
                        struct gl_array_attrib *attrib)
 {
    /* Get a non driver gl_array_object. */
    attrib->ArrayObj = CALLOC_STRUCT( gl_array_object );
+
+   if (attrib->ArrayObj == NULL) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
+      return false;
+   }
+
    _mesa_initialize_array_object(ctx, attrib->ArrayObj, 0);
+   return true;
 }
 
 /**
@@ -1519,24 +1526,65 @@ _mesa_PushClientAttrib(GLbitfield mask)
       struct gl_pixelstore_attrib *attr;
       /* packing attribs */
       attr = CALLOC_STRUCT( gl_pixelstore_attrib );
-      copy_pixelstore(ctx, attr, &ctx->Pack);
-      save_attrib_data(&head, GL_CLIENT_PACK_BIT, attr);
+      if (attr == NULL) {
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib" );
+         goto end;
+      }
+      if (save_attrib_data(&head, GL_CLIENT_PACK_BIT, attr)) {
+         copy_pixelstore(ctx, attr, &ctx->Pack);
+      }
+      else {
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib" );
+         FREE(attr);
+         goto end;
+      }
+
       /* unpacking attribs */
       attr = CALLOC_STRUCT( gl_pixelstore_attrib );
-      copy_pixelstore(ctx, attr, &ctx->Unpack);
-      save_attrib_data(&head, GL_CLIENT_UNPACK_BIT, attr);
+      if (attr == NULL) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
+         goto end;
+      }
+
+      if (save_attrib_data(&head, GL_CLIENT_UNPACK_BIT, attr)) {
+         copy_pixelstore(ctx, attr, &ctx->Unpack);
+      }
+      else {
+         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib" );
+         FREE(attr);
+         goto end;
+       }
    }
 
    if (mask & GL_CLIENT_VERTEX_ARRAY_BIT) {
       struct gl_array_attrib *attr;
       attr = CALLOC_STRUCT( gl_array_attrib );
-      init_array_attrib_data(ctx, attr);
-      save_array_attrib(ctx, attr, &ctx->Array);
-      save_attrib_data(&head, GL_CLIENT_VERTEX_ARRAY_BIT, attr);
-   }
+      if (attr == NULL) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
+         goto end;
+      }
 
-   ctx->ClientAttribStack[ctx->ClientAttribStackDepth] = head;
-   ctx->ClientAttribStackDepth++;
+      if (!init_array_attrib_data(ctx, attr)) {
+         FREE(attr);
+         goto end;
+      }
+
+      if (save_attrib_data(&head, GL_CLIENT_VERTEX_ARRAY_BIT, attr)) {
+         save_array_attrib(ctx, attr, &ctx->Array);
+      }
+      else {
+         free_array_attrib_data(ctx, attr);
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
+         FREE(attr);
+         /* goto to keep safe from possible later changes */
+         goto end;
+      }
+   }
+end:
+   if (head != NULL) {
+       ctx->ClientAttribStack[ctx->ClientAttribStackDepth] = head;
+       ctx->ClientAttribStackDepth++;
+   }
 }
 
 
