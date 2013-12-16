@@ -366,6 +366,10 @@ dri2CreateDrawable(struct glx_screen *base, XID xDrawable,
    struct dri2_display *pdp;
    GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
 
+   dpyPriv = __glXInitialize(psc->base.dpy);
+   if (dpyPriv == NULL)
+      return NULL;
+
    pdraw = calloc(1, sizeof(*pdraw));
    if (!pdraw)
       return NULL;
@@ -395,8 +399,6 @@ dri2CreateDrawable(struct glx_screen *base, XID xDrawable,
    }
 
    DRI2CreateDrawable(psc->base.dpy, xDrawable);
-
-   dpyPriv = __glXInitialize(psc->base.dpy);
    pdp = (struct dri2_display *)dpyPriv->dri2Display;;
    /* Create a new drawable */
    pdraw->driDrawable =
