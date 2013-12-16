@@ -442,6 +442,96 @@ link_program_with_debug(struct gl_context *ctx, GLuint program)
 }
 
 /**
+ * Generate a generic shader to blit from a texture to a framebuffer
+ *
+ * \param ctx       Current GL context
+ * \param texTarget Texture target that will be the source of the blit
+ *
+ * \returns a handle to a shader program on success or zero on failure.
+ */
+static GLuint
+setup_shader_for_sampler(struct gl_context *ctx, struct glsl_sampler *sampler)
+{
+   const char *vs_source;
+   char *fs_source;
+   GLuint vs, fs;
+   void *const mem_ctx = ralloc_context(NULL);
+
+   if (sampler->shader_prog != 0)
+      return sampler->shader_prog;
+
+   if (ctx->API == API_OPENGLES2 || ctx->Const.GLSLVersion < 130) {
+      vs_source =
+         "attribute vec2 position;\n"
+         "attribute vec3 textureCoords;\n"
+         "varying vec3 texCoords;\n"
+         "void main()\n"
+         "{\n"
+         "   texCoords = textureCoords;\n"
+         "   gl_Position = vec4(position, 0.0, 1.0);\n"
+         "}\n";
+
+      fs_source = ralloc_asprintf(mem_ctx,
+                                  "#extension GL_EXT_texture_array : enable\n"
+                                  "#ifdef GL_ES\n"
+                                  "precision highp float;\n"
+                                  "#endif\n"
+                                  "uniform %s texSampler;\n"
+                                  "varying vec3 texCoords;\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "   gl_FragColor = %s(texSampler, %s);\n"
+                                  "}\n",
+                                  sampler->type,
+                                  sampler->func, sampler->texcoords);
+   }
+   else {
+      vs_source = ralloc_asprintf(mem_ctx,
+                                  "#version %s\n"
+                                  "in vec2 position;\n"
+                                  "in vec3 textureCoords;\n"
+                                  "out vec3 texCoords;\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "   texCoords = textureCoords;\n"
+                                  "   gl_Position = vec4(position, 0.0, 1.0);\n"
+                                  "}\n",
+                                  _mesa_is_desktop_gl(ctx) ? "130" : "300 es");
+      fs_source = ralloc_asprintf(mem_ctx,
+                                  "#version %s\n"
+                                  "#ifdef GL_ES\n"
+                                  "precision highp float;\n"
+                                  "#endif\n"
+                                  "uniform %s texSampler;\n"
+                                  "in vec3 texCoords;\n"
+                                  "out vec4 out_color;\n"
+                                  "\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "   out_color = texture(texSampler, %s);\n"
+                                  "}\n",
+                                  _mesa_is_desktop_gl(ctx) ? "130" : "300 es",
+                                  sampler->type,
+                                  sampler->texcoords);
+   }
+
+   vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
+   fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
+
+   sampler->shader_prog = _mesa_CreateProgramObjectARB();
+   _mesa_AttachShader(sampler->shader_prog, fs);
+   _mesa_DeleteObjectARB(fs);
+   _mesa_AttachShader(sampler->shader_prog, vs);
+   _mesa_DeleteObjectARB(vs);
+   _mesa_BindAttribLocation(sampler->shader_prog, 0, "position");
+   _mesa_BindAttribLocation(sampler->shader_prog, 1, "texcoords");
+   link_program_with_debug(ctx, sampler->shader_prog);
+   ralloc_free(mem_ctx);
+
+   return sampler->shader_prog;
+}
+
+/**
  * Configure vertex buffer and vertex array objects for tests
  *
  * Regardless of whether a new VAO and new VBO are created, the objects
@@ -3398,91 +3488,14 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
                            GLenum target)
 {
    struct glsl_sampler *sampler;
-   const char *vs_source;
-   char *fs_source;
-   GLuint vs, fs;
-   void *mem_ctx;
 
    setup_vertex_objects(&mipmap->VAO, &mipmap->VBO, true, 2, 3, 0);
 
    /* Generate a fragment shader program appropriate for the texture target */
    sampler = setup_texture_sampler(target, &mipmap->samplers);
    assert(sampler != NULL);
-   if (sampler->shader_prog != 0) {
-      mipmap->ShaderProg = sampler->shader_prog;
-      return;
-   }
 
-   mem_ctx = ralloc_context(NULL);
-
-   if (ctx->API == API_OPENGLES2 || ctx->Const.GLSLVersion < 130) {
-      vs_source =
-         "attribute vec2 position;\n"
-         "attribute vec3 textureCoords;\n"
-         "varying vec3 texCoords;\n"
-         "void main()\n"
-         "{\n"
-         "   texCoords = textureCoords;\n"
-         "   gl_Position = vec4(position, 0.0, 1.0);\n"
-         "}\n";
-
-      fs_source = ralloc_asprintf(mem_ctx,
-                                  "#extension GL_EXT_texture_array : enable\n"
-                                  "#ifdef GL_ES\n"
-                                  "precision highp float;\n"
-                                  "#endif\n"
-                                  "uniform %s texSampler;\n"
-                                  "varying vec3 texCoords;\n"
-                                  "void main()\n"
-                                  "{\n"
-                                  "   gl_FragColor = %s(texSampler, %s);\n"
-                                  "}\n",
-                                  sampler->type,
-                                  sampler->func, sampler->texcoords);
-   }
-   else {
-      vs_source = ralloc_asprintf(mem_ctx,
-                                  "#version %s\n"
-                                  "in vec2 position;\n"
-                                  "in vec3 textureCoords;\n"
-                                  "out vec3 texCoords;\n"
-                                  "void main()\n"
-                                  "{\n"
-                                  "   texCoords = textureCoords;\n"
-                                  "   gl_Position = vec4(position, 0.0, 1.0);\n"
-                                  "}\n",
-                                  _mesa_is_desktop_gl(ctx) ? "130" : "300 es");
-      fs_source = ralloc_asprintf(mem_ctx,
-                                  "#version %s\n"
-                                  "#ifdef GL_ES\n"
-                                  "precision highp float;\n"
-                                  "#endif\n"
-                                  "uniform %s texSampler;\n"
-                                  "in vec3 texCoords;\n"
-                                  "out vec4 out_color;\n"
-                                  "\n"
-                                  "void main()\n"
-                                  "{\n"
-                                  "   out_color = texture(texSampler, %s);\n"
-                                  "}\n",
-                                  _mesa_is_desktop_gl(ctx) ? "130" : "300 es",
-                                  sampler->type,
-                                  sampler->texcoords);
-   }
-
-   vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
-   fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
-
-   mipmap->ShaderProg = _mesa_CreateProgramObjectARB();
-   _mesa_AttachShader(mipmap->ShaderProg, fs);
-   _mesa_DeleteObjectARB(fs);
-   _mesa_AttachShader(mipmap->ShaderProg, vs);
-   _mesa_DeleteObjectARB(vs);
-   _mesa_BindAttribLocation(mipmap->ShaderProg, 0, "position");
-   _mesa_BindAttribLocation(mipmap->ShaderProg, 1, "texcoords");
-   link_program_with_debug(ctx, mipmap->ShaderProg);
-   sampler->shader_prog = mipmap->ShaderProg;
-   ralloc_free(mem_ctx);
+   mipmap->ShaderProg = setup_shader_for_sampler(ctx, sampler);
 }
 
 
