@@ -422,6 +422,9 @@ st_bufferobj_validate_usage(struct st_context *st,
 void
 st_init_bufferobject_functions(struct dd_function_table *functions)
 {
+   /* plug in default driver fallbacks (such as for ClearBufferSubData) */
+   _mesa_init_buffer_object_functions(functions);
+
    functions->NewBufferObject = st_bufferobj_alloc;
    functions->DeleteBuffer = st_bufferobj_free;
    functions->BufferData = st_bufferobj_data;
