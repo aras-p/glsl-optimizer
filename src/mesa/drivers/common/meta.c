@@ -324,6 +324,8 @@ struct decompress_state
    GLuint VAO;
    GLuint VBO, FBO, RBO, Sampler;
    GLint Width, Height;
+
+   struct sampler_table samplers;
 };
 
 /**
@@ -3860,6 +3862,10 @@ decompress_texture_image(struct gl_context *ctx,
    GLuint fboDrawSave, fboReadSave;
    GLuint rbSave;
    GLuint samplerSave;
+   const bool use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
+                                      ctx->Extensions.ARB_fragment_shader &&
+                                      (ctx->API != API_OPENGLES);
+   GLuint shaderProg = 0;
 
    if (slice > 0) {
       assert(target == GL_TEXTURE_3D ||
@@ -3876,9 +3882,8 @@ decompress_texture_image(struct gl_context *ctx,
       assert(!"No compressed 3D textures.");
       return;
 
-   case GL_TEXTURE_2D_ARRAY:
    case GL_TEXTURE_CUBE_MAP_ARRAY:
-      /* These targets are just broken currently. */
+      /* This target is just broken currently. */
       return;
 
    case GL_TEXTURE_CUBE_MAP:
@@ -3924,7 +3929,20 @@ decompress_texture_image(struct gl_context *ctx,
       decompress->Height = height;
    }
 
-   setup_ff_tnl_for_blit(&decompress->VAO, &decompress->VBO, 3);
+   if (use_glsl_version) {
+      struct glsl_sampler *sampler;
+
+      setup_vertex_objects(&decompress->VAO, &decompress->VBO, true,
+                           2, 3, 0);
+
+      /* Generate a relevant fragment shader program for the texture target */
+      sampler = setup_texture_sampler(target, &decompress->samplers);
+      assert(sampler != NULL);
+
+      shaderProg = setup_shader_for_sampler(ctx, sampler);
+   } else {
+      setup_ff_tnl_for_blit(&decompress->VAO, &decompress->VBO, 3);
+   }
 
    if (!decompress->Sampler) {
       _mesa_GenSamplers(1, &decompress->Sampler);
@@ -3968,7 +3986,13 @@ decompress_texture_image(struct gl_context *ctx,
 
    /* setup texture state */
    _mesa_BindTexture(target, texObj->Name);
-   _mesa_set_enable(ctx, target, GL_TRUE);
+
+   if (!use_glsl_version)
+      _mesa_set_enable(ctx, target, GL_TRUE);
+   else {
+      assert(shaderProg != 0);
+      _mesa_UseProgram(shaderProg);
+   }
 
    {
       /* save texture object state */
@@ -4028,7 +4052,8 @@ decompress_texture_image(struct gl_context *ctx,
    }
 
    /* disable texture unit */
-   _mesa_set_enable(ctx, target, GL_FALSE);
+   if (!use_glsl_version)
+      _mesa_set_enable(ctx, target, GL_FALSE);
 
    _mesa_BindSampler(ctx->Texture.CurrentUnit, samplerSave);
 
