@@ -471,7 +471,7 @@ setup_shader_for_sampler(struct gl_context *ctx, struct glsl_sampler *sampler)
       vs_source =
          "attribute vec2 position;\n"
          "attribute vec3 textureCoords;\n"
-         "varying vec3 texCoords;\n"
+         "varying vec4 texCoords;\n"
          "void main()\n"
          "{\n"
          "   texCoords = textureCoords;\n"
@@ -484,7 +484,7 @@ setup_shader_for_sampler(struct gl_context *ctx, struct glsl_sampler *sampler)
                                   "precision highp float;\n"
                                   "#endif\n"
                                   "uniform %s texSampler;\n"
-                                  "varying vec3 texCoords;\n"
+                                  "varying vec4 texCoords;\n"
                                   "void main()\n"
                                   "{\n"
                                   "   gl_FragColor = %s(texSampler, %s);\n"
@@ -497,8 +497,8 @@ setup_shader_for_sampler(struct gl_context *ctx, struct glsl_sampler *sampler)
       vs_source = ralloc_asprintf(mem_ctx,
                                   "#version %s\n"
                                   "in vec2 position;\n"
-                                  "in vec3 textureCoords;\n"
-                                  "out vec3 texCoords;\n"
+                                  "in vec4 textureCoords;\n"
+                                  "out vec4 texCoords;\n"
                                   "void main()\n"
                                   "{\n"
                                   "   texCoords = textureCoords;\n"
@@ -511,7 +511,7 @@ setup_shader_for_sampler(struct gl_context *ctx, struct glsl_sampler *sampler)
                                   "precision highp float;\n"
                                   "#endif\n"
                                   "uniform %s texSampler;\n"
-                                  "in vec3 texCoords;\n"
+                                  "in vec4 texCoords;\n"
                                   "out vec4 out_color;\n"
                                   "\n"
                                   "void main()\n"
@@ -3371,12 +3371,12 @@ setup_texture_sampler(GLenum target, struct sampler_table *table)
        */
       table->sampler_3d.type = "sampler3D";
       table->sampler_3d.func = "texture3D";
-      table->sampler_3d.texcoords = "texCoords";
+      table->sampler_3d.texcoords = "texCoords.xyz";
       return &table->sampler_3d;
    case GL_TEXTURE_CUBE_MAP:
       table->sampler_cubemap.type = "samplerCube";
       table->sampler_cubemap.func = "textureCube";
-      table->sampler_cubemap.texcoords = "texCoords";
+      table->sampler_cubemap.texcoords = "texCoords.xyz";
       return &table->sampler_cubemap;
    case GL_TEXTURE_1D_ARRAY:
       table->sampler_1d_array.type = "sampler1DArray";
@@ -3386,7 +3386,7 @@ setup_texture_sampler(GLenum target, struct sampler_table *table)
    case GL_TEXTURE_2D_ARRAY:
       table->sampler_2d_array.type = "sampler2DArray";
       table->sampler_2d_array.func = "texture2DArray";
-      table->sampler_2d_array.texcoords = "texCoords";
+      table->sampler_2d_array.texcoords = "texCoords.xyz";
       return &table->sampler_2d_array;
    default:
       _mesa_problem(NULL, "Unexpected texture target 0x%x in"
