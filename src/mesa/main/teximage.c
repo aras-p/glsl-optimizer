@@ -3967,6 +3967,20 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
       }
    }
 
+   if (ctx->API == API_OPENGL_CORE &&
+       ctx->Extensions.ARB_texture_buffer_object_rgb32) {
+      switch (internalFormat) {
+      case GL_RGB32F:
+         return MESA_FORMAT_RGB_FLOAT32;
+      case GL_RGB32UI:
+         return MESA_FORMAT_RGB_UINT32;
+      case GL_RGB32I:
+         return MESA_FORMAT_RGB_INT32;
+      default:
+         break;
+      }
+   }
+
    switch (internalFormat) {
    case GL_RGBA8:
       return MESA_FORMAT_RGBA8888_REV;
@@ -4030,13 +4044,6 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
       return MESA_FORMAT_R_UINT16;
    case GL_R32UI:
       return MESA_FORMAT_R_UINT32;
-
-   case GL_RGB32F:
-      return MESA_FORMAT_RGB_FLOAT32;
-   case GL_RGB32UI:
-      return MESA_FORMAT_RGB_UINT32;
-   case GL_RGB32I:
-      return MESA_FORMAT_RGB_INT32;
 
    default:
       return MESA_FORMAT_NONE;
