@@ -197,6 +197,7 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 	ctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB |
 			R600_CONTEXT_FLUSH_AND_INV_CB_META |
 			R600_CONTEXT_FLUSH_AND_INV_DB |
+			R600_CONTEXT_FLUSH_AND_INV_DB_META |
 			R600_CONTEXT_INV_TEX_CACHE;
 	si_emit_cache_flush(&ctx->b, NULL);
 

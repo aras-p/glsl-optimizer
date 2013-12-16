@@ -2099,7 +2099,8 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 				 R600_CONTEXT_FLUSH_AND_INV_CB_META;
 	}
 	if (rctx->framebuffer.zsbuf) {
-		rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_DB;
+		rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_DB |
+				 R600_CONTEXT_FLUSH_AND_INV_DB_META;
 	}
 
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
