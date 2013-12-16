@@ -113,7 +113,7 @@ _mesa_shader_type_to_index(GLenum v)
       return MESA_SHADER_GEOMETRY;
    default:
       ASSERT(0 && "bad value in _mesa_shader_type_to_index()");
-      return MESA_SHADER_TYPES;
+      return MESA_SHADER_VERTEX;
    }
 }
 
