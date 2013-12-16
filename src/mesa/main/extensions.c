@@ -480,7 +480,8 @@ set_extension( struct gl_context *ctx, const char *name, GLboolean state )
 
    if (ctx->Extensions.String) {
       /* The string was already queried - can't change it now! */
-      _mesa_problem(ctx, "Trying to enable/disable extension after glGetString(GL_EXTENSIONS): %s", name);
+      _mesa_problem(ctx, "Trying to enable/disable extension after "
+                    "glGetString(GL_EXTENSIONS): %s", name);
       return GL_FALSE;
    }
 
@@ -679,10 +680,10 @@ _mesa_make_extension_string(struct gl_context *ctx)
       return NULL;
    }
 
-   /* Sort extensions in chronological order because certain old applications (e.g.,
-    * Quake3 demo) store the extension list in a static size buffer so chronologically
-    * order ensure that the extensions that such applications expect will fit into
-    * that buffer.
+   /* Sort extensions in chronological order because certain old applications
+    * (e.g., Quake3 demo) store the extension list in a static size buffer so
+    * chronologically order ensure that the extensions that such applications
+    * expect will fit into that buffer.
     */
    j = 0;
    for (i = extension_table; i->name != 0; ++i) {
@@ -693,7 +694,8 @@ _mesa_make_extension_string(struct gl_context *ctx)
       }
    }
    assert(j == count);
-   qsort(extension_indices, count, sizeof *extension_indices, extension_compare);
+   qsort(extension_indices, count,
+         sizeof *extension_indices, extension_compare);
 
    /* Build the extension string.*/
    for (j = 0; j < count; ++j) {
