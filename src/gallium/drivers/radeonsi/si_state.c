@@ -1825,6 +1825,8 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		uint64_t va = r600_resource_va(&rctx->screen->b.b, &rtex->htile_buffer->b.b);
 		db_htile_data_base = va >> 8;
 		db_htile_surface = S_028ABC_FULL_CACHE(1);
+
+		si_pm4_add_bo(pm4, rtex->htile_buffer, RADEON_USAGE_READWRITE);
 	} else {
 		db_htile_data_base = 0;
 		db_htile_surface = 0;
