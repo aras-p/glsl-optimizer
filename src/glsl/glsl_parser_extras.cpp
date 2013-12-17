@@ -334,16 +334,15 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
 extern "C" {
 
 /**
- * The most common use of _mesa_glsl_shader_target_name(), which is
- * shared with C code in Mesa core to translate a GLenum to a short
- * shader stage name in debug printouts.
+ * Translate a GLenum to a short shader stage name for debug printouts and
+ * error messages.
  *
  * It recognizes the PROGRAM variants of the names so it can be used
  * with a struct gl_program->Target, not just a struct
  * gl_shader->Type.
  */
 const char *
-_mesa_glsl_shader_target_name(GLenum type)
+_mesa_shader_enum_to_string(GLenum type)
 {
    switch (type) {
    case GL_VERTEX_SHADER:
@@ -363,11 +362,11 @@ _mesa_glsl_shader_target_name(GLenum type)
 } /* extern "C" */
 
 /**
- * Overloaded C++ variant usable within the compiler for translating
- * our internal enum into short stage names.
+ * Translate a gl_shader_type to a short shader stage name for debug printouts
+ * and error messages.
  */
 const char *
-_mesa_glsl_shader_target_name(gl_shader_type target)
+_mesa_shader_type_to_string(unsigned target)
 {
    switch (target) {
    case MESA_SHADER_VERTEX:   return "vertex";
@@ -651,11 +650,11 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 
          if (behavior == extension_require) {
             _mesa_glsl_error(name_locp, state, fmt,
-                             name, _mesa_glsl_shader_target_name(state->target));
+                             name, _mesa_shader_type_to_string(state->target));
             return false;
          } else {
             _mesa_glsl_warning(name_locp, state, fmt,
-                               name, _mesa_glsl_shader_target_name(state->target));
+                               name, _mesa_shader_type_to_string(state->target));
          }
       }
    }

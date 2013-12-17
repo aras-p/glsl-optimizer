@@ -422,10 +422,11 @@ extern bool _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 					 _mesa_glsl_parse_state *state);
 
 /**
- * Get the textual name of the specified shader target
+ * Get the textual name of the specified shader target (which is a
+ * gl_shader_type).
  */
 extern const char *
-_mesa_glsl_shader_target_name(gl_shader_type target);
+_mesa_shader_type_to_string(unsigned target);
 
 
 #endif /* __cplusplus */
@@ -439,7 +440,7 @@ extern "C" {
 #endif
 
 extern const char *
-_mesa_glsl_shader_target_name(GLenum type);
+_mesa_shader_enum_to_string(GLenum type);
 
 extern int glcpp_preprocess(void *ctx, const char **shader, char **info_log,
                       const struct gl_extensions *extensions, struct gl_context *gl_ctx);

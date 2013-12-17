@@ -1375,7 +1375,7 @@ link_intrastage_shaders(void *mem_ctx,
 
    if (main == NULL) {
       linker_error(prog, "%s shader lacks `main'\n",
-		   _mesa_glsl_shader_target_name(shader_list[0]->Type));
+		   _mesa_shader_enum_to_string(shader_list[0]->Type));
       return NULL;
    }
 

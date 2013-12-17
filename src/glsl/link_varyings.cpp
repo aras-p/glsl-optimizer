@@ -82,10 +82,10 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
          linker_error(prog,
                       "%s shader output `%s' declared as type `%s', "
                       "but %s shader input declared as type `%s'\n",
-                      _mesa_glsl_shader_target_name(producer_type),
+                      _mesa_shader_enum_to_string(producer_type),
                       output->name,
                       output->type->name,
-                      _mesa_glsl_shader_target_name(consumer_type),
+                      _mesa_shader_enum_to_string(consumer_type),
                       input->type->name);
          return;
       }
@@ -97,10 +97,10 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
       linker_error(prog,
                    "%s shader output `%s' %s centroid qualifier, "
                    "but %s shader input %s centroid qualifier\n",
-                   _mesa_glsl_shader_target_name(producer_type),
+                   _mesa_shader_enum_to_string(producer_type),
                    output->name,
                    (output->data.centroid) ? "has" : "lacks",
-                   _mesa_glsl_shader_target_name(consumer_type),
+                   _mesa_shader_enum_to_string(consumer_type),
                    (input->data.centroid) ? "has" : "lacks");
       return;
    }
@@ -109,10 +109,10 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
       linker_error(prog,
                    "%s shader output `%s' %s sample qualifier, "
                    "but %s shader input %s sample qualifier\n",
-                   _mesa_glsl_shader_target_name(producer_type),
+                   _mesa_shader_enum_to_string(producer_type),
                    output->name,
                    (output->data.sample) ? "has" : "lacks",
-                   _mesa_glsl_shader_target_name(consumer_type),
+                   _mesa_shader_enum_to_string(consumer_type),
                    (input->data.sample) ? "has" : "lacks");
       return;
    }
@@ -121,10 +121,10 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
       linker_error(prog,
                    "%s shader output `%s' %s invariant qualifier, "
                    "but %s shader input %s invariant qualifier\n",
-                   _mesa_glsl_shader_target_name(producer_type),
+                   _mesa_shader_enum_to_string(producer_type),
                    output->name,
                    (output->data.invariant) ? "has" : "lacks",
-                   _mesa_glsl_shader_target_name(consumer_type),
+                   _mesa_shader_enum_to_string(consumer_type),
                    (input->data.invariant) ? "has" : "lacks");
       return;
    }
@@ -135,10 +135,10 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
                    "interpolation qualifier, "
                    "but %s shader input specifies %s "
                    "interpolation qualifier\n",
-                   _mesa_glsl_shader_target_name(producer_type),
+                   _mesa_shader_enum_to_string(producer_type),
                    output->name,
                    interpolation_string(output->data.interpolation),
-                   _mesa_glsl_shader_target_name(consumer_type),
+                   _mesa_shader_enum_to_string(consumer_type),
                    interpolation_string(input->data.interpolation));
       return;
    }
@@ -1217,9 +1217,9 @@ assign_varying_locations(struct gl_context *ctx,
 
                linker_error(prog, "%s shader varying %s not written "
                             "by %s shader\n.",
-                            _mesa_glsl_shader_target_name(consumer->Type),
+                            _mesa_shader_enum_to_string(consumer->Type),
 			    var->name,
-                            _mesa_glsl_shader_target_name(producer->Type));
+                            _mesa_shader_enum_to_string(producer->Type));
             }
 
             /* An 'in' variable is only really a shader input if its

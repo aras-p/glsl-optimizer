@@ -2801,7 +2801,7 @@ get_mesa_program(struct gl_context *ctx,
    int i;
    struct gl_program *prog;
    GLenum target;
-   const char *target_string = _mesa_glsl_shader_target_name(shader->Type);
+   const char *target_string = _mesa_shader_enum_to_string(shader->Type);
    struct gl_shader_compiler_options *options =
          &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(shader->Type)];
 

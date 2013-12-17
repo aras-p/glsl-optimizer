@@ -452,7 +452,7 @@ log_program_parameters(const struct gl_shader_program *shProg)
       const struct gl_program *const prog = shProg->_LinkedShaders[i]->Program;
 
       printf("Program %d %s shader parameters:\n",
-             shProg->Name, _mesa_glsl_shader_target_name(prog->Target));
+             shProg->Name, _mesa_shader_enum_to_string(prog->Target));
       for (unsigned j = 0; j < prog->Parameters->NumParameters; j++) {
 	 printf("%s: %p %f %f %f %f\n",
 		prog->Parameters->Parameters[j].Name,

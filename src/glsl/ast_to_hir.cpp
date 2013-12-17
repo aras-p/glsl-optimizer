@@ -2110,7 +2110,7 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
       _mesa_glsl_error(loc, state,
                        "%s cannot be given an explicit location in %s shader",
                        mode_string(var),
-		       _mesa_glsl_shader_target_name(state->target));
+		       _mesa_shader_type_to_string(state->target));
    } else {
       var->data.explicit_location = true;
 
@@ -2188,7 +2188,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       _mesa_glsl_error(loc, state,
 		       "`attribute' variables may not be declared in the "
 		       "%s shader",
-		       _mesa_glsl_shader_target_name(state->target));
+		       _mesa_shader_type_to_string(state->target));
    }
 
    /* Section 6.1.1 (Function Calling Conventions) of the GLSL 1.10 spec says:
@@ -2599,7 +2599,7 @@ process_initializer(ir_variable *var, ast_declaration *decl,
    if ((var->data.mode == ir_var_shader_in) && (state->current_function == NULL)) {
       _mesa_glsl_error(& initializer_loc, state,
 		       "cannot initialize %s shader input / %s",
-		       _mesa_glsl_shader_target_name(state->target),
+		       _mesa_shader_type_to_string(state->target),
 		       (state->target == MESA_SHADER_VERTEX)
 		       ? "attribute" : "varying");
    }
@@ -4890,7 +4890,7 @@ ast_interface_block::hir(exec_list *instructions,
             _mesa_glsl_error(&loc, state,
                              "redeclaration of gl_PerVertex input not allowed "
                              "in the %s shader",
-                             _mesa_glsl_shader_target_name(state->target));
+                             _mesa_shader_type_to_string(state->target));
          }
          if (this->instance_name == NULL ||
              strcmp(this->instance_name, "gl_in") != 0 || !this->is_array) {
@@ -4907,7 +4907,7 @@ ast_interface_block::hir(exec_list *instructions,
             _mesa_glsl_error(&loc, state,
                              "redeclaration of gl_PerVertex output not "
                              "allowed in the %s shader",
-                             _mesa_glsl_shader_target_name(state->target));
+                             _mesa_shader_type_to_string(state->target));
          }
          if (this->instance_name != NULL) {
             _mesa_glsl_error(&loc, state,
