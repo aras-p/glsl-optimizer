@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "glsl_parser_extras.h"
 #include "ir.h"
 #include "ir_uniform.h"
 #include "linker.h"
@@ -214,9 +215,6 @@ link_check_atomic_counter_resources(struct gl_context *ctx,
                                     struct gl_shader_program *prog)
 {
    STATIC_ASSERT(MESA_SHADER_TYPES == 3);
-   static const char *shader_names[MESA_SHADER_TYPES] = {
-      "vertex", "geometry", "fragment"
-   };
    const unsigned max_atomic_counters[MESA_SHADER_TYPES] = {
       ctx->Const.VertexProgram.MaxAtomicCounters,
       ctx->Const.GeometryProgram.MaxAtomicCounters,
@@ -260,11 +258,11 @@ link_check_atomic_counter_resources(struct gl_context *ctx,
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
       if (atomic_counters[i] > max_atomic_counters[i])
          linker_error(prog, "Too many %s shader atomic counters",
-                      shader_names[i]);
+                      _mesa_shader_type_to_string(i));
 
       if (atomic_buffers[i] > max_atomic_buffers[i])
          linker_error(prog, "Too many %s shader atomic counter buffers",
-                      shader_names[i]);
+                      _mesa_shader_type_to_string(i));
    }
 
    if (total_atomic_counters > ctx->Const.MaxCombinedAtomicCounters)

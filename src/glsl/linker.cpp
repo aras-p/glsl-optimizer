@@ -1893,10 +1893,6 @@ store_fragdepth_layout(struct gl_shader_program *prog)
 static void
 check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
 {
-   static const char *const shader_names[MESA_SHADER_TYPES] = {
-      "vertex", "geometry", "fragment"
-   };
-
    const unsigned max_samplers[MESA_SHADER_TYPES] = {
       ctx->Const.VertexProgram.MaxTextureImageUnits,
       ctx->Const.GeometryProgram.MaxTextureImageUnits,
@@ -1929,7 +1925,7 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
 
       if (sh->num_samplers > max_samplers[i]) {
 	 linker_error(prog, "Too many %s shader texture samplers",
-		      shader_names[i]);
+		      _mesa_shader_type_to_string(i));
       }
 
       if (sh->num_uniform_components > max_default_uniform_components[i]) {
@@ -1938,11 +1934,11 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
                            "components, but the driver will try to optimize "
                            "them out; this is non-portable out-of-spec "
 			   "behavior\n",
-                           shader_names[i]);
+                           _mesa_shader_type_to_string(i));
          } else {
             linker_error(prog, "Too many %s shader default uniform block "
 			 "components",
-                         shader_names[i]);
+                         _mesa_shader_type_to_string(i));
          }
       }
 
@@ -1952,10 +1948,10 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
             linker_warning(prog, "Too many %s shader uniform components, "
                            "but the driver will try to optimize them out; "
                            "this is non-portable out-of-spec behavior\n",
-                           shader_names[i]);
+                           _mesa_shader_type_to_string(i));
          } else {
             linker_error(prog, "Too many %s shader uniform components",
-                         shader_names[i]);
+                         _mesa_shader_type_to_string(i));
          }
       }
    }
@@ -1979,7 +1975,7 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
 	 for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
 	    if (blocks[i] > max_uniform_blocks[i]) {
 	       linker_error(prog, "Too many %s uniform blocks (%d/%d)",
-			    shader_names[i],
+			    _mesa_shader_type_to_string(i),
 			    blocks[i],
 			    max_uniform_blocks[i]);
 	       break;
