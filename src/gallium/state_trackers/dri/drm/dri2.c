@@ -28,6 +28,7 @@
  *    <wallbraker@gmail.com> Chia-I Wu <olv@lunarg.com>
  */
 
+#include <xf86drm.h>
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
@@ -1051,10 +1052,18 @@ dri2_init_screen(__DRIscreen * sPriv)
       screen->default_throttle_frames = throttle_ret->val.val_int;
    }
 
+#ifdef DRM_CAP_PRIME /* Old libdrm? */
    if (dmabuf_ret && dmabuf_ret->val.val_bool) {
-      dri2ImageExtension.base.version = 7;
-      dri2ImageExtension.createImageFromFds = dri2_from_fds;
+      uint64_t cap;
+
+      if (drmGetCap(sPriv->fd, DRM_CAP_PRIME, &cap) == 0 &&
+          (cap & DRM_PRIME_CAP_IMPORT)) {
+
+         dri2ImageExtension.base.version = 7;
+         dri2ImageExtension.createImageFromFds = dri2_from_fds;
+      }
    }
+#endif /* DRM_CAP_PRIME */
 
    sPriv->extensions = dri_screen_extensions;
 

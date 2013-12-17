@@ -31,12 +31,6 @@ static const struct drm_conf_ret throttle_ret = {
    .val.val_int = 2,
 };
 
-/* Technically this requires kernel support that is not yet
- * widespread.
- *
- * We could check for support in create_screen and return the correct
- * value, but for now just return true in all cases.
- */
 static const struct drm_conf_ret share_fd_ret = {
    .type = DRM_CONF_BOOL,
    .val.val_int = true,
