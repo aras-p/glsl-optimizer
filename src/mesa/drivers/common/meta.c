@@ -403,7 +403,7 @@ compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB
       return 0;
    }
 
-   _mesa_GetProgramInfoLog(shader, size, NULL, info);
+   _mesa_GetShaderInfoLog(shader, size, NULL, info);
    _mesa_problem(ctx,
 		 "meta program compile failed:\n%s\n"
 		 "source:\n%s\n",
