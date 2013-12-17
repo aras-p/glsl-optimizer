@@ -616,7 +616,6 @@ static void si_state_draw(struct r600_context *rctx,
 	}
 
 	si_pm4_set_state(rctx, draw, pm4);
-	si_update_db_draw_state(rctx, (struct r600_surface *)rctx->framebuffer.zsbuf);
 }
 
 void si_emit_cache_flush(struct r600_common_context *rctx, struct r600_atom *atom)

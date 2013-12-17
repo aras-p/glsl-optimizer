@@ -791,11 +791,6 @@ static void *si_create_db_flush_dsa(struct r600_context *rctx, bool copy_depth,
 		si_pm4_set_reg(&state->pm4, R_028000_DB_RENDER_CONTROL,
 			       S_028000_DEPTH_COMPRESS_DISABLE(1) |
 			       S_028000_STENCIL_COMPRESS_DISABLE(1));
-		si_pm4_set_reg(&state->pm4, R_02800C_DB_RENDER_OVERRIDE,
-			       S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE) |
-			       S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
-			       S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE) |
-			       S_02800C_DISABLE_TILE_RATE_TILES(1));
 	}
 
         return state;
@@ -1721,47 +1716,6 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	}
 }
 
-/* Update register(s) containing depth buffer and draw state. */
-void si_update_db_draw_state(struct r600_context *rctx, struct r600_surface *zsbuf)
-{
-	struct si_pm4_state *pm4;
-	uint32_t db_render_override;
-	boolean hiz_enable = false;
-
-	pm4 = si_pm4_alloc_state(rctx);
-	if (pm4 == NULL) {
-		return;
-	}
-
-	/* db */
-
-	/* TODO HiS aka stencil buffer htile goes here */
-	db_render_override = S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
-			     S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE);
-
-	/* HiZ aka depth buffer htile */
-	if (zsbuf && zsbuf->base.texture) {
-		struct r600_texture *rtex = (struct r600_texture*)zsbuf->base.texture;
-		uint level = zsbuf->base.u.tex.level;
-		/* use htile only for first level */
-		hiz_enable = rtex->htile_buffer && !level;
-	}
-	if (hiz_enable) {
-		db_render_override |= S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_OFF);
-	} else {
-		db_render_override |= S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_DISABLE);
-	}
-
-	/* draw */
-
-	if (rctx->num_cs_dw_nontimer_queries_suspend) {
-		db_render_override |= S_02800C_NOOP_CULL_DISABLE(1);
-	}
-
-	si_pm4_set_reg(pm4, R_02800C_DB_RENDER_OVERRIDE, db_render_override);
-	si_pm4_set_state(rctx, db_draw, pm4);
-}
-
 static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		  const struct pipe_framebuffer_state *state)
 {
@@ -2158,7 +2112,6 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	si_pm4_set_state(rctx, framebuffer, pm4);
 	si_update_fb_rs_state(rctx);
 	si_update_fb_blend_state(rctx);
-	si_update_db_draw_state(rctx, (struct r600_surface *)state->zsbuf);
 }
 
 /*
@@ -3224,6 +3177,9 @@ void si_init_config(struct r600_context *rctx)
 	si_pm4_set_reg(pm4, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 0x0);
 	si_pm4_set_reg(pm4, R_028AC4_DB_SRESULTS_COMPARE_STATE1, 0x0);
 	si_pm4_set_reg(pm4, R_028AC8_DB_PRELOAD_CONTROL, 0x0);
+	si_pm4_set_reg(pm4, R_02800C_DB_RENDER_OVERRIDE,
+		       S_02800C_FORCE_HIS_ENABLE0(V_02800C_FORCE_DISABLE) |
+		       S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE));
 	si_pm4_set_reg(pm4, R_028400_VGT_MAX_VTX_INDX, ~0);
 	si_pm4_set_reg(pm4, R_028404_VGT_MIN_VTX_INDX, 0);
 

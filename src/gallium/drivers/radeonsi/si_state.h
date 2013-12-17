@@ -87,7 +87,6 @@ union si_state {
 		struct si_state_dsa		*dsa;
 		struct si_pm4_state		*fb_rs;
 		struct si_pm4_state		*fb_blend;
-		struct si_pm4_state		*db_draw;
 		struct si_pm4_state		*dsa_stencil_ref;
 		struct si_pm4_state		*vs;
 		struct si_pm4_state		*vs_sampler;
@@ -210,7 +209,6 @@ boolean si_is_format_supported(struct pipe_screen *screen,
                                enum pipe_texture_target target,
                                unsigned sample_count,
                                unsigned usage);
-void si_update_db_draw_state(struct r600_context *rctx, struct r600_surface *zsbuf);
 int si_shader_select(struct pipe_context *ctx,
 		     struct si_pipe_shader_selector *sel,
 		     unsigned *dirty);
