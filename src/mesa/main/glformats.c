@@ -1694,8 +1694,6 @@ GLenum
 _mesa_es3_error_check_format_and_type(GLenum format, GLenum type,
                                       GLenum internalFormat)
 {
-   GLboolean type_valid = GL_TRUE;
-
    switch (format) {
    case GL_RGBA:
       switch (type) {
@@ -2116,5 +2114,5 @@ _mesa_es3_error_check_format_and_type(GLenum format, GLenum type,
       break;
    }
 
-   return type_valid ? GL_NO_ERROR : GL_INVALID_OPERATION;
+   return GL_NO_ERROR;
 }
