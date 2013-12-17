@@ -237,6 +237,7 @@ struct sampler_table {
    struct glsl_sampler sampler_cubemap;
    struct glsl_sampler sampler_1d_array;
    struct glsl_sampler sampler_2d_array;
+   struct glsl_sampler sampler_cubemap_array;
 };
 
 /**
@@ -480,6 +481,7 @@ setup_shader_for_sampler(struct gl_context *ctx, struct glsl_sampler *sampler)
 
       fs_source = ralloc_asprintf(mem_ctx,
                                   "#extension GL_EXT_texture_array : enable\n"
+                                  "#extension GL_ARB_texture_cube_map_array: enable\n"
                                   "#ifdef GL_ES\n"
                                   "precision highp float;\n"
                                   "#endif\n"
@@ -507,6 +509,7 @@ setup_shader_for_sampler(struct gl_context *ctx, struct glsl_sampler *sampler)
                                   _mesa_is_desktop_gl(ctx) ? "130" : "300 es");
       fs_source = ralloc_asprintf(mem_ctx,
                                   "#version %s\n"
+                                  "#extension GL_ARB_texture_cube_map_array: enable\n"
                                   "#ifdef GL_ES\n"
                                   "precision highp float;\n"
                                   "#endif\n"
@@ -3305,6 +3308,8 @@ setup_texture_coords(GLenum faceTarget,
             assert(0);
          }
 
+         coord[3] = (float) (slice / 6);
+
          switch (faceTarget) {
          case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
             coord[0] = 1.0f;
@@ -3388,6 +3393,11 @@ setup_texture_sampler(GLenum target, struct sampler_table *table)
       table->sampler_2d_array.func = "texture2DArray";
       table->sampler_2d_array.texcoords = "texCoords.xyz";
       return &table->sampler_2d_array;
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+      table->sampler_cubemap_array.type = "samplerCubeArray";
+      table->sampler_cubemap_array.func = "textureCubeArray";
+      table->sampler_cubemap_array.texcoords = "texCoords.xyzw";
+      return &table->sampler_cubemap_array;
    default:
       _mesa_problem(NULL, "Unexpected texture target 0x%x in"
                     " setup_texture_sampler()\n", target);
@@ -3405,6 +3415,7 @@ sampler_table_cleanup(struct sampler_table *table)
    _mesa_DeleteObjectARB(table->sampler_cubemap.shader_prog);
    _mesa_DeleteObjectARB(table->sampler_1d_array.shader_prog);
    _mesa_DeleteObjectARB(table->sampler_2d_array.shader_prog);
+   _mesa_DeleteObjectARB(table->sampler_cubemap_array.shader_prog);
 
    table->sampler_1d.shader_prog = 0;
    table->sampler_2d.shader_prog = 0;
@@ -3413,6 +3424,7 @@ sampler_table_cleanup(struct sampler_table *table)
    table->sampler_cubemap.shader_prog = 0;
    table->sampler_1d_array.shader_prog = 0;
    table->sampler_2d_array.shader_prog = 0;
+   table->sampler_cubemap_array.shader_prog = 0;
 }
 
 static void
