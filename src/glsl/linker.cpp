@@ -414,7 +414,7 @@ link_invalidate_variable_locations(exec_list *ir)
  * Return false if an error was reported.
  */
 static void
-analyze_clip_usage(const char *shader_type, struct gl_shader_program *prog,
+analyze_clip_usage(struct gl_shader_program *prog,
                    struct gl_shader *shader, GLboolean *UsesClipDistance,
                    GLuint *ClipDistanceArraySize)
 {
@@ -437,7 +437,8 @@ analyze_clip_usage(const char *shader_type, struct gl_shader_program *prog,
       clip_distance.run(shader->ir);
       if (clip_vertex.variable_found() && clip_distance.variable_found()) {
          linker_error(prog, "%s shader writes to both `gl_ClipVertex' "
-                      "and `gl_ClipDistance'\n", shader_type);
+                      "and `gl_ClipDistance'\n",
+                      _mesa_shader_enum_to_string(shader->Type));
          return;
       }
       *UsesClipDistance = clip_distance.variable_found();
@@ -501,7 +502,7 @@ validate_vertex_shader_executable(struct gl_shader_program *prog,
       }
    }
 
-   analyze_clip_usage("vertex", prog, shader, &prog->Vert.UsesClipDistance,
+   analyze_clip_usage(prog, shader, &prog->Vert.UsesClipDistance,
                       &prog->Vert.ClipDistanceArraySize);
 }
 
@@ -548,7 +549,7 @@ validate_geometry_shader_executable(struct gl_shader_program *prog,
    unsigned num_vertices = vertices_per_prim(prog->Geom.InputType);
    prog->Geom.VerticesIn = num_vertices;
 
-   analyze_clip_usage("geometry", prog, shader, &prog->Geom.UsesClipDistance,
+   analyze_clip_usage(prog, shader, &prog->Geom.UsesClipDistance,
                       &prog->Geom.ClipDistanceArraySize);
 
    find_end_primitive_visitor end_primitive;
