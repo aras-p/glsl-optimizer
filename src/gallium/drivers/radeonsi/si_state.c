@@ -1815,7 +1815,13 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	/* use htile only for first level */
 	if (rtex->htile_buffer && !level) {
 		z_info |= S_028040_TILE_SURFACE_ENABLE(1);
-		/* Force off means no force, DB_SHADER_CONTROL decides */
+
+		/* This is optimal for the clear value of 1.0 and using
+		 * the LESS and LEQUAL test functions. Set this to 0
+		 * for the opposite case. This can only be changed when
+		 * clearing. */
+		z_info |= S_028040_ZRANGE_PRECISION(1);
+
 		uint64_t va = r600_resource_va(&rctx->screen->b.b, &rtex->htile_buffer->b.b);
 		db_htile_data_base = va >> 8;
 		db_htile_surface = S_028ABC_FULL_CACHE(1);
