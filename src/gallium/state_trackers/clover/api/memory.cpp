@@ -20,6 +20,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 //
 
+#include "util/u_math.h"
 #include "api/util.hpp"
 #include "core/memory.hpp"
 #include "core/format.hpp"
@@ -35,12 +36,23 @@ clCreateBuffer(cl_context d_ctx, cl_mem_flags flags, size_t size,
                                        CL_MEM_COPY_HOST_PTR)))
       throw error(CL_INVALID_HOST_PTR);
 
-   if (!size)
+   if (!size ||
+       size > fold(maximum(), 0u,
+                   map(std::mem_fn(&device::max_mem_alloc_size), ctx.devs())
+          ))
       throw error(CL_INVALID_BUFFER_SIZE);
 
    if (flags & ~(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
                  CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR |
                  CL_MEM_COPY_HOST_PTR))
+      throw error(CL_INVALID_VALUE);
+
+   if (util_bitcount(flags & (CL_MEM_READ_ONLY | CL_MEM_WRITE_ONLY |
+                              CL_MEM_READ_WRITE)) > 1)
+      throw error(CL_INVALID_VALUE);
+
+   if ((flags & CL_MEM_USE_HOST_PTR) &&
+       (flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR)))
       throw error(CL_INVALID_VALUE);
 
    ret_error(r_errcode, CL_SUCCESS);
