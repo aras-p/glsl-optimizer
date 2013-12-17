@@ -1433,6 +1433,9 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
       case BRW_OPCODE_MUL:
 	 brw_MUL(p, dst, src[0], src[1]);
 	 break;
+      case BRW_OPCODE_AVG:
+	 brw_AVG(p, dst, src[0], src[1]);
+	 break;
       case BRW_OPCODE_MACH:
 	 brw_set_acc_write_control(p, 1);
 	 brw_MACH(p, dst, src[0], src[1]);
