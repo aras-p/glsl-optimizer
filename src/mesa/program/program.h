@@ -216,9 +216,10 @@ _mesa_program_index_to_target(GLuint i)
       GL_FRAGMENT_PROGRAM_ARB
    };
    STATIC_ASSERT(Elements(enums) == MESA_SHADER_TYPES);
-   if(i >= MESA_SHADER_TYPES)
+   if(i >= MESA_SHADER_TYPES) {
+      assert(!"Unexpected program index");
       return 0;
-   else
+   } else
       return enums[i];
 }
 
