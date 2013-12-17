@@ -1467,7 +1467,6 @@ static void
 setup_drawpix_texture(struct gl_context *ctx,
 		      struct temp_texture *tex,
                       GLboolean newTex,
-                      GLenum texIntFormat,
                       GLsizei width, GLsizei height,
                       GLenum format, GLenum type,
                       const GLvoid *pixels)
@@ -1980,7 +1979,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
          newTex = alloc_texture(depthTex, srcW, srcH, GL_DEPTH_COMPONENT);
          _mesa_ReadPixels(srcX, srcY, srcW, srcH, GL_DEPTH_COMPONENT,
                           GL_UNSIGNED_INT, tmp);
-         setup_drawpix_texture(ctx, depthTex, newTex, GL_DEPTH_COMPONENT,
+         setup_drawpix_texture(ctx, depthTex, newTex,
                                srcW, srcH, GL_DEPTH_COMPONENT,
                                GL_UNSIGNED_INT, tmp);
 
@@ -2838,7 +2837,7 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
       if (!drawpix->StencilFP)
          init_draw_stencil_pixels(ctx);
 
-      setup_drawpix_texture(ctx, tex, newTex, texIntFormat, width, height,
+      setup_drawpix_texture(ctx, tex, newTex, width, height,
                             GL_ALPHA, type, pixels);
 
       _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -2881,14 +2880,14 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
       _mesa_ProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0,
                                         ctx->Current.RasterColor);
 
-      setup_drawpix_texture(ctx, tex, newTex, texIntFormat, width, height,
+      setup_drawpix_texture(ctx, tex, newTex, width, height,
                             format, type, pixels);
 
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
    else {
       /* Drawing RGBA */
-      setup_drawpix_texture(ctx, tex, newTex, texIntFormat, width, height,
+      setup_drawpix_texture(ctx, tex, newTex, width, height,
                             format, type, pixels);
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
@@ -3072,7 +3071,7 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
       _mesa_set_enable(ctx, GL_ALPHA_TEST, GL_TRUE);
       _mesa_AlphaFunc(GL_NOTEQUAL, UBYTE_TO_FLOAT(bg));
 
-      setup_drawpix_texture(ctx, tex, newTex, texIntFormat, width, height,
+      setup_drawpix_texture(ctx, tex, newTex, width, height,
                             GL_ALPHA, GL_UNSIGNED_BYTE, bitmap8);
 
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
