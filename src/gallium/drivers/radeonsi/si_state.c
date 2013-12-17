@@ -252,20 +252,18 @@ static void *si_create_blend_state_mode(struct pipe_context *ctx,
 	struct si_state_blend *blend = CALLOC_STRUCT(si_state_blend);
 	struct si_pm4_state *pm4 = &blend->pm4;
 
-	uint32_t color_control;
+	uint32_t color_control = 0;
 
 	if (blend == NULL)
 		return NULL;
 
 	blend->alpha_to_one = state->alpha_to_one;
 
-	color_control = S_028808_MODE(mode);
 	if (state->logicop_enable) {
 		color_control |= S_028808_ROP3(state->logicop_func | (state->logicop_func << 4));
 	} else {
 		color_control |= S_028808_ROP3(0xcc);
 	}
-	si_pm4_set_reg(pm4, R_028808_CB_COLOR_CONTROL, color_control);
 
 	si_pm4_set_reg(pm4, R_028B70_DB_ALPHA_TO_MASK,
 		       S_028B70_ALPHA_TO_MASK_ENABLE(state->alpha_to_coverage) |
@@ -309,6 +307,13 @@ static void *si_create_blend_state_mode(struct pipe_context *ctx,
 		}
 		si_pm4_set_reg(pm4, R_028780_CB_BLEND0_CONTROL + i * 4, blend_cntl);
 	}
+
+	if (blend->cb_target_mask) {
+		color_control |= S_028808_MODE(mode);
+	} else {
+		color_control |= S_028808_MODE(V_028808_CB_DISABLE);
+	}
+	si_pm4_set_reg(pm4, R_028808_CB_COLOR_CONTROL, color_control);
 
 	return blend;
 }
