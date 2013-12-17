@@ -3881,7 +3881,8 @@ decompress_texture_image(struct gl_context *ctx,
 
    if (slice > 0) {
       assert(target == GL_TEXTURE_3D ||
-             target == GL_TEXTURE_2D_ARRAY);
+             target == GL_TEXTURE_2D_ARRAY ||
+             target == GL_TEXTURE_CUBE_MAP_ARRAY);
    }
 
    switch (target) {
@@ -3895,8 +3896,8 @@ decompress_texture_image(struct gl_context *ctx,
       return;
 
    case GL_TEXTURE_CUBE_MAP_ARRAY:
-      /* This target is just broken currently. */
-      return;
+      faceTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + (slice % 6);
+      break;
 
    case GL_TEXTURE_CUBE_MAP:
       faceTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + texImage->Face;
@@ -3945,7 +3946,7 @@ decompress_texture_image(struct gl_context *ctx,
       struct glsl_sampler *sampler;
 
       setup_vertex_objects(&decompress->VAO, &decompress->VBO, true,
-                           2, 3, 0);
+                           2, 4, 0);
 
       /* Generate a relevant fragment shader program for the texture target */
       sampler = setup_texture_sampler(target, &decompress->samplers);
@@ -4097,8 +4098,7 @@ _mesa_meta_GetTexImage(struct gl_context *ctx,
     * unsigned, normalized values.  We could handle signed and unnormalized 
     * with floating point renderbuffers...
     */
-   if (texImage->TexObject->Target != GL_TEXTURE_CUBE_MAP_ARRAY
-       && _mesa_is_format_compressed(texImage->TexFormat) &&
+   if (_mesa_is_format_compressed(texImage->TexFormat) &&
        _mesa_get_format_datatype(texImage->TexFormat)
        == GL_UNSIGNED_NORMALIZED) {
       struct gl_texture_object *texObj = texImage->TexObject;
@@ -4107,7 +4107,8 @@ _mesa_meta_GetTexImage(struct gl_context *ctx,
       _mesa_unlock_texture(ctx, texObj);
       for (slice = 0; slice < texImage->Depth; slice++) {
          void *dst;
-         if (texImage->TexObject->Target == GL_TEXTURE_2D_ARRAY) {
+         if (texImage->TexObject->Target == GL_TEXTURE_2D_ARRAY
+             || texImage->TexObject->Target == GL_TEXTURE_CUBE_MAP_ARRAY) {
             /* Setup pixel packing.  SkipPixels and SkipRows will be applied
              * in the decompress_texture_image() function's call to
              * glReadPixels but we need to compute the dest slice's address
