@@ -310,6 +310,11 @@ control_line:
 			_glcpp_parser_expand_and_lex_from (parser,
 							   ELIF_EXPANDED, $2);
 		}
+		else if (parser->skip_stack &&
+		    parser->skip_stack->has_else)
+		{
+			glcpp_error(& @1, parser, "#elif after #else");
+		}
 		else
 		{
 			_glcpp_parser_skip_stack_change_if (parser, & @1,
@@ -324,6 +329,11 @@ control_line:
 		{
 			glcpp_error(& @1, parser, "#elif with no expression");
 		}
+		else if (parser->skip_stack &&
+		    parser->skip_stack->has_else)
+		{
+			glcpp_error(& @1, parser, "#elif after #else");
+		}
 		else
 		{
 			_glcpp_parser_skip_stack_change_if (parser, & @1,
@@ -332,7 +342,17 @@ control_line:
 		}
 	}
 |	HASH_ELSE {
-		_glcpp_parser_skip_stack_change_if (parser, & @1, "else", 1);
+		if (parser->skip_stack &&
+		    parser->skip_stack->has_else)
+		{
+			glcpp_error(& @1, parser, "multiple #else");
+		}
+		else
+		{
+			_glcpp_parser_skip_stack_change_if (parser, & @1, "else", 1);
+			if (parser->skip_stack)
+				parser->skip_stack->has_else = true;
+		}
 	} NEWLINE
 |	HASH_ENDIF {
 		_glcpp_parser_skip_stack_pop (parser, & @1);
@@ -2025,6 +2045,7 @@ _glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, YYLTYPE *loc,
 		node->type = SKIP_TO_ENDIF;
 	}
 
+	node->has_else = false;
 	node->next = parser->skip_stack;
 	parser->skip_stack = node;
 }

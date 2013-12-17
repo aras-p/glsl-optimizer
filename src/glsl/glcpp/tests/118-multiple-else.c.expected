@@ -1,0 +1,8 @@
+0:4(1): preprocessor error: multiple #else
+
+
+int foo;
+
+int bar;
+
+

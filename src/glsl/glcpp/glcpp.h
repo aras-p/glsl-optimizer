@@ -153,6 +153,7 @@ typedef enum skip_type {
 
 typedef struct skip_node {
 	skip_type_t type;
+	bool has_else;
 	YYLTYPE loc; /* location of the initial #if/#elif/... */
 	struct skip_node *next;
 } skip_node_t;
