@@ -3821,6 +3821,12 @@ _mesa_meta_CopyTexSubImage(struct gl_context *ctx, GLuint dims,
    GLint bpp;
    void *buf;
 
+   /* The gl_renderbuffer is part of the interface for
+    * dd_function_table::CopyTexSubImage, but this implementation does not use
+    * it.
+    */
+   (void) rb;
+
    /* Choose format/type for temporary image buffer */
    format = _mesa_get_format_base_format(texImage->TexFormat);
    if (format == GL_LUMINANCE ||
