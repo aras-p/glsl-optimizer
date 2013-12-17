@@ -406,6 +406,8 @@ brw_instruction_name(enum opcode op)
    switch (op) {
    case FS_OPCODE_FB_WRITE:
       return "fb_write";
+   case FS_OPCODE_BLORP_FB_WRITE:
+      return "blorp_fb_write";
 
    case SHADER_OPCODE_RCP:
       return "rcp";

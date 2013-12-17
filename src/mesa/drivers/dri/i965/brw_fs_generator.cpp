@@ -190,6 +190,21 @@ fs_generator::generate_fb_write(fs_inst *inst)
    mark_surface_used(surf_index);
 }
 
+void
+fs_generator::generate_blorp_fb_write(fs_inst *inst)
+{
+   brw_fb_WRITE(p,
+                16 /* dispatch_width */,
+                inst->base_mrf,
+                brw_reg_from_fs_reg(&inst->src[0]),
+                BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE,
+                inst->target,
+                inst->mlen,
+                0,
+                true,
+                inst->header_present);
+}
+
 /* Computes the integer pixel x,y values from the origin.
  *
  * This is the basis of gl_FragCoord computation, but is also used
@@ -1724,6 +1739,10 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
 
       case FS_OPCODE_FB_WRITE:
 	 generate_fb_write(inst);
+	 break;
+
+      case FS_OPCODE_BLORP_FB_WRITE:
+	 generate_blorp_fb_write(inst);
 	 break;
 
       case FS_OPCODE_MOV_DISPATCH_TO_FLAGS:
