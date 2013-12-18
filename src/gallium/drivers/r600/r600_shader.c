@@ -285,6 +285,7 @@ struct r600_shader_ctx {
 	int					fragcoord_input;
 	int					native_integers;
 	int					next_ring_offset;
+	int					gs_out_ring_offset;
 	int					gs_next_vertex;
 	struct r600_shader	*gs_for_vs;
 };
@@ -618,6 +619,9 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 				ctx->clip_vertex_write = TRUE;
 				ctx->cv_output = i;
 				break;
+			}
+			if (ctx->type == TGSI_PROCESSOR_GEOMETRY) {
+				ctx->gs_out_ring_offset += 16;
 			}
 		} else if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
 			switch (d->Semantic.Name) {
@@ -1313,7 +1317,7 @@ static int emit_gs_ring_writes(struct r600_shader_ctx *ctx)
 
 		/* next_ring_offset after parsing input decls contains total size of
 		 * single vertex data, gs_next_vertex - current vertex index */
-		ring_offset += ctx->next_ring_offset * ctx->gs_next_vertex;
+		ring_offset += ctx->gs_out_ring_offset * ctx->gs_next_vertex;
 
 		memset(&output, 0, sizeof(struct r600_bytecode_output));
 		output.gpr = ctx->shader->output[i].gpr;
@@ -1379,6 +1383,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 	}
 
 	ctx.next_ring_offset = 0;
+	ctx.gs_out_ring_offset = 0;
 	ctx.gs_next_vertex = 0;
 
 	ctx.face_gpr = -1;
