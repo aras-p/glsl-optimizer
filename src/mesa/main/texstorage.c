@@ -332,6 +332,11 @@ tex_storage_error_check(struct gl_context *ctx, GLuint dims, GLenum target,
       return GL_TRUE;
    }
 
+   /* additional checks for depth textures */
+   if (!_mesa_legal_texture_base_format_for_target(ctx, target, internalformat,
+                                                   dims, "glTexStorage"))
+      return GL_TRUE;
+
    return GL_FALSE;
 }
 
