@@ -567,6 +567,11 @@ st_translate_fragment_program(struct st_context *st,
             input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
             break;
+         case VARYING_SLOT_PRIMITIVE_ID:
+            input_semantic_name[slot] = TGSI_SEMANTIC_PRIMID;
+            input_semantic_index[slot] = 0;
+            interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
+            break;
          case VARYING_SLOT_CLIP_DIST0:
             input_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
             input_semantic_index[slot] = 0;
