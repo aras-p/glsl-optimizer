@@ -55,7 +55,7 @@ brw_lower_unnormalized_offset_visitor::visit_leave(ir_texture *ir)
    if (!ir->offset)
       return visit_continue;
 
-   if (ir->op == ir_tg4) {
+   if (ir->op == ir_tg4 || ir->op == ir_tex) {
       if (ir->sampler->type->sampler_dimensionality != GLSL_SAMPLER_DIM_RECT)
          return visit_continue;
    }
