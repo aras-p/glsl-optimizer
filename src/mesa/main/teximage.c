@@ -2133,8 +2133,22 @@ texture_error_check( struct gl_context *ctx,
    /* additional checks for depth textures */
    if (_mesa_base_tex_format(ctx, internalFormat) == GL_DEPTH_COMPONENT
        || _mesa_base_tex_format(ctx, internalFormat) == GL_DEPTH_STENCIL) {
-      /* Only 1D, 2D, rect, array and cube textures supported, not 3D
-       * Cubemaps are only supported for GL version > 3.0 or with EXT_gpu_shader4 */
+      /* Section 3.8.3 (Texture Image Specification) of the OpenGL 3.3 Core
+       * Profile spec says:
+       *
+       *     "Textures with a base internal format of DEPTH_COMPONENT or
+       *     DEPTH_STENCIL are supported by texture image specification
+       *     commands only if target is TEXTURE_1D, TEXTURE_2D,
+       *     TEXTURE_1D_ARRAY, TEXTURE_2D_ARRAY, TEXTURE_RECTANGLE,
+       *     TEXTURE_CUBE_MAP, PROXY_TEXTURE_1D, PROXY_TEXTURE_2D,
+       *     PROXY_TEXTURE_1D_ARRAY, PROXY_TEXTURE_2D_ARRAY,
+       *     PROXY_TEXTURE_RECTANGLE, or PROXY_TEXTURE_CUBE_MAP. Using these
+       *     formats in conjunction with any other target will result in an
+       *     INVALID_OPERATION error."
+       *
+       * Cubemaps are only supported with desktop OpenGL version >= 3.0,
+       * EXT_gpu_shader4, or, on OpenGL ES 2.0+, OES_depth_texture_cube_map.
+       */
       if (target != GL_TEXTURE_1D &&
           target != GL_PROXY_TEXTURE_1D &&
           target != GL_TEXTURE_2D &&
@@ -2151,7 +2165,7 @@ texture_error_check( struct gl_context *ctx,
           !((target == GL_TEXTURE_CUBE_MAP_ARRAY ||
              target == GL_PROXY_TEXTURE_CUBE_MAP_ARRAY) &&
             ctx->Extensions.ARB_texture_cube_map_array)) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
+         _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glTexImage%dD(bad target for depth texture)",
                      dimensions);
          return GL_TRUE;
