@@ -244,6 +244,10 @@ _mesa_alloc_texture_storage(struct gl_context *ctx,
    int face;
    int level;
 
+   (void) width;
+   (void) height;
+   (void) depth;
+
    for (face = 0; face < numFaces; face++) {
       for (level = 0; level < levels; level++) {
          struct gl_texture_image *const texImage = texObj->Image[face][level];
@@ -460,6 +464,11 @@ _mesa_TextureStorage1DEXT(GLuint texture, GLenum target, GLsizei levels,
                           GLenum internalformat,
                           GLsizei width)
 {
+   (void) texture;
+   (void) target;
+   (void) levels;
+   (void) internalformat;
+   (void) width;
    /* no-op */
 }
 
@@ -469,6 +478,12 @@ _mesa_TextureStorage2DEXT(GLuint texture, GLenum target, GLsizei levels,
                           GLenum internalformat,
                           GLsizei width, GLsizei height)
 {
+   (void) texture;
+   (void) target;
+   (void) levels;
+   (void) internalformat;
+   (void) width;
+   (void) height;
    /* no-op */
 }
 
@@ -479,5 +494,12 @@ _mesa_TextureStorage3DEXT(GLuint texture, GLenum target, GLsizei levels,
                           GLenum internalformat,
                           GLsizei width, GLsizei height, GLsizei depth)
 {
+   (void) texture;
+   (void) target;
+   (void) levels;
+   (void) internalformat;
+   (void) width;
+   (void) height;
+   (void) depth;
    /* no-op */
 }
