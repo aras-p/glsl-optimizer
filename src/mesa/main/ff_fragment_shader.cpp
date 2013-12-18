@@ -1096,7 +1096,9 @@ load_texunit_bumpmap( texenv_fragment_program *p, GLuint unit )
    ir_variable *rot_mat_0, *rot_mat_1;
 
    rot_mat_0 = p->shader->symbols->get_variable("gl_BumpRotMatrix0MESA");
+   assert(rot_mat_0);
    rot_mat_1 = p->shader->symbols->get_variable("gl_BumpRotMatrix1MESA");
+   assert(rot_mat_1);
 
    ir_variable *tc_array = p->shader->symbols->get_variable("gl_TexCoord");
    assert(tc_array);
