@@ -43,6 +43,37 @@
 #include "dri_drawable.h"
 #include "dri2_buffer.h"
 
+static int convert_fourcc(int format, int *dri_components_p)
+{
+   int dri_components;
+   switch(format) {
+   case __DRI_IMAGE_FOURCC_RGB565:
+      format = __DRI_IMAGE_FORMAT_RGB565;
+      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
+      break;
+   case __DRI_IMAGE_FOURCC_ARGB8888:
+      format = __DRI_IMAGE_FORMAT_ARGB8888;
+      dri_components = __DRI_IMAGE_COMPONENTS_RGBA;
+      break;
+   case __DRI_IMAGE_FOURCC_XRGB8888:
+      format = __DRI_IMAGE_FORMAT_XRGB8888;
+      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
+      break;
+   case __DRI_IMAGE_FOURCC_ABGR8888:
+      format = __DRI_IMAGE_FORMAT_ABGR8888;
+      dri_components = __DRI_IMAGE_COMPONENTS_RGBA;
+      break;
+   case __DRI_IMAGE_FOURCC_XBGR8888:
+      format = __DRI_IMAGE_FORMAT_XBGR8888;
+      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
+      break;
+   default:
+      return -1;
+   }
+   *dri_components_p = dri_components;
+   return format;
+}
+
 /**
  * DRI2 flush extension.
  */
@@ -812,30 +843,9 @@ dri2_from_names(__DRIscreen *screen, int width, int height, int format,
    if (offsets[0] != 0)
       return NULL;
 
-   switch(format) {
-   case __DRI_IMAGE_FOURCC_RGB565:
-      format = __DRI_IMAGE_FORMAT_RGB565;
-      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
-      break;
-   case __DRI_IMAGE_FOURCC_ARGB8888:
-      format = __DRI_IMAGE_FORMAT_ARGB8888;
-      dri_components = __DRI_IMAGE_COMPONENTS_RGBA;
-      break;
-   case __DRI_IMAGE_FOURCC_XRGB8888:
-      format = __DRI_IMAGE_FORMAT_XRGB8888;
-      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
-      break;
-   case __DRI_IMAGE_FOURCC_ABGR8888:
-      format = __DRI_IMAGE_FORMAT_ABGR8888;
-      dri_components = __DRI_IMAGE_COMPONENTS_RGBA;
-      break;
-   case __DRI_IMAGE_FOURCC_XBGR8888:
-      format = __DRI_IMAGE_FORMAT_XBGR8888;
-      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
-      break;
-   default:
+   format = convert_fourcc(format, &dri_components);
+   if (format == -1)
       return NULL;
-   }
 
    /* Strides are in bytes not pixels. */
    stride = strides[0] /4;
@@ -948,30 +958,9 @@ dri2_from_fds(__DRIscreen *screen, int width, int height, int fourcc,
    if (offsets[0] != 0)
       return NULL;
 
-   switch(fourcc) {
-   case __DRI_IMAGE_FOURCC_RGB565:
-      format = __DRI_IMAGE_FORMAT_RGB565;
-      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
-      break;
-   case __DRI_IMAGE_FOURCC_ARGB8888:
-      format = __DRI_IMAGE_FORMAT_ARGB8888;
-      dri_components = __DRI_IMAGE_COMPONENTS_RGBA;
-      break;
-   case __DRI_IMAGE_FOURCC_XRGB8888:
-      format = __DRI_IMAGE_FORMAT_XRGB8888;
-      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
-      break;
-   case __DRI_IMAGE_FOURCC_ABGR8888:
-      format = __DRI_IMAGE_FORMAT_ABGR8888;
-      dri_components = __DRI_IMAGE_COMPONENTS_RGBA;
-      break;
-   case __DRI_IMAGE_FOURCC_XBGR8888:
-      format = __DRI_IMAGE_FORMAT_XBGR8888;
-      dri_components = __DRI_IMAGE_COMPONENTS_RGB;
-      break;
-   default:
+   format = convert_fourcc(fourcc, &dri_components);
+   if (format == -1)
       return NULL;
-   }
 
    /* Strides are in bytes not pixels. */
    stride = strides[0] /4;
