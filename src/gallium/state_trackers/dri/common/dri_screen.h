@@ -95,6 +95,15 @@ struct __DRIimageRec {
    uint32_t dri_components;
 
    void *loader_private;
+
+   /**
+    * Provided by EGL_EXT_image_dma_buf_import.
+    */
+   enum __DRIYUVColorSpace yuv_color_space;
+   enum __DRISampleRange sample_range;
+   enum __DRIChromaSiting horizontal_siting;
+   enum __DRIChromaSiting vertical_siting;
+
 };
 
 #ifndef __NOT_HAVE_DRM_H

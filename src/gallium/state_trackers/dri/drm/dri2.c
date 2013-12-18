@@ -974,6 +974,52 @@ dri2_from_fds(__DRIscreen *screen, int width, int height, int fourcc,
    return img;
 }
 
+static __DRIimage *
+dri2_from_dma_bufs(__DRIscreen *screen,
+                   int width, int height, int fourcc,
+                   int *fds, int num_fds,
+                   int *strides, int *offsets,
+                   enum __DRIYUVColorSpace yuv_color_space,
+                   enum __DRISampleRange sample_range,
+                   enum __DRIChromaSiting horizontal_siting,
+                   enum __DRIChromaSiting vertical_siting,
+                   unsigned *error,
+                   void *loaderPrivate)
+{
+   __DRIimage *img;
+   int format, stride, dri_components;
+
+   if (num_fds != 1 || offsets[0] != 0) {
+      *error = __DRI_IMAGE_ERROR_BAD_MATCH;
+      return NULL;
+   }
+
+   format = convert_fourcc(fourcc, &dri_components);
+   if (format == -1) {
+      *error = __DRI_IMAGE_ERROR_BAD_MATCH;
+      return NULL;
+   }
+
+   /* Strides are in bytes not pixels. */
+   stride = strides[0] /4;
+
+   img = dri2_create_image_from_fd(screen, width, height, format,
+                                   fds[0], stride, loaderPrivate);
+   if (img == NULL) {
+      *error = __DRI_IMAGE_ERROR_BAD_ALLOC;
+      return NULL;
+   }
+
+   img->yuv_color_space = yuv_color_space;
+   img->sample_range = sample_range;
+   img->horizontal_siting = horizontal_siting;
+   img->vertical_siting = vertical_siting;
+   img->dri_components = dri_components;
+
+   *error = __DRI_IMAGE_ERROR_SUCCESS;
+   return img;
+}
+
 static void
 dri2_destroy_image(__DRIimage *img)
 {
@@ -1048,8 +1094,9 @@ dri2_init_screen(__DRIscreen * sPriv)
       if (drmGetCap(sPriv->fd, DRM_CAP_PRIME, &cap) == 0 &&
           (cap & DRM_PRIME_CAP_IMPORT)) {
 
-         dri2ImageExtension.base.version = 7;
+         dri2ImageExtension.base.version = 8;
          dri2ImageExtension.createImageFromFds = dri2_from_fds;
+         dri2ImageExtension.createImageFromDmaBufs = dri2_from_dma_bufs;
       }
    }
 
