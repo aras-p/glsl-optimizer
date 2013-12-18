@@ -296,7 +296,9 @@ generate_fs_loop(struct gallivm_state *gallivm,
       assert(zs_format_desc);
 
       if (!shader->info.base.writes_z) {
-         if (key->alpha.enabled || shader->info.base.uses_kill) {
+         if (key->alpha.enabled ||
+             key->blend.alpha_to_coverage ||
+             shader->info.base.uses_kill) {
             /* With alpha test and kill, can do the depth test early
              * and hopefully eliminate some quads.  But need to do a
              * special deferred depth write once the final mask value
@@ -435,6 +437,21 @@ generate_fs_loop(struct gallivm_state *gallivm,
          lp_build_alpha_test(gallivm, key->alpha.func, type, cbuf_format_desc,
                              &mask, alpha, alpha_ref_value,
                              (depth_mode & LATE_DEPTH_TEST) != 0);
+      }
+   }
+
+   /* Emulate Alpha to Coverage with Alpha test */
+   if (key->blend.alpha_to_coverage) {
+      int color0 = find_output_by_semantic(&shader->info.base,
+                                           TGSI_SEMANTIC_COLOR,
+                                           0);
+
+      if (color0 != -1 && outputs[color0][3]) {
+         LLVMValueRef alpha = LLVMBuildLoad(builder, outputs[color0][3], "alpha");
+
+         lp_build_alpha_to_coverage(gallivm, type,
+                                    &mask, alpha,
+                                    (depth_mode & LATE_DEPTH_TEST) != 0);
       }
    }
 
@@ -2426,6 +2443,9 @@ dump_fs_variant_key(const struct lp_fragment_shader_variant_key *key)
       debug_printf("blend.alpha_dst_factor = %s\n", util_dump_blend_factor(key->blend.rt[0].alpha_dst_factor, TRUE));
    }
    debug_printf("blend.colormask = 0x%x\n", key->blend.rt[0].colormask);
+   if (key->blend.alpha_to_coverage) {
+      debug_printf("blend.alpha_to_coverage is enabled\n");
+   }
    for (i = 0; i < key->nr_samplers; ++i) {
       const struct lp_static_sampler_state *sampler = &key->state[i].sampler_state;
       debug_printf("sampler[%u] = \n", i);
@@ -2521,6 +2541,7 @@ generate_variant(struct llvmpipe_context *lp,
          fullcolormask &&
          !key->stencil[0].enabled &&
          !key->alpha.enabled &&
+         !key->blend.alpha_to_coverage &&
          !key->depth.enabled &&
          !shader->info.base.uses_kill
       ? TRUE : FALSE;

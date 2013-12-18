@@ -38,6 +38,7 @@
 struct pipe_blend_state;
 struct lp_type;
 struct lp_build_context;
+struct lp_build_mask_context;
 
 
 LLVMValueRef
@@ -99,5 +100,11 @@ lp_build_blend_func_reverse(unsigned rgb_func,
 boolean
 lp_build_blend_func_commutative(unsigned func);
 
+void
+lp_build_alpha_to_coverage(struct gallivm_state *gallivm,
+                           struct lp_type type,
+                           struct lp_build_mask_context *mask,
+                           LLVMValueRef alpha,
+                           boolean do_branch);
 
 #endif /* !LP_BLD_BLEND_H */

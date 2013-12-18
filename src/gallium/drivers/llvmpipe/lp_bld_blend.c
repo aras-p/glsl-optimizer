@@ -30,6 +30,11 @@
 
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_arit.h"
+#include "gallivm/lp_bld_const.h"
+#include "gallivm/lp_bld_logic.h"
+#include "gallivm/lp_bld_swizzle.h"
+#include "gallivm/lp_bld_flow.h"
+#include "gallivm/lp_bld_debug.h"
 
 #include "lp_bld_blend.h"
 
@@ -190,4 +195,29 @@ lp_build_blend(struct lp_build_context *bld,
    src_term = lp_build_mul(bld, src, src_factor);
    dst_term = lp_build_mul(bld, dst, dst_factor);
    return lp_build_blend_func(bld, func, src_term, dst_term);
+}
+
+void
+lp_build_alpha_to_coverage(struct gallivm_state *gallivm,
+                           struct lp_type type,
+                           struct lp_build_mask_context *mask,
+                           LLVMValueRef alpha,
+                           boolean do_branch)
+{
+   struct lp_build_context bld;
+   LLVMValueRef test;
+   LLVMValueRef alpha_ref_value;
+
+   lp_build_context_init(&bld, gallivm, type);
+
+   alpha_ref_value = lp_build_const_vec(gallivm, type, 0.5);
+
+   test = lp_build_cmp(&bld, PIPE_FUNC_GREATER, alpha, alpha_ref_value);
+
+   lp_build_name(test, "alpha_to_coverage");
+
+   lp_build_mask_update(mask, test);
+
+   if (do_branch)
+      lp_build_mask_check(mask);
 }
