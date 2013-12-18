@@ -991,9 +991,13 @@ dri2_bind_tex_image(Display * dpy,
    __GLXDRIdrawable *base = GetGLXDRIDrawable(dpy, drawable);
    struct glx_display *dpyPriv = __glXInitialize(dpy);
    struct dri2_drawable *pdraw = (struct dri2_drawable *) base;
-   struct dri2_display *pdp =
-      (struct dri2_display *) dpyPriv->dri2Display;
+   struct dri2_display *pdp;
    struct dri2_screen *psc;
+
+   if (dpyPriv == NULL)
+       return;
+
+   pdp = (struct dri2_display *) dpyPriv->dri2Display;
 
    if (pdraw != NULL) {
       psc = (struct dri2_screen *) base->psc;
