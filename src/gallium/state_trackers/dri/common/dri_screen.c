@@ -360,6 +360,12 @@ dri_destroy_option_cache(struct dri_screen * screen)
    }
 
    free(screen->optionCache.values);
+
+   /* Default values are copied to screen->optionCache->values in
+    * initOptionCache. The info field, however, is a pointer copy, so don't free
+    * that twice.
+    */
+   free(screen->optionCacheDefaults.values);
 }
 
 void
