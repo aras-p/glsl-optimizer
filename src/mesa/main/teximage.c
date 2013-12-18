@@ -1961,6 +1961,73 @@ compressed_tex_size(GLsizei width, GLsizei height, GLsizei depth,
    return _mesa_format_image_size(mesaFormat, width, height, depth);
 }
 
+/**
+ * Verify that a texture format is valid with a particular target
+ *
+ * In particular, textures with base format of \c GL_DEPTH_COMPONENT or
+ * \c GL_DEPTH_STENCIL are only valid with certain, context dependent texture
+ * targets.
+ *
+ * \param ctx             GL context
+ * \param target          Texture target
+ * \param internalFormat  Internal format of the texture image
+ * \param dimensions      Dimensionality at the caller.  This is \b not used
+ *                        in the validation.  It is only used when logging
+ *                        error messages.
+ * \param caller          Base name of the calling function (e.g.,
+ *                        "glTexImage" or "glTexStorage").
+ *
+ * \returns true if the combination is legal, false otherwise.
+ */
+bool
+_mesa_legal_texture_base_format_for_target(struct gl_context *ctx,
+                                           GLenum target, GLenum internalFormat,
+                                           unsigned dimensions,
+                                           const char *caller)
+{
+   if (_mesa_base_tex_format(ctx, internalFormat) == GL_DEPTH_COMPONENT
+       || _mesa_base_tex_format(ctx, internalFormat) == GL_DEPTH_STENCIL) {
+      /* Section 3.8.3 (Texture Image Specification) of the OpenGL 3.3 Core
+       * Profile spec says:
+       *
+       *     "Textures with a base internal format of DEPTH_COMPONENT or
+       *     DEPTH_STENCIL are supported by texture image specification
+       *     commands only if target is TEXTURE_1D, TEXTURE_2D,
+       *     TEXTURE_1D_ARRAY, TEXTURE_2D_ARRAY, TEXTURE_RECTANGLE,
+       *     TEXTURE_CUBE_MAP, PROXY_TEXTURE_1D, PROXY_TEXTURE_2D,
+       *     PROXY_TEXTURE_1D_ARRAY, PROXY_TEXTURE_2D_ARRAY,
+       *     PROXY_TEXTURE_RECTANGLE, or PROXY_TEXTURE_CUBE_MAP. Using these
+       *     formats in conjunction with any other target will result in an
+       *     INVALID_OPERATION error."
+       *
+       * Cubemaps are only supported with desktop OpenGL version >= 3.0,
+       * EXT_gpu_shader4, or, on OpenGL ES 2.0+, OES_depth_texture_cube_map.
+       */
+      if (target != GL_TEXTURE_1D &&
+          target != GL_PROXY_TEXTURE_1D &&
+          target != GL_TEXTURE_2D &&
+          target != GL_PROXY_TEXTURE_2D &&
+          target != GL_TEXTURE_1D_ARRAY &&
+          target != GL_PROXY_TEXTURE_1D_ARRAY &&
+          target != GL_TEXTURE_2D_ARRAY &&
+          target != GL_PROXY_TEXTURE_2D_ARRAY &&
+          target != GL_TEXTURE_RECTANGLE_ARB &&
+          target != GL_PROXY_TEXTURE_RECTANGLE_ARB &&
+         !((_mesa_is_cube_face(target) || target == GL_PROXY_TEXTURE_CUBE_MAP) &&
+           (ctx->Version >= 30 || ctx->Extensions.EXT_gpu_shader4
+            || (ctx->API == API_OPENGLES2 && ctx->Extensions.OES_depth_texture_cube_map))) &&
+          !((target == GL_TEXTURE_CUBE_MAP_ARRAY ||
+             target == GL_PROXY_TEXTURE_CUBE_MAP_ARRAY) &&
+            ctx->Extensions.ARB_texture_cube_map_array)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "%s%dD(bad target for depth texture)",
+                     caller, dimensions);
+         return false;
+      }
+   }
+
+   return true;
+}
 
 /**
  * Test the glTexImage[123]D() parameters for errors.
@@ -2131,46 +2198,9 @@ texture_error_check( struct gl_context *ctx,
    }
 
    /* additional checks for depth textures */
-   if (_mesa_base_tex_format(ctx, internalFormat) == GL_DEPTH_COMPONENT
-       || _mesa_base_tex_format(ctx, internalFormat) == GL_DEPTH_STENCIL) {
-      /* Section 3.8.3 (Texture Image Specification) of the OpenGL 3.3 Core
-       * Profile spec says:
-       *
-       *     "Textures with a base internal format of DEPTH_COMPONENT or
-       *     DEPTH_STENCIL are supported by texture image specification
-       *     commands only if target is TEXTURE_1D, TEXTURE_2D,
-       *     TEXTURE_1D_ARRAY, TEXTURE_2D_ARRAY, TEXTURE_RECTANGLE,
-       *     TEXTURE_CUBE_MAP, PROXY_TEXTURE_1D, PROXY_TEXTURE_2D,
-       *     PROXY_TEXTURE_1D_ARRAY, PROXY_TEXTURE_2D_ARRAY,
-       *     PROXY_TEXTURE_RECTANGLE, or PROXY_TEXTURE_CUBE_MAP. Using these
-       *     formats in conjunction with any other target will result in an
-       *     INVALID_OPERATION error."
-       *
-       * Cubemaps are only supported with desktop OpenGL version >= 3.0,
-       * EXT_gpu_shader4, or, on OpenGL ES 2.0+, OES_depth_texture_cube_map.
-       */
-      if (target != GL_TEXTURE_1D &&
-          target != GL_PROXY_TEXTURE_1D &&
-          target != GL_TEXTURE_2D &&
-          target != GL_PROXY_TEXTURE_2D &&
-          target != GL_TEXTURE_1D_ARRAY &&
-          target != GL_PROXY_TEXTURE_1D_ARRAY &&
-          target != GL_TEXTURE_2D_ARRAY &&
-          target != GL_PROXY_TEXTURE_2D_ARRAY &&
-          target != GL_TEXTURE_RECTANGLE_ARB &&
-          target != GL_PROXY_TEXTURE_RECTANGLE_ARB &&
-         !((_mesa_is_cube_face(target) || target == GL_PROXY_TEXTURE_CUBE_MAP) &&
-           (ctx->Version >= 30 || ctx->Extensions.EXT_gpu_shader4
-            || (ctx->API == API_OPENGLES2 && ctx->Extensions.OES_depth_texture_cube_map))) &&
-          !((target == GL_TEXTURE_CUBE_MAP_ARRAY ||
-             target == GL_PROXY_TEXTURE_CUBE_MAP_ARRAY) &&
-            ctx->Extensions.ARB_texture_cube_map_array)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glTexImage%dD(bad target for depth texture)",
-                     dimensions);
-         return GL_TRUE;
-      }
-   }
+   if (!_mesa_legal_texture_base_format_for_target(ctx, target, internalFormat,
+                                                   dimensions, "glTexImage"))
+      return GL_TRUE;
 
    /* additional checks for compressed textures */
    if (_mesa_is_compressed_format(ctx, internalFormat)) {

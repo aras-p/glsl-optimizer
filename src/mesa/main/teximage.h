@@ -157,6 +157,14 @@ extern gl_format
 _mesa_validate_texbuffer_format(const struct gl_context *ctx,
                                 GLenum internalFormat);
 
+
+bool
+_mesa_legal_texture_base_format_for_target(struct gl_context *ctx,
+                                           GLenum target,
+                                           GLenum internalFormat,
+                                           unsigned dimensions,
+                                           const char *caller);
+
 /**
  * Lock a texture for updating.  See also _mesa_lock_context_textures().
  */
