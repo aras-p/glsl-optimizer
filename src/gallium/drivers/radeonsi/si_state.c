@@ -2246,14 +2246,17 @@ static void *si_create_shader_state(struct pipe_context *ctx,
 {
 	struct si_pipe_shader_selector *sel = CALLOC_STRUCT(si_pipe_shader_selector);
 	int r;
-	struct tgsi_shader_info info;
-
-	tgsi_scan_shader(state->tokens, &info);
 
 	sel->type = pipe_shader_type;
 	sel->tokens = tgsi_dup_tokens(state->tokens);
 	sel->so = state->stream_output;
-	sel->fs_write_all = info.color0_writes_all_cbufs;
+
+	if (pipe_shader_type == PIPE_SHADER_FRAGMENT) {
+		struct tgsi_shader_info info;
+
+		tgsi_scan_shader(state->tokens, &info);
+		sel->fs_write_all = info.color0_writes_all_cbufs;
+	}
 
 	r = si_shader_select(ctx, sel, NULL);
 	if (r) {
