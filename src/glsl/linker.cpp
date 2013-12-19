@@ -2441,11 +2441,12 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       goto done;
 
    /* OpenGL ES requires that a vertex shader and a fragment shader both be
-    * present in a linked program.  By checking prog->IsES, we also
-    * catch the GL_ARB_ES2_compatibility case.
+    * present in a linked program. GL_ARB_ES2_compatibility doesn't say
+    * anything about shader linking when one of the shaders (vertex or
+    * fragment shader) is absent. So, the extension shouldn't change the
+    * behavior specified in GLSL specification.
     */
-   if (!prog->InternalSeparateShader &&
-       (ctx->API == API_OPENGLES2 || prog->IsES)) {
+   if (!prog->InternalSeparateShader && ctx->API == API_OPENGLES2) {
       if (prog->_LinkedShaders[MESA_SHADER_VERTEX] == NULL) {
 	 linker_error(prog, "program lacks a vertex shader\n");
       } else if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL) {
