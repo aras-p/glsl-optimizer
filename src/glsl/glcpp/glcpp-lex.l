@@ -92,13 +92,44 @@ OCTAL_INTEGER		0[0-7]*[uU]?
 HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 %%
-	/* Implicitly switch between SKIP and INITIAL (non-skipping);
-	 * don't switch if some other state was explicitly set.
+
+	/* The handling of the SKIP vs INITIAL start states requires
+	 * some special handling. Typically, a lexer would change
+	 * start states with statements like "BEGIN SKIP" within the
+	 * lexer rules. We can't get away with that here, since we
+	 * need the parser to actually evaluate expressions for
+	 * directives like "#if".
+	 *
+	 * So, here, in code that will be executed on every call to
+	 * the lexer,and before any rules, we examine the skip_stack
+	 * as set by the parser to know whether to change from INITIAL
+	 * to SKIP or from SKIP back to INITIAL.
+	 *
+	 * Three cases cause us to switch out of the SKIP state and
+	 * back to the INITIAL state:
+	 *
+	 *	1. The top of the skip_stack is of type SKIP_NO_SKIP
+	 *	   This means we're still evaluating some #if
+	 *	   hierarchy, but we're on a branch of it where
+	 *	   content should not be skipped (such as "#if 1" or
+	 *	   "#else" or so).
+	 *
+	 *	2. The skip_stack is NULL meaning that we've reached
+	 *	   the last #endif.
+	 *
+	 *	3. The lexing_if bit is set. This indicates that we
+	 *	   are lexing the expression following an "#if" of
+	 *	   "#elif". Even inside an "#if 0" we need to lex this
+	 *	   expression so the parser can correctly update the
+	 *	   skip_stack state.
 	 */
 	glcpp_parser_t *parser = yyextra;
-	if (YY_START == 0 || YY_START == SKIP) {
-		if (parser->lexing_if || parser->skip_stack == NULL || parser->skip_stack->type == SKIP_NO_SKIP) {
-			BEGIN 0;
+	if (YY_START == INITIAL || YY_START == SKIP) {
+		if (parser->lexing_if ||
+		    parser->skip_stack == NULL ||
+		    parser->skip_stack->type == SKIP_NO_SKIP)
+		{
+			BEGIN INITIAL;
 		} else {
 			BEGIN SKIP;
 		}
