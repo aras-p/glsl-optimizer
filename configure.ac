@@ -231,6 +231,12 @@ AC_SUBST([VISIBILITY_CFLAGS])
 AC_SUBST([VISIBILITY_CXXFLAGS])
 
 dnl
+dnl Optional flags, check for compiler support
+dnl
+AX_CHECK_COMPILE_FLAG([-msse4.1], [SSE41_SUPPORTED=1], [SSE41_SUPPORTED=0])
+AM_CONDITIONAL([SSE41_SUPPORTED], [test x$SSE41_SUPPORTED = x1])
+
+dnl
 dnl Hacks to enable 32 or 64 bit build
 dnl
 AC_ARG_ENABLE([32-bit],

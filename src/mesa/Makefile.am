@@ -103,7 +103,11 @@ noinst_PROGRAMS = gen_matypes
 gen_matypes_SOURCES = x86/gen_matypes.c
 BUILT_SOURCES += matypes.h
 
-ARCH_LIBS = libmesa_sse41.la
+ARCH_LIBS =
+
+if SSE41_SUPPORTED
+ARCH_LIBS += libmesa_sse41.la
+endif
 
 if HAVE_X86_64_ASM
 MESA_ASM_FILES_FOR_ARCH += $(X86_64_FILES)
