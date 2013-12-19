@@ -224,9 +224,10 @@ dri_load_driver(struct gbm_dri_device *dri)
          snprintf(path, sizeof path,
                   "%.*s/%s_dri.so", len, p, dri->base.driver_name);
          dri->driver = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
-         if (dri->driver == NULL)
-            fprintf(stderr, "failed to open %s: %s\n", path, dlerror());
       }
+      /* not need continue to loop all paths once the driver is found */
+      if (dri->driver != NULL)
+         break;
    }
 
    if (dri->driver == NULL) {

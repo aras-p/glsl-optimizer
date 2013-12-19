@@ -403,6 +403,9 @@ dri2_open_driver(_EGLDisplay *disp)
 	 if (dri2_dpy->driver == NULL)
 	    _eglLog(_EGL_DEBUG, "failed to open %s: %s\n", path, dlerror());
       }
+      /* not need continue to loop all paths once the driver is found */
+      if (dri2_dpy->driver != NULL)
+         break;
    }
 
    if (dri2_dpy->driver == NULL) {
