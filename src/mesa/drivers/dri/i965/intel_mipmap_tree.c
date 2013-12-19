@@ -501,7 +501,7 @@ intel_miptree_create(struct brw_context *brw,
    gl_format etc_format = MESA_FORMAT_NONE;
    GLuint total_width, total_height;
 
-   if (!brw->is_baytrail) {
+   if (brw->gen < 8 && !brw->is_baytrail) {
       switch (format) {
       case MESA_FORMAT_ETC1_RGB8:
          format = MESA_FORMAT_RGBX8888_REV;
