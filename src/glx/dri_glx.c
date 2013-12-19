@@ -747,13 +747,15 @@ static int
 driSetSwapInterval(__GLXDRIdrawable *pdraw, int interval)
 {
    struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
-   struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
 
-   if (psc->swapControl != NULL && pdraw != NULL) {
-      psc->swapControl->setSwapInterval(pdp->driDrawable, interval);
-      return 0;
+   if (pdraw != NULL) {
+      struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
+
+      if (psc->swapControl != NULL) {
+         psc->swapControl->setSwapInterval(pdp->driDrawable, interval);
+         return 0;
+      }
    }
-
    return GLX_BAD_CONTEXT;
 }
 
@@ -761,11 +763,13 @@ static int
 driGetSwapInterval(__GLXDRIdrawable *pdraw)
 {
    struct dri_drawable *pdp = (struct dri_drawable *) pdraw;
-   struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
 
-   if (psc->swapControl != NULL && pdraw != NULL)
-      return psc->swapControl->getSwapInterval(pdp->driDrawable);
+   if (pdraw != NULL) {
+      struct dri_screen *psc = (struct dri_screen *) pdraw->psc;
 
+      if (psc->swapControl != NULL)
+         return psc->swapControl->getSwapInterval(pdp->driDrawable);
+   }
    return 0;
 }
 
