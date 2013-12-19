@@ -202,6 +202,8 @@ def generate(env):
 
             env.ParseConfig('llvm-config --libs ' + ' '.join(components))
             env.ParseConfig('llvm-config --ldflags')
+            if llvm_version >= distutils.version.LooseVersion('3.5'):
+                env.ParseConfig('llvm-config --system-libs')
         except OSError:
             print 'scons: llvm-config version %s failed' % llvm_version
             return
