@@ -245,7 +245,7 @@ static void evergreen_bind_compute_state(struct pipe_context *ctx_, void *state)
 }
 
 /* The kernel parameters are stored a vtx buffer (ID=0), besides the explicit
- * kernel parameters there are inplicit parameters that need to be stored
+ * kernel parameters there are implicit parameters that need to be stored
  * in the vertex buffer as well.  Here is how these parameters are organized in
  * the buffer:
  *
