@@ -515,6 +515,7 @@ static inline __DRIdrawable* radeon_get_readable(radeonContextPtr radeon)
 }
 
 GLboolean radeonInitContext(radeonContextPtr radeon,
+                            gl_api api,
 			    struct dd_function_table* functions,
 			    const struct gl_config * glVisual,
 			    __DRIcontext * driContextPriv,

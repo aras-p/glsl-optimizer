@@ -234,7 +234,7 @@ r100CreateContext( gl_api api,
    radeonInitTextureFuncs( &rmesa->radeon, &functions );
    radeonInitQueryObjFunctions(&functions);
 
-   if (!radeonInitContext(&rmesa->radeon, &functions,
+   if (!radeonInitContext(&rmesa->radeon, api, &functions,
 			  glVisual, driContextPriv,
 			  sharedContextPrivate)) {
      free(rmesa);

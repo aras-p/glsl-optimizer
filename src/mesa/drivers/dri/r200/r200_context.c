@@ -271,7 +271,7 @@ GLboolean r200CreateContext( gl_api api,
    r200InitShaderFuncs(&functions);
    radeonInitQueryObjFunctions(&functions);
 
-   if (!radeonInitContext(&rmesa->radeon, &functions,
+   if (!radeonInitContext(&rmesa->radeon, api, &functions,
 			  glVisual, driContextPriv,
 			  sharedContextPrivate)) {
      free(rmesa);

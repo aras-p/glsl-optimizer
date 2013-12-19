@@ -126,6 +126,7 @@ static void radeonInitDriverFuncs(struct dd_function_table *functions)
  * including the Mesa context itself.
  */
 GLboolean radeonInitContext(radeonContextPtr radeon,
+                            gl_api api,
 			    struct dd_function_table* functions,
 			    const struct gl_config * glVisual,
 			    __DRIcontext * driContextPriv,
@@ -147,7 +148,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	else
 		shareCtx = NULL;
 
-	if (!_mesa_initialize_context(&radeon->glCtx, API_OPENGL_COMPAT,
+	if (!_mesa_initialize_context(&radeon->glCtx, api,
 				      glVisual, shareCtx,
 				      functions))
 		return GL_FALSE;
