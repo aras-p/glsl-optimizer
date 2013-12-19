@@ -1159,8 +1159,11 @@ emit_fog_instructions(texenv_fragment_program *p,
    fragcolor = swizzle_xyz(fog_result);
 
    oparams = p->shader->symbols->get_variable("gl_FogParamsOptimizedMESA");
+   assert(oparams);
    fogcoord = p->shader->symbols->get_variable("gl_FogFragCoord");
+   assert(fogcoord);
    params = p->shader->symbols->get_variable("gl_Fog");
+   assert(params);
    f = new(p->mem_ctx) ir_dereference_variable(fogcoord);
 
    ir_variable *f_var = p->make_temp(glsl_type::float_type, "fog_factor");
