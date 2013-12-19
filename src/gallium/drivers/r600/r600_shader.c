@@ -1095,7 +1095,8 @@ out_err:
 }
 
 static int generate_gs_copy_shader(struct r600_context *rctx,
-				   struct r600_pipe_shader *gs)
+				   struct r600_pipe_shader *gs,
+				   struct pipe_stream_output_info *so)
 {
 	struct r600_shader_ctx ctx = {};
 	struct r600_shader *gs_shader = &gs->shader;
@@ -1179,6 +1180,7 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 	}
 
 	/* XXX handle clipvertex, streamout? */
+	emit_streamout(&ctx, so);
 
 	/* export vertex data */
 	/* XXX factor out common code with r600_shader_from_tgsi ? */
@@ -1961,7 +1963,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 	}
 
 	if (ctx.type == TGSI_PROCESSOR_GEOMETRY) {
-		if ((r = generate_gs_copy_shader(rctx, pipeshader)))
+		if ((r = generate_gs_copy_shader(rctx, pipeshader, &so)))
 			return r;
 	}
 

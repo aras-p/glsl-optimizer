@@ -826,6 +826,10 @@ static void r600_bind_gs_state(struct pipe_context *ctx, void *state)
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
 	rctx->gs_shader = (struct r600_pipe_shader_selector *)state;
+
+	if (!state)
+		return;
+	rctx->b.streamout.stride_in_dw = rctx->gs_shader->so.stride;
 }
 
 static void r600_delete_shader_selector(struct pipe_context *ctx,
