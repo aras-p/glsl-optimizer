@@ -121,6 +121,7 @@ enum {
 struct lp_jit_context
 {
    const float *constants[LP_MAX_TGSI_CONST_BUFFERS];
+   int num_constants[LP_MAX_TGSI_CONST_BUFFERS];
 
    float alpha_ref_value;
 
@@ -142,6 +143,7 @@ struct lp_jit_context
  */
 enum {
    LP_JIT_CTX_CONSTANTS = 0,
+   LP_JIT_CTX_NUM_CONSTANTS,
    LP_JIT_CTX_ALPHA_REF,
    LP_JIT_CTX_STENCIL_REF_FRONT,
    LP_JIT_CTX_STENCIL_REF_BACK,
@@ -156,6 +158,9 @@ enum {
 
 #define lp_jit_context_constants(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, LP_JIT_CTX_CONSTANTS, "constants")
+
+#define lp_jit_context_num_constants(_gallivm, _ptr) \
+   lp_build_struct_get_ptr(_gallivm, _ptr, LP_JIT_CTX_NUM_CONSTANTS, "num_constants")
 
 #define lp_jit_context_alpha_ref_value(_gallivm, _ptr) \
    lp_build_struct_get(_gallivm, _ptr, LP_JIT_CTX_ALPHA_REF, "alpha_ref_value")

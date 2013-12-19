@@ -984,6 +984,7 @@ try_update_scene_state( struct lp_setup_context *setup )
          struct pipe_resource *buffer = setup->constants[i].current.buffer;
          const unsigned current_size = setup->constants[i].current.buffer_size;
          const ubyte *current_data = NULL;
+         int num_constants;
 
          if (buffer) {
             /* resource buffer */
@@ -1024,7 +1025,11 @@ try_update_scene_state( struct lp_setup_context *setup )
             setup->constants[i].stored_data = NULL;
          }
 
-         setup->fs.current.jit_context.constants[i] = setup->constants[i].stored_data;
+         setup->fs.current.jit_context.constants[i] =
+            setup->constants[i].stored_data;
+         num_constants =
+            setup->constants[i].stored_size / (sizeof(float) * 4);
+         setup->fs.current.jit_context.num_constants[i] = num_constants;
          setup->dirty |= LP_SETUP_NEW_FS;
       }
    }

@@ -789,11 +789,19 @@ gather_outputs(struct lp_build_tgsi_soa_context * bld)
 static LLVMValueRef
 build_gather(struct lp_build_context *bld,
              LLVMValueRef base_ptr,
-             LLVMValueRef indexes)
+             LLVMValueRef indexes,
+             LLVMValueRef *overflow_mask)
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef res = bld->undef;
    unsigned i;
+   LLVMValueRef temp_ptr;
+
+   if (overflow_mask) {
+      temp_ptr = lp_build_alloca(
+         bld->gallivm,
+         lp_build_vec_type(bld->gallivm, bld->type), "");
+   }
 
    /*
     * Loop over elements of index_vec, load scalar value, insert it into 'res'.
@@ -802,11 +810,54 @@ build_gather(struct lp_build_context *bld,
       LLVMValueRef ii = lp_build_const_int32(bld->gallivm, i);
       LLVMValueRef index = LLVMBuildExtractElement(builder,
                                                    indexes, ii, "");
-      LLVMValueRef scalar_ptr = LLVMBuildGEP(builder, base_ptr,
-                                             &index, 1, "gather_ptr");
-      LLVMValueRef scalar = LLVMBuildLoad(builder, scalar_ptr, "");
+      LLVMValueRef scalar_ptr, scalar;
+      LLVMValueRef overflow;
+      struct lp_build_if_state if_ctx;
 
-      res = LLVMBuildInsertElement(builder, res, scalar, ii, "");
+      /*
+       * overflow_mask is a boolean vector telling us which channels
+       * in the vector overflowed. We use the overflow behavior for
+       * constant buffers which is defined as:
+       * Out of bounds access to constant buffer returns 0 in all
+       * componenets. Out of bounds behavior is always with respect
+       * to the size of the buffer bound at that slot.
+       */
+      if (overflow_mask) {
+         overflow = LLVMBuildExtractElement(builder, *overflow_mask,
+                                            ii, "");
+         lp_build_if(&if_ctx, bld->gallivm, overflow);
+         {
+            LLVMValueRef val = LLVMBuildLoad(builder, temp_ptr, "");
+            val = LLVMBuildInsertElement(
+               builder, val,
+               LLVMConstNull(LLVMFloatTypeInContext(bld->gallivm->context)),
+               ii, "");
+            LLVMBuildStore(builder, val, temp_ptr);
+         }
+         lp_build_else(&if_ctx);
+         {
+            LLVMValueRef val = LLVMBuildLoad(builder, temp_ptr, "");
+
+            scalar_ptr = LLVMBuildGEP(builder, base_ptr,
+                                      &index, 1, "gather_ptr");
+            scalar = LLVMBuildLoad(builder, scalar_ptr, "");
+
+            val = LLVMBuildInsertElement(builder, val, scalar, ii, "");
+
+            LLVMBuildStore(builder, val, temp_ptr);
+         }
+         lp_build_endif(&if_ctx);
+      } else {
+         scalar_ptr = LLVMBuildGEP(builder, base_ptr,
+                                   &index, 1, "gather_ptr");
+         scalar = LLVMBuildLoad(builder, scalar_ptr, "");
+
+         res = LLVMBuildInsertElement(builder, res, scalar, ii, "");
+      }
+   }
+
+   if (overflow_mask) {
+      res = LLVMBuildLoad(builder, temp_ptr, "gather_val");
    }
 
    return res;
@@ -912,12 +963,23 @@ get_indirect_index(struct lp_build_tgsi_soa_context *bld,
 
    index = lp_build_add(uint_bld, base, rel);
 
-   max_index = lp_build_const_int_vec(bld->bld_base.base.gallivm,
-                                      uint_bld->type,
-                                      bld->bld_base.info->file_max[reg_file]);
+   /*
+    * emit_fetch_constant handles constant buffer overflow so this code
+    * is pointless for them.
+    * Furthermore the D3D10 spec in section 6.5 says:
+    * If the constant buffer bound to a slot is larger than the size
+    * declared in the shader for that slot, implementations are allowed
+    * to return incorrect data (not necessarily 0) for indices that are
+    * larger than the declared size but smaller than the buffer size.
+    */
+   if (reg_file != TGSI_FILE_CONSTANT) {
+      max_index = lp_build_const_int_vec(bld->bld_base.base.gallivm,
+                                         uint_bld->type,
+                                         bld->bld_base.info->file_max[reg_file]);
 
-   assert(!uint_bld->type.sign);
-   index = lp_build_min(uint_bld, index, max_index);
+      assert(!uint_bld->type.sign);
+      index = lp_build_min(uint_bld, index, max_index);
+   }
 
    return index;
 }
@@ -996,6 +1058,7 @@ emit_fetch_constant(
    unsigned dimension = 0;
    LLVMValueRef dimension_index;
    LLVMValueRef consts_ptr;
+   LLVMValueRef num_consts;
    LLVMValueRef res;
 
    /* XXX: Handle fetching xyzw components as a vector */
@@ -1008,25 +1071,40 @@ emit_fetch_constant(
    }
 
    dimension_index = lp_build_const_int32(gallivm, dimension);
-   consts_ptr = lp_build_array_get(gallivm, bld->consts_ptr, dimension_index);
+   consts_ptr =
+      lp_build_array_get(gallivm, bld->consts_ptr, dimension_index);
+   num_consts =
+      lp_build_array_get(gallivm, bld->const_sizes_ptr, dimension_index);
 
    if (reg->Register.Indirect) {
       LLVMValueRef indirect_index;
       LLVMValueRef swizzle_vec =
          lp_build_const_int_vec(gallivm, uint_bld->type, swizzle);
       LLVMValueRef index_vec;  /* index into the const buffer */
+      LLVMValueRef overflow_mask;
 
       indirect_index = get_indirect_index(bld,
                                           reg->Register.File,
                                           reg->Register.Index,
                                           &reg->Indirect);
 
+      /* All fetches are from the same constant buffer, so
+       * we need to propagate the size to a vector to do a
+       * vector comparison */
+      num_consts = lp_build_broadcast_scalar(uint_bld, num_consts);
+      /* Construct a boolean vector telling us which channels
+       * overflow the bound constant buffer */
+      overflow_mask = LLVMBuildICmp(builder, LLVMIntUGE,
+                                    indirect_index,
+                                    num_consts, "");
+
       /* index_vec = indirect_index * 4 + swizzle */
       index_vec = lp_build_shl_imm(uint_bld, indirect_index, 2);
       index_vec = lp_build_add(uint_bld, index_vec, swizzle_vec);
 
       /* Gather values from the constant buffer */
-      res = build_gather(&bld_base->base, consts_ptr, index_vec);
+      res = build_gather(&bld_base->base, consts_ptr, index_vec,
+                         &overflow_mask);
    }
    else {
       LLVMValueRef index;  /* index into the const buffer */
@@ -1044,6 +1122,7 @@ emit_fetch_constant(
       struct lp_build_context *bld_fetch = stype_to_fetch(bld_base, stype);
       res = LLVMBuildBitCast(builder, res, bld_fetch->vec_type, "");
    }
+
    return res;
 }
 
@@ -1085,7 +1164,7 @@ emit_fetch_immediate(
       imms_array = LLVMBuildBitCast(builder, bld->imms_array, fptr_type, "");
 
       /* Gather values from the immediate register array */
-      res = build_gather(&bld_base->base, imms_array, index_vec);
+      res = build_gather(&bld_base->base, imms_array, index_vec, NULL);
    }
    else {
       res = bld->immediates[reg->Register.Index][swizzle];
@@ -1132,7 +1211,7 @@ emit_fetch_input(
       inputs_array = LLVMBuildBitCast(builder, bld->inputs_array, fptr_type, "");
 
       /* Gather values from the input register array */
-      res = build_gather(&bld_base->base, inputs_array, index_vec);
+      res = build_gather(&bld_base->base, inputs_array, index_vec, NULL);
    } else {
       if (bld->indirect_files & (1 << TGSI_FILE_INPUT)) {
          LLVMValueRef lindex = lp_build_const_int32(gallivm,
@@ -1242,7 +1321,7 @@ emit_fetch_temporary(
       temps_array = LLVMBuildBitCast(builder, bld->temps_array, fptr_type, "");
 
       /* Gather values from the temporary register array */
-      res = build_gather(&bld_base->base, temps_array, index_vec);
+      res = build_gather(&bld_base->base, temps_array, index_vec, NULL);
    }
    else {
       LLVMValueRef temp_ptr;
@@ -3352,6 +3431,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
                   struct lp_type type,
                   struct lp_build_mask_context *mask,
                   LLVMValueRef consts_ptr,
+                  LLVMValueRef const_sizes_ptr,
                   const struct lp_bld_tgsi_system_values *system_values,
                   const LLVMValueRef (*inputs)[TGSI_NUM_CHANNELS],
                   LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS],
@@ -3379,6 +3459,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.inputs = inputs;
    bld.outputs = outputs;
    bld.consts_ptr = consts_ptr;
+   bld.const_sizes_ptr = const_sizes_ptr;
    bld.sampler = sampler;
    bld.bld_base.info = info;
    bld.indirect_files = info->indirect_files;

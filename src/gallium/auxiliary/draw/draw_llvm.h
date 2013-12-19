@@ -123,6 +123,7 @@ enum {
 struct draw_jit_context
 {
    const float *vs_constants[LP_MAX_TGSI_CONST_BUFFERS];
+   int num_vs_constants[LP_MAX_TGSI_CONST_BUFFERS];
    float (*planes) [DRAW_TOTAL_CLIP_PLANES][4];
    float *viewport;
 
@@ -131,16 +132,20 @@ struct draw_jit_context
 };
 
 enum {
-   DRAW_JIT_CTX_CONSTANTS   = 0,
-   DRAW_JIT_CTX_PLANES      = 1,
-   DRAW_JIT_CTX_VIEWPORT    = 2,
-   DRAW_JIT_CTX_TEXTURES    = 3,
-   DRAW_JIT_CTX_SAMPLERS    = 4,
+   DRAW_JIT_CTX_CONSTANTS            = 0,
+   DRAW_JIT_CTX_NUM_CONSTANTS        = 1,
+   DRAW_JIT_CTX_PLANES               = 2,
+   DRAW_JIT_CTX_VIEWPORT             = 3,
+   DRAW_JIT_CTX_TEXTURES             = 4,
+   DRAW_JIT_CTX_SAMPLERS             = 5,
    DRAW_JIT_CTX_NUM_FIELDS
 };
 
 #define draw_jit_context_vs_constants(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_CTX_CONSTANTS, "vs_constants")
+
+#define draw_jit_context_num_vs_constants(_gallivm, _ptr) \
+   lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_CTX_NUM_CONSTANTS, "num_vs_constants")
 
 #define draw_jit_context_planes(_gallivm, _ptr) \
    lp_build_struct_get(_gallivm, _ptr, DRAW_JIT_CTX_PLANES, "planes")
@@ -200,6 +205,7 @@ enum {
 struct draw_gs_jit_context
 {
    const float *constants[LP_MAX_TGSI_CONST_BUFFERS];
+   int num_constants[LP_MAX_TGSI_CONST_BUFFERS];
    float (*planes) [DRAW_TOTAL_CLIP_PLANES][4];
    float *viewport;
 
@@ -215,22 +221,26 @@ struct draw_gs_jit_context
 
 enum {
    DRAW_GS_JIT_CTX_CONSTANTS = 0,
-   DRAW_GS_JIT_CTX_PLANES = 1,
-   DRAW_GS_JIT_CTX_VIEWPORT = 2,
+   DRAW_GS_JIT_CTX_NUM_CONSTANTS = 1,
+   DRAW_GS_JIT_CTX_PLANES = 2,
+   DRAW_GS_JIT_CTX_VIEWPORT = 3,
    /* Textures and samples are reserved for DRAW_JIT_CTX_TEXTURES
     * and DRAW_JIT_CTX_SAMPLERS, because they both need
     * to be at exactly the same locations as they are in the
     * VS ctx structure for sampling to work. */
    DRAW_GS_JIT_CTX_TEXTURES = DRAW_JIT_CTX_TEXTURES,
    DRAW_GS_JIT_CTX_SAMPLERS = DRAW_JIT_CTX_SAMPLERS,
-   DRAW_GS_JIT_CTX_PRIM_LENGTHS = 5,
-   DRAW_GS_JIT_CTX_EMITTED_VERTICES = 6,
-   DRAW_GS_JIT_CTX_EMITTED_PRIMS = 7,
-   DRAW_GS_JIT_CTX_NUM_FIELDS = 8
+   DRAW_GS_JIT_CTX_PRIM_LENGTHS = 6,
+   DRAW_GS_JIT_CTX_EMITTED_VERTICES = 7,
+   DRAW_GS_JIT_CTX_EMITTED_PRIMS = 8,
+   DRAW_GS_JIT_CTX_NUM_FIELDS = 9
 };
 
 #define draw_gs_jit_context_constants(_gallivm, _ptr) \
    lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_GS_JIT_CTX_CONSTANTS, "constants")
+
+#define draw_gs_jit_context_num_constants(_gallivm, _ptr) \
+   lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_GS_JIT_CTX_NUM_CONSTANTS, "num_constants")
 
 #define draw_gs_jit_context_planes(_gallivm, _ptr) \
    lp_build_struct_get(_gallivm, _ptr, DRAW_GS_JIT_CTX_PLANES, "planes")

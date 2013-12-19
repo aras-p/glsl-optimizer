@@ -262,10 +262,16 @@ llvm_middle_end_bind_parameters(struct draw_pt_middle_end *middle)
    unsigned i;
 
    for (i = 0; i < Elements(fpme->llvm->jit_context.vs_constants); ++i) {
+      int num_consts =
+         draw->pt.user.vs_constants_size[i] / (sizeof(float) * 4);
       fpme->llvm->jit_context.vs_constants[i] = draw->pt.user.vs_constants[i];
+      fpme->llvm->jit_context.num_vs_constants[i] = num_consts;
    }
    for (i = 0; i < Elements(fpme->llvm->gs_jit_context.constants); ++i) {
+      int num_consts =
+         draw->pt.user.gs_constants_size[i] / (sizeof(float) * 4);
       fpme->llvm->gs_jit_context.constants[i] = draw->pt.user.gs_constants[i];
+      fpme->llvm->gs_jit_context.num_constants[i] = num_consts;
    }
 
    fpme->llvm->jit_context.planes =

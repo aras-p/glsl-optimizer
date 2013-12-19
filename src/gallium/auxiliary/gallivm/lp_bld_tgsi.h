@@ -225,6 +225,7 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
                   struct lp_type type,
                   struct lp_build_mask_context *mask,
                   LLVMValueRef consts_ptr,
+                  LLVMValueRef const_sizes_ptr,
                   const struct lp_bld_tgsi_system_values *system_values,
                   const LLVMValueRef (*inputs)[4],
                   LLVMValueRef (*outputs)[4],
@@ -433,6 +434,7 @@ struct lp_build_tgsi_soa_context
    LLVMValueRef max_output_vertices_vec;
 
    LLVMValueRef consts_ptr;
+   LLVMValueRef const_sizes_ptr;
    const LLVMValueRef (*inputs)[TGSI_NUM_CHANNELS];
    LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS];
 

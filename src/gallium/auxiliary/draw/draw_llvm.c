@@ -242,17 +242,20 @@ create_jit_context_type(struct gallivm_state *gallivm,
 {
    LLVMTargetDataRef target = gallivm->target;
    LLVMTypeRef float_type = LLVMFloatTypeInContext(gallivm->context);
+   LLVMTypeRef int_type = LLVMInt32TypeInContext(gallivm->context);
    LLVMTypeRef elem_types[DRAW_JIT_CTX_NUM_FIELDS];
    LLVMTypeRef context_type;
 
    elem_types[0] = LLVMArrayType(LLVMPointerType(float_type, 0), /* vs_constants */
                                  LP_MAX_TGSI_CONST_BUFFERS);
-   elem_types[1] = LLVMPointerType(LLVMArrayType(LLVMArrayType(float_type, 4),
+   elem_types[1] = LLVMArrayType(int_type, /* num_vs_constants */
+                                 LP_MAX_TGSI_CONST_BUFFERS);
+   elem_types[2] = LLVMPointerType(LLVMArrayType(LLVMArrayType(float_type, 4),
                                                  DRAW_TOTAL_CLIP_PLANES), 0);
-   elem_types[2] = LLVMPointerType(float_type, 0); /* viewport */
-   elem_types[3] = LLVMArrayType(texture_type,
+   elem_types[3] = LLVMPointerType(float_type, 0); /* viewport */
+   elem_types[4] = LLVMArrayType(texture_type,
                                  PIPE_MAX_SHADER_SAMPLER_VIEWS); /* textures */
-   elem_types[4] = LLVMArrayType(sampler_type,
+   elem_types[5] = LLVMArrayType(sampler_type,
                                  PIPE_MAX_SAMPLERS); /* samplers */
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
@@ -264,6 +267,8 @@ create_jit_context_type(struct gallivm_state *gallivm,
 
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, vs_constants,
                           target, context_type, DRAW_JIT_CTX_CONSTANTS);
+   LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, num_vs_constants,
+                          target, context_type, DRAW_JIT_CTX_NUM_CONSTANTS);
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, planes,
                           target, context_type, DRAW_JIT_CTX_PLANES);
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, viewport,
@@ -298,19 +303,21 @@ create_gs_jit_context_type(struct gallivm_state *gallivm,
 
    elem_types[0] = LLVMArrayType(LLVMPointerType(float_type, 0), /* constants */
                                  LP_MAX_TGSI_CONST_BUFFERS);
-   elem_types[1] = LLVMPointerType(LLVMArrayType(LLVMArrayType(float_type, 4),
+   elem_types[1] = LLVMArrayType(int_type, /* num_constants */
+                                 LP_MAX_TGSI_CONST_BUFFERS);
+   elem_types[2] = LLVMPointerType(LLVMArrayType(LLVMArrayType(float_type, 4),
                                                  DRAW_TOTAL_CLIP_PLANES), 0);
-   elem_types[2] = LLVMPointerType(float_type, 0); /* viewport */
+   elem_types[3] = LLVMPointerType(float_type, 0); /* viewport */
 
-   elem_types[3] = LLVMArrayType(texture_type,
+   elem_types[4] = LLVMArrayType(texture_type,
                                  PIPE_MAX_SHADER_SAMPLER_VIEWS); /* textures */
-   elem_types[4] = LLVMArrayType(sampler_type,
+   elem_types[5] = LLVMArrayType(sampler_type,
                                  PIPE_MAX_SAMPLERS); /* samplers */
    
-   elem_types[5] = LLVMPointerType(LLVMPointerType(int_type, 0), 0);
-   elem_types[6] = LLVMPointerType(LLVMVectorType(int_type,
-                                                  vector_length), 0);
+   elem_types[6] = LLVMPointerType(LLVMPointerType(int_type, 0), 0);
    elem_types[7] = LLVMPointerType(LLVMVectorType(int_type,
+                                                  vector_length), 0);
+   elem_types[8] = LLVMPointerType(LLVMVectorType(int_type,
                                                   vector_length), 0);
 
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
@@ -323,6 +330,8 @@ create_gs_jit_context_type(struct gallivm_state *gallivm,
 
    LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, constants,
                           target, context_type, DRAW_GS_JIT_CTX_CONSTANTS);
+   LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, num_constants,
+                          target, context_type, DRAW_GS_JIT_CTX_NUM_CONSTANTS);
    LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, planes,
                           target, context_type, DRAW_GS_JIT_CTX_PLANES);
    LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, viewport,
@@ -617,7 +626,10 @@ generate_vs(struct draw_llvm_variant *variant,
 {
    struct draw_llvm *llvm = variant->llvm;
    const struct tgsi_token *tokens = llvm->draw->vs.vertex_shader->state.tokens;
-   LLVMValueRef consts_ptr = draw_jit_context_vs_constants(variant->gallivm, context_ptr);
+   LLVMValueRef consts_ptr =
+      draw_jit_context_vs_constants(variant->gallivm, context_ptr);
+   LLVMValueRef num_consts_ptr =
+      draw_jit_context_num_vs_constants(variant->gallivm, context_ptr);
    struct lp_build_sampler_soa *sampler = 0;
 
    if (gallivm_debug & (GALLIVM_DEBUG_TGSI | GALLIVM_DEBUG_IR)) {
@@ -633,6 +645,7 @@ generate_vs(struct draw_llvm_variant *variant,
                      vs_type,
                      NULL /*struct lp_build_mask_context *mask*/,
                      consts_ptr,
+                     num_consts_ptr,
                      system_values,
                      inputs,
                      outputs,
@@ -2089,7 +2102,7 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    unsigned i;
    struct draw_gs_llvm_iface gs_iface;
    const struct tgsi_token *tokens = variant->shader->base.state.tokens;
-   LLVMValueRef consts_ptr;
+   LLVMValueRef consts_ptr, num_consts_ptr;
    LLVMValueRef outputs[PIPE_MAX_SHADER_OUTPUTS][TGSI_NUM_CHANNELS];
    struct lp_build_mask_context mask;
    const struct tgsi_shader_info *gs_info = &variant->shader->base.info;
@@ -2163,6 +2176,8 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    gs_type.length = vector_length;
 
    consts_ptr = draw_gs_jit_context_constants(variant->gallivm, context_ptr);
+   num_consts_ptr =
+      draw_gs_jit_context_num_constants(variant->gallivm, context_ptr);
 
    /* code generated texture sampling */
    sampler = draw_llvm_sampler_soa_create(variant->key.samplers,
@@ -2185,6 +2200,7 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
                      gs_type,
                      &mask,
                      consts_ptr,
+                     num_consts_ptr,
                      &system_values,
                      NULL,
                      outputs,

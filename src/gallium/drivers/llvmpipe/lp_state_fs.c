@@ -262,7 +262,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
    const struct tgsi_token *tokens = shader->base.tokens;
    LLVMTypeRef vec_type;
    LLVMValueRef mask_ptr, mask_val;
-   LLVMValueRef consts_ptr;
+   LLVMValueRef consts_ptr, num_consts_ptr;
    LLVMValueRef z;
    LLVMValueRef z_value, s_value;
    LLVMValueRef z_fb, s_fb;
@@ -336,6 +336,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
    vec_type = lp_build_vec_type(gallivm, type);
 
    consts_ptr = lp_jit_context_constants(gallivm, context_ptr);
+   num_consts_ptr = lp_jit_context_num_constants(gallivm, context_ptr);
 
    lp_build_for_loop_begin(&loop_state, gallivm,
                            lp_build_const_int32(gallivm, 0),
@@ -414,7 +415,7 @@ generate_fs_loop(struct gallivm_state *gallivm,
 
    /* Build the actual shader */
    lp_build_tgsi_soa(gallivm, tokens, type, &mask,
-                     consts_ptr, &system_values,
+                     consts_ptr, num_consts_ptr, &system_values,
                      interp->inputs,
                      outputs, sampler, &shader->info.base, NULL);
 
