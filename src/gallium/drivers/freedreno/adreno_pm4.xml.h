@@ -8,12 +8,13 @@ http://github.com/freedreno/envytools/
 git clone https://github.com/freedreno/envytools.git
 
 The rules-ng-ng source files this header was generated from are:
-- /home/robclark/src/freedreno/envytools/rnndb/adreno.xml              (    327 bytes, from 2013-07-05 19:21:12)
-- /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/a2xx/a2xx.xml           (  32800 bytes, from 2013-11-01 23:57:26)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno_common.xml       (   8900 bytes, from 2013-10-22 23:57:49)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno_pm4.xml          (  10345 bytes, from 2013-10-25 14:31:35)
-- /home/robclark/src/freedreno/envytools/rnndb/a3xx/a3xx.xml           (  52925 bytes, from 2013-11-01 23:57:26)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno.xml               (    364 bytes, from 2013-11-30 14:47:15)
+- /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml  (   1453 bytes, from 2013-03-31 16:51:27)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32814 bytes, from 2013-11-30 15:07:33)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   8900 bytes, from 2013-10-22 23:57:49)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  10925 bytes, from 2013-12-20 21:06:09)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  54008 bytes, from 2013-12-20 22:49:44)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (   8344 bytes, from 2013-11-30 14:49:47)
 
 Copyright (C) 2013 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -160,6 +161,8 @@ enum adreno_pm4_type3_packets {
 	CP_COND_INDIRECT_BUFFER_PFD = 50,
 	CP_INDIRECT_BUFFER_PFE = 63,
 	CP_SET_BIN = 76,
+	CP_TEST_TWO_MEMS = 113,
+	CP_WAIT_FOR_ME = 19,
 	IN_IB_PREFETCH_END = 23,
 	IN_SUBBLK_PREFETCH = 31,
 	IN_INSTR_PREFETCH = 32,
@@ -257,6 +260,22 @@ static inline uint32_t CP_SET_BIN_2_X2(uint32_t val)
 static inline uint32_t CP_SET_BIN_2_Y2(uint32_t val)
 {
 	return ((val) << CP_SET_BIN_2_Y2__SHIFT) & CP_SET_BIN_2_Y2__MASK;
+}
+
+#define REG_CP_SET_BIN_DATA_0					0x00000000
+#define CP_SET_BIN_DATA_0_BIN_DATA_ADDR__MASK			0xffffffff
+#define CP_SET_BIN_DATA_0_BIN_DATA_ADDR__SHIFT			0
+static inline uint32_t CP_SET_BIN_DATA_0_BIN_DATA_ADDR(uint32_t val)
+{
+	return ((val) << CP_SET_BIN_DATA_0_BIN_DATA_ADDR__SHIFT) & CP_SET_BIN_DATA_0_BIN_DATA_ADDR__MASK;
+}
+
+#define REG_CP_SET_BIN_DATA_1					0x00000001
+#define CP_SET_BIN_DATA_1_BIN_SIZE_ADDRESS__MASK		0xffffffff
+#define CP_SET_BIN_DATA_1_BIN_SIZE_ADDRESS__SHIFT		0
+static inline uint32_t CP_SET_BIN_DATA_1_BIN_SIZE_ADDRESS(uint32_t val)
+{
+	return ((val) << CP_SET_BIN_DATA_1_BIN_SIZE_ADDRESS__SHIFT) & CP_SET_BIN_DATA_1_BIN_SIZE_ADDRESS__MASK;
 }
 
 

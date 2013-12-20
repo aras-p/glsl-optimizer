@@ -423,9 +423,9 @@ fd3_emit_sysmem_prep(struct fd_context *ctx)
 
 	fd3_emit_restore(ctx);
 
-	OUT_PKT0(ring, REG_A3XX_RB_WINDOW_SIZE, 1);
-	OUT_RING(ring, A3XX_RB_WINDOW_SIZE_WIDTH(pfb->width) |
-			A3XX_RB_WINDOW_SIZE_HEIGHT(pfb->height));
+	OUT_PKT0(ring, REG_A3XX_RB_FRAME_BUFFER_DIMENSION, 1);
+	OUT_RING(ring, A3XX_RB_FRAME_BUFFER_DIMENSION_WIDTH(pfb->width) |
+			A3XX_RB_FRAME_BUFFER_DIMENSION_HEIGHT(pfb->height));
 
 	emit_mrt(ring, pfb->nr_cbufs, pfb->cbufs, NULL, 0);
 
@@ -433,9 +433,9 @@ fd3_emit_sysmem_prep(struct fd_context *ctx)
 			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(pitch));
 
 	/* setup scissor/offset for current tile: */
-	OUT_PKT0(ring, REG_A3XX_PA_SC_WINDOW_OFFSET, 1);
-	OUT_RING(ring, A3XX_PA_SC_WINDOW_OFFSET_X(0) |
-			A3XX_PA_SC_WINDOW_OFFSET_Y(0));
+	OUT_PKT0(ring, REG_A3XX_RB_WINDOW_OFFSET, 1);
+	OUT_RING(ring, A3XX_RB_WINDOW_OFFSET_X(0) |
+			A3XX_RB_WINDOW_OFFSET_Y(0));
 
 	OUT_PKT0(ring, REG_A3XX_GRAS_SC_SCREEN_SCISSOR_TL, 2);
 	OUT_RING(ring, A3XX_GRAS_SC_SCREEN_SCISSOR_TL_X(0) |
@@ -495,9 +495,9 @@ fd3_emit_tile_prep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 		OUT_RING(ring, 0x00000000);
 	}
 
-	OUT_PKT0(ring, REG_A3XX_RB_WINDOW_SIZE, 1);
-	OUT_RING(ring, A3XX_RB_WINDOW_SIZE_WIDTH(pfb->width) |
-			A3XX_RB_WINDOW_SIZE_HEIGHT(pfb->height));
+	OUT_PKT0(ring, REG_A3XX_RB_FRAME_BUFFER_DIMENSION, 1);
+	OUT_RING(ring, A3XX_RB_FRAME_BUFFER_DIMENSION_WIDTH(pfb->width) |
+			A3XX_RB_FRAME_BUFFER_DIMENSION_HEIGHT(pfb->height));
 
 	OUT_PKT0(ring, REG_A3XX_RB_MODE_CONTROL, 1);
 	OUT_RING(ring, A3XX_RB_MODE_CONTROL_RENDER_MODE(RB_RENDERING_PASS) |
@@ -530,9 +530,9 @@ fd3_emit_tile_renderprep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(gmem->bin_w));
 
 	/* setup scissor/offset for current tile: */
-	OUT_PKT0(ring, REG_A3XX_PA_SC_WINDOW_OFFSET, 1);
-	OUT_RING(ring, A3XX_PA_SC_WINDOW_OFFSET_X(xoff) |
-			A3XX_PA_SC_WINDOW_OFFSET_Y(yoff));
+	OUT_PKT0(ring, REG_A3XX_RB_WINDOW_OFFSET, 1);
+	OUT_RING(ring, A3XX_RB_WINDOW_OFFSET_X(xoff) |
+			A3XX_RB_WINDOW_OFFSET_Y(yoff));
 
 	OUT_PKT0(ring, REG_A3XX_GRAS_SC_SCREEN_SCISSOR_TL, 2);
 	OUT_RING(ring, A3XX_GRAS_SC_SCREEN_SCISSOR_TL_X(x1) |
