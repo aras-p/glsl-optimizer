@@ -470,10 +470,9 @@ ilo_gpe_init_view_surface_for_texture(const struct ilo_dev_info *dev,
 void
 ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
                         const struct ilo_texture *tex,
-                        enum pipe_format format,
-                        unsigned level,
+                        enum pipe_format format, unsigned level,
                         unsigned first_layer, unsigned num_layers,
-                        struct ilo_zs_surface *zs);
+                        bool offset_to_layer, struct ilo_zs_surface *zs);
 
 void
 ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,

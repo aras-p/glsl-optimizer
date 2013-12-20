@@ -979,12 +979,10 @@ zs_init_info_null(const struct ilo_dev_info *dev,
 static void
 zs_init_info(const struct ilo_dev_info *dev,
              const struct ilo_texture *tex,
-             enum pipe_format format,
-             unsigned level,
+             enum pipe_format format, unsigned level,
              unsigned first_layer, unsigned num_layers,
-             struct ilo_zs_surface_info *info)
+             bool offset_to_layer, struct ilo_zs_surface_info *info)
 {
-   const bool rebase_layer = true;
    struct intel_bo * const hiz_bo = NULL;
    bool separate_stencil;
    uint32_t x_offset[3], y_offset[3];
@@ -1080,7 +1078,7 @@ zs_init_info(const struct ilo_dev_info *dev,
       info->zs.stride = tex->bo_stride;
       info->zs.tiling = tex->tiling;
 
-      if (rebase_layer) {
+      if (offset_to_layer) {
          info->zs.offset = ilo_texture_get_slice_offset(tex,
                level, first_layer, &x_offset[0], &y_offset[0]);
       }
@@ -1105,7 +1103,7 @@ zs_init_info(const struct ilo_dev_info *dev,
 
       info->stencil.tiling = s8_tex->tiling;
 
-      if (rebase_layer) {
+      if (offset_to_layer) {
          info->stencil.offset = ilo_texture_get_slice_offset(s8_tex,
                level, first_layer, &x_offset[1], &y_offset[1]);
       }
@@ -1129,7 +1127,7 @@ zs_init_info(const struct ilo_dev_info *dev,
    info->first_layer = first_layer;
    info->num_layers = num_layers;
 
-   if (rebase_layer) {
+   if (offset_to_layer) {
       /* the size of the layer */
       info->width = u_minify(info->width, level);
       info->height = u_minify(info->height, level);
@@ -1201,10 +1199,9 @@ zs_init_info(const struct ilo_dev_info *dev,
 void
 ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
                         const struct ilo_texture *tex,
-                        enum pipe_format format,
-                        unsigned level,
+                        enum pipe_format format, unsigned level,
                         unsigned first_layer, unsigned num_layers,
-                        struct ilo_zs_surface *zs)
+                        bool offset_to_layer, struct ilo_zs_surface *zs)
 {
    const int max_2d_size = (dev->gen >= ILO_GEN(7)) ? 16384 : 8192;
    const int max_array_size = (dev->gen >= ILO_GEN(7)) ? 2048 : 512;
@@ -1213,10 +1210,13 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
-   if (tex)
-      zs_init_info(dev, tex, format, level, first_layer, num_layers, &info);
-   else
+   if (tex) {
+      zs_init_info(dev, tex, format, level, first_layer, num_layers,
+            offset_to_layer, &info);
+   }
+   else {
       zs_init_info_null(dev, &info);
+   }
 
    switch (info.surface_type) {
    case BRW_SURFACE_NULL:
