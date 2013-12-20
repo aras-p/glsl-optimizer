@@ -801,7 +801,20 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
    memset(&prog_data, 0, sizeof(prog_data));
    prog_data.persample_msaa_dispatch = key->persample_msaa_dispatch;
 
-   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
+   /*
+    * By default everything is emitted as 16-wide with only a few exceptions
+    * handled explicitly either here in the compiler or by one of the specific
+    * code emission calls.
+    * It should be also noted that here in this file any alterations of the
+    * compression control settings are only used to affect the execution size
+    * of the instructions. The instruction template used to initialise all the
+    * instructions is effectively not altered -- the value stays at zero
+    * representing either GEN6_COMPRESSION_1Q or GEN6_COMPRESSION_1H depending
+    * on the context.
+    * If any other settings are used in the instruction headers, they are set
+    * elsewhere by the individual code emission calls.
+    */
+   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
 
    alloc_regs();
    compute_frag_coords();
@@ -1077,8 +1090,10 @@ brw_blorp_blit_program::compute_frag_coords()
          struct brw_reg t1_uw1 = retype(t1, BRW_REGISTER_TYPE_UW);
          brw_MOV(&func, vec16(t1_uw1), brw_imm_v(0x3210));
          /* Move to UD sample_index register. */
+         brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
          brw_MOV(&func, S, stride(t1_uw1, 1, 4, 0));
          brw_MOV(&func, offset(S, 1), suboffset(stride(t1_uw1, 1, 4, 0), 2));
+         brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
          break;
       }
       case 8: {
@@ -1103,9 +1118,11 @@ brw_blorp_blit_program::compute_frag_coords()
          brw_MOV(&func, vec16(t2_uw1), brw_imm_v(0x3210));
          brw_ADD(&func, vec16(S), retype(t1_ud1, BRW_REGISTER_TYPE_UW),
                  stride(t2_uw1, 1, 4, 0));
+         brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
          brw_ADD(&func, offset(S, 1),
                  retype(t1_ud1, BRW_REGISTER_TYPE_UW),
                  suboffset(stride(t2_uw1, 1, 4, 0), 2));
+         brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
          break;
       }
       default:
@@ -1147,7 +1164,6 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
     */
    assert(s_is_zero);
 
-   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    if (new_tiled_w) {
       /* Given X and Y coordinates that describe an address using Y tiling,
        * translate to the X and Y coordinates that describe the same address
@@ -1217,7 +1233,6 @@ brw_blorp_blit_program::translate_tiling(bool old_tiled_w, bool new_tiled_w)
       brw_OR(&func, Yp, t1, t2);
       SWAP_XY_AND_XPYP();
    }
-   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
 }
 
 /**
@@ -1234,7 +1249,6 @@ void
 brw_blorp_blit_program::encode_msaa(unsigned num_samples,
                                     intel_msaa_layout layout)
 {
-   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    switch (layout) {
    case INTEL_MSAA_LAYOUT_NONE:
       /* No translation necessary, and S should already be zero. */
@@ -1306,7 +1320,6 @@ brw_blorp_blit_program::encode_msaa(unsigned num_samples,
       s_is_zero = true;
       break;
    }
-   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
 }
 
 /**
@@ -1323,7 +1336,6 @@ void
 brw_blorp_blit_program::decode_msaa(unsigned num_samples,
                                     intel_msaa_layout layout)
 {
-   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    switch (layout) {
    case INTEL_MSAA_LAYOUT_NONE:
       /* No translation necessary, and S should already be zero. */
@@ -1386,7 +1398,6 @@ brw_blorp_blit_program::decode_msaa(unsigned num_samples,
       SWAP_XY_AND_XPYP();
       break;
    }
-   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
 }
 
 /**
@@ -1424,7 +1435,6 @@ brw_blorp_blit_program::translate_dst_to_src()
    struct brw_reg Xp_f = retype(Xp, BRW_REGISTER_TYPE_F);
    struct brw_reg Yp_f = retype(Yp, BRW_REGISTER_TYPE_F);
 
-   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    /* Move the UD coordinates to float registers. */
    brw_MOV(&func, Xp_f, X);
    brw_MOV(&func, Yp_f, Y);
@@ -1472,7 +1482,6 @@ brw_blorp_blit_program::translate_dst_to_src()
       brw_MOV(&func, Yp, Y_f);
       SWAP_XY_AND_XPYP();
    }
-   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
 }
 
 void
@@ -1513,12 +1522,10 @@ brw_blorp_blit_program::single_to_blend()
     * that maxe up a pixel).  So we need to multiply our X and Y coordinates
     * each by 2 and then add 1.
     */
-   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    brw_SHL(&func, t1, X, brw_imm_w(1));
    brw_SHL(&func, t2, Y, brw_imm_w(1));
    brw_ADD(&func, Xp, t1, brw_imm_w(1));
    brw_ADD(&func, Yp, t2, brw_imm_w(1));
-   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
    SWAP_XY_AND_XPYP();
 }
 
@@ -1760,6 +1767,7 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
 
 #define SAMPLE(x, y) offset(texture_data[x], y)
    brw_set_access_mode(&func, BRW_ALIGN_16);
+   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
    for (int index = 3; index > 0; ) {
       /* Since we're doing SIMD16, 4 color channels fits in to 8 registers.
        * Counter value of 8 in 'for' loop below is used to interpolate all
@@ -1779,6 +1787,7 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
               offset(y_frac, k & 1),
               vec8(SAMPLE(2, k)),
               vec8(SAMPLE(0, k)));
+   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
    brw_set_access_mode(&func, BRW_ALIGN_1);
 #undef SAMPLE
 }
