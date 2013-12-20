@@ -67,7 +67,7 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 %option stack
 %option never-interactive
 
-%x DONE COMMENT UNREACHABLE SKIP DEFINE
+%x DONE COMMENT UNREACHABLE SKIP DEFINE NEWLINE_CATCHUP
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
@@ -92,6 +92,25 @@ OCTAL_INTEGER		0[0-7]*[uU]?
 HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 %%
+
+	glcpp_parser_t *parser = yyextra;
+
+	/* When we lex a multi-line comment, we replace it (as
+	 * specified) with a single space. But if the comment spanned
+	 * multiple lines, then subsequent parsing stages will not
+	 * count correct line numbers. To avoid this problem we keep
+	 * track of all newlines that were commented out by a
+	 * multi-line comment, and we emit a NEWLINE token for each at
+	 * the next legal opportunity, (which is when the lexer would
+	 * be emitting a NEWLINE token anyway).
+	 */
+	if (YY_START == NEWLINE_CATCHUP) {
+		if (parser->commented_newlines)
+			parser->commented_newlines--;
+		if (parser->commented_newlines == 0)
+			BEGIN INITIAL;
+		return NEWLINE;
+	}
 
 	/* The handling of the SKIP vs INITIAL start states requires
 	 * some special handling. Typically, a lexer would change
@@ -123,7 +142,6 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	 *	   expression so the parser can correctly update the
 	 *	   skip_stack state.
 	 */
-	glcpp_parser_t *parser = yyextra;
 	if (YY_START == INITIAL || YY_START == SKIP) {
 		if (parser->lexing_if ||
 		    parser->skip_stack == NULL ||
@@ -137,14 +155,16 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 	/* Single-line comments */
 "//"[^\n]* {
+	if (parser->commented_newlines)
+		BEGIN NEWLINE_CATCHUP;
 }
 
 	/* Multi-line comments */
 "/*"                    { yy_push_state(COMMENT, yyscanner); }
 <COMMENT>[^*\n]*
-<COMMENT>[^*\n]*\n      { yylineno++; yycolumn = 0; return NEWLINE; }
+<COMMENT>[^*\n]*\n      { yylineno++; yycolumn = 0; parser->commented_newlines++; }
 <COMMENT>"*"+[^*/\n]*
-<COMMENT>"*"+[^*/\n]*\n { yylineno++; yycolumn = 0; return NEWLINE; }
+<COMMENT>"*"+[^*/\n]*\n { yylineno++; yycolumn = 0; parser->commented_newlines++; }
 <COMMENT>"*"+"/"        {
 	yy_pop_state(yyscanner);
 	if (yyextra->space_tokens)
@@ -160,6 +180,8 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	/* glcpp doesn't handle #extension, #version, or #pragma directives.
 	 * Simply pass them through to the main compiler's lexer/parser. */
 {HASH}(extension|pragma)[^\n]+ {
+	if (parser->commented_newlines)
+		BEGIN NEWLINE_CATCHUP;
 	yylval->str = ralloc_strdup (yyextra, yytext);
 	yylineno++;
 	yycolumn = 0;
@@ -206,7 +228,10 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 }
 
-<SKIP>[^\n] ;
+<SKIP>[^\n] {
+	if (parser->commented_newlines)
+		BEGIN NEWLINE_CATCHUP;
+}
 
 {HASH}error.* {
 	char *p;
@@ -321,6 +346,9 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 <SKIP,INITIAL>\n {
+	if (parser->commented_newlines) {
+		BEGIN NEWLINE_CATCHUP;
+	}
 	yyextra->lexing_if = 0;
 	yylineno++;
 	yycolumn = 0;

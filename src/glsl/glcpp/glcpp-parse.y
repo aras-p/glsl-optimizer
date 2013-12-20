@@ -1164,6 +1164,7 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	parser->newline_as_space = 0;
 	parser->in_control_line = 0;
 	parser->paren_count = 0;
+        parser->commented_newlines = 0;
 
 	parser->skip_stack = NULL;
 

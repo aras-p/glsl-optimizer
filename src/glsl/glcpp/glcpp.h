@@ -172,6 +172,7 @@ struct glcpp_parser {
 	int newline_as_space;
 	int in_control_line;
 	int paren_count;
+	int commented_newlines;
 	skip_node_t *skip_stack;
 	token_list_t *lex_from_list;
 	token_node_t *lex_from_node;
