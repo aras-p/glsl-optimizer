@@ -1012,6 +1012,19 @@ gen6_blorp_emit_primitive(struct brw_context *brw,
    ADVANCE_BATCH();
 }
 
+static void
+gen6_emit_hiz_workaround(struct brw_context *brw, enum gen6_hiz_op hiz_op)
+{
+   /* This fixes a HiZ hang in WebGL Google Maps. A more minimal fix likely
+    * exists, but this gets the job done.
+    */
+   if (hiz_op == GEN6_HIZ_OP_DEPTH_RESOLVE ||
+       hiz_op == GEN6_HIZ_OP_HIZ_RESOLVE) {
+      brw->batch.need_workaround_flush = true;
+      intel_emit_post_sync_nonzero_flush(brw);
+      intel_emit_depth_stall_flushes(brw);
+   }
+}
 
 /**
  * \brief Execute a blit or render pass operation.
@@ -1034,6 +1047,8 @@ gen6_blorp_exec(struct brw_context *brw,
    uint32_t wm_bind_bo_offset = 0;
 
    uint32_t prog_offset = params->get_wm_prog(brw, &prog_data);
+
+   gen6_emit_hiz_workaround(brw, params->hiz_op);
    gen6_emit_3dstate_multisample(brw, params->dst.num_samples);
    gen6_emit_3dstate_sample_mask(brw,
                                  params->dst.num_samples > 1 ?
