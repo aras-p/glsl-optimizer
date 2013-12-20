@@ -25,7 +25,6 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "util/u_framebuffer.h"
 #include "util/u_helpers.h"
 #include "util/u_upload_mgr.h"
 
@@ -645,17 +644,7 @@ ilo_set_framebuffer_state(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   util_copy_framebuffer_state(&ilo->fb.state, state);
-
-   if (state->nr_cbufs)
-      ilo->fb.num_samples = state->cbufs[0]->texture->nr_samples;
-   else if (state->zsbuf)
-      ilo->fb.num_samples = state->zsbuf->texture->nr_samples;
-   else
-      ilo->fb.num_samples = 1;
-
-   if (!ilo->fb.num_samples)
-      ilo->fb.num_samples = 1;
+   ilo_gpe_init_fb(ilo->dev, state, &ilo->fb);
 
    ilo->dirty |= ILO_DIRTY_FB;
 }
@@ -943,7 +932,7 @@ ilo_create_sampler_view(struct pipe_context *pipe,
             templ->u.tex.last_level - templ->u.tex.first_level + 1,
             templ->u.tex.first_layer,
             templ->u.tex.last_layer - templ->u.tex.first_layer + 1,
-            false, true, &view->surface);
+            false, false, &view->surface);
    }
 
    return &view->base;
@@ -991,7 +980,7 @@ ilo_create_surface(struct pipe_context *pipe,
             templ->format, templ->u.tex.level, 1,
             templ->u.tex.first_layer,
             templ->u.tex.last_layer - templ->u.tex.first_layer + 1,
-            true, true, &surf->u.rt);
+            true, false, &surf->u.rt);
    }
    else {
       assert(res->target != PIPE_BUFFER);
@@ -1000,7 +989,7 @@ ilo_create_surface(struct pipe_context *pipe,
             templ->format, templ->u.tex.level,
             templ->u.tex.first_layer,
             templ->u.tex.last_layer - templ->u.tex.first_layer + 1,
-            true, &surf->u.zs);
+            false, &surf->u.zs);
    }
 
    return &surf->base;

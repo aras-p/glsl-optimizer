@@ -723,13 +723,27 @@ gen6_pipeline_wm_depth(struct ilo_3d_pipeline *p,
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
    if (DIRTY(FB) || session->batch_bo_changed) {
       const struct ilo_zs_surface *zs;
+      struct ilo_zs_surface layer;
 
       if (ilo->fb.state.zsbuf) {
          const struct ilo_surface_cso *surface =
             (const struct ilo_surface_cso *) ilo->fb.state.zsbuf;
 
-         assert(!surface->is_rt);
-         zs = &surface->u.zs;
+         if (ilo->fb.offset_to_layers) {
+            assert(surface->base.u.tex.first_layer ==
+                  surface->base.u.tex.last_layer);
+
+            ilo_gpe_init_zs_surface(ilo->dev,
+                  ilo_texture(surface->base.texture),
+                  surface->base.format, surface->base.u.tex.level,
+                  surface->base.u.tex.first_layer, 1, true, &layer);
+
+            zs = &layer;
+         }
+         else {
+            assert(!surface->is_rt);
+            zs = &surface->u.zs;
+         }
       }
       else {
          zs = &ilo->fb.null_zs;
@@ -875,9 +889,27 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
          const struct ilo_surface_cso *surface =
             (const struct ilo_surface_cso *) fb->state.cbufs[i];
 
-         assert(surface && surface->is_rt);
-         surface_state[i] =
-            gen6_emit_SURFACE_STATE(p->dev, &surface->u.rt, true, p->cp);
+         if (fb->offset_to_layers) {
+            struct ilo_view_surface layer;
+
+            assert(surface->base.u.tex.first_layer ==
+                  surface->base.u.tex.last_layer);
+
+            ilo_gpe_init_view_surface_for_texture(ilo->dev,
+                  ilo_texture(surface->base.texture),
+                  surface->base.format,
+                  surface->base.u.tex.level, 1,
+                  surface->base.u.tex.first_layer, 1,
+                  true, true, &layer);
+
+            surface_state[i] =
+               gen6_emit_SURFACE_STATE(p->dev, &layer, true, p->cp);
+         }
+         else {
+            assert(surface && surface->is_rt);
+            surface_state[i] =
+               gen6_emit_SURFACE_STATE(p->dev, &surface->u.rt, true, p->cp);
+         }
       }
 
       /*

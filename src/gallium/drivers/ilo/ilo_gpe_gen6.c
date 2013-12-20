@@ -26,6 +26,7 @@
  */
 
 #include "util/u_dual_blend.h"
+#include "util/u_framebuffer.h"
 #include "util/u_half.h"
 #include "brw_defines.h"
 #include "intel_reg.h"
@@ -2451,6 +2452,94 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
 
       sampler_init_border_color_gen6(dev,
             &state->border_color, &sampler->payload[3], 12);
+   }
+}
+
+void
+ilo_gpe_init_fb(const struct ilo_dev_info *dev,
+                const struct pipe_framebuffer_state *state,
+                struct ilo_fb_state *fb)
+{
+   const struct pipe_surface *first;
+   unsigned num_surfaces;
+
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+
+   util_copy_framebuffer_state(&fb->state, state);
+
+   first = (state->nr_cbufs) ? state->cbufs[0] :
+           (state->zsbuf) ? state->zsbuf :
+           NULL;
+   num_surfaces = state->nr_cbufs + !!state->zsbuf;
+
+   fb->num_samples = (first) ? first->texture->nr_samples : 1;
+   if (!fb->num_samples)
+      fb->num_samples = 1;
+
+   fb->offset_to_layers = false;
+
+   if (num_surfaces > 1) {
+      const unsigned first_depth =
+         (first->texture->target == PIPE_TEXTURE_3D) ?
+         first->texture->depth0 :
+         first->u.tex.last_layer - first->u.tex.first_layer + 1;
+      bool has_3d_target = (first->texture->target == PIPE_TEXTURE_3D);
+      unsigned i;
+
+      for (i = 1; i < num_surfaces; i++) {
+         const struct pipe_surface *surf =
+            (i < state->nr_cbufs) ? state->cbufs[i] : state->zsbuf;
+         const unsigned depth =
+            (surf->texture->target == PIPE_TEXTURE_3D) ?
+            surf->texture->depth0 :
+            surf->u.tex.last_layer - surf->u.tex.first_layer + 1;
+
+         has_3d_target |= (surf->texture->target == PIPE_TEXTURE_3D);
+
+         /*
+          * From the Sandy Bridge PRM, volume 4 part 1, page 79:
+          *
+          *     "The LOD of a render target must be the same as the LOD of the
+          *      other render target(s) and of the depth buffer (defined in
+          *      3DSTATE_DEPTH_BUFFER)."
+          *
+          * From the Sandy Bridge PRM, volume 4 part 1, page 81:
+          *
+          *     "The Depth of a render target must be the same as the Depth of
+          *      the other render target(s) and of the depth buffer (defined
+          *      in 3DSTATE_DEPTH_BUFFER)."
+          */
+         if (surf->u.tex.level != first->u.tex.level ||
+             depth != first_depth) {
+            fb->offset_to_layers = true;
+            break;
+         }
+
+         /*
+          * From the Sandy Bridge PRM, volume 4 part 1, page 77:
+          *
+          *     "The Height of a render target must be the same as the Height
+          *      of the other render targets and the depth buffer (defined in
+          *      3DSTATE_DEPTH_BUFFER), unless Surface Type is SURFTYPE_1D or
+          *      SURFTYPE_2D with Depth = 0 (non-array) and LOD = 0 (non-mip
+          *      mapped)."
+          *
+          * From the Sandy Bridge PRM, volume 4 part 1, page 78:
+          *
+          *     "The Width of a render target must be the same as the Width of
+          *      the other render target(s) and the depth buffer (defined in
+          *      3DSTATE_DEPTH_BUFFER), unless Surface Type is SURFTYPE_1D or
+          *      SURFTYPE_2D with Depth = 0 (non-array) and LOD = 0 (non-mip
+          *      mapped)."
+          */
+         if (surf->texture->width0 != first->texture->width0 ||
+             surf->texture->height0 != first->texture->height0) {
+            if (has_3d_target || first->u.tex.level || first_depth > 1) {
+               fb->offset_to_layers = true;
+               break;
+            }
+         }
+      }
    }
 }
 
