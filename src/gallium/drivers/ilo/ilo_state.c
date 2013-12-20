@@ -943,7 +943,7 @@ ilo_create_sampler_view(struct pipe_context *pipe,
             templ->u.tex.last_level - templ->u.tex.first_level + 1,
             templ->u.tex.first_layer,
             templ->u.tex.last_layer - templ->u.tex.first_layer + 1,
-            false, false, &view->surface);
+            false, true, &view->surface);
    }
 
    return &view->base;

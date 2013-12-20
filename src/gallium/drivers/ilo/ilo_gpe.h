@@ -380,7 +380,7 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
                                            unsigned num_levels,
                                            unsigned first_layer,
                                            unsigned num_layers,
-                                           bool is_rt, bool render_cache_rw,
+                                           bool is_rt, bool offset_to_layer,
                                            struct ilo_view_surface *surf);
 
 void
@@ -406,7 +406,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
                                            unsigned num_levels,
                                            unsigned first_layer,
                                            unsigned num_layers,
-                                           bool is_rt, bool render_cache_rw,
+                                           bool is_rt, bool offset_to_layer,
                                            struct ilo_view_surface *surf);
 
 static inline void
@@ -452,18 +452,18 @@ ilo_gpe_init_view_surface_for_texture(const struct ilo_dev_info *dev,
                                       unsigned num_levels,
                                       unsigned first_layer,
                                       unsigned num_layers,
-                                      bool is_rt, bool render_cache_rw,
+                                      bool is_rt, bool offset_to_layer,
                                       struct ilo_view_surface *surf)
 {
    if (dev->gen >= ILO_GEN(7)) {
       ilo_gpe_init_view_surface_for_texture_gen7(dev, tex, format,
             first_level, num_levels, first_layer, num_layers,
-            is_rt, render_cache_rw, surf);
+            is_rt, offset_to_layer, surf);
    }
    else {
       ilo_gpe_init_view_surface_for_texture_gen6(dev, tex, format,
             first_level, num_levels, first_layer, num_layers,
-            is_rt, render_cache_rw, surf);
+            is_rt, offset_to_layer, surf);
    }
 }
 

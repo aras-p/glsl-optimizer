@@ -429,7 +429,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
                                            unsigned num_levels,
                                            unsigned first_layer,
                                            unsigned num_layers,
-                                           bool is_rt, bool render_cache_rw,
+                                           bool is_rt, bool offset_to_layer,
                                            struct ilo_view_surface *surf)
 {
    int surface_type, surface_format;
@@ -505,52 +505,44 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    }
 
    if (is_rt) {
-      /*
-       * Compute the offset to the layer manually.
-       *
-       * For rendering, the hardware requires LOD to be the same for all
-       * render targets and the depth buffer.  We need to compute the offset
-       * to the layer manually and always set LOD to 0.
-       */
-      if (true) {
-         /* we lose the capability for layered rendering */
-         assert(num_layers == 1);
-
-         layer_offset = ilo_texture_get_slice_offset(tex,
-               first_level, first_layer, &x_offset, &y_offset);
-
-         assert(x_offset % 4 == 0);
-         assert(y_offset % 2 == 0);
-         x_offset /= 4;
-         y_offset /= 2;
-
-         /* derive the size for the LOD */
-         width = u_minify(width, first_level);
-         height = u_minify(height, first_level);
-         if (surface_type == BRW_SURFACE_3D)
-            depth = u_minify(depth, first_level);
-         else
-            depth = 1;
-
-         first_level = 0;
-         first_layer = 0;
-         lod = 0;
-      }
-      else {
-         layer_offset = 0;
-         x_offset = 0;
-         y_offset = 0;
-      }
-
       assert(num_levels == 1);
       lod = first_level;
+   }
+   else {
+      lod = num_levels - 1;
+   }
+
+   /*
+    * Offset to the layer.  When rendering, the hardware requires LOD and
+    * Depth to be the same for all render targets and the depth buffer.  We
+    * need to offset to the layer manually and always set LOD and Depth to 0.
+    */
+   if (offset_to_layer) {
+      /* we lose the capability for layered rendering */
+      assert(is_rt && num_layers == 1);
+
+      layer_offset = ilo_texture_get_slice_offset(tex,
+            first_level, first_layer, &x_offset, &y_offset);
+
+      assert(x_offset % 4 == 0);
+      assert(y_offset % 2 == 0);
+      x_offset /= 4;
+      y_offset /= 2;
+
+      /* derive the size for the LOD */
+      width = u_minify(width, first_level);
+      height = u_minify(height, first_level);
+
+      first_level = 0;
+      first_layer = 0;
+
+      lod = 0;
+      depth = 1;
    }
    else {
       layer_offset = 0;
       x_offset = 0;
       y_offset = 0;
-
-      lod = num_levels - 1;
    }
 
    /*
@@ -622,7 +614,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    else
       dw[0] |= GEN7_SURFACE_ARYSPC_LOD0;
 
-   if (render_cache_rw)
+   if (is_rt)
       dw[0] |= BRW_SURFACE_RC_READ_WRITE;
 
    if (surface_type == BRW_SURFACE_CUBE && !is_rt)
