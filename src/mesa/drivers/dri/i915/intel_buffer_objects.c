@@ -336,20 +336,28 @@ intel_bufferobj_map_range(struct gl_context * ctx,
     */
    if ((access & GL_MAP_INVALIDATE_RANGE_BIT) &&
        drm_intel_bo_busy(intel_obj->buffer)) {
+      /* Ensure that the base alignment of the allocation meets the alignment
+       * guarantees the driver has advertised to the application.
+       */
+      const unsigned alignment = ctx->Const.MinMapBufferAlignment;
+      const unsigned extra = (uintptr_t) offset % alignment;
+
       if (access & GL_MAP_FLUSH_EXPLICIT_BIT) {
-	 intel_obj->range_map_buffer = malloc(length);
-	 obj->Pointer = intel_obj->range_map_buffer;
+         intel_obj->range_map_buffer = _mesa_align_malloc(length + extra,
+                                                          alignment);
+         obj->Pointer = intel_obj->range_map_buffer + extra;
       } else {
 	 intel_obj->range_map_bo = drm_intel_bo_alloc(intel->bufmgr,
 						      "range map",
-						      length, 64);
+                                                      length + extra,
+                                                      alignment);
 	 if (!(access & GL_MAP_READ_BIT)) {
 	    drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo);
 	 } else {
 	    drm_intel_bo_map(intel_obj->range_map_bo,
 			     (access & GL_MAP_WRITE_BIT) != 0);
 	 }
-	 obj->Pointer = intel_obj->range_map_bo->virtual;
+	 obj->Pointer = intel_obj->range_map_bo->virtual + extra;
       }
       return obj->Pointer;
    }
@@ -391,7 +399,11 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
 
    temp_bo = drm_intel_bo_alloc(intel->bufmgr, "range map flush", length, 64);
 
-   drm_intel_bo_subdata(temp_bo, 0, length, intel_obj->range_map_buffer);
+   /* Use obj->Pointer instead of intel_obj->range_map_buffer because the
+    * former points to the actual mapping while the latter may be offset to
+    * meet alignment guarantees.
+    */
+   drm_intel_bo_subdata(temp_bo, 0, length, obj->Pointer);
 
    intel_emit_linear_blit(intel,
 			  intel_obj->buffer, obj->Offset + offset,
@@ -422,14 +434,16 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
        * usage inside of a batchbuffer.
        */
       intel_batchbuffer_emit_mi_flush(intel);
-      free(intel_obj->range_map_buffer);
+      _mesa_align_free(intel_obj->range_map_buffer);
       intel_obj->range_map_buffer = NULL;
    } else if (intel_obj->range_map_bo != NULL) {
+      const unsigned extra = obj->Pointer - intel_obj->range_map_bo->virtual;
+
       drm_intel_bo_unmap(intel_obj->range_map_bo);
 
       intel_emit_linear_blit(intel,
 			     intel_obj->buffer, obj->Offset,
-			     intel_obj->range_map_bo, 0,
+			     intel_obj->range_map_bo, extra,
 			     obj->Length);
 
       /* Since we've emitted some blits to buffers that will (likely) be used
