@@ -1564,6 +1564,10 @@ do_common_optimization(exec_list *ir, bool linked,
    if (options->OptimizeForAOS && !linked)
       progress = opt_flip_matrices(ir) || progress;
 
+   if (linked && options->OptimizeForAOS) {
+      progress = do_vectorize(ir) || progress;
+   }
+
    if (linked)
       progress = do_dead_code(ir, uniform_locations_assigned) || progress;
    else
