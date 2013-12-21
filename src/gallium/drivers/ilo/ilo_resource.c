@@ -969,6 +969,30 @@ tex_create_bo(struct ilo_texture *tex,
    return true;
 }
 
+static bool
+tex_create_separate_stencil(struct ilo_texture *tex)
+{
+   struct pipe_resource templ = tex->base;
+   struct pipe_resource *s8;
+
+   /*
+    * Unless PIPE_BIND_DEPTH_STENCIL is set, the resource may have other
+    * tilings.  But that should be fine since it will never be bound as the
+    * stencil buffer, and our transfer code can handle all tilings.
+    */
+   templ.format = PIPE_FORMAT_S8_UINT;
+
+   s8 = tex->base.screen->resource_create(tex->base.screen, &templ);
+   if (!s8)
+      return false;
+
+   tex->separate_s8 = ilo_texture(s8);
+
+   assert(tex->separate_s8->bo_format == PIPE_FORMAT_S8_UINT);
+
+   return true;
+}
+
 static void
 tex_destroy(struct ilo_texture *tex)
 {
@@ -1053,26 +1077,9 @@ tex_create(struct pipe_screen *screen,
    }
 
    /* allocate separate stencil resource */
-   if (layout.separate_stencil) {
-      struct pipe_resource s8_templ = *layout.templ;
-      struct pipe_resource *s8;
-
-      /*
-       * Unless PIPE_BIND_DEPTH_STENCIL is set, the resource may have other
-       * tilings.  But that should be fine since it will never be bound as the
-       * stencil buffer, and our transfer code can handle all tilings.
-       */
-      s8_templ.format = PIPE_FORMAT_S8_UINT;
-
-      s8 = screen->resource_create(screen, &s8_templ);
-      if (!s8) {
-         tex_destroy(tex);
-         return NULL;
-      }
-
-      tex->separate_s8 = ilo_texture(s8);
-
-      assert(tex->separate_s8->bo_format == PIPE_FORMAT_S8_UINT);
+   if (layout.separate_stencil && !tex_create_separate_stencil(tex)) {
+      tex_destroy(tex);
+      return NULL;
    }
 
    return &tex->base;
