@@ -1819,6 +1819,8 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 	/* HiZ aka depth buffer htile */
 	/* use htile only for first level */
 	if (rtex->htile_buffer && !level) {
+		const struct util_format_description *fmt_desc;
+
 		z_info |= S_028040_TILE_SURFACE_ENABLE(1);
 
 		/* This is optimal for the clear value of 1.0 and using
@@ -1826,6 +1828,12 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		 * for the opposite case. This can only be changed when
 		 * clearing. */
 		z_info |= S_028040_ZRANGE_PRECISION(1);
+
+		fmt_desc = util_format_description(rtex->resource.b.b.format);
+		if (!util_format_has_stencil(fmt_desc)) {
+			/* Use all of the htile_buffer for depth */
+			s_info |= S_028044_TILE_STENCIL_DISABLE(1);
+		}
 
 		uint64_t va = r600_resource_va(&rctx->screen->b.b, &rtex->htile_buffer->b.b);
 		db_htile_data_base = va >> 8;
