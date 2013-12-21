@@ -37,6 +37,7 @@
 #include "util/u_string.h"
 
 #include "freedreno_screen.h"
+#include "freedreno_gmem.h"
 
 struct fd_vertex_stateobj;
 
@@ -78,15 +79,6 @@ struct fd_vertexbuf_stateobj {
 struct fd_vertex_stateobj {
 	struct pipe_vertex_element pipe[PIPE_MAX_ATTRIBS];
 	unsigned num_elements;
-};
-
-struct fd_gmem_stateobj {
-	struct pipe_scissor_state scissor;
-	uint cpp;
-	uint16_t minx, miny;
-	uint16_t bin_h, nbins_y;
-	uint16_t bin_w, nbins_x;
-	uint16_t width, height;
 };
 
 struct fd_context {
@@ -176,6 +168,8 @@ struct fd_context {
 	 * if out of date with current maximal-scissor/cpp:
 	 */
 	struct fd_gmem_stateobj gmem;
+	struct fd_vsc_pipe      pipe[8];
+	struct fd_tile          tile[64];
 
 	/* which state objects need to be re-emit'd: */
 	enum {
@@ -221,14 +215,10 @@ struct fd_context {
 
 	/* GMEM/tile handling fxns: */
 	void (*emit_tile_init)(struct fd_context *ctx);
-	void (*emit_tile_prep)(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-			uint32_t bin_w, uint32_t bin_h);
-	void (*emit_tile_mem2gmem)(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-			uint32_t bin_w, uint32_t bin_h);
-	void (*emit_tile_renderprep)(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-			uint32_t bin_w, uint32_t bin_h);
-	void (*emit_tile_gmem2mem)(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-			uint32_t bin_w, uint32_t bin_h);
+	void (*emit_tile_prep)(struct fd_context *ctx, struct fd_tile *tile);
+	void (*emit_tile_mem2gmem)(struct fd_context *ctx, struct fd_tile *tile);
+	void (*emit_tile_renderprep)(struct fd_context *ctx, struct fd_tile *tile);
+	void (*emit_tile_gmem2mem)(struct fd_context *ctx, struct fd_tile *tile);
 
 	/* optional, for GMEM bypass: */
 	void (*emit_sysmem_prep)(struct fd_context *ctx);

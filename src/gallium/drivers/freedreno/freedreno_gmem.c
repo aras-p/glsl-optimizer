@@ -78,6 +78,7 @@ calculate_tiles(struct fd_context *ctx)
 	uint32_t bin_w, bin_h;
 	uint32_t max_width = 992;
 	uint32_t cpp = 4;
+	uint32_t i, j, t, p, n, xoff, yoff;
 
 	if (pfb->cbufs[0])
 		cpp = util_format_get_blocksize(pfb->cbufs[0]->format);
@@ -129,57 +130,96 @@ calculate_tiles(struct fd_context *ctx)
 
 	gmem->scissor = *scissor;
 	gmem->cpp = cpp;
-	gmem->minx = minx;
-	gmem->miny = miny;
 	gmem->bin_h = bin_h;
 	gmem->bin_w = bin_w;
 	gmem->nbins_x = nbins_x;
 	gmem->nbins_y = nbins_y;
 	gmem->width = width;
 	gmem->height = height;
+
+	/* Assign tiles and pipes:
+	 * NOTE we currently take a rather simplistic approach of
+	 * mapping rows of tiles to a pipe.  At some point it might
+	 * be worth playing with different strategies and seeing if
+	 * that makes much impact on performance.
+	 */
+	t = p = n = 0;
+	yoff = miny;
+	for (i = 0; i < nbins_y; i++) {
+		struct fd_vsc_pipe *pipe = &ctx->pipe[p];
+		uint32_t bw, bh;
+
+		assert(p < ARRAY_SIZE(ctx->pipe));
+
+		xoff = minx;
+
+		/* clip bin height: */
+		bh = MIN2(bin_h, miny + height - yoff);
+
+		for (j = 0; j < nbins_x; j++) {
+			struct fd_tile *tile = &ctx->tile[t];
+
+			assert(t < ARRAY_SIZE(ctx->tile));
+
+			/* clip bin width: */
+			bw = MIN2(bin_w, minx + width - xoff);
+
+			tile->n = n++;
+			tile->p = p;
+			tile->bin_w = bw;
+			tile->bin_h = bh;
+			tile->xoff = xoff;
+			tile->yoff = yoff;
+
+			t++;
+
+			xoff += bw;
+		}
+
+		/* one pipe per row: */
+		pipe->x = 0;
+		pipe->y = i;
+		pipe->w = nbins_x;
+		pipe->h = 1;
+
+		p++;
+		n = 0;
+
+		yoff += bh;
+	}
+
+	for (; p < ARRAY_SIZE(ctx->pipe); p++) {
+		struct fd_vsc_pipe *pipe = &ctx->pipe[p];
+		pipe->x = pipe->y = pipe->w = pipe->h = 0;
+	}
 }
 
 static void
 render_tiles(struct fd_context *ctx)
 {
 	struct fd_gmem_stateobj *gmem = &ctx->gmem;
-	uint32_t i, yoff = gmem->miny;
+	int i;
 
 	ctx->emit_tile_init(ctx);
 
-	for (i = 0; i < gmem->nbins_y; i++) {
-		uint32_t j, xoff = gmem->minx;
-		uint32_t bh = gmem->bin_h;
+	for (i = 0; i < (gmem->nbins_x * gmem->nbins_y); i++) {
+		struct fd_tile *tile = &ctx->tile[i];
 
-		/* clip bin height: */
-		bh = MIN2(bh, gmem->miny + gmem->height - yoff);
+		DBG("bin_h=%d, yoff=%d, bin_w=%d, xoff=%d",
+			tile->bin_h, tile->yoff, tile->bin_w, tile->xoff);
 
-		for (j = 0; j < gmem->nbins_x; j++) {
-			uint32_t bw = gmem->bin_w;
+		ctx->emit_tile_prep(ctx, tile);
 
-			/* clip bin width: */
-			bw = MIN2(bw, gmem->minx + gmem->width - xoff);
+		if (ctx->restore)
+			ctx->emit_tile_mem2gmem(ctx, tile);
 
-			DBG("bin_h=%d, yoff=%d, bin_w=%d, xoff=%d",
-					bh, yoff, bw, xoff);
+		ctx->emit_tile_renderprep(ctx, tile);
 
-			ctx->emit_tile_prep(ctx, xoff, yoff, bw, bh);
+		/* emit IB to drawcmds: */
+		OUT_IB(ctx->ring, ctx->draw_start, ctx->draw_end);
 
-			if (ctx->restore)
-				ctx->emit_tile_mem2gmem(ctx, xoff, yoff, bw, bh);
-
-			ctx->emit_tile_renderprep(ctx, xoff, yoff, bw, bh);
-
-			/* emit IB to drawcmds: */
-			OUT_IB(ctx->ring, ctx->draw_start, ctx->draw_end);
-
-			/* emit gmem2mem to transfer tile back to system memory: */
-			ctx->emit_tile_gmem2mem(ctx, xoff, yoff, bw, bh);
-
-			xoff += bw;
-		}
-
-		yoff += bh;
+		/* emit gmem2mem to transfer tile back to system memory: */
+		ctx->emit_tile_gmem2mem(ctx, tile);
 	}
 }
 

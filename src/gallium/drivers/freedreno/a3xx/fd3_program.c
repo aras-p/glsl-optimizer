@@ -266,17 +266,6 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 			// XXX sometimes 0, sometimes 1:
 			A3XX_SP_SP_CTRL_REG_LOMODE(1));
 
-	/* emit unknown sequence of perfcounter disables that the blob
-	 * emits as part of the program state..
-	 */
-	for (i = 0; i < 6; i++) {
-		OUT_PKT0(ring, REG_A3XX_SP_PERFCOUNTER0_SELECT, 1);
-		OUT_RING(ring, 0x00000000);    /* SP_PERFCOUNTER0_SELECT */
-
-		OUT_PKT0(ring, REG_A3XX_SP_PERFCOUNTER4_SELECT, 1);
-		OUT_RING(ring, 0x00000000);    /* SP_PERFCOUNTER4_SELECT */
-	}
-
 	OUT_PKT0(ring, REG_A3XX_SP_VS_LENGTH_REG, 1);
 	OUT_RING(ring, A3XX_SP_VS_LENGTH_REG_SHADERLENGTH(vp->instrlen));
 
@@ -329,22 +318,10 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 		OUT_RING(ring, reg);
 	}
 
-#if 0
-	/* for some reason, when I write SP_{VS,FS}_OBJ_START_REG I get:
-[  666.663665] kgsl kgsl-3d0: |a3xx_err_callback| RBBM | AHB bus error | READ | addr=201 | ports=1:3
-[  666.664001] kgsl kgsl-3d0: |a3xx_err_callback| ringbuffer AHB error interrupt
-[  670.680909] kgsl kgsl-3d0: |adreno_idle| spun too long waiting for RB to idle
-[  670.681062] kgsl kgsl-3d0: |kgsl-3d0| Dump Started
-[  670.681123] kgsl kgsl-3d0: POWER: FLAGS = 00000007 | ACTIVE POWERLEVEL = 00000001
-[  670.681214] kgsl kgsl-3d0: POWER: INTERVAL TIMEOUT = 0000000A
-[  670.681367] kgsl kgsl-3d0: GRP_CLK = 325000000
-[  670.681489] kgsl kgsl-3d0: BUS CLK = 0
-	 */
 	OUT_PKT0(ring, REG_A3XX_SP_VS_OBJ_OFFSET_REG, 2);
 	OUT_RING(ring, A3XX_SP_VS_OBJ_OFFSET_REG_CONSTOBJECTOFFSET(0) |
 			A3XX_SP_VS_OBJ_OFFSET_REG_SHADEROBJOFFSET(0));
 	OUT_RELOC(ring, vp->bo, 0, 0, 0);  /* SP_VS_OBJ_START_REG */
-#endif
 
 	OUT_PKT0(ring, REG_A3XX_SP_FS_LENGTH_REG, 1);
 	OUT_RING(ring, A3XX_SP_FS_LENGTH_REG_SHADERLENGTH(fp->instrlen));
@@ -364,12 +341,10 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 			A3XX_SP_FS_CTRL_REG1_CONSTFOOTPRINT(MAX2(fsi->max_const, 0)) |
 			A3XX_SP_FS_CTRL_REG1_HALFPRECVAROFFSET(63));
 
-#if 0
 	OUT_PKT0(ring, REG_A3XX_SP_FS_OBJ_OFFSET_REG, 2);
 	OUT_RING(ring, A3XX_SP_FS_OBJ_OFFSET_REG_CONSTOBJECTOFFSET(128) |
-			A3XX_SP_FS_OBJ_OFFSET_REG_SHADEROBJOFFSET(128 - fp->instrlen));
+			A3XX_SP_FS_OBJ_OFFSET_REG_SHADEROBJOFFSET(0));
 	OUT_RELOC(ring, fp->bo, 0, 0, 0);  /* SP_FS_OBJ_START_REG */
-#endif
 
 	OUT_PKT0(ring, REG_A3XX_SP_FS_FLAT_SHAD_MODE_REG_0, 2);
 	OUT_RING(ring, 0x00000000);        /* SP_FS_FLAT_SHAD_MODE_REG_0 */

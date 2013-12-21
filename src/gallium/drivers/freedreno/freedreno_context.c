@@ -117,6 +117,7 @@ void
 fd_context_destroy(struct pipe_context *pctx)
 {
 	struct fd_context *ctx = fd_context(pctx);
+	unsigned i;
 
 	DBG("");
 
@@ -129,6 +130,13 @@ fd_context_destroy(struct pipe_context *pctx)
 	fd_ringmarker_del(ctx->draw_start);
 	fd_ringmarker_del(ctx->draw_end);
 	fd_ringbuffer_del(ctx->ring);
+
+	for (i = 0; i < ARRAY_SIZE(ctx->pipe); i++) {
+		struct fd_vsc_pipe *pipe = &ctx->pipe[i];
+		if (!pipe->bo)
+			break;
+		fd_bo_del(pipe->bo);
+	}
 
 	FREE(ctx);
 }

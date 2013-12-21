@@ -134,8 +134,7 @@ emit_gmem2mem_surf(struct fd_context *ctx,
 }
 
 static void
-fd3_emit_tile_gmem2mem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-		uint32_t bin_w, uint32_t bin_h)
+fd3_emit_tile_gmem2mem(struct fd_context *ctx, struct fd_tile *tile)
 {
 	struct fd3_context *fd3_ctx = fd3_context(ctx);
 	struct fd_ringbuffer *ring = ctx->ring;
@@ -256,21 +255,22 @@ emit_mem2gmem_surf(struct fd_context *ctx, uint32_t base,
 }
 
 static void
-fd3_emit_tile_mem2gmem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-		uint32_t bin_w, uint32_t bin_h)
+fd3_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 {
 	struct fd3_context *fd3_ctx = fd3_context(ctx);
 	struct fd_gmem_stateobj *gmem = &ctx->gmem;
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
 	float x0, y0, x1, y1;
+	unsigned bin_w = tile->bin_w;
+	unsigned bin_h = tile->bin_h;
 	unsigned i;
 
 	/* write texture coordinates to vertexbuf: */
-	x0 = ((float)xoff) / ((float)pfb->width);
-	x1 = ((float)xoff + bin_w) / ((float)pfb->width);
-	y0 = ((float)yoff) / ((float)pfb->height);
-	y1 = ((float)yoff + bin_h) / ((float)pfb->height);
+	x0 = ((float)tile->xoff) / ((float)pfb->width);
+	x1 = ((float)tile->xoff + bin_w) / ((float)pfb->width);
+	y0 = ((float)tile->yoff) / ((float)pfb->height);
+	y1 = ((float)tile->yoff + bin_h) / ((float)pfb->height);
 
 	OUT_PKT3(ring, CP_MEM_WRITE, 5);
 	OUT_RELOC(ring, fd_resource(fd3_ctx->blit_texcoord_vbuf)->bo, 0, 0, 0);
@@ -384,29 +384,23 @@ static void
 update_vsc_pipe(struct fd_context *ctx)
 {
 	struct fd_ringbuffer *ring = ctx->ring;
-	struct fd_gmem_stateobj *gmem = &ctx->gmem;
-	struct fd_bo *bo = fd3_context(ctx)->vsc_pipe_mem;
 	int i;
 
-	/* since we aren't using binning, just try to assign all bins
-	 * to same pipe for now:
-	 */
-	OUT_PKT0(ring, REG_A3XX_VSC_PIPE(0), 3);
-	OUT_RING(ring, A3XX_VSC_PIPE_CONFIG_X(0) |
-			A3XX_VSC_PIPE_CONFIG_Y(0) |
-			A3XX_VSC_PIPE_CONFIG_W(gmem->nbins_x) |
-			A3XX_VSC_PIPE_CONFIG_H(gmem->nbins_y));
-	OUT_RELOC(ring, bo, 0, 0, 0);           /* VSC_PIPE[0].DATA_ADDRESS */
-	OUT_RING(ring, fd_bo_size(bo) - 32);    /* VSC_PIPE[0].DATA_LENGTH */
+	for (i = 0; i < 8; i++) {
+		struct fd_vsc_pipe *pipe = &ctx->pipe[i];
 
-	for (i = 1; i < 8; i++) {
-		OUT_PKT0(ring, REG_A3XX_VSC_PIPE(i), 3);
-		OUT_RING(ring, A3XX_VSC_PIPE_CONFIG_X(0) |
-				A3XX_VSC_PIPE_CONFIG_Y(0) |
-				A3XX_VSC_PIPE_CONFIG_W(0) |
-				A3XX_VSC_PIPE_CONFIG_H(0));
-		OUT_RING(ring, 0x00000000);         /* VSC_PIPE[i].DATA_ADDRESS */
-		OUT_RING(ring, 0x00000000);         /* VSC_PIPE[i].DATA_LENGTH */
+		if (!pipe->bo) {
+			pipe->bo = fd_bo_new(ctx->screen->dev, 0x40000,
+					DRM_FREEDRENO_GEM_TYPE_KMEM);
+		}
+
+		OUT_PKT0(ring, REG_A3XX_VSC_PIPE(0), 3);
+		OUT_RING(ring, A3XX_VSC_PIPE_CONFIG_X(pipe->x) |
+				A3XX_VSC_PIPE_CONFIG_Y(pipe->y) |
+				A3XX_VSC_PIPE_CONFIG_W(pipe->w) |
+				A3XX_VSC_PIPE_CONFIG_H(pipe->h));
+		OUT_RELOC(ring, pipe->bo, 0, 0, 0);        /* VSC_PIPE[i].DATA_ADDRESS */
+		OUT_RING(ring, fd_bo_size(pipe->bo) - 32); /* VSC_PIPE[i].DATA_LENGTH */
 	}
 }
 
@@ -465,16 +459,12 @@ fd3_emit_tile_init(struct fd_context *ctx)
 	OUT_RING(ring, A3XX_VSC_BIN_SIZE_WIDTH(gmem->bin_w) |
 			A3XX_VSC_BIN_SIZE_HEIGHT(gmem->bin_h));
 
-	/* TODO we only need to do this if gmem stateobj changes.. or in
-	 * particular if the # of bins changes..
-	 */
 	update_vsc_pipe(ctx);
 }
 
 /* before mem2gmem */
 static void
-fd3_emit_tile_prep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-		uint32_t bin_w, uint32_t bin_h)
+fd3_emit_tile_prep(struct fd_context *ctx, struct fd_tile *tile)
 {
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
@@ -506,17 +496,16 @@ fd3_emit_tile_prep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 
 /* before IB to rendering cmds: */
 static void
-fd3_emit_tile_renderprep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-		uint32_t bin_w, uint32_t bin_h)
+fd3_emit_tile_renderprep(struct fd_context *ctx, struct fd_tile *tile)
 {
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct fd_gmem_stateobj *gmem = &ctx->gmem;
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
 
-	uint32_t x1 = xoff;
-	uint32_t y1 = yoff;
-	uint32_t x2 = xoff + bin_w - 1;
-	uint32_t y2 = yoff + bin_h - 1;
+	uint32_t x1 = tile->xoff;
+	uint32_t y1 = tile->yoff;
+	uint32_t x2 = tile->xoff + tile->bin_w - 1;
+	uint32_t y2 = tile->yoff + tile->bin_h - 1;
 
 	OUT_PKT3(ring, CP_SET_BIN, 3);
 	OUT_RING(ring, 0x00000000);
@@ -531,8 +520,8 @@ fd3_emit_tile_renderprep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 
 	/* setup scissor/offset for current tile: */
 	OUT_PKT0(ring, REG_A3XX_RB_WINDOW_OFFSET, 1);
-	OUT_RING(ring, A3XX_RB_WINDOW_OFFSET_X(xoff) |
-			A3XX_RB_WINDOW_OFFSET_Y(yoff));
+	OUT_RING(ring, A3XX_RB_WINDOW_OFFSET_X(tile->xoff) |
+			A3XX_RB_WINDOW_OFFSET_Y(tile->yoff));
 
 	OUT_PKT0(ring, REG_A3XX_GRAS_SC_SCREEN_SCISSOR_TL, 2);
 	OUT_RING(ring, A3XX_GRAS_SC_SCREEN_SCISSOR_TL_X(x1) |

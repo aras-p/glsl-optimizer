@@ -47,7 +47,6 @@ fd3_context_destroy(struct pipe_context *pctx)
 	fd_bo_del(fd3_ctx->vs_pvt_mem);
 	fd_bo_del(fd3_ctx->fs_pvt_mem);
 	fd_bo_del(fd3_ctx->vsc_size_mem);
-	fd_bo_del(fd3_ctx->vsc_pipe_mem);
 
 	pipe_resource_reference(&fd3_ctx->solid_vbuf, NULL);
 	pipe_resource_reference(&fd3_ctx->blit_texcoord_vbuf, NULL);
@@ -127,9 +126,6 @@ fd3_context_create(struct pipe_screen *pscreen, void *priv)
 			DRM_FREEDRENO_GEM_TYPE_KMEM);
 
 	fd3_ctx->vsc_size_mem = fd_bo_new(screen->dev, 0x1000,
-			DRM_FREEDRENO_GEM_TYPE_KMEM);
-
-	fd3_ctx->vsc_pipe_mem = fd_bo_new(screen->dev, 0x40000,
 			DRM_FREEDRENO_GEM_TYPE_KMEM);
 
 	fd3_ctx->solid_vbuf = create_solid_vertexbuf(pctx);

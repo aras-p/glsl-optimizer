@@ -38,13 +38,10 @@ struct fd3_context {
 
 	struct fd_bo *vs_pvt_mem, *fs_pvt_mem;
 
-	/* not sure how big this actually needs to be.. the blob driver
-	 * combines it w/ the solid_vertexbuf, we could probably do the
-	 * same to save an extra bo allocation..
+	/* This only needs to be 4 * num_of_pipes bytes (ie. 32 bytes).  We
+	 * could combine it with another allocation.
 	 */
 	struct fd_bo *vsc_size_mem;
-
-	struct fd_bo *vsc_pipe_mem;
 
 	/* vertex buf used for clear/gmem->mem vertices, and mem->gmem
 	 * vertices:

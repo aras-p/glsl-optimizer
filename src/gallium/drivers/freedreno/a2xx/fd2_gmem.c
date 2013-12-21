@@ -95,8 +95,7 @@ emit_gmem2mem_surf(struct fd_context *ctx, uint32_t base,
 }
 
 static void
-fd2_emit_tile_gmem2mem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-		uint32_t bin_w, uint32_t bin_h)
+fd2_emit_tile_gmem2mem(struct fd_context *ctx, struct fd_tile *tile)
 {
 	struct fd2_context *fd2_ctx = fd2_context(ctx);
 	struct fd_ringbuffer *ring = ctx->ring;
@@ -157,11 +156,11 @@ fd2_emit_tile_gmem2mem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_A2XX_RB_COPY_DEST_OFFSET));
-	OUT_RING(ring, A2XX_RB_COPY_DEST_OFFSET_X(xoff) |
-			A2XX_RB_COPY_DEST_OFFSET_Y(yoff));
+	OUT_RING(ring, A2XX_RB_COPY_DEST_OFFSET_X(tile->xoff) |
+			A2XX_RB_COPY_DEST_OFFSET_Y(tile->yoff));
 
 	if (ctx->resolve & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL))
-		emit_gmem2mem_surf(ctx, bin_w * bin_h, pfb->zsbuf);
+		emit_gmem2mem_surf(ctx, tile->bin_w * tile->bin_h, pfb->zsbuf);
 
 	if (ctx->resolve & FD_BUFFER_COLOR)
 		emit_gmem2mem_surf(ctx, 0, pfb->cbufs[0]);
@@ -218,12 +217,13 @@ emit_mem2gmem_surf(struct fd_context *ctx, uint32_t base,
 }
 
 static void
-fd2_emit_tile_mem2gmem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-		uint32_t bin_w, uint32_t bin_h)
+fd2_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 {
 	struct fd2_context *fd2_ctx = fd2_context(ctx);
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
+	unsigned bin_w = tile->bin_w;
+	unsigned bin_h = tile->bin_h;
 	float x0, y0, x1, y1;
 
 	fd2_emit_vertex_bufs(ring, 0x9c, (struct fd2_vertex_buf[]) {
@@ -232,10 +232,10 @@ fd2_emit_tile_mem2gmem(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 		}, 2);
 
 	/* write texture coordinates to vertexbuf: */
-	x0 = ((float)xoff) / ((float)pfb->width);
-	x1 = ((float)xoff + bin_w) / ((float)pfb->width);
-	y0 = ((float)yoff) / ((float)pfb->height);
-	y1 = ((float)yoff + bin_h) / ((float)pfb->height);
+	x0 = ((float)tile->xoff) / ((float)pfb->width);
+	x1 = ((float)tile->xoff + bin_w) / ((float)pfb->width);
+	y0 = ((float)tile->yoff) / ((float)pfb->height);
+	y1 = ((float)tile->yoff + bin_h) / ((float)pfb->height);
 	OUT_PKT3(ring, CP_MEM_WRITE, 9);
 	OUT_RELOC(ring, fd_resource(fd2_ctx->solid_vertexbuf)->bo, 0x60, 0, 0);
 	OUT_RING(ring, fui(x0));
@@ -349,8 +349,7 @@ fd2_emit_tile_init(struct fd_context *ctx)
 
 /* before mem2gmem */
 static void
-fd2_emit_tile_prep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-		uint32_t bin_w, uint32_t bin_h)
+fd2_emit_tile_prep(struct fd_context *ctx, struct fd_tile *tile)
 {
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
@@ -364,14 +363,15 @@ fd2_emit_tile_prep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 	/* setup screen scissor for current tile (same for mem2gmem): */
 	OUT_PKT3(ring, CP_SET_CONSTANT, 3);
 	OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_SCREEN_SCISSOR_TL));
-	OUT_RING(ring, xy2d(0,0));           /* PA_SC_SCREEN_SCISSOR_TL */
-	OUT_RING(ring, xy2d(bin_w, bin_h));  /* PA_SC_SCREEN_SCISSOR_BR */
+	OUT_RING(ring, A2XX_PA_SC_SCREEN_SCISSOR_TL_X(0) |
+			A2XX_PA_SC_SCREEN_SCISSOR_TL_Y(0));
+	OUT_RING(ring, A2XX_PA_SC_SCREEN_SCISSOR_BR_X(tile->bin_w) |
+			A2XX_PA_SC_SCREEN_SCISSOR_BR_Y(tile->bin_h));
 }
 
 /* before IB to rendering cmds: */
 static void
-fd2_emit_tile_renderprep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
-		uint32_t bin_w, uint32_t bin_h)
+fd2_emit_tile_renderprep(struct fd_context *ctx, struct fd_tile *tile)
 {
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
@@ -387,8 +387,8 @@ fd2_emit_tile_renderprep(struct fd_context *ctx, uint32_t xoff, uint32_t yoff,
 	 */
 	OUT_PKT3(ring, CP_SET_CONSTANT, 2);
 	OUT_RING(ring, CP_REG(REG_A2XX_PA_SC_WINDOW_OFFSET));
-	OUT_RING(ring, A2XX_PA_SC_WINDOW_OFFSET_X(-xoff) |
-			A2XX_PA_SC_WINDOW_OFFSET_Y(-yoff));
+	OUT_RING(ring, A2XX_PA_SC_WINDOW_OFFSET_X(-tile->xoff) |
+			A2XX_PA_SC_WINDOW_OFFSET_Y(-tile->yoff));
 }
 
 void
