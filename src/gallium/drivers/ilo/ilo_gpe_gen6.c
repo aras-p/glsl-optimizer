@@ -2478,7 +2478,11 @@ ilo_gpe_init_fb(const struct ilo_dev_info *dev,
 
    fb->offset_to_layers = false;
 
-   if (num_surfaces > 1) {
+   /*
+    * The PRMs list several restrictions when the framebuffer has more than
+    * one surface, but it seems they are lifted on GEN7+.
+    */
+   if (dev->gen < ILO_GEN(7) && num_surfaces > 1) {
       const unsigned first_depth =
          (first->texture->target == PIPE_TEXTURE_3D) ?
          first->texture->depth0 :
