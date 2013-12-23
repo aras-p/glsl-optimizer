@@ -127,8 +127,7 @@ do_blit_readpixels(struct gl_context * ctx,
    brw->front_buffer_dirty = dirty;
 
    dst_buffer = intel_bufferobj_buffer(brw, dst,
-				       dst_offset, width * height *
-                                       irb->mt->cpp);
+				       dst_offset, height * dst_stride);
 
    struct intel_mipmap_tree *pbo_mt =
       intel_miptree_create_for_bo(brw,
