@@ -106,13 +106,15 @@ do_blit_readpixels(struct gl_context * ctx,
    /* Mesa flips the dst_stride for pack->Invert, but we want our mt to have a
     * normal dst_stride.
     */
+   struct gl_pixelstore_attrib uninverted_pack = *pack;
    if (pack->Invert) {
       dst_stride = -dst_stride;
       dst_flip = true;
+      uninverted_pack.Invert = false;
    }
 
    dst_offset = (GLintptr)pixels;
-   dst_offset += _mesa_image_offset(2, pack, width, height,
+   dst_offset += _mesa_image_offset(2, &uninverted_pack, width, height,
 				    format, type, 0, 0, 0);
 
    if (!_mesa_clip_copytexsubimage(ctx,
