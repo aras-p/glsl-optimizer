@@ -443,7 +443,8 @@ intel_miptree_choose_tiling(struct brw_context *brw,
    if (minimum_pitch < 64)
       return I915_TILING_NONE;
 
-   if (ALIGN(minimum_pitch, 512) >= 32768) {
+   if (ALIGN(minimum_pitch, 512) >= 32768 ||
+       mt->total_width >= 32768 || mt->total_height >= 32768) {
       perf_debug("%dx%d miptree too large to blit, falling back to untiled",
                  mt->total_width, mt->total_height);
       return I915_TILING_NONE;
@@ -2233,6 +2234,22 @@ intel_miptree_release_map(struct intel_mipmap_tree *mt,
    *map = NULL;
 }
 
+static bool
+can_blit_slice(struct intel_mipmap_tree *mt,
+               unsigned int level, unsigned int slice)
+{
+   uint32_t image_x;
+   uint32_t image_y;
+   intel_miptree_get_image_offset(mt, level, slice, &image_x, &image_y);
+   if (image_x >= 32768 || image_y >= 32768)
+      return false;
+
+   if (mt->region->pitch >= 32768)
+      return false;
+
+   return true;
+}
+
 static void
 intel_miptree_map_singlesample(struct brw_context *brw,
                                struct intel_mipmap_tree *mt,
@@ -2276,11 +2293,11 @@ intel_miptree_map_singlesample(struct brw_context *brw,
             !mt->compressed &&
             (mt->region->tiling == I915_TILING_X ||
              (brw->gen >= 6 && mt->region->tiling == I915_TILING_Y)) &&
-            mt->region->pitch < 32768) {
+            can_blit_slice(mt, level, slice)) {
       intel_miptree_map_blit(brw, mt, map, level, slice);
    } else if (mt->region->tiling != I915_TILING_NONE &&
               mt->region->bo->size >= brw->max_gtt_map_object_size) {
-      assert(mt->region->pitch < 32768);
+      assert(can_blit_slice(mt, level, slice));
       intel_miptree_map_blit(brw, mt, map, level, slice);
 #ifdef __SSE4_1__
    } else if (!(mode & GL_MAP_WRITE_BIT) && !mt->compressed) {
