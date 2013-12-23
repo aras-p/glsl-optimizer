@@ -80,8 +80,6 @@ fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 	OUT_PKT0(ring, REG_A3XX_PC_VERTEX_REUSE_BLOCK_CNTL, 1);
 	OUT_RING(ring, 0x0000000b);                  /* PC_VERTEX_REUSE_BLOCK_CNTL */
 
-	OUT_WFI (ring);
-
 	OUT_PKT0(ring, REG_A3XX_VFD_INDEX_MIN, 4);
 	OUT_RING(ring, info->min_index);        /* VFD_INDEX_MIN */
 	OUT_RING(ring, info->max_index);        /* VFD_INDEX_MAX */
@@ -111,7 +109,7 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	OUT_RING(ring, A3XX_RB_BLEND_ALPHA_UINT(0xff) |
 			A3XX_RB_BLEND_ALPHA_FLOAT(1.0));
 
-	fd3_emit_rbrc_draw_state(ring,
+	fd3_emit_rbrc_draw_state(ctx, ring,
 			A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER));
 
 	if (buffers & PIPE_CLEAR_DEPTH) {
@@ -220,8 +218,6 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 
 	fd_draw(ctx, DI_PT_RECTLIST, DI_SRC_SEL_AUTO_INDEX, 2,
 			INDEX_SIZE_IGN, 0, 0, NULL);
-
-	OUT_WFI (ring);
 }
 
 void

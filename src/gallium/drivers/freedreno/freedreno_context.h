@@ -38,6 +38,7 @@
 
 #include "freedreno_screen.h"
 #include "freedreno_gmem.h"
+#include "freedreno_util.h"
 
 struct fd_vertex_stateobj;
 
@@ -150,6 +151,20 @@ struct fd_context {
 	struct fd_ringbuffer *ring;
 	struct fd_ringmarker *draw_start, *draw_end;
 
+	/* Keep track if WAIT_FOR_IDLE is needed for registers we need
+	 * to update via RMW:
+	 */
+	struct {
+		bool need_wfi;
+		/* note: would be nicer to have in fd3_context, fd2_context,
+		 * etc, because the registered modified via RMR differ across
+		 * generation.  But as long as it is a small set of registers
+		 * that might be more hassle than it's worth.
+		 */
+		/* state for RB_RENDER_CONTROL: */
+		uint32_t rbrc_draw;
+	} rmw;
+
 	struct pipe_scissor_state scissor;
 
 	/* we don't have a disable/enable bit for scissor, so instead we keep
@@ -247,6 +262,23 @@ static INLINE bool
 fd_supported_prim(struct fd_context *ctx, unsigned prim)
 {
 	return (1 << prim) & ctx->primtype_mask;
+}
+
+static INLINE void
+fd_reset_rmw_state(struct fd_context *ctx)
+{
+	ctx->rmw.need_wfi = true;
+	ctx->rmw.rbrc_draw = ~0;
+}
+
+/* emit before a RMW a WAIT_FOR_IDLE only if needed: */
+static inline void
+fd_rmw_wfi(struct fd_context *ctx, struct fd_ringbuffer *ring)
+{
+	if (ctx->rmw.need_wfi) {
+		OUT_WFI(ring);
+		ctx->rmw.need_wfi = false;
+	}
 }
 
 struct pipe_context * fd_context_init(struct fd_context *ctx,

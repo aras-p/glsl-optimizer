@@ -243,8 +243,6 @@ emit_cache_flush(struct fd_ringbuffer *ring)
 	OUT_RING(ring, 0x00000000);
 	OUT_RING(ring, 0x00000000);
 	OUT_RING(ring, 0x00000000);
-
-	OUT_WFI (ring);
 }
 
 /* emit texture state for mem->gmem restore operation.. eventually it would
@@ -356,7 +354,7 @@ fd3_emit_state(struct fd_context *ctx, uint32_t dirty)
 		struct fd3_zsa_stateobj *zsa = fd3_zsa_stateobj(ctx->zsa);
 		struct pipe_stencil_ref *sr = &ctx->stencil_ref;
 
-		fd3_emit_rbrc_draw_state(ring, zsa->rb_render_control);
+		fd3_emit_rbrc_draw_state(ctx, ring, zsa->rb_render_control);
 
 		OUT_PKT0(ring, REG_A3XX_RB_ALPHA_REF, 1);
 		OUT_RING(ring, zsa->rb_alpha_ref);
@@ -607,4 +605,5 @@ fd3_emit_restore(struct fd_context *ctx)
 	}
 
 	emit_cache_flush(ring);
+	fd_rmw_wfi(ctx, ring);
 }

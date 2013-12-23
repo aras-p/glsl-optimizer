@@ -85,6 +85,8 @@ fd_draw(struct fd_context *ctx, enum pc_di_primtype primtype,
 	}
 
 	emit_marker(ring, 7);
+
+	ctx->rmw.need_wfi = true;
 }
 
 #endif /* FREEDRENO_DRAW_H_ */

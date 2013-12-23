@@ -272,6 +272,8 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 	/* mark start for next draw cmds: */
 	fd_ringmarker_mark(ctx->draw_start);
 
+	fd_reset_rmw_state(ctx);
+
 	/* update timestamps on render targets: */
 	timestamp = fd_ringbuffer_timestamp(ctx->ring);
 	if (pfb->cbufs[0])

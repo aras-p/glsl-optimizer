@@ -66,24 +66,23 @@ void fd3_emit_restore(struct fd_context *ctx);
  * GMEM/binning code is deciding on the bin-width (and whether to
  * use binning) after the draw/clear state is emitted.
  */
-static inline void
-fd3_emit_rbrc_draw_state(struct fd_ringbuffer *ring, uint32_t val)
-{
-	OUT_PKT3(ring, CP_REG_RMW, 3);
-	OUT_RING(ring, REG_A3XX_RB_RENDER_CONTROL);
-	OUT_RING(ring, A3XX_RB_RENDER_CONTROL_BIN_WIDTH__MASK |
-			A3XX_RB_RENDER_CONTROL_ENABLE_GMEM);
-	OUT_RING(ring, val);
-}
+
+#define RBRC_DRAW_STATE  (A3XX_RB_RENDER_CONTROL_ALPHA_TEST | \
+		A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC__MASK)
 
 static inline void
-fd3_emit_rbrc_tile_state(struct fd_ringbuffer *ring, uint32_t val)
+fd3_emit_rbrc_draw_state(struct fd_context *ctx,
+		struct fd_ringbuffer *ring, uint32_t val)
 {
-	OUT_PKT3(ring, CP_REG_RMW, 3);
-	OUT_RING(ring, REG_A3XX_RB_RENDER_CONTROL);
-	OUT_RING(ring, ~(A3XX_RB_RENDER_CONTROL_BIN_WIDTH__MASK |
-			A3XX_RB_RENDER_CONTROL_ENABLE_GMEM));
-	OUT_RING(ring, val);
+	assert(!(val & ~RBRC_DRAW_STATE));
+	if (val != ctx->rmw.rbrc_draw) {
+		fd_rmw_wfi(ctx, ring);
+		OUT_PKT3(ring, CP_REG_RMW, 3);
+		OUT_RING(ring, REG_A3XX_RB_RENDER_CONTROL);
+		OUT_RING(ring, ~RBRC_DRAW_STATE);
+		OUT_RING(ring, val);
+		ctx->rmw.rbrc_draw = val;
+	}
 }
 
 #endif /* FD3_EMIT_H */

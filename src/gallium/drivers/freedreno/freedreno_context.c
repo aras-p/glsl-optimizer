@@ -174,6 +174,7 @@ fd_context_init(struct fd_context *ctx, struct pipe_screen *pscreen,
 	}
 
 	fd_context_next_rb(pctx);
+	fd_reset_rmw_state(ctx);
 
 	util_slab_create(&ctx->transfer_pool, sizeof(struct pipe_transfer),
 			16, UTIL_SLAB_SINGLETHREADED);

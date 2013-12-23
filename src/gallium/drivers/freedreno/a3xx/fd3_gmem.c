@@ -181,9 +181,11 @@ fd3_emit_tile_gmem2mem(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_RING(ring, A3XX_RB_MODE_CONTROL_RENDER_MODE(RB_RESOLVE_PASS) |
 			A3XX_RB_MODE_CONTROL_MARB_CACHE_SPLIT_MODE);
 
-	fd3_emit_rbrc_draw_state(ring,
-			A3XX_RB_RENDER_CONTROL_DISABLE_COLOR_PIPE |
-			A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER));
+	OUT_PKT0(ring, REG_A3XX_RB_RENDER_CONTROL, 1);
+	OUT_RING(ring, A3XX_RB_RENDER_CONTROL_DISABLE_COLOR_PIPE |
+			A3XX_RB_RENDER_CONTROL_ENABLE_GMEM |
+			A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER) |
+			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(ctx->gmem.bin_w));
 
 	OUT_PKT0(ring, REG_A3XX_GRAS_SC_CONTROL, 1);
 	OUT_RING(ring, A3XX_GRAS_SC_CONTROL_RENDER_MODE(RB_RESOLVE_PASS) |
@@ -295,7 +297,8 @@ fd3_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 				A3XX_RB_MRT_BLEND_CONTROL_CLAMP_ENABLE);
 	}
 
-	fd3_emit_rbrc_tile_state(ring,
+	OUT_PKT0(ring, REG_A3XX_RB_RENDER_CONTROL, 1);
+	OUT_RING(ring, A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_ALWAYS) |
 			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(gmem->bin_w));
 
 	OUT_PKT0(ring, REG_A3XX_RB_DEPTH_CONTROL, 1);
@@ -334,9 +337,6 @@ fd3_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 			A3XX_RB_STENCIL_CONTROL_FAIL_BF(STENCIL_KEEP) |
 			A3XX_RB_STENCIL_CONTROL_ZPASS_BF(STENCIL_KEEP) |
 			A3XX_RB_STENCIL_CONTROL_ZFAIL_BF(STENCIL_KEEP));
-
-	fd3_emit_rbrc_draw_state(ring,
-			A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_ALWAYS));
 
 	OUT_PKT0(ring, REG_A3XX_GRAS_SC_CONTROL, 1);
 	OUT_RING(ring, A3XX_GRAS_SC_CONTROL_RENDER_MODE(RB_RENDERING_PASS) |
@@ -423,7 +423,8 @@ fd3_emit_sysmem_prep(struct fd_context *ctx)
 
 	emit_mrt(ring, pfb->nr_cbufs, pfb->cbufs, NULL, 0);
 
-	fd3_emit_rbrc_tile_state(ring,
+	OUT_PKT0(ring, REG_A3XX_RB_RENDER_CONTROL, 1);
+	OUT_RING(ring, A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER) |
 			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(pitch));
 
 	/* setup scissor/offset for current tile: */
@@ -514,8 +515,9 @@ fd3_emit_tile_renderprep(struct fd_context *ctx, struct fd_tile *tile)
 
 	emit_mrt(ring, pfb->nr_cbufs, pfb->cbufs, NULL, gmem->bin_w);
 
-	fd3_emit_rbrc_tile_state(ring,
-			A3XX_RB_RENDER_CONTROL_ENABLE_GMEM |
+	OUT_PKT0(ring, REG_A3XX_RB_RENDER_CONTROL, 1);
+	OUT_RING(ring, A3XX_RB_RENDER_CONTROL_ENABLE_GMEM |
+			A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER) |
 			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(gmem->bin_w));
 
 	/* setup scissor/offset for current tile: */
