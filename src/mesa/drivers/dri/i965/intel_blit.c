@@ -33,6 +33,7 @@
 #include "main/fbobject.h"
 
 #include "brw_context.h"
+#include "brw_defines.h"
 #include "intel_blit.h"
 #include "intel_buffers.h"
 #include "intel_fbo.h"
@@ -400,12 +401,12 @@ intelEmitCopyBlit(struct brw_context *brw,
 
    OUT_BATCH(CMD | (8 - 2));
    OUT_BATCH(BR13 | (uint16_t)dst_pitch);
-   OUT_BATCH((dst_y << 16) | dst_x);
-   OUT_BATCH((dst_y2 << 16) | dst_x2);
+   OUT_BATCH(SET_FIELD(dst_y, BLT_Y) | SET_FIELD(dst_x, BLT_X));
+   OUT_BATCH(SET_FIELD(dst_y2, BLT_Y) | SET_FIELD(dst_x2, BLT_X));
    OUT_RELOC(dst_buffer,
              I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
              dst_offset);
-   OUT_BATCH((src_y << 16) | src_x);
+   OUT_BATCH(SET_FIELD(src_y, BLT_Y) | SET_FIELD(src_x, BLT_X));
    OUT_BATCH((uint16_t)src_pitch);
    OUT_RELOC(src_buffer, I915_GEM_DOMAIN_RENDER, 0, src_offset);
 
@@ -479,8 +480,8 @@ intelEmitImmediateColorExpandBlit(struct brw_context *brw,
    OUT_BATCH(0); /* pattern base addr */
 
    OUT_BATCH(blit_cmd | ((3 - 2) + dwords));
-   OUT_BATCH((y << 16) | x);
-   OUT_BATCH(((y + h) << 16) | (x + w));
+   OUT_BATCH(SET_FIELD(y, BLT_Y) | SET_FIELD(x, BLT_X));
+   OUT_BATCH(SET_FIELD(y + h, BLT_Y) | SET_FIELD(x + w, BLT_X));
    ADVANCE_BATCH();
 
    intel_batchbuffer_data(brw, src_bits, dwords * 4, BLT_RING);
@@ -588,8 +589,8 @@ intel_miptree_set_alpha_to_one(struct brw_context *brw,
    BEGIN_BATCH_BLT_TILED(6, dst_y_tiled, false);
    OUT_BATCH(CMD | (6 - 2));
    OUT_BATCH(BR13);
-   OUT_BATCH((y << 16) | x);
-   OUT_BATCH(((y + height) << 16) | (x + width));
+   OUT_BATCH(SET_FIELD(y, BLT_Y) | SET_FIELD(x, BLT_X));
+   OUT_BATCH(SET_FIELD(y + height, BLT_Y) | SET_FIELD(x + width, BLT_X));
    OUT_RELOC(region->bo,
              I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
              0);

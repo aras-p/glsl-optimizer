@@ -30,6 +30,7 @@
   */
 
 #define INTEL_MASK(high, low) (((1<<((high)-(low)+1))-1)<<(low))
+/* Using the GNU statement expression extension */
 #define SET_FIELD(value, field)                                         \
    ({                                                                   \
       uint32_t fieldval = (value) << field ## _SHIFT;                   \
@@ -1918,6 +1919,11 @@ enum brw_wm_barycentric_interp_mode {
 /* DW3: end address. */
 
 #define CMD_MI_FLUSH                  0x0200
+
+# define BLT_X_SHIFT					0
+# define BLT_X_MASK					INTEL_MASK(15, 0)
+# define BLT_Y_SHIFT					16
+# define BLT_Y_MASK					INTEL_MASK(31, 16)
 
 #define GEN5_MI_REPORT_PERF_COUNT ((0x26 << 23) | (3 - 2))
 /* DW0 */
