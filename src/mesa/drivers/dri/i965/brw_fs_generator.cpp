@@ -1326,15 +1326,17 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       if (prog) {
-         printf("Native code for %s fragment shader %d (SIMD%d dispatch):\n",
-                prog->Label ? prog->Label : "unnamed",
-                prog->Name, dispatch_width);
+         fprintf(stderr,
+                 "Native code for %s fragment shader %d (SIMD%d dispatch):\n",
+                 prog->Label ? prog->Label : "unnamed",
+                 prog->Name, dispatch_width);
       } else if (fp) {
-         printf("Native code for fragment program %d (SIMD%d dispatch):\n",
-                fp->Base.Id, dispatch_width);
+         fprintf(stderr,
+                 "Native code for fragment program %d (SIMD%d dispatch):\n",
+                 fp->Base.Id, dispatch_width);
       } else {
-         printf("Native code for blorp program (SIMD%d dispatch):\n",
-                dispatch_width);
+         fprintf(stderr, "Native code for blorp program (SIMD%d dispatch):\n",
+                 dispatch_width);
       }
    }
 
@@ -1352,38 +1354,39 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
 	    bblock_t *block = link->block;
 
 	    if (block->start == inst) {
-	       printf("   START B%d", block->block_num);
+	       fprintf(stderr, "   START B%d", block->block_num);
 	       foreach_list(predecessor_node, &block->parents) {
 		  bblock_link *predecessor_link =
 		     (bblock_link *)predecessor_node;
 		  bblock_t *predecessor_block = predecessor_link->block;
-		  printf(" <-B%d", predecessor_block->block_num);
+		  fprintf(stderr, " <-B%d", predecessor_block->block_num);
 	       }
-	       printf("\n");
+	       fprintf(stderr, "\n");
 	    }
 	 }
 
 	 if (last_annotation_ir != inst->ir) {
 	    last_annotation_ir = inst->ir;
 	    if (last_annotation_ir) {
-	       printf("   ");
+	       fprintf(stderr, "   ");
                if (prog)
-                  ((ir_instruction *)inst->ir)->print();
+                  ((ir_instruction *)inst->ir)->fprint(stderr);
                else {
                   const prog_instruction *fpi;
                   fpi = (const prog_instruction *)inst->ir;
-                  printf("%d: ", (int)(fpi - (fp ? fp->Base.Instructions : 0)));
-                  _mesa_fprint_instruction_opt(stdout,
+                  fprintf(stderr, "%d: ",
+                          (int)(fpi - (fp ? fp->Base.Instructions : 0)));
+                  _mesa_fprint_instruction_opt(stderr,
                                                fpi,
                                                0, PROG_PRINT_DEBUG, NULL);
                }
-	       printf("\n");
+	       fprintf(stderr, "\n");
 	    }
 	 }
 	 if (last_annotation_string != inst->annotation) {
 	    last_annotation_string = inst->annotation;
 	    if (last_annotation_string)
-	       printf("   %s\n", last_annotation_string);
+	       fprintf(stderr, "   %s\n", last_annotation_string);
 	 }
       }
 
@@ -1801,7 +1804,7 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
       }
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-	 brw_dump_compile(p, stdout,
+	 brw_dump_compile(p, stderr,
 			  last_native_insn_offset, p->next_insn_offset);
 
 	 foreach_list(node, &cfg->block_list) {
@@ -1809,14 +1812,14 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
 	    bblock_t *block = link->block;
 
 	    if (block->end == inst) {
-	       printf("   END B%d", block->block_num);
+	       fprintf(stderr, "   END B%d", block->block_num);
 	       foreach_list(successor_node, &block->children) {
 		  bblock_link *successor_link =
 		     (bblock_link *)successor_node;
 		  bblock_t *successor_block = successor_link->block;
-		  printf(" ->B%d", successor_block->block_num);
+		  fprintf(stderr, " ->B%d", successor_block->block_num);
 	       }
-	       printf("\n");
+	       fprintf(stderr, "\n");
 	    }
 	 }
       }
@@ -1825,7 +1828,7 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      printf("\n");
+      fprintf(stderr, "\n");
    }
 
    brw_set_uip_jip(p);

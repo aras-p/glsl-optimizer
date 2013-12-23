@@ -42,9 +42,9 @@ brw_blorp_eu_emitter::get_program(unsigned *program_size, FILE *dump_file)
    const unsigned *res;
 
    if (unlikely(INTEL_DEBUG & DEBUG_BLORP)) {
-      printf("Native code for BLORP blit:\n");
+      fprintf(stderr, "Native code for BLORP blit:\n");
       res = generator.generate_assembly(NULL, &insts, program_size, dump_file);
-      printf("\n");
+      fprintf(stderr, "\n");
    } else {
       res = generator.generate_assembly(NULL, &insts, program_size);
    }

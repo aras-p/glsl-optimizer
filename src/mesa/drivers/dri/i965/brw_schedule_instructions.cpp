@@ -1320,7 +1320,7 @@ instruction_scheduler::schedule_instructions(backend_instruction *next_block_hea
       time = MAX2(time, chosen->unblocked_time);
 
       if (debug) {
-         printf("clock %4d, scheduled: ", time);
+         fprintf(stderr, "clock %4d, scheduled: ", time);
          bv->dump_instruction(chosen->inst);
       }
 
@@ -1336,7 +1336,7 @@ instruction_scheduler::schedule_instructions(backend_instruction *next_block_hea
 				      time + chosen->child_latency[i]);
 
          if (debug) {
-            printf("\tchild %d, %d parents: ", i, child->parent_count);
+            fprintf(stderr, "\tchild %d, %d parents: ", i, child->parent_count);
             bv->dump_instruction(child->inst);
          }
 
@@ -1344,7 +1344,7 @@ instruction_scheduler::schedule_instructions(backend_instruction *next_block_hea
 	 child->parent_count--;
 	 if (child->parent_count == 0) {
             if (debug) {
-               printf("\t\tnow available\n");
+               fprintf(stderr, "\t\tnow available\n");
             }
 	    instructions.push_head(child);
 	 }
@@ -1377,7 +1377,8 @@ instruction_scheduler::run(exec_list *all_instructions)
       (backend_instruction *)all_instructions->head;
 
    if (debug) {
-      printf("\nInstructions before scheduling (reg_alloc %d)\n", post_reg_alloc);
+      fprintf(stderr, "\nInstructions before scheduling (reg_alloc %d)\n",
+              post_reg_alloc);
       bv->dump_instructions();
    }
 
@@ -1411,7 +1412,8 @@ instruction_scheduler::run(exec_list *all_instructions)
    }
 
    if (debug) {
-      printf("\nInstructions after scheduling (reg_alloc %d)\n", post_reg_alloc);
+      fprintf(stderr, "\nInstructions after scheduling (reg_alloc %d)\n",
+              post_reg_alloc);
       bv->dump_instructions();
    }
 }
@@ -1429,7 +1431,7 @@ fs_visitor::schedule_instructions(instruction_scheduler_mode mode)
    sched.run(&instructions);
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM) && mode == SCHEDULE_POST) {
-      printf("fs%d estimated execution time: %d cycles\n",
+      fprintf(stderr, "fs%d estimated execution time: %d cycles\n",
              dispatch_width, sched.time);
    }
 
@@ -1443,7 +1445,7 @@ vec4_visitor::opt_schedule_instructions()
    sched.run(&instructions);
 
    if (unlikely(debug_flag)) {
-      printf("vec4 estimated execution time: %d cycles\n", sched.time);
+      fprintf(stderr, "vec4 estimated execution time: %d cycles\n", sched.time);
    }
 
    invalidate_live_intervals();

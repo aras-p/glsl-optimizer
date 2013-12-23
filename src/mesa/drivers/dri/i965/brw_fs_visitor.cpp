@@ -349,8 +349,8 @@ fs_visitor::visit(ir_expression *ir)
       ir->operands[operand]->accept(this);
       if (this->result.file == BAD_FILE) {
 	 fail("Failed to get tree for expression operand:\n");
-	 ir->operands[operand]->print();
-         printf("\n");
+	 ir->operands[operand]->fprint(stderr);
+         fprintf(stderr, "\n");
       }
       assert(this->result.is_valid_3src());
       op[operand] = this->result;

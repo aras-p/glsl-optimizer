@@ -1166,8 +1166,8 @@ vec4_visitor::visit(ir_expression *ir)
       this->result.file = BAD_FILE;
       ir->operands[operand]->accept(this);
       if (this->result.file == BAD_FILE) {
-	 printf("Failed to get tree for expression operand:\n");
-	 ir->operands[operand]->print();
+	 fprintf(stderr, "Failed to get tree for expression operand:\n");
+	 ir->operands[operand]->fprint(stderr);
 	 exit(1);
       }
       op[operand] = this->result;

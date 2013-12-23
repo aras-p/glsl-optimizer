@@ -318,7 +318,7 @@ ir_vector_splitting_visitor::visit_leave(ir_assignment *ir)
 	 elem = 3;
 	 break;
       default:
-	 ir->print();
+	 ir->fprint(stderr);
 	 assert(!"not reached: non-channelwise dereference of LHS.");
       }
 
@@ -347,9 +347,9 @@ brw_do_vector_splitting(exec_list *instructions)
       variable_entry *entry = (variable_entry *)node;
 
       if (debug) {
-	 printf("vector %s@%p: decl %d, whole_access %d\n",
-		entry->var->name, (void *) entry->var, entry->declaration,
-		entry->whole_vector_access);
+	 fprintf(stderr, "vector %s@%p: decl %d, whole_access %d\n",
+                 entry->var->name, (void *) entry->var, entry->declaration,
+                 entry->whole_vector_access);
       }
 
       if (!entry->declaration || entry->whole_vector_access) {

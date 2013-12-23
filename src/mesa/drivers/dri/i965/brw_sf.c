@@ -115,11 +115,11 @@ static void compile_sf_prog( struct brw_context *brw,
    program = brw_get_program(&c.func, &program_size);
 
    if (unlikely(INTEL_DEBUG & DEBUG_SF)) {
-      printf("sf:\n");
+      fprintf(stderr, "sf:\n");
       for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
-	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
+	 brw_disasm(stderr, &((struct brw_instruction *)program)[i],
 		    brw->gen);
-      printf("\n");
+      fprintf(stderr, "\n");
    }
 
    brw_upload_cache(&brw->cache, BRW_SF_PROG,

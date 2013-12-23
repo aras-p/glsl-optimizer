@@ -1271,11 +1271,11 @@ vec4_generator::generate_code(exec_list *instructions)
 
    if (unlikely(debug_flag)) {
       if (shader_prog) {
-         printf("Native code for %s vertex shader %d:\n",
-                shader_prog->Label ? shader_prog->Label : "unnamed",
-                shader_prog->Name);
+         fprintf(stderr, "Native code for %s vertex shader %d:\n",
+                 shader_prog->Label ? shader_prog->Label : "unnamed",
+                 shader_prog->Name);
       } else {
-         printf("Native code for vertex program %d:\n", prog->Id);
+         fprintf(stderr, "Native code for vertex program %d:\n", prog->Id);
       }
    }
 
@@ -1287,23 +1287,23 @@ vec4_generator::generate_code(exec_list *instructions)
 	 if (last_annotation_ir != inst->ir) {
 	    last_annotation_ir = inst->ir;
 	    if (last_annotation_ir) {
-	       printf("   ");
+	       fprintf(stderr, "   ");
                if (shader_prog) {
-                  ((ir_instruction *) last_annotation_ir)->print();
+                  ((ir_instruction *) last_annotation_ir)->fprint(stderr);
                } else {
                   const prog_instruction *vpi;
                   vpi = (const prog_instruction *) inst->ir;
-                  printf("%d: ", (int)(vpi - prog->Instructions));
-                  _mesa_fprint_instruction_opt(stdout, vpi, 0,
+                  fprintf(stderr, "%d: ", (int)(vpi - prog->Instructions));
+                  _mesa_fprint_instruction_opt(stderr, vpi, 0,
                                                PROG_PRINT_DEBUG, NULL);
                }
-	       printf("\n");
+	       fprintf(stderr, "\n");
 	    }
 	 }
 	 if (last_annotation_string != inst->annotation) {
 	    last_annotation_string = inst->annotation;
 	    if (last_annotation_string)
-	       printf("   %s\n", last_annotation_string);
+	       fprintf(stderr, "   %s\n", last_annotation_string);
 	 }
       }
 
@@ -1336,7 +1336,7 @@ vec4_generator::generate_code(exec_list *instructions)
       }
 
       if (unlikely(debug_flag)) {
-	 brw_dump_compile(p, stdout,
+	 brw_dump_compile(p, stderr,
 			  last_native_insn_offset, p->next_insn_offset);
       }
 
@@ -1344,7 +1344,7 @@ vec4_generator::generate_code(exec_list *instructions)
    }
 
    if (unlikely(debug_flag)) {
-      printf("\n");
+      fprintf(stderr, "\n");
    }
 
    brw_set_uip_jip(p);
@@ -1355,7 +1355,7 @@ vec4_generator::generate_code(exec_list *instructions)
     * case you're doing that.
     */
    if (0 && unlikely(debug_flag)) {
-      brw_dump_compile(p, stdout, 0, p->next_insn_offset);
+      brw_dump_compile(p, stderr, 0, p->next_insn_offset);
    }
 }
 

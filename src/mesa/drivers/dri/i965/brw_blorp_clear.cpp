@@ -486,9 +486,9 @@ brw_blorp_const_color_program::compile(struct brw_context *brw,
                 false /* header present */);
 
    if (unlikely(INTEL_DEBUG & DEBUG_BLORP)) {
-      printf("Native code for BLORP clear:\n");
-      brw_dump_compile(&func, stdout, 0, func.next_insn_offset);
-      printf("\n");
+      fprintf(stderr, "Native code for BLORP clear:\n");
+      brw_dump_compile(&func, stderr, 0, func.next_insn_offset);
+      fprintf(stderr, "\n");
    }
    return brw_get_program(&func, program_size);
 }

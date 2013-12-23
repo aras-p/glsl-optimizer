@@ -629,7 +629,7 @@ public:
                           const brw_blorp_blit_prog_key *key);
 
    const GLuint *compile(struct brw_context *brw, GLuint *program_size,
-                         FILE *dump_file = stdout);
+                         FILE *dump_file = stderr);
 
    brw_blorp_prog_data prog_data;
 
@@ -2255,7 +2255,7 @@ brw_blorp_blit_params::get_wm_prog(struct brw_context *brw,
                          &prog_offset, prog_data)) {
       brw_blorp_blit_program prog(brw, &this->wm_prog_key);
       GLuint program_size;
-      const GLuint *program = prog.compile(brw, &program_size, stdout);
+      const GLuint *program = prog.compile(brw, &program_size, stderr);
       brw_upload_cache(&brw->cache, BRW_BLORP_BLIT_PROG,
                        &this->wm_prog_key, sizeof(this->wm_prog_key),
                        program, program_size,

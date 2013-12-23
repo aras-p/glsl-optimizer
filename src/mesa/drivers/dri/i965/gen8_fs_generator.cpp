@@ -838,15 +838,17 @@ gen8_fs_generator::generate_code(exec_list *instructions)
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       if (prog) {
-         printf("Native code for %s fragment shader %d (SIMD%d dispatch):\n",
+         fprintf(stderr,
+                 "Native code for %s fragment shader %d (SIMD%d dispatch):\n",
                 shader_prog->Label ? shader_prog->Label : "unnamed",
                 shader_prog->Name, dispatch_width);
       } else if (fp) {
-         printf("Native code for fragment program %d (SIMD%d dispatch):\n",
-                prog->Id, dispatch_width);
+         fprintf(stderr,
+                 "Native code for fragment program %d (SIMD%d dispatch):\n",
+                 prog->Id, dispatch_width);
       } else {
-         printf("Native code for blorp program (SIMD%d dispatch):\n",
-                dispatch_width);
+         fprintf(stderr, "Native code for blorp program (SIMD%d dispatch):\n",
+                 dispatch_width);
       }
    }
 
@@ -864,38 +866,38 @@ gen8_fs_generator::generate_code(exec_list *instructions)
             bblock_t *block = link->block;
 
             if (block->start == ir) {
-               printf("   START B%d", block->block_num);
+               fprintf(stderr, "   START B%d", block->block_num);
                foreach_list(predecessor_node, &block->parents) {
                   bblock_link *predecessor_link =
                      (bblock_link *)predecessor_node;
                   bblock_t *predecessor_block = predecessor_link->block;
-                  printf(" <-B%d", predecessor_block->block_num);
+                  fprintf(stderr, " <-B%d", predecessor_block->block_num);
                }
-               printf("\n");
+               fprintf(stderr, "\n");
             }
          }
 
          if (last_annotation_ir != ir->ir) {
             last_annotation_ir = ir->ir;
             if (last_annotation_ir) {
-               printf("   ");
+               fprintf(stderr, "   ");
                if (prog) {
-                  ((ir_instruction *) ir->ir)->print();
+                  ((ir_instruction *) ir->ir)->fprint(stderr);
                } else if (prog) {
                   const prog_instruction *fpi;
                   fpi = (const prog_instruction *) ir->ir;
-                  printf("%d: ", (int)(fpi - prog->Instructions));
-                  _mesa_fprint_instruction_opt(stdout,
+                  fprintf(stderr, "%d: ", (int)(fpi - prog->Instructions));
+                  _mesa_fprint_instruction_opt(stderr,
                                                fpi,
                                                0, PROG_PRINT_DEBUG, NULL);
                }
-               printf("\n");
+               fprintf(stderr, "\n");
             }
          }
          if (last_annotation_string != ir->annotation) {
             last_annotation_string = ir->annotation;
             if (last_annotation_string)
-               printf("   %s\n", last_annotation_string);
+               fprintf(stderr, "   %s\n", last_annotation_string);
          }
       }
 
@@ -1239,21 +1241,21 @@ gen8_fs_generator::generate_code(exec_list *instructions)
       }
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-         disassemble(stdout, last_native_inst_offset, next_inst_offset);
+         disassemble(stderr, last_native_inst_offset, next_inst_offset);
 
          foreach_list(node, &cfg->block_list) {
             bblock_link *link = (bblock_link *)node;
             bblock_t *block = link->block;
 
             if (block->end == ir) {
-               printf("   END B%d", block->block_num);
+               fprintf(stderr, "   END B%d", block->block_num);
                foreach_list(successor_node, &block->children) {
                   bblock_link *successor_link =
                      (bblock_link *)successor_node;
                   bblock_t *successor_block = successor_link->block;
-                  printf(" ->B%d", successor_block->block_num);
+                  fprintf(stderr, " ->B%d", successor_block->block_num);
                }
-               printf("\n");
+               fprintf(stderr, "\n");
             }
          }
       }
@@ -1262,7 +1264,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      printf("\n");
+      fprintf(stderr, "\n");
    }
 
    patch_jump_targets();

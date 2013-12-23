@@ -251,12 +251,12 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       _mesa_reference_program(ctx, &prog, NULL);
 
       if (ctx->Shader.Flags & GLSL_DUMP) {
-         printf("\n");
-         printf("GLSL IR for linked %s program %d:\n",
-                _mesa_shader_stage_to_string(shader->base.Stage),
-                shProg->Name);
-         _mesa_print_ir(stdout, shader->base.ir, NULL);
-         printf("\n");
+         fprintf(stderr, "\n");
+         fprintf(stderr, "GLSL IR for linked %s program %d:\n",
+                 _mesa_shader_stage_to_string(shader->base.Stage),
+                 shProg->Name);
+         _mesa_print_ir(stderr, shader->base.ir, NULL);
+         fprintf(stderr, "\n");
       }
    }
 
@@ -266,12 +266,11 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
          if (!sh)
             continue;
 
-         printf("GLSL %s shader %d source for linked program %d:\n",
-                _mesa_shader_stage_to_string(sh->Stage),
-                i,
-                shProg->Name);
-         printf("%s", sh->Source);
-         printf("\n");
+         fprintf(stderr, "GLSL %s shader %d source for linked program %d:\n",
+                 _mesa_shader_stage_to_string(sh->Stage),
+                 i, shProg->Name);
+         fprintf(stderr, "%s", sh->Source);
+         fprintf(stderr, "\n");
       }
    }
 
@@ -668,7 +667,7 @@ backend_visitor::dump_instructions()
    int ip = 0;
    foreach_list(node, &this->instructions) {
       backend_instruction *inst = (backend_instruction *)node;
-      printf("%d: ", ip++);
+      fprintf(stderr, "%d: ", ip++);
       dump_instruction(inst);
    }
 }

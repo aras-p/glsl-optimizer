@@ -135,11 +135,11 @@ static void compile_ff_gs_prog(struct brw_context *brw,
    if (unlikely(INTEL_DEBUG & DEBUG_GS)) {
       int i;
 
-      printf("gs:\n");
+      fprintf(stderr, "gs:\n");
       for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
-	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
+	 brw_disasm(stderr, &((struct brw_instruction *)program)[i],
 		    brw->gen);
-      printf("\n");
+      fprintf(stderr, "\n");
     }
 
    brw_upload_cache(&brw->cache, BRW_FF_GS_PROG,

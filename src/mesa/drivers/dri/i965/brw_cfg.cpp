@@ -71,7 +71,7 @@ bblock_t::dump(backend_visitor *v)
    for (backend_instruction *inst = (backend_instruction *)this->start;
 	inst != this->end->next;
 	inst = (backend_instruction *) inst->next) {
-      printf("%5d: ", ip);
+      fprintf(stderr, "%5d: ", ip);
       v->dump_instruction(inst);
       ip++;
    }
@@ -297,18 +297,20 @@ cfg_t::dump(backend_visitor *v)
 {
    for (int b = 0; b < this->num_blocks; b++) {
         bblock_t *block = this->blocks[b];
-      printf("START B%d", b);
+      fprintf(stderr, "START B%d", b);
       foreach_list(node, &block->parents) {
          bblock_link *link = (bblock_link *)node;
-         printf(" <-B%d", link->block->block_num);
+         fprintf(stderr, " <-B%d",
+                 link->block->block_num);
       }
-      printf("\n");
+      fprintf(stderr, "\n");
       block->dump(v);
-      printf("END B%d", b);
+      fprintf(stderr, "END B%d", b);
       foreach_list(node, &block->children) {
          bblock_link *link = (bblock_link *)node;
-         printf(" ->B%d", link->block->block_num);
+         fprintf(stderr, " ->B%d",
+                 link->block->block_num);
       }
-      printf("\n");
+      fprintf(stderr, "\n");
    }
 }

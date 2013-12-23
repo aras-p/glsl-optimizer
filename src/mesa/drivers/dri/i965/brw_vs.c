@@ -284,7 +284,7 @@ do_vs_prog(struct brw_context *brw,
    brw_compute_vue_map(brw, &prog_data.base.vue_map, outputs_written);
 
    if (0) {
-      _mesa_fprint_program_opt(stdout, &c.vp->program.Base, PROG_PRINT_DEBUG,
+      _mesa_fprint_program_opt(stderr, &c.vp->program.Base, PROG_PRINT_DEBUG,
 			       true);
    }
 

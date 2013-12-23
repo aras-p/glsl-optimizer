@@ -307,8 +307,8 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_binop_logic_and:
    case ir_binop_logic_xor:
    case ir_binop_logic_or:
-      ir->print();
-      printf("\n");
+      ir->fprint(stderr);
+      fprintf(stderr, "\n");
       assert(!"not reached: expression operates on scalars only");
       break;
    case ir_binop_all_equal:

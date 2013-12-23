@@ -118,11 +118,11 @@ static void compile_clip_prog( struct brw_context *brw,
    program = brw_get_program(&c.func, &program_size);
 
    if (unlikely(INTEL_DEBUG & DEBUG_CLIP)) {
-      printf("clip:\n");
+      fprintf(stderr, "clip:\n");
       for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
-	 brw_disasm(stdout, &((struct brw_instruction *)program)[i],
+	 brw_disasm(stderr, &((struct brw_instruction *)program)[i],
 		    brw->gen);
-      printf("\n");
+      fprintf(stderr, "\n");
    }
 
    brw_upload_cache(&brw->cache,
