@@ -30,7 +30,13 @@
   */
 
 #define INTEL_MASK(high, low) (((1<<((high)-(low)+1))-1)<<(low))
-#define SET_FIELD(value, field) (((value) << field ## _SHIFT) & field ## _MASK)
+#define SET_FIELD(value, field)                                         \
+   ({                                                                   \
+      uint32_t fieldval = (value) << field ## _SHIFT;                   \
+      assert((fieldval & ~ field ## _MASK) == 0);                       \
+      fieldval & field ## _MASK;                                        \
+   })
+
 #define GET_FIELD(word, field) (((word)  & field ## _MASK) >> field ## _SHIFT)
 
 #ifndef BRW_DEFINES_H
