@@ -590,6 +590,8 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 			/* FIXME probably skip inputs if they aren't passed in the ring */
 			ctx->shader->input[i].ring_offset = ctx->next_ring_offset;
 			ctx->next_ring_offset += 16;
+			if (ctx->shader->input[i].name == TGSI_SEMANTIC_PRIMID)
+				ctx->shader->gs_prim_id_input = true;
 		}
 		for (j = 1; j < count; ++j) {
 			ctx->shader->input[i + j] = ctx->shader->input[i];
@@ -872,6 +874,13 @@ static int tgsi_split_gs_inputs(struct r600_shader_ctx *ctx)
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
 		struct tgsi_full_src_register *src = &inst->Src[i];
 
+		if (src->Register.File == TGSI_FILE_INPUT) {
+			if (ctx->shader->input[src->Register.Index].name == TGSI_SEMANTIC_PRIMID) {
+				/* primitive id is in R0.z */
+				ctx->src[i].sel = 0;
+				ctx->src[i].swizzle[0] = 2;
+			}
+		}
 		if (src->Register.File == TGSI_FILE_INPUT && src->Register.Dimension) {
 			int treg = r600_get_temp(ctx);
 			int index = src->Register.Index;

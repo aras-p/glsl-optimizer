@@ -1983,6 +1983,10 @@
 #define R_028A58_ES_PER_GS                           0x00028A58
 #define R_028A5C_GS_PER_VS                           0x00028A5C
 
+#define R_028A84_VGT_PRIMITIVEID_EN                  0x028A84
+#define   S_028A84_PRIMITIVEID_EN(x)                   (((x) & 0x1) << 0)
+#define   G_028A84_PRIMITIVEID_EN(x)                   (((x) >> 0) & 0x1)
+#define   C_028A84_PRIMITIVEID_EN                      0xFFFFFFFE
 #define R_028A94_VGT_MULTI_PRIM_IB_RESET_EN          0x00028A94
 #define   S_028A94_RESET_EN(x)                         (((x) & 0x1) << 0)
 #define   G_028A94_RESET_EN(x)                         (((x) >> 0) & 0x1)

@@ -64,6 +64,7 @@ struct r600_shader {
 	boolean			vs_out_point_size;
 	boolean			has_txq_cube_array_z_comp;
 	boolean			uses_tex_buffers;
+	boolean                 gs_prim_id_input;
 
 	/* geometry shader properties */
 	unsigned		gs_input_prim;
