@@ -79,7 +79,6 @@ do_blit_readpixels(struct gl_context * ctx,
    struct intel_buffer_object *dst = intel_buffer_object(pack->BufferObj);
    GLuint dst_offset;
    drm_intel_bo *dst_buffer;
-   bool all;
    GLint dst_x, dst_y;
    GLuint dirty;
 
@@ -127,12 +126,7 @@ do_blit_readpixels(struct gl_context * ctx,
    intel_prepare_render(intel);
    intel->front_buffer_dirty = dirty;
 
-   all = (width * height * irb->mt->cpp == dst->Base.Size &&
-	  x == 0 && dst_offset == 0);
-
-   dst_buffer = intel_bufferobj_buffer(intel, dst,
-				       all ? INTEL_WRITE_FULL :
-				       INTEL_WRITE_PART);
+   dst_buffer = intel_bufferobj_buffer(intel, dst);
 
    struct intel_mipmap_tree *pbo_mt =
       intel_miptree_create_for_bo(intel,

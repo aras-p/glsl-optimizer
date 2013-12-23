@@ -467,8 +467,7 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
 
 drm_intel_bo *
 intel_bufferobj_buffer(struct intel_context *intel,
-                       struct intel_buffer_object *intel_obj,
-		       GLuint flag)
+                       struct intel_buffer_object *intel_obj)
 {
    if (intel_obj->source)
       release_buffer(intel_obj);
@@ -627,7 +626,7 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
 
    /* Otherwise, we have real BOs, so blit them. */
 
-   dst_bo = intel_bufferobj_buffer(intel, intel_dst, INTEL_WRITE_PART);
+   dst_bo = intel_bufferobj_buffer(intel, intel_dst);
    src_bo = intel_bufferobj_source(intel, intel_src, 64, &src_offset);
 
    intel_emit_linear_blit(intel,
@@ -671,7 +670,7 @@ intel_buffer_object_purgeable(struct gl_context * ctx,
    } else {
       /* XXX Create the buffer and madvise(MADV_DONTNEED)? */
       struct intel_context *intel = intel_context(ctx);
-      drm_intel_bo *bo = intel_bufferobj_buffer(intel, intel_obj, INTEL_READ);
+      drm_intel_bo *bo = intel_bufferobj_buffer(intel, intel_obj);
 
       return intel_buffer_purgeable(bo);
    }

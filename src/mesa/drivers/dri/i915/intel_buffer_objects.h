@@ -58,8 +58,7 @@ struct intel_buffer_object
 /* Get the bm buffer associated with a GL bufferobject:
  */
 drm_intel_bo *intel_bufferobj_buffer(struct intel_context *intel,
-				     struct intel_buffer_object *obj,
-				     GLuint flag);
+				     struct intel_buffer_object *obj);
 drm_intel_bo *intel_bufferobj_source(struct intel_context *intel,
 				     struct intel_buffer_object *obj,
 				     GLuint align,
