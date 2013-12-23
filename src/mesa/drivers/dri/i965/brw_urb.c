@@ -185,23 +185,24 @@ static void recalculate_urb_fence( struct brw_context *brw )
 	     * entries and the values for minimum nr of entries
 	     * provided above.
 	     */
-	    printf("couldn't calculate URB layout!\n");
+	    fprintf(stderr, "couldn't calculate URB layout!\n");
 	    exit(1);
 	 }
 	
 	 if (unlikely(INTEL_DEBUG & (DEBUG_URB|DEBUG_PERF)))
-	    printf("URB CONSTRAINED\n");
+	    fprintf(stderr, "URB CONSTRAINED\n");
       }
 
 done:
       if (unlikely(INTEL_DEBUG & DEBUG_URB))
-	 printf("URB fence: %d ..VS.. %d ..GS.. %d ..CLP.. %d ..SF.. %d ..CS.. %d\n",
-		      brw->urb.vs_start,
-		      brw->urb.gs_start,
-		      brw->urb.clip_start,
-		      brw->urb.sf_start,
-		      brw->urb.cs_start,
-		      brw->urb.size);
+	 fprintf(stderr,
+                 "URB fence: %d ..VS.. %d ..GS.. %d ..CLP.. %d ..SF.. %d ..CS.. %d\n",
+                 brw->urb.vs_start,
+                 brw->urb.gs_start,
+                 brw->urb.clip_start,
+                 brw->urb.sf_start,
+                 brw->urb.cs_start,
+                 brw->urb.size);
 
       brw->state.dirty.brw |= BRW_NEW_URB_FENCE;
    }

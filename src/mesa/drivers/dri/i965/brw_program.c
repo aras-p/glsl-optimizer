@@ -320,17 +320,17 @@ static void
 print_shader_time_line(const char *stage, const char *name,
                        int shader_num, uint64_t time, uint64_t total)
 {
-   printf("%-6s%-18s", stage, name);
+   fprintf(stderr, "%-6s%-18s", stage, name);
 
    if (shader_num != -1)
-      printf("%4d: ", shader_num);
+      fprintf(stderr, "%4d: ", shader_num);
    else
-      printf("    : ");
+      fprintf(stderr, "    : ");
 
-   printf("%16lld (%7.2f Gcycles)      %4.1f%%\n",
-          (long long)time,
-          (double)time / 1000000000.0,
-          (double)time / total * 100.0);
+   fprintf(stderr, "%16lld (%7.2f Gcycles)      %4.1f%%\n",
+           (long long)time,
+           (double)time / 1000000000.0,
+           (double)time / total * 100.0);
 }
 
 static void
@@ -401,14 +401,14 @@ brw_report_shader_time(struct brw_context *brw)
    }
 
    if (total == 0) {
-      printf("No shader time collected yet\n");
+      fprintf(stderr, "No shader time collected yet\n");
       return;
    }
 
    qsort(sorted, brw->shader_time.num_entries, sizeof(sorted[0]), compare_time);
 
-   printf("\n");
-   printf("type          ID                  cycles spent                   %% of total\n");
+   fprintf(stderr, "\n");
+   fprintf(stderr, "type          ID                  cycles spent                   %% of total\n");
    for (int s = 0; s < brw->shader_time.num_entries; s++) {
       const char *shader_name;
       const char *stage;
@@ -470,7 +470,7 @@ brw_report_shader_time(struct brw_context *brw)
                              scaled[i], total);
    }
 
-   printf("\n");
+   fprintf(stderr, "\n");
    print_shader_time_line("total", "vs", -1, total_by_type[ST_VS], total);
    print_shader_time_line("total", "gs", -1, total_by_type[ST_GS], total);
    print_shader_time_line("total", "fs8", -1, total_by_type[ST_FS8], total);

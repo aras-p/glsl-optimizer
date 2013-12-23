@@ -66,17 +66,17 @@ gen6_upload_wm_push_constants(struct brw_context *brw)
       }
 
       if (0) {
-	 printf("WM constants:\n");
+	 fprintf(stderr, "WM constants:\n");
 	 for (i = 0; i < prog_data->base.nr_params; i++) {
 	    if ((i & 7) == 0)
-	       printf("g%d: ", prog_data->first_curbe_grf + i / 8);
-	    printf("%8f ", constants[i]);
+	       fprintf(stderr, "g%d: ", prog_data->first_curbe_grf + i / 8);
+	    fprintf(stderr, "%8f ", constants[i]);
 	    if ((i & 7) == 7)
-	       printf("\n");
+	       fprintf(stderr, "\n");
 	 }
 	 if ((i & 7) != 0)
-	    printf("\n");
-	 printf("\n");
+	    fprintf(stderr, "\n");
+	 fprintf(stderr, "\n");
       }
 
       brw->wm.base.push_const_size = ALIGN(prog_data->base.nr_params, 8) / 8;

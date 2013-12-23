@@ -70,7 +70,7 @@ extern int INTEL_DEBUG;
 #endif
 #define dbg_printf(...)	ALOGW(__VA_ARGS__)
 #else
-#define dbg_printf(...)	printf(__VA_ARGS__)
+#define dbg_printf(...)	fprintf(stderr, __VA_ARGS__)
 #endif /* HAVE_ANDROID_PLATFORM */
 
 #define DBG(...) do {						\

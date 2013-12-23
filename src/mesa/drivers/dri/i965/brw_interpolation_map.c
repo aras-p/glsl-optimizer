@@ -85,18 +85,18 @@ brw_setup_vue_interpolation(struct brw_context *brw)
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_VUE)) {
-      printf("VUE map:\n");
+      fprintf(stderr, "VUE map:\n");
       for (int i = 0; i < vue_map->num_slots; i++) {
          int varying = vue_map->slot_to_varying[i];
          if (varying == -1) {
-            printf("%d: --\n", i);
+            fprintf(stderr, "%d: --\n", i);
             continue;
          }
 
-         printf("%d: %d %s ofs %d\n",
-               i, varying,
-               get_qual_name(brw->interpolation_mode.mode[i]),
-               brw_vue_slot_to_offset(i));
+         fprintf(stderr, "%d: %d %s ofs %d\n",
+                 i, varying,
+                 get_qual_name(brw->interpolation_mode.mode[i]),
+                 brw_vue_slot_to_offset(i));
       }
    }
 }

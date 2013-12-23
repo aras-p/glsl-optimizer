@@ -602,7 +602,7 @@ brwCreateContext(gl_api api,
 
    struct brw_context *brw = rzalloc(NULL, struct brw_context);
    if (!brw) {
-      printf("%s: failed to alloc context\n", __FUNCTION__);
+      fprintf(stderr, "%s: failed to alloc context\n", __FUNCTION__);
       *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;
       return false;
    }
@@ -658,7 +658,7 @@ brwCreateContext(gl_api api,
 
    if (!_mesa_initialize_context(ctx, api, mesaVis, shareCtx, &functions)) {
       *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;
-      printf("%s: failed to init mesa context\n", __FUNCTION__);
+      fprintf(stderr, "%s: failed to init mesa context\n", __FUNCTION__);
       intelDestroyContext(driContextPriv);
       return false;
    }

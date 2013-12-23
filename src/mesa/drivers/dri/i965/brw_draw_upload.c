@@ -229,9 +229,9 @@ brw_get_vertex_surface_type(struct brw_context *brw,
    int size = glarray->Size;
 
    if (unlikely(INTEL_DEBUG & DEBUG_VERTS))
-      printf("type %s size %d normalized %d\n",
-             _mesa_lookup_enum_by_nr(glarray->Type),
-             glarray->Size, glarray->Normalized);
+      fprintf(stderr, "type %s size %d normalized %d\n",
+              _mesa_lookup_enum_by_nr(glarray->Type),
+              glarray->Size, glarray->Normalized);
 
    if (glarray->Integer) {
       assert(glarray->Format == GL_RGBA); /* sanity check */
@@ -428,7 +428,7 @@ brw_prepare_vertices(struct brw_context *brw)
    }
 
    if (0)
-      printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
+      fprintf(stderr, "%s %d..%d\n", __FUNCTION__, min_index, max_index);
 
    /* Accumulate the list of enabled arrays. */
    brw->vb.nr_enabled = 0;

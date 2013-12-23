@@ -78,8 +78,8 @@ brw_upload_vec4_pull_constants(struct brw_context *brw,
    if (0) {
       for (i = 0; i < ALIGN(prog_data->base.nr_pull_params, 4) / 4; i++) {
 	 float *row = (float *)stage_state->const_bo->virtual + i * 4;
-	 printf("const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
-		i, row[0], row[1], row[2], row[3]);
+	 fprintf(stderr, "const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
+                 i, row[0], row[1], row[2], row[3]);
       }
    }
 

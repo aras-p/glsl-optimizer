@@ -71,11 +71,11 @@ gen6_upload_vec4_push_constants(struct brw_context *brw,
       params_uploaded = prog_data->base.nr_params / 4;
 
       if (0) {
-	 printf("Constant buffer:\n");
+	 fprintf(stderr, "Constant buffer:\n");
 	 for (i = 0; i < params_uploaded; i++) {
 	    float *buf = param + i * 4;
-	    printf("%d: %f %f %f %f\n",
-		   i, buf[0], buf[1], buf[2], buf[3]);
+	    fprintf(stderr, "%d: %f %f %f %f\n",
+                    i, buf[0], buf[1], buf[2], buf[3]);
 	 }
       }
 
