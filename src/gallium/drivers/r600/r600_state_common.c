@@ -1285,30 +1285,6 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 	return true;
 }
 
-static unsigned r600_conv_prim_to_gs_out(unsigned mode)
-{
-	static const int prim_conv[] = {
-		V_028A6C_OUTPRIM_TYPE_POINTLIST,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP
-	};
-	assert(mode < Elements(prim_conv));
-
-	return prim_conv[mode];
-}
-
 void r600_emit_clip_misc_state(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
@@ -1438,8 +1414,6 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		r600_write_context_reg(cs, R_028A0C_PA_SC_LINE_STIPPLE,
 				       S_028A0C_AUTO_RESET_CNTL(ls_mask) |
 				       (rctx->rasterizer ? rctx->rasterizer->pa_sc_line_stipple : 0));
-		r600_write_context_reg(cs, R_028A6C_VGT_GS_OUT_PRIM_TYPE,
-				       r600_conv_prim_to_gs_out(info.mode));
 		r600_write_config_reg(cs, R_008958_VGT_PRIMITIVE_TYPE,
 				      r600_conv_pipe_prim(info.mode));
 

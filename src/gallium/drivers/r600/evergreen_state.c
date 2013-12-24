@@ -3593,6 +3593,30 @@ void evergreen_update_es_state(struct pipe_context *ctx, struct r600_pipe_shader
 	/* After that, the NOP relocation packet must be emitted (shader->bo, RADEON_USAGE_READ). */
 }
 
+static unsigned r600_conv_prim_to_gs_out(unsigned mode)
+{
+	static const int prim_conv[] = {
+		V_028A6C_OUTPRIM_TYPE_POINTLIST,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP
+	};
+	assert(mode < Elements(prim_conv));
+
+	return prim_conv[mode];
+}
+
 void evergreen_update_gs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
@@ -3604,13 +3628,14 @@ void evergreen_update_gs_state(struct pipe_context *ctx, struct r600_pipe_shader
 
 	r600_init_command_buffer(cb, 64);
 
-	/* VGT_GS_OUT_PRIM_TYPE is written by r6000_draw_vbo */
 	/* VGT_GS_MODE is written by evergreen_emit_shader_stages */
 
 	r600_store_context_reg(cb, R_028AB8_VGT_VTX_CNT_EN, 1);
 
 	r600_store_context_reg(cb, R_028B38_VGT_GS_MAX_VERT_OUT,
 			       S_028B38_MAX_VERT_OUT(rshader->gs_max_out_vertices));
+	r600_store_context_reg(cb, R_028A6C_VGT_GS_OUT_PRIM_TYPE,
+			       r600_conv_prim_to_gs_out(rshader->gs_output_prim));
 
 	if (rctx->screen->b.info.drm_minor >= 35) {
 		r600_store_context_reg(cb, R_028B90_VGT_GS_INSTANCE_CNT,
