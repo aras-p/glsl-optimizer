@@ -1010,6 +1010,9 @@ gen6_blorp_emit_primitive(struct brw_context *brw,
    OUT_BATCH(0);
    OUT_BATCH(0);
    ADVANCE_BATCH();
+
+   /* Only used on Sandybridge; harmless to set elsewhere. */
+   brw->batch.need_workaround_flush = true;
 }
 
 static void
