@@ -357,7 +357,8 @@ intel_bufferobj_map_range(struct gl_context * ctx,
     * BO, and we'll copy what they put in there out at unmap or
     * FlushRange time.
     */
-   if ((access & GL_MAP_INVALIDATE_RANGE_BIT) &&
+   if (!(access & GL_MAP_UNSYNCHRONIZED_BIT) &&
+       (access & GL_MAP_INVALIDATE_RANGE_BIT) &&
        drm_intel_bo_busy(intel_obj->buffer)) {
       if (access & GL_MAP_FLUSH_EXPLICIT_BIT) {
 	 intel_obj->range_map_buffer = malloc(length);
