@@ -1023,7 +1023,6 @@ gen6_emit_hiz_workaround(struct brw_context *brw, enum gen6_hiz_op hiz_op)
     */
    if (hiz_op == GEN6_HIZ_OP_DEPTH_RESOLVE ||
        hiz_op == GEN6_HIZ_OP_HIZ_RESOLVE) {
-      brw->batch.need_workaround_flush = true;
       intel_emit_post_sync_nonzero_flush(brw);
       intel_emit_depth_stall_flushes(brw);
    }
@@ -1050,6 +1049,9 @@ gen6_blorp_exec(struct brw_context *brw,
    uint32_t wm_bind_bo_offset = 0;
 
    uint32_t prog_offset = params->get_wm_prog(brw, &prog_data);
+
+   /* Emit workaround flushes when we switch from drawing to blorping. */
+   brw->batch.need_workaround_flush = true;
 
    gen6_emit_hiz_workaround(brw, params->hiz_op);
    gen6_emit_3dstate_multisample(brw, params->dst.num_samples);
