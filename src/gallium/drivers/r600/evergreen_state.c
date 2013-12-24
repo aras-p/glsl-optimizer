@@ -3595,6 +3595,7 @@ void evergreen_update_es_state(struct pipe_context *ctx, struct r600_pipe_shader
 
 void evergreen_update_gs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
+	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_command_buffer *cb = &shader->command_buffer;
 	struct r600_shader *rshader = &shader->shader;
 	struct r600_shader *cp_shader = &shader->gs_copy_shader->shader;
@@ -3611,12 +3612,11 @@ void evergreen_update_gs_state(struct pipe_context *ctx, struct r600_pipe_shader
 	r600_store_context_reg(cb, R_028B38_VGT_GS_MAX_VERT_OUT,
 			       S_028B38_MAX_VERT_OUT(rshader->gs_max_out_vertices));
 
-
-/* XXX kernel checker fails
-	r600_store_context_reg(cb, R_028B90_VGT_GS_INSTANCE_CNT,
-             S_028B90_CNT(0) |
-	               S_028B90_ENABLE(0));
-*/
+	if (rctx->screen->b.info.drm_minor >= 35) {
+		r600_store_context_reg(cb, R_028B90_VGT_GS_INSTANCE_CNT,
+				S_028B90_CNT(0) |
+				S_028B90_ENABLE(0));
+	}
 	r600_store_context_reg_seq(cb, R_02891C_SQ_GS_VERT_ITEMSIZE, 4);
 	r600_store_value(cb, cp_shader->ring_item_size >> 2);
 	r600_store_value(cb, 0);
