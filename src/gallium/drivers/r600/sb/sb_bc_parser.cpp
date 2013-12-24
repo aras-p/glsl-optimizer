@@ -209,7 +209,7 @@ int bc_parser::decode_cf(unsigned &i, bool &eop) {
 		if (cf->bc.rw_rel)
 			gpr_reladdr = true;
 		assert(!cf->bc.rw_rel);
-	} else if (flags & (CF_STRM | CF_RAT)) {
+	} else if (flags & CF_MEM) {
 		if (cf->bc.rw_rel)
 			gpr_reladdr = true;
 		assert(!cf->bc.rw_rel);
@@ -683,7 +683,7 @@ int bc_parser::prepare_ir() {
 			} while (1);
 
 			c->bc.end_of_program = eop;
-		} else if (flags & (CF_STRM | CF_RAT)) {
+		} else if (flags & CF_MEM) {
 
 			unsigned burst_count = c->bc.burst_count;
 			unsigned eop = c->bc.end_of_program;
@@ -701,7 +701,7 @@ int bc_parser::prepare_ir() {
 								sh->get_gpr_value(true, c->bc.rw_gpr, s, false);
 				}
 
-				if ((flags & CF_RAT) && (c->bc.type & 1)) { // indexed write
+				if (((flags & CF_RAT) || (!(flags & CF_STRM))) && (c->bc.type & 1)) { // indexed write
 					c->src.resize(8);
 					for(int s = 0; s < 3; ++s) {
 						c->src[4 + s] =

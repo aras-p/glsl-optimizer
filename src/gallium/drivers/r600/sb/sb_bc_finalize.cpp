@@ -695,7 +695,7 @@ void bc_finalizer::finalize_cf(cf_node* c) {
 		c->bc.rw_gpr = reg >= 0 ? reg : 0;
 		c->bc.comp_mask = mask;
 
-		if ((flags & CF_RAT) && (c->bc.type & 1)) {
+		if (((flags & CF_RAT) || (!(flags & CF_STRM))) && (c->bc.type & 1)) {
 
 			reg = -1;
 
