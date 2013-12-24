@@ -108,8 +108,6 @@ unsigned
 brw_reg_type_to_hw_type(const struct brw_context *brw,
                         enum brw_reg_type type, unsigned file)
 {
-   bool imm = file == BRW_IMMEDIATE_VALUE;
-
    if (file == BRW_IMMEDIATE_VALUE) {
       const static int imm_hw_types[] = {
          [BRW_REGISTER_TYPE_UD] = BRW_HW_REG_TYPE_UD,
