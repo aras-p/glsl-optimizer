@@ -944,17 +944,16 @@ st_translate_geometry_program(struct st_context *st,
          case VARYING_SLOT_TEX5:
          case VARYING_SLOT_TEX6:
          case VARYING_SLOT_TEX7:
-            stgp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            stgp->input_semantic_name[slot] = st->needs_texcoord_semantic ?
+               TGSI_SEMANTIC_TEXCOORD : TGSI_SEMANTIC_GENERIC;
             stgp->input_semantic_index[slot] = (attr - VARYING_SLOT_TEX0);
             break;
          case VARYING_SLOT_VAR0:
          default:
             assert(attr >= VARYING_SLOT_VAR0 && attr < VARYING_SLOT_MAX);
             stgp->input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            stgp->input_semantic_index[slot] = (VARYING_SLOT_VAR0 -
-                                                VARYING_SLOT_TEX0 +
-                                                attr -
-                                                VARYING_SLOT_VAR0);
+            stgp->input_semantic_index[slot] = st->needs_texcoord_semantic ?
+               (attr - VARYING_SLOT_VAR0) : (attr - VARYING_SLOT_TEX0);
          break;
          }
       }
@@ -1036,7 +1035,8 @@ st_translate_geometry_program(struct st_context *st,
          case VARYING_SLOT_TEX5:
          case VARYING_SLOT_TEX6:
          case VARYING_SLOT_TEX7:
-            gs_output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            gs_output_semantic_name[slot] = st->needs_texcoord_semantic ?
+               TGSI_SEMANTIC_TEXCOORD : TGSI_SEMANTIC_GENERIC;
             gs_output_semantic_index[slot] = (attr - VARYING_SLOT_TEX0);
             break;
          case VARYING_SLOT_VAR0:
@@ -1044,10 +1044,9 @@ st_translate_geometry_program(struct st_context *st,
             assert(slot < Elements(gs_output_semantic_name));
             assert(attr >= VARYING_SLOT_VAR0);
             gs_output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            gs_output_semantic_index[slot] = (VARYING_SLOT_VAR0 -
-                                              VARYING_SLOT_TEX0 +
-                                              attr - 
-                                              VARYING_SLOT_VAR0);
+            gs_output_semantic_index[slot] = st->needs_texcoord_semantic ?
+               (attr - VARYING_SLOT_VAR0) : (attr - VARYING_SLOT_TEX0);
+         break;
          }
       }
    }
