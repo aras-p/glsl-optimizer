@@ -32,6 +32,16 @@
 
 #include "ilo_common.h"
 
+enum ilo_texture_flags {
+   ILO_TEXTURE_RENDER_WRITE   = 1 << 0,
+   ILO_TEXTURE_BLT_WRITE      = 1 << 1,
+   ILO_TEXTURE_CPU_WRITE      = 1 << 2,
+   ILO_TEXTURE_RENDER_READ    = 1 << 3,
+   ILO_TEXTURE_BLT_READ       = 1 << 4,
+   ILO_TEXTURE_CPU_READ       = 1 << 5,
+   ILO_TEXTURE_CLEAR          = 1 << 6,
+};
+
 struct ilo_screen;
 
 struct ilo_buffer {
@@ -48,6 +58,7 @@ struct ilo_buffer {
 struct ilo_texture_slice {
    /* 2D offset to the slice */
    unsigned x, y;
+   unsigned flags;
 };
 
 struct ilo_texture {
@@ -129,5 +140,23 @@ unsigned
 ilo_texture_get_slice_offset(const struct ilo_texture *tex,
                              unsigned level, unsigned slice,
                              unsigned *x_offset, unsigned *y_offset);
+
+static inline void
+ilo_texture_set_slice_flags(struct ilo_texture *tex, unsigned level,
+                            unsigned first_slice, unsigned num_slices,
+                            unsigned mask, unsigned value)
+{
+   struct ilo_texture_slice *slice =
+      ilo_texture_get_slice(tex, level, first_slice);
+
+   assert(first_slice + num_slices - 1 <
+         ((tex->base.target == PIPE_TEXTURE_3D) ?
+          u_minify(tex->base.depth0, level) : tex->base.array_size));
+
+   while (num_slices--) {
+      slice->flags = (slice->flags & ~mask) | (value & mask);
+      slice++;
+   }
+}
 
 #endif /* ILO_RESOURCE_H */
