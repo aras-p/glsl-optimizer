@@ -419,7 +419,9 @@ void st_init_extensions(struct st_context *st)
           PIPE_FORMAT_R16G16B16A16_FLOAT } },
 
       { { o(ARB_texture_rgb10_a2ui) },
-        { PIPE_FORMAT_B10G10R10A2_UINT } },
+        { PIPE_FORMAT_R10G10B10A2_UINT,
+          PIPE_FORMAT_B10G10R10A2_UINT },
+         GL_TRUE }, /* at least one format must be supported */
 
       { { o(EXT_framebuffer_sRGB) },
         { PIPE_FORMAT_A8B8G8R8_SRGB,

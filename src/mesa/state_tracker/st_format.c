@@ -359,6 +359,8 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       return PIPE_FORMAT_R11G11B10_FLOAT;
    case MESA_FORMAT_ARGB2101010_UINT:
       return PIPE_FORMAT_B10G10R10A2_UINT;
+   case MESA_FORMAT_ABGR2101010_UINT:
+      return PIPE_FORMAT_R10G10B10A2_UINT;
 
    case MESA_FORMAT_XRGB4444_UNORM:
       return PIPE_FORMAT_B4G4R4X4_UNORM;
@@ -712,6 +714,8 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
 
    case PIPE_FORMAT_B10G10R10A2_UINT:
       return MESA_FORMAT_ARGB2101010_UINT;
+   case PIPE_FORMAT_R10G10B10A2_UINT:
+      return MESA_FORMAT_ABGR2101010_UINT;
 
    case PIPE_FORMAT_B4G4R4X4_UNORM:
       return MESA_FORMAT_XRGB4444_UNORM;
@@ -1483,7 +1487,7 @@ static const struct format_mapping format_map[] = {
    },
    {
       { GL_RGB10_A2UI, 0 },
-      { PIPE_FORMAT_B10G10R10A2_UINT, 0 }
+      { PIPE_FORMAT_R10G10B10A2_UINT, PIPE_FORMAT_B10G10R10A2_UINT, 0 }
    },
 };
 
