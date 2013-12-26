@@ -527,7 +527,7 @@ tex_clear_region(struct ilo_blitter *blitter,
 
    for (slice = 0; slice < dst_box->depth; slice++) {
       const struct ilo_texture_slice *dst_slice =
-         &dst->slice_offsets[dst_level][dst_box->z + slice];
+         ilo_texture_get_slice(dst, dst_level, dst_box->z + slice);
       unsigned x1, y1, x2, y2;
 
       x1 = dst_slice->x + dst_box->x;
@@ -607,9 +607,9 @@ tex_copy_region(struct ilo_blitter *blitter,
 
    for (slice = 0; slice < src_box->depth; slice++) {
       const struct ilo_texture_slice *dst_slice =
-         &dst->slice_offsets[dst_level][dst_z + slice];
+         ilo_texture_get_slice(dst, dst_level, dst_z + slice);
       const struct ilo_texture_slice *src_slice =
-         &src->slice_offsets[src_level][src_box->z + slice];
+         ilo_texture_get_slice(src, src_level, src_box->z + slice);
       unsigned x1, y1, x2, y2, src_x, src_y;
 
       x1 = (dst_slice->x + dst_x) * xscale;

@@ -872,7 +872,7 @@ tex_layout_apply(const struct tex_layout *layout, struct ilo_texture *tex)
 static void
 tex_free_slices(struct ilo_texture *tex)
 {
-   FREE(tex->slice_offsets[0]);
+   FREE(tex->slices[0]);
 }
 
 static bool
@@ -896,11 +896,11 @@ tex_alloc_slices(struct ilo_texture *tex)
    if (!slices)
       return false;
 
-   tex->slice_offsets[0] = slices;
+   tex->slices[0] = slices;
 
    /* point to the respective positions in the buffer */
    for (lv = 1; lv <= templ->last_level; lv++) {
-      tex->slice_offsets[lv] = tex->slice_offsets[lv - 1] +
+      tex->slices[lv] = tex->slices[lv - 1] +
          u_minify(templ->depth0, lv - 1) * templ->array_size;
    }
 
@@ -1104,7 +1104,7 @@ tex_create(struct pipe_screen *screen,
                          PIPE_BIND_RENDER_TARGET))
       tex->bo_flags |= INTEL_ALLOC_FOR_RENDER;
 
-   tex_layout_init(&layout, screen, templ, tex->slice_offsets);
+   tex_layout_init(&layout, screen, templ, tex->slices);
 
    switch (templ->target) {
    case PIPE_TEXTURE_1D:
@@ -1380,9 +1380,11 @@ ilo_texture_alloc_bo(struct ilo_texture *tex)
  */
 unsigned
 ilo_texture_get_slice_offset(const struct ilo_texture *tex,
-                             int level, int slice,
+                             unsigned level, unsigned slice,
                              unsigned *x_offset, unsigned *y_offset)
 {
+   const struct ilo_texture_slice *s =
+      ilo_texture_get_slice(tex, level, slice);
    unsigned tile_w, tile_h, tile_size, row_size;
    unsigned x, y, slice_offset;
 
@@ -1419,8 +1421,8 @@ ilo_texture_get_slice_offset(const struct ilo_texture *tex,
    row_size = tex->bo_stride * tile_h;
 
    /* in bytes */
-   x = tex->slice_offsets[level][slice].x / tex->block_width * tex->bo_cpp;
-   y = tex->slice_offsets[level][slice].y / tex->block_height;
+   x = s->x / tex->block_width * tex->bo_cpp;
+   y = s->y / tex->block_height;
    slice_offset = row_size * (y / tile_h) + tile_size * (x / tile_w);
 
    /*

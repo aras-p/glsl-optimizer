@@ -186,10 +186,12 @@ tex_get_box_origin(const struct ilo_texture *tex,
                    const struct pipe_box *box,
                    unsigned *mem_x, unsigned *mem_y)
 {
+   const struct ilo_texture_slice *s =
+      ilo_texture_get_slice(tex, level, slice + box->z);
    unsigned x, y;
 
-   x = tex->slice_offsets[level][slice + box->z].x + box->x;
-   y = tex->slice_offsets[level][slice + box->z].y + box->y;
+   x = s->x + box->x;
+   y = s->y + box->y;
 
    assert(x % tex->block_width == 0 && y % tex->block_height == 0);
 
@@ -211,6 +213,7 @@ tex_get_box_offset(const struct ilo_texture *tex, unsigned level,
 static unsigned
 tex_get_slice_stride(const struct ilo_texture *tex, unsigned level)
 {
+   const struct ilo_texture_slice *s0, *s1;
    unsigned qpitch;
 
    /* there is no 3D array texture */
@@ -228,7 +231,9 @@ tex_get_slice_stride(const struct ilo_texture *tex, unsigned level)
       }
    }
 
-   qpitch = tex->slice_offsets[level][1].y - tex->slice_offsets[level][0].y;
+   s0 = ilo_texture_get_slice(tex, level, 0);
+   s1 = ilo_texture_get_slice(tex, level, 1);
+   qpitch = s1->y - s0->y;
    assert(qpitch % tex->block_height == 0);
 
    return (qpitch / tex->block_height) * tex->bo_stride;

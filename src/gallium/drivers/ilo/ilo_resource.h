@@ -42,6 +42,14 @@ struct ilo_buffer {
    unsigned bo_flags;
 };
 
+/**
+ * A 3D image slice, cube face, or array layer.
+ */
+struct ilo_texture_slice {
+   /* 2D offset to the slice */
+   unsigned x, y;
+};
+
 struct ilo_texture {
    struct pipe_resource base;
 
@@ -73,11 +81,7 @@ struct ilo_texture {
    /* true if samples are interleaved */
    bool interleaved;
 
-   /* 2D offsets into a layer/slice/face */
-   struct ilo_texture_slice {
-      unsigned x;
-      unsigned y;
-   } *slice_offsets[PIPE_MAX_TEXTURE_LEVELS];
+   struct ilo_texture_slice *slices[PIPE_MAX_TEXTURE_LEVELS];
 
    struct ilo_texture *separate_s8;
 
@@ -110,9 +114,20 @@ ilo_buffer_alloc_bo(struct ilo_buffer *buf);
 bool
 ilo_texture_alloc_bo(struct ilo_texture *tex);
 
+static inline struct ilo_texture_slice *
+ilo_texture_get_slice(const struct ilo_texture *tex,
+                      unsigned level, unsigned slice)
+{
+   assert(level <= tex->base.last_level);
+   assert(slice < ((tex->base.target == PIPE_TEXTURE_3D) ?
+         u_minify(tex->base.depth0, level) : tex->base.array_size));
+
+   return &tex->slices[level][slice];
+}
+
 unsigned
 ilo_texture_get_slice_offset(const struct ilo_texture *tex,
-                             int level, int slice,
+                             unsigned level, unsigned slice,
                              unsigned *x_offset, unsigned *y_offset);
 
 #endif /* ILO_RESOURCE_H */
