@@ -341,6 +341,21 @@ resource_surface_throttle(struct resource_surface *rsurf)
 }
 
 boolean
+resource_surface_flush_resource(struct resource_surface *rsurf,
+                                struct native_display *ndpy,
+                                enum native_attachment which)
+{
+   struct pipe_context *pipe = ndpy_get_copy_context(ndpy);
+
+   if (!pipe)
+      return FALSE;
+
+   pipe->flush_resource(pipe, rsurf->resources[which]);
+
+   return TRUE;
+}
+
+boolean
 resource_surface_flush(struct resource_surface *rsurf,
 		       struct native_display *ndpy)
 {

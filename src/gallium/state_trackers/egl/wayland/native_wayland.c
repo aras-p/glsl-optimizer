@@ -259,6 +259,10 @@ wayland_surface_swap_buffers(struct native_surface *nsurf)
    if (ret == -1)
       return EGL_FALSE;
 
+   (void) resource_surface_flush_resource(surface->rsurf, &display->base,
+                                          NATIVE_ATTACHMENT_BACK_LEFT);
+   (void) resource_surface_flush(surface->rsurf, &display->base);
+
    surface->frame_callback = wl_surface_frame(surface->win->surface);
    wl_callback_add_listener(surface->frame_callback, &frame_listener, surface);
    wl_proxy_set_queue((struct wl_proxy *) surface->frame_callback,

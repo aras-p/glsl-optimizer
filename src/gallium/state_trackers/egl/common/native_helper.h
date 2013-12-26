@@ -91,6 +91,11 @@ resource_surface_copy_swap(struct resource_surface *rsurf,
 boolean
 resource_surface_throttle(struct resource_surface *rsurf);
 
+boolean
+resource_surface_flush_resource(struct resource_surface *rsurf,
+                                struct native_display *ndpy,
+                                enum native_attachment which);
+
 /**
  * Flush pending rendering using the copy context. This function saves a
  * marker for upcoming throttles.
