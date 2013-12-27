@@ -125,27 +125,30 @@ static unsigned cik_bank_wh(unsigned bankwh)
 	return bankwh;
 }
 
-static unsigned cik_db_pipe_config(unsigned tile_pipes,
-				   unsigned num_rbs)
+static unsigned cik_db_pipe_config(struct r600_screen *rscreen, unsigned tile_mode)
 {
-	unsigned pipe_config;
+	if (rscreen->b.info.si_tile_mode_array_valid) {
+		uint32_t gb_tile_mode = rscreen->b.info.si_tile_mode_array[tile_mode];
 
-	switch (tile_pipes) {
+		return G_009910_PIPE_CONFIG(gb_tile_mode);
+	}
+
+	/* This is probably broken for a lot of chips, but it's only used
+	 * if the kernel cannot return the tile mode array for CIK. */
+	switch (rscreen->b.info.r600_num_tile_pipes) {
+	case 16:
+		return V_02803C_X_ADDR_SURF_P16_32X32_16X16;
 	case 8:
-		pipe_config = V_02803C_X_ADDR_SURF_P8_32X32_16X16;
-		break;
+		return V_02803C_X_ADDR_SURF_P8_32X32_16X16;
 	case 4:
 	default:
-		if (num_rbs == 4)
-			pipe_config = V_02803C_X_ADDR_SURF_P4_16X16;
+		if (rscreen->b.info.r600_num_backends == 4)
+			return V_02803C_X_ADDR_SURF_P4_16X16;
 		else
-			pipe_config = V_02803C_X_ADDR_SURF_P4_8X16;
-		break;
+			return V_02803C_X_ADDR_SURF_P4_8X16;
 	case 2:
-			pipe_config = V_02803C_ADDR_SURF_P2;
-		break;
+		return V_02803C_ADDR_SURF_P2;
 	}
-	return pipe_config;
 }
 
 /*
@@ -1798,8 +1801,8 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		bankw = cik_bank_wh(bankw);
 		bankh = cik_bank_wh(bankh);
 		nbanks = cik_num_banks(rscreen->b.tiling_info.num_banks);
-		pipe_config = cik_db_pipe_config(rscreen->b.info.r600_num_tile_pipes,
-						 rscreen->b.info.r600_num_backends);
+		tile_mode_index = si_tile_mode_index(rtex, level, false);
+		pipe_config = cik_db_pipe_config(rscreen, tile_mode_index);
 
 		db_depth_info |= S_02803C_ARRAY_MODE(array_mode) |
 			S_02803C_PIPE_CONFIG(pipe_config) |

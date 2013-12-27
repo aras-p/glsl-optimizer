@@ -418,6 +418,11 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     radeon_get_drm_value(ws->fd, RADEON_INFO_MAX_PIPES, NULL,
                          &ws->info.r600_max_pipes);
 
+    if (radeon_get_drm_value(ws->fd, RADEON_INFO_SI_TILE_MODE_ARRAY, NULL,
+                             ws->info.si_tile_mode_array)) {
+        ws->info.si_tile_mode_array_valid = TRUE;
+    }
+
     return TRUE;
 }
 

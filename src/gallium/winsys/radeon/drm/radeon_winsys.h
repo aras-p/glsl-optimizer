@@ -195,6 +195,9 @@ struct radeon_info {
     boolean                     r600_backend_map_valid;
     boolean                     r600_virtual_address;
     boolean                     r600_has_dma;
+
+    boolean                     si_tile_mode_array_valid;
+    uint32_t                    si_tile_mode_array[32];
 };
 
 enum radeon_feature_id {
