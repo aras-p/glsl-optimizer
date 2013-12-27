@@ -66,6 +66,13 @@
  * resolve.
  */
 
+static uint32_t bin_width(struct fd_context *ctx)
+{
+	if (ctx->screen->gpu_id >= 300)
+		return 992;
+	return 512;
+}
+
 static void
 calculate_tiles(struct fd_context *ctx)
 {
@@ -76,17 +83,24 @@ calculate_tiles(struct fd_context *ctx)
 	uint32_t minx, miny, width, height;
 	uint32_t nbins_x = 1, nbins_y = 1;
 	uint32_t bin_w, bin_h;
-	uint32_t max_width = 992;
+	uint32_t max_width = bin_width(ctx);
 	uint32_t cpp = 4;
 	uint32_t i, j, t, p, n, xoff, yoff;
+	bool has_zs = !!(ctx->resolve & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL));
 
 	if (pfb->cbufs[0])
 		cpp = util_format_get_blocksize(pfb->cbufs[0]->format);
 
-	if ((gmem->cpp == cpp) &&
+	if ((gmem->cpp == cpp) && (gmem->has_zs == has_zs) &&
 			!memcmp(&gmem->scissor, scissor, sizeof(gmem->scissor))) {
 		/* everything is up-to-date */
 		return;
+	}
+
+	/* if have depth/stencil, we need to leave room: */
+	if (has_zs) {
+		gmem_size /= 2;
+		max_width /= 2;
 	}
 
 	if (fd_mesa_debug & FD_DBG_DSCIS) {
@@ -100,13 +114,6 @@ calculate_tiles(struct fd_context *ctx)
 		width = scissor->maxx - minx;
 		height = scissor->maxy - miny;
 	}
-
-// TODO we probably could optimize this a bit if we know that
-// Z or stencil is not enabled for any of the draw calls..
-//	if (fd_stencil_enabled(ctx->zsa) || fd_depth_enabled(ctx->zsa)) {
-		gmem_size /= 2;
-		max_width = 256;
-//	}
 
 	bin_w = align(width, 32);
 	bin_h = align(height, 32);
@@ -130,6 +137,7 @@ calculate_tiles(struct fd_context *ctx)
 
 	gmem->scissor = *scissor;
 	gmem->cpp = cpp;
+	gmem->has_zs = has_zs;
 	gmem->bin_h = bin_h;
 	gmem->bin_w = bin_w;
 	gmem->nbins_x = nbins_x;
