@@ -399,6 +399,19 @@ is_color_masked(struct gl_context *ctx, int i)
 
 
 /**
+ * Return if all of the stencil bits are masked.
+ */
+static INLINE GLboolean
+is_stencil_disabled(struct gl_context *ctx, struct gl_renderbuffer *rb)
+{
+   const GLuint stencilMax = 0xff;
+
+   assert(_mesa_get_format_bits(rb->Format, GL_STENCIL_BITS) > 0);
+   return (ctx->Stencil.WriteMask[0] & stencilMax) == 0;
+}
+
+
+/**
  * Return if any of the stencil bits are masked.
  */
 static INLINE GLboolean
@@ -457,7 +470,7 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
    if (mask & BUFFER_BIT_DEPTH) {
       struct st_renderbuffer *strb = st_renderbuffer(depthRb);
 
-      if (strb->surface) {
+      if (strb->surface && ctx->Depth.Mask) {
          if (is_scissor_enabled(ctx, depthRb))
             quad_buffers |= PIPE_CLEAR_DEPTH;
          else
@@ -467,7 +480,7 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
    if (mask & BUFFER_BIT_STENCIL) {
       struct st_renderbuffer *strb = st_renderbuffer(stencilRb);
 
-      if (strb->surface) {
+      if (strb->surface && !is_stencil_disabled(ctx, stencilRb)) {
          if (is_scissor_enabled(ctx, stencilRb) ||
              is_stencil_masked(ctx, stencilRb))
             quad_buffers |= PIPE_CLEAR_STENCIL;
