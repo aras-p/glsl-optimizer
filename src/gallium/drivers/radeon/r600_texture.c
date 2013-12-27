@@ -466,6 +466,11 @@ static unsigned si_texture_htile_alloc_size(struct r600_common_screen *rscreen,
 	unsigned slice_elements, slice_bytes, pipe_interleave_bytes, base_align;
 	unsigned num_pipes = rscreen->tiling_info.num_channels;
 
+	/* HTILE doesn't work with 1D tiling (there's massive corruption
+	 * in glxgears). */
+	if (rtex->surface.level[0].mode != RADEON_SURF_MODE_2D)
+		return 0;
+
 	switch (num_pipes) {
 	case 2:
 		cl_width = 32;
