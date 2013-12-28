@@ -1567,9 +1567,9 @@ if test "x$enable_gallium_llvm" = xauto; then
 fi
 if test "x$enable_gallium_llvm" = xyes; then
     if test "x$llvm_prefix" != x; then
-        AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no], ["$llvm_prefix/bin"])
+        AC_PATH_TOOL([LLVM_CONFIG], [llvm-config], [no], ["$llvm_prefix/bin"])
     else
-        AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no])
+        AC_PATH_TOOL([LLVM_CONFIG], [llvm-config], [no])
     fi
 
     if test "x$LLVM_CONFIG" != xno; then
