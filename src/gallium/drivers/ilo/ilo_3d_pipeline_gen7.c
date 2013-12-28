@@ -28,7 +28,7 @@
 #include "util/u_dual_blend.h"
 #include "intel_reg.h"
 
-#include "ilo_common.h"
+#include "ilo_blitter.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_gpe_gen7.h"
@@ -650,6 +650,233 @@ ilo_3d_pipeline_emit_draw_gen7(struct ilo_3d_pipeline *p,
    gen6_pipeline_end(p, ilo, &session);
 }
 
+static void
+gen7_rectlist_pcb_alloc(struct ilo_3d_pipeline *p,
+                        const struct ilo_blitter *blitter,
+                        struct gen6_rectlist_session *session)
+{
+   /*
+    * Push constant buffers are only allowed to take up at most the first
+    * 16KB of the URB.  Split the space evenly for VS and FS.
+    */
+   const int max_size =
+      (p->dev->gen == ILO_GEN(7.5) && p->dev->gt == 3) ? 32768 : 16384;
+   const int size = max_size / 2;
+   int offset = 0;
+
+   gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_VS(p->dev, offset, size, p->cp);
+   offset += size;
+
+   gen7_emit_3DSTATE_PUSH_CONSTANT_ALLOC_PS(p->dev, offset, size, p->cp);
+
+   gen7_wa_pipe_control_cs_stall(p, true, true);
+}
+
+static void
+gen7_rectlist_urb(struct ilo_3d_pipeline *p,
+                  const struct ilo_blitter *blitter,
+                  struct gen6_rectlist_session *session)
+{
+   /* the first 16KB are reserved for VS and PS PCBs */
+   const int offset =
+      (p->dev->gen == ILO_GEN(7.5) && p->dev->gt == 3) ? 32768 : 16384;
+
+   gen7_emit_3DSTATE_URB_VS(p->dev, offset, p->dev->urb_size - offset,
+         blitter->ve.count * 4 * sizeof(float), p->cp);
+
+   gen7_emit_3DSTATE_URB_GS(p->dev, offset, 0, 0, p->cp);
+   gen7_emit_3DSTATE_URB_HS(p->dev, offset, 0, 0, p->cp);
+   gen7_emit_3DSTATE_URB_DS(p->dev, offset, 0, 0, p->cp);
+}
+
+static void
+gen7_rectlist_vs_to_sf(struct ilo_3d_pipeline *p,
+                       const struct ilo_blitter *blitter,
+                       struct gen6_rectlist_session *session)
+{
+   gen7_emit_3DSTATE_CONSTANT_VS(p->dev, NULL, NULL, 0, p->cp);
+   gen6_emit_3DSTATE_VS(p->dev, NULL, 0, p->cp);
+
+   gen7_emit_3DSTATE_CONSTANT_HS(p->dev, NULL, NULL, 0, p->cp);
+   gen7_emit_3DSTATE_HS(p->dev, NULL, 0, p->cp);
+
+   gen7_emit_3DSTATE_TE(p->dev, p->cp);
+
+   gen7_emit_3DSTATE_CONSTANT_DS(p->dev, NULL, NULL, 0, p->cp);
+   gen7_emit_3DSTATE_DS(p->dev, NULL, 0, p->cp);
+
+   gen7_emit_3DSTATE_CONSTANT_GS(p->dev, NULL, NULL, 0, p->cp);
+   gen7_emit_3DSTATE_GS(p->dev, NULL, 0, p->cp);
+
+   gen7_emit_3DSTATE_STREAMOUT(p->dev, 0x0, 0, false, p->cp);
+
+   gen6_emit_3DSTATE_CLIP(p->dev, NULL, NULL, false, 0, p->cp);
+
+   gen7_wa_pipe_control_cs_stall(p, true, true);
+
+   gen7_emit_3DSTATE_SF(p->dev, NULL, blitter->fb.dst.base.format, p->cp);
+   gen7_emit_3DSTATE_SBE(p->dev, NULL, NULL, p->cp);
+}
+
+static void
+gen7_rectlist_wm(struct ilo_3d_pipeline *p,
+                 const struct ilo_blitter *blitter,
+                 struct gen6_rectlist_session *session)
+{
+   uint32_t hiz_op;
+
+   switch (blitter->op) {
+   case ILO_BLITTER_RECTLIST_CLEAR_ZS:
+      hiz_op = GEN7_WM_DEPTH_CLEAR;
+      break;
+   case ILO_BLITTER_RECTLIST_RESOLVE_Z:
+      hiz_op = GEN7_WM_DEPTH_RESOLVE;
+      break;
+   case ILO_BLITTER_RECTLIST_RESOLVE_HIZ:
+      hiz_op = GEN7_WM_HIERARCHICAL_DEPTH_RESOLVE;
+      break;
+   default:
+      hiz_op = 0;
+      break;
+   }
+
+   gen7_wa_pipe_control_wm_max_threads_stall(p);
+   gen7_emit_3DSTATE_WM(p->dev, NULL, NULL, false, hiz_op, p->cp);
+
+   gen7_emit_3DSTATE_CONSTANT_PS(p->dev, NULL, NULL, 0, p->cp);
+   gen7_emit_3DSTATE_PS(p->dev, NULL, 0, false, p->cp);
+}
+
+static void
+gen7_rectlist_wm_depth(struct ilo_3d_pipeline *p,
+                       const struct ilo_blitter *blitter,
+                       struct gen6_rectlist_session *session)
+{
+   gen7_wa_pipe_control_wm_depth_stall(p, true);
+
+   if (blitter->uses & ILO_BLITTER_USE_FB_DEPTH) {
+      gen6_emit_3DSTATE_DEPTH_BUFFER(p->dev,
+            &blitter->fb.dst.u.zs, p->cp);
+
+      gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(p->dev,
+            &blitter->fb.dst.u.zs, p->cp);
+   }
+
+   if (blitter->uses & ILO_BLITTER_USE_FB_STENCIL) {
+      gen6_emit_3DSTATE_STENCIL_BUFFER(p->dev,
+            &blitter->fb.dst.u.zs, p->cp);
+   }
+
+   gen7_emit_3DSTATE_CLEAR_PARAMS(p->dev,
+         blitter->depth_clear_value, p->cp);
+}
+
+static void
+gen7_rectlist_wm_multisample(struct ilo_3d_pipeline *p,
+                             const struct ilo_blitter *blitter,
+                             struct gen6_rectlist_session *session)
+{
+   const uint32_t *packed_sample_pos =
+      (blitter->fb.num_samples > 4) ? p->packed_sample_position_8x :
+      (blitter->fb.num_samples > 1) ? &p->packed_sample_position_4x :
+      &p->packed_sample_position_1x;
+
+   gen7_wa_pipe_control_cs_stall(p, true, true);
+
+   gen6_emit_3DSTATE_MULTISAMPLE(p->dev, blitter->fb.num_samples,
+         packed_sample_pos, true, p->cp);
+
+   gen7_emit_3DSTATE_SAMPLE_MASK(p->dev,
+         (1 << blitter->fb.num_samples) - 1, blitter->fb.num_samples, p->cp);
+}
+
+static void
+gen7_rectlist_commands(struct ilo_3d_pipeline *p,
+                       const struct ilo_blitter *blitter,
+                       struct gen6_rectlist_session *session)
+{
+   gen7_rectlist_wm_multisample(p, blitter, session);
+
+   gen6_emit_STATE_BASE_ADDRESS(p->dev,
+         NULL,                /* General State Base */
+         p->cp->bo,           /* Surface State Base */
+         p->cp->bo,           /* Dynamic State Base */
+         NULL,                /* Indirect Object Base */
+         NULL,                /* Instruction Base */
+         0, 0, 0, 0, p->cp);
+
+   gen6_emit_3DSTATE_VERTEX_BUFFERS(p->dev,
+         &blitter->ve, &blitter->vb, p->cp);
+
+   gen6_emit_3DSTATE_VERTEX_ELEMENTS(p->dev,
+         &blitter->ve, false, false, p->cp);
+
+   gen7_rectlist_pcb_alloc(p, blitter, session);
+
+   /* needed for any VS-related commands */
+   gen7_wa_pipe_control_vs_depth_stall(p);
+
+   gen7_rectlist_urb(p, blitter, session);
+
+   if (blitter->uses & ILO_BLITTER_USE_DSA) {
+      gen7_emit_3DSTATE_DEPTH_STENCIL_STATE_POINTERS(p->dev,
+            session->DEPTH_STENCIL_STATE, p->cp);
+   }
+
+   if (blitter->uses & ILO_BLITTER_USE_CC) {
+      gen7_emit_3DSTATE_CC_STATE_POINTERS(p->dev,
+            session->COLOR_CALC_STATE, p->cp);
+   }
+
+   gen7_rectlist_vs_to_sf(p, blitter, session);
+   gen7_rectlist_wm(p, blitter, session);
+
+   if (blitter->uses & ILO_BLITTER_USE_VIEWPORT) {
+      gen7_emit_3DSTATE_VIEWPORT_STATE_POINTERS_CC(p->dev,
+            session->CC_VIEWPORT, p->cp);
+   }
+
+   gen7_rectlist_wm_depth(p, blitter, session);
+
+   gen6_emit_3DSTATE_DRAWING_RECTANGLE(p->dev, 0, 0,
+         blitter->fb.width, blitter->fb.height, p->cp);
+
+   gen7_emit_3DPRIMITIVE(p->dev, &blitter->draw, NULL, true, p->cp);
+}
+
+static void
+gen7_rectlist_states(struct ilo_3d_pipeline *p,
+                     const struct ilo_blitter *blitter,
+                     struct gen6_rectlist_session *session)
+{
+   if (blitter->uses & ILO_BLITTER_USE_DSA) {
+      session->DEPTH_STENCIL_STATE =
+         gen6_emit_DEPTH_STENCIL_STATE(p->dev, &blitter->dsa, p->cp);
+   }
+
+   if (blitter->uses & ILO_BLITTER_USE_CC) {
+      session->COLOR_CALC_STATE =
+         gen6_emit_COLOR_CALC_STATE(p->dev, &blitter->cc.stencil_ref,
+               blitter->cc.alpha_ref, &blitter->cc.blend_color, p->cp);
+   }
+
+   if (blitter->uses & ILO_BLITTER_USE_VIEWPORT) {
+      session->CC_VIEWPORT =
+         gen6_emit_CC_VIEWPORT(p->dev, &blitter->viewport, 1, p->cp);
+   }
+}
+
+static void
+ilo_3d_pipeline_emit_rectlist_gen7(struct ilo_3d_pipeline *p,
+                                   const struct ilo_blitter *blitter)
+{
+   struct gen6_rectlist_session session;
+
+   memset(&session, 0, sizeof(session));
+   gen7_rectlist_states(p, blitter, &session);
+   gen7_rectlist_commands(p, blitter, &session);
+}
+
 static int
 gen7_pipeline_estimate_commands(const struct ilo_3d_pipeline *p,
                                 const struct ilo_context *ilo)
@@ -809,6 +1036,9 @@ ilo_3d_pipeline_estimate_size_gen7(struct ilo_3d_pipeline *p,
       size = ilo_gpe_gen7_estimate_command_size(p->dev,
             ILO_GPE_GEN7_PIPE_CONTROL, 1);
       break;
+   case ILO_3D_PIPELINE_RECTLIST:
+      size = 64 + 256; /* states + commands */
+      break;
    default:
       assert(!"unknown 3D pipeline action");
       size = 0;
@@ -826,4 +1056,5 @@ ilo_3d_pipeline_init_gen7(struct ilo_3d_pipeline *p)
    p->emit_flush = ilo_3d_pipeline_emit_flush_gen6;
    p->emit_write_timestamp = ilo_3d_pipeline_emit_write_timestamp_gen6;
    p->emit_write_depth_count = ilo_3d_pipeline_emit_write_depth_count_gen6;
+   p->emit_rectlist = ilo_3d_pipeline_emit_rectlist_gen7;
 }

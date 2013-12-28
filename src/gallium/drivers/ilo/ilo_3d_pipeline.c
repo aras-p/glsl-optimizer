@@ -28,6 +28,7 @@
 #include "util/u_prim.h"
 #include "intel_winsys.h"
 
+#include "ilo_blitter.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_state.h"
@@ -256,6 +257,48 @@ ilo_3d_pipeline_emit_write_depth_count(struct ilo_3d_pipeline *p,
 {
    handle_invalid_batch_bo(p, true);
    p->emit_write_depth_count(p, bo, index);
+}
+
+void
+ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
+                              const struct ilo_blitter *blitter)
+{
+   const int max_len = ilo_3d_pipeline_estimate_size(p,
+         ILO_3D_PIPELINE_RECTLIST, blitter);
+
+   if (max_len > ilo_cp_space(p->cp))
+      ilo_cp_flush(p->cp, "out of space");
+
+   while (true) {
+      struct ilo_cp_jmp_buf jmp;
+      int err;
+
+      /* we will rewind if aperture check below fails */
+      ilo_cp_setjmp(p->cp, &jmp);
+
+      handle_invalid_batch_bo(p, false);
+
+      ilo_cp_assert_no_implicit_flush(p->cp, true);
+      p->emit_rectlist(p, blitter);
+      ilo_cp_assert_no_implicit_flush(p->cp, false);
+
+      err = intel_winsys_check_aperture_space(blitter->ilo->winsys,
+            &p->cp->bo, 1);
+      if (err) {
+         /* rewind */
+         ilo_cp_longjmp(p->cp, &jmp);
+
+         /* flush and try again */
+         if (!ilo_cp_empty(p->cp)) {
+            ilo_cp_flush(p->cp, "out of aperture");
+            continue;
+         }
+      }
+
+      break;
+   }
+
+   ilo_3d_pipeline_invalidate(p, ILO_3D_PIPELINE_INVALIDATE_HW);
 }
 
 void

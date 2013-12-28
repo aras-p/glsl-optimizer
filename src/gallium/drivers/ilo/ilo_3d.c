@@ -156,7 +156,7 @@ ilo_3d_release_render_ring(struct ilo_cp *cp, void *data)
    ilo_3d_pause_queries(hw3d);
 }
 
-static void
+void
 ilo_3d_own_render_ring(struct ilo_3d *hw3d)
 {
    ilo_cp_set_ring(hw3d->cp, ILO_CP_RING_RENDER);

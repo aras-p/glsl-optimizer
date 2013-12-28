@@ -73,6 +73,12 @@ struct gen6_pipeline_session {
    int num_surfaces[PIPE_SHADER_TYPES];
 };
 
+struct gen6_rectlist_session {
+   uint32_t DEPTH_STENCIL_STATE;
+   uint32_t COLOR_CALC_STATE;
+   uint32_t CC_VIEWPORT;
+};
+
 void
 gen6_pipeline_prepare(const struct ilo_3d_pipeline *p,
                       const struct ilo_context *ilo,

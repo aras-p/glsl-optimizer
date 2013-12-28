@@ -32,6 +32,7 @@
 #include "ilo_gpe.h"
 
 struct intel_bo;
+struct ilo_blitter;
 struct ilo_cp;
 struct ilo_context;
 
@@ -49,6 +50,7 @@ enum ilo_3d_pipeline_action {
    ILO_3D_PIPELINE_FLUSH,
    ILO_3D_PIPELINE_WRITE_TIMESTAMP,
    ILO_3D_PIPELINE_WRITE_DEPTH_COUNT,
+   ILO_3D_PIPELINE_RECTLIST,
 };
 
 /**
@@ -80,6 +82,9 @@ struct ilo_3d_pipeline {
 
    void (*emit_write_depth_count)(struct ilo_3d_pipeline *pipeline,
                                   struct intel_bo *bo, int index);
+
+   void (*emit_rectlist)(struct ilo_3d_pipeline *pipeline,
+                         const struct ilo_blitter *blitter);
 
    /**
     * HW states.
@@ -170,6 +175,10 @@ ilo_3d_pipeline_emit_write_timestamp(struct ilo_3d_pipeline *p,
 void
 ilo_3d_pipeline_emit_write_depth_count(struct ilo_3d_pipeline *p,
                                        struct intel_bo *bo, int index);
+
+void
+ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
+                              const struct ilo_blitter *blitter);
 
 void
 ilo_3d_pipeline_get_sample_position(struct ilo_3d_pipeline *p,

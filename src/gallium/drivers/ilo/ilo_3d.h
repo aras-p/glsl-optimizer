@@ -74,6 +74,9 @@ void
 ilo_3d_cp_flushed(struct ilo_3d *hw3d);
 
 void
+ilo_3d_own_render_ring(struct ilo_3d *hw3d);
+
+void
 ilo_3d_begin_query(struct ilo_context *ilo, struct ilo_query *q);
 
 void

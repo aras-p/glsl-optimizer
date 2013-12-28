@@ -8,6 +8,7 @@ C_SOURCES := \
 	ilo_blitter.c \
 	ilo_blitter_blt.c \
 	ilo_blitter_pipe.c \
+	ilo_blitter_rectlist.c \
 	ilo_context.c \
 	ilo_cp.c \
 	ilo_format.c \

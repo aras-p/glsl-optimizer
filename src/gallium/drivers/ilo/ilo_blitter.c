@@ -70,5 +70,10 @@ ilo_blitter_destroy(struct ilo_blitter *blitter)
    if (blitter->pipe_blitter)
       util_blitter_destroy(blitter->pipe_blitter);
 
+   if (blitter->buffer.res) {
+      struct pipe_screen *screen = blitter->ilo->base.screen;
+      screen->resource_destroy(screen, blitter->buffer.res);
+   }
+
    FREE(blitter);
 }
