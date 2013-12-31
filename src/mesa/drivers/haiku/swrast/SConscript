@@ -6,6 +6,7 @@ env.Append(CPPPATH = [
     '#/src/mapi',
     '#/src/mesa',
     '#/src/mesa/main',
+    '#/include/HaikuGL',
     '/boot/system/develop/headers/private',
     Dir('../../../mapi'), # src/mapi build path for python-generated GL API files/headers
 ])

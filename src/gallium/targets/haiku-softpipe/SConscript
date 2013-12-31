@@ -21,6 +21,7 @@ env.Append(CPPPATH = [
     '#/src/mapi',
     '#/src/mesa',
     '#/src/mesa/main',
+    '#/include/HaikuGL',
     '#/src/gallium/winsys/sw/hgl',
     '/boot/system/develop/headers/private',
 ])
