@@ -91,7 +91,6 @@ CHIPSET(0x0F32, byt,     "Intel(R) Bay Trail")
 CHIPSET(0x0F33, byt,     "Intel(R) Bay Trail")
 CHIPSET(0x0157, byt,     "Intel(R) Bay Trail")
 CHIPSET(0x0155, byt,     "Intel(R) Bay Trail")
-#ifdef INTEL_PRELIMINARY_HW_SUPPORT
 CHIPSET(0x1602, bdw_gt1, "Intel(R) Broadwell")
 CHIPSET(0x1606, bdw_gt1, "Intel(R) Broadwell")
 CHIPSET(0x160A, bdw_gt1, "Intel(R) Broadwell")
@@ -110,4 +109,3 @@ CHIPSET(0x162A, bdw_gt3, "Intel(R) Broadwell")
 CHIPSET(0x162B, bdw_gt3, "Intel(R) Broadwell")
 CHIPSET(0x162D, bdw_gt3, "Intel(R) Broadwell")
 CHIPSET(0x162E, bdw_gt3, "Intel(R) Broadwell")
-#endif
