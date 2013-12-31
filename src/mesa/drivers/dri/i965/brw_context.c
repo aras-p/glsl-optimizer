@@ -1290,14 +1290,24 @@ intel_process_dri2_buffer(struct brw_context *brw,
                                           buffer->pitch,
                                           buffer->name,
                                           buffer_name);
-   if (!region)
+   if (!region) {
+      fprintf(stderr,
+              "Failed to make region for returned DRI2 buffer "
+              "(%dx%d, named %d).\n"
+              "This is likely a bug in the X Server that will lead to a "
+              "crash soon.\n",
+              drawable->w, drawable->h, buffer->name);
       return;
+   }
 
    rb->mt = intel_miptree_create_for_dri2_buffer(brw,
                                                  buffer->attachment,
                                                  intel_rb_format(rb),
                                                  num_samples,
                                                  region);
+
+   assert(rb->mt);
+
    intel_region_release(&region);
 }
 
