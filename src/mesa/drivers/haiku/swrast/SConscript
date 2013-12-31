@@ -16,6 +16,8 @@ env.Prepend(LIBS = [
     mesa,
 ])
 
+env.Prepend(LIBS = [libgl])
+
 sources = [
 	'SoftwareRast.cpp'
 ]

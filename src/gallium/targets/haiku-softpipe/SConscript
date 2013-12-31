@@ -17,6 +17,8 @@ if True:
     ])
     env.Prepend(LIBS = [softpipe])
 
+env.Prepend(LIBS = [libgl])
+
 env.Append(CPPPATH = [
     '#/src/mapi',
     '#/src/mesa',

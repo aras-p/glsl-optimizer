@@ -18,6 +18,11 @@ if env['hostonly']:
 # enable OpenGL ES support.
 SConscript('mapi/glapi/gen/SConscript')
 SConscript('mapi/glapi/SConscript')
+
+# Haiku C++ libGL dispatch (renderers depend on libgl)
+if env['platform'] in ['haiku']:
+    SConscript('hgl/SConscript')
+
 SConscript('mesa/SConscript')
 
 SConscript('mapi/vgapi/SConscript')

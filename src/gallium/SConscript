@@ -119,7 +119,6 @@ if not env['embedded']:
     if env['platform'] == 'haiku':
         SConscript([
             'targets/haiku-softpipe/SConscript',
-            'targets/libgl-haiku/SConscript',
         ])
 
     if env['dri']:

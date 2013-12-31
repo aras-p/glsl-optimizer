@@ -33,3 +33,4 @@ libgl = env.SharedLibrary(
 )
 
 env.Alias('libgl-haiku', libgl)
+Export('libgl')
