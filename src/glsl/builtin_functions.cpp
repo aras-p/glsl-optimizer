@@ -586,6 +586,11 @@ private:
                                 const glsl_type *y_type,
                                 const glsl_type *z_type);
 
+   ir_function_signature *_mid3(builtin_available_predicate avail,
+                                const glsl_type *x_type,
+                                const glsl_type *y_type,
+                                const glsl_type *z_type);
+
 #undef B0
 #undef B1
 #undef B2
@@ -2154,6 +2159,23 @@ builtin_builder::create_builtins()
                 _max3(shader_trinary_minmax, glsl_type::uvec2_type, glsl_type::uvec2_type, glsl_type::uvec2_type),
                 _max3(shader_trinary_minmax, glsl_type::uvec3_type, glsl_type::uvec3_type, glsl_type::uvec3_type),
                 _max3(shader_trinary_minmax, glsl_type::uvec4_type, glsl_type::uvec4_type, glsl_type::uvec4_type),
+                NULL);
+
+   add_function("mid3",
+                _mid3(shader_trinary_minmax, glsl_type::float_type, glsl_type::float_type, glsl_type::float_type),
+                _mid3(shader_trinary_minmax, glsl_type::vec2_type, glsl_type::vec2_type, glsl_type::vec2_type),
+                _mid3(shader_trinary_minmax, glsl_type::vec3_type, glsl_type::vec3_type, glsl_type::vec3_type),
+                _mid3(shader_trinary_minmax, glsl_type::vec4_type, glsl_type::vec4_type, glsl_type::vec4_type),
+
+                _mid3(shader_trinary_minmax, glsl_type::int_type, glsl_type::int_type, glsl_type::int_type),
+                _mid3(shader_trinary_minmax, glsl_type::ivec2_type, glsl_type::ivec2_type, glsl_type::ivec2_type),
+                _mid3(shader_trinary_minmax, glsl_type::ivec3_type, glsl_type::ivec3_type, glsl_type::ivec3_type),
+                _mid3(shader_trinary_minmax, glsl_type::ivec4_type, glsl_type::ivec4_type, glsl_type::ivec4_type),
+
+                _mid3(shader_trinary_minmax, glsl_type::uint_type, glsl_type::uint_type, glsl_type::uint_type),
+                _mid3(shader_trinary_minmax, glsl_type::uvec2_type, glsl_type::uvec2_type, glsl_type::uvec2_type),
+                _mid3(shader_trinary_minmax, glsl_type::uvec3_type, glsl_type::uvec3_type, glsl_type::uvec3_type),
+                _mid3(shader_trinary_minmax, glsl_type::uvec4_type, glsl_type::uvec4_type, glsl_type::uvec4_type),
                 NULL);
 
 #undef F
@@ -4069,6 +4091,22 @@ builtin_builder::_max3(builtin_available_predicate avail,
 
    ir_expression *max3 = max(x, max(y,z));
    body.emit(ret(max3));
+
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_mid3(builtin_available_predicate avail,
+                       const glsl_type *x_type, const glsl_type *y_type,
+                       const glsl_type *z_type)
+{
+   ir_variable *x = in_var(x_type, "x");
+   ir_variable *y = in_var(y_type, "y");
+   ir_variable *z = in_var(z_type, "z");
+   MAKE_SIG(x_type, avail, 3, x, y, z);
+
+   ir_expression *mid3 = max(min(x, y), max(min(x, z), min(y, z)));
+   body.emit(ret(mid3));
 
    return sig;
 }
