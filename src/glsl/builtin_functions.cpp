@@ -576,6 +576,11 @@ private:
    ir_function_signature *_atomic_op(const char *intrinsic,
                                      builtin_available_predicate avail);
 
+   ir_function_signature *_min3(builtin_available_predicate avail,
+                                const glsl_type *x_type,
+                                const glsl_type *y_type,
+                                const glsl_type *z_type);
+
 #undef B0
 #undef B1
 #undef B2
@@ -2110,6 +2115,23 @@ builtin_builder::create_builtins()
    add_function("atomicCounterDecrement",
                 _atomic_op("__intrinsic_atomic_predecrement",
                            shader_atomic_counters),
+                NULL);
+
+   add_function("min3",
+                _min3(shader_trinary_minmax, glsl_type::float_type, glsl_type::float_type, glsl_type::float_type),
+                _min3(shader_trinary_minmax, glsl_type::vec2_type, glsl_type::vec2_type, glsl_type::vec2_type),
+                _min3(shader_trinary_minmax, glsl_type::vec3_type, glsl_type::vec3_type, glsl_type::vec3_type),
+                _min3(shader_trinary_minmax, glsl_type::vec4_type, glsl_type::vec4_type, glsl_type::vec4_type),
+
+                _min3(shader_trinary_minmax, glsl_type::int_type, glsl_type::int_type, glsl_type::int_type),
+                _min3(shader_trinary_minmax, glsl_type::ivec2_type, glsl_type::ivec2_type, glsl_type::ivec2_type),
+                _min3(shader_trinary_minmax, glsl_type::ivec3_type, glsl_type::ivec3_type, glsl_type::ivec3_type),
+                _min3(shader_trinary_minmax, glsl_type::ivec4_type, glsl_type::ivec4_type, glsl_type::ivec4_type),
+
+                _min3(shader_trinary_minmax, glsl_type::uint_type, glsl_type::uint_type, glsl_type::uint_type),
+                _min3(shader_trinary_minmax, glsl_type::uvec2_type, glsl_type::uvec2_type, glsl_type::uvec2_type),
+                _min3(shader_trinary_minmax, glsl_type::uvec3_type, glsl_type::uvec3_type, glsl_type::uvec3_type),
+                _min3(shader_trinary_minmax, glsl_type::uvec4_type, glsl_type::uvec4_type, glsl_type::uvec4_type),
                 NULL);
 
 #undef F
@@ -3994,6 +4016,22 @@ builtin_builder::_atomic_op(const char *intrinsic,
    body.emit(call(shader->symbols->get_function(intrinsic), retval,
                   sig->parameters));
    body.emit(ret(retval));
+   return sig;
+}
+
+ir_function_signature *
+builtin_builder::_min3(builtin_available_predicate avail,
+                      const glsl_type *x_type, const glsl_type *y_type,
+                      const glsl_type *z_type)
+{
+   ir_variable *x = in_var(x_type, "x");
+   ir_variable *y = in_var(y_type, "y");
+   ir_variable *z = in_var(z_type, "z");
+   MAKE_SIG(x_type, avail, 3, x, y, z);
+
+   ir_expression *min3 = min(x, min(y,z));
+   body.emit(ret(min3));
+
    return sig;
 }
 
