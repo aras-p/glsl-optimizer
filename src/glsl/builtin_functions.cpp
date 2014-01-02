@@ -334,6 +334,12 @@ shader_atomic_counters(const _mesa_glsl_parse_state *state)
    return state->ARB_shader_atomic_counters_enable;
 }
 
+static bool
+shader_trinary_minmax(const _mesa_glsl_parse_state *state)
+{
+   return state->AMD_shader_trinary_minmax_enable;
+}
+
 /** @} */
 
 /******************************************************************************/
