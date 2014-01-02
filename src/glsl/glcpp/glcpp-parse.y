@@ -1281,6 +1281,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	      if (extensions->ARB_shader_atomic_counters)
 	         add_builtin_define(parser, "GL_ARB_shader_atomic_counters", 1);
+
+	      if (extensions->AMD_shader_trinary_minmax)
+	         add_builtin_define(parser, "GL_AMD_shader_trinary_minmax", 1);
 	   }
 	}
 
