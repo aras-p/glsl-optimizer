@@ -148,7 +148,7 @@ public:
     * in particular.  No support for other instruction types (assignments,
     * jumps, calls, etc.) is planned.
     */
-   virtual bool equals(ir_instruction *ir);
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
 protected:
    ir_instruction()
@@ -1413,7 +1413,7 @@ public:
       return this;
    }
 
-   virtual bool equals(ir_instruction *ir);
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
    virtual ir_expression *clone(void *mem_ctx, struct hash_table *ht) const;
 
@@ -1741,7 +1741,7 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
-   virtual bool equals(ir_instruction *ir);
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
    /**
     * Return a string representing the ir_texture_opcode.
@@ -1847,7 +1847,7 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
-   virtual bool equals(ir_instruction *ir);
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
    bool is_lvalue() const
    {
@@ -1913,7 +1913,7 @@ public:
       return this;
    }
 
-   virtual bool equals(ir_instruction *ir);
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
    /**
     * Get the variable that is ultimately referenced by an r-value
@@ -1973,7 +1973,7 @@ public:
       return this;
    }
 
-   virtual bool equals(ir_instruction *ir);
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
    /**
     * Get the variable that is ultimately referenced by an r-value
@@ -2109,7 +2109,7 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
-   virtual bool equals(ir_instruction *ir);
+   virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
    /**
     * Get a particular component of a constant as a specific type
