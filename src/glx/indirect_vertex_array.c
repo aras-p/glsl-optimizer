@@ -135,9 +135,6 @@ __glXFreeVertexArrayState(struct glx_context * gc)
  * struct glx_context::server_minor, and __GLXcontext::server_major have been
  * initialized.  These values are used to determine what vertex arrays are
  * supported.
- *
- * \bug
- * Return values from malloc are not properly tested.
  */
 void
 __glXInitVertexArrayState(struct glx_context * gc)
@@ -154,7 +151,11 @@ __glXInitVertexArrayState(struct glx_context * gc)
 
 
    arrays = calloc(1, sizeof(struct array_state_vector));
-   state->array_state = arrays;
+
+   if (arrays == NULL) {
+      __glXSetError(gc, GL_OUT_OF_MEMORY);
+      return;
+   }
 
    arrays->old_DrawArrays_possible = !state->NoDrawArraysProtocol;
    arrays->new_DrawArrays_possible = GL_FALSE;
@@ -203,6 +204,12 @@ __glXInitVertexArrayState(struct glx_context * gc)
    array_count += texture_units + vertex_program_attribs;
    arrays->num_arrays = array_count;
    arrays->arrays = calloc(array_count, sizeof(struct array_state));
+
+   if (arrays->arrays == NULL) {
+      free(arrays);
+      __glXSetError(gc, GL_OUT_OF_MEMORY);
+      return;
+   }
 
    arrays->arrays[0].data_type = GL_FLOAT;
    arrays->arrays[0].count = 3;
@@ -289,6 +296,18 @@ __glXInitVertexArrayState(struct glx_context * gc)
    arrays->stack = malloc(sizeof(struct array_stack_state)
                           * arrays->num_arrays
                           * __GL_CLIENT_ATTRIB_STACK_DEPTH);
+
+   if (arrays->stack == NULL) {
+      free(arrays->arrays);
+      free(arrays);
+      __glXSetError(gc, GL_OUT_OF_MEMORY);
+      return;
+   }
+
+   /* Everything went ok so we put vertex array state in place
+    * in context.
+    */
+   state->array_state = arrays;
 }
 
 
