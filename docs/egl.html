@@ -88,7 +88,7 @@ drivers will be installed to <code>${libdir}/egl</code>.</p>
 <dd>
 
 <p>List the platforms (window systems) to support.  Its argument is a comma
-seprated string such as <code>--with-egl-platforms=x11,drm</code>.  It decides
+separated string such as <code>--with-egl-platforms=x11,drm</code>.  It decides
 the platforms a driver may support.  The first listed platform is also used by
 the main library to decide the native platform: the platform the EGL native
 types such as <code>EGLNativeDisplayType</code> or
@@ -223,7 +223,7 @@ the X server directly using (XCB-)DRI2 protocol.</p>
 <dd>
 
 <p>This driver is based on Gallium3D.  It supports all rendering APIs and
-hardwares supported by Gallium3D.  It is the only driver that supports OpenVG.
+hardware supported by Gallium3D.  It is the only driver that supports OpenVG.
 The supported platforms are X11, DRM, FBDEV, and GDI.</p>
 
 <p>This driver comes with its own hardware drivers
@@ -273,8 +273,8 @@ longer than the display that creates them.</p>
 
 <p>In EGL, when a display is terminated through <code>eglTerminate</code>, all
 display resources should be destroyed.  Similarly, when a thread is released
-throught <code>eglReleaseThread</code>, all current display resources should be
-released.  Another way to destory or release resources is through functions
+through <code>eglReleaseThread</code>, all current display resources should be
+released.  Another way to destroy or release resources is through functions
 such as <code>eglDestroySurface</code> or <code>eglMakeCurrent</code>.</p>
 
 <p>When a resource that is current to some thread is destroyed, the resource
