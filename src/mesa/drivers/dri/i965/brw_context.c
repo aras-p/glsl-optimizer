@@ -473,7 +473,7 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->ShaderCompilerOptions[i].LowerClipDistance = true;
    }
 
-   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].PreferDP4 = true;
+   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS = true;
 
    /* ARB_viewport_array */
    if (brw->gen >= 7 && ctx->API == API_OPENGL_CORE) {

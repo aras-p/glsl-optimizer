@@ -301,7 +301,7 @@ r100CreateContext( gl_api api,
    ctx->Const.MaxColorAttachments = 1;
    ctx->Const.MaxRenderbufferSize = 2048;
 
-   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].PreferDP4 = true;
+   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS = true;
 
    /* Install the customized pipeline:
     */

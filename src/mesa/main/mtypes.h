@@ -2760,10 +2760,13 @@ struct gl_shader_compiler_options
    GLuint MaxUnrollIterations;
 
    /**
-    * Prefer DP4 instructions (rather than MUL/MAD) for matrix * vector
-    * operations, such as position transformation.
+    * Optimize code for array of structures backends.
+    *
+    * This is a proxy for:
+    *   - preferring DP4 instructions (rather than MUL/MAD) for
+    *     matrix * vector operations, such as position transformation.
     */
-   GLboolean PreferDP4;
+   GLboolean OptimizeForAOS;
 
    struct gl_sl_pragmas DefaultPragmas; /**< Default #pragma settings */
 };

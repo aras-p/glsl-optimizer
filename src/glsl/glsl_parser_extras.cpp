@@ -1561,7 +1561,7 @@ do_common_optimization(exec_list *ir, bool linked,
    progress = do_copy_propagation(ir) || progress;
    progress = do_copy_propagation_elements(ir) || progress;
 
-   if (options->PreferDP4 && !linked)
+   if (options->OptimizeForAOS && !linked)
       progress = opt_flip_matrices(ir) || progress;
 
    if (linked)

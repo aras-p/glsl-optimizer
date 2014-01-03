@@ -338,7 +338,7 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Const.MaxDrawBuffers = 1;
    ctx->Const.MaxColorAttachments = 1;
 
-   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].PreferDP4 = GL_TRUE;
+   ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].OptimizeForAOS = GL_TRUE;
 
    /* Install the customized pipeline:
     */
