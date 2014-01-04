@@ -335,7 +335,7 @@ intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
  * \param num_samples must be quantized.
  */
 struct intel_renderbuffer *
-intel_create_renderbuffer(gl_format format, unsigned num_samples)
+intel_create_renderbuffer(mesa_format format, unsigned num_samples)
 {
    struct intel_renderbuffer *irb;
    struct gl_renderbuffer *rb;
@@ -373,7 +373,7 @@ intel_create_renderbuffer(gl_format format, unsigned num_samples)
  * \param num_samples must be quantized.
  */
 struct intel_renderbuffer *
-intel_create_private_renderbuffer(gl_format format, unsigned num_samples)
+intel_create_private_renderbuffer(mesa_format format, unsigned num_samples)
 {
    struct intel_renderbuffer *irb;
 
@@ -739,8 +739,8 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
             return mask;
          }
 
-         gl_format src_format = _mesa_get_srgb_format_linear(src_rb->Format);
-         gl_format dst_format = _mesa_get_srgb_format_linear(dst_rb->Format);
+         mesa_format src_format = _mesa_get_srgb_format_linear(src_rb->Format);
+         mesa_format dst_format = _mesa_get_srgb_format_linear(dst_rb->Format);
          if (src_format != dst_format) {
             perf_debug("glBlitFramebuffer(): unsupported blit from %s to %s.  "
                        "Falling back to software rendering.\n",

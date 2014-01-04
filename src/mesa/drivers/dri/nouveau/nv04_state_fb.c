@@ -32,7 +32,7 @@
 #include "nv04_driver.h"
 
 static inline unsigned
-get_rt_format(gl_format format)
+get_rt_format(mesa_format format)
 {
 	switch (format) {
 	case MESA_FORMAT_XRGB8888:

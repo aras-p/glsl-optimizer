@@ -2311,7 +2311,7 @@ unpack_SIGNED_RG1616(const void *src, GLfloat dst[][4], GLuint n)
  * Return the unpacker function for the given format.
  */
 static unpack_rgba_func
-get_unpack_rgba_function(gl_format format)
+get_unpack_rgba_function(mesa_format format)
 {
    static unpack_rgba_func table[MESA_FORMAT_COUNT];
    static GLboolean initialized = GL_FALSE;
@@ -2540,7 +2540,7 @@ get_unpack_rgba_function(gl_format format)
  * Unpack rgba colors, returning as GLfloat values.
  */
 void
-_mesa_unpack_rgba_row(gl_format format, GLuint n,
+_mesa_unpack_rgba_row(mesa_format format, GLuint n,
                       const void *src, GLfloat dst[][4])
 {
    unpack_rgba_func unpack = get_unpack_rgba_function(format);
@@ -2913,7 +2913,7 @@ unpack_ubyte_RG88(const void *src, GLubyte dst[][4], GLuint n)
  * only be used for unpacking formats that use 8 bits or less per channel.
  */
 void
-_mesa_unpack_ubyte_rgba_row(gl_format format, GLuint n,
+_mesa_unpack_ubyte_rgba_row(mesa_format format, GLuint n,
                             const void *src, GLubyte dst[][4])
 {
    switch (format) {
@@ -3640,7 +3640,7 @@ unpack_int_rgba_ABGR2101010(const GLuint *src, GLuint dst[][4], GLuint n)
 }
 
 void
-_mesa_unpack_uint_rgba_row(gl_format format, GLuint n,
+_mesa_unpack_uint_rgba_row(mesa_format format, GLuint n,
                            const void *src, GLuint dst[][4])
 {
    switch (format) {
@@ -3863,7 +3863,7 @@ _mesa_unpack_uint_rgba_row(gl_format format, GLuint n,
  * \param height  height of rect region to convert
  */
 void
-_mesa_unpack_rgba_block(gl_format format,
+_mesa_unpack_rgba_block(mesa_format format,
                         const void *src, GLint srcRowStride,
                         GLfloat dst[][4], GLint dstRowStride,
                         GLuint x, GLuint y, GLuint width, GLuint height)
@@ -3964,7 +3964,7 @@ unpack_float_z_Z32X24S8(GLuint n, const void *src, GLfloat *dst)
  * The returned values will always be in the range [0.0, 1.0].
  */
 void
-_mesa_unpack_float_z_row(gl_format format, GLuint n,
+_mesa_unpack_float_z_row(mesa_format format, GLuint n,
                          const void *src, GLfloat *dst)
 {
    unpack_float_z_func unpack;
@@ -4068,7 +4068,7 @@ unpack_uint_z_Z32_FLOAT_X24S8(const void *src, GLuint *dst, GLuint n)
  * The returned values will always be in the range [0, 0xffffffff].
  */
 void
-_mesa_unpack_uint_z_row(gl_format format, GLuint n,
+_mesa_unpack_uint_z_row(mesa_format format, GLuint n,
                         const void *src, GLuint *dst)
 {
    unpack_uint_z_func unpack;
@@ -4142,7 +4142,7 @@ unpack_ubyte_s_Z32_FLOAT_X24S8(const void *src, GLubyte *dst, GLuint n)
 }
 
 void
-_mesa_unpack_ubyte_stencil_row(gl_format format, GLuint n,
+_mesa_unpack_ubyte_stencil_row(mesa_format format, GLuint n,
 			       const void *src, GLubyte *dst)
 {
    switch (format) {
@@ -4183,7 +4183,7 @@ unpack_uint_24_8_depth_stencil_Z24_S8(const GLuint *src, GLuint *dst, GLuint n)
 }
 
 void
-_mesa_unpack_uint_24_8_depth_stencil_row(gl_format format, GLuint n,
+_mesa_unpack_uint_24_8_depth_stencil_row(mesa_format format, GLuint n,
 					 const void *src, GLuint *dst)
 {
    switch (format) {

@@ -188,12 +188,12 @@ void gen4_init_vtable_surface_functions(struct brw_context *brw);
 uint32_t brw_get_surface_tiling_bits(uint32_t tiling);
 uint32_t brw_get_surface_num_multisamples(unsigned num_samples);
 
-uint32_t brw_format_for_mesa_format(gl_format mesa_format);
+uint32_t brw_format_for_mesa_format(mesa_format mesa_format);
 
 GLuint translate_tex_target(GLenum target);
 
 GLuint translate_tex_format(struct brw_context *brw,
-                            gl_format mesa_format,
+                            mesa_format mesa_format,
 			    GLenum srgb_decode);
 
 int brw_get_texture_swizzle(const struct gl_context *ctx,

@@ -1115,7 +1115,7 @@ struct gl_texture_image
 				 *   GL_DEPTH_STENCIL_EXT only. Used for
 				 *   choosing TexEnv arithmetic.
 				 */
-   gl_format TexFormat;         /**< The actual texture memory format */
+   mesa_format TexFormat;         /**< The actual texture memory format */
 
    GLuint Border;		/**< 0 or 1 */
    GLuint Width;		/**< = 2^WidthLog2 + 2*Border */
@@ -1229,7 +1229,7 @@ struct gl_texture_object
    struct gl_buffer_object *BufferObject;
    GLenum BufferObjectFormat;
    /** Equivalent Mesa format for BufferObjectFormat. */
-   gl_format _BufferObjectFormat;
+   mesa_format _BufferObjectFormat;
    /** GL_ARB_texture_buffer_range */
    GLintptr BufferOffset;
    GLsizeiptr BufferSize; /**< if this is -1, use BufferObject->Size instead */
@@ -2928,7 +2928,7 @@ struct gl_renderbuffer
    GLenum InternalFormat; /**< The user-specified format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
-   gl_format Format;      /**< The actual renderbuffer memory format */
+   mesa_format Format;      /**< The actual renderbuffer memory format */
    /**
     * Pointer to the texture image if this renderbuffer wraps a texture,
     * otherwise NULL.
@@ -3860,7 +3860,7 @@ struct gl_image_unit
    /**
     * Mesa format corresponding to \c Format.
     */
-   gl_format _ActualFormat;
+   mesa_format _ActualFormat;
 
    /**
     * GL_TRUE if the state of this image unit is valid and access from

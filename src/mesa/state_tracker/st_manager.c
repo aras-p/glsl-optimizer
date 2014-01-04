@@ -508,7 +508,7 @@ st_context_teximage(struct st_context_iface *stctxi,
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    stImage = st_texture_image(texImage);
    if (tex) {
-      gl_format texFormat = st_pipe_format_to_mesa_format(pipe_format);
+      mesa_format texFormat = st_pipe_format_to_mesa_format(pipe_format);
 
       if (util_format_has_alpha(tex->format))
          internalFormat = GL_RGBA;

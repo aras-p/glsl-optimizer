@@ -29,7 +29,7 @@ void
 radeon_renderbuffer_set_bo(struct radeon_renderbuffer *rb,
 			   struct radeon_bo *bo);
 struct radeon_renderbuffer *
-radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv);
+radeon_create_renderbuffer(mesa_format format, __DRIdrawable *driDrawPriv);
 
 void
 radeonReadPixels(struct gl_context * ctx,

@@ -303,7 +303,7 @@ intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
  * not a user-created renderbuffer.
  */
 struct intel_renderbuffer *
-intel_create_renderbuffer(gl_format format)
+intel_create_renderbuffer(mesa_format format)
 {
    struct intel_renderbuffer *irb;
    struct gl_renderbuffer *rb;
@@ -338,7 +338,7 @@ intel_create_renderbuffer(gl_format format)
  * may be called at intel_update_renderbuffers() time.
  */
 struct intel_renderbuffer *
-intel_create_private_renderbuffer(gl_format format)
+intel_create_private_renderbuffer(mesa_format format)
 {
    struct intel_renderbuffer *irb;
 
@@ -682,8 +682,8 @@ intel_blit_framebuffer_with_blitter(struct gl_context *ctx,
             return mask;
          }
 
-         gl_format src_format = _mesa_get_srgb_format_linear(src_rb->Format);
-         gl_format dst_format = _mesa_get_srgb_format_linear(dst_rb->Format);
+         mesa_format src_format = _mesa_get_srgb_format_linear(src_rb->Format);
+         mesa_format dst_format = _mesa_get_srgb_format_linear(dst_rb->Format);
          if (src_format != dst_format) {
             perf_debug("glBlitFramebuffer(): unsupported blit from %s to %s.  "
                        "Falling back to software rendering.\n",

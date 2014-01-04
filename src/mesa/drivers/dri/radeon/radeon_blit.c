@@ -38,7 +38,7 @@ static inline uint32_t cmdpacket0(struct radeon_screen *rscrn,
 }
 
 /* common formats supported as both textures and render targets */
-unsigned r100_check_blit(gl_format mesa_format, uint32_t dst_pitch)
+unsigned r100_check_blit(mesa_format mesa_format, uint32_t dst_pitch)
 {
     /* XXX others?  BE/LE? */
     switch (mesa_format) {
@@ -92,7 +92,7 @@ static inline void emit_vtx_state(struct r100_context *r100)
 }
 
 static void inline emit_tx_setup(struct r100_context *r100,
-				 gl_format mesa_format,
+				 mesa_format mesa_format,
 				 struct radeon_bo *bo,
 				 intptr_t offset,
 				 unsigned width,
@@ -175,7 +175,7 @@ static void inline emit_tx_setup(struct r100_context *r100,
 static inline void emit_cb_setup(struct r100_context *r100,
 				 struct radeon_bo *bo,
 				 intptr_t offset,
-				 gl_format mesa_format,
+				 mesa_format mesa_format,
 				 unsigned pitch,
 				 unsigned width,
 				 unsigned height)
@@ -341,7 +341,7 @@ static inline void emit_draw_packet(struct r100_context *r100,
 unsigned r100_blit(struct gl_context *ctx,
                    struct radeon_bo *src_bo,
                    intptr_t src_offset,
-                   gl_format src_mesaformat,
+                   mesa_format src_mesaformat,
                    unsigned src_pitch,
                    unsigned src_width,
                    unsigned src_height,
@@ -349,7 +349,7 @@ unsigned r100_blit(struct gl_context *ctx,
                    unsigned src_y_offset,
                    struct radeon_bo *dst_bo,
                    intptr_t dst_offset,
-                   gl_format dst_mesaformat,
+                   mesa_format dst_mesaformat,
                    unsigned dst_pitch,
                    unsigned dst_width,
                    unsigned dst_height,

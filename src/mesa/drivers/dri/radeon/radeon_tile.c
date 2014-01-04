@@ -211,7 +211,7 @@ static void micro_tile_1_x_1_128bit(const void * src, unsigned src_pitch,
 
 void tile_image(const void * src, unsigned src_pitch,
                 void *dst, unsigned dst_pitch,
-                gl_format format, unsigned width, unsigned height)
+                mesa_format format, unsigned width, unsigned height)
 {
     assert(src_pitch >= width);
     assert(dst_pitch >= width);
@@ -435,7 +435,7 @@ static void micro_untile_1_x_1_128bit(const void * src, unsigned src_pitch,
 
 void untile_image(const void * src, unsigned src_pitch,
                   void *dst, unsigned dst_pitch,
-                  gl_format format, unsigned width, unsigned height)
+                  mesa_format format, unsigned width, unsigned height)
 {
     assert(src_pitch >= width);
     assert(dst_pitch >= width);
@@ -474,7 +474,7 @@ void untile_image(const void * src, unsigned src_pitch,
     }
 }
 
-void get_tile_size(gl_format format, unsigned *block_width, unsigned *block_height)
+void get_tile_size(mesa_format format, unsigned *block_width, unsigned *block_height)
 {
     switch (_mesa_get_format_bytes(format))
     {

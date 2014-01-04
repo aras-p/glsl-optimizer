@@ -1050,7 +1050,7 @@ _swrast_choose_triangle( struct gl_context *ctx )
          const struct gl_texture_image *texImg;
          const struct swrast_texture_image *swImg;
          GLenum minFilter, magFilter, envMode;
-         gl_format format;
+         mesa_format format;
          texObj2D = ctx->Texture.Unit[0].CurrentTex[TEXTURE_2D_INDEX];
          if (ctx->Texture.Unit[0].Sampler)
             samp = ctx->Texture.Unit[0].Sampler;

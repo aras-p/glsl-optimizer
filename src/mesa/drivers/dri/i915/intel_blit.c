@@ -120,8 +120,8 @@ intel_miptree_blit(struct intel_context *intel,
     * consistent with what we want in the callers (glCopyTexSubImage(),
     * glBlitFramebuffer(), texture validation, etc.).
     */
-   gl_format src_format = _mesa_get_srgb_format_linear(src_mt->format);
-   gl_format dst_format = _mesa_get_srgb_format_linear(dst_mt->format);
+   mesa_format src_format = _mesa_get_srgb_format_linear(src_mt->format);
+   mesa_format dst_format = _mesa_get_srgb_format_linear(dst_mt->format);
 
    /* The blitter doesn't support doing any format conversions.  We do also
     * support blitting ARGB8888 to XRGB8888 (trivial, the values dropped into

@@ -598,7 +598,7 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 	struct radeon_framebuffer *rfb;
 	radeonTexObjPtr t;
 	uint32_t pitch_val;
-	gl_format texFormat;
+	mesa_format texFormat;
 
 	radeon = pDRICtx->driverPrivate;
 

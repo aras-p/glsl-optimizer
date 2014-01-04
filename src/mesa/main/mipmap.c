@@ -1816,7 +1816,7 @@ GLboolean
 _mesa_prepare_mipmap_level(struct gl_context *ctx,
                            struct gl_texture_object *texObj, GLuint level,
                            GLsizei width, GLsizei height, GLsizei depth,
-                           GLsizei border, GLenum intFormat, gl_format format)
+                           GLsizei border, GLenum intFormat, mesa_format format)
 {
    const GLuint numFaces = _mesa_num_tex_faces(texObj->Target);
    GLuint face;
@@ -2018,7 +2018,7 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
 			   GLuint maxLevel)
 {
    GLuint level;
-   gl_format temp_format;
+   mesa_format temp_format;
    GLint components;
    GLuint temp_src_row_stride, temp_src_img_stride; /* in bytes */
    GLubyte *temp_src = NULL, *temp_dst = NULL;

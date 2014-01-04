@@ -237,7 +237,7 @@ brw_update_buffer_texture_surface(struct gl_context *ctx,
       intel_buffer_object(tObj->BufferObject);
    uint32_t size = tObj->BufferSize;
    drm_intel_bo *bo = NULL;
-   gl_format format = tObj->_BufferObjectFormat;
+   mesa_format format = tObj->_BufferObjectFormat;
    uint32_t brw_format = brw_format_for_mesa_format(format);
    int texel_size = _mesa_get_format_bytes(format);
 
@@ -596,7 +596,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    uint32_t tile_x, tile_y;
    uint32_t format = 0;
    /* _NEW_BUFFERS */
-   gl_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
+   mesa_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
    uint32_t surf_index =
       brw->wm.prog_data->binding_table.render_target_start + unit;
 

@@ -45,7 +45,7 @@
  * Return true if the conversion L=R+G+B is needed.
  */
 static GLboolean
-need_rgb_to_luminance_conversion(gl_format texFormat, GLenum format)
+need_rgb_to_luminance_conversion(mesa_format texFormat, GLenum format)
 {
    GLenum baseTexFormat = _mesa_get_format_base_format(texFormat);
 
@@ -60,7 +60,7 @@ need_rgb_to_luminance_conversion(gl_format texFormat, GLenum format)
  * Return transfer op flags for this ReadPixels operation.
  */
 static GLbitfield
-get_readpixels_transfer_ops(const struct gl_context *ctx, gl_format texFormat,
+get_readpixels_transfer_ops(const struct gl_context *ctx, mesa_format texFormat,
                             GLenum format, GLenum type, GLboolean uses_blit)
 {
    GLbitfield transferOps = ctx->_ImageTransferState;
@@ -493,7 +493,7 @@ slow_read_rgba_pixels( struct gl_context *ctx,
 		       GLbitfield transferOps )
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-   const gl_format rbFormat = _mesa_get_srgb_format_linear(rb->Format);
+   const mesa_format rbFormat = _mesa_get_srgb_format_linear(rb->Format);
    void *rgba;
    GLubyte *dst, *map;
    int dstStride, stride, j;

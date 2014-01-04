@@ -628,7 +628,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
     * the function.
     */
    DBG("%s: level=%d offset=(%d,%d) (w,h)=(%d,%d) format=0x%x type=0x%x "
-       "gl_format=0x%x tiling=%d "
+       "mesa_format=0x%x tiling=%d "
        "packing=(alignment=%d row_length=%d skip_pixels=%d skip_rows=%d) "
        "for_glTexImage=%d\n",
        __FUNCTION__, texImage->Level, xoffset, yoffset, width, height,

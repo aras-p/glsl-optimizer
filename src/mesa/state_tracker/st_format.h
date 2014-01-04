@@ -41,9 +41,9 @@ struct pipe_screen;
 
 
 extern enum pipe_format
-st_mesa_format_to_pipe_format(gl_format mesaFormat);
+st_mesa_format_to_pipe_format(mesa_format mesaFormat);
 
-extern gl_format
+extern mesa_format
 st_pipe_format_to_mesa_format(enum pipe_format pipeFormat);
 
 
@@ -61,7 +61,7 @@ extern enum pipe_format
 st_choose_matching_format(struct pipe_screen *screen, unsigned bind,
 			  GLenum format, GLenum type, GLboolean swapBytes);
 
-extern gl_format
+extern mesa_format
 st_ChooseTextureFormat(struct gl_context * ctx, GLenum target,
                        GLint internalFormat,
                        GLenum format, GLenum type);

@@ -469,7 +469,7 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
       if (fb->Attachment[i].Renderbuffer) {
          const struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
          const GLenum baseFormat = _mesa_get_format_base_format(rb->Format);
-         const gl_format fmt = rb->Format;
+         const mesa_format fmt = rb->Format;
 
          /* Grab samples and sampleBuffers from any attachment point (assuming
           * the framebuffer is complete, we'll get the same answer from all
@@ -496,7 +496,7 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
    for (i = 0; i < BUFFER_COUNT; i++) {
       if (fb->Attachment[i].Renderbuffer) {
          const struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
-         const gl_format fmt = rb->Format;
+         const mesa_format fmt = rb->Format;
 
          if (_mesa_get_format_datatype(fmt) == GL_FLOAT) {
             fb->Visual.floatMode = GL_TRUE;
@@ -508,7 +508,7 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
    if (fb->Attachment[BUFFER_DEPTH].Renderbuffer) {
       const struct gl_renderbuffer *rb =
          fb->Attachment[BUFFER_DEPTH].Renderbuffer;
-      const gl_format fmt = rb->Format;
+      const mesa_format fmt = rb->Format;
       fb->Visual.haveDepthBuffer = GL_TRUE;
       fb->Visual.depthBits = _mesa_get_format_bits(fmt, GL_DEPTH_BITS);
    }
@@ -516,7 +516,7 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
    if (fb->Attachment[BUFFER_STENCIL].Renderbuffer) {
       const struct gl_renderbuffer *rb =
          fb->Attachment[BUFFER_STENCIL].Renderbuffer;
-      const gl_format fmt = rb->Format;
+      const mesa_format fmt = rb->Format;
       fb->Visual.haveStencilBuffer = GL_TRUE;
       fb->Visual.stencilBits = _mesa_get_format_bits(fmt, GL_STENCIL_BITS);
    }
@@ -524,7 +524,7 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
    if (fb->Attachment[BUFFER_ACCUM].Renderbuffer) {
       const struct gl_renderbuffer *rb =
          fb->Attachment[BUFFER_ACCUM].Renderbuffer;
-      const gl_format fmt = rb->Format;
+      const mesa_format fmt = rb->Format;
       fb->Visual.haveAccumBuffer = GL_TRUE;
       fb->Visual.accumRedBits = _mesa_get_format_bits(fmt, GL_RED_BITS);
       fb->Visual.accumGreenBits = _mesa_get_format_bits(fmt, GL_GREEN_BITS);

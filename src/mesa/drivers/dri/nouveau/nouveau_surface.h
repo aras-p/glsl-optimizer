@@ -39,7 +39,7 @@ struct nouveau_surface {
 
 	enum nouveau_surface_layout layout;
 
-	gl_format format;
+	mesa_format format;
 	unsigned cpp, pitch;
 
 	unsigned width, height;

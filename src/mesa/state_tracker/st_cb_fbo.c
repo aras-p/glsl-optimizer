@@ -541,7 +541,7 @@ st_validate_attachment(struct gl_context *ctx,
 {
    const struct st_texture_object *stObj = st_texture_object(att->Texture);
    enum pipe_format format;
-   gl_format texFormat;
+   mesa_format texFormat;
    GLboolean valid;
 
    /* Sanity check: we must be binding the surface as a (color) render target
@@ -568,7 +568,7 @@ st_validate_attachment(struct gl_context *ctx,
     * Later when we create a surface, we change the format to a linear one. */
    if (!ctx->Extensions.EXT_framebuffer_sRGB &&
        _mesa_get_format_color_encoding(texFormat) == GL_SRGB) {
-      const gl_format linearFormat = _mesa_get_srgb_format_linear(texFormat);
+      const mesa_format linearFormat = _mesa_get_srgb_format_linear(texFormat);
       format = st_mesa_format_to_pipe_format(linearFormat);
    }
 

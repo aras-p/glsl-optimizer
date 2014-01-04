@@ -33,12 +33,12 @@
 
 #include "main/formats.h"
 
-extern gl_format _radeon_texformat_rgba8888;
-extern gl_format _radeon_texformat_argb8888;
-extern gl_format _radeon_texformat_rgb565;
-extern gl_format _radeon_texformat_argb4444;
-extern gl_format _radeon_texformat_argb1555;
-extern gl_format _radeon_texformat_al88;
+extern mesa_format _radeon_texformat_rgba8888;
+extern mesa_format _radeon_texformat_argb8888;
+extern mesa_format _radeon_texformat_rgb565;
+extern mesa_format _radeon_texformat_argb4444;
+extern mesa_format _radeon_texformat_argb1555;
+extern mesa_format _radeon_texformat_al88;
 
 extern 
 void copy_rows(void* dst, GLuint dststride, const void* src, GLuint srcstride,
@@ -51,13 +51,13 @@ int radeon_validate_texture_miptree(struct gl_context * ctx,
 				    struct gl_texture_object *texObj);
 
 
-gl_format radeonChooseTextureFormat_mesa(struct gl_context * ctx,
+mesa_format radeonChooseTextureFormat_mesa(struct gl_context * ctx,
                                          GLenum target,
                                          GLint internalFormat,
                                          GLenum format,
                                          GLenum type);
 
-gl_format radeonChooseTextureFormat(struct gl_context * ctx,
+mesa_format radeonChooseTextureFormat(struct gl_context * ctx,
                                     GLint internalFormat,
                                     GLenum format,
                                     GLenum type, GLboolean fbo);
@@ -69,7 +69,7 @@ void radeonCopyTexSubImage(struct gl_context *ctx, GLuint dims,
                            GLint x, GLint y,
                            GLsizei width, GLsizei height);
 
-unsigned radeonIsFormatRenderable(gl_format mesa_format);
+unsigned radeonIsFormatRenderable(mesa_format mesa_format);
 
 void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 				    struct gl_texture_object *texObj,

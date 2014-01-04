@@ -182,7 +182,7 @@ struct dd_function_table {
     * GL_TEXTURE_CUBE_MAP_[POSITIVE/NEGATIVE]_[XYZ].
     * Called by glTexImage(), etc.
     */
-   gl_format (*ChooseTextureFormat)( struct gl_context *ctx,
+   mesa_format (*ChooseTextureFormat)( struct gl_context *ctx,
                                      GLenum target, GLint internalFormat,
                                      GLenum srcFormat, GLenum srcType );
 
@@ -268,7 +268,7 @@ struct dd_function_table {
     * \return GL_TRUE if the image is OK, GL_FALSE if too large
     */
    GLboolean (*TestProxyTexImage)(struct gl_context *ctx, GLenum target,
-                                  GLint level, gl_format format,
+                                  GLint level, mesa_format format,
                                   GLint width, GLint height,
                                   GLint depth, GLint border);
    /*@}*/

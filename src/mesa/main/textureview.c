@@ -196,7 +196,7 @@ initialize_texture_fields(struct gl_context *ctx,
                           struct gl_texture_object *texObj,
                           GLint levels,
                           GLsizei width, GLsizei height, GLsizei depth,
-                          GLenum internalFormat, gl_format texFormat)
+                          GLenum internalFormat, mesa_format texFormat)
 {
    const GLuint numFaces = _mesa_num_tex_faces(target);
    GLint level, levelWidth = width, levelHeight = height, levelDepth = depth;
@@ -430,7 +430,7 @@ _mesa_TextureView(GLuint texture, GLenum target, GLuint origtexture,
    GLuint newViewMinLevel, newViewMinLayer;
    GLuint newViewNumLevels, newViewNumLayers;
    GLsizei width, height, depth;
-   gl_format texFormat;
+   mesa_format texFormat;
    GLboolean sizeOK, dimensionsOK;
    GLenum faceTarget;
 

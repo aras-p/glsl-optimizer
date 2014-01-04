@@ -1081,7 +1081,7 @@ get_tex_level_parameter_image(struct gl_context *ctx,
                               GLenum pname, GLint *params)
 {
    const struct gl_texture_image *img = NULL;
-   gl_format texFormat;
+   mesa_format texFormat;
 
    img = _mesa_select_tex_image(ctx, texObj, target, level);
    if (!img || img->TexFormat == MESA_FORMAT_NONE) {
@@ -1237,7 +1237,7 @@ get_tex_level_parameter_buffer(struct gl_context *ctx,
                                GLenum pname, GLint *params)
 {
    const struct gl_buffer_object *bo = texObj->BufferObject;
-   gl_format texFormat = texObj->_BufferObjectFormat;
+   mesa_format texFormat = texObj->_BufferObjectFormat;
    GLenum internalFormat = texObj->BufferObjectFormat;
    GLenum baseFormat = _mesa_get_format_base_format(texFormat);
 

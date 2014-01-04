@@ -219,7 +219,7 @@ intel_set_texture_image_region(struct gl_context *ctx,
 			       struct intel_region *region,
 			       GLenum target,
 			       GLenum internalFormat,
-			       gl_format format,
+			       mesa_format format,
                                uint32_t offset,
                                GLuint width,
                                GLuint height,
@@ -287,7 +287,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    int level = 0, internalFormat = 0;
-   gl_format texFormat = MESA_FORMAT_NONE;
+   mesa_format texFormat = MESA_FORMAT_NONE;
 
    texObj = _mesa_get_current_tex_object(ctx, target);
    intelObj = intel_texture_object(texObj);

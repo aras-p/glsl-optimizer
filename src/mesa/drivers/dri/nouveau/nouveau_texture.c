@@ -160,7 +160,7 @@ nouveau_unmap_texture_image(struct gl_context *ctx, struct gl_texture_image *ti,
 	}
 }
 
-static gl_format
+static mesa_format
 nouveau_choose_tex_format(struct gl_context *ctx, GLenum target,
                           GLint internalFormat,
 			  GLenum srcFormat, GLenum srcType)
@@ -581,7 +581,7 @@ nouveau_bind_texture(struct gl_context *ctx, GLenum target,
 	context_dirty_i(ctx, TEX_ENV, ctx->Texture.CurrentUnit);
 }
 
-static gl_format
+static mesa_format
 get_texbuffer_format(struct gl_renderbuffer *rb, GLint format)
 {
 	struct nouveau_surface *s = &to_nouveau_renderbuffer(rb)->surface;

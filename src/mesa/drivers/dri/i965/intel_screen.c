@@ -962,7 +962,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 {
    struct intel_renderbuffer *rb;
    struct intel_screen *screen = (struct intel_screen*) driScrnPriv->driverPrivate;
-   gl_format rgbFormat;
+   mesa_format rgbFormat;
    unsigned num_samples = intel_quantize_num_samples(screen, mesaVis->samples);
    struct gl_framebuffer *fb;
 
@@ -1124,7 +1124,7 @@ intel_supported_msaa_modes(const struct intel_screen  *screen)
 static __DRIconfig**
 intel_screen_make_configs(__DRIscreen *dri_screen)
 {
-   static const gl_format formats[] = {
+   static const mesa_format formats[] = {
       MESA_FORMAT_RGB565,
       MESA_FORMAT_ARGB8888
    };

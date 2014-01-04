@@ -1325,7 +1325,7 @@ _mesa_init_teximage_fields(struct gl_context *ctx,
                            struct gl_texture_image *img,
                            GLsizei width, GLsizei height, GLsizei depth,
                            GLint border, GLenum internalFormat,
-                           gl_format format)
+                           mesa_format format)
 {
    GLenum target;
    ASSERT(img);
@@ -1748,7 +1748,7 @@ error_check_subtexture_dimensions(struct gl_context *ctx,
  */
 GLboolean
 _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
-                          gl_format format,
+                          mesa_format format,
                           GLint width, GLint height, GLint depth, GLint border)
 {
    /* We just check if the image size is less than MaxTextureMbytes.
@@ -1957,7 +1957,7 @@ static GLuint
 compressed_tex_size(GLsizei width, GLsizei height, GLsizei depth,
                     GLenum glformat)
 {
-   gl_format mesaFormat = _mesa_glenum_to_compressed_format(glformat);
+   mesa_format mesaFormat = _mesa_glenum_to_compressed_format(glformat);
    return _mesa_format_image_size(mesaFormat, width, height, depth);
 }
 
@@ -2964,13 +2964,13 @@ override_internal_format(GLenum internalFormat, GLint width, GLint height)
  * for efficient texture memory layout/allocation.  In particular, this
  * comes up during automatic mipmap generation.
  */
-gl_format
+mesa_format
 _mesa_choose_texture_format(struct gl_context *ctx,
                             struct gl_texture_object *texObj,
                             GLenum target, GLint level,
                             GLenum internalFormat, GLenum format, GLenum type)
 {
-   gl_format f;
+   mesa_format f;
 
    /* see if we've already chosen a format for the previous level */
    if (level > 0) {
@@ -3092,7 +3092,7 @@ teximage(struct gl_context *ctx, GLboolean compressed, GLuint dims,
    struct gl_pixelstore_attrib unpack_no_border;
    const struct gl_pixelstore_attrib *unpack = &ctx->Unpack;
    struct gl_texture_object *texObj;
-   gl_format texFormat;
+   mesa_format texFormat;
    GLboolean dimensionsOK, sizeOK;
 
    FLUSH_VERTICES(ctx, 0);
@@ -3516,7 +3516,7 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
  * from.  This depends on whether the texture contains color or depth values.
  */
 static struct gl_renderbuffer *
-get_copy_tex_image_source(struct gl_context *ctx, gl_format texFormat)
+get_copy_tex_image_source(struct gl_context *ctx, mesa_format texFormat)
 {
    if (_mesa_get_format_bits(texFormat, GL_DEPTH_BITS) > 0) {
       /* reading from depth/stencil buffer */
@@ -3570,7 +3570,7 @@ copyteximage(struct gl_context *ctx, GLuint dims,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    const GLuint face = _mesa_tex_target_to_face(target);
-   gl_format texFormat;
+   mesa_format texFormat;
 
    FLUSH_VERTICES(ctx, 0);
 
@@ -4008,7 +4008,7 @@ _mesa_CompressedTexSubImage3D(GLenum target, GLint level, GLint xoffset,
                             width, height, depth, format, imageSize, data);
 }
 
-static gl_format
+static mesa_format
 get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
 {
    if (ctx->API != API_OPENGL_CORE) {
@@ -4182,11 +4182,11 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
 }
 
 
-gl_format
+mesa_format
 _mesa_validate_texbuffer_format(const struct gl_context *ctx,
                                 GLenum internalFormat)
 {
-   gl_format format = get_texbuffer_format(ctx, internalFormat);
+   mesa_format format = get_texbuffer_format(ctx, internalFormat);
    GLenum datatype;
 
    if (format == MESA_FORMAT_NONE)
@@ -4220,7 +4220,7 @@ texbufferrange(struct gl_context *ctx, GLenum target, GLenum internalFormat,
                GLintptr offset, GLsizeiptr size)
 {
    struct gl_texture_object *texObj;
-   gl_format format;
+   mesa_format format;
 
    FLUSH_VERTICES(ctx, 0);
 
@@ -4357,7 +4357,7 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLboolean sizeOK, dimensionsOK;
-   gl_format texFormat;
+   mesa_format texFormat;
    GLenum sample_count_error;
 
    GET_CURRENT_CONTEXT(ctx);

@@ -923,7 +923,7 @@ _mesa_swizzle_ubyte_image(struct gl_context *ctx,
 static void
 memcpy_texture(struct gl_context *ctx,
 	       GLuint dimensions,
-               gl_format dstFormat,
+               mesa_format dstFormat,
                GLint dstRowStride,
                GLubyte **dstSlices,
                GLint srcWidth, GLint srcHeight, GLint srcDepth,
@@ -3235,7 +3235,7 @@ _mesa_texstore_rgba_uint32(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_srgb8(TEXSTORE_PARAMS)
 {
-   gl_format newDstFormat;
+   mesa_format newDstFormat;
    GLboolean k;
 
    ASSERT(dstFormat == MESA_FORMAT_SRGB8);
@@ -3256,7 +3256,7 @@ _mesa_texstore_srgb8(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_srgba8(TEXSTORE_PARAMS)
 {
-   gl_format newDstFormat;
+   mesa_format newDstFormat;
    GLboolean k;
 
    ASSERT(dstFormat == MESA_FORMAT_SRGBA8 ||
@@ -3287,7 +3287,7 @@ _mesa_texstore_srgba8(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_sargb8(TEXSTORE_PARAMS)
 {
-   gl_format newDstFormat;
+   mesa_format newDstFormat;
    GLboolean k;
 
    ASSERT(dstFormat == MESA_FORMAT_SARGB8);
@@ -3308,7 +3308,7 @@ _mesa_texstore_sargb8(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_sl8(TEXSTORE_PARAMS)
 {
-   gl_format newDstFormat;
+   mesa_format newDstFormat;
    GLboolean k;
 
    ASSERT(dstFormat == MESA_FORMAT_SL8);
@@ -3329,7 +3329,7 @@ _mesa_texstore_sl8(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_sla8(TEXSTORE_PARAMS)
 {
-   gl_format newDstFormat;
+   mesa_format newDstFormat;
    GLboolean k;
 
    ASSERT(dstFormat == MESA_FORMAT_SLA8);
@@ -3652,7 +3652,7 @@ _mesa_texstore_null(TEXSTORE_PARAMS)
  * Return the StoreTexImageFunc pointer to store an image in the given format.
  */
 static StoreTexImageFunc
-_mesa_get_texstore_func(gl_format format)
+_mesa_get_texstore_func(mesa_format format)
 {
    static StoreTexImageFunc table[MESA_FORMAT_COUNT];
    static GLboolean initialized = GL_FALSE;
@@ -3870,7 +3870,7 @@ _mesa_get_texstore_func(gl_format format)
 GLboolean
 _mesa_texstore_needs_transfer_ops(struct gl_context *ctx,
                                   GLenum baseInternalFormat,
-                                  gl_format dstFormat)
+                                  mesa_format dstFormat)
 {
    GLenum dstType;
 
@@ -3899,7 +3899,7 @@ _mesa_texstore_needs_transfer_ops(struct gl_context *ctx,
 
 GLboolean
 _mesa_texstore_can_use_memcpy(struct gl_context *ctx,
-                              GLenum baseInternalFormat, gl_format dstFormat,
+                              GLenum baseInternalFormat, mesa_format dstFormat,
                               GLenum srcFormat, GLenum srcType,
                               const struct gl_pixelstore_attrib *srcPacking)
 {
@@ -3977,7 +3977,7 @@ _mesa_texstore(TEXSTORE_PARAMS)
  * \param texFormat  the destination texture format
  */
 static GLbitfield
-get_read_write_mode(GLenum userFormat, gl_format texFormat)
+get_read_write_mode(GLenum userFormat, mesa_format texFormat)
 {
    if ((userFormat == GL_STENCIL_INDEX || userFormat == GL_DEPTH_COMPONENT)
        && _mesa_get_format_base_format(texFormat) == GL_DEPTH_STENCIL)
@@ -4220,7 +4220,7 @@ _mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
    GLint i, rows;
    GLubyte *dstMap;
    const GLubyte *src;
-   const gl_format texFormat = texImage->TexFormat;
+   const mesa_format texFormat = texImage->TexFormat;
    GLuint bw, bh;
    GLint slice;
 

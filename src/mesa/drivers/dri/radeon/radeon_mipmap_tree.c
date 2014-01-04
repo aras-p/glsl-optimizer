@@ -39,7 +39,7 @@
 #include "radeon_tile.h"
 
 static unsigned get_aligned_compressed_row_stride(
-		gl_format format,
+		mesa_format format,
 		unsigned width,
 		unsigned minStride)
 {
@@ -71,7 +71,7 @@ static unsigned get_aligned_compressed_row_stride(
 }
 
 unsigned get_texture_image_size(
-		gl_format format,
+		mesa_format format,
 		unsigned rowStride,
 		unsigned height,
 		unsigned depth,
@@ -96,7 +96,7 @@ unsigned get_texture_image_size(
 	return rowStride * height * depth;
 }
 
-unsigned get_texture_image_row_stride(radeonContextPtr rmesa, gl_format format, unsigned width, unsigned tiling, GLuint target)
+unsigned get_texture_image_row_stride(radeonContextPtr rmesa, mesa_format format, unsigned width, unsigned tiling, GLuint target)
 {
 	if (_mesa_is_format_compressed(format)) {
 		return get_aligned_compressed_row_stride(format, width, rmesa->texture_compressed_row_align);
@@ -177,7 +177,7 @@ static void calculate_miptree_layout(radeonContextPtr rmesa, radeon_mipmap_tree 
  * Create a new mipmap tree, calculate its layout and allocate memory.
  */
 radeon_mipmap_tree* radeon_miptree_create(radeonContextPtr rmesa,
-					  GLenum target, gl_format mesaFormat, GLuint baseLevel, GLuint numLevels,
+					  GLenum target, mesa_format mesaFormat, GLuint baseLevel, GLuint numLevels,
 					  GLuint width0, GLuint height0, GLuint depth0, GLuint tilebits)
 {
 	radeon_mipmap_tree *mt = CALLOC_STRUCT(_radeon_mipmap_tree);

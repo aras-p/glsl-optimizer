@@ -361,7 +361,7 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
 /**
  * Convert a compressed MESA_FORMAT_x to a GLenum.
  */
-gl_format
+mesa_format
 _mesa_glenum_to_compressed_format(GLenum format)
 {
    switch (format) {
@@ -451,7 +451,7 @@ _mesa_glenum_to_compressed_format(GLenum format)
  * internal format unchanged.
  */
 GLenum
-_mesa_compressed_format_to_glenum(struct gl_context *ctx, gl_format mesaFormat)
+_mesa_compressed_format_to_glenum(struct gl_context *ctx, mesa_format mesaFormat)
 {
    switch (mesaFormat) {
    case MESA_FORMAT_RGB_FXT1:
@@ -535,7 +535,7 @@ _mesa_compressed_format_to_glenum(struct gl_context *ctx, gl_format mesaFormat)
  */
 GLubyte *
 _mesa_compressed_image_address(GLint col, GLint row, GLint img,
-                               gl_format mesaFormat,
+                               mesa_format mesaFormat,
                                GLsizei width, const GLubyte *image)
 {
    /* XXX only 2D images implemented, not 3D */
@@ -560,7 +560,7 @@ _mesa_compressed_image_address(GLint col, GLint row, GLint img,
  * invalid format.
  */
 compressed_fetch_func
-_mesa_get_compressed_fetch_func(gl_format format)
+_mesa_get_compressed_fetch_func(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_RGB_DXT1:
@@ -598,7 +598,7 @@ _mesa_get_compressed_fetch_func(gl_format format)
  *                      compressed source image.
  */
 void
-_mesa_decompress_image(gl_format format, GLuint width, GLuint height,
+_mesa_decompress_image(mesa_format format, GLuint width, GLuint height,
                        const GLubyte *src, GLint srcRowStride,
                        GLfloat *dest)
 {

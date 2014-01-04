@@ -35,7 +35,7 @@
  */
 struct gl_format_info
 {
-   gl_format Name;
+   mesa_format Name;
 
    /** text name for debugging */
    const char *StrName;
@@ -1795,7 +1795,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
 
 
 static const struct gl_format_info *
-_mesa_get_format_info(gl_format format)
+_mesa_get_format_info(mesa_format format)
 {
    const struct gl_format_info *info = &format_info[format];
    assert(info->Name == format);
@@ -1805,7 +1805,7 @@ _mesa_get_format_info(gl_format format)
 
 /** Return string name of format (for debugging) */
 const char *
-_mesa_get_format_name(gl_format format)
+_mesa_get_format_name(mesa_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    return info->StrName;
@@ -1821,7 +1821,7 @@ _mesa_get_format_name(gl_format format)
  * Note: not GLuint, so as not to coerce math to unsigned. cf. fdo #37351
  */
 GLint
-_mesa_get_format_bytes(gl_format format)
+_mesa_get_format_bytes(mesa_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    ASSERT(info->BytesPerBlock);
@@ -1837,7 +1837,7 @@ _mesa_get_format_bytes(gl_format format)
  * \param pname  the component, such as GL_RED_BITS, GL_TEXTURE_BLUE_BITS, etc.
  */
 GLint
-_mesa_get_format_bits(gl_format format, GLenum pname)
+_mesa_get_format_bits(mesa_format format, GLenum pname)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
 
@@ -1886,7 +1886,7 @@ _mesa_get_format_bits(gl_format format, GLenum pname)
 
 
 GLuint
-_mesa_get_format_max_bits(gl_format format)
+_mesa_get_format_max_bits(mesa_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    GLuint max = MAX2(info->RedBits, info->GreenBits);
@@ -1911,7 +1911,7 @@ _mesa_get_format_max_bits(gl_format format)
  *    GL_FLOAT = an ordinary float
  */
 GLenum
-_mesa_get_format_datatype(gl_format format)
+_mesa_get_format_datatype(mesa_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    return info->DataType;
@@ -1924,7 +1924,7 @@ _mesa_get_format_datatype(gl_format format)
  * GL_YCBCR_MESA, GL_DEPTH_COMPONENT, GL_STENCIL_INDEX, GL_DEPTH_STENCIL.
  */
 GLenum
-_mesa_get_format_base_format(gl_format format)
+_mesa_get_format_base_format(mesa_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    return info->BaseFormat;
@@ -1939,7 +1939,7 @@ _mesa_get_format_base_format(gl_format format)
  * \param bh  returns block height in pixels
  */
 void
-_mesa_get_format_block_size(gl_format format, GLuint *bw, GLuint *bh)
+_mesa_get_format_block_size(mesa_format format, GLuint *bw, GLuint *bh)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    *bw = info->BlockWidth;
@@ -1949,7 +1949,7 @@ _mesa_get_format_block_size(gl_format format, GLuint *bw, GLuint *bh)
 
 /** Is the given format a compressed format? */
 GLboolean
-_mesa_is_format_compressed(gl_format format)
+_mesa_is_format_compressed(mesa_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    return info->BlockWidth > 1 || info->BlockHeight > 1;
@@ -1960,7 +1960,7 @@ _mesa_is_format_compressed(gl_format format)
  * Determine if the given format represents a packed depth/stencil buffer.
  */
 GLboolean
-_mesa_is_format_packed_depth_stencil(gl_format format)
+_mesa_is_format_packed_depth_stencil(mesa_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
 
@@ -1972,7 +1972,7 @@ _mesa_is_format_packed_depth_stencil(gl_format format)
  * Is the given format a signed/unsigned integer color format?
  */
 GLboolean
-_mesa_is_format_integer_color(gl_format format)
+_mesa_is_format_integer_color(mesa_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    return (info->DataType == GL_INT || info->DataType == GL_UNSIGNED_INT) &&
@@ -1986,7 +1986,7 @@ _mesa_is_format_integer_color(gl_format format)
  * Is the given format an unsigned integer format?
  */
 GLboolean
-_mesa_is_format_unsigned(gl_format format)
+_mesa_is_format_unsigned(mesa_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    return _mesa_is_type_unsigned(info->DataType);
@@ -1997,7 +1997,7 @@ _mesa_is_format_unsigned(gl_format format)
  * Does the given format store signed values?
  */
 GLboolean
-_mesa_is_format_signed(gl_format format)
+_mesa_is_format_signed(mesa_format format)
 {
    if (format == MESA_FORMAT_R11_G11_B10_FLOAT || 
        format == MESA_FORMAT_RGB9_E5_FLOAT) {
@@ -2018,7 +2018,7 @@ _mesa_is_format_signed(gl_format format)
  * \return GL_LINEAR or GL_SRGB
  */
 GLenum
-_mesa_get_format_color_encoding(gl_format format)
+_mesa_get_format_color_encoding(mesa_format format)
 {
    /* XXX this info should be encoded in gl_format_info */
    switch (format) {
@@ -2046,8 +2046,8 @@ _mesa_get_format_color_encoding(gl_format format)
  * For an sRGB format, return the corresponding linear color space format.
  * For non-sRGB formats, return the format as-is.
  */
-gl_format
-_mesa_get_srgb_format_linear(gl_format format)
+mesa_format
+_mesa_get_srgb_format_linear(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_SRGB8:
@@ -2100,8 +2100,8 @@ _mesa_get_srgb_format_linear(gl_format format)
  * If the given format is a compressed format, return a corresponding
  * uncompressed format.
  */
-gl_format
-_mesa_get_uncompressed_format(gl_format format)
+mesa_format
+_mesa_get_uncompressed_format(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_RGB_FXT1:
@@ -2161,7 +2161,7 @@ _mesa_get_uncompressed_format(gl_format format)
 
 
 GLuint
-_mesa_format_num_components(gl_format format)
+_mesa_format_num_components(mesa_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    return ((info->RedBits > 0) +
@@ -2180,7 +2180,7 @@ _mesa_format_num_components(gl_format format)
  * in the given format.
  */
 GLuint
-_mesa_format_image_size(gl_format format, GLsizei width,
+_mesa_format_image_size(mesa_format format, GLsizei width,
                         GLsizei height, GLsizei depth)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
@@ -2206,7 +2206,7 @@ _mesa_format_image_size(gl_format format, GLsizei width,
  * accomodate very large textures.
  */
 uint64_t
-_mesa_format_image_size64(gl_format format, GLsizei width,
+_mesa_format_image_size64(mesa_format format, GLsizei width,
                           GLsizei height, GLsizei depth)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
@@ -2232,7 +2232,7 @@ _mesa_format_image_size64(gl_format format, GLsizei width,
 
 
 GLint
-_mesa_format_row_stride(gl_format format, GLsizei width)
+_mesa_format_row_stride(mesa_format format, GLsizei width)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
    /* Strictly speaking, a conditional isn't needed here */
@@ -2259,7 +2259,7 @@ _mesa_format_row_stride(gl_format format, GLsizei width)
 static void
 check_format_to_type_and_comps(void)
 {
-   gl_format f;
+   mesa_format f;
 
    for (f = MESA_FORMAT_NONE + 1; f < MESA_FORMAT_COUNT; f++) {
       GLenum datatype = 0;
@@ -2364,11 +2364,11 @@ _mesa_test_formats(void)
 
 
 /**
- * Return datatype and number of components per texel for the given gl_format.
+ * Return datatype and number of components per texel for the given mesa_format.
  * Only used for mipmap generation code.
  */
 void
-_mesa_format_to_type_and_comps(gl_format format,
+_mesa_format_to_type_and_comps(mesa_format format,
                                GLenum *datatype, GLuint *comps)
 {
    switch (format) {
@@ -2912,16 +2912,16 @@ _mesa_format_to_type_and_comps(gl_format format,
 }
 
 /**
- * Check if a gl_format exactly matches a GL format/type combination
+ * Check if a mesa_format exactly matches a GL format/type combination
  * such that we can use memcpy() from one to the other.
- * \param gl_format  a MESA_FORMAT_x value
+ * \param mesa_format  a MESA_FORMAT_x value
  * \param format  the user-specified image format
  * \param type  the user-specified image datatype
  * \param swapBytes  typically the current pixel pack/unpack byteswap state
  * \return GL_TRUE if the formats match, GL_FALSE otherwise.
  */
 GLboolean
-_mesa_format_matches_format_and_type(gl_format gl_format,
+_mesa_format_matches_format_and_type(mesa_format mesa_format,
 				     GLenum format, GLenum type,
                                      GLboolean swapBytes)
 {
@@ -2936,7 +2936,7 @@ _mesa_format_matches_format_and_type(gl_format gl_format,
     * enums in formats.h.
     */
 
-   switch (gl_format) {
+   switch (mesa_format) {
 
    case MESA_FORMAT_NONE:
    case MESA_FORMAT_COUNT:

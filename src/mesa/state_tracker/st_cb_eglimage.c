@@ -99,7 +99,7 @@ st_bind_surface(struct gl_context *ctx, GLenum target,
    struct st_texture_object *stObj;
    struct st_texture_image *stImage;
    GLenum internalFormat;
-   gl_format texFormat;
+   mesa_format texFormat;
 
    /* map pipe format to base format */
    if (util_format_get_component_bits(ps->format, UTIL_FORMAT_COLORSPACE_RGB, 3) > 0)

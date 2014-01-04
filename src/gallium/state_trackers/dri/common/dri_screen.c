@@ -81,7 +81,7 @@ const __DRIconfigOptionsExtension gallium_config_options = {
 static const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen)
 {
-   static const gl_format mesa_formats[3] = {
+   static const mesa_format mesa_formats[3] = {
       MESA_FORMAT_ARGB8888,
       MESA_FORMAT_XRGB8888,
       MESA_FORMAT_RGB565,
@@ -91,7 +91,7 @@ dri_fill_in_modes(struct dri_screen *screen)
       PIPE_FORMAT_BGRX8888_UNORM,
       PIPE_FORMAT_B5G6R5_UNORM,
    };
-   gl_format format;
+   mesa_format format;
    __DRIconfig **configs = NULL;
    uint8_t depth_bits_array[5];
    uint8_t stencil_bits_array[5];

@@ -474,11 +474,11 @@ struct radeon_context {
 	   void (*free_context)(struct gl_context *ctx);
 	   void (*emit_query_finish)(radeonContextPtr radeon);
 	   void (*update_scissor)(struct gl_context *ctx);
-	   unsigned (*check_blit)(gl_format mesa_format, uint32_t dst_pitch);
+	   unsigned (*check_blit)(mesa_format mesa_format, uint32_t dst_pitch);
 	   unsigned (*blit)(struct gl_context *ctx,
                         struct radeon_bo *src_bo,
                         intptr_t src_offset,
-                        gl_format src_mesaformat,
+                        mesa_format src_mesaformat,
                         unsigned src_pitch,
                         unsigned src_width,
                         unsigned src_height,
@@ -486,7 +486,7 @@ struct radeon_context {
                         unsigned src_y_offset,
                         struct radeon_bo *dst_bo,
                         intptr_t dst_offset,
-                        gl_format dst_mesaformat,
+                        mesa_format dst_mesaformat,
                         unsigned dst_pitch,
                         unsigned dst_width,
                         unsigned dst_height,
@@ -495,7 +495,7 @@ struct radeon_context {
                         unsigned reg_width,
                         unsigned reg_height,
                         unsigned flip_y);
-	   unsigned (*is_format_renderable)(gl_format mesa_format);
+	   unsigned (*is_format_renderable)(mesa_format mesa_format);
    } vtbl;
 };
 

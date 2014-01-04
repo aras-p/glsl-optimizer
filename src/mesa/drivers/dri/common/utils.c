@@ -151,7 +151,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
  *                      If the function fails and returns \c GL_FALSE, this
  *                      value will be unmodified, but some elements in the
  *                      linked list may be modified.
- * \param format        Mesa gl_format enum describing the pixel format
+ * \param format        Mesa mesa_format enum describing the pixel format
  * \param depth_bits    Array of depth buffer sizes to be exposed.
  * \param stencil_bits  Array of stencil buffer sizes to be exposed.
  * \param num_depth_stencil_bits  Number of entries in both \c depth_bits and
@@ -176,7 +176,7 @@ driGetRendererString( char * buffer, const char * hardware_name,
  * \c format).
  */
 __DRIconfig **
-driCreateConfigs(gl_format format,
+driCreateConfigs(mesa_format format,
 		 const uint8_t * depth_bits, const uint8_t * stencil_bits,
 		 unsigned num_depth_stencil_bits,
 		 const GLenum * db_modes, unsigned num_db_modes,

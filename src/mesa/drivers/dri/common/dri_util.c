@@ -806,7 +806,7 @@ driUpdateFramebufferSize(struct gl_context *ctx, const __DRIdrawable *dPriv)
 }
 
 uint32_t
-driGLFormatToImageFormat(gl_format format)
+driGLFormatToImageFormat(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_RGB565:
@@ -836,7 +836,7 @@ driGLFormatToImageFormat(gl_format format)
    }
 }
 
-gl_format
+mesa_format
 driImageFormatToGLFormat(uint32_t image_format)
 {
    switch (image_format) {

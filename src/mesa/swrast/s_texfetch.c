@@ -134,7 +134,7 @@ static void fetch_null_texelf( const struct swrast_texture_image *texImage,
  * XXX this is somewhat temporary.
  */
 static struct {
-   gl_format Name;
+   mesa_format Name;
    FetchTexelFunc Fetch1D;
    FetchTexelFunc Fetch2D;
    FetchTexelFunc Fetch3D;
@@ -1314,11 +1314,11 @@ static void
 set_fetch_functions(const struct gl_sampler_object *samp,
                     struct swrast_texture_image *texImage, GLuint dims)
 {
-   gl_format format = texImage->Base.TexFormat;
+   mesa_format format = texImage->Base.TexFormat;
 
 #ifdef DEBUG
    /* check that the table entries are sorted by format name */
-   gl_format fmt;
+   mesa_format fmt;
    for (fmt = 0; fmt < MESA_FORMAT_COUNT; fmt++) {
       assert(texfetch_funcs[fmt].Name == fmt);
    }

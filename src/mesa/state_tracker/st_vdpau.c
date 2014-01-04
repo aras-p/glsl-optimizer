@@ -63,7 +63,7 @@ st_vdpau_map_surface(struct gl_context *ctx, GLenum target, GLenum access,
  
    struct pipe_resource *res;
    struct pipe_sampler_view *sv, templ;
-   gl_format texFormat;
+   mesa_format texFormat;
 
    getProcAddr = ctx->vdpGetProcAddress;
    if (output) {

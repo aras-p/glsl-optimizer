@@ -68,7 +68,7 @@ target_to_target(GLenum target)
 struct intel_mipmap_tree *
 intel_miptree_create_layout(struct intel_context *intel,
                             GLenum target,
-                            gl_format format,
+                            mesa_format format,
                             GLuint first_level,
                             GLuint last_level,
                             GLuint width0,
@@ -130,7 +130,7 @@ intel_miptree_create_layout(struct intel_context *intel,
  */
 static uint32_t
 intel_miptree_choose_tiling(struct intel_context *intel,
-                            gl_format format,
+                            mesa_format format,
                             uint32_t width0,
                             enum intel_miptree_tiling_mode requested,
                             struct intel_mipmap_tree *mt)
@@ -166,7 +166,7 @@ intel_miptree_choose_tiling(struct intel_context *intel,
 struct intel_mipmap_tree *
 intel_miptree_create(struct intel_context *intel,
 		     GLenum target,
-		     gl_format format,
+		     mesa_format format,
 		     GLuint first_level,
 		     GLuint last_level,
 		     GLuint width0,
@@ -236,7 +236,7 @@ intel_miptree_create(struct intel_context *intel,
 struct intel_mipmap_tree *
 intel_miptree_create_for_bo(struct intel_context *intel,
                             drm_intel_bo *bo,
-                            gl_format format,
+                            mesa_format format,
                             uint32_t offset,
                             uint32_t width,
                             uint32_t height,
@@ -295,7 +295,7 @@ intel_miptree_create_for_bo(struct intel_context *intel,
 struct intel_mipmap_tree*
 intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
                                      unsigned dri_attachment,
-                                     gl_format format,
+                                     mesa_format format,
                                      struct intel_region *region)
 {
    struct intel_mipmap_tree *mt = NULL;
@@ -334,7 +334,7 @@ intel_miptree_create_for_dri2_buffer(struct intel_context *intel,
 struct intel_mipmap_tree*
 intel_miptree_create_for_image_buffer(struct intel_context *intel,
                                       enum __DRIimageBufferMask buffer_type,
-                                      gl_format format,
+                                      mesa_format format,
                                       uint32_t num_samples,
                                       struct intel_region *region)
 {
@@ -359,7 +359,7 @@ intel_miptree_create_for_image_buffer(struct intel_context *intel,
 
 struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct intel_context *intel,
-                                      gl_format format,
+                                      mesa_format format,
                                       uint32_t width,
                                       uint32_t height)
 {
@@ -449,7 +449,7 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
     */
    assert(target_to_target(image->TexObject->Target) == mt->target);
 
-   gl_format mt_format = mt->format;
+   mesa_format mt_format = mt->format;
 
    if (image->TexFormat != mt_format)
       return false;
@@ -629,7 +629,7 @@ intel_miptree_copy_slice(struct intel_context *intel,
 			 int depth)
 
 {
-   gl_format format = src_mt->format;
+   mesa_format format = src_mt->format;
    uint32_t width = src_mt->level[level].width;
    uint32_t height = src_mt->level[level].height;
    int slice;

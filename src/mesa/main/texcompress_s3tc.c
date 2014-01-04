@@ -483,7 +483,7 @@ fetch_srgba_dxt5(const GLubyte *map,
 
 
 compressed_fetch_func
-_mesa_get_dxt_fetch_func(gl_format format)
+_mesa_get_dxt_fetch_func(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_RGB_DXT1:

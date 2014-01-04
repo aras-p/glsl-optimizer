@@ -560,7 +560,7 @@ static bool
 i915_render_target_supported(struct intel_context *intel,
 			     struct gl_renderbuffer *rb)
 {
-   gl_format format = rb->Format;
+   mesa_format format = rb->Format;
 
    if (format == MESA_FORMAT_S8_Z24 ||
        format == MESA_FORMAT_X8_Z24 ||

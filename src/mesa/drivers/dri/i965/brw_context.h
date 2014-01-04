@@ -1644,7 +1644,7 @@ void brw_upload_abo_surfaces(struct brw_context *brw,
                              struct brw_stage_prog_data *prog_data);
 
 /* brw_surface_formats.c */
-bool brw_is_hiz_depth_format(struct brw_context *ctx, gl_format format);
+bool brw_is_hiz_depth_format(struct brw_context *ctx, mesa_format format);
 bool brw_render_target_supported(struct brw_context *brw,
                                  struct gl_renderbuffer *rb);
 

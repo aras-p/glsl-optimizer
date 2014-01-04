@@ -49,58 +49,58 @@ typedef void (*gl_pack_ubyte_stencil_func)(const GLubyte *src, void *dst);
 
 
 extern gl_pack_ubyte_rgba_func
-_mesa_get_pack_ubyte_rgba_function(gl_format format);
+_mesa_get_pack_ubyte_rgba_function(mesa_format format);
 
 
 extern gl_pack_float_rgba_func
-_mesa_get_pack_float_rgba_function(gl_format format);
+_mesa_get_pack_float_rgba_function(mesa_format format);
 
 
 extern gl_pack_float_z_func
-_mesa_get_pack_float_z_func(gl_format format);
+_mesa_get_pack_float_z_func(mesa_format format);
 
 
 extern gl_pack_uint_z_func
-_mesa_get_pack_uint_z_func(gl_format format);
+_mesa_get_pack_uint_z_func(mesa_format format);
 
 
 extern gl_pack_ubyte_stencil_func
-_mesa_get_pack_ubyte_stencil_func(gl_format format);
+_mesa_get_pack_ubyte_stencil_func(mesa_format format);
 
 
 
 extern void
-_mesa_pack_float_rgba_row(gl_format format, GLuint n,
+_mesa_pack_float_rgba_row(mesa_format format, GLuint n,
                           const GLfloat src[][4], void *dst);
 
 extern void
-_mesa_pack_ubyte_rgba_row(gl_format format, GLuint n,
+_mesa_pack_ubyte_rgba_row(mesa_format format, GLuint n,
                           const GLubyte src[][4], void *dst);
 
 
 extern void
-_mesa_pack_ubyte_rgba_rect(gl_format format, GLuint width, GLuint height,
+_mesa_pack_ubyte_rgba_rect(mesa_format format, GLuint width, GLuint height,
                            const GLubyte *src, GLint srcRowStride,
                            void *dst, GLint dstRowStride);
 
 extern void
-_mesa_pack_float_z_row(gl_format format, GLuint n,
+_mesa_pack_float_z_row(mesa_format format, GLuint n,
                        const GLfloat *src, void *dst);
 
 extern void
-_mesa_pack_uint_z_row(gl_format format, GLuint n,
+_mesa_pack_uint_z_row(mesa_format format, GLuint n,
                       const GLuint *src, void *dst);
 
 extern void
-_mesa_pack_ubyte_stencil_row(gl_format format, GLuint n,
+_mesa_pack_ubyte_stencil_row(mesa_format format, GLuint n,
                              const GLubyte *src, void *dst);
 
 extern void
-_mesa_pack_uint_24_8_depth_stencil_row(gl_format format, GLuint n,
+_mesa_pack_uint_24_8_depth_stencil_row(mesa_format format, GLuint n,
                                        const GLuint *src, void *dst);
 
 
 extern void
-_mesa_pack_colormask(gl_format format, const GLubyte colorMask[4], void *dst);
+_mesa_pack_colormask(mesa_format format, const GLubyte colorMask[4], void *dst);
 
 #endif

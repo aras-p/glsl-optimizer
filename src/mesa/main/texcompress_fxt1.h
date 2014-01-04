@@ -37,6 +37,6 @@ _mesa_texstore_rgba_fxt1(TEXSTORE_PARAMS);
 
 
 compressed_fetch_func
-_mesa_get_fxt_fetch_func(gl_format format);
+_mesa_get_fxt_fetch_func(mesa_format format);
 
 #endif /* TEXCOMPRESS_FXT1_H */

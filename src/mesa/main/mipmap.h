@@ -45,7 +45,7 @@ extern GLboolean
 _mesa_prepare_mipmap_level(struct gl_context *ctx,
                            struct gl_texture_object *texObj, GLuint level,
                            GLsizei width, GLsizei height, GLsizei depth,
-                           GLsizei border, GLenum intFormat, gl_format format);
+                           GLsizei border, GLenum intFormat, mesa_format format);
 
 extern void
 _mesa_generate_mipmap(struct gl_context *ctx, GLenum target,

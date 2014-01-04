@@ -295,18 +295,18 @@ buffer_object_subdata_range_good(struct gl_context * ctx, GLenum target,
  * \param format          Format of the supplied data.
  * \param type            Type of the supplied data.
  * \param caller          Name of calling function for recording errors.
- * \return   If internalformat, format and type are legal the gl_format
+ * \return   If internalformat, format and type are legal the mesa_format
  *           corresponding to internalformat, otherwise MESA_FORMAT_NONE.
  *
  * \sa glClearBufferData and glClearBufferSubData
  */
-static gl_format
+static mesa_format
 validate_clear_buffer_format(struct gl_context *ctx,
                              GLenum internalformat,
                              GLenum format, GLenum type,
                              const char *caller)
 {
-   gl_format mesaFormat;
+   mesa_format mesaFormat;
    GLenum errorFormatType;
 
    mesaFormat = _mesa_validate_texbuffer_format(ctx, internalformat);
@@ -360,7 +360,7 @@ validate_clear_buffer_format(struct gl_context *ctx,
  */
 static bool
 convert_clear_buffer_data(struct gl_context *ctx,
-                          gl_format internalformat,
+                          mesa_format internalformat,
                           GLubyte *clearValue, GLenum format, GLenum type,
                           const GLvoid *data, const char *caller)
 {
@@ -1365,7 +1365,7 @@ _mesa_ClearBufferData(GLenum target, GLenum internalformat, GLenum format,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object* bufObj;
-   gl_format mesaFormat;
+   mesa_format mesaFormat;
    GLubyte clearValue[MAX_PIXEL_BYTES];
    GLsizeiptr clearValueSize;
 
@@ -1420,7 +1420,7 @@ _mesa_ClearBufferSubData(GLenum target, GLenum internalformat,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object* bufObj;
-   gl_format mesaFormat;
+   mesa_format mesaFormat;
    GLubyte clearValue[MAX_PIXEL_BYTES];
    GLsizeiptr clearValueSize;
 

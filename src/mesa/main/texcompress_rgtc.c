@@ -439,7 +439,7 @@ fetch_signed_la_latc2(const GLubyte *map,
 
 
 compressed_fetch_func
-_mesa_get_compressed_rgtc_func(gl_format format)
+_mesa_get_compressed_rgtc_func(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_RED_RGTC1:

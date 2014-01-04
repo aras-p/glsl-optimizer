@@ -269,7 +269,7 @@ nouveau_finish_render_texture(struct gl_context *ctx,
 }
 
 static int
-validate_format_bpp(gl_format format)
+validate_format_bpp(mesa_format format)
 {
 	switch (format) {
 	case MESA_FORMAT_XRGB8888:

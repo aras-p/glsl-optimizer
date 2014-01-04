@@ -54,12 +54,12 @@
  * \param format  incoming image pixel format.
  * \param type  incoming image data type.
  *
- * \return the closest gl_format for the given format/type arguments
+ * \return the closest mesa_format for the given format/type arguments
  *
  * This is called via dd_function_table::ChooseTextureFormat.  Hardware
  * drivers may override this function with a specialized version.
  */
-gl_format
+mesa_format
 _mesa_choose_tex_format(struct gl_context *ctx, GLenum target,
                         GLint internalFormat, GLenum format, GLenum type)
 {

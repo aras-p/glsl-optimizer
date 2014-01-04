@@ -483,7 +483,7 @@ make_texture(struct st_context *st,
 {
    struct gl_context *ctx = st->ctx;
    struct pipe_context *pipe = st->pipe;
-   gl_format mformat;
+   mesa_format mformat;
    struct pipe_resource *pt;
    enum pipe_format pipeFormat;
    GLenum baseInternalFormat;
@@ -542,7 +542,7 @@ make_texture(struct st_context *st,
        */
       success = _mesa_texstore(ctx, 2,           /* dims */
                                baseInternalFormat, /* baseInternalFormat */
-                               mformat,          /* gl_format */
+                               mformat,          /* mesa_format */
                                transfer->stride, /* dstRowStride, bytes */
                                &dest,            /* destSlices */
                                width, height, 1, /* size */

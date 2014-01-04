@@ -536,7 +536,7 @@ blit_linear(struct gl_context *ctx,
    GLint srcBufferY0 = -1, srcBufferY1 = -1;
    GLvoid *dstBuffer;
 
-   gl_format readFormat = _mesa_get_srgb_format_linear(readRb->Format);
+   mesa_format readFormat = _mesa_get_srgb_format_linear(readRb->Format);
    GLuint bpp = _mesa_get_format_bytes(readFormat);
 
    GLenum pixelType;
@@ -571,7 +571,7 @@ blit_linear(struct gl_context *ctx,
       GLint idx = drawFb->_ColorDrawBufferIndexes[i];
       struct gl_renderbuffer_attachment *drawAtt;
       struct gl_renderbuffer *drawRb;
-      gl_format drawFormat;
+      mesa_format drawFormat;
 
       if (idx == -1)
          continue;

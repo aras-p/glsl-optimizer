@@ -50,8 +50,8 @@ do_copy_texsubimage(struct gl_context *ctx,
     const GLuint level = timg->base.Base.Level;
     unsigned src_bpp;
     unsigned dst_bpp;
-    gl_format src_mesaformat;
-    gl_format dst_mesaformat;
+    mesa_format src_mesaformat;
+    mesa_format dst_mesaformat;
     unsigned flip_y;
 
     if (!radeon->vtbl.blit) {

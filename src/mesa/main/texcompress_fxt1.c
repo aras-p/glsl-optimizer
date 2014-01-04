@@ -1641,7 +1641,7 @@ fetch_rgba_fxt1(const GLubyte *map,
 
 
 compressed_fetch_func
-_mesa_get_fxt_fetch_func(gl_format format)
+_mesa_get_fxt_fetch_func(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_RGB_FXT1:

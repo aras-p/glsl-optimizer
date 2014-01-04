@@ -310,7 +310,7 @@ const struct surface_format_info surface_formats[] = {
 #undef Y
 
 uint32_t
-brw_format_for_mesa_format(gl_format mesa_format)
+brw_format_for_mesa_format(mesa_format mesa_format)
 {
    /* This table is ordered according to the enum ordering in formats.h.  We do
     * expect that enum to be extended without our explicit initialization
@@ -530,7 +530,7 @@ brw_init_surface_formats(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
    int gen;
-   gl_format format;
+   mesa_format format;
 
    memset(&ctx->TextureFormatSupported, 0, sizeof(ctx->TextureFormatSupported));
 
@@ -654,7 +654,7 @@ bool
 brw_render_target_supported(struct brw_context *brw,
 			    struct gl_renderbuffer *rb)
 {
-   gl_format format = rb->Format;
+   mesa_format format = rb->Format;
 
    /* Many integer formats are promoted to RGBA (like XRGB8888 is), which means
     * we would consider them renderable even though we don't have surface
@@ -685,7 +685,7 @@ brw_render_target_supported(struct brw_context *brw,
 
 GLuint
 translate_tex_format(struct brw_context *brw,
-                     gl_format mesa_format,
+                     mesa_format mesa_format,
 		     GLenum srgb_decode)
 {
    struct gl_context *ctx = &brw->ctx;
@@ -732,7 +732,7 @@ translate_tex_format(struct brw_context *brw,
 
 /** Can HiZ be enabled on a depthbuffer of the given format? */
 bool
-brw_is_hiz_depth_format(struct brw_context *brw, gl_format format)
+brw_is_hiz_depth_format(struct brw_context *brw, mesa_format format)
 {
    if (!brw->has_hiz)
       return false;

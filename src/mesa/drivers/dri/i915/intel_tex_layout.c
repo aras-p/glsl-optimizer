@@ -39,7 +39,7 @@
 
 static unsigned int
 intel_horizontal_texture_alignment_unit(struct intel_context *intel,
-                                       gl_format format)
+                                       mesa_format format)
 {
    /**
     * From the "Alignment Unit Size" section of various specs, namely:
@@ -79,7 +79,7 @@ intel_horizontal_texture_alignment_unit(struct intel_context *intel,
 
 static unsigned int
 intel_vertical_texture_alignment_unit(struct intel_context *intel,
-                                     gl_format format)
+                                     mesa_format format)
 {
    /**
     * From the "Alignment Unit Size" section of various specs, namely:
@@ -114,7 +114,7 @@ intel_vertical_texture_alignment_unit(struct intel_context *intel,
 
 void
 intel_get_texture_alignment_unit(struct intel_context *intel,
-				 gl_format format,
+				 mesa_format format,
 				 unsigned int *w, unsigned int *h)
 {
    *w = intel_horizontal_texture_alignment_unit(intel, format);

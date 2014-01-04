@@ -1879,7 +1879,7 @@ pack_float_SIGNED_RG1616(const GLfloat src[4], void *dst)
  * Return a function that can pack a GLubyte rgba[4] color.
  */
 gl_pack_ubyte_rgba_func
-_mesa_get_pack_ubyte_rgba_function(gl_format format)
+_mesa_get_pack_ubyte_rgba_function(mesa_format format)
 {
    static gl_pack_ubyte_rgba_func table[MESA_FORMAT_COUNT];
    static GLboolean initialized = GL_FALSE;
@@ -2042,7 +2042,7 @@ _mesa_get_pack_ubyte_rgba_function(gl_format format)
  * Return a function that can pack a GLfloat rgba[4] color.
  */
 gl_pack_float_rgba_func
-_mesa_get_pack_float_rgba_function(gl_format format)
+_mesa_get_pack_float_rgba_function(mesa_format format)
 {
    static gl_pack_float_rgba_func table[MESA_FORMAT_COUNT];
    static GLboolean initialized = GL_FALSE;
@@ -2202,7 +2202,7 @@ _mesa_get_pack_float_rgba_function(gl_format format)
 
 
 static pack_float_rgba_row_func
-get_pack_float_rgba_row_function(gl_format format)
+get_pack_float_rgba_row_function(mesa_format format)
 {
    static pack_float_rgba_row_func table[MESA_FORMAT_COUNT];
    static GLboolean initialized = GL_FALSE;
@@ -2235,7 +2235,7 @@ get_pack_float_rgba_row_function(gl_format format)
 
 
 static pack_ubyte_rgba_row_func
-get_pack_ubyte_rgba_row_function(gl_format format)
+get_pack_ubyte_rgba_row_function(mesa_format format)
 {
    static pack_ubyte_rgba_row_func table[MESA_FORMAT_COUNT];
    static GLboolean initialized = GL_FALSE;
@@ -2271,7 +2271,7 @@ get_pack_ubyte_rgba_row_function(gl_format format)
  * Pack a row of GLfloat rgba[4] values to the destination.
  */
 void
-_mesa_pack_float_rgba_row(gl_format format, GLuint n,
+_mesa_pack_float_rgba_row(mesa_format format, GLuint n,
                           const GLfloat src[][4], void *dst)
 {
    pack_float_rgba_row_func packrow = get_pack_float_rgba_row_function(format);
@@ -2302,7 +2302,7 @@ _mesa_pack_float_rgba_row(gl_format format, GLuint n,
  * Pack a row of GLubyte rgba[4] values to the destination.
  */
 void
-_mesa_pack_ubyte_rgba_row(gl_format format, GLuint n,
+_mesa_pack_ubyte_rgba_row(mesa_format format, GLuint n,
                           const GLubyte src[][4], void *dst)
 {
    pack_ubyte_rgba_row_func packrow = get_pack_ubyte_rgba_row_function(format);
@@ -2335,7 +2335,7 @@ _mesa_pack_ubyte_rgba_row(gl_format format, GLuint n,
  * \param dstRowStride  destination image row stride in bytes
  */
 void
-_mesa_pack_ubyte_rgba_rect(gl_format format, GLuint width, GLuint height,
+_mesa_pack_ubyte_rgba_rect(mesa_format format, GLuint width, GLuint height,
                            const GLubyte *src, GLint srcRowStride,
                            void *dst, GLint dstRowStride)
 {
@@ -2423,7 +2423,7 @@ pack_float_z_Z32_FLOAT(const GLfloat *src, void *dst)
 }
 
 gl_pack_float_z_func
-_mesa_get_pack_float_z_func(gl_format format)
+_mesa_get_pack_float_z_func(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_Z24_S8:
@@ -2508,7 +2508,7 @@ pack_uint_z_Z32_FLOAT_X24S8(const GLuint *src, void *dst)
 }
 
 gl_pack_uint_z_func
-_mesa_get_pack_uint_z_func(gl_format format)
+_mesa_get_pack_uint_z_func(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_Z24_S8:
@@ -2572,7 +2572,7 @@ pack_ubyte_stencil_Z32_FLOAT_X24S8(const GLubyte *src, void *dst)
 
 
 gl_pack_ubyte_stencil_func
-_mesa_get_pack_ubyte_stencil_func(gl_format format)
+_mesa_get_pack_ubyte_stencil_func(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_Z24_S8:
@@ -2593,7 +2593,7 @@ _mesa_get_pack_ubyte_stencil_func(gl_format format)
 
 
 void
-_mesa_pack_float_z_row(gl_format format, GLuint n,
+_mesa_pack_float_z_row(mesa_format format, GLuint n,
                        const GLfloat *src, void *dst)
 {
    switch (format) {
@@ -2669,7 +2669,7 @@ _mesa_pack_float_z_row(gl_format format, GLuint n,
  * The incoming Z values are always in the range [0, 0xffffffff].
  */
 void
-_mesa_pack_uint_z_row(gl_format format, GLuint n,
+_mesa_pack_uint_z_row(mesa_format format, GLuint n,
                       const GLuint *src, void *dst)
 {
    switch (format) {
@@ -2742,7 +2742,7 @@ _mesa_pack_uint_z_row(gl_format format, GLuint n,
 
 
 void
-_mesa_pack_ubyte_stencil_row(gl_format format, GLuint n,
+_mesa_pack_ubyte_stencil_row(mesa_format format, GLuint n,
                              const GLubyte *src, void *dst)
 {
    switch (format) {
@@ -2792,7 +2792,7 @@ _mesa_pack_ubyte_stencil_row(gl_format format, GLuint n,
  * Incoming Z/stencil values are always in uint_24_8 format.
  */
 void
-_mesa_pack_uint_24_8_depth_stencil_row(gl_format format, GLuint n,
+_mesa_pack_uint_24_8_depth_stencil_row(mesa_format format, GLuint n,
                                        const GLuint *src, void *dst)
 {
    switch (format) {
@@ -2836,7 +2836,7 @@ _mesa_pack_uint_24_8_depth_stencil_row(gl_format format, GLuint n,
  * the packed value at dst will be 0 or ~0 depending on the colorMask.
  */
 void
-_mesa_pack_colormask(gl_format format, const GLubyte colorMask[4], void *dst)
+_mesa_pack_colormask(mesa_format format, const GLubyte colorMask[4], void *dst)
 {
    GLfloat maskColor[4];
 

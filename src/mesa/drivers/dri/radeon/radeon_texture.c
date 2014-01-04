@@ -213,7 +213,7 @@ radeon_unmap_texture_image(struct gl_context *ctx,
 }
 
 /* try to find a format which will only need a memcopy */
-static gl_format radeonChoose8888TexFormat(radeonContextPtr rmesa,
+static mesa_format radeonChoose8888TexFormat(radeonContextPtr rmesa,
 					   GLenum srcFormat,
 					   GLenum srcType, GLboolean fbo)
 {
@@ -242,7 +242,7 @@ static gl_format radeonChoose8888TexFormat(radeonContextPtr rmesa,
 #endif
 }
 
-gl_format radeonChooseTextureFormat_mesa(struct gl_context * ctx,
+mesa_format radeonChooseTextureFormat_mesa(struct gl_context * ctx,
 					 GLenum target,
 					 GLint internalFormat,
 					 GLenum format,
@@ -252,7 +252,7 @@ gl_format radeonChooseTextureFormat_mesa(struct gl_context * ctx,
 					 type, 0);
 }
 
-gl_format radeonChooseTextureFormat(struct gl_context * ctx,
+mesa_format radeonChooseTextureFormat(struct gl_context * ctx,
 				    GLint internalFormat,
 				    GLenum format,
 				    GLenum type, GLboolean fbo)
@@ -504,7 +504,7 @@ static void teximage_assign_miptree(radeonContextPtr rmesa,
 				"%s Failed to allocate miptree.\n", __func__);
 }
 
-unsigned radeonIsFormatRenderable(gl_format mesa_format)
+unsigned radeonIsFormatRenderable(mesa_format mesa_format)
 {
 	if (mesa_format == _radeon_texformat_argb8888 || mesa_format == _radeon_texformat_rgb565 ||
 		mesa_format == _radeon_texformat_argb1555 || mesa_format == _radeon_texformat_argb4444)
@@ -579,12 +579,12 @@ void radeon_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 		fprintf(stderr, "miptree doesn't match image\n");
 }
 
-gl_format _radeon_texformat_rgba8888 = MESA_FORMAT_NONE;
-gl_format _radeon_texformat_argb8888 = MESA_FORMAT_NONE;
-gl_format _radeon_texformat_rgb565 = MESA_FORMAT_NONE;
-gl_format _radeon_texformat_argb4444 = MESA_FORMAT_NONE;
-gl_format _radeon_texformat_argb1555 = MESA_FORMAT_NONE;
-gl_format _radeon_texformat_al88 = MESA_FORMAT_NONE;
+mesa_format _radeon_texformat_rgba8888 = MESA_FORMAT_NONE;
+mesa_format _radeon_texformat_argb8888 = MESA_FORMAT_NONE;
+mesa_format _radeon_texformat_rgb565 = MESA_FORMAT_NONE;
+mesa_format _radeon_texformat_argb4444 = MESA_FORMAT_NONE;
+mesa_format _radeon_texformat_argb1555 = MESA_FORMAT_NONE;
+mesa_format _radeon_texformat_al88 = MESA_FORMAT_NONE;
 /*@}*/
 
 

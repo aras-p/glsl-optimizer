@@ -1175,7 +1175,7 @@ _mesa_unpack_etc2_format(uint8_t *dst_row,
                          unsigned src_stride,
                          unsigned src_width,
                          unsigned src_height,
-                         gl_format format)
+                         mesa_format format)
 {
    if (format == MESA_FORMAT_ETC2_RGB8)
       etc2_unpack_rgb8(dst_row, dst_stride,
@@ -1452,7 +1452,7 @@ fetch_etc2_srgb8_punchthrough_alpha1(const GLubyte *map,
 
 
 compressed_fetch_func
-_mesa_get_etc_fetch_func(gl_format format)
+_mesa_get_etc_fetch_func(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_ETC1_RGB8:

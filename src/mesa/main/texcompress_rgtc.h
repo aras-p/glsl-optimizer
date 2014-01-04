@@ -41,7 +41,7 @@ extern GLboolean
 _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS);
 
 extern compressed_fetch_func
-_mesa_get_compressed_rgtc_func(gl_format format);
+_mesa_get_compressed_rgtc_func(mesa_format format);
 
 
 #endif

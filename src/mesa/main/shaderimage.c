@@ -57,7 +57,7 @@
 # define MESA_FORMAT_SIGNED_RG_8 MESA_FORMAT_SIGNED_RG88_REV
 #endif
 
-static gl_format
+static mesa_format
 get_image_format(GLenum format)
 {
    switch (format) {
@@ -205,7 +205,7 @@ enum image_format_class
 };
 
 static enum image_format_class
-get_image_format_class(gl_format format)
+get_image_format_class(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_RGBA_FLOAT32:

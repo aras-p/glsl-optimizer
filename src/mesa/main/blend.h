@@ -115,8 +115,8 @@ _mesa_update_clamp_fragment_color(struct gl_context *ctx);
 extern void
 _mesa_update_clamp_vertex_color(struct gl_context *ctx);
 
-extern gl_format
-_mesa_get_render_format(const struct gl_context *ctx, gl_format format);
+extern mesa_format
+_mesa_get_render_format(const struct gl_context *ctx, mesa_format format);
 
 extern void  
 _mesa_init_color( struct gl_context * ctx );

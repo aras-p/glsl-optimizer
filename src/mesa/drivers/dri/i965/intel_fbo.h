@@ -125,22 +125,22 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, gl_buffer_index attIndex)
 }
 
 
-static inline gl_format
+static inline mesa_format
 intel_rb_format(const struct intel_renderbuffer *rb)
 {
    return rb->Base.Base.Format;
 }
 
 extern struct intel_renderbuffer *
-intel_create_renderbuffer(gl_format format, unsigned num_samples);
+intel_create_renderbuffer(mesa_format format, unsigned num_samples);
 
 struct intel_renderbuffer *
-intel_create_private_renderbuffer(gl_format format, unsigned num_samples);
+intel_create_private_renderbuffer(mesa_format format, unsigned num_samples);
 
 struct gl_renderbuffer*
 intel_create_wrapped_renderbuffer(struct gl_context * ctx,
 				  int width, int height,
-				  gl_format format);
+				  mesa_format format);
 
 extern void
 intel_fbo_init(struct brw_context *brw);

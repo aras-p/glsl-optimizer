@@ -57,7 +57,7 @@
 #define TEXSTORE_PARAMS \
 	struct gl_context *ctx, GLuint dims, \
 	GLenum baseInternalFormat, \
-	gl_format dstFormat, \
+	mesa_format dstFormat, \
         GLint dstRowStride, \
         GLubyte **dstSlices, \
 	GLint srcWidth, GLint srcHeight, GLint srcDepth, \
@@ -72,11 +72,11 @@ _mesa_texstore(TEXSTORE_PARAMS);
 extern GLboolean
 _mesa_texstore_needs_transfer_ops(struct gl_context *ctx,
                                   GLenum baseInternalFormat,
-                                  gl_format dstFormat);
+                                  mesa_format dstFormat);
 
 extern GLboolean
 _mesa_texstore_can_use_memcpy(struct gl_context *ctx,
-                              GLenum baseInternalFormat, gl_format dstFormat,
+                              GLenum baseInternalFormat, mesa_format dstFormat,
                               GLenum srcFormat, GLenum srcType,
                               const struct gl_pixelstore_attrib *srcPacking);
 

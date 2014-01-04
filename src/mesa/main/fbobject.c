@@ -636,7 +636,7 @@ _mesa_is_legal_color_format(const struct gl_context *ctx, GLenum baseFormat)
  * Is the given base format a legal format for a color renderbuffer?
  */
 static GLboolean
-is_format_color_renderable(const struct gl_context *ctx, gl_format format, GLenum internalFormat)
+is_format_color_renderable(const struct gl_context *ctx, mesa_format format, GLenum internalFormat)
 {
    const GLenum baseFormat =
       _mesa_get_format_base_format(format);
@@ -901,7 +901,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    for (i = -2; i < (GLint) ctx->Const.MaxColorAttachments; i++) {
       struct gl_renderbuffer_attachment *att;
       GLenum f;
-      gl_format attFormat;
+      mesa_format attFormat;
       GLenum att_tex_target = GL_NONE;
 
       /*
@@ -1858,7 +1858,7 @@ _mesa_EGLImageTargetRenderbufferStorageOES(GLenum target, GLeglImageOES image)
  * we need to return zero.
  */
 static GLint
-get_component_bits(GLenum pname, GLenum baseFormat, gl_format format)
+get_component_bits(GLenum pname, GLenum baseFormat, mesa_format format)
 {
    if (_mesa_base_format_has_channel(baseFormat, pname))
       return _mesa_get_format_bits(format, pname);
@@ -2882,7 +2882,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
-         gl_format format = att->Renderbuffer->Format;
+         mesa_format format = att->Renderbuffer->Format;
 
          /* Page 235 (page 247 of the PDF) in section 6.1.13 of the OpenGL ES
           * 3.0.1 spec says:
@@ -3092,7 +3092,7 @@ find_attachment(const struct gl_framebuffer *fb,
  *     does not contain signed integer values."
  */
 static GLboolean
-compatible_color_datatypes(gl_format srcFormat, gl_format dstFormat)
+compatible_color_datatypes(mesa_format srcFormat, mesa_format dstFormat)
 {
    GLenum srcType = _mesa_get_format_datatype(srcFormat);
    GLenum dstType = _mesa_get_format_datatype(dstFormat);

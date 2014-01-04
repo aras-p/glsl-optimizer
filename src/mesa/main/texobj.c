@@ -745,7 +745,7 @@ _mesa_get_fallback_texture(struct gl_context *ctx, gl_texture_index tex)
       GLubyte texel[4];
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
-      gl_format texFormat;
+      mesa_format texFormat;
       GLuint dims, face, numFaces = 1;
       GLenum target;
 

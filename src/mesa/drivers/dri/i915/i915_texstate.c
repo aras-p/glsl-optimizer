@@ -39,7 +39,7 @@
 
 
 static GLuint
-translate_texture_format(gl_format mesa_format, GLenum DepthMode)
+translate_texture_format(mesa_format mesa_format, GLenum DepthMode)
 {
    switch (mesa_format) {
    case MESA_FORMAT_L8:

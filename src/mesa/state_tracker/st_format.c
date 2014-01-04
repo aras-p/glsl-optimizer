@@ -54,7 +54,7 @@
  * Translate Mesa format to Gallium format.
  */
 enum pipe_format
-st_mesa_format_to_pipe_format(gl_format mesaFormat)
+st_mesa_format_to_pipe_format(mesa_format mesaFormat)
 {
    switch (mesaFormat) {
    case MESA_FORMAT_RGBA8888:
@@ -402,7 +402,7 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
 /**
  * Translate Gallium format to Mesa format.
  */
-gl_format
+mesa_format
 st_pipe_format_to_mesa_format(enum pipe_format format)
 {
    switch (format) {
@@ -1691,7 +1691,7 @@ enum pipe_format
 st_choose_matching_format(struct pipe_screen *screen, unsigned bind,
 			  GLenum format, GLenum type, GLboolean swapBytes)
 {
-   gl_format mesa_format;
+   mesa_format mesa_format;
 
    for (mesa_format = 1; mesa_format < MESA_FORMAT_COUNT; mesa_format++) {
       if (_mesa_get_format_color_encoding(mesa_format) == GL_SRGB) {
@@ -1718,7 +1718,7 @@ st_choose_matching_format(struct pipe_screen *screen, unsigned bind,
 /**
  * Called via ctx->Driver.ChooseTextureFormat().
  */
-gl_format
+mesa_format
 st_ChooseTextureFormat(struct gl_context *ctx, GLenum target,
                        GLint internalFormat,
                        GLenum format, GLenum type)

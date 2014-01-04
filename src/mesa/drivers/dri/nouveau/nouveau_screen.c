@@ -52,7 +52,7 @@ nouveau_get_configs(void)
 	const uint8_t stencil_bits[] = { 0,  0,  0,  8 };
 	const uint8_t msaa_samples[] = { 0 };
 
-	static const gl_format formats[3] = {
+	static const mesa_format formats[3] = {
 		MESA_FORMAT_RGB565,
 		MESA_FORMAT_ARGB8888,
 		MESA_FORMAT_XRGB8888,

@@ -598,7 +598,7 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
     const GLboolean swAccum = mesaVis->accumRedBits > 0;
     const GLboolean swStencil = mesaVis->stencilBits > 0 &&
 	mesaVis->depthBits != 24;
-    gl_format rgbFormat;
+    mesa_format rgbFormat;
     struct radeon_framebuffer *rfb;
 
     if (isPixmap)
@@ -708,7 +708,7 @@ radeonDestroyBuffer(__DRIdrawable *driDrawPriv)
 static const
 __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
 {
-   static const gl_format formats[3] = {
+   static const mesa_format formats[3] = {
       MESA_FORMAT_RGB565,
       MESA_FORMAT_XRGB8888,
       MESA_FORMAT_ARGB8888

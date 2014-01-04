@@ -38,7 +38,7 @@
 #include "radeon_debug.h"
 #include "radeon_mipmap_tree.h"
 
-static gl_format gl_format_and_type_to_mesa_format(GLenum format, GLenum type)
+static mesa_format gl_format_and_type_to_mesa_format(GLenum format, GLenum type)
 {
     switch (format)
     {
@@ -94,7 +94,7 @@ do_blit_readpixels(struct gl_context * ctx,
 {
     radeonContextPtr radeon = RADEON_CONTEXT(ctx);
     const struct radeon_renderbuffer *rrb = radeon_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
-    const gl_format dst_format = gl_format_and_type_to_mesa_format(format, type);
+    const mesa_format dst_format = gl_format_and_type_to_mesa_format(format, type);
     unsigned dst_rowstride, dst_imagesize, aligned_rowstride, flip_y;
     struct radeon_bo *dst_buffer;
     GLint dst_x = 0, dst_y = 0;

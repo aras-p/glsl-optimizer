@@ -33,7 +33,7 @@ update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
    struct gl_renderbuffer *rb = att->Renderbuffer;
    struct swrast_renderbuffer *srb = swrast_renderbuffer(rb);
    struct swrast_texture_image *swImage;
-   gl_format format;
+   mesa_format format;
    GLuint zOffset;
 
    (void) ctx;

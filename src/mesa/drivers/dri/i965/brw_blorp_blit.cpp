@@ -197,10 +197,10 @@ do_blorp_blit(struct brw_context *brw, GLbitfield buffer_bit,
 }
 
 static bool
-color_formats_match(gl_format src_format, gl_format dst_format)
+color_formats_match(mesa_format src_format, mesa_format dst_format)
 {
-   gl_format linear_src_format = _mesa_get_srgb_format_linear(src_format);
-   gl_format linear_dst_format = _mesa_get_srgb_format_linear(dst_format);
+   mesa_format linear_src_format = _mesa_get_srgb_format_linear(src_format);
+   mesa_format linear_dst_format = _mesa_get_srgb_format_linear(dst_format);
 
    /* Normally, we require the formats to be equal.  However, we also support
     * blitting from ARGB to XRGB (discarding alpha), and from XRGB to ARGB
@@ -222,8 +222,8 @@ formats_match(GLbitfield buffer_bit, struct intel_renderbuffer *src_irb,
     * example MESA_FORMAT_X8_Z24 and MESA_FORMAT_S8_Z24), and we can blit
     * between those formats.
     */
-   gl_format src_format = find_miptree(buffer_bit, src_irb)->format;
-   gl_format dst_format = find_miptree(buffer_bit, dst_irb)->format;
+   mesa_format src_format = find_miptree(buffer_bit, src_irb)->format;
+   mesa_format dst_format = find_miptree(buffer_bit, dst_irb)->format;
 
    return color_formats_match(src_format, dst_format);
 }

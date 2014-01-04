@@ -3814,7 +3814,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
  * ReadPixels() and passed to Tex[Sub]Image().
  */
 static GLenum
-get_temp_image_type(struct gl_context *ctx, gl_format format)
+get_temp_image_type(struct gl_context *ctx, mesa_format format)
 {
    GLenum baseFormat;
 

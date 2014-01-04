@@ -636,7 +636,7 @@ radeon_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
  * Not used for user-created renderbuffers.
  */
 struct radeon_renderbuffer *
-radeon_create_renderbuffer(gl_format format, __DRIdrawable *driDrawPriv)
+radeon_create_renderbuffer(mesa_format format, __DRIdrawable *driDrawPriv)
 {
     struct radeon_renderbuffer *rrb;
     struct gl_renderbuffer *rb;
@@ -833,7 +833,7 @@ static void
 radeon_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-	gl_format mesa_format;
+	mesa_format mesa_format;
 	int i;
 
 	for (i = -2; i < (GLint) ctx->Const.MaxColorAttachments; i++) {

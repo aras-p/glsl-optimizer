@@ -444,7 +444,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    struct intel_region *region = irb->mt->region;
    uint32_t format;
    /* _NEW_BUFFERS */
-   gl_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
+   mesa_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
    uint32_t surftype;
    bool is_array = false;
    int depth = MAX2(rb->Depth, 1);

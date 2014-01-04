@@ -40,7 +40,7 @@
 
 static unsigned int
 intel_horizontal_texture_alignment_unit(struct brw_context *brw,
-                                       gl_format format)
+                                       mesa_format format)
 {
    /**
     * From the "Alignment Unit Size" section of various specs, namely:
@@ -86,7 +86,7 @@ intel_horizontal_texture_alignment_unit(struct brw_context *brw,
 
 static unsigned int
 intel_vertical_texture_alignment_unit(struct brw_context *brw,
-                                      gl_format format, bool multisampled)
+                                      mesa_format format, bool multisampled)
 {
    /**
     * From the "Alignment Unit Size" section of various specs, namely:

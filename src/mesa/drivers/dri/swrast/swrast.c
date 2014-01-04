@@ -76,7 +76,7 @@ static void swrastSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
     struct gl_texture_image *texImage;
     struct swrast_texture_image *swImage;
     uint32_t internalFormat;
-    gl_format texFormat;
+    mesa_format texFormat;
 
     dri_ctx = pDRICtx->driverPrivate;
 
@@ -130,7 +130,7 @@ swrastFillInModes(__DRIscreen *psp,
     __DRIconfig **configs;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
-    gl_format format;
+    mesa_format format;
 
     /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
      * support pageflipping at all.
@@ -627,7 +627,7 @@ viewport(struct gl_context *ctx)
     swrast_check_and_update_window_size(ctx, read);
 }
 
-static gl_format swrastChooseTextureFormat(struct gl_context * ctx,
+static mesa_format swrastChooseTextureFormat(struct gl_context * ctx,
                                            GLenum target,
 					   GLint internalFormat,
 					   GLenum format,

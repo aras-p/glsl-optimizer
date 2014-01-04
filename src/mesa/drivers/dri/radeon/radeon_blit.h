@@ -30,12 +30,12 @@
 
 void r100_blit_init(struct r100_context *r100);
 
-unsigned r100_check_blit(gl_format mesa_format, uint32_t dst_pitch);
+unsigned r100_check_blit(mesa_format mesa_format, uint32_t dst_pitch);
 
 unsigned r100_blit(struct gl_context *ctx,
                    struct radeon_bo *src_bo,
                    intptr_t src_offset,
-                   gl_format src_mesaformat,
+                   mesa_format src_mesaformat,
                    unsigned src_pitch,
                    unsigned src_width,
                    unsigned src_height,
@@ -43,7 +43,7 @@ unsigned r100_blit(struct gl_context *ctx,
                    unsigned src_y_offset,
                    struct radeon_bo *dst_bo,
                    intptr_t dst_offset,
-                   gl_format dst_mesaformat,
+                   mesa_format dst_mesaformat,
                    unsigned dst_pitch,
                    unsigned dst_width,
                    unsigned dst_height,

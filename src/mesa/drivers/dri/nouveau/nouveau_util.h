@@ -31,7 +31,7 @@
 #include "main/colormac.h"
 
 static inline unsigned
-pack_rgba_i(gl_format f, uint8_t c[])
+pack_rgba_i(mesa_format f, uint8_t c[])
 {
 	switch (f) {
 	case MESA_FORMAT_ARGB8888:
@@ -54,7 +54,7 @@ pack_rgba_i(gl_format f, uint8_t c[])
 }
 
 static inline unsigned
-pack_zs_i(gl_format f, uint32_t z, uint8_t s)
+pack_zs_i(mesa_format f, uint32_t z, uint8_t s)
 {
 	switch (f) {
 	case MESA_FORMAT_Z24_S8:
@@ -69,7 +69,7 @@ pack_zs_i(gl_format f, uint32_t z, uint8_t s)
 }
 
 static inline unsigned
-pack_rgba_f(gl_format f, float c[])
+pack_rgba_f(mesa_format f, float c[])
 {
 	return pack_rgba_i(f, (uint8_t []) {
 			   FLOAT_TO_UBYTE(c[RCOMP]),
@@ -79,7 +79,7 @@ pack_rgba_f(gl_format f, float c[])
 }
 
 static inline unsigned
-pack_rgba_clamp_f(gl_format f, float c[])
+pack_rgba_clamp_f(mesa_format f, float c[])
 {
 	GLubyte bytes[4];
 	_mesa_unclamped_float_rgba_to_ubyte(bytes, c);
@@ -87,7 +87,7 @@ pack_rgba_clamp_f(gl_format f, float c[])
 }
 
 static inline unsigned
-pack_zs_f(gl_format f, float z, uint8_t s)
+pack_zs_f(mesa_format f, float z, uint8_t s)
 {
 	return pack_zs_i(f, FLOAT_TO_UINT(z), s);
 }
@@ -208,7 +208,7 @@ get_texgen_coeff(struct gl_texgen *c)
 }
 
 static inline unsigned
-get_format_blocksx(gl_format format,
+get_format_blocksx(mesa_format format,
 		       unsigned x)
 {
 	GLuint blockwidth;
@@ -218,7 +218,7 @@ get_format_blocksx(gl_format format,
 }
 
 static inline unsigned
-get_format_blocksy(gl_format format,
+get_format_blocksy(mesa_format format,
 		       unsigned y)
 {
 	GLuint blockwidth;

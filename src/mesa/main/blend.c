@@ -854,7 +854,7 @@ _mesa_update_clamp_vertex_color(struct gl_context *ctx)
 }
 
 /**
- * Returns an appropriate gl_format for color rendering based on the
+ * Returns an appropriate mesa_format for color rendering based on the
  * GL_FRAMEBUFFER_SRGB state.
  *
  * Some drivers implement GL_FRAMEBUFFER_SRGB using a flag on the blend state
@@ -862,8 +862,8 @@ _mesa_update_clamp_vertex_color(struct gl_context *ctx)
  * overriding the format of the surface.  This is a helper for doing the
  * surface format override variant.
  */
-gl_format
-_mesa_get_render_format(const struct gl_context *ctx, gl_format format)
+mesa_format
+_mesa_get_render_format(const struct gl_context *ctx, mesa_format format)
 {
    if (ctx->Color.sRGBEnabled)
       return format;

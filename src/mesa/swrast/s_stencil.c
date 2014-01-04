@@ -61,7 +61,7 @@ ENDIF
  * within the 4-byte pixel will be either 0 or 3.
  */
 static GLint
-get_stencil_offset(gl_format format)
+get_stencil_offset(mesa_format format)
 {
    const GLubyte one = 1;
    GLubyte pixel[MAX_PIXEL_BYTES];

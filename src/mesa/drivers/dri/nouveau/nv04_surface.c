@@ -34,7 +34,7 @@
 #include "nv04_driver.h"
 
 static inline int
-swzsurf_format(gl_format format)
+swzsurf_format(mesa_format format)
 {
 	switch (format) {
 	case MESA_FORMAT_A8:
@@ -73,7 +73,7 @@ swzsurf_format(gl_format format)
 }
 
 static inline int
-surf2d_format(gl_format format)
+surf2d_format(mesa_format format)
 {
 	switch (format) {
 	case MESA_FORMAT_A8:
@@ -112,7 +112,7 @@ surf2d_format(gl_format format)
 }
 
 static inline int
-rect_format(gl_format format)
+rect_format(mesa_format format)
 {
 	switch (format) {
 	case MESA_FORMAT_A8:
@@ -151,7 +151,7 @@ rect_format(gl_format format)
 }
 
 static inline int
-sifm_format(gl_format format)
+sifm_format(mesa_format format)
 {
 	switch (format) {
 	case MESA_FORMAT_A8:

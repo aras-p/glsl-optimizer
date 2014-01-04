@@ -170,7 +170,7 @@ get_input_arg(struct combiner_state *rc, int arg, int flags)
 		int i = (source == GL_TEXTURE ?
 			 rc->unit : source - GL_TEXTURE0);
 		struct gl_texture_object *t = rc->ctx->Texture.Unit[i]._Current;
-		gl_format format = t->Image[0][t->BaseLevel]->TexFormat;
+		mesa_format format = t->Image[0][t->BaseLevel]->TexFormat;
 
 		if (format == MESA_FORMAT_A8) {
 			/* Emulated using I8. */

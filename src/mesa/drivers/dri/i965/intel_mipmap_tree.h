@@ -285,10 +285,10 @@ struct intel_mipmap_tree
     * For ETC1/ETC2 textures, this is one of the uncompressed mesa texture
     * formats if the hardware lacks support for ETC1/ETC2. See @ref wraps_etc.
     */
-   gl_format format;
+   mesa_format format;
 
    /** This variable stores the value of ETC compressed texture format */
-   gl_format etc_format;
+   mesa_format etc_format;
 
    /**
     * The X offset of each image in the miptree must be aligned to this.
@@ -497,7 +497,7 @@ intel_miptree_alloc_non_msrt_mcs(struct brw_context *brw,
 
 struct intel_mipmap_tree *intel_miptree_create(struct brw_context *brw,
                                                GLenum target,
-					       gl_format format,
+					       mesa_format format,
                                                GLuint first_level,
                                                GLuint last_level,
                                                GLuint width0,
@@ -510,7 +510,7 @@ struct intel_mipmap_tree *intel_miptree_create(struct brw_context *brw,
 struct intel_mipmap_tree *
 intel_miptree_create_layout(struct brw_context *brw,
                             GLenum target,
-                            gl_format format,
+                            mesa_format format,
                             GLuint first_level,
                             GLuint last_level,
                             GLuint width0,
@@ -522,7 +522,7 @@ intel_miptree_create_layout(struct brw_context *brw,
 struct intel_mipmap_tree *
 intel_miptree_create_for_bo(struct brw_context *brw,
                             drm_intel_bo *bo,
-                            gl_format format,
+                            mesa_format format,
                             uint32_t offset,
                             uint32_t width,
                             uint32_t height,
@@ -532,14 +532,14 @@ intel_miptree_create_for_bo(struct brw_context *brw,
 struct intel_mipmap_tree*
 intel_miptree_create_for_dri2_buffer(struct brw_context *brw,
                                      unsigned dri_attachment,
-                                     gl_format format,
+                                     mesa_format format,
                                      uint32_t num_samples,
                                      struct intel_region *region);
 
 struct intel_mipmap_tree*
 intel_miptree_create_for_image_buffer(struct brw_context *intel,
                                      enum __DRIimageBufferMask buffer_type,
-                                     gl_format format,
+                                     mesa_format format,
                                      uint32_t num_samples,
                                      struct intel_region *region);
 
@@ -552,7 +552,7 @@ intel_miptree_create_for_image_buffer(struct brw_context *intel,
  */
 struct intel_mipmap_tree*
 intel_miptree_create_for_renderbuffer(struct brw_context *brw,
-                                      gl_format format,
+                                      mesa_format format,
                                       uint32_t width,
                                       uint32_t height,
                                       uint32_t num_samples);

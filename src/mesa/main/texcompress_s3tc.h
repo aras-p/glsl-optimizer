@@ -49,7 +49,7 @@ extern void
 _mesa_init_texture_s3tc(struct gl_context *ctx);
 
 extern compressed_fetch_func
-_mesa_get_dxt_fetch_func(gl_format format);
+_mesa_get_dxt_fetch_func(mesa_format format);
 
 
 #endif /* TEXCOMPRESS_S3TC_H */
