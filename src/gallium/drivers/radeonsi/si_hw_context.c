@@ -24,9 +24,9 @@
  *      Jerome Glisse
  */
 #include "../radeon/r600_cs.h"
-#include "radeonsi_pm4.h"
-#include "radeonsi_pipe.h"
 #include "sid.h"
+#include "si_pm4.h"
+#include "si_pipe.h"
 #include "util/u_memory.h"
 #include <errno.h>
 

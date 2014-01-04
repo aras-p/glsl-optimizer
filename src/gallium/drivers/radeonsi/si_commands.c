@@ -24,9 +24,9 @@
  *      Christian König <christian.koenig@amd.com>
  */
 
-#include "radeonsi_pipe.h"
-#include "radeonsi_pm4.h"
 #include "sid.h"
+#include "si_pipe.h"
+#include "si_pm4.h"
 
 void si_cmd_context_control(struct si_pm4_state *pm4)
 {

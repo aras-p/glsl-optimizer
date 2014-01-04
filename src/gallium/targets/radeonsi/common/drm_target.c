@@ -29,7 +29,7 @@
 #include "target-helpers/inline_debug_helper.h"
 #include "radeon/drm/radeon_drm_public.h"
 #include "radeon/drm/radeon_winsys.h"
-#include "radeonsi/radeonsi_public.h"
+#include "radeonsi/si_public.h"
 
 static struct pipe_screen *create_screen(int fd)
 {

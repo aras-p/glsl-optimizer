@@ -23,14 +23,14 @@
  * Authors:
  *      Jerome Glisse
  */
-#ifndef R600_H
-#define R600_H
+#ifndef SI_H
+#define SI_H
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 #include "util/u_double_list.h"
 #include "util/u_transfer.h"
 
-#include "radeonsi_resource.h"
+#include "si_resource.h"
 
 struct winsys_handle;
 

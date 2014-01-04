@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Marek Olšák <maraeo@gmail.com
+ * Copyright 2010 Jerome Glisse <glisse@freedesktop.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -19,22 +19,52 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *      Jerome Glisse
+ *      Corbin Simpson <MostAwesomeDude@gmail.com>
  */
-#ifndef R600_RESOURCE_H
-#define R600_RESOURCE_H
 
-#include "../radeon/r600_pipe_common.h"
+#include "pipe/p_screen.h"
+#include "util/u_format.h"
+#include "util/u_math.h"
+#include "util/u_inlines.h"
+#include "util/u_memory.h"
+#include "util/u_upload_mgr.h"
 
-struct r600_surface {
-	struct pipe_surface		base;
-};
+#include "si.h"
+#include "si_pipe.h"
 
-void r600_init_screen_resource_functions(struct pipe_screen *screen);
-
-struct r600_context;
+void r600_upload_index_buffer(struct r600_context *rctx,
+			      struct pipe_index_buffer *ib, unsigned count)
+{
+	u_upload_data(rctx->b.uploader, 0, count * ib->index_size,
+		      ib->user_buffer, &ib->offset, &ib->buffer);
+}
 
 void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
-			      const uint8_t *ptr, unsigned size,
-			      uint32_t *const_offset);
+			const uint8_t *ptr, unsigned size,
+			uint32_t *const_offset)
+{
+	if (R600_BIG_ENDIAN) {
+		uint32_t *tmpPtr;
+		unsigned i;
 
-#endif
+		if (!(tmpPtr = malloc(size))) {
+			R600_ERR("Failed to allocate BE swap buffer.\n");
+			return;
+		}
+
+		for (i = 0; i < size / 4; ++i) {
+			tmpPtr[i] = util_bswap32(((uint32_t *)ptr)[i]);
+		}
+
+		u_upload_data(rctx->b.uploader, 0, size, tmpPtr, const_offset,
+				(struct pipe_resource**)rbuffer);
+
+		free(tmpPtr);
+	} else {
+		u_upload_data(rctx->b.uploader, 0, size, ptr, const_offset,
+					(struct pipe_resource**)rbuffer);
+	}
+}

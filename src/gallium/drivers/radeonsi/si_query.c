@@ -20,7 +20,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "radeonsi_pipe.h"
+#include "si_pipe.h"
 #include "sid.h"
 
 static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned query_type)

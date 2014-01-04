@@ -44,7 +44,7 @@
 #include "vl/vl_defines.h"
 #include "vl/vl_mpeg12_decoder.h"
 
-#include "radeonsi_pipe.h"
+#include "si_pipe.h"
 #include "radeon/radeon_uvd.h"
 #include "sid.h"
 

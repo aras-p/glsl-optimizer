@@ -27,7 +27,7 @@
 #ifndef SI_STATE_H
 #define SI_STATE_H
 
-#include "radeonsi_pm4.h"
+#include "si_pm4.h"
 #include "../radeon/r600_pipe_common.h"
 
 struct si_state_blend {

@@ -21,7 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "radeonsi_pipe.h"
+#include "si_pipe.h"
 
 static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)

@@ -26,8 +26,8 @@
  *      Christian König <christian.koenig@amd.com>
  */
 
-#ifndef RADEONSI_SHADER_H
-#define RADEONSI_SHADER_H
+#ifndef SI_SHADER_H
+#define SI_SHADER_H
 
 #include <llvm-c/Core.h> /* LLVMModuleRef */
 

@@ -23,7 +23,7 @@
 #include "util/u_surface.h"
 #include "util/u_blitter.h"
 #include "util/u_format.h"
-#include "radeonsi_pipe.h"
+#include "si_pipe.h"
 #include "si_state.h"
 
 enum r600_blitter_op /* bitmask */

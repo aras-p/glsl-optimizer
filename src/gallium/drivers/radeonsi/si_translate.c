@@ -25,7 +25,7 @@
 
 #include "util/u_index_modify.h"
 #include "util/u_upload_mgr.h"
-#include "radeonsi_pipe.h"
+#include "si_pipe.h"
 
 
 void r600_translate_index_buffer(struct r600_context *r600,

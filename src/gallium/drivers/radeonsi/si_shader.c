@@ -44,8 +44,8 @@
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_dump.h"
 
-#include "radeonsi_pipe.h"
-#include "radeonsi_shader.h"
+#include "si_pipe.h"
+#include "si_shader.h"
 #include "si_state.h"
 #include "sid.h"
 

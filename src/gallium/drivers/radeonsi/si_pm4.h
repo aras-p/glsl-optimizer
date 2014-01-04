@@ -24,8 +24,8 @@
  *      Christian König <christian.koenig@amd.com>
  */
 
-#ifndef RADEONSI_PM4_H
-#define RADEONSI_PM4_H
+#ifndef SI_PM4_H
+#define SI_PM4_H
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 

@@ -26,8 +26,8 @@
 
 #include "../radeon/r600_cs.h"
 #include "util/u_memory.h"
-#include "radeonsi_pipe.h"
-#include "radeonsi_pm4.h"
+#include "si_pipe.h"
+#include "si_pm4.h"
 #include "sid.h"
 
 #define NUMBER_OF_STATES (sizeof(union si_state) / sizeof(struct si_pm4_state *))

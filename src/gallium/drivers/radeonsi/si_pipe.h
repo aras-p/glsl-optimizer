@@ -23,8 +23,8 @@
  * Authors:
  *      Jerome Glisse
  */
-#ifndef RADEONSI_PIPE_H
-#define RADEONSI_PIPE_H
+#ifndef SI_PIPE_H
+#define SI_PIPE_H
 
 #include "../radeon/r600_pipe_common.h"
 
@@ -33,12 +33,12 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_slab.h"
-#include "r600.h"
-#include "radeonsi_public.h"
-#include "radeonsi_pm4.h"
-#include "si_state.h"
-#include "r600_resource.h"
+#include "si.h"
 #include "sid.h"
+#include "si_public.h"
+#include "si_pm4.h"
+#include "si_resource.h"
+#include "si_state.h"
 
 #ifdef PIPE_ARCH_BIG_ENDIAN
 #define R600_BIG_ENDIAN 1
@@ -175,30 +175,30 @@ struct r600_context {
 	union si_state	emitted;
 };
 
-/* r600_blit.c */
+/* si_blit.c */
 void si_init_blit_functions(struct r600_context *rctx);
 void si_flush_depth_textures(struct r600_context *rctx,
 			     struct r600_textures_info *textures);
 void r600_decompress_color_textures(struct r600_context *rctx,
 				    struct r600_textures_info *textures);
 
-/* r600_buffer.c */
+/* si_buffer.c */
 void r600_upload_index_buffer(struct r600_context *rctx,
 			      struct pipe_index_buffer *ib, unsigned count);
 
 
-/* r600_pipe.c */
+/* si_pipe.c */
 void radeonsi_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 		    unsigned flags);
 const char *r600_get_llvm_processor_name(enum radeon_family family);
 
-/* r600_query.c */
+/* si_query.c */
 void r600_init_query_functions(struct r600_context *rctx);
 
-/* r600_resource.c */
+/* si_resource.c */
 void r600_init_context_resource_functions(struct r600_context *r600);
 
-/* r600_translate.c */
+/* si_translate.c */
 void r600_translate_index_buffer(struct r600_context *r600,
 				 struct pipe_index_buffer *ib,
 				 unsigned count);
@@ -207,10 +207,10 @@ void r600_translate_index_buffer(struct r600_context *r600,
 void r600_trace_emit(struct r600_context *rctx);
 #endif
 
-/* radeonsi_compute.c */
+/* si_compute.c */
 void si_init_compute_functions(struct r600_context *rctx);
 
-/* radeonsi_uvd.c */
+/* si_uvd.c */
 struct pipe_video_codec *radeonsi_uvd_create_decoder(struct pipe_context *context,
                                                      const struct pipe_video_codec *templ);
 

@@ -1,8 +1,8 @@
 #include "util/u_memory.h"
 
 #include "../radeon/r600_cs.h"
-#include "radeonsi_pipe.h"
-#include "radeonsi_shader.h"
+#include "si_pipe.h"
+#include "si_shader.h"
 
 #include "radeon_llvm_util.h"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Jerome Glisse <glisse@freedesktop.org>
+ * Copyright 2012 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -19,12 +19,37 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *      Christian König <christian.koenig@amd.com>
  */
-#ifndef RADEONSI_PUBLIC_H
-#define RADEONSI_PUBLIC_H
 
-struct radeon_winsys;
+#ifndef SI_RESOURCE_H
+#define SI_RESOURCE_H
 
-struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws);
+#include "../radeon/r600_pipe_common.h"
+#include "util/u_transfer.h"
+#include "util/u_inlines.h"
+
+static INLINE struct r600_resource *
+r600_resource_create_custom(struct pipe_screen *screen,
+			    unsigned usage, unsigned size)
+{
+	assert(size);
+	return r600_resource(pipe_buffer_create(screen,
+		PIPE_BIND_CUSTOM, usage, size));
+}
+
+struct r600_surface {
+	struct pipe_surface		base;
+};
+
+void r600_init_screen_resource_functions(struct pipe_screen *screen);
+
+struct r600_context;
+
+void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
+			      const uint8_t *ptr, unsigned size,
+			      uint32_t *const_offset);
 
 #endif
