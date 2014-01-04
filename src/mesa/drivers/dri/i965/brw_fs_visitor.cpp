@@ -1549,6 +1549,7 @@ fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, int sampler)
    }
 
    fs_inst *inst = emit(SHADER_OPCODE_TXF_MCS, dest, payload);
+   virtual_grf_sizes[payload.reg] = next.reg_offset;
    inst->base_mrf = -1;
    inst->mlen = next.reg_offset * reg_width;
    inst->header_present = false;
