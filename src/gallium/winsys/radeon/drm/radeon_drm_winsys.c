@@ -423,6 +423,11 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
         ws->info.si_tile_mode_array_valid = TRUE;
     }
 
+    if (radeon_get_drm_value(ws->fd, RADEON_INFO_CIK_MACROTILE_MODE_ARRAY, NULL,
+                             ws->info.cik_macrotile_mode_array)) {
+        ws->info.cik_macrotile_mode_array_valid = TRUE;
+    }
+
     return TRUE;
 }
 

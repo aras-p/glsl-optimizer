@@ -198,6 +198,9 @@ struct radeon_info {
 
     boolean                     si_tile_mode_array_valid;
     uint32_t                    si_tile_mode_array[32];
+
+    boolean                     cik_macrotile_mode_array_valid;
+    uint32_t                    cik_macrotile_mode_array[16];
 };
 
 enum radeon_feature_id {

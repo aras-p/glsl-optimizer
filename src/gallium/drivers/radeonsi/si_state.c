@@ -40,9 +40,25 @@
 #include "../radeon/r600_cs.h"
 #include "sid.h"
 
-static uint32_t cik_num_banks(uint32_t nbanks)
+static uint32_t cik_num_banks(struct r600_screen *rscreen, unsigned bpe, unsigned tile_split)
 {
-	switch (nbanks) {
+	if (rscreen->b.info.cik_macrotile_mode_array_valid) {
+		unsigned index, tileb;
+
+		tileb = 8 * 8 * bpe;
+		tileb = MIN2(tile_split, tileb);
+
+		for (index = 0; tileb > 64; index++) {
+			tileb >>= 1;
+		}
+
+		assert(index < 16);
+
+		return (rscreen->b.info.cik_macrotile_mode_array[index] >> 6) & 0x3;
+	}
+
+	/* The old way. */
+	switch (rscreen->b.tiling_info.num_banks) {
 	case 2:
 		return V_02803C_ADDR_SURF_2_BANK;
 	case 4:
@@ -54,7 +70,6 @@ static uint32_t cik_num_banks(uint32_t nbanks)
 		return V_02803C_ADDR_SURF_16_BANK;
 	}
 }
-
 
 static unsigned cik_tile_split(unsigned tile_split)
 {
@@ -1800,7 +1815,7 @@ static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
 		macro_aspect = cik_macro_tile_aspect(macro_aspect);
 		bankw = cik_bank_wh(bankw);
 		bankh = cik_bank_wh(bankh);
-		nbanks = cik_num_banks(rscreen->b.tiling_info.num_banks);
+		nbanks = cik_num_banks(rscreen, rtex->surface.bpe, rtex->surface.tile_split);
 		tile_mode_index = si_tile_mode_index(rtex, level, false);
 		pipe_config = cik_db_pipe_config(rscreen, tile_mode_index);
 
