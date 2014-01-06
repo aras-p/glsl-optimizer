@@ -2186,6 +2186,12 @@ public:
     */
    bool has_value(const ir_constant *) const;
 
+   /**
+    * Return true if this ir_constant represents the given value.
+    *
+    * For vectors, this checks that each component is the given value.
+    */
+   virtual bool is_value(float f, int i) const;
    virtual bool is_zero() const;
    virtual bool is_one() const;
    virtual bool is_negative_one() const;
