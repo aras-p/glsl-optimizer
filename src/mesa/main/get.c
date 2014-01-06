@@ -327,6 +327,12 @@ static const int extra_EXT_framebuffer_sRGB_and_new_buffers[] = {
    EXTRA_END
 };
 
+static const int extra_EXT_packed_float[] = {
+   EXT(EXT_packed_float),
+   EXTRA_NEW_BUFFERS,
+   EXTRA_END
+};
+
 static const int extra_EXT_texture_array_es3[] = {
    EXT(EXT_texture_array),
    EXTRA_API_ES3,
@@ -755,6 +761,22 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       unit = ctx->Texture.CurrentUnit;
       v->value_int =
 	 ctx->Texture.Unit[unit].CurrentTex[d->offset]->Name;
+      break;
+
+   /* GL_EXT_packed_float */
+   case GL_RGBA_SIGNED_COMPONENTS_EXT:
+      {
+         /* Note: we only check the 0th color attachment. */
+         const struct gl_renderbuffer *rb =
+            ctx->DrawBuffer->_ColorDrawBuffers[0];
+         const GLboolean is_signed =
+            rb ? _mesa_is_format_signed(rb->Format) : GL_FALSE;
+         /* At this time, all color channels have same signedness */
+         v->value_int_4[0] =
+         v->value_int_4[1] =
+         v->value_int_4[2] =
+         v->value_int_4[3] = is_signed;
+      }
       break;
 
    /* GL_ARB_vertex_buffer_object */

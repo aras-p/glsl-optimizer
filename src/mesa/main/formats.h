@@ -341,6 +341,9 @@ _mesa_is_format_integer_color(gl_format format);
 extern GLboolean
 _mesa_is_format_unsigned(gl_format format);
 
+extern GLboolean
+_mesa_is_format_signed(gl_format format);
+
 extern GLenum
 _mesa_get_format_color_encoding(gl_format format);
 

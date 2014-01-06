@@ -1967,6 +1967,25 @@ _mesa_is_format_unsigned(gl_format format)
 
 
 /**
+ * Does the given format store signed values?
+ */
+GLboolean
+_mesa_is_format_signed(gl_format format)
+{
+   if (format == MESA_FORMAT_R11_G11_B10_FLOAT) {
+      /* this packed float format only stores unsigned values */
+      return GL_FALSE;
+   }
+   else {
+      const struct gl_format_info *info = _mesa_get_format_info(format);
+      return (info->DataType == GL_SIGNED_NORMALIZED ||
+              info->DataType == GL_INT ||
+              info->DataType == GL_FLOAT);
+   }
+}
+
+
+/**
  * Return color encoding for given format.
  * \return GL_LINEAR or GL_SRGB
  */

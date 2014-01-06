@@ -611,6 +611,9 @@ descriptor=[
 # GL_ARB_fragment_program
   [ "FRAGMENT_PROGRAM_ARB", "CONTEXT_BOOL(FragmentProgram.Enabled), extra_ARB_fragment_program" ],
 
+# GL_EXT_packed_float
+  [ "RGBA_SIGNED_COMPONENTS_EXT", "LOC_CUSTOM, TYPE_INT_4, 0, extra_EXT_packed_float" ],
+
 # GL_EXT_depth_bounds_test
   [ "DEPTH_BOUNDS_TEST_EXT", "CONTEXT_BOOL(Depth.BoundsTest), extra_EXT_depth_bounds_test" ],
   [ "DEPTH_BOUNDS_EXT", "CONTEXT_FLOAT2(Depth.BoundsMin), extra_EXT_depth_bounds_test" ],
