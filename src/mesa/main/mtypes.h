@@ -3378,6 +3378,9 @@ struct gl_constants
    GLuint MaxCombinedImageUnitsAndFragmentOutputs;
    GLuint MaxImageSamples;
    GLuint MaxCombinedImageUniforms;
+
+   /** GL_ARB_compute_shader */
+   GLuint MaxComputeWorkGroupSize[3]; /* Array of x, y, z dimensions */
 };
 
 

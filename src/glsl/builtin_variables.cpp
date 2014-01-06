@@ -390,6 +390,7 @@ private:
                              enum ir_variable_mode mode, int slot);
    ir_variable *add_uniform(const glsl_type *type, const char *name);
    ir_variable *add_const(const char *name, int value);
+   ir_variable *add_const_ivec3(const char *name, int x, int y, int z);
    void add_varying(int slot, const glsl_type *type, const char *name,
                     const char *name_as_gs_input);
 
@@ -530,6 +531,25 @@ builtin_variable_generator::add_const(const char *name, int value)
 }
 
 
+ir_variable *
+builtin_variable_generator::add_const_ivec3(const char *name, int x, int y,
+                                            int z)
+{
+   ir_variable *const var = add_variable(name, glsl_type::ivec3_type,
+                                         ir_var_auto, -1);
+   ir_constant_data data;
+   memset(&data, 0, sizeof(data));
+   data.i[0] = x;
+   data.i[1] = y;
+   data.i[2] = z;
+   var->constant_value = new(var) ir_constant(glsl_type::ivec3_type, &data);
+   var->constant_initializer =
+      new(var) ir_constant(glsl_type::ivec3_type, &data);
+   var->data.has_initializer = true;
+   return var;
+}
+
+
 void
 builtin_variable_generator::generate_constants()
 {
@@ -659,6 +679,13 @@ builtin_variable_generator::generate_constants()
                 state->Const.MaxAtomicBufferBindings);
       add_const("gl_MaxTessControlAtomicCounters", 0);
       add_const("gl_MaxTessEvaluationAtomicCounters", 0);
+   }
+
+   if (state->is_version(430, 0) || state->ARB_compute_shader_enable) {
+      add_const_ivec3("gl_MaxComputeWorkGroupSize",
+                      state->Const.MaxComputeWorkGroupSize[0],
+                      state->Const.MaxComputeWorkGroupSize[1],
+                      state->Const.MaxComputeWorkGroupSize[2]);
    }
 }
 

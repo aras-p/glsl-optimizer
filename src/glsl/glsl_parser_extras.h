@@ -250,6 +250,9 @@ struct _mesa_glsl_parse_state {
       unsigned MaxFragmentAtomicCounters;
       unsigned MaxCombinedAtomicCounters;
       unsigned MaxAtomicBufferBindings;
+
+      /* ARB_compute_shader */
+      unsigned MaxComputeWorkGroupSize[3];
    } Const;
 
    /**
