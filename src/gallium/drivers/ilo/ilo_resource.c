@@ -38,7 +38,8 @@ struct tex_layout {
    enum pipe_format format;
    unsigned block_width, block_height, block_size;
    bool compressed;
-   bool has_depth, has_stencil, separate_stencil;
+   bool has_depth, has_stencil;
+   bool hiz, separate_stencil;
 
    enum intel_tiling_mode tiling;
    bool can_be_linear;
@@ -613,6 +614,9 @@ tex_layout_init_format(struct tex_layout *layout)
    desc = util_format_description(format);
    layout->has_depth = util_format_has_depth(desc);
    layout->has_stencil = util_format_has_stencil(desc);
+
+   /* we are not ready yet */
+   layout->hiz = false;
 }
 
 static void
@@ -993,6 +997,75 @@ tex_create_separate_stencil(struct ilo_texture *tex)
    return true;
 }
 
+static bool
+tex_create_hiz(struct ilo_texture *tex, const struct tex_layout *layout)
+{
+   struct ilo_screen *is = ilo_screen(tex->base.screen);
+   const struct pipe_resource *templ = layout->templ;
+   const int hz_align_j = 8;
+   unsigned hz_width, hz_height;
+   unsigned long pitch;
+   int i;
+
+   /*
+    * See the Sandy Bridge PRM, volume 2 part 1, page 312, and the Ivy Bridge
+    * PRM, volume 2 part 1, page 312-313.
+    *
+    * It seems HiZ buffer is aligned to 8x8, with every two rows packed into a
+    * memory row.
+    */
+
+   hz_width = align(layout->levels[0].w, 16);
+
+   if (templ->target == PIPE_TEXTURE_3D) {
+      hz_height = 0;
+
+      for (i = 0; i <= templ->last_level; i++) {
+         const unsigned h = align(layout->levels[i].h, hz_align_j);
+         hz_height += h * layout->levels[i].d;
+      }
+
+      hz_height /= 2;
+   }
+   else {
+      const unsigned h0 = align(layout->levels[0].h, hz_align_j);
+      unsigned hz_qpitch = h0;
+
+      if (layout->array_spacing_full) {
+         const unsigned h1 = align(layout->levels[1].h, hz_align_j);
+         const unsigned htail =
+            ((layout->dev->gen >= ILO_GEN(7)) ? 12 : 11) * hz_align_j;
+
+         hz_qpitch += h1 + htail;
+      }
+
+      hz_height = hz_qpitch * templ->array_size / 2;
+
+      if (layout->dev->gen >= ILO_GEN(7))
+         hz_height = align(hz_height, 8);
+   }
+
+   /*
+    * On GEN6, Depth Coordinate Offsets may be set to the values returned by
+    * ilo_texture_get_slice_offset(), which can be as large as (63, 31).  Pad
+    * the HiZ bo to avoid out-of-bound accesses.
+    */
+   if (layout->dev->gen == ILO_GEN(6)) {
+      hz_width += 64;
+      hz_height += 32 / 2;
+   }
+
+   tex->hiz.bo = intel_winsys_alloc_texture(is->winsys,
+         "hiz texture", hz_width, hz_height, 1,
+         INTEL_TILING_Y, INTEL_ALLOC_FOR_RENDER, &pitch);
+   if (!tex->hiz.bo)
+      return false;
+
+   tex->hiz.bo_stride = pitch;
+
+   return true;
+}
+
 static void
 tex_destroy(struct ilo_texture *tex)
 {
@@ -1081,6 +1154,9 @@ tex_create(struct pipe_screen *screen,
       tex_destroy(tex);
       return NULL;
    }
+
+   if (layout.hiz)
+      tex_create_hiz(tex, &layout);
 
    return &tex->base;
 }
