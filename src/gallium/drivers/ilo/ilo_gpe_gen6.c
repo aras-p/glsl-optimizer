@@ -984,9 +984,8 @@ zs_init_info(const struct ilo_dev_info *dev,
              unsigned first_layer, unsigned num_layers,
              bool offset_to_layer, struct ilo_zs_surface_info *info)
 {
-   struct intel_bo * const hiz_bo = NULL;
-   bool separate_stencil;
    uint32_t x_offset[3], y_offset[3];
+   bool separate_stencil;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
@@ -1021,7 +1020,7 @@ zs_init_info(const struct ilo_dev_info *dev,
        *      same value (enabled or disabled) as Hierarchical Depth Buffer
        *      Enable."
        */
-      separate_stencil = (hiz_bo != NULL);
+      separate_stencil = (tex->hiz.bo != NULL);
    }
 
    /*
@@ -1110,10 +1109,12 @@ zs_init_info(const struct ilo_dev_info *dev,
       }
    }
 
-   if (hiz_bo) {
-      info->hiz.bo = hiz_bo;
-      info->hiz.stride = 0;
-      info->hiz.tiling = 0;
+   if (tex->hiz.bo) {
+      info->hiz.bo = tex->hiz.bo;
+      info->hiz.stride = tex->hiz.bo_stride;
+      info->hiz.tiling = INTEL_TILING_Y;
+
+      assert(!offset_to_layer);
       info->hiz.offset = 0;
       x_offset[2] = 0;
       y_offset[2] = 0;

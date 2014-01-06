@@ -209,40 +209,14 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
                                     enum pipe_format depth_format,
                                     uint32_t *payload, unsigned payload_len)
 {
-   const struct ilo_rasterizer_sf *sf = &rasterizer->sf;
+   assert(payload_len == Elements(rasterizer->sf.payload));
 
-   assert(payload_len == Elements(sf->payload));
+   if (rasterizer) {
+      const struct ilo_rasterizer_sf *sf = &rasterizer->sf;
 
-   if (sf) {
       memcpy(payload, sf->payload, sizeof(sf->payload));
-
       if (num_samples > 1)
          payload[1] |= sf->dw_msaa;
-
-      if (dev->gen >= ILO_GEN(7)) {
-         int format;
-
-         /* separate stencil */
-         switch (depth_format) {
-         case PIPE_FORMAT_Z16_UNORM:
-            format = BRW_DEPTHFORMAT_D16_UNORM;
-            break;
-         case PIPE_FORMAT_Z32_FLOAT:
-         case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-            format = BRW_DEPTHFORMAT_D32_FLOAT;
-            break;
-         case PIPE_FORMAT_Z24X8_UNORM:
-         case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-            format = BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
-            break;
-         default:
-            /* FLOAT surface is assumed when there is no depth buffer */
-            format = BRW_DEPTHFORMAT_D32_FLOAT;
-            break;
-         }
-
-         payload[0] |= format << GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT;
-      }
    }
    else {
       payload[0] = 0;
@@ -251,6 +225,31 @@ ilo_gpe_gen6_fill_3dstate_sf_raster(const struct ilo_dev_info *dev,
       payload[3] = 0;
       payload[4] = 0;
       payload[5] = 0;
+   }
+
+   if (dev->gen >= ILO_GEN(7)) {
+      int format;
+
+      /* separate stencil */
+      switch (depth_format) {
+      case PIPE_FORMAT_Z16_UNORM:
+         format = BRW_DEPTHFORMAT_D16_UNORM;
+         break;
+      case PIPE_FORMAT_Z32_FLOAT:
+      case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+         format = BRW_DEPTHFORMAT_D32_FLOAT;
+         break;
+      case PIPE_FORMAT_Z24X8_UNORM:
+      case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+         format = BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
+         break;
+      default:
+         /* FLOAT surface is assumed when there is no depth buffer */
+         format = BRW_DEPTHFORMAT_D32_FLOAT;
+         break;
+      }
+
+      payload[0] |= format << GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT;
    }
 }
 
@@ -1217,6 +1216,7 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
                      int num_samplers,
                      const struct ilo_rasterizer_state *rasterizer,
                      bool dual_blend, bool cc_may_kill,
+                     uint32_t hiz_op,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x14);
@@ -1236,7 +1236,7 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
       ilo_cp_write(cp, 0);
       ilo_cp_write(cp, 0);
       ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, 0);
+      ilo_cp_write(cp, hiz_op);
       /* honor the valid range even if dispatching is disabled */
       ilo_cp_write(cp, (max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT);
       ilo_cp_write(cp, 0);
@@ -1255,21 +1255,15 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
 
    dw2 |= (num_samplers + 3) / 4 << GEN6_WM_SAMPLER_COUNT_SHIFT;
 
-   if (true) {
-      dw4 |= GEN6_WM_STATISTICS_ENABLE;
-   }
-   else {
-      /*
-       * From the Sandy Bridge PRM, volume 2 part 1, page 248:
-       *
-       *     "This bit (Statistics Enable) must be disabled if either of these
-       *      bits is set: Depth Buffer Clear , Hierarchical Depth Buffer
-       *      Resolve Enable or Depth Buffer Resolve Enable."
-       */
-      dw4 |= GEN6_WM_DEPTH_CLEAR;
-      dw4 |= GEN6_WM_DEPTH_RESOLVE;
-      dw4 |= GEN6_WM_HIERARCHICAL_DEPTH_RESOLVE;
-   }
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 248:
+    *
+    *     "This bit (Statistics Enable) must be disabled if either of these
+    *      bits is set: Depth Buffer Clear , Hierarchical Depth Buffer Resolve
+    *      Enable or Depth Buffer Resolve Enable."
+    */
+   assert(!hiz_op);
+   dw4 |= GEN6_WM_STATISTICS_ENABLE;
 
    if (cc_may_kill) {
       dw5 |= GEN6_WM_KILL_ENABLE |

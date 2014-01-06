@@ -256,7 +256,7 @@ gen7_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
 static inline void
 gen7_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
                      const struct ilo_rasterizer_state *rasterizer,
-                     const struct pipe_surface *zs_surf,
+                     enum pipe_format zs_format,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x13);
@@ -267,8 +267,7 @@ gen7_emit_3DSTATE_SF(const struct ilo_dev_info *dev,
    ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
    ilo_gpe_gen6_fill_3dstate_sf_raster(dev,
-         rasterizer, num_samples,
-         (zs_surf) ? zs_surf->format : PIPE_FORMAT_NONE,
+         rasterizer, num_samples, zs_format,
          payload, Elements(payload));
 
    ilo_cp_begin(cp, cmd_len);
@@ -281,7 +280,7 @@ static inline void
 gen7_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
                      const struct ilo_shader_state *fs,
                      const struct ilo_rasterizer_state *rasterizer,
-                     bool cc_may_kill,
+                     bool cc_may_kill, uint32_t hiz_op,
                      struct ilo_cp *cp)
 {
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x0, 0x14);
@@ -292,15 +291,16 @@ gen7_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
    ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
    /* see ilo_gpe_init_rasterizer_wm() */
-   dw1 = rasterizer->wm.payload[0];
-   dw2 = rasterizer->wm.payload[1];
+   if (rasterizer) {
+      dw1 = rasterizer->wm.payload[0];
+      dw2 = rasterizer->wm.payload[1];
 
-   dw1 |= GEN7_WM_STATISTICS_ENABLE;
-
-   if (false) {
-      dw1 |= GEN7_WM_DEPTH_CLEAR;
-      dw1 |= GEN7_WM_DEPTH_RESOLVE;
-      dw1 |= GEN7_WM_HIERARCHICAL_DEPTH_RESOLVE;
+      assert(!hiz_op);
+      dw1 |= GEN7_WM_STATISTICS_ENABLE;
+   }
+   else {
+      dw1 = hiz_op;
+      dw2 = 0;
    }
 
    if (fs) {
@@ -638,12 +638,12 @@ gen7_emit_3DSTATE_PS(const struct ilo_dev_info *dev,
       switch (dev->gen) {
       case ILO_GEN(7.5):
          max_threads = (dev->gt == 3) ? 408 : (dev->gt == 2) ? 204 : 102;
-         dw4 |= max_threads << HSW_PS_MAX_THREADS_SHIFT;
+         dw4 |= (max_threads - 1) << HSW_PS_MAX_THREADS_SHIFT;
          break;
       case ILO_GEN(7):
       default:
          max_threads = (dev->gt == 2) ? 172 : 48;
-         dw4 |= max_threads << IVB_PS_MAX_THREADS_SHIFT;
+         dw4 |= (max_threads - 1) << IVB_PS_MAX_THREADS_SHIFT;
          break;
       }
 

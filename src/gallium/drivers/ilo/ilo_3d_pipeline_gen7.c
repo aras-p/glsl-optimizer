@@ -462,8 +462,11 @@ gen7_pipeline_sf(struct ilo_3d_pipeline *p,
 
    /* 3DSTATE_SF */
    if (DIRTY(RASTERIZER) || DIRTY(FB)) {
+      struct pipe_surface *zs = ilo->fb.state.zsbuf;
+
       gen7_wa_pipe_control_cs_stall(p, true, true);
-      gen7_emit_3DSTATE_SF(p->dev, ilo->rasterizer, ilo->fb.state.zsbuf, p->cp);
+      gen7_emit_3DSTATE_SF(p->dev, ilo->rasterizer,
+            (zs) ? zs->format : PIPE_FORMAT_NONE, p->cp);
    }
 }
 
@@ -481,7 +484,7 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
          gen7_wa_pipe_control_wm_max_threads_stall(p);
 
       gen7_emit_3DSTATE_WM(p->dev, ilo->fs,
-            ilo->rasterizer, cc_may_kill, p->cp);
+            ilo->rasterizer, cc_may_kill, 0, p->cp);
    }
 
    /* 3DSTATE_BINDING_TABLE_POINTERS_PS */
