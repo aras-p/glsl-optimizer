@@ -52,6 +52,7 @@ main_sources = [
     'main/clear.c',
     'main/clip.c',
     'main/colortab.c',
+    'main/compute.c',
     'main/condrender.c',
     'main/context.c',
     'main/convolve.c',

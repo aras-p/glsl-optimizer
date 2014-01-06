@@ -24,6 +24,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/clear.c \
 	$(SRCDIR)main/clip.c \
 	$(SRCDIR)main/colortab.c \
+	$(SRCDIR)main/compute.c \
 	$(SRCDIR)main/condrender.c \
 	$(SRCDIR)main/context.c \
 	$(SRCDIR)main/convolve.c \

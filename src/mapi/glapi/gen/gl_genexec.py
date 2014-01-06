@@ -58,6 +58,7 @@ header = """/**
 #include "main/clear.h"
 #include "main/clip.h"
 #include "main/colortab.h"
+#include "main/compute.h"
 #include "main/condrender.h"
 #include "main/context.h"
 #include "main/convolve.h"

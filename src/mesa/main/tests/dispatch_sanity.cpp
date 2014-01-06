@@ -850,8 +850,8 @@ const struct function gl_core_functions_possible[] = {
    { "glClearBufferSubData", 43, -1 },
 // { "glClearNamedBufferDataEXT", 43, -1 },             // XXX: Add to xml
 // { "glClearNamedBufferSubDataEXT", 43, -1 },          // XXX: Add to xml
-// { "glDispatchCompute", 43, -1 },                     // XXX: Add to xml
-// { "glDispatchComputeIndirect", 43, -1 },             // XXX: Add to xml
+   { "glDispatchCompute", 43, -1 },
+   { "glDispatchComputeIndirect", 43, -1 },
 // { "glCopyImageSubData", 43, -1 },                    // XXX: Add to xml
    { "glTextureView", 43, -1 },
    { "glBindVertexBuffer", 43, -1 },
