@@ -4073,7 +4073,7 @@ builtin_builder::_min3(builtin_available_predicate avail,
    ir_variable *z = in_var(z_type, "z");
    MAKE_SIG(x_type, avail, 3, x, y, z);
 
-   ir_expression *min3 = min(x, min(y,z));
+   ir_expression *min3 = min2(x, min2(y,z));
    body.emit(ret(min3));
 
    return sig;
@@ -4089,7 +4089,7 @@ builtin_builder::_max3(builtin_available_predicate avail,
    ir_variable *z = in_var(z_type, "z");
    MAKE_SIG(x_type, avail, 3, x, y, z);
 
-   ir_expression *max3 = max(x, max(y,z));
+   ir_expression *max3 = max2(x, max2(y,z));
    body.emit(ret(max3));
 
    return sig;
@@ -4105,7 +4105,7 @@ builtin_builder::_mid3(builtin_available_predicate avail,
    ir_variable *z = in_var(z_type, "z");
    MAKE_SIG(x_type, avail, 3, x, y, z);
 
-   ir_expression *mid3 = max(min(x, y), max(min(x, z), min(y, z)));
+   ir_expression *mid3 = max2(min2(x, y), max2(min2(x, z), min2(y, z)));
    body.emit(ret(mid3));
 
    return sig;

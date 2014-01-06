@@ -211,12 +211,12 @@ ir_expression *sub(operand a, operand b)
    return expr(ir_binop_sub, a, b);
 }
 
-ir_expression *min(operand a, operand b)
+ir_expression *min2(operand a, operand b)
 {
    return expr(ir_binop_min, a, b);
 }
 
-ir_expression *max(operand a, operand b)
+ir_expression *max2(operand a, operand b)
 {
    return expr(ir_binop_max, a, b);
 }
