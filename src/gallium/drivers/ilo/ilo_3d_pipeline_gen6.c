@@ -756,6 +756,8 @@ gen6_pipeline_wm_depth(struct ilo_3d_pipeline *p,
       }
 
       gen6_emit_3DSTATE_DEPTH_BUFFER(p->dev, zs, p->cp);
+      gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(p->dev, zs, p->cp);
+      gen6_emit_3DSTATE_STENCIL_BUFFER(p->dev, zs, p->cp);
 
       /* TODO */
       gen6_emit_3DSTATE_CLEAR_PARAMS(p->dev, 0, p->cp);

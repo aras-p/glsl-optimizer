@@ -572,17 +572,45 @@ tex_layout_init_format(struct tex_layout *layout)
    const struct pipe_resource *templ = layout->templ;
    enum pipe_format format;
    const struct util_format_description *desc;
-   bool separate_stencil;
+   bool can_separate_stencil;
 
-   /* GEN7+ requires separate stencil buffers */
-   separate_stencil = (layout->dev->gen >= ILO_GEN(7));
+   if (layout->dev->gen >= ILO_GEN(7)) {
+      /* GEN7+ requires separate stencil buffers */
+      can_separate_stencil = true;
+   }
+   else {
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 312:
+       *
+       *     "The hierarchical depth buffer does not support the LOD field, it
+       *      is assumed by hardware to be zero. A separate hierarachical
+       *      depth buffer is required for each LOD used, and the
+       *      corresponding buffer's state delivered to hardware each time a
+       *      new depth buffer state with modified LOD is delivered."
+       *
+       * From the Sandy Bridge PRM, volume 2 part 1, page 316:
+       *
+       *     "The stencil depth buffer does not support the LOD field, it is
+       *      assumed by hardware to be zero. A separate stencil depth buffer
+       *      is required for each LOD used, and the corresponding buffer's
+       *      state delivered to hardware each time a new depth buffer state
+       *      with modified LOD is delivered."
+       *
+       * Enable separate stencil buffer only when non-mipmapped.  And we will
+       * allocate HiZ bo only when separate stencil buffer is enabled.
+       */
+      if (ilo_debug & ILO_DEBUG_NOHIZ)
+         can_separate_stencil = false;
+      else
+         can_separate_stencil = !templ->last_level;
+   }
 
    switch (templ->format) {
    case PIPE_FORMAT_ETC1_RGB8:
       format = PIPE_FORMAT_R8G8B8X8_UNORM;
       break;
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-      if (separate_stencil) {
+      if (can_separate_stencil) {
          format = PIPE_FORMAT_Z24X8_UNORM;
          layout->separate_stencil = true;
       }
@@ -591,7 +619,7 @@ tex_layout_init_format(struct tex_layout *layout)
       }
       break;
    case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-      if (separate_stencil) {
+      if (can_separate_stencil) {
          format = PIPE_FORMAT_Z32_FLOAT;
          layout->separate_stencil = true;
       }
@@ -615,8 +643,14 @@ tex_layout_init_format(struct tex_layout *layout)
    layout->has_depth = util_format_has_depth(desc);
    layout->has_stencil = util_format_has_stencil(desc);
 
-   /* we are not ready yet */
-   layout->hiz = false;
+   /*
+    * On GEN6, HiZ can be enabled only when separate stencil is enabled.  On
+    * GEN7, there is no such restriction and separate stencil is always
+    * enabled.
+    */
+   if (layout->has_depth && can_separate_stencil &&
+       !(ilo_debug & ILO_DEBUG_NOHIZ))
+      layout->hiz = true;
 }
 
 static void

@@ -62,6 +62,7 @@ enum ilo_debug {
    /* flags that affect the behaviors of the driver */
    ILO_DEBUG_NOHW      = 1 << 20,
    ILO_DEBUG_NOCACHE   = 1 << 21,
+   ILO_DEBUG_NOHIZ     = 1 << 22,
 };
 
 struct ilo_dev_info {

@@ -50,6 +50,7 @@ static const struct debug_named_value ilo_debug_flags[] = {
    { "flush",     ILO_DEBUG_FLUSH,    "Show batch buffer flushes" },
    { "nohw",      ILO_DEBUG_NOHW,     "Do not send commands to HW" },
    { "nocache",   ILO_DEBUG_NOCACHE,  "Always invalidate HW caches" },
+   { "nohiz",     ILO_DEBUG_NOHIZ,    "Disable HiZ" },
    DEBUG_NAMED_VALUE_END
 };
 
