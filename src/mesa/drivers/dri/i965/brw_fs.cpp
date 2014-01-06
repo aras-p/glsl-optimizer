@@ -998,7 +998,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 fs_inst *
 fs_visitor::emit_linterp(const fs_reg &attr, const fs_reg &interp,
                          glsl_interp_qualifier interpolation_mode,
-                         bool is_centroid)
+                         bool is_centroid, bool is_sample)
 {
    brw_wm_barycentric_interp_mode barycoord_mode;
    if (brw->gen >= 6) {
@@ -1007,6 +1007,11 @@ fs_visitor::emit_linterp(const fs_reg &attr, const fs_reg &interp,
             barycoord_mode = BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC;
          else
             barycoord_mode = BRW_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC;
+      } else if (is_sample) {
+          if (interpolation_mode == INTERP_QUALIFIER_SMOOTH)
+            barycoord_mode = BRW_WM_PERSPECTIVE_SAMPLE_BARYCENTRIC;
+         else
+            barycoord_mode = BRW_WM_NONPERSPECTIVE_SAMPLE_BARYCENTRIC;
       } else {
          if (interpolation_mode == INTERP_QUALIFIER_SMOOTH)
             barycoord_mode = BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
@@ -1084,7 +1089,8 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 		*/
                struct brw_reg interp = interp_reg(location, k);
                emit_linterp(attr, fs_reg(interp), interpolation_mode,
-                            ir->data.centroid);
+                            ir->data.centroid,
+                            ir->data.sample || c->key.persample_shading);
                if (brw->needs_unlit_centroid_workaround && ir->data.centroid) {
                   /* Get the pixel/sample mask into f0 so that we know
                    * which pixels are lit.  Then, for each channel that is
@@ -1093,7 +1099,8 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
                    */
                   emit(FS_OPCODE_MOV_DISPATCH_TO_FLAGS);
                   fs_inst *inst = emit_linterp(attr, fs_reg(interp),
-                                               interpolation_mode, false);
+                                               interpolation_mode,
+                                               false, false);
                   inst->predicate = BRW_PREDICATE_NORMAL;
                   inst->predicate_inverse = true;
                }

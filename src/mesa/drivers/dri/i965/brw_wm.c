@@ -49,6 +49,7 @@
 static unsigned
 brw_compute_barycentric_interp_modes(struct brw_context *brw,
                                      bool shade_model_flat,
+                                     bool persample_shading,
                                      const struct gl_fragment_program *fprog)
 {
    unsigned barycentric_interp_modes = 0;
@@ -62,6 +63,8 @@ brw_compute_barycentric_interp_modes(struct brw_context *brw,
       enum glsl_interp_qualifier interp_qualifier =
          fprog->InterpQualifier[attr];
       bool is_centroid = fprog->IsCentroid & BITFIELD64_BIT(attr);
+      bool is_sample = (fprog->IsSample & BITFIELD64_BIT(attr)) ||
+         persample_shading;
       bool is_gl_Color = attr == VARYING_SLOT_COL0 || attr == VARYING_SLOT_COL1;
 
       /* Ignore unused inputs. */
@@ -82,8 +85,12 @@ brw_compute_barycentric_interp_modes(struct brw_context *brw,
          if (is_centroid) {
             barycentric_interp_modes |=
                1 << BRW_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC;
+         } else if (is_sample) {
+            barycentric_interp_modes |=
+               1 << BRW_WM_NONPERSPECTIVE_SAMPLE_BARYCENTRIC;
          }
-         if (!is_centroid || brw->needs_unlit_centroid_workaround) {
+         if ((!is_centroid && !is_sample) ||
+             brw->needs_unlit_centroid_workaround) {
             barycentric_interp_modes |=
                1 << BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC;
          }
@@ -93,8 +100,12 @@ brw_compute_barycentric_interp_modes(struct brw_context *brw,
          if (is_centroid) {
             barycentric_interp_modes |=
                1 << BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC;
+         } else if (is_sample) {
+            barycentric_interp_modes |=
+               1 << BRW_WM_PERSPECTIVE_SAMPLE_BARYCENTRIC;
          }
-         if (!is_centroid || brw->needs_unlit_centroid_workaround) {
+         if ((!is_centroid && !is_sample) ||
+             brw->needs_unlit_centroid_workaround) {
             barycentric_interp_modes |=
                1 << BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
          }
@@ -171,6 +182,7 @@ bool do_wm_prog(struct brw_context *brw,
 
    c->prog_data.barycentric_interp_modes =
       brw_compute_barycentric_interp_modes(brw, c->key.flat_shade,
+                                           c->key.persample_shading,
                                            &fp->program);
 
    program = brw_wm_fs_emit(brw, c, &fp->program, prog, &program_size);
@@ -503,6 +515,10 @@ static void brw_wm_populate_key( struct brw_context *brw,
       (ctx->Multisample.SampleAlphaToCoverage || ctx->Color.AlphaEnabled);
 
    /* _NEW_BUFFERS _NEW_MULTISAMPLE */
+   /* Ignore sample qualifier while computing this flag. */
+   key->persample_shading =
+      _mesa_get_min_invocations_per_fragment(ctx, &fp->program, true) > 1;
+
    key->compute_pos_offset =
       _mesa_get_min_invocations_per_fragment(ctx, &fp->program, false) > 1 &&
       fp->program.Base.SystemValuesRead & SYSTEM_BIT_SAMPLE_POS;
