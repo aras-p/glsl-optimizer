@@ -139,10 +139,6 @@ extern "C" {
  * Handles blending and (presumably) depth and stencil testing.
  */
 
-#define INTEL_WRITE_PART  0x1
-#define INTEL_WRITE_FULL  0x2
-#define INTEL_READ        0x4
-
 #define BRW_MAX_CURBE                    (32*16)
 
 struct brw_context;
