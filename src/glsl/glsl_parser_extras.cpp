@@ -519,6 +519,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_sample_shading,             true,  false,     ARB_sample_shading),
    EXT(AMD_shader_trinary_minmax,      true,  false,     dummy_true),
    EXT(ARB_viewport_array,             true,  false,     ARB_viewport_array),
+   EXT(ARB_compute_shader,             true,  false,     ARB_compute_shader),
 };
 
 #undef EXT

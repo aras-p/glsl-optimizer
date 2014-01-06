@@ -85,6 +85,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_blend_func_extended",                 o(ARB_blend_func_extended),                 GL,             2009 },
    { "GL_ARB_clear_buffer_object",                 o(dummy_true),                              GL,             2012 },
    { "GL_ARB_color_buffer_float",                  o(ARB_color_buffer_float),                  GL,             2004 },
+   { "GL_ARB_compute_shader",                      o(ARB_compute_shader),                      GL,             2012 },
    { "GL_ARB_copy_buffer",                         o(dummy_true),                              GL,             2008 },
    { "GL_ARB_conservative_depth",                  o(ARB_conservative_depth),                  GL,             2011 },
    { "GL_ARB_debug_output",                        o(dummy_true),                              GL,             2009 },

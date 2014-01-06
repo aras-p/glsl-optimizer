@@ -2123,6 +2123,9 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 
 	      if (extensions->ARB_viewport_array)
 	         add_builtin_define(parser, "GL_ARB_viewport_array", 1);
+
+              if (extensions->ARB_compute_shader)
+                 add_builtin_define(parser, "GL_ARB_compute_shader", 1);
 	   }
 	}
 
