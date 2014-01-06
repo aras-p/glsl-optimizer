@@ -2172,7 +2172,7 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    lp_build_mask_begin(&mask, gallivm, gs_type, mask_val);
 
    if (gs_info->uses_primid) {
-      system_values.prim_id = LLVMBuildLoad(builder, prim_id_ptr, "prim_id");;
+      system_values.prim_id = LLVMBuildLoad(builder, prim_id_ptr, "prim_id");
    }
 
    if (gallivm_debug & (GALLIVM_DEBUG_TGSI | GALLIVM_DEBUG_IR)) {
