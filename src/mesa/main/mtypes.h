@@ -3381,6 +3381,7 @@ struct gl_constants
 
    /** GL_ARB_compute_shader */
    GLuint MaxComputeWorkGroupSize[3]; /* Array of x, y, z dimensions */
+   GLuint MaxComputeWorkGroupInvocations;
 };
 
 

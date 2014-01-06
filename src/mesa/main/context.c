@@ -705,6 +705,7 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxComputeWorkGroupSize[0] = 1024;
    ctx->Const.MaxComputeWorkGroupSize[1] = 1024;
    ctx->Const.MaxComputeWorkGroupSize[2] = 64;
+   ctx->Const.MaxComputeWorkGroupInvocations = 1024;
 }
 
 
