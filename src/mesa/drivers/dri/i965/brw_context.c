@@ -296,10 +296,17 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = max_samplers;
    else
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = 0;
+   if (getenv("INTEL_COMPUTE_SHADER")) {
+      ctx->Const.Program[MESA_SHADER_COMPUTE].MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
+      ctx->Const.MaxUniformBufferBindings += 12;
+   } else {
+      ctx->Const.Program[MESA_SHADER_COMPUTE].MaxTextureImageUnits = 0;
+   }
    ctx->Const.MaxCombinedTextureImageUnits =
       ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits +
       ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits +
-      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits;
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits +
+      ctx->Const.Program[MESA_SHADER_COMPUTE].MaxTextureImageUnits;
 
    ctx->Const.MaxTextureLevels = 14; /* 8192 */
    if (ctx->Const.MaxTextureLevels > MAX_TEXTURE_LEVELS)
@@ -423,9 +430,11 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
       ctx->Const.Program[MESA_SHADER_VERTEX].MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
+      ctx->Const.Program[MESA_SHADER_COMPUTE].MaxAtomicCounters = MAX_ATOMIC_COUNTERS;
       ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicBuffers = BRW_MAX_ABO;
       ctx->Const.Program[MESA_SHADER_VERTEX].MaxAtomicBuffers = BRW_MAX_ABO;
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxAtomicBuffers = BRW_MAX_ABO;
+      ctx->Const.Program[MESA_SHADER_COMPUTE].MaxAtomicBuffers = BRW_MAX_ABO;
       ctx->Const.MaxCombinedAtomicBuffers = 3 * BRW_MAX_ABO;
    }
 

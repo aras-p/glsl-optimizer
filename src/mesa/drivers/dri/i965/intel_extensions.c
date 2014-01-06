@@ -299,6 +299,9 @@ intelInitExtensions(struct gl_context *ctx)
        */
       if (ctx->API == API_OPENGL_CORE)
          ctx->Extensions.ARB_viewport_array = true;
+
+      if (getenv("INTEL_COMPUTE_SHADER"))
+         ctx->Extensions.ARB_compute_shader = true;
    }
 
    if (brw->gen == 5 || can_write_oacontrol(brw))
