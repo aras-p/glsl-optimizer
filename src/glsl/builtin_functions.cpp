@@ -576,20 +576,9 @@ private:
    ir_function_signature *_atomic_op(const char *intrinsic,
                                      builtin_available_predicate avail);
 
-   ir_function_signature *_min3(builtin_available_predicate avail,
-                                const glsl_type *x_type,
-                                const glsl_type *y_type,
-                                const glsl_type *z_type);
-
-   ir_function_signature *_max3(builtin_available_predicate avail,
-                                const glsl_type *x_type,
-                                const glsl_type *y_type,
-                                const glsl_type *z_type);
-
-   ir_function_signature *_mid3(builtin_available_predicate avail,
-                                const glsl_type *x_type,
-                                const glsl_type *y_type,
-                                const glsl_type *z_type);
+   B1(min3)
+   B1(max3)
+   B1(mid3)
 
 #undef B0
 #undef B1
@@ -2128,54 +2117,54 @@ builtin_builder::create_builtins()
                 NULL);
 
    add_function("min3",
-                _min3(shader_trinary_minmax, glsl_type::float_type, glsl_type::float_type, glsl_type::float_type),
-                _min3(shader_trinary_minmax, glsl_type::vec2_type, glsl_type::vec2_type, glsl_type::vec2_type),
-                _min3(shader_trinary_minmax, glsl_type::vec3_type, glsl_type::vec3_type, glsl_type::vec3_type),
-                _min3(shader_trinary_minmax, glsl_type::vec4_type, glsl_type::vec4_type, glsl_type::vec4_type),
+                _min3(glsl_type::float_type),
+                _min3(glsl_type::vec2_type),
+                _min3(glsl_type::vec3_type),
+                _min3(glsl_type::vec4_type),
 
-                _min3(shader_trinary_minmax, glsl_type::int_type, glsl_type::int_type, glsl_type::int_type),
-                _min3(shader_trinary_minmax, glsl_type::ivec2_type, glsl_type::ivec2_type, glsl_type::ivec2_type),
-                _min3(shader_trinary_minmax, glsl_type::ivec3_type, glsl_type::ivec3_type, glsl_type::ivec3_type),
-                _min3(shader_trinary_minmax, glsl_type::ivec4_type, glsl_type::ivec4_type, glsl_type::ivec4_type),
+                _min3(glsl_type::int_type),
+                _min3(glsl_type::ivec2_type),
+                _min3(glsl_type::ivec3_type),
+                _min3(glsl_type::ivec4_type),
 
-                _min3(shader_trinary_minmax, glsl_type::uint_type, glsl_type::uint_type, glsl_type::uint_type),
-                _min3(shader_trinary_minmax, glsl_type::uvec2_type, glsl_type::uvec2_type, glsl_type::uvec2_type),
-                _min3(shader_trinary_minmax, glsl_type::uvec3_type, glsl_type::uvec3_type, glsl_type::uvec3_type),
-                _min3(shader_trinary_minmax, glsl_type::uvec4_type, glsl_type::uvec4_type, glsl_type::uvec4_type),
+                _min3(glsl_type::uint_type),
+                _min3(glsl_type::uvec2_type),
+                _min3(glsl_type::uvec3_type),
+                _min3(glsl_type::uvec4_type),
                 NULL);
 
    add_function("max3",
-                _max3(shader_trinary_minmax, glsl_type::float_type, glsl_type::float_type, glsl_type::float_type),
-                _max3(shader_trinary_minmax, glsl_type::vec2_type, glsl_type::vec2_type, glsl_type::vec2_type),
-                _max3(shader_trinary_minmax, glsl_type::vec3_type, glsl_type::vec3_type, glsl_type::vec3_type),
-                _max3(shader_trinary_minmax, glsl_type::vec4_type, glsl_type::vec4_type, glsl_type::vec4_type),
+                _max3(glsl_type::float_type),
+                _max3(glsl_type::vec2_type),
+                _max3(glsl_type::vec3_type),
+                _max3(glsl_type::vec4_type),
 
-                _max3(shader_trinary_minmax, glsl_type::int_type, glsl_type::int_type, glsl_type::int_type),
-                _max3(shader_trinary_minmax, glsl_type::ivec2_type, glsl_type::ivec2_type, glsl_type::ivec2_type),
-                _max3(shader_trinary_minmax, glsl_type::ivec3_type, glsl_type::ivec3_type, glsl_type::ivec3_type),
-                _max3(shader_trinary_minmax, glsl_type::ivec4_type, glsl_type::ivec4_type, glsl_type::ivec4_type),
+                _max3(glsl_type::int_type),
+                _max3(glsl_type::ivec2_type),
+                _max3(glsl_type::ivec3_type),
+                _max3(glsl_type::ivec4_type),
 
-                _max3(shader_trinary_minmax, glsl_type::uint_type, glsl_type::uint_type, glsl_type::uint_type),
-                _max3(shader_trinary_minmax, glsl_type::uvec2_type, glsl_type::uvec2_type, glsl_type::uvec2_type),
-                _max3(shader_trinary_minmax, glsl_type::uvec3_type, glsl_type::uvec3_type, glsl_type::uvec3_type),
-                _max3(shader_trinary_minmax, glsl_type::uvec4_type, glsl_type::uvec4_type, glsl_type::uvec4_type),
+                _max3(glsl_type::uint_type),
+                _max3(glsl_type::uvec2_type),
+                _max3(glsl_type::uvec3_type),
+                _max3(glsl_type::uvec4_type),
                 NULL);
 
    add_function("mid3",
-                _mid3(shader_trinary_minmax, glsl_type::float_type, glsl_type::float_type, glsl_type::float_type),
-                _mid3(shader_trinary_minmax, glsl_type::vec2_type, glsl_type::vec2_type, glsl_type::vec2_type),
-                _mid3(shader_trinary_minmax, glsl_type::vec3_type, glsl_type::vec3_type, glsl_type::vec3_type),
-                _mid3(shader_trinary_minmax, glsl_type::vec4_type, glsl_type::vec4_type, glsl_type::vec4_type),
+                _mid3(glsl_type::float_type),
+                _mid3(glsl_type::vec2_type),
+                _mid3(glsl_type::vec3_type),
+                _mid3(glsl_type::vec4_type),
 
-                _mid3(shader_trinary_minmax, glsl_type::int_type, glsl_type::int_type, glsl_type::int_type),
-                _mid3(shader_trinary_minmax, glsl_type::ivec2_type, glsl_type::ivec2_type, glsl_type::ivec2_type),
-                _mid3(shader_trinary_minmax, glsl_type::ivec3_type, glsl_type::ivec3_type, glsl_type::ivec3_type),
-                _mid3(shader_trinary_minmax, glsl_type::ivec4_type, glsl_type::ivec4_type, glsl_type::ivec4_type),
+                _mid3(glsl_type::int_type),
+                _mid3(glsl_type::ivec2_type),
+                _mid3(glsl_type::ivec3_type),
+                _mid3(glsl_type::ivec4_type),
 
-                _mid3(shader_trinary_minmax, glsl_type::uint_type, glsl_type::uint_type, glsl_type::uint_type),
-                _mid3(shader_trinary_minmax, glsl_type::uvec2_type, glsl_type::uvec2_type, glsl_type::uvec2_type),
-                _mid3(shader_trinary_minmax, glsl_type::uvec3_type, glsl_type::uvec3_type, glsl_type::uvec3_type),
-                _mid3(shader_trinary_minmax, glsl_type::uvec4_type, glsl_type::uvec4_type, glsl_type::uvec4_type),
+                _mid3(glsl_type::uint_type),
+                _mid3(glsl_type::uvec2_type),
+                _mid3(glsl_type::uvec3_type),
+                _mid3(glsl_type::uvec4_type),
                 NULL);
 
 #undef F
@@ -4064,14 +4053,12 @@ builtin_builder::_atomic_op(const char *intrinsic,
 }
 
 ir_function_signature *
-builtin_builder::_min3(builtin_available_predicate avail,
-                      const glsl_type *x_type, const glsl_type *y_type,
-                      const glsl_type *z_type)
+builtin_builder::_min3(const glsl_type *type)
 {
-   ir_variable *x = in_var(x_type, "x");
-   ir_variable *y = in_var(y_type, "y");
-   ir_variable *z = in_var(z_type, "z");
-   MAKE_SIG(x_type, avail, 3, x, y, z);
+   ir_variable *x = in_var(type, "x");
+   ir_variable *y = in_var(type, "y");
+   ir_variable *z = in_var(type, "z");
+   MAKE_SIG(type, shader_trinary_minmax, 3, x, y, z);
 
    ir_expression *min3 = min2(x, min2(y,z));
    body.emit(ret(min3));
@@ -4080,14 +4067,12 @@ builtin_builder::_min3(builtin_available_predicate avail,
 }
 
 ir_function_signature *
-builtin_builder::_max3(builtin_available_predicate avail,
-                       const glsl_type *x_type, const glsl_type *y_type,
-                       const glsl_type *z_type)
+builtin_builder::_max3(const glsl_type *type)
 {
-   ir_variable *x = in_var(x_type, "x");
-   ir_variable *y = in_var(y_type, "y");
-   ir_variable *z = in_var(z_type, "z");
-   MAKE_SIG(x_type, avail, 3, x, y, z);
+   ir_variable *x = in_var(type, "x");
+   ir_variable *y = in_var(type, "y");
+   ir_variable *z = in_var(type, "z");
+   MAKE_SIG(type, shader_trinary_minmax, 3, x, y, z);
 
    ir_expression *max3 = max2(x, max2(y,z));
    body.emit(ret(max3));
@@ -4096,14 +4081,12 @@ builtin_builder::_max3(builtin_available_predicate avail,
 }
 
 ir_function_signature *
-builtin_builder::_mid3(builtin_available_predicate avail,
-                       const glsl_type *x_type, const glsl_type *y_type,
-                       const glsl_type *z_type)
+builtin_builder::_mid3(const glsl_type *type)
 {
-   ir_variable *x = in_var(x_type, "x");
-   ir_variable *y = in_var(y_type, "y");
-   ir_variable *z = in_var(z_type, "z");
-   MAKE_SIG(x_type, avail, 3, x, y, z);
+   ir_variable *x = in_var(type, "x");
+   ir_variable *y = in_var(type, "y");
+   ir_variable *z = in_var(type, "z");
+   MAKE_SIG(type, shader_trinary_minmax, 3, x, y, z);
 
    ir_expression *mid3 = max2(min2(x, y), max2(min2(x, z), min2(y, z)));
    body.emit(ret(mid3));
