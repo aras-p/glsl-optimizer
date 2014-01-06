@@ -690,6 +690,26 @@ builtin_variable_generator::generate_constants()
                       state->Const.MaxComputeWorkGroupSize[0],
                       state->Const.MaxComputeWorkGroupSize[1],
                       state->Const.MaxComputeWorkGroupSize[2]);
+
+      /* From the GLSL 4.40 spec, section 7.1 (Built-In Language Variables):
+       *
+       *     The built-in constant gl_WorkGroupSize is a compute-shader
+       *     constant containing the local work-group size of the shader.  The
+       *     size of the work group in the X, Y, and Z dimensions is stored in
+       *     the x, y, and z components.  The constants values in
+       *     gl_WorkGroupSize will match those specified in the required
+       *     local_size_x, local_size_y, and local_size_z layout qualifiers
+       *     for the current shader.  This is a constant so that it can be
+       *     used to size arrays of memory that can be shared within the local
+       *     work group.  It is a compile-time error to use gl_WorkGroupSize
+       *     in a shader that does not declare a fixed local group size, or
+       *     before that shader has declared a fixed local group size, using
+       *     local_size_x, local_size_y, and local_size_z.
+       *
+       * To prevent the shader from trying to refer to gl_WorkGroupSize before
+       * the layout declaration, we don't define it here.  Intead we define it
+       * in ast_cs_input_layout::hir().
+       */
    }
 }
 

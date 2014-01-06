@@ -2451,6 +2451,17 @@ struct gl_shader
     * ImageAccess arrays above.
     */
    GLuint NumImages;
+
+   /**
+    * Compute shader state from ARB_compute_shader layout qualifiers.
+    */
+   struct {
+      /**
+       * Size specified using local_size_{x,y,z}, or all 0's to indicate that
+       * it's not set in this shader.
+       */
+      unsigned LocalSize[3];
+   } Comp;
 };
 
 

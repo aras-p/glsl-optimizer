@@ -349,7 +349,8 @@ layout		{
 		      || yyextra->ARB_explicit_attrib_location_enable
 		      || yyextra->ARB_uniform_buffer_object_enable
 		      || yyextra->ARB_fragment_coord_conventions_enable
-                      || yyextra->ARB_shading_language_420pack_enable) {
+                      || yyextra->ARB_shading_language_420pack_enable
+                      || yyextra->ARB_compute_shader_enable) {
 		      return LAYOUT_TOK;
 		   } else {
 		      yylval->identifier = strdup(yytext);

@@ -77,6 +77,7 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
    state->toplevel_ir = instructions;
 
    state->gs_input_prim_type_specified = false;
+   state->cs_input_local_size_specified = false;
 
    /* Section 4.2 of the GLSL 1.20 specification states:
     * "The built-in functions are scoped in a scope outside the global scope
@@ -5298,6 +5299,84 @@ ast_gs_input_layout::hir(exec_list *instructions,
          }
       }
    }
+
+   return NULL;
+}
+
+
+ir_rvalue *
+ast_cs_input_layout::hir(exec_list *instructions,
+                         struct _mesa_glsl_parse_state *state)
+{
+   YYLTYPE loc = this->get_location();
+
+   /* If any compute input layout declaration preceded this one, make sure it
+    * was consistent with this one.
+    */
+   if (state->cs_input_local_size_specified) {
+      for (int i = 0; i < 3; i++) {
+         if (state->cs_input_local_size[i] != this->local_size[i]) {
+            _mesa_glsl_error(&loc, state,
+                             "compute shader input layout does not match"
+                             " previous declaration");
+            return NULL;
+         }
+      }
+   }
+
+   /* From the ARB_compute_shader specification:
+    *
+    *     If the local size of the shader in any dimension is greater
+    *     than the maximum size supported by the implementation for that
+    *     dimension, a compile-time error results.
+    *
+    * It is not clear from the spec how the error should be reported if
+    * the total size of the work group exceeds
+    * MAX_COMPUTE_WORK_GROUP_INVOCATIONS, but it seems reasonable to
+    * report it at compile time as well.
+    */
+   GLuint64 total_invocations = 1;
+   for (int i = 0; i < 3; i++) {
+      if (this->local_size[i] > state->ctx->Const.MaxComputeWorkGroupSize[i]) {
+         _mesa_glsl_error(&loc, state,
+                          "local_size_%c exceeds MAX_COMPUTE_WORK_GROUP_SIZE"
+                          " (%d)", 'x' + i,
+                          state->ctx->Const.MaxComputeWorkGroupSize[i]);
+         break;
+      }
+      total_invocations *= this->local_size[i];
+      if (total_invocations >
+          state->ctx->Const.MaxComputeWorkGroupInvocations) {
+         _mesa_glsl_error(&loc, state,
+                          "product of local_sizes exceeds "
+                          "MAX_COMPUTE_WORK_GROUP_INVOCATIONS (%d)",
+                          state->ctx->Const.MaxComputeWorkGroupInvocations);
+         break;
+      }
+   }
+
+   state->cs_input_local_size_specified = true;
+   for (int i = 0; i < 3; i++)
+      state->cs_input_local_size[i] = this->local_size[i];
+
+   /* We may now declare the built-in constant gl_WorkGroupSize (see
+    * builtin_variable_generator::generate_constants() for why we didn't
+    * declare it earlier).
+    */
+   ir_variable *var = new(state->symbols)
+      ir_variable(glsl_type::ivec3_type, "gl_WorkGroupSize", ir_var_auto);
+   var->data.how_declared = ir_var_declared_implicitly;
+   var->data.read_only = true;
+   instructions->push_tail(var);
+   state->symbols->add_variable(var);
+   ir_constant_data data;
+   memset(&data, 0, sizeof(data));
+   for (int i = 0; i < 3; i++)
+      data.i[i] = this->local_size[i];
+   var->constant_value = new(var) ir_constant(glsl_type::ivec3_type, &data);
+   var->constant_initializer =
+      new(var) ir_constant(glsl_type::ivec3_type, &data);
+   var->data.has_initializer = true;
 
    return NULL;
 }

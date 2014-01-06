@@ -1291,6 +1291,34 @@ layout_qualifier_id:
          }
       }
 
+      static const char *local_size_qualifiers[3] = {
+         "local_size_x",
+         "local_size_y",
+         "local_size_z",
+      };
+      for (int i = 0; i < 3; i++) {
+         if (match_layout_qualifier(local_size_qualifiers[i], $1,
+                                    state) == 0) {
+            if ($3 <= 0) {
+               _mesa_glsl_error(& @3, state,
+                                "invalid %s of %d specified",
+                                local_size_qualifiers[i], $3);
+               YYERROR;
+            } else if (!state->is_version(430, 0) &&
+                       !state->ARB_compute_shader_enable) {
+               _mesa_glsl_error(& @3, state,
+                                "%s qualifier requires GLSL 4.30 or "
+                                "ARB_compute_shader",
+                                local_size_qualifiers[i]);
+               YYERROR;
+            } else {
+               $$.flags.q.local_size |= (1 << i);
+               $$.local_size[i] = $3;
+            }
+            break;
+         }
+      }
+
       /* If the identifier didn't match any known layout identifiers,
        * emit an error.
        */
@@ -2334,29 +2362,53 @@ layout_defaults:
    {
       void *ctx = state;
       $$ = NULL;
-      if (state->stage != MESA_SHADER_GEOMETRY) {
+      switch (state->stage) {
+      case MESA_SHADER_GEOMETRY: {
+         if (!$1.flags.q.prim_type) {
+            _mesa_glsl_error(& @1, state,
+                             "input layout qualifiers must specify a primitive"
+                             " type");
+         } else {
+            /* Make sure this is a valid input primitive type. */
+            switch ($1.prim_type) {
+            case GL_POINTS:
+            case GL_LINES:
+            case GL_LINES_ADJACENCY:
+            case GL_TRIANGLES:
+            case GL_TRIANGLES_ADJACENCY:
+               $$ = new(ctx) ast_gs_input_layout(@1, $1.prim_type);
+               break;
+            default:
+               _mesa_glsl_error(&@1, state,
+                                "invalid geometry shader input primitive type");
+               break;
+            }
+         }
+      }
+         break;
+      case MESA_SHADER_COMPUTE: {
+         if ($1.flags.q.local_size == 0) {
+            _mesa_glsl_error(& @1, state,
+                             "input layout qualifiers must specify a local "
+                             "size");
+         } else {
+            /* Infer a local_size of 1 for every unspecified dimension */
+            unsigned local_size[3];
+            for (int i = 0; i < 3; i++) {
+               if ($1.flags.q.local_size & (1 << i))
+                  local_size[i] = $1.local_size[i];
+               else
+                  local_size[i] = 1;
+            }
+            $$ = new(ctx) ast_cs_input_layout(@1, local_size);
+         }
+      }
+         break;
+      default:
          _mesa_glsl_error(& @1, state,
                           "input layout qualifiers only valid in "
-                          "geometry shaders");
-      } else if (!$1.flags.q.prim_type) {
-         _mesa_glsl_error(& @1, state,
-                          "input layout qualifiers must specify a primitive"
-                          " type");
-      } else {
-         /* Make sure this is a valid input primitive type. */
-         switch ($1.prim_type) {
-         case GL_POINTS:
-         case GL_LINES:
-         case GL_LINES_ADJACENCY:
-         case GL_TRIANGLES:
-         case GL_TRIANGLES_ADJACENCY:
-            $$ = new(ctx) ast_gs_input_layout(@1, $1.prim_type);
-            break;
-         default:
-            _mesa_glsl_error(&@1, state,
-                             "invalid geometry shader input primitive type");
-            break;
-         }
+                          "geometry and compute shaders");
+         break;
       }
    }
 

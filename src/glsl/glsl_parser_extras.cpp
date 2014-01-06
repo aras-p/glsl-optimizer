@@ -56,7 +56,8 @@ static unsigned known_desktop_glsl_versions[] =
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
 					       gl_shader_stage stage,
                                                void *mem_ctx)
-   : ctx(_ctx), switch_state()
+   : ctx(_ctx), cs_input_local_size_specified(false), cs_input_local_size(),
+     switch_state()
 {
    assert(stage < MESA_SHADER_STAGES);
    this->stage = stage;
@@ -1339,23 +1340,45 @@ set_shader_inout_layout(struct gl_shader *shader,
       /* Should have been prevented by the parser. */
       assert(!state->gs_input_prim_type_specified);
       assert(!state->out_qualifier->flags.i);
-      return;
    }
 
-   shader->Geom.VerticesOut = 0;
-   if (state->out_qualifier->flags.q.max_vertices)
-      shader->Geom.VerticesOut = state->out_qualifier->max_vertices;
-
-   if (state->gs_input_prim_type_specified) {
-      shader->Geom.InputType = state->gs_input_prim_type;
-   } else {
-      shader->Geom.InputType = PRIM_UNKNOWN;
+   if (shader->Stage != MESA_SHADER_COMPUTE) {
+      /* Should have been prevented by the parser. */
+      assert(!state->cs_input_local_size_specified);
    }
 
-   if (state->out_qualifier->flags.q.prim_type) {
-      shader->Geom.OutputType = state->out_qualifier->prim_type;
-   } else {
-      shader->Geom.OutputType = PRIM_UNKNOWN;
+   switch (shader->Stage) {
+   case MESA_SHADER_GEOMETRY:
+      shader->Geom.VerticesOut = 0;
+      if (state->out_qualifier->flags.q.max_vertices)
+         shader->Geom.VerticesOut = state->out_qualifier->max_vertices;
+
+      if (state->gs_input_prim_type_specified) {
+         shader->Geom.InputType = state->gs_input_prim_type;
+      } else {
+         shader->Geom.InputType = PRIM_UNKNOWN;
+      }
+
+      if (state->out_qualifier->flags.q.prim_type) {
+         shader->Geom.OutputType = state->out_qualifier->prim_type;
+      } else {
+         shader->Geom.OutputType = PRIM_UNKNOWN;
+      }
+      break;
+
+   case MESA_SHADER_COMPUTE:
+      if (state->cs_input_local_size_specified) {
+         for (int i = 0; i < 3; i++)
+            shader->Comp.LocalSize[i] = state->cs_input_local_size[i];
+      } else {
+         for (int i = 0; i < 3; i++)
+            shader->Comp.LocalSize[i] = 0;
+      }
+      break;
+
+   default:
+      /* Nothing to do. */
+      break;
    }
 }
 

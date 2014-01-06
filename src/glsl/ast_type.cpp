@@ -158,6 +158,20 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    if ((q.flags.i & ubo_layout_mask.flags.i) != 0)
       this->flags.i &= ~ubo_layout_mask.flags.i;
 
+   for (int i = 0; i < 3; i++) {
+      if (q.flags.q.local_size & (1 << i)) {
+         if ((this->flags.q.local_size & (1 << i)) &&
+             this->local_size[i] != q.local_size[i]) {
+            _mesa_glsl_error(loc, state,
+                             "compute shader set conflicting values for "
+                             "local_size_%c (%d and %d)", 'x' + i,
+                             this->local_size[i], q.local_size[i]);
+            return false;
+         }
+         this->local_size[i] = q.local_size[i];
+      }
+   }
+
    this->flags.i |= q.flags.i;
 
    if (q.flags.q.explicit_location)

@@ -196,6 +196,21 @@ struct _mesa_glsl_parse_state {
     */
    GLenum gs_input_prim_type;
 
+   /**
+    * True if a compute shader input local size was specified using a layout
+    * directive.
+    *
+    * Note: this value is computed at ast_to_hir time rather than at parse
+    * time.
+    */
+   bool cs_input_local_size_specified;
+
+   /**
+    * If cs_input_local_size_specified is true, the local size that was
+    * specified.  Otherwise ignored.
+    */
+   unsigned cs_input_local_size[3];
+
    /** Output layout qualifiers from GLSL 1.50. (geometry shader controls)*/
    struct ast_type_qualifier *out_qualifier;
 
