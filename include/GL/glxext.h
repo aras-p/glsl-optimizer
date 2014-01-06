@@ -272,7 +272,6 @@ __GLXextFuncPtr glXGetProcAddressARB (const GLubyte *procName);
 
 #ifndef GLX_EXT_import_context
 #define GLX_EXT_import_context 1
-typedef XID GLXContextID;
 #define GLX_SHARE_CONTEXT_EXT             0x800A
 #define GLX_VISUAL_ID_EXT                 0x800B
 #define GLX_SCREEN_EXT                    0x800C
