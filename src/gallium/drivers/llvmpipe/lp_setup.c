@@ -66,9 +66,6 @@ static boolean try_update_scene_state( struct lp_setup_context *setup );
 static void
 lp_setup_get_empty_scene(struct lp_setup_context *setup)
 {
-   struct llvmpipe_context *lp = llvmpipe_context(setup->pipe);
-   boolean discard = lp->rasterizer ? lp->rasterizer->rasterizer_discard : FALSE;
-
    assert(setup->scene == NULL);
 
    setup->scene_idx++;
@@ -84,8 +81,8 @@ lp_setup_get_empty_scene(struct lp_setup_context *setup)
       lp_fence_wait(setup->scene->fence);
    }
 
-   lp_scene_begin_binning(setup->scene, &setup->fb, discard);
-   
+   lp_scene_begin_binning(setup->scene, &setup->fb, setup->rasterizer_discard);
+
 }
 
 

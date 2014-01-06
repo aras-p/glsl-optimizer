@@ -69,6 +69,7 @@ struct llvmpipe_context {
    const struct lp_so_state *so;
 
    /** Other rendering state */
+   unsigned sample_mask;
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;

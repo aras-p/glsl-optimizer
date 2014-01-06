@@ -185,6 +185,14 @@ void llvmpipe_update_derived( struct llvmpipe_context *llvmpipe )
                           LP_NEW_OCCLUSION_QUERY))
       llvmpipe_update_fs( llvmpipe );
 
+   if (llvmpipe->dirty & (LP_NEW_RASTERIZER)) {
+      boolean discard =
+         (llvmpipe->sample_mask & 1) == 0 ||
+         (llvmpipe->rasterizer ? llvmpipe->rasterizer->rasterizer_discard : FALSE);
+
+      lp_setup_set_rasterizer_discard(llvmpipe->setup, discard);
+   }
+
    if (llvmpipe->dirty & (LP_NEW_FS |
                           LP_NEW_FRAMEBUFFER |
                           LP_NEW_RASTERIZER))
