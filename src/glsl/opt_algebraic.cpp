@@ -416,6 +416,12 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       }
       break;
 
+   case ir_binop_pow:
+      /* 1^x == 1 */
+      if (is_vec_one(op_const[0]))
+         return op_const[0];
+      break;
+
    case ir_unop_rcp:
       if (op_expr[0] && op_expr[0]->operation == ir_unop_rcp)
 	 return op_expr[0]->operands[0];
