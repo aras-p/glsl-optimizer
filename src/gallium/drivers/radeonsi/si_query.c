@@ -23,21 +23,21 @@
 #include "si_pipe.h"
 #include "sid.h"
 
-static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned query_type)
+static struct pipe_query *si_create_query(struct pipe_context *ctx, unsigned query_type)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 
 	return (struct pipe_query*)si_context_query_create(rctx, query_type);
 }
 
-static void r600_destroy_query(struct pipe_context *ctx, struct pipe_query *query)
+static void si_destroy_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 
 	si_context_query_destroy(rctx, (struct si_query *)query);
 }
 
-static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
+static void si_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_query *rquery = (struct si_query *)query;
@@ -56,7 +56,7 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 	}
 }
 
-static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
+static void si_end_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_query *rquery = (struct si_query *)query;
@@ -72,9 +72,9 @@ static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 	}
 }
 
-static boolean r600_get_query_result(struct pipe_context *ctx,
-					struct pipe_query *query,
-					boolean wait, union pipe_query_result *vresult)
+static boolean si_get_query_result(struct pipe_context *ctx,
+				   struct pipe_query *query,
+				   boolean wait, union pipe_query_result *vresult)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_query *rquery = (struct si_query *)query;
@@ -82,10 +82,10 @@ static boolean r600_get_query_result(struct pipe_context *ctx,
 	return si_context_query_result(rctx, rquery, wait, vresult);
 }
 
-static void r600_render_condition(struct pipe_context *ctx,
-				  struct pipe_query *query,
-				  boolean condition,
-				  uint mode)
+static void si_render_condition(struct pipe_context *ctx,
+				struct pipe_query *query,
+				boolean condition,
+				uint mode)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_query *rquery = (struct si_query *)query;
@@ -94,7 +94,7 @@ static void r600_render_condition(struct pipe_context *ctx,
 	/* If we already have nonzero result, render unconditionally */
 	if (query != NULL && rquery->result.u64 != 0) {
 		if (rctx->current_render_cond) {
-			r600_render_condition(ctx, NULL, FALSE, 0);
+			si_render_condition(ctx, NULL, FALSE, 0);
 		}
 		return;
 	}
@@ -136,12 +136,12 @@ static void r600_render_condition(struct pipe_context *ctx,
 
 void si_init_query_functions(struct si_context *rctx)
 {
-	rctx->b.b.create_query = r600_create_query;
-	rctx->b.b.destroy_query = r600_destroy_query;
-	rctx->b.b.begin_query = r600_begin_query;
-	rctx->b.b.end_query = r600_end_query;
-	rctx->b.b.get_query_result = r600_get_query_result;
+	rctx->b.b.create_query = si_create_query;
+	rctx->b.b.destroy_query = si_destroy_query;
+	rctx->b.b.begin_query = si_begin_query;
+	rctx->b.b.end_query = si_end_query;
+	rctx->b.b.get_query_result = si_get_query_result;
 
 	if (rctx->screen->b.info.r600_num_backends > 0)
-	    rctx->b.b.render_condition = r600_render_condition;
+	    rctx->b.b.render_condition = si_render_condition;
 }
