@@ -371,10 +371,10 @@ try_setup_point( struct lp_setup_context *setup,
        */
       int adj = (setup->bottom_edge_rule != 0) ? 1 : 0;
 
-      bbox.x0 = (x0 + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
-      bbox.x1 = (x0 + fixed_width + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
-      bbox.y0 = (y0 + (FIXED_ONE-1)) >> FIXED_ORDER;
-      bbox.y1 = (y0 + fixed_width + (FIXED_ONE-1)) >> FIXED_ORDER;
+      bbox.x0 = (x0 + (FIXED_ONE-1)) >> FIXED_ORDER;
+      bbox.x1 = (x0 + fixed_width + (FIXED_ONE-1)) >> FIXED_ORDER;
+      bbox.y0 = (y0 + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
+      bbox.y1 = (y0 + fixed_width + (FIXED_ONE-1) + adj) >> FIXED_ORDER;
 
       /* Inclusive coordinates:
        */
