@@ -40,6 +40,7 @@ brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type)
    shader = rzalloc(NULL, struct brw_shader);
    if (shader) {
       shader->base.Type = type;
+      shader->base.Stage = _mesa_shader_enum_to_shader_stage(type);
       shader->base.Name = name;
       _mesa_init_shader(ctx, &shader->base);
    }

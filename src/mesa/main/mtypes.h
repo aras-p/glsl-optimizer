@@ -2319,6 +2319,7 @@ struct gl_shader
     * Must be the first field.
     */
    GLenum Type;
+   gl_shader_stage Stage;
    GLuint Name;  /**< AKA the handle */
    GLchar *Label;   /**< GL_KHR_debug */
    GLint RefCount;  /**< Reference count */

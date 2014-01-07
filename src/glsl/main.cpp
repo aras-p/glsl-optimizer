@@ -362,6 +362,7 @@ main(int argc, char **argv)
 	 shader->Type = GL_FRAGMENT_SHADER;
       else
 	 usage_fail(argv[0]);
+      shader->Stage = _mesa_shader_enum_to_shader_stage(shader->Type);
 
       shader->Source = load_text_file(whole_program, argv[optind]);
       if (shader->Source == NULL) {

@@ -65,6 +65,7 @@ common_builtin::SetUp()
 
    this->shader = rzalloc(this->mem_ctx, gl_shader);
    this->shader->Type = this->shader_type;
+   this->shader->Stage = _mesa_shader_enum_to_shader_stage(this->shader_type);
 
    this->state =
       new(mem_ctx) _mesa_glsl_parse_state(&this->ctx, this->shader->Type,

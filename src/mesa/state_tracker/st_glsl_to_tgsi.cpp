@@ -5207,6 +5207,7 @@ st_new_shader(struct gl_context *ctx, GLuint name, GLuint type)
    shader = rzalloc(NULL, struct gl_shader);
    if (shader) {
       shader->Type = type;
+      shader->Stage = _mesa_shader_enum_to_shader_stage(type);
       shader->Name = name;
       _mesa_init_shader(ctx, shader);
    }

@@ -204,6 +204,7 @@ int test_optpass(int argc, char **argv)
 
    struct gl_shader *shader = rzalloc(NULL, struct gl_shader);
    shader->Type = shader_type;
+   shader->Stage = _mesa_shader_enum_to_shader_stage(shader_type);
 
    string input = read_stdin_to_eof();
 
