@@ -82,20 +82,20 @@ void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 	}
 }
 
-static void r600_flush_from_st(struct pipe_context *ctx,
-			       struct pipe_fence_handle **fence,
-                               unsigned flags)
+static void si_flush_from_st(struct pipe_context *ctx,
+			     struct pipe_fence_handle **fence,
+			     unsigned flags)
 {
 	si_flush(ctx, fence,
 		 flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0);
 }
 
-static void r600_flush_from_winsys(void *ctx, unsigned flags)
+static void si_flush_from_winsys(void *ctx, unsigned flags)
 {
 	si_flush((struct pipe_context*)ctx, NULL, flags);
 }
 
-static void r600_destroy_context(struct pipe_context *context)
+static void si_destroy_context(struct pipe_context *context)
 {
 	struct si_context *rctx = (struct si_context *)context;
 
@@ -123,7 +123,7 @@ static void r600_destroy_context(struct pipe_context *context)
 	FREE(rctx);
 }
 
-static struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
+static struct pipe_context *si_create_context(struct pipe_screen *screen, void *priv)
 {
 	struct si_context *rctx = CALLOC_STRUCT(si_context);
 	struct si_screen* rscreen = (struct si_screen *)screen;
@@ -137,8 +137,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	rctx->b.b.screen = screen;
 	rctx->b.b.priv = priv;
-	rctx->b.b.destroy = r600_destroy_context;
-	rctx->b.b.flush = r600_flush_from_st;
+	rctx->b.b.destroy = si_destroy_context;
+	rctx->b.b.flush = si_flush_from_st;
 
 	/* Easy accessing of screen/winsys. */
 	rctx->screen = rscreen;
@@ -157,7 +157,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	}
 
 	rctx->b.rings.gfx.cs = rctx->b.ws->cs_create(rctx->b.ws, RING_GFX, NULL);
-	rctx->b.rings.gfx.flush = r600_flush_from_winsys;
+	rctx->b.rings.gfx.flush = si_flush_from_winsys;
 
 	si_init_all_descriptors(rctx);
 
@@ -180,7 +180,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		goto fail;
 	}
 
-	rctx->b.ws->cs_set_flush_callback(rctx->b.rings.gfx.cs, r600_flush_from_winsys, rctx);
+	rctx->b.ws->cs_set_flush_callback(rctx->b.rings.gfx.cs, si_flush_from_winsys, rctx);
 
 	rctx->blitter = util_blitter_create(&rctx->b.b);
 	if (rctx->blitter == NULL)
@@ -217,14 +217,14 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	return &rctx->b.b;
 fail:
-	r600_destroy_context(&rctx->b.b);
+	si_destroy_context(&rctx->b.b);
 	return NULL;
 }
 
 /*
  * pipe_screen
  */
-static const char* r600_get_vendor(struct pipe_screen* pscreen)
+static const char* si_get_vendor(struct pipe_screen* pscreen)
 {
 	return "X.Org";
 }
@@ -249,7 +249,7 @@ const char *si_get_llvm_processor_name(enum radeon_family family)
 	}
 }
 
-static const char *r600_get_family_name(enum radeon_family family)
+static const char *si_get_family_name(enum radeon_family family)
 {
 	switch(family) {
 	case CHIP_TAHITI: return "AMD TAHITI";
@@ -265,14 +265,14 @@ static const char *r600_get_family_name(enum radeon_family family)
 	}
 }
 
-static const char* r600_get_name(struct pipe_screen* pscreen)
+static const char* si_get_name(struct pipe_screen* pscreen)
 {
 	struct si_screen *rscreen = (struct si_screen *)pscreen;
 
-	return r600_get_family_name(rscreen->b.family);
+	return si_get_family_name(rscreen->b.family);
 }
 
-static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
+static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
 	struct si_screen *rscreen = (struct si_screen *)pscreen;
 
@@ -397,7 +397,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	return 0;
 }
 
-static float r600_get_paramf(struct pipe_screen* pscreen,
+static float si_get_paramf(struct pipe_screen* pscreen,
 			     enum pipe_capf param)
 {
 	switch (param) {
@@ -419,7 +419,7 @@ static float r600_get_paramf(struct pipe_screen* pscreen,
 	return 0.0f;
 }
 
-static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enum pipe_shader_cap param)
+static int si_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enum pipe_shader_cap param)
 {
 	switch(shader)
 	{
@@ -484,10 +484,10 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	return 0;
 }
 
-static int r600_get_video_param(struct pipe_screen *screen,
-				enum pipe_video_profile profile,
-				enum pipe_video_entrypoint entrypoint,
-				enum pipe_video_cap param)
+static int si_get_video_param(struct pipe_screen *screen,
+			      enum pipe_video_profile profile,
+			      enum pipe_video_entrypoint entrypoint,
+			      enum pipe_video_cap param)
 {
 	switch (param) {
 	case PIPE_VIDEO_CAP_SUPPORTED:
@@ -506,7 +506,7 @@ static int r600_get_video_param(struct pipe_screen *screen,
 	}
 }
 
-static int r600_get_compute_param(struct pipe_screen *screen,
+static int si_get_compute_param(struct pipe_screen *screen,
         enum pipe_compute_cap param,
         void *ret)
 {
@@ -575,7 +575,7 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 		if (ret) {
 			uint64_t max_global_size;
 			uint64_t *max_mem_alloc_size = ret;
-			r600_get_compute_param(screen, PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE, &max_global_size);
+			si_get_compute_param(screen, PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE, &max_global_size);
 			*max_mem_alloc_size = max_global_size / 4;
 		}
 		return sizeof(uint64_t);
@@ -585,7 +585,7 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 	}
 }
 
-static void r600_destroy_screen(struct pipe_screen* pscreen)
+static void si_destroy_screen(struct pipe_screen* pscreen)
 {
 	struct si_screen *rscreen = (struct si_screen *)pscreen;
 
@@ -608,7 +608,7 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	FREE(rscreen);
 }
 
-static uint64_t r600_get_timestamp(struct pipe_screen *screen)
+static uint64_t si_get_timestamp(struct pipe_screen *screen)
 {
 	struct si_screen *rscreen = (struct si_screen*)screen;
 
@@ -626,21 +626,21 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	ws->query_info(ws, &rscreen->b.info);
 
 	/* Set functions first. */
-	rscreen->b.b.context_create = r600_create_context;
-	rscreen->b.b.destroy = r600_destroy_screen;
-	rscreen->b.b.get_name = r600_get_name;
-	rscreen->b.b.get_vendor = r600_get_vendor;
-	rscreen->b.b.get_param = r600_get_param;
-	rscreen->b.b.get_shader_param = r600_get_shader_param;
-	rscreen->b.b.get_paramf = r600_get_paramf;
-	rscreen->b.b.get_compute_param = r600_get_compute_param;
-	rscreen->b.b.get_timestamp = r600_get_timestamp;
+	rscreen->b.b.context_create = si_create_context;
+	rscreen->b.b.destroy = si_destroy_screen;
+	rscreen->b.b.get_name = si_get_name;
+	rscreen->b.b.get_vendor = si_get_vendor;
+	rscreen->b.b.get_param = si_get_param;
+	rscreen->b.b.get_shader_param = si_get_shader_param;
+	rscreen->b.b.get_paramf = si_get_paramf;
+	rscreen->b.b.get_compute_param = si_get_compute_param;
+	rscreen->b.b.get_timestamp = si_get_timestamp;
 	rscreen->b.b.is_format_supported = si_is_format_supported;
 	if (rscreen->b.info.has_uvd) {
 		rscreen->b.b.get_video_param = ruvd_get_video_param;
 		rscreen->b.b.is_video_format_supported = ruvd_is_format_supported;
 	} else {
-		rscreen->b.b.get_video_param = r600_get_video_param;
+		rscreen->b.b.get_video_param = si_get_video_param;
 		rscreen->b.b.is_video_format_supported = vl_video_buffer_is_format_supported;
 	}
 	si_init_screen_resource_functions(&rscreen->b.b);
