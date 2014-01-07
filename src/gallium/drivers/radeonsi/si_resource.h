@@ -40,7 +40,7 @@ r600_resource_create_custom(struct pipe_screen *screen,
 		PIPE_BIND_CUSTOM, usage, size));
 }
 
-struct r600_surface {
+struct si_surface {
 	struct pipe_surface		base;
 };
 

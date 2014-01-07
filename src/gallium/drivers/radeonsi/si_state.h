@@ -202,7 +202,7 @@ void si_copy_buffer(struct si_context *rctx,
 
 /* si_state.c */
 struct si_pipe_shader_selector;
-struct r600_surface;
+struct si_surface;
 
 boolean si_is_format_supported(struct pipe_screen *screen,
                                enum pipe_format format,

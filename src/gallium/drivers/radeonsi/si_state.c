@@ -1565,7 +1565,7 @@ static void si_cb(struct si_context *rctx, struct si_pm4_state *pm4,
 		  const struct pipe_framebuffer_state *state, int cb)
 {
 	struct r600_texture *rtex;
-	struct r600_surface *surf;
+	struct si_surface *surf;
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
 	unsigned color_info, color_attrib, color_pitch, color_view;
@@ -1577,7 +1577,7 @@ static void si_cb(struct si_context *rctx, struct si_pm4_state *pm4,
 	unsigned blend_clamp = 0, blend_bypass = 0;
 	unsigned max_comp_size;
 
-	surf = (struct r600_surface *)state->cbufs[cb];
+	surf = (struct si_surface *)state->cbufs[cb];
 	rtex = (struct r600_texture*)state->cbufs[cb]->texture;
 
 	offset = rtex->surface.level[level].offset;
@@ -1744,7 +1744,7 @@ static void si_db(struct si_context *rctx, struct si_pm4_state *pm4,
 {
 	struct si_screen *rscreen = rctx->screen;
 	struct r600_texture *rtex;
-	struct r600_surface *surf;
+	struct si_surface *surf;
 	unsigned level, pitch, slice, format, tile_mode_index, array_mode;
 	unsigned macro_aspect, tile_split, stile_split, bankh, bankw, nbanks, pipe_config;
 	uint32_t z_info, s_info, db_depth_info;
@@ -1757,7 +1757,7 @@ static void si_db(struct si_context *rctx, struct si_pm4_state *pm4,
 		return;
 	}
 
-	surf = (struct r600_surface *)state->zsbuf;
+	surf = (struct si_surface *)state->zsbuf;
 	level = surf->base.u.tex.level;
 	rtex = (struct r600_texture*)surf->base.texture;
 
@@ -3009,7 +3009,7 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 						const struct pipe_surface *surf_tmpl)
 {
 	struct r600_texture *rtex = (struct r600_texture*)texture;
-	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
+	struct si_surface *surface = CALLOC_STRUCT(si_surface);
 	unsigned level = surf_tmpl->u.tex.level;
 
 	if (surface == NULL)
