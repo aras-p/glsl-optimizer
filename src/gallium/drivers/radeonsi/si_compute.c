@@ -134,7 +134,7 @@ static void radeonsi_launch_grid(
 
 	memcpy(kernel_args + (num_work_size_bytes / 4), input, program->input_size);
 
-	r600_upload_const_buffer(rctx, &kernel_args_buffer, (uint8_t*)kernel_args,
+	si_upload_const_buffer(rctx, &kernel_args_buffer, (uint8_t*)kernel_args,
 					kernel_args_size, &kernel_args_offset);
 	kernel_args_va = r600_resource_va(ctx->screen,
 				(struct pipe_resource*)kernel_args_buffer);

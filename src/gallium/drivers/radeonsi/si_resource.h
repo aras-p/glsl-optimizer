@@ -32,8 +32,8 @@
 #include "util/u_inlines.h"
 
 static INLINE struct r600_resource *
-r600_resource_create_custom(struct pipe_screen *screen,
-			    unsigned usage, unsigned size)
+si_resource_create_custom(struct pipe_screen *screen,
+			  unsigned usage, unsigned size)
 {
 	assert(size);
 	return r600_resource(pipe_buffer_create(screen,
@@ -44,12 +44,12 @@ struct si_surface {
 	struct pipe_surface		base;
 };
 
-void r600_init_screen_resource_functions(struct pipe_screen *screen);
+void si_init_screen_resource_functions(struct pipe_screen *screen);
 
 struct si_context;
 
-void r600_upload_const_buffer(struct si_context *rctx, struct r600_resource **rbuffer,
-			      const uint8_t *ptr, unsigned size,
-			      uint32_t *const_offset);
+void si_upload_const_buffer(struct si_context *rctx, struct r600_resource **rbuffer,
+			    const uint8_t *ptr, unsigned size,
+			    uint32_t *const_offset);
 
 #endif

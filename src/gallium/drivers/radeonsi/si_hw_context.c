@@ -61,7 +61,7 @@ void si_get_backend_mask(struct si_context *ctx)
 	/* otherwise backup path for older kernels */
 
 	/* create buffer for event data */
-	buffer = r600_resource_create_custom(&ctx->screen->b.b,
+	buffer = si_resource_create_custom(&ctx->screen->b.b,
 					   PIPE_USAGE_STAGING,
 					   ctx->max_db*16);
 	if (!buffer)
@@ -623,7 +623,7 @@ struct si_query *r600_context_query_create(struct si_context *ctx, unsigned quer
 	 * being written by the gpu, hence staging is probably a good
 	 * usage pattern.
 	 */
-	query->buffer = r600_resource_create_custom(&ctx->screen->b.b,
+	query->buffer = si_resource_create_custom(&ctx->screen->b.b,
 						  PIPE_USAGE_STAGING,
 						  buffer_size);
 	if (!query->buffer) {

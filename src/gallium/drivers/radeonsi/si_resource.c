@@ -44,7 +44,7 @@ static struct pipe_resource *r600_resource_from_handle(struct pipe_screen * scre
 	}
 }
 
-void r600_init_screen_resource_functions(struct pipe_screen *screen)
+void si_init_screen_resource_functions(struct pipe_screen *screen)
 {
 	screen->resource_create = r600_resource_create;
 	screen->resource_from_handle = r600_resource_from_handle;

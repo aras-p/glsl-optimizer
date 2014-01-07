@@ -42,7 +42,7 @@ void r600_upload_index_buffer(struct si_context *rctx,
 		      ib->user_buffer, &ib->offset, &ib->buffer);
 }
 
-void r600_upload_const_buffer(struct si_context *rctx, struct r600_resource **rbuffer,
+void si_upload_const_buffer(struct si_context *rctx, struct r600_resource **rbuffer,
 			const uint8_t *ptr, unsigned size,
 			uint32_t *const_offset)
 {

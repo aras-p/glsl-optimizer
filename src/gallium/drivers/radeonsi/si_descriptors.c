@@ -426,9 +426,9 @@ static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint s
 		if (input->user_buffer) {
 			unsigned buffer_offset;
 
-			r600_upload_const_buffer(rctx,
-						 (struct r600_resource**)&buffer, input->user_buffer,
-						 input->buffer_size, &buffer_offset);
+			si_upload_const_buffer(rctx,
+					       (struct r600_resource**)&buffer, input->user_buffer,
+					       input->buffer_size, &buffer_offset);
 			va = r600_resource_va(ctx->screen, buffer) + buffer_offset;
 		} else {
 			pipe_resource_reference(&buffer, input->buffer);

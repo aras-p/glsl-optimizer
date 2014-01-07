@@ -1941,7 +1941,7 @@ int si_compile_llvm(struct si_context *rctx, struct si_pipe_shader *shader,
 
 	/* copy new shader */
 	r600_resource_reference(&shader->bo, NULL);
-	shader->bo = r600_resource_create_custom(rctx->b.b.screen, PIPE_USAGE_IMMUTABLE,
+	shader->bo = si_resource_create_custom(rctx->b.b.screen, PIPE_USAGE_IMMUTABLE,
 					       binary.code_size);
 	if (shader->bo == NULL) {
 		return -ENOMEM;

@@ -2794,7 +2794,7 @@ static struct si_pm4_state *si_set_sampler_states(struct si_context *rctx, unsig
 				rctx->border_color_offset = 0;
 
 				rctx->border_color_table =
-					r600_resource_create_custom(&rctx->screen->b.b,
+					si_resource_create_custom(&rctx->screen->b.b,
 								  PIPE_USAGE_STAGING,
 								  4096 * 4 * 4);
 			}

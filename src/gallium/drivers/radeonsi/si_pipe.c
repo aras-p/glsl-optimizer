@@ -643,7 +643,7 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 		rscreen->b.b.get_video_param = r600_get_video_param;
 		rscreen->b.b.is_video_format_supported = vl_video_buffer_is_format_supported;
 	}
-	r600_init_screen_resource_functions(&rscreen->b.b);
+	si_init_screen_resource_functions(&rscreen->b.b);
 
 	if (!r600_common_screen_init(&rscreen->b, ws)) {
 		FREE(rscreen);
