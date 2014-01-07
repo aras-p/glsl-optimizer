@@ -250,6 +250,13 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 
 void r600_common_context_cleanup(struct r600_common_context *rctx)
 {
+	if (rctx->rings.gfx.cs) {
+		rctx->ws->cs_destroy(rctx->rings.gfx.cs);
+	}
+	if (rctx->rings.dma.cs) {
+		rctx->ws->cs_destroy(rctx->rings.dma.cs);
+	}
+
 	if (rctx->uploader) {
 		u_upload_destroy(rctx->uploader);
 	}

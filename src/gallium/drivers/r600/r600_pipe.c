@@ -185,13 +185,6 @@ static void r600_destroy_context(struct pipe_context *context)
 
 	r600_release_command_buffer(&rctx->start_cs_cmd);
 
-	if (rctx->b.rings.gfx.cs) {
-		rctx->b.ws->cs_destroy(rctx->b.rings.gfx.cs);
-	}
-	if (rctx->b.rings.dma.cs) {
-		rctx->b.ws->cs_destroy(rctx->b.rings.dma.cs);
-	}
-
 	FREE(rctx->start_compute_cs_cmd.buf);
 
 	r600_common_context_cleanup(&rctx->b);
