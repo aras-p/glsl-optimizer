@@ -23,7 +23,7 @@ struct si_pipe_compute {
 	LLVMContextRef llvm_ctx;
 };
 
-static void *radeonsi_create_compute_state(
+static void *si_create_compute_state(
 	struct pipe_context *ctx,
 	const struct pipe_compute_state *cso)
 {
@@ -58,13 +58,13 @@ static void *radeonsi_create_compute_state(
 	return program;
 }
 
-static void radeonsi_bind_compute_state(struct pipe_context *ctx, void *state)
+static void si_bind_compute_state(struct pipe_context *ctx, void *state)
 {
 	struct si_context *rctx = (struct si_context*)ctx;
 	rctx->cs_shader_state.program = (struct si_pipe_compute*)state;
 }
 
-static void radeonsi_set_global_binding(
+static void si_set_global_binding(
 	struct pipe_context *ctx, unsigned first, unsigned n,
 	struct pipe_resource **resources,
 	uint32_t **handles)
@@ -88,7 +88,7 @@ static void radeonsi_set_global_binding(
 	}
 }
 
-static void radeonsi_launch_grid(
+static void si_launch_grid(
 		struct pipe_context *ctx,
 		const uint *block_layout, const uint *grid_layout,
 		uint32_t pc, const void *input)
@@ -289,11 +289,11 @@ static void si_set_compute_resources(struct pipe_context * ctx_,
 
 void si_init_compute_functions(struct si_context *rctx)
 {
-	rctx->b.b.create_compute_state = radeonsi_create_compute_state;
+	rctx->b.b.create_compute_state = si_create_compute_state;
 	rctx->b.b.delete_compute_state = si_delete_compute_state;
-	rctx->b.b.bind_compute_state = radeonsi_bind_compute_state;
+	rctx->b.b.bind_compute_state = si_bind_compute_state;
 /*	 ctx->context.create_sampler_view = evergreen_compute_create_sampler_view; */
 	rctx->b.b.set_compute_resources = si_set_compute_resources;
-	rctx->b.b.set_global_binding = radeonsi_set_global_binding;
-	rctx->b.b.launch_grid = radeonsi_launch_grid;
+	rctx->b.b.set_global_binding = si_set_global_binding;
+	rctx->b.b.launch_grid = si_launch_grid;
 }
