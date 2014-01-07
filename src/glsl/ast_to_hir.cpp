@@ -2155,6 +2155,12 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
 
       fail = true;
       break;
+
+   case MESA_SHADER_COMPUTE:
+      _mesa_glsl_error(loc, state,
+                       "compute shader variables cannot be given "
+                       "explicit locations");
+      return;
    };
 
    if (fail) {
@@ -2337,6 +2343,9 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 	 if (var->data.mode == ir_var_shader_in)
 	    var->data.invariant = true;
 	 break;
+      case MESA_SHADER_COMPUTE:
+         /* Invariance isn't meaningful in compute shaders. */
+         break;
       }
    }
 

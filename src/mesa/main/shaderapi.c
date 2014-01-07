@@ -188,6 +188,8 @@ _mesa_validate_shader_target(const struct gl_context *ctx, GLenum type)
       return ctx == NULL || ctx->Extensions.ARB_vertex_shader;
    case GL_GEOMETRY_SHADER_ARB:
       return ctx == NULL || _mesa_has_geometry_shaders(ctx);
+   case GL_COMPUTE_SHADER:
+      return ctx == NULL || ctx->Extensions.ARB_compute_shader;
    default:
       return false;
    }
@@ -966,6 +968,9 @@ use_shader_program(struct gl_context *ctx, GLenum type,
       case GL_GEOMETRY_SHADER_ARB:
 	 /* Empty for now. */
 	 break;
+      case GL_COMPUTE_SHADER:
+         /* Empty for now. */
+         break;
       case GL_FRAGMENT_SHADER:
 	 if (*target == ctx->Shader._CurrentFragmentProgram) {
 	    _mesa_reference_shader_program(ctx,

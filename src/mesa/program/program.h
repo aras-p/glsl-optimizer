@@ -202,6 +202,8 @@ _mesa_program_enum_to_shader_stage(GLenum v)
       return MESA_SHADER_FRAGMENT;
    case GL_GEOMETRY_PROGRAM_NV:
       return MESA_SHADER_GEOMETRY;
+   case GL_COMPUTE_PROGRAM_NV:
+      return MESA_SHADER_COMPUTE;
    default:
       ASSERT(0);
       return ~0;
@@ -219,6 +221,8 @@ _mesa_shader_stage_to_program(unsigned stage)
       return GL_FRAGMENT_PROGRAM_ARB;
    case MESA_SHADER_GEOMETRY:
       return GL_GEOMETRY_PROGRAM_NV;
+   case MESA_SHADER_COMPUTE:
+      return GL_COMPUTE_PROGRAM_NV;
    }
 
    assert(!"Unexpected shader stage in _mesa_shader_stage_to_program");

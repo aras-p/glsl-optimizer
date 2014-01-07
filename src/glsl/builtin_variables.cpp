@@ -356,6 +356,7 @@ public:
    void generate_vs_special_vars();
    void generate_gs_special_vars();
    void generate_fs_special_vars();
+   void generate_cs_special_vars();
    void generate_varyings();
 
 private:
@@ -868,6 +869,16 @@ builtin_variable_generator::generate_fs_special_vars()
 
 
 /**
+ * Generate variables which only exist in compute shaders.
+ */
+void
+builtin_variable_generator::generate_cs_special_vars()
+{
+   /* TODO: finish this. */
+}
+
+
+/**
  * Add a single "varying" variable.  The variable's type and direction (input
  * or output) are adjusted as appropriate for the type of shader being
  * compiled.  For geometry shaders using {ARB,EXT}_geometry_shader4,
@@ -887,6 +898,9 @@ builtin_variable_generator::add_varying(int slot, const glsl_type *type,
       break;
    case MESA_SHADER_FRAGMENT:
       add_input(slot, type, name);
+      break;
+   case MESA_SHADER_COMPUTE:
+      /* Compute shaders don't have varyings. */
       break;
    }
 }
@@ -974,6 +988,9 @@ _mesa_glsl_initialize_variables(exec_list *instructions,
       break;
    case MESA_SHADER_FRAGMENT:
       gen.generate_fs_special_vars();
+      break;
+   case MESA_SHADER_COMPUTE:
+      gen.generate_cs_special_vars();
       break;
    }
 }
