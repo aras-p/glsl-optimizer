@@ -393,6 +393,23 @@ typedef enum
 
 
 /**
+ * Shader stages. Note that these will become 5 with tessellation.
+ *
+ * The order must match how shaders are ordered in the pipeline.
+ * The GLSL linker assumes that if i<j, then the j-th shader is
+ * executed later than the i-th shader.
+ */
+typedef enum
+{
+   MESA_SHADER_VERTEX = 0,
+   MESA_SHADER_GEOMETRY = 1,
+   MESA_SHADER_FRAGMENT = 2,
+} gl_shader_stage;
+
+#define MESA_SHADER_STAGES (MESA_SHADER_FRAGMENT + 1)
+
+
+/**
  * Framebuffer configuration (aka visual / pixelformat)
  * Note: some of these fields should be boolean, but it appears that
  * code in drivers/dri/common/util.c requires int-sized fields.
@@ -2385,23 +2402,6 @@ struct gl_shader
       GLenum OutputType;
    } Geom;
 };
-
-
-/**
- * Shader stages. Note that these will become 5 with tessellation.
- *
- * The order must match how shaders are ordered in the pipeline.
- * The GLSL linker assumes that if i<j, then the j-th shader is
- * executed later than the i-th shader.
- */
-typedef enum
-{
-   MESA_SHADER_VERTEX = 0,
-   MESA_SHADER_GEOMETRY = 1,
-   MESA_SHADER_FRAGMENT = 2,
-} gl_shader_stage;
-
-#define MESA_SHADER_STAGES (MESA_SHADER_FRAGMENT + 1)
 
 
 struct gl_uniform_buffer_variable
