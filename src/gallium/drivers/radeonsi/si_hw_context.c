@@ -696,7 +696,7 @@ void si_context_queries_resume(struct si_context *ctx)
 }
 
 #if R600_TRACE_CS
-void r600_trace_emit(struct si_context *rctx)
+void si_trace_emit(struct si_context *rctx)
 {
 	struct si_screen *rscreen = rctx->screen;
 	struct radeon_winsys_cs *cs = rctx->cs;
