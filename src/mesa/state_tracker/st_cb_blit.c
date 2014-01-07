@@ -44,6 +44,34 @@
 
 
 static void
+st_adjust_blit_for_msaa_resolve(struct pipe_blit_info *blit)
+{
+   /* Even though we do multisample resolves at the time of the blit, OpenGL
+    * specification defines them as if they happen at the time of rendering,
+    * which means that the type of averaging we do during the resolve should
+    * only depend on the source format; the destination format should be
+    * ignored. But, specification doesn't seem to be strict about it.
+    *
+    * It has been observed that mulitisample resolves produce slightly better
+    * looking images when averaging is done using destination format. NVIDIA's
+    * proprietary OpenGL driver also follows this approach.
+    *
+    * When multisampling, if the source and destination formats are equal
+    * (aside from the color space), we choose to blit in sRGB space to get
+    * this higher quality image.
+    */
+   if (blit->src.resource->nr_samples > 1 &&
+       blit->dst.resource->nr_samples <= 1) {
+      blit->dst.format = blit->dst.resource->format;
+
+      if (util_format_is_srgb(blit->dst.resource->format))
+         blit->src.format = util_format_srgb(blit->src.resource->format);
+      else
+         blit->src.format = util_format_linear(blit->src.resource->format);
+   }
+}
+
+static void
 st_BlitFramebuffer(struct gl_context *ctx,
                    GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                    GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
@@ -192,6 +220,8 @@ st_BlitFramebuffer(struct gl_context *ctx,
                   blit.src.box.z = srcAtt->Zoffset + srcAtt->CubeMapFace;
                   blit.src.format = util_format_linear(srcObj->pt->format);
 
+                  st_adjust_blit_for_msaa_resolve(&blit);
+
                   st->pipe->blit(st->pipe, &blit);
                }
             }
@@ -226,6 +256,8 @@ st_BlitFramebuffer(struct gl_context *ctx,
                   blit.src.level = srcSurf->u.tex.level;
                   blit.src.box.z = srcSurf->u.tex.first_layer;
                   blit.src.format = util_format_linear(srcSurf->format);
+
+                  st_adjust_blit_for_msaa_resolve(&blit);
 
                   st->pipe->blit(st->pipe, &blit);
                }
