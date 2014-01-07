@@ -305,7 +305,7 @@ do_triangle_ccw(struct lp_setup_context *setup,
        * up needing a bottom-left fill convention, which requires
        * slightly different rounding.
        */
-      int adj = (setup->pixel_offset != 0) ? 1 : 0;
+      int adj = (setup->bottom_edge_rule != 0) ? 1 : 0;
 
       /* Inclusive x0, exclusive x1 */
       bbox.x0 =  MIN3(position->x[0], position->x[1], position->x[2]) >> FIXED_ORDER;

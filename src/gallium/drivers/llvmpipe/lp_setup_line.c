@@ -553,7 +553,7 @@ try_setup_line( struct lp_setup_context *setup,
        * up needing a bottom-left fill convention, which requires
        * slightly different rounding.
        */
-      int adj = (setup->pixel_offset != 0) ? 1 : 0;
+      int adj = (setup->bottom_edge_rule != 0) ? 1 : 0;
 
       bbox.x0 = (MIN4(x[0], x[1], x[2], x[3]) + (FIXED_ONE-1)) >> FIXED_ORDER;
       bbox.x1 = (MAX4(x[0], x[1], x[2], x[3]) + (FIXED_ONE-1)) >> FIXED_ORDER;
