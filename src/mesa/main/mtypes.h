@@ -2181,6 +2181,13 @@ struct gl_fragment_program
 };
 
 
+/** Compute program object */
+struct gl_compute_program
+{
+   struct gl_program Base;   /**< base class */
+};
+
+
 /**
  * State common to vertex and fragment programs.
  */

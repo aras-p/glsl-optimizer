@@ -84,6 +84,11 @@ _mesa_init_geometry_program(struct gl_context *ctx,
                             GLenum target, GLuint id);
 
 extern struct gl_program *
+_mesa_init_compute_program(struct gl_context *ctx,
+                           struct gl_compute_program *prog,
+                           GLenum target, GLuint id);
+
+extern struct gl_program *
 _mesa_new_program(struct gl_context *ctx, GLenum target, GLuint id);
 
 extern void

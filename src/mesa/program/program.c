@@ -279,6 +279,21 @@ _mesa_init_vertex_program( struct gl_context *ctx, struct gl_vertex_program *pro
 
 
 /**
+ * Initialize a new compute program object.
+ */
+struct gl_program *
+_mesa_init_compute_program(struct gl_context *ctx,
+                           struct gl_compute_program *prog, GLenum target,
+                           GLuint id)
+{
+   if (prog)
+      return _mesa_init_program_struct( ctx, &prog->Base, target, id );
+   else
+      return NULL;
+}
+
+
+/**
  * Initialize a new geometry program object.
  */
 struct gl_program *
@@ -323,6 +338,11 @@ _mesa_new_program(struct gl_context *ctx, GLenum target, GLuint id)
       prog = _mesa_init_geometry_program(ctx,
                                          CALLOC_STRUCT(gl_geometry_program),
                                          target, id);
+      break;
+   case GL_COMPUTE_PROGRAM_NV:
+      prog = _mesa_init_compute_program(ctx,
+                                        CALLOC_STRUCT(gl_compute_program),
+                                        target, id);
       break;
    default:
       _mesa_problem(ctx, "bad target in _mesa_new_program");
