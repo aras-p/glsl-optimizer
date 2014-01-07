@@ -329,35 +329,6 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
    }
 }
 
-extern "C" {
-
-/**
- * Translate a GLenum to a short shader stage name for debug printouts and
- * error messages.
- *
- * It recognizes the PROGRAM variants of the names so it can be used
- * with a struct gl_program->Target, not just a struct
- * gl_shader->Type.
- */
-const char *
-_mesa_progshader_enum_to_string(GLenum type)
-{
-   switch (type) {
-   case GL_VERTEX_SHADER:
-   case GL_VERTEX_PROGRAM_ARB:
-      return "vertex";
-   case GL_FRAGMENT_SHADER:
-   case GL_FRAGMENT_PROGRAM_ARB:
-      return "fragment";
-   case GL_GEOMETRY_SHADER:
-      return "geometry";
-   default:
-      assert(!"Should not get here.");
-      return "unknown";
-   }
-}
-
-} /* extern "C" */
 
 /**
  * Translate a gl_shader_stage to a short shader stage name for debug

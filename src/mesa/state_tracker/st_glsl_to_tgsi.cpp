@@ -5143,7 +5143,7 @@ get_mesa_program(struct gl_context *ctx,
    if (ctx->Shader.Flags & GLSL_DUMP) {
       printf("\n");
       printf("GLSL IR for linked %s program %d:\n",
-             _mesa_progshader_enum_to_string(shader->Type),
+             _mesa_shader_stage_to_string(shader->Stage),
              shader_program->Name);
       _mesa_print_ir(shader->ir, NULL);
       printf("\n");

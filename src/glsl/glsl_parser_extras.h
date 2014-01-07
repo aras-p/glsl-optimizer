@@ -440,9 +440,6 @@ extern "C" {
 extern const char *
 _mesa_shader_stage_to_string(unsigned stage);
 
-extern const char *
-_mesa_progshader_enum_to_string(GLenum type);
-
 extern int glcpp_preprocess(void *ctx, const char **shader, char **info_log,
                       const struct gl_extensions *extensions, struct gl_context *gl_ctx);
 
