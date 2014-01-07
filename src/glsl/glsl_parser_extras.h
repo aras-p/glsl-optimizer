@@ -68,7 +68,7 @@ extern void _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
 
 
 struct _mesa_glsl_parse_state {
-   _mesa_glsl_parse_state(struct gl_context *_ctx, GLenum target,
+   _mesa_glsl_parse_state(struct gl_context *_ctx, gl_shader_stage stage,
 			  void *mem_ctx);
 
    DECLARE_RALLOC_CXX_OPERATORS(_mesa_glsl_parse_state);

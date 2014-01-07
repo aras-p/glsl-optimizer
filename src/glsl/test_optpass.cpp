@@ -209,7 +209,7 @@ int test_optpass(int argc, char **argv)
    string input = read_stdin_to_eof();
 
    struct _mesa_glsl_parse_state *state
-      = new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
+      = new(shader) _mesa_glsl_parse_state(ctx, shader->Stage, shader);
 
    if (input_format_ir) {
       shader->ir = new(shader) exec_list;

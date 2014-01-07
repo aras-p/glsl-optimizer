@@ -54,14 +54,12 @@ static unsigned known_desktop_glsl_versions[] =
 
 
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
-					       GLenum target, void *mem_ctx)
+					       gl_shader_stage stage,
+                                               void *mem_ctx)
    : ctx(_ctx), switch_state()
 {
-   switch (target) {
-   case GL_VERTEX_SHADER:   this->stage = MESA_SHADER_VERTEX; break;
-   case GL_FRAGMENT_SHADER: this->stage = MESA_SHADER_FRAGMENT; break;
-   case GL_GEOMETRY_SHADER: this->stage = MESA_SHADER_GEOMETRY; break;
-   }
+   assert(stage < MESA_SHADER_STAGES);
+   this->stage = stage;
 
    this->scanner = NULL;
    this->translation_unit.make_empty();
@@ -1479,7 +1477,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
                           bool dump_ast, bool dump_hir)
 {
    struct _mesa_glsl_parse_state *state =
-      new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
+      new(shader) _mesa_glsl_parse_state(ctx, shader->Stage, shader);
    const char *source = shader->Source;
 
    state->error = glcpp_preprocess(state, &source, &state->info_log,

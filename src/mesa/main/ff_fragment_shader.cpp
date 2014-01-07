@@ -1296,7 +1296,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
    p.mem_ctx = ralloc_context(NULL);
    p.shader = ctx->Driver.NewShader(ctx, 0, GL_FRAGMENT_SHADER);
    p.shader->ir = new(p.shader) exec_list;
-   state = new(p.shader) _mesa_glsl_parse_state(ctx, GL_FRAGMENT_SHADER,
+   state = new(p.shader) _mesa_glsl_parse_state(ctx, MESA_SHADER_FRAGMENT,
 						p.shader);
    p.shader->symbols = state->symbols;
    p.top_instructions = p.shader->ir;

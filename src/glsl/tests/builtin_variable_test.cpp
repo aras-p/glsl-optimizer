@@ -68,7 +68,7 @@ common_builtin::SetUp()
    this->shader->Stage = _mesa_shader_enum_to_shader_stage(this->shader_type);
 
    this->state =
-      new(mem_ctx) _mesa_glsl_parse_state(&this->ctx, this->shader->Type,
+      new(mem_ctx) _mesa_glsl_parse_state(&this->ctx, this->shader->Stage,
                                           this->shader);
 
    _mesa_glsl_initialize_types(this->state);
