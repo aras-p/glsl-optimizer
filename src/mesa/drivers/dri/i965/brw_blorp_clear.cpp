@@ -573,14 +573,14 @@ brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
       if (rb == NULL)
          continue;
 
-      if (fb->NumLayers > 0) {
+      if (fb->MaxNumLayers > 0) {
          unsigned layer_multiplier =
             (irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_UMS ||
              irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) ?
             irb->mt->num_samples : 1;
-         assert(fb->NumLayers * layer_multiplier ==
-                irb->mt->level[irb->mt_level].depth);
-         for (unsigned layer = 0; layer < fb->NumLayers; layer++) {
+         unsigned num_layers =
+            irb->mt->level[irb->mt_level].depth / layer_multiplier;
+         for (unsigned layer = 0; layer < num_layers; layer++) {
             if (!do_single_blorp_clear(brw, fb, rb, buf, partial_clear,
                                        layer * layer_multiplier)) {
                return false;

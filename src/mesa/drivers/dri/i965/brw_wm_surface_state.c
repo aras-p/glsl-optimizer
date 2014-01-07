@@ -700,7 +700,7 @@ brw_update_renderbuffer_surfaces(struct brw_context *brw)
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
 	 if (intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[i])) {
 	    brw->vtbl.update_renderbuffer_surface(brw, ctx->DrawBuffer->_ColorDrawBuffers[i],
-                                                  ctx->DrawBuffer->NumLayers > 0, i);
+                                                  ctx->DrawBuffer->MaxNumLayers > 0, i);
 	 } else {
 	    brw->vtbl.update_null_renderbuffer_surface(brw, i);
 	 }

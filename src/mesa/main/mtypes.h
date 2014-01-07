@@ -3008,12 +3008,11 @@ struct gl_framebuffer
    struct gl_renderbuffer *_ColorReadBuffer;
 
    /**
-    * The number of layers in the framebuffer, or 0 if the framebuffer is not
-    * layered.  For cube maps, this value is 6.  For cube map arrays, this
-    * value is the "depth" value passed to TexImage3D (always a multiple of
-    * 6).
+    * The maximum number of layers in the framebuffer, or 0 if the framebuffer
+    * is not layered.  For cube maps and cube map arrays, each cube face
+    * counts as a layer.
     */
-   GLuint NumLayers;
+   GLuint MaxNumLayers;
 
    /** Delete this framebuffer */
    void (*Delete)(struct gl_framebuffer *fb);

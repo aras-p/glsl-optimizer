@@ -81,7 +81,7 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
       break;
    }
 
-   if (fb->NumLayers > 0 || !irb) {
+   if (fb->MaxNumLayers > 0 || !irb) {
       min_array_element = 0;
    } else if (irb->mt->num_samples > 1) {
       /* Convert physical layer to logical layer. */

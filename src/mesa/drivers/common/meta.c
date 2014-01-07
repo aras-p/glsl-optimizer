@@ -2407,9 +2407,9 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
 		       GL_DYNAMIC_DRAW_ARB);
 
    /* draw quad(s) */
-   if (fb->NumLayers > 0) {
+   if (fb->MaxNumLayers > 0) {
       unsigned layer;
-      for (layer = 0; layer < fb->NumLayers; layer++) {
+      for (layer = 0; layer < fb->MaxNumLayers; layer++) {
          if (fb->_IntegerColor)
             _mesa_Uniform1i(clear->IntegerLayerLocation, layer);
          else

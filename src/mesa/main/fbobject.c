@@ -877,8 +877,10 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    GLint fixedSampleLocations = -1;
    GLint i;
    GLuint j;
-   bool layer_info_valid = false; /* Covers layer_count and layer_tex_target */
-   GLuint layer_count = 0, att_layer_count;
+   /* Covers max_layer_count, is_layered, and layer_tex_target */
+   bool layer_info_valid = false;
+   GLuint max_layer_count = 0, att_layer_count;
+   bool is_layered;
    GLenum layer_tex_target = 0;
 
    assert(_mesa_is_user_fbo(fb));
@@ -1064,26 +1066,24 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          att_layer_count = 0;
       }
       if (!layer_info_valid) {
-         layer_count = att_layer_count;
+         is_layered = att->Layered;
+         max_layer_count = att_layer_count;
          layer_tex_target = att_tex_target;
          layer_info_valid = true;
-      } else if (layer_count > 0 && layer_tex_target != att_tex_target) {
+      } else if (max_layer_count > 0 && layer_tex_target != att_tex_target) {
          fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS;
          fbo_incomplete(ctx, "layered framebuffer has mismatched targets", i);
          return;
-      } else if (layer_count != att_layer_count) {
-         if (layer_count == 0 || att_layer_count == 0) {
-            fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS;
-            fbo_incomplete(ctx, "framebuffer attachment layer mode is inconsistent", i);
-         } else {
-            fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_LAYER_COUNT_ARB;
-            fbo_incomplete(ctx, "framebuffer attachment layer count is inconsistent", i);
-         }
+      } else if (is_layered != att->Layered) {
+         fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS;
+         fbo_incomplete(ctx, "framebuffer attachment layer mode is inconsistent", i);
          return;
+      } else if (att_layer_count > max_layer_count) {
+         max_layer_count = att_layer_count;
       }
    }
 
-   fb->NumLayers = layer_count;
+   fb->MaxNumLayers = max_layer_count;
 
    if (_mesa_is_desktop_gl(ctx) && !ctx->Extensions.ARB_ES2_compatibility) {
       /* Check that all DrawBuffers are present */
