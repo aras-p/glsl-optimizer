@@ -35,7 +35,7 @@
 struct winsys_handle;
 
 /* R600/R700 STATES */
-struct r600_query {
+struct si_query {
 	union {
 		uint64_t			u64;
 		boolean				b;
@@ -67,16 +67,16 @@ void si_get_backend_mask(struct si_context *ctx);
 void si_context_flush(struct si_context *ctx, unsigned flags);
 void si_begin_new_cs(struct si_context *ctx);
 
-struct r600_query *r600_context_query_create(struct si_context *ctx, unsigned query_type);
-void r600_context_query_destroy(struct si_context *ctx, struct r600_query *query);
+struct si_query *r600_context_query_create(struct si_context *ctx, unsigned query_type);
+void r600_context_query_destroy(struct si_context *ctx, struct si_query *query);
 boolean r600_context_query_result(struct si_context *ctx,
-				struct r600_query *query,
+				struct si_query *query,
 				boolean wait, void *vresult);
-void r600_query_begin(struct si_context *ctx, struct r600_query *query);
-void r600_query_end(struct si_context *ctx, struct r600_query *query);
+void r600_query_begin(struct si_context *ctx, struct si_query *query);
+void r600_query_end(struct si_context *ctx, struct si_query *query);
 void r600_context_queries_suspend(struct si_context *ctx);
 void r600_context_queries_resume(struct si_context *ctx);
-void r600_query_predication(struct si_context *ctx, struct r600_query *query, int operation,
+void r600_query_predication(struct si_context *ctx, struct si_query *query, int operation,
 			    int flag_wait);
 
 bool si_is_timer_query(unsigned type);

@@ -295,7 +295,7 @@ static unsigned r600_query_read_result(char *map, unsigned start_index, unsigned
 	return 0;
 }
 
-static boolean r600_query_result(struct si_context *ctx, struct r600_query *query, boolean wait)
+static boolean r600_query_result(struct si_context *ctx, struct si_query *query, boolean wait)
 {
 	unsigned results_base = query->results_start;
 	char *map;
@@ -382,7 +382,7 @@ static boolean r600_query_result(struct si_context *ctx, struct r600_query *quer
 	return TRUE;
 }
 
-void r600_query_begin(struct si_context *ctx, struct r600_query *query)
+void r600_query_begin(struct si_context *ctx, struct si_query *query)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 	unsigned new_results_end, i;
@@ -471,7 +471,7 @@ void r600_query_begin(struct si_context *ctx, struct r600_query *query)
 	}
 }
 
-void r600_query_end(struct si_context *ctx, struct r600_query *query)
+void r600_query_end(struct si_context *ctx, struct si_query *query)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 	uint64_t va;
@@ -534,7 +534,7 @@ void r600_query_end(struct si_context *ctx, struct r600_query *query)
 	}
 }
 
-void r600_query_predication(struct si_context *ctx, struct r600_query *query, int operation,
+void r600_query_predication(struct si_context *ctx, struct si_query *query, int operation,
 			    int flag_wait)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
@@ -577,12 +577,12 @@ void r600_query_predication(struct si_context *ctx, struct r600_query *query, in
 	}
 }
 
-struct r600_query *r600_context_query_create(struct si_context *ctx, unsigned query_type)
+struct si_query *r600_context_query_create(struct si_context *ctx, unsigned query_type)
 {
-	struct r600_query *query;
+	struct si_query *query;
 	unsigned buffer_size = 4096;
 
-	query = CALLOC_STRUCT(r600_query);
+	query = CALLOC_STRUCT(si_query);
 	if (query == NULL)
 		return NULL;
 
@@ -633,14 +633,14 @@ struct r600_query *r600_context_query_create(struct si_context *ctx, unsigned qu
 	return query;
 }
 
-void r600_context_query_destroy(struct si_context *ctx, struct r600_query *query)
+void r600_context_query_destroy(struct si_context *ctx, struct si_query *query)
 {
 	r600_resource_reference(&query->buffer, NULL);
 	free(query);
 }
 
 boolean r600_context_query_result(struct si_context *ctx,
-				struct r600_query *query,
+				struct si_query *query,
 				boolean wait, void *vresult)
 {
 	boolean *result_b = (boolean*)vresult;
@@ -676,7 +676,7 @@ boolean r600_context_query_result(struct si_context *ctx,
 
 void r600_context_queries_suspend(struct si_context *ctx)
 {
-	struct r600_query *query;
+	struct si_query *query;
 
 	LIST_FOR_EACH_ENTRY(query, &ctx->active_nontimer_query_list, list) {
 		r600_query_end(ctx, query);
@@ -686,7 +686,7 @@ void r600_context_queries_suspend(struct si_context *ctx)
 
 void r600_context_queries_resume(struct si_context *ctx)
 {
-	struct r600_query *query;
+	struct si_query *query;
 
 	assert(ctx->num_cs_dw_nontimer_queries_suspend == 0);
 

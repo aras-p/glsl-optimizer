@@ -34,13 +34,13 @@ static void r600_destroy_query(struct pipe_context *ctx, struct pipe_query *quer
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 
-	r600_context_query_destroy(rctx, (struct r600_query *)query);
+	r600_context_query_destroy(rctx, (struct si_query *)query);
 }
 
 static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
-	struct r600_query *rquery = (struct r600_query *)query;
+	struct si_query *rquery = (struct si_query *)query;
 
 	if (!si_query_needs_begin(rquery->type)) {
 		assert(0);
@@ -49,7 +49,7 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 
 	memset(&rquery->result, 0, sizeof(rquery->result));
 	rquery->results_start = rquery->results_end;
-	r600_query_begin(rctx, (struct r600_query *)query);
+	r600_query_begin(rctx, (struct si_query *)query);
 
 	if (!si_is_timer_query(rquery->type)) {
 		LIST_ADDTAIL(&rquery->list, &rctx->active_nontimer_query_list);
@@ -59,7 +59,7 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
-	struct r600_query *rquery = (struct r600_query *)query;
+	struct si_query *rquery = (struct si_query *)query;
 
 	if (!si_query_needs_begin(rquery->type)) {
 		memset(&rquery->result, 0, sizeof(rquery->result));
@@ -77,7 +77,7 @@ static boolean r600_get_query_result(struct pipe_context *ctx,
 					boolean wait, union pipe_query_result *vresult)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
-	struct r600_query *rquery = (struct r600_query *)query;
+	struct si_query *rquery = (struct si_query *)query;
 
 	return r600_context_query_result(rctx, rquery, wait, vresult);
 }
@@ -88,7 +88,7 @@ static void r600_render_condition(struct pipe_context *ctx,
 				  uint mode)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
-	struct r600_query *rquery = (struct r600_query *)query;
+	struct si_query *rquery = (struct si_query *)query;
 	int wait_flag = 0;
 
 	/* If we already have nonzero result, render unconditionally */
