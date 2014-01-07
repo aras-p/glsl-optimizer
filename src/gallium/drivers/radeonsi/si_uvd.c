@@ -131,7 +131,7 @@ error:
 }
 
 /* set the decoding target buffer offsets */
-static struct radeon_winsys_cs_handle* radeonsi_uvd_set_dtb(struct ruvd_msg *msg, struct vl_video_buffer *buf)
+static struct radeon_winsys_cs_handle* si_uvd_set_dtb(struct ruvd_msg *msg, struct vl_video_buffer *buf)
 {
 	struct r600_texture *luma = (struct r600_texture *)buf->resources[0];
 	struct r600_texture *chroma = (struct r600_texture *)buf->resources[1];
@@ -149,5 +149,5 @@ static struct radeon_winsys_cs_handle* radeonsi_uvd_set_dtb(struct ruvd_msg *msg
 struct pipe_video_codec *si_uvd_create_decoder(struct pipe_context *context,
 					       const struct pipe_video_codec *templ)
 {
-	return ruvd_create_decoder(context, templ, radeonsi_uvd_set_dtb);
+	return ruvd_create_decoder(context, templ, si_uvd_set_dtb);
 }
