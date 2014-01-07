@@ -89,4 +89,9 @@
 #  define __FUNCTION__ __func__
 #endif
 
+#define STATIC_ASSERT(COND) \
+   do { \
+      (void) sizeof(char [1 - 2*!(COND)]); \
+   } while (0)
+
 #endif /* EGLCOMPILER_INCLUDED */
