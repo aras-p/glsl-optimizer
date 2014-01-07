@@ -29,6 +29,7 @@
 #include "util/u_transfer.h"
 #include "util/u_format_etc.h"
 
+#include "ilo_blit.h"
 #include "ilo_cp.h"
 #include "ilo_context.h"
 #include "ilo_resource.h"
@@ -996,6 +997,8 @@ ilo_transfer_map(struct pipe_context *pipe,
    xfer->base.level = level;
    xfer->base.usage = usage;
    xfer->base.box = *box;
+
+   ilo_blit_resolve_transfer(ilo, &xfer->base);
 
    if (res->target == PIPE_BUFFER)
       success = buf_map(ilo, xfer);

@@ -129,8 +129,71 @@ ilo_blit(struct pipe_context *pipe, const struct pipe_blit_info *info)
 }
 
 static void
-ilo_flush_resource(struct pipe_context *ctx, struct pipe_resource *resource)
+ilo_flush_resource(struct pipe_context *pipe, struct pipe_resource *res)
 {
+   struct ilo_context *ilo = ilo_context(pipe);
+   const unsigned flags = ILO_TEXTURE_CPU_READ |
+                          ILO_TEXTURE_BLT_READ |
+                          ILO_TEXTURE_RENDER_READ;
+
+   ilo_blit_resolve_resource(ilo, res, flags);
+}
+
+void
+ilo_blit_resolve_slices_for_hiz(struct ilo_context *ilo,
+                                struct pipe_resource *res, unsigned level,
+                                unsigned first_slice, unsigned num_slices,
+                                unsigned flags)
+{
+   struct ilo_texture *tex = ilo_texture(res);
+   const unsigned any_reader =
+      ILO_TEXTURE_RENDER_READ |
+      ILO_TEXTURE_BLT_READ |
+      ILO_TEXTURE_CPU_READ;
+   const unsigned other_writers =
+      ILO_TEXTURE_BLT_WRITE |
+      ILO_TEXTURE_CPU_WRITE;
+   unsigned i;
+
+   assert(tex->base.target != PIPE_BUFFER && tex->hiz.bo);
+
+   if (flags & ILO_TEXTURE_RENDER_WRITE) {
+      /*
+       * When ILO_TEXTURE_RENDER_WRITE is set, there can be no reader.  We
+       * need to perform a HiZ Buffer Resolve in case the resource was
+       * previously written by another writer, unless this is a clear.
+       */
+      assert(!(flags & (other_writers | any_reader)));
+
+      if (!(flags & ILO_TEXTURE_CLEAR)) {
+         for (i = 0; i < num_slices; i++) {
+            const struct ilo_texture_slice *slice =
+               ilo_texture_get_slice(tex, level, first_slice + i);
+
+            if (slice->flags & other_writers) {
+               ilo_blitter_rectlist_resolve_hiz(ilo->blitter,
+                     res, level, first_slice + i);
+            }
+         }
+      }
+   }
+   else if ((flags & any_reader) ||
+         ((flags & other_writers) && !(flags & ILO_TEXTURE_CLEAR))) {
+      /*
+       * When there is at least a reader or writer, we need to perform a
+       * Depth Buffer Resolve in case the resource was previously written
+       * by ILO_TEXTURE_RENDER_WRITE.
+       */
+      for (i = 0; i < num_slices; i++) {
+         const struct ilo_texture_slice *slice =
+            ilo_texture_get_slice(tex, level, first_slice + i);
+
+         if (slice->flags & ILO_TEXTURE_RENDER_WRITE) {
+            ilo_blitter_rectlist_resolve_z(ilo->blitter,
+                  &tex->base, level, first_slice + i);
+         }
+      }
+   }
 }
 
 /**

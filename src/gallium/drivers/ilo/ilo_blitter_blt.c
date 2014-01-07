@@ -31,6 +31,7 @@
 #include "ilo_3d.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
+#include "ilo_blit.h"
 #include "ilo_resource.h"
 #include "ilo_blitter.h"
 
@@ -654,6 +655,11 @@ ilo_blitter_blt_copy_resource(struct ilo_blitter *blitter,
 {
    bool success;
 
+   ilo_blit_resolve_slices(blitter->ilo, src, src_level,
+         src_box->z, src_box->depth, ILO_TEXTURE_BLT_READ);
+   ilo_blit_resolve_slices(blitter->ilo, dst, dst_level,
+         dst_z, src_box->depth, ILO_TEXTURE_BLT_WRITE);
+
    if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
       const unsigned dst_offset = dst_x;
       const unsigned src_offset = src_box->x;
@@ -714,6 +720,8 @@ ilo_blitter_blt_clear_rt(struct ilo_blitter *blitter,
    if (util_format_is_pure_integer(rt->format) ||
        util_format_is_compressed(rt->format))
       return false;
+
+   ilo_blit_resolve_surface(blitter->ilo, rt, ILO_TEXTURE_BLT_WRITE);
 
    util_pack_color(color->f, rt->format, &packed);
 
@@ -799,6 +807,8 @@ ilo_blitter_blt_clear_zs(struct ilo_blitter *blitter,
       return false;
       break;
    }
+
+   ilo_blit_resolve_surface(blitter->ilo, zs, ILO_TEXTURE_BLT_WRITE);
 
    val = util_pack_z_stencil(zs->format, depth, stencil);
 

@@ -29,6 +29,7 @@
 #include "intel_winsys.h"
 
 #include "ilo_3d_pipeline.h"
+#include "ilo_blit.h"
 #include "ilo_context.h"
 #include "ilo_cp.h"
 #include "ilo_query.h"
@@ -736,6 +737,8 @@ ilo_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    if (!upload_shaders(hw3d, ilo->shader_cache))
       return;
+
+   ilo_blit_resolve_framebuffer(ilo);
 
    /* If draw_vbo ever fails, return immediately. */
    if (!draw_vbo(hw3d, ilo, &prim_generated, &prim_emitted))
