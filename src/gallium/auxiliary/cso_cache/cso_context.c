@@ -269,7 +269,7 @@ struct cso_context *cso_create_context( struct pipe_context *pipe )
                                    ctx);
 
    ctx->pipe = pipe;
-   ctx->sample_mask_saved = ~0;
+   ctx->sample_mask = ~0;
 
    ctx->aux_vertex_buffer_index = 0; /* 0 for now */
 
