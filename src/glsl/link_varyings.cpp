@@ -48,13 +48,13 @@ static void
 cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
                                     const ir_variable *input,
                                     const ir_variable *output,
-                                    GLenum consumer_type,
-                                    GLenum producer_type)
+                                    gl_shader_stage consumer_stage,
+                                    gl_shader_stage producer_stage)
 {
    /* Check that the types match between stages.
     */
    const glsl_type *type_to_match = input->type;
-   if (consumer_type == GL_GEOMETRY_SHADER) {
+   if (consumer_stage == MESA_SHADER_GEOMETRY) {
       assert(type_to_match->is_array()); /* Enforced by ast_to_hir */
       type_to_match = type_to_match->element_type();
    }
@@ -82,10 +82,10 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
          linker_error(prog,
                       "%s shader output `%s' declared as type `%s', "
                       "but %s shader input declared as type `%s'\n",
-                      _mesa_progshader_enum_to_string(producer_type),
+                      _mesa_shader_stage_to_string(producer_stage),
                       output->name,
                       output->type->name,
-                      _mesa_progshader_enum_to_string(consumer_type),
+                      _mesa_shader_stage_to_string(consumer_stage),
                       input->type->name);
          return;
       }
@@ -97,10 +97,10 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
       linker_error(prog,
                    "%s shader output `%s' %s centroid qualifier, "
                    "but %s shader input %s centroid qualifier\n",
-                   _mesa_progshader_enum_to_string(producer_type),
+                   _mesa_shader_stage_to_string(producer_stage),
                    output->name,
                    (output->data.centroid) ? "has" : "lacks",
-                   _mesa_progshader_enum_to_string(consumer_type),
+                   _mesa_shader_stage_to_string(consumer_stage),
                    (input->data.centroid) ? "has" : "lacks");
       return;
    }
@@ -109,10 +109,10 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
       linker_error(prog,
                    "%s shader output `%s' %s sample qualifier, "
                    "but %s shader input %s sample qualifier\n",
-                   _mesa_progshader_enum_to_string(producer_type),
+                   _mesa_shader_stage_to_string(producer_stage),
                    output->name,
                    (output->data.sample) ? "has" : "lacks",
-                   _mesa_progshader_enum_to_string(consumer_type),
+                   _mesa_shader_stage_to_string(consumer_stage),
                    (input->data.sample) ? "has" : "lacks");
       return;
    }
@@ -121,10 +121,10 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
       linker_error(prog,
                    "%s shader output `%s' %s invariant qualifier, "
                    "but %s shader input %s invariant qualifier\n",
-                   _mesa_progshader_enum_to_string(producer_type),
+                   _mesa_shader_stage_to_string(producer_stage),
                    output->name,
                    (output->data.invariant) ? "has" : "lacks",
-                   _mesa_progshader_enum_to_string(consumer_type),
+                   _mesa_shader_stage_to_string(consumer_stage),
                    (input->data.invariant) ? "has" : "lacks");
       return;
    }
@@ -135,10 +135,10 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
                    "interpolation qualifier, "
                    "but %s shader input specifies %s "
                    "interpolation qualifier\n",
-                   _mesa_progshader_enum_to_string(producer_type),
+                   _mesa_shader_stage_to_string(producer_stage),
                    output->name,
                    interpolation_string(output->data.interpolation),
-                   _mesa_progshader_enum_to_string(consumer_type),
+                   _mesa_shader_stage_to_string(consumer_stage),
                    interpolation_string(input->data.interpolation));
       return;
    }
@@ -152,16 +152,16 @@ cross_validate_front_and_back_color(struct gl_shader_program *prog,
                                     const ir_variable *input,
                                     const ir_variable *front_color,
                                     const ir_variable *back_color,
-                                    GLenum consumer_type,
-                                    GLenum producer_type)
+                                    gl_shader_stage consumer_stage,
+                                    gl_shader_stage producer_stage)
 {
    if (front_color != NULL && front_color->data.assigned)
       cross_validate_types_and_qualifiers(prog, input, front_color,
-                                          consumer_type, producer_type);
+                                          consumer_stage, producer_stage);
 
    if (back_color != NULL && back_color->data.assigned)
       cross_validate_types_and_qualifiers(prog, input, back_color,
-                                          consumer_type, producer_type);
+                                          consumer_stage, producer_stage);
 }
 
 /**
@@ -208,7 +208,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 
          cross_validate_front_and_back_color(prog, input,
                                              front_color, back_color,
-                                             consumer->Type, producer->Type);
+                                             consumer->Stage, producer->Stage);
       } else if (strcmp(input->name, "gl_SecondaryColor") == 0 && input->data.used) {
          const ir_variable *const front_color =
             parameters.get_variable("gl_FrontSecondaryColor");
@@ -218,12 +218,12 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 
          cross_validate_front_and_back_color(prog, input,
                                              front_color, back_color,
-                                             consumer->Type, producer->Type);
+                                             consumer->Stage, producer->Stage);
       } else {
          ir_variable *const output = parameters.get_variable(input->name);
          if (output != NULL) {
             cross_validate_types_and_qualifiers(prog, input, output,
-                                                consumer->Type, producer->Type);
+                                                consumer->Stage, producer->Stage);
          }
       }
    }
@@ -943,10 +943,10 @@ varying_matches::match_comparator(const void *x_generic, const void *y_generic)
  * varyings, but excludes variables such as gl_FrontFacing and gl_FragCoord.
  */
 static bool
-is_varying_var(GLenum shaderType, const ir_variable *var)
+is_varying_var(gl_shader_stage stage, const ir_variable *var)
 {
    /* Only fragment shaders will take a varying variable as an input */
-   if (shaderType == GL_FRAGMENT_SHADER &&
+   if (stage == MESA_SHADER_FRAGMENT &&
        var->data.mode == ir_var_shader_in) {
       switch (var->data.location) {
       case VARYING_SLOT_POS:
@@ -1244,7 +1244,7 @@ check_against_output_limit(struct gl_context *ctx,
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if (var && var->data.mode == ir_var_shader_out &&
-          is_varying_var(producer->Type, var)) {
+          is_varying_var(producer->Stage, var)) {
          output_vectors += var->type->count_attribute_slots();
       }
    }
@@ -1293,7 +1293,7 @@ check_against_input_limit(struct gl_context *ctx,
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if (var && var->data.mode == ir_var_shader_in &&
-          is_varying_var(consumer->Type, var)) {
+          is_varying_var(consumer->Stage, var)) {
          input_vectors += var->type->count_attribute_slots();
       }
    }
