@@ -860,8 +860,8 @@ clamp_colors(float (*quadColor)[4])
 {
    unsigned i, j;
 
-   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-      for (i = 0; i < 4; i++) {
+   for (i = 0; i < 4; i++) {
+      for (j = 0; j < TGSI_QUAD_SIZE; j++) {
          quadColor[i][j] = CLAMP(quadColor[i][j], 0.0F, 1.0F);
       }
    }
