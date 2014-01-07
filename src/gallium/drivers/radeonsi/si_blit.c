@@ -51,7 +51,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 
-	r600_context_queries_suspend(rctx);
+	si_context_queries_suspend(rctx);
 
 	util_blitter_save_blend(rctx->blitter, rctx->queued.named.blend);
 	util_blitter_save_depth_stencil_alpha(rctx->blitter, rctx->queued.named.dsa);
@@ -100,7 +100,7 @@ static void r600_blitter_end(struct pipe_context *ctx)
 					       rctx->saved_render_cond_mode);
 		rctx->saved_render_cond = NULL;
 	}
-	r600_context_queries_resume(rctx);
+	si_context_queries_resume(rctx);
 }
 
 static unsigned u_max_sample(struct pipe_resource *r)
