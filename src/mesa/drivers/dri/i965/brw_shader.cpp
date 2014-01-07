@@ -262,7 +262,8 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       if (ctx->Shader.Flags & GLSL_DUMP) {
          printf("\n");
          printf("GLSL IR for linked %s program %d:\n",
-                _mesa_progshader_enum_to_string(shader->base.Type), shProg->Name);
+                _mesa_shader_stage_to_string(shader->base.Stage),
+                shProg->Name);
          _mesa_print_ir(shader->base.ir, NULL);
          printf("\n");
       }
@@ -275,7 +276,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
             continue;
 
          printf("GLSL %s shader %d source for linked program %d:\n",
-                _mesa_progshader_enum_to_string(sh->Type),
+                _mesa_shader_stage_to_string(sh->Stage),
                 i,
                 shProg->Name);
          printf("%s", sh->Source);

@@ -669,7 +669,7 @@ lower_packed_varyings(void *mem_ctx, unsigned location_base,
                                          gs_input_vertices, &new_instructions);
    visitor.run(instructions);
    if (mode == ir_var_shader_out) {
-      if (shader->Type == GL_GEOMETRY_SHADER) {
+      if (shader->Stage == MESA_SHADER_GEOMETRY) {
          /* For geometry shaders, outputs need to be lowered before each call
           * to EmitVertex()
           */

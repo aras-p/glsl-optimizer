@@ -2493,8 +2493,7 @@ _mesa_generate_parameters_list_for_uniforms(struct gl_shader_program
 					    struct gl_program_parameter_list
 					    *params)
 {
-   add_uniform_to_shader add(shader_program, params,
-                             _mesa_shader_enum_to_shader_stage(sh->Type));
+   add_uniform_to_shader add(shader_program, params, sh->Stage);
 
    foreach_list(node, sh->ir) {
       ir_variable *var = ((ir_instruction *) node)->as_variable();
@@ -2801,18 +2800,18 @@ get_mesa_program(struct gl_context *ctx,
    int i;
    struct gl_program *prog;
    GLenum target;
-   const char *target_string = _mesa_progshader_enum_to_string(shader->Type);
+   const char *target_string = _mesa_shader_stage_to_string(shader->Stage);
    struct gl_shader_compiler_options *options =
-         &ctx->ShaderCompilerOptions[_mesa_shader_enum_to_shader_stage(shader->Type)];
+         &ctx->ShaderCompilerOptions[shader->Stage];
 
-   switch (shader->Type) {
-   case GL_VERTEX_SHADER:
+   switch (shader->Stage) {
+   case MESA_SHADER_VERTEX:
       target = GL_VERTEX_PROGRAM_ARB;
       break;
-   case GL_FRAGMENT_SHADER:
+   case MESA_SHADER_FRAGMENT:
       target = GL_FRAGMENT_PROGRAM_ARB;
       break;
-   case GL_GEOMETRY_SHADER:
+   case MESA_SHADER_GEOMETRY:
       target = GL_GEOMETRY_PROGRAM_NV;
       break;
    default:
@@ -3007,7 +3006,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       bool progress;
       exec_list *ir = prog->_LinkedShaders[i]->ir;
       const struct gl_shader_compiler_options *options =
-            &ctx->ShaderCompilerOptions[_mesa_shader_enum_to_shader_stage(prog->_LinkedShaders[i]->Type)];
+            &ctx->ShaderCompilerOptions[prog->_LinkedShaders[i]->Stage];
 
       do {
 	 progress = false;

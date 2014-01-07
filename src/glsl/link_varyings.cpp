@@ -1072,7 +1072,7 @@ assign_varying_locations(struct gl_context *ctx,
    const unsigned producer_base = VARYING_SLOT_VAR0;
    const unsigned consumer_base = VARYING_SLOT_VAR0;
    varying_matches matches(ctx->Const.DisableVaryingPacking,
-                           consumer && consumer->Type == GL_FRAGMENT_SHADER);
+                           consumer && consumer->Stage == MESA_SHADER_FRAGMENT);
    hash_table *tfeedback_candidates
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
    hash_table *consumer_inputs
@@ -1217,9 +1217,9 @@ assign_varying_locations(struct gl_context *ctx,
 
                linker_error(prog, "%s shader varying %s not written "
                             "by %s shader\n.",
-                            _mesa_progshader_enum_to_string(consumer->Type),
+                            _mesa_shader_stage_to_string(consumer->Stage),
 			    var->name,
-                            _mesa_progshader_enum_to_string(producer->Type));
+                            _mesa_shader_stage_to_string(producer->Stage));
             }
 
             /* An 'in' variable is only really a shader input if its
@@ -1250,14 +1250,14 @@ check_against_output_limit(struct gl_context *ctx,
    }
 
    unsigned max_output_components;
-   switch (producer->Type) {
-   case GL_VERTEX_SHADER:
+   switch (producer->Stage) {
+   case MESA_SHADER_VERTEX:
       max_output_components = ctx->Const.VertexProgram.MaxOutputComponents;
       break;
-   case GL_GEOMETRY_SHADER:
+   case MESA_SHADER_GEOMETRY:
       max_output_components = ctx->Const.GeometryProgram.MaxOutputComponents;
       break;
-   case GL_FRAGMENT_SHADER:
+   case MESA_SHADER_FRAGMENT:
    default:
       assert(!"Should not get here.");
       return false;
@@ -1299,14 +1299,14 @@ check_against_input_limit(struct gl_context *ctx,
    }
 
    unsigned max_input_components;
-   switch (consumer->Type) {
-   case GL_GEOMETRY_SHADER:
+   switch (consumer->Stage) {
+   case MESA_SHADER_GEOMETRY:
       max_input_components = ctx->Const.GeometryProgram.MaxInputComponents;
       break;
-   case GL_FRAGMENT_SHADER:
+   case MESA_SHADER_FRAGMENT:
       max_input_components = ctx->Const.FragmentProgram.MaxInputComponents;
       break;
-   case GL_VERTEX_SHADER:
+   case MESA_SHADER_VERTEX:
    default:
       assert(!"Should not get here.");
       return false;

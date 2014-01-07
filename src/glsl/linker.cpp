@@ -438,7 +438,7 @@ analyze_clip_usage(struct gl_shader_program *prog,
       if (clip_vertex.variable_found() && clip_distance.variable_found()) {
          linker_error(prog, "%s shader writes to both `gl_ClipVertex' "
                       "and `gl_ClipDistance'\n",
-                      _mesa_progshader_enum_to_string(shader->Type));
+                      _mesa_shader_stage_to_string(shader->Stage));
          return;
       }
       *UsesClipDistance = clip_distance.variable_found();
@@ -1209,7 +1209,7 @@ link_gs_inout_layout_qualifiers(struct gl_shader_program *prog,
    /* No in/out qualifiers defined for anything but GLSL 1.50+
     * geometry shaders so far.
     */
-   if (linked_shader->Type != GL_GEOMETRY_SHADER || prog->Version < 150)
+   if (linked_shader->Stage != MESA_SHADER_GEOMETRY || prog->Version < 150)
       return;
 
    /* From the GLSL 1.50 spec, page 46:
@@ -1376,7 +1376,7 @@ link_intrastage_shaders(void *mem_ctx,
 
    if (main == NULL) {
       linker_error(prog, "%s shader lacks `main'\n",
-		   _mesa_progshader_enum_to_string(shader_list[0]->Type));
+		   _mesa_shader_stage_to_string(shader_list[0]->Stage));
       return NULL;
    }
 
@@ -1450,7 +1450,7 @@ link_intrastage_shaders(void *mem_ctx,
    validate_ir_tree(linked->ir);
 
    /* Set the size of geometry shader input arrays */
-   if (linked->Type == GL_GEOMETRY_SHADER) {
+   if (linked->Stage == MESA_SHADER_GEOMETRY) {
       unsigned num_vertices = vertices_per_prim(prog->Geom.InputType);
       geom_array_resize_visitor input_resize_visitor(num_vertices, prog);
       foreach_iter(exec_list_iterator, iter, *linked->ir) {
@@ -2049,16 +2049,16 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 goto done;
       }
 
-      switch (prog->Shaders[i]->Type) {
-      case GL_VERTEX_SHADER:
+      switch (prog->Shaders[i]->Stage) {
+      case MESA_SHADER_VERTEX:
 	 vert_shader_list[num_vert_shaders] = prog->Shaders[i];
 	 num_vert_shaders++;
 	 break;
-      case GL_FRAGMENT_SHADER:
+      case MESA_SHADER_FRAGMENT:
 	 frag_shader_list[num_frag_shaders] = prog->Shaders[i];
 	 num_frag_shaders++;
 	 break;
-      case GL_GEOMETRY_SHADER:
+      case MESA_SHADER_GEOMETRY:
 	 geom_shader_list[num_geom_shaders] = prog->Shaders[i];
 	 num_geom_shaders++;
 	 break;

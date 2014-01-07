@@ -842,7 +842,7 @@ brw_upload_ubo_surfaces(struct brw_context *brw,
       brw_create_constant_surface(brw, bo, binding->Offset,
                                   bo->size - binding->Offset,
                                   &surf_offsets[i],
-                                  shader->Type == GL_FRAGMENT_SHADER);
+                                  shader->Stage == MESA_SHADER_FRAGMENT);
    }
 
    if (shader->NumUniformBlocks)

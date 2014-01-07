@@ -1005,16 +1005,21 @@ _mesa_print_parameter_list(const struct gl_program_parameter_list *list)
 void
 _mesa_write_shader_to_file(const struct gl_shader *shader)
 {
-   const char *type;
+   const char *type = "????";
    char filename[100];
    FILE *f;
 
-   if (shader->Type == GL_FRAGMENT_SHADER)
+   switch (shader->Stage) {
+   case MESA_SHADER_FRAGMENT:
       type = "frag";
-   else if (shader->Type == GL_VERTEX_SHADER)
+      break;
+   case MESA_SHADER_VERTEX:
       type = "vert";
-   else
+      break;
+   case MESA_SHADER_GEOMETRY:
       type = "geom";
+      break;
+   }
 
    _mesa_snprintf(filename, sizeof(filename), "shader_%u.%s", shader->Name, type);
    f = fopen(filename, "w");
@@ -1061,7 +1066,7 @@ _mesa_append_uniforms_to_file(const struct gl_shader *shader)
    char filename[100];
    FILE *f;
 
-   if (shader->Type == GL_FRAGMENT_SHADER)
+   if (shader->Stage == MESA_SHADER_FRAGMENT)
       type = "frag";
    else
       type = "vert";

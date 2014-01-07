@@ -512,7 +512,7 @@ do_dead_builtin_varyings(struct gl_context *ctx,
                          tfeedback_decl *tfeedback_decls)
 {
    /* Lower the gl_FragData array to separate variables. */
-   if (consumer && consumer->Type == GL_FRAGMENT_SHADER) {
+   if (consumer && consumer->Stage == MESA_SHADER_FRAGMENT) {
       lower_fragdata_array(consumer->ir);
    }
 
@@ -574,7 +574,7 @@ do_dead_builtin_varyings(struct gl_context *ctx,
     * This doesn't prevent elimination of the gl_TexCoord elements which
     * are not read by the fragment shader. We want to eliminate those anyway.
     */
-   if (consumer->Type == GL_FRAGMENT_SHADER) {
+   if (consumer->Stage == MESA_SHADER_FRAGMENT) {
       producer_info.texcoord_usage = (1 << MAX_TEXTURE_COORD_UNITS) - 1;
    }
 

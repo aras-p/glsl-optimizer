@@ -313,7 +313,7 @@ validate_interstage_inout_blocks(struct gl_shader_program *prog,
                                  const gl_shader *consumer)
 {
    interface_block_definitions definitions;
-   const bool extra_array_level = consumer->Type == GL_GEOMETRY_SHADER;
+   const bool extra_array_level = consumer->Stage == MESA_SHADER_GEOMETRY;
 
    /* Add input interfaces from the consumer to the symbol table. */
    foreach_list(node, consumer->ir) {
