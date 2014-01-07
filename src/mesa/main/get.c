@@ -769,13 +769,36 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
          /* Note: we only check the 0th color attachment. */
          const struct gl_renderbuffer *rb =
             ctx->DrawBuffer->_ColorDrawBuffers[0];
-         const GLboolean is_signed =
-            rb ? _mesa_is_format_signed(rb->Format) : GL_FALSE;
-         /* At this time, all color channels have same signedness */
-         v->value_int_4[0] =
-         v->value_int_4[1] =
-         v->value_int_4[2] =
-         v->value_int_4[3] = is_signed;
+         if (rb && _mesa_is_format_signed(rb->Format)) {
+            /* Issue 17 of GL_EXT_packed_float:  If a component (such as
+             * alpha) has zero bits, the component should not be considered
+             * signed and so the bit for the respective component should be
+             * zeroed.
+             */
+            GLint r_bits =
+               _mesa_get_format_bits(rb->Format, GL_RED_BITS);
+            GLint g_bits =
+               _mesa_get_format_bits(rb->Format, GL_GREEN_BITS);
+            GLint b_bits =
+               _mesa_get_format_bits(rb->Format, GL_BLUE_BITS);
+            GLint a_bits =
+               _mesa_get_format_bits(rb->Format, GL_ALPHA_BITS);
+            GLint l_bits =
+               _mesa_get_format_bits(rb->Format, GL_TEXTURE_LUMINANCE_SIZE);
+            GLint i_bits =
+               _mesa_get_format_bits(rb->Format, GL_TEXTURE_INTENSITY_SIZE);
+
+            v->value_int_4[0] = r_bits + l_bits + i_bits > 0;
+            v->value_int_4[1] = g_bits + l_bits + i_bits > 0;
+            v->value_int_4[2] = b_bits + l_bits + i_bits > 0;
+            v->value_int_4[3] = a_bits + i_bits > 0;
+         }
+         else {
+            v->value_int_4[0] =
+            v->value_int_4[1] =
+            v->value_int_4[2] =
+            v->value_int_4[3] = 0;
+         }
       }
       break;
 
