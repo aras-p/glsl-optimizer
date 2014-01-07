@@ -397,10 +397,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_fragment_program_shadow = GL_TRUE;
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
    ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
-   /* XXX re-enable when GLSL compiler again supports geometry shaders */
-#if 0
-   ctx->Extensions.ARB_geometry_shader4 = GL_TRUE;
-#endif
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
    ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
