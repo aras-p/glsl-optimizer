@@ -2098,7 +2098,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    unsigned prev;
 
-   for (prev = 0; prev < MESA_SHADER_STAGES; prev++) {
+   for (prev = 0; prev <= MESA_SHADER_FRAGMENT; prev++) {
       if (prog->_LinkedShaders[prev] != NULL)
          break;
    }
@@ -2106,7 +2106,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    /* Validate the inputs of each stage with the output of the preceding
     * stage.
     */
-   for (unsigned i = prev + 1; i < MESA_SHADER_STAGES; i++) {
+   for (unsigned i = prev + 1; i <= MESA_SHADER_FRAGMENT; i++) {
       if (prog->_LinkedShaders[i] == NULL)
          continue;
 
@@ -2201,7 +2201,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 
    unsigned first;
-   for (first = 0; first < MESA_SHADER_STAGES; first++) {
+   for (first = 0; first <= MESA_SHADER_FRAGMENT; first++) {
       if (prog->_LinkedShaders[first] != NULL)
 	 break;
    }
@@ -2233,7 +2233,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
     * eliminated if they are (transitively) not used in a later stage.
     */
    int last, next;
-   for (last = MESA_SHADER_STAGES-1; last >= 0; last--) {
+   for (last = MESA_SHADER_FRAGMENT; last >= 0; last--) {
       if (prog->_LinkedShaders[last] != NULL)
          break;
    }
