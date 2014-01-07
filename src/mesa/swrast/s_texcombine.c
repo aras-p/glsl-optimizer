@@ -602,6 +602,14 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
    if (!swrast->TexelBuffer) {
 #ifdef _OPENMP
       const GLint maxThreads = omp_get_max_threads();
+
+      /* TexelBuffer memory allocation needs to be done in a critical section
+       * as this code runs in a parallel loop.
+       * When entering the section, first check if TexelBuffer has been
+       * initialized already by another thread while this thread was waiting.
+       */
+      #pragma omp critical
+      if (!swrast->TexelBuffer) {
 #else
       const GLint maxThreads = 1;
 #endif
@@ -613,6 +621,10 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
       swrast->TexelBuffer =
 	 malloc(ctx->Const.FragmentProgram.MaxTextureImageUnits * maxThreads *
 			    SWRAST_MAX_WIDTH * 4 * sizeof(GLfloat));
+#ifdef _OPENMP
+      } /* critical section */
+#endif
+
       if (!swrast->TexelBuffer) {
 	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture_combine");
 	 return;
