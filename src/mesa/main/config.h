@@ -137,6 +137,9 @@
 #define MAX_VIEWPORT_WIDTH 16384
 #define MAX_VIEWPORT_HEIGHT 16384
 
+/** Maximun number of viewports supported with ARB_viewport_array */
+#define MAX_VIEWPORTS 16
+
 /** Maxmimum size for CVA.  May be overridden by the drivers.  */
 #define MAX_ARRAY_LOCK_SIZE 3000
 
