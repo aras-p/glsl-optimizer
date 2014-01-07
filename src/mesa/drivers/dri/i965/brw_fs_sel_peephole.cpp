@@ -169,6 +169,12 @@ fs_visitor::opt_peephole_sel()
             break;
          }
 
+         /* Check that source types for mov operations match. */
+         if (then_mov[i]->src[0].type != else_mov[i]->src[0].type) {
+            movs = i;
+            break;
+         }
+
          if (!then_mov[i]->src[0].equals(else_mov[i]->src[0])) {
             /* Only the last source register can be a constant, so if the MOV
              * in the "then" clause uses a constant, we need to put it in a
