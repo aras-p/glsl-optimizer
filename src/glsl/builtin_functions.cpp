@@ -3936,7 +3936,7 @@ builtin_builder::_fma(const glsl_type *type)
    ir_variable *c = in_var(type, "c");
    MAKE_SIG(type, gpu_shader5, 3, a, b, c);
 
-   body.emit(ret(fma(a, b, c)));
+   body.emit(ret(ir_builder::fma(a, b, c)));
 
    return sig;
 }
