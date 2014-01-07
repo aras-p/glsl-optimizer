@@ -134,7 +134,7 @@ static void r600_render_condition(struct pipe_context *ctx,
 	}
 }
 
-void r600_init_query_functions(struct si_context *rctx)
+void si_init_query_functions(struct si_context *rctx)
 {
 	rctx->b.b.create_query = r600_create_query;
 	rctx->b.b.destroy_query = r600_destroy_query;

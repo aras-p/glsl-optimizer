@@ -28,9 +28,9 @@
 #include "si_pipe.h"
 
 
-void r600_translate_index_buffer(struct si_context *r600,
-				 struct pipe_index_buffer *ib,
-				 unsigned count)
+void si_translate_index_buffer(struct si_context *r600,
+			       struct pipe_index_buffer *ib,
+			       unsigned count)
 {
 	struct pipe_resource *out_buffer = NULL;
 	unsigned out_offset;

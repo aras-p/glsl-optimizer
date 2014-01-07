@@ -169,7 +169,7 @@ void si_need_cs_space(struct si_context *ctx, unsigned num_dw,
 
 	/* Flush if there's not enough space. */
 	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {
-		radeonsi_flush(&ctx->b.b, NULL, RADEON_FLUSH_ASYNC);
+		si_flush(&ctx->b.b, NULL, RADEON_FLUSH_ASYNC);
 	}
 }
 

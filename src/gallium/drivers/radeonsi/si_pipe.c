@@ -54,8 +54,8 @@
 /*
  * pipe_context
  */
-void radeonsi_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
-		    unsigned flags)
+void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
+	      unsigned flags)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 	struct pipe_query *render_cond = NULL;
@@ -86,13 +86,13 @@ static void r600_flush_from_st(struct pipe_context *ctx,
 			       struct pipe_fence_handle **fence,
                                unsigned flags)
 {
-	radeonsi_flush(ctx, fence,
-                       flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0);
+	si_flush(ctx, fence,
+		 flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0);
 }
 
 static void r600_flush_from_winsys(void *ctx, unsigned flags)
 {
-	radeonsi_flush((struct pipe_context*)ctx, NULL, flags);
+	si_flush((struct pipe_context*)ctx, NULL, flags);
 }
 
 static void r600_destroy_context(struct pipe_context *context)
@@ -144,13 +144,13 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->screen = rscreen;
 
 	si_init_blit_functions(rctx);
-	r600_init_query_functions(rctx);
-	r600_init_context_resource_functions(rctx);
+	si_init_query_functions(rctx);
+	si_init_context_resource_functions(rctx);
 	si_init_compute_functions(rctx);
 
 	if (rscreen->b.info.has_uvd) {
-		rctx->b.b.create_video_codec = radeonsi_uvd_create_decoder;
-		rctx->b.b.create_video_buffer = radeonsi_video_buffer_create;
+		rctx->b.b.create_video_codec = si_uvd_create_decoder;
+		rctx->b.b.create_video_buffer = si_video_buffer_create;
 	} else {
 		rctx->b.b.create_video_codec = vl_create_decoder;
 		rctx->b.b.create_video_buffer = vl_video_buffer_create;
@@ -229,7 +229,7 @@ static const char* r600_get_vendor(struct pipe_screen* pscreen)
 	return "X.Org";
 }
 
-const char *r600_get_llvm_processor_name(enum radeon_family family)
+const char *si_get_llvm_processor_name(enum radeon_family family)
 {
 	switch (family) {
 		case CHIP_TAHITI: return "tahiti";
@@ -514,7 +514,7 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 	//TODO: select these params by asic
 	switch (param) {
 	case PIPE_COMPUTE_CAP_IR_TARGET: {
-		const char *gpu = r600_get_llvm_processor_name(rscreen->b.family);
+		const char *gpu = si_get_llvm_processor_name(rscreen->b.family);
 	        if (ret) {
 			sprintf(ret, "%s-r600--", gpu);
 		}

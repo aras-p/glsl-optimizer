@@ -434,7 +434,7 @@ static void si_update_derived_state(struct si_context *rctx)
 				si_flush_depth_textures(rctx, &rctx->samplers[i]);
 			}
 			if (rctx->samplers[i].compressed_colortex_mask) {
-				r600_decompress_color_textures(rctx, &rctx->samplers[i]);
+				si_decompress_color_textures(rctx, &rctx->samplers[i]);
 			}
 		}
 	}
@@ -717,10 +717,10 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		ib.offset = rctx->index_buffer.offset + info->start * ib.index_size;
 
 		/* Translate or upload, if needed. */
-		r600_translate_index_buffer(rctx, &ib, info->count);
+		si_translate_index_buffer(rctx, &ib, info->count);
 
 		if (ib.user_buffer && !ib.buffer) {
-			r600_upload_index_buffer(rctx, &ib, info->count);
+			si_upload_index_buffer(rctx, &ib, info->count);
 		}
 	}
 

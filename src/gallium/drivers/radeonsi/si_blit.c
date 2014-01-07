@@ -108,12 +108,12 @@ static unsigned u_max_sample(struct pipe_resource *r)
 	return r->nr_samples ? r->nr_samples - 1 : 0;
 }
 
-static void r600_blit_decompress_depth(struct pipe_context *ctx,
-				       struct r600_texture *texture,
-				       struct r600_texture *staging,
-				       unsigned first_level, unsigned last_level,
-				       unsigned first_layer, unsigned last_layer,
-				       unsigned first_sample, unsigned last_sample)
+static void si_blit_decompress_depth(struct pipe_context *ctx,
+				     struct r600_texture *texture,
+				     struct r600_texture *staging,
+				     unsigned first_level, unsigned last_level,
+				     unsigned first_layer, unsigned last_layer,
+				     unsigned first_sample, unsigned last_sample)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 	unsigned layer, level, sample, checked_last_layer, max_layer, max_sample;
@@ -299,8 +299,8 @@ static void r600_blit_decompress_color(struct pipe_context *ctx,
 	}
 }
 
-void r600_decompress_color_textures(struct si_context *rctx,
-				    struct si_textures_info *textures)
+void si_decompress_color_textures(struct si_context *rctx,
+				  struct si_textures_info *textures)
 {
 	unsigned i;
 	unsigned mask = textures->compressed_colortex_mask;
@@ -700,5 +700,5 @@ void si_init_blit_functions(struct si_context *rctx)
 	rctx->b.b.resource_copy_region = r600_resource_copy_region;
 	rctx->b.b.blit = si_blit;
 	rctx->b.b.flush_resource = si_flush_resource;
-	rctx->b.blit_decompress_depth = r600_blit_decompress_depth;
+	rctx->b.blit_decompress_depth = si_blit_decompress_depth;
 }

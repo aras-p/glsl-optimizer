@@ -51,8 +51,8 @@
 /**
  * creates an video buffer with an UVD compatible memory layout
  */
-struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe,
-						       const struct pipe_video_buffer *tmpl)
+struct pipe_video_buffer *si_video_buffer_create(struct pipe_context *pipe,
+						 const struct pipe_video_buffer *tmpl)
 {
 	struct si_context *ctx = (struct si_context *)pipe;
 	struct r600_texture *resources[VL_NUM_COMPONENTS] = {};
@@ -146,8 +146,8 @@ static struct radeon_winsys_cs_handle* radeonsi_uvd_set_dtb(struct ruvd_msg *msg
 /**
  * creates an UVD compatible decoder
  */
-struct pipe_video_codec *radeonsi_uvd_create_decoder(struct pipe_context *context,
-						     const struct pipe_video_codec *templ)
+struct pipe_video_codec *si_uvd_create_decoder(struct pipe_context *context,
+					       const struct pipe_video_codec *templ)
 {
 	return ruvd_create_decoder(context, templ, radeonsi_uvd_set_dtb);
 }

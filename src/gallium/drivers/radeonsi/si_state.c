@@ -610,8 +610,8 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 	}
 	/* Divide by two, because 0.5 = 1 pixel. */
 	si_pm4_set_reg(pm4, R_028A04_PA_SU_POINT_MINMAX,
-			S_028A04_MIN_SIZE(r600_pack_float_12p4(psize_min/2)) |
-			S_028A04_MAX_SIZE(r600_pack_float_12p4(psize_max/2)));
+			S_028A04_MIN_SIZE(si_pack_float_12p4(psize_min/2)) |
+			S_028A04_MAX_SIZE(si_pack_float_12p4(psize_max/2)));
 
 	tmp = (unsigned)state->line_width * 8;
 	si_pm4_set_reg(pm4, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp));

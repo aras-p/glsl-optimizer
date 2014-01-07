@@ -179,43 +179,43 @@ struct si_context {
 void si_init_blit_functions(struct si_context *rctx);
 void si_flush_depth_textures(struct si_context *rctx,
 			     struct si_textures_info *textures);
-void r600_decompress_color_textures(struct si_context *rctx,
-				    struct si_textures_info *textures);
+void si_decompress_color_textures(struct si_context *rctx,
+				  struct si_textures_info *textures);
 
 /* si_buffer.c */
-void r600_upload_index_buffer(struct si_context *rctx,
-			      struct pipe_index_buffer *ib, unsigned count);
+void si_upload_index_buffer(struct si_context *rctx,
+			    struct pipe_index_buffer *ib, unsigned count);
 
 
 /* si_pipe.c */
-void radeonsi_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
-		    unsigned flags);
-const char *r600_get_llvm_processor_name(enum radeon_family family);
+void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
+	       unsigned flags);
+const char *si_get_llvm_processor_name(enum radeon_family family);
 
 /* si_query.c */
-void r600_init_query_functions(struct si_context *rctx);
+void si_init_query_functions(struct si_context *rctx);
 
 /* si_resource.c */
-void r600_init_context_resource_functions(struct si_context *r600);
+void si_init_context_resource_functions(struct si_context *r600);
 
 /* si_translate.c */
-void r600_translate_index_buffer(struct si_context *r600,
-				 struct pipe_index_buffer *ib,
-				 unsigned count);
+void si_translate_index_buffer(struct si_context *r600,
+			       struct pipe_index_buffer *ib,
+			       unsigned count);
 
 #if R600_TRACE_CS
-void r600_trace_emit(struct si_context *rctx);
+void si_trace_emit(struct si_context *rctx);
 #endif
 
 /* si_compute.c */
 void si_init_compute_functions(struct si_context *rctx);
 
 /* si_uvd.c */
-struct pipe_video_codec *radeonsi_uvd_create_decoder(struct pipe_context *context,
-                                                     const struct pipe_video_codec *templ);
+struct pipe_video_codec *si_uvd_create_decoder(struct pipe_context *context,
+					       const struct pipe_video_codec *templ);
 
-struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe,
-						       const struct pipe_video_buffer *tmpl);
+struct pipe_video_buffer *si_video_buffer_create(struct pipe_context *pipe,
+						 const struct pipe_video_buffer *tmpl);
 
 /*
  * common helpers
@@ -244,7 +244,7 @@ static INLINE unsigned si_map_swizzle(unsigned swizzle)
 	}
 }
 
-static inline unsigned r600_tex_aniso_filter(unsigned filter)
+static inline unsigned si_tex_aniso_filter(unsigned filter)
 {
 	if (filter <= 1)   return 0;
 	if (filter <= 2)   return 1;
@@ -254,7 +254,7 @@ static inline unsigned r600_tex_aniso_filter(unsigned filter)
 }
 
 /* 12.4 fixed-point */
-static INLINE unsigned r600_pack_float_12p4(float x)
+static INLINE unsigned si_pack_float_12p4(float x)
 {
 	return x <= 0    ? 0 :
 	       x >= 4096 ? 0xffff : x * 16;
