@@ -26,28 +26,28 @@
 #include "si_pipe.h"
 #include "si_state.h"
 
-enum r600_blitter_op /* bitmask */
+enum si_blitter_op /* bitmask */
 {
-	R600_SAVE_TEXTURES      = 1,
-	R600_SAVE_FRAMEBUFFER   = 2,
-	R600_DISABLE_RENDER_COND = 4,
+	SI_SAVE_TEXTURES      = 1,
+	SI_SAVE_FRAMEBUFFER   = 2,
+	SI_DISABLE_RENDER_COND = 4,
 
-	R600_CLEAR         = 0,
+	SI_CLEAR         = 0,
 
-	R600_CLEAR_SURFACE = R600_SAVE_FRAMEBUFFER,
+	SI_CLEAR_SURFACE = SI_SAVE_FRAMEBUFFER,
 
-	R600_COPY          = R600_SAVE_FRAMEBUFFER | R600_SAVE_TEXTURES |
-			     R600_DISABLE_RENDER_COND,
+	SI_COPY          = SI_SAVE_FRAMEBUFFER | SI_SAVE_TEXTURES |
+			   SI_DISABLE_RENDER_COND,
 
-	R600_BLIT          = R600_SAVE_FRAMEBUFFER | R600_SAVE_TEXTURES |
-			     R600_DISABLE_RENDER_COND,
+	SI_BLIT          = SI_SAVE_FRAMEBUFFER | SI_SAVE_TEXTURES |
+			   SI_DISABLE_RENDER_COND,
 
-	R600_DECOMPRESS    = R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND,
+	SI_DECOMPRESS    = SI_SAVE_FRAMEBUFFER | SI_DISABLE_RENDER_COND,
 
-	R600_COLOR_RESOLVE = R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND
+	SI_COLOR_RESOLVE = SI_SAVE_FRAMEBUFFER | SI_DISABLE_RENDER_COND
 };
 
-static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op)
+static void si_blitter_begin(struct pipe_context *ctx, enum si_blitter_op op)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 
@@ -67,10 +67,10 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	util_blitter_save_so_targets(rctx->blitter, rctx->b.streamout.num_targets,
 				     (struct pipe_stream_output_target**)rctx->b.streamout.targets);
 
-	if (op & R600_SAVE_FRAMEBUFFER)
+	if (op & SI_SAVE_FRAMEBUFFER)
 		util_blitter_save_framebuffer(rctx->blitter, &rctx->framebuffer);
 
-	if (op & R600_SAVE_TEXTURES) {
+	if (op & SI_SAVE_TEXTURES) {
 		util_blitter_save_fragment_sampler_states(
 			rctx->blitter, rctx->samplers[PIPE_SHADER_FRAGMENT].n_samplers,
 			(void**)rctx->samplers[PIPE_SHADER_FRAGMENT].samplers);
@@ -81,7 +81,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 			rctx->samplers[PIPE_SHADER_FRAGMENT].views.views);
 	}
 
-	if ((op & R600_DISABLE_RENDER_COND) && rctx->current_render_cond) {
+	if ((op & SI_DISABLE_RENDER_COND) && rctx->current_render_cond) {
 		rctx->saved_render_cond = rctx->current_render_cond;
 		rctx->saved_render_cond_cond = rctx->current_render_cond_cond;
 		rctx->saved_render_cond_mode = rctx->current_render_cond_mode;
@@ -90,7 +90,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 
 }
 
-static void r600_blitter_end(struct pipe_context *ctx)
+static void si_blitter_end(struct pipe_context *ctx)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 	if (rctx->saved_render_cond) {
@@ -168,10 +168,10 @@ static void si_blit_decompress_depth(struct pipe_context *ctx,
 				cbsurf = ctx->create_surface(ctx,
 						(struct pipe_resource*)flushed_depth_texture, &surf_tmpl);
 
-				r600_blitter_begin(ctx, R600_DECOMPRESS);
+				si_blitter_begin(ctx, SI_DECOMPRESS);
 				util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, 1 << sample,
 								  custom_dsa[sample], depth);
-				r600_blitter_end(ctx);
+				si_blitter_end(ctx);
 
 				pipe_surface_reference(&zsurf, NULL);
 				pipe_surface_reference(&cbsurf, NULL);
@@ -215,11 +215,11 @@ static void si_blit_decompress_depth_in_place(struct si_context *rctx,
 
 			zsurf = rctx->b.b.create_surface(&rctx->b.b, &texture->resource.b.b, &surf_tmpl);
 
-			r600_blitter_begin(&rctx->b.b, R600_DECOMPRESS);
+			si_blitter_begin(&rctx->b.b, SI_DECOMPRESS);
 			util_blitter_custom_depth_stencil(rctx->blitter, zsurf, NULL, ~0,
 							  rctx->custom_dsa_flush_inplace,
 							  1.0f);
-			r600_blitter_end(&rctx->b.b);
+			si_blitter_end(&rctx->b.b);
 
 			pipe_surface_reference(&zsurf, NULL);
 		}
@@ -254,7 +254,7 @@ void si_flush_depth_textures(struct si_context *rctx,
 	}
 }
 
-static void r600_blit_decompress_color(struct pipe_context *ctx,
+static void si_blit_decompress_color(struct pipe_context *ctx,
 		struct r600_texture *rtex,
 		unsigned first_level, unsigned last_level,
 		unsigned first_layer, unsigned last_layer)
@@ -283,10 +283,10 @@ static void r600_blit_decompress_color(struct pipe_context *ctx,
 			surf_tmpl.u.tex.last_layer = layer;
 			cbsurf = ctx->create_surface(ctx, &rtex->resource.b.b, &surf_tmpl);
 
-			r600_blitter_begin(ctx, R600_DECOMPRESS);
+			si_blitter_begin(ctx, SI_DECOMPRESS);
 			util_blitter_custom_color(rctx->blitter, cbsurf,
 						  rctx->custom_blend_decompress);
-			r600_blitter_end(ctx);
+			si_blitter_end(ctx);
 
 			pipe_surface_reference(&cbsurf, NULL);
 		}
@@ -317,64 +317,64 @@ void si_decompress_color_textures(struct si_context *rctx,
 		tex = (struct r600_texture *)view->texture;
 		assert(tex->cmask.size || tex->fmask.size);
 
-		r600_blit_decompress_color(&rctx->b.b, tex,
-					   view->u.tex.first_level, view->u.tex.last_level,
-					   0, util_max_layer(&tex->resource.b.b, view->u.tex.first_level));
+		si_blit_decompress_color(&rctx->b.b, tex,
+					 view->u.tex.first_level, view->u.tex.last_level,
+					 0, util_max_layer(&tex->resource.b.b, view->u.tex.first_level));
 	}
 }
 
-static void r600_clear(struct pipe_context *ctx, unsigned buffers,
-		       const union pipe_color_union *color,
-		       double depth, unsigned stencil)
+static void si_clear(struct pipe_context *ctx, unsigned buffers,
+		     const union pipe_color_union *color,
+		     double depth, unsigned stencil)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer;
 
-	r600_blitter_begin(ctx, R600_CLEAR);
+	si_blitter_begin(ctx, SI_CLEAR);
 	util_blitter_clear(rctx->blitter, fb->width, fb->height,
 			   util_framebuffer_get_num_layers(fb),
 			   buffers, color, depth, stencil);
-	r600_blitter_end(ctx);
+	si_blitter_end(ctx);
 }
 
-static void r600_clear_render_target(struct pipe_context *ctx,
-				     struct pipe_surface *dst,
-				     const union pipe_color_union *color,
-				     unsigned dstx, unsigned dsty,
-				     unsigned width, unsigned height)
+static void si_clear_render_target(struct pipe_context *ctx,
+				   struct pipe_surface *dst,
+				   const union pipe_color_union *color,
+				   unsigned dstx, unsigned dsty,
+				   unsigned width, unsigned height)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 
-	r600_blitter_begin(ctx, R600_CLEAR_SURFACE);
+	si_blitter_begin(ctx, SI_CLEAR_SURFACE);
 	util_blitter_clear_render_target(rctx->blitter, dst, color,
 					 dstx, dsty, width, height);
-	r600_blitter_end(ctx);
+	si_blitter_end(ctx);
 }
 
-static void r600_clear_depth_stencil(struct pipe_context *ctx,
-				     struct pipe_surface *dst,
-				     unsigned clear_flags,
-				     double depth,
-				     unsigned stencil,
-				     unsigned dstx, unsigned dsty,
-				     unsigned width, unsigned height)
+static void si_clear_depth_stencil(struct pipe_context *ctx,
+				   struct pipe_surface *dst,
+				   unsigned clear_flags,
+				   double depth,
+				   unsigned stencil,
+				   unsigned dstx, unsigned dsty,
+				   unsigned width, unsigned height)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 
-	r600_blitter_begin(ctx, R600_CLEAR_SURFACE);
+	si_blitter_begin(ctx, SI_CLEAR_SURFACE);
 	util_blitter_clear_depth_stencil(rctx->blitter, dst, clear_flags, depth, stencil,
 					 dstx, dsty, width, height);
-	r600_blitter_end(ctx);
+	si_blitter_end(ctx);
 }
 
 /* Helper for decompressing a portion of a color or depth resource before
  * blitting if any decompression is needed.
  * The driver doesn't decompress resources automatically while u_blitter is
  * rendering. */
-static void r600_decompress_subresource(struct pipe_context *ctx,
-					struct pipe_resource *tex,
-					unsigned level,
-					unsigned first_layer, unsigned last_layer)
+static void si_decompress_subresource(struct pipe_context *ctx,
+				      struct pipe_resource *tex,
+				      unsigned level,
+				      unsigned first_layer, unsigned last_layer)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 	struct r600_texture *rtex = (struct r600_texture*)tex;
@@ -384,8 +384,8 @@ static void r600_decompress_subresource(struct pipe_context *ctx,
 						  level, level,
 						  first_layer, last_layer);
 	} else if (rtex->fmask.size || rtex->cmask.size) {
-		r600_blit_decompress_color(ctx, rtex, level, level,
-					   first_layer, last_layer);
+		si_blit_decompress_color(ctx, rtex, level, level,
+					 first_layer, last_layer);
 	}
 }
 
@@ -399,9 +399,9 @@ struct texture_orig_info {
 	unsigned npix0_y;
 };
 
-static void r600_compressed_to_blittable(struct pipe_resource *tex,
-				   unsigned level,
-				   struct texture_orig_info *orig)
+static void si_compressed_to_blittable(struct pipe_resource *tex,
+				       unsigned level,
+				       struct texture_orig_info *orig)
 {
 	struct r600_texture *rtex = (struct r600_texture*)tex;
 	unsigned pixsize = util_format_get_blocksize(rtex->resource.b.b.format);
@@ -448,10 +448,10 @@ static void r600_compressed_to_blittable(struct pipe_resource *tex,
 		rtex->mipmap_shift = level - (rtex->resource.b.b.last_level-2);
 }
 
-static void r600_change_format(struct pipe_resource *tex,
-			       unsigned level,
-			       struct texture_orig_info *orig,
-			       enum pipe_format format)
+static void si_change_format(struct pipe_resource *tex,
+			     unsigned level,
+			     struct texture_orig_info *orig,
+			     enum pipe_format format)
 {
 	struct r600_texture *rtex = (struct r600_texture*)tex;
 
@@ -466,9 +466,9 @@ static void r600_change_format(struct pipe_resource *tex,
 	tex->format = format;
 }
 
-static void r600_reset_blittable_to_orig(struct pipe_resource *tex,
-					 unsigned level,
-					 struct texture_orig_info *orig)
+static void si_reset_blittable_to_orig(struct pipe_resource *tex,
+				       unsigned level,
+				       struct texture_orig_info *orig)
 {
 	struct r600_texture *rtex = (struct r600_texture*)tex;
 
@@ -482,13 +482,13 @@ static void r600_reset_blittable_to_orig(struct pipe_resource *tex,
 	rtex->mipmap_shift = 0;
 }
 
-static void r600_resource_copy_region(struct pipe_context *ctx,
-				      struct pipe_resource *dst,
-				      unsigned dst_level,
-				      unsigned dstx, unsigned dsty, unsigned dstz,
-				      struct pipe_resource *src,
-				      unsigned src_level,
-				      const struct pipe_box *src_box)
+static void si_resource_copy_region(struct pipe_context *ctx,
+				    struct pipe_resource *dst,
+				    unsigned dst_level,
+				    unsigned dstx, unsigned dsty, unsigned dstz,
+				    struct pipe_resource *src,
+				    unsigned src_level,
+				    const struct pipe_box *src_box)
 {
 	struct si_context *rctx = (struct si_context *)ctx;
 	struct texture_orig_info orig_info[2];
@@ -506,14 +506,14 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 	/* The driver doesn't decompress resources automatically while
 	 * u_blitter is rendering. */
-	r600_decompress_subresource(ctx, src, src_level,
-				    src_box->z, src_box->z + src_box->depth - 1);
+	si_decompress_subresource(ctx, src, src_level,
+				  src_box->z, src_box->z + src_box->depth - 1);
 
 	restore_orig[0] = restore_orig[1] = FALSE;
 
 	if (util_format_is_compressed(src->format) &&
 	    util_format_is_compressed(dst->format)) {
-		r600_compressed_to_blittable(src, src_level, &orig_info[0]);
+		si_compressed_to_blittable(src, src_level, &orig_info[0]);
 		restore_orig[0] = TRUE;
 		sbox.x = util_format_get_nblocksx(orig_info[0].format, src_box->x);
 		sbox.y = util_format_get_nblocksy(orig_info[0].format, src_box->y);
@@ -523,7 +523,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		sbox.depth = src_box->depth;
 		psbox=&sbox;
 
-		r600_compressed_to_blittable(dst, dst_level, &orig_info[1]);
+		si_compressed_to_blittable(dst, dst_level, &orig_info[1]);
 		restore_orig[1] = TRUE;
 		/* translate the dst box as well */
 		dstx = util_format_get_nblocksx(orig_info[1].format, dstx);
@@ -533,34 +533,34 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 		switch (blocksize) {
 		case 1:
-			r600_change_format(src, src_level, &orig_info[0],
-					   PIPE_FORMAT_R8_UNORM);
-			r600_change_format(dst, dst_level, &orig_info[1],
-					   PIPE_FORMAT_R8_UNORM);
+			si_change_format(src, src_level, &orig_info[0],
+					 PIPE_FORMAT_R8_UNORM);
+			si_change_format(dst, dst_level, &orig_info[1],
+					 PIPE_FORMAT_R8_UNORM);
 			break;
 		case 2:
-			r600_change_format(src, src_level, &orig_info[0],
-					   PIPE_FORMAT_R8G8_UNORM);
-			r600_change_format(dst, dst_level, &orig_info[1],
-					   PIPE_FORMAT_R8G8_UNORM);
+			si_change_format(src, src_level, &orig_info[0],
+					 PIPE_FORMAT_R8G8_UNORM);
+			si_change_format(dst, dst_level, &orig_info[1],
+					 PIPE_FORMAT_R8G8_UNORM);
 			break;
 		case 4:
-			r600_change_format(src, src_level, &orig_info[0],
-					   PIPE_FORMAT_R8G8B8A8_UNORM);
-			r600_change_format(dst, dst_level, &orig_info[1],
-					   PIPE_FORMAT_R8G8B8A8_UNORM);
+			si_change_format(src, src_level, &orig_info[0],
+					 PIPE_FORMAT_R8G8B8A8_UNORM);
+			si_change_format(dst, dst_level, &orig_info[1],
+					 PIPE_FORMAT_R8G8B8A8_UNORM);
 			break;
 		case 8:
-			r600_change_format(src, src_level, &orig_info[0],
-					   PIPE_FORMAT_R16G16B16A16_UINT);
-			r600_change_format(dst, dst_level, &orig_info[1],
-					   PIPE_FORMAT_R16G16B16A16_UINT);
+			si_change_format(src, src_level, &orig_info[0],
+					 PIPE_FORMAT_R16G16B16A16_UINT);
+			si_change_format(dst, dst_level, &orig_info[1],
+					 PIPE_FORMAT_R16G16B16A16_UINT);
 			break;
 		case 16:
-			r600_change_format(src, src_level, &orig_info[0],
-					   PIPE_FORMAT_R32G32B32A32_UINT);
-			r600_change_format(dst, dst_level, &orig_info[1],
-					   PIPE_FORMAT_R32G32B32A32_UINT);
+			si_change_format(src, src_level, &orig_info[0],
+					 PIPE_FORMAT_R32G32B32A32_UINT);
+			si_change_format(dst, dst_level, &orig_info[1],
+					 PIPE_FORMAT_R32G32B32A32_UINT);
 			break;
 		default:
 			fprintf(stderr, "Unhandled format %s with blocksize %u\n",
@@ -571,16 +571,16 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		restore_orig[1] = TRUE;
 	}
 
-	r600_blitter_begin(ctx, R600_COPY);
+	si_blitter_begin(ctx, SI_COPY);
 	util_blitter_copy_texture(rctx->blitter, dst, dst_level, dstx, dsty, dstz,
 				  src, src_level, psbox);
-	r600_blitter_end(ctx);
+	si_blitter_end(ctx);
 
 	if (restore_orig[0])
-		r600_reset_blittable_to_orig(src, src_level, &orig_info[0]);
+		si_reset_blittable_to_orig(src, src_level, &orig_info[0]);
 
 	if (restore_orig[1])
-		r600_reset_blittable_to_orig(dst, dst_level, &orig_info[1]);
+		si_reset_blittable_to_orig(dst, dst_level, &orig_info[1]);
 }
 
 /* For MSAA integer resolving to work, we change the format to NORM using this function. */
@@ -652,14 +652,14 @@ static bool do_hardware_msaa_resolve(struct pipe_context *ctx,
 	    info->src.box.depth == 1 &&
 	    dst->surface.level[info->dst.level].mode >= RADEON_SURF_MODE_1D &&
 	    !(dst->surface.flags & RADEON_SURF_SCANOUT)) {
-		r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
+		si_blitter_begin(ctx, SI_COLOR_RESOLVE);
 		util_blitter_custom_resolve_color(rctx->blitter,
 						  info->dst.resource, info->dst.level,
 						  info->dst.box.z,
 						  info->src.resource, info->src.box.z,
 						  sample_mask, rctx->custom_blend_resolve,
 						  format);
-		r600_blitter_end(ctx);
+		si_blitter_end(ctx);
 		return true;
 	}
 	return false;
@@ -678,13 +678,13 @@ static void si_blit(struct pipe_context *ctx,
 
 	/* The driver doesn't decompress resources automatically while
 	 * u_blitter is rendering. */
-	r600_decompress_subresource(ctx, info->src.resource, info->src.level,
-				    info->src.box.z,
-				    info->src.box.z + info->src.box.depth - 1);
+	si_decompress_subresource(ctx, info->src.resource, info->src.level,
+				  info->src.box.z,
+				  info->src.box.z + info->src.box.depth - 1);
 
-	r600_blitter_begin(ctx, R600_BLIT);
+	si_blitter_begin(ctx, SI_BLIT);
 	util_blitter_blit(rctx->blitter, info);
-	r600_blitter_end(ctx);
+	si_blitter_end(ctx);
 }
 
 static void si_flush_resource(struct pipe_context *ctx,
@@ -694,10 +694,10 @@ static void si_flush_resource(struct pipe_context *ctx,
 
 void si_init_blit_functions(struct si_context *rctx)
 {
-	rctx->b.b.clear = r600_clear;
-	rctx->b.b.clear_render_target = r600_clear_render_target;
-	rctx->b.b.clear_depth_stencil = r600_clear_depth_stencil;
-	rctx->b.b.resource_copy_region = r600_resource_copy_region;
+	rctx->b.b.clear = si_clear;
+	rctx->b.b.clear_render_target = si_clear_render_target;
+	rctx->b.b.clear_depth_stencil = si_clear_depth_stencil;
+	rctx->b.b.resource_copy_region = si_resource_copy_region;
 	rctx->b.b.blit = si_blit;
 	rctx->b.b.flush_resource = si_flush_resource;
 	rctx->b.blit_decompress_depth = si_blit_decompress_depth;
