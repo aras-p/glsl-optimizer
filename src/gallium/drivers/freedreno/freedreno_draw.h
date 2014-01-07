@@ -38,19 +38,21 @@
 
 struct fd_ringbuffer;
 
-void fd_draw_emit(struct fd_context *ctx, const struct pipe_draw_info *info);
+void fd_draw_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
+		enum pc_di_vis_cull_mode vismode,
+		const struct pipe_draw_info *info);
 
 void fd_draw_init(struct pipe_context *pctx);
 
 static inline void
-fd_draw(struct fd_context *ctx, enum pc_di_primtype primtype,
+fd_draw(struct fd_context *ctx, struct fd_ringbuffer *ring,
+		enum pc_di_primtype primtype,
+		enum pc_di_vis_cull_mode vismode,
 		enum pc_di_src_sel src_sel, uint32_t count,
 		enum pc_di_index_size idx_type,
 		uint32_t idx_size, uint32_t idx_offset,
 		struct fd_bo *idx_bo)
 {
-	struct fd_ringbuffer *ring = ctx->ring;
-
 	/* for debug after a lock up, write a unique counter value
 	 * to scratch7 for each draw, to make it easier to match up
 	 * register dumps to cmdstream.  The combination of IB
@@ -64,7 +66,7 @@ fd_draw(struct fd_context *ctx, enum pc_di_primtype primtype,
 		OUT_PKT3(ring, CP_DRAW_INDX, 3);
 		OUT_RING(ring, 0x00000000);
 		OUT_RING(ring, DRAW(1, DI_SRC_SEL_AUTO_INDEX,
-				INDEX_SIZE_IGN, IGNORE_VISIBILITY));
+				INDEX_SIZE_IGN, USE_VISIBILITY));
 		OUT_RING(ring, 0);             /* NumIndices */
 
 		/* ugg, hard-code register offset to avoid pulling in the
@@ -76,8 +78,15 @@ fd_draw(struct fd_context *ctx, enum pc_di_primtype primtype,
 
 	OUT_PKT3(ring, CP_DRAW_INDX, idx_bo ? 5 : 3);
 	OUT_RING(ring, 0x00000000);        /* viz query info. */
-	OUT_RING(ring, DRAW(primtype, src_sel,
-			idx_type, IGNORE_VISIBILITY));
+	if (vismode == USE_VISIBILITY) {
+		/* leave vis mode blank for now, it will be patched up when
+		 * we know if we are binning or not
+		 */
+		OUT_RINGP(ring, DRAW(primtype, src_sel, idx_type, 0),
+				&ctx->draw_patches);
+	} else {
+		OUT_RING(ring, DRAW(primtype, src_sel, idx_type, vismode));
+	}
 	OUT_RING(ring, count);             /* NumIndices */
 	if (idx_bo) {
 		OUT_RELOC(ring, idx_bo, idx_offset, 0, 0);

@@ -34,15 +34,10 @@
 #include "freedreno_gmem.h"
 #include "freedreno_util.h"
 
-static void
-fd_context_next_rb(struct pipe_context *pctx)
+static struct fd_ringbuffer *next_rb(struct fd_context *ctx)
 {
-	struct fd_context *ctx = fd_context(pctx);
 	struct fd_ringbuffer *ring;
 	uint32_t ts;
-
-	fd_ringmarker_del(ctx->draw_start);
-	fd_ringmarker_del(ctx->draw_end);
 
 	/* grab next ringbuffer: */
 	ring = ctx->rings[(ctx->rings_idx++) % ARRAY_SIZE(ctx->rings)];
@@ -56,10 +51,36 @@ fd_context_next_rb(struct pipe_context *pctx)
 
 	fd_ringbuffer_reset(ring);
 
+	return ring;
+}
+
+static void
+fd_context_next_rb(struct pipe_context *pctx)
+{
+	struct fd_context *ctx = fd_context(pctx);
+	struct fd_ringbuffer *ring;
+
+	fd_ringmarker_del(ctx->draw_start);
+	fd_ringmarker_del(ctx->draw_end);
+
+	ring = next_rb(ctx);
+
 	ctx->draw_start = fd_ringmarker_new(ring);
 	ctx->draw_end = fd_ringmarker_new(ring);
 
+	fd_ringbuffer_set_parent(ring, NULL);
 	ctx->ring = ring;
+
+	fd_ringmarker_del(ctx->binning_start);
+	fd_ringmarker_del(ctx->binning_end);
+
+	ring = next_rb(ctx);
+
+	ctx->binning_start = fd_ringmarker_new(ring);
+	ctx->binning_end = fd_ringmarker_new(ring);
+
+	fd_ringbuffer_set_parent(ring, ctx->ring);
+	ctx->binning_ring = ring;
 }
 
 /* emit accumulated render cmds, needed for example if render target has
@@ -121,6 +142,10 @@ fd_context_destroy(struct pipe_context *pctx)
 
 	DBG("");
 
+	util_slab_destroy(&ctx->transfer_pool);
+
+	util_dynarray_fini(&ctx->draw_patches);
+
 	if (ctx->blitter)
 		util_blitter_destroy(ctx->blitter);
 
@@ -129,7 +154,11 @@ fd_context_destroy(struct pipe_context *pctx)
 
 	fd_ringmarker_del(ctx->draw_start);
 	fd_ringmarker_del(ctx->draw_end);
-	fd_ringbuffer_del(ctx->ring);
+	fd_ringmarker_del(ctx->binning_start);
+	fd_ringmarker_del(ctx->binning_end);
+
+	for (i = 0; i < ARRAY_SIZE(ctx->rings); i++)
+		fd_ringbuffer_del(ctx->rings[i]);
 
 	for (i = 0; i < ARRAY_SIZE(ctx->pipe); i++) {
 		struct fd_vsc_pipe *pipe = &ctx->pipe[i];
@@ -175,6 +204,8 @@ fd_context_init(struct fd_context *ctx, struct pipe_screen *pscreen,
 
 	fd_context_next_rb(pctx);
 	fd_reset_rmw_state(ctx);
+
+	util_dynarray_init(&ctx->draw_patches);
 
 	util_slab_create(&ctx->transfer_pool, sizeof(struct pipe_transfer),
 			16, UTIL_SLAB_SINGLETHREADED);

@@ -85,7 +85,8 @@ calculate_tiles(struct fd_context *ctx)
 	uint32_t bin_w, bin_h;
 	uint32_t max_width = bin_width(ctx);
 	uint32_t cpp = 4;
-	uint32_t i, j, t, p, n, xoff, yoff;
+	uint32_t i, j, t, xoff, yoff;
+	uint32_t tpp_x, tpp_y;
 	bool has_zs = !!(ctx->resolve & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL));
 
 	if (pfb->cbufs[0])
@@ -145,19 +146,64 @@ calculate_tiles(struct fd_context *ctx)
 	gmem->width = width;
 	gmem->height = height;
 
-	/* Assign tiles and pipes:
-	 * NOTE we currently take a rather simplistic approach of
-	 * mapping rows of tiles to a pipe.  At some point it might
-	 * be worth playing with different strategies and seeing if
-	 * that makes much impact on performance.
+	/*
+	 * Assign tiles and pipes:
+	 *
+	 * At some point it might be worth playing with different
+	 * strategies and seeing if that makes much impact on
+	 * performance.
 	 */
-	t = p = n = 0;
+
+#define div_round_up(v, a)  (((v) + (a) - 1) / (a))
+	/* figure out number of tiles per pipe: */
+	tpp_x = tpp_y = 1;
+	while (div_round_up(nbins_y, tpp_y) > 8)
+		tpp_y += 2;
+	while ((div_round_up(nbins_y, tpp_y) *
+			div_round_up(nbins_x, tpp_x)) > 8)
+		tpp_x += 1;
+
+	/* configure pipes: */
+	xoff = yoff = 0;
+	for (i = 0; i < ARRAY_SIZE(ctx->pipe); i++) {
+		struct fd_vsc_pipe *pipe = &ctx->pipe[i];
+
+		if (xoff >= nbins_x) {
+			xoff = 0;
+			yoff += tpp_y;
+		}
+
+		if (yoff >= nbins_y) {
+			break;
+		}
+
+		pipe->x = xoff;
+		pipe->y = yoff;
+		pipe->w = MIN2(tpp_x, nbins_x - xoff);
+		pipe->h = MIN2(tpp_y, nbins_y - yoff);
+
+		xoff += tpp_x;
+	}
+
+	for (; i < ARRAY_SIZE(ctx->pipe); i++) {
+		struct fd_vsc_pipe *pipe = &ctx->pipe[i];
+		pipe->x = pipe->y = pipe->w = pipe->h = 0;
+	}
+
+#if 0 /* debug */
+	printf("%dx%d ... tpp=%dx%d\n", nbins_x, nbins_y, tpp_x, tpp_y);
+	for (i = 0; i < 8; i++) {
+		struct fd_vsc_pipe *pipe = &ctx->pipe[i];
+		printf("pipe[%d]: %ux%u @ %u,%u\n", i,
+				pipe->w, pipe->h, pipe->x, pipe->y);
+	}
+#endif
+
+	/* configure tiles: */
+	t = 0;
 	yoff = miny;
 	for (i = 0; i < nbins_y; i++) {
-		struct fd_vsc_pipe *pipe = &ctx->pipe[p];
 		uint32_t bw, bh;
-
-		assert(p < ARRAY_SIZE(ctx->pipe));
 
 		xoff = minx;
 
@@ -166,13 +212,20 @@ calculate_tiles(struct fd_context *ctx)
 
 		for (j = 0; j < nbins_x; j++) {
 			struct fd_tile *tile = &ctx->tile[t];
+			uint32_t n, p;
 
 			assert(t < ARRAY_SIZE(ctx->tile));
+
+			/* pipe number: */
+			p = ((i / tpp_y) * div_round_up(nbins_x, tpp_x)) + (j / tpp_x);
+
+			/* slot number: */
+			n = ((i % tpp_y) * tpp_x) + (j % tpp_x);
 
 			/* clip bin width: */
 			bw = MIN2(bin_w, minx + width - xoff);
 
-			tile->n = n++;
+			tile->n = n;
 			tile->p = p;
 			tile->bin_w = bw;
 			tile->bin_h = bh;
@@ -184,22 +237,19 @@ calculate_tiles(struct fd_context *ctx)
 			xoff += bw;
 		}
 
-		/* one pipe per row: */
-		pipe->x = 0;
-		pipe->y = i;
-		pipe->w = nbins_x;
-		pipe->h = 1;
-
-		p++;
-		n = 0;
-
 		yoff += bh;
 	}
 
-	for (; p < ARRAY_SIZE(ctx->pipe); p++) {
-		struct fd_vsc_pipe *pipe = &ctx->pipe[p];
-		pipe->x = pipe->y = pipe->w = pipe->h = 0;
+#if 0 /* debug */
+	t = 0;
+	for (i = 0; i < nbins_y; i++) {
+		for (j = 0; j < nbins_x; j++) {
+			struct fd_tile *tile = &ctx->tile[t++];
+			printf("|p:%u n:%u|", tile->p, tile->n);
+		}
+		printf("\n");
 	}
+#endif
 }
 
 static void
@@ -259,6 +309,7 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 
 	/* mark the end of the clear/draw cmds before emitting per-tile cmds: */
 	fd_ringmarker_mark(ctx->draw_end);
+	fd_ringmarker_mark(ctx->binning_end);
 
 	if (sysmem) {
 		DBG("rendering sysmem (%s/%s)",
@@ -277,8 +328,9 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 	/* GPU executes starting from tile cmds, which IB back to draw cmds: */
 	fd_ringmarker_flush(ctx->draw_end);
 
-	/* mark start for next draw cmds: */
+	/* mark start for next draw/binning cmds: */
 	fd_ringmarker_mark(ctx->draw_start);
+	fd_ringmarker_mark(ctx->binning_start);
 
 	fd_reset_rmw_state(ctx);
 

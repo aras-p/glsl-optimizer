@@ -43,7 +43,7 @@
 
 
 static void
-emit_vertexbufs(struct fd_context *ctx)
+emit_vertexbufs(struct fd_context *ctx, struct fd_ringbuffer *ring)
 {
 	struct fd_vertex_stateobj *vtx = ctx->vtx;
 	struct fd_vertexbuf_stateobj *vertexbuf = &ctx->vertexbuf;
@@ -63,19 +63,17 @@ emit_vertexbufs(struct fd_context *ctx)
 		bufs[i].format = elem->src_format;
 	}
 
-	fd3_emit_vertex_bufs(ctx->ring, &ctx->prog, bufs, vtx->num_elements);
+	fd3_emit_vertex_bufs(ring, &ctx->prog, bufs, vtx->num_elements);
 }
 
 static void
-fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
+draw_impl(struct fd_context *ctx, const struct pipe_draw_info *info,
+		struct fd_ringbuffer *ring, unsigned dirty, bool binning)
 {
-	struct fd_ringbuffer *ring = ctx->ring;
-	unsigned dirty = ctx->dirty;
-
-	fd3_emit_state(ctx, dirty);
+	fd3_emit_state(ctx, ring, dirty, binning);
 
 	if (dirty & FD_DIRTY_VTXBUF)
-		emit_vertexbufs(ctx);
+		emit_vertexbufs(ctx, ring);
 
 	OUT_PKT0(ring, REG_A3XX_PC_VERTEX_REUSE_BLOCK_CNTL, 1);
 	OUT_RING(ring, 0x0000000b);                  /* PC_VERTEX_REUSE_BLOCK_CNTL */
@@ -90,7 +88,59 @@ fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 	OUT_RING(ring, info->primitive_restart ? /* PC_RESTART_INDEX */
 			info->restart_index : 0xffffffff);
 
-	fd_draw_emit(ctx, info);
+	fd_draw_emit(ctx, ring, binning ? IGNORE_VISIBILITY : USE_VISIBILITY, info);
+}
+
+static void
+fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
+{
+	unsigned dirty = ctx->dirty;
+	draw_impl(ctx, info, ctx->binning_ring,
+			dirty & ~(FD_DIRTY_BLEND), true);
+	draw_impl(ctx, info, ctx->ring, dirty, false);
+}
+
+/* binning pass cmds for a clear:
+ * NOTE: newer blob drivers don't use binning for clear, which is probably
+ * preferable since it is low vtx count.  However that doesn't seem to
+ * actually work for me.  Not sure if it is depending on support for
+ * clear pass (rather than using solid-fill shader), or something else
+ * that newer blob is doing differently.  Once that is figured out, we
+ * can remove fd3_clear_binning().
+ */
+static void
+fd3_clear_binning(struct fd_context *ctx, unsigned dirty)
+{
+	struct fd3_context *fd3_ctx = fd3_context(ctx);
+	struct fd_ringbuffer *ring = ctx->binning_ring;
+
+	fd3_emit_state(ctx, ring, dirty & (FD_DIRTY_VIEWPORT |
+			FD_DIRTY_FRAMEBUFFER | FD_DIRTY_SCISSOR), true);
+
+	fd3_program_emit(ring, &ctx->solid_prog, true);
+
+	fd3_emit_vertex_bufs(ring, &ctx->solid_prog, (struct fd3_vertex_buf[]) {
+			{ .prsc = fd3_ctx->solid_vbuf, .stride = 12, .format = PIPE_FORMAT_R32G32B32_FLOAT },
+		}, 1);
+
+	OUT_PKT0(ring, REG_A3XX_PC_PRIM_VTX_CNTL, 1);
+	OUT_RING(ring, A3XX_PC_PRIM_VTX_CNTL_STRIDE_IN_VPC(0) |
+			A3XX_PC_PRIM_VTX_CNTL_POLYMODE_FRONT_PTYPE(PC_DRAW_TRIANGLES) |
+			A3XX_PC_PRIM_VTX_CNTL_POLYMODE_BACK_PTYPE(PC_DRAW_TRIANGLES) |
+			A3XX_PC_PRIM_VTX_CNTL_PROVOKING_VTX_LAST);
+	OUT_PKT0(ring, REG_A3XX_VFD_INDEX_MIN, 4);
+	OUT_RING(ring, 0);            /* VFD_INDEX_MIN */
+	OUT_RING(ring, 2);            /* VFD_INDEX_MAX */
+	OUT_RING(ring, 0);            /* VFD_INSTANCEID_OFFSET */
+	OUT_RING(ring, 0);            /* VFD_INDEX_OFFSET */
+	OUT_PKT0(ring, REG_A3XX_PC_RESTART_INDEX, 1);
+	OUT_RING(ring, 0xffffffff);   /* PC_RESTART_INDEX */
+
+	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
+	OUT_RING(ring, PERFCOUNTER_STOP);
+
+	fd_draw(ctx, ring, DI_PT_RECTLIST, IGNORE_VISIBILITY,
+			DI_SRC_SEL_AUTO_INDEX, 2, INDEX_SIZE_IGN, 0, 0, NULL);
 }
 
 static void
@@ -99,11 +149,14 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 {
 	struct fd3_context *fd3_ctx = fd3_context(ctx);
 	struct fd_ringbuffer *ring = ctx->ring;
+	unsigned dirty = ctx->dirty;
 	unsigned ce, i;
 
+	fd3_clear_binning(ctx, dirty);
+
 	/* emit generic state now: */
-	fd3_emit_state(ctx, ctx->dirty & (FD_DIRTY_VIEWPORT |
-			FD_DIRTY_FRAMEBUFFER | FD_DIRTY_SCISSOR));
+	fd3_emit_state(ctx, ring, dirty & (FD_DIRTY_VIEWPORT |
+			FD_DIRTY_FRAMEBUFFER | FD_DIRTY_SCISSOR), false);
 
 	OUT_PKT0(ring, REG_A3XX_RB_BLEND_ALPHA, 1);
 	OUT_RING(ring, A3XX_RB_BLEND_ALPHA_UINT(0xff) |
@@ -192,7 +245,7 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	OUT_PKT0(ring, REG_A3XX_GRAS_SU_MODE_CONTROL, 1);
 	OUT_RING(ring, A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH(0));
 
-	fd3_program_emit(ring, &ctx->solid_prog);
+	fd3_program_emit(ring, &ctx->solid_prog, false);
 
 	fd3_emit_vertex_bufs(ring, &ctx->solid_prog, (struct fd3_vertex_buf[]) {
 			{ .prsc = fd3_ctx->solid_vbuf, .stride = 12, .format = PIPE_FORMAT_R32G32B32_FLOAT },
@@ -216,8 +269,8 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
 	OUT_RING(ring, PERFCOUNTER_STOP);
 
-	fd_draw(ctx, DI_PT_RECTLIST, DI_SRC_SEL_AUTO_INDEX, 2,
-			INDEX_SIZE_IGN, 0, 0, NULL);
+	fd_draw(ctx, ring, DI_PT_RECTLIST, USE_VISIBILITY,
+			DI_SRC_SEL_AUTO_INDEX, 2, INDEX_SIZE_IGN, 0, 0, NULL);
 }
 
 void

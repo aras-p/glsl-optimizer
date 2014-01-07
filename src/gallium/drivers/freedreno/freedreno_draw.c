@@ -54,7 +54,9 @@ size2indextype(unsigned index_size)
 
 /* this is same for a2xx/a3xx, so split into helper: */
 void
-fd_draw_emit(struct fd_context *ctx, const struct pipe_draw_info *info)
+fd_draw_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
+		enum pc_di_vis_cull_mode vismode,
+		const struct pipe_draw_info *info)
 {
 	struct pipe_index_buffer *idx = &ctx->indexbuf;
 	struct fd_bo *idx_bo = NULL;
@@ -78,8 +80,8 @@ fd_draw_emit(struct fd_context *ctx, const struct pipe_draw_info *info)
 		src_sel = DI_SRC_SEL_AUTO_INDEX;
 	}
 
-	fd_draw(ctx, ctx->primtypes[info->mode], src_sel, info->count,
-			idx_type, idx_size, idx_offset, idx_bo);
+	fd_draw(ctx, ring, ctx->primtypes[info->mode], vismode, src_sel,
+			info->count, idx_type, idx_size, idx_offset, idx_bo);
 }
 
 static void
@@ -180,6 +182,7 @@ fd_clear(struct pipe_context *pctx, unsigned buffers,
 	ctx->clear(ctx, buffers, color, depth, stencil);
 
 	ctx->dirty |= FD_DIRTY_ZSA |
+			FD_DIRTY_VIEWPORT |
 			FD_DIRTY_RASTERIZER |
 			FD_DIRTY_SAMPLE_MASK |
 			FD_DIRTY_PROG |

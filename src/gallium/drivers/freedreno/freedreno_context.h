@@ -111,7 +111,7 @@ struct fd_context {
 	 */
 	enum {
 		/* align bitmask values w/ PIPE_CLEAR_*.. since that is convenient.. */
-		FD_BUFFER_COLOR   = PIPE_CLEAR_COLOR,
+		FD_BUFFER_COLOR   = PIPE_CLEAR_COLOR0,
 		FD_BUFFER_DEPTH   = PIPE_CLEAR_DEPTH,
 		FD_BUFFER_STENCIL = PIPE_CLEAR_STENCIL,
 		FD_BUFFER_ALL     = FD_BUFFER_COLOR | FD_BUFFER_DEPTH | FD_BUFFER_STENCIL,
@@ -148,8 +148,13 @@ struct fd_context {
 	struct fd_ringbuffer *rings[4];
 	unsigned rings_idx;
 
+	/* normal draw/clear cmds: */
 	struct fd_ringbuffer *ring;
 	struct fd_ringmarker *draw_start, *draw_end;
+
+	/* binning pass draw/clear cmds: */
+	struct fd_ringbuffer *binning_ring;
+	struct fd_ringmarker *binning_start, *binning_end;
 
 	/* Keep track if WAIT_FOR_IDLE is needed for registers we need
 	 * to update via RMW:
@@ -164,6 +169,11 @@ struct fd_context {
 		/* state for RB_RENDER_CONTROL: */
 		uint32_t rbrc_draw;
 	} rmw;
+
+	/* Keep track of DRAW initiators that need to be patched up depending
+	 * on whether we using binning or not:
+	 */
+	struct util_dynarray draw_patches;
 
 	struct pipe_scissor_state scissor;
 

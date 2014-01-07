@@ -337,10 +337,9 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 }
 
 void
-fd3_emit_state(struct fd_context *ctx, uint32_t dirty)
+fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
+		uint32_t dirty, bool binning)
 {
-	struct fd_ringbuffer *ring = ctx->ring;
-
 	emit_marker(ring, 5);
 
 	if (dirty & FD_DIRTY_SAMPLE_MASK) {
@@ -354,7 +353,8 @@ fd3_emit_state(struct fd_context *ctx, uint32_t dirty)
 		struct fd3_zsa_stateobj *zsa = fd3_zsa_stateobj(ctx->zsa);
 		struct pipe_stencil_ref *sr = &ctx->stencil_ref;
 
-		fd3_emit_rbrc_draw_state(ctx, ring, zsa->rb_render_control);
+		if (!binning)
+			fd3_emit_rbrc_draw_state(ctx, ring, zsa->rb_render_control);
 
 		OUT_PKT0(ring, REG_A3XX_RB_ALPHA_REF, 1);
 		OUT_RING(ring, zsa->rb_alpha_ref);
@@ -432,7 +432,10 @@ fd3_emit_state(struct fd_context *ctx, uint32_t dirty)
 	}
 
 	if (dirty & FD_DIRTY_PROG)
-		fd3_program_emit(ring, &ctx->prog);
+		fd3_program_emit(ring, &ctx->prog, binning);
+
+	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
+	OUT_RING(ring, HLSQ_FLUSH);
 
 	if (dirty & (FD_DIRTY_PROG | FD_DIRTY_CONSTBUF)) {
 		struct fd_program_stateobj *prog = &ctx->prog;
@@ -566,11 +569,11 @@ fd3_emit_restore(struct fd_context *ctx)
 	OUT_RING(ring, A3XX_HLSQ_CONST_FSPRESV_RANGE_REG_STARTENTRY(0) |
 			A3XX_HLSQ_CONST_FSPRESV_RANGE_REG_ENDENTRY(0));
 
-	OUT_PKT0(ring, REG_A3XX_UCHE_CACHE_MODE_CONTROL_REG, 1);
-	OUT_RING(ring, 0x00000001);        /* UCHE_CACHE_MODE_CONTROL_REG */
-
-	OUT_PKT0(ring, REG_A3XX_VSC_SIZE_ADDRESS, 1);
-	OUT_RELOC(ring, fd3_ctx->vsc_size_mem, 0, 0, 0); /* VSC_SIZE_ADDRESS */
+	OUT_PKT0(ring, REG_A3XX_UCHE_CACHE_INVALIDATE0_REG, 2);
+	OUT_RING(ring, A3XX_UCHE_CACHE_INVALIDATE0_REG_ADDR(0));
+	OUT_RING(ring, A3XX_UCHE_CACHE_INVALIDATE1_REG_ADDR(0) |
+			A3XX_UCHE_CACHE_INVALIDATE1_REG_OPCODE(INVALIDATE) |
+			A3XX_UCHE_CACHE_INVALIDATE1_REG_ENTIRE_CACHE);
 
 	OUT_PKT0(ring, REG_A3XX_GRAS_CL_CLIP_CNTL, 1);
 	OUT_RING(ring, 0x00000000);                  /* GRAS_CL_CLIP_CNTL */
@@ -603,6 +606,9 @@ fd3_emit_restore(struct fd_context *ctx)
 		OUT_RING(ring, 0x00000000);    /* GRAS_CL_USER_PLANE[i].Z */
 		OUT_RING(ring, 0x00000000);    /* GRAS_CL_USER_PLANE[i].W */
 	}
+
+	OUT_PKT0(ring, REG_A3XX_PC_VSTREAM_CONTROL, 1);
+	OUT_RING(ring, 0x00000000);
 
 	emit_cache_flush(ring);
 	fd_rmw_wfi(ctx, ring);
