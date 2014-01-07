@@ -1402,7 +1402,7 @@ ir_expression::constant_expression_value(struct hash_table *variable_context)
          data.f[c] = ldexp(op[0]->value.f[c], op[1]->value.i[c]);
          /* Flush subnormal values to zero. */
          if (!isnormal(data.f[c]))
-            data.f[c] = copysign(0.0, op[0]->value.f[c]);
+            data.f[c] = copysign(0.0f, op[0]->value.f[c]);
       }
       break;
 
