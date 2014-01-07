@@ -423,14 +423,6 @@ extern bool _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 					 YYLTYPE *behavior_locp,
 					 _mesa_glsl_parse_state *state);
 
-/**
- * Get the textual name of the specified shader stage (which is a
- * gl_shader_stage).
- */
-extern const char *
-_mesa_shader_stage_to_string(unsigned stage);
-
-
 #endif /* __cplusplus */
 
 
@@ -440,6 +432,13 @@ _mesa_shader_stage_to_string(unsigned stage);
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Get the textual name of the specified shader stage (which is a
+ * gl_shader_stage).
+ */
+extern const char *
+_mesa_shader_stage_to_string(unsigned stage);
 
 extern const char *
 _mesa_progshader_enum_to_string(GLenum type);
