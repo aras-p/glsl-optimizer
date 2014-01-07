@@ -316,6 +316,14 @@ struct brw_fragment_program {
    GLuint id;  /**< serial no. to identify frag progs, never re-used */
 };
 
+
+/** Subclass of Mesa compute program */
+struct brw_compute_program {
+   struct gl_compute_program program;
+   unsigned id;  /**< serial no. to identify compute progs, never re-used */
+};
+
+
 struct brw_shader {
    struct gl_shader base;
 

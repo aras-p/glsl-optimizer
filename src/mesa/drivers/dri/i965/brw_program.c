@@ -113,6 +113,17 @@ static struct gl_program *brwNewProgram( struct gl_context *ctx,
       }
    }
 
+   case GL_COMPUTE_PROGRAM_NV: {
+      struct brw_compute_program *prog = CALLOC_STRUCT(brw_compute_program);
+      if (prog) {
+         prog->id = get_new_program_id(brw->intelScreen);
+
+         return _mesa_init_compute_program(ctx, &prog->program, target, id);
+      } else {
+         return NULL;
+      }
+   }
+
    default:
       assert(!"Unsupported target in brwNewProgram()");
       return NULL;
