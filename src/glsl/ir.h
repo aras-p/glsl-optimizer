@@ -2351,7 +2351,7 @@ ir_has_call(ir_instruction *ir);
 
 extern void
 do_set_program_inouts(exec_list *instructions, struct gl_program *prog,
-                      GLenum shader_type);
+                      gl_shader_stage shader_stage);
 
 extern char *
 prototype_string(const glsl_type *return_type, const char *name,

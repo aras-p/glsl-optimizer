@@ -5154,7 +5154,7 @@ get_mesa_program(struct gl_context *ctx,
    prog->Instructions = NULL;
    prog->NumInstructions = 0;
 
-   do_set_program_inouts(shader->ir, prog, shader->Type);
+   do_set_program_inouts(shader->ir, prog, shader->Stage);
    count_resources(v, prog);
 
    _mesa_reference_program(ctx, &shader->Program, prog);
