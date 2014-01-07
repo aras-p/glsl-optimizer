@@ -50,6 +50,10 @@ initialize_context(struct gl_context *ctx, gl_api api)
     */
    ctx->Const.GLSLVersion = glsl_version;
    ctx->Extensions.ARB_ES3_compatibility = true;
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxTextureImageUnits = 16;
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxUniformComponents = 1024;
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxInputComponents = 0; /* not used */
+   ctx->Const.Program[MESA_SHADER_COMPUTE].MaxOutputComponents = 0; /* not used */
 
    switch (ctx->Const.GLSLVersion) {
    case 100:
