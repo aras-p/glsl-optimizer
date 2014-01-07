@@ -215,6 +215,9 @@ _mesa_copy_linked_program_data(gl_shader_stage type,
                                const struct gl_shader_program *src,
                                struct gl_program *dst);
 
+extern bool
+_mesa_validate_shader_target(const struct gl_context *ctx, GLenum type);
+
 
 #ifdef __cplusplus
 }

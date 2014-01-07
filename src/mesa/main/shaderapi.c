@@ -171,8 +171,8 @@ _mesa_copy_string(GLchar *dst, GLsizei maxLength,
  * \param type  Shader target
  *
  */
-static bool
-validate_shader_target(const struct gl_context *ctx, GLenum type)
+bool
+_mesa_validate_shader_target(const struct gl_context *ctx, GLenum type)
 {
    switch (type) {
    case GL_FRAGMENT_SHADER:
@@ -273,7 +273,7 @@ create_shader(struct gl_context *ctx, GLenum type)
    struct gl_shader *sh;
    GLuint name;
 
-   if (!validate_shader_target(ctx, type)) {
+   if (!_mesa_validate_shader_target(ctx, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "CreateShader(type)");
       return 0;
    }
@@ -1739,7 +1739,7 @@ _mesa_UseShaderProgramEXT(GLenum type, GLuint program)
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *shProg = NULL;
 
-   if (!validate_shader_target(ctx, type)) {
+   if (!_mesa_validate_shader_target(ctx, type)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glUseShaderProgramEXT(type)");
       return;
    }
