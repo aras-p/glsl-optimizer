@@ -82,7 +82,7 @@ brw_shader_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
 
 static void
 brw_lower_packing_builtins(struct brw_context *brw,
-                           gl_shader_type shader_type,
+                           gl_shader_stage shader_type,
                            exec_list *ir)
 {
    int ops = LOWER_PACK_SNORM_2x16
@@ -132,7 +132,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 	return false;
       prog->Parameters = _mesa_new_parameter_list();
 
-      _mesa_copy_linked_program_data((gl_shader_type) stage, shProg, prog);
+      _mesa_copy_linked_program_data((gl_shader_stage) stage, shProg, prog);
 
       void *mem_ctx = ralloc_context(NULL);
       bool progress;
@@ -145,7 +145,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       /* lower_packing_builtins() inserts arithmetic instructions, so it
        * must precede lower_instructions().
        */
-      brw_lower_packing_builtins(brw, (gl_shader_type) stage, shader->ir);
+      brw_lower_packing_builtins(brw, (gl_shader_stage) stage, shader->ir);
       do_mat_op_to_vec(shader->ir);
       const int bitfield_insert = brw->gen >= 7
                                   ? BITFIELD_INSERT_TO_BFM_BFI
@@ -261,7 +261,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       if (ctx->Shader.Flags & GLSL_DUMP) {
          printf("\n");
          printf("GLSL IR for linked %s program %d:\n",
-                _mesa_shader_enum_to_string(shader->base.Type), shProg->Name);
+                _mesa_progshader_enum_to_string(shader->base.Type), shProg->Name);
          _mesa_print_ir(shader->base.ir, NULL);
          printf("\n");
       }
@@ -274,7 +274,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
             continue;
 
          printf("GLSL %s shader %d source for linked program %d:\n",
-                _mesa_shader_enum_to_string(sh->Type),
+                _mesa_progshader_enum_to_string(sh->Type),
                 i,
                 shProg->Name);
          printf("%s", sh->Source);

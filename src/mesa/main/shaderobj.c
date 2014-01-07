@@ -307,7 +307,7 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
                                struct gl_shader_program *shProg)
 {
    GLuint i;
-   gl_shader_type sh;
+   gl_shader_stage sh;
 
    assert(shProg->Type == GL_SHADER_PROGRAM_MESA);
 
@@ -346,7 +346,7 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
    shProg->TransformFeedback.NumVarying = 0;
 
 
-   for (sh = 0; sh < MESA_SHADER_TYPES; sh++) {
+   for (sh = 0; sh < MESA_SHADER_STAGES; sh++) {
       if (shProg->_LinkedShaders[sh] != NULL) {
 	 ctx->Driver.DeleteShader(ctx, shProg->_LinkedShaders[sh]);
 	 shProg->_LinkedShaders[sh] = NULL;

@@ -111,7 +111,7 @@ _mesa_get_sampler_uniform_value(class ir_dereference *sampler,
 {
    get_sampler_name getname(sampler, shader_program);
 
-   GLuint shader = _mesa_program_target_to_index(prog->Target);
+   GLuint shader = _mesa_program_enum_to_shader_stage(prog->Target);
 
    sampler->accept(&getname);
 

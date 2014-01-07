@@ -58,9 +58,9 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    : ctx(_ctx), switch_state()
 {
    switch (target) {
-   case GL_VERTEX_SHADER:   this->target = MESA_SHADER_VERTEX; break;
-   case GL_FRAGMENT_SHADER: this->target = MESA_SHADER_FRAGMENT; break;
-   case GL_GEOMETRY_SHADER: this->target = MESA_SHADER_GEOMETRY; break;
+   case GL_VERTEX_SHADER:   this->stage = MESA_SHADER_VERTEX; break;
+   case GL_FRAGMENT_SHADER: this->stage = MESA_SHADER_FRAGMENT; break;
+   case GL_GEOMETRY_SHADER: this->stage = MESA_SHADER_GEOMETRY; break;
    }
 
    this->scanner = NULL;
@@ -342,7 +342,7 @@ extern "C" {
  * gl_shader->Type.
  */
 const char *
-_mesa_shader_enum_to_string(GLenum type)
+_mesa_progshader_enum_to_string(GLenum type)
 {
    switch (type) {
    case GL_VERTEX_SHADER:
@@ -362,13 +362,13 @@ _mesa_shader_enum_to_string(GLenum type)
 } /* extern "C" */
 
 /**
- * Translate a gl_shader_type to a short shader stage name for debug printouts
- * and error messages.
+ * Translate a gl_shader_stage to a short shader stage name for debug
+ * printouts and error messages.
  */
 const char *
-_mesa_shader_type_to_string(unsigned target)
+_mesa_shader_stage_to_string(unsigned stage)
 {
-   switch (target) {
+   switch (stage) {
    case MESA_SHADER_VERTEX:   return "vertex";
    case MESA_SHADER_FRAGMENT: return "fragment";
    case MESA_SHADER_GEOMETRY: return "geometry";
@@ -651,11 +651,11 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 
          if (behavior == extension_require) {
             _mesa_glsl_error(name_locp, state, fmt,
-                             name, _mesa_shader_type_to_string(state->target));
+                             name, _mesa_shader_stage_to_string(state->stage));
             return false;
          } else {
             _mesa_glsl_warning(name_locp, state, fmt,
-                               name, _mesa_shader_type_to_string(state->target));
+                               name, _mesa_shader_stage_to_string(state->stage));
          }
       }
    }
@@ -1516,7 +1516,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
 
    if (!state->error && !shader->ir->is_empty()) {
       struct gl_shader_compiler_options *options =
-         &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(shader->Type)];
+         &ctx->ShaderCompilerOptions[_mesa_shader_enum_to_shader_stage(shader->Type)];
 
       /* Do some optimization at compile time to reduce shader IR size
        * and reduce later work if the same shader is linked multiple times

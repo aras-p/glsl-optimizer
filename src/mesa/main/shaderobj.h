@@ -101,8 +101,8 @@ extern void
 _mesa_free_shader_state(struct gl_context *ctx);
 
 
-static inline gl_shader_type
-_mesa_shader_type_to_index(GLenum v)
+static inline gl_shader_stage
+_mesa_shader_enum_to_shader_stage(GLenum v)
 {
    switch (v) {
    case GL_VERTEX_SHADER:
@@ -112,7 +112,7 @@ _mesa_shader_type_to_index(GLenum v)
    case GL_GEOMETRY_SHADER:
       return MESA_SHADER_GEOMETRY;
    default:
-      ASSERT(0 && "bad value in _mesa_shader_type_to_index()");
+      ASSERT(0 && "bad value in _mesa_shader_enum_to_shader_stage()");
       return MESA_SHADER_VERTEX;
    }
 }

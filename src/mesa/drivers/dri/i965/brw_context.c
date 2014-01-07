@@ -463,7 +463,7 @@ brw_initialize_context_constants(struct brw_context *brw)
    }
 
    /* We want the GLSL compiler to emit code that uses condition codes */
-   for (int i = 0; i < MESA_SHADER_TYPES; i++) {
+   for (int i = 0; i < MESA_SHADER_STAGES; i++) {
       ctx->ShaderCompilerOptions[i].MaxIfDepth = brw->gen < 6 ? 16 : UINT_MAX;
       ctx->ShaderCompilerOptions[i].EmitCondCodes = true;
       ctx->ShaderCompilerOptions[i].EmitNoNoise = true;

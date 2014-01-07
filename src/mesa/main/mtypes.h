@@ -2399,9 +2399,9 @@ typedef enum
    MESA_SHADER_VERTEX = 0,
    MESA_SHADER_GEOMETRY = 1,
    MESA_SHADER_FRAGMENT = 2,
-} gl_shader_type;
+} gl_shader_stage;
 
-#define MESA_SHADER_TYPES (MESA_SHADER_FRAGMENT + 1)
+#define MESA_SHADER_STAGES (MESA_SHADER_FRAGMENT + 1)
 
 
 struct gl_uniform_buffer_variable
@@ -2482,7 +2482,7 @@ struct gl_active_atomic_buffer
    GLuint MinimumSize;
 
    /** Shader stages making use of it. */
-   GLboolean StageReferences[MESA_SHADER_TYPES];
+   GLboolean StageReferences[MESA_SHADER_STAGES];
 };
 
 /**
@@ -2620,7 +2620,7 @@ struct gl_shader_program
     * This is used to maintain the Binding values of the stage's UniformBlocks[]
     * and to answer the GL_UNIFORM_BLOCK_REFERENCED_BY_*_SHADER queries.
     */
-   int *UniformBlockStageIndex[MESA_SHADER_TYPES];
+   int *UniformBlockStageIndex[MESA_SHADER_STAGES];
 
    /**
     * Map of active uniform names to locations
@@ -2650,7 +2650,7 @@ struct gl_shader_program
     * \c MESA_SHADER_* defines.  Entries for non-existent stages will be
     * \c NULL.
     */
-   struct gl_shader *_LinkedShaders[MESA_SHADER_TYPES];
+   struct gl_shader *_LinkedShaders[MESA_SHADER_STAGES];
 };   
 
 
@@ -3907,7 +3907,7 @@ struct gl_context
    struct gl_ati_fragment_shader_state ATIFragmentShader;
 
    struct gl_shader_state Shader; /**< GLSL shader object state */
-   struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_TYPES];
+   struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_STAGES];
 
    struct gl_query_state Query;  /**< occlusion, timer queries */
 

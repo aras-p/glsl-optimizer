@@ -1851,14 +1851,14 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 
 #ifdef DEBUG
    if (ctx->Shader.Flags & GLSL_LOG) {
-      struct gl_shader_program *shProg[MESA_SHADER_TYPES];
-      gl_shader_type i;
+      struct gl_shader_program *shProg[MESA_SHADER_STAGES];
+      gl_shader_stage i;
 
       shProg[MESA_SHADER_VERTEX] = ctx->Shader.CurrentVertexProgram;
       shProg[MESA_SHADER_GEOMETRY] = ctx->Shader.CurrentGeometryProgram;
       shProg[MESA_SHADER_FRAGMENT] = ctx->Shader.CurrentFragmentProgram;
 
-      for (i = 0; i < MESA_SHADER_TYPES; i++) {
+      for (i = 0; i < MESA_SHADER_STAGES; i++) {
 	 if (shProg[i] == NULL || shProg[i]->_Used
 	     || shProg[i]->_LinkedShaders[i] == NULL)
 	    continue;
@@ -1875,7 +1875,7 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 	 _mesa_append_uniforms_to_file(shProg[i]->_LinkedShaders[i]);
       }
 
-      for (i = 0; i < MESA_SHADER_TYPES; i++) {
+      for (i = 0; i < MESA_SHADER_STAGES; i++) {
 	 if (shProg[i] != NULL)
 	    shProg[i]->_Used = GL_TRUE;
       }

@@ -356,9 +356,9 @@ public:
    {
    }
 
-   void start_shader(gl_shader_type shader_type)
+   void start_shader(gl_shader_stage shader_type)
    {
-      assert(shader_type < MESA_SHADER_TYPES);
+      assert(shader_type < MESA_SHADER_STAGES);
       this->shader_type = shader_type;
 
       this->shader_samplers_used = 0;
@@ -429,7 +429,7 @@ public:
    int ubo_block_index;
    int ubo_byte_offset;
    bool ubo_row_major;
-   gl_shader_type shader_type;
+   gl_shader_stage shader_type;
 
 private:
    void handle_samplers(const glsl_type *base_type,
@@ -741,7 +741,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
     * glGetUniformLocation.
     */
    count_uniform_size uniform_size(prog->UniformHash);
-   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_shader *sh = prog->_LinkedShaders[i];
 
       if (sh == NULL)
@@ -809,11 +809,11 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 
    parcel_out_uniform_storage parcel(prog->UniformHash, uniforms, data);
 
-   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
 
-      parcel.start_shader((gl_shader_type)i);
+      parcel.start_shader((gl_shader_stage)i);
 
       foreach_list(node, prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();

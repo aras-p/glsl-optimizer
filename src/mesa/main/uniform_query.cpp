@@ -445,14 +445,14 @@ log_uniform(const void *values, enum glsl_base_type basicType,
 static void
 log_program_parameters(const struct gl_shader_program *shProg)
 {
-   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       if (shProg->_LinkedShaders[i] == NULL)
 	 continue;
 
       const struct gl_program *const prog = shProg->_LinkedShaders[i]->Program;
 
       printf("Program %d %s shader parameters:\n",
-             shProg->Name, _mesa_shader_enum_to_string(prog->Target));
+             shProg->Name, _mesa_progshader_enum_to_string(prog->Target));
       for (unsigned j = 0; j < prog->Parameters->NumParameters; j++) {
 	 printf("%s: %p %f %f %f %f\n",
 		prog->Parameters->Parameters[j].Name,
@@ -784,7 +784,7 @@ _mesa_uniform(struct gl_context *ctx, struct gl_shader_program *shProg,
       int i;
 
       bool flushed = false;
-      for (i = 0; i < MESA_SHADER_TYPES; i++) {
+      for (i = 0; i < MESA_SHADER_STAGES; i++) {
 	 struct gl_shader *const sh = shProg->_LinkedShaders[i];
          int j;
 

@@ -68,7 +68,7 @@ _mesa_update_shader_textures_used(struct gl_shader_program *shProg,
 {
    GLuint s;
    struct gl_shader *shader =
-      shProg->_LinkedShaders[_mesa_program_target_to_index(prog->Target)];
+      shProg->_LinkedShaders[_mesa_program_enum_to_shader_stage(prog->Target)];
 
    assert(shader);
 
@@ -642,7 +642,7 @@ _mesa_UniformBlockBinding(GLuint program,
 
       shProg->UniformBlocks[uniformBlockIndex].Binding = uniformBlockBinding;
 
-      for (i = 0; i < MESA_SHADER_TYPES; i++) {
+      for (i = 0; i < MESA_SHADER_STAGES; i++) {
 	 int stage_index = shProg->UniformBlockStageIndex[i][uniformBlockIndex];
 
 	 if (stage_index != -1) {

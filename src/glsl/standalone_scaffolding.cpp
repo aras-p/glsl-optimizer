@@ -148,6 +148,6 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    /* Default pragma settings */
    options.DefaultPragmas.Optimize = true;
 
-   for (int sh = 0; sh < MESA_SHADER_TYPES; ++sh)
+   for (int sh = 0; sh < MESA_SHADER_STAGES; ++sh)
       memcpy(&ctx->ShaderCompilerOptions[sh], &options, sizeof(options));
 }

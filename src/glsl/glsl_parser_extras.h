@@ -165,7 +165,7 @@ struct _mesa_glsl_parse_state {
 
    bool es_shader;
    unsigned language_version;
-   gl_shader_type target;
+   gl_shader_stage stage;
 
    /**
     * Number of nested struct_specifier levels
@@ -424,11 +424,11 @@ extern bool _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 					 _mesa_glsl_parse_state *state);
 
 /**
- * Get the textual name of the specified shader target (which is a
- * gl_shader_type).
+ * Get the textual name of the specified shader stage (which is a
+ * gl_shader_stage).
  */
 extern const char *
-_mesa_shader_type_to_string(unsigned target);
+_mesa_shader_stage_to_string(unsigned stage);
 
 
 #endif /* __cplusplus */
@@ -442,7 +442,7 @@ extern "C" {
 #endif
 
 extern const char *
-_mesa_shader_enum_to_string(GLenum type);
+_mesa_progshader_enum_to_string(GLenum type);
 
 extern int glcpp_preprocess(void *ctx, const char **shader, char **info_log,
                       const struct gl_extensions *extensions, struct gl_context *gl_ctx);

@@ -1860,7 +1860,7 @@ ast_fully_specified_type::glsl_type(const char **name,
 
    if (type->base_type == GLSL_TYPE_FLOAT
        && state->es_shader
-       && state->target == MESA_SHADER_FRAGMENT
+       && state->stage == MESA_SHADER_FRAGMENT
        && this->qualifier.precision == ast_precision_none
        && state->symbols->get_variable("#default precision") == NULL) {
       YYLTYPE loc = this->get_location();
@@ -1882,7 +1882,7 @@ ast_fully_specified_type::glsl_type(const char **name,
  * this function will produce undefined results.
  */
 static bool
-is_varying_var(ir_variable *var, gl_shader_type target)
+is_varying_var(ir_variable *var, gl_shader_stage target)
 {
    switch (target) {
    case MESA_SHADER_VERTEX:
@@ -1984,7 +1984,7 @@ validate_binding_qualifier(struct _mesa_glsl_parse_state *state,
        *  through binding + N - 1 must be within this range."
        */
       unsigned limit = 0;
-      switch (state->target) {
+      switch (state->stage) {
       case MESA_SHADER_VERTEX:
          limit = ctx->Const.VertexProgram.MaxTextureImageUnits;
          break;
@@ -2049,8 +2049,8 @@ interpret_interpolation_qualifier(const struct ast_type_qualifier *qual,
 
       }
 
-      if ((state->target == MESA_SHADER_VERTEX && mode == ir_var_shader_in) ||
-          (state->target == MESA_SHADER_FRAGMENT && mode == ir_var_shader_out)) {
+      if ((state->stage == MESA_SHADER_VERTEX && mode == ir_var_shader_in) ||
+          (state->stage == MESA_SHADER_FRAGMENT && mode == ir_var_shader_out)) {
          _mesa_glsl_error(loc, state,
                           "interpolation qualifier `%s' cannot be applied to "
                           "vertex shader inputs or fragment shader outputs",
@@ -2076,7 +2076,7 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
     * In the fragment shader only shader outputs can be given explicit
     * locations.
     */
-   switch (state->target) {
+   switch (state->stage) {
    case MESA_SHADER_VERTEX:
       if (var->data.mode == ir_var_shader_in) {
          if (!state->check_explicit_attrib_location_allowed(loc, var))
@@ -2110,7 +2110,7 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
       _mesa_glsl_error(loc, state,
                        "%s cannot be given an explicit location in %s shader",
                        mode_string(var),
-		       _mesa_shader_type_to_string(state->target));
+		       _mesa_shader_stage_to_string(state->stage));
    } else {
       var->data.explicit_location = true;
 
@@ -2122,7 +2122,7 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
        * ensures that negative values stay negative.
        */
       if (qual->location >= 0) {
-         var->data.location = (state->target == MESA_SHADER_VERTEX)
+         var->data.location = (state->stage == MESA_SHADER_VERTEX)
             ? (qual->location + VERT_ATTRIB_GENERIC0)
             : (qual->location + FRAG_RESULT_DATA0);
       } else {
@@ -2174,7 +2174,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 
    if (qual->flags.q.constant || qual->flags.q.attribute
        || qual->flags.q.uniform
-       || (qual->flags.q.varying && (state->target == MESA_SHADER_FRAGMENT)))
+       || (qual->flags.q.varying && (state->stage == MESA_SHADER_FRAGMENT)))
       var->data.read_only = 1;
 
    if (qual->flags.q.centroid)
@@ -2183,12 +2183,12 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    if (qual->flags.q.sample)
       var->data.sample = 1;
 
-   if (qual->flags.q.attribute && state->target != MESA_SHADER_VERTEX) {
+   if (qual->flags.q.attribute && state->stage != MESA_SHADER_VERTEX) {
       var->type = glsl_type::error_type;
       _mesa_glsl_error(loc, state,
 		       "`attribute' variables may not be declared in the "
 		       "%s shader",
-		       _mesa_shader_type_to_string(state->target));
+		       _mesa_shader_stage_to_string(state->stage));
    }
 
    /* Section 6.1.1 (Function Calling Conventions) of the GLSL 1.10 spec says:
@@ -2214,16 +2214,16 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    else if (qual->flags.q.in)
       var->data.mode = is_parameter ? ir_var_function_in : ir_var_shader_in;
    else if (qual->flags.q.attribute
-	    || (qual->flags.q.varying && (state->target == MESA_SHADER_FRAGMENT)))
+	    || (qual->flags.q.varying && (state->stage == MESA_SHADER_FRAGMENT)))
       var->data.mode = ir_var_shader_in;
    else if (qual->flags.q.out)
       var->data.mode = is_parameter ? ir_var_function_out : ir_var_shader_out;
-   else if (qual->flags.q.varying && (state->target == MESA_SHADER_VERTEX))
+   else if (qual->flags.q.varying && (state->stage == MESA_SHADER_VERTEX))
       var->data.mode = ir_var_shader_out;
    else if (qual->flags.q.uniform)
       var->data.mode = ir_var_uniform;
 
-   if (!is_parameter && is_varying_var(var, state->target)) {
+   if (!is_parameter && is_varying_var(var, state->stage)) {
       /* This variable is being used to link data between shader stages (in
        * pre-glsl-1.30 parlance, it's a "varying").  Check that it has a type
        * that is allowed for such purposes.
@@ -2272,7 +2272,7 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    }
 
    if (state->all_invariant && (state->current_function == NULL)) {
-      switch (state->target) {
+      switch (state->stage) {
       case MESA_SHADER_VERTEX:
 	 if (var->data.mode == ir_var_shader_out)
 	    var->data.invariant = true;
@@ -2599,8 +2599,8 @@ process_initializer(ir_variable *var, ast_declaration *decl,
    if ((var->data.mode == ir_var_shader_in) && (state->current_function == NULL)) {
       _mesa_glsl_error(& initializer_loc, state,
 		       "cannot initialize %s shader input / %s",
-		       _mesa_shader_type_to_string(state->target),
-		       (state->target == MESA_SHADER_VERTEX)
+		       _mesa_shader_stage_to_string(state->stage),
+		       (state->stage == MESA_SHADER_VERTEX)
 		       ? "attribute" : "varying");
    }
 
@@ -2844,12 +2844,12 @@ ast_declarator_list::hir(exec_list *instructions,
 	    _mesa_glsl_error(& loc, state,
 			     "undeclared variable `%s' cannot be marked "
 			     "invariant", decl->identifier);
-	 } else if ((state->target == MESA_SHADER_VERTEX)
+	 } else if ((state->stage == MESA_SHADER_VERTEX)
 	       && (earlier->data.mode != ir_var_shader_out)) {
 	    _mesa_glsl_error(& loc, state,
 			     "`%s' cannot be marked invariant, vertex shader "
 			     "outputs only", decl->identifier);
-	 } else if ((state->target == MESA_SHADER_FRAGMENT)
+	 } else if ((state->stage == MESA_SHADER_FRAGMENT)
 	       && (earlier->data.mode != ir_var_shader_in)) {
 	    _mesa_glsl_error(& loc, state,
 			     "`%s' cannot be marked invariant, fragment shader "
@@ -3034,12 +3034,12 @@ ast_declarator_list::hir(exec_list *instructions,
 				       & loc, false);
 
       if (this->type->qualifier.flags.q.invariant) {
-	 if ((state->target == MESA_SHADER_VERTEX) &&
+	 if ((state->stage == MESA_SHADER_VERTEX) &&
              var->data.mode != ir_var_shader_out) {
 	    _mesa_glsl_error(& loc, state,
 			     "`%s' cannot be marked invariant, vertex shader "
 			     "outputs only", var->name);
-	 } else if ((state->target == MESA_SHADER_FRAGMENT) &&
+	 } else if ((state->stage == MESA_SHADER_FRAGMENT) &&
 		    var->data.mode != ir_var_shader_in) {
 	    /* FINISHME: Note that this doesn't work for invariant on
 	     * a function signature inval
@@ -3080,7 +3080,7 @@ ast_declarator_list::hir(exec_list *instructions,
       } else if (var->data.mode == ir_var_shader_in) {
          var->data.read_only = true;
 
-	 if (state->target == MESA_SHADER_VERTEX) {
+	 if (state->stage == MESA_SHADER_VERTEX) {
 	    bool error_emitted = false;
 
 	    /* From page 31 (page 37 of the PDF) of the GLSL 1.50 spec:
@@ -3135,7 +3135,7 @@ ast_declarator_list::hir(exec_list *instructions,
                                       "cannot have array type")) {
 	       error_emitted = true;
 	    }
-	 } else if (state->target == MESA_SHADER_GEOMETRY) {
+	 } else if (state->stage == MESA_SHADER_GEOMETRY) {
             /* From section 4.3.4 (Inputs) of the GLSL 1.50 spec:
              *
              *     Geometry shader input variables get the per-vertex values
@@ -3185,10 +3185,10 @@ ast_declarator_list::hir(exec_list *instructions,
       if (state->is_version(130, 300) &&
           var->type->contains_integer() &&
           var->data.interpolation != INTERP_QUALIFIER_FLAT &&
-          ((state->target == MESA_SHADER_FRAGMENT && var->data.mode == ir_var_shader_in)
-           || (state->target == MESA_SHADER_VERTEX && var->data.mode == ir_var_shader_out
+          ((state->stage == MESA_SHADER_FRAGMENT && var->data.mode == ir_var_shader_in)
+           || (state->stage == MESA_SHADER_VERTEX && var->data.mode == ir_var_shader_out
                && state->es_shader))) {
-         const char *var_type = (state->target == MESA_SHADER_VERTEX) ?
+         const char *var_type = (state->stage == MESA_SHADER_VERTEX) ?
             "vertex output" : "fragment input";
          _mesa_glsl_error(&loc, state, "if a %s is (or contains) "
                           "an integer, then it must be qualified with 'flat'",
@@ -3244,7 +3244,7 @@ ast_declarator_list::hir(exec_list *instructions,
          const char *i = this->type->qualifier.interpolation_string();
          assert(i != NULL);
 
-         switch (state->target) {
+         switch (state->stage) {
          case MESA_SHADER_VERTEX:
             if (this->type->qualifier.flags.q.in) {
                _mesa_glsl_error(&loc, state,
@@ -3275,13 +3275,13 @@ ast_declarator_list::hir(exec_list *instructions,
       if (state->is_version(130, 300)
           && this->type->qualifier.flags.q.centroid
           && this->type->qualifier.flags.q.in
-          && state->target == MESA_SHADER_VERTEX) {
+          && state->stage == MESA_SHADER_VERTEX) {
 
          _mesa_glsl_error(&loc, state,
                           "'centroid in' cannot be used in a vertex shader");
       }
 
-      if (state->target == MESA_SHADER_VERTEX
+      if (state->stage == MESA_SHADER_VERTEX
           && this->type->qualifier.flags.q.sample
           && this->type->qualifier.flags.q.in) {
 
@@ -3296,7 +3296,7 @@ ast_declarator_list::hir(exec_list *instructions,
        * "It is an error to use auxiliary storage qualifiers or interpolation
        *  qualifiers on an output in a fragment shader."
        */
-      if (state->target == MESA_SHADER_FRAGMENT &&
+      if (state->stage == MESA_SHADER_FRAGMENT &&
           this->type->qualifier.flags.q.out &&
           this->type->qualifier.has_auxiliary_storage()) {
          _mesa_glsl_error(&loc, state,
@@ -3954,7 +3954,7 @@ ast_jump_statement::hir(exec_list *instructions,
    }
 
    case ast_discard:
-      if (state->target != MESA_SHADER_FRAGMENT) {
+      if (state->stage != MESA_SHADER_FRAGMENT) {
 	 YYLTYPE loc = this->get_location();
 
 	 _mesa_glsl_error(& loc, state,
@@ -4492,7 +4492,7 @@ ast_type_specifier::hir(exec_list *instructions,
 
       if (type->base_type == GLSL_TYPE_FLOAT
           && state->es_shader
-          && state->target == MESA_SHADER_FRAGMENT) {
+          && state->stage == MESA_SHADER_FRAGMENT) {
          /* Section 4.5.3 (Default Precision Qualifiers) of the GLSL ES 1.00
           * spec says:
           *
@@ -4890,7 +4890,7 @@ ast_interface_block::hir(exec_list *instructions,
             _mesa_glsl_error(&loc, state,
                              "redeclaration of gl_PerVertex input not allowed "
                              "in the %s shader",
-                             _mesa_shader_type_to_string(state->target));
+                             _mesa_shader_stage_to_string(state->stage));
          }
          if (this->instance_name == NULL ||
              strcmp(this->instance_name, "gl_in") != 0 || !this->is_array) {
@@ -4907,7 +4907,7 @@ ast_interface_block::hir(exec_list *instructions,
             _mesa_glsl_error(&loc, state,
                              "redeclaration of gl_PerVertex output not "
                              "allowed in the %s shader",
-                             _mesa_shader_type_to_string(state->target));
+                             _mesa_shader_stage_to_string(state->stage));
          }
          if (this->instance_name != NULL) {
             _mesa_glsl_error(&loc, state,
@@ -4995,7 +4995,7 @@ ast_interface_block::hir(exec_list *instructions,
     *     variable (or input block, see interface blocks below) needs to be
     *     declared as an array.
     */
-   if (state->target == MESA_SHADER_GEOMETRY && !this->is_array &&
+   if (state->stage == MESA_SHADER_GEOMETRY && !this->is_array &&
        var_mode == ir_var_shader_in) {
       _mesa_glsl_error(&loc, state, "geometry shader inputs must be arrays");
    }
@@ -5050,7 +5050,7 @@ ast_interface_block::hir(exec_list *instructions,
           * geometry shader input.
           */
          if (this->array_size == NULL &&
-             (state->target != MESA_SHADER_GEOMETRY || !this->layout.flags.q.in)) {
+             (state->stage != MESA_SHADER_GEOMETRY || !this->layout.flags.q.in)) {
             _mesa_glsl_error(&loc, state,
                              "only geometry shader inputs may be unsized "
                              "instance block arrays");
@@ -5069,7 +5069,7 @@ ast_interface_block::hir(exec_list *instructions,
                                       var_mode);
       }
 
-      if (state->target == MESA_SHADER_GEOMETRY && var_mode == ir_var_shader_in)
+      if (state->stage == MESA_SHADER_GEOMETRY && var_mode == ir_var_shader_in)
          handle_geometry_shader_input_decl(state, loc, var);
 
       if (ir_variable *earlier =
@@ -5265,7 +5265,7 @@ detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
       else if (strcmp(var->name, "gl_FragData") == 0)
 	 gl_FragData_assigned = true;
       else if (strncmp(var->name, "gl_", 3) != 0) {
-	 if (state->target == MESA_SHADER_FRAGMENT &&
+	 if (state->stage == MESA_SHADER_FRAGMENT &&
 	     var->data.mode == ir_var_shader_out) {
 	    user_defined_fs_output_assigned = true;
 	    user_defined_fs_output = var;

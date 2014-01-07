@@ -116,7 +116,7 @@ establish_uniform_storage(struct gl_shader_program *prog, unsigned num_storage,
    prog->UniformStorage[index_to_set].type = type;
    prog->UniformStorage[index_to_set].array_elements = array_size;
    prog->UniformStorage[index_to_set].initialized = false;
-   for (int sh = 0; sh < MESA_SHADER_TYPES; sh++) {
+   for (int sh = 0; sh < MESA_SHADER_STAGES; sh++) {
       prog->UniformStorage[index_to_set].sampler[sh].index = ~0;
       prog->UniformStorage[index_to_set].sampler[sh].active = false;
    }
@@ -137,7 +137,7 @@ establish_uniform_storage(struct gl_shader_program *prog, unsigned num_storage,
       prog->UniformStorage[i].type = glsl_type::void_type;
       prog->UniformStorage[i].array_elements = 0;
       prog->UniformStorage[i].initialized = false;
-      for (int sh = 0; sh < MESA_SHADER_TYPES; sh++) {
+      for (int sh = 0; sh < MESA_SHADER_STAGES; sh++) {
          prog->UniformStorage[i].sampler[sh].index = ~0;
          prog->UniformStorage[i].sampler[sh].active = false;
       }

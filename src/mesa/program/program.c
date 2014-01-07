@@ -891,7 +891,7 @@ _mesa_find_free_register(const GLboolean used[],
  */
 GLboolean
 _mesa_valid_register_index(const struct gl_context *ctx,
-                           gl_shader_type shaderType,
+                           gl_shader_stage shaderType,
                            gl_register_file file, GLint index)
 {
    const struct gl_program_constants *c;

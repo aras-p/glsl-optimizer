@@ -876,7 +876,7 @@ builtin_variable_generator::add_varying(int slot, const glsl_type *type,
                                         const char *name,
                                         const char *name_as_gs_input)
 {
-   switch (state->target) {
+   switch (state->stage) {
    case MESA_SHADER_GEOMETRY:
       this->per_vertex_in.add_field(slot, type, name);
       /* FALLTHROUGH */
@@ -901,7 +901,7 @@ builtin_variable_generator::generate_varyings()
    add_varying(loc, type, name, name "In")
 
    /* gl_Position and gl_PointSize are not visible from fragment shaders. */
-   if (state->target != MESA_SHADER_FRAGMENT) {
+   if (state->stage != MESA_SHADER_FRAGMENT) {
       ADD_VARYING(VARYING_SLOT_POS, vec4_t, "gl_Position");
       ADD_VARYING(VARYING_SLOT_PSIZ, float_t, "gl_PointSize");
    }
@@ -914,7 +914,7 @@ builtin_variable_generator::generate_varyings()
    if (compatibility) {
       ADD_VARYING(VARYING_SLOT_TEX0, array(vec4_t, 0), "gl_TexCoord");
       ADD_VARYING(VARYING_SLOT_FOGC, float_t, "gl_FogFragCoord");
-      if (state->target == MESA_SHADER_FRAGMENT) {
+      if (state->stage == MESA_SHADER_FRAGMENT) {
          ADD_VARYING(VARYING_SLOT_COL0, vec4_t, "gl_Color");
          ADD_VARYING(VARYING_SLOT_COL1, vec4_t, "gl_SecondaryColor");
       } else {
@@ -926,13 +926,13 @@ builtin_variable_generator::generate_varyings()
       }
    }
 
-   if (state->target == MESA_SHADER_GEOMETRY) {
+   if (state->stage == MESA_SHADER_GEOMETRY) {
       const glsl_type *per_vertex_in_type =
          this->per_vertex_in.construct_interface_instance();
       add_variable("gl_in", array(per_vertex_in_type, 0),
                    ir_var_shader_in, -1);
    }
-   if (state->target == MESA_SHADER_VERTEX || state->target == MESA_SHADER_GEOMETRY) {
+   if (state->stage == MESA_SHADER_VERTEX || state->stage == MESA_SHADER_GEOMETRY) {
       const glsl_type *per_vertex_out_type =
          this->per_vertex_out.construct_interface_instance();
       const glsl_struct_field *fields = per_vertex_out_type->fields.structure;
@@ -963,7 +963,7 @@ _mesa_glsl_initialize_variables(exec_list *instructions,
 
    gen.generate_varyings();
 
-   switch (state->target) {
+   switch (state->stage) {
    case MESA_SHADER_VERTEX:
       gen.generate_vs_special_vars();
       break;

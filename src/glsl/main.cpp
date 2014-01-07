@@ -388,7 +388,7 @@ main(int argc, char **argv)
 	 printf("Info log for linking:\n%s\n", whole_program->InfoLog);
    }
 
-   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++)
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++)
       ralloc_free(whole_program->_LinkedShaders[i]);
 
    ralloc_free(whole_program);
