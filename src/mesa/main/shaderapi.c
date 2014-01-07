@@ -994,6 +994,7 @@ _mesa_use_program(struct gl_context *ctx, struct gl_shader_program *shProg)
    use_shader_program(ctx, GL_VERTEX_SHADER, shProg);
    use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB, shProg);
    use_shader_program(ctx, GL_FRAGMENT_SHADER, shProg);
+   use_shader_program(ctx, GL_COMPUTE_SHADER, shProg);
    _mesa_active_program(ctx, shProg, "glUseProgram");
 
    if (ctx->Driver.UseProgram)
