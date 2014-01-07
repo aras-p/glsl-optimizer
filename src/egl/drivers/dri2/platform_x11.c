@@ -183,7 +183,7 @@ swrastGetImage(__DRIdrawable * read,
  */
 static _EGLSurface *
 dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
-                        _EGLConfig *conf, EGLNativeWindowType native_window,
+                        _EGLConfig *conf, void *native_surface,
                         const EGLint *attrib_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
@@ -193,7 +193,10 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    xcb_get_geometry_reply_t *reply;
    xcb_screen_iterator_t s;
    xcb_generic_error_t *error;
-   xcb_drawable_t window = (uintptr_t )native_window;
+   xcb_drawable_t drawable;
+
+   STATIC_ASSERT(sizeof(uintptr_t) == sizeof(native_surface));
+   drawable = (uintptr_t) native_surface;
 
    (void) drv;
 
@@ -214,7 +217,7 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 			dri2_surf->drawable, s.data->root,
 			dri2_surf->base.Width, dri2_surf->base.Height);
    } else {
-      dri2_surf->drawable = window;
+      dri2_surf->drawable = drawable;
    }
 
    if (dri2_dpy->dri2) {
@@ -278,14 +281,14 @@ dri2_x11_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
  */
 static _EGLSurface *
 dri2_x11_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
-                               _EGLConfig *conf, EGLNativeWindowType window,
+                               _EGLConfig *conf, void *native_window,
                                const EGLint *attrib_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    _EGLSurface *surf;
 
    surf = dri2_x11_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
-                                  window, attrib_list);
+                                  native_window, attrib_list);
    if (surf != NULL) {
       /* When we first create the DRI2 drawable, its swap interval on the
        * server side is 1.
@@ -301,11 +304,11 @@ dri2_x11_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
 
 static _EGLSurface *
 dri2_x11_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *disp,
-                               _EGLConfig *conf, EGLNativePixmapType pixmap,
+                               _EGLConfig *conf, void *native_pixmap,
                                const EGLint *attrib_list)
 {
    return dri2_x11_create_surface(drv, disp, EGL_PIXMAP_BIT, conf,
-                                  pixmap, attrib_list);
+                                  native_pixmap, attrib_list);
 }
 
 static _EGLSurface *
@@ -862,12 +865,15 @@ dri2_x11_swap_interval(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
 
 static EGLBoolean
 dri2_x11_copy_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
-                      EGLNativePixmapType native_target)
+                      void *native_pixmap_target)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
    xcb_gcontext_t gc;
-   xcb_pixmap_t target = (uintptr_t )native_target;
+   xcb_pixmap_t target;
+
+   STATIC_ASSERT(sizeof(uintptr_t) == sizeof(native_pixmap_target));
+   target = (uintptr_t) native_pixmap_target;
 
    (void) drv;
 

@@ -88,12 +88,13 @@ has_free_buffers(struct gbm_surface *_surf)
 
 static _EGLSurface *
 dri2_drm_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
-                        _EGLConfig *conf, EGLNativeWindowType window,
+                        _EGLConfig *conf, void *native_window,
                         const EGLint *attrib_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_config *dri2_conf = dri2_egl_config(conf);
    struct dri2_egl_surface *dri2_surf;
+   struct gbm_surface *window = native_window;
    struct gbm_dri_surface *surf;
 
    (void) drv;
@@ -111,7 +112,7 @@ dri2_drm_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    case EGL_WINDOW_BIT:
       if (!window)
          return NULL;
-      surf = gbm_dri_surface((struct gbm_surface *) window);
+      surf = gbm_dri_surface(window);
       dri2_surf->gbm_surf = surf;
       dri2_surf->base.Width =  surf->base.width;
       dri2_surf->base.Height = surf->base.height;
@@ -141,11 +142,11 @@ dri2_drm_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 
 static _EGLSurface *
 dri2_drm_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
-                               _EGLConfig *conf, EGLNativeWindowType window,
+                               _EGLConfig *conf, void *native_window,
                                const EGLint *attrib_list)
 {
    return dri2_drm_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
-                                  window, attrib_list);
+                                  native_window, attrib_list);
 }
 
 static EGLBoolean

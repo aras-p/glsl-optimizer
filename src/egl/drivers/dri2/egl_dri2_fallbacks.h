@@ -31,7 +31,7 @@ struct wl_buffer;
 static inline _EGLSurface *
 dri2_fallback_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *disp,
                                     _EGLConfig *conf,
-                                    EGLNativePixmapType pixmap,
+                                    void *native_pixmap,
                                     const EGLint *attrib_list)
 {
    return NULL;
@@ -79,7 +79,7 @@ dri2_fallback_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *dpy,
 static inline EGLBoolean
 dri2_fallback_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy,
                            _EGLSurface *surf,
-                           EGLNativePixmapType target)
+                           void *native_pixmap_target)
 {
    return EGL_FALSE;
 }

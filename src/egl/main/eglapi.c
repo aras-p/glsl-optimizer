@@ -296,8 +296,15 @@ _eglUnlockDisplay(_EGLDisplay *dpy)
 EGLDisplay EGLAPIENTRY
 eglGetDisplay(EGLNativeDisplayType nativeDisplay)
 {
-   _EGLPlatformType plat = _eglGetNativePlatform(nativeDisplay);
-   _EGLDisplay *dpy = _eglFindDisplay(plat, (void *) nativeDisplay);
+   _EGLPlatformType plat;
+   _EGLDisplay *dpy;
+   void *native_display_ptr;
+
+   STATIC_ASSERT(sizeof(void*) == sizeof(nativeDisplay));
+   native_display_ptr = (void*) nativeDisplay;
+
+   plat = _eglGetNativePlatform(native_display_ptr);
+   dpy = _eglFindDisplay(plat, native_display_ptr);
    return _eglGetDisplayHandle(dpy);
 }
 
@@ -529,12 +536,17 @@ eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
    _EGLDriver *drv;
    _EGLSurface *surf;
    EGLSurface ret;
+   void *native_window_ptr;
+
+   STATIC_ASSERT(sizeof(void*) == sizeof(window));
+   native_window_ptr = (void*) window;
 
    _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE, drv);
    if (disp->Platform != _eglGetNativePlatform(disp->PlatformDisplay))
       RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_WINDOW, EGL_NO_SURFACE);
 
-   surf = drv->API.CreateWindowSurface(drv, disp, conf, window, attrib_list);
+   surf = drv->API.CreateWindowSurface(drv, disp, conf, native_window_ptr,
+                                       attrib_list);
    ret = (surf) ? _eglLinkSurface(surf) : EGL_NO_SURFACE;
 
    RETURN_EGL_EVAL(disp, ret);
@@ -550,12 +562,17 @@ eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
    _EGLDriver *drv;
    _EGLSurface *surf;
    EGLSurface ret;
+   void *native_pixmap_ptr;
+
+   STATIC_ASSERT(sizeof(void*) == sizeof(pixmap));
+   native_pixmap_ptr = (void*) pixmap;
 
    _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE, drv);
    if (disp->Platform != _eglGetNativePlatform(disp->PlatformDisplay))
       RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_PIXMAP, EGL_NO_SURFACE);
 
-   surf = drv->API.CreatePixmapSurface(drv, disp, conf, pixmap, attrib_list);
+   surf = drv->API.CreatePixmapSurface(drv, disp, conf, native_pixmap_ptr,
+                                       attrib_list);
    ret = (surf) ? _eglLinkSurface(surf) : EGL_NO_SURFACE;
 
    RETURN_EGL_EVAL(disp, ret);
@@ -740,11 +757,15 @@ eglCopyBuffers(EGLDisplay dpy, EGLSurface surface, EGLNativePixmapType target)
    _EGLSurface *surf = _eglLookupSurface(surface, disp);
    _EGLDriver *drv;
    EGLBoolean ret;
+   void *native_pixmap_ptr;
+
+   STATIC_ASSERT(sizeof(void*) == sizeof(target));
+   native_pixmap_ptr = (void*) target;
 
    _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE, drv);
    if (disp->Platform != _eglGetNativePlatform(disp->PlatformDisplay))
       RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_PIXMAP, EGL_FALSE);
-   ret = drv->API.CopyBuffers(drv, disp, surf, target);
+   ret = drv->API.CopyBuffers(drv, disp, surf, native_pixmap_ptr);
 
    RETURN_EGL_EVAL(disp, ret);
 }

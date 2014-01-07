@@ -1026,21 +1026,21 @@ dri2_get_proc_address(_EGLDriver *drv, const char *procname)
 
 static _EGLSurface*
 dri2_create_window_surface(_EGLDriver *drv, _EGLDisplay *dpy,
-                           _EGLConfig *conf, EGLNativeWindowType window,
+                           _EGLConfig *conf, void *native_window,
                            const EGLint *attrib_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(dpy);
-   return dri2_dpy->vtbl->create_window_surface(drv, dpy, conf, window,
+   return dri2_dpy->vtbl->create_window_surface(drv, dpy, conf, native_window,
                                                 attrib_list);
 }
 
 static _EGLSurface*
 dri2_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *dpy,
-                           _EGLConfig *conf, EGLNativePixmapType pixmap,
+                           _EGLConfig *conf, void *native_pixmap,
                            const EGLint *attrib_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(dpy);
-   return dri2_dpy->vtbl->create_pixmap_surface(drv, dpy, conf, pixmap,
+   return dri2_dpy->vtbl->create_pixmap_surface(drv, dpy, conf, native_pixmap,
                                                 attrib_list);
 }
 
@@ -1102,10 +1102,10 @@ dri2_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
 
 static EGLBoolean
 dri2_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
-                  EGLNativePixmapType target)
+                  void *native_pixmap_target)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(dpy);
-   return dri2_dpy->vtbl->copy_buffers(drv, dpy, surf, target);
+   return dri2_dpy->vtbl->copy_buffers(drv, dpy, surf, native_pixmap_target);
 }
 
 static EGLint

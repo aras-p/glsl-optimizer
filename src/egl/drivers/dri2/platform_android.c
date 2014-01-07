@@ -194,12 +194,14 @@ droid_free_local_buffers(struct dri2_egl_surface *dri2_surf)
 
 static _EGLSurface *
 droid_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
-		    _EGLConfig *conf, EGLNativeWindowType window,
+		    _EGLConfig *conf, void *native_window,
 		    const EGLint *attrib_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_config *dri2_conf = dri2_egl_config(conf);
    struct dri2_egl_surface *dri2_surf;
+   struct ANativeWindow *window = native_window;
+
    dri2_surf = calloc(1, sizeof *dri2_surf);
    if (!dri2_surf) {
       _eglError(EGL_BAD_ALLOC, "droid_create_surface");
@@ -254,11 +256,11 @@ cleanup_surface:
 
 static _EGLSurface *
 droid_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
-			   _EGLConfig *conf, EGLNativeWindowType window,
-			   const EGLint *attrib_list)
+                            _EGLConfig *conf, void *native_window,
+                            const EGLint *attrib_list)
 {
    return droid_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
-			      window, attrib_list);
+                               native_window, attrib_list);
 }
 
 static _EGLSurface *

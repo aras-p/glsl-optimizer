@@ -120,11 +120,12 @@ resize_callback(struct wl_egl_window *wl_win, void *data)
  */
 static _EGLSurface *
 dri2_wl_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
-                       _EGLConfig *conf, EGLNativeWindowType window,
+                       _EGLConfig *conf, void *native_window,
                        const EGLint *attrib_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_config *dri2_conf = dri2_egl_config(conf);
+   struct wl_egl_window *window = native_window;
    struct dri2_egl_surface *dri2_surf;
 
    (void) drv;
@@ -148,7 +149,7 @@ dri2_wl_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 
    switch (type) {
    case EGL_WINDOW_BIT:
-      dri2_surf->wl_win = (struct wl_egl_window *) window;
+      dri2_surf->wl_win = window;
 
       dri2_surf->wl_win->private = dri2_surf;
       dri2_surf->wl_win->resize_callback = resize_callback;
@@ -186,14 +187,14 @@ dri2_wl_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
  */
 static _EGLSurface *
 dri2_wl_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
-                              _EGLConfig *conf, EGLNativeWindowType window,
+                              _EGLConfig *conf, void *native_window,
                               const EGLint *attrib_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    _EGLSurface *surf;
 
    surf = dri2_wl_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
-                                 window, attrib_list);
+                                 native_window, attrib_list);
 
    if (surf != NULL)
       dri2_wl_swap_interval(drv, disp, surf, dri2_dpy->default_swap_interval);

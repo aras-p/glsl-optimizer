@@ -139,7 +139,7 @@ _eglPointerIsDereferencable(void *p)
  * Try detecting native platform with the help of native display characteristcs.
  */
 static _EGLPlatformType
-_eglNativePlatformDetectNativeDisplay(EGLNativeDisplayType nativeDisplay)
+_eglNativePlatformDetectNativeDisplay(void *nativeDisplay)
 {
 #ifdef HAVE_FBDEV_PLATFORM
    struct stat buf;
@@ -186,7 +186,7 @@ _eglNativePlatformDetectNativeDisplay(EGLNativeDisplayType nativeDisplay)
  * Return the native platform.  It is the platform of the EGL native types.
  */
 _EGLPlatformType
-_eglGetNativePlatform(EGLNativeDisplayType nativeDisplay)
+_eglGetNativePlatform(void *nativeDisplay)
 {
    static _EGLPlatformType native_platform = _EGL_INVALID_PLATFORM;
    char *detection_method = NULL;

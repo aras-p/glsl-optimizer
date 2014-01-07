@@ -162,7 +162,7 @@ struct _egl_display
 
 
 extern _EGLPlatformType
-_eglGetNativePlatform(EGLNativeDisplayType nativeDisplay);
+_eglGetNativePlatform(void *nativeDisplay);
 
 
 extern void

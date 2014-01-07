@@ -91,12 +91,12 @@ struct dri2_egl_display_vtbl {
 
    _EGLSurface* (*create_window_surface)(_EGLDriver *drv, _EGLDisplay *dpy,
                                          _EGLConfig *config,
-                                         EGLNativeWindowType window,
+                                         void *native_window,
                                          const EGLint *attrib_list);
 
    _EGLSurface* (*create_pixmap_surface)(_EGLDriver *drv, _EGLDisplay *dpy,
                                          _EGLConfig *config,
-                                         EGLNativePixmapType pixmap,
+                                         void *native_pixmap,
                                          const EGLint *attrib_list);
 
    _EGLSurface* (*create_pbuffer_surface)(_EGLDriver *drv, _EGLDisplay *dpy,
@@ -131,7 +131,7 @@ struct dri2_egl_display_vtbl {
                                  EGLint width, EGLint height);
 
    EGLBoolean (*copy_buffers)(_EGLDriver *drv, _EGLDisplay *dpy,
-                              _EGLSurface *surf, EGLNativePixmapType target);
+                              _EGLSurface *surf, void *native_pixmap_target);
 
    EGLint (*query_buffer_age)(_EGLDriver *drv, _EGLDisplay *dpy,
                               _EGLSurface *surf);
