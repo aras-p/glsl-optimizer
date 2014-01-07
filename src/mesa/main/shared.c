@@ -38,6 +38,7 @@
 #include "dlist.h"
 #include "samplerobj.h"
 #include "set.h"
+#include "shaderapi.h"
 #include "shaderobj.h"
 #include "syncobj.h"
 
@@ -218,8 +219,7 @@ delete_shader_cb(GLuint id, void *data, void *userData)
 {
    struct gl_context *ctx = (struct gl_context *) userData;
    struct gl_shader *sh = (struct gl_shader *) data;
-   if (sh->Type == GL_FRAGMENT_SHADER || sh->Type == GL_VERTEX_SHADER ||
-       sh->Type == GL_GEOMETRY_SHADER) {
+   if (_mesa_validate_shader_target(ctx, sh->Type)) {
       ctx->Driver.DeleteShader(ctx, sh);
    }
    else {

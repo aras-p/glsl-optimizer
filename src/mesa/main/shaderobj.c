@@ -34,6 +34,7 @@
 #include "main/context.h"
 #include "main/hash.h"
 #include "main/mtypes.h"
+#include "main/shaderapi.h"
 #include "main/shaderobj.h"
 #include "main/uniforms.h"
 #include "program/program.h"
@@ -105,8 +106,7 @@ struct gl_shader *
 _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
 {
    struct gl_shader *shader;
-   assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER ||
-          type == GL_GEOMETRY_SHADER_ARB);
+   assert(_mesa_validate_shader_target(ctx, type));
    shader = rzalloc(NULL, struct gl_shader);
    if (shader) {
       shader->Type = type;
