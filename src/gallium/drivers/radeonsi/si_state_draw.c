@@ -260,7 +260,7 @@ static unsigned si_conv_pipe_prim(unsigned pprim)
 	return result;
 }
 
-static unsigned r600_conv_prim_to_gs_out(unsigned mode)
+static unsigned si_conv_prim_to_gs_out(unsigned mode)
 {
 	static const int prim_conv[] = {
 		[PIPE_PRIM_POINTS]			= V_028A6C_OUTPRIM_TYPE_POINTLIST,
@@ -290,7 +290,7 @@ static bool si_update_draw_info_state(struct si_context *rctx,
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	struct si_shader *vs = &rctx->vs_shader->current->shader;
 	unsigned prim = si_conv_pipe_prim(info->mode);
-	unsigned gs_out_prim = r600_conv_prim_to_gs_out(info->mode);
+	unsigned gs_out_prim = si_conv_prim_to_gs_out(info->mode);
 	unsigned ls_mask = 0;
 
 	if (pm4 == NULL)
