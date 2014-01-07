@@ -10,13 +10,13 @@ git clone https://github.com/freedreno/envytools.git
 The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno.xml               (    364 bytes, from 2013-11-30 14:47:15)
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml  (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32814 bytes, from 2013-11-30 15:07:33)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   8900 bytes, from 2013-10-22 23:57:49)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  10925 bytes, from 2013-12-20 21:06:09)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  54008 bytes, from 2013-12-20 22:49:44)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32840 bytes, from 2014-01-05 14:44:21)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   8900 bytes, from 2014-01-05 14:44:21)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  12362 bytes, from 2014-01-07 14:47:36)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  54368 bytes, from 2014-01-05 14:44:21)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (   8344 bytes, from 2013-11-30 14:49:47)
 
-Copyright (C) 2013 by the following authors:
+Copyright (C) 2013-2014 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
 
 Permission is hereby granted, free of charge, to any person obtaining
@@ -890,6 +890,39 @@ static inline uint32_t A2XX_SQ_CONTEXT_MISC_PARAM_GEN_POS(uint32_t val)
 #define REG_A2XX_VGT_EVENT_INITIATOR				0x000021f9
 
 #define REG_A2XX_VGT_DRAW_INITIATOR				0x000021fc
+#define A2XX_VGT_DRAW_INITIATOR_PRIM_TYPE__MASK			0x0000003f
+#define A2XX_VGT_DRAW_INITIATOR_PRIM_TYPE__SHIFT		0
+static inline uint32_t A2XX_VGT_DRAW_INITIATOR_PRIM_TYPE(enum pc_di_primtype val)
+{
+	return ((val) << A2XX_VGT_DRAW_INITIATOR_PRIM_TYPE__SHIFT) & A2XX_VGT_DRAW_INITIATOR_PRIM_TYPE__MASK;
+}
+#define A2XX_VGT_DRAW_INITIATOR_SOURCE_SELECT__MASK		0x000000c0
+#define A2XX_VGT_DRAW_INITIATOR_SOURCE_SELECT__SHIFT		6
+static inline uint32_t A2XX_VGT_DRAW_INITIATOR_SOURCE_SELECT(enum pc_di_src_sel val)
+{
+	return ((val) << A2XX_VGT_DRAW_INITIATOR_SOURCE_SELECT__SHIFT) & A2XX_VGT_DRAW_INITIATOR_SOURCE_SELECT__MASK;
+}
+#define A2XX_VGT_DRAW_INITIATOR_VIS_CULL__MASK			0x00000600
+#define A2XX_VGT_DRAW_INITIATOR_VIS_CULL__SHIFT			9
+static inline uint32_t A2XX_VGT_DRAW_INITIATOR_VIS_CULL(enum pc_di_vis_cull_mode val)
+{
+	return ((val) << A2XX_VGT_DRAW_INITIATOR_VIS_CULL__SHIFT) & A2XX_VGT_DRAW_INITIATOR_VIS_CULL__MASK;
+}
+#define A2XX_VGT_DRAW_INITIATOR_INDEX_SIZE__MASK		0x00000800
+#define A2XX_VGT_DRAW_INITIATOR_INDEX_SIZE__SHIFT		11
+static inline uint32_t A2XX_VGT_DRAW_INITIATOR_INDEX_SIZE(enum pc_di_index_size val)
+{
+	return ((val) << A2XX_VGT_DRAW_INITIATOR_INDEX_SIZE__SHIFT) & A2XX_VGT_DRAW_INITIATOR_INDEX_SIZE__MASK;
+}
+#define A2XX_VGT_DRAW_INITIATOR_NOT_EOP				0x00001000
+#define A2XX_VGT_DRAW_INITIATOR_SMALL_INDEX			0x00002000
+#define A2XX_VGT_DRAW_INITIATOR_PRE_DRAW_INITIATOR_ENABLE	0x00004000
+#define A2XX_VGT_DRAW_INITIATOR_NUM_INDICES__MASK		0xffff0000
+#define A2XX_VGT_DRAW_INITIATOR_NUM_INDICES__SHIFT		16
+static inline uint32_t A2XX_VGT_DRAW_INITIATOR_NUM_INDICES(uint32_t val)
+{
+	return ((val) << A2XX_VGT_DRAW_INITIATOR_NUM_INDICES__SHIFT) & A2XX_VGT_DRAW_INITIATOR_NUM_INDICES__MASK;
+}
 
 #define REG_A2XX_VGT_IMMED_DATA					0x000021fd
 
