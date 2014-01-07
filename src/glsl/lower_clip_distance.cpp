@@ -54,10 +54,10 @@ namespace {
 
 class lower_clip_distance_visitor : public ir_rvalue_visitor {
 public:
-   explicit lower_clip_distance_visitor(GLenum shader_type)
+   explicit lower_clip_distance_visitor(gl_shader_stage shader_stage)
       : progress(false), old_clip_distance_1d_var(NULL),
         old_clip_distance_2d_var(NULL), new_clip_distance_1d_var(NULL),
-        new_clip_distance_2d_var(NULL), shader_type(shader_type)
+        new_clip_distance_2d_var(NULL), shader_stage(shader_stage)
    {
    }
 
@@ -96,9 +96,9 @@ public:
    ir_variable *new_clip_distance_2d_var;
 
    /**
-    * Type of shader we are compiling (e.g. GL_VERTEX_SHADER)
+    * Type of shader we are compiling (e.g. MESA_SHADER_VERTEX)
     */
-   const GLenum shader_type;
+   const gl_shader_stage shader_stage;
 };
 
 } /* anonymous namespace */
@@ -142,7 +142,7 @@ lower_clip_distance_visitor::visit(ir_variable *ir)
    } else {
       /* 2D gl_ClipDistance (used for geometry input). */
       assert(ir->data.mode == ir_var_shader_in &&
-             this->shader_type == GL_GEOMETRY_SHADER_ARB);
+             this->shader_stage == MESA_SHADER_GEOMETRY);
       if (this->old_clip_distance_2d_var)
          return visit_continue;
 
@@ -253,7 +253,7 @@ lower_clip_distance_visitor::is_clip_distance_vec8(ir_rvalue *ir)
    }
    if (this->old_clip_distance_2d_var) {
       /* 2D clip distance is only possible as a geometry input */
-      assert(this->shader_type == GL_GEOMETRY_SHADER_ARB);
+      assert(this->shader_stage == MESA_SHADER_GEOMETRY);
 
       ir_dereference_array *array_ref = ir->as_dereference_array();
       if (array_ref) {
@@ -288,7 +288,7 @@ lower_clip_distance_visitor::lower_clip_distance_vec8(ir_rvalue *ir)
    }
    if (this->old_clip_distance_2d_var) {
       /* 2D clip distance is only possible as a geometry input */
-      assert(this->shader_type == GL_GEOMETRY_SHADER_ARB);
+      assert(this->shader_stage == MESA_SHADER_GEOMETRY);
 
       ir_dereference_array *array_ref = ir->as_dereference_array();
       if (array_ref) {
@@ -536,7 +536,7 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
 bool
 lower_clip_distance(gl_shader *shader)
 {
-   lower_clip_distance_visitor v(shader->Type);
+   lower_clip_distance_visitor v(shader->Stage);
 
    visit_list_elements(&v, shader->ir);
 
