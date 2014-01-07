@@ -23,7 +23,7 @@
 
 #include "si_pipe.h"
 
-static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
+static struct pipe_resource *si_resource_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
 	if (templ->target == PIPE_BUFFER) {
@@ -33,9 +33,9 @@ static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
 	}
 }
 
-static struct pipe_resource *r600_resource_from_handle(struct pipe_screen * screen,
-							const struct pipe_resource *templ,
-							struct winsys_handle *whandle)
+static struct pipe_resource *si_resource_from_handle(struct pipe_screen * screen,
+						     const struct pipe_resource *templ,
+						     struct winsys_handle *whandle)
 {
 	if (templ->target == PIPE_BUFFER) {
 		return NULL;
@@ -46,8 +46,8 @@ static struct pipe_resource *r600_resource_from_handle(struct pipe_screen * scre
 
 void si_init_screen_resource_functions(struct pipe_screen *screen)
 {
-	screen->resource_create = r600_resource_create;
-	screen->resource_from_handle = r600_resource_from_handle;
+	screen->resource_create = si_resource_create;
+	screen->resource_from_handle = si_resource_from_handle;
 	screen->resource_get_handle = u_resource_get_handle_vtbl;
 	screen->resource_destroy = u_resource_destroy_vtbl;
 }
