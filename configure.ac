@@ -1206,8 +1206,6 @@ if test "x$enable_egl" = xyes; then
     AC_CHECK_FUNC(mincore, [DEFINES="$DEFINES -DHAVE_MINCORE"])
 
     if test "$enable_static" != yes; then
-        # build egl_glx when libGL is built
-
         if test "x$enable_dri" = xyes; then
 	    HAVE_EGL_DRIVER_DRI2=1
 	fi
@@ -1440,10 +1438,6 @@ for plat in $egl_platforms; do
 
 	x11)
 		PKG_CHECK_MODULES([XCB_DRI2], [x11-xcb xcb-dri2 >= 1.8 xcb-xfixes])
-
-                if test "x$enable_glx" = xyes; then
-                        HAVE_EGL_DRIVER_GLX=1
-                fi
 		;;
 
 	drm)
@@ -1486,7 +1480,6 @@ AM_CONDITIONAL(HAVE_EGL_PLATFORM_FBDEV, echo "$egl_platforms" | grep 'fbdev' >/d
 AM_CONDITIONAL(HAVE_EGL_PLATFORM_NULL, echo "$egl_platforms" | grep 'null' >/dev/null 2>&1)
 
 AM_CONDITIONAL(HAVE_EGL_DRIVER_DRI2, test "x$HAVE_EGL_DRIVER_DRI2" != "x")
-AM_CONDITIONAL(HAVE_EGL_DRIVER_GLX, test "x$HAVE_EGL_DRIVER_GLX" != "x")
 
 AC_SUBST([EGL_NATIVE_PLATFORM])
 AC_SUBST([EGL_CFLAGS])
@@ -1976,7 +1969,6 @@ AC_CONFIG_FILES([Makefile
 		src/egl/Makefile
 		src/egl/drivers/Makefile
 		src/egl/drivers/dri2/Makefile
-		src/egl/drivers/glx/Makefile
 		src/egl/main/Makefile
 		src/egl/main/egl.pc
 		src/egl/wayland/Makefile
@@ -2158,9 +2150,6 @@ if test "$enable_egl" = yes; then
     echo "        EGL platforms:   $egl_platforms"
 
     egl_drivers=""
-    if test "x$HAVE_EGL_DRIVER_GLX" != "x"; then
-        egl_drivers="$egl_drivers builtin:egl_glx"
-    fi
     if test "x$HAVE_EGL_DRIVER_DRI2" != "x"; then
         egl_drivers="$egl_drivers builtin:egl_dri2"
     fi

@@ -73,9 +73,6 @@ const struct {
 #ifdef _EGL_BUILT_IN_DRIVER_DRI2
    { "egl_dri2", _eglBuiltInDriverDRI2 },
 #endif
-#ifdef _EGL_BUILT_IN_DRIVER_GLX
-   { "egl_glx", _eglBuiltInDriverGLX },
-#endif
    { NULL, NULL }
 };
 

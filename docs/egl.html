@@ -232,16 +232,6 @@ The supported platforms are X11, DRM, FBDEV, and GDI.</p>
 
 </dd>
 
-<dt><code>egl_glx</code></dt>
-<dd>
-
-<p>This driver provides a wrapper to GLX.  It uses exclusively GLX to implement
-the EGL API.  It supports both direct and indirect rendering when the GLX does.
-It is accelerated when the GLX is.  As such, it cannot provide functions that
-is not available in GLX or GLX extensions.</p>
-</dd>
-</dl>
-
 <h2>Packaging</h2>
 
 <p>The ABI between the main library and its drivers are not stable.  Nor is
@@ -261,10 +251,6 @@ is disabled by default.</p>
 <p>The sources of the main library and the classic drivers can be found at
 <code>src/egl/</code>.  The sources of the <code>egl</code> state tracker can
 be found at <code>src/gallium/state_trackers/egl/</code>.</p>
-
-<p>The suggested way to learn to write a EGL driver is to see how other drivers
-are written.  <code>egl_glx</code> should be a good reference.  It works in any
-environment that has GLX support, and it is simpler than most drivers.</p>
 
 <h3>Lifetime of Display Resources</h3>
 

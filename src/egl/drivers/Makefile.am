@@ -21,10 +21,6 @@
 
 SUBDIRS =
 
-if HAVE_EGL_DRIVER_GLX
-SUBDIRS += glx
-endif
-
 if HAVE_EGL_DRIVER_DRI2
 SUBDIRS += dri2
 endif
