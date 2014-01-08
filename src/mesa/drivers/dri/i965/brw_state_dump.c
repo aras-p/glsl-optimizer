@@ -197,22 +197,28 @@ static void dump_gen7_surface_state(struct brw_context *brw, uint32_t offset)
    const char *name = "SURF";
    uint32_t *surf = brw->batch.bo->virtual + offset;
 
-   batch_out(brw, name, offset, 0, "%s %s\n",
+   batch_out(brw, name, offset, 0, "%s %s %s\n",
              get_965_surfacetype(GET_FIELD(surf[0], BRW_SURFACE_TYPE)),
-             get_965_surface_format(GET_FIELD(surf[0], BRW_SURFACE_FORMAT)));
+             get_965_surface_format(GET_FIELD(surf[0], BRW_SURFACE_FORMAT)),
+             (surf[0] & GEN7_SURFACE_IS_ARRAY) ? "array" : "");
    batch_out(brw, name, offset, 1, "offset\n");
-   batch_out(brw, name, offset, 2, "%dx%d size, %d mips\n",
+   batch_out(brw, name, offset, 2, "%dx%d size, %d mips, %d slices\n",
              GET_FIELD(surf[2], GEN7_SURFACE_WIDTH) + 1,
              GET_FIELD(surf[2], GEN7_SURFACE_HEIGHT) + 1,
-             surf[5] & INTEL_MASK(3, 0));
+             surf[5] & INTEL_MASK(3, 0),
+             GET_FIELD(surf[3], BRW_SURFACE_DEPTH) + 1);
    batch_out(brw, name, offset, 3, "pitch %d, %stiled\n",
 	     (surf[3] & INTEL_MASK(17, 0)) + 1,
              (surf[0] & (1 << 14)) ? "" : "not ");
-   batch_out(brw, name, offset, 4, "mip base %d\n",
+   batch_out(brw, name, offset, 4, "min array element %d, array extent %d\n",
+             GET_FIELD(surf[4], GEN7_SURFACE_MIN_ARRAY_ELEMENT),
+             GET_FIELD(surf[4], GEN7_SURFACE_RENDER_TARGET_VIEW_EXTENT) + 1);
+   batch_out(brw, name, offset, 5, "mip base %d\n",
              GET_FIELD(surf[5], GEN7_SURFACE_MIN_LOD));
-   batch_out(brw, name, offset, 5, "x,y offset: %d,%d\n",
+   batch_out(brw, name, offset, 6, "x,y offset: %d,%d\n",
              GET_FIELD(surf[5], BRW_SURFACE_X_OFFSET),
              GET_FIELD(surf[5], BRW_SURFACE_Y_OFFSET));
+   batch_out(brw, name, offset, 7, "\n");
 }
 
 static void
