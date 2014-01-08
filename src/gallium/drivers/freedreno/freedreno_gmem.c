@@ -260,6 +260,9 @@ render_tiles(struct fd_context *ctx)
 
 	ctx->emit_tile_init(ctx);
 
+	if (ctx->restore)
+		ctx->stats.batch_restore++;
+
 	for (i = 0; i < (gmem->nbins_x * gmem->nbins_y); i++) {
 		struct fd_tile *tile = &ctx->tile[i];
 
@@ -311,11 +314,14 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 	fd_ringmarker_mark(ctx->draw_end);
 	fd_ringmarker_mark(ctx->binning_end);
 
+	ctx->stats.batch_total++;
+
 	if (sysmem) {
 		DBG("rendering sysmem (%s/%s)",
 			util_format_short_name(pipe_surface_format(pfb->cbufs[0])),
 			util_format_short_name(pipe_surface_format(pfb->zsbuf)));
 		render_sysmem(ctx);
+		ctx->stats.batch_sysmem++;
 	} else {
 		struct fd_gmem_stateobj *gmem = &ctx->gmem;
 		calculate_tiles(ctx);
@@ -323,6 +329,7 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 			util_format_short_name(pipe_surface_format(pfb->cbufs[0])),
 			util_format_short_name(pipe_surface_format(pfb->zsbuf)));
 		render_tiles(ctx);
+		ctx->stats.batch_gmem++;
 	}
 
 	/* GPU executes starting from tile cmds, which IB back to draw cmds: */

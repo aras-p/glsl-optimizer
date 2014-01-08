@@ -32,6 +32,7 @@
 #include "freedreno_texture.h"
 #include "freedreno_state.h"
 #include "freedreno_gmem.h"
+#include "freedreno_query.h"
 #include "freedreno_util.h"
 
 static struct fd_ringbuffer *next_rb(struct fd_context *ctx)
@@ -212,6 +213,7 @@ fd_context_init(struct fd_context *ctx, struct pipe_screen *pscreen,
 
 	fd_draw_init(pctx);
 	fd_resource_context_init(pctx);
+	fd_query_context_init(pctx);
 	fd_texture_init(pctx);
 	fd_state_init(pctx);
 

@@ -134,7 +134,15 @@ struct fd_context {
 		FD_GMEM_BLEND_ENABLED        = 0x10,
 		FD_GMEM_LOGICOP_ENABLED      = 0x20,
 	} gmem_reason;
-	unsigned num_draws;
+	unsigned num_draws;   /* number of draws in current batch */
+
+	/* Stats/counters:
+	 */
+	struct {
+		uint64_t prims_emitted;
+		uint64_t draw_calls;
+		uint64_t batch_total, batch_sysmem, batch_gmem, batch_restore;
+	} stats;
 
 	/* we can't really sanely deal with wraparound point in ringbuffer
 	 * and because of the way tiling works we can't really flush at

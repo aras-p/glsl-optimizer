@@ -47,6 +47,7 @@
 #include "freedreno_screen.h"
 #include "freedreno_resource.h"
 #include "freedreno_fence.h"
+#include "freedreno_query.h"
 #include "freedreno_util.h"
 
 #include "fd2_screen.h"
@@ -457,6 +458,7 @@ fd_screen_create(struct fd_device *dev)
 	pscreen->get_shader_param = fd_screen_get_shader_param;
 
 	fd_resource_screen_init(pscreen);
+	fd_query_screen_init(pscreen);
 
 	pscreen->get_name = fd_screen_get_name;
 	pscreen->get_vendor = fd_screen_get_vendor;
