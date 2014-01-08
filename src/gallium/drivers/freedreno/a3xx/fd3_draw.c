@@ -162,8 +162,9 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	OUT_RING(ring, A3XX_RB_BLEND_ALPHA_UINT(0xff) |
 			A3XX_RB_BLEND_ALPHA_FLOAT(1.0));
 
-	fd3_emit_rbrc_draw_state(ctx, ring,
-			A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER));
+	OUT_PKT0(ring, REG_A3XX_RB_RENDER_CONTROL, 1);
+	OUT_RINGP(ring, A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER),
+			&fd3_ctx->rbrc_patches);
 
 	if (buffers & PIPE_CLEAR_DEPTH) {
 		OUT_PKT0(ring, REG_A3XX_RB_DEPTH_CONTROL, 1);

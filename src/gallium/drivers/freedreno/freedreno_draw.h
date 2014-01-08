@@ -95,7 +95,7 @@ fd_draw(struct fd_context *ctx, struct fd_ringbuffer *ring,
 
 	emit_marker(ring, 7);
 
-	ctx->rmw.need_wfi = true;
+	ctx->rmw_needs_wfi = true;
 }
 
 #endif /* FREEDRENO_DRAW_H_ */

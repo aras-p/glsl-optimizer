@@ -544,6 +544,18 @@ patch_draws(struct fd_context *ctx, enum pc_di_vis_cull_mode vismode)
 	util_dynarray_resize(&ctx->draw_patches, 0);
 }
 
+static void
+patch_rbrc(struct fd_context *ctx, uint32_t val)
+{
+	struct fd3_context *fd3_ctx = fd3_context(ctx);
+	unsigned i;
+	for (i = 0; i < fd_patch_num_elements(&fd3_ctx->rbrc_patches); i++) {
+		struct fd_cs_patch *patch = fd_patch_element(&fd3_ctx->rbrc_patches, i);
+		*patch->cs = patch->val | val;
+	}
+	util_dynarray_resize(&fd3_ctx->rbrc_patches, 0);
+}
+
 /* for rendering directly to system memory: */
 static void
 fd3_emit_sysmem_prep(struct fd_context *ctx)
@@ -563,10 +575,6 @@ fd3_emit_sysmem_prep(struct fd_context *ctx)
 
 	emit_mrt(ring, pfb->nr_cbufs, pfb->cbufs, NULL, 0);
 
-	OUT_PKT0(ring, REG_A3XX_RB_RENDER_CONTROL, 1);
-	OUT_RING(ring, A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER) |
-			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(pitch));
-
 	/* setup scissor/offset for current tile: */
 	OUT_PKT0(ring, REG_A3XX_RB_WINDOW_OFFSET, 1);
 	OUT_RING(ring, A3XX_RB_WINDOW_OFFSET_X(0) |
@@ -584,6 +592,7 @@ fd3_emit_sysmem_prep(struct fd_context *ctx)
 			A3XX_RB_MODE_CONTROL_MARB_CACHE_SPLIT_MODE);
 
 	patch_draws(ctx, IGNORE_VISIBILITY);
+	patch_rbrc(ctx, A3XX_RB_RENDER_CONTROL_BIN_WIDTH(pitch));
 }
 
 static void
@@ -757,6 +766,9 @@ fd3_emit_tile_init(struct fd_context *ctx)
 	} else {
 		patch_draws(ctx, IGNORE_VISIBILITY);
 	}
+
+	patch_rbrc(ctx, A3XX_RB_RENDER_CONTROL_ENABLE_GMEM |
+			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(gmem->bin_w));
 }
 
 /* before mem2gmem */
@@ -836,11 +848,6 @@ fd3_emit_tile_renderprep(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_RING(ring, CP_SET_BIN_2_X2(x2) | CP_SET_BIN_2_Y2(y2));
 
 	emit_mrt(ring, pfb->nr_cbufs, pfb->cbufs, NULL, gmem->bin_w);
-
-	OUT_PKT0(ring, REG_A3XX_RB_RENDER_CONTROL, 1);
-	OUT_RING(ring, A3XX_RB_RENDER_CONTROL_ENABLE_GMEM |
-			A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC(FUNC_NEVER) |
-			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(gmem->bin_w));
 
 	/* setup scissor/offset for current tile: */
 	OUT_PKT0(ring, REG_A3XX_RB_WINDOW_OFFSET, 1);

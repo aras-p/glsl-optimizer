@@ -353,8 +353,19 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		struct fd3_zsa_stateobj *zsa = fd3_zsa_stateobj(ctx->zsa);
 		struct pipe_stencil_ref *sr = &ctx->stencil_ref;
 
-		if (!binning)
-			fd3_emit_rbrc_draw_state(ctx, ring, zsa->rb_render_control);
+		if (!binning) {
+			struct fd3_context *fd3_ctx = fd3_context(ctx);
+
+			/* I suppose if we needed to (which I don't *think* we need
+			 * to), we could emit this for binning pass too.  But we
+			 * would need to keep a different patch-list for binning
+			 * vs render pass.
+			 */
+
+			OUT_PKT0(ring, REG_A3XX_RB_RENDER_CONTROL, 1);
+			OUT_RINGP(ring, zsa->rb_render_control,
+					&fd3_ctx->rbrc_patches);
+		}
 
 		OUT_PKT0(ring, REG_A3XX_RB_ALPHA_REF, 1);
 		OUT_RING(ring, zsa->rb_alpha_ref);

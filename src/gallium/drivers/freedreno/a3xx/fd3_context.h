@@ -36,6 +36,11 @@
 struct fd3_context {
 	struct fd_context base;
 
+	/* Keep track of writes to RB_RENDER_CONTROL which need to be patched
+	 * once we know whether or not to use GMEM, and GMEM tile pitch.
+	 */
+	struct util_dynarray rbrc_patches;
+
 	struct fd_bo *vs_pvt_mem, *fs_pvt_mem;
 
 	/* This only needs to be 4 * num_of_pipes bytes (ie. 32 bytes).  We
