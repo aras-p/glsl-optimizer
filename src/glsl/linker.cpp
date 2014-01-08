@@ -2109,6 +2109,13 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       goto done;
    }
 
+   /* Compute shaders have additional restrictions. */
+   if (num_shaders[MESA_SHADER_COMPUTE] > 0 &&
+       num_shaders[MESA_SHADER_COMPUTE] != prog->NumShaders) {
+      linker_error(prog, "Compute shaders may not be linked with any other "
+                   "type of shader\n");
+   }
+
    for (unsigned int i = 0; i < MESA_SHADER_STAGES; i++) {
       if (prog->_LinkedShaders[i] != NULL)
 	 ctx->Driver.DeleteShader(ctx, prog->_LinkedShaders[i]);
