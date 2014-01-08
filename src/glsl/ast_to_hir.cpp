@@ -1983,18 +1983,7 @@ validate_binding_qualifier(struct _mesa_glsl_parse_state *state,
        *  with an array of size N, all elements of the array from binding
        *  through binding + N - 1 must be within this range."
        */
-      unsigned limit = 0;
-      switch (state->stage) {
-      case MESA_SHADER_VERTEX:
-         limit = ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits;
-         break;
-      case MESA_SHADER_GEOMETRY:
-         limit = ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits;
-         break;
-      case MESA_SHADER_FRAGMENT:
-         limit = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits;
-         break;
-      }
+      unsigned limit = ctx->Const.Program[state->stage].MaxTextureImageUnits;
 
       if (max_index >= limit) {
          _mesa_glsl_error(loc, state, "layout(binding = %d) for %d samplers "

@@ -1894,48 +1894,19 @@ store_fragdepth_layout(struct gl_shader_program *prog)
 static void
 check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
 {
-   const unsigned max_samplers[] = {
-      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits,
-      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits,
-      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits
-   };
-   STATIC_ASSERT(Elements(max_samplers) == MESA_SHADER_STAGES);
-
-   const unsigned max_default_uniform_components[] = {
-      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents,
-      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxUniformComponents,
-      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents
-   };
-   STATIC_ASSERT(Elements(max_default_uniform_components) ==
-                 MESA_SHADER_STAGES);
-
-   const unsigned max_combined_uniform_components[] = {
-      ctx->Const.Program[MESA_SHADER_VERTEX].MaxCombinedUniformComponents,
-      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxCombinedUniformComponents,
-      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxCombinedUniformComponents
-   };
-   STATIC_ASSERT(Elements(max_combined_uniform_components) ==
-                 MESA_SHADER_STAGES);
-
-   const unsigned max_uniform_blocks[] = {
-      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformBlocks,
-      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxUniformBlocks,
-      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformBlocks
-   };
-   STATIC_ASSERT(Elements(max_uniform_blocks) == MESA_SHADER_STAGES);
-
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_shader *sh = prog->_LinkedShaders[i];
 
       if (sh == NULL)
 	 continue;
 
-      if (sh->num_samplers > max_samplers[i]) {
+      if (sh->num_samplers > ctx->Const.Program[i].MaxTextureImageUnits) {
 	 linker_error(prog, "Too many %s shader texture samplers",
 		      _mesa_shader_stage_to_string(i));
       }
 
-      if (sh->num_uniform_components > max_default_uniform_components[i]) {
+      if (sh->num_uniform_components >
+          ctx->Const.Program[i].MaxUniformComponents) {
          if (ctx->Const.GLSLSkipStrictMaxUniformLimitCheck) {
             linker_warning(prog, "Too many %s shader default uniform block "
                            "components, but the driver will try to optimize "
@@ -1950,7 +1921,7 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
       }
 
       if (sh->num_combined_uniform_components >
-	  max_combined_uniform_components[i]) {
+	  ctx->Const.Program[i].MaxCombinedUniformComponents) {
          if (ctx->Const.GLSLSkipStrictMaxUniformLimitCheck) {
             linker_warning(prog, "Too many %s shader uniform components, "
                            "but the driver will try to optimize them out; "
@@ -1980,11 +1951,13 @@ check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
 		      ctx->Const.MaxCombinedUniformBlocks);
       } else {
 	 for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-	    if (blocks[i] > max_uniform_blocks[i]) {
+            const unsigned max_uniform_blocks =
+               ctx->Const.Program[i].MaxUniformBlocks;
+	    if (blocks[i] > max_uniform_blocks) {
 	       linker_error(prog, "Too many %s uniform blocks (%d/%d)",
 			    _mesa_shader_stage_to_string(i),
 			    blocks[i],
-			    max_uniform_blocks[i]);
+			    max_uniform_blocks);
 	       break;
 	    }
 	 }

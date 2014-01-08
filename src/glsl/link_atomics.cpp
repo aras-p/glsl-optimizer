@@ -214,18 +214,6 @@ void
 link_check_atomic_counter_resources(struct gl_context *ctx,
                                     struct gl_shader_program *prog)
 {
-   const unsigned max_atomic_counters[] = {
-      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAtomicCounters,
-      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxAtomicCounters,
-      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicCounters
-   };
-   STATIC_ASSERT(Elements(max_atomic_counters) == MESA_SHADER_STAGES);
-   const unsigned max_atomic_buffers[] = {
-      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAtomicBuffers,
-      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxAtomicBuffers,
-      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicBuffers
-   };
-   STATIC_ASSERT(Elements(max_atomic_buffers) == MESA_SHADER_STAGES);
    unsigned num_buffers;
    active_atomic_buffer *const abs =
       find_active_atomic_counters(ctx, prog, &num_buffers);
@@ -257,11 +245,11 @@ link_check_atomic_counter_resources(struct gl_context *ctx,
 
    /* Check that they are within the supported limits. */
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      if (atomic_counters[i] > max_atomic_counters[i])
+      if (atomic_counters[i] > ctx->Const.Program[i].MaxAtomicCounters)
          linker_error(prog, "Too many %s shader atomic counters",
                       _mesa_shader_stage_to_string(i));
 
-      if (atomic_buffers[i] > max_atomic_buffers[i])
+      if (atomic_buffers[i] > ctx->Const.Program[i].MaxAtomicBuffers)
          linker_error(prog, "Too many %s shader atomic counter buffers",
                       _mesa_shader_stage_to_string(i));
    }

@@ -1249,19 +1249,9 @@ check_against_output_limit(struct gl_context *ctx,
       }
    }
 
-   unsigned max_output_components;
-   switch (producer->Stage) {
-   case MESA_SHADER_VERTEX:
-      max_output_components = ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents;
-      break;
-   case MESA_SHADER_GEOMETRY:
-      max_output_components = ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxOutputComponents;
-      break;
-   case MESA_SHADER_FRAGMENT:
-   default:
-      assert(!"Should not get here.");
-      return false;
-   }
+   assert(producer->Stage != MESA_SHADER_FRAGMENT);
+   unsigned max_output_components =
+      ctx->Const.Program[producer->Stage].MaxOutputComponents;
 
    const unsigned output_components = output_vectors * 4;
    if (output_components > max_output_components) {
@@ -1298,19 +1288,9 @@ check_against_input_limit(struct gl_context *ctx,
       }
    }
 
-   unsigned max_input_components;
-   switch (consumer->Stage) {
-   case MESA_SHADER_GEOMETRY:
-      max_input_components = ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxInputComponents;
-      break;
-   case MESA_SHADER_FRAGMENT:
-      max_input_components = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents;
-      break;
-   case MESA_SHADER_VERTEX:
-   default:
-      assert(!"Should not get here.");
-      return false;
-   }
+   assert(consumer->Stage != MESA_SHADER_VERTEX);
+   unsigned max_input_components =
+      ctx->Const.Program[consumer->Stage].MaxInputComponents;
 
    const unsigned input_components = input_vectors * 4;
    if (input_components > max_input_components) {
