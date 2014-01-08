@@ -2102,8 +2102,15 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	rctx->export_16bpc = 0;
 	rctx->fb_compressed_cb_mask = 0;
 	for (i = 0; i < state->nr_cbufs; i++) {
-		struct r600_texture *rtex =
-			(struct r600_texture*)state->cbufs[i]->texture;
+		struct r600_texture *rtex;
+
+		if (!state->cbufs[i]) {
+			si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + i * 0x3C,
+				       S_028C70_FORMAT(V_028C70_COLOR_INVALID));
+			continue;
+		}
+
+		rtex = (struct r600_texture*)state->cbufs[i]->texture;
 
 		si_cb(rctx, pm4, state, i);
 
@@ -2136,16 +2143,11 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	si_pm4_set_reg(pm4, R_028204_PA_SC_WINDOW_SCISSOR_TL, tl);
 	si_pm4_set_reg(pm4, R_028208_PA_SC_WINDOW_SCISSOR_BR, br);
 
-	if (state->nr_cbufs)
-		nr_samples = state->cbufs[0]->texture->nr_samples;
-	else if (state->zsbuf)
-		nr_samples = state->zsbuf->texture->nr_samples;
-	else
-		nr_samples = 0;
+	nr_samples = util_framebuffer_get_num_samples(state);
 
 	si_set_msaa_state(rctx, pm4, nr_samples);
 	rctx->fb_log_samples = util_logbase2(nr_samples);
-	rctx->fb_cb0_is_integer = state->nr_cbufs &&
+	rctx->fb_cb0_is_integer = state->nr_cbufs && state->cbufs[0] &&
 				  util_format_is_pure_integer(state->cbufs[0]->format);
 
 	si_pm4_set_state(rctx, framebuffer, pm4);
