@@ -439,9 +439,14 @@ static bool can_fast_clear_color(struct pipe_context *ctx)
 	}
 
 	for (i = 0; i < fb->nr_cbufs; i++) {
-		struct r600_texture *tex = (struct r600_texture *)fb->cbufs[i]->texture;
+		struct r600_texture *tex;
 
-		/* 128-bit formats are unuspported */
+		if (!fb->cbufs[i])
+			continue;
+
+		tex = (struct r600_texture *)fb->cbufs[i]->texture;
+
+		/* 128-bit formats are unusupported */
 		if (util_format_get_blocksizebits(fb->cbufs[i]->format) > 64) {
 			return false;
 		}
@@ -484,7 +489,12 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		int i;
 
 		for (i = 0; i < fb->nr_cbufs; i++) {
-			struct r600_texture *tex = (struct r600_texture *)fb->cbufs[i]->texture;
+			struct r600_texture *tex;
+
+			if (!fb->cbufs[i])
+				continue;
+
+			tex = (struct r600_texture *)fb->cbufs[i]->texture;
 
 			evergreen_set_clear_color(fb->cbufs[i], color);
 			r600_clear_buffer(ctx, &tex->cmask_buffer->b.b,
@@ -502,7 +512,12 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 
 		/* cannot use fast clear, make sure to disable expansion */
 		for (i = 0; i < fb->nr_cbufs; i++) {
-			struct r600_texture *tex = (struct r600_texture *)fb->cbufs[i]->texture;
+			struct r600_texture *tex;
+
+			if (!fb->cbufs[i])
+				continue;
+
+			tex = (struct r600_texture *)fb->cbufs[i]->texture;
 			if (tex->fmask.size == 0)
 			    tex->dirty_level_mask &= ~(1 << fb->cbufs[i]->u.tex.level);
 		}

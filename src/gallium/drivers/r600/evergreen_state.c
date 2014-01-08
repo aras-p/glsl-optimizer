@@ -1721,11 +1721,8 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 	if (rctx->framebuffer.state.nr_cbufs) {
 		rctx->b.flags |= R600_CONTEXT_WAIT_3D_IDLE | R600_CONTEXT_FLUSH_AND_INV;
-		rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB;
-
-		if (rctx->framebuffer.state.cbufs[0]->texture->nr_samples > 1) {
-			rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB_META;
-		}
+		rctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB |
+				 R600_CONTEXT_FLUSH_AND_INV_CB_META;
 	}
 	if (rctx->framebuffer.state.zsbuf) {
 		rctx->b.flags |= R600_CONTEXT_WAIT_3D_IDLE | R600_CONTEXT_FLUSH_AND_INV;
@@ -1741,19 +1738,16 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 	/* Colorbuffers. */
 	rctx->framebuffer.export_16bpc = state->nr_cbufs != 0;
-	rctx->framebuffer.cb0_is_integer = state->nr_cbufs &&
+	rctx->framebuffer.cb0_is_integer = state->nr_cbufs && state->cbufs[0] &&
 					   util_format_is_pure_integer(state->cbufs[0]->format);
 	rctx->framebuffer.compressed_cb_mask = 0;
-
-	if (state->nr_cbufs)
-		rctx->framebuffer.nr_samples = state->cbufs[0]->texture->nr_samples;
-	else if (state->zsbuf)
-		rctx->framebuffer.nr_samples = state->zsbuf->texture->nr_samples;
-	else
-		rctx->framebuffer.nr_samples = 0;
+	rctx->framebuffer.nr_samples = util_framebuffer_get_num_samples(state);
 
 	for (i = 0; i < state->nr_cbufs; i++) {
 		surf = (struct r600_surface*)state->cbufs[i];
+		if (!surf)
+			continue;
+
 		rtex = (struct r600_texture*)surf->base.texture;
 
 		r600_context_add_resource_size(ctx, state->cbufs[i]->texture);
@@ -1774,13 +1768,21 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	/* Update alpha-test state dependencies.
 	 * Alpha-test is done on the first colorbuffer only. */
 	if (state->nr_cbufs) {
+		bool alphatest_bypass = false;
+		bool export_16bpc = true;
+
 		surf = (struct r600_surface*)state->cbufs[0];
-		if (rctx->alphatest_state.bypass != surf->alphatest_bypass) {
-			rctx->alphatest_state.bypass = surf->alphatest_bypass;
+		if (surf) {
+			alphatest_bypass = surf->alphatest_bypass;
+			export_16bpc = surf->export_16bpc;
+		}
+
+		if (rctx->alphatest_state.bypass != alphatest_bypass) {
+			rctx->alphatest_state.bypass = alphatest_bypass;
 			rctx->alphatest_state.atom.dirty = true;
 		}
-		if (rctx->alphatest_state.cb0_export_16bpc != surf->export_16bpc) {
-			rctx->alphatest_state.cb0_export_16bpc = surf->export_16bpc;
+		if (rctx->alphatest_state.cb0_export_16bpc != export_16bpc) {
+			rctx->alphatest_state.cb0_export_16bpc = export_16bpc;
 			rctx->alphatest_state.atom.dirty = true;
 		}
 	}
@@ -2181,12 +2183,21 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 	/* Colorbuffers. */
 	for (i = 0; i < nr_cbufs; i++) {
 		struct r600_surface *cb = (struct r600_surface*)state->cbufs[i];
-		struct r600_texture *tex = (struct r600_texture *)cb->base.texture;
-		unsigned reloc = r600_context_bo_reloc(&rctx->b,
-						       &rctx->b.rings.gfx,
-						       (struct r600_resource*)cb->base.texture,
-						       RADEON_USAGE_READWRITE);
-		unsigned cmask_reloc = 0;
+		struct r600_texture *tex;
+		unsigned reloc, cmask_reloc;
+
+		if (!cb) {
+			r600_write_context_reg(cs, R_028C70_CB_COLOR0_INFO + i * 0x3C,
+					       S_028C70_FORMAT(V_028C70_COLOR_INVALID));
+			continue;
+		}
+
+		tex = (struct r600_texture *)cb->base.texture;
+		reloc = r600_context_bo_reloc(&rctx->b,
+					      &rctx->b.rings.gfx,
+					      (struct r600_resource*)cb->base.texture,
+					      RADEON_USAGE_READWRITE);
+
 		if (tex->cmask_buffer && tex->cmask_buffer != &tex->resource) {
 			cmask_reloc = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx,
 				tex->cmask_buffer, RADEON_USAGE_READWRITE);
@@ -2227,7 +2238,7 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 		radeon_emit(cs, reloc);
 	}
 	/* set CB_COLOR1_INFO for possible dual-src blending */
-	if (i == 1) {
+	if (i == 1 && state->cbufs[0]) {
 		r600_write_context_reg(cs, R_028C70_CB_COLOR0_INFO + 1 * 0x3C,
 				       ((struct r600_surface*)state->cbufs[0])->cb_color_info);
 
