@@ -3380,6 +3380,7 @@ struct gl_constants
    GLuint MaxCombinedImageUniforms;
 
    /** GL_ARB_compute_shader */
+   GLuint MaxComputeWorkGroupCount[3]; /* Array of x, y, z dimensions */
    GLuint MaxComputeWorkGroupSize[3]; /* Array of x, y, z dimensions */
    GLuint MaxComputeWorkGroupInvocations;
 };

@@ -682,6 +682,10 @@ builtin_variable_generator::generate_constants()
    }
 
    if (state->is_version(430, 0) || state->ARB_compute_shader_enable) {
+      add_const_ivec3("gl_MaxComputeWorkGroupCount",
+                      state->Const.MaxComputeWorkGroupCount[0],
+                      state->Const.MaxComputeWorkGroupCount[1],
+                      state->Const.MaxComputeWorkGroupCount[2]);
       add_const_ivec3("gl_MaxComputeWorkGroupSize",
                       state->Const.MaxComputeWorkGroupSize[0],
                       state->Const.MaxComputeWorkGroupSize[1],

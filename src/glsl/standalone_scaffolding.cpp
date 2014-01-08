@@ -141,6 +141,9 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents = 32;
 
    ctx->Const.MaxDrawBuffers = 1;
+   ctx->Const.MaxComputeWorkGroupCount[0] = 65535;
+   ctx->Const.MaxComputeWorkGroupCount[1] = 65535;
+   ctx->Const.MaxComputeWorkGroupCount[2] = 65535;
    ctx->Const.MaxComputeWorkGroupSize[0] = 1024;
    ctx->Const.MaxComputeWorkGroupSize[1] = 1024;
    ctx->Const.MaxComputeWorkGroupSize[2] = 64;

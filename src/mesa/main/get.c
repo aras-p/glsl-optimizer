@@ -1929,6 +1929,14 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
       v->value_int = ctx->ImageUnits[index].Format;
       return TYPE_INT;
 
+   case GL_MAX_COMPUTE_WORK_GROUP_COUNT:
+      if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_compute_shader)
+         goto invalid_enum;
+      if (index >= 3)
+         goto invalid_value;
+      v->value_int = ctx->Const.MaxComputeWorkGroupCount[index];
+      return TYPE_INT;
+
    case GL_MAX_COMPUTE_WORK_GROUP_SIZE:
       if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_compute_shader)
          goto invalid_enum;

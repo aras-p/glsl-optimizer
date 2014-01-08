@@ -702,6 +702,9 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxVertexAttribBindings = MAX_VERTEX_GENERIC_ATTRIBS;
 
    /* GL_ARB_compute_shader */
+   ctx->Const.MaxComputeWorkGroupCount[0] = 65535;
+   ctx->Const.MaxComputeWorkGroupCount[1] = 65535;
+   ctx->Const.MaxComputeWorkGroupCount[2] = 65535;
    ctx->Const.MaxComputeWorkGroupSize[0] = 1024;
    ctx->Const.MaxComputeWorkGroupSize[1] = 1024;
    ctx->Const.MaxComputeWorkGroupSize[2] = 64;

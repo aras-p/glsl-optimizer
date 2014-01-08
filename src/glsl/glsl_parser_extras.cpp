@@ -124,6 +124,8 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->Const.MaxAtomicBufferBindings = ctx->Const.MaxAtomicBufferBindings;
 
    /* Compute shader constants */
+   for (unsigned i = 0; i < Elements(this->Const.MaxComputeWorkGroupCount); i++)
+      this->Const.MaxComputeWorkGroupCount[i] = ctx->Const.MaxComputeWorkGroupCount[i];
    for (unsigned i = 0; i < Elements(this->Const.MaxComputeWorkGroupSize); i++)
       this->Const.MaxComputeWorkGroupSize[i] = ctx->Const.MaxComputeWorkGroupSize[i];
 
