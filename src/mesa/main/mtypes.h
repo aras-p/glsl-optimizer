@@ -2185,6 +2185,11 @@ struct gl_fragment_program
 struct gl_compute_program
 {
    struct gl_program Base;   /**< base class */
+
+   /**
+    * Size specified using local_size_{x,y,z}.
+    */
+   unsigned LocalSize[3];
 };
 
 
@@ -2645,6 +2650,18 @@ struct gl_shader_program
       GLuint ClipDistanceArraySize; /**< Size of the gl_ClipDistance array, or
                                          0 if not present. */
    } Vert;
+
+   /**
+    * Compute shader state - copied into gl_compute_program by
+    * _mesa_copy_linked_program_data().
+    */
+   struct {
+      /**
+       * If this shader contains a compute stage, size specified using
+       * local_size_{x,y,z}.  Otherwise undefined.
+       */
+      unsigned LocalSize[3];
+   } Comp;
 
    /* post-link info: */
    unsigned NumUserUniformStorage;

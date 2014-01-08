@@ -1846,6 +1846,13 @@ _mesa_copy_linked_program_data(gl_shader_stage type,
       dst_gp->UsesEndPrimitive = src->Geom.UsesEndPrimitive;
    }
       break;
+   case MESA_SHADER_COMPUTE: {
+      struct gl_compute_program *dst_cp = (struct gl_compute_program *) dst;
+      int i;
+      for (i = 0; i < 3; i++)
+         dst_cp->LocalSize[i] = src->Comp.LocalSize[i];
+   }
+      break;
    default:
       break;
    }
