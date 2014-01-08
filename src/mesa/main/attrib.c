@@ -1269,15 +1269,19 @@ _mesa_PopAttrib(void)
 	    break;
          case GL_SCISSOR_BIT:
             {
+               unsigned i;
                const struct gl_scissor_attrib *scissor;
                scissor = (const struct gl_scissor_attrib *) attr->data;
-               _mesa_set_scissor(ctx, 0,
-                                 scissor->ScissorArray[0].X,
-                                 scissor->ScissorArray[0].Y,
-                                 scissor->ScissorArray[0].Width,
-                                 scissor->ScissorArray[0].Height);
-               _mesa_set_enable(ctx, GL_SCISSOR_TEST, scissor->EnableFlags & 1);
 
+               for (i = 0; i < ctx->Const.MaxViewports; i++) {
+                  _mesa_set_scissor(ctx, i,
+                                    scissor->ScissorArray[i].X,
+                                    scissor->ScissorArray[i].Y,
+                                    scissor->ScissorArray[i].Width,
+                                    scissor->ScissorArray[i].Height);
+                  _mesa_set_enablei(ctx, GL_SCISSOR_TEST, i,
+                                    (scissor->EnableFlags >> i) & 1);
+               }
             }
             break;
          case GL_STENCIL_BUFFER_BIT:
