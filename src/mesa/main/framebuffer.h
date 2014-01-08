@@ -71,6 +71,11 @@ _mesa_resize_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
 extern void
 _mesa_resizebuffers( struct gl_context *ctx );
 
+extern void
+_mesa_scissor_bounding_box(const struct gl_context *ctx,
+                           const struct gl_framebuffer *buffer,
+                           unsigned idx, int *bbox);
+
 extern void 
 _mesa_update_draw_buffer_bounds(struct gl_context *ctx);
 

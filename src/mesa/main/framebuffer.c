@@ -357,6 +357,56 @@ update_framebuffer_size(struct gl_context *ctx, struct gl_framebuffer *fb)
 
 
 /**
+ * Calculate the inclusive bounding box for the scissor of a specific viewport
+ *
+ * \param ctx     GL context.
+ * \param buffer  Framebuffer to be checked against
+ * \param idx     Index of the desired viewport
+ * \param bbox    Bounding box for the scissored viewport.  Stored as xmin,
+ *                xmax, ymin, ymax.
+ *
+ * \warning This function assumes that the framebuffer dimensions are up to
+ * date (e.g., update_framebuffer_size has been recently called on \c buffer).
+ *
+ * \sa _mesa_clip_to_region
+ */
+void
+_mesa_scissor_bounding_box(const struct gl_context *ctx,
+                           const struct gl_framebuffer *buffer,
+                           unsigned idx, int *bbox)
+{
+   bbox[0] = 0;
+   bbox[2] = 0;
+   bbox[1] = buffer->Width;
+   bbox[3] = buffer->Height;
+
+   if (ctx->Scissor.EnableFlags & (1u << idx)) {
+      if (ctx->Scissor.ScissorArray[idx].X > bbox[0]) {
+         bbox[0] = ctx->Scissor.ScissorArray[idx].X;
+      }
+      if (ctx->Scissor.ScissorArray[idx].Y > bbox[2]) {
+         bbox[2] = ctx->Scissor.ScissorArray[idx].Y;
+      }
+      if (ctx->Scissor.ScissorArray[idx].X + ctx->Scissor.ScissorArray[idx].Width < bbox[1]) {
+         bbox[1] = ctx->Scissor.ScissorArray[idx].X + ctx->Scissor.ScissorArray[idx].Width;
+      }
+      if (ctx->Scissor.ScissorArray[idx].Y + ctx->Scissor.ScissorArray[idx].Height < bbox[3]) {
+         bbox[3] = ctx->Scissor.ScissorArray[idx].Y + ctx->Scissor.ScissorArray[idx].Height;
+      }
+      /* finally, check for empty region */
+      if (bbox[0] > bbox[1]) {
+         bbox[0] = bbox[1];
+      }
+      if (bbox[2] > bbox[3]) {
+         bbox[2] = bbox[3];
+      }
+   }
+
+   ASSERT(bbox[0] <= bbox[1]);
+   ASSERT(bbox[2] <= bbox[3]);
+}
+
+/**
  * Update the context's current drawing buffer's Xmin, Xmax, Ymin, Ymax fields.
  * These values are computed from the buffer's width and height and
  * the scissor box, if it's enabled.
@@ -366,6 +416,7 @@ void
 _mesa_update_draw_buffer_bounds(struct gl_context *ctx)
 {
    struct gl_framebuffer *buffer = ctx->DrawBuffer;
+   int bbox[4];
 
    if (!buffer)
       return;
@@ -375,36 +426,12 @@ _mesa_update_draw_buffer_bounds(struct gl_context *ctx)
       update_framebuffer_size(ctx, buffer);
    }
 
-   buffer->_Xmin = 0;
-   buffer->_Ymin = 0;
-   buffer->_Xmax = buffer->Width;
-   buffer->_Ymax = buffer->Height;
-
    /* Default to the first scissor as that's always valid */
-   if (ctx->Scissor.EnableFlags & 1) {
-      if (ctx->Scissor.ScissorArray[0].X > buffer->_Xmin) {
-	 buffer->_Xmin = ctx->Scissor.ScissorArray[0].X;
-      }
-      if (ctx->Scissor.ScissorArray[0].Y > buffer->_Ymin) {
-	 buffer->_Ymin = ctx->Scissor.ScissorArray[0].Y;
-      }
-      if (ctx->Scissor.ScissorArray[0].X + ctx->Scissor.ScissorArray[0].Width < buffer->_Xmax) {
-	 buffer->_Xmax = ctx->Scissor.ScissorArray[0].X + ctx->Scissor.ScissorArray[0].Width;
-      }
-      if (ctx->Scissor.ScissorArray[0].Y + ctx->Scissor.ScissorArray[0].Height < buffer->_Ymax) {
-	 buffer->_Ymax = ctx->Scissor.ScissorArray[0].Y + ctx->Scissor.ScissorArray[0].Height;
-      }
-      /* finally, check for empty region */
-      if (buffer->_Xmin > buffer->_Xmax) {
-         buffer->_Xmin = buffer->_Xmax;
-      }
-      if (buffer->_Ymin > buffer->_Ymax) {
-         buffer->_Ymin = buffer->_Ymax;
-      }
-   }
-
-   ASSERT(buffer->_Xmin <= buffer->_Xmax);
-   ASSERT(buffer->_Ymin <= buffer->_Ymax);
+   _mesa_scissor_bounding_box(ctx, buffer, 0, bbox);
+   buffer->_Xmin = bbox[0];
+   buffer->_Ymin = bbox[2];
+   buffer->_Xmax = bbox[1];
+   buffer->_Ymax = bbox[3];
 }
 
 
