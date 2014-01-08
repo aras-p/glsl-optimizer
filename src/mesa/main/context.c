@@ -461,7 +461,7 @@ _mesa_init_current(struct gl_context *ctx)
  * Important: drivers should override these with actual limits.
  */
 static void
-init_program_limits(struct gl_context *ctx, GLenum type,
+init_program_limits(struct gl_context *ctx, gl_shader_stage stage,
                     struct gl_program_constants *prog)
 {
    prog->MaxInstructions = MAX_PROGRAM_INSTRUCTIONS;
@@ -473,8 +473,8 @@ init_program_limits(struct gl_context *ctx, GLenum type,
    prog->MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
    prog->MaxAddressOffset = MAX_PROGRAM_LOCAL_PARAMS;
 
-   switch (type) {
-   case GL_VERTEX_PROGRAM_ARB:
+   switch (stage) {
+   case MESA_SHADER_VERTEX:
       prog->MaxParameters = MAX_VERTEX_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_VERTEX_GENERIC_ATTRIBS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
@@ -482,7 +482,7 @@ init_program_limits(struct gl_context *ctx, GLenum type,
       prog->MaxInputComponents = 0; /* value not used */
       prog->MaxOutputComponents = 16 * 4; /* old limit not to break tnl and swrast */
       break;
-   case GL_FRAGMENT_PROGRAM_ARB:
+   case MESA_SHADER_FRAGMENT:
       prog->MaxParameters = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
@@ -490,7 +490,7 @@ init_program_limits(struct gl_context *ctx, GLenum type,
       prog->MaxInputComponents = 16 * 4; /* old limit not to break tnl and swrast */
       prog->MaxOutputComponents = 0; /* value not used */
       break;
-   case MESA_GEOMETRY_PROGRAM:
+   case MESA_SHADER_GEOMETRY:
       prog->MaxParameters = MAX_VERTEX_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_VERTEX_GENERIC_ATTRIBS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
@@ -499,7 +499,7 @@ init_program_limits(struct gl_context *ctx, GLenum type,
       prog->MaxOutputComponents = 16 * 4; /* old limit not to break tnl and swrast */
       break;
    default:
-      assert(0 && "Bad program type in init_program_limits()");
+      assert(0 && "Bad shader stage in init_program_limits()");
    }
 
    /* Set the native limits to zero.  This implies that there is no native
@@ -551,6 +551,7 @@ init_program_limits(struct gl_context *ctx, GLenum type,
 static void 
 _mesa_init_constants(struct gl_context *ctx)
 {
+   int i;
    assert(ctx);
 
    /* Constants, may be overriden (usually only reduced) by device drivers */
@@ -593,9 +594,8 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxUniformBlockSize = 16384;
    ctx->Const.UniformBufferOffsetAlignment = 1;
 
-   init_program_limits(ctx, GL_VERTEX_PROGRAM_ARB, &ctx->Const.Program[MESA_SHADER_VERTEX]);
-   init_program_limits(ctx, GL_FRAGMENT_PROGRAM_ARB, &ctx->Const.Program[MESA_SHADER_FRAGMENT]);
-   init_program_limits(ctx, MESA_GEOMETRY_PROGRAM, &ctx->Const.Program[MESA_SHADER_GEOMETRY]);
+   for (i = 0; i < MESA_SHADER_STAGES; i++)
+      init_program_limits(ctx, i, &ctx->Const.Program[i]);
 
    ctx->Const.MaxProgramMatrices = MAX_PROGRAM_MATRICES;
    ctx->Const.MaxProgramMatrixStackDepth = MAX_PROGRAM_MATRIX_STACK_DEPTH;
