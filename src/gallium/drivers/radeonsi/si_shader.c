@@ -50,6 +50,7 @@ struct si_shader_output_values
 	LLVMValueRef values[4];
 	unsigned name;
 	unsigned index;
+	unsigned sid;
 	unsigned usage;
 };
 
@@ -876,7 +877,9 @@ static void build_streamout_store(struct si_shader_context *shader,
 
 /* On SI, the vertex shader is responsible for writing streamout data
  * to buffers. */
-static void si_llvm_emit_streamout(struct si_shader_context *shader)
+static void si_llvm_emit_streamout(struct si_shader_context *shader,
+				   struct si_shader_output_values *outputs,
+				   unsigned noutput)
 {
 	struct pipe_stream_output_info *so = &shader->shader->selector->so;
 	struct gallivm_state *gallivm = &shader->radeon_bld.gallivm;
@@ -937,8 +940,6 @@ static void si_llvm_emit_streamout(struct si_shader_context *shader)
 			so_write_offset[i] = LLVMBuildAdd(builder, so_write_offset[i], so_offset, "");
 		}
 
-		LLVMValueRef (*outputs)[TGSI_NUM_CHANNELS] = shader->radeon_bld.soa.outputs;
-
 		/* Write streamout data. */
 		for (i = 0; i < so->num_outputs; i++) {
 			unsigned buf_idx = so->output[i].output_buffer;
@@ -953,9 +954,21 @@ static void si_llvm_emit_streamout(struct si_shader_context *shader)
 
 			/* Load the output as int. */
 			for (j = 0; j < num_comps; j++) {
-				out[j] = LLVMBuildLoad(builder, outputs[reg][start+j], "");
-				out[j] = LLVMBuildBitCast(builder, out[j], i32, "");
+				unsigned outidx = 0;
+
+				while (outidx < noutput && outputs[outidx].index != reg)
+					outidx++;
+
+				if (outidx < noutput)
+					out[j] = LLVMBuildBitCast(builder,
+								  outputs[outidx].values[start+j],
+								  i32, "");
+				else
+					out[j] = NULL;
 			}
+
+			if (!out[0])
+				continue;
 
 			/* Pack the output. */
 			LLVMValueRef vdata = NULL;
@@ -1005,13 +1018,13 @@ static void si_llvm_export_vs(struct lp_build_tgsi_context *bld_base,
 	unsigned pos_idx;
 	int i;
 
-	if (si_shader_ctx->shader->selector->so.num_outputs) {
-		si_llvm_emit_streamout(si_shader_ctx);
+	if (outputs && si_shader_ctx->shader->selector->so.num_outputs) {
+		si_llvm_emit_streamout(si_shader_ctx, outputs, noutput);
 	}
 
 	for (i = 0; i < noutput; i++) {
 		semantic_name = outputs[i].name;
-		semantic_index = outputs[i].index;
+		semantic_index = outputs[i].sid;
 		semantic_usage = outputs[i].usage;
 
 handle_semantic:
@@ -1263,8 +1276,9 @@ static void si_llvm_emit_vs_epilogue(struct lp_build_tgsi_context * bld_base)
 		outputs = REALLOC(outputs, noutput * sizeof(outputs[0]),
 				  (noutput + 1) * sizeof(outputs[0]));
 		for (index = d->Range.First; index <= d->Range.Last; index++) {
+			outputs[noutput].index = index;
 			outputs[noutput].name = d->Semantic.Name;
-			outputs[noutput].index = d->Semantic.Index;
+			outputs[noutput].sid = d->Semantic.Index;
 			outputs[noutput].usage = d->Declaration.UsageMask;
 
 			for (i = 0; i < 4; i++)
@@ -2242,7 +2256,9 @@ static void preload_streamout_buffers(struct si_shader_context *si_shader_ctx)
 	struct gallivm_state * gallivm = bld_base->base.gallivm;
 	unsigned i;
 
-	if (!si_shader_ctx->shader->selector->so.num_outputs)
+	if (si_shader_ctx->type != TGSI_PROCESSOR_VERTEX ||
+	    si_shader_ctx->shader->key.vs.as_es ||
+	    !si_shader_ctx->shader->selector->so.num_outputs)
 		return;
 
 	LLVMValueRef buf_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
@@ -2386,6 +2402,7 @@ static int si_generate_gs_copy_shader(struct si_context *sctx,
 
 		outputs[i].name = out->name;
 		outputs[i].index = out->index;
+		outputs[i].sid = out->sid;
 		outputs[i].usage = out->usage;
 
 		for (chan = 0; chan < 4; chan++) {
