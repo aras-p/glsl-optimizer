@@ -1284,6 +1284,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	      if (extensions->AMD_shader_trinary_minmax)
 	         add_builtin_define(parser, "GL_AMD_shader_trinary_minmax", 1);
+
+	      if (extensions->ARB_viewport_array)
+	         add_builtin_define(parser, "GL_ARB_viewport_array", 1);
 	   }
 	}
 
