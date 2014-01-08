@@ -36,8 +36,8 @@ _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 
 extern void 
-_mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLint x, GLint y,
-                   GLsizei width, GLsizei height);
+_mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLfloat x, GLfloat y,
+                   GLfloat width, GLfloat height);
 
 
 extern void GLAPIENTRY

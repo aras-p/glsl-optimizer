@@ -35,12 +35,13 @@
 #include "viewport.h"
 
 static void
-set_viewport_no_notify(struct gl_context *ctx, unsigned idx, GLint x, GLint y,
-                       GLsizei width, GLsizei height)
+set_viewport_no_notify(struct gl_context *ctx, unsigned idx,
+                       GLfloat x, GLfloat y,
+                       GLfloat width, GLfloat height)
 {
    /* clamp width and height to the implementation dependent range */
-   width  = MIN2(width, (GLsizei) ctx->Const.MaxViewportWidth);
-   height = MIN2(height, (GLsizei) ctx->Const.MaxViewportHeight);
+   width  = MIN2(width, (GLfloat) ctx->Const.MaxViewportWidth);
+   height = MIN2(height, (GLfloat) ctx->Const.MaxViewportHeight);
 
    ctx->ViewportArray[idx].X = x;
    ctx->ViewportArray[idx].Width = width;
@@ -121,8 +122,8 @@ _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
  * \param height height of the viewport rectangle.
  */
 void
-_mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLint x, GLint y,
-                    GLsizei width, GLsizei height)
+_mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLfloat x, GLfloat y,
+                    GLfloat width, GLfloat height)
 {
    set_viewport_no_notify(ctx, idx, x, y, width, height);
 
