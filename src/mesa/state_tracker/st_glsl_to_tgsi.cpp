@@ -5023,6 +5023,24 @@ out:
 }
 /* ----------------------------- End TGSI code ------------------------------ */
 
+
+static unsigned
+shader_stage_to_ptarget(gl_shader_stage stage)
+{
+   switch (stage) {
+   case MESA_SHADER_VERTEX:
+      return PIPE_SHADER_VERTEX;
+   case MESA_SHADER_FRAGMENT:
+      return PIPE_SHADER_FRAGMENT;
+   case MESA_SHADER_GEOMETRY:
+      return PIPE_SHADER_GEOMETRY;
+   }
+
+   assert(!"should not be reached");
+   return PIPE_SHADER_VERTEX;
+}
+
+
 /**
  * Convert a shader's GLSL IR into a Mesa gl_program, although without 
  * generating Mesa IR.
@@ -5034,30 +5052,12 @@ get_mesa_program(struct gl_context *ctx,
 {
    glsl_to_tgsi_visitor* v;
    struct gl_program *prog;
-   GLenum target;
+   GLenum target = _mesa_shader_stage_to_program(shader->Stage);
    bool progress;
    struct gl_shader_compiler_options *options =
          &ctx->ShaderCompilerOptions[_mesa_shader_enum_to_shader_stage(shader->Type)];
    struct pipe_screen *pscreen = ctx->st->pipe->screen;
-   unsigned ptarget;
-
-   switch (shader->Type) {
-   case GL_VERTEX_SHADER:
-      target = GL_VERTEX_PROGRAM_ARB;
-      ptarget = PIPE_SHADER_VERTEX;
-      break;
-   case GL_FRAGMENT_SHADER:
-      target = GL_FRAGMENT_PROGRAM_ARB;
-      ptarget = PIPE_SHADER_FRAGMENT;
-      break;
-   case GL_GEOMETRY_SHADER:
-      target = GL_GEOMETRY_PROGRAM_NV;
-      ptarget = PIPE_SHADER_GEOMETRY;
-      break;
-   default:
-      assert(!"should not be reached");
-      return NULL;
-   }
+   unsigned ptarget = shader_stage_to_ptarget(shader->Stage);
 
    validate_ir_tree(shader->ir);
 

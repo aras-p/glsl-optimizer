@@ -2799,25 +2799,10 @@ get_mesa_program(struct gl_context *ctx,
    ir_instruction **mesa_instruction_annotation;
    int i;
    struct gl_program *prog;
-   GLenum target;
+   GLenum target = _mesa_shader_stage_to_program(shader->Stage);
    const char *target_string = _mesa_shader_stage_to_string(shader->Stage);
    struct gl_shader_compiler_options *options =
          &ctx->ShaderCompilerOptions[shader->Stage];
-
-   switch (shader->Stage) {
-   case MESA_SHADER_VERTEX:
-      target = GL_VERTEX_PROGRAM_ARB;
-      break;
-   case MESA_SHADER_FRAGMENT:
-      target = GL_FRAGMENT_PROGRAM_ARB;
-      break;
-   case MESA_SHADER_GEOMETRY:
-      target = GL_GEOMETRY_PROGRAM_NV;
-      break;
-   default:
-      assert(!"should not be reached");
-      return NULL;
-   }
 
    validate_ir_tree(shader->ir);
 
