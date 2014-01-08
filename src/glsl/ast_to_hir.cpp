@@ -2282,6 +2282,13 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       var->data.mode = ir_var_uniform;
 
    if (!is_parameter && is_varying_var(var, state->stage)) {
+      /* User-defined ins/outs are not permitted in compute shaders. */
+      if (state->stage == MESA_SHADER_COMPUTE) {
+         _mesa_glsl_error(loc, state,
+                          "user-defined input and output variables are not "
+                          "permitted in compute shaders");
+      }
+
       /* This variable is being used to link data between shader stages (in
        * pre-glsl-1.30 parlance, it's a "varying").  Check that it has a type
        * that is allowed for such purposes.
