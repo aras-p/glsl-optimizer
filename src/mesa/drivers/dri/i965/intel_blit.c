@@ -204,9 +204,9 @@ intel_miptree_blit(struct brw_context *brw,
     * As a result of these two limitations, we can only use the blitter to do
     * this copy when the region's pitch is less than 32k.
     */
-   if (src_mt->region->pitch > 32768 ||
-       dst_mt->region->pitch > 32768) {
-      perf_debug("Falling back due to >32k pitch\n");
+   if (src_mt->region->pitch >= 32768 ||
+       dst_mt->region->pitch >= 32768) {
+      perf_debug("Falling back due to >=32k pitch\n");
       return false;
    }
 
