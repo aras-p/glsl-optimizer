@@ -896,21 +896,8 @@ _mesa_valid_register_index(const struct gl_context *ctx,
 {
    const struct gl_program_constants *c;
 
-   switch (shaderType) {
-   case MESA_SHADER_VERTEX:
-      c = &ctx->Const.Program[MESA_SHADER_VERTEX];
-      break;
-   case MESA_SHADER_FRAGMENT:
-      c = &ctx->Const.Program[MESA_SHADER_FRAGMENT];
-      break;
-   case MESA_SHADER_GEOMETRY:
-      c = &ctx->Const.Program[MESA_SHADER_GEOMETRY];
-      break;
-   default:
-      _mesa_problem(ctx,
-                    "unexpected shader type in _mesa_valid_register_index()");
-      return GL_FALSE;
-   }
+   assert(0 <= shaderType && shaderType < MESA_SHADER_STAGES);
+   c = &ctx->Const.Program[shaderType];
 
    switch (file) {
    case PROGRAM_UNDEFINED:
