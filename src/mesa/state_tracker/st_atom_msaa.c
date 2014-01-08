@@ -31,6 +31,7 @@
 #include "st_atom.h"
 
 #include "cso_cache/cso_context.h"
+#include "util/u_framebuffer.h"
 
 
 /* Second state atom for user clip planes:
@@ -38,14 +39,9 @@
 static void update_sample_mask( struct st_context *st )
 {
    unsigned sample_mask = 0xffffffff;
-   unsigned sample_count = 1;
    struct pipe_framebuffer_state *framebuffer = &st->state.framebuffer;
-
    /* dependency here on bound surface (or rather, sample count) is worrying */
-   if (framebuffer->zsbuf)
-      sample_count = framebuffer->zsbuf->texture->nr_samples;
-   else if (framebuffer->cbufs[0])
-      sample_count = framebuffer->cbufs[0]->texture->nr_samples;
+   unsigned sample_count = util_framebuffer_get_num_samples(framebuffer);
 
    if (st->ctx->Multisample.Enabled && sample_count > 1) {
    /* unlike in gallium/d3d10 the mask is only active if msaa is enabled */

@@ -680,7 +680,10 @@ st_DrawBuffers(struct gl_context *ctx, GLsizei count, const GLenum *buffers)
    /* add the renderbuffers on demand */
    for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
       gl_buffer_index idx = fb->_ColorDrawBufferIndexes[i];
-      st_manager_add_color_renderbuffer(st, fb, idx);
+
+      if (idx >= 0) {
+         st_manager_add_color_renderbuffer(st, fb, idx);
+      }
    }
 }
 

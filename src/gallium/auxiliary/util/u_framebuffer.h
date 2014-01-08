@@ -60,6 +60,10 @@ extern unsigned
 util_framebuffer_get_num_layers(const struct pipe_framebuffer_state *fb);
 
 
+extern unsigned
+util_framebuffer_get_num_samples(const struct pipe_framebuffer_state *fb);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -65,12 +65,14 @@ update_framebuffer_state( struct st_context *st )
    /* Examine Mesa's ctx->DrawBuffer->_ColorDrawBuffers state
     * to determine which surfaces to draw to
     */
-   framebuffer->nr_cbufs = 0;
+   framebuffer->nr_cbufs = fb->_NumColorDrawBuffers;
+
    for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
+      pipe_surface_reference(&framebuffer->cbufs[i], NULL);
+
       strb = st_renderbuffer(fb->_ColorDrawBuffers[i]);
 
       if (strb) {
-         /*printf("--------- framebuffer surface rtt %p\n", strb->rtt);*/
          if (strb->is_rtt ||
              (strb->texture && util_format_is_srgb(strb->texture->format))) {
             /* rendering to a GL texture, may have to update surface */
@@ -78,13 +80,12 @@ update_framebuffer_state( struct st_context *st )
          }
 
          if (strb->surface) {
-            pipe_surface_reference(&framebuffer->cbufs[framebuffer->nr_cbufs],
-                                   strb->surface);
-            framebuffer->nr_cbufs++;
+            pipe_surface_reference(&framebuffer->cbufs[i], strb->surface);
          }
          strb->defined = GL_TRUE; /* we'll be drawing something */
       }
    }
+
    for (i = framebuffer->nr_cbufs; i < PIPE_MAX_COLOR_BUFS; i++) {
       pipe_surface_reference(&framebuffer->cbufs[i], NULL);
    }
@@ -113,7 +114,8 @@ update_framebuffer_state( struct st_context *st )
 #ifdef DEBUG
    /* Make sure the resource binding flags were set properly */
    for (i = 0; i < framebuffer->nr_cbufs; i++) {
-      assert(framebuffer->cbufs[i]->texture->bind & PIPE_BIND_RENDER_TARGET);
+      assert(!framebuffer->cbufs[i] ||
+             framebuffer->cbufs[i]->texture->bind & PIPE_BIND_RENDER_TARGET);
    }
    if (framebuffer->zsbuf) {
       assert(framebuffer->zsbuf->texture->bind & PIPE_BIND_DEPTH_STENCIL);

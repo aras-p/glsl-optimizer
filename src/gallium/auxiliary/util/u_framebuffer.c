@@ -171,3 +171,24 @@ util_framebuffer_get_num_layers(const struct pipe_framebuffer_state *fb)
 	}
 	return num_layers;
 }
+
+
+/**
+ * Return the number of MSAA samples.
+ */
+unsigned
+util_framebuffer_get_num_samples(const struct pipe_framebuffer_state *fb)
+{
+   unsigned i;
+
+   for (i = 0; i < fb->nr_cbufs; i++) {
+      if (fb->cbufs[i]) {
+         return MAX2(1, fb->cbufs[i]->texture->nr_samples);
+      }
+   }
+   if (fb->zsbuf) {
+      return MAX2(1, fb->zsbuf->texture->nr_samples);
+   }
+
+   return 1;
+}
