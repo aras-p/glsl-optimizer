@@ -338,9 +338,13 @@ try_setup_point( struct lp_setup_context *setup,
    int fixed_width = MAX2(FIXED_ONE,
                           (subpixel_snap(size) + FIXED_ONE/2 - 1) & ~(FIXED_ONE-1));
 
-   const int x0 = subpixel_snap(v0[0][0] - setup->pixel_offset) - fixed_width/2;
-   const int y0 = subpixel_snap(v0[0][1] - setup->pixel_offset) - fixed_width/2;
-     
+   /* Yes this is necessary to accurately calculate bounding boxes
+    * with the two fill-conventions we support.  GL (normally) ends
+    * up needing a bottom-left fill convention, which requires
+    * slightly different rounding.
+    */
+   int adj = (setup->bottom_edge_rule != 0) ? 1 : 0;
+
    struct lp_scene *scene = setup->scene;
    struct lp_rast_triangle *point;
    unsigned bytes;
@@ -363,13 +367,14 @@ try_setup_point( struct lp_setup_context *setup,
       print_point(setup, v0);
 
    /* Bounding rectangle (in pixels) */
-   {
-      /* Yes this is necessary to accurately calculate bounding boxes
-       * with the two fill-conventions we support.  GL (normally) ends
-       * up needing a bottom-left fill convention, which requires
-       * slightly different rounding.
+   if (!lp_context->rasterizer ||
+       lp_context->rasterizer->point_quad_rasterization) {
+      /*
+       * Rasterize points as quads.
        */
-      int adj = (setup->bottom_edge_rule != 0) ? 1 : 0;
+
+      const int x0 = subpixel_snap(v0[0][0] - setup->pixel_offset) - fixed_width/2;
+      const int y0 = subpixel_snap(v0[0][1] - setup->pixel_offset) - fixed_width/2;
 
       bbox.x0 = (x0 + (FIXED_ONE-1)) >> FIXED_ORDER;
       bbox.x1 = (x0 + fixed_width + (FIXED_ONE-1)) >> FIXED_ORDER;
@@ -380,8 +385,50 @@ try_setup_point( struct lp_setup_context *setup,
        */
       bbox.x1--;
       bbox.y1--;
+   } else {
+      /*
+       * OpenGL legacy rasterization rules for non-sprite points.
+       *
+       * Per OpenGL 2.1 spec, section 3.3.1, "Basic Point Rasterization".
+       *
+       * This type of point rasterization is only available in pre 3.0 contexts
+       * (or compatibilility contexts which we don't support) anyway.
+       */
+
+      const int x0 = subpixel_snap(v0[0][0]);
+      const int y0 = subpixel_snap(v0[0][1]) - adj;
+
+      int int_width = fixed_width >> FIXED_ORDER;
+
+      assert(setup->pixel_offset != 0);
+
+      if (int_width == 1) {
+         bbox.x0 = x0 >> FIXED_ORDER;
+         bbox.y0 = y0 >> FIXED_ORDER;
+         bbox.x1 = bbox.x0;
+         bbox.y1 = bbox.y0;
+      } else {
+         if (int_width & 1) {
+            /* Odd width */
+            bbox.x0 = (x0 >> FIXED_ORDER) - (int_width - 1)/2;
+            bbox.y0 = (y0 >> FIXED_ORDER) - (int_width - 1)/2;
+         } else {
+            /* Even width */
+            bbox.x0 = ((x0 + FIXED_ONE/2) >> FIXED_ORDER) - int_width/2;
+            bbox.y0 = ((y0 + FIXED_ONE/2) >> FIXED_ORDER) - int_width/2;
+         }
+
+         bbox.x1 = bbox.x0 + int_width - 1;
+         bbox.y1 = bbox.y0 + int_width - 1;
+      }
    }
-   
+
+   if (0) {
+      debug_printf("  bbox: (%i, %i) - (%i, %i)\n",
+                   bbox.x0, bbox.y0,
+                   bbox.x1, bbox.y1);
+   }
+
    if (!u_rect_test_intersection(&setup->draw_regions[viewport_index], &bbox)) {
       if (0) debug_printf("offscreen\n");
       LP_COUNT(nr_culled_tris);
