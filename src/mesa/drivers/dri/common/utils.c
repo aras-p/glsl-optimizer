@@ -308,6 +308,7 @@ driCreateConfigs(gl_format format,
 			__DRI_ATTRIB_TEXTURE_2D_BIT |
 			__DRI_ATTRIB_TEXTURE_RECTANGLE_BIT;
 
+		    modes->yInverted = GL_TRUE;
 		    modes->sRGBCapable = is_srgb;
 		}
 	    }
