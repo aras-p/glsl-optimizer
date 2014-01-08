@@ -1438,7 +1438,7 @@ _mesa_check_init_viewport(struct gl_context *ctx, GLuint width, GLuint height)
        */
       ctx->ViewportInitialized = GL_TRUE;
       _mesa_set_viewport(ctx, 0, 0, 0, width, height);
-      _mesa_set_scissor(ctx, 0, 0, width, height);
+      _mesa_set_scissor(ctx, 0, 0, 0, width, height);
    }
 }
 

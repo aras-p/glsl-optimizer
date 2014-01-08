@@ -70,7 +70,7 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
       return;
    }
 
-   _mesa_set_scissor(ctx, x, y, width, height);
+   _mesa_set_scissor(ctx, 0, x, y, width, height);
 }
 
 
@@ -88,10 +88,10 @@ _mesa_Scissor( GLint x, GLint y, GLsizei width, GLsizei height )
  * the dd_function_table::Scissor callback.
  */
 void
-_mesa_set_scissor(struct gl_context *ctx, 
+_mesa_set_scissor(struct gl_context *ctx, unsigned idx,
                   GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   set_scissor_no_notify(ctx, 0, x, y, width, height);
+   set_scissor_no_notify(ctx, idx, x, y, width, height);
 
    if (ctx->Driver.Scissor)
       ctx->Driver.Scissor(ctx);

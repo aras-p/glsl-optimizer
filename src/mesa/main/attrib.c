@@ -1271,7 +1271,7 @@ _mesa_PopAttrib(void)
             {
                const struct gl_scissor_attrib *scissor;
                scissor = (const struct gl_scissor_attrib *) attr->data;
-               _mesa_set_scissor(ctx,
+               _mesa_set_scissor(ctx, 0,
                                  scissor->ScissorArray[0].X,
                                  scissor->ScissorArray[0].Y,
                                  scissor->ScissorArray[0].Width,
