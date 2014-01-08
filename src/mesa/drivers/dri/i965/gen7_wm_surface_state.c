@@ -298,8 +298,11 @@ gen7_update_texture_surface(struct gl_context *ctx,
 
    surf[0] = translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
              tex_format << BRW_SURFACE_FORMAT_SHIFT |
-             gen7_surface_tiling_mode(mt->region->tiling) |
-             BRW_SURFACE_CUBEFACE_ENABLES;
+             gen7_surface_tiling_mode(mt->region->tiling);
+
+   /* mask of faces present in cube map; for other surfaces MBZ. */
+   if (tObj->Target == GL_TEXTURE_CUBE_MAP || tObj->Target == GL_TEXTURE_CUBE_MAP_ARRAY)
+      surf[0] |= BRW_SURFACE_CUBEFACE_ENABLES;
 
    if (mt->align_h == 4)
       surf[0] |= GEN7_SURFACE_VALIGN_4;
