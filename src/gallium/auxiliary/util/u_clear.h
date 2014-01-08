@@ -47,7 +47,10 @@ util_clear(struct pipe_context *pipe,
    for (i = 0; i < framebuffer->nr_cbufs; i++) {
       if (buffers & (PIPE_CLEAR_COLOR0 << i)) {
          struct pipe_surface *ps = framebuffer->cbufs[i];
-         pipe->clear_render_target(pipe, ps, color, 0, 0, ps->width, ps->height);
+
+         if (ps) {
+            pipe->clear_render_target(pipe, ps, color, 0, 0, ps->width, ps->height);
+         }
       }
    }
 

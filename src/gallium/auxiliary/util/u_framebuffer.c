@@ -127,6 +127,9 @@ util_framebuffer_min_size(const struct pipe_framebuffer_state *fb,
    unsigned i;
 
    for (i = 0; i < fb->nr_cbufs; i++) {
+      if (!fb->cbufs[i])
+         continue;
+
       w = MIN2(w, fb->cbufs[i]->width);
       h = MIN2(h, fb->cbufs[i]->height);
    }
