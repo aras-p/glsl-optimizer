@@ -57,7 +57,7 @@ _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
       return;
    }
 
-   _mesa_set_viewport(ctx, x, y, width, height);
+   _mesa_set_viewport(ctx, 0, x, y, width, height);
 }
 
 
@@ -66,22 +66,23 @@ _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height)
  * matrix).  Usually called from _mesa_Viewport().
  * 
  * \param ctx GL context.
+ * \param idx    Index of the viewport to be updated.
  * \param x, y coordinates of the lower left corner of the viewport rectangle.
  * \param width width of the viewport rectangle.
  * \param height height of the viewport rectangle.
  */
 void
-_mesa_set_viewport(struct gl_context *ctx, GLint x, GLint y,
+_mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLint x, GLint y,
                     GLsizei width, GLsizei height)
 {
    /* clamp width and height to the implementation dependent range */
    width  = MIN2(width, (GLsizei) ctx->Const.MaxViewportWidth);
    height = MIN2(height, (GLsizei) ctx->Const.MaxViewportHeight);
 
-   ctx->ViewportArray[0].X = x;
-   ctx->ViewportArray[0].Width = width;
-   ctx->ViewportArray[0].Y = y;
-   ctx->ViewportArray[0].Height = height;
+   ctx->ViewportArray[idx].X = x;
+   ctx->ViewportArray[idx].Width = width;
+   ctx->ViewportArray[idx].Y = y;
+   ctx->ViewportArray[idx].Height = height;
    ctx->NewState |= _NEW_VIEWPORT;
 
 #if 1
@@ -89,10 +90,13 @@ _mesa_set_viewport(struct gl_context *ctx, GLint x, GLint y,
     * the WindowMap matrix being up to date in the driver's Viewport
     * and DepthRange functions.
     */
-   _math_matrix_viewport(&ctx->ViewportArray[0]._WindowMap,
-                         ctx->ViewportArray[0].X, ctx->ViewportArray[0].Y,
-                         ctx->ViewportArray[0].Width, ctx->ViewportArray[0].Height,
-                         ctx->ViewportArray[0].Near, ctx->ViewportArray[0].Far,
+   _math_matrix_viewport(&ctx->ViewportArray[idx]._WindowMap,
+                         ctx->ViewportArray[idx].X,
+                         ctx->ViewportArray[idx].Y,
+                         ctx->ViewportArray[idx].Width,
+                         ctx->ViewportArray[idx].Height,
+                         ctx->ViewportArray[idx].Near,
+                         ctx->ViewportArray[idx].Far,
                          ctx->DrawBuffer->_DepthMaxF);
 #endif
 

@@ -36,7 +36,7 @@ _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
 
 extern void 
-_mesa_set_viewport(struct gl_context *ctx, GLint x, GLint y,
+_mesa_set_viewport(struct gl_context *ctx, unsigned idx, GLint x, GLint y,
                    GLsizei width, GLsizei height);
 
 
