@@ -871,11 +871,11 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
          v->value_float = ctx->Color.AlphaRefUnclamped;
       break;
    case GL_MAX_VERTEX_UNIFORM_VECTORS:
-      v->value_int = ctx->Const.VertexProgram.MaxUniformComponents / 4;
+      v->value_int = ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents / 4;
       break;
 
    case GL_MAX_FRAGMENT_UNIFORM_VECTORS:
-      v->value_int = ctx->Const.FragmentProgram.MaxUniformComponents / 4;
+      v->value_int = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents / 4;
       break;
 
    /* GL_ARB_texture_buffer_object */
@@ -1769,7 +1769,7 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
    case GL_VERTEX_BINDING_DIVISOR:
       if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_instanced_arrays)
           goto invalid_enum;
-      if (index >= ctx->Const.VertexProgram.MaxAttribs)
+      if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs)
           goto invalid_value;
       v->value_int = ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_GENERIC(index)].InstanceDivisor;
       return TYPE_INT;
@@ -1777,7 +1777,7 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
    case GL_VERTEX_BINDING_OFFSET:
       if (!_mesa_is_desktop_gl(ctx))
           goto invalid_enum;
-      if (index >= ctx->Const.VertexProgram.MaxAttribs)
+      if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs)
           goto invalid_value;
       v->value_int = ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_GENERIC(index)].Offset;
       return TYPE_INT;
@@ -1785,7 +1785,7 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
    case GL_VERTEX_BINDING_STRIDE:
       if (!_mesa_is_desktop_gl(ctx))
           goto invalid_enum;
-      if (index >= ctx->Const.VertexProgram.MaxAttribs)
+      if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs)
           goto invalid_value;
       v->value_int = ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_GENERIC(index)].Stride;
       return TYPE_INT;

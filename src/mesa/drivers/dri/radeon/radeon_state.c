@@ -2020,7 +2020,7 @@ static GLboolean r100ValidateBuffers(struct gl_context *ctx)
 				       0, RADEON_GEM_DOMAIN_VRAM);
    }
 
-   for (i = 0; i < ctx->Const.FragmentProgram.MaxTextureImageUnits; ++i) {
+   for (i = 0; i < ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits; ++i) {
       radeonTexObj *t;
 
       if (!ctx->Texture.Unit[i]._ReallyEnabled)

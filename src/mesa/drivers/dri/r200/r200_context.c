@@ -295,7 +295,7 @@ GLboolean r200CreateContext( gl_api api,
 
    ctx->Const.MaxTextureUnits = driQueryOptioni (&rmesa->radeon.optionCache,
 						 "texture_units");
-   ctx->Const.FragmentProgram.MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = ctx->Const.MaxTextureUnits;
    ctx->Const.MaxTextureCoordUnits = ctx->Const.MaxTextureUnits;
 
    ctx->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxTextureUnits;
@@ -329,11 +329,11 @@ GLboolean r200CreateContext( gl_api api,
    ctx->Const.MaxLineWidthAA = 10.0;
    ctx->Const.LineWidthGranularity = 0.0625;
 
-   ctx->Const.VertexProgram.MaxNativeInstructions = R200_VSF_MAX_INST;
-   ctx->Const.VertexProgram.MaxNativeAttribs = 12;
-   ctx->Const.VertexProgram.MaxNativeTemps = R200_VSF_MAX_TEMPS;
-   ctx->Const.VertexProgram.MaxNativeParameters = R200_VSF_MAX_PARAM;
-   ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxNativeInstructions = R200_VSF_MAX_INST;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxNativeAttribs = 12;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxNativeTemps = R200_VSF_MAX_TEMPS;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxNativeParameters = R200_VSF_MAX_PARAM;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxNativeAddressRegs = 1;
 
    ctx->Const.MaxDrawBuffers = 1;
    ctx->Const.MaxColorAttachments = 1;

@@ -326,11 +326,11 @@ update_vertex_textures(struct st_context *st)
 {
    const struct gl_context *ctx = st->ctx;
 
-   if (ctx->Const.VertexProgram.MaxTextureImageUnits > 0) {
+   if (ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits > 0) {
       update_textures(st,
                       PIPE_SHADER_VERTEX,
                       &ctx->VertexProgram._Current->Base,
-                      ctx->Const.VertexProgram.MaxTextureImageUnits,
+                      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits,
                       st->state.sampler_views[PIPE_SHADER_VERTEX],
                       &st->state.num_sampler_views[PIPE_SHADER_VERTEX]);
    }
@@ -345,7 +345,7 @@ update_fragment_textures(struct st_context *st)
    update_textures(st,
                    PIPE_SHADER_FRAGMENT,
                    &ctx->FragmentProgram._Current->Base,
-                   ctx->Const.FragmentProgram.MaxTextureImageUnits,
+                   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits,
                    st->state.sampler_views[PIPE_SHADER_FRAGMENT],
                    &st->state.num_sampler_views[PIPE_SHADER_FRAGMENT]);
 }
@@ -360,7 +360,7 @@ update_geometry_textures(struct st_context *st)
       update_textures(st,
                       PIPE_SHADER_GEOMETRY,
                       &ctx->GeometryProgram._Current->Base,
-                      ctx->Const.FragmentProgram.MaxTextureImageUnits,
+                      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits,
                       st->state.sampler_views[PIPE_SHADER_GEOMETRY],
                       &st->state.num_sampler_views[PIPE_SHADER_GEOMETRY]);
    }

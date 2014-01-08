@@ -554,9 +554,9 @@ builtin_variable_generator::generate_constants()
        */
       if (state->is_version(0, 300)) {
          add_const("gl_MaxVertexOutputVectors",
-                   state->ctx->Const.VertexProgram.MaxOutputComponents / 4);
+                   state->ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents / 4);
          add_const("gl_MaxFragmentInputVectors",
-                   state->ctx->Const.FragmentProgram.MaxInputComponents / 4);
+                   state->ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents / 4);
       } else {
          add_const("gl_MaxVaryingVectors",
                    state->ctx->Const.MaxVarying);

@@ -56,21 +56,21 @@ _mesa_init_program(struct gl_context *ctx)
     * If this assertion fails, we need to increase the field
     * size for register indexes (see INST_INDEX_BITS).
     */
-   ASSERT(ctx->Const.VertexProgram.MaxUniformComponents / 4
+   ASSERT(ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents / 4
           <= (1 << INST_INDEX_BITS));
-   ASSERT(ctx->Const.FragmentProgram.MaxUniformComponents / 4
+   ASSERT(ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents / 4
           <= (1 << INST_INDEX_BITS));
 
-   ASSERT(ctx->Const.VertexProgram.MaxTemps <= (1 << INST_INDEX_BITS));
-   ASSERT(ctx->Const.VertexProgram.MaxLocalParams <= (1 << INST_INDEX_BITS));
-   ASSERT(ctx->Const.FragmentProgram.MaxTemps <= (1 << INST_INDEX_BITS));
-   ASSERT(ctx->Const.FragmentProgram.MaxLocalParams <= (1 << INST_INDEX_BITS));
+   ASSERT(ctx->Const.Program[MESA_SHADER_VERTEX].MaxTemps <= (1 << INST_INDEX_BITS));
+   ASSERT(ctx->Const.Program[MESA_SHADER_VERTEX].MaxLocalParams <= (1 << INST_INDEX_BITS));
+   ASSERT(ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTemps <= (1 << INST_INDEX_BITS));
+   ASSERT(ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxLocalParams <= (1 << INST_INDEX_BITS));
 
-   ASSERT(ctx->Const.VertexProgram.MaxUniformComponents <= 4 * MAX_UNIFORMS);
-   ASSERT(ctx->Const.FragmentProgram.MaxUniformComponents <= 4 * MAX_UNIFORMS);
+   ASSERT(ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents <= 4 * MAX_UNIFORMS);
+   ASSERT(ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents <= 4 * MAX_UNIFORMS);
 
-   ASSERT(ctx->Const.VertexProgram.MaxAddressOffset <= (1 << INST_INDEX_BITS));
-   ASSERT(ctx->Const.FragmentProgram.MaxAddressOffset <= (1 << INST_INDEX_BITS));
+   ASSERT(ctx->Const.Program[MESA_SHADER_VERTEX].MaxAddressOffset <= (1 << INST_INDEX_BITS));
+   ASSERT(ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAddressOffset <= (1 << INST_INDEX_BITS));
 
    /* If this fails, increase prog_instruction::TexSrcUnit size */
    STATIC_ASSERT(MAX_TEXTURE_UNITS <= (1 << 5));
@@ -898,13 +898,13 @@ _mesa_valid_register_index(const struct gl_context *ctx,
 
    switch (shaderType) {
    case MESA_SHADER_VERTEX:
-      c = &ctx->Const.VertexProgram;
+      c = &ctx->Const.Program[MESA_SHADER_VERTEX];
       break;
    case MESA_SHADER_FRAGMENT:
-      c = &ctx->Const.FragmentProgram;
+      c = &ctx->Const.Program[MESA_SHADER_FRAGMENT];
       break;
    case MESA_SHADER_GEOMETRY:
-      c = &ctx->Const.GeometryProgram;
+      c = &ctx->Const.Program[MESA_SHADER_GEOMETRY];
       break;
    default:
       _mesa_problem(ctx,

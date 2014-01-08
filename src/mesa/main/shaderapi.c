@@ -1533,10 +1533,10 @@ _mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
 
    switch (shadertype) {
    case GL_VERTEX_SHADER:
-      limits = &ctx->Const.VertexProgram;
+      limits = &ctx->Const.Program[MESA_SHADER_VERTEX];
       break;
    case GL_FRAGMENT_SHADER:
-      limits = &ctx->Const.FragmentProgram;
+      limits = &ctx->Const.Program[MESA_SHADER_FRAGMENT];
       break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM,

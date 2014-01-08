@@ -279,14 +279,14 @@ update_samplers(struct st_context *st)
    update_shader_samplers(st,
                           PIPE_SHADER_FRAGMENT,
                           &ctx->FragmentProgram._Current->Base,
-                          ctx->Const.FragmentProgram.MaxTextureImageUnits,
+                          ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits,
                           st->state.samplers[PIPE_SHADER_FRAGMENT],
                           &st->state.num_samplers[PIPE_SHADER_FRAGMENT]);
 
    update_shader_samplers(st,
                           PIPE_SHADER_VERTEX,
                           &ctx->VertexProgram._Current->Base,
-                          ctx->Const.VertexProgram.MaxTextureImageUnits,
+                          ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits,
                           st->state.samplers[PIPE_SHADER_VERTEX],
                           &st->state.num_samplers[PIPE_SHADER_VERTEX]);
 
@@ -294,7 +294,7 @@ update_samplers(struct st_context *st)
       update_shader_samplers(st,
                              PIPE_SHADER_GEOMETRY,
                              &ctx->GeometryProgram._Current->Base,
-                             ctx->Const.GeometryProgram.MaxTextureImageUnits,
+                             ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits,
                              st->state.samplers[PIPE_SHADER_GEOMETRY],
                              &st->state.num_samplers[PIPE_SHADER_GEOMETRY]);
    }

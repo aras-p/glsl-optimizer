@@ -62,20 +62,20 @@ initialize_context(struct gl_context *ctx, gl_api api)
       ctx->Const.MaxTextureCoordUnits = 0;
       ctx->Const.MaxTextureUnits = 8;
 
-      ctx->Const.VertexProgram.MaxAttribs = 8;
-      ctx->Const.VertexProgram.MaxTextureImageUnits = 0;
-      ctx->Const.VertexProgram.MaxUniformComponents = 128 * 4;
-      ctx->Const.VertexProgram.MaxInputComponents = 0; /* not used */
-      ctx->Const.VertexProgram.MaxOutputComponents = 32;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 8;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 0;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 128 * 4;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxInputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents = 32;
 
-      ctx->Const.FragmentProgram.MaxTextureImageUnits =
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits =
          ctx->Const.MaxCombinedTextureImageUnits;
-      ctx->Const.FragmentProgram.MaxUniformComponents = 16 * 4;
-      ctx->Const.FragmentProgram.MaxInputComponents =
-         ctx->Const.VertexProgram.MaxOutputComponents;
-      ctx->Const.FragmentProgram.MaxOutputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 16 * 4;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents =
+         ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxOutputComponents = 0; /* not used */
 
-      ctx->Const.MaxVarying = ctx->Const.VertexProgram.MaxOutputComponents / 4;
+      ctx->Const.MaxVarying = ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents / 4;
       break;
    case 110:
    case 120:
@@ -88,20 +88,20 @@ initialize_context(struct gl_context *ctx, gl_api api)
       ctx->Const.MaxTextureCoordUnits = 2;
       ctx->Const.MaxTextureUnits = 2;
 
-      ctx->Const.VertexProgram.MaxAttribs = 16;
-      ctx->Const.VertexProgram.MaxTextureImageUnits = 0;
-      ctx->Const.VertexProgram.MaxUniformComponents = 512;
-      ctx->Const.VertexProgram.MaxInputComponents = 0; /* not used */
-      ctx->Const.VertexProgram.MaxOutputComponents = 32;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 0;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 512;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxInputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents = 32;
 
-      ctx->Const.FragmentProgram.MaxTextureImageUnits =
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits =
          ctx->Const.MaxCombinedTextureImageUnits;
-      ctx->Const.FragmentProgram.MaxUniformComponents = 64;
-      ctx->Const.FragmentProgram.MaxInputComponents =
-         ctx->Const.VertexProgram.MaxOutputComponents;
-      ctx->Const.FragmentProgram.MaxOutputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 64;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents =
+         ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxOutputComponents = 0; /* not used */
 
-      ctx->Const.MaxVarying = ctx->Const.VertexProgram.MaxOutputComponents / 4;
+      ctx->Const.MaxVarying = ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents / 4;
       break;
    case 130:
    case 140:
@@ -114,19 +114,19 @@ initialize_context(struct gl_context *ctx, gl_api api)
       ctx->Const.MaxTextureCoordUnits = 8;
       ctx->Const.MaxTextureUnits = 2;
 
-      ctx->Const.VertexProgram.MaxAttribs = 16;
-      ctx->Const.VertexProgram.MaxTextureImageUnits = 16;
-      ctx->Const.VertexProgram.MaxUniformComponents = 1024;
-      ctx->Const.VertexProgram.MaxInputComponents = 0; /* not used */
-      ctx->Const.VertexProgram.MaxOutputComponents = 64;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxInputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents = 64;
 
-      ctx->Const.FragmentProgram.MaxTextureImageUnits = 16;
-      ctx->Const.FragmentProgram.MaxUniformComponents = 1024;
-      ctx->Const.FragmentProgram.MaxInputComponents =
-         ctx->Const.VertexProgram.MaxOutputComponents;
-      ctx->Const.FragmentProgram.MaxOutputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents =
+         ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxOutputComponents = 0; /* not used */
 
-      ctx->Const.MaxVarying = ctx->Const.VertexProgram.MaxOutputComponents / 4;
+      ctx->Const.MaxVarying = ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents / 4;
       break;
    case 150:
    case 330:
@@ -138,28 +138,28 @@ initialize_context(struct gl_context *ctx, gl_api api)
       ctx->Const.MaxTextureCoordUnits = 8;
       ctx->Const.MaxTextureUnits = 2;
 
-      ctx->Const.VertexProgram.MaxAttribs = 16;
-      ctx->Const.VertexProgram.MaxTextureImageUnits = 16;
-      ctx->Const.VertexProgram.MaxUniformComponents = 1024;
-      ctx->Const.VertexProgram.MaxInputComponents = 0; /* not used */
-      ctx->Const.VertexProgram.MaxOutputComponents = 64;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxInputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents = 64;
 
-      ctx->Const.GeometryProgram.MaxTextureImageUnits = 16;
-      ctx->Const.GeometryProgram.MaxUniformComponents = 1024;
-      ctx->Const.GeometryProgram.MaxInputComponents =
-         ctx->Const.VertexProgram.MaxOutputComponents;
-      ctx->Const.GeometryProgram.MaxOutputComponents = 128;
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxInputComponents =
+         ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents;
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxOutputComponents = 128;
 
-      ctx->Const.FragmentProgram.MaxTextureImageUnits = 16;
-      ctx->Const.FragmentProgram.MaxUniformComponents = 1024;
-      ctx->Const.FragmentProgram.MaxInputComponents =
-         ctx->Const.GeometryProgram.MaxOutputComponents;
-      ctx->Const.FragmentProgram.MaxOutputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents =
+         ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxOutputComponents;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxOutputComponents = 0; /* not used */
 
       ctx->Const.MaxCombinedTextureImageUnits =
-         ctx->Const.VertexProgram.MaxTextureImageUnits
-         + ctx->Const.GeometryProgram.MaxTextureImageUnits
-         + ctx->Const.FragmentProgram.MaxTextureImageUnits;
+         ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits
+         + ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits
+         + ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits;
 
       ctx->Const.MaxGeometryOutputVertices = 256;
       ctx->Const.MaxGeometryTotalOutputComponents = 1024;
@@ -178,18 +178,18 @@ initialize_context(struct gl_context *ctx, gl_api api)
       ctx->Const.MaxTextureCoordUnits = 0;
       ctx->Const.MaxTextureUnits = 0;
 
-      ctx->Const.VertexProgram.MaxAttribs = 16;
-      ctx->Const.VertexProgram.MaxTextureImageUnits = 16;
-      ctx->Const.VertexProgram.MaxUniformComponents = 1024;
-      ctx->Const.VertexProgram.MaxInputComponents = 0; /* not used */
-      ctx->Const.VertexProgram.MaxOutputComponents = 16 * 4;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 1024;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxInputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents = 16 * 4;
 
-      ctx->Const.FragmentProgram.MaxTextureImageUnits = 16;
-      ctx->Const.FragmentProgram.MaxUniformComponents = 224;
-      ctx->Const.FragmentProgram.MaxInputComponents = 15 * 4;
-      ctx->Const.FragmentProgram.MaxOutputComponents = 0; /* not used */
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = 16;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 224;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents = 15 * 4;
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxOutputComponents = 0; /* not used */
 
-      ctx->Const.MaxVarying = ctx->Const.FragmentProgram.MaxInputComponents / 4;
+      ctx->Const.MaxVarying = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents / 4;
       break;
    }
 

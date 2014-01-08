@@ -259,7 +259,7 @@ map_textures(struct gl_context *ctx, const struct gl_vertex_program *vp)
 {
    GLuint u;
 
-   for (u = 0; u < ctx->Const.VertexProgram.MaxTextureImageUnits; u++) {
+   for (u = 0; u < ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits; u++) {
       if (vp->Base.TexturesUsed[u]) {
          /* Note: _Current *should* correspond to the target indicated
           * in TexturesUsed[u].
@@ -278,7 +278,7 @@ unmap_textures(struct gl_context *ctx, const struct gl_vertex_program *vp)
 {
    GLuint u;
 
-   for (u = 0; u < ctx->Const.VertexProgram.MaxTextureImageUnits; u++) {
+   for (u = 0; u < ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits; u++) {
       if (vp->Base.TexturesUsed[u]) {
          /* Note: _Current *should* correspond to the target indicated
           * in TexturesUsed[u].

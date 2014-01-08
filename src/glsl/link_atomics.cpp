@@ -215,15 +215,15 @@ link_check_atomic_counter_resources(struct gl_context *ctx,
                                     struct gl_shader_program *prog)
 {
    const unsigned max_atomic_counters[] = {
-      ctx->Const.VertexProgram.MaxAtomicCounters,
-      ctx->Const.GeometryProgram.MaxAtomicCounters,
-      ctx->Const.FragmentProgram.MaxAtomicCounters
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAtomicCounters,
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxAtomicCounters,
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicCounters
    };
    STATIC_ASSERT(Elements(max_atomic_counters) == MESA_SHADER_STAGES);
    const unsigned max_atomic_buffers[] = {
-      ctx->Const.VertexProgram.MaxAtomicBuffers,
-      ctx->Const.GeometryProgram.MaxAtomicBuffers,
-      ctx->Const.FragmentProgram.MaxAtomicBuffers
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxAtomicBuffers,
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxAtomicBuffers,
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicBuffers
    };
    STATIC_ASSERT(Elements(max_atomic_buffers) == MESA_SHADER_STAGES);
    unsigned num_buffers;

@@ -192,14 +192,14 @@ i915CreateContext(int api,
       FALLBACK(intel, INTEL_FALLBACK_USER, 1);
 
    ctx->Const.MaxTextureUnits = I915_TEX_UNITS;
-   ctx->Const.FragmentProgram.MaxTextureImageUnits = I915_TEX_UNITS;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = I915_TEX_UNITS;
    ctx->Const.MaxTextureCoordUnits = I915_TEX_UNITS;
    ctx->Const.MaxVarying = I915_TEX_UNITS;
-   ctx->Const.VertexProgram.MaxOutputComponents =
-      ctx->Const.FragmentProgram.MaxInputComponents = ctx->Const.MaxVarying * 4;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents =
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents = ctx->Const.MaxVarying * 4;
    ctx->Const.MaxCombinedTextureImageUnits =
-      ctx->Const.VertexProgram.MaxTextureImageUnits +
-      ctx->Const.FragmentProgram.MaxTextureImageUnits;
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits +
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits;
 
    /* Advertise the full hardware capabilities.  The new memory
     * manager should cope much better with overload situations:
@@ -217,33 +217,33 @@ i915CreateContext(int api,
     * instruction can translate to more than one HW instruction, so
     * we'll still have to check and fallback each time.
     */
-   ctx->Const.FragmentProgram.MaxNativeTemps = I915_MAX_TEMPORARY;
-   ctx->Const.FragmentProgram.MaxNativeAttribs = 11;    /* 8 tex, 2 color, fog */
-   ctx->Const.FragmentProgram.MaxNativeParameters = I915_MAX_CONSTANT;
-   ctx->Const.FragmentProgram.MaxNativeAluInstructions = I915_MAX_ALU_INSN;
-   ctx->Const.FragmentProgram.MaxNativeTexInstructions = I915_MAX_TEX_INSN;
-   ctx->Const.FragmentProgram.MaxNativeInstructions = (I915_MAX_ALU_INSN +
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxNativeTemps = I915_MAX_TEMPORARY;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxNativeAttribs = 11;    /* 8 tex, 2 color, fog */
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxNativeParameters = I915_MAX_CONSTANT;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxNativeAluInstructions = I915_MAX_ALU_INSN;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxNativeTexInstructions = I915_MAX_TEX_INSN;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxNativeInstructions = (I915_MAX_ALU_INSN +
                                                        I915_MAX_TEX_INSN);
-   ctx->Const.FragmentProgram.MaxNativeTexIndirections =
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxNativeTexIndirections =
       I915_MAX_TEX_INDIRECT;
-   ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0; /* I don't think we have one */
-   ctx->Const.FragmentProgram.MaxEnvParams =
-      MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
-	   ctx->Const.FragmentProgram.MaxEnvParams);
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxNativeAddressRegs = 0; /* I don't think we have one */
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxEnvParams =
+      MIN2(ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxNativeParameters,
+	   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxEnvParams);
 
    /* i915 stores all values in single-precision floats.  Values aren't set
     * for other program targets because software is used for those targets.
     */
-   ctx->Const.FragmentProgram.MediumFloat.RangeMin = 127;
-   ctx->Const.FragmentProgram.MediumFloat.RangeMax = 127;
-   ctx->Const.FragmentProgram.MediumFloat.Precision = 23;
-   ctx->Const.FragmentProgram.LowFloat = ctx->Const.FragmentProgram.HighFloat =
-      ctx->Const.FragmentProgram.MediumFloat;
-   ctx->Const.FragmentProgram.MediumInt.RangeMin = 24;
-   ctx->Const.FragmentProgram.MediumInt.RangeMax = 24;
-   ctx->Const.FragmentProgram.MediumInt.Precision = 0;
-   ctx->Const.FragmentProgram.LowInt = ctx->Const.FragmentProgram.HighInt =
-      ctx->Const.FragmentProgram.MediumInt;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MediumFloat.RangeMin = 127;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MediumFloat.RangeMax = 127;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MediumFloat.Precision = 23;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].LowFloat = ctx->Const.Program[MESA_SHADER_FRAGMENT].HighFloat =
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MediumFloat;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MediumInt.RangeMin = 24;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MediumInt.RangeMax = 24;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MediumInt.Precision = 0;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].LowInt = ctx->Const.Program[MESA_SHADER_FRAGMENT].HighInt =
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MediumInt;
 
    ctx->FragmentProgram._MaintainTexEnvProgram = true;
 

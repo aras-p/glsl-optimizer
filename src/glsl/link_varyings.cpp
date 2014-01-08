@@ -1252,10 +1252,10 @@ check_against_output_limit(struct gl_context *ctx,
    unsigned max_output_components;
    switch (producer->Stage) {
    case MESA_SHADER_VERTEX:
-      max_output_components = ctx->Const.VertexProgram.MaxOutputComponents;
+      max_output_components = ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents;
       break;
    case MESA_SHADER_GEOMETRY:
-      max_output_components = ctx->Const.GeometryProgram.MaxOutputComponents;
+      max_output_components = ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxOutputComponents;
       break;
    case MESA_SHADER_FRAGMENT:
    default:
@@ -1301,10 +1301,10 @@ check_against_input_limit(struct gl_context *ctx,
    unsigned max_input_components;
    switch (consumer->Stage) {
    case MESA_SHADER_GEOMETRY:
-      max_input_components = ctx->Const.GeometryProgram.MaxInputComponents;
+      max_input_components = ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxInputComponents;
       break;
    case MESA_SHADER_FRAGMENT:
-      max_input_components = ctx->Const.FragmentProgram.MaxInputComponents;
+      max_input_components = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents;
       break;
    case MESA_SHADER_VERTEX:
    default:

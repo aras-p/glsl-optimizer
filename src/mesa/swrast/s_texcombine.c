@@ -619,7 +619,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
        * thread.
        */
       swrast->TexelBuffer =
-	 malloc(ctx->Const.FragmentProgram.MaxTextureImageUnits * maxThreads *
+	 malloc(ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits * maxThreads *
 			    SWRAST_MAX_WIDTH * 4 * sizeof(GLfloat));
 #ifdef _OPENMP
       } /* critical section */

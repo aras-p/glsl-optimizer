@@ -621,7 +621,7 @@ _mesa_VertexAttribPointer(GLuint index, GLint size, GLenum type,
                                   UNSIGNED_INT_10F_11F_11F_REV_BIT);
    GET_CURRENT_CONTEXT(ctx);
 
-   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+   if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribPointerARB(index)");
       return;
    }
@@ -649,7 +649,7 @@ _mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
    const GLboolean integer = GL_TRUE;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+   if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribIPointer(index)");
       return;
    }
@@ -667,7 +667,7 @@ _mesa_EnableVertexAttribArray(GLuint index)
    struct gl_array_object *arrayObj;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+   if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glEnableVertexAttribArrayARB(index)");
       return;
@@ -693,7 +693,7 @@ _mesa_DisableVertexAttribArray(GLuint index)
    struct gl_array_object *arrayObj;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+   if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glDisableVertexAttribArrayARB(index)");
       return;
@@ -725,7 +725,7 @@ get_vertex_array_attrib(struct gl_context *ctx, GLuint index, GLenum pname,
    const struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    const struct gl_vertex_attrib_array *array;
 
-   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+   if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE, "%s(index=%u)", caller, index);
       return 0;
    }
@@ -795,7 +795,7 @@ get_current_attrib(struct gl_context *ctx, GLuint index, const char *function)
 	 return NULL;
       }
    }
-   else if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+   else if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE,
 		  "%s(index>=GL_MAX_VERTEX_ATTRIBS)", function);
       return NULL;
@@ -913,7 +913,7 @@ _mesa_GetVertexAttribPointerv(GLuint index, GLenum pname, GLvoid **pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
 
-   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+   if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribPointerARB(index)");
       return;
    }
@@ -1308,7 +1308,7 @@ _mesa_VertexAttribDivisor(GLuint index, GLuint divisor)
       return;
    }
 
-   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+   if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glVertexAttribDivisor(index = %u)",
                   index);
       return;
@@ -1479,7 +1479,7 @@ _mesa_VertexAttribFormat(GLuint attribIndex, GLint size, GLenum type,
     *   "The error INVALID_VALUE is generated if index is greater than or equal
     *     to the value of MAX_VERTEX_ATTRIBS."
     */
-   if (attribIndex >= ctx->Const.VertexProgram.MaxAttribs) {
+   if (attribIndex >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glVertexAttribFormat(attribindex=%u > "
                   "GL_MAX_VERTEX_ATTRIBS)",
@@ -1526,7 +1526,7 @@ _mesa_VertexAttribIFormat(GLuint attribIndex, GLint size, GLenum type,
     *   "The error INVALID_VALUE is generated if index is greater than
     *    or equal to the value of MAX_VERTEX_ATTRIBS."
     */
-   if (attribIndex >= ctx->Const.VertexProgram.MaxAttribs) {
+   if (attribIndex >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glVertexAttribIFormat(attribindex=%u > "
                   "GL_MAX_VERTEX_ATTRIBS)",
@@ -1574,7 +1574,7 @@ _mesa_VertexAttribLFormat(GLuint attribIndex, GLint size, GLenum type,
     *   "The error INVALID_VALUE is generated if <attribindex> is greater than
     *    or equal to the value of MAX_VERTEX_ATTRIBS."
     */
-   if (attribIndex >= ctx->Const.VertexProgram.MaxAttribs) {
+   if (attribIndex >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glVertexAttribLFormat(attribindex=%u > "
                   "GL_MAX_VERTEX_ATTRIBS)",
@@ -1616,7 +1616,7 @@ _mesa_VertexAttribBinding(GLuint attribIndex, GLuint bindingIndex)
     *     MAX_VERTEX_ATTRIB_BINDINGS, otherwise the error INVALID_VALUE
     *     is generated."
     */
-   if (attribIndex >= ctx->Const.VertexProgram.MaxAttribs) {
+   if (attribIndex >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glVertexAttribBinding(attribindex=%u >= "
                   "GL_MAX_VERTEX_ATTRIBS)",

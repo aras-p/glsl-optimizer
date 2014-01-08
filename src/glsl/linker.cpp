@@ -1895,32 +1895,32 @@ static void
 check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    const unsigned max_samplers[] = {
-      ctx->Const.VertexProgram.MaxTextureImageUnits,
-      ctx->Const.GeometryProgram.MaxTextureImageUnits,
-      ctx->Const.FragmentProgram.MaxTextureImageUnits
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits,
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits,
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits
    };
    STATIC_ASSERT(Elements(max_samplers) == MESA_SHADER_STAGES);
 
    const unsigned max_default_uniform_components[] = {
-      ctx->Const.VertexProgram.MaxUniformComponents,
-      ctx->Const.GeometryProgram.MaxUniformComponents,
-      ctx->Const.FragmentProgram.MaxUniformComponents
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents,
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxUniformComponents,
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents
    };
    STATIC_ASSERT(Elements(max_default_uniform_components) ==
                  MESA_SHADER_STAGES);
 
    const unsigned max_combined_uniform_components[] = {
-      ctx->Const.VertexProgram.MaxCombinedUniformComponents,
-      ctx->Const.GeometryProgram.MaxCombinedUniformComponents,
-      ctx->Const.FragmentProgram.MaxCombinedUniformComponents
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxCombinedUniformComponents,
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxCombinedUniformComponents,
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxCombinedUniformComponents
    };
    STATIC_ASSERT(Elements(max_combined_uniform_components) ==
                  MESA_SHADER_STAGES);
 
    const unsigned max_uniform_blocks[] = {
-      ctx->Const.VertexProgram.MaxUniformBlocks,
-      ctx->Const.GeometryProgram.MaxUniformBlocks,
-      ctx->Const.FragmentProgram.MaxUniformBlocks
+      ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformBlocks,
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxUniformBlocks,
+      ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformBlocks
    };
    STATIC_ASSERT(Elements(max_uniform_blocks) == MESA_SHADER_STAGES);
 
