@@ -428,53 +428,61 @@ static void evergreen_check_alloc_cmask(struct pipe_context *ctx,
         }
 }
 
-static bool can_fast_clear_color(struct pipe_context *ctx)
+static void r600_try_fast_color_clear(struct r600_context *rctx, unsigned *buffers,
+				      const union pipe_color_union *color)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer.state;
 	int i;
 
-	if (rctx->b.chip_class < EVERGREEN) {
-		return false;
-	}
-
 	for (i = 0; i < fb->nr_cbufs; i++) {
 		struct r600_texture *tex;
+		unsigned clear_bit = PIPE_CLEAR_COLOR0 << i;
 
 		if (!fb->cbufs[i])
+			continue;
+
+		/* if this colorbuffer is not being cleared */
+		if (!(*buffers & clear_bit))
 			continue;
 
 		tex = (struct r600_texture *)fb->cbufs[i]->texture;
 
 		/* 128-bit formats are unusupported */
 		if (util_format_get_blocksizebits(fb->cbufs[i]->format) > 64) {
-			return false;
+			continue;
 		}
 
 		/* the clear is allowed if all layers are bound */
 		if (fb->cbufs[i]->u.tex.first_layer != 0 ||
 		    fb->cbufs[i]->u.tex.last_layer != util_max_layer(&tex->resource.b.b, 0)) {
-			return false;
+			continue;
 		}
 
 		/* cannot clear mipmapped textures */
 		if (fb->cbufs[i]->texture->last_level != 0) {
-			return false;
+			continue;
 		}
 
 		/* only supported on tiled surfaces */
 		if (tex->surface.level[0].mode < RADEON_SURF_MODE_1D) {
-		    return false;
+			continue;
 		}
 
 		/* ensure CMASK is enabled */
-		evergreen_check_alloc_cmask(ctx, fb->cbufs[i]);
+		evergreen_check_alloc_cmask(&rctx->b.b, fb->cbufs[i]);
 		if (tex->cmask.size == 0) {
-			return false;
+			continue;
 		}
-	}
 
-	return true;
+		/* Do the fast clear. */
+		evergreen_set_clear_color(fb->cbufs[i], color);
+		r600_clear_buffer(&rctx->b.b, &tex->cmask_buffer->b.b,
+				  tex->cmask.offset, tex->cmask.size, 0);
+
+		tex->dirty_level_mask |= 1 << fb->cbufs[i]->u.tex.level;
+		rctx->framebuffer.atom.dirty = true;
+		*buffers &= ~clear_bit;
+	}
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
@@ -484,42 +492,27 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer.state;
 
-	/* fast clear on colorbuffers (EG+) */
-	if ((buffers & PIPE_CLEAR_COLOR) && can_fast_clear_color(ctx)) {
+	if (buffers & PIPE_CLEAR_COLOR && rctx->b.chip_class >= EVERGREEN) {
+		r600_try_fast_color_clear(rctx, &buffers, color);
+	}
+
+	if (buffers & PIPE_CLEAR_COLOR) {
 		int i;
 
+		/* These buffers cannot use fast clear, make sure to disable expansion. */
 		for (i = 0; i < fb->nr_cbufs; i++) {
 			struct r600_texture *tex;
 
-			if (!fb->cbufs[i])
+			/* If not clearing this buffer, skip. */
+			if (!(buffers & (PIPE_CLEAR_COLOR0 << i)))
 				continue;
-
-			tex = (struct r600_texture *)fb->cbufs[i]->texture;
-
-			evergreen_set_clear_color(fb->cbufs[i], color);
-			r600_clear_buffer(ctx, &tex->cmask_buffer->b.b,
-					tex->cmask.offset, tex->cmask.size, 0);
-			tex->dirty_level_mask |= 1 << fb->cbufs[i]->u.tex.level;
-		}
-
-		rctx->framebuffer.atom.dirty = true;
-
-		buffers &= ~PIPE_CLEAR_COLOR;
-		if (!buffers)
-			return;
-	} else if (buffers & PIPE_CLEAR_COLOR) {
-		int i;
-
-		/* cannot use fast clear, make sure to disable expansion */
-		for (i = 0; i < fb->nr_cbufs; i++) {
-			struct r600_texture *tex;
 
 			if (!fb->cbufs[i])
 				continue;
 
 			tex = (struct r600_texture *)fb->cbufs[i]->texture;
 			if (tex->fmask.size == 0)
-			    tex->dirty_level_mask &= ~(1 << fb->cbufs[i]->u.tex.level);
+				tex->dirty_level_mask &= ~(1 << fb->cbufs[i]->u.tex.level);
 		}
 	}
 
