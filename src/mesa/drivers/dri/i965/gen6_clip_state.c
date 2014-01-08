@@ -96,11 +96,15 @@ upload_clip_state(struct brw_context *brw)
    dw2 |= (ctx->Transform.ClipPlanesEnabled <<
            GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT);
 
-   if (ctx->ViewportArray[0].X == 0 &&
-       ctx->ViewportArray[0].Y == 0 &&
-       ctx->ViewportArray[0].Width == (float) fb->Width &&
-       ctx->ViewportArray[0].Height == (float) fb->Height) {
-      dw2 |= GEN6_CLIP_GB_TEST;
+   dw2 |= GEN6_CLIP_GB_TEST;
+   for (unsigned i = 0; i < ctx->Const.MaxViewports; i++) {
+      if (ctx->ViewportArray[i].X != 0 ||
+          ctx->ViewportArray[i].Y != 0 ||
+          ctx->ViewportArray[i].Width != (float) fb->Width ||
+          ctx->ViewportArray[i].Height != (float) fb->Height) {
+         dw2 &= ~GEN6_CLIP_GB_TEST;
+         break;
+      }
    }
 
    /* BRW_NEW_RASTERIZER_DISCARD */
