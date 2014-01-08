@@ -1357,10 +1357,15 @@ _mesa_PopAttrib(void)
             break;
          case GL_VIEWPORT_BIT:
             {
+               unsigned i;
                const struct gl_viewport_attrib *vp;
                vp = (const struct gl_viewport_attrib *) attr->data;
-               _mesa_Viewport(vp->X, vp->Y, vp->Width, vp->Height);
-               _mesa_DepthRange(vp->Near, vp->Far);
+
+               for (i = 0; i < ctx->Const.MaxViewports; i++) {
+                  _mesa_set_viewport(ctx, i, vp[i].X, vp[i].Y, vp[i].Width,
+                                     vp[i].Height);
+                  _mesa_set_depth_range(ctx, i, vp[i].Near, vp[i].Far);
+               }
             }
             break;
          case GL_MULTISAMPLE_BIT_ARB:
