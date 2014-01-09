@@ -2330,6 +2330,7 @@ static int si_generate_gs_copy_shader(struct si_context *sctx,
 	struct lp_build_tgsi_context *bld_base = &si_shader_ctx->radeon_bld.soa.bld_base;
 	struct lp_build_context *base = &bld_base->base;
 	struct lp_build_context *uint = &bld_base->uint_bld;
+	struct si_shader *shader = &si_shader_ctx->shader->shader;
 	struct si_shader *gs = &si_shader_ctx->shader->selector->current->shader;
 	struct si_shader_output_values *outputs;
 	LLVMValueRef t_list_ptr, t_list;
@@ -2370,6 +2371,8 @@ static int si_generate_gs_copy_shader(struct si_context *sctx,
 		struct si_shader_output *out = gs->output + i;
 		unsigned chan;
 
+		shader->output[i] = *out;
+
 		outputs[i].name = out->name;
 		outputs[i].index = out->index;
 		outputs[i].usage = out->usage;
@@ -2389,6 +2392,7 @@ static int si_generate_gs_copy_shader(struct si_context *sctx,
 						 base->elem_type, "");
 		}
 	}
+	shader->noutput = gs->noutput;
 
 	si_llvm_export_vs(bld_base, outputs, gs->noutput);
 

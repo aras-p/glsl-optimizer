@@ -403,7 +403,7 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 				      const struct pipe_index_buffer *ib)
 {
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
-	struct si_shader *vs = &sctx->vs_shader->current->shader;
+	struct si_shader *vs = si_get_vs_state(sctx);
 	unsigned prim = si_conv_pipe_prim(info->mode);
 	unsigned gs_out_prim =
 		si_conv_prim_to_gs_out(sctx->gs_shader ?
@@ -488,7 +488,7 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 static void si_update_spi_map(struct si_context *sctx)
 {
 	struct si_shader *ps = &sctx->ps_shader->current->shader;
-	struct si_shader *vs = &sctx->vs_shader->current->shader;
+	struct si_shader *vs = si_get_vs_state(sctx);
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
 	unsigned i, j, tmp;
 

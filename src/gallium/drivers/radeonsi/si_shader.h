@@ -183,6 +183,14 @@ struct si_pipe_shader {
 	union si_shader_key		key;
 };
 
+static inline struct si_shader* si_get_vs_state(struct si_context *sctx)
+{
+	if (sctx->gs_shader)
+		return &sctx->gs_shader->current->gs_copy_shader->shader;
+	else
+		return &sctx->vs_shader->current->shader;
+}
+
 /* radeonsi_shader.c */
 int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader);
 int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader);
