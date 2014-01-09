@@ -2171,6 +2171,14 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 	struct si_context *sctx = (struct si_context *)ctx;
 	memset(key, 0, sizeof(*key));
 
+	if ((sel->type == PIPE_SHADER_VERTEX || sel->type == PIPE_SHADER_GEOMETRY) &&
+	    sctx->queued.named.rasterizer) {
+		if (sctx->queued.named.rasterizer->clip_plane_enable & 0xf0)
+			key->vs.ucps_enabled |= 0x2;
+		if (sctx->queued.named.rasterizer->clip_plane_enable & 0xf)
+			key->vs.ucps_enabled |= 0x1;
+	}
+
 	if (sel->type == PIPE_SHADER_VERTEX) {
 		unsigned i;
 		if (!sctx->vertex_elements)
@@ -2178,11 +2186,6 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 
 		for (i = 0; i < sctx->vertex_elements->count; ++i)
 			key->vs.instance_divisors[i] = sctx->vertex_elements->elements[i].instance_divisor;
-
-		if (sctx->queued.named.rasterizer->clip_plane_enable & 0xf0)
-			key->vs.ucps_enabled |= 0x2;
-		if (sctx->queued.named.rasterizer->clip_plane_enable & 0xf)
-			key->vs.ucps_enabled |= 0x1;
 
 		key->vs.as_es = sctx->gs_shader != NULL;
 	} else if (sel->type == PIPE_SHADER_FRAGMENT) {
