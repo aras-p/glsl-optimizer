@@ -130,11 +130,11 @@ _mesa_init_shader_state(struct gl_context *ctx)
 void
 _mesa_free_shader_state(struct gl_context *ctx)
 {
-   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX], NULL);
-   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY],
-				  NULL);
-   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT],
-				  NULL);
+   int i;
+   for (i = 0; i < MESA_SHADER_STAGES; i++) {
+      _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram[i],
+                                     NULL);
+   }
    _mesa_reference_shader_program(ctx, &ctx->Shader._CurrentFragmentProgram,
 				  NULL);
    _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram, NULL);
@@ -946,32 +946,11 @@ use_shader_program(struct gl_context *ctx, GLenum type,
 		   struct gl_shader_program *shProg)
 {
    struct gl_shader_program **target;
+   gl_shader_stage stage = _mesa_shader_enum_to_shader_stage(type);
 
-   switch (type) {
-   case GL_VERTEX_SHADER:
-      target = &ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
-      if ((shProg == NULL)
-	  || (shProg->_LinkedShaders[MESA_SHADER_VERTEX] == NULL)) {
-	 shProg = NULL;
-      }
-      break;
-   case GL_GEOMETRY_SHADER_ARB:
-      target = &ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY];
-      if ((shProg == NULL)
-	  || (shProg->_LinkedShaders[MESA_SHADER_GEOMETRY] == NULL)) {
-	 shProg = NULL;
-      }
-      break;
-   case GL_FRAGMENT_SHADER:
-      target = &ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT];
-      if ((shProg == NULL)
-	  || (shProg->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL)) {
-	 shProg = NULL;
-      }
-      break;
-   default:
-      return;
-   }
+   target = &ctx->Shader.CurrentProgram[stage];
+   if ((shProg == NULL) || (shProg->_LinkedShaders[stage] == NULL))
+      shProg = NULL;
 
    if (*target != shProg) {
       FLUSH_VERTICES(ctx, _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS);
