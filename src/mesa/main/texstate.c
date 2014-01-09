@@ -527,27 +527,20 @@ static void
 update_texture_state( struct gl_context *ctx )
 {
    GLuint unit;
-   struct gl_program *fprog = NULL;
-   struct gl_program *vprog = NULL;
-   struct gl_program *gprog = NULL;
+   struct gl_program *prog[MESA_SHADER_STAGES];
    GLbitfield enabledFragUnits = 0x0;
+   int i;
 
-   if (ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX] &&
-       ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]->LinkStatus) {
-      vprog = ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]->_LinkedShaders[MESA_SHADER_VERTEX]->Program;
-   }
-
-   if (ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY] &&
-       ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]->LinkStatus) {
-      gprog = ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program;
-   }
-
-   if (ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT] &&
-       ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT]->LinkStatus) {
-      fprog = ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT]->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program;
-   }
-   else if (ctx->FragmentProgram._Enabled) {
-      fprog = &ctx->FragmentProgram.Current->Base;
+   for (i = 0; i < MESA_SHADER_STAGES; i++) {
+      if (ctx->Shader.CurrentProgram[i] &&
+          ctx->Shader.CurrentProgram[i]->LinkStatus) {
+         prog[i] = ctx->Shader.CurrentProgram[i]->_LinkedShaders[i]->Program;
+      } else {
+         if (i == MESA_SHADER_FRAGMENT && ctx->FragmentProgram._Enabled)
+            prog[i] = &ctx->FragmentProgram.Current->Base;
+         else
+            prog[i] = NULL;
+      }
    }
 
    /* TODO: only set this if there are actual changes */
@@ -563,9 +556,7 @@ update_texture_state( struct gl_context *ctx )
     */
    for (unit = 0; unit < ctx->Const.MaxCombinedTextureImageUnits; unit++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-      GLbitfield enabledVertTargets = 0x0;
-      GLbitfield enabledFragTargets = 0x0;
-      GLbitfield enabledGeomTargets = 0x0;
+      GLbitfield enabledTargetsByStage[MESA_SHADER_STAGES];
       GLbitfield enabledTargets = 0x0;
       GLuint texIndex;
 
@@ -575,24 +566,15 @@ update_texture_state( struct gl_context *ctx )
        * by a fragment program/program.  When multiple flags are set, we'll
        * settle on the one with highest priority (see below).
        */
-      if (vprog) {
-         enabledVertTargets |= vprog->TexturesUsed[unit];
+      for (i = 0; i < MESA_SHADER_STAGES; i++) {
+         if (prog[i])
+            enabledTargetsByStage[i] = prog[i]->TexturesUsed[unit];
+         else if (i == MESA_SHADER_FRAGMENT)
+            enabledTargetsByStage[i] = texUnit->Enabled;
+         else
+            enabledTargetsByStage[i] = 0;
+         enabledTargets |= enabledTargetsByStage[i];
       }
-
-      if (gprog) {
-         enabledGeomTargets |= gprog->TexturesUsed[unit];
-      }
-
-      if (fprog) {
-         enabledFragTargets |= fprog->TexturesUsed[unit];
-      }
-      else {
-         /* fixed-function fragment program */
-         enabledFragTargets |= texUnit->Enabled;
-      }
-
-      enabledTargets = enabledVertTargets | enabledFragTargets |
-                       enabledGeomTargets;
 
       texUnit->_ReallyEnabled = 0x0;
 
@@ -625,7 +607,7 @@ update_texture_state( struct gl_context *ctx )
       }
 
       if (!texUnit->_ReallyEnabled) {
-         if (fprog) {
+         if (prog[MESA_SHADER_FRAGMENT]) {
             /* If we get here it means the shader is expecting a texture
              * object, but there isn't one (or it's incomplete).  Use the
              * fallback texture.
@@ -655,25 +637,26 @@ update_texture_state( struct gl_context *ctx )
 
       ctx->Texture._EnabledUnits |= (1 << unit);
 
-      if (enabledFragTargets)
+      if (enabledTargetsByStage[MESA_SHADER_FRAGMENT])
          enabledFragUnits |= (1 << unit);
 
-      if (!fprog)
+      if (!prog[MESA_SHADER_FRAGMENT])
          update_tex_combine(ctx, texUnit);
    }
 
 
    /* Determine which texture coordinate sets are actually needed */
-   if (fprog) {
+   if (prog[MESA_SHADER_FRAGMENT]) {
       const GLuint coordMask = (1 << MAX_TEXTURE_COORD_UNITS) - 1;
       ctx->Texture._EnabledCoordUnits
-         = (fprog->InputsRead >> VARYING_SLOT_TEX0) & coordMask;
+         = (prog[MESA_SHADER_FRAGMENT]->InputsRead >> VARYING_SLOT_TEX0) &
+         coordMask;
    }
    else {
       ctx->Texture._EnabledCoordUnits = enabledFragUnits;
    }
 
-   if (!fprog || !vprog)
+   if (!prog[MESA_SHADER_FRAGMENT] || !prog[MESA_SHADER_VERTEX])
       update_texgen(ctx);
 
    _mesa_validate_image_units(ctx);
