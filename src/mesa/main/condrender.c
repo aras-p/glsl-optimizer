@@ -40,16 +40,37 @@
 void GLAPIENTRY
 _mesa_BeginConditionalRender(GLuint queryId, GLenum mode)
 {
-   struct gl_query_object *q;
+   struct gl_query_object *q = NULL;
    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->Extensions.NV_conditional_render || ctx->Query.CondRenderQuery ||
-       queryId == 0) {
+   /* Section 2.14 (Conditional Rendering) of the OpenGL 3.0 spec says:
+    *
+    *     "If BeginConditionalRender is called while conditional rendering is
+    *     in progress, or if EndConditionalRender is called while conditional
+    *     rendering is not in progress, the error INVALID_OPERATION is
+    *     generated."
+    */
+   if (!ctx->Extensions.NV_conditional_render || ctx->Query.CondRenderQuery) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBeginConditionalRender()");
       return;
    }
 
    ASSERT(ctx->Query.CondRenderMode == GL_NONE);
+
+   /* Section 2.14 (Conditional Rendering) of the OpenGL 3.0 spec says:
+    *
+    *     "The error INVALID_VALUE is generated if <id> is not the name of an
+    *     existing query object query."
+    */
+   if (queryId != 0)
+      q = _mesa_lookup_query_object(ctx, queryId);
+
+   if (!q) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glBeginConditionalRender(bad queryId=%u)", queryId);
+      return;
+   }
+   ASSERT(q->Id == queryId);
 
    switch (mode) {
    case GL_QUERY_WAIT:
@@ -64,14 +85,12 @@ _mesa_BeginConditionalRender(GLuint queryId, GLenum mode)
       return;
    }
 
-   q = _mesa_lookup_query_object(ctx, queryId);
-   if (!q) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glBeginConditionalRender(bad queryId=%u)", queryId);
-      return;
-   }
-   ASSERT(q->Id == queryId);
-
+   /* Section 2.14 (Conditional Rendering) of the OpenGL 3.0 spec says:
+    *
+    *     "The error INVALID_OPERATION is generated if <id> is the name of a
+    *     query object with a target other than SAMPLES_PASSED, or <id> is the
+    *     name of a query currently in progress."
+    */
    if ((q->Target != GL_SAMPLES_PASSED &&
         q->Target != GL_ANY_SAMPLES_PASSED &&
         q->Target != GL_ANY_SAMPLES_PASSED_CONSERVATIVE) || q->Active) {
