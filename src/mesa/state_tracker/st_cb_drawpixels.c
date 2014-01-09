@@ -1364,7 +1364,7 @@ blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
        !ctx->Stencil.Enabled &&
        !ctx->FragmentProgram.Enabled &&
        !ctx->VertexProgram.Enabled &&
-       !ctx->Shader.CurrentFragmentProgram &&
+       !ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT] &&
        ctx->DrawBuffer->_NumColorDrawBuffers == 1 &&
        !ctx->Query.CondRenderQuery &&
        !ctx->Query.CurrentOcclusionObject) {

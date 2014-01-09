@@ -60,7 +60,7 @@ brw_upload_vs_unit(struct brw_context *brw)
    /* Use ALT floating point mode for ARB vertex programs, because they
     * require 0^0 == 1.
     */
-   if (brw->ctx.Shader.CurrentVertexProgram == NULL)
+   if (brw->ctx.Shader.CurrentProgram[MESA_SHADER_VERTEX] == NULL)
       vs->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
    else
       vs->thread1.floating_point_mode = BRW_FLOATING_POINT_IEEE_754;

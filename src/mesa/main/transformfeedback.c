@@ -387,13 +387,13 @@ _mesa_BeginTransformFeedback(GLenum mode)
 
    obj = ctx->TransformFeedback.CurrentObject;
 
-   if (ctx->Shader.CurrentVertexProgram == NULL) {
+   if (ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX] == NULL) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBeginTransformFeedback(no program active)");
       return;
    }
 
-   info = &ctx->Shader.CurrentVertexProgram->LinkedTransformFeedback;
+   info = &ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]->LinkedTransformFeedback;
 
    if (info->NumOutputs == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -451,7 +451,7 @@ _mesa_BeginTransformFeedback(GLenum mode)
       obj->GlesRemainingPrims = max_vertices / vertices_per_prim;
    }
 
-   obj->shader_program = ctx->Shader.CurrentVertexProgram;
+   obj->shader_program = ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
 
    assert(ctx->Driver.BeginTransformFeedback);
    ctx->Driver.BeginTransformFeedback(ctx, mode, obj);
@@ -993,7 +993,7 @@ _mesa_ResumeTransformFeedback(void)
     *  the program object being used by the current transform feedback object
     *  is not active."
     */
-   if (obj->shader_program != ctx->Shader.CurrentVertexProgram) {
+   if (obj->shader_program != ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glResumeTransformFeedback(wrong vertex program bound)");
       return;

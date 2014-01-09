@@ -140,7 +140,7 @@ upload_wm_state(struct brw_context *brw)
     * rendering, CurrentFragmentProgram is used for this check to
     * differentiate between the GLSL and non-GLSL cases.
     */
-   if (ctx->Shader.CurrentFragmentProgram == NULL)
+   if (ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT] == NULL)
       dw2 |= GEN6_WM_FLOATING_POINT_MODE_ALT;
 
    /* CACHE_NEW_SAMPLER */

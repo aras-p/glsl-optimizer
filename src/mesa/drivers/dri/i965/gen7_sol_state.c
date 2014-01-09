@@ -41,7 +41,7 @@ upload_3dstate_so_buffers(struct brw_context *brw)
    struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_VERTEX_PROGRAM */
    const struct gl_shader_program *vs_prog =
-      ctx->Shader.CurrentVertexProgram;
+      ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
    const struct gl_transform_feedback_info *linked_xfb_info =
       &vs_prog->LinkedTransformFeedback;
    /* BRW_NEW_TRANSFORM_FEEDBACK */
@@ -104,7 +104,7 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_VERTEX_PROGRAM */
    const struct gl_shader_program *vs_prog =
-      ctx->Shader.CurrentVertexProgram;
+      ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
    /* BRW_NEW_TRANSFORM_FEEDBACK */
    const struct gl_transform_feedback_info *linked_xfb_info =
       &vs_prog->LinkedTransformFeedback;

@@ -618,11 +618,11 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       }
 
       _mesa_reference_shader_program(ctx, &save->VertexShader,
-                                     ctx->Shader.CurrentVertexProgram);
+                                     ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]);
       _mesa_reference_shader_program(ctx, &save->GeometryShader,
-                                     ctx->Shader.CurrentGeometryProgram);
+                                     ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]);
       _mesa_reference_shader_program(ctx, &save->FragmentShader,
-                                     ctx->Shader.CurrentFragmentProgram);
+                                     ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT]);
       _mesa_reference_shader_program(ctx, &save->ActiveShader,
                                      ctx->Shader.ActiveProgram);
 

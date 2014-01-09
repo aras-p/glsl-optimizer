@@ -532,19 +532,19 @@ update_texture_state( struct gl_context *ctx )
    struct gl_program *gprog = NULL;
    GLbitfield enabledFragUnits = 0x0;
 
-   if (ctx->Shader.CurrentVertexProgram &&
-       ctx->Shader.CurrentVertexProgram->LinkStatus) {
-      vprog = ctx->Shader.CurrentVertexProgram->_LinkedShaders[MESA_SHADER_VERTEX]->Program;
+   if (ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX] &&
+       ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]->LinkStatus) {
+      vprog = ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]->_LinkedShaders[MESA_SHADER_VERTEX]->Program;
    }
 
-   if (ctx->Shader.CurrentGeometryProgram &&
-       ctx->Shader.CurrentGeometryProgram->LinkStatus) {
-      gprog = ctx->Shader.CurrentGeometryProgram->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program;
+   if (ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY] &&
+       ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]->LinkStatus) {
+      gprog = ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]->_LinkedShaders[MESA_SHADER_GEOMETRY]->Program;
    }
 
-   if (ctx->Shader.CurrentFragmentProgram &&
-       ctx->Shader.CurrentFragmentProgram->LinkStatus) {
-      fprog = ctx->Shader.CurrentFragmentProgram->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program;
+   if (ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT] &&
+       ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT]->LinkStatus) {
+      fprog = ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT]->_LinkedShaders[MESA_SHADER_FRAGMENT]->Program;
    }
    else if (ctx->FragmentProgram._Enabled) {
       fprog = &ctx->FragmentProgram.Current->Base;

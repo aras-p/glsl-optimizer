@@ -296,7 +296,7 @@ brw_upload_gs_prog(struct brw_context *brw)
    if (!brw_search_cache(&brw->cache, BRW_GS_PROG,
                          &key, sizeof(key),
                          &stage_state->prog_offset, &brw->gs.prog_data)) {
-      bool success = do_gs_prog(brw, ctx->Shader.CurrentGeometryProgram,
+      bool success = do_gs_prog(brw, ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY],
                                 gp, &key);
       assert(success);
    }

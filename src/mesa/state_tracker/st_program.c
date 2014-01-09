@@ -1196,9 +1196,9 @@ void
 st_print_shaders(struct gl_context *ctx)
 {
    struct gl_shader_program *shProg[3] = {
-      ctx->Shader.CurrentVertexProgram,
-      ctx->Shader.CurrentGeometryProgram,
-      ctx->Shader.CurrentFragmentProgram,
+      ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX],
+      ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY],
+      ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT],
    };
    unsigned j;
 

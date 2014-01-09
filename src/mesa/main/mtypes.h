@@ -1815,7 +1815,8 @@ struct gl_transform_feedback_object
 
    /**
     * The shader program active when BeginTransformFeedback() was called.
-    * When active and unpaused, this equals ctx->Shader.CurrentVertexProgram.
+    * When active and unpaused, this equals
+    * ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX].
     */
    struct gl_shader_program *shader_program;
 
@@ -2714,9 +2715,7 @@ struct gl_shader_state
     * GL_EXT_separate_shader_objects is not supported, each of these must point
     * to \c NULL or to the same program.
     */
-   struct gl_shader_program *CurrentVertexProgram;
-   struct gl_shader_program *CurrentGeometryProgram;
-   struct gl_shader_program *CurrentFragmentProgram;
+   struct gl_shader_program *CurrentProgram[MESA_SHADER_STAGES];
 
    struct gl_shader_program *_CurrentFragmentProgram;
 

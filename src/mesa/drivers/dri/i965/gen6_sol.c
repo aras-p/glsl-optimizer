@@ -43,7 +43,7 @@ gen6_update_sol_surfaces(struct brw_context *brw)
       ctx->TransformFeedback.CurrentObject;
    /* BRW_NEW_VERTEX_PROGRAM */
    const struct gl_shader_program *shaderprog =
-      ctx->Shader.CurrentVertexProgram;
+      ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
    const struct gl_transform_feedback_info *linked_xfb_info =
       &shaderprog->LinkedTransformFeedback;
    int i;
@@ -89,7 +89,7 @@ brw_gs_upload_binding_table(struct brw_context *brw)
    struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_VERTEX_PROGRAM */
    const struct gl_shader_program *shaderprog =
-      ctx->Shader.CurrentVertexProgram;
+      ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
    bool has_surfaces = false;
    uint32_t *bind;
 
@@ -175,7 +175,7 @@ brw_begin_transform_feedback(struct gl_context *ctx, GLenum mode,
 {
    struct brw_context *brw = brw_context(ctx);
    const struct gl_shader_program *vs_prog =
-      ctx->Shader.CurrentVertexProgram;
+      ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
    const struct gl_transform_feedback_info *linked_xfb_info =
       &vs_prog->LinkedTransformFeedback;
    struct gl_transform_feedback_object *xfb_obj =

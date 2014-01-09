@@ -69,7 +69,7 @@ brw_upload_gs_ubo_surfaces(struct brw_context *brw)
    struct gl_context *ctx = &brw->ctx;
 
    /* _NEW_PROGRAM */
-   struct gl_shader_program *prog = ctx->Shader.CurrentGeometryProgram;
+   struct gl_shader_program *prog = ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY];
 
    if (!prog)
       return;
@@ -93,7 +93,7 @@ brw_upload_gs_abo_surfaces(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
    /* _NEW_PROGRAM */
-   struct gl_shader_program *prog = ctx->Shader.CurrentGeometryProgram;
+   struct gl_shader_program *prog = ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY];
 
    if (prog) {
       /* CACHE_NEW_GS_PROG */
