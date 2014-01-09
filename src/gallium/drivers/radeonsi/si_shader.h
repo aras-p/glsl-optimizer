@@ -136,7 +136,7 @@ struct si_shader {
 	unsigned		gs_output_prim;
 	unsigned		gs_max_out_vertices;
 
-	unsigned		ninterp;
+	unsigned		nparam;
 	bool			uses_kill;
 	bool			uses_instanceid;
 	bool			fs_write_all;

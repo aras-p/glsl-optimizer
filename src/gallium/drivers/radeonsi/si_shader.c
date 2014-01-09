@@ -158,6 +158,34 @@ static LLVMValueRef get_instance_index_for_fetch(
 	return result;
 }
 
+static int si_store_shader_io_attribs(struct si_shader *shader,
+				      const struct tgsi_full_declaration *d)
+{
+	int i = -1;
+
+	switch (d->Declaration.File) {
+	case TGSI_FILE_INPUT:
+		i = shader->ninput++;
+		assert(i < Elements(shader->input));
+		shader->input[i].name = d->Semantic.Name;
+		shader->input[i].sid = d->Semantic.Index;
+		shader->input[i].interpolate = d->Interp.Interpolate;
+		shader->input[i].centroid = d->Interp.Centroid;
+		return -1;
+
+	case TGSI_FILE_OUTPUT:
+		i = shader->noutput++;
+		assert(i < Elements(shader->output));
+		shader->output[i].name = d->Semantic.Name;
+		shader->output[i].sid = d->Semantic.Index;
+		shader->output[i].index = d->Range.First;
+		shader->output[i].usage = d->Declaration.UsageMask;
+		break;
+	}
+
+	return i;
+}
+
 static void declare_input_vs(
 	struct radeon_llvm_context *radeon_bld,
 	unsigned input_index,
@@ -225,7 +253,12 @@ static void declare_input_gs(
 	unsigned input_index,
 	const struct tgsi_full_declaration *decl)
 {
-	/* Nothing to do, inputs are handled in fetch_input_gs() below */
+	struct si_shader_context *si_shader_ctx =
+		si_shader_context(&radeon_bld->soa.bld_base);
+	struct si_shader *shader = &si_shader_ctx->shader->shader;
+
+	si_store_shader_io_attribs(shader, decl);
+	shader->input[input_index].param_offset = shader->nparam++;
 }
 
 static LLVMValueRef fetch_input_gs(
@@ -236,6 +269,7 @@ static LLVMValueRef fetch_input_gs(
 {
 	struct lp_build_context *base = &bld_base->base;
 	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
+	struct si_shader *shader = &si_shader_ctx->shader->shader;
 	struct lp_build_context *uint =	&si_shader_ctx->radeon_bld.soa.bld_base.uint_bld;
 	struct gallivm_state *gallivm = base->gallivm;
 	LLVMTypeRef i32 = LLVMInt32TypeInContext(gallivm->context);
@@ -280,7 +314,8 @@ static LLVMValueRef fetch_input_gs(
 	args[0] = t_list;
 	args[1] = vtx_offset;
 	args[2] = lp_build_const_int32(gallivm,
-				       ((reg->Register.Index * 4) + swizzle) * 256);
+				       ((shader->input[reg->Register.Index].param_offset * 4) +
+					swizzle) * 256);
 	args[3] = uint->zero;
 	args[4] = uint->one;  /* OFFEN */
 	args[5] = uint->zero; /* IDXEN */
@@ -368,7 +403,7 @@ static void declare_input_fs(
 		return;
 	}
 
-	shader->input[input_index].param_offset = shader->ninterp++;
+	shader->input[input_index].param_offset = shader->nparam++;
 	attr_number = lp_build_const_int32(gallivm,
 					   shader->input[input_index].param_offset);
 
@@ -447,7 +482,7 @@ static void declare_input_fs(
 						"");
 		}
 
-		shader->ninterp++;
+		shader->nparam++;
 	} else if (decl->Semantic.Name == TGSI_SEMANTIC_FOG) {
 		LLVMValueRef args[4];
 
@@ -938,34 +973,6 @@ static void si_llvm_emit_streamout(struct si_shader_context *shader)
 	lp_build_endif(&if_ctx);
 }
 
-
-static int si_store_shader_io_attribs(struct si_shader *shader,
-				      struct tgsi_full_declaration *d)
-{
-	int i = -1;
-
-	switch (d->Declaration.File) {
-	case TGSI_FILE_INPUT:
-		i = shader->ninput++;
-		assert(i < Elements(shader->input));
-		shader->input[i].name = d->Semantic.Name;
-		shader->input[i].sid = d->Semantic.Index;
-		shader->input[i].interpolate = d->Interp.Interpolate;
-		shader->input[i].centroid = d->Interp.Centroid;
-		return -1;
-
-	case TGSI_FILE_OUTPUT:
-		i = shader->noutput++;
-		assert(i < Elements(shader->output));
-		shader->output[i].name = d->Semantic.Name;
-		shader->output[i].sid = d->Semantic.Index;
-		shader->output[i].index = d->Range.First;
-		shader->output[i].usage = d->Declaration.UsageMask;
-		break;
-	}
-
-	return i;
-}
 
 /* Generate export instructions for hardware VS shader stage */
 static void si_llvm_export_vs(struct lp_build_tgsi_context *bld_base,
@@ -1877,9 +1884,12 @@ static void si_llvm_emit_vertex(
 		while (!tgsi_parse_end_of_tokens(parse)) {
 			tgsi_parse_token(parse);
 
-			if (parse->FullToken.Token.Type == TGSI_TOKEN_TYPE_DECLARATION)
-				si_store_shader_io_attribs(shader,
-							   &parse->FullToken.FullDeclaration);
+			if (parse->FullToken.Token.Type == TGSI_TOKEN_TYPE_DECLARATION) {
+				struct tgsi_full_declaration *d = &parse->FullToken.FullDeclaration;
+
+				if (d->Declaration.File == TGSI_FILE_OUTPUT)
+					si_store_shader_io_attribs(shader, d);
+			}
 		}
 	}
 
@@ -2397,7 +2407,7 @@ int si_pipe_shader_create(
 	bool dump = r600_can_dump_shader(&sctx->screen->b, shader->selector->tokens);
 
 	assert(shader->shader.noutput == 0);
-	assert(shader->shader.ninterp == 0);
+	assert(shader->shader.nparam == 0);
 	assert(shader->shader.ninput == 0);
 
 	memset(&si_shader_ctx, 0, sizeof(si_shader_ctx));

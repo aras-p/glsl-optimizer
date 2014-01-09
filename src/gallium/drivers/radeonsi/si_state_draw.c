@@ -287,7 +287,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		exports_ps = 2;
 	}
 
-	spi_ps_in_control = S_0286D8_NUM_INTERP(shader->shader.ninterp) |
+	spi_ps_in_control = S_0286D8_NUM_INTERP(shader->shader.nparam) |
 		S_0286D8_BC_OPTIMIZE_DISABLE(1);
 
 	si_pm4_set_reg(pm4, R_0286E0_SPI_BARYC_CNTL, spi_baryc_cntl);
