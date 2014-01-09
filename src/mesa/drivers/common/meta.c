@@ -933,9 +933,17 @@ _mesa_meta_end(struct gl_context *ctx)
    }
 
    if (state & MESA_META_SCISSOR) {
-      _mesa_set_enable(ctx, GL_SCISSOR_TEST, save->Scissor.EnableFlags);
-      _mesa_Scissor(save->Scissor.ScissorArray[0].X, save->Scissor.ScissorArray[0].Y,
-                    save->Scissor.ScissorArray[0].Width, save->Scissor.ScissorArray[0].Height);
+      unsigned i;
+
+      for (i = 0; i < ctx->Const.MaxViewports; i++) {
+         _mesa_set_scissor(ctx, i,
+                           save->Scissor.ScissorArray[i].X,
+                           save->Scissor.ScissorArray[i].Y,
+                           save->Scissor.ScissorArray[i].Width,
+                           save->Scissor.ScissorArray[i].Height);
+         _mesa_set_enablei(ctx, GL_SCISSOR_TEST, i,
+                           (save->Scissor.EnableFlags >> i) & 1);
+      }
    }
 
    if (state & MESA_META_SHADER) {
