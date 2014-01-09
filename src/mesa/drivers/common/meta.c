@@ -138,9 +138,7 @@ struct save_state
    GLboolean FragmentProgramEnabled;
    struct gl_fragment_program *FragmentProgram;
    GLboolean ATIFragmentShaderEnabled;
-   struct gl_shader_program *VertexShader;
-   struct gl_shader_program *GeometryShader;
-   struct gl_shader_program *FragmentShader;
+   struct gl_shader_program *Shader[MESA_SHADER_STAGES];
    struct gl_shader_program *ActiveShader;
 
    /** MESA_META_STENCIL_TEST */
@@ -617,12 +615,10 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
          _mesa_set_enable(ctx, GL_FRAGMENT_SHADER_ATI, GL_FALSE);
       }
 
-      _mesa_reference_shader_program(ctx, &save->VertexShader,
-                                     ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]);
-      _mesa_reference_shader_program(ctx, &save->GeometryShader,
-                                     ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]);
-      _mesa_reference_shader_program(ctx, &save->FragmentShader,
-                                     ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT]);
+      for (int i = 0; i < MESA_SHADER_STAGES; i++) {
+         _mesa_reference_shader_program(ctx, &save->Shader[i],
+                                     ctx->Shader.CurrentProgram[i]);
+      }
       _mesa_reference_shader_program(ctx, &save->ActiveShader,
                                      ctx->Shader.ActiveProgram);
 
@@ -829,6 +825,7 @@ _mesa_meta_end(struct gl_context *ctx)
 {
    struct save_state *save = &ctx->Meta->Save[ctx->Meta->SaveStackDepth - 1];
    const GLbitfield state = save->SavedState;
+   int i;
 
    /* After starting a new occlusion query, initialize the results to the
     * values saved previously. The driver will then continue to increment
@@ -968,23 +965,24 @@ _mesa_meta_end(struct gl_context *ctx)
                           save->ATIFragmentShaderEnabled);
       }
 
-      if (ctx->Extensions.ARB_vertex_shader)
-	 _mesa_use_shader_program(ctx, GL_VERTEX_SHADER, save->VertexShader);
+      if (ctx->Extensions.ARB_vertex_shader) {
+	 _mesa_use_shader_program(ctx, GL_VERTEX_SHADER,
+                                  save->Shader[MESA_SHADER_VERTEX]);
+      }
 
       if (_mesa_has_geometry_shaders(ctx))
 	 _mesa_use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB,
-				  save->GeometryShader);
+				  save->Shader[MESA_SHADER_GEOMETRY]);
 
       if (ctx->Extensions.ARB_fragment_shader)
 	 _mesa_use_shader_program(ctx, GL_FRAGMENT_SHADER,
-				  save->FragmentShader);
+				  save->Shader[MESA_SHADER_FRAGMENT]);
 
       _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram,
 				     save->ActiveShader);
 
-      _mesa_reference_shader_program(ctx, &save->VertexShader, NULL);
-      _mesa_reference_shader_program(ctx, &save->GeometryShader, NULL);
-      _mesa_reference_shader_program(ctx, &save->FragmentShader, NULL);
+      for (i = 0; i < MESA_SHADER_STAGES; i++)
+         _mesa_reference_shader_program(ctx, &save->Shader[i], NULL);
       _mesa_reference_shader_program(ctx, &save->ActiveShader, NULL);
    }
 
