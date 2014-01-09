@@ -169,6 +169,7 @@ static int si_store_shader_io_attribs(struct si_shader *shader,
 		assert(i < Elements(shader->input));
 		shader->input[i].name = d->Semantic.Name;
 		shader->input[i].sid = d->Semantic.Index;
+		shader->input[i].index = d->Range.First;
 		shader->input[i].interpolate = d->Interp.Interpolate;
 		shader->input[i].centroid = d->Interp.Centroid;
 		return -1;
@@ -258,7 +259,9 @@ static void declare_input_gs(
 	struct si_shader *shader = &si_shader_ctx->shader->shader;
 
 	si_store_shader_io_attribs(shader, decl);
-	shader->input[input_index].param_offset = shader->nparam++;
+
+	if (decl->Semantic.Name != TGSI_SEMANTIC_PRIMID)
+		shader->input[input_index].param_offset = shader->nparam++;
 }
 
 static LLVMValueRef fetch_input_gs(
@@ -278,6 +281,15 @@ static LLVMValueRef fetch_input_gs(
 	LLVMValueRef t_list;
 	LLVMValueRef args[9];
 	unsigned vtx_offset_param;
+
+	if (swizzle != ~0 &&
+	    shader->input[reg->Register.Index].name == TGSI_SEMANTIC_PRIMID) {
+		if (swizzle == 0)
+			return LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
+					    SI_PARAM_PRIMITIVE_ID);
+		else
+			return uint->zero;
+	}
 
 	if (!reg->Register.Dimension)
 		return NULL;
@@ -1040,6 +1052,7 @@ handle_semantic:
 		case TGSI_SEMANTIC_CLIPVERTEX:
 			si_llvm_emit_clipvertex(bld_base, pos_args, outputs[i].values);
 			continue;
+		case TGSI_SEMANTIC_PRIMID:
 		case TGSI_SEMANTIC_FOG:
 		case TGSI_SEMANTIC_GENERIC:
 			target = V_008DFC_SQ_EXP_PARAM + param_count;

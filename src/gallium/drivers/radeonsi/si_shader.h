@@ -93,6 +93,7 @@ struct si_shader_input {
 	unsigned		name;
 	int			sid;
 	unsigned		param_offset;
+	unsigned		index;
 	unsigned		interpolate;
 	bool			centroid;
 };
