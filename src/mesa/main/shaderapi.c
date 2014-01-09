@@ -174,13 +174,20 @@ _mesa_copy_string(GLchar *dst, GLsizei maxLength,
 bool
 _mesa_validate_shader_target(const struct gl_context *ctx, GLenum type)
 {
+   /* Note: when building built-in GLSL functions, this function may be
+    * invoked with ctx == NULL.  In that case, we can only validate that it's
+    * a shader target we recognize, not that it's supported in the current
+    * context.  But that's fine--we don't need any further validation than
+    * that when building built-in GLSL functions.
+    */
+
    switch (type) {
    case GL_FRAGMENT_SHADER:
-      return ctx->Extensions.ARB_fragment_shader;
+      return ctx == NULL || ctx->Extensions.ARB_fragment_shader;
    case GL_VERTEX_SHADER:
-      return ctx->Extensions.ARB_vertex_shader;
+      return ctx == NULL || ctx->Extensions.ARB_vertex_shader;
    case GL_GEOMETRY_SHADER_ARB:
-      return _mesa_has_geometry_shaders(ctx);
+      return ctx == NULL || _mesa_has_geometry_shaders(ctx);
    default:
       return false;
    }
