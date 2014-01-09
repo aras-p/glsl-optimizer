@@ -482,8 +482,9 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    if (!brw_search_cache(&brw->cache, BRW_VS_PROG,
 			 &key, sizeof(key),
 			 &brw->vs.base.prog_offset, &brw->vs.prog_data)) {
-      bool success = do_vs_prog(brw, ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX],
-				vp, &key);
+      bool success =
+         do_vs_prog(brw, ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX], vp,
+                    &key);
       (void) success;
       assert(success);
    }

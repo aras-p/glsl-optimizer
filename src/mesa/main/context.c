@@ -1801,7 +1801,8 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 					    ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY],
                                             errMsg)) {
             _mesa_warning(ctx, "Shader program %u is invalid: %s",
-                          ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]->Name, errMsg);
+                          ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY]->Name,
+                          errMsg);
          }
       }
 #endif
@@ -1822,7 +1823,8 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 					    ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT],
                                             errMsg)) {
             _mesa_warning(ctx, "Shader program %u is invalid: %s",
-                          ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT]->Name, errMsg);
+                          ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT]->Name,
+                          errMsg);
          }
       }
 #endif

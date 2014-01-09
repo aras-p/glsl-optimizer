@@ -393,7 +393,8 @@ _mesa_BeginTransformFeedback(GLenum mode)
       return;
    }
 
-   info = &ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]->LinkedTransformFeedback;
+   info =
+      &ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]->LinkedTransformFeedback;
 
    if (info->NumOutputs == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
