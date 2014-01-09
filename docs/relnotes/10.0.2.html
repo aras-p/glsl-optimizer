@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 10.0.2 Release Notes / (January 9, 2014)</h1>
+
+<p>
+Mesa 10.0.2 is a bug fix release which fixes bugs found since the 10.0.1 release.
+</p>
+<p>
+Mesa 10.0.2 implements the OpenGL 3.3 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.3.  OpenGL
+3.3 is <strong>only</strong> available if requested at context creation
+because compatibility contexts not supported.
+</p>
+
+
+<h2>MD5 checksums</h2>
+<pre>
+de7d14baf0101b697c140d2f47ef27e9  MesaLib-10.0.2.tar.gz
+8544c0ab3e438a08b5103421ea15b6d2  MesaLib-10.0.2.tar.bz2
+181b0d6c1afca38e98a930d0e564ed90  MesaLib-10.0.2.zip
+</pre>
+
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=70740">Bug 70740</a> - HiZ on SNB causes GPU hang with WebGL web app</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=72026">Bug 72026</a> - SIGSEGV in fs_visitor::visit(ir_dereference_variable*)</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=72264">Bug 72264</a> - GLSL error reporting</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=72369">Bug 72369</a> - glitches in serious sam 3 with the sb shader backend</li>
+
+</ul>
+
+<h2>Changes</h2>
+
+<p>The full set of changes can be viewed by using the following git command:</p>
+
+<pre>
+  git log mesa-10.0.1..mesa-10.0.2
+</pre>
+
+<p>Aaron Watry (8):</p>
+<ul>
+  <li>clover: Remove unused variable</li>
+  <li>pipe_loader/sw: close dev-&gt;lib when initialization fails</li>
+  <li>radeon/compute: Stop leaking LLVMContexts in radeon_llvm_parse_bitcode</li>
+  <li>r600/compute: Free compiled kernels when deleting compute state</li>
+  <li>r600/compute: Use the correct FREE macro when deleting compute state</li>
+  <li>radeon/llvm: Free target data at end of optimization</li>
+  <li>st/vdpau: Destroy context when initialization fails</li>
+  <li>r600/pipe: Stop leaking context-&gt;start_compute_cs_cmd.buf on EG/CM</li>
+</ul>
+
+<p>Alex Deucher (1):</p>
+<ul>
+  <li>r600g: fix SUMO2 pci id</li>
+</ul>
+
+<p>Alexander von Gluck IV (1):</p>
+<ul>
+  <li>Haiku: Add in public GL kit headers</li>
+</ul>
+
+<p>Anuj Phogat (1):</p>
+<ul>
+  <li>mesa: Fix error code generation in glBeginConditionalRender()</li>
+</ul>
+
+<p>Carl Worth (2):</p>
+<ul>
+  <li>docs: Add md5sums for the 10.0.1 release.</li>
+  <li>Update version to 10.0.2</li>
+</ul>
+
+<p>Chad Versace (1):</p>
+<ul>
+  <li>i965/gen6: Fix HiZ hang in WebGL Google Maps</li>
+</ul>
+
+<p>Erik Faye-Lund (1):</p>
+<ul>
+  <li>glcpp: error on multiple #else/#elif directives</li>
+</ul>
+
+<p>Henri Verbeet (1):</p>
+<ul>
+  <li>i915: Add support for gl_FragData[0] reads.</li>
+</ul>
+
+<p>Ilia Mirkin (1):</p>
+<ul>
+  <li>nv50: fix a small leak on context destroy</li>
+</ul>
+
+<p>Jonathan Liu (2):</p>
+<ul>
+  <li>st/mesa: use pipe_sampler_view_release()</li>
+  <li>llvmpipe: use pipe_sampler_view_release() to avoid segfault</li>
+</ul>
+
+<p>Kenneth Graunke (2):</p>
+<ul>
+  <li>i965: Fix 3DSTATE_PUSH_CONSTANT_ALLOC_PS packet creation.</li>
+  <li>Revert "mesa: Remove GLXContextID typedef from glx.h."</li>
+</ul>
+
+<p>Kevin Rogovin (1):</p>
+<ul>
+  <li>Use line number information from entire function expression</li>
+</ul>
+
+<p>Kristian Høgsberg (1):</p>
+<ul>
+  <li>dri_util: Don't assume __DRIcontext-&gt;driverPrivate is a gl_context</li>
+</ul>
+
+<p>Marek Olšák (2):</p>
+<ul>
+  <li>mesa: fix interpretation of glClearBuffer(drawbuffer)</li>
+  <li>st/mesa: fix glClear with multiple colorbuffers and different formats</li>
+</ul>
+
+<p>Paul Berry (2):</p>
+<ul>
+  <li>glsl: Teach ir_variable_refcount about ir_loop::counter variables.</li>
+  <li>glsl: Fix inconsistent assumptions about ir_loop::counter.</li>
+</ul>
+
+<p>Vadim Girlin (1):</p>
+<ul>
+  <li>r600g/sb: fix stack size computation on evergreen</li>
+</ul>
+
+</div>
+</body>
+</html>
