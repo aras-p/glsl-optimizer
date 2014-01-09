@@ -663,6 +663,24 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
 
       *params = shProg->NumAtomicBuffers;
       return;
+   case GL_COMPUTE_WORK_GROUP_SIZE: {
+      int i;
+      if (!_mesa_is_desktop_gl(ctx) || !ctx->Extensions.ARB_compute_shader)
+         break;
+      if (!shProg->LinkStatus) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramiv(program not "
+                     "linked)");
+         return;
+      }
+      if (shProg->_LinkedShaders[MESA_SHADER_COMPUTE] == NULL) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glGetProgramiv(no compute "
+                     "shaders)");
+         return;
+      }
+      for (i = 0; i < 3; i++)
+         params[i] = shProg->Comp.LocalSize[i];
+      return;
+   }
    default:
       break;
    }
