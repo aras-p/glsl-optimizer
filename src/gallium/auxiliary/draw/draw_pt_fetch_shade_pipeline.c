@@ -104,7 +104,8 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
                           fpme->vertex_size,
                           instance_id_index );
    draw_pt_post_vs_prepare( fpme->post_vs,
-                            draw->clip_xy,
+                            gs_out_prim == PIPE_PRIM_POINTS ?
+                                           draw->clip_points_xy : draw->clip_xy,
                             draw->clip_z,
                             draw->clip_user,
                             draw->guard_band_xy,

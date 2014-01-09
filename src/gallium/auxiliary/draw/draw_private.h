@@ -217,6 +217,7 @@ struct draw_context
       boolean bypass_clip_xy;
       boolean bypass_clip_z;
       boolean guard_band_xy;
+      boolean bypass_clip_points;
    } driver;
 
    boolean quads_always_flatshade_last;
@@ -231,6 +232,7 @@ struct draw_context
    boolean clip_z;
    boolean clip_user;
    boolean guard_band_xy;
+   boolean clip_points_xy;
 
    boolean force_passthrough; /**< never clip or shade */
 

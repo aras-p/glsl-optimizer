@@ -183,7 +183,7 @@ boolean svga_init_swtnl( struct svga_context *svga )
                                  screen->maxLineWidthAA));
 
    if (debug_get_bool_option("SVGA_SWTNL_FSE", FALSE))
-      draw_set_driver_clipping(svga->swtnl.draw, TRUE, TRUE, TRUE);
+      draw_set_driver_clipping(svga->swtnl.draw, TRUE, TRUE, TRUE, FALSE);
 
    return TRUE;
 

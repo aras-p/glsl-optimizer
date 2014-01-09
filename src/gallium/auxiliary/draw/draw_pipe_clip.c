@@ -609,10 +609,35 @@ do_clip_line( struct draw_stage *stage,
 
 static void
 clip_point( struct draw_stage *stage, 
-	    struct prim_header *header )
+            struct prim_header *header )
 {
-   if (header->v[0]->clipmask == 0) 
+   if (header->v[0]->clipmask == 0)
       stage->next->point( stage->next, header );
+}
+
+/*
+ * Clip points but ignore the first 4 (xy) clip planes.
+ * (This is necessary because we don't generate a different shader variant
+ * just for points hence xy clip bits are still generated. This is not really
+ * optimal because of the extra calculations both in generating clip masks
+ * and executing the clip stage but it gets the job done.)
+ */
+static void
+clip_point_no_xy( struct draw_stage *stage,
+                  struct prim_header *header )
+{
+   if ((header->v[0]->clipmask & 0xfffffff0) == 0)
+      stage->next->point( stage->next, header );
+}
+
+
+
+static void
+clip_first_point( struct draw_stage *stage,
+                  struct prim_header *header )
+{
+   stage->point = stage->draw->clip_points_xy ? clip_point : clip_point_no_xy;
+   stage->point(stage, header);
 }
 
 
@@ -822,7 +847,7 @@ struct draw_stage *draw_clip_stage( struct draw_context *draw )
 
    clipper->stage.draw = draw;
    clipper->stage.name = "clipper";
-   clipper->stage.point = clip_point;
+   clipper->stage.point = clip_first_point;
    clipper->stage.line = clip_first_line;
    clipper->stage.tri = clip_first_tri;
    clipper->stage.flush = clip_flush;

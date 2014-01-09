@@ -262,6 +262,10 @@ static void update_clip_flags( struct draw_context *draw )
                    draw->rasterizer && draw->rasterizer->depth_clip);
    draw->clip_user = draw->rasterizer &&
                      draw->rasterizer->clip_plane_enable != 0;
+   draw->clip_points_xy = draw->clip_xy &&
+                          (!draw->driver.bypass_clip_points ||
+                          (draw->rasterizer &&
+                          !draw->rasterizer->point_tri_clip));
 }
 
 /**
@@ -287,17 +291,23 @@ void draw_set_rasterizer_state( struct draw_context *draw,
  * Some hardware can turn off clipping altogether - in particular any
  * hardware with a TNL unit can do its own clipping, even if it is
  * relying on the draw module for some other reason.
+ * Setting bypass_clip_points to achieve d3d-style point clipping (the driver
+ * will need to do the "vp scissoring") _requires_ the driver to implement
+ * wide points / point sprites itself (points will still be clipped if rasterizer
+ * point_tri_clip isn't set). Only relevant if bypass_clip_xy isn't set.
  */
 void draw_set_driver_clipping( struct draw_context *draw,
                                boolean bypass_clip_xy,
                                boolean bypass_clip_z,
-                               boolean guard_band_xy)
+                               boolean guard_band_xy,
+                               boolean bypass_clip_points)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
    draw->driver.bypass_clip_xy = bypass_clip_xy;
    draw->driver.bypass_clip_z = bypass_clip_z;
    draw->driver.guard_band_xy = guard_band_xy;
+   draw->driver.bypass_clip_points = bypass_clip_points;
    update_clip_flags(draw);
 }
 
