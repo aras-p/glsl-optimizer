@@ -1874,12 +1874,8 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 
 #ifdef DEBUG
    if (ctx->Shader.Flags & GLSL_LOG) {
-      struct gl_shader_program *shProg[MESA_SHADER_STAGES];
+      struct gl_shader_program **shProg = ctx->Shader.CurrentProgram;
       gl_shader_stage i;
-
-      shProg[MESA_SHADER_VERTEX] = ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
-      shProg[MESA_SHADER_GEOMETRY] = ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY];
-      shProg[MESA_SHADER_FRAGMENT] = ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT];
 
       for (i = 0; i < MESA_SHADER_STAGES; i++) {
 	 if (shProg[i] == NULL || shProg[i]->_Used
