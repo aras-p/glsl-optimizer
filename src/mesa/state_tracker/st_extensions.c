@@ -155,15 +155,15 @@ void st_init_limits(struct st_context *st)
 
       switch (sh) {
       case PIPE_SHADER_FRAGMENT:
-         pc = &c->FragmentProgram;
+         pc = &c->Program[MESA_SHADER_FRAGMENT];
          options = &st->ctx->ShaderCompilerOptions[MESA_SHADER_FRAGMENT];
          break;
       case PIPE_SHADER_VERTEX:
-         pc = &c->VertexProgram;
+         pc = &c->Program[MESA_SHADER_VERTEX];
          options = &st->ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX];
          break;
       case PIPE_SHADER_GEOMETRY:
-         pc = &c->GeometryProgram;
+         pc = &c->Program[MESA_SHADER_GEOMETRY];
          options = &st->ctx->ShaderCompilerOptions[MESA_SHADER_GEOMETRY];
          break;
       default:
@@ -245,21 +245,21 @@ void st_init_limits(struct st_context *st)
 
    /* This depends on program constants. */
    c->MaxTextureCoordUnits
-      = _min(c->FragmentProgram.MaxTextureImageUnits, MAX_TEXTURE_COORD_UNITS);
+      = _min(c->Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits, MAX_TEXTURE_COORD_UNITS);
 
-   c->MaxTextureUnits = _min(c->FragmentProgram.MaxTextureImageUnits, c->MaxTextureCoordUnits);
+   c->MaxTextureUnits = _min(c->Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits, c->MaxTextureCoordUnits);
 
-   c->VertexProgram.MaxAttribs = MIN2(c->VertexProgram.MaxAttribs, 16);
+   c->Program[MESA_SHADER_VERTEX].MaxAttribs = MIN2(c->Program[MESA_SHADER_VERTEX].MaxAttribs, 16);
 
    /* PIPE_SHADER_CAP_MAX_INPUTS for the FS specifies the maximum number
     * of inputs. It's always 2 colors + N generic inputs. */
    c->MaxVarying = screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
                                             PIPE_SHADER_CAP_MAX_INPUTS);
    c->MaxVarying = MIN2(c->MaxVarying, MAX_VARYING);
-   c->FragmentProgram.MaxInputComponents = c->MaxVarying * 4;
-   c->VertexProgram.MaxOutputComponents = c->MaxVarying * 4;
-   c->GeometryProgram.MaxInputComponents = c->MaxVarying * 4;
-   c->GeometryProgram.MaxOutputComponents = c->MaxVarying * 4;
+   c->Program[MESA_SHADER_FRAGMENT].MaxInputComponents = c->MaxVarying * 4;
+   c->Program[MESA_SHADER_VERTEX].MaxOutputComponents = c->MaxVarying * 4;
+   c->Program[MESA_SHADER_GEOMETRY].MaxInputComponents = c->MaxVarying * 4;
+   c->Program[MESA_SHADER_GEOMETRY].MaxOutputComponents = c->MaxVarying * 4;
 
    c->MinProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MIN_TEXEL_OFFSET);
    c->MaxProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MAX_TEXEL_OFFSET);
@@ -284,9 +284,9 @@ void st_init_limits(struct st_context *st)
       c->UniformBufferOffsetAlignment =
          screen->get_param(screen, PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT);
       c->MaxCombinedUniformBlocks = c->MaxUniformBufferBindings =
-         c->VertexProgram.MaxUniformBlocks +
-         c->GeometryProgram.MaxUniformBlocks +
-         c->FragmentProgram.MaxUniformBlocks;
+         c->Program[MESA_SHADER_VERTEX].MaxUniformBlocks +
+         c->Program[MESA_SHADER_GEOMETRY].MaxUniformBlocks +
+         c->Program[MESA_SHADER_FRAGMENT].MaxUniformBlocks;
       assert(c->MaxCombinedUniformBlocks <= MAX_COMBINED_UNIFORM_BUFFERS);
    }
 }
