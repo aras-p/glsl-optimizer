@@ -127,7 +127,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 	 continue;
 
       struct gl_program *prog =
-	 ctx->Driver.NewProgram(ctx, _mesa_program_index_to_target(stage),
+	 ctx->Driver.NewProgram(ctx, _mesa_shader_stage_to_program(stage),
                                 shader->base.Name);
       if (!prog)
 	return false;

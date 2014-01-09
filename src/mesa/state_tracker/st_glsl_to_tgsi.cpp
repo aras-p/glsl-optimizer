@@ -5312,7 +5312,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	 _mesa_reference_program(ctx, &prog->_LinkedShaders[i]->Program,
 				 linked_prog);
          if (!ctx->Driver.ProgramStringNotify(ctx,
-                                              _mesa_program_index_to_target(i),
+                                              _mesa_shader_stage_to_program(i),
                                               linked_prog)) {
 	    _mesa_reference_program(ctx, &prog->_LinkedShaders[i]->Program,
 				    NULL);

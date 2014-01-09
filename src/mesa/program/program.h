@@ -210,7 +210,7 @@ _mesa_program_enum_to_shader_stage(GLenum v)
 
 
 static inline GLenum
-_mesa_shader_stage_to_program(gl_shader_stage stage)
+_mesa_shader_stage_to_program(unsigned stage)
 {
    switch (stage) {
    case MESA_SHADER_VERTEX:
@@ -223,23 +223,6 @@ _mesa_shader_stage_to_program(gl_shader_stage stage)
 
    assert(!"Unexpected shader stage in _mesa_shader_stage_to_program");
    return GL_VERTEX_PROGRAM_ARB;
-}
-
-
-static inline GLenum
-_mesa_program_index_to_target(GLuint i)
-{
-   static const GLenum enums[] = {
-      GL_VERTEX_PROGRAM_ARB,
-      GL_GEOMETRY_PROGRAM_NV,
-      GL_FRAGMENT_PROGRAM_ARB
-   };
-   STATIC_ASSERT(Elements(enums) == MESA_SHADER_STAGES);
-   if(i >= MESA_SHADER_STAGES) {
-      assert(!"Unexpected program index");
-      return 0;
-   } else
-      return enums[i];
 }
 
 
