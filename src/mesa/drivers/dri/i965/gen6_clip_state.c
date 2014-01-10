@@ -121,7 +121,8 @@ upload_clip_state(struct brw_context *brw)
 	     dw2);
    OUT_BATCH(U_FIXED(0.125, 3) << GEN6_CLIP_MIN_POINT_WIDTH_SHIFT |
              U_FIXED(255.875, 3) << GEN6_CLIP_MAX_POINT_WIDTH_SHIFT |
-             (fb->MaxNumLayers > 0 ? 0 : GEN6_CLIP_FORCE_ZERO_RTAINDEX));
+             (fb->MaxNumLayers > 0 ? 0 : GEN6_CLIP_FORCE_ZERO_RTAINDEX) |
+             ((ctx->Const.MaxViewports - 1) & GEN6_CLIP_MAX_VP_INDEX_MASK));
    ADVANCE_BATCH();
 }
 

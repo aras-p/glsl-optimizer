@@ -1544,6 +1544,7 @@ enum brw_message_target {
 # define GEN6_CLIP_MIN_POINT_WIDTH_SHIFT		17
 # define GEN6_CLIP_MAX_POINT_WIDTH_SHIFT		6
 # define GEN6_CLIP_FORCE_ZERO_RTAINDEX			(1 << 5)
+# define GEN6_CLIP_MAX_VP_INDEX_MASK			INTEL_MASK(3, 0)
 
 #define _3DSTATE_SF				0x7813 /* GEN6+ */
 /* DW1 (for gen6) */

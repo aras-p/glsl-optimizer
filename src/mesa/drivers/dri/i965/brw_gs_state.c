@@ -83,6 +83,8 @@ brw_upload_gs_unit(struct brw_context *brw)
    if (unlikely(INTEL_DEBUG & DEBUG_STATS))
       gs->thread4.stats_enable = 1;
 
+   gs->gs6.max_vp_index = brw->ctx.Const.MaxViewports - 1;
+
    brw->state.dirty.cache |= CACHE_NEW_FF_GS_UNIT;
 }
 
