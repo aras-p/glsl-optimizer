@@ -69,7 +69,7 @@ static struct mem_block *exec_heap = NULL;
 static unsigned char *exec_mem = NULL;
 
 
-static void
+static int
 init_heap(void)
 {
    if (!exec_heap)
@@ -79,6 +79,8 @@ init_heap(void)
       exec_mem = (unsigned char *) mmap(0, EXEC_HEAP_SIZE, 
 					PROT_EXEC | PROT_READ | PROT_WRITE, 
 					MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+   return (exec_mem != MAP_FAILED);
 }
 
 
@@ -90,7 +92,8 @@ rtasm_exec_malloc(size_t size)
 
    pipe_mutex_lock(exec_mutex);
 
-   init_heap();
+   if (!init_heap())
+      goto bail;
 
    if (exec_heap) {
       size = (size + 31) & ~31;  /* next multiple of 32 bytes */
@@ -101,7 +104,8 @@ rtasm_exec_malloc(size_t size)
       addr = exec_mem + block->ofs;
    else 
       debug_printf("rtasm_exec_malloc failed\n");
-   
+
+bail:
    pipe_mutex_unlock(exec_mutex);
    
    return addr;
