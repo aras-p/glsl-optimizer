@@ -62,13 +62,13 @@ static void brwBindProgram( struct gl_context *ctx,
 
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB:
-      brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
+      SET_DIRTY_BIT(brw, BRW_NEW_VERTEX_PROGRAM);
       break;
    case MESA_GEOMETRY_PROGRAM:
-      brw->state.dirty.brw |= BRW_NEW_GEOMETRY_PROGRAM;
+      SET_DIRTY_BIT(brw, BRW_NEW_GEOMETRY_PROGRAM);
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
-      brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
+      SET_DIRTY_BIT(brw, BRW_NEW_FRAGMENT_PROGRAM);
       break;
    }
 }
@@ -161,7 +161,7 @@ brwProgramStringNotify(struct gl_context *ctx,
          brw_fragment_program_const(brw->fragment_program);
 
       if (newFP == curFP)
-	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
+	 SET_DIRTY_BIT(brw, BRW_NEW_FRAGMENT_PROGRAM);
       newFP->id = get_new_program_id(brw->intelScreen);
       break;
    }
@@ -172,7 +172,7 @@ brwProgramStringNotify(struct gl_context *ctx,
          brw_vertex_program_const(brw->vertex_program);
 
       if (newVP == curVP)
-	 brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
+	 SET_DIRTY_BIT(brw, BRW_NEW_VERTEX_PROGRAM);
       if (newVP->program.IsPositionInvariant) {
 	 _mesa_insert_mvp_code(ctx, &newVP->program);
       }

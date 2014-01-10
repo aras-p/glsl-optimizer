@@ -85,7 +85,7 @@ brw_upload_gs_unit(struct brw_context *brw)
 
    gs->gs6.max_vp_index = brw->ctx.Const.MaxViewports - 1;
 
-   brw->state.dirty.cache |= CACHE_NEW_FF_GS_UNIT;
+   SET_DIRTY_BIT(cache, CACHE_NEW_FF_GS_UNIT);
 }
 
 const struct brw_tracked_state brw_gs_unit = {

@@ -62,7 +62,7 @@ brw_upload_cc_vp(struct brw_context *brw)
       }
    }
 
-   brw->state.dirty.cache |= CACHE_NEW_CC_VP;
+   SET_DIRTY_BIT(cache, CACHE_NEW_CC_VP);
 }
 
 const struct brw_tracked_state brw_cc_vp = {
@@ -223,7 +223,7 @@ static void upload_cc_unit(struct brw_context *brw)
    cc->cc4.cc_viewport_state_offset = (brw->batch.bo->offset64 +
 				       brw->cc.vp_offset) >> 5; /* reloc */
 
-   brw->state.dirty.cache |= CACHE_NEW_CC_UNIT;
+   SET_DIRTY_BIT(cache, CACHE_NEW_CC_UNIT);
 
    /* Emit CC viewport relocation */
    drm_intel_bo_emit_reloc(brw->batch.bo,

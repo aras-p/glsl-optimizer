@@ -241,6 +241,13 @@ struct brw_state_flags {
    GLuint cache;
 };
 
+
+/**
+ * Set one of the bits in a field of brw_state_flags.
+ */
+#define SET_DIRTY_BIT(FIELD, FLAG) brw->state.dirty.FIELD |= (FLAG)
+
+
 /** Subclass of Mesa vertex program */
 struct brw_vertex_program {
    struct gl_vertex_program program;

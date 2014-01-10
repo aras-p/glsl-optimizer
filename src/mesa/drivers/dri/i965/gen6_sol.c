@@ -65,7 +65,7 @@ gen6_update_sol_surfaces(struct brw_context *brw)
       }
    }
 
-   brw->state.dirty.brw |= BRW_NEW_SURFACES;
+   SET_DIRTY_BIT(brw, BRW_NEW_SURFACES);
 }
 
 const struct brw_tracked_state gen6_sol_surface = {
@@ -103,7 +103,7 @@ brw_gs_upload_binding_table(struct brw_context *brw)
    /* Skip making a binding table if we don't have anything to put in it. */
    if (!has_surfaces) {
       if (brw->ff_gs.bind_bo_offset != 0) {
-	 brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
+	 SET_DIRTY_BIT(brw, BRW_NEW_GS_BINDING_TABLE);
 	 brw->ff_gs.bind_bo_offset = 0;
       }
       return;
@@ -119,7 +119,7 @@ brw_gs_upload_binding_table(struct brw_context *brw)
    /* BRW_NEW_SURFACES */
    memcpy(bind, brw->ff_gs.surf_offset, BRW_MAX_GEN6_GS_SURFACES * sizeof(uint32_t));
 
-   brw->state.dirty.brw |= BRW_NEW_GS_BINDING_TABLE;
+   SET_DIRTY_BIT(brw, BRW_NEW_GS_BINDING_TABLE);
 }
 
 const struct brw_tracked_state gen6_gs_binding_table = {

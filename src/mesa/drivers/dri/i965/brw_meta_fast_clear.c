@@ -376,7 +376,7 @@ set_fast_clear_op(struct brw_context *brw, uint32_t op)
     * 3DSTATE_PS.
     */
    brw->wm.fast_clear_op = op;
-   brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
+   SET_DIRTY_BIT(brw, BRW_NEW_FRAGMENT_PROGRAM);
 }
 
 static void
@@ -400,8 +400,8 @@ use_rectlist(struct brw_context *brw, bool enable)
     * _NEW_BUFFERS to make sure we emit new SURFACE_STATE with the new fast
     * clear color value.
     */
-   brw->state.dirty.mesa |= _NEW_LIGHT | _NEW_BUFFERS;
-   brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
+   SET_DIRTY_BIT(mesa, _NEW_LIGHT | _NEW_BUFFERS);
+   SET_DIRTY_BIT(brw, BRW_NEW_FRAGMENT_PROGRAM);
 }
 
 bool
@@ -602,8 +602,7 @@ brw_meta_fast_clear(struct brw_context *brw, struct gl_framebuffer *fb,
     * color before resolve and sets irb->mt->fast_clear_state to UNRESOLVED if
     * we render to it.
     */
-   brw->state.dirty.mesa |= _NEW_BUFFERS;
-
+   SET_DIRTY_BIT(mesa, _NEW_BUFFERS);
 
    /* Set the custom state back to normal and dirty the same bits as above */
    use_rectlist(brw, false);

@@ -178,9 +178,9 @@ brw_new_batch(struct brw_context *brw)
     * purposes means everything).
     */
    if (brw->hw_ctx == NULL)
-      brw->state.dirty.brw |= BRW_NEW_CONTEXT;
+      SET_DIRTY_BIT(brw, BRW_NEW_CONTEXT);
 
-   brw->state.dirty.brw |= BRW_NEW_BATCH;
+   SET_DIRTY_BIT(brw, BRW_NEW_BATCH);
 
    /* Assume that the last command before the start of our batch was a
     * primitive, for safety.

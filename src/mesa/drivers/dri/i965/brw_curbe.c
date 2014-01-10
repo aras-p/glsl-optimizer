@@ -134,7 +134,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
                  brw->curbe.vs_start,
                  brw->curbe.vs_size );
 
-      brw->state.dirty.brw |= BRW_NEW_CURBE_OFFSETS;
+      SET_DIRTY_BIT(brw, BRW_NEW_CURBE_OFFSETS);
    }
 }
 

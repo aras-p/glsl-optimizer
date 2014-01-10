@@ -63,7 +63,7 @@ gen6_upload_clip_vp(struct brw_context *brw)
    vp->ymin = -gby;
    vp->ymax = gby;
 
-   brw->state.dirty.cache |= CACHE_NEW_CLIP_VP;
+   SET_DIRTY_BIT(cache, CACHE_NEW_CLIP_VP);
 }
 
 const struct brw_tracked_state gen6_clip_vp = {
@@ -106,7 +106,7 @@ gen6_upload_sf_vp(struct brw_context *brw)
    sfv->viewport.m31 = v[MAT_TY] * y_scale + y_bias;
    sfv->viewport.m32 = v[MAT_TZ] * depth_scale;
 
-   brw->state.dirty.cache |= CACHE_NEW_SF_VP;
+   SET_DIRTY_BIT(cache, CACHE_NEW_SF_VP);
 }
 
 const struct brw_tracked_state gen6_sf_vp = {

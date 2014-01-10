@@ -230,7 +230,7 @@ brw_upload_ff_gs_prog(struct brw_context *brw)
    populate_key(brw, &key);
 
    if (brw->ff_gs.prog_active != key.need_gs_prog) {
-      brw->state.dirty.cache |= CACHE_NEW_FF_GS_PROG;
+      SET_DIRTY_BIT(cache, CACHE_NEW_FF_GS_PROG);
       brw->ff_gs.prog_active = key.need_gs_prog;
    }
 

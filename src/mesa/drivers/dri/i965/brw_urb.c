@@ -204,7 +204,7 @@ done:
                  brw->urb.cs_start,
                  brw->urb.size);
 
-      brw->state.dirty.brw |= BRW_NEW_URB_FENCE;
+      SET_DIRTY_BIT(brw, BRW_NEW_URB_FENCE);
    }
 }
 

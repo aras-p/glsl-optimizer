@@ -67,7 +67,7 @@ brw_upload_pull_constants(struct brw_context *brw,
    if (!prog_data->nr_pull_params) {
       if (stage_state->surf_offset[surf_index]) {
 	 stage_state->surf_offset[surf_index] = 0;
-	 brw->state.dirty.brw |= brw_new_constbuf;
+	 SET_DIRTY_BIT(brw, brw_new_constbuf);
       }
       return;
    }
@@ -98,7 +98,7 @@ brw_upload_pull_constants(struct brw_context *brw,
                                dword_pitch);
    drm_intel_bo_unreference(const_bo);
 
-   brw->state.dirty.brw |= brw_new_constbuf;
+   SET_DIRTY_BIT(brw, brw_new_constbuf);
 }
 
 

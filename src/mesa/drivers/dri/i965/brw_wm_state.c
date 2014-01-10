@@ -239,7 +239,7 @@ brw_upload_wm_unit(struct brw_context *brw)
 			      I915_GEM_DOMAIN_INSTRUCTION, 0);
    }
 
-   brw->state.dirty.cache |= CACHE_NEW_WM_UNIT;
+   SET_DIRTY_BIT(cache, CACHE_NEW_WM_UNIT);
 }
 
 const struct brw_tracked_state brw_wm_unit = {

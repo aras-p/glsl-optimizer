@@ -126,11 +126,11 @@ static void brw_set_prim(struct brw_context *brw,
 
    if (hw_prim != brw->primitive) {
       brw->primitive = hw_prim;
-      brw->state.dirty.brw |= BRW_NEW_PRIMITIVE;
+      SET_DIRTY_BIT(brw, BRW_NEW_PRIMITIVE);
 
       if (reduced_prim[prim->mode] != brw->reduced_primitive) {
 	 brw->reduced_primitive = reduced_prim[prim->mode];
-	 brw->state.dirty.brw |= BRW_NEW_REDUCED_PRIMITIVE;
+	 SET_DIRTY_BIT(brw, BRW_NEW_REDUCED_PRIMITIVE);
       }
    }
 }
@@ -146,7 +146,7 @@ static void gen6_set_prim(struct brw_context *brw,
 
    if (hw_prim != brw->primitive) {
       brw->primitive = hw_prim;
-      brw->state.dirty.brw |= BRW_NEW_PRIMITIVE;
+      SET_DIRTY_BIT(brw, BRW_NEW_PRIMITIVE);
    }
 }
 
@@ -403,11 +403,11 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
    brw_merge_inputs( brw, arrays );
 
    brw->ib.ib = ib;
-   brw->state.dirty.brw |= BRW_NEW_INDICES;
+   SET_DIRTY_BIT(brw, BRW_NEW_INDICES);
 
    brw->vb.min_index = min_index;
    brw->vb.max_index = max_index;
-   brw->state.dirty.brw |= BRW_NEW_VERTICES;
+   SET_DIRTY_BIT(brw, BRW_NEW_VERTICES);
 
    for (i = 0; i < nr_prims; i++) {
       int estimated_max_prim_size;
@@ -432,7 +432,7 @@ static bool brw_try_draw_prims( struct gl_context *ctx,
          brw->num_instances = prims[i].num_instances;
          brw->basevertex = prims[i].basevertex;
          if (i > 0) { /* For i == 0 we just did this before the loop */
-            brw->state.dirty.brw |= BRW_NEW_VERTICES;
+            SET_DIRTY_BIT(brw, BRW_NEW_VERTICES);
             brw_merge_inputs(brw, arrays);
          }
       }

@@ -572,10 +572,10 @@ void brw_upload_state(struct brw_context *brw)
    int i;
    static int dirty_count = 0;
 
-   state->mesa |= brw->NewGLState;
+   SET_DIRTY_BIT(mesa, brw->NewGLState);
    brw->NewGLState = 0;
 
-   state->brw |= ctx->NewDriverState;
+   SET_DIRTY_BIT(brw, ctx->NewDriverState);
    ctx->NewDriverState = 0;
 
    if (0) {
@@ -587,27 +587,27 @@ void brw_upload_state(struct brw_context *brw)
 
    if (brw->fragment_program != ctx->FragmentProgram._Current) {
       brw->fragment_program = ctx->FragmentProgram._Current;
-      brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
+      SET_DIRTY_BIT(brw, BRW_NEW_FRAGMENT_PROGRAM);
    }
 
    if (brw->geometry_program != ctx->GeometryProgram._Current) {
       brw->geometry_program = ctx->GeometryProgram._Current;
-      brw->state.dirty.brw |= BRW_NEW_GEOMETRY_PROGRAM;
+      SET_DIRTY_BIT(brw, BRW_NEW_GEOMETRY_PROGRAM);
    }
 
    if (brw->vertex_program != ctx->VertexProgram._Current) {
       brw->vertex_program = ctx->VertexProgram._Current;
-      brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
+      SET_DIRTY_BIT(brw, BRW_NEW_VERTEX_PROGRAM);
    }
 
    if (brw->meta_in_progress != _mesa_meta_in_progress(ctx)) {
       brw->meta_in_progress = _mesa_meta_in_progress(ctx);
-      brw->state.dirty.brw |= BRW_NEW_META_IN_PROGRESS;
+      SET_DIRTY_BIT(brw, BRW_NEW_META_IN_PROGRESS);
    }
 
    if (brw->num_samples != ctx->DrawBuffer->Visual.samples) {
       brw->num_samples = ctx->DrawBuffer->Visual.samples;
-      brw->state.dirty.brw |= BRW_NEW_NUM_SAMPLES;
+      SET_DIRTY_BIT(brw, BRW_NEW_NUM_SAMPLES);
    }
 
    if ((state->mesa | state->cache | state->brw) == 0)

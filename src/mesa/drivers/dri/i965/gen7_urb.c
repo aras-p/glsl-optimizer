@@ -94,7 +94,7 @@ gen7_allocate_push_constants(struct brw_context *brw)
     * Similar text exists for the other 3DSTATE_PUSH_CONSTANT_ALLOC_*
     * commands.
     */
-   brw->state.dirty.brw |= BRW_NEW_PUSH_CONSTANT_ALLOCATION;
+   SET_DIRTY_BIT(brw, BRW_NEW_PUSH_CONSTANT_ALLOCATION);
 }
 
 void
