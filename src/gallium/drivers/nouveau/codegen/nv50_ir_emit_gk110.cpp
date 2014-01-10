@@ -808,6 +808,14 @@ CodeEmitterGK110::emitCVT(const Instruction *i)
       break;
    }
 
+   DataType dType;
+
+   if (i->op == OP_NEG && i->dType == TYPE_U32)
+      dType = TYPE_S32;
+   else
+      dType = i->dType;
+
+
    uint32_t op;
 
    if      (f2f) op = 0x254;
@@ -824,10 +832,10 @@ CodeEmitterGK110::emitCVT(const Instruction *i)
 
    emitRoundMode(rnd, 32 + 10, f2f ? (32 + 13) : -1);
 
-   code[0] |= typeSizeofLog2(i->dType) << 10;
+   code[0] |= typeSizeofLog2(dType) << 10;
    code[0] |= typeSizeofLog2(i->sType) << 12;
 
-   if (isSignedIntType(i->dType))
+   if (isSignedIntType(dType))
       code[0] |= 0x4000;
    if (isSignedIntType(i->sType))
       code[0] |= 0x8000;

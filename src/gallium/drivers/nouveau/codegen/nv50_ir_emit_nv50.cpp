@@ -1106,6 +1106,7 @@ CodeEmitterNV50::emitCVT(const Instruction *i)
 {
    const bool f2f = isFloatType(i->dType) && isFloatType(i->sType);
    RoundMode rnd;
+   DataType dType;
 
    switch (i->op) {
    case OP_CEIL:  rnd = f2f ? ROUND_PI : ROUND_P; break;
@@ -1116,9 +1117,14 @@ CodeEmitterNV50::emitCVT(const Instruction *i)
       break;
    }
 
+   if (i->op == OP_NEG && i->dType == TYPE_U32)
+      dType = TYPE_S32;
+   else
+      dType = i->dType;
+
    code[0] = 0xa0000000;
 
-   switch (i->dType) {
+   switch (dType) {
    case TYPE_F64:
       switch (i->sType) {
       case TYPE_F64: code[1] = 0xc4404000; break;
