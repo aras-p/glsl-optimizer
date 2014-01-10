@@ -146,14 +146,12 @@ ilo_texture_set_slice_flags(struct ilo_texture *tex, unsigned level,
                             unsigned first_slice, unsigned num_slices,
                             unsigned mask, unsigned value)
 {
+   const struct ilo_texture_slice *last =
+      ilo_texture_get_slice(tex, level, first_slice + num_slices - 1);
    struct ilo_texture_slice *slice =
       ilo_texture_get_slice(tex, level, first_slice);
 
-   assert(first_slice + num_slices - 1 <
-         ((tex->base.target == PIPE_TEXTURE_3D) ?
-          u_minify(tex->base.depth0, level) : tex->base.array_size));
-
-   while (num_slices--) {
+   while (slice <= last) {
       slice->flags = (slice->flags & ~mask) | (value & mask);
       slice++;
    }
