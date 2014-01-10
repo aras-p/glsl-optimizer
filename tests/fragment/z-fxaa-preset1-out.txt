@@ -189,7 +189,7 @@ void main ()
     posN_10 = (posN_10 + (tmpvar_54 * vec2(-2.0, -2.0)));
     posP_9 = (posP_9 + (tmpvar_54 * vec2(2.0, 2.0)));
     offNP_8 = (tmpvar_54 * vec2(3.0, 3.0));
-    for ( ; i_3 < 4; i_3 = (i_3 + 1)) {
+    for ( ; i_3 < 4; i_3++) {
       if (!(doneN_5)) {
         vec4 tmpvar_57;
         tmpvar_57 = texture2DGradARB (_MainTex, posN_10, offNP_8, offNP_8);

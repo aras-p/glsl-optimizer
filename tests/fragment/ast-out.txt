@@ -7,10 +7,10 @@ void main ()
   };
   a_2 = 4.0;
   i_1 = 0;
-  for ( ; i_1 < 10; i_1 = (i_1 + 1), a_2 = (a_2 + 1.0)) {
+  for ( ; i_1 < 10; i_1++, a_2 += 1.0) {
   };
   while (true) {
-    a_2 = (a_2 + 2.0);
+    a_2 += 2.0;
     break;
   };
   float tmpvar_3;

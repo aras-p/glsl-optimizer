@@ -17,7 +17,7 @@ void main ()
   light_5 = vec3(0.0, 0.0, 0.0);
   loopCount_4 = int((tmpvar_7.w * 10.0));
   j_3 = 0;
-  for ( ; j_3 < loopCount_4; j_3 = (j_3 + 1)) {
+  for ( ; j_3 < loopCount_4; j_3++) {
     highp vec3 tmpvar_8;
     tmpvar_8 = (light_5 + ((col_6.xyz * 
       tmpvar_2[j_3]

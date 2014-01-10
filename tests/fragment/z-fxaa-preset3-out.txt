@@ -189,7 +189,7 @@ void main ()
     posN_10 = (posN_10 - tmpvar_54);
     posP_9 = (posP_9 + tmpvar_54);
     i_3 = 0;
-    for ( ; i_3 < 16; i_3 = (i_3 + 1)) {
+    for ( ; i_3 < 16; i_3++) {
       if (!(doneN_5)) {
         vec4 tmpvar_57;
         tmpvar_57 = texture2DLod (_MainTex, posN_10, 0.0);

@@ -984,6 +984,62 @@ void ir_print_glsl_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalue
 	}
 }
 
+
+// Try to print (X = X + const) as (X += const), mostly to satisfy
+// OpenGL ES 2.0 loop syntax restrictions.
+static bool try_print_increment (ir_print_glsl_visitor* vis, ir_assignment* ir)
+{
+	if (ir->condition)
+		return false;
+	
+	// Needs to be + on rhs
+	ir_expression* rhsOp = ir->rhs->as_expression();
+	if (!rhsOp || rhsOp->operation != ir_binop_add)
+		return false;
+	
+	// Needs to write to whole variable
+	ir_variable* lhsVar = ir->whole_variable_written();
+	if (lhsVar == NULL)
+		return false;
+	
+	// Types must match
+	if (ir->lhs->type != ir->rhs->type)
+		return false;
+	
+	// Type must be scalar
+	if (!ir->lhs->type->is_scalar())
+		return false;
+	
+	// rhs0 must be variable deref, same one as lhs
+	ir_dereference_variable* rhsDeref = rhsOp->operands[0]->as_dereference_variable();
+	if (rhsDeref == NULL)
+		return false;
+	if (lhsVar != rhsDeref->var)
+		return false;
+	
+	// rhs1 must be a constant
+	ir_constant* rhsConst = rhsOp->operands[1]->as_constant();
+	if (!rhsConst)
+		return false;
+	
+	// print variable name
+	ir->lhs->accept (vis);
+	
+	// print ++ or +=const
+	if (ir->lhs->type->base_type <= GLSL_TYPE_INT && rhsConst->is_one())
+	{
+		vis->buffer.asprintf_append ("++");
+	}
+	else
+	{
+		vis->buffer.asprintf_append(" += ");
+		rhsConst->accept (vis);
+	}
+	
+	return true;
+}
+
+
 void ir_print_glsl_visitor::visit(ir_assignment *ir)
 {
 	// assignments in global scope are postponed to main function
@@ -1021,6 +1077,9 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 		emit_assignment_part(ir->lhs, rhsOp->operands[1], ir->write_mask, rhsOp->operands[2]);
 		return;
 	}
+	
+	if (try_print_increment (this, ir))
+		return;
 	
    if (ir->condition)
    {
