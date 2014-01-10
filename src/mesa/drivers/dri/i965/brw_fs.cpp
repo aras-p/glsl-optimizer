@@ -2000,6 +2000,16 @@ fs_visitor::opt_algebraic()
             break;
          }
          break;
+      case BRW_OPCODE_LRP:
+         if (inst->src[1].equals(inst->src[2])) {
+            inst->opcode = BRW_OPCODE_MOV;
+            inst->src[0] = inst->src[1];
+            inst->src[1] = reg_undef;
+            inst->src[2] = reg_undef;
+            progress = true;
+            break;
+         }
+         break;
       case BRW_OPCODE_SEL:
          if (inst->saturate && inst->src[1].file == IMM) {
             switch (inst->conditional_mod) {
