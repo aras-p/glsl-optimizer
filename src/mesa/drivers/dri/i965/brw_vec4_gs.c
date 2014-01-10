@@ -272,7 +272,7 @@ brw_upload_gs_prog(struct brw_context *brw)
 
    if (gp == NULL) {
       /* No geometry shader.  Vertex data just passes straight through. */
-      if (brw->state.dirty.brw & BRW_NEW_VUE_MAP_VS) {
+      if (CHECK_DIRTY_BIT(brw, BRW_NEW_VUE_MAP_VS)) {
          brw->vue_map_geom_out = brw->vue_map_vs;
          SET_DIRTY_BIT(brw, BRW_NEW_VUE_MAP_GEOM_OUT);
       }

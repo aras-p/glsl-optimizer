@@ -259,6 +259,12 @@ struct brw_state_flags {
    } while (false)
 
 
+/**
+ * Check one of the bits in a field of brw_state_flags.
+ */
+#define CHECK_DIRTY_BIT(FIELD, FLAG) ((brw->state.dirty.FIELD & (FLAG)) != 0)
+
+
 /** Subclass of Mesa vertex program */
 struct brw_vertex_program {
    struct gl_vertex_program program;
