@@ -78,6 +78,7 @@ endif
 ifneq ($(strip $(MESA_GPU_DRIVERS)),)
 
 SUBDIRS := \
+	src/loader \
 	src/mapi \
 	src/glsl \
 	src/mesa \

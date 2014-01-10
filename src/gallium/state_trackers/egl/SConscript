@@ -33,6 +33,7 @@ else:
         # XXX: Disabled as it depends on gbm, which is not yet built with scons
         env.Append(CPPDEFINES = ['HAVE_DRM_BACKEND'])
         env.Append(CPPPATH = [
+            '#/src/loader',
             '#/src/gbm/main',
             '#/src/gallium/state_trackers/gbm',
         ])

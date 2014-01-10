@@ -66,6 +66,7 @@ libegl_la_SOURCES += $(drm_FILES)
 AM_CFLAGS += \
 	$(LIBDRM_CFLAGS)
 AM_CPPFLAGS += \
+	-I$(top_srcdir)/src/loader \
 	-I$(top_srcdir)/src/gallium/winsys \
 	-I$(top_srcdir)/src/gbm/main \
 	-I$(top_srcdir)/src/gallium/state_trackers/gbm \

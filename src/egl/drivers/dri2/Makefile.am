@@ -22,6 +22,7 @@
 AM_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/egl/main \
+	-I$(top_srcdir)/src/loader \
 	-I$(top_srcdir)/src/gbm/main \
 	-I$(top_srcdir)/src/gbm/backends/dri \
 	-I$(top_srcdir)/src/egl/wayland/wayland-egl \

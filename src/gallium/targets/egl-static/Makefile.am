@@ -36,6 +36,7 @@ AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = \
 	$(GALLIUM_CFLAGS) \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/loader \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/src/gallium/winsys \
 	-I$(top_srcdir)/src/gallium/include \

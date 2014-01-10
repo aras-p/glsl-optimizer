@@ -11,6 +11,7 @@ if env['hostonly']:
     # compilation
     Return()
 
+SConscript('loader/SConscript')
 
 # When env['gles'] is set, the targets defined in mapi/glapi/SConscript are not
 # used.  libgl-xlib and libgl-gdi adapt themselves to use the targets defined

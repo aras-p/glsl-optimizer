@@ -1,7 +1,6 @@
 # Mesa 3-D graphics library
 #
-# Copyright (C) 2010-2011 Chia-I Wu <olvaffe@gmail.com>
-# Copyright (C) 2010-2011 LunarG Inc.
+# Copyright (C) 2014 Emil Velikov <emil.l.velikov@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,30 +20,29 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-# Android.mk for egl_dri2
-
 LOCAL_PATH := $(call my-dir)
+
+include $(LOCAL_PATH)/Makefile.sources
+
+# ---------------------------------------
+# Build libloader
+# ---------------------------------------
 
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-	egl_dri2.c \
-	platform_android.c
+	$(LOADER_C_FILES)
 
-LOCAL_CFLAGS := \
-	-DDEFAULT_DRIVER_DIR=\"/system/lib/dri\" \
-	-DHAVE_SHARED_GLAPI \
-	-DHAVE_ANDROID_PLATFORM
+# swrast only
+ifeq ($(MESA_GPU_DRIVERS),swrast)
+	LOCAL_CFLAGS += -D_EGL_NO_DRM
+else
+LOCAL_C_INCLUDES += \
+	$(DRM_TOP)/include/drm \
+	$(DRM_TOP)
+endif
 
-LOCAL_C_INCLUDES := \
-	$(MESA_TOP)/src/mapi \
-	$(MESA_TOP)/src/egl/main \
-	$(MESA_TOP)/src/loader \
-	$(DRM_GRALLOC_TOP) \
-	$(DRM_TOP) \
-	$(DRM_TOP)/include/drm
-
-LOCAL_MODULE := libmesa_egl_dri2
+LOCAL_MODULE := libloader
 
 include $(MESA_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)

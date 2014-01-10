@@ -1,0 +1,28 @@
+Import('*')
+
+if not env['drm']:
+    Return()
+
+env = env.Clone()
+
+env.Prepend(CPPPATH = [
+    '.',
+    '#include'
+])
+
+env.PkgUseModules('DRM')
+
+if env['udev']:
+    env.PkgUseModules('UDEV')
+    env.Append(CPPDEFINES = ['HAVE_LIBUDEV'])
+
+# parse Makefile.sources
+sources = env.ParseSourceList('Makefile.sources', 'LOADER_C_FILES')
+
+libloader = env.ConvenienceLibrary(
+    target = 'libloader',
+    source = sources,
+)
+
+env.Alias('libloader', libloader)
+Export('libloader')

@@ -1,4 +1,4 @@
-# Copyright © 2013 Intel Corporation
+# Copyright © 2012 Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,39 +19,19 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-SUBDIRS = gtest loader mapi
+include Makefile.sources
 
-if NEED_OPENGL_COMMON
-SUBDIRS += glsl mesa
-endif
+noinst_LTLIBRARIES = libloader.la
 
-if HAVE_DRI_GLX
-SUBDIRS += glx
-endif
+libloader_la_CPPFLAGS = \
+	$(DEFINES) \
+	-I$(top_srcdir)/include \
+	$(VISIBILITY_CFLAGS) \
+	$(LIBDRM_CFLAGS) \
+	$(LIBUDEV_CFLAGS)
 
-if HAVE_EGL_PLATFORM_WAYLAND
-SUBDIRS += egl/wayland
-endif
+libloader_la_LIBADD = \
+	$(LIBDRM_LIBS) \
+	$(LIBUDEV_LIBS)
 
-if HAVE_GBM
-SUBDIRS += gbm
-endif
-
-if HAVE_EGL
-SUBDIRS += egl
-endif
-
-if HAVE_GALLIUM
-SUBDIRS +=			\
-	gallium/auxiliary	\
-	gallium/drivers		\
-	gallium/state_trackers	\
-	gallium/winsys		\
-	gallium/targets
-
-if HAVE_GALLIUM_TESTS
-SUBDIRS +=			\
-	gallium/tests/trivial	\
-	gallium/tests/unit
-endif
-endif
+libloader_la_SOURCES = $(LOADER_C_FILES)
