@@ -383,8 +383,8 @@ void brw_init_state( struct brw_context *brw )
 
    brw_upload_initial_gpu_state(brw);
 
-   brw->state.dirty.mesa = ~0;
-   brw->state.dirty.brw = ~0;
+   SET_DIRTY_ALL(mesa);
+   SET_DIRTY_ALL(brw);
 
    /* Make sure that brw->state.dirty.brw has enough bits to hold all possible
     * dirty flags.

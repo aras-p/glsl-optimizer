@@ -248,6 +248,17 @@ struct brw_state_flags {
 #define SET_DIRTY_BIT(FIELD, FLAG) brw->state.dirty.FIELD |= (FLAG)
 
 
+/**
+ * Set all of the bits in a field of brw_state_flags.
+ */
+#define SET_DIRTY_ALL(FIELD) \
+   do { \
+      /* ~0 == 0xffffffff, so make sure field is <= 32 bits */ \
+      STATIC_ASSERT(sizeof(brw->state.dirty.FIELD) == 4); \
+      brw->state.dirty.FIELD = ~0; \
+   } while (false)
+
+
 /** Subclass of Mesa vertex program */
 struct brw_vertex_program {
    struct gl_vertex_program program;
