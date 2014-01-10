@@ -1,6 +1,14 @@
 GLSL optimizer Change Log
 =========================
 
+2014 01
+-------
+
+Goodies:
+
+* More OpenGL ES 2.0 conformant printing of complex for-loops (loop inductions printed
+  as += or ++; loop initializers inside loop body).
+
 2013 12
 -------
 

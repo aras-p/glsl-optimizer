@@ -1,13 +1,11 @@
 void main ()
 {
-  int i_1;
   float a_2;
   if ((gl_FragCoord.x == 1.0)) {
     discard;
   };
   a_2 = 4.0;
-  i_1 = 0;
-  for ( ; i_1 < 10; i_1++, a_2 += 1.0) {
+  for (int i_1 = 0; i_1 < 10; i_1++, a_2 += 1.0) {
   };
   while (true) {
     a_2 += 2.0;

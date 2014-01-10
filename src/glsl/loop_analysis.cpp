@@ -24,6 +24,7 @@
 #include "glsl_types.h"
 #include "loop_analysis.h"
 #include "ir_hierarchical_visitor.h"
+#include "ir_variable_refcount.h"
 
 static bool is_loop_terminator(ir_if *ir);
 
@@ -77,6 +78,8 @@ loop_state::loop_state()
 {
    this->ht = hash_table_ctor(0, hash_table_pointer_hash,
 			      hash_table_pointer_compare);
+   this->ht_inductors = hash_table_ctor(0, hash_table_pointer_hash,
+            hash_table_pointer_compare);
    this->mem_ctx = ralloc_context(NULL);
    this->loop_found = false;
 }
@@ -85,6 +88,7 @@ loop_state::loop_state()
 loop_state::~loop_state()
 {
    hash_table_dtor(this->ht);
+   hash_table_dtor(this->ht_inductors);
    ralloc_free(this->mem_ctx);
 }
 
@@ -105,6 +109,32 @@ loop_variable_state *
 loop_state::get(const ir_loop *ir)
 {
    return (loop_variable_state *) hash_table_find(this->ht, ir);
+}
+
+loop_variable_state *
+loop_state::get_for_inductor(const ir_variable *ir)
+{
+   return (loop_variable_state *) hash_table_find(this->ht_inductors, ir);
+}
+
+void
+loop_state::insert_inductor(ir_variable* var, loop_variable_state* state, ir_loop* loop)
+{
+	// Check if this variable is used after the loop anywhere. If it is, it can't be a
+	// variable that's private to the loop.
+	ir_variable_refcount_visitor refs;
+	for (exec_node* node = loop->next;
+		 !node->is_tail_sentinel();
+		 node = node->next)
+	{
+		ir_instruction *ir = (ir_instruction *) node;
+		ir->accept (&refs);
+		if (refs.find_variable_entry(var))
+			return;
+	}
+	
+	state->private_induction_variable_count++;
+	hash_table_insert(this->ht_inductors, state, var);
 }
 
 
@@ -393,6 +423,7 @@ loop_analysis::visit_leave(ir_loop *ir)
 
 	 lv->remove();
 	 ls->induction_variables.push_tail(lv);
+	 loops->insert_inductor(lv->var, ls, ir);
       }
    }
 
@@ -448,6 +479,7 @@ loop_analysis::visit_leave(ir_loop *ir)
 
          loop_variable *lv = ls->get(var);
          if (lv != NULL && lv->is_induction_var()) {
+            lv->initial_value = init;
             t->iterations = calculate_iterations(init, limit, lv->increment,
                                                  cmp);
 

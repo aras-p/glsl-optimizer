@@ -92,6 +92,7 @@ public:
     * This list contains \c loop_variable objects.
     */
    exec_list induction_variables;
+   int private_induction_variable_count;
 
    /**
     * Simple if-statements that lead to the termination of the loop
@@ -178,6 +179,9 @@ public:
    /** Reference to the first assignment to the variable in the loop body. */
    ir_assignment *first_assignment;
 
+   /** Reference to initial value outside of the loop. */
+   ir_rvalue *initial_value;
+
    /** Number of assignments to the variable in the loop body. */
    unsigned num_assignments;
 
@@ -258,6 +262,9 @@ public:
    loop_variable_state *get(const ir_loop *);
 
    loop_variable_state *insert(ir_loop *ir);
+	
+   loop_variable_state* get_for_inductor (const ir_variable*);
+   void insert_inductor(ir_variable* var, loop_variable_state* state, ir_loop* loop);
 
    bool loop_found;
 
@@ -268,6 +275,11 @@ private:
     * Hash table containing all loops that have been analyzed.
     */
    hash_table *ht;
+	
+   /**
+    * Hash table from ir_variables to loop state, for induction variables.
+    */
+   hash_table *ht_inductors;
 
    void *mem_ctx;
 

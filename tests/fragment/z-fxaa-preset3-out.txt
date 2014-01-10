@@ -7,7 +7,6 @@ void main ()
   vec2 rcpFrame_1;
   rcpFrame_1 = _MainTex_TexelSize.xy;
   vec3 tmpvar_2;
-  int i_3;
   bool doneP_4;
   bool doneN_5;
   float lumaEndP_6;
@@ -188,8 +187,7 @@ void main ()
     doneP_4 = bool(0);
     posN_10 = (posN_10 - tmpvar_54);
     posP_9 = (posP_9 + tmpvar_54);
-    i_3 = 0;
-    for ( ; i_3 < 16; i_3++) {
+    for (int i_3 = 0; i_3 < 16; i_3++) {
       if (!(doneN_5)) {
         vec4 tmpvar_57;
         tmpvar_57 = texture2DLod (_MainTex, posN_10, 0.0);

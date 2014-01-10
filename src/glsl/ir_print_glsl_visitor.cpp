@@ -139,6 +139,9 @@ public:
 	ir_print_glsl_visitor(string_buffer& buf, global_print_tracker* globals_, PrintGlslMode mode_, bool use_precision_, const _mesa_glsl_parse_state* state_)
 		: buffer(buf)
 		, loopstate(NULL)
+		, inside_loop_body(false)
+		, skipped_this_ir(false)
+		, previous_skipped(false)
 	{
 		indentation = 0;
 		expression_depth = 0;
@@ -155,6 +158,7 @@ public:
 
 	void indent(void);
 	void newline_indent();
+	void end_statement_line();
 	void newline_deindent();
 	void print_var_name (ir_variable* v);
 	void print_precision (ir_instruction* ir, const glsl_type* type);
@@ -192,6 +196,9 @@ public:
 	PrintGlslMode mode;
 	loop_state* loopstate;
 	bool	use_precision;
+	bool	inside_loop_body;
+	bool	skipped_this_ir;
+	bool	previous_skipped;
 };
 
 
@@ -246,7 +253,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		v.loopstate = ls;
 
 		ir->accept(&v);
-		if (ir->ir_type != ir_type_function)
+		if (ir->ir_type != ir_type_function && !v.skipped_this_ir)
 			str.asprintf_append (";\n");
 	}
 	
@@ -258,8 +265,19 @@ _mesa_print_ir_glsl(exec_list *instructions,
 
 void ir_print_glsl_visitor::indent(void)
 {
-   for (int i = 0; i < indentation; i++)
-      buffer.asprintf_append ("  ");
+	if (previous_skipped)
+		return;
+	previous_skipped = false;
+	for (int i = 0; i < indentation; i++)
+		buffer.asprintf_append ("  ");
+}
+
+void ir_print_glsl_visitor::end_statement_line()
+{
+	if (!skipped_this_ir)
+		buffer.asprintf_append(";\n");
+	previous_skipped = skipped_this_ir;
+	skipped_this_ir = false;
 }
 
 void ir_print_glsl_visitor::newline_indent()
@@ -396,6 +414,18 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 		}
 	}
 	
+	// if this is a loop induction variable, do not print it
+	// (will be printed inside loop body)
+	if (!inside_loop_body)
+	{
+		loop_variable_state* inductor_state = loopstate->get_for_inductor(ir);
+		if (inductor_state && inductor_state->private_induction_variable_count == 1)
+		{
+			skipped_this_ir = true;
+			return;
+		}
+	}
+	
 	// keep invariant declaration for builtin variables
 	if (strstr(ir->name, "gl_") == ir->name) {
 		buffer.asprintf_append ("%s", inv);
@@ -434,7 +464,7 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
    {
 	   buffer.asprintf_append ("\n");
 
-	   indentation++;
+	   indentation++; previous_skipped = false;
 	   bool first = true;
 	   foreach_iter(exec_list_iterator, iter, ir->parameters) {
 		  ir_variable *const inst = (ir_variable *) iter.get();
@@ -461,7 +491,7 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 
    indent();
    buffer.asprintf_append ("{\n");
-   indentation++;
+   indentation++; previous_skipped = false;
 	
 	// insert postponed global assigments
 	if (strcmp(ir->function()->name, "main") == 0)
@@ -481,7 +511,7 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 
       indent();
       inst->accept(this);
-	  buffer.asprintf_append (";\n");
+	   end_statement_line();
    }
    indentation--;
    indent();
@@ -1042,6 +1072,22 @@ static bool try_print_increment (ir_print_glsl_visitor* vis, ir_assignment* ir)
 
 void ir_print_glsl_visitor::visit(ir_assignment *ir)
 {
+	// if this is a loop induction variable initial assignment, and we aren't inside loop body:
+	// do not print it (will be printed when inside loop body)
+	if (!inside_loop_body)
+	{
+		ir_variable* whole_var = ir->whole_variable_written();
+		if (!ir->condition && whole_var)
+		{
+			loop_variable_state* inductor_state = loopstate->get_for_inductor(whole_var);
+			if (inductor_state && inductor_state->private_induction_variable_count == 1)
+			{
+				skipped_this_ir = true;
+				return;
+			}
+		}
+	}
+	
 	// assignments in global scope are postponed to main function
 	if (this->mode != kPrintGlslNone)
 	{
@@ -1080,7 +1126,7 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 	
 	if (try_print_increment (this, ir))
 		return;
-	
+		
    if (ir->condition)
    {
       ir->condition->accept(this);
@@ -1253,14 +1299,15 @@ ir_print_glsl_visitor::visit(ir_if *ir)
    ir->condition->accept(this);
 
    buffer.asprintf_append (") {\n");
-   indentation++;
+	indentation++; previous_skipped = false;
+
 
    foreach_iter(exec_list_iterator, iter, ir->then_instructions) {
       ir_instruction *const inst = (ir_instruction *) iter.get();
 
       indent();
       inst->accept(this);
-      buffer.asprintf_append (";\n");
+	   end_statement_line();
    }
 
    indentation--;
@@ -1270,14 +1317,14 @@ ir_print_glsl_visitor::visit(ir_if *ir)
    if (!ir->else_instructions.is_empty())
    {
 	   buffer.asprintf_append (" else {\n");
-	   indentation++;
+	   indentation++; previous_skipped = false;
 
 	   foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
 		  ir_instruction *const inst = (ir_instruction *) iter.get();
 
 		  indent();
 		  inst->accept(this);
-		  buffer.asprintf_append (";\n");
+		   end_statement_line();
 	   }
 	   indentation--;
 	   indent();
@@ -1309,7 +1356,33 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	hash_table* terminator_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 	hash_table* induction_hash = hash_table_ctor(0, hash_table_pointer_hash, hash_table_pointer_compare);
 	
-	buffer.asprintf_append("for ( ; ");
+	buffer.asprintf_append("for (");
+	inside_loop_body = true;
+	
+	// emit loop induction variable declarations.
+	// only for loops with single induction variable, to avoid cases of different types of them
+	if (ls->private_induction_variable_count == 1)
+	{
+		foreach_list(node, &ls->induction_variables)
+		{
+			loop_variable* indvar = (loop_variable *) node;
+			if (!this->loopstate->get_for_inductor(indvar->var))
+				continue;
+			
+			ir_variable* var = indvar->var;
+			print_precision (var, var->type);
+			print_type(buffer, var->type, false);
+			buffer.asprintf_append (" ");
+			print_var_name (var);
+			print_type_post(buffer, var->type, false);
+			if (indvar->initial_value)
+			{
+				buffer.asprintf_append (" = ");
+				indvar->initial_value->accept(this);
+			}
+		}
+	}
+	buffer.asprintf_append("; ");
 	
 	// emit loop terminating conditions
 	foreach_list(node, &ls->terminators)
@@ -1376,8 +1449,10 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 	}
 	buffer.asprintf_append(") {\n");
 	
+	inside_loop_body = false;
+	
 	// emit loop body
-	indentation++;
+	indentation++; previous_skipped = false;
 	foreach_list(node, &ir->body_instructions) {
 		ir_instruction *const inst = (ir_instruction *)node;
 		
@@ -1390,7 +1465,7 @@ bool ir_print_glsl_visitor::emit_canonical_for (ir_loop* ir)
 		
 		indent();
 		inst->accept(this);
-		buffer.asprintf_append (";\n");
+		end_statement_line();
 	}
 	indentation--;
 	
@@ -1411,12 +1486,12 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 		return;
 	
 	buffer.asprintf_append ("while (true) {\n");
-	indentation++;
+	indentation++; previous_skipped = false;
 	foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
 		ir_instruction *const inst = (ir_instruction *) iter.get();
 		indent();
 		inst->accept(this);
-		buffer.asprintf_append (";\n");
+		end_statement_line();
 	}
 	indentation--;
 	indent();

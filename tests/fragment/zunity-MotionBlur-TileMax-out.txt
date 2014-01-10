@@ -3,16 +3,12 @@ uniform vec4 _MainTex_TexelSize;
 varying vec2 xlv_TEXCOORD0;
 void main ()
 {
-  int j_1;
   vec2 mx_2;
   vec2 uvCorner_3;
   uvCorner_3 = xlv_TEXCOORD0;
   mx_2 = texture2D (_MainTex, xlv_TEXCOORD0).xy;
-  j_1 = 0;
-  for ( ; j_1 < 8; j_1++) {
-    int l_4;
-    l_4 = 0;
-    for ( ; l_4 < 8; l_4++) {
+  for (int j_1 = 0; j_1 < 8; j_1++) {
+    for (int l_4 = 0; l_4 < 8; l_4++) {
       vec2 tmpvar_5;
       tmpvar_5.x = float(l_4);
       tmpvar_5.y = float(j_1);
