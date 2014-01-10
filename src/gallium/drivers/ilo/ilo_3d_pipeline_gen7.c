@@ -161,14 +161,14 @@ gen7_wa_pipe_control_wm_depth_stall(struct ilo_3d_pipeline *p,
 }
 
 static void
-gen7_wa_pipe_control_wm_max_threads_stall(struct ilo_3d_pipeline *p)
+gen7_wa_pipe_control_ps_max_threads_stall(struct ilo_3d_pipeline *p)
 {
-   assert(p->dev->gen == ILO_GEN(7));
+   assert(p->dev->gen == ILO_GEN(7) || p->dev->gen == ILO_GEN(7.5));
 
    /*
     * From the Ivy Bridge PRM, volume 2 part 1, page 286:
     *
-    *     "If this field (Maximum Number of Threads in 3DSTATE_WM) is changed
+    *     "If this field (Maximum Number of Threads in 3DSTATE_PS) is changed
     *      between 3DPRIMITIVE commands, a PIPE_CONTROL command with Stall at
     *      Pixel Scoreboard set is required to be issued."
     */
@@ -480,9 +480,6 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
       const bool cc_may_kill = (ilo->dsa->dw_alpha ||
                                 ilo->blend->alpha_to_coverage);
 
-      if (p->dev->gen == ILO_GEN(7) && session->hw_ctx_changed)
-         gen7_wa_pipe_control_wm_max_threads_stall(p);
-
       gen7_emit_3DSTATE_WM(p->dev, ilo->fs,
             ilo->rasterizer, cc_may_kill, 0, p->cp);
    }
@@ -512,6 +509,10 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
        session->kernel_bo_changed) {
       const int num_samplers = ilo->sampler[PIPE_SHADER_FRAGMENT].count;
       const bool dual_blend = ilo->blend->dual_blend;
+
+      if ((p->dev->gen == ILO_GEN(7) || p->dev->gen == ILO_GEN(7.5)) &&
+          session->hw_ctx_changed)
+         gen7_wa_pipe_control_ps_max_threads_stall(p);
 
       gen7_emit_3DSTATE_PS(p->dev, ilo->fs, num_samplers, dual_blend, p->cp);
    }
@@ -740,10 +741,11 @@ gen7_rectlist_wm(struct ilo_3d_pipeline *p,
       break;
    }
 
-   gen7_wa_pipe_control_wm_max_threads_stall(p);
    gen7_emit_3DSTATE_WM(p->dev, NULL, NULL, false, hiz_op, p->cp);
 
    gen7_emit_3DSTATE_CONSTANT_PS(p->dev, NULL, NULL, 0, p->cp);
+
+   gen7_wa_pipe_control_ps_max_threads_stall(p);
    gen7_emit_3DSTATE_PS(p->dev, NULL, 0, false, p->cp);
 }
 
