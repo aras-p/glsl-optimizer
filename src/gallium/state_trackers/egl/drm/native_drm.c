@@ -30,14 +30,11 @@
 
 #include "util/u_memory.h"
 #include "egllog.h"
+#include "loader.h"
 
 #include "native_drm.h"
 
 #include "gbm_gallium_drmint.h"
-
-#ifdef HAVE_LIBUDEV
-#include <libudev.h>
-#endif
 
 static boolean
 drm_display_is_format_supported(struct native_display *ndpy,
@@ -151,43 +148,6 @@ static struct native_display_buffer drm_display_buffer = {
    drm_display_export_native_buffer
 };
 
-static char *
-drm_get_device_name(int fd)
-{
-   char *device_name = NULL;
-#ifdef HAVE_LIBUDEV
-   struct udev *udev;
-   struct udev_device *device;
-   struct stat buf;
-   const char *tmp;
-
-   udev = udev_new();
-   if (fstat(fd, &buf) < 0) {
-      _eglLog(_EGL_WARNING, "failed to stat fd %d", fd);
-      goto outudev;
-   }
-
-   device = udev_device_new_from_devnum(udev, 'c', buf.st_rdev);
-   if (device == NULL) {
-      _eglLog(_EGL_WARNING,
-              "could not create udev device for fd %d", fd);
-      goto outdevice;
-   }
-
-   tmp = udev_device_get_devnode(device);
-   if (!tmp)
-      goto outdevice;
-   device_name = strdup(tmp);
-
-outdevice:
-   udev_device_unref(device);
-outudev:
-   udev_unref(udev);
-
-#endif
-   return device_name;
-}
-
 #ifdef HAVE_WAYLAND_BACKEND
 
 static int
@@ -230,7 +190,7 @@ drm_create_display(struct gbm_gallium_drm_device *gbmdrm, int own_gbm,
    drmdpy->gbmdrm = gbmdrm;
    drmdpy->own_gbm = own_gbm;
    drmdpy->fd = gbmdrm->base.base.fd;
-   drmdpy->device_name = drm_get_device_name(drmdpy->fd);
+   drmdpy->device_name = loader_get_device_name_for_fd(drmdpy->fd);
 
    gbmdrm->lookup_egl_image = (struct pipe_resource *(*)(void *, void *))
       event_handler->lookup_egl_image;

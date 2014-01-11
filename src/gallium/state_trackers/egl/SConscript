@@ -37,6 +37,9 @@ else:
             '#/src/gbm/main',
             '#/src/gallium/state_trackers/gbm',
         ])
+        env.Prepend(LIBS = [
+            libloader
+        ])
         sources.append(env.ParseSourceList('Makefile.sources', 'drm_FILES'))
 
 st_egl = env.ConvenienceLibrary(
