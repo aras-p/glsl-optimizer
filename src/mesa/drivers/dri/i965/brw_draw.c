@@ -447,9 +447,9 @@ retry:
        * *_set_prim or intel_batchbuffer_flush(), which only impacts
        * brw->state.dirty.brw.
        */
-      if (brw->state.dirty.brw) {
+      if (brw->state.pipeline_dirty[BRW_PIPELINE_3D].brw) {
 	 brw->no_batch_wrap = true;
-	 brw_upload_state(brw);
+	 brw_upload_state(brw, BRW_PIPELINE_3D);
       }
 
       brw_emit_prim(brw, &prims[i], brw->primitive);
@@ -480,8 +480,8 @@ retry:
       /* Now that we know we haven't run out of aperture space, we can safely
        * reset the dirty bits.
        */
-      if (brw->state.dirty.brw)
-         brw_clear_dirty_bits(brw);
+      if (brw->state.pipeline_dirty[BRW_PIPELINE_3D].brw)
+         brw_clear_dirty_bits(brw, BRW_PIPELINE_3D);
    }
 
    if (brw->always_flush_batch)

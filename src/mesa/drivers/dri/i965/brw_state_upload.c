@@ -389,7 +389,8 @@ void brw_init_state( struct brw_context *brw )
    /* Make sure that brw->state.dirty.brw has enough bits to hold all possible
     * dirty flags.
     */
-   STATIC_ASSERT(BRW_NUM_STATE_BITS <= 8 * sizeof(brw->state.dirty.brw));
+   STATIC_ASSERT(BRW_NUM_STATE_BITS <=
+                 8 * sizeof(brw->state.pipeline_dirty[0].brw));
 
    ctx->DriverFlags.NewTransformFeedback = BRW_NEW_TRANSFORM_FEEDBACK;
    ctx->DriverFlags.NewTransformFeedbackProg = BRW_NEW_TRANSFORM_FEEDBACK;
@@ -565,12 +566,15 @@ brw_print_dirty_count(struct dirty_bit_map *bit_map)
 /***********************************************************************
  * Emit all state:
  */
-void brw_upload_state(struct brw_context *brw)
+void brw_upload_state(struct brw_context *brw, brw_pipeline pipeline)
 {
    struct gl_context *ctx = &brw->ctx;
-   struct brw_state_flags *state = &brw->state.dirty;
+   struct brw_state_flags *state = &brw->state.pipeline_dirty[pipeline];
    int i;
    static int dirty_count = 0;
+
+   assert(0 <= pipeline && pipeline < BRW_NUM_PIPELINES);
+   brw->state.current_pipeline = pipeline;
 
    SET_DIRTY_BIT(mesa, brw->NewGLState);
    brw->NewGLState = 0;
@@ -677,8 +681,8 @@ void brw_upload_state(struct brw_context *brw)
  * brw_upload_state() call.
  */
 void
-brw_clear_dirty_bits(struct brw_context *brw)
+brw_clear_dirty_bits(struct brw_context *brw, brw_pipeline pipeline)
 {
-   struct brw_state_flags *state = &brw->state.dirty;
+   struct brw_state_flags *state = &brw->state.pipeline_dirty[pipeline];
    memset(state, 0, sizeof(*state));
 }

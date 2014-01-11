@@ -243,9 +243,31 @@ struct brw_state_flags {
 
 
 /**
+ * Enum representing the different pipelines.
+ */
+typedef enum {
+   /**
+    * 3D rendering pipeline (vertex through fragment shader).
+    */
+   BRW_PIPELINE_3D,
+
+   /**
+    * Compute shader pipeline.
+    */
+   BRW_PIPELINE_COMPUTE,
+
+   BRW_NUM_PIPELINES
+} brw_pipeline;
+
+
+/**
  * Set one of the bits in a field of brw_state_flags.
  */
-#define SET_DIRTY_BIT(FIELD, FLAG) brw->state.dirty.FIELD |= (FLAG)
+#define SET_DIRTY_BIT(FIELD, FLAG) \
+   do { \
+      for (int pipeline = 0; pipeline < BRW_NUM_PIPELINES; pipeline++) \
+         brw->state.pipeline_dirty[pipeline].FIELD |= (FLAG); \
+   } while (false)
 
 
 /**
@@ -254,15 +276,18 @@ struct brw_state_flags {
 #define SET_DIRTY_ALL(FIELD) \
    do { \
       /* ~0 == 0xffffffff, so make sure field is <= 32 bits */ \
-      STATIC_ASSERT(sizeof(brw->state.dirty.FIELD) == 4); \
-      brw->state.dirty.FIELD = ~0; \
+      STATIC_ASSERT(sizeof(brw->state.pipeline_dirty[0].FIELD) == 4); \
+      for (int pipeline = 0; pipeline < BRW_NUM_PIPELINES; pipeline++) \
+         brw->state.pipeline_dirty[pipeline].FIELD = ~0; \
    } while (false)
 
 
 /**
  * Check one of the bits in a field of brw_state_flags.
  */
-#define CHECK_DIRTY_BIT(FIELD, FLAG) ((brw->state.dirty.FIELD & (FLAG)) != 0)
+#define CHECK_DIRTY_BIT(FIELD, FLAG) \
+   ((brw->state.pipeline_dirty[brw->state.current_pipeline].FIELD & (FLAG)) \
+    != 0)
 
 
 /** Subclass of Mesa vertex program */
@@ -1071,7 +1096,8 @@ struct brw_context
 
    GLuint NewGLState;
    struct {
-      struct brw_state_flags dirty;
+      struct brw_state_flags pipeline_dirty[BRW_NUM_PIPELINES];
+      brw_pipeline current_pipeline;
    } state;
 
    struct brw_cache cache;
