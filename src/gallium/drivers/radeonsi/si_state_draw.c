@@ -40,7 +40,7 @@
 
 static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
 	unsigned num_sgprs, num_user_sgprs;
 	unsigned nparams, i, vgpr_comp_cnt;
@@ -117,7 +117,7 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 
 static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
 	unsigned i, exports_ps, spi_ps_in_control, db_shader_control;
 	unsigned num_sgprs, num_user_sgprs;
@@ -283,7 +283,7 @@ static unsigned r600_conv_prim_to_gs_out(unsigned mode)
 	return prim_conv[mode];
 }
 
-static bool si_update_draw_info_state(struct r600_context *rctx,
+static bool si_update_draw_info_state(struct si_context *rctx,
 				      const struct pipe_draw_info *info,
 				      const struct pipe_index_buffer *ib)
 {
@@ -365,7 +365,7 @@ static bool si_update_draw_info_state(struct r600_context *rctx,
 	return true;
 }
 
-static void si_update_spi_map(struct r600_context *rctx)
+static void si_update_spi_map(struct si_context *rctx)
 {
 	struct si_shader *ps = &rctx->ps_shader->current->shader;
 	struct si_shader *vs = &rctx->vs_shader->current->shader;
@@ -422,7 +422,7 @@ bcolor:
 	si_pm4_set_state(rctx, spi, pm4);
 }
 
-static void si_update_derived_state(struct r600_context *rctx)
+static void si_update_derived_state(struct si_context *rctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)rctx;
 	unsigned vs_dirty = 0, ps_dirty = 0;
@@ -476,7 +476,7 @@ static void si_update_derived_state(struct r600_context *rctx)
 	}
 }
 
-static void si_vertex_buffer_update(struct r600_context *rctx)
+static void si_vertex_buffer_update(struct si_context *rctx)
 {
 	struct pipe_context *ctx = &rctx->b.b;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
@@ -534,7 +534,7 @@ static void si_vertex_buffer_update(struct r600_context *rctx)
 	si_pm4_set_state(rctx, vertex_buffers, pm4);
 }
 
-static void si_state_draw(struct r600_context *rctx,
+static void si_state_draw(struct si_context *rctx,
 			  const struct pipe_draw_info *info,
 			  const struct pipe_index_buffer *ib)
 {
@@ -696,7 +696,7 @@ const struct r600_atom si_atom_cache_flush = { si_emit_cache_flush, 13 }; /* num
 
 void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct pipe_index_buffer ib = {};
 	uint32_t i;
 

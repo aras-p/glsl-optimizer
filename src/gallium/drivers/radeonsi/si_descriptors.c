@@ -46,7 +46,7 @@ static uint32_t null_desc[8]; /* zeros */
 /* Emit a CP DMA packet to do a copy from one buffer to another.
  * The size must fit in bits [20:0].
  */
-static void si_emit_cp_dma_copy_buffer(struct r600_context *rctx,
+static void si_emit_cp_dma_copy_buffer(struct si_context *rctx,
 				       uint64_t dst_va, uint64_t src_va,
 				       unsigned size, unsigned flags)
 {
@@ -76,7 +76,7 @@ static void si_emit_cp_dma_copy_buffer(struct r600_context *rctx,
 }
 
 /* Emit a CP DMA packet to clear a buffer. The size must fit in bits [20:0]. */
-static void si_emit_cp_dma_clear_buffer(struct r600_context *rctx,
+static void si_emit_cp_dma_clear_buffer(struct si_context *rctx,
 					uint64_t dst_va, unsigned size,
 					uint32_t clear_value, unsigned flags)
 {
@@ -105,12 +105,12 @@ static void si_emit_cp_dma_clear_buffer(struct r600_context *rctx,
 	}
 }
 
-static void si_init_descriptors(struct r600_context *rctx,
+static void si_init_descriptors(struct si_context *rctx,
 				struct si_descriptors *desc,
 				unsigned shader_userdata_reg,
 				unsigned element_dw_size,
 				unsigned num_elements,
-				void (*emit_func)(struct r600_context *ctx, struct r600_atom *state))
+				void (*emit_func)(struct si_context *ctx, struct r600_atom *state))
 {
 	uint64_t va;
 
@@ -142,7 +142,7 @@ static void si_release_descriptors(struct si_descriptors *desc)
 	pipe_resource_reference((struct pipe_resource**)&desc->buffer, NULL);
 }
 
-static void si_update_descriptors(struct r600_context *rctx,
+static void si_update_descriptors(struct si_context *rctx,
 				  struct si_descriptors *desc)
 {
 	if (desc->dirty_mask) {
@@ -158,7 +158,7 @@ static void si_update_descriptors(struct r600_context *rctx,
 	}
 }
 
-static void si_emit_shader_pointer(struct r600_context *rctx,
+static void si_emit_shader_pointer(struct si_context *rctx,
 				   struct si_descriptors *desc)
 {
 	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
@@ -171,7 +171,7 @@ static void si_emit_shader_pointer(struct r600_context *rctx,
 	radeon_emit(cs, va >> 32);
 }
 
-static void si_emit_descriptors(struct r600_context *rctx,
+static void si_emit_descriptors(struct si_context *rctx,
 				struct si_descriptors *desc,
 				uint32_t **descriptors)
 {
@@ -255,14 +255,14 @@ static unsigned si_get_shader_user_data_base(unsigned shader)
 
 /* SAMPLER VIEWS */
 
-static void si_emit_sampler_views(struct r600_context *rctx, struct r600_atom *atom)
+static void si_emit_sampler_views(struct si_context *rctx, struct r600_atom *atom)
 {
 	struct si_sampler_views *views = (struct si_sampler_views*)atom;
 
 	si_emit_descriptors(rctx, &views->desc, views->desc_data);
 }
 
-static void si_init_sampler_views(struct r600_context *rctx,
+static void si_init_sampler_views(struct si_context *rctx,
 				  struct si_sampler_views *views,
 				  unsigned shader)
 {
@@ -282,7 +282,7 @@ static void si_release_sampler_views(struct si_sampler_views *views)
 	si_release_descriptors(&views->desc);
 }
 
-static void si_sampler_views_begin_new_cs(struct r600_context *rctx,
+static void si_sampler_views_begin_new_cs(struct si_context *rctx,
 					  struct si_sampler_views *views)
 {
 	unsigned mask = views->desc.enabled_mask;
@@ -301,7 +301,7 @@ static void si_sampler_views_begin_new_cs(struct r600_context *rctx,
 	si_emit_shader_pointer(rctx, &views->desc);
 }
 
-void si_set_sampler_view(struct r600_context *rctx, unsigned shader,
+void si_set_sampler_view(struct si_context *rctx, unsigned shader,
 			 unsigned slot, struct pipe_sampler_view *view,
 			 unsigned *view_desc)
 {
@@ -331,14 +331,14 @@ void si_set_sampler_view(struct r600_context *rctx, unsigned shader,
 
 /* BUFFER RESOURCES */
 
-static void si_emit_buffer_resources(struct r600_context *rctx, struct r600_atom *atom)
+static void si_emit_buffer_resources(struct si_context *rctx, struct r600_atom *atom)
 {
 	struct si_buffer_resources *buffers = (struct si_buffer_resources*)atom;
 
 	si_emit_descriptors(rctx, &buffers->desc, buffers->desc_data);
 }
 
-static void si_init_buffer_resources(struct r600_context *rctx,
+static void si_init_buffer_resources(struct si_context *rctx,
 				     struct si_buffer_resources *buffers,
 				     unsigned num_buffers, unsigned shader,
 				     unsigned shader_userdata_index,
@@ -378,7 +378,7 @@ static void si_release_buffer_resources(struct si_buffer_resources *buffers)
 	si_release_descriptors(&buffers->desc);
 }
 
-static void si_buffer_resources_begin_new_cs(struct r600_context *rctx,
+static void si_buffer_resources_begin_new_cs(struct si_context *rctx,
 					     struct si_buffer_resources *buffers)
 {
 	unsigned mask = buffers->desc.enabled_mask;
@@ -403,7 +403,7 @@ static void si_buffer_resources_begin_new_cs(struct r600_context *rctx,
 static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint slot,
 				   struct pipe_constant_buffer *input)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_buffer_resources *buffers = &rctx->const_buffers[shader];
 
 	if (shader >= SI_NUM_SHADERS)
@@ -469,7 +469,7 @@ static void si_set_streamout_targets(struct pipe_context *ctx,
 				     struct pipe_stream_output_target **targets,
 				     unsigned append_bitmask)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_buffer_resources *buffers = &rctx->streamout_buffers;
 	unsigned old_num_targets = rctx->b.streamout.num_targets;
 	unsigned i;
@@ -553,7 +553,7 @@ static void si_desc_reset_buffer_offset(struct pipe_context *ctx,
  */
 static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource *buf)
 {
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct si_context *rctx = (struct si_context*)ctx;
 	struct r600_resource *rbuffer = r600_resource(buf);
 	unsigned i, shader, alignment = rbuffer->buf->alignment;
 	uint64_t old_va = r600_resource_va(ctx->screen, buf);
@@ -654,7 +654,7 @@ static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource 
 static void si_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
 			    unsigned offset, unsigned size, unsigned value)
 {
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct si_context *rctx = (struct si_context*)ctx;
 
 	if (!size)
 		return;
@@ -728,7 +728,7 @@ static void si_clear_buffer(struct pipe_context *ctx, struct pipe_resource *dst,
 			 R600_CONTEXT_FLUSH_AND_INV_DB_META;
 }
 
-void si_copy_buffer(struct r600_context *rctx,
+void si_copy_buffer(struct si_context *rctx,
 		    struct pipe_resource *dst, struct pipe_resource *src,
 		    uint64_t dst_offset, uint64_t src_offset, unsigned size)
 {
@@ -791,7 +791,7 @@ void si_copy_buffer(struct r600_context *rctx,
 
 /* INIT/DEINIT */
 
-void si_init_all_descriptors(struct r600_context *rctx)
+void si_init_all_descriptors(struct si_context *rctx)
 {
 	int i;
 
@@ -817,7 +817,7 @@ void si_init_all_descriptors(struct r600_context *rctx)
 	rctx->b.invalidate_buffer = si_invalidate_buffer;
 }
 
-void si_release_all_descriptors(struct r600_context *rctx)
+void si_release_all_descriptors(struct si_context *rctx)
 {
 	int i;
 
@@ -828,7 +828,7 @@ void si_release_all_descriptors(struct r600_context *rctx)
 	si_release_buffer_resources(&rctx->streamout_buffers);
 }
 
-void si_all_descriptors_begin_new_cs(struct r600_context *rctx)
+void si_all_descriptors_begin_new_cs(struct si_context *rctx)
 {
 	int i;
 

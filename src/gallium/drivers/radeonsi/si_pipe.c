@@ -57,7 +57,7 @@
 void radeonsi_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 		    unsigned flags)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct pipe_query *render_cond = NULL;
 	boolean render_cond_cond = FALSE;
 	unsigned render_cond_mode = 0;
@@ -97,7 +97,7 @@ static void r600_flush_from_winsys(void *ctx, unsigned flags)
 
 static void r600_destroy_context(struct pipe_context *context)
 {
-	struct r600_context *rctx = (struct r600_context *)context;
+	struct si_context *rctx = (struct si_context *)context;
 
 	si_release_all_descriptors(rctx);
 
@@ -125,8 +125,8 @@ static void r600_destroy_context(struct pipe_context *context)
 
 static struct pipe_context *r600_create_context(struct pipe_screen *screen, void *priv)
 {
-	struct r600_context *rctx = CALLOC_STRUCT(r600_context);
-	struct r600_screen* rscreen = (struct r600_screen *)screen;
+	struct si_context *rctx = CALLOC_STRUCT(si_context);
+	struct si_screen* rscreen = (struct si_screen *)screen;
 	int shader, i;
 
 	if (rctx == NULL)
@@ -267,14 +267,14 @@ static const char *r600_get_family_name(enum radeon_family family)
 
 static const char* r600_get_name(struct pipe_screen* pscreen)
 {
-	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
+	struct si_screen *rscreen = (struct si_screen *)pscreen;
 
 	return r600_get_family_name(rscreen->b.family);
 }
 
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
-	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
+	struct si_screen *rscreen = (struct si_screen *)pscreen;
 
 	switch (param) {
 	/* Supported features (boolean caps). */
@@ -510,7 +510,7 @@ static int r600_get_compute_param(struct pipe_screen *screen,
         enum pipe_compute_cap param,
         void *ret)
 {
-	struct r600_screen *rscreen = (struct r600_screen *)screen;
+	struct si_screen *rscreen = (struct si_screen *)screen;
 	//TODO: select these params by asic
 	switch (param) {
 	case PIPE_COMPUTE_CAP_IR_TARGET: {
@@ -587,7 +587,7 @@ static int r600_get_compute_param(struct pipe_screen *screen,
 
 static void r600_destroy_screen(struct pipe_screen* pscreen)
 {
-	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
+	struct si_screen *rscreen = (struct si_screen *)pscreen;
 
 	if (rscreen == NULL)
 		return;
@@ -610,7 +610,7 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 
 static uint64_t r600_get_timestamp(struct pipe_screen *screen)
 {
-	struct r600_screen *rscreen = (struct r600_screen*)screen;
+	struct si_screen *rscreen = (struct si_screen*)screen;
 
 	return 1000000 * rscreen->b.ws->query_value(rscreen->b.ws, RADEON_TIMESTAMP) /
 		rscreen->b.info.r600_clock_crystal_freq;
@@ -618,7 +618,7 @@ static uint64_t r600_get_timestamp(struct pipe_screen *screen)
 
 struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 {
-	struct r600_screen *rscreen = CALLOC_STRUCT(r600_screen);
+	struct si_screen *rscreen = CALLOC_STRUCT(si_screen);
 	if (rscreen == NULL) {
 		return NULL;
 	}

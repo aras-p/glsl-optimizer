@@ -9,7 +9,7 @@
 #define MAX_GLOBAL_BUFFERS 20
 
 struct si_pipe_compute {
-	struct r600_context *ctx;
+	struct si_context *ctx;
 
 	unsigned local_size;
 	unsigned private_size;
@@ -27,7 +27,7 @@ static void *radeonsi_create_compute_state(
 	struct pipe_context *ctx,
 	const struct pipe_compute_state *cso)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pipe_compute *program =
 					CALLOC_STRUCT(si_pipe_compute);
 	const struct pipe_llvm_program_header *header;
@@ -60,7 +60,7 @@ static void *radeonsi_create_compute_state(
 
 static void radeonsi_bind_compute_state(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct si_context *rctx = (struct si_context*)ctx;
 	rctx->cs_shader_state.program = (struct si_pipe_compute*)state;
 }
 
@@ -70,7 +70,7 @@ static void radeonsi_set_global_binding(
 	uint32_t **handles)
 {
 	unsigned i;
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct si_context *rctx = (struct si_context*)ctx;
 	struct si_pipe_compute *program = rctx->cs_shader_state.program;
 
 	if (!resources) {
@@ -93,7 +93,7 @@ static void radeonsi_launch_grid(
 		const uint *block_layout, const uint *grid_layout,
 		uint32_t pc, const void *input)
 {
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct si_context *rctx = (struct si_context*)ctx;
 	struct si_pipe_compute *program = rctx->cs_shader_state.program;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	struct r600_resource *kernel_args_buffer = NULL;
@@ -287,7 +287,7 @@ static void si_set_compute_resources(struct pipe_context * ctx_,
 		unsigned start, unsigned count,
 		struct pipe_surface ** surfaces) { }
 
-void si_init_compute_functions(struct r600_context *rctx)
+void si_init_compute_functions(struct si_context *rctx)
 {
 	rctx->b.b.create_compute_state = radeonsi_create_compute_state;
 	rctx->b.b.delete_compute_state = si_delete_compute_state;

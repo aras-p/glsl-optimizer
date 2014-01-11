@@ -53,7 +53,7 @@
 
 struct si_pipe_compute;
 
-struct r600_screen {
+struct si_screen {
 	struct r600_common_screen	b;
 #if R600_TRACE_CS
 	struct r600_resource		*trace_bo;
@@ -78,7 +78,7 @@ struct si_cs_shader_state {
 	struct si_pipe_compute		*program;
 };
 
-struct r600_textures_info {
+struct si_textures_info {
 	struct si_sampler_views		views;
 	struct si_pipe_sampler_state	*samplers[NUM_TEX_UNITS];
 	unsigned			n_views;
@@ -90,7 +90,7 @@ struct r600_textures_info {
 #define SI_NUM_ATOMS(rctx) (sizeof((rctx)->atoms)/sizeof((rctx)->atoms.array[0]))
 #define SI_NUM_SHADERS (PIPE_SHADER_FRAGMENT+1)
 
-struct r600_context {
+struct si_context {
 	struct r600_common_context	b;
 	struct blitter_context		*blitter;
 	void				*custom_dsa_flush_depth_stencil[8];
@@ -99,7 +99,7 @@ struct r600_context {
 	void				*custom_dsa_flush_inplace;
 	void				*custom_blend_resolve;
 	void				*custom_blend_decompress;
-	struct r600_screen		*screen;
+	struct si_screen		*screen;
 
 	union {
 		struct {
@@ -138,7 +138,7 @@ struct r600_context {
 	unsigned			export_16bpc;
 	struct si_buffer_resources	const_buffers[SI_NUM_SHADERS];
 	struct si_buffer_resources	streamout_buffers;
-	struct r600_textures_info	samplers[SI_NUM_SHADERS];
+	struct si_textures_info	samplers[SI_NUM_SHADERS];
 	struct r600_resource		*border_color_table;
 	unsigned			border_color_offset;
 
@@ -176,14 +176,14 @@ struct r600_context {
 };
 
 /* si_blit.c */
-void si_init_blit_functions(struct r600_context *rctx);
-void si_flush_depth_textures(struct r600_context *rctx,
-			     struct r600_textures_info *textures);
-void r600_decompress_color_textures(struct r600_context *rctx,
-				    struct r600_textures_info *textures);
+void si_init_blit_functions(struct si_context *rctx);
+void si_flush_depth_textures(struct si_context *rctx,
+			     struct si_textures_info *textures);
+void r600_decompress_color_textures(struct si_context *rctx,
+				    struct si_textures_info *textures);
 
 /* si_buffer.c */
-void r600_upload_index_buffer(struct r600_context *rctx,
+void r600_upload_index_buffer(struct si_context *rctx,
 			      struct pipe_index_buffer *ib, unsigned count);
 
 
@@ -193,22 +193,22 @@ void radeonsi_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 const char *r600_get_llvm_processor_name(enum radeon_family family);
 
 /* si_query.c */
-void r600_init_query_functions(struct r600_context *rctx);
+void r600_init_query_functions(struct si_context *rctx);
 
 /* si_resource.c */
-void r600_init_context_resource_functions(struct r600_context *r600);
+void r600_init_context_resource_functions(struct si_context *r600);
 
 /* si_translate.c */
-void r600_translate_index_buffer(struct r600_context *r600,
+void r600_translate_index_buffer(struct si_context *r600,
 				 struct pipe_index_buffer *ib,
 				 unsigned count);
 
 #if R600_TRACE_CS
-void r600_trace_emit(struct r600_context *rctx);
+void r600_trace_emit(struct si_context *rctx);
 #endif
 
 /* si_compute.c */
-void si_init_compute_functions(struct r600_context *rctx);
+void si_init_compute_functions(struct si_context *rctx);
 
 /* si_uvd.c */
 struct pipe_video_codec *radeonsi_uvd_create_decoder(struct pipe_context *context,

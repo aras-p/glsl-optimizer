@@ -49,7 +49,7 @@ enum r600_blitter_op /* bitmask */
 
 static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 
 	r600_context_queries_suspend(rctx);
 
@@ -92,7 +92,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 
 static void r600_blitter_end(struct pipe_context *ctx)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	if (rctx->saved_render_cond) {
 		rctx->b.b.render_condition(&rctx->b.b,
 					       rctx->saved_render_cond,
@@ -115,7 +115,7 @@ static void r600_blit_decompress_depth(struct pipe_context *ctx,
 				       unsigned first_layer, unsigned last_layer,
 				       unsigned first_sample, unsigned last_sample)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	unsigned layer, level, sample, checked_last_layer, max_layer, max_sample;
 	float depth = 1.0f;
 	const struct util_format_description *desc;
@@ -188,7 +188,7 @@ static void r600_blit_decompress_depth(struct pipe_context *ctx,
 	}
 }
 
-static void si_blit_decompress_depth_in_place(struct r600_context *rctx,
+static void si_blit_decompress_depth_in_place(struct si_context *rctx,
                                               struct r600_texture *texture,
                                               unsigned first_level, unsigned last_level,
                                               unsigned first_layer, unsigned last_layer)
@@ -232,8 +232,8 @@ static void si_blit_decompress_depth_in_place(struct r600_context *rctx,
 	}
 }
 
-void si_flush_depth_textures(struct r600_context *rctx,
-			     struct r600_textures_info *textures)
+void si_flush_depth_textures(struct si_context *rctx,
+			     struct si_textures_info *textures)
 {
 	unsigned i;
 
@@ -259,7 +259,7 @@ static void r600_blit_decompress_color(struct pipe_context *ctx,
 		unsigned first_level, unsigned last_level,
 		unsigned first_layer, unsigned last_layer)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	unsigned layer, level, checked_last_layer, max_layer;
 
 	if (!rtex->dirty_level_mask)
@@ -299,8 +299,8 @@ static void r600_blit_decompress_color(struct pipe_context *ctx,
 	}
 }
 
-void r600_decompress_color_textures(struct r600_context *rctx,
-				    struct r600_textures_info *textures)
+void r600_decompress_color_textures(struct si_context *rctx,
+				    struct si_textures_info *textures)
 {
 	unsigned i;
 	unsigned mask = textures->compressed_colortex_mask;
@@ -327,7 +327,7 @@ static void r600_clear(struct pipe_context *ctx, unsigned buffers,
 		       const union pipe_color_union *color,
 		       double depth, unsigned stencil)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct pipe_framebuffer_state *fb = &rctx->framebuffer;
 
 	r600_blitter_begin(ctx, R600_CLEAR);
@@ -343,7 +343,7 @@ static void r600_clear_render_target(struct pipe_context *ctx,
 				     unsigned dstx, unsigned dsty,
 				     unsigned width, unsigned height)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 
 	r600_blitter_begin(ctx, R600_CLEAR_SURFACE);
 	util_blitter_clear_render_target(rctx->blitter, dst, color,
@@ -359,7 +359,7 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 				     unsigned dstx, unsigned dsty,
 				     unsigned width, unsigned height)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 
 	r600_blitter_begin(ctx, R600_CLEAR_SURFACE);
 	util_blitter_clear_depth_stencil(rctx->blitter, dst, clear_flags, depth, stencil,
@@ -376,7 +376,7 @@ static void r600_decompress_subresource(struct pipe_context *ctx,
 					unsigned level,
 					unsigned first_layer, unsigned last_layer)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct r600_texture *rtex = (struct r600_texture*)tex;
 
 	if (rtex->is_depth && !rtex->is_flushing_texture) {
@@ -490,7 +490,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      unsigned src_level,
 				      const struct pipe_box *src_box)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct texture_orig_info orig_info[2];
 	struct pipe_box sbox;
 	const struct pipe_box *psbox = src_box;
@@ -622,7 +622,7 @@ static enum pipe_format int_to_norm_format(enum pipe_format format)
 static bool do_hardware_msaa_resolve(struct pipe_context *ctx,
 				     const struct pipe_blit_info *info)
 {
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct si_context *rctx = (struct si_context*)ctx;
 	struct r600_texture *dst = (struct r600_texture*)info->dst.resource;
 	unsigned dst_width = u_minify(info->dst.resource->width0, info->dst.level);
 	unsigned dst_height = u_minify(info->dst.resource->height0, info->dst.level);
@@ -668,7 +668,7 @@ static bool do_hardware_msaa_resolve(struct pipe_context *ctx,
 static void si_blit(struct pipe_context *ctx,
 		    const struct pipe_blit_info *info)
 {
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct si_context *rctx = (struct si_context*)ctx;
 
 	if (do_hardware_msaa_resolve(ctx, info)) {
 		return;
@@ -692,7 +692,7 @@ static void si_flush_resource(struct pipe_context *ctx,
 {
 }
 
-void si_init_blit_functions(struct r600_context *rctx)
+void si_init_blit_functions(struct si_context *rctx)
 {
 	rctx->b.b.clear = r600_clear;
 	rctx->b.b.clear_render_target = r600_clear_render_target;

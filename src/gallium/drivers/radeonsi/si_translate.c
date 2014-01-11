@@ -28,7 +28,7 @@
 #include "si_pipe.h"
 
 
-void r600_translate_index_buffer(struct r600_context *r600,
+void r600_translate_index_buffer(struct si_context *r600,
 				 struct pipe_index_buffer *ib,
 				 unsigned count)
 {

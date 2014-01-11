@@ -46,9 +46,9 @@ struct r600_surface {
 
 void r600_init_screen_resource_functions(struct pipe_screen *screen);
 
-struct r600_context;
+struct si_context;
 
-void r600_upload_const_buffer(struct r600_context *rctx, struct r600_resource **rbuffer,
+void r600_upload_const_buffer(struct si_context *rctx, struct r600_resource **rbuffer,
 			      const uint8_t *ptr, unsigned size,
 			      uint32_t *const_offset);
 

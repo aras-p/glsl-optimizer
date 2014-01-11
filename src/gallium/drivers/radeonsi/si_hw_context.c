@@ -33,7 +33,7 @@
 #define GROUP_FORCE_NEW_BLOCK	0
 
 /* Get backends mask */
-void si_get_backend_mask(struct r600_context *ctx)
+void si_get_backend_mask(struct si_context *ctx)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 	struct r600_resource *buffer;
@@ -123,7 +123,7 @@ bool si_query_needs_begin(unsigned type)
 }
 
 /* initialize */
-void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
+void si_need_cs_space(struct si_context *ctx, unsigned num_dw,
 			boolean count_draw_in)
 {
 	int i;
@@ -173,7 +173,7 @@ void si_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	}
 }
 
-void si_context_flush(struct r600_context *ctx, unsigned flags)
+void si_context_flush(struct si_context *ctx, unsigned flags)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 
@@ -210,7 +210,7 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 
 #if R600_TRACE_CS
 	if (ctx->screen->trace_bo) {
-		struct r600_screen *rscreen = ctx->screen;
+		struct si_screen *rscreen = ctx->screen;
 		unsigned i;
 
 		for (i = 0; i < cs->cdw; i++) {
@@ -225,7 +225,7 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 
 #if R600_TRACE_CS
 	if (ctx->screen->trace_bo) {
-		struct r600_screen *rscreen = ctx->screen;
+		struct si_screen *rscreen = ctx->screen;
 		unsigned i;
 
 		for (i = 0; i < 10; i++) {
@@ -246,7 +246,7 @@ void si_context_flush(struct r600_context *ctx, unsigned flags)
 	si_begin_new_cs(ctx);
 }
 
-void si_begin_new_cs(struct r600_context *ctx)
+void si_begin_new_cs(struct si_context *ctx)
 {
 	ctx->pm4_dirty_cdwords = 0;
 
@@ -295,7 +295,7 @@ static unsigned r600_query_read_result(char *map, unsigned start_index, unsigned
 	return 0;
 }
 
-static boolean r600_query_result(struct r600_context *ctx, struct r600_query *query, boolean wait)
+static boolean r600_query_result(struct si_context *ctx, struct r600_query *query, boolean wait)
 {
 	unsigned results_base = query->results_start;
 	char *map;
@@ -382,7 +382,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	return TRUE;
 }
 
-void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
+void r600_query_begin(struct si_context *ctx, struct r600_query *query)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 	unsigned new_results_end, i;
@@ -471,7 +471,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	}
 }
 
-void r600_query_end(struct r600_context *ctx, struct r600_query *query)
+void r600_query_end(struct si_context *ctx, struct r600_query *query)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 	uint64_t va;
@@ -534,7 +534,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	}
 }
 
-void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
+void r600_query_predication(struct si_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
@@ -577,7 +577,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 	}
 }
 
-struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type)
+struct r600_query *r600_context_query_create(struct si_context *ctx, unsigned query_type)
 {
 	struct r600_query *query;
 	unsigned buffer_size = 4096;
@@ -633,13 +633,13 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 	return query;
 }
 
-void r600_context_query_destroy(struct r600_context *ctx, struct r600_query *query)
+void r600_context_query_destroy(struct si_context *ctx, struct r600_query *query)
 {
 	r600_resource_reference(&query->buffer, NULL);
 	free(query);
 }
 
-boolean r600_context_query_result(struct r600_context *ctx,
+boolean r600_context_query_result(struct si_context *ctx,
 				struct r600_query *query,
 				boolean wait, void *vresult)
 {
@@ -674,7 +674,7 @@ boolean r600_context_query_result(struct r600_context *ctx,
 	return TRUE;
 }
 
-void r600_context_queries_suspend(struct r600_context *ctx)
+void r600_context_queries_suspend(struct si_context *ctx)
 {
 	struct r600_query *query;
 
@@ -684,7 +684,7 @@ void r600_context_queries_suspend(struct r600_context *ctx)
 	assert(ctx->num_cs_dw_nontimer_queries_suspend == 0);
 }
 
-void r600_context_queries_resume(struct r600_context *ctx)
+void r600_context_queries_resume(struct si_context *ctx)
 {
 	struct r600_query *query;
 
@@ -696,9 +696,9 @@ void r600_context_queries_resume(struct r600_context *ctx)
 }
 
 #if R600_TRACE_CS
-void r600_trace_emit(struct r600_context *rctx)
+void r600_trace_emit(struct si_context *rctx)
 {
-	struct r600_screen *rscreen = rctx->screen;
+	struct si_screen *rscreen = rctx->screen;
 	struct radeon_winsys_cs *cs = rctx->cs;
 	uint64_t va;
 

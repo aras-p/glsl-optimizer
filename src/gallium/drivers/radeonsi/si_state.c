@@ -40,7 +40,7 @@
 #include "../radeon/r600_cs.h"
 #include "sid.h"
 
-static uint32_t cik_num_banks(struct r600_screen *rscreen, unsigned bpe, unsigned tile_split)
+static uint32_t cik_num_banks(struct si_screen *rscreen, unsigned bpe, unsigned tile_split)
 {
 	if (rscreen->b.info.cik_macrotile_mode_array_valid) {
 		unsigned index, tileb;
@@ -140,7 +140,7 @@ static unsigned cik_bank_wh(unsigned bankwh)
 	return bankwh;
 }
 
-static unsigned cik_db_pipe_config(struct r600_screen *rscreen, unsigned tile_mode)
+static unsigned cik_db_pipe_config(struct si_screen *rscreen, unsigned tile_mode)
 {
 	if (rscreen->b.info.si_tile_mode_array_valid) {
 		uint32_t gb_tile_mode = rscreen->b.info.si_tile_mode_array[tile_mode];
@@ -169,7 +169,7 @@ static unsigned cik_db_pipe_config(struct r600_screen *rscreen, unsigned tile_mo
 /*
  * inferred framebuffer and blender state
  */
-static void si_update_fb_blend_state(struct r600_context *rctx)
+static void si_update_fb_blend_state(struct si_context *rctx)
 {
 	struct si_pm4_state *pm4;
 	struct si_state_blend *blend = rctx->queued.named.blend;
@@ -344,21 +344,21 @@ static void *si_create_blend_state(struct pipe_context *ctx,
 
 static void si_bind_blend_state(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	si_pm4_bind_state(rctx, blend, (struct si_state_blend *)state);
 	si_update_fb_blend_state(rctx);
 }
 
 static void si_delete_blend_state(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	si_pm4_delete_state(rctx, blend, (struct si_state_blend *)state);
 }
 
 static void si_set_blend_color(struct pipe_context *ctx,
 			       const struct pipe_blend_color *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 
         if (pm4 == NULL)
@@ -379,7 +379,7 @@ static void si_set_blend_color(struct pipe_context *ctx,
 static void si_set_clip_state(struct pipe_context *ctx,
 			      const struct pipe_clip_state *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	struct pipe_constant_buffer cb;
 
@@ -412,7 +412,7 @@ static void si_set_scissor_states(struct pipe_context *ctx,
                                   unsigned num_scissors,
                                   const struct pipe_scissor_state *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	uint32_t tl, br;
 
@@ -438,7 +438,7 @@ static void si_set_viewport_states(struct pipe_context *ctx,
                                    unsigned num_viewports,
                                    const struct pipe_viewport_state *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_state_viewport *viewport = CALLOC_STRUCT(si_state_viewport);
 	struct si_pm4_state *pm4 = &viewport->pm4;
 
@@ -459,7 +459,7 @@ static void si_set_viewport_states(struct pipe_context *ctx,
 /*
  * inferred state between framebuffer and rasterizer
  */
-static void si_update_fb_rs_state(struct r600_context *rctx)
+static void si_update_fb_rs_state(struct si_context *rctx)
 {
 	struct si_state_rasterizer *rs = rctx->queued.named.rasterizer;
 	struct si_pm4_state *pm4;
@@ -631,7 +631,7 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 
 static void si_bind_rs_state(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_state_rasterizer *rs = (struct si_state_rasterizer *)state;
 
 	if (state == NULL)
@@ -648,14 +648,14 @@ static void si_bind_rs_state(struct pipe_context *ctx, void *state)
 
 static void si_delete_rs_state(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	si_pm4_delete_state(rctx, rasterizer, (struct si_state_rasterizer *)state);
 }
 
 /*
  * infeered state between dsa and stencil ref
  */
-static void si_update_dsa_stencil_ref(struct r600_context *rctx)
+static void si_update_dsa_stencil_ref(struct si_context *rctx)
 {
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	struct pipe_stencil_ref *ref = &rctx->stencil_ref;
@@ -681,7 +681,7 @@ static void si_update_dsa_stencil_ref(struct r600_context *rctx)
 static void si_set_pipe_stencil_ref(struct pipe_context *ctx,
 				    const struct pipe_stencil_ref *state)
 {
-        struct r600_context *rctx = (struct r600_context *)ctx;
+        struct si_context *rctx = (struct si_context *)ctx;
         rctx->stencil_ref = *state;
 	si_update_dsa_stencil_ref(rctx);
 }
@@ -779,7 +779,7 @@ static void *si_create_dsa_state(struct pipe_context *ctx,
 
 static void si_bind_dsa_state(struct pipe_context *ctx, void *state)
 {
-        struct r600_context *rctx = (struct r600_context *)ctx;
+        struct si_context *rctx = (struct si_context *)ctx;
         struct si_state_dsa *dsa = state;
 
         if (state == NULL)
@@ -791,11 +791,11 @@ static void si_bind_dsa_state(struct pipe_context *ctx, void *state)
 
 static void si_delete_dsa_state(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	si_pm4_delete_state(rctx, dsa, (struct si_state_dsa *)state);
 }
 
-static void *si_create_db_flush_dsa(struct r600_context *rctx, bool copy_depth,
+static void *si_create_db_flush_dsa(struct si_context *rctx, bool copy_depth,
 				    bool copy_stencil, int sample)
 {
 	struct pipe_depth_stencil_alpha_state dsa;
@@ -1062,7 +1062,7 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 				       const struct util_format_description *desc,
 				       int first_non_void)
 {
-	struct r600_screen *rscreen = (struct r600_screen*)screen;
+	struct si_screen *rscreen = (struct si_screen*)screen;
 	bool enable_s3tc = rscreen->b.info.drm_minor >= 31;
 	boolean uniform = TRUE;
 	int i;
@@ -1476,7 +1476,7 @@ boolean si_is_format_supported(struct pipe_screen *screen,
                                unsigned sample_count,
                                unsigned usage)
 {
-	struct r600_screen *rscreen = (struct r600_screen *)screen;
+	struct si_screen *rscreen = (struct si_screen *)screen;
 	unsigned retval = 0;
 
 	if (target >= PIPE_MAX_TEXTURE_TYPES) {
@@ -1561,7 +1561,7 @@ static unsigned si_tile_mode_index(struct r600_texture *rtex, unsigned level, bo
  * framebuffer handling
  */
 
-static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
+static void si_cb(struct si_context *rctx, struct si_pm4_state *pm4,
 		  const struct pipe_framebuffer_state *state, int cb)
 {
 	struct r600_texture *rtex;
@@ -1739,10 +1739,10 @@ static void si_cb(struct r600_context *rctx, struct si_pm4_state *pm4,
 	}
 }
 
-static void si_db(struct r600_context *rctx, struct si_pm4_state *pm4,
+static void si_db(struct si_context *rctx, struct si_pm4_state *pm4,
 		  const struct pipe_framebuffer_state *state)
 {
-	struct r600_screen *rscreen = rctx->screen;
+	struct si_screen *rscreen = rctx->screen;
 	struct r600_texture *rtex;
 	struct r600_surface *surf;
 	unsigned level, pitch, slice, format, tile_mode_index, array_mode;
@@ -1988,7 +1988,7 @@ static void si_get_sample_position(struct pipe_context *ctx,
 	}
 }
 
-static void si_set_msaa_state(struct r600_context *rctx, struct si_pm4_state *pm4, int nr_samples)
+static void si_set_msaa_state(struct si_context *rctx, struct si_pm4_state *pm4, int nr_samples)
 {
 	unsigned max_dist = 0;
 
@@ -2079,7 +2079,7 @@ static void si_set_msaa_state(struct r600_context *rctx, struct si_pm4_state *pm
 static void si_set_framebuffer_state(struct pipe_context *ctx,
 				     const struct pipe_framebuffer_state *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	uint32_t tl, br;
 	int tl_x, tl_y, br_x, br_y, nr_samples, i;
@@ -2164,7 +2164,7 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 					  struct si_pipe_shader_selector *sel,
 					  union si_shader_key *key)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	memset(key, 0, sizeof(*key));
 
 	if (sel->type == PIPE_SHADER_VERTEX) {
@@ -2309,7 +2309,7 @@ static void *si_create_vs_state(struct pipe_context *ctx,
 
 static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pipe_shader_selector *sel = state;
 
 	if (rctx->vs_shader == sel)
@@ -2326,7 +2326,7 @@ static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 
 static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pipe_shader_selector *sel = state;
 
 	if (rctx->ps_shader == sel)
@@ -2343,7 +2343,7 @@ static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 static void si_delete_shader_selector(struct pipe_context *ctx,
 				      struct si_pipe_shader_selector *sel)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pipe_shader *p = sel->current, *c;
 
 	while (p) {
@@ -2360,7 +2360,7 @@ static void si_delete_shader_selector(struct pipe_context *ctx,
 
 static void si_delete_vs_shader(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pipe_shader_selector *sel = (struct si_pipe_shader_selector *)state;
 
 	if (rctx->vs_shader == sel) {
@@ -2372,7 +2372,7 @@ static void si_delete_vs_shader(struct pipe_context *ctx, void *state)
 
 static void si_delete_ps_shader(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pipe_shader_selector *sel = (struct si_pipe_shader_selector *)state;
 
 	if (rctx->ps_shader == sel) {
@@ -2709,8 +2709,8 @@ static void si_set_sampler_views(struct pipe_context *ctx,
                                  unsigned count,
 				 struct pipe_sampler_view **views)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct r600_textures_info *samplers = &rctx->samplers[shader];
+	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_textures_info *samplers = &rctx->samplers[shader];
 	struct si_pipe_sampler_view **rviews = (struct si_pipe_sampler_view **)views;
 	int i;
 
@@ -2767,9 +2767,9 @@ static void si_set_sampler_views(struct pipe_context *ctx,
 	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
 }
 
-static struct si_pm4_state *si_set_sampler_states(struct r600_context *rctx, unsigned count,
+static struct si_pm4_state *si_set_sampler_states(struct si_context *rctx, unsigned count,
 						   void **states,
-						   struct r600_textures_info *samplers,
+						   struct si_textures_info *samplers,
 						   unsigned user_data_reg)
 {
 	struct si_pipe_sampler_state **rstates = (struct si_pipe_sampler_state **)states;
@@ -2843,7 +2843,7 @@ out:
 
 static void si_bind_vs_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
 
 	pm4 = si_set_sampler_states(rctx, count, states, &rctx->samplers[PIPE_SHADER_VERTEX],
@@ -2853,7 +2853,7 @@ static void si_bind_vs_sampler_states(struct pipe_context *ctx, unsigned count, 
 
 static void si_bind_ps_sampler_states(struct pipe_context *ctx, unsigned count, void **states)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
 
 	pm4 = si_set_sampler_states(rctx, count, states, &rctx->samplers[PIPE_SHADER_FRAGMENT],
@@ -2884,7 +2884,7 @@ static void si_bind_sampler_states(struct pipe_context *ctx, unsigned shader,
 
 static void si_set_sample_mask(struct pipe_context *ctx, unsigned sample_mask)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 	uint16_t mask = sample_mask;
 
@@ -2942,7 +2942,7 @@ static void *si_create_vertex_elements(struct pipe_context *ctx,
 
 static void si_bind_vertex_elements(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct si_vertex_element *v = (struct si_vertex_element*)state;
 
 	rctx->vertex_elements = v;
@@ -2950,7 +2950,7 @@ static void si_bind_vertex_elements(struct pipe_context *ctx, void *state)
 
 static void si_delete_vertex_element(struct pipe_context *ctx, void *state)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 
 	if (rctx->vertex_elements == state)
 		rctx->vertex_elements = NULL;
@@ -2960,7 +2960,7 @@ static void si_delete_vertex_element(struct pipe_context *ctx, void *state)
 static void si_set_vertex_buffers(struct pipe_context *ctx, unsigned start_slot, unsigned count,
 				  const struct pipe_vertex_buffer *buffers)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 
 	util_set_vertex_buffers_count(rctx->vertex_buffer, &rctx->nr_vertex_buffers, buffers, start_slot, count);
 }
@@ -2968,7 +2968,7 @@ static void si_set_vertex_buffers(struct pipe_context *ctx, unsigned start_slot,
 static void si_set_index_buffer(struct pipe_context *ctx,
 				const struct pipe_index_buffer *ib)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 
 	if (ib) {
 		pipe_resource_reference(&rctx->index_buffer.buffer, ib->buffer);
@@ -2988,13 +2988,13 @@ static void si_set_polygon_stipple(struct pipe_context *ctx,
 
 static void si_texture_barrier(struct pipe_context *ctx)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 
 	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE |
 			 R600_CONTEXT_FLUSH_AND_INV_CB;
 }
 
-static void *si_create_blend_custom(struct r600_context *rctx, unsigned mode)
+static void *si_create_blend_custom(struct si_context *rctx, unsigned mode)
 {
 	struct pipe_blend_state blend;
 
@@ -3051,7 +3051,7 @@ static boolean si_dma_copy(struct pipe_context *ctx,
 	return FALSE;
 }
 
-void si_init_state_functions(struct r600_context *rctx)
+void si_init_state_functions(struct si_context *rctx)
 {
 	int i;
 
@@ -3117,7 +3117,7 @@ void si_init_state_functions(struct r600_context *rctx)
 	rctx->b.b.draw_vbo = si_draw_vbo;
 }
 
-void si_init_config(struct r600_context *rctx)
+void si_init_config(struct si_context *rctx)
 {
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
 

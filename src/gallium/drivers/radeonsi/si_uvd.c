@@ -54,7 +54,7 @@
 struct pipe_video_buffer *radeonsi_video_buffer_create(struct pipe_context *pipe,
 						       const struct pipe_video_buffer *tmpl)
 {
-	struct r600_context *ctx = (struct r600_context *)pipe;
+	struct si_context *ctx = (struct si_context *)pipe;
 	struct r600_texture *resources[VL_NUM_COMPONENTS] = {};
 	struct radeon_surface *surfaces[VL_NUM_COMPONENTS] = {};
 	struct pb_buffer **pbs[VL_NUM_COMPONENTS] = {};

@@ -34,7 +34,7 @@
 #define SI_PM4_MAX_RELOCS	4
 
 // forward defines
-struct r600_context;
+struct si_context;
 enum chip_class;
 
 struct si_pm4_state
@@ -81,15 +81,15 @@ void si_pm4_sh_data_end(struct si_pm4_state *state, unsigned base, unsigned idx)
 void si_pm4_inval_shader_cache(struct si_pm4_state *state);
 void si_pm4_inval_texture_cache(struct si_pm4_state *state);
 
-void si_pm4_free_state(struct r600_context *rctx,
+void si_pm4_free_state(struct si_context *rctx,
 		       struct si_pm4_state *state,
 		       unsigned idx);
-struct si_pm4_state * si_pm4_alloc_state(struct r600_context *rctx);
+struct si_pm4_state * si_pm4_alloc_state(struct si_context *rctx);
 
-uint32_t si_pm4_sync_flags(struct r600_context *rctx);
-unsigned si_pm4_dirty_dw(struct r600_context *rctx);
-void si_pm4_emit(struct r600_context *rctx, struct si_pm4_state *state);
-void si_pm4_emit_dirty(struct r600_context *rctx);
-void si_pm4_reset_emitted(struct r600_context *rctx);
+uint32_t si_pm4_sync_flags(struct si_context *rctx);
+unsigned si_pm4_dirty_dw(struct si_context *rctx);
+void si_pm4_emit(struct si_context *rctx, struct si_pm4_state *state);
+void si_pm4_emit_dirty(struct si_context *rctx);
+void si_pm4_reset_emitted(struct si_context *rctx);
 
 #endif

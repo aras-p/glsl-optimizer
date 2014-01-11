@@ -1889,7 +1889,7 @@ static void preload_streamout_buffers(struct si_shader_context *si_shader_ctx)
 	}
 }
 
-int si_compile_llvm(struct r600_context *rctx, struct si_pipe_shader *shader,
+int si_compile_llvm(struct si_context *rctx, struct si_pipe_shader *shader,
 							LLVMModuleRef mod)
 {
 	unsigned i;
@@ -1967,7 +1967,7 @@ int si_pipe_shader_create(
 	struct pipe_context *ctx,
 	struct si_pipe_shader *shader)
 {
-	struct r600_context *rctx = (struct r600_context*)ctx;
+	struct si_context *rctx = (struct si_context*)ctx;
 	struct si_pipe_shader_selector *sel = shader->selector;
 	struct si_shader_context si_shader_ctx;
 	struct tgsi_shader_info shader_info;

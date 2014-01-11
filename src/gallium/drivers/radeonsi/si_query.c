@@ -25,21 +25,21 @@
 
 static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned query_type)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 
 	return (struct pipe_query*)r600_context_query_create(rctx, query_type);
 }
 
 static void r600_destroy_query(struct pipe_context *ctx, struct pipe_query *query)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 
 	r600_context_query_destroy(rctx, (struct r600_query *)query);
 }
 
 static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
 
 	if (!si_query_needs_begin(rquery->type)) {
@@ -58,7 +58,7 @@ static void r600_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 
 static void r600_end_query(struct pipe_context *ctx, struct pipe_query *query)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
 
 	if (!si_query_needs_begin(rquery->type)) {
@@ -76,7 +76,7 @@ static boolean r600_get_query_result(struct pipe_context *ctx,
 					struct pipe_query *query,
 					boolean wait, union pipe_query_result *vresult)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
 
 	return r600_context_query_result(rctx, rquery, wait, vresult);
@@ -87,7 +87,7 @@ static void r600_render_condition(struct pipe_context *ctx,
 				  boolean condition,
 				  uint mode)
 {
-	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct si_context *rctx = (struct si_context *)ctx;
 	struct r600_query *rquery = (struct r600_query *)query;
 	int wait_flag = 0;
 
@@ -134,7 +134,7 @@ static void r600_render_condition(struct pipe_context *ctx,
 	}
 }
 
-void r600_init_query_functions(struct r600_context *rctx)
+void r600_init_query_functions(struct si_context *rctx)
 {
 	rctx->b.b.create_query = r600_create_query;
 	rctx->b.b.destroy_query = r600_destroy_query;

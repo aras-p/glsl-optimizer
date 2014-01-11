@@ -154,7 +154,7 @@ struct si_pipe_shader {
 /* radeonsi_shader.c */
 int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader);
 int si_pipe_shader_create(struct pipe_context *ctx, struct si_pipe_shader *shader);
-int si_compile_llvm(struct r600_context *rctx, struct si_pipe_shader *shader,
+int si_compile_llvm(struct si_context *rctx, struct si_pipe_shader *shader,
 							LLVMModuleRef mod);
 void si_pipe_shader_destroy(struct pipe_context *ctx, struct si_pipe_shader *shader);
 

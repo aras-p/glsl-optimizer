@@ -145,7 +145,7 @@ void si_pm4_inval_texture_cache(struct si_pm4_state *state)
 	state->cp_coher_cntl |= S_0085F0_TCL1_ACTION_ENA(1);
 }
 
-void si_pm4_free_state(struct r600_context *rctx,
+void si_pm4_free_state(struct si_context *rctx,
 		       struct si_pm4_state *state,
 		       unsigned idx)
 {
@@ -162,7 +162,7 @@ void si_pm4_free_state(struct r600_context *rctx,
 	FREE(state);
 }
 
-struct si_pm4_state * si_pm4_alloc_state(struct r600_context *rctx)
+struct si_pm4_state * si_pm4_alloc_state(struct si_context *rctx)
 {
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 
@@ -174,7 +174,7 @@ struct si_pm4_state * si_pm4_alloc_state(struct r600_context *rctx)
 	return pm4;
 }
 
-uint32_t si_pm4_sync_flags(struct r600_context *rctx)
+uint32_t si_pm4_sync_flags(struct si_context *rctx)
 {
 	uint32_t cp_coher_cntl = 0;
 
@@ -189,7 +189,7 @@ uint32_t si_pm4_sync_flags(struct r600_context *rctx)
 	return cp_coher_cntl;
 }
 
-unsigned si_pm4_dirty_dw(struct r600_context *rctx)
+unsigned si_pm4_dirty_dw(struct si_context *rctx)
 {
 	unsigned count = 0;
 
@@ -211,7 +211,7 @@ unsigned si_pm4_dirty_dw(struct r600_context *rctx)
 	return count;
 }
 
-void si_pm4_emit(struct r600_context *rctx, struct si_pm4_state *state)
+void si_pm4_emit(struct si_context *rctx, struct si_pm4_state *state)
 {
 	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
 	for (int i = 0; i < state->nbo; ++i) {
@@ -234,7 +234,7 @@ void si_pm4_emit(struct r600_context *rctx, struct si_pm4_state *state)
 #endif
 }
 
-void si_pm4_emit_dirty(struct r600_context *rctx)
+void si_pm4_emit_dirty(struct si_context *rctx)
 {
 	for (int i = 0; i < NUMBER_OF_STATES; ++i) {
 		struct si_pm4_state *state = rctx->queued.array[i];
@@ -248,7 +248,7 @@ void si_pm4_emit_dirty(struct r600_context *rctx)
 	}
 }
 
-void si_pm4_reset_emitted(struct r600_context *rctx)
+void si_pm4_reset_emitted(struct si_context *rctx)
 {
 	memset(&rctx->emitted, 0, sizeof(rctx->emitted));
 }
