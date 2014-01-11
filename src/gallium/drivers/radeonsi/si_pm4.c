@@ -145,15 +145,15 @@ void si_pm4_inval_texture_cache(struct si_pm4_state *state)
 	state->cp_coher_cntl |= S_0085F0_TCL1_ACTION_ENA(1);
 }
 
-void si_pm4_free_state(struct si_context *rctx,
+void si_pm4_free_state(struct si_context *sctx,
 		       struct si_pm4_state *state,
 		       unsigned idx)
 {
 	if (state == NULL)
 		return;
 
-	if (idx != ~0 && rctx->emitted.array[idx] == state) {
-		rctx->emitted.array[idx] = NULL;
+	if (idx != ~0 && sctx->emitted.array[idx] == state) {
+		sctx->emitted.array[idx] = NULL;
 	}
 
 	for (int i = 0; i < state->nbo; ++i) {
@@ -162,26 +162,26 @@ void si_pm4_free_state(struct si_context *rctx,
 	FREE(state);
 }
 
-struct si_pm4_state * si_pm4_alloc_state(struct si_context *rctx)
+struct si_pm4_state * si_pm4_alloc_state(struct si_context *sctx)
 {
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 
         if (pm4 == NULL)
                 return NULL;
 
-	pm4->chip_class = rctx->b.chip_class;
+	pm4->chip_class = sctx->b.chip_class;
 
 	return pm4;
 }
 
-uint32_t si_pm4_sync_flags(struct si_context *rctx)
+uint32_t si_pm4_sync_flags(struct si_context *sctx)
 {
 	uint32_t cp_coher_cntl = 0;
 
 	for (int i = 0; i < NUMBER_OF_STATES; ++i) {
-		struct si_pm4_state *state = rctx->queued.array[i];
+		struct si_pm4_state *state = sctx->queued.array[i];
 
-		if (!state || rctx->emitted.array[i] == state)
+		if (!state || sctx->emitted.array[i] == state)
 			continue;
 
 		cp_coher_cntl |= state->cp_coher_cntl;
@@ -189,20 +189,20 @@ uint32_t si_pm4_sync_flags(struct si_context *rctx)
 	return cp_coher_cntl;
 }
 
-unsigned si_pm4_dirty_dw(struct si_context *rctx)
+unsigned si_pm4_dirty_dw(struct si_context *sctx)
 {
 	unsigned count = 0;
 
 	for (int i = 0; i < NUMBER_OF_STATES; ++i) {
-		struct si_pm4_state *state = rctx->queued.array[i];
+		struct si_pm4_state *state = sctx->queued.array[i];
 
-		if (!state || rctx->emitted.array[i] == state)
+		if (!state || sctx->emitted.array[i] == state)
 			continue;
 
 		count += state->ndw;
 #if SI_TRACE_CS
 		/* for tracing each states */
-		if (rctx->screen->trace_bo) {
+		if (sctx->screen->trace_bo) {
 			count += SI_TRACE_CS_DWORDS;
 		}
 #endif
@@ -211,11 +211,11 @@ unsigned si_pm4_dirty_dw(struct si_context *rctx)
 	return count;
 }
 
-void si_pm4_emit(struct si_context *rctx, struct si_pm4_state *state)
+void si_pm4_emit(struct si_context *sctx, struct si_pm4_state *state)
 {
-	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
+	struct radeon_winsys_cs *cs = sctx->b.rings.gfx.cs;
 	for (int i = 0; i < state->nbo; ++i) {
-		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, state->bo[i],
+		r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx, state->bo[i],
 				      state->bo_usage[i]);
 	}
 
@@ -228,27 +228,27 @@ void si_pm4_emit(struct si_context *rctx, struct si_pm4_state *state)
 	cs->cdw += state->ndw;
 
 #if SI_TRACE_CS
-	if (rctx->screen->trace_bo) {
-		si_trace_emit(rctx);
+	if (sctx->screen->trace_bo) {
+		si_trace_emit(sctx);
 	}
 #endif
 }
 
-void si_pm4_emit_dirty(struct si_context *rctx)
+void si_pm4_emit_dirty(struct si_context *sctx)
 {
 	for (int i = 0; i < NUMBER_OF_STATES; ++i) {
-		struct si_pm4_state *state = rctx->queued.array[i];
+		struct si_pm4_state *state = sctx->queued.array[i];
 
-		if (!state || rctx->emitted.array[i] == state)
+		if (!state || sctx->emitted.array[i] == state)
 			continue;
 
-		assert(state != rctx->queued.named.init);
-		si_pm4_emit(rctx, state);
-		rctx->emitted.array[i] = state;
+		assert(state != sctx->queued.named.init);
+		si_pm4_emit(sctx, state);
+		sctx->emitted.array[i] = state;
 	}
 }
 
-void si_pm4_reset_emitted(struct si_context *rctx)
+void si_pm4_reset_emitted(struct si_context *sctx)
 {
-	memset(&rctx->emitted, 0, sizeof(rctx->emitted));
+	memset(&sctx->emitted, 0, sizeof(sctx->emitted));
 }

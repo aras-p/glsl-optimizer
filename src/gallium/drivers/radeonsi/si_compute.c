@@ -27,7 +27,7 @@ static void *si_create_compute_state(
 	struct pipe_context *ctx,
 	const struct pipe_compute_state *cso)
 {
-	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pipe_compute *program =
 					CALLOC_STRUCT(si_pipe_compute);
 	const struct pipe_llvm_program_header *header;
@@ -39,7 +39,7 @@ static void *si_create_compute_state(
 	header = cso->prog;
 	code = cso->prog + sizeof(struct pipe_llvm_program_header);
 
-	program->ctx = rctx;
+	program->ctx = sctx;
 	program->local_size = cso->req_local_mem;
 	program->private_size = cso->req_private_mem;
 	program->input_size = cso->req_input_mem;
@@ -51,7 +51,7 @@ static void *si_create_compute_state(
 	for (i = 0; i < program->num_kernels; i++) {
 		LLVMModuleRef mod = radeon_llvm_get_kernel_module(program->llvm_ctx, i,
 							code, header->num_bytes);
-		si_compile_llvm(rctx, &program->kernels[i], mod);
+		si_compile_llvm(sctx, &program->kernels[i], mod);
 		LLVMDisposeModule(mod);
 	}
 
@@ -60,8 +60,8 @@ static void *si_create_compute_state(
 
 static void si_bind_compute_state(struct pipe_context *ctx, void *state)
 {
-	struct si_context *rctx = (struct si_context*)ctx;
-	rctx->cs_shader_state.program = (struct si_pipe_compute*)state;
+	struct si_context *sctx = (struct si_context*)ctx;
+	sctx->cs_shader_state.program = (struct si_pipe_compute*)state;
 }
 
 static void si_set_global_binding(
@@ -70,8 +70,8 @@ static void si_set_global_binding(
 	uint32_t **handles)
 {
 	unsigned i;
-	struct si_context *rctx = (struct si_context*)ctx;
-	struct si_pipe_compute *program = rctx->cs_shader_state.program;
+	struct si_context *sctx = (struct si_context*)ctx;
+	struct si_pipe_compute *program = sctx->cs_shader_state.program;
 
 	if (!resources) {
 		for (i = first; i < first + n; i++) {
@@ -93,8 +93,8 @@ static void si_launch_grid(
 		const uint *block_layout, const uint *grid_layout,
 		uint32_t pc, const void *input)
 {
-	struct si_context *rctx = (struct si_context*)ctx;
-	struct si_pipe_compute *program = rctx->cs_shader_state.program;
+	struct si_context *sctx = (struct si_context*)ctx;
+	struct si_pipe_compute *program = sctx->cs_shader_state.program;
 	struct si_pm4_state *pm4 = CALLOC_STRUCT(si_pm4_state);
 	struct r600_resource *kernel_args_buffer = NULL;
 	unsigned kernel_args_size;
@@ -134,7 +134,7 @@ static void si_launch_grid(
 
 	memcpy(kernel_args + (num_work_size_bytes / 4), input, program->input_size);
 
-	si_upload_const_buffer(rctx, &kernel_args_buffer, (uint8_t*)kernel_args,
+	si_upload_const_buffer(sctx, &kernel_args_buffer, (uint8_t*)kernel_args,
 					kernel_args_size, &kernel_args_offset);
 	kernel_args_va = r600_resource_va(ctx->screen,
 				(struct pipe_resource*)kernel_args_buffer);
@@ -171,7 +171,7 @@ static void si_launch_grid(
 	 * kernel if we want to use something other than the default value,
 	 * which is now 0x22f.
 	 */
-	if (rctx->b.chip_class <= SI) {
+	if (sctx->b.chip_class <= SI) {
 		/* XXX: This should be:
 		 * (number of compute units) * 4 * (waves per simd) - 1 */
 
@@ -204,7 +204,7 @@ static void si_launch_grid(
 	 * the shader and 4 bytes allocated by the state tracker, then
 	 * we will set LDS_SIZE to 512 bytes rather than 256.
 	 */
-	if (rctx->b.chip_class <= SI) {
+	if (sctx->b.chip_class <= SI) {
 		lds_blocks += align(program->local_size, 256) >> 8;
 	} else {
 		lds_blocks += align(program->local_size, 512) >> 9;
@@ -250,12 +250,12 @@ static void si_launch_grid(
 	si_pm4_inval_shader_cache(pm4);
 	si_cmd_surface_sync(pm4, pm4->cp_coher_cntl);
 
-	si_pm4_emit(rctx, pm4);
+	si_pm4_emit(sctx, pm4);
 
 #if 0
-	fprintf(stderr, "cdw: %i\n", rctx->cs->cdw);
-	for (i = 0; i < rctx->cs->cdw; i++) {
-		fprintf(stderr, "%4i : 0x%08X\n", i, rctx->cs->buf[i]);
+	fprintf(stderr, "cdw: %i\n", sctx->cs->cdw);
+	for (i = 0; i < sctx->cs->cdw; i++) {
+		fprintf(stderr, "%4i : 0x%08X\n", i, sctx->cs->buf[i]);
 	}
 #endif
 
@@ -287,13 +287,13 @@ static void si_set_compute_resources(struct pipe_context * ctx_,
 		unsigned start, unsigned count,
 		struct pipe_surface ** surfaces) { }
 
-void si_init_compute_functions(struct si_context *rctx)
+void si_init_compute_functions(struct si_context *sctx)
 {
-	rctx->b.b.create_compute_state = si_create_compute_state;
-	rctx->b.b.delete_compute_state = si_delete_compute_state;
-	rctx->b.b.bind_compute_state = si_bind_compute_state;
+	sctx->b.b.create_compute_state = si_create_compute_state;
+	sctx->b.b.delete_compute_state = si_delete_compute_state;
+	sctx->b.b.bind_compute_state = si_bind_compute_state;
 /*	 ctx->context.create_sampler_view = evergreen_compute_create_sampler_view; */
-	rctx->b.b.set_compute_resources = si_set_compute_resources;
-	rctx->b.b.set_global_binding = si_set_global_binding;
-	rctx->b.b.launch_grid = si_launch_grid;
+	sctx->b.b.set_compute_resources = si_set_compute_resources;
+	sctx->b.b.set_global_binding = si_set_global_binding;
+	sctx->b.b.launch_grid = si_launch_grid;
 }

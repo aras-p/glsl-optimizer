@@ -87,7 +87,7 @@ struct si_textures_info {
 	unsigned			n_samplers;
 };
 
-#define SI_NUM_ATOMS(rctx) (sizeof((rctx)->atoms)/sizeof((rctx)->atoms.array[0]))
+#define SI_NUM_ATOMS(sctx) (sizeof((sctx)->atoms)/sizeof((sctx)->atoms.array[0]))
 #define SI_NUM_SHADERS (PIPE_SHADER_FRAGMENT+1)
 
 struct si_context {
@@ -176,14 +176,14 @@ struct si_context {
 };
 
 /* si_blit.c */
-void si_init_blit_functions(struct si_context *rctx);
-void si_flush_depth_textures(struct si_context *rctx,
+void si_init_blit_functions(struct si_context *sctx);
+void si_flush_depth_textures(struct si_context *sctx,
 			     struct si_textures_info *textures);
-void si_decompress_color_textures(struct si_context *rctx,
+void si_decompress_color_textures(struct si_context *sctx,
 				  struct si_textures_info *textures);
 
 /* si_buffer.c */
-void si_upload_index_buffer(struct si_context *rctx,
+void si_upload_index_buffer(struct si_context *sctx,
 			    struct pipe_index_buffer *ib, unsigned count);
 
 
@@ -193,22 +193,22 @@ void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 const char *si_get_llvm_processor_name(enum radeon_family family);
 
 /* si_query.c */
-void si_init_query_functions(struct si_context *rctx);
+void si_init_query_functions(struct si_context *sctx);
 
 /* si_resource.c */
-void si_init_context_resource_functions(struct si_context *r600);
+void si_init_context_resource_functions(struct si_context *sctx);
 
 /* si_translate.c */
-void si_translate_index_buffer(struct si_context *r600,
+void si_translate_index_buffer(struct si_context *sctx,
 			       struct pipe_index_buffer *ib,
 			       unsigned count);
 
 #if SI_TRACE_CS
-void si_trace_emit(struct si_context *rctx);
+void si_trace_emit(struct si_context *sctx);
 #endif
 
 /* si_compute.c */
-void si_init_compute_functions(struct si_context *rctx);
+void si_init_compute_functions(struct si_context *sctx);
 
 /* si_uvd.c */
 struct pipe_video_codec *si_uvd_create_decoder(struct pipe_context *context,

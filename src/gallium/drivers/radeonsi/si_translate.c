@@ -28,7 +28,7 @@
 #include "si_pipe.h"
 
 
-void si_translate_index_buffer(struct si_context *r600,
+void si_translate_index_buffer(struct si_context *sctx,
 			       struct pipe_index_buffer *ib,
 			       unsigned count)
 {
@@ -38,11 +38,11 @@ void si_translate_index_buffer(struct si_context *r600,
 
 	switch (ib->index_size) {
 	case 1:
-		u_upload_alloc(r600->b.uploader, 0, count * 2,
+		u_upload_alloc(sctx->b.uploader, 0, count * 2,
 			       &out_offset, &out_buffer, &ptr);
 
 		util_shorten_ubyte_elts_to_userptr(
-				&r600->b.b, ib, 0, ib->offset, count, ptr);
+				&sctx->b.b, ib, 0, ib->offset, count, ptr);
 
 		pipe_resource_reference(&ib->buffer, NULL);
 		ib->buffer = out_buffer;

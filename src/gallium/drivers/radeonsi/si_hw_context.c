@@ -696,14 +696,14 @@ void si_context_queries_resume(struct si_context *ctx)
 }
 
 #if SI_TRACE_CS
-void si_trace_emit(struct si_context *rctx)
+void si_trace_emit(struct si_context *sctx)
 {
-	struct si_screen *rscreen = rctx->screen;
-	struct radeon_winsys_cs *cs = rctx->cs;
+	struct si_screen *rscreen = sctx->screen;
+	struct radeon_winsys_cs *cs = sctx->cs;
 	uint64_t va;
 
 	va = r600_resource_va(&rscreen->screen, (void*)rscreen->trace_bo);
-	r600_context_bo_reloc(rctx, rscreen->trace_bo, RADEON_USAGE_READWRITE);
+	r600_context_bo_reloc(sctx, rscreen->trace_bo, RADEON_USAGE_READWRITE);
 	cs->buf[cs->cdw++] = PKT3(PKT3_WRITE_DATA, 4, 0);
 	cs->buf[cs->cdw++] = PKT3_WRITE_DATA_DST_SEL(PKT3_WRITE_DATA_DST_SEL_MEM_SYNC) |
 				PKT3_WRITE_DATA_WR_CONFIRM |

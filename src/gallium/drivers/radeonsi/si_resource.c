@@ -52,10 +52,10 @@ void si_init_screen_resource_functions(struct pipe_screen *screen)
 	screen->resource_destroy = u_resource_destroy_vtbl;
 }
 
-void si_init_context_resource_functions(struct si_context *r600)
+void si_init_context_resource_functions(struct si_context *sctx)
 {
-	r600->b.b.transfer_map = u_transfer_map_vtbl;
-	r600->b.b.transfer_flush_region = u_default_transfer_flush_region;
-	r600->b.b.transfer_unmap = u_transfer_unmap_vtbl;
-	r600->b.b.transfer_inline_write = u_default_transfer_inline_write;
+	sctx->b.b.transfer_map = u_transfer_map_vtbl;
+	sctx->b.b.transfer_flush_region = u_default_transfer_flush_region;
+	sctx->b.b.transfer_unmap = u_transfer_unmap_vtbl;
+	sctx->b.b.transfer_inline_write = u_default_transfer_inline_write;
 }

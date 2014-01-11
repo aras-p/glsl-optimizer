@@ -48,7 +48,7 @@ void si_init_screen_resource_functions(struct pipe_screen *screen);
 
 struct si_context;
 
-void si_upload_const_buffer(struct si_context *rctx, struct r600_resource **rbuffer,
+void si_upload_const_buffer(struct si_context *sctx, struct r600_resource **rbuffer,
 			    const uint8_t *ptr, unsigned size,
 			    uint32_t *const_offset);
 

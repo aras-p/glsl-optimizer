@@ -57,24 +57,24 @@
 void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 	      unsigned flags)
 {
-	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_context *sctx = (struct si_context *)ctx;
 	struct pipe_query *render_cond = NULL;
 	boolean render_cond_cond = FALSE;
 	unsigned render_cond_mode = 0;
 
 	if (fence) {
-		*fence = rctx->b.ws->cs_create_fence(rctx->b.rings.gfx.cs);
+		*fence = sctx->b.ws->cs_create_fence(sctx->b.rings.gfx.cs);
 	}
 
 	/* Disable render condition. */
-	if (rctx->current_render_cond) {
-		render_cond = rctx->current_render_cond;
-		render_cond_cond = rctx->current_render_cond_cond;
-		render_cond_mode = rctx->current_render_cond_mode;
+	if (sctx->current_render_cond) {
+		render_cond = sctx->current_render_cond;
+		render_cond_cond = sctx->current_render_cond_cond;
+		render_cond_mode = sctx->current_render_cond_mode;
 		ctx->render_condition(ctx, NULL, FALSE, 0);
 	}
 
-	si_context_flush(rctx, flags);
+	si_context_flush(sctx, flags);
 
 	/* Re-enable render condition. */
 	if (render_cond) {
@@ -97,127 +97,127 @@ static void si_flush_from_winsys(void *ctx, unsigned flags)
 
 static void si_destroy_context(struct pipe_context *context)
 {
-	struct si_context *rctx = (struct si_context *)context;
+	struct si_context *sctx = (struct si_context *)context;
 
-	si_release_all_descriptors(rctx);
+	si_release_all_descriptors(sctx);
 
-	pipe_resource_reference(&rctx->null_const_buf.buffer, NULL);
-	r600_resource_reference(&rctx->border_color_table, NULL);
+	pipe_resource_reference(&sctx->null_const_buf.buffer, NULL);
+	r600_resource_reference(&sctx->border_color_table, NULL);
 
-	if (rctx->dummy_pixel_shader) {
-		rctx->b.b.delete_fs_state(&rctx->b.b, rctx->dummy_pixel_shader);
+	if (sctx->dummy_pixel_shader) {
+		sctx->b.b.delete_fs_state(&sctx->b.b, sctx->dummy_pixel_shader);
 	}
 	for (int i = 0; i < 8; i++) {
-		rctx->b.b.delete_depth_stencil_alpha_state(&rctx->b.b, rctx->custom_dsa_flush_depth_stencil[i]);
-		rctx->b.b.delete_depth_stencil_alpha_state(&rctx->b.b, rctx->custom_dsa_flush_depth[i]);
-		rctx->b.b.delete_depth_stencil_alpha_state(&rctx->b.b, rctx->custom_dsa_flush_stencil[i]);
+		sctx->b.b.delete_depth_stencil_alpha_state(&sctx->b.b, sctx->custom_dsa_flush_depth_stencil[i]);
+		sctx->b.b.delete_depth_stencil_alpha_state(&sctx->b.b, sctx->custom_dsa_flush_depth[i]);
+		sctx->b.b.delete_depth_stencil_alpha_state(&sctx->b.b, sctx->custom_dsa_flush_stencil[i]);
 	}
-	rctx->b.b.delete_depth_stencil_alpha_state(&rctx->b.b, rctx->custom_dsa_flush_inplace);
-	rctx->b.b.delete_blend_state(&rctx->b.b, rctx->custom_blend_resolve);
-	rctx->b.b.delete_blend_state(&rctx->b.b, rctx->custom_blend_decompress);
-	util_unreference_framebuffer_state(&rctx->framebuffer);
+	sctx->b.b.delete_depth_stencil_alpha_state(&sctx->b.b, sctx->custom_dsa_flush_inplace);
+	sctx->b.b.delete_blend_state(&sctx->b.b, sctx->custom_blend_resolve);
+	sctx->b.b.delete_blend_state(&sctx->b.b, sctx->custom_blend_decompress);
+	util_unreference_framebuffer_state(&sctx->framebuffer);
 
-	util_blitter_destroy(rctx->blitter);
+	util_blitter_destroy(sctx->blitter);
 
-	r600_common_context_cleanup(&rctx->b);
-	FREE(rctx);
+	r600_common_context_cleanup(&sctx->b);
+	FREE(sctx);
 }
 
 static struct pipe_context *si_create_context(struct pipe_screen *screen, void *priv)
 {
-	struct si_context *rctx = CALLOC_STRUCT(si_context);
+	struct si_context *sctx = CALLOC_STRUCT(si_context);
 	struct si_screen* rscreen = (struct si_screen *)screen;
 	int shader, i;
 
-	if (rctx == NULL)
+	if (sctx == NULL)
 		return NULL;
 
-	if (!r600_common_context_init(&rctx->b, &rscreen->b))
+	if (!r600_common_context_init(&sctx->b, &rscreen->b))
 		goto fail;
 
-	rctx->b.b.screen = screen;
-	rctx->b.b.priv = priv;
-	rctx->b.b.destroy = si_destroy_context;
-	rctx->b.b.flush = si_flush_from_st;
+	sctx->b.b.screen = screen;
+	sctx->b.b.priv = priv;
+	sctx->b.b.destroy = si_destroy_context;
+	sctx->b.b.flush = si_flush_from_st;
 
 	/* Easy accessing of screen/winsys. */
-	rctx->screen = rscreen;
+	sctx->screen = rscreen;
 
-	si_init_blit_functions(rctx);
-	si_init_query_functions(rctx);
-	si_init_context_resource_functions(rctx);
-	si_init_compute_functions(rctx);
+	si_init_blit_functions(sctx);
+	si_init_query_functions(sctx);
+	si_init_context_resource_functions(sctx);
+	si_init_compute_functions(sctx);
 
 	if (rscreen->b.info.has_uvd) {
-		rctx->b.b.create_video_codec = si_uvd_create_decoder;
-		rctx->b.b.create_video_buffer = si_video_buffer_create;
+		sctx->b.b.create_video_codec = si_uvd_create_decoder;
+		sctx->b.b.create_video_buffer = si_video_buffer_create;
 	} else {
-		rctx->b.b.create_video_codec = vl_create_decoder;
-		rctx->b.b.create_video_buffer = vl_video_buffer_create;
+		sctx->b.b.create_video_codec = vl_create_decoder;
+		sctx->b.b.create_video_buffer = vl_video_buffer_create;
 	}
 
-	rctx->b.rings.gfx.cs = rctx->b.ws->cs_create(rctx->b.ws, RING_GFX, NULL);
-	rctx->b.rings.gfx.flush = si_flush_from_winsys;
+	sctx->b.rings.gfx.cs = sctx->b.ws->cs_create(sctx->b.ws, RING_GFX, NULL);
+	sctx->b.rings.gfx.flush = si_flush_from_winsys;
 
-	si_init_all_descriptors(rctx);
+	si_init_all_descriptors(sctx);
 
 	/* Initialize cache_flush. */
-	rctx->cache_flush = si_atom_cache_flush;
-	rctx->atoms.cache_flush = &rctx->cache_flush;
+	sctx->cache_flush = si_atom_cache_flush;
+	sctx->atoms.cache_flush = &sctx->cache_flush;
 
-	rctx->atoms.streamout_begin = &rctx->b.streamout.begin_atom;
+	sctx->atoms.streamout_begin = &sctx->b.streamout.begin_atom;
 
-	switch (rctx->b.chip_class) {
+	switch (sctx->b.chip_class) {
 	case SI:
 	case CIK:
-		si_init_state_functions(rctx);
-		LIST_INITHEAD(&rctx->active_nontimer_query_list);
-		rctx->max_db = 8;
-		si_init_config(rctx);
+		si_init_state_functions(sctx);
+		LIST_INITHEAD(&sctx->active_nontimer_query_list);
+		sctx->max_db = 8;
+		si_init_config(sctx);
 		break;
 	default:
-		R600_ERR("Unsupported chip class %d.\n", rctx->b.chip_class);
+		R600_ERR("Unsupported chip class %d.\n", sctx->b.chip_class);
 		goto fail;
 	}
 
-	rctx->b.ws->cs_set_flush_callback(rctx->b.rings.gfx.cs, si_flush_from_winsys, rctx);
+	sctx->b.ws->cs_set_flush_callback(sctx->b.rings.gfx.cs, si_flush_from_winsys, sctx);
 
-	rctx->blitter = util_blitter_create(&rctx->b.b);
-	if (rctx->blitter == NULL)
+	sctx->blitter = util_blitter_create(&sctx->b.b);
+	if (sctx->blitter == NULL)
 		goto fail;
 
-	rctx->dummy_pixel_shader =
-		util_make_fragment_cloneinput_shader(&rctx->b.b, 0,
+	sctx->dummy_pixel_shader =
+		util_make_fragment_cloneinput_shader(&sctx->b.b, 0,
 						     TGSI_SEMANTIC_GENERIC,
 						     TGSI_INTERPOLATE_CONSTANT);
-	rctx->b.b.bind_fs_state(&rctx->b.b, rctx->dummy_pixel_shader);
+	sctx->b.b.bind_fs_state(&sctx->b.b, sctx->dummy_pixel_shader);
 
 	/* these must be last */
-	si_begin_new_cs(rctx);
-	si_get_backend_mask(rctx);
+	si_begin_new_cs(sctx);
+	si_get_backend_mask(sctx);
 
 	/* CIK cannot unbind a constant buffer (S_BUFFER_LOAD is buggy
 	 * with a NULL buffer). We need to use a dummy buffer instead. */
-	if (rctx->b.chip_class == CIK) {
-		rctx->null_const_buf.buffer = pipe_buffer_create(screen, PIPE_BIND_CONSTANT_BUFFER,
+	if (sctx->b.chip_class == CIK) {
+		sctx->null_const_buf.buffer = pipe_buffer_create(screen, PIPE_BIND_CONSTANT_BUFFER,
 								 PIPE_USAGE_STATIC, 16);
-		rctx->null_const_buf.buffer_size = rctx->null_const_buf.buffer->width0;
+		sctx->null_const_buf.buffer_size = sctx->null_const_buf.buffer->width0;
 
 		for (shader = 0; shader < SI_NUM_SHADERS; shader++) {
 			for (i = 0; i < NUM_CONST_BUFFERS; i++) {
-				rctx->b.b.set_constant_buffer(&rctx->b.b, shader, i,
-							      &rctx->null_const_buf);
+				sctx->b.b.set_constant_buffer(&sctx->b.b, shader, i,
+							      &sctx->null_const_buf);
 			}
 		}
 
 		/* Clear the NULL constant buffer, because loads should return zeros. */
-		rctx->b.clear_buffer(&rctx->b.b, rctx->null_const_buf.buffer, 0,
-				     rctx->null_const_buf.buffer->width0, 0);
+		sctx->b.clear_buffer(&sctx->b.b, sctx->null_const_buf.buffer, 0,
+				     sctx->null_const_buf.buffer->width0, 0);
 	}
 
-	return &rctx->b.b;
+	return &sctx->b.b;
 fail:
-	si_destroy_context(&rctx->b.b);
+	si_destroy_context(&sctx->b.b);
 	return NULL;
 }
 

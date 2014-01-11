@@ -25,21 +25,21 @@
 
 static struct pipe_query *si_create_query(struct pipe_context *ctx, unsigned query_type)
 {
-	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_context *sctx = (struct si_context *)ctx;
 
-	return (struct pipe_query*)si_context_query_create(rctx, query_type);
+	return (struct pipe_query*)si_context_query_create(sctx, query_type);
 }
 
 static void si_destroy_query(struct pipe_context *ctx, struct pipe_query *query)
 {
-	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_context *sctx = (struct si_context *)ctx;
 
-	si_context_query_destroy(rctx, (struct si_query *)query);
+	si_context_query_destroy(sctx, (struct si_query *)query);
 }
 
 static void si_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 {
-	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_query *rquery = (struct si_query *)query;
 
 	if (!si_query_needs_begin(rquery->type)) {
@@ -49,23 +49,23 @@ static void si_begin_query(struct pipe_context *ctx, struct pipe_query *query)
 
 	memset(&rquery->result, 0, sizeof(rquery->result));
 	rquery->results_start = rquery->results_end;
-	si_query_begin(rctx, (struct si_query *)query);
+	si_query_begin(sctx, (struct si_query *)query);
 
 	if (!si_is_timer_query(rquery->type)) {
-		LIST_ADDTAIL(&rquery->list, &rctx->active_nontimer_query_list);
+		LIST_ADDTAIL(&rquery->list, &sctx->active_nontimer_query_list);
 	}
 }
 
 static void si_end_query(struct pipe_context *ctx, struct pipe_query *query)
 {
-	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_query *rquery = (struct si_query *)query;
 
 	if (!si_query_needs_begin(rquery->type)) {
 		memset(&rquery->result, 0, sizeof(rquery->result));
 	}
 
-	si_query_end(rctx, rquery);
+	si_query_end(sctx, rquery);
 
 	if (si_query_needs_begin(rquery->type) && !si_is_timer_query(rquery->type)) {
 		LIST_DELINIT(&rquery->list);
@@ -76,10 +76,10 @@ static boolean si_get_query_result(struct pipe_context *ctx,
 				   struct pipe_query *query,
 				   boolean wait, union pipe_query_result *vresult)
 {
-	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_query *rquery = (struct si_query *)query;
 
-	return si_context_query_result(rctx, rquery, wait, vresult);
+	return si_context_query_result(sctx, rquery, wait, vresult);
 }
 
 static void si_render_condition(struct pipe_context *ctx,
@@ -87,26 +87,26 @@ static void si_render_condition(struct pipe_context *ctx,
 				boolean condition,
 				uint mode)
 {
-	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_query *rquery = (struct si_query *)query;
 	int wait_flag = 0;
 
 	/* If we already have nonzero result, render unconditionally */
 	if (query != NULL && rquery->result.u64 != 0) {
-		if (rctx->current_render_cond) {
+		if (sctx->current_render_cond) {
 			si_render_condition(ctx, NULL, FALSE, 0);
 		}
 		return;
 	}
 
-	rctx->current_render_cond = query;
-	rctx->current_render_cond_cond = condition;
-	rctx->current_render_cond_mode = mode;
+	sctx->current_render_cond = query;
+	sctx->current_render_cond_cond = condition;
+	sctx->current_render_cond_mode = mode;
 
 	if (query == NULL) {
-		if (rctx->predicate_drawing) {
-			rctx->predicate_drawing = false;
-			si_query_predication(rctx, NULL, PREDICATION_OP_CLEAR, 1);
+		if (sctx->predicate_drawing) {
+			sctx->predicate_drawing = false;
+			si_query_predication(sctx, NULL, PREDICATION_OP_CLEAR, 1);
 		}
 		return;
 	}
@@ -116,32 +116,32 @@ static void si_render_condition(struct pipe_context *ctx,
 		wait_flag = 1;
 	}
 
-	rctx->predicate_drawing = true;
+	sctx->predicate_drawing = true;
 
 	switch (rquery->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
-		si_query_predication(rctx, rquery, PREDICATION_OP_ZPASS, wait_flag);
+		si_query_predication(sctx, rquery, PREDICATION_OP_ZPASS, wait_flag);
 		break;
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-		si_query_predication(rctx, rquery, PREDICATION_OP_PRIMCOUNT, wait_flag);
+		si_query_predication(sctx, rquery, PREDICATION_OP_PRIMCOUNT, wait_flag);
 		break;
 	default:
 		assert(0);
 	}
 }
 
-void si_init_query_functions(struct si_context *rctx)
+void si_init_query_functions(struct si_context *sctx)
 {
-	rctx->b.b.create_query = si_create_query;
-	rctx->b.b.destroy_query = si_destroy_query;
-	rctx->b.b.begin_query = si_begin_query;
-	rctx->b.b.end_query = si_end_query;
-	rctx->b.b.get_query_result = si_get_query_result;
+	sctx->b.b.create_query = si_create_query;
+	sctx->b.b.destroy_query = si_destroy_query;
+	sctx->b.b.begin_query = si_begin_query;
+	sctx->b.b.end_query = si_end_query;
+	sctx->b.b.get_query_result = si_get_query_result;
 
-	if (rctx->screen->b.info.r600_num_backends > 0)
-	    rctx->b.b.render_condition = si_render_condition;
+	if (sctx->screen->b.info.r600_num_backends > 0)
+	    sctx->b.b.render_condition = si_render_condition;
 }

@@ -35,14 +35,14 @@
 #include "si.h"
 #include "si_pipe.h"
 
-void si_upload_index_buffer(struct si_context *rctx,
+void si_upload_index_buffer(struct si_context *sctx,
 			    struct pipe_index_buffer *ib, unsigned count)
 {
-	u_upload_data(rctx->b.uploader, 0, count * ib->index_size,
+	u_upload_data(sctx->b.uploader, 0, count * ib->index_size,
 		      ib->user_buffer, &ib->offset, &ib->buffer);
 }
 
-void si_upload_const_buffer(struct si_context *rctx, struct r600_resource **rbuffer,
+void si_upload_const_buffer(struct si_context *sctx, struct r600_resource **rbuffer,
 			const uint8_t *ptr, unsigned size,
 			uint32_t *const_offset)
 {
@@ -59,12 +59,12 @@ void si_upload_const_buffer(struct si_context *rctx, struct r600_resource **rbuf
 			tmpPtr[i] = util_bswap32(((uint32_t *)ptr)[i]);
 		}
 
-		u_upload_data(rctx->b.uploader, 0, size, tmpPtr, const_offset,
+		u_upload_data(sctx->b.uploader, 0, size, tmpPtr, const_offset,
 				(struct pipe_resource**)rbuffer);
 
 		free(tmpPtr);
 	} else {
-		u_upload_data(rctx->b.uploader, 0, size, ptr, const_offset,
+		u_upload_data(sctx->b.uploader, 0, size, ptr, const_offset,
 					(struct pipe_resource**)rbuffer);
 	}
 }

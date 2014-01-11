@@ -40,14 +40,14 @@
 
 static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *shader)
 {
-	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
 	unsigned num_sgprs, num_user_sgprs;
 	unsigned nparams, i, vgpr_comp_cnt;
 	uint64_t va;
 
-	si_pm4_delete_state(rctx, vs, shader->pm4);
-	pm4 = shader->pm4 = si_pm4_alloc_state(rctx);
+	si_pm4_delete_state(sctx, vs, shader->pm4);
+	pm4 = shader->pm4 = si_pm4_alloc_state(sctx);
 
 	if (pm4 == NULL)
 		return;
@@ -111,27 +111,27 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 		       S_00B12C_SO_BASE3_EN(!!shader->selector->so.stride[3]) |
 		       S_00B12C_SO_EN(!!shader->selector->so.num_outputs));
 
-	si_pm4_bind_state(rctx, vs, shader->pm4);
-	rctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
+	si_pm4_bind_state(sctx, vs, shader->pm4);
+	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *shader)
 {
-	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
 	unsigned i, exports_ps, spi_ps_in_control, db_shader_control;
 	unsigned num_sgprs, num_user_sgprs;
 	unsigned spi_baryc_cntl = 0, spi_ps_input_ena, spi_shader_z_format;
 	uint64_t va;
 
-	si_pm4_delete_state(rctx, ps, shader->pm4);
-	pm4 = shader->pm4 = si_pm4_alloc_state(rctx);
+	si_pm4_delete_state(sctx, ps, shader->pm4);
+	pm4 = shader->pm4 = si_pm4_alloc_state(sctx);
 
 	if (pm4 == NULL)
 		return;
 
 	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z) |
-			    S_02880C_ALPHA_TO_MASK_DISABLE(rctx->fb_cb0_is_integer);
+			    S_02880C_ALPHA_TO_MASK_DISABLE(sctx->fb_cb0_is_integer);
 
 	for (i = 0; i < shader->shader.ninput; i++) {
 		switch (shader->shader.input[i].name) {
@@ -225,10 +225,10 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	si_pm4_set_reg(pm4, R_02880C_DB_SHADER_CONTROL, db_shader_control);
 
-	shader->cb0_is_integer = rctx->fb_cb0_is_integer;
-	shader->sprite_coord_enable = rctx->sprite_coord_enable;
-	si_pm4_bind_state(rctx, ps, shader->pm4);
-	rctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
+	shader->cb0_is_integer = sctx->fb_cb0_is_integer;
+	shader->sprite_coord_enable = sctx->sprite_coord_enable;
+	si_pm4_bind_state(sctx, ps, shader->pm4);
+	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 /*
@@ -283,12 +283,12 @@ static unsigned si_conv_prim_to_gs_out(unsigned mode)
 	return prim_conv[mode];
 }
 
-static bool si_update_draw_info_state(struct si_context *rctx,
+static bool si_update_draw_info_state(struct si_context *sctx,
 				      const struct pipe_draw_info *info,
 				      const struct pipe_index_buffer *ib)
 {
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
-	struct si_shader *vs = &rctx->vs_shader->current->shader;
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
+	struct si_shader *vs = &sctx->vs_shader->current->shader;
 	unsigned prim = si_conv_pipe_prim(info->mode);
 	unsigned gs_out_prim = si_conv_prim_to_gs_out(info->mode);
 	unsigned ls_mask = 0;
@@ -301,8 +301,8 @@ static bool si_update_draw_info_state(struct si_context *rctx,
 		return false;
 	}
 
-	if (rctx->b.chip_class >= CIK) {
-		struct si_state_rasterizer *rs = rctx->queued.named.rasterizer;
+	if (sctx->b.chip_class >= CIK) {
+		struct si_state_rasterizer *rs = sctx->queued.named.rasterizer;
 		bool wd_switch_on_eop = prim == V_008958_DI_PT_POLYGON ||
 					prim == V_008958_DI_PT_LINELOOP ||
 					prim == V_008958_DI_PT_TRIFAN ||
@@ -339,13 +339,13 @@ static bool si_update_draw_info_state(struct si_context *rctx,
                 ls_mask = 2;
 	si_pm4_set_reg(pm4, R_028A0C_PA_SC_LINE_STIPPLE,
 		       S_028A0C_AUTO_RESET_CNTL(ls_mask) |
-		       rctx->pa_sc_line_stipple);
+		       sctx->pa_sc_line_stipple);
 
         if (info->mode == PIPE_PRIM_QUADS || info->mode == PIPE_PRIM_QUAD_STRIP || info->mode == PIPE_PRIM_POLYGON) {
 		si_pm4_set_reg(pm4, R_028814_PA_SU_SC_MODE_CNTL,
-			       S_028814_PROVOKING_VTX_LAST(1) | rctx->pa_su_sc_mode_cntl);
+			       S_028814_PROVOKING_VTX_LAST(1) | sctx->pa_su_sc_mode_cntl);
         } else {
-		si_pm4_set_reg(pm4, R_028814_PA_SU_SC_MODE_CNTL, rctx->pa_su_sc_mode_cntl);
+		si_pm4_set_reg(pm4, R_028814_PA_SU_SC_MODE_CNTL, sctx->pa_su_sc_mode_cntl);
         }
 	si_pm4_set_reg(pm4, R_02881C_PA_CL_VS_OUT_CNTL,
 		       S_02881C_USE_VTX_POINT_SIZE(vs->vs_out_point_size) |
@@ -354,22 +354,22 @@ static bool si_update_draw_info_state(struct si_context *rctx,
 		       S_02881C_VS_OUT_CCDIST0_VEC_ENA((vs->clip_dist_write & 0x0F) != 0) |
 		       S_02881C_VS_OUT_CCDIST1_VEC_ENA((vs->clip_dist_write & 0xF0) != 0) |
 		       S_02881C_VS_OUT_MISC_VEC_ENA(vs->vs_out_misc_write) |
-		       (rctx->queued.named.rasterizer->clip_plane_enable &
+		       (sctx->queued.named.rasterizer->clip_plane_enable &
 			vs->clip_dist_write));
 	si_pm4_set_reg(pm4, R_028810_PA_CL_CLIP_CNTL,
-		       rctx->queued.named.rasterizer->pa_cl_clip_cntl |
+		       sctx->queued.named.rasterizer->pa_cl_clip_cntl |
 		       (vs->clip_dist_write ? 0 :
-			rctx->queued.named.rasterizer->clip_plane_enable & 0x3F));
+			sctx->queued.named.rasterizer->clip_plane_enable & 0x3F));
 
-	si_pm4_set_state(rctx, draw_info, pm4);
+	si_pm4_set_state(sctx, draw_info, pm4);
 	return true;
 }
 
-static void si_update_spi_map(struct si_context *rctx)
+static void si_update_spi_map(struct si_context *sctx)
 {
-	struct si_shader *ps = &rctx->ps_shader->current->shader;
-	struct si_shader *vs = &rctx->vs_shader->current->shader;
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
+	struct si_shader *ps = &sctx->ps_shader->current->shader;
+	struct si_shader *vs = &sctx->vs_shader->current->shader;
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
 	unsigned i, j, tmp;
 
 	for (i = 0; i < ps->ninput; i++) {
@@ -385,12 +385,12 @@ bcolor:
 
 		if (ps->input[i].interpolate == TGSI_INTERPOLATE_CONSTANT ||
 		    (ps->input[i].interpolate == TGSI_INTERPOLATE_COLOR &&
-		     rctx->ps_shader->current->key.ps.flatshade)) {
+		     sctx->ps_shader->current->key.ps.flatshade)) {
 			tmp |= S_028644_FLAT_SHADE(1);
 		}
 
 		if (name == TGSI_SEMANTIC_GENERIC &&
-		    rctx->sprite_coord_enable & (1 << ps->input[i].sid)) {
+		    sctx->sprite_coord_enable & (1 << ps->input[i].sid)) {
 			tmp |= S_028644_PT_SPRITE_TEX(1);
 		}
 
@@ -412,94 +412,94 @@ bcolor:
 			       tmp);
 
 		if (name == TGSI_SEMANTIC_COLOR &&
-		    rctx->ps_shader->current->key.ps.color_two_side) {
+		    sctx->ps_shader->current->key.ps.color_two_side) {
 			name = TGSI_SEMANTIC_BCOLOR;
 			param_offset++;
 			goto bcolor;
 		}
 	}
 
-	si_pm4_set_state(rctx, spi, pm4);
+	si_pm4_set_state(sctx, spi, pm4);
 }
 
-static void si_update_derived_state(struct si_context *rctx)
+static void si_update_derived_state(struct si_context *sctx)
 {
-	struct pipe_context * ctx = (struct pipe_context*)rctx;
+	struct pipe_context * ctx = (struct pipe_context*)sctx;
 	unsigned vs_dirty = 0, ps_dirty = 0;
 
-	if (!rctx->blitter->running) {
+	if (!sctx->blitter->running) {
 		/* Flush depth textures which need to be flushed. */
 		for (int i = 0; i < SI_NUM_SHADERS; i++) {
-			if (rctx->samplers[i].depth_texture_mask) {
-				si_flush_depth_textures(rctx, &rctx->samplers[i]);
+			if (sctx->samplers[i].depth_texture_mask) {
+				si_flush_depth_textures(sctx, &sctx->samplers[i]);
 			}
-			if (rctx->samplers[i].compressed_colortex_mask) {
-				si_decompress_color_textures(rctx, &rctx->samplers[i]);
+			if (sctx->samplers[i].compressed_colortex_mask) {
+				si_decompress_color_textures(sctx, &sctx->samplers[i]);
 			}
 		}
 	}
 
-	si_shader_select(ctx, rctx->vs_shader, &vs_dirty);
+	si_shader_select(ctx, sctx->vs_shader, &vs_dirty);
 
-	if (!rctx->vs_shader->current->pm4) {
-		si_pipe_shader_vs(ctx, rctx->vs_shader->current);
+	if (!sctx->vs_shader->current->pm4) {
+		si_pipe_shader_vs(ctx, sctx->vs_shader->current);
 		vs_dirty = 0;
 	}
 
 	if (vs_dirty) {
-		si_pm4_bind_state(rctx, vs, rctx->vs_shader->current->pm4);
+		si_pm4_bind_state(sctx, vs, sctx->vs_shader->current->pm4);
 	}
 
 
-	si_shader_select(ctx, rctx->ps_shader, &ps_dirty);
+	si_shader_select(ctx, sctx->ps_shader, &ps_dirty);
 
-	if (!rctx->ps_shader->current->pm4) {
-		si_pipe_shader_ps(ctx, rctx->ps_shader->current);
+	if (!sctx->ps_shader->current->pm4) {
+		si_pipe_shader_ps(ctx, sctx->ps_shader->current);
 		ps_dirty = 0;
 	}
-	if (rctx->ps_shader->current->cb0_is_integer != rctx->fb_cb0_is_integer) {
-		si_pipe_shader_ps(ctx, rctx->ps_shader->current);
+	if (sctx->ps_shader->current->cb0_is_integer != sctx->fb_cb0_is_integer) {
+		si_pipe_shader_ps(ctx, sctx->ps_shader->current);
 		ps_dirty = 0;
 	}
 
 	if (ps_dirty) {
-		si_pm4_bind_state(rctx, ps, rctx->ps_shader->current->pm4);
+		si_pm4_bind_state(sctx, ps, sctx->ps_shader->current->pm4);
 	}
 
-	if (si_pm4_state_changed(rctx, ps) || si_pm4_state_changed(rctx, vs)) {
+	if (si_pm4_state_changed(sctx, ps) || si_pm4_state_changed(sctx, vs)) {
 		/* XXX: Emitting the PS state even when only the VS changed
 		 * fixes random failures with piglit glsl-max-varyings.
 		 * Not sure why...
 		 */
-		rctx->emitted.named.ps = NULL;
-		si_update_spi_map(rctx);
+		sctx->emitted.named.ps = NULL;
+		si_update_spi_map(sctx);
 	}
 }
 
-static void si_vertex_buffer_update(struct si_context *rctx)
+static void si_vertex_buffer_update(struct si_context *sctx)
 {
-	struct pipe_context *ctx = &rctx->b.b;
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
+	struct pipe_context *ctx = &sctx->b.b;
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
 	bool bound[PIPE_MAX_ATTRIBS] = {};
 	unsigned i, count;
 	uint64_t va;
 
-	rctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
+	sctx->b.flags |= R600_CONTEXT_INV_TEX_CACHE;
 
-	count = rctx->vertex_elements->count;
+	count = sctx->vertex_elements->count;
 	assert(count <= 256 / 4);
 
 	si_pm4_sh_data_begin(pm4);
 	for (i = 0 ; i < count; i++) {
-		struct pipe_vertex_element *ve = &rctx->vertex_elements->elements[i];
+		struct pipe_vertex_element *ve = &sctx->vertex_elements->elements[i];
 		struct pipe_vertex_buffer *vb;
 		struct r600_resource *rbuffer;
 		unsigned offset;
 
-		if (ve->vertex_buffer_index >= rctx->nr_vertex_buffers)
+		if (ve->vertex_buffer_index >= sctx->nr_vertex_buffers)
 			continue;
 
-		vb = &rctx->vertex_buffer[ve->vertex_buffer_index];
+		vb = &sctx->vertex_buffer[ve->vertex_buffer_index];
 		rbuffer = (struct r600_resource*)vb->buffer;
 		if (rbuffer == NULL)
 			continue;
@@ -523,7 +523,7 @@ static void si_vertex_buffer_update(struct si_context *rctx)
 					   vb->stride + 1);
 		else
 			si_pm4_sh_data_add(pm4, vb->buffer->width0 - offset);
-		si_pm4_sh_data_add(pm4, rctx->vertex_elements->rsrc_word3[i]);
+		si_pm4_sh_data_add(pm4, sctx->vertex_elements->rsrc_word3[i]);
 
 		if (!bound[ve->vertex_buffer_index]) {
 			si_pm4_add_bo(pm4, rbuffer, RADEON_USAGE_READ);
@@ -531,39 +531,39 @@ static void si_vertex_buffer_update(struct si_context *rctx)
 		}
 	}
 	si_pm4_sh_data_end(pm4, R_00B130_SPI_SHADER_USER_DATA_VS_0, SI_SGPR_VERTEX_BUFFER);
-	si_pm4_set_state(rctx, vertex_buffers, pm4);
+	si_pm4_set_state(sctx, vertex_buffers, pm4);
 }
 
-static void si_state_draw(struct si_context *rctx,
+static void si_state_draw(struct si_context *sctx,
 			  const struct pipe_draw_info *info,
 			  const struct pipe_index_buffer *ib)
 {
-	struct si_pm4_state *pm4 = si_pm4_alloc_state(rctx);
+	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
 
 	if (pm4 == NULL)
 		return;
 
 	/* queries need some special values
 	 * (this is non-zero if any query is active) */
-	if (rctx->num_cs_dw_nontimer_queries_suspend) {
-		if (rctx->b.chip_class >= CIK) {
+	if (sctx->num_cs_dw_nontimer_queries_suspend) {
+		if (sctx->b.chip_class >= CIK) {
 			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,
 				       S_028004_PERFECT_ZPASS_COUNTS(1) |
-				       S_028004_SAMPLE_RATE(rctx->fb_log_samples) |
+				       S_028004_SAMPLE_RATE(sctx->fb_log_samples) |
 				       S_028004_ZPASS_ENABLE(1) |
 				       S_028004_SLICE_EVEN_ENABLE(1) |
 				       S_028004_SLICE_ODD_ENABLE(1));
 		} else {
 			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,
 				       S_028004_PERFECT_ZPASS_COUNTS(1) |
-				       S_028004_SAMPLE_RATE(rctx->fb_log_samples));
+				       S_028004_SAMPLE_RATE(sctx->fb_log_samples));
 		}
 	}
 
 	if (info->count_from_stream_output) {
 		struct r600_so_target *t =
 			(struct r600_so_target*)info->count_from_stream_output;
-		uint64_t va = r600_resource_va(&rctx->screen->b.b,
+		uint64_t va = r600_resource_va(&sctx->screen->b.b,
 					       &t->buf_filled_size->b.b);
 		va += t->buf_filled_size_offset;
 
@@ -592,52 +592,52 @@ static void si_state_draw(struct si_context *rctx,
 		si_pm4_cmd_add(pm4, V_028A7C_VGT_INDEX_16 | (SI_BIG_ENDIAN ?
 				V_028A7C_VGT_DMA_SWAP_16_BIT : 0));
 	}
-	si_pm4_cmd_end(pm4, rctx->predicate_drawing);
+	si_pm4_cmd_end(pm4, sctx->predicate_drawing);
 
 	si_pm4_cmd_begin(pm4, PKT3_NUM_INSTANCES);
 	si_pm4_cmd_add(pm4, info->instance_count);
-	si_pm4_cmd_end(pm4, rctx->predicate_drawing);
+	si_pm4_cmd_end(pm4, sctx->predicate_drawing);
 
 	if (info->indexed) {
 		uint32_t max_size = (ib->buffer->width0 - ib->offset) /
-				 rctx->index_buffer.index_size;
+				 sctx->index_buffer.index_size;
 		uint64_t va;
-		va = r600_resource_va(&rctx->screen->b.b, ib->buffer);
+		va = r600_resource_va(&sctx->screen->b.b, ib->buffer);
 		va += ib->offset;
 
 		si_pm4_add_bo(pm4, (struct r600_resource *)ib->buffer, RADEON_USAGE_READ);
 		si_cmd_draw_index_2(pm4, max_size, va, info->count,
 				    V_0287F0_DI_SRC_SEL_DMA,
-				    rctx->predicate_drawing);
+				    sctx->predicate_drawing);
 	} else {
 		uint32_t initiator = V_0287F0_DI_SRC_SEL_AUTO_INDEX;
 		initiator |= S_0287F0_USE_OPAQUE(!!info->count_from_stream_output);
-		si_cmd_draw_index_auto(pm4, info->count, initiator, rctx->predicate_drawing);
+		si_cmd_draw_index_auto(pm4, info->count, initiator, sctx->predicate_drawing);
 	}
 
-	si_pm4_set_state(rctx, draw, pm4);
+	si_pm4_set_state(sctx, draw, pm4);
 }
 
-void si_emit_cache_flush(struct r600_common_context *rctx, struct r600_atom *atom)
+void si_emit_cache_flush(struct r600_common_context *sctx, struct r600_atom *atom)
 {
-	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
+	struct radeon_winsys_cs *cs = sctx->rings.gfx.cs;
 	uint32_t cp_coher_cntl = 0;
 
 	/* XXX SI flushes both ICACHE and KCACHE if either flag is set.
 	 * XXX CIK shouldn't have this issue. Test CIK before separating the flags
 	 * XXX to ensure there is no regression. Also find out if there is another
 	 * XXX way to flush either ICACHE or KCACHE but not both for SI. */
-	if (rctx->flags & (R600_CONTEXT_INV_SHADER_CACHE |
+	if (sctx->flags & (R600_CONTEXT_INV_SHADER_CACHE |
 			   R600_CONTEXT_INV_CONST_CACHE)) {
 		cp_coher_cntl |= S_0085F0_SH_ICACHE_ACTION_ENA(1) |
 				 S_0085F0_SH_KCACHE_ACTION_ENA(1);
 	}
-	if (rctx->flags & (R600_CONTEXT_INV_TEX_CACHE |
+	if (sctx->flags & (R600_CONTEXT_INV_TEX_CACHE |
 			   R600_CONTEXT_STREAMOUT_FLUSH)) {
 		cp_coher_cntl |= S_0085F0_TC_ACTION_ENA(1) |
 				 S_0085F0_TCL1_ACTION_ENA(1);
 	}
-	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_CB) {
+	if (sctx->flags & R600_CONTEXT_FLUSH_AND_INV_CB) {
 		cp_coher_cntl |= S_0085F0_CB_ACTION_ENA(1) |
 				 S_0085F0_CB0_DEST_BASE_ENA(1) |
 			         S_0085F0_CB1_DEST_BASE_ENA(1) |
@@ -648,13 +648,13 @@ void si_emit_cache_flush(struct r600_common_context *rctx, struct r600_atom *ato
 			         S_0085F0_CB6_DEST_BASE_ENA(1) |
 			         S_0085F0_CB7_DEST_BASE_ENA(1);
 	}
-	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB) {
+	if (sctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB) {
 		cp_coher_cntl |= S_0085F0_DB_ACTION_ENA(1) |
 				 S_0085F0_DB_DEST_BASE_ENA(1);
 	}
 
 	if (cp_coher_cntl) {
-		if (rctx->chip_class >= CIK) {
+		if (sctx->chip_class >= CIK) {
 			radeon_emit(cs, PKT3(PKT3_ACQUIRE_MEM, 5, 0));
 			radeon_emit(cs, cp_coher_cntl);   /* CP_COHER_CNTL */
 			radeon_emit(cs, 0xffffffff);      /* CP_COHER_SIZE */
@@ -671,104 +671,104 @@ void si_emit_cache_flush(struct r600_common_context *rctx, struct r600_atom *ato
 		}
 	}
 
-	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_CB_META) {
+	if (sctx->flags & R600_CONTEXT_FLUSH_AND_INV_CB_META) {
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 		radeon_emit(cs, EVENT_TYPE(V_028A90_FLUSH_AND_INV_CB_META) | EVENT_INDEX(0));
 	}
-	if (rctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB_META) {
+	if (sctx->flags & R600_CONTEXT_FLUSH_AND_INV_DB_META) {
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 		radeon_emit(cs, EVENT_TYPE(V_028A90_FLUSH_AND_INV_DB_META) | EVENT_INDEX(0));
 	}
 
-	if (rctx->flags & R600_CONTEXT_WAIT_3D_IDLE) {
+	if (sctx->flags & R600_CONTEXT_WAIT_3D_IDLE) {
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 		radeon_emit(cs, EVENT_TYPE(V_028A90_PS_PARTIAL_FLUSH) | EVENT_INDEX(4));
-	} else if (rctx->flags & R600_CONTEXT_STREAMOUT_FLUSH) {
+	} else if (sctx->flags & R600_CONTEXT_STREAMOUT_FLUSH) {
 		/* Needed if streamout buffers are going to be used as a source. */
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 		radeon_emit(cs, EVENT_TYPE(V_028A90_VS_PARTIAL_FLUSH) | EVENT_INDEX(4));
 	}
 
-	rctx->flags = 0;
+	sctx->flags = 0;
 }
 
 const struct r600_atom si_atom_cache_flush = { si_emit_cache_flush, 13 }; /* number of CS dwords */
 
 void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
-	struct si_context *rctx = (struct si_context *)ctx;
+	struct si_context *sctx = (struct si_context *)ctx;
 	struct pipe_index_buffer ib = {};
 	uint32_t i;
 
 	if (!info->count && (info->indexed || !info->count_from_stream_output))
 		return;
 
-	if (!rctx->ps_shader || !rctx->vs_shader)
+	if (!sctx->ps_shader || !sctx->vs_shader)
 		return;
 
-	si_update_derived_state(rctx);
-	si_vertex_buffer_update(rctx);
+	si_update_derived_state(sctx);
+	si_vertex_buffer_update(sctx);
 
 	if (info->indexed) {
 		/* Initialize the index buffer struct. */
-		pipe_resource_reference(&ib.buffer, rctx->index_buffer.buffer);
-		ib.user_buffer = rctx->index_buffer.user_buffer;
-		ib.index_size = rctx->index_buffer.index_size;
-		ib.offset = rctx->index_buffer.offset + info->start * ib.index_size;
+		pipe_resource_reference(&ib.buffer, sctx->index_buffer.buffer);
+		ib.user_buffer = sctx->index_buffer.user_buffer;
+		ib.index_size = sctx->index_buffer.index_size;
+		ib.offset = sctx->index_buffer.offset + info->start * ib.index_size;
 
 		/* Translate or upload, if needed. */
-		si_translate_index_buffer(rctx, &ib, info->count);
+		si_translate_index_buffer(sctx, &ib, info->count);
 
 		if (ib.user_buffer && !ib.buffer) {
-			si_upload_index_buffer(rctx, &ib, info->count);
+			si_upload_index_buffer(sctx, &ib, info->count);
 		}
 	}
 
-	if (!si_update_draw_info_state(rctx, info, &ib))
+	if (!si_update_draw_info_state(sctx, info, &ib))
 		return;
 
-	si_state_draw(rctx, info, &ib);
+	si_state_draw(sctx, info, &ib);
 
-	rctx->pm4_dirty_cdwords += si_pm4_dirty_dw(rctx);
+	sctx->pm4_dirty_cdwords += si_pm4_dirty_dw(sctx);
 
 	/* Check flush flags. */
-	if (rctx->b.flags)
-		rctx->atoms.cache_flush->dirty = true;
+	if (sctx->b.flags)
+		sctx->atoms.cache_flush->dirty = true;
 
-	si_need_cs_space(rctx, 0, TRUE);
+	si_need_cs_space(sctx, 0, TRUE);
 
 	/* Emit states. */
-	for (i = 0; i < SI_NUM_ATOMS(rctx); i++) {
-		if (rctx->atoms.array[i]->dirty) {
-			rctx->atoms.array[i]->emit(&rctx->b, rctx->atoms.array[i]);
-			rctx->atoms.array[i]->dirty = false;
+	for (i = 0; i < SI_NUM_ATOMS(sctx); i++) {
+		if (sctx->atoms.array[i]->dirty) {
+			sctx->atoms.array[i]->emit(&sctx->b, sctx->atoms.array[i]);
+			sctx->atoms.array[i]->dirty = false;
 		}
 	}
 
-	si_pm4_emit_dirty(rctx);
-	rctx->pm4_dirty_cdwords = 0;
+	si_pm4_emit_dirty(sctx);
+	sctx->pm4_dirty_cdwords = 0;
 
 #if SI_TRACE_CS
-	if (rctx->screen->trace_bo) {
-		si_trace_emit(rctx);
+	if (sctx->screen->trace_bo) {
+		si_trace_emit(sctx);
 	}
 #endif
 
 	/* Set the depth buffer as dirty. */
-	if (rctx->framebuffer.zsbuf) {
-		struct pipe_surface *surf = rctx->framebuffer.zsbuf;
+	if (sctx->framebuffer.zsbuf) {
+		struct pipe_surface *surf = sctx->framebuffer.zsbuf;
 		struct r600_texture *rtex = (struct r600_texture *)surf->texture;
 
 		rtex->dirty_level_mask |= 1 << surf->u.tex.level;
 	}
-	if (rctx->fb_compressed_cb_mask) {
+	if (sctx->fb_compressed_cb_mask) {
 		struct pipe_surface *surf;
 		struct r600_texture *rtex;
-		unsigned mask = rctx->fb_compressed_cb_mask;
+		unsigned mask = sctx->fb_compressed_cb_mask;
 
 		do {
 			unsigned i = u_bit_scan(&mask);
-			surf = rctx->framebuffer.cbufs[i];
+			surf = sctx->framebuffer.cbufs[i];
 			rtex = (struct r600_texture*)surf->texture;
 
 			rtex->dirty_level_mask |= 1 << surf->u.tex.level;
