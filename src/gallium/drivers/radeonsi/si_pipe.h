@@ -41,13 +41,13 @@
 #include "si_state.h"
 
 #ifdef PIPE_ARCH_BIG_ENDIAN
-#define R600_BIG_ENDIAN 1
+#define SI_BIG_ENDIAN 1
 #else
-#define R600_BIG_ENDIAN 0
+#define SI_BIG_ENDIAN 0
 #endif
 
-#define R600_TRACE_CS 0
-#define R600_TRACE_CS_DWORDS		6
+#define SI_TRACE_CS 0
+#define SI_TRACE_CS_DWORDS		6
 
 #define SI_MAX_DRAW_CS_DWORDS 18
 
@@ -55,7 +55,7 @@ struct si_pipe_compute;
 
 struct si_screen {
 	struct r600_common_screen	b;
-#if R600_TRACE_CS
+#if SI_TRACE_CS
 	struct r600_resource		*trace_bo;
 	uint32_t			*trace_ptr;
 	unsigned			cs_count;
@@ -203,7 +203,7 @@ void si_translate_index_buffer(struct si_context *r600,
 			       struct pipe_index_buffer *ib,
 			       unsigned count);
 
-#if R600_TRACE_CS
+#if SI_TRACE_CS
 void si_trace_emit(struct si_context *rctx);
 #endif
 

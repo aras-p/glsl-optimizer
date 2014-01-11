@@ -597,7 +597,7 @@ static void si_destroy_screen(struct pipe_screen* pscreen)
 
 	r600_common_screen_cleanup(&rscreen->b);
 
-#if R600_TRACE_CS
+#if SI_TRACE_CS
 	if (rscreen->trace_bo) {
 		rscreen->ws->buffer_unmap(rscreen->trace_bo->cs_buf);
 		pipe_resource_reference((struct pipe_resource**)&rscreen->trace_bo, NULL);
@@ -656,7 +656,7 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	if (debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE))
 		rscreen->b.debug_flags |= DBG_FS | DBG_VS | DBG_GS | DBG_PS | DBG_CS;
 
-#if R600_TRACE_CS
+#if SI_TRACE_CS
 	rscreen->cs_count = 0;
 	if (rscreen->info.drm_minor >= 28) {
 		rscreen->trace_bo = (struct r600_resource*)pipe_buffer_create(&rscreen->screen,

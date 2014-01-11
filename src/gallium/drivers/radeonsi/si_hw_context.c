@@ -161,9 +161,9 @@ void si_need_cs_space(struct si_context *ctx, unsigned num_dw,
 	/* Count in framebuffer cache flushes at the end of CS. */
 	num_dw += ctx->atoms.cache_flush->num_dw;
 
-#if R600_TRACE_CS
+#if SI_TRACE_CS
 	if (ctx->screen->trace_bo) {
-		num_dw += R600_TRACE_CS_DWORDS;
+		num_dw += SI_TRACE_CS_DWORDS;
 	}
 #endif
 
@@ -208,7 +208,7 @@ void si_context_flush(struct si_context *ctx, unsigned flags)
 	/* force to keep tiling flags */
 	flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;
 
-#if R600_TRACE_CS
+#if SI_TRACE_CS
 	if (ctx->screen->trace_bo) {
 		struct si_screen *rscreen = ctx->screen;
 		unsigned i;
@@ -223,7 +223,7 @@ void si_context_flush(struct si_context *ctx, unsigned flags)
 	/* Flush the CS. */
 	ctx->b.ws->cs_flush(ctx->b.rings.gfx.cs, flags, 0);
 
-#if R600_TRACE_CS
+#if SI_TRACE_CS
 	if (ctx->screen->trace_bo) {
 		struct si_screen *rscreen = ctx->screen;
 		unsigned i;
@@ -695,7 +695,7 @@ void si_context_queries_resume(struct si_context *ctx)
 	}
 }
 
-#if R600_TRACE_CS
+#if SI_TRACE_CS
 void si_trace_emit(struct si_context *rctx)
 {
 	struct si_screen *rscreen = rctx->screen;

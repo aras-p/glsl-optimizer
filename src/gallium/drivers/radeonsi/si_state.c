@@ -948,7 +948,7 @@ static uint32_t si_translate_colorswap(enum pipe_format format)
 
 static uint32_t si_colorformat_endian_swap(uint32_t colorformat)
 {
-	if (R600_BIG_ENDIAN) {
+	if (SI_BIG_ENDIAN) {
 		switch(colorformat) {
 		/* 8-bit buffers. */
 		case V_028C70_COLOR_8:

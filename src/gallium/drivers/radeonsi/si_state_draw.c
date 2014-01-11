@@ -586,10 +586,10 @@ static void si_state_draw(struct si_context *rctx,
 	/* draw packet */
 	si_pm4_cmd_begin(pm4, PKT3_INDEX_TYPE);
 	if (ib->index_size == 4) {
-		si_pm4_cmd_add(pm4, V_028A7C_VGT_INDEX_32 | (R600_BIG_ENDIAN ?
+		si_pm4_cmd_add(pm4, V_028A7C_VGT_INDEX_32 | (SI_BIG_ENDIAN ?
 				V_028A7C_VGT_DMA_SWAP_32_BIT : 0));
 	} else {
-		si_pm4_cmd_add(pm4, V_028A7C_VGT_INDEX_16 | (R600_BIG_ENDIAN ?
+		si_pm4_cmd_add(pm4, V_028A7C_VGT_INDEX_16 | (SI_BIG_ENDIAN ?
 				V_028A7C_VGT_DMA_SWAP_16_BIT : 0));
 	}
 	si_pm4_cmd_end(pm4, rctx->predicate_drawing);
@@ -748,7 +748,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	si_pm4_emit_dirty(rctx);
 	rctx->pm4_dirty_cdwords = 0;
 
-#if R600_TRACE_CS
+#if SI_TRACE_CS
 	if (rctx->screen->trace_bo) {
 		r600_trace_emit(rctx);
 	}

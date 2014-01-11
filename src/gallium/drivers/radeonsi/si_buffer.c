@@ -46,7 +46,7 @@ void si_upload_const_buffer(struct si_context *rctx, struct r600_resource **rbuf
 			const uint8_t *ptr, unsigned size,
 			uint32_t *const_offset)
 {
-	if (R600_BIG_ENDIAN) {
+	if (SI_BIG_ENDIAN) {
 		uint32_t *tmpPtr;
 		unsigned i;
 

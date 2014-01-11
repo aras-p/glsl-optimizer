@@ -1948,7 +1948,7 @@ int si_compile_llvm(struct si_context *rctx, struct si_pipe_shader *shader,
 	}
 
 	ptr = (uint32_t*)rctx->b.ws->buffer_map(shader->bo->cs_buf, rctx->b.rings.gfx.cs, PIPE_TRANSFER_WRITE);
-	if (0 /*R600_BIG_ENDIAN*/) {
+	if (0 /*SI_BIG_ENDIAN*/) {
 		for (i = 0; i < binary.code_size / 4; ++i) {
 			ptr[i] = util_bswap32(*(uint32_t*)(binary.code + i*4));
 		}
