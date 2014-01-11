@@ -39,7 +39,6 @@
 
 #include "gbm.h"
 #include "gbmint.h"
-#include "common.h"
 #include "backend.h"
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))

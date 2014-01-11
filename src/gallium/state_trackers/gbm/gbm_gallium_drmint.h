@@ -32,7 +32,6 @@
 
 #include "gbmint.h"
 
-#include "common.h"
 #include "common_drm.h"
 
 struct gbm_gallium_drm_device {

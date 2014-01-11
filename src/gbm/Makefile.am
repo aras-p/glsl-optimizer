@@ -19,10 +19,10 @@ include_HEADERS = main/gbm.h
 
 libgbm_la_SOURCES = \
 	main/gbm.c \
-	main/backend.c \
-	main/common.c
+	main/backend.c
 libgbm_la_LDFLAGS = -version-info 1:0
 libgbm_la_LIBADD = \
+	$(top_builddir)/src/loader/libloader.la \
 	$(LIBUDEV_LIBS) \
 	$(LIBKMS_LIBS) \
 	$(DLOPEN_LIBS)
@@ -36,8 +36,7 @@ endif
 if HAVE_DRI
 noinst_LTLIBRARIES = libgbm_dri.la
 libgbm_dri_la_SOURCES = \
-	backends/dri/gbm_dri.c \
-	backends/dri/driver_name.c
+	backends/dri/gbm_dri.c
 
 libgbm_dri_la_CFLAGS = \
 	$(AM_CFLAGS) \

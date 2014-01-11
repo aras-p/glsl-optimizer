@@ -44,6 +44,7 @@
 #include "gbm_driint.h"
 
 #include "gbmint.h"
+#include "loader.h"
 
 /* For importing wl_buffer */
 #if HAVE_WAYLAND_PLATFORM
@@ -271,7 +272,7 @@ dri_screen_create(struct gbm_dri_device *dri)
    const __DRIextension **extensions;
    int ret = 0;
 
-   dri->base.driver_name = dri_fd_get_driver_name(dri->base.base.fd);
+   dri->base.driver_name = loader_get_driver_for_fd(dri->base.base.fd, 0);
    if (dri->base.driver_name == NULL)
       return -1;
 

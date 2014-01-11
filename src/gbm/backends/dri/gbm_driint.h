@@ -30,7 +30,6 @@
 
 #include "gbmint.h"
 
-#include "common.h"
 #include "common_drm.h"
 
 #include <GL/gl.h> /* dri_interface needs GL types */
@@ -110,8 +109,5 @@ gbm_dri_surface(struct gbm_surface *surface)
 {
    return (struct gbm_dri_surface *) surface;
 }
-
-char *
-dri_fd_get_driver_name(int fd);
 
 #endif
