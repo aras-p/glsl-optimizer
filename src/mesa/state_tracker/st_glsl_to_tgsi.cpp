@@ -2617,10 +2617,10 @@ glsl_to_tgsi_visitor::visit(ir_call *ir)
    int i;
 
    /* Process in parameters. */
-   exec_list_iterator sig_iter = sig->parameters.iterator();
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
-      ir_variable *param = (ir_variable *)sig_iter.get();
+   foreach_two_lists(formal_node, &sig->parameters,
+                     actual_node, &ir->actual_parameters) {
+      ir_rvalue *param_rval = (ir_rvalue *) actual_node;
+      ir_variable *param = (ir_variable *) formal_node;
 
       if (param->data.mode == ir_var_function_in ||
           param->data.mode == ir_var_function_inout) {
@@ -2643,20 +2643,17 @@ glsl_to_tgsi_visitor::visit(ir_call *ir)
             r.index++;
          }
       }
-
-      sig_iter.next();
    }
-   assert(!sig_iter.has_next());
 
    /* Emit call instruction */
    call_inst = emit(ir, TGSI_OPCODE_CAL);
    call_inst->function = entry;
 
    /* Process out parameters. */
-   sig_iter = sig->parameters.iterator();
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
-      ir_variable *param = (ir_variable *)sig_iter.get();
+   foreach_two_lists(formal_node, &sig->parameters,
+                     actual_node, &ir->actual_parameters) {
+      ir_rvalue *param_rval = (ir_rvalue *) actual_node;
+      ir_variable *param = (ir_variable *) formal_node;
 
       if (param->data.mode == ir_var_function_out ||
           param->data.mode == ir_var_function_inout) {
@@ -2679,10 +2676,7 @@ glsl_to_tgsi_visitor::visit(ir_call *ir)
             r.index++;
          }
       }
-
-      sig_iter.next();
    }
-   assert(!sig_iter.has_next());
 
    /* Process return value. */
    this->result = entry->return_reg;

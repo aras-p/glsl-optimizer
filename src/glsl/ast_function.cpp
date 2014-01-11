@@ -293,15 +293,10 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
     * call takes place.  Since we haven't emitted the call yet, we'll place
     * the post-call conversions in a temporary exec_list, and emit them later.
     */
-   exec_list_iterator actual_iter = actual_parameters->iterator();
-   exec_list_iterator formal_iter = sig->parameters.iterator();
-
-   while (actual_iter.has_next()) {
-      ir_rvalue *actual = (ir_rvalue *) actual_iter.get();
-      ir_variable *formal = (ir_variable *) formal_iter.get();
-
-      assert(actual != NULL);
-      assert(formal != NULL);
+   foreach_two_lists(formal_node, &sig->parameters,
+                     actual_node, actual_parameters) {
+      ir_rvalue *actual = (ir_rvalue *) actual_node;
+      ir_variable *formal = (ir_variable *) formal_node;
 
       if (formal->type->is_numeric() || formal->type->is_boolean()) {
 	 switch (formal->data.mode) {
@@ -323,9 +318,6 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
 	    break;
 	 }
       }
-
-      actual_iter.next();
-      formal_iter.next();
    }
 
    /* If the function call is a constant expression, don't generate any

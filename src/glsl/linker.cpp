@@ -109,10 +109,10 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_call *ir)
    {
-      exec_list_iterator sig_iter = ir->callee->parameters.iterator();
-      foreach_iter(exec_list_iterator, iter, *ir) {
-	 ir_rvalue *param_rval = (ir_rvalue *)iter.get();
-	 ir_variable *sig_param = (ir_variable *)sig_iter.get();
+      foreach_two_lists(formal_node, &ir->callee->parameters,
+                        actual_node, &ir->actual_parameters) {
+	 ir_rvalue *param_rval = (ir_rvalue *) actual_node;
+	 ir_variable *sig_param = (ir_variable *) formal_node;
 
 	 if (sig_param->data.mode == ir_var_function_out ||
 	     sig_param->data.mode == ir_var_function_inout) {
@@ -122,7 +122,6 @@ public:
 	       return visit_stop;
 	    }
 	 }
-	 sig_iter.next();
       }
 
       if (ir->return_deref != NULL) {

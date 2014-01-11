@@ -132,10 +132,10 @@ ir_visitor_status
 ir_constant_variable_visitor::visit_enter(ir_call *ir)
 {
    /* Mark any out parameters as assigned to */
-   exec_list_iterator sig_iter = ir->callee->parameters.iterator();
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_rvalue *param_rval = (ir_rvalue *)iter.get();
-      ir_variable *param = (ir_variable *)sig_iter.get();
+   foreach_two_lists(formal_node, &ir->callee->parameters,
+                     actual_node, &ir->actual_parameters) {
+      ir_rvalue *param_rval = (ir_rvalue *) actual_node;
+      ir_variable *param = (ir_variable *) formal_node;
 
       if (param->data.mode == ir_var_function_out ||
 	  param->data.mode == ir_var_function_inout) {
@@ -146,7 +146,6 @@ ir_constant_variable_visitor::visit_enter(ir_call *ir)
 	 entry = get_assignment_entry(var, &this->list);
 	 entry->assignment_count++;
       }
-      sig_iter.next();
    }
 
    /* Mark the return storage as having been assigned to */

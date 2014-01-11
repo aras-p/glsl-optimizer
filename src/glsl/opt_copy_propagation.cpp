@@ -185,15 +185,14 @@ ir_visitor_status
 ir_copy_propagation_visitor::visit_enter(ir_call *ir)
 {
    /* Do copy propagation on call parameters, but skip any out params */
-   exec_list_iterator sig_param_iter = ir->callee->parameters.iterator();
-   foreach_iter(exec_list_iterator, iter, ir->actual_parameters) {
-      ir_variable *sig_param = (ir_variable *)sig_param_iter.get();
-      ir_rvalue *ir = (ir_rvalue *) iter.get();
+   foreach_two_lists(formal_node, &ir->callee->parameters,
+                     actual_node, &ir->actual_parameters) {
+      ir_variable *sig_param = (ir_variable *) formal_node;
+      ir_rvalue *ir = (ir_rvalue *) actual_node;
       if (sig_param->data.mode != ir_var_function_out
           && sig_param->data.mode != ir_var_function_inout) {
          ir->accept(this);
       }
-      sig_param_iter.next();
    }
 
    /* Since we're unlinked, we don't (necessarily) know the side effects of

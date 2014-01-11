@@ -116,11 +116,10 @@ ir_call::generate_inline(ir_instruction *next_ir)
     * and set up the mapping of real function body variables to ours.
     */
    i = 0;
-   exec_list_iterator sig_param_iter = this->callee->parameters.iterator();
-   exec_list_iterator param_iter = this->actual_parameters.iterator();
-   for (i = 0; i < num_parameters; i++) {
-      ir_variable *sig_param = (ir_variable *) sig_param_iter.get();
-      ir_rvalue *param = (ir_rvalue *) param_iter.get();
+   foreach_two_lists(formal_node, &this->callee->parameters,
+                     actual_node, &this->actual_parameters) {
+      ir_variable *sig_param = (ir_variable *) formal_node;
+      ir_rvalue *param = (ir_rvalue *) actual_node;
 
       /* Generate a new variable for the parameter. */
       if (sig_param->type->contains_opaque()) {
@@ -154,8 +153,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	 next_ir->insert_before(assign);
       }
 
-      sig_param_iter.next();
-      param_iter.next();
+      ++i;
    }
 
    exec_list new_instructions;
@@ -172,11 +170,10 @@ ir_call::generate_inline(ir_instruction *next_ir)
    /* If any opaque types were passed in, replace any deref of the
     * opaque variable with a deref of the argument.
     */
-   param_iter = this->actual_parameters.iterator();
-   sig_param_iter = this->callee->parameters.iterator();
-   for (i = 0; i < num_parameters; i++) {
-      ir_rvalue *const param = (ir_rvalue *) param_iter.get();
-      ir_variable *sig_param = (ir_variable *) sig_param_iter.get();
+   foreach_two_lists(formal_node, &this->callee->parameters,
+                     actual_node, &this->actual_parameters) {
+      ir_rvalue *const param = (ir_rvalue *) actual_node;
+      ir_variable *sig_param = (ir_variable *) formal_node;
 
       if (sig_param->type->contains_opaque()) {
 	 ir_dereference *deref = param->as_dereference();
@@ -184,8 +181,6 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	 assert(deref);
 	 do_variable_replacement(&new_instructions, sig_param, deref);
       }
-      param_iter.next();
-      sig_param_iter.next();
    }
 
    /* Now push those new instructions in. */
@@ -195,11 +190,10 @@ ir_call::generate_inline(ir_instruction *next_ir)
     * variables to our own.
     */
    i = 0;
-   param_iter = this->actual_parameters.iterator();
-   sig_param_iter = this->callee->parameters.iterator();
-   for (i = 0; i < num_parameters; i++) {
-      ir_rvalue *const param = (ir_rvalue *) param_iter.get();
-      const ir_variable *const sig_param = (ir_variable *) sig_param_iter.get();
+   foreach_two_lists(formal_node, &this->callee->parameters,
+                     actual_node, &this->actual_parameters) {
+      ir_rvalue *const param = (ir_rvalue *) actual_node;
+      const ir_variable *const sig_param = (ir_variable *) formal_node;
 
       /* Move our param variable into the actual param if it's an 'out' type. */
       if (parameters[i] && (sig_param->data.mode == ir_var_function_out ||
@@ -212,8 +206,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	 next_ir->insert_before(assign);
       }
 
-      param_iter.next();
-      sig_param_iter.next();
+      ++i;
    }
 
    delete [] parameters;

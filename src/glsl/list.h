@@ -447,6 +447,22 @@ inline void exec_node::insert_before(exec_list *before)
 	; (__node)->next != NULL 			\
 	; (__node) = (__node)->next)
 
+/**
+ * Iterate through two lists at once.  Stops at the end of the shorter list.
+ *
+ * This is safe against either current node being removed or replaced.
+ */
+#define foreach_two_lists(__node1, __list1, __node2, __list2) \
+   for (exec_node * __node1 = (__list1)->head,                \
+                  * __node2 = (__list2)->head,                \
+                  * __next1 = __node1->next,                  \
+                  * __next2 = __node2->next                   \
+	; __next1 != NULL && __next2 != NULL                  \
+	; __node1 = __next1,                                  \
+          __node2 = __next2,                                  \
+          __next1 = __next1->next,                            \
+          __next2 = __next2->next)
+
 #define foreach_list_const(__node, __list)		\
    for (const exec_node * __node = (__list)->head	\
 	; (__node)->next != NULL 			\
