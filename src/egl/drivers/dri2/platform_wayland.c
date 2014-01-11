@@ -36,6 +36,7 @@
 #include <xf86drm.h>
 
 #include "egl_dri2.h"
+#include "loader.h"
 
 #include <wayland-client.h>
 #include "wayland-drm-client-protocol.h"
@@ -962,6 +963,8 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    static const unsigned int rgb_masks[4] = { 0xff0000, 0xff00, 0xff, 0 };
    static const unsigned int rgb565_masks[4] = { 0xf800, 0x07e0, 0x001f, 0 };
 
+   loader_set_logger(_eglLog);
+
    drv->API.CreateWindowSurface = dri2_create_window_surface;
    drv->API.DestroySurface = dri2_destroy_surface;
    drv->API.SwapBuffers = dri2_swap_buffers;
@@ -1006,7 +1009,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    if (roundtrip(dri2_dpy) < 0 || !dri2_dpy->authenticated)
       goto cleanup_fd;
 
-   dri2_dpy->driver_name = dri2_get_driver_for_fd(dri2_dpy->fd);
+   dri2_dpy->driver_name = loader_get_driver_for_fd(dri2_dpy->fd, 0);
    if (dri2_dpy->driver_name == NULL) {
       _eglError(EGL_BAD_ALLOC, "DRI2: failed to get driver name");
       goto cleanup_fd;

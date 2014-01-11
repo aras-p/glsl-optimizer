@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include "egl_dri2.h"
+#include "loader.h"
 
 static struct gbm_bo *
 lock_front_buffer(struct gbm_surface *_surf)
@@ -447,6 +448,8 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    int fd = -1;
    int i;
 
+   loader_set_logger(_eglLog);
+
    dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
@@ -482,7 +485,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    }
 
    dri2_dpy->fd = fd;
-   dri2_dpy->device_name = dri2_get_device_name_for_fd(dri2_dpy->fd);
+   dri2_dpy->device_name = loader_get_device_name_for_fd(dri2_dpy->fd);
    dri2_dpy->driver_name = dri2_dpy->gbm_dri->base.driver_name;
 
    dri2_dpy->dri_screen = dri2_dpy->gbm_dri->screen;

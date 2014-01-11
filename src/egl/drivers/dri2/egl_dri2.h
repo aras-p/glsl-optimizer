@@ -271,9 +271,4 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp);
 EGLBoolean
 dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *disp);
 
-char *
-dri2_get_driver_for_fd(int fd);
-char *
-dri2_get_device_name_for_fd(int fd);
-
 #endif /* EGL_DRI2_INCLUDED */

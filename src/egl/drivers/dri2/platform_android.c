@@ -34,11 +34,7 @@
 #include <sync/sync.h>
 #endif
 
-/* for droid_get_pci_id */
-#include <xf86drm.h>
-#include <i915_drm.h>
-#include <radeon_drm.h>
-
+#include "loader.h"
 #include "egl_dri2.h"
 #include "gralloc_drm.h"
 
@@ -602,103 +598,6 @@ droid_add_configs_for_visuals(_EGLDriver *drv, _EGLDisplay *dpy)
    return (count != 0);
 }
 
-static EGLBoolean
-droid_get_pci_id(int fd, int *vendor_id, int *chip_id)
-{
-   drmVersionPtr version;
-
-   *chip_id = -1;
-
-   version = drmGetVersion(fd);
-   if (!version) {
-      _eglLog(_EGL_WARNING, "invalid drm fd");
-      return EGL_FALSE;
-   }
-   if (!version->name) {
-      _eglLog(_EGL_WARNING, "unable to determine the driver name");
-      drmFreeVersion(version);
-      return EGL_FALSE;
-   }
-
-   if (strcmp(version->name, "i915") == 0) {
-      struct drm_i915_getparam gp;
-      int ret;
-
-      *vendor_id = 0x8086;
-
-      memset(&gp, 0, sizeof(gp));
-      gp.param = I915_PARAM_CHIPSET_ID;
-      gp.value = chip_id;
-      ret = drmCommandWriteRead(fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
-      if (ret) {
-         _eglLog(_EGL_WARNING, "failed to get param for i915");
-	 *chip_id = -1;
-      }
-   }
-   else if (strcmp(version->name, "radeon") == 0) {
-      struct drm_radeon_info info;
-      int ret;
-
-      *vendor_id = 0x1002;
-
-      memset(&info, 0, sizeof(info));
-      info.request = RADEON_INFO_DEVICE_ID;
-      info.value = (unsigned long) chip_id;
-      ret = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
-      if (ret) {
-         _eglLog(_EGL_WARNING, "failed to get info for radeon");
-	 *chip_id = -1;
-      }
-   }
-   else if (strcmp(version->name, "nouveau") == 0) {
-      *vendor_id = 0x10de;
-      /* not used */
-      *chip_id = 0;
-   }
-   else if (strcmp(version->name, "vmwgfx") == 0) {
-      *vendor_id = 0x15ad;
-      /* assume SVGA II */
-      *chip_id = 0x0405;
-   }
-
-   drmFreeVersion(version);
-
-   return (*chip_id >= 0);
-}
-
-#define DRIVER_MAP_DRI2_ONLY
-#include "pci_ids/pci_id_driver_map.h"
-static const char *
-droid_get_driver_name(int fd)
-{
-   int vendor_id = -1, chip_id = -1;
-   int idx, i;
-   char *name;
-
-   if (!droid_get_pci_id(fd, &vendor_id, &chip_id))
-      return NULL;
-
-   for (idx = 0; driver_map[idx].driver; idx++) {
-      if (vendor_id != driver_map[idx].vendor_id)
-         continue;
-
-      if (driver_map[idx].num_chips_ids == -1)
-         break;
-
-      for (i = 0; i < driver_map[idx].num_chips_ids; i++) {
-         if (driver_map[idx].chip_ids[i] == chip_id)
-            break;
-      }
-      if (i < driver_map[idx].num_chips_ids)
-	      break;
-   }
-
-   _eglLog(_EGL_INFO, "pci id for fd %d: %04x:%04x, driver %s",
-         fd, vendor_id, chip_id, driver_map[idx].driver);
-
-   return driver_map[idx].driver;
-}
-
 static int
 droid_open_device(void)
 {
@@ -761,6 +660,8 @@ dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *dpy)
 
    _eglSetLogProc(droid_log);
 
+   loader_set_logger(_eglLog);
+
    dri2_dpy = calloc(1, sizeof(*dri2_dpy));
    if (!dri2_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
@@ -773,7 +674,7 @@ dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *dpy)
       goto cleanup_display;
    }
 
-   dri2_dpy->driver_name = (char *) droid_get_driver_name(dri2_dpy->fd);
+   dri2_dpy->driver_name = loader_get_driver_for_fd(dri2_dpy->fd, 0);
    if (dri2_dpy->driver_name == NULL) {
       err = "DRI2: failed to get driver name";
       goto cleanup_device;
