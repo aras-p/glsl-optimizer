@@ -300,10 +300,15 @@ TargetNV50::insnCanLoad(const Instruction *i, int s,
    case 0x01:
    case 0x03:
    case 0x08:
-   case 0x09:
    case 0x0c:
    case 0x20:
    case 0x21:
+      break;
+   case 0x09:
+      // Shader inputs get transformed to p[] in geometry shaders, and those
+      // aren't allowed to be used at the same time as c[].
+      if (ld->bb->getProgram()->getType() == Program::TYPE_GEOMETRY)
+         return false;
       break;
    case 0x0d:
       if (ld->bb->getProgram()->getType() != Program::TYPE_GEOMETRY)
