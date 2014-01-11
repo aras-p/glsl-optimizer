@@ -573,6 +573,20 @@ void brw_upload_state(struct brw_context *brw)
 	 fprintf(stderr, "\n");
       }
    }
+}
 
+
+/**
+ * Clear dirty bits to account for the fact that the state emitted by
+ * brw_upload_state() has been committed to the hardware.  This is a separate
+ * call from brw_upload_state() because it's possible that after the call to
+ * brw_upload_state(), we will discover that we've run out of aperture space,
+ * and need to rewind the batch buffer to the state it had before the
+ * brw_upload_state() call.
+ */
+void
+brw_clear_dirty_bits(struct brw_context *brw)
+{
+   struct brw_state_flags *state = &brw->state.dirty;
    memset(state, 0, sizeof(*state));
 }

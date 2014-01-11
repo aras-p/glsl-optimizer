@@ -499,6 +499,12 @@ retry:
 	    }
 	 }
       }
+
+      /* Now that we know we haven't run out of aperture space, we can safely
+       * reset the dirty bits.
+       */
+      if (brw->state.dirty.brw)
+         brw_clear_dirty_bits(brw);
    }
 
    if (brw->always_flush_batch)
