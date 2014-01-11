@@ -40,9 +40,9 @@
 #include "../radeon/r600_cs.h"
 #include "sid.h"
 
-static uint32_t cik_num_banks(struct si_screen *rscreen, unsigned bpe, unsigned tile_split)
+static uint32_t cik_num_banks(struct si_screen *sscreen, unsigned bpe, unsigned tile_split)
 {
-	if (rscreen->b.info.cik_macrotile_mode_array_valid) {
+	if (sscreen->b.info.cik_macrotile_mode_array_valid) {
 		unsigned index, tileb;
 
 		tileb = 8 * 8 * bpe;
@@ -54,11 +54,11 @@ static uint32_t cik_num_banks(struct si_screen *rscreen, unsigned bpe, unsigned 
 
 		assert(index < 16);
 
-		return (rscreen->b.info.cik_macrotile_mode_array[index] >> 6) & 0x3;
+		return (sscreen->b.info.cik_macrotile_mode_array[index] >> 6) & 0x3;
 	}
 
 	/* The old way. */
-	switch (rscreen->b.tiling_info.num_banks) {
+	switch (sscreen->b.tiling_info.num_banks) {
 	case 2:
 		return V_02803C_ADDR_SURF_2_BANK;
 	case 4:
@@ -140,24 +140,24 @@ static unsigned cik_bank_wh(unsigned bankwh)
 	return bankwh;
 }
 
-static unsigned cik_db_pipe_config(struct si_screen *rscreen, unsigned tile_mode)
+static unsigned cik_db_pipe_config(struct si_screen *sscreen, unsigned tile_mode)
 {
-	if (rscreen->b.info.si_tile_mode_array_valid) {
-		uint32_t gb_tile_mode = rscreen->b.info.si_tile_mode_array[tile_mode];
+	if (sscreen->b.info.si_tile_mode_array_valid) {
+		uint32_t gb_tile_mode = sscreen->b.info.si_tile_mode_array[tile_mode];
 
 		return G_009910_PIPE_CONFIG(gb_tile_mode);
 	}
 
 	/* This is probably broken for a lot of chips, but it's only used
 	 * if the kernel cannot return the tile mode array for CIK. */
-	switch (rscreen->b.info.r600_num_tile_pipes) {
+	switch (sscreen->b.info.r600_num_tile_pipes) {
 	case 16:
 		return V_02803C_X_ADDR_SURF_P16_32X32_16X16;
 	case 8:
 		return V_02803C_X_ADDR_SURF_P8_32X32_16X16;
 	case 4:
 	default:
-		if (rscreen->b.info.r600_num_backends == 4)
+		if (sscreen->b.info.r600_num_backends == 4)
 			return V_02803C_X_ADDR_SURF_P4_16X16;
 		else
 			return V_02803C_X_ADDR_SURF_P4_8X16;
@@ -1062,8 +1062,8 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 				       const struct util_format_description *desc,
 				       int first_non_void)
 {
-	struct si_screen *rscreen = (struct si_screen*)screen;
-	bool enable_s3tc = rscreen->b.info.drm_minor >= 31;
+	struct si_screen *sscreen = (struct si_screen*)screen;
+	bool enable_s3tc = sscreen->b.info.drm_minor >= 31;
 	boolean uniform = TRUE;
 	int i;
 
@@ -1476,7 +1476,7 @@ boolean si_is_format_supported(struct pipe_screen *screen,
                                unsigned sample_count,
                                unsigned usage)
 {
-	struct si_screen *rscreen = (struct si_screen *)screen;
+	struct si_screen *sscreen = (struct si_screen *)screen;
 	unsigned retval = 0;
 
 	if (target >= PIPE_MAX_TEXTURE_TYPES) {
@@ -1492,7 +1492,7 @@ boolean si_is_format_supported(struct pipe_screen *screen,
 			return FALSE;
 
 		/* 2D tiling on CIK is supported since DRM 2.35.0 */
-		if (rscreen->b.chip_class >= CIK && rscreen->b.info.drm_minor < 35)
+		if (sscreen->b.chip_class >= CIK && sscreen->b.info.drm_minor < 35)
 			return FALSE;
 
 		switch (sample_count) {
@@ -1742,7 +1742,7 @@ static void si_cb(struct si_context *sctx, struct si_pm4_state *pm4,
 static void si_db(struct si_context *sctx, struct si_pm4_state *pm4,
 		  const struct pipe_framebuffer_state *state)
 {
-	struct si_screen *rscreen = sctx->screen;
+	struct si_screen *sscreen = sctx->screen;
 	struct r600_texture *rtex;
 	struct si_surface *surf;
 	unsigned level, pitch, slice, format, tile_mode_index, array_mode;
@@ -1815,9 +1815,9 @@ static void si_db(struct si_context *sctx, struct si_pm4_state *pm4,
 		macro_aspect = cik_macro_tile_aspect(macro_aspect);
 		bankw = cik_bank_wh(bankw);
 		bankh = cik_bank_wh(bankh);
-		nbanks = cik_num_banks(rscreen, rtex->surface.bpe, rtex->surface.tile_split);
+		nbanks = cik_num_banks(sscreen, rtex->surface.bpe, rtex->surface.tile_split);
 		tile_mode_index = si_tile_mode_index(rtex, level, false);
-		pipe_config = cik_db_pipe_config(rscreen, tile_mode_index);
+		pipe_config = cik_db_pipe_config(sscreen, tile_mode_index);
 
 		db_depth_info |= S_02803C_ARRAY_MODE(array_mode) |
 			S_02803C_PIPE_CONFIG(pipe_config) |

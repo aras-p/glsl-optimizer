@@ -126,13 +126,13 @@ static void si_destroy_context(struct pipe_context *context)
 static struct pipe_context *si_create_context(struct pipe_screen *screen, void *priv)
 {
 	struct si_context *sctx = CALLOC_STRUCT(si_context);
-	struct si_screen* rscreen = (struct si_screen *)screen;
+	struct si_screen* sscreen = (struct si_screen *)screen;
 	int shader, i;
 
 	if (sctx == NULL)
 		return NULL;
 
-	if (!r600_common_context_init(&sctx->b, &rscreen->b))
+	if (!r600_common_context_init(&sctx->b, &sscreen->b))
 		goto fail;
 
 	sctx->b.b.screen = screen;
@@ -141,14 +141,14 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 	sctx->b.b.flush = si_flush_from_st;
 
 	/* Easy accessing of screen/winsys. */
-	sctx->screen = rscreen;
+	sctx->screen = sscreen;
 
 	si_init_blit_functions(sctx);
 	si_init_query_functions(sctx);
 	si_init_context_resource_functions(sctx);
 	si_init_compute_functions(sctx);
 
-	if (rscreen->b.info.has_uvd) {
+	if (sscreen->b.info.has_uvd) {
 		sctx->b.b.create_video_codec = si_uvd_create_decoder;
 		sctx->b.b.create_video_buffer = si_video_buffer_create;
 	} else {
@@ -267,14 +267,14 @@ static const char *si_get_family_name(enum radeon_family family)
 
 static const char* si_get_name(struct pipe_screen* pscreen)
 {
-	struct si_screen *rscreen = (struct si_screen *)pscreen;
+	struct si_screen *sscreen = (struct si_screen *)pscreen;
 
-	return si_get_family_name(rscreen->b.family);
+	return si_get_family_name(sscreen->b.family);
 }
 
 static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
-	struct si_screen *rscreen = (struct si_screen *)pscreen;
+	struct si_screen *sscreen = (struct si_screen *)pscreen;
 
 	switch (param) {
 	/* Supported features (boolean caps). */
@@ -319,8 +319,8 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	case PIPE_CAP_TEXTURE_MULTISAMPLE:
 		/* 2D tiling on CIK is supported since DRM 2.35.0 */
-		return HAVE_LLVM >= 0x0304 && (rscreen->b.chip_class < CIK ||
-					       rscreen->b.info.drm_minor >= 35);
+		return HAVE_LLVM >= 0x0304 && (sscreen->b.chip_class < CIK ||
+					       sscreen->b.info.drm_minor >= 35);
 
 	case PIPE_CAP_TGSI_TEXCOORD:
 		return 0;
@@ -337,7 +337,7 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
 		return 1;
 	case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
-		return MIN2(rscreen->b.info.vram_size, 0xFFFFFFFF);
+		return MIN2(sscreen->b.info.vram_size, 0xFFFFFFFF);
 
 	/* Unsupported features. */
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
@@ -357,12 +357,12 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Stream output. */
 	case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
-		return rscreen->b.has_streamout ? 4 : 0;
+		return sscreen->b.has_streamout ? 4 : 0;
 	case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
-		return rscreen->b.has_streamout ? 1 : 0;
+		return sscreen->b.has_streamout ? 1 : 0;
 	case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
 	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
-		return rscreen->b.has_streamout ? 32*4 : 0;
+		return sscreen->b.has_streamout ? 32*4 : 0;
 
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
@@ -384,7 +384,7 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	/* Timer queries, present when the clock frequency is non zero. */
 	case PIPE_CAP_QUERY_TIMESTAMP:
 	case PIPE_CAP_QUERY_TIME_ELAPSED:
-		return rscreen->b.info.r600_clock_crystal_freq != 0;
+		return sscreen->b.info.r600_clock_crystal_freq != 0;
 
 	case PIPE_CAP_MIN_TEXEL_OFFSET:
 		return -8;
@@ -510,11 +510,11 @@ static int si_get_compute_param(struct pipe_screen *screen,
         enum pipe_compute_cap param,
         void *ret)
 {
-	struct si_screen *rscreen = (struct si_screen *)screen;
+	struct si_screen *sscreen = (struct si_screen *)screen;
 	//TODO: select these params by asic
 	switch (param) {
 	case PIPE_COMPUTE_CAP_IR_TARGET: {
-		const char *gpu = si_get_llvm_processor_name(rscreen->b.family);
+		const char *gpu = si_get_llvm_processor_name(sscreen->b.family);
 	        if (ret) {
 			sprintf(ret, "%s-r600--", gpu);
 		}
@@ -587,91 +587,91 @@ static int si_get_compute_param(struct pipe_screen *screen,
 
 static void si_destroy_screen(struct pipe_screen* pscreen)
 {
-	struct si_screen *rscreen = (struct si_screen *)pscreen;
+	struct si_screen *sscreen = (struct si_screen *)pscreen;
 
-	if (rscreen == NULL)
+	if (sscreen == NULL)
 		return;
 
-	if (!radeon_winsys_unref(rscreen->b.ws))
+	if (!radeon_winsys_unref(sscreen->b.ws))
 		return;
 
-	r600_common_screen_cleanup(&rscreen->b);
+	r600_common_screen_cleanup(&sscreen->b);
 
 #if SI_TRACE_CS
-	if (rscreen->trace_bo) {
-		rscreen->ws->buffer_unmap(rscreen->trace_bo->cs_buf);
-		pipe_resource_reference((struct pipe_resource**)&rscreen->trace_bo, NULL);
+	if (sscreen->trace_bo) {
+		sscreen->ws->buffer_unmap(sscreen->trace_bo->cs_buf);
+		pipe_resource_reference((struct pipe_resource**)&sscreen->trace_bo, NULL);
 	}
 #endif
 
-	rscreen->b.ws->destroy(rscreen->b.ws);
-	FREE(rscreen);
+	sscreen->b.ws->destroy(sscreen->b.ws);
+	FREE(sscreen);
 }
 
 static uint64_t si_get_timestamp(struct pipe_screen *screen)
 {
-	struct si_screen *rscreen = (struct si_screen*)screen;
+	struct si_screen *sscreen = (struct si_screen*)screen;
 
-	return 1000000 * rscreen->b.ws->query_value(rscreen->b.ws, RADEON_TIMESTAMP) /
-		rscreen->b.info.r600_clock_crystal_freq;
+	return 1000000 * sscreen->b.ws->query_value(sscreen->b.ws, RADEON_TIMESTAMP) /
+		sscreen->b.info.r600_clock_crystal_freq;
 }
 
 struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 {
-	struct si_screen *rscreen = CALLOC_STRUCT(si_screen);
-	if (rscreen == NULL) {
+	struct si_screen *sscreen = CALLOC_STRUCT(si_screen);
+	if (sscreen == NULL) {
 		return NULL;
 	}
 
-	ws->query_info(ws, &rscreen->b.info);
+	ws->query_info(ws, &sscreen->b.info);
 
 	/* Set functions first. */
-	rscreen->b.b.context_create = si_create_context;
-	rscreen->b.b.destroy = si_destroy_screen;
-	rscreen->b.b.get_name = si_get_name;
-	rscreen->b.b.get_vendor = si_get_vendor;
-	rscreen->b.b.get_param = si_get_param;
-	rscreen->b.b.get_shader_param = si_get_shader_param;
-	rscreen->b.b.get_paramf = si_get_paramf;
-	rscreen->b.b.get_compute_param = si_get_compute_param;
-	rscreen->b.b.get_timestamp = si_get_timestamp;
-	rscreen->b.b.is_format_supported = si_is_format_supported;
-	if (rscreen->b.info.has_uvd) {
-		rscreen->b.b.get_video_param = ruvd_get_video_param;
-		rscreen->b.b.is_video_format_supported = ruvd_is_format_supported;
+	sscreen->b.b.context_create = si_create_context;
+	sscreen->b.b.destroy = si_destroy_screen;
+	sscreen->b.b.get_name = si_get_name;
+	sscreen->b.b.get_vendor = si_get_vendor;
+	sscreen->b.b.get_param = si_get_param;
+	sscreen->b.b.get_shader_param = si_get_shader_param;
+	sscreen->b.b.get_paramf = si_get_paramf;
+	sscreen->b.b.get_compute_param = si_get_compute_param;
+	sscreen->b.b.get_timestamp = si_get_timestamp;
+	sscreen->b.b.is_format_supported = si_is_format_supported;
+	if (sscreen->b.info.has_uvd) {
+		sscreen->b.b.get_video_param = ruvd_get_video_param;
+		sscreen->b.b.is_video_format_supported = ruvd_is_format_supported;
 	} else {
-		rscreen->b.b.get_video_param = si_get_video_param;
-		rscreen->b.b.is_video_format_supported = vl_video_buffer_is_format_supported;
+		sscreen->b.b.get_video_param = si_get_video_param;
+		sscreen->b.b.is_video_format_supported = vl_video_buffer_is_format_supported;
 	}
-	si_init_screen_resource_functions(&rscreen->b.b);
+	si_init_screen_resource_functions(&sscreen->b.b);
 
-	if (!r600_common_screen_init(&rscreen->b, ws)) {
-		FREE(rscreen);
+	if (!r600_common_screen_init(&sscreen->b, ws)) {
+		FREE(sscreen);
 		return NULL;
 	}
 
-	rscreen->b.has_cp_dma = true;
-	rscreen->b.has_streamout = HAVE_LLVM >= 0x0304;
+	sscreen->b.has_cp_dma = true;
+	sscreen->b.has_streamout = HAVE_LLVM >= 0x0304;
 
 	if (debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE))
-		rscreen->b.debug_flags |= DBG_FS | DBG_VS | DBG_GS | DBG_PS | DBG_CS;
+		sscreen->b.debug_flags |= DBG_FS | DBG_VS | DBG_GS | DBG_PS | DBG_CS;
 
 #if SI_TRACE_CS
-	rscreen->cs_count = 0;
-	if (rscreen->info.drm_minor >= 28) {
-		rscreen->trace_bo = (struct r600_resource*)pipe_buffer_create(&rscreen->screen,
+	sscreen->cs_count = 0;
+	if (sscreen->info.drm_minor >= 28) {
+		sscreen->trace_bo = (struct r600_resource*)pipe_buffer_create(&sscreen->screen,
 										PIPE_BIND_CUSTOM,
 										PIPE_USAGE_STAGING,
 										4096);
-		if (rscreen->trace_bo) {
-			rscreen->trace_ptr = rscreen->ws->buffer_map(rscreen->trace_bo->cs_buf, NULL,
+		if (sscreen->trace_bo) {
+			sscreen->trace_ptr = sscreen->ws->buffer_map(sscreen->trace_bo->cs_buf, NULL,
 									PIPE_TRANSFER_UNSYNCHRONIZED);
 		}
 	}
 #endif
 
 	/* Create the auxiliary context. This must be done last. */
-	rscreen->b.aux_context = rscreen->b.b.context_create(&rscreen->b.b, NULL);
+	sscreen->b.aux_context = sscreen->b.b.context_create(&sscreen->b.b, NULL);
 
-	return &rscreen->b.b;
+	return &sscreen->b.b;
 }

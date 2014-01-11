@@ -210,13 +210,13 @@ void si_context_flush(struct si_context *ctx, unsigned flags)
 
 #if SI_TRACE_CS
 	if (ctx->screen->trace_bo) {
-		struct si_screen *rscreen = ctx->screen;
+		struct si_screen *sscreen = ctx->screen;
 		unsigned i;
 
 		for (i = 0; i < cs->cdw; i++) {
-			fprintf(stderr, "[%4d] [%5d] 0x%08x\n", rscreen->cs_count, i, cs->buf[i]);
+			fprintf(stderr, "[%4d] [%5d] 0x%08x\n", sscreen->cs_count, i, cs->buf[i]);
 		}
-		rscreen->cs_count++;
+		sscreen->cs_count++;
 	}
 #endif
 
@@ -225,20 +225,20 @@ void si_context_flush(struct si_context *ctx, unsigned flags)
 
 #if SI_TRACE_CS
 	if (ctx->screen->trace_bo) {
-		struct si_screen *rscreen = ctx->screen;
+		struct si_screen *sscreen = ctx->screen;
 		unsigned i;
 
 		for (i = 0; i < 10; i++) {
 			usleep(5);
-			if (!ctx->ws->buffer_is_busy(rscreen->trace_bo->buf, RADEON_USAGE_READWRITE)) {
+			if (!ctx->ws->buffer_is_busy(sscreen->trace_bo->buf, RADEON_USAGE_READWRITE)) {
 				break;
 			}
 		}
 		if (i == 10) {
 			fprintf(stderr, "timeout on cs lockup likely happen at cs %d dw %d\n",
-				rscreen->trace_ptr[1], rscreen->trace_ptr[0]);
+				sscreen->trace_ptr[1], sscreen->trace_ptr[0]);
 		} else {
-			fprintf(stderr, "cs %d executed in %dms\n", rscreen->trace_ptr[1], i * 5);
+			fprintf(stderr, "cs %d executed in %dms\n", sscreen->trace_ptr[1], i * 5);
 		}
 	}
 #endif
@@ -698,12 +698,12 @@ void si_context_queries_resume(struct si_context *ctx)
 #if SI_TRACE_CS
 void si_trace_emit(struct si_context *sctx)
 {
-	struct si_screen *rscreen = sctx->screen;
+	struct si_screen *sscreen = sctx->screen;
 	struct radeon_winsys_cs *cs = sctx->cs;
 	uint64_t va;
 
-	va = r600_resource_va(&rscreen->screen, (void*)rscreen->trace_bo);
-	r600_context_bo_reloc(sctx, rscreen->trace_bo, RADEON_USAGE_READWRITE);
+	va = r600_resource_va(&sscreen->screen, (void*)sscreen->trace_bo);
+	r600_context_bo_reloc(sctx, sscreen->trace_bo, RADEON_USAGE_READWRITE);
 	cs->buf[cs->cdw++] = PKT3(PKT3_WRITE_DATA, 4, 0);
 	cs->buf[cs->cdw++] = PKT3_WRITE_DATA_DST_SEL(PKT3_WRITE_DATA_DST_SEL_MEM_SYNC) |
 				PKT3_WRITE_DATA_WR_CONFIRM |
@@ -711,6 +711,6 @@ void si_trace_emit(struct si_context *sctx)
 	cs->buf[cs->cdw++] = va & 0xFFFFFFFFUL;
 	cs->buf[cs->cdw++] = (va >> 32UL) & 0xFFFFFFFFUL;
 	cs->buf[cs->cdw++] = cs->cdw;
-	cs->buf[cs->cdw++] = rscreen->cs_count;
+	cs->buf[cs->cdw++] = sscreen->cs_count;
 }
 #endif
