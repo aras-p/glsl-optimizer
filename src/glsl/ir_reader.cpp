@@ -205,11 +205,12 @@ ir_reader::read_function(s_expression *expr, bool skip_body)
       assert(added);
    }
 
-   exec_list_iterator it = ((s_list *) expr)->subexpressions.iterator();
-   it.next(); // skip "function" tag
-   it.next(); // skip function name
-   for (/* nothing */; it.has_next(); it.next()) {
-      s_expression *s_sig = (s_expression *) it.get();
+   /* Skip over "function" tag and function name (which are guaranteed to be
+    * present by the above PARTIAL_MATCH call).
+    */
+   exec_node *node = ((s_list *) expr)->subexpressions.head->next->next;
+   for (/* nothing */; !node->is_tail_sentinel(); node = node->next) {
+      s_expression *s_sig = (s_expression *) node;
       read_function_sig(f, s_sig, skip_body);
    }
    return added ? f : NULL;
@@ -249,9 +250,10 @@ ir_reader::read_function_sig(ir_function *f, s_expression *expr, bool skip_body)
    exec_list hir_parameters;
    state->symbols->push_scope();
 
-   exec_list_iterator it = paramlist->subexpressions.iterator();
-   for (it.next() /* skip "parameters" */; it.has_next(); it.next()) {
-      ir_variable *var = read_declaration((s_expression *) it.get());
+   /* Skip over the "parameters" tag. */
+   exec_node *node = paramlist->subexpressions.head->next;
+   for (/* nothing */; !node->is_tail_sentinel(); node = node->next) {
+      ir_variable *var = read_declaration((s_expression *) node);
       if (var == NULL)
 	 return;
 
