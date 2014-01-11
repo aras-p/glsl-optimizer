@@ -44,6 +44,7 @@ struct pipe_screen;
 enum pipe_loader_device_type {
    PIPE_LOADER_DEVICE_SOFTWARE,
    PIPE_LOADER_DEVICE_PCI,
+   PIPE_LOADER_DEVICE_PLATFORM,
    NUM_PIPE_LOADER_DEVICE_TYPES
 };
 

@@ -63,6 +63,7 @@ device::type() const {
    case PIPE_LOADER_DEVICE_SOFTWARE:
       return CL_DEVICE_TYPE_CPU;
    case PIPE_LOADER_DEVICE_PCI:
+   case PIPE_LOADER_DEVICE_PLATFORM:
       return CL_DEVICE_TYPE_GPU;
    default:
       assert(0);
@@ -74,6 +75,7 @@ cl_uint
 device::vendor_id() const {
    switch (ldev->type) {
    case PIPE_LOADER_DEVICE_SOFTWARE:
+   case PIPE_LOADER_DEVICE_PLATFORM:
       return 0;
    case PIPE_LOADER_DEVICE_PCI:
       return ldev->u.pci.vendor_id;

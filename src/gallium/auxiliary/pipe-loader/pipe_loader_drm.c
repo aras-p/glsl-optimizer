@@ -121,6 +121,8 @@ pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd)
       ddev->base.type = PIPE_LOADER_DEVICE_PCI;
       ddev->base.u.pci.vendor_id = vendor_id;
       ddev->base.u.pci.chip_id = chip_id;
+   } else {
+      ddev->base.type = PIPE_LOADER_DEVICE_PLATFORM;
    }
    ddev->base.ops = &pipe_loader_drm_ops;
    ddev->fd = fd;
