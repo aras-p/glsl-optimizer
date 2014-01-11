@@ -2348,6 +2348,20 @@ struct gl_fragment_program_state
 
 
 /**
+ * Context state for compute programs.
+ */
+struct gl_compute_program_state
+{
+   struct gl_compute_program *Current;  /**< user-bound compute program */
+
+   /** Currently enabled and valid program (including internal programs
+    * and compiled shader programs).
+    */
+   struct gl_compute_program *_Current;
+};
+
+
+/**
  * ATI_fragment_shader runtime state
  */
 #define ATI_FS_INPUT_PRIMARY 0
@@ -4153,6 +4167,7 @@ struct gl_context
    struct gl_vertex_program_state VertexProgram;
    struct gl_fragment_program_state FragmentProgram;
    struct gl_geometry_program_state GeometryProgram;
+   struct gl_compute_program_state ComputeProgram;
    struct gl_ati_fragment_shader_state ATIFragmentShader;
 
    struct gl_pipeline_shader_state Pipeline; /**< GLSL pipeline shader object state */
