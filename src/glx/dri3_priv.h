@@ -203,6 +203,3 @@ struct dri3_drawable {
    xcb_gcontext_t gc;
    xcb_special_event_t *special_event;
 };
-
-char *
-dri3_get_driver_for_fd(int fd);

@@ -78,6 +78,7 @@
 #include "xf86drm.h"
 #include "dri_common.h"
 #include "dri3_priv.h"
+#include "loader.h"
 
 static const struct glx_context_vtable dri3_context_vtable;
 
@@ -1597,7 +1598,7 @@ dri3_create_screen(int screen, struct glx_display * priv)
    }
    deviceName = NULL;
 
-   driverName = dri3_get_driver_for_fd(psc->fd);
+   driverName = loader_get_driver_for_fd(psc->fd, 0);
    if (!driverName) {
       ErrorMessageF("No driver found\n");
       goto handle_error;
@@ -1802,6 +1803,7 @@ dri3_create_display(Display * dpy)
    pdp->base.destroyDisplay = dri3_destroy_display;
    pdp->base.createScreen = dri3_create_screen;
 
+   loader_set_logger(ErrorMessageF);
    i = 0;
 
    pdp->loader_extensions[i++] = &imageLoaderExtension.base;

@@ -27,6 +27,7 @@ env.Append(CPPDEFINES = [
 ])
 
 env.Prepend(LIBS = [
+    libloader,
     glapi
 ])
 
@@ -82,7 +83,6 @@ sources = [
     'dri2.c',
     'dri2_query_renderer.c',
     #'dri3_glx.c',
-    #'dri3_common.c',
     'applegl_glx.c',
 ]
 
