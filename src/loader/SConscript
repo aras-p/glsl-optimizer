@@ -6,7 +6,6 @@ if not env['drm']:
 env = env.Clone()
 
 env.Prepend(CPPPATH = [
-    '.',
     '#include'
 ])
 

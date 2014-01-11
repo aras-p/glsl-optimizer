@@ -2,10 +2,13 @@
 #define _PCI_ID_DRIVER_MAP_H_
 
 #include <stddef.h>
-#include "loader.h"
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#endif
+
+#ifndef __IS_LOADER
+#  error "Only include from loader.c"
 #endif
 
 static const int i915_chip_ids[] = {
