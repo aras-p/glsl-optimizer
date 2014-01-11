@@ -48,9 +48,6 @@
 #include "util/u_dl.h"
 #include "util/u_debug.h"
 
-#define DRIVER_MAP_GALLIUM_ONLY
-#include "pci_ids/pci_id_driver_map.h"
-
 struct pipe_loader_drm_device {
    struct pipe_loader_device base;
    struct util_dl_library *lib;
@@ -58,78 +55,6 @@ struct pipe_loader_drm_device {
 };
 
 #define pipe_loader_drm_device(dev) ((struct pipe_loader_drm_device *)dev)
-
-static boolean
-find_drm_pci_id(struct pipe_loader_drm_device *ddev)
-{
-   struct udev *udev = NULL;
-   struct udev_device *parent, *device = NULL;
-   struct stat stat;
-   const char *pci_id;
-
-   if (fstat(ddev->fd, &stat) < 0)
-      goto fail;
-
-   udev = udev_new();
-   if (!udev)
-      goto fail;
-
-   device = udev_device_new_from_devnum(udev, 'c', stat.st_rdev);
-   if (!device)
-      goto fail;
-
-   parent = udev_device_get_parent(device);
-   if (!parent)
-      goto fail;
-
-   pci_id = udev_device_get_property_value(parent, "PCI_ID");
-   if (!pci_id ||
-       sscanf(pci_id, "%x:%x", &ddev->base.u.pci.vendor_id,
-              &ddev->base.u.pci.chip_id) != 2)
-      goto fail;
-
-   udev_device_unref(device);
-   udev_unref(udev);
-
-   return TRUE;
-
-  fail:
-   if (device)
-      udev_device_unref(device);
-   if (udev)
-      udev_unref(udev);
-
-   return FALSE;
-}
-
-static boolean
-find_drm_driver_name(struct pipe_loader_drm_device *ddev)
-{
-   struct pipe_loader_device *dev = &ddev->base;
-   int i, j;
-
-   for (i = 0; driver_map[i].driver; i++) {
-      if (dev->u.pci.vendor_id != driver_map[i].vendor_id)
-         continue;
-
-      if (driver_map[i].num_chips_ids == -1) {
-         dev->driver_name = driver_map[i].driver;
-         goto found;
-      }
-
-      for (j = 0; j < driver_map[i].num_chips_ids; j++) {
-         if (dev->u.pci.chip_id == driver_map[i].chip_ids[j]) {
-            dev->driver_name = driver_map[i].driver;
-            goto found;
-         }
-      }
-   }
-
-   return FALSE;
-
-  found:
-   return TRUE;
-}
 
 static struct pipe_loader_ops pipe_loader_drm_ops;
 
@@ -190,17 +115,20 @@ boolean
 pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd)
 {
    struct pipe_loader_drm_device *ddev = CALLOC_STRUCT(pipe_loader_drm_device);
+   int vendor_id, chip_id;
 
-   ddev->base.type = PIPE_LOADER_DEVICE_PCI;
+   if (loader_get_pci_id_for_fd(fd, &vendor_id, &chip_id)) {
+      ddev->base.type = PIPE_LOADER_DEVICE_PCI;
+      ddev->base.u.pci.vendor_id = vendor_id;
+      ddev->base.u.pci.chip_id = chip_id;
+   }
    ddev->base.ops = &pipe_loader_drm_ops;
    ddev->fd = fd;
 
    pipe_loader_drm_x_auth(fd);
 
-   if (!find_drm_pci_id(ddev))
-      goto fail;
-
-   if (!find_drm_driver_name(ddev))
+   ddev->base.driver_name = loader_get_driver_for_fd(fd, _LOADER_GALLIUM);
+   if (!ddev->base.driver_name)
       goto fail;
 
    *dev = &ddev->base;

@@ -20,7 +20,12 @@ libpipe_loader_la_SOURCES = \
 	pipe_loader_sw.c
 
 if HAVE_DRM_LOADER_GALLIUM
-libpipe_loader_la_SOURCES += pipe_loader_drm.c
 AM_CFLAGS = $(LIBDRM_CFLAGS)
+
+libpipe_loader_la_SOURCES += pipe_loader_drm.c
+
+libpipe_loader_la_LIBADD = \
+	$(top_builddir)/src/loader/libloader.la
+
 endif
 endif
