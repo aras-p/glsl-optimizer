@@ -331,6 +331,11 @@ static const struct brw_tracked_state *gen8_atoms[] =
    &haswell_cut_index,
 };
 
+static const struct brw_tracked_state *gen7_compute_atoms[] =
+{
+};
+
+
 static void
 brw_upload_initial_gpu_state(struct brw_context *brw)
 {
@@ -351,34 +356,36 @@ brw_upload_initial_gpu_state(struct brw_context *brw)
 void brw_init_state( struct brw_context *brw )
 {
    struct gl_context *ctx = &brw->ctx;
-   const struct brw_tracked_state **atoms;
-   int num_atoms;
+   int i, j;
 
    brw_init_caches(brw);
 
+   memset(brw->atoms, 0, sizeof(brw->atoms));
+   memset(brw->num_atoms, 0, sizeof(brw->num_atoms));
+
    if (brw->gen >= 8) {
-      atoms = gen8_atoms;
-      num_atoms = ARRAY_SIZE(gen8_atoms);
+      brw->atoms[BRW_PIPELINE_3D] = gen8_atoms;
+      brw->num_atoms[BRW_PIPELINE_3D] = ARRAY_SIZE(gen8_atoms);
    } else if (brw->gen == 7) {
-      atoms = gen7_atoms;
-      num_atoms = ARRAY_SIZE(gen7_atoms);
+      brw->atoms[BRW_PIPELINE_3D] = gen7_atoms;
+      brw->num_atoms[BRW_PIPELINE_3D] = ARRAY_SIZE(gen7_atoms);
+      brw->atoms[BRW_PIPELINE_COMPUTE] = gen7_compute_atoms;
+      brw->num_atoms[BRW_PIPELINE_COMPUTE] = ARRAY_SIZE(gen7_compute_atoms);
    } else if (brw->gen == 6) {
-      atoms = gen6_atoms;
-      num_atoms = ARRAY_SIZE(gen6_atoms);
+      brw->atoms[BRW_PIPELINE_3D] = gen6_atoms;
+      brw->num_atoms[BRW_PIPELINE_3D] = ARRAY_SIZE(gen6_atoms);
    } else {
-      atoms = gen4_atoms;
-      num_atoms = ARRAY_SIZE(gen4_atoms);
+      brw->atoms[BRW_PIPELINE_3D] = gen4_atoms;
+      brw->num_atoms[BRW_PIPELINE_3D] = ARRAY_SIZE(gen4_atoms);
    }
 
-   brw->atoms = atoms;
-   brw->num_atoms = num_atoms;
-
-   while (num_atoms--) {
-      assert((*atoms)->dirty.mesa |
-	     (*atoms)->dirty.brw |
-	     (*atoms)->dirty.cache);
-      assert((*atoms)->emit);
-      atoms++;
+   for (i = 0; i < BRW_NUM_PIPELINES; i++) {
+      for (j = 0; j < brw->num_atoms[i]; j++) {
+         assert(brw->atoms[i][j]->dirty.mesa |
+                brw->atoms[i][j]->dirty.brw |
+                brw->atoms[i][j]->dirty.cache);
+         assert(brw->atoms[i][j]->emit);
+      }
    }
 
    brw_upload_initial_gpu_state(brw);
@@ -626,8 +633,8 @@ void brw_upload_state(struct brw_context *brw, brw_pipeline pipeline)
       memset(&examined, 0, sizeof(examined));
       prev = *state;
 
-      for (i = 0; i < brw->num_atoms; i++) {
-	 const struct brw_tracked_state *atom = brw->atoms[i];
+      for (i = 0; i < brw->num_atoms[pipeline]; i++) {
+	 const struct brw_tracked_state *atom = brw->atoms[pipeline][i];
 	 struct brw_state_flags generated;
 
 	 if (check_state(state, &atom->dirty)) {
@@ -646,8 +653,8 @@ void brw_upload_state(struct brw_context *brw, brw_pipeline pipeline)
       }
    }
    else {
-      for (i = 0; i < brw->num_atoms; i++) {
-	 const struct brw_tracked_state *atom = brw->atoms[i];
+      for (i = 0; i < brw->num_atoms[pipeline]; i++) {
+	 const struct brw_tracked_state *atom = brw->atoms[pipeline][i];
 
 	 if (check_state(state, &atom->dirty)) {
 	    atom->emit(brw);

@@ -1356,8 +1356,8 @@ struct brw_context
       int entries_per_oa_snapshot;
    } perfmon;
 
-   int num_atoms;
-   const struct brw_tracked_state **atoms;
+   int num_atoms[BRW_NUM_PIPELINES];
+   const struct brw_tracked_state **atoms[BRW_NUM_PIPELINES];
 
    /* If (INTEL_DEBUG & DEBUG_BATCH) */
    struct {
