@@ -750,7 +750,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 #if SI_TRACE_CS
 	if (rctx->screen->trace_bo) {
-		r600_trace_emit(rctx);
+		si_trace_emit(rctx);
 	}
 #endif
 

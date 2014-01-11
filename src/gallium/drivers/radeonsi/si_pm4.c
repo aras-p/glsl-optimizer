@@ -229,7 +229,7 @@ void si_pm4_emit(struct si_context *rctx, struct si_pm4_state *state)
 
 #if SI_TRACE_CS
 	if (rctx->screen->trace_bo) {
-		r600_trace_emit(rctx);
+		si_trace_emit(rctx);
 	}
 #endif
 }
