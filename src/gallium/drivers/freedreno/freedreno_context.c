@@ -168,6 +168,8 @@ fd_context_destroy(struct pipe_context *pctx)
 		fd_bo_del(pipe->bo);
 	}
 
+	fd_device_del(ctx->dev);
+
 	FREE(ctx);
 }
 

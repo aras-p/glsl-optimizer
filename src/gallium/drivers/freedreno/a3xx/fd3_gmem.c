@@ -609,7 +609,7 @@ update_vsc_pipe(struct fd_context *ctx)
 		struct fd_vsc_pipe *pipe = &ctx->pipe[i];
 
 		if (!pipe->bo) {
-			pipe->bo = fd_bo_new(ctx->screen->dev, 0x40000,
+			pipe->bo = fd_bo_new(ctx->dev, 0x40000,
 					DRM_FREEDRENO_GEM_TYPE_KMEM);
 		}
 

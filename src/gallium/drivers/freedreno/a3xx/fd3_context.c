@@ -105,6 +105,7 @@ fd3_context_create(struct pipe_screen *pscreen, void *priv)
 
 	pctx = &fd3_ctx->base.base;
 
+	fd3_ctx->base.dev = fd_device_ref(screen->dev);
 	fd3_ctx->base.screen = fd_screen(pscreen);
 
 	pctx->destroy = fd3_context_destroy;

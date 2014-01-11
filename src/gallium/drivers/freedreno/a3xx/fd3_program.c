@@ -57,7 +57,7 @@ assemble_shader(struct pipe_context *pctx, struct fd3_shader_stateobj *so)
 	bin = ir3_shader_assemble(so->ir, &so->info);
 	sz = so->info.sizedwords * 4;
 
-	so->bo = fd_bo_new(ctx->screen->dev, sz,
+	so->bo = fd_bo_new(ctx->dev, sz,
 			DRM_FREEDRENO_GEM_CACHE_WCOMBINE |
 			DRM_FREEDRENO_GEM_TYPE_KMEM);
 

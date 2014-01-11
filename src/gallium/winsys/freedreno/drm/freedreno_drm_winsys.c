@@ -11,7 +11,7 @@
 struct pipe_screen *
 fd_drm_screen_create(int fd)
 {
-	struct fd_device *dev = fd_device_new(fd);
+	struct fd_device *dev = fd_device_new_dup(fd);
 	if (!dev)
 		return NULL;
 	return fd_screen_create(dev);

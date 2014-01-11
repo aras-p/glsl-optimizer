@@ -85,6 +85,7 @@ struct fd_vertex_stateobj {
 struct fd_context {
 	struct pipe_context base;
 
+	struct fd_device *dev;
 	struct fd_screen *screen;
 	struct blitter_context *blitter;
 	struct primconvert_context *primconvert;
