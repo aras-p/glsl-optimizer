@@ -3624,13 +3624,13 @@ glsl_to_tgsi_visitor::eliminate_dead_code(void)
       int last_read = get_last_temp_read(i);
       int j = 0;
       
-      foreach_iter(exec_list_iterator, iter, this->instructions) {
-         glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
+      foreach_list_safe(node, &this->instructions) {
+         glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
 
          if (inst->dst.file == PROGRAM_TEMPORARY && inst->dst.index == i &&
              j > last_read)
          {
-            iter.remove();
+            inst->remove();
             delete inst;
          }
          
@@ -3769,13 +3769,13 @@ glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
    /* Now actually remove the instructions that are completely dead and update
     * the writemask of other instructions with dead channels.
     */
-   foreach_iter(exec_list_iterator, iter, this->instructions) {
-      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *)iter.get();
+   foreach_list_safe(node, &this->instructions) {
+      glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
       
       if (!inst->dead_mask || !inst->dst.writemask)
          continue;
       else if ((inst->dst.writemask & ~inst->dead_mask) == 0) {
-         iter.remove();
+         inst->remove();
          delete inst;
          removed++;
       } else
