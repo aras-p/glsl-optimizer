@@ -31,6 +31,7 @@ env.Prepend(LIBS = [
     rbug,
     trace,
     galahad,
+    libloader,
     gallium,
     egl,
     st_egl,

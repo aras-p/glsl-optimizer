@@ -61,6 +61,7 @@ egl_gallium_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(top_builddir)/src/gallium/state_trackers/egl/libegl.la \
 	$(top_builddir)/src/egl/main/libEGL.la \
+	$(top_builddir)/src/loader/libloader.la \
 	$(CLOCK_LIB) \
 	$(LIBUDEV_LIBS) \
 	$(DLOPEN_LIBS) \

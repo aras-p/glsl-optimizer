@@ -45,10 +45,8 @@ LOCAL_C_INCLUDES := \
 # swrast
 LOCAL_CFLAGS += -DGALLIUM_SOFTPIPE
 
-# swrast only
-ifeq ($(MESA_GPU_DRIVERS),swrast)
-LOCAL_CFLAGS += -D_EGL_NO_DRM
-else
+# !swrast only
+ifneq ($(MESA_GPU_DRIVERS),swrast)
 LOCAL_C_INCLUDES += \
 	$(DRM_TOP)/include/drm \
 	$(DRM_TOP)

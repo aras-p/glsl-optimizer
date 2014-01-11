@@ -154,6 +154,7 @@ LOCAL_STATIC_LIBRARIES := \
 	libmesa_glsl \
 	libmesa_glsl_utils \
 	libmesa_gallium \
+	libloader \
 	$(LOCAL_STATIC_LIBRARIES)
 
 endif # MESA_BUILD_GALLIUM
