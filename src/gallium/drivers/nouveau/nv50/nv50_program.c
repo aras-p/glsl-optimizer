@@ -405,8 +405,10 @@ nv50_program_upload_code(struct nv50_context *nv50, struct nv50_program *prog)
    prog->code_base = prog->mem->start;
 
    ret = nv50_tls_realloc(nv50->screen, prog->tls_space);
-   if (ret < 0)
+   if (ret < 0) {
+      nouveau_heap_free(&prog->mem);
       return FALSE;
+   }
    if (ret > 0)
       nv50->state.new_tls_space = TRUE;
 
