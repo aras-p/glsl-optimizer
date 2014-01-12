@@ -143,7 +143,7 @@ nv50_create_texture_view(struct pipe_context *pipe,
          tic[2] |= NV50_TIC_2_LINEAR | NV50_TIC_2_TARGET_RECT;
          tic[3] = mt->level[0].pitch;
          tic[4] = mt->base.base.width0;
-         tic[5] = (1 << 16) | mt->base.base.height0;
+         tic[5] = (1 << 16) | (mt->base.base.height0);
       }
       tic[6] =
       tic[7] = 0;
@@ -284,6 +284,24 @@ nv50_validate_tic(struct nv50_context *nv50, int s)
       BEGIN_NV04(push, NV50_3D(BIND_TIC(s)), 1);
       PUSH_DATA (push, (i << 1) | 0);
    }
+   if (nv50->num_textures[s]) {
+      BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
+      PUSH_DATA (push, (NV50_CB_AUX_TEX_MS_OFFSET << (8 - 2)) | NV50_CB_AUX);
+      BEGIN_NI04(push, NV50_3D(CB_DATA(0)), nv50->num_textures[s] * 2);
+      for (i = 0; i < nv50->num_textures[s]; i++) {
+         struct nv50_tic_entry *tic = nv50_tic_entry(nv50->textures[s][i]);
+         struct nv50_miptree *res;
+
+         if (!tic) {
+            PUSH_DATA (push, 0);
+            PUSH_DATA (push, 0);
+            continue;
+         }
+         res = nv50_miptree(tic->pipe.texture);
+         PUSH_DATA (push, res->ms_x);
+         PUSH_DATA (push, res->ms_y);
+      }
+   }
    nv50->state.num_textures[s] = nv50->num_textures[s];
 
    return need_flush;
@@ -353,4 +371,59 @@ void nv50_validate_samplers(struct nv50_context *nv50)
       BEGIN_NV04(nv50->base.pushbuf, NV50_3D(TSC_FLUSH), 1);
       PUSH_DATA (nv50->base.pushbuf, 0);
    }
+}
+
+/* There can be up to 4 different MS levels (1, 2, 4, 8). To simplify the
+ * shader logic, allow each one to take up 8 offsets.
+ */
+#define COMBINE(x, y) x, y
+#define DUMMY 0, 0
+static const uint32_t msaa_sample_xy_offsets[] = {
+   /* MS1 */
+   COMBINE(0, 0),
+   DUMMY,
+   DUMMY,
+   DUMMY,
+   DUMMY,
+   DUMMY,
+   DUMMY,
+   DUMMY,
+
+   /* MS2 */
+   COMBINE(0, 0),
+   COMBINE(1, 0),
+   DUMMY,
+   DUMMY,
+   DUMMY,
+   DUMMY,
+   DUMMY,
+   DUMMY,
+
+   /* MS4 */
+   COMBINE(0, 0),
+   COMBINE(1, 0),
+   COMBINE(0, 1),
+   COMBINE(1, 1),
+   DUMMY,
+   DUMMY,
+   DUMMY,
+   DUMMY,
+
+   /* MS8 */
+   COMBINE(0, 0),
+   COMBINE(1, 0),
+   COMBINE(0, 1),
+   COMBINE(1, 1),
+   COMBINE(2, 0),
+   COMBINE(3, 0),
+   COMBINE(2, 1),
+   COMBINE(3, 1),
+};
+
+void nv50_upload_ms_info(struct nouveau_pushbuf *push)
+{
+   BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
+   PUSH_DATA (push, (NV50_CB_AUX_MS_OFFSET << (8 - 2)) | NV50_CB_AUX);
+   BEGIN_NI04(push, NV50_3D(CB_DATA(0)), Elements(msaa_sample_xy_offsets));
+   PUSH_DATAp(push, msaa_sample_xy_offsets, Elements(msaa_sample_xy_offsets));
 }

@@ -75,9 +75,15 @@
 /* size of the buffer: 64k. not all taken up, can be reduced if needed. */
 #define NV50_CB_AUX_SIZE          (1 << 16)
 /* 8 user clip planes, at 4 32-bit floats each */
-#define NV50_CB_AUX_UCP_OFFSET    0x0
-/* 256 textures, each with 2 16-bit integers specifying the x/y MS shift */
-#define NV50_CB_AUX_MS_OFFSET     0x80
+#define NV50_CB_AUX_UCP_OFFSET    0x0000
+#define NV50_CB_AUX_UCP_SIZE      (8 * 4 * 4)
+/* 256 textures, each with ms_x, ms_y u32 pairs */
+#define NV50_CB_AUX_TEX_MS_OFFSET 0x0080
+#define NV50_CB_AUX_TEX_MS_SIZE   (256 * 2 * 4)
+/* For each MS level (4), 8 sets of 32-bit integer pairs sample offsets */
+#define NV50_CB_AUX_MS_OFFSET     0x880
+#define NV50_CB_AUX_MS_SIZE       (4 * 8 * 4 * 2)
+/* next spot: 0x980 */
 /* 4 32-bit floats for the vertex runout, put at the end */
 #define NV50_CB_AUX_RUNOUT_OFFSET (NV50_CB_AUX_SIZE - 0x10)
 
@@ -251,6 +257,7 @@ extern void nv50_init_surface_functions(struct nv50_context *);
 /* nv50_tex.c */
 void nv50_validate_textures(struct nv50_context *);
 void nv50_validate_samplers(struct nv50_context *);
+void nv50_upload_ms_info(struct nouveau_pushbuf *);
 
 struct pipe_sampler_view *
 nv50_create_texture_view(struct pipe_context *,

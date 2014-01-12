@@ -329,8 +329,13 @@ nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
    info->bin.source = (void *)prog->pipe.tokens;
 
    info->io.ucpCBSlot = 15;
-   info->io.ucpBase = 0;
+   info->io.ucpBase = NV50_CB_AUX_UCP_OFFSET;
    info->io.genUserClip = prog->vp.clpd_nr;
+
+   info->io.resInfoCBSlot = 15;
+   info->io.suInfoBase = NV50_CB_AUX_TEX_MS_OFFSET;
+   info->io.msInfoCBSlot = 15;
+   info->io.msInfoBase = NV50_CB_AUX_MS_OFFSET;
 
    info->assignSlots = nv50_program_assign_varying_slots;
 

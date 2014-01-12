@@ -1232,6 +1232,7 @@ CodeEmitterNV50::emitCVT(const Instruction *i)
       case TYPE_S32: code[1] = 0x44014000; break;
       case TYPE_U32: code[1] = 0x44004000; break;
       case TYPE_F16: code[1] = 0xc4000000; break;
+      case TYPE_U16: code[1] = 0x44000000; break;
       default:
          assert(0);
          break;

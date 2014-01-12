@@ -549,6 +549,8 @@ private:
    bool handleCONT(Instruction *);
 
    void checkPredicate(Instruction *);
+   void loadTexMsInfo(uint32_t off, Value **ms, Value **ms_x, Value **ms_y);
+   void loadMsInfo(Value *ms, Value *s, Value **dx, Value **dy);
 
 private:
    const Target *const targ;
@@ -582,12 +584,70 @@ NV50LoweringPreSSA::visit(Function *f)
    return true;
 }
 
+void NV50LoweringPreSSA::loadTexMsInfo(uint32_t off, Value **ms,
+                                       Value **ms_x, Value **ms_y) {
+   // This loads the texture-indexed ms setting from the constant buffer
+   Value *tmp = new_LValue(func, FILE_GPR);
+   uint8_t b = prog->driver->io.resInfoCBSlot;
+   off += prog->driver->io.suInfoBase;
+   *ms_x = bld.mkLoadv(TYPE_U32, bld.mkSymbol(
+                             FILE_MEMORY_CONST, b, TYPE_U32, off + 0), NULL);
+   *ms_y = bld.mkLoadv(TYPE_U32, bld.mkSymbol(
+                             FILE_MEMORY_CONST, b, TYPE_U32, off + 4), NULL);
+   *ms = bld.mkOp2v(OP_ADD, TYPE_U32, tmp, *ms_x, *ms_y);
+}
+
+void NV50LoweringPreSSA::loadMsInfo(Value *ms, Value *s, Value **dx, Value **dy) {
+   // Given a MS level, and a sample id, compute the delta x/y
+   uint8_t b = prog->driver->io.msInfoCBSlot;
+   Value *off = new_LValue(func, FILE_ADDRESS), *t = new_LValue(func, FILE_GPR);
+
+   // The required information is at mslevel * 16 * 4 + sample * 8
+   // = (mslevel * 8 + sample) * 8
+   bld.mkOp2(OP_SHL,
+             TYPE_U32,
+             off,
+             bld.mkOp2v(OP_ADD, TYPE_U32, t,
+                        bld.mkOp2v(OP_SHL, TYPE_U32, t, ms, bld.mkImm(3)),
+                        s),
+             bld.mkImm(3));
+   *dx = bld.mkLoadv(TYPE_U32, bld.mkSymbol(
+                           FILE_MEMORY_CONST, b, TYPE_U32,
+                           prog->driver->io.msInfoBase), off);
+   *dy = bld.mkLoadv(TYPE_U32, bld.mkSymbol(
+                           FILE_MEMORY_CONST, b, TYPE_U32,
+                           prog->driver->io.msInfoBase + 4), off);
+}
+
 bool
 NV50LoweringPreSSA::handleTEX(TexInstruction *i)
 {
    const int arg = i->tex.target.getArgCount();
    const int dref = arg;
    const int lod = i->tex.target.isShadow() ? (arg + 1) : arg;
+
+   // handle MS, which means looking up the MS params for this texture, and
+   // adjusting the input coordinates to point at the right sample.
+   if (i->tex.target.isMS()) {
+      Value *x = i->getSrc(0);
+      Value *y = i->getSrc(1);
+      Value *s = i->getSrc(arg - 1);
+      Value *tx = new_LValue(func, FILE_GPR), *ty = new_LValue(func, FILE_GPR),
+         *ms, *ms_x, *ms_y, *dx, *dy;
+
+      i->tex.target.clearMS();
+
+      loadTexMsInfo(i->tex.r * 4 * 2, &ms, &ms_x, &ms_y);
+      loadMsInfo(ms, s, &dx, &dy);
+
+      bld.mkOp2(OP_SHL, TYPE_U32, tx, x, ms_x);
+      bld.mkOp2(OP_SHL, TYPE_U32, ty, y, ms_y);
+      bld.mkOp2(OP_ADD, TYPE_U32, tx, tx, dx);
+      bld.mkOp2(OP_ADD, TYPE_U32, ty, ty, dy);
+      i->setSrc(0, tx);
+      i->setSrc(1, ty);
+      i->setSrc(arg - 1, bld.loadImm(NULL, 0));
+   }
 
    // dref comes before bias/lod
    if (i->tex.target.isShadow())

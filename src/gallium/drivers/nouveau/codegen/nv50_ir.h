@@ -827,6 +827,14 @@ public:
       int isShadow() const { return descTable[target].shadow ? 1 : 0; }
       int isMS() const {
         return target == TEX_TARGET_2D_MS || target == TEX_TARGET_2D_MS_ARRAY; }
+      void clearMS() {
+         if (isMS()) {
+            if (isArray())
+               target = TEX_TARGET_2D_ARRAY;
+            else
+               target = TEX_TARGET_2D;
+         }
+      }
 
       Target& operator=(TexTarget targ)
       {
