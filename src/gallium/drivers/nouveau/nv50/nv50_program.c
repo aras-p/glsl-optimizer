@@ -122,6 +122,8 @@ nv50_vertprog_assign_slots(struct nv50_ir_prog_info *info)
    }
    prog->out_nr = info->numOutputs;
    prog->max_out = n;
+   if (!prog->max_out)
+      prog->max_out = 1;
 
    if (prog->vp.psiz < info->numOutputs)
       prog->vp.psiz = prog->out[prog->vp.psiz].hw;
