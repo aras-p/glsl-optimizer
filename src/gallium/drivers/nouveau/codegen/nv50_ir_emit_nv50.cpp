@@ -381,7 +381,7 @@ CodeEmitterNV50::setSrcFileBits(const Instruction *i, int enc)
    case 0x00: // rrr
       break;
    case 0x01: // arr/grr
-      if (progType == Program::TYPE_GEOMETRY) {
+      if (progType == Program::TYPE_GEOMETRY && i->src(0).isIndirect(0)) {
          code[0] |= 0x01800000;
          if (enc == NV50_OP_ENC_LONG || enc == NV50_OP_ENC_LONG_ALT)
             code[1] |= 0x00200000;
@@ -412,7 +412,7 @@ CodeEmitterNV50::setSrcFileBits(const Instruction *i, int enc)
       code[1] |= (i->getSrc(1)->reg.fileIndex << 22);
       break;
    case 0x09: // acr/gcr
-      if (progType == Program::TYPE_GEOMETRY) {
+      if (progType == Program::TYPE_GEOMETRY && i->src(0).isIndirect(0)) {
          code[0] |= 0x01800000;
       } else {
          code[0] |= (enc == NV50_OP_ENC_LONG_ALT) ? 0x01000000 : 0x00800000;
@@ -617,7 +617,7 @@ CodeEmitterNV50::emitLOAD(const Instruction *i)
 
    switch (sf) {
    case FILE_SHADER_INPUT:
-      if (progType == Program::TYPE_GEOMETRY)
+      if (progType == Program::TYPE_GEOMETRY && i->src(0).isIndirect(0))
          code[0] = 0x11800001;
       else
          // use 'mov' where we can

@@ -1434,13 +1434,16 @@ Converter::fetchSrc(tgsi::Instruction::SrcRegister src, int c, Value *ptr)
             return mkOp1v(OP_RDSV, TYPE_F32, getSSA(), mkSysVal(SV_FACE, 0));
          return interpolate(src, c, shiftAddress(ptr));
       } else
-      if (ptr && prog->getType() == Program::TYPE_GEOMETRY) {
+      if (prog->getType() == Program::TYPE_GEOMETRY) {
+         if (!ptr && info->in[idx].sn == TGSI_SEMANTIC_PRIMID)
+            return mkOp1v(OP_RDSV, TYPE_U32, getSSA(), mkSysVal(SV_PRIMITIVE_ID, 0));
          // XXX: This is going to be a problem with scalar arrays, i.e. when
          // we cannot assume that the address is given in units of vec4.
          //
          // nv50 and nvc0 need different things here, so let the lowering
          // passes decide what to do with the address
-         return mkLoadv(TYPE_U32, srcToSym(src, c), ptr);
+         if (ptr)
+            return mkLoadv(TYPE_U32, srcToSym(src, c), ptr);
       }
       return mkLoadv(TYPE_U32, srcToSym(src, c), shiftAddress(ptr));
    case TGSI_FILE_OUTPUT:
