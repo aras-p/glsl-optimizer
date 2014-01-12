@@ -35,11 +35,12 @@ struct tex_layout {
    const struct ilo_dev_info *dev;
    const struct pipe_resource *templ;
 
+   bool has_depth, has_stencil;
+   bool hiz, separate_stencil;
+
    enum pipe_format format;
    unsigned block_width, block_height, block_size;
    bool compressed;
-   bool has_depth, has_stencil;
-   bool hiz, separate_stencil;
 
    enum intel_tiling_mode tiling;
    bool can_be_linear;
@@ -561,61 +562,22 @@ tex_layout_init_format(struct tex_layout *layout)
 {
    const struct pipe_resource *templ = layout->templ;
    enum pipe_format format;
-   const struct util_format_description *desc;
-   bool can_separate_stencil;
-
-   if (layout->dev->gen >= ILO_GEN(7)) {
-      /* GEN7+ requires separate stencil buffers */
-      can_separate_stencil = true;
-   }
-   else {
-      /*
-       * From the Sandy Bridge PRM, volume 2 part 1, page 312:
-       *
-       *     "The hierarchical depth buffer does not support the LOD field, it
-       *      is assumed by hardware to be zero. A separate hierarachical
-       *      depth buffer is required for each LOD used, and the
-       *      corresponding buffer's state delivered to hardware each time a
-       *      new depth buffer state with modified LOD is delivered."
-       *
-       * From the Sandy Bridge PRM, volume 2 part 1, page 316:
-       *
-       *     "The stencil depth buffer does not support the LOD field, it is
-       *      assumed by hardware to be zero. A separate stencil depth buffer
-       *      is required for each LOD used, and the corresponding buffer's
-       *      state delivered to hardware each time a new depth buffer state
-       *      with modified LOD is delivered."
-       *
-       * Enable separate stencil buffer only when non-mipmapped.  And we will
-       * allocate HiZ bo only when separate stencil buffer is enabled.
-       */
-      if (ilo_debug & ILO_DEBUG_NOHIZ)
-         can_separate_stencil = false;
-      else
-         can_separate_stencil = !templ->last_level;
-   }
 
    switch (templ->format) {
    case PIPE_FORMAT_ETC1_RGB8:
       format = PIPE_FORMAT_R8G8B8X8_UNORM;
       break;
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-      if (can_separate_stencil) {
+      if (layout->separate_stencil)
          format = PIPE_FORMAT_Z24X8_UNORM;
-         layout->separate_stencil = true;
-      }
-      else {
+      else
          format = templ->format;
-      }
       break;
    case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-      if (can_separate_stencil) {
+      if (layout->separate_stencil)
          format = PIPE_FORMAT_Z32_FLOAT;
-         layout->separate_stencil = true;
-      }
-      else {
+      else
          format = templ->format;
-      }
       break;
    default:
       format = templ->format;
@@ -628,19 +590,66 @@ tex_layout_init_format(struct tex_layout *layout)
    layout->block_height = util_format_get_blockheight(format);
    layout->block_size = util_format_get_blocksize(format);
    layout->compressed = util_format_is_compressed(format);
+}
 
-   desc = util_format_description(format);
+static void
+tex_layout_init_hiz(struct tex_layout *layout)
+{
+   const struct pipe_resource *templ = layout->templ;
+   const struct util_format_description *desc;
+
+   desc = util_format_description(templ->format);
    layout->has_depth = util_format_has_depth(desc);
    layout->has_stencil = util_format_has_stencil(desc);
 
-   /*
-    * On GEN6, HiZ can be enabled only when separate stencil is enabled.  On
-    * GEN7, there is no such restriction and separate stencil is always
-    * enabled.
-    */
-   if (layout->has_depth && can_separate_stencil &&
-       !(ilo_debug & ILO_DEBUG_NOHIZ))
-      layout->hiz = true;
+   if (!layout->has_depth)
+      return;
+
+   layout->hiz = true;
+
+   /* no point in having HiZ */
+   if (templ->usage & PIPE_USAGE_STAGING)
+      layout->hiz = false;
+
+   if (layout->dev->gen == ILO_GEN(6)) {
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 312:
+       *
+       *     "The hierarchical depth buffer does not support the LOD field, it
+       *      is assumed by hardware to be zero. A separate hierarachical
+       *      depth buffer is required for each LOD used, and the
+       *      corresponding buffer's state delivered to hardware each time a
+       *      new depth buffer state with modified LOD is delivered."
+       *
+       * But we have a stronger requirement.  Because of layer offsetting
+       * (check out the callers of ilo_texture_get_slice_offset()), we already
+       * have to require the texture to be non-mipmapped and non-array.
+       */
+      if (templ->last_level > 0 || templ->array_size > 1 || templ->depth0 > 1)
+         layout->hiz = false;
+   }
+
+   if (ilo_debug & ILO_DEBUG_NOHIZ)
+      layout->hiz = false;
+
+   if (layout->has_stencil) {
+      /*
+       * From the Sandy Bridge PRM, volume 2 part 1, page 317:
+       *
+       *     "This field (Separate Stencil Buffer Enable) must be set to the
+       *      same value (enabled or disabled) as Hierarchical Depth Buffer
+       *      Enable."
+       *
+       * GEN7+ requires separate stencil buffers.
+       */
+      if (layout->dev->gen >= ILO_GEN(7))
+         layout->separate_stencil = true;
+      else
+         layout->separate_stencil = layout->hiz;
+
+      if (layout->separate_stencil)
+         layout->has_stencil = false;
+   }
 }
 
 static void
@@ -657,6 +666,7 @@ tex_layout_init(struct tex_layout *layout,
    layout->templ = templ;
 
    /* note that there are dependencies between these functions */
+   tex_layout_init_hiz(layout);
    tex_layout_init_format(layout);
    tex_layout_init_tiling(layout);
    tex_layout_init_spacing(layout);
@@ -1067,16 +1077,6 @@ tex_create_hiz(struct ilo_texture *tex, const struct tex_layout *layout)
 
       if (layout->dev->gen >= ILO_GEN(7))
          hz_height = align(hz_height, 8);
-   }
-
-   /*
-    * On GEN6, Depth Coordinate Offsets may be set to the values returned by
-    * ilo_texture_get_slice_offset(), which can be as large as (63, 31).  Pad
-    * the HiZ bo to avoid out-of-bound accesses.
-    */
-   if (layout->dev->gen == ILO_GEN(6)) {
-      hz_width += 64;
-      hz_height += 32 / 2;
    }
 
    tex->hiz.bo = intel_winsys_alloc_texture(is->winsys,
