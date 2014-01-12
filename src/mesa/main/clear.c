@@ -278,7 +278,7 @@ make_color_buffer_mask(struct gl_context *ctx, GLint drawbuffer)
       break;
    default:
       {
-         GLuint buf = ctx->DrawBuffer->_ColorDrawBufferIndexes[drawbuffer];
+         GLint buf = ctx->DrawBuffer->_ColorDrawBufferIndexes[drawbuffer];
 
          if (buf >= 0 && att[buf].Renderbuffer) {
             mask |= 1 << buf;
