@@ -395,7 +395,7 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
    struct nv50_context *nv50 = nv50_context(pipe);
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct pipe_framebuffer_state *fb = &nv50->framebuffer;
-   unsigned i;
+   unsigned i, j, k;
    uint32_t mode = 0;
 
    /* don't need NEW_BLEND, COLOR_MASK doesn't affect CLEAR_BUFFERS */
@@ -427,14 +427,36 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
    }
 
    if (mode) {
-      BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
-      PUSH_DATA (push, mode);
+      int zs_layers = 0, color0_layers = 0;
+      if (fb->cbufs[0] && (mode & 0x3c))
+         color0_layers = fb->cbufs[0]->u.tex.last_layer -
+            fb->cbufs[0]->u.tex.first_layer + 1;
+      if (fb->zsbuf && (mode & ~0x3c))
+         zs_layers = fb->zsbuf->u.tex.last_layer -
+            fb->zsbuf->u.tex.first_layer + 1;
+
+      for (j = 0; j < MIN2(zs_layers, color0_layers); j++) {
+         BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
+         PUSH_DATA(push, mode | (j << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
+      }
+      for (k = j; k < zs_layers; k++) {
+         BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
+         PUSH_DATA(push, (mode & ~0x3c) | (k << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
+      }
+      for (k = j; k < color0_layers; k++) {
+         BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
+         PUSH_DATA(push, (mode & 0x3c) | (k << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
+      }
    }
 
    for (i = 1; i < fb->nr_cbufs; i++) {
-      if (buffers & (PIPE_CLEAR_COLOR0 << i)) {
+      struct pipe_surface *sf = fb->cbufs[i];
+      if (!sf || !(buffers & (PIPE_CLEAR_COLOR0 << i)))
+         continue;
+      for (j = 0; j <= sf->u.tex.last_layer - sf->u.tex.first_layer; j++) {
          BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
-         PUSH_DATA (push, (i << 6) | 0x3c);
+         PUSH_DATA (push, (i << 6) | 0x3c |
+                    (j << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
       }
    }
 }
