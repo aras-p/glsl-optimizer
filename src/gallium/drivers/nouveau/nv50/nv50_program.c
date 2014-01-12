@@ -52,6 +52,9 @@ nv50_vertprog_assign_slots(struct nv50_ir_prog_info *info)
       for (c = 0; c < 4; ++c)
          if (info->in[i].mask & (1 << c))
             info->in[i].slot[c] = n++;
+
+      if (info->in[i].sn == TGSI_SEMANTIC_PRIMID)
+         prog->vp.attrs[2] |= NV50_3D_VP_GP_BUILTIN_ATTR_EN_PRIMITIVE_ID;
    }
    prog->in_nr = info->numInputs;
 
