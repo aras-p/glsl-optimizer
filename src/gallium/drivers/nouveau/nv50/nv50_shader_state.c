@@ -461,6 +461,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
       BEGIN_NV04(push, NV50_3D(SEMANTIC_PRIM_ID), 1);
       PUSH_DATA (push, primid);
 
+      assert(m > 0);
       BEGIN_NV04(push, NV50_3D(VP_RESULT_MAP_SIZE), 1);
       PUSH_DATA (push, m);
       BEGIN_NV04(push, NV50_3D(VP_RESULT_MAP(0)), n);
@@ -523,6 +524,8 @@ nv50_vp_gp_mapping(uint8_t *map, int m,
          oid += mv & 1;
       }
    }
+   if (!m)
+      map[m++] = 0;
    return m;
 }
 
@@ -547,6 +550,7 @@ nv50_gp_linkage_validate(struct nv50_context *nv50)
    BEGIN_NV04(push, NV50_3D(VP_GP_BUILTIN_ATTR_EN), 1);
    PUSH_DATA (push, vp->vp.attrs[2] | gp->vp.attrs[2]);
 
+   assert(m > 0);
    BEGIN_NV04(push, NV50_3D(VP_RESULT_MAP_SIZE), 1);
    PUSH_DATA (push, m);
    BEGIN_NV04(push, NV50_3D(VP_RESULT_MAP(0)), n);
