@@ -1229,4 +1229,6 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
    pipe->set_global_binding = nvc0_set_global_bindings;
    pipe->set_compute_resources = nvc0_set_compute_resources;
    pipe->set_shader_resources = nvc0_set_shader_resources;
+
+   nvc0->sample_mask = ~0;
 }

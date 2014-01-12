@@ -1123,4 +1123,6 @@ nv50_init_state_functions(struct nv50_context *nv50)
    pipe->create_stream_output_target = nv50_so_target_create;
    pipe->stream_output_target_destroy = nv50_so_target_destroy;
    pipe->set_stream_output_targets = nv50_set_stream_output_targets;
+
+   nv50->sample_mask = ~0;
 }
