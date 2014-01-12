@@ -551,10 +551,19 @@ create_mov(struct fd3_compile_context *ctx, struct tgsi_dst_register *dst,
 	for (i = 0; i < 4; i++) {
 		/* move to destination: */
 		if (dst->WriteMask & (1 << i)) {
-			struct ir3_instruction *instr =
-					ir3_instr_create(ctx->ir, 1, 0);
-			instr->cat1.src_type = type_mov;
-			instr->cat1.dst_type = type_mov;
+			struct ir3_instruction *instr;
+
+			if (src->Absolute || src->Negate) {
+				/* can't have abs or neg on a mov instr, so use
+				 * absneg.f instead to handle these cases:
+				 */
+				instr = ir3_instr_create(ctx->ir, 2, OPC_ABSNEG_F);
+			} else {
+				instr = ir3_instr_create(ctx->ir, 1, 0);
+				instr->cat1.src_type = type_mov;
+				instr->cat1.dst_type = type_mov;
+			}
+
 			add_dst_reg(ctx, instr, dst, i);
 			add_src_reg(ctx, instr, src, src_swiz(src, i));
 		} else {
@@ -600,7 +609,8 @@ get_dst(struct fd3_compile_context *ctx, struct tgsi_full_instruction *inst)
 	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
 		struct tgsi_src_register *src = &inst->Src[i].Register;
 		if ((src->File == dst->File) && (src->Index == dst->Index)) {
-			if ((src->SwizzleX == TGSI_SWIZZLE_X) &&
+			if ((dst->WriteMask == TGSI_WRITEMASK_XYZW) &&
+					(src->SwizzleX == TGSI_SWIZZLE_X) &&
 					(src->SwizzleY == TGSI_SWIZZLE_Y) &&
 					(src->SwizzleZ == TGSI_SWIZZLE_Z) &&
 					(src->SwizzleW == TGSI_SWIZZLE_W))
@@ -910,6 +920,9 @@ trans_dotp(const struct instr_translater *t,
 
 	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 2;
 
+	/* because of get_internal_temp_repl(), this will replicate
+	 * the results to all components of dst:
+	 */
 	create_mov(ctx, dst, tmp_src);
 }
 
@@ -997,7 +1010,6 @@ trans_arl(const struct instr_translater *t,
 	handle_last_rel(ctx);
 
 	tmp_src = get_internal_temp_hr(ctx, &tmp_dst);
-
 
 	/* cov.{f32,f16}s16 Rtmp, Rsrc */
 	instr = ir3_instr_create(ctx->ir, 1, 0);
@@ -1515,7 +1527,7 @@ instr_cat3(const struct instr_translater *t,
 			src0 = src1;
 			src1 = tmp;
 		} else {
-			src0 = get_unconst(ctx, src0);
+			src1 = get_unconst(ctx, src1);
 		}
 	}
 
@@ -1534,19 +1546,27 @@ instr_cat4(const struct instr_translater *t,
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
 	struct tgsi_src_register *src = &inst->Src[0].Register;
 	struct ir3_instruction *instr;
+	unsigned i, n;
 
 	/* seems like blob compiler avoids const as src.. */
 	if (is_const(src))
 		src = get_unconst(ctx, src);
 
+	/* worst case: */
 	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 5;
-	instr = ir3_instr_create(ctx->ir, 4, t->opc);
 
-	vectorize(ctx, instr, dst, 1, src, 0);
+	/* we need to replicate into each component: */
+	for (i = 0, n = 0; i < 4; i++) {
+		if (dst->WriteMask & (1 << i)) {
+			if (n++)
+				ir3_instr_create(ctx->ir, 0, OPC_NOP);
+			instr = ir3_instr_create(ctx->ir, 4, t->opc);
+			add_dst_reg(ctx, instr, dst, i);
+			add_src_reg(ctx, instr, src, src->SwizzleX);
+		}
+	}
 
-	regmask_set(ctx->needs_ss, instr->regs[0],
-			inst->Dst[0].Register.WriteMask);
-
+	regmask_set(ctx->needs_ss, instr->regs[0], dst->WriteMask);
 	put_dst(ctx, inst, dst);
 }
 
@@ -1579,8 +1599,8 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(LG2,          instr_cat4, .opc = OPC_LOG2),
 	INSTR(POW,          trans_pow),
 	INSTR(ABS,          instr_cat2, .opc = OPC_ABSNEG_F),
-	INSTR(COS,          instr_cat4, .opc = OPC_SIN),
-	INSTR(SIN,          instr_cat4, .opc = OPC_COS),
+	INSTR(COS,          instr_cat4, .opc = OPC_COS),
+	INSTR(SIN,          instr_cat4, .opc = OPC_SIN),
 	INSTR(TEX,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TEX),
 	INSTR(TXP,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TXP),
 	INSTR(SGT,          trans_cmp),
