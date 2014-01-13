@@ -125,6 +125,7 @@ struct r600_bytecode_output {
 	unsigned			swizzle_z;
 	unsigned			swizzle_w;
 	unsigned			burst_count;
+	unsigned			index_gpr;
 };
 
 struct r600_bytecode_kcache {

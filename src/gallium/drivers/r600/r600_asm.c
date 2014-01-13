@@ -1525,7 +1525,8 @@ static int r600_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode
 		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD0_RW_GPR(cf->output.gpr) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ELEM_SIZE(cf->output.elem_size) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(cf->output.array_base) |
-			S_SQ_CF_ALLOC_EXPORT_WORD0_TYPE(cf->output.type);
+			S_SQ_CF_ALLOC_EXPORT_WORD0_TYPE(cf->output.type) |
+			S_SQ_CF_ALLOC_EXPORT_WORD0_INDEX_GPR(cf->output.index_gpr);
 		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD1_BURST_COUNT(cf->output.burst_count - 1) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_X(cf->output.swizzle_x) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Y(cf->output.swizzle_y) |
@@ -1538,7 +1539,8 @@ static int r600_bytecode_cf_build(struct r600_bytecode *bc, struct r600_bytecode
 		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD0_RW_GPR(cf->output.gpr) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ELEM_SIZE(cf->output.elem_size) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(cf->output.array_base) |
-			S_SQ_CF_ALLOC_EXPORT_WORD0_TYPE(cf->output.type);
+			S_SQ_CF_ALLOC_EXPORT_WORD0_TYPE(cf->output.type) |
+			S_SQ_CF_ALLOC_EXPORT_WORD0_INDEX_GPR(cf->output.index_gpr);
 		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD1_BURST_COUNT(cf->output.burst_count - 1) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->barrier) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(opcode) |
@@ -1962,6 +1964,9 @@ void r600_bytecode_disasm(struct r600_bytecode *bc)
 					else
 						o += print_swizzle(7);
 				}
+
+				if (cf->output.type == V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_WRITE_IND)
+					o += fprintf(stderr, " R%d", cf->output.index_gpr);
 
 				o += print_indent(o, 67);
 
