@@ -738,8 +738,12 @@ nv50_screen_create(struct nouveau_device *dev)
       goto fail;
    }
 
+   /* This over-allocates by a whole code BO. The GP, which would execute at
+    * the end of the last page, would trigger faults. The going theory is that
+    * it prefetches up to a certain amount. This avoids dmesg spam.
+    */
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16,
-                        3 << NV50_CODE_BO_SIZE_LOG2, NULL, &screen->code);
+                        4 << NV50_CODE_BO_SIZE_LOG2, NULL, &screen->code);
    if (ret) {
       NOUVEAU_ERR("Failed to allocate code bo: %d\n", ret);
       goto fail;
