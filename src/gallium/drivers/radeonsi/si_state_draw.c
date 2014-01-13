@@ -680,7 +680,8 @@ void si_emit_cache_flush(struct r600_common_context *sctx, struct r600_atom *ato
 		radeon_emit(cs, EVENT_TYPE(V_028A90_FLUSH_AND_INV_DB_META) | EVENT_INDEX(0));
 	}
 
-	if (sctx->flags & R600_CONTEXT_WAIT_3D_IDLE) {
+	if (sctx->flags & (R600_CONTEXT_WAIT_3D_IDLE |
+			   R600_CONTEXT_PS_PARTIAL_FLUSH)) {
 		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
 		radeon_emit(cs, EVENT_TYPE(V_028A90_PS_PARTIAL_FLUSH) | EVENT_INDEX(4));
 	} else if (sctx->flags & R600_CONTEXT_STREAMOUT_FLUSH) {
