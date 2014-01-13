@@ -57,16 +57,6 @@ struct u_upload_mgr *u_upload_create( struct pipe_context *pipe,
 void u_upload_destroy( struct u_upload_mgr *upload );
 
 /**
- * Unmap and release old upload buffer.
- * 
- * This is like u_upload_unmap() except the upload buffer is released for
- * recycling. This should be called on real hardware flushes on systems
- * that don't support the PIPE_TRANSFER_UNSYNCHRONIZED flag, as otherwise
- * the next u_upload_buffer will cause a sync on the buffer.
- */
-void u_upload_flush( struct u_upload_mgr *upload );
-
-/**
  * Unmap upload buffer
  *
  * \param upload           Upload manager

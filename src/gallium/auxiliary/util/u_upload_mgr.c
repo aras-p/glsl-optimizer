@@ -87,16 +87,8 @@ void u_upload_unmap( struct u_upload_mgr *upload )
    }
 }
 
-/* Release old buffer.
- * 
- * This must usually be called prior to firing the command stream
- * which references the upload buffer, as many memory managers will
- * cause subsequent maps of a fired buffer to wait.
- *
- * Can improve this with a change to pipe_buffer_write to use the
- * DONT_WAIT bit, but for now, it's easiest just to grab a new buffer.
- */
-void u_upload_flush( struct u_upload_mgr *upload )
+
+static void u_upload_release_buffer(struct u_upload_mgr *upload)
 {
    /* Unmap and unreference the upload buffer. */
    u_upload_unmap(upload);
@@ -107,7 +99,7 @@ void u_upload_flush( struct u_upload_mgr *upload )
 
 void u_upload_destroy( struct u_upload_mgr *upload )
 {
-   u_upload_flush( upload );
+   u_upload_release_buffer( upload );
    FREE( upload );
 }
 
@@ -120,7 +112,7 @@ u_upload_alloc_buffer( struct u_upload_mgr *upload,
 
    /* Release the old buffer, if present:
     */
-   u_upload_flush( upload );
+   u_upload_release_buffer( upload );
 
    /* Allocate a new one: 
     */
