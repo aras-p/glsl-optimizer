@@ -414,21 +414,15 @@ static void si_set_scissor_states(struct pipe_context *ctx,
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
-	uint32_t tl, br;
 
 	if (pm4 == NULL)
 		return;
 
-	tl = S_028240_TL_X(state->minx) | S_028240_TL_Y(state->miny);
-	br = S_028244_BR_X(state->maxx) | S_028244_BR_Y(state->maxy);
-	si_pm4_set_reg(pm4, R_028210_PA_SC_CLIPRECT_0_TL, tl);
-	si_pm4_set_reg(pm4, R_028214_PA_SC_CLIPRECT_0_BR, br);
-	si_pm4_set_reg(pm4, R_028218_PA_SC_CLIPRECT_1_TL, tl);
-	si_pm4_set_reg(pm4, R_02821C_PA_SC_CLIPRECT_1_BR, br);
-	si_pm4_set_reg(pm4, R_028220_PA_SC_CLIPRECT_2_TL, tl);
-	si_pm4_set_reg(pm4, R_028224_PA_SC_CLIPRECT_2_BR, br);
-	si_pm4_set_reg(pm4, R_028228_PA_SC_CLIPRECT_3_TL, tl);
-	si_pm4_set_reg(pm4, R_02822C_PA_SC_CLIPRECT_3_BR, br);
+	si_pm4_set_reg(pm4, R_028250_PA_SC_VPORT_SCISSOR_0_TL,
+		       S_028250_TL_X(state->minx) | S_028250_TL_Y(state->miny) |
+		       S_028250_WINDOW_OFFSET_DISABLE(1));
+	si_pm4_set_reg(pm4, R_028254_PA_SC_VPORT_SCISSOR_0_BR,
+		       S_028254_BR_X(state->maxx) | S_028254_BR_Y(state->maxy));
 
 	si_pm4_set_state(sctx, scissor, pm4);
 }
@@ -536,7 +530,6 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 	struct si_pm4_state *pm4 = &rs->pm4;
 	unsigned tmp;
 	unsigned prov_vtx = 1, polygon_dual_mode;
-	unsigned clip_rule;
 	float psize_min, psize_max;
 
 	if (rs == NULL) {
@@ -577,8 +570,6 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 		S_028810_DX_RASTERIZATION_KILL(state->rasterizer_discard) |
 		S_028810_DX_LINEAR_ATTR_CLIP_ENA(1);
 
-	clip_rule = state->scissor ? 0xAAAA : 0xFFFF;
-
 	/* offset */
 	rs->offset_units = state->offset_units;
 	rs->offset_scale = state->offset_scale * 12.0f;
@@ -617,14 +608,14 @@ static void *si_create_rs_state(struct pipe_context *ctx,
 	si_pm4_set_reg(pm4, R_028A08_PA_SU_LINE_CNTL, S_028A08_WIDTH(tmp));
 	si_pm4_set_reg(pm4, R_028A48_PA_SC_MODE_CNTL_0,
 		       S_028A48_LINE_STIPPLE_ENABLE(state->line_stipple_enable) |
-		       S_028A48_MSAA_ENABLE(state->multisample));
+		       S_028A48_MSAA_ENABLE(state->multisample) |
+		       S_028A48_VPORT_SCISSOR_ENABLE(state->scissor));
 
 	si_pm4_set_reg(pm4, R_028BE4_PA_SU_VTX_CNTL,
 		       S_028BE4_PIX_CENTER(state->half_pixel_center) |
 		       S_028BE4_QUANT_MODE(V_028BE4_X_16_8_FIXED_POINT_1_256TH));
 
 	si_pm4_set_reg(pm4, R_028B7C_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp));
-	si_pm4_set_reg(pm4, R_02820C_PA_SC_CLIPRECT_RULE, clip_rule);
 
 	return rs;
 }
@@ -2081,8 +2072,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
-	uint32_t tl, br;
-	int tl_x, tl_y, br_x, br_y, nr_samples, i;
+	int nr_samples, i;
 
 	if (pm4 == NULL)
 		return;
@@ -2126,22 +2116,9 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	assert(!(sctx->export_16bpc & ~0xff));
 	si_db(sctx, pm4, state);
 
-	tl_x = 0;
-	tl_y = 0;
-	br_x = state->width;
-	br_y = state->height;
-
-	tl = S_028240_TL_X(tl_x) | S_028240_TL_Y(tl_y);
-	br = S_028244_BR_X(br_x) | S_028244_BR_Y(br_y);
-
-	si_pm4_set_reg(pm4, R_028240_PA_SC_GENERIC_SCISSOR_TL, tl);
-	si_pm4_set_reg(pm4, R_028244_PA_SC_GENERIC_SCISSOR_BR, br);
-	si_pm4_set_reg(pm4, R_028250_PA_SC_VPORT_SCISSOR_0_TL, tl);
-	si_pm4_set_reg(pm4, R_028254_PA_SC_VPORT_SCISSOR_0_BR, br);
-	si_pm4_set_reg(pm4, R_028030_PA_SC_SCREEN_SCISSOR_TL, tl);
-	si_pm4_set_reg(pm4, R_028034_PA_SC_SCREEN_SCISSOR_BR, br);
-	si_pm4_set_reg(pm4, R_028204_PA_SC_WINDOW_SCISSOR_TL, tl);
-	si_pm4_set_reg(pm4, R_028208_PA_SC_WINDOW_SCISSOR_BR, br);
+	/* PA_SC_WINDOW_SCISSOR_TL is set in si_init_config() */
+	si_pm4_set_reg(pm4, R_028208_PA_SC_WINDOW_SCISSOR_BR,
+		       S_028208_BR_X(state->width) | S_028208_BR_Y(state->height));
 
 	nr_samples = util_framebuffer_get_num_samples(state);
 
@@ -3204,7 +3181,15 @@ void si_init_config(struct si_context *sctx)
 		}
 	}
 
-	si_pm4_set_reg(pm4, R_028200_PA_SC_WINDOW_OFFSET, 0x00000000);
+	si_pm4_set_reg(pm4, R_028204_PA_SC_WINDOW_SCISSOR_TL, S_028204_WINDOW_OFFSET_DISABLE(1));
+	si_pm4_set_reg(pm4, R_028240_PA_SC_GENERIC_SCISSOR_TL, S_028240_WINDOW_OFFSET_DISABLE(1));
+	si_pm4_set_reg(pm4, R_028244_PA_SC_GENERIC_SCISSOR_BR,
+		       S_028244_BR_X(16384) | S_028244_BR_Y(16384));
+	si_pm4_set_reg(pm4, R_028030_PA_SC_SCREEN_SCISSOR_TL, 0);
+	si_pm4_set_reg(pm4, R_028034_PA_SC_SCREEN_SCISSOR_BR,
+		       S_028034_BR_X(16384) | S_028034_BR_Y(16384));
+
+	si_pm4_set_reg(pm4, R_02820C_PA_SC_CLIPRECT_RULE, 0xFFFF);
 	si_pm4_set_reg(pm4, R_028230_PA_SC_EDGERULE, 0xAAAAAAAA);
 	si_pm4_set_reg(pm4, R_0282D0_PA_SC_VPORT_ZMIN_0, 0x00000000);
 	si_pm4_set_reg(pm4, R_0282D4_PA_SC_VPORT_ZMAX_0, 0x3F800000);
