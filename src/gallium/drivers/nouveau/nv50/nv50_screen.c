@@ -471,7 +471,7 @@ nv50_screen_init_hwctx(struct nv50_screen *screen)
    BEGIN_NV04(push, NV50_3D(CB_DEF_ADDRESS_HIGH), 3);
    PUSH_DATAh(push, screen->uniforms->offset + (3 << 16));
    PUSH_DATA (push, screen->uniforms->offset + (3 << 16));
-   PUSH_DATA (push, (NV50_CB_AUX << 16) | 0x0200);
+   PUSH_DATA (push, (NV50_CB_AUX << 16) | (NV50_CB_AUX_SIZE & 0xffff));
 
    BEGIN_NI04(push, NV50_3D(SET_PROGRAM_CB), 3);
    PUSH_DATA (push, (NV50_CB_AUX << 12) | 0xf01);
@@ -480,15 +480,15 @@ nv50_screen_init_hwctx(struct nv50_screen *screen)
 
    /* return { 0.0, 0.0, 0.0, 0.0 } on out-of-bounds vtxbuf access */
    BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
-   PUSH_DATA (push, ((1 << 9) << 6) | NV50_CB_AUX);
+   PUSH_DATA (push, (NV50_CB_AUX_RUNOUT_OFFSET << 6) | NV50_CB_AUX);
    BEGIN_NI04(push, NV50_3D(CB_DATA(0)), 4);
    PUSH_DATAf(push, 0.0f);
    PUSH_DATAf(push, 0.0f);
    PUSH_DATAf(push, 0.0f);
    PUSH_DATAf(push, 0.0f);
    BEGIN_NV04(push, NV50_3D(VERTEX_RUNOUT_ADDRESS_HIGH), 2);
-   PUSH_DATAh(push, screen->uniforms->offset + (3 << 16) + (1 << 9));
-   PUSH_DATA (push, screen->uniforms->offset + (3 << 16) + (1 << 9));
+   PUSH_DATAh(push, screen->uniforms->offset + (3 << 16) + NV50_CB_AUX_RUNOUT_OFFSET);
+   PUSH_DATA (push, screen->uniforms->offset + (3 << 16) + NV50_CB_AUX_RUNOUT_OFFSET);
 
    /* max TIC (bits 4:8) & TSC bindings, per program type */
    for (i = 0; i < 3; ++i) {

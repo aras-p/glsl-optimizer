@@ -260,7 +260,7 @@ nv50_validate_clip(struct nv50_context *nv50)
 
    if (nv50->dirty & NV50_NEW_CLIP) {
       BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
-      PUSH_DATA (push, (0 << 8) | NV50_CB_AUX);
+      PUSH_DATA (push, (NV50_CB_AUX_UCP_OFFSET << 8) | NV50_CB_AUX);
       BEGIN_NI04(push, NV50_3D(CB_DATA(0)), PIPE_MAX_CLIP_PLANES * 4);
       PUSH_DATAp(push, &nv50->clip.ucp[0][0], PIPE_MAX_CLIP_PLANES * 4);
    }

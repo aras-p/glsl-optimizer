@@ -70,7 +70,17 @@
 #define NV50_CB_PVP 124
 #define NV50_CB_PGP 126
 #define NV50_CB_PFP 125
+/* constant buffer permanently mapped in as c15[] */
 #define NV50_CB_AUX 127
+/* size of the buffer: 64k. not all taken up, can be reduced if needed. */
+#define NV50_CB_AUX_SIZE          (1 << 16)
+/* 8 user clip planes, at 4 32-bit floats each */
+#define NV50_CB_AUX_UCP_OFFSET    0x0
+/* 256 textures, each with 2 16-bit integers specifying the x/y MS shift */
+#define NV50_CB_AUX_MS_OFFSET     0x80
+/* 4 32-bit floats for the vertex runout, put at the end */
+#define NV50_CB_AUX_RUNOUT_OFFSET (NV50_CB_AUX_SIZE - 0x10)
+
 
 
 struct nv50_blitctx;
