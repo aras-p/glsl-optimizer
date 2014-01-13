@@ -418,20 +418,6 @@ get_internal_temp_hr(struct fd3_compile_context *ctx,
 	return tmp_src;
 }
 
-/* same as get_internal_temp, but w/ src.xxxx (for instructions that
- * replicate their results)
- */
-static struct tgsi_src_register *
-get_internal_temp_repl(struct fd3_compile_context *ctx,
-		struct tgsi_dst_register *tmp_dst)
-{
-	struct tgsi_src_register *tmp_src =
-			get_internal_temp(ctx, tmp_dst);
-	tmp_src->SwizzleX = tmp_src->SwizzleY =
-		tmp_src->SwizzleZ = tmp_src->SwizzleW = TGSI_SWIZZLE_X;
-	return tmp_src;
-}
-
 static inline bool
 is_const(struct tgsi_src_register *src)
 {
@@ -706,227 +692,6 @@ vectorize(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
  * native instructions:
  */
 
-/* LIT - Light Coefficients:
- *   dst.x = 1.0
- *   dst.y = max(src.x, 0.0)
- *   dst.z = (src.x > 0.0) ? max(src.y, 0.0)^{clamp(src.w, -128.0, 128.0))} : 0.0
- *   dst.w = 1.0
- *
- *   max.f tmp.y, src.y, {0.0}
- *   nop
- *   max.f tmp.z, src.w, {-128.0}
- *   cmps.f.ge tmp.w, (neg)src.x, {0.0}
- *   max.f dst.y, src.x, {0.0}
- *   nop
- *   min.f tmp.x, tmp.z, {128.0}
- *   add.s tmp.z, tmp.w, -1
- *   log2 tmp.y, tmp.y
- *   (rpt1)nop
- *   (ss)mul.f tmp.x, tmp.x, tmp.y
- *   mov.f16f16 dst.x, {1.0}
- *   mov.f16f16 dst.w, {1.0}
- *   (rpt3)nop
- *   exp2 tmp.x, tmp.x
- *   (ss)sel.f16 dst.z, {0.0}, tmp.z, tmp.x
- */
-static void
-trans_lit(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
-		struct tgsi_full_instruction *inst)
-{
-	struct ir3_instruction *instr;
-	struct ir3_register *r;
-	struct tgsi_dst_register tmp_dst;
-	struct tgsi_src_register *tmp_src;
-	struct tgsi_src_register constval0, constval1, constval128;
-	struct tgsi_src_register *src = &inst->Src[0].Register;
-	struct tgsi_dst_register *dst = get_dst(ctx, inst);
-
-	tmp_src = get_internal_temp_repl(ctx, &tmp_dst);
-
-	if (is_const(src))
-		src = get_unconst(ctx, src);
-
-	get_immediate(ctx, &constval0, fui(0.0));
-	get_immediate(ctx, &constval1, fui(1.0));
-	get_immediate(ctx, &constval128, fui(128.0));
-
-	/* max.f tmp.y, src.y, {0.0} */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_MAX_F);
-	add_dst_reg(ctx, instr, &tmp_dst, TGSI_SWIZZLE_Y);
-	add_src_reg(ctx, instr, src, TGSI_SWIZZLE_Y);
-	add_src_reg(ctx, instr, &constval0, constval0.SwizzleX);
-
-	/* nop */
-	ir3_instr_create(ctx->ir, 0, OPC_NOP);
-
-	/* max.f tmp.z, src.w, {-128.0} */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_MAX_F);
-	add_dst_reg(ctx, instr, &tmp_dst, TGSI_SWIZZLE_Z);
-	add_src_reg(ctx, instr, src, TGSI_SWIZZLE_W);
-	add_src_reg(ctx, instr, &constval128,
-			constval128.SwizzleX)->flags |= IR3_REG_NEGATE;
-
-	/* cmps.f.ge tmp.w, (neg)src.x, {0.0} */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_CMPS_F);
-	add_dst_reg(ctx, instr, &tmp_dst, TGSI_SWIZZLE_W);
-	add_src_reg(ctx, instr, src, TGSI_SWIZZLE_X)->flags |= IR3_REG_NEGATE;
-	add_src_reg(ctx, instr, &constval0, constval0.SwizzleX);
-	instr->cat2.condition = IR3_COND_GE;
-
-	/* max.f dst.y, src.x, {0.0} */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_MAX_F);
-	add_dst_reg(ctx, instr, dst, TGSI_SWIZZLE_Y);
-	add_src_reg(ctx, instr, src, TGSI_SWIZZLE_X);
-	add_src_reg(ctx, instr, &constval0, constval0.SwizzleX);
-
-	/* nop */
-	ir3_instr_create(ctx->ir, 0, OPC_NOP);
-
-	/* min.f tmp.x, tmp.z, {128.0} */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_MIN_F);
-	add_dst_reg(ctx, instr, &tmp_dst, TGSI_SWIZZLE_X);
-	add_src_reg(ctx, instr, tmp_src, TGSI_SWIZZLE_Z);
-	add_src_reg(ctx, instr, &constval128, constval128.SwizzleX);
-
-	/* add.s tmp.z, tmp.w, -1 */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_ADD_S);
-	add_dst_reg(ctx, instr, &tmp_dst, TGSI_SWIZZLE_Z);
-	add_src_reg(ctx, instr, tmp_src, TGSI_SWIZZLE_W);
-	ir3_reg_create(instr, 0, IR3_REG_IMMED)->iim_val = -1;
-
-	/* log2 tmp.y, tmp.y */
-	instr = ir3_instr_create(ctx->ir, 4, OPC_LOG2);
-	r = add_dst_reg(ctx, instr, &tmp_dst, TGSI_SWIZZLE_Y);
-	add_src_reg(ctx, instr, tmp_src, TGSI_SWIZZLE_Y);
-	regmask_set(ctx->needs_ss, r, TGSI_WRITEMASK_Y);
-
-	/* (rpt1)nop */
-	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 1;
-
-	/* (ss)mul.f tmp.x, tmp.x, tmp.y */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_MUL_F);
-	add_dst_reg(ctx, instr, &tmp_dst, TGSI_SWIZZLE_X);
-	add_src_reg(ctx, instr, tmp_src, TGSI_SWIZZLE_X);
-	add_src_reg(ctx, instr, tmp_src, TGSI_SWIZZLE_Y);
-
-	/* mov.f16f16 dst.x, {1.0} */
-	instr = ir3_instr_create(ctx->ir, 1, 0);
-	instr->cat1.src_type = get_ftype(ctx);
-	instr->cat1.dst_type = get_ftype(ctx);
-	add_dst_reg(ctx, instr, dst, TGSI_SWIZZLE_X);
-	add_src_reg(ctx, instr, &constval1, constval1.SwizzleX);
-
-	/* mov.f16f16 dst.w, {1.0} */
-	instr = ir3_instr_create(ctx->ir, 1, 0);
-	instr->cat1.src_type = get_ftype(ctx);
-	instr->cat1.dst_type = get_ftype(ctx);
-	add_dst_reg(ctx, instr, dst, TGSI_SWIZZLE_W);
-	add_src_reg(ctx, instr, &constval1, constval1.SwizzleX);
-
-	/* (rpt3)nop */
-	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 3;
-
-	/* exp2 tmp.x, tmp.x */
-	instr = ir3_instr_create(ctx->ir, 4, OPC_EXP2);
-	r = add_dst_reg(ctx, instr, &tmp_dst, TGSI_SWIZZLE_X);
-	add_src_reg(ctx, instr, tmp_src, TGSI_SWIZZLE_X);
-	regmask_set(ctx->needs_ss, r, TGSI_WRITEMASK_X);
-
-	/* (ss)sel.f16 dst.z, {0.0}, tmp.z, tmp.x */
-	instr = ir3_instr_create(ctx->ir, 3,
-			ctx->so->half_precision ? OPC_SEL_F16 : OPC_SEL_F32);
-	add_dst_reg(ctx, instr, dst, TGSI_SWIZZLE_Z);
-	add_src_reg(ctx, instr, &constval0, constval0.SwizzleX);
-	add_src_reg(ctx, instr, tmp_src, TGSI_SWIZZLE_Z);
-	add_src_reg(ctx, instr, tmp_src, TGSI_SWIZZLE_X);
-
-	put_dst(ctx, inst, dst);
-}
-
-static inline void
-get_swiz(unsigned *swiz, struct tgsi_src_register *src)
-{
-	swiz[0] = src->SwizzleX;
-	swiz[1] = src->SwizzleY;
-	swiz[2] = src->SwizzleZ;
-	swiz[3] = src->SwizzleW;
-}
-
-static void
-trans_dotp(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
-		struct tgsi_full_instruction *inst)
-{
-	struct ir3_instruction *instr;
-	struct tgsi_dst_register tmp_dst;
-	struct tgsi_src_register *tmp_src;
-	struct tgsi_dst_register *dst  = &inst->Dst[0].Register;
-	struct tgsi_src_register *src0 = &inst->Src[0].Register;
-	struct tgsi_src_register *src1 = &inst->Src[1].Register;
-	unsigned swiz0[4];
-	unsigned swiz1[4];
-	opc_t opc_mad    = ctx->so->half_precision ? OPC_MAD_F16 : OPC_MAD_F32;
-	unsigned n = t->arg;     /* number of components */
-	unsigned i, swapped = 0;
-
-	tmp_src = get_internal_temp_repl(ctx, &tmp_dst);
-
-	/* in particular, can't handle const for src1 for cat3/mad:
-	 */
-	if (is_rel_or_const(src1)) {
-		if (!is_rel_or_const(src0)) {
-			struct tgsi_src_register *tmp;
-			tmp = src0;
-			src0 = src1;
-			src1 = tmp;
-			swapped = 1;
-		} else {
-			src0 = get_unconst(ctx, src0);
-		}
-	}
-
-	get_swiz(swiz0, src0);
-	get_swiz(swiz1, src1);
-
-	instr = ir3_instr_create(ctx->ir, 2, OPC_MUL_F);
-	add_dst_reg(ctx, instr, &tmp_dst, 0);
-	add_src_reg(ctx, instr, src0, swiz0[0]);
-	add_src_reg(ctx, instr, src1, swiz1[0]);
-
-	for (i = 1; i < n; i++) {
-		ir3_instr_create(ctx->ir, 0, OPC_NOP);
-
-		instr = ir3_instr_create(ctx->ir, 3, opc_mad);
-		add_dst_reg(ctx, instr, &tmp_dst, 0);
-		add_src_reg(ctx, instr, src0, swiz0[i]);
-		add_src_reg(ctx, instr, src1, swiz1[i]);
-		add_src_reg(ctx, instr, tmp_src, 0);
-	}
-
-	/* DPH(a,b) = (a.x * b.x) + (a.y * b.y) + (a.z * b.z) + b.w */
-	if (t->tgsi_opc == TGSI_OPCODE_DPH) {
-		ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 1;
-
-		instr = ir3_instr_create(ctx->ir, 2, OPC_ADD_F);
-		add_dst_reg(ctx, instr, &tmp_dst, 0);
-		if (swapped)
-			add_src_reg(ctx, instr, src0, swiz0[i]);
-		else
-			add_src_reg(ctx, instr, src1, swiz1[i]);
-		add_src_reg(ctx, instr, tmp_src, 0);
-
-		n++;
-	}
-
-	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 2;
-
-	/* because of get_internal_temp_repl(), this will replicate
-	 * the results to all components of dst:
-	 */
-	create_mov(ctx, dst, tmp_src);
-}
-
 static void
 trans_clamp(const struct instr_translater *t,
 		struct fd3_compile_context *ctx,
@@ -940,73 +705,6 @@ trans_clamp(const struct instr_translater *t,
 	create_clamp(ctx, dst, src0, src1, src2);
 
 	put_dst(ctx, inst, dst);
-}
-
-/* LRP(a,b,c) = (a * b) + ((1 - a) * c) */
-static void
-trans_lrp(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
-		struct tgsi_full_instruction *inst)
-{
-	struct ir3_instruction *instr;
-	struct tgsi_dst_register tmp_dst1, tmp_dst2;
-	struct tgsi_src_register *tmp_src1, *tmp_src2;
-	struct tgsi_src_register tmp_const;
-	struct tgsi_src_register *src0 = &inst->Src[0].Register;
-	struct tgsi_src_register *src1 = &inst->Src[1].Register;
-
-	if (is_const(src0) && is_const(src1))
-		src0 = get_unconst(ctx, src0);
-
-	tmp_src1 = get_internal_temp(ctx, &tmp_dst1);
-	tmp_src2 = get_internal_temp(ctx, &tmp_dst2);
-
-	get_immediate(ctx, &tmp_const, fui(1.0));
-
-	/* tmp1 = (a * b) */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_MUL_F);
-	vectorize(ctx, instr, &tmp_dst1, 2, src0, 0, src1, 0);
-
-	/* tmp2 = (1 - a) */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_ADD_F);
-	vectorize(ctx, instr, &tmp_dst2, 2, &tmp_const, 0,
-			src0, IR3_REG_NEGATE);
-
-	/* tmp2 = tmp2 * c */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_MUL_F);
-	vectorize(ctx, instr, &tmp_dst2, 2,
-			tmp_src2, 0,
-			&inst->Src[2].Register, 0);
-
-	/* dst = tmp1 + tmp2 */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_ADD_F);
-	vectorize(ctx, instr, &inst->Dst[0].Register, 2,
-			tmp_src1, 0,
-			tmp_src2, 0);
-}
-
-/* FRC(x) = x - FLOOR(x) */
-static void
-trans_frac(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
-		struct tgsi_full_instruction *inst)
-{
-	struct ir3_instruction *instr;
-	struct tgsi_dst_register tmp_dst;
-	struct tgsi_src_register *tmp_src;
-
-	tmp_src = get_internal_temp(ctx, &tmp_dst);
-
-	/* tmp = FLOOR(x) */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_FLOOR_F);
-	vectorize(ctx, instr, &tmp_dst, 1,
-			&inst->Src[0].Register, 0);
-
-	/* dst = x - tmp */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_ADD_F);
-	vectorize(ctx, instr, &inst->Dst[0].Register, 2,
-			&inst->Src[0].Register, 0,
-			tmp_src, IR3_REG_NEGATE);
 }
 
 /* ARL(x) = x, but mova from hrN.x to a0.. */
@@ -1053,50 +751,6 @@ trans_arl(const struct instr_translater *t,
 
 	/* need to ensure 5 instr slots before a0 is used: */
 	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 5;
-}
-
-/* POW(a,b) = EXP2(b * LOG2(a)) */
-static void
-trans_pow(const struct instr_translater *t,
-		struct fd3_compile_context *ctx,
-		struct tgsi_full_instruction *inst)
-{
-	struct ir3_instruction *instr;
-	struct ir3_register *r;
-	struct tgsi_dst_register tmp_dst;
-	struct tgsi_src_register *tmp_src;
-	struct tgsi_dst_register *dst  = &inst->Dst[0].Register;
-	struct tgsi_src_register *src0 = &inst->Src[0].Register;
-	struct tgsi_src_register *src1 = &inst->Src[1].Register;
-
-	tmp_src = get_internal_temp_repl(ctx, &tmp_dst);
-
-	/* log2 Rtmp, Rsrc0 */
-	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 5;
-	instr = ir3_instr_create(ctx->ir, 4, OPC_LOG2);
-	r = add_dst_reg(ctx, instr, &tmp_dst, 0);
-	add_src_reg(ctx, instr, src0, src0->SwizzleX);
-	regmask_set(ctx->needs_ss, r, TGSI_WRITEMASK_X);
-
-	/* mul.f Rtmp, Rtmp, Rsrc1 */
-	instr = ir3_instr_create(ctx->ir, 2, OPC_MUL_F);
-	add_dst_reg(ctx, instr, &tmp_dst, 0);
-	add_src_reg(ctx, instr, tmp_src, 0);
-	add_src_reg(ctx, instr, src1, src1->SwizzleX);
-
-	/* blob compiler seems to ensure there are at least 6 instructions
-	 * between a "simple" (non-cat4) instruction and a dependent cat4..
-	 * probably we need to handle this in some other places too.
-	 */
-	ir3_instr_create(ctx->ir, 0, OPC_NOP)->repeat = 5;
-
-	/* exp2 Rdst, Rtmp */
-	instr = ir3_instr_create(ctx->ir, 4, OPC_EXP2);
-	r = add_dst_reg(ctx, instr, &tmp_dst, 0);
-	add_src_reg(ctx, instr, tmp_src, 0);
-	regmask_set(ctx->needs_ss, r, TGSI_WRITEMASK_X);
-
-	create_mov(ctx, dst, tmp_src);
 }
 
 /* texture fetch/sample instructions: */
@@ -1591,30 +1245,22 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	[TGSI_OPCODE_ ## n] = { .fxn = (f), .tgsi_opc = TGSI_OPCODE_ ## n, ##__VA_ARGS__ }
 
 	INSTR(MOV,          instr_cat1),
-	INSTR(LIT,          trans_lit),
 	INSTR(RCP,          instr_cat4, .opc = OPC_RCP),
 	INSTR(RSQ,          instr_cat4, .opc = OPC_RSQ),
 	INSTR(SQRT,         instr_cat4, .opc = OPC_SQRT),
 	INSTR(MUL,          instr_cat2, .opc = OPC_MUL_F),
 	INSTR(ADD,          instr_cat2, .opc = OPC_ADD_F),
 	INSTR(SUB,          instr_cat2, .opc = OPC_ADD_F),
-	INSTR(DP2,          trans_dotp, .arg = 2),
-	INSTR(DP3,          trans_dotp, .arg = 3),
-	INSTR(DP4,          trans_dotp, .arg = 4),
-	INSTR(DPH,          trans_dotp, .arg = 3),   /* almost like DP3 */
 	INSTR(MIN,          instr_cat2, .opc = OPC_MIN_F),
 	INSTR(MAX,          instr_cat2, .opc = OPC_MAX_F),
 	INSTR(MAD,          instr_cat3, .opc = OPC_MAD_F32, .hopc = OPC_MAD_F16),
 	INSTR(TRUNC,        instr_cat2, .opc = OPC_TRUNC_F),
-	INSTR(LRP,          trans_lrp),
-	INSTR(FRC,          trans_frac),
 	INSTR(CLAMP,        trans_clamp),
 	INSTR(FLR,          instr_cat2, .opc = OPC_FLOOR_F),
 	INSTR(ROUND,        instr_cat2, .opc = OPC_RNDNE_F),
 	INSTR(ARL,          trans_arl),
 	INSTR(EX2,          instr_cat4, .opc = OPC_EXP2),
 	INSTR(LG2,          instr_cat4, .opc = OPC_LOG2),
-	INSTR(POW,          trans_pow),
 	INSTR(ABS,          instr_cat2, .opc = OPC_ABSNEG_F),
 	INSTR(COS,          instr_cat4, .opc = OPC_COS),
 	INSTR(SIN,          instr_cat4, .opc = OPC_SIN),
