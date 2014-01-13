@@ -161,7 +161,7 @@ upload_wm_state(struct brw_context *brw)
     * better performance than 'SIMD8 only' dispatch.
     */
    int min_inv_per_frag =
-      _mesa_get_min_invocations_per_fragment(ctx, brw->fragment_program);
+      _mesa_get_min_invocations_per_fragment(ctx, brw->fragment_program, false);
    assert(min_inv_per_frag >= 1);
 
    if (brw->wm.prog_data->prog_offset_16) {

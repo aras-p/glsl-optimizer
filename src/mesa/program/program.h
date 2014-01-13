@@ -189,7 +189,8 @@ _mesa_postprocess_program(struct gl_context *ctx, struct gl_program *prog);
 
 extern GLint
 _mesa_get_min_invocations_per_fragment(struct gl_context *ctx,
-                                       const struct gl_fragment_program *prog);
+                                       const struct gl_fragment_program *prog,
+                                       bool ignore_sample_qualifier);
 
 static inline GLuint
 _mesa_program_enum_to_shader_stage(GLenum v)

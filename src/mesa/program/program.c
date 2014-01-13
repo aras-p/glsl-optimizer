@@ -1023,7 +1023,8 @@ _mesa_postprocess_program(struct gl_context *ctx, struct gl_program *prog)
  */
 GLint
 _mesa_get_min_invocations_per_fragment(struct gl_context *ctx,
-                                       const struct gl_fragment_program *prog)
+                                       const struct gl_fragment_program *prog,
+                                       bool ignore_sample_qualifier)
 {
    /* From ARB_sample_shading specification:
     * "Using gl_SampleID in a fragment shader causes the entire shader
@@ -1041,7 +1042,7 @@ _mesa_get_min_invocations_per_fragment(struct gl_context *ctx,
        * "Use of the "sample" qualifier on a fragment shader input
        *  forces per-sample shading"
        */
-      if (prog->IsSample)
+      if (prog->IsSample && !ignore_sample_qualifier)
          return MAX2(ctx->DrawBuffer->Visual.samples, 1);
 
       if (prog->Base.SystemValuesRead & (SYSTEM_BIT_SAMPLE_ID |

@@ -504,7 +504,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    /* _NEW_BUFFERS _NEW_MULTISAMPLE */
    key->compute_pos_offset =
-      _mesa_get_min_invocations_per_fragment(ctx, &fp->program) > 1 &&
+      _mesa_get_min_invocations_per_fragment(ctx, &fp->program, false) > 1 &&
       fp->program.Base.SystemValuesRead & SYSTEM_BIT_SAMPLE_POS;
 
    key->compute_sample_id =
