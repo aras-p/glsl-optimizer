@@ -89,6 +89,7 @@ struct vl_compositor_state
 struct vl_compositor
 {
    struct pipe_context *pipe;
+   struct u_upload_mgr *upload;
 
    struct pipe_framebuffer_state fb_state;
    struct pipe_vertex_buffer vertex_buf;

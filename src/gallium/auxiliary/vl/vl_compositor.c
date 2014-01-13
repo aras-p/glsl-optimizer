@@ -33,6 +33,7 @@
 #include "util/u_memory.h"
 #include "util/u_draw.h"
 #include "util/u_surface.h"
+#include "util/u_upload_mgr.h"
 
 #include "tgsi/tgsi_ureg.h"
 
@@ -498,23 +499,6 @@ static void cleanup_pipe_state(struct vl_compositor *c)
 }
 
 static bool
-create_vertex_buffer(struct vl_compositor *c)
-{
-   assert(c);
-
-   pipe_resource_reference(&c->vertex_buf.buffer, NULL);
-   c->vertex_buf.buffer = pipe_buffer_create
-   (
-      c->pipe->screen,
-      PIPE_BIND_VERTEX_BUFFER,
-      PIPE_USAGE_STREAM,
-      c->vertex_buf.stride * VL_COMPOSITOR_MAX_LAYERS * 4
-   );
-
-   return c->vertex_buf.buffer != NULL;
-}
-
-static bool
 init_buffers(struct vl_compositor *c)
 {
    struct pipe_vertex_element vertex_elems[3];
@@ -526,7 +510,7 @@ init_buffers(struct vl_compositor *c)
     */
    c->vertex_buf.stride = sizeof(struct vertex2f) + sizeof(struct vertex4f) * 2;
    c->vertex_buf.buffer_offset = 0;
-   create_vertex_buffer(c);
+   c->vertex_buf.buffer = NULL;
 
    vertex_elems[0].src_offset = 0;
    vertex_elems[0].instance_divisor = 0;
@@ -659,22 +643,15 @@ static void
 gen_vertex_data(struct vl_compositor *c, struct vl_compositor_state *s, struct u_rect *dirty)
 {
    struct vertex2f *vb;
-   struct pipe_transfer *buf_transfer;
    unsigned i;
 
    assert(c);
 
-   vb = pipe_buffer_map(c->pipe, c->vertex_buf.buffer,
-                        PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE | PIPE_TRANSFER_DONTBLOCK,
-                        &buf_transfer);
-
-   if (!vb) {
-      // If buffer is still locked from last draw create a new one
-      create_vertex_buffer(c);
-      vb = pipe_buffer_map(c->pipe, c->vertex_buf.buffer,
-                           PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD_RANGE,
-                           &buf_transfer);
-   }
+   /* Allocate new memory for vertices. */
+   u_upload_alloc(c->upload, 0,
+                  c->vertex_buf.stride * VL_COMPOSITOR_MAX_LAYERS * 4, /* size */
+                  &c->vertex_buf.buffer_offset, &c->vertex_buf.buffer,
+                  (void**)&vb);
 
    for (i = 0; i < VL_COMPOSITOR_MAX_LAYERS; i++) {
       if (s->used_layers & (1 << i)) {
@@ -705,7 +682,7 @@ gen_vertex_data(struct vl_compositor *c, struct vl_compositor_state *s, struct u
       }
    }
 
-   pipe_buffer_unmap(c->pipe, buf_transfer);
+   u_upload_unmap(c->upload);
 }
 
 static void
@@ -802,6 +779,7 @@ vl_compositor_cleanup(struct vl_compositor *c)
 {
    assert(c);
 
+   u_upload_destroy(c->upload);
    cleanup_buffers(c);
    cleanup_shaders(c);
    cleanup_pipe_state(c);
@@ -1037,15 +1015,24 @@ vl_compositor_init(struct vl_compositor *c, struct pipe_context *pipe)
 
    c->pipe = pipe;
 
-   if (!init_pipe_state(c))
+   c->upload = u_upload_create(pipe, 128 * 1024, 4, PIPE_BIND_VERTEX_BUFFER);
+
+   if (!c->upload)
       return false;
 
+   if (!init_pipe_state(c)) {
+      u_upload_destroy(c->upload);
+      return false;
+   }
+
    if (!init_shaders(c)) {
+      u_upload_destroy(c->upload);
       cleanup_pipe_state(c);
       return false;
    }
 
    if (!init_buffers(c)) {
+      u_upload_destroy(c->upload);
       cleanup_shaders(c);
       cleanup_pipe_state(c);
       return false;
