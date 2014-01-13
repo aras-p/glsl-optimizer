@@ -43,7 +43,7 @@
 /* for r600 */
 #include "r600/r600_public.h"
 /* for radeonsi */
-#include "radeonsi/radeonsi_public.h"
+#include "radeonsi/si_public.h"
 /* for vmwgfx */
 #include "svga/drm/svga_drm_public.h"
 #include "svga/svga_public.h"
