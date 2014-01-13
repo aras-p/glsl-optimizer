@@ -55,7 +55,7 @@ GL 3.1 --- all DONE: i965, nv50, nvc0, r600, radeonsi
   Forward compatible context support/deprecations       DONE ()
   Instanced drawing (GL_ARB_draw_instanced)             DONE (swrast)
   Buffer copying (GL_ARB_copy_buffer)                   DONE (r300, swrast)
-  Primitive restart (GL_NV_primitive_restart)           DONE (r300, )
+  Primitive restart (GL_NV_primitive_restart)           DONE (r300)
   16 vertex texture image units                         DONE ()
   Texture buffer objs (GL_ARB_texture_buffer_object)    DONE for OpenGL 3.1 contexts ()
   Rectangular textures (GL_ARB_texture_rectangle)       DONE (r300, swrast)
@@ -83,9 +83,9 @@ GL 3.3 --- all DONE: i965, nv50, nvc0
 
   GLSL 3.30                                             DONE ()
   GL_ARB_blend_func_extended                            DONE (r600, radeonsi, softpipe)
-  GL_ARB_explicit_attrib_location                       DONE (i915, r300, r600, radeonsi, swrast)
+  GL_ARB_explicit_attrib_location                       DONE (all drivers that support GLSL)
   GL_ARB_occlusion_query2                               DONE (r300, r600, radeonsi, swrast)
-  GL_ARB_sampler_objects                                DONE (r300, r600, radeonsi)
+  GL_ARB_sampler_objects                                DONE (all drivers)
   GL_ARB_shader_bit_encoding                            DONE (r600, radeonsi)
   GL_ARB_texture_rgb10_a2ui                             DONE (r600, radeonsi)
   GL_ARB_texture_swizzle                                DONE (r300, r600, radeonsi, swrast)
@@ -117,7 +117,7 @@ GL 4.1:
   GLSL 4.1                                             not started
   GL_ARB_ES2_compatibility                             DONE (i965, nv50, nvc0, r300, r600, radeonsi)
   GL_ARB_get_program_binary                            DONE (0 binary formats)
-  GL_ARB_separate_shader_objects                       some infrastructure done
+  GL_ARB_separate_shader_objects                       started (Ian Romanick, Gregory Hainaut)
   GL_ARB_shader_precision                              not started
   GL_ARB_vertex_attrib_64bit                           not started
   GL_ARB_viewport_array                                DONE (i965)
@@ -144,8 +144,8 @@ GL 4.3:
   GLSL 4.3                                             not started
   GL_ARB_arrays_of_arrays                              started
   GL_ARB_ES3_compatibility                             DONE (i965)
-  GL_ARB_clear_buffer_object                           not started
-  GL_ARB_compute_shader                                not started
+  GL_ARB_clear_buffer_object                           DONE (all drivers)
+  GL_ARB_compute_shader                                started (Paul Berry)
   GL_ARB_copy_image                                    not started
   GL_KHR_debug                                         DONE (all drivers)
   GL_ARB_explicit_uniform_location                     not started
@@ -162,7 +162,7 @@ GL 4.3:
   GL_ARB_texture_buffer_range                          DONE (nv50, nvc0, i965, r600, radeonsi)
   GL_ARB_texture_query_levels                          DONE (i965)
   GL_ARB_texture_storage_multisample                   DONE (all drivers that support GL_ARB_texture_multisample)
-  GL_ARB_texture_view                                  not started
+  GL_ARB_texture_view                                  started (Courtney Goeltzenleuchter, Chris Forbes)
   GL_ARB_vertex_attrib_binding                         DONE (all drivers)
 
 
@@ -173,7 +173,7 @@ GL 4.4:
   GL_ARB_buffer_storage                                not started
   GL_ARB_clear_texture                                 not started
   GL_ARB_enhanced_layouts                              not started
-  GL_ARB_multi_bind                                    not started
+  GL_ARB_multi_bind                                    started (Fredrik Höglund)
   GL_ARB_query_buffer_object                           not started
   GL_ARB_texture_mirror_clamp_to_edge                  DONE (i965, nv30, nv50, nvc0, r300, r600, radeonsi, swrast)
   GL_ARB_texture_stencil8                              not started
