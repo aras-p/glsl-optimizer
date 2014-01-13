@@ -36,18 +36,18 @@ endif
 gldir = $(includedir)/GL
 gl_HEADERS = $(top_srcdir)/include/GL/*.h
 
-.PHONY: main/git_sha1.h.tmp
-main/git_sha1.h.tmp:
+.PHONY: $(BUILDDIR)main/git_sha1.h.tmp
+$(BUILDDIR)main/git_sha1.h.tmp:
 	@touch main/git_sha1.h.tmp
-	@if test -d ../../.git; then \
+	@if test -d $(top_srcdir)/.git; then \
 		if which git > /dev/null; then \
-		    git log -n 1 --oneline | \
+		    git --git-dir=$(top_srcdir)/.git log -n 1 --oneline | \
 			sed 's/^\([^ ]*\) .*/#define MESA_GIT_SHA1 "git-\1"/' \
 			> main/git_sha1.h.tmp ; \
 		fi \
 	fi
 
-main/git_sha1.h: main/git_sha1.h.tmp
+$(BUILDDIR)main/git_sha1.h: $(BUILDDIR)main/git_sha1.h.tmp
 	@echo "updating main/git_sha1.h"
 	@if ! cmp -s main/git_sha1.h.tmp main/git_sha1.h; then \
 		mv main/git_sha1.h.tmp main/git_sha1.h ;\
@@ -63,8 +63,8 @@ BUILDDIR = $(builddir)/
 include Makefile.sources
 
 BUILT_SOURCES = \
-	main/git_sha1.h \
 	main/get_hash.h \
+	$(BUILDDIR)main/git_sha1.h \
 	$(BUILDDIR)program/program_parse.tab.c \
 	$(BUILDDIR)program/lex.yy.c
 CLEANFILES = \
