@@ -220,7 +220,7 @@ static void upload_cc_unit(struct brw_context *brw)
       cc->cc5.statistics_enable = 1;
 
    /* CACHE_NEW_CC_VP */
-   cc->cc4.cc_viewport_state_offset = (brw->batch.bo->offset +
+   cc->cc4.cc_viewport_state_offset = (brw->batch.bo->offset64 +
 				       brw->cc.vp_offset) >> 5; /* reloc */
 
    brw->state.dirty.cache |= CACHE_NEW_CC_UNIT;

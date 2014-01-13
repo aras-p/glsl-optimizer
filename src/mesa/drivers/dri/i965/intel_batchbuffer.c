@@ -155,7 +155,7 @@ do_batch_dump(struct brw_context *brw)
    if (ret == 0) {
       drm_intel_decode_set_batch_pointer(decode,
 					 batch->bo->virtual,
-					 batch->bo->offset,
+					 batch->bo->offset64,
 					 batch->used);
    } else {
       fprintf(stderr,
@@ -164,7 +164,7 @@ do_batch_dump(struct brw_context *brw)
 
       drm_intel_decode_set_batch_pointer(decode,
 					 batch->map,
-					 batch->bo->offset,
+					 batch->bo->offset64,
 					 batch->used);
    }
 
@@ -392,7 +392,7 @@ intel_batchbuffer_emit_reloc(struct brw_context *brw,
     * the buffer doesn't move and we can short-circuit the relocation processing
     * in the kernel
     */
-   intel_batchbuffer_emit_dword(brw, buffer->offset + delta);
+   intel_batchbuffer_emit_dword(brw, buffer->offset64 + delta);
 
    return true;
 }

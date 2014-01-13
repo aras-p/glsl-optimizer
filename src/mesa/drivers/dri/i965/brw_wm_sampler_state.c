@@ -350,7 +350,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
       sampler->ss2.default_color_pointer = *sdc_offset >> 5;
    } else {
       /* reloc */
-      sampler->ss2.default_color_pointer = (brw->batch.bo->offset +
+      sampler->ss2.default_color_pointer = (brw->batch.bo->offset64 +
 					    *sdc_offset) >> 5;
 
       drm_intel_bo_emit_reloc(brw->batch.bo,

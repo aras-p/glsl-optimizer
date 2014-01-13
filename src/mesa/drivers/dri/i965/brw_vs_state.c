@@ -84,7 +84,7 @@ brw_upload_vs_unit(struct brw_context *brw)
 
    if (brw->vs.prog_data->base.total_scratch != 0) {
       vs->thread2.scratch_space_base_pointer =
-	 stage_state->scratch_bo->offset >> 10; /* reloc */
+	 stage_state->scratch_bo->offset64 >> 10; /* reloc */
       vs->thread2.per_thread_scratch_space =
 	 ffs(brw->vs.prog_data->base.total_scratch) - 11;
    } else {
@@ -161,7 +161,7 @@ brw_upload_vs_unit(struct brw_context *brw)
     */
    if (stage_state->sampler_count) {
       vs->vs5.sampler_state_pointer =
-         (brw->batch.bo->offset + stage_state->sampler_offset) >> 5;
+         (brw->batch.bo->offset64 + stage_state->sampler_offset) >> 5;
       drm_intel_bo_emit_reloc(brw->batch.bo,
                               stage_state->state_offset +
                               offsetof(struct brw_vs_unit_state, vs5),

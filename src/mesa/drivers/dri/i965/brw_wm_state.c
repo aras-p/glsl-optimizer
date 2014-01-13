@@ -125,7 +125,7 @@ brw_upload_wm_unit(struct brw_context *brw)
 
    if (brw->wm.prog_data->total_scratch != 0) {
       wm->thread2.scratch_space_base_pointer =
-	 brw->wm.base.scratch_bo->offset >> 10; /* reloc */
+	 brw->wm.base.scratch_bo->offset64 >> 10; /* reloc */
       wm->thread2.per_thread_scratch_space =
 	 ffs(brw->wm.prog_data->total_scratch) - 11;
    } else {
@@ -151,7 +151,7 @@ brw_upload_wm_unit(struct brw_context *brw)
 
    if (brw->wm.base.sampler_count) {
       /* reloc */
-      wm->wm4.sampler_state_pointer = (brw->batch.bo->offset +
+      wm->wm4.sampler_state_pointer = (brw->batch.bo->offset64 +
 				       brw->wm.base.sampler_offset) >> 5;
    } else {
       wm->wm4.sampler_state_pointer = 0;

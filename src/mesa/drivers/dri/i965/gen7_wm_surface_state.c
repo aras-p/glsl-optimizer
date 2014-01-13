@@ -122,11 +122,11 @@ gen7_set_surface_mcs_info(struct brw_context *brw,
     * thus have their lower 12 bits zero), we can use an ordinary reloc to do
     * the necessary address translation.
     */
-   assert ((mcs_mt->region->bo->offset & 0xfff) == 0);
+   assert ((mcs_mt->region->bo->offset64 & 0xfff) == 0);
 
    surf[6] = GEN7_SURFACE_MCS_ENABLE |
              SET_FIELD(pitch_tiles - 1, GEN7_SURFACE_MCS_PITCH) |
-             mcs_mt->region->bo->offset;
+             mcs_mt->region->bo->offset64;
 
    drm_intel_bo_emit_reloc(brw->batch.bo,
                            surf_offset + 6 * 4,
@@ -242,7 +242,7 @@ gen7_emit_buffer_surface_state(struct brw_context *brw,
    surf[0] = BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
              surface_format << BRW_SURFACE_FORMAT_SHIFT |
              BRW_SURFACE_RC_READ_WRITE;
-   surf[1] = (bo ? bo->offset : 0) + buffer_offset; /* reloc */
+   surf[1] = (bo ? bo->offset64 : 0) + buffer_offset; /* reloc */
    surf[2] = SET_FIELD((buffer_size - 1) & 0x7f, GEN7_SURFACE_WIDTH) |
              SET_FIELD(((buffer_size - 1) >> 7) & 0x3fff, GEN7_SURFACE_HEIGHT);
    surf[3] = SET_FIELD(((buffer_size - 1) >> 21) & 0x3f, BRW_SURFACE_DEPTH) |
@@ -315,7 +315,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
    if (mt->array_spacing_lod0)
       surf[0] |= GEN7_SURFACE_ARYSPC_LOD0;
 
-   surf[1] = mt->region->bo->offset + mt->offset; /* reloc */
+   surf[1] = mt->region->bo->offset64 + mt->offset; /* reloc */
 
    surf[2] = SET_FIELD(mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);
@@ -360,7 +360,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
    drm_intel_bo_emit_reloc(brw->batch.bo,
 			   *surf_offset + 4,
 			   intelObj->mt->region->bo,
-                           surf[1] - intelObj->mt->region->bo->offset,
+                           surf[1] - intelObj->mt->region->bo->offset64,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 
    gen7_check_surface_setup(surf, false /* is_render_target */);
@@ -508,7 +508,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
       surf[0] |= GEN7_SURFACE_IS_ARRAY;
    }
 
-   surf[1] = region->bo->offset;
+   surf[1] = region->bo->offset64;
 
    assert(brw->has_surface_tile_offset);
 
@@ -542,7 +542,7 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    drm_intel_bo_emit_reloc(brw->batch.bo,
 			   brw->wm.base.surf_offset[surf_index] + 4,
 			   region->bo,
-			   surf[1] - region->bo->offset,
+			   surf[1] - region->bo->offset64,
 			   I915_GEM_DOMAIN_RENDER,
 			   I915_GEM_DOMAIN_RENDER);
 

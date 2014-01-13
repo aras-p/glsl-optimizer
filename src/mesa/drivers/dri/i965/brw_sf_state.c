@@ -173,7 +173,7 @@ static void upload_sf_unit( struct brw_context *brw )
       sf->thread4.stats_enable = 1;
 
    /* CACHE_NEW_SF_VP */
-   sf->sf5.sf_viewport_state_offset = (brw->batch.bo->offset +
+   sf->sf5.sf_viewport_state_offset = (brw->batch.bo->offset64 +
 				       brw->sf.vp_offset) >> 5; /* reloc */
 
    sf->sf5.viewport_transform = 1;

@@ -176,7 +176,7 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
 
    /* reloc */
    surf[1] =
-      surface->compute_tile_offsets(&tile_x, &tile_y) + region->bo->offset;
+      surface->compute_tile_offsets(&tile_x, &tile_y) + region->bo->offset64;
 
    /* Note that the low bits of these fields are missing, so
     * there's the possibility of getting in trouble.
@@ -214,7 +214,7 @@ gen7_blorp_emit_surface_state(struct brw_context *brw,
    drm_intel_bo_emit_reloc(brw->batch.bo,
                            wm_surf_offset + 4,
                            region->bo,
-                           surf[1] - region->bo->offset,
+                           surf[1] - region->bo->offset64,
                            read_domains, write_domain);
 
    gen7_check_surface_setup(surf, is_render_target);

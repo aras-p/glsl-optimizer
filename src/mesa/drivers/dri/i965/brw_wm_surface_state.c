@@ -208,7 +208,7 @@ gen4_emit_buffer_surface_state(struct brw_context *brw,
    surf[0] = BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
              surface_format << BRW_SURFACE_FORMAT_SHIFT |
              (brw->gen >= 6 ? BRW_SURFACE_RC_READ_WRITE : 0);
-   surf[1] = (bo ? bo->offset : 0) + buffer_offset; /* reloc */
+   surf[1] = (bo ? bo->offset64 : 0) + buffer_offset; /* reloc */
    surf[2] = (buffer_size & 0x7f) << BRW_SURFACE_WIDTH_SHIFT |
              ((buffer_size >> 7) & 0x1fff) << BRW_SURFACE_HEIGHT_SHIFT;
    surf[3] = ((buffer_size >> 20) & 0x7f) << BRW_SURFACE_DEPTH_SHIFT |
@@ -292,7 +292,7 @@ brw_update_texture_surface(struct gl_context *ctx,
 				    sampler->sRGBDecode) <<
 	       BRW_SURFACE_FORMAT_SHIFT));
 
-   surf[1] = intelObj->mt->region->bo->offset + intelObj->mt->offset; /* reloc */
+   surf[1] = intelObj->mt->region->bo->offset64 + intelObj->mt->offset; /* reloc */
 
    surf[2] = ((intelObj->_MaxLevel - tObj->BaseLevel) << BRW_SURFACE_LOD_SHIFT |
 	      (mt->logical_width0 - 1) << BRW_SURFACE_WIDTH_SHIFT |
@@ -312,7 +312,7 @@ brw_update_texture_surface(struct gl_context *ctx,
    drm_intel_bo_emit_reloc(brw->batch.bo,
 			   *surf_offset + 4,
 			   intelObj->mt->region->bo,
-                           surf[1] - intelObj->mt->region->bo->offset,
+                           surf[1] - intelObj->mt->region->bo->offset64,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
 
@@ -408,7 +408,7 @@ brw_update_sol_surface(struct brw_context *brw,
       BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
       surface_format << BRW_SURFACE_FORMAT_SHIFT |
       BRW_SURFACE_RC_READ_WRITE;
-   surf[1] = bo->offset + offset_bytes; /* reloc */
+   surf[1] = bo->offset64 + offset_bytes; /* reloc */
    surf[2] = (width << BRW_SURFACE_WIDTH_SHIFT |
 	      height << BRW_SURFACE_HEIGHT_SHIFT);
    surf[3] = (depth << BRW_SURFACE_DEPTH_SHIFT |
@@ -555,7 +555,7 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 		  1 << BRW_SURFACE_WRITEDISABLE_B_SHIFT |
 		  1 << BRW_SURFACE_WRITEDISABLE_A_SHIFT);
    }
-   surf[1] = bo ? bo->offset : 0;
+   surf[1] = bo ? bo->offset64 : 0;
    surf[2] = ((fb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
               (fb->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
 
@@ -635,7 +635,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
    /* reloc */
    surf[1] = (intel_renderbuffer_get_tile_offsets(irb, &tile_x, &tile_y) +
-	      region->bo->offset);
+	      region->bo->offset64);
 
    surf[2] = ((rb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
 	      (rb->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
@@ -680,7 +680,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    drm_intel_bo_emit_reloc(brw->batch.bo,
 			   brw->wm.base.surf_offset[surf_index] + 4,
 			   region->bo,
-			   surf[1] - region->bo->offset,
+			   surf[1] - region->bo->offset64,
 			   I915_GEM_DOMAIN_RENDER,
 			   I915_GEM_DOMAIN_RENDER);
 }
