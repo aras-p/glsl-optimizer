@@ -59,11 +59,6 @@ bool intel_batchbuffer_emit_reloc(struct brw_context *brw,
 				       uint32_t read_domains,
 				       uint32_t write_domain,
 				       uint32_t offset);
-bool intel_batchbuffer_emit_reloc_fenced(struct brw_context *brw,
-					      drm_intel_bo *buffer,
-					      uint32_t read_domains,
-					      uint32_t write_domain,
-					      uint32_t offset);
 void intel_batchbuffer_emit_mi_flush(struct brw_context *brw);
 void intel_emit_post_sync_nonzero_flush(struct brw_context *brw);
 void intel_emit_depth_stall_flushes(struct brw_context *brw);

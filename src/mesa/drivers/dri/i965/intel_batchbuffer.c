@@ -397,31 +397,6 @@ intel_batchbuffer_emit_reloc(struct brw_context *brw,
    return true;
 }
 
-bool
-intel_batchbuffer_emit_reloc_fenced(struct brw_context *brw,
-				    drm_intel_bo *buffer,
-				    uint32_t read_domains,
-				    uint32_t write_domain,
-				    uint32_t delta)
-{
-   int ret;
-
-   ret = drm_intel_bo_emit_reloc_fence(brw->batch.bo, 4*brw->batch.used,
-				       buffer, delta,
-				       read_domains, write_domain);
-   assert(ret == 0);
-   (void)ret;
-
-   /*
-    * Using the old buffer offset, write in what the right data would
-    * be, in case the buffer doesn't move and we can short-circuit the
-    * relocation processing in the kernel
-    */
-   intel_batchbuffer_emit_dword(brw, buffer->offset + delta);
-
-   return true;
-}
-
 void
 intel_batchbuffer_data(struct brw_context *brw,
                        const void *data, GLuint bytes, enum brw_gpu_ring ring)
