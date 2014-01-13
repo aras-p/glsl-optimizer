@@ -4186,7 +4186,18 @@ _mesa_validate_texbuffer_format(const struct gl_context *ctx,
    if (datatype == GL_FLOAT && !ctx->Extensions.ARB_texture_float)
       return MESA_FORMAT_NONE;
 
-   if (datatype == GL_HALF_FLOAT && !ctx->Extensions.ARB_half_float_pixel)
+   /* The GL_ARB_texture_buffer_object spec says:
+    *
+    *     "If ARB_texture_float is not supported, references to the
+    *     floating-point internal formats provided by that extension should be
+    *     removed, and such formats may not be passed to TexBufferARB."
+    *
+    * As a result, GL_HALF_FLOAT internal format depends on both
+    * GL_ARB_texture_float and GL_ARB_half_float_pixel.
+    */
+   if (datatype == GL_HALF_FLOAT &&
+       !(ctx->Extensions.ARB_half_float_pixel
+         && ctx->Extensions.ARB_texture_float))
       return MESA_FORMAT_NONE;
 
    if (!ctx->Extensions.ARB_texture_rg) {
