@@ -174,7 +174,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_fragment_program_shadow = true;
    ctx->Extensions.ARB_fragment_shader = true;
    ctx->Extensions.ARB_framebuffer_object = true;
-   ctx->Extensions.ARB_half_float_pixel = true;
    ctx->Extensions.ARB_half_float_vertex = true;
    ctx->Extensions.ARB_instanced_arrays = true;
    ctx->Extensions.ARB_internalformat_query = true;

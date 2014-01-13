@@ -30,7 +30,7 @@ GL 3.0 --- all DONE: i965, nv50, nvc0, r600, radeonsi
   GL_EXT_texture_shared_exponent                        DONE (swrast)
   Float depth buffers (GL_ARB_depth_buffer_float)       DONE ()
   Framebuffer objects (GL_ARB_framebuffer_object)       DONE (r300, swrast)
-  GL_ARB_half_float_pixel                               DONE (r300, swrast)
+  GL_ARB_half_float_pixel                               DONE (all drivers)
   GL_ARB_half_float_vertex                              DONE (r300, swrast)
   GL_EXT_texture_integer                                DONE ()
   GL_EXT_texture_array                                  DONE ()

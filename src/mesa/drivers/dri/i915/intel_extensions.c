@@ -47,7 +47,6 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_draw_elements_base_vertex = true;
    ctx->Extensions.ARB_explicit_attrib_location = true;
    ctx->Extensions.ARB_framebuffer_object = true;
-   ctx->Extensions.ARB_half_float_pixel = true;
    ctx->Extensions.ARB_internalformat_query = true;
    ctx->Extensions.ARB_map_buffer_range = true;
    ctx->Extensions.ARB_point_sprite = true;

@@ -397,11 +397,6 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
    if (ctx->Extensions.ARB_texture_rg) {
       switch (internalFormat) {
       case GL_R16F:
-	 /* R16F depends on both ARB_half_float_pixel and ARB_texture_float.
-	  */
-	 if (!ctx->Extensions.ARB_half_float_pixel)
-	    break;
-	 /* FALLTHROUGH */
       case GL_R32F:
 	 if (!ctx->Extensions.ARB_texture_float)
 	    break;
@@ -422,11 +417,6 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
          return GL_RED;
 
       case GL_RG16F:
-	 /* RG16F depends on both ARB_half_float_pixel and ARB_texture_float.
-	  */
-	 if (!ctx->Extensions.ARB_half_float_pixel)
-	    break;
-	 /* FALLTHROUGH */
       case GL_RG32F:
 	 if (!ctx->Extensions.ARB_texture_float)
 	    break;
@@ -4183,8 +4173,6 @@ _mesa_validate_texbuffer_format(const struct gl_context *ctx,
       return MESA_FORMAT_NONE;
 
    datatype = _mesa_get_format_datatype(format);
-   if (datatype == GL_FLOAT && !ctx->Extensions.ARB_texture_float)
-      return MESA_FORMAT_NONE;
 
    /* The GL_ARB_texture_buffer_object spec says:
     *
@@ -4195,9 +4183,8 @@ _mesa_validate_texbuffer_format(const struct gl_context *ctx,
     * As a result, GL_HALF_FLOAT internal format depends on both
     * GL_ARB_texture_float and GL_ARB_half_float_pixel.
     */
-   if (datatype == GL_HALF_FLOAT &&
-       !(ctx->Extensions.ARB_half_float_pixel
-         && ctx->Extensions.ARB_texture_float))
+   if ((datatype == GL_FLOAT || datatype == GL_HALF_FLOAT) &&
+       !ctx->Extensions.ARB_texture_float)
       return MESA_FORMAT_NONE;
 
    if (!ctx->Extensions.ARB_texture_rg) {

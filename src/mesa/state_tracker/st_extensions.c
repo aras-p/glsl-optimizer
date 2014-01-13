@@ -528,7 +528,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_fragment_shader = GL_TRUE;
-   ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
    ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
    ctx->Extensions.ARB_internalformat_query = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;

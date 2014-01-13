@@ -1323,10 +1323,8 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
-               return GL_NO_ERROR;
             case GL_HALF_FLOAT:
-               return ctx->Extensions.ARB_half_float_pixel
-                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+               return GL_NO_ERROR;
             default:
                return GL_INVALID_ENUM;
          }
@@ -1349,10 +1347,8 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
-               return GL_NO_ERROR;
             case GL_HALF_FLOAT:
-               return ctx->Extensions.ARB_half_float_pixel
-                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+               return GL_NO_ERROR;
             default:
                return GL_INVALID_ENUM;
          }
@@ -1368,10 +1364,8 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
-               return GL_NO_ERROR;
             case GL_HALF_FLOAT:
-               return ctx->Extensions.ARB_half_float_pixel
-                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+               return GL_NO_ERROR;
             default:
                return GL_INVALID_ENUM;
          }
@@ -1389,13 +1383,11 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_BYTE_2_3_3_REV:
             case GL_UNSIGNED_SHORT_5_6_5:
             case GL_UNSIGNED_SHORT_5_6_5_REV:
+            case GL_HALF_FLOAT:
                return GL_NO_ERROR;
             case GL_UNSIGNED_INT_2_10_10_10_REV:
                /* OK by GL_EXT_texture_type_2_10_10_10_REV */
                return (ctx->API == API_OPENGLES2)
-                  ? GL_NO_ERROR : GL_INVALID_ENUM;
-            case GL_HALF_FLOAT:
-               return ctx->Extensions.ARB_half_float_pixel
                   ? GL_NO_ERROR : GL_INVALID_ENUM;
             case GL_UNSIGNED_INT_5_9_9_9_REV:
                return ctx->Extensions.EXT_texture_shared_exponent
@@ -1419,10 +1411,8 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             case GL_INT:
             case GL_UNSIGNED_INT:
             case GL_FLOAT:
-               return GL_NO_ERROR;
             case GL_HALF_FLOAT:
-               return ctx->Extensions.ARB_half_float_pixel
-                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+               return GL_NO_ERROR;
             default:
                return GL_INVALID_ENUM;
          }
@@ -1446,10 +1436,8 @@ _mesa_error_check_format_and_type(const struct gl_context *ctx,
             case GL_UNSIGNED_INT_8_8_8_8_REV:
             case GL_UNSIGNED_INT_10_10_10_2:
             case GL_UNSIGNED_INT_2_10_10_10_REV:
-               return GL_NO_ERROR;
             case GL_HALF_FLOAT:
-               return ctx->Extensions.ARB_half_float_pixel
-                  ? GL_NO_ERROR : GL_INVALID_ENUM;
+               return GL_NO_ERROR;
             default:
                return GL_INVALID_ENUM;
          }
