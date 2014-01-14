@@ -1133,6 +1133,7 @@ tex_create_hiz(struct ilo_texture *tex, const struct tex_layout *layout)
     */
    for (lv = 0; lv <= templ->last_level; lv++) {
       unsigned align_w = 8, align_h = 4;
+      unsigned flags = 0;
 
       switch (templ->nr_samples) {
       case 0:
@@ -1154,11 +1155,17 @@ tex_create_hiz(struct ilo_texture *tex, const struct tex_layout *layout)
 
       if (u_minify(templ->width0, lv) % align_w == 0 &&
           u_minify(templ->height0, lv) % align_h == 0) {
+         flags |= ILO_TEXTURE_HIZ;
+
+         /* this will trigger a HiZ resolve */
+         if (tex->imported)
+            flags |= ILO_TEXTURE_CPU_WRITE;
+      }
+
+      if (flags) {
          const unsigned num_slices = (templ->target == PIPE_TEXTURE_3D) ?
             u_minify(templ->depth0, lv) : templ->array_size;
-
-         ilo_texture_set_slice_flags(tex, lv, 0, num_slices,
-               ILO_TEXTURE_HIZ, ILO_TEXTURE_HIZ);
+         ilo_texture_set_slice_flags(tex, lv, 0, num_slices, flags, flags);
       }
    }
 
