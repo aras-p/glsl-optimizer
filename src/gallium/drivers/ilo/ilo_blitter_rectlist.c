@@ -32,7 +32,8 @@
 #include "ilo_3d.h"
 #include "ilo_3d_pipeline.h"
 #include "ilo_gpe.h"
-#include "ilo_gpe_gen6.h" /* for ve_init_cso_with_components */
+#include "ilo_gpe_gen6.h" /* for ve_init_cso_with_components and
+                             zs_align_surface */
 
 /**
  * Set the states that are invariant between all ops.
@@ -223,49 +224,18 @@ ilo_blitter_set_uses(struct ilo_blitter *blitter, uint32_t uses)
 }
 
 static void
-hiz_emit_rectlist(struct ilo_blitter *blitter)
+hiz_align_fb(struct ilo_blitter *blitter)
 {
-   struct ilo_3d *hw3d = blitter->ilo->hw3d;
-   struct ilo_3d_pipeline *p = hw3d->pipeline;
+   unsigned align_w, align_h;
 
-   ilo_3d_own_render_ring(hw3d);
-
-   /*
-    * From the Sandy Bridge PRM, volume 2 part 1, page 313:
-    *
-    *     "If other rendering operations have preceded this clear, a
-    *      PIPE_CONTROL with write cache flush enabled and Z-inhibit
-    *      disabled must be issued before the rectangle primitive used for
-    *      the depth buffer clear operation."
-    *
-    * From the Sandy Bridge PRM, volume 2 part 1, page 314:
-    *
-    *     "Depth buffer clear pass must be followed by a PIPE_CONTROL
-    *      command with DEPTH_STALL bit set and Then followed by Depth
-    *      FLUSH"
-    *
-    * But the pipeline has to be flushed both before and after not only
-    * because of these workarounds.  We need them for reasons such as
-    *
-    *  - we may sample from a texture that was rendered to
-    *  - we may sample from the fb shortly after
-    */
-   if (!ilo_cp_empty(p->cp))
-      ilo_3d_pipeline_emit_flush(p);
-
-   ilo_3d_pipeline_emit_rectlist(p, blitter);
-
-   ilo_3d_pipeline_emit_flush(p);
-}
-
-/**
- * This must be called after ilo_blitter_set_fb().
- */
-static void
-hiz_set_rectlist(struct ilo_blitter *blitter, bool aligned)
-{
-   unsigned width = blitter->fb.width;
-   unsigned height = blitter->fb.height;
+   switch (blitter->op) {
+   case ILO_BLITTER_RECTLIST_CLEAR_ZS:
+   case ILO_BLITTER_RECTLIST_RESOLVE_Z:
+      break;
+   default:
+      return;
+      break;
+   }
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 313-314:
@@ -296,38 +266,76 @@ hiz_set_rectlist(struct ilo_blitter *blitter, bool aligned)
     *        buffer clear operation must be delivered, and depth buffer state
     *        cannot have changed since the previous depth buffer clear
     *        operation."
-    *
-    * Making the RECTLIST aligned to 8x4 is easy.  But how about
-    * 3DSTATE_DRAWING_RECTANGLE and 3DSTATE_DEPTH_BUFFER?  Since we use
-    * HALIGN_8 and VALIGN_4 for depth buffers, we can safely align the drawing
-    * rectangle, except that the PRM requires the drawing rectangle to be
-    * clampped to the render target boundary.  For 3DSTATE_DEPTH_BUFFER, we
-    * cannot align the Width and Height fields if level or slice is greater
-    * than zero.
     */
-   if (aligned) {
-      switch (blitter->fb.num_samples) {
-      case 1:
-         width = align(width, 8);
-         height = align(height, 4);
-         break;
-      case 2:
-         width = align(width, 4);
-         height = align(height, 4);
-         break;
-      case 4:
-         width = align(width, 4);
-         height = align(height, 2);
-         break;
-      case 8:
-      default:
-         width = align(width, 2);
-         height = align(height, 2);
-         break;
-      }
+   switch (blitter->fb.num_samples) {
+   case 1:
+      align_w = 8;
+      align_h = 4;
+      break;
+   case 2:
+      align_w = 4;
+      align_h = 4;
+      break;
+   case 4:
+      align_w = 4;
+      align_h = 2;
+      break;
+   case 8:
+   default:
+      align_w = 2;
+      align_h = 2;
+      break;
    }
 
-   ilo_blitter_set_rectlist(blitter, 0, 0, width, height);
+   if (blitter->fb.width % align_w || blitter->fb.height % align_h) {
+      blitter->fb.width = align(blitter->fb.width, align_w);
+      blitter->fb.height = align(blitter->fb.width, align_h);
+
+      assert(!blitter->fb.dst.is_rt);
+      zs_align_surface(blitter->ilo->dev, align_w, align_h,
+            &blitter->fb.dst.u.zs);
+   }
+}
+
+static void
+hiz_emit_rectlist(struct ilo_blitter *blitter)
+{
+   struct ilo_3d *hw3d = blitter->ilo->hw3d;
+   struct ilo_3d_pipeline *p = hw3d->pipeline;
+
+   hiz_align_fb(blitter);
+
+   ilo_blitter_set_rectlist(blitter, 0, 0,
+         blitter->fb.width, blitter->fb.height);
+
+   ilo_3d_own_render_ring(hw3d);
+
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 313:
+    *
+    *     "If other rendering operations have preceded this clear, a
+    *      PIPE_CONTROL with write cache flush enabled and Z-inhibit
+    *      disabled must be issued before the rectangle primitive used for
+    *      the depth buffer clear operation."
+    *
+    * From the Sandy Bridge PRM, volume 2 part 1, page 314:
+    *
+    *     "Depth buffer clear pass must be followed by a PIPE_CONTROL
+    *      command with DEPTH_STALL bit set and Then followed by Depth
+    *      FLUSH"
+    *
+    * But the pipeline has to be flushed both before and after not only
+    * because of these workarounds.  We need them for reasons such as
+    *
+    *  - we may sample from a texture that was rendered to
+    *  - we may sample from the fb shortly after
+    */
+   if (!ilo_cp_empty(p->cp))
+      ilo_3d_pipeline_emit_flush(p);
+
+   ilo_3d_pipeline_emit_rectlist(p, blitter);
+
+   ilo_3d_pipeline_emit_flush(p);
 }
 
 static bool
@@ -452,7 +460,6 @@ ilo_blitter_rectlist_clear_zs(struct ilo_blitter *blitter,
       uses |= ILO_BLITTER_USE_CC | ILO_BLITTER_USE_FB_STENCIL;
    ilo_blitter_set_uses(blitter, uses);
 
-   hiz_set_rectlist(blitter, true);
    hiz_emit_rectlist(blitter);
 
    return true;
@@ -489,7 +496,6 @@ ilo_blitter_rectlist_resolve_z(struct ilo_blitter *blitter,
    ilo_blitter_set_uses(blitter,
          ILO_BLITTER_USE_DSA | ILO_BLITTER_USE_FB_DEPTH);
 
-   hiz_set_rectlist(blitter, true);
    hiz_emit_rectlist(blitter);
 }
 
@@ -522,6 +528,5 @@ ilo_blitter_rectlist_resolve_hiz(struct ilo_blitter *blitter,
    ilo_blitter_set_uses(blitter,
          ILO_BLITTER_USE_DSA | ILO_BLITTER_USE_FB_DEPTH);
 
-   hiz_set_rectlist(blitter, false);
    hiz_emit_rectlist(blitter);
 }

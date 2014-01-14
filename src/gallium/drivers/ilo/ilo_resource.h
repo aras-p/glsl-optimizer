@@ -31,6 +31,7 @@
 #include "intel_winsys.h"
 
 #include "ilo_common.h"
+#include "ilo_screen.h"
 
 enum ilo_texture_flags {
    ILO_TEXTURE_RENDER_WRITE   = 1 << 0,
@@ -40,9 +41,8 @@ enum ilo_texture_flags {
    ILO_TEXTURE_BLT_READ       = 1 << 4,
    ILO_TEXTURE_CPU_READ       = 1 << 5,
    ILO_TEXTURE_CLEAR          = 1 << 6,
+   ILO_TEXTURE_HIZ            = 1 << 7,
 };
-
-struct ilo_screen;
 
 struct ilo_buffer {
    struct pipe_resource base;
@@ -161,7 +161,25 @@ static inline bool
 ilo_texture_can_enable_hiz(const struct ilo_texture *tex, unsigned level,
                            unsigned first_slice, unsigned num_slices)
 {
-   return (tex->hiz.bo != NULL);
+   const struct ilo_screen *is = ilo_screen(tex->base.screen);
+   const struct ilo_texture_slice *slice =
+      ilo_texture_get_slice(tex, level, first_slice);
+
+   if (!tex->hiz.bo)
+      return false;
+
+   /* we can adjust 3DSTATE_DEPTH_BUFFER for the first slice */
+   if (level == 0 && first_slice == 0 && num_slices == 1)
+      return true;
+
+   /* HiZ is non-mipmapped and non-array on GEN6 */
+   assert(is->dev.gen > ILO_GEN(6));
+
+   /*
+    * Either all or none of the slices in the same level have ILO_TEXTURE_HIZ
+    * set.  It suffices to check only the first slice.
+    */
+   return (slice->flags & ILO_TEXTURE_HIZ);
 }
 
 #endif /* ILO_RESOURCE_H */

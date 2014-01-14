@@ -1491,6 +1491,41 @@ gen6_emit_3DSTATE_DRAWING_RECTANGLE(const struct ilo_dev_info *dev,
 }
 
 static inline void
+zs_align_surface(const struct ilo_dev_info *dev,
+                 unsigned align_w, unsigned align_h,
+                 struct ilo_zs_surface *zs)
+{
+   unsigned mask, shift_w, shift_h;
+   unsigned width, height;
+   uint32_t dw3;
+
+   ILO_GPE_VALID_GEN(dev, 6, 7.5);
+
+   if (dev->gen >= ILO_GEN(7)) {
+      shift_w = 4;
+      shift_h = 18;
+      mask = 0x3fff;
+   }
+   else {
+      shift_w = 6;
+      shift_h = 19;
+      mask = 0x1fff;
+   }
+
+   dw3 = zs->payload[2];
+
+   /* aligned width and height */
+   width = align(((dw3 >> shift_w) & mask) + 1, align_w);
+   height = align(((dw3 >> shift_h) & mask) + 1, align_h);
+
+   dw3 = (dw3 & ~((mask << shift_w) | (mask << shift_h))) |
+      (width - 1) << shift_w |
+      (height - 1) << shift_h;
+
+   zs->payload[2] = dw3;
+}
+
+static inline void
 gen6_emit_3DSTATE_DEPTH_BUFFER(const struct ilo_dev_info *dev,
                                const struct ilo_zs_surface *zs,
                                struct ilo_cp *cp)

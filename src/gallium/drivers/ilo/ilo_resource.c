@@ -852,6 +852,16 @@ tex_layout_validate(struct tex_layout *layout)
       layout->height = align(layout->height, 64);
    }
 
+   /*
+    * Depth Buffer Clear/Resolve works in 8x4 sample blocks.  In
+    * ilo_texture_can_enable_hiz(), we always return true for the first slice.
+    * To avoid out-of-bound access, we have to pad.
+    */
+   if (layout->hiz) {
+      layout->width = align(layout->width, 8);
+      layout->height = align(layout->height, 4);
+   }
+
    assert(layout->width % layout->block_width == 0);
    assert(layout->height % layout->block_height == 0);
    assert(layout->qpitch % layout->block_height == 0);
@@ -1037,9 +1047,8 @@ tex_create_hiz(struct ilo_texture *tex, const struct tex_layout *layout)
    struct ilo_screen *is = ilo_screen(tex->base.screen);
    const struct pipe_resource *templ = layout->templ;
    const int hz_align_j = 8;
-   unsigned hz_width, hz_height;
+   unsigned hz_width, hz_height, lv;
    unsigned long pitch;
-   int i;
 
    /*
     * See the Sandy Bridge PRM, volume 2 part 1, page 312, and the Ivy Bridge
@@ -1054,9 +1063,9 @@ tex_create_hiz(struct ilo_texture *tex, const struct tex_layout *layout)
    if (templ->target == PIPE_TEXTURE_3D) {
       hz_height = 0;
 
-      for (i = 0; i <= templ->last_level; i++) {
-         const unsigned h = align(layout->levels[i].h, hz_align_j);
-         hz_height += h * layout->levels[i].d;
+      for (lv = 0; lv <= templ->last_level; lv++) {
+         const unsigned h = align(layout->levels[lv].h, hz_align_j);
+         hz_height += h * layout->levels[lv].d;
       }
 
       hz_height /= 2;
@@ -1086,6 +1095,72 @@ tex_create_hiz(struct ilo_texture *tex, const struct tex_layout *layout)
       return false;
 
    tex->hiz.bo_stride = pitch;
+
+   /*
+    * From the Sandy Bridge PRM, volume 2 part 1, page 313-314:
+    *
+    *     "A rectangle primitive representing the clear area is delivered. The
+    *      primitive must adhere to the following restrictions on size:
+    *
+    *      - If Number of Multisamples is NUMSAMPLES_1, the rectangle must be
+    *        aligned to an 8x4 pixel block relative to the upper left corner
+    *        of the depth buffer, and contain an integer number of these pixel
+    *        blocks, and all 8x4 pixels must be lit.
+    *
+    *      - If Number of Multisamples is NUMSAMPLES_4, the rectangle must be
+    *        aligned to a 4x2 pixel block (8x4 sample block) relative to the
+    *        upper left corner of the depth buffer, and contain an integer
+    *        number of these pixel blocks, and all samples of the 4x2 pixels
+    *        must be lit
+    *
+    *      - If Number of Multisamples is NUMSAMPLES_8, the rectangle must be
+    *        aligned to a 2x2 pixel block (8x4 sample block) relative to the
+    *        upper left corner of the depth buffer, and contain an integer
+    *        number of these pixel blocks, and all samples of the 2x2 pixels
+    *        must be list."
+    *
+    *     "The following is required when performing a depth buffer resolve:
+    *
+    *      - A rectangle primitive of the same size as the previous depth
+    *        buffer clear operation must be delivered, and depth buffer state
+    *        cannot have changed since the previous depth buffer clear
+    *        operation."
+    *
+    * Experiments on Haswell show that depth buffer resolves have the same
+    * alignment requirements, and aligning the RECTLIST primitive and
+    * 3DSTATE_DRAWING_RECTANGLE alone are not enough.  The mipmap size must be
+    * aligned.
+    */
+   for (lv = 0; lv <= templ->last_level; lv++) {
+      unsigned align_w = 8, align_h = 4;
+
+      switch (templ->nr_samples) {
+      case 0:
+      case 1:
+         break;
+      case 2:
+         align_w /= 2;
+         break;
+      case 4:
+         align_w /= 2;
+         align_h /= 2;
+         break;
+      case 8:
+      default:
+         align_w /= 4;
+         align_h /= 2;
+         break;
+      }
+
+      if (u_minify(templ->width0, lv) % align_w == 0 &&
+          u_minify(templ->height0, lv) % align_h == 0) {
+         const unsigned num_slices = (templ->target == PIPE_TEXTURE_3D) ?
+            u_minify(templ->depth0, lv) : templ->array_size;
+
+         ilo_texture_set_slice_flags(tex, lv, 0, num_slices,
+               ILO_TEXTURE_HIZ, ILO_TEXTURE_HIZ);
+      }
+   }
 
    return true;
 }
