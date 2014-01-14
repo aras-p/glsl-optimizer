@@ -459,6 +459,44 @@ brw_emit_pipe_control_flush(struct brw_context *brw, uint32_t flags)
 }
 
 /**
+ * Emit a PIPE_CONTROL that writes to a buffer object.
+ *
+ * \p flags should contain one of the following items:
+ *  - PIPE_CONTROL_WRITE_IMMEDIATE
+ *  - PIPE_CONTROL_WRITE_TIMESTAMP
+ *  - PIPE_CONTROL_WRITE_DEPTH_COUNT
+ */
+void
+brw_emit_pipe_control_write(struct brw_context *brw, uint32_t flags,
+                            drm_intel_bo *bo, uint32_t offset,
+                            uint32_t imm_lower, uint32_t imm_upper)
+{
+   if (brw->gen >= 6) {
+      /* PPGTT/GGTT is selected by DW2 bit 2 on Sandybridge, but DW1 bit 24
+       * on later platforms.  We always use PPGTT on Gen7+.
+       */
+      unsigned gen6_gtt = brw->gen == 6 ? PIPE_CONTROL_GLOBAL_GTT_WRITE : 0;
+
+      BEGIN_BATCH(5);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
+      OUT_BATCH(flags);
+      OUT_RELOC(bo, I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                gen6_gtt | offset);
+      OUT_BATCH(imm_lower);
+      OUT_BATCH(imm_upper);
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(4);
+      OUT_BATCH(_3DSTATE_PIPE_CONTROL | flags | (4 - 2));
+      OUT_RELOC(bo, I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
+                PIPE_CONTROL_GLOBAL_GTT_WRITE | offset);
+      OUT_BATCH(imm_lower);
+      OUT_BATCH(imm_upper);
+      ADVANCE_BATCH();
+   }
+}
+
+/**
  * Restriction [DevSNB, DevIVB]:
  *
  * Prior to changing Depth/Stencil Buffer state (i.e. any combination of
@@ -492,15 +530,11 @@ void
 gen7_emit_vs_workaround_flush(struct brw_context *brw)
 {
    assert(brw->gen == 7);
-
-   BEGIN_BATCH(5);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
-   OUT_BATCH(PIPE_CONTROL_DEPTH_STALL | PIPE_CONTROL_WRITE_IMMEDIATE);
-   OUT_RELOC(brw->batch.workaround_bo,
-	     I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION, 0);
-   OUT_BATCH(0); /* write data */
-   OUT_BATCH(0); /* write data */
-   ADVANCE_BATCH();
+   brw_emit_pipe_control_write(brw,
+                               PIPE_CONTROL_WRITE_IMMEDIATE
+                               | PIPE_CONTROL_DEPTH_STALL,
+                               brw->batch.workaround_bo, 0,
+                               0, 0);
 }
 
 
@@ -510,27 +544,11 @@ gen7_emit_vs_workaround_flush(struct brw_context *brw)
 void
 gen7_emit_cs_stall_flush(struct brw_context *brw)
 {
-   BEGIN_BATCH(5);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
-   /* From p61 of the Ivy Bridge PRM (1.10.4 PIPE_CONTROL Command: DW1[20]
-    * CS Stall):
-    *
-    *     One of the following must also be set:
-    *     - Render Target Cache Flush Enable ([12] of DW1)
-    *     - Depth Cache Flush Enable ([0] of DW1)
-    *     - Stall at Pixel Scoreboard ([1] of DW1)
-    *     - Depth Stall ([13] of DW1)
-    *     - Post-Sync Operation ([13] of DW1)
-    *
-    * We choose to do a Post-Sync Operation (Write Immediate Data), since
-    * it seems like it will incur the least additional performance penalty.
-    */
-   OUT_BATCH(PIPE_CONTROL_CS_STALL | PIPE_CONTROL_WRITE_IMMEDIATE);
-   OUT_RELOC(brw->batch.workaround_bo,
-             I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION, 0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
+   brw_emit_pipe_control_write(brw,
+                               PIPE_CONTROL_CS_STALL
+                               | PIPE_CONTROL_WRITE_IMMEDIATE,
+                               brw->batch.workaround_bo, 0,
+                               0, 0);
 }
 
 
@@ -581,14 +599,8 @@ intel_emit_post_sync_nonzero_flush(struct brw_context *brw)
                                PIPE_CONTROL_CS_STALL |
                                PIPE_CONTROL_STALL_AT_SCOREBOARD);
 
-   BEGIN_BATCH(5);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
-   OUT_BATCH(PIPE_CONTROL_WRITE_IMMEDIATE);
-   OUT_RELOC(brw->batch.workaround_bo,
-	     I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION, 0);
-   OUT_BATCH(0); /* write data */
-   OUT_BATCH(0); /* write data */
-   ADVANCE_BATCH();
+   brw_emit_pipe_control_write(brw, PIPE_CONTROL_WRITE_IMMEDIATE,
+                               brw->batch.workaround_bo, 0, 0, 0);
 
    brw->batch.need_workaround_flush = false;
 }

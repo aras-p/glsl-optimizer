@@ -49,36 +49,15 @@
 void
 brw_write_timestamp(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 {
-   if (brw->gen >= 6) {
-      /* Emit workaround flushes: */
-      if (brw->gen == 6) {
-         brw_emit_pipe_control_flush(brw,
-                                     PIPE_CONTROL_CS_STALL |
-                                     PIPE_CONTROL_STALL_AT_SCOREBOARD);
-      }
-
-      BEGIN_BATCH(5);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (5 - 2));
-      OUT_BATCH(PIPE_CONTROL_WRITE_TIMESTAMP);
-      OUT_RELOC(query_bo,
-                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-                PIPE_CONTROL_GLOBAL_GTT_WRITE |
-                idx * sizeof(uint64_t));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   } else {
-      BEGIN_BATCH(4);
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
-                PIPE_CONTROL_WRITE_TIMESTAMP);
-      OUT_RELOC(query_bo,
-                I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-                PIPE_CONTROL_GLOBAL_GTT_WRITE |
-                idx * sizeof(uint64_t));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
+   if (brw->gen == 6) {
+      /* Emit Sandybridge workaround flush: */
+      brw_emit_pipe_control_flush(brw,
+                                  PIPE_CONTROL_CS_STALL |
+                                  PIPE_CONTROL_STALL_AT_SCOREBOARD);
    }
+
+   brw_emit_pipe_control_write(brw, PIPE_CONTROL_WRITE_TIMESTAMP,
+                               query_bo, idx * sizeof(uint64_t), 0, 0);
 }
 
 /**
@@ -89,21 +68,10 @@ write_depth_count(struct brw_context *brw, drm_intel_bo *query_bo, int idx)
 {
    assert(brw->gen < 6);
 
-   BEGIN_BATCH(4);
-   OUT_BATCH(_3DSTATE_PIPE_CONTROL | (4 - 2) |
-             PIPE_CONTROL_DEPTH_STALL | PIPE_CONTROL_WRITE_DEPTH_COUNT);
-   /* This object could be mapped cacheable, but we don't have an exposed
-    * mechanism to support that.  Since it's going uncached, tell GEM that
-    * we're writing to it.  The usual clflush should be all that's required
-    * to pick up the results.
-    */
-   OUT_RELOC(query_bo,
-             I915_GEM_DOMAIN_INSTRUCTION, I915_GEM_DOMAIN_INSTRUCTION,
-             PIPE_CONTROL_GLOBAL_GTT_WRITE |
-             (idx * sizeof(uint64_t)));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
+   brw_emit_pipe_control_write(brw,
+                               PIPE_CONTROL_WRITE_DEPTH_COUNT
+                               | PIPE_CONTROL_DEPTH_STALL,
+                               query_bo, idx * sizeof(uint64_t), 0, 0);
 }
 
 /**
