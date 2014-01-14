@@ -108,6 +108,9 @@ namespace {
       proc(S &s, QT &x) {
          _proc(s, x.type);
          _proc(s, x.size);
+         _proc(s, x.target_size);
+         _proc(s, x.target_align);
+         _proc(s, x.ext_type);
       }
    };
 
