@@ -228,17 +228,7 @@ tex_layout_init_alignments(struct tex_layout *layout)
             layout->align_j = 8;
             break;
          default:
-            /*
-             * From the Ivy Bridge PRM, volume 2 part 1, page 319:
-             *
-             *     "The 3 LSBs of both offsets (Depth Coordinate Offset Y and
-             *      Depth Coordinate Offset X) must be zero to ensure correct
-             *      alignment"
-             *
-             * We will make use of them and setting align_i to 8 help us meet
-             * the requirement.
-             */
-            layout->align_i = (templ->last_level > 0) ? 8 : 4;
+            layout->align_i = 4;
             layout->align_j = 4;
             break;
          }
