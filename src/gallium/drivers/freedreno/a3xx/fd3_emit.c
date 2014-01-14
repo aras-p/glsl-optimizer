@@ -115,12 +115,10 @@ emit_constants(struct fd_ringbuffer *ring,
 		// I expect that size should be a multiple of vec4's:
 		assert(size == align(size, 4));
 
-		/* gallium could have const-buffer still bound, even though the
-		 * shader is not using it.  Writing consts above constlen (or
-		 * rather, HLSQ_{VS,FS}_CONTROL_REG.CONSTLENGTH) will cause a
-		 * hang.
+		/* gallium could leave const buffers bound above what the
+		 * current shader uses.. don't let that confuse us.
 		 */
-		if ((base / 4) >= shader->constlen)
+		if (base >= (4 * shader->first_immediate))
 			break;
 
 		if (constbuf->dirty_mask & (1 << index)) {
@@ -137,9 +135,11 @@ emit_constants(struct fd_ringbuffer *ring,
 	/* emit shader immediates: */
 	if (shader) {
 		for (i = 0; i < shader->immediates_count; i++) {
-			fd3_emit_constant(ring, sb,
-					4 * (shader->first_immediate + i),
-					0, 4, shader->immediates[i].val, NULL);
+			base = 4 * (shader->first_immediate + i);
+			if (base >= (4 * shader->constlen))
+				break;
+			fd3_emit_constant(ring, sb, base,
+				0, 4, shader->immediates[i].val, NULL);
 		}
 	}
 }

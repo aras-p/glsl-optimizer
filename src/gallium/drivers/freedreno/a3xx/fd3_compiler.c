@@ -157,7 +157,7 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 			info->file_max[TGSI_FILE_OUTPUT] + 1;
 
 	so->first_immediate = ctx->base_reg[TGSI_FILE_IMMEDIATE];
-	ctx->immediate_idx = 4 * (info->file_max[TGSI_FILE_IMMEDIATE] + 1);
+	ctx->immediate_idx = 4 * (ctx->info.file_max[TGSI_FILE_IMMEDIATE] + 1);
 
 	ret = tgsi_parse_init(&ctx->parser, tokens);
 	if (ret != TGSI_PARSE_OK)
