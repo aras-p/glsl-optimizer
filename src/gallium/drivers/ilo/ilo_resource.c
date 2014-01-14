@@ -1192,8 +1192,13 @@ tex_create(struct pipe_screen *screen,
       return NULL;
    }
 
-   if (layout.hiz)
-      tex_create_hiz(tex, &layout);
+   if (layout.hiz && !tex_create_hiz(tex, &layout)) {
+      /* Separate Stencil Buffer requires HiZ to be enabled */
+      if (layout.dev->gen == ILO_GEN(6) && layout.separate_stencil) {
+         tex_destroy(tex);
+         return NULL;
+      }
+   }
 
    return &tex->base;
 }
