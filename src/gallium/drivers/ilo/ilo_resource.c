@@ -1103,6 +1103,9 @@ tex_create_hiz(struct ilo_texture *tex, const struct tex_layout *layout)
 static void
 tex_destroy(struct ilo_texture *tex)
 {
+   if (tex->hiz.bo)
+      intel_bo_unreference(tex->hiz.bo);
+
    if (tex->separate_s8)
       tex_destroy(tex->separate_s8);
 
