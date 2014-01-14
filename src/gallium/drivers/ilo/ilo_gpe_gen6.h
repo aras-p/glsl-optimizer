@@ -2109,7 +2109,7 @@ gen6_emit_BLEND_STATE(const struct ilo_dev_info *dev,
       const struct ilo_blend_cso *cso = &blend->cso[idx];
       const int num_samples = fb->num_samples;
       const struct util_format_description *format_desc =
-         (idx < fb->state.nr_cbufs) ?
+         (idx < fb->state.nr_cbufs && fb->state.cbufs[idx]) ?
          util_format_description(fb->state.cbufs[idx]->format) : NULL;
       bool rt_is_unorm, rt_is_pure_integer, rt_dst_alpha_forced_one;
 

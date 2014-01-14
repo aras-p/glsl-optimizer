@@ -644,7 +644,7 @@ ilo_set_framebuffer_state(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
-   ilo_gpe_init_fb(ilo->dev, state, &ilo->fb);
+   ilo_gpe_set_fb(ilo->dev, state, &ilo->fb);
 
    ilo->dirty |= ILO_DIRTY_FB;
 }
@@ -1310,7 +1310,8 @@ ilo_mark_states_with_resource_dirty(struct ilo_context *ilo,
    /* for now? */
    if (res->target != PIPE_BUFFER) {
       for (i = 0; i < ilo->fb.state.nr_cbufs; i++) {
-         if (ilo->fb.state.cbufs[i]->texture == res) {
+         const struct pipe_surface *surf = ilo->fb.state.cbufs[i];
+         if (surf && surf->texture == res) {
             states |= ILO_DIRTY_FB;
             break;
          }

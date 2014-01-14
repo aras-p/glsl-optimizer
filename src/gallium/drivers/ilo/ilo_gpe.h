@@ -256,6 +256,7 @@ struct ilo_surface_cso {
 struct ilo_fb_state {
    struct pipe_framebuffer_state state;
 
+   struct ilo_view_surface null_rt;
    struct ilo_zs_surface null_zs;
 
    unsigned num_samples;
@@ -528,8 +529,8 @@ ilo_gpe_init_fs_cso(const struct ilo_dev_info *dev,
 }
 
 void
-ilo_gpe_init_fb(const struct ilo_dev_info *dev,
-                const struct pipe_framebuffer_state *state,
-                struct ilo_fb_state *fb);
+ilo_gpe_set_fb(const struct ilo_dev_info *dev,
+               const struct pipe_framebuffer_state *state,
+               struct ilo_fb_state *fb);
 
 #endif /* ILO_GPE_H */

@@ -179,8 +179,11 @@ ilo_blit_resolve_framebuffer(struct ilo_context *ilo)
       }
    }
 
-   for (i = 0; i < fb->nr_cbufs; i++)
-      ilo_blit_resolve_surface(ilo, fb->cbufs[i], ILO_TEXTURE_RENDER_WRITE);
+   for (i = 0; i < fb->nr_cbufs; i++) {
+      struct pipe_surface *surf = fb->cbufs[i];
+      if (surf)
+         ilo_blit_resolve_surface(ilo, surf, ILO_TEXTURE_RENDER_WRITE);
+   }
 
    if (fb->zsbuf)
       ilo_blit_resolve_surface(ilo, fb->zsbuf, ILO_TEXTURE_RENDER_WRITE);

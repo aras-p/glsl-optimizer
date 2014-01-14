@@ -892,7 +892,11 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
          const struct ilo_surface_cso *surface =
             (const struct ilo_surface_cso *) fb->state.cbufs[i];
 
-         if (fb->offset_to_layers) {
+         if (!surface) {
+            surface_state[i] =
+               gen6_emit_SURFACE_STATE(p->dev, &fb->null_rt, true, p->cp);
+         }
+         else if (fb->offset_to_layers) {
             struct ilo_view_surface layer;
 
             assert(surface->base.u.tex.first_layer ==
@@ -920,14 +924,8 @@ gen6_pipeline_state_surfaces_rt(struct ilo_3d_pipeline *p,
        * brw_update_renderbuffer_surfaces() does.  I don't know why.
        */
       if (i == 0) {
-         struct ilo_view_surface null_surface;
-
-         ilo_gpe_init_view_surface_null(p->dev,
-               fb->state.width, fb->state.height,
-               1, 0, &null_surface);
-
          surface_state[i] =
-            gen6_emit_SURFACE_STATE(p->dev, &null_surface, true, p->cp);
+            gen6_emit_SURFACE_STATE(p->dev, &fb->null_rt, true, p->cp);
 
          i++;
       }

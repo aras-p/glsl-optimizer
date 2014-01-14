@@ -2458,21 +2458,30 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
 }
 
 void
-ilo_gpe_init_fb(const struct ilo_dev_info *dev,
-                const struct pipe_framebuffer_state *state,
-                struct ilo_fb_state *fb)
+ilo_gpe_set_fb(const struct ilo_dev_info *dev,
+               const struct pipe_framebuffer_state *state,
+               struct ilo_fb_state *fb)
 {
    const struct pipe_surface *first;
-   unsigned num_surfaces;
+   unsigned num_surfaces, first_idx;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    util_copy_framebuffer_state(&fb->state, state);
 
-   first = (state->nr_cbufs) ? state->cbufs[0] :
-           (state->zsbuf) ? state->zsbuf :
-           NULL;
-   num_surfaces = state->nr_cbufs + !!state->zsbuf;
+   ilo_gpe_init_view_surface_null(dev,
+         state->width, state->height,
+         1, 0, &fb->null_rt);
+
+   first = NULL;
+   for (first_idx = 0; first_idx < state->nr_cbufs; first_idx++) {
+      if (state->cbufs[first_idx]) {
+         first = state->cbufs[first_idx];
+         break;
+      }
+   }
+   if (!first)
+      first = state->zsbuf;
 
    fb->num_samples = (first) ? first->texture->nr_samples : 1;
    if (!fb->num_samples)
@@ -2484,6 +2493,8 @@ ilo_gpe_init_fb(const struct ilo_dev_info *dev,
     * The PRMs list several restrictions when the framebuffer has more than
     * one surface, but it seems they are lifted on GEN7+.
     */
+   num_surfaces = state->nr_cbufs + !!state->zsbuf;
+
    if (dev->gen < ILO_GEN(7) && num_surfaces > 1) {
       const unsigned first_depth =
          (first->texture->target == PIPE_TEXTURE_3D) ?
@@ -2492,11 +2503,15 @@ ilo_gpe_init_fb(const struct ilo_dev_info *dev,
       bool has_3d_target = (first->texture->target == PIPE_TEXTURE_3D);
       unsigned i;
 
-      for (i = 1; i < num_surfaces; i++) {
+      for (i = first_idx + 1; i < num_surfaces; i++) {
          const struct pipe_surface *surf =
             (i < state->nr_cbufs) ? state->cbufs[i] : state->zsbuf;
-         const unsigned depth =
-            (surf->texture->target == PIPE_TEXTURE_3D) ?
+         unsigned depth;
+
+         if (!surf)
+            continue;
+
+         depth = (surf->texture->target == PIPE_TEXTURE_3D) ?
             surf->texture->depth0 :
             surf->u.tex.last_layer - surf->u.tex.first_layer + 1;
 
