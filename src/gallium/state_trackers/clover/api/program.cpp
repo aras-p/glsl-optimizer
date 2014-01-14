@@ -69,7 +69,7 @@ clCreateProgramWithBinary(cl_context d_ctx, cl_uint n,
       throw error(CL_INVALID_DEVICE);
 
    // Deserialize the provided binaries,
-   auto result = map(
+   std::vector<std::pair<cl_int, module>> result = map(
       [](const unsigned char *p, size_t l) -> std::pair<cl_int, module> {
          if (!p || !l)
             return { CL_INVALID_VALUE, {} };
