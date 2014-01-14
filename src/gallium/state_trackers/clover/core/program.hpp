@@ -49,6 +49,7 @@ namespace clover {
 
       void build(const ref_vector<device> &devs, const char *opts);
 
+      const bool has_source;
       const std::string &source() const;
 
       device_range devices() const;

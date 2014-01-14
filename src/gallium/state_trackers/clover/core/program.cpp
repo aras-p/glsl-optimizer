@@ -26,13 +26,13 @@
 using namespace clover;
 
 program::program(context &ctx, const std::string &source) :
-   ctx(ctx), _source(source) {
+   has_source(true), ctx(ctx), _source(source) {
 }
 
 program::program(context &ctx,
                  const ref_vector<device> &devs,
                  const std::vector<module> &binaries) :
-   ctx(ctx) {
+   has_source(false), ctx(ctx) {
    for_each([&](device &dev, const module &bin) {
          _binaries.insert({ &dev, bin });
       },
@@ -41,23 +41,25 @@ program::program(context &ctx,
 
 void
 program::build(const ref_vector<device> &devs, const char *opts) {
-   for (auto &dev : devs) {
-      _binaries.erase(&dev);
-      _logs.erase(&dev);
-      _opts.erase(&dev);
+   if (has_source) {
+      for (auto &dev : devs) {
+         _binaries.erase(&dev);
+         _logs.erase(&dev);
+         _opts.erase(&dev);
 
-      _opts.insert({ &dev, opts });
+         _opts.insert({ &dev, opts });
 
-      try {
-         auto module = (dev.ir_format() == PIPE_SHADER_IR_TGSI ?
-                        compile_program_tgsi(_source) :
-                        compile_program_llvm(_source, dev.ir_format(),
-                                             dev.ir_target(), build_opts(dev)));
-         _binaries.insert({ &dev, module });
+         try {
+            auto module = (dev.ir_format() == PIPE_SHADER_IR_TGSI ?
+                           compile_program_tgsi(_source) :
+                           compile_program_llvm(_source, dev.ir_format(),
+                                                dev.ir_target(), build_opts(dev)));
+            _binaries.insert({ &dev, module });
 
-      } catch (build_error &e) {
-         _logs.insert({ &dev, e.what() });
-         throw;
+         } catch (build_error &e) {
+            _logs.insert({ &dev, e.what() });
+            throw;
+         }
       }
    }
 }
