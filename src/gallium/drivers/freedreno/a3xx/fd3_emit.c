@@ -338,7 +338,7 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 
 void
 fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
-		uint32_t dirty, bool binning)
+		struct fd_program_stateobj *prog, uint32_t dirty, bool binning)
 {
 	emit_marker(ring, 5);
 
@@ -370,9 +370,6 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		OUT_PKT0(ring, REG_A3XX_RB_ALPHA_REF, 1);
 		OUT_RING(ring, zsa->rb_alpha_ref);
 
-		OUT_PKT0(ring, REG_A3XX_RB_DEPTH_CONTROL, 1);
-		OUT_RING(ring, zsa->rb_depth_control);
-
 		OUT_PKT0(ring, REG_A3XX_RB_STENCIL_CONTROL, 1);
 		OUT_RING(ring, zsa->rb_stencil_control);
 
@@ -381,6 +378,17 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 				A3XX_RB_STENCILREFMASK_STENCILREF(sr->ref_value[0]));
 		OUT_RING(ring, zsa->rb_stencilrefmask_bf |
 				A3XX_RB_STENCILREFMASK_BF_STENCILREF(sr->ref_value[1]));
+	}
+
+	if (dirty & (FD_DIRTY_ZSA | FD_DIRTY_PROG)) {
+		struct fd3_shader_stateobj *fp = prog->fp;
+		uint32_t val = fd3_zsa_stateobj(ctx->zsa)->rb_depth_control;
+		if (fp->writes_pos) {
+			val |= A3XX_RB_DEPTH_CONTROL_FRAG_WRITES_Z;
+			val |= A3XX_RB_DEPTH_CONTROL_EARLY_Z_DISABLE;
+		}
+		OUT_PKT0(ring, REG_A3XX_RB_DEPTH_CONTROL, 1);
+		OUT_RING(ring, val);
 	}
 
 	if (dirty & FD_DIRTY_RASTERIZER) {
@@ -397,15 +405,23 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		OUT_PKT0(ring, REG_A3XX_GRAS_SU_POLY_OFFSET_SCALE, 2);
 		OUT_RING(ring, rasterizer->gras_su_poly_offset_scale);
 		OUT_RING(ring, rasterizer->gras_su_poly_offset_offset);
+	}
 
+	if (dirty & (FD_DIRTY_RASTERIZER | FD_DIRTY_PROG)) {
+		struct fd3_shader_stateobj *fp = prog->fp;
+		uint32_t val = fd3_rasterizer_stateobj(ctx->rasterizer)
+				->gras_cl_clip_cntl;
+		if (fp->writes_pos) {
+			val |= A3XX_GRAS_CL_CLIP_CNTL_ZCLIP_DISABLE;
+		}
 		OUT_PKT0(ring, REG_A3XX_GRAS_CL_CLIP_CNTL, 1);
-		OUT_RING(ring, rasterizer->gras_cl_clip_cntl);
+		OUT_RING(ring, val);
 	}
 
 	if (dirty & (FD_DIRTY_RASTERIZER | FD_DIRTY_PROG)) {
 		struct fd3_rasterizer_stateobj *rasterizer =
 				fd3_rasterizer_stateobj(ctx->rasterizer);
-		struct fd3_shader_stateobj *fp = ctx->prog.fp;
+		struct fd3_shader_stateobj *fp = prog->fp;
 		uint32_t stride_in_vpc;
 
 		stride_in_vpc = align(fp->total_in, 4) / 4;
@@ -443,14 +459,14 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	}
 
 	if (dirty & FD_DIRTY_PROG)
-		fd3_program_emit(ring, &ctx->prog, binning);
+		fd3_program_emit(ring, prog, binning);
 
 	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
 	OUT_RING(ring, HLSQ_FLUSH);
 
-	if (dirty & (FD_DIRTY_PROG | FD_DIRTY_CONSTBUF)) {
-		struct fd_program_stateobj *prog = &ctx->prog;
-
+	if ((dirty & (FD_DIRTY_PROG | FD_DIRTY_CONSTBUF)) &&
+			/* evil hack to deal sanely with clear path: */
+			(prog == &ctx->prog)) {
 		emit_constants(ring,  SB_VERT_SHADER,
 				&ctx->constbuf[PIPE_SHADER_VERTEX],
 				(prog->dirty & FD_SHADER_DIRTY_VP) ? prog->vp : NULL);
@@ -459,7 +475,7 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 				(prog->dirty & FD_SHADER_DIRTY_FP) ? prog->fp : NULL);
 	}
 
-	if (dirty & FD_DIRTY_BLEND) {
+	if ((dirty & FD_DIRTY_BLEND) && ctx->blend) {
 		struct fd3_blend_stateobj *blend = fd3_blend_stateobj(ctx->blend);
 		uint32_t i;
 

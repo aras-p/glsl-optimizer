@@ -81,6 +81,7 @@ struct fd3_shader_stateobj {
 		fd3_semantic semantic;
 		uint8_t regid;
 	} outputs[16];
+	bool writes_pos;
 
 	/* vertices/inputs: */
 	unsigned inputs_count;

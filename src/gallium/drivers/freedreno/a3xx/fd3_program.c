@@ -247,7 +247,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	const struct fd3_shader_stateobj *fp = prog->fp;
 	const struct ir3_shader_info *vsi = &vp->info;
 	const struct ir3_shader_info *fsi = &fp->info;
-	uint32_t pos_regid, psize_regid, color_regid;
+	uint32_t pos_regid, posz_regid, psize_regid, color_regid;
 	int i;
 
 	if (binning) {
@@ -258,6 +258,8 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	}
 
 	pos_regid = find_regid(vp,
+		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0));
+	posz_regid = find_regid(fp,
 		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0));
 	psize_regid = find_regid(vp,
 		fd3_semantic_name(TGSI_SEMANTIC_PSIZE, 0));
@@ -389,7 +391,12 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	OUT_RING(ring, 0x00000000);        /* SP_FS_FLAT_SHAD_MODE_REG_1 */
 
 	OUT_PKT0(ring, REG_A3XX_SP_FS_OUTPUT_REG, 1);
-	OUT_RING(ring, 0x00000000);        /* SP_FS_OUTPUT_REG */
+	if (fp->writes_pos) {
+		OUT_RING(ring, A3XX_SP_FS_OUTPUT_REG_DEPTH_ENABLE |
+				A3XX_SP_FS_OUTPUT_REG_DEPTH_REGID(posz_regid));
+	} else {
+		OUT_RING(ring, 0x00000000);
+	}
 
 	OUT_PKT0(ring, REG_A3XX_SP_FS_MRT_REG(0), 4);
 	OUT_RING(ring, A3XX_SP_FS_MRT_REG_REGID(color_regid) |

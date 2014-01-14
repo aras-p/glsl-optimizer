@@ -70,7 +70,7 @@ static void
 draw_impl(struct fd_context *ctx, const struct pipe_draw_info *info,
 		struct fd_ringbuffer *ring, unsigned dirty, bool binning)
 {
-	fd3_emit_state(ctx, ring, dirty, binning);
+	fd3_emit_state(ctx, ring, &ctx->prog, dirty, binning);
 
 	if (dirty & FD_DIRTY_VTXBUF)
 		emit_vertexbufs(ctx, ring);
@@ -114,10 +114,7 @@ fd3_clear_binning(struct fd_context *ctx, unsigned dirty)
 	struct fd3_context *fd3_ctx = fd3_context(ctx);
 	struct fd_ringbuffer *ring = ctx->binning_ring;
 
-	fd3_emit_state(ctx, ring, dirty & (FD_DIRTY_VIEWPORT |
-			FD_DIRTY_FRAMEBUFFER | FD_DIRTY_SCISSOR), true);
-
-	fd3_program_emit(ring, &ctx->solid_prog, true);
+	fd3_emit_state(ctx, ring, &ctx->solid_prog, dirty, true);
 
 	fd3_emit_vertex_bufs(ring, &ctx->solid_prog, (struct fd3_vertex_buf[]) {
 			{ .prsc = fd3_ctx->solid_vbuf, .stride = 12, .format = PIPE_FORMAT_R32G32B32_FLOAT },
@@ -152,11 +149,13 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	unsigned dirty = ctx->dirty;
 	unsigned ce, i;
 
+	dirty &= FD_DIRTY_VIEWPORT | FD_DIRTY_FRAMEBUFFER | FD_DIRTY_SCISSOR;
+	dirty |= FD_DIRTY_PROG;
+
 	fd3_clear_binning(ctx, dirty);
 
 	/* emit generic state now: */
-	fd3_emit_state(ctx, ring, dirty & (FD_DIRTY_VIEWPORT |
-			FD_DIRTY_FRAMEBUFFER | FD_DIRTY_SCISSOR), false);
+	fd3_emit_state(ctx, ring, &ctx->solid_prog, dirty, false);
 
 	OUT_PKT0(ring, REG_A3XX_RB_BLEND_ALPHA, 1);
 	OUT_RING(ring, A3XX_RB_BLEND_ALPHA_UINT(0xff) |
@@ -245,8 +244,6 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 
 	OUT_PKT0(ring, REG_A3XX_GRAS_SU_MODE_CONTROL, 1);
 	OUT_RING(ring, A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH(0));
-
-	fd3_program_emit(ring, &ctx->solid_prog, false);
 
 	fd3_emit_vertex_bufs(ring, &ctx->solid_prog, (struct fd3_vertex_buf[]) {
 			{ .prsc = fd3_ctx->solid_vbuf, .stride = 12, .format = PIPE_FORMAT_R32G32B32_FLOAT },

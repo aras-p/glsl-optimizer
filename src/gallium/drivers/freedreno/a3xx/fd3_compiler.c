@@ -1341,6 +1341,7 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 {
 	struct fd3_shader_stateobj *so = ctx->so;
 	unsigned base = ctx->base_reg[TGSI_FILE_OUTPUT];
+	unsigned comp = 0;
 	unsigned name = decl->Semantic.Name;
 	unsigned i;
 
@@ -1351,6 +1352,8 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 	if (ctx->type == TGSI_PROCESSOR_VERTEX) {
 		switch (name) {
 		case TGSI_SEMANTIC_POSITION:
+			so->writes_pos = true;
+			/* fallthrough */
 		case TGSI_SEMANTIC_PSIZE:
 		case TGSI_SEMANTIC_COLOR:
 		case TGSI_SEMANTIC_GENERIC:
@@ -1363,6 +1366,10 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 		}
 	} else {
 		switch (name) {
+		case TGSI_SEMANTIC_POSITION:
+			comp = 2;  /* tgsi will write to .z component */
+			so->writes_pos = true;
+			/* fallthrough */
 		case TGSI_SEMANTIC_COLOR:
 			break;
 		default:
@@ -1374,7 +1381,7 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 	for (i = decl->Range.First; i <= decl->Range.Last; i++) {
 		unsigned n = so->outputs_count++;
 		so->outputs[n].semantic = decl_semantic(&decl->Semantic);
-		so->outputs[n].regid = regid(i + base, 0);
+		so->outputs[n].regid = regid(i + base, comp);
 	}
 }
 
