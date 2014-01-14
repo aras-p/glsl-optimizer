@@ -289,17 +289,17 @@ namespace clover {
 
    struct keys {
       template<typename P>
-      typename std::remove_reference<P>::type::first_type &
-      operator()(P &&p) const {
-         return p.first;
+      auto
+      operator()(P &&p) const -> decltype(std::get<0>(std::forward<P>(p))) {
+         return std::get<0>(std::forward<P>(p));
       }
    };
 
    struct values {
       template<typename P>
-      typename std::remove_reference<P>::type::second_type &
-      operator()(P &&p) const {
-         return p.second;
+      auto
+      operator()(P &&p) const -> decltype(std::get<1>(std::forward<P>(p))) {
+         return std::get<1>(std::forward<P>(p));
       }
    };
 
