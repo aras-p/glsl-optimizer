@@ -263,6 +263,43 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats)
       else {
          n += 3;
       }
+
+      /* The ES and desktop GL specs diverge here.
+       *
+       * In desktop OpenGL, the driver can perform online compression of
+       * uncompressed texture data.  GL_NUM_COMPRESSED_TEXTURE_FORMATS and
+       * GL_COMPRESSED_TEXTURE_FORMATS give the application a list of
+       * formats that it could ask the driver to compress with some
+       * expectation of quality.  The GL_ARB_texture_compression spec
+       * calls this "suitable for general-purpose usage."  As noted
+       * above, this means GL_COMPRESSED_RGBA_S3TC_DXT1_EXT is not
+       * included in the list.
+       *
+       * In OpenGL ES, the driver never performs compression.
+       * GL_NUM_COMPRESSED_TEXTURE_FORMATS and
+       * GL_COMPRESSED_TEXTURE_FORMATS give the application a list of
+       * formats that the driver can receive from the application.  It
+       * is the *complete* list of formats.  The
+       * GL_EXT_texture_compression_s3tc spec says:
+       *
+       *     "New State for OpenGL ES 2.0.25 and 3.0.2 Specifications
+       *
+       *         The queries for NUM_COMPRESSED_TEXTURE_FORMATS and
+       *         COMPRESSED_TEXTURE_FORMATS include
+       *         COMPRESSED_RGB_S3TC_DXT1_EXT,
+       *         COMPRESSED_RGBA_S3TC_DXT1_EXT,
+       *         COMPRESSED_RGBA_S3TC_DXT3_EXT, and
+       *         COMPRESSED_RGBA_S3TC_DXT5_EXT."
+       *
+       * Note that the addition is only to the OpenGL ES specification!
+       */
+      if (_mesa_is_gles(ctx)) {
+         if (formats) {
+            formats[n++] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+         } else {
+            n += 1;
+         }
+      }
    }
 
    /* The GL_OES_compressed_ETC1_RGB8_texture spec says:
