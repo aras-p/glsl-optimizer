@@ -1020,7 +1020,8 @@ zs_init_info(const struct ilo_dev_info *dev,
        *      same value (enabled or disabled) as Hierarchical Depth Buffer
        *      Enable."
        */
-      separate_stencil = (tex->hiz.bo != NULL);
+      separate_stencil =
+         ilo_texture_can_enable_hiz(tex, level, first_layer, num_layers);
    }
 
    /*
@@ -1109,7 +1110,7 @@ zs_init_info(const struct ilo_dev_info *dev,
       }
    }
 
-   if (tex->hiz.bo) {
+   if (ilo_texture_can_enable_hiz(tex, level, first_layer, num_layers)) {
       info->hiz.bo = tex->hiz.bo;
       info->hiz.stride = tex->hiz.bo_stride;
       info->hiz.tiling = INTEL_TILING_Y;

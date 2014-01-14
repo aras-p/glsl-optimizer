@@ -60,7 +60,7 @@ ilo_blit_resolve_slices(struct ilo_context *ilo,
     * As it is only used to resolve HiZ right now, return early when there is
     * no HiZ.
     */
-   if (!tex->hiz.bo)
+   if (!ilo_texture_can_enable_hiz(tex, level, first_slice, num_slices))
       return;
 
    /*
@@ -74,7 +74,7 @@ ilo_blit_resolve_slices(struct ilo_context *ilo,
     * It is assumed there is at most one writer, and that readers read before
     * writers write.
     */
-   if (tex->hiz.bo) {
+   if (ilo_texture_can_enable_hiz(tex, level, first_slice, num_slices)) {
       ilo_blit_resolve_slices_for_hiz(ilo, res, level,
             first_slice, num_slices, flags);
    }

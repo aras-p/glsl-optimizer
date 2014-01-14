@@ -157,4 +157,11 @@ ilo_texture_set_slice_flags(struct ilo_texture *tex, unsigned level,
    }
 }
 
+static inline bool
+ilo_texture_can_enable_hiz(const struct ilo_texture *tex, unsigned level,
+                           unsigned first_slice, unsigned num_slices)
+{
+   return (tex->hiz.bo != NULL);
+}
+
 #endif /* ILO_RESOURCE_H */
