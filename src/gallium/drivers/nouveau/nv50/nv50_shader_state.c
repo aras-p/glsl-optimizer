@@ -346,6 +346,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    struct nv50_varying dummy;
    int i, n, c, m;
    uint32_t primid = 0;
+   uint32_t layerid = vp->gp.layerid;
    uint32_t psiz = 0x000;
    uint32_t interp = fp->fp.interp;
    uint32_t colors = fp->fp.colors;
@@ -412,6 +413,12 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
       map[m++] = vp->gp.primid;
    }
 
+   if (vp->gp.has_layer) {
+      // In GL4.x, layer can be an fp input, but not in 3.x. Make sure to add
+      // it to the output map.
+      map[m++] = layerid;
+   }
+
    if (nv50->rast->pipe.point_size_per_vertex) {
       psiz = (m << 4) | 1;
       map[m++] = vp->vp.psiz;
@@ -468,8 +475,11 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    BEGIN_NV04(push, NV50_3D(SEMANTIC_COLOR), 4);
    PUSH_DATA (push, colors);
    PUSH_DATA (push, (vp->vp.clpd_nr << 8) | 4);
-   PUSH_DATA (push, 0);
+   PUSH_DATA (push, layerid);
    PUSH_DATA (push, psiz);
+
+   BEGIN_NV04(push, NV50_3D(LAYER), 1);
+   PUSH_DATA (push, vp->gp.has_layer << 16);
 
    BEGIN_NV04(push, NV50_3D(FP_INTERPOLANT_CTRL), 1);
    PUSH_DATA (push, interp);
