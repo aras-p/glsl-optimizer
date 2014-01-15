@@ -444,7 +444,7 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
 
    if (mask & BUFFER_BITS_COLOR) {
       for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-         GLuint b = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
+         GLint b = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
 
          if (b >= 0 && mask & (1 << b)) {
             struct gl_renderbuffer *rb
