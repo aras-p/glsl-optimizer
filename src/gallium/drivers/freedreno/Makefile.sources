@@ -1,5 +1,6 @@
 C_SOURCES := \
 	freedreno_util.c \
+	freedreno_lowering.c \
 	freedreno_query.c \
 	freedreno_fence.c \
 	freedreno_resource.c \

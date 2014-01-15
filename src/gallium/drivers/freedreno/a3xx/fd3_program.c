@@ -34,6 +34,8 @@
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_parse.h"
 
+#include "freedreno_lowering.h"
+
 #include "fd3_program.h"
 #include "fd3_compiler.h"
 #include "fd3_emit.h"
@@ -87,6 +89,7 @@ create_shader(struct pipe_context *pctx, const struct pipe_shader_state *cso,
 		enum shader_t type)
 {
 	struct fd3_shader_stateobj *so = CALLOC_STRUCT(fd3_shader_stateobj);
+	const struct tgsi_token *tokens = fd_transform_lowering(cso->tokens);
 	int ret;
 
 	if (!so)
@@ -96,13 +99,13 @@ create_shader(struct pipe_context *pctx, const struct pipe_shader_state *cso,
 
 	if (fd_mesa_debug & FD_DBG_DISASM) {
 		DBG("dump tgsi: type=%d", so->type);
-		tgsi_dump(cso->tokens, 0);
+		tgsi_dump(tokens, 0);
 	}
 
 	if ((type == SHADER_FRAGMENT) && (fd_mesa_debug & FD_DBG_FRAGHALF))
 		so->half_precision = true;
 
-	ret = fd3_compile_shader(so, cso->tokens);
+	ret = fd3_compile_shader(so, tokens);
 	if (ret) {
 		debug_error("compile failed!");
 		goto fail;
