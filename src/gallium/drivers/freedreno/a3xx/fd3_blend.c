@@ -39,11 +39,29 @@ fd3_blend_state_create(struct pipe_context *pctx,
 		const struct pipe_blend_state *cso)
 {
 	struct fd3_blend_stateobj *so;
+	enum a3xx_rop_code rop = ROP_COPY;
+	bool reads_dest = false;
 	int i;
 
 	if (cso->logicop_enable) {
-		DBG("Unsupported! logicop");
-		return NULL;
+		rop = cso->logicop_func;  /* maps 1:1 */
+
+		switch (cso->logicop_func) {
+		case PIPE_LOGICOP_NOR:
+		case PIPE_LOGICOP_AND_INVERTED:
+		case PIPE_LOGICOP_AND_REVERSE:
+		case PIPE_LOGICOP_INVERT:
+		case PIPE_LOGICOP_XOR:
+		case PIPE_LOGICOP_NAND:
+		case PIPE_LOGICOP_AND:
+		case PIPE_LOGICOP_EQUIV:
+		case PIPE_LOGICOP_NOOP:
+		case PIPE_LOGICOP_OR_INVERTED:
+		case PIPE_LOGICOP_OR_REVERSE:
+		case PIPE_LOGICOP_OR:
+			reads_dest = true;
+			break;
+		}
 	}
 
 	if (cso->independent_blend_enable) {
@@ -70,7 +88,7 @@ fd3_blend_state_create(struct pipe_context *pctx,
 				A3XX_RB_MRT_BLEND_CONTROL_CLAMP_ENABLE;
 
 		so->rb_mrt[i].control =
-				A3XX_RB_MRT_CONTROL_ROP_CODE(12) |
+				A3XX_RB_MRT_CONTROL_ROP_CODE(rop) |
 				A3XX_RB_MRT_CONTROL_COMPONENT_ENABLE(rt->colormask);
 
 		if (rt->blend_enable)
@@ -78,6 +96,9 @@ fd3_blend_state_create(struct pipe_context *pctx,
 					A3XX_RB_MRT_CONTROL_READ_DEST_ENABLE |
 					A3XX_RB_MRT_CONTROL_BLEND |
 					A3XX_RB_MRT_CONTROL_BLEND2;
+
+		if (reads_dest)
+			so->rb_mrt[i].control |= A3XX_RB_MRT_CONTROL_READ_DEST_ENABLE;
 
 		if (cso->dither)
 			so->rb_mrt[i].control |= A3XX_RB_MRT_CONTROL_DITHER_MODE(DITHER_ALWAYS);

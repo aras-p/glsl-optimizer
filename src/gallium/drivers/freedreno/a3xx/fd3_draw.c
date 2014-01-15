@@ -228,7 +228,7 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 
 	for (i = 0; i < 4; i++) {
 		OUT_PKT0(ring, REG_A3XX_RB_MRT_CONTROL(i), 1);
-		OUT_RING(ring, A3XX_RB_MRT_CONTROL_ROP_CODE(12) |
+		OUT_RING(ring, A3XX_RB_MRT_CONTROL_ROP_CODE(ROP_COPY) |
 				A3XX_RB_MRT_CONTROL_DITHER_MODE(DITHER_ALWAYS) |
 				A3XX_RB_MRT_CONTROL_COMPONENT_ENABLE(ce));
 

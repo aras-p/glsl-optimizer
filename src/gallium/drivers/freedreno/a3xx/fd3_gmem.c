@@ -436,7 +436,7 @@ fd3_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 
 	for (i = 0; i < 4; i++) {
 		OUT_PKT0(ring, REG_A3XX_RB_MRT_CONTROL(i), 1);
-		OUT_RING(ring, A3XX_RB_MRT_CONTROL_ROP_CODE(12) |
+		OUT_RING(ring, A3XX_RB_MRT_CONTROL_ROP_CODE(ROP_COPY) |
 				A3XX_RB_MRT_CONTROL_DITHER_MODE(DITHER_DISABLE) |
 				A3XX_RB_MRT_CONTROL_COMPONENT_ENABLE(0xf));
 
@@ -674,7 +674,7 @@ emit_binning_pass(struct fd_context *ctx)
 
 	for (i = 0; i < 4; i++) {
 		OUT_PKT0(ring, REG_A3XX_RB_MRT_CONTROL(i), 1);
-		OUT_RING(ring, A3XX_RB_MRT_CONTROL_ROP_CODE(0) |
+		OUT_RING(ring, A3XX_RB_MRT_CONTROL_ROP_CODE(ROP_CLEAR) |
 				A3XX_RB_MRT_CONTROL_DITHER_MODE(DITHER_DISABLE) |
 				A3XX_RB_MRT_CONTROL_COMPONENT_ENABLE(0));
 	}
