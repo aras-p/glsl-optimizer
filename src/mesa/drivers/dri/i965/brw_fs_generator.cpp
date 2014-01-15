@@ -1030,8 +1030,8 @@ brw_reg_from_fs_reg(fs_reg *reg)
    switch (reg->file) {
    case GRF:
    case MRF:
-      if (reg->stride == 0 || reg->smear >= 0) {
-         brw_reg = brw_vec1_reg(brw_file_from_reg(reg), reg->reg, reg->smear);
+      if (reg->stride == 0) {
+         brw_reg = brw_vec1_reg(brw_file_from_reg(reg), reg->reg, 0);
       } else {
          brw_reg = brw_vec8_reg(brw_file_from_reg(reg), reg->reg, 0);
          brw_reg = stride(brw_reg, 8 * reg->stride, 8, reg->stride);

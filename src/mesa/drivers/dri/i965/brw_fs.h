@@ -107,7 +107,9 @@ public:
    bool abs;
    bool sechalf;
    struct brw_reg fixed_hw_reg;
-   int smear; /* -1, or a channel of the reg to smear to all channels. */
+
+   /** Smear a channel of the reg to all channels. */
+   fs_reg &set_smear(unsigned subreg);
 
    /** Value for file == IMM */
    union {

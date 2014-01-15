@@ -380,7 +380,6 @@ void
 fs_reg::init()
 {
    memset(this, 0, sizeof(*this));
-   this->smear = -1;
    stride = 1;
 }
 
@@ -440,7 +439,6 @@ fs_reg::equals(const fs_reg &r) const
            !reladdr && !r.reladdr &&
            memcmp(&fixed_hw_reg, &r.fixed_hw_reg,
                   sizeof(fixed_hw_reg)) == 0 &&
-           smear == r.smear &&
            stride == r.stride &&
            imm.u == r.imm.u);
 }
@@ -460,6 +458,15 @@ fs_reg::apply_stride(unsigned stride)
           (is_power_of_two(stride) || stride == 0) &&
           file != HW_REG && file != IMM);
    this->stride *= stride;
+   return *this;
+}
+
+fs_reg &
+fs_reg::set_smear(unsigned subreg)
+{
+   assert(file != HW_REG && file != IMM);
+   subreg_offset = subreg * type_sz(type);
+   stride = 0;
    return *this;
 }
 
@@ -567,7 +574,7 @@ fs_visitor::get_timestamp()
     * else that might disrupt timing) by setting smear to 2 and checking if
     * that field is != 0.
     */
-   dst.smear = 0;
+   dst.set_smear(0);
 
    return dst;
 }
@@ -602,7 +609,7 @@ fs_visitor::emit_shader_time_end()
     * were the only two timestamp reads that happened).
     */
    fs_reg reset = shader_end_time;
-   reset.smear = 2;
+   reset.set_smear(2);
    fs_inst *test = emit(AND(reg_null_d, reset, fs_reg(1u)));
    test->conditional_mod = BRW_CONDITIONAL_Z;
    emit(IF(BRW_PREDICATE_NORMAL));
@@ -1973,7 +1980,7 @@ fs_visitor::setup_pull_constants()
 	 inst->src[i].file = GRF;
 	 inst->src[i].reg = dst.reg;
 	 inst->src[i].reg_offset = 0;
-	 inst->src[i].smear = pull_index & 3;
+	 inst->src[i].set_smear(pull_index & 3);
       }
    }
 }
@@ -2334,8 +2341,7 @@ fs_visitor::register_coalesce()
 	  inst->src[0].file != GRF ||
 	  inst->src[0].negate ||
 	  inst->src[0].abs ||
-	  inst->src[0].smear != -1 ||
-          !inst->src[0].is_contiguous() ||
+	  !inst->src[0].is_contiguous() ||
 	  inst->dst.file != GRF ||
 	  inst->dst.type != inst->src[0].type) {
 	 continue;
@@ -2496,7 +2502,7 @@ fs_visitor::compute_to_mrf()
 	  inst->dst.file != MRF || inst->src[0].file != GRF ||
 	  inst->dst.type != inst->src[0].type ||
 	  inst->src[0].abs || inst->src[0].negate ||
-          inst->src[0].smear != -1 || !inst->src[0].is_contiguous() ||
+          !inst->src[0].is_contiguous() ||
           inst->src[0].subreg_offset)
 	 continue;
 

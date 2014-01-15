@@ -744,8 +744,14 @@ fs_visitor::visit(ir_expression *ir)
          emit(fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
                       packed_consts, surf_index, const_offset_reg));
 
-         packed_consts.smear = const_offset->value.u[0] % 16 / 4;
          for (int i = 0; i < ir->type->vector_elements; i++) {
+            packed_consts.set_smear(const_offset->value.u[0] % 16 / 4 + i);
+
+            /* The std140 packing rules don't allow vectors to cross 16-byte
+             * boundaries, and a reg is 32 bytes.
+             */
+            assert(packed_consts.subreg_offset < 32);
+
             /* UBO bools are any nonzero value.  We consider bools to be
              * values with the low bit set to 1.  Convert them using CMP.
              */
@@ -755,13 +761,7 @@ fs_visitor::visit(ir_expression *ir)
                emit(MOV(result, packed_consts));
             }
 
-            packed_consts.smear++;
             result.reg_offset++;
-
-            /* The std140 packing rules don't allow vectors to cross 16-byte
-             * boundaries, and a reg is 32 bytes.
-             */
-            assert(packed_consts.smear < 8);
          }
       } else {
          /* Turn the byte offset into a dword offset. */

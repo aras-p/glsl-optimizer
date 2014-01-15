@@ -300,7 +300,7 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
    bool has_source_modifiers = entry->src.abs || entry->src.negate;
 
    if ((has_source_modifiers || entry->src.file == UNIFORM ||
-        entry->src.smear != -1 || !entry->src.is_contiguous()) &&
+        !entry->src.is_contiguous()) &&
        !can_do_source_mods(inst))
       return false;
 
@@ -334,8 +334,6 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
    inst->src[arg].file = entry->src.file;
    inst->src[arg].reg = entry->src.reg;
    inst->src[arg].reg_offset = entry->src.reg_offset;
-   if (entry->src.smear != -1)
-      inst->src[arg].smear = entry->src.smear;
    inst->src[arg].subreg_offset = entry->src.subreg_offset;
    inst->src[arg].stride *= entry->src.stride;
 
