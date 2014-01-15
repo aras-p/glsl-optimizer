@@ -2421,7 +2421,14 @@ int si_pipe_shader_create(
 	struct lp_build_tgsi_context * bld_base;
 	LLVMModuleRef mod;
 	int r = 0;
-	bool dump = r600_can_dump_shader(&sctx->screen->b, shader->selector->tokens);
+	bool dump = r600_can_dump_shader(&sctx->screen->b, sel->tokens);
+
+	/* Dump TGSI code before doing TGSI->LLVM conversion in case the
+	 * conversion fails. */
+	if (dump) {
+		tgsi_dump(sel->tokens, 0);
+		si_dump_streamout(&sel->so);
+	}
 
 	assert(shader->shader.noutput == 0);
 	assert(shader->shader.nparam == 0);
@@ -2508,13 +2515,6 @@ int si_pipe_shader_create(
 	preload_constants(&si_shader_ctx);
 	preload_samplers(&si_shader_ctx);
 	preload_streamout_buffers(&si_shader_ctx);
-
-	/* Dump TGSI code before doing TGSI->LLVM conversion in case the
-	 * conversion fails. */
-	if (dump) {
-		tgsi_dump(sel->tokens, 0);
-		si_dump_streamout(&sel->so);
-	}
 
 	if (si_shader_ctx.type == TGSI_PROCESSOR_GEOMETRY) {
 		si_shader_ctx.gs_next_vertex =
