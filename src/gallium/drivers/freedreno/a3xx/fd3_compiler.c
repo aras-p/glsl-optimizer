@@ -573,19 +573,17 @@ create_mov(struct fd3_compile_context *ctx, struct tgsi_dst_register *dst,
 }
 
 static void
-create_clamp(struct fd3_compile_context *ctx, struct tgsi_dst_register *dst,
+create_clamp(struct fd3_compile_context *ctx,
+		struct tgsi_dst_register *dst, struct tgsi_src_register *val,
 		struct tgsi_src_register *minval, struct tgsi_src_register *maxval)
 {
 	struct ir3_instruction *instr;
-	struct tgsi_src_register src;
-
-	src_from_dst(&src, dst);
 
 	instr = ir3_instr_create(ctx->ir, 2, OPC_MAX_F);
-	vectorize(ctx, instr, dst, 2, &src, 0, minval, 0);
+	vectorize(ctx, instr, dst, 2, val, 0, minval, 0);
 
 	instr = ir3_instr_create(ctx->ir, 2, OPC_MIN_F);
-	vectorize(ctx, instr, dst, 2, &src, 0, maxval, 0);
+	vectorize(ctx, instr, dst, 2, val, 0, maxval, 0);
 }
 
 static void
@@ -594,11 +592,14 @@ create_clamp_imm(struct fd3_compile_context *ctx,
 		uint32_t minval, uint32_t maxval)
 {
 	struct tgsi_src_register minconst, maxconst;
+	struct tgsi_src_register src;
+
+	src_from_dst(&src, dst);
 
 	get_immediate(ctx, &minconst, minval);
 	get_immediate(ctx, &maxconst, maxval);
 
-	create_clamp(ctx, dst, &minconst, &maxconst);
+	create_clamp(ctx, dst, &src, &minconst, &maxconst);
 }
 
 static struct tgsi_dst_register *
@@ -924,6 +925,21 @@ trans_dotp(const struct instr_translater *t,
 	 * the results to all components of dst:
 	 */
 	create_mov(ctx, dst, tmp_src);
+}
+
+static void
+trans_clamp(const struct instr_translater *t,
+		struct fd3_compile_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct tgsi_dst_register *dst = get_dst(ctx, inst);
+	struct tgsi_src_register *src0 = &inst->Src[0].Register;
+	struct tgsi_src_register *src1 = &inst->Src[1].Register;
+	struct tgsi_src_register *src2 = &inst->Src[2].Register;
+
+	create_clamp(ctx, dst, src0, src1, src2);
+
+	put_dst(ctx, inst, dst);
 }
 
 /* LRP(a,b,c) = (a * b) + ((1 - a) * c) */
@@ -1592,6 +1608,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(TRUNC,        instr_cat2, .opc = OPC_TRUNC_F),
 	INSTR(LRP,          trans_lrp),
 	INSTR(FRC,          trans_frac),
+	INSTR(CLAMP,        trans_clamp),
 	INSTR(FLR,          instr_cat2, .opc = OPC_FLOOR_F),
 	INSTR(ROUND,        instr_cat2, .opc = OPC_RNDNE_F),
 	INSTR(ARL,          trans_arl),
