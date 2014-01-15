@@ -71,7 +71,6 @@
 # define U_tV  U_V
 #endif
 
-#define NV50_SURFACE_FORMAT_NONE 0
 #define NV50_ZETA_FORMAT_NONE 0
 
 /* for vertex buffers: */

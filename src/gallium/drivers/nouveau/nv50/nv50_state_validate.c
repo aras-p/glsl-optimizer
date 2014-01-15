@@ -1,6 +1,19 @@
 
 #include "nv50/nv50_context.h"
-#include "os/os_time.h"
+#include "nv50/nv50_defs.xml.h"
+
+static INLINE void
+nv50_fb_set_null_rt(struct nouveau_pushbuf *push, unsigned i)
+{
+   BEGIN_NV04(push, NV50_3D(RT_ADDRESS_HIGH(i)), 4);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, NV50_SURFACE_FORMAT_NONE);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(RT_HORIZ(i)), 2);
+   PUSH_DATA (push, 64);
+   PUSH_DATA (push, 0);
+}
 
 static void
 nv50_validate_fb(struct nv50_context *nv50)
@@ -20,9 +33,18 @@ nv50_validate_fb(struct nv50_context *nv50)
    PUSH_DATA (push, fb->height << 16);
 
    for (i = 0; i < fb->nr_cbufs; ++i) {
-      struct nv50_miptree *mt = nv50_miptree(fb->cbufs[i]->texture);
-      struct nv50_surface *sf = nv50_surface(fb->cbufs[i]);
-      struct nouveau_bo *bo = mt->base.bo;
+      struct nv50_miptree *mt;
+      struct nv50_surface *sf;
+      struct nouveau_bo *bo;
+
+      if (!fb->cbufs[i]) {
+         nv50_fb_set_null_rt(push, i);
+         continue;
+      }
+
+      mt = nv50_miptree(fb->cbufs[i]->texture);
+      sf = nv50_surface(fb->cbufs[i]);
+      bo = mt->base.bo;
 
       array_size = MIN2(array_size, sf->depth);
       if (mt->layout_3d)

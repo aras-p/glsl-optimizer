@@ -2,6 +2,7 @@
 #include "util/u_math.h"
 
 #include "nvc0/nvc0_context.h"
+#include "nv50/nv50_defs.xml.h"
 
 #if 0
 static void
@@ -54,6 +55,18 @@ nvc0_validate_zcull(struct nvc0_context *nvc0)
 }
 #endif
 
+static INLINE void
+nvc0_fb_set_null_rt(struct nouveau_pushbuf *push, unsigned i)
+{
+   BEGIN_NVC0(push, NVC0_3D(RT_ADDRESS_HIGH(i)), 6);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, 64);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, NV50_SURFACE_FORMAT_NONE);
+   PUSH_DATA (push, 0);
+}
+
 static void
 nvc0_validate_fb(struct nvc0_context *nvc0)
 {
@@ -72,9 +85,18 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
     PUSH_DATA (push, fb->height << 16);
 
     for (i = 0; i < fb->nr_cbufs; ++i) {
-        struct nv50_surface *sf = nv50_surface(fb->cbufs[i]);
-        struct nv04_resource *res = nv04_resource(sf->base.texture);
-        struct nouveau_bo *bo = res->bo;
+        struct nv50_surface *sf;
+        struct nv04_resource *res;
+        struct nouveau_bo *bo;
+
+        if (!fb->cbufs[i]) {
+           nvc0_fb_set_null_rt(push, i);
+           continue;
+        }
+
+        sf = nv50_surface(fb->cbufs[i]);
+        res = nv04_resource(sf->base.texture);
+        bo = res->bo;
 
         BEGIN_NVC0(push, NVC0_3D(RT_ADDRESS_HIGH(i)), 9);
         PUSH_DATAh(push, res->address + sf->offset);
