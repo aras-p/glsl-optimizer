@@ -401,16 +401,11 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
          if (vp->out[n].sn == fp->in[i].sn &&
              vp->out[n].si == fp->in[i].si)
             break;
+      if (i == fp->gp.primid) {
+         primid = m;
+      }
       m = nv50_vec4_map(map, m, lin,
                         &fp->in[i], (n < vp->out_nr) ? &vp->out[n] : &dummy);
-   }
-
-   /* PrimitiveID either is replaced by the system value, or
-    * written by the geometry shader into an output register
-    */
-   if (fp->gp.primid < 0x80) {
-      primid = m;
-      map[m++] = vp->gp.primid;
    }
 
    if (vp->gp.has_layer) {
@@ -461,7 +456,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
       PUSH_DATAp(push, map, n);
    } else {
       BEGIN_NV04(push, NV50_3D(VP_GP_BUILTIN_ATTR_EN), 1);
-      PUSH_DATA (push, vp->vp.attrs[2]);
+      PUSH_DATA (push, vp->vp.attrs[2] | fp->vp.attrs[2]);
 
       BEGIN_NV04(push, NV50_3D(SEMANTIC_PRIM_ID), 1);
       PUSH_DATA (push, primid);

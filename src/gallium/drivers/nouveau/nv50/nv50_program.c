@@ -168,6 +168,10 @@ nv50_fragprog_assign_slots(struct nv50_ir_prog_info *info)
 
          if (info->in[i].sn == TGSI_SEMANTIC_COLOR)
             prog->vp.bfc[info->in[i].si] = j;
+         else if (info->in[i].sn == TGSI_SEMANTIC_PRIMID) {
+            prog->vp.attrs[2] |= NV50_3D_VP_GP_BUILTIN_ATTR_EN_PRIMITIVE_ID;
+            prog->gp.primid = j;
+         }
 
          prog->in[j].id = i;
          prog->in[j].mask = info->in[i].mask;
