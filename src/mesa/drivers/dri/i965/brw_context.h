@@ -647,7 +647,7 @@ struct brw_gs_prog_data
 };
 
 /** Number of texture sampler units */
-#define BRW_MAX_TEX_UNIT 16
+#define BRW_MAX_TEX_UNIT 32
 
 /** Max number of render targets in a shader */
 #define BRW_MAX_DRAW_BUFFERS 8

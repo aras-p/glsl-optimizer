@@ -277,20 +277,23 @@ brw_initialize_context_constants(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
 
+   unsigned max_samplers =
+      brw->gen >= 8 || brw->is_haswell ? BRW_MAX_TEX_UNIT : 16;
+
    ctx->Const.QueryCounterBits.Timestamp = 36;
 
    ctx->Const.StripTextureBorder = true;
 
    ctx->Const.MaxDualSourceDrawBuffers = 1;
    ctx->Const.MaxDrawBuffers = BRW_MAX_DRAW_BUFFERS;
-   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = max_samplers;
    ctx->Const.MaxTextureCoordUnits = 8; /* Mesa limit */
    ctx->Const.MaxTextureUnits =
       MIN2(ctx->Const.MaxTextureCoordUnits,
            ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits);
-   ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = max_samplers;
    if (brw->gen >= 7)
-      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
+      ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = max_samplers;
    else
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = 0;
    ctx->Const.MaxCombinedTextureImageUnits =
