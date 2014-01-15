@@ -110,6 +110,7 @@ main_sources = [
     'main/scissor.c',
     'main/set.c',
     'main/shaderapi.c',
+    'main/shaderimage.c',
     'main/shaderobj.c',
     'main/shader_query.cpp',
     'main/shared.c',
