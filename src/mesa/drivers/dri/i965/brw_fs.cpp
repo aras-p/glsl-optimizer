@@ -1089,7 +1089,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 		*/
                struct brw_reg interp = interp_reg(location, k);
                emit_linterp(attr, fs_reg(interp), interpolation_mode,
-                            ir->data.centroid,
+                            ir->data.centroid && !c->key.persample_shading,
                             ir->data.sample || c->key.persample_shading);
                if (brw->needs_unlit_centroid_workaround && ir->data.centroid) {
                   /* Get the pixel/sample mask into f0 so that we know
