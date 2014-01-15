@@ -1115,10 +1115,18 @@ zs_init_info(const struct ilo_dev_info *dev,
       info->hiz.stride = tex->hiz.bo_stride;
       info->hiz.tiling = INTEL_TILING_Y;
 
-      assert(!offset_to_layer);
-      info->hiz.offset = 0;
-      x_offset[2] = 0;
-      y_offset[2] = 0;
+      /*
+       * Layer offsetting is used on GEN6 only.  And on GEN6, HiZ is enabled
+       * only when the depth buffer is non-mipmapped and non-array, making
+       * layer offsetting no-op.
+       */
+      if (offset_to_layer) {
+         assert(level == 0 && first_layer == 0 && num_layers == 1);
+
+         info->hiz.offset = 0;
+         x_offset[2] = 0;
+         y_offset[2] = 0;
+      }
    }
 
    info->width = tex->base.width0;
