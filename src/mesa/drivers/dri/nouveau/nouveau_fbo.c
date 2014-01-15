@@ -268,6 +268,56 @@ nouveau_finish_render_texture(struct gl_context *ctx,
 	texture_dirty(rb->TexImage->TexObject);
 }
 
+static int
+validate_format_bpp(gl_format format)
+{
+	switch (format) {
+	case MESA_FORMAT_XRGB8888:
+	case MESA_FORMAT_ARGB8888:
+	case MESA_FORMAT_Z24_S8:
+		return 32;
+	case MESA_FORMAT_RGB565:
+	case MESA_FORMAT_Z16:
+		return 16;
+	default:
+		return 0;
+	}
+}
+
+static void
+nouveau_check_framebuffer_complete(struct gl_context *ctx,
+				   struct gl_framebuffer *fb)
+{
+	struct gl_renderbuffer_attachment *color =
+		&fb->Attachment[BUFFER_COLOR0];
+	struct gl_renderbuffer_attachment *depth =
+		&fb->Attachment[BUFFER_DEPTH];
+	int color_bpp = 0, zeta_bpp;
+
+	if (color->Type == GL_TEXTURE) {
+		color_bpp = validate_format_bpp(
+				color->Renderbuffer->TexImage->TexFormat);
+		if (!color_bpp)
+			goto err;
+	}
+
+	if (depth->Type == GL_TEXTURE) {
+		zeta_bpp = validate_format_bpp(
+				depth->Renderbuffer->TexImage->TexFormat);
+		if (!zeta_bpp)
+			goto err;
+		/* NV04/NV05 requires same bpp-ness for color/zeta */
+		if (context_chipset(ctx) < 0x10 &&
+		    color_bpp && color_bpp != zeta_bpp)
+			goto err;
+	}
+
+	return;
+err:
+	fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	return;
+}
+
 void
 nouveau_fbo_functions_init(struct dd_function_table *functions)
 {
@@ -279,4 +329,5 @@ nouveau_fbo_functions_init(struct dd_function_table *functions)
 	functions->FramebufferRenderbuffer = nouveau_framebuffer_renderbuffer;
 	functions->RenderTexture = nouveau_render_texture;
 	functions->FinishRenderTexture = nouveau_finish_render_texture;
+	functions->ValidateFramebuffer = nouveau_check_framebuffer_complete;
 }

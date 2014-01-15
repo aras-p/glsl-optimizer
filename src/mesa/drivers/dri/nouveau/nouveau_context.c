@@ -187,6 +187,7 @@ nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
 	ctx->Extensions.EXT_framebuffer_blit = true;
 	ctx->Extensions.EXT_texture_filter_anisotropic = true;
 	ctx->Extensions.NV_texture_env_combine4 = true;
+	ctx->Const.MaxColorAttachments = 1;
 
 	return GL_TRUE;
 }
