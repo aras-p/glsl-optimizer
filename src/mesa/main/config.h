@@ -121,7 +121,7 @@
  * Max number of texture image units.  Also determines number of texture
  * samplers in shaders.
  */
-#define MAX_TEXTURE_IMAGE_UNITS 16
+#define MAX_TEXTURE_IMAGE_UNITS 32
 
 /**
  * Larger of MAX_TEXTURE_COORD_UNITS and MAX_TEXTURE_IMAGE_UNITS.
