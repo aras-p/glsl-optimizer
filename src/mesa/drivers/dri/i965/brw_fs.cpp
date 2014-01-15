@@ -1219,22 +1219,18 @@ fs_visitor::emit_samplepos_setup(ir_variable *ir)
 
    emit(MOV(int_sample_x, fs_reg(sample_pos_reg)));
    if (dispatch_width == 16) {
-      int_sample_x.sechalf = true;
-      fs_inst *inst = emit(MOV(int_sample_x,
+      fs_inst *inst = emit(MOV(half(int_sample_x, 1),
                                fs_reg(suboffset(sample_pos_reg, 16))));
       inst->force_sechalf = true;
-      int_sample_x.sechalf = false;
    }
    /* Compute gl_SamplePosition.x */
    compute_sample_position(pos, int_sample_x);
    pos.reg_offset++;
    emit(MOV(int_sample_y, fs_reg(suboffset(sample_pos_reg, 1))));
    if (dispatch_width == 16) {
-      int_sample_y.sechalf = true;
-      fs_inst *inst = emit(MOV(int_sample_y,
+      fs_inst *inst = emit(MOV(half(int_sample_y, 1),
                                fs_reg(suboffset(sample_pos_reg, 17))));
       inst->force_sechalf = true;
-      int_sample_y.sechalf = false;
    }
    /* Compute gl_SamplePosition.y */
    compute_sample_position(pos, int_sample_y);

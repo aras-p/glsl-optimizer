@@ -105,7 +105,6 @@ public:
    int type;
    bool negate;
    bool abs;
-   bool sechalf;
    struct brw_reg fixed_hw_reg;
 
    /** Smear a channel of the reg to all channels. */
@@ -136,6 +135,19 @@ byte_offset(fs_reg reg, unsigned delta)
    assert(delta == 0 || (reg.file != HW_REG && reg.file != IMM));
    reg.subreg_offset += delta;
    return reg;
+}
+
+/**
+ * Get either of the 8-component halves of a 16-component register.
+ *
+ * Note: this also works if \c reg represents a SIMD16 pair of registers.
+ */
+static inline fs_reg
+half(const fs_reg &reg, unsigned idx)
+{
+   assert(idx < 2);
+   assert(idx == 0 || (reg.file != HW_REG && reg.file != IMM));
+   return byte_offset(reg, 8 * idx * reg.stride * type_sz(reg.type));
 }
 
 static const fs_reg reg_undef;

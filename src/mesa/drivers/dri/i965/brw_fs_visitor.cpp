@@ -2654,12 +2654,10 @@ fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
 	 inst->saturate = c->key.clamp_fragment_color;
 	 pop_force_uncompressed();
 
-	 color.sechalf = true;
 	 inst = emit(MOV(fs_reg(MRF, first_color_mrf + index + 4, color.type),
-                         color));
+                         half(color, 1)));
 	 inst->force_sechalf = true;
 	 inst->saturate = c->key.clamp_fragment_color;
-	 color.sechalf = false;
       }
    }
 }
