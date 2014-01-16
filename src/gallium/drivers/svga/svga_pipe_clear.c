@@ -111,9 +111,13 @@ svga_clear(struct pipe_context *pipe, unsigned buffers,
    struct svga_context *svga = svga_context( pipe );
    enum pipe_error ret;
 
-   if (buffers & PIPE_CLEAR_COLOR)
-      SVGA_DBG(DEBUG_DMA, "clear sid %p\n",
-               svga_surface(svga->curr.framebuffer.cbufs[0])->handle);
+   if (buffers & PIPE_CLEAR_COLOR) {
+      struct svga_winsys_surface *h = NULL;
+      if (svga->curr.framebuffer.cbufs[0]) {
+         h = svga_surface(svga->curr.framebuffer.cbufs[0])->handle;
+      }
+      SVGA_DBG(DEBUG_DMA, "clear sid %p\n", h);
+   }
 
    /* flush any queued prims (don't want them to appear after the clear!) */
    svga_hwtnl_flush_retry(svga);
