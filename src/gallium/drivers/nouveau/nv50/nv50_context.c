@@ -165,7 +165,7 @@ nv50_invalidate_resource_storage(struct nouveau_context *ctx,
    }
 
    if (res->bind & PIPE_BIND_SAMPLER_VIEW) {
-      for (s = 0; s < 5; ++s) {
+      for (s = 0; s < 3; ++s) {
       for (i = 0; i < nv50->num_textures[s]; ++i) {
          if (nv50->textures[s][i] &&
              nv50->textures[s][i]->texture == res) {
