@@ -786,6 +786,7 @@ nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
    if (shader == PIPE_SHADER_COMPUTE)
       return;
 
+   assert(i < NV50_MAX_PIPE_CONSTBUFS);
    if (nv50->constbuf[s][i].user)
       nv50->constbuf[s][i].u.buf = NULL;
    else

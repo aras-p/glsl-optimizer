@@ -180,6 +180,7 @@ nv50_invalidate_resource_storage(struct nouveau_context *ctx,
 
    if (res->bind & PIPE_BIND_CONSTANT_BUFFER) {
       for (s = 0; s < 3; ++s) {
+      assert(nv50->num_vtxbufs <= NV50_MAX_PIPE_CONSTBUFS);
       for (i = 0; i < nv50->num_vtxbufs; ++i) {
          if (!nv50->constbuf[s][i].user &&
              nv50->constbuf[s][i].u.buf == res) {
