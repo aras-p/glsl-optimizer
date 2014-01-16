@@ -189,7 +189,7 @@ nv50_emit_vtxattr(struct nv50_context *nv50, struct pipe_vertex_buffer *vb,
 }
 
 static INLINE void
-nv50_user_vbuf_range(struct nv50_context *nv50, int vbi,
+nv50_user_vbuf_range(struct nv50_context *nv50, unsigned vbi,
                      uint32_t *base, uint32_t *size)
 {
    assert(vbi < PIPE_MAX_ATTRIBS);
