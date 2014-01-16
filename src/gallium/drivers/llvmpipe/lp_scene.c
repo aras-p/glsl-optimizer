@@ -156,6 +156,14 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
 
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       struct pipe_surface *cbuf = scene->fb.cbufs[i];
+
+      if (!cbuf) {
+         scene->cbufs[i].stride = 0;
+         scene->cbufs[i].layer_stride = 0;
+         scene->cbufs[i].map = NULL;
+         continue;
+      }
+
       if (llvmpipe_resource_is_texture(cbuf->texture)) {
          scene->cbufs[i].stride = llvmpipe_resource_stride(cbuf->texture,
                                                            cbuf->u.tex.level);
@@ -171,7 +179,7 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
          struct llvmpipe_resource *lpr = llvmpipe_resource(cbuf->texture);
          unsigned pixstride = util_format_get_blocksize(cbuf->format);
          scene->cbufs[i].stride = cbuf->texture->width0;
-
+         scene->cbufs[i].layer_stride = 0;
          scene->cbufs[i].map = lpr->data;
          scene->cbufs[i].map += cbuf->u.buf.first_element * pixstride;
       }
@@ -521,11 +529,14 @@ void lp_scene_begin_binning( struct lp_scene *scene,
     */
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       struct pipe_surface *cbuf = scene->fb.cbufs[i];
-      if (llvmpipe_resource_is_texture(cbuf->texture)) {
-         max_layer = MIN2(max_layer, cbuf->u.tex.last_layer - cbuf->u.tex.first_layer);
-      }
-      else {
-         max_layer = 0;
+      if (cbuf) {
+         if (llvmpipe_resource_is_texture(cbuf->texture)) {
+            max_layer = MIN2(max_layer,
+                             cbuf->u.tex.last_layer - cbuf->u.tex.first_layer);
+         }
+         else {
+            max_layer = 0;
+         }
       }
    }
    if (fb->zsbuf) {

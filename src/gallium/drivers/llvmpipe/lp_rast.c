@@ -110,6 +110,25 @@ lp_rast_tile_begin(struct lp_rasterizer_task *task,
 
 
 /**
+ * Examine a framebuffer object to determine if any of the colorbuffers
+ * use a pure integer format.
+ * XXX this could be a gallium utility function if useful elsewhere.
+ */
+static boolean
+is_fb_pure_integer(const struct pipe_framebuffer_state *fb)
+{
+   unsigned i;
+   for (i = 0; i < fb->nr_cbufs; i++) {
+      if (fb->cbufs[i] &&
+          util_format_is_pure_integer(fb->cbufs[i]->format)) {
+         return TRUE;
+      }
+   }
+   return FALSE;
+}
+
+
+/**
  * Clear the rasterizer's current color tile.
  * This is a bin command called during bin processing.
  * Clear commands always clear all bound layers.
@@ -124,7 +143,7 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
       unsigned i;
       union util_color uc;
 
-      if (util_format_is_pure_integer(scene->fb.cbufs[0]->format)) {
+      if (is_fb_pure_integer(&scene->fb)) {
          /*
           * We expect int/uint clear values here, though some APIs
           * might disagree (but in any case util_pack_color()
@@ -174,20 +193,22 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
                     clear_color[3]);
 
          for (i = 0; i < scene->fb.nr_cbufs; i++) {
-            util_pack_color(arg.clear_color.f,
-                            scene->fb.cbufs[i]->format, &uc);
+            if (scene->fb.cbufs[i]) {
+               util_pack_color(arg.clear_color.f,
+                               scene->fb.cbufs[i]->format, &uc);
 
-            util_fill_box(scene->cbufs[i].map,
-                          scene->fb.cbufs[i]->format,
-                          scene->cbufs[i].stride,
-                          scene->cbufs[i].layer_stride,
-                          task->x,
-                          task->y,
-                          0,
-                          task->width,
-                          task->height,
-                          scene->fb_max_layer + 1,
-                          &uc);
+               util_fill_box(scene->cbufs[i].map,
+                             scene->fb.cbufs[i]->format,
+                             scene->cbufs[i].stride,
+                             scene->cbufs[i].layer_stride,
+                             task->x,
+                             task->y,
+                             0,
+                             task->width,
+                             task->height,
+                             scene->fb_max_layer + 1,
+                             &uc);
+            }
          }
       }
    }
@@ -444,8 +465,15 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
 
    /* color buffer */
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
-      stride[i] = scene->cbufs[i].stride;
-      color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, x, y, inputs->layer);
+      if (scene->fb.cbufs[i]) {
+         stride[i] = scene->cbufs[i].stride;
+         color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, x, y,
+                                                               inputs->layer);
+      }
+      else {
+         stride[i] = 0;
+         color[i] = NULL;
+      }
    }
 
    /* depth buffer */

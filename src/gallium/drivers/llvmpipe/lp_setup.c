@@ -882,7 +882,7 @@ lp_setup_is_resource_referenced( const struct lp_setup_context *setup,
 
    /* check the render targets */
    for (i = 0; i < setup->fb.nr_cbufs; i++) {
-      if (setup->fb.cbufs[i]->texture == texture)
+      if (setup->fb.cbufs[i] && setup->fb.cbufs[i]->texture == texture)
          return LP_REFERENCED_FOR_READ | LP_REFERENCED_FOR_WRITE;
    }
    if (setup->fb.zsbuf && setup->fb.zsbuf->texture == texture) {
