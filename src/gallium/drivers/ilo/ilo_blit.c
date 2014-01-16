@@ -65,6 +65,15 @@ ilo_clear(struct pipe_context *pipe,
 {
    struct ilo_context *ilo = ilo_context(pipe);
 
+   if ((buffers & PIPE_CLEAR_DEPTHSTENCIL) && ilo->fb.state.zsbuf) {
+      if (ilo_blitter_rectlist_clear_zs(ilo->blitter, ilo->fb.state.zsbuf,
+               buffers & PIPE_CLEAR_DEPTHSTENCIL, depth, stencil))
+         buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
+
+      if (!buffers)
+         return;
+   }
+
    ilo_blitter_pipe_clear_fb(ilo->blitter, buffers, color, depth, stencil);
 }
 

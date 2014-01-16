@@ -31,6 +31,7 @@
 #include "ilo_blitter.h"
 #include "ilo_3d.h"
 #include "ilo_3d_pipeline.h"
+#include "ilo_blit.h"
 #include "ilo_gpe.h"
 #include "ilo_gpe_gen6.h" /* for ve_init_cso_with_components and
                              zs_align_surface */
@@ -342,13 +343,10 @@ static bool
 hiz_can_clear_zs(const struct ilo_blitter *blitter,
                  const struct ilo_texture *tex)
 {
-   if (blitter->ilo->dev->gen > ILO_GEN(6))
-      return true;
-
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 314:
     *
-    *      Several cases exist where Depth Buffer Clear cannot be enabled (the
+    *     "Several cases exist where Depth Buffer Clear cannot be enabled (the
     *      legacy method of clearing must be performed):
     *
     *      - If the depth buffer format is D32_FLOAT_S8X24_UINT or
@@ -361,11 +359,25 @@ hiz_can_clear_zs(const struct ilo_blitter *blitter,
     *
     *      - [DevSNB{W/A}]: When depth buffer format is D16_UNORM and the
     *        width of the map (LOD0) is not multiple of 16, fast clear
-    *        optimization must be disabled.
+    *        optimization must be disabled."
+    *
+    * From the Ivy Bridge PRM, volume 2 part 1, page 313:
+    *
+    *     "Several cases exist where Depth Buffer Clear cannot be enabled (the
+    *      legacy method of clearing must be performed):
+    *
+    *      - If the depth buffer format is D32_FLOAT_S8X24_UINT or
+    *        D24_UNORM_S8_UINT.
+    *
+    *      - If stencil test is enabled but the separate stencil buffer is
+    *        disabled."
+    *
+    * The truth is when HiZ is enabled, separate stencil is also enabled on
+    * all GENs.  The depth buffer format cannot be combined depth/stencil.
     */
    switch (tex->bo_format) {
    case PIPE_FORMAT_Z16_UNORM:
-      if (tex->base.width0 % 16)
+      if (blitter->ilo->dev->gen == ILO_GEN(6) && tex->base.width0 % 16)
          return false;
       break;
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
@@ -388,7 +400,7 @@ ilo_blitter_rectlist_clear_zs(struct ilo_blitter *blitter,
 {
    struct ilo_texture *tex = ilo_texture(zs->texture);
    struct pipe_depth_stencil_alpha_state dsa_state;
-   uint32_t uses;
+   uint32_t uses, clear_value;
 
    if (!ilo_texture_can_enable_hiz(tex,
             zs->u.tex.level, zs->u.tex.first_layer,
@@ -397,6 +409,15 @@ ilo_blitter_rectlist_clear_zs(struct ilo_blitter *blitter,
 
    if (!hiz_can_clear_zs(blitter, tex))
       return false;
+
+   clear_value = util_pack_z(tex->bo_format, depth);
+
+   ilo_blit_resolve_surface(blitter->ilo, zs,
+         ILO_TEXTURE_RENDER_WRITE | ILO_TEXTURE_CLEAR);
+   ilo_texture_set_slice_clear_value(tex, zs->u.tex.level,
+         zs->u.tex.first_layer,
+         zs->u.tex.last_layer - zs->u.tex.first_layer + 1,
+         clear_value);
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 313-314:
@@ -449,8 +470,7 @@ ilo_blitter_rectlist_clear_zs(struct ilo_blitter *blitter,
    ilo_blitter_set_op(blitter, ILO_BLITTER_RECTLIST_CLEAR_ZS);
 
    ilo_blitter_set_dsa(blitter, &dsa_state);
-   ilo_blitter_set_clear_values(blitter,
-         util_pack_z(zs->format, depth), (ubyte) stencil);
+   ilo_blitter_set_clear_values(blitter, clear_value, (ubyte) stencil);
    ilo_blitter_set_fb_from_surface(blitter, zs);
 
    uses = ILO_BLITTER_USE_DSA;
