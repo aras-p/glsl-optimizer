@@ -87,6 +87,7 @@ nv50_context_unreference_resources(struct nv50_context *nv50)
    pipe_resource_reference(&nv50->idxbuf.buffer, NULL);
 
    for (s = 0; s < 3; ++s) {
+      assert(nv50->num_textures[s] <= PIPE_MAX_SAMPLERS);
       for (i = 0; i < nv50->num_textures[s]; ++i)
          pipe_sampler_view_reference(&nv50->textures[s][i], NULL);
 
@@ -168,6 +169,7 @@ nv50_invalidate_resource_storage(struct nouveau_context *ctx,
 
    if (res->bind & PIPE_BIND_SAMPLER_VIEW) {
       for (s = 0; s < 3; ++s) {
+      assert(nv50->num_textures[s] <= PIPE_MAX_SAMPLERS);
       for (i = 0; i < nv50->num_textures[s]; ++i) {
          if (nv50->textures[s][i] &&
              nv50->textures[s][i]->texture == res) {

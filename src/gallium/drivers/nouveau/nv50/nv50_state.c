@@ -646,6 +646,7 @@ nv50_stage_set_sampler_views(struct nv50_context *nv50, int s,
 {
    unsigned i;
 
+   assert(nr <= PIPE_MAX_SAMPLERS);
    for (i = 0; i < nr; ++i) {
       struct nv50_tic_entry *old = nv50_tic_entry(nv50->textures[s][i]);
       if (old)
@@ -654,6 +655,7 @@ nv50_stage_set_sampler_views(struct nv50_context *nv50, int s,
       pipe_sampler_view_reference(&nv50->textures[s][i], views[i]);
    }
 
+   assert(nv50->num_textures[s] <= PIPE_MAX_SAMPLERS);
    for (i = nr; i < nv50->num_textures[s]; ++i) {
       struct nv50_tic_entry *old = nv50_tic_entry(nv50->textures[s][i]);
       if (!old)

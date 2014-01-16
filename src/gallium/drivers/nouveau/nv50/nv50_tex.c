@@ -222,6 +222,7 @@ nv50_validate_tic(struct nv50_context *nv50, int s)
    unsigned i;
    boolean need_flush = FALSE;
 
+   assert(nv50->num_textures[s] <= PIPE_MAX_SAMPLERS);
    for (i = 0; i < nv50->num_textures[s]; ++i) {
       struct nv50_tic_entry *tic = nv50_tic_entry(nv50->textures[s][i]);
       struct nv04_resource *res;
