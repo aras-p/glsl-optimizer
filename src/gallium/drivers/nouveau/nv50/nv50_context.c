@@ -130,6 +130,7 @@ nv50_invalidate_resource_storage(struct nouveau_context *ctx,
    unsigned s, i;
 
    if (res->bind & PIPE_BIND_RENDER_TARGET) {
+      assert(nv50->framebuffer.nr_cbufs <= PIPE_MAX_COLOR_BUFS);
       for (i = 0; i < nv50->framebuffer.nr_cbufs; ++i) {
          if (nv50->framebuffer.cbufs[i] &&
              nv50->framebuffer.cbufs[i]->texture == res) {
