@@ -309,6 +309,7 @@ nv50_validate_tsc(struct nv50_context *nv50, int s)
    unsigned i;
    boolean need_flush = FALSE;
 
+   assert(nv50->num_samplers[s] <= PIPE_MAX_SAMPLERS);
    for (i = 0; i < nv50->num_samplers[s]; ++i) {
       struct nv50_tsc_entry *tsc = nv50_tsc_entry(nv50->samplers[s][i]);
 

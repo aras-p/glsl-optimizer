@@ -557,6 +557,7 @@ nv50_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
    unsigned s, i;
 
    for (s = 0; s < 3; ++s)
+      assert(nv50_context(pipe)->num_samplers[s] <= PIPE_MAX_SAMPLERS);
       for (i = 0; i < nv50_context(pipe)->num_samplers[s]; ++i)
          if (nv50_context(pipe)->samplers[s][i] == hwcso)
             nv50_context(pipe)->samplers[s][i] = NULL;
@@ -572,6 +573,7 @@ nv50_stage_sampler_states_bind(struct nv50_context *nv50, int s,
 {
    unsigned i;
 
+   assert(nr <= PIPE_MAX_SAMPLERS);
    for (i = 0; i < nr; ++i) {
       struct nv50_tsc_entry *old = nv50->samplers[s][i];
 
@@ -579,6 +581,7 @@ nv50_stage_sampler_states_bind(struct nv50_context *nv50, int s,
       if (old)
          nv50_screen_tsc_unlock(nv50->screen, old);
    }
+   assert(nv50->num_samplers[s] <= PIPE_MAX_SAMPLERS);
    for (; i < nv50->num_samplers[s]; ++i)
       if (nv50->samplers[s][i])
          nv50_screen_tsc_unlock(nv50->screen, nv50->samplers[s][i]);
