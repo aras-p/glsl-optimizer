@@ -46,7 +46,7 @@ nv50_constbufs_validate(struct nv50_context *nv50)
          p = NV50_3D_SET_PROGRAM_CB_PROGRAM_VERTEX;
 
       while (nv50->constbuf_dirty[s]) {
-         const int i = ffs(nv50->constbuf_dirty[s]) - 1;
+         const unsigned i = (unsigned)ffs(nv50->constbuf_dirty[s]) - 1;
 
          assert(i < NV50_MAX_PIPE_CONSTBUFS);
          nv50->constbuf_dirty[s] &= ~(1 << i);
