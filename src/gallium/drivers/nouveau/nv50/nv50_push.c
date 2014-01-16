@@ -219,6 +219,7 @@ nv50_push_vbo(struct nv50_context *nv50, const struct pipe_draw_info *info)
    ctx.packet_vertex_limit = nv50->vertex->packet_vertex_limit;
    ctx.vertex_words = nv50->vertex->vertex_size;
 
+   assert(nv50->num_vtxbufs <= PIPE_MAX_ATTRIBS);
    for (i = 0; i < nv50->num_vtxbufs; ++i) {
       const struct pipe_vertex_buffer *vb = &nv50->vtxbuf[i];
       const uint8_t *data;

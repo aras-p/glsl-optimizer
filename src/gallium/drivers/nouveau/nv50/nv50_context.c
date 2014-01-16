@@ -80,6 +80,7 @@ nv50_context_unreference_resources(struct nv50_context *nv50)
 
    util_unreference_framebuffer_state(&nv50->framebuffer);
 
+   assert(nv50->num_vtxbufs <= PIPE_MAX_ATTRIBS);
    for (i = 0; i < nv50->num_vtxbufs; ++i)
       pipe_resource_reference(&nv50->vtxbuf[i].buffer, NULL);
 
@@ -149,6 +150,7 @@ nv50_invalidate_resource_storage(struct nouveau_context *ctx,
    }
 
    if (res->bind & PIPE_BIND_VERTEX_BUFFER) {
+      assert(nv50->num_vtxbufs <= PIPE_MAX_ATTRIBS);
       for (i = 0; i < nv50->num_vtxbufs; ++i) {
          if (nv50->vtxbuf[i].buffer == res) {
             nv50->dirty |= NV50_NEW_ARRAYS;

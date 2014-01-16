@@ -192,6 +192,7 @@ static INLINE void
 nv50_user_vbuf_range(struct nv50_context *nv50, int vbi,
                      uint32_t *base, uint32_t *size)
 {
+   assert(vbi < PIPE_MAX_ATTRIBS);
    if (unlikely(nv50->vertex->instance_bufs & (1 << vbi))) {
       /* TODO: use min and max instance divisor to get a proper range */
       *base = 0;
@@ -211,6 +212,7 @@ nv50_upload_user_buffers(struct nv50_context *nv50,
 {
    unsigned b;
 
+   assert(nv50->num_vtxbufs <= PIPE_MAX_ATTRIBS);
    for (b = 0; b < nv50->num_vtxbufs; ++b) {
       struct nouveau_bo *bo;
       const struct pipe_vertex_buffer *vb = &nv50->vtxbuf[b];
@@ -241,8 +243,11 @@ nv50_update_user_vbufs(struct nv50_context *nv50)
    for (i = 0; i < nv50->vertex->num_elements; ++i) {
       struct pipe_vertex_element *ve = &nv50->vertex->element[i].pipe;
       const unsigned b = ve->vertex_buffer_index;
-      struct pipe_vertex_buffer *vb = &nv50->vtxbuf[b];
+      struct pipe_vertex_buffer *vb;
       uint32_t base, size;
+
+      assert(b < PIPE_MAX_ATTRIBS);
+      vb = &nv50->vtxbuf[b];
 
       if (!(nv50->vbo_user & (1 << b)))
          continue;
@@ -306,6 +311,7 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
 
    if (!nv50->vbo_fifo) {
       /* if vertex buffer was written by GPU - flush VBO cache */
+      assert(nv50->num_vtxbufs <= PIPE_MAX_ATTRIBS);
       for (i = 0; i < nv50->num_vtxbufs; ++i) {
          struct nv04_resource *buf = nv04_resource(nv50->vtxbuf[i].buffer);
          if (buf && buf->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
@@ -332,6 +338,8 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
    }
    for (i = 0; i < vertex->num_elements; ++i) {
       const unsigned b = vertex->element[i].pipe.vertex_buffer_index;
+
+      assert(b < PIPE_MAX_ATTRIBS);
       ve = &vertex->element[i];
       vb = &nv50->vtxbuf[b];
 
@@ -360,6 +368,8 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
    for (i = 0; i < vertex->num_elements; ++i) {
       uint64_t address, limit;
       const unsigned b = vertex->element[i].pipe.vertex_buffer_index;
+
+      assert(b < PIPE_MAX_ATTRIBS);
       ve = &vertex->element[i];
       vb = &nv50->vtxbuf[b];
 
