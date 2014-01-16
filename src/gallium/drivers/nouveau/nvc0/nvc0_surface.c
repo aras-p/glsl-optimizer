@@ -427,9 +427,10 @@ nvc0_clear(struct pipe_context *pipe, unsigned buffers,
       PUSH_DATAf(push, color->f[1]);
       PUSH_DATAf(push, color->f[2]);
       PUSH_DATAf(push, color->f[3]);
-      mode =
-         NVC0_3D_CLEAR_BUFFERS_R | NVC0_3D_CLEAR_BUFFERS_G |
-         NVC0_3D_CLEAR_BUFFERS_B | NVC0_3D_CLEAR_BUFFERS_A;
+      if (buffers & PIPE_CLEAR_COLOR0)
+         mode =
+            NVC0_3D_CLEAR_BUFFERS_R | NVC0_3D_CLEAR_BUFFERS_G |
+            NVC0_3D_CLEAR_BUFFERS_B | NVC0_3D_CLEAR_BUFFERS_A;
    }
 
    if (buffers & PIPE_CLEAR_DEPTH) {
@@ -444,12 +445,16 @@ nvc0_clear(struct pipe_context *pipe, unsigned buffers,
       mode |= NVC0_3D_CLEAR_BUFFERS_S;
    }
 
-   BEGIN_NVC0(push, NVC0_3D(CLEAR_BUFFERS), 1);
-   PUSH_DATA (push, mode);
+   if (mode) {
+      BEGIN_NVC0(push, NVC0_3D(CLEAR_BUFFERS), 1);
+      PUSH_DATA (push, mode);
+   }
 
    for (i = 1; i < fb->nr_cbufs; i++) {
-      BEGIN_NVC0(push, NVC0_3D(CLEAR_BUFFERS), 1);
-      PUSH_DATA (push, (i << 6) | 0x3c);
+      if (buffers & (PIPE_CLEAR_COLOR0 << i)) {
+         BEGIN_NVC0(push, NVC0_3D(CLEAR_BUFFERS), 1);
+         PUSH_DATA (push, (i << 6) | 0x3c);
+      }
    }
 }
 

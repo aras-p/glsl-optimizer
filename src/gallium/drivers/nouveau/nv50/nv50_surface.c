@@ -408,9 +408,10 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
       PUSH_DATAf(push, color->f[1]);
       PUSH_DATAf(push, color->f[2]);
       PUSH_DATAf(push, color->f[3]);
-      mode =
-         NV50_3D_CLEAR_BUFFERS_R | NV50_3D_CLEAR_BUFFERS_G |
-         NV50_3D_CLEAR_BUFFERS_B | NV50_3D_CLEAR_BUFFERS_A;
+      if (buffers & PIPE_CLEAR_COLOR0)
+         mode =
+            NV50_3D_CLEAR_BUFFERS_R | NV50_3D_CLEAR_BUFFERS_G |
+            NV50_3D_CLEAR_BUFFERS_B | NV50_3D_CLEAR_BUFFERS_A;
    }
 
    if (buffers & PIPE_CLEAR_DEPTH) {
@@ -425,12 +426,16 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
       mode |= NV50_3D_CLEAR_BUFFERS_S;
    }
 
-   BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
-   PUSH_DATA (push, mode);
+   if (mode) {
+      BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
+      PUSH_DATA (push, mode);
+   }
 
    for (i = 1; i < fb->nr_cbufs; i++) {
-      BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
-      PUSH_DATA (push, (i << 6) | 0x3c);
+      if (buffers & (PIPE_CLEAR_COLOR0 << i)) {
+         BEGIN_NV04(push, NV50_3D(CLEAR_BUFFERS), 1);
+         PUSH_DATA (push, (i << 6) | 0x3c);
+      }
    }
 }
 
