@@ -298,15 +298,13 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    return pipe;
 
 out_err:
-   if (nv50) {
-      if (nv50->bufctx_3d)
-         nouveau_bufctx_del(&nv50->bufctx_3d);
-      if (nv50->bufctx)
-         nouveau_bufctx_del(&nv50->bufctx);
-      if (nv50->blit)
-         FREE(nv50->blit);
-      FREE(nv50);
-   }
+   if (nv50->bufctx_3d)
+      nouveau_bufctx_del(&nv50->bufctx_3d);
+   if (nv50->bufctx)
+      nouveau_bufctx_del(&nv50->bufctx);
+   if (nv50->blit)
+      FREE(nv50->blit);
+   FREE(nv50);
    return NULL;
 }
 
