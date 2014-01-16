@@ -762,7 +762,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
       case GL_COLOR_SUM_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         CHECK_EXTENSION(ARB_vertex_program, cap);
          if (ctx->Fog.ColorSumEnabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_FOG);
@@ -1443,7 +1442,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_COLOR_SUM_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         CHECK_EXTENSION(ARB_vertex_program);
          return ctx->Fog.ColorSumEnabled;
 
       /* GL_ARB_multisample */

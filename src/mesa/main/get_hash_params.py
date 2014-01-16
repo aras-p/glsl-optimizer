@@ -541,7 +541,7 @@ descriptor=[
   [ "TRANSPOSE_TEXTURE_MATRIX_ARB", "CONTEXT_MATRIX_T(TextureMatrixStack), NO_EXTRA" ],
 
 # GL_EXT_secondary_color
-  [ "COLOR_SUM", "CONTEXT_BOOL(Fog.ColorSumEnabled), extra_ARB_vertex_program" ],
+  [ "COLOR_SUM", "CONTEXT_BOOL(Fog.ColorSumEnabled), NO_EXTRA" ],
   [ "CURRENT_SECONDARY_COLOR", "CONTEXT_FIELD(Current.Attrib[VERT_ATTRIB_COLOR1][0], TYPE_FLOATN_4), extra_flush_current" ],
   [ "SECONDARY_COLOR_ARRAY", "ARRAY_BOOL(VertexAttrib[VERT_ATTRIB_COLOR1].Enabled), NO_EXTRA" ],
   [ "SECONDARY_COLOR_ARRAY_TYPE", "ARRAY_ENUM(VertexAttrib[VERT_ATTRIB_COLOR1].Type), NO_EXTRA" ],
