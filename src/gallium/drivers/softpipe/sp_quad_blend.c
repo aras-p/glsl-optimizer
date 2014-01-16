@@ -927,93 +927,94 @@ blend_fallback(struct quad_stage *qs,
 
    write_all = softpipe->fs_variant->info.color0_writes_all_cbufs;
 
-   for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) 
-   {
-      /* which blend/mask state index to use: */
-      const uint blend_buf = blend->independent_blend_enable ? cbuf : 0;
-      float dest[4][TGSI_QUAD_SIZE];
-      struct softpipe_cached_tile *tile
-         = sp_get_cached_tile(softpipe->cbuf_cache[cbuf],
-                              quads[0]->input.x0, 
-                              quads[0]->input.y0);
-      const boolean clamp = bqs->clamp[cbuf];
-      const float *blend_color;
-      const boolean dual_source_blend = util_blend_state_is_dual(blend, cbuf);
-      uint q, i, j;
+   for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) {
+      if (softpipe->framebuffer.cbufs[cbuf]) {
+         /* which blend/mask state index to use: */
+         const uint blend_buf = blend->independent_blend_enable ? cbuf : 0;
+         float dest[4][TGSI_QUAD_SIZE];
+         struct softpipe_cached_tile *tile
+            = sp_get_cached_tile(softpipe->cbuf_cache[cbuf],
+                                 quads[0]->input.x0, 
+                                 quads[0]->input.y0);
+         const boolean clamp = bqs->clamp[cbuf];
+         const float *blend_color;
+         const boolean dual_source_blend = util_blend_state_is_dual(blend, cbuf);
+         uint q, i, j;
 
-      if (clamp)
-         blend_color = softpipe->blend_color_clamped.color;
-      else
-         blend_color = softpipe->blend_color.color;
+         if (clamp)
+            blend_color = softpipe->blend_color_clamped.color;
+         else
+            blend_color = softpipe->blend_color.color;
 
-      for (q = 0; q < nr; q++) {
-         struct quad_header *quad = quads[q];
-         float (*quadColor)[4];
-         float (*quadColor2)[4] = NULL;
-         float temp_quad_color[TGSI_QUAD_SIZE][4];
-         const int itx = (quad->input.x0 & (TILE_SIZE-1));
-         const int ity = (quad->input.y0 & (TILE_SIZE-1));
+         for (q = 0; q < nr; q++) {
+            struct quad_header *quad = quads[q];
+            float (*quadColor)[4];
+            float (*quadColor2)[4] = NULL;
+            float temp_quad_color[TGSI_QUAD_SIZE][4];
+            const int itx = (quad->input.x0 & (TILE_SIZE-1));
+            const int ity = (quad->input.y0 & (TILE_SIZE-1));
 
-         if (write_all) {
-            for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-               for (i = 0; i < 4; i++) {
-                  temp_quad_color[i][j] = quad->output.color[0][i][j];
+            if (write_all) {
+               for (j = 0; j < TGSI_QUAD_SIZE; j++) {
+                  for (i = 0; i < 4; i++) {
+                     temp_quad_color[i][j] = quad->output.color[0][i][j];
+                  }
                }
+               quadColor = temp_quad_color;
+            } else {
+               quadColor = quad->output.color[cbuf];
+               if (dual_source_blend)
+                  quadColor2 = quad->output.color[cbuf + 1];
             }
-            quadColor = temp_quad_color;
-         } else {
-            quadColor = quad->output.color[cbuf];
-	    if (dual_source_blend)
-	       quadColor2 = quad->output.color[cbuf + 1];
-         }
 
-         /* If fixed-point dest color buffer, need to clamp the incoming
-          * fragment colors now.
-          */
-         if (clamp || softpipe->rasterizer->clamp_fragment_color) {
-            clamp_colors(quadColor);
-         }
-
-         /* get/swizzle dest colors
-          */
-         for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-            int x = itx + (j & 1);
-            int y = ity + (j >> 1);
-            for (i = 0; i < 4; i++) {
-               dest[i][j] = tile->data.color[y][x][i];
-            }
-         }
-
-
-         if (blend->logicop_enable) {
-            if (bqs->format_type[cbuf] != UTIL_FORMAT_TYPE_FLOAT) {
-               logicop_quad( qs, quadColor, dest );
-            }
-         }
-         else if (blend->rt[blend_buf].blend_enable) {
-            blend_quad(qs, quadColor, quadColor2, dest, blend_color, blend_buf);
-
-            /* If fixed-point dest color buffer, need to clamp the outgoing
+            /* If fixed-point dest color buffer, need to clamp the incoming
              * fragment colors now.
              */
-            if (clamp) {
+            if (clamp || softpipe->rasterizer->clamp_fragment_color) {
                clamp_colors(quadColor);
             }
-         }
 
-         rebase_colors(bqs->base_format[cbuf], quadColor);
-
-         if (blend->rt[blend_buf].colormask != 0xf)
-            colormask_quad( blend->rt[cbuf].colormask, quadColor, dest);
-   
-         /* Output color values
-          */
-         for (j = 0; j < TGSI_QUAD_SIZE; j++) {
-            if (quad->inout.mask & (1 << j)) {
+            /* get/swizzle dest colors
+             */
+            for (j = 0; j < TGSI_QUAD_SIZE; j++) {
                int x = itx + (j & 1);
                int y = ity + (j >> 1);
-               for (i = 0; i < 4; i++) { /* loop over color chans */
-                  tile->data.color[y][x][i] = quadColor[i][j];
+               for (i = 0; i < 4; i++) {
+                  dest[i][j] = tile->data.color[y][x][i];
+               }
+            }
+
+
+            if (blend->logicop_enable) {
+               if (bqs->format_type[cbuf] != UTIL_FORMAT_TYPE_FLOAT) {
+                  logicop_quad( qs, quadColor, dest );
+               }
+            }
+            else if (blend->rt[blend_buf].blend_enable) {
+               blend_quad(qs, quadColor, quadColor2, dest, blend_color, blend_buf);
+
+               /* If fixed-point dest color buffer, need to clamp the outgoing
+                * fragment colors now.
+                */
+               if (clamp) {
+                  clamp_colors(quadColor);
+               }
+            }
+
+            rebase_colors(bqs->base_format[cbuf], quadColor);
+
+            if (blend->rt[blend_buf].colormask != 0xf)
+               colormask_quad( blend->rt[cbuf].colormask, quadColor, dest);
+
+            /* Output color values
+             */
+            for (j = 0; j < TGSI_QUAD_SIZE; j++) {
+               if (quad->inout.mask & (1 << j)) {
+                  int x = itx + (j & 1);
+                  int y = ity + (j >> 1);
+                  for (i = 0; i < 4; i++) { /* loop over color chans */
+                     tile->data.color[y][x][i] = quadColor[i][j];
+                  }
                }
             }
          }
@@ -1255,23 +1256,25 @@ choose_blend_quad(struct quad_stage *qs,
     * whether color clamping is needed.
     */
    for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
-      const enum pipe_format format = softpipe->framebuffer.cbufs[i]->format;
-      const struct util_format_description *desc =
-         util_format_description(format);
-      /* assuming all or no color channels are normalized: */
-      bqs->clamp[i] = desc->channel[0].normalized;
-      bqs->format_type[i] = desc->channel[0].type;
+      if (softpipe->framebuffer.cbufs[i]) {
+         const enum pipe_format format = softpipe->framebuffer.cbufs[i]->format;
+         const struct util_format_description *desc =
+            util_format_description(format);
+         /* assuming all or no color channels are normalized: */
+         bqs->clamp[i] = desc->channel[0].normalized;
+         bqs->format_type[i] = desc->channel[0].type;
 
-      if (util_format_is_intensity(format))
-         bqs->base_format[i] = INTENSITY;
-      else if (util_format_is_luminance(format))
-         bqs->base_format[i] = LUMINANCE;
-      else if (util_format_is_luminance_alpha(format))
-         bqs->base_format[i] = LUMINANCE_ALPHA;
-      else if (!util_format_has_alpha(format))
-         bqs->base_format[i] = RGB;
-      else
-         bqs->base_format[i] = RGBA;
+         if (util_format_is_intensity(format))
+            bqs->base_format[i] = INTENSITY;
+         else if (util_format_is_luminance(format))
+            bqs->base_format[i] = LUMINANCE;
+         else if (util_format_is_luminance_alpha(format))
+            bqs->base_format[i] = LUMINANCE_ALPHA;
+         else if (!util_format_has_alpha(format))
+            bqs->base_format[i] = RGB;
+         else
+            bqs->base_format[i] = RGBA;
+      }
    }
 
    qs->run(qs, quads, nr);
