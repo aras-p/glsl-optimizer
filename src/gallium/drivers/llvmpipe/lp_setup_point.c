@@ -307,12 +307,13 @@ subpixel_snap(float a)
  */
 static void
 print_point(struct lp_setup_context *setup,
-            const float (*v0)[4])
+            const float (*v0)[4],
+            const float size)
 {
    const struct lp_setup_variant_key *key = &setup->setup.variant->key;
    uint i;
 
-   debug_printf("llvmpipe point\n");
+   debug_printf("llvmpipe point, width %f\n", size);
    for (i = 0; i < 1 + key->num_inputs; i++) {
       debug_printf("  v0[%d]:  %f %f %f %f\n", i,
                    v0[i][0], v0[i][1], v0[i][2], v0[i][3]);
@@ -331,12 +332,6 @@ try_setup_point( struct lp_setup_context *setup,
    const float size
       = (setup->point_size_per_vertex && sizeAttr > 0) ? v0[sizeAttr][0]
       : setup->point_size;
-   
-   /* Point size as fixed point integer, remove rounding errors 
-    * and gives minimum width for very small points
-    */
-   int fixed_width = MAX2(FIXED_ONE,
-                          (subpixel_snap(size) + FIXED_ONE/2 - 1) & ~(FIXED_ONE-1));
 
    /* Yes this is necessary to accurately calculate bounding boxes
     * with the two fill-conventions we support.  GL (normally) ends
@@ -353,6 +348,7 @@ try_setup_point( struct lp_setup_context *setup,
    struct point_info info;
    unsigned viewport_index = 0;
    unsigned layer = 0;
+   int fixed_width;
 
    if (setup->viewport_index_slot > 0) {
       unsigned *udata = (unsigned*)v0[setup->viewport_index_slot];
@@ -364,7 +360,7 @@ try_setup_point( struct lp_setup_context *setup,
    }
 
    if (0)
-      print_point(setup, v0);
+      print_point(setup, v0, size);
 
    /* Bounding rectangle (in pixels) */
    if (!lp_context->rasterizer ||
@@ -372,9 +368,14 @@ try_setup_point( struct lp_setup_context *setup,
       /*
        * Rasterize points as quads.
        */
+      int x0, y0;
+      /* Point size as fixed point integer, remove rounding errors
+       * and gives minimum width for very small points.
+       */
+      fixed_width = MAX2(FIXED_ONE, subpixel_snap(size));
 
-      const int x0 = subpixel_snap(v0[0][0] - setup->pixel_offset) - fixed_width/2;
-      const int y0 = subpixel_snap(v0[0][1] - setup->pixel_offset) - fixed_width/2;
+      x0 = subpixel_snap(v0[0][0] - setup->pixel_offset) - fixed_width/2;
+      y0 = subpixel_snap(v0[0][1] - setup->pixel_offset) - fixed_width/2;
 
       bbox.x0 = (x0 + (FIXED_ONE-1)) >> FIXED_ORDER;
       bbox.x1 = (x0 + fixed_width + (FIXED_ONE-1)) >> FIXED_ORDER;
@@ -398,7 +399,13 @@ try_setup_point( struct lp_setup_context *setup,
       const int x0 = subpixel_snap(v0[0][0]);
       const int y0 = subpixel_snap(v0[0][1]) - adj;
 
-      int int_width = fixed_width >> FIXED_ORDER;
+      int int_width;
+      /* Point size as fixed point integer. For GL legacy points
+       * the point size is always a whole integer.
+       */
+      fixed_width = MAX2(FIXED_ONE,
+                         (subpixel_snap(size) + FIXED_ONE/2 - 1) & ~(FIXED_ONE-1));
+      int_width = fixed_width >> FIXED_ORDER;
 
       assert(setup->pixel_offset != 0);
 
