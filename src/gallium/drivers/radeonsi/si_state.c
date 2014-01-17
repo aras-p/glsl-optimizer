@@ -2217,11 +2217,9 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 	}
 }
 
-/* Select the hw shader variant depending on the current state.
- * (*dirty) is set to 1 if current variant was changed */
+/* Select the hw shader variant depending on the current state. */
 int si_shader_select(struct pipe_context *ctx,
-		     struct si_pipe_shader_selector *sel,
-		     unsigned *dirty)
+		     struct si_pipe_shader_selector *sel)
 {
 	union si_shader_key key;
 	struct si_pipe_shader * shader = NULL;
@@ -2273,10 +2271,6 @@ int si_shader_select(struct pipe_context *ctx,
 		sel->num_shaders++;
 	}
 
-	if (dirty)
-		*dirty = 1;
-
-
 	return 0;
 }
 
@@ -2298,7 +2292,7 @@ static void *si_create_shader_state(struct pipe_context *ctx,
 		sel->fs_write_all = info.color0_writes_all_cbufs;
 	}
 
-	r = si_shader_select(ctx, sel, NULL);
+	r = si_shader_select(ctx, sel);
 	if (r) {
 	    free(sel);
 	    return NULL;
@@ -2341,9 +2335,6 @@ static void si_bind_vs_shader(struct pipe_context *ctx, void *state)
 		return;
 
 	sctx->vs_shader = sel;
-	si_pm4_bind_state(sctx, vs, sel->current->pm4);
-	sctx->b.streamout.stride_in_dw = sel->so.stride;
-	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 #if HAVE_LLVM >= 0x0305
@@ -2357,12 +2348,6 @@ static void si_bind_gs_shader(struct pipe_context *ctx, void *state)
 		return;
 
 	sctx->gs_shader = sel;
-
-	if (sel && sel->current) {
-		si_pm4_bind_state(sctx, gs, sel->current->pm4);
-		sctx->b.streamout.stride_in_dw = sel->so.stride;
-		sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
-	}
 }
 
 #endif
@@ -2379,8 +2364,6 @@ static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 		sel = sctx->dummy_pixel_shader;
 
 	sctx->ps_shader = sel;
-	si_pm4_bind_state(sctx, ps, sel->current->pm4);
-	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
 static void si_delete_shader_selector(struct pipe_context *ctx,

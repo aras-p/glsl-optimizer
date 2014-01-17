@@ -76,7 +76,6 @@ static void si_pipe_shader_es(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_00B32C_SPI_SHADER_PGM_RSRC2_ES,
 		       S_00B32C_USER_SGPR(num_user_sgprs));
 
-	si_pm4_bind_state(sctx, es, shader->pm4);
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
@@ -149,7 +148,6 @@ static void si_pipe_shader_gs(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_00B22C_SPI_SHADER_PGM_RSRC2_GS,
 		       S_00B22C_USER_SGPR(num_user_sgprs));
 
-	si_pm4_bind_state(sctx, gs, shader->pm4);
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
@@ -226,7 +224,6 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 		       S_00B12C_SO_BASE3_EN(!!shader->selector->so.stride[3]) |
 		       S_00B12C_SO_EN(!!shader->selector->so.num_outputs));
 
-	si_pm4_bind_state(sctx, vs, shader->pm4);
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
@@ -342,7 +339,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	shader->cb0_is_integer = sctx->fb_cb0_is_integer;
 	shader->sprite_coord_enable = sctx->sprite_coord_enable;
-	si_pm4_bind_state(sctx, ps, shader->pm4);
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
 
@@ -584,7 +580,6 @@ static void si_init_gs_rings(struct si_context *sctx)
 static void si_update_derived_state(struct si_context *sctx)
 {
 	struct pipe_context * ctx = (struct pipe_context*)sctx;
-	unsigned vs_dirty = 0, ps_dirty = 0;
 
 	if (!sctx->blitter->running) {
 		/* Flush depth textures which need to be flushed. */
@@ -599,33 +594,25 @@ static void si_update_derived_state(struct si_context *sctx)
 	}
 
 	if (sctx->gs_shader) {
-		unsigned es_dirty = 0, gs_dirty = 0;
-
-		si_shader_select(ctx, sctx->gs_shader, &gs_dirty);
+		si_shader_select(ctx, sctx->gs_shader);
 
 		if (!sctx->gs_shader->current->pm4) {
 			si_pipe_shader_gs(ctx, sctx->gs_shader->current);
 			si_pipe_shader_vs(ctx,
 					  sctx->gs_shader->current->gs_copy_shader);
-			gs_dirty = 0;
 		}
 
-		if (gs_dirty) {
-			si_pm4_bind_state(sctx, gs, sctx->gs_shader->current->pm4);
-			si_pm4_bind_state(sctx, vs,
-					  sctx->gs_shader->current->gs_copy_shader->pm4);
-		}
+		si_pm4_bind_state(sctx, gs, sctx->gs_shader->current->pm4);
+		si_pm4_bind_state(sctx, vs, sctx->gs_shader->current->gs_copy_shader->pm4);
 
-		si_shader_select(ctx, sctx->vs_shader, &es_dirty);
+		sctx->b.streamout.stride_in_dw = sctx->gs_shader->so.stride;
 
-		if (!sctx->vs_shader->current->pm4) {
+		si_shader_select(ctx, sctx->vs_shader);
+
+		if (!sctx->vs_shader->current->pm4)
 			si_pipe_shader_es(ctx, sctx->vs_shader->current);
-			es_dirty = 0;
-		}
 
-		if (es_dirty) {
-			si_pm4_bind_state(sctx, es, sctx->vs_shader->current->pm4);
-		}
+		si_pm4_bind_state(sctx, es, sctx->vs_shader->current->pm4);
 
 		if (!sctx->gs_rings)
 			si_init_gs_rings(sctx);
@@ -648,16 +635,14 @@ static void si_update_derived_state(struct si_context *sctx)
 		}
 		si_pm4_bind_state(sctx, gs_onoff, sctx->gs_on);
 	} else {
-		si_shader_select(ctx, sctx->vs_shader, &vs_dirty);
+		si_shader_select(ctx, sctx->vs_shader);
 
-		if (!sctx->vs_shader->current->pm4) {
+		if (!sctx->vs_shader->current->pm4)
 			si_pipe_shader_vs(ctx, sctx->vs_shader->current);
-			vs_dirty = 0;
-		}
 
-		if (vs_dirty) {
-			si_pm4_bind_state(sctx, vs, sctx->vs_shader->current->pm4);
-		}
+		si_pm4_bind_state(sctx, vs, sctx->vs_shader->current->pm4);
+
+		sctx->b.streamout.stride_in_dw = sctx->vs_shader->so.stride;
 
 		if (!sctx->gs_off) {
 			sctx->gs_off = si_pm4_alloc_state(sctx);
@@ -671,20 +656,13 @@ static void si_update_derived_state(struct si_context *sctx)
 		si_pm4_bind_state(sctx, es, NULL);
 	}
 
-	si_shader_select(ctx, sctx->ps_shader, &ps_dirty);
+	si_shader_select(ctx, sctx->ps_shader);
 
-	if (!sctx->ps_shader->current->pm4) {
+	if (!sctx->ps_shader->current->pm4 ||
+	    sctx->ps_shader->current->cb0_is_integer != sctx->fb_cb0_is_integer)
 		si_pipe_shader_ps(ctx, sctx->ps_shader->current);
-		ps_dirty = 0;
-	}
-	if (sctx->ps_shader->current->cb0_is_integer != sctx->fb_cb0_is_integer) {
-		si_pipe_shader_ps(ctx, sctx->ps_shader->current);
-		ps_dirty = 0;
-	}
 
-	if (ps_dirty) {
-		si_pm4_bind_state(sctx, ps, sctx->ps_shader->current->pm4);
-	}
+	si_pm4_bind_state(sctx, ps, sctx->ps_shader->current->pm4);
 
 	if (si_pm4_state_changed(sctx, ps) || si_pm4_state_changed(sctx, vs)) {
 		/* XXX: Emitting the PS state even when only the VS changed
