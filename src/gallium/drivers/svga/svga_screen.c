@@ -139,8 +139,6 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
    SVGA3dDevCapResult result;
 
    switch (param) {
-   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-      return 16;
    case PIPE_CAP_NPOT_TEXTURES:
    case PIPE_CAP_MIXED_FRAMEBUFFER_SIZES:
       return 1;

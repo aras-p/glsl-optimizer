@@ -180,8 +180,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
             return 0;
 
         /* Texturing. */
-        case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-            return r300screen->caps.num_tex_units;
         case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
         case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
         case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:

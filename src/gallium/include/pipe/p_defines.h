@@ -469,9 +469,6 @@ enum pipe_cap {
    PIPE_CAP_SM3 = 29,  /*< Shader Model, supported */
    PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS = 30,
    PIPE_CAP_PRIMITIVE_RESTART = 31,
-   /** Maximum texture image units accessible from vertex and fragment shaders
-    * combined */
-   PIPE_CAP_MAX_COMBINED_SAMPLERS = 32,
    /** blend enables and write masks per rendertarget */
    PIPE_CAP_INDEP_BLEND_ENABLE = 33,
    /** different blend funcs per rendertarget */

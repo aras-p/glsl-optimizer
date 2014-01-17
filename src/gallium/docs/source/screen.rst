@@ -53,8 +53,6 @@ The integer capabilities:
   opcodes to the Shader Model 3 specification. XXX oh god this is horrible
 * ``PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS``: The maximum number of stream buffers.
 * ``PIPE_CAP_PRIMITIVE_RESTART``: Whether primitive restart is supported.
-* ``PIPE_CAP_MAX_COMBINED_SAMPLERS``: The total number of samplers accessible from
-  the vertex and fragment shader, inclusive.
 * ``PIPE_CAP_INDEP_BLEND_ENABLE``: Whether per-rendertarget blend enabling and channel
   masks are supported. If 0, then the first rendertarget's blend mask is
   replicated across all MRTs.

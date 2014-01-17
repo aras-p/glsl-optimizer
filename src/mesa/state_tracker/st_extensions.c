@@ -89,10 +89,6 @@ void st_init_limits(struct st_context *st)
    c->MaxArrayTextureLayers
       = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS);
 
-   c->MaxCombinedTextureImageUnits
-      = _min(screen->get_param(screen, PIPE_CAP_MAX_COMBINED_SAMPLERS),
-             MAX_COMBINED_TEXTURE_IMAGE_UNITS);
-
    /* Define max viewport size and max renderbuffer size in terms of
     * max texture size (note: max tex RECT size = max tex 2D size).
     * If this isn't true for some hardware we'll need new PIPE_CAP_ queries.
@@ -242,6 +238,12 @@ void st_init_limits(struct st_context *st)
          options->MaxUnrollIterations = 255; /* SM3 limit */
       options->LowerClipDistance = true;
    }
+
+   c->MaxCombinedTextureImageUnits =
+         _min(c->Program[MESA_SHADER_VERTEX].MaxTextureImageUnits +
+              c->Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits +
+              c->Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits,
+              MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
    /* This depends on program constants. */
    c->MaxTextureCoordUnits

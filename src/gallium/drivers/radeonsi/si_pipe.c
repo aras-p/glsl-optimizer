@@ -306,8 +306,6 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 			return 15;
 	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
 		return 16384;
-	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-		return HAVE_LLVM >= 0x0305 ? 48 : 32;
 
 	/* Render targets. */
 	case PIPE_CAP_MAX_RENDER_TARGETS:

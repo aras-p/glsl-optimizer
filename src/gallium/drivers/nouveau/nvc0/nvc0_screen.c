@@ -71,8 +71,6 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    const uint16_t class_3d = nouveau_screen(pscreen)->class_3d;
 
    switch (param) {
-   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-      return 16 * 5;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return 15;

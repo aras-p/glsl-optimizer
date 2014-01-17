@@ -240,13 +240,6 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
       return is->debug.lie ? 1 : 0;
 
    /* Texturing. */
-   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-      return i915_get_shader_param(screen,
-                                   PIPE_SHADER_VERTEX,
-                                   PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS) +
-             i915_get_shader_param(screen,
-                                   PIPE_SHADER_FRAGMENT,
-                                   PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS);
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
       return I915_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:

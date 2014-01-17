@@ -219,8 +219,6 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return MAX_MIP_LEVELS;
 	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
 		return 9192;
-	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-		return 20;
 
 	/* Render targets. */
 	case PIPE_CAP_MAX_RENDER_TARGETS:

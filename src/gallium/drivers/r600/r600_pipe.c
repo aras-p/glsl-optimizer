@@ -415,8 +415,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
 		return rscreen->b.info.drm_minor >= 9 ?
 			(family >= CHIP_CEDAR ? 16384 : 8192) : 0;
-	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-		return 32;
 
 	/* Render targets. */
 	case PIPE_CAP_MAX_RENDER_TARGETS:

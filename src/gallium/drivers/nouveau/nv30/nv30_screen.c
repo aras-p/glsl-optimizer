@@ -60,8 +60,6 @@ nv30_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 10;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return 13;
-   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-      return 16;
    case PIPE_CAP_GLSL_FEATURE_LEVEL:
       return 120;
    /* supported capabilities */
