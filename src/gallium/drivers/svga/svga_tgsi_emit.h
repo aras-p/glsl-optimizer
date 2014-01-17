@@ -119,8 +119,9 @@ struct svga_shader_emitter
    /* shared output for depth and fog */
    SVGA3dShaderDestToken vs_depth_fog;
 
-   SVGA3dShaderDestToken temp_col[PIPE_MAX_COLOR_BUFS];
-   SVGA3dShaderDestToken true_col[PIPE_MAX_COLOR_BUFS];
+   /* PS output colors */
+   SVGA3dShaderDestToken temp_color_output[PIPE_MAX_COLOR_BUFS];
+   SVGA3dShaderDestToken true_color_output[PIPE_MAX_COLOR_BUFS];
 
    SVGA3dShaderDestToken temp_psiz;
    SVGA3dShaderDestToken true_psiz;

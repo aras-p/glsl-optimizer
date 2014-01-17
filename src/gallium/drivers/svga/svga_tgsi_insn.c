@@ -3059,7 +3059,7 @@ emit_ps_postamble(struct svga_shader_emitter *emit)
    }
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      if (SVGA3dShaderGetRegType(emit->true_col[i].value) != 0) {
+      if (SVGA3dShaderGetRegType(emit->true_color_output[i].value) != 0) {
          /* Potentially override output colors with white for XOR
           * logicop workaround.
           */
@@ -3070,15 +3070,15 @@ emit_ps_postamble(struct svga_shader_emitter *emit)
 
             if (!submit_op1( emit,
                              inst_token(SVGA3DOP_MOV),
-                             emit->true_col[i],
+                             emit->true_color_output[i],
                              one ))
                return FALSE;
          }
          else {
             if (!submit_op1( emit,
                              inst_token(SVGA3DOP_MOV),
-                             emit->true_col[i],
-                             src(emit->temp_col[i]) ))
+                             emit->true_color_output[i],
+                             src(emit->temp_color_output[i]) ))
                return FALSE;
          }
       }

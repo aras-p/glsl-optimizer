@@ -332,9 +332,9 @@ ps30_output(struct svga_shader_emitter *emit,
 
          emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,
                                                emit->nr_hw_temp++ );
-         emit->temp_col[idx] = emit->output_map[idx];
-         emit->true_col[idx] = dst_register( SVGA3DREG_COLOROUT, 
-                                              semantic.Index );
+         emit->temp_color_output[idx] = emit->output_map[idx];
+         emit->true_color_output[idx] = dst_register(SVGA3DREG_COLOROUT, 
+                                                     semantic.Index);
       }
       else {
          emit->output_map[idx] = dst_register( SVGA3DREG_COLOROUT, 
