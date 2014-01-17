@@ -327,7 +327,7 @@ kernel::global_argument::set(size_t size, const void *value) {
    if (size != sizeof(cl_mem))
       throw error(CL_INVALID_ARG_SIZE);
 
-   buf = &obj<buffer>(*(cl_mem *)value);
+   buf = pobj<buffer>(value ? *(cl_mem *)value : NULL);
    _set = true;
 }
 
@@ -335,8 +335,14 @@ void
 kernel::global_argument::bind(exec_context &ctx,
                               const module::argument &marg) {
    align(ctx.input, marg.target_align);
-   ctx.g_handles.push_back(allocate(ctx.input, marg.target_size));
-   ctx.g_buffers.push_back(buf->resource(*ctx.q).pipe);
+
+   if (buf) {
+      ctx.g_handles.push_back(allocate(ctx.input, marg.target_size));
+      ctx.g_buffers.push_back(buf->resource(*ctx.q).pipe);
+   } else {
+      // Null pointer.
+      allocate(ctx.input, marg.target_size);
+   }
 }
 
 void
@@ -379,22 +385,28 @@ kernel::constant_argument::set(size_t size, const void *value) {
    if (size != sizeof(cl_mem))
       throw error(CL_INVALID_ARG_SIZE);
 
-   buf = &obj<buffer>(*(cl_mem *)value);
+   buf = pobj<buffer>(value ? *(cl_mem *)value : NULL);
    _set = true;
 }
 
 void
 kernel::constant_argument::bind(exec_context &ctx,
                                 const module::argument &marg) {
-   auto v = bytes(ctx.resources.size() << 24);
-
-   extend(v, module::argument::zero_ext, marg.target_size);
-   byteswap(v, ctx.q->dev.endianness());
    align(ctx.input, marg.target_align);
-   insert(ctx.input, v);
 
-   st = buf->resource(*ctx.q).bind_surface(*ctx.q, false);
-   ctx.resources.push_back(st);
+   if (buf) {
+      auto v = bytes(ctx.resources.size() << 24);
+
+      extend(v, module::argument::zero_ext, marg.target_size);
+      byteswap(v, ctx.q->dev.endianness());
+      insert(ctx.input, v);
+
+      st = buf->resource(*ctx.q).bind_surface(*ctx.q, false);
+      ctx.resources.push_back(st);
+   } else {
+      // Null pointer.
+      allocate(ctx.input, marg.target_size);
+   }
 }
 
 void
