@@ -61,6 +61,27 @@ _mesa_lookup_texture(struct gl_context *ctx, GLuint id)
 }
 
 
+void
+_mesa_begin_texture_lookups(struct gl_context *ctx)
+{
+   _mesa_HashLockMutex(ctx->Shared->TexObjects);
+}
+
+
+void
+_mesa_end_texture_lookups(struct gl_context *ctx)
+{
+   _mesa_HashUnlockMutex(ctx->Shared->TexObjects);
+}
+
+
+struct gl_texture_object *
+_mesa_lookup_texture_locked(struct gl_context *ctx, GLuint id)
+{
+   return (struct gl_texture_object *)
+      _mesa_HashLookupLocked(ctx->Shared->TexObjects, id);
+}
+
 
 /**
  * Allocate and initialize a new texture object.  But don't put it into the

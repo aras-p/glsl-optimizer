@@ -46,6 +46,15 @@
 extern struct gl_texture_object *
 _mesa_lookup_texture(struct gl_context *ctx, GLuint id);
 
+extern void
+_mesa_begin_texture_lookups(struct gl_context *ctx);
+
+extern void
+_mesa_end_texture_lookups(struct gl_context *ctx);
+
+extern struct gl_texture_object *
+_mesa_lookup_texture_locked(struct gl_context *ctx, GLuint id);
+
 extern struct gl_texture_object *
 _mesa_new_texture_object( struct gl_context *ctx, GLuint name, GLenum target );
 
