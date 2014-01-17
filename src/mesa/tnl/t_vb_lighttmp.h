@@ -23,7 +23,7 @@
  *
  *
  * Authors:
- *    Brian Paul Keith Whitwell <keith@tungstengraphics.com>
+ *    Brian Paul Keith Whitwell <keithw@vmware.com>
  */
 
 

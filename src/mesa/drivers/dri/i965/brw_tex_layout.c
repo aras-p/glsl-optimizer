@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2006 VMware, Inc.
  * Copyright © 2006 Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -28,8 +28,8 @@
  *
  * Code to lay out images in a mipmap tree.
  *
- * \author Keith Whitwell <keith@tungstengraphics.com>
- * \author Michel Dänzer <michel@tungstengraphics.com>
+ * \author Keith Whitwell <keithw@vmware.com>
+ * \author Michel Dänzer <daenzer@vmware.com>
  */
 
 #include "intel_mipmap_tree.h"

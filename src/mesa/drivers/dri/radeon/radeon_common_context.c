@@ -80,7 +80,7 @@ static const GLubyte *radeonGetString(struct gl_context * ctx, GLenum name)
 
 	switch (name) {
 	case GL_VENDOR:
-		return (GLubyte *) "Tungsten Graphics, Inc.";
+		return (GLubyte *) "VMware, Inc.";
 
 	case GL_RENDERER:
 	{

@@ -3,7 +3,7 @@
  * SAREA definitions.
  * 
  * \author Kevin E. Martin <kevin@precisioninsight.com>
- * \author Jens Owen <jens@tungstengraphics.com>
+ * \author Jens Owen <jowen@vmware.com>
  * \author Rickard E. (Rik) Faith <faith@valinux.com>
  */
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * All Rights Reserved.
  *
  * Copyright © 2012 Intel Corporation

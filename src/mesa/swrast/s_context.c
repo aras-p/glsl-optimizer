@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keith@tungstengraphics.com> Brian Paul
+ *    Keith Whitwell <keithw@vmware.com> Brian Paul
  */
 
 #include "main/imports.h"

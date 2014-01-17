@@ -1,7 +1,7 @@
 /**
  * \file vtxfmt.h
  * 
- * \author Keith Whitwell <keith@tungstengraphics.com>
+ * \author Keith Whitwell <keithw@vmware.com>
  * \author Gareth Hughes
  */
 

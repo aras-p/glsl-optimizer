@@ -3,7 +3,7 @@
  * Copyright 2011-2012 Advanced Micro Devices, Inc.
  * Copyright 2010 VMware, Inc.
  * Copyright 2009 VMware, Inc.
- * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 VMware, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a

@@ -1,7 +1,7 @@
 
 /**************************************************************************
  *
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 VMware, Inc.
  * Copyright 2012 Marek Olšák <maraeo@gmail.com>
  * All Rights Reserved.
  *
@@ -32,7 +32,7 @@
  * Gallium vertex state and binds it.
  *
  * Authors:
- *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Keith Whitwell <keithw@vmware.com>
  *   Marek Olšák <maraeo@gmail.com>
  */
 

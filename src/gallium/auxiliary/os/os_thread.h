@@ -1,7 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 1999-2006 Brian Paul
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a

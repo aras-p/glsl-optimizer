@@ -29,7 +29,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Kevin E. Martin <martin@valinux.com>
- *   Jens Owen <jens@tungstengraphics.com>
+ *   Jens Owen <jowen@vmware.com>
  *   Rickard E. (Rik) Fiath <faith@valinux.com>
  *
  */

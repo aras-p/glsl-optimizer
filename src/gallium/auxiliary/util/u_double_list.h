@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND. USA.
+ * Copyright 2006 VMware, Inc., Bismarck, ND. USA.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a

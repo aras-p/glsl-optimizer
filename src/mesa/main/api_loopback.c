@@ -1,7 +1,7 @@
 /**
  * \file api_loopback.c
  *
- * \author Keith Whitwell <keith@tungstengraphics.com>
+ * \author Keith Whitwell <keithw@vmware.com>
  */
 
 /*

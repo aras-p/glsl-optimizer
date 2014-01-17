@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND., USA
+ * Copyright 2006 VMware, Inc., Bismarck, ND., USA
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -30,8 +30,8 @@
  * \file
  * Batch buffer pool management.
  * 
- * \author Jose Fonseca <jrfonseca-at-tungstengraphics-dot-com>
- * \author Thomas Hellström <thomas-at-tungstengraphics-dot-com>
+ * \author Jose Fonseca <jfonseca-at-vmware-dot-com>
+ * \author Thomas Hellström <thellstom-at-vmware-dot-com>
  */
 
 

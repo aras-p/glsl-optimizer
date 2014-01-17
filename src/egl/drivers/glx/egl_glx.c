@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 VMware, Inc.
  * Copyright 2009-2010 Chia-I Wu <olvaffe@gmail.com>
  * Copyright 2010-2011 LunarG, Inc.
  * All Rights Reserved.
@@ -32,7 +32,7 @@
  * This is an EGL driver that wraps GLX. This gives the benefit of being
  * completely agnostic of the direct rendering implementation.
  *
- * Authors: Alan Hourihane <alanh@tungstengraphics.com>
+ * Authors: Alan Hourihane <alanh@vmware.com>
  */
 
 #include <stdlib.h>

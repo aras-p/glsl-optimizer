@@ -26,7 +26,7 @@
 /**
  * \file swrast/s_context.h
  * \brief Software rasterization context and private types.
- * \author Keith Whitwell <keith@tungstengraphics.com>
+ * \author Keith Whitwell <keithw@vmware.com>
  */
 
 /**

@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2006-2008 Tungsten Graphics, Inc., Cedar Park, TX., USA
+ * Copyright 2006-2008 VMware, Inc., USA
  * All Rights Reserved.
  *
  * Permission is hereby granted, FREE of charge, to any person obtaining a
@@ -32,8 +32,8 @@
  * 
  * @sa http://en.wikipedia.org/wiki/Slab_allocation
  * 
- * @author Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
- * @author Jose Fonseca <jrfonseca@tungstengraphics.com>
+ * @author Thomas Hellstrom <thellstom-at-vmware-dot-com>
+ * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
 #include "pipe/p_compiler.h"

@@ -31,7 +31,7 @@
 
 
 /* Author:
- *    Keith Whitwell <keith@tungstengraphics.com>
+ *    Keith Whitwell <keithw@vmware.com>
  */
 
 #include "glheader.h"

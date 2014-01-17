@@ -1,6 +1,6 @@
 /*
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
- Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
+ Intel funded Tungsten Graphics to
  develop this 3D driver.
 
  Permission is hereby granted, free of charge, to any person obtaining
@@ -26,7 +26,7 @@
  **********************************************************************/
  /*
   * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Keith Whitwell <keithw@vmware.com>
   */
 
 

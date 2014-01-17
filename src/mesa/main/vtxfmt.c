@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keith@tungstengraphics.com> Gareth Hughes
+ *    Keith Whitwell <keithw@vmware.com> Gareth Hughes
  */
 
 #include "glheader.h"

@@ -26,7 +26,7 @@
 /**
  * \file swrast/swrast.h
  * \brief Public interface to the software rasterization functions.
- * \author Keith Whitwell <keith@tungstengraphics.com>
+ * \author Keith Whitwell <keithw@vmware.com>
  */
 
 #ifndef SWRAST_H

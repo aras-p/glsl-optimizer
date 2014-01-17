@@ -29,7 +29,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Keith Whitwell <keithw@vmware.com>
  */
 
 #include <stdbool.h>
@@ -80,7 +80,7 @@ static const GLubyte *r200GetString( struct gl_context *ctx, GLenum name )
 
    switch ( name ) {
    case GL_VENDOR:
-      return (GLubyte *)"Tungsten Graphics, Inc.";
+      return (GLubyte *)"VMware, Inc.";
 
    case GL_RENDERER:
       offset = driGetRendererString( buffer, "R200", agp_mode );

@@ -24,7 +24,7 @@
  *
  * Authors:
  *    Gareth Hughes <gareth@valinux.com>
- *    Keith Whitwell <keith@tungstengraphics.com>
+ *    Keith Whitwell <keithw@vmware.com>
  */
 
 #include "main/glheader.h"

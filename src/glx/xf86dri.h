@@ -31,7 +31,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Protocol numbers and function prototypes for DRI X protocol.
  *
  * \author Kevin E. Martin <martin@valinux.com>
- * \author Jens Owen <jens@tungstengraphics.com>
+ * \author Jens Owen <jowen@vmware.com>
  * \author Rickard E. (Rik) Faith <faith@valinux.com>
  */
 
