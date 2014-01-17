@@ -56,6 +56,7 @@ struct svga_fs_compile_key
    unsigned light_twoside:1;
    unsigned front_ccw:1;
    unsigned white_fragments:1;
+   unsigned write_color0_to_n_cbufs:3;
    unsigned num_textures:8;
    unsigned num_unnormalized_coords:8;
    unsigned sprite_origin_lower_left:1;

@@ -276,6 +276,12 @@ make_fs_key(const struct svga_context *svga,
    key->sprite_origin_lower_left = (svga->curr.rast->templ.sprite_coord_mode
                                     == PIPE_SPRITE_COORD_LOWER_LEFT);
 
+   /* SVGA_NEW_FRAME_BUFFER */
+   if (fs->base.info.color0_writes_all_cbufs) {
+      /* Replicate color0 output to N colorbuffers */
+      key->write_color0_to_n_cbufs = svga->curr.framebuffer.nr_cbufs;
+   }
+
    return PIPE_OK;
 }
 
@@ -296,6 +302,7 @@ emit_hw_fs(struct svga_context *svga, unsigned dirty)
     * SVGA_NEW_RAST
     * SVGA_NEW_NEED_SWTNL
     * SVGA_NEW_SAMPLER
+    * SVGA_NEW_FRAME_BUFFER
     */
    ret = make_fs_key( svga, fs, &key );
    if (ret != PIPE_OK)
@@ -335,6 +342,7 @@ struct svga_tracked_state svga_hw_fs =
     SVGA_NEW_NEED_SWTNL |
     SVGA_NEW_RAST |
     SVGA_NEW_SAMPLER |
+    SVGA_NEW_FRAME_BUFFER |
     SVGA_NEW_BLEND),
    emit_hw_fs
 };

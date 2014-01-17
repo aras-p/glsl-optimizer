@@ -3074,6 +3074,15 @@ emit_ps_postamble(struct svga_shader_emitter *emit)
                              one ))
                return FALSE;
          }
+         else if (emit->unit == PIPE_SHADER_FRAGMENT &&
+                  i < emit->key.fkey.write_color0_to_n_cbufs) {
+            /* Write temp color output [0] to true output [i] */
+            if (!submit_op1(emit, inst_token(SVGA3DOP_MOV),
+                            emit->true_color_output[i],
+                            src(emit->temp_color_output[0]))) {
+               return FALSE;
+            }
+         }
          else {
             if (!submit_op1( emit,
                              inst_token(SVGA3DOP_MOV),
