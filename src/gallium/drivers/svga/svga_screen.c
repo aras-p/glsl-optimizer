@@ -246,7 +246,6 @@ svga_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
    case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
-   case PIPE_CAP_SCALED_RESOLVE:
    case PIPE_CAP_MIN_TEXEL_OFFSET:
    case PIPE_CAP_MAX_TEXEL_OFFSET:
    case PIPE_CAP_CONDITIONAL_RENDER:

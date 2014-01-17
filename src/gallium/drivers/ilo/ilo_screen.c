@@ -362,7 +362,6 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return true;
    case PIPE_CAP_SEAMLESS_CUBE_MAP:
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
-   case PIPE_CAP_SCALED_RESOLVE:
       return true;
    case PIPE_CAP_MIN_TEXEL_OFFSET:
       return -8;

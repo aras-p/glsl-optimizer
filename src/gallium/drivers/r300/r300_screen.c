@@ -146,7 +146,6 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
         case PIPE_CAP_SEAMLESS_CUBE_MAP:
         case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
-        case PIPE_CAP_SCALED_RESOLVE:
         case PIPE_CAP_MIN_TEXEL_OFFSET:
         case PIPE_CAP_MAX_TEXEL_OFFSET:
         case PIPE_CAP_MAX_STREAM_OUTPUT_BUFFERS:
