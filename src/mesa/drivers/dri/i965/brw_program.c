@@ -288,7 +288,7 @@ get_written_and_reset(struct brw_context *brw, int i,
                       uint64_t *written, uint64_t *reset)
 {
    enum shader_time_shader_type type = brw->shader_time.types[i];
-   assert(type == ST_VS || type == ST_FS8 || type == ST_FS16);
+   assert(type == ST_VS || type == ST_GS || type == ST_FS8 || type == ST_FS16);
 
    /* Find where we recorded written and reset. */
    int wi, ri;
@@ -340,6 +340,8 @@ brw_report_shader_time(struct brw_context *brw)
       switch (type) {
       case ST_VS_WRITTEN:
       case ST_VS_RESET:
+      case ST_GS_WRITTEN:
+      case ST_GS_RESET:
       case ST_FS8_WRITTEN:
       case ST_FS8_RESET:
       case ST_FS16_WRITTEN:
@@ -349,6 +351,7 @@ brw_report_shader_time(struct brw_context *brw)
          continue;
 
       case ST_VS:
+      case ST_GS:
       case ST_FS8:
       case ST_FS16:
          get_written_and_reset(brw, i, &written, &reset);
@@ -372,6 +375,7 @@ brw_report_shader_time(struct brw_context *brw)
 
       switch (type) {
       case ST_VS:
+      case ST_GS:
       case ST_FS8:
       case ST_FS16:
          total_by_type[type] += scaled[i];
@@ -432,6 +436,9 @@ brw_report_shader_time(struct brw_context *brw)
       case ST_VS:
          stage = "vs";
          break;
+      case ST_GS:
+         stage = "gs";
+         break;
       case ST_FS8:
          stage = "fs8";
          break;
@@ -449,6 +456,7 @@ brw_report_shader_time(struct brw_context *brw)
 
    printf("\n");
    print_shader_time_line("total", "vs", -1, total_by_type[ST_VS], total);
+   print_shader_time_line("total", "gs", -1, total_by_type[ST_GS], total);
    print_shader_time_line("total", "fs8", -1, total_by_type[ST_FS8], total);
    print_shader_time_line("total", "fs16", -1, total_by_type[ST_FS16], total);
 }

@@ -3283,13 +3283,19 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
 			   struct brw_shader *shader,
 			   void *mem_ctx,
                            bool debug_flag,
-                           bool no_spills)
+                           bool no_spills,
+                           shader_time_shader_type st_base,
+                           shader_time_shader_type st_written,
+                           shader_time_shader_type st_reset)
    : sanity_param_count(0),
      fail_msg(NULL),
      first_non_payload_grf(0),
      need_all_constants_in_pull_buffer(false),
      debug_flag(debug_flag),
-     no_spills(no_spills)
+     no_spills(no_spills),
+     st_base(st_base),
+     st_written(st_written),
+     st_reset(st_reset)
 {
    this->brw = brw;
    this->ctx = &brw->ctx;

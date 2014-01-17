@@ -232,7 +232,10 @@ public:
 		struct brw_shader *shader,
 		void *mem_ctx,
                 bool debug_flag,
-                bool no_spills);
+                bool no_spills,
+                shader_time_shader_type st_base,
+                shader_time_shader_type st_written,
+                shader_time_shader_type st_reset);
    ~vec4_visitor();
 
    dst_reg dst_null_f()
@@ -548,6 +551,10 @@ private:
     * If true, then register allocation should fail instead of spilling.
     */
    const bool no_spills;
+
+   const shader_time_shader_type st_base;
+   const shader_time_shader_type st_written;
+   const shader_time_shader_type st_reset;
 };
 
 

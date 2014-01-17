@@ -41,7 +41,8 @@ vec4_gs_visitor::vec4_gs_visitor(struct brw_context *brw,
                                  bool no_spills)
    : vec4_visitor(brw, &c->base, &c->gp->program.Base, &c->key.base,
                   &c->prog_data.base, prog, shader, mem_ctx,
-                  INTEL_DEBUG & DEBUG_GS, no_spills),
+                  INTEL_DEBUG & DEBUG_GS, no_spills,
+                  ST_GS, ST_GS_WRITTEN, ST_GS_RESET),
      c(c)
 {
 }
