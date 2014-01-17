@@ -143,6 +143,8 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
       u_assembled_prim(in_prim);
    const unsigned nr = MAX2(vs->info.num_inputs,
                             draw_total_vs_outputs(draw));
+   unsigned point_clip = draw->rasterizer->fill_front == PIPE_POLYGON_MODE_POINT ||
+                         out_prim == PIPE_PRIM_POINTS;
 
    fpme->input_prim = in_prim;
    fpme->opt = opt;
@@ -155,11 +157,11 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
 
 
    draw_pt_post_vs_prepare( fpme->post_vs,
-                            out_prim == PIPE_PRIM_POINTS ?
-                                        draw->clip_points_xy : draw->clip_xy,
+                            draw->clip_xy,
                             draw->clip_z,
                             draw->clip_user,
-                            draw->guard_band_xy,
+                            point_clip ? draw->guard_band_points_xy :
+                                         draw->guard_band_xy,
                             draw->identity_viewport,
                             draw->rasterizer->clip_halfz,
                             (draw->vs.edgeflag_output ? TRUE : FALSE) );

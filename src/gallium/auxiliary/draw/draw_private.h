@@ -232,7 +232,7 @@ struct draw_context
    boolean clip_z;
    boolean clip_user;
    boolean guard_band_xy;
-   boolean clip_points_xy;
+   boolean guard_band_points_xy;
 
    boolean force_passthrough; /**< never clip or shade */
 

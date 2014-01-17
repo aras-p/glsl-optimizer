@@ -262,10 +262,10 @@ static void update_clip_flags( struct draw_context *draw )
                    draw->rasterizer && draw->rasterizer->depth_clip);
    draw->clip_user = draw->rasterizer &&
                      draw->rasterizer->clip_plane_enable != 0;
-   draw->clip_points_xy = draw->clip_xy &&
-                          (!draw->driver.bypass_clip_points ||
-                          (draw->rasterizer &&
-                          !draw->rasterizer->point_tri_clip));
+   draw->guard_band_points_xy = draw->guard_band_xy ||
+                                (draw->driver.bypass_clip_points &&
+                                (draw->rasterizer &&
+                                 draw->rasterizer->point_tri_clip));
 }
 
 /**

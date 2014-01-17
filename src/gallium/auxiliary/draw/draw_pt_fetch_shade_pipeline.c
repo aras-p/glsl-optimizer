@@ -60,7 +60,7 @@ struct fetch_pipeline_middle_end {
  */
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
                                     unsigned prim,
-				    unsigned opt,
+                                    unsigned opt,
                                     unsigned *max_vertices )
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
@@ -72,8 +72,10 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 
    const unsigned gs_out_prim = (gs ? gs->output_primitive :
                                  u_assembled_prim(prim));
-   unsigned nr = MAX2( vs->info.num_inputs,
-		       draw_total_vs_outputs(draw) );
+   unsigned nr = MAX2(vs->info.num_inputs,
+                      draw_total_vs_outputs(draw));
+   unsigned point_clip = draw->rasterizer->fill_front == PIPE_POLYGON_MODE_POINT ||
+                         gs_out_prim == PIPE_PRIM_POINTS;
 
    if (gs) {
       nr = MAX2(nr, gs->info.num_outputs + 1);
@@ -97,18 +99,17 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
     */
    fpme->vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
 
-   
 
    draw_pt_fetch_prepare( fpme->fetch, 
                           vs->info.num_inputs,
                           fpme->vertex_size,
                           instance_id_index );
    draw_pt_post_vs_prepare( fpme->post_vs,
-                            gs_out_prim == PIPE_PRIM_POINTS ?
-                                           draw->clip_points_xy : draw->clip_xy,
+                            draw->clip_xy,
                             draw->clip_z,
                             draw->clip_user,
-                            draw->guard_band_xy,
+                            point_clip ? draw->guard_band_points_xy :
+                                         draw->guard_band_xy,
                             draw->identity_viewport,
                             draw->rasterizer->clip_halfz,
                             (draw->vs.edgeflag_output ? TRUE : FALSE) );

@@ -615,19 +615,33 @@ clip_point( struct draw_stage *stage,
       stage->next->point( stage->next, header );
 }
 
+
 /*
  * Clip points but ignore the first 4 (xy) clip planes.
- * (This is necessary because we don't generate a different shader variant
- * just for points hence xy clip bits are still generated. This is not really
- * optimal because of the extra calculations both in generating clip masks
- * and executing the clip stage but it gets the job done.)
+ * (Because the generated clip mask is completely unaffacted by guard band,
+ * we still need to manually evaluate the x/y planes if they are outside
+ * the guard band and not just outside the vp.)
  */
 static void
-clip_point_no_xy( struct draw_stage *stage,
-                  struct prim_header *header )
+clip_point_guard_xy( struct draw_stage *stage,
+                     struct prim_header *header )
 {
-   if ((header->v[0]->clipmask & 0xfffffff0) == 0)
-      stage->next->point( stage->next, header );
+   unsigned clipmask = header->v[0]->clipmask;
+   if ((clipmask & 0xffffffff) == 0)
+      stage->next->point(stage->next, header);
+   else if ((clipmask & 0xfffffff0) == 0) {
+      while (clipmask) {
+         const unsigned plane_idx = ffs(clipmask)-1;
+         clipmask &= ~(1 << plane_idx);  /* turn off this plane's bit */
+         /* TODO: this should really do proper guardband clipping,
+          * currently just throw out infs/nans.
+          */
+         if (util_is_inf_or_nan(header->v[0]->clip[0]) ||
+             util_is_inf_or_nan(header->v[0]->clip[1]))
+            return;
+      }
+      stage->next->point(stage->next, header);
+   }
 }
 
 
@@ -636,7 +650,7 @@ static void
 clip_first_point( struct draw_stage *stage,
                   struct prim_header *header )
 {
-   stage->point = stage->draw->clip_points_xy ? clip_point : clip_point_no_xy;
+   stage->point = stage->draw->guard_band_points_xy ? clip_point_guard_xy : clip_point;
    stage->point(stage, header);
 }
 
@@ -662,7 +676,7 @@ clip_line( struct draw_stage *stage,
 
 static void
 clip_tri( struct draw_stage *stage,
-	  struct prim_header *header )
+          struct prim_header *header )
 {
    unsigned clipmask = (header->v[0]->clipmask | 
                         header->v[1]->clipmask | 
