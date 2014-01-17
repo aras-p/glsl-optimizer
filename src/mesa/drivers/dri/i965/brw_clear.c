@@ -121,7 +121,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
     * a previous clear had happened at a different clear value and resolve it
     * first.
     */
-   if (ctx->Scissor.EnableFlags && !noop_scissor(ctx, fb)) {
+   if ((ctx->Scissor.EnableFlags & 1) && !noop_scissor(ctx, fb)) {
       perf_debug("Failed to fast clear depth due to scissor being enabled.  "
                  "Possible 5%% performance win if avoided.\n");
       return false;
