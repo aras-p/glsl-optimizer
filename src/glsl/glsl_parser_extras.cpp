@@ -291,6 +291,10 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
       }
    }
 
+   if (this->es_shader) {
+      this->ARB_texture_rectangle_enable = false;
+   }
+
    this->language_version = version;
 
    bool supported = false;
