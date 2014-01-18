@@ -387,6 +387,23 @@ vec4_generator::generate_tex(vec4_instruction *inst,
             brw_MOV(p, get_element_ud(header, 2),
                     brw_imm_ud(inst->texture_offset));
          }
+
+         if (inst->sampler >= 16) {
+            /* The "Sampler Index" field can only store values between 0 and 15.
+             * However, we can add an offset to the "Sampler State Pointer"
+             * field, effectively selecting a different set of 16 samplers.
+             *
+             * The "Sampler State Pointer" needs to be aligned to a 32-byte
+             * offset, and each sampler state is only 16-bytes, so we can't
+             * exclusively use the offset - we have to use both.
+             */
+            assert(brw->is_haswell); /* field only exists on Haswell */
+            brw_ADD(p,
+                    get_element_ud(header, 3),
+                    get_element_ud(brw_vec8_grf(0, 0), 3),
+                    brw_imm_ud(16 * (inst->sampler / 16) *
+                               sizeof(gen7_sampler_state)));
+         }
          brw_pop_insn_state(p);
       }
    }
@@ -415,7 +432,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
 	      inst->base_mrf,
 	      src,
               surface_index,
-	      inst->sampler,
+	      inst->sampler % 16,
 	      msg_type,
 	      1, /* response length */
 	      inst->mlen,

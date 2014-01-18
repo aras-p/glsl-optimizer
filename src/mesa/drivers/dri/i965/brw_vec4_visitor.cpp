@@ -2370,9 +2370,15 @@ vec4_visitor::visit(ir_texture *ir)
    if (ir->op == ir_tg4)
       inst->texture_offset |= gather_channel(ir, sampler) << 16;
 
-   /* Texel offsets go in the message header; Gen4 also requires headers. */
+   /* The message header is necessary for:
+    * - Gen4 (always)
+    * - Texel offsets
+    * - Gather channel selection
+    * - Sampler indices too large to fit in a 4-bit value.
+    */
    inst->header_present =
-      brw->gen < 5 || inst->texture_offset != 0 || ir->op == ir_tg4;
+      brw->gen < 5 || inst->texture_offset != 0 || ir->op == ir_tg4 ||
+      sampler >= 16;
    inst->base_mrf = 2;
    inst->mlen = inst->header_present + 1; /* always at least one */
    inst->sampler = sampler;
