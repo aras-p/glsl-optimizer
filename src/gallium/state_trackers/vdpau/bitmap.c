@@ -80,6 +80,12 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
    res_tmpl.usage = frequently_accessed ? PIPE_USAGE_DYNAMIC : PIPE_USAGE_STATIC;
 
    pipe_mutex_lock(dev->mutex);
+
+   if (!CheckSurfaceParams(pipe->screen, &res_tmpl)) {
+      ret = VDP_STATUS_RESOURCES;
+      goto err_unlock;
+   }
+
    res = pipe->screen->resource_create(pipe->screen, &res_tmpl);
    if (!res) {
       ret = VDP_STATUS_RESOURCES;

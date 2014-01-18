@@ -83,6 +83,10 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    res_tmpl.usage = PIPE_USAGE_STATIC;
 
    pipe_mutex_lock(dev->mutex);
+
+   if (!CheckSurfaceParams(pipe->screen, &res_tmpl))
+      goto err_unlock;
+
    res = pipe->screen->resource_create(pipe->screen, &res_tmpl);
    if (!res)
       goto err_unlock;
@@ -318,6 +322,9 @@ vlVdpOutputSurfacePutBitsIndexed(VdpOutputSurface surface,
 
    pipe_mutex_lock(vlsurface->device->mutex);
    vlVdpResolveDelayedRendering(vlsurface->device, NULL, NULL);
+
+   if (!CheckSurfaceParams(context->screen, &res_tmpl))
+      goto error_resource;
 
    res = context->screen->resource_create(context->screen, &res_tmpl);
    if (!res)

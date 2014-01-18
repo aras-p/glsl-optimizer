@@ -332,6 +332,14 @@ RectToPipeBox(const VdpRect *rect, struct pipe_resource *res)
    return box;
 }
 
+static inline bool
+CheckSurfaceParams(struct pipe_screen *screen,
+                   const struct pipe_resource *templ)
+{
+   return screen->is_format_supported(
+         screen, templ->format, templ->target, templ->nr_samples, templ->bind);
+}
+
 typedef struct
 {
    struct vl_screen *vscreen;
