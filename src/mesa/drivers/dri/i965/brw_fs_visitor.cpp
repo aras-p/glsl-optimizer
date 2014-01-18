@@ -1250,13 +1250,16 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    fs_reg payload = fs_reg(this, glsl_type::float_type);
    fs_reg next = payload;
 
-   if (ir->op == ir_tg4 || (ir->offset && ir->op != ir_txf)) {
+   if (ir->op == ir_tg4 || (ir->offset && ir->op != ir_txf) || sampler >= 16) {
       /* For general texture offsets (no txf workaround), we need a header to
        * put them in.  Note that for SIMD16 we're making space for two actual
        * hardware registers here, so the emit will have to fix up for this.
        *
        * * ir4_tg4 needs to place its channel select in the header,
        * for interaction with ARB_texture_swizzle
+       *
+       * The sampler index is only 4-bits, so for larger sampler numbers we
+       * need to offset the Sampler State Pointer in the header.
        */
       header_present = true;
       next.reg_offset++;
