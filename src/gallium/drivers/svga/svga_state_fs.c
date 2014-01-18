@@ -293,7 +293,6 @@ make_fs_key(const struct svga_context *svga,
 }
 
 
-
 static enum pipe_error
 emit_hw_fs(struct svga_context *svga, unsigned dirty)
 {
