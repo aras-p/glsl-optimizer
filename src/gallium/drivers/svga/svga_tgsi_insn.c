@@ -729,45 +729,6 @@ alias_src_dst(struct src_register src,
 
 
 /**
- * Translate/emit a LRP (linear interpolation) instruction.
- */
-static boolean
-submit_lrp(struct svga_shader_emitter *emit,
-           SVGA3dShaderDestToken dst,
-           struct src_register src0,
-           struct src_register src1,
-           struct src_register src2)
-{
-   SVGA3dShaderDestToken tmp;
-   boolean need_dst_tmp = FALSE;
-
-   /* The dst reg must be a temporary, and not be the same as src0 or src2 */
-   if (SVGA3dShaderGetRegType(dst.value) != SVGA3DREG_TEMP ||
-       alias_src_dst(src0, dst) ||
-       alias_src_dst(src2, dst))
-      need_dst_tmp = TRUE;
-
-   if (need_dst_tmp) {
-      tmp = get_temp( emit );
-      tmp.mask = dst.mask;
-   }
-   else {
-      tmp = dst;
-   }
-
-   if (!submit_op3(emit, inst_token( SVGA3DOP_LRP ), tmp, src0, src1, src2))
-      return FALSE;
-
-   if (need_dst_tmp) {
-      if (!submit_op1(emit, inst_token( SVGA3DOP_MOV ), dst, src( tmp )))
-         return FALSE;
-   }
-
-   return TRUE;
-}
-
-
-/**
  * Helper for emitting SVGA immediate values using the SVGA3DOP_DEF[I]
  * instructions.
  */
@@ -1092,20 +1053,20 @@ emit_if(struct svga_shader_emitter *emit,
 
 
 static boolean
+emit_else(struct svga_shader_emitter *emit,
+          const struct tgsi_full_instruction *insn)
+{
+   return emit_instruction(emit, inst_token(SVGA3DOP_ELSE));
+}
+
+
+static boolean
 emit_endif(struct svga_shader_emitter *emit,
            const struct tgsi_full_instruction *insn)
 {
    emit->dynamic_branching_level--;
 
    return emit_instruction(emit, inst_token(SVGA3DOP_ENDIF));
-}
-
-
-static boolean
-emit_else(struct svga_shader_emitter *emit,
-          const struct tgsi_full_instruction *insn)
-{
-   return emit_instruction(emit, inst_token(SVGA3DOP_ELSE));
 }
 
 
@@ -2327,6 +2288,45 @@ emit_xpd(struct svga_shader_emitter *emit,
                       inst_token( SVGA3DOP_MOV ),
                       writemask(dst, TGSI_WRITEMASK_W),
                       one))
+         return FALSE;
+   }
+
+   return TRUE;
+}
+
+
+/**
+ * Emit a LRP (linear interpolation) instruction.
+ */
+static boolean
+submit_lrp(struct svga_shader_emitter *emit,
+           SVGA3dShaderDestToken dst,
+           struct src_register src0,
+           struct src_register src1,
+           struct src_register src2)
+{
+   SVGA3dShaderDestToken tmp;
+   boolean need_dst_tmp = FALSE;
+
+   /* The dst reg must be a temporary, and not be the same as src0 or src2 */
+   if (SVGA3dShaderGetRegType(dst.value) != SVGA3DREG_TEMP ||
+       alias_src_dst(src0, dst) ||
+       alias_src_dst(src2, dst))
+      need_dst_tmp = TRUE;
+
+   if (need_dst_tmp) {
+      tmp = get_temp( emit );
+      tmp.mask = dst.mask;
+   }
+   else {
+      tmp = dst;
+   }
+
+   if (!submit_op3(emit, inst_token( SVGA3DOP_LRP ), tmp, src0, src1, src2))
+      return FALSE;
+
+   if (need_dst_tmp) {
+      if (!submit_op1(emit, inst_token( SVGA3DOP_MOV ), dst, src( tmp )))
          return FALSE;
    }
 
