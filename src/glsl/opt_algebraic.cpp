@@ -218,6 +218,11 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       this->mem_ctx = ralloc_parent(ir);
 
    switch (ir->operation) {
+   case ir_unop_bit_not:
+      if (op_expr[0] && op_expr[0]->operation == ir_unop_bit_not)
+         return op_expr[0]->operands[0];
+      break;
+
    case ir_unop_abs:
       if (op_expr[0] == NULL)
 	 break;
