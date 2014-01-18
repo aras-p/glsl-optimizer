@@ -266,7 +266,7 @@ done:
 static enum pipe_error
 emit_fs_consts(struct svga_context *svga, unsigned dirty)
 {
-   const struct svga_shader_result *result = svga->state.hw_draw.fs;
+   const struct svga_shader_variant *variant = svga->state.hw_draw.fs;
    enum pipe_error ret = PIPE_OK;
 
    ret = emit_consts( svga, PIPE_SHADER_FRAGMENT );
@@ -274,14 +274,14 @@ emit_fs_consts(struct svga_context *svga, unsigned dirty)
       return ret;
 
    /* The internally generated fragment shader for xor blending
-    * doesn't have a 'result' struct.  It should be fixed to avoid
+    * doesn't have a 'variant' struct.  It should be fixed to avoid
     * this special case, but work around it with a NULL check:
     */
-   if (result) {
-      const struct svga_fs_compile_key *key = &result->key.fkey;
+   if (variant) {
+      const struct svga_fs_compile_key *key = &variant->key.fkey;
       if (key->num_unnormalized_coords) {
          const unsigned offset =
-            result->shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
+            variant->shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
          unsigned i;
 
          for (i = 0; i < key->num_textures; i++) {
@@ -314,7 +314,7 @@ struct svga_tracked_state svga_hw_fs_constants =
 {
    "hw fs params",
    (SVGA_NEW_FS_CONST_BUFFER |
-    SVGA_NEW_FS_RESULT |
+    SVGA_NEW_FS_VARIANT |
     SVGA_NEW_TEXTURE_BINDING),
    emit_fs_consts
 };
@@ -324,17 +324,17 @@ struct svga_tracked_state svga_hw_fs_constants =
 static enum pipe_error
 emit_vs_consts(struct svga_context *svga, unsigned dirty)
 {
-   const struct svga_shader_result *result = svga->state.hw_draw.vs;
+   const struct svga_shader_variant *variant = svga->state.hw_draw.vs;
    const struct svga_vs_compile_key *key;
    enum pipe_error ret = PIPE_OK;
    unsigned offset;
 
-   /* SVGA_NEW_VS_RESULT
+   /* SVGA_NEW_VS_VARIANT
     */
-   if (result == NULL)
+   if (variant == NULL)
       return PIPE_OK;
 
-   key = &result->key.vkey;
+   key = &variant->key.vkey;
 
    /* SVGA_NEW_VS_CONST_BUFFER
     */
@@ -343,7 +343,7 @@ emit_vs_consts(struct svga_context *svga, unsigned dirty)
       return ret;
 
    /* offset = number of constants in the VS const buffer */
-   offset = result->shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
+   offset = variant->shader->info.file_max[TGSI_FILE_CONSTANT] + 1;
 
    /* SVGA_NEW_VS_PRESCALE
     * Put the viewport pre-scale/translate values into the const buffer.
@@ -369,6 +369,6 @@ struct svga_tracked_state svga_hw_vs_constants =
    "hw vs params",
    (SVGA_NEW_PRESCALE |
     SVGA_NEW_VS_CONST_BUFFER |
-    SVGA_NEW_VS_RESULT),
+    SVGA_NEW_VS_VARIANT),
    emit_vs_consts
 };

@@ -264,11 +264,11 @@ svga_remap_generic_index(int8_t remap_table[MAX_GENERIC_VARYING],
  * can be dynamically grown.  Once we've finished and know how large
  * it is, it will be copied to a hardware buffer for upload.
  */
-static struct svga_shader_result *
+static struct svga_shader_variant *
 svga_tgsi_translate(const struct svga_shader *shader,
                     const struct svga_compile_key *key, unsigned unit)
 {
-   struct svga_shader_result *result = NULL;
+   struct svga_shader_variant *variant = NULL;
    struct svga_shader_emitter emit;
 
    memset(&emit, 0, sizeof(emit));
@@ -317,15 +317,15 @@ svga_tgsi_translate(const struct svga_shader *shader,
       goto fail;
    }
 
-   result = CALLOC_STRUCT(svga_shader_result);
-   if (result == NULL)
+   variant = CALLOC_STRUCT(svga_shader_variant);
+   if (variant == NULL)
       goto fail;
 
-   result->shader = shader;
-   result->tokens = (const unsigned *) emit.buf;
-   result->nr_tokens = (emit.ptr - emit.buf) / sizeof(unsigned);
-   memcpy(&result->key, key, sizeof(*key));
-   result->id = UTIL_BITMASK_INVALID_INDEX;
+   variant->shader = shader;
+   variant->tokens = (const unsigned *) emit.buf;
+   variant->nr_tokens = (emit.ptr - emit.buf) / sizeof(unsigned);
+   memcpy(&variant->key, key, sizeof(*key));
+   variant->id = UTIL_BITMASK_INVALID_INDEX;
 
    if (SVGA_DEBUG & DEBUG_TGSI) {
       debug_printf("#####################################\n");
@@ -333,21 +333,21 @@ svga_tgsi_translate(const struct svga_shader *shader,
       tgsi_dump(shader->tokens, 0);
       if (SVGA_DEBUG & DEBUG_TGSI) {
          debug_printf("Shader %u compiled below\n", shader->id);
-         svga_shader_dump(result->tokens, result->nr_tokens, FALSE);
+         svga_shader_dump(variant->tokens, variant->nr_tokens, FALSE);
       }
       debug_printf("#####################################\n");
    }
 
-   return result;
+   return variant;
 
  fail:
-   FREE(result);
+   FREE(variant);
    FREE(emit.buf);
    return NULL;
 }
 
 
-struct svga_shader_result *
+struct svga_shader_variant *
 svga_translate_fragment_program(const struct svga_fragment_shader *fs,
                                 const struct svga_fs_compile_key *fkey)
 {
@@ -364,7 +364,7 @@ svga_translate_fragment_program(const struct svga_fragment_shader *fs,
 }
 
 
-struct svga_shader_result *
+struct svga_shader_variant *
 svga_translate_vertex_program(const struct svga_vertex_shader *vs,
                               const struct svga_vs_compile_key *vkey)
 {
@@ -384,8 +384,8 @@ svga_translate_vertex_program(const struct svga_vertex_shader *vs,
 
 
 void
-svga_destroy_shader_result(struct svga_shader_result *result)
+svga_destroy_shader_variant(struct svga_shader_variant *variant)
 {
-   FREE((unsigned *) result->tokens);
-   FREE(result);
+   FREE((unsigned *) variant->tokens);
+   FREE(variant);
 }

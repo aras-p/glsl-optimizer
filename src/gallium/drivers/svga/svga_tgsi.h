@@ -74,6 +74,9 @@ struct svga_fs_compile_key
    } tex[PIPE_MAX_SAMPLERS];
 };
 
+/**
+ * Key/index for identifying shader variants.
+ */
 struct svga_compile_key {
    struct svga_vs_compile_key vkey;
    struct svga_fs_compile_key fkey;
@@ -84,14 +87,13 @@ struct svga_compile_key {
 /**
  * A single TGSI shader may be compiled into different variants of
  * SVGA3D shaders depending on the compile key.  Each user shader
- * will have a linked list of these results.
+ * will have a linked list of these variants.
  */
-struct svga_shader_result
+struct svga_shader_variant
 {
    const struct svga_shader *shader;
 
-   /* Parameters used to generate this compilation result:
-    */
+   /** Parameters used to generate this variant */
    struct svga_compile_key key;
 
    /* Compiled shader tokens:
@@ -104,9 +106,8 @@ struct svga_shader_result
     */
    unsigned id;
    
-   /* Next compilation result:
-    */
-   struct svga_shader_result *next;
+   /** Next variant */
+   struct svga_shader_variant *next;
 };
 
 
@@ -144,16 +145,17 @@ static INLINE unsigned svga_fs_key_size( const struct svga_fs_compile_key *key )
    return (const char *)&key->tex[key->num_textures] - (const char *)key;
 }
 
-struct svga_shader_result *
+struct svga_shader_variant *
 svga_translate_fragment_program( const struct svga_fragment_shader *fs,
                                  const struct svga_fs_compile_key *fkey );
 
-struct svga_shader_result *
+struct svga_shader_variant *
 svga_translate_vertex_program( const struct svga_vertex_shader *fs,
                                const struct svga_vs_compile_key *vkey );
 
 
-void svga_destroy_shader_result( struct svga_shader_result *result );
+void
+svga_destroy_shader_variant(struct svga_shader_variant *variant);
 
 unsigned
 svga_get_generic_inputs_mask(const struct tgsi_shader_info *info);

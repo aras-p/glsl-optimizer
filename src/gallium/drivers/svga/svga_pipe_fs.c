@@ -88,33 +88,33 @@ svga_delete_fs_state(struct pipe_context *pipe, void *shader)
 {
    struct svga_context *svga = svga_context(pipe);
    struct svga_fragment_shader *fs = (struct svga_fragment_shader *) shader;
-   struct svga_shader_result *result, *tmp;
+   struct svga_shader_variant *variant, *tmp;
    enum pipe_error ret;
 
    svga_hwtnl_flush_retry(svga);
 
    draw_delete_fragment_shader(svga->swtnl.draw, fs->draw_shader);
 
-   for (result = fs->base.results; result; result = tmp) {
-      tmp = result->next;
+   for (variant = fs->base.variants; variant; variant = tmp) {
+      tmp = variant->next;
 
-      ret = SVGA3D_DestroyShader(svga->swc, result->id, SVGA3D_SHADERTYPE_PS);
+      ret = SVGA3D_DestroyShader(svga->swc, variant->id, SVGA3D_SHADERTYPE_PS);
       if (ret != PIPE_OK) {
          svga_context_flush(svga, NULL);
-         ret = SVGA3D_DestroyShader(svga->swc, result->id,
+         ret = SVGA3D_DestroyShader(svga->swc, variant->id,
                                     SVGA3D_SHADERTYPE_PS);
          assert(ret == PIPE_OK);
       }
 
-      util_bitmask_clear(svga->fs_bm, result->id);
+      util_bitmask_clear(svga->fs_bm, variant->id);
 
-      svga_destroy_shader_result(result);
+      svga_destroy_shader_variant(variant);
 
       /*
-       * Remove stale references to this result to ensure a new result on the
+       * Remove stale references to this variant to ensure a new variant on the
        * same address will be detected as a change.
        */
-      if (result == svga->state.hw_draw.fs)
+      if (variant == svga->state.hw_draw.fs)
          svga->state.hw_draw.fs = NULL;
    }
 

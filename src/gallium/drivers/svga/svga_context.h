@@ -50,7 +50,7 @@
 
 struct draw_vertex_shader;
 struct draw_fragment_shader;
-struct svga_shader_result;
+struct svga_shader_variant;
 struct SVGACmdMemory;
 struct util_bitmask;
 
@@ -61,10 +61,12 @@ struct svga_shader
 
    struct tgsi_shader_info info;
 
-   struct svga_shader_result *results;
+   /** Head of linked list of variants */
+   struct svga_shader_variant *variants;
 
    unsigned id;  /**< for debugging only */
 };
+
 
 struct svga_fragment_shader
 {
@@ -77,6 +79,7 @@ struct svga_fragment_shader
    /** Table mapping original TGSI generic indexes to low integers */
    int8_t generic_remap_table[MAX_GENERIC_VARYING];
 };
+
 
 struct svga_vertex_shader
 {
@@ -282,8 +285,8 @@ struct svga_hw_draw_state
    unsigned ts[SVGA3D_PIXEL_SAMPLERREG_MAX][SVGA3D_TS_MAX];
    float cb[PIPE_SHADER_TYPES][SVGA3D_CONSTREG_MAX][4];
 
-   struct svga_shader_result *fs;
-   struct svga_shader_result *vs;
+   struct svga_shader_variant *fs;
+   struct svga_shader_variant *vs;
    struct svga_hw_view_state views[PIPE_MAX_SAMPLERS];
 
    unsigned num_views;
@@ -405,8 +408,8 @@ struct svga_context
 #define SVGA_NEW_NEED_PIPELINE       0x100000
 #define SVGA_NEW_NEED_SWVFETCH       0x200000
 #define SVGA_NEW_NEED_SWTNL          0x400000
-#define SVGA_NEW_FS_RESULT           0x800000
-#define SVGA_NEW_VS_RESULT           0x1000000
+#define SVGA_NEW_FS_VARIANT          0x800000
+#define SVGA_NEW_VS_VARIANT          0x1000000
 #define SVGA_NEW_TEXTURE_FLAGS       0x4000000
 #define SVGA_NEW_STENCIL_REF         0x8000000
 

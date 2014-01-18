@@ -40,8 +40,9 @@
 
 
 
-static INLINE int compare_fs_keys( const struct svga_fs_compile_key *a,
-                                   const struct svga_fs_compile_key *b )
+static INLINE int
+compare_fs_keys(const struct svga_fs_compile_key *a,
+                const struct svga_fs_compile_key *b)
 {
    unsigned keysize_a = svga_fs_key_size( a );
    unsigned keysize_b = svga_fs_key_size( b );
@@ -53,16 +54,18 @@ static INLINE int compare_fs_keys( const struct svga_fs_compile_key *a,
 }
 
 
-static struct svga_shader_result *search_fs_key( struct svga_fragment_shader *fs,
-                                                 const struct svga_fs_compile_key *key )
+/** Search for a fragment shader variant */
+static struct svga_shader_variant *
+search_fs_key(const struct svga_fragment_shader *fs,
+              const struct svga_fs_compile_key *key)
 {
-   struct svga_shader_result *result = fs->base.results;
+   struct svga_shader_variant *variant = fs->base.variants;
 
    assert(key);
 
-   for ( ; result; result = result->next) {
-      if (compare_fs_keys( key, &result->key.fkey ) == 0)
-         return result;
+   for ( ; variant; variant = variant->next) {
+      if (compare_fs_keys( key, &variant->key.fkey ) == 0)
+         return variant;
    }
    
    return NULL;
@@ -101,16 +104,20 @@ get_dummy_fragment_shader(void)
 }
 
 
-static enum pipe_error compile_fs( struct svga_context *svga,
-                                   struct svga_fragment_shader *fs,
-                                   const struct svga_fs_compile_key *key,
-                                   struct svga_shader_result **out_result )
+/**
+ * Translate TGSI shader into an svga shader variant.
+ */
+static enum pipe_error
+compile_fs(struct svga_context *svga,
+           struct svga_fragment_shader *fs,
+           const struct svga_fs_compile_key *key,
+           struct svga_shader_variant **out_variant)
 {
-   struct svga_shader_result *result;
+   struct svga_shader_variant *variant;
    enum pipe_error ret = PIPE_ERROR;
 
-   result = svga_translate_fragment_program( fs, key );
-   if (result == NULL) {
+   variant = svga_translate_fragment_program( fs, key );
+   if (variant == NULL) {
       /* some problem during translation, try the dummy shader */
       const struct tgsi_token *dummy = get_dummy_fragment_shader();
       if (!dummy) {
@@ -120,37 +127,37 @@ static enum pipe_error compile_fs( struct svga_context *svga,
       debug_printf("Failed to compile fragment shader, using dummy shader instead.\n");
       FREE((void *) fs->base.tokens);
       fs->base.tokens = dummy;
-      result = svga_translate_fragment_program(fs, key);
-      if (result == NULL) {
+      variant = svga_translate_fragment_program(fs, key);
+      if (variant == NULL) {
          ret = PIPE_ERROR;
          goto fail;
       }
    }
 
-   result->id = util_bitmask_add(svga->fs_bm);
-   if(result->id == UTIL_BITMASK_INVALID_INDEX) {
+   variant->id = util_bitmask_add(svga->fs_bm);
+   if(variant->id == UTIL_BITMASK_INVALID_INDEX) {
       ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto fail;
    }
 
    ret = SVGA3D_DefineShader(svga->swc, 
-                             result->id,
+                             variant->id,
                              SVGA3D_SHADERTYPE_PS,
-                             result->tokens, 
-                             result->nr_tokens * sizeof result->tokens[0]);
+                             variant->tokens, 
+                             variant->nr_tokens * sizeof variant->tokens[0]);
    if (ret != PIPE_OK)
       goto fail;
 
-   *out_result = result;
-   result->next = fs->base.results;
-   fs->base.results = result;
+   *out_variant = variant;
+   variant->next = fs->base.variants;
+   fs->base.variants = variant;
    return PIPE_OK;
 
 fail:
-   if (result) {
-      if (result->id != UTIL_BITMASK_INVALID_INDEX)
-         util_bitmask_clear( svga->fs_bm, result->id );
-      svga_destroy_shader_result( result );
+   if (variant) {
+      if (variant->id != UTIL_BITMASK_INVALID_INDEX)
+         util_bitmask_clear( svga->fs_bm, variant->id );
+      svga_destroy_shader_variant( variant );
    }
    return ret;
 }
@@ -290,7 +297,7 @@ make_fs_key(const struct svga_context *svga,
 static enum pipe_error
 emit_hw_fs(struct svga_context *svga, unsigned dirty)
 {
-   struct svga_shader_result *result = NULL;
+   struct svga_shader_variant *variant = NULL;
    unsigned id = SVGA3D_INVALID_ID;
    enum pipe_error ret = PIPE_OK;
 
@@ -308,27 +315,27 @@ emit_hw_fs(struct svga_context *svga, unsigned dirty)
    if (ret != PIPE_OK)
       return ret;
 
-   result = search_fs_key( fs, &key );
-   if (!result) {
-      ret = compile_fs( svga, fs, &key, &result );
+   variant = search_fs_key( fs, &key );
+   if (!variant) {
+      ret = compile_fs( svga, fs, &key, &variant );
       if (ret != PIPE_OK)
          return ret;
    }
 
-   assert (result);
-   id = result->id;
+   assert (variant);
+   id = variant->id;
 
    assert(id != SVGA3D_INVALID_ID);
 
-   if (result != svga->state.hw_draw.fs) {
+   if (variant != svga->state.hw_draw.fs) {
       ret = SVGA3D_SetShader(svga->swc,
                              SVGA3D_SHADERTYPE_PS,
                              id );
       if (ret != PIPE_OK)
          return ret;
 
-      svga->dirty |= SVGA_NEW_FS_RESULT;
-      svga->state.hw_draw.fs = result;      
+      svga->dirty |= SVGA_NEW_FS_VARIANT;
+      svga->state.hw_draw.fs = variant;      
    }
 
    return PIPE_OK;
