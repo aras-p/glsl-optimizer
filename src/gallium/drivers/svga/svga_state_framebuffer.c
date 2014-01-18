@@ -66,22 +66,22 @@ emit_framebuffer( struct svga_context *svga,
     * We need to reemit non-null surface bindings, even when they are not
     * dirty, to ensure that the resources are paged in.
     */
-   
+
    for (i = 0; i < svgascreen->max_color_buffers; i++) {
       if (curr->cbufs[i] != hw->cbufs[i] ||
           (reemit && hw->cbufs[i])) {
          if (svga->curr.nr_fbs++ > MAX_RT_PER_BATCH)
             return PIPE_ERROR_OUT_OF_MEMORY;
 
-         ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_COLOR0 + i, curr->cbufs[i]);
+         ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_COLOR0 + i,
+                                      curr->cbufs[i]);
          if (ret != PIPE_OK)
             return ret;
-         
+
          pipe_surface_reference(&hw->cbufs[i], curr->cbufs[i]);
       }
    }
 
-   
    if (curr->zsbuf != hw->zsbuf ||
        (reemit && hw->zsbuf)) {
       ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_DEPTH, curr->zsbuf);
@@ -90,7 +90,8 @@ emit_framebuffer( struct svga_context *svga,
 
       if (curr->zsbuf &&
           curr->zsbuf->format == PIPE_FORMAT_S8_UINT_Z24_UNORM) {
-         ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_STENCIL, curr->zsbuf);
+         ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_STENCIL,
+                                      curr->zsbuf);
          if (ret != PIPE_OK)
             return ret;
       }
@@ -99,7 +100,7 @@ emit_framebuffer( struct svga_context *svga,
          if (ret != PIPE_OK)
             return ret;
       }
-      
+
       pipe_surface_reference(&hw->zsbuf, curr->zsbuf);
    }
 
@@ -129,7 +130,8 @@ svga_reemit_framebuffer_bindings(struct svga_context *svga)
 
    for (i = 0; i < svgascreen->max_color_buffers; i++) {
       if (hw->cbufs[i]) {
-         ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_COLOR0 + i, hw->cbufs[i]);
+         ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_COLOR0 + i,
+                                      hw->cbufs[i]);
          if (ret != PIPE_OK) {
             return ret;
          }
@@ -163,7 +165,7 @@ svga_reemit_framebuffer_bindings(struct svga_context *svga)
 }
 
 
-struct svga_tracked_state svga_hw_framebuffer = 
+struct svga_tracked_state svga_hw_framebuffer =
 {
    "hw framebuffer state",
    SVGA_NEW_FRAME_BUFFER,
@@ -173,7 +175,7 @@ struct svga_tracked_state svga_hw_framebuffer =
 
 
 
-/*********************************************************************** 
+/***********************************************************************
  */
 
 static enum pipe_error
@@ -198,8 +200,8 @@ emit_viewport( struct svga_context *svga,
 
    float fx =        viewport->scale[0] * -1.0f + viewport->translate[0];
    float fy = flip * viewport->scale[1] * -1.0f + viewport->translate[1];
-   float fw =        viewport->scale[0] * 2.0f; 
-   float fh = flip * viewport->scale[1] * 2.0f; 
+   float fw =        viewport->scale[0] * 2.0f;
+   float fh = flip * viewport->scale[1] * 2.0f;
 
    memset( &prescale, 0, sizeof(prescale) );
 
@@ -225,13 +227,11 @@ emit_viewport( struct svga_context *svga,
    prescale.translate[3] = 0;
    prescale.enabled = TRUE;
 
-
-
    if (fw < 0) {
       prescale.scale[0] *= -1.0f;
       prescale.translate[0] += -fw;
       fw = -fw;
-      fx =        viewport->scale[0] * 1.0f + viewport->translate[0];
+      fx = viewport->scale[0] * 1.0f + viewport->translate[0];
    }
 
    if (fh < 0.0) {
@@ -244,7 +244,7 @@ emit_viewport( struct svga_context *svga,
 
    if (fx < 0) {
       prescale.translate[0] += fx;
-      prescale.scale[0] *= fw / (fw + fx); 
+      prescale.scale[0] *= fw / (fw + fx);
       fw += fx;
       fx = 0.0f;
    }
@@ -256,17 +256,16 @@ emit_viewport( struct svga_context *svga,
       else {
          prescale.translate[1] += fy;
       }
-      prescale.scale[1] *= fh / (fh + fy); 
+      prescale.scale[1] *= fh / (fh + fy);
       fh += fy;
       fy = 0.0f;
    }
 
    if (fx + fw > fb_width) {
-      prescale.scale[0] *= fw / (fb_width - fx); 
+      prescale.scale[0] *= fw / (fb_width - fx);
       prescale.translate[0] -= fx * (fw / (fb_width - fx));
       prescale.translate[0] += fx;
       fw = fb_width - fx;
-      
    }
 
    if (fy + fh > fb_height) {
@@ -288,7 +287,6 @@ emit_viewport( struct svga_context *svga,
       degenerate = TRUE;
       goto out;
    }
-
 
    /* D3D viewport is integer space.  Convert fx,fy,etc. to
     * integers.
@@ -314,7 +312,6 @@ emit_viewport( struct svga_context *svga,
             rect.y,
             rect.w,
             rect.h);
-
 
    /* Finally, to get GL rasterization rules, need to tweak the
     * screen-space coordinates slightly relative to D3D which is
@@ -345,7 +342,6 @@ emit_viewport( struct svga_context *svga,
       prescale.scale[2]     = 0.5; /* D3D clip space */
    }
 
-
    range_min = viewport->scale[2] * -1.0f + viewport->translate[2];
    range_max = viewport->scale[2] *  1.0f + viewport->translate[2];
 
@@ -355,10 +351,10 @@ emit_viewport( struct svga_context *svga,
     */
    if (range_min > range_max) {
       float range_tmp;
-      range_tmp = range_min; 
-      range_min = range_max; 
+      range_tmp = range_min;
+      range_min = range_max;
       range_max = range_tmp;
-      prescale.scale[2]     = -prescale.scale[2];
+      prescale.scale[2] = -prescale.scale[2];
    }
 
    if (prescale.enabled) {
@@ -389,7 +385,7 @@ emit_viewport( struct svga_context *svga,
       /* Adjust prescale to take into account the fact that it is
        * going to be applied prior to the perspective divide and
        * viewport transformation.
-       * 
+       *
        * Vwin = H(Vc/Vc.w) + J
        *
        * We want to tweak Vwin with scale and translation from above,
@@ -439,8 +435,7 @@ out:
    }
 
    if (svga->state.hw_clear.depthrange.zmin != range_min ||
-       svga->state.hw_clear.depthrange.zmax != range_max) 
-   {
+       svga->state.hw_clear.depthrange.zmax != range_max) {
       ret = SVGA3D_SetZRange(svga->swc, range_min, range_max );
       if(ret != PIPE_OK)
          return ret;
@@ -458,7 +453,7 @@ out:
 }
 
 
-struct svga_tracked_state svga_hw_viewport = 
+struct svga_tracked_state svga_hw_viewport =
 {
    "hw viewport state",
    ( SVGA_NEW_FRAME_BUFFER |
@@ -483,12 +478,12 @@ emit_scissor_rect( struct svga_context *svga,
    rect.y = scissor->miny;
    rect.w = scissor->maxx - scissor->minx; /* + 1 ?? */
    rect.h = scissor->maxy - scissor->miny; /* + 1 ?? */
-   
+
    return SVGA3D_SetScissorRect(svga->swc, &rect);
 }
 
 
-struct svga_tracked_state svga_hw_scissor = 
+struct svga_tracked_state svga_hw_scissor =
 {
    "hw scissor state",
    SVGA_NEW_SCISSOR,
@@ -538,7 +533,7 @@ emit_clip_planes( struct svga_context *svga,
 }
 
 
-struct svga_tracked_state svga_hw_clip_planes = 
+struct svga_tracked_state svga_hw_clip_planes =
 {
    "hw viewport state",
    SVGA_NEW_CLIP,
