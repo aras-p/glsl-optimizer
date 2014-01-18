@@ -534,36 +534,32 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
     * we need to set it up explicitly and load the offset bitfield.
     * Otherwise, we can use an implied move from g0 to the first message reg.
     */
-   if (inst->texture_offset) {
-      struct brw_reg header_reg;
-
-      if (brw->gen >= 7) {
-         header_reg = src;
+   if (inst->header_present) {
+      if (brw->gen < 6 && !inst->texture_offset) {
+         /* Set up an implied move from g0 to the MRF. */
+         src = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
       } else {
-         assert(inst->base_mrf != -1);
-         header_reg = brw_message_reg(inst->base_mrf);
-      }
-      brw_push_insn_state(p);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      /* Explicitly set up the message header by copying g0 to the MRF. */
-      brw_MOV(p, header_reg, brw_vec8_grf(0, 0));
+         struct brw_reg header_reg;
 
-      /* Then set the offset bits in DWord 2. */
-      brw_MOV(p, get_element_ud(header_reg, 2),
-                 brw_imm_ud(inst->texture_offset));
-      brw_pop_insn_state(p);
-   } else if (inst->header_present) {
-      if (brw->gen >= 7) {
-         /* Explicitly set up the message header by copying g0 to the MRF. */
+         if (brw->gen >= 7) {
+            header_reg = src;
+         } else {
+            assert(inst->base_mrf != -1);
+            header_reg = brw_message_reg(inst->base_mrf);
+         }
+
          brw_push_insn_state(p);
          brw_set_mask_control(p, BRW_MASK_DISABLE);
          brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-         brw_MOV(p, src, brw_vec8_grf(0, 0));
+         /* Explicitly set up the message header by copying g0 to the MRF. */
+         brw_MOV(p, header_reg, brw_vec8_grf(0, 0));
+
+         if (inst->texture_offset) {
+            /* Set the offset bits in DWord 2. */
+            brw_MOV(p, get_element_ud(header_reg, 2),
+                       brw_imm_ud(inst->texture_offset));
+         }
          brw_pop_insn_state(p);
-      } else {
-         /* Set up an implied move from g0 to the MRF. */
-         src = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
       }
    }
 
