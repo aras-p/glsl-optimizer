@@ -550,8 +550,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       brw_MOV(p, header_reg, brw_vec8_grf(0, 0));
 
       /* Then set the offset bits in DWord 2. */
-      brw_MOV(p, retype(brw_vec1_reg(header_reg.file,
-                                     header_reg.nr, 2), BRW_REGISTER_TYPE_UD),
+      brw_MOV(p, get_element_ud(header_reg, 2),
                  brw_imm_ud(inst->texture_offset));
       brw_pop_insn_state(p);
    } else if (inst->header_present) {
