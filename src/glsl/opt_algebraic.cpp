@@ -547,6 +547,19 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 
       break;
 
+   case ir_triop_fma:
+      /* Operands are op0 * op1 + op2. */
+      if (is_vec_zero(op_const[0]) || is_vec_zero(op_const[1])) {
+         return ir->operands[2];
+      } else if (is_vec_zero(op_const[2])) {
+         return mul(ir->operands[0], ir->operands[1]);
+      } else if (is_vec_one(op_const[0])) {
+         return add(ir->operands[1], ir->operands[2]);
+      } else if (is_vec_one(op_const[1])) {
+         return add(ir->operands[0], ir->operands[2]);
+      }
+      break;
+
    case ir_triop_lrp:
       /* Operands are (x, y, a). */
       if (is_vec_zero(op_const[2])) {
