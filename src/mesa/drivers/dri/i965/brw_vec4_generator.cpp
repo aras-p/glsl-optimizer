@@ -367,23 +367,28 @@ vec4_generator::generate_tex(vec4_instruction *inst,
     * to set it up explicitly and load the offset bitfield.  Otherwise, we can
     * use an implied move from g0 to the first message register.
     */
-   if (inst->texture_offset) {
-      /* Explicitly set up the message header by copying g0 to the MRF. */
-      brw_push_insn_state(p);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_MOV(p, retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD),
-	         retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+   if (inst->header_present) {
+      if (brw->gen < 6 && !inst->texture_offset) {
+         /* Set up an implied move from g0 to the MRF. */
+         src = brw_vec8_grf(0, 0);
+      } else {
+         struct brw_reg header =
+            retype(brw_message_reg(inst->base_mrf), BRW_REGISTER_TYPE_UD);
 
-      /* Then set the offset bits in DWord 2. */
-      brw_set_access_mode(p, BRW_ALIGN_1);
-      brw_MOV(p,
-	      retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, inst->base_mrf, 2),
-		     BRW_REGISTER_TYPE_UD),
-	      brw_imm_ud(inst->texture_offset));
-      brw_pop_insn_state(p);
-   } else if (inst->header_present) {
-      /* Set up an implied move from g0 to the MRF. */
-      src = brw_vec8_grf(0, 0);
+         /* Explicitly set up the message header by copying g0 to the MRF. */
+         brw_push_insn_state(p);
+         brw_set_mask_control(p, BRW_MASK_DISABLE);
+         brw_MOV(p, header, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+
+         brw_set_access_mode(p, BRW_ALIGN_1);
+
+         if (inst->texture_offset) {
+            /* Set the texel offset bits in DWord 2. */
+            brw_MOV(p, get_element_ud(header, 2),
+                    brw_imm_ud(inst->texture_offset));
+         }
+         brw_pop_insn_state(p);
+      }
    }
 
    uint32_t return_format;
