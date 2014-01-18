@@ -398,9 +398,14 @@ CodeEmitterNV50::setSrcFileBits(const Instruction *i, int enc)
    case 0x0c: // rir
       break;
    case 0x0d: // gir
-      code[0] |= 0x01000000;
       assert(progType == Program::TYPE_GEOMETRY ||
              progType == Program::TYPE_COMPUTE);
+      code[0] |= 0x01000000;
+      if (progType == Program::TYPE_GEOMETRY && i->src(0).isIndirect(0)) {
+         int reg = i->src(0).getIndirect(0)->rep()->reg.data.id;
+         assert(reg < 3);
+         code[0] |= (reg + 1) << 26;
+      }
       break;
    case 0x08: // rcr
       code[0] |= (enc == NV50_OP_ENC_LONG_ALT) ? 0x01000000 : 0x00800000;

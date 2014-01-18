@@ -313,6 +313,7 @@ TargetNV50::insnCanLoad(const Instruction *i, int s,
    case 0x0d:
       if (ld->bb->getProgram()->getType() != Program::TYPE_GEOMETRY)
          return false;
+      break;
    default:
       return false;
    }
