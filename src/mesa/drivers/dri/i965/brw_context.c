@@ -906,6 +906,7 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
    if (driContextPriv) {
       struct gl_context *ctx = &brw->ctx;
       struct gl_framebuffer *fb, *readFb;
+      struct intel_renderbuffer *rb = NULL;
 
       if (driDrawPriv == NULL && driReadPriv == NULL) {
          fb = _mesa_get_incomplete_framebuffer();
@@ -913,6 +914,7 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       } else {
          fb = driDrawPriv->driverPrivate;
          readFb = driReadPriv->driverPrivate;
+         rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
          driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
          driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
       }
@@ -924,7 +926,12 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       intel_gles3_srgb_workaround(brw, fb);
       intel_gles3_srgb_workaround(brw, readFb);
 
-      intel_prepare_render(brw);
+      if (rb && !rb->mt) {
+         /* If we don't have buffers for the drawable yet, force a call to
+          * getbuffers here so we can have a default drawable size. */
+         intel_prepare_render(brw);
+      }
+
       _mesa_make_current(ctx, fb, readFb);
    } else {
       _mesa_make_current(NULL, NULL, NULL);
