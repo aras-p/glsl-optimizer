@@ -72,6 +72,11 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
       goto no_context;
    }
 
+   if (!pscreen->get_param(pscreen, PIPE_CAP_NPOT_TEXTURES)) {
+      ret = VDP_STATUS_NO_IMPLEMENTATION;
+      goto no_context;
+   }
+
    *device = vlAddDataHTAB(dev);
    if (*device == 0) {
       ret = VDP_STATUS_ERROR;
