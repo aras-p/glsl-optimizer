@@ -1242,7 +1242,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
 fs_inst *
 fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
                               fs_reg shadow_c, fs_reg lod, fs_reg lod2,
-                              fs_reg sample_index, fs_reg mcs)
+                              fs_reg sample_index, fs_reg mcs, int sampler)
 {
    int reg_width = dispatch_width / 8;
    bool header_present = false;
@@ -1665,7 +1665,7 @@ fs_visitor::visit(ir_texture *ir)
 
    if (brw->gen >= 7) {
       inst = emit_texture_gen7(ir, dst, coordinate, shadow_comparitor,
-                               lod, lod2, sample_index, mcs);
+                               lod, lod2, sample_index, mcs, sampler);
    } else if (brw->gen >= 5) {
       inst = emit_texture_gen5(ir, dst, coordinate, shadow_comparitor,
                                lod, lod2, sample_index);
