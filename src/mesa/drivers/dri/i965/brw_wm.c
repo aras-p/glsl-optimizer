@@ -153,6 +153,7 @@ bool do_wm_prog(struct brw_context *brw,
 		struct brw_fragment_program *fp,
 		struct brw_wm_prog_key *key)
 {
+   struct gl_context *ctx = &brw->ctx;
    struct brw_wm_compile *c;
    const GLuint *program;
    struct gl_shader *fs = NULL;
@@ -174,7 +175,7 @@ bool do_wm_prog(struct brw_context *brw,
       param_count = fp->program.Base.Parameters->NumParameters * 4;
    }
    /* The backend also sometimes adds params for texture size. */
-   param_count += 2 * BRW_MAX_TEX_UNIT;
+   param_count += 2 * ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits;
    c->prog_data.param = rzalloc_array(NULL, const float *, param_count);
    c->prog_data.pull_param = rzalloc_array(NULL, const float *, param_count);
 
