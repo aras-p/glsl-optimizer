@@ -84,40 +84,24 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
 
    pipe_mutex_lock(dev->mutex);
    res = pipe->screen->resource_create(pipe->screen, &res_tmpl);
-   if (!res) {
-      pipe_mutex_unlock(dev->mutex);
-      FREE(dev);
-      FREE(vlsurface);
-      return VDP_STATUS_ERROR;
-   }
+   if (!res)
+      goto err_unlock;
 
    vlVdpDefaultSamplerViewTemplate(&sv_templ, res);
    vlsurface->sampler_view = pipe->create_sampler_view(pipe, res, &sv_templ);
-   if (!vlsurface->sampler_view) {
-      pipe_resource_reference(&res, NULL);
-      pipe_mutex_unlock(dev->mutex);
-      FREE(dev);
-      return VDP_STATUS_ERROR;
-   }
+   if (!vlsurface->sampler_view)
+      goto err_resource;
 
    memset(&surf_templ, 0, sizeof(surf_templ));
    surf_templ.format = res->format;
    vlsurface->surface = pipe->create_surface(pipe, res, &surf_templ);
-   if (!vlsurface->surface) {
-      pipe_resource_reference(&res, NULL);
-      pipe_mutex_unlock(dev->mutex);
-      FREE(dev);
-      return VDP_STATUS_ERROR;
-   }
+   if (!vlsurface->surface)
+      goto err_resource;
 
    *surface = vlAddDataHTAB(vlsurface);
-   if (*surface == 0) {
-      pipe_resource_reference(&res, NULL);
-      pipe_mutex_unlock(dev->mutex);
-      FREE(dev);
-      return VDP_STATUS_ERROR;
-   }
-   
+   if (*surface == 0)
+      goto err_resource;
+
    pipe_resource_reference(&res, NULL);
 
    vl_compositor_init_state(&vlsurface->cstate, pipe);
@@ -125,6 +109,15 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    pipe_mutex_unlock(dev->mutex);
 
    return VDP_STATUS_OK;
+
+err_resource:
+   pipe_sampler_view_reference(&vlsurface->sampler_view, NULL);
+   pipe_surface_reference(&vlsurface->surface, NULL);
+   pipe_surface_reference(&res, NULL);
+err_unlock:
+   pipe_mutex_unlock(dev->mutex);
+   FREE(vlsurface);
+   return VDP_STATUS_ERROR;
 }
 
 /**

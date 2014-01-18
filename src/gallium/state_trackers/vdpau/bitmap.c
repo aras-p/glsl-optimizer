@@ -45,6 +45,7 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
    struct pipe_context *pipe;
    struct pipe_resource res_tmpl, *res;
    struct pipe_sampler_view sv_templ;
+   VdpStatus ret;
 
    vlVdpBitmapSurface *vlsurface = NULL;
 
@@ -81,30 +82,37 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
    pipe_mutex_lock(dev->mutex);
    res = pipe->screen->resource_create(pipe->screen, &res_tmpl);
    if (!res) {
-      pipe_mutex_unlock(dev->mutex);
-      FREE(dev);
-      FREE(vlsurface);
-      return VDP_STATUS_RESOURCES;
+      ret = VDP_STATUS_RESOURCES;
+      goto err_unlock;
    }
 
    vlVdpDefaultSamplerViewTemplate(&sv_templ, res);
    vlsurface->sampler_view = pipe->create_sampler_view(pipe, res, &sv_templ);
 
    pipe_resource_reference(&res, NULL);
-   pipe_mutex_unlock(dev->mutex);
 
    if (!vlsurface->sampler_view) {
-      FREE(dev);
-      return VDP_STATUS_RESOURCES;
+      ret = VDP_STATUS_RESOURCES;
+      goto err_unlock;
    }
+
+   pipe_mutex_unlock(dev->mutex);
 
    *surface = vlAddDataHTAB(vlsurface);
    if (*surface == 0) {
-      FREE(dev);
-      return VDP_STATUS_ERROR;
+      pipe_mutex_lock(dev->mutex);
+      ret = VDP_STATUS_ERROR;
+      goto err_sampler;
    }
 
    return VDP_STATUS_OK;
+
+err_sampler:
+   pipe_sampler_view_reference(&vlsurface->sampler_view, NULL);
+err_unlock:
+   pipe_mutex_unlock(dev->mutex);
+   FREE(vlsurface);
+   return ret;
 }
 
 /**
