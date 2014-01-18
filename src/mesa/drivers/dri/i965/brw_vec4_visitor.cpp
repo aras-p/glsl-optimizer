@@ -2363,23 +2363,22 @@ vec4_visitor::visit(ir_texture *ir)
       assert(!"Unrecognized tex op");
    }
 
-   bool use_texture_offset = ir->offset != NULL && ir->op != ir_txf;
+   if (ir->offset != NULL && ir->op != ir_txf)
+      inst->texture_offset = brw_texture_offset(ctx, ir->offset->as_constant());
+
+   /* Stuff the channel select bits in the top of the texture offset */
+   if (ir->op == ir_tg4)
+      inst->texture_offset |= gather_channel(ir, sampler) << 16;
 
    /* Texel offsets go in the message header; Gen4 also requires headers. */
-   inst->header_present = use_texture_offset || brw->gen < 5 || ir->op == ir_tg4;
+   inst->header_present =
+      brw->gen < 5 || inst->texture_offset != 0 || ir->op == ir_tg4;
    inst->base_mrf = 2;
    inst->mlen = inst->header_present + 1; /* always at least one */
    inst->sampler = sampler;
    inst->dst = dst_reg(this, ir->type);
    inst->dst.writemask = WRITEMASK_XYZW;
    inst->shadow_compare = ir->shadow_comparitor != NULL;
-
-   if (use_texture_offset)
-      inst->texture_offset = brw_texture_offset(ctx, ir->offset->as_constant());
-
-   /* Stuff the channel select bits in the top of the texture offset */
-   if (ir->op == ir_tg4)
-      inst->texture_offset |= gather_channel(ir, sampler)<<16;
 
    /* MRF for the first parameter */
    int param_base = inst->base_mrf + inst->header_present;
