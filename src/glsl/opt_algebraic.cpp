@@ -520,6 +520,10 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       if (is_vec_one(op_const[0]))
          return op_const[0];
 
+      /* x^1 == x */
+      if (is_vec_one(op_const[1]))
+         return ir->operands[0];
+
       /* pow(2,x) == exp2(x) */
       if (is_vec_two(op_const[0]))
          return expr(ir_unop_exp2, ir->operands[1]);
