@@ -41,6 +41,7 @@
 
 #endif
 
+#include "loader.h"
 #include "state_tracker/drm_driver.h"
 #include "pipe_loader_priv.h"
 
