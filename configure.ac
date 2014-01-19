@@ -1935,6 +1935,7 @@ AM_CONDITIONAL(HAVE_MESA_LLVM, test x$MESA_LLVM = x1)
 AC_SUBST([ELF_LIB])
 
 AM_CONDITIONAL(DRICOMMON_NEED_LIBDRM, test "x$DRICOMMON_NEED_LIBDRM" = xyes)
+AM_CONDITIONAL(HAVE_LIBDRM, test "x$have_libdrm" = xyes)
 AM_CONDITIONAL(HAVE_X11_DRIVER, test "x$enable_xlib_glx" = xyes)
 AM_CONDITIONAL(HAVE_OSMESA, test "x$enable_osmesa" = xyes)
 AM_CONDITIONAL(HAVE_GALLIUM_OSMESA, test "x$enable_gallium_osmesa" = xyes)

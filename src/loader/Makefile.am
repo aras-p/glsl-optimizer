@@ -27,11 +27,20 @@ libloader_la_CPPFLAGS = \
 	$(DEFINES) \
 	-I$(top_srcdir)/include \
 	$(VISIBILITY_CFLAGS) \
-	$(LIBDRM_CFLAGS) \
 	$(LIBUDEV_CFLAGS)
 
 libloader_la_LIBADD = \
-	$(LIBDRM_LIBS) \
 	$(LIBUDEV_LIBS)
+
+if !HAVE_LIBDRM
+libloader_la_CPPFLAGS += \
+	-D__NOT_HAVE_DRM_H
+else
+libloader_la_CPPFLAGS += \
+	$(LIBDRM_CFLAGS)
+
+libloader_la_LIBADD += \
+	$(LIBDRM_LIBS)
+endif
 
 libloader_la_SOURCES = $(LOADER_C_FILES)

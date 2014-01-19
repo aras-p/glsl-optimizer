@@ -35,7 +35,7 @@ LOCAL_SRC_FILES := \
 
 # swrast only
 ifeq ($(MESA_GPU_DRIVERS),swrast)
-	LOCAL_CFLAGS += -D_EGL_NO_DRM
+	LOCAL_CFLAGS += -D__NOT_HAVE_DRM_H
 else
 LOCAL_C_INCLUDES += \
 	$(DRM_TOP)/include/drm \

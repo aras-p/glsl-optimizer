@@ -69,7 +69,9 @@
 #include <string.h>
 #include "loader.h"
 
+#ifndef __NOT_HAVE_DRM_H
 #include <xf86drm.h>
+#endif
 
 #define __IS_LOADER
 #include "pci_ids/pci_id_driver_map.h"
@@ -149,7 +151,7 @@ out:
    return (*chip_id >= 0);
 }
 
-#elif defined(ANDROID) && !defined(_EGL_NO_DRM)
+#elif defined(ANDROID) && !defined(__NOT_HAVE_DRM_H)
 
 /* for i915 */
 #include <i915_drm.h>
@@ -267,6 +269,8 @@ loader_get_driver_for_fd(int fd, unsigned driver_types)
       driver_types = _LOADER_GALLIUM | _LOADER_DRI;
 
    if (!loader_get_pci_id_for_fd(fd, &vendor_id, &chip_id)) {
+
+#ifndef __NOT_HAVE_DRM_H
       /* fallback to drmGetVersion(): */
       drmVersionPtr version = drmGetVersion(fd);
 
@@ -279,6 +283,7 @@ loader_get_driver_for_fd(int fd, unsigned driver_types)
       log(_LOADER_INFO, "using driver %s for %d", driver, fd);
 
       drmFreeVersion(version);
+#endif
 
       return driver;
    }

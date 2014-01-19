@@ -1,15 +1,12 @@
 Import('*')
 
-if not env['drm']:
-    Return()
-
 env = env.Clone()
 
 env.Prepend(CPPPATH = [
     '#include'
 ])
 
-env.PkgUseModules('DRM')
+env.Append(CPPDEFINES = ['__NOT_HAVE_DRM_H'])
 
 if env['udev']:
     env.PkgUseModules('UDEV')
