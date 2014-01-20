@@ -759,7 +759,6 @@ void rcommonDestroyCmdBuf(radeonContextPtr rmesa)
 }
 
 void rcommonBeginBatch(radeonContextPtr rmesa, int n,
-		       int dostate,
 		       const char *file,
 		       const char *function,
 		       int line)
