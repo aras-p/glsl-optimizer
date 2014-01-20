@@ -117,7 +117,7 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
 err_resource:
    pipe_sampler_view_reference(&vlsurface->sampler_view, NULL);
    pipe_surface_reference(&vlsurface->surface, NULL);
-   pipe_surface_reference(&res, NULL);
+   pipe_resource_reference(&res, NULL);
 err_unlock:
    pipe_mutex_unlock(dev->mutex);
    FREE(vlsurface);
