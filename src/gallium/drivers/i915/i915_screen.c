@@ -50,7 +50,7 @@
 static const char *
 i915_get_vendor(struct pipe_screen *screen)
 {
-   return "VMware, Inc.";
+   return "Mesa Project";
 }
 
 static const char *

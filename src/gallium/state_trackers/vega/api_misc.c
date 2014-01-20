@@ -62,7 +62,7 @@ VGHardwareQueryResult vegaHardwareQuery(VGHardwareQueryType key,
 const VGubyte *vegaGetString(VGStringID name)
 {
    struct vg_context *ctx = vg_current_context();
-   static const VGubyte *vendor = (VGubyte *)"VMware, Inc.";
+   static const VGubyte *vendor = (VGubyte *)"Mesa Project";
    static const VGubyte *renderer = (VGubyte *)"Vega OpenVG 1.1";
    static const VGubyte *version = (VGubyte *)"1.1";
 

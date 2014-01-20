@@ -80,7 +80,7 @@ static const GLubyte *r200GetString( struct gl_context *ctx, GLenum name )
 
    switch ( name ) {
    case GL_VENDOR:
-      return (GLubyte *)"VMware, Inc.";
+      return (GLubyte *)"Mesa Project";
 
    case GL_RENDERER:
       offset = driGetRendererString( buffer, "R200", agp_mode );
