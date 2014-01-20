@@ -233,9 +233,9 @@ void radeon_draw_buffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 		return;
 	}
 
-	if (fb->Name)
+	if (fb->Name) {
 		;/* do something depthy/stencily TODO */
-
+        }
 
 		/* none */
 	if (fb->Name == 0) {
