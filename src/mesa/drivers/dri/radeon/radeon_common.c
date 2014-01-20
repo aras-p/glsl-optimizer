@@ -400,8 +400,7 @@ void radeon_viewport(struct gl_context *ctx)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	__DRIcontext *driContext = radeon->dri.context;
-	void (*old_viewport)(struct gl_context *ctx, GLint x, GLint y,
-			     GLsizei w, GLsizei h);
+	void (*old_viewport)(struct gl_context *ctx);
 
 	if (_mesa_is_winsys_fbo(ctx->DrawBuffer)) {
 		if (radeon->is_front_buffer_rendering) {
