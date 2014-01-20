@@ -220,8 +220,11 @@ intel_map_texture_image(struct gl_context *ctx,
    if (tex_image->TexObject->Target == GL_TEXTURE_CUBE_MAP)
       slice = tex_image->Face;
 
-   intel_miptree_map(brw, mt, tex_image->Level, slice, x, y, w, h, mode,
-		     (void **)map, stride);
+   intel_miptree_map(brw, mt,
+                     tex_image->Level + tex_image->TexObject->MinLevel,
+                     slice + tex_image->TexObject->MinLayer,
+                     x, y, w, h, mode,
+                     (void **)map, stride);
 }
 
 static void
@@ -235,7 +238,9 @@ intel_unmap_texture_image(struct gl_context *ctx,
    if (tex_image->TexObject->Target == GL_TEXTURE_CUBE_MAP)
       slice = tex_image->Face;
 
-   intel_miptree_unmap(brw, mt, tex_image->Level, slice);
+   intel_miptree_unmap(brw, mt,
+         tex_image->Level + tex_image->TexObject->MinLevel,
+         slice + tex_image->TexObject->MinLayer);
 }
 
 static GLboolean
