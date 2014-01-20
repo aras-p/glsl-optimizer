@@ -53,6 +53,14 @@ struct fetch_pipeline_middle_end {
 };
 
 
+/** cast wrapper */
+static INLINE struct fetch_pipeline_middle_end *
+fetch_pipeline_middle_end(struct draw_pt_middle_end *middle)
+{
+   return (struct fetch_pipeline_middle_end *) middle;
+}
+
+
 /**
  * Prepare/validate middle part of the vertex pipeline.
  * NOTE: if you change this function, also look at the LLVM
@@ -64,8 +72,7 @@ fetch_pipeline_prepare(struct draw_pt_middle_end *middle,
                        unsigned opt,
                        unsigned *max_vertices)
 {
-   struct fetch_pipeline_middle_end *fpme =
-      (struct fetch_pipeline_middle_end *)middle;
+   struct fetch_pipeline_middle_end *fpme = fetch_pipeline_middle_end(middle);
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *vs = draw->vs.vertex_shader;
    struct draw_geometry_shader *gs = draw->gs.geometry_shader;
@@ -224,8 +231,7 @@ fetch_pipeline_generic(struct draw_pt_middle_end *middle,
                        const struct draw_fetch_info *fetch_info,
                        const struct draw_prim_info *in_prim_info)
 {
-   struct fetch_pipeline_middle_end *fpme =
-      (struct fetch_pipeline_middle_end *) middle;
+   struct fetch_pipeline_middle_end *fpme = fetch_pipeline_middle_end(middle);
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *vshader = draw->vs.vertex_shader;
    struct draw_geometry_shader *gshader = draw->gs.geometry_shader;
@@ -361,8 +367,7 @@ fetch_pipeline_run(struct draw_pt_middle_end *middle,
                    unsigned draw_count,
                    unsigned prim_flags)
 {
-   struct fetch_pipeline_middle_end *fpme =
-      (struct fetch_pipeline_middle_end *) middle;
+   struct fetch_pipeline_middle_end *fpme = fetch_pipeline_middle_end(middle);
    struct draw_fetch_info fetch_info;
    struct draw_prim_info prim_info;
 
@@ -390,8 +395,7 @@ fetch_pipeline_linear_run(struct draw_pt_middle_end *middle,
                           unsigned count,
                           unsigned prim_flags)
 {
-   struct fetch_pipeline_middle_end *fpme =
-      (struct fetch_pipeline_middle_end *) middle;
+   struct fetch_pipeline_middle_end *fpme = fetch_pipeline_middle_end(middle);
    struct draw_fetch_info fetch_info;
    struct draw_prim_info prim_info;
 
@@ -422,8 +426,7 @@ fetch_pipeline_linear_run_elts(struct draw_pt_middle_end *middle,
                                unsigned draw_count,
                                unsigned prim_flags )
 {
-   struct fetch_pipeline_middle_end *fpme =
-      (struct fetch_pipeline_middle_end *) middle;
+   struct fetch_pipeline_middle_end *fpme = fetch_pipeline_middle_end(middle);
    struct draw_fetch_info fetch_info;
    struct draw_prim_info prim_info;
 
@@ -457,8 +460,7 @@ fetch_pipeline_finish( struct draw_pt_middle_end *middle )
 static void
 fetch_pipeline_destroy( struct draw_pt_middle_end *middle )
 {
-   struct fetch_pipeline_middle_end *fpme =
-      (struct fetch_pipeline_middle_end *) middle;
+   struct fetch_pipeline_middle_end *fpme = fetch_pipeline_middle_end(middle);
 
    if (fpme->fetch)
       draw_pt_fetch_destroy( fpme->fetch );
