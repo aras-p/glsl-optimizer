@@ -118,7 +118,6 @@ loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
 {
    struct udev *udev = NULL;
    struct udev_device *device = NULL, *parent;
-   struct stat buf;
    const char *pci_id;
 
    *chip_id = -1;
