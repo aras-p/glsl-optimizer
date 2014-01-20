@@ -135,8 +135,8 @@ aub_dump_bmp(struct gl_context *ctx)
 	 enum aub_dump_bmp_format format;
 
 	 switch (irb->Base.Base.Format) {
-	 case MESA_FORMAT_ARGB8888:
-	 case MESA_FORMAT_XRGB8888:
+	 case MESA_FORMAT_B8G8R8A8_UNORM:
+	 case MESA_FORMAT_B8G8R8X8_UNORM:
 	    format = AUB_DUMP_BMP_FORMAT_ARGB_8888;
 	    break;
 	 default:
@@ -980,7 +980,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    else if (mesaVis->sRGBCapable)
       rgbFormat = MESA_FORMAT_SARGB8;
    else if (mesaVis->alphaBits == 0)
-      rgbFormat = MESA_FORMAT_XRGB8888;
+      rgbFormat = MESA_FORMAT_B8G8R8X8_UNORM;
    else {
       rgbFormat = MESA_FORMAT_SARGB8;
       fb->Visual.sRGBCapable = true;
@@ -1126,7 +1126,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
 {
    static const mesa_format formats[] = {
       MESA_FORMAT_RGB565,
-      MESA_FORMAT_ARGB8888
+      MESA_FORMAT_B8G8R8A8_UNORM
    };
 
    /* GLX_SWAP_COPY_OML is not supported due to page flipping. */

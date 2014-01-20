@@ -82,8 +82,8 @@ static const __DRIconfig **
 dri_fill_in_modes(struct dri_screen *screen)
 {
    static const mesa_format mesa_formats[3] = {
-      MESA_FORMAT_ARGB8888,
-      MESA_FORMAT_XRGB8888,
+      MESA_FORMAT_B8G8R8A8_UNORM,
+      MESA_FORMAT_B8G8R8X8_UNORM,
       MESA_FORMAT_RGB565,
    };
    static const enum pipe_format pipe_formats[3] = {

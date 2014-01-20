@@ -42,8 +42,8 @@ unsigned r200_check_blit(mesa_format mesa_format, uint32_t dst_pitch)
 {
     /* XXX others?  BE/LE? */
     switch (mesa_format) {
-    case MESA_FORMAT_ARGB8888:
-    case MESA_FORMAT_XRGB8888:
+    case MESA_FORMAT_B8G8R8A8_UNORM:
+    case MESA_FORMAT_B8G8R8X8_UNORM:
     case MESA_FORMAT_RGB565:
     case MESA_FORMAT_ARGB4444:
     case MESA_FORMAT_ARGB1555:
@@ -51,8 +51,8 @@ unsigned r200_check_blit(mesa_format mesa_format, uint32_t dst_pitch)
     case MESA_FORMAT_L8:
     case MESA_FORMAT_I8:
     /* swizzled */
-    case MESA_FORMAT_RGBA8888:
-    case MESA_FORMAT_RGBA8888_REV:
+    case MESA_FORMAT_A8B8G8R8_UNORM:
+    case MESA_FORMAT_R8G8B8A8_UNORM:
 	    break;
     default:
 	    return 0;
@@ -114,16 +114,16 @@ static void inline emit_tx_setup(struct r200_context *r200,
 
     /* XXX others?  BE/LE? */
     switch (src_mesa_format) {
-    case MESA_FORMAT_ARGB8888:
+    case MESA_FORMAT_B8G8R8A8_UNORM:
 	    txformat |= R200_TXFORMAT_ARGB8888 | R200_TXFORMAT_ALPHA_IN_MAP;
 	    break;
-    case MESA_FORMAT_RGBA8888:
+    case MESA_FORMAT_A8B8G8R8_UNORM:
 	    txformat |= R200_TXFORMAT_RGBA8888 | R200_TXFORMAT_ALPHA_IN_MAP;
 	    break;
-    case MESA_FORMAT_RGBA8888_REV:
+    case MESA_FORMAT_R8G8B8A8_UNORM:
 	    txformat |= R200_TXFORMAT_ABGR8888 | R200_TXFORMAT_ALPHA_IN_MAP;
 	    break;
-    case MESA_FORMAT_XRGB8888:
+    case MESA_FORMAT_B8G8R8X8_UNORM:
 	    txformat |= R200_TXFORMAT_ARGB8888;
 	    break;
     case MESA_FORMAT_RGB565:
@@ -155,8 +155,8 @@ static void inline emit_tx_setup(struct r200_context *r200,
 	offset |= R200_TXO_MICRO_TILE;
 
     switch (dst_mesa_format) {
-    case MESA_FORMAT_ARGB8888:
-    case MESA_FORMAT_XRGB8888:
+    case MESA_FORMAT_B8G8R8A8_UNORM:
+    case MESA_FORMAT_B8G8R8X8_UNORM:
     case MESA_FORMAT_RGB565:
     case MESA_FORMAT_ARGB4444:
     case MESA_FORMAT_ARGB1555:
@@ -182,7 +182,7 @@ static void inline emit_tx_setup(struct r200_context *r200,
 						   R200_TXA_OUTPUT_REG_R0));
 	    END_BATCH();
 	    break;
-    case MESA_FORMAT_RGBA8888:
+    case MESA_FORMAT_A8B8G8R8_UNORM:
 	    BEGIN_BATCH(10);
 	    OUT_BATCH_REGVAL(RADEON_PP_CNTL, (RADEON_TEX_0_ENABLE |
 					      RADEON_TEX_BLEND_0_ENABLE));
@@ -202,7 +202,7 @@ static void inline emit_tx_setup(struct r200_context *r200,
 						   R200_TXA_OUTPUT_REG_R0));
 	    END_BATCH();
 	    break;
-    case MESA_FORMAT_RGBA8888_REV:
+    case MESA_FORMAT_R8G8B8A8_UNORM:
 	    BEGIN_BATCH(34);
 	    OUT_BATCH_REGVAL(RADEON_PP_CNTL, (RADEON_TEX_0_ENABLE |
 					      RADEON_TEX_BLEND_0_ENABLE |
@@ -308,10 +308,10 @@ static inline void emit_cb_setup(struct r200_context *r200,
 
     /* XXX others?  BE/LE? */
     switch (mesa_format) {
-    case MESA_FORMAT_ARGB8888:
-    case MESA_FORMAT_XRGB8888:
-    case MESA_FORMAT_RGBA8888:
-    case MESA_FORMAT_RGBA8888_REV:
+    case MESA_FORMAT_B8G8R8A8_UNORM:
+    case MESA_FORMAT_B8G8R8X8_UNORM:
+    case MESA_FORMAT_A8B8G8R8_UNORM:
+    case MESA_FORMAT_R8G8B8A8_UNORM:
 	    dst_format = RADEON_COLOR_FORMAT_ARGB8888;
 	    break;
     case MESA_FORMAT_RGB565:

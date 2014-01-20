@@ -175,7 +175,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLenum target,
 	case GL_RGBA16:
 	case GL_RGB10_A2:
 	case GL_COMPRESSED_RGBA:
-		return MESA_FORMAT_ARGB8888;
+		return MESA_FORMAT_B8G8R8A8_UNORM;
 	case GL_RGB5_A1:
 		return MESA_FORMAT_ARGB1555;
 
@@ -185,7 +185,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLenum target,
 	case GL_RGB12:
 	case GL_RGB16:
 	case GL_COMPRESSED_RGB:
-		return MESA_FORMAT_XRGB8888;
+		return MESA_FORMAT_B8G8R8X8_UNORM;
 	case 3:
 	case GL_R3_G3_B2:
 	case GL_RGB4:
@@ -201,7 +201,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLenum target,
 	case GL_LUMINANCE16_ALPHA16:
 	case GL_LUMINANCE8_ALPHA8:
 	case GL_COMPRESSED_LUMINANCE_ALPHA:
-		return MESA_FORMAT_ARGB8888;
+		return MESA_FORMAT_B8G8R8A8_UNORM;
 
 	case 1:
 	case GL_LUMINANCE:
@@ -589,9 +589,9 @@ get_texbuffer_format(struct gl_renderbuffer *rb, GLint format)
 	if (s->cpp < 4)
 		return s->format;
 	else if (format == __DRI_TEXTURE_FORMAT_RGBA)
-		return MESA_FORMAT_ARGB8888;
+		return MESA_FORMAT_B8G8R8A8_UNORM;
 	else
-		return MESA_FORMAT_XRGB8888;
+		return MESA_FORMAT_B8G8R8X8_UNORM;
 }
 
 void

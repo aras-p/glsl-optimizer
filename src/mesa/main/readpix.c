@@ -424,13 +424,13 @@ read_rgba_pixels_swizzle(struct gl_context *ctx,
    GLboolean swizzle_rb = GL_FALSE, copy_xrgb = GL_FALSE;
 
    /* XXX we could check for other swizzle/special cases here as needed */
-   if (rb->Format == MESA_FORMAT_RGBA8888_REV &&
+   if (rb->Format == MESA_FORMAT_R8G8B8A8_UNORM &&
        format == GL_BGRA &&
        type == GL_UNSIGNED_INT_8_8_8_8_REV &&
        !ctx->Pack.SwapBytes) {
       swizzle_rb = GL_TRUE;
    }
-   else if (rb->Format == MESA_FORMAT_XRGB8888 &&
+   else if (rb->Format == MESA_FORMAT_B8G8R8X8_UNORM &&
        format == GL_BGRA &&
        type == GL_UNSIGNED_INT_8_8_8_8_REV &&
        !ctx->Pack.SwapBytes) {

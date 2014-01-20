@@ -294,6 +294,6 @@ nv04_emit_tex_env(struct gl_context *ctx, int emit)
 	/* update calculated multitex state */
 	nv04->alpha[i] = rc_a.hw;
 	nv04->color[i] = rc_c.hw;
-	nv04->factor   = pack_rgba_f(MESA_FORMAT_ARGB8888,
+	nv04->factor   = pack_rgba_f(MESA_FORMAT_B8G8R8A8_UNORM,
 				     ctx->Texture.Unit[0].EnvColor);
 }

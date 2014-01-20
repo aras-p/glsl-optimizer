@@ -309,11 +309,11 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    if (rb->mt->cpp == 4) {
       if (texture_format == __DRI_TEXTURE_FORMAT_RGB) {
          internalFormat = GL_RGB;
-         texFormat = MESA_FORMAT_XRGB8888;
+         texFormat = MESA_FORMAT_B8G8R8X8_UNORM;
       }
       else {
          internalFormat = GL_RGBA;
-         texFormat = MESA_FORMAT_ARGB8888;
+         texFormat = MESA_FORMAT_B8G8R8A8_UNORM;
       }
    } else if (rb->mt->cpp == 2) {
       internalFormat = GL_RGB;

@@ -81,9 +81,9 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    case GL_RGBA12:
 #endif
       if (_mesa_little_endian())
-         rb->Format = MESA_FORMAT_RGBA8888_REV;
+         rb->Format = MESA_FORMAT_R8G8B8A8_UNORM;
       else
-         rb->Format = MESA_FORMAT_RGBA8888;
+         rb->Format = MESA_FORMAT_A8B8G8R8_UNORM;
       break;
    case GL_RGBA16:
    case GL_RGBA16_SNORM:

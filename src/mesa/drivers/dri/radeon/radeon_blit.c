@@ -42,8 +42,8 @@ unsigned r100_check_blit(mesa_format mesa_format, uint32_t dst_pitch)
 {
     /* XXX others?  BE/LE? */
     switch (mesa_format) {
-    case MESA_FORMAT_ARGB8888:
-    case MESA_FORMAT_XRGB8888:
+    case MESA_FORMAT_B8G8R8A8_UNORM:
+    case MESA_FORMAT_B8G8R8X8_UNORM:
     case MESA_FORMAT_RGB565:
     case MESA_FORMAT_ARGB4444:
     case MESA_FORMAT_ARGB1555:
@@ -108,13 +108,13 @@ static void inline emit_tx_setup(struct r100_context *r100,
 
     /* XXX others?  BE/LE? */
     switch (mesa_format) {
-    case MESA_FORMAT_ARGB8888:
+    case MESA_FORMAT_B8G8R8A8_UNORM:
 	    txformat |= RADEON_TXFORMAT_ARGB8888 | RADEON_TXFORMAT_ALPHA_IN_MAP;
 	    break;
-    case MESA_FORMAT_RGBA8888:
+    case MESA_FORMAT_A8B8G8R8_UNORM:
             txformat |= RADEON_TXFORMAT_RGBA8888 | RADEON_TXFORMAT_ALPHA_IN_MAP;
             break;
-    case MESA_FORMAT_XRGB8888:
+    case MESA_FORMAT_B8G8R8X8_UNORM:
 	    txformat |= RADEON_TXFORMAT_ARGB8888;
 	    break;
     case MESA_FORMAT_RGB565:
@@ -186,8 +186,8 @@ static inline void emit_cb_setup(struct r100_context *r100,
 
     /* XXX others?  BE/LE? */
     switch (mesa_format) {
-    case MESA_FORMAT_ARGB8888:
-    case MESA_FORMAT_XRGB8888:
+    case MESA_FORMAT_B8G8R8A8_UNORM:
+    case MESA_FORMAT_B8G8R8X8_UNORM:
 	    dst_format = RADEON_COLOR_FORMAT_ARGB8888;
 	    break;
     case MESA_FORMAT_RGB565:

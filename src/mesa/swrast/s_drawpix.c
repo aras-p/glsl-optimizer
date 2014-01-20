@@ -223,8 +223,8 @@ fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
 
    if (format == GL_RGB &&
        type == GL_UNSIGNED_BYTE &&
-       (rb->Format == MESA_FORMAT_XRGB8888 ||
-        rb->Format == MESA_FORMAT_ARGB8888)) {
+       (rb->Format == MESA_FORMAT_B8G8R8X8_UNORM ||
+        rb->Format == MESA_FORMAT_B8G8R8A8_UNORM)) {
       fast_draw_rgb_ubyte_pixels(ctx, rb, x, y, width, height,
                                  &unpack, pixels);
       return GL_TRUE;
@@ -232,8 +232,8 @@ fast_draw_rgba_pixels(struct gl_context *ctx, GLint x, GLint y,
 
    if (format == GL_RGBA &&
        type == GL_UNSIGNED_BYTE &&
-       (rb->Format == MESA_FORMAT_XRGB8888 ||
-        rb->Format == MESA_FORMAT_ARGB8888)) {
+       (rb->Format == MESA_FORMAT_B8G8R8X8_UNORM ||
+        rb->Format == MESA_FORMAT_B8G8R8A8_UNORM)) {
       fast_draw_rgba_ubyte_pixels(ctx, rb, x, y, width, height,
                                   &unpack, pixels);
       return GL_TRUE;

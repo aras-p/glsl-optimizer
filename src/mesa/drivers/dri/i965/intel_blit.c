@@ -171,10 +171,10 @@ intel_miptree_blit(struct brw_context *brw,
     * channel to 1.0 at the end.
     */
    if (src_format != dst_format &&
-      ((src_format != MESA_FORMAT_ARGB8888 &&
-        src_format != MESA_FORMAT_XRGB8888) ||
-       (dst_format != MESA_FORMAT_ARGB8888 &&
-        dst_format != MESA_FORMAT_XRGB8888))) {
+      ((src_format != MESA_FORMAT_B8G8R8A8_UNORM &&
+        src_format != MESA_FORMAT_B8G8R8X8_UNORM) ||
+       (dst_format != MESA_FORMAT_B8G8R8A8_UNORM &&
+        dst_format != MESA_FORMAT_B8G8R8X8_UNORM))) {
       perf_debug("%s: Can't use hardware blitter from %s to %s, "
                  "falling back.\n", __FUNCTION__,
                  _mesa_get_format_name(src_format),
@@ -271,8 +271,8 @@ intel_miptree_blit(struct brw_context *brw,
       return false;
    }
 
-   if (src_mt->format == MESA_FORMAT_XRGB8888 &&
-       dst_mt->format == MESA_FORMAT_ARGB8888) {
+   if (src_mt->format == MESA_FORMAT_B8G8R8X8_UNORM &&
+       dst_mt->format == MESA_FORMAT_B8G8R8A8_UNORM) {
       intel_miptree_set_alpha_to_one(brw, dst_mt,
                                      dst_x, dst_y,
                                      width, height);

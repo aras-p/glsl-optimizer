@@ -57,10 +57,10 @@ static mesa_format gl_format_and_type_to_mesa_format(GLenum format, GLenum type)
                 case GL_UNSIGNED_SHORT_5_5_5_1:
                     return MESA_FORMAT_RGBA5551;
                 case GL_UNSIGNED_INT_8_8_8_8:
-                    return MESA_FORMAT_RGBA8888;
+                    return MESA_FORMAT_A8B8G8R8_UNORM;
                 case GL_UNSIGNED_BYTE:
                 case GL_UNSIGNED_INT_8_8_8_8_REV:
-                    return MESA_FORMAT_RGBA8888_REV;
+                    return MESA_FORMAT_R8G8B8A8_UNORM;
             }
             break;
         case GL_BGRA:
@@ -74,10 +74,10 @@ static mesa_format gl_format_and_type_to_mesa_format(GLenum format, GLenum type)
                 case GL_UNSIGNED_SHORT_1_5_5_5_REV:
                     return MESA_FORMAT_ARGB1555;
                 case GL_UNSIGNED_INT_8_8_8_8:
-                    return MESA_FORMAT_ARGB8888_REV;
+                    return MESA_FORMAT_A8R8G8B8_UNORM;
                 case GL_UNSIGNED_BYTE:
                 case GL_UNSIGNED_INT_8_8_8_8_REV:
-                    return MESA_FORMAT_ARGB8888;
+                    return MESA_FORMAT_B8G8R8A8_UNORM;
 
             }
             break;

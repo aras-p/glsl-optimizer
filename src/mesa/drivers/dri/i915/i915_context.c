@@ -99,10 +99,10 @@ intel_init_texture_formats(struct gl_context *ctx)
    struct intel_context *intel = intel_context(ctx);
    struct intel_screen *intel_screen = intel->intelScreen;
 
-   ctx->TextureFormatSupported[MESA_FORMAT_ARGB8888] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_B8G8R8A8_UNORM] = true;
    if (intel_screen->deviceID != PCI_CHIP_I830_M &&
        intel_screen->deviceID != PCI_CHIP_845_G)
-      ctx->TextureFormatSupported[MESA_FORMAT_XRGB8888] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_B8G8R8X8_UNORM] = true;
    if (intel->gen == 3)
       ctx->TextureFormatSupported[MESA_FORMAT_SARGB8] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_ARGB4444] = true;

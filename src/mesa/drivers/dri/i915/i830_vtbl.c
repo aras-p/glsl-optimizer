@@ -582,8 +582,8 @@ i830_destroy_context(struct intel_context *intel)
 
 static uint32_t i830_render_target_format_for_mesa_format[MESA_FORMAT_COUNT] =
 {
-   [MESA_FORMAT_ARGB8888] = DV_PF_8888,
-   [MESA_FORMAT_XRGB8888] = DV_PF_8888,
+   [MESA_FORMAT_B8G8R8A8_UNORM] = DV_PF_8888,
+   [MESA_FORMAT_B8G8R8X8_UNORM] = DV_PF_8888,
    [MESA_FORMAT_RGB565] = DV_PF_565,
    [MESA_FORMAT_ARGB1555] = DV_PF_1555,
    [MESA_FORMAT_ARGB4444] = DV_PF_4444,

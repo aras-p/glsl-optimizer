@@ -207,10 +207,10 @@ color_formats_match(mesa_format src_format, mesa_format dst_format)
     * (overriding alpha to 1.0 via blending).
     */
    return linear_src_format == linear_dst_format ||
-          (linear_src_format == MESA_FORMAT_XRGB8888 &&
-           linear_dst_format == MESA_FORMAT_ARGB8888) ||
-          (linear_src_format == MESA_FORMAT_ARGB8888 &&
-           linear_dst_format == MESA_FORMAT_XRGB8888);
+          (linear_src_format == MESA_FORMAT_B8G8R8X8_UNORM &&
+           linear_dst_format == MESA_FORMAT_B8G8R8A8_UNORM) ||
+          (linear_src_format == MESA_FORMAT_B8G8R8A8_UNORM &&
+           linear_dst_format == MESA_FORMAT_B8G8R8X8_UNORM);
 }
 
 static bool

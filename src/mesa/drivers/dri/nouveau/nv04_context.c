@@ -114,7 +114,7 @@ init_dummy_texture(struct gl_context *ctx)
 
 	nouveau_surface_alloc(ctx, s, SWIZZLED,
 			      NOUVEAU_BO_MAP | NOUVEAU_BO_VRAM,
-			      MESA_FORMAT_ARGB8888, 1, 1);
+			      MESA_FORMAT_B8G8R8A8_UNORM, 1, 1);
 
 	nouveau_bo_map(s->bo, NOUVEAU_BO_WR, context_client(ctx));
 	*(uint32_t *)s->bo->map = 0xffffffff;

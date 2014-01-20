@@ -44,13 +44,13 @@ set_renderbuffer_format(struct gl_renderbuffer *rb, GLenum internalFormat)
 	case GL_RGB:
 	case GL_RGB8:
 		rb->_BaseFormat  = GL_RGB;
-		rb->Format = MESA_FORMAT_XRGB8888;
+		rb->Format = MESA_FORMAT_B8G8R8X8_UNORM;
 		s->cpp = 4;
 		break;
 	case GL_RGBA:
 	case GL_RGBA8:
 		rb->_BaseFormat  = GL_RGBA;
-		rb->Format = MESA_FORMAT_ARGB8888;
+		rb->Format = MESA_FORMAT_B8G8R8A8_UNORM;
 		s->cpp = 4;
 		break;
 	case GL_RGB5:
@@ -272,8 +272,8 @@ static int
 validate_format_bpp(mesa_format format)
 {
 	switch (format) {
-	case MESA_FORMAT_XRGB8888:
-	case MESA_FORMAT_ARGB8888:
+	case MESA_FORMAT_B8G8R8X8_UNORM:
+	case MESA_FORMAT_B8G8R8A8_UNORM:
 	case MESA_FORMAT_Z24_S8:
 		return 32;
 	case MESA_FORMAT_RGB565:

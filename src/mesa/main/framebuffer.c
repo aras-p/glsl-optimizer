@@ -840,7 +840,7 @@ _mesa_get_color_read_format(struct gl_context *ctx)
       const GLenum format = ctx->ReadBuffer->_ColorReadBuffer->Format;
       const GLenum data_type = _mesa_get_format_datatype(format);
 
-      if (format == MESA_FORMAT_ARGB8888)
+      if (format == MESA_FORMAT_B8G8R8A8_UNORM)
          return GL_BGRA;
       else if (format == MESA_FORMAT_RGB565)
          return GL_BGR;

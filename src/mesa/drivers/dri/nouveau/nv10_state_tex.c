@@ -90,10 +90,10 @@ static uint32_t
 get_tex_format_pot(struct gl_texture_image *ti)
 {
 	switch (ti->TexFormat) {
-	case MESA_FORMAT_ARGB8888:
+	case MESA_FORMAT_B8G8R8A8_UNORM:
 		return NV10_3D_TEX_FORMAT_FORMAT_A8R8G8B8;
 
-	case MESA_FORMAT_XRGB8888:
+	case MESA_FORMAT_B8G8R8X8_UNORM:
 		return NV10_3D_TEX_FORMAT_FORMAT_X8R8G8B8;
 
 	case MESA_FORMAT_ARGB1555:
@@ -137,8 +137,8 @@ get_tex_format_rect(struct gl_texture_image *ti)
 	case MESA_FORMAT_RGB565:
 		return NV10_3D_TEX_FORMAT_FORMAT_R5G6B5_RECT;
 
-	case MESA_FORMAT_ARGB8888:
-	case MESA_FORMAT_XRGB8888:
+	case MESA_FORMAT_B8G8R8A8_UNORM:
+	case MESA_FORMAT_B8G8R8X8_UNORM:
 		return NV10_3D_TEX_FORMAT_FORMAT_A8R8G8B8_RECT;
 
 	case MESA_FORMAT_A8:

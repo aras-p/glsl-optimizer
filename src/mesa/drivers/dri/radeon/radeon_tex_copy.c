@@ -112,8 +112,8 @@ do_copy_texsubimage(struct gl_context *ctx,
 		    dst_mesaformat = MESA_FORMAT_RGB565;
 		    break;
 	    case 4:
-		    src_mesaformat = MESA_FORMAT_ARGB8888;
-		    dst_mesaformat = MESA_FORMAT_ARGB8888;
+		    src_mesaformat = MESA_FORMAT_B8G8R8A8_UNORM;
+		    dst_mesaformat = MESA_FORMAT_B8G8R8A8_UNORM;
 		    break;
 	    case 1:
 		    src_mesaformat = MESA_FORMAT_A8;

@@ -129,10 +129,10 @@ intel_miptree_blit(struct intel_context *intel,
     * channel to 1.0 at the end.
     */
    if (src_format != dst_format &&
-      ((src_format != MESA_FORMAT_ARGB8888 &&
-        src_format != MESA_FORMAT_XRGB8888) ||
-       (dst_format != MESA_FORMAT_ARGB8888 &&
-        dst_format != MESA_FORMAT_XRGB8888))) {
+      ((src_format != MESA_FORMAT_B8G8R8A8_UNORM &&
+        src_format != MESA_FORMAT_B8G8R8X8_UNORM) ||
+       (dst_format != MESA_FORMAT_B8G8R8A8_UNORM &&
+        dst_format != MESA_FORMAT_B8G8R8X8_UNORM))) {
       perf_debug("%s: Can't use hardware blitter from %s to %s, "
                  "falling back.\n", __FUNCTION__,
                  _mesa_get_format_name(src_format),
@@ -201,8 +201,8 @@ intel_miptree_blit(struct intel_context *intel,
       return false;
    }
 
-   if (src_mt->format == MESA_FORMAT_XRGB8888 &&
-       dst_mt->format == MESA_FORMAT_ARGB8888) {
+   if (src_mt->format == MESA_FORMAT_B8G8R8X8_UNORM &&
+       dst_mt->format == MESA_FORMAT_B8G8R8A8_UNORM) {
       intel_miptree_set_alpha_to_one(intel, dst_mt,
                                      dst_x, dst_y,
                                      width, height);
@@ -450,8 +450,8 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 	 _mesa_unclamped_float_rgba_to_ubyte(clear, color);
 
 	 switch (intel_rb_format(irb)) {
-	 case MESA_FORMAT_ARGB8888:
-	 case MESA_FORMAT_XRGB8888:
+	 case MESA_FORMAT_B8G8R8A8_UNORM:
+	 case MESA_FORMAT_B8G8R8X8_UNORM:
 	    clear_val = PACK_COLOR_8888(clear[3], clear[0],
 					clear[1], clear[2]);
 	    break;

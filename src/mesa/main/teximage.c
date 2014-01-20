@@ -4114,7 +4114,7 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
 
    switch (internalFormat) {
    case GL_RGBA8:
-      return MESA_FORMAT_RGBA8888_REV;
+      return MESA_FORMAT_R8G8B8A8_UNORM;
    case GL_RGBA16:
       return MESA_FORMAT_RGBA_16;
    case GL_RGBA16F_ARB:

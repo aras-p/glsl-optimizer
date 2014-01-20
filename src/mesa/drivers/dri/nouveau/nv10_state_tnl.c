@@ -144,7 +144,7 @@ nv10_emit_fog(struct gl_context *ctx, int emit)
 	PUSH_DATA (push, get_fog_mode(f->Mode));
 	PUSH_DATA (push, get_fog_source(source, f->FogDistanceMode));
 	PUSH_DATAb(push, f->Enabled);
-	PUSH_DATA (push, pack_rgba_f(MESA_FORMAT_RGBA8888_REV, f->Color));
+	PUSH_DATA (push, pack_rgba_f(MESA_FORMAT_R8G8B8A8_UNORM, f->Color));
 
 	BEGIN_NV04(push, NV10_3D(FOG_COEFF(0)), 3);
 	PUSH_DATAp(push, k, 3);

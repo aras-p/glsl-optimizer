@@ -92,7 +92,7 @@ linear_ubyte_to_srgb_ubyte(GLubyte cl)
 
 
 /*
- * MESA_FORMAT_RGBA8888
+ * MESA_FORMAT_A8B8G8R8_UNORM
  */
 
 static void
@@ -136,7 +136,7 @@ pack_row_float_RGBA8888(GLuint n, const GLfloat src[][4], void *dst)
 
 
 /*
- * MESA_FORMAT_RGBA8888_REV
+ * MESA_FORMAT_R8G8B8A8_UNORM
  */
 
 static void
@@ -179,7 +179,7 @@ pack_row_float_RGBA8888_REV(GLuint n, const GLfloat src[][4], void *dst)
 
 
 /*
- * MESA_FORMAT_ARGB8888
+ * MESA_FORMAT_B8G8R8A8_UNORM
  */
 
 static void
@@ -222,7 +222,7 @@ pack_row_float_ARGB8888(GLuint n, const GLfloat src[][4], void *dst)
 
 
 /*
- * MESA_FORMAT_ARGB8888_REV
+ * MESA_FORMAT_A8R8G8B8_UNORM
  */
 
 static void
@@ -265,7 +265,7 @@ pack_row_float_ARGB8888_REV(GLuint n, const GLfloat src[][4], void *dst)
 
 
 /*
- * MESA_FORMAT_XRGB8888
+ * MESA_FORMAT_B8G8R8X8_UNORM
  */
 
 static void
@@ -307,7 +307,7 @@ pack_row_float_XRGB8888(GLuint n, const GLfloat src[][4], void *dst)
 
 
 /*
- * MESA_FORMAT_XRGB8888_REV
+ * MESA_FORMAT_X8R8G8B8_UNORM
  */
 
 static void
@@ -1889,14 +1889,14 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
 
       table[MESA_FORMAT_NONE] = NULL;
 
-      table[MESA_FORMAT_RGBA8888] = pack_ubyte_RGBA8888;
-      table[MESA_FORMAT_RGBA8888_REV] = pack_ubyte_RGBA8888_REV;
-      table[MESA_FORMAT_ARGB8888] = pack_ubyte_ARGB8888;
-      table[MESA_FORMAT_ARGB8888_REV] = pack_ubyte_ARGB8888_REV;
-      table[MESA_FORMAT_RGBX8888] = pack_ubyte_RGBA8888; /* reused */
-      table[MESA_FORMAT_RGBX8888_REV] = pack_ubyte_RGBA8888_REV; /* reused */
-      table[MESA_FORMAT_XRGB8888] = pack_ubyte_XRGB8888;
-      table[MESA_FORMAT_XRGB8888_REV] = pack_ubyte_XRGB8888_REV;
+      table[MESA_FORMAT_A8B8G8R8_UNORM] = pack_ubyte_RGBA8888;
+      table[MESA_FORMAT_R8G8B8A8_UNORM] = pack_ubyte_RGBA8888_REV;
+      table[MESA_FORMAT_B8G8R8A8_UNORM] = pack_ubyte_ARGB8888;
+      table[MESA_FORMAT_A8R8G8B8_UNORM] = pack_ubyte_ARGB8888_REV;
+      table[MESA_FORMAT_X8B8G8R8_UNORM] = pack_ubyte_RGBA8888; /* reused */
+      table[MESA_FORMAT_R8G8B8X8_UNORM] = pack_ubyte_RGBA8888_REV; /* reused */
+      table[MESA_FORMAT_B8G8R8X8_UNORM] = pack_ubyte_XRGB8888;
+      table[MESA_FORMAT_X8R8G8B8_UNORM] = pack_ubyte_XRGB8888_REV;
       table[MESA_FORMAT_RGB888] = pack_ubyte_RGB888;
       table[MESA_FORMAT_BGR888] = pack_ubyte_BGR888;
       table[MESA_FORMAT_RGB565] = pack_ubyte_RGB565;
@@ -2052,14 +2052,14 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
 
       table[MESA_FORMAT_NONE] = NULL;
 
-      table[MESA_FORMAT_RGBA8888] = pack_float_RGBA8888;
-      table[MESA_FORMAT_RGBA8888_REV] = pack_float_RGBA8888_REV;
-      table[MESA_FORMAT_ARGB8888] = pack_float_ARGB8888;
-      table[MESA_FORMAT_ARGB8888_REV] = pack_float_ARGB8888_REV;
-      table[MESA_FORMAT_RGBX8888] = pack_float_RGBA8888; /* reused */
-      table[MESA_FORMAT_RGBX8888_REV] = pack_float_RGBA8888_REV; /* reused */
-      table[MESA_FORMAT_XRGB8888] = pack_float_XRGB8888;
-      table[MESA_FORMAT_XRGB8888_REV] = pack_float_XRGB8888_REV;
+      table[MESA_FORMAT_A8B8G8R8_UNORM] = pack_float_RGBA8888;
+      table[MESA_FORMAT_R8G8B8A8_UNORM] = pack_float_RGBA8888_REV;
+      table[MESA_FORMAT_B8G8R8A8_UNORM] = pack_float_ARGB8888;
+      table[MESA_FORMAT_A8R8G8B8_UNORM] = pack_float_ARGB8888_REV;
+      table[MESA_FORMAT_X8B8G8R8_UNORM] = pack_float_RGBA8888; /* reused */
+      table[MESA_FORMAT_R8G8B8X8_UNORM] = pack_float_RGBA8888_REV; /* reused */
+      table[MESA_FORMAT_B8G8R8X8_UNORM] = pack_float_XRGB8888;
+      table[MESA_FORMAT_X8R8G8B8_UNORM] = pack_float_XRGB8888_REV;
       table[MESA_FORMAT_RGB888] = pack_float_RGB888;
       table[MESA_FORMAT_BGR888] = pack_float_BGR888;
       table[MESA_FORMAT_RGB565] = pack_float_RGB565;
@@ -2213,14 +2213,14 @@ get_pack_float_rgba_row_function(mesa_format format)
        */
       memset(table, 0, sizeof(table));
 
-      table[MESA_FORMAT_RGBA8888] = pack_row_float_RGBA8888;
-      table[MESA_FORMAT_RGBA8888_REV] = pack_row_float_RGBA8888_REV;
-      table[MESA_FORMAT_ARGB8888] = pack_row_float_ARGB8888;
-      table[MESA_FORMAT_ARGB8888_REV] = pack_row_float_ARGB8888_REV;
-      table[MESA_FORMAT_RGBX8888] = pack_row_float_RGBA8888; /* reused */
-      table[MESA_FORMAT_RGBX8888_REV] = pack_row_float_RGBA8888_REV; /* reused */
-      table[MESA_FORMAT_XRGB8888] = pack_row_float_XRGB8888;
-      table[MESA_FORMAT_XRGB8888_REV] = pack_row_float_XRGB8888_REV;
+      table[MESA_FORMAT_A8B8G8R8_UNORM] = pack_row_float_RGBA8888;
+      table[MESA_FORMAT_R8G8B8A8_UNORM] = pack_row_float_RGBA8888_REV;
+      table[MESA_FORMAT_B8G8R8A8_UNORM] = pack_row_float_ARGB8888;
+      table[MESA_FORMAT_A8R8G8B8_UNORM] = pack_row_float_ARGB8888_REV;
+      table[MESA_FORMAT_X8B8G8R8_UNORM] = pack_row_float_RGBA8888; /* reused */
+      table[MESA_FORMAT_R8G8B8X8_UNORM] = pack_row_float_RGBA8888_REV; /* reused */
+      table[MESA_FORMAT_B8G8R8X8_UNORM] = pack_row_float_XRGB8888;
+      table[MESA_FORMAT_X8R8G8B8_UNORM] = pack_row_float_XRGB8888_REV;
       table[MESA_FORMAT_RGB888] = pack_row_float_RGB888;
       table[MESA_FORMAT_BGR888] = pack_row_float_BGR888;
       table[MESA_FORMAT_RGB565] = pack_row_float_RGB565;
@@ -2246,14 +2246,14 @@ get_pack_ubyte_rgba_row_function(mesa_format format)
        */
       memset(table, 0, sizeof(table));
 
-      table[MESA_FORMAT_RGBA8888] = pack_row_ubyte_RGBA8888;
-      table[MESA_FORMAT_RGBA8888_REV] = pack_row_ubyte_RGBA8888_REV;
-      table[MESA_FORMAT_ARGB8888] = pack_row_ubyte_ARGB8888;
-      table[MESA_FORMAT_ARGB8888_REV] = pack_row_ubyte_ARGB8888_REV;
-      table[MESA_FORMAT_RGBX8888] = pack_row_ubyte_RGBA8888; /* reused */
-      table[MESA_FORMAT_RGBX8888_REV] = pack_row_ubyte_RGBA8888_REV; /* reused */
-      table[MESA_FORMAT_XRGB8888] = pack_row_ubyte_XRGB8888;
-      table[MESA_FORMAT_XRGB8888_REV] = pack_row_ubyte_XRGB8888_REV;
+      table[MESA_FORMAT_A8B8G8R8_UNORM] = pack_row_ubyte_RGBA8888;
+      table[MESA_FORMAT_R8G8B8A8_UNORM] = pack_row_ubyte_RGBA8888_REV;
+      table[MESA_FORMAT_B8G8R8A8_UNORM] = pack_row_ubyte_ARGB8888;
+      table[MESA_FORMAT_A8R8G8B8_UNORM] = pack_row_ubyte_ARGB8888_REV;
+      table[MESA_FORMAT_X8B8G8R8_UNORM] = pack_row_ubyte_RGBA8888; /* reused */
+      table[MESA_FORMAT_R8G8B8X8_UNORM] = pack_row_ubyte_RGBA8888_REV; /* reused */
+      table[MESA_FORMAT_B8G8R8X8_UNORM] = pack_row_ubyte_XRGB8888;
+      table[MESA_FORMAT_X8R8G8B8_UNORM] = pack_row_ubyte_XRGB8888_REV;
       table[MESA_FORMAT_RGB888] = pack_row_ubyte_RGB888;
       table[MESA_FORMAT_BGR888] = pack_row_ubyte_BGR888;
       table[MESA_FORMAT_RGB565] = pack_row_ubyte_RGB565;

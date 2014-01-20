@@ -343,20 +343,20 @@ xmesa_new_renderbuffer(struct gl_context *ctx, GLuint name,
          /* This will really only happen for pixmaps.  We'll access the
           * pixmap via a temporary XImage which will be 32bpp.
           */
-         xrb->Base.Base.Format = MESA_FORMAT_XRGB8888;
+         xrb->Base.Base.Format = MESA_FORMAT_B8G8R8X8_UNORM;
          break;
       case PF_8A8R8G8B:
-         xrb->Base.Base.Format = MESA_FORMAT_ARGB8888;
+         xrb->Base.Base.Format = MESA_FORMAT_B8G8R8A8_UNORM;
          break;
       case PF_8A8B8G8R:
-         xrb->Base.Base.Format = MESA_FORMAT_RGBA8888_REV;
+         xrb->Base.Base.Format = MESA_FORMAT_R8G8B8A8_UNORM;
          break;
       case PF_5R6G5B:
          xrb->Base.Base.Format = MESA_FORMAT_RGB565;
          break;
       default:
          _mesa_warning(ctx, "Bad pixel format in xmesa_new_renderbuffer");
-         xrb->Base.Base.Format = MESA_FORMAT_ARGB8888;
+         xrb->Base.Base.Format = MESA_FORMAT_B8G8R8A8_UNORM;
          break;
       }
 

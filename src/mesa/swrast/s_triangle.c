@@ -437,7 +437,7 @@ affine_span(struct gl_context *ctx, SWspan *span,
             return;
          }
          break;
-      case MESA_FORMAT_RGBA8888:
+      case MESA_FORMAT_A8B8G8R8_UNORM:
          switch(info->envmode) {
          case GL_MODULATE:
             SPAN_NEAREST(NEAREST_RGBA;MODULATE,4);
@@ -486,7 +486,7 @@ affine_span(struct gl_context *ctx, SWspan *span,
             return;
          }
          break;
-      case MESA_FORMAT_RGBA8888:
+      case MESA_FORMAT_A8B8G8R8_UNORM:
          switch (info->envmode) {
          case GL_MODULATE:
             SPAN_LINEAR(LINEAR_RGBA;MODULATE,4);
@@ -575,7 +575,7 @@ affine_span(struct gl_context *ctx, SWspan *span,
    case MESA_FORMAT_RGB888:						\
       info.tbytesline = texImg->Width * 3;				\
       break;								\
-   case MESA_FORMAT_RGBA8888:						\
+   case MESA_FORMAT_A8B8G8R8_UNORM:						\
       info.tbytesline = texImg->Width * 4;				\
       break;								\
    default:								\
@@ -709,7 +709,7 @@ fast_persp_span(struct gl_context *ctx, SWspan *span,
             return;
          }
          break;
-      case MESA_FORMAT_RGBA8888:
+      case MESA_FORMAT_A8B8G8R8_UNORM:
          switch(info->envmode) {
          case GL_MODULATE:
             SPAN_NEAREST(NEAREST_RGBA;MODULATE,4);
@@ -756,7 +756,7 @@ fast_persp_span(struct gl_context *ctx, SWspan *span,
             return;
          }
          break;
-      case MESA_FORMAT_RGBA8888:
+      case MESA_FORMAT_A8B8G8R8_UNORM:
          switch (info->envmode) {
          case GL_MODULATE:
             SPAN_LINEAR(LINEAR_RGBA;MODULATE,4);
@@ -841,7 +841,7 @@ fast_persp_span(struct gl_context *ctx, SWspan *span,
    case MESA_FORMAT_RGB888:						\
       info.tbytesline = texImg->Width * 3;				\
       break;								\
-   case MESA_FORMAT_RGBA8888:						\
+   case MESA_FORMAT_A8B8G8R8_UNORM:						\
       info.tbytesline = texImg->Width * 4;				\
       break;								\
    default:								\
@@ -1080,7 +1080,7 @@ _swrast_choose_triangle( struct gl_context *ctx )
              && texImg->Border == 0
              && (_mesa_format_row_stride(format, texImg->Width) ==
                  swImg->RowStride)
-             && (format == MESA_FORMAT_RGB888 || format == MESA_FORMAT_RGBA8888)
+             && (format == MESA_FORMAT_RGB888 || format == MESA_FORMAT_A8B8G8R8_UNORM)
              && minFilter == magFilter
              && ctx->Light.Model.ColorControl == GL_SINGLE_COLOR
              && !swrast->_FogEnabled
@@ -1107,7 +1107,7 @@ _swrast_choose_triangle( struct gl_context *ctx )
 #if CHAN_BITS != 8
                   USE(general_triangle);
 #else
-                  if (format == MESA_FORMAT_RGBA8888 && !_mesa_little_endian()) {
+                  if (format == MESA_FORMAT_A8B8G8R8_UNORM && !_mesa_little_endian()) {
                      /* We only handle RGBA8888 correctly on little endian
                       * in the optimized code above.
                       */

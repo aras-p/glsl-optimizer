@@ -504,10 +504,10 @@ intel_miptree_create(struct brw_context *brw,
    if (brw->gen < 8 && !brw->is_baytrail) {
       switch (format) {
       case MESA_FORMAT_ETC1_RGB8:
-         format = MESA_FORMAT_RGBX8888_REV;
+         format = MESA_FORMAT_R8G8B8X8_UNORM;
          break;
       case MESA_FORMAT_ETC2_RGB8:
-         format = MESA_FORMAT_RGBX8888_REV;
+         format = MESA_FORMAT_R8G8B8X8_UNORM;
          break;
       case MESA_FORMAT_ETC2_SRGB8:
       case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
@@ -516,7 +516,7 @@ intel_miptree_create(struct brw_context *brw,
          break;
       case MESA_FORMAT_ETC2_RGBA8_EAC:
       case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
-         format = MESA_FORMAT_RGBA8888_REV;
+         format = MESA_FORMAT_R8G8B8A8_UNORM;
          break;
       case MESA_FORMAT_ETC2_R11_EAC:
          format = MESA_FORMAT_R16;
@@ -2004,7 +2004,7 @@ intel_miptree_map_etc(struct brw_context *brw,
 {
    assert(mt->etc_format != MESA_FORMAT_NONE);
    if (mt->etc_format == MESA_FORMAT_ETC1_RGB8) {
-      assert(mt->format == MESA_FORMAT_RGBX8888_REV);
+      assert(mt->format == MESA_FORMAT_R8G8B8X8_UNORM);
    }
 
    assert(map->mode & GL_MAP_WRITE_BIT);

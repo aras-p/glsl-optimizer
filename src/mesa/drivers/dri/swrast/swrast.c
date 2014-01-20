@@ -92,9 +92,9 @@ static void swrastSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
     sPriv->swrast_loader->getDrawableInfo(dPriv, &x, &y, &w, &h, dPriv->loaderPrivate);
 
     if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
-	texFormat = MESA_FORMAT_XRGB8888;
+	texFormat = MESA_FORMAT_B8G8R8X8_UNORM;
     else
-	texFormat = MESA_FORMAT_ARGB8888;
+	texFormat = MESA_FORMAT_B8G8R8A8_UNORM;
 
     _mesa_init_teximage_fields(&dri_ctx->Base, texImage,
 			       w, h, 1, 0, internalFormat, texFormat);
@@ -169,10 +169,10 @@ swrastFillInModes(__DRIscreen *psp,
 	format = MESA_FORMAT_RGB565;
 	break;
     case 24:
-        format = MESA_FORMAT_XRGB8888;
+        format = MESA_FORMAT_B8G8R8X8_UNORM;
 	break;
     case 32:
-	format = MESA_FORMAT_ARGB8888;
+	format = MESA_FORMAT_B8G8R8A8_UNORM;
 	break;
     default:
 	fprintf(stderr, "[%s:%u] bad depth %d\n", __func__, __LINE__,
@@ -345,13 +345,13 @@ swrast_new_renderbuffer(const struct gl_config *visual, __DRIdrawable *dPriv,
 
     switch (pixel_format) {
     case PF_A8R8G8B8:
-	rb->Format = MESA_FORMAT_ARGB8888;
+	rb->Format = MESA_FORMAT_B8G8R8A8_UNORM;
 	rb->InternalFormat = GL_RGBA;
 	rb->_BaseFormat = GL_RGBA;
 	xrb->bpp = 32;
 	break;
     case PF_X8R8G8B8:
-	rb->Format = MESA_FORMAT_ARGB8888; /* XXX */
+	rb->Format = MESA_FORMAT_B8G8R8A8_UNORM; /* XXX */
 	rb->InternalFormat = GL_RGB;
 	rb->_BaseFormat = GL_RGB;
 	xrb->bpp = 32;
@@ -634,7 +634,7 @@ static mesa_format swrastChooseTextureFormat(struct gl_context * ctx,
 					   GLenum type)
 {
     if (internalFormat == GL_RGB)
-	return MESA_FORMAT_XRGB8888;
+	return MESA_FORMAT_B8G8R8X8_UNORM;
     return _mesa_choose_tex_format(ctx, target, internalFormat, format, type);
 }
 

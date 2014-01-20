@@ -593,11 +593,11 @@ MesaSoftwareRast::_SetupRenderBuffer(struct gl_renderbuffer* rb,
 	switch (colorSpace) {
 		case B_RGBA32:
 			rb->_BaseFormat = GL_RGBA;
-			rb->Format = MESA_FORMAT_ARGB8888;
+			rb->Format = MESA_FORMAT_B8G8R8A8_UNORM;
 			break;
 		case B_RGB32:
 			rb->_BaseFormat = GL_RGB;
-			rb->Format = MESA_FORMAT_XRGB8888;
+			rb->Format = MESA_FORMAT_B8G8R8X8_UNORM;
 			break;
 		case B_RGB24:
 			rb->_BaseFormat = GL_RGB;

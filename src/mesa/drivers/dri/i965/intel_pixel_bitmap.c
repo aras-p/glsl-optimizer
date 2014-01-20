@@ -229,8 +229,8 @@ do_blit_bitmap( struct gl_context *ctx,
    UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[3], tmpColor[3]);
 
    switch (_mesa_get_render_format(ctx, intel_rb_format(irb))) {
-   case MESA_FORMAT_ARGB8888:
-   case MESA_FORMAT_XRGB8888:
+   case MESA_FORMAT_B8G8R8A8_UNORM:
+   case MESA_FORMAT_B8G8R8X8_UNORM:
       color = PACK_COLOR_8888(ubcolor[3], ubcolor[0], ubcolor[1], ubcolor[2]);
       break;
    case MESA_FORMAT_RGB565:

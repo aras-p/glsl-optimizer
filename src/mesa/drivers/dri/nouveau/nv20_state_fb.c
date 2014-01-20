@@ -36,9 +36,9 @@ static inline unsigned
 get_rt_format(mesa_format format)
 {
 	switch (format) {
-	case MESA_FORMAT_XRGB8888:
+	case MESA_FORMAT_B8G8R8X8_UNORM:
 		return NV20_3D_RT_FORMAT_COLOR_X8R8G8B8;
-	case MESA_FORMAT_ARGB8888:
+	case MESA_FORMAT_B8G8R8A8_UNORM:
 		return NV20_3D_RT_FORMAT_COLOR_A8R8G8B8;
 	case MESA_FORMAT_RGB565:
 		return NV20_3D_RT_FORMAT_COLOR_R5G6B5;

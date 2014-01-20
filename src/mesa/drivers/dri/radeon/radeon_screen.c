@@ -219,12 +219,12 @@ radeon_create_image_from_name(__DRIscreen *screen,
       image->data_type = GL_UNSIGNED_BYTE;
       break;
    case __DRI_IMAGE_FORMAT_XRGB8888:
-      image->format = MESA_FORMAT_XRGB8888;
+      image->format = MESA_FORMAT_B8G8R8X8_UNORM;
       image->internal_format = GL_RGB;
       image->data_type = GL_UNSIGNED_BYTE;
       break;
    case __DRI_IMAGE_FORMAT_ARGB8888:
-      image->format = MESA_FORMAT_ARGB8888;
+      image->format = MESA_FORMAT_B8G8R8A8_UNORM;
       image->internal_format = GL_RGBA;
       image->data_type = GL_UNSIGNED_BYTE;
       break;
@@ -319,12 +319,12 @@ radeon_create_image(__DRIscreen *screen,
       image->data_type = GL_UNSIGNED_BYTE;
       break;
    case __DRI_IMAGE_FORMAT_XRGB8888:
-      image->format = MESA_FORMAT_XRGB8888;
+      image->format = MESA_FORMAT_B8G8R8X8_UNORM;
       image->internal_format = GL_RGB;
       image->data_type = GL_UNSIGNED_BYTE;
       break;
    case __DRI_IMAGE_FORMAT_ARGB8888:
-      image->format = MESA_FORMAT_ARGB8888;
+      image->format = MESA_FORMAT_B8G8R8A8_UNORM;
       image->internal_format = GL_RGBA;
       image->data_type = GL_UNSIGNED_BYTE;
       break;
@@ -613,9 +613,9 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
     if (mesaVis->redBits == 5)
         rgbFormat = _mesa_little_endian() ? MESA_FORMAT_RGB565 : MESA_FORMAT_RGB565_REV;
     else if (mesaVis->alphaBits == 0)
-        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_XRGB8888 : MESA_FORMAT_XRGB8888_REV;
+        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_B8G8R8X8_UNORM : MESA_FORMAT_X8R8G8B8_UNORM;
     else
-        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_ARGB8888 : MESA_FORMAT_ARGB8888_REV;
+        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_B8G8R8A8_UNORM : MESA_FORMAT_A8R8G8B8_UNORM;
 
     /* front color renderbuffer */
     rfb->color_rb[0] = radeon_create_renderbuffer(rgbFormat, driDrawPriv);
@@ -710,8 +710,8 @@ __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
 {
    static const mesa_format formats[3] = {
       MESA_FORMAT_RGB565,
-      MESA_FORMAT_XRGB8888,
-      MESA_FORMAT_ARGB8888
+      MESA_FORMAT_B8G8R8X8_UNORM,
+      MESA_FORMAT_B8G8R8A8_UNORM
    };
    /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
     * support pageflipping at all.

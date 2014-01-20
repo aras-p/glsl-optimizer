@@ -185,7 +185,7 @@ get_input_arg(struct combiner_state *rc, int arg, int flags)
 					get_input_mapping(rc, operand,
 							  flags ^ INVERT);
 
-		} else if (format == MESA_FORMAT_XRGB8888) {
+		} else if (format == MESA_FORMAT_B8G8R8X8_UNORM) {
 			/* Sometimes emulated using ARGB8888. */
 			if (!is_color_operand(operand))
 				return RC_IN_SOURCE(ZERO) |
@@ -319,7 +319,7 @@ nv10_get_general_combiner(struct gl_context *ctx, int i,
 		rc_a.in = rc_a.out = rc_c.in = rc_c.out = 0;
 	}
 
-	*k = pack_rgba_f(MESA_FORMAT_ARGB8888,
+	*k = pack_rgba_f(MESA_FORMAT_B8G8R8A8_UNORM,
 			 ctx->Texture.Unit[i].EnvColor);
 	*a_in = rc_a.in;
 	*a_out = rc_a.out;

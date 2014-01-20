@@ -269,7 +269,7 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
 
    /* __DRIimage is opaque to the core so it has to be checked here */
    switch (image->format) {
-   case MESA_FORMAT_RGBA8888_REV:
+   case MESA_FORMAT_R8G8B8A8_UNORM:
       _mesa_error(ctx, GL_INVALID_OPERATION,
             "glEGLImageTargetRenderbufferStorage(unsupported image format");
       return;
