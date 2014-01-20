@@ -72,8 +72,8 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 
    const unsigned gs_out_prim = (gs ? gs->output_primitive :
                                  u_assembled_prim(prim));
-   unsigned nr = MAX2(vs->info.num_inputs,
-                      draw_total_vs_outputs(draw));
+   unsigned nr_vs_outputs = draw_total_vs_outputs(draw);
+   unsigned nr = MAX2(vs->info.num_inputs, nr_vs_outputs);
    unsigned point_clip = draw->rasterizer->fill_front == PIPE_POLYGON_MODE_POINT ||
                          gs_out_prim == PIPE_PRIM_POINTS;
 
@@ -131,6 +131,9 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    /* No need to prepare the shader.
     */
    vs->prepare(vs, draw);
+
+   /* Make sure that the vertex size didn't change at any point above */
+   assert(nr_vs_outputs == draw_total_vs_outputs(draw));
 }
 
 

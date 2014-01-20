@@ -141,20 +141,12 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
    struct draw_geometry_shader *gs = draw->gs.geometry_shader;
    const unsigned out_prim = gs ? gs->output_primitive :
       u_assembled_prim(in_prim);
-   const unsigned nr = MAX2(vs->info.num_inputs,
-                            draw_total_vs_outputs(draw));
    unsigned point_clip = draw->rasterizer->fill_front == PIPE_POLYGON_MODE_POINT ||
                          out_prim == PIPE_PRIM_POINTS;
+   unsigned nr;
 
    fpme->input_prim = in_prim;
    fpme->opt = opt;
-
-   /* Always leave room for the vertex header whether we need it or
-    * not.  It's hard to get rid of it in particular because of the
-    * viewport code in draw_pt_post_vs.c.
-    */
-   fpme->vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
-
 
    draw_pt_post_vs_prepare( fpme->post_vs,
                             draw->clip_xy,
@@ -179,6 +171,30 @@ llvm_middle_end_prepare( struct draw_pt_middle_end *middle,
       /* limit max fetches by limiting max_vertices */
       *max_vertices = 4096;
    }
+
+   /* Get the number of float[4] attributes per vertex.
+    * Note: this must be done after draw_pt_emit_prepare() since that
+    * can effect the vertex size.
+    */
+   nr = MAX2(vs->info.num_inputs, draw_total_vs_outputs(draw));
+
+   /* Always leave room for the vertex header whether we need it or
+    * not.  It's hard to get rid of it in particular because of the
+    * viewport code in draw_pt_post_vs.c.
+    */
+   fpme->vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
+
+   /* Get the number of float[4] attributes per vertex.
+    * Note: this must be done after draw_pt_emit_prepare() since that
+    * can effect the vertex size.
+    */
+   nr = MAX2(vs->info.num_inputs, draw_total_vs_outputs(draw));
+
+   /* Always leave room for the vertex header whether we need it or
+    * not.  It's hard to get rid of it in particular because of the
+    * viewport code in draw_pt_post_vs.c.
+    */
+   fpme->vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
 
    /* return even number */
    *max_vertices = *max_vertices & ~1;
