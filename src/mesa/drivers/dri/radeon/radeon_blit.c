@@ -214,7 +214,7 @@ static inline void emit_cb_setup(struct r100_context *r100,
     if (bo->flags & RADEON_BO_FLAGS_MICRO_TILE)
         dst_pitch |= RADEON_COLOR_MICROTILE_ENABLE;
 
-    BEGIN_BATCH_NO_AUTOSTATE(18);
+    BEGIN_BATCH(18);
     OUT_BATCH_REGVAL(RADEON_RE_TOP_LEFT, 0);
     OUT_BATCH_REGVAL(RADEON_RE_WIDTH_HEIGHT, (((width - 1) << RADEON_RE_WIDTH_SHIFT) |
 					      ((height - 1) << RADEON_RE_HEIGHT_SHIFT)));

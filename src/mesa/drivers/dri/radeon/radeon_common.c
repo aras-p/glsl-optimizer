@@ -499,7 +499,7 @@ static INLINE void radeon_emit_atom(radeonContextPtr radeon, struct radeon_state
 		if (atom->emit) {
 			(*atom->emit)(&radeon->glCtx, atom);
 		} else {
-			BEGIN_BATCH_NO_AUTOSTATE(dwords);
+			BEGIN_BATCH(dwords);
 			OUT_BATCH_TABLE(atom->cmd, dwords);
 			END_BATCH();
 		}

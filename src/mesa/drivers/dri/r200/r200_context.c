@@ -169,7 +169,7 @@ static void r200_emit_query_finish(radeonContextPtr radeon)
    BATCH_LOCALS(radeon);
    struct radeon_query_object *query = radeon->query.current;
 
-   BEGIN_BATCH_NO_AUTOSTATE(4);
+   BEGIN_BATCH(4);
    OUT_BATCH(CP_PACKET0(RADEON_RB3D_ZPASS_ADDR, 0));
    OUT_BATCH_RELOC(0, query->bo, query->curr_offset, 0, RADEON_GEM_DOMAIN_GTT, 0);
    END_BATCH();

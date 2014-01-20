@@ -263,7 +263,7 @@ static void scl_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
    BATCH_LOCALS(&r100->radeon);
    uint32_t dwords = atom->check(ctx, atom);
    
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   BEGIN_BATCH(dwords);
    OUT_SCL(atom->cmd[0], atom->cmd+1);
    END_BATCH();
 }
@@ -275,7 +275,7 @@ static void vec_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
    BATCH_LOCALS(&r100->radeon);
    uint32_t dwords = atom->check(ctx, atom);
 
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   BEGIN_BATCH(dwords);
    OUT_VEC(atom->cmd[0], atom->cmd+1);
    END_BATCH();
 }
@@ -287,7 +287,7 @@ static void lit_emit(struct gl_context *ctx, struct radeon_state_atom *atom)
    BATCH_LOCALS(&r100->radeon);
    uint32_t dwords = atom->check(ctx, atom);
 
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   BEGIN_BATCH(dwords);
    OUT_VEC(atom->cmd[LIT_CMD_0], atom->cmd+1);
    OUT_SCL(atom->cmd[LIT_CMD_1], atom->cmd+LIT_CMD_1+1);
    END_BATCH();
@@ -366,7 +366,7 @@ static void ctx_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
      
    }
 
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   BEGIN_BATCH(dwords);
 
    /* In the CS case we need to split this up */
    OUT_BATCH(CP_PACKET0(packet[0].start, 3));
@@ -399,7 +399,7 @@ static void ctx_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
    // }
 
    END_BATCH();
-   BEGIN_BATCH_NO_AUTOSTATE(4);
+   BEGIN_BATCH(4);
    OUT_BATCH(CP_PACKET0(RADEON_RE_TOP_LEFT, 0));
    OUT_BATCH(0);
    OUT_BATCH(CP_PACKET0(RADEON_RE_WIDTH_HEIGHT, 0));
@@ -437,7 +437,7 @@ static void cube_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
 	default:
 	case 0: base_reg = RADEON_PP_CUBIC_OFFSET_T0_0; break;
    };
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   BEGIN_BATCH(dwords);
    OUT_BATCH_TABLE(atom->cmd, 2);
    lvl = &t->mt->levels[0];
    for (j = 0; j < 5; j++) {
@@ -469,7 +469,7 @@ static void tex_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
      dwords += 2;
    else
      dwords -= 2;
-   BEGIN_BATCH_NO_AUTOSTATE(dwords);
+   BEGIN_BATCH(dwords);
 
    OUT_BATCH(CP_PACKET0(RADEON_PP_TXFILTER_0 + (24 * i), 1));
    OUT_BATCH_TABLE((atom->cmd + 1), 2);

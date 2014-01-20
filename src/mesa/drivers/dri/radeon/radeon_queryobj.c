@@ -209,7 +209,7 @@ void radeon_emit_queryobj(struct gl_context *ctx, struct radeon_state_atom *atom
 
 	dwords = (*atom->check) (ctx, atom);
 
-	BEGIN_BATCH_NO_AUTOSTATE(dwords);
+	BEGIN_BATCH(dwords);
 	OUT_BATCH_TABLE(atom->cmd, dwords);
 	END_BATCH();
 

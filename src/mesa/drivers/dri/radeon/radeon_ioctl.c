@@ -234,7 +234,7 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
    align_min_nr = (min_nr + 1) & ~1;
 
 #if RADEON_OLD_PACKETS
-   BEGIN_BATCH_NO_AUTOSTATE(2+ELTS_BUFSZ(align_min_nr)/4);
+   BEGIN_BATCH(2+ELTS_BUFSZ(align_min_nr)/4);
    OUT_BATCH_PACKET3_CLIP(RADEON_CP_PACKET3_3D_RNDR_GEN_INDX_PRIM, 0);
    OUT_BATCH(rmesa->ioctl.vertex_offset);
    OUT_BATCH(rmesa->ioctl.vertex_max);
@@ -244,7 +244,7 @@ GLushort *radeonAllocEltsOpenEnded( r100ContextPtr rmesa,
 	     RADEON_CP_VC_CNTL_COLOR_ORDER_RGBA |
 	     RADEON_CP_VC_CNTL_VTX_FMT_RADEON_MODE);
 #else
-   BEGIN_BATCH_NO_AUTOSTATE(ELTS_BUFSZ(align_min_nr)/4);
+   BEGIN_BATCH(ELTS_BUFSZ(align_min_nr)/4);
    OUT_BATCH_PACKET3_CLIP(RADEON_CP_PACKET3_DRAW_INDX, 0);
    OUT_BATCH(vertex_format);
    OUT_BATCH(primitive |

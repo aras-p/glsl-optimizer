@@ -28,15 +28,10 @@ void rcommonBeginBatch(radeonContextPtr rmesa,
 	const radeonContextPtr b_l_rmesa = rmesa
 
 /**
- * Prepare writing n dwords to the command buffer,
- * including producing any necessary state emits on buffer wraparound.
+ * Prepare writing n dwords to the command buffer.  Does not cause automatic
+ * state emits.
  */
 #define BEGIN_BATCH(n) rcommonBeginBatch(b_l_rmesa, n, __FILE__, __FUNCTION__, __LINE__)
-
-/**
- * Same as BEGIN_BATCH, but do not cause automatic state emits.
- */
-#define BEGIN_BATCH_NO_AUTOSTATE(n) rcommonBeginBatch(b_l_rmesa, n, __FILE__, __FUNCTION__, __LINE__)
 
 /**
  * Write one dword to the command buffer.

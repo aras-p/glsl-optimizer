@@ -337,7 +337,7 @@ static inline void emit_cb_setup(struct r200_context *r200,
     if (bo->flags & RADEON_BO_FLAGS_MICRO_TILE)
 	dst_pitch |= R200_COLOR_MICROTILE_ENABLE;
 
-    BEGIN_BATCH_NO_AUTOSTATE(22);
+    BEGIN_BATCH(22);
     OUT_BATCH_REGVAL(R200_RE_AUX_SCISSOR_CNTL, 0);
     OUT_BATCH_REGVAL(R200_RE_CNTL, 0);
     OUT_BATCH_REGVAL(RADEON_RE_TOP_LEFT, 0);
