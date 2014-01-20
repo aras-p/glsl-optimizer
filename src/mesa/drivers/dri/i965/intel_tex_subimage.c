@@ -588,6 +588,10 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
    if (!mem_copy)
       return false;
 
+   /* If this is a nontrivial texture view, let another path handle it instead. */
+   if (texImage->TexObject->MinLevel || texImage->TexObject->MinLayer)
+      return false;
+
    if (for_glTexImage)
       ctx->Driver.AllocTextureImageBuffer(ctx, texImage);
 
