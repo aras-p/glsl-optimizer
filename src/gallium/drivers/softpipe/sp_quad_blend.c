@@ -1232,7 +1232,10 @@ choose_blend_quad(struct quad_stage *qs,
             softpipe->blend->rt[0].colormask == 0xf &&
             softpipe->framebuffer.nr_cbufs == 1)
    {
-      if (!blend->rt[0].blend_enable) {
+      if (softpipe->framebuffer.cbufs[0] == NULL) {
+         qs->run = blend_noop;
+      }
+      else if (!blend->rt[0].blend_enable) {
          qs->run = single_output_color;
       }
       else if (blend->rt[0].rgb_src_factor == blend->rt[0].alpha_src_factor &&
