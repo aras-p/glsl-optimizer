@@ -98,6 +98,11 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
       return true;
    }
 
+   /* Immutable textures should not get this far -- they should have been
+    * created in a validated state, and nothing can invalidate them.
+    */
+   assert(!tObj->Immutable);
+
    firstImage = intel_texture_image(tObj->Image[0][tObj->BaseLevel]);
 
    /* Check tree can hold all active levels.  Check tree matches
