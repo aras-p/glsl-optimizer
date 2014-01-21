@@ -519,15 +519,18 @@ intel_renderbuffer_update_wrapper(struct brw_context *brw,
    intel_miptree_check_level_layer(mt, level, layer);
    irb->mt_level = level;
 
+   int layer_multiplier;
    switch (mt->msaa_layout) {
       case INTEL_MSAA_LAYOUT_UMS:
       case INTEL_MSAA_LAYOUT_CMS:
-         irb->mt_layer = layer * mt->num_samples;
+         layer_multiplier = mt->num_samples;
          break;
 
       default:
-         irb->mt_layer = layer;
+         layer_multiplier = 1;
    }
+
+   irb->mt_layer = layer_multiplier * layer;
 
    intel_miptree_reference(&irb->mt, mt);
 
