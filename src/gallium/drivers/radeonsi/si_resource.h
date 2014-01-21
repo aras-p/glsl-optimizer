@@ -44,8 +44,6 @@ struct si_surface {
 	struct pipe_surface		base;
 };
 
-void si_init_screen_resource_functions(struct pipe_screen *screen);
-
 struct si_context;
 
 void si_upload_const_buffer(struct si_context *sctx, struct r600_resource **rbuffer,

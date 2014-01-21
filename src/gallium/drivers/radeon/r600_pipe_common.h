@@ -333,6 +333,8 @@ bool r600_can_dump_shader(struct r600_common_screen *rscreen,
 			  const struct tgsi_token *tokens);
 void r600_screen_clear_buffer(struct r600_common_screen *rscreen, struct pipe_resource *dst,
 			      unsigned offset, unsigned size, unsigned value);
+struct pipe_resource *r600_resource_create_common(struct pipe_screen *screen,
+						  const struct pipe_resource *templ);
 
 /* r600_query.c */
 void r600_query_init(struct r600_common_context *rctx);
@@ -364,9 +366,7 @@ bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct r600_texture **staging);
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 					const struct pipe_resource *templ);
-struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
-						const struct pipe_resource *base,
-						struct winsys_handle *whandle);
+void r600_init_texture_functions(struct r600_common_screen *rscreen);
 
 
 /* Inline helpers. */

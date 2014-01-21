@@ -191,6 +191,16 @@ static bool r600_init_tiling(struct r600_common_screen *rscreen)
 	}
 }
 
+struct pipe_resource *r600_resource_create_common(struct pipe_screen *screen,
+						  const struct pipe_resource *templ)
+{
+	if (templ->target == PIPE_BUFFER) {
+		return r600_buffer_create(screen, templ, 4096);
+	} else {
+		return r600_texture_create(screen, templ);
+	}
+}
+
 bool r600_common_screen_init(struct r600_common_screen *rscreen,
 			     struct radeon_winsys *ws)
 {
@@ -199,6 +209,10 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 	rscreen->b.fence_finish = r600_fence_finish;
 	rscreen->b.fence_reference = r600_fence_reference;
 	rscreen->b.fence_signalled = r600_fence_signalled;
+	rscreen->b.resource_create = r600_resource_create_common;
+	rscreen->b.resource_destroy = u_resource_destroy_vtbl;
+
+	r600_init_texture_functions(rscreen);
 
 	rscreen->ws = ws;
 	rscreen->family = rscreen->info.family;
@@ -233,6 +247,11 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 	rctx->family = rscreen->family;
 	rctx->chip_class = rscreen->chip_class;
 	rctx->max_db = rscreen->chip_class >= EVERGREEN ? 8 : 4;
+
+	rctx->b.transfer_map = u_transfer_map_vtbl;
+	rctx->b.transfer_flush_region = u_default_transfer_flush_region;
+	rctx->b.transfer_unmap = u_transfer_unmap_vtbl;
+	rctx->b.transfer_inline_write = u_default_transfer_inline_write;
 
 	r600_streamout_init(rctx);
 	r600_query_init(rctx);

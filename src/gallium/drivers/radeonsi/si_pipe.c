@@ -142,7 +142,6 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 		goto fail;
 
 	si_init_blit_functions(sctx);
-	si_init_context_resource_functions(sctx);
 	si_init_compute_functions(sctx);
 
 	if (sscreen->b.info.has_uvd) {
@@ -637,7 +636,6 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 		sscreen->b.b.get_video_param = si_get_video_param;
 		sscreen->b.b.is_video_format_supported = vl_video_buffer_is_format_supported;
 	}
-	si_init_screen_resource_functions(&sscreen->b.b);
 
 	if (!r600_common_screen_init(&sscreen->b, ws)) {
 		FREE(sscreen);

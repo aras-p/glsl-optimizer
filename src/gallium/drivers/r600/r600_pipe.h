@@ -535,9 +535,6 @@ void r600_decompress_color_textures(struct r600_context *rctx,
 /* r600_pipe.c */
 const char * r600_llvm_gpu_string(enum radeon_family family);
 
-/* r600_resource.c */
-void r600_init_context_resource_functions(struct r600_context *r600);
-
 /* r600_shader.c */
 int r600_pipe_shader_create(struct pipe_context *ctx,
 			    struct r600_pipe_shader *shader,

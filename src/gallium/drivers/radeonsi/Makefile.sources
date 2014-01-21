@@ -7,7 +7,6 @@ C_SOURCES := \
 	si_hw_context.c \
 	si_pipe.c \
 	si_pm4.c \
-	si_resource.c \
 	si_shader.c \
 	si_state.c \
 	si_state_draw.c \

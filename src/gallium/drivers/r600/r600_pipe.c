@@ -211,7 +211,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->keep_tiling_flags = rscreen->b.info.drm_minor >= 12;
 
 	r600_init_blit_functions(rctx);
-	r600_init_context_resource_functions(rctx);
 
 	if (rscreen->b.info.has_uvd) {
 		rctx->b.b.create_video_codec = r600_uvd_create_decoder;
@@ -826,6 +825,16 @@ static int r600_get_driver_query_info(struct pipe_screen *screen,
 	return 1;
 }
 
+static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
+						  const struct pipe_resource *templ)
+{
+	if (templ->target == PIPE_BUFFER &&
+	    (templ->bind & PIPE_BIND_GLOBAL))
+		return r600_compute_global_buffer_create(screen, templ);
+
+	return r600_resource_create_common(screen, templ);
+}
+
 struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 {
 	struct r600_screen *rscreen = CALLOC_STRUCT(r600_screen);
@@ -859,7 +868,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		rscreen->b.b.get_video_param = r600_get_video_param;
 		rscreen->b.b.is_video_format_supported = vl_video_buffer_is_format_supported;
 	}
-	r600_init_screen_resource_functions(&rscreen->b.b);
+	rscreen->b.b.resource_create = r600_resource_create;
 
 	if (!r600_common_screen_init(&rscreen->b, ws)) {
 		FREE(rscreen);

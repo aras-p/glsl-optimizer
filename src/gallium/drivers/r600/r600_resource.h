@@ -86,7 +86,4 @@ static INLINE bool r600_can_read_depth(struct r600_texture *rtex)
 		rtex->resource.b.b.format == PIPE_FORMAT_Z32_FLOAT);
 }
 
-void r600_resource_destroy(struct pipe_screen *screen, struct pipe_resource *res);
-void r600_init_screen_resource_functions(struct pipe_screen *screen);
-
 #endif
