@@ -511,6 +511,10 @@ intel_renderbuffer_update_wrapper(struct brw_context *brw,
 
    rb->AllocStorage = intel_nop_alloc_storage;
 
+   /* adjust for texture view parameters */
+   layer += image->TexObject->MinLayer;
+   level += image->TexObject->MinLevel;
+
    intel_miptree_check_level_layer(mt, level, layer);
    irb->mt_level = level;
 
