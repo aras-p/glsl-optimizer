@@ -51,7 +51,7 @@ static void si_blitter_begin(struct pipe_context *ctx, enum si_blitter_op op)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 
-	si_context_queries_suspend(sctx);
+	r600_suspend_nontimer_queries(&sctx->b);
 
 	util_blitter_save_blend(sctx->blitter, sctx->queued.named.blend);
 	util_blitter_save_depth_stencil_alpha(sctx->blitter, sctx->queued.named.dsa);
@@ -81,26 +81,18 @@ static void si_blitter_begin(struct pipe_context *ctx, enum si_blitter_op op)
 			sctx->samplers[PIPE_SHADER_FRAGMENT].views.views);
 	}
 
-	if ((op & SI_DISABLE_RENDER_COND) && sctx->current_render_cond) {
-		sctx->saved_render_cond = sctx->current_render_cond;
-		sctx->saved_render_cond_cond = sctx->current_render_cond_cond;
-		sctx->saved_render_cond_mode = sctx->current_render_cond_mode;
-		sctx->b.b.render_condition(&sctx->b.b, NULL, FALSE, 0);
+	if ((op & SI_DISABLE_RENDER_COND) && sctx->b.current_render_cond) {
+		util_blitter_save_render_condition(sctx->blitter,
+                                                   sctx->b.current_render_cond,
+                                                   sctx->b.current_render_cond_cond,
+                                                   sctx->b.current_render_cond_mode);
 	}
-
 }
 
 static void si_blitter_end(struct pipe_context *ctx)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	if (sctx->saved_render_cond) {
-		sctx->b.b.render_condition(&sctx->b.b,
-					       sctx->saved_render_cond,
-					       sctx->saved_render_cond_cond,
-					       sctx->saved_render_cond_mode);
-		sctx->saved_render_cond = NULL;
-	}
-	si_context_queries_resume(sctx);
+	r600_resume_nontimer_queries(&sctx->b);
 }
 
 static unsigned u_max_sample(struct pipe_resource *r)

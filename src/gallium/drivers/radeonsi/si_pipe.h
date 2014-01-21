@@ -127,12 +127,6 @@ struct si_context {
 	struct si_pipe_shader_selector	*ps_shader;
 	struct si_pipe_shader_selector	*vs_shader;
 	struct si_cs_shader_state	cs_shader_state;
-	struct pipe_query		*current_render_cond;
-	unsigned			current_render_cond_mode;
-	boolean				current_render_cond_cond;
-	struct pipe_query		*saved_render_cond;
-	unsigned			saved_render_cond_mode;
-	boolean				saved_render_cond_cond;
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	unsigned			export_16bpc;
@@ -147,16 +141,6 @@ struct si_context {
 	/* Below are variables from the old r600_context.
 	 */
 	unsigned		pm4_dirty_cdwords;
-
-	/* The list of active queries. Only one query of each type can be active. */
-	struct list_head	active_nontimer_query_list;
-	unsigned		num_cs_dw_nontimer_queries_suspend;
-	/* If queries have been suspended. */
-	bool			nontimer_queries_suspended;
-
-	unsigned		backend_mask;
-	unsigned                max_db; /* for OQ */
-	boolean                 predicate_drawing;
 
 	/* Vertex and index buffers. */
 	bool			vertex_buffers_dirty;
@@ -191,9 +175,6 @@ void si_upload_index_buffer(struct si_context *sctx,
 void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 	       unsigned flags);
 const char *si_get_llvm_processor_name(enum radeon_family family);
-
-/* si_query.c */
-void si_init_query_functions(struct si_context *sctx);
 
 /* si_resource.c */
 void si_init_context_resource_functions(struct si_context *sctx);

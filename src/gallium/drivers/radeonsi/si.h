@@ -33,56 +33,11 @@
 #include "si_resource.h"
 
 struct winsys_handle;
-
-/* R600/R700 STATES */
-struct si_query {
-	union {
-		uint64_t			u64;
-		boolean				b;
-		struct pipe_query_data_so_statistics so;
-	} result;
-	/* The kind of query */
-	unsigned				type;
-	/* Offset of the first result for current query */
-	unsigned				results_start;
-	/* Offset of the next free result after current query data */
-	unsigned				results_end;
-	/* Size of the result in memory for both begin_query and end_query,
-	 * this can be one or two numbers, or it could even be a size of a structure. */
-	unsigned				result_size;
-	/* The buffer where query results are stored. It's used as a ring,
-	 * data blocks for current query are stored sequentially from
-	 * results_start to results_end, with wrapping on the buffer end */
-	struct r600_resource			*buffer;
-	/* The number of dwords for begin_query or end_query. */
-	unsigned				num_cs_dw;
-	/* linked list of queries */
-	struct list_head			list;
-};
-
 struct si_context;
 struct si_screen;
 
-void si_get_backend_mask(struct si_context *ctx);
 void si_context_flush(struct si_context *ctx, unsigned flags);
 void si_begin_new_cs(struct si_context *ctx);
-
-struct si_query *si_context_query_create(struct si_context *ctx, unsigned query_type);
-void si_context_query_destroy(struct si_context *ctx, struct si_query *query);
-boolean si_context_query_result(struct si_context *ctx,
-				struct si_query *query,
-				boolean wait, void *vresult);
-void si_query_begin(struct si_context *ctx, struct si_query *query);
-void si_query_end(struct si_context *ctx, struct si_query *query);
-void si_context_queries_suspend(struct si_context *ctx);
-void si_context_queries_resume(struct si_context *ctx);
-void si_query_predication(struct si_context *ctx, struct si_query *query, int operation,
-			    int flag_wait);
-
-bool si_is_timer_query(unsigned type);
-bool si_query_needs_begin(unsigned type);
 void si_need_cs_space(struct si_context *ctx, unsigned num_dw, boolean count_draw_in);
-
-int si_context_init(struct si_context *ctx);
 
 #endif

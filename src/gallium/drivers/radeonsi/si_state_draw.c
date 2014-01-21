@@ -545,7 +545,7 @@ static void si_state_draw(struct si_context *sctx,
 
 	/* queries need some special values
 	 * (this is non-zero if any query is active) */
-	if (sctx->num_cs_dw_nontimer_queries_suspend) {
+	if (sctx->b.num_occlusion_queries > 0) {
 		if (sctx->b.chip_class >= CIK) {
 			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,
 				       S_028004_PERFECT_ZPASS_COUNTS(1) |
@@ -592,11 +592,11 @@ static void si_state_draw(struct si_context *sctx,
 		si_pm4_cmd_add(pm4, V_028A7C_VGT_INDEX_16 | (SI_BIG_ENDIAN ?
 				V_028A7C_VGT_DMA_SWAP_16_BIT : 0));
 	}
-	si_pm4_cmd_end(pm4, sctx->predicate_drawing);
+	si_pm4_cmd_end(pm4, sctx->b.predicate_drawing);
 
 	si_pm4_cmd_begin(pm4, PKT3_NUM_INSTANCES);
 	si_pm4_cmd_add(pm4, info->instance_count);
-	si_pm4_cmd_end(pm4, sctx->predicate_drawing);
+	si_pm4_cmd_end(pm4, sctx->b.predicate_drawing);
 
 	if (info->indexed) {
 		uint32_t max_size = (ib->buffer->width0 - ib->offset) /
@@ -608,11 +608,11 @@ static void si_state_draw(struct si_context *sctx,
 		si_pm4_add_bo(pm4, (struct r600_resource *)ib->buffer, RADEON_USAGE_READ);
 		si_cmd_draw_index_2(pm4, max_size, va, info->count,
 				    V_0287F0_DI_SRC_SEL_DMA,
-				    sctx->predicate_drawing);
+				    sctx->b.predicate_drawing);
 	} else {
 		uint32_t initiator = V_0287F0_DI_SRC_SEL_AUTO_INDEX;
 		initiator |= S_0287F0_USE_OPAQUE(!!info->count_from_stream_output);
-		si_cmd_draw_index_auto(pm4, info->count, initiator, sctx->predicate_drawing);
+		si_cmd_draw_index_auto(pm4, info->count, initiator, sctx->b.predicate_drawing);
 	}
 
 	si_pm4_set_state(sctx, draw, pm4);

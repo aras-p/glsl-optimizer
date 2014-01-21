@@ -3028,6 +3028,19 @@ static boolean si_dma_copy(struct pipe_context *ctx,
 	return FALSE;
 }
 
+static void si_set_occlusion_query_state(struct pipe_context *ctx, bool enable)
+{
+	/* XXX Turn this into a proper state. Right now the queries are
+	 * enabled in draw_vbo, which snoops r600_common_context to see
+	 * if any occlusion queries are active. */
+}
+
+static void si_need_gfx_cs_space(struct pipe_context *ctx, unsigned num_dw,
+				 bool include_draw_vbo)
+{
+	si_need_cs_space((struct si_context*)ctx, num_dw, include_draw_vbo);
+}
+
 void si_init_state_functions(struct si_context *sctx)
 {
 	int i;
@@ -3090,6 +3103,8 @@ void si_init_state_functions(struct si_context *sctx)
 	sctx->b.b.create_surface = r600_create_surface;
 	sctx->b.b.surface_destroy = r600_surface_destroy;
 	sctx->b.dma_copy = si_dma_copy;
+	sctx->b.set_occlusion_query_state = si_set_occlusion_query_state;
+	sctx->b.need_gfx_cs_space = si_need_gfx_cs_space;
 
 	sctx->b.b.draw_vbo = si_draw_vbo;
 }

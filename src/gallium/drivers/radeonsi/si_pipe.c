@@ -67,10 +67,10 @@ void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 	}
 
 	/* Disable render condition. */
-	if (sctx->current_render_cond) {
-		render_cond = sctx->current_render_cond;
-		render_cond_cond = sctx->current_render_cond_cond;
-		render_cond_mode = sctx->current_render_cond_mode;
+	if (sctx->b.current_render_cond) {
+		render_cond = sctx->b.current_render_cond;
+		render_cond_cond = sctx->b.current_render_cond_cond;
+		render_cond_mode = sctx->b.current_render_cond_mode;
 		ctx->render_condition(ctx, NULL, FALSE, 0);
 	}
 
@@ -142,7 +142,6 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 		goto fail;
 
 	si_init_blit_functions(sctx);
-	si_init_query_functions(sctx);
 	si_init_context_resource_functions(sctx);
 	si_init_compute_functions(sctx);
 
@@ -169,8 +168,6 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 	case SI:
 	case CIK:
 		si_init_state_functions(sctx);
-		LIST_INITHEAD(&sctx->active_nontimer_query_list);
-		sctx->max_db = 8;
 		si_init_config(sctx);
 		break;
 	default:
@@ -192,7 +189,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 
 	/* these must be last */
 	si_begin_new_cs(sctx);
-	si_get_backend_mask(sctx);
+	r600_query_init_backend_mask(&sctx->b); /* this emits commands and must be last */
 
 	/* CIK cannot unbind a constant buffer (S_BUFFER_LOAD is buggy
 	 * with a NULL buffer). We need to use a dummy buffer instead. */
