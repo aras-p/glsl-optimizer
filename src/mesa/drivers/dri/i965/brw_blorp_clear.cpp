@@ -585,8 +585,7 @@ brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
             (irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_UMS ||
              irb->mt->msaa_layout == INTEL_MSAA_LAYOUT_CMS) ?
             irb->mt->num_samples : 1;
-         unsigned num_layers =
-            irb->mt->level[irb->mt_level].depth / layer_multiplier;
+         unsigned num_layers = irb->layer_count;
          for (unsigned layer = 0; layer < num_layers; layer++) {
             if (!do_single_blorp_clear(brw, fb, rb, buf, partial_clear,
                                        layer * layer_multiplier)) {
