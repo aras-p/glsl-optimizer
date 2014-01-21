@@ -572,8 +572,8 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
        packing->Invert)
       return false;
 
-   if ((texImage->TexFormat == MESA_FORMAT_L8 && format == GL_LUMINANCE) ||
-       (texImage->TexFormat == MESA_FORMAT_A8 && format == GL_ALPHA)) {
+   if ((texImage->TexFormat == MESA_FORMAT_L_UNORM8 && format == GL_LUMINANCE) ||
+       (texImage->TexFormat == MESA_FORMAT_A_UNORM8 && format == GL_ALPHA)) {
       cpp = 1;
       mem_copy = memcpy;
    } else if ((texImage->TexFormat == MESA_FORMAT_B8G8R8A8_UNORM) ||

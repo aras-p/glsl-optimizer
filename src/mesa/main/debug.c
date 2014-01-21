@@ -615,17 +615,17 @@ _mesa_print_texture(struct gl_context *ctx, struct gl_texture_image *img)
    else {
       /* XXX add more formats or make into a new format utility function */
       switch (img->TexFormat) {
-         case MESA_FORMAT_A8:
-         case MESA_FORMAT_L8:
-         case MESA_FORMAT_I8:
+         case MESA_FORMAT_A_UNORM8:
+         case MESA_FORMAT_L_UNORM8:
+         case MESA_FORMAT_I_UNORM8:
             c = 1;
             break;
          case MESA_FORMAT_AL88:
          case MESA_FORMAT_AL88_REV:
             c = 2;
             break;
-         case MESA_FORMAT_RGB888:
-         case MESA_FORMAT_BGR888:
+         case MESA_FORMAT_BGR_UNORM8:
+         case MESA_FORMAT_RGB_UNORM8:
             c = 3;
             break;
          case MESA_FORMAT_A8B8G8R8_UNORM:

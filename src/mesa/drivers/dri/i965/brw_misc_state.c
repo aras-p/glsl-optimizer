@@ -151,9 +151,9 @@ brw_depthbuffer_format(struct brw_context *brw)
       return BRW_DEPTHFORMAT_D32_FLOAT;
 
    switch (drb->mt->format) {
-   case MESA_FORMAT_Z16:
+   case MESA_FORMAT_Z_UNORM16:
       return BRW_DEPTHFORMAT_D16_UNORM;
-   case MESA_FORMAT_Z32_FLOAT:
+   case MESA_FORMAT_Z_FLOAT32:
       return BRW_DEPTHFORMAT_D32_FLOAT;
    case MESA_FORMAT_X8_Z24:
       if (brw->gen >= 6) {
@@ -230,7 +230,7 @@ brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
       if (stencil_mt->stencil_mt)
 	 stencil_mt = stencil_mt->stencil_mt;
 
-      if (stencil_mt->format == MESA_FORMAT_S8) {
+      if (stencil_mt->format == MESA_FORMAT_S_UINT8) {
          /* Separate stencil buffer uses 64x64 tiles. */
          tile_mask_x |= 63;
          tile_mask_y |= 63;
@@ -494,7 +494,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
       stencil_mt = get_stencil_miptree(stencil_irb);
 
       brw->depthstencil.stencil_mt = stencil_mt;
-      if (stencil_mt->format == MESA_FORMAT_S8) {
+      if (stencil_mt->format == MESA_FORMAT_S_UINT8) {
          /* Note: we can't compute the stencil offset using
           * intel_region_get_aligned_offset(), because stencil_region claims
           * that the region is untiled even though it's W tiled.
@@ -526,7 +526,7 @@ brw_emit_depthbuffer(struct brw_context *brw)
    uint32_t width = 1, height = 1;
 
    if (stencil_mt) {
-      separate_stencil = stencil_mt->format == MESA_FORMAT_S8;
+      separate_stencil = stencil_mt->format == MESA_FORMAT_S_UINT8;
 
       /* Gen7 supports only separate stencil */
       assert(separate_stencil || brw->gen < 7);

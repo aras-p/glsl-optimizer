@@ -4014,9 +4014,9 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
    if (ctx->API != API_OPENGL_CORE) {
       switch (internalFormat) {
       case GL_ALPHA8:
-         return MESA_FORMAT_A8;
+         return MESA_FORMAT_A_UNORM8;
       case GL_ALPHA16:
-         return MESA_FORMAT_A16;
+         return MESA_FORMAT_A_UNORM16;
       case GL_ALPHA16F_ARB:
          return MESA_FORMAT_ALPHA_FLOAT16;
       case GL_ALPHA32F_ARB:
@@ -4034,9 +4034,9 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
       case GL_ALPHA32UI_EXT:
          return MESA_FORMAT_ALPHA_UINT32;
       case GL_LUMINANCE8:
-         return MESA_FORMAT_L8;
+         return MESA_FORMAT_L_UNORM8;
       case GL_LUMINANCE16:
-         return MESA_FORMAT_L16;
+         return MESA_FORMAT_L_UNORM16;
       case GL_LUMINANCE16F_ARB:
          return MESA_FORMAT_LUMINANCE_FLOAT16;
       case GL_LUMINANCE32F_ARB:
@@ -4074,9 +4074,9 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
       case GL_LUMINANCE_ALPHA32UI_EXT:
          return MESA_FORMAT_LUMINANCE_ALPHA_UINT32;
       case GL_INTENSITY8:
-         return MESA_FORMAT_I8;
+         return MESA_FORMAT_I_UNORM8;
       case GL_INTENSITY16:
-         return MESA_FORMAT_I16;
+         return MESA_FORMAT_I_UNORM16;
       case GL_INTENSITY16F_ARB:
          return MESA_FORMAT_INTENSITY_FLOAT16;
       case GL_INTENSITY32F_ARB:
@@ -4116,7 +4116,7 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
    case GL_RGBA8:
       return MESA_FORMAT_R8G8B8A8_UNORM;
    case GL_RGBA16:
-      return MESA_FORMAT_RGBA_16;
+      return MESA_FORMAT_RGBA_UNORM16;
    case GL_RGBA16F_ARB:
       return MESA_FORMAT_RGBA_FLOAT16;
    case GL_RGBA32F_ARB:
@@ -4156,9 +4156,9 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
       return MESA_FORMAT_RG_UINT32;
 
    case GL_R8:
-      return MESA_FORMAT_R8;
+      return MESA_FORMAT_R_UNORM8;
    case GL_R16:
-      return MESA_FORMAT_R16;
+      return MESA_FORMAT_R_UNORM16;
    case GL_R16F:
       return MESA_FORMAT_R_FLOAT16;
    case GL_R32F:

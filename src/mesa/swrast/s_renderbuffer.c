@@ -69,7 +69,7 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      rb->Format = MESA_FORMAT_RGB888;
+      rb->Format = MESA_FORMAT_BGR_UNORM8;
       break;
    case GL_RGBA:
    case GL_RGBA2:
@@ -95,17 +95,17 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    case GL_STENCIL_INDEX4_EXT:
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
-      rb->Format = MESA_FORMAT_S8;
+      rb->Format = MESA_FORMAT_S_UINT8;
       break;
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT16:
-      rb->Format = MESA_FORMAT_Z16;
+      rb->Format = MESA_FORMAT_Z_UNORM16;
       break;
    case GL_DEPTH_COMPONENT24:
       rb->Format = MESA_FORMAT_X8_Z24;
       break;
    case GL_DEPTH_COMPONENT32:
-      rb->Format = MESA_FORMAT_Z32;
+      rb->Format = MESA_FORMAT_Z_UNORM32;
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:

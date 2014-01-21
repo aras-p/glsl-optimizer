@@ -646,7 +646,7 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
     } else if (mesaVis->depthBits == 16) {
         /* just 16-bit depth buffer, no hw stencil */
 	struct radeon_renderbuffer *depth =
-           radeon_create_renderbuffer(MESA_FORMAT_Z16, driDrawPriv);
+           radeon_create_renderbuffer(MESA_FORMAT_Z_UNORM16, driDrawPriv);
 	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depth->base.Base);
 	depth->has_surface = screen->depthHasSurface;
     }

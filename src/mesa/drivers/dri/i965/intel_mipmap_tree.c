@@ -353,7 +353,7 @@ intel_miptree_create_layout(struct brw_context *brw,
 	(brw->has_separate_stencil && brw_is_hiz_depth_format(brw, format)))) {
       mt->stencil_mt = intel_miptree_create(brw,
                                             mt->target,
-                                            MESA_FORMAT_S8,
+                                            MESA_FORMAT_S_UINT8,
                                             mt->first_level,
                                             mt->last_level,
                                             mt->logical_width0,
@@ -373,7 +373,7 @@ intel_miptree_create_layout(struct brw_context *brw,
       if (mt->format == MESA_FORMAT_S8_Z24) {
 	 mt->format = MESA_FORMAT_X8_Z24;
       } else if (mt->format == MESA_FORMAT_Z32_FLOAT_X24S8) {
-	 mt->format = MESA_FORMAT_Z32_FLOAT;
+	 mt->format = MESA_FORMAT_Z_FLOAT32;
 	 mt->cpp = 4;
       } else {
 	 _mesa_problem(NULL, "Unknown format %s in separate stencil mt\n",
@@ -397,7 +397,7 @@ intel_miptree_choose_tiling(struct brw_context *brw,
                             enum intel_miptree_tiling_mode requested,
                             struct intel_mipmap_tree *mt)
 {
-   if (format == MESA_FORMAT_S8) {
+   if (format == MESA_FORMAT_S_UINT8) {
       /* The stencil buffer is W tiled. However, we request from the kernel a
        * non-tiled buffer because the GTT is incapable of W fencing.
        */
@@ -519,7 +519,7 @@ intel_miptree_create(struct brw_context *brw,
          format = MESA_FORMAT_R8G8B8A8_UNORM;
          break;
       case MESA_FORMAT_ETC2_R11_EAC:
-         format = MESA_FORMAT_R16;
+         format = MESA_FORMAT_R_UNORM16;
          break;
       case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
          format = MESA_FORMAT_SIGNED_R16;
@@ -553,7 +553,7 @@ intel_miptree_create(struct brw_context *brw,
    total_width = mt->total_width;
    total_height = mt->total_height;
 
-   if (format == MESA_FORMAT_S8) {
+   if (format == MESA_FORMAT_S_UINT8) {
       /* Align to size of W tile, 64x64. */
       total_width = ALIGN(total_width, 64);
       total_height = ALIGN(total_height, 64);
@@ -920,7 +920,7 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    mesa_format mt_format = mt->format;
    if (mt->format == MESA_FORMAT_X8_Z24 && mt->stencil_mt)
       mt_format = MESA_FORMAT_S8_Z24;
-   if (mt->format == MESA_FORMAT_Z32_FLOAT && mt->stencil_mt)
+   if (mt->format == MESA_FORMAT_Z_FLOAT32 && mt->stencil_mt)
       mt_format = MESA_FORMAT_Z32_FLOAT_X24S8;
    if (mt->etc_format != MESA_FORMAT_NONE)
       mt_format = mt->etc_format;
@@ -1221,7 +1221,7 @@ intel_miptree_alloc_mcs(struct brw_context *brw,
       /* 8 bits/pixel are required for MCS data when using 4x MSAA (2 bits for
        * each sample).
        */
-      format = MESA_FORMAT_R8;
+      format = MESA_FORMAT_R_UNORM8;
       break;
    case 8:
       /* 32 bits/pixel are required for MCS data when using 8x MSAA (3 bits
@@ -2066,7 +2066,7 @@ intel_miptree_map_depthstencil(struct brw_context *brw,
 {
    struct intel_mipmap_tree *z_mt = mt;
    struct intel_mipmap_tree *s_mt = mt->stencil_mt;
-   bool map_z32f_x24s8 = mt->format == MESA_FORMAT_Z32_FLOAT;
+   bool map_z32f_x24s8 = mt->format == MESA_FORMAT_Z_FLOAT32;
    int packed_bpp = map_z32f_x24s8 ? 8 : 4;
 
    map->stride = map->w * packed_bpp;
@@ -2138,7 +2138,7 @@ intel_miptree_unmap_depthstencil(struct brw_context *brw,
 {
    struct intel_mipmap_tree *z_mt = mt;
    struct intel_mipmap_tree *s_mt = mt->stencil_mt;
-   bool map_z32f_x24s8 = mt->format == MESA_FORMAT_Z32_FLOAT;
+   bool map_z32f_x24s8 = mt->format == MESA_FORMAT_Z_FLOAT32;
 
    if (map->mode & GL_MAP_WRITE_BIT) {
       uint32_t *packed_map = map->ptr;
@@ -2279,7 +2279,7 @@ intel_miptree_map_singlesample(struct brw_context *brw,
       intel_miptree_slice_set_needs_hiz_resolve(mt, level, slice);
    }
 
-   if (mt->format == MESA_FORMAT_S8) {
+   if (mt->format == MESA_FORMAT_S_UINT8) {
       intel_miptree_map_s8(brw, mt, map, level, slice);
    } else if (mt->etc_format != MESA_FORMAT_NONE &&
               !(mode & BRW_MAP_DIRECT_BIT)) {
@@ -2330,7 +2330,7 @@ intel_miptree_unmap_singlesample(struct brw_context *brw,
    DBG("%s: mt %p (%s) level %d slice %d\n", __FUNCTION__,
        mt, _mesa_get_format_name(mt->format), level, slice);
 
-   if (mt->format == MESA_FORMAT_S8) {
+   if (mt->format == MESA_FORMAT_S_UINT8) {
       intel_miptree_unmap_s8(brw, mt, map, level, slice);
    } else if (mt->etc_format != MESA_FORMAT_NONE &&
               !(map->mode & BRW_MAP_DIRECT_BIT)) {

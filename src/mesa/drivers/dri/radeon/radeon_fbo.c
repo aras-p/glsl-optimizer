@@ -315,7 +315,7 @@ radeon_map_renderbuffer(struct gl_context *ctx,
 					 mode, out_map, out_stride);
 	   return;
        }
-       if (rb->Format == MESA_FORMAT_Z16) {
+       if (rb->Format == MESA_FORMAT_Z_UNORM16) {
 	   radeon_map_renderbuffer_z16(ctx, rb, x, y, w, h,
 				       mode, out_map, out_stride);
 	   return;
@@ -423,7 +423,7 @@ radeon_unmap_renderbuffer(struct gl_context *ctx,
 	   radeon_unmap_renderbuffer_s8z24(ctx, rb);
 	   return;
        }
-       if (rb->Format == MESA_FORMAT_Z16) {
+       if (rb->Format == MESA_FORMAT_Z_UNORM16) {
 	   radeon_unmap_renderbuffer_z16(ctx, rb);
 	   return;
        }
@@ -511,7 +511,7 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
       cpp = 4;
       break;
    case GL_DEPTH_COMPONENT16:
-      rb->Format = MESA_FORMAT_Z16;
+      rb->Format = MESA_FORMAT_Z_UNORM16;
       cpp = 2;
       break;
    case GL_DEPTH_COMPONENT:

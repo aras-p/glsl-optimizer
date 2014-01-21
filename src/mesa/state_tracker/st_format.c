@@ -89,21 +89,21 @@ st_mesa_format_to_pipe_format(mesa_format mesaFormat)
       return PIPE_FORMAT_L8A8_UNORM;
    case MESA_FORMAT_AL1616:
       return PIPE_FORMAT_L16A16_UNORM;
-   case MESA_FORMAT_A8:
+   case MESA_FORMAT_A_UNORM8:
       return PIPE_FORMAT_A8_UNORM;
-   case MESA_FORMAT_A16:
+   case MESA_FORMAT_A_UNORM16:
       return PIPE_FORMAT_A16_UNORM;
-   case MESA_FORMAT_L8:
+   case MESA_FORMAT_L_UNORM8:
       return PIPE_FORMAT_L8_UNORM;
-   case MESA_FORMAT_L16:
+   case MESA_FORMAT_L_UNORM16:
       return PIPE_FORMAT_L16_UNORM;
-   case MESA_FORMAT_I8:
+   case MESA_FORMAT_I_UNORM8:
       return PIPE_FORMAT_I8_UNORM;
-   case MESA_FORMAT_I16:
+   case MESA_FORMAT_I_UNORM16:
       return PIPE_FORMAT_I16_UNORM;
-   case MESA_FORMAT_Z16:
+   case MESA_FORMAT_Z_UNORM16:
       return PIPE_FORMAT_Z16_UNORM;
-   case MESA_FORMAT_Z32:
+   case MESA_FORMAT_Z_UNORM32:
       return PIPE_FORMAT_Z32_UNORM;
    case MESA_FORMAT_Z24_S8:
       return PIPE_FORMAT_S8_UINT_Z24_UNORM;
@@ -113,9 +113,9 @@ st_mesa_format_to_pipe_format(mesa_format mesaFormat)
       return PIPE_FORMAT_X8Z24_UNORM;
    case MESA_FORMAT_X8_Z24:
       return PIPE_FORMAT_Z24X8_UNORM;
-   case MESA_FORMAT_S8:
+   case MESA_FORMAT_S_UINT8:
       return PIPE_FORMAT_S8_UINT;
-   case MESA_FORMAT_Z32_FLOAT:
+   case MESA_FORMAT_Z_FLOAT32:
       return PIPE_FORMAT_Z32_FLOAT;
    case MESA_FORMAT_Z32_FLOAT_X24S8:
       return PIPE_FORMAT_Z32_FLOAT_S8X24_UINT;
@@ -139,9 +139,9 @@ st_mesa_format_to_pipe_format(mesa_format mesaFormat)
       return PIPE_FORMAT_DXT5_SRGBA;
    case MESA_FORMAT_SLA8:
       return PIPE_FORMAT_L8A8_SRGB;
-   case MESA_FORMAT_SL8:
+   case MESA_FORMAT_L_SRGB8:
       return PIPE_FORMAT_L8_SRGB;
-   case MESA_FORMAT_SRGB8:
+   case MESA_FORMAT_BGR_SRGB8:
       return PIPE_FORMAT_R8G8B8_SRGB;
    case MESA_FORMAT_SRGBA8:
       return PIPE_FORMAT_A8B8G8R8_SRGB;
@@ -180,15 +180,15 @@ st_mesa_format_to_pipe_format(mesa_format mesaFormat)
    case MESA_FORMAT_RG_FLOAT16:
       return PIPE_FORMAT_R16G16_FLOAT;
 
-   case MESA_FORMAT_R8:
+   case MESA_FORMAT_R_UNORM8:
       return PIPE_FORMAT_R8_UNORM;
-   case MESA_FORMAT_R16:
+   case MESA_FORMAT_R_UNORM16:
       return PIPE_FORMAT_R16_UNORM;
    case MESA_FORMAT_GR88:
       return PIPE_FORMAT_R8G8_UNORM;
    case MESA_FORMAT_GR1616:
       return PIPE_FORMAT_R16G16_UNORM;
-   case MESA_FORMAT_RGBA_16:
+   case MESA_FORMAT_RGBA_UNORM16:
       return PIPE_FORMAT_R16G16B16A16_UNORM;
 
    /* signed int formats */
@@ -370,27 +370,27 @@ st_mesa_format_to_pipe_format(mesa_format mesaFormat)
       return PIPE_FORMAT_R8G8B8X8_SNORM;
    case MESA_FORMAT_XBGR8888_SRGB:
       return PIPE_FORMAT_R8G8B8X8_SRGB;
-   case MESA_FORMAT_XBGR8888_UINT:
+   case MESA_FORMAT_RGBX_UINT8:
       return PIPE_FORMAT_R8G8B8X8_UINT;
-   case MESA_FORMAT_XBGR8888_SINT:
+   case MESA_FORMAT_RGBX_SINT8:
       return PIPE_FORMAT_R8G8B8X8_SINT;
    case MESA_FORMAT_XRGB2101010_UNORM:
       return PIPE_FORMAT_B10G10R10X2_UNORM;
-   case MESA_FORMAT_XBGR16161616_UNORM:
+   case MESA_FORMAT_RGBX_UNORM16:
       return PIPE_FORMAT_R16G16B16X16_UNORM;
-   case MESA_FORMAT_XBGR16161616_SNORM:
+   case MESA_FORMAT_RGBX_SNORM16:
       return PIPE_FORMAT_R16G16B16X16_SNORM;
-   case MESA_FORMAT_XBGR16161616_FLOAT:
+   case MESA_FORMAT_RGBX_FLOAT16:
       return PIPE_FORMAT_R16G16B16X16_FLOAT;
-   case MESA_FORMAT_XBGR16161616_UINT:
+   case MESA_FORMAT_RGBX_UINT16:
       return PIPE_FORMAT_R16G16B16X16_UINT;
-   case MESA_FORMAT_XBGR16161616_SINT:
+   case MESA_FORMAT_RGBX_SINT16:
       return PIPE_FORMAT_R16G16B16X16_SINT;
-   case MESA_FORMAT_XBGR32323232_FLOAT:
+   case MESA_FORMAT_RGBX_FLOAT32:
       return PIPE_FORMAT_R32G32B32X32_FLOAT;
-   case MESA_FORMAT_XBGR32323232_UINT:
+   case MESA_FORMAT_RGBX_UINT32:
       return PIPE_FORMAT_R32G32B32X32_UINT;
-   case MESA_FORMAT_XBGR32323232_SINT:
+   case MESA_FORMAT_RGBX_SINT32:
       return PIPE_FORMAT_R32G32B32X32_SINT;
 
    default:
@@ -439,27 +439,27 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_L16A16_UNORM:
       return MESA_FORMAT_AL1616;
    case PIPE_FORMAT_A8_UNORM:
-      return MESA_FORMAT_A8;
+      return MESA_FORMAT_A_UNORM8;
    case PIPE_FORMAT_A16_UNORM:
-      return MESA_FORMAT_A16;
+      return MESA_FORMAT_A_UNORM16;
    case PIPE_FORMAT_L8_UNORM:
-      return MESA_FORMAT_L8;
+      return MESA_FORMAT_L_UNORM8;
    case PIPE_FORMAT_L16_UNORM:
-      return MESA_FORMAT_L16;
+      return MESA_FORMAT_L_UNORM16;
    case PIPE_FORMAT_I8_UNORM:
-      return MESA_FORMAT_I8;
+      return MESA_FORMAT_I_UNORM8;
    case PIPE_FORMAT_I16_UNORM:
-      return MESA_FORMAT_I16;
+      return MESA_FORMAT_I_UNORM16;
    case PIPE_FORMAT_S8_UINT:
-      return MESA_FORMAT_S8;
+      return MESA_FORMAT_S_UINT8;
 
    case PIPE_FORMAT_R16G16B16A16_UNORM:
-      return MESA_FORMAT_RGBA_16;
+      return MESA_FORMAT_RGBA_UNORM16;
 
    case PIPE_FORMAT_Z16_UNORM:
-      return MESA_FORMAT_Z16;
+      return MESA_FORMAT_Z_UNORM16;
    case PIPE_FORMAT_Z32_UNORM:
-      return MESA_FORMAT_Z32;
+      return MESA_FORMAT_Z_UNORM32;
    case PIPE_FORMAT_S8_UINT_Z24_UNORM:
       return MESA_FORMAT_Z24_S8;
    case PIPE_FORMAT_X8Z24_UNORM:
@@ -469,7 +469,7 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
       return MESA_FORMAT_S8_Z24;
    case PIPE_FORMAT_Z32_FLOAT:
-      return MESA_FORMAT_Z32_FLOAT;
+      return MESA_FORMAT_Z_FLOAT32;
    case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
       return MESA_FORMAT_Z32_FLOAT_X24S8;
 
@@ -497,9 +497,9 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_L8A8_SRGB:
       return MESA_FORMAT_SLA8;
    case PIPE_FORMAT_L8_SRGB:
-      return MESA_FORMAT_SL8;
+      return MESA_FORMAT_L_SRGB8;
    case PIPE_FORMAT_R8G8B8_SRGB:
-      return MESA_FORMAT_SRGB8;
+      return MESA_FORMAT_BGR_SRGB8;
    case PIPE_FORMAT_A8B8G8R8_SRGB:
       return MESA_FORMAT_SRGBA8;
    case PIPE_FORMAT_B8G8R8A8_SRGB:
@@ -538,9 +538,9 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_RG_FLOAT16;
 
    case PIPE_FORMAT_R8_UNORM:
-      return MESA_FORMAT_R8;
+      return MESA_FORMAT_R_UNORM8;
    case PIPE_FORMAT_R16_UNORM:
-      return MESA_FORMAT_R16;
+      return MESA_FORMAT_R_UNORM16;
    case PIPE_FORMAT_R8G8_UNORM:
       return MESA_FORMAT_GR88;
    case PIPE_FORMAT_R16G16_UNORM:
@@ -726,27 +726,27 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_R8G8B8X8_SRGB:
       return MESA_FORMAT_XBGR8888_SRGB;
    case PIPE_FORMAT_R8G8B8X8_UINT:
-      return MESA_FORMAT_XBGR8888_UINT;
+      return MESA_FORMAT_RGBX_UINT8;
    case PIPE_FORMAT_R8G8B8X8_SINT:
-      return MESA_FORMAT_XBGR8888_SINT;
+      return MESA_FORMAT_RGBX_SINT8;
    case PIPE_FORMAT_B10G10R10X2_UNORM:
       return MESA_FORMAT_XRGB2101010_UNORM;
    case PIPE_FORMAT_R16G16B16X16_UNORM:
-      return MESA_FORMAT_XBGR16161616_UNORM;
+      return MESA_FORMAT_RGBX_UNORM16;
    case PIPE_FORMAT_R16G16B16X16_SNORM:
-      return MESA_FORMAT_XBGR16161616_SNORM;
+      return MESA_FORMAT_RGBX_SNORM16;
    case PIPE_FORMAT_R16G16B16X16_FLOAT:
-      return MESA_FORMAT_XBGR16161616_FLOAT;
+      return MESA_FORMAT_RGBX_FLOAT16;
    case PIPE_FORMAT_R16G16B16X16_UINT:
-      return MESA_FORMAT_XBGR16161616_UINT;
+      return MESA_FORMAT_RGBX_UINT16;
    case PIPE_FORMAT_R16G16B16X16_SINT:
-      return MESA_FORMAT_XBGR16161616_SINT;
+      return MESA_FORMAT_RGBX_SINT16;
    case PIPE_FORMAT_R32G32B32X32_FLOAT:
-      return MESA_FORMAT_XBGR32323232_FLOAT;
+      return MESA_FORMAT_RGBX_FLOAT32;
    case PIPE_FORMAT_R32G32B32X32_UINT:
-      return MESA_FORMAT_XBGR32323232_UINT;
+      return MESA_FORMAT_RGBX_UINT32;
    case PIPE_FORMAT_R32G32B32X32_SINT:
-      return MESA_FORMAT_XBGR32323232_SINT;
+      return MESA_FORMAT_RGBX_SINT32;
 
    default:
       assert(0);

@@ -134,11 +134,11 @@ public:
 
    /* Setting this flag indicates that the buffer's contents are W-tiled
     * stencil data, but the surface state should be set up for Y tiled
-    * MESA_FORMAT_R8 data (this is necessary because surface states don't
+    * MESA_FORMAT_R_UNORM8 data (this is necessary because surface states don't
     * support W tiling).
     *
     * Since W tiles are 64 pixels wide by 64 pixels high, whereas Y tiles of
-    * MESA_FORMAT_R8 data are 128 pixels wide by 32 pixels high, the width and
+    * MESA_FORMAT_R_UNORM8 data are 128 pixels wide by 32 pixels high, the width and
     * pitch stored in the surface state will be multiplied by 2, and the
     * height will be halved.  Also, since W and Y tiles store their data in a
     * different order, the width and height will be rounded up to a multiple

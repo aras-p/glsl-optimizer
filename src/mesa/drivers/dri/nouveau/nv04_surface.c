@@ -37,9 +37,9 @@ static inline int
 swzsurf_format(mesa_format format)
 {
 	switch (format) {
-	case MESA_FORMAT_A8:
-	case MESA_FORMAT_L8:
-	case MESA_FORMAT_I8:
+	case MESA_FORMAT_A_UNORM8:
+	case MESA_FORMAT_L_UNORM8:
+	case MESA_FORMAT_I_UNORM8:
 	case MESA_FORMAT_RGB332:
 		return NV04_SWIZZLED_SURFACE_FORMAT_COLOR_Y8;
 
@@ -54,7 +54,7 @@ swzsurf_format(mesa_format format)
 	case MESA_FORMAT_AL88_REV:
 	case MESA_FORMAT_YCBCR:
 	case MESA_FORMAT_YCBCR_REV:
-	case MESA_FORMAT_Z16:
+	case MESA_FORMAT_Z_UNORM16:
 		return NV04_SWIZZLED_SURFACE_FORMAT_COLOR_R5G6B5;
 
 	case MESA_FORMAT_A8B8G8R8_UNORM:
@@ -64,7 +64,7 @@ swzsurf_format(mesa_format format)
 	case MESA_FORMAT_A8R8G8B8_UNORM:
 	case MESA_FORMAT_S8_Z24:
 	case MESA_FORMAT_Z24_S8:
-	case MESA_FORMAT_Z32:
+	case MESA_FORMAT_Z_UNORM32:
 		return NV04_SWIZZLED_SURFACE_FORMAT_COLOR_A8R8G8B8;
 
 	default:
@@ -76,9 +76,9 @@ static inline int
 surf2d_format(mesa_format format)
 {
 	switch (format) {
-	case MESA_FORMAT_A8:
-	case MESA_FORMAT_L8:
-	case MESA_FORMAT_I8:
+	case MESA_FORMAT_A_UNORM8:
+	case MESA_FORMAT_L_UNORM8:
+	case MESA_FORMAT_I_UNORM8:
 	case MESA_FORMAT_RGB332:
 		return NV04_CONTEXT_SURFACES_2D_FORMAT_Y8;
 
@@ -93,7 +93,7 @@ surf2d_format(mesa_format format)
 	case MESA_FORMAT_AL88_REV:
 	case MESA_FORMAT_YCBCR:
 	case MESA_FORMAT_YCBCR_REV:
-	case MESA_FORMAT_Z16:
+	case MESA_FORMAT_Z_UNORM16:
 		return NV04_CONTEXT_SURFACES_2D_FORMAT_R5G6B5;
 
 	case MESA_FORMAT_A8B8G8R8_UNORM:
@@ -103,7 +103,7 @@ surf2d_format(mesa_format format)
 	case MESA_FORMAT_A8R8G8B8_UNORM:
 	case MESA_FORMAT_S8_Z24:
 	case MESA_FORMAT_Z24_S8:
-	case MESA_FORMAT_Z32:
+	case MESA_FORMAT_Z_UNORM32:
 		return NV04_CONTEXT_SURFACES_2D_FORMAT_Y32;
 
 	default:
@@ -115,9 +115,9 @@ static inline int
 rect_format(mesa_format format)
 {
 	switch (format) {
-	case MESA_FORMAT_A8:
-	case MESA_FORMAT_L8:
-	case MESA_FORMAT_I8:
+	case MESA_FORMAT_A_UNORM8:
+	case MESA_FORMAT_L_UNORM8:
+	case MESA_FORMAT_I_UNORM8:
 	case MESA_FORMAT_RGB332:
 		return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
 
@@ -132,7 +132,7 @@ rect_format(mesa_format format)
 	case MESA_FORMAT_AL88_REV:
 	case MESA_FORMAT_YCBCR:
 	case MESA_FORMAT_YCBCR_REV:
-	case MESA_FORMAT_Z16:
+	case MESA_FORMAT_Z_UNORM16:
 		return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A16R5G6B5;
 
 	case MESA_FORMAT_A8B8G8R8_UNORM:
@@ -142,7 +142,7 @@ rect_format(mesa_format format)
 	case MESA_FORMAT_A8R8G8B8_UNORM:
 	case MESA_FORMAT_S8_Z24:
 	case MESA_FORMAT_Z24_S8:
-	case MESA_FORMAT_Z32:
+	case MESA_FORMAT_Z_UNORM32:
 		return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
 
 	default:
@@ -154,9 +154,9 @@ static inline int
 sifm_format(mesa_format format)
 {
 	switch (format) {
-	case MESA_FORMAT_A8:
-	case MESA_FORMAT_L8:
-	case MESA_FORMAT_I8:
+	case MESA_FORMAT_A_UNORM8:
+	case MESA_FORMAT_L_UNORM8:
+	case MESA_FORMAT_I_UNORM8:
 	case MESA_FORMAT_RGB332:
 		return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_AY8;
 
@@ -171,7 +171,7 @@ sifm_format(mesa_format format)
 	case MESA_FORMAT_AL88_REV:
 	case MESA_FORMAT_YCBCR:
 	case MESA_FORMAT_YCBCR_REV:
-	case MESA_FORMAT_Z16:
+	case MESA_FORMAT_Z_UNORM16:
 		return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_R5G6B5;
 
 	case MESA_FORMAT_A8B8G8R8_UNORM:
@@ -181,7 +181,7 @@ sifm_format(mesa_format format)
 	case MESA_FORMAT_A8R8G8B8_UNORM:
 	case MESA_FORMAT_S8_Z24:
 	case MESA_FORMAT_Z24_S8:
-	case MESA_FORMAT_Z32:
+	case MESA_FORMAT_Z_UNORM32:
 		return NV03_SCALED_IMAGE_FROM_MEMORY_COLOR_FORMAT_A8R8G8B8;
 
 	default:

@@ -349,7 +349,7 @@ mesa_format radeonChooseTextureFormat(struct gl_context * ctx,
 		   in wrong rgb values (same as alpha value instead of 0). */
 		return _radeon_texformat_al88;
 #else
-		return MESA_FORMAT_A8;
+		return MESA_FORMAT_A_UNORM8;
 #endif
 	case 1:
 	case GL_LUMINANCE:
@@ -358,7 +358,7 @@ mesa_format radeonChooseTextureFormat(struct gl_context * ctx,
 	case GL_LUMINANCE12:
 	case GL_LUMINANCE16:
 	case GL_COMPRESSED_LUMINANCE:
-		return MESA_FORMAT_L8;
+		return MESA_FORMAT_L_UNORM8;
 
 	case 2:
 	case GL_LUMINANCE_ALPHA:
@@ -377,7 +377,7 @@ mesa_format radeonChooseTextureFormat(struct gl_context * ctx,
 	case GL_INTENSITY12:
 	case GL_INTENSITY16:
 	case GL_COMPRESSED_INTENSITY:
-		return MESA_FORMAT_I8;
+		return MESA_FORMAT_I_UNORM8;
 
 	case GL_YCBCR_MESA:
 		if (type == GL_UNSIGNED_SHORT_8_8_APPLE ||
@@ -447,7 +447,7 @@ mesa_format radeonChooseTextureFormat(struct gl_context * ctx,
 	case GL_SLUMINANCE:
 	case GL_SLUMINANCE8:
 	case GL_COMPRESSED_SLUMINANCE:
-		return MESA_FORMAT_SL8;
+		return MESA_FORMAT_L_SRGB8;
 
 	case GL_SLUMINANCE_ALPHA:
 	case GL_SLUMINANCE8_ALPHA8:
@@ -512,7 +512,7 @@ unsigned radeonIsFormatRenderable(mesa_format mesa_format)
 
 	switch (mesa_format)
 	{
-		case MESA_FORMAT_Z16:
+		case MESA_FORMAT_Z_UNORM16:
 		case MESA_FORMAT_S8_Z24:
 			return 1;
 		default:

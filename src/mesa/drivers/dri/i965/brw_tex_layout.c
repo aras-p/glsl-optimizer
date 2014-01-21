@@ -75,10 +75,10 @@ intel_horizontal_texture_alignment_unit(struct brw_context *brw,
       return i;
     }
 
-   if (format == MESA_FORMAT_S8)
+   if (format == MESA_FORMAT_S_UINT8)
       return 8;
 
-   if (brw->gen >= 7 && format == MESA_FORMAT_Z16)
+   if (brw->gen >= 7 && format == MESA_FORMAT_Z_UNORM16)
       return 8;
 
    return 4;
@@ -114,7 +114,7 @@ intel_vertical_texture_alignment_unit(struct brw_context *brw,
    if (_mesa_is_format_compressed(format))
       return 4;
 
-   if (format == MESA_FORMAT_S8)
+   if (format == MESA_FORMAT_S_UINT8)
       return brw->gen >= 7 ? 8 : 4;
 
    /* Broadwell only supports VALIGN of 4, 8, and 16.  The BSpec says 4

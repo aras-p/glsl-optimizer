@@ -38,9 +38,9 @@ static uint32_t
 get_tex_format(struct gl_texture_image *ti)
 {
 	switch (ti->TexFormat) {
-	case MESA_FORMAT_A8:
-	case MESA_FORMAT_L8:
-	case MESA_FORMAT_I8:
+	case MESA_FORMAT_A_UNORM8:
+	case MESA_FORMAT_L_UNORM8:
+	case MESA_FORMAT_I_UNORM8:
 		return NV04_TEXTURED_TRIANGLE_FORMAT_COLOR_Y8;
 	case MESA_FORMAT_ARGB1555:
 		return NV04_TEXTURED_TRIANGLE_FORMAT_COLOR_A1R5G5B5;

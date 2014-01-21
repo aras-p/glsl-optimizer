@@ -47,9 +47,9 @@ unsigned r200_check_blit(mesa_format mesa_format, uint32_t dst_pitch)
     case MESA_FORMAT_RGB565:
     case MESA_FORMAT_ARGB4444:
     case MESA_FORMAT_ARGB1555:
-    case MESA_FORMAT_A8:
-    case MESA_FORMAT_L8:
-    case MESA_FORMAT_I8:
+    case MESA_FORMAT_A_UNORM8:
+    case MESA_FORMAT_L_UNORM8:
+    case MESA_FORMAT_I_UNORM8:
     /* swizzled */
     case MESA_FORMAT_A8B8G8R8_UNORM:
     case MESA_FORMAT_R8G8B8A8_UNORM:
@@ -135,11 +135,11 @@ static void inline emit_tx_setup(struct r200_context *r200,
     case MESA_FORMAT_ARGB1555:
 	    txformat |= R200_TXFORMAT_ARGB1555 | R200_TXFORMAT_ALPHA_IN_MAP;
 	    break;
-    case MESA_FORMAT_A8:
-    case MESA_FORMAT_I8:
+    case MESA_FORMAT_A_UNORM8:
+    case MESA_FORMAT_I_UNORM8:
 	    txformat |= R200_TXFORMAT_I8 | R200_TXFORMAT_ALPHA_IN_MAP;
 	    break;
-    case MESA_FORMAT_L8:
+    case MESA_FORMAT_L_UNORM8:
 	    txformat |= R200_TXFORMAT_I8;
 	    break;
     case MESA_FORMAT_AL88:
@@ -160,9 +160,9 @@ static void inline emit_tx_setup(struct r200_context *r200,
     case MESA_FORMAT_RGB565:
     case MESA_FORMAT_ARGB4444:
     case MESA_FORMAT_ARGB1555:
-    case MESA_FORMAT_A8:
-    case MESA_FORMAT_L8:
-    case MESA_FORMAT_I8:
+    case MESA_FORMAT_A_UNORM8:
+    case MESA_FORMAT_L_UNORM8:
+    case MESA_FORMAT_I_UNORM8:
     default:
 	    /* no swizzle required */
 	    BEGIN_BATCH(10);
@@ -323,9 +323,9 @@ static inline void emit_cb_setup(struct r200_context *r200,
     case MESA_FORMAT_ARGB1555:
 	    dst_format = RADEON_COLOR_FORMAT_ARGB1555;
 	    break;
-    case MESA_FORMAT_A8:
-    case MESA_FORMAT_L8:
-    case MESA_FORMAT_I8:
+    case MESA_FORMAT_A_UNORM8:
+    case MESA_FORMAT_L_UNORM8:
+    case MESA_FORMAT_I_UNORM8:
 	    dst_format = RADEON_COLOR_FORMAT_RGB8;
 	    break;
     default:

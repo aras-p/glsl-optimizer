@@ -210,7 +210,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLenum target,
 	case GL_LUMINANCE16:
 	case GL_LUMINANCE8:
 	case GL_COMPRESSED_LUMINANCE:
-		return MESA_FORMAT_L8;
+		return MESA_FORMAT_L_UNORM8;
 
 	case GL_ALPHA:
 	case GL_ALPHA4:
@@ -218,14 +218,14 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLenum target,
 	case GL_ALPHA16:
 	case GL_ALPHA8:
 	case GL_COMPRESSED_ALPHA:
-		return MESA_FORMAT_A8;
+		return MESA_FORMAT_A_UNORM8;
 
 	case GL_INTENSITY:
 	case GL_INTENSITY4:
 	case GL_INTENSITY12:
 	case GL_INTENSITY16:
 	case GL_INTENSITY8:
-		return MESA_FORMAT_I8;
+		return MESA_FORMAT_I_UNORM8;
 
 	case GL_RGB_S3TC:
 	case GL_RGB4_S3TC:
@@ -398,9 +398,9 @@ nouveau_texture_reallocate(struct gl_context *ctx, struct gl_texture_object *t)
 static unsigned
 get_teximage_placement(struct gl_texture_image *ti)
 {
-	if (ti->TexFormat == MESA_FORMAT_A8 ||
-	    ti->TexFormat == MESA_FORMAT_L8 ||
-	    ti->TexFormat == MESA_FORMAT_I8)
+	if (ti->TexFormat == MESA_FORMAT_A_UNORM8 ||
+	    ti->TexFormat == MESA_FORMAT_L_UNORM8 ||
+	    ti->TexFormat == MESA_FORMAT_I_UNORM8)
 		/* 1 cpp formats will have to be swizzled by the CPU,
 		 * so leave them in system RAM for now. */
 		return NOUVEAU_BO_MAP;

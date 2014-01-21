@@ -217,7 +217,7 @@ get_z32_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
    const GLubyte *map = _swrast_pixel_address(rb, 0, 0);
    GLuint i;
 
-   if (rb->Format == MESA_FORMAT_Z32) {
+   if (rb->Format == MESA_FORMAT_Z_UNORM32) {
       const GLint rowStride = srb->RowStride;
       for (i = 0; i < count; i++) {
          if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
@@ -252,7 +252,7 @@ put_z32_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
    GLubyte *map = _swrast_pixel_address(rb, 0, 0);
    GLuint i;
 
-   if (rb->Format == MESA_FORMAT_Z32) {
+   if (rb->Format == MESA_FORMAT_Z_UNORM32) {
       const GLint rowStride = srb->RowStride;
       for (i = 0; i < count; i++) {
          if (mask[i] && x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
@@ -300,12 +300,12 @@ _swrast_depth_test_span(struct gl_context *ctx, SWspan *span)
    else
       zStart = _swrast_pixel_address(rb, span->x, span->y);
 
-   if (rb->Format == MESA_FORMAT_Z16 && !(span->arrayMask & SPAN_XY)) {
+   if (rb->Format == MESA_FORMAT_Z_UNORM16 && !(span->arrayMask & SPAN_XY)) {
       /* directly read/write row of 16-bit Z values */
       zBufferVals = zStart;
       ztest16 = GL_TRUE;
    }
-   else if (rb->Format == MESA_FORMAT_Z32 && !(span->arrayMask & SPAN_XY)) {
+   else if (rb->Format == MESA_FORMAT_Z_UNORM32 && !(span->arrayMask & SPAN_XY)) {
       /* directly read/write row of 32-bit Z values */
       zBufferVals = zStart;
    }
@@ -439,7 +439,7 @@ _swrast_depth_bounds_test( struct gl_context *ctx, SWspan *span )
    else
       zStart = _swrast_pixel_address(rb, span->x, span->y);
 
-   if (rb->Format == MESA_FORMAT_Z32 && !(span->arrayMask & SPAN_XY)) {
+   if (rb->Format == MESA_FORMAT_Z_UNORM32 && !(span->arrayMask & SPAN_XY)) {
       /* directly access 32-bit values in the depth buffer */
       zBufferVals = (const GLuint *) zStart;
    }
@@ -567,7 +567,7 @@ _swrast_clear_depth_buffer(struct gl_context *ctx)
    }
 
    switch (rb->Format) {
-   case MESA_FORMAT_Z16:
+   case MESA_FORMAT_Z_UNORM16:
       {
          GLfloat clear = (GLfloat) ctx->Depth.Clear;
          GLushort clearVal = 0;
@@ -587,8 +587,8 @@ _swrast_clear_depth_buffer(struct gl_context *ctx)
          }
       }
       break;
-   case MESA_FORMAT_Z32:
-   case MESA_FORMAT_Z32_FLOAT:
+   case MESA_FORMAT_Z_UNORM32:
+   case MESA_FORMAT_Z_FLOAT32:
       {
          GLfloat clear = (GLfloat) ctx->Depth.Clear;
          GLuint clearVal = 0;

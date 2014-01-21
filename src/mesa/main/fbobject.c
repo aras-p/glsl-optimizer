@@ -2899,7 +2899,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
             return;
          }
 
-         if (format == MESA_FORMAT_S8) {
+         if (format == MESA_FORMAT_S_UINT8) {
             /* special cases */
             *params = GL_INDEX;
          }

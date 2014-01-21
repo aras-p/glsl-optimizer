@@ -206,7 +206,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    case GL_STENCIL_INDEX16_EXT:
       /* These aren't actual texture formats, so force them here. */
       if (brw->has_separate_stencil) {
-	 rb->Format = MESA_FORMAT_S8;
+	 rb->Format = MESA_FORMAT_S_UINT8;
       } else {
 	 assert(!brw->must_use_separate_stencil);
 	 rb->Format = MESA_FORMAT_S8_Z24;
@@ -609,7 +609,7 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	    fbo_incomplete(fb, "FBO incomplete: separate stencil "
                            "unsupported\n");
 	 }
-	 if (stencil_mt->format != MESA_FORMAT_S8) {
+	 if (stencil_mt->format != MESA_FORMAT_S_UINT8) {
 	    fbo_incomplete(fb, "FBO incomplete: separate stencil is %s "
                            "instead of S8\n",
                            _mesa_get_format_name(stencil_mt->format));

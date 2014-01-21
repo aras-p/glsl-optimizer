@@ -823,7 +823,7 @@ driGLFormatToImageFormat(mesa_format format)
       return __DRI_IMAGE_FORMAT_ABGR8888;
    case MESA_FORMAT_R8G8B8X8_UNORM:
       return __DRI_IMAGE_FORMAT_XBGR8888;
-   case MESA_FORMAT_R8:
+   case MESA_FORMAT_R_UNORM8:
       return __DRI_IMAGE_FORMAT_R8;
    case MESA_FORMAT_GR88:
       return __DRI_IMAGE_FORMAT_GR88;
@@ -855,7 +855,7 @@ driImageFormatToGLFormat(uint32_t image_format)
    case __DRI_IMAGE_FORMAT_XBGR8888:
       return MESA_FORMAT_R8G8B8X8_UNORM;
    case __DRI_IMAGE_FORMAT_R8:
-      return MESA_FORMAT_R8;
+      return MESA_FORMAT_R_UNORM8;
    case __DRI_IMAGE_FORMAT_GR88:
       return MESA_FORMAT_GR88;
    case __DRI_IMAGE_FORMAT_SARGB8:

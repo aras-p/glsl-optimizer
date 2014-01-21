@@ -43,11 +43,11 @@ static GLuint
 translate_texture_format(GLuint mesa_format)
 {
    switch (mesa_format) {
-   case MESA_FORMAT_L8:
+   case MESA_FORMAT_L_UNORM8:
       return MAPSURF_8BIT | MT_8BIT_L8;
-   case MESA_FORMAT_I8:
+   case MESA_FORMAT_I_UNORM8:
       return MAPSURF_8BIT | MT_8BIT_I8;
-   case MESA_FORMAT_A8:
+   case MESA_FORMAT_A_UNORM8:
       return MAPSURF_8BIT | MT_8BIT_I8; /* Kludge! */
    case MESA_FORMAT_AL88:
       return MAPSURF_16BIT | MT_16BIT_AY88;

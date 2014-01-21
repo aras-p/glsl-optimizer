@@ -105,11 +105,11 @@ get_tex_format_pot(struct gl_texture_image *ti)
 	case MESA_FORMAT_RGB565:
 		return NV10_3D_TEX_FORMAT_FORMAT_R5G6B5;
 
-	case MESA_FORMAT_A8:
-	case MESA_FORMAT_I8:
+	case MESA_FORMAT_A_UNORM8:
+	case MESA_FORMAT_I_UNORM8:
 		return NV10_3D_TEX_FORMAT_FORMAT_I8;
 
-	case MESA_FORMAT_L8:
+	case MESA_FORMAT_L_UNORM8:
 		return NV10_3D_TEX_FORMAT_FORMAT_L8;
 
 	case MESA_FORMAT_RGB_DXT1:
@@ -141,9 +141,9 @@ get_tex_format_rect(struct gl_texture_image *ti)
 	case MESA_FORMAT_B8G8R8X8_UNORM:
 		return NV10_3D_TEX_FORMAT_FORMAT_A8R8G8B8_RECT;
 
-	case MESA_FORMAT_A8:
-	case MESA_FORMAT_L8:
-	case MESA_FORMAT_I8:
+	case MESA_FORMAT_A_UNORM8:
+	case MESA_FORMAT_L_UNORM8:
+	case MESA_FORMAT_I_UNORM8:
 		return NV10_3D_TEX_FORMAT_FORMAT_I8_RECT;
 
 	default:

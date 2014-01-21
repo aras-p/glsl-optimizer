@@ -564,7 +564,7 @@ i915_render_target_supported(struct intel_context *intel,
 
    if (format == MESA_FORMAT_S8_Z24 ||
        format == MESA_FORMAT_X8_Z24 ||
-       format == MESA_FORMAT_Z16) {
+       format == MESA_FORMAT_Z_UNORM16) {
       return true;
    }
 

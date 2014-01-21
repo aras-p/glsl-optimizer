@@ -1428,7 +1428,7 @@ opt_sample_rgb_2d(struct gl_context *ctx,
    ASSERT(samp->WrapS==GL_REPEAT);
    ASSERT(samp->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
-   ASSERT(img->TexFormat == MESA_FORMAT_RGB888);
+   ASSERT(img->TexFormat == MESA_FORMAT_BGR_UNORM8);
    ASSERT(swImg->_IsPowerOfTwo);
    (void) swImg;
 
@@ -1521,7 +1521,7 @@ sample_lambda_2d(struct gl_context *ctx,
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
             switch (tImg->TexFormat) {
-            case MESA_FORMAT_RGB888:
+            case MESA_FORMAT_BGR_UNORM8:
                opt_sample_rgb_2d(ctx, samp, tObj, m, texcoords + minStart,
                                  NULL, rgba + minStart);
                break;
@@ -1578,7 +1578,7 @@ sample_lambda_2d(struct gl_context *ctx,
       case GL_NEAREST:
          if (repeatNoBorderPOT) {
             switch (tImg->TexFormat) {
-            case MESA_FORMAT_RGB888:
+            case MESA_FORMAT_BGR_UNORM8:
                opt_sample_rgb_2d(ctx, samp, tObj, m, texcoords + magStart,
                                  NULL, rgba + magStart);
                break;
@@ -3760,7 +3760,7 @@ _swrast_choose_texture_sample_func( struct gl_context *ctx,
                 sampler->WrapT == GL_REPEAT &&
                 swImg->_IsPowerOfTwo &&
                 img->Border == 0) {
-               if (img->TexFormat == MESA_FORMAT_RGB888)
+               if (img->TexFormat == MESA_FORMAT_BGR_UNORM8)
                   func = &opt_sample_rgb_2d;
                else if (img->TexFormat == MESA_FORMAT_A8B8G8R8_UNORM)
                   func = &opt_sample_rgba_2d;

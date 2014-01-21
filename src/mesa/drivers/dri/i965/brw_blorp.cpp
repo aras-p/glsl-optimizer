@@ -87,7 +87,7 @@ brw_blorp_surface_info::set(struct brw_context *brw,
    this->msaa_layout = mt->msaa_layout;
 
    switch (mt->format) {
-   case MESA_FORMAT_S8:
+   case MESA_FORMAT_S_UINT8:
       /* The miptree is a W-tiled stencil buffer.  Surface states can't be set
        * up for W tiling, so we'll need to use Y tiling and have the WM
        * program swizzle the coordinates.
@@ -108,10 +108,10 @@ brw_blorp_surface_info::set(struct brw_context *brw,
        */
       this->brw_surfaceformat = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       break;
-   case MESA_FORMAT_Z32_FLOAT:
+   case MESA_FORMAT_Z_FLOAT32:
       this->brw_surfaceformat = BRW_SURFACEFORMAT_R32_FLOAT;
       break;
-   case MESA_FORMAT_Z16:
+   case MESA_FORMAT_Z_UNORM16:
       this->brw_surfaceformat = BRW_SURFACEFORMAT_R16_UNORM;
       break;
    default: {
@@ -326,8 +326,8 @@ brw_hiz_op_params::brw_hiz_op_params(struct intel_mipmap_tree *mt,
    assert(intel_miptree_slice_has_hiz(mt, level, layer));
 
    switch (mt->format) {
-   case MESA_FORMAT_Z16:       depth_format = BRW_DEPTHFORMAT_D16_UNORM; break;
-   case MESA_FORMAT_Z32_FLOAT: depth_format = BRW_DEPTHFORMAT_D32_FLOAT; break;
+   case MESA_FORMAT_Z_UNORM16:       depth_format = BRW_DEPTHFORMAT_D16_UNORM; break;
+   case MESA_FORMAT_Z_FLOAT32: depth_format = BRW_DEPTHFORMAT_D32_FLOAT; break;
    case MESA_FORMAT_X8_Z24:    depth_format = BRW_DEPTHFORMAT_D24_UNORM_X8_UINT; break;
    default:                    assert(0); break;
    }

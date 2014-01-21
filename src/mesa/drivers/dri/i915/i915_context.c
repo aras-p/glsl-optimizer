@@ -108,9 +108,9 @@ intel_init_texture_formats(struct gl_context *ctx)
    ctx->TextureFormatSupported[MESA_FORMAT_ARGB4444] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_ARGB1555] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_RGB565] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_L8] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_A8] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_I8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_L_UNORM8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_A_UNORM8] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_I_UNORM8] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_AL88] = true;
 
    /* Depth and stencil */
@@ -124,7 +124,7 @@ intel_init_texture_formats(struct gl_context *ctx)
     * combo that actually works, so this can probably be re-enabled.
     */
    /*
-   ctx->TextureFormatSupported[MESA_FORMAT_Z16] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z_UNORM16] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z24] = true;
    */
 

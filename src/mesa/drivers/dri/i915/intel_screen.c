@@ -892,7 +892,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    }
    else if (mesaVis->depthBits == 16) {
       assert(mesaVis->stencilBits == 0);
-      rb = intel_create_private_renderbuffer(MESA_FORMAT_Z16);
+      rb = intel_create_private_renderbuffer(MESA_FORMAT_Z_UNORM16);
       _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
    }
    else {

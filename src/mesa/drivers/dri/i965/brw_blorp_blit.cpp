@@ -2030,7 +2030,7 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
       wm_prog_key.texture_data_type = BRW_REGISTER_TYPE_F;
       break;
    case GL_UNSIGNED_INT:
-      if (src_mt->format == MESA_FORMAT_S8) {
+      if (src_mt->format == MESA_FORMAT_S_UINT8) {
          /* We process stencil as though it's an unsigned normalized color */
          wm_prog_key.texture_data_type = BRW_REGISTER_TYPE_F;
       } else {

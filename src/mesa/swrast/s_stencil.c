@@ -300,7 +300,7 @@ get_s8_values(struct gl_context *ctx, struct gl_renderbuffer *rb,
    const GLubyte *map = _swrast_pixel_address(rb, 0, 0);
    GLuint i;
 
-   if (rb->Format == MESA_FORMAT_S8) {
+   if (rb->Format == MESA_FORMAT_S_UINT8) {
       const GLint rowStride = srb->RowStride;
       for (i = 0; i < count; i++) {
          if (x[i] >= 0 && y[i] >= 0 && x[i] < w && y[i] < h) {
@@ -587,7 +587,7 @@ _swrast_clear_stencil_buffer(struct gl_context *ctx)
    }
 
    switch (rb->Format) {
-   case MESA_FORMAT_S8:
+   case MESA_FORMAT_S_UINT8:
       {
          GLubyte clear = ctx->Stencil.Clear & writeMask & 0xff;
          GLubyte mask = (~writeMask) & 0xff;

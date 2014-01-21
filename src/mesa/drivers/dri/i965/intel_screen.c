@@ -1007,7 +1007,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
          rb = intel_create_private_renderbuffer(MESA_FORMAT_X8_Z24,
                                                 num_samples);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8,
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_S_UINT8,
                                                 num_samples);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
       } else {
@@ -1023,7 +1023,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    }
    else if (mesaVis->depthBits == 16) {
       assert(mesaVis->stencilBits == 0);
-      rb = intel_create_private_renderbuffer(MESA_FORMAT_Z16,
+      rb = intel_create_private_renderbuffer(MESA_FORMAT_Z_UNORM16,
                                              num_samples);
       _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
    }

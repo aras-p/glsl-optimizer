@@ -140,7 +140,7 @@ get_image_format(GLenum format)
       return MESA_FORMAT_R_INT8;
 
    case GL_RGBA16:
-      return MESA_FORMAT_RGBA_16;
+      return MESA_FORMAT_RGBA_UNORM16;
 
    case GL_RGB10_A2:
       return MESA_FORMAT_ABGR2101010;
@@ -155,10 +155,10 @@ get_image_format(GLenum format)
       return MESA_FORMAT_RG_8;
 
    case GL_R16:
-      return MESA_FORMAT_R16;
+      return MESA_FORMAT_R_UNORM16;
 
    case GL_R8:
-      return MESA_FORMAT_R8;
+      return MESA_FORMAT_R_UNORM8;
 
    case GL_RGBA16_SNORM:
       return MESA_FORMAT_SIGNED_RGBA_16;
@@ -286,7 +286,7 @@ get_image_format_class(mesa_format format)
    case MESA_FORMAT_R_INT8:
       return IMAGE_FORMAT_CLASS_1X8;
 
-   case MESA_FORMAT_RGBA_16:
+   case MESA_FORMAT_RGBA_UNORM16:
       return IMAGE_FORMAT_CLASS_4X16;
 
    case MESA_FORMAT_ABGR2101010:
@@ -301,10 +301,10 @@ get_image_format_class(mesa_format format)
    case MESA_FORMAT_RG_8:
       return IMAGE_FORMAT_CLASS_2X8;
 
-   case MESA_FORMAT_R16:
+   case MESA_FORMAT_R_UNORM16:
       return IMAGE_FORMAT_CLASS_1X16;
 
-   case MESA_FORMAT_R8:
+   case MESA_FORMAT_R_UNORM8:
       return IMAGE_FORMAT_CLASS_1X8;
 
    case MESA_FORMAT_SIGNED_RGBA_16:

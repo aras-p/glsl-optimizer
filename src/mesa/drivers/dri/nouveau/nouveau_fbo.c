@@ -60,7 +60,7 @@ set_renderbuffer_format(struct gl_renderbuffer *rb, GLenum internalFormat)
 		break;
 	case GL_DEPTH_COMPONENT16:
 		rb->_BaseFormat  = GL_DEPTH_COMPONENT;
-		rb->Format = MESA_FORMAT_Z16;
+		rb->Format = MESA_FORMAT_Z_UNORM16;
 		s->cpp = 2;
 		break;
 	case GL_DEPTH_COMPONENT:
@@ -277,7 +277,7 @@ validate_format_bpp(mesa_format format)
 	case MESA_FORMAT_Z24_S8:
 		return 32;
 	case MESA_FORMAT_RGB565:
-	case MESA_FORMAT_Z16:
+	case MESA_FORMAT_Z_UNORM16:
 		return 16;
 	default:
 		return 0;

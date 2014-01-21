@@ -42,11 +42,11 @@ static GLuint
 translate_texture_format(mesa_format mesa_format, GLenum DepthMode)
 {
    switch (mesa_format) {
-   case MESA_FORMAT_L8:
+   case MESA_FORMAT_L_UNORM8:
       return MAPSURF_8BIT | MT_8BIT_L8;
-   case MESA_FORMAT_I8:
+   case MESA_FORMAT_I_UNORM8:
       return MAPSURF_8BIT | MT_8BIT_I8;
-   case MESA_FORMAT_A8:
+   case MESA_FORMAT_A_UNORM8:
       return MAPSURF_8BIT | MT_8BIT_A8;
    case MESA_FORMAT_AL88:
       return MAPSURF_16BIT | MT_16BIT_AY88;
@@ -70,7 +70,7 @@ translate_texture_format(mesa_format mesa_format, GLenum DepthMode)
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_FXT1);
-   case MESA_FORMAT_Z16:
+   case MESA_FORMAT_Z_UNORM16:
       if (DepthMode == GL_ALPHA)
           return (MAPSURF_16BIT | MT_16BIT_A16);
       else if (DepthMode == GL_INTENSITY)

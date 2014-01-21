@@ -166,7 +166,7 @@ blit_nearest(struct gl_context *ctx,
        * using the core helpers for pack/unpack, we avoid needing to handle
        * masking for things like DEPTH copies of Z24S8.
        */
-      if (readRb->Format == MESA_FORMAT_Z32_FLOAT ||
+      if (readRb->Format == MESA_FORMAT_Z_FLOAT32 ||
 	  readRb->Format == MESA_FORMAT_Z32_FLOAT_X24S8) {
 	 mode = UNPACK_Z_FLOAT;
       } else {
