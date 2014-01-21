@@ -170,38 +170,38 @@ static void r600_emit_query_begin(struct r600_common_context *ctx, struct r600_q
 	switch (query->type) {
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		cs->buf[cs->cdw++] = va;
-		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 2, 0));
+		radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1));
+		radeon_emit(cs, va);
+		radeon_emit(cs, (va >> 32UL) & 0xFF);
 		break;
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SAMPLE_STREAMOUTSTATS) | EVENT_INDEX(3);
-		cs->buf[cs->cdw++] = va;
-		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 2, 0));
+		radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_SAMPLE_STREAMOUTSTATS) | EVENT_INDEX(3));
+		radeon_emit(cs, va);
+		radeon_emit(cs, (va >> 32UL) & 0xFF);
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		cs->buf[cs->cdw++] = va;
-		cs->buf[cs->cdw++] = (3 << 29) | ((va >> 32UL) & 0xFF);
-		cs->buf[cs->cdw++] = 0;
-		cs->buf[cs->cdw++] = 0;
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE_EOP, 4, 0));
+		radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5));
+		radeon_emit(cs, va);
+		radeon_emit(cs, (3 << 29) | ((va >> 32UL) & 0xFF));
+		radeon_emit(cs, 0);
+		radeon_emit(cs, 0);
 		break;
 	case PIPE_QUERY_PIPELINE_STATISTICS:
 		if (!ctx->num_pipelinestat_queries) {
-			cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-			cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PIPELINESTAT_START) | EVENT_INDEX(0);
+			radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+			radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_PIPELINESTAT_START) | EVENT_INDEX(0));
 		}
 		ctx->num_pipelinestat_queries++;
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SAMPLE_PIPELINESTAT) | EVENT_INDEX(2);
-		cs->buf[cs->cdw++] = va;
-		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 2, 0));
+		radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_SAMPLE_PIPELINESTAT) | EVENT_INDEX(2));
+		radeon_emit(cs, va);
+		radeon_emit(cs, (va >> 32UL) & 0xFF);
 		break;
 	default:
 		assert(0);
@@ -229,44 +229,44 @@ static void r600_emit_query_end(struct r600_common_context *ctx, struct r600_que
 	case PIPE_QUERY_OCCLUSION_COUNTER:
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		va += query->buffer.results_end + 8;
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		cs->buf[cs->cdw++] = va;
-		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 2, 0));
+		radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1));
+		radeon_emit(cs, va);
+		radeon_emit(cs, (va >> 32UL) & 0xFF);
 		break;
 	case PIPE_QUERY_PRIMITIVES_EMITTED:
 	case PIPE_QUERY_PRIMITIVES_GENERATED:
 	case PIPE_QUERY_SO_STATISTICS:
 	case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
 		va += query->buffer.results_end + query->result_size/2;
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SAMPLE_STREAMOUTSTATS) | EVENT_INDEX(3);
-		cs->buf[cs->cdw++] = va;
-		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 2, 0));
+		radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_SAMPLE_STREAMOUTSTATS) | EVENT_INDEX(3));
+		radeon_emit(cs, va);
+		radeon_emit(cs, (va >> 32UL) & 0xFF);
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		va += query->buffer.results_end + query->result_size/2;
 		/* fall through */
 	case PIPE_QUERY_TIMESTAMP:
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
-		cs->buf[cs->cdw++] = va;
-		cs->buf[cs->cdw++] = (3 << 29) | ((va >> 32UL) & 0xFF);
-		cs->buf[cs->cdw++] = 0;
-		cs->buf[cs->cdw++] = 0;
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE_EOP, 4, 0));
+		radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5));
+		radeon_emit(cs, va);
+		radeon_emit(cs, (3 << 29) | ((va >> 32UL) & 0xFF));
+		radeon_emit(cs, 0);
+		radeon_emit(cs, 0);
 		break;
 	case PIPE_QUERY_PIPELINE_STATISTICS:
 		assert(ctx->num_pipelinestat_queries > 0);
 		ctx->num_pipelinestat_queries--;
 		if (!ctx->num_pipelinestat_queries) {
-			cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-			cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PIPELINESTAT_STOP) | EVENT_INDEX(0);
+			radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+			radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_PIPELINESTAT_STOP) | EVENT_INDEX(0));
 		}
 		va += query->buffer.results_end + query->result_size/2;
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_SAMPLE_PIPELINESTAT) | EVENT_INDEX(2);
-		cs->buf[cs->cdw++] = va;
-		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 2, 0));
+		radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_SAMPLE_PIPELINESTAT) | EVENT_INDEX(2));
+		radeon_emit(cs, va);
+		radeon_emit(cs, (va >> 32UL) & 0xFF);
 		break;
 	default:
 		assert(0);
@@ -292,9 +292,9 @@ static void r600_emit_query_predication(struct r600_common_context *ctx, struct 
 	if (operation == PREDICATION_OP_CLEAR) {
 		ctx->need_gfx_cs_space(&ctx->b, 3, FALSE);
 
-		cs->buf[cs->cdw++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
-		cs->buf[cs->cdw++] = 0;
-		cs->buf[cs->cdw++] = PRED_OP(PREDICATION_OP_CLEAR);
+		radeon_emit(cs, PKT3(PKT3_SET_PREDICATION, 1, 0));
+		radeon_emit(cs, 0);
+		radeon_emit(cs, PRED_OP(PREDICATION_OP_CLEAR));
 	} else {
 		struct r600_query_buffer *qbuf;
 		unsigned count;
@@ -317,9 +317,9 @@ static void r600_emit_query_predication(struct r600_common_context *ctx, struct 
 			uint64_t va = r600_resource_va(ctx->b.screen, &qbuf->buf->b.b);
 
 			while (results_base < qbuf->results_end) {
-				cs->buf[cs->cdw++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
-				cs->buf[cs->cdw++] = (va + results_base) & 0xFFFFFFFFUL;
-				cs->buf[cs->cdw++] = op | (((va + results_base) >> 32UL) & 0xFF);
+				radeon_emit(cs, PKT3(PKT3_SET_PREDICATION, 1, 0));
+				radeon_emit(cs, (va + results_base) & 0xFFFFFFFFUL);
+				radeon_emit(cs, op | (((va + results_base) >> 32UL) & 0xFF));
 				r600_emit_reloc(ctx, &ctx->rings.gfx, qbuf->buf, RADEON_USAGE_READ);
 				results_base += query->result_size;
 
@@ -812,10 +812,10 @@ void r600_query_init_backend_mask(struct r600_common_context *ctx)
 		ctx->ws->buffer_unmap(buffer->cs_buf);
 
 		/* emit EVENT_WRITE for ZPASS_DONE */
-		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
-		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-		cs->buf[cs->cdw++] = va;
-		cs->buf[cs->cdw++] = va >> 32;
+		radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 2, 0));
+		radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1));
+		radeon_emit(cs, va);
+		radeon_emit(cs, va >> 32);
 
 		r600_emit_reloc(ctx, &ctx->rings.gfx, buffer, RADEON_USAGE_WRITE);
 
