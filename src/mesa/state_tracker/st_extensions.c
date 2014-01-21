@@ -779,4 +779,13 @@ void st_init_extensions(struct st_context *st)
       if (!ctx->Extensions.EXT_transform_feedback)
          ctx->Const.DisableVaryingPacking = GL_TRUE;
    }
+
+   if (ctx->API == API_OPENGL_CORE) {
+      ctx->Const.MaxViewports = screen->get_param(screen, PIPE_CAP_MAX_VIEWPORTS);
+      if (ctx->Const.MaxViewports >= 16) {
+         ctx->Const.ViewportBounds.Min = -(float)ctx->Const.MaxViewportWidth;
+         ctx->Const.ViewportBounds.Max = ctx->Const.MaxViewportWidth;
+         ctx->Extensions.ARB_viewport_array = GL_TRUE;
+      }
+   }
 }

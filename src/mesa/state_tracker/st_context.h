@@ -115,8 +115,8 @@ struct st_context
          unsigned size;
       } constants[PIPE_SHADER_TYPES];
       struct pipe_framebuffer_state framebuffer;
-      struct pipe_scissor_state scissor;
-      struct pipe_viewport_state viewport;
+      struct pipe_scissor_state scissor[PIPE_MAX_VIEWPORTS];
+      struct pipe_viewport_state viewport[PIPE_MAX_VIEWPORTS];
       unsigned sample_mask;
 
       GLuint poly_stipple[32];  /**< In OpenGL's bottom-to-top order */
