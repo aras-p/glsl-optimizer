@@ -635,15 +635,19 @@ clip_point_guard_xy( struct draw_stage *stage,
          clipmask &= ~(1 << plane_idx);  /* turn off this plane's bit */
          /* TODO: this should really do proper guardband clipping,
           * currently just throw out infs/nans.
+          * Also note that vertices with negative w values MUST be tossed
+          * out (not sure if proper guardband clipping would do this
+          * automatically). These would usually be captured by depth clip
+          * too but this can be disabled.
           */
-         if (util_is_inf_or_nan(header->v[0]->clip[0]) ||
+         if (header->v[0]->clip[3] <= 0.0f ||
+             util_is_inf_or_nan(header->v[0]->clip[0]) ||
              util_is_inf_or_nan(header->v[0]->clip[1]))
             return;
       }
       stage->next->point(stage->next, header);
    }
 }
-
 
 
 static void
