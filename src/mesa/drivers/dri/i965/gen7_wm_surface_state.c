@@ -288,7 +288,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
    memset(surf, 0, 8 * 4);
 
    uint32_t tex_format = translate_tex_format(brw,
-                                              mt->format,
+                                              intelObj->_Format,
                                               sampler->sRGBDecode);
 
    if (for_gather && tex_format == BRW_SURFACEFORMAT_R32G32_FLOAT)
@@ -310,6 +310,12 @@ gen7_update_texture_surface(struct gl_context *ctx,
    if (mt->logical_depth0 > 1 && tObj->Target != GL_TEXTURE_3D)
       surf[0] |= GEN7_SURFACE_IS_ARRAY;
 
+   /* if this is a view with restricted NumLayers, then
+    * our effective depth is not just the miptree depth.
+    */
+   uint32_t effective_depth = (tObj->Immutable && tObj->Target != GL_TEXTURE_3D)
+                              ? tObj->NumLayers : mt->logical_depth0;
+
    if (mt->array_spacing_lod0)
       surf[0] |= GEN7_SURFACE_ARYSPC_LOD0;
 
@@ -317,14 +323,17 @@ gen7_update_texture_surface(struct gl_context *ctx,
 
    surf[2] = SET_FIELD(mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);
-   surf[3] = SET_FIELD(mt->logical_depth0 - 1, BRW_SURFACE_DEPTH) |
+
+   surf[3] = SET_FIELD(effective_depth - 1, BRW_SURFACE_DEPTH) |
              (mt->region->pitch - 1);
 
-   surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout);
+   surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout) |
+             SET_FIELD(tObj->MinLayer, GEN7_SURFACE_MIN_ARRAY_ELEMENT) |
+             SET_FIELD((effective_depth - 1),
+                       GEN7_SURFACE_RENDER_TARGET_VIEW_EXTENT);
 
    surf[5] = (SET_FIELD(GEN7_MOCS_L3, GEN7_SURFACE_MOCS) |
-              SET_FIELD(tObj->BaseLevel - mt->first_level,
-                        GEN7_SURFACE_MIN_LOD) |
+              SET_FIELD(tObj->MinLevel + tObj->BaseLevel - mt->first_level, GEN7_SURFACE_MIN_LOD) |
               /* mip count */
               (intelObj->_MaxLevel - tObj->BaseLevel));
 
