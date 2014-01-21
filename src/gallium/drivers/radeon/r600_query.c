@@ -206,8 +206,7 @@ static void r600_emit_query_begin(struct r600_common_context *ctx, struct r600_q
 	default:
 		assert(0);
 	}
-	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, &ctx->rings.gfx, query->buffer.buf, RADEON_USAGE_WRITE);
+	r600_emit_reloc(ctx, &ctx->rings.gfx, query->buffer.buf, RADEON_USAGE_WRITE);
 
 	if (!r600_is_timer_query(query->type)) {
 		ctx->num_cs_dw_nontimer_queries_suspend += query->num_cs_dw;
@@ -272,8 +271,7 @@ static void r600_emit_query_end(struct r600_common_context *ctx, struct r600_que
 	default:
 		assert(0);
 	}
-	cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-	cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, &ctx->rings.gfx, query->buffer.buf, RADEON_USAGE_WRITE);
+	r600_emit_reloc(ctx, &ctx->rings.gfx, query->buffer.buf, RADEON_USAGE_WRITE);
 
 	query->buffer.results_end += query->result_size;
 
@@ -322,8 +320,7 @@ static void r600_emit_query_predication(struct r600_common_context *ctx, struct 
 				cs->buf[cs->cdw++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
 				cs->buf[cs->cdw++] = (va + results_base) & 0xFFFFFFFFUL;
 				cs->buf[cs->cdw++] = op | (((va + results_base) >> 32UL) & 0xFF);
-				cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-				cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, &ctx->rings.gfx, qbuf->buf, RADEON_USAGE_READ);
+				r600_emit_reloc(ctx, &ctx->rings.gfx, qbuf->buf, RADEON_USAGE_READ);
 				results_base += query->result_size;
 
 				/* set CONTINUE bit for all packets except the first */
@@ -818,10 +815,9 @@ void r600_query_init_backend_mask(struct r600_common_context *ctx)
 		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
 		cs->buf[cs->cdw++] = va;
-		cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
+		cs->buf[cs->cdw++] = va >> 32;
 
-		cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, 0);
-		cs->buf[cs->cdw++] = r600_context_bo_reloc(ctx, &ctx->rings.gfx, buffer, RADEON_USAGE_WRITE);
+		r600_emit_reloc(ctx, &ctx->rings.gfx, buffer, RADEON_USAGE_WRITE);
 
 		/* analyze results */
 		results = r600_buffer_map_sync_with_rings(ctx, buffer, PIPE_TRANSFER_READ);

@@ -66,6 +66,20 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_common_context *rctx,
 	return rctx->ws->cs_add_reloc(ring->cs, rbo->cs_buf, usage, rbo->domains) * 4;
 }
 
+static INLINE void r600_emit_reloc(struct r600_common_context *rctx,
+				   struct r600_ring *ring, struct r600_resource *rbo,
+				   enum radeon_bo_usage usage)
+{
+	struct radeon_winsys_cs *cs = ring->cs;
+	bool has_vm = ((struct r600_common_screen*)rctx->b.screen)->info.r600_virtual_address;
+	unsigned reloc = r600_context_bo_reloc(rctx, ring, rbo, usage);
+
+	if (!has_vm) {
+		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
+		radeon_emit(cs, reloc);
+	}
+}
+
 static INLINE void r600_write_config_reg_seq(struct radeon_winsys_cs *cs, unsigned reg, unsigned num)
 {
 	assert(reg < R600_CONTEXT_REG_OFFSET);

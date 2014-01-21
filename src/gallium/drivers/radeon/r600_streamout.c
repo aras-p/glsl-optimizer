@@ -199,20 +199,6 @@ static void evergreen_set_streamout_enable(struct r600_common_context *rctx, uns
 	}
 }
 
-static void r600_emit_reloc(struct r600_common_context *rctx,
-			    struct r600_ring *ring, struct r600_resource *rbo,
-			    enum radeon_bo_usage usage)
-{
-	struct radeon_winsys_cs *cs = ring->cs;
-	bool has_vm = ((struct r600_common_screen*)rctx->b.screen)->info.r600_virtual_address;
-	unsigned reloc = r600_context_bo_reloc(rctx, ring, rbo, usage);
-
-	if (!has_vm) {
-		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
-		radeon_emit(cs, reloc);
-	}
-}
-
 static void r600_emit_streamout_begin(struct r600_common_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
