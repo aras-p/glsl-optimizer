@@ -237,6 +237,46 @@ intel_unmap_texture_image(struct gl_context *ctx,
    intel_miptree_unmap(brw, mt, tex_image->Level, slice);
 }
 
+static GLboolean
+intel_texture_view(struct gl_context *ctx,
+                   struct gl_texture_object *texObj,
+                   struct gl_texture_object *origTexObj)
+{
+   struct intel_texture_object *intel_tex = intel_texture_object(texObj);
+   struct intel_texture_object *intel_orig_tex = intel_texture_object(origTexObj);
+
+   assert(intel_orig_tex->mt);
+   intel_miptree_reference(&intel_tex->mt, intel_orig_tex->mt);
+
+   /* Since we can only make views of immutable-format textures,
+    * we can assume that everything is in origTexObj's miptree.
+    *
+    * Mesa core has already made us a copy of all the teximage objects,
+    * except it hasn't copied our mt pointers, etc.
+    */
+   const int numFaces = _mesa_num_tex_faces(texObj->Target);
+   const int numLevels = texObj->NumLevels;
+
+   int face;
+   int level;
+
+   for (face = 0; face < numFaces; face++) {
+      for (level = 0; level < numLevels; level++) {
+         struct gl_texture_image *image = texObj->Image[face][level];
+         struct intel_texture_image *intel_image = intel_texture_image(image);
+
+         intel_miptree_reference(&intel_image->mt, intel_orig_tex->mt);
+      }
+   }
+
+   /* The miptree is in a validated state, so no need to check later. */
+   intel_tex->needs_validate = false;
+   intel_tex->validated_first_level = 0;
+   intel_tex->validated_last_level = numLevels - 1;
+
+   return GL_TRUE;
+}
+
 void
 intelInitTextureFuncs(struct dd_function_table *functions)
 {
@@ -249,4 +289,5 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->AllocTextureStorage = intel_alloc_texture_storage;
    functions->MapTextureImage = intel_map_texture_image;
    functions->UnmapTextureImage = intel_unmap_texture_image;
+   functions->TextureView = intel_texture_view;
 }
