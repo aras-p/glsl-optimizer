@@ -90,6 +90,9 @@ struct intel_renderbuffer
     */
    unsigned int mt_level;
    unsigned int mt_layer;
+
+   /* The number of attached logical layers. */
+   unsigned int layer_count;
    /** \} */
 
    GLuint draw_x, draw_y; /**< Offset of drawing within the region */

@@ -319,6 +319,8 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    if (!irb->mt)
       return false;
 
+   irb->layer_count = 1;
+
    return true;
 }
 
@@ -383,6 +385,7 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
    rb->Format = image->format;
    rb->_BaseFormat = _mesa_base_fbo_format(ctx, image->internal_format);
    rb->NeedsFinishRenderTexture = true;
+   irb->layer_count = 1;
 }
 
 /**
@@ -435,6 +438,7 @@ intel_create_renderbuffer(mesa_format format, unsigned num_samples)
    }
 
    rb = &irb->Base.Base;
+   irb->layer_count = 1;
 
    _mesa_init_renderbuffer(rb, 0);
    rb->ClassID = INTEL_RB_CLASS;
@@ -531,6 +535,12 @@ intel_renderbuffer_update_wrapper(struct brw_context *brw,
    }
 
    irb->mt_layer = layer_multiplier * layer;
+
+   if (layered) {
+      irb->layer_count = image->TexObject->NumLayers ?: mt->level[level].depth / layer_multiplier;
+   } else {
+      irb->layer_count = 1;
+   }
 
    intel_miptree_reference(&irb->mt, mt);
 
