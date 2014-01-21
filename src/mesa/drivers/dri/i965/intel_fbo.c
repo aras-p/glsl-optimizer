@@ -501,8 +501,9 @@ intel_new_renderbuffer(struct gl_context * ctx, GLuint name)
 static bool
 intel_renderbuffer_update_wrapper(struct brw_context *brw,
                                   struct intel_renderbuffer *irb,
-				  struct gl_texture_image *image,
-                                  uint32_t layer)
+                                  struct gl_texture_image *image,
+                                  uint32_t layer,
+                                  bool layered)
 {
    struct gl_renderbuffer *rb = &irb->Base.Base;
    struct intel_texture_image *intel_image = intel_texture_image(image);
@@ -594,7 +595,7 @@ intel_render_texture(struct gl_context * ctx,
 
    intel_miptree_check_level_layer(mt, att->TextureLevel, layer);
 
-   if (!intel_renderbuffer_update_wrapper(brw, irb, image, layer)) {
+   if (!intel_renderbuffer_update_wrapper(brw, irb, image, layer, att->Layered)) {
        _swrast_render_texture(ctx, fb, att);
        return;
    }
