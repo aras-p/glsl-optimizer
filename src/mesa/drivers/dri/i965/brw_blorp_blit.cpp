@@ -923,6 +923,8 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
     */
    render_target_write();
 
+   brw_set_uip_jip(&func);
+
    if (unlikely(INTEL_DEBUG & DEBUG_BLORP)) {
       printf("Native code for BLORP blit:\n");
       brw_dump_compile(&func, dump_file, 0, func.next_insn_offset);
