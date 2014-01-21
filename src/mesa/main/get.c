@@ -1247,6 +1247,8 @@ _mesa_GetBooleanv(GLenum pname, GLboolean *params)
       params[0] = FLOAT_TO_BOOLEAN(((GLfloat *) p)[0]);
       break;
 
+   case TYPE_DOUBLEN_2:
+      params[1] = FLOAT_TO_BOOLEAN(((GLdouble *) p)[1]);
    case TYPE_DOUBLEN:
       params[0] = FLOAT_TO_BOOLEAN(((GLdouble *) p)[0]);
       break;
@@ -1333,6 +1335,8 @@ _mesa_GetFloatv(GLenum pname, GLfloat *params)
       params[0] = ((GLfloat *) p)[0];
       break;
 
+   case TYPE_DOUBLEN_2:
+      params[1] = (GLfloat) (((GLdouble *) p)[1]);
    case TYPE_DOUBLEN:
       params[0] = (GLfloat) (((GLdouble *) p)[0]);
       break;
@@ -1425,6 +1429,8 @@ _mesa_GetIntegerv(GLenum pname, GLint *params)
       params[0] = FLOAT_TO_INT(((GLfloat *) p)[0]);
       break;
 
+   case TYPE_DOUBLEN_2:
+      params[1] = FLOAT_TO_INT(((GLdouble *) p)[1]);
    case TYPE_DOUBLEN:
       params[0] = FLOAT_TO_INT(((GLdouble *) p)[0]);
       break;
@@ -1517,6 +1523,8 @@ _mesa_GetInteger64v(GLenum pname, GLint64 *params)
       params[0] = FLOAT_TO_INT64(((GLfloat *) p)[0]);
       break;
 
+   case TYPE_DOUBLEN_2:
+      params[1] = FLOAT_TO_INT64(((GLdouble *) p)[1]);
    case TYPE_DOUBLEN:
       params[0] = FLOAT_TO_INT64(((GLdouble *) p)[0]);
       break;
@@ -1603,6 +1611,8 @@ _mesa_GetDoublev(GLenum pname, GLdouble *params)
       params[0] = ((GLfloat *) p)[0];
       break;
 
+   case TYPE_DOUBLEN_2:
+      params[1] = ((GLdouble *) p)[1];
    case TYPE_DOUBLEN:
       params[0] = ((GLdouble *) p)[0];
       break;
@@ -2201,6 +2211,8 @@ _mesa_GetFixedv(GLenum pname, GLfixed *params)
       params[0] = FLOAT_TO_FIXED(((GLfloat *) p)[0]);
       break;
 
+   case TYPE_DOUBLEN_2:
+      params[1] = FLOAT_TO_FIXED(((GLdouble *) p)[1]);
    case TYPE_DOUBLEN:
       params[0] = FLOAT_TO_FIXED(((GLdouble *) p)[0]);
       break;
