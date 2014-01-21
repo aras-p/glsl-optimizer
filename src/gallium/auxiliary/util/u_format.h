@@ -872,6 +872,9 @@ util_format_get_component_bits(enum pipe_format format,
 static INLINE enum pipe_format
 util_format_srgb(enum pipe_format format)
 {
+   if (util_format_is_srgb(format))
+      return format;
+
    switch (format) {
    case PIPE_FORMAT_L8_UNORM:
       return PIPE_FORMAT_L8_SRGB;
