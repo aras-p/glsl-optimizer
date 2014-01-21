@@ -588,7 +588,7 @@ brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
          unsigned num_layers = irb->layer_count;
          for (unsigned layer = 0; layer < num_layers; layer++) {
             if (!do_single_blorp_clear(brw, fb, rb, buf, partial_clear,
-                                       layer * layer_multiplier)) {
+                                       irb->mt_layer + layer * layer_multiplier)) {
                return false;
             }
          }
