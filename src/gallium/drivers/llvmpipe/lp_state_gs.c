@@ -28,6 +28,7 @@
 #include "lp_context.h"
 #include "lp_state.h"
 #include "lp_texture.h"
+#include "lp_debug.h"
 
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
@@ -50,8 +51,10 @@ llvmpipe_create_gs_state(struct pipe_context *pipe,
       goto fail;
 
    /* debug */
-   if (0)
+   if (LP_DEBUG & DEBUG_TGSI) {
+      debug_printf("llvmpipe: Create geometry shader %p:\n", (void *)state);
       tgsi_dump(templ->tokens, 0);
+   }
 
    /* copy stream output info */
    state->shader = *templ;
