@@ -572,6 +572,11 @@ st_translate_fragment_program(struct st_context *st,
             input_semantic_index[slot] = 0;
             interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
             break;
+         case VARYING_SLOT_VIEWPORT:
+            input_semantic_name[slot] = TGSI_SEMANTIC_VIEWPORT_INDEX;
+            input_semantic_index[slot] = 0;
+            interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
+            break;
          case VARYING_SLOT_CLIP_DIST0:
             input_semantic_name[slot] = TGSI_SEMANTIC_CLIPDIST;
             input_semantic_index[slot] = 0;
@@ -1025,6 +1030,10 @@ st_translate_geometry_program(struct st_context *st,
             break;
          case VARYING_SLOT_PRIMITIVE_ID:
             gs_output_semantic_name[slot] = TGSI_SEMANTIC_PRIMID;
+            gs_output_semantic_index[slot] = 0;
+            break;
+         case VARYING_SLOT_VIEWPORT:
+            gs_output_semantic_name[slot] = TGSI_SEMANTIC_VIEWPORT_INDEX;
             gs_output_semantic_index[slot] = 0;
             break;
          case VARYING_SLOT_TEX0:
