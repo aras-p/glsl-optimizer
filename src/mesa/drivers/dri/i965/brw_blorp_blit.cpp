@@ -658,6 +658,11 @@ private:
                        const sampler_message_arg *args, int num_args);
    void render_target_write();
 
+   void emit_lrp(const struct brw_reg &dst,
+                 const struct brw_reg &src1,
+                 const struct brw_reg &src2,
+                 const struct brw_reg &src3);
+
    /**
     * Base-2 logarithm of the maximum number of samples that can be blended.
     */
@@ -1656,6 +1661,21 @@ brw_blorp_blit_program::manual_blend_average(unsigned num_samples)
 }
 
 void
+brw_blorp_blit_program::emit_lrp(const struct brw_reg &dst,
+                                 const struct brw_reg &src1,
+                                 const struct brw_reg &src2,
+                                 const struct brw_reg &src3)
+{
+   brw_set_access_mode(&func, BRW_ALIGN_16);
+   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
+   brw_LRP(&func, dst, src1, src2, src3);
+   brw_set_compression_control(&func, BRW_COMPRESSION_2NDHALF);
+   brw_LRP(&func, sechalf(dst), sechalf(src1), sechalf(src2), sechalf(src3));
+   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
+   brw_set_access_mode(&func, BRW_ALIGN_1);
+}
+
+void
 brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
 {
    /* We do this computation by performing the following operations:
@@ -1768,29 +1788,23 @@ brw_blorp_blit_program::manual_blend_bilinear(unsigned num_samples)
    }
 
 #define SAMPLE(x, y) offset(texture_data[x], y)
-   brw_set_access_mode(&func, BRW_ALIGN_16);
-   brw_set_compression_control(&func, BRW_COMPRESSION_NONE);
    for (int index = 3; index > 0; ) {
       /* Since we're doing SIMD16, 4 color channels fits in to 8 registers.
        * Counter value of 8 in 'for' loop below is used to interpolate all
        * the color components.
        */
-      for (int k = 0; k < 8; ++k)
-         brw_LRP(&func,
-                 vec8(SAMPLE(index - 1, k)),
-                 offset(x_frac, k & 1),
-                 SAMPLE(index, k),
-                 SAMPLE(index - 1, k));
+      for (int k = 0; k < 8; k += 2)
+         emit_lrp(vec8(SAMPLE(index - 1, k)),
+                  x_frac,
+                  vec8(SAMPLE(index, k)),
+                  vec8(SAMPLE(index - 1, k)));
       index -= 2;
    }
-   for (int k = 0; k < 8; ++k)
-      brw_LRP(&func,
-              vec8(SAMPLE(0, k)),
-              offset(y_frac, k & 1),
-              vec8(SAMPLE(2, k)),
-              vec8(SAMPLE(0, k)));
-   brw_set_compression_control(&func, BRW_COMPRESSION_COMPRESSED);
-   brw_set_access_mode(&func, BRW_ALIGN_1);
+   for (int k = 0; k < 8; k += 2)
+      emit_lrp(vec8(SAMPLE(0, k)),
+               y_frac,
+               vec8(SAMPLE(2, k)),
+               vec8(SAMPLE(0, k)));
 #undef SAMPLE
 }
 
