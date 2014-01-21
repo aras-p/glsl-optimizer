@@ -22,6 +22,7 @@
  */
 
 #include <stdbool.h>
+#include "program/program.h"
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "intel_batchbuffer.h"
@@ -29,6 +30,7 @@
 static void
 upload_ps_extra(struct brw_context *brw)
 {
+   struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
@@ -63,6 +65,18 @@ upload_ps_extra(struct brw_context *brw)
    if (fp->program.Base.InputsRead & VARYING_BIT_POS)
       dw1 |= GEN8_PSX_USES_SOURCE_DEPTH | GEN8_PSX_USES_SOURCE_W;
 
+   /* _NEW_BUFFERS | _NEW_MULTISAMPLE */
+   bool multisampled_fbo = ctx->DrawBuffer->Visual.samples > 1;
+   if (multisampled_fbo &&
+       _mesa_get_min_invocations_per_fragment(ctx, &fp->program, false) > 1)
+      dw1 |= GEN8_PSX_SHADER_IS_PER_SAMPLE;
+
+   if (fp->program.Base.SystemValuesRead & SYSTEM_BIT_SAMPLE_MASK_IN)
+      dw1 |= GEN8_PSX_SHADER_USES_INPUT_COVERAGE_MASK;
+
+   if (brw->wm.prog_data->uses_omask)
+      dw1 |= GEN8_PSX_OMASK_TO_RENDER_TARGET;
+
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_PS_EXTRA << 16 | (2 - 2));
    OUT_BATCH(dw1);
@@ -71,7 +85,7 @@ upload_ps_extra(struct brw_context *brw)
 
 const struct brw_tracked_state gen8_ps_extra = {
    .dirty = {
-      .mesa  = 0,
+      .mesa  = _NEW_BUFFERS | _NEW_MULTISAMPLE,
       .brw   = BRW_NEW_CONTEXT | BRW_NEW_FRAGMENT_PROGRAM,
       .cache = 0,
    },
