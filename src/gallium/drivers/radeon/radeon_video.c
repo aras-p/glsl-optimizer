@@ -59,9 +59,12 @@ unsigned rvid_alloc_stream_handle()
 }
 
 /* create a buffer in the winsys */
-bool rvid_create_buffer(struct radeon_winsys *ws, struct rvid_buffer *buffer, unsigned size)
+bool rvid_create_buffer(struct radeon_winsys *ws, struct rvid_buffer *buffer,
+			unsigned size, enum radeon_bo_domain domain)
 {
-	buffer->buf = ws->buffer_create(ws, size, 4096, false, RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM);
+	buffer->domain = domain;
+
+	buffer->buf = ws->buffer_create(ws, size, 4096, false, domain);
 	if (!buffer->buf)
 		return false;
 
@@ -87,7 +90,7 @@ bool rvid_resize_buffer(struct radeon_winsys *ws, struct radeon_winsys_cs *cs,
 	struct rvid_buffer old_buf = *new_buf;
 	void *src = NULL, *dst = NULL;
 
-	if (!rvid_create_buffer(ws, new_buf, new_size))
+	if (!rvid_create_buffer(ws, new_buf, new_size, new_buf->domain))
 		goto error;
 
 	src = ws->buffer_map(old_buf.cs_handle, cs, PIPE_TRANSFER_READ);

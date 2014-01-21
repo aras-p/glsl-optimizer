@@ -815,12 +815,12 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 	for (i = 0; i < NUM_BUFFERS; ++i) {
 		unsigned msg_fb_size = FB_BUFFER_OFFSET + FB_BUFFER_SIZE;
 		STATIC_ASSERT(sizeof(struct ruvd_msg) <= FB_BUFFER_OFFSET);
-		if (!rvid_create_buffer(dec->ws, &dec->msg_fb_buffers[i], msg_fb_size)) {
+		if (!rvid_create_buffer(dec->ws, &dec->msg_fb_buffers[i], msg_fb_size, RADEON_DOMAIN_VRAM)) {
 			RVID_ERR("Can't allocated message buffers.\n");
 			goto error;
 		}
 
-		if (!rvid_create_buffer(dec->ws, &dec->bs_buffers[i], bs_buf_size)) {
+		if (!rvid_create_buffer(dec->ws, &dec->bs_buffers[i], bs_buf_size, RADEON_DOMAIN_GTT)) {
 			RVID_ERR("Can't allocated bitstream buffers.\n");
 			goto error;
 		}
@@ -829,7 +829,7 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 		rvid_clear_buffer(dec->ws, dec->cs, &dec->bs_buffers[i]);
 	}
 
-	if (!rvid_create_buffer(dec->ws, &dec->dpb, dpb_size)) {
+	if (!rvid_create_buffer(dec->ws, &dec->dpb, dpb_size, RADEON_DOMAIN_VRAM)) {
 		RVID_ERR("Can't allocated dpb.\n");
 		goto error;
 	}
