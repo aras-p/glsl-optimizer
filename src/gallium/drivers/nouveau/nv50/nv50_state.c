@@ -235,8 +235,10 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
    so->pipe = *cso;
 
 #ifndef NV50_SCISSORS_CLIPPING
-   SB_BEGIN_3D(so, SCISSOR_ENABLE(0), 1);
-   SB_DATA    (so, cso->scissor);
+   for (int i = 0; i < NV50_MAX_VIEWPORTS; i++) {
+      SB_BEGIN_3D(so, SCISSOR_ENABLE(i), 1);
+      SB_DATA    (so, cso->scissor);
+   }
 #endif
 
    SB_BEGIN_3D(so, SHADE_MODEL, 1);
@@ -903,9 +905,16 @@ nv50_set_scissor_states(struct pipe_context *pipe,
                         const struct pipe_scissor_state *scissor)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
+   int i;
 
-   nv50->scissor = *scissor;
-   nv50->dirty |= NV50_NEW_SCISSOR;
+   assert(start_slot + num_scissors <= NV50_MAX_VIEWPORTS);
+   for (i = 0; i < num_scissors; i++) {
+      if (!memcmp(&nv50->scissors[start_slot + i], &scissor[i], sizeof(*scissor)))
+         continue;
+      nv50->scissors[start_slot + i] = scissor[i];
+      nv50->scissors_dirty |= 1 << (start_slot + i);
+      nv50->dirty |= NV50_NEW_SCISSOR;
+   }
 }
 
 static void
@@ -915,9 +924,16 @@ nv50_set_viewport_states(struct pipe_context *pipe,
                          const struct pipe_viewport_state *vpt)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
+   int i;
 
-   nv50->viewport = *vpt;
-   nv50->dirty |= NV50_NEW_VIEWPORT;
+   assert(start_slot + num_viewports <= NV50_MAX_VIEWPORTS);
+   for (i = 0; i < num_viewports; i++) {
+      if (!memcmp(&nv50->viewports[start_slot + i], &vpt[i], sizeof(*vpt)))
+         continue;
+      nv50->viewports[start_slot + i] = vpt[i];
+      nv50->viewports_dirty |= 1 << (start_slot + i);
+      nv50->dirty |= NV50_NEW_VIEWPORT;
+   }
 }
 
 static void

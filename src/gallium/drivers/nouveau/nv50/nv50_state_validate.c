@@ -124,6 +124,7 @@ nv50_validate_fb(struct nv50_context *nv50)
    BEGIN_NV04(push, NV50_3D(MULTISAMPLE_MODE), 1);
    PUSH_DATA (push, ms_mode);
 
+   /* Only need to initialize the first viewport, which is used for clears */
    BEGIN_NV04(push, NV50_3D(VIEWPORT_HORIZ(0)), 2);
    PUSH_DATA (push, fb->width << 16);
    PUSH_DATA (push, fb->height << 16);
@@ -167,42 +168,63 @@ static void
 nv50_validate_scissor(struct nv50_context *nv50)
 {
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
-   struct pipe_scissor_state *s = &nv50->scissor;
 #ifdef NV50_SCISSORS_CLIPPING
-   struct pipe_viewport_state *vp = &nv50->viewport;
-   int minx, maxx, miny, maxy;
+   int minx, maxx, miny, maxy, i;
 
    if (!(nv50->dirty &
          (NV50_NEW_SCISSOR | NV50_NEW_VIEWPORT | NV50_NEW_FRAMEBUFFER)) &&
        nv50->state.scissor == nv50->rast->pipe.scissor)
       return;
+
+   if (nv50->state.scissor != nv50->rast->pipe.scissor)
+      nv50->scissors_dirty = (1 << NV50_MAX_VIEWPORTS) - 1;
+
    nv50->state.scissor = nv50->rast->pipe.scissor;
 
-   if (nv50->state.scissor) {
-      minx = s->minx;
-      maxx = s->maxx;
-      miny = s->miny;
-      maxy = s->maxy;
-   } else {
-      minx = 0;
-      maxx = nv50->framebuffer.width;
-      miny = 0;
-      maxy = nv50->framebuffer.height;
+   if ((nv50->dirty & NV50_NEW_FRAMEBUFFER) && !nv50->state.scissor)
+      nv50->scissors_dirty = (1 << NV50_MAX_VIEWPORTS) - 1;
+
+   for (i = 0; i < NV50_MAX_VIEWPORTS; i++) {
+      struct pipe_scissor_state *s = &nv50->scissors[i];
+      struct pipe_viewport_state *vp = &nv50->viewports[i];
+
+      if (!(nv50->scissors_dirty & (1 << i)) &&
+          !(nv50->viewports_dirty & (1 << i)))
+         continue;
+
+      if (nv50->state.scissor) {
+         minx = s->minx;
+         maxx = s->maxx;
+         miny = s->miny;
+         maxy = s->maxy;
+      } else {
+         minx = 0;
+         maxx = nv50->framebuffer.width;
+         miny = 0;
+         maxy = nv50->framebuffer.height;
+      }
+
+      minx = MAX2(minx, (int)(vp->translate[0] - fabsf(vp->scale[0])));
+      maxx = MIN2(maxx, (int)(vp->translate[0] + fabsf(vp->scale[0])));
+      miny = MAX2(miny, (int)(vp->translate[1] - fabsf(vp->scale[1])));
+      maxy = MIN2(maxy, (int)(vp->translate[1] + fabsf(vp->scale[1])));
+
+      minx = MIN2(minx, 8192);
+      maxx = MAX2(maxx, 0);
+      miny = MIN2(miny, 8192);
+      maxy = MAX2(maxy, 0);
+
+      BEGIN_NV04(push, NV50_3D(SCISSOR_HORIZ(i)), 2);
+      PUSH_DATA (push, (maxx << 16) | minx);
+      PUSH_DATA (push, (maxy << 16) | miny);
+#else
+      BEGIN_NV04(push, NV50_3D(SCISSOR_HORIZ(i)), 2);
+      PUSH_DATA (push, (s->maxx << 16) | s->minx);
+      PUSH_DATA (push, (s->maxy << 16) | s->miny);
+#endif
    }
 
-   minx = MAX2(minx, (int)(vp->translate[0] - fabsf(vp->scale[0])));
-   maxx = MIN2(maxx, (int)(vp->translate[0] + fabsf(vp->scale[0])));
-   miny = MAX2(miny, (int)(vp->translate[1] - fabsf(vp->scale[1])));
-   maxy = MIN2(maxy, (int)(vp->translate[1] + fabsf(vp->scale[1])));
-
-   BEGIN_NV04(push, NV50_3D(SCISSOR_HORIZ(0)), 2);
-   PUSH_DATA (push, (maxx << 16) | minx);
-   PUSH_DATA (push, (maxy << 16) | miny);
-#else
-   BEGIN_NV04(push, NV50_3D(SCISSOR_HORIZ(0)), 2);
-   PUSH_DATA (push, (s->maxx << 16) | s->minx);
-   PUSH_DATA (push, (s->maxy << 16) | s->miny);
-#endif
+   nv50->scissors_dirty = 0;
 }
 
 static void
@@ -210,24 +232,34 @@ nv50_validate_viewport(struct nv50_context *nv50)
 {
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    float zmin, zmax;
+   int i;
 
-   BEGIN_NV04(push, NV50_3D(VIEWPORT_TRANSLATE_X(0)), 3);
-   PUSH_DATAf(push, nv50->viewport.translate[0]);
-   PUSH_DATAf(push, nv50->viewport.translate[1]);
-   PUSH_DATAf(push, nv50->viewport.translate[2]);
-   BEGIN_NV04(push, NV50_3D(VIEWPORT_SCALE_X(0)), 3);
-   PUSH_DATAf(push, nv50->viewport.scale[0]);
-   PUSH_DATAf(push, nv50->viewport.scale[1]);
-   PUSH_DATAf(push, nv50->viewport.scale[2]);
+   for (i = 0; i < NV50_MAX_VIEWPORTS; i++) {
+      struct pipe_viewport_state *vpt = &nv50->viewports[i];
 
-   zmin = nv50->viewport.translate[2] - fabsf(nv50->viewport.scale[2]);
-   zmax = nv50->viewport.translate[2] + fabsf(nv50->viewport.scale[2]);
+      if (!(nv50->viewports_dirty & (1 << i)))
+         continue;
+
+      BEGIN_NV04(push, NV50_3D(VIEWPORT_TRANSLATE_X(i)), 3);
+      PUSH_DATAf(push, vpt->translate[0]);
+      PUSH_DATAf(push, vpt->translate[1]);
+      PUSH_DATAf(push, vpt->translate[2]);
+      BEGIN_NV04(push, NV50_3D(VIEWPORT_SCALE_X(i)), 3);
+      PUSH_DATAf(push, vpt->scale[0]);
+      PUSH_DATAf(push, vpt->scale[1]);
+      PUSH_DATAf(push, vpt->scale[2]);
+
+      zmin = vpt->translate[2] - fabsf(vpt->scale[2]);
+      zmax = vpt->translate[2] + fabsf(vpt->scale[2]);
 
 #ifdef NV50_SCISSORS_CLIPPING
-   BEGIN_NV04(push, NV50_3D(DEPTH_RANGE_NEAR(0)), 2);
-   PUSH_DATAf(push, zmin);
-   PUSH_DATAf(push, zmax);
+      BEGIN_NV04(push, NV50_3D(DEPTH_RANGE_NEAR(i)), 2);
+      PUSH_DATAf(push, zmin);
+      PUSH_DATAf(push, zmax);
 #endif
+   }
+
+   nv50->viewports_dirty = 0;
 }
 
 static INLINE void

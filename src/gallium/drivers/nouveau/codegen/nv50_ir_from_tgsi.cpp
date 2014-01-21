@@ -1031,6 +1031,7 @@ bool Source::scanInstruction(const struct tgsi_full_instruction *inst)
          if (info->out[dst.getIndex(0)].sn == TGSI_SEMANTIC_PSIZE ||
              info->out[dst.getIndex(0)].sn == TGSI_SEMANTIC_PRIMID ||
              info->out[dst.getIndex(0)].sn == TGSI_SEMANTIC_LAYER ||
+             info->out[dst.getIndex(0)].sn == TGSI_SEMANTIC_VIEWPORT_INDEX ||
              info->out[dst.getIndex(0)].sn == TGSI_SEMANTIC_FOG)
             info->out[dst.getIndex(0)].mask &= 1;
 

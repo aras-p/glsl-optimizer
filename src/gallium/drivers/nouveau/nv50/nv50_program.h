@@ -91,6 +91,8 @@ struct nv50_program {
       uint8_t prim_type; /* point, line strip or tri strip */
       uint8_t has_layer;
       ubyte layerid; /* hw value of layer output */
+      uint8_t has_viewport;
+      ubyte viewportid; /* hw value of viewport index output */
    } gp;
 
    void *fixups; /* relocation records */

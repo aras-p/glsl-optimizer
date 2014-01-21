@@ -21,6 +21,8 @@ struct nv50_context;
 
 #define NV50_SCREEN_RESIDENT_BO_COUNT 5
 
+#define NV50_MAX_VIEWPORTS 16
+
 struct nv50_blitter;
 
 struct nv50_screen {

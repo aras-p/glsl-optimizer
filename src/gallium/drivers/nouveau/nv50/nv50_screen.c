@@ -197,6 +197,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return PIPE_ENDIAN_LITTLE;
    case PIPE_CAP_TGSI_VS_LAYER:
       return 0;
+   case PIPE_CAP_MAX_VIEWPORTS:
+      return NV50_MAX_VIEWPORTS;
    default:
       NOUVEAU_ERR("unknown PIPE_CAP %d\n", param);
       return 0;
@@ -528,9 +530,14 @@ nv50_screen_init_hwctx(struct nv50_screen *screen)
 
    BEGIN_NV04(push, NV50_3D(VIEWPORT_TRANSFORM_EN), 1);
    PUSH_DATA (push, 1);
-   BEGIN_NV04(push, NV50_3D(DEPTH_RANGE_NEAR(0)), 2);
-   PUSH_DATAf(push, 0.0f);
-   PUSH_DATAf(push, 1.0f);
+   for (i = 0; i < NV50_MAX_VIEWPORTS; i++) {
+      BEGIN_NV04(push, NV50_3D(DEPTH_RANGE_NEAR(i)), 2);
+      PUSH_DATAf(push, 0.0f);
+      PUSH_DATAf(push, 1.0f);
+      BEGIN_NV04(push, NV50_3D(VIEWPORT_HORIZ(i)), 2);
+      PUSH_DATA (push, 8192 << 16);
+      PUSH_DATA (push, 8192 << 16);
+   }
 
    BEGIN_NV04(push, NV50_3D(VIEW_VOLUME_CLIP_CTRL), 1);
 #ifdef NV50_SCISSORS_CLIPPING
@@ -545,10 +552,12 @@ nv50_screen_init_hwctx(struct nv50_screen *screen)
    /* We use scissors instead of exact view volume clipping,
     * so they're always enabled.
     */
-   BEGIN_NV04(push, NV50_3D(SCISSOR_ENABLE(0)), 3);
-   PUSH_DATA (push, 1);
-   PUSH_DATA (push, 8192 << 16);
-   PUSH_DATA (push, 8192 << 16);
+   for (i = 0; i < NV50_MAX_VIEWPORTS; i++) {
+      BEGIN_NV04(push, NV50_3D(SCISSOR_ENABLE(i)), 3);
+      PUSH_DATA (push, 1);
+      PUSH_DATA (push, 8192 << 16);
+      PUSH_DATA (push, 8192 << 16);
+   }
 
    BEGIN_NV04(push, NV50_3D(RASTERIZE_ENABLE), 1);
    PUSH_DATA (push, 1);
