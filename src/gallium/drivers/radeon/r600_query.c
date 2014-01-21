@@ -326,7 +326,7 @@ static void r600_emit_query_predication(struct r600_common_context *ctx, struct 
 				/* set CONTINUE bit for all packets except the first */
 				op |= PREDICATION_CONTINUE;
 			}
-		} while (qbuf);
+		}
 	}
 }
 
