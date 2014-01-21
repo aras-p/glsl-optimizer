@@ -231,10 +231,10 @@ intel_miptree_create_layout(struct brw_context *brw,
    if (!mt)
       return NULL;
 
-   DBG("%s target %s format %s level %d..%d <-- %p\n", __FUNCTION__,
+   DBG("%s target %s format %s level %d..%d slices %d <-- %p\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
        _mesa_get_format_name(format),
-       first_level, last_level, mt);
+       first_level, last_level, depth0, mt);
 
    mt->target = target;
    mt->format = format;
