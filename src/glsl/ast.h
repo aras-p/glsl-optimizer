@@ -296,7 +296,16 @@ public:
       /* empty */
    }
 
-   ast_type_specifier *constructor_type;
+   /**
+    * glsl_type of the aggregate, which is inferred from the LHS of whatever
+    * the aggregate is being used to initialize.  This can't be inferred at
+    * parse time (since the parser deals with ast_type_specifiers, not
+    * glsl_types), so the parser leaves it NULL.  However, the ast-to-hir
+    * conversion code makes sure to fill it in with the appropriate type
+    * before hir() is called.
+    */
+   const glsl_type *constructor_type;
+
    virtual ir_rvalue *hir(exec_list *instructions,
                           struct _mesa_glsl_parse_state *state);
 };
@@ -978,9 +987,8 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 			     YYLTYPE &loc, YYLTYPE &idx_loc);
 
 extern void
-_mesa_ast_set_aggregate_type(const ast_type_specifier *type,
-                             ast_expression *expr,
-                             _mesa_glsl_parse_state *state);
+_mesa_ast_set_aggregate_type(const glsl_type *type,
+                             ast_expression *expr);
 
 void
 emit_function(_mesa_glsl_parse_state *state, ir_function *f);

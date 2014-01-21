@@ -2593,6 +2593,13 @@ process_initializer(ir_variable *var, ast_declaration *decl,
 		       ? "attribute" : "varying");
    }
 
+   /* If the initializer is an ast_aggregate_initializer, recursively store
+    * type information from the LHS into it, so that its hir() function can do
+    * type checking.
+    */
+   if (decl->initializer->oper == ast_aggregate)
+      _mesa_ast_set_aggregate_type(var->type, decl->initializer);
+
    ir_dereference *const lhs = new(state) ir_dereference_variable(var);
    ir_rvalue *rhs = decl->initializer->hir(initializer_instructions,
 					   state);

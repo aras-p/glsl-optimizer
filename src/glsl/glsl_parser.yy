@@ -1012,11 +1012,6 @@ init_declarator_list:
       $$ = $1;
       $$->declarations.push_tail(&decl->link);
       state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto));
-      if ($7->oper == ast_aggregate) {
-         ast_aggregate_initializer *ai = (ast_aggregate_initializer *)$7;
-         ast_type_specifier *type = new(ctx) ast_type_specifier($1->type->specifier, true, NULL);
-         _mesa_ast_set_aggregate_type(type, ai, state);
-      }
    }
    | init_declarator_list ',' any_identifier '[' constant_expression ']' '=' initializer
    {
@@ -1027,11 +1022,6 @@ init_declarator_list:
       $$ = $1;
       $$->declarations.push_tail(&decl->link);
       state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto));
-      if ($8->oper == ast_aggregate) {
-         ast_aggregate_initializer *ai = (ast_aggregate_initializer *)$8;
-         ast_type_specifier *type = new(ctx) ast_type_specifier($1->type->specifier, true, $5);
-         _mesa_ast_set_aggregate_type(type, ai, state);
-      }
    }
    | init_declarator_list ',' any_identifier '=' initializer
    {
@@ -1042,10 +1032,6 @@ init_declarator_list:
       $$ = $1;
       $$->declarations.push_tail(&decl->link);
       state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto));
-      if ($5->oper == ast_aggregate) {
-         ast_aggregate_initializer *ai = (ast_aggregate_initializer *)$5;
-         _mesa_ast_set_aggregate_type($1->type->specifier, ai, state);
-      }
    }
    ;
 
@@ -1093,11 +1079,6 @@ single_declaration:
       $$ = new(ctx) ast_declarator_list($1);
       $$->set_location(yylloc);
       $$->declarations.push_tail(&decl->link);
-      if ($6->oper == ast_aggregate) {
-         ast_aggregate_initializer *ai = (ast_aggregate_initializer *)$6;
-         ast_type_specifier *type = new(ctx) ast_type_specifier($1->specifier, true, NULL);
-         _mesa_ast_set_aggregate_type(type, ai, state);
-      }
    }
    | fully_specified_type any_identifier '[' constant_expression ']' '=' initializer
    {
@@ -1107,11 +1088,6 @@ single_declaration:
       $$ = new(ctx) ast_declarator_list($1);
       $$->set_location(yylloc);
       $$->declarations.push_tail(&decl->link);
-      if ($7->oper == ast_aggregate) {
-         ast_aggregate_initializer *ai = (ast_aggregate_initializer *)$7;
-         ast_type_specifier *type = new(ctx) ast_type_specifier($1->specifier, true, $4);
-         _mesa_ast_set_aggregate_type(type, ai, state);
-      }
    }
    | fully_specified_type any_identifier '=' initializer
    {
@@ -1121,9 +1097,6 @@ single_declaration:
       $$ = new(ctx) ast_declarator_list($1);
       $$->set_location(yylloc);
       $$->declarations.push_tail(&decl->link);
-      if ($4->oper == ast_aggregate) {
-         _mesa_ast_set_aggregate_type($1->specifier, $4, state);
-      }
    }
    | INVARIANT variable_identifier // Vertex only.
    {

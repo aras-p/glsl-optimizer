@@ -1687,14 +1687,12 @@ ast_aggregate_initializer::hir(exec_list *instructions,
 {
    void *ctx = state;
    YYLTYPE loc = this->get_location();
-   const char *name;
 
    if (!this->constructor_type) {
       _mesa_glsl_error(&loc, state, "type of C-style initializer unknown");
       return ir_rvalue::error_value(ctx);
    }
-   const glsl_type *const constructor_type =
-      this->constructor_type->glsl_type(&name, state);
+   const glsl_type *const constructor_type = this->constructor_type;
 
    if (!state->ARB_shading_language_420pack_enable) {
       _mesa_glsl_error(&loc, state, "C-style initialization requires the "
@@ -1702,12 +1700,12 @@ ast_aggregate_initializer::hir(exec_list *instructions,
       return ir_rvalue::error_value(ctx);
    }
 
-   if (this->constructor_type->is_array) {
+   if (constructor_type->is_array()) {
       return process_array_constructor(instructions, constructor_type, &loc,
                                        &this->expressions, state);
    }
 
-   if (this->constructor_type->structure) {
+   if (constructor_type->is_record()) {
       return process_record_constructor(instructions, constructor_type, &loc,
                                         &this->expressions, state);
    }
