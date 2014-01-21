@@ -132,16 +132,14 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 	if (sctx == NULL)
 		return NULL;
 
-	if (!r600_common_context_init(&sctx->b, &sscreen->b))
-		goto fail;
-
-	sctx->b.b.screen = screen;
+	sctx->b.b.screen = screen; /* this must be set first */
 	sctx->b.b.priv = priv;
 	sctx->b.b.destroy = si_destroy_context;
 	sctx->b.b.flush = si_flush_from_st;
+	sctx->screen = sscreen; /* Easy accessing of screen/winsys. */
 
-	/* Easy accessing of screen/winsys. */
-	sctx->screen = sscreen;
+	if (!r600_common_context_init(&sctx->b, &sscreen->b))
+		goto fail;
 
 	si_init_blit_functions(sctx);
 	si_init_query_functions(sctx);

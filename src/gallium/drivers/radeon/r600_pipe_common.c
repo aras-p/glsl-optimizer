@@ -228,11 +228,14 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 			 sizeof(struct r600_transfer), 64,
 			 UTIL_SLAB_SINGLETHREADED);
 
+	rctx->screen = rscreen;
 	rctx->ws = rscreen->ws;
 	rctx->family = rscreen->family;
 	rctx->chip_class = rscreen->chip_class;
+	rctx->max_db = rscreen->chip_class >= EVERGREEN ? 8 : 4;
 
 	r600_streamout_init(rctx);
+	r600_query_init(rctx);
 
 	rctx->allocator_so_filled_size = u_suballocator_create(&rctx->b, 4096, 4,
 							       0, PIPE_USAGE_STATIC, TRUE);

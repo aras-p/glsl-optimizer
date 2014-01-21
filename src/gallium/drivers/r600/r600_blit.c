@@ -54,7 +54,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 
-	r600_suspend_nontimer_queries(rctx);
+	r600_suspend_nontimer_queries(&rctx->b);
 
 	util_blitter_save_vertex_buffer_slot(rctx->blitter, rctx->vertex_buffer_state.vb);
 	util_blitter_save_vertex_elements(rctx->blitter, rctx->vertex_fetch_shader.cso);
@@ -86,18 +86,18 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 			(struct pipe_sampler_view**)rctx->samplers[PIPE_SHADER_FRAGMENT].views.views);
 	}
 
-	if ((op & R600_DISABLE_RENDER_COND) && rctx->current_render_cond) {
+	if ((op & R600_DISABLE_RENDER_COND) && rctx->b.current_render_cond) {
            util_blitter_save_render_condition(rctx->blitter,
-                                              rctx->current_render_cond,
-                                              rctx->current_render_cond_cond,
-                                              rctx->current_render_cond_mode);
+                                              rctx->b.current_render_cond,
+                                              rctx->b.current_render_cond_cond,
+                                              rctx->b.current_render_cond_mode);
         }
 }
 
 static void r600_blitter_end(struct pipe_context *ctx)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
-        r600_resume_nontimer_queries(rctx);
+        r600_resume_nontimer_queries(&rctx->b);
 }
 
 static unsigned u_max_sample(struct pipe_resource *r)

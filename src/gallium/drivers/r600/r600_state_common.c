@@ -1339,10 +1339,10 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	}
 
 	/* Draw packets. */
-	cs->buf[cs->cdw++] = PKT3(PKT3_NUM_INSTANCES, 0, rctx->predicate_drawing);
+	cs->buf[cs->cdw++] = PKT3(PKT3_NUM_INSTANCES, 0, rctx->b.predicate_drawing);
 	cs->buf[cs->cdw++] = info.instance_count;
 	if (info.indexed) {
-		cs->buf[cs->cdw++] = PKT3(PKT3_INDEX_TYPE, 0, rctx->predicate_drawing);
+		cs->buf[cs->cdw++] = PKT3(PKT3_INDEX_TYPE, 0, rctx->b.predicate_drawing);
 		cs->buf[cs->cdw++] = ib.index_size == 4 ?
 					(VGT_INDEX_32 | (R600_BIG_ENDIAN ? VGT_DMA_SWAP_32_BIT : 0)) :
 					(VGT_INDEX_16 | (R600_BIG_ENDIAN ? VGT_DMA_SWAP_16_BIT : 0));
@@ -1350,19 +1350,19 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		if (ib.user_buffer) {
 			unsigned size_bytes = info.count*ib.index_size;
 			unsigned size_dw = align(size_bytes, 4) / 4;
-			cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX_IMMD, 1 + size_dw, rctx->predicate_drawing);
+			cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX_IMMD, 1 + size_dw, rctx->b.predicate_drawing);
 			cs->buf[cs->cdw++] = info.count;
 			cs->buf[cs->cdw++] = V_0287F0_DI_SRC_SEL_IMMEDIATE;
 			memcpy(cs->buf+cs->cdw, ib.user_buffer, size_bytes);
 			cs->cdw += size_dw;
 		} else {
 			uint64_t va = r600_resource_va(ctx->screen, ib.buffer) + ib.offset;
-			cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX, 3, rctx->predicate_drawing);
+			cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX, 3, rctx->b.predicate_drawing);
 			cs->buf[cs->cdw++] = va;
 			cs->buf[cs->cdw++] = (va >> 32UL) & 0xFF;
 			cs->buf[cs->cdw++] = info.count;
 			cs->buf[cs->cdw++] = V_0287F0_DI_SRC_SEL_DMA;
-			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, rctx->predicate_drawing);
+			cs->buf[cs->cdw++] = PKT3(PKT3_NOP, 0, rctx->b.predicate_drawing);
 			cs->buf[cs->cdw++] = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, (struct r600_resource*)ib.buffer, RADEON_USAGE_READ);
 		}
 	} else {
@@ -1383,7 +1383,7 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 			cs->buf[cs->cdw++] = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, t->buf_filled_size, RADEON_USAGE_READ);
 		}
 
-		cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, rctx->predicate_drawing);
+		cs->buf[cs->cdw++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, rctx->b.predicate_drawing);
 		cs->buf[cs->cdw++] = info.count;
 		cs->buf[cs->cdw++] = V_0287F0_DI_SRC_SEL_AUTO_INDEX |
 					(info.count_from_stream_output ? S_0287F0_USE_OPAQUE(1) : 0);
@@ -1416,7 +1416,7 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);
-	rctx->num_draw_calls++;
+	rctx->b.num_draw_calls++;
 }
 
 void r600_draw_rectangle(struct blitter_context *blitter,
@@ -2127,6 +2127,22 @@ static void r600_invalidate_buffer(struct pipe_context *ctx, struct pipe_resourc
 	/* XXX TODO: texture buffer objects */
 }
 
+static void r600_set_occlusion_query_state(struct pipe_context *ctx, bool enable)
+{
+	struct r600_context *rctx = (struct r600_context*)ctx;
+
+	if (rctx->db_misc_state.occlusion_query_enabled != enable) {
+		rctx->db_misc_state.occlusion_query_enabled = enable;
+		rctx->db_misc_state.atom.dirty = true;
+	}
+}
+
+static void r600_need_gfx_cs_space(struct pipe_context *ctx, unsigned num_dw,
+                                   bool include_draw_vbo)
+{
+	r600_need_cs_space((struct r600_context*)ctx, num_dw, include_draw_vbo);
+}
+
 /* keep this at the end of this file, please */
 void r600_init_common_state_functions(struct r600_context *rctx)
 {
@@ -2163,6 +2179,8 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->b.b.surface_destroy = r600_surface_destroy;
 	rctx->b.b.draw_vbo = r600_draw_vbo;
 	rctx->b.invalidate_buffer = r600_invalidate_buffer;
+	rctx->b.set_occlusion_query_state = r600_set_occlusion_query_state;
+	rctx->b.need_gfx_cs_space = r600_need_gfx_cs_space;
 }
 
 void r600_trace_emit(struct r600_context *rctx)

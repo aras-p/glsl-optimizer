@@ -36,6 +36,7 @@
 
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 
+#include "util/u_double_list.h"
 #include "util/u_range.h"
 #include "util/u_slab.h"
 #include "util/u_suballoc.h"
@@ -44,6 +45,11 @@
 #define R600_RESOURCE_FLAG_TRANSFER		(PIPE_RESOURCE_FLAG_DRV_PRIV << 0)
 #define R600_RESOURCE_FLAG_FLUSHED_DEPTH	(PIPE_RESOURCE_FLAG_DRV_PRIV << 1)
 #define R600_RESOURCE_FLAG_FORCE_TILING		(PIPE_RESOURCE_FLAG_DRV_PRIV << 2)
+
+#define R600_QUERY_DRAW_CALLS		(PIPE_QUERY_DRIVER_SPECIFIC + 0)
+#define R600_QUERY_REQUESTED_VRAM	(PIPE_QUERY_DRIVER_SPECIFIC + 1)
+#define R600_QUERY_REQUESTED_GTT	(PIPE_QUERY_DRIVER_SPECIFIC + 2)
+#define R600_QUERY_BUFFER_WAIT_TIME	(PIPE_QUERY_DRIVER_SPECIFIC + 3)
 
 /* read caches */
 #define R600_CONTEXT_INV_VERTEX_CACHE		(1 << 0)
@@ -225,6 +231,7 @@ struct r600_rings {
 struct r600_common_context {
 	struct pipe_context b; /* base class */
 
+	struct r600_common_screen	*screen;
 	struct radeon_winsys		*ws;
 	enum radeon_family		family;
 	enum chip_class			chip_class;
@@ -243,6 +250,29 @@ struct r600_common_context {
 
 	/* Additional context states. */
 	unsigned flags; /* flush flags */
+
+	/* Queries. */
+	/* The list of active queries. Only one query of each type can be active. */
+	int				num_occlusion_queries;
+	int				num_pipelinestat_queries;
+	/* Keep track of non-timer queries, because they should be suspended
+	 * during context flushing.
+	 * The timer queries (TIME_ELAPSED) shouldn't be suspended. */
+	struct list_head		active_nontimer_queries;
+	unsigned			num_cs_dw_nontimer_queries_suspend;
+	/* If queries have been suspended. */
+	bool				nontimer_queries_suspended;
+	/* Additional hardware info. */
+	unsigned			backend_mask;
+	unsigned			max_db; /* for OQ */
+	/* Misc stats. */
+	unsigned			num_draw_calls;
+
+	/* Render condition. */
+	struct pipe_query		*current_render_cond;
+	unsigned			current_render_cond_mode;
+	boolean				current_render_cond_cond;
+	boolean				predicate_drawing;
 
 	/* Copy one resource to another using async DMA.
 	 * False is returned if the copy couldn't be done. */
@@ -267,6 +297,13 @@ struct r600_common_context {
 	/* Reallocate the buffer and update all resource bindings where
 	 * the buffer is bound, including all resource descriptors. */
 	void (*invalidate_buffer)(struct pipe_context *ctx, struct pipe_resource *buf);
+
+	/* Enable or disable occlusion queries. */
+	void (*set_occlusion_query_state)(struct pipe_context *ctx, bool enable);
+
+	/* This ensures there is enough space in the command stream. */
+	void (*need_gfx_cs_space)(struct pipe_context *ctx, unsigned num_dw,
+				  bool include_draw_vbo);
 };
 
 /* r600_buffer.c */
@@ -296,6 +333,12 @@ bool r600_can_dump_shader(struct r600_common_screen *rscreen,
 			  const struct tgsi_token *tokens);
 void r600_screen_clear_buffer(struct r600_common_screen *rscreen, struct pipe_resource *dst,
 			      unsigned offset, unsigned size, unsigned value);
+
+/* r600_query.c */
+void r600_query_init(struct r600_common_context *rctx);
+void r600_suspend_nontimer_queries(struct r600_common_context *ctx);
+void r600_resume_nontimer_queries(struct r600_common_context *ctx);
+void r600_query_init_backend_mask(struct r600_common_context *ctx);
 
 /* r600_streamout.c */
 void r600_streamout_buffers_dirty(struct r600_common_context *rctx);

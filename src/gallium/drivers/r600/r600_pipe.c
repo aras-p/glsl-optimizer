@@ -78,10 +78,10 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags)
 
 	rctx->b.rings.gfx.flushing = true;
 	/* Disable render condition. */
-	if (rctx->current_render_cond) {
-		render_cond = rctx->current_render_cond;
-		render_cond_cond = rctx->current_render_cond_cond;
-		render_cond_mode = rctx->current_render_cond_mode;
+	if (rctx->b.current_render_cond) {
+		render_cond = rctx->b.current_render_cond;
+		render_cond_cond = rctx->b.current_render_cond_cond;
+		render_cond_mode = rctx->b.current_render_cond_mode;
 		ctx->render_condition(ctx, NULL, FALSE, 0);
 	}
 
@@ -210,10 +210,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->screen = rscreen;
 	rctx->keep_tiling_flags = rscreen->b.info.drm_minor >= 12;
 
-	LIST_INITHEAD(&rctx->active_nontimer_queries);
-
 	r600_init_blit_functions(rctx);
-	r600_init_query_functions(rctx);
 	r600_init_context_resource_functions(rctx);
 
 	if (rscreen->b.info.has_uvd) {
@@ -231,7 +228,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case R700:
 		r600_init_state_functions(rctx);
 		r600_init_atom_start_cs(rctx);
-		rctx->max_db = 4;
 		rctx->custom_dsa_flush = r600_create_db_flush_dsa(rctx);
 		rctx->custom_blend_resolve = rctx->b.chip_class == R700 ? r700_create_resolve_blend(rctx)
 								      : r600_create_resolve_blend(rctx);
@@ -247,7 +243,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		evergreen_init_state_functions(rctx);
 		evergreen_init_atom_start_cs(rctx);
 		evergreen_init_atom_start_compute_cs(rctx);
-		rctx->max_db = 8;
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 		rctx->custom_blend_resolve = evergreen_create_resolve_blend(rctx);
 		rctx->custom_blend_decompress = evergreen_create_decompress_blend(rctx);
@@ -298,7 +293,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->blitter->draw_rectangle = r600_draw_rectangle;
 
 	r600_begin_new_cs(rctx);
-	r600_get_backend_mask(rctx); /* this emits commands and must be last */
+	r600_query_init_backend_mask(&rctx->b); /* this emits commands and must be last */
 
 	rctx->dummy_pixel_shader =
 		util_make_fragment_cloneinput_shader(&rctx->b.b, 0,

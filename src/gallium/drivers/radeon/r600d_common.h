@@ -40,6 +40,7 @@
 #define RADEON_CP_PACKET3_COMPUTE_MODE 0x00000002
 
 #define PKT3_NOP                               0x10
+#define PKT3_SET_PREDICATION                   0x20
 #define PKT3_STRMOUT_BUFFER_UPDATE             0x34
 #define		STRMOUT_STORE_BUFFER_FILLED_SIZE	1
 #define		STRMOUT_OFFSET_SOURCE(x)	(((x) & 0x3) << 1)
@@ -51,6 +52,7 @@
 #define PKT3_WAIT_REG_MEM                      0x3C
 #define		WAIT_REG_MEM_EQUAL		3
 #define PKT3_EVENT_WRITE                       0x46
+#define PKT3_EVENT_WRITE_EOP                   0x47
 #define PKT3_SET_CONFIG_REG		       0x68
 #define PKT3_SET_CONTEXT_REG		       0x69
 #define PKT3_STRMOUT_BASE_UPDATE	       0x72 /* r700 only */
@@ -81,6 +83,16 @@
 		 * 4 - *S_PARTIAL_FLUSH
 		 * 5 - TS events
 		 */
+
+#define PREDICATION_OP_CLEAR 0x0
+#define PREDICATION_OP_ZPASS 0x1
+#define PREDICATION_OP_PRIMCOUNT 0x2
+#define PRED_OP(x) ((x) << 16)
+#define PREDICATION_CONTINUE (1 << 31)
+#define PREDICATION_HINT_WAIT (0 << 12)
+#define PREDICATION_HINT_NOWAIT_DRAW (1 << 12)
+#define PREDICATION_DRAW_NOT_VISIBLE (0 << 8)
+#define PREDICATION_DRAW_VISIBLE (1 << 8)
 
 /* R600-R700*/
 #define R_008490_CP_STRMOUT_CNTL		     0x008490
