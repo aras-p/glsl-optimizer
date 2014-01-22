@@ -1104,10 +1104,10 @@ unbind_texobj_from_texunits(struct gl_context *ctx,
  * and unbind it if that's the case.
  */
 static void
-unbind_texobj_from_imgunits(struct gl_context *ctx,
-                            struct gl_texture_object *texObj)
+unbind_texobj_from_image_units(struct gl_context *ctx,
+                               struct gl_texture_object *texObj)
 {
-   int i;
+   GLuint i;
 
    for (i = 0; i < ctx->Const.MaxImageUnits; i++) {
       struct gl_image_unit *unit = &ctx->ImageUnits[i];
@@ -1169,7 +1169,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
              * image unit.  If so, unbind it.
              * See section 3.9.X of GL_ARB_shader_image_load_store.
              */
-            unbind_texobj_from_imgunits(ctx, delObj);
+            unbind_texobj_from_image_units(ctx, delObj);
 
             _mesa_unlock_texture(ctx, delObj);
 
