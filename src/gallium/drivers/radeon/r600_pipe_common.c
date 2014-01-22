@@ -31,6 +31,93 @@
 #include "util/u_upload_mgr.h"
 #include <inttypes.h>
 
+/*
+ * pipe_context
+ */
+
+bool r600_common_context_init(struct r600_common_context *rctx,
+			      struct r600_common_screen *rscreen)
+{
+	util_slab_create(&rctx->pool_transfers,
+			 sizeof(struct r600_transfer), 64,
+			 UTIL_SLAB_SINGLETHREADED);
+
+	rctx->screen = rscreen;
+	rctx->ws = rscreen->ws;
+	rctx->family = rscreen->family;
+	rctx->chip_class = rscreen->chip_class;
+	rctx->max_db = rscreen->chip_class >= EVERGREEN ? 8 : 4;
+
+	rctx->b.transfer_map = u_transfer_map_vtbl;
+	rctx->b.transfer_flush_region = u_default_transfer_flush_region;
+	rctx->b.transfer_unmap = u_transfer_unmap_vtbl;
+	rctx->b.transfer_inline_write = u_default_transfer_inline_write;
+
+	r600_streamout_init(rctx);
+	r600_query_init(rctx);
+
+	rctx->allocator_so_filled_size = u_suballocator_create(&rctx->b, 4096, 4,
+							       0, PIPE_USAGE_STATIC, TRUE);
+	if (!rctx->allocator_so_filled_size)
+		return false;
+
+	rctx->uploader = u_upload_create(&rctx->b, 1024 * 1024, 256,
+					PIPE_BIND_INDEX_BUFFER |
+					PIPE_BIND_CONSTANT_BUFFER);
+	if (!rctx->uploader)
+		return false;
+
+	return true;
+}
+
+void r600_common_context_cleanup(struct r600_common_context *rctx)
+{
+	if (rctx->rings.gfx.cs) {
+		rctx->ws->cs_destroy(rctx->rings.gfx.cs);
+	}
+	if (rctx->rings.dma.cs) {
+		rctx->ws->cs_destroy(rctx->rings.dma.cs);
+	}
+
+	if (rctx->uploader) {
+		u_upload_destroy(rctx->uploader);
+	}
+
+	util_slab_destroy(&rctx->pool_transfers);
+
+	if (rctx->allocator_so_filled_size) {
+		u_suballocator_destroy(rctx->allocator_so_filled_size);
+	}
+}
+
+void r600_context_add_resource_size(struct pipe_context *ctx, struct pipe_resource *r)
+{
+	struct r600_common_context *rctx = (struct r600_common_context *)ctx;
+	struct r600_resource *rr = (struct r600_resource *)r;
+
+	if (r == NULL) {
+		return;
+	}
+
+	/*
+	 * The idea is to compute a gross estimate of memory requirement of
+	 * each draw call. After each draw call, memory will be precisely
+	 * accounted. So the uncertainty is only on the current draw call.
+	 * In practice this gave very good estimate (+/- 10% of the target
+	 * memory limit).
+	 */
+	if (rr->domains & RADEON_DOMAIN_GTT) {
+		rctx->gtt += rr->buf->size;
+	}
+	if (rr->domains & RADEON_DOMAIN_VRAM) {
+		rctx->vram += rr->buf->size;
+	}
+}
+
+/*
+ * pipe_screen
+ */
+
 static const struct debug_named_value common_debug_options[] = {
 	/* logging */
 	{ "tex", DBG_TEX, "Print texture info" },
@@ -233,85 +320,6 @@ void r600_common_screen_cleanup(struct r600_common_screen *rscreen)
 {
 	pipe_mutex_destroy(rscreen->aux_context_lock);
 	rscreen->aux_context->destroy(rscreen->aux_context);
-}
-
-bool r600_common_context_init(struct r600_common_context *rctx,
-			      struct r600_common_screen *rscreen)
-{
-	util_slab_create(&rctx->pool_transfers,
-			 sizeof(struct r600_transfer), 64,
-			 UTIL_SLAB_SINGLETHREADED);
-
-	rctx->screen = rscreen;
-	rctx->ws = rscreen->ws;
-	rctx->family = rscreen->family;
-	rctx->chip_class = rscreen->chip_class;
-	rctx->max_db = rscreen->chip_class >= EVERGREEN ? 8 : 4;
-
-	rctx->b.transfer_map = u_transfer_map_vtbl;
-	rctx->b.transfer_flush_region = u_default_transfer_flush_region;
-	rctx->b.transfer_unmap = u_transfer_unmap_vtbl;
-	rctx->b.transfer_inline_write = u_default_transfer_inline_write;
-
-	r600_streamout_init(rctx);
-	r600_query_init(rctx);
-
-	rctx->allocator_so_filled_size = u_suballocator_create(&rctx->b, 4096, 4,
-							       0, PIPE_USAGE_STATIC, TRUE);
-	if (!rctx->allocator_so_filled_size)
-		return false;
-
-	rctx->uploader = u_upload_create(&rctx->b, 1024 * 1024, 256,
-					PIPE_BIND_INDEX_BUFFER |
-					PIPE_BIND_CONSTANT_BUFFER);
-	if (!rctx->uploader)
-		return false;
-
-	return true;
-}
-
-void r600_common_context_cleanup(struct r600_common_context *rctx)
-{
-	if (rctx->rings.gfx.cs) {
-		rctx->ws->cs_destroy(rctx->rings.gfx.cs);
-	}
-	if (rctx->rings.dma.cs) {
-		rctx->ws->cs_destroy(rctx->rings.dma.cs);
-	}
-
-	if (rctx->uploader) {
-		u_upload_destroy(rctx->uploader);
-	}
-
-	util_slab_destroy(&rctx->pool_transfers);
-
-	if (rctx->allocator_so_filled_size) {
-		u_suballocator_destroy(rctx->allocator_so_filled_size);
-	}
-}
-
-void r600_context_add_resource_size(struct pipe_context *ctx, struct pipe_resource *r)
-{
-	struct r600_common_context *rctx = (struct r600_common_context *)ctx;
-	struct r600_resource *rr = (struct r600_resource *)r;
-
-	if (r == NULL) {
-		return;
-	}
-
-	/*
-	 * The idea is to compute a gross estimate of memory requirement of
-	 * each draw call. After each draw call, memory will be precisely
-	 * accounted. So the uncertainty is only on the current draw call.
-	 * In practice this gave very good estimate (+/- 10% of the target
-	 * memory limit).
-	 */
-	if (rr->domains & RADEON_DOMAIN_GTT) {
-		rctx->gtt += rr->buf->size;
-	}
-	if (rr->domains & RADEON_DOMAIN_VRAM) {
-		rctx->vram += rr->buf->size;
-	}
 }
 
 static unsigned tgsi_get_processor_type(const struct tgsi_token *tokens)
