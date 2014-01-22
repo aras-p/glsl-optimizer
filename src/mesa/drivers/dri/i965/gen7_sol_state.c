@@ -39,14 +39,11 @@ static void
 upload_3dstate_so_buffers(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
-   /* BRW_NEW_VERTEX_PROGRAM */
-   const struct gl_shader_program *vs_prog =
-      ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
-   const struct gl_transform_feedback_info *linked_xfb_info =
-      &vs_prog->LinkedTransformFeedback;
    /* BRW_NEW_TRANSFORM_FEEDBACK */
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
+   const struct gl_transform_feedback_info *linked_xfb_info =
+      &xfb_obj->shader_program->LinkedTransformFeedback;
    int i;
 
    /* Set up the up to 4 output buffers.  These are the ranges defined in the
@@ -102,12 +99,11 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
                                  const struct brw_vue_map *vue_map)
 {
    struct gl_context *ctx = &brw->ctx;
-   /* BRW_NEW_VERTEX_PROGRAM */
-   const struct gl_shader_program *vs_prog =
-      ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
    /* BRW_NEW_TRANSFORM_FEEDBACK */
+   struct gl_transform_feedback_object *xfb_obj =
+      ctx->TransformFeedback.CurrentObject;
    const struct gl_transform_feedback_info *linked_xfb_info =
-      &vs_prog->LinkedTransformFeedback;
+      &xfb_obj->shader_program->LinkedTransformFeedback;
    uint16_t so_decl[128];
    int buffer_mask = 0;
    int next_offset[4] = {0, 0, 0, 0};
@@ -260,7 +256,6 @@ const struct brw_tracked_state gen7_sol_state = {
    .dirty = {
       .mesa  = (_NEW_LIGHT),
       .brw   = (BRW_NEW_BATCH |
-		BRW_NEW_VERTEX_PROGRAM |
                 BRW_NEW_VUE_MAP_GEOM_OUT |
                 BRW_NEW_TRANSFORM_FEEDBACK)
    },
