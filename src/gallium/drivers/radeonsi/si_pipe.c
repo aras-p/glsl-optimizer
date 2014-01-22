@@ -363,28 +363,6 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	return 0;
 }
 
-static float si_get_paramf(struct pipe_screen* pscreen,
-			     enum pipe_capf param)
-{
-	switch (param) {
-	case PIPE_CAPF_MAX_LINE_WIDTH:
-	case PIPE_CAPF_MAX_LINE_WIDTH_AA:
-	case PIPE_CAPF_MAX_POINT_WIDTH:
-	case PIPE_CAPF_MAX_POINT_WIDTH_AA:
-		return 16384.0f;
-	case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
-		return 16.0f;
-	case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
-		return 16.0f;
-	case PIPE_CAPF_GUARD_BAND_LEFT:
-	case PIPE_CAPF_GUARD_BAND_TOP:
-	case PIPE_CAPF_GUARD_BAND_RIGHT:
-	case PIPE_CAPF_GUARD_BAND_BOTTOM:
-		return 0.0f;
-	}
-	return 0.0f;
-}
-
 static int si_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enum pipe_shader_cap param)
 {
 	switch(shader)
@@ -448,28 +426,6 @@ static int si_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enu
 		return PIPE_SHADER_IR_TGSI;
 	}
 	return 0;
-}
-
-static int si_get_video_param(struct pipe_screen *screen,
-			      enum pipe_video_profile profile,
-			      enum pipe_video_entrypoint entrypoint,
-			      enum pipe_video_cap param)
-{
-	switch (param) {
-	case PIPE_VIDEO_CAP_SUPPORTED:
-		return vl_profile_supported(screen, profile, entrypoint);
-	case PIPE_VIDEO_CAP_NPOT_TEXTURES:
-		return 1;
-	case PIPE_VIDEO_CAP_MAX_WIDTH:
-	case PIPE_VIDEO_CAP_MAX_HEIGHT:
-		return vl_video_buffer_max_size(screen);
-	case PIPE_VIDEO_CAP_PREFERED_FORMAT:
-		return PIPE_FORMAT_NV12;
-	case PIPE_VIDEO_CAP_MAX_LEVEL:
-		return vl_level_supported(screen, profile);
-	default:
-		return 0;
-	}
 }
 
 static int si_get_compute_param(struct pipe_screen *screen,
@@ -581,23 +537,13 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 		return NULL;
 	}
 
-	ws->query_info(ws, &sscreen->b.info);
-
 	/* Set functions first. */
 	sscreen->b.b.context_create = si_create_context;
 	sscreen->b.b.destroy = si_destroy_screen;
 	sscreen->b.b.get_param = si_get_param;
 	sscreen->b.b.get_shader_param = si_get_shader_param;
-	sscreen->b.b.get_paramf = si_get_paramf;
 	sscreen->b.b.get_compute_param = si_get_compute_param;
 	sscreen->b.b.is_format_supported = si_is_format_supported;
-	if (sscreen->b.info.has_uvd) {
-		sscreen->b.b.get_video_param = ruvd_get_video_param;
-		sscreen->b.b.is_video_format_supported = ruvd_is_format_supported;
-	} else {
-		sscreen->b.b.get_video_param = si_get_video_param;
-		sscreen->b.b.is_video_format_supported = vl_video_buffer_is_format_supported;
-	}
 
 	if (!r600_common_screen_init(&sscreen->b, ws)) {
 		FREE(sscreen);

@@ -24,12 +24,15 @@
  *
  */
 
+#include "radeon/radeon_uvd.h"
 #include "r600_pipe_common.h"
 #include "r600_cs.h"
 #include "tgsi/tgsi_parse.h"
 #include "util/u_memory.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_upload_mgr.h"
+#include "vl/vl_decoder.h"
+#include "vl/vl_video_buffer.h"
 #include <inttypes.h>
 
 /*
@@ -186,6 +189,61 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 	case CHIP_KABINI: return "AMD KABINI";
 	case CHIP_HAWAII: return "AMD HAWAII";
 	default: return "AMD unknown";
+	}
+}
+
+static float r600_get_paramf(struct pipe_screen* pscreen,
+			     enum pipe_capf param)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen *)pscreen;
+
+	switch (param) {
+	case PIPE_CAPF_MAX_LINE_WIDTH:
+	case PIPE_CAPF_MAX_LINE_WIDTH_AA:
+	case PIPE_CAPF_MAX_POINT_WIDTH:
+	case PIPE_CAPF_MAX_POINT_WIDTH_AA:
+		if (rscreen->family >= CHIP_CEDAR)
+			return 16384.0f;
+		else
+			return 8192.0f;
+	case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
+		return 16.0f;
+	case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
+		return 16.0f;
+	case PIPE_CAPF_GUARD_BAND_LEFT:
+	case PIPE_CAPF_GUARD_BAND_TOP:
+	case PIPE_CAPF_GUARD_BAND_RIGHT:
+	case PIPE_CAPF_GUARD_BAND_BOTTOM:
+		return 0.0f;
+	}
+	return 0.0f;
+}
+
+static int r600_get_video_param(struct pipe_screen *screen,
+				enum pipe_video_profile profile,
+				enum pipe_video_entrypoint entrypoint,
+				enum pipe_video_cap param)
+{
+	switch (param) {
+	case PIPE_VIDEO_CAP_SUPPORTED:
+		return vl_profile_supported(screen, profile, entrypoint);
+	case PIPE_VIDEO_CAP_NPOT_TEXTURES:
+		return 1;
+	case PIPE_VIDEO_CAP_MAX_WIDTH:
+	case PIPE_VIDEO_CAP_MAX_HEIGHT:
+		return vl_video_buffer_max_size(screen);
+	case PIPE_VIDEO_CAP_PREFERED_FORMAT:
+		return PIPE_FORMAT_NV12;
+	case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
+		return false;
+	case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
+		return false;
+	case PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE:
+		return true;
+	case PIPE_VIDEO_CAP_MAX_LEVEL:
+		return vl_level_supported(screen, profile);
+	default:
+		return 0;
 	}
 }
 
@@ -374,6 +432,7 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 
 	rscreen->b.get_name = r600_get_name;
 	rscreen->b.get_vendor = r600_get_vendor;
+	rscreen->b.get_paramf = r600_get_paramf;
 	rscreen->b.get_driver_query_info = r600_get_driver_query_info;
 	rscreen->b.get_timestamp = r600_get_timestamp;
 	rscreen->b.fence_finish = r600_fence_finish;
@@ -381,6 +440,14 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 	rscreen->b.fence_signalled = r600_fence_signalled;
 	rscreen->b.resource_create = r600_resource_create_common;
 	rscreen->b.resource_destroy = u_resource_destroy_vtbl;
+
+	if (rscreen->info.has_uvd) {
+		rscreen->b.get_video_param = ruvd_get_video_param;
+		rscreen->b.is_video_format_supported = ruvd_is_format_supported;
+	} else {
+		rscreen->b.get_video_param = r600_get_video_param;
+		rscreen->b.is_video_format_supported = vl_video_buffer_is_format_supported;
+	}
 
 	r600_init_texture_functions(rscreen);
 

@@ -447,34 +447,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	return 0;
 }
 
-static float r600_get_paramf(struct pipe_screen* pscreen,
-			     enum pipe_capf param)
-{
-	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
-	enum radeon_family family = rscreen->b.family;
-
-	switch (param) {
-	case PIPE_CAPF_MAX_LINE_WIDTH:
-	case PIPE_CAPF_MAX_LINE_WIDTH_AA:
-	case PIPE_CAPF_MAX_POINT_WIDTH:
-	case PIPE_CAPF_MAX_POINT_WIDTH_AA:
-		if (family >= CHIP_CEDAR)
-			return 16384.0f;
-		else
-			return 8192.0f;
-	case PIPE_CAPF_MAX_TEXTURE_ANISOTROPY:
-		return 16.0f;
-	case PIPE_CAPF_MAX_TEXTURE_LOD_BIAS:
-		return 16.0f;
-	case PIPE_CAPF_GUARD_BAND_LEFT:
-	case PIPE_CAPF_GUARD_BAND_TOP:
-	case PIPE_CAPF_GUARD_BAND_RIGHT:
-	case PIPE_CAPF_GUARD_BAND_BOTTOM:
-		return 0.0f;
-	}
-	return 0.0f;
-}
-
 static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enum pipe_shader_cap param)
 {
 	switch(shader)
@@ -536,34 +508,6 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		}
 	}
 	return 0;
-}
-
-static int r600_get_video_param(struct pipe_screen *screen,
-				enum pipe_video_profile profile,
-				enum pipe_video_entrypoint entrypoint,
-				enum pipe_video_cap param)
-{
-	switch (param) {
-	case PIPE_VIDEO_CAP_SUPPORTED:
-		return vl_profile_supported(screen, profile, entrypoint);
-	case PIPE_VIDEO_CAP_NPOT_TEXTURES:
-		return 1;
-	case PIPE_VIDEO_CAP_MAX_WIDTH:
-	case PIPE_VIDEO_CAP_MAX_HEIGHT:
-		return vl_video_buffer_max_size(screen);
-	case PIPE_VIDEO_CAP_PREFERED_FORMAT:
-		return PIPE_FORMAT_NV12;
-	case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
-		return false;
-	case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
-		return false;
-	case PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE:
-		return true;
-	case PIPE_VIDEO_CAP_MAX_LEVEL:
-		return vl_level_supported(screen, profile);
-	default:
-		return 0;
-	}
 }
 
 const char * r600_llvm_gpu_string(enum radeon_family family)
@@ -777,19 +721,11 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->b.b.destroy = r600_destroy_screen;
 	rscreen->b.b.get_param = r600_get_param;
 	rscreen->b.b.get_shader_param = r600_get_shader_param;
-	rscreen->b.b.get_paramf = r600_get_paramf;
 	rscreen->b.b.get_compute_param = r600_get_compute_param;
 	if (rscreen->b.info.chip_class >= EVERGREEN) {
 		rscreen->b.b.is_format_supported = evergreen_is_format_supported;
 	} else {
 		rscreen->b.b.is_format_supported = r600_is_format_supported;
-	}
-	if (rscreen->b.info.has_uvd) {
-		rscreen->b.b.get_video_param = ruvd_get_video_param;
-		rscreen->b.b.is_video_format_supported = ruvd_is_format_supported;
-	} else {
-		rscreen->b.b.get_video_param = r600_get_video_param;
-		rscreen->b.b.is_video_format_supported = vl_video_buffer_is_format_supported;
 	}
 	rscreen->b.b.resource_create = r600_resource_create;
 
