@@ -27,6 +27,7 @@
 #include "r600_pipe_common.h"
 #include "r600_cs.h"
 #include "tgsi/tgsi_parse.h"
+#include "util/u_memory.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_upload_mgr.h"
 #include <inttypes.h>
@@ -188,6 +189,36 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 	}
 }
 
+static uint64_t r600_get_timestamp(struct pipe_screen *screen)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
+
+	return 1000000 * rscreen->ws->query_value(rscreen->ws, RADEON_TIMESTAMP) /
+			rscreen->info.r600_clock_crystal_freq;
+}
+
+static int r600_get_driver_query_info(struct pipe_screen *screen,
+				      unsigned index,
+				      struct pipe_driver_query_info *info)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
+	struct pipe_driver_query_info list[] = {
+		{"draw-calls", R600_QUERY_DRAW_CALLS, 0},
+		{"requested-VRAM", R600_QUERY_REQUESTED_VRAM, rscreen->info.vram_size, TRUE},
+		{"requested-GTT", R600_QUERY_REQUESTED_GTT, rscreen->info.gart_size, TRUE},
+		{"buffer-wait-time", R600_QUERY_BUFFER_WAIT_TIME, 0, FALSE}
+	};
+
+	if (!info)
+		return Elements(list);
+
+	if (index >= Elements(list))
+		return 0;
+
+	*info = list[index];
+	return 1;
+}
+
 static void r600_fence_reference(struct pipe_screen *screen,
 				 struct pipe_fence_handle **ptr,
 				 struct pipe_fence_handle *fence)
@@ -343,6 +374,8 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 
 	rscreen->b.get_name = r600_get_name;
 	rscreen->b.get_vendor = r600_get_vendor;
+	rscreen->b.get_driver_query_info = r600_get_driver_query_info;
+	rscreen->b.get_timestamp = r600_get_timestamp;
 	rscreen->b.fence_finish = r600_fence_finish;
 	rscreen->b.fence_reference = r600_fence_reference;
 	rscreen->b.fence_signalled = r600_fence_signalled;

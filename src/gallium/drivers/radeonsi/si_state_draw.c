@@ -777,4 +777,5 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	}
 
 	pipe_resource_reference(&ib.buffer, NULL);
+	sctx->b.num_draw_calls++;
 }

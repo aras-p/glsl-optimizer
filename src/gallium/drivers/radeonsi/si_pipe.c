@@ -574,14 +574,6 @@ static void si_destroy_screen(struct pipe_screen* pscreen)
 	FREE(sscreen);
 }
 
-static uint64_t si_get_timestamp(struct pipe_screen *screen)
-{
-	struct si_screen *sscreen = (struct si_screen*)screen;
-
-	return 1000000 * sscreen->b.ws->query_value(sscreen->b.ws, RADEON_TIMESTAMP) /
-		sscreen->b.info.r600_clock_crystal_freq;
-}
-
 struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 {
 	struct si_screen *sscreen = CALLOC_STRUCT(si_screen);
@@ -598,7 +590,6 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	sscreen->b.b.get_shader_param = si_get_shader_param;
 	sscreen->b.b.get_paramf = si_get_paramf;
 	sscreen->b.b.get_compute_param = si_get_compute_param;
-	sscreen->b.b.get_timestamp = si_get_timestamp;
 	sscreen->b.b.is_format_supported = si_is_format_supported;
 	if (sscreen->b.info.has_uvd) {
 		sscreen->b.b.get_video_param = ruvd_get_video_param;

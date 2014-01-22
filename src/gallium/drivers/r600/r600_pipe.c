@@ -752,36 +752,6 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	FREE(rscreen);
 }
 
-static uint64_t r600_get_timestamp(struct pipe_screen *screen)
-{
-	struct r600_screen *rscreen = (struct r600_screen*)screen;
-
-	return 1000000 * rscreen->b.ws->query_value(rscreen->b.ws, RADEON_TIMESTAMP) /
-			rscreen->b.info.r600_clock_crystal_freq;
-}
-
-static int r600_get_driver_query_info(struct pipe_screen *screen,
-				      unsigned index,
-				      struct pipe_driver_query_info *info)
-{
-	struct r600_screen *rscreen = (struct r600_screen*)screen;
-	struct pipe_driver_query_info list[] = {
-		{"draw-calls", R600_QUERY_DRAW_CALLS, 0},
-		{"requested-VRAM", R600_QUERY_REQUESTED_VRAM, rscreen->b.info.vram_size, TRUE},
-		{"requested-GTT", R600_QUERY_REQUESTED_GTT, rscreen->b.info.gart_size, TRUE},
-		{"buffer-wait-time", R600_QUERY_BUFFER_WAIT_TIME, 0, FALSE}
-	};
-
-	if (!info)
-		return Elements(list);
-
-	if (index >= Elements(list))
-		return 0;
-
-	*info = list[index];
-	return 1;
-}
-
 static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
 						  const struct pipe_resource *templ)
 {
@@ -809,13 +779,11 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	rscreen->b.b.get_shader_param = r600_get_shader_param;
 	rscreen->b.b.get_paramf = r600_get_paramf;
 	rscreen->b.b.get_compute_param = r600_get_compute_param;
-	rscreen->b.b.get_timestamp = r600_get_timestamp;
 	if (rscreen->b.info.chip_class >= EVERGREEN) {
 		rscreen->b.b.is_format_supported = evergreen_is_format_supported;
 	} else {
 		rscreen->b.b.is_format_supported = r600_is_format_supported;
 	}
-	rscreen->b.b.get_driver_query_info = r600_get_driver_query_info;
 	if (rscreen->b.info.has_uvd) {
 		rscreen->b.b.get_video_param = ruvd_get_video_param;
 		rscreen->b.b.is_video_format_supported = ruvd_is_format_supported;
