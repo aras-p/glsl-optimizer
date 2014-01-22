@@ -652,7 +652,6 @@ private:
    struct brw_compile *p;
 
    struct gl_shader_program *shader_prog;
-   struct gl_shader *shader;
    const struct gl_program *prog;
 
    struct brw_vec4_prog_data *prog_data;

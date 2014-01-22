@@ -133,7 +133,6 @@ protected:
    gen8_instruction *next_inst(unsigned opcode);
 
    struct gl_shader_program *shader_prog;
-   struct gl_shader *shader;
    struct gl_program *prog;
 
    struct brw_context *brw;

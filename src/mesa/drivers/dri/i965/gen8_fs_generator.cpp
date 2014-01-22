@@ -43,8 +43,6 @@ gen8_fs_generator::gen8_fs_generator(struct brw_context *brw,
    : gen8_generator(brw, shader_prog, fp ? &fp->Base : NULL, c), c(c), fp(fp),
      dual_source_output(dual_source_output)
 {
-   shader =
-      shader_prog ? shader_prog->_LinkedShaders[MESA_SHADER_FRAGMENT] : NULL;
 }
 
 gen8_fs_generator::~gen8_fs_generator()
@@ -570,7 +568,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
    const void *last_annotation_ir = NULL;
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      if (shader) {
+      if (prog) {
          printf("Native code for fragment shader %d (SIMD%d dispatch):\n",
                 shader_prog->Name, dispatch_width);
       } else if (fp) {
@@ -611,7 +609,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
             last_annotation_ir = ir->ir;
             if (last_annotation_ir) {
                printf("   ");
-               if (shader) {
+               if (prog) {
                   ((ir_instruction *) ir->ir)->print();
                } else if (prog) {
                   const prog_instruction *fpi;

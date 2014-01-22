@@ -42,7 +42,6 @@ gen8_vec4_generator::gen8_vec4_generator(struct brw_context *brw,
      prog_data(prog_data),
      debug_flag(debug_flag)
 {
-   shader = shader_prog ? shader_prog->_LinkedShaders[MESA_SHADER_VERTEX] : NULL;
 }
 
 gen8_vec4_generator::~gen8_vec4_generator()
@@ -783,7 +782,7 @@ gen8_vec4_generator::generate_code(exec_list *instructions)
    const void *last_annotation_ir = NULL;
 
    if (unlikely(debug_flag)) {
-      if (shader) {
+      if (prog) {
          printf("Native code for vertex shader %d:\n", shader_prog->Name);
       } else {
          printf("Native code for vertex program %d:\n", prog->Id);
@@ -799,7 +798,7 @@ gen8_vec4_generator::generate_code(exec_list *instructions)
             last_annotation_ir = ir->ir;
             if (last_annotation_ir) {
                printf("   ");
-               if (shader) {
+               if (prog) {
                   ((ir_instruction *) last_annotation_ir)->print();
                } else {
                   const prog_instruction *vpi;

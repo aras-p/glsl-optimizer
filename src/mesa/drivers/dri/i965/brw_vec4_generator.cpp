@@ -142,8 +142,6 @@ vec4_generator::vec4_generator(struct brw_context *brw,
    : brw(brw), shader_prog(shader_prog), prog(prog), prog_data(prog_data),
      mem_ctx(mem_ctx), debug_flag(debug_flag)
 {
-   shader = shader_prog ? shader_prog->_LinkedShaders[MESA_SHADER_VERTEX] : NULL;
-
    p = rzalloc(mem_ctx, struct brw_compile);
    brw_init_compile(brw, p, mem_ctx);
 }
@@ -1257,7 +1255,7 @@ vec4_generator::generate_code(exec_list *instructions)
    const void *last_annotation_ir = NULL;
 
    if (unlikely(debug_flag)) {
-      if (shader) {
+      if (prog) {
          printf("Native code for vertex shader %d:\n", shader_prog->Name);
       } else {
          printf("Native code for vertex program %d:\n", prog->Id);
@@ -1273,7 +1271,7 @@ vec4_generator::generate_code(exec_list *instructions)
 	    last_annotation_ir = inst->ir;
 	    if (last_annotation_ir) {
 	       printf("   ");
-               if (shader) {
+               if (prog) {
                   ((ir_instruction *) last_annotation_ir)->print();
                } else {
                   const prog_instruction *vpi;

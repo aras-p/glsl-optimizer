@@ -46,8 +46,6 @@ fs_generator::fs_generator(struct brw_context *brw,
 {
    ctx = &brw->ctx;
 
-   shader = prog ? prog->_LinkedShaders[MESA_SHADER_FRAGMENT] : NULL;
-
    mem_ctx = c;
 
    p = rzalloc(mem_ctx, struct brw_compile);
@@ -1332,7 +1330,7 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
    const void *last_annotation_ir = NULL;
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      if (shader) {
+      if (prog) {
          printf("Native code for fragment shader %d (SIMD%d dispatch):\n",
                 prog->Name, dispatch_width);
       } else if (fp) {
@@ -1373,7 +1371,7 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
 	    last_annotation_ir = inst->ir;
 	    if (last_annotation_ir) {
 	       printf("   ");
-               if (shader)
+               if (prog)
                   ((ir_instruction *)inst->ir)->print();
                else {
                   const prog_instruction *fpi;
