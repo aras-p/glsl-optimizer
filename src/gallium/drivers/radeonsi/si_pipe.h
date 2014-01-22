@@ -161,11 +161,6 @@ void si_flush_depth_textures(struct si_context *sctx,
 void si_decompress_color_textures(struct si_context *sctx,
 				  struct si_textures_info *textures);
 
-/* si_buffer.c */
-void si_upload_index_buffer(struct si_context *sctx,
-			    struct pipe_index_buffer *ib, unsigned count);
-
-
 /* si_pipe.c */
 void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 	       unsigned flags);

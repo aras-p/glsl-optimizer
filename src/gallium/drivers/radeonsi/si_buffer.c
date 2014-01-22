@@ -35,13 +35,6 @@
 #include "si.h"
 #include "si_pipe.h"
 
-void si_upload_index_buffer(struct si_context *sctx,
-			    struct pipe_index_buffer *ib, unsigned count)
-{
-	u_upload_data(sctx->b.uploader, 0, count * ib->index_size,
-		      ib->user_buffer, &ib->offset, &ib->buffer);
-}
-
 void si_upload_const_buffer(struct si_context *sctx, struct r600_resource **rbuffer,
 			const uint8_t *ptr, unsigned size,
 			uint32_t *const_offset)

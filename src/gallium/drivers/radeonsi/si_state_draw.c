@@ -721,7 +721,8 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		si_translate_index_buffer(sctx, &ib, info->count);
 
 		if (ib.user_buffer && !ib.buffer) {
-			si_upload_index_buffer(sctx, &ib, info->count);
+			u_upload_data(sctx->b.uploader, 0, info->count * ib.index_size,
+				      ib.user_buffer, &ib.offset, &ib.buffer);
 		}
 	}
 
