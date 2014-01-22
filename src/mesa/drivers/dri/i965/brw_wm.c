@@ -62,7 +62,8 @@ brw_compute_barycentric_interp_modes(struct brw_context *brw,
    for (attr = 0; attr < VARYING_SLOT_MAX; ++attr) {
       enum glsl_interp_qualifier interp_qualifier =
          fprog->InterpQualifier[attr];
-      bool is_centroid = fprog->IsCentroid & BITFIELD64_BIT(attr);
+      bool is_centroid = (fprog->IsCentroid & BITFIELD64_BIT(attr)) &&
+         !persample_shading;
       bool is_sample = (fprog->IsSample & BITFIELD64_BIT(attr)) ||
          persample_shading;
       bool is_gl_Color = attr == VARYING_SLOT_COL0 || attr == VARYING_SLOT_COL1;
