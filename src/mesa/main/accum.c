@@ -138,7 +138,7 @@ _mesa_clear_accum_buffer(struct gl_context *ctx)
       return;
    }
 
-   if (accRb->Format == MESA_FORMAT_SIGNED_RGBA_16) {
+   if (accRb->Format == MESA_FORMAT_RGBA_SNORM16) {
       const GLshort clearR = FLOAT_TO_SHORT(ctx->Accum.ClearColor[0]);
       const GLshort clearG = FLOAT_TO_SHORT(ctx->Accum.ClearColor[1]);
       const GLshort clearB = FLOAT_TO_SHORT(ctx->Accum.ClearColor[2]);
@@ -193,7 +193,7 @@ accum_scale_or_bias(struct gl_context *ctx, GLfloat value,
       return;
    }
 
-   if (accRb->Format == MESA_FORMAT_SIGNED_RGBA_16) {
+   if (accRb->Format == MESA_FORMAT_RGBA_SNORM16) {
       const GLshort incr = (GLshort) (value * 32767.0f);
       GLint i, j;
       if (bias) {
@@ -271,7 +271,7 @@ accum_or_load(struct gl_context *ctx, GLfloat value,
       return;
    }
 
-   if (accRb->Format == MESA_FORMAT_SIGNED_RGBA_16) {
+   if (accRb->Format == MESA_FORMAT_RGBA_SNORM16) {
       const GLfloat scale = value * 32767.0f;
       GLint i, j;
       GLfloat (*rgba)[4];
@@ -363,7 +363,7 @@ accum_return(struct gl_context *ctx, GLfloat value,
          continue;
       }
 
-      if (accRb->Format == MESA_FORMAT_SIGNED_RGBA_16) {
+      if (accRb->Format == MESA_FORMAT_RGBA_SNORM16) {
          const GLfloat scale = value / 32767.0f;
          GLint i, j;
          GLfloat (*rgba)[4], (*dest)[4];

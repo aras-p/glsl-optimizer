@@ -1153,7 +1153,7 @@ static void FETCH(dudv8)(const struct swrast_texture_image *texImage,
 }
 
 
-/* MESA_FORMAT_SIGNED_R8 ***********************************************/
+/* MESA_FORMAT_R_SNORM8 ***********************************************/
 
 static void FETCH(signed_r8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1168,7 +1168,7 @@ static void FETCH(signed_r8)( const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_A8 ***********************************************/
+/* MESA_FORMAT_A_SNORM8 ***********************************************/
 
 static void FETCH(signed_a8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1183,7 +1183,7 @@ static void FETCH(signed_a8)( const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_L8 ***********************************************/
+/* MESA_FORMAT_L_SNORM8 ***********************************************/
 
 static void FETCH(signed_l8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1198,7 +1198,7 @@ static void FETCH(signed_l8)( const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_I8 ***********************************************/
+/* MESA_FORMAT_I_SNORM8 ***********************************************/
 
 static void FETCH(signed_i8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1213,7 +1213,7 @@ static void FETCH(signed_i8)( const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_RG88_REV ***********************************************/
+/* MESA_FORMAT_R8G8_SNORM ***********************************************/
 
 static void FETCH(signed_rg88_rev)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1228,7 +1228,7 @@ static void FETCH(signed_rg88_rev)( const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_AL88 ***********************************************/
+/* MESA_FORMAT_L8A8_SNORM ***********************************************/
 
 static void FETCH(signed_al88)( const struct swrast_texture_image *texImage,
                                 GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1243,7 +1243,7 @@ static void FETCH(signed_al88)( const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_RGBX8888 ***********************************************/
+/* MESA_FORMAT_X8B8G8R8_SNORM ***********************************************/
 
 static void FETCH(signed_rgbx8888)( const struct swrast_texture_image *texImage,
 			            GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1258,7 +1258,7 @@ static void FETCH(signed_rgbx8888)( const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_RGBA8888 ***********************************************/
+/* MESA_FORMAT_A8B8G8R8_SNORM ***********************************************/
 
 static void FETCH(signed_rgba8888)( const struct swrast_texture_image *texImage,
 			            GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1286,7 +1286,7 @@ static void FETCH(signed_rgba8888_rev)( const struct swrast_texture_image *texIm
 
 
 
-/* MESA_FORMAT_SIGNED_R16 ***********************************************/
+/* MESA_FORMAT_R_SNORM16 ***********************************************/
 
 static void
 FETCH(signed_r16)(const struct swrast_texture_image *texImage,
@@ -1302,7 +1302,7 @@ FETCH(signed_r16)(const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_A16 ***********************************************/
+/* MESA_FORMAT_A_SNORM16 ***********************************************/
 
 static void
 FETCH(signed_a16)(const struct swrast_texture_image *texImage,
@@ -1318,7 +1318,7 @@ FETCH(signed_a16)(const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_L16 ***********************************************/
+/* MESA_FORMAT_L_SNORM16 ***********************************************/
 
 static void
 FETCH(signed_l16)(const struct swrast_texture_image *texImage,
@@ -1334,7 +1334,7 @@ FETCH(signed_l16)(const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_I16 ***********************************************/
+/* MESA_FORMAT_I_SNORM16 ***********************************************/
 
 static void
 FETCH(signed_i16)(const struct swrast_texture_image *texImage,
@@ -1350,7 +1350,7 @@ FETCH(signed_i16)(const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_RG1616 ***********************************************/
+/* MESA_FORMAT_G16R16_SNORM ***********************************************/
 
 static void
 FETCH(signed_rg1616)(const struct swrast_texture_image *texImage,
@@ -1366,7 +1366,7 @@ FETCH(signed_rg1616)(const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_AL1616 ***********************************************/
+/* MESA_FORMAT_LA_SNORM16 ***********************************************/
 
 static void
 FETCH(signed_al1616)(const struct swrast_texture_image *texImage,
@@ -1382,7 +1382,7 @@ FETCH(signed_al1616)(const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_RGB_16 ***********************************************/
+/* MESA_FORMAT_RGB_SNORM16 ***********************************************/
 
 static void 
 FETCH(signed_rgb_16)(const struct swrast_texture_image *texImage,
@@ -1398,7 +1398,7 @@ FETCH(signed_rgb_16)(const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_SIGNED_RGBA_16 ***********************************************/
+/* MESA_FORMAT_RGBA_SNORM16 ***********************************************/
 
 static void
 FETCH(signed_rgba_16)(const struct swrast_texture_image *texImage,

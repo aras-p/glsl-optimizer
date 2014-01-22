@@ -540,24 +540,24 @@ typedef enum
    MESA_FORMAT_DUDV8,             /*                     DUDU DUDU DVDV DVDV */
 
    /* Type A format(s) */
-   MESA_FORMAT_SIGNED_R8,         /*                               RRRR RRRR */
+   MESA_FORMAT_R_SNORM8,      /* char[i] = R */
 
    /* Type P formats */
-   MESA_FORMAT_SIGNED_RG88_REV,   /*                     GGGG GGGG RRRR RRRR */
-   MESA_FORMAT_SIGNED_RGBX8888,   /* RRRR RRRR GGGG GGGG BBBB BBBB xxxx xxxx */
-   MESA_FORMAT_SIGNED_RGBA8888,   /* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
-   MESA_FORMAT_SIGNED_RGBA8888_REV,/*AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR */
+   MESA_FORMAT_R8G8_SNORM,                           /* RRRR RRRR GGGG GGGG */
+   MESA_FORMAT_X8B8G8R8_SNORM,   /* xxxx xxxx BBBB BBBB GGGG GGGG RRRR RRRR */
+   MESA_FORMAT_A8B8G8R8_SNORM,   /* AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR */
+   MESA_FORMAT_R8G8B8A8_SNORM,   /* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
 
    /* Type A format(s) */
-   MESA_FORMAT_SIGNED_R16,        /*                     RRRR RRRR RRRR RRRR */
+   MESA_FORMAT_R_SNORM16,     /* short[i] = R */
 
    /* Type P format(s) */
-   MESA_FORMAT_SIGNED_GR1616,     /* GGGG GGGG GGGG GGGG RRRR RRRR RRRR RRRR */
+   MESA_FORMAT_R16G16_SNORM,     /* RRRR RRRR RRRR RRRR GGGG GGGG GGGG GGGG */
 
    /* Type A format(s) */
-   MESA_FORMAT_SIGNED_RGB_16,     /* ushort[0]=R, ushort[1]=G, ushort[2]=B */
-   MESA_FORMAT_SIGNED_RGBA_16,    /* ... */
-   MESA_FORMAT_RGBA_UNORM16,      /* ... */
+   MESA_FORMAT_RGB_SNORM16,   /* short[i * 3] = R, [i * 3 + 1] = G, [i *3 + 2] = B */
+   MESA_FORMAT_RGBA_SNORM16,  /* ... */
+   MESA_FORMAT_RGBA_UNORM16,  /* ... */
    /*@}*/
 
    /*@{*/
@@ -588,18 +588,18 @@ typedef enum
    MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1,
 
    /* Type A format(s) */
-   MESA_FORMAT_SIGNED_A8,         /*                               AAAA AAAA */
-   MESA_FORMAT_SIGNED_L8,         /*                               LLLL LLLL */
+   MESA_FORMAT_A_SNORM8,      /* char[i] = A */
+   MESA_FORMAT_L_SNORM8,      /* char[i] = L */
 
    /* Type P format(s) */
-   MESA_FORMAT_SIGNED_AL88,       /*                     AAAA AAAA LLLL LLLL */
+   MESA_FORMAT_L8A8_SNORM,                           /* LLLL LLLL AAAA AAAA */
 
    /* Type A format(s) */
-   MESA_FORMAT_SIGNED_I8,         /*                               IIII IIII */
-   MESA_FORMAT_SIGNED_A16,        /*                     AAAA AAAA AAAA AAAA */
-   MESA_FORMAT_SIGNED_L16,        /*                     LLLL LLLL LLLL LLLL */
-   MESA_FORMAT_SIGNED_AL1616,     /* AAAA AAAA AAAA AAAA LLLL LLLL LLLL LLLL */
-   MESA_FORMAT_SIGNED_I16,        /*                     IIII IIII IIII IIII */
+   MESA_FORMAT_I_SNORM8,      /* char[i] = I */
+   MESA_FORMAT_A_SNORM16,     /* short[i] = A */
+   MESA_FORMAT_L_SNORM16,     /* short[i] = L */
+   MESA_FORMAT_LA_SNORM16,    /* short[i * 2] = L, [i * 2 + 1] = A */
+   MESA_FORMAT_I_SNORM16,     /* short[i] = I */
 
    /* Type P format(s) */
    MESA_FORMAT_R9G9B9E5_FLOAT,
@@ -639,8 +639,8 @@ typedef enum
 
    /* Type P formats */
    MESA_FORMAT_R10G10B10A2_UNORM,
-   MESA_FORMAT_SIGNED_RG88,
-   MESA_FORMAT_SIGNED_RG1616,
+   MESA_FORMAT_G8R8_SNORM,
+   MESA_FORMAT_G16R16_SNORM,
 
    MESA_FORMAT_COUNT
 } mesa_format;

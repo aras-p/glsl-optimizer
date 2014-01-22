@@ -522,13 +522,13 @@ intel_miptree_create(struct brw_context *brw,
          format = MESA_FORMAT_R_UNORM16;
          break;
       case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
-         format = MESA_FORMAT_SIGNED_R16;
+         format = MESA_FORMAT_R_SNORM16;
          break;
       case MESA_FORMAT_ETC2_RG11_EAC:
          format = MESA_FORMAT_R16G16_UNORM;
          break;
       case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
-         format = MESA_FORMAT_SIGNED_GR1616;
+         format = MESA_FORMAT_R16G16_SNORM;
          break;
       default:
          /* Non ETC1 / ETC2 format */

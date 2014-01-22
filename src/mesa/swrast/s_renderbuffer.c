@@ -88,7 +88,7 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    case GL_RGBA16:
    case GL_RGBA16_SNORM:
       /* for accum buffer */
-      rb->Format = MESA_FORMAT_SIGNED_RGBA_16;
+      rb->Format = MESA_FORMAT_RGBA_SNORM16;
       break;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:

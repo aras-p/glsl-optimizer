@@ -2454,15 +2454,15 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBA_UINT32] = unpack_RGBA_UINT32;
 
       table[MESA_FORMAT_DUDV8] = unpack_DUDV8;
-      table[MESA_FORMAT_SIGNED_R8] = unpack_SIGNED_R8;
-      table[MESA_FORMAT_SIGNED_RG88_REV] = unpack_SIGNED_RG88_REV;
-      table[MESA_FORMAT_SIGNED_RGBX8888] = unpack_SIGNED_RGBX8888;
-      table[MESA_FORMAT_SIGNED_RGBA8888] = unpack_SIGNED_RGBA8888;
-      table[MESA_FORMAT_SIGNED_RGBA8888_REV] = unpack_SIGNED_RGBA8888_REV;
-      table[MESA_FORMAT_SIGNED_R16] = unpack_SIGNED_R16;
-      table[MESA_FORMAT_SIGNED_GR1616] = unpack_SIGNED_GR1616;
-      table[MESA_FORMAT_SIGNED_RGB_16] = unpack_SIGNED_RGB_16;
-      table[MESA_FORMAT_SIGNED_RGBA_16] = unpack_SIGNED_RGBA_16;
+      table[MESA_FORMAT_R_SNORM8] = unpack_SIGNED_R8;
+      table[MESA_FORMAT_R8G8_SNORM] = unpack_SIGNED_RG88_REV;
+      table[MESA_FORMAT_X8B8G8R8_SNORM] = unpack_SIGNED_RGBX8888;
+      table[MESA_FORMAT_A8B8G8R8_SNORM] = unpack_SIGNED_RGBA8888;
+      table[MESA_FORMAT_R8G8B8A8_SNORM] = unpack_SIGNED_RGBA8888_REV;
+      table[MESA_FORMAT_R_SNORM16] = unpack_SIGNED_R16;
+      table[MESA_FORMAT_R16G16_SNORM] = unpack_SIGNED_GR1616;
+      table[MESA_FORMAT_RGB_SNORM16] = unpack_SIGNED_RGB_16;
+      table[MESA_FORMAT_RGBA_SNORM16] = unpack_SIGNED_RGBA_16;
       table[MESA_FORMAT_RGBA_UNORM16] = unpack_RGBA_16;
 
       table[MESA_FORMAT_RED_RGTC1] = unpack_RED_RGTC1;
@@ -2488,14 +2488,14 @@ get_unpack_rgba_function(mesa_format format)
          unpack_ETC2_RGB8_PUNCHTHROUGH_ALPHA1;
       table[MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1] =
          unpack_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1;
-      table[MESA_FORMAT_SIGNED_A8] = unpack_SIGNED_A8;
-      table[MESA_FORMAT_SIGNED_L8] = unpack_SIGNED_L8;
-      table[MESA_FORMAT_SIGNED_AL88] = unpack_SIGNED_AL88;
-      table[MESA_FORMAT_SIGNED_I8] = unpack_SIGNED_I8;
-      table[MESA_FORMAT_SIGNED_A16] = unpack_SIGNED_A16;
-      table[MESA_FORMAT_SIGNED_L16] = unpack_SIGNED_L16;
-      table[MESA_FORMAT_SIGNED_AL1616] = unpack_SIGNED_AL1616;
-      table[MESA_FORMAT_SIGNED_I16] = unpack_SIGNED_I16;
+      table[MESA_FORMAT_A_SNORM8] = unpack_SIGNED_A8;
+      table[MESA_FORMAT_L_SNORM8] = unpack_SIGNED_L8;
+      table[MESA_FORMAT_L8A8_SNORM] = unpack_SIGNED_AL88;
+      table[MESA_FORMAT_I_SNORM8] = unpack_SIGNED_I8;
+      table[MESA_FORMAT_A_SNORM16] = unpack_SIGNED_A16;
+      table[MESA_FORMAT_L_SNORM16] = unpack_SIGNED_L16;
+      table[MESA_FORMAT_LA_SNORM16] = unpack_SIGNED_AL1616;
+      table[MESA_FORMAT_I_SNORM16] = unpack_SIGNED_I16;
 
       table[MESA_FORMAT_R9G9B9E5_FLOAT] = unpack_RGB9_E5_FLOAT;
       table[MESA_FORMAT_R11G11B10_FLOAT] = unpack_R11_G11_B10_FLOAT;
@@ -2521,8 +2521,8 @@ get_unpack_rgba_function(mesa_format format)
 
       table[MESA_FORMAT_R10G10B10A2_UNORM] = unpack_ABGR2101010;
 
-      table[MESA_FORMAT_SIGNED_RG88] = unpack_SIGNED_RG88;
-      table[MESA_FORMAT_SIGNED_RG1616] = unpack_SIGNED_RG1616;
+      table[MESA_FORMAT_G8R8_SNORM] = unpack_SIGNED_RG88;
+      table[MESA_FORMAT_G16R16_SNORM] = unpack_SIGNED_RG1616;
 
       initialized = GL_TRUE;
    }
