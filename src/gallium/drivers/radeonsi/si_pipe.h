@@ -36,7 +36,6 @@
 #include "sid.h"
 #include "si_public.h"
 #include "si_pm4.h"
-#include "si_resource.h"
 #include "si_state.h"
 
 #ifdef PIPE_ARCH_BIG_ENDIAN
@@ -79,6 +78,10 @@ struct si_textures_info {
 	uint32_t			depth_texture_mask; /* which textures are depth */
 	uint32_t			compressed_colortex_mask;
 	unsigned			n_samplers;
+};
+
+struct si_surface {
+	struct pipe_surface		base;
 };
 
 #define SI_NUM_ATOMS(sctx) (sizeof((sctx)->atoms)/sizeof((sctx)->atoms.array[0]))
@@ -224,6 +227,15 @@ static INLINE unsigned si_pack_float_12p4(float x)
 {
 	return x <= 0    ? 0 :
 	       x >= 4096 ? 0xffff : x * 16;
+}
+
+static INLINE struct r600_resource *
+si_resource_create_custom(struct pipe_screen *screen,
+			  unsigned usage, unsigned size)
+{
+	assert(size);
+	return r600_resource(pipe_buffer_create(screen,
+		PIPE_BIND_CUSTOM, usage, size));
 }
 
 #endif

@@ -25,7 +25,6 @@
  */
 #include "../radeon/r600_cs.h"
 #include "si_pipe.h"
-#include "si_resource.h"
 #include "si_shader.h"
 
 #include "util/u_memory.h"

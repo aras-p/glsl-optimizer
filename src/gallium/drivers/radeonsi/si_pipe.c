@@ -45,7 +45,6 @@
 #include "si_pipe.h"
 #include "radeon/radeon_uvd.h"
 #include "sid.h"
-#include "si_resource.h"
 #include "si_pipe.h"
 #include "si_state.h"
 #include "../radeon/r600_cs.h"
