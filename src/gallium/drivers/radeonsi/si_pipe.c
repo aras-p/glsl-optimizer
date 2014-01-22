@@ -44,7 +44,6 @@
 #include "pipebuffer/pb_buffer.h"
 #include "si_pipe.h"
 #include "radeon/radeon_uvd.h"
-#include "si.h"
 #include "sid.h"
 #include "si_resource.h"
 #include "si_pipe.h"

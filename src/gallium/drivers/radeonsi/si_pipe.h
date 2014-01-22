@@ -33,7 +33,6 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_slab.h"
-#include "si.h"
 #include "sid.h"
 #include "si_public.h"
 #include "si_pm4.h"
@@ -160,6 +159,11 @@ void si_flush_depth_textures(struct si_context *sctx,
 			     struct si_textures_info *textures);
 void si_decompress_color_textures(struct si_context *sctx,
 				  struct si_textures_info *textures);
+
+/* si_hw_context.c */
+void si_context_flush(struct si_context *ctx, unsigned flags);
+void si_begin_new_cs(struct si_context *ctx);
+void si_need_cs_space(struct si_context *ctx, unsigned num_dw, boolean count_draw_in);
 
 /* si_pipe.c */
 void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
