@@ -596,6 +596,8 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
    }
 
    if (state & MESA_META_SHADER) {
+      int i;
+
       if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ARB_vertex_program) {
          save->VertexProgramEnabled = ctx->VertexProgram.Enabled;
          _mesa_reference_vertprog(ctx, &save->VertexProgram,
@@ -615,7 +617,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
          _mesa_set_enable(ctx, GL_FRAGMENT_SHADER_ATI, GL_FALSE);
       }
 
-      for (int i = 0; i < MESA_SHADER_STAGES; i++) {
+      for (i = 0; i < MESA_SHADER_STAGES; i++) {
          _mesa_reference_shader_program(ctx, &save->Shader[i],
                                      ctx->Shader.CurrentProgram[i]);
       }
