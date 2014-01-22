@@ -569,12 +569,15 @@ static void si_init_gs_rings(struct si_context *sctx)
 			       sctx->gsvs_ring.buffer_size / 256);
 	}
 
-	si_set_ring_buffer(&sctx->b.b, SI_SHADER_EXPORT, 0, &sctx->esgs_ring,
-			   0, sctx->esgs_ring.buffer_size, true, true, 4, 64);
-	si_set_ring_buffer(&sctx->b.b, PIPE_SHADER_GEOMETRY, 0, &sctx->esgs_ring,
-			   0, sctx->esgs_ring.buffer_size, false, false, 0, 0);
-	si_set_ring_buffer(&sctx->b.b, PIPE_SHADER_VERTEX, 0, &sctx->gsvs_ring,
-			   0, sctx->gsvs_ring.buffer_size, false, false, 0, 0);
+	si_set_ring_buffer(&sctx->b.b, PIPE_SHADER_VERTEX, SI_RING_ESGS,
+			   &sctx->esgs_ring, 0, sctx->esgs_ring.buffer_size,
+			   true, true, 4, 64);
+	si_set_ring_buffer(&sctx->b.b, PIPE_SHADER_GEOMETRY, SI_RING_ESGS,
+			   &sctx->esgs_ring, 0, sctx->esgs_ring.buffer_size,
+			   false, false, 0, 0);
+	si_set_ring_buffer(&sctx->b.b, PIPE_SHADER_VERTEX, SI_RING_GSVS,
+			   &sctx->gsvs_ring, 0, sctx->gsvs_ring.buffer_size,
+			   false, false, 0, 0);
 }
 
 static void si_update_derived_state(struct si_context *sctx)
@@ -620,7 +623,8 @@ static void si_update_derived_state(struct si_context *sctx)
 			sctx->b.flags |= R600_CONTEXT_VGT_FLUSH;
 		si_pm4_bind_state(sctx, gs_rings, sctx->gs_rings);
 
-		si_set_ring_buffer(ctx, PIPE_SHADER_GEOMETRY, 1, &sctx->gsvs_ring,
+		si_set_ring_buffer(ctx, PIPE_SHADER_GEOMETRY, SI_RING_GSVS,
+				   &sctx->gsvs_ring,
 				   sctx->gs_shader->current->shader.gs_max_out_vertices *
 				   sctx->gs_shader->current->shader.noutput * 16,
 				   64, true, true, 4, 16);

@@ -151,6 +151,11 @@ static void si_update_descriptors(struct si_context *sctx,
 			7 + /* copy */
 			(4 + desc->element_dw_size) * util_bitcount(desc->dirty_mask) + /* update */
 			4; /* pointer update */
+#if HAVE_LLVM >= 0x0305
+		if (desc->shader_userdata_reg >= R_00B130_SPI_SHADER_USER_DATA_VS_0 &&
+		    desc->shader_userdata_reg < R_00B230_SPI_SHADER_USER_DATA_GS_0)
+			desc->atom.num_dw += 4; /* second pointer update */
+#endif
 		desc->atom.dirty = true;
 		/* The descriptors are read with the K cache. */
 		sctx->b.flags |= R600_CONTEXT_INV_CONST_CACHE;
@@ -170,6 +175,19 @@ static void si_emit_shader_pointer(struct si_context *sctx,
 	radeon_emit(cs, (desc->shader_userdata_reg - SI_SH_REG_OFFSET) >> 2);
 	radeon_emit(cs, va);
 	radeon_emit(cs, va >> 32);
+
+#if HAVE_LLVM >= 0x0305
+	if (desc->shader_userdata_reg >= R_00B130_SPI_SHADER_USER_DATA_VS_0 &&
+	    desc->shader_userdata_reg < R_00B230_SPI_SHADER_USER_DATA_GS_0) {
+		radeon_emit(cs, PKT3(PKT3_SET_SH_REG, 2, 0));
+		radeon_emit(cs, (desc->shader_userdata_reg +
+				 (R_00B330_SPI_SHADER_USER_DATA_ES_0 -
+				  R_00B130_SPI_SHADER_USER_DATA_VS_0) -
+				 SI_SH_REG_OFFSET) >> 2);
+		radeon_emit(cs, va);
+		radeon_emit(cs, va >> 32);
+	}
+#endif
 }
 
 static void si_emit_descriptors(struct si_context *sctx,
@@ -242,8 +260,6 @@ static void si_emit_descriptors(struct si_context *sctx,
 static unsigned si_get_shader_user_data_base(unsigned shader)
 {
 	switch (shader) {
-	case SI_SHADER_EXPORT:
-		return R_00B330_SPI_SHADER_USER_DATA_ES_0;
 	case PIPE_SHADER_VERTEX:
 		return R_00B130_SPI_SHADER_USER_DATA_VS_0;
 	case PIPE_SHADER_GEOMETRY:
@@ -508,7 +524,6 @@ void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,
 	/* The stride field in the resource descriptor has 14 bits */
 	assert(stride < (1 << 14));
 
-	slot += NUM_PIPE_CONST_BUFFERS + 1;
 	assert(slot < buffers->num_buffers);
 	pipe_resource_reference(&buffers->buffers[slot], NULL);
 

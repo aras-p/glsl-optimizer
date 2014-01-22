@@ -321,8 +321,7 @@ static LLVMValueRef fetch_input_gs(
 	/* Load the ESGS ring resource descriptor */
 	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
 	t_list = build_indexed_load(si_shader_ctx, t_list_ptr,
-				    lp_build_const_int32(gallivm,
-							 NUM_PIPE_CONST_BUFFERS + 1));
+				    lp_build_const_int32(gallivm, SI_RING_ESGS));
 
 	args[0] = t_list;
 	args[1] = vtx_offset;
@@ -1200,8 +1199,7 @@ static void si_llvm_emit_es_epilogue(struct lp_build_tgsi_context * bld_base)
 	/* Load the ESGS ring resource descriptor */
 	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
 	t_list = build_indexed_load(si_shader_ctx, t_list_ptr,
-				    lp_build_const_int32(gallivm,
-							 NUM_PIPE_CONST_BUFFERS + 1));
+				    lp_build_const_int32(gallivm, SI_RING_ESGS));
 
 	for (i = 0; i < es->noutput; i++) {
 		LLVMValueRef *out_ptr =
@@ -1913,8 +1911,7 @@ static void si_llvm_emit_vertex(
 	/* Load the GSVS ring resource descriptor */
 	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
 	t_list = build_indexed_load(si_shader_ctx, t_list_ptr,
-				    lp_build_const_int32(gallivm,
-							 NUM_PIPE_CONST_BUFFERS + 2));
+				    lp_build_const_int32(gallivm, SI_RING_GSVS));
 
 	if (shader->noutput == 0) {
 		struct tgsi_parse_context *parse = &si_shader_ctx->parse;
@@ -2378,8 +2375,7 @@ static int si_generate_gs_copy_shader(struct si_context *sctx,
 	/* Load the GSVS ring resource descriptor */
 	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
 	t_list = build_indexed_load(si_shader_ctx, t_list_ptr,
-				    lp_build_const_int32(gallivm,
-							 NUM_PIPE_CONST_BUFFERS + 1));
+				    lp_build_const_int32(gallivm, SI_RING_GSVS));
 
 	args[0] = t_list;
 	args[1] = lp_build_mul_imm(uint,

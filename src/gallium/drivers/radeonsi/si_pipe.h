@@ -76,8 +76,7 @@ struct si_surface {
 
 #define SI_NUM_ATOMS(sctx) (sizeof((sctx)->atoms)/sizeof((sctx)->atoms.array[0]))
 
-#define SI_SHADER_EXPORT (PIPE_SHADER_GEOMETRY+1)
-#define SI_NUM_SHADERS (SI_SHADER_EXPORT+1)
+#define SI_NUM_SHADERS (PIPE_SHADER_GEOMETRY+1)
 
 struct si_context {
 	struct r600_common_context	b;
