@@ -520,19 +520,11 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	if (!radeon_winsys_unref(rscreen->b.ws))
 		return;
 
-	r600_common_screen_cleanup(&rscreen->b);
-
 	if (rscreen->global_pool) {
 		compute_memory_pool_delete(rscreen->global_pool);
 	}
 
-	if (rscreen->b.trace_bo) {
-		rscreen->b.ws->buffer_unmap(rscreen->b.trace_bo->cs_buf);
-		pipe_resource_reference((struct pipe_resource**)&rscreen->b.trace_bo, NULL);
-	}
-
-	rscreen->b.ws->destroy(rscreen->b.ws);
-	FREE(rscreen);
+	r600_destroy_common_screen(&rscreen->b);
 }
 
 static struct pipe_resource *r600_resource_create(struct pipe_screen *screen,
@@ -553,23 +545,22 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 		return NULL;
 	}
 
-	ws->query_info(ws, &rscreen->b.info);
-
 	/* Set functions first. */
 	rscreen->b.b.context_create = r600_create_context;
 	rscreen->b.b.destroy = r600_destroy_screen;
 	rscreen->b.b.get_param = r600_get_param;
 	rscreen->b.b.get_shader_param = r600_get_shader_param;
-	if (rscreen->b.info.chip_class >= EVERGREEN) {
-		rscreen->b.b.is_format_supported = evergreen_is_format_supported;
-	} else {
-		rscreen->b.b.is_format_supported = r600_is_format_supported;
-	}
 	rscreen->b.b.resource_create = r600_resource_create;
 
 	if (!r600_common_screen_init(&rscreen->b, ws)) {
 		FREE(rscreen);
 		return NULL;
+	}
+
+	if (rscreen->b.info.chip_class >= EVERGREEN) {
+		rscreen->b.b.is_format_supported = evergreen_is_format_supported;
+	} else {
+		rscreen->b.b.is_format_supported = r600_is_format_supported;
 	}
 
 	rscreen->b.debug_flags |= debug_get_flags_option("R600_DEBUG", r600_debug_options, 0);
@@ -633,18 +624,6 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 			      !(rscreen->b.debug_flags & DBG_NO_CP_DMA);
 
 	rscreen->global_pool = compute_memory_pool_new(rscreen);
-
-	rscreen->b.cs_count = 0;
-	if (rscreen->b.info.drm_minor >= 28 && (rscreen->b.debug_flags & DBG_TRACE_CS)) {
-		rscreen->b.trace_bo = (struct r600_resource*)pipe_buffer_create(&rscreen->b.b,
-										PIPE_BIND_CUSTOM,
-										PIPE_USAGE_STAGING,
-										4096);
-		if (rscreen->b.trace_bo) {
-			rscreen->b.trace_ptr = rscreen->b.ws->buffer_map(rscreen->b.trace_bo->cs_buf, NULL,
-									PIPE_TRANSFER_UNSYNCHRONIZED);
-		}
-	}
 
 	/* Create the auxiliary context. This must be done last. */
 	rscreen->b.aux_context = rscreen->b.b.context_create(&rscreen->b.b, NULL);

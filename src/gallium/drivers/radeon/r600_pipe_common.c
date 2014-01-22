@@ -619,17 +619,35 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 	if (!r600_init_tiling(rscreen)) {
 		return false;
 	}
-
 	util_format_s3tc_init();
-
 	pipe_mutex_init(rscreen->aux_context_lock);
+
+	if (rscreen->info.drm_minor >= 28 && (rscreen->debug_flags & DBG_TRACE_CS)) {
+		rscreen->trace_bo = (struct r600_resource*)pipe_buffer_create(&rscreen->b,
+										PIPE_BIND_CUSTOM,
+										PIPE_USAGE_STAGING,
+										4096);
+		if (rscreen->trace_bo) {
+			rscreen->trace_ptr = rscreen->ws->buffer_map(rscreen->trace_bo->cs_buf, NULL,
+									PIPE_TRANSFER_UNSYNCHRONIZED);
+		}
+	}
+
 	return true;
 }
 
-void r600_common_screen_cleanup(struct r600_common_screen *rscreen)
+void r600_destroy_common_screen(struct r600_common_screen *rscreen)
 {
 	pipe_mutex_destroy(rscreen->aux_context_lock);
 	rscreen->aux_context->destroy(rscreen->aux_context);
+
+	if (rscreen->trace_bo) {
+		rscreen->ws->buffer_unmap(rscreen->trace_bo->cs_buf);
+		pipe_resource_reference((struct pipe_resource**)&rscreen->trace_bo, NULL);
+	}
+
+	rscreen->ws->destroy(rscreen->ws);
+	FREE(rscreen);
 }
 
 static unsigned tgsi_get_processor_type(const struct tgsi_token *tokens)

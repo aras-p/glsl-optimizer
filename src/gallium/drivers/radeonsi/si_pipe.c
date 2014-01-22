@@ -418,17 +418,7 @@ static void si_destroy_screen(struct pipe_screen* pscreen)
 	if (!radeon_winsys_unref(sscreen->b.ws))
 		return;
 
-	r600_common_screen_cleanup(&sscreen->b);
-
-#if SI_TRACE_CS
-	if (sscreen->b.trace_bo) {
-		sscreen->ws->buffer_unmap(sscreen->b.trace_bo->cs_buf);
-		pipe_resource_reference((struct pipe_resource**)&sscreen->b.trace_bo, NULL);
-	}
-#endif
-
-	sscreen->b.ws->destroy(sscreen->b.ws);
-	FREE(sscreen);
+	r600_destroy_common_screen(&sscreen->b);
 }
 
 struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
@@ -455,20 +445,6 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 
 	if (debug_get_bool_option("RADEON_DUMP_SHADERS", FALSE))
 		sscreen->b.debug_flags |= DBG_FS | DBG_VS | DBG_GS | DBG_PS | DBG_CS;
-
-#if SI_TRACE_CS
-	sscreen->b.cs_count = 0;
-	if (sscreen->info.drm_minor >= 28) {
-		sscreen->b.trace_bo = (struct r600_resource*)pipe_buffer_create(&sscreen->screen,
-										PIPE_BIND_CUSTOM,
-										PIPE_USAGE_STAGING,
-										4096);
-		if (sscreen->b.trace_bo) {
-			sscreen->b.trace_ptr = sscreen->ws->buffer_map(sscreen->b.trace_bo->cs_buf, NULL,
-									PIPE_TRANSFER_UNSYNCHRONIZED);
-		}
-	}
-#endif
 
 	/* Create the auxiliary context. This must be done last. */
 	sscreen->b.aux_context = sscreen->b.b.context_create(&sscreen->b.b, NULL);
