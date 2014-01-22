@@ -587,6 +587,7 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxSpotExponent = 128.0;
    ctx->Const.MaxViewportWidth = MAX_VIEWPORT_WIDTH;
    ctx->Const.MaxViewportHeight = MAX_VIEWPORT_HEIGHT;
+   ctx->Const.MinMapBufferAlignment = 1;
 
    /* Driver must override these values if ARB_viewport_array is supported. */
    ctx->Const.MaxViewports = 1;
