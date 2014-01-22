@@ -880,7 +880,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    /* Covers max_layer_count, is_layered, and layer_tex_target */
    bool layer_info_valid = false;
    GLuint max_layer_count = 0, att_layer_count;
-   bool is_layered;
+   bool is_layered = false;
    GLenum layer_tex_target = 0;
 
    assert(_mesa_is_user_fbo(fb));
