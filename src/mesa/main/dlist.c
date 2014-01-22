@@ -767,6 +767,7 @@ _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
             break;
          case OPCODE_PIXEL_MAP:
             free(get_pointer(&n[3]));
+            n += InstSize[n[0].opcode];
             break;
 
          case OPCODE_CONTINUE:
