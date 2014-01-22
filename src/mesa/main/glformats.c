@@ -1229,10 +1229,16 @@ _mesa_get_linear_internalformat(GLenum format)
    case GL_SRGB8_ALPHA8:
       return GL_RGBA8;
 
-   case GL_SLUMINANCE:
+   case GL_SLUMINANCE8:
       return GL_LUMINANCE8;
 
+   case GL_SLUMINANCE:
+      return GL_LUMINANCE;
+
    case GL_SLUMINANCE_ALPHA:
+      return GL_LUMINANCE_ALPHA;
+
+   case GL_SLUMINANCE8_ALPHA8:
       return GL_LUMINANCE8_ALPHA8;
 
    default:
