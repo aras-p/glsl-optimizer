@@ -10,5 +10,4 @@ C_SOURCES := \
 	si_shader.c \
 	si_state.c \
 	si_state_draw.c \
-	si_translate.c \
 	si_uvd.c

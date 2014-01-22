@@ -27,6 +27,8 @@
 #include "util/u_memory.h"
 #include "util/u_framebuffer.h"
 #include "util/u_blitter.h"
+#include "util/u_index_modify.h"
+#include "util/u_upload_mgr.h"
 #include "tgsi/tgsi_parse.h"
 #include "si_pipe.h"
 #include "si_shader.h"
@@ -718,7 +720,23 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		ib.offset = sctx->index_buffer.offset + info->start * ib.index_size;
 
 		/* Translate or upload, if needed. */
-		si_translate_index_buffer(sctx, &ib, info->count);
+		if (ib.index_size == 1) {
+			struct pipe_resource *out_buffer = NULL;
+			unsigned out_offset;
+			void *ptr;
+
+			u_upload_alloc(sctx->b.uploader, 0, info->count * 2,
+				       &out_offset, &out_buffer, &ptr);
+
+			util_shorten_ubyte_elts_to_userptr(
+						&sctx->b.b, &ib, 0, ib.offset, info->count, ptr);
+
+			pipe_resource_reference(&ib.buffer, NULL);
+			ib.user_buffer = NULL;
+			ib.buffer = out_buffer;
+			ib.offset = out_offset;
+			ib.index_size = 2;
+		}
 
 		if (ib.user_buffer && !ib.buffer) {
 			u_upload_data(sctx->b.uploader, 0, info->count * ib.index_size,

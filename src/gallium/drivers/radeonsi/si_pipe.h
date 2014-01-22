@@ -165,11 +165,6 @@ void si_decompress_color_textures(struct si_context *sctx,
 void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 	       unsigned flags);
 
-/* si_translate.c */
-void si_translate_index_buffer(struct si_context *sctx,
-			       struct pipe_index_buffer *ib,
-			       unsigned count);
-
 #if SI_TRACE_CS
 void si_trace_emit(struct si_context *sctx);
 #endif
