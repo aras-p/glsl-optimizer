@@ -166,6 +166,36 @@ static unsigned cik_db_pipe_config(struct si_screen *sscreen, unsigned tile_mode
 	}
 }
 
+static unsigned si_map_swizzle(unsigned swizzle)
+{
+	switch (swizzle) {
+	case UTIL_FORMAT_SWIZZLE_Y:
+		return V_008F0C_SQ_SEL_Y;
+	case UTIL_FORMAT_SWIZZLE_Z:
+		return V_008F0C_SQ_SEL_Z;
+	case UTIL_FORMAT_SWIZZLE_W:
+		return V_008F0C_SQ_SEL_W;
+	case UTIL_FORMAT_SWIZZLE_0:
+		return V_008F0C_SQ_SEL_0;
+	case UTIL_FORMAT_SWIZZLE_1:
+		return V_008F0C_SQ_SEL_1;
+	default: /* UTIL_FORMAT_SWIZZLE_X */
+		return V_008F0C_SQ_SEL_X;
+	}
+}
+
+static uint32_t S_FIXED(float value, uint32_t frac_bits)
+{
+	return value * (1 << frac_bits);
+}
+
+/* 12.4 fixed-point */
+static unsigned si_pack_float_12p4(float x)
+{
+	return x <= 0    ? 0 :
+	       x >= 4096 ? 0xffff : x * 16;
+}
+
 /*
  * inferred framebuffer and blender state
  */

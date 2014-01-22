@@ -189,45 +189,6 @@ struct pipe_video_buffer *si_video_buffer_create(struct pipe_context *pipe,
 /*
  * common helpers
  */
-static INLINE uint32_t S_FIXED(float value, uint32_t frac_bits)
-{
-	return value * (1 << frac_bits);
-}
-#define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
-
-static INLINE unsigned si_map_swizzle(unsigned swizzle)
-{
-	switch (swizzle) {
-	case UTIL_FORMAT_SWIZZLE_Y:
-		return V_008F0C_SQ_SEL_Y;
-	case UTIL_FORMAT_SWIZZLE_Z:
-		return V_008F0C_SQ_SEL_Z;
-	case UTIL_FORMAT_SWIZZLE_W:
-		return V_008F0C_SQ_SEL_W;
-	case UTIL_FORMAT_SWIZZLE_0:
-		return V_008F0C_SQ_SEL_0;
-	case UTIL_FORMAT_SWIZZLE_1:
-		return V_008F0C_SQ_SEL_1;
-	default: /* UTIL_FORMAT_SWIZZLE_X */
-		return V_008F0C_SQ_SEL_X;
-	}
-}
-
-static inline unsigned si_tex_aniso_filter(unsigned filter)
-{
-	if (filter <= 1)   return 0;
-	if (filter <= 2)   return 1;
-	if (filter <= 4)   return 2;
-	if (filter <= 8)   return 3;
-	 /* else */        return 4;
-}
-
-/* 12.4 fixed-point */
-static INLINE unsigned si_pack_float_12p4(float x)
-{
-	return x <= 0    ? 0 :
-	       x >= 4096 ? 0xffff : x * 16;
-}
 
 static INLINE struct r600_resource *
 si_resource_create_custom(struct pipe_screen *screen,
