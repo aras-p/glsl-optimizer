@@ -54,7 +54,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 		for (i = 0; i < R600_NUM_ATOMS; i++) {
 			if (ctx->atoms[i] && ctx->atoms[i]->dirty) {
 				num_dw += ctx->atoms[i]->num_dw;
-				if (ctx->screen->trace_bo) {
+				if (ctx->screen->b.trace_bo) {
 					num_dw += R600_TRACE_CS_DWORDS;
 				}
 			}
@@ -62,7 +62,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 
 		/* The upper-bound of how much space a draw command would take. */
 		num_dw += R600_MAX_FLUSH_CS_DWORDS + R600_MAX_DRAW_CS_DWORDS;
-		if (ctx->screen->trace_bo) {
+		if (ctx->screen->b.trace_bo) {
 			num_dw += R600_TRACE_CS_DWORDS;
 		}
 	}
@@ -270,7 +270,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	}
 
 	/* Flush the CS. */
-	ctx->b.ws->cs_flush(ctx->b.rings.gfx.cs, flags, ctx->screen->cs_count++);
+	ctx->b.ws->cs_flush(ctx->b.rings.gfx.cs, flags, ctx->screen->b.cs_count++);
 }
 
 void r600_begin_new_cs(struct r600_context *ctx)

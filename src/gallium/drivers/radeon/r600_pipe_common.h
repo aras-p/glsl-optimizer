@@ -180,6 +180,10 @@ struct r600_common_screen {
 	 * It must be locked prior to using and flushed before unlocking. */
 	struct pipe_context		*aux_context;
 	pipe_mutex			aux_context_lock;
+
+	struct r600_resource		*trace_bo;
+	uint32_t			*trace_ptr;
+	unsigned			cs_count;
 };
 
 /* This encapsulates a state or an operation which can emitted into the GPU

@@ -259,8 +259,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		goto fail;
 	}
 
-	if (rscreen->trace_bo) {
-		rctx->b.rings.gfx.cs = rctx->b.ws->cs_create(rctx->b.ws, RING_GFX, rscreen->trace_bo->cs_buf);
+	if (rscreen->b.trace_bo) {
+		rctx->b.rings.gfx.cs = rctx->b.ws->cs_create(rctx->b.ws, RING_GFX, rscreen->b.trace_bo->cs_buf);
 	} else {
 		rctx->b.rings.gfx.cs = rctx->b.ws->cs_create(rctx->b.ws, RING_GFX, NULL);
 	}
@@ -743,9 +743,9 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 		compute_memory_pool_delete(rscreen->global_pool);
 	}
 
-	if (rscreen->trace_bo) {
-		rscreen->b.ws->buffer_unmap(rscreen->trace_bo->cs_buf);
-		pipe_resource_reference((struct pipe_resource**)&rscreen->trace_bo, NULL);
+	if (rscreen->b.trace_bo) {
+		rscreen->b.ws->buffer_unmap(rscreen->b.trace_bo->cs_buf);
+		pipe_resource_reference((struct pipe_resource**)&rscreen->b.trace_bo, NULL);
 	}
 
 	rscreen->b.ws->destroy(rscreen->b.ws);
@@ -860,14 +860,14 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 
 	rscreen->global_pool = compute_memory_pool_new(rscreen);
 
-	rscreen->cs_count = 0;
+	rscreen->b.cs_count = 0;
 	if (rscreen->b.info.drm_minor >= 28 && (rscreen->b.debug_flags & DBG_TRACE_CS)) {
-		rscreen->trace_bo = (struct r600_resource*)pipe_buffer_create(&rscreen->b.b,
+		rscreen->b.trace_bo = (struct r600_resource*)pipe_buffer_create(&rscreen->b.b,
 										PIPE_BIND_CUSTOM,
 										PIPE_USAGE_STAGING,
 										4096);
-		if (rscreen->trace_bo) {
-			rscreen->trace_ptr = rscreen->b.ws->buffer_map(rscreen->trace_bo->cs_buf, NULL,
+		if (rscreen->b.trace_bo) {
+			rscreen->b.trace_ptr = rscreen->b.ws->buffer_map(rscreen->b.trace_bo->cs_buf, NULL,
 									PIPE_TRANSFER_UNSYNCHRONIZED);
 		}
 	}

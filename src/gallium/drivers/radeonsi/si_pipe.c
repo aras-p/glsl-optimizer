@@ -564,9 +564,9 @@ static void si_destroy_screen(struct pipe_screen* pscreen)
 	r600_common_screen_cleanup(&sscreen->b);
 
 #if SI_TRACE_CS
-	if (sscreen->trace_bo) {
-		sscreen->ws->buffer_unmap(sscreen->trace_bo->cs_buf);
-		pipe_resource_reference((struct pipe_resource**)&sscreen->trace_bo, NULL);
+	if (sscreen->b.trace_bo) {
+		sscreen->ws->buffer_unmap(sscreen->b.trace_bo->cs_buf);
+		pipe_resource_reference((struct pipe_resource**)&sscreen->b.trace_bo, NULL);
 	}
 #endif
 
@@ -611,14 +611,14 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 		sscreen->b.debug_flags |= DBG_FS | DBG_VS | DBG_GS | DBG_PS | DBG_CS;
 
 #if SI_TRACE_CS
-	sscreen->cs_count = 0;
+	sscreen->b.cs_count = 0;
 	if (sscreen->info.drm_minor >= 28) {
-		sscreen->trace_bo = (struct r600_resource*)pipe_buffer_create(&sscreen->screen,
+		sscreen->b.trace_bo = (struct r600_resource*)pipe_buffer_create(&sscreen->screen,
 										PIPE_BIND_CUSTOM,
 										PIPE_USAGE_STAGING,
 										4096);
-		if (sscreen->trace_bo) {
-			sscreen->trace_ptr = sscreen->ws->buffer_map(sscreen->trace_bo->cs_buf, NULL,
+		if (sscreen->b.trace_bo) {
+			sscreen->b.trace_ptr = sscreen->ws->buffer_map(sscreen->b.trace_bo->cs_buf, NULL,
 									PIPE_TRANSFER_UNSYNCHRONIZED);
 		}
 	}

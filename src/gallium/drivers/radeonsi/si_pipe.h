@@ -55,11 +55,6 @@ struct si_pipe_compute;
 
 struct si_screen {
 	struct r600_common_screen	b;
-#if SI_TRACE_CS
-	struct r600_resource		*trace_bo;
-	uint32_t			*trace_ptr;
-	unsigned			cs_count;
-#endif
 };
 
 struct si_pipe_sampler_view {

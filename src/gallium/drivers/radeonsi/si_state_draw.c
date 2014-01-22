@@ -750,7 +750,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	sctx->pm4_dirty_cdwords = 0;
 
 #if SI_TRACE_CS
-	if (sctx->screen->trace_bo) {
+	if (sctx->screen->b.trace_bo) {
 		si_trace_emit(sctx);
 	}
 #endif

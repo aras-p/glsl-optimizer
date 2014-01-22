@@ -204,9 +204,6 @@ struct r600_screen {
 	 * XXX: Not sure if this is the best place for global_pool.  Also,
 	 * it's not thread safe, so it won't work with multiple contexts. */
 	struct compute_memory_pool *global_pool;
-	struct r600_resource		*trace_bo;
-	uint32_t			*trace_ptr;
-	unsigned			cs_count;
 };
 
 struct r600_pipe_sampler_view {
@@ -461,7 +458,7 @@ static INLINE void r600_emit_atom(struct r600_context *rctx, struct r600_atom *a
 {
 	atom->emit(&rctx->b, atom);
 	atom->dirty = false;
-	if (rctx->screen->trace_bo) {
+	if (rctx->screen->b.trace_bo) {
 		r600_trace_emit(rctx);
 	}
 }

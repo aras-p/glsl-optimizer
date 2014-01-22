@@ -1389,7 +1389,7 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 					(info.count_from_stream_output ? S_0287F0_USE_OPAQUE(1) : 0);
 	}
 
-	if (rctx->screen->trace_bo) {
+	if (rctx->screen->b.trace_bo) {
 		r600_trace_emit(rctx);
 	}
 
@@ -2190,13 +2190,13 @@ void r600_trace_emit(struct r600_context *rctx)
 	uint64_t va;
 	uint32_t reloc;
 
-	va = r600_resource_va(&rscreen->b.b, (void*)rscreen->trace_bo);
-	reloc = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rscreen->trace_bo, RADEON_USAGE_READWRITE);
+	va = r600_resource_va(&rscreen->b.b, (void*)rscreen->b.trace_bo);
+	reloc = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rscreen->b.trace_bo, RADEON_USAGE_READWRITE);
 	radeon_emit(cs, PKT3(PKT3_MEM_WRITE, 3, 0));
 	radeon_emit(cs, va & 0xFFFFFFFFUL);
 	radeon_emit(cs, (va >> 32UL) & 0xFFUL);
 	radeon_emit(cs, cs->cdw);
-	radeon_emit(cs, rscreen->cs_count);
+	radeon_emit(cs, rscreen->b.cs_count);
 	radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
 	radeon_emit(cs, reloc);
 }
