@@ -29,6 +29,7 @@
 #include "si_shader.h"
 
 #include "util/u_memory.h"
+#include "util/u_upload_mgr.h"
 
 #define SI_NUM_CONTEXTS 16
 
@@ -399,6 +400,32 @@ static void si_buffer_resources_begin_new_cs(struct si_context *sctx,
 }
 
 /* CONSTANT BUFFERS */
+
+void si_upload_const_buffer(struct si_context *sctx, struct r600_resource **rbuffer,
+			    const uint8_t *ptr, unsigned size, uint32_t *const_offset)
+{
+	if (SI_BIG_ENDIAN) {
+		uint32_t *tmpPtr;
+		unsigned i;
+
+		if (!(tmpPtr = malloc(size))) {
+			R600_ERR("Failed to allocate BE swap buffer.\n");
+			return;
+		}
+
+		for (i = 0; i < size / 4; ++i) {
+			tmpPtr[i] = util_bswap32(((uint32_t *)ptr)[i]);
+		}
+
+		u_upload_data(sctx->b.uploader, 0, size, tmpPtr, const_offset,
+				(struct pipe_resource**)rbuffer);
+
+		free(tmpPtr);
+	} else {
+		u_upload_data(sctx->b.uploader, 0, size, ptr, const_offset,
+					(struct pipe_resource**)rbuffer);
+	}
+}
 
 static void si_set_constant_buffer(struct pipe_context *ctx, uint shader, uint slot,
 				   struct pipe_constant_buffer *input)

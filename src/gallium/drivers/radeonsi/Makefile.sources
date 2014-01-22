@@ -1,6 +1,5 @@
 C_SOURCES := \
 	si_blit.c \
-	si_buffer.c \
 	si_commands.c \
 	si_compute.c \
 	si_descriptors.c \

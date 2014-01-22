@@ -44,10 +44,4 @@ struct si_surface {
 	struct pipe_surface		base;
 };
 
-struct si_context;
-
-void si_upload_const_buffer(struct si_context *sctx, struct r600_resource **rbuffer,
-			    const uint8_t *ptr, unsigned size,
-			    uint32_t *const_offset);
-
 #endif

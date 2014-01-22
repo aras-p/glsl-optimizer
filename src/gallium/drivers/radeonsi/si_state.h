@@ -199,6 +199,8 @@ void si_all_descriptors_begin_new_cs(struct si_context *sctx);
 void si_copy_buffer(struct si_context *sctx,
 		    struct pipe_resource *dst, struct pipe_resource *src,
 		    uint64_t dst_offset, uint64_t src_offset, unsigned size);
+void si_upload_const_buffer(struct si_context *sctx, struct r600_resource **rbuffer,
+			    const uint8_t *ptr, unsigned size, uint32_t *const_offset);
 
 /* si_state.c */
 struct si_pipe_shader_selector;
