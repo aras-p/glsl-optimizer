@@ -2032,6 +2032,9 @@ _mesa_get_format_color_encoding(gl_format format)
    case MESA_FORMAT_SRGBA_DXT3:
    case MESA_FORMAT_SRGBA_DXT5:
    case MESA_FORMAT_XBGR8888_SRGB:
+   case MESA_FORMAT_ETC2_SRGB8:
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
       return GL_SRGB;
    default:
       return GL_LINEAR;
@@ -2076,6 +2079,15 @@ _mesa_get_srgb_format_linear(gl_format format)
       break;
    case MESA_FORMAT_XBGR8888_SRGB:
       format = MESA_FORMAT_RGBX8888_REV;
+      break;
+   case MESA_FORMAT_ETC2_SRGB8:
+      format = MESA_FORMAT_ETC2_RGB8;
+      break;
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+      format = MESA_FORMAT_ETC2_RGBA8_EAC;
+      break;
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+      format = MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1;
       break;
    default:
       break;
