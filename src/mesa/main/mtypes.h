@@ -1815,8 +1815,9 @@ struct gl_transform_feedback_object
 
    /**
     * The shader program active when BeginTransformFeedback() was called.
-    * When active and unpaused, this equals
-    * ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX].
+    * When active and unpaused, this equals ctx->Shader.CurrentProgram[stage],
+    * where stage is the pipeline stage that is the source of data for
+    * transform feedback.
     */
    struct gl_shader_program *shader_program;
 
@@ -3779,6 +3780,9 @@ struct gl_driver_flags
 
    /** gl_context::TransformFeedback::CurrentObject */
    GLbitfield NewTransformFeedback;
+
+   /** gl_context::TransformFeedback::CurrentObject::shader_program */
+   GLbitfield NewTransformFeedbackProg;
 
    /** gl_context::RasterDiscard */
    GLbitfield NewRasterizerDiscard;

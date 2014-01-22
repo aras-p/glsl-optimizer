@@ -24,7 +24,7 @@
 
 
 /*
- * Vertex transform feedback support.
+ * Transform feedback support.
  *
  * Authors:
  *   Brian Paul
@@ -376,25 +376,48 @@ _mesa_compute_max_transform_feedback_vertices(
  **/
 
 
+/**
+ * Figure out which stage of the pipeline is the source of transform feedback
+ * data given the current context state, and return its gl_shader_program.
+ *
+ * If no active program can generate transform feedback data (i.e. no vertex
+ * shader is active), returns NULL.
+ */
+static struct gl_shader_program *
+get_xfb_source(struct gl_context *ctx)
+{
+   int i;
+   for (i = MESA_SHADER_GEOMETRY; i >= MESA_SHADER_VERTEX; i--) {
+      if (ctx->Shader.CurrentProgram[i] != NULL)
+         return ctx->Shader.CurrentProgram[i];
+   }
+   return NULL;
+}
+
+
 void GLAPIENTRY
 _mesa_BeginTransformFeedback(GLenum mode)
 {
    struct gl_transform_feedback_object *obj;
-   struct gl_transform_feedback_info *info;
+   struct gl_transform_feedback_info *info = NULL;
+   struct gl_shader_program *source;
    GLuint i;
    unsigned vertices_per_prim;
    GET_CURRENT_CONTEXT(ctx);
 
    obj = ctx->TransformFeedback.CurrentObject;
 
-   if (ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX] == NULL) {
+   /* Figure out what pipeline stage is the source of data for transform
+    * feedback.
+    */
+   source = get_xfb_source(ctx);
+   if (source == NULL) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glBeginTransformFeedback(no program active)");
       return;
    }
 
-   info =
-      &ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]->LinkedTransformFeedback;
+   info = &source->LinkedTransformFeedback;
 
    if (info->NumOutputs == 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -452,7 +475,10 @@ _mesa_BeginTransformFeedback(GLenum mode)
       obj->GlesRemainingPrims = max_vertices / vertices_per_prim;
    }
 
-   obj->shader_program = ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
+   if (obj->shader_program != source) {
+      ctx->NewDriverState |= ctx->DriverFlags.NewTransformFeedbackProg;
+      obj->shader_program = source;
+   }
 
    assert(ctx->Driver.BeginTransformFeedback);
    ctx->Driver.BeginTransformFeedback(ctx, mode, obj);
@@ -519,7 +545,7 @@ bind_buffer_range(struct gl_context *ctx, GLuint index,
 
 
 /**
- * Specify a buffer object to receive vertex shader results.  Plus,
+ * Specify a buffer object to receive transform feedback results.  Plus,
  * specify the starting offset to place the results, and max size.
  * Called from the glBindBufferRange() function.
  */
@@ -563,7 +589,7 @@ _mesa_bind_buffer_range_transform_feedback(struct gl_context *ctx,
 
 
 /**
- * Specify a buffer object to receive vertex shader results.
+ * Specify a buffer object to receive transform feedback results.
  * As above, but start at offset = 0.
  * Called from the glBindBufferBase() function.
  */
@@ -592,7 +618,7 @@ _mesa_bind_buffer_base_transform_feedback(struct gl_context *ctx,
 
 
 /**
- * Specify a buffer object to receive vertex shader results, plus the
+ * Specify a buffer object to receive transform feedback results, plus the
  * offset in the buffer to start placing results.
  * This function is part of GL_EXT_transform_feedback, but not GL3.
  */
@@ -647,7 +673,7 @@ _mesa_BindBufferOffsetEXT(GLenum target, GLuint index, GLuint buffer,
 
 
 /**
- * This function specifies the vertex shader outputs to be written
+ * This function specifies the transform feedback outputs to be written
  * to the feedback buffer(s), and in what order.
  */
 void GLAPIENTRY
@@ -757,7 +783,7 @@ _mesa_TransformFeedbackVaryings(GLuint program, GLsizei count,
 
 
 /**
- * Get info about the vertex shader's outputs which are to be written
+ * Get info about the transform feedback outputs which are to be written
  * to the feedback buffer(s).
  */
 void GLAPIENTRY
@@ -994,9 +1020,9 @@ _mesa_ResumeTransformFeedback(void)
     *  the program object being used by the current transform feedback object
     *  is not active."
     */
-   if (obj->shader_program != ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX]) {
+   if (obj->shader_program != get_xfb_source(ctx)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glResumeTransformFeedback(wrong vertex program bound)");
+                  "glResumeTransformFeedback(wrong program bound)");
       return;
    }
 
