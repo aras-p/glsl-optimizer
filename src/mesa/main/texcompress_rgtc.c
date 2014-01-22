@@ -97,8 +97,8 @@ _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS)
    GLubyte srcpixels[4][4];
    GLubyte *blkaddr;
    GLint dstRowDiff;
-   ASSERT(dstFormat == MESA_FORMAT_RED_RGTC1 ||
-          dstFormat == MESA_FORMAT_L_LATC1);
+   ASSERT(dstFormat == MESA_FORMAT_R_RGTC1_UNORM ||
+          dstFormat == MESA_FORMAT_L_LATC1_UNORM);
 
    tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
 					  baseInternalFormat,
@@ -144,8 +144,8 @@ _mesa_texstore_signed_red_rgtc1(TEXSTORE_PARAMS)
    GLbyte srcpixels[4][4];
    GLbyte *blkaddr;
    GLint dstRowDiff;
-   ASSERT(dstFormat == MESA_FORMAT_SIGNED_RED_RGTC1 ||
-          dstFormat == MESA_FORMAT_SIGNED_L_LATC1);
+   ASSERT(dstFormat == MESA_FORMAT_R_RGTC1_SNORM ||
+          dstFormat == MESA_FORMAT_L_LATC1_SNORM);
 
    tempImage = _mesa_make_temp_float_image(ctx, dims,
 					   baseInternalFormat,
@@ -192,8 +192,8 @@ _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS)
    GLubyte *blkaddr;
    GLint dstRowDiff;
 
-   ASSERT(dstFormat == MESA_FORMAT_RG_RGTC2 ||
-          dstFormat == MESA_FORMAT_LA_LATC2);
+   ASSERT(dstFormat == MESA_FORMAT_RG_RGTC2_UNORM ||
+          dstFormat == MESA_FORMAT_LA_LATC2_UNORM);
 
    tempImage = _mesa_make_temp_ubyte_image(ctx, dims,
 					  baseInternalFormat,
@@ -246,8 +246,8 @@ _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
    GLbyte *blkaddr;
    GLint dstRowDiff;
 
-   ASSERT(dstFormat == MESA_FORMAT_SIGNED_RG_RGTC2 ||
-          dstFormat == MESA_FORMAT_SIGNED_LA_LATC2);
+   ASSERT(dstFormat == MESA_FORMAT_RG_RGTC2_SNORM ||
+          dstFormat == MESA_FORMAT_LA_LATC2_SNORM);
 
    tempImage = _mesa_make_temp_float_image(ctx, dims,
 					   baseInternalFormat,
@@ -442,21 +442,21 @@ compressed_fetch_func
 _mesa_get_compressed_rgtc_func(mesa_format format)
 {
    switch (format) {
-   case MESA_FORMAT_RED_RGTC1:
+   case MESA_FORMAT_R_RGTC1_UNORM:
       return fetch_red_rgtc1;
-   case MESA_FORMAT_L_LATC1:
+   case MESA_FORMAT_L_LATC1_UNORM:
       return fetch_l_latc1;
-   case MESA_FORMAT_SIGNED_RED_RGTC1:
+   case MESA_FORMAT_R_RGTC1_SNORM:
       return fetch_signed_red_rgtc1;
-   case MESA_FORMAT_SIGNED_L_LATC1:
+   case MESA_FORMAT_L_LATC1_SNORM:
       return fetch_signed_l_latc1;
-   case MESA_FORMAT_RG_RGTC2:
+   case MESA_FORMAT_RG_RGTC2_UNORM:
       return fetch_rg_rgtc2;
-   case MESA_FORMAT_LA_LATC2:
+   case MESA_FORMAT_LA_LATC2_UNORM:
       return fetch_la_latc2;
-   case MESA_FORMAT_SIGNED_RG_RGTC2:
+   case MESA_FORMAT_RG_RGTC2_SNORM:
       return fetch_signed_rg_rgtc2;
-   case MESA_FORMAT_SIGNED_LA_LATC2:
+   case MESA_FORMAT_LA_LATC2_SNORM:
       return fetch_signed_la_latc2;
    default:
       return NULL;

@@ -1042,7 +1042,7 @@ static void FETCH(sla8)(const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_RGBA_INT8 **************************************************/
+/* MESA_FORMAT_RGBA_SINT8 **************************************************/
 
 static void
 FETCH(rgba_int8)(const struct swrast_texture_image *texImage,
@@ -1058,7 +1058,7 @@ FETCH(rgba_int8)(const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_RGBA_INT16 **************************************************/
+/* MESA_FORMAT_RGBA_SINT16 **************************************************/
 
 static void
 FETCH(rgba_int16)(const struct swrast_texture_image *texImage,
@@ -1074,7 +1074,7 @@ FETCH(rgba_int16)(const struct swrast_texture_image *texImage,
 
 
 
-/* MESA_FORMAT_RGBA_INT32 **************************************************/
+/* MESA_FORMAT_RGBA_SINT32 **************************************************/
 
 static void
 FETCH(rgba_int32)(const struct swrast_texture_image *texImage,

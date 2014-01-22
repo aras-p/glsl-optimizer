@@ -113,31 +113,31 @@ get_image_format(GLenum format)
       return MESA_FORMAT_R_UINT8;
 
    case GL_RGBA32I:
-      return MESA_FORMAT_RGBA_INT32;
+      return MESA_FORMAT_RGBA_SINT32;
 
    case GL_RGBA16I:
-      return MESA_FORMAT_RGBA_INT16;
+      return MESA_FORMAT_RGBA_SINT16;
 
    case GL_RGBA8I:
-      return MESA_FORMAT_RGBA_INT8;
+      return MESA_FORMAT_RGBA_SINT8;
 
    case GL_RG32I:
-      return MESA_FORMAT_RG_INT32;
+      return MESA_FORMAT_RG_SINT32;
 
    case GL_RG16I:
-      return MESA_FORMAT_RG_INT16;
+      return MESA_FORMAT_RG_SINT16;
 
    case GL_RG8I:
-      return MESA_FORMAT_RG_INT8;
+      return MESA_FORMAT_RG_SINT8;
 
    case GL_R32I:
-      return MESA_FORMAT_R_INT32;
+      return MESA_FORMAT_R_SINT32;
 
    case GL_R16I:
-      return MESA_FORMAT_R_INT16;
+      return MESA_FORMAT_R_SINT16;
 
    case GL_R8I:
-      return MESA_FORMAT_R_INT8;
+      return MESA_FORMAT_R_SINT8;
 
    case GL_RGBA16:
       return MESA_FORMAT_RGBA_UNORM16;
@@ -259,31 +259,31 @@ get_image_format_class(mesa_format format)
    case MESA_FORMAT_R_UINT8:
       return IMAGE_FORMAT_CLASS_1X8;
 
-   case MESA_FORMAT_RGBA_INT32:
+   case MESA_FORMAT_RGBA_SINT32:
       return IMAGE_FORMAT_CLASS_4X32;
 
-   case MESA_FORMAT_RGBA_INT16:
+   case MESA_FORMAT_RGBA_SINT16:
       return IMAGE_FORMAT_CLASS_4X16;
 
-   case MESA_FORMAT_RGBA_INT8:
+   case MESA_FORMAT_RGBA_SINT8:
       return IMAGE_FORMAT_CLASS_4X8;
 
-   case MESA_FORMAT_RG_INT32:
+   case MESA_FORMAT_RG_SINT32:
       return IMAGE_FORMAT_CLASS_2X32;
 
-   case MESA_FORMAT_RG_INT16:
+   case MESA_FORMAT_RG_SINT16:
       return IMAGE_FORMAT_CLASS_2X16;
 
-   case MESA_FORMAT_RG_INT8:
+   case MESA_FORMAT_RG_SINT8:
       return IMAGE_FORMAT_CLASS_2X8;
 
-   case MESA_FORMAT_R_INT32:
+   case MESA_FORMAT_R_SINT32:
       return IMAGE_FORMAT_CLASS_1X32;
 
-   case MESA_FORMAT_R_INT16:
+   case MESA_FORMAT_R_SINT16:
       return IMAGE_FORMAT_CLASS_1X16;
 
-   case MESA_FORMAT_R_INT8:
+   case MESA_FORMAT_R_SINT8:
       return IMAGE_FORMAT_CLASS_1X8;
 
    case MESA_FORMAT_RGBA_UNORM16:

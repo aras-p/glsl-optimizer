@@ -779,21 +779,21 @@ texfetch_funcs[] =
 
 
    {
-      MESA_FORMAT_R_INT8,
+      MESA_FORMAT_R_SINT8,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_RG_INT8,
+      MESA_FORMAT_RG_SINT8,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_RGB_INT8,
+      MESA_FORMAT_RGB_SINT8,
       NULL,
       NULL,
       NULL
@@ -801,55 +801,55 @@ texfetch_funcs[] =
 
    /* non-normalized, signed int */
    {
-      MESA_FORMAT_RGBA_INT8,
+      MESA_FORMAT_RGBA_SINT8,
       fetch_texel_1d_rgba_int8,
       fetch_texel_2d_rgba_int8,
       fetch_texel_3d_rgba_int8
    },
    {
-      MESA_FORMAT_R_INT16,
+      MESA_FORMAT_R_SINT16,
       NULL,
       NULL,
       NULL
    },
    {
-      MESA_FORMAT_RG_INT16,
+      MESA_FORMAT_RG_SINT16,
       NULL,
       NULL,
       NULL
    },
    {
-      MESA_FORMAT_RGB_INT16,
+      MESA_FORMAT_RGB_SINT16,
       NULL,
       NULL,
       NULL
    },
    {
-      MESA_FORMAT_RGBA_INT16,
+      MESA_FORMAT_RGBA_SINT16,
       fetch_texel_1d_rgba_int16,
       fetch_texel_2d_rgba_int16,
       fetch_texel_3d_rgba_int16
    },
    {
-      MESA_FORMAT_R_INT32,
+      MESA_FORMAT_R_SINT32,
       NULL,
       NULL,
       NULL
    },
    {
-      MESA_FORMAT_RG_INT32,
+      MESA_FORMAT_RG_SINT32,
       NULL,
       NULL,
       NULL
    },
    {
-      MESA_FORMAT_RGB_INT32,
+      MESA_FORMAT_RGB_SINT32,
       NULL,
       NULL,
       NULL
    },
    {
-      MESA_FORMAT_RGBA_INT32,
+      MESA_FORMAT_RGBA_SINT32,
       fetch_texel_1d_rgba_int32,
       fetch_texel_2d_rgba_int32,
       fetch_texel_3d_rgba_int32
@@ -999,49 +999,49 @@ texfetch_funcs[] =
       fetch_texel_3d_rgba_16
    },
    {
-      MESA_FORMAT_RED_RGTC1,
+      MESA_FORMAT_R_RGTC1_UNORM,
       fetch_compressed,
       fetch_compressed,
       fetch_compressed
    },
    {
-      MESA_FORMAT_SIGNED_RED_RGTC1,
+      MESA_FORMAT_R_RGTC1_SNORM,
       fetch_compressed,
       fetch_compressed,
       fetch_compressed
    },
    {
-      MESA_FORMAT_RG_RGTC2,
+      MESA_FORMAT_RG_RGTC2_UNORM,
       fetch_compressed,
       fetch_compressed,
       fetch_compressed
    },
    {
-      MESA_FORMAT_SIGNED_RG_RGTC2,
+      MESA_FORMAT_RG_RGTC2_SNORM,
       fetch_compressed,
       fetch_compressed,
       fetch_compressed
    },
    {
-      MESA_FORMAT_L_LATC1,
+      MESA_FORMAT_L_LATC1_UNORM,
       fetch_compressed,
       fetch_compressed,
       fetch_compressed
    },
    {
-      MESA_FORMAT_SIGNED_L_LATC1,
+      MESA_FORMAT_L_LATC1_SNORM,
       fetch_compressed,
       fetch_compressed,
       fetch_compressed
    },
    {
-      MESA_FORMAT_LA_LATC2,
+      MESA_FORMAT_LA_LATC2_UNORM,
       fetch_compressed,
       fetch_compressed,
       fetch_compressed
    },
    {
-      MESA_FORMAT_SIGNED_LA_LATC2,
+      MESA_FORMAT_LA_LATC2_SNORM,
       fetch_compressed,
       fetch_compressed,
       fetch_compressed

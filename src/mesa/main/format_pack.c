@@ -1975,9 +1975,9 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
       table[MESA_FORMAT_RG_FLOAT16] = pack_ubyte_RG_FLOAT16;
 
       /* n/a */
-      table[MESA_FORMAT_RGBA_INT8] = NULL; /* pack_ubyte_RGBA_INT8 */
-      table[MESA_FORMAT_RGBA_INT16] = NULL; /* pack_ubyte_RGBA_INT16 */
-      table[MESA_FORMAT_RGBA_INT32] = NULL; /* pack_ubyte_RGBA_INT32 */
+      table[MESA_FORMAT_RGBA_SINT8] = NULL; /* pack_ubyte_RGBA_INT8 */
+      table[MESA_FORMAT_RGBA_SINT16] = NULL; /* pack_ubyte_RGBA_INT16 */
+      table[MESA_FORMAT_RGBA_SINT32] = NULL; /* pack_ubyte_RGBA_INT32 */
       table[MESA_FORMAT_RGBA_UINT8] = NULL; /* pack_ubyte_RGBA_UINT8 */
       table[MESA_FORMAT_RGBA_UINT16] = NULL; /* pack_ubyte_RGBA_UINT16 */
       table[MESA_FORMAT_RGBA_UINT32] = NULL; /* pack_ubyte_RGBA_UINT32 */
@@ -2139,9 +2139,9 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
       table[MESA_FORMAT_RG_FLOAT16] = pack_float_RG_FLOAT16;
 
       /* n/a */
-      table[MESA_FORMAT_RGBA_INT8] = NULL;
-      table[MESA_FORMAT_RGBA_INT16] = NULL;
-      table[MESA_FORMAT_RGBA_INT32] = NULL;
+      table[MESA_FORMAT_RGBA_SINT8] = NULL;
+      table[MESA_FORMAT_RGBA_SINT16] = NULL;
+      table[MESA_FORMAT_RGBA_SINT32] = NULL;
       table[MESA_FORMAT_RGBA_UINT8] = NULL;
       table[MESA_FORMAT_RGBA_UINT16] = NULL;
       table[MESA_FORMAT_RGBA_UINT32] = NULL;

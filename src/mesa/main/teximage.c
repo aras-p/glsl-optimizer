@@ -4106,7 +4106,7 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
       case GL_RGB32UI:
          return MESA_FORMAT_RGB_UINT32;
       case GL_RGB32I:
-         return MESA_FORMAT_RGB_INT32;
+         return MESA_FORMAT_RGB_SINT32;
       default:
          break;
       }
@@ -4122,11 +4122,11 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
    case GL_RGBA32F_ARB:
       return MESA_FORMAT_RGBA_FLOAT32;
    case GL_RGBA8I_EXT:
-      return MESA_FORMAT_RGBA_INT8;
+      return MESA_FORMAT_RGBA_SINT8;
    case GL_RGBA16I_EXT:
-      return MESA_FORMAT_RGBA_INT16;
+      return MESA_FORMAT_RGBA_SINT16;
    case GL_RGBA32I_EXT:
-      return MESA_FORMAT_RGBA_INT32;
+      return MESA_FORMAT_RGBA_SINT32;
    case GL_RGBA8UI_EXT:
       return MESA_FORMAT_RGBA_UINT8;
    case GL_RGBA16UI_EXT:
@@ -4143,11 +4143,11 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
    case GL_RG32F:
       return MESA_FORMAT_RG_FLOAT32;
    case GL_RG8I:
-      return MESA_FORMAT_RG_INT8;
+      return MESA_FORMAT_RG_SINT8;
    case GL_RG16I:
-      return MESA_FORMAT_RG_INT16;
+      return MESA_FORMAT_RG_SINT16;
    case GL_RG32I:
-      return MESA_FORMAT_RG_INT32;
+      return MESA_FORMAT_RG_SINT32;
    case GL_RG8UI:
       return MESA_FORMAT_RG_UINT8;
    case GL_RG16UI:
@@ -4164,11 +4164,11 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
    case GL_R32F:
       return MESA_FORMAT_R_FLOAT32;
    case GL_R8I:
-      return MESA_FORMAT_R_INT8;
+      return MESA_FORMAT_R_SINT8;
    case GL_R16I:
-      return MESA_FORMAT_R_INT16;
+      return MESA_FORMAT_R_SINT16;
    case GL_R32I:
-      return MESA_FORMAT_R_INT32;
+      return MESA_FORMAT_R_SINT32;
    case GL_R8UI:
       return MESA_FORMAT_R_UINT8;
    case GL_R16UI:

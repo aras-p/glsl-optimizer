@@ -2828,10 +2828,10 @@ _mesa_texstore_rgba_int8(TEXSTORE_PARAMS)
       components = 4;
    }
 
-   ASSERT(dstFormat == MESA_FORMAT_R_INT8 ||
-          dstFormat == MESA_FORMAT_RG_INT8 ||
-          dstFormat == MESA_FORMAT_RGB_INT8 ||
-          dstFormat == MESA_FORMAT_RGBA_INT8 ||
+   ASSERT(dstFormat == MESA_FORMAT_R_SINT8 ||
+          dstFormat == MESA_FORMAT_RG_SINT8 ||
+          dstFormat == MESA_FORMAT_RGB_SINT8 ||
+          dstFormat == MESA_FORMAT_RGBA_SINT8 ||
           dstFormat == MESA_FORMAT_A_SINT8 ||
           dstFormat == MESA_FORMAT_I_SINT8 ||
           dstFormat == MESA_FORMAT_L_SINT8 ||
@@ -2899,10 +2899,10 @@ _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
       components = 4;
    }
 
-   ASSERT(dstFormat == MESA_FORMAT_R_INT16 ||
-          dstFormat == MESA_FORMAT_RG_INT16 ||
-          dstFormat == MESA_FORMAT_RGB_INT16 ||
-          dstFormat == MESA_FORMAT_RGBA_INT16 ||
+   ASSERT(dstFormat == MESA_FORMAT_R_SINT16 ||
+          dstFormat == MESA_FORMAT_RG_SINT16 ||
+          dstFormat == MESA_FORMAT_RGB_SINT16 ||
+          dstFormat == MESA_FORMAT_RGBA_SINT16 ||
           dstFormat == MESA_FORMAT_A_SINT16 ||
           dstFormat == MESA_FORMAT_L_SINT16 ||
           dstFormat == MESA_FORMAT_I_SINT16 ||
@@ -2970,10 +2970,10 @@ _mesa_texstore_rgba_int32(TEXSTORE_PARAMS)
       components = 4;
    }
 
-   ASSERT(dstFormat == MESA_FORMAT_R_INT32 ||
-          dstFormat == MESA_FORMAT_RG_INT32 ||
-          dstFormat == MESA_FORMAT_RGB_INT32 ||
-          dstFormat == MESA_FORMAT_RGBA_INT32 ||
+   ASSERT(dstFormat == MESA_FORMAT_R_SINT32 ||
+          dstFormat == MESA_FORMAT_RG_SINT32 ||
+          dstFormat == MESA_FORMAT_RGB_SINT32 ||
+          dstFormat == MESA_FORMAT_RGBA_SINT32 ||
           dstFormat == MESA_FORMAT_A_SINT32 ||
           dstFormat == MESA_FORMAT_I_SINT32 ||
           dstFormat == MESA_FORMAT_L_SINT32 ||
@@ -3747,14 +3747,14 @@ _mesa_get_texstore_func(mesa_format format)
       table[MESA_FORMAT_RGB_SNORM16] = _mesa_texstore_signed_rgba_16;
       table[MESA_FORMAT_RGBA_SNORM16] = _mesa_texstore_signed_rgba_16;
       table[MESA_FORMAT_RGBA_UNORM16] = _mesa_texstore_rgba_16;
-      table[MESA_FORMAT_RED_RGTC1] = _mesa_texstore_red_rgtc1;
-      table[MESA_FORMAT_SIGNED_RED_RGTC1] = _mesa_texstore_signed_red_rgtc1;
-      table[MESA_FORMAT_RG_RGTC2] = _mesa_texstore_rg_rgtc2;
-      table[MESA_FORMAT_SIGNED_RG_RGTC2] = _mesa_texstore_signed_rg_rgtc2;
-      table[MESA_FORMAT_L_LATC1] = _mesa_texstore_red_rgtc1;
-      table[MESA_FORMAT_SIGNED_L_LATC1] = _mesa_texstore_signed_red_rgtc1;
-      table[MESA_FORMAT_LA_LATC2] = _mesa_texstore_rg_rgtc2;
-      table[MESA_FORMAT_SIGNED_LA_LATC2] = _mesa_texstore_signed_rg_rgtc2;
+      table[MESA_FORMAT_R_RGTC1_UNORM] = _mesa_texstore_red_rgtc1;
+      table[MESA_FORMAT_R_RGTC1_SNORM] = _mesa_texstore_signed_red_rgtc1;
+      table[MESA_FORMAT_RG_RGTC2_UNORM] = _mesa_texstore_rg_rgtc2;
+      table[MESA_FORMAT_RG_RGTC2_SNORM] = _mesa_texstore_signed_rg_rgtc2;
+      table[MESA_FORMAT_L_LATC1_UNORM] = _mesa_texstore_red_rgtc1;
+      table[MESA_FORMAT_L_LATC1_SNORM] = _mesa_texstore_signed_red_rgtc1;
+      table[MESA_FORMAT_LA_LATC2_UNORM] = _mesa_texstore_rg_rgtc2;
+      table[MESA_FORMAT_LA_LATC2_SNORM] = _mesa_texstore_signed_rg_rgtc2;
       table[MESA_FORMAT_ETC1_RGB8] = _mesa_texstore_etc1_rgb8;
       table[MESA_FORMAT_ETC2_RGB8] = _mesa_texstore_etc2_rgb8;
       table[MESA_FORMAT_ETC2_SRGB8] = _mesa_texstore_etc2_srgb8;
@@ -3809,18 +3809,18 @@ _mesa_get_texstore_func(mesa_format format)
       table[MESA_FORMAT_LA_SINT16] = _mesa_texstore_rgba_int16;
       table[MESA_FORMAT_LA_SINT32] = _mesa_texstore_rgba_int32;
 
-      table[MESA_FORMAT_R_INT8] = _mesa_texstore_rgba_int8;
-      table[MESA_FORMAT_RG_INT8] = _mesa_texstore_rgba_int8;
-      table[MESA_FORMAT_RGB_INT8] = _mesa_texstore_rgba_int8;
-      table[MESA_FORMAT_RGBA_INT8] = _mesa_texstore_rgba_int8;
-      table[MESA_FORMAT_R_INT16] = _mesa_texstore_rgba_int16;
-      table[MESA_FORMAT_RG_INT16] = _mesa_texstore_rgba_int16;
-      table[MESA_FORMAT_RGB_INT16] = _mesa_texstore_rgba_int16;
-      table[MESA_FORMAT_RGBA_INT16] = _mesa_texstore_rgba_int16;
-      table[MESA_FORMAT_R_INT32] = _mesa_texstore_rgba_int32;
-      table[MESA_FORMAT_RG_INT32] = _mesa_texstore_rgba_int32;
-      table[MESA_FORMAT_RGB_INT32] = _mesa_texstore_rgba_int32;
-      table[MESA_FORMAT_RGBA_INT32] = _mesa_texstore_rgba_int32;
+      table[MESA_FORMAT_R_SINT8] = _mesa_texstore_rgba_int8;
+      table[MESA_FORMAT_RG_SINT8] = _mesa_texstore_rgba_int8;
+      table[MESA_FORMAT_RGB_SINT8] = _mesa_texstore_rgba_int8;
+      table[MESA_FORMAT_RGBA_SINT8] = _mesa_texstore_rgba_int8;
+      table[MESA_FORMAT_R_SINT16] = _mesa_texstore_rgba_int16;
+      table[MESA_FORMAT_RG_SINT16] = _mesa_texstore_rgba_int16;
+      table[MESA_FORMAT_RGB_SINT16] = _mesa_texstore_rgba_int16;
+      table[MESA_FORMAT_RGBA_SINT16] = _mesa_texstore_rgba_int16;
+      table[MESA_FORMAT_R_SINT32] = _mesa_texstore_rgba_int32;
+      table[MESA_FORMAT_RG_SINT32] = _mesa_texstore_rgba_int32;
+      table[MESA_FORMAT_RGB_SINT32] = _mesa_texstore_rgba_int32;
+      table[MESA_FORMAT_RGBA_SINT32] = _mesa_texstore_rgba_int32;
 
       table[MESA_FORMAT_R_UINT8] = _mesa_texstore_rgba_uint8;
       table[MESA_FORMAT_RG_UINT8] = _mesa_texstore_rgba_uint8;
