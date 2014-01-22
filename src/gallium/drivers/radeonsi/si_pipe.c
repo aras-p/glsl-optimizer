@@ -219,26 +219,6 @@ fail:
  * pipe_screen
  */
 
-const char *si_get_llvm_processor_name(enum radeon_family family)
-{
-	switch (family) {
-		case CHIP_TAHITI: return "tahiti";
-		case CHIP_PITCAIRN: return "pitcairn";
-		case CHIP_VERDE: return "verde";
-		case CHIP_OLAND: return "oland";
-#if HAVE_LLVM <= 0x0303
-		default: return "SI";
-#else
-		case CHIP_HAINAN: return "hainan";
-		case CHIP_BONAIRE: return "bonaire";
-		case CHIP_KABINI: return "kabini";
-		case CHIP_KAVERI: return "kaveri";
-		case CHIP_HAWAII: return "hawaii";
-		default: return "";
-#endif
-	}
-}
-
 static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
 	struct si_screen *sscreen = (struct si_screen *)pscreen;
@@ -428,85 +408,6 @@ static int si_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enu
 	return 0;
 }
 
-static int si_get_compute_param(struct pipe_screen *screen,
-        enum pipe_compute_cap param,
-        void *ret)
-{
-	struct si_screen *sscreen = (struct si_screen *)screen;
-	//TODO: select these params by asic
-	switch (param) {
-	case PIPE_COMPUTE_CAP_IR_TARGET: {
-		const char *gpu = si_get_llvm_processor_name(sscreen->b.family);
-	        if (ret) {
-			sprintf(ret, "%s-r600--", gpu);
-		}
-		return (8 + strlen(gpu)) * sizeof(char);
-	}
-	case PIPE_COMPUTE_CAP_GRID_DIMENSION:
-		if (ret) {
-			uint64_t * grid_dimension = ret;
-			grid_dimension[0] = 3;
-		}
-		return 1 * sizeof(uint64_t);
-	case PIPE_COMPUTE_CAP_MAX_GRID_SIZE:
-		if (ret) {
-			uint64_t * grid_size = ret;
-			grid_size[0] = 65535;
-			grid_size[1] = 65535;
-			grid_size[2] = 1;
-		}
-		return 3 * sizeof(uint64_t) ;
-
-	case PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE:
-		if (ret) {
-			uint64_t * block_size = ret;
-			block_size[0] = 256;
-			block_size[1] = 256;
-			block_size[2] = 256;
-		}
-		return 3 * sizeof(uint64_t);
-	case PIPE_COMPUTE_CAP_MAX_THREADS_PER_BLOCK:
-		if (ret) {
-			uint64_t * max_threads_per_block = ret;
-			*max_threads_per_block = 256;
-		}
-		return sizeof(uint64_t);
-
-	case PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE:
-		if (ret) {
-			uint64_t *max_global_size = ret;
-			/* XXX: Not sure what to put here. */
-			*max_global_size = 2000000000;
-		}
-		return sizeof(uint64_t);
-	case PIPE_COMPUTE_CAP_MAX_LOCAL_SIZE:
-		if (ret) {
-			uint64_t *max_local_size = ret;
-			/* Value reported by the closed source driver. */
-			*max_local_size = 32768;
-		}
-		return sizeof(uint64_t);
-	case PIPE_COMPUTE_CAP_MAX_INPUT_SIZE:
-		if (ret) {
-			uint64_t *max_input_size = ret;
-			/* Value reported by the closed source driver. */
-			*max_input_size = 1024;
-		}
-		return sizeof(uint64_t);
-	case PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE:
-		if (ret) {
-			uint64_t max_global_size;
-			uint64_t *max_mem_alloc_size = ret;
-			si_get_compute_param(screen, PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE, &max_global_size);
-			*max_mem_alloc_size = max_global_size / 4;
-		}
-		return sizeof(uint64_t);
-	default:
-		fprintf(stderr, "unknown PIPE_COMPUTE_CAP %d\n", param);
-		return 0;
-	}
-}
-
 static void si_destroy_screen(struct pipe_screen* pscreen)
 {
 	struct si_screen *sscreen = (struct si_screen *)pscreen;
@@ -542,7 +443,6 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	sscreen->b.b.destroy = si_destroy_screen;
 	sscreen->b.b.get_param = si_get_param;
 	sscreen->b.b.get_shader_param = si_get_shader_param;
-	sscreen->b.b.get_compute_param = si_get_compute_param;
 	sscreen->b.b.is_format_supported = si_is_format_supported;
 
 	if (!r600_common_screen_init(&sscreen->b, ws)) {

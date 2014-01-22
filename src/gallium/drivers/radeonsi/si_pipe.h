@@ -169,7 +169,6 @@ void si_upload_index_buffer(struct si_context *sctx,
 /* si_pipe.c */
 void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 	       unsigned flags);
-const char *si_get_llvm_processor_name(enum radeon_family family);
 
 /* si_translate.c */
 void si_translate_index_buffer(struct si_context *sctx,

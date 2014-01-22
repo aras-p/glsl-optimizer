@@ -339,6 +339,7 @@ void r600_screen_clear_buffer(struct r600_common_screen *rscreen, struct pipe_re
 			      unsigned offset, unsigned size, unsigned value);
 struct pipe_resource *r600_resource_create_common(struct pipe_screen *screen,
 						  const struct pipe_resource *templ);
+const char *r600_get_llvm_processor_name(enum radeon_family family);
 
 /* r600_query.c */
 void r600_query_init(struct r600_common_context *rctx);

@@ -247,6 +247,165 @@ static int r600_get_video_param(struct pipe_screen *screen,
 	}
 }
 
+const char *r600_get_llvm_processor_name(enum radeon_family family)
+{
+	switch (family) {
+	case CHIP_R600:
+	case CHIP_RV630:
+	case CHIP_RV635:
+	case CHIP_RV670:
+		return "r600";
+	case CHIP_RV610:
+	case CHIP_RV620:
+	case CHIP_RS780:
+	case CHIP_RS880:
+		return "rs880";
+	case CHIP_RV710:
+		return "rv710";
+	case CHIP_RV730:
+		return "rv730";
+	case CHIP_RV740:
+	case CHIP_RV770:
+		return "rv770";
+	case CHIP_PALM:
+	case CHIP_CEDAR:
+		return "cedar";
+	case CHIP_SUMO:
+	case CHIP_SUMO2:
+		return "sumo";
+	case CHIP_REDWOOD:
+		return "redwood";
+	case CHIP_JUNIPER:
+		return "juniper";
+	case CHIP_HEMLOCK:
+	case CHIP_CYPRESS:
+		return "cypress";
+	case CHIP_BARTS:
+		return "barts";
+	case CHIP_TURKS:
+		return "turks";
+	case CHIP_CAICOS:
+		return "caicos";
+	case CHIP_CAYMAN:
+        case CHIP_ARUBA:
+		return "cayman";
+
+	case CHIP_TAHITI: return "tahiti";
+	case CHIP_PITCAIRN: return "pitcairn";
+	case CHIP_VERDE: return "verde";
+	case CHIP_OLAND: return "oland";
+#if HAVE_LLVM <= 0x0303
+	default:
+		fprintf(stderr, "%s: Unknown chipset = %i, defaulting to Southern Islands\n",
+			__func__, family);
+		return "SI";
+#else
+	case CHIP_HAINAN: return "hainan";
+	case CHIP_BONAIRE: return "bonaire";
+	case CHIP_KABINI: return "kabini";
+	case CHIP_KAVERI: return "kaveri";
+	case CHIP_HAWAII: return "hawaii";
+	default: return "";
+#endif
+	}
+}
+
+static int r600_get_compute_param(struct pipe_screen *screen,
+        enum pipe_compute_cap param,
+        void *ret)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen *)screen;
+
+	//TODO: select these params by asic
+	switch (param) {
+	case PIPE_COMPUTE_CAP_IR_TARGET: {
+		const char *gpu = r600_get_llvm_processor_name(rscreen->family);
+		if (ret) {
+			sprintf(ret, "%s-r600--", gpu);
+		}
+		return (8 + strlen(gpu)) * sizeof(char);
+	}
+	case PIPE_COMPUTE_CAP_GRID_DIMENSION:
+		if (ret) {
+			uint64_t *grid_dimension = ret;
+			grid_dimension[0] = 3;
+		}
+		return 1 * sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_GRID_SIZE:
+		if (ret) {
+			uint64_t *grid_size = ret;
+			grid_size[0] = 65535;
+			grid_size[1] = 65535;
+			grid_size[2] = 1;
+		}
+		return 3 * sizeof(uint64_t) ;
+
+	case PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE:
+		if (ret) {
+			uint64_t *block_size = ret;
+			block_size[0] = 256;
+			block_size[1] = 256;
+			block_size[2] = 256;
+		}
+		return 3 * sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_THREADS_PER_BLOCK:
+		if (ret) {
+			uint64_t *max_threads_per_block = ret;
+			*max_threads_per_block = 256;
+		}
+		return sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE:
+		if (ret) {
+			uint64_t *max_global_size = ret;
+			/* XXX: This is what the proprietary driver reports, we
+			 * may want to use a different value. */
+			/* XXX: Not sure what to put here for SI. */
+			if (rscreen->chip_class >= SI)
+				*max_global_size = 2000000000;
+			else
+				*max_global_size = 201326592;
+		}
+		return sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_LOCAL_SIZE:
+		if (ret) {
+			uint64_t *max_local_size = ret;
+			/* Value reported by the closed source driver. */
+			*max_local_size = 32768;
+		}
+		return sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_INPUT_SIZE:
+		if (ret) {
+			uint64_t *max_input_size = ret;
+			/* Value reported by the closed source driver. */
+			*max_input_size = 1024;
+		}
+		return sizeof(uint64_t);
+
+	case PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE:
+		if (ret) {
+			uint64_t max_global_size;
+			uint64_t *max_mem_alloc_size = ret;
+			r600_get_compute_param(screen, PIPE_COMPUTE_CAP_MAX_GLOBAL_SIZE, &max_global_size);
+			/* OpenCL requres this value be at least
+			 * max(MAX_GLOBAL_SIZE / 4, 128 * 1024 *1024)
+			 * I'm really not sure what value to report here, but
+			 * MAX_GLOBAL_SIZE / 4 seems resonable.
+			 */
+			*max_mem_alloc_size = max_global_size / 4;
+		}
+		return sizeof(uint64_t);
+
+	default:
+		fprintf(stderr, "unknown PIPE_COMPUTE_CAP %d\n", param);
+		return 0;
+	}
+}
+
 static uint64_t r600_get_timestamp(struct pipe_screen *screen)
 {
 	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
@@ -432,6 +591,7 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 
 	rscreen->b.get_name = r600_get_name;
 	rscreen->b.get_vendor = r600_get_vendor;
+	rscreen->b.get_compute_param = r600_get_compute_param;
 	rscreen->b.get_paramf = r600_get_paramf;
 	rscreen->b.get_driver_query_info = r600_get_driver_query_info;
 	rscreen->b.get_timestamp = r600_get_timestamp;

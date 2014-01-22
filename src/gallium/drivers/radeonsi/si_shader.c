@@ -1899,7 +1899,7 @@ int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
 			shader->selector ? shader->selector->tokens : NULL);
 	memset(&binary, 0, sizeof(binary));
 	radeon_llvm_compile(mod, &binary,
-		si_get_llvm_processor_name(sctx->screen->b.family), dump);
+		r600_get_llvm_processor_name(sctx->screen->b.family), dump);
 	if (dump && ! binary.disassembled) {
 		fprintf(stderr, "SI CODE:\n");
 		for (i = 0; i < binary.code_size; i+=4 ) {
