@@ -218,10 +218,6 @@ fail:
 /*
  * pipe_screen
  */
-static const char* si_get_vendor(struct pipe_screen* pscreen)
-{
-	return "X.Org";
-}
 
 const char *si_get_llvm_processor_name(enum radeon_family family)
 {
@@ -241,29 +237,6 @@ const char *si_get_llvm_processor_name(enum radeon_family family)
 		default: return "";
 #endif
 	}
-}
-
-static const char *si_get_family_name(enum radeon_family family)
-{
-	switch(family) {
-	case CHIP_TAHITI: return "AMD TAHITI";
-	case CHIP_PITCAIRN: return "AMD PITCAIRN";
-	case CHIP_VERDE: return "AMD CAPE VERDE";
-	case CHIP_OLAND: return "AMD OLAND";
-	case CHIP_HAINAN: return "AMD HAINAN";
-	case CHIP_BONAIRE: return "AMD BONAIRE";
-	case CHIP_KAVERI: return "AMD KAVERI";
-	case CHIP_KABINI: return "AMD KABINI";
-	case CHIP_HAWAII: return "AMD HAWAII";
-	default: return "AMD unknown";
-	}
-}
-
-static const char* si_get_name(struct pipe_screen* pscreen)
-{
-	struct si_screen *sscreen = (struct si_screen *)pscreen;
-
-	return si_get_family_name(sscreen->b.family);
 }
 
 static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
@@ -621,8 +594,6 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	/* Set functions first. */
 	sscreen->b.b.context_create = si_create_context;
 	sscreen->b.b.destroy = si_destroy_screen;
-	sscreen->b.b.get_name = si_get_name;
-	sscreen->b.b.get_vendor = si_get_vendor;
 	sscreen->b.b.get_param = si_get_param;
 	sscreen->b.b.get_shader_param = si_get_shader_param;
 	sscreen->b.b.get_paramf = si_get_paramf;

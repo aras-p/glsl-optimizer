@@ -140,6 +140,54 @@ static const struct debug_named_value common_debug_options[] = {
 	DEBUG_NAMED_VALUE_END /* must be last */
 };
 
+static const char* r600_get_vendor(struct pipe_screen* pscreen)
+{
+	return "X.Org";
+}
+
+static const char* r600_get_name(struct pipe_screen* pscreen)
+{
+	struct r600_common_screen *rscreen = (struct r600_common_screen*)pscreen;
+
+	switch (rscreen->family) {
+	case CHIP_R600: return "AMD R600";
+	case CHIP_RV610: return "AMD RV610";
+	case CHIP_RV630: return "AMD RV630";
+	case CHIP_RV670: return "AMD RV670";
+	case CHIP_RV620: return "AMD RV620";
+	case CHIP_RV635: return "AMD RV635";
+	case CHIP_RS780: return "AMD RS780";
+	case CHIP_RS880: return "AMD RS880";
+	case CHIP_RV770: return "AMD RV770";
+	case CHIP_RV730: return "AMD RV730";
+	case CHIP_RV710: return "AMD RV710";
+	case CHIP_RV740: return "AMD RV740";
+	case CHIP_CEDAR: return "AMD CEDAR";
+	case CHIP_REDWOOD: return "AMD REDWOOD";
+	case CHIP_JUNIPER: return "AMD JUNIPER";
+	case CHIP_CYPRESS: return "AMD CYPRESS";
+	case CHIP_HEMLOCK: return "AMD HEMLOCK";
+	case CHIP_PALM: return "AMD PALM";
+	case CHIP_SUMO: return "AMD SUMO";
+	case CHIP_SUMO2: return "AMD SUMO2";
+	case CHIP_BARTS: return "AMD BARTS";
+	case CHIP_TURKS: return "AMD TURKS";
+	case CHIP_CAICOS: return "AMD CAICOS";
+	case CHIP_CAYMAN: return "AMD CAYMAN";
+	case CHIP_ARUBA: return "AMD ARUBA";
+	case CHIP_TAHITI: return "AMD TAHITI";
+	case CHIP_PITCAIRN: return "AMD PITCAIRN";
+	case CHIP_VERDE: return "AMD CAPE VERDE";
+	case CHIP_OLAND: return "AMD OLAND";
+	case CHIP_HAINAN: return "AMD HAINAN";
+	case CHIP_BONAIRE: return "AMD BONAIRE";
+	case CHIP_KAVERI: return "AMD KAVERI";
+	case CHIP_KABINI: return "AMD KABINI";
+	case CHIP_HAWAII: return "AMD HAWAII";
+	default: return "AMD unknown";
+	}
+}
+
 static void r600_fence_reference(struct pipe_screen *screen,
 				 struct pipe_fence_handle **ptr,
 				 struct pipe_fence_handle *fence)
@@ -293,6 +341,8 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 {
 	ws->query_info(ws, &rscreen->info);
 
+	rscreen->b.get_name = r600_get_name;
+	rscreen->b.get_vendor = r600_get_vendor;
 	rscreen->b.fence_finish = r600_fence_finish;
 	rscreen->b.fence_reference = r600_fence_reference;
 	rscreen->b.fence_signalled = r600_fence_signalled;
