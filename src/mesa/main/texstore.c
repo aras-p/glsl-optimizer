@@ -2701,10 +2701,10 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
 
    ASSERT(dstFormat == MESA_FORMAT_RGBA_FLOAT32 ||
           dstFormat == MESA_FORMAT_RGB_FLOAT32 ||
-          dstFormat == MESA_FORMAT_ALPHA_FLOAT32 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_FLOAT32 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32 ||
-          dstFormat == MESA_FORMAT_INTENSITY_FLOAT32 ||
+          dstFormat == MESA_FORMAT_A_FLOAT32 ||
+          dstFormat == MESA_FORMAT_L_FLOAT32 ||
+          dstFormat == MESA_FORMAT_LA_FLOAT32 ||
+          dstFormat == MESA_FORMAT_I_FLOAT32 ||
           dstFormat == MESA_FORMAT_R_FLOAT32 ||
           dstFormat == MESA_FORMAT_RG_FLOAT32 ||
           dstFormat == MESA_FORMAT_RGBX_FLOAT32);
@@ -2766,10 +2766,10 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
 
    ASSERT(dstFormat == MESA_FORMAT_RGBA_FLOAT16 ||
           dstFormat == MESA_FORMAT_RGB_FLOAT16 ||
-          dstFormat == MESA_FORMAT_ALPHA_FLOAT16 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_FLOAT16 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16 ||
-          dstFormat == MESA_FORMAT_INTENSITY_FLOAT16 ||
+          dstFormat == MESA_FORMAT_A_FLOAT16 ||
+          dstFormat == MESA_FORMAT_L_FLOAT16 ||
+          dstFormat == MESA_FORMAT_LA_FLOAT16 ||
+          dstFormat == MESA_FORMAT_I_FLOAT16 ||
           dstFormat == MESA_FORMAT_R_FLOAT16 ||
           dstFormat == MESA_FORMAT_RG_FLOAT16 ||
           dstFormat == MESA_FORMAT_RGBX_FLOAT16);
@@ -2832,10 +2832,10 @@ _mesa_texstore_rgba_int8(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_RG_INT8 ||
           dstFormat == MESA_FORMAT_RGB_INT8 ||
           dstFormat == MESA_FORMAT_RGBA_INT8 ||
-          dstFormat == MESA_FORMAT_ALPHA_INT8 ||
-          dstFormat == MESA_FORMAT_INTENSITY_INT8 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_INT8 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_INT8 ||
+          dstFormat == MESA_FORMAT_A_SINT8 ||
+          dstFormat == MESA_FORMAT_I_SINT8 ||
+          dstFormat == MESA_FORMAT_L_SINT8 ||
+          dstFormat == MESA_FORMAT_LA_SINT8 ||
           dstFormat == MESA_FORMAT_RGBX_SINT8);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
@@ -2903,10 +2903,10 @@ _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_RG_INT16 ||
           dstFormat == MESA_FORMAT_RGB_INT16 ||
           dstFormat == MESA_FORMAT_RGBA_INT16 ||
-          dstFormat == MESA_FORMAT_ALPHA_INT16 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_INT16 ||
-          dstFormat == MESA_FORMAT_INTENSITY_INT16 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_INT16 ||
+          dstFormat == MESA_FORMAT_A_SINT16 ||
+          dstFormat == MESA_FORMAT_L_SINT16 ||
+          dstFormat == MESA_FORMAT_I_SINT16 ||
+          dstFormat == MESA_FORMAT_LA_SINT16 ||
           dstFormat == MESA_FORMAT_RGBX_SINT16);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
@@ -2974,10 +2974,10 @@ _mesa_texstore_rgba_int32(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_RG_INT32 ||
           dstFormat == MESA_FORMAT_RGB_INT32 ||
           dstFormat == MESA_FORMAT_RGBA_INT32 ||
-          dstFormat == MESA_FORMAT_ALPHA_INT32 ||
-          dstFormat == MESA_FORMAT_INTENSITY_INT32 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_INT32 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_INT32 ||
+          dstFormat == MESA_FORMAT_A_SINT32 ||
+          dstFormat == MESA_FORMAT_I_SINT32 ||
+          dstFormat == MESA_FORMAT_L_SINT32 ||
+          dstFormat == MESA_FORMAT_LA_SINT32 ||
           dstFormat == MESA_FORMAT_RGBX_SINT32);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
@@ -3045,10 +3045,10 @@ _mesa_texstore_rgba_uint8(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_RG_UINT8 ||
           dstFormat == MESA_FORMAT_RGB_UINT8 ||
           dstFormat == MESA_FORMAT_RGBA_UINT8 ||
-          dstFormat == MESA_FORMAT_ALPHA_UINT8 ||
-          dstFormat == MESA_FORMAT_INTENSITY_UINT8 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_UINT8 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_UINT8 ||
+          dstFormat == MESA_FORMAT_A_UINT8 ||
+          dstFormat == MESA_FORMAT_I_UINT8 ||
+          dstFormat == MESA_FORMAT_L_UINT8 ||
+          dstFormat == MESA_FORMAT_LA_UINT8 ||
           dstFormat == MESA_FORMAT_RGBX_UINT8);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
@@ -3113,10 +3113,10 @@ _mesa_texstore_rgba_uint16(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_RG_UINT16 ||
           dstFormat == MESA_FORMAT_RGB_UINT16 ||
           dstFormat == MESA_FORMAT_RGBA_UINT16 ||
-          dstFormat == MESA_FORMAT_ALPHA_UINT16 ||
-          dstFormat == MESA_FORMAT_INTENSITY_UINT16 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_UINT16 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_UINT16 ||
+          dstFormat == MESA_FORMAT_A_UINT16 ||
+          dstFormat == MESA_FORMAT_I_UINT16 ||
+          dstFormat == MESA_FORMAT_L_UINT16 ||
+          dstFormat == MESA_FORMAT_LA_UINT16 ||
           dstFormat == MESA_FORMAT_RGBX_UINT16);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
@@ -3181,10 +3181,10 @@ _mesa_texstore_rgba_uint32(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_RG_UINT32 ||
           dstFormat == MESA_FORMAT_RGB_UINT32 ||
           dstFormat == MESA_FORMAT_RGBA_UINT32 ||
-          dstFormat == MESA_FORMAT_ALPHA_UINT32 ||
-          dstFormat == MESA_FORMAT_INTENSITY_UINT32 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_UINT32 ||
-          dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_UINT32 ||
+          dstFormat == MESA_FORMAT_A_UINT32 ||
+          dstFormat == MESA_FORMAT_I_UINT32 ||
+          dstFormat == MESA_FORMAT_L_UINT32 ||
+          dstFormat == MESA_FORMAT_LA_UINT32 ||
           dstFormat == MESA_FORMAT_RGBX_UINT32);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
@@ -3724,14 +3724,14 @@ _mesa_get_texstore_func(mesa_format format)
       table[MESA_FORMAT_RGBA_FLOAT16] = _mesa_texstore_rgba_float16;
       table[MESA_FORMAT_RGB_FLOAT32] = _mesa_texstore_rgba_float32;
       table[MESA_FORMAT_RGB_FLOAT16] = _mesa_texstore_rgba_float16;
-      table[MESA_FORMAT_ALPHA_FLOAT32] = _mesa_texstore_rgba_float32;
-      table[MESA_FORMAT_ALPHA_FLOAT16] = _mesa_texstore_rgba_float16;
-      table[MESA_FORMAT_LUMINANCE_FLOAT32] = _mesa_texstore_rgba_float32;
-      table[MESA_FORMAT_LUMINANCE_FLOAT16] = _mesa_texstore_rgba_float16;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = _mesa_texstore_rgba_float32;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16] = _mesa_texstore_rgba_float16;
-      table[MESA_FORMAT_INTENSITY_FLOAT32] = _mesa_texstore_rgba_float32;
-      table[MESA_FORMAT_INTENSITY_FLOAT16] = _mesa_texstore_rgba_float16;
+      table[MESA_FORMAT_A_FLOAT32] = _mesa_texstore_rgba_float32;
+      table[MESA_FORMAT_A_FLOAT16] = _mesa_texstore_rgba_float16;
+      table[MESA_FORMAT_L_FLOAT32] = _mesa_texstore_rgba_float32;
+      table[MESA_FORMAT_L_FLOAT16] = _mesa_texstore_rgba_float16;
+      table[MESA_FORMAT_LA_FLOAT32] = _mesa_texstore_rgba_float32;
+      table[MESA_FORMAT_LA_FLOAT16] = _mesa_texstore_rgba_float16;
+      table[MESA_FORMAT_I_FLOAT32] = _mesa_texstore_rgba_float32;
+      table[MESA_FORMAT_I_FLOAT16] = _mesa_texstore_rgba_float16;
       table[MESA_FORMAT_R_FLOAT32] = _mesa_texstore_rgba_float32;
       table[MESA_FORMAT_R_FLOAT16] = _mesa_texstore_rgba_float16;
       table[MESA_FORMAT_RG_FLOAT32] = _mesa_texstore_rgba_float32;
@@ -3781,33 +3781,33 @@ _mesa_get_texstore_func(mesa_format format)
       table[MESA_FORMAT_Z_FLOAT32] = _mesa_texstore_z32;
       table[MESA_FORMAT_Z32_FLOAT_S8X24_UINT] = _mesa_texstore_z32f_x24s8;
 
-      table[MESA_FORMAT_ALPHA_UINT8] = _mesa_texstore_rgba_uint8;
-      table[MESA_FORMAT_ALPHA_UINT16] = _mesa_texstore_rgba_uint16;
-      table[MESA_FORMAT_ALPHA_UINT32] = _mesa_texstore_rgba_uint32;
-      table[MESA_FORMAT_ALPHA_INT8] = _mesa_texstore_rgba_int8;
-      table[MESA_FORMAT_ALPHA_INT16] = _mesa_texstore_rgba_int16;
-      table[MESA_FORMAT_ALPHA_INT32] = _mesa_texstore_rgba_int32;
+      table[MESA_FORMAT_A_UINT8] = _mesa_texstore_rgba_uint8;
+      table[MESA_FORMAT_A_UINT16] = _mesa_texstore_rgba_uint16;
+      table[MESA_FORMAT_A_UINT32] = _mesa_texstore_rgba_uint32;
+      table[MESA_FORMAT_A_SINT8] = _mesa_texstore_rgba_int8;
+      table[MESA_FORMAT_A_SINT16] = _mesa_texstore_rgba_int16;
+      table[MESA_FORMAT_A_SINT32] = _mesa_texstore_rgba_int32;
 
-      table[MESA_FORMAT_INTENSITY_UINT8] = _mesa_texstore_rgba_uint8;
-      table[MESA_FORMAT_INTENSITY_UINT16] = _mesa_texstore_rgba_uint16;
-      table[MESA_FORMAT_INTENSITY_UINT32] = _mesa_texstore_rgba_uint32;
-      table[MESA_FORMAT_INTENSITY_INT8] = _mesa_texstore_rgba_int8;
-      table[MESA_FORMAT_INTENSITY_INT16] = _mesa_texstore_rgba_int16;
-      table[MESA_FORMAT_INTENSITY_INT32] = _mesa_texstore_rgba_int32;
+      table[MESA_FORMAT_I_UINT8] = _mesa_texstore_rgba_uint8;
+      table[MESA_FORMAT_I_UINT16] = _mesa_texstore_rgba_uint16;
+      table[MESA_FORMAT_I_UINT32] = _mesa_texstore_rgba_uint32;
+      table[MESA_FORMAT_I_SINT8] = _mesa_texstore_rgba_int8;
+      table[MESA_FORMAT_I_SINT16] = _mesa_texstore_rgba_int16;
+      table[MESA_FORMAT_I_SINT32] = _mesa_texstore_rgba_int32;
 
-      table[MESA_FORMAT_LUMINANCE_UINT8] = _mesa_texstore_rgba_uint8;
-      table[MESA_FORMAT_LUMINANCE_UINT16] = _mesa_texstore_rgba_uint16;
-      table[MESA_FORMAT_LUMINANCE_UINT32] = _mesa_texstore_rgba_uint32;
-      table[MESA_FORMAT_LUMINANCE_INT8] = _mesa_texstore_rgba_int8;
-      table[MESA_FORMAT_LUMINANCE_INT16] = _mesa_texstore_rgba_int16;
-      table[MESA_FORMAT_LUMINANCE_INT32] = _mesa_texstore_rgba_int32;
+      table[MESA_FORMAT_L_UINT8] = _mesa_texstore_rgba_uint8;
+      table[MESA_FORMAT_L_UINT16] = _mesa_texstore_rgba_uint16;
+      table[MESA_FORMAT_L_UINT32] = _mesa_texstore_rgba_uint32;
+      table[MESA_FORMAT_L_SINT8] = _mesa_texstore_rgba_int8;
+      table[MESA_FORMAT_L_SINT16] = _mesa_texstore_rgba_int16;
+      table[MESA_FORMAT_L_SINT32] = _mesa_texstore_rgba_int32;
 
-      table[MESA_FORMAT_LUMINANCE_ALPHA_UINT8] = _mesa_texstore_rgba_uint8;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_UINT16] = _mesa_texstore_rgba_uint16;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_UINT32] = _mesa_texstore_rgba_uint32;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_INT8] = _mesa_texstore_rgba_int8;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_INT16] = _mesa_texstore_rgba_int16;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_INT32] = _mesa_texstore_rgba_int32;
+      table[MESA_FORMAT_LA_UINT8] = _mesa_texstore_rgba_uint8;
+      table[MESA_FORMAT_LA_UINT16] = _mesa_texstore_rgba_uint16;
+      table[MESA_FORMAT_LA_UINT32] = _mesa_texstore_rgba_uint32;
+      table[MESA_FORMAT_LA_SINT8] = _mesa_texstore_rgba_int8;
+      table[MESA_FORMAT_LA_SINT16] = _mesa_texstore_rgba_int16;
+      table[MESA_FORMAT_LA_SINT32] = _mesa_texstore_rgba_int32;
 
       table[MESA_FORMAT_R_INT8] = _mesa_texstore_rgba_int8;
       table[MESA_FORMAT_RG_INT8] = _mesa_texstore_rgba_int8;

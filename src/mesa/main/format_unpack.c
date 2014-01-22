@@ -2387,46 +2387,46 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBA_FLOAT16] = unpack_RGBA_FLOAT16;
       table[MESA_FORMAT_RGB_FLOAT32] = unpack_RGB_FLOAT32;
       table[MESA_FORMAT_RGB_FLOAT16] = unpack_RGB_FLOAT16;
-      table[MESA_FORMAT_ALPHA_FLOAT32] = unpack_ALPHA_FLOAT32;
-      table[MESA_FORMAT_ALPHA_FLOAT16] = unpack_ALPHA_FLOAT16;
-      table[MESA_FORMAT_LUMINANCE_FLOAT32] = unpack_LUMINANCE_FLOAT32;
-      table[MESA_FORMAT_LUMINANCE_FLOAT16] = unpack_LUMINANCE_FLOAT16;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = unpack_LUMINANCE_ALPHA_FLOAT32;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16] = unpack_LUMINANCE_ALPHA_FLOAT16;
-      table[MESA_FORMAT_INTENSITY_FLOAT32] = unpack_INTENSITY_FLOAT32;
-      table[MESA_FORMAT_INTENSITY_FLOAT16] = unpack_INTENSITY_FLOAT16;
+      table[MESA_FORMAT_A_FLOAT32] = unpack_ALPHA_FLOAT32;
+      table[MESA_FORMAT_A_FLOAT16] = unpack_ALPHA_FLOAT16;
+      table[MESA_FORMAT_L_FLOAT32] = unpack_LUMINANCE_FLOAT32;
+      table[MESA_FORMAT_L_FLOAT16] = unpack_LUMINANCE_FLOAT16;
+      table[MESA_FORMAT_LA_FLOAT32] = unpack_LUMINANCE_ALPHA_FLOAT32;
+      table[MESA_FORMAT_LA_FLOAT16] = unpack_LUMINANCE_ALPHA_FLOAT16;
+      table[MESA_FORMAT_I_FLOAT32] = unpack_INTENSITY_FLOAT32;
+      table[MESA_FORMAT_I_FLOAT16] = unpack_INTENSITY_FLOAT16;
       table[MESA_FORMAT_R_FLOAT32] = unpack_R_FLOAT32;
       table[MESA_FORMAT_R_FLOAT16] = unpack_R_FLOAT16;
       table[MESA_FORMAT_RG_FLOAT32] = unpack_RG_FLOAT32;
       table[MESA_FORMAT_RG_FLOAT16] = unpack_RG_FLOAT16;
 
-      table[MESA_FORMAT_ALPHA_UINT8] = unpack_ALPHA_UINT8;
-      table[MESA_FORMAT_ALPHA_UINT16] = unpack_ALPHA_UINT16;
-      table[MESA_FORMAT_ALPHA_UINT32] = unpack_ALPHA_UINT32;
-      table[MESA_FORMAT_ALPHA_INT8] = unpack_ALPHA_INT8;
-      table[MESA_FORMAT_ALPHA_INT16] = unpack_ALPHA_INT16;
-      table[MESA_FORMAT_ALPHA_INT32] = unpack_ALPHA_INT32;
+      table[MESA_FORMAT_A_UINT8] = unpack_ALPHA_UINT8;
+      table[MESA_FORMAT_A_UINT16] = unpack_ALPHA_UINT16;
+      table[MESA_FORMAT_A_UINT32] = unpack_ALPHA_UINT32;
+      table[MESA_FORMAT_A_SINT8] = unpack_ALPHA_INT8;
+      table[MESA_FORMAT_A_SINT16] = unpack_ALPHA_INT16;
+      table[MESA_FORMAT_A_SINT32] = unpack_ALPHA_INT32;
 
-      table[MESA_FORMAT_INTENSITY_UINT8] = unpack_INTENSITY_UINT8;
-      table[MESA_FORMAT_INTENSITY_UINT16] = unpack_INTENSITY_UINT16;
-      table[MESA_FORMAT_INTENSITY_UINT32] = unpack_INTENSITY_UINT32;
-      table[MESA_FORMAT_INTENSITY_INT8] = unpack_INTENSITY_INT8;
-      table[MESA_FORMAT_INTENSITY_INT16] = unpack_INTENSITY_INT16;
-      table[MESA_FORMAT_INTENSITY_INT32] = unpack_INTENSITY_INT32;
+      table[MESA_FORMAT_I_UINT8] = unpack_INTENSITY_UINT8;
+      table[MESA_FORMAT_I_UINT16] = unpack_INTENSITY_UINT16;
+      table[MESA_FORMAT_I_UINT32] = unpack_INTENSITY_UINT32;
+      table[MESA_FORMAT_I_SINT8] = unpack_INTENSITY_INT8;
+      table[MESA_FORMAT_I_SINT16] = unpack_INTENSITY_INT16;
+      table[MESA_FORMAT_I_SINT32] = unpack_INTENSITY_INT32;
 
-      table[MESA_FORMAT_LUMINANCE_UINT8] = unpack_LUMINANCE_UINT8;
-      table[MESA_FORMAT_LUMINANCE_UINT16] = unpack_LUMINANCE_UINT16;
-      table[MESA_FORMAT_LUMINANCE_UINT32] = unpack_LUMINANCE_UINT32;
-      table[MESA_FORMAT_LUMINANCE_INT8] = unpack_LUMINANCE_INT8;
-      table[MESA_FORMAT_LUMINANCE_INT16] = unpack_LUMINANCE_INT16;
-      table[MESA_FORMAT_LUMINANCE_INT32] = unpack_LUMINANCE_INT32;
+      table[MESA_FORMAT_L_UINT8] = unpack_LUMINANCE_UINT8;
+      table[MESA_FORMAT_L_UINT16] = unpack_LUMINANCE_UINT16;
+      table[MESA_FORMAT_L_UINT32] = unpack_LUMINANCE_UINT32;
+      table[MESA_FORMAT_L_SINT8] = unpack_LUMINANCE_INT8;
+      table[MESA_FORMAT_L_SINT16] = unpack_LUMINANCE_INT16;
+      table[MESA_FORMAT_L_SINT32] = unpack_LUMINANCE_INT32;
 
-      table[MESA_FORMAT_LUMINANCE_ALPHA_UINT8] = unpack_LUMINANCE_ALPHA_UINT8;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_UINT16] = unpack_LUMINANCE_ALPHA_UINT16;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_UINT32] = unpack_LUMINANCE_ALPHA_UINT32;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_INT8] = unpack_LUMINANCE_ALPHA_INT8;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_INT16] = unpack_LUMINANCE_ALPHA_INT16;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_INT32] = unpack_LUMINANCE_ALPHA_INT32;
+      table[MESA_FORMAT_LA_UINT8] = unpack_LUMINANCE_ALPHA_UINT8;
+      table[MESA_FORMAT_LA_UINT16] = unpack_LUMINANCE_ALPHA_UINT16;
+      table[MESA_FORMAT_LA_UINT32] = unpack_LUMINANCE_ALPHA_UINT32;
+      table[MESA_FORMAT_LA_SINT8] = unpack_LUMINANCE_ALPHA_INT8;
+      table[MESA_FORMAT_LA_SINT16] = unpack_LUMINANCE_ALPHA_INT16;
+      table[MESA_FORMAT_LA_SINT32] = unpack_LUMINANCE_ALPHA_INT32;
 
       table[MESA_FORMAT_R_INT8] = unpack_R_INT8;
       table[MESA_FORMAT_RG_INT8] = unpack_RG_INT8;
@@ -3731,78 +3731,78 @@ _mesa_unpack_uint_rgba_row(mesa_format format, GLuint n,
       unpack_int_rgba_R_INT8(src, dst, n);
       break;
 
-   case MESA_FORMAT_ALPHA_UINT32:
-   case MESA_FORMAT_ALPHA_INT32:
+   case MESA_FORMAT_A_UINT32:
+   case MESA_FORMAT_A_SINT32:
       unpack_int_rgba_ALPHA_UINT32(src, dst, n);
       break;
 
-   case MESA_FORMAT_ALPHA_UINT16:
+   case MESA_FORMAT_A_UINT16:
       unpack_int_rgba_ALPHA_UINT16(src, dst, n);
       break;
-   case MESA_FORMAT_ALPHA_INT16:
+   case MESA_FORMAT_A_SINT16:
       unpack_int_rgba_ALPHA_INT16(src, dst, n);
       break;
 
-   case MESA_FORMAT_ALPHA_UINT8:
+   case MESA_FORMAT_A_UINT8:
       unpack_int_rgba_ALPHA_UINT8(src, dst, n);
       break;
-   case MESA_FORMAT_ALPHA_INT8:
+   case MESA_FORMAT_A_SINT8:
       unpack_int_rgba_ALPHA_INT8(src, dst, n);
       break;
 
-   case MESA_FORMAT_LUMINANCE_UINT32:
-   case MESA_FORMAT_LUMINANCE_INT32:
+   case MESA_FORMAT_L_UINT32:
+   case MESA_FORMAT_L_SINT32:
       unpack_int_rgba_LUMINANCE_UINT32(src, dst, n);
       break;
-   case MESA_FORMAT_LUMINANCE_UINT16:
+   case MESA_FORMAT_L_UINT16:
       unpack_int_rgba_LUMINANCE_UINT16(src, dst, n);
       break;
-   case MESA_FORMAT_LUMINANCE_INT16:
+   case MESA_FORMAT_L_SINT16:
       unpack_int_rgba_LUMINANCE_INT16(src, dst, n);
       break;
 
-   case MESA_FORMAT_LUMINANCE_UINT8:
+   case MESA_FORMAT_L_UINT8:
       unpack_int_rgba_LUMINANCE_UINT8(src, dst, n);
       break;
-   case MESA_FORMAT_LUMINANCE_INT8:
+   case MESA_FORMAT_L_SINT8:
       unpack_int_rgba_LUMINANCE_INT8(src, dst, n);
       break;
 
-   case MESA_FORMAT_LUMINANCE_ALPHA_UINT32:
-   case MESA_FORMAT_LUMINANCE_ALPHA_INT32:
+   case MESA_FORMAT_LA_UINT32:
+   case MESA_FORMAT_LA_SINT32:
       unpack_int_rgba_LUMINANCE_ALPHA_UINT32(src, dst, n);
       break;
 
-   case MESA_FORMAT_LUMINANCE_ALPHA_UINT16:
+   case MESA_FORMAT_LA_UINT16:
       unpack_int_rgba_LUMINANCE_ALPHA_UINT16(src, dst, n);
       break;
-   case MESA_FORMAT_LUMINANCE_ALPHA_INT16:
+   case MESA_FORMAT_LA_SINT16:
       unpack_int_rgba_LUMINANCE_ALPHA_INT16(src, dst, n);
       break;
 
-   case MESA_FORMAT_LUMINANCE_ALPHA_UINT8:
+   case MESA_FORMAT_LA_UINT8:
       unpack_int_rgba_LUMINANCE_ALPHA_UINT8(src, dst, n);
       break;
-   case MESA_FORMAT_LUMINANCE_ALPHA_INT8:
+   case MESA_FORMAT_LA_SINT8:
       unpack_int_rgba_LUMINANCE_ALPHA_INT8(src, dst, n);
       break;
 
-   case MESA_FORMAT_INTENSITY_UINT32:
-   case MESA_FORMAT_INTENSITY_INT32:
+   case MESA_FORMAT_I_UINT32:
+   case MESA_FORMAT_I_SINT32:
       unpack_int_rgba_INTENSITY_UINT32(src, dst, n);
       break;
 
-   case MESA_FORMAT_INTENSITY_UINT16:
+   case MESA_FORMAT_I_UINT16:
       unpack_int_rgba_INTENSITY_UINT16(src, dst, n);
       break;
-   case MESA_FORMAT_INTENSITY_INT16:
+   case MESA_FORMAT_I_SINT16:
       unpack_int_rgba_INTENSITY_INT16(src, dst, n);
       break;
 
-   case MESA_FORMAT_INTENSITY_UINT8:
+   case MESA_FORMAT_I_UINT8:
       unpack_int_rgba_INTENSITY_UINT8(src, dst, n);
       break;
-   case MESA_FORMAT_INTENSITY_INT8:
+   case MESA_FORMAT_I_SINT8:
       unpack_int_rgba_INTENSITY_INT8(src, dst, n);
       break;
 

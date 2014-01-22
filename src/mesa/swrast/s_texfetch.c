@@ -534,49 +534,49 @@ texfetch_funcs[] =
       fetch_texel_3d_f_rgb_f16
    },
    {
-      MESA_FORMAT_ALPHA_FLOAT32,
+      MESA_FORMAT_A_FLOAT32,
       fetch_texel_1d_f_alpha_f32,
       fetch_texel_2d_f_alpha_f32,
       fetch_texel_3d_f_alpha_f32
    },
    {
-      MESA_FORMAT_ALPHA_FLOAT16,
+      MESA_FORMAT_A_FLOAT16,
       fetch_texel_1d_f_alpha_f16,
       fetch_texel_2d_f_alpha_f16,
       fetch_texel_3d_f_alpha_f16
    },
    {
-      MESA_FORMAT_LUMINANCE_FLOAT32,
+      MESA_FORMAT_L_FLOAT32,
       fetch_texel_1d_f_luminance_f32,
       fetch_texel_2d_f_luminance_f32,
       fetch_texel_3d_f_luminance_f32
    },
    {
-      MESA_FORMAT_LUMINANCE_FLOAT16,
+      MESA_FORMAT_L_FLOAT16,
       fetch_texel_1d_f_luminance_f16,
       fetch_texel_2d_f_luminance_f16,
       fetch_texel_3d_f_luminance_f16
    },
    {
-      MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32,
+      MESA_FORMAT_LA_FLOAT32,
       fetch_texel_1d_f_luminance_alpha_f32,
       fetch_texel_2d_f_luminance_alpha_f32,
       fetch_texel_3d_f_luminance_alpha_f32
    },
    {
-      MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16,
+      MESA_FORMAT_LA_FLOAT16,
       fetch_texel_1d_f_luminance_alpha_f16,
       fetch_texel_2d_f_luminance_alpha_f16,
       fetch_texel_3d_f_luminance_alpha_f16
    },
    {
-      MESA_FORMAT_INTENSITY_FLOAT32,
+      MESA_FORMAT_I_FLOAT32,
       fetch_texel_1d_f_intensity_f32,
       fetch_texel_2d_f_intensity_f32,
       fetch_texel_3d_f_intensity_f32
    },
    {
-      MESA_FORMAT_INTENSITY_FLOAT16,
+      MESA_FORMAT_I_FLOAT16,
       fetch_texel_1d_f_intensity_f16,
       fetch_texel_2d_f_intensity_f16,
       fetch_texel_3d_f_intensity_f16
@@ -607,85 +607,42 @@ texfetch_funcs[] =
    },
 
    {
-      MESA_FORMAT_ALPHA_UINT8,
+      MESA_FORMAT_A_UINT8,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_ALPHA_UINT16,
+      MESA_FORMAT_A_UINT16,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_ALPHA_UINT32,
+      MESA_FORMAT_A_UINT32,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_ALPHA_INT8,
+      MESA_FORMAT_A_SINT8,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_ALPHA_INT16,
+      MESA_FORMAT_A_SINT16,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_ALPHA_INT32,
-      NULL,
-      NULL,
-      NULL
-   },
-
-
-   {
-      MESA_FORMAT_INTENSITY_UINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_INTENSITY_UINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_INTENSITY_UINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_INTENSITY_INT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_INTENSITY_INT16,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_INTENSITY_INT32,
+      MESA_FORMAT_A_SINT32,
       NULL,
       NULL,
       NULL
@@ -693,42 +650,42 @@ texfetch_funcs[] =
 
 
    {
-      MESA_FORMAT_LUMINANCE_UINT8,
+      MESA_FORMAT_I_UINT8,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_LUMINANCE_UINT16,
+      MESA_FORMAT_I_UINT16,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_LUMINANCE_UINT32,
+      MESA_FORMAT_I_UINT32,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_LUMINANCE_INT8,
+      MESA_FORMAT_I_SINT8,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_LUMINANCE_INT16,
+      MESA_FORMAT_I_SINT16,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_LUMINANCE_INT32,
+      MESA_FORMAT_I_SINT32,
       NULL,
       NULL,
       NULL
@@ -736,42 +693,85 @@ texfetch_funcs[] =
 
 
    {
-      MESA_FORMAT_LUMINANCE_ALPHA_UINT8,
+      MESA_FORMAT_L_UINT8,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_LUMINANCE_ALPHA_UINT16,
+      MESA_FORMAT_L_UINT16,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_LUMINANCE_ALPHA_UINT32,
+      MESA_FORMAT_L_UINT32,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_LUMINANCE_ALPHA_INT8,
+      MESA_FORMAT_L_SINT8,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_LUMINANCE_ALPHA_INT16,
+      MESA_FORMAT_L_SINT16,
       NULL,
       NULL,
       NULL
    },
 
    {
-      MESA_FORMAT_LUMINANCE_ALPHA_INT32,
+      MESA_FORMAT_L_SINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+
+
+   {
+      MESA_FORMAT_LA_UINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LA_UINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LA_UINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LA_SINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LA_SINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   {
+      MESA_FORMAT_LA_SINT32,
       NULL,
       NULL,
       NULL

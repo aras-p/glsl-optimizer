@@ -4018,81 +4018,81 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
       case GL_ALPHA16:
          return MESA_FORMAT_A_UNORM16;
       case GL_ALPHA16F_ARB:
-         return MESA_FORMAT_ALPHA_FLOAT16;
+         return MESA_FORMAT_A_FLOAT16;
       case GL_ALPHA32F_ARB:
-         return MESA_FORMAT_ALPHA_FLOAT32;
+         return MESA_FORMAT_A_FLOAT32;
       case GL_ALPHA8I_EXT:
-         return MESA_FORMAT_ALPHA_INT8;
+         return MESA_FORMAT_A_SINT8;
       case GL_ALPHA16I_EXT:
-         return MESA_FORMAT_ALPHA_INT16;
+         return MESA_FORMAT_A_SINT16;
       case GL_ALPHA32I_EXT:
-         return MESA_FORMAT_ALPHA_INT32;
+         return MESA_FORMAT_A_SINT32;
       case GL_ALPHA8UI_EXT:
-         return MESA_FORMAT_ALPHA_UINT8;
+         return MESA_FORMAT_A_UINT8;
       case GL_ALPHA16UI_EXT:
-         return MESA_FORMAT_ALPHA_UINT16;
+         return MESA_FORMAT_A_UINT16;
       case GL_ALPHA32UI_EXT:
-         return MESA_FORMAT_ALPHA_UINT32;
+         return MESA_FORMAT_A_UINT32;
       case GL_LUMINANCE8:
          return MESA_FORMAT_L_UNORM8;
       case GL_LUMINANCE16:
          return MESA_FORMAT_L_UNORM16;
       case GL_LUMINANCE16F_ARB:
-         return MESA_FORMAT_LUMINANCE_FLOAT16;
+         return MESA_FORMAT_L_FLOAT16;
       case GL_LUMINANCE32F_ARB:
-         return MESA_FORMAT_LUMINANCE_FLOAT32;
+         return MESA_FORMAT_L_FLOAT32;
       case GL_LUMINANCE8I_EXT:
-         return MESA_FORMAT_LUMINANCE_INT8;
+         return MESA_FORMAT_L_SINT8;
       case GL_LUMINANCE16I_EXT:
-         return MESA_FORMAT_LUMINANCE_INT16;
+         return MESA_FORMAT_L_SINT16;
       case GL_LUMINANCE32I_EXT:
-         return MESA_FORMAT_LUMINANCE_INT32;
+         return MESA_FORMAT_L_SINT32;
       case GL_LUMINANCE8UI_EXT:
-         return MESA_FORMAT_LUMINANCE_UINT8;
+         return MESA_FORMAT_L_UINT8;
       case GL_LUMINANCE16UI_EXT:
-         return MESA_FORMAT_LUMINANCE_UINT16;
+         return MESA_FORMAT_L_UINT16;
       case GL_LUMINANCE32UI_EXT:
-         return MESA_FORMAT_LUMINANCE_UINT32;
+         return MESA_FORMAT_L_UINT32;
       case GL_LUMINANCE8_ALPHA8:
          return MESA_FORMAT_L8A8_UNORM;
       case GL_LUMINANCE16_ALPHA16:
          return MESA_FORMAT_L16A16_UNORM;
       case GL_LUMINANCE_ALPHA16F_ARB:
-         return MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16;
+         return MESA_FORMAT_LA_FLOAT16;
       case GL_LUMINANCE_ALPHA32F_ARB:
-         return MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32;
+         return MESA_FORMAT_LA_FLOAT32;
       case GL_LUMINANCE_ALPHA8I_EXT:
-         return MESA_FORMAT_LUMINANCE_ALPHA_INT8;
+         return MESA_FORMAT_LA_SINT8;
       case GL_LUMINANCE_ALPHA16I_EXT:
-         return MESA_FORMAT_LUMINANCE_ALPHA_INT8;
+         return MESA_FORMAT_LA_SINT8;
       case GL_LUMINANCE_ALPHA32I_EXT:
-         return MESA_FORMAT_LUMINANCE_ALPHA_INT16;
+         return MESA_FORMAT_LA_SINT16;
       case GL_LUMINANCE_ALPHA8UI_EXT:
-         return MESA_FORMAT_LUMINANCE_ALPHA_UINT8;
+         return MESA_FORMAT_LA_UINT8;
       case GL_LUMINANCE_ALPHA16UI_EXT:
-         return MESA_FORMAT_LUMINANCE_ALPHA_UINT16;
+         return MESA_FORMAT_LA_UINT16;
       case GL_LUMINANCE_ALPHA32UI_EXT:
-         return MESA_FORMAT_LUMINANCE_ALPHA_UINT32;
+         return MESA_FORMAT_LA_UINT32;
       case GL_INTENSITY8:
          return MESA_FORMAT_I_UNORM8;
       case GL_INTENSITY16:
          return MESA_FORMAT_I_UNORM16;
       case GL_INTENSITY16F_ARB:
-         return MESA_FORMAT_INTENSITY_FLOAT16;
+         return MESA_FORMAT_I_FLOAT16;
       case GL_INTENSITY32F_ARB:
-         return MESA_FORMAT_INTENSITY_FLOAT32;
+         return MESA_FORMAT_I_FLOAT32;
       case GL_INTENSITY8I_EXT:
-         return MESA_FORMAT_INTENSITY_INT8;
+         return MESA_FORMAT_I_SINT8;
       case GL_INTENSITY16I_EXT:
-         return MESA_FORMAT_INTENSITY_INT16;
+         return MESA_FORMAT_I_SINT16;
       case GL_INTENSITY32I_EXT:
-         return MESA_FORMAT_INTENSITY_INT32;
+         return MESA_FORMAT_I_SINT32;
       case GL_INTENSITY8UI_EXT:
-         return MESA_FORMAT_INTENSITY_UINT8;
+         return MESA_FORMAT_I_UINT8;
       case GL_INTENSITY16UI_EXT:
-         return MESA_FORMAT_INTENSITY_UINT16;
+         return MESA_FORMAT_I_UINT16;
       case GL_INTENSITY32UI_EXT:
-         return MESA_FORMAT_INTENSITY_UINT32;
+         return MESA_FORMAT_I_UINT32;
       default:
          break;
       }

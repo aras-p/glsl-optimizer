@@ -1229,7 +1229,7 @@ pack_float_RGB_FLOAT16(const GLfloat src[4], void *dst)
 }
 
 
-/* MESA_FORMAT_ALPHA_FLOAT32 */
+/* MESA_FORMAT_A_FLOAT32 */
 
 static void
 pack_ubyte_ALPHA_FLOAT32(const GLubyte src[4], void *dst)
@@ -1246,7 +1246,7 @@ pack_float_ALPHA_FLOAT32(const GLfloat src[4], void *dst)
 }
 
 
-/* MESA_FORMAT_ALPHA_FLOAT16 */
+/* MESA_FORMAT_A_FLOAT16 */
 
 static void
 pack_ubyte_ALPHA_FLOAT16(const GLubyte src[4], void *dst)
@@ -1263,7 +1263,7 @@ pack_float_ALPHA_FLOAT16(const GLfloat src[4], void *dst)
 }
 
 
-/* MESA_FORMAT_LUMINANCE_FLOAT32 (and INTENSITY_FLOAT32, R_FLOAT32) */
+/* MESA_FORMAT_L_FLOAT32 (and INTENSITY_FLOAT32, R_FLOAT32) */
 
 static void
 pack_ubyte_LUMINANCE_FLOAT32(const GLubyte src[4], void *dst)
@@ -1280,7 +1280,7 @@ pack_float_LUMINANCE_FLOAT32(const GLfloat src[4], void *dst)
 }
 
 
-/* MESA_FORMAT_LUMINANCE_FLOAT16 (and INTENSITY_FLOAT16, R_FLOAT32) */
+/* MESA_FORMAT_L_FLOAT16 (and INTENSITY_FLOAT16, R_FLOAT32) */
 
 static void
 pack_ubyte_LUMINANCE_FLOAT16(const GLubyte src[4], void *dst)
@@ -1297,7 +1297,7 @@ pack_float_LUMINANCE_FLOAT16(const GLfloat src[4], void *dst)
 }
 
 
-/* MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32 */
+/* MESA_FORMAT_LA_FLOAT32 */
 
 static void
 pack_ubyte_LUMINANCE_ALPHA_FLOAT32(const GLubyte src[4], void *dst)
@@ -1316,7 +1316,7 @@ pack_float_LUMINANCE_ALPHA_FLOAT32(const GLfloat src[4], void *dst)
 }
 
 
-/* MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16 */
+/* MESA_FORMAT_LA_FLOAT16 */
 
 static void
 pack_ubyte_LUMINANCE_ALPHA_FLOAT16(const GLubyte src[4], void *dst)
@@ -1961,14 +1961,14 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBA_FLOAT16] = pack_ubyte_RGBA_FLOAT16;
       table[MESA_FORMAT_RGB_FLOAT32] = pack_ubyte_RGB_FLOAT32;
       table[MESA_FORMAT_RGB_FLOAT16] = pack_ubyte_RGB_FLOAT16;
-      table[MESA_FORMAT_ALPHA_FLOAT32] = pack_ubyte_ALPHA_FLOAT32;
-      table[MESA_FORMAT_ALPHA_FLOAT16] = pack_ubyte_ALPHA_FLOAT16;
-      table[MESA_FORMAT_LUMINANCE_FLOAT32] = pack_ubyte_LUMINANCE_FLOAT32;
-      table[MESA_FORMAT_LUMINANCE_FLOAT16] = pack_ubyte_LUMINANCE_FLOAT16;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = pack_ubyte_LUMINANCE_ALPHA_FLOAT32;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16] = pack_ubyte_LUMINANCE_ALPHA_FLOAT16;
-      table[MESA_FORMAT_INTENSITY_FLOAT32] = pack_ubyte_LUMINANCE_FLOAT32;
-      table[MESA_FORMAT_INTENSITY_FLOAT16] = pack_ubyte_LUMINANCE_FLOAT16;
+      table[MESA_FORMAT_A_FLOAT32] = pack_ubyte_ALPHA_FLOAT32;
+      table[MESA_FORMAT_A_FLOAT16] = pack_ubyte_ALPHA_FLOAT16;
+      table[MESA_FORMAT_L_FLOAT32] = pack_ubyte_LUMINANCE_FLOAT32;
+      table[MESA_FORMAT_L_FLOAT16] = pack_ubyte_LUMINANCE_FLOAT16;
+      table[MESA_FORMAT_LA_FLOAT32] = pack_ubyte_LUMINANCE_ALPHA_FLOAT32;
+      table[MESA_FORMAT_LA_FLOAT16] = pack_ubyte_LUMINANCE_ALPHA_FLOAT16;
+      table[MESA_FORMAT_I_FLOAT32] = pack_ubyte_LUMINANCE_FLOAT32;
+      table[MESA_FORMAT_I_FLOAT16] = pack_ubyte_LUMINANCE_FLOAT16;
       table[MESA_FORMAT_R_FLOAT32] = pack_ubyte_LUMINANCE_FLOAT32;
       table[MESA_FORMAT_R_FLOAT16] = pack_ubyte_LUMINANCE_FLOAT16;
       table[MESA_FORMAT_RG_FLOAT32] = pack_ubyte_RG_FLOAT32;
@@ -2124,15 +2124,15 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBA_FLOAT16] = pack_float_RGBA_FLOAT16;
       table[MESA_FORMAT_RGB_FLOAT32] = pack_float_RGB_FLOAT32;
       table[MESA_FORMAT_RGB_FLOAT16] = pack_float_RGB_FLOAT16;
-      table[MESA_FORMAT_ALPHA_FLOAT32] = pack_float_ALPHA_FLOAT32;
-      table[MESA_FORMAT_ALPHA_FLOAT16] = pack_float_ALPHA_FLOAT16;
-      table[MESA_FORMAT_LUMINANCE_FLOAT32] = pack_float_LUMINANCE_FLOAT32;
-      table[MESA_FORMAT_LUMINANCE_FLOAT16] = pack_float_LUMINANCE_FLOAT16;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = pack_float_LUMINANCE_ALPHA_FLOAT32;
-      table[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16] = pack_float_LUMINANCE_ALPHA_FLOAT16;
+      table[MESA_FORMAT_A_FLOAT32] = pack_float_ALPHA_FLOAT32;
+      table[MESA_FORMAT_A_FLOAT16] = pack_float_ALPHA_FLOAT16;
+      table[MESA_FORMAT_L_FLOAT32] = pack_float_LUMINANCE_FLOAT32;
+      table[MESA_FORMAT_L_FLOAT16] = pack_float_LUMINANCE_FLOAT16;
+      table[MESA_FORMAT_LA_FLOAT32] = pack_float_LUMINANCE_ALPHA_FLOAT32;
+      table[MESA_FORMAT_LA_FLOAT16] = pack_float_LUMINANCE_ALPHA_FLOAT16;
 
-      table[MESA_FORMAT_INTENSITY_FLOAT32] = pack_float_LUMINANCE_FLOAT32;
-      table[MESA_FORMAT_INTENSITY_FLOAT16] = pack_float_LUMINANCE_FLOAT16;
+      table[MESA_FORMAT_I_FLOAT32] = pack_float_LUMINANCE_FLOAT32;
+      table[MESA_FORMAT_I_FLOAT16] = pack_float_LUMINANCE_FLOAT16;
       table[MESA_FORMAT_R_FLOAT32] = pack_float_LUMINANCE_FLOAT32;
       table[MESA_FORMAT_R_FLOAT16] = pack_float_LUMINANCE_FLOAT16;
       table[MESA_FORMAT_RG_FLOAT32] = pack_float_RG_FLOAT32;
