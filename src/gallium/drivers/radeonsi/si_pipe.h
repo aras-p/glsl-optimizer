@@ -26,16 +26,6 @@
 #ifndef SI_PIPE_H
 #define SI_PIPE_H
 
-#include "../radeon/r600_pipe_common.h"
-
-#include "pipe/p_screen.h"
-#include "pipe/p_context.h"
-#include "util/u_format.h"
-#include "util/u_math.h"
-#include "util/u_slab.h"
-#include "sid.h"
-#include "si_public.h"
-#include "si_pm4.h"
 #include "si_state.h"
 
 #ifdef PIPE_ARCH_BIG_ENDIAN

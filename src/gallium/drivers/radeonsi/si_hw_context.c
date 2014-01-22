@@ -23,13 +23,8 @@
  * Authors:
  *      Jerome Glisse
  */
-#include "../radeon/r600_cs.h"
-#include "sid.h"
-#include "si_pm4.h"
-#include "si_pipe.h"
-#include "util/u_memory.h"
-#include <errno.h>
 
+#include "si_pipe.h"
 
 /* initialize */
 void si_need_cs_space(struct si_context *ctx, unsigned num_dw,

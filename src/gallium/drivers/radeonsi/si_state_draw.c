@@ -24,17 +24,16 @@
  *      Christian König <christian.koenig@amd.com>
  */
 
-#include "util/u_memory.h"
-#include "util/u_framebuffer.h"
-#include "util/u_blitter.h"
-#include "util/u_index_modify.h"
-#include "util/u_upload_mgr.h"
-#include "tgsi/tgsi_parse.h"
 #include "si_pipe.h"
 #include "si_shader.h"
-#include "si_state.h"
 #include "../radeon/r600_cs.h"
 #include "sid.h"
+
+#include "util/u_blitter.h"
+#include "util/u_format.h"
+#include "util/u_index_modify.h"
+#include "util/u_memory.h"
+#include "util/u_upload_mgr.h"
 
 /*
  * Shaders

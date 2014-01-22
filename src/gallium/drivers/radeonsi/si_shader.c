@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
@@ -27,31 +26,24 @@
  *      Christian König <christian.koenig@amd.com>
  */
 
-#include "gallivm/lp_bld_tgsi_action.h"
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_gather.h"
 #include "gallivm/lp_bld_intr.h"
 #include "gallivm/lp_bld_logic.h"
-#include "gallivm/lp_bld_tgsi.h"
 #include "gallivm/lp_bld_arit.h"
 #include "gallivm/lp_bld_flow.h"
 #include "radeon_llvm.h"
 #include "radeon_llvm_emit.h"
 #include "util/u_memory.h"
-#include "tgsi/tgsi_info.h"
 #include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_scan.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_dump.h"
 
 #include "si_pipe.h"
 #include "si_shader.h"
-#include "si_state.h"
 #include "sid.h"
 
-#include <assert.h>
 #include <errno.h>
-#include <stdio.h>
 
 struct si_shader_context
 {

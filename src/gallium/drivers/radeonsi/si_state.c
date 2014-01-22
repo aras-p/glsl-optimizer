@@ -24,21 +24,18 @@
  *      Christian König <christian.koenig@amd.com>
  */
 
-#include "util/u_memory.h"
-#include "util/u_framebuffer.h"
-#include "util/u_blitter.h"
-#include "util/u_helpers.h"
-#include "util/u_math.h"
-#include "util/u_pack_color.h"
-#include "util/u_upload_mgr.h"
-#include "util/u_format_s3tc.h"
-#include "tgsi/tgsi_parse.h"
-#include "tgsi/tgsi_scan.h"
 #include "si_pipe.h"
 #include "si_shader.h"
-#include "si_state.h"
-#include "../radeon/r600_cs.h"
 #include "sid.h"
+#include "../radeon/r600_cs.h"
+
+#include "tgsi/tgsi_parse.h"
+#include "tgsi/tgsi_scan.h"
+#include "util/u_format.h"
+#include "util/u_format_s3tc.h"
+#include "util/u_framebuffer.h"
+#include "util/u_helpers.h"
+#include "util/u_memory.h"
 
 static uint32_t cik_num_banks(struct si_screen *sscreen, unsigned bpe, unsigned tile_split)
 {

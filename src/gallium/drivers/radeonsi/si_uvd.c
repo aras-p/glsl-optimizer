@@ -31,22 +31,8 @@
  *
  */
 
-#include <sys/types.h>
-#include <assert.h>
-#include <errno.h>
-#include <unistd.h>
-
-#include "pipe/p_video_codec.h"
-
-#include "util/u_memory.h"
-#include "util/u_video.h"
-
-#include "vl/vl_defines.h"
-#include "vl/vl_mpeg12_decoder.h"
-
 #include "si_pipe.h"
 #include "radeon/radeon_uvd.h"
-#include "sid.h"
 
 /**
  * creates an video buffer with an UVD compatible memory layout

@@ -20,11 +20,10 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "util/u_surface.h"
+
+#include "si_pipe.h"
 #include "util/u_blitter.h"
 #include "util/u_format.h"
-#include "si_pipe.h"
-#include "si_state.h"
 
 enum si_blitter_op /* bitmask */
 {
