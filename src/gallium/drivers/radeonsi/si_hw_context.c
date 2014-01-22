@@ -107,12 +107,10 @@ void si_context_flush(struct si_context *ctx, unsigned flags)
 			R600_CONTEXT_FLUSH_AND_INV_CB_META |
 			R600_CONTEXT_FLUSH_AND_INV_DB |
 			R600_CONTEXT_FLUSH_AND_INV_DB_META |
-			R600_CONTEXT_INV_TEX_CACHE;
+			R600_CONTEXT_INV_TEX_CACHE |
+			/* this is probably not needed anymore */
+			R600_CONTEXT_PS_PARTIAL_FLUSH;
 	si_emit_cache_flush(&ctx->b, NULL);
-
-	/* this is probably not needed anymore */
-	cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 
 	/* force to keep tiling flags */
 	flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;
