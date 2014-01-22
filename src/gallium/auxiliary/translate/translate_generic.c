@@ -638,7 +638,7 @@ static ALWAYS_INLINE void PIPE_CDECL generic_run_one( struct translate_generic *
          }
 
          src = tg->attrib[attr].input_ptr +
-               tg->attrib[attr].input_stride * index;
+               (ptrdiff_t)tg->attrib[attr].input_stride * index;
 
          copy_size = tg->attrib[attr].copy_size;
          if(likely(copy_size >= 0))
