@@ -130,7 +130,7 @@ typedef cnd_t pipe_condvar;
  * pipe_barrier
  */
 
-#if defined(HAVE_PTHREAD) && !defined(PIPE_OS_ANDROID)
+#if (defined(PIPE_OS_LINUX) || defined(PIPE_OS_BSD) || defined(PIPE_OS_SOLARIS) || defined(PIPE_OS_HURD)) && !defined(PIPE_OS_ANDROID)
 
 typedef pthread_barrier_t pipe_barrier;
 
