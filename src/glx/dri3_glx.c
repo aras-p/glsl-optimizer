@@ -1338,14 +1338,13 @@ dri3_open(Display *dpy,
    xcb_dri3_open_cookie_t       cookie;
    xcb_dri3_open_reply_t        *reply;
    xcb_connection_t             *c = XGetXCBConnection(dpy);
-   xcb_generic_error_t          *error;
    int                          fd;
 
    cookie = xcb_dri3_open(c,
                           root,
                           provider);
 
-   reply = xcb_dri3_open_reply(c, cookie, &error);
+   reply = xcb_dri3_open_reply(c, cookie, NULL);
    if (!reply)
       return -1;
 
@@ -1799,6 +1798,7 @@ dri3_create_display(Display * dpy)
    }
    pdp->presentMajor = present_reply->major_version;
    pdp->presentMinor = present_reply->minor_version;
+   free(present_reply);
 
    pdp->base.destroyDisplay = dri3_destroy_display;
    pdp->base.createScreen = dri3_create_screen;
