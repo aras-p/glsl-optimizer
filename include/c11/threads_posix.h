@@ -41,7 +41,7 @@ Configuration macro:
     Use pthread_mutex_timedlock() for `mtx_timedlock()'
     Otherwise use mtx_trylock() + *busy loop* emulation.
 */
-#if !defined(__CYGWIN__)
+#if !defined(__CYGWIN__) && !defined(__APPLE__)
 #define EMULATED_THREADS_USE_NATIVE_TIMEDLOCK
 #endif
 
@@ -195,6 +195,12 @@ mtx_lock(mtx_t *mtx)
     pthread_mutex_lock(mtx);
     return thrd_success;
 }
+
+static inline int
+mtx_trylock(mtx_t *mtx);
+
+static inline void
+thrd_yield(void);
 
 // 7.25.4.4
 static inline int
