@@ -52,6 +52,10 @@ struct _egl_global
 
    struct _egl_client_extensions {
       bool EXT_client_extensions;
+      bool EXT_platform_base;
+      bool EXT_platform_x11;
+      bool EXT_platform_wayland;
+      bool MESA_platform_gbm;
    } ClientExtensions;
 
    const char *ClientExtensionString;

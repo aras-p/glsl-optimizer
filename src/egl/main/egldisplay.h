@@ -242,5 +242,25 @@ _eglIsResourceLinked(_EGLResource *res)
    return res->IsLinked;
 }
 
+#ifdef HAVE_X11_PLATFORM
+_EGLDisplay*
+_eglGetX11Display(Display *native_display, const EGLint *attrib_list);
+#endif
+
+#ifdef HAVE_DRM_PLATFORM
+struct gbm_device;
+
+_EGLDisplay*
+_eglGetGbmDisplay(struct gbm_device *native_display,
+                  const EGLint *attrib_list);
+#endif
+
+#ifdef HAVE_WAYLAND_PLATFORM
+struct wl_display;
+
+_EGLDisplay*
+_eglGetWaylandDisplay(struct wl_display *native_display,
+                      const EGLint *attrib_list);
+#endif
 
 #endif /* EGLDISPLAY_INCLUDED */

@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "eglcontext.h"
+#include "eglcurrent.h"
 #include "eglsurface.h"
 #include "egldisplay.h"
 #include "egldriver.h"
@@ -458,3 +459,74 @@ _eglUnlinkResource(_EGLResource *res, _EGLResourceType type)
    /* We always unlink before destroy.  The driver still owns a reference */
    assert(res->RefCount);
 }
+
+#ifdef HAVE_X11_PLATFORM
+static EGLBoolean
+_eglParseX11DisplayAttribList(const EGLint *attrib_list)
+{
+   int i;
+
+   if (attrib_list == NULL) {
+      return EGL_TRUE;
+   }
+
+   for (i = 0; attrib_list[i] != EGL_NONE; i += 2) {
+      EGLint attrib = attrib_list[i];
+      EGLint value = attrib_list[i + 1];
+
+      /* EGL_EXT_platform_x11 recognizes exactly one attribute,
+       * EGL_PLATFORM_X11_SCREEN_EXT, which is optional.
+       * 
+       * Mesa supports connecting to only the default screen, so we reject
+       * screen != 0.
+       */
+      if (attrib != EGL_PLATFORM_X11_SCREEN_EXT || value != 0) {
+         _eglError(EGL_BAD_ATTRIBUTE, "eglGetPlatformDisplay");
+         return EGL_FALSE;
+      }
+   }
+
+   return EGL_TRUE;
+}
+
+_EGLDisplay*
+_eglGetX11Display(Display *native_display,
+                  const EGLint *attrib_list)
+{
+   if (!_eglParseX11DisplayAttribList(attrib_list)) {
+      return NULL;
+   }
+
+   return _eglFindDisplay(_EGL_PLATFORM_X11, native_display);
+}
+#endif /* HAVE_X11_PLATFORM */
+
+#ifdef HAVE_DRM_PLATFORM
+_EGLDisplay*
+_eglGetGbmDisplay(struct gbm_device *native_display,
+                  const EGLint *attrib_list)
+{
+   /* EGL_MESA_platform_gbm recognizes no attributes. */
+   if (attrib_list != NULL && attrib_list[0] != EGL_NONE) {
+      _eglError(EGL_BAD_ATTRIBUTE, "eglGetPlatformDisplay");
+      return NULL;
+   }
+
+   return _eglFindDisplay(_EGL_PLATFORM_DRM, native_display);
+}
+#endif /* HAVE_DRM_PLATFORM */
+
+#ifdef HAVE_WAYLAND_PLATFORM
+_EGLDisplay*
+_eglGetWaylandDisplay(struct wl_display *native_display,
+                      const EGLint *attrib_list)
+{
+   /* EGL_EXT_platform_wayland recognizes no attributes. */
+   if (attrib_list != NULL && attrib_list[0] != EGL_NONE) {
+      _eglError(EGL_BAD_ATTRIBUTE, "eglGetPlatformDisplay");
+      return NULL;
+   }
+
+   return _eglFindDisplay(_EGL_PLATFORM_WAYLAND, native_display);
+}
+#endif /* HAVE_WAYLAND_PLATFORM */
