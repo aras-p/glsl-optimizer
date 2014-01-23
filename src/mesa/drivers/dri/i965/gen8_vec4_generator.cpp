@@ -113,14 +113,33 @@ gen8_vec4_generator::generate_tex(vec4_instruction *ir, struct brw_reg dst)
       MOV_RAW(retype(brw_message_reg(ir->base_mrf), BRW_REGISTER_TYPE_UD),
               retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
 
+      default_state.access_mode = BRW_ALIGN_1;
+
       if (ir->texture_offset) {
          /* Set the offset bits in DWord 2. */
-         default_state.access_mode = BRW_ALIGN_1;
          MOV_RAW(retype(brw_vec1_reg(MRF, ir->base_mrf, 2),
                         BRW_REGISTER_TYPE_UD),
                  brw_imm_ud(ir->texture_offset));
-         default_state.access_mode = BRW_ALIGN_16;
       }
+
+      if (ir->sampler >= 16) {
+         /* The "Sampler Index" field can only store values between 0 and 15.
+          * However, we can add an offset to the "Sampler State Pointer"
+          * field, effectively selecting a different set of 16 samplers.
+          *
+          * The "Sampler State Pointer" needs to be aligned to a 32-byte
+          * offset, and each sampler state is only 16-bytes, so we can't
+          * exclusively use the offset - we have to use both.
+          */
+         gen8_instruction *add =
+            ADD(get_element_ud(brw_message_reg(ir->base_mrf), 3),
+                get_element_ud(brw_vec8_grf(0, 0), 3),
+                brw_imm_ud(16 * (ir->sampler / 16) *
+                           sizeof(gen7_sampler_state)));
+         gen8_set_mask_control(add, BRW_MASK_DISABLE);
+      }
+
+      default_state.access_mode = BRW_ALIGN_16;
    }
 
    uint32_t surf_index =
@@ -131,7 +150,7 @@ gen8_vec4_generator::generate_tex(vec4_instruction *ir, struct brw_reg dst)
    gen8_set_src0(brw, inst, brw_message_reg(ir->base_mrf));
    gen8_set_sampler_message(brw, inst,
                             surf_index,
-                            ir->sampler,
+                            ir->sampler % 16,
                             msg_type,
                             1,
                             ir->mlen,
