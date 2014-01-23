@@ -100,9 +100,9 @@ libglx_la_SOURCES = \
 if HAVE_DRI3
 libglx_la_SOURCES += \
           dri3_glx.c
+endif
 
 libglx_la_LIBADD = $(top_builddir)/src/loader/libloader.la
-endif
 
 GL_LIBS = \
 	libglx.la \
