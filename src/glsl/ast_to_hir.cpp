@@ -3143,8 +3143,9 @@ ast_declarator_list::hir(exec_list *instructions,
              *    vectors. Vertex shader inputs cannot be arrays or
              *    structures."
 	     */
-	    const glsl_type *check_type = var->type->is_array()
-	       ? var->type->fields.array : var->type;
+            const glsl_type *check_type = var->type;
+            while (check_type->is_array())
+               check_type = check_type->element_type();
 
 	    switch (check_type->base_type) {
 	    case GLSL_TYPE_FLOAT:
