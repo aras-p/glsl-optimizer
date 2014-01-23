@@ -1803,7 +1803,7 @@ dri3_create_display(Display * dpy)
    pdp->base.destroyDisplay = dri3_destroy_display;
    pdp->base.createScreen = dri3_create_screen;
 
-   loader_set_logger(ErrorMessageF);
+   loader_set_logger(dri_message);
    i = 0;
 
    pdp->loader_extensions[i++] = &imageLoaderExtension.base;

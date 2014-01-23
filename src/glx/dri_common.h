@@ -39,6 +39,12 @@
 #include <GL/internal/dri_interface.h>
 #include <stdbool.h>
 
+#if (__GNUC__ >= 3)
+#define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
+#else
+#define PRINTFLIKE(f, a)
+#endif
+
 typedef struct __GLXDRIconfigPrivateRec __GLXDRIconfigPrivate;
 
 struct __GLXDRIconfigPrivateRec
@@ -61,10 +67,10 @@ driReleaseDrawables(struct glx_context *gc);
 
 extern const __DRIsystemTimeExtension systemTimeExtension;
 
+extern void dri_message(int level, const char *f, ...) PRINTFLIKE(2, 3);
+
 extern void InfoMessageF(const char *f, ...);
-
 extern void ErrorMessageF(const char *f, ...);
-
 extern void CriticalErrorMessageF(const char *f, ...);
 
 extern void *driOpenDriver(const char *driverName);

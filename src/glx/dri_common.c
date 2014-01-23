@@ -40,6 +40,7 @@
 #include <stdarg.h>
 #include "glxclient.h"
 #include "dri_common.h"
+#include "loader.h"
 
 #ifndef RTLD_NOW
 #define RTLD_NOW 0
@@ -47,6 +48,30 @@
 #ifndef RTLD_GLOBAL
 #define RTLD_GLOBAL 0
 #endif
+
+_X_HIDDEN void
+dri_message(int level, const char *f, ...)
+{
+   va_list args;
+   int threshold = _LOADER_WARNING;
+   const char *libgl_debug;
+
+   libgl_debug = getenv("LIBGL_DEBUG");
+   if (libgl_debug) {
+      if (strstr(libgl_debug, "quiet"))
+         threshold = _LOADER_FATAL;
+      else if (strstr(libgl_debug, "verbose"))
+         threshold = _LOADER_DEBUG;
+   }
+
+   /* Note that the _LOADER_* levels are lower numbers for more severe. */
+   if (level <= threshold) {
+      fprintf(stderr, "libGL%s: ", level <= _LOADER_WARNING ? " error" : "");
+      va_start(args, f);
+      vfprintf(stderr, f, args);
+      va_end(args);
+   }
+}
 
 /**
  * Print informational message to stderr if LIBGL_DEBUG is set to
