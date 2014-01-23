@@ -92,7 +92,7 @@ typedef mtx_t u_mutex;
 static INLINE unsigned long
 u_thread_self(void)
 {
-   return (unsigned long) thrd_current();
+   return (unsigned long) (uintptr_t) thrd_current();
 }
 
 
