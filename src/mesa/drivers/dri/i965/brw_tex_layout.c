@@ -246,17 +246,17 @@ brw_miptree_layout_texture_array(struct brw_context *brw,
       mt->qpitch = h0;
    else
       mt->qpitch = (h0 + h1 + (brw->gen >= 7 ? 12 : 11) * mt->align_h);
-   if (mt->compressed)
-      mt->qpitch /= 4;
+
+   int physical_qpitch = mt->compressed ? mt->qpitch / 4 : mt->qpitch;
 
    brw_miptree_layout_2d(mt);
 
    for (unsigned level = mt->first_level; level <= mt->last_level; level++) {
       for (int q = 0; q < mt->physical_depth0; q++) {
-	 intel_miptree_set_image_offset(mt, level, q, 0, q * mt->qpitch);
+	 intel_miptree_set_image_offset(mt, level, q, 0, q * physical_qpitch);
       }
    }
-   mt->total_height = mt->qpitch * mt->physical_depth0;
+   mt->total_height = physical_qpitch * mt->physical_depth0;
 
    align_cube(mt);
 }

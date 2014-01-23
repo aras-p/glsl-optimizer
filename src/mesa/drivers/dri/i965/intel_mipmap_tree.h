@@ -334,7 +334,10 @@ struct intel_mipmap_tree
    bool array_spacing_lod0;
 
    /**
-    * The distance in rows between array slices.
+    * The distance in rows between array slices in an uncompressed surface.
+    *
+    * For compressed surfaces, slices are stored closer together physically;
+    * the real distance is (qpitch / block height).
     */
    uint32_t qpitch;
 
