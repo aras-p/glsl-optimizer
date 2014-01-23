@@ -38,6 +38,7 @@
 
 #include <GL/internal/dri_interface.h>
 #include <stdbool.h>
+#include "loader.h"
 
 #if (__GNUC__ >= 3)
 #define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
@@ -69,9 +70,9 @@ extern const __DRIsystemTimeExtension systemTimeExtension;
 
 extern void dri_message(int level, const char *f, ...) PRINTFLIKE(2, 3);
 
-extern void InfoMessageF(const char *f, ...);
-extern void ErrorMessageF(const char *f, ...);
-extern void CriticalErrorMessageF(const char *f, ...);
+#define InfoMessageF(...) dri_message(_LOADER_INFO, __VA_ARGS__)
+#define ErrorMessageF(...) dri_message(_LOADER_WARNING, __VA_ARGS__)
+#define CriticalErrorMessageF(...) dri_message(_LOADER_FATAL, __VA_ARGS__)
 
 extern void *driOpenDriver(const char *driverName);
 
