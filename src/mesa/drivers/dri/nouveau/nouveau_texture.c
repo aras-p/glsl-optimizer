@@ -575,11 +575,11 @@ nouveau_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
 }
 
 static void
-nouveau_bind_texture(struct gl_context *ctx, GLenum target,
-		     struct gl_texture_object *t)
+nouveau_bind_texture(struct gl_context *ctx, GLuint texUnit,
+                     GLenum target, struct gl_texture_object *t)
 {
-	context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
-	context_dirty_i(ctx, TEX_ENV, ctx->Texture.CurrentUnit);
+	context_dirty_i(ctx, TEX_OBJ, texUnit);
+	context_dirty_i(ctx, TEX_ENV, texUnit);
 }
 
 static mesa_format

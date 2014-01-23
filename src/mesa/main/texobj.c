@@ -1390,7 +1390,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
    /* Pass BindTexture call to device driver */
    if (ctx->Driver.BindTexture)
-      ctx->Driver.BindTexture(ctx, target, newTexObj);
+      ctx->Driver.BindTexture(ctx, ctx->Texture.CurrentUnit, target, newTexObj);
 }
 
 

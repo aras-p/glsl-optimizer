@@ -314,10 +314,10 @@ struct dd_function_table {
    /*@{*/
 
    /**
-    * Called by glBindTexture().
+    * Called by glBindTexture() and glBindTextures().
     */
-   void (*BindTexture)( struct gl_context *ctx, GLenum target,
-                        struct gl_texture_object *tObj );
+   void (*BindTexture)( struct gl_context *ctx, GLuint texUnit,
+                        GLenum target, struct gl_texture_object *tObj );
 
    /**
     * Called to allocate a new texture object.  Drivers will usually
