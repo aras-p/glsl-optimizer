@@ -32,6 +32,8 @@
 #ifndef R600_PIPE_COMMON_H
 #define R600_PIPE_COMMON_H
 
+#include <stdio.h>
+
 #include "../../winsys/radeon/drm/radeon_winsys.h"
 
 #include "util/u_range.h"

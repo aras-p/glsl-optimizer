@@ -41,6 +41,7 @@
 #include <xf86drm.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 /*
  * this are copy from radeon_drm, once an updated libdrm is released
