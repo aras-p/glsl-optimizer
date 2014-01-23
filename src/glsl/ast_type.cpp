@@ -32,10 +32,8 @@ ast_type_specifier::print(void) const
       printf("%s ", type_name);
    }
 
-   if (is_array) {
-      if (array_specifier) {
-         array_specifier->print();
-      }
+   if (array_specifier) {
+      array_specifier->print();
    }
 }
 

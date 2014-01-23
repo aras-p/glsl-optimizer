@@ -2874,7 +2874,6 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
       foreach_list_typed (ast_declaration, decl, link, &this->declarations) {
-	 assert(!decl->is_array);
 	 assert(decl->array_specifier == NULL);
 	 assert(decl->initializer == NULL);
 
@@ -4507,7 +4506,7 @@ ast_type_specifier::hir(exec_list *instructions,
          return NULL;
       }
 
-      if (this->is_array) {
+      if (this->array_specifier != NULL) {
          _mesa_glsl_error(&loc, state,
                           "default precision statements do not apply to "
                           "arrays");
@@ -4924,7 +4923,7 @@ ast_interface_block::hir(exec_list *instructions,
                              _mesa_shader_stage_to_string(state->stage));
          }
          if (this->instance_name == NULL ||
-             strcmp(this->instance_name, "gl_in") != 0 || !this->is_array) {
+             strcmp(this->instance_name, "gl_in") != 0 || this->array_specifier == NULL) {
             _mesa_glsl_error(&loc, state,
                              "gl_PerVertex input must be redeclared as "
                              "gl_in[]");
@@ -5026,7 +5025,7 @@ ast_interface_block::hir(exec_list *instructions,
     *     variable (or input block, see interface blocks below) needs to be
     *     declared as an array.
     */
-   if (state->stage == MESA_SHADER_GEOMETRY && !this->is_array &&
+   if (state->stage == MESA_SHADER_GEOMETRY && this->array_specifier == NULL &&
        var_mode == ir_var_shader_in) {
       _mesa_glsl_error(&loc, state, "geometry shader inputs must be arrays");
    }
@@ -5060,7 +5059,7 @@ ast_interface_block::hir(exec_list *instructions,
 
       ir_variable *var;
 
-      if (this->is_array) {
+      if (this->array_specifier != NULL) {
          /* Section 4.3.7 (Interface Blocks) of the GLSL 1.50 spec says:
           *
           *     For uniform blocks declared an array, each individual array
@@ -5121,7 +5120,7 @@ ast_interface_block::hir(exec_list *instructions,
       /* In order to have an array size, the block must also be declared with
        * an instane name.
        */
-      assert(!this->is_array);
+      assert(this->array_specifier == NULL);
 
       for (unsigned i = 0; i < num_variables; i++) {
          ir_variable *var =

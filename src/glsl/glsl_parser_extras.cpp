@@ -790,12 +790,10 @@ ast_node::ast_node(void)
 
 
 static void
-ast_opt_array_dimensions_print(bool is_array, const ast_array_specifier *array_specifier)
+ast_opt_array_dimensions_print(const ast_array_specifier *array_specifier)
 {
-   if (is_array) {
-      if (array_specifier)
-         array_specifier->print();
-   }
+   if (array_specifier)
+      array_specifier->print();
 }
 
 
@@ -1018,7 +1016,7 @@ ast_parameter_declarator::print(void) const
    type->print();
    if (identifier)
       printf("%s ", identifier);
-   ast_opt_array_dimensions_print(is_array, array_specifier);
+   ast_opt_array_dimensions_print(array_specifier);
 }
 
 
@@ -1034,7 +1032,7 @@ void
 ast_declaration::print(void) const
 {
    printf("%s ", identifier);
-   ast_opt_array_dimensions_print(is_array, array_specifier);
+   ast_opt_array_dimensions_print(array_specifier);
 
    if (initializer) {
       printf("= ");
@@ -1043,12 +1041,11 @@ ast_declaration::print(void) const
 }
 
 
-ast_declaration::ast_declaration(const char *identifier, bool is_array,
+ast_declaration::ast_declaration(const char *identifier,
 				 ast_array_specifier *array_specifier,
 				 ast_expression *initializer)
 {
    this->identifier = identifier;
-   this->is_array = is_array;
    this->array_specifier = array_specifier;
    this->initializer = initializer;
 }

@@ -371,14 +371,13 @@ public:
 
 class ast_declaration : public ast_node {
 public:
-   ast_declaration(const char *identifier, bool is_array,
+   ast_declaration(const char *identifier,
                    ast_array_specifier *array_specifier,
                    ast_expression *initializer);
    virtual void print(void) const;
 
    const char *identifier;
-   
-   bool is_array;
+
    ast_array_specifier *array_specifier;
 
    ast_expression *initializer;
@@ -588,10 +587,10 @@ public:
     * Use only if the objects are allocated from the same context and will not
     * be modified. Zeros the inherited ast_node's fields.
     */
-   ast_type_specifier(const ast_type_specifier *that, bool is_array,
+   ast_type_specifier(const ast_type_specifier *that,
                       ast_array_specifier *array_specifier)
       : ast_node(), type_name(that->type_name), structure(that->structure),
-        is_array(is_array), array_specifier(array_specifier),
+        array_specifier(array_specifier),
         default_precision(that->default_precision)
    {
       /* empty */
@@ -599,8 +598,7 @@ public:
 
    /** Construct a type specifier from a type name */
    ast_type_specifier(const char *name) 
-      : type_name(name), structure(NULL),
-	is_array(false), array_specifier(NULL),
+      : type_name(name), structure(NULL), array_specifier(NULL),
 	default_precision(ast_precision_none)
    {
       /* empty */
@@ -608,8 +606,7 @@ public:
 
    /** Construct a type specifier from a structure definition */
    ast_type_specifier(ast_struct_specifier *s)
-      : type_name(s->name), structure(s),
-	is_array(false), array_specifier(NULL),
+      : type_name(s->name), structure(s), array_specifier(NULL),
 	default_precision(ast_precision_none)
    {
       /* empty */
@@ -626,7 +623,6 @@ public:
    const char *type_name;
    ast_struct_specifier *structure;
 
-   bool is_array;
    ast_array_specifier *array_specifier;
 
    /** For precision statements, this is the given precision; otherwise none. */
@@ -680,7 +676,6 @@ public:
    ast_parameter_declarator() :
       type(NULL),
       identifier(NULL),
-      is_array(false),
       array_specifier(NULL),
       formal_parameter(false),
       is_void(false)
@@ -695,7 +690,6 @@ public:
 
    ast_fully_specified_type *type;
    const char *identifier;
-   bool is_array;
    ast_array_specifier *array_specifier;
 
    static void parameters_to_hir(exec_list *ast_parameters,
@@ -943,13 +937,10 @@ class ast_interface_block : public ast_node {
 public:
    ast_interface_block(ast_type_qualifier layout,
                        const char *instance_name,
-                       bool is_array,
                        ast_array_specifier *array_specifier)
    : layout(layout), block_name(NULL), instance_name(instance_name),
-     is_array(is_array), array_specifier(array_specifier)
+     array_specifier(array_specifier)
    {
-      if (!is_array)
-         assert(array_specifier == NULL);
    }
 
    virtual ir_rvalue *hir(exec_list *instructions,
@@ -968,15 +959,6 @@ public:
 
    /** List of ast_declarator_list * */
    exec_list declarations;
-
-   /**
-    * True if the block is declared as an array
-    *
-    * \note
-    * A block can only be an array if it also has an instance name.  If this
-    * field is true, ::instance_name must also not be \c NULL.
-    */
-   bool is_array;
 
    /**
     * Declared array size of the block instance

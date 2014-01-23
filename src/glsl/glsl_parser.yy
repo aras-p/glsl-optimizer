@@ -977,7 +977,7 @@ init_declarator_list:
    | init_declarator_list ',' any_identifier
    {
       void *ctx = state;
-      ast_declaration *decl = new(ctx) ast_declaration($3, false, NULL, NULL);
+      ast_declaration *decl = new(ctx) ast_declaration($3, NULL, NULL);
       decl->set_location(yylloc);
 
       $$ = $1;
@@ -987,7 +987,7 @@ init_declarator_list:
    | init_declarator_list ',' any_identifier array_specifier
    {
       void *ctx = state;
-      ast_declaration *decl = new(ctx) ast_declaration($3, true, $4, NULL);
+      ast_declaration *decl = new(ctx) ast_declaration($3, $4, NULL);
       decl->set_location(yylloc);
 
       $$ = $1;
@@ -997,7 +997,7 @@ init_declarator_list:
    | init_declarator_list ',' any_identifier array_specifier '=' initializer
    {
       void *ctx = state;
-      ast_declaration *decl = new(ctx) ast_declaration($3, true, $4, $6);
+      ast_declaration *decl = new(ctx) ast_declaration($3, $4, $6);
       decl->set_location(yylloc);
 
       $$ = $1;
@@ -1007,7 +1007,7 @@ init_declarator_list:
    | init_declarator_list ',' any_identifier '=' initializer
    {
       void *ctx = state;
-      ast_declaration *decl = new(ctx) ast_declaration($3, false, NULL, $5);
+      ast_declaration *decl = new(ctx) ast_declaration($3, NULL, $5);
       decl->set_location(yylloc);
 
       $$ = $1;
@@ -1028,7 +1028,7 @@ single_declaration:
    | fully_specified_type any_identifier
    {
       void *ctx = state;
-      ast_declaration *decl = new(ctx) ast_declaration($2, false, NULL, NULL);
+      ast_declaration *decl = new(ctx) ast_declaration($2, NULL, NULL);
 
       $$ = new(ctx) ast_declarator_list($1);
       $$->set_location(yylloc);
@@ -1037,7 +1037,7 @@ single_declaration:
    | fully_specified_type any_identifier array_specifier
    {
       void *ctx = state;
-      ast_declaration *decl = new(ctx) ast_declaration($2, true, $3, NULL);
+      ast_declaration *decl = new(ctx) ast_declaration($2, $3, NULL);
 
       $$ = new(ctx) ast_declarator_list($1);
       $$->set_location(yylloc);
@@ -1046,7 +1046,7 @@ single_declaration:
    | fully_specified_type any_identifier array_specifier '=' initializer
    {
       void *ctx = state;
-      ast_declaration *decl = new(ctx) ast_declaration($2, true, $3, $5);
+      ast_declaration *decl = new(ctx) ast_declaration($2, $3, $5);
 
       $$ = new(ctx) ast_declarator_list($1);
       $$->set_location(yylloc);
@@ -1055,7 +1055,7 @@ single_declaration:
    | fully_specified_type any_identifier '=' initializer
    {
       void *ctx = state;
-      ast_declaration *decl = new(ctx) ast_declaration($2, false, NULL, $4);
+      ast_declaration *decl = new(ctx) ast_declaration($2, NULL, $4);
 
       $$ = new(ctx) ast_declarator_list($1);
       $$->set_location(yylloc);
@@ -1064,7 +1064,7 @@ single_declaration:
    | INVARIANT variable_identifier // Vertex only.
    {
       void *ctx = state;
-      ast_declaration *decl = new(ctx) ast_declaration($2, false, NULL, NULL);
+      ast_declaration *decl = new(ctx) ast_declaration($2, NULL, NULL);
 
       $$ = new(ctx) ast_declarator_list(NULL);
       $$->set_location(yylloc);
@@ -1771,13 +1771,13 @@ struct_declarator:
    any_identifier
    {
       void *ctx = state;
-      $$ = new(ctx) ast_declaration($1, false, NULL, NULL);
+      $$ = new(ctx) ast_declaration($1, NULL, NULL);
       $$->set_location(yylloc);
    }
    | any_identifier array_specifier
    {
       void *ctx = state;
-      $$ = new(ctx) ast_declaration($1, true, $2, NULL);
+      $$ = new(ctx) ast_declaration($1, $2, NULL);
       $$->set_location(yylloc);
    }
    ;
@@ -1935,7 +1935,7 @@ condition:
    | fully_specified_type any_identifier '=' initializer
    {
       void *ctx = state;
-      ast_declaration *decl = new(ctx) ast_declaration($2, false, NULL, $4);
+      ast_declaration *decl = new(ctx) ast_declaration($2, NULL, $4);
       ast_declarator_list *declarator = new(ctx) ast_declarator_list($1);
       decl->set_location(yylloc);
       declarator->set_location(yylloc);
@@ -2270,17 +2270,17 @@ instance_name_opt:
    /* empty */
    {
       $$ = new(state) ast_interface_block(*state->default_uniform_qualifier,
-                                          NULL, false, NULL);
+                                          NULL, NULL);
    }
    | NEW_IDENTIFIER
    {
       $$ = new(state) ast_interface_block(*state->default_uniform_qualifier,
-                                          $1, false, NULL);
+                                          $1, NULL);
    }
    | NEW_IDENTIFIER array_specifier
    {
       $$ = new(state) ast_interface_block(*state->default_uniform_qualifier,
-                                          $1, true, $2);
+                                          $1, $2);
    }
    ;
 
