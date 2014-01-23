@@ -319,6 +319,7 @@ ps30_input(struct svga_shader_emitter *emit,
 /**
  * Process a PS output declaration.
  * Note that we don't actually emit a SVGA3DOpDcl for PS outputs.
+ * \idx  register index, such as OUT[2] (not semantic index)
  */
 static boolean
 ps30_output(struct svga_shader_emitter *emit,
@@ -344,9 +345,9 @@ ps30_output(struct svga_shader_emitter *emit,
             if (semantic.Index == 0) {
                unsigned i;
                for (i = 0; i < emit->key.fkey.write_color0_to_n_cbufs; i++) {
-                  emit->output_map[i] = dst_register(SVGA3DREG_TEMP,
+                  emit->output_map[idx+i] = dst_register(SVGA3DREG_TEMP,
                                                      emit->nr_hw_temp++);
-                  emit->temp_color_output[i] = emit->output_map[i];
+                  emit->temp_color_output[i] = emit->output_map[idx+i];
                   emit->true_color_output[i] = dst_register(SVGA3DREG_COLOROUT,
                                                             i);
                }

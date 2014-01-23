@@ -99,6 +99,7 @@ struct svga_shader_emitter
    unsigned label[32];
    unsigned nr_labels;
 
+   /** input/output register mappings, indexed by register number */
    struct src_register input_map[PIPE_MAX_ATTRIBS];
    SVGA3dShaderDestToken output_map[PIPE_MAX_ATTRIBS];
 
@@ -119,7 +120,7 @@ struct svga_shader_emitter
    /* shared output for depth and fog */
    SVGA3dShaderDestToken vs_depth_fog;
 
-   /* PS output colors */
+   /* PS output colors (indexed by color semantic index) */
    SVGA3dShaderDestToken temp_color_output[PIPE_MAX_COLOR_BUFS];
    SVGA3dShaderDestToken true_color_output[PIPE_MAX_COLOR_BUFS];
 
