@@ -112,7 +112,7 @@ if HAVE_EGL_DRIVER_DRI2
 AM_CFLAGS += -D_EGL_BUILT_IN_DRIVER_DRI2
 AM_CFLAGS += -DHAVE_XCB_DRI2
 libEGL_la_LIBADD += ../drivers/dri2/libegl_dri2.la
-libEGL_la_LIBADD += $(LIBUDEV_LIBS) $(DLOPEN_LIBS) $(LIBDRM_LIBS)
+libEGL_la_LIBADD += $(DLOPEN_LIBS) $(LIBDRM_LIBS)
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for

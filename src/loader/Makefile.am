@@ -29,9 +29,6 @@ libloader_la_CPPFLAGS = \
 	$(VISIBILITY_CFLAGS) \
 	$(LIBUDEV_CFLAGS)
 
-libloader_la_LIBADD = \
-	$(LIBUDEV_LIBS)
-
 if !HAVE_LIBDRM
 libloader_la_CPPFLAGS += \
 	-D__NOT_HAVE_DRM_H
@@ -39,7 +36,7 @@ else
 libloader_la_CPPFLAGS += \
 	$(LIBDRM_CFLAGS)
 
-libloader_la_LIBADD += \
+libloader_la_LIBADD = \
 	$(LIBDRM_LIBS)
 endif
 
