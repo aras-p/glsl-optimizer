@@ -142,7 +142,7 @@ GL 4.2:
 GL 4.3:
 
   GLSL 4.3                                             not started
-  GL_ARB_arrays_of_arrays                              not started
+  GL_ARB_arrays_of_arrays                              started
   GL_ARB_ES3_compatibility                             DONE (i965)
   GL_ARB_clear_buffer_object                           not started
   GL_ARB_compute_shader                                not started
