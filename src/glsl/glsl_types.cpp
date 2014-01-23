@@ -300,8 +300,20 @@ glsl_type::glsl_type(const glsl_type *array, unsigned length) :
 
    if (length == 0)
       snprintf(n, name_length, "%s[]", array->name);
-   else
-      snprintf(n, name_length, "%s[%u]", array->name, length);
+   else {
+      /* insert outermost dimensions in the correct spot
+       * otherwise the dimension order will be backwards
+       */
+      const char *pos = strchr(array->name, '[');
+      if (pos) {
+         int idx = pos - array->name;
+         snprintf(n, idx+1, "%s", array->name);
+         snprintf(n + idx, name_length - idx, "[%u]%s",
+                  length, array->name + idx);
+      } else {
+         snprintf(n, name_length, "%s[%u]", array->name, length);
+      }
+   }
 
    this->name = n;
 }
