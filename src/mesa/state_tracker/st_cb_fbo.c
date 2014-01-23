@@ -700,7 +700,8 @@ st_ReadBuffer(struct gl_context *ctx, GLenum buffer)
    (void) buffer;
 
    /* add the renderbuffer on demand */
-   st_manager_add_color_renderbuffer(st, fb, fb->_ColorReadBufferIndex);
+   if (fb->_ColorReadBufferIndex >= 0)
+      st_manager_add_color_renderbuffer(st, fb, fb->_ColorReadBufferIndex);
 }
 
 
