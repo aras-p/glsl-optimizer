@@ -1136,76 +1136,60 @@ GLenum
 _mesa_get_nongeneric_internalformat(GLenum format)
 {
    switch (format) {
-      /* GL 1.1 formats. */
-      case 4:
-      case GL_RGBA:
-         return GL_RGBA8;
+   /* GL 1.1 formats. */
+   case 4:
+   case GL_RGBA:
+      return GL_RGBA8;
+   case 3:
+   case GL_RGB:
+      return GL_RGB8;
+   case 2:
+   case GL_LUMINANCE_ALPHA:
+      return GL_LUMINANCE8_ALPHA8;
+   case 1:
+   case GL_LUMINANCE:
+      return GL_LUMINANCE8;
+   case GL_ALPHA:
+      return GL_ALPHA8;
+   case GL_INTENSITY:
+      return GL_INTENSITY8;
 
-      case 3:
-      case GL_RGB:
-         return GL_RGB8;
+   /* GL_ARB_texture_rg */
+   case GL_RED:
+      return GL_R8;
+   case GL_RG:
+      return GL_RG8;
 
-      case 2:
-      case GL_LUMINANCE_ALPHA:
-         return GL_LUMINANCE8_ALPHA8;
+   /* GL_EXT_texture_sRGB */
+   case GL_SRGB:
+      return GL_SRGB8;
+   case GL_SRGB_ALPHA:
+      return GL_SRGB8_ALPHA8;
+   case GL_SLUMINANCE:
+      return GL_SLUMINANCE8;
+   case GL_SLUMINANCE_ALPHA:
+      return GL_SLUMINANCE8_ALPHA8;
 
-      case 1:
-      case GL_LUMINANCE:
-         return GL_LUMINANCE8;
+   /* GL_EXT_texture_snorm */
+   case GL_RGBA_SNORM:
+      return GL_RGBA8_SNORM;
+   case GL_RGB_SNORM:
+      return GL_RGB8_SNORM;
+   case GL_RG_SNORM:
+      return GL_RG8_SNORM;
+   case GL_RED_SNORM:
+      return GL_R8_SNORM;
+   case GL_LUMINANCE_ALPHA_SNORM:
+      return GL_LUMINANCE8_ALPHA8_SNORM;
+   case GL_LUMINANCE_SNORM:
+      return GL_LUMINANCE8_SNORM;
+   case GL_ALPHA_SNORM:
+      return GL_ALPHA8_SNORM;
+   case GL_INTENSITY_SNORM:
+      return GL_INTENSITY8_SNORM;
 
-      case GL_ALPHA:
-         return GL_ALPHA8;
-
-      case GL_INTENSITY:
-         return GL_INTENSITY8;
-
-      /* GL_ARB_texture_rg */
-      case GL_RED:
-         return GL_R8;
-
-      case GL_RG:
-         return GL_RG8;
-
-      /* GL_EXT_texture_sRGB */
-      case GL_SRGB:
-         return GL_SRGB8;
-
-      case GL_SRGB_ALPHA:
-         return GL_SRGB8_ALPHA8;
-
-      case GL_SLUMINANCE:
-         return GL_SLUMINANCE8;
-
-      case GL_SLUMINANCE_ALPHA:
-         return GL_SLUMINANCE8_ALPHA8;
-
-      /* GL_EXT_texture_snorm */
-      case GL_RGBA_SNORM:
-         return GL_RGBA8_SNORM;
-
-      case GL_RGB_SNORM:
-         return GL_RGB8_SNORM;
-
-      case GL_RG_SNORM:
-         return GL_RG8_SNORM;
-
-      case GL_RED_SNORM:
-         return GL_R8_SNORM;
-
-      case GL_LUMINANCE_ALPHA_SNORM:
-         return GL_LUMINANCE8_ALPHA8_SNORM;
-
-      case GL_LUMINANCE_SNORM:
-         return GL_LUMINANCE8_SNORM;
-
-      case GL_ALPHA_SNORM:
-         return GL_ALPHA8_SNORM;
-
-      case GL_INTENSITY_SNORM:
-         return GL_INTENSITY8_SNORM;
-
-      default:
-         return format;
+   default:
+      return format;
    }
 }
 
@@ -1219,28 +1203,20 @@ _mesa_get_linear_internalformat(GLenum format)
    switch (format) {
    case GL_SRGB:
       return GL_RGB;
-
    case GL_SRGB_ALPHA:
       return GL_RGBA;
-
    case GL_SRGB8:
       return GL_RGB8;
-
    case GL_SRGB8_ALPHA8:
       return GL_RGBA8;
-
    case GL_SLUMINANCE8:
       return GL_LUMINANCE8;
-
    case GL_SLUMINANCE:
       return GL_LUMINANCE;
-
    case GL_SLUMINANCE_ALPHA:
       return GL_LUMINANCE_ALPHA;
-
    case GL_SLUMINANCE8_ALPHA8:
       return GL_LUMINANCE8_ALPHA8;
-
    default:
       return format;
    }
