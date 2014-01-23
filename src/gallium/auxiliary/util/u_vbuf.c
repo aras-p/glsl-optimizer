@@ -370,7 +370,7 @@ u_vbuf_translate_buffers(struct u_vbuf *mgr, struct translate_key *key,
 
       /* Subtract min_index so that indexing with the index buffer works. */
       if (unroll_indices) {
-         map -= vb->stride * min_index;
+         map -= (ptrdiff_t)vb->stride * min_index;
       }
 
       tr->set_buffer(tr, i, map, vb->stride, ~0);
