@@ -145,6 +145,7 @@ _mesa_ScissorArrayv(GLuint first, GLsizei count, const GLint *v)
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glScissorArrayv: index (%d) width or height < 0 (%d, %d)",
                      i, p[i].Width, p[i].Height);
+         return;
       }
    }
 
@@ -187,6 +188,7 @@ ScissorIndexed(GLuint index, GLint left, GLint bottom,
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "%s: index (%d) width or height < 0 (%d, %d)",
                   function, index, width, height);
+      return;
    }
 
    set_scissor_no_notify(ctx, index, left, bottom, width, height);
