@@ -484,6 +484,7 @@ struct _mesa_glsl_extension {
 static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    /*                                  API availability */
    /* name                             GL     ES         supported flag */
+   EXT(ARB_arrays_of_arrays,           true,  false,     ARB_arrays_of_arrays),
    EXT(ARB_conservative_depth,         true,  false,     ARB_conservative_depth),
    EXT(ARB_draw_buffers,               true,  false,     dummy_true),
    EXT(ARB_draw_instanced,             true,  false,     ARB_draw_instanced),
@@ -789,15 +790,11 @@ ast_node::ast_node(void)
 
 
 static void
-ast_opt_array_size_print(bool is_array, const ast_expression *array_size)
+ast_opt_array_dimensions_print(bool is_array, const ast_array_specifier *array_specifier)
 {
    if (is_array) {
-      printf("[ ");
-
-      if (array_size)
-	 array_size->print();
-
-      printf("] ");
+      if (array_specifier)
+         array_specifier->print();
    }
 }
 
@@ -1021,7 +1018,7 @@ ast_parameter_declarator::print(void) const
    type->print();
    if (identifier)
       printf("%s ", identifier);
-   ast_opt_array_size_print(is_array, array_size);
+   ast_opt_array_dimensions_print(is_array, array_specifier);
 }
 
 
@@ -1037,7 +1034,7 @@ void
 ast_declaration::print(void) const
 {
    printf("%s ", identifier);
-   ast_opt_array_size_print(is_array, array_size);
+   ast_opt_array_dimensions_print(is_array, array_specifier);
 
    if (initializer) {
       printf("= ");
@@ -1047,12 +1044,12 @@ ast_declaration::print(void) const
 
 
 ast_declaration::ast_declaration(const char *identifier, bool is_array,
-				 ast_expression *array_size,
+				 ast_array_specifier *array_specifier,
 				 ast_expression *initializer)
 {
    this->identifier = identifier;
    this->is_array = is_array;
-   this->array_size = array_size;
+   this->array_specifier = array_specifier;
    this->initializer = initializer;
 }
 

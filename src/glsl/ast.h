@@ -276,6 +276,43 @@ private:
    bool cons;
 };
 
+class ast_array_specifier : public ast_node {
+public:
+   /** Unsized array specifier ([]) */
+   explicit ast_array_specifier(const struct YYLTYPE &locp)
+     : dimension_count(1), is_unsized_array(true)
+   {
+      set_location(locp);
+   }
+
+   /** Sized array specifier ([dim]) */
+   ast_array_specifier(const struct YYLTYPE &locp, ast_expression *dim)
+     : dimension_count(1), is_unsized_array(false)
+   {
+      set_location(locp);
+      array_dimensions.push_tail(&dim->link);
+   }
+
+   void add_dimension(ast_expression *dim)
+   {
+      array_dimensions.push_tail(&dim->link);
+      dimension_count++;
+   }
+
+   virtual void print(void) const;
+
+   /* Count including sized and unsized dimensions */
+   unsigned dimension_count;
+
+   /* If true, this means that the array has an unsized outermost dimension. */
+   bool is_unsized_array;
+
+   /* This list contains objects of type ast_node containing the
+    * sized dimensions only, in outermost-to-innermost order.
+    */
+   exec_list array_dimensions;
+};
+
 /**
  * C-style aggregate initialization class
  *
@@ -334,14 +371,15 @@ public:
 
 class ast_declaration : public ast_node {
 public:
-   ast_declaration(const char *identifier, bool is_array, ast_expression *array_size,
-		   ast_expression *initializer);
+   ast_declaration(const char *identifier, bool is_array,
+                   ast_array_specifier *array_specifier,
+                   ast_expression *initializer);
    virtual void print(void) const;
 
    const char *identifier;
    
    bool is_array;
-   ast_expression *array_size;
+   ast_array_specifier *array_specifier;
 
    ast_expression *initializer;
 };
@@ -551,9 +589,9 @@ public:
     * be modified. Zeros the inherited ast_node's fields.
     */
    ast_type_specifier(const ast_type_specifier *that, bool is_array,
-                      ast_expression *array_size)
+                      ast_array_specifier *array_specifier)
       : ast_node(), type_name(that->type_name), structure(that->structure),
-        is_array(is_array), array_size(array_size),
+        is_array(is_array), array_specifier(array_specifier),
         default_precision(that->default_precision)
    {
       /* empty */
@@ -562,7 +600,7 @@ public:
    /** Construct a type specifier from a type name */
    ast_type_specifier(const char *name) 
       : type_name(name), structure(NULL),
-	is_array(false), array_size(NULL),
+	is_array(false), array_specifier(NULL),
 	default_precision(ast_precision_none)
    {
       /* empty */
@@ -571,7 +609,7 @@ public:
    /** Construct a type specifier from a structure definition */
    ast_type_specifier(ast_struct_specifier *s)
       : type_name(s->name), structure(s),
-	is_array(false), array_size(NULL),
+	is_array(false), array_specifier(NULL),
 	default_precision(ast_precision_none)
    {
       /* empty */
@@ -589,7 +627,7 @@ public:
    ast_struct_specifier *structure;
 
    bool is_array;
-   ast_expression *array_size;
+   ast_array_specifier *array_specifier;
 
    /** For precision statements, this is the given precision; otherwise none. */
    unsigned default_precision:2;
@@ -643,7 +681,7 @@ public:
       type(NULL),
       identifier(NULL),
       is_array(false),
-      array_size(NULL),
+      array_specifier(NULL),
       formal_parameter(false),
       is_void(false)
    {
@@ -658,7 +696,7 @@ public:
    ast_fully_specified_type *type;
    const char *identifier;
    bool is_array;
-   ast_expression *array_size;
+   ast_array_specifier *array_specifier;
 
    static void parameters_to_hir(exec_list *ast_parameters,
 				 bool formal, exec_list *ir_parameters,
@@ -906,12 +944,12 @@ public:
    ast_interface_block(ast_type_qualifier layout,
                        const char *instance_name,
                        bool is_array,
-                       ast_expression *array_size)
+                       ast_array_specifier *array_specifier)
    : layout(layout), block_name(NULL), instance_name(instance_name),
-     is_array(is_array), array_size(array_size)
+     is_array(is_array), array_specifier(array_specifier)
    {
       if (!is_array)
-         assert(array_size == NULL);
+         assert(array_specifier == NULL);
    }
 
    virtual ir_rvalue *hir(exec_list *instructions,
@@ -946,7 +984,7 @@ public:
     * If the block is not declared as an array or if the block instance array
     * is unsized, this field will be \c NULL.
     */
-   ast_expression *array_size;
+   ast_array_specifier *array_specifier;
 };
 
 

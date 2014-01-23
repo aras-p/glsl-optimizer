@@ -25,6 +25,19 @@
 #include "glsl_types.h"
 #include "ir.h"
 
+void
+ast_array_specifier::print(void) const
+{
+   if (this->is_unsized_array) {
+      printf("[ ] ");
+   }
+
+   foreach_list_typed (ast_node, array_dimension, link, &this->array_dimensions) {
+      printf("[ ");
+      array_dimension->print();
+      printf("] ");
+   }
+}
 
 /**
  * If \c ir is a reference to an array for which we are tracking the max array
