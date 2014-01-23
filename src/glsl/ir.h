@@ -471,7 +471,7 @@ public:
    void reinit_interface_type(const struct glsl_type *type)
    {
       if (this->max_ifc_array_access != NULL) {
-#ifndef _NDEBUG
+#ifndef NDEBUG
          /* Redeclaring gl_PerVertex is only allowed if none of the built-ins
           * it defines have been accessed yet; so it's safe to throw away the
           * old max_ifc_array_access pointer, since all of its values are
