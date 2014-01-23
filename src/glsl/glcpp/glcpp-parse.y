@@ -1222,6 +1222,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	         add_builtin_define(parser, "GL_EXT_texture_array", 1);
 	      }
 
+              if (extensions->ARB_arrays_of_arrays)
+                 add_builtin_define(parser, "GL_ARB_arrays_of_arrays", 1);
+
 	      if (extensions->ARB_fragment_coord_conventions)
 	         add_builtin_define(parser, "GL_ARB_fragment_coord_conventions",
 				    1);

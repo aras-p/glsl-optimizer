@@ -3380,6 +3380,7 @@ struct gl_extensions
    GLboolean ANGLE_texture_compression_dxt;
    GLboolean ARB_ES2_compatibility;
    GLboolean ARB_ES3_compatibility;
+   GLboolean ARB_arrays_of_arrays;
    GLboolean ARB_base_instance;
    GLboolean ARB_blend_func_extended;
    GLboolean ARB_color_buffer_float;
