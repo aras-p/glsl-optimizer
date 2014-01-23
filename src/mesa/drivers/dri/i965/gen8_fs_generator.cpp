@@ -241,6 +241,9 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
       if (dispatch_width == 16)
          src.nr++;
 
+      unsigned save_exec_size = default_state.exec_size;
+      default_state.exec_size = BRW_EXECUTE_8;
+
       MOV_RAW(src, brw_vec8_grf(0, 0));
 
       if (ir->texture_offset) {
@@ -248,6 +251,8 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
          MOV_RAW(retype(brw_vec1_grf(src.nr, 2), BRW_REGISTER_TYPE_UD),
                  brw_imm_ud(ir->texture_offset));
       }
+
+      default_state.exec_size = save_exec_size;
    }
 
    uint32_t surf_index =
