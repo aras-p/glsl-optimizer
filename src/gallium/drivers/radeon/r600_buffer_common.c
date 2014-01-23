@@ -28,6 +28,7 @@
 #include "util/u_memory.h"
 #include "util/u_upload_mgr.h"
 #include <inttypes.h>
+#include <stdio.h>
 
 boolean r600_rings_is_buffer_referenced(struct r600_common_context *ctx,
 					struct radeon_winsys_cs_handle *buf,
