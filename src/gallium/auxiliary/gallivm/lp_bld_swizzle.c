@@ -180,7 +180,8 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
    /* XXX: SSE3 has PSHUFB which should be better than bitmasks, but forcing
     * using shuffles here actually causes worst results. More investigation is
     * needed. */
-   if (type.width >= 16) {
+   if (LLVMIsConstant(a) ||
+       type.width >= 16) {
       /*
        * Shuffle.
        */
@@ -398,7 +399,8 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
       }
    }
 
-   if (type.width >= 16) {
+   if (LLVMIsConstant(a) ||
+       type.width >= 16) {
       /*
        * Shuffle.
        */
