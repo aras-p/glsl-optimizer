@@ -740,6 +740,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 {
    void *ctx = state;
    bool error_emitted = (lhs->type->is_error() || rhs->type->is_error());
+   ir_rvalue *extract_channel = NULL;
 
    /* If the assignment LHS comes back as an ir_binop_vector_extract
     * expression, move it to the RHS as an ir_triop_vector_insert.
@@ -755,11 +756,23 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
          if (new_rhs == NULL) {
             return lhs;
          } else {
+            /* This converts:
+             * - LHS: (expression float vector_extract <vec> <channel>)
+             * - RHS: <scalar>
+             * into:
+             * - LHS: <vec>
+             * - RHS: (expression vec2 vector_insert <vec> <channel> <scalar>)
+             *
+             * The LHS type is now a vector instead of a scalar.  Since GLSL
+             * allows assignments to be used as rvalues, we need to re-extract
+             * the channel from assignment_temp when returning the rvalue.
+             */
+            extract_channel = lhs_expr->operands[1];
             rhs = new(ctx) ir_expression(ir_triop_vector_insert,
                                          lhs_expr->operands[0]->type,
                                          lhs_expr->operands[0],
                                          new_rhs,
-                                         lhs_expr->operands[1]);
+                                         extract_channel);
             lhs = lhs_expr->operands[0]->clone(ctx, NULL);
          }
       }
@@ -856,6 +869,11 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    if (!error_emitted)
       instructions->push_tail(new(ctx) ir_assignment(lhs, deref_var));
 
+   if (extract_channel) {
+      return new(ctx) ir_expression(ir_binop_vector_extract,
+                                    new(ctx) ir_dereference_variable(var),
+                                    extract_channel->clone(ctx, NULL));
+   }
    return new(ctx) ir_dereference_variable(var);
 }
 
