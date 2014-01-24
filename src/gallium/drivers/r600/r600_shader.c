@@ -288,6 +288,7 @@ struct r600_shader_ctx {
 	int					gs_out_ring_offset;
 	int					gs_next_vertex;
 	struct r600_shader	*gs_for_vs;
+	int					gs_export_gpr_treg;
 };
 
 struct r600_shader_tgsi_instruction {
@@ -297,7 +298,7 @@ struct r600_shader_tgsi_instruction {
 	int (*process)(struct r600_shader_ctx *ctx);
 };
 
-static int emit_gs_ring_writes(struct r600_shader_ctx *ctx);
+static int emit_gs_ring_writes(struct r600_shader_ctx *ctx, bool ind);
 static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[], eg_shader_tgsi_instruction[], cm_shader_tgsi_instruction[];
 static int tgsi_helper_tempx_replicate(struct r600_shader_ctx *ctx);
 static inline void callstack_push(struct r600_shader_ctx *ctx, unsigned reason);
@@ -1303,7 +1304,7 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 	return r600_bytecode_build(ctx.bc);
 }
 
-static int emit_gs_ring_writes(struct r600_shader_ctx *ctx)
+static int emit_gs_ring_writes(struct r600_shader_ctx *ctx, bool ind)
 {
 	struct r600_bytecode_output output;
 	int i, k, ring_offset;
@@ -1328,16 +1329,47 @@ static int emit_gs_ring_writes(struct r600_shader_ctx *ctx)
 
 		/* next_ring_offset after parsing input decls contains total size of
 		 * single vertex data, gs_next_vertex - current vertex index */
-		ring_offset += ctx->gs_out_ring_offset * ctx->gs_next_vertex;
+		if (!ind)
+			ring_offset += ctx->gs_out_ring_offset * ctx->gs_next_vertex;
 
+		/* get a temp and add the ring offset to the next vertex base in the shader */
 		memset(&output, 0, sizeof(struct r600_bytecode_output));
 		output.gpr = ctx->shader->output[i].gpr;
 		output.elem_size = 3;
 		output.comp_mask = 0xF;
 		output.burst_count = 1;
+
+		if (ind)
+			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_WRITE_IND;
+		else
+			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_WRITE;
 		output.op = CF_OP_MEM_RING;
-		output.array_base = ring_offset >> 2; /* in dwords */
+
+
+		if (ind) {
+			output.array_base = ring_offset >> 2; /* in dwords */
+			output.array_size = 0xff
+			output.index_gpr = ctx->gs_export_gpr_treg;
+		} else
+			output.array_base = ring_offset >> 2; /* in dwords */
 		r600_bytecode_add_output(ctx->bc, &output);
+	}
+
+	if (ind) {
+		struct r600_bytecode_alu alu;
+		int r;
+
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.op = ALU_OP2_ADD_INT;
+		alu.src[0].sel = ctx->gs_export_gpr_treg;
+		alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
+		alu.src[1].value = ctx->gs_out_ring_offset >> 4;
+		alu.dst.sel = ctx->gs_export_gpr_treg;
+		alu.dst.write = 1;
+		alu.last = 1;
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
 	}
 	++ctx->gs_next_vertex;
 	return 0;
@@ -1473,7 +1505,11 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 	ctx.file_offset[TGSI_FILE_IMMEDIATE] = V_SQ_ALU_SRC_LITERAL;
 	ctx.bc->ar_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +
 			ctx.info.file_max[TGSI_FILE_TEMPORARY] + 1;
-	ctx.temp_reg = ctx.bc->ar_reg + 1;
+	if (ctx.type == TGSI_PROCESSOR_GEOMETRY) {
+		ctx.gs_export_gpr_treg = ctx.bc->ar_reg + 1;
+		ctx.temp_reg = ctx.bc->ar_reg + 2;
+	} else
+		ctx.temp_reg = ctx.bc->ar_reg + 1;
 
 	if (indirect_gprs) {
 		shader->max_arrays = 0;
@@ -1667,6 +1703,21 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 			}
 		}
 
+		if (ctx.type == TGSI_PROCESSOR_GEOMETRY) {
+			struct r600_bytecode_alu alu;
+			int r;
+
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			alu.op = ALU_OP1_MOV;
+			alu.src[0].sel = V_SQ_ALU_SRC_LITERAL;
+			alu.src[0].value = 0;
+			alu.dst.sel = ctx.gs_export_gpr_treg;
+			alu.dst.write = 1;
+			alu.last = 1;
+			r = r600_bytecode_add_alu(ctx.bc, &alu);
+			if (r)
+				return r;
+		}
 		if (shader->two_side && ctx.colors_used) {
 			if ((r = process_twoside_color_inputs(&ctx)))
 				return r;
@@ -1770,7 +1821,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 
 	if (ring_outputs) {
 		if (key.vs_as_es)
-			emit_gs_ring_writes(&ctx);
+			emit_gs_ring_writes(&ctx, FALSE);
 	} else {
 		/* export output */
 		for (i = 0, j = 0; i < noutput; i++, j++) {
@@ -5973,7 +6024,7 @@ static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx)
 static int tgsi_gs_emit(struct r600_shader_ctx *ctx)
 {
 	if (ctx->inst_info->op == CF_OP_EMIT_VERTEX)
-		emit_gs_ring_writes(ctx);
+		emit_gs_ring_writes(ctx, TRUE);
 
 	return r600_bytecode_add_cfinst(ctx->bc, ctx->inst_info->op);
 }
