@@ -293,7 +293,7 @@ void r600_flush_emit(struct r600_context *rctx)
 				S_0085F0_SMX_ACTION_ENA(1);
 	}
 
-	if (cp_coher_cntl && !rctx->skip_surface_sync_on_next_cs_flush) {
+	if (cp_coher_cntl) {
 		cs->buf[cs->cdw++] = PKT3(PKT3_SURFACE_SYNC, 3, 0);
 		cs->buf[cs->cdw++] = cp_coher_cntl;   /* CP_COHER_CNTL */
 		cs->buf[cs->cdw++] = 0xffffffff;      /* CP_COHER_SIZE */
@@ -354,8 +354,6 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 
 	/* Flush the CS. */
 	ctx->b.ws->cs_flush(ctx->b.rings.gfx.cs, flags, ctx->screen->cs_count++);
-
-	ctx->skip_surface_sync_on_next_cs_flush = false;
 }
 
 void r600_begin_new_cs(struct r600_context *ctx)

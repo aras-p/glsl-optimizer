@@ -63,6 +63,7 @@
 #define R600_TEXEL_PITCH_ALIGNMENT_MASK        0x7
 
 #define PKT3_NOP                               0x10
+#define PKT3_DEALLOC_STATE                     0x14
 #define PKT3_DISPATCH_DIRECT                   0x15
 #define PKT3_DISPATCH_INDIRECT                 0x16
 #define PKT3_INDIRECT_BUFFER_END               0x17

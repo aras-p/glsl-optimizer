@@ -489,7 +489,14 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	ctx->b.flags = 0;
 
 	if (ctx->b.chip_class >= CAYMAN) {
-		ctx->skip_surface_sync_on_next_cs_flush = true;
+		cs->buf[cs->cdw++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+		cs->buf[cs->cdw++] = EVENT_TYPE(EVENT_TYPE_CS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+		/* DEALLOC_STATE prevents the GPU from hanging when a
+		 * SURFACE_SYNC packet is emitted some time after a DISPATCH_DIRECT
+		 * with any of the CB*_DEST_BASE_ENA or DB_DEST_BASE_ENA bits set.
+		 */
+		cs->buf[cs->cdw++] = PKT3C(PKT3_DEALLOC_STATE, 0, 0);
+		cs->buf[cs->cdw++] = 0;
 	}
 
 #if 0
