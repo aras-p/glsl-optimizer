@@ -834,10 +834,12 @@ static int tgsi_fetch_rel_const(struct r600_shader_ctx *ctx, unsigned int cb_idx
 	return 0;
 }
 
-static int fetch_gs_input(struct r600_shader_ctx *ctx, unsigned index, unsigned vtx_id, unsigned int dst_reg)
+static int fetch_gs_input(struct r600_shader_ctx *ctx, struct tgsi_full_src_register *src, unsigned int dst_reg)
 {
 	struct r600_bytecode_vtx vtx;
 	int r;
+	unsigned index = src->Register.Index;
+	unsigned vtx_id = src->Dimension.Index;
 	int offset_reg = vtx_id / 3;
 	int offset_chan = vtx_id % 3;
 
@@ -846,6 +848,46 @@ static int fetch_gs_input(struct r600_shader_ctx *ctx, unsigned index, unsigned 
 
 	if (offset_reg == 0 && offset_chan == 2)
 		offset_chan = 3;
+
+	if (src->Dimension.Indirect) {
+		int treg[3];
+		int t2;
+		struct r600_bytecode_alu alu;
+		int r, i;
+
+		/* you have got to be shitting me -
+		   we have to put the R0.x/y/w into Rt.x Rt+1.x Rt+2.x then index reg from Rt.
+		   at least this is what fglrx seems to do. */
+		for (i = 0; i < 3; i++) {
+			treg[i] = r600_get_temp(ctx);
+		}
+		t2 = r600_get_temp(ctx);
+		for (i = 0; i < 3; i++) {
+			memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+			alu.op = ALU_OP1_MOV;
+			alu.src[0].sel = 0;
+			alu.src[0].chan = i == 2 ? 3 : i;
+			alu.dst.sel = treg[i];
+			alu.dst.chan = 0;
+			alu.dst.write = 1;
+			alu.last = 1;
+			r = r600_bytecode_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
+		memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+		alu.op = ALU_OP1_MOV;
+		alu.src[0].sel = treg[0];
+		alu.src[0].rel = 1;
+		alu.dst.sel = t2;
+		alu.dst.write = 1;
+		alu.last = 1;
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+		offset_reg = t2;
+	}
+
 
 	memset(&vtx, 0, sizeof(vtx));
 	vtx.buffer_id = R600_GS_RING_CONST_BUFFER;
@@ -884,10 +926,8 @@ static int tgsi_split_gs_inputs(struct r600_shader_ctx *ctx)
 		}
 		if (src->Register.File == TGSI_FILE_INPUT && src->Register.Dimension) {
 			int treg = r600_get_temp(ctx);
-			int index = src->Register.Index;
-			int vtx_id = src->Dimension.Index;
 
-			fetch_gs_input(ctx, index, vtx_id, treg);
+			fetch_gs_input(ctx, src, treg);
 			ctx->src[i].sel = treg;
 		}
 	}
