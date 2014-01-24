@@ -2300,7 +2300,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    /* Geometry shaders have to be linked with vertex shaders.
     */
    if (num_shaders[MESA_SHADER_GEOMETRY] > 0 &&
-       num_shaders[MESA_SHADER_VERTEX] == 0) {
+       num_shaders[MESA_SHADER_VERTEX] == 0 &&
+       !prog->SeparateShader) {
       linker_error(prog, "Geometry shader must be linked with "
 		   "vertex shader\n");
       goto done;
