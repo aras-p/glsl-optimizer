@@ -842,6 +842,9 @@ static void build_tbuffer_store(struct si_shader_context *shader,
 		LLVMConstInt(i32, tfe, 0)
 	};
 
+	/* The instruction offset field has 12 bits */
+	assert(offen || inst_offset < (1 << 12));
+
 	/* The intrinsic is overloaded, we need to add a type suffix for overloading to work. */
 	unsigned func = CLAMP(num_channels, 1, 3) - 1;
 	const char *types[] = {"i32", "v2i32", "v4i32"};
@@ -1179,6 +1182,8 @@ static void si_llvm_emit_es_epilogue(struct lp_build_tgsi_context * bld_base)
 	struct si_shader *gs = si_shader_ctx->gs_for_vs;
 	struct tgsi_parse_context *parse = &si_shader_ctx->parse;
 	LLVMTypeRef i32 = LLVMInt32TypeInContext(gallivm->context);
+	LLVMValueRef soffset = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
+					    SI_PARAM_ES2GS_OFFSET);
 	LLVMValueRef t_list_ptr;
 	LLVMValueRef t_list;
 	unsigned chan;
@@ -1216,20 +1221,14 @@ static void si_llvm_emit_es_epilogue(struct lp_build_tgsi_context * bld_base)
 
 		for (chan = 0; chan < 4; chan++) {
 			LLVMValueRef out_val = LLVMBuildLoad(gallivm->builder, out_ptr[chan], "");
-			LLVMValueRef voffset =
-				lp_build_const_int32(gallivm,
-						     (4 * gs->input[j].param_offset + chan) * 4);
-			LLVMValueRef soffset =
-				LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
-					     SI_PARAM_ES2GS_OFFSET);
-
 			out_val = LLVMBuildBitCast(gallivm->builder, out_val, i32, "");
 
 			build_tbuffer_store(si_shader_ctx, t_list, out_val, 1,
-					    voffset, soffset, 0,
+					    LLVMGetUndef(i32), soffset,
+					    (4 * gs->input[j].param_offset + chan) * 4,
 					    V_008F0C_BUF_DATA_FORMAT_32,
 					    V_008F0C_BUF_NUM_FORMAT_UINT,
-					    1, 0, 1, 1, 0);
+					    0, 0, 1, 1, 0);
 		}
 	}
 }
@@ -1901,6 +1900,8 @@ static void si_llvm_emit_vertex(
 	struct si_shader *shader = &si_shader_ctx->shader->shader;
 	struct gallivm_state *gallivm = bld_base->base.gallivm;
 	LLVMTypeRef i32 = LLVMInt32TypeInContext(gallivm->context);
+	LLVMValueRef soffset = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
+					    SI_PARAM_GS2VS_OFFSET);
 	LLVMValueRef gs_next_vertex;
 	LLVMValueRef t_list_ptr;
 	LLVMValueRef t_list;
@@ -1936,9 +1937,6 @@ static void si_llvm_emit_vertex(
 
 		for (chan = 0; chan < 4; chan++) {
 			LLVMValueRef out_val = LLVMBuildLoad(gallivm->builder, out_ptr[chan], "");
-			LLVMValueRef soffset =
-				LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
-					     SI_PARAM_GS2VS_OFFSET);
 			LLVMValueRef voffset =
 				lp_build_const_int32(gallivm, (i * 4 + chan) *
 						     shader->gs_max_out_vertices);
