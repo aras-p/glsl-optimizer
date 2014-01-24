@@ -2043,6 +2043,8 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 	} else {
 	   add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
 	   add_builtin_define(parser, "GL_ARB_texture_rectangle", 1);
+           add_builtin_define(parser, "GL_AMD_shader_trinary_minmax", 1);
+
 
 	   if (extensions != NULL) {
 	      if (extensions->EXT_texture_array)
@@ -2107,9 +2109,6 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 
 	      if (extensions->ARB_shader_atomic_counters)
 	         add_builtin_define(parser, "GL_ARB_shader_atomic_counters", 1);
-
-	      if (extensions->AMD_shader_trinary_minmax)
-	         add_builtin_define(parser, "GL_AMD_shader_trinary_minmax", 1);
 
 	      if (extensions->ARB_viewport_array)
 	         add_builtin_define(parser, "GL_ARB_viewport_array", 1);
