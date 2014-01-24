@@ -745,9 +745,9 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
     * expression, move it to the RHS as an ir_triop_vector_insert.
     */
    if (lhs->ir_type == ir_type_expression) {
-      ir_expression *const expr = lhs->as_expression();
+      ir_expression *const lhs_expr = lhs->as_expression();
 
-      if (unlikely(expr->operation == ir_binop_vector_extract)) {
+      if (unlikely(lhs_expr->operation == ir_binop_vector_extract)) {
          ir_rvalue *new_rhs =
             validate_assignment(state, lhs_loc, lhs->type,
                                 rhs, is_initializer);
@@ -756,11 +756,11 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
             return lhs;
          } else {
             rhs = new(ctx) ir_expression(ir_triop_vector_insert,
-                                         expr->operands[0]->type,
-                                         expr->operands[0],
+                                         lhs_expr->operands[0]->type,
+                                         lhs_expr->operands[0],
                                          new_rhs,
-                                         expr->operands[1]);
-            lhs = expr->operands[0]->clone(ctx, NULL);
+                                         lhs_expr->operands[1]);
+            lhs = lhs_expr->operands[0]->clone(ctx, NULL);
          }
       }
    }
