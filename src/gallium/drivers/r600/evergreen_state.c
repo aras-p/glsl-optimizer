@@ -2967,6 +2967,7 @@ static void cayman_init_atom_start_cs(struct r600_context *rctx)
 
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0, 0x01000FFF);
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF);
+	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0 + (64 * 4), 0x01000FFF);
 }
 
 void evergreen_init_common_regs(struct r600_command_buffer *cb,
@@ -3425,6 +3426,7 @@ void evergreen_init_atom_start_cs(struct r600_context *rctx)
 
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0, 0x01000FFF);
 	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF);
+	eg_store_loop_const(cb, R_03A200_SQ_LOOP_CONST_0 + (64 * 4), 0x01000FFF);
 }
 
 void evergreen_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
