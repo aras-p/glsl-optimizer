@@ -2728,12 +2728,22 @@ static void evergreen_emit_shader_stages(struct r600_context *rctx, struct r600_
 	uint32_t v = 0, v2 = 0, primid = 0;
 
 	if (state->geom_enable) {
+		uint32_t cut_val;
+
+		if (rctx->gs_shader->current->shader.gs_max_out_vertices <= 128)
+			cut_val = V_028A40_GS_CUT_128;
+		else if (rctx->gs_shader->current->shader.gs_max_out_vertices <= 256)
+			cut_val = V_028A40_GS_CUT_256;
+		else if (rctx->gs_shader->current->shader.gs_max_out_vertices <= 512)
+			cut_val = V_028A40_GS_CUT_512;
+		else
+			cut_val = V_028A40_GS_CUT_1024;
 		v = S_028B54_ES_EN(V_028B54_ES_STAGE_REAL) |
 			S_028B54_GS_EN(1) |
 			S_028B54_VS_EN(V_028B54_VS_STAGE_COPY_SHADER);
 
 		v2 = S_028A40_MODE(V_028A40_GS_SCENARIO_G) |
-			S_028A40_CUT_MODE(V_028A40_GS_CUT_128);
+			S_028A40_CUT_MODE(cut_val);
 
 		if (rctx->gs_shader->current->shader.gs_prim_id_input)
 			primid = 1;
