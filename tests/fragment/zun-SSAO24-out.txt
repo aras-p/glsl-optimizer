@@ -34,7 +34,7 @@ void main ()
   vec2 tmpvar_2;
   tmpvar_2 = xlv_TEXCOORD0;
   vec3 samples_3[24];
-  samples_3 = RAND_SAMPLES_1;
+  samples_3[0]=RAND_SAMPLES_1[0];samples_3[1]=RAND_SAMPLES_1[1];samples_3[2]=RAND_SAMPLES_1[2];samples_3[3]=RAND_SAMPLES_1[3];samples_3[4]=RAND_SAMPLES_1[4];samples_3[5]=RAND_SAMPLES_1[5];samples_3[6]=RAND_SAMPLES_1[6];samples_3[7]=RAND_SAMPLES_1[7];samples_3[8]=RAND_SAMPLES_1[8];samples_3[9]=RAND_SAMPLES_1[9];samples_3[10]=RAND_SAMPLES_1[10];samples_3[11]=RAND_SAMPLES_1[11];samples_3[12]=RAND_SAMPLES_1[12];samples_3[13]=RAND_SAMPLES_1[13];samples_3[14]=RAND_SAMPLES_1[14];samples_3[15]=RAND_SAMPLES_1[15];samples_3[16]=RAND_SAMPLES_1[16];samples_3[17]=RAND_SAMPLES_1[17];samples_3[18]=RAND_SAMPLES_1[18];samples_3[19]=RAND_SAMPLES_1[19];samples_3[20]=RAND_SAMPLES_1[20];samples_3[21]=RAND_SAMPLES_1[21];samples_3[22]=RAND_SAMPLES_1[22];samples_3[23]=RAND_SAMPLES_1[23];
   float occ_5;
   float scale_6;
   float depth_7;

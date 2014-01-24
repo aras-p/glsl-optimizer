@@ -187,6 +187,7 @@ public:
 	
 	void emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex);
 	bool emit_canonical_for (ir_loop* ir);
+	bool try_print_array_assignment (ir_dereference* lhs, ir_rvalue* rhs);
 	
 	int indentation;
 	int expression_depth;
@@ -949,6 +950,35 @@ void ir_print_glsl_visitor::visit(ir_dereference_record *ir)
 }
 
 
+bool ir_print_glsl_visitor::try_print_array_assignment (ir_dereference* lhs, ir_rvalue* rhs)
+{
+	if (this->state->language_version >= 120)
+		return false;
+	ir_dereference_variable* rhsarr = rhs->as_dereference_variable();
+	if (rhsarr == NULL)
+		return false;
+	const glsl_type* lhstype = lhs->type;
+	const glsl_type* rhstype = rhsarr->type;
+	if (!lhstype->is_array() || !rhstype->is_array())
+		return false;
+	if (lhstype->array_size() != rhstype->array_size())
+		return false;
+	if (lhstype->base_type != rhstype->base_type)
+		return false;
+	
+	const unsigned size = rhstype->array_size();
+	for (unsigned i = 0; i < size; i++)
+	{
+		lhs->accept(this);
+		buffer.asprintf_append ("[%d]=", i);
+		rhs->accept(this);
+		buffer.asprintf_append ("[%d]", i);
+		if (i != size-1)
+			buffer.asprintf_append (";");
+	}
+	return true;
+}
+
 void ir_print_glsl_visitor::emit_assignment_part (ir_dereference* lhs, ir_rvalue* rhs, unsigned write_mask, ir_rvalue* dstIndex)
 {
 	lhs->accept(this);
@@ -1125,6 +1155,9 @@ void ir_print_glsl_visitor::visit(ir_assignment *ir)
 	}
 	
 	if (try_print_increment (this, ir))
+		return;
+		
+	if (try_print_array_assignment (ir->lhs, ir->rhs))
 		return;
 		
    if (ir->condition)

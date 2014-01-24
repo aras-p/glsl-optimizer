@@ -9,6 +9,11 @@ Goodies:
 * More OpenGL ES 2.0 conformant printing of complex for-loops (loop inductions printed
   as += or ++; loop initializers inside loop body).
 
+Fixes:
+
+* Fixed array assignments sometimes appearing in pre-GLSL1.20 versions, especially with
+  complex loops that couldn't be unrolled.
+
 2013 12
 -------
 
