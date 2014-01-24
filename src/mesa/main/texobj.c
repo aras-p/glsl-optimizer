@@ -559,6 +559,13 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
                        /* 'q' in the GL spec */
                        maxLevels - 1);
 
+   if (t->Immutable) {
+      /* Adjust max level for views: the data store may have more levels than
+       * the view exposes.
+       */
+      t->_MaxLevel = MIN2(t->_MaxLevel, t->NumLevels - 1);
+   }
+
    /* Compute _MaxLambda = q - p in the spec used during mipmapping */
    t->_MaxLambda = (GLfloat) (t->_MaxLevel - baseLevel);
 
