@@ -544,6 +544,12 @@ st_validate_attachment(struct gl_context *ctx,
    gl_format texFormat;
    GLboolean valid;
 
+   /* Sanity check: we must be binding the surface as a (color) render target
+    * or depth/stencil target.
+    */
+   assert(bindings == PIPE_BIND_RENDER_TARGET ||
+          bindings == PIPE_BIND_DEPTH_STENCIL);
+
    /* Only validate texture attachments for now, since
     * st_renderbuffer_alloc_storage makes sure that
     * the format is supported.
