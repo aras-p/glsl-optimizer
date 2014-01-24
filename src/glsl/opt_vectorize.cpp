@@ -170,21 +170,30 @@ void
 ir_vectorize_visitor::try_vectorize()
 {
    if (this->last_assignment && this->channels > 1) {
-      ir_swizzle_mask mask = {0, 1, 2, 3, channels, 0};
-
-      visit_tree(this->last_assignment->rhs, rewrite_swizzle, &mask);
+      ir_swizzle_mask mask = {0, 0, 0, 0, channels, 0};
 
       this->last_assignment->write_mask = 0;
 
-      for (unsigned i = 0; i < 4; i++) {
+      for (unsigned i = 0, j = 0; i < 4; i++) {
          if (this->assignment[i]) {
             this->last_assignment->write_mask |= 1 << i;
 
             if (this->assignment[i] != this->last_assignment) {
                this->assignment[i]->remove();
             }
+
+            switch (j) {
+            case 0: mask.x = i; break;
+            case 1: mask.y = i; break;
+            case 2: mask.z = i; break;
+            case 3: mask.w = i; break;
+            }
+
+            j++;
          }
       }
+
+      visit_tree(this->last_assignment->rhs, rewrite_swizzle, &mask);
 
       this->progress = true;
    }
