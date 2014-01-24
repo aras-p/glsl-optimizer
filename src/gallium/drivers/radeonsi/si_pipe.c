@@ -269,7 +269,7 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 256;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
-		return 140;
+		return HAVE_LLVM >= 0x0305 ? 330 : 140;
 
 	case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
 		return 1;
@@ -307,7 +307,7 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
 		return 16384;
 	case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-		return 32;
+		return HAVE_LLVM >= 0x0305 ? 48 : 32;
 
 	/* Render targets. */
 	case PIPE_CAP_MAX_RENDER_TARGETS:
@@ -340,8 +340,10 @@ static int si_get_shader_param(struct pipe_screen* pscreen, unsigned shader, enu
 	case PIPE_SHADER_VERTEX:
 		break;
 	case PIPE_SHADER_GEOMETRY:
-		/* TODO: support and enable geometry programs */
+#if HAVE_LLVM < 0x0305
 		return 0;
+#endif
+		break;
 	case PIPE_SHADER_COMPUTE:
 		switch (param) {
 		case PIPE_SHADER_CAP_PREFERRED_IR:
