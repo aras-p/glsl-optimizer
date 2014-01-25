@@ -550,6 +550,7 @@ _mesa_clone_program(struct gl_context *ctx, const struct gl_program *prog)
          struct gl_geometry_program *gpc = gl_geometry_program(clone);
          gpc->VerticesOut = gp->VerticesOut;
          gpc->InputType = gp->InputType;
+         gpc->Invocations = gp->Invocations;
          gpc->OutputType = gp->OutputType;
       }
       break;

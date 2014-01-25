@@ -5183,6 +5183,7 @@ get_mesa_program(struct gl_context *ctx,
       stgp->Base.InputType = shader_program->Geom.InputType;
       stgp->Base.OutputType = shader_program->Geom.OutputType;
       stgp->Base.VerticesOut = shader_program->Geom.VerticesOut;
+      stgp->Base.Invocations = shader_program->Geom.Invocations;
       break;
    default:
       assert(!"should not be reached");

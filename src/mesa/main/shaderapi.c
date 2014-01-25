@@ -1859,6 +1859,7 @@ _mesa_copy_linked_program_data(gl_shader_stage type,
       struct gl_geometry_program *dst_gp = (struct gl_geometry_program *) dst;
       dst_gp->VerticesIn = src->Geom.VerticesIn;
       dst_gp->VerticesOut = src->Geom.VerticesOut;
+      dst_gp->Invocations = src->Geom.Invocations;
       dst_gp->InputType = src->Geom.InputType;
       dst_gp->OutputType = src->Geom.OutputType;
       dst->UsesClipDistanceOut = src->Geom.UsesClipDistance;

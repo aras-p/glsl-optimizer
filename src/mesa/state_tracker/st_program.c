@@ -1096,6 +1096,7 @@ st_translate_geometry_program(struct st_context *st,
    ureg_property_gs_input_prim(ureg, stgp->Base.InputType);
    ureg_property_gs_output_prim(ureg, stgp->Base.OutputType);
    ureg_property_gs_max_vertices(ureg, stgp->Base.VerticesOut);
+   ureg_property_gs_invocations(ureg, stgp->Base.Invocations);
 
    if (stgp->glsl_to_tgsi)
       st_translate_program(st->ctx,
