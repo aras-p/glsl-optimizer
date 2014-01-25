@@ -8314,6 +8314,9 @@
 
 <xi:include href="ARB_invalidate_subdata.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<!-- ARB extension #133 is ARB_multi_draw_indirect, defined in the same
+     file as ARB_draw_indirect -->
+
 <!-- ARB extensions #134...#138 -->
 
 <xi:include href="ARB_texture_buffer_range.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
