@@ -382,6 +382,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_explicit_uniform_location_warn;
    bool ARB_fragment_coord_conventions_enable;
    bool ARB_fragment_coord_conventions_warn;
+   bool ARB_fragment_layer_viewport_enable;
+   bool ARB_fragment_layer_viewport_warn;
    bool ARB_gpu_shader5_enable;
    bool ARB_gpu_shader5_warn;
    bool ARB_sample_shading_enable;
