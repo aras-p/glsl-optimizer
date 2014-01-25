@@ -107,6 +107,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_explicit_attrib_location",            o(ARB_explicit_attrib_location),            GL,             2009 },
    { "GL_ARB_explicit_uniform_location",           o(ARB_explicit_uniform_location),           GL,             2012 },
    { "GL_ARB_fragment_coord_conventions",          o(ARB_fragment_coord_conventions),          GL,             2009 },
+   { "GL_ARB_fragment_layer_viewport",             o(ARB_fragment_layer_viewport),             GLC,            2012 },
    { "GL_ARB_fragment_program",                    o(ARB_fragment_program),                    GLL,            2002 },
    { "GL_ARB_fragment_program_shadow",             o(ARB_fragment_program_shadow),             GLL,            2003 },
    { "GL_ARB_fragment_shader",                     o(ARB_fragment_shader),                     GL,             2002 },
