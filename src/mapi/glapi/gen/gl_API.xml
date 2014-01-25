@@ -8243,6 +8243,8 @@
 
 <xi:include href="ARB_draw_indirect.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="ARB_gpu_shader5.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <category name="GL_ARB_transform_feedback3" number="94">
   <enum name="MAX_TRANSFORM_FEEDBACK_BUFFERS" value="0x8E70"/>
   <enum name="MAX_VERTEX_STREAMS"             value="0x8E71"/>
