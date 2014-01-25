@@ -902,6 +902,13 @@ enum opcode {
     *   form the final channel mask.
     */
    GS_OPCODE_SET_CHANNEL_MASKS,
+
+   /**
+    * Get the "Instance ID" fields from the payload.
+    *
+    * - dst is the GRF for gl_InvocationID.
+    */
+   GS_OPCODE_GET_INSTANCE_ID,
 };
 
 enum brw_urb_write_flags {
@@ -1537,6 +1544,11 @@ enum brw_message_target {
 
 # define BRW_GS_EDGE_INDICATOR_0			(1 << 8)
 # define BRW_GS_EDGE_INDICATOR_1			(1 << 9)
+
+/* GS Thread Payload
+ */
+/* R0 */
+# define GEN7_GS_PAYLOAD_INSTANCE_ID_SHIFT		27
 
 /* 3DSTATE_GS "Output Vertex Size" has an effective maximum of 62.  It's
  * counted in multiples of 16 bytes.

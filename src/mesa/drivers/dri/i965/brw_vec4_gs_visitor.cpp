@@ -51,9 +51,19 @@ vec4_gs_visitor::vec4_gs_visitor(struct brw_context *brw,
 dst_reg *
 vec4_gs_visitor::make_reg_for_system_value(ir_variable *ir)
 {
-   /* Geometry shaders don't use any system values. */
-   assert(!"Unreached");
-   return NULL;
+   dst_reg *reg = new(mem_ctx) dst_reg(this, ir->type);
+
+   switch (ir->data.location) {
+   case SYSTEM_VALUE_INVOCATION_ID:
+      this->current_annotation = "initialize gl_InvocationID";
+      emit(GS_OPCODE_GET_INSTANCE_ID, *reg);
+      break;
+   default:
+      assert(!"not reached");
+      break;
+   }
+
+   return reg;
 }
 
 

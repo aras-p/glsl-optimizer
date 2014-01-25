@@ -632,6 +632,23 @@ vec4_generator::generate_gs_set_channel_masks(struct brw_reg dst,
 }
 
 void
+vec4_generator::generate_gs_get_instance_id(struct brw_reg dst)
+{
+   /* We want to right shift R0.0 & R0.1 by GEN7_GS_PAYLOAD_INSTANCE_ID_SHIFT
+    * and store into dst.0 & dst.4. So generate the instruction:
+    *
+    *     shr(8) dst<1> R0<1,4,0> GEN7_GS_PAYLOAD_INSTANCE_ID_SHIFT { align1 WE_normal 1Q }
+    */
+   brw_push_insn_state(p);
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   dst = retype(dst, BRW_REGISTER_TYPE_UD);
+   struct brw_reg r0(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+   brw_SHR(p, dst, stride(r0, 1, 4, 0),
+           brw_imm_ud(GEN7_GS_PAYLOAD_INSTANCE_ID_SHIFT));
+   brw_pop_insn_state(p);
+}
+
+void
 vec4_generator::generate_oword_dual_block_offsets(struct brw_reg m1,
                                                   struct brw_reg index)
 {
@@ -1209,6 +1226,10 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 
    case GS_OPCODE_SET_CHANNEL_MASKS:
       generate_gs_set_channel_masks(dst, src[0]);
+      break;
+
+   case GS_OPCODE_GET_INSTANCE_ID:
+      generate_gs_get_instance_id(dst);
       break;
 
    case SHADER_OPCODE_SHADER_TIME_ADD:

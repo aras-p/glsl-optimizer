@@ -527,6 +527,8 @@ brw_instruction_name(enum opcode op)
       return "prepare_channel_masks";
    case GS_OPCODE_SET_CHANNEL_MASKS:
       return "set_channel_masks";
+   case GS_OPCODE_GET_INSTANCE_ID:
+      return "get_instance_id";
 
    default:
       /* Yes, this leaks.  It's in debug code, it should never occur, and if
