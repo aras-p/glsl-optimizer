@@ -642,6 +642,8 @@ struct brw_gs_prog_data
 
    bool include_primitive_id;
 
+   int invocations;
+
    /**
     * True if the thread should be dispatched in DUAL_INSTANCE mode, false if
     * it should be dispatched in DUAL_OBJECT mode.

@@ -153,6 +153,8 @@ upload_gs_state(struct brw_context *brw)
          ((brw->max_gs_threads - 1) << max_threads_shift) |
          (brw->gs.prog_data->control_data_header_size_hwords <<
           GEN7_GS_CONTROL_DATA_HEADER_SIZE_SHIFT) |
+         ((brw->gs.prog_data->invocations - 1) <<
+          GEN7_GS_INSTANCE_CONTROL_SHIFT) |
          (brw->gs.prog_data->dual_instanced_dispatch ?
           GEN7_GS_DISPATCH_MODE_DUAL_INSTANCE :
           GEN7_GS_DISPATCH_MODE_DUAL_OBJECT) |

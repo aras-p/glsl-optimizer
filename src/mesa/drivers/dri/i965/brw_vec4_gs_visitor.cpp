@@ -595,9 +595,11 @@ brw_gs_emit(struct brw_context *brw,
    }
 
    /* Compile the geometry shader in DUAL_OBJECT dispatch mode, if we can do
-    * so without spilling.
+    * so without spilling. If the GS invocations count > 1, then we can't use
+    * dual object mode.
     */
-   if (likely(!(INTEL_DEBUG & DEBUG_NO_DUAL_OBJECT_GS))) {
+   if (c->prog_data.invocations <= 1 &&
+       likely(!(INTEL_DEBUG & DEBUG_NO_DUAL_OBJECT_GS))) {
       c->prog_data.dual_instanced_dispatch = false;
 
       vec4_gs_visitor v(brw, c, prog, shader, mem_ctx, true /* no_spills */);

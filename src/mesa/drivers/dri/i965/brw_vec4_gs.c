@@ -48,6 +48,8 @@ do_gs_prog(struct brw_context *brw,
    c.prog_data.include_primitive_id =
       (gp->program.Base.InputsRead & VARYING_BIT_PRIMITIVE_ID) != 0;
 
+   c.prog_data.invocations = gp->program.Invocations;
+
    /* Allocate the references to the uniforms that will end up in the
     * prog_data associated with the compiled program, and which will be freed
     * by the state cache.
