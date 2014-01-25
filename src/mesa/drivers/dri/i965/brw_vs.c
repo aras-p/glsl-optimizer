@@ -61,7 +61,7 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
    int i;
 
    /* gl_Layer and gl_ViewportIndex don't get their own varying slots -- they
-    * are stored in the virst VUE slot (VARYING_SLOT_PSIZ).
+    * are stored in the first VUE slot (VARYING_SLOT_PSIZ).
     */
    slots_valid &= ~(VARYING_BIT_LAYER | VARYING_BIT_VIEWPORT);
 
