@@ -682,7 +682,7 @@ dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *dpy)
 
    if (!dri2_load_driver(dpy)) {
       err = "DRI2: failed to load driver";
-      goto cleanup_device;
+      goto cleanup_driver_name;
    }
 
    dri2_dpy->dri2_loader_extension.base.name = __DRI_DRI2_LOADER;
@@ -722,6 +722,8 @@ cleanup_screen:
    dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
 cleanup_driver:
    dlclose(dri2_dpy->driver);
+cleanup_driver_name:
+   free(dri2_dpy->driver_name);
 cleanup_device:
    close(dri2_dpy->fd);
 cleanup_display:
