@@ -2419,6 +2419,11 @@ struct gl_shader
    struct {
       GLint VerticesOut;
       /**
+       * 0 - Invocations count not declared in shader, or
+       * 1 .. MAX_GEOMETRY_SHADER_INVOCATIONS
+       */
+      GLint Invocations;
+      /**
        * GL_POINTS, GL_LINES, GL_LINES_ADJACENCY, GL_TRIANGLES, or
        * GL_TRIANGLES_ADJACENCY, or PRIM_UNKNOWN if it's not set in this
        * shader.
@@ -2627,6 +2632,10 @@ struct gl_shader_program
    struct {
       GLint VerticesIn;
       GLint VerticesOut;
+      /**
+       * 1 .. MAX_GEOMETRY_SHADER_INVOCATIONS
+       */
+      GLint Invocations;
       GLenum InputType;  /**< GL_POINTS, GL_LINES, GL_LINES_ADJACENCY_ARB,
                               GL_TRIANGLES, or GL_TRIANGLES_ADJACENCY_ARB */
       GLenum OutputType; /**< GL_POINTS, GL_LINE_STRIP or GL_TRIANGLE_STRIP */

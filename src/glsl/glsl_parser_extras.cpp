@@ -1374,6 +1374,10 @@ set_shader_inout_layout(struct gl_shader *shader,
       } else {
          shader->Geom.OutputType = PRIM_UNKNOWN;
       }
+
+      shader->Geom.Invocations = 0;
+      if (state->in_qualifier->flags.q.invocations)
+         shader->Geom.Invocations = state->in_qualifier->invocations;
       break;
 
    case MESA_SHADER_COMPUTE:

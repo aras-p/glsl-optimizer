@@ -1206,6 +1206,7 @@ link_gs_inout_layout_qualifiers(struct gl_shader_program *prog,
 				unsigned num_shaders)
 {
    linked_shader->Geom.VerticesOut = 0;
+   linked_shader->Geom.Invocations = 0;
    linked_shader->Geom.InputType = PRIM_UNKNOWN;
    linked_shader->Geom.OutputType = PRIM_UNKNOWN;
 
@@ -1259,6 +1260,18 @@ link_gs_inout_layout_qualifiers(struct gl_shader_program *prog,
 	 }
 	 linked_shader->Geom.VerticesOut = shader->Geom.VerticesOut;
       }
+
+      if (shader->Geom.Invocations != 0) {
+	 if (linked_shader->Geom.Invocations != 0 &&
+	     linked_shader->Geom.Invocations != shader->Geom.Invocations) {
+	    linker_error(prog, "geometry shader defined with conflicting "
+			 "invocation count (%d and %d)\n",
+			 linked_shader->Geom.Invocations,
+			 shader->Geom.Invocations);
+	    return;
+	 }
+	 linked_shader->Geom.Invocations = shader->Geom.Invocations;
+      }
    }
 
    /* Just do the intrastage -> interstage propagation right now,
@@ -1285,6 +1298,11 @@ link_gs_inout_layout_qualifiers(struct gl_shader_program *prog,
       return;
    }
    prog->Geom.VerticesOut = linked_shader->Geom.VerticesOut;
+
+   if (linked_shader->Geom.Invocations == 0)
+      linked_shader->Geom.Invocations = 1;
+
+   prog->Geom.Invocations = linked_shader->Geom.Invocations;
 }
 
 
