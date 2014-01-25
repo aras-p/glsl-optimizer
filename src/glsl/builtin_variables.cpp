@@ -938,6 +938,11 @@ builtin_variable_generator::generate_fs_special_vars()
    if (state->ARB_gpu_shader5_enable) {
       add_system_value(SYSTEM_VALUE_SAMPLE_MASK_IN, array(int_t, 1), "gl_SampleMaskIn");
    }
+
+   if (state->ARB_fragment_layer_viewport_enable) {
+      add_input(VARYING_SLOT_LAYER, int_t, "gl_Layer");
+      add_input(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex");
+   }
 }
 
 
