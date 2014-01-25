@@ -194,7 +194,7 @@ line:
 		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "\n");
 	}
 |	HASH_LINE {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} pp_tokens NEWLINE {
 
 		if (parser->skip_stack == NULL ||
@@ -254,10 +254,10 @@ define:
 
 control_line:
 	HASH_DEFINE {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} define
 |	HASH_UNDEF {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} IDENTIFIER NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $3);
 		if (macro) {
@@ -267,7 +267,7 @@ control_line:
 		ralloc_free ($3);
 	}
 |	HASH_IF {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} conditional_tokens NEWLINE {
 		/* Be careful to only evaluate the 'if' expression if
 		 * we are not skipping. When we are skipping, we
@@ -299,14 +299,14 @@ control_line:
 		_glcpp_parser_skip_stack_push_if (parser, & @1, 0);
 	}
 |	HASH_IFDEF {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} IDENTIFIER junk NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $3);
 		ralloc_free ($3);
 		_glcpp_parser_skip_stack_push_if (parser, & @1, macro != NULL);
 	}
 |	HASH_IFNDEF {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} IDENTIFIER junk NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $3);
 		ralloc_free ($3);
@@ -380,7 +380,7 @@ control_line:
 		_glcpp_parser_handle_version_declaration(parser, $2, $3, true);
 	}
 |	HASH NEWLINE {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	}
 ;
 
@@ -2024,6 +2024,9 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 {
 	const struct gl_extensions *extensions = parser->extensions;
 
+	if (parser->version_resolved)
+		return;
+
 	parser->version_resolved = true;
 
 	add_builtin_define (parser, "__VERSION__", version);
@@ -2143,11 +2146,8 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 #define IMPLICIT_GLSL_VERSION 110
 
 void
-glcpp_parser_resolve_version(glcpp_parser_t *parser)
+glcpp_parser_resolve_implicit_version(glcpp_parser_t *parser)
 {
-	if (parser->version_resolved)
-		return;
-
 	_glcpp_parser_handle_version_declaration(parser, IMPLICIT_GLSL_VERSION,
 						 NULL, false);
 }

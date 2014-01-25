@@ -203,7 +203,7 @@ void
 glcpp_parser_destroy (glcpp_parser_t *parser);
 
 void
-glcpp_parser_resolve_version(glcpp_parser_t *parser);
+glcpp_parser_resolve_implicit_version(glcpp_parser_t *parser);
 
 int
 glcpp_preprocess(void *ralloc_ctx, const char **shader, char **info_log,

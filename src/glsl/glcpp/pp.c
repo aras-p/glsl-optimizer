@@ -151,7 +151,7 @@ glcpp_preprocess(void *ralloc_ctx, const char **shader, char **info_log,
 	if (parser->skip_stack)
 		glcpp_error (&parser->skip_stack->loc, parser, "Unterminated #if\n");
 
-	glcpp_parser_resolve_version(parser);
+	glcpp_parser_resolve_implicit_version(parser);
 
 	ralloc_strcat(info_log, parser->info_log);
 
