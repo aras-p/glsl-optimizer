@@ -3586,13 +3586,14 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
       key.drawable_height = ctx->DrawBuffer->Height;
    }
 
-   if ((fp->Base.InputsRead & VARYING_BIT_POS) || program_uses_dfdy) {
-      key.render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer);
-   }
-
    key.nr_color_regions = _mesa_bitcount_64(fp->Base.OutputsWritten &
          ~(BITFIELD64_BIT(FRAG_RESULT_DEPTH) |
          BITFIELD64_BIT(FRAG_RESULT_SAMPLE_MASK)));
+
+   if ((fp->Base.InputsRead & VARYING_BIT_POS) || program_uses_dfdy) {
+      key.render_to_fbo = _mesa_is_user_fbo(ctx->DrawBuffer) ||
+                          key.nr_color_regions > 1;
+   }
 
    /* GL_FRAGMENT_SHADER_DERIVATIVE_HINT is almost always GL_DONT_CARE.  The
     * quality of the derivatives is likely to be determined by the driconf
