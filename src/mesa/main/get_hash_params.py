@@ -643,7 +643,7 @@ descriptor=[
 
 # GL_ARB_transform_feedback3
   [ "MAX_TRANSFORM_FEEDBACK_BUFFERS", "CONTEXT_INT(Const.MaxTransformFeedbackBuffers), extra_ARB_transform_feedback3" ],
-  [ "MAX_VERTEX_STREAMS", "CONTEXT_INT(Const.MaxVertexStreams), extra_ARB_transform_feedback3" ],
+  [ "MAX_VERTEX_STREAMS", "CONTEXT_INT(Const.MaxVertexStreams), extra_ARB_transform_feedback3_ARB_gpu_shader5" ],
 
 # GL_ARB_geometry_shader4
   [ "MAX_GEOMETRY_TEXTURE_IMAGE_UNITS_ARB", "CONTEXT_INT(Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits), extra_gl32_ARB_geometry_shader4" ],
@@ -754,6 +754,12 @@ descriptor=[
 
 # GL_ARB_compute_shader
   [ "MAX_COMPUTE_WORK_GROUP_INVOCATIONS", "CONTEXT_INT(Const.MaxComputeWorkGroupInvocations), extra_ARB_compute_shader" ],
+
+# GL_ARB_gpu_shader5
+  [ "MAX_GEOMETRY_SHADER_INVOCATIONS", "CONST(MAX_GEOMETRY_SHADER_INVOCATIONS), extra_ARB_gpu_shader5" ],
+  [ "MIN_FRAGMENT_INTERPOLATION_OFFSET", "CONTEXT_FLOAT(Const.MinFragmentInterpolationOffset), extra_ARB_gpu_shader5" ],
+  [ "MAX_FRAGMENT_INTERPOLATION_OFFSET", "CONTEXT_FLOAT(Const.MaxFragmentInterpolationOffset), extra_ARB_gpu_shader5" ],
+  [ "FRAGMENT_INTERPOLATION_OFFSET_BITS", "CONST(FRAGMENT_INTERPOLATION_OFFSET_BITS), extra_ARB_gpu_shader5" ],
 ]},
 
 # Enums restricted to OpenGL Core profile

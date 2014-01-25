@@ -709,6 +709,10 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxComputeWorkGroupSize[1] = 1024;
    ctx->Const.MaxComputeWorkGroupSize[2] = 64;
    ctx->Const.MaxComputeWorkGroupInvocations = 1024;
+
+   /** GL_ARB_gpu_shader5 */
+   ctx->Const.MinFragmentInterpolationOffset = MIN_FRAGMENT_INTERPOLATION_OFFSET;
+   ctx->Const.MaxFragmentInterpolationOffset = MAX_FRAGMENT_INTERPOLATION_OFFSET;
 }
 
 
