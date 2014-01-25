@@ -100,7 +100,7 @@ gbm_device_destroy(struct gbm_device *gbm)
       gbm->destroy(gbm);
 }
 
-GBM_EXPORT struct gbm_device *
+struct gbm_device *
 _gbm_mesa_get_device(int fd)
 {
    struct gbm_device *gbm = NULL;

@@ -110,7 +110,7 @@ struct gbm_backend {
    struct gbm_device *(*create_device)(int fd);
 };
 
-GBM_EXPORT struct gbm_device *
+struct gbm_device *
 _gbm_mesa_get_device(int fd);
 
 #endif
