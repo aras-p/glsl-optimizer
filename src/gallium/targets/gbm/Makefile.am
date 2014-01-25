@@ -34,6 +34,7 @@ AM_CPPFLAGS = \
 
 AM_CFLAGS = \
 	$(GALLIUM_CFLAGS) \
+	$(VISIBILITY_CFLAGS) \
 	$(LIBDRM_CFLAGS)
 
 gbm_LTLIBRARIES = gbm_gallium_drm.la
