@@ -11,7 +11,8 @@ AM_CFLAGS = \
 	-I$(top_srcdir)/src/gbm/main \
 	$(LIBKMS_CFLAGS) \
 	$(DLOPEN_CFLAGS) \
-	$(DEFINES)
+	$(DEFINES) \
+	$(VISIBILITY_CFLAGS)
 
 lib_LTLIBRARIES = libgbm.la
 include_HEADERS = main/gbm.h
