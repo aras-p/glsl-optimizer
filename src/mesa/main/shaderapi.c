@@ -606,6 +606,12 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname, GLint *param
       if (check_gs_query(ctx, shProg))
          *params = shProg->Geom.VerticesOut;
       return;
+   case GL_GEOMETRY_SHADER_INVOCATIONS:
+      if (!has_core_gs || !ctx->Extensions.ARB_gpu_shader5)
+         break;
+      if (check_gs_query(ctx, shProg))
+         *params = shProg->Geom.Invocations;
+      return;
    case GL_GEOMETRY_INPUT_TYPE:
       if (!has_core_gs)
          break;
