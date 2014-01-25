@@ -48,6 +48,7 @@
 
 struct nouveau_driver {
 	struct gl_context *(*context_create)(struct nouveau_screen *screen,
+				     gl_api api,
 				     const struct gl_config *visual,
 				     struct gl_context *share_ctx);
 	void (*context_destroy)(struct gl_context *ctx);

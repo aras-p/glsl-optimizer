@@ -115,7 +115,8 @@ nouveau_context_create(gl_api api,
 		       void *share_ctx);
 
 GLboolean
-nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
+nouveau_context_init(struct gl_context *ctx, gl_api api,
+		     struct nouveau_screen *screen,
 		     const struct gl_config *visual, struct gl_context *share_ctx);
 
 void

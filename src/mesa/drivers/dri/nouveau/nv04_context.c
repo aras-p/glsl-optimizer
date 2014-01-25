@@ -138,7 +138,8 @@ nv04_context_destroy(struct gl_context *ctx)
 }
 
 static struct gl_context *
-nv04_context_create(struct nouveau_screen *screen, const struct gl_config *visual,
+nv04_context_create(struct nouveau_screen *screen, gl_api api,
+		    const struct gl_config *visual,
 		    struct gl_context *share_ctx)
 {
 	struct nv04_context *nctx;
@@ -153,7 +154,7 @@ nv04_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 	ctx = &nctx->base.base;
 	hw = &nctx->base.hw;
 
-	if (!nouveau_context_init(ctx, screen, visual, share_ctx))
+	if (!nouveau_context_init(ctx, api, screen, visual, share_ctx))
 		goto fail;
 
 	/* GL constants. */

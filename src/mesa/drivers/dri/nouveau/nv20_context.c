@@ -438,7 +438,8 @@ nv20_context_destroy(struct gl_context *ctx)
 }
 
 static struct gl_context *
-nv20_context_create(struct nouveau_screen *screen, const struct gl_config *visual,
+nv20_context_create(struct nouveau_screen *screen, gl_api api,
+		    const struct gl_config *visual,
 		    struct gl_context *share_ctx)
 {
 	struct nouveau_context *nctx;
@@ -452,7 +453,7 @@ nv20_context_create(struct nouveau_screen *screen, const struct gl_config *visua
 
 	ctx = &nctx->base;
 
-	if (!nouveau_context_init(ctx, screen, visual, share_ctx))
+	if (!nouveau_context_init(ctx, api, screen, visual, share_ctx))
 		goto fail;
 
 	ctx->Extensions.ARB_texture_env_crossbar = true;
