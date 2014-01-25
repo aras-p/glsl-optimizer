@@ -2013,6 +2013,7 @@ typedef enum
    SYSTEM_VALUE_SAMPLE_ID,      /**< Fragment shader only */
    SYSTEM_VALUE_SAMPLE_POS,     /**< Fragment shader only */
    SYSTEM_VALUE_SAMPLE_MASK_IN, /**< Fragment shader only */
+   SYSTEM_VALUE_INVOCATION_ID,  /**< Geometry shader only */
    SYSTEM_VALUE_MAX             /**< Number of values */
 } gl_system_value;
 
