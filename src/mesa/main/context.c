@@ -603,9 +603,6 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.ViewportBounds.Min = 0;
    ctx->Const.ViewportBounds.Max = 0;
 
-   /* Driver must override if it supports ARB_viewport_array */
-   ctx->Const.MaxViewports = 1;
-
    /** GL_ARB_uniform_buffer_object */
    ctx->Const.MaxCombinedUniformBlocks = 36;
    ctx->Const.MaxUniformBufferBindings = 36;
