@@ -234,6 +234,9 @@ unpack_RGB565(const void *src, GLfloat dst[][4], GLuint n)
 static void
 unpack_RGB565_REV(const void *src, GLfloat dst[][4], GLuint n)
 {
+   /* Warning: this function does not match the current Mesa definition
+    * of MESA_FORMAT_R5G6B5_UNORM.
+    */
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
    for (i = 0; i < n; i++) {
@@ -300,6 +303,9 @@ unpack_ARGB1555(const void *src, GLfloat dst[][4], GLuint n)
 static void
 unpack_ARGB1555_REV(const void *src, GLfloat dst[][4], GLuint n)
 {
+   /* Warning: this function does not match the current Mesa definition
+    * of MESA_FORMAT_A1R5G5B5_UNORM.
+    */
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
    for (i = 0; i < n; i++) {
@@ -2699,6 +2705,9 @@ unpack_ubyte_RGB565(const void *src, GLubyte dst[][4], GLuint n)
 static void
 unpack_ubyte_RGB565_REV(const void *src, GLubyte dst[][4], GLuint n)
 {
+   /* Warning: this function does not match the current Mesa definition
+    * of MESA_FORMAT_R5G6B5_UNORM.
+    */
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
    for (i = 0; i < n; i++) {
@@ -2765,6 +2774,9 @@ unpack_ubyte_ARGB1555(const void *src, GLubyte dst[][4], GLuint n)
 static void
 unpack_ubyte_ARGB1555_REV(const void *src, GLubyte dst[][4], GLuint n)
 {
+   /* Warning: this function does not match the current Mesa definition
+    * of MESA_FORMAT_A1R5G5B5_UNORM.
+    */
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
    for (i = 0; i < n; i++) {

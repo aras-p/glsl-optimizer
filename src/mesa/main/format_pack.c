@@ -492,6 +492,8 @@ pack_row_float_RGB565(GLuint n, const GLfloat src[][4], void *dst)
 
 /*
  * MESA_FORMAT_R5G6B5_UNORM
+ * Warning: these functions do not match the current Mesa definition
+ * of MESA_FORMAT_R5G6B5_UNORM.
  */
 
 static void
@@ -621,7 +623,10 @@ pack_float_ARGB1555(const GLfloat src[4], void *dst)
 }
 
 
-/* MESA_FORMAT_A1R5G5B5_UNORM */
+/* MESA_FORMAT_A1R5G5B5_UNORM
+ * Warning: these functions do not match the current Mesa definition
+ * of MESA_FORMAT_A1R5G5B5_UNORM.
+ */
 
 static void
 pack_ubyte_ARGB1555_REV(const GLubyte src[4], void *dst)
