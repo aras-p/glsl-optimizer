@@ -3217,8 +3217,6 @@ brw_fs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
                                          BRW_FS_VARYING_INPUT_MASK) > 16)
       key.input_slots_valid = fp->Base.InputsRead | VARYING_BIT_POS;
 
-   key.clamp_fragment_color = ctx->API == API_OPENGL_COMPAT;
-
    unsigned sampler_count = _mesa_fls(fp->Base.SamplersUsed);
    for (unsigned i = 0; i < sampler_count; i++) {
       if (fp->Base.ShadowSamplers & (1 << i)) {
