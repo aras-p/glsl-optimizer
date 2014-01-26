@@ -167,7 +167,7 @@ blit_nearest(struct gl_context *ctx,
        * masking for things like DEPTH copies of Z24S8.
        */
       if (readRb->Format == MESA_FORMAT_Z_FLOAT32 ||
-	  readRb->Format == MESA_FORMAT_Z32_FLOAT_X24S8) {
+	  readRb->Format == MESA_FORMAT_Z32_FLOAT_S8X24_UINT) {
 	 mode = UNPACK_Z_FLOAT;
       } else {
 	 mode = UNPACK_Z_INT;

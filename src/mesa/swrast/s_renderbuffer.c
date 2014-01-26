@@ -102,14 +102,14 @@ soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
       rb->Format = MESA_FORMAT_Z_UNORM16;
       break;
    case GL_DEPTH_COMPONENT24:
-      rb->Format = MESA_FORMAT_X8_Z24;
+      rb->Format = MESA_FORMAT_Z24_UNORM_S8_UINT;
       break;
    case GL_DEPTH_COMPONENT32:
       rb->Format = MESA_FORMAT_Z_UNORM32;
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      rb->Format = MESA_FORMAT_Z24_S8;
+      rb->Format = MESA_FORMAT_S8_UINT_Z24_UNORM;
       break;
    default:
       /* unsupported format */

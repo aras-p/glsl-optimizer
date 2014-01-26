@@ -46,7 +46,7 @@ pack_rgba_i(mesa_format f, uint8_t c[])
 		return PACK_COLOR_8888(c[RCOMP], c[GCOMP], c[BCOMP], c[ACOMP]);
 	case MESA_FORMAT_R8G8B8A8_UNORM:
 		return PACK_COLOR_8888(c[ACOMP], c[BCOMP], c[GCOMP], c[RCOMP]);
-	case MESA_FORMAT_RGB565:
+	case MESA_FORMAT_B5G6R5_UNORM:
 		return PACK_COLOR_565(c[RCOMP], c[GCOMP], c[BCOMP]);
 	default:
 		assert(0);
@@ -57,9 +57,9 @@ static inline unsigned
 pack_zs_i(mesa_format f, uint32_t z, uint8_t s)
 {
 	switch (f) {
-	case MESA_FORMAT_Z24_S8:
+	case MESA_FORMAT_S8_UINT_Z24_UNORM:
 		return (z & 0xffffff00) | (s & 0xff);
-	case MESA_FORMAT_Z24_X8:
+	case MESA_FORMAT_X8Z24_UNORM:
 		return (z & 0xffffff00);
 	case MESA_FORMAT_Z_UNORM16:
 		return (z & 0xffff0000) >> 16;

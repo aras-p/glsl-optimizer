@@ -232,7 +232,7 @@ do_blit_bitmap( struct gl_context *ctx,
    case MESA_FORMAT_B8G8R8X8_UNORM:
       color = PACK_COLOR_8888(ubcolor[3], ubcolor[0], ubcolor[1], ubcolor[2]);
       break;
-   case MESA_FORMAT_RGB565:
+   case MESA_FORMAT_B5G6R5_UNORM:
       color = PACK_COLOR_565(ubcolor[0], ubcolor[1], ubcolor[2]);
       break;
    default:

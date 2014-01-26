@@ -433,7 +433,7 @@ mesa_format radeonChooseTextureFormat(struct gl_context * ctx,
 	case GL_DEPTH_COMPONENT32:
 	case GL_DEPTH_STENCIL_EXT:
 	case GL_DEPTH24_STENCIL8_EXT:
-		return MESA_FORMAT_S8_Z24;
+		return MESA_FORMAT_Z24_UNORM_X8_UINT;
 
 	/* EXT_texture_sRGB */
 	case GL_SRGB:
@@ -442,7 +442,7 @@ mesa_format radeonChooseTextureFormat(struct gl_context * ctx,
 	case GL_SRGB8_ALPHA8:
 	case GL_COMPRESSED_SRGB:
 	case GL_COMPRESSED_SRGB_ALPHA:
-		return MESA_FORMAT_SARGB8;
+		return MESA_FORMAT_B8G8R8A8_SRGB;
 
 	case GL_SLUMINANCE:
 	case GL_SLUMINANCE8:
@@ -452,7 +452,7 @@ mesa_format radeonChooseTextureFormat(struct gl_context * ctx,
 	case GL_SLUMINANCE_ALPHA:
 	case GL_SLUMINANCE8_ALPHA8:
 	case GL_COMPRESSED_SLUMINANCE_ALPHA:
-		return MESA_FORMAT_SLA8;
+      return MESA_FORMAT_L8A8_SRGB;
 
 	case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
 		return MESA_FORMAT_SRGB_DXT1;
@@ -513,7 +513,7 @@ unsigned radeonIsFormatRenderable(mesa_format mesa_format)
 	switch (mesa_format)
 	{
 		case MESA_FORMAT_Z_UNORM16:
-		case MESA_FORMAT_S8_Z24:
+		case MESA_FORMAT_Z24_UNORM_X8_UINT:
 			return 1;
 		default:
 			return 0;
@@ -594,18 +594,18 @@ radeonInitTextureFormats(void)
    if (_mesa_little_endian()) {
       _radeon_texformat_rgba8888	= MESA_FORMAT_A8B8G8R8_UNORM;
       _radeon_texformat_argb8888	= MESA_FORMAT_B8G8R8A8_UNORM;
-      _radeon_texformat_rgb565		= MESA_FORMAT_RGB565;
-      _radeon_texformat_argb4444	= MESA_FORMAT_ARGB4444;
-      _radeon_texformat_argb1555	= MESA_FORMAT_ARGB1555;
-      _radeon_texformat_al88		= MESA_FORMAT_AL88;
+      _radeon_texformat_rgb565		= MESA_FORMAT_B5G6R5_UNORM;
+      _radeon_texformat_argb4444	= MESA_FORMAT_B4G4R4A4_UNORM;
+      _radeon_texformat_argb1555	= MESA_FORMAT_B5G5R5A1_UNORM;
+      _radeon_texformat_al88		= MESA_FORMAT_L8A8_UNORM;
    }
    else {
       _radeon_texformat_rgba8888	= MESA_FORMAT_R8G8B8A8_UNORM;
       _radeon_texformat_argb8888	= MESA_FORMAT_A8R8G8B8_UNORM;
-      _radeon_texformat_rgb565		= MESA_FORMAT_RGB565_REV;
-      _radeon_texformat_argb4444	= MESA_FORMAT_ARGB4444_REV;
-      _radeon_texformat_argb1555	= MESA_FORMAT_ARGB1555_REV;
-      _radeon_texformat_al88		= MESA_FORMAT_AL88_REV;
+      _radeon_texformat_rgb565		= MESA_FORMAT_R5G6B5_UNORM;
+      _radeon_texformat_argb4444	= MESA_FORMAT_A4R4G4B4_UNORM;
+      _radeon_texformat_argb1555	= MESA_FORMAT_A1R5G5B5_UNORM;
+      _radeon_texformat_al88		= MESA_FORMAT_A8L8_UNORM;
    }
 }
 

@@ -44,9 +44,9 @@ unsigned r100_check_blit(mesa_format mesa_format, uint32_t dst_pitch)
     switch (mesa_format) {
     case MESA_FORMAT_B8G8R8A8_UNORM:
     case MESA_FORMAT_B8G8R8X8_UNORM:
-    case MESA_FORMAT_RGB565:
-    case MESA_FORMAT_ARGB4444:
-    case MESA_FORMAT_ARGB1555:
+    case MESA_FORMAT_B5G6R5_UNORM:
+    case MESA_FORMAT_B4G4R4A4_UNORM:
+    case MESA_FORMAT_B5G5R5A1_UNORM:
     case MESA_FORMAT_A_UNORM8:
     case MESA_FORMAT_L_UNORM8:
     case MESA_FORMAT_I_UNORM8:
@@ -117,13 +117,13 @@ static void inline emit_tx_setup(struct r100_context *r100,
     case MESA_FORMAT_B8G8R8X8_UNORM:
 	    txformat |= RADEON_TXFORMAT_ARGB8888;
 	    break;
-    case MESA_FORMAT_RGB565:
+    case MESA_FORMAT_B5G6R5_UNORM:
 	    txformat |= RADEON_TXFORMAT_RGB565;
 	    break;
-    case MESA_FORMAT_ARGB4444:
+    case MESA_FORMAT_B4G4R4A4_UNORM:
 	    txformat |= RADEON_TXFORMAT_ARGB4444 | RADEON_TXFORMAT_ALPHA_IN_MAP;
 	    break;
-    case MESA_FORMAT_ARGB1555:
+    case MESA_FORMAT_B5G5R5A1_UNORM:
 	    txformat |= RADEON_TXFORMAT_ARGB1555 | RADEON_TXFORMAT_ALPHA_IN_MAP;
 	    break;
     case MESA_FORMAT_A_UNORM8:
@@ -133,7 +133,7 @@ static void inline emit_tx_setup(struct r100_context *r100,
     case MESA_FORMAT_L_UNORM8:
             txformat |= RADEON_TXFORMAT_I8;
             break;
-    case MESA_FORMAT_AL88:
+    case MESA_FORMAT_L8A8_UNORM:
             txformat |= RADEON_TXFORMAT_AI88 | RADEON_TXFORMAT_ALPHA_IN_MAP;
             break;
     default:
@@ -190,13 +190,13 @@ static inline void emit_cb_setup(struct r100_context *r100,
     case MESA_FORMAT_B8G8R8X8_UNORM:
 	    dst_format = RADEON_COLOR_FORMAT_ARGB8888;
 	    break;
-    case MESA_FORMAT_RGB565:
+    case MESA_FORMAT_B5G6R5_UNORM:
 	    dst_format = RADEON_COLOR_FORMAT_RGB565;
 	    break;
-    case MESA_FORMAT_ARGB4444:
+    case MESA_FORMAT_B4G4R4A4_UNORM:
 	    dst_format = RADEON_COLOR_FORMAT_ARGB4444;
 	    break;
-    case MESA_FORMAT_ARGB1555:
+    case MESA_FORMAT_B5G5R5A1_UNORM:
 	    dst_format = RADEON_COLOR_FORMAT_ARGB1555;
 	    break;
     case MESA_FORMAT_A_UNORM8:

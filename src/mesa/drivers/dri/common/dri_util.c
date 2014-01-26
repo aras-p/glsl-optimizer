@@ -809,13 +809,13 @@ uint32_t
 driGLFormatToImageFormat(mesa_format format)
 {
    switch (format) {
-   case MESA_FORMAT_RGB565:
+   case MESA_FORMAT_B5G6R5_UNORM:
       return __DRI_IMAGE_FORMAT_RGB565;
    case MESA_FORMAT_B8G8R8X8_UNORM:
       return __DRI_IMAGE_FORMAT_XRGB8888;
-   case MESA_FORMAT_ARGB2101010:
+   case MESA_FORMAT_B10G10R10A2_UNORM:
       return __DRI_IMAGE_FORMAT_ARGB2101010;
-   case MESA_FORMAT_XRGB2101010_UNORM:
+   case MESA_FORMAT_B10G10R10X2_UNORM:
       return __DRI_IMAGE_FORMAT_XRGB2101010;
    case MESA_FORMAT_B8G8R8A8_UNORM:
       return __DRI_IMAGE_FORMAT_ARGB8888;
@@ -825,11 +825,11 @@ driGLFormatToImageFormat(mesa_format format)
       return __DRI_IMAGE_FORMAT_XBGR8888;
    case MESA_FORMAT_R_UNORM8:
       return __DRI_IMAGE_FORMAT_R8;
-   case MESA_FORMAT_GR88:
+   case MESA_FORMAT_R8G8_UNORM:
       return __DRI_IMAGE_FORMAT_GR88;
    case MESA_FORMAT_NONE:
       return __DRI_IMAGE_FORMAT_NONE;
-   case MESA_FORMAT_SARGB8:
+   case MESA_FORMAT_B8G8R8A8_SRGB:
       return __DRI_IMAGE_FORMAT_SARGB8;
    default:
       return 0;
@@ -841,13 +841,13 @@ driImageFormatToGLFormat(uint32_t image_format)
 {
    switch (image_format) {
    case __DRI_IMAGE_FORMAT_RGB565:
-      return MESA_FORMAT_RGB565;
+      return MESA_FORMAT_B5G6R5_UNORM;
    case __DRI_IMAGE_FORMAT_XRGB8888:
       return MESA_FORMAT_B8G8R8X8_UNORM;
    case __DRI_IMAGE_FORMAT_ARGB2101010:
-      return MESA_FORMAT_ARGB2101010;
+      return MESA_FORMAT_B10G10R10A2_UNORM;
    case __DRI_IMAGE_FORMAT_XRGB2101010:
-      return MESA_FORMAT_XRGB2101010_UNORM;
+      return MESA_FORMAT_B10G10R10X2_UNORM;
    case __DRI_IMAGE_FORMAT_ARGB8888:
       return MESA_FORMAT_B8G8R8A8_UNORM;
    case __DRI_IMAGE_FORMAT_ABGR8888:
@@ -857,9 +857,9 @@ driImageFormatToGLFormat(uint32_t image_format)
    case __DRI_IMAGE_FORMAT_R8:
       return MESA_FORMAT_R_UNORM8;
    case __DRI_IMAGE_FORMAT_GR88:
-      return MESA_FORMAT_GR88;
+      return MESA_FORMAT_R8G8_UNORM;
    case __DRI_IMAGE_FORMAT_SARGB8:
-      return MESA_FORMAT_SARGB8;
+      return MESA_FORMAT_B8G8R8A8_SRGB;
    case __DRI_IMAGE_FORMAT_NONE:
       return MESA_FORMAT_NONE;
    default:

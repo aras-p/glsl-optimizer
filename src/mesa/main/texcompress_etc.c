@@ -726,7 +726,7 @@ etc2_unpack_srgb8(uint8_t *dst_row,
             for (i = 0; i < bw; i++) {
                etc2_rgb8_fetch_texel(&block, i, j, dst,
                                      false /* punchthrough_alpha */);
-               /* Convert to MESA_FORMAT_SARGB8 */
+               /* Convert to MESA_FORMAT_B8G8R8A8_SRGB */
                tmp = dst[0];
                dst[0] = dst[2];
                dst[2] = tmp;
@@ -806,7 +806,7 @@ etc2_unpack_srgb8_alpha8(uint8_t *dst_row,
             for (i = 0; i < bw; i++) {
                etc2_rgba8_fetch_texel(&block, i, j, dst);
 
-               /* Convert to MESA_FORMAT_SARGB8 */
+               /* Convert to MESA_FORMAT_B8G8R8A8_SRGB */
                tmp = dst[0];
                dst[0] = dst[2];
                dst[2] = tmp;
@@ -1047,7 +1047,7 @@ etc2_unpack_srgb8_punchthrough_alpha1(uint8_t *dst_row,
             for (i = 0; i < bw; i++) {
                etc2_rgb8_fetch_texel(&block, i, j, dst,
                                      true /* punchthrough_alpha */);
-               /* Convert to MESA_FORMAT_SARGB8 */
+               /* Convert to MESA_FORMAT_B8G8R8A8_SRGB */
                tmp = dst[0];
                dst[0] = dst[2];
                dst[2] = tmp;

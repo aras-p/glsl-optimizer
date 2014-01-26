@@ -1169,7 +1169,7 @@ get_tex_level_parameter_image(struct gl_context *ctx,
          if (ctx->Version < 30 &&
              !ctx->Extensions.EXT_texture_shared_exponent)
             goto invalid_pname;
-         *params = texFormat == MESA_FORMAT_RGB9_E5_FLOAT ? 5 : 0;
+         *params = texFormat == MESA_FORMAT_R9G9B9E5_FLOAT ? 5 : 0;
          break;
 
       /* GL_ARB_texture_compression */

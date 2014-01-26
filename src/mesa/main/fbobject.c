@@ -538,7 +538,7 @@ _mesa_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
          default:
             switch (rb->Format) {
             /* XXX This list is likely incomplete. */
-            case MESA_FORMAT_RGB9_E5_FLOAT:
+            case MESA_FORMAT_R9G9B9E5_FLOAT:
                fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;
                return;
             default:;
@@ -668,7 +668,7 @@ is_format_color_renderable(const struct gl_context *ctx, mesa_format format, GLe
       break;
    }
 
-   if (format == MESA_FORMAT_ARGB2101010 && internalFormat != GL_RGB10_A2) {
+   if (format == MESA_FORMAT_B10G10R10A2_UNORM && internalFormat != GL_RGB10_A2) {
       return GL_FALSE;
    }
 
@@ -2903,7 +2903,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
             /* special cases */
             *params = GL_INDEX;
          }
-         else if (format == MESA_FORMAT_Z32_FLOAT_X24S8) {
+         else if (format == MESA_FORMAT_Z32_FLOAT_S8X24_UINT) {
             /* depends on the attachment parameter */
             if (attachment == GL_STENCIL_ATTACHMENT) {
                *params = GL_INDEX;

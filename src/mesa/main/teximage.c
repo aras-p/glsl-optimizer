@@ -4054,9 +4054,9 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
       case GL_LUMINANCE32UI_EXT:
          return MESA_FORMAT_LUMINANCE_UINT32;
       case GL_LUMINANCE8_ALPHA8:
-         return MESA_FORMAT_AL88;
+         return MESA_FORMAT_L8A8_UNORM;
       case GL_LUMINANCE16_ALPHA16:
-         return MESA_FORMAT_AL1616;
+         return MESA_FORMAT_L16A16_UNORM;
       case GL_LUMINANCE_ALPHA16F_ARB:
          return MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16;
       case GL_LUMINANCE_ALPHA32F_ARB:
@@ -4135,9 +4135,9 @@ get_texbuffer_format(const struct gl_context *ctx, GLenum internalFormat)
       return MESA_FORMAT_RGBA_UINT32;
 
    case GL_RG8:
-      return MESA_FORMAT_GR88;
+      return MESA_FORMAT_R8G8_UNORM;
    case GL_RG16:
-      return MESA_FORMAT_GR1616;
+      return MESA_FORMAT_R16G16_UNORM;
    case GL_RG16F:
       return MESA_FORMAT_RG_FLOAT16;
    case GL_RG32F:

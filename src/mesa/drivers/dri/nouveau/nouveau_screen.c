@@ -53,7 +53,7 @@ nouveau_get_configs(void)
 	const uint8_t msaa_samples[] = { 0 };
 
 	static const mesa_format formats[3] = {
-		MESA_FORMAT_RGB565,
+		MESA_FORMAT_B5G6R5_UNORM,
 		MESA_FORMAT_B8G8R8A8_UNORM,
 		MESA_FORMAT_B8G8R8X8_UNORM,
 	};

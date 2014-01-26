@@ -214,7 +214,7 @@ radeon_create_image_from_name(__DRIscreen *screen,
 
    switch (format) {
    case __DRI_IMAGE_FORMAT_RGB565:
-      image->format = MESA_FORMAT_RGB565;
+      image->format = MESA_FORMAT_B5G6R5_UNORM;
       image->internal_format = GL_RGB;
       image->data_type = GL_UNSIGNED_BYTE;
       break;
@@ -314,7 +314,7 @@ radeon_create_image(__DRIscreen *screen,
 
    switch (format) {
    case __DRI_IMAGE_FORMAT_RGB565:
-      image->format = MESA_FORMAT_RGB565;
+      image->format = MESA_FORMAT_B5G6R5_UNORM;
       image->internal_format = GL_RGB;
       image->data_type = GL_UNSIGNED_BYTE;
       break;
@@ -611,7 +611,7 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
     _mesa_initialize_window_framebuffer(&rfb->base, mesaVis);
 
     if (mesaVis->redBits == 5)
-        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_RGB565 : MESA_FORMAT_RGB565_REV;
+        rgbFormat = _mesa_little_endian() ? MESA_FORMAT_B5G6R5_UNORM : MESA_FORMAT_R5G6B5_UNORM;
     else if (mesaVis->alphaBits == 0)
         rgbFormat = _mesa_little_endian() ? MESA_FORMAT_B8G8R8X8_UNORM : MESA_FORMAT_X8R8G8B8_UNORM;
     else
@@ -632,14 +632,14 @@ radeonCreateBuffer( __DRIscreen *driScrnPriv,
     if (mesaVis->depthBits == 24) {
       if (mesaVis->stencilBits == 8) {
 	struct radeon_renderbuffer *depthStencilRb =
-           radeon_create_renderbuffer(MESA_FORMAT_S8_Z24, driDrawPriv);
+           radeon_create_renderbuffer(MESA_FORMAT_Z24_UNORM_X8_UINT, driDrawPriv);
 	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depthStencilRb->base.Base);
 	_mesa_add_renderbuffer(&rfb->base, BUFFER_STENCIL, &depthStencilRb->base.Base);
 	depthStencilRb->has_surface = screen->depthHasSurface;
       } else {
 	/* depth renderbuffer */
 	struct radeon_renderbuffer *depth =
-           radeon_create_renderbuffer(MESA_FORMAT_X8_Z24, driDrawPriv);
+           radeon_create_renderbuffer(MESA_FORMAT_Z24_UNORM_S8_UINT, driDrawPriv);
 	_mesa_add_renderbuffer(&rfb->base, BUFFER_DEPTH, &depth->base.Base);
 	depth->has_surface = screen->depthHasSurface;
       }
@@ -709,7 +709,7 @@ static const
 __DRIconfig **radeonInitScreen2(__DRIscreen *psp)
 {
    static const mesa_format formats[3] = {
-      MESA_FORMAT_RGB565,
+      MESA_FORMAT_B5G6R5_UNORM,
       MESA_FORMAT_B8G8R8X8_UNORM,
       MESA_FORMAT_B8G8R8A8_UNORM
    };

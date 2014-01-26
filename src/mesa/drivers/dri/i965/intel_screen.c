@@ -976,13 +976,13 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
    _mesa_initialize_window_framebuffer(fb, mesaVis);
 
    if (mesaVis->redBits == 5)
-      rgbFormat = MESA_FORMAT_RGB565;
+      rgbFormat = MESA_FORMAT_B5G6R5_UNORM;
    else if (mesaVis->sRGBCapable)
-      rgbFormat = MESA_FORMAT_SARGB8;
+      rgbFormat = MESA_FORMAT_B8G8R8A8_SRGB;
    else if (mesaVis->alphaBits == 0)
       rgbFormat = MESA_FORMAT_B8G8R8X8_UNORM;
    else {
-      rgbFormat = MESA_FORMAT_SARGB8;
+      rgbFormat = MESA_FORMAT_B8G8R8A8_SRGB;
       fb->Visual.sRGBCapable = true;
    }
 
@@ -1004,7 +1004,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       assert(mesaVis->stencilBits == 8);
 
       if (screen->devinfo->has_hiz_and_separate_stencil) {
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_X8_Z24,
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_Z24_UNORM_S8_UINT,
                                                 num_samples);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
          rb = intel_create_private_renderbuffer(MESA_FORMAT_S_UINT8,
@@ -1015,7 +1015,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
           * Use combined depth/stencil. Note that the renderbuffer is
           * attached to two attachment points.
           */
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_S8_Z24,
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_Z24_UNORM_X8_UINT,
                                                 num_samples);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);
@@ -1125,7 +1125,7 @@ static __DRIconfig**
 intel_screen_make_configs(__DRIscreen *dri_screen)
 {
    static const mesa_format formats[] = {
-      MESA_FORMAT_RGB565,
+      MESA_FORMAT_B5G6R5_UNORM,
       MESA_FORMAT_B8G8R8A8_UNORM
    };
 
@@ -1154,7 +1154,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
       depth_bits[0] = 0;
       stencil_bits[0] = 0;
 
-      if (formats[i] == MESA_FORMAT_RGB565) {
+      if (formats[i] == MESA_FORMAT_B5G6R5_UNORM) {
          depth_bits[1] = 16;
          stencil_bits[1] = 0;
          if (devinfo->gen >= 6) {
@@ -1183,7 +1183,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
    for (int i = 0; i < ARRAY_SIZE(formats); i++) {
       __DRIconfig **new_configs;
 
-      if (formats[i] == MESA_FORMAT_RGB565) {
+      if (formats[i] == MESA_FORMAT_B5G6R5_UNORM) {
          depth_bits[0] = 16;
          stencil_bits[0] = 0;
       } else {
@@ -1223,7 +1223,7 @@ intel_screen_make_configs(__DRIscreen *dri_screen)
       depth_bits[0] = 0;
       stencil_bits[0] = 0;
 
-      if (formats[i] == MESA_FORMAT_RGB565) {
+      if (formats[i] == MESA_FORMAT_B5G6R5_UNORM) {
          depth_bits[1] = 16;
          stencil_bits[1] = 0;
       } else {

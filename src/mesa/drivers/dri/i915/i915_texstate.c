@@ -48,15 +48,15 @@ translate_texture_format(mesa_format mesa_format, GLenum DepthMode)
       return MAPSURF_8BIT | MT_8BIT_I8;
    case MESA_FORMAT_A_UNORM8:
       return MAPSURF_8BIT | MT_8BIT_A8;
-   case MESA_FORMAT_AL88:
+   case MESA_FORMAT_L8A8_UNORM:
       return MAPSURF_16BIT | MT_16BIT_AY88;
-   case MESA_FORMAT_RGB565:
+   case MESA_FORMAT_B5G6R5_UNORM:
       return MAPSURF_16BIT | MT_16BIT_RGB565;
-   case MESA_FORMAT_ARGB1555:
+   case MESA_FORMAT_B5G5R5A1_UNORM:
       return MAPSURF_16BIT | MT_16BIT_ARGB1555;
-   case MESA_FORMAT_ARGB4444:
+   case MESA_FORMAT_B4G4R4A4_UNORM:
       return MAPSURF_16BIT | MT_16BIT_ARGB4444;
-   case MESA_FORMAT_SARGB8:
+   case MESA_FORMAT_B8G8R8A8_SRGB:
    case MESA_FORMAT_B8G8R8A8_UNORM:
       return MAPSURF_32BIT | MT_32BIT_ARGB8888;
    case MESA_FORMAT_B8G8R8X8_UNORM:
@@ -88,8 +88,8 @@ translate_texture_format(mesa_format mesa_format, GLenum DepthMode)
    case MESA_FORMAT_RGBA_DXT5:
    case MESA_FORMAT_SRGBA_DXT5:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
-   case MESA_FORMAT_S8_Z24:
-   case MESA_FORMAT_X8_Z24:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
       if (DepthMode == GL_ALPHA)
 	 return (MAPSURF_32BIT | MT_32BIT_x8A24);
       else if (DepthMode == GL_INTENSITY)

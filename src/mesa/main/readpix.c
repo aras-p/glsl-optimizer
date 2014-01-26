@@ -594,8 +594,8 @@ fast_read_depth_stencil_pixels(struct gl_context *ctx,
    if (rb != stencilRb)
       return GL_FALSE;
 
-   if (rb->Format != MESA_FORMAT_Z24_S8 &&
-       rb->Format != MESA_FORMAT_S8_Z24)
+   if (rb->Format != MESA_FORMAT_S8_UINT_Z24_UNORM &&
+       rb->Format != MESA_FORMAT_Z24_UNORM_X8_UINT)
       return GL_FALSE;
 
    ctx->Driver.MapRenderbuffer(ctx, rb, x, y, width, height, GL_MAP_READ_BIT,

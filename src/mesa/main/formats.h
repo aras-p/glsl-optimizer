@@ -348,19 +348,19 @@ typedef enum
    MESA_FORMAT_RGB_UNORM8,    /* uchar[i * 3] = R, [i * 3 + 1] = G, [i *3 + 2] = B */
 
    /* Type P formats */
-   MESA_FORMAT_RGB565,		/*                     RRRR RGGG GGGB BBBB */
-   MESA_FORMAT_RGB565_REV,	/*                     GGGB BBBB RRRR RGGG */
-   MESA_FORMAT_ARGB4444,	/*                     AAAA RRRR GGGG BBBB */
-   MESA_FORMAT_ARGB4444_REV,	/*                     GGGG BBBB AAAA RRRR */
-   MESA_FORMAT_RGBA5551,        /*                     RRRR RGGG GGBB BBBA */
-   MESA_FORMAT_ARGB1555,	/*                     ARRR RRGG GGGB BBBB */
-   MESA_FORMAT_ARGB1555_REV,	/*                     GGGB BBBB ARRR RRGG */
-   MESA_FORMAT_AL44,		/*                               AAAA LLLL */
-   MESA_FORMAT_AL88,		/*                     AAAA AAAA LLLL LLLL */
-   MESA_FORMAT_AL88_REV,	/*                     LLLL LLLL AAAA AAAA */
-   MESA_FORMAT_AL1616,          /* AAAA AAAA AAAA AAAA LLLL LLLL LLLL LLLL */
-   MESA_FORMAT_AL1616_REV,      /* LLLL LLLL LLLL LLLL AAAA AAAA AAAA AAAA */
-   MESA_FORMAT_RGB332,		/*                               RRRG GGBB */
+   MESA_FORMAT_B5G6R5_UNORM,                         /* BBBB BGGG GGGR RRRR */
+   MESA_FORMAT_R5G6B5_UNORM,                         /* RRRR RGGG GGGB BBBB */
+   MESA_FORMAT_B4G4R4A4_UNORM,                       /* BBBB GGGG RRRR AAAA */
+   MESA_FORMAT_A4R4G4B4_UNORM,                       /* AAAA RRRR GGGG BBBB */
+   MESA_FORMAT_A1B5G5R5_UNORM,                       /* ABBB BBGG GGGR RRRR */
+   MESA_FORMAT_B5G5R5A1_UNORM,                       /* BBBB BGGG GGRR RRRA */
+   MESA_FORMAT_A1R5G5B5_UNORM,                       /* ARRR RRGG GGGB BBBB */
+   MESA_FORMAT_L4A4_UNORM,                                     /* LLLL AAAA */
+   MESA_FORMAT_L8A8_UNORM,                           /* LLLL LLLL AAAA AAAA */
+   MESA_FORMAT_A8L8_UNORM,                           /* AAAA AAAA LLLL LLLL */
+   MESA_FORMAT_L16A16_UNORM,     /* LLLL LLLL LLLL LLLL AAAA AAAA AAAA AAAA */
+   MESA_FORMAT_A16L16_UNORM,     /* AAAA AAAA AAAA AAAA LLLL LLLL LLLL LLLL */
+   MESA_FORMAT_B2G3R3_UNORM,                                   /* BBGG GRRR */
 
    /* Type A formats */
    MESA_FORMAT_A_UNORM8,     /* uchar[i] = A */
@@ -371,32 +371,32 @@ typedef enum
    MESA_FORMAT_I_UNORM16,    /* ushort[i] = I */
 
    /* Type P formats */
-   MESA_FORMAT_YCBCR,		/*                     YYYY YYYY UorV UorV */
-   MESA_FORMAT_YCBCR_REV,	/*                     UorV UorV YYYY YYYY */
+   MESA_FORMAT_YCBCR,         /*                     YYYY YYYY UorV UorV */
+   MESA_FORMAT_YCBCR_REV,     /*                     UorV UorV YYYY YYYY */
 
    /* Type A format(s) */
    MESA_FORMAT_R_UNORM8,      /* uchar[i] = R */
 
    /* Type P formats */
-   MESA_FORMAT_GR88,		/*                     GGGG GGGG RRRR RRRR */
-   MESA_FORMAT_RG88,    	/*                     RRRR RRRR GGGG GGGG */
+   MESA_FORMAT_R8G8_UNORM,                           /* RRRR RRRR GGGG GGGG */
+   MESA_FORMAT_G8R8_UNORM,                           /* GGGG GGGG RRRR RRRR */
 
    /* Type A format(s) */
    MESA_FORMAT_R_UNORM16,     /* ushort[i] = R */
 
    /* Type P formats */
-   MESA_FORMAT_GR1616,		/* GGGG GGGG GGGG GGGG RRRR RRRR RRRR RRRR */
-   MESA_FORMAT_RG1616,          /* RRRR RRRR RRRR RRRR GGGG GGGG GGGG GGGG */
-   MESA_FORMAT_ARGB2101010,     /* AARR RRRR RRRR GGGG GGGG GGBB BBBB BBBB */
-   MESA_FORMAT_Z24_S8,          /* ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ SSSS SSSS */
-   MESA_FORMAT_S8_Z24,          /* SSSS SSSS ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ */
+   MESA_FORMAT_R16G16_UNORM,     /* RRRR RRRR RRRR RRRR GGGG GGGG GGGG GGGG */
+   MESA_FORMAT_G16R16_UNORM,     /* GGGG GGGG GGGG GGGG RRRR RRRR RRRR RRRR */
+   MESA_FORMAT_B10G10R10A2_UNORM,/* BBBB BBBB BBGG GGGG GGGG RRRR RRRR RRAA */
+   MESA_FORMAT_S8_UINT_Z24_UNORM,/* SSSS SSSS ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ */
+   MESA_FORMAT_Z24_UNORM_X8_UINT,/* ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ xxxx xxxx */
 
    /* Type A format(s) */
    MESA_FORMAT_Z_UNORM16,     /* ushort[i] = Z */
 
    /* Type P formats */
-   MESA_FORMAT_X8_Z24,          /* xxxx xxxx ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ */
-   MESA_FORMAT_Z24_X8,          /* ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ xxxx xxxx */
+   MESA_FORMAT_Z24_UNORM_S8_UINT,/* ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ SSSS SSSS */
+   MESA_FORMAT_X8Z24_UNORM,      /* xxxx xxxx ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ */
 
    /* Type A formats */
    MESA_FORMAT_Z_UNORM32,     /* uint[i] = Z */
@@ -411,14 +411,14 @@ typedef enum
    MESA_FORMAT_BGR_SRGB8,     /* uchar[i * 3] = B, [i * 3 + 1] = G, [i *3 + 2] = R */
 
    /* Type P formats */
-   MESA_FORMAT_SRGBA8,          /* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
-   MESA_FORMAT_SARGB8,          /* AAAA AAAA RRRR RRRR GGGG GGGG BBBB BBBB */
+   MESA_FORMAT_A8B8G8R8_SRGB,    /* AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR*/
+   MESA_FORMAT_B8G8R8A8_SRGB,    /* BBBB BBBB GGGG GGGG RRRR RRRR AAAA AAAA */
 
    /* Type A format(s) */
    MESA_FORMAT_L_SRGB8,       /* uchar[i] = L */
 
    /* Type P formats */
-   MESA_FORMAT_SLA8,            /*                     AAAA AAAA LLLL LLLL */
+   MESA_FORMAT_L8A8_SRGB,        /* LLLL LLLL AAAA AAAA */
 
    /* Type C formats */
    MESA_FORMAT_SRGB_DXT1,
@@ -531,8 +531,8 @@ typedef enum
    MESA_FORMAT_RGB_UINT32,
    MESA_FORMAT_RGBA_UINT32,
 
-                                  /* msb <------ TEXEL BITS -----------> lsb */
-                                  /* ---- ---- ---- ---- ---- ---- ---- ---- */
+                                 /* msb <------ TEXEL BITS -----------> lsb */
+                                 /* ---- ---- ---- ---- ---- ---- ---- ---- */
    /**
     * \name Signed fixed point texture formats.
     */
@@ -602,31 +602,31 @@ typedef enum
    MESA_FORMAT_SIGNED_I16,        /*                     IIII IIII IIII IIII */
 
    /* Type P format(s) */
-   MESA_FORMAT_RGB9_E5_FLOAT,
-   MESA_FORMAT_R11_G11_B10_FLOAT,
+   MESA_FORMAT_R9G9B9E5_FLOAT,
+   MESA_FORMAT_R11G11B10_FLOAT,
 
    /* Type A format(s) */
    MESA_FORMAT_Z_FLOAT32,
 
    /* Type P formats */
-   MESA_FORMAT_Z32_FLOAT_X24S8,
+   MESA_FORMAT_Z32_FLOAT_S8X24_UINT,
 
-   MESA_FORMAT_ARGB2101010_UINT,
-   MESA_FORMAT_ABGR2101010_UINT,
+   MESA_FORMAT_B10G10R10A2_UINT,
+   MESA_FORMAT_R10G10B10A2_UINT,
 
-   MESA_FORMAT_XRGB4444_UNORM,    /*                     xxxx RRRR GGGG BBBB */
-   MESA_FORMAT_XRGB1555_UNORM,    /*                     xRRR RRGG GGGB BBBB */
-   MESA_FORMAT_XBGR8888_SNORM,    /* xxxx xxxx BBBB BBBB GGGG GGGG RRRR RRRR */
-   MESA_FORMAT_XBGR8888_SRGB,     /* xxxx xxxx BBBB BBBB GGGG GGGG RRRR RRRR */
+   MESA_FORMAT_B4G4R4X4_UNORM,                       /* BBBB GGGG RRRR xxxx */
+   MESA_FORMAT_B5G5R5X1_UNORM,                       /* BBBB BGGG GGRR RRRx */
+   MESA_FORMAT_R8G8B8X8_SNORM,   /* RRRR RRRR GGGG GGGG BBBB BBBB xxxx xxxx */
+   MESA_FORMAT_R8G8B8X8_SRGB,    /* RRRR RRRR GGGG GGGG BBBB BBBB xxxx xxxx */
 
    /* Type A formats */
    MESA_FORMAT_RGBX_UINT8,    /* uchar[i * 4] = R, [i * 4 + 1] = G, [i * 4 + 2] = B, [i * 4 + 3] = x */
    MESA_FORMAT_RGBX_SINT8,    /* char[i * 4] = R, [i * 4 + 1] = G, [i * 4 + 2] = B, [i * 4 + 3] = x  */
 
    /* Type P format(s) */
-   MESA_FORMAT_XRGB2101010_UNORM, /* xxRR RRRR RRRR GGGG GGGG GGBB BBBB BBBB */
+   MESA_FORMAT_B10G10R10X2_UNORM,/* xxRR RRRR RRRR GGGG GGGG GGBB BBBB BBBB */
 
-   /* Type A format(s) */
+   /* Type A formats */
    MESA_FORMAT_RGBX_UNORM16,  /* ushort[i * 4] = R, [i * 4 + 1] = G, [i * 4 + 2] = B, [i * 4 + 3] = x */
    MESA_FORMAT_RGBX_SNORM16,  /* ... */
    MESA_FORMAT_RGBX_FLOAT16,  /* ... */
@@ -638,7 +638,7 @@ typedef enum
    MESA_FORMAT_RGBX_SINT32,   /* ... */
 
    /* Type P formats */
-   MESA_FORMAT_ABGR2101010,
+   MESA_FORMAT_R10G10B10A2_UNORM,
    MESA_FORMAT_SIGNED_RG88,
    MESA_FORMAT_SIGNED_RG1616,
 

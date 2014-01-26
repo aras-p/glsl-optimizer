@@ -308,7 +308,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
       }
    } else if (rb->mt->cpp == 2) {
       internalFormat = GL_RGB;
-      texFormat = MESA_FORMAT_RGB565;
+      texFormat = MESA_FORMAT_B5G6R5_UNORM;
    }
 
    _mesa_lock_texture(&brw->ctx, texObj);

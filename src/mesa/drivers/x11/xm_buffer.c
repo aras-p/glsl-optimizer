@@ -352,7 +352,7 @@ xmesa_new_renderbuffer(struct gl_context *ctx, GLuint name,
          xrb->Base.Base.Format = MESA_FORMAT_R8G8B8A8_UNORM;
          break;
       case PF_5R6G5B:
-         xrb->Base.Base.Format = MESA_FORMAT_RGB565;
+         xrb->Base.Base.Format = MESA_FORMAT_B5G6R5_UNORM;
          break;
       default:
          _mesa_warning(ctx, "Bad pixel format in xmesa_new_renderbuffer");

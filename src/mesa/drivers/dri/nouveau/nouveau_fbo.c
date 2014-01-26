@@ -55,7 +55,7 @@ set_renderbuffer_format(struct gl_renderbuffer *rb, GLenum internalFormat)
 		break;
 	case GL_RGB5:
 		rb->_BaseFormat  = GL_RGB;
-		rb->Format = MESA_FORMAT_RGB565;
+		rb->Format = MESA_FORMAT_B5G6R5_UNORM;
 		s->cpp = 2;
 		break;
 	case GL_DEPTH_COMPONENT16:
@@ -68,7 +68,7 @@ set_renderbuffer_format(struct gl_renderbuffer *rb, GLenum internalFormat)
 	case GL_STENCIL_INDEX8_EXT:
 	case GL_DEPTH24_STENCIL8_EXT:
 		rb->_BaseFormat  = GL_DEPTH_STENCIL;
-		rb->Format = MESA_FORMAT_Z24_S8;
+		rb->Format = MESA_FORMAT_S8_UINT_Z24_UNORM;
 		s->cpp = 4;
 		break;
 	default:
@@ -274,9 +274,9 @@ validate_format_bpp(mesa_format format)
 	switch (format) {
 	case MESA_FORMAT_B8G8R8X8_UNORM:
 	case MESA_FORMAT_B8G8R8A8_UNORM:
-	case MESA_FORMAT_Z24_S8:
+	case MESA_FORMAT_S8_UINT_Z24_UNORM:
 		return 32;
-	case MESA_FORMAT_RGB565:
+	case MESA_FORMAT_B5G6R5_UNORM:
 	case MESA_FORMAT_Z_UNORM16:
 		return 16;
 	default:

@@ -166,7 +166,7 @@ swrastFillInModes(__DRIscreen *psp,
 
     switch (pixel_bits) {
     case 16:
-	format = MESA_FORMAT_RGB565;
+	format = MESA_FORMAT_B5G6R5_UNORM;
 	break;
     case 24:
         format = MESA_FORMAT_B8G8R8X8_UNORM;
@@ -357,13 +357,13 @@ swrast_new_renderbuffer(const struct gl_config *visual, __DRIdrawable *dPriv,
 	xrb->bpp = 32;
 	break;
     case PF_R5G6B5:
-	rb->Format = MESA_FORMAT_RGB565;
+	rb->Format = MESA_FORMAT_B5G6R5_UNORM;
 	rb->InternalFormat = GL_RGB;
 	rb->_BaseFormat = GL_RGB;
 	xrb->bpp = 16;
 	break;
     case PF_R3G3B2:
-	rb->Format = MESA_FORMAT_RGB332;
+	rb->Format = MESA_FORMAT_B2G3R3_UNORM;
 	rb->InternalFormat = GL_RGB;
 	rb->_BaseFormat = GL_RGB;
 	xrb->bpp = 8;

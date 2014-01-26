@@ -104,18 +104,18 @@ intel_init_texture_formats(struct gl_context *ctx)
        intel_screen->deviceID != PCI_CHIP_845_G)
       ctx->TextureFormatSupported[MESA_FORMAT_B8G8R8X8_UNORM] = true;
    if (intel->gen == 3)
-      ctx->TextureFormatSupported[MESA_FORMAT_SARGB8] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_ARGB4444] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_ARGB1555] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_RGB565] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_B8G8R8A8_SRGB] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_B4G4R4A4_UNORM] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_B5G5R5A1_UNORM] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_B5G6R5_UNORM] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_L_UNORM8] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_A_UNORM8] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_I_UNORM8] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_AL88] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_L8A8_UNORM] = true;
 
    /* Depth and stencil */
-   ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_X8_Z24] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_X8_UINT] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_S8_UINT] = true;
 
    /*
     * This was disabled in initial FBO enabling to avoid combinations

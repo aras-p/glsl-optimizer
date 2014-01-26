@@ -891,7 +891,7 @@ intel_gles3_srgb_workaround(struct brw_context *brw,
    fb->Visual.sRGBCapable = false;
    for (int i = 0; i < BUFFER_COUNT; i++) {
       if (fb->Attachment[i].Renderbuffer &&
-          fb->Attachment[i].Renderbuffer->Format == MESA_FORMAT_SARGB8) {
+          fb->Attachment[i].Renderbuffer->Format == MESA_FORMAT_B8G8R8A8_SRGB) {
          fb->Attachment[i].Renderbuffer->Format = MESA_FORMAT_B8G8R8A8_UNORM;
       }
    }

@@ -177,7 +177,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLenum target,
 	case GL_COMPRESSED_RGBA:
 		return MESA_FORMAT_B8G8R8A8_UNORM;
 	case GL_RGB5_A1:
-		return MESA_FORMAT_ARGB1555;
+		return MESA_FORMAT_B5G5R5A1_UNORM;
 
 	case GL_RGB:
 	case GL_RGB8:
@@ -190,7 +190,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLenum target,
 	case GL_R3_G3_B2:
 	case GL_RGB4:
 	case GL_RGB5:
-		return MESA_FORMAT_RGB565;
+		return MESA_FORMAT_B5G6R5_UNORM;
 
 	case 2:
 	case GL_LUMINANCE_ALPHA:

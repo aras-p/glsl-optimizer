@@ -278,9 +278,9 @@ struct intel_mipmap_tree
     * However, for textures and renderbuffers with packed depth/stencil formats
     * on hardware where we want or need to use separate stencil, there will be
     * two miptrees for storing the data.  If the depthstencil texture or rb is
-    * MESA_FORMAT_Z32_FLOAT_X24S8, then mt->format will be
-    * MESA_FORMAT_Z_FLOAT32, otherwise for MESA_FORMAT_S8_Z24 objects it will be
-    * MESA_FORMAT_X8_Z24.
+    * MESA_FORMAT_Z32_FLOAT_S8X24_UINT, then mt->format will be
+    * MESA_FORMAT_Z_FLOAT32, otherwise for MESA_FORMAT_Z24_UNORM_X8_UINT objects it will be
+    * MESA_FORMAT_Z24_UNORM_S8_UINT.
     *
     * For ETC1/ETC2 textures, this is one of the uncompressed mesa texture
     * formats if the hardware lacks support for ETC1/ETC2. See @ref wraps_etc.

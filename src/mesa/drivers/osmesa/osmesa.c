@@ -520,7 +520,7 @@ osmesa_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
    else if (osmesa->format == OSMESA_RGB_565) {
       ASSERT(osmesa->DataType == GL_UNSIGNED_BYTE);
-      rb->Format = MESA_FORMAT_RGB565;
+      rb->Format = MESA_FORMAT_B5G6R5_UNORM;
    }
    else {
       _mesa_problem(ctx, "bad pixel format in osmesa renderbuffer_storage");

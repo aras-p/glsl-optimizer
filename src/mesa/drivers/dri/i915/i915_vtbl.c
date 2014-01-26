@@ -551,9 +551,9 @@ static uint32_t i915_render_target_format_for_mesa_format[MESA_FORMAT_COUNT] =
 {
    [MESA_FORMAT_B8G8R8A8_UNORM] = DV_PF_8888,
    [MESA_FORMAT_B8G8R8X8_UNORM] = DV_PF_8888,
-   [MESA_FORMAT_RGB565] = DV_PF_565 | DITHER_FULL_ALWAYS,
-   [MESA_FORMAT_ARGB1555] = DV_PF_1555 | DITHER_FULL_ALWAYS,
-   [MESA_FORMAT_ARGB4444] = DV_PF_4444 | DITHER_FULL_ALWAYS,
+   [MESA_FORMAT_B5G6R5_UNORM] = DV_PF_565 | DITHER_FULL_ALWAYS,
+   [MESA_FORMAT_B5G5R5A1_UNORM] = DV_PF_1555 | DITHER_FULL_ALWAYS,
+   [MESA_FORMAT_B4G4R4A4_UNORM] = DV_PF_4444 | DITHER_FULL_ALWAYS,
 };
 
 static bool
@@ -562,8 +562,8 @@ i915_render_target_supported(struct intel_context *intel,
 {
    mesa_format format = rb->Format;
 
-   if (format == MESA_FORMAT_S8_Z24 ||
-       format == MESA_FORMAT_X8_Z24 ||
+   if (format == MESA_FORMAT_Z24_UNORM_X8_UINT ||
+       format == MESA_FORMAT_Z24_UNORM_S8_UINT ||
        format == MESA_FORMAT_Z_UNORM16) {
       return true;
    }
@@ -777,7 +777,7 @@ i915_update_draw_buffer(struct intel_context *intel)
 
    /* Check for stencil fallback. */
    if (irbStencil && irbStencil->mt) {
-      assert(intel_rb_format(irbStencil) == MESA_FORMAT_S8_Z24);
+      assert(intel_rb_format(irbStencil) == MESA_FORMAT_Z24_UNORM_X8_UINT);
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, false);
    } else if (irbStencil && !irbStencil->mt) {
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, true);
@@ -790,7 +790,7 @@ i915_update_draw_buffer(struct intel_context *intel)
     * we still need to set up the shared depth/stencil state so we can use it.
     */
    if (depthRegion == NULL && irbStencil && irbStencil->mt
-       && intel_rb_format(irbStencil) == MESA_FORMAT_S8_Z24) {
+       && intel_rb_format(irbStencil) == MESA_FORMAT_Z24_UNORM_X8_UINT) {
       depthRegion = irbStencil->mt->region;
    }
 

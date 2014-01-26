@@ -455,14 +455,14 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 	    clear_val = PACK_COLOR_8888(clear[3], clear[0],
 					clear[1], clear[2]);
 	    break;
-	 case MESA_FORMAT_RGB565:
+	 case MESA_FORMAT_B5G6R5_UNORM:
 	    clear_val = PACK_COLOR_565(clear[0], clear[1], clear[2]);
 	    break;
-	 case MESA_FORMAT_ARGB4444:
+	 case MESA_FORMAT_B4G4R4A4_UNORM:
 	    clear_val = PACK_COLOR_4444(clear[3], clear[0],
 					clear[1], clear[2]);
 	    break;
-	 case MESA_FORMAT_ARGB1555:
+	 case MESA_FORMAT_B5G5R5A1_UNORM:
 	    clear_val = PACK_COLOR_1555(clear[3], clear[0],
 					clear[1], clear[2]);
 	    break;
