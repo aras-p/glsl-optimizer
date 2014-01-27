@@ -589,7 +589,6 @@ static GLboolean radeonUpdateTextureEnv( struct gl_context *ctx, int unit )
 void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format,
 			 __DRIdrawable *dPriv)
 {
-	struct gl_texture_unit *texUnit;
 	struct gl_texture_object *texObj;
 	struct gl_texture_image *texImage;
 	struct radeon_renderbuffer *rb;
@@ -603,9 +602,8 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 	radeon = pDRICtx->driverPrivate;
 
 	rfb = dPriv->driverPrivate;
-        texUnit = _mesa_get_current_tex_unit(&radeon->glCtx);
-	texObj = _mesa_select_tex_object(&radeon->glCtx, texUnit, target);
-        texImage = _mesa_get_tex_image(&radeon->glCtx, texObj, target, 0);
+	texObj = _mesa_get_current_tex_object(&radeon->glCtx, target);
+	texImage = _mesa_get_tex_image(&radeon->glCtx, texObj, target, 0);
 
 	rImage = get_radeon_texture_image(texImage);
 	t = radeon_tex_obj(texObj);
