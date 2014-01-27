@@ -1462,6 +1462,7 @@ struct gl_buffer_object
    GLboolean DeletePending;   /**< true if buffer object is removed from the hash */
    GLboolean Written;   /**< Ever written to? (for debugging) */
    GLboolean Purgeable; /**< Is the buffer purgeable under memory pressure? */
+   GLboolean Immutable; /**< GL_ARB_buffer_storage */
 };
 
 
@@ -3474,6 +3475,7 @@ struct gl_extensions
    GLboolean ARB_arrays_of_arrays;
    GLboolean ARB_base_instance;
    GLboolean ARB_blend_func_extended;
+   GLboolean ARB_buffer_storage;
    GLboolean ARB_color_buffer_float;
    GLboolean ARB_compute_shader;
    GLboolean ARB_conservative_depth;

@@ -1234,6 +1234,68 @@ _mesa_IsBuffer(GLuint id)
 
 
 void GLAPIENTRY
+_mesa_BufferStorage(GLenum target, GLsizeiptr size, const GLvoid *data,
+                    GLbitfield flags)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_buffer_object *bufObj;
+
+   if (size <= 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBufferStorage(size <= 0)");
+      return;
+   }
+
+   if (flags & ~(GL_MAP_READ_BIT |
+                 GL_MAP_WRITE_BIT |
+                 GL_MAP_PERSISTENT_BIT |
+                 GL_MAP_COHERENT_BIT |
+                 GL_DYNAMIC_STORAGE_BIT |
+                 GL_CLIENT_STORAGE_BIT)) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBufferStorage(flags)");
+      return;
+   }
+
+   if (flags & GL_MAP_PERSISTENT_BIT &&
+       !(flags & (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT))) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBufferStorage(flags!=READ/WRITE)");
+      return;
+   }
+
+   if (flags & GL_MAP_COHERENT_BIT && !(flags & GL_MAP_PERSISTENT_BIT)) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glBufferStorage(flags!=PERSISTENT)");
+      return;
+   }
+
+   bufObj = get_buffer(ctx, "glBufferStorage", target, GL_INVALID_OPERATION);
+   if (!bufObj)
+      return;
+
+   if (bufObj->Immutable) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glBufferStorage(immutable)");
+      return;
+   }
+
+   if (_mesa_bufferobj_mapped(bufObj)) {
+      /* Unmap the existing buffer.  We'll replace it now.  Not an error. */
+      ctx->Driver.UnmapBuffer(ctx, bufObj);
+      bufObj->AccessFlags = 0;
+      ASSERT(bufObj->Pointer == NULL);
+   }
+
+   FLUSH_VERTICES(ctx, _NEW_BUFFER_OBJECT);
+
+   bufObj->Written = GL_TRUE;
+   bufObj->Immutable = GL_TRUE;
+
+   ASSERT(ctx->Driver.BufferData);
+   if (!ctx->Driver.BufferData(ctx, target, size, data, GL_DYNAMIC_DRAW,
+                               flags, bufObj)) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBufferStorage()");
+   }
+}
+
+
+void GLAPIENTRY
 _mesa_BufferData(GLenum target, GLsizeiptrARB size,
                     const GLvoid * data, GLenum usage)
 {
@@ -1285,6 +1347,11 @@ _mesa_BufferData(GLenum target, GLsizeiptrARB size,
    if (!bufObj)
       return;
 
+   if (bufObj->Immutable) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glBufferData(immutable)");
+      return;
+   }
+
    if (_mesa_bufferobj_mapped(bufObj)) {
       /* Unmap the existing buffer.  We'll replace it now.  Not an error. */
       ctx->Driver.UnmapBuffer(ctx, bufObj);
@@ -1328,6 +1395,12 @@ _mesa_BufferSubData(GLenum target, GLintptrARB offset,
                                               "glBufferSubDataARB" );
    if (!bufObj) {
       /* error already recorded */
+      return;
+   }
+
+   if (bufObj->Immutable &&
+       !(bufObj->StorageFlags & GL_DYNAMIC_STORAGE_BIT)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glBufferSubData");
       return;
    }
 
@@ -1663,6 +1736,16 @@ _mesa_GetBufferParameteriv(GLenum target, GLenum pname, GLint *params)
          goto invalid_pname;
       *params = (GLint) bufObj->Length;
       return;
+   case GL_BUFFER_IMMUTABLE_STORAGE:
+      if (!ctx->Extensions.ARB_buffer_storage)
+         goto invalid_pname;
+      *params = bufObj->Immutable;
+      return;
+   case GL_BUFFER_STORAGE_FLAGS:
+      if (!ctx->Extensions.ARB_buffer_storage)
+         goto invalid_pname;
+      *params = bufObj->StorageFlags;
+      return;
    default:
       ; /* fall-through */
    }
@@ -1716,6 +1799,16 @@ _mesa_GetBufferParameteri64v(GLenum target, GLenum pname, GLint64 *params)
       if (!ctx->Extensions.ARB_map_buffer_range)
          goto invalid_pname;
       *params = bufObj->Length;
+      return;
+   case GL_BUFFER_IMMUTABLE_STORAGE:
+      if (!ctx->Extensions.ARB_buffer_storage)
+         goto invalid_pname;
+      *params = bufObj->Immutable;
+      return;
+   case GL_BUFFER_STORAGE_FLAGS:
+      if (!ctx->Extensions.ARB_buffer_storage)
+         goto invalid_pname;
+      *params = bufObj->StorageFlags;
       return;
    default:
       ; /* fall-through */

@@ -118,6 +118,10 @@ GLboolean GLAPIENTRY
 _mesa_IsBuffer(GLuint buffer);
 
 void GLAPIENTRY
+_mesa_BufferStorage(GLenum target, GLsizeiptr size, const GLvoid *data,
+                    GLbitfield flags);
+
+void GLAPIENTRY
 _mesa_BufferData(GLenum target, GLsizeiptrARB size,
                  const GLvoid * data, GLenum usage);
 
