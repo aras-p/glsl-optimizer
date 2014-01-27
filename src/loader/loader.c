@@ -85,7 +85,6 @@ static void default_logger(int level, const char *fmt, ...)
       va_start(args, fmt);
       vfprintf(stderr, fmt, args);
       va_end(args);
-      fprintf(stderr, "\n");
    }
 }
 
@@ -127,14 +126,14 @@ udev_device_new_from_fd(struct udev *udev, int fd)
                (struct udev *udev, char type, dev_t devnum));
 
    if (fstat(fd, &buf) < 0) {
-      log_(_LOADER_WARNING, "MESA-LOADER: failed to stat fd %d", fd);
+      log_(_LOADER_WARNING, "MESA-LOADER: failed to stat fd %d\n", fd);
       return NULL;
    }
 
    device = udev_device_new_from_devnum(udev, 'c', buf.st_rdev);
    if (device == NULL) {
       log_(_LOADER_WARNING,
-              "MESA-LOADER: could not create udev device for fd %d", fd);
+              "MESA-LOADER: could not create udev device for fd %d\n", fd);
       return NULL;
    }
 
@@ -165,14 +164,14 @@ loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
 
    parent = udev_device_get_parent(device);
    if (parent == NULL) {
-      log_(_LOADER_WARNING, "MESA-LOADER: could not get parent device");
+      log_(_LOADER_WARNING, "MESA-LOADER: could not get parent device\n");
       goto out;
    }
 
    pci_id = udev_device_get_property_value(parent, "PCI_ID");
    if (pci_id == NULL ||
        sscanf(pci_id, "%x:%x", vendor_id, chip_id) != 2) {
-      log_(_LOADER_WARNING, "MESA-LOADER: malformed or no PCI ID");
+      log_(_LOADER_WARNING, "MESA-LOADER: malformed or no PCI ID\n");
       *chip_id = -1;
       goto out;
    }
@@ -202,11 +201,11 @@ loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
 
    version = drmGetVersion(fd);
    if (!version) {
-      log_(_LOADER_WARNING, "MESA-LOADER: invalid drm fd");
+      log_(_LOADER_WARNING, "MESA-LOADER: invalid drm fd\n");
       return FALSE;
    }
    if (!version->name) {
-      log_(_LOADER_WARNING, "MESA-LOADER: unable to determine the driver name");
+      log_(_LOADER_WARNING, "MESA-LOADER: unable to determine the driver name\n");
       drmFreeVersion(version);
       return FALSE;
    }
@@ -222,7 +221,7 @@ loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
       gp.value = chip_id;
       ret = drmCommandWriteRead(fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
       if (ret) {
-         log_(_LOADER_WARNING, "MESA-LOADER: failed to get param for i915");
+         log_(_LOADER_WARNING, "MESA-LOADER: failed to get param for i915\n");
 	 *chip_id = -1;
       }
    }
@@ -237,7 +236,7 @@ loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
       info.value = (unsigned long) chip_id;
       ret = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
       if (ret) {
-         log_(_LOADER_WARNING, "MESA-LOADER: failed to get info for radeon");
+         log_(_LOADER_WARNING, "MESA-LOADER: failed to get info for radeon\n");
 	 *chip_id = -1;
       }
    }
@@ -316,12 +315,12 @@ loader_get_driver_for_fd(int fd, unsigned driver_types)
       drmVersionPtr version = drmGetVersion(fd);
 
       if (!version) {
-         log_(_LOADER_WARNING, "failed to get driver name for fd %d", fd);
+         log_(_LOADER_WARNING, "failed to get driver name for fd %d\n", fd);
          return NULL;
       }
 
       driver = strndup(version->name, version->name_len);
-      log_(_LOADER_INFO, "using driver %s for %d", driver, fd);
+      log_(_LOADER_INFO, "using driver %s for %d\n", driver, fd);
 
       drmFreeVersion(version);
 #endif
@@ -350,7 +349,7 @@ loader_get_driver_for_fd(int fd, unsigned driver_types)
 
 out:
    log_(driver ? _LOADER_INFO : _LOADER_WARNING,
-         "pci id for fd %d: %04x:%04x, driver %s",
+         "pci id for fd %d: %04x:%04x, driver %s\n",
          fd, vendor_id, chip_id, driver);
    return driver;
 }
