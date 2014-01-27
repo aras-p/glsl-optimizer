@@ -799,7 +799,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		buffer.asprintf_append ("Lod");
 	if (ir->op == ir_txd)
 		buffer.asprintf_append ("Grad");
-    if (ir->op == ir_txf && ir->offset != NULL)
+    if (ir->offset != NULL)
         buffer.asprintf_append ("Offset");
 	
 	if (state->es_shader)
