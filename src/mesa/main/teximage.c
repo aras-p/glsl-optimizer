@@ -689,8 +689,8 @@ _mesa_is_proxy_texture(GLenum target)
 /**
  * Return the proxy target which corresponds to the given texture target
  */
-GLenum
-_mesa_get_proxy_target(GLenum target)
+static GLenum
+proxy_target(GLenum target)
 {
    switch (target) {
    case GL_TEXTURE_1D:
@@ -730,7 +730,7 @@ _mesa_get_proxy_target(GLenum target)
    case GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY:
       return GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY;
    default:
-      _mesa_problem(NULL, "unexpected target in _mesa_get_proxy_target()");
+      _mesa_problem(NULL, "unexpected target in proxy_target()");
       return 0;
    }
 }
@@ -3167,7 +3167,7 @@ teximage(struct gl_context *ctx, GLboolean compressed, GLuint dims,
                                                  height, depth, border);
 
    /* check that the texture won't take too much memory, etc */
-   sizeOK = ctx->Driver.TestProxyTexImage(ctx, _mesa_get_proxy_target(target),
+   sizeOK = ctx->Driver.TestProxyTexImage(ctx, proxy_target(target),
                                           level, texFormat,
                                           width, height, depth, border);
 
@@ -3586,7 +3586,7 @@ copyteximage(struct gl_context *ctx, GLuint dims,
                                            internalFormat, GL_NONE, GL_NONE);
    assert(texFormat != MESA_FORMAT_NONE);
 
-   if (!ctx->Driver.TestProxyTexImage(ctx, _mesa_get_proxy_target(target),
+   if (!ctx->Driver.TestProxyTexImage(ctx, proxy_target(target),
                                       level, texFormat,
                                       width, height, 1, border)) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY,
