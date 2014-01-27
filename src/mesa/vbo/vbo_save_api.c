@@ -200,6 +200,8 @@ alloc_vertex_store(struct gl_context *ctx)
                                  GL_ARRAY_BUFFER_ARB,
                                  VBO_SAVE_BUFFER_SIZE * sizeof(GLfloat),
                                  NULL, GL_STATIC_DRAW_ARB,
+                                 GL_MAP_WRITE_BIT |
+                                 GL_DYNAMIC_STORAGE_BIT,
                                  vertex_store->bufferobj);
    }
    else {

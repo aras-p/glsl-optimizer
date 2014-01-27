@@ -555,7 +555,7 @@ _mesa_total_buffer_object_memory(struct gl_context *ctx)
  */
 static GLboolean
 _mesa_buffer_data( struct gl_context *ctx, GLenum target, GLsizeiptrARB size,
-		   const GLvoid * data, GLenum usage,
+		   const GLvoid * data, GLenum usage, GLenum storageFlags,
 		   struct gl_buffer_object * bufObj )
 {
    void * new_data;
@@ -569,6 +569,7 @@ _mesa_buffer_data( struct gl_context *ctx, GLenum target, GLsizeiptrARB size,
       bufObj->Data = (GLubyte *) new_data;
       bufObj->Size = size;
       bufObj->Usage = usage;
+      bufObj->StorageFlags = storageFlags;
 
       if (data) {
 	 memcpy( bufObj->Data, data, size );
@@ -1305,7 +1306,11 @@ _mesa_BufferData(GLenum target, GLsizeiptrARB size,
 #endif
 
    ASSERT(ctx->Driver.BufferData);
-   if (!ctx->Driver.BufferData( ctx, target, size, data, usage, bufObj )) {
+   if (!ctx->Driver.BufferData(ctx, target, size, data, usage,
+                               GL_MAP_READ_BIT |
+                               GL_MAP_WRITE_BIT |
+                               GL_DYNAMIC_STORAGE_BIT,
+                               bufObj)) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBufferDataARB()");
    }
 }

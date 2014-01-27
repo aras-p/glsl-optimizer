@@ -578,7 +578,7 @@ struct dd_function_table {
 
    GLboolean (*BufferData)(struct gl_context *ctx, GLenum target,
                            GLsizeiptrARB size, const GLvoid *data, GLenum usage,
-                           struct gl_buffer_object *obj);
+                           GLenum storageFlags, struct gl_buffer_object *obj);
 
    void (*BufferSubData)( struct gl_context *ctx, GLintptrARB offset,
 			  GLsizeiptrARB size, const GLvoid *data,

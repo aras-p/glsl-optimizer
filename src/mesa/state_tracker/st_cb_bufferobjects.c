@@ -176,6 +176,7 @@ st_bufferobj_data(struct gl_context *ctx,
 		  GLsizeiptrARB size,
 		  const GLvoid * data,
 		  GLenum usage,
+                  GLbitfield storageFlags,
 		  struct gl_buffer_object *obj)
 {
    struct st_context *st = st_context(ctx);
@@ -184,7 +185,9 @@ st_bufferobj_data(struct gl_context *ctx,
    unsigned bind, pipe_usage;
 
    if (size && data && st_obj->buffer &&
-       st_obj->Base.Size == size && st_obj->Base.Usage == usage) {
+       st_obj->Base.Size == size &&
+       st_obj->Base.Usage == usage &&
+       st_obj->Base.StorageFlags == storageFlags) {
       /* Just discard the old contents and write new data.
        * This should be the same as creating a new buffer, but we avoid
        * a lot of validation in Mesa.
@@ -200,6 +203,7 @@ st_bufferobj_data(struct gl_context *ctx,
 
    st_obj->Base.Size = size;
    st_obj->Base.Usage = usage;
+   st_obj->Base.StorageFlags = storageFlags;
 
    switch (target) {
    case GL_PIXEL_PACK_BUFFER_ARB:

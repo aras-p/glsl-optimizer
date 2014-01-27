@@ -73,7 +73,7 @@ nouveau_bufferobj_del(struct gl_context *ctx, struct gl_buffer_object *obj)
 
 static GLboolean
 nouveau_bufferobj_data(struct gl_context *ctx, GLenum target, GLsizeiptrARB size,
-		       const GLvoid *data, GLenum usage,
+		       const GLvoid *data, GLenum usage, GLbitfield storageFlags,
 		       struct gl_buffer_object *obj)
 {
 	struct nouveau_bufferobj *nbo = to_nouveau_bufferobj(obj);
@@ -81,6 +81,7 @@ nouveau_bufferobj_data(struct gl_context *ctx, GLenum target, GLsizeiptrARB size
 
 	obj->Size = size;
 	obj->Usage = usage;
+        obj->StorageFlags = storageFlags;
 
 	/* Free previous storage */
 	nouveau_bo_ref(NULL, &nbo->bo);

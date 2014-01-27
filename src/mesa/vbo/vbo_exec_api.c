@@ -998,7 +998,11 @@ void vbo_use_buffer_objects(struct gl_context *ctx)
    /* Allocate a real buffer object now */
    _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
    exec->vtx.bufferobj = ctx->Driver.NewBufferObject(ctx, bufName, target);
-   if (!ctx->Driver.BufferData(ctx, target, size, NULL, usage, exec->vtx.bufferobj)) {
+   if (!ctx->Driver.BufferData(ctx, target, size, NULL, usage,
+                               GL_MAP_WRITE_BIT |
+                               GL_DYNAMIC_STORAGE_BIT |
+                               GL_CLIENT_STORAGE_BIT,
+                               exec->vtx.bufferobj)) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "VBO allocation");
    }
 }

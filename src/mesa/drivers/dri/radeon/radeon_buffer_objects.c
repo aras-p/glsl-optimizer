@@ -86,6 +86,7 @@ radeonBufferData(struct gl_context * ctx,
                  GLsizeiptrARB size,
                  const GLvoid * data,
                  GLenum usage,
+                 GLbitfield storageFlags,
                  struct gl_buffer_object *obj)
 {
     radeonContextPtr radeon = RADEON_CONTEXT(ctx);
@@ -93,6 +94,7 @@ radeonBufferData(struct gl_context * ctx,
 
     radeon_obj->Base.Size = size;
     radeon_obj->Base.Usage = usage;
+    radeon_obj->Base.StorageFlags = storageFlags;
 
     if (radeon_obj->bo != NULL) {
         radeon_bo_unref(radeon_obj->bo);

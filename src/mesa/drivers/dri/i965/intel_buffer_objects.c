@@ -182,7 +182,9 @@ intel_bufferobj_data(struct gl_context * ctx,
                      GLenum target,
                      GLsizeiptrARB size,
                      const GLvoid * data,
-                     GLenum usage, struct gl_buffer_object *obj)
+                     GLenum usage,
+                     GLbitfield storageFlags,
+                     struct gl_buffer_object *obj)
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
@@ -193,6 +195,7 @@ intel_bufferobj_data(struct gl_context * ctx,
 
    intel_obj->Base.Size = size;
    intel_obj->Base.Usage = usage;
+   intel_obj->Base.StorageFlags = storageFlags;
 
    assert(!obj->Pointer); /* Mesa should have unmapped it */
 

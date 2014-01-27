@@ -325,8 +325,12 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
       exec->vtx.buffer_used = 0;
 
       if (ctx->Driver.BufferData(ctx, GL_ARRAY_BUFFER_ARB,
-                                  VBO_VERT_BUFFER_SIZE, 
-                                  NULL, usage, exec->vtx.bufferobj)) {
+                                 VBO_VERT_BUFFER_SIZE,
+                                 NULL, usage,
+                                 GL_MAP_WRITE_BIT |
+                                 GL_DYNAMIC_STORAGE_BIT |
+                                 GL_CLIENT_STORAGE_BIT,
+                                 exec->vtx.bufferobj)) {
          /* buffer allocation worked, now map the buffer */
          exec->vtx.buffer_map =
             (GLfloat *)ctx->Driver.MapBufferRange(ctx,
