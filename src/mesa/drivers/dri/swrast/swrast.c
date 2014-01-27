@@ -71,7 +71,6 @@ static void swrastSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
     struct dri_context *dri_ctx;
     int x, y, w, h;
     __DRIscreen *sPriv = dPriv->driScreenPriv;
-    struct gl_texture_unit *texUnit;
     struct gl_texture_object *texObj;
     struct gl_texture_image *texImage;
     struct swrast_texture_image *swImage;
@@ -82,8 +81,7 @@ static void swrastSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
     internalFormat = (texture_format == __DRI_TEXTURE_FORMAT_RGB ? 3 : 4);
 
-    texUnit = _mesa_get_current_tex_unit(&dri_ctx->Base);
-    texObj = _mesa_select_tex_object(&dri_ctx->Base, texUnit, target);
+    texObj = _mesa_get_current_tex_object(&dri_ctx->Base, target);
     texImage = _mesa_get_tex_image(&dri_ctx->Base, texObj, target, 0);
     swImage = swrast_texture_image(texImage);
 
