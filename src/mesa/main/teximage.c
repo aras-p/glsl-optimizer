@@ -737,20 +737,14 @@ _mesa_get_proxy_target(GLenum target)
 
 
 /**
- * Get the texture object that corresponds to the target of the given
- * texture unit.  The target should have already been checked for validity.
- *
- * \param ctx GL context.
- * \param texUnit texture unit.
- * \param target texture target.
- *
- * \return pointer to the texture object on success, or NULL on failure.
+ * Return a pointer to the current texture object for the given target
+ * on the current texture unit.
+ * Note: all <target> error checking should have been done by this point.
  */
 struct gl_texture_object *
-_mesa_select_tex_object(struct gl_context *ctx,
-                        const struct gl_texture_unit *texUnit,
-                        GLenum target)
+_mesa_get_current_tex_object(struct gl_context *ctx, GLenum target)
 {
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    const GLboolean arrayTex = ctx->Extensions.EXT_texture_array;
 
    switch (target) {
@@ -818,21 +812,11 @@ _mesa_select_tex_object(struct gl_context *ctx,
          return ctx->Extensions.ARB_texture_multisample
             ? ctx->Texture.ProxyTex[TEXTURE_2D_MULTISAMPLE_ARRAY_INDEX] : NULL;
       default:
-         _mesa_problem(NULL, "bad target in _mesa_select_tex_object()");
+         _mesa_problem(NULL, "bad target in _mesa_get_current_tex_object()");
          return NULL;
    }
 }
 
-
-/**
- * Return pointer to texture object for given target on current texture unit.
- */
-struct gl_texture_object *
-_mesa_get_current_tex_object(struct gl_context *ctx, GLenum target)
-{
-   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
-   return _mesa_select_tex_object(ctx, texUnit, target);
-}
 
 
 /**
