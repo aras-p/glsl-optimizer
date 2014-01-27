@@ -204,6 +204,17 @@ MD(dp_message_control,  13,   8)
 /** @} */
 
 /**
+ * Scratch message bits:
+ *  @{
+ */
+MD(scratch_read_write,  17,  17) /* 0 = read,  1 = write */
+MD(scratch_type,        16,  16) /* 0 = OWord, 1 = DWord */
+MD(scratch_invalidate_after_read, 15, 15)
+MD(scratch_block_size,  13,  12)
+MD(scratch_addr_offset, 11,   0)
+/** @} */
+
+/**
  * Render Target message function control bits:
  *  @{
  */
@@ -342,6 +353,18 @@ void gen8_set_dp_message(const struct brw_context *brw,
                          unsigned response_length,
                          bool header_present,
                          bool end_of_thread);
+
+void gen8_set_dp_scratch_message(const struct brw_context *brw,
+                                 struct gen8_instruction *inst,
+                                 bool write,
+                                 bool dword,
+                                 bool invalidate_after_read,
+                                 unsigned num_regs,
+                                 unsigned addr_offset,
+                                 unsigned msg_length,
+                                 unsigned response_length,
+                                 bool header_present,
+                                 bool end_of_thread);
 
 /** Disassemble the instruction. */
 int gen8_disassemble(FILE *file, struct gen8_instruction *inst, int gen);

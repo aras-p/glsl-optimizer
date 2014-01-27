@@ -431,3 +431,27 @@ gen8_set_dp_message(const struct brw_context *brw,
    gen8_set_dp_message_type(inst, msg_type);
    gen8_set_dp_message_control(inst, msg_control);
 }
+
+void
+gen8_set_dp_scratch_message(const struct brw_context *brw,
+                            struct gen8_instruction *inst,
+                            bool write,
+                            bool dword,
+                            bool invalidate_after_read,
+                            unsigned num_regs,
+                            unsigned addr_offset,
+                            unsigned mlen,
+                            unsigned rlen,
+                            bool header_present,
+                            bool end_of_thread)
+{
+   assert(num_regs == 1 || num_regs == 2 || num_regs == 4 || num_regs == 8);
+   gen8_set_message_descriptor(brw, inst, GEN7_SFID_DATAPORT_DATA_CACHE,
+                               mlen, rlen, header_present, end_of_thread);
+   gen8_set_dp_category(inst, 1); /* Scratch Block Read/Write messages */
+   gen8_set_scratch_read_write(inst, write);
+   gen8_set_scratch_type(inst, dword);
+   gen8_set_scratch_invalidate_after_read(inst, invalidate_after_read);
+   gen8_set_scratch_block_size(inst, ffs(num_regs) - 1);
+   gen8_set_scratch_addr_offset(inst, addr_offset);
+}
