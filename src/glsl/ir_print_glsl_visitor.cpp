@@ -787,7 +787,10 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
     }
     else 
     {
-        buffer.asprintf_append ("texture");
+        if (ir->op == ir_txf)
+            buffer.asprintf_append ("texelFetch");
+        else
+            buffer.asprintf_append ("texture");
     }
 	
 	if (is_proj)
@@ -796,6 +799,8 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		buffer.asprintf_append ("Lod");
 	if (ir->op == ir_txd)
 		buffer.asprintf_append ("Grad");
+    if (ir->op == ir_txf && ir->offset != NULL)
+        buffer.asprintf_append ("Offset");
 	
 	if (state->es_shader)
 	{
@@ -831,7 +836,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	}
 	
 	// lod
-	if (ir->op == ir_txl)
+	if (ir->op == ir_txl || ir->op == ir_txf)
 	{
 		buffer.asprintf_append (", ");
 		ir->lod_info.lod->accept(this);
@@ -846,11 +851,12 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		ir->lod_info.grad.dPdy->accept(this);
 	}
 	
-	/*
-	
    if (ir->offset != NULL) {
+      buffer.asprintf_append (", ");
       ir->offset->accept(this);
    }
+    /*
+	
 	
    if (ir->op != ir_txf) {
       if (ir->projector)
