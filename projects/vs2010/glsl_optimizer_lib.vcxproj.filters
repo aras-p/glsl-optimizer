@@ -386,6 +386,9 @@
     <ClCompile Include="..\..\src\glsl\opt_tree_grafting.cpp">
       <Filter>src\glsl</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\glsl\opt_vectorize.cpp">
+      <Filter>src\glsl</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\glsl\ralloc.c">
       <Filter>src\glsl</Filter>
     </ClCompile>

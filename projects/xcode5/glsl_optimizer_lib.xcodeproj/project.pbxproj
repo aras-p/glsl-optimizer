@@ -59,6 +59,7 @@
 		2B8979E0182C195C00718F8A /* opt_cse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B8979DF182C195C00718F8A /* opt_cse.cpp */; };
 		2B8979E2182CB62900718F8A /* link_atomics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B8979E1182CB62900718F8A /* link_atomics.cpp */; };
 		2B92A05E15F9FF4700CFED4A /* builtin_variables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B92A05C15F9FF4700CFED4A /* builtin_variables.cpp */; };
+		2B9F0A3D189664F3002FF617 /* opt_vectorize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B9F0A3C189664F3002FF617 /* opt_vectorize.cpp */; };
 		2BA07FAB1352E7BB00A1C074 /* ralloc.c in Sources */ = {isa = PBXBuildFile; fileRef = 2BA07FA91352E7BB00A1C074 /* ralloc.c */; };
 		2BA07FAC1352E7BB00A1C074 /* ralloc.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA07FAA1352E7BB00A1C074 /* ralloc.h */; };
 		2BA55A9C1207FEA6002DC82D /* ast_expr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A511207FEA6002DC82D /* ast_expr.cpp */; };
@@ -212,6 +213,7 @@
 		2B8979DF182C195C00718F8A /* opt_cse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_cse.cpp; path = ../../src/glsl/opt_cse.cpp; sourceTree = "<group>"; };
 		2B8979E1182CB62900718F8A /* link_atomics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = link_atomics.cpp; path = ../../src/glsl/link_atomics.cpp; sourceTree = "<group>"; };
 		2B92A05C15F9FF4700CFED4A /* builtin_variables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = builtin_variables.cpp; path = ../../src/glsl/builtin_variables.cpp; sourceTree = SOURCE_ROOT; };
+		2B9F0A3C189664F3002FF617 /* opt_vectorize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_vectorize.cpp; path = ../../src/glsl/opt_vectorize.cpp; sourceTree = "<group>"; };
 		2BA07FA91352E7BB00A1C074 /* ralloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ralloc.c; path = ../../src/glsl/ralloc.c; sourceTree = SOURCE_ROOT; };
 		2BA07FAA1352E7BB00A1C074 /* ralloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ralloc.h; path = ../../src/glsl/ralloc.h; sourceTree = SOURCE_ROOT; };
 		2BA0808A1352EBFB00A1C074 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../src/glsl/main.cpp; sourceTree = SOURCE_ROOT; };
@@ -502,6 +504,7 @@
 				2B38545A1293BE5000F3E692 /* opt_structure_splitting.cpp */,
 				2B38545B1293BE5000F3E692 /* opt_swizzle_swizzle.cpp */,
 				2B38545C1293BE5000F3E692 /* opt_tree_grafting.cpp */,
+				2B9F0A3C189664F3002FF617 /* opt_vectorize.cpp */,
 				2BA55A991207FEA6002DC82D /* program.h */,
 				2BA07FA91352E7BB00A1C074 /* ralloc.c */,
 				2BA07FAA1352E7BB00A1C074 /* ralloc.h */,
@@ -692,6 +695,7 @@
 				2BBA492A1254706A00D42573 /* loop_analysis.cpp in Sources */,
 				2BBA492C1254706A00D42573 /* loop_controls.cpp in Sources */,
 				2BBA492D1254706A00D42573 /* loop_unroll.cpp in Sources */,
+				2B9F0A3D189664F3002FF617 /* opt_vectorize.cpp in Sources */,
 				2BBA492E1254706A00D42573 /* lower_noise.cpp in Sources */,
 				2BBA492F1254706A00D42573 /* lower_variable_index_to_cond_assign.cpp in Sources */,
 				2BBA49301254706A00D42573 /* opt_redundant_jumps.cpp in Sources */,

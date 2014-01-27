@@ -73,6 +73,7 @@ SRC = ast_expr.cpp \
 	opt_structure_splitting.cpp \
 	opt_swizzle_swizzle.cpp \
 	opt_tree_grafting.cpp \
+	opt_vectorize.cpp \
 	ralloc.c \
 	s_expression.cpp \
 	standalone_scaffolding.cpp \
