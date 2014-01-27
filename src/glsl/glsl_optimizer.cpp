@@ -9,6 +9,7 @@
 #include "loop_analysis.h"
 #include "program.h"
 #include "linker.h"
+#include "standalone_scaffolding.h"
 
 
 extern "C" struct gl_shader *
@@ -23,51 +24,45 @@ static void DeleteShader(struct gl_context *ctx, struct gl_shader *shader)
 static void
 initialize_mesa_context(struct gl_context *ctx, glslopt_target api)
 {
-   memset(ctx, 0, sizeof(*ctx));
+	gl_api mesaAPI;
+	switch(api)
+	{
+		default:
+		case kGlslTargetOpenGL:
+			mesaAPI = API_OPENGL_COMPAT;
+			break;
+		case kGlslTargetOpenGLES20:
+			mesaAPI = API_OPENGLES2;
+			break;
+		case kGlslTargetOpenGLES30:
+			mesaAPI = API_OPENGL_CORE;
+			break;
+	}
+	initialize_context_to_defaults (ctx, mesaAPI);
 
 	switch(api)
 	{
 	default:
 	case kGlslTargetOpenGL:
-		ctx->API = API_OPENGL_COMPAT;
 		ctx->Const.GLSLVersion = 140;
 		break;
 	case kGlslTargetOpenGLES20:
-		ctx->API = API_OPENGLES2;
-		ctx->Const.GLSLVersion = 110;
-		ctx->Extensions.OES_standard_derivatives = GL_TRUE;
-		ctx->Extensions.EXT_shadow_samplers = GL_TRUE;
-		ctx->Extensions.EXT_frag_depth = GL_TRUE;
+		ctx->Extensions.OES_standard_derivatives = true;
+		ctx->Extensions.EXT_shadow_samplers = true;
+		ctx->Extensions.EXT_frag_depth = true;
 		break;
 	case kGlslTargetOpenGLES30:
-		ctx->API = API_OPENGL_CORE;
-		ctx->Const.GLSLVersion = 300;
 		ctx->Extensions.ARB_ES3_compatibility = true;
 		break;
 	}
 	
 
-   ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
-   ctx->Extensions.EXT_texture_array = GL_TRUE;
-   ctx->Extensions.NV_texture_rectangle = GL_TRUE;
-   ctx->Extensions.ARB_shader_texture_lod = GL_TRUE;
-
-   /* 1.20 minimums. */
-   ctx->Const.MaxLights = 8;
-   ctx->Const.MaxClipPlanes = 8;
-   ctx->Const.MaxTextureUnits = 2;
-
-   /* allow high amount */
+   // allow high amount of texcoords
    ctx->Const.MaxTextureCoordUnits = 16;
 
-   ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 16;
-   ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 512;
-   ctx->Const.MaxVarying = 8;
-   ctx->Const.MaxCombinedTextureImageUnits = 2;
    ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 16;
    ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = 16;
    ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = 16;
-   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 64;
 
    ctx->Const.MaxDrawBuffers = 2;
 
