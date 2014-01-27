@@ -8496,6 +8496,25 @@
 
 <xi:include href="ARB_texture_storage_multisample.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<!-- ARB extension 142 - 143. -->
+
+<category name="GL_ARB_buffer_storage" number="144">
+    <enum name="MAP_PERSISTENT_BIT" value="0x40" />
+    <enum name="MAP_COHERENT_BIT" value="0x80" />
+    <enum name="DYNAMIC_STORAGE_BIT" value="0x100" />
+    <enum name="CLIENT_STORAGE_BIT" value="0x200" />
+    <enum name="BUFFER_IMMUTABLE_STORAGE" value="0x821F" />
+    <enum name="BUFFER_STORAGE_FLAGS" value="0x8220" />
+    <enum name="CLIENT_MAPPED_BUFFER_BARRIER_BIT" value="0x4000" />
+
+    <function name="BufferStorage" offset="assign">
+        <param name="target" type="GLenum"/>
+        <param name="size" type="GLsizeiptr"/>
+        <param name="data" type="const GLvoid *"/>
+        <param name="flags" type="GLbitfield"/>
+    </function>
+</category>
+
 <!-- Non-ARB extensions sorted by extension number. -->
 
 <category name="GL_EXT_blend_color" number="2">
