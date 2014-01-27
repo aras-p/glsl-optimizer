@@ -571,9 +571,6 @@ struct dd_function_table {
     * \name Vertex/pixel buffer object functions
     */
    /*@{*/
-   void (*BindBuffer)( struct gl_context *ctx, GLenum target,
-		       struct gl_buffer_object *obj );
-
    struct gl_buffer_object * (*NewBufferObject)(struct gl_context *ctx,
                                                 GLuint buffer, GLenum target);
    

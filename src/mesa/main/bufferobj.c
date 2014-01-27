@@ -954,10 +954,6 @@ bind_buffer_object(struct gl_context *ctx, GLenum target, GLuint buffer)
    
    /* bind new buffer */
    _mesa_reference_buffer_object(ctx, bindTarget, newBufObj);
-
-   /* Pass BindBuffer call to device driver */
-   if (ctx->Driver.BindBuffer)
-      ctx->Driver.BindBuffer( ctx, target, newBufObj );
 }
 
 
@@ -1022,7 +1018,6 @@ _mesa_init_buffer_object_functions(struct dd_function_table *driver)
    /* GL_ARB_vertex/pixel_buffer_object */
    driver->NewBufferObject = _mesa_new_buffer_object;
    driver->DeleteBuffer = _mesa_delete_buffer_object;
-   driver->BindBuffer = NULL;
    driver->BufferData = _mesa_buffer_data;
    driver->BufferSubData = _mesa_buffer_subdata;
    driver->GetBufferSubData = _mesa_buffer_get_subdata;
