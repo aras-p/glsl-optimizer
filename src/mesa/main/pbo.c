@@ -201,7 +201,7 @@ _mesa_map_validate_pbo_source(struct gl_context *ctx,
       return ptr;
    }
 
-   if (_mesa_bufferobj_mapped(unpack->BufferObj)) {
+   if (_mesa_check_disallowed_mapping(unpack->BufferObj)) {
       /* buffer is already mapped - that's an error */
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(PBO is mapped)", where);
       return NULL;
@@ -297,7 +297,7 @@ _mesa_map_validate_pbo_dest(struct gl_context *ctx,
       return ptr;
    }
 
-   if (_mesa_bufferobj_mapped(unpack->BufferObj)) {
+   if (_mesa_check_disallowed_mapping(unpack->BufferObj)) {
       /* buffer is already mapped - that's an error */
       _mesa_error(ctx, GL_INVALID_OPERATION, "%s(PBO is mapped)", where);
       return NULL;

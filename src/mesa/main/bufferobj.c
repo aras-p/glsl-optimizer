@@ -269,6 +269,9 @@ buffer_object_subdata_range_good(struct gl_context * ctx, GLenum target,
       return NULL;
    }
 
+   if (bufObj->AccessFlags & GL_MAP_PERSISTENT_BIT)
+      return bufObj;
+
    if (mappedRange) {
       if (bufferobj_range_mapped(bufObj, offset, size)) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "%s", caller);
@@ -1449,7 +1452,7 @@ _mesa_ClearBufferData(GLenum target, GLenum internalformat, GLenum format,
       return;
    }
 
-   if (_mesa_bufferobj_mapped(bufObj)) {
+   if (_mesa_check_disallowed_mapping(bufObj)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glClearBufferData(buffer currently mapped)");
       return;
@@ -1872,13 +1875,13 @@ _mesa_CopyBufferSubData(GLenum readTarget, GLenum writeTarget,
    if (!dst)
       return;
 
-   if (_mesa_bufferobj_mapped(src)) {
+   if (_mesa_check_disallowed_mapping(src)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCopyBufferSubData(readBuffer is mapped)");
       return;
    }
 
-   if (_mesa_bufferobj_mapped(dst)) {
+   if (_mesa_check_disallowed_mapping(dst)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glCopyBufferSubData(writeBuffer is mapped)");
       return;
@@ -2802,13 +2805,15 @@ _mesa_InvalidateBufferSubData(GLuint buffer, GLintptr offset,
       return;
    }
 
-   /* The GL_ARB_invalidate_subdata spec says:
+   /* The OpenGL 4.4 (Core Profile) spec says:
     *
-    *     "An INVALID_OPERATION error is generated if the buffer is currently
-    *     mapped by MapBuffer, or if the invalidate range intersects the range
-    *     currently mapped by MapBufferRange."
+    *     "An INVALID_OPERATION error is generated if buffer is currently
+    *     mapped by MapBuffer or if the invalidate range intersects the range
+    *     currently mapped by MapBufferRange, unless it was mapped
+    *     with MAP_PERSISTENT_BIT set in the MapBufferRange access flags."
     */
-   if (bufferobj_range_mapped(bufObj, offset, length)) {
+   if (!(bufObj->AccessFlags & GL_MAP_PERSISTENT_BIT) &&
+       bufferobj_range_mapped(bufObj, offset, length)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glInvalidateBufferSubData(intersection with mapped "
                   "range)");
@@ -2835,13 +2840,14 @@ _mesa_InvalidateBufferData(GLuint buffer)
       return;
    }
 
-   /* The GL_ARB_invalidate_subdata spec says:
+   /* The OpenGL 4.4 (Core Profile) spec says:
     *
-    *     "An INVALID_OPERATION error is generated if the buffer is currently
-    *     mapped by MapBuffer, or if the invalidate range intersects the range
-    *     currently mapped by MapBufferRange."
+    *     "An INVALID_OPERATION error is generated if buffer is currently
+    *     mapped by MapBuffer or if the invalidate range intersects the range
+    *     currently mapped by MapBufferRange, unless it was mapped
+    *     with MAP_PERSISTENT_BIT set in the MapBufferRange access flags."
     */
-   if (_mesa_bufferobj_mapped(bufObj)) {
+   if (_mesa_check_disallowed_mapping(bufObj)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "glInvalidateBufferData(intersection with mapped "
                   "range)");

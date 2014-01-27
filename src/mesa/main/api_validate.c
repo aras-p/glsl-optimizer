@@ -865,7 +865,7 @@ valid_draw_indirect(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   if (_mesa_bufferobj_mapped(ctx->DrawIndirectBuffer)) {
+   if (_mesa_check_disallowed_mapping(ctx->DrawIndirectBuffer)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "%s(DRAW_INDIRECT_BUFFER is mapped)", name);
       return GL_FALSE;

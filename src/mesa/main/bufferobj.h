@@ -44,6 +44,14 @@ _mesa_bufferobj_mapped(const struct gl_buffer_object *obj)
    return obj->Pointer != NULL;
 }
 
+/** Can we not use this buffer while mapped? */
+static inline GLboolean
+_mesa_check_disallowed_mapping(const struct gl_buffer_object *obj)
+{
+   return _mesa_bufferobj_mapped(obj) &&
+          !(obj->AccessFlags & GL_MAP_PERSISTENT_BIT);
+}
+
 /**
  * Is the given buffer object a user-created buffer object?
  * Mesa uses default buffer objects in several places.  Default buffers

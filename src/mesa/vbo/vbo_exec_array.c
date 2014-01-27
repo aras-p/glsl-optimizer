@@ -53,7 +53,7 @@ check_buffers_are_unmapped(const struct gl_client_array **inputs)
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       if (inputs[i]) {
          struct gl_buffer_object *obj = inputs[i]->BufferObj;
-         assert(!_mesa_bufferobj_mapped(obj));
+         assert(!_mesa_check_disallowed_mapping(obj));
          (void) obj;
       }
    }
@@ -73,7 +73,7 @@ vbo_check_buffers_are_unmapped(struct gl_context *ctx)
    /* check the current vertex arrays */
    check_buffers_are_unmapped(exec->array.inputs);
    /* check the current glBegin/glVertex/glEnd-style VBO */
-   assert(!_mesa_bufferobj_mapped(exec->vtx.bufferobj));
+   assert(!_mesa_check_disallowed_mapping(exec->vtx.bufferobj));
 }
 
 
