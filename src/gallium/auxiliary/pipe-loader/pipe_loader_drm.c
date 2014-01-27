@@ -112,7 +112,8 @@ disconnect:
 }
 
 boolean
-pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd)
+pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd,
+                         boolean auth_x)
 {
    struct pipe_loader_drm_device *ddev = CALLOC_STRUCT(pipe_loader_drm_device);
    int vendor_id, chip_id;
@@ -127,7 +128,8 @@ pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd)
    ddev->base.ops = &pipe_loader_drm_ops;
    ddev->fd = fd;
 
-   pipe_loader_drm_x_auth(fd);
+   if (auth_x)
+      pipe_loader_drm_x_auth(fd);
 
    ddev->base.driver_name = loader_get_driver_for_fd(fd, _LOADER_GALLIUM);
    if (!ddev->base.driver_name)
@@ -159,7 +161,7 @@ pipe_loader_drm_probe(struct pipe_loader_device **devs, int ndev)
       if (fd < 0)
          continue;
 
-      if (j >= ndev || !pipe_loader_drm_probe_fd(&devs[j], fd))
+      if (j >= ndev || !pipe_loader_drm_probe_fd(&devs[j], fd, true))
          close(fd);
 
       j++;

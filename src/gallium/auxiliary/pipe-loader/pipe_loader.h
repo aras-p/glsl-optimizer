@@ -128,9 +128,13 @@ pipe_loader_drm_probe(struct pipe_loader_device **devs, int ndev);
  * This function is platform-specific.
  *
  * \sa pipe_loader_probe
+ *
+ * \param auth_x If true, the pipe-loader will attempt to
+ *               authenticate with the X server.
  */
 boolean
-pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd);
+pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd,
+                         boolean auth_x);
 
 #endif
 

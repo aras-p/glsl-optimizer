@@ -52,7 +52,7 @@ gallium_screen_create(struct gbm_gallium_drm_device *gdrm)
 #ifdef HAVE_PIPE_LOADER_DRM
    int ret;
 
-   ret = pipe_loader_drm_probe_fd(&dev, gdrm->base.base.fd);
+   ret = pipe_loader_drm_probe_fd(&dev, gdrm->base.base.fd, true);
    if (!ret)
       return -1;
 #endif /* HAVE_PIPE_LOADER_DRM */
