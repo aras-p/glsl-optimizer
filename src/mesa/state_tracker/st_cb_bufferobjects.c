@@ -182,7 +182,7 @@ st_bufferobj_data(struct gl_context *ctx,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
-   unsigned bind, pipe_usage;
+   unsigned bind, pipe_usage, pipe_flags = 0;
 
    if (size && data && st_obj->buffer &&
        st_obj->Base.Size == size &&
@@ -229,24 +229,41 @@ st_bufferobj_data(struct gl_context *ctx,
       bind = 0;
    }
 
-   switch (usage) {
-   case GL_STATIC_DRAW:
-   case GL_STATIC_READ:
-   case GL_STATIC_COPY:
-   default:
-      pipe_usage = PIPE_USAGE_DEFAULT;
-      break;
-   case GL_DYNAMIC_DRAW:
-   case GL_DYNAMIC_READ:
-   case GL_DYNAMIC_COPY:
-      pipe_usage = PIPE_USAGE_DYNAMIC;
-      break;
-   case GL_STREAM_DRAW:
-   case GL_STREAM_READ:
-   case GL_STREAM_COPY:
-      pipe_usage = PIPE_USAGE_STREAM;
-      break;
+   /* Set usage. */
+   if (st_obj->Base.Immutable) {
+      /* BufferStorage */
+      if (storageFlags & GL_CLIENT_STORAGE_BIT)
+         pipe_usage = PIPE_USAGE_STAGING;
+      else
+         pipe_usage = PIPE_USAGE_DEFAULT;
    }
+   else {
+      /* BufferData */
+      switch (usage) {
+      case GL_STATIC_DRAW:
+      case GL_STATIC_READ:
+      case GL_STATIC_COPY:
+      default:
+	 pipe_usage = PIPE_USAGE_DEFAULT;
+         break;
+      case GL_DYNAMIC_DRAW:
+      case GL_DYNAMIC_READ:
+      case GL_DYNAMIC_COPY:
+         pipe_usage = PIPE_USAGE_DYNAMIC;
+         break;
+      case GL_STREAM_DRAW:
+      case GL_STREAM_READ:
+      case GL_STREAM_COPY:
+         pipe_usage = PIPE_USAGE_STREAM;
+         break;
+      }
+   }
+
+   /* Set flags. */
+   if (storageFlags & GL_MAP_PERSISTENT_BIT)
+      pipe_flags |= PIPE_RESOURCE_FLAG_MAP_PERSISTENT;
+   if (storageFlags & GL_MAP_COHERENT_BIT)
+      pipe_flags |= PIPE_RESOURCE_FLAG_MAP_COHERENT;
 
    pipe_resource_reference( &st_obj->buffer, NULL );
 
@@ -255,8 +272,20 @@ st_bufferobj_data(struct gl_context *ctx,
    }
 
    if (size != 0) {
-      st_obj->buffer = pipe_buffer_create(pipe->screen, bind,
-                                          pipe_usage, size);
+      struct pipe_resource buffer;
+
+      memset(&buffer, 0, sizeof buffer);
+      buffer.target = PIPE_BUFFER;
+      buffer.format = PIPE_FORMAT_R8_UNORM; /* want TYPELESS or similar */
+      buffer.bind = bind;
+      buffer.usage = pipe_usage;
+      buffer.flags = pipe_flags;
+      buffer.width0 = size;
+      buffer.height0 = 1;
+      buffer.depth0 = 1;
+      buffer.array_size = 1;
+
+      st_obj->buffer = pipe->screen->resource_create(pipe->screen, &buffer);
 
       if (!st_obj->buffer) {
          /* out of memory */
@@ -308,6 +337,12 @@ st_bufferobj_map_range(struct gl_context *ctx,
 
    if (access & GL_MAP_UNSYNCHRONIZED_BIT)
       flags |= PIPE_TRANSFER_UNSYNCHRONIZED;
+
+   if (access & GL_MAP_PERSISTENT_BIT)
+      flags |= PIPE_TRANSFER_PERSISTENT;
+
+   if (access & GL_MAP_COHERENT_BIT)
+      flags |= PIPE_TRANSFER_COHERENT;
 
    /* ... other flags ...
     */
@@ -399,8 +434,8 @@ st_copy_buffer_subdata(struct gl_context *ctx,
       return;
 
    /* buffer should not already be mapped */
-   assert(!src->Pointer);
-   assert(!dst->Pointer);
+   assert(!_mesa_check_disallowed_mapping(src));
+   assert(!_mesa_check_disallowed_mapping(dst));
 
    u_box_1d(readOffset, size, &box);
 

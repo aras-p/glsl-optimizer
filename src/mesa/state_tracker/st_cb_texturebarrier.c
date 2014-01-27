@@ -54,7 +54,24 @@ st_TextureBarrier(struct gl_context *ctx)
 }
 
 
+/**
+ * Called via ctx->Driver.MemoryBarrier()
+ */
+static void
+st_MemoryBarrier(struct gl_context *ctx, GLbitfield barriers)
+{
+   struct pipe_context *pipe = st_context(ctx)->pipe;
+   unsigned flags = 0;
+
+   if (barriers & GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT)
+      flags |= PIPE_BARRIER_MAPPED_BUFFER;
+
+   if (flags && pipe->memory_barrier)
+      pipe->memory_barrier(pipe, flags);
+}
+
 void st_init_texture_barrier_functions(struct dd_function_table *functions)
 {
    functions->TextureBarrier = st_TextureBarrier;
+   functions->MemoryBarrier = st_MemoryBarrier;
 }
