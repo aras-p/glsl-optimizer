@@ -469,7 +469,6 @@ st_context_teximage(struct st_context_iface *stctxi,
 {
    struct st_context *st = (struct st_context *) stctxi;
    struct gl_context *ctx = st->ctx;
-   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    struct st_texture_object *stObj;
@@ -495,7 +494,8 @@ st_context_teximage(struct st_context_iface *stctxi,
       return FALSE;
    }
 
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
+
    _mesa_lock_texture(ctx, texObj);
 
    stObj = st_texture_object(texObj);
