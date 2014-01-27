@@ -416,24 +416,124 @@ gen8_fs_generator::generate_ddy(fs_inst *inst,
 }
 
 void
-gen8_fs_generator::generate_scratch_write(fs_inst *inst, struct brw_reg dst)
+gen8_fs_generator::generate_scratch_write(fs_inst *ir, struct brw_reg src)
 {
-   assert(inst->mlen != 0);
-   assert(!"TODO: Implement generate_scratch_write.");
+   MOV(retype(brw_message_reg(ir->base_mrf + 1), BRW_REGISTER_TYPE_UD),
+       retype(src, BRW_REGISTER_TYPE_UD));
+
+   struct brw_reg mrf =
+      retype(brw_message_reg(ir->base_mrf), BRW_REGISTER_TYPE_UD);
+
+   const int num_regs = dispatch_width / 8;
+
+   uint32_t msg_control;
+   if (num_regs == 1)
+      msg_control = BRW_DATAPORT_OWORD_BLOCK_2_OWORDS;
+   else
+      msg_control = BRW_DATAPORT_OWORD_BLOCK_4_OWORDS;
+
+   /* Set up the message header.  This is g0, with g0.2 filled with
+    * the offset.  We don't want to leave our offset around in g0 or
+    * it'll screw up texture samples, so set it up inside the message
+    * reg.
+    */
+   unsigned save_exec_size = default_state.exec_size;
+   default_state.exec_size = BRW_EXECUTE_8;
+
+   MOV_RAW(mrf, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+   /* set message header global offset field (reg 0, element 2) */
+   MOV_RAW(get_element_ud(mrf, 2), brw_imm_ud(ir->offset / 16));
+
+   struct brw_reg dst;
+   if (dispatch_width == 16)
+      dst = retype(vec16(brw_null_reg()), BRW_REGISTER_TYPE_UW);
+   else
+      dst = retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW);
+
+   default_state.exec_size = BRW_EXECUTE_16;
+
+   gen8_instruction *send = next_inst(BRW_OPCODE_SEND);
+   gen8_set_dst(brw, send, dst);
+   gen8_set_src0(brw, send, mrf);
+   gen8_set_dp_message(brw, send, GEN7_SFID_DATAPORT_DATA_CACHE,
+                       255, /* binding table index: stateless access */
+                       GEN6_DATAPORT_WRITE_MESSAGE_OWORD_BLOCK_WRITE,
+                       msg_control,
+                       1 + num_regs, /* mlen */
+                       0,            /* rlen */
+                       true,         /* header present */
+                       false);       /* EOT */
+
+   default_state.exec_size = save_exec_size;
 }
 
 void
-gen8_fs_generator::generate_scratch_read(fs_inst *inst, struct brw_reg dst)
+gen8_fs_generator::generate_scratch_read(fs_inst *ir, struct brw_reg dst)
 {
-   assert(inst->mlen != 0);
-   assert(!"TODO: Implement generate_scratch_read.");
+   struct brw_reg mrf =
+      retype(brw_message_reg(ir->base_mrf), BRW_REGISTER_TYPE_UD);
+
+   const int num_regs = dispatch_width / 8;
+
+   uint32_t msg_control;
+   if (num_regs == 1)
+      msg_control = BRW_DATAPORT_OWORD_BLOCK_2_OWORDS;
+   else
+      msg_control = BRW_DATAPORT_OWORD_BLOCK_4_OWORDS;
+
+   unsigned save_exec_size = default_state.exec_size;
+   default_state.exec_size = BRW_EXECUTE_8;
+
+   MOV_RAW(mrf, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
+   /* set message header global offset field (reg 0, element 2) */
+   MOV_RAW(get_element_ud(mrf, 2), brw_imm_ud(ir->offset / 16));
+
+   gen8_instruction *send = next_inst(BRW_OPCODE_SEND);
+   gen8_set_dst(brw, send, retype(dst, BRW_REGISTER_TYPE_UW));
+   gen8_set_src0(brw, send, mrf);
+   gen8_set_dp_message(brw, send, GEN7_SFID_DATAPORT_DATA_CACHE,
+                       255, /* binding table index: stateless access */
+                       BRW_DATAPORT_READ_MESSAGE_OWORD_BLOCK_READ,
+                       msg_control,
+                       1,        /* mlen */
+                       num_regs, /* rlen */
+                       true,     /* header present */
+                       false);   /* EOT */
+
+   default_state.exec_size = save_exec_size;
 }
 
 void
-gen8_fs_generator::generate_scratch_read_gen7(fs_inst *inst, struct brw_reg dst)
+gen8_fs_generator::generate_scratch_read_gen7(fs_inst *ir, struct brw_reg dst)
 {
-   assert(inst->mlen != 0);
-   assert(!"TODO: Implement generate_scratch_read_gen7.");
+   unsigned save_exec_size = default_state.exec_size;
+   gen8_instruction *send = next_inst(BRW_OPCODE_SEND);
+
+   int num_regs = dispatch_width / 8;
+
+   /* According to the docs, offset is "A 12-bit HWord offset into the memory
+    * Immediate Memory buffer as specified by binding table 0xFF."  An HWORD
+    * is 32 bytes, which happens to be the size of a register.
+    */
+   int offset = ir->offset / REG_SIZE;
+
+   /* The HW requires that the header is present; this is to get the g0.5
+    * scratch offset.
+    */
+   gen8_set_src0(brw, send, brw_vec8_grf(0, 0));
+   gen8_set_dst(brw, send, retype(dst, BRW_REGISTER_TYPE_UW));
+   gen8_set_dp_scratch_message(brw, send,
+                               false,    /* scratch read */
+                               false,    /* OWords */
+                               false,    /* invalidate after read */
+                               num_regs,
+                               offset,
+                               1,        /* mlen - just g0 */
+                               num_regs, /* rlen */
+                               true,     /* header present */
+                               false);   /* EOT */
+
+   default_state.exec_size = save_exec_size;
 }
 
 void
