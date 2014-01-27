@@ -183,6 +183,7 @@ struct glcpp_parser {
 	size_t info_log_length;
 	int error;
 	const struct gl_extensions *extensions;
+	gl_api api;
 	bool version_resolved;
 	bool has_new_line_number;
 	int new_line_number;
@@ -194,7 +195,7 @@ struct glcpp_parser {
 struct gl_extensions;
 
 glcpp_parser_t *
-glcpp_parser_create (const struct gl_extensions *extensions);
+glcpp_parser_create (const struct gl_extensions *extensions, gl_api api);
 
 int
 glcpp_parser_parse (glcpp_parser_t *parser);

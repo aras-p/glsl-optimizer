@@ -30,6 +30,7 @@
 
 #include "glcpp.h"
 #include "main/core.h" /* for struct gl_extensions */
+#include "main/mtypes.h" /* for gl_api enum */
 
 static void
 yyerror (YYLTYPE *locp, glcpp_parser_t *parser, const char *error);
@@ -1186,7 +1187,7 @@ static void add_builtin_define(glcpp_parser_t *parser,
 }
 
 glcpp_parser_t *
-glcpp_parser_create (const struct gl_extensions *extensions)
+glcpp_parser_create (const struct gl_extensions *extensions, gl_api api)
 {
 	glcpp_parser_t *parser;
 
@@ -1215,6 +1216,7 @@ glcpp_parser_create (const struct gl_extensions *extensions)
 	parser->error = 0;
 
         parser->extensions = extensions;
+        parser->api = api;
         parser->version_resolved = false;
 
 	parser->has_new_line_number = 0;
@@ -2142,12 +2144,19 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 	}
 }
 
-/* GLSL version is no version is explicitly specified. */
+/* GLSL version if no version is explicitly specified. */
 #define IMPLICIT_GLSL_VERSION 110
+
+/* GLSL ES version if no version is explicitly specified. */
+#define IMPLICIT_GLSL_ES_VERSION 100
 
 void
 glcpp_parser_resolve_implicit_version(glcpp_parser_t *parser)
 {
-	_glcpp_parser_handle_version_declaration(parser, IMPLICIT_GLSL_VERSION,
+	int language_version = parser->api == API_OPENGLES2 ?
+			       IMPLICIT_GLSL_ES_VERSION :
+			       IMPLICIT_GLSL_VERSION;
+
+	_glcpp_parser_handle_version_declaration(parser, language_version,
 						 NULL, false);
 }

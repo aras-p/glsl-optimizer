@@ -101,6 +101,7 @@ load_text_file(void *ctx, const char *filename)
 static void
 init_fake_gl_context (struct gl_context *gl_ctx)
 {
+	gl_ctx->API = API_OPENGL_COMPAT;
 	gl_ctx->Const.DisableGLSLLineContinuations = false;
 }
 
