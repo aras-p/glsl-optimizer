@@ -270,6 +270,16 @@ static void
 dri3_free_render_buffer(struct dri3_drawable *pdraw, struct dri3_buffer *buffer);
 
 static void
+dri3_update_num_back(struct dri3_drawable *priv)
+{
+   priv->num_back = 1;
+   if (priv->flipping)
+      priv->num_back++;
+   if (priv->swap_interval == 0)
+      priv->num_back++;
+}
+
+static void
 dri3_destroy_drawable(__GLXDRIdrawable *base)
 {
    struct dri3_screen *psc = (struct dri3_screen *) base->psc;
@@ -326,6 +336,8 @@ dri3_create_drawable(struct glx_screen *base, XID xDrawable,
       break;
    }
 
+   dri3_update_num_back(pdraw);
+
    (void) __glXInitialize(psc->base.dpy);
 
    /* Create a new drawable */
@@ -373,6 +385,15 @@ dri3_handle_present_event(struct dri3_drawable *priv, xcb_present_generic_event_
          priv->recv_sbc = (priv->send_sbc & 0xffffffff00000000LL) | ce->serial;
          if (priv->recv_sbc > priv->send_sbc)
             priv->recv_sbc -= 0x100000000;
+         switch (ce->mode) {
+         case XCB_PRESENT_COMPLETE_MODE_FLIP:
+            priv->flipping = true;
+            break;
+         case XCB_PRESENT_COMPLETE_MODE_COPY:
+            priv->flipping = false;
+            break;
+         }
+         dri3_update_num_back(priv);
       } else {
          priv->recv_msc_serial = ce->serial;
       }
@@ -389,6 +410,10 @@ dri3_handle_present_event(struct dri3_drawable *priv, xcb_present_generic_event_
 
          if (buf && buf->pixmap == ie->pixmap) {
             buf->busy = 0;
+            if (priv->num_back <= b && b < DRI3_MAX_BACK) {
+               dri3_free_render_buffer(priv, buf);
+               priv->buffers[b] = NULL;
+            }
             break;
          }
       }
@@ -1067,10 +1092,9 @@ dri3_find_back(xcb_connection_t *c, struct dri3_drawable *priv)
    xcb_present_generic_event_t *ge;
 
    for (;;) {
-
-      for (b = 0; b < DRI3_NUM_BACK; b++) {
-         int                    id = DRI3_BACK_ID(b);
-         struct dri3_buffer        *buffer = priv->buffers[id];
+      for (b = 0; b < priv->num_back; b++) {
+         int id = DRI3_BACK_ID(b);
+         struct dri3_buffer *buffer = priv->buffers[id];
 
          if (!buffer)
             return b;
@@ -1185,7 +1209,7 @@ dri3_free_buffers(__DRIdrawable *driDrawable,
    switch (buffer_type) {
    case dri3_buffer_back:
       first_id = DRI3_BACK_ID(0);
-      n_id = DRI3_NUM_BACK;
+      n_id = DRI3_MAX_BACK;
       break;
    case dri3_buffer_front:
       first_id = DRI3_FRONT_ID;
@@ -1437,6 +1461,7 @@ dri3_set_swap_interval(__GLXDRIdrawable *pdraw, int interval)
    }
 
    priv->swap_interval = interval;
+   dri3_update_num_back(priv);
 
    return 0;
 }
