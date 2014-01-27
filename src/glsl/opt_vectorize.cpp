@@ -82,6 +82,8 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_enter(ir_swizzle *);
+   virtual ir_visitor_status visit_enter(ir_if *);
+   virtual ir_visitor_status visit_enter(ir_loop *);
 
    virtual ir_visitor_status visit_leave(ir_assignment *);
 
@@ -283,6 +285,39 @@ ir_vectorize_visitor::visit_enter(ir_swizzle *ir)
       }
    }
    return visit_continue;
+}
+
+/* Since there is no statement to visit between the "then" and "else"
+ * instructions try to vectorize before, in between, and after them to avoid
+ * combining statements from different basic blocks.
+ */
+ir_visitor_status
+ir_vectorize_visitor::visit_enter(ir_if *ir)
+{
+   try_vectorize();
+
+   visit_list_elements(this, &ir->then_instructions);
+   try_vectorize();
+
+   visit_list_elements(this, &ir->else_instructions);
+   try_vectorize();
+
+   return visit_continue_with_parent;
+}
+
+/* Since there is no statement to visit between the instructions in the body of
+ * the loop and the instructions after it try to vectorize before and after the
+ * body to avoid combining statements from different basic blocks.
+ */
+ir_visitor_status
+ir_vectorize_visitor::visit_enter(ir_loop *ir)
+{
+   try_vectorize();
+
+   visit_list_elements(this, &ir->body_instructions);
+   try_vectorize();
+
+   return visit_continue_with_parent;
 }
 
 /**
