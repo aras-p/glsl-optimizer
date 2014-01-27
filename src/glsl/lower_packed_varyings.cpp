@@ -557,7 +557,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
                                           this->gs_input_vertices);
       }
       ir_variable *packed_var = new(this->mem_ctx)
-         ir_variable(packed_type, packed_name, this->mode, (glsl_precision)unpacked_var->precision);
+         ir_variable(packed_type, packed_name, this->mode, (glsl_precision)unpacked_var->data.precision);
       if (this->gs_input_vertices != 0) {
          /* Prevent update_array_sizes() from messing with the size of the
           * array.

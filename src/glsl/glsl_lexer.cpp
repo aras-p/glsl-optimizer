@@ -2793,7 +2793,7 @@ KEYWORD(0, 300, 0, 0, PATCH);
 case 230:
 YY_RULE_SETUP
 #line 529 "src/glsl/glsl_lexer.ll"
-KEYWORD(0, 300, 0, 0, SAMPLE);
+KEYWORD_WITH_ALT(400, 300, 400, 0, yyextra->ARB_gpu_shader5_enable, SAMPLE);
 	YY_BREAK
 case 231:
 YY_RULE_SETUP

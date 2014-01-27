@@ -372,7 +372,7 @@ optimize_split_arrays(exec_list *instructions, bool linked)
       variable_entry *entry = (variable_entry *)iter.get();
       const struct glsl_type *type = entry->var->type;
       const struct glsl_type *subtype;
-      glsl_precision subprec = (glsl_precision)entry->var->precision;
+      glsl_precision subprec = (glsl_precision)entry->var->data.precision;
 
       if (type->is_matrix()) {
 	 subtype = type->column_type();

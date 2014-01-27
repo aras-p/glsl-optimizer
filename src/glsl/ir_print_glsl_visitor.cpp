@@ -246,7 +246,7 @@ _mesa_print_ir_glsl(exec_list *instructions,
 		if (ir->ir_type == ir_type_variable) {
 			ir_variable *var = static_cast<ir_variable*>(ir);
 			if ((strstr(var->name, "gl_") == var->name)
-			  && !var->invariant)
+			  && !var->data.invariant)
 				continue;
 		}
 
@@ -304,14 +304,14 @@ void ir_print_glsl_visitor::newline_deindent()
 void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 {
     long id = (long)hash_table_find (globals->var_hash, v);
-	if (!id && v->mode == ir_var_temporary)
+	if (!id && v->data.mode == ir_var_temporary)
 	{
         id = ++globals->var_counter;
         hash_table_insert (globals->var_hash, (void*)id, v);
 	}
     if (id)
     {
-        if (v->mode == ir_var_temporary)
+        if (v->data.mode == ir_var_temporary)
             buffer.asprintf_append ("tmpvar_%d", (int)id);
         else
             buffer.asprintf_append ("%s_%d", v->name, (int)id);
@@ -379,8 +379,8 @@ static void print_type_post(string_buffer& buffer, const glsl_type *t, bool arra
 
 void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
-	const char *const cent = (ir->centroid) ? "centroid " : "";
-	const char *const inv = (ir->invariant) ? "invariant " : "";
+	const char *const cent = (ir->data.centroid) ? "centroid " : "";
+	const char *const inv = (ir->data.invariant) ? "invariant " : "";
 	const char *const mode[3][ir_var_mode_count] =
 	{
 		{ "", "uniform ", "in ",        "out ",     "in ", "out ", "inout ", "", "", "" },
@@ -390,10 +390,10 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	
 	const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
 	
-	if (this->state->language_version >= 300 && ir->explicit_location)
+	if (this->state->language_version >= 300 && ir->data.explicit_location)
 	{
-		const int binding_base = (this->state->target == vertex_shader ? (int)VERT_ATTRIB_GENERIC0 : (int)FRAG_RESULT_DATA0);
-		const int location = ir->location - binding_base;
+		const int binding_base = (this->state->stage == MESA_SHADER_VERTEX ? (int)VERT_ATTRIB_GENERIC0 : (int)FRAG_RESULT_DATA0);
+		const int location = ir->data.location - binding_base;
 		buffer.asprintf_append ("layout(location=%d) ", location);
 	}
 	
@@ -405,7 +405,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	}
 	
 	// give an id to any variable defined in a function that is not an uniform
-	if ((this->mode == kPrintGlslNone && ir->mode != ir_var_uniform))
+	if ((this->mode == kPrintGlslNone && ir->data.mode != ir_var_uniform))
 	{
 		long id = (long)hash_table_find (globals->var_hash, ir);
 		if (id == 0)
@@ -435,7 +435,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	}
 	
 	buffer.asprintf_append ("%s%s%s%s",
-							cent, inv, interp[ir->interpolation], mode[decormode][ir->mode]);
+							cent, inv, interp[ir->data.interpolation], mode[decormode][ir->data.mode]);
 	print_precision (ir, ir->type);
 	print_type(buffer, ir->type, false);
 	buffer.asprintf_append (" ");
@@ -443,11 +443,11 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	print_type_post(buffer, ir->type, false);
 	
 	if (ir->constant_value &&
-		ir->mode != ir_var_shader_in &&
-		ir->mode != ir_var_shader_out &&
-		ir->mode != ir_var_function_in &&
-		ir->mode != ir_var_function_out &&
-		ir->mode != ir_var_function_inout)
+		ir->data.mode != ir_var_shader_in &&
+		ir->data.mode != ir_var_shader_out &&
+		ir->data.mode != ir_var_function_in &&
+		ir->data.mode != ir_var_function_out &&
+		ir->data.mode != ir_var_function_inout)
 	{
 		buffer.asprintf_append (" = ");
 		visit (ir->constant_value);

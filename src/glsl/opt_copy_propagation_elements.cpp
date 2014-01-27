@@ -470,7 +470,7 @@ ir_copy_propagation_elements_visitor::add_copy(ir_assignment *ir)
 	 swizzle[i] = orig_swizzle[j++];
    }
 	
-   if (lhs->var->precision != rhs->var->precision && lhs->var->precision!=glsl_precision_undefined && rhs->var->precision!=glsl_precision_undefined)
+   if (lhs->var->data.precision != rhs->var->data.precision && lhs->var->data.precision!=glsl_precision_undefined && rhs->var->data.precision!=glsl_precision_undefined)
       return;
 
    int write_mask = ir->write_mask;

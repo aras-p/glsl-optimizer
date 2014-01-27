@@ -1568,7 +1568,7 @@ ir_swizzle::variable_referenced() const
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode, glsl_precision precision)
-   : max_ifc_array_access(NULL), precision(precision)
+   : max_ifc_array_access(NULL)
 {
    this->ir_type = ir_type_variable;
    this->type = type;
@@ -1590,6 +1590,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->data.invariant = false;
    this->data.how_declared = ir_var_declared_normally;
    this->data.mode = mode;
+   this->data.precision = precision;
    this->data.interpolation = INTERP_QUALIFIER_NONE;
    this->data.max_array_access = 0;
    this->data.atomic.buffer_index = 0;
@@ -1811,7 +1812,7 @@ precision_from_ir (ir_instruction* ir)
 		return glsl_precision_undefined;
 	ir_variable* var = ir->as_variable();
 	if (var)
-		return (glsl_precision)var->precision;
+		return (glsl_precision)var->data.precision;
 	ir_rvalue* rv = ir->as_rvalue();
 	if (rv)
 		return rv->get_precision();

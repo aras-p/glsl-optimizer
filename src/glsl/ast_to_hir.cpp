@@ -856,7 +856,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 	   {
 		   ir_variable *const var = d->variable_referenced();
 		   if (var)
-			   var->precision = prec;
+			   var->data.precision = prec;
 	   }
    }
 
@@ -2726,9 +2726,9 @@ apply_precision_to_variable(const struct ast_type_qualifier& qual,
 	if (!state->es_shader)
 		return;
 	if (var->type->is_sampler() && qual.precision == ast_precision_none)
-		var->precision = ast_precision_low; // samplers default to low precision
+		var->data.precision = ast_precision_low; // samplers default to low precision
 	else
-		var->precision = qual.precision;
+		var->data.precision = qual.precision;
 }
 
 

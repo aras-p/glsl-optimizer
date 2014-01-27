@@ -136,7 +136,7 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, exec
 		ir_variable *formal = (ir_variable *) formal_iter.get();
 		assert(actual != NULL);
 		assert(formal != NULL);
-		glsl_precision param_prec = (glsl_precision)formal->precision;
+		glsl_precision param_prec = (glsl_precision)formal->data.precision;
 		if (param_prec == glsl_precision_undefined)
 			param_prec = actual->get_precision();
 		prec_params_max = higher_precision (prec_params_max, param_prec);
@@ -375,8 +375,8 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
 	 case ir_var_function_inout:
             fix_parameter(ctx, actual, formal->type,
                           instructions, &post_call_conversions,
-                          formal->data.mode == ir_var_function_inout);
-            precision_for_call(sig,actual_parameters));
+                          formal->data.mode == ir_var_function_inout,
+						  precision_for_call(sig,actual_parameters));
 	    break;
 	 default:
 	    assert (!"Illegal formal parameter mode");
@@ -962,7 +962,7 @@ emit_inline_vector_constructor(const glsl_type *type, unsigned ast_precision,
       ir_rvalue *first_param = (ir_rvalue *)parameters->head;
       ir_rvalue *rhs = new(ctx) ir_swizzle(first_param, 0, 0, 0, 0,
 					   lhs_components);
-      var->precision = higher_precision ((glsl_precision)var->precision, rhs->get_precision());
+      var->data.precision = higher_precision ((glsl_precision)var->data.precision, rhs->get_precision());
       ir_dereference_variable *lhs = new(ctx) ir_dereference_variable(var);
       const unsigned mask = (1U << lhs_components) - 1;
 
@@ -980,7 +980,7 @@ emit_inline_vector_constructor(const glsl_type *type, unsigned ast_precision,
 
       foreach_list(node, parameters) {
 	 ir_rvalue *param = (ir_rvalue *) node;
-	 var->precision = higher_precision ((glsl_precision)var->precision, param->get_precision());
+	 var->data.precision = higher_precision ((glsl_precision)var->data.precision, param->get_precision());
 	 unsigned rhs_components = param->type->components();
 
 	 /* Do not try to assign more components to the vector than it has!

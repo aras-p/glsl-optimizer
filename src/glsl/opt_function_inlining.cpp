@@ -149,10 +149,10 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	 parameters[i] = sig_param->clone(ctx, ht);
 	 parameters[i]->data.mode = ir_var_auto;
 
-     parameters[i]->precision = (glsl_precision)parameters[i]->precision;
-     if (parameters[i]->precision == glsl_precision_undefined)
-        parameters[i]->precision = param->get_precision();
-     prec_params_max = higher_precision (prec_params_max, (glsl_precision)parameters[i]->precision);
+     parameters[i]->data.precision = (glsl_precision)parameters[i]->data.precision;
+     if (parameters[i]->data.precision == glsl_precision_undefined)
+        parameters[i]->data.precision = param->get_precision();
+     prec_params_max = higher_precision (prec_params_max, (glsl_precision)parameters[i]->data.precision);
 
 	 /* Remove the read-only decoration becuase we're going to write
 	  * directly to this variable.  If the cloned variable is left

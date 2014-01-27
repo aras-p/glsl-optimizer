@@ -826,7 +826,7 @@ struct gl_shader_program
     * This is used to maintain the Binding values of the stage's UniformBlocks[]
     * and to answer the GL_UNIFORM_BLOCK_REFERENCED_BY_*_SHADER queries.
     */
-   int *UniformBlockStageIndex[MESA_SHADER_TYPES];
+   int *UniformBlockStageIndex[MESA_SHADER_STAGES];
 
    /**
     * Map of active uniform names to locations
@@ -856,7 +856,7 @@ struct gl_shader_program
     * \c MESA_SHADER_* defines.  Entries for non-existent stages will be
     * \c NULL.
     */
-   struct gl_shader *_LinkedShaders[MESA_SHADER_TYPES];
+   struct gl_shader *_LinkedShaders[MESA_SHADER_STAGES];
 };   
 
 
@@ -1394,14 +1394,6 @@ struct gl_context
    GLuint Version;
    char *VersionString;
 
-
-   struct gl_program_state Program;  /**< general program state */
-   struct gl_vertex_program_state VertexProgram;
-   struct gl_fragment_program_state FragmentProgram;
-   struct gl_geometry_program_state GeometryProgram;
-   struct gl_ati_fragment_shader_state ATIFragmentShader;
-
-   struct gl_shader_state Shader; /**< GLSL shader object state */
    struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_STAGES];
 
    GLenum ErrorValue;        /**< Last error code */
