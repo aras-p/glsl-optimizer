@@ -494,6 +494,7 @@ typedef union YYSTYPE
 
    ast_node *node;
    ast_type_specifier *type_specifier;
+   ast_array_specifier *array_specifier;
    ast_fully_specified_type *fully_specified_type;
    ast_function *function;
    ast_parameter_declarator *parameter_declarator;
@@ -521,7 +522,7 @@ typedef union YYSTYPE
    } selection_rest_statement;
 }
 /* Line 1529 of yacc.c.  */
-#line 525 "src/glsl/glsl_parser.h"
+#line 526 "src/glsl/glsl_parser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

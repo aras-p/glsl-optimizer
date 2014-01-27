@@ -71,8 +71,8 @@ bool
 ir_struct_usage_visitor::has_struct_entry(const glsl_type *t) const
 {
 	assert(t);
-	foreach_iter(exec_list_iterator, iter, this->struct_list) {
-		struct_entry *entry = (struct_entry *)iter.get();
+	foreach_list(node, &this->struct_list) {
+		struct_entry *entry = (struct_entry *)node;
 		if (entry->type == t)
 			return true;
 	}

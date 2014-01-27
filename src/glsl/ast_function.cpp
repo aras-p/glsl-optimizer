@@ -127,13 +127,10 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, exec
 	glsl_precision prec_params_first = glsl_precision_undefined;
 	int params_counter = 0;
 	
-	exec_list_iterator actual_iter = actual_parameters->iterator();
-	exec_list_iterator formal_iter = sig->parameters.iterator();
-	
-	while (actual_iter.has_next())
-	{
-		ir_rvalue *actual = (ir_rvalue *) actual_iter.get();
-		ir_variable *formal = (ir_variable *) formal_iter.get();
+	foreach_two_lists(formal_node, &sig->parameters,
+					  actual_node, actual_parameters) {
+		ir_rvalue *actual = (ir_rvalue *) actual_node;
+		ir_variable *formal = (ir_variable *) formal_node;
 		assert(actual != NULL);
 		assert(formal != NULL);
 		glsl_precision param_prec = (glsl_precision)formal->data.precision;
@@ -143,8 +140,6 @@ static glsl_precision precision_for_call (const ir_function_signature* sig, exec
 		if (params_counter == 0)
 			prec_params_first = param_prec;
 		
-		actual_iter.next();
-		formal_iter.next();
 		++params_counter;
 	}
 	

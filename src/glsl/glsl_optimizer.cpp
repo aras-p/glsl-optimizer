@@ -250,19 +250,16 @@ static void propagate_precision_call(ir_instruction *ir, void *data)
 	if (call->return_deref->get_precision() == glsl_precision_undefined /*&& call->callee->precision == glsl_precision_undefined*/)
 	{
 		glsl_precision prec_params_max = glsl_precision_undefined;
-		exec_list_iterator iter_sig  = call->callee->parameters.iterator();
-		foreach_iter(exec_list_iterator, iter_param, call->actual_parameters)
-		{
-			ir_variable* sig_param = (ir_variable*)iter_sig.get();
-			ir_rvalue* param = (ir_rvalue*)iter_param.get();
+		foreach_two_lists(formal_node, &call->callee->parameters,
+						  actual_node, &call->actual_parameters) {
+			ir_variable* sig_param = (ir_variable*)formal_node;
+			ir_rvalue* param = (ir_rvalue*)actual_node;
 			
 			glsl_precision p = (glsl_precision)sig_param->data.precision;
 			if (p == glsl_precision_undefined)
 				p = param->get_precision();
 			
 			prec_params_max = higher_precision (prec_params_max, p);
-			
-			iter_sig.next();
 		}
 		if (call->return_deref->get_precision() != prec_params_max)
 		{
@@ -279,8 +276,8 @@ static bool propagate_precision(exec_list* list)
 	bool res;
 	do {
 		res = false;
-		foreach_iter(exec_list_iterator, iter, *list) {
-			ir_instruction* ir = (ir_instruction*)iter.get();
+		foreach_list(node, list) {
+			ir_instruction* ir = (ir_instruction*)node;
 			visit_tree (ir, propagate_precision_deref, &res);
 			visit_tree (ir, propagate_precision_assign, &res);
 			visit_tree (ir, propagate_precision_call, &res);

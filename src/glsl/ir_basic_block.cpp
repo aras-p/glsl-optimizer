@@ -43,8 +43,8 @@ static ir_if* as_if_skip_discard (ir_instruction* ir)
 	
 	bool only_discards = true;
 	int count = 0;
-	foreach_iter(exec_list_iterator, iter, irif->then_instructions) {
-		ir_instruction *iir = (ir_instruction *)iter.get();
+	foreach_list(node, &irif->then_instructions) {
+		ir_instruction *iir = (ir_instruction *)node;
 		if (!iir->as_discard())
 		{
 			only_discards = false;

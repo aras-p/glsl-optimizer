@@ -240,9 +240,9 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	if (ls->loop_found)
 		set_loop_controls(instructions, ls);
 
-	foreach_iter(exec_list_iterator, iter, *instructions)
+	foreach_list(node, instructions)
 	{
-		ir_instruction *ir = (ir_instruction *)iter.get();
+		ir_instruction *ir = (ir_instruction *)node;
 		if (ir->ir_type == ir_type_variable) {
 			ir_variable *var = static_cast<ir_variable*>(ir);
 			if ((strstr(var->name, "gl_") == var->name)
@@ -467,8 +467,8 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 
 	   indentation++; previous_skipped = false;
 	   bool first = true;
-	   foreach_iter(exec_list_iterator, iter, ir->parameters) {
-		  ir_variable *const inst = (ir_variable *) iter.get();
+	   foreach_list(node, &ir->parameters) {
+		  ir_variable *const inst = (ir_variable *)node;
 
 		  if (!first)
 			  buffer.asprintf_append (",\n");
@@ -499,16 +499,16 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
 	{
 		assert (!globals->main_function_done);
 		globals->main_function_done = true;
-		foreach_iter(exec_list_iterator, it, globals->global_assignements)
+		foreach_list(node, &globals->global_assignements)
 		{
-			ir_instruction* as = ((ga_entry *)it.get())->ir;
+			ir_instruction* as = ((ga_entry *)node)->ir;
 			as->accept(this);
 			buffer.asprintf_append(";\n");
 		}
 	}
 
-   foreach_iter(exec_list_iterator, iter, ir->body) {
-      ir_instruction *const inst = (ir_instruction *) iter.get();
+   foreach_list(node, &ir->body) {
+      ir_instruction *const inst = (ir_instruction *)node;
 
       indent();
       inst->accept(this);
@@ -519,13 +519,12 @@ void ir_print_glsl_visitor::visit(ir_function_signature *ir)
    buffer.asprintf_append ("}\n");
 }
 
-
 void ir_print_glsl_visitor::visit(ir_function *ir)
 {
    bool found_non_builtin_proto = false;
 
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_function_signature *const sig = (ir_function_signature *) iter.get();
+   foreach_list(node, &ir->signatures) {
+      ir_function_signature *const sig = (ir_function_signature *)node;
       if (!sig->is_builtin())
 	 found_non_builtin_proto = true;
    }
@@ -535,8 +534,8 @@ void ir_print_glsl_visitor::visit(ir_function *ir)
    PrintGlslMode oldMode = this->mode;
    this->mode = kPrintGlslNone;
 
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_function_signature *const sig = (ir_function_signature *) iter.get();
+   foreach_list(node, &ir->signatures) {
+      ir_function_signature *const sig = (ir_function_signature *)node;
 
       indent();
       sig->accept(this);
@@ -1249,11 +1248,11 @@ void ir_print_glsl_visitor::visit(ir_constant *ir)
       }
    } else if (ir->type->is_record()) {
       bool first = true;
-      foreach_iter(exec_list_iterator, iter, ir->components) {
+      foreach_list(n, &ir->components) {
 	 if (!first)
 	    buffer.asprintf_append (", ");
 	 first = false;
-	 ir_constant* inst = (ir_constant*)iter.get();
+	 ir_constant* inst = (ir_constant*)n;
 	 inst->accept(this);
      } 
    }else {
@@ -1295,8 +1294,8 @@ ir_print_glsl_visitor::visit(ir_call *ir)
 	
    buffer.asprintf_append ("%s (", ir->callee_name());
    bool first = true;
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_instruction *const inst = (ir_instruction *) iter.get();
+   foreach_list(node, &ir->actual_parameters) {
+      ir_instruction *const inst = (ir_instruction *)node;
 	  if (!first)
 		  buffer.asprintf_append (", ");
       inst->accept(this);
@@ -1341,8 +1340,8 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 	indentation++; previous_skipped = false;
 
 
-   foreach_iter(exec_list_iterator, iter, ir->then_instructions) {
-      ir_instruction *const inst = (ir_instruction *) iter.get();
+   foreach_list(n, &ir->then_instructions) {
+      ir_instruction *const inst = (ir_instruction *)n;
 
       indent();
       inst->accept(this);
@@ -1358,8 +1357,8 @@ ir_print_glsl_visitor::visit(ir_if *ir)
 	   buffer.asprintf_append (" else {\n");
 	   indentation++; previous_skipped = false;
 
-	   foreach_iter(exec_list_iterator, iter, ir->else_instructions) {
-		  ir_instruction *const inst = (ir_instruction *) iter.get();
+	   foreach_list(n, &ir->else_instructions) {
+		  ir_instruction *const inst = (ir_instruction *)n;
 
 		  indent();
 		  inst->accept(this);
@@ -1526,8 +1525,8 @@ ir_print_glsl_visitor::visit(ir_loop *ir)
 	
 	buffer.asprintf_append ("while (true) {\n");
 	indentation++; previous_skipped = false;
-	foreach_iter(exec_list_iterator, iter, ir->body_instructions) {
-		ir_instruction *const inst = (ir_instruction *) iter.get();
+	foreach_list(n, &ir->body_instructions) {
+		ir_instruction *const inst = (ir_instruction *)n;
 		indent();
 		inst->accept(this);
 		end_statement_line();
