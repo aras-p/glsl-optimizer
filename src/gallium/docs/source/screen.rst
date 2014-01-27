@@ -188,6 +188,9 @@ The integer capabilities:
 * ``PIPE_CAP_TEXTURE_GATHER_SM5``: Whether the texture gather
   hardware implements the SM5 features, component selection,
   shadow comparison, and run-time offsets.
+* ``PIPE_CAP_BUFFER_MAP_PERSISTENT_COHERENT``: Whether
+  PIPE_TRANSFER_PERSISTENT and PIPE_TRANSFER_COHERENT are supported
+  for buffers.
 
 
 .. _pipe_capf:

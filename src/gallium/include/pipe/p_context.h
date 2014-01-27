@@ -406,7 +406,12 @@ struct pipe_context {
     * Flush any pending framebuffer writes and invalidate texture caches.
     */
    void (*texture_barrier)(struct pipe_context *);
-   
+
+   /**
+    * Flush caches according to flags.
+    */
+   void (*memory_barrier)(struct pipe_context *, unsigned flags);
+
    /**
     * Creates a video codec for a specific video format/profile
     */

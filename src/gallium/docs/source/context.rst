@@ -520,6 +520,16 @@ invalidates all read caches of the currently-set samplers.
 
 
 
+.. _memory_barrier:
+
+memory_barrier
+%%%%%%%%%%%%%%%
+
+This function flushes caches according to which of the PIPE_BARRIER_* flags
+are set.
+
+
+
 .. _pipe_transfer:
 
 PIPE_TRANSFER
@@ -557,6 +567,18 @@ These flags control the behavior of a transfer object.
   Written ranges will be notified later with :ref:`transfer_flush_region`.
   Cannot be used with ``PIPE_TRANSFER_READ``.
 
+``PIPE_TRANSFER_PERSISTENT``
+  Allows the resource to be used for rendering while mapped.
+  PIPE_RESOURCE_FLAG_MAP_PERSISTENT must be set when creating
+  the resource.
+  If COHERENT is not set, memory_barrier(PIPE_BARRIER_MAPPED_BUFFER)
+  must be called to ensure the device can see what the CPU has written.
+
+``PIPE_TRANSFER_COHERENT``
+  If PERSISTENT is set, this ensures any writes done by the device are
+  immediately visible to the CPU and vice versa.
+  PIPE_RESOURCE_FLAG_MAP_COHERENT must be set when creating
+  the resource.
 
 Compute kernel execution
 ^^^^^^^^^^^^^^^^^^^^^^^^

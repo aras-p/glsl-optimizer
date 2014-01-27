@@ -295,8 +295,27 @@ enum pipe_transfer_usage {
     * - D3D10 DDI's D3D10_DDI_MAP_WRITE_DISCARD flag
     * - D3D10's D3D10_MAP_WRITE_DISCARD flag.
     */
-   PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE = (1 << 12)
+   PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE = (1 << 12),
 
+   /**
+    * Allows the resource to be used for rendering while mapped.
+    *
+    * PIPE_RESOURCE_FLAG_MAP_PERSISTENT must be set when creating
+    * the resource.
+    *
+    * If COHERENT is not set, memory_barrier(PIPE_BARRIER_MAPPED_BUFFER)
+    * must be called to ensure the device can see what the CPU has written.
+    */
+   PIPE_TRANSFER_PERSISTENT = (1 << 13),
+
+   /**
+    * If PERSISTENT is set, this ensures any writes done by the device are
+    * immediately visible to the CPU and vice versa.
+    *
+    * PIPE_RESOURCE_FLAG_MAP_COHERENT must be set when creating
+    * the resource.
+    */
+   PIPE_TRANSFER_COHERENT = (1 << 14)
 };
 
 /**
@@ -305,6 +324,11 @@ enum pipe_transfer_usage {
 enum pipe_flush_flags {
    PIPE_FLUSH_END_OF_FRAME = (1 << 0)
 };
+
+/**
+ * Flags for pipe_context::memory_barrier.
+ */
+#define PIPE_BARRIER_MAPPED_BUFFER     (1 << 0)
 
 /*
  * Resource binding flags -- state tracker must specify in advance all
@@ -352,6 +376,8 @@ enum pipe_flush_flags {
 
 /* Flags for the driver about resource behaviour:
  */
+#define PIPE_RESOURCE_FLAG_MAP_PERSISTENT (1 << 0)
+#define PIPE_RESOURCE_FLAG_MAP_COHERENT   (1 << 1)
 #define PIPE_RESOURCE_FLAG_DRV_PRIV    (1 << 16) /* driver/winsys private */
 #define PIPE_RESOURCE_FLAG_ST_PRIV     (1 << 24) /* state-tracker/winsys private */
 
@@ -524,7 +550,8 @@ enum pipe_cap {
    PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES = 88,
    PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS = 89,
    PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS = 90,
-   PIPE_CAP_TEXTURE_GATHER_SM5 = 91
+   PIPE_CAP_TEXTURE_GATHER_SM5 = 91,
+   PIPE_CAP_BUFFER_MAP_PERSISTENT_COHERENT = 92
 };
 
 #define PIPE_QUIRK_TEXTURE_BORDER_COLOR_SWIZZLE_NV50 (1 << 0)
