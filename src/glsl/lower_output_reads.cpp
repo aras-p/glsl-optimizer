@@ -91,7 +91,7 @@ output_read_remover::~output_read_remover()
 ir_visitor_status
 output_read_remover::visit(ir_dereference_variable *ir)
 {
-   if (ir->var->mode != ir_var_shader_out)
+   if (ir->var->data.mode != ir_var_shader_out)
       return visit_continue;
 
    ir_variable *temp = (ir_variable *) hash_table_find(replacements, ir->var);

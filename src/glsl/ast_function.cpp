@@ -182,7 +182,7 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
       YYLTYPE loc = actual_ast->get_location();
 
       /* Verify that 'const_in' parameters are ir_constants. */
-      if (formal->mode == ir_var_const_in &&
+      if (formal->data.mode == ir_var_const_in &&
 	  actual->ir_type != ir_type_constant) {
 	 _mesa_glsl_error(&loc, state,
 			  "parameter `in %s' must be a constant expression",
@@ -191,10 +191,10 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
       }
 
       /* Verify that 'out' and 'inout' actual parameters are lvalues. */
-      if (formal->mode == ir_var_function_out
-          || formal->mode == ir_var_function_inout) {
+      if (formal->data.mode == ir_var_function_out
+          || formal->data.mode == ir_var_function_inout) {
 	 const char *mode = NULL;
-	 switch (formal->mode) {
+	 switch (formal->data.mode) {
 	 case ir_var_function_out:   mode = "out";   break;
 	 case ir_var_function_inout: mode = "inout"; break;
 	 default:                    assert(false);  break;
@@ -214,9 +214,9 @@ verify_parameter_modes(_mesa_glsl_parse_state *state,
 
 	 ir_variable *var = actual->variable_referenced();
 	 if (var)
-	    var->assigned = true;
+	    var->data.assigned = true;
 
-	 if (var && var->read_only) {
+	 if (var && var->data.read_only) {
 	    _mesa_glsl_error(&loc, state,
 			     "function parameter '%s %s' references the "
 			     "read-only variable '%s'",
@@ -363,7 +363,7 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
       assert(formal != NULL);
 
       if (formal->type->is_numeric() || formal->type->is_boolean()) {
-	 switch (formal->mode) {
+	 switch (formal->data.mode) {
 	 case ir_var_const_in:
 	 case ir_var_function_in: {
 	    ir_rvalue *converted
@@ -375,8 +375,8 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
 	 case ir_var_function_inout:
             fix_parameter(ctx, actual, formal->type,
                           instructions, &post_call_conversions,
-                          formal->mode == ir_var_function_inout,
-						  precision_for_call(sig,actual_parameters));
+                          formal->data.mode == ir_var_function_inout);
+            precision_for_call(sig,actual_parameters));
 	    break;
 	 default:
 	    assert (!"Illegal formal parameter mode");
@@ -510,17 +510,24 @@ no_matching_function_error(const char *name,
 			   exec_list *actual_parameters,
 			   _mesa_glsl_parse_state *state)
 {
-   char *str = prototype_string(NULL, name, actual_parameters);
-   _mesa_glsl_error(loc, state,
-                    "no matching function for call to `%s'; candidates are:",
-                    str);
-   ralloc_free(str);
+   gl_shader *sh = _mesa_glsl_get_builtin_function_shader();
 
-   print_function_prototypes(state, loc, state->symbols->get_function(name));
+   if (state->symbols->get_function(name) == NULL
+      && (!state->uses_builtin_functions
+          || sh->symbols->get_function(name) == NULL)) {
+      _mesa_glsl_error(loc, state, "no function with name '%s'", name);
+   } else {
+      char *str = prototype_string(NULL, name, actual_parameters);
+      _mesa_glsl_error(loc, state,
+                       "no matching function for call to `%s'; candidates are:",
+                       str);
+      ralloc_free(str);
 
-   if (state->uses_builtin_functions) {
-      gl_shader *sh = _mesa_glsl_get_builtin_function_shader();
-      print_function_prototypes(state, loc, sh->symbols->get_function(name));
+      print_function_prototypes(state, loc, state->symbols->get_function(name));
+
+      if (state->uses_builtin_functions) {
+         print_function_prototypes(state, loc, sh->symbols->get_function(name));
+      }
    }
 }
 
@@ -1718,7 +1725,7 @@ ast_function_expression::hir(exec_list *instructions,
    } else {
       const ast_expression *id = subexpressions[0];
       const char *func_name = id->primary_expression.identifier;
-      YYLTYPE loc = id->get_location();
+      YYLTYPE loc = get_location();
       exec_list actual_parameters;
 
       process_parameters(instructions, &actual_parameters, &this->expressions,

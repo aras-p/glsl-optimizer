@@ -103,8 +103,8 @@ ir_structure_reference_visitor::get_variable_entry(ir_variable *var)
 {
    assert(var);
 
-   if (!var->type->is_record() || var->mode == ir_var_uniform
-       || var->mode == ir_var_shader_in || var->mode == ir_var_shader_out)
+   if (!var->type->is_record() || var->data.mode == ir_var_uniform
+       || var->data.mode == ir_var_shader_in || var->data.mode == ir_var_shader_out)
       return NULL;
 
    foreach_iter(exec_list_iterator, iter, this->variable_list) {

@@ -1153,27 +1153,31 @@ ir_constant::has_value(const ir_constant *c) const
 }
 
 bool
-ir_constant::is_zero() const
+ir_constant::is_value(float f, int i) const
 {
    if (!this->type->is_scalar() && !this->type->is_vector())
+      return false;
+
+   /* Only accept boolean values for 0/1. */
+   if (int(bool(i)) != i && this->type->is_boolean())
       return false;
 
    for (unsigned c = 0; c < this->type->vector_elements; c++) {
       switch (this->type->base_type) {
       case GLSL_TYPE_FLOAT:
-	 if (this->value.f[c] != 0.0)
+	 if (this->value.f[c] != f)
 	    return false;
 	 break;
       case GLSL_TYPE_INT:
-	 if (this->value.i[c] != 0)
+	 if (this->value.i[c] != i)
 	    return false;
 	 break;
       case GLSL_TYPE_UINT:
-	 if (this->value.u[c] != 0)
+	 if (this->value.u[c] != unsigned(i))
 	    return false;
 	 break;
       case GLSL_TYPE_BOOL:
-	 if (this->value.b[c] != false)
+	 if (this->value.b[c] != bool(i))
 	    return false;
 	 break;
       default:
@@ -1187,79 +1191,24 @@ ir_constant::is_zero() const
    }
 
    return true;
+}
+
+bool
+ir_constant::is_zero() const
+{
+   return is_value(0.0, 0);
 }
 
 bool
 ir_constant::is_one() const
 {
-   if (!this->type->is_scalar() && !this->type->is_vector())
-      return false;
-
-   for (unsigned c = 0; c < this->type->vector_elements; c++) {
-      switch (this->type->base_type) {
-      case GLSL_TYPE_FLOAT:
-	 if (this->value.f[c] != 1.0)
-	    return false;
-	 break;
-      case GLSL_TYPE_INT:
-	 if (this->value.i[c] != 1)
-	    return false;
-	 break;
-      case GLSL_TYPE_UINT:
-	 if (this->value.u[c] != 1)
-	    return false;
-	 break;
-      case GLSL_TYPE_BOOL:
-	 if (this->value.b[c] != true)
-	    return false;
-	 break;
-      default:
-	 /* The only other base types are structures, arrays, and samplers.
-	  * Samplers cannot be constants, and the others should have been
-	  * filtered out above.
-	  */
-	 assert(!"Should not get here.");
-	 return false;
-      }
-   }
-
-   return true;
+   return is_value(1.0, 1);
 }
 
 bool
 ir_constant::is_negative_one() const
 {
-   if (!this->type->is_scalar() && !this->type->is_vector())
-      return false;
-
-   if (this->type->is_boolean())
-      return false;
-
-   for (unsigned c = 0; c < this->type->vector_elements; c++) {
-      switch (this->type->base_type) {
-      case GLSL_TYPE_FLOAT:
-	 if (this->value.f[c] != -1.0)
-	    return false;
-	 break;
-      case GLSL_TYPE_INT:
-	 if (this->value.i[c] != -1)
-	    return false;
-	 break;
-      case GLSL_TYPE_UINT:
-	 if (int(this->value.u[c]) != -1)
-	    return false;
-	 break;
-      default:
-	 /* The only other base types are structures, arrays, samplers, and
-	  * booleans.  Samplers cannot be constants, and the others should
-	  * have been filtered out above.
-	  */
-	 assert(!"Should not get here.");
-	 return false;
-      }
-   }
-
-   return true;
+   return is_value(-1.0, -1);
 }
 
 bool
@@ -1399,7 +1348,7 @@ ir_dereference::is_lvalue() const
 
    /* Every l-value derference chain eventually ends in a variable.
     */
-   if ((var == NULL) || var->read_only)
+   if ((var == NULL) || var->data.read_only)
       return false;
 
    /* From page 17 (page 23 of the PDF) of the GLSL 1.20 spec:
@@ -1619,29 +1568,36 @@ ir_swizzle::variable_referenced() const
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode, glsl_precision precision)
-   : max_array_access(0), max_ifc_array_access(NULL),
-     read_only(false), centroid(false), sample(false), invariant(false),
-     how_declared(ir_var_declared_normally), mode(mode),
-     interpolation(INTERP_QUALIFIER_NONE), atomic(), precision(precision)
+   : max_ifc_array_access(NULL), precision(precision)
 {
    this->ir_type = ir_type_variable;
    this->type = type;
    this->name = ralloc_strdup(this, name);
-   this->explicit_location = false;
-   this->has_initializer = false;
-   this->location = -1;
-   this->location_frac = 0;
+   this->data.explicit_location = false;
+   this->data.has_initializer = false;
+   this->data.location = -1;
+   this->data.location_frac = 0;
    this->warn_extension = NULL;
    this->constant_value = NULL;
    this->constant_initializer = NULL;
-   this->origin_upper_left = false;
-   this->pixel_center_integer = false;
-   this->depth_layout = ir_depth_layout_none;
-   this->used = false;
+   this->data.origin_upper_left = false;
+   this->data.pixel_center_integer = false;
+   this->data.depth_layout = ir_depth_layout_none;
+   this->data.used = false;
+   this->data.read_only = false;
+   this->data.centroid = false;
+   this->data.sample = false;
+   this->data.invariant = false;
+   this->data.how_declared = ir_var_declared_normally;
+   this->data.mode = mode;
+   this->data.interpolation = INTERP_QUALIFIER_NONE;
+   this->data.max_array_access = 0;
+   this->data.atomic.buffer_index = 0;
+   this->data.atomic.offset = 0;
 
    if (type != NULL) {
       if (type->base_type == GLSL_TYPE_SAMPLER)
-         this->read_only = true;
+         this->data.read_only = true;
 
       if (type->is_interface())
          this->init_interface_type(type);
@@ -1669,9 +1625,9 @@ interpolation_string(unsigned interpolation)
 glsl_interp_qualifier
 ir_variable::determine_interpolation_mode(bool flat_shade)
 {
-   if (this->interpolation != INTERP_QUALIFIER_NONE)
-      return (glsl_interp_qualifier) this->interpolation;
-   int location = this->location;
+   if (this->data.interpolation != INTERP_QUALIFIER_NONE)
+      return (glsl_interp_qualifier) this->data.interpolation;
+   int location = this->data.location;
    bool is_gl_Color =
       location == VARYING_SLOT_COL0 || location == VARYING_SLOT_COL1;
    if (flat_shade && is_gl_Color)
@@ -1742,11 +1698,11 @@ ir_function_signature::qualifiers_match(exec_list *params)
       ir_variable *b = (ir_variable *)iter_b.get();
 
       /* NOTE: precision does not affect qualifier matching */
-      if (a->read_only != b->read_only ||
-	  !modes_match(a->mode, b->mode) ||
-	  a->interpolation != b->interpolation ||
-	  a->centroid != b->centroid ||
-         a->sample != b->sample) {
+      if (a->data.read_only != b->data.read_only ||
+	  !modes_match(a->data.mode, b->data.mode) ||
+	  a->data.interpolation != b->data.interpolation ||
+	  a->data.centroid != b->data.centroid ||
+         a->data.sample != b->data.sample) {
 
 	 /* parameter a's qualifiers don't match */
 	 return a->name;
@@ -1952,9 +1908,9 @@ vertices_per_prim(GLenum prim)
 const char *
 mode_string(const ir_variable *var)
 {
-   switch (var->mode) {
+   switch (var->data.mode) {
    case ir_var_auto:
-      return (var->read_only) ? "global constant" : "global variable";
+      return (var->data.read_only) ? "global constant" : "global variable";
 
    case ir_var_uniform:
       return "uniform";

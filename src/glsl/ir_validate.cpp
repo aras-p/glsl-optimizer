@@ -645,9 +645,9 @@ ir_validate::visit(ir_variable *ir)
     * to be out of bounds.
     */
    if (ir->type->array_size() > 0) {
-      if (ir->max_array_access >= ir->type->length) {
+      if (ir->data.max_array_access >= ir->type->length) {
 	 printf("ir_variable has maximum access out of bounds (%d vs %d)\n",
-		ir->max_array_access, ir->type->length - 1);
+		ir->data.max_array_access, ir->type->length - 1);
 	 ir->print();
 	 abort();
       }
@@ -673,7 +673,7 @@ ir_validate::visit(ir_variable *ir)
       }
    }
 
-   if (ir->constant_initializer != NULL && !ir->has_initializer) {
+   if (ir->constant_initializer != NULL && !ir->data.has_initializer) {
       printf("ir_variable didn't have an initializer, but has a constant "
 	     "initializer value.\n");
       ir->print();
@@ -755,8 +755,8 @@ ir_validate::visit_enter(ir_call *ir)
          printf("ir_call parameter type mismatch:\n");
          goto dump_ir;
       }
-      if (formal_param->mode == ir_var_function_out
-          || formal_param->mode == ir_var_function_inout) {
+      if (formal_param->data.mode == ir_var_function_out
+          || formal_param->data.mode == ir_var_function_inout) {
          if (!actual_param->is_lvalue()) {
             printf("ir_call out/inout parameters must be lvalues:\n");
             goto dump_ir;

@@ -76,6 +76,7 @@ _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
    shader = rzalloc(NULL, struct gl_shader);
    if (shader) {
       shader->Type = type;
+      shader->Stage = _mesa_shader_enum_to_shader_stage(type);
       shader->Name = name;
       shader->RefCount = 1;
    }
@@ -126,16 +127,16 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Const.MaxClipPlanes = 6;
    ctx->Const.MaxTextureUnits = 2;
    ctx->Const.MaxTextureCoordUnits = 2;
-   ctx->Const.VertexProgram.MaxAttribs = 16;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs = 16;
 
-   ctx->Const.VertexProgram.MaxUniformComponents = 512;
-   ctx->Const.VertexProgram.MaxOutputComponents = 32;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents = 512;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents = 32;
    ctx->Const.MaxVarying = 8; /* == gl_MaxVaryingFloats / 4 */
-   ctx->Const.VertexProgram.MaxTextureImageUnits = 0;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = 0;
    ctx->Const.MaxCombinedTextureImageUnits = 2;
-   ctx->Const.FragmentProgram.MaxTextureImageUnits = 2;
-   ctx->Const.FragmentProgram.MaxUniformComponents = 64;
-   ctx->Const.FragmentProgram.MaxInputComponents = 32;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = 2;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents = 64;
+   ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents = 32;
 
    ctx->Const.MaxDrawBuffers = 1;
 
@@ -148,6 +149,6 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    /* Default pragma settings */
    options.DefaultPragmas.Optimize = true;
 
-   for (int sh = 0; sh < MESA_SHADER_TYPES; ++sh)
+   for (int sh = 0; sh < MESA_SHADER_STAGES; ++sh)
       memcpy(&ctx->ShaderCompilerOptions[sh], &options, sizeof(options));
 }

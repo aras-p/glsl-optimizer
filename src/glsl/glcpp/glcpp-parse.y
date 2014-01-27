@@ -310,6 +310,11 @@ control_line:
 			_glcpp_parser_expand_and_lex_from (parser,
 							   ELIF_EXPANDED, $2);
 		}
+		else if (parser->skip_stack &&
+		    parser->skip_stack->has_else)
+		{
+			glcpp_error(& @1, parser, "#elif after #else");
+		}
 		else
 		{
 			_glcpp_parser_skip_stack_change_if (parser, & @1,
@@ -324,6 +329,11 @@ control_line:
 		{
 			glcpp_error(& @1, parser, "#elif with no expression");
 		}
+		else if (parser->skip_stack &&
+		    parser->skip_stack->has_else)
+		{
+			glcpp_error(& @1, parser, "#elif after #else");
+		}
 		else
 		{
 			_glcpp_parser_skip_stack_change_if (parser, & @1,
@@ -332,7 +342,17 @@ control_line:
 		}
 	}
 |	HASH_ELSE {
-		_glcpp_parser_skip_stack_change_if (parser, & @1, "else", 1);
+		if (parser->skip_stack &&
+		    parser->skip_stack->has_else)
+		{
+			glcpp_error(& @1, parser, "multiple #else");
+		}
+		else
+		{
+			_glcpp_parser_skip_stack_change_if (parser, & @1, "else", 1);
+			if (parser->skip_stack)
+				parser->skip_stack->has_else = true;
+		}
 	} NEWLINE
 |	HASH_ENDIF {
 		_glcpp_parser_skip_stack_pop (parser, & @1);
@@ -1164,6 +1184,7 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 	parser->newline_as_space = 0;
 	parser->in_control_line = 0;
 	parser->paren_count = 0;
+        parser->commented_newlines = 0;
 
 	parser->skip_stack = NULL;
 
@@ -1260,6 +1281,9 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	      if (extensions->ARB_shader_atomic_counters)
 	         add_builtin_define(parser, "GL_ARB_shader_atomic_counters", 1);
+
+	      if (extensions->AMD_shader_trinary_minmax)
+	         add_builtin_define(parser, "GL_AMD_shader_trinary_minmax", 1);
 	   }
 	}
 
@@ -2024,6 +2048,7 @@ _glcpp_parser_skip_stack_push_if (glcpp_parser_t *parser, YYLTYPE *loc,
 		node->type = SKIP_TO_ENDIF;
 	}
 
+	node->has_else = false;
 	node->next = parser->skip_stack;
 	parser->skip_stack = node;
 }

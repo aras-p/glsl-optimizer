@@ -75,7 +75,7 @@ program_resource_visitor::process(ir_variable *var)
     */
 
    /* Only strdup the name if we actually will need to modify it. */
-   if (var->from_named_ifc_block_array) {
+   if (var->data.from_named_ifc_block_array) {
       /* lower_named_interface_blocks created this variable by lowering an
        * interface block array to an array variable.  For example if the
        * original source code was:
@@ -108,7 +108,7 @@ program_resource_visitor::process(ir_variable *var)
          recursion(var->type, &name, new_length, false, NULL);
       }
       ralloc_free(name);
-   } else if (var->from_named_ifc_block_nonarray) {
+   } else if (var->data.from_named_ifc_block_nonarray) {
       /* lower_named_interface_blocks created this variable by lowering a
        * named interface block (non-array) to an ordinary variable.  For
        * example if the original source code was:
@@ -356,9 +356,9 @@ public:
    {
    }
 
-   void start_shader(gl_shader_type shader_type)
+   void start_shader(gl_shader_stage shader_type)
    {
-      assert(shader_type < MESA_SHADER_TYPES);
+      assert(shader_type < MESA_SHADER_STAGES);
       this->shader_type = shader_type;
 
       this->shader_samplers_used = 0;
@@ -408,10 +408,10 @@ public:
             const struct gl_uniform_block *const block =
                &prog->UniformBlocks[ubo_block_index];
 
-            assert(var->location != -1);
+            assert(var->data.location != -1);
 
             const struct gl_uniform_buffer_variable *const ubo_var =
-               &block->Uniforms[var->location];
+               &block->Uniforms[var->data.location];
 
             ubo_row_major = !!ubo_var->RowMajor;
             ubo_byte_offset = ubo_var->Offset;
@@ -429,7 +429,7 @@ public:
    int ubo_block_index;
    int ubo_byte_offset;
    bool ubo_row_major;
-   gl_shader_type shader_type;
+   gl_shader_stage shader_type;
 
 private:
    void handle_samplers(const glsl_type *base_type,
@@ -637,10 +637,10 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
       if ((var == NULL) || !var->is_in_uniform_block())
 	 continue;
 
-      assert(var->mode == ir_var_uniform);
+      assert(var->data.mode == ir_var_uniform);
 
       if (var->is_interface_instance()) {
-         var->location = 0;
+         var->data.location = 0;
          continue;
       }
 
@@ -669,13 +669,13 @@ link_update_uniform_buffer_variables(struct gl_shader *shader)
 
                if (strncmp(var->name, begin, l) == 0) {
                   found = true;
-                  var->location = j;
+                  var->data.location = j;
                   break;
                }
             } else if (!strcmp(var->name,
                                shader->UniformBlocks[i].Uniforms[j].Name)) {
 	       found = true;
-	       var->location = j;
+	       var->data.location = j;
 	       break;
 	    }
 	 }
@@ -741,7 +741,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
     * glGetUniformLocation.
     */
    count_uniform_size uniform_size(prog->UniformHash);
-   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       struct gl_shader *sh = prog->_LinkedShaders[i];
 
       if (sh == NULL)
@@ -767,7 +767,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
       foreach_list(node, sh->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform))
+	 if ((var == NULL) || (var->data.mode != ir_var_uniform))
 	    continue;
 
 	 /* FINISHME: Update code to process built-in uniforms!
@@ -809,16 +809,16 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 
    parcel_out_uniform_storage parcel(prog->UniformHash, uniforms, data);
 
-   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
 
-      parcel.start_shader((gl_shader_type)i);
+      parcel.start_shader((gl_shader_stage)i);
 
       foreach_list(node, prog->_LinkedShaders[i]->ir) {
 	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-	 if ((var == NULL) || (var->mode != ir_var_uniform))
+	 if ((var == NULL) || (var->data.mode != ir_var_uniform))
 	    continue;
 
 	 /* FINISHME: Update code to process built-in uniforms!

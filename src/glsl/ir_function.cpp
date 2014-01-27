@@ -66,7 +66,7 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 
       /* Try to find an implicit conversion from actual to param. */
       inexact_match = true;
-      switch ((enum ir_variable_mode)(param->mode)) {
+      switch ((enum ir_variable_mode)(param->data.mode)) {
       case ir_var_auto:
       case ir_var_uniform:
       case ir_var_temporary:

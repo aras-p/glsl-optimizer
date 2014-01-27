@@ -79,9 +79,9 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 	 /* Remove a single dead assignment to the variable we found.
 	  * Don't do so if it's a shader or function output, though.
 	  */
-	 if (entry->var->mode != ir_var_function_out &&
-	     entry->var->mode != ir_var_function_inout &&
-             entry->var->mode != ir_var_shader_out) {
+	 if (entry->var->data.mode != ir_var_function_out &&
+	     entry->var->data.mode != ir_var_function_inout &&
+             entry->var->data.mode != ir_var_shader_out) {
 	    entry->assign->remove();
 	    progress = true;
 
@@ -99,7 +99,7 @@ do_dead_code(exec_list *instructions, bool uniform_locations_assigned)
 	  * stage.  Also, once uniform locations have been assigned, the
 	  * declaration cannot be deleted.
 	  */
-	 if (entry->var->mode == ir_var_uniform &&
+	 if (entry->var->data.mode == ir_var_uniform &&
 	     (uniform_locations_assigned ||
 	      entry->var->constant_value))
 	    continue;

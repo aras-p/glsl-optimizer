@@ -121,7 +121,7 @@ public:
        */
       foreach_iter(exec_list_iterator, iter, *this->assignments) {
          assignment_entry *entry = (assignment_entry *)iter.get();
-         if (entry->lhs->mode == ir_var_shader_out) {
+         if (entry->lhs->data.mode == ir_var_shader_out) {
             if (debug)
                printf("kill %s\n", entry->lhs->name);
             entry->remove();

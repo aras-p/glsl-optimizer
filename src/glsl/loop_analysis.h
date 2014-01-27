@@ -221,7 +221,8 @@ public:
 
       /* Variables that are marked read-only *MUST* be loop constant.
        */
-      assert(!this->var->read_only || (this->var->read_only && is_const));
+      assert(!this->var->data.read_only
+            || (this->var->data.read_only && is_const));
 
       return is_const;
    }

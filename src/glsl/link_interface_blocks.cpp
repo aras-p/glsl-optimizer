@@ -60,7 +60,7 @@ struct interface_block_definition
          if (var->type->is_array())
             array_size = var->type->length;
       }
-      explicitly_declared = (var->how_declared != ir_var_declared_implicitly);
+      explicitly_declared = (var->data.how_declared != ir_var_declared_implicitly);
    }
 
    /**
@@ -270,7 +270,7 @@ validate_intrastage_interface_blocks(struct gl_shader_program *prog,
             continue;
 
          interface_block_definitions *definitions;
-         switch (var->mode) {
+         switch (var->data.mode) {
          case ir_var_shader_in:
             definitions = &in_interfaces;
             break;
@@ -298,7 +298,7 @@ validate_intrastage_interface_blocks(struct gl_shader_program *prog,
              */
             definitions->store(def);
          } else if (!intrastage_match(prev_def, &def,
-                                      (ir_variable_mode) var->mode)) {
+                                      (ir_variable_mode) var->data.mode)) {
             linker_error(prog, "definitions of interface block `%s' do not"
                          " match\n", iface_type->name);
             return;
@@ -313,12 +313,12 @@ validate_interstage_inout_blocks(struct gl_shader_program *prog,
                                  const gl_shader *consumer)
 {
    interface_block_definitions definitions;
-   const bool extra_array_level = consumer->Type == GL_GEOMETRY_SHADER;
+   const bool extra_array_level = consumer->Stage == MESA_SHADER_GEOMETRY;
 
    /* Add input interfaces from the consumer to the symbol table. */
    foreach_list(node, consumer->ir) {
       ir_variable *var = ((ir_instruction *) node)->as_variable();
-      if (!var || !var->get_interface_type() || var->mode != ir_var_shader_in)
+      if (!var || !var->get_interface_type() || var->data.mode != ir_var_shader_in)
          continue;
 
       definitions.store(interface_block_definition(var));
@@ -327,7 +327,7 @@ validate_interstage_inout_blocks(struct gl_shader_program *prog,
    /* Verify that the producer's output interfaces match. */
    foreach_list(node, producer->ir) {
       ir_variable *var = ((ir_instruction *) node)->as_variable();
-      if (!var || !var->get_interface_type() || var->mode != ir_var_shader_out)
+      if (!var || !var->get_interface_type() || var->data.mode != ir_var_shader_out)
          continue;
 
       interface_block_definition *consumer_def =
@@ -361,7 +361,7 @@ validate_interstage_uniform_blocks(struct gl_shader_program *prog,
       const gl_shader *stage = stages[i];
       foreach_list(node, stage->ir) {
          ir_variable *var = ((ir_instruction *) node)->as_variable();
-         if (!var || !var->get_interface_type() || var->mode != ir_var_uniform)
+         if (!var || !var->get_interface_type() || var->data.mode != ir_var_uniform)
             continue;
 
          interface_block_definition *old_def =

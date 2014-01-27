@@ -143,7 +143,7 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
          struct gl_uniform_block *block = &shader->UniformBlocks[i];
 
          this->ubo_var = var->is_interface_instance()
-            ? &block->Uniforms[0] : &block->Uniforms[var->location];
+            ? &block->Uniforms[0] : &block->Uniforms[var->data.location];
 
          break;
       }

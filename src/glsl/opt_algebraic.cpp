@@ -88,6 +88,12 @@ is_vec_one(ir_constant *ir)
 }
 
 static inline bool
+is_vec_two(ir_constant *ir)
+{
+   return (ir == NULL) ? false : ir->is_value(2.0, 2);
+}
+
+static inline bool
 is_vec_negative_one(ir_constant *ir)
 {
    return (ir == NULL) ? false : ir->is_negative_one();
@@ -434,6 +440,17 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
          /* (a || a) == a */
          return ir->operands[0];
       }
+      break;
+
+   case ir_binop_pow:
+      /* 1^x == 1 */
+      if (is_vec_one(op_const[0]))
+         return op_const[0];
+
+      /* pow(2,x) == exp2(x) */
+      if (is_vec_two(op_const[0]))
+         return expr(ir_unop_exp2, ir->operands[1]);
+
       break;
 
    case ir_unop_rcp:

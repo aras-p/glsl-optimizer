@@ -155,6 +155,7 @@ typedef enum skip_type {
 
 typedef struct skip_node {
 	skip_type_t type;
+	bool has_else;
 	YYLTYPE loc; /* location of the initial #if/#elif/... */
 	struct skip_node *next;
 } skip_node_t;
@@ -174,6 +175,7 @@ struct glcpp_parser {
 	int newline_as_space;
 	int in_control_line;
 	int paren_count;
+	int commented_newlines;
 	skip_node_t *skip_stack;
 	token_list_t *lex_from_list;
 	token_node_t *lex_from_node;

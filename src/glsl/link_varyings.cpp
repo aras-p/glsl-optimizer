@@ -48,13 +48,13 @@ static void
 cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
                                     const ir_variable *input,
                                     const ir_variable *output,
-                                    GLenum consumer_type,
-                                    GLenum producer_type)
+                                    gl_shader_stage consumer_stage,
+                                    gl_shader_stage producer_stage)
 {
    /* Check that the types match between stages.
     */
    const glsl_type *type_to_match = input->type;
-   if (consumer_type == GL_GEOMETRY_SHADER) {
+   if (consumer_stage == MESA_SHADER_GEOMETRY) {
       assert(type_to_match->is_array()); /* Enforced by ast_to_hir */
       type_to_match = type_to_match->element_type();
    }
@@ -82,10 +82,10 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
          linker_error(prog,
                       "%s shader output `%s' declared as type `%s', "
                       "but %s shader input declared as type `%s'\n",
-                      _mesa_glsl_shader_target_name(producer_type),
+                      _mesa_shader_stage_to_string(producer_stage),
                       output->name,
                       output->type->name,
-                      _mesa_glsl_shader_target_name(consumer_type),
+                      _mesa_shader_stage_to_string(consumer_stage),
                       input->type->name);
          return;
       }
@@ -93,53 +93,53 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
 
    /* Check that all of the qualifiers match between stages.
     */
-   if (input->centroid != output->centroid) {
+   if (input->data.centroid != output->data.centroid) {
       linker_error(prog,
                    "%s shader output `%s' %s centroid qualifier, "
                    "but %s shader input %s centroid qualifier\n",
-                   _mesa_glsl_shader_target_name(producer_type),
+                   _mesa_shader_stage_to_string(producer_stage),
                    output->name,
-                   (output->centroid) ? "has" : "lacks",
-                   _mesa_glsl_shader_target_name(consumer_type),
-                   (input->centroid) ? "has" : "lacks");
+                   (output->data.centroid) ? "has" : "lacks",
+                   _mesa_shader_stage_to_string(consumer_stage),
+                   (input->data.centroid) ? "has" : "lacks");
       return;
    }
 
-   if (input->sample != output->sample) {
+   if (input->data.sample != output->data.sample) {
       linker_error(prog,
                    "%s shader output `%s' %s sample qualifier, "
                    "but %s shader input %s sample qualifier\n",
-                   _mesa_glsl_shader_target_name(producer_type),
+                   _mesa_shader_stage_to_string(producer_stage),
                    output->name,
-                   (output->sample) ? "has" : "lacks",
-                   _mesa_glsl_shader_target_name(consumer_type),
-                   (input->sample) ? "has" : "lacks");
+                   (output->data.sample) ? "has" : "lacks",
+                   _mesa_shader_stage_to_string(consumer_stage),
+                   (input->data.sample) ? "has" : "lacks");
       return;
    }
 
-   if (input->invariant != output->invariant) {
+   if (input->data.invariant != output->data.invariant) {
       linker_error(prog,
                    "%s shader output `%s' %s invariant qualifier, "
                    "but %s shader input %s invariant qualifier\n",
-                   _mesa_glsl_shader_target_name(producer_type),
+                   _mesa_shader_stage_to_string(producer_stage),
                    output->name,
-                   (output->invariant) ? "has" : "lacks",
-                   _mesa_glsl_shader_target_name(consumer_type),
-                   (input->invariant) ? "has" : "lacks");
+                   (output->data.invariant) ? "has" : "lacks",
+                   _mesa_shader_stage_to_string(consumer_stage),
+                   (input->data.invariant) ? "has" : "lacks");
       return;
    }
 
-   if (input->interpolation != output->interpolation) {
+   if (input->data.interpolation != output->data.interpolation) {
       linker_error(prog,
                    "%s shader output `%s' specifies %s "
                    "interpolation qualifier, "
                    "but %s shader input specifies %s "
                    "interpolation qualifier\n",
-                   _mesa_glsl_shader_target_name(producer_type),
+                   _mesa_shader_stage_to_string(producer_stage),
                    output->name,
-                   interpolation_string(output->interpolation),
-                   _mesa_glsl_shader_target_name(consumer_type),
-                   interpolation_string(input->interpolation));
+                   interpolation_string(output->data.interpolation),
+                   _mesa_shader_stage_to_string(consumer_stage),
+                   interpolation_string(input->data.interpolation));
       return;
    }
 }
@@ -152,16 +152,16 @@ cross_validate_front_and_back_color(struct gl_shader_program *prog,
                                     const ir_variable *input,
                                     const ir_variable *front_color,
                                     const ir_variable *back_color,
-                                    GLenum consumer_type,
-                                    GLenum producer_type)
+                                    gl_shader_stage consumer_stage,
+                                    gl_shader_stage producer_stage)
 {
-   if (front_color != NULL && front_color->assigned)
+   if (front_color != NULL && front_color->data.assigned)
       cross_validate_types_and_qualifiers(prog, input, front_color,
-                                          consumer_type, producer_type);
+                                          consumer_stage, producer_stage);
 
-   if (back_color != NULL && back_color->assigned)
+   if (back_color != NULL && back_color->data.assigned)
       cross_validate_types_and_qualifiers(prog, input, back_color,
-                                          consumer_type, producer_type);
+                                          consumer_stage, producer_stage);
 }
 
 /**
@@ -178,7 +178,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
    foreach_list(node, producer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if ((var == NULL) || (var->mode != ir_var_shader_out))
+      if ((var == NULL) || (var->data.mode != ir_var_shader_out))
 	 continue;
 
       parameters.add_variable(var);
@@ -196,10 +196,10 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
    foreach_list(node, consumer->ir) {
       ir_variable *const input = ((ir_instruction *) node)->as_variable();
 
-      if ((input == NULL) || (input->mode != ir_var_shader_in))
+      if ((input == NULL) || (input->data.mode != ir_var_shader_in))
 	 continue;
 
-      if (strcmp(input->name, "gl_Color") == 0 && input->used) {
+      if (strcmp(input->name, "gl_Color") == 0 && input->data.used) {
          const ir_variable *const front_color =
             parameters.get_variable("gl_FrontColor");
 
@@ -208,8 +208,8 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 
          cross_validate_front_and_back_color(prog, input,
                                              front_color, back_color,
-                                             consumer->Type, producer->Type);
-      } else if (strcmp(input->name, "gl_SecondaryColor") == 0 && input->used) {
+                                             consumer->Stage, producer->Stage);
+      } else if (strcmp(input->name, "gl_SecondaryColor") == 0 && input->data.used) {
          const ir_variable *const front_color =
             parameters.get_variable("gl_FrontSecondaryColor");
 
@@ -218,12 +218,12 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 
          cross_validate_front_and_back_color(prog, input,
                                              front_color, back_color,
-                                             consumer->Type, producer->Type);
+                                             consumer->Stage, producer->Stage);
       } else {
          ir_variable *const output = parameters.get_variable(input->name);
          if (output != NULL) {
             cross_validate_types_and_qualifiers(prog, input, output,
-                                                consumer->Type, producer->Type);
+                                                consumer->Stage, producer->Stage);
          }
       }
    }
@@ -329,8 +329,8 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
    assert(this->is_varying());
 
    unsigned fine_location
-      = this->matched_candidate->toplevel_var->location * 4
-      + this->matched_candidate->toplevel_var->location_frac
+      = this->matched_candidate->toplevel_var->data.location * 4
+      + this->matched_candidate->toplevel_var->data.location_frac
       + this->matched_candidate->offset;
 
    if (this->matched_candidate->type->is_array()) {
@@ -746,7 +746,7 @@ varying_matches::~varying_matches()
 void
 varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
 {
-   if (!producer_var->is_unmatched_generic_inout) {
+   if (!producer_var->data.is_unmatched_generic_inout) {
       /* Either a location already exists for this variable (since it is part
        * of fixed functionality), or it has already been recorded as part of a
        * previous match.
@@ -764,14 +764,14 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
        * regardless of where they appear.  We can trivially satisfy that
        * requirement by changing the interpolation type to flat here.
        */
-      producer_var->centroid = false;
-      producer_var->sample = false;
-      producer_var->interpolation = INTERP_QUALIFIER_FLAT;
+      producer_var->data.centroid = false;
+      producer_var->data.sample = false;
+      producer_var->data.interpolation = INTERP_QUALIFIER_FLAT;
 
       if (consumer_var) {
-         consumer_var->centroid = false;
-         consumer_var->sample = false;
-         consumer_var->interpolation = INTERP_QUALIFIER_FLAT;
+         consumer_var->data.centroid = false;
+         consumer_var->data.sample = false;
+         consumer_var->data.interpolation = INTERP_QUALIFIER_FLAT;
       }
    }
 
@@ -798,9 +798,9 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
    this->matches[this->num_matches].producer_var = producer_var;
    this->matches[this->num_matches].consumer_var = consumer_var;
    this->num_matches++;
-   producer_var->is_unmatched_generic_inout = 0;
+   producer_var->data.is_unmatched_generic_inout = 0;
    if (consumer_var)
-      consumer_var->is_unmatched_generic_inout = 0;
+      consumer_var->data.is_unmatched_generic_inout = 0;
 }
 
 
@@ -852,12 +852,12 @@ varying_matches::store_locations(unsigned producer_base,
       unsigned slot = generic_location / 4;
       unsigned offset = generic_location % 4;
 
-      producer_var->location = producer_base + slot;
-      producer_var->location_frac = offset;
+      producer_var->data.location = producer_base + slot;
+      producer_var->data.location_frac = offset;
       if (consumer_var) {
-         assert(consumer_var->location == -1);
-         consumer_var->location = consumer_base + slot;
-         consumer_var->location_frac = offset;
+         assert(consumer_var->data.location == -1);
+         consumer_var->data.location = consumer_base + slot;
+         consumer_var->data.location_frac = offset;
       }
    }
 }
@@ -887,9 +887,9 @@ varying_matches::compute_packing_class(ir_variable *var)
     *
     * Therefore, the packing class depends only on the interpolation type.
     */
-   unsigned packing_class = var->centroid | (var->sample << 1);
+   unsigned packing_class = var->data.centroid | (var->data.sample << 1);
    packing_class *= 4;
-   packing_class += var->interpolation;
+   packing_class += var->data.interpolation;
    return packing_class;
 }
 
@@ -943,12 +943,12 @@ varying_matches::match_comparator(const void *x_generic, const void *y_generic)
  * varyings, but excludes variables such as gl_FrontFacing and gl_FragCoord.
  */
 static bool
-is_varying_var(GLenum shaderType, const ir_variable *var)
+is_varying_var(gl_shader_stage stage, const ir_variable *var)
 {
    /* Only fragment shaders will take a varying variable as an input */
-   if (shaderType == GL_FRAGMENT_SHADER &&
-       var->mode == ir_var_shader_in) {
-      switch (var->location) {
+   if (stage == MESA_SHADER_FRAGMENT &&
+       var->data.mode == ir_var_shader_in) {
+      switch (var->data.location) {
       case VARYING_SLOT_POS:
       case VARYING_SLOT_FACE:
       case VARYING_SLOT_PNTC:
@@ -1072,7 +1072,7 @@ assign_varying_locations(struct gl_context *ctx,
    const unsigned producer_base = VARYING_SLOT_VAR0;
    const unsigned consumer_base = VARYING_SLOT_VAR0;
    varying_matches matches(!!ctx->Const.DisableVaryingPacking,
-                           consumer && consumer->Type == GL_FRAGMENT_SHADER);
+                           consumer && consumer->Stage == MESA_SHADER_FRAGMENT);
    hash_table *tfeedback_candidates
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
    hash_table *consumer_inputs
@@ -1096,7 +1096,7 @@ assign_varying_locations(struct gl_context *ctx,
          ir_variable *const input_var =
             ((ir_instruction *) node)->as_variable();
 
-         if ((input_var != NULL) && (input_var->mode == ir_var_shader_in)) {
+         if ((input_var != NULL) && (input_var->data.mode == ir_var_shader_in)) {
             if (input_var->get_interface_type() != NULL) {
                char *const iface_field_name =
                   ralloc_asprintf(mem_ctx, "%s.%s",
@@ -1115,7 +1115,7 @@ assign_varying_locations(struct gl_context *ctx,
    foreach_list(node, producer->ir) {
       ir_variable *const output_var = ((ir_instruction *) node)->as_variable();
 
-      if ((output_var == NULL) || (output_var->mode != ir_var_shader_out))
+      if ((output_var == NULL) || (output_var->data.mode != ir_var_shader_out))
 	 continue;
 
       tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates);
@@ -1135,7 +1135,7 @@ assign_varying_locations(struct gl_context *ctx,
             (ir_variable *) hash_table_find(consumer_inputs, output_var->name);
       }
 
-      if (input_var && input_var->mode != ir_var_shader_in)
+      if (input_var && input_var->data.mode != ir_var_shader_in)
          input_var = NULL;
 
       if (input_var) {
@@ -1157,7 +1157,7 @@ assign_varying_locations(struct gl_context *ctx,
          return false;
       }
 
-      if (matched_candidate->toplevel_var->is_unmatched_generic_inout)
+      if (matched_candidate->toplevel_var->data.is_unmatched_generic_inout)
          matches.record(matched_candidate->toplevel_var, NULL);
    }
 
@@ -1199,8 +1199,8 @@ assign_varying_locations(struct gl_context *ctx,
       foreach_list(node, consumer->ir) {
          ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-         if (var && var->mode == ir_var_shader_in &&
-             var->is_unmatched_generic_inout) {
+         if (var && var->data.mode == ir_var_shader_in &&
+             var->data.is_unmatched_generic_inout) {
             if (prog->Version <= 120) {
                /* On page 25 (page 31 of the PDF) of the GLSL 1.20 spec:
                 *
@@ -1217,15 +1217,15 @@ assign_varying_locations(struct gl_context *ctx,
 
                linker_error(prog, "%s shader varying %s not written "
                             "by %s shader\n.",
-                            _mesa_glsl_shader_target_name(consumer->Type),
+                            _mesa_shader_stage_to_string(consumer->Stage),
 			    var->name,
-                            _mesa_glsl_shader_target_name(producer->Type));
+                            _mesa_shader_stage_to_string(producer->Stage));
             }
 
             /* An 'in' variable is only really a shader input if its
              * value is written by the previous stage.
              */
-            var->mode = ir_var_auto;
+            var->data.mode = ir_var_auto;
          }
       }
    }
@@ -1243,25 +1243,15 @@ check_against_output_limit(struct gl_context *ctx,
    foreach_list(node, producer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var && var->mode == ir_var_shader_out &&
-          is_varying_var(producer->Type, var)) {
+      if (var && var->data.mode == ir_var_shader_out &&
+          is_varying_var(producer->Stage, var)) {
          output_vectors += var->type->count_attribute_slots();
       }
    }
 
-   unsigned max_output_components;
-   switch (producer->Type) {
-   case GL_VERTEX_SHADER:
-      max_output_components = ctx->Const.VertexProgram.MaxOutputComponents;
-      break;
-   case GL_GEOMETRY_SHADER:
-      max_output_components = ctx->Const.GeometryProgram.MaxOutputComponents;
-      break;
-   case GL_FRAGMENT_SHADER:
-   default:
-      assert(!"Should not get here.");
-      return false;
-   }
+   assert(producer->Stage != MESA_SHADER_FRAGMENT);
+   unsigned max_output_components =
+      ctx->Const.Program[producer->Stage].MaxOutputComponents;
 
    const unsigned output_components = output_vectors * 4;
    if (output_components > max_output_components) {
@@ -1292,25 +1282,15 @@ check_against_input_limit(struct gl_context *ctx,
    foreach_list(node, consumer->ir) {
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var && var->mode == ir_var_shader_in &&
-          is_varying_var(consumer->Type, var)) {
+      if (var && var->data.mode == ir_var_shader_in &&
+          is_varying_var(consumer->Stage, var)) {
          input_vectors += var->type->count_attribute_slots();
       }
    }
 
-   unsigned max_input_components;
-   switch (consumer->Type) {
-   case GL_GEOMETRY_SHADER:
-      max_input_components = ctx->Const.GeometryProgram.MaxInputComponents;
-      break;
-   case GL_FRAGMENT_SHADER:
-      max_input_components = ctx->Const.FragmentProgram.MaxInputComponents;
-      break;
-   case GL_VERTEX_SHADER:
-   default:
-      assert(!"Should not get here.");
-      return false;
-   }
+   assert(consumer->Stage != MESA_SHADER_VERTEX);
+   unsigned max_input_components =
+      ctx->Const.Program[consumer->Stage].MaxInputComponents;
 
    const unsigned input_components = input_vectors * 4;
    if (input_components > max_input_components) {

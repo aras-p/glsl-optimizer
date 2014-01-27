@@ -147,7 +147,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	 parameters[i] = NULL;
       } else {
 	 parameters[i] = sig_param->clone(ctx, ht);
-	 parameters[i]->mode = ir_var_auto;
+	 parameters[i]->data.mode = ir_var_auto;
 
      parameters[i]->precision = (glsl_precision)parameters[i]->precision;
      if (parameters[i]->precision == glsl_precision_undefined)
@@ -159,14 +159,14 @@ ir_call::generate_inline(ir_instruction *next_ir)
 	  * read-only and the inlined function is inside a loop, the loop
 	  * analysis code will get confused.
 	  */
-	 parameters[i]->read_only = false;
+	 parameters[i]->data.read_only = false;
 	 next_ir->insert_before(parameters[i]);
       }
 
       /* Move the actual param into our param variable if it's an 'in' type. */
-      if (parameters[i] && (sig_param->mode == ir_var_function_in ||
-			    sig_param->mode == ir_var_const_in ||
-			    sig_param->mode == ir_var_function_inout)) {
+      if (parameters[i] && (sig_param->data.mode == ir_var_function_in ||
+			    sig_param->data.mode == ir_var_const_in ||
+			    sig_param->data.mode == ir_var_function_inout)) {
 	 ir_assignment *assign;
 
 	 assign = new(ctx) ir_assignment(new(ctx) ir_dereference_variable(parameters[i]),
@@ -222,8 +222,8 @@ ir_call::generate_inline(ir_instruction *next_ir)
       const ir_variable *const sig_param = (ir_variable *) sig_param_iter.get();
 
       /* Move our param variable into the actual param if it's an 'out' type. */
-      if (parameters[i] && (sig_param->mode == ir_var_function_out ||
-			    sig_param->mode == ir_var_function_inout)) {
+      if (parameters[i] && (sig_param->data.mode == ir_var_function_out ||
+			    sig_param->data.mode == ir_var_function_inout)) {
 	 ir_assignment *assign;
 
 	 assign = new(ctx) ir_assignment(param->clone(ctx, NULL)->as_rvalue(),

@@ -41,8 +41,8 @@ update_max_array_access(ir_rvalue *ir, unsigned idx, YYLTYPE *loc,
 {
    if (ir_dereference_variable *deref_var = ir->as_dereference_variable()) {
       ir_variable *var = deref_var->var;
-      if (idx > var->max_array_access) {
-         var->max_array_access = idx;
+      if (idx > var->data.max_array_access) {
+         var->data.max_array_access = idx;
 
          /* Check whether this access will, as a side effect, implicitly cause
           * the size of a built-in array to be too large.
@@ -168,7 +168,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
       if (array->type->is_unsized_array()) {
 	 _mesa_glsl_error(&loc, state, "unsized array index must be constant");
       } else if (array->type->fields.array->is_interface()
-                 && array->variable_referenced()->mode == ir_var_uniform) {
+                 && array->variable_referenced()->data.mode == ir_var_uniform) {
 	 /* Page 46 in section 4.3.7 of the OpenGL ES 3.00 spec says:
 	  *
 	  *     "All indexes used to index a uniform block array must be
@@ -184,7 +184,7 @@ _mesa_ast_array_index_to_hir(void *mem_ctx,
 	  */
 	 ir_variable *v = array->whole_variable_referenced();
 	 if (v != NULL)
-	    v->max_array_access = array->type->array_size() - 1;
+	    v->data.max_array_access = array->type->array_size() - 1;
       }
 
       /* From page 23 (29 of the PDF) of the GLSL 1.30 spec:

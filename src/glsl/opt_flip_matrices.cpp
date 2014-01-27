@@ -104,8 +104,8 @@ matrix_flipper::visit_enter(ir_expression *ir)
 
       var_ref->var = texmat_transpose;
 
-      texmat_transpose->max_array_access =
-         MAX2(texmat_transpose->max_array_access, mat_var->max_array_access);
+      texmat_transpose->data.max_array_access =
+         MAX2(texmat_transpose->data.max_array_access, mat_var->data.max_array_access);
 
       progress = true;
    }

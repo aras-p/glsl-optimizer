@@ -365,7 +365,7 @@ public:
       if (var == NULL)
 	 return this->lower_temps;
 
-      switch (var->mode) {
+      switch (var->data.mode) {
       case ir_var_auto:
       case ir_var_temporary:
 	 return this->lower_temps;

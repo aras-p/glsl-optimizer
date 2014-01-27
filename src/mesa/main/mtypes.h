@@ -178,7 +178,6 @@ typedef enum
 } gl_varying_slot;
 
 
-
 /**
  * Fragment program results
  */
@@ -200,6 +199,22 @@ typedef enum
    FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
 } gl_frag_result;
 
+
+/**
+ * Shader stages. Note that these will become 5 with tessellation.
+ *
+ * The order must match how shaders are ordered in the pipeline.
+ * The GLSL linker assumes that if i<j, then the j-th shader is
+ * executed later than the i-th shader.
+ */
+typedef enum
+{
+   MESA_SHADER_VERTEX = 0,
+   MESA_SHADER_GEOMETRY = 1,
+   MESA_SHADER_FRAGMENT = 2,
+} gl_shader_stage;
+
+#define MESA_SHADER_STAGES (MESA_SHADER_FRAGMENT + 1)
 
 
 
@@ -391,12 +406,13 @@ typedef enum
  */
 typedef enum
 {
-   SYSTEM_VALUE_FRONT_FACE,  /**< Fragment shader only (not done yet) */
-   SYSTEM_VALUE_VERTEX_ID,   /**< Vertex shader only */
-   SYSTEM_VALUE_INSTANCE_ID, /**< Vertex shader only */
-   SYSTEM_VALUE_SAMPLE_ID,   /**< Fragment shader only */
-   SYSTEM_VALUE_SAMPLE_POS,  /**< Fragment shader only */
-   SYSTEM_VALUE_MAX          /**< Number of values */
+   SYSTEM_VALUE_FRONT_FACE,     /**< Fragment shader only (not done yet) */
+   SYSTEM_VALUE_VERTEX_ID,      /**< Vertex shader only */
+   SYSTEM_VALUE_INSTANCE_ID,    /**< Vertex shader only */
+   SYSTEM_VALUE_SAMPLE_ID,      /**< Fragment shader only */
+   SYSTEM_VALUE_SAMPLE_POS,     /**< Fragment shader only */
+   SYSTEM_VALUE_SAMPLE_MASK_IN, /**< Fragment shader only */
+   SYSTEM_VALUE_MAX             /**< Number of values */
 } gl_system_value;
 
 
@@ -507,6 +523,7 @@ struct gl_shader
     * Must be the first field.
     */
    GLenum Type;
+   gl_shader_stage Stage;
    GLuint Name;  /**< AKA the handle */
    GLchar *Label;   /**< GL_KHR_debug */
    GLint RefCount;  /**< Reference count */
@@ -592,22 +609,6 @@ struct gl_shader
 };
 
 
-/**
- * Shader stages. Note that these will become 5 with tessellation.
- *
- * The order must match how shaders are ordered in the pipeline.
- * The GLSL linker assumes that if i<j, then the j-th shader is
- * executed later than the i-th shader.
- */
-typedef enum
-{
-   MESA_SHADER_VERTEX = 0,
-   MESA_SHADER_GEOMETRY = 1,
-   MESA_SHADER_FRAGMENT = 2,
-   MESA_SHADER_TYPES = 3
-} gl_shader_type;
-
-
 struct gl_uniform_buffer_variable
 {
    char *Name;
@@ -686,7 +687,7 @@ struct gl_active_atomic_buffer
    GLuint MinimumSize;
 
    /** Shader stages making use of it. */
-   GLboolean StageReferences[MESA_SHADER_TYPES];
+   GLboolean StageReferences[MESA_SHADER_STAGES];
 };
 
 
@@ -1001,9 +1002,7 @@ struct gl_constants
 
    GLuint MaxViewportWidth, MaxViewportHeight;
 
-   struct gl_program_constants VertexProgram;   /**< GL_ARB_vertex_program */
-   struct gl_program_constants FragmentProgram; /**< GL_ARB_fragment_program */
-   struct gl_program_constants GeometryProgram;  /**< GL_ARB_geometry_shader4 */
+   struct gl_program_constants Program[MESA_SHADER_STAGES];
    GLuint MaxProgramMatrices;
    GLuint MaxProgramMatrixStackDepth;
 
@@ -1237,6 +1236,7 @@ struct gl_extensions
    GLboolean ARB_texture_query_lod;
    GLboolean ARB_texture_rg;
    GLboolean ARB_texture_rgb10_a2ui;
+   GLboolean ARB_texture_view;
    GLboolean ARB_timer_query;
    GLboolean ARB_transform_feedback2;
    GLboolean ARB_transform_feedback3;
@@ -1258,7 +1258,6 @@ struct gl_extensions
    GLboolean EXT_framebuffer_sRGB;
    GLboolean EXT_gpu_program_parameters;
    GLboolean EXT_gpu_shader4;
-   GLboolean EXT_packed_depth_stencil;
    GLboolean EXT_packed_float;
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
@@ -1288,6 +1287,7 @@ struct gl_extensions
    /* vendor extensions */
    GLboolean AMD_performance_monitor;
    GLboolean AMD_seamless_cubemap_per_texture;
+   GLboolean AMD_shader_trinary_minmax;
    GLboolean AMD_vertex_shader_layer;
    GLboolean APPLE_object_purgeable;
    GLboolean ATI_envmap_bumpmap;
@@ -1395,7 +1395,14 @@ struct gl_context
    char *VersionString;
 
 
-   struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_TYPES];
+   struct gl_program_state Program;  /**< general program state */
+   struct gl_vertex_program_state VertexProgram;
+   struct gl_fragment_program_state FragmentProgram;
+   struct gl_geometry_program_state GeometryProgram;
+   struct gl_ati_fragment_shader_state ATIFragmentShader;
+
+   struct gl_shader_state Shader; /**< GLSL shader object state */
+   struct gl_shader_compiler_options ShaderCompilerOptions[MESA_SHADER_STAGES];
 
    GLenum ErrorValue;        /**< Last error code */
 };

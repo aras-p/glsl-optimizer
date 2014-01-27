@@ -116,7 +116,7 @@ struct gl_uniform_storage {
        * Whether this sampler is used in this shader stage.
        */
       bool active;
-   } sampler[MESA_SHADER_TYPES];
+   } sampler[MESA_SHADER_STAGES];
 
    /**
     * Storage used by the driver for the uniform

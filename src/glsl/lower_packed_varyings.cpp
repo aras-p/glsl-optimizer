@@ -258,8 +258,8 @@ lower_packed_varyings_visitor::run(exec_list *instructions)
       if (var == NULL)
          continue;
 
-      if (var->mode != this->mode ||
-          var->location < (int) this->location_base ||
+      if (var->data.mode != this->mode ||
+          var->data.location < (int) this->location_base ||
           !this->needs_lowering(var))
          continue;
 
@@ -268,18 +268,18 @@ lower_packed_varyings_visitor::run(exec_list *instructions)
        * safe, caller should ensure that integral varyings always use flat
        * interpolation, even when this is not required by GLSL.
        */
-      assert(var->interpolation == INTERP_QUALIFIER_FLAT ||
+      assert(var->data.interpolation == INTERP_QUALIFIER_FLAT ||
              !var->type->contains_integer());
 
       /* Change the old varying into an ordinary global. */
-      var->mode = ir_var_auto;
+      var->data.mode = ir_var_auto;
 
       /* Create a reference to the old varying. */
       ir_dereference_variable *deref
          = new(this->mem_ctx) ir_dereference_variable(var);
 
       /* Recursively pack or unpack it. */
-      this->lower_rvalue(deref, var->location * 4 + var->location_frac, var,
+      this->lower_rvalue(deref, var->data.location * 4 + var->data.location_frac, var,
                          var->name, this->gs_input_vertices != 0, 0);
    }
 }
@@ -547,7 +547,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
    if (this->packed_varyings[slot] == NULL) {
       char *packed_name = ralloc_asprintf(this->mem_ctx, "packed:%s", name);
       const glsl_type *packed_type;
-      if (unpacked_var->interpolation == INTERP_QUALIFIER_FLAT)
+      if (unpacked_var->data.interpolation == INTERP_QUALIFIER_FLAT)
          packed_type = glsl_type::ivec4_type;
       else
          packed_type = glsl_type::vec4_type;
@@ -562,12 +562,12 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
          /* Prevent update_array_sizes() from messing with the size of the
           * array.
           */
-         packed_var->max_array_access = this->gs_input_vertices - 1;
+         packed_var->data.max_array_access = this->gs_input_vertices - 1;
       }
-      packed_var->centroid = unpacked_var->centroid;
-      packed_var->sample = unpacked_var->sample;
-      packed_var->interpolation = unpacked_var->interpolation;
-      packed_var->location = location;
+      packed_var->data.centroid = unpacked_var->data.centroid;
+      packed_var->data.sample = unpacked_var->data.sample;
+      packed_var->data.interpolation = unpacked_var->data.interpolation;
+      packed_var->data.location = location;
       unpacked_var->insert_before(packed_var);
       this->packed_varyings[slot] = packed_var;
    } else {
@@ -669,7 +669,7 @@ lower_packed_varyings(void *mem_ctx, unsigned location_base,
                                          gs_input_vertices, &new_instructions);
    visitor.run(instructions);
    if (mode == ir_var_shader_out) {
-      if (shader->Type == GL_GEOMETRY_SHADER) {
+      if (shader->Stage == MESA_SHADER_GEOMETRY) {
          /* For geometry shaders, outputs need to be lowered before each call
           * to EmitVertex()
           */

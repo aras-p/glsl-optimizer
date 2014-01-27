@@ -54,14 +54,12 @@ static unsigned known_desktop_glsl_versions[] =
 
 
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
-					       GLenum target, void *mem_ctx)
+					       gl_shader_stage stage,
+                                               void *mem_ctx)
    : ctx(_ctx), switch_state()
 {
-   switch (target) {
-   case GL_VERTEX_SHADER:   this->target = vertex_shader; break;
-   case GL_FRAGMENT_SHADER: this->target = fragment_shader; break;
-   case GL_GEOMETRY_SHADER: this->target = geometry_shader; break;
-   }
+   assert(stage < MESA_SHADER_STAGES);
+   this->stage = stage;
 
    this->scanner = NULL;
    this->translation_unit.make_empty();
@@ -99,30 +97,30 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->Const.MaxClipPlanes = ctx->Const.MaxClipPlanes;
    this->Const.MaxTextureUnits = ctx->Const.MaxTextureUnits;
    this->Const.MaxTextureCoords = ctx->Const.MaxTextureCoordUnits;
-   this->Const.MaxVertexAttribs = ctx->Const.VertexProgram.MaxAttribs;
-   this->Const.MaxVertexUniformComponents = ctx->Const.VertexProgram.MaxUniformComponents;
-   this->Const.MaxVertexTextureImageUnits = ctx->Const.VertexProgram.MaxTextureImageUnits;
+   this->Const.MaxVertexAttribs = ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs;
+   this->Const.MaxVertexUniformComponents = ctx->Const.Program[MESA_SHADER_VERTEX].MaxUniformComponents;
+   this->Const.MaxVertexTextureImageUnits = ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits;
    this->Const.MaxCombinedTextureImageUnits = ctx->Const.MaxCombinedTextureImageUnits;
-   this->Const.MaxTextureImageUnits = ctx->Const.FragmentProgram.MaxTextureImageUnits;
-   this->Const.MaxFragmentUniformComponents = ctx->Const.FragmentProgram.MaxUniformComponents;
+   this->Const.MaxTextureImageUnits = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits;
+   this->Const.MaxFragmentUniformComponents = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxUniformComponents;
    this->Const.MinProgramTexelOffset = ctx->Const.MinProgramTexelOffset;
    this->Const.MaxProgramTexelOffset = ctx->Const.MaxProgramTexelOffset;
 
    this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
 
    /* 1.50 constants */
-   this->Const.MaxVertexOutputComponents = ctx->Const.VertexProgram.MaxOutputComponents;
-   this->Const.MaxGeometryInputComponents = ctx->Const.GeometryProgram.MaxInputComponents;
-   this->Const.MaxGeometryOutputComponents = ctx->Const.GeometryProgram.MaxOutputComponents;
-   this->Const.MaxFragmentInputComponents = ctx->Const.FragmentProgram.MaxInputComponents;
-   this->Const.MaxGeometryTextureImageUnits = ctx->Const.GeometryProgram.MaxTextureImageUnits;
+   this->Const.MaxVertexOutputComponents = ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents;
+   this->Const.MaxGeometryInputComponents = ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxInputComponents;
+   this->Const.MaxGeometryOutputComponents = ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxOutputComponents;
+   this->Const.MaxFragmentInputComponents = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxInputComponents;
+   this->Const.MaxGeometryTextureImageUnits = ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits;
    this->Const.MaxGeometryOutputVertices = ctx->Const.MaxGeometryOutputVertices;
    this->Const.MaxGeometryTotalOutputComponents = ctx->Const.MaxGeometryTotalOutputComponents;
-   this->Const.MaxGeometryUniformComponents = ctx->Const.GeometryProgram.MaxUniformComponents;
+   this->Const.MaxGeometryUniformComponents = ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxUniformComponents;
 
-   this->Const.MaxVertexAtomicCounters = ctx->Const.VertexProgram.MaxAtomicCounters;
-   this->Const.MaxGeometryAtomicCounters = ctx->Const.GeometryProgram.MaxAtomicCounters;
-   this->Const.MaxFragmentAtomicCounters = ctx->Const.FragmentProgram.MaxAtomicCounters;
+   this->Const.MaxVertexAtomicCounters = ctx->Const.Program[MESA_SHADER_VERTEX].MaxAtomicCounters;
+   this->Const.MaxGeometryAtomicCounters = ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxAtomicCounters;
+   this->Const.MaxFragmentAtomicCounters = ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxAtomicCounters;
    this->Const.MaxCombinedAtomicCounters = ctx->Const.MaxCombinedAtomicCounters;
    this->Const.MaxAtomicBufferBindings = ctx->Const.MaxAtomicBufferBindings;
 
@@ -333,46 +331,18 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
    }
 }
 
-extern "C" {
 
 /**
- * The most common use of _mesa_glsl_shader_target_name(), which is
- * shared with C code in Mesa core to translate a GLenum to a short
- * shader stage name in debug printouts.
- *
- * It recognizes the PROGRAM variants of the names so it can be used
- * with a struct gl_program->Target, not just a struct
- * gl_shader->Type.
+ * Translate a gl_shader_stage to a short shader stage name for debug
+ * printouts and error messages.
  */
 const char *
-_mesa_glsl_shader_target_name(GLenum type)
+_mesa_shader_stage_to_string(unsigned stage)
 {
-   switch (type) {
-   case GL_VERTEX_SHADER:
-      return "vertex";
-   case GL_FRAGMENT_SHADER:
-      return "fragment";
-   case GL_GEOMETRY_SHADER:
-      return "geometry";
-   default:
-      assert(!"Should not get here.");
-      return "unknown";
-   }
-}
-
-} /* extern "C" */
-
-/**
- * Overloaded C++ variant usable within the compiler for translating
- * our internal enum into short stage names.
- */
-const char *
-_mesa_glsl_shader_target_name(enum _mesa_glsl_parser_targets target)
-{
-   switch (target) {
-   case vertex_shader:   return "vertex";
-   case fragment_shader: return "fragment";
-   case geometry_shader: return "geometry";
+   switch (stage) {
+   case MESA_SHADER_VERTEX:   return "vertex";
+   case MESA_SHADER_FRAGMENT: return "fragment";
+   case MESA_SHADER_GEOMETRY: return "geometry";
    }
 
    assert(!"Should not get here.");
@@ -547,6 +517,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_texture_gather,             true,  false,     ARB_texture_gather),
    EXT(ARB_shader_atomic_counters,     true,  false,     ARB_shader_atomic_counters),
    EXT(ARB_sample_shading,             true,  false,     ARB_sample_shading),
+   EXT(AMD_shader_trinary_minmax,      true,  false,     dummy_true),
 };
 
 #undef EXT
@@ -654,11 +625,11 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 
          if (behavior == extension_require) {
             _mesa_glsl_error(name_locp, state, fmt,
-                             name, _mesa_glsl_shader_target_name(state->target));
+                             name, _mesa_shader_stage_to_string(state->stage));
             return false;
          } else {
             _mesa_glsl_warning(name_locp, state, fmt,
-                               name, _mesa_glsl_shader_target_name(state->target));
+                               name, _mesa_shader_stage_to_string(state->stage));
          }
       }
    }
@@ -1451,7 +1422,7 @@ static void
 set_shader_inout_layout(struct gl_shader *shader,
 		     struct _mesa_glsl_parse_state *state)
 {
-   if (shader->Type != GL_GEOMETRY_SHADER) {
+   if (shader->Stage != MESA_SHADER_GEOMETRY) {
       /* Should have been prevented by the parser. */
       assert(!state->gs_input_prim_type_specified);
       assert(!state->out_qualifier->flags.i);
@@ -1482,7 +1453,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
                           bool dump_ast, bool dump_hir)
 {
    struct _mesa_glsl_parse_state *state =
-      new(shader) _mesa_glsl_parse_state(ctx, shader->Type, shader);
+      new(shader) _mesa_glsl_parse_state(ctx, shader->Stage, shader);
    const char *source = shader->Source;
 
    state->error = !!glcpp_preprocess(state, &source, &state->info_log,
@@ -1519,7 +1490,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
 
    if (!state->error && !shader->ir->is_empty()) {
       struct gl_shader_compiler_options *options =
-         &ctx->ShaderCompilerOptions[_mesa_shader_type_to_index(shader->Type)];
+         &ctx->ShaderCompilerOptions[shader->Stage];
 
       /* Do some optimization at compile time to reduce shader IR size
        * and reduce later work if the same shader is linked multiple times

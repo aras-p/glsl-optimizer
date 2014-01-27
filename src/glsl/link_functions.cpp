@@ -201,8 +201,9 @@ public:
             if (formal_param->type->is_array()) {
                ir_dereference_variable *deref = actual_param->as_dereference_variable();
                if (deref && deref->var && deref->var->type->is_array()) {
-                  deref->var->max_array_access =
-                     MAX2(formal_param->max_array_access, deref->var->max_array_access);
+                  deref->var->data.max_array_access =
+                     MAX2(formal_param->data.max_array_access,
+                         deref->var->data.max_array_access);
                }
             }
          }
@@ -234,8 +235,9 @@ public:
                 * we need to track the maximal access to the array as linking
                 * pulls more functions in that access the array.
                 */
-               var->max_array_access =
-                  MAX2(var->max_array_access, ir->var->max_array_access);
+               var->data.max_array_access =
+                  MAX2(var->data.max_array_access,
+                       ir->var->data.max_array_access);
 
                if (var->type->length == 0 && ir->var->type->length != 0)
                   var->type = ir->var->type;

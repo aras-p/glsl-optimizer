@@ -85,10 +85,10 @@ public:
    {
       ir_variable *var = ir->variable_referenced();
 
-      if (!var || var->mode != this->mode)
+      if (!var || var->data.mode != this->mode)
          return visit_continue;
 
-      if (this->find_frag_outputs && var->location == FRAG_RESULT_DATA0) {
+      if (this->find_frag_outputs && var->data.location == FRAG_RESULT_DATA0) {
          this->fragdata_array = var;
 
          ir_constant *index = ir->array_index->as_constant();
@@ -105,7 +105,7 @@ public:
          return visit_continue_with_parent;
       }
 
-      if (!this->find_frag_outputs && var->location == VARYING_SLOT_TEX0) {
+      if (!this->find_frag_outputs && var->data.location == VARYING_SLOT_TEX0) {
          this->texcoord_array = var;
 
          ir_constant *index = ir->array_index->as_constant();
@@ -130,17 +130,17 @@ public:
    {
       ir_variable *var = ir->variable_referenced();
 
-      if (var->mode != this->mode || !var->type->is_array())
+      if (var->data.mode != this->mode || !var->type->is_array())
          return visit_continue;
 
-      if (this->find_frag_outputs && var->location == FRAG_RESULT_DATA0) {
+      if (this->find_frag_outputs && var->data.location == FRAG_RESULT_DATA0) {
          /* This is a whole array dereference. */
          this->fragdata_usage |= (1 << var->type->array_size()) - 1;
          this->lower_fragdata_array = false;
          return visit_continue;
       }
 
-      if (!this->find_frag_outputs && var->location == VARYING_SLOT_TEX0) {
+      if (!this->find_frag_outputs && var->data.location == VARYING_SLOT_TEX0) {
          /* This is a whole array dereference like "gl_TexCoord = x;",
           * there's probably no point in lowering that.
           */
@@ -152,7 +152,7 @@ public:
 
    virtual ir_visitor_status visit(ir_variable *var)
    {
-      if (var->mode != this->mode)
+      if (var->data.mode != this->mode)
          return visit_continue;
 
       /* Nothing to do here for fragment outputs. */
@@ -160,7 +160,7 @@ public:
          return visit_continue;
 
       /* Handle colors and fog. */
-      switch (var->location) {
+      switch (var->data.location) {
       case VARYING_SLOT_COL0:
          this->color[0] = var;
          this->color_usage |= 1;
@@ -358,9 +358,9 @@ public:
                new_var[i] =
                   new(ctx) ir_variable(glsl_type::vec4_type, name,
                                        this->info->mode, glsl_precision_undefined);
-               new_var[i]->location = start_location + i;
-               new_var[i]->explicit_location = true;
-               new_var[i]->explicit_index = 0;
+               new_var[i]->data.location = start_location + i;
+               new_var[i]->data.explicit_location = true;
+               new_var[i]->data.explicit_index = 0;
             }
 
             ir->head->insert_before(new_var[i]);
@@ -512,7 +512,7 @@ do_dead_builtin_varyings(struct gl_context *ctx,
                          tfeedback_decl *tfeedback_decls)
 {
    /* Lower the gl_FragData array to separate variables. */
-   if (consumer && consumer->Type == GL_FRAGMENT_SHADER) {
+   if (consumer && consumer->Stage == MESA_SHADER_FRAGMENT) {
       lower_fragdata_array(consumer->ir);
    }
 
@@ -574,7 +574,7 @@ do_dead_builtin_varyings(struct gl_context *ctx,
     * This doesn't prevent elimination of the gl_TexCoord elements which
     * are not read by the fragment shader. We want to eliminate those anyway.
     */
-   if (consumer->Type == GL_FRAGMENT_SHADER) {
+   if (consumer->Stage == MESA_SHADER_FRAGMENT) {
       producer_info.texcoord_usage = (1 << MAX_TEXTURE_COORD_UNITS) - 1;
    }
 

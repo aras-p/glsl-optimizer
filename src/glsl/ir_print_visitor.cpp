@@ -148,9 +148,9 @@ void ir_print_visitor::visit(ir_variable *ir)
 {
    printf("(declare ");
 
-   const char *const cent = (ir->centroid) ? "centroid " : "";
-   const char *const samp = (ir->sample) ? "sample " : "";
-   const char *const inv = (ir->invariant) ? "invariant " : "";
+   const char *const cent = (ir->data.centroid) ? "centroid " : "";
+   const char *const samp = (ir->data.sample) ? "sample " : "";
+   const char *const inv = (ir->data.invariant) ? "invariant " : "";
    const char *const mode[] = { "", "uniform ", "shader_in ", "shader_out ",
                                 "in ", "out ", "inout ",
 			        "const_in ", "sys ", "temporary " };
@@ -159,7 +159,7 @@ void ir_print_visitor::visit(ir_variable *ir)
    STATIC_ASSERT(ARRAY_SIZE(interp) == INTERP_QUALIFIER_COUNT);
 
    printf("(%s%s%s%s%s) ",
-	  cent, samp, inv, mode[ir->mode], interp[ir->interpolation]);
+	  cent, samp, inv, mode[ir->data.mode], interp[ir->data.interpolation]);
 
    print_type(ir->type);
    printf(" %s)", unique_name(ir));

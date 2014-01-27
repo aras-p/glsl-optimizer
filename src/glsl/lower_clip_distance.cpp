@@ -54,10 +54,10 @@ namespace {
 
 class lower_clip_distance_visitor : public ir_rvalue_visitor {
 public:
-   explicit lower_clip_distance_visitor(GLenum shader_type)
+   explicit lower_clip_distance_visitor(gl_shader_stage shader_stage)
       : progress(false), old_clip_distance_1d_var(NULL),
         old_clip_distance_2d_var(NULL), new_clip_distance_1d_var(NULL),
-        new_clip_distance_2d_var(NULL), shader_type(shader_type)
+        new_clip_distance_2d_var(NULL), shader_stage(shader_stage)
    {
    }
 
@@ -96,9 +96,9 @@ public:
    ir_variable *new_clip_distance_2d_var;
 
    /**
-    * Type of shader we are compiling (e.g. GL_VERTEX_SHADER)
+    * Type of shader we are compiling (e.g. MESA_SHADER_VERTEX)
     */
-   const GLenum shader_type;
+   const gl_shader_stage shader_stage;
 };
 
 } /* anonymous namespace */
@@ -135,14 +135,14 @@ lower_clip_distance_visitor::visit(ir_variable *ir)
                          "gl_ClipDistanceMESA");
       this->new_clip_distance_1d_var->type
          = glsl_type::get_array_instance(glsl_type::vec4_type, new_size);
-      this->new_clip_distance_1d_var->max_array_access
-         = ir->max_array_access / 4;
+      this->new_clip_distance_1d_var->data.max_array_access
+         = ir->data.max_array_access / 4;
 
       ir->replace_with(this->new_clip_distance_1d_var);
    } else {
       /* 2D gl_ClipDistance (used for geometry input). */
-      assert(ir->mode == ir_var_shader_in &&
-             this->shader_type == GL_GEOMETRY_SHADER_ARB);
+      assert(ir->data.mode == ir_var_shader_in &&
+             this->shader_stage == MESA_SHADER_GEOMETRY);
       if (this->old_clip_distance_2d_var)
          return visit_continue;
 
@@ -161,8 +161,8 @@ lower_clip_distance_visitor::visit(ir_variable *ir)
          glsl_type::get_array_instance(glsl_type::vec4_type,
             new_size),
          ir->type->array_size());
-      this->new_clip_distance_2d_var->max_array_access
-         = ir->max_array_access / 4;
+      this->new_clip_distance_2d_var->data.max_array_access
+         = ir->data.max_array_access / 4;
 
       ir->replace_with(this->new_clip_distance_2d_var);
    }
@@ -253,7 +253,7 @@ lower_clip_distance_visitor::is_clip_distance_vec8(ir_rvalue *ir)
    }
    if (this->old_clip_distance_2d_var) {
       /* 2D clip distance is only possible as a geometry input */
-      assert(this->shader_type == GL_GEOMETRY_SHADER_ARB);
+      assert(this->shader_stage == MESA_SHADER_GEOMETRY);
 
       ir_dereference_array *array_ref = ir->as_dereference_array();
       if (array_ref) {
@@ -288,7 +288,7 @@ lower_clip_distance_visitor::lower_clip_distance_vec8(ir_rvalue *ir)
    }
    if (this->old_clip_distance_2d_var) {
       /* 2D clip distance is only possible as a geometry input */
-      assert(this->shader_type == GL_GEOMETRY_SHADER_ARB);
+      assert(this->shader_stage == MESA_SHADER_GEOMETRY);
 
       ir_dereference_array *array_ref = ir->as_dereference_array();
       if (array_ref) {
@@ -500,8 +500,8 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
          this->base_ir->insert_before(temp_clip_distance);
          actual_param->replace_with(
             new(ctx) ir_dereference_variable(temp_clip_distance));
-         if (formal_param->mode == ir_var_function_in
-             || formal_param->mode == ir_var_function_inout) {
+         if (formal_param->data.mode == ir_var_function_in
+             || formal_param->data.mode == ir_var_function_inout) {
             /* Copy from gl_ClipDistance to the temporary before the call.
              * Since we are going to insert this copy before the current
              * instruction, we need to visit it afterwards to make sure it
@@ -513,8 +513,8 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
             this->base_ir->insert_before(new_assignment);
             this->visit_new_assignment(new_assignment);
          }
-         if (formal_param->mode == ir_var_function_out
-             || formal_param->mode == ir_var_function_inout) {
+         if (formal_param->data.mode == ir_var_function_out
+             || formal_param->data.mode == ir_var_function_inout) {
             /* Copy from the temporary to gl_ClipDistance after the call.
              * Since visit_list_elements() has already decided which
              * instruction it's going to visit next, we need to visit
@@ -536,7 +536,7 @@ lower_clip_distance_visitor::visit_leave(ir_call *ir)
 bool
 lower_clip_distance(gl_shader *shader)
 {
-   lower_clip_distance_visitor v(shader->Type);
+   lower_clip_distance_visitor v(shader->Stage);
 
    visit_list_elements(&v, shader->ir);
 

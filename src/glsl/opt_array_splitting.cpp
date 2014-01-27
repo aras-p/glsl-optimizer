@@ -122,8 +122,8 @@ ir_array_reference_visitor::get_variable_entry(ir_variable *var)
 {
    assert(var);
 
-   if (var->mode != ir_var_auto &&
-       var->mode != ir_var_temporary)
+   if (var->data.mode != ir_var_auto &&
+       var->data.mode != ir_var_temporary)
       return NULL;
 
    if (!(var->type->is_array() || var->type->is_matrix()))
