@@ -50,7 +50,6 @@ struct u_upload_mgr {
    struct pipe_resource *buffer;   /* Upload buffer. */
    struct pipe_transfer *transfer; /* Transfer object for the upload buffer. */
    uint8_t *map;    /* Pointer to the mapped upload buffer. */
-   unsigned size;   /* Actual size of the upload buffer. */
    unsigned offset; /* Aligned offset to the upload buffer, pointing
                      * at the first unused byte. */
 };
@@ -120,7 +119,6 @@ static void u_upload_release_buffer(struct u_upload_mgr *upload)
    /* Unmap and unreference the upload buffer. */
    upload_unmap_internal(upload, TRUE);
    pipe_resource_reference( &upload->buffer, NULL );
-   upload->size = 0;
 }
 
 
@@ -173,12 +171,10 @@ u_upload_alloc_buffer( struct u_upload_mgr *upload,
                                        &upload->transfer);
    if (upload->map == NULL) {
       upload->transfer = NULL;
-      upload->size = 0;
       pipe_resource_reference(&upload->buffer, NULL);
       return PIPE_ERROR_OUT_OF_MEMORY;
    }
 
-   upload->size = size;
    upload->offset = 0;
    return PIPE_OK;
 }
@@ -203,7 +199,8 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
 
    /* Make sure we have enough space in the upload buffer
     * for the sub-allocation. */
-   if (MAX2(upload->offset, alloc_offset) + alloc_size > upload->size) {
+   if (!upload->buffer ||
+       MAX2(upload->offset, alloc_offset) + alloc_size > upload->buffer->width0) {
       enum pipe_error ret = u_upload_alloc_buffer(upload,
                                                   alloc_offset + alloc_size);
       if (ret != PIPE_OK)
@@ -214,7 +211,8 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
 
    if (!upload->map) {
       upload->map = pipe_buffer_map_range(upload->pipe, upload->buffer,
-					  offset, upload->size - offset,
+                                          offset,
+                                          upload->buffer->width0 - offset,
                                           upload->map_flags,
 					  &upload->transfer);
       if (!upload->map) {
