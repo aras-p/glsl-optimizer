@@ -3436,7 +3436,7 @@ static void add_builtin_define(glcpp_parser_t *parser,
 }
 
 glcpp_parser_t *
-glcpp_parser_create (const struct gl_extensions *extensions)
+glcpp_parser_create (const struct gl_extensions *extensions, bool default_to_es)
 {
 	glcpp_parser_t *parser;
 
@@ -3466,6 +3466,7 @@ glcpp_parser_create (const struct gl_extensions *extensions)
 
         parser->extensions = extensions;
         parser->version_resolved = false;
+		parser->default_to_es = default_to_es;
 
 	parser->has_new_line_number = 0;
 	parser->new_line_number = 1;
@@ -4392,6 +4393,7 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 
 /* GLSL version is no version is explicitly specified. */
 #define IMPLICIT_GLSL_VERSION 110
+#define IMPLICIT_GLSL_ES_VERSION 100
 
 void
 glcpp_parser_resolve_version(glcpp_parser_t *parser)
@@ -4399,7 +4401,7 @@ glcpp_parser_resolve_version(glcpp_parser_t *parser)
 	if (parser->version_resolved)
 		return;
 
-	_glcpp_parser_handle_version_declaration(parser, IMPLICIT_GLSL_VERSION,
+	_glcpp_parser_handle_version_declaration(parser, parser->default_to_es ? IMPLICIT_GLSL_ES_VERSION : IMPLICIT_GLSL_VERSION,
 						 NULL, false);
 }
 

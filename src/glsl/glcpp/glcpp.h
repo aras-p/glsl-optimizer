@@ -186,6 +186,7 @@ struct glcpp_parser {
 	int error;
 	const struct gl_extensions *extensions;
 	bool version_resolved;
+	bool default_to_es;
 	bool has_new_line_number;
 	int new_line_number;
 	bool has_new_source_number;
@@ -196,7 +197,7 @@ struct glcpp_parser {
 struct gl_extensions;
 
 glcpp_parser_t *
-glcpp_parser_create (const struct gl_extensions *extensions);
+glcpp_parser_create (const struct gl_extensions *extensions, bool default_to_es);
 
 int
 glcpp_parser_parse (glcpp_parser_t *parser);
