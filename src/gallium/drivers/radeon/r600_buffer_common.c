@@ -122,6 +122,14 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 		break;
 	}
 
+	/* Use GTT for all persistent mappings, because they are
+	 * always cached and coherent. */
+	if (res->b.b.target == PIPE_BUFFER &&
+	    res->b.b.flags & (PIPE_RESOURCE_FLAG_MAP_PERSISTENT |
+			      PIPE_RESOURCE_FLAG_MAP_COHERENT)) {
+		res->domains = RADEON_DOMAIN_GTT;
+	}
+
 	/* Tiled textures are unmappable. Always put them in VRAM. */
 	if (res->b.b.target != PIPE_BUFFER &&
 	    rtex->surface.level[0].mode >= RADEON_SURF_MODE_1D) {

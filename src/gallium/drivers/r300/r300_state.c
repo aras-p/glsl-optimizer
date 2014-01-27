@@ -2129,6 +2129,10 @@ static void r300_texture_barrier(struct pipe_context *pipe)
     r300_mark_atom_dirty(r300, &r300->texture_cache_inval);
 }
 
+static void r300_memory_barrier(struct pipe_context *pipe, unsigned flags)
+{
+}
+
 void r300_init_state_functions(struct r300_context* r300)
 {
     r300->context.create_blend_state = r300_create_blend_state;
@@ -2189,4 +2193,5 @@ void r300_init_state_functions(struct r300_context* r300)
     r300->context.delete_vs_state = r300_delete_vs_state;
 
     r300->context.texture_barrier = r300_texture_barrier;
+    r300->context.memory_barrier = r300_memory_barrier;
 }

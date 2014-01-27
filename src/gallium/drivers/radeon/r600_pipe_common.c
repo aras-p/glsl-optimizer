@@ -39,6 +39,10 @@
  * pipe_context
  */
 
+static void r600_memory_barrier(struct pipe_context *ctx, unsigned flags)
+{
+}
+
 bool r600_common_context_init(struct r600_common_context *rctx,
 			      struct r600_common_screen *rscreen)
 {
@@ -56,6 +60,7 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 	rctx->b.transfer_flush_region = u_default_transfer_flush_region;
 	rctx->b.transfer_unmap = u_transfer_unmap_vtbl;
 	rctx->b.transfer_inline_write = u_default_transfer_inline_write;
+        rctx->b.memory_barrier = r600_memory_barrier;
 
 	r600_streamout_init(rctx);
 	r600_query_init(rctx);

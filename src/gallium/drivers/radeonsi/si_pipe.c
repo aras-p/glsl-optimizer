@@ -252,6 +252,7 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
         case PIPE_CAP_TGSI_VS_LAYER:
 	case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
+	case PIPE_CAP_BUFFER_MAP_PERSISTENT_COHERENT:
 		return 1;
 
 	case PIPE_CAP_TEXTURE_MULTISAMPLE:
