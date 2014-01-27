@@ -352,15 +352,10 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
     * call takes place.  Since we haven't emitted the call yet, we'll place
     * the post-call conversions in a temporary exec_list, and emit them later.
     */
-   exec_list_iterator actual_iter = actual_parameters->iterator();
-   exec_list_iterator formal_iter = sig->parameters.iterator();
-
-   while (actual_iter.has_next()) {
-      ir_rvalue *actual = (ir_rvalue *) actual_iter.get();
-      ir_variable *formal = (ir_variable *) formal_iter.get();
-
-      assert(actual != NULL);
-      assert(formal != NULL);
+   foreach_two_lists(formal_node, &sig->parameters,
+                     actual_node, actual_parameters) {
+      ir_rvalue *actual = (ir_rvalue *) actual_node;
+      ir_variable *formal = (ir_variable *) formal_node;
 
       if (formal->type->is_numeric() || formal->type->is_boolean()) {
 	 switch (formal->data.mode) {
@@ -383,9 +378,6 @@ generate_call(exec_list *instructions, ir_function_signature *sig,
 	    break;
 	 }
       }
-
-      actual_iter.next();
-      formal_iter.next();
    }
 
    /* If the function call is a constant expression, don't generate any
@@ -1757,14 +1749,12 @@ ast_aggregate_initializer::hir(exec_list *instructions,
 {
    void *ctx = state;
    YYLTYPE loc = this->get_location();
-   const char *name;
 
    if (!this->constructor_type) {
       _mesa_glsl_error(&loc, state, "type of C-style initializer unknown");
       return ir_rvalue::error_value(ctx);
    }
-   const glsl_type *const constructor_type =
-      this->constructor_type->glsl_type(&name, state);
+   const glsl_type *const constructor_type = this->constructor_type;
 
    if (!state->ARB_shading_language_420pack_enable) {
       _mesa_glsl_error(&loc, state, "C-style initialization requires the "
@@ -1772,12 +1762,12 @@ ast_aggregate_initializer::hir(exec_list *instructions,
       return ir_rvalue::error_value(ctx);
    }
 
-   if (this->constructor_type->is_array) {
+   if (constructor_type->is_array()) {
       return process_array_constructor(instructions, constructor_type, &loc,
                                        &this->expressions, state);
    }
 
-   if (this->constructor_type->structure) {
+   if (constructor_type->is_record()) {
       return process_record_constructor(instructions, constructor_type, &loc,
                                         &this->expressions, state);
    }

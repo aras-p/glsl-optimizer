@@ -816,8 +816,8 @@ validate_ir_tree(exec_list *instructions)
 
    v.run(instructions);
 
-   foreach_iter(exec_list_iterator, iter, *instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
 
       visit_tree(ir, check_node_type, NULL);
    }

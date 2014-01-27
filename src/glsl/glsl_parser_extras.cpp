@@ -50,7 +50,7 @@ glsl_compute_version_string(void *mem_ctx, bool is_es, unsigned version)
 
 
 static unsigned known_desktop_glsl_versions[] =
-   { 110, 120, 130, 140, 150, 330, 400, 410, 420, 430 };
+   { 110, 120, 130, 140, 150, 330, 400, 410, 420, 430, 440 };
 
 
 _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
@@ -292,6 +292,10 @@ _mesa_glsl_parse_state::process_version_directive(YYLTYPE *locp, int version,
       }
    }
 
+   if (this->es_shader) {
+      this->ARB_texture_rectangle_enable = false;
+   }
+
    this->language_version = version;
    this->had_version_string = true;
 
@@ -486,6 +490,7 @@ struct _mesa_glsl_extension {
 static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    /*                                  API availability */
    /* name                             GL     ES         supported flag */
+   EXT(ARB_arrays_of_arrays,           true,  false,     ARB_arrays_of_arrays),
    EXT(ARB_conservative_depth,         true,  false,     ARB_conservative_depth),
    EXT(ARB_draw_buffers,               true,  false,     dummy_true),
    EXT(ARB_draw_instanced,             true,  false,     ARB_draw_instanced),
@@ -518,6 +523,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(ARB_shader_atomic_counters,     true,  false,     ARB_shader_atomic_counters),
    EXT(ARB_sample_shading,             true,  false,     ARB_sample_shading),
    EXT(AMD_shader_trinary_minmax,      true,  false,     dummy_true),
+   EXT(ARB_viewport_array,             true,  false,     ARB_viewport_array),
 };
 
 #undef EXT
@@ -639,25 +645,6 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 
 
 /**
- * Returns the name of the type of a column of a matrix. E.g.,
- *
- *    "mat3"   -> "vec3"
- *    "mat4x2" -> "vec2"
- */
-static const char *
-_mesa_ast_get_matrix_column_type_name(const char *matrix_type_name)
-{
-   static const char *vec_name[] = { "vec2", "vec3", "vec4" };
-
-   /* The number of elements in a row of a matrix is specified by the last
-    * character of the matrix type name.
-    */
-   long rows = strtol(matrix_type_name + strlen(matrix_type_name) - 1,
-                      NULL, 10);
-   return vec_name[rows - 2];
-}
-
-/**
  * Recurses through <type> and <expr> if <expr> is an aggregate initializer
  * and sets <expr>'s <constructor_type> field to <type>. Gives later functions
  * (process_array_constructor, et al) sufficient information to do type
@@ -704,37 +691,19 @@ _mesa_ast_get_matrix_column_type_name(const char *matrix_type_name)
  * doesn't contain sufficient information to determine if the types match.
  */
 void
-_mesa_ast_set_aggregate_type(const ast_type_specifier *type,
-                             ast_expression *expr,
-                             _mesa_glsl_parse_state *state)
+_mesa_ast_set_aggregate_type(const glsl_type *type,
+                             ast_expression *expr)
 {
-   void *ctx = state;
    ast_aggregate_initializer *ai = (ast_aggregate_initializer *)expr;
-   ai->constructor_type = (ast_type_specifier *)type;
-
-   bool is_declaration = ai->constructor_type->structure != NULL;
-   if (!is_declaration) {
-      /* Look up <type> name in the symbol table to see if it's a struct. */
-      const ast_type_specifier *struct_type =
-         state->symbols->get_type_ast(type->type_name);
-      ai->constructor_type->structure =
-         struct_type ? new(ctx) ast_struct_specifier(*struct_type->structure)
-                     : NULL;
-   }
+   ai->constructor_type = type;
 
    /* If the aggregate is an array, recursively set its elements' types. */
-   if (type->is_array) {
-      /* We want to set the element type which is not an array itself, so make
-       * a copy of the array type and set its is_array field to false.
+   if (type->is_array()) {
+      /* Each array element has the type type->element_type().
        *
        * E.g., if <type> if struct S[2] we want to set each element's type to
        * struct S.
-       *
-       * FINISHME: Update when ARB_array_of_arrays is supported.
        */
-      const ast_type_specifier *non_array_type =
-         new(ctx) ast_type_specifier(type, false, NULL);
-
       for (exec_node *expr_node = ai->expressions.head;
            !expr_node->is_tail_sentinel();
            expr_node = expr_node->next) {
@@ -742,84 +711,33 @@ _mesa_ast_set_aggregate_type(const ast_type_specifier *type,
                                                link);
 
          if (expr->oper == ast_aggregate)
-            _mesa_ast_set_aggregate_type(non_array_type, expr, state);
+            _mesa_ast_set_aggregate_type(type->element_type(), expr);
       }
 
    /* If the aggregate is a struct, recursively set its fields' types. */
-   } else if (ai->constructor_type->structure) {
-      ai->constructor_type->structure->is_declaration = is_declaration;
+   } else if (type->is_record()) {
       exec_node *expr_node = ai->expressions.head;
 
-      /* Iterate through the struct's fields' declarations. E.g., iterate from
-       * "float a, b" to "int c" in the struct below.
-       *
-       *     struct {
-       *         float a, b;
-       *         int c;
-       *     } s;
-       */
-      for (exec_node *decl_list_node =
-              ai->constructor_type->structure->declarations.head;
-           !decl_list_node->is_tail_sentinel();
-           decl_list_node = decl_list_node->next) {
-         ast_declarator_list *decl_list = exec_node_data(ast_declarator_list,
-                                                         decl_list_node, link);
+      /* Iterate through the struct's fields. */
+      for (unsigned i = 0; !expr_node->is_tail_sentinel() && i < type->length;
+           i++, expr_node = expr_node->next) {
+         ast_expression *expr = exec_node_data(ast_expression, expr_node,
+                                               link);
 
-         for (exec_node *decl_node = decl_list->declarations.head;
-              !decl_node->is_tail_sentinel() && !expr_node->is_tail_sentinel();
-              decl_node = decl_node->next, expr_node = expr_node->next) {
-            ast_declaration *decl = exec_node_data(ast_declaration, decl_node,
-                                                   link);
-            ast_expression *expr = exec_node_data(ast_expression, expr_node,
-                                                  link);
-
-            bool is_array = decl_list->type->specifier->is_array;
-            ast_expression *array_size = decl_list->type->specifier->array_size;
-
-            /* Recognize variable declarations with the bracketed size attached
-             * to the type rather than the variable name as arrays. E.g.,
-             *
-             *     float a[2];
-             *     float[2] b;
-             *
-             * are both arrays, but <a>'s array_size is decl->array_size, while
-             * <b>'s array_size is decl_list->type->specifier->array_size.
-             */
-            if (!is_array) {
-               /* FINISHME: Update when ARB_array_of_arrays is supported. */
-               is_array = decl->is_array;
-               array_size = decl->array_size;
-            }
-
-            /* Declaration shadows the <type> parameter. */
-            ast_type_specifier *type =
-               new(ctx) ast_type_specifier(decl_list->type->specifier,
-                                           is_array, array_size);
-
-            if (expr->oper == ast_aggregate)
-               _mesa_ast_set_aggregate_type(type, expr, state);
+         if (expr->oper == ast_aggregate) {
+            _mesa_ast_set_aggregate_type(type->fields.structure[i].type, expr);
          }
       }
-   } else {
-      /* If the aggregate is a matrix, set its columns' types. */
-      const char *name;
-      const glsl_type *const constructor_type =
-         ai->constructor_type->glsl_type(&name, state);
+   /* If the aggregate is a matrix, set its columns' types. */
+   } else if (type->is_matrix()) {
+      for (exec_node *expr_node = ai->expressions.head;
+           !expr_node->is_tail_sentinel();
+           expr_node = expr_node->next) {
+         ast_expression *expr = exec_node_data(ast_expression, expr_node,
+                                               link);
 
-      if (constructor_type->is_matrix()) {
-         for (exec_node *expr_node = ai->expressions.head;
-              !expr_node->is_tail_sentinel();
-              expr_node = expr_node->next) {
-            ast_expression *expr = exec_node_data(ast_expression, expr_node,
-                                                  link);
-
-            /* Declaration shadows the <type> parameter. */
-            ast_type_specifier *type = new(ctx)
-               ast_type_specifier(_mesa_ast_get_matrix_column_type_name(name));
-
-            if (expr->oper == ast_aggregate)
-               _mesa_ast_set_aggregate_type(type, expr, state);
-         }
+         if (expr->oper == ast_aggregate)
+            _mesa_ast_set_aggregate_type(type->column_type(), expr);
       }
    }
 }
@@ -881,16 +799,10 @@ ast_node::ast_node(void)
 
 
 static void
-ast_opt_array_size_print(bool is_array, const ast_expression *array_size)
+ast_opt_array_dimensions_print(const ast_array_specifier *array_specifier)
 {
-   if (is_array) {
-      printf("[ ");
-
-      if (array_size)
-	 array_size->print();
-
-      printf("] ");
-   }
+   if (array_specifier)
+      array_specifier->print();
 }
 
 
@@ -1113,7 +1025,7 @@ ast_parameter_declarator::print(void) const
    type->print();
    if (identifier)
       printf("%s ", identifier);
-   ast_opt_array_size_print(!!is_array, array_size);
+   ast_opt_array_dimensions_print(array_specifier);
 }
 
 
@@ -1129,7 +1041,7 @@ void
 ast_declaration::print(void) const
 {
    printf("%s ", identifier);
-   ast_opt_array_size_print(!!is_array, array_size);
+   ast_opt_array_dimensions_print(array_specifier);
 
    if (initializer) {
       printf("= ");
@@ -1138,13 +1050,12 @@ ast_declaration::print(void) const
 }
 
 
-ast_declaration::ast_declaration(const char *identifier, bool is_array,
-				 ast_expression *array_size,
+ast_declaration::ast_declaration(const char *identifier,
+				 ast_array_specifier *array_specifier,
 				 ast_expression *initializer)
 {
    this->identifier = identifier;
-   this->is_array = is_array;
-   this->array_size = array_size;
+   this->array_specifier = array_specifier;
    this->initializer = initializer;
 }
 
@@ -1565,8 +1476,12 @@ do_common_optimization(exec_list *ir, bool linked,
    progress = do_copy_propagation(ir) || progress;
    progress = do_copy_propagation_elements(ir) || progress;
 
-   if (options->PreferDP4 && !linked)
+   if (options->OptimizeForAOS && !linked)
       progress = opt_flip_matrices(ir) || progress;
+
+   if (linked && options->OptimizeForAOS) {
+      progress = do_vectorize(ir) || progress;
+   }
 
    if (linked)
       progress = do_dead_code(ir, uniform_locations_assigned) || progress;

@@ -125,13 +125,13 @@ ir_if::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_if *new_if = new(mem_ctx) ir_if(this->condition->clone(mem_ctx, ht));
 
-   foreach_iter(exec_list_iterator, iter, this->then_instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, &this->then_instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
       new_if->then_instructions.push_tail(ir->clone(mem_ctx, ht));
    }
 
-   foreach_iter(exec_list_iterator, iter, this->else_instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, &this->else_instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
       new_if->else_instructions.push_tail(ir->clone(mem_ctx, ht));
    }
 
@@ -143,8 +143,8 @@ ir_loop::clone(void *mem_ctx, struct hash_table *ht) const
 {
    ir_loop *new_loop = new(mem_ctx) ir_loop();
 
-   foreach_iter(exec_list_iterator, iter, this->body_instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, &this->body_instructions) {
+      ir_instruction *ir = (ir_instruction *) n;
       new_loop->body_instructions.push_tail(ir->clone(mem_ctx, ht));
    }
 
@@ -160,8 +160,8 @@ ir_call::clone(void *mem_ctx, struct hash_table *ht) const
 
    exec_list new_parameters;
 
-   foreach_iter(exec_list_iterator, iter, this->actual_parameters) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
+   foreach_list(n, &this->actual_parameters) {
+      ir_instruction *ir = (ir_instruction *) n;
       new_parameters.push_tail(ir->clone(mem_ctx, ht));
    }
 

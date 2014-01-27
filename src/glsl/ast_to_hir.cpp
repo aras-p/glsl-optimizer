@@ -754,14 +754,15 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 {
    void *ctx = state;
    bool error_emitted = (lhs->type->is_error() || rhs->type->is_error());
+   ir_rvalue *extract_channel = NULL;
 
    /* If the assignment LHS comes back as an ir_binop_vector_extract
     * expression, move it to the RHS as an ir_triop_vector_insert.
     */
    if (lhs->ir_type == ir_type_expression) {
-      ir_expression *const expr = lhs->as_expression();
+      ir_expression *const lhs_expr = lhs->as_expression();
 
-      if (unlikely(expr->operation == ir_binop_vector_extract)) {
+      if (unlikely(lhs_expr->operation == ir_binop_vector_extract)) {
          ir_rvalue *new_rhs =
             validate_assignment(state, lhs_loc, lhs->type,
                                 rhs, is_initializer);
@@ -769,12 +770,24 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
          if (new_rhs == NULL) {
             return lhs;
          } else {
+            /* This converts:
+             * - LHS: (expression float vector_extract <vec> <channel>)
+             * - RHS: <scalar>
+             * into:
+             * - LHS: <vec>
+             * - RHS: (expression vec2 vector_insert <vec> <channel> <scalar>)
+             *
+             * The LHS type is now a vector instead of a scalar.  Since GLSL
+             * allows assignments to be used as rvalues, we need to re-extract
+             * the channel from assignment_temp when returning the rvalue.
+             */
+            extract_channel = lhs_expr->operands[1];
             rhs = new(ctx) ir_expression(ir_triop_vector_insert,
-                                         expr->operands[0]->type,
-                                         expr->operands[0],
+                                         lhs_expr->operands[0]->type,
+                                         lhs_expr->operands[0],
                                          new_rhs,
-                                         expr->operands[1]);
-            lhs = expr->operands[0]->clone(ctx, NULL);
+                                         extract_channel);
+            lhs = lhs_expr->operands[0]->clone(ctx, NULL);
          }
       }
    }
@@ -844,8 +857,10 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 						   rhs->type->array_size());
 	 d->type = var->type;
       }
-      mark_whole_array_access(rhs);
-      mark_whole_array_access(lhs);
+      if (lhs->type->is_array()) {
+         mark_whole_array_access(rhs);
+         mark_whole_array_access(lhs);
+      }
    }
 
    if (lhs->get_precision() == glsl_precision_undefined)
@@ -880,6 +895,11 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    if (!error_emitted)
       instructions->push_tail(new(ctx) ir_assignment(lhs, deref_var));
 
+   if (extract_channel) {
+      return new(ctx) ir_expression(ir_binop_vector_extract,
+                                    new(ctx) ir_dereference_variable(var),
+                                    extract_channel->clone(ctx, NULL));
+   }
    return new(ctx) ir_dereference_variable(var);
 }
 
@@ -1798,64 +1818,108 @@ ast_compound_statement::hir(exec_list *instructions,
    return NULL;
 }
 
+/**
+ * Evaluate the given exec_node (which should be an ast_node representing
+ * a single array dimension) and return its integer value.
+ */
+static const unsigned
+process_array_size(exec_node *node,
+                   struct _mesa_glsl_parse_state *state)
+{
+   exec_list dummy_instructions;
+
+   ast_node *array_size = exec_node_data(ast_node, node, link);
+   ir_rvalue *const ir = array_size->hir(& dummy_instructions,
+                                                   state);
+   YYLTYPE loc = array_size->get_location();
+
+   if (ir == NULL) {
+      _mesa_glsl_error(& loc, state,
+                       "array size could not be resolved");
+      return 0;
+   }
+
+   if (!ir->type->is_integer()) {
+      _mesa_glsl_error(& loc, state,
+                       "array size must be integer type");
+      return 0;
+   }
+
+   if (!ir->type->is_scalar()) {
+      _mesa_glsl_error(& loc, state,
+                       "array size must be scalar type");
+      return 0;
+   }
+
+   ir_constant *const size = ir->constant_expression_value();
+   if (size == NULL) {
+      _mesa_glsl_error(& loc, state, "array size must be a "
+                       "constant valued expression");
+      return 0;
+   }
+
+   if (size->value.i[0] <= 0) {
+      _mesa_glsl_error(& loc, state, "array size must be > 0");
+      return 0;
+   }
+
+   assert(size->type == ir->type);
+
+   /* If the array size is const (and we've verified that
+    * it is) then no instructions should have been emitted
+    * when we converted it to HIR. If they were emitted,
+    * then either the array size isn't const after all, or
+    * we are emitting unnecessary instructions.
+    */
+   assert(dummy_instructions.is_empty());
+
+   return size->value.u[0];
+}
 
 static const glsl_type *
-process_array_type(YYLTYPE *loc, const glsl_type *base, ast_node *array_size,
-		   struct _mesa_glsl_parse_state *state)
+process_array_type(YYLTYPE *loc, const glsl_type *base,
+                   ast_array_specifier *array_specifier,
+                   struct _mesa_glsl_parse_state *state)
 {
-   unsigned length = 0;
+   const glsl_type *array_type = base;
 
-   if (base == NULL)
-      return glsl_type::error_type;
+   if (array_specifier != NULL) {
+      if (base->is_array()) {
 
-   /* From page 19 (page 25) of the GLSL 1.20 spec:
-    *
-    *     "Only one-dimensional arrays may be declared."
-    */
-   if (base->is_array()) {
-      _mesa_glsl_error(loc, state,
-		       "invalid array of `%s' (only one-dimensional arrays "
-		       "may be declared)",
-		       base->name);
-      return glsl_type::error_type;
-   }
+         /* From page 19 (page 25) of the GLSL 1.20 spec:
+          *
+          * "Only one-dimensional arrays may be declared."
+          */
+         if (!state->ARB_arrays_of_arrays_enable) {
+            _mesa_glsl_error(loc, state,
+                             "invalid array of `%s'"
+                             "GL_ARB_arrays_of_arrays "
+                             "required for defining arrays of arrays",
+                             base->name);
+            return glsl_type::error_type;
+         }
 
-   if (array_size != NULL) {
-      exec_list dummy_instructions;
-      ir_rvalue *const ir = array_size->hir(& dummy_instructions, state);
-      YYLTYPE loc = array_size->get_location();
-
-      if (ir != NULL) {
-	 if (!ir->type->is_integer()) {
-	    _mesa_glsl_error(& loc, state, "array size must be integer type");
-	 } else if (!ir->type->is_scalar()) {
-	    _mesa_glsl_error(& loc, state, "array size must be scalar type");
-	 } else {
-	    ir_constant *const size = ir->constant_expression_value();
-
-	    if (size == NULL) {
-	       _mesa_glsl_error(& loc, state, "array size must be a "
-				"constant valued expression");
-	    } else if (size->value.i[0] <= 0) {
-	       _mesa_glsl_error(& loc, state, "array size must be > 0");
-	    } else {
-	       assert(size->type == ir->type);
-	       length = size->value.u[0];
-
-               /* If the array size is const (and we've verified that
-                * it is) then no instructions should have been emitted
-                * when we converted it to HIR.  If they were emitted,
-                * then either the array size isn't const after all, or
-                * we are emitting unnecessary instructions.
-                */
-               assert(dummy_instructions.is_empty());
-	    }
-	 }
+         if (base->length == 0) {
+            _mesa_glsl_error(loc, state,
+                             "only the outermost array dimension can "
+                             "be unsized",
+                             base->name);
+            return glsl_type::error_type;
+         }
       }
+
+      for (exec_node *node = array_specifier->array_dimensions.tail_pred;
+           !node->is_head_sentinel(); node = node->prev) {
+         unsigned array_size = process_array_size(node, state);
+         array_type = glsl_type::get_array_instance(array_type,
+                                                    array_size);
+      }
+
+      if (array_specifier->is_unsized_array)
+         array_type = glsl_type::get_array_instance(array_type, 0);
    }
 
-   const glsl_type *array_type = glsl_type::get_array_instance(base, length);
-   return array_type != NULL ? array_type : glsl_type::error_type;
+   return array_type;
 }
 
 
@@ -1868,10 +1932,8 @@ ast_type_specifier::glsl_type(const char **name,
    type = state->symbols->get_type(this->type_name);
    *name = this->type_name;
 
-   if (this->is_array) {
-      YYLTYPE loc = this->get_location();
-      type = process_array_type(&loc, type, this->array_size, state);
-   }
+   YYLTYPE loc = this->get_location();
+   type = process_array_type(&loc, type, this->array_specifier, state);
 
    return type;
 }
@@ -2624,6 +2686,13 @@ process_initializer(ir_variable *var, ast_declaration *decl,
 		       ? "attribute" : "varying");
    }
 
+   /* If the initializer is an ast_aggregate_initializer, recursively store
+    * type information from the LHS into it, so that its hir() function can do
+    * type checking.
+    */
+   if (decl->initializer->oper == ast_aggregate)
+      _mesa_ast_set_aggregate_type(var->type, decl->initializer);
+
    ir_dereference *const lhs = new(state) ir_dereference_variable(var);
    ir_rvalue *rhs = decl->initializer->hir(initializer_instructions,
 					   state);
@@ -2867,8 +2936,7 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
       foreach_list_typed (ast_declaration, decl, link, &this->declarations) {
-	 assert(!decl->is_array);
-	 assert(decl->array_size == NULL);
+	 assert(decl->array_specifier == NULL);
 	 assert(decl->initializer == NULL);
 
 	 ir_variable *const earlier =
@@ -3003,14 +3071,8 @@ ast_declarator_list::hir(exec_list *instructions,
 	 continue;
       }
 
-      if (decl->is_array) {
-	 var_type = process_array_type(&loc, decl_type, decl->array_size,
-				       state);
-	 if (var_type->is_error())
-	    continue;
-      } else {
-	 var_type = decl_type;
-      }
+      var_type = process_array_type(&loc, decl_type, decl->array_specifier,
+                                    state);
 
       var = new(ctx) ir_variable(var_type, decl->identifier, ir_var_auto, (glsl_precision)this->type->qualifier.precision);
 
@@ -3143,8 +3205,9 @@ ast_declarator_list::hir(exec_list *instructions,
              *    vectors. Vertex shader inputs cannot be arrays or
              *    structures."
 	     */
-	    const glsl_type *check_type = var->type->is_array()
-	       ? var->type->fields.array : var->type;
+            const glsl_type *check_type = var->type;
+            while (check_type->is_array())
+               check_type = check_type->element_type();
 
 	    switch (check_type->base_type) {
 	    case GLSL_TYPE_FLOAT:
@@ -3576,9 +3639,7 @@ ast_parameter_declarator::hir(exec_list *instructions,
    /* This only handles "vec4 foo[..]".  The earlier specifier->glsl_type(...)
     * call already handled the "vec4[..] foo" case.
     */
-   if (this->is_array) {
-      type = process_array_type(&loc, type, this->array_size, state);
-   }
+   type = process_array_type(&loc, type, this->array_specifier, state);
 
    if (!type->is_error() && type->is_unsized_array()) {
       _mesa_glsl_error(&loc, state, "arrays passed as parameters must have "
@@ -3872,8 +3933,8 @@ ast_function_definition::hir(exec_list *instructions,
     * Add these to the symbol table.
     */
    state->symbols->push_scope();
-   foreach_iter(exec_list_iterator, iter, signature->parameters) {
-      ir_variable *const var = ((ir_instruction *) iter.get())->as_variable();
+   foreach_list(n, &signature->parameters) {
+      ir_variable *const var = ((ir_instruction *) n)->as_variable();
 
       assert(var != NULL);
 
@@ -4517,7 +4578,7 @@ ast_type_specifier::hir(exec_list *instructions,
          return NULL;
       }
 
-      if (this->is_array) {
+      if (this->array_specifier != NULL) {
          _mesa_glsl_error(&loc, state,
                           "default precision statements do not apply to "
                           "arrays");
@@ -4724,10 +4785,8 @@ ast_process_structure_or_interface_block(exec_list *instructions,
                              "members");
          }
 
-	 if (decl->is_array) {
-	    field_type = process_array_type(&loc, decl_type, decl->array_size,
-					    state);
-	 }
+	 field_type = process_array_type(&loc, decl_type,
+                                         decl->array_specifier, state);
          fields[i].type = field_type;
 	 fields[i].name = decl->identifier;
 	 fields[i].precision = (glsl_precision)decl_list->type->qualifier.precision;
@@ -4969,7 +5028,7 @@ ast_interface_block::hir(exec_list *instructions,
                              _mesa_shader_stage_to_string(state->stage));
          }
          if (this->instance_name == NULL ||
-             strcmp(this->instance_name, "gl_in") != 0 || !this->is_array) {
+             strcmp(this->instance_name, "gl_in") != 0 || this->array_specifier == NULL) {
             _mesa_glsl_error(&loc, state,
                              "gl_PerVertex input must be redeclared as "
                              "gl_in[]");
@@ -5071,7 +5130,7 @@ ast_interface_block::hir(exec_list *instructions,
     *     variable (or input block, see interface blocks below) needs to be
     *     declared as an array.
     */
-   if (state->stage == MESA_SHADER_GEOMETRY && !this->is_array &&
+   if (state->stage == MESA_SHADER_GEOMETRY && this->array_specifier == NULL &&
        var_mode == ir_var_shader_in) {
       _mesa_glsl_error(&loc, state, "geometry shader inputs must be arrays");
    }
@@ -5105,7 +5164,7 @@ ast_interface_block::hir(exec_list *instructions,
 
       ir_variable *var;
 
-      if (this->is_array) {
+      if (this->array_specifier != NULL) {
          /* Section 4.3.7 (Interface Blocks) of the GLSL 1.50 spec says:
           *
           *     For uniform blocks declared an array, each individual array
@@ -5125,7 +5184,7 @@ ast_interface_block::hir(exec_list *instructions,
           * interface array size *doesn't* need to be specified is on a
           * geometry shader input.
           */
-         if (this->array_size == NULL &&
+         if (this->array_specifier->is_unsized_array &&
              (state->stage != MESA_SHADER_GEOMETRY || !this->layout.flags.q.in)) {
             _mesa_glsl_error(&loc, state,
                              "only geometry shader inputs may be unsized "
@@ -5134,7 +5193,7 @@ ast_interface_block::hir(exec_list *instructions,
          }
 
          const glsl_type *block_array_type =
-            process_array_type(&loc, block_type, this->array_size, state);
+            process_array_type(&loc, block_type, this->array_specifier, state);
 
          var = new(state) ir_variable(block_array_type,
                                       this->instance_name,
@@ -5166,7 +5225,7 @@ ast_interface_block::hir(exec_list *instructions,
       /* In order to have an array size, the block must also be declared with
        * an instane name.
        */
-      assert(!this->is_array);
+      assert(this->array_specifier == NULL);
 
       for (unsigned i = 0; i < num_variables; i++) {
          ir_variable *var =

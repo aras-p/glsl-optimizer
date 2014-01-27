@@ -171,6 +171,7 @@ typedef enum
    VARYING_SLOT_CLIP_DIST1,
    VARYING_SLOT_PRIMITIVE_ID, /* Does not appear in VS */
    VARYING_SLOT_LAYER, /* Appears as VS or GS output */
+   VARYING_SLOT_VIEWPORT, /* Appears as VS or GS output */
    VARYING_SLOT_FACE, /* FS only */
    VARYING_SLOT_PNTC, /* FS only */
    VARYING_SLOT_VAR0, /* First generic varying slot */
@@ -232,38 +233,6 @@ typedef enum
 
 
 /**
- * Indexes for geometry program result attributes
- */
-typedef enum
-{
-   GEOM_RESULT_POS  = 0,
-   GEOM_RESULT_COL0  = 1,
-   GEOM_RESULT_COL1  = 2,
-   GEOM_RESULT_SCOL0 = 3,
-   GEOM_RESULT_SCOL1 = 4,
-   GEOM_RESULT_FOGC = 5,
-   GEOM_RESULT_TEX0 = 6,
-   GEOM_RESULT_TEX1 = 7,
-   GEOM_RESULT_TEX2 = 8,
-   GEOM_RESULT_TEX3 = 9,
-   GEOM_RESULT_TEX4 = 10,
-   GEOM_RESULT_TEX5 = 11,
-   GEOM_RESULT_TEX6 = 12,
-   GEOM_RESULT_TEX7 = 13,
-   GEOM_RESULT_PSIZ = 14,
-   GEOM_RESULT_CLPV = 15,
-   GEOM_RESULT_PRID = 16,
-   GEOM_RESULT_LAYR = 17,
-   GEOM_RESULT_VAR0 = 18,  /**< shader varying, should really be 16 */
-   /* ### we need to -2 because var0 is 18 instead 16 like in the others */
-   GEOM_RESULT_MAX  =  (GEOM_RESULT_VAR0 + MAX_VARYING - 2)
-} gl_geom_result;
-
-
-/**
- * Indexes for fragment program input attributes.  Note that
- * _mesa_vert_result_to_frag_attrib() and frag_attrib_to_vert_result() make
- * assumptions about the layout of this enum.
  */
 typedef enum
 {
@@ -606,6 +575,32 @@ struct gl_shader
         */
       GLenum OutputType;
    } Geom;
+
+   /**
+    * Map from image uniform index to image unit (set by glUniform1i())
+    *
+    * An image uniform index is associated with each image uniform by
+    * the linker.  The image index associated with each uniform is
+    * stored in the \c gl_uniform_storage::image field.
+    */
+   GLubyte ImageUnits[MAX_IMAGE_UNIFORMS];
+
+   /**
+    * Access qualifier specified in the shader for each image uniform
+    * index.  Either \c GL_READ_ONLY, \c GL_WRITE_ONLY or \c
+    * GL_READ_WRITE.
+    *
+    * It may be different, though only more strict than the value of
+    * \c gl_image_unit::Access for the corresponding image unit.
+    */
+   GLenum ImageAccess[MAX_IMAGE_UNIFORMS];
+
+   /**
+    * Number of image uniforms defined in the shader.  It specifies
+    * the number of valid elements in the \c ImageUnits and \c
+    * ImageAccess arrays above.
+    */
+   GLuint NumImages;
 };
 
 
@@ -957,9 +952,13 @@ struct gl_program_constants
    GLuint MaxUniformBlocks;
    GLuint MaxCombinedUniformComponents;
    GLuint MaxTextureImageUnits;
+
    /* GL_ARB_shader_atomic_counters */
    GLuint MaxAtomicBuffers;
    GLuint MaxAtomicCounters;
+
+   /* GL_ARB_shader_image_load_store */
+   GLuint MaxImageUniforms;
 };
 
 
@@ -1001,6 +1000,12 @@ struct gl_constants
    GLfloat MaxSpotExponent;                  /**< GL_NV_light_max_exponent */
 
    GLuint MaxViewportWidth, MaxViewportHeight;
+   GLuint MaxViewports;                      /**< GL_ARB_viewport_array */
+   GLuint ViewportSubpixelBits;              /**< GL_ARB_viewport_array */
+   struct {
+      GLfloat Min;
+      GLfloat Max;
+   } ViewportBounds;                         /**< GL_ARB_viewport_array */
 
    struct gl_program_constants Program[MESA_SHADER_STAGES];
    GLuint MaxProgramMatrices;
@@ -1164,6 +1169,12 @@ struct gl_constants
    /** GL_ARB_vertex_attrib_binding */
    GLint MaxVertexAttribRelativeOffset;
    GLint MaxVertexAttribBindings;
+
+   /* GL_ARB_shader_image_load_store */
+   GLuint MaxImageUnits;
+   GLuint MaxCombinedImageUnitsAndFragmentOutputs;
+   GLuint MaxImageSamples;
+   GLuint MaxCombinedImageUniforms;
 };
 
 
@@ -1179,6 +1190,7 @@ struct gl_extensions
    GLboolean ANGLE_texture_compression_dxt;
    GLboolean ARB_ES2_compatibility;
    GLboolean ARB_ES3_compatibility;
+   GLboolean ARB_arrays_of_arrays;
    GLboolean ARB_base_instance;
    GLboolean ARB_blend_func_extended;
    GLboolean ARB_color_buffer_float;
@@ -1211,6 +1223,7 @@ struct gl_extensions
    GLboolean ARB_seamless_cube_map;
    GLboolean ARB_shader_atomic_counters;
    GLboolean ARB_shader_bit_encoding;
+   GLboolean ARB_shader_image_load_store;
    GLboolean ARB_shader_stencil_export;
    GLboolean ARB_shader_texture_lod;
    GLboolean ARB_shading_language_packing;
@@ -1246,6 +1259,7 @@ struct gl_extensions
    GLboolean ARB_vertex_shader;
    GLboolean ARB_vertex_type_10f_11f_11f_rev;
    GLboolean ARB_vertex_type_2_10_10_10_rev;
+   GLboolean ARB_viewport_array;
    GLboolean EXT_blend_color;
    GLboolean EXT_blend_equation_separate;
    GLboolean EXT_blend_func_separate;

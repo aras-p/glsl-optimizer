@@ -303,8 +303,20 @@ glsl_type::glsl_type(const glsl_type *array, unsigned length) :
 
    if (length == 0)
       snprintf(n, name_length, "%s[]", array->name);
-   else
-      snprintf(n, name_length, "%s[%u]", array->name, length);
+   else {
+      /* insert outermost dimensions in the correct spot
+       * otherwise the dimension order will be backwards
+       */
+      const char *pos = strchr(array->name, '[');
+      if (pos) {
+         int idx = pos - array->name;
+         snprintf(n, idx+1, "%s", array->name);
+         snprintf(n + idx, name_length - idx, "[%u]%s",
+                  length, array->name + idx);
+      } else {
+         snprintf(n, name_length, "%s[%u]", array->name, length);
+      }
+   }
 
    this->name = n;
 }
@@ -452,6 +464,45 @@ glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
 }
 
 
+bool
+glsl_type::record_compare(const glsl_type *b) const
+{
+   if (this->length != b->length)
+      return false;
+
+   if (this->interface_packing != b->interface_packing)
+      return false;
+
+   for (unsigned i = 0; i < this->length; i++) {
+      if (this->fields.structure[i].type != b->fields.structure[i].type)
+	 return false;
+      if (strcmp(this->fields.structure[i].name,
+		 b->fields.structure[i].name) != 0)
+	 return false;
+      if (this->fields.structure[i].row_major
+         != b->fields.structure[i].row_major)
+        return false;
+      if (this->fields.structure[i].location
+          != b->fields.structure[i].location)
+         return false;
+      if (this->fields.structure[i].interpolation
+          != b->fields.structure[i].interpolation)
+         return false;
+      if (this->fields.structure[i].centroid
+          != b->fields.structure[i].centroid)
+         return false;
+      if (this->fields.structure[i].sample
+          != b->fields.structure[i].sample)
+         return false;
+      if (this->fields.structure[i].precision
+          != b->fields.structure[i].precision)
+         return false;
+   }
+
+   return true;
+}
+
+
 int
 glsl_type::record_key_compare(const void *a, const void *b)
 {
@@ -464,38 +515,7 @@ glsl_type::record_key_compare(const void *a, const void *b)
    if (strcmp(key1->name, key2->name) != 0)
       return 1;
 
-   if (key1->length != key2->length)
-      return 1;
-
-   if (key1->interface_packing != key2->interface_packing)
-      return 1;
-
-   for (unsigned i = 0; i < key1->length; i++) {
-      if (key1->fields.structure[i].type != key2->fields.structure[i].type)
-	 return 1;
-      if (key1->fields.structure[i].precision != key2->fields.structure[i].precision)
-	 return 1;
-      if (strcmp(key1->fields.structure[i].name,
-		 key2->fields.structure[i].name) != 0)
-	 return 1;
-      if (key1->fields.structure[i].row_major
-         != key2->fields.structure[i].row_major)
-        return 1;
-      if (key1->fields.structure[i].location
-          != key2->fields.structure[i].location)
-         return 1;
-      if (key1->fields.structure[i].interpolation
-          != key2->fields.structure[i].interpolation)
-         return 1;
-      if (key1->fields.structure[i].centroid
-          != key2->fields.structure[i].centroid)
-         return 1;
-      if (key1->fields.structure[i].sample
-          != key2->fields.structure[i].sample)
-         return 1;
-   }
-
-   return 0;
+   return !key1->record_compare(key2);
 }
 
 

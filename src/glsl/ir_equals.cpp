@@ -28,12 +28,12 @@
  * can't access a's vtable in that case.
  */
 static bool
-possibly_null_equals(ir_instruction *a, ir_instruction *b)
+possibly_null_equals(ir_instruction *a, ir_instruction *b, enum ir_node_type ignore)
 {
    if (!a || !b)
       return !a && !b;
 
-   return a->equals(b);
+   return a->equals(b, ignore);
 }
 
 /**
@@ -41,13 +41,13 @@ possibly_null_equals(ir_instruction *a, ir_instruction *b)
  * about.
  */
 bool
-ir_instruction::equals(ir_instruction *ir)
+ir_instruction::equals(ir_instruction *ir, enum ir_node_type)
 {
    return false;
 }
 
 bool
-ir_constant::equals(ir_instruction *ir)
+ir_constant::equals(ir_instruction *ir, enum ir_node_type ignore)
 {
    const ir_constant *other = ir->as_constant();
    if (!other)
@@ -65,7 +65,7 @@ ir_constant::equals(ir_instruction *ir)
 }
 
 bool
-ir_dereference_variable::equals(ir_instruction *ir)
+ir_dereference_variable::equals(ir_instruction *ir, enum ir_node_type ignore)
 {
    const ir_dereference_variable *other = ir->as_dereference_variable();
    if (!other)
@@ -75,7 +75,7 @@ ir_dereference_variable::equals(ir_instruction *ir)
 }
 
 bool
-ir_dereference_array::equals(ir_instruction *ir)
+ir_dereference_array::equals(ir_instruction *ir, enum ir_node_type ignore)
 {
    const ir_dereference_array *other = ir->as_dereference_array();
    if (!other)
@@ -84,17 +84,17 @@ ir_dereference_array::equals(ir_instruction *ir)
    if (type != other->type)
       return false;
 
-   if (!array->equals(other->array))
+   if (!array->equals(other->array, ignore))
       return false;
 
-   if (!array_index->equals(other->array_index))
+   if (!array_index->equals(other->array_index, ignore))
       return false;
 
    return true;
 }
 
 bool
-ir_swizzle::equals(ir_instruction *ir)
+ir_swizzle::equals(ir_instruction *ir, enum ir_node_type ignore)
 {
    const ir_swizzle *other = ir->as_swizzle();
    if (!other)
@@ -103,18 +103,20 @@ ir_swizzle::equals(ir_instruction *ir)
    if (type != other->type)
       return false;
 
-   if (mask.x != other->mask.x ||
-       mask.y != other->mask.y ||
-       mask.z != other->mask.z ||
-       mask.w != other->mask.w) {
-      return false;
+   if (ignore != ir_type_swizzle) {
+      if (mask.x != other->mask.x ||
+          mask.y != other->mask.y ||
+          mask.z != other->mask.z ||
+          mask.w != other->mask.w) {
+         return false;
+      }
    }
 
-   return val->equals(other->val);
+   return val->equals(other->val, ignore);
 }
 
 bool
-ir_texture::equals(ir_instruction *ir)
+ir_texture::equals(ir_instruction *ir, enum ir_node_type ignore)
 {
    const ir_texture *other = ir->as_texture();
    if (!other)
@@ -126,21 +128,21 @@ ir_texture::equals(ir_instruction *ir)
    if (op != other->op)
       return false;
 
-   if (!possibly_null_equals(coordinate, other->coordinate))
+   if (!possibly_null_equals(coordinate, other->coordinate, ignore))
       return false;
 
 #if 0 // Note: glsl optimizer removed projector & shadow_comparitor fields
-   if (!possibly_null_equals(projector, other->projector))
+   if (!possibly_null_equals(projector, other->projector, ignore))
       return false;
 
-   if (!possibly_null_equals(shadow_comparitor, other->shadow_comparitor))
+   if (!possibly_null_equals(shadow_comparitor, other->shadow_comparitor, ignore))
       return false;
 #endif
 
-   if (!possibly_null_equals(offset, other->offset))
+   if (!possibly_null_equals(offset, other->offset, ignore))
       return false;
 
-   if (!sampler->equals(other->sampler))
+   if (!sampler->equals(other->sampler, ignore))
       return false;
 
    switch (op) {
@@ -149,26 +151,26 @@ ir_texture::equals(ir_instruction *ir)
    case ir_query_levels:
       break;
    case ir_txb:
-      if (!lod_info.bias->equals(other->lod_info.bias))
+      if (!lod_info.bias->equals(other->lod_info.bias, ignore))
          return false;
       break;
    case ir_txl:
    case ir_txf:
    case ir_txs:
-      if (!lod_info.lod->equals(other->lod_info.lod))
+      if (!lod_info.lod->equals(other->lod_info.lod, ignore))
          return false;
       break;
    case ir_txd:
-      if (!lod_info.grad.dPdx->equals(other->lod_info.grad.dPdx) ||
-          !lod_info.grad.dPdy->equals(other->lod_info.grad.dPdy))
+      if (!lod_info.grad.dPdx->equals(other->lod_info.grad.dPdx, ignore) ||
+          !lod_info.grad.dPdy->equals(other->lod_info.grad.dPdy, ignore))
          return false;
       break;
    case ir_txf_ms:
-      if (!lod_info.sample_index->equals(other->lod_info.sample_index))
+      if (!lod_info.sample_index->equals(other->lod_info.sample_index, ignore))
          return false;
       break;
    case ir_tg4:
-      if (!lod_info.component->equals(other->lod_info.component))
+      if (!lod_info.component->equals(other->lod_info.component, ignore))
          return false;
       break;
    default:
@@ -179,7 +181,7 @@ ir_texture::equals(ir_instruction *ir)
 }
 
 bool
-ir_expression::equals(ir_instruction *ir)
+ir_expression::equals(ir_instruction *ir, enum ir_node_type ignore)
 {
    const ir_expression *other = ir->as_expression();
    if (!other)
@@ -192,7 +194,7 @@ ir_expression::equals(ir_instruction *ir)
       return false;
 
    for (unsigned i = 0; i < get_num_operands(); i++) {
-      if (!operands[i]->equals(other->operands[i]))
+      if (!operands[i]->equals(other->operands[i], ignore))
          return false;
    }
 

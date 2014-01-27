@@ -798,6 +798,8 @@ void
 builtin_variable_generator::generate_gs_special_vars()
 {
    add_output(VARYING_SLOT_LAYER, int_t, "gl_Layer", glsl_precision_high);
+   if (state->ARB_viewport_array_enable)
+      add_output(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex", glsl_precision_high);
 
    /* Although gl_PrimitiveID appears in tessellation control and tessellation
     * evaluation shaders, it has a different function there than it has in

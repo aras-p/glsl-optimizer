@@ -219,11 +219,10 @@ ir_tree_grafting_visitor::visit_enter(ir_function_signature *ir)
 ir_visitor_status
 ir_tree_grafting_visitor::visit_enter(ir_call *ir)
 {
-   exec_list_iterator sig_iter = ir->callee->parameters.iterator();
-   /* Reminder: iterating ir_call iterates its parameters. */
-   foreach_iter(exec_list_iterator, iter, *ir) {
-      ir_variable *sig_param = (ir_variable *)sig_iter.get();
-      ir_rvalue *ir = (ir_rvalue *)iter.get();
+   foreach_two_lists(formal_node, &ir->callee->parameters,
+                     actual_node, &ir->actual_parameters) {
+      ir_variable *sig_param = (ir_variable *) formal_node;
+      ir_rvalue *ir = (ir_rvalue *) actual_node;
       ir_rvalue *new_ir = ir;
 
       if (sig_param->data.mode != ir_var_function_in
@@ -237,7 +236,6 @@ ir_tree_grafting_visitor::visit_enter(ir_call *ir)
 	 ir->replace_with(new_ir);
 	 return visit_stop;
       }
-      sig_iter.next();
    }
 
    if (ir->return_deref && check_graft(ir, ir->return_deref->var) == visit_stop)

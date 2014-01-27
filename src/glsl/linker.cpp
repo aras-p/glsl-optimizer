@@ -108,10 +108,10 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_call *ir)
    {
-      exec_list_iterator sig_iter = ir->callee->parameters.iterator();
-      foreach_iter(exec_list_iterator, iter, *ir) {
-	 ir_rvalue *param_rval = (ir_rvalue *)iter.get();
-	 ir_variable *sig_param = (ir_variable *)sig_iter.get();
+      foreach_two_lists(formal_node, &ir->callee->parameters,
+                        actual_node, &ir->actual_parameters) {
+	 ir_rvalue *param_rval = (ir_rvalue *) actual_node;
+	 ir_variable *sig_param = (ir_variable *) formal_node;
 
 	 if (sig_param->data.mode == ir_var_function_out ||
 	     sig_param->data.mode == ir_var_function_inout) {
@@ -121,7 +121,6 @@ public:
 	       return visit_stop;
 	    }
 	 }
-	 sig_iter.next();
       }
 
       if (ir->return_deref != NULL) {
@@ -609,6 +608,10 @@ cross_validate_globals(struct gl_shader_program *prog,
 		  if (var->type->length != 0) {
 		     existing->type = var->type;
 		  }
+               } else if (var->type->is_record()
+		   && existing->type->is_record()
+		   && existing->type->record_compare(var->type)) {
+		  existing->type = var->type;
 	       } else {
 		  linker_error(prog, "%s `%s' declared as type "
 			       "`%s' and type `%s'\n",
@@ -1342,9 +1345,8 @@ link_intrastage_shaders(void *mem_ctx,
 	    if (other == NULL)
 	       continue;
 
-	    foreach_iter (exec_list_iterator, iter, *f) {
-	       ir_function_signature *sig =
-		  (ir_function_signature *) iter.get();
+	    foreach_list(n, &f->signatures) {
+	       ir_function_signature *sig = (ir_function_signature *) n;
 
 	       if (!sig->is_defined || sig->is_builtin())
 		  continue;
@@ -1457,8 +1459,8 @@ link_intrastage_shaders(void *mem_ctx,
    if (linked->Stage == MESA_SHADER_GEOMETRY) {
       unsigned num_vertices = vertices_per_prim(prog->Geom.InputType);
       geom_array_resize_visitor input_resize_visitor(num_vertices, prog);
-      foreach_iter(exec_list_iterator, iter, *linked->ir) {
-         ir_instruction *ir = (ir_instruction *)iter.get();
+      foreach_list(n, linked->ir) {
+         ir_instruction *ir = (ir_instruction *) n;
          ir->accept(&input_resize_visitor);
       }
    }
@@ -1998,19 +2000,14 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    /* Separate the shaders into groups based on their type.
     */
-   struct gl_shader **vert_shader_list;
-   unsigned num_vert_shaders = 0;
-   struct gl_shader **frag_shader_list;
-   unsigned num_frag_shaders = 0;
-   struct gl_shader **geom_shader_list;
-   unsigned num_geom_shaders = 0;
+   struct gl_shader **shader_list[MESA_SHADER_STAGES];
+   unsigned num_shaders[MESA_SHADER_STAGES];
 
-   vert_shader_list = (struct gl_shader **)
-      calloc(prog->NumShaders, sizeof(struct gl_shader *));
-   frag_shader_list = (struct gl_shader **)
-      calloc(prog->NumShaders, sizeof(struct gl_shader *));
-   geom_shader_list = (struct gl_shader **)
-      calloc(prog->NumShaders, sizeof(struct gl_shader *));
+   for (int i = 0; i < MESA_SHADER_STAGES; i++) {
+      shader_list[i] = (struct gl_shader **)
+         calloc(prog->NumShaders, sizeof(struct gl_shader *));
+      num_shaders[i] = 0;
+   }
 
    unsigned min_version = UINT_MAX;
    unsigned max_version = 0;
@@ -2026,20 +2023,9 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 	 goto done;
       }
 
-      switch (prog->Shaders[i]->Stage) {
-      case MESA_SHADER_VERTEX:
-	 vert_shader_list[num_vert_shaders] = prog->Shaders[i];
-	 num_vert_shaders++;
-	 break;
-      case MESA_SHADER_FRAGMENT:
-	 frag_shader_list[num_frag_shaders] = prog->Shaders[i];
-	 num_frag_shaders++;
-	 break;
-      case MESA_SHADER_GEOMETRY:
-	 geom_shader_list[num_geom_shaders] = prog->Shaders[i];
-	 num_geom_shaders++;
-	 break;
-      }
+      gl_shader_stage shader_type = prog->Shaders[i]->Stage;
+      shader_list[shader_type][num_shaders[shader_type]] = prog->Shaders[i];
+      num_shaders[shader_type]++;
    }
 
    /* In desktop GLSL, different shader versions may be linked together.  In
@@ -2056,7 +2042,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    /* Geometry shaders have to be linked with vertex shaders.
     */
-   if (num_geom_shaders > 0 && num_vert_shaders == 0) {
+   if (num_shaders[MESA_SHADER_GEOMETRY] > 0 &&
+       num_shaders[MESA_SHADER_VERTEX] == 0) {
       linker_error(prog, "Geometry shader must be linked with "
 		   "vertex shader\n");
       goto done;
@@ -2071,55 +2058,39 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    /* Link all shaders for a particular stage and validate the result.
     */
-   if (num_vert_shaders > 0) {
-      gl_shader *const sh =
-	 link_intrastage_shaders(mem_ctx, ctx, prog, vert_shader_list,
-				 num_vert_shaders);
+   for (int stage = 0; stage < MESA_SHADER_STAGES; stage++) {
+      if (num_shaders[stage] > 0) {
+         gl_shader *const sh =
+            link_intrastage_shaders(mem_ctx, ctx, prog, shader_list[stage],
+                                    num_shaders[stage]);
 
-      if (!prog->LinkStatus)
-	 goto done;
+         if (!prog->LinkStatus)
+            goto done;
 
-      validate_vertex_shader_executable(prog, sh);
-      if (!prog->LinkStatus)
-	 goto done;
-      prog->LastClipDistanceArraySize = prog->Vert.ClipDistanceArraySize;
+         switch (stage) {
+         case MESA_SHADER_VERTEX:
+            validate_vertex_shader_executable(prog, sh);
+            break;
+         case MESA_SHADER_GEOMETRY:
+            validate_geometry_shader_executable(prog, sh);
+            break;
+         case MESA_SHADER_FRAGMENT:
+            validate_fragment_shader_executable(prog, sh);
+            break;
+         }
+         if (!prog->LinkStatus)
+            goto done;
 
-      _mesa_reference_shader(ctx, &prog->_LinkedShaders[MESA_SHADER_VERTEX],
-			     sh);
+         _mesa_reference_shader(ctx, &prog->_LinkedShaders[stage], sh);
+      }
    }
 
-   if (num_frag_shaders > 0) {
-      gl_shader *const sh =
-	 link_intrastage_shaders(mem_ctx, ctx, prog, frag_shader_list,
-				 num_frag_shaders);
-
-      if (!prog->LinkStatus)
-	 goto done;
-
-      validate_fragment_shader_executable(prog, sh);
-      if (!prog->LinkStatus)
-	 goto done;
-
-      _mesa_reference_shader(ctx, &prog->_LinkedShaders[MESA_SHADER_FRAGMENT],
-			     sh);
-   }
-
-   if (num_geom_shaders > 0) {
-      gl_shader *const sh =
-	 link_intrastage_shaders(mem_ctx, ctx, prog, geom_shader_list,
-				 num_geom_shaders);
-
-      if (!prog->LinkStatus)
-	 goto done;
-
-      validate_geometry_shader_executable(prog, sh);
-      if (!prog->LinkStatus)
-	 goto done;
+   if (num_shaders[MESA_SHADER_GEOMETRY] > 0)
       prog->LastClipDistanceArraySize = prog->Geom.ClipDistanceArraySize;
-
-      _mesa_reference_shader(ctx, &prog->_LinkedShaders[MESA_SHADER_GEOMETRY],
-			     sh);
-   }
+   else if (num_shaders[MESA_SHADER_VERTEX] > 0)
+      prog->LastClipDistanceArraySize = prog->Vert.ClipDistanceArraySize;
+   else
+      prog->LastClipDistanceArraySize = 0; /* Not used */
 
    /* Here begins the inter-stage linking phase.  Some initial validation is
     * performed, then locations are assigned for uniforms, attributes, and
@@ -2377,11 +2348,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    /* FINISHME: Assign fragment shader output locations. */
 
 done:
-   free(vert_shader_list);
-   free(frag_shader_list);
-   free(geom_shader_list);
-
    for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
+      free(shader_list[i]);
       if (prog->_LinkedShaders[i] == NULL)
 	 continue;
 

@@ -110,6 +110,7 @@ void initialize_context_to_defaults(struct gl_context *ctx, gl_api api)
    ctx->Extensions.ARB_texture_query_levels = true;
    ctx->Extensions.ARB_texture_query_lod = true;
    ctx->Extensions.ARB_uniform_buffer_object = true;
+   ctx->Extensions.ARB_viewport_array = true;
 
    ctx->Extensions.OES_EGL_image_external = true;
    ctx->Extensions.OES_standard_derivatives = true;

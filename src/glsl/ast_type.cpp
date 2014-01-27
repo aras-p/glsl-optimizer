@@ -32,14 +32,8 @@ ast_type_specifier::print(void) const
       printf("%s ", type_name);
    }
 
-   if (is_array) {
-      printf("[ ");
-
-      if (array_size) {
-	 array_size->print();
-      }
-
-      printf("] ");
+   if (array_specifier) {
+      array_specifier->print();
    }
 }
 

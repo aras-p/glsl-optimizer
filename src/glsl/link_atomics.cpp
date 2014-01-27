@@ -105,9 +105,10 @@ namespace {
             ir_variable *var = ((ir_instruction *)node)->as_variable();
 
             if (var && var->type->contains_atomic()) {
-               unsigned id;
+               unsigned id = 0;
                bool found = prog->UniformHash->get(id, var->name);
                assert(found);
+               (void) found;
                active_atomic_buffer *buf = &buffers[var->data.binding];
 
                /* If this is the first time the buffer is used, increment

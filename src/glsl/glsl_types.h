@@ -552,6 +552,13 @@ struct glsl_type {
     */
    int sampler_coordinate_components() const;
 
+   /**
+    * Compare a record type against another record type.
+    *
+    * This is useful for matching record types declared across shader stages.
+    */
+   bool record_compare(const glsl_type *b) const;
+
 private:
    /**
     * ralloc context for all glsl_type allocations
