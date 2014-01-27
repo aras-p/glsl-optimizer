@@ -118,8 +118,8 @@ validate_texture_wrap_mode(struct gl_context * ctx, GLenum target, GLenum wrap)
 /**
  * Get current texture object for given target.
  * Return NULL if any error (and record the error).
- * Note that this is different from _mesa_select_tex_object() in that proxy
- * targets are not accepted.
+ * Note that this is different from _mesa_get_current_tex_object() in that
+ * proxy targets are not accepted.
  * Only the glGetTexLevelParameter() functions accept proxy targets.
  */
 static struct gl_texture_object *
@@ -1356,7 +1356,6 @@ void GLAPIENTRY
 _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                               GLenum pname, GLint *params )
 {
-   const struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    GLint maxLevels;
    GET_CURRENT_CONTEXT(ctx);
@@ -1366,8 +1365,6 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                   "glGetTexLevelParameteriv(current unit)");
       return;
    }
-
-   texUnit = _mesa_get_current_tex_unit(ctx);
 
    if (!legal_get_tex_level_parameter_target(ctx, target)) {
       _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1383,7 +1380,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
       return;
    }
 
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
+   texObj = _mesa_get_current_tex_object(ctx, target);
 
    if (target == GL_TEXTURE_BUFFER)
       get_tex_level_parameter_buffer(ctx, texObj, pname, params);
