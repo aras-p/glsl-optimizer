@@ -1577,6 +1577,20 @@ _mesa_MapBuffer(GLenum target, GLenum access)
    if (!bufObj)
       return NULL;
 
+   if (accessFlags & GL_MAP_READ_BIT &&
+       !(bufObj->StorageFlags & GL_MAP_READ_BIT)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glMapBuffer(invalid read flag)");
+      return NULL;
+   }
+
+   if (accessFlags & GL_MAP_WRITE_BIT &&
+       !(bufObj->StorageFlags & GL_MAP_WRITE_BIT)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glMapBuffer(invalid write flag)");
+      return NULL;
+   }
+
    if (_mesa_bufferobj_mapped(bufObj)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glMapBufferARB(already mapped)");
       return NULL;
@@ -1931,6 +1945,7 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
    void *map;
+   GLbitfield allowed_access;
 
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, NULL);
 
@@ -1965,13 +1980,20 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
       return NULL;
    }
 
-   if (access & ~(GL_MAP_READ_BIT |
-                  GL_MAP_WRITE_BIT |
-                  GL_MAP_INVALIDATE_RANGE_BIT |
-                  GL_MAP_INVALIDATE_BUFFER_BIT |
-                  GL_MAP_FLUSH_EXPLICIT_BIT |
-                  GL_MAP_UNSYNCHRONIZED_BIT)) {
-      /* generate an error if any undefind bit is set */
+   allowed_access = GL_MAP_READ_BIT |
+                    GL_MAP_WRITE_BIT |
+                    GL_MAP_INVALIDATE_RANGE_BIT |
+                    GL_MAP_INVALIDATE_BUFFER_BIT |
+                    GL_MAP_FLUSH_EXPLICIT_BIT |
+                    GL_MAP_UNSYNCHRONIZED_BIT;
+
+   if (ctx->Extensions.ARB_buffer_storage) {
+         allowed_access |= GL_MAP_PERSISTENT_BIT |
+                           GL_MAP_COHERENT_BIT;
+   }
+
+   if (access & ~allowed_access) {
+      /* generate an error if any other than allowed bit is set */
       _mesa_error(ctx, GL_INVALID_VALUE, "glMapBufferRange(access)");
       return NULL;
    }
@@ -2001,6 +2023,34 @@ _mesa_MapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length,
    bufObj = get_buffer(ctx, "glMapBufferRange", target, GL_INVALID_OPERATION);
    if (!bufObj)
       return NULL;
+
+   if (access & GL_MAP_READ_BIT &&
+       !(bufObj->StorageFlags & GL_MAP_READ_BIT)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glMapBufferRange(invalid read flag)");
+      return NULL;
+   }
+
+   if (access & GL_MAP_WRITE_BIT &&
+       !(bufObj->StorageFlags & GL_MAP_WRITE_BIT)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glMapBufferRange(invalid write flag)");
+      return NULL;
+   }
+
+   if (access & GL_MAP_COHERENT_BIT &&
+       !(bufObj->StorageFlags & GL_MAP_COHERENT_BIT)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glMapBufferRange(invalid coherent flag)");
+      return NULL;
+   }
+
+   if (access & GL_MAP_PERSISTENT_BIT &&
+       !(bufObj->StorageFlags & GL_MAP_PERSISTENT_BIT)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glMapBufferRange(invalid persistent flag)");
+      return NULL;
+   }
 
    if (offset + length > bufObj->Size) {
       _mesa_error(ctx, GL_INVALID_VALUE,
