@@ -1568,7 +1568,7 @@ _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
          return GL_FALSE;
       if (height < 2 * border || height > 2 * border + maxSize)
          return GL_FALSE;
-      if (depth < 1 || depth > ctx->Const.MaxArrayTextureLayers)
+      if (depth < 0 || depth > ctx->Const.MaxArrayTextureLayers)
          return GL_FALSE;
       if (!ctx->Extensions.ARB_texture_non_power_of_two) {
          if (width > 0 && !_mesa_is_pow_two(width - 2 * border))
@@ -1585,7 +1585,7 @@ _mesa_legal_texture_dimensions(struct gl_context *ctx, GLenum target,
          return GL_FALSE;
       if (height < 2 * border || height > 2 * border + maxSize)
          return GL_FALSE;
-      if (depth < 1 || depth > ctx->Const.MaxArrayTextureLayers || depth % 6)
+      if (depth < 0 || depth > ctx->Const.MaxArrayTextureLayers || depth % 6)
          return GL_FALSE;
       if (width != height)
          return GL_FALSE;
