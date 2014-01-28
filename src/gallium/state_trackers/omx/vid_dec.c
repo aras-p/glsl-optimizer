@@ -247,8 +247,7 @@ static OMX_ERRORTYPE vid_dec_Destructor(OMX_COMPONENTTYPE *comp)
    if (priv->screen)
       omx_put_screen();
 
-   omx_base_filter_Destructor(comp);
-   return OMX_ErrorNone;
+   return omx_workaround_Destructor(comp);
 }
 
 static OMX_ERRORTYPE vid_dec_SetParameter(OMX_HANDLETYPE handle, OMX_INDEXTYPE idx, OMX_PTR param)

@@ -98,3 +98,16 @@ void omx_put_screen(void)
    }
    pipe_mutex_unlock(omx_lock);
 }
+
+OMX_ERRORTYPE omx_workaround_Destructor(OMX_COMPONENTTYPE *comp)
+{
+   omx_base_component_PrivateType* priv = (omx_base_component_PrivateType*)comp->pComponentPrivate;
+
+   priv->state = OMX_StateInvalid;
+   tsem_up(priv->messageSem);
+
+   /* wait for thread to exit */;
+   pthread_join(priv->messageHandlerThread, NULL);
+
+   return omx_base_component_Destructor(comp);
+}
