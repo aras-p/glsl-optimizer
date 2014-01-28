@@ -1407,7 +1407,7 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 	struct pipe_resource *pipe_tex = surf->base.texture;
 	unsigned level = surf->base.u.tex.level;
 	unsigned pitch, slice;
-	unsigned color_info, color_attrib, color_dim = 0;
+	unsigned color_info, color_attrib, color_dim = 0, color_view;
 	unsigned format, swap, ntype, endian;
 	uint64_t offset, base_offset;
 	unsigned non_disp_tiling, macro_aspect, tile_split, bankh, bankw, fmask_bankh, nbanks;
@@ -1416,10 +1416,15 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 	bool blend_clamp = 0, blend_bypass = 0;
 
 	offset = rtex->surface.level[level].offset;
-	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
+	if (rtex->surface.level[level].mode == RADEON_SURF_MODE_LINEAR) {
+		assert(surf->base.u.tex.first_layer == surf->base.u.tex.last_layer);
 		offset += rtex->surface.level[level].slice_size *
 			  surf->base.u.tex.first_layer;
-	}
+		color_view = 0;
+	} else
+		color_view = S_028C6C_SLICE_START(surf->base.u.tex.first_layer) |
+			     S_028C6C_SLICE_MAX(surf->base.u.tex.last_layer);
+
 	pitch = (rtex->surface.level[level].nblk_x) / 8 - 1;
 	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
 	if (slice) {
@@ -1569,12 +1574,7 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 	surf->cb_color_info = color_info;
 	surf->cb_color_pitch = S_028C64_PITCH_TILE_MAX(pitch);
 	surf->cb_color_slice = S_028C68_SLICE_TILE_MAX(slice);
-	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
-		surf->cb_color_view = 0;
-	} else {
-		surf->cb_color_view = S_028C6C_SLICE_START(surf->base.u.tex.first_layer) |
-				      S_028C6C_SLICE_MAX(surf->base.u.tex.last_layer);
-	}
+	surf->cb_color_view = color_view;
 	surf->cb_color_attrib = color_attrib;
 	if (rtex->fmask.size) {
 		surf->cb_color_fmask = (base_offset + rtex->fmask.offset) >> 8;

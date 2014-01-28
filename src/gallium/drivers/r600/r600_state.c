@@ -1264,6 +1264,7 @@ static void r600_init_color_surface(struct r600_context *rctx,
 	unsigned level = surf->base.u.tex.level;
 	unsigned pitch, slice;
 	unsigned color_info;
+	unsigned color_view;
 	unsigned format, swap, ntype, endian;
 	unsigned offset;
 	const struct util_format_description *desc;
@@ -1277,10 +1278,15 @@ static void r600_init_color_surface(struct r600_context *rctx,
 	}
 
 	offset = rtex->surface.level[level].offset;
-	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
+	if (rtex->surface.level[level].mode == RADEON_SURF_MODE_LINEAR) {
+		assert(surf->base.u.tex.first_layer == surf->base.u.tex.last_layer);
 		offset += rtex->surface.level[level].slice_size *
-			  surf->base.u.tex.first_layer;
-	}
+			surf->base.u.tex.first_layer;
+		color_view = 0;
+	} else
+		color_view = S_028080_SLICE_START(surf->base.u.tex.first_layer) |
+			     S_028080_SLICE_MAX(surf->base.u.tex.last_layer);
+
 	pitch = rtex->surface.level[level].nblk_x / 8 - 1;
 	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
 	if (slice) {
@@ -1466,14 +1472,7 @@ static void r600_init_color_surface(struct r600_context *rctx,
 	}
 
 	surf->cb_color_info = color_info;
-
-	if (rtex->surface.level[level].mode < RADEON_SURF_MODE_1D) {
-		surf->cb_color_view = 0;
-	} else {
-		surf->cb_color_view = S_028080_SLICE_START(surf->base.u.tex.first_layer) |
-				      S_028080_SLICE_MAX(surf->base.u.tex.last_layer);
-	}
-
+	surf->cb_color_view = color_view;
 	surf->color_initialized = true;
 }
 
