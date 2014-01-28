@@ -36,6 +36,7 @@
 #include <xf86drm.h>
 
 #include "egl_dri2.h"
+#include "egl_dri2_fallbacks.h"
 #include "loader.h"
 
 #include <wayland-client.h>
@@ -958,6 +959,7 @@ dri2_wl_setup_swap_interval(struct dri2_egl_display *dri2_dpy)
 
 static struct dri2_egl_display_vtbl dri2_wl_display_vtbl = {
    .authenticate = dri2_wl_authenticate,
+   .swap_interval = dri2_wl_swap_interval,
 };
 
 EGLBoolean
@@ -978,7 +980,6 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.DestroySurface = dri2_wl_destroy_surface;
    drv->API.SwapBuffers = dri2_wl_swap_buffers;
    drv->API.SwapBuffersWithDamageEXT = dri2_wl_swap_buffers_with_damage;
-   drv->API.SwapInterval = dri2_wl_swap_interval;
    drv->API.Terminate = dri2_wl_terminate;
    drv->API.QueryBufferAge = dri2_wl_query_buffer_age;
 

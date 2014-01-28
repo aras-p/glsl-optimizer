@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include "egl_dri2.h"
+#include "egl_dri2_fallbacks.h"
 #include "loader.h"
 
 static struct gbm_bo *
@@ -442,6 +443,7 @@ dri2_drm_authenticate(_EGLDisplay *disp, uint32_t id)
 
 static struct dri2_egl_display_vtbl dri2_drm_display_vtbl = {
    .authenticate = dri2_drm_authenticate,
+   .swap_interval = dri2_fallback_swap_interval,
 };
 
 EGLBoolean

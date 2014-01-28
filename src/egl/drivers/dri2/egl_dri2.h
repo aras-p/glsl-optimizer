@@ -86,6 +86,9 @@ struct dri2_egl_driver
 
 struct dri2_egl_display_vtbl {
    int (*authenticate)(_EGLDisplay *disp, uint32_t id);
+
+   EGLBoolean (*swap_interval)(_EGLDriver *drv, _EGLDisplay *dpy,
+                               _EGLSurface *surf, EGLint interval);
 };
 
 struct dri2_egl_display

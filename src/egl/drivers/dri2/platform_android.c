@@ -36,6 +36,7 @@
 
 #include "loader.h"
 #include "egl_dri2.h"
+#include "egl_dri2_fallbacks.h"
 #include "gralloc_drm.h"
 
 static int
@@ -654,6 +655,7 @@ droid_log(EGLint level, const char *msg)
 
 static struct dri2_egl_display_vtbl droid_display_vtbl = {
    .authenticate = NULL,
+   .swap_interval = dri2_fallback_swap_interval,
 };
 
 EGLBoolean

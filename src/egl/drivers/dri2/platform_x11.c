@@ -40,6 +40,7 @@
 #include <sys/stat.h>
 
 #include "egl_dri2.h"
+#include "egl_dri2_fallbacks.h"
 
 static EGLBoolean
 dri2_x11_swap_interval(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
@@ -993,10 +994,12 @@ dri2_x11_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
 
 static struct dri2_egl_display_vtbl dri2_x11_swrast_display_vtbl = {
    .authenticate = NULL,
+   .swap_interval = dri2_fallback_swap_interval,
 };
 
 static struct dri2_egl_display_vtbl dri2_x11_display_vtbl = {
    .authenticate = dri2_x11_authenticate,
+   .swap_interval = dri2_x11_swap_interval,
 };
 
 static EGLBoolean
@@ -1139,7 +1142,6 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.CreateImageKHR = dri2_x11_create_image_khr;
    drv->API.SwapBuffersRegionNOK = dri2_x11_swap_buffers_region;
    drv->API.PostSubBufferNV = dri2_x11_post_sub_buffer;
-   drv->API.SwapInterval = dri2_x11_swap_interval;
 
    dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)
