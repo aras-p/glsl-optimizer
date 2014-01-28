@@ -47,6 +47,7 @@
 #include "st_context.h"
 #include "st_texture.h"
 #include "st_format.h"
+#include "st_cb_flush.h"
 
 static void
 st_vdpau_map_surface(struct gl_context *ctx, GLenum target, GLenum access,
@@ -163,6 +164,7 @@ st_vdpau_unmap_surface(struct gl_context *ctx, GLenum target, GLenum access,
                        struct gl_texture_image *texImage,
                        const GLvoid *vdpSurface, GLuint index)
 {
+   struct st_context *st = st_context(ctx);
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
 
@@ -171,6 +173,8 @@ st_vdpau_unmap_surface(struct gl_context *ctx, GLenum target, GLenum access,
    pipe_resource_reference(&stImage->pt, NULL);
 
    _mesa_dirty_texobj(ctx, texObj);
+
+   st_flush(st, NULL, 0);
 }
 
 void
