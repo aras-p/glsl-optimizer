@@ -487,6 +487,7 @@ static int r600_spi_sid(struct r600_shader_io * io)
 	 */
 	if (name == TGSI_SEMANTIC_POSITION ||
 		name == TGSI_SEMANTIC_PSIZE ||
+		name == TGSI_SEMANTIC_LAYER ||
 		name == TGSI_SEMANTIC_FACE)
 		index = 0;
 	else {
@@ -617,6 +618,10 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 			case TGSI_SEMANTIC_PSIZE:
 				ctx->shader->vs_out_misc_write = 1;
 				ctx->shader->vs_out_point_size = 1;
+				break;
+			case TGSI_SEMANTIC_LAYER:
+				ctx->shader->vs_out_misc_write = 1;
+				ctx->shader->vs_out_layer = 1;
 				break;
 			case TGSI_SEMANTIC_CLIPVERTEX:
 				ctx->clip_vertex_write = TRUE;
@@ -1157,7 +1162,7 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 	struct r600_bytecode_output output;
 	struct r600_bytecode_cf *cf_jump, *cf_pop,
 		*last_exp_pos = NULL, *last_exp_param = NULL;
-	int i, next_pos = 60, next_param = 0;
+	int i, next_clip_pos = 62, next_param = 0;
 
 	cshader = calloc(1, sizeof(struct r600_pipe_shader));
 	if (!cshader)
@@ -1252,13 +1257,24 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 		output.op = CF_OP_EXPORT;
 		switch (out->name) {
 		case TGSI_SEMANTIC_POSITION:
-			output.array_base = next_pos++;
+			output.array_base = 60;
 			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 			break;
 
 		case TGSI_SEMANTIC_PSIZE:
-			output.array_base = next_pos++;
+			output.array_base = 61;
 			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+			output.swizzle_y = 7;
+			output.swizzle_z = 7;
+			output.swizzle_w = 7;
+			break;
+		case TGSI_SEMANTIC_LAYER:
+			output.array_base = 61;
+			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+			output.swizzle_x = 7;
+			output.swizzle_y = 7;
+			output.swizzle_z = 0;
+			output.swizzle_w = 7;
 			break;
 		case TGSI_SEMANTIC_CLIPDIST:
 			/* spi_sid is 0 for clipdistance outputs that were generated
@@ -1269,7 +1285,7 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 				r600_bytecode_add_output(ctx.bc, &output);
 				last_exp_param = ctx.bc->cf_last;
 			}
-			output.array_base = next_pos++;
+			output.array_base = next_clip_pos++;
 			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 			break;
 		case TGSI_SEMANTIC_FOG:
@@ -1299,7 +1315,7 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 		output.burst_count = 1;
 		output.type = 2;
 		output.op = CF_OP_EXPORT;
-		output.array_base = next_pos++;
+		output.array_base = 60;
 		output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 		r600_bytecode_add_output(ctx.bc, &output);
 		last_exp_pos = ctx.bc->cf_last;
@@ -1430,12 +1446,13 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 	unsigned output_done, noutput;
 	unsigned opcode;
 	int i, j, k, r = 0;
-	int next_pos_base = 60, next_param_base = 0;
+	int next_param_base = 0, next_clip_base;
 	int max_color_exports = MAX2(key.nr_cbufs, 1);
 	/* Declarations used by llvm code */
 	bool use_llvm = false;
 	bool indirect_gprs;
 	bool ring_outputs = false;
+	bool pos_emitted = false;
 
 #ifdef R600_USE_LLVM
 	use_llvm = !(rscreen->b.debug_flags & DBG_NO_LLVM);
@@ -1863,7 +1880,9 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 		if (key.vs_as_es)
 			emit_gs_ring_writes(&ctx, FALSE);
 	} else {
-		/* export output */
+		/* Export output */
+		next_clip_base = shader->vs_out_misc_write ? 62 : 61;
+
 		for (i = 0, j = 0; i < noutput; i++, j++) {
 			memset(&output[j], 0, sizeof(struct r600_bytecode_output));
 			output[j].gpr = shader->output[i].gpr;
@@ -1879,20 +1898,35 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 			case TGSI_PROCESSOR_VERTEX:
 				switch (shader->output[i].name) {
 				case TGSI_SEMANTIC_POSITION:
-					output[j].array_base = next_pos_base++;
+					output[j].array_base = 60;
 					output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+					pos_emitted = true;
 					break;
 
 				case TGSI_SEMANTIC_PSIZE:
-					output[j].array_base = next_pos_base++;
+					output[j].array_base = 61;
+					output[j].swizzle_y = 7;
+					output[j].swizzle_z = 7;
+					output[j].swizzle_w = 7;
 					output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+					pos_emitted = true;
+					break;
+				case TGSI_SEMANTIC_LAYER:
+					output[j].array_base = 61;
+					output[j].swizzle_x = 7;
+					output[j].swizzle_y = 7;
+					output[j].swizzle_z = 0;
+					output[j].swizzle_w = 7;
+					output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+					pos_emitted = true;
 					break;
 				case TGSI_SEMANTIC_CLIPVERTEX:
 					j--;
 					break;
 				case TGSI_SEMANTIC_CLIPDIST:
-					output[j].array_base = next_pos_base++;
+					output[j].array_base = next_clip_base++;
 					output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+					pos_emitted = true;
 					/* spi_sid is 0 for clipdistance outputs that were generated
 					 * for clipvertex - we don't need to pass them to PS */
 					if (shader->output[i].spi_sid) {
@@ -1970,7 +2004,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 		}
 
 		/* add fake position export */
-		if (ctx.type == TGSI_PROCESSOR_VERTEX && next_pos_base == 60) {
+		if (ctx.type == TGSI_PROCESSOR_VERTEX && pos_emitted == false) {
 			memset(&output[j], 0, sizeof(struct r600_bytecode_output));
 			output[j].gpr = 0;
 			output[j].elem_size = 3;
@@ -1980,7 +2014,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 			output[j].swizzle_w = 7;
 			output[j].burst_count = 1;
 			output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
-			output[j].array_base = next_pos_base;
+			output[j].array_base = 60;
 			output[j].op = CF_OP_EXPORT;
 			j++;
 		}

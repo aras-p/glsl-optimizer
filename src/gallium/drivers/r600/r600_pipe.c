@@ -383,6 +383,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	/* Supported on Evergreen. */
 	case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
 	case PIPE_CAP_CUBE_MAP_ARRAY:
+	case PIPE_CAP_TGSI_VS_LAYER:
 		return family >= CHIP_CEDAR ? 1 : 0;
 
 	/* Unsupported features. */
@@ -392,7 +393,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_FRAGMENT_COLOR_CLAMPED:
 	case PIPE_CAP_VERTEX_COLOR_CLAMPED:
 	case PIPE_CAP_USER_VERTEX_BUFFERS:
-	case PIPE_CAP_TGSI_VS_LAYER:
 		return 0;
 
 	/* Stream output. */
