@@ -598,7 +598,6 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 	rscreen->b.fence_finish = r600_fence_finish;
 	rscreen->b.fence_reference = r600_fence_reference;
 	rscreen->b.fence_signalled = r600_fence_signalled;
-	rscreen->b.resource_create = r600_resource_create_common;
 	rscreen->b.resource_destroy = u_resource_destroy_vtbl;
 
 	if (rscreen->info.has_uvd) {

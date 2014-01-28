@@ -413,6 +413,7 @@ struct pipe_screen *radeonsi_screen_create(struct radeon_winsys *ws)
 	sscreen->b.b.get_param = si_get_param;
 	sscreen->b.b.get_shader_param = si_get_shader_param;
 	sscreen->b.b.is_format_supported = si_is_format_supported;
+	sscreen->b.b.resource_create = r600_resource_create_common;
 
 	if (!r600_common_screen_init(&sscreen->b, ws)) {
 		FREE(sscreen);
