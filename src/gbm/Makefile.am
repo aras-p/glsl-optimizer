@@ -50,3 +50,4 @@ endif
 all-local: libgbm.la
 	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
 	ln -f .libs/libgbm.so.1.0.0 $(top_builddir)/$(LIB_DIR)/libgbm.so
+	ln -f .libs/libgbm.so.1.0.0 $(top_builddir)/$(LIB_DIR)/libgbm.so.1
