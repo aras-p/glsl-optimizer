@@ -67,8 +67,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_LIBUDEV
 #include <assert.h>
 #include <dlfcn.h>
+#endif
 #include "loader.h"
 
 #ifndef __NOT_HAVE_DRM_H
