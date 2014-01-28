@@ -34,23 +34,23 @@
 #define SI_SGPR_CONST		0
 #define SI_SGPR_SAMPLER		2
 #define SI_SGPR_RESOURCE	4
-#define SI_SGPR_VERTEX_BUFFER	6  /* VS only */
-#define SI_SGPR_SO_BUFFER	8  /* VS only, stream-out */
+#define SI_SGPR_RW_BUFFERS	6  /* rings (& stream-out, VS only) */
+#define SI_SGPR_VERTEX_BUFFER	8  /* VS only */
 #define SI_SGPR_START_INSTANCE	10 /* VS only */
-#define SI_SGPR_ALPHA_REF	6  /* PS only */
+#define SI_SGPR_ALPHA_REF	8  /* PS only */
 
 #define SI_VS_NUM_USER_SGPR	11
-#define SI_GS_NUM_USER_SGPR	6
-#define SI_PS_NUM_USER_SGPR	7
+#define SI_GS_NUM_USER_SGPR	8
+#define SI_PS_NUM_USER_SGPR	9
 
 /* LLVM function parameter indices */
 #define SI_PARAM_CONST		0
 #define SI_PARAM_SAMPLER	1
 #define SI_PARAM_RESOURCE	2
+#define SI_PARAM_RW_BUFFERS	3
 
 /* VS only parameters */
-#define SI_PARAM_VERTEX_BUFFER	3
-#define SI_PARAM_SO_BUFFER	4
+#define SI_PARAM_VERTEX_BUFFER	4
 #define SI_PARAM_START_INSTANCE	5
 /* the other VS parameters are assigned dynamically */
 
@@ -58,36 +58,38 @@
 #define SI_PARAM_ES2GS_OFFSET	6
 
 /* GS only parameters */
-#define SI_PARAM_GS2VS_OFFSET	3
-#define SI_PARAM_GS_WAVE_ID	4
-#define SI_PARAM_VTX0_OFFSET	5
-#define SI_PARAM_VTX1_OFFSET	6
-#define SI_PARAM_PRIMITIVE_ID	7
-#define SI_PARAM_VTX2_OFFSET	8
-#define SI_PARAM_VTX3_OFFSET	9
-#define SI_PARAM_VTX4_OFFSET	10
-#define SI_PARAM_VTX5_OFFSET	11
-#define SI_PARAM_GS_INSTANCE_ID	12
+#define SI_PARAM_GS2VS_OFFSET	4
+#define SI_PARAM_GS_WAVE_ID	5
+#define SI_PARAM_VTX0_OFFSET	6
+#define SI_PARAM_VTX1_OFFSET	7
+#define SI_PARAM_PRIMITIVE_ID	8
+#define SI_PARAM_VTX2_OFFSET	9
+#define SI_PARAM_VTX3_OFFSET	10
+#define SI_PARAM_VTX4_OFFSET	11
+#define SI_PARAM_VTX5_OFFSET	12
+#define SI_PARAM_GS_INSTANCE_ID	13
 
 /* PS only parameters */
-#define SI_PARAM_ALPHA_REF		3
-#define SI_PARAM_PRIM_MASK		4
-#define SI_PARAM_PERSP_SAMPLE		5
-#define SI_PARAM_PERSP_CENTER		6
-#define SI_PARAM_PERSP_CENTROID		7
-#define SI_PARAM_PERSP_PULL_MODEL	8
-#define SI_PARAM_LINEAR_SAMPLE		9
-#define SI_PARAM_LINEAR_CENTER		10
-#define SI_PARAM_LINEAR_CENTROID	11
-#define SI_PARAM_LINE_STIPPLE_TEX	12
-#define SI_PARAM_POS_X_FLOAT		13
-#define SI_PARAM_POS_Y_FLOAT		14
-#define SI_PARAM_POS_Z_FLOAT		15
-#define SI_PARAM_POS_W_FLOAT		16
-#define SI_PARAM_FRONT_FACE		17
-#define SI_PARAM_ANCILLARY		18
-#define SI_PARAM_SAMPLE_COVERAGE	19
-#define SI_PARAM_POS_FIXED_PT		20
+#define SI_PARAM_ALPHA_REF		4
+#define SI_PARAM_PRIM_MASK		5
+#define SI_PARAM_PERSP_SAMPLE		6
+#define SI_PARAM_PERSP_CENTER		7
+#define SI_PARAM_PERSP_CENTROID		8
+#define SI_PARAM_PERSP_PULL_MODEL	9
+#define SI_PARAM_LINEAR_SAMPLE		10
+#define SI_PARAM_LINEAR_CENTER		11
+#define SI_PARAM_LINEAR_CENTROID	12
+#define SI_PARAM_LINE_STIPPLE_TEX	13
+#define SI_PARAM_POS_X_FLOAT		14
+#define SI_PARAM_POS_Y_FLOAT		15
+#define SI_PARAM_POS_Z_FLOAT		16
+#define SI_PARAM_POS_W_FLOAT		17
+#define SI_PARAM_FRONT_FACE		18
+#define SI_PARAM_ANCILLARY		19
+#define SI_PARAM_SAMPLE_COVERAGE	20
+#define SI_PARAM_POS_FIXED_PT		21
+
+#define SI_NUM_PARAMS (SI_PARAM_POS_FIXED_PT + 1)
 
 struct si_shader_input {
 	unsigned		name;

@@ -78,6 +78,8 @@ struct si_surface {
 
 #define SI_NUM_SHADERS (PIPE_SHADER_GEOMETRY+1)
 
+#define SI_RW_SO 2 /* Streamout buffer descriptors after ring buffers */
+
 struct si_context {
 	struct r600_common_context	b;
 	struct blitter_context		*blitter;
@@ -93,8 +95,8 @@ struct si_context {
 		struct {
 			/* The order matters. */
 			struct r600_atom *const_buffers[SI_NUM_SHADERS];
+			struct r600_atom *rw_buffers[SI_NUM_SHADERS];
 			struct r600_atom *sampler_views[SI_NUM_SHADERS];
-			struct r600_atom *streamout_buffers;
 			/* Caches must be flushed after resource descriptors are
 			 * updated in memory. */
 			struct r600_atom *cache_flush;
@@ -120,7 +122,7 @@ struct si_context {
 	unsigned			sprite_coord_enable;
 	unsigned			export_16bpc;
 	struct si_buffer_resources	const_buffers[SI_NUM_SHADERS];
-	struct si_buffer_resources	streamout_buffers;
+	struct si_buffer_resources	rw_buffers[SI_NUM_SHADERS];
 	struct si_textures_info	samplers[SI_NUM_SHADERS];
 	struct r600_resource		*border_color_table;
 	unsigned			border_color_offset;

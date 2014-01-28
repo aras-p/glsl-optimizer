@@ -115,10 +115,10 @@ union si_state {
 #define NUM_SAMPLER_STATES	NUM_TEX_UNITS
 
 #define NUM_PIPE_CONST_BUFFERS	16
-#define SI_RING_ESGS		17
-#define SI_RING_GSVS		18
-#define NUM_CONST_BUFFERS	(SI_RING_GSVS + 1)
+#define NUM_CONST_BUFFERS	(NUM_PIPE_CONST_BUFFERS + 1)
 
+#define SI_RING_ESGS		0
+#define SI_RING_GSVS		1
 
 /* This represents resource descriptors in memory, such as buffer resources,
  * image resources, and sampler states.

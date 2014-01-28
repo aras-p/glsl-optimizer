@@ -319,7 +319,8 @@ static LLVMValueRef fetch_input_gs(
 				      4);
 
 	/* Load the ESGS ring resource descriptor */
-	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
+	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
+				  SI_PARAM_RW_BUFFERS);
 	t_list = build_indexed_load(si_shader_ctx, t_list_ptr,
 				    lp_build_const_int32(gallivm, SI_RING_ESGS));
 
@@ -1202,7 +1203,8 @@ static void si_llvm_emit_es_epilogue(struct lp_build_tgsi_context * bld_base)
 	}
 
 	/* Load the ESGS ring resource descriptor */
-	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
+	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
+				  SI_PARAM_RW_BUFFERS);
 	t_list = build_indexed_load(si_shader_ctx, t_list_ptr,
 				    lp_build_const_int32(gallivm, SI_RING_ESGS));
 
@@ -1910,7 +1912,8 @@ static void si_llvm_emit_vertex(
 	int i;
 
 	/* Load the GSVS ring resource descriptor */
-	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
+	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
+				  SI_PARAM_RW_BUFFERS);
 	t_list = build_indexed_load(si_shader_ctx, t_list_ptr,
 				    lp_build_const_int32(gallivm, SI_RING_GSVS));
 
@@ -2038,7 +2041,7 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	struct lp_build_tgsi_context *bld_base = &si_shader_ctx->radeon_bld.soa.bld_base;
 	struct gallivm_state *gallivm = bld_base->base.gallivm;
 	struct si_pipe_shader *shader = si_shader_ctx->shader;
-	LLVMTypeRef params[21], f32, i8, i32, v2i32, v3i32;
+	LLVMTypeRef params[SI_NUM_PARAMS], f32, i8, i32, v2i32, v3i32;
 	unsigned i, last_sgpr, num_params;
 
 	i8 = LLVMInt8TypeInContext(gallivm->context);
@@ -2049,6 +2052,8 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 
 	params[SI_PARAM_CONST] = LLVMPointerType(
 		LLVMArrayType(LLVMVectorType(i8, 16), NUM_CONST_BUFFERS), CONST_ADDR_SPACE);
+	params[SI_PARAM_RW_BUFFERS] = params[SI_PARAM_CONST];
+
 	/* We assume at most 16 textures per program at the moment.
 	 * This need probably need to be changed to support bindless textures */
 	params[SI_PARAM_SAMPLER] = LLVMPointerType(
@@ -2059,7 +2064,6 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	switch (si_shader_ctx->type) {
 	case TGSI_PROCESSOR_VERTEX:
 		params[SI_PARAM_VERTEX_BUFFER] = params[SI_PARAM_CONST];
-		params[SI_PARAM_SO_BUFFER] = params[SI_PARAM_CONST];
 		params[SI_PARAM_START_INSTANCE] = i32;
 		num_params = SI_PARAM_START_INSTANCE+1;
 		if (shader->key.vs.as_es) {
@@ -2257,12 +2261,13 @@ static void preload_streamout_buffers(struct si_shader_context *si_shader_ctx)
 		return;
 
 	LLVMValueRef buf_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
-					    SI_PARAM_SO_BUFFER);
+					    SI_PARAM_RW_BUFFERS);
 
 	/* Load the resources, we rely on the code sinking to do the rest */
 	for (i = 0; i < 4; ++i) {
 		if (si_shader_ctx->shader->selector->so.stride[i]) {
-			LLVMValueRef offset = lp_build_const_int32(gallivm, i);
+			LLVMValueRef offset = lp_build_const_int32(gallivm,
+								   SI_RW_SO + i);
 
 			si_shader_ctx->so_buffers[i] = build_indexed_load(si_shader_ctx, buf_ptr, offset);
 		}
@@ -2371,7 +2376,8 @@ static int si_generate_gs_copy_shader(struct si_context *sctx,
 	preload_streamout_buffers(si_shader_ctx);
 
 	/* Load the GSVS ring resource descriptor */
-	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
+	t_list_ptr = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
+				  SI_PARAM_RW_BUFFERS);
 	t_list = build_indexed_load(si_shader_ctx, t_list_ptr,
 				    lp_build_const_int32(gallivm, SI_RING_GSVS));
 
