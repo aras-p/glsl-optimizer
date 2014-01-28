@@ -47,6 +47,10 @@ enum wl_drm_format_flags {
    HAS_RGB565 = 4,
 };
 
+static EGLBoolean
+dri2_wl_swap_interval(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
+                      EGLint interval);
+
 static void
 sync_callback(void *data, struct wl_callback *callback, uint32_t serial)
 {
@@ -191,7 +195,7 @@ dri2_wl_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
                                  window, attrib_list);
 
    if (surf != NULL)
-      drv->API.SwapInterval(drv, disp, surf, dri2_dpy->default_swap_interval);
+      dri2_wl_swap_interval(drv, disp, surf, dri2_dpy->default_swap_interval);
 
    return surf;
 }

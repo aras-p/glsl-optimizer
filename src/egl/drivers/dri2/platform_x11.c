@@ -41,6 +41,10 @@
 
 #include "egl_dri2.h"
 
+static EGLBoolean
+dri2_x11_swap_interval(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
+                       EGLint interval);
+
 static void
 swrastCreateDrawable(struct dri2_egl_display * dri2_dpy,
                      struct dri2_egl_surface * dri2_surf,
@@ -287,7 +291,7 @@ dri2_x11_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
       surf->SwapInterval = 1;
 
       /* Override that with a driconf-set value. */
-      drv->API.SwapInterval(drv, disp, surf, dri2_dpy->default_swap_interval);
+      dri2_x11_swap_interval(drv, disp, surf, dri2_dpy->default_swap_interval);
    }
 
    return surf;
