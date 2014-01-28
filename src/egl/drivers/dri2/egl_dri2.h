@@ -84,8 +84,14 @@ struct dri2_egl_driver
    void (*glFlush)(void);
 };
 
+struct dri2_egl_display_vtbl {
+   int (*authenticate)(_EGLDisplay *disp, uint32_t id);
+};
+
 struct dri2_egl_display
 {
+   const struct dri2_egl_display_vtbl *vtbl;
+
    int                       dri2_major;
    int                       dri2_minor;
    __DRIscreen              *dri_screen;
@@ -134,8 +140,6 @@ struct dri2_egl_display
    int			     formats;
    uint32_t                  capabilities;
 #endif
-
-   int (*authenticate) (_EGLDisplay *disp, uint32_t id);
 };
 
 struct dri2_egl_context

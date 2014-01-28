@@ -985,6 +985,14 @@ dri2_x11_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
    }
 }
 
+static struct dri2_egl_display_vtbl dri2_x11_swrast_display_vtbl = {
+   .authenticate = NULL,
+};
+
+static struct dri2_egl_display_vtbl dri2_x11_display_vtbl = {
+   .authenticate = dri2_x11_authenticate,
+};
+
 static EGLBoolean
 dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
 {
@@ -1043,6 +1051,11 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
    /* we're supporting EGL 1.4 */
    disp->VersionMajor = 1;
    disp->VersionMinor = 4;
+
+   /* Fill vtbl last to prevent accidentally calling virtual function during
+    * initialization.
+    */
+   dri2_dpy->vtbl = &dri2_x11_swrast_display_vtbl;
 
    return EGL_TRUE;
 
@@ -1209,11 +1222,14 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
 	 goto cleanup_configs;
    }
 
-   dri2_dpy->authenticate = dri2_x11_authenticate;
-
    /* we're supporting EGL 1.4 */
    disp->VersionMajor = 1;
    disp->VersionMinor = 4;
+
+   /* Fill vtbl last to prevent accidentally calling virtual function during
+    * initialization.
+    */
+   dri2_dpy->vtbl = &dri2_x11_display_vtbl;
 
    return EGL_TRUE;
 

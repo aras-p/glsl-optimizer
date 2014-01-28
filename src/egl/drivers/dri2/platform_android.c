@@ -652,6 +652,10 @@ droid_log(EGLint level, const char *msg)
    }
 }
 
+static struct dri2_egl_display_vtbl droid_display_vtbl = {
+   .authenticate = NULL,
+};
+
 EGLBoolean
 dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *dpy)
 {
@@ -715,6 +719,11 @@ dri2_initialize_android(_EGLDriver *drv, _EGLDisplay *dpy)
    dpy->VersionMinor = 4;
 
    droid_init_driver_functions(drv);
+
+   /* Fill vtbl last to prevent accidentally calling virtual function during
+    * initialization.
+    */
+   dri2_dpy->vtbl = &droid_display_vtbl;
 
    return EGL_TRUE;
 

@@ -440,6 +440,10 @@ dri2_drm_authenticate(_EGLDisplay *disp, uint32_t id)
    return drmAuthMagic(dri2_dpy->fd, id);
 }
 
+static struct dri2_egl_display_vtbl dri2_drm_display_vtbl = {
+   .authenticate = dri2_drm_authenticate,
+};
+
 EGLBoolean
 dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 {
@@ -543,11 +547,15 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 #ifdef HAVE_WAYLAND_PLATFORM
    disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
 #endif
-   dri2_dpy->authenticate = dri2_drm_authenticate;
 
    /* we're supporting EGL 1.4 */
    disp->VersionMajor = 1;
    disp->VersionMinor = 4;
+
+   /* Fill vtbl last to prevent accidentally calling virtual function during
+    * initialization.
+    */
+   dri2_dpy->vtbl = &dri2_drm_display_vtbl;
 
    return EGL_TRUE;
 }

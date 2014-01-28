@@ -952,6 +952,10 @@ dri2_setup_swap_interval(struct dri2_egl_display *dri2_dpy)
    }
 }
 
+static struct dri2_egl_display_vtbl dri2_wl_display_vtbl = {
+   .authenticate = dri2_wayland_authenticate,
+};
+
 EGLBoolean
 dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 {
@@ -1062,13 +1066,17 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
    disp->Extensions.WL_create_wayland_buffer_from_image = EGL_TRUE;
    disp->Extensions.EXT_buffer_age = EGL_TRUE;
-   dri2_dpy->authenticate = dri2_wayland_authenticate;
 
    disp->Extensions.EXT_swap_buffers_with_damage = EGL_TRUE;
 
    /* we're supporting EGL 1.4 */
    disp->VersionMajor = 1;
    disp->VersionMinor = 4;
+
+   /* Fill vtbl last to prevent accidentally calling virtual function during
+    * initialization.
+    */
+   dri2_dpy->vtbl = &dri2_wl_display_vtbl;
 
    return EGL_TRUE;
 

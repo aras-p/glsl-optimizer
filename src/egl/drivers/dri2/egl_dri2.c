@@ -1880,7 +1880,7 @@ dri2_bind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *disp,
 	   return EGL_FALSE;
 
    wl_drm_callbacks.authenticate =
-      (int(*)(void *, uint32_t)) dri2_dpy->authenticate;
+      (int(*)(void *, uint32_t)) dri2_dpy->vtbl->authenticate;
 
    ret = drmGetCap(dri2_dpy->fd, DRM_CAP_PRIME, &cap);
    if (ret == 0 && cap == (DRM_PRIME_CAP_IMPORT | DRM_PRIME_CAP_EXPORT) &&
