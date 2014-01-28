@@ -867,6 +867,10 @@ xyesno)
     ;;
 esac
 
+if test "$have_libudev" = yes; then
+    DEFINES="$DEFINES -DHAVE_LIBUDEV"
+fi
+
 # This is outside the case (above) so that it is invoked even for non-GLX
 # builds.
 AM_CONDITIONAL(HAVE_XF86VIDMODE, test "x$HAVE_XF86VIDMODE" = xyes)
@@ -1203,9 +1207,6 @@ if test "x$enable_egl" = xyes; then
 
     if test "$enable_static" != yes; then
         # build egl_glx when libGL is built
-        if test "$have_libudev" = yes; then
-            DEFINES="$DEFINES -DHAVE_LIBUDEV"
-        fi
 
         if test "x$enable_dri" = xyes; then
 	    HAVE_EGL_DRIVER_DRI2=1
