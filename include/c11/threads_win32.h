@@ -30,6 +30,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <process.h>  // MSVCRT
+#include <stdlib.h>
 
 /*
 Configuration macro:
