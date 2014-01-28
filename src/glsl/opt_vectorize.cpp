@@ -151,6 +151,11 @@ rewrite_swizzle(ir_instruction *ir, void *data)
                expr->operands[i] = new(ir) ir_swizzle(deref, 0, 0, 0, 0,
                                                       mask->num_components);
             }
+			 ir_constant *cns = expr->operands[i]->as_constant();
+			 if (cns && cns->type->is_scalar()) {
+				 expr->operands[i] = new(ir) ir_swizzle(cns, 0, 0, 0, 0,
+														mask->num_components);
+			 }
          }
       }
       break;
