@@ -114,9 +114,9 @@ resize_callback(struct wl_egl_window *wl_win, void *data)
  * Called via eglCreateWindowSurface(), drv->API.CreateWindowSurface().
  */
 static _EGLSurface *
-dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
-		    _EGLConfig *conf, EGLNativeWindowType window,
-		    const EGLint *attrib_list)
+dri2_wl_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
+                       _EGLConfig *conf, EGLNativeWindowType window,
+                       const EGLint *attrib_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_config *dri2_conf = dri2_egl_config(conf);
@@ -180,15 +180,15 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
  * Called via eglCreateWindowSurface(), drv->API.CreateWindowSurface().
  */
 static _EGLSurface *
-dri2_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
-			   _EGLConfig *conf, EGLNativeWindowType window,
-			   const EGLint *attrib_list)
+dri2_wl_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
+                              _EGLConfig *conf, EGLNativeWindowType window,
+                              const EGLint *attrib_list)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    _EGLSurface *surf;
 
-   surf = dri2_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
-			      window, attrib_list);
+   surf = dri2_wl_create_surface(drv, disp, EGL_WINDOW_BIT, conf,
+                                 window, attrib_list);
 
    if (surf != NULL)
       drv->API.SwapInterval(drv, disp, surf, dri2_dpy->default_swap_interval);
@@ -200,7 +200,7 @@ dri2_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
  * Called via eglDestroySurface(), drv->API.DestroySurface().
  */
 static EGLBoolean
-dri2_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
+dri2_wl_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
@@ -240,7 +240,7 @@ dri2_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 }
 
 static void
-dri2_release_buffers(struct dri2_egl_surface *dri2_surf)
+dri2_wl_release_buffers(struct dri2_egl_surface *dri2_surf)
 {
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
@@ -369,7 +369,7 @@ update_buffers(struct dri2_egl_surface *dri2_surf)
        (dri2_surf->base.Width != dri2_surf->wl_win->width || 
         dri2_surf->base.Height != dri2_surf->wl_win->height)) {
 
-      dri2_release_buffers(dri2_surf);
+      dri2_wl_release_buffers(dri2_surf);
 
       dri2_surf->base.Width  = dri2_surf->wl_win->width;
       dri2_surf->base.Height = dri2_surf->wl_win->height;
@@ -399,10 +399,10 @@ update_buffers(struct dri2_egl_surface *dri2_surf)
 }
 
 static __DRIbuffer *
-dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
-			     int *width, int *height,
-			     unsigned int *attachments, int count,
-			     int *out_count, void *loaderPrivate)
+dri2_wl_get_buffers_with_format(__DRIdrawable * driDrawable,
+                                int *width, int *height,
+                                unsigned int *attachments, int count,
+                                int *out_count, void *loaderPrivate)
 {
    struct dri2_egl_surface *dri2_surf = loaderPrivate;
    int i, j;
@@ -436,10 +436,10 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
 }
 
 static __DRIbuffer *
-dri2_get_buffers(__DRIdrawable * driDrawable,
-		 int *width, int *height,
-		 unsigned int *attachments, int count,
-		 int *out_count, void *loaderPrivate)
+dri2_wl_get_buffers(__DRIdrawable * driDrawable,
+                    int *width, int *height,
+                    unsigned int *attachments, int count,
+                    int *out_count, void *loaderPrivate)
 {
    unsigned int *attachments_with_format;
    __DRIbuffer *buffer;
@@ -458,10 +458,10 @@ dri2_get_buffers(__DRIdrawable * driDrawable,
    }
 
    buffer =
-      dri2_get_buffers_with_format(driDrawable,
-				   width, height,
-				   attachments_with_format, count,
-				   out_count, loaderPrivate);
+      dri2_wl_get_buffers_with_format(driDrawable,
+                                      width, height,
+                                      attachments_with_format, count,
+                                      out_count, loaderPrivate);
 
    free(attachments_with_format);
 
@@ -488,7 +488,7 @@ image_get_buffers(__DRIdrawable *driDrawable,
 }
 
 static void
-dri2_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
+dri2_wl_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 {
    (void) driDrawable;
    (void) loaderPrivate;
@@ -498,7 +498,7 @@ static const __DRIimageLoaderExtension image_loader_extension = {
    .base = { __DRI_IMAGE_LOADER, 1 },
 
    .getBuffers          = image_get_buffers,
-   .flushFrontBuffer    = dri2_flush_front_buffer,
+   .flushFrontBuffer    = dri2_wl_flush_front_buffer,
 };
 
 static void
@@ -567,11 +567,11 @@ create_wl_buffer(struct dri2_egl_surface *dri2_surf)
  * Called via eglSwapBuffers(), drv->API.SwapBuffers().
  */
 static EGLBoolean
-dri2_swap_buffers_with_damage(_EGLDriver *drv,
-                              _EGLDisplay *disp,
-                              _EGLSurface *draw,
-                              const EGLint *rects,
-                              EGLint n_rects)
+dri2_wl_swap_buffers_with_damage(_EGLDriver *drv,
+                                 _EGLDisplay *disp,
+                                 _EGLSurface *draw,
+                                 const EGLint *rects,
+                                 EGLint n_rects)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
@@ -661,8 +661,8 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv,
 }
 
 static EGLint
-dri2_query_buffer_age(_EGLDriver *drv,
-                      _EGLDisplay *disp, _EGLSurface *surface)
+dri2_wl_query_buffer_age(_EGLDriver *drv,
+                         _EGLDisplay *disp, _EGLSurface *surface)
 {
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surface);
 
@@ -675,15 +675,15 @@ dri2_query_buffer_age(_EGLDriver *drv,
 }
 
 static EGLBoolean
-dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
+dri2_wl_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 {
-   return dri2_swap_buffers_with_damage (drv, disp, draw, NULL, 0);
+   return dri2_wl_swap_buffers_with_damage (drv, disp, draw, NULL, 0);
 }
 
 static struct wl_buffer *
-dri2_create_wayland_buffer_from_image_wl(_EGLDriver *drv,
-                                         _EGLDisplay *disp,
-                                         _EGLImage *img)
+dri2_wl_create_wayland_buffer_from_image_wl(_EGLDriver *drv,
+                                            _EGLDisplay *disp,
+                                            _EGLImage *img)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_image *dri2_img = dri2_egl_image(img);
@@ -756,7 +756,7 @@ bad_format:
 }
 
 static int
-dri2_wayland_authenticate(_EGLDisplay *disp, uint32_t id)
+dri2_wl_authenticate(_EGLDisplay *disp, uint32_t id)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    int ret = 0;
@@ -780,7 +780,7 @@ dri2_wayland_authenticate(_EGLDisplay *disp, uint32_t id)
  * Called via eglTerminate(), drv->API.Terminate().
  */
 static EGLBoolean
-dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
+dri2_wl_terminate(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
 
@@ -899,7 +899,7 @@ static const struct wl_registry_listener registry_listener = {
 };
 
 static EGLBoolean
-dri2_swap_interval(_EGLDriver *drv,
+dri2_wl_swap_interval(_EGLDriver *drv,
                    _EGLDisplay *disp,
                    _EGLSurface *surf,
                    EGLint interval)
@@ -915,7 +915,7 @@ dri2_swap_interval(_EGLDriver *drv,
 }
 
 static void
-dri2_setup_swap_interval(struct dri2_egl_display *dri2_dpy)
+dri2_wl_setup_swap_interval(struct dri2_egl_display *dri2_dpy)
 {
    GLint vblank_mode = DRI_CONF_VBLANK_DEF_INTERVAL_1;
 
@@ -953,7 +953,7 @@ dri2_setup_swap_interval(struct dri2_egl_display *dri2_dpy)
 }
 
 static struct dri2_egl_display_vtbl dri2_wl_display_vtbl = {
-   .authenticate = dri2_wayland_authenticate,
+   .authenticate = dri2_wl_authenticate,
 };
 
 EGLBoolean
@@ -970,16 +970,16 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 
    loader_set_logger(_eglLog);
 
-   drv->API.CreateWindowSurface = dri2_create_window_surface;
-   drv->API.DestroySurface = dri2_destroy_surface;
-   drv->API.SwapBuffers = dri2_swap_buffers;
-   drv->API.SwapBuffersWithDamageEXT = dri2_swap_buffers_with_damage;
-   drv->API.SwapInterval = dri2_swap_interval;
-   drv->API.Terminate = dri2_terminate;
-   drv->API.QueryBufferAge = dri2_query_buffer_age;
+   drv->API.CreateWindowSurface = dri2_wl_create_window_surface;
+   drv->API.DestroySurface = dri2_wl_destroy_surface;
+   drv->API.SwapBuffers = dri2_wl_swap_buffers;
+   drv->API.SwapBuffersWithDamageEXT = dri2_wl_swap_buffers_with_damage;
+   drv->API.SwapInterval = dri2_wl_swap_interval;
+   drv->API.Terminate = dri2_wl_terminate;
+   drv->API.QueryBufferAge = dri2_wl_query_buffer_age;
 
    drv->API.CreateWaylandBufferFromImageWL =
-      dri2_create_wayland_buffer_from_image_wl;
+      dri2_wl_create_wayland_buffer_from_image_wl;
 
    dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)
@@ -1025,10 +1025,10 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 
    dri2_dpy->dri2_loader_extension.base.name = __DRI_DRI2_LOADER;
    dri2_dpy->dri2_loader_extension.base.version = 3;
-   dri2_dpy->dri2_loader_extension.getBuffers = dri2_get_buffers;
-   dri2_dpy->dri2_loader_extension.flushFrontBuffer = dri2_flush_front_buffer;
+   dri2_dpy->dri2_loader_extension.getBuffers = dri2_wl_get_buffers;
+   dri2_dpy->dri2_loader_extension.flushFrontBuffer = dri2_wl_flush_front_buffer;
    dri2_dpy->dri2_loader_extension.getBuffersWithFormat =
-      dri2_get_buffers_with_format;
+      dri2_wl_get_buffers_with_format;
 
    dri2_dpy->extensions[0] = &dri2_dpy->dri2_loader_extension.base;
    dri2_dpy->extensions[1] = &image_loader_extension.base;
@@ -1041,7 +1041,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    if (!dri2_create_screen(disp))
       goto cleanup_driver;
 
-   dri2_setup_swap_interval(dri2_dpy);
+   dri2_wl_setup_swap_interval(dri2_dpy);
 
    /* The server shouldn't advertise WL_DRM_CAPABILITY_PRIME if the driver
     * doesn't have createImageFromFds, since we're using the same driver on
