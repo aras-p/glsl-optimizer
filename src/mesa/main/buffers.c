@@ -360,16 +360,18 @@ _mesa_DrawBuffers(GLsizei n, const GLenum *buffers)
             return;
          }         
 
-         /* From the OpenGL 3.0 specification, page 259:
+         /* From the OpenGL 4.0 specification, page 256:
           * "For both the default framebuffer and framebuffer objects, the
           *  constants FRONT, BACK, LEFT, RIGHT, and FRONT_AND_BACK are not
           *  valid in the bufs array passed to DrawBuffers, and will result in
-          *  the error INVALID_OPERATION.  This restriction is because these
+          *  the error INVALID_ENUM. This restriction is because these
           *  constants may themselves refer to multiple buffers, as shown in
           *  table 4.4."
+          *  Previous versions of the OpenGL specification say INVALID_OPERATION,
+          *  but the Khronos conformance tests expect INVALID_ENUM.
           */
          if (_mesa_bitcount(destMask[output]) > 1) {
-            _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawBuffersARB(buffer)");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glDrawBuffersARB(buffer)");
             return;
          }
 
