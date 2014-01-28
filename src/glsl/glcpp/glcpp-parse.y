@@ -30,6 +30,7 @@
 
 #include "glcpp.h"
 #include "main/core.h" /* for struct gl_extensions */
+#include "main/mtypes.h" /* for gl_api enum */
 
 static void
 yyerror (YYLTYPE *locp, glcpp_parser_t *parser, const char *error);
@@ -194,7 +195,7 @@ line:
 		ralloc_asprintf_rewrite_tail (&parser->output, &parser->output_length, "\n");
 	}
 |	HASH_LINE {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} pp_tokens NEWLINE {
 
 		if (parser->skip_stack == NULL ||
@@ -254,10 +255,10 @@ define:
 
 control_line:
 	HASH_DEFINE {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} define
 |	HASH_UNDEF {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} IDENTIFIER NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $3);
 		if (macro) {
@@ -267,7 +268,7 @@ control_line:
 		ralloc_free ($3);
 	}
 |	HASH_IF {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} conditional_tokens NEWLINE {
 		/* Be careful to only evaluate the 'if' expression if
 		 * we are not skipping. When we are skipping, we
@@ -299,14 +300,14 @@ control_line:
 		_glcpp_parser_skip_stack_push_if (parser, & @1, 0);
 	}
 |	HASH_IFDEF {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} IDENTIFIER junk NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $3);
 		ralloc_free ($3);
 		_glcpp_parser_skip_stack_push_if (parser, & @1, macro != NULL);
 	}
 |	HASH_IFNDEF {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	} IDENTIFIER junk NEWLINE {
 		macro_t *macro = hash_table_find (parser->defines, $3);
 		ralloc_free ($3);
@@ -380,7 +381,7 @@ control_line:
 		_glcpp_parser_handle_version_declaration(parser, $2, $3, true);
 	}
 |	HASH NEWLINE {
-		glcpp_parser_resolve_version(parser);
+		glcpp_parser_resolve_implicit_version(parser);
 	}
 ;
 
@@ -1186,7 +1187,7 @@ static void add_builtin_define(glcpp_parser_t *parser,
 }
 
 glcpp_parser_t *
-glcpp_parser_create (const struct gl_extensions *extensions, bool default_to_es)
+glcpp_parser_create (const struct gl_extensions *extensions, gl_api api)
 {
 	glcpp_parser_t *parser;
 
@@ -1215,8 +1216,8 @@ glcpp_parser_create (const struct gl_extensions *extensions, bool default_to_es)
 	parser->error = 0;
 
         parser->extensions = extensions;
+        parser->api = api;
         parser->version_resolved = false;
-		parser->default_to_es = default_to_es;
 
 	parser->has_new_line_number = 0;
 	parser->new_line_number = 1;
@@ -2025,6 +2026,9 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 {
 	const struct gl_extensions *extensions = parser->extensions;
 
+	if (parser->version_resolved)
+		return;
+
 	parser->version_resolved = true;
 
 	add_builtin_define (parser, "__VERSION__", version);
@@ -2044,6 +2048,8 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 	} else {
 	   add_builtin_define(parser, "GL_ARB_draw_buffers", 1);
 	   add_builtin_define(parser, "GL_ARB_texture_rectangle", 1);
+           add_builtin_define(parser, "GL_AMD_shader_trinary_minmax", 1);
+
 
 	   if (extensions != NULL) {
 	      if (extensions->EXT_texture_array)
@@ -2109,9 +2115,6 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 	      if (extensions->ARB_shader_atomic_counters)
 	         add_builtin_define(parser, "GL_ARB_shader_atomic_counters", 1);
 
-	      if (extensions->AMD_shader_trinary_minmax)
-	         add_builtin_define(parser, "GL_AMD_shader_trinary_minmax", 1);
-
 	      if (extensions->ARB_viewport_array)
 	         add_builtin_define(parser, "GL_ARB_viewport_array", 1);
 	   }
@@ -2141,16 +2144,20 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 	}
 }
 
-/* GLSL version is no version is explicitly specified. */
+/* GLSL version if no version is explicitly specified. */
 #define IMPLICIT_GLSL_VERSION 110
 #define IMPLICIT_GLSL_ES_VERSION 100
 
-void
-glcpp_parser_resolve_version(glcpp_parser_t *parser)
-{
-	if (parser->version_resolved)
-		return;
+/* GLSL ES version if no version is explicitly specified. */
+#define IMPLICIT_GLSL_ES_VERSION 100
 
-	_glcpp_parser_handle_version_declaration(parser, parser->default_to_es ? IMPLICIT_GLSL_ES_VERSION : IMPLICIT_GLSL_VERSION,
+void
+glcpp_parser_resolve_implicit_version(glcpp_parser_t *parser)
+{
+	int language_version = parser->api == API_OPENGLES2 ?
+			       IMPLICIT_GLSL_ES_VERSION :
+			       IMPLICIT_GLSL_VERSION;
+
+	_glcpp_parser_handle_version_declaration(parser, language_version,
 						 NULL, false);
 }
