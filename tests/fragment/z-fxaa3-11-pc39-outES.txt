@@ -20,8 +20,7 @@ void main ()
   highp float lumaS_13;
   highp vec4 rgbyM_14;
   highp vec2 posM_15;
-  posM_15.x = xlv_TEXCOORD0.x;
-  posM_15.y = xlv_TEXCOORD0.y;
+  posM_15 = xlv_TEXCOORD0;
   lowp vec4 tmpvar_16;
   tmpvar_16 = texture2DLodEXT (_MainTex, xlv_TEXCOORD0, 0.0);
   rgbyM_14 = tmpvar_16;
@@ -150,8 +149,7 @@ void main ()
     };
     highp float tmpvar_58;
     tmpvar_58 = clamp ((abs(tmpvar_52) * tmpvar_47), 0.0, 1.0);
-    posB_9.x = posM_15.x;
-    posB_9.y = posM_15.y;
+    posB_9 = xlv_TEXCOORD0;
     highp float tmpvar_59;
     if (!(tmpvar_50)) {
       tmpvar_59 = 0.0;

@@ -6,6 +6,7 @@ GLSL optimizer Change Log
 
 Goodies:
 
+* Better optimization: vectorize assignments to individual vector channels.
 * More OpenGL ES 2.0 conformant printing of complex for-loops (loop inductions printed
   as += or ++; loop initializers inside loop body).
 

@@ -19,8 +19,7 @@ void main ()
   float lumaN_12;
   float lumaS_13;
   vec2 posM_14;
-  posM_14.x = xlv_TEXCOORD0.x;
-  posM_14.y = xlv_TEXCOORD0.y;
+  posM_14 = xlv_TEXCOORD0;
   vec4 tmpvar_15;
   tmpvar_15 = texture2DLod (_MainTex, xlv_TEXCOORD0, 0.0);
   vec4 tmpvar_16;
@@ -132,8 +131,7 @@ void main ()
     };
     float tmpvar_49;
     tmpvar_49 = clamp ((abs(tmpvar_43) * tmpvar_38), 0.0, 1.0);
-    posB_9.x = posM_14.x;
-    posB_9.y = posM_14.y;
+    posB_9 = xlv_TEXCOORD0;
     float tmpvar_50;
     if (!(tmpvar_41)) {
       tmpvar_50 = 0.0;
