@@ -260,49 +260,51 @@ struct lp_exec_mask {
 
    LLVMTypeRef int_vec_type;
 
-   LLVMValueRef cond_stack[LP_MAX_TGSI_NESTING];
-   int cond_stack_size;
-   LLVMValueRef cond_mask;
-
-   /* keep track if break belongs to switch or loop */
-   enum lp_exec_mask_break_type break_type_stack[LP_MAX_TGSI_NESTING];
-   enum lp_exec_mask_break_type break_type;
-
-   struct {
-      LLVMValueRef switch_val;
-      LLVMValueRef switch_mask;
-      LLVMValueRef switch_mask_default;
-      boolean switch_in_default;
-      unsigned switch_pc;
-   } switch_stack[LP_MAX_TGSI_NESTING];
-   int switch_stack_size;
-   LLVMValueRef switch_val;
-   LLVMValueRef switch_mask;         /* current switch exec mask */
-   LLVMValueRef switch_mask_default; /* reverse of switch mask used for default */
-   boolean switch_in_default;        /* if switch exec is currently in default */
-   unsigned switch_pc;               /* when used points to default or endswitch-1 */
-
-   LLVMBasicBlockRef loop_block;
-   LLVMValueRef cont_mask;
-   LLVMValueRef break_mask;
-   LLVMValueRef break_var;
-   struct {
-      LLVMBasicBlockRef loop_block;
-      LLVMValueRef cont_mask;
-      LLVMValueRef break_mask;
-      LLVMValueRef break_var;
-   } loop_stack[LP_MAX_TGSI_NESTING];
-   int loop_stack_size;
+   LLVMValueRef exec_mask;
 
    LLVMValueRef ret_mask;
-   struct {
+   LLVMValueRef cond_mask;
+   LLVMValueRef switch_mask;         /* current switch exec mask */
+   LLVMValueRef cont_mask;
+   LLVMValueRef break_mask;
+
+   struct function_ctx {
       int pc;
       LLVMValueRef ret_mask;
-   } call_stack[LP_MAX_TGSI_NESTING];
-   int call_stack_size;
 
-   LLVMValueRef exec_mask;
-   LLVMValueRef loop_limiter;
+      LLVMValueRef cond_stack[LP_MAX_TGSI_NESTING];
+      int cond_stack_size;
+
+      /* keep track if break belongs to switch or loop */
+      enum lp_exec_mask_break_type break_type_stack[LP_MAX_TGSI_NESTING];
+      enum lp_exec_mask_break_type break_type;
+
+      struct {
+         LLVMValueRef switch_val;
+         LLVMValueRef switch_mask;
+         LLVMValueRef switch_mask_default;
+         boolean switch_in_default;
+         unsigned switch_pc;
+      } switch_stack[LP_MAX_TGSI_NESTING];
+      int switch_stack_size;
+      LLVMValueRef switch_val;
+      LLVMValueRef switch_mask_default; /* reverse of switch mask used for default */
+      boolean switch_in_default;        /* if switch exec is currently in default */
+      unsigned switch_pc;               /* when used points to default or endswitch-1 */
+
+      LLVMValueRef loop_limiter;
+      LLVMBasicBlockRef loop_block;
+      LLVMValueRef break_var;
+      struct {
+         LLVMBasicBlockRef loop_block;
+         LLVMValueRef cont_mask;
+         LLVMValueRef break_mask;
+         LLVMValueRef break_var;
+      } loop_stack[LP_MAX_TGSI_NESTING];
+      int loop_stack_size;
+
+   } *function_stack;
+   int function_stack_size;
 };
 
 struct lp_build_tgsi_inst_list
