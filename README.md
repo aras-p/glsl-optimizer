@@ -79,7 +79,7 @@ Dev Notes
 
 Pulling Mesa upstream:
 
-    git fetch upstream master
+    git fetch upstream
     git merge upstream/master
     sh removeDeletedByUs.sh
     # inspect files, git rm unneeded ones, fix conflicts etc.
