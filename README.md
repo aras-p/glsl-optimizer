@@ -29,6 +29,10 @@ Visual Studio 2010 (Windows, x86/x64) and Xcode 5+ (Mac, i386) project files for
 library are provided in `projects/vs2010/glsl_optimizer.sln` and `projects/xcode5/glsl_optimizer_lib`
 respectively.
 
+> Note: only the VS and Xcode project files are maintained and should work at any time.
+> There's also a cmake and gyp build system for Linux et al., and some stuff in contrib folder -
+> all that may or might not work.
+
 For Linux you can use cmake. Just type "cmake . && make" in the root directory.
 This will build the optimizer library and some executable binaries.
 
