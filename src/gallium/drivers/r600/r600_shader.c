@@ -1221,6 +1221,9 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 			output.swizzle_z = 4; /* 0 */
 			output.swizzle_w = 5; /* 1 */
 			break;
+		default:
+			output.array_base = next_param++;
+			break;
 		}
 		r600_bytecode_add_output(ctx.bc, &output);
 		if (output.type == V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM)
