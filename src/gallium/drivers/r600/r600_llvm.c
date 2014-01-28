@@ -828,7 +828,7 @@ unsigned r600_llvm_compile(
 {
 	unsigned r;
 	struct radeon_llvm_binary binary;
-	const char * gpu_family = r600_llvm_gpu_string(family);
+	const char * gpu_family = r600_get_llvm_processor_name(family);
 	unsigned i;
 
 	memset(&binary, 0, sizeof(struct radeon_llvm_binary));
