@@ -1252,11 +1252,15 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 			r600_setup_buffer_constants(rctx, PIPE_SHADER_FRAGMENT);
 		if (rctx->vs_shader && rctx->vs_shader->current->shader.uses_tex_buffers)
 			r600_setup_buffer_constants(rctx, PIPE_SHADER_VERTEX);
+		if (rctx->gs_shader && rctx->gs_shader->current->shader.uses_tex_buffers)
+			r600_setup_buffer_constants(rctx, PIPE_SHADER_GEOMETRY);
 	} else {
 		if (rctx->ps_shader && rctx->ps_shader->current->shader.uses_tex_buffers)
 			eg_setup_buffer_constants(rctx, PIPE_SHADER_FRAGMENT);
 		if (rctx->vs_shader && rctx->vs_shader->current->shader.uses_tex_buffers)
 			eg_setup_buffer_constants(rctx, PIPE_SHADER_VERTEX);
+		if (rctx->gs_shader && rctx->gs_shader->current->shader.uses_tex_buffers)
+			eg_setup_buffer_constants(rctx, PIPE_SHADER_GEOMETRY);
 	}
 
 
@@ -1264,6 +1268,8 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 		r600_setup_txq_cube_array_constants(rctx, PIPE_SHADER_FRAGMENT);
 	if (rctx->vs_shader && rctx->vs_shader->current->shader.has_txq_cube_array_z_comp)
 		r600_setup_txq_cube_array_constants(rctx, PIPE_SHADER_VERTEX);
+	if (rctx->gs_shader && rctx->gs_shader->current->shader.has_txq_cube_array_z_comp)
+		r600_setup_txq_cube_array_constants(rctx, PIPE_SHADER_GEOMETRY);
 
 	if (rctx->b.chip_class < EVERGREEN && rctx->ps_shader && rctx->vs_shader) {
 		if (!r600_adjust_gprs(rctx)) {
