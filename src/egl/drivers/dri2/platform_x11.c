@@ -25,6 +25,7 @@
  *    Kristian Høgsberg <krh@bitplanet.net>
  */
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -1038,6 +1039,7 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
    disp->DriverData = (void *) dri2_dpy;
    if (disp->PlatformDisplay == NULL) {
       dri2_dpy->conn = xcb_connect(0, 0);
+      dri2_dpy->own_device = true;
    } else {
       dri2_dpy->conn = XGetXCBConnection((Display *) disp->PlatformDisplay);
    }
@@ -1153,6 +1155,7 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    disp->DriverData = (void *) dri2_dpy;
    if (disp->PlatformDisplay == NULL) {
       dri2_dpy->conn = xcb_connect(0, 0);
+      dri2_dpy->own_device = true;
    } else {
       dri2_dpy->conn = XGetXCBConnection((Display *) disp->PlatformDisplay);
    }
