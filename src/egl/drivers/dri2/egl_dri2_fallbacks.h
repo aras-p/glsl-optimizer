@@ -67,6 +67,14 @@ dri2_fallback_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *dpy,
 }
 
 static inline EGLBoolean
+dri2_fallback_post_sub_buffer(_EGLDriver *drv, _EGLDisplay *dpy,
+                              _EGLSurface *draw,
+                              EGLint x, EGLint y, EGLint width, EGLint height)
+{
+   return EGL_FALSE;
+}
+
+static inline EGLBoolean
 dri2_fallback_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy,
                            _EGLSurface *surf,
                            EGLNativePixmapType target)
