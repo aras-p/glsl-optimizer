@@ -757,6 +757,78 @@ gen8_fs_generator::generate_set_sample_id(fs_inst *ir,
    default_state.exec_size = save_exec_size;
 }
 
+/**
+ * Change the register's data type from UD to HF, doubling the strides in order
+ * to compensate for halving the data type width.
+ */
+static struct brw_reg
+ud_reg_to_hf(struct brw_reg r)
+{
+   assert(r.type == BRW_REGISTER_TYPE_UD);
+   r.type = BRW_REGISTER_TYPE_HF;
+
+   /* The BRW_*_STRIDE enums are defined so that incrementing the field
+    * doubles the real stride.
+    */
+   if (r.hstride != 0)
+      ++r.hstride;
+   if (r.vstride != 0)
+      ++r.vstride;
+
+   return r;
+}
+
+void
+gen8_fs_generator::generate_pack_half_2x16_split(fs_inst *inst,
+                                                 struct brw_reg dst,
+                                                 struct brw_reg x,
+                                                 struct brw_reg y)
+{
+   assert(dst.type == BRW_REGISTER_TYPE_UD);
+   assert(x.type == BRW_REGISTER_TYPE_F);
+   assert(y.type == BRW_REGISTER_TYPE_F);
+
+   struct brw_reg dst_hf = ud_reg_to_hf(dst);
+
+   /* Give each 32-bit channel of dst the form below , where "." means
+    * unchanged.
+    *   0x....hhhh
+    */
+   MOV(dst_hf, y);
+
+   /* Now the form:
+    *   0xhhhh0000
+    */
+   SHL(dst, dst, brw_imm_ud(16u));
+
+   /* And, finally the form of packHalf2x16's output:
+    *   0xhhhhllll
+    */
+   MOV(dst_hf, x);
+}
+
+void
+gen8_fs_generator::generate_unpack_half_2x16_split(fs_inst *inst,
+                                                   struct brw_reg dst,
+                                                   struct brw_reg src)
+{
+   assert(dst.type == BRW_REGISTER_TYPE_F);
+   assert(src.type == BRW_REGISTER_TYPE_UD);
+
+   struct brw_reg src_hf = ud_reg_to_hf(src);
+
+   /* Each channel of src has the form of unpackHalf2x16's input: 0xhhhhllll.
+    * For the Y case, we wish to access only the upper word; therefore
+    * a 16-bit subregister offset is needed.
+    */
+   assert(inst->opcode == FS_OPCODE_UNPACK_HALF_2x16_SPLIT_X ||
+          inst->opcode == FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y);
+   if (inst->opcode == FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y)
+      src_hf.subnr += 2;
+
+   MOV(dst, src_hf);
+}
+
 void
 gen8_fs_generator::generate_code(exec_list *instructions)
 {
@@ -1140,12 +1212,12 @@ gen8_fs_generator::generate_code(exec_list *instructions)
          break;
 
       case FS_OPCODE_PACK_HALF_2x16_SPLIT:
-         assert(!"XXX: Missing Gen8 scalar support for PACK_HALF_2x16_SPLIT");
+         generate_pack_half_2x16_split(ir, dst, src[0], src[1]);
          break;
 
       case FS_OPCODE_UNPACK_HALF_2x16_SPLIT_X:
       case FS_OPCODE_UNPACK_HALF_2x16_SPLIT_Y:
-         assert(!"XXX: Missing Gen8 scalar support for UNPACK_HALF_2x16_SPLIT");
+         generate_unpack_half_2x16_split(ir, dst, src[0]);
          break;
 
       case FS_OPCODE_PLACEHOLDER_HALT:
