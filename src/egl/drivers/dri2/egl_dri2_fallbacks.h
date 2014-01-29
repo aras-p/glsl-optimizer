@@ -26,6 +26,15 @@
 
 #include "egltypedefs.h"
 
+static inline _EGLSurface *
+dri2_fallback_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *disp,
+                                    _EGLConfig *conf,
+                                    EGLNativePixmapType pixmap,
+                                    const EGLint *attrib_list)
+{
+   return NULL;
+}
+
 static inline EGLBoolean
 dri2_fallback_swap_interval(_EGLDriver *drv, _EGLDisplay *dpy,
                             _EGLSurface *surf, EGLint interval)

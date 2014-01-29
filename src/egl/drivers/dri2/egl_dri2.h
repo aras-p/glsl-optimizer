@@ -92,6 +92,11 @@ struct dri2_egl_display_vtbl {
                                          EGLNativeWindowType window,
                                          const EGLint *attrib_list);
 
+   _EGLSurface* (*create_pixmap_surface)(_EGLDriver *drv, _EGLDisplay *dpy,
+                                         _EGLConfig *config,
+                                         EGLNativePixmapType pixmap,
+                                         const EGLint *attrib_list);
+
    EGLBoolean (*swap_interval)(_EGLDriver *drv, _EGLDisplay *dpy,
                                _EGLSurface *surf, EGLint interval);
 
