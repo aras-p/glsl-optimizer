@@ -781,31 +781,6 @@ dri2_wl_authenticate(_EGLDisplay *disp, uint32_t id)
    return ret;
 }
 
-/**
- * Called via eglTerminate(), drv->API.Terminate().
- */
-static EGLBoolean
-dri2_wl_terminate(_EGLDriver *drv, _EGLDisplay *disp)
-{
-   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
-
-   _eglReleaseDisplayResources(drv, disp);
-   _eglCleanupDisplay(disp);
-
-   dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
-   close(dri2_dpy->fd);
-   dlclose(dri2_dpy->driver);
-   free(dri2_dpy->driver_name);
-   free(dri2_dpy->device_name);
-   wl_drm_destroy(dri2_dpy->wl_drm);
-   if (dri2_dpy->own_device)
-      wl_display_disconnect(dri2_dpy->wl_dpy);
-   free(dri2_dpy);
-   disp->DriverData = NULL;
-
-   return EGL_TRUE;
-}
-
 static void
 drm_handle_device(void *data, struct wl_drm *drm, const char *device)
 {
@@ -985,8 +960,6 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    static const unsigned int rgb565_masks[4] = { 0xf800, 0x07e0, 0x001f, 0 };
 
    loader_set_logger(_eglLog);
-
-   drv->API.Terminate = dri2_wl_terminate;
 
    drv->API.CreateWaylandBufferFromImageWL =
       dri2_wl_create_wayland_buffer_from_image_wl;

@@ -25,6 +25,8 @@
  *    Kristian Høgsberg <krh@bitplanet.net>
  */
 
+#define WL_HIDE_DEPRECATED
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -42,11 +44,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "egl_dri2.h"
-
 #ifdef HAVE_WAYLAND_PLATFORM
 #include "wayland-drm.h"
+#include "wayland-drm-client-protocol.h"
 #endif
+
+#include "egl_dri2.h"
 
 const __DRIuseInvalidateExtension use_invalidate = {
    { __DRI_USE_INVALIDATE, 1 }
@@ -672,23 +675,31 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
       dlclose(dri2_dpy->driver);
    free(dri2_dpy->device_name);
 
-   if (disp->PlatformDisplay == NULL) {
-      switch (disp->Platform) {
+   switch (disp->Platform) {
 #ifdef HAVE_X11_PLATFORM
-      case _EGL_PLATFORM_X11:
+   case _EGL_PLATFORM_X11:
+      if (dri2_dpy->own_device) {
          xcb_disconnect(dri2_dpy->conn);
-         break;
+      }
+      break;
 #endif
 #ifdef HAVE_DRM_PLATFORM
-      case _EGL_PLATFORM_DRM:
-         if (dri2_dpy->own_device) {
-            gbm_device_destroy(&dri2_dpy->gbm_dri->base.base);
-         }
-         break;
-#endif
-      default:
-         break;
+   case _EGL_PLATFORM_DRM:
+      if (dri2_dpy->own_device) {
+         gbm_device_destroy(&dri2_dpy->gbm_dri->base.base);
       }
+      break;
+#endif
+#ifdef HAVE_WAYLAND_PLATFORM
+   case _EGL_PLATFORM_WAYLAND:
+      wl_drm_destroy(dri2_dpy->wl_drm);
+      if (dri2_dpy->own_device) {
+         wl_display_disconnect(dri2_dpy->wl_dpy);
+      }
+      break;
+#endif
+   default:
+      break;
    }
 
    free(dri2_dpy);
