@@ -187,8 +187,6 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_USER_INDEX_BUFFERS:
    case PIPE_CAP_USER_CONSTANT_BUFFERS:
       return 1;
-   case PIPE_CAP_TGSI_TEXCOORD:
-      return 0;
 
    /* Unsupported features (boolean caps). */
    case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
@@ -215,14 +213,19 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_TEXTURE_MULTISAMPLE:
    case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
    case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
+   case PIPE_CAP_CUBE_MAP_ARRAY:
+   case PIPE_CAP_TEXTURE_BUFFER_OBJECTS:
+   case PIPE_CAP_TGSI_TEXCOORD:
+   case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
       return 0;
+
    case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:
    case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
    case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_TGSI_VS_LAYER:
-       return 0;
+      return 0;
 
    case PIPE_CAP_GLSL_FEATURE_LEVEL:
       return 120;
