@@ -920,10 +920,10 @@ gen8_fs_generator::generate_code(exec_list *instructions)
          break;
 
       case BRW_OPCODE_F32TO16:
-         F32TO16(dst, src[0]);
+         MOV(retype(dst, BRW_REGISTER_TYPE_HF), src[0]);
          break;
       case BRW_OPCODE_F16TO32:
-         F16TO32(dst, src[0]);
+         MOV(dst, retype(src[0], BRW_REGISTER_TYPE_HF));
          break;
 
       case BRW_OPCODE_CMP:

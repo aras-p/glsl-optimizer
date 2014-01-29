@@ -586,11 +586,13 @@ gen8_vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       break;
 
    case BRW_OPCODE_F32TO16:
-      F32TO16(dst, src[0]);
+      /* Emulate the Gen7 zeroing bug. */
+      MOV(retype(dst, BRW_REGISTER_TYPE_UD), brw_imm_ud(0u));
+      MOV(retype(dst, BRW_REGISTER_TYPE_HF), src[0]);
       break;
 
    case BRW_OPCODE_F16TO32:
-      F16TO32(dst, src[0]);
+      MOV(dst, retype(src[0], BRW_REGISTER_TYPE_HF));
       break;
 
    case BRW_OPCODE_LRP:
