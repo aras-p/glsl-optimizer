@@ -372,7 +372,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 1;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
-		return 140;
+		return family >= CHIP_CEDAR ? 330 : 140;
 
 	/* Supported except the original R600. */
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
