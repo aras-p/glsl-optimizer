@@ -1029,11 +1029,6 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy;
 
-   drv->API.CreateImageKHR  = NULL;
-   drv->API.DestroyImageKHR = NULL;
-   drv->API.CreateDRMImageMESA = NULL;
-   drv->API.ExportDRMImageMESA = NULL;
-
    dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
