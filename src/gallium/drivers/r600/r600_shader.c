@@ -1299,10 +1299,9 @@ static int emit_gs_ring_writes(struct r600_shader_ctx *ctx)
 				if (in->name == out->name && in->sid == out->sid)
 					ring_offset = in->ring_offset;
 			}
-			if (ring_offset == -1) {
-				R600_ERR("error mapping VS->GS outputs\n");
-				return -1;
-			}
+
+			if (ring_offset == -1)
+				continue;
 		} else
 			ring_offset = i * 16;
 
