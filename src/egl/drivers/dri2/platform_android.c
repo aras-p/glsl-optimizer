@@ -656,6 +656,7 @@ static struct dri2_egl_display_vtbl droid_display_vtbl = {
    .authenticate = NULL,
    .swap_interval = dri2_fallback_swap_interval,
    .swap_buffers = droid_swap_buffers,
+   .swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
 };
 
 EGLBoolean

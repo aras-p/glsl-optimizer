@@ -1002,6 +1002,7 @@ static struct dri2_egl_display_vtbl dri2_x11_display_vtbl = {
    .authenticate = dri2_x11_authenticate,
    .swap_interval = dri2_x11_swap_interval,
    .swap_buffers = dri2_x11_swap_buffers,
+   .swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
 };
 
 static EGLBoolean
