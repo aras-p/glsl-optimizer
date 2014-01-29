@@ -176,6 +176,7 @@ static const int reg_type_size[] = {
    [BRW_HW_REG_NON_IMM_TYPE_B]   = 1,
    [GEN7_HW_REG_NON_IMM_TYPE_DF] = 8,
    [BRW_HW_REG_TYPE_F]           = 4,
+   [GEN8_HW_REG_NON_IMM_TYPE_HF] = 2,
 };
 
 static const char *const m_reg_file[4] = {
