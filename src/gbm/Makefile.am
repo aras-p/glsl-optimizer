@@ -47,7 +47,4 @@ libgbm_la_LIBADD += \
 	libgbm_dri.la $(top_builddir)/src/mapi/shared-glapi/libglapi.la $(LIBDRM_LIBS)
 endif
 
-all-local: libgbm.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/libgbm.so.1.0.0 $(top_builddir)/$(LIB_DIR)/libgbm.so
-	ln -f .libs/libgbm.so.1.0.0 $(top_builddir)/$(LIB_DIR)/libgbm.so.1
+include $(top_srcdir)/install-lib-links.mk

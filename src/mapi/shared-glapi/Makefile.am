@@ -27,8 +27,4 @@ AM_CPPFLAGS =							\
 	-DMAPI_MODE_GLAPI					\
 	-DMAPI_ABI_HEADER=\"shared-glapi/glapi_mapi_tmp.h\"
 
-all-local: libglapi.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)
-	ln -f .libs/libglapi.so.0.0.0 $(top_builddir)/$(LIB_DIR)/libglapi.so.0.0.0
-	ln -sf libglapi.so.0.0.0 $(top_builddir)/$(LIB_DIR)/libglapi.so.0
-	ln -sf libglapi.so.0 $(top_builddir)/$(LIB_DIR)/libglapi.so
+include $(top_srcdir)/install-lib-links.mk

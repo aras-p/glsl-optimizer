@@ -57,10 +57,4 @@ glapi_mapi_tmp.h: ../glapi/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)
 BUILT_SOURCES = glapi_mapi_tmp.h
 CLEANFILES = $(BUILT_SOURCES)
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: libGLESv1_CM.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/libGLESv1_CM.so $(top_builddir)/$(LIB_DIR)/libGLESv1_CM.so
-	ln -f .libs/libGLESv1_CM.so.1 $(top_builddir)/$(LIB_DIR)/libGLESv1_CM.so.1
-	ln -f .libs/libGLESv1_CM.so.1.1.0 $(top_builddir)/$(LIB_DIR)/libGLESv1_CM.so.1.1.0
+include $(top_srcdir)/install-lib-links.mk

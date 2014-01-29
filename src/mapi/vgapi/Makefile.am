@@ -52,10 +52,4 @@ vgapi_tmp.h: $(srcdir)/vgapi.csv $(top_srcdir)/src/mapi/mapi_abi.py
 BUILT_SOURCES = vgapi_tmp.h
 CLEANFILES = $(BUILT_SOURCES)
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: libOpenVG.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/libOpenVG.so $(top_builddir)/$(LIB_DIR)/libOpenVG.so
-	ln -f .libs/libOpenVG.so.1 $(top_builddir)/$(LIB_DIR)/libOpenVG.so.1
-	ln -f .libs/libOpenVG.so.1.0.0 $(top_builddir)/$(LIB_DIR)/libOpenVG.so.1.0.0
+include $(top_srcdir)/install-lib-links.mk
