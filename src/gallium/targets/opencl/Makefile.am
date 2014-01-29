@@ -11,7 +11,7 @@ lib@OPENCL_LIBNAME@_la_LIBADD = \
 	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/state_trackers/clover/libclover.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(GALLIUM_PIPE_LOADER_LIBS) $(LIBUDEV_LIBS) \
+	$(GALLIUM_PIPE_LOADER_LIBS) \
 	-ldl \
 	-lclangCodeGen \
 	-lclangFrontendTool \
