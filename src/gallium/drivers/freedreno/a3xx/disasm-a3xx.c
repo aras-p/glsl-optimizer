@@ -735,6 +735,14 @@ struct opc_info {
 
 #define GETINFO(instr) (&(opcs[((instr)->opc_cat << NOPC_BITS) | instr_opc(instr)]))
 
+// XXX hack.. probably should move this table somewhere common:
+#include "ir3.h"
+const char *ir3_instr_name(struct ir3_instruction *instr)
+{
+	if (instr->category == -1) return "??meta??";
+	return opcs[(instr->category << NOPC_BITS) | instr->opc].name;
+}
+
 static void print_instr(uint32_t *dwords, int level, int n)
 {
 	instr_t *instr = (instr_t *)dwords;

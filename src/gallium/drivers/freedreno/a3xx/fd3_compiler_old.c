@@ -1161,23 +1161,6 @@ instr_cat2(const struct instr_translater *t,
 	put_dst(ctx, inst, dst);
 }
 
-static bool is_mad(opc_t opc)
-{
-	switch (opc) {
-	case OPC_MAD_U16:
-	case OPC_MADSH_U16:
-	case OPC_MAD_S16:
-	case OPC_MADSH_M16:
-	case OPC_MAD_U24:
-	case OPC_MAD_S24:
-	case OPC_MAD_F16:
-	case OPC_MAD_F32:
-		return true;
-	default:
-		return false;
-	}
-}
-
 static void
 instr_cat3(const struct instr_translater *t,
 		struct fd3_compile_context *ctx,

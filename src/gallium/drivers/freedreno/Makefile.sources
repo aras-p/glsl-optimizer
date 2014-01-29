@@ -43,4 +43,10 @@ a3xx_SOURCES := \
 	a3xx/fd3_util.c \
 	a3xx/fd3_zsa.c \
 	a3xx/disasm-a3xx.c \
+	a3xx/ir3_cp.c \
+	a3xx/ir3_depth.c \
+	a3xx/ir3_dump.c \
+	a3xx/ir3_flatten.c \
+	a3xx/ir3_ra.c \
+	a3xx/ir3_sched.c \
 	a3xx/ir3.c

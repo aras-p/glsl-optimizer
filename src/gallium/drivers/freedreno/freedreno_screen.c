@@ -68,6 +68,8 @@ static const struct debug_named_value debug_options[] = {
 		{"binning",   FD_DBG_BINNING,  "Enable hw binning"},
 		{"dbinning",  FD_DBG_DBINNING, "Disable hw binning"},
 		{"optimize",  FD_DBG_OPTIMIZE, "Enable optimization passes in compiler"},
+		{"optmsgs",   FD_DBG_OPTMSGS,  "Enable optimizater debug messages"},
+		{"optdump",   FD_DBG_OPTDUMP,  "Dump shader DAG to .dot files"},
 		DEBUG_NAMED_VALUE_END
 };
 

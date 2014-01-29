@@ -80,9 +80,9 @@ fixup_vp_regfootprint(struct fd3_shader_stateobj *so)
 {
 	unsigned i;
 	for (i = 0; i < so->inputs_count; i++)
-		so->info.max_reg = MAX2(so->info.max_reg, so->inputs[i].regid >> 2);
+		so->info.max_reg = MAX2(so->info.max_reg, (so->inputs[i].regid + 3) >> 2);
 	for (i = 0; i < so->outputs_count; i++)
-		so->info.max_reg = MAX2(so->info.max_reg, so->outputs[i].regid >> 2);
+		so->info.max_reg = MAX2(so->info.max_reg, (so->outputs[i].regid + 3) >> 2);
 }
 
 static struct fd3_shader_stateobj *

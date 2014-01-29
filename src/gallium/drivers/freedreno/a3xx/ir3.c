@@ -36,7 +36,7 @@
 /* simple allocator to carve allocations out of an up-front allocated heap,
  * so that we can free everything easily in one shot.
  */
-static void * ir3_alloc(struct ir3_shader *shader, int sz)
+void * ir3_alloc(struct ir3_shader *shader, int sz)
 {
 	void *ptr = &shader->heap[shader->heap_idx];
 	shader->heap_idx += align(sz, 4);

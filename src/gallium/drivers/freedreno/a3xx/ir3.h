@@ -65,6 +65,11 @@ struct ir3_register {
 		 * that the shader needs no more input:
 		 */
 		IR3_REG_EI     = 0x200,
+		/* meta-flags, for intermediate stages of IR, ie.
+		 * before register assignment is done:
+		 */
+		IR3_REG_SSA    = 0x1000,   /* 'instr' is ptr to assigning instr */
+		IR3_REG_IA     = 0x2000,   /* meta-input dst is "assigned" */
 	} flags;
 	union {
 		/* normal registers:
@@ -77,6 +82,10 @@ struct ir3_register {
 		float   fim_val;
 		/* relative: */
 		int offset;
+		/* for IR3_REG_SSA, src registers contain ptr back to
+		 * assigning instruction.
+		 */
+		struct ir3_instruction *instr;
 	};
 
 	/* used for cat5 instructions, but also for internal/IR level
@@ -139,6 +148,10 @@ struct ir3_instruction {
 		IR3_INSTR_P     = 0x080,
 		IR3_INSTR_S     = 0x100,
 		IR3_INSTR_S2EN  = 0x200,
+		/* meta-flags, for intermediate stages of IR, ie.
+		 * before register assignment is done:
+		 */
+		IR3_INSTR_MARK  = 0x1000,
 	} flags;
 	int repeat;
 	unsigned regs_count;
@@ -171,7 +184,33 @@ struct ir3_instruction {
 			int offset;
 			int iim_val;
 		} cat6;
+		/* for meta-instructions, just used to hold extra data
+		 * before instruction scheduling, etc
+		 */
+		struct {
+			int off;              /* component/offset */
+		} fo;
+		struct {
+			struct ir3_block *if_block, *else_block;
+		} flow;
+		struct {
+			struct ir3_block *block;
+		} inout;
 	};
+
+	/* transient values used during various algorithms: */
+	union {
+		/* The instruction depth is the max dependency distance to output.
+		 *
+		 * You can also think of it as the "cost", if we did any sort of
+		 * optimization for register footprint.  Ie. a value that is  just
+		 * result of moving a const to a reg would have a low cost,  so to
+		 * it could make sense to duplicate the instruction at various
+		 * points where the result is needed to reduce register footprint.
+		 */
+		unsigned depth;
+	};
+	struct ir3_instruction *next;
 #ifdef DEBUG
 	uint32_t serialno;
 #endif
@@ -201,6 +240,7 @@ struct ir3_shader * ir3_shader_create(void);
 void ir3_shader_destroy(struct ir3_shader *shader);
 void * ir3_shader_assemble(struct ir3_shader *shader,
 		struct ir3_shader_info *info);
+void * ir3_alloc(struct ir3_shader *shader, int sz);
 
 struct ir3_block * ir3_block_create(struct ir3_shader *shader,
 		unsigned ntmp, unsigned nin, unsigned nout);
@@ -208,9 +248,42 @@ struct ir3_block * ir3_block_create(struct ir3_shader *shader,
 struct ir3_instruction * ir3_instr_create(struct ir3_block *block,
 		int category, opc_t opc);
 struct ir3_instruction * ir3_instr_clone(struct ir3_instruction *instr);
+const char *ir3_instr_name(struct ir3_instruction *instr);
 
 struct ir3_register * ir3_reg_create(struct ir3_instruction *instr,
 		int num, int flags);
+
+
+static inline bool ir3_instr_check_mark(struct ir3_instruction *instr)
+{
+	if (instr->flags & IR3_INSTR_MARK)
+		return true;  /* already visited */
+	instr->flags ^= IR3_INSTR_MARK;
+	return false;
+}
+
+static inline void ir3_shader_clear_mark(struct ir3_shader *shader)
+{
+	/* TODO would be nice to drop the instruction array.. for
+	 * new compiler, _clear_mark() is all we use it for, and
+	 * we could probably manage a linked list instead..
+	 */
+	unsigned i;
+	for (i = 0; i < shader->instrs_count; i++) {
+		struct ir3_instruction *instr = shader->instrs[i];
+		instr->flags &= ~IR3_INSTR_MARK;
+	}
+}
+
+static inline int ir3_instr_regno(struct ir3_instruction *instr,
+		struct ir3_register *reg)
+{
+	unsigned i;
+	for (i = 0; i < instr->regs_count; i++)
+		if (reg == instr->regs[i])
+			return i;
+	return -1;
+}
 
 
 /* comp:
@@ -254,6 +327,15 @@ static inline bool is_input(struct ir3_instruction *instr)
 	return (instr->category == 2) && (instr->opc == OPC_BARY_F);
 }
 
+static inline bool is_meta(struct ir3_instruction *instr)
+{
+	/* TODO how should we count PHI (and maybe fan-in/out) which
+	 * might actually contribute some instructions to the final
+	 * result?
+	 */
+	return (instr->category == -1);
+}
+
 static inline bool is_gpr(struct ir3_register *reg)
 {
 	return !(reg->flags & (IR3_REG_CONST | IR3_REG_IMMED));
@@ -262,12 +344,38 @@ static inline bool is_gpr(struct ir3_register *reg)
 /* TODO combine is_gpr()/reg_gpr().. */
 static inline bool reg_gpr(struct ir3_register *r)
 {
-	if (r->flags & (IR3_REG_CONST | IR3_REG_IMMED | IR3_REG_RELATIV))
+	if (r->flags & (IR3_REG_CONST | IR3_REG_IMMED | IR3_REG_RELATIV | IR3_REG_SSA))
 		return false;
 	if ((reg_num(r) == REG_A0) || (reg_num(r) == REG_P0))
 		return false;
 	return true;
 }
+
+/* dump: */
+#include <stdio.h>
+void ir3_shader_dump(struct ir3_shader *shader, const char *name,
+		struct ir3_block *block /* XXX maybe 'block' ptr should move to ir3_shader? */,
+		FILE *f);
+void ir3_dump_instr_single(struct ir3_instruction *instr);
+void ir3_dump_instr_list(struct ir3_instruction *instr);
+
+/* flatten if/else: */
+int ir3_block_flatten(struct ir3_block *block);
+
+/* depth calculation: */
+int ir3_delayslots(struct ir3_instruction *assigner,
+		struct ir3_instruction *consumer, unsigned n);
+void ir3_block_depth(struct ir3_block *block);
+
+/* copy-propagate: */
+void ir3_block_cp(struct ir3_block *block);
+
+/* scheduling: */
+void ir3_block_sched(struct ir3_block *block);
+
+/* register assignment: */
+int ir3_block_ra(struct ir3_block *block, enum shader_t type);
+
 
 #ifndef ARRAY_SIZE
 #  define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))

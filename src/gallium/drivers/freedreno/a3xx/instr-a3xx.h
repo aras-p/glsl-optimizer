@@ -190,6 +190,22 @@ typedef enum {
 	OPC_LDC_4 = 30,
 	OPC_LDLV = 31,
 
+	/* meta instructions (category -1): */
+	/* placeholder instr to mark inputs/outputs: */
+	OPC_META_INPUT = 0,
+	OPC_META_OUTPUT = 1,
+	/* The "fan-in" and "fan-out" instructions are used for keeping
+	 * track of instructions that write to multiple dst registers
+	 * (fan-out) like texture sample instructions, or read multiple
+	 * consecutive scalar registers (fan-in) (bary.f, texture samp)
+	 */
+	OPC_META_FO = 2,
+	OPC_META_FI = 3,
+	/* branches/flow control */
+	OPC_META_FLOW = 4,
+	OPC_META_PHI = 5,
+
+
 } opc_t;
 
 typedef enum {
@@ -640,6 +656,23 @@ static inline uint32_t instr_opc(instr_t *instr)
 	case 5:  return instr->cat5.opc;
 	case 6:  return instr->cat6.opc;
 	default: return 0;
+	}
+}
+
+static inline bool is_mad(opc_t opc)
+{
+	switch (opc) {
+	case OPC_MAD_U16:
+	case OPC_MADSH_U16:
+	case OPC_MAD_S16:
+	case OPC_MADSH_M16:
+	case OPC_MAD_U24:
+	case OPC_MAD_S24:
+	case OPC_MAD_F16:
+	case OPC_MAD_F32:
+		return true;
+	default:
+		return false;
 	}
 }
 
