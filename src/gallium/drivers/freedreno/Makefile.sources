@@ -42,4 +42,4 @@ a3xx_SOURCES := \
 	a3xx/fd3_util.c \
 	a3xx/fd3_zsa.c \
 	a3xx/disasm-a3xx.c \
-	a3xx/ir-a3xx.c
+	a3xx/ir3.c

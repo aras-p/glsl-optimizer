@@ -79,9 +79,10 @@ static void
 fixup_vp_regfootprint(struct fd3_shader_stateobj *so)
 {
 	unsigned i;
-	for (i = 0; i < so->inputs_count; i++) {
+	for (i = 0; i < so->inputs_count; i++)
 		so->info.max_reg = MAX2(so->info.max_reg, so->inputs[i].regid >> 2);
-	}
+	for (i = 0; i < so->outputs_count; i++)
+		so->info.max_reg = MAX2(so->info.max_reg, so->outputs[i].regid >> 2);
 }
 
 static struct fd3_shader_stateobj *
@@ -230,7 +231,7 @@ find_output(const struct fd3_shader_stateobj *so, fd3_semantic semantic)
 }
 
 static uint32_t
-find_regid(const struct fd3_shader_stateobj *so, fd3_semantic semantic)
+find_output_regid(const struct fd3_shader_stateobj *so, fd3_semantic semantic)
 {
 	int j;
 	for (j = 0; j < so->outputs_count; j++)
@@ -257,13 +258,13 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 		fsi = &fp->info;
 	}
 
-	pos_regid = find_regid(vp,
+	pos_regid = find_output_regid(vp,
 		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0));
-	posz_regid = find_regid(fp,
+	posz_regid = find_output_regid(fp,
 		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0));
-	psize_regid = find_regid(vp,
+	psize_regid = find_output_regid(vp,
 		fd3_semantic_name(TGSI_SEMANTIC_PSIZE, 0));
-	color_regid = find_regid(fp,
+	color_regid = find_output_regid(fp,
 		fd3_semantic_name(TGSI_SEMANTIC_COLOR, 0));
 
 	/* we could probably divide this up into things that need to be
@@ -501,10 +502,11 @@ create_blit_fp(struct pipe_context *pctx)
 {
 	struct fd3_shader_stateobj *so;
 	struct ir3_shader *ir = ir3_shader_create();
+	struct ir3_block *block = ir3_block_create(ir, 0, 0, 0);
 	struct ir3_instruction *instr;
 
 	/* (sy)(ss)(rpt1)bary.f (ei)r0.z, (r)0, r0.x */
-	instr = ir3_instr_create(ir, 2, OPC_BARY_F);
+	instr = ir3_instr_create(block, 2, OPC_BARY_F);
 	instr->flags = IR3_INSTR_SY | IR3_INSTR_SS;
 	instr->repeat = 1;
 
@@ -514,11 +516,11 @@ create_blit_fp(struct pipe_context *pctx)
 	ir3_reg_create(instr, regid(0,0), 0);             /* r0.x */
 
 	/* (rpt5)nop */
-	instr = ir3_instr_create(ir, 0, OPC_NOP);
+	instr = ir3_instr_create(block, 0, OPC_NOP);
 	instr->repeat = 5;
 
 	/* sam (f32)(xyzw)r0.x, r0.z, s#0, t#0 */
-	instr = ir3_instr_create(ir, 5, OPC_SAM);
+	instr = ir3_instr_create(block, 5, OPC_SAM);
 	instr->cat5.samp = 0;
 	instr->cat5.tex  = 0;
 	instr->cat5.type = TYPE_F32;
@@ -528,7 +530,7 @@ create_blit_fp(struct pipe_context *pctx)
 	ir3_reg_create(instr, regid(0,2), 0);             /* r0.z */
 
 	/* (sy)(rpt3)cov.f32f16 hr0.x, (r)r0.x */
-	instr = ir3_instr_create(ir, 1, 0);  /* mov/cov instructions have no opc */
+	instr = ir3_instr_create(block, 1, 0);  /* mov/cov instructions have no opc */
 	instr->flags = IR3_INSTR_SY;
 	instr->repeat = 3;
 	instr->cat1.src_type = TYPE_F32;
@@ -538,7 +540,7 @@ create_blit_fp(struct pipe_context *pctx)
 	ir3_reg_create(instr, regid(0,0), IR3_REG_R);     /* (r)r0.x */
 
 	/* end */
-	instr = ir3_instr_create(ir, 0, OPC_END);
+	instr = ir3_instr_create(block, 0, OPC_END);
 
 	so = create_internal_shader(pctx, SHADER_FRAGMENT, ir);
 	if (!so)
@@ -573,10 +575,11 @@ create_blit_vp(struct pipe_context *pctx)
 {
 	struct fd3_shader_stateobj *so;
 	struct ir3_shader *ir = ir3_shader_create();
+	struct ir3_block *block = ir3_block_create(ir, 0, 0, 0);
 	struct ir3_instruction *instr;
 
 	/* (sy)(ss)end */
-	instr = ir3_instr_create(ir, 0, OPC_END);
+	instr = ir3_instr_create(block, 0, OPC_END);
 	instr->flags = IR3_INSTR_SY | IR3_INSTR_SS;
 
 	so = create_internal_shader(pctx, SHADER_VERTEX, ir);
@@ -611,10 +614,11 @@ create_solid_fp(struct pipe_context *pctx)
 {
 	struct fd3_shader_stateobj *so;
 	struct ir3_shader *ir = ir3_shader_create();
+	struct ir3_block *block = ir3_block_create(ir, 0, 0, 0);
 	struct ir3_instruction *instr;
 
 	/* (sy)(ss)(rpt3)mov.f16f16 hr0.x, (r)hc0.x */
-	instr = ir3_instr_create(ir, 1, 0);  /* mov/cov instructions have no opc */
+	instr = ir3_instr_create(block, 1, 0);  /* mov/cov instructions have no opc */
 	instr->flags = IR3_INSTR_SY | IR3_INSTR_SS;
 	instr->repeat = 3;
 	instr->cat1.src_type = TYPE_F16;
@@ -625,7 +629,7 @@ create_solid_fp(struct pipe_context *pctx)
 			IR3_REG_CONST | IR3_REG_R);
 
 	/* end */
-	instr = ir3_instr_create(ir, 0, OPC_END);
+	instr = ir3_instr_create(block, 0, OPC_END);
 
 	so = create_internal_shader(pctx, SHADER_FRAGMENT, ir);
 	if (!so)
@@ -650,10 +654,11 @@ create_solid_vp(struct pipe_context *pctx)
 {
 	struct fd3_shader_stateobj *so;
 	struct ir3_shader *ir = ir3_shader_create();
+	struct ir3_block *block = ir3_block_create(ir, 0, 0, 0);
 	struct ir3_instruction *instr;
 
 	/* (sy)(ss)end */
-	instr = ir3_instr_create(ir, 0, OPC_END);
+	instr = ir3_instr_create(block, 0, OPC_END);
 	instr->flags = IR3_INSTR_SY | IR3_INSTR_SS;
 
 

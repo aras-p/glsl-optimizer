@@ -285,21 +285,7 @@ static void print_instr_cat2(instr_t *instr)
 static void print_instr_cat3(instr_t *instr)
 {
 	instr_cat3_t *cat3 = &instr->cat3;
-	bool full = true;
-
-	// XXX is this based on opc or some other bit?
-	switch (cat3->opc) {
-	case OPC_MAD_F16:
-	case OPC_MAD_U16:
-	case OPC_MAD_S16:
-	case OPC_SEL_B16:
-	case OPC_SEL_S16:
-	case OPC_SEL_F16:
-	case OPC_SAD_S16:
-	case OPC_SAD_S32:  // really??
-		full = false;
-		break;
-	}
+	bool full = instr_cat3_full(cat3);
 
 	printf(" ");
 	print_reg_dst((reg_t)(cat3->dst), full ^ cat3->dst_half, false);
@@ -747,26 +733,12 @@ struct opc_info {
 #undef OPC
 };
 
-#define GETINFO(instr) (&(opcs[((instr)->opc_cat << NOPC_BITS) | getopc(instr)]))
-
-static uint32_t getopc(instr_t *instr)
-{
-	switch (instr->opc_cat) {
-	case 0:  return instr->cat0.opc;
-	case 1:  return 0;
-	case 2:  return instr->cat2.opc;
-	case 3:  return instr->cat3.opc;
-	case 4:  return instr->cat4.opc;
-	case 5:  return instr->cat5.opc;
-	case 6:  return instr->cat6.opc;
-	default: return 0;
-	}
-}
+#define GETINFO(instr) (&(opcs[((instr)->opc_cat << NOPC_BITS) | instr_opc(instr)]))
 
 static void print_instr(uint32_t *dwords, int level, int n)
 {
 	instr_t *instr = (instr_t *)dwords;
-	uint32_t opc = getopc(instr);
+	uint32_t opc = instr_opc(instr);
 	const char *name;
 
 	printf("%s%04d[%08xx_%08xx] ", levels[level], n, dwords[1], dwords[0]);

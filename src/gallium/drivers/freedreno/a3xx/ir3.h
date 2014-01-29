@@ -28,15 +28,19 @@
 #include <stdbool.h>
 
 #include "instr-a3xx.h"
+#include "disasm.h"  /* TODO move 'enum shader_t' somewhere else.. */
 
 /* low level intermediate representation of an adreno shader program */
 
 struct ir3_shader;
+struct ir3_instruction;
+struct ir3_block;
 
 struct ir3_shader * fd_asm_parse(const char *src);
 
 struct ir3_shader_info {
 	uint16_t sizedwords;
+	uint16_t instrs_count;   /* expanded to account for rpt's */
 	/* NOTE: max_reg, etc, does not include registers not touched
 	 * by the shader (ie. vertex fetched via VFD_DECODE but not
 	 * touched by shader)
@@ -84,7 +88,7 @@ struct ir3_register {
 };
 
 struct ir3_instruction {
-	struct ir3_shader *shader;
+	struct ir3_block *block;
 	int category;
 	opc_t opc;
 	enum {
@@ -138,7 +142,7 @@ struct ir3_instruction {
 	} flags;
 	int repeat;
 	unsigned regs_count;
-	struct ir3_register *regs[4];
+	struct ir3_register *regs[5];
 	union {
 		struct {
 			char inv;
@@ -168,6 +172,9 @@ struct ir3_instruction {
 			int iim_val;
 		} cat6;
 	};
+#ifdef DEBUG
+	uint32_t serialno;
+#endif
 };
 
 #define MAX_INSTRS 1024
@@ -179,16 +186,151 @@ struct ir3_shader {
 	unsigned heap_idx;
 };
 
+struct ir3_block {
+	struct ir3_shader *shader;
+	unsigned ntemporaries, ninputs, noutputs;
+	/* maps TGSI_FILE_TEMPORARY index back to the assigning instruction: */
+	struct ir3_instruction **temporaries;
+	struct ir3_instruction **inputs;
+	struct ir3_instruction **outputs;
+	struct ir3_block *parent;
+	struct ir3_instruction *head;
+};
+
 struct ir3_shader * ir3_shader_create(void);
 void ir3_shader_destroy(struct ir3_shader *shader);
 void * ir3_shader_assemble(struct ir3_shader *shader,
 		struct ir3_shader_info *info);
 
-struct ir3_instruction * ir3_instr_create(struct ir3_shader *shader,
+struct ir3_block * ir3_block_create(struct ir3_shader *shader,
+		unsigned ntmp, unsigned nin, unsigned nout);
+
+struct ir3_instruction * ir3_instr_create(struct ir3_block *block,
 		int category, opc_t opc);
 struct ir3_instruction * ir3_instr_clone(struct ir3_instruction *instr);
 
 struct ir3_register * ir3_reg_create(struct ir3_instruction *instr,
 		int num, int flags);
+
+
+/* comp:
+ *   0 - x
+ *   1 - y
+ *   2 - z
+ *   3 - w
+ */
+static inline uint32_t regid(int num, int comp)
+{
+	return (num << 2) | (comp & 0x3);
+}
+
+static inline uint32_t reg_num(struct ir3_register *reg)
+{
+	return reg->num >> 2;
+}
+
+static inline uint32_t reg_comp(struct ir3_register *reg)
+{
+	return reg->num & 0x3;
+}
+
+static inline bool is_alu(struct ir3_instruction *instr)
+{
+	return (1 <= instr->category) && (instr->category <= 3);
+}
+
+static inline bool is_sfu(struct ir3_instruction *instr)
+{
+	return (instr->category == 4);
+}
+
+static inline bool is_tex(struct ir3_instruction *instr)
+{
+	return (instr->category == 5);
+}
+
+static inline bool is_input(struct ir3_instruction *instr)
+{
+	return (instr->category == 2) && (instr->opc == OPC_BARY_F);
+}
+
+static inline bool is_gpr(struct ir3_register *reg)
+{
+	return !(reg->flags & (IR3_REG_CONST | IR3_REG_IMMED));
+}
+
+/* TODO combine is_gpr()/reg_gpr().. */
+static inline bool reg_gpr(struct ir3_register *r)
+{
+	if (r->flags & (IR3_REG_CONST | IR3_REG_IMMED | IR3_REG_RELATIV))
+		return false;
+	if ((reg_num(r) == REG_A0) || (reg_num(r) == REG_P0))
+		return false;
+	return true;
+}
+
+#ifndef ARRAY_SIZE
+#  define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#endif
+
+/* ************************************************************************* */
+/* split this out or find some helper to use.. like main/bitset.h.. */
+
+#include <string.h>
+
+#define MAX_REG 256
+
+typedef uint8_t regmask_t[2 * MAX_REG / 8];
+
+static inline unsigned regmask_idx(struct ir3_register *reg)
+{
+	unsigned num = reg->num;
+	assert(num < MAX_REG);
+	if (reg->flags & IR3_REG_HALF)
+		num += MAX_REG;
+	return num;
+}
+
+static inline void regmask_init(regmask_t *regmask)
+{
+	memset(regmask, 0, sizeof(*regmask));
+}
+
+static inline void regmask_set(regmask_t *regmask, struct ir3_register *reg)
+{
+	unsigned idx = regmask_idx(reg);
+	unsigned i;
+	for (i = 0; i < 4; i++, idx++)
+		if (reg->wrmask & (1 << i))
+			(*regmask)[idx / 8] |= 1 << (idx % 8);
+}
+
+/* set bits in a if not set in b, conceptually:
+ *   a |= (reg & ~b)
+ */
+static inline void regmask_set_if_not(regmask_t *a,
+		struct ir3_register *reg, regmask_t *b)
+{
+	unsigned idx = regmask_idx(reg);
+	unsigned i;
+	for (i = 0; i < 4; i++, idx++)
+		if (reg->wrmask & (1 << i))
+			if (!((*b)[idx / 8] & (1 << (idx % 8))))
+				(*a)[idx / 8] |= 1 << (idx % 8);
+}
+
+static inline unsigned regmask_get(regmask_t *regmask,
+		struct ir3_register *reg)
+{
+	unsigned idx = regmask_idx(reg);
+	unsigned i;
+	for (i = 0; i < 4; i++, idx++)
+		if (reg->wrmask & (1 << i))
+			if ((*regmask)[idx / 8] & (1 << (idx % 8)))
+				return true;
+	return false;
+}
+
+/* ************************************************************************* */
 
 #endif /* IR3_H_ */

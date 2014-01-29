@@ -438,6 +438,23 @@ typedef struct PACKED {
 	uint32_t opc_cat  : 3;
 } instr_cat3_t;
 
+static inline bool instr_cat3_full(instr_cat3_t *cat3)
+{
+	switch (cat3->opc) {
+	case OPC_MAD_F16:
+	case OPC_MAD_U16:
+	case OPC_MAD_S16:
+	case OPC_SEL_B16:
+	case OPC_SEL_S16:
+	case OPC_SEL_F16:
+	case OPC_SAD_S16:
+	case OPC_SAD_S32:  // really??
+		return false;
+	default:
+		return true;
+	}
+}
+
 typedef struct PACKED {
 	/* dword0: */
 	union PACKED {
@@ -611,5 +628,19 @@ typedef union PACKED {
 
 	};
 } instr_t;
+
+static inline uint32_t instr_opc(instr_t *instr)
+{
+	switch (instr->opc_cat) {
+	case 0:  return instr->cat0.opc;
+	case 1:  return 0;
+	case 2:  return instr->cat2.opc;
+	case 3:  return instr->cat3.opc;
+	case 4:  return instr->cat4.opc;
+	case 5:  return instr->cat5.opc;
+	case 6:  return instr->cat6.opc;
+	default: return 0;
+	}
+}
 
 #endif /* INSTR_A3XX_H_ */

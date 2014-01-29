@@ -33,7 +33,7 @@
 
 #include "freedreno_context.h"
 
-#include "ir-a3xx.h"
+#include "ir3.h"
 #include "disasm.h"
 
 typedef uint16_t fd3_semantic;  /* semantic name + index */
@@ -41,6 +41,16 @@ static inline fd3_semantic
 fd3_semantic_name(uint8_t name, uint16_t index)
 {
 	return (name << 8) | (index & 0xff);
+}
+
+static inline uint8_t sem2name(fd3_semantic sem)
+{
+	return sem >> 8;
+}
+
+static inline uint16_t sem2idx(fd3_semantic sem)
+{
+	return sem & 0xff;
 }
 
 struct fd3_shader_stateobj {

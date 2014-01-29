@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "ir-a3xx.h"
+#include "ir3.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -72,7 +72,8 @@ static uint32_t reg(struct ir3_register *reg, struct ir3_shader_info *info,
 	if (reg->flags & IR3_REG_IMMED) {
 		val.iim_val = reg->iim_val;
 	} else {
-		int8_t max = (reg->num + repeat) >> 2;
+		int8_t components = util_last_bit(reg->wrmask);
+		int8_t max = (reg->num + repeat + components - 1) >> 2;
 
 		val.comp = reg->num & 0x3;
 		val.num  = reg->num >> 2;
@@ -514,6 +515,7 @@ void * ir3_shader_assemble(struct ir3_shader *shader, struct ir3_shader_info *in
 	info->max_reg       = -1;
 	info->max_half_reg  = -1;
 	info->max_const     = -1;
+	info->instrs_count  = 0;
 
 	/* need a integer number of instruction "groups" (sets of four
 	 * instructions), so pad out w/ NOPs if needed:
@@ -528,6 +530,7 @@ void * ir3_shader_assemble(struct ir3_shader *shader, struct ir3_shader_info *in
 		int ret = emit[instr->category](instr, dwords, info);
 		if (ret)
 			goto fail;
+		info->instrs_count += 1 + instr->repeat;
 		dwords += 2;
 	}
 
@@ -552,30 +555,68 @@ static struct ir3_register * reg_create(struct ir3_shader *shader,
 static void insert_instr(struct ir3_shader *shader,
 		struct ir3_instruction *instr)
 {
+#ifdef DEBUG
+	static uint32_t serialno = 0;
+	instr->serialno = ++serialno;
+#endif
 	assert(shader->instrs_count < ARRAY_SIZE(shader->instrs));
 	shader->instrs[shader->instrs_count++] = instr;
 }
 
-struct ir3_instruction * ir3_instr_create(struct ir3_shader *shader,
+struct ir3_block * ir3_block_create(struct ir3_shader *shader,
+		unsigned ntmp, unsigned nin, unsigned nout)
+{
+	struct ir3_block *block;
+	unsigned size;
+	char *ptr;
+
+	size = sizeof(*block);
+	size += sizeof(block->temporaries[0]) * ntmp;
+	size += sizeof(block->inputs[0]) * nin;
+	size += sizeof(block->outputs[0]) * nout;
+
+	ptr = ir3_alloc(shader, size);
+
+	block = (void *)ptr;
+	ptr += sizeof(*block);
+
+	block->temporaries = (void *)ptr;
+	block->ntemporaries = ntmp;
+	ptr += sizeof(block->temporaries[0]) * ntmp;
+
+	block->inputs = (void *)ptr;
+	block->ninputs = nin;
+	ptr += sizeof(block->inputs[0]) * nin;
+
+	block->outputs = (void *)ptr;
+	block->noutputs = nout;
+	ptr += sizeof(block->outputs[0]) * nout;
+
+	block->shader = shader;
+
+	return block;
+}
+
+struct ir3_instruction * ir3_instr_create(struct ir3_block *block,
 		int category, opc_t opc)
 {
 	struct ir3_instruction *instr =
-			ir3_alloc(shader, sizeof(struct ir3_instruction));
-	instr->shader = shader;
+			ir3_alloc(block->shader, sizeof(struct ir3_instruction));
+	instr->block = block;
 	instr->category = category;
 	instr->opc = opc;
-	insert_instr(shader, instr);
+	insert_instr(block->shader, instr);
 	return instr;
 }
 
 struct ir3_instruction * ir3_instr_clone(struct ir3_instruction *instr)
 {
 	struct ir3_instruction *new_instr =
-			ir3_alloc(instr->shader, sizeof(struct ir3_instruction));
+			ir3_alloc(instr->block->shader, sizeof(struct ir3_instruction));
 	unsigned i;
 
 	*new_instr = *instr;
-	insert_instr(instr->shader, new_instr);
+	insert_instr(instr->block->shader, new_instr);
 
 	/* clone registers: */
 	new_instr->regs_count = 0;
@@ -592,7 +633,7 @@ struct ir3_instruction * ir3_instr_clone(struct ir3_instruction *instr)
 struct ir3_register * ir3_reg_create(struct ir3_instruction *instr,
 		int num, int flags)
 {
-	struct ir3_register *reg = reg_create(instr->shader, num, flags);
+	struct ir3_register *reg = reg_create(instr->block->shader, num, flags);
 	assert(instr->regs_count < ARRAY_SIZE(instr->regs));
 	instr->regs[instr->regs_count++] = reg;
 	return reg;
