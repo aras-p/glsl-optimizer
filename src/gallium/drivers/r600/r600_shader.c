@@ -875,6 +875,114 @@ static int process_twoside_color_inputs(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+static int emit_streamout(struct r600_shader_ctx *ctx, struct pipe_stream_output_info *so)
+{
+	unsigned so_gpr[PIPE_MAX_SHADER_OUTPUTS];
+	int i, j, r;
+
+	/* Sanity checking. */
+	if (so->num_outputs > PIPE_MAX_SHADER_OUTPUTS) {
+		R600_ERR("Too many stream outputs: %d\n", so->num_outputs);
+		r = -EINVAL;
+		goto out_err;
+	}
+	for (i = 0; i < so->num_outputs; i++) {
+		if (so->output[i].output_buffer >= 4) {
+			R600_ERR("Exceeded the max number of stream output buffers, got: %d\n",
+				 so->output[i].output_buffer);
+			r = -EINVAL;
+			goto out_err;
+		}
+	}
+
+	/* Initialize locations where the outputs are stored. */
+	for (i = 0; i < so->num_outputs; i++) {
+		so_gpr[i] = ctx->shader->output[so->output[i].register_index].gpr;
+
+		/* Lower outputs with dst_offset < start_component.
+		 *
+		 * We can only output 4D vectors with a write mask, e.g. we can
+		 * only output the W component at offset 3, etc. If we want
+		 * to store Y, Z, or W at buffer offset 0, we need to use MOV
+		 * to move it to X and output X. */
+		if (so->output[i].dst_offset < so->output[i].start_component) {
+			unsigned tmp = r600_get_temp(ctx);
+
+			for (j = 0; j < so->output[i].num_components; j++) {
+				struct r600_bytecode_alu alu;
+				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+				alu.op = ALU_OP1_MOV;
+				alu.src[0].sel = so_gpr[i];
+				alu.src[0].chan = so->output[i].start_component + j;
+
+				alu.dst.sel = tmp;
+				alu.dst.chan = j;
+				alu.dst.write = 1;
+				if (j == so->output[i].num_components - 1)
+					alu.last = 1;
+				r = r600_bytecode_add_alu(ctx->bc, &alu);
+				if (r)
+					return r;
+			}
+			so->output[i].start_component = 0;
+			so_gpr[i] = tmp;
+		}
+	}
+
+	/* Write outputs to buffers. */
+	for (i = 0; i < so->num_outputs; i++) {
+		struct r600_bytecode_output output;
+
+		memset(&output, 0, sizeof(struct r600_bytecode_output));
+		output.gpr = so_gpr[i];
+		output.elem_size = so->output[i].num_components;
+		output.array_base = so->output[i].dst_offset - so->output[i].start_component;
+		output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_WRITE;
+		output.burst_count = 1;
+		output.barrier = 1;
+		/* array_size is an upper limit for the burst_count
+		 * with MEM_STREAM instructions */
+		output.array_size = 0xFFF;
+		output.comp_mask = ((1 << so->output[i].num_components) - 1) << so->output[i].start_component;
+		if (ctx->bc->chip_class >= EVERGREEN) {
+			switch (so->output[i].output_buffer) {
+			case 0:
+				output.op = CF_OP_MEM_STREAM0_BUF0;
+				break;
+			case 1:
+				output.op = CF_OP_MEM_STREAM0_BUF1;
+				break;
+			case 2:
+				output.op = CF_OP_MEM_STREAM0_BUF2;
+				break;
+			case 3:
+				output.op = CF_OP_MEM_STREAM0_BUF3;
+				break;
+			}
+		} else {
+			switch (so->output[i].output_buffer) {
+			case 0:
+				output.op = CF_OP_MEM_STREAM0;
+				break;
+			case 1:
+				output.op = CF_OP_MEM_STREAM1;
+				break;
+			case 2:
+				output.op = CF_OP_MEM_STREAM2;
+				break;
+			case 3:
+				output.op = CF_OP_MEM_STREAM3;
+					break;
+			}
+		}
+		r = r600_bytecode_add_output(ctx->bc, &output);
+		if (r)
+			goto out_err;
+	}
+	return 0;
+out_err:
+	return r;
+}
 
 static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 				 struct r600_pipe_shader *pipeshader,
@@ -1263,109 +1371,8 @@ static int r600_shader_from_tgsi(struct r600_screen *rscreen,
 	}
 
 	/* Add stream outputs. */
-	if (ctx.type == TGSI_PROCESSOR_VERTEX && so.num_outputs && !use_llvm) {
-		unsigned so_gpr[PIPE_MAX_SHADER_OUTPUTS];
-
-		/* Sanity checking. */
-		if (so.num_outputs > PIPE_MAX_SHADER_OUTPUTS) {
-			R600_ERR("Too many stream outputs: %d\n", so.num_outputs);
-			r = -EINVAL;
-			goto out_err;
-		}
-		for (i = 0; i < so.num_outputs; i++) {
-			if (so.output[i].output_buffer >= 4) {
-				R600_ERR("Exceeded the max number of stream output buffers, got: %d\n",
-					 so.output[i].output_buffer);
-				r = -EINVAL;
-				goto out_err;
-			}
-		}
-
-		/* Initialize locations where the outputs are stored. */
-		for (i = 0; i < so.num_outputs; i++) {
-			so_gpr[i] = shader->output[so.output[i].register_index].gpr;
-
-			/* Lower outputs with dst_offset < start_component.
-			 *
-			 * We can only output 4D vectors with a write mask, e.g. we can
-			 * only output the W component at offset 3, etc. If we want
-			 * to store Y, Z, or W at buffer offset 0, we need to use MOV
-			 * to move it to X and output X. */
-			if (so.output[i].dst_offset < so.output[i].start_component) {
-				unsigned tmp = r600_get_temp(&ctx);
-
-				for (j = 0; j < so.output[i].num_components; j++) {
-					struct r600_bytecode_alu alu;
-					memset(&alu, 0, sizeof(struct r600_bytecode_alu));
-					alu.op = ALU_OP1_MOV;
-					alu.src[0].sel = so_gpr[i];
-					alu.src[0].chan = so.output[i].start_component + j;
-
-					alu.dst.sel = tmp;
-					alu.dst.chan = j;
-					alu.dst.write = 1;
-					if (j == so.output[i].num_components - 1)
-						alu.last = 1;
-					r = r600_bytecode_add_alu(ctx.bc, &alu);
-					if (r)
-						return r;
-				}
-				so.output[i].start_component = 0;
-				so_gpr[i] = tmp;
-			}
-		}
-
-		/* Write outputs to buffers. */
-		for (i = 0; i < so.num_outputs; i++) {
-			struct r600_bytecode_output output;
-
-			memset(&output, 0, sizeof(struct r600_bytecode_output));
-			output.gpr = so_gpr[i];
-			output.elem_size = so.output[i].num_components;
-			output.array_base = so.output[i].dst_offset - so.output[i].start_component;
-			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_WRITE;
-			output.burst_count = 1;
-			output.barrier = 1;
-			/* array_size is an upper limit for the burst_count
-			 * with MEM_STREAM instructions */
-			output.array_size = 0xFFF;
-			output.comp_mask = ((1 << so.output[i].num_components) - 1) << so.output[i].start_component;
-			if (ctx.bc->chip_class >= EVERGREEN) {
-				switch (so.output[i].output_buffer) {
-				case 0:
-					output.op = CF_OP_MEM_STREAM0_BUF0;
-					break;
-				case 1:
-					output.op = CF_OP_MEM_STREAM0_BUF1;
-					break;
-				case 2:
-					output.op = CF_OP_MEM_STREAM0_BUF2;
-					break;
-				case 3:
-					output.op = CF_OP_MEM_STREAM0_BUF3;
-					break;
-				}
-			} else {
-				switch (so.output[i].output_buffer) {
-				case 0:
-					output.op = CF_OP_MEM_STREAM0;
-					break;
-				case 1:
-					output.op = CF_OP_MEM_STREAM1;
-					break;
-				case 2:
-					output.op = CF_OP_MEM_STREAM2;
-					break;
-				case 3:
-					output.op = CF_OP_MEM_STREAM3;
-					break;
-				}
-			}
-			r = r600_bytecode_add_output(ctx.bc, &output);
-			if (r)
-				goto out_err;
-		}
-	}
+	if (ctx.type == TGSI_PROCESSOR_VERTEX && so.num_outputs && !use_llvm)
+		emit_streamout(&ctx, &so);
 
 	/* export output */
 	for (i = 0, j = 0; i < noutput; i++, j++) {
