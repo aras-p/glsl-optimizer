@@ -217,7 +217,7 @@ nv30_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
       case PIPE_SHADER_CAP_MAX_CONTROL_FLOW_DEPTH:
          return 0;
       case PIPE_SHADER_CAP_MAX_INPUTS:
-         return (eng3d->oclass >= NV40_3D_CLASS) ? 12 : 10;
+         return 8; /* should be possible to do 10 with nv4x */
       case PIPE_SHADER_CAP_MAX_CONSTS:
          return (eng3d->oclass >= NV40_3D_CLASS) ? 224 : 32;
       case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
