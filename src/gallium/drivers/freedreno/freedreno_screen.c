@@ -67,6 +67,7 @@ static const struct debug_named_value debug_options[] = {
 		{"fraghalf",  FD_DBG_FRAGHALF, "Use half-precision in fragment shader"},
 		{"binning",   FD_DBG_BINNING,  "Enable hw binning"},
 		{"dbinning",  FD_DBG_DBINNING, "Disable hw binning"},
+		{"optimize",  FD_DBG_OPTIMIZE, "Enable optimization passes in compiler"},
 		DEBUG_NAMED_VALUE_END
 };
 

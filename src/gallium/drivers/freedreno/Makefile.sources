@@ -31,6 +31,7 @@ a2xx_SOURCES := \
 a3xx_SOURCES := \
 	a3xx/fd3_blend.c \
 	a3xx/fd3_compiler.c \
+	a3xx/fd3_compiler_old.c \
 	a3xx/fd3_context.c \
 	a3xx/fd3_draw.c \
 	a3xx/fd3_emit.c \

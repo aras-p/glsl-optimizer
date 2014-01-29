@@ -106,7 +106,25 @@ create_shader(struct pipe_context *pctx, const struct pipe_shader_state *cso,
 	if ((type == SHADER_FRAGMENT) && (fd_mesa_debug & FD_DBG_FRAGHALF))
 		so->half_precision = true;
 
-	ret = fd3_compile_shader(so, tokens);
+
+	if (fd_mesa_debug & FD_DBG_OPTIMIZE) {
+		ret = fd3_compile_shader(so, tokens);
+		if (ret) {
+			debug_error("new compiler failed, trying fallback!");
+
+			so->inputs_count = 0;
+			so->outputs_count = 0;
+			so->total_in = 0;
+			so->samplers_count = 0;
+			so->immediates_count = 0;
+		}
+	} else {
+		ret = -1;  /* force fallback to old compiler */
+	}
+
+	if (ret)
+		ret = fd3_compile_shader_old(so, tokens);
+
 	if (ret) {
 		debug_error("compile failed!");
 		goto fail;
