@@ -1000,6 +1000,7 @@ static struct dri2_egl_display_vtbl dri2_x11_swrast_display_vtbl = {
    .destroy_surface = dri2_x11_destroy_surface,
    .swap_interval = dri2_fallback_swap_interval,
    .swap_buffers = dri2_x11_swap_buffers,
+   .swap_buffers_region = dri2_fallback_swap_buffers_region,
    .copy_buffers = dri2_x11_copy_buffers,
    .query_buffer_age = dri2_fallback_query_buffer_age,
 };
@@ -1013,6 +1014,7 @@ static struct dri2_egl_display_vtbl dri2_x11_display_vtbl = {
    .swap_interval = dri2_x11_swap_interval,
    .swap_buffers = dri2_x11_swap_buffers,
    .swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
+   .swap_buffers_region = dri2_x11_swap_buffers_region,
    .copy_buffers = dri2_x11_copy_buffers,
    .query_buffer_age = dri2_fallback_query_buffer_age,
 };
@@ -1022,7 +1024,6 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy;
 
-   drv->API.SwapBuffersRegionNOK = NULL;
    drv->API.CreateImageKHR  = NULL;
    drv->API.DestroyImageKHR = NULL;
    drv->API.CreateDRMImageMESA = NULL;
@@ -1142,7 +1143,6 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    struct dri2_egl_display *dri2_dpy;
 
    drv->API.CreateImageKHR = dri2_x11_create_image_khr;
-   drv->API.SwapBuffersRegionNOK = dri2_x11_swap_buffers_region;
    drv->API.PostSubBufferNV = dri2_x11_post_sub_buffer;
 
    dri2_dpy = calloc(1, sizeof *dri2_dpy);

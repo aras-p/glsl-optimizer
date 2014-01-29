@@ -1074,6 +1074,14 @@ dri2_swap_buffers_with_damage(_EGLDriver *drv, _EGLDisplay *dpy,
 }
 
 static EGLBoolean
+dri2_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
+                         EGLint numRects, const EGLint *rects)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(dpy);
+   return dri2_dpy->vtbl->swap_buffers_region(drv, dpy, surf, numRects, rects);
+}
+
+static EGLBoolean
 dri2_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
                   EGLNativePixmapType target)
 {
@@ -2118,6 +2126,7 @@ _eglBuiltInDriverDRI2(const char *args)
    dri2_drv->base.API.SwapInterval = dri2_swap_interval;
    dri2_drv->base.API.SwapBuffers = dri2_swap_buffers;
    dri2_drv->base.API.SwapBuffersWithDamageEXT = dri2_swap_buffers_with_damage;
+   dri2_drv->base.API.SwapBuffersRegionNOK = dri2_swap_buffers_region;
    dri2_drv->base.API.CopyBuffers = dri2_copy_buffers,
    dri2_drv->base.API.QueryBufferAge = dri2_query_buffer_age;
    dri2_drv->base.API.CreateImageKHR = dri2_create_image_khr;
