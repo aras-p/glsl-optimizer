@@ -1180,7 +1180,7 @@ if test "x$enable_gbm" = xauto; then
 fi
 if test "x$enable_gbm" = xyes; then
     if test x"$have_libudev" != xyes; then
-        AC_MSG_ERROR([gbm needs udev])
+        AC_MSG_ERROR([gbm requires udev >= $LIBUDEV_REQUIRED])
     fi
 
     if test "x$enable_dri" = xyes; then
@@ -1191,7 +1191,7 @@ if test "x$enable_gbm" = xyes; then
     fi
 fi
 AM_CONDITIONAL(HAVE_GBM, test "x$enable_gbm" = xyes)
-GBM_PC_REQ_PRIV="libudev"
+GBM_PC_REQ_PRIV="libudev >= $LIBUDEV_REQUIRED"
 GBM_PC_LIB_PRIV="$DLOPEN_LIBS"
 AC_SUBST([GBM_PC_REQ_PRIV])
 AC_SUBST([GBM_PC_LIB_PRIV])
@@ -1468,7 +1468,7 @@ for plat in $egl_platforms; do
 
         case "$plat$have_libudev" in
                 waylandno|drmno)
-                    AC_MSG_ERROR([cannot build $plat platfrom without udev]) ;;
+                    AC_MSG_ERROR([cannot build $plat platform without udev >= $LIBUDEV_REQUIRED]) ;;
         esac
 done
 
@@ -1716,8 +1716,9 @@ gallium_require_llvm() {
 
 gallium_require_drm_loader() {
     if test "x$enable_gallium_loader" = xyes; then
-        PKG_CHECK_MODULES([LIBUDEV], [libudev], [],
-                          AC_MSG_ERROR([Gallium drm loader requires libudev]))
+        if test "x$have_libudev" != xyes; then
+            AC_MSG_ERROR([Gallium drm loader requires libudev >= $LIBUDEV_REQUIRED])
+        fi
         if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([Gallium drm loader requires libdrm >= $LIBDRM_REQUIRED])
         fi
