@@ -445,6 +445,7 @@ static struct dri2_egl_display_vtbl dri2_drm_display_vtbl = {
    .authenticate = dri2_drm_authenticate,
    .create_window_surface = dri2_drm_create_window_surface,
    .create_pixmap_surface = dri2_fallback_create_pixmap_surface,
+   .create_pbuffer_surface = dri2_fallback_create_pbuffer_surface,
    .swap_interval = dri2_fallback_swap_interval,
    .swap_buffers = dri2_drm_swap_buffers,
    .swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,

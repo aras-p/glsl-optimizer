@@ -97,6 +97,10 @@ struct dri2_egl_display_vtbl {
                                          EGLNativePixmapType pixmap,
                                          const EGLint *attrib_list);
 
+   _EGLSurface* (*create_pbuffer_surface)(_EGLDriver *drv, _EGLDisplay *dpy,
+                                          _EGLConfig *config,
+                                          const EGLint *attrib_list);
+
    EGLBoolean (*swap_interval)(_EGLDriver *drv, _EGLDisplay *dpy,
                                _EGLSurface *surf, EGLint interval);
 

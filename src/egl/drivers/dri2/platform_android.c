@@ -423,7 +423,6 @@ droid_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
 static void
 droid_init_driver_functions(_EGLDriver *drv)
 {
-   drv->API.CreatePbufferSurface = droid_create_pbuffer_surface;
    drv->API.DestroySurface = droid_destroy_surface;
 
    drv->API.CreateImageKHR = droid_create_image_khr;
@@ -646,6 +645,7 @@ static struct dri2_egl_display_vtbl droid_display_vtbl = {
    .authenticate = NULL,
    .create_window_surface = droid_create_window_surface,
    .create_pixmap_surface = dri2_fallback_pixmap_surface,
+   .create_pbuffer_surface = droid_create_pbuffer_surface,
    .swap_interval = dri2_fallback_swap_interval,
    .swap_buffers = droid_swap_buffers,
    .swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
