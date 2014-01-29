@@ -1013,6 +1013,16 @@ dri2_get_proc_address(_EGLDriver *drv, const char *procname)
    return dri2_drv->get_proc_address(procname);
 }
 
+static _EGLSurface*
+dri2_create_window_surface(_EGLDriver *drv, _EGLDisplay *dpy,
+                           _EGLConfig *conf, EGLNativeWindowType window,
+                           const EGLint *attrib_list)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(dpy);
+   return dri2_dpy->vtbl->create_window_surface(drv, dpy, conf, window,
+                                                attrib_list);
+}
+
 static EGLBoolean
 dri2_swap_interval(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
                    EGLint interval)
@@ -2056,6 +2066,7 @@ _eglBuiltInDriverDRI2(const char *args)
    dri2_drv->base.API.CreateContext = dri2_create_context;
    dri2_drv->base.API.DestroyContext = dri2_destroy_context;
    dri2_drv->base.API.MakeCurrent = dri2_make_current;
+   dri2_drv->base.API.CreateWindowSurface = dri2_create_window_surface;
    dri2_drv->base.API.GetProcAddress = dri2_get_proc_address;
    dri2_drv->base.API.WaitClient = dri2_wait_client;
    dri2_drv->base.API.WaitNative = dri2_wait_native;

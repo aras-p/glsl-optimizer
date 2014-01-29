@@ -994,12 +994,14 @@ dri2_x11_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
 
 static struct dri2_egl_display_vtbl dri2_x11_swrast_display_vtbl = {
    .authenticate = NULL,
+   .create_window_surface = dri2_x11_create_window_surface,
    .swap_interval = dri2_fallback_swap_interval,
    .swap_buffers = dri2_x11_swap_buffers,
 };
 
 static struct dri2_egl_display_vtbl dri2_x11_display_vtbl = {
    .authenticate = dri2_x11_authenticate,
+   .create_window_surface = dri2_x11_create_window_surface,
    .swap_interval = dri2_x11_swap_interval,
    .swap_buffers = dri2_x11_swap_buffers,
    .swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
@@ -1010,7 +1012,6 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy;
 
-   drv->API.CreateWindowSurface = dri2_x11_create_window_surface;
    drv->API.CreatePixmapSurface = dri2_x11_create_pixmap_surface;
    drv->API.CreatePbufferSurface = dri2_x11_create_pbuffer_surface;
    drv->API.DestroySurface = dri2_x11_destroy_surface;
@@ -1135,7 +1136,6 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy;
 
-   drv->API.CreateWindowSurface = dri2_x11_create_window_surface;
    drv->API.CreatePixmapSurface = dri2_x11_create_pixmap_surface;
    drv->API.CreatePbufferSurface = dri2_x11_create_pbuffer_surface;
    drv->API.DestroySurface = dri2_x11_destroy_surface;

@@ -959,6 +959,7 @@ dri2_wl_setup_swap_interval(struct dri2_egl_display *dri2_dpy)
 
 static struct dri2_egl_display_vtbl dri2_wl_display_vtbl = {
    .authenticate = dri2_wl_authenticate,
+   .create_window_surface = dri2_wl_create_window_surface,
    .swap_interval = dri2_wl_swap_interval,
    .swap_buffers = dri2_wl_swap_buffers,
    .swap_buffers_with_damage = dri2_wl_swap_buffers_with_damage,
@@ -978,7 +979,6 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 
    loader_set_logger(_eglLog);
 
-   drv->API.CreateWindowSurface = dri2_wl_create_window_surface;
    drv->API.DestroySurface = dri2_wl_destroy_surface;
    drv->API.Terminate = dri2_wl_terminate;
    drv->API.QueryBufferAge = dri2_wl_query_buffer_age;

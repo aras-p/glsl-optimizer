@@ -87,6 +87,11 @@ struct dri2_egl_driver
 struct dri2_egl_display_vtbl {
    int (*authenticate)(_EGLDisplay *disp, uint32_t id);
 
+   _EGLSurface* (*create_window_surface)(_EGLDriver *drv, _EGLDisplay *dpy,
+                                         _EGLConfig *config,
+                                         EGLNativeWindowType window,
+                                         const EGLint *attrib_list);
+
    EGLBoolean (*swap_interval)(_EGLDriver *drv, _EGLDisplay *dpy,
                                _EGLSurface *surf, EGLint interval);
 
