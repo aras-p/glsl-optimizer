@@ -962,6 +962,7 @@ static struct dri2_egl_display_vtbl dri2_wl_display_vtbl = {
    .create_window_surface = dri2_wl_create_window_surface,
    .create_pixmap_surface = dri2_fallback_create_pixmap_surface,
    .create_pbuffer_surface = dri2_fallback_create_pbuffer_surface,
+   .destroy_surface = dri2_wl_destroy_surface,
    .swap_interval = dri2_wl_swap_interval,
    .swap_buffers = dri2_wl_swap_buffers,
    .swap_buffers_with_damage = dri2_wl_swap_buffers_with_damage,
@@ -981,7 +982,6 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 
    loader_set_logger(_eglLog);
 
-   drv->API.DestroySurface = dri2_wl_destroy_surface;
    drv->API.Terminate = dri2_wl_terminate;
    drv->API.QueryBufferAge = dri2_wl_query_buffer_age;
 

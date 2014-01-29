@@ -1042,6 +1042,13 @@ dri2_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
 }
 
 static EGLBoolean
+dri2_destroy_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(dpy);
+   return dri2_dpy->vtbl->destroy_surface(drv, dpy, surf);
+}
+
+static EGLBoolean
 dri2_swap_interval(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
                    EGLint interval)
 {
@@ -2087,6 +2094,7 @@ _eglBuiltInDriverDRI2(const char *args)
    dri2_drv->base.API.CreateWindowSurface = dri2_create_window_surface;
    dri2_drv->base.API.CreatePixmapSurface = dri2_create_pixmap_surface;
    dri2_drv->base.API.CreatePbufferSurface = dri2_create_pbuffer_surface;
+   dri2_drv->base.API.DestroySurface = dri2_destroy_surface;
    dri2_drv->base.API.GetProcAddress = dri2_get_proc_address;
    dri2_drv->base.API.WaitClient = dri2_wait_client;
    dri2_drv->base.API.WaitNative = dri2_wait_native;

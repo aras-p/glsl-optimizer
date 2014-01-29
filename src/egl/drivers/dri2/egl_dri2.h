@@ -101,6 +101,9 @@ struct dri2_egl_display_vtbl {
                                           _EGLConfig *config,
                                           const EGLint *attrib_list);
 
+   EGLBoolean (*destroy_surface)(_EGLDriver *drv, _EGLDisplay *dpy,
+                                 _EGLSurface *surface);
+
    EGLBoolean (*swap_interval)(_EGLDriver *drv, _EGLDisplay *dpy,
                                _EGLSurface *surf, EGLint interval);
 

@@ -446,6 +446,7 @@ static struct dri2_egl_display_vtbl dri2_drm_display_vtbl = {
    .create_window_surface = dri2_drm_create_window_surface,
    .create_pixmap_surface = dri2_fallback_create_pixmap_surface,
    .create_pbuffer_surface = dri2_fallback_create_pbuffer_surface,
+   .destroy_surface = dri2_drm_destroy_surface,
    .swap_interval = dri2_fallback_swap_interval,
    .swap_buffers = dri2_drm_swap_buffers,
    .swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
@@ -543,7 +544,6 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
                       i + 1, EGL_WINDOW_BIT, attr_list, NULL);
    }
 
-   drv->API.DestroySurface = dri2_drm_destroy_surface;
    drv->API.CreateImageKHR = dri2_drm_create_image_khr;
    drv->API.QueryBufferAge = dri2_drm_query_buffer_age;
 
