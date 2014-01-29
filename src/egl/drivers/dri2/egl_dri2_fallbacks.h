@@ -57,3 +57,10 @@ dri2_fallback_swap_buffers_with_damage(_EGLDriver *drv, _EGLDisplay *dpy,
 {
    return EGL_FALSE;
 }
+
+static inline EGLint
+dri2_fallback_query_buffer_age(_EGLDriver *drv, _EGLDisplay *dpy,
+                               _EGLSurface *surf)
+{
+   return 0;
+}

@@ -450,6 +450,7 @@ static struct dri2_egl_display_vtbl dri2_drm_display_vtbl = {
    .swap_interval = dri2_fallback_swap_interval,
    .swap_buffers = dri2_drm_swap_buffers,
    .swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
+   .query_buffer_age = dri2_drm_query_buffer_age,
 };
 
 EGLBoolean
@@ -545,7 +546,6 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    }
 
    drv->API.CreateImageKHR = dri2_drm_create_image_khr;
-   drv->API.QueryBufferAge = dri2_drm_query_buffer_age;
 
    disp->Extensions.EXT_buffer_age = EGL_TRUE;
 

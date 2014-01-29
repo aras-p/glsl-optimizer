@@ -966,6 +966,7 @@ static struct dri2_egl_display_vtbl dri2_wl_display_vtbl = {
    .swap_interval = dri2_wl_swap_interval,
    .swap_buffers = dri2_wl_swap_buffers,
    .swap_buffers_with_damage = dri2_wl_swap_buffers_with_damage,
+   .query_buffer_age = dri2_wl_query_buffer_age,
 };
 
 EGLBoolean
@@ -983,7 +984,6 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    loader_set_logger(_eglLog);
 
    drv->API.Terminate = dri2_wl_terminate;
-   drv->API.QueryBufferAge = dri2_wl_query_buffer_age;
 
    drv->API.CreateWaylandBufferFromImageWL =
       dri2_wl_create_wayland_buffer_from_image_wl;

@@ -1000,6 +1000,7 @@ static struct dri2_egl_display_vtbl dri2_x11_swrast_display_vtbl = {
    .destroy_surface = dri2_x11_destroy_surface,
    .swap_interval = dri2_fallback_swap_interval,
    .swap_buffers = dri2_x11_swap_buffers,
+   .query_buffer_age = dri2_fallback_query_buffer_age,
 };
 
 static struct dri2_egl_display_vtbl dri2_x11_display_vtbl = {
@@ -1011,6 +1012,7 @@ static struct dri2_egl_display_vtbl dri2_x11_display_vtbl = {
    .swap_interval = dri2_x11_swap_interval,
    .swap_buffers = dri2_x11_swap_buffers,
    .swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
+   .query_buffer_age = dri2_fallback_query_buffer_age,
 };
 
 static EGLBoolean
