@@ -89,6 +89,9 @@ struct dri2_egl_display_vtbl {
 
    EGLBoolean (*swap_interval)(_EGLDriver *drv, _EGLDisplay *dpy,
                                _EGLSurface *surf, EGLint interval);
+
+   EGLBoolean (*swap_buffers)(_EGLDriver *drv, _EGLDisplay *dpy,
+                              _EGLSurface *surf);
 };
 
 struct dri2_egl_display

@@ -1022,6 +1022,13 @@ dri2_swap_interval(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
 }
 
 static EGLBoolean
+dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(dpy);
+   return dri2_dpy->vtbl->swap_buffers(drv, dpy, surf);
+}
+
+static EGLBoolean
 dri2_wait_client(_EGLDriver *drv, _EGLDisplay *disp, _EGLContext *ctx)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
@@ -2045,6 +2052,7 @@ _eglBuiltInDriverDRI2(const char *args)
    dri2_drv->base.API.BindTexImage = dri2_bind_tex_image;
    dri2_drv->base.API.ReleaseTexImage = dri2_release_tex_image;
    dri2_drv->base.API.SwapInterval = dri2_swap_interval;
+   dri2_drv->base.API.SwapBuffers = dri2_swap_buffers;
    dri2_drv->base.API.CreateImageKHR = dri2_create_image_khr;
    dri2_drv->base.API.DestroyImageKHR = dri2_destroy_image_khr;
 #ifdef HAVE_DRM_PLATFORM

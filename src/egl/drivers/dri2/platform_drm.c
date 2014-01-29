@@ -444,6 +444,7 @@ dri2_drm_authenticate(_EGLDisplay *disp, uint32_t id)
 static struct dri2_egl_display_vtbl dri2_drm_display_vtbl = {
    .authenticate = dri2_drm_authenticate,
    .swap_interval = dri2_fallback_swap_interval,
+   .swap_buffers = dri2_drm_swap_buffers,
 };
 
 EGLBoolean
@@ -540,7 +541,6 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 
    drv->API.CreateWindowSurface = dri2_drm_create_window_surface;
    drv->API.DestroySurface = dri2_drm_destroy_surface;
-   drv->API.SwapBuffers = dri2_drm_swap_buffers;
    drv->API.CreateImageKHR = dri2_drm_create_image_khr;
    drv->API.QueryBufferAge = dri2_drm_query_buffer_age;
 

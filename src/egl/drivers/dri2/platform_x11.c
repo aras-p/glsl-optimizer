@@ -995,11 +995,13 @@ dri2_x11_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
 static struct dri2_egl_display_vtbl dri2_x11_swrast_display_vtbl = {
    .authenticate = NULL,
    .swap_interval = dri2_fallback_swap_interval,
+   .swap_buffers = dri2_x11_swap_buffers,
 };
 
 static struct dri2_egl_display_vtbl dri2_x11_display_vtbl = {
    .authenticate = dri2_x11_authenticate,
    .swap_interval = dri2_x11_swap_interval,
+   .swap_buffers = dri2_x11_swap_buffers,
 };
 
 static EGLBoolean
@@ -1011,7 +1013,6 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.CreatePixmapSurface = dri2_x11_create_pixmap_surface;
    drv->API.CreatePbufferSurface = dri2_x11_create_pbuffer_surface;
    drv->API.DestroySurface = dri2_x11_destroy_surface;
-   drv->API.SwapBuffers = dri2_x11_swap_buffers;
    drv->API.CopyBuffers = dri2_x11_copy_buffers;
 
    drv->API.SwapBuffersRegionNOK = NULL;
@@ -1137,7 +1138,6 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    drv->API.CreatePixmapSurface = dri2_x11_create_pixmap_surface;
    drv->API.CreatePbufferSurface = dri2_x11_create_pbuffer_surface;
    drv->API.DestroySurface = dri2_x11_destroy_surface;
-   drv->API.SwapBuffers = dri2_x11_swap_buffers;
    drv->API.CopyBuffers = dri2_x11_copy_buffers;
    drv->API.CreateImageKHR = dri2_x11_create_image_khr;
    drv->API.SwapBuffersRegionNOK = dri2_x11_swap_buffers_region;
