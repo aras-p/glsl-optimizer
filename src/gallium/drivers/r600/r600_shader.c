@@ -1162,7 +1162,7 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 	struct r600_bytecode_output output;
 	struct r600_bytecode_cf *cf_jump, *cf_pop,
 		*last_exp_pos = NULL, *last_exp_param = NULL;
-	int i, next_clip_pos = 62, next_param = 0;
+	int i, next_clip_pos = 61, next_param = 0;
 
 	cshader = calloc(1, sizeof(struct r600_pipe_shader));
 	if (!cshader)
@@ -1263,18 +1263,26 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 
 		case TGSI_SEMANTIC_PSIZE:
 			output.array_base = 61;
+			if (next_clip_pos == 61)
+				next_clip_pos = 62;
 			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 			output.swizzle_y = 7;
 			output.swizzle_z = 7;
 			output.swizzle_w = 7;
+			ctx.shader->vs_out_misc_write = 1;
+			ctx.shader->vs_out_point_size = 1;
 			break;
 		case TGSI_SEMANTIC_LAYER:
 			output.array_base = 61;
+			if (next_clip_pos == 61)
+				next_clip_pos = 62;
 			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
 			output.swizzle_x = 7;
 			output.swizzle_y = 7;
 			output.swizzle_z = 0;
 			output.swizzle_w = 7;
+			ctx.shader->vs_out_misc_write = 1;
+			ctx.shader->vs_out_layer = 1;
 			break;
 		case TGSI_SEMANTIC_CLIPDIST:
 			/* spi_sid is 0 for clipdistance outputs that were generated

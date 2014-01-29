@@ -1171,6 +1171,13 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 		if (unlikely(rctx->geometry_shader.shader != rctx->gs_shader->current)) {
 			update_shader_atom(ctx, &rctx->geometry_shader, rctx->gs_shader->current);
 			update_shader_atom(ctx, &rctx->vertex_shader, rctx->gs_shader->current->gs_copy_shader);
+			/* Update clip misc state. */
+			if (rctx->gs_shader->current->gs_copy_shader->pa_cl_vs_out_cntl != rctx->clip_misc_state.pa_cl_vs_out_cntl ||
+					rctx->gs_shader->current->gs_copy_shader->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write) {
+				rctx->clip_misc_state.pa_cl_vs_out_cntl = rctx->gs_shader->current->gs_copy_shader->pa_cl_vs_out_cntl;
+				rctx->clip_misc_state.clip_dist_write = rctx->gs_shader->current->gs_copy_shader->shader.clip_dist_write;
+				rctx->clip_misc_state.atom.dirty = true;
+			}
 		}
 
 		r600_shader_select(ctx, rctx->vs_shader, &vs_dirty);
