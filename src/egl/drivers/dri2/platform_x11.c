@@ -993,12 +993,22 @@ dri2_x11_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
    }
 }
 
+static _EGLImage*
+dri2_x11_swrast_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
+                                 _EGLContext *ctx, EGLenum target,
+                                 EGLClientBuffer buffer,
+                                 const EGLint *attr_list)
+{
+   return NULL;
+}
+
 static struct dri2_egl_display_vtbl dri2_x11_swrast_display_vtbl = {
    .authenticate = NULL,
    .create_window_surface = dri2_x11_create_window_surface,
    .create_pixmap_surface = dri2_x11_create_pixmap_surface,
    .create_pbuffer_surface = dri2_x11_create_pbuffer_surface,
    .destroy_surface = dri2_x11_destroy_surface,
+   .create_image = dri2_x11_swrast_create_image_khr,
    .swap_interval = dri2_fallback_swap_interval,
    .swap_buffers = dri2_x11_swap_buffers,
    .swap_buffers_region = dri2_fallback_swap_buffers_region,
@@ -1014,6 +1024,7 @@ static struct dri2_egl_display_vtbl dri2_x11_display_vtbl = {
    .create_pixmap_surface = dri2_x11_create_pixmap_surface,
    .create_pbuffer_surface = dri2_x11_create_pbuffer_surface,
    .destroy_surface = dri2_x11_destroy_surface,
+   .create_image = dri2_x11_create_image_khr,
    .swap_interval = dri2_x11_swap_interval,
    .swap_buffers = dri2_x11_swap_buffers,
    .swap_buffers_with_damage = dri2_fallback_swap_buffers_with_damage,
@@ -1142,8 +1153,6 @@ static EGLBoolean
 dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy;
-
-   drv->API.CreateImageKHR = dri2_x11_create_image_khr;
 
    dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)

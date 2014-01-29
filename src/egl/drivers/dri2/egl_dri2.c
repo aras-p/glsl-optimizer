@@ -1220,8 +1220,18 @@ dri2_release_tex_image(_EGLDriver *drv,
    return EGL_TRUE;
 }
 
+static _EGLImage*
+dri2_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
+                  EGLenum target, EGLClientBuffer buffer,
+                  const EGLint *attr_list)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(dpy);
+   return dri2_dpy->vtbl->create_image(drv, dpy, ctx, target, buffer,
+                                       attr_list);
+}
+
 static _EGLImage *
-dri2_create_image(_EGLDisplay *disp, __DRIimage *dri_image)
+dri2_create_image_from_dri(_EGLDisplay *disp, __DRIimage *dri_image)
 {
    struct dri2_egl_image *dri2_img;
 
@@ -1265,7 +1275,7 @@ dri2_create_image_khr_renderbuffer(_EGLDisplay *disp, _EGLContext *ctx,
       dri2_dpy->image->createImageFromRenderbuffer(dri2_ctx->dri_context,
                                                    renderbuffer, NULL);
 
-   return dri2_create_image(disp, dri_image);
+   return dri2_create_image_from_dri(disp, dri_image);
 }
 
 #ifdef HAVE_DRM_PLATFORM
@@ -1311,7 +1321,7 @@ dri2_create_image_mesa_drm_buffer(_EGLDisplay *disp, _EGLContext *ctx,
 					   pitch,
 					   NULL);
 
-   return dri2_create_image(disp, dri_image);
+   return dri2_create_image_from_dri(disp, dri_image);
 }
 #endif
 
@@ -1374,7 +1384,7 @@ dri2_create_image_wayland_wl_buffer(_EGLDisplay *disp, _EGLContext *ctx,
       return NULL;
    }
 
-   return dri2_create_image(disp, dri_image);
+   return dri2_create_image_from_dri(disp, dri_image);
 }
 #endif
 
@@ -1744,7 +1754,7 @@ dri2_create_image_dma_buf(_EGLDisplay *disp, _EGLContext *ctx,
    if (!dri_image)
       return EGL_NO_IMAGE_KHR;
 
-   res = dri2_create_image(disp, dri_image);
+   res = dri2_create_image_from_dri(disp, dri_image);
    if (res)
       dri2_take_dma_buf_ownership(fds, num_fds);
 
@@ -2157,7 +2167,7 @@ _eglBuiltInDriverDRI2(const char *args)
    dri2_drv->base.API.PostSubBufferNV = dri2_post_sub_buffer;
    dri2_drv->base.API.CopyBuffers = dri2_copy_buffers,
    dri2_drv->base.API.QueryBufferAge = dri2_query_buffer_age;
-   dri2_drv->base.API.CreateImageKHR = dri2_create_image_khr;
+   dri2_drv->base.API.CreateImageKHR = dri2_create_image;
    dri2_drv->base.API.DestroyImageKHR = dri2_destroy_image_khr;
    dri2_drv->base.API.CreateWaylandBufferFromImageWL = dri2_create_wayland_buffer_from_image;
 #ifdef HAVE_DRM_PLATFORM
