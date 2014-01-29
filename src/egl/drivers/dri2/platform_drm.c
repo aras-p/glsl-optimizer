@@ -454,6 +454,7 @@ static struct dri2_egl_display_vtbl dri2_drm_display_vtbl = {
    .post_sub_buffer = dri2_fallback_post_sub_buffer,
    .copy_buffers = dri2_fallback_copy_buffers,
    .query_buffer_age = dri2_drm_query_buffer_age,
+   .create_wayland_buffer_from_image = dri2_fallback_create_wayland_buffer_from_image,
 };
 
 EGLBoolean

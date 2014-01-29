@@ -26,6 +26,8 @@
 
 #include "egltypedefs.h"
 
+struct wl_buffer;
+
 static inline _EGLSurface *
 dri2_fallback_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *disp,
                                     _EGLConfig *conf,
@@ -87,4 +89,12 @@ dri2_fallback_query_buffer_age(_EGLDriver *drv, _EGLDisplay *dpy,
                                _EGLSurface *surf)
 {
    return 0;
+}
+
+static inline struct wl_buffer*
+dri2_fallback_create_wayland_buffer_from_image(_EGLDriver *drv,
+                                               _EGLDisplay *dpy,
+                                               _EGLImage *img)
+{
+   return NULL;
 }

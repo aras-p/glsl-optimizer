@@ -686,9 +686,9 @@ dri2_wl_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 }
 
 static struct wl_buffer *
-dri2_wl_create_wayland_buffer_from_image_wl(_EGLDriver *drv,
-                                            _EGLDisplay *disp,
-                                            _EGLImage *img)
+dri2_wl_create_wayland_buffer_from_image(_EGLDriver *drv,
+                                          _EGLDisplay *disp,
+                                          _EGLImage *img)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_image *dri2_img = dri2_egl_image(img);
@@ -945,6 +945,7 @@ static struct dri2_egl_display_vtbl dri2_wl_display_vtbl = {
    .post_sub_buffer = dri2_fallback_post_sub_buffer,
    .copy_buffers = dri2_fallback_copy_buffers,
    .query_buffer_age = dri2_wl_query_buffer_age,
+   .create_wayland_buffer_from_image = dri2_wl_create_wayland_buffer_from_image,
 };
 
 EGLBoolean
@@ -960,9 +961,6 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    static const unsigned int rgb565_masks[4] = { 0xf800, 0x07e0, 0x001f, 0 };
 
    loader_set_logger(_eglLog);
-
-   drv->API.CreateWaylandBufferFromImageWL =
-      dri2_wl_create_wayland_buffer_from_image_wl;
 
    dri2_dpy = calloc(1, sizeof *dri2_dpy);
    if (!dri2_dpy)

@@ -1487,6 +1487,14 @@ dri2_create_image_khr_texture(_EGLDisplay *disp, _EGLContext *ctx,
    return &dri2_img->base;
 }
 
+static struct wl_buffer*
+dri2_create_wayland_buffer_from_image(_EGLDriver *drv, _EGLDisplay *dpy,
+                                      _EGLImage *img)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(dpy);
+   return dri2_dpy->vtbl->create_wayland_buffer_from_image(drv, dpy, img);
+}
+
 #ifdef HAVE_DRM_PLATFORM
 static EGLBoolean
 dri2_check_dma_buf_attribs(const _EGLImageAttribs *attrs)
@@ -2151,6 +2159,7 @@ _eglBuiltInDriverDRI2(const char *args)
    dri2_drv->base.API.QueryBufferAge = dri2_query_buffer_age;
    dri2_drv->base.API.CreateImageKHR = dri2_create_image_khr;
    dri2_drv->base.API.DestroyImageKHR = dri2_destroy_image_khr;
+   dri2_drv->base.API.CreateWaylandBufferFromImageWL = dri2_create_wayland_buffer_from_image;
 #ifdef HAVE_DRM_PLATFORM
    dri2_drv->base.API.CreateDRMImageMESA = dri2_create_drm_image_mesa;
    dri2_drv->base.API.ExportDRMImageMESA = dri2_export_drm_image_mesa;

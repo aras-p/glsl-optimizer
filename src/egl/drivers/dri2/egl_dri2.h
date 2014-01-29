@@ -75,6 +75,8 @@
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
+struct wl_buffer;
+
 struct dri2_egl_driver
 {
    _EGLDriver base;
@@ -128,6 +130,9 @@ struct dri2_egl_display_vtbl {
 
    EGLint (*query_buffer_age)(_EGLDriver *drv, _EGLDisplay *dpy,
                               _EGLSurface *surf);
+
+   struct wl_buffer* (*create_wayland_buffer_from_image)(
+                        _EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *img);
 };
 
 struct dri2_egl_display
