@@ -34,7 +34,6 @@ AM_CPPFLAGS = \
 
 AM_CFLAGS = \
 	$(GALLIUM_CFLAGS) \
-	$(LIBUDEV_CFLAGS) \
 	$(LIBDRM_CFLAGS)
 
 gbm_LTLIBRARIES = gbm_gallium_drm.la
@@ -47,7 +46,6 @@ gbm_gallium_drm_la_LIBADD = \
 	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/state_trackers/gbm/libgbm.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(LIBUDEV_LIBS) \
 	$(LIBDRM_LIBS) \
 	-lm
 
