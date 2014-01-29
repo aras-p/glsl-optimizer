@@ -41,6 +41,46 @@
 #include "intel_buffer_objects.h"
 #include "intel_batchbuffer.h"
 
+/**
+ * Map a buffer object; issue performance warnings if mapping causes stalls.
+ *
+ * This matches the drm_intel_bo_map API, but takes an additional human-readable
+ * name for the buffer object to use in the performance debug message.
+ */
+int
+brw_bo_map(struct brw_context *brw,
+           drm_intel_bo *bo, int write_enable,
+           const char *bo_name)
+{
+   if (likely(!brw->perf_debug) || !drm_intel_bo_busy(bo))
+      return drm_intel_bo_map(bo, write_enable);
+
+   float start_time = get_time();
+
+   int ret = drm_intel_bo_map(bo, write_enable);
+
+   perf_debug("CPU mapping a busy %s BO stalled and took %.03f ms.\n",
+              bo_name, (get_time() - start_time) * 1000);
+
+   return ret;
+}
+
+int
+brw_bo_map_gtt(struct brw_context *brw, drm_intel_bo *bo, const char *bo_name)
+{
+   if (likely(!brw->perf_debug) || !drm_intel_bo_busy(bo))
+      return drm_intel_gem_bo_map_gtt(bo);
+
+   float start_time = get_time();
+
+   int ret = drm_intel_gem_bo_map_gtt(bo);
+
+   perf_debug("GTT mapping a busy %s BO stalled and took %.03f ms.\n",
+              bo_name, (get_time() - start_time) * 1000);
+
+   return ret;
+}
+
 static GLboolean
 intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj);
 

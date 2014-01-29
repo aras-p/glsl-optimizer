@@ -1658,6 +1658,12 @@ void brw_dump_perf_monitors(struct brw_context *brw);
 void brw_perf_monitor_new_batch(struct brw_context *brw);
 void brw_perf_monitor_finish_batch(struct brw_context *brw);
 
+/* intel_buffer_objects.c */
+int brw_bo_map(struct brw_context *brw, drm_intel_bo *bo, int write_enable,
+               const char *bo_name);
+int brw_bo_map_gtt(struct brw_context *brw, drm_intel_bo *bo,
+                   const char *bo_name);
+
 /* intel_extensions.c */
 extern void intelInitExtensions(struct gl_context *ctx);
 
