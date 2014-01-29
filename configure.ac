@@ -862,11 +862,6 @@ xyesno)
     X11_INCLUDES="$X11_INCLUDES $DRIGL_CFLAGS"
     GL_LIB_DEPS="$DRIGL_LIBS"
 
-    if test x"$enable_dri3$have_libudev" = xyesyes; then
-        X11_INCLUDES="$X11_INCLUDES $LIBUDEV_CFLAGS"
-        GL_LIB_DEPS="$GL_LIB_DEPS"
-    fi
-
     # need DRM libs, $PTHREAD_LIBS, etc.
     GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm $PTHREAD_LIBS $DLOPEN_LIBS"
     GL_PC_LIB_PRIV="-lm $PTHREAD_LIBS $DLOPEN_LIBS"
