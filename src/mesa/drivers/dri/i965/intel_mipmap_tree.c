@@ -1706,18 +1706,12 @@ intel_miptree_map_raw(struct brw_context *brw, struct intel_mipmap_tree *mt)
 
    drm_intel_bo *bo = mt->region->bo;
 
-   if (unlikely(INTEL_DEBUG & DEBUG_PERF)) {
-      if (drm_intel_bo_busy(bo)) {
-         perf_debug("Mapping a busy miptree, causing a stall on the GPU.\n");
-      }
-   }
-
    intel_batchbuffer_flush(brw);
 
    if (mt->region->tiling != I915_TILING_NONE)
-      drm_intel_gem_bo_map_gtt(bo);
+      brw_bo_map_gtt(brw, bo, "miptree");
    else
-      drm_intel_bo_map(bo, true);
+      brw_bo_map(brw, bo, true, "miptree");
 
    return bo->virtual;
 }
