@@ -114,6 +114,9 @@ struct dri2_egl_display_vtbl {
                                           _EGLSurface *surface,                  
                                           const EGLint *rects, EGLint n_rects);  
 
+   EGLBoolean (*copy_buffers)(_EGLDriver *drv, _EGLDisplay *dpy,
+                              _EGLSurface *surf, EGLNativePixmapType target);
+
    EGLint (*query_buffer_age)(_EGLDriver *drv, _EGLDisplay *dpy,
                               _EGLSurface *surf);
 };
