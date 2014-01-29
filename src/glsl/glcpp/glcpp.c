@@ -30,7 +30,7 @@
 #include "main/mtypes.h"
 #include "main/shaderobj.h"
 
-extern int yydebug;
+extern int glcpp_parser_debug;
 
 void
 _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
