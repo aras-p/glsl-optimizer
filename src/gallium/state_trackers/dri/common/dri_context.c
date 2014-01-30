@@ -236,9 +236,9 @@ dri_make_current(__DRIcontext * cPriv,
 
    ++ctx->bind_count;
 
-   if (!driDrawPriv && !driReadPriv)
+   if (!draw && !read)
       return ctx->stapi->make_current(ctx->stapi, ctx->st, NULL, NULL);
-   else if (!driDrawPriv || !driReadPriv)
+   else if (!draw || !read)
       return GL_FALSE;
 
    if (ctx->dPriv != driDrawPriv) {
