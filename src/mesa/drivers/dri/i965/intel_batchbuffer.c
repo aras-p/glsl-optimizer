@@ -661,3 +661,28 @@ intel_batchbuffer_emit_mi_flush(struct brw_context *brw)
       brw_emit_pipe_control_flush(brw, flags);
    }
 }
+
+void
+brw_load_register_mem(struct brw_context *brw,
+                      uint32_t reg,
+                      drm_intel_bo *bo,
+                      uint32_t read_domains, uint32_t write_domain,
+                      uint32_t offset)
+{
+   /* MI_LOAD_REGISTER_MEM only exists on Gen7+. */
+   assert(brw->gen >= 7);
+
+   if (brw->gen >= 8) {
+      BEGIN_BATCH(4);
+      OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (4 - 2));
+      OUT_BATCH(reg);
+      OUT_RELOC64(bo, read_domains, write_domain, offset);
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(3);
+      OUT_BATCH(GEN7_MI_LOAD_REGISTER_MEM | (3 - 2));
+      OUT_BATCH(reg);
+      OUT_RELOC(bo, read_domains, write_domain, offset);
+      ADVANCE_BATCH();
+   }
+}

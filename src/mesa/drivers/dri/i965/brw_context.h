@@ -1575,6 +1575,13 @@ void brw_write_depth_count(struct brw_context *brw, drm_intel_bo *bo, int idx);
 void brw_store_register_mem64(struct brw_context *brw,
                               drm_intel_bo *bo, uint32_t reg, int idx);
 
+/** intel_batchbuffer.c */
+void brw_load_register_mem(struct brw_context *brw,
+                           uint32_t reg,
+                           drm_intel_bo *bo,
+                           uint32_t read_domains, uint32_t write_domain,
+                           uint32_t offset);
+
 /*======================================================================
  * brw_state_dump.c
  */
