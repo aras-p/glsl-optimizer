@@ -15,6 +15,7 @@ Fixes:
 * Fixed array assignments sometimes appearing in pre-GLSL1.20 versions, especially with
   complex loops that couldn't be unrolled.
 * Fixed output of textureOffset and texelFetch.
+* Fixed error messages on MRT outputs on GL & GLES3 (now supports 4 MRTs).
 
 2013 12
 -------
