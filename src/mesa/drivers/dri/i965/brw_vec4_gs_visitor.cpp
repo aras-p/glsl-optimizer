@@ -409,6 +409,13 @@ vec4_gs_visitor::emit_control_data_bits()
       inst->force_writemask_all = true;
       inst = emit(GS_OPCODE_URB_WRITE);
       inst->urb_write_flags = urb_write_flags;
+      /* We need to increment Global Offset by 256-bits to make room for
+       * Broadwell's extra "Vertex Count" payload at the beginning of the
+       * URB entry.  Since this is an OWord message, Global Offset is counted
+       * in 128-bit units, so we must set it to 2.
+       */
+      if (brw->gen >= 8)
+         inst->offset = 2;
       inst->base_mrf = base_mrf;
       inst->mlen = 2;
    }
