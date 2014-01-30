@@ -994,6 +994,10 @@ if test "x$enable_dri" = xyes; then
             DEFINES="$DEFINES -DHAVE_DRI3"
         fi
 
+        if test "x$have_libudev" != xyes; then
+            AC_MSG_ERROR([libudev-dev required for building DRI])
+        fi
+
         case "$host_cpu" in
         powerpc* | sparc*)
             # Build only the drivers for cards that exist on PowerPC/sparc
