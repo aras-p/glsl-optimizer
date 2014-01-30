@@ -173,11 +173,8 @@ gen8_vec4_generator::generate_urb_write(vec4_instruction *ir, bool vs)
    if (!(ir->urb_write_flags & BRW_URB_WRITE_USE_CHANNEL_MASKS)) {
       /* Enable Channel Masks in the URB_WRITE_OWORD message header */
       default_state.access_mode = BRW_ALIGN_1;
-      inst = OR(retype(brw_vec1_grf(GEN7_MRF_HACK_START + ir->base_mrf, 5),
-                       BRW_REGISTER_TYPE_UD),
-                retype(brw_vec1_grf(0, 5), BRW_REGISTER_TYPE_UD),
-                brw_imm_ud(0xff00));
-      gen8_set_mask_control(inst, BRW_MASK_DISABLE);
+      MOV_RAW(brw_vec1_grf(GEN7_MRF_HACK_START + ir->base_mrf, 5),
+              brw_imm_ud(0xff00));
       default_state.access_mode = BRW_ALIGN_16;
    }
 
