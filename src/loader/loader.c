@@ -102,6 +102,16 @@ udev_dlopen_handle(void)
 {
    if (!udev_handle) {
       udev_handle = dlopen("libudev.so.1", RTLD_LOCAL | RTLD_LAZY);
+
+      if (!udev_handle) {
+         /* libudev.so.1 changed the return types of the two unref functions
+          * from voids to pointers.  We don't use those return values, and the
+          * only ABI I've heard that cares about this kind of change (calling
+          * a function with a void * return that actually only returns void)
+          * might be ia64.
+          */
+         udev_handle = dlopen("libudev.so.0", RTLD_LOCAL | RTLD_LAZY);
+      }
    }
 
    return udev_handle;
