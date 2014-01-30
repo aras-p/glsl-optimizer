@@ -201,6 +201,19 @@
 /* Registers */
 #define R_008490_CP_STRMOUT_CNTL		     0x008490
 #define   S_008490_OFFSET_UPDATE_DONE(x)		(((x) & 0x1) << 0)
+#define R_008C40_SQ_ESGS_RING_BASE                   0x008C40
+#define R_008C44_SQ_ESGS_RING_SIZE                   0x008C44
+#define R_008C48_SQ_GSVS_RING_BASE                   0x008C48
+#define R_008C4C_SQ_GSVS_RING_SIZE                   0x008C4C
+#define R_008C50_SQ_ESTMP_RING_BASE                  0x008C50
+#define R_008C54_SQ_ESTMP_RING_SIZE                  0x008C54
+#define R_008C50_SQ_GSTMP_RING_BASE                  0x008C58
+#define R_008C54_SQ_GSTMP_RING_SIZE                  0x008C5C
+
+#define R_0088C8_VGT_GS_PER_ES                       0x0088C8
+#define R_0088CC_VGT_ES_PER_GS                       0x0088CC
+#define R_0088E8_VGT_GS_PER_VS                       0x0088E8
+
 #define R_008960_VGT_STRMOUT_BUFFER_FILLED_SIZE_0    0x008960 /* read-only */
 #define R_008964_VGT_STRMOUT_BUFFER_FILLED_SIZE_1    0x008964 /* read-only */
 #define R_008968_VGT_STRMOUT_BUFFER_FILLED_SIZE_2    0x008968 /* read-only */
@@ -1825,12 +1838,20 @@
 #define   S_028A40_MODE(x)                             (((x) & 0x3) << 0)
 #define   G_028A40_MODE(x)                             (((x) >> 0) & 0x3)
 #define   C_028A40_MODE                                0xFFFFFFFC
+#define     V_028A40_GS_OFF                            0
+#define     V_028A40_GS_SCENARIO_A                     1
+#define     V_028A40_GS_SCENARIO_B                     2
+#define     V_028A40_GS_SCENARIO_G                     3
 #define   S_028A40_ES_PASSTHRU(x)                      (((x) & 0x1) << 2)
 #define   G_028A40_ES_PASSTHRU(x)                      (((x) >> 2) & 0x1)
 #define   C_028A40_ES_PASSTHRU                         0xFFFFFFFB
 #define   S_028A40_CUT_MODE(x)                         (((x) & 0x3) << 3)
 #define   G_028A40_CUT_MODE(x)                         (((x) >> 3) & 0x3)
 #define   C_028A40_CUT_MODE                            0xFFFFFFE7
+#define     V_028A40_GS_CUT_1024                       0
+#define     V_028A40_GS_CUT_512                        1
+#define     V_028A40_GS_CUT_256                        2
+#define     V_028A40_GS_CUT_128                        3
 #define R_008DFC_SQ_CF_WORD0                         0x008DFC
 #define   S_008DFC_ADDR(x)                             (((x) & 0xFFFFFFFF) << 0)
 #define   G_008DFC_ADDR(x)                             (((x) >> 0) & 0xFFFFFFFF)
@@ -2333,6 +2354,26 @@
 #define   S_028D44_ALPHA_TO_MASK_OFFSET3(x)		(((x) & 0x3) << 14)
 #define   S_028D44_OFFSET_ROUND(x)			(((x) & 0x1) << 16)
 #define R_028868_SQ_PGM_RESOURCES_VS                 0x028868
+#define R_028890_SQ_PGM_RESOURCES_ES                 0x028890
+#define   S_028890_NUM_GPRS(x)                         (((x) & 0xFF) << 0)
+#define   G_028890_NUM_GPRS(x)                         (((x) >> 0) & 0xFF)
+#define   C_028890_NUM_GPRS                            0xFFFFFF00
+#define   S_028890_STACK_SIZE(x)                       (((x) & 0xFF) << 8)
+#define   G_028890_STACK_SIZE(x)                       (((x) >> 8) & 0xFF)
+#define   C_028890_STACK_SIZE                          0xFFFF00FF
+#define   S_028890_DX10_CLAMP(x)                       (((x) & 0x1) << 21)
+#define   G_028890_DX10_CLAMP(x)                       (((x) >> 21) & 0x1)
+#define   C_028890_DX10_CLAMP                          0xFFDFFFFF
+#define R_02887C_SQ_PGM_RESOURCES_GS                 0x02887C
+#define   S_02887C_NUM_GPRS(x)                         (((x) & 0xFF) << 0)
+#define   G_02887C_NUM_GPRS(x)                         (((x) >> 0) & 0xFF)
+#define   C_02887C_NUM_GPRS                            0xFFFFFF00
+#define   S_02887C_STACK_SIZE(x)                       (((x) & 0xFF) << 8)
+#define   G_02887C_STACK_SIZE(x)                       (((x) >> 8) & 0xFF)
+#define   C_02887C_STACK_SIZE                          0xFFFF00FF
+#define   S_02887C_DX10_CLAMP(x)                       (((x) & 0x1) << 21)
+#define   G_02887C_DX10_CLAMP(x)                       (((x) >> 21) & 0x1)
+#define   C_02887C_DX10_CLAMP                          0xFFDFFFFF
 #define R_0286CC_SPI_PS_IN_CONTROL_0                 0x0286CC
 #define R_0286D0_SPI_PS_IN_CONTROL_1                 0x0286D0
 #define R_028644_SPI_PS_INPUT_CNTL_0                 0x028644
@@ -2422,11 +2463,15 @@
 #define   G_028C04_MAX_SAMPLE_DIST(x)                  (((x) >> 13) & 0xF)
 #define   C_028C04_MAX_SAMPLE_DIST                     0xFFFE1FFF
 #define R_0288CC_SQ_PGM_CF_OFFSET_PS                 0x0288CC
-#define R_0288DC_SQ_PGM_CF_OFFSET_FS                 0x0288DC
 #define R_0288D0_SQ_PGM_CF_OFFSET_VS                 0x0288D0
+#define R_0288D4_SQ_PGM_CF_OFFSET_GS                 0x0288D4
+#define R_0288D8_SQ_PGM_CF_OFFSET_ES                 0x0288D8
+#define R_0288DC_SQ_PGM_CF_OFFSET_FS                 0x0288DC
 #define R_028840_SQ_PGM_START_PS                     0x028840
 #define R_028894_SQ_PGM_START_FS                     0x028894
 #define R_028858_SQ_PGM_START_VS                     0x028858
+#define R_02886C_SQ_PGM_START_GS                     0x02886C
+#define R_028880_SQ_PGM_START_ES                     0x028880
 #define R_028080_CB_COLOR0_VIEW                      0x028080
 #define   S_028080_SLICE_START(x)                      (((x) & 0x7FF) << 0)
 #define   G_028080_SLICE_START(x)                      (((x) >> 0) & 0x7FF)
@@ -2864,6 +2909,7 @@
 #define R_0283F4_SQ_VTX_SEMANTIC_29                  0x0283F4
 #define R_0283F8_SQ_VTX_SEMANTIC_30                  0x0283F8
 #define R_0283FC_SQ_VTX_SEMANTIC_31                  0x0283FC
+#define R_0288C8_SQ_GS_VERT_ITEMSIZE                 0x0288C8
 #define R_0288E0_SQ_VTX_SEMANTIC_CLEAR               0x0288E0
 #define R_028400_VGT_MAX_VTX_INDX                    0x028400
 #define   S_028400_MAX_INDX(x)                         (((x) & 0xFFFFFFFF) << 0)
@@ -3288,6 +3334,8 @@
 #define R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET	     0x028B28
 #define R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE 0x028B2C
 #define R_028B30_VGT_STRMOUT_DRAW_OPAQUE_VERTEX_STRIDE 0x028B30
+#define R_028B38_VGT_GS_MAX_VERT_OUT                 0x028B38 /* r7xx */
+#define   S_028B38_MAX_VERT_OUT(x)                      (((x) & 0x7FF) << 0)
 #define R_028B44_VGT_STRMOUT_BASE_OFFSET_HI_0	     0x028B44
 #define R_028B48_VGT_STRMOUT_BASE_OFFSET_HI_1	     0x028B48
 #define R_028B4C_VGT_STRMOUT_BASE_OFFSET_HI_2	     0x028B4C

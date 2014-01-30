@@ -2064,6 +2064,7 @@ static void r600_emit_config_state(struct r600_context *rctx, struct r600_atom *
 	struct r600_config_state *a = (struct r600_config_state*)atom;
 
 	r600_write_config_reg(cs, R_008C04_SQ_GPR_RESOURCE_MGMT_1, a->sq_gpr_resource_mgmt_1);
+	r600_write_config_reg(cs, R_008C08_SQ_GPR_RESOURCE_MGMT_2, a->sq_gpr_resource_mgmt_2);
 }
 
 static void r600_emit_vertex_buffers(struct r600_context *rctx, struct r600_atom *atom)
@@ -2115,16 +2116,18 @@ static void r600_emit_constant_buffers(struct r600_context *rctx,
 		struct r600_resource *rbuffer;
 		unsigned offset;
 		unsigned buffer_index = ffs(dirty_mask) - 1;
-
+		unsigned gs_ring_buffer = (buffer_index == R600_GS_RING_CONST_BUFFER);
 		cb = &state->cb[buffer_index];
 		rbuffer = (struct r600_resource*)cb->buffer;
 		assert(rbuffer);
 
 		offset = cb->buffer_offset;
 
-		r600_write_context_reg(cs, reg_alu_constbuf_size + buffer_index * 4,
-				       ALIGN_DIVUP(cb->buffer_size >> 4, 16));
-		r600_write_context_reg(cs, reg_alu_const_cache + buffer_index * 4, offset >> 8);
+		if (!gs_ring_buffer) {
+			r600_write_context_reg(cs, reg_alu_constbuf_size + buffer_index * 4,
+					       ALIGN_DIVUP(cb->buffer_size >> 4, 16));
+			r600_write_context_reg(cs, reg_alu_const_cache + buffer_index * 4, offset >> 8);
+		}
 
 		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
 		radeon_emit(cs, r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rbuffer, RADEON_USAGE_READ));
@@ -2134,8 +2137,8 @@ static void r600_emit_constant_buffers(struct r600_context *rctx,
 		radeon_emit(cs, offset); /* RESOURCEi_WORD0 */
 		radeon_emit(cs, rbuffer->buf->size - offset - 1); /* RESOURCEi_WORD1 */
 		radeon_emit(cs, /* RESOURCEi_WORD2 */
-				 S_038008_ENDIAN_SWAP(r600_endian_swap(32)) |
-				 S_038008_STRIDE(16));
+			    S_038008_ENDIAN_SWAP(gs_ring_buffer ? ENDIAN_NONE : r600_endian_swap(32)) |
+			    S_038008_STRIDE(gs_ring_buffer ? 4 : 16));
 		radeon_emit(cs, 0); /* RESOURCEi_WORD3 */
 		radeon_emit(cs, 0); /* RESOURCEi_WORD4 */
 		radeon_emit(cs, 0); /* RESOURCEi_WORD5 */
@@ -2320,34 +2323,124 @@ static void r600_emit_vertex_fetch_shader(struct r600_context *rctx, struct r600
 	radeon_emit(cs, r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, shader->buffer, RADEON_USAGE_READ));
 }
 
+static void r600_emit_shader_stages(struct r600_context *rctx, struct r600_atom *a)
+{
+	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
+	struct r600_shader_stages_state *state = (struct r600_shader_stages_state*)a;
+
+	uint32_t v2 = 0, primid = 0;
+
+	if (state->geom_enable) {
+		uint32_t cut_val;
+
+		if (rctx->gs_shader->current->shader.gs_max_out_vertices <= 128)
+			cut_val = V_028A40_GS_CUT_128;
+		else if (rctx->gs_shader->current->shader.gs_max_out_vertices <= 256)
+			cut_val = V_028A40_GS_CUT_256;
+		else if (rctx->gs_shader->current->shader.gs_max_out_vertices <= 512)
+			cut_val = V_028A40_GS_CUT_512;
+		else
+			cut_val = V_028A40_GS_CUT_1024;
+
+		v2 = S_028A40_MODE(V_028A40_GS_SCENARIO_G) |
+			S_028A40_CUT_MODE(cut_val);
+
+		if (rctx->gs_shader->current->shader.gs_prim_id_input)
+			primid = 1;
+	}
+
+	r600_write_context_reg(cs, R_028A40_VGT_GS_MODE, v2);
+	r600_write_context_reg(cs, R_028A84_VGT_PRIMITIVEID_EN, primid);
+}
+
+static void r600_emit_gs_rings(struct r600_context *rctx, struct r600_atom *a)
+{
+	struct pipe_screen *screen = rctx->b.b.screen;
+	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
+	struct r600_gs_rings_state *state = (struct r600_gs_rings_state*)a;
+	struct r600_resource *rbuffer;
+
+	r600_write_config_reg(cs, R_008040_WAIT_UNTIL, S_008040_WAIT_3D_IDLE(1));
+	radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+	radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_VGT_FLUSH));
+
+	if (state->enable) {
+		rbuffer =(struct r600_resource*)state->esgs_ring.buffer;
+		r600_write_config_reg(cs, R_008C40_SQ_ESGS_RING_BASE,
+				(r600_resource_va(screen, &rbuffer->b.b)) >> 8);
+		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
+		radeon_emit(cs, r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rbuffer, RADEON_USAGE_READWRITE));
+		r600_write_config_reg(cs, R_008C44_SQ_ESGS_RING_SIZE,
+				state->esgs_ring.buffer_size >> 8);
+
+		rbuffer =(struct r600_resource*)state->gsvs_ring.buffer;
+		r600_write_config_reg(cs, R_008C48_SQ_GSVS_RING_BASE,
+				(r600_resource_va(screen, &rbuffer->b.b)) >> 8);
+		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
+		radeon_emit(cs, r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, rbuffer, RADEON_USAGE_READWRITE));
+		r600_write_config_reg(cs, R_008C4C_SQ_GSVS_RING_SIZE,
+				state->gsvs_ring.buffer_size >> 8);
+	} else {
+		r600_write_config_reg(cs, R_008C44_SQ_ESGS_RING_SIZE, 0);
+		r600_write_config_reg(cs, R_008C4C_SQ_GSVS_RING_SIZE, 0);
+	}
+
+	r600_write_config_reg(cs, R_008040_WAIT_UNTIL, S_008040_WAIT_3D_IDLE(1));
+	radeon_emit(cs, PKT3(PKT3_EVENT_WRITE, 0, 0));
+	radeon_emit(cs, EVENT_TYPE(EVENT_TYPE_VGT_FLUSH));
+}
+
 /* Adjust GPR allocation on R6xx/R7xx */
 bool r600_adjust_gprs(struct r600_context *rctx)
 {
 	unsigned num_ps_gprs = rctx->ps_shader->current->shader.bc.ngpr;
-	unsigned num_vs_gprs = rctx->vs_shader->current->shader.bc.ngpr;
+	unsigned num_vs_gprs, num_es_gprs, num_gs_gprs;
 	unsigned new_num_ps_gprs = num_ps_gprs;
-	unsigned new_num_vs_gprs = num_vs_gprs;
+	unsigned new_num_vs_gprs, new_num_es_gprs, new_num_gs_gprs;
 	unsigned cur_num_ps_gprs = G_008C04_NUM_PS_GPRS(rctx->config_state.sq_gpr_resource_mgmt_1);
 	unsigned cur_num_vs_gprs = G_008C04_NUM_VS_GPRS(rctx->config_state.sq_gpr_resource_mgmt_1);
+	unsigned cur_num_gs_gprs = G_008C08_NUM_GS_GPRS(rctx->config_state.sq_gpr_resource_mgmt_2);
+	unsigned cur_num_es_gprs = G_008C08_NUM_ES_GPRS(rctx->config_state.sq_gpr_resource_mgmt_2);
 	unsigned def_num_ps_gprs = rctx->default_ps_gprs;
 	unsigned def_num_vs_gprs = rctx->default_vs_gprs;
+	unsigned def_num_gs_gprs = 0;
+	unsigned def_num_es_gprs = 0;
 	unsigned def_num_clause_temp_gprs = rctx->r6xx_num_clause_temp_gprs;
 	/* hardware will reserve twice num_clause_temp_gprs */
-	unsigned max_gprs = def_num_ps_gprs + def_num_vs_gprs + def_num_clause_temp_gprs * 2;
-	unsigned tmp;
+	unsigned max_gprs = def_num_gs_gprs + def_num_es_gprs + def_num_ps_gprs + def_num_vs_gprs + def_num_clause_temp_gprs * 2;
+	unsigned tmp, tmp2;
+
+	if (rctx->gs_shader) {
+		num_es_gprs = rctx->vs_shader->current->shader.bc.ngpr;
+		num_gs_gprs = rctx->gs_shader->current->shader.bc.ngpr;
+		num_vs_gprs = rctx->gs_shader->current->gs_copy_shader->shader.bc.ngpr;
+	} else {
+		num_es_gprs = 0;
+		num_gs_gprs = 0;
+		num_vs_gprs = rctx->vs_shader->current->shader.bc.ngpr;
+	}
+	new_num_vs_gprs = num_vs_gprs;
+	new_num_es_gprs = num_es_gprs;
+	new_num_gs_gprs = num_gs_gprs;
 
 	/* the sum of all SQ_GPR_RESOURCE_MGMT*.NUM_*_GPRS must <= to max_gprs */
-	if (new_num_ps_gprs > cur_num_ps_gprs || new_num_vs_gprs > cur_num_vs_gprs) {
+	if (new_num_ps_gprs > cur_num_ps_gprs || new_num_vs_gprs > cur_num_vs_gprs ||
+	    new_num_es_gprs > cur_num_es_gprs || new_num_gs_gprs > cur_num_gs_gprs) {
 		/* try to use switch back to default */
-		if (new_num_ps_gprs > def_num_ps_gprs || new_num_vs_gprs > def_num_vs_gprs) {
+		if (new_num_ps_gprs > def_num_ps_gprs || new_num_vs_gprs > def_num_vs_gprs ||
+		    new_num_gs_gprs > def_num_gs_gprs || new_num_es_gprs > def_num_es_gprs) {
 			/* always privilege vs stage so that at worst we have the
 			 * pixel stage producing wrong output (not the vertex
 			 * stage) */
-			new_num_ps_gprs = max_gprs - (new_num_vs_gprs + def_num_clause_temp_gprs * 2);
+			new_num_ps_gprs = max_gprs - ((new_num_vs_gprs - new_num_es_gprs - new_num_gs_gprs) + def_num_clause_temp_gprs * 2);
 			new_num_vs_gprs = num_vs_gprs;
+			new_num_gs_gprs = num_gs_gprs;
+			new_num_es_gprs = num_es_gprs;
 		} else {
 			new_num_ps_gprs = def_num_ps_gprs;
 			new_num_vs_gprs = def_num_vs_gprs;
+			new_num_es_gprs = def_num_es_gprs;
+			new_num_gs_gprs = def_num_gs_gprs;
 		}
 	} else {
 		return true;
@@ -2359,10 +2452,11 @@ bool r600_adjust_gprs(struct r600_context *rctx)
 	 * it will lockup. So in this case just discard the draw command
 	 * and don't change the current gprs repartitions.
 	 */
-	if (num_ps_gprs > new_num_ps_gprs || num_vs_gprs > new_num_vs_gprs) {
-		R600_ERR("ps & vs shader require too many register (%d + %d) "
+	if (num_ps_gprs > new_num_ps_gprs || num_vs_gprs > new_num_vs_gprs ||
+	    num_gs_gprs > new_num_gs_gprs || num_es_gprs > new_num_es_gprs) {
+		R600_ERR("shaders require too many register (%d + %d + %d + %d) "
 			 "for a combined maximum of %d\n",
-			 num_ps_gprs, num_vs_gprs, max_gprs);
+			 num_ps_gprs, num_vs_gprs, num_es_gprs, num_gs_gprs, max_gprs);
 		return false;
 	}
 
@@ -2370,8 +2464,12 @@ bool r600_adjust_gprs(struct r600_context *rctx)
 	tmp = S_008C04_NUM_PS_GPRS(new_num_ps_gprs) |
 		S_008C04_NUM_VS_GPRS(new_num_vs_gprs) |
 		S_008C04_NUM_CLAUSE_TEMP_GPRS(def_num_clause_temp_gprs);
-	if (rctx->config_state.sq_gpr_resource_mgmt_1 != tmp) {
+
+	tmp2 = S_008C08_NUM_ES_GPRS(new_num_es_gprs) |
+		S_008C08_NUM_GS_GPRS(new_num_gs_gprs);
+	if (rctx->config_state.sq_gpr_resource_mgmt_1 != tmp || rctx->config_state.sq_gpr_resource_mgmt_2 != tmp2) {
 		rctx->config_state.sq_gpr_resource_mgmt_1 = tmp;
+		rctx->config_state.sq_gpr_resource_mgmt_2 = tmp2;
 		rctx->config_state.atom.dirty = true;
 		rctx->b.flags |= R600_CONTEXT_WAIT_3D_IDLE;
 	}
@@ -2489,19 +2587,19 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 		num_es_stack_entries = 16;
 		break;
 	case CHIP_RV770:
-		num_ps_gprs = 192;
+		num_ps_gprs = 130;
 		num_vs_gprs = 56;
 		num_temp_gprs = 4;
-		num_gs_gprs = 0;
-		num_es_gprs = 0;
-		num_ps_threads = 188;
+		num_gs_gprs = 31;
+		num_es_gprs = 31;
+		num_ps_threads = 180;
 		num_vs_threads = 60;
-		num_gs_threads = 0;
-		num_es_threads = 0;
-		num_ps_stack_entries = 256;
-		num_vs_stack_entries = 256;
-		num_gs_stack_entries = 0;
-		num_es_stack_entries = 0;
+		num_gs_threads = 4;
+		num_es_threads = 4;
+		num_ps_stack_entries = 128;
+		num_vs_stack_entries = 128;
+		num_gs_stack_entries = 128;
+		num_es_stack_entries = 128;
 		break;
 	case CHIP_RV730:
 	case CHIP_RV740:
@@ -2510,10 +2608,10 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 		num_temp_gprs = 4;
 		num_gs_gprs = 0;
 		num_es_gprs = 0;
-		num_ps_threads = 188;
+		num_ps_threads = 180;
 		num_vs_threads = 60;
-		num_gs_threads = 0;
-		num_es_threads = 0;
+		num_gs_threads = 4;
+		num_es_threads = 4;
 		num_ps_stack_entries = 128;
 		num_vs_stack_entries = 128;
 		num_gs_stack_entries = 0;
@@ -2525,10 +2623,10 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 		num_temp_gprs = 4;
 		num_gs_gprs = 0;
 		num_es_gprs = 0;
-		num_ps_threads = 144;
+		num_ps_threads = 136;
 		num_vs_threads = 48;
-		num_gs_threads = 0;
-		num_es_threads = 0;
+		num_gs_threads = 4;
+		num_es_threads = 4;
 		num_ps_stack_entries = 128;
 		num_vs_stack_entries = 128;
 		num_gs_stack_entries = 0;
@@ -2704,9 +2802,12 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028240_PA_SC_GENERIC_SCISSOR_TL */
 	r600_store_value(cb, S_028244_BR_X(8192) | S_028244_BR_Y(8192)); /* R_028244_PA_SC_GENERIC_SCISSOR_BR */
 
-	r600_store_context_reg_seq(cb, R_0288CC_SQ_PGM_CF_OFFSET_PS, 2);
+	r600_store_context_reg_seq(cb, R_0288CC_SQ_PGM_CF_OFFSET_PS, 5);
 	r600_store_value(cb, 0); /* R_0288CC_SQ_PGM_CF_OFFSET_PS */
 	r600_store_value(cb, 0); /* R_0288D0_SQ_PGM_CF_OFFSET_VS */
+	r600_store_value(cb, 0); /* R_0288D4_SQ_PGM_CF_OFFSET_GS */
+	r600_store_value(cb, 0); /* R_0288D8_SQ_PGM_CF_OFFSET_ES */
+	r600_store_value(cb, 0); /* R_0288DC_SQ_PGM_CF_OFFSET_FS */
 
         r600_store_context_reg(cb, R_0288E0_SQ_VTX_SEMANTIC_CLEAR, ~0);
 
@@ -2715,7 +2816,6 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0); /* R_028404_VGT_MIN_VTX_INDX */
 
 	r600_store_context_reg(cb, R_0288A4_SQ_PGM_RESOURCES_FS, 0);
-	r600_store_context_reg(cb, R_0288DC_SQ_PGM_CF_OFFSET_FS, 0);
 
 	if (rctx->b.chip_class == R700 && rctx->screen->b.has_streamout)
 		r600_store_context_reg(cb, R_028354_SX_SURFACE_SYNC, S_028354_SURFACE_SYNC_MASK(0xf));
@@ -2726,6 +2826,7 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 
 	r600_store_loop_const(cb, R_03E200_SQ_LOOP_CONST_0, 0x1000FFF);
 	r600_store_loop_const(cb, R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x1000FFF);
+	r600_store_loop_const(cb, R_03E200_SQ_LOOP_CONST_0 + (64 * 4), 0x1000FFF);
 }
 
 void r600_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
@@ -2897,6 +2998,94 @@ void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 		S_02881C_VS_OUT_MISC_VEC_ENA(rshader->vs_out_misc_write) |
 		S_02881C_USE_VTX_POINT_SIZE(rshader->vs_out_point_size);
 }
+
+static unsigned r600_conv_prim_to_gs_out(unsigned mode)
+{
+	static const int prim_conv[] = {
+		V_028A6C_OUTPRIM_TYPE_POINTLIST,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP
+	};
+	assert(mode < Elements(prim_conv));
+
+	return prim_conv[mode];
+}
+
+void r600_update_gs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+{
+	struct r600_context *rctx = (struct r600_context *)ctx;
+	struct r600_command_buffer *cb = &shader->command_buffer;
+	struct r600_shader *rshader = &shader->shader;
+	struct r600_shader *cp_shader = &shader->gs_copy_shader->shader;
+	unsigned gsvs_itemsize =
+			(cp_shader->ring_item_size * rshader->gs_max_out_vertices) >> 2;
+
+	r600_init_command_buffer(cb, 64);
+
+	/* VGT_GS_MODE is written by r600_emit_shader_stages */
+	r600_store_context_reg(cb, R_028AB8_VGT_VTX_CNT_EN, 1);
+
+	if (rctx->b.chip_class >= R700) {
+		r600_store_context_reg(cb, R_028B38_VGT_GS_MAX_VERT_OUT,
+				       S_028B38_MAX_VERT_OUT(rshader->gs_max_out_vertices));
+	}
+	r600_store_context_reg(cb, R_028A6C_VGT_GS_OUT_PRIM_TYPE,
+			       r600_conv_prim_to_gs_out(rshader->gs_output_prim));
+
+	r600_store_context_reg_seq(cb, R_0288C8_SQ_GS_VERT_ITEMSIZE, 4);
+	r600_store_value(cb, cp_shader->ring_item_size >> 2);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+	r600_store_value(cb, 0);
+
+	r600_store_context_reg(cb, R_0288A8_SQ_ESGS_RING_ITEMSIZE,
+			       (rshader->ring_item_size) >> 2);
+
+	r600_store_context_reg(cb, R_0288AC_SQ_GSVS_RING_ITEMSIZE,
+			       gsvs_itemsize);
+
+	/* FIXME calculate these values somehow ??? */
+	r600_store_config_reg_seq(cb, R_0088C8_VGT_GS_PER_ES, 2);
+	r600_store_value(cb, 0x80); /* GS_PER_ES */
+	r600_store_value(cb, 0x100); /* ES_PER_GS */
+	r600_store_config_reg_seq(cb, R_0088E8_VGT_GS_PER_VS, 1);
+	r600_store_value(cb, 0x2); /* GS_PER_VS */
+
+	r600_store_context_reg(cb, R_02887C_SQ_PGM_RESOURCES_GS,
+			       S_02887C_NUM_GPRS(rshader->bc.ngpr) |
+			       S_02887C_STACK_SIZE(rshader->bc.nstack));
+	r600_store_context_reg(cb, R_02886C_SQ_PGM_START_GS,
+			       r600_resource_va(ctx->screen, (void *)shader->bo) >> 8);
+	/* After that, the NOP relocation packet must be emitted (shader->bo, RADEON_USAGE_READ). */
+}
+
+void r600_update_es_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+{
+	struct r600_command_buffer *cb = &shader->command_buffer;
+	struct r600_shader *rshader = &shader->shader;
+
+	r600_init_command_buffer(cb, 32);
+
+	r600_store_context_reg(cb, R_028890_SQ_PGM_RESOURCES_ES,
+			       S_028890_NUM_GPRS(rshader->bc.ngpr) |
+			       S_028890_STACK_SIZE(rshader->bc.nstack));
+	r600_store_context_reg(cb, R_028880_SQ_PGM_START_ES,
+			       r600_resource_va(ctx->screen, (void *)shader->bo) >> 8);
+	/* After that, the NOP relocation packet must be emitted (shader->bo, RADEON_USAGE_READ). */
+}
+
 
 void *r600_create_resolve_blend(struct r600_context *rctx)
 {
@@ -3259,6 +3448,10 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->atoms[id++] = &rctx->b.streamout.begin_atom;
 	r600_init_atom(rctx, &rctx->vertex_shader.atom, id++, r600_emit_shader, 23);
 	r600_init_atom(rctx, &rctx->pixel_shader.atom, id++, r600_emit_shader, 0);
+	r600_init_atom(rctx, &rctx->geometry_shader.atom, id++, r600_emit_shader, 0);
+	r600_init_atom(rctx, &rctx->export_shader.atom, id++, r600_emit_shader, 0);
+	r600_init_atom(rctx, &rctx->shader_stages.atom, id++, r600_emit_shader_stages, 0);
+	r600_init_atom(rctx, &rctx->gs_rings.atom, id++, r600_emit_gs_rings, 0);
 
 	rctx->b.b.create_blend_state = r600_create_blend_state;
 	rctx->b.b.create_depth_stencil_alpha_state = r600_create_dsa_state;

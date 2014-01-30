@@ -210,7 +210,8 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 			evergreen_update_gs_state(ctx, shader);
 			evergreen_update_vs_state(ctx, shader->gs_copy_shader);
 		} else {
-			assert(!"not suported yet");
+			r600_update_gs_state(ctx, shader);
+			r600_update_vs_state(ctx, shader->gs_copy_shader);
 		}
 		break;
 	case TGSI_PROCESSOR_VERTEX:
@@ -220,7 +221,10 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 			else
 				evergreen_update_vs_state(ctx, shader);
 		} else {
-			r600_update_vs_state(ctx, shader);
+			if (export_shader)
+				r600_update_es_state(ctx, shader);
+			else
+				r600_update_vs_state(ctx, shader);
 		}
 		break;
 	case TGSI_PROCESSOR_FRAGMENT:
@@ -906,7 +910,11 @@ static int fetch_gs_input(struct r600_shader_ctx *ctx, struct tgsi_full_src_regi
 	vtx.dst_sel_y = 1;		/* SEL_Y */
 	vtx.dst_sel_z = 2;		/* SEL_Z */
 	vtx.dst_sel_w = 3;		/* SEL_W */
-	vtx.use_const_fields = 1;
+	if (ctx->bc->chip_class >= EVERGREEN) {
+		vtx.use_const_fields = 1;
+	} else {
+		vtx.data_format = FMT_32_32_32_32_FLOAT;
+	}
 
 	if ((r = r600_bytecode_add_vtx(ctx->bc, &vtx)))
 		return r;
@@ -1229,7 +1237,11 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 		vtx.dst_sel_y = 1;
 		vtx.dst_sel_z = 2;
 		vtx.dst_sel_w = 3;
-		vtx.use_const_fields = 1;
+		if (rctx->b.chip_class >= EVERGREEN) {
+			vtx.use_const_fields = 1;
+		} else {
+			vtx.data_format = FMT_32_32_32_32_FLOAT;
+		}
 
 		r600_bytecode_add_vtx(ctx.bc, &vtx);
 	}
@@ -1551,7 +1563,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 	if (ctx.type == TGSI_PROCESSOR_FRAGMENT && ctx.bc->chip_class >= EVERGREEN) {
 		ctx.file_offset[TGSI_FILE_INPUT] = evergreen_gpr_count(&ctx);
 	}
-	if (ctx.type == TGSI_PROCESSOR_GEOMETRY && ctx.bc->chip_class >= EVERGREEN) {
+	if (ctx.type == TGSI_PROCESSOR_GEOMETRY) {
 		/* FIXME 1 would be enough in some cases (3 or less input vertices) */
 		ctx.file_offset[TGSI_FILE_INPUT] = 2;
 	}
@@ -6297,8 +6309,8 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_TXF,	0, FETCH_OP_LD, tgsi_tex},
 	{TGSI_OPCODE_TXQ,	0, FETCH_OP_GET_TEXTURE_RESINFO, tgsi_tex},
 	{TGSI_OPCODE_CONT,	0, CF_OP_LOOP_CONTINUE, tgsi_loop_brk_cont},
-	{TGSI_OPCODE_EMIT,	0, ALU_OP0_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_ENDPRIM,	0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_EMIT,	0, CF_OP_EMIT_VERTEX, tgsi_gs_emit},
+	{TGSI_OPCODE_ENDPRIM,	0, CF_OP_CUT_VERTEX, tgsi_gs_emit},
 	{TGSI_OPCODE_BGNLOOP,	0, ALU_OP0_NOP, tgsi_bgnloop},
 	{TGSI_OPCODE_BGNSUB,	0, ALU_OP0_NOP, tgsi_unsupported},
 	{TGSI_OPCODE_ENDLOOP,	0, ALU_OP0_NOP, tgsi_endloop},

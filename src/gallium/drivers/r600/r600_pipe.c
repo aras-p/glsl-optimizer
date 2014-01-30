@@ -372,7 +372,12 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 1;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
-		return family >= CHIP_CEDAR ? 330 : 140;
+		if (family >= CHIP_CEDAR)
+		   return 330;
+		/* pre-evergreen geom shaders need newer kernel */
+		if (rscreen->b.info.drm_minor >= 37)
+		   return 330;
+		return 140;
 
 	/* Supported except the original R600. */
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -456,9 +461,12 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_COMPUTE:
 		break;
 	case PIPE_SHADER_GEOMETRY:
-		if (rscreen->b.chip_class < EVERGREEN)
-			return 0;
-		break;
+		if (rscreen->b.family >= CHIP_CEDAR)
+			break;
+		/* pre-evergreen geom shaders need newer kernel */
+		if (rscreen->b.info.drm_minor >= 37)
+			break;
+		return 0;
 	default:
 		/* XXX: support tessellation on Evergreen */
 		return 0;

@@ -1162,7 +1162,7 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 		if (unlikely(!rctx->gs_shader->current))
 			return false;
 
-		if (rctx->b.chip_class >= EVERGREEN && !rctx->shader_stages.geom_enable) {
+		if (!rctx->shader_stages.geom_enable) {
 			rctx->shader_stages.geom_enable = true;
 			rctx->shader_stages.atom.dirty = true;
 		}

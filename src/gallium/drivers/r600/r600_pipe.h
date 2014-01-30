@@ -160,6 +160,7 @@ struct r600_sample_mask {
 struct r600_config_state {
 	struct r600_atom atom;
 	unsigned sq_gpr_resource_mgmt_1;
+	unsigned sq_gpr_resource_mgmt_2;
 };
 
 struct r600_stencil_ref
@@ -565,6 +566,8 @@ r600_create_sampler_view_custom(struct pipe_context *ctx,
 void r600_init_state_functions(struct r600_context *rctx);
 void r600_init_atom_start_cs(struct r600_context *rctx);
 void r600_update_ps_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+void r600_update_es_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+void r600_update_gs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void *r600_create_db_flush_dsa(struct r600_context *rctx);
 void *r600_create_resolve_blend(struct r600_context *rctx);
