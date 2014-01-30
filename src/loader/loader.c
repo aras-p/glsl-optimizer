@@ -111,6 +111,11 @@ udev_dlopen_handle(void)
           * might be ia64.
           */
          udev_handle = dlopen("libudev.so.0", RTLD_LOCAL | RTLD_LAZY);
+
+         if (!udev_handle) {
+            log_(_LOADER_FATAL, "Couldn't dlopen libudev.so.1 or libudev.so.0, "
+                 "driver detection may be broken.\n");
+         }
       }
    }
 
