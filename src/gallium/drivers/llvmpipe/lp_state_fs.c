@@ -1089,6 +1089,19 @@ scale_bits(struct gallivm_state *gallivm,
    return result;
 }
 
+/**
+ * If RT is a smallfloat (needing denorms) format
+ */
+static INLINE int
+have_smallfloat_format(struct lp_type dst_type,
+                       enum pipe_format format)
+{
+   return ((dst_type.floating && dst_type.width != 32) ||
+    /* due to format handling hacks this format doesn't have floating set
+     * here (and actually has width set to 32 too) so special case this. */
+    (format == PIPE_FORMAT_R11G11B10_FLOAT));
+}
+
 
 /**
  * Convert from memory format to blending format
@@ -1593,7 +1606,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
     * this, otherwise half-float format conversions won't work
     * (again due to llvm bug #6393).
     */
-   if (dst_type.floating && dst_type.width != 32) {
+   if (have_smallfloat_format(dst_type, out_format)) {
       /* We need to make sure that denorms are ok for half float
          conversions */
       fpstate = lp_build_fpstate_get(gallivm);
@@ -2091,7 +2104,7 @@ generate_unswizzled_blend(struct gallivm_state *gallivm,
                              dst, dst_type, dst_count, dst_alignment);
    }
 
-   if (dst_type.floating && dst_type.width != 32) {
+   if (have_smallfloat_format(dst_type, out_format)) {
       lp_build_fpstate_set(gallivm, fpstate);
    }
 
