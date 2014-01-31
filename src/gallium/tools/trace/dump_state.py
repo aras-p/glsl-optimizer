@@ -474,7 +474,10 @@ class Context(Dispatcher):
         indices = []
         for i in xrange(info.start, info.start + count):
             offset = self._state.index_buffer.offset + i*index_size
-            index, = unpack_from(format, data, offset)
+            if offset + index_size > len(data):
+                index = 0
+            else:
+                index, = unpack_from(format, data, offset)
             indices.append(index)
             min_index = min(min_index, index)
             max_index = max(max_index, index)
