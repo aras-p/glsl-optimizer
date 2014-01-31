@@ -1205,10 +1205,12 @@ static void r600_set_polygon_stipple(struct pipe_context *ctx,
 static void r600_emit_scissor_state(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
-	struct pipe_scissor_state *state = &rctx->scissor.scissor;
+	struct r600_scissor_state *rstate = (struct r600_scissor_state *)atom;
+	struct pipe_scissor_state *state = &rstate->scissor;
+	unsigned offset = rstate->idx * 4 * 2;
 
-	if (rctx->b.chip_class != R600 || rctx->scissor.enable) {
-		r600_write_context_reg_seq(cs, R_028250_PA_SC_VPORT_SCISSOR_0_TL, 2);
+	if (rctx->b.chip_class != R600 || rctx->scissor[0].enable) {
+		r600_write_context_reg_seq(cs, R_028250_PA_SC_VPORT_SCISSOR_0_TL + offset, 2);
 		radeon_emit(cs, S_028240_TL_X(state->minx) | S_028240_TL_Y(state->miny) |
 				     S_028240_WINDOW_OFFSET_DISABLE(1));
 		radeon_emit(cs, S_028244_BR_X(state->maxx) | S_028244_BR_Y(state->maxy));
@@ -1226,13 +1228,18 @@ static void r600_set_scissor_states(struct pipe_context *ctx,
                                     const struct pipe_scissor_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
+	int i;
 
-	rctx->scissor.scissor = *state;
+	for (i = start_slot ; i < start_slot + num_scissors; i++) {
+		rctx->scissor[i].scissor = state[i - start_slot];
+	}
 
-	if (rctx->b.chip_class == R600 && !rctx->scissor.enable)
+	if (rctx->b.chip_class == R600 && !rctx->scissor[0].enable)
 		return;
 
-	rctx->scissor.atom.dirty = true;
+	for (i = start_slot ; i < start_slot + num_scissors; i++) {
+		rctx->scissor[i].atom.dirty = true;
+	}
 }
 
 static struct r600_resource *r600_buffer_create_helper(struct r600_screen *rscreen,
@@ -2775,9 +2782,11 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_value(cb, 0x3F800000); /* R_028C14_PA_CL_GB_HORZ_CLIP_ADJ */
 	r600_store_value(cb, 0x3F800000); /* R_028C18_PA_CL_GB_HORZ_DISC_ADJ */
 
-	r600_store_context_reg_seq(cb, R_0282D0_PA_SC_VPORT_ZMIN_0, 2);
-	r600_store_value(cb, 0); /* R_0282D0_PA_SC_VPORT_ZMIN_0 */
-	r600_store_value(cb, 0x3F800000); /* R_0282D4_PA_SC_VPORT_ZMAX_0 */
+	r600_store_context_reg_seq(cb, R_0282D0_PA_SC_VPORT_ZMIN_0, 2 * 16);
+	for (tmp = 0; tmp < 16; tmp++) {
+		r600_store_value(cb, 0); /* R_0282D0_PA_SC_VPORT_ZMIN_0 */
+		r600_store_value(cb, 0x3F800000); /* R_0282D4_PA_SC_VPORT_ZMAX_0 */
+	}
 
 	r600_store_context_reg(cb, R_028818_PA_CL_VTE_CNTL, 0x43F);
 
@@ -2996,6 +3005,7 @@ void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 		S_02881C_VS_OUT_CCDIST0_VEC_ENA((rshader->clip_dist_write & 0x0F) != 0) |
 		S_02881C_VS_OUT_CCDIST1_VEC_ENA((rshader->clip_dist_write & 0xF0) != 0) |
 		S_02881C_VS_OUT_MISC_VEC_ENA(rshader->vs_out_misc_write) |
+		S_02881C_USE_VTX_VIEWPORT_INDX(rshader->vs_out_viewport) |
 		S_02881C_USE_VTX_POINT_SIZE(rshader->vs_out_point_size);
 }
 
@@ -3393,6 +3403,7 @@ static boolean r600_dma_blit(struct pipe_context *ctx,
 void r600_init_state_functions(struct r600_context *rctx)
 {
 	unsigned id = 4;
+	int i;
 
 	/* !!!
 	 *  To avoid GPU lockup registers must be emited in a specific order
@@ -3440,10 +3451,14 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->dsa_state.atom, id++, r600_emit_cso_state, 0);
 	r600_init_atom(rctx, &rctx->poly_offset_state.atom, id++, r600_emit_polygon_offset, 6);
 	r600_init_atom(rctx, &rctx->rasterizer_state.atom, id++, r600_emit_cso_state, 0);
-	r600_init_atom(rctx, &rctx->scissor.atom, id++, r600_emit_scissor_state, 4);
+	for (i = 0;i < 16; i++) {
+		r600_init_atom(rctx, &rctx->scissor[i].atom, id++, r600_emit_scissor_state, 4);
+		r600_init_atom(rctx, &rctx->viewport[i].atom, id++, r600_emit_viewport_state, 8);
+		rctx->scissor[i].idx = i;
+		rctx->viewport[i].idx = i;
+	}
 	r600_init_atom(rctx, &rctx->config_state.atom, id++, r600_emit_config_state, 3);
 	r600_init_atom(rctx, &rctx->stencil_ref.atom, id++, r600_emit_stencil_ref, 4);
-	r600_init_atom(rctx, &rctx->viewport.atom, id++, r600_emit_viewport_state, 8);
 	r600_init_atom(rctx, &rctx->vertex_fetch_shader.atom, id++, r600_emit_vertex_fetch_shader, 5);
 	rctx->atoms[id++] = &rctx->b.streamout.begin_atom;
 	r600_init_atom(rctx, &rctx->vertex_shader.atom, id++, r600_emit_shader, 23);

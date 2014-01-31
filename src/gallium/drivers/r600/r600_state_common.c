@@ -334,9 +334,9 @@ static void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 
 	/* Workaround for a missing scissor enable on r600. */
 	if (rctx->b.chip_class == R600 &&
-	    rs->scissor_enable != rctx->scissor.enable) {
-		rctx->scissor.enable = rs->scissor_enable;
-		rctx->scissor.atom.dirty = true;
+	    rs->scissor_enable != rctx->scissor[0].enable) {
+		rctx->scissor[0].enable = rs->scissor_enable;
+		rctx->scissor[0].atom.dirty = true;
 	}
 
 	/* Re-emit PA_SC_LINE_STIPPLE. */
@@ -657,17 +657,22 @@ static void r600_set_viewport_states(struct pipe_context *ctx,
                                      const struct pipe_viewport_state *state)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
+	int i;
 
-	rctx->viewport.state = *state;
-	rctx->viewport.atom.dirty = true;
+	for (i = start_slot; i < start_slot + num_viewports; i++) {
+		rctx->viewport[i].state = state[i - start_slot];
+		rctx->viewport[i].atom.dirty = true;
+	}
 }
 
 void r600_emit_viewport_state(struct r600_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
-	struct pipe_viewport_state *state = &rctx->viewport.state;
+	struct r600_viewport_state *rstate = (struct r600_viewport_state *)atom;
+	struct pipe_viewport_state *state = &rstate->state;
+	int offset = rstate->idx * 6 * 4;
 
-	r600_write_context_reg_seq(cs, R_02843C_PA_CL_VPORT_XSCALE_0, 6);
+	r600_write_context_reg_seq(cs, R_02843C_PA_CL_VPORT_XSCALE_0 + offset, 6);
 	radeon_emit(cs, fui(state->scale[0]));     /* R_02843C_PA_CL_VPORT_XSCALE_0  */
 	radeon_emit(cs, fui(state->translate[0])); /* R_028440_PA_CL_VPORT_XOFFSET_0 */
 	radeon_emit(cs, fui(state->scale[1]));     /* R_028444_PA_CL_VPORT_YSCALE_0  */

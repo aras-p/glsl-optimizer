@@ -38,7 +38,7 @@
 #include "util/u_double_list.h"
 #include "util/u_transfer.h"
 
-#define R600_NUM_ATOMS 42
+#define R600_NUM_ATOMS 72
 
 /* the number of CS dwords for flushing and drawing */
 #define R600_MAX_FLUSH_CS_DWORDS	16
@@ -179,6 +179,7 @@ struct r600_stencil_ref_state {
 struct r600_viewport_state {
 	struct r600_atom atom;
 	struct pipe_viewport_state state;
+	int idx;
 };
 
 struct r600_shader_stages_state {
@@ -358,6 +359,7 @@ struct r600_scissor_state
 	struct r600_atom		atom;
 	struct pipe_scissor_state	scissor;
 	bool				enable; /* r6xx only */
+	int idx;
 };
 
 struct r600_fetch_shader {
@@ -419,12 +421,12 @@ struct r600_context {
 	struct r600_poly_offset_state	poly_offset_state;
 	struct r600_cso_state		rasterizer_state;
 	struct r600_sample_mask		sample_mask;
-	struct r600_scissor_state	scissor;
+	struct r600_scissor_state	scissor[16];
 	struct r600_seamless_cube_map	seamless_cube_map;
 	struct r600_config_state	config_state;
 	struct r600_stencil_ref_state	stencil_ref;
 	struct r600_vgt_state		vgt_state;
-	struct r600_viewport_state	viewport;
+	struct r600_viewport_state	viewport[16];
 	/* Shaders and shader resources. */
 	struct r600_cso_state		vertex_fetch_shader;
 	struct r600_shader_state	vertex_shader;

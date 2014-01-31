@@ -63,6 +63,7 @@ struct r600_shader {
 	boolean			vs_out_misc_write;
 	boolean			vs_out_point_size;
 	boolean			vs_out_layer;
+	boolean			vs_out_viewport;
 	boolean			has_txq_cube_array_z_comp;
 	boolean			uses_tex_buffers;
 	boolean                 gs_prim_id_input;

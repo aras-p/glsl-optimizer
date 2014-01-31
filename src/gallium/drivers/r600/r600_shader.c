@@ -492,6 +492,7 @@ static int r600_spi_sid(struct r600_shader_io * io)
 	if (name == TGSI_SEMANTIC_POSITION ||
 		name == TGSI_SEMANTIC_PSIZE ||
 		name == TGSI_SEMANTIC_LAYER ||
+		name == TGSI_SEMANTIC_VIEWPORT_INDEX ||
 		name == TGSI_SEMANTIC_FACE)
 		index = 0;
 	else {
@@ -622,6 +623,10 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 			case TGSI_SEMANTIC_PSIZE:
 				ctx->shader->vs_out_misc_write = 1;
 				ctx->shader->vs_out_point_size = 1;
+				break;
+			case TGSI_SEMANTIC_VIEWPORT_INDEX:
+				ctx->shader->vs_out_misc_write = 1;
+				ctx->shader->vs_out_viewport = 1;
 				break;
 			case TGSI_SEMANTIC_LAYER:
 				ctx->shader->vs_out_misc_write = 1;
@@ -1295,6 +1300,18 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 			output.swizzle_w = 7;
 			ctx.shader->vs_out_misc_write = 1;
 			ctx.shader->vs_out_layer = 1;
+			break;
+		case TGSI_SEMANTIC_VIEWPORT_INDEX:
+			output.array_base = 61;
+			if (next_clip_pos == 61)
+				next_clip_pos = 62;
+			output.type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+			ctx.shader->vs_out_misc_write = 1;
+			ctx.shader->vs_out_viewport = 1;
+			output.swizzle_x = 7;
+			output.swizzle_y = 7;
+			output.swizzle_z = 7;
+			output.swizzle_w = 0;
 			break;
 		case TGSI_SEMANTIC_CLIPDIST:
 			/* spi_sid is 0 for clipdistance outputs that were generated

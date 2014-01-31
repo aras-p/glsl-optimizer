@@ -276,7 +276,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 void r600_begin_new_cs(struct r600_context *ctx)
 {
 	unsigned shader;
-
+	int i;
 	ctx->b.flags = 0;
 	ctx->b.gtt = 0;
 	ctx->b.vram = 0;
@@ -297,7 +297,10 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->poly_offset_state.atom.dirty = true;
 	ctx->vgt_state.atom.dirty = true;
 	ctx->sample_mask.atom.dirty = true;
-	ctx->scissor.atom.dirty = true;
+	for (i = 0; i < 16; i++) {
+		ctx->scissor[i].atom.dirty = true;
+		ctx->viewport[i].atom.dirty = true;
+	}
 	ctx->config_state.atom.dirty = true;
 	ctx->stencil_ref.atom.dirty = true;
 	ctx->vertex_fetch_shader.atom.dirty = true;
@@ -308,7 +311,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 		ctx->gs_rings.atom.dirty = true;
 	}
 	ctx->vertex_shader.atom.dirty = true;
-	ctx->viewport.atom.dirty = true;
+
 
 	if (ctx->blend_state.cso)
 		ctx->blend_state.atom.dirty = true;
