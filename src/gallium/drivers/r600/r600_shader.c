@@ -1357,8 +1357,12 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 	cf_pop->cf_addr = cf_pop->id + 2;
 	cf_pop->pop_count = 1;
 
-	r600_bytecode_add_cfinst(ctx.bc, CF_OP_NOP);
-	ctx.bc->cf_last->end_of_program = 1;
+	if (ctx.bc->chip_class == CAYMAN)
+		cm_bytecode_add_cf_end(ctx.bc);
+	else {
+		r600_bytecode_add_cfinst(ctx.bc, CF_OP_NOP);
+		ctx.bc->cf_last->end_of_program = 1;
+	}
 
 	gs->gs_copy_shader = cshader;
 
