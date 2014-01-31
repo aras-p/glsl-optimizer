@@ -4369,14 +4369,14 @@ ast_case_label::hir(exec_list *instructions,
 }
 
 void
-ast_iteration_statement::condition_to_hir(ir_loop *stmt,
+ast_iteration_statement::condition_to_hir(exec_list *instructions,
 					  struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
 
    if (condition != NULL) {
       ir_rvalue *const cond =
-	 condition->hir(& stmt->body_instructions, state);
+	 condition->hir(instructions, state);
 
       if ((cond == NULL)
 	  || !cond->type->is_boolean() || !cond->type->is_scalar()) {
@@ -4397,7 +4397,7 @@ ast_iteration_statement::condition_to_hir(ir_loop *stmt,
 	    new(ctx) ir_loop_jump(ir_loop_jump::jump_break);
 
 	 if_stmt->then_instructions.push_tail(break_stmt);
-	 stmt->body_instructions.push_tail(if_stmt);
+	 instructions->push_tail(if_stmt);
       }
    }
 }
@@ -4432,7 +4432,7 @@ ast_iteration_statement::hir(exec_list *instructions,
    state->switch_state.is_switch_innermost = false;
 
    if (mode != ast_do_while)
-      condition_to_hir(stmt, state);
+      condition_to_hir(&stmt->body_instructions, state);
 
    if (body != NULL)
       body->hir(& stmt->body_instructions, state);
@@ -4441,7 +4441,7 @@ ast_iteration_statement::hir(exec_list *instructions,
       rest_expression->hir(& stmt->body_instructions, state);
 
    if (mode == ast_do_while)
-      condition_to_hir(stmt, state);
+      condition_to_hir(&stmt->body_instructions, state);
 
    if (mode != ast_do_while)
       state->symbols->pop_scope();
