@@ -299,7 +299,7 @@ gen8_generator::math(unsigned math_function,
 {
    gen8_instruction *inst = next_inst(BRW_OPCODE_MATH);
 
-   assert(dst.hstride == src0.hstride);
+   assert(src0.hstride == 0 || src0.hstride == dst.hstride);
 
    gen8_set_math_function(inst, math_function);
    gen8_set_dst(brw, inst, dst);
