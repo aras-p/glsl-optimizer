@@ -4029,17 +4029,22 @@ ast_jump_statement::hir(exec_list *instructions,
 	 _mesa_glsl_error(& loc, state,
 			  "break may only appear in a loop or a switch");
       } else {
-	 /* For a loop, inline the for loop expression again,
-	  * since we don't know where near the end of
-	  * the loop body the normal copy of it
-	  * is going to be placed.
+	 /* For a loop, inline the for loop expression again, since we don't
+	  * know where near the end of the loop body the normal copy of it is
+	  * going to be placed.  Same goes for the condition for a do-while
+	  * loop.
 	  */
 	 if (state->loop_nesting_ast != NULL &&
-	     mode == ast_continue &&
-	     state->loop_nesting_ast->rest_expression) {
-	    state->loop_nesting_ast->rest_expression->hir(instructions,
-							  state);
-	 }
+	     mode == ast_continue) {
+            if (state->loop_nesting_ast->rest_expression) {
+               state->loop_nesting_ast->rest_expression->hir(instructions,
+                                                             state);
+            }
+            if (state->loop_nesting_ast->mode ==
+                ast_iteration_statement::ast_do_while) {
+               state->loop_nesting_ast->condition_to_hir(instructions, state);
+            }
+         }
 
 	 if (state->switch_state.is_switch_innermost &&
 	     mode == ast_break) {
