@@ -694,7 +694,7 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_LIST_BIT				0x00020000
 #define GL_TEXTURE_BIT				0x00040000
 #define GL_SCISSOR_BIT				0x00080000
-#define GL_ALL_ATTRIB_BITS			0x000FFFFF
+#define GL_ALL_ATTRIB_BITS			0xFFFFFFFF
 
 
 /* OpenGL 1.1 */
