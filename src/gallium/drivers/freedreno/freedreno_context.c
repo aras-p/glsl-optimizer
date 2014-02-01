@@ -206,7 +206,7 @@ fd_context_init(struct fd_context *ctx, struct pipe_screen *pscreen,
 	}
 
 	fd_context_next_rb(pctx);
-	fd_reset_rmw_state(ctx);
+	fd_reset_wfi(ctx);
 
 	util_dynarray_init(&ctx->draw_patches);
 

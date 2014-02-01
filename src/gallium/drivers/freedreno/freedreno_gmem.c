@@ -278,6 +278,7 @@ render_tiles(struct fd_context *ctx)
 
 		/* emit IB to drawcmds: */
 		OUT_IB(ctx->ring, ctx->draw_start, ctx->draw_end);
+		fd_reset_wfi(ctx);
 
 		/* emit gmem2mem to transfer tile back to system memory: */
 		ctx->emit_tile_gmem2mem(ctx, tile);
@@ -291,6 +292,7 @@ render_sysmem(struct fd_context *ctx)
 
 	/* emit IB to drawcmds: */
 	OUT_IB(ctx->ring, ctx->draw_start, ctx->draw_end);
+	fd_reset_wfi(ctx);
 }
 
 void
@@ -313,6 +315,8 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 	/* mark the end of the clear/draw cmds before emitting per-tile cmds: */
 	fd_ringmarker_mark(ctx->draw_end);
 	fd_ringmarker_mark(ctx->binning_end);
+
+	fd_reset_wfi(ctx);
 
 	ctx->stats.batch_total++;
 
@@ -339,7 +343,7 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 	fd_ringmarker_mark(ctx->draw_start);
 	fd_ringmarker_mark(ctx->binning_start);
 
-	fd_reset_rmw_state(ctx);
+	fd_reset_wfi(ctx);
 
 	/* update timestamps on render targets: */
 	timestamp = fd_ringbuffer_timestamp(ctx->ring);

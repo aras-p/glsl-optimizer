@@ -146,6 +146,7 @@ emit_binning_workaround(struct fd_context *ctx)
 			A3XX_GRAS_SC_CONTROL_MSAA_SAMPLES(MSAA_ONE) |
 			A3XX_GRAS_SC_CONTROL_RASTER_MODE(1));
 
+	fd_wfi(ctx, ring);
 	fd3_program_emit(ring, &ctx->solid_prog, false);
 
 	fd3_emit_vertex_bufs(ring, &ctx->solid_prog, (struct fd3_vertex_buf[]) {
@@ -237,6 +238,7 @@ emit_binning_workaround(struct fd_context *ctx)
 	OUT_RING(ring, 2);            /* NumIndices */
 	OUT_RING(ring, 2);
 	OUT_RING(ring, 1);
+	fd_reset_wfi(ctx);
 
 	OUT_PKT0(ring, REG_A3XX_HLSQ_CONTROL_0_REG, 1);
 	OUT_RING(ring, A3XX_HLSQ_CONTROL_0_REG_FSTHREADSIZE(TWO_QUADS));
@@ -244,8 +246,7 @@ emit_binning_workaround(struct fd_context *ctx)
 	OUT_PKT0(ring, REG_A3XX_VFD_PERFCOUNTER0_SELECT, 1);
 	OUT_RING(ring, 0x00000000);
 
-	OUT_WFI(ring);
-
+	fd_wfi(ctx, ring);
 	OUT_PKT0(ring, REG_A3XX_VSC_BIN_SIZE, 1);
 	OUT_RING(ring, A3XX_VSC_BIN_SIZE_WIDTH(gmem->bin_w) |
 			A3XX_VSC_BIN_SIZE_HEIGHT(gmem->bin_h));
@@ -363,6 +364,7 @@ fd3_emit_tile_gmem2mem(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_RING(ring, 0);            /* VFD_INSTANCEID_OFFSET */
 	OUT_RING(ring, 0);            /* VFD_INDEX_OFFSET */
 
+	fd_wfi(ctx, ring);
 	fd3_program_emit(ring, &ctx->solid_prog, false);
 
 	fd3_emit_vertex_bufs(ring, &ctx->solid_prog, (struct fd3_vertex_buf[]) {
@@ -403,6 +405,7 @@ emit_mem2gmem_surf(struct fd_context *ctx, uint32_t base,
 
 	emit_mrt(ring, 1, &psurf, &base, bin_w);
 
+	fd_wfi(ctx, ring);
 	fd3_emit_gmem_restore_tex(ring, psurf);
 
 	fd_draw(ctx, ring, DI_PT_RECTLIST, IGNORE_VISIBILITY,
@@ -508,6 +511,7 @@ fd3_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_RING(ring, 0);            /* VFD_INSTANCEID_OFFSET */
 	OUT_RING(ring, 0);            /* VFD_INDEX_OFFSET */
 
+	fd_wfi(ctx, ring);
 	fd3_program_emit(ring, &ctx->blit_prog, false);
 
 	fd3_emit_vertex_bufs(ring, &ctx->blit_prog, (struct fd3_vertex_buf[]) {
@@ -685,6 +689,9 @@ emit_binning_pass(struct fd_context *ctx)
 
 	/* emit IB to binning drawcmds: */
 	OUT_IB(ring, ctx->binning_start, ctx->binning_end);
+	fd_reset_wfi(ctx);
+
+	fd_wfi(ctx, ring);
 
 	/* and then put stuff back the way it was: */
 
@@ -722,6 +729,7 @@ emit_binning_pass(struct fd_context *ctx)
 		OUT_RING(ring, DRAW(1, DI_SRC_SEL_AUTO_INDEX,
 				INDEX_SIZE_IGN, IGNORE_VISIBILITY));
 		OUT_RING(ring, 0);             /* NumIndices */
+		fd_reset_wfi(ctx);
 	}
 
 	OUT_PKT3(ring, CP_NOP, 4);
@@ -730,7 +738,7 @@ emit_binning_pass(struct fd_context *ctx)
 	OUT_RING(ring, 0x00000000);
 	OUT_RING(ring, 0x00000000);
 
-	OUT_WFI(ring);
+	fd_wfi(ctx, ring);
 
 	if (ctx->screen->gpu_id == 320) {
 		emit_binning_workaround(ctx);

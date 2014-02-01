@@ -64,15 +64,6 @@ fd3_emit_constant(struct fd_ringbuffer *ring,
 		src = SS_DIRECT;
 	}
 
-	/* we have this sometimes, not others.. perhaps we could be clever
-	 * and figure out actually when we need to invalidate cache:
-	 */
-	OUT_PKT0(ring, REG_A3XX_UCHE_CACHE_INVALIDATE0_REG, 2);
-	OUT_RING(ring, A3XX_UCHE_CACHE_INVALIDATE0_REG_ADDR(0));
-	OUT_RING(ring, A3XX_UCHE_CACHE_INVALIDATE1_REG_ADDR(0) |
-			A3XX_UCHE_CACHE_INVALIDATE1_REG_OPCODE(INVALIDATE) |
-			A3XX_UCHE_CACHE_INVALIDATE1_REG_ENTIRE_CACHE);
-
 	OUT_PKT3(ring, CP_LOAD_STATE, 2 + sz);
 	OUT_RING(ring, CP_LOAD_STATE_0_DST_OFF(regid/2) |
 			CP_LOAD_STATE_0_STATE_SRC(src) |
@@ -458,8 +449,10 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		OUT_RING(ring, A3XX_GRAS_CL_VPORT_ZSCALE(ctx->viewport.scale[2]));
 	}
 
-	if (dirty & FD_DIRTY_PROG)
+	if (dirty & FD_DIRTY_PROG) {
+		fd_wfi(ctx, ring);
 		fd3_program_emit(ring, prog, binning);
+	}
 
 	OUT_PKT3(ring, CP_EVENT_WRITE, 1);
 	OUT_RING(ring, HLSQ_FLUSH);
@@ -467,6 +460,7 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	if ((dirty & (FD_DIRTY_PROG | FD_DIRTY_CONSTBUF)) &&
 			/* evil hack to deal sanely with clear path: */
 			(prog == &ctx->prog)) {
+		fd_wfi(ctx, ring);
 		emit_constants(ring,  SB_VERT_SHADER,
 				&ctx->constbuf[PIPE_SHADER_VERTEX],
 				(prog->dirty & FD_SHADER_DIRTY_VP) ? prog->vp : NULL);
@@ -500,6 +494,9 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		OUT_RING(ring, A3XX_RB_BLEND_ALPHA_UINT(bcolor->color[3] * 255.0) |
 				A3XX_RB_BLEND_ALPHA_FLOAT(bcolor->color[3]));
 	}
+
+	if (dirty & (FD_DIRTY_VERTTEX | FD_DIRTY_FRAGTEX))
+		fd_wfi(ctx, ring);
 
 	if (dirty & FD_DIRTY_VERTTEX)
 		emit_textures(ring, SB_VERT_TEX, &ctx->verttex);
@@ -638,5 +635,5 @@ fd3_emit_restore(struct fd_context *ctx)
 	OUT_RING(ring, 0x00000000);
 
 	emit_cache_flush(ring);
-	fd_rmw_wfi(ctx, ring);
+	fd_wfi(ctx, ring);
 }
