@@ -107,11 +107,6 @@ intel_finalize_mipmap_tree(struct brw_context *brw, GLuint unit)
 
    /* Check tree can hold all active levels.  Check tree matches
     * target, imageFormat, etc.
-    *
-    * For pre-gen4, we have to match first_level == tObj->BaseLevel,
-    * because we don't have the control that gen4 does to make min/mag
-    * determination happen at a nonzero (hardware) baselevel.  Because
-    * of that, we just always relayout on baselevel change.
     */
    if (intelObj->mt &&
        (!intel_miptree_match_image(intelObj->mt, &firstImage->base.Base) ||
