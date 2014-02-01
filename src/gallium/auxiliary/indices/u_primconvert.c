@@ -74,7 +74,7 @@ void
 util_primconvert_destroy(struct primconvert_context *pc)
 {
    util_primconvert_save_index_buffer(pc, NULL);
-   free(pc);
+   FREE(pc);
 }
 
 void
