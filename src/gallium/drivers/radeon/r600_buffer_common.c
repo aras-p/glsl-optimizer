@@ -49,6 +49,7 @@ void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
                                       unsigned usage)
 {
 	enum radeon_bo_usage rusage = RADEON_USAGE_READWRITE;
+	bool busy = false;
 
 	if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
 		return ctx->ws->buffer_map(resource->cs_buf, NULL, usage);
@@ -67,6 +68,7 @@ void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
 			return NULL;
 		} else {
 			ctx->rings.gfx.flush(ctx, 0);
+			busy = true;
 		}
 	}
 	if (ctx->rings.dma.cs &&
@@ -78,10 +80,11 @@ void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
 			return NULL;
 		} else {
 			ctx->rings.dma.flush(ctx, 0);
+			busy = true;
 		}
 	}
 
-	if (ctx->ws->buffer_is_busy(resource->buf, rusage)) {
+	if (busy || ctx->ws->buffer_is_busy(resource->buf, rusage)) {
 		if (usage & PIPE_TRANSFER_DONTBLOCK) {
 			return NULL;
 		} else {
@@ -93,6 +96,7 @@ void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
 		}
 	}
 
+	/* Setting the CS to NULL will prevent doing checks we have done already. */
 	return ctx->ws->buffer_map(resource->cs_buf, NULL, usage);
 }
 
