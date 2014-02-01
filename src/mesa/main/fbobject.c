@@ -181,9 +181,9 @@ get_framebuffer_target(struct gl_context *ctx, GLenum target)
  * If \p attachment is GL_DEPTH_STENCIL_ATTACHMENT, return a pointer to
  * the depth buffer attachment point.
  */
-struct gl_renderbuffer_attachment *
-_mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
-                     GLenum attachment)
+static struct gl_renderbuffer_attachment *
+get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
+               GLenum attachment)
 {
    GLuint i;
 
@@ -313,9 +313,9 @@ _mesa_get_fb0_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
  * Remove any texture or renderbuffer attached to the given attachment
  * point.  Update reference counts, etc.
  */
-void
-_mesa_remove_attachment(struct gl_context *ctx,
-                        struct gl_renderbuffer_attachment *att)
+static void
+remove_attachment(struct gl_context *ctx,
+                  struct gl_renderbuffer_attachment *att)
 {
    struct gl_renderbuffer *rb = att->Renderbuffer;
 
@@ -418,13 +418,13 @@ _mesa_update_texture_renderbuffer(struct gl_context *ctx,
  * Bind a texture object to an attachment point.
  * The previous binding, if any, will be removed first.
  */
-void
-_mesa_set_texture_attachment(struct gl_context *ctx,
-                             struct gl_framebuffer *fb,
-                             struct gl_renderbuffer_attachment *att,
-                             struct gl_texture_object *texObj,
-                             GLenum texTarget, GLuint level, GLuint zoffset,
-                             GLboolean layered)
+static void
+set_texture_attachment(struct gl_context *ctx,
+                       struct gl_framebuffer *fb,
+                       struct gl_renderbuffer_attachment *att,
+                       struct gl_texture_object *texObj,
+                       GLenum texTarget, GLuint level, GLuint zoffset,
+                       GLboolean layered)
 {
    struct gl_renderbuffer *rb = att->Renderbuffer;
 
@@ -437,7 +437,7 @@ _mesa_set_texture_attachment(struct gl_context *ctx,
    }
    else {
       /* new attachment */
-      _mesa_remove_attachment(ctx, att);
+      remove_attachment(ctx, att);
       att->Type = GL_TEXTURE;
       assert(!att->Texture);
       _mesa_reference_texobj(&att->Texture, texObj);
@@ -459,13 +459,13 @@ _mesa_set_texture_attachment(struct gl_context *ctx,
  * Bind a renderbuffer to an attachment point.
  * The previous binding, if any, will be removed first.
  */
-void
-_mesa_set_renderbuffer_attachment(struct gl_context *ctx,
-                                  struct gl_renderbuffer_attachment *att,
-                                  struct gl_renderbuffer *rb)
+static void
+set_renderbuffer_attachment(struct gl_context *ctx,
+                            struct gl_renderbuffer_attachment *att,
+                            struct gl_renderbuffer *rb)
 {
    /* XXX check if re-doing same attachment, exit early */
-   _mesa_remove_attachment(ctx, att);
+   remove_attachment(ctx, att);
    att->Type = GL_RENDERBUFFER_EXT;
    att->Texture = NULL; /* just to be safe */
    att->Complete = GL_FALSE;
@@ -486,20 +486,20 @@ _mesa_framebuffer_renderbuffer(struct gl_context *ctx,
 
    _glthread_LOCK_MUTEX(fb->Mutex);
 
-   att = _mesa_get_attachment(ctx, fb, attachment);
+   att = get_attachment(ctx, fb, attachment);
    ASSERT(att);
    if (rb) {
-      _mesa_set_renderbuffer_attachment(ctx, att, rb);
+      set_renderbuffer_attachment(ctx, att, rb);
       if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
          /* do stencil attachment here (depth already done above) */
-         att = _mesa_get_attachment(ctx, fb, GL_STENCIL_ATTACHMENT_EXT);
+         att = get_attachment(ctx, fb, GL_STENCIL_ATTACHMENT_EXT);
          assert(att);
-         _mesa_set_renderbuffer_attachment(ctx, att, rb);
+         set_renderbuffer_attachment(ctx, att, rb);
       }
       rb->AttachedAnytime = GL_TRUE;
    }
    else {
-      _mesa_remove_attachment(ctx, att);
+      remove_attachment(ctx, att);
    }
 
    invalidate_framebuffer(fb);
@@ -1085,7 +1085,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       for (j = 0; j < ctx->Const.MaxDrawBuffers; j++) {
 	 if (fb->ColorDrawBuffer[j] != GL_NONE) {
 	    const struct gl_renderbuffer_attachment *att
-	       = _mesa_get_attachment(ctx, fb, fb->ColorDrawBuffer[j]);
+	       = get_attachment(ctx, fb, fb->ColorDrawBuffer[j]);
 	    assert(att);
 	    if (att->Type == GL_NONE) {
 	       fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT;
@@ -1098,7 +1098,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       /* Check that the ReadBuffer is present */
       if (fb->ColorReadBuffer != GL_NONE) {
 	 const struct gl_renderbuffer_attachment *att
-	    = _mesa_get_attachment(ctx, fb, fb->ColorReadBuffer);
+	    = get_attachment(ctx, fb, fb->ColorReadBuffer);
 	 assert(att);
 	 if (att->Type == GL_NONE) {
 	    fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT;
@@ -1246,7 +1246,7 @@ _mesa_detach_renderbuffer(struct gl_context *ctx,
    for (i = 0; i < BUFFER_COUNT; i++) {
       if (fb->Attachment[i].Texture == att
           || fb->Attachment[i].Renderbuffer == att) {
-         _mesa_remove_attachment(ctx, &fb->Attachment[i]);
+         remove_attachment(ctx, &fb->Attachment[i]);
          progress = true;
       }
    }
@@ -2424,7 +2424,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
       }
    }
 
-   att = _mesa_get_attachment(ctx, fb, attachment);
+   att = get_attachment(ctx, fb, attachment);
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glFramebufferTexture%sEXT(attachment)", caller);
@@ -2458,7 +2458,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
 	 reuse_framebuffer_texture_attachment(fb, BUFFER_STENCIL,
 	                                      BUFFER_DEPTH);
       } else {
-	 _mesa_set_texture_attachment(ctx, fb, att, texObj, textarget,
+	 set_texture_attachment(ctx, fb, att, texObj, textarget,
 	                              level, zoffset, layered);
 	 if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
 	    /* Above we created a new renderbuffer and attached it to the
@@ -2482,10 +2482,10 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
       texObj->_RenderToTexture = GL_TRUE;
    }
    else {
-      _mesa_remove_attachment(ctx, att);
+      remove_attachment(ctx, att);
       if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
 	 assert(att == &fb->Attachment[BUFFER_DEPTH]);
-	 _mesa_remove_attachment(ctx, &fb->Attachment[BUFFER_STENCIL]);
+	 remove_attachment(ctx, &fb->Attachment[BUFFER_STENCIL]);
       }
    }
 
@@ -2653,7 +2653,7 @@ _mesa_FramebufferRenderbuffer(GLenum target, GLenum attachment,
       return;
    }
 
-   att = _mesa_get_attachment(ctx, fb, attachment);
+   att = get_attachment(ctx, fb, attachment);
    if (att == NULL) {
       _mesa_error(ctx, GL_INVALID_ENUM,
                   "glFramebufferRenderbufferEXT(invalid attachment %s)",
@@ -2755,7 +2755,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
    }
    else {
       /* user-created framebuffer FBO */
-      att = _mesa_get_attachment(ctx, buffer, attachment);
+      att = get_attachment(ctx, buffer, attachment);
    }
 
    if (att == NULL) {
@@ -2767,8 +2767,8 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
    if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
       /* the depth and stencil attachments must point to the same buffer */
       const struct gl_renderbuffer_attachment *depthAtt, *stencilAtt;
-      depthAtt = _mesa_get_attachment(ctx, buffer, GL_DEPTH_ATTACHMENT);
-      stencilAtt = _mesa_get_attachment(ctx, buffer, GL_STENCIL_ATTACHMENT);
+      depthAtt = get_attachment(ctx, buffer, GL_DEPTH_ATTACHMENT);
+      stencilAtt = get_attachment(ctx, buffer, GL_STENCIL_ATTACHMENT);
       if (depthAtt->Renderbuffer != stencilAtt->Renderbuffer) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glGetFramebufferAttachmentParameterivEXT(DEPTH/STENCIL"

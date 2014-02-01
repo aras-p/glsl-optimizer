@@ -67,26 +67,6 @@ _mesa_lookup_renderbuffer(struct gl_context *ctx, GLuint id);
 extern struct gl_framebuffer *
 _mesa_lookup_framebuffer(struct gl_context *ctx, GLuint id);
 
-extern struct gl_renderbuffer_attachment *
-_mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
-                     GLenum attachment);
-
-extern void
-_mesa_remove_attachment(struct gl_context *ctx,
-                        struct gl_renderbuffer_attachment *att);
-
-extern void
-_mesa_set_texture_attachment(struct gl_context *ctx,
-                             struct gl_framebuffer *fb,
-                             struct gl_renderbuffer_attachment *att,
-                             struct gl_texture_object *texObj,
-                             GLenum texTarget, GLuint level, GLuint zoffset,
-                             GLboolean layered);
-
-extern void
-_mesa_set_renderbuffer_attachment(struct gl_context *ctx,
-                                  struct gl_renderbuffer_attachment *att,
-                                  struct gl_renderbuffer *rb);
 
 void
 _mesa_update_texture_renderbuffer(struct gl_context *ctx,
