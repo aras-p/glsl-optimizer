@@ -279,12 +279,13 @@ GLboolean r200CreateContext( gl_api api,
      return GL_FALSE;
    }
 
-   driContextSetFlags(ctx, flags);
-
    rmesa->radeon.swtcl.RenderIndex = ~0;
    rmesa->radeon.hw.all_dirty = 1;
 
    ctx = &rmesa->radeon.glCtx;
+
+   driContextSetFlags(ctx, flags);
+
    /* Initialize the software rasterizer and helper modules.
     */
    _swrast_CreateContext( ctx );
