@@ -54,7 +54,7 @@ unsigned lp_bld_tgsi_list_init(struct lp_build_tgsi_context * bld_base)
 
 unsigned lp_bld_tgsi_add_instruction(
    struct lp_build_tgsi_context * bld_base,
-   struct tgsi_full_instruction *inst_to_add)
+   const struct tgsi_full_instruction *inst_to_add)
 {
 
    if (bld_base->num_instructions == bld_base->max_instructions) {
@@ -469,8 +469,8 @@ lp_build_tgsi_llvm(
    }
 
    while (bld_base->pc != -1) {
-      struct tgsi_full_instruction *instr = bld_base->instructions +
-                                               bld_base->pc;
+      const struct tgsi_full_instruction *instr =
+         bld_base->instructions + bld_base->pc;
       const struct tgsi_opcode_info *opcode_info =
          tgsi_get_opcode_info(instr->Instruction.Opcode);
       if (!lp_build_tgsi_inst_llvm(bld_base, instr)) {

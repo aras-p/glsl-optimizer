@@ -317,7 +317,7 @@ unsigned lp_bld_tgsi_list_init(struct lp_build_tgsi_context * bld_base);
 
 unsigned lp_bld_tgsi_add_instruction(
    struct lp_build_tgsi_context * bld_base,
-   struct tgsi_full_instruction *inst_to_add);
+   const struct tgsi_full_instruction *inst_to_add);
 
 
 struct lp_build_tgsi_context;
