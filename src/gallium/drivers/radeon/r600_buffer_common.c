@@ -243,8 +243,12 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 				data += box->x % R600_MAP_BUFFER_ALIGNMENT;
 				return r600_buffer_get_transfer(ctx, resource, level, usage, box,
 								ptransfer, data, staging, offset);
+			} else {
+				return NULL; /* error, shouldn't occur though */
 			}
 		}
+		/* At this point, the buffer is always idle (we checked it above). */
+		usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
 	}
 
 	data = r600_buffer_map_sync_with_rings(rctx, rbuffer, usage);
