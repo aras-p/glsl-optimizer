@@ -3442,7 +3442,9 @@ texsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
 
          check_gen_mipmap(ctx, target, texObj, level);
 
-         ctx->NewState |= _NEW_TEXTURE;
+         /* NOTE: Don't signal _NEW_TEXTURE since we've only changed
+          * the texel data, not the texture format, size, etc.
+          */
       }
    }
    _mesa_unlock_texture(ctx, texObj);
@@ -3729,7 +3731,9 @@ copytexsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
 
          check_gen_mipmap(ctx, target, texObj, level);
 
-         ctx->NewState |= _NEW_TEXTURE;
+         /* NOTE: Don't signal _NEW_TEXTURE since we've only changed
+          * the texel data, not the texture format, size, etc.
+          */
       }
    }
    _mesa_unlock_texture(ctx, texObj);
@@ -3954,7 +3958,9 @@ compressed_tex_sub_image(GLuint dims, GLenum target, GLint level,
 
          check_gen_mipmap(ctx, target, texObj, level);
 
-         ctx->NewState |= _NEW_TEXTURE;
+         /* NOTE: Don't signal _NEW_TEXTURE since we've only changed
+          * the texel data, not the texture format, size, etc.
+          */
       }
    }
    _mesa_unlock_texture(ctx, texObj);
