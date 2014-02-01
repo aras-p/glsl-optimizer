@@ -29,7 +29,6 @@
 static void
 upload_ps_extra(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->ctx;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
