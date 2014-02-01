@@ -105,18 +105,14 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 
 	switch(usage) {
 	case PIPE_USAGE_STAGING:
-		/* Staging resources participate in transfers, i.e. are used
+	case PIPE_USAGE_DYNAMIC:
+	case PIPE_USAGE_STREAM:
+		/* These resources participate in transfers, i.e. are used
 		 * for uploads and downloads from regular resources.
 		 * We generate them internally for some transfers.
 		 */
 		initial_domain = RADEON_DOMAIN_GTT;
 		domains = RADEON_DOMAIN_GTT;
-		break;
-	case PIPE_USAGE_DYNAMIC:
-	case PIPE_USAGE_STREAM:
-		/* Default to GTT, but allow the memory manager to move it to VRAM. */
-		initial_domain = RADEON_DOMAIN_GTT;
-		domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
 		break;
 	case PIPE_USAGE_DEFAULT:
 	case PIPE_USAGE_STATIC:
