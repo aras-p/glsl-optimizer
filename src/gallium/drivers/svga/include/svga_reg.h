@@ -889,6 +889,7 @@ typedef enum {
 } SVGAFifoCmdId;
 
 #define SVGA_CMD_MAX_ARGS           64
+#define SVGA_CB_MAX_COMMAND_SIZE (32 * 1024) // 32 KB
 
 
 /*

@@ -76,12 +76,18 @@ search_fs_key(const struct svga_fragment_shader *fs,
 /**
  * If we fail to compile a fragment shader (because it uses too many
  * registers, for example) we'll use a dummy/fallback shader that
- * simply emits a constant color.
+ * simply emits a constant color (red for debug, black for release).
+ * We hit this with the Unigine/Heaven demo when Shaders = High.
+ * With black, the demo still looks good.
  */
 static const struct tgsi_token *
 get_dummy_fragment_shader(void)
 {
-   static const float red[4] = { 1.0, 0.0, 0.0, 0.0 };
+#ifdef DEBUG
+   static const float color[4] = { 1.0, 0.0, 0.0, 0.0 }; /* red */
+#else
+   static const float color[4] = { 0.0, 0.0, 0.0, 0.0 }; /* black */
+#endif
    struct ureg_program *ureg;
    const struct tgsi_token *tokens;
    struct ureg_src src;
@@ -93,7 +99,7 @@ get_dummy_fragment_shader(void)
       return NULL;
 
    dst = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
-   src = ureg_DECL_immediate(ureg, red, 4);
+   src = ureg_DECL_immediate(ureg, color, 4);
    ureg_MOV(ureg, dst, src);
    ureg_END(ureg);
 
@@ -102,6 +108,29 @@ get_dummy_fragment_shader(void)
    ureg_destroy(ureg);
 
    return tokens;
+}
+
+
+/**
+ * Replace the given shader's instruction with a simple constant-color
+ * shader.  We use this when normal shader translation fails.
+ */
+static struct svga_shader_variant *
+get_compiled_dummy_shader(struct svga_fragment_shader *fs,
+                          const struct svga_fs_compile_key *key)
+{
+   const struct tgsi_token *dummy = get_dummy_fragment_shader();
+   struct svga_shader_variant *variant;
+
+   if (!dummy) {
+      return NULL;
+   }
+
+   FREE((void *) fs->base.tokens);
+   fs->base.tokens = dummy;
+
+   variant = svga_translate_fragment_program(fs, key);
+   return variant;
 }
 
 
@@ -119,17 +148,24 @@ compile_fs(struct svga_context *svga,
 
    variant = svga_translate_fragment_program( fs, key );
    if (variant == NULL) {
-      /* some problem during translation, try the dummy shader */
-      const struct tgsi_token *dummy = get_dummy_fragment_shader();
-      if (!dummy) {
-         ret = PIPE_ERROR_OUT_OF_MEMORY;
+      debug_printf("Failed to compile fragment shader,"
+                   " using dummy shader instead.\n");
+      variant = get_compiled_dummy_shader(fs, key);
+      if (!variant) {
+         ret = PIPE_ERROR;
          goto fail;
       }
-      debug_printf("Failed to compile fragment shader, using dummy shader instead.\n");
-      FREE((void *) fs->base.tokens);
-      fs->base.tokens = dummy;
-      variant = svga_translate_fragment_program(fs, key);
-      if (variant == NULL) {
+   }
+
+   if (variant->nr_tokens * sizeof(variant->tokens[0])
+       + sizeof(SVGA3dCmdDefineShader) + sizeof(SVGA3dCmdHeader)
+       >= SVGA_CB_MAX_COMMAND_SIZE) {
+      /* too big, use dummy shader */
+      debug_printf("Shader too large (%lu bytes),"
+                   " using dummy shader instead.\n",
+                   (unsigned long ) variant->nr_tokens * sizeof(variant->tokens[0]));
+      variant = get_compiled_dummy_shader(fs, key);
+      if (!variant) {
          ret = PIPE_ERROR;
          goto fail;
       }
