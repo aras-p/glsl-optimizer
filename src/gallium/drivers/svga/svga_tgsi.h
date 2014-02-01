@@ -154,9 +154,6 @@ svga_translate_vertex_program( const struct svga_vertex_shader *fs,
                                const struct svga_vs_compile_key *vkey );
 
 
-void
-svga_destroy_shader_variant(struct svga_shader_variant *variant);
-
 unsigned
 svga_get_generic_inputs_mask(const struct tgsi_shader_info *info);
 

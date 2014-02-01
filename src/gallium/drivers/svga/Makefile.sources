@@ -24,6 +24,7 @@ C_SOURCES := \
 	svga_pipe_vs.c \
 	svga_screen.c \
 	svga_screen_cache.c \
+	svga_shader.c \
 	svga_state.c \
 	svga_state_need_swtnl.c \
 	svga_state_constants.c \

@@ -33,6 +33,7 @@
 #include "svga_context.h"
 #include "svga_state.h"
 #include "svga_cmd.h"
+#include "svga_shader.h"
 #include "svga_resource_texture.h"
 #include "svga_tgsi.h"
 
@@ -134,30 +135,21 @@ compile_fs(struct svga_context *svga,
       }
    }
 
-   variant->id = util_bitmask_add(svga->fs_bm);
-   if(variant->id == UTIL_BITMASK_INVALID_INDEX) {
-      ret = PIPE_ERROR_OUT_OF_MEMORY;
-      goto fail;
-   }
-
-   ret = SVGA3D_DefineShader(svga->swc, 
-                             variant->id,
-                             SVGA3D_SHADERTYPE_PS,
-                             variant->tokens, 
-                             variant->nr_tokens * sizeof variant->tokens[0]);
+   ret = svga_define_shader(svga, SVGA3D_SHADERTYPE_PS, variant);
    if (ret != PIPE_OK)
       goto fail;
 
    *out_variant = variant;
+
+   /* insert variants at head of linked list */
    variant->next = fs->base.variants;
    fs->base.variants = variant;
+
    return PIPE_OK;
 
 fail:
    if (variant) {
-      if (variant->id != UTIL_BITMASK_INVALID_INDEX)
-         util_bitmask_clear( svga->fs_bm, variant->id );
-      svga_destroy_shader_variant( variant );
+      svga_destroy_shader_variant(svga, SVGA3D_SHADERTYPE_PS, variant);
    }
    return ret;
 }

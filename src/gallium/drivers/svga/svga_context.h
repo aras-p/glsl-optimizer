@@ -347,8 +347,7 @@ struct svga_context
    } swtnl;
 
    /* Bitmask of used shader IDs */
-   struct util_bitmask *fs_bm;
-   struct util_bitmask *vs_bm;
+   struct util_bitmask *shader_id_bm;
 
    struct {
       unsigned dirty[SVGA_STATE_MAX];

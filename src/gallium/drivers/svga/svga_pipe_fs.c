@@ -35,6 +35,7 @@
 #include "svga_hw_reg.h"
 #include "svga_cmd.h"
 #include "svga_debug.h"
+#include "svga_shader.h"
 
 
 static void *
@@ -98,17 +99,8 @@ svga_delete_fs_state(struct pipe_context *pipe, void *shader)
    for (variant = fs->base.variants; variant; variant = tmp) {
       tmp = variant->next;
 
-      ret = SVGA3D_DestroyShader(svga->swc, variant->id, SVGA3D_SHADERTYPE_PS);
-      if (ret != PIPE_OK) {
-         svga_context_flush(svga, NULL);
-         ret = SVGA3D_DestroyShader(svga->swc, variant->id,
-                                    SVGA3D_SHADERTYPE_PS);
-         assert(ret == PIPE_OK);
-      }
-
-      util_bitmask_clear(svga->fs_bm, variant->id);
-
-      svga_destroy_shader_variant(variant);
+      ret = svga_destroy_shader_variant(svga, SVGA3D_SHADERTYPE_PS, variant);
+      (void) ret;  /* PIPE_ERROR_ not handled yet */
 
       /*
        * Remove stale references to this variant to ensure a new variant on the

@@ -381,11 +381,3 @@ svga_translate_vertex_program(const struct svga_vertex_shader *vs,
 
    return svga_tgsi_translate(&vs->base, &key, PIPE_SHADER_VERTEX);
 }
-
-
-void
-svga_destroy_shader_variant(struct svga_shader_variant *variant)
-{
-   FREE((unsigned *) variant->tokens);
-   FREE(variant);
-}

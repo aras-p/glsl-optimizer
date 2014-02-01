@@ -68,8 +68,7 @@ static void svga_destroy( struct pipe_context *pipe )
    
    svga_destroy_swtnl( svga );
 
-   util_bitmask_destroy( svga->vs_bm );
-   util_bitmask_destroy( svga->fs_bm );
+   util_bitmask_destroy( svga->shader_id_bm );
 
    for(shader = 0; shader < PIPE_SHADER_TYPES; ++shader)
       pipe_resource_reference( &svga->curr.cb[shader], NULL );
@@ -124,13 +123,9 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    svga->debug.no_line_width = debug_get_option_no_line_width();
    svga->debug.force_hw_line_stipple = debug_get_option_force_hw_line_stipple();
 
-   svga->fs_bm = util_bitmask_create();
-   if (svga->fs_bm == NULL)
-      goto no_fs_bm;
-
-   svga->vs_bm = util_bitmask_create();
-   if (svga->vs_bm == NULL)
-      goto no_vs_bm;
+   svga->shader_id_bm = util_bitmask_create();
+   if (svga->shader_id_bm == NULL)
+      goto no_shader_bm;
 
    svga->hwtnl = svga_hwtnl_create(svga);
    if (svga->hwtnl == NULL)
@@ -164,10 +159,8 @@ no_state:
 no_swtnl:
    svga_hwtnl_destroy( svga->hwtnl );
 no_hwtnl:
-   util_bitmask_destroy( svga->vs_bm );
-no_vs_bm:
-   util_bitmask_destroy( svga->fs_bm );
-no_fs_bm:
+   util_bitmask_destroy( svga->shader_id_bm );
+no_shader_bm:
    svga->swc->destroy(svga->swc);
 no_swc:
    FREE(svga);
