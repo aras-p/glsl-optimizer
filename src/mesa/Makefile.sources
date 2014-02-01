@@ -18,6 +18,7 @@ MAIN_FILES = \
 	$(SRCDIR)main/attrib.c \
 	$(SRCDIR)main/arrayobj.c \
 	$(SRCDIR)main/blend.c \
+	$(SRCDIR)main/blit.c \
 	$(SRCDIR)main/bufferobj.c \
 	$(SRCDIR)main/buffers.c \
 	$(SRCDIR)main/clear.c \

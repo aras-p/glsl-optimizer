@@ -46,6 +46,7 @@ main_sources = [
     'main/attrib.c',
     'main/arrayobj.c',
     'main/blend.c',
+    'main/blit.c',
     'main/bufferobj.c',
     'main/buffers.c',
     'main/clear.c',

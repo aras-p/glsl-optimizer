@@ -51,6 +51,7 @@ header = """/**
 #include "main/atifragshader.h"
 #include "main/attrib.h"
 #include "main/blend.h"
+#include "main/blit.h"
 #include "main/bufferobj.h"
 #include "main/arrayobj.h"
 #include "main/buffers.h"
