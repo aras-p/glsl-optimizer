@@ -375,16 +375,15 @@ void r200TexUpdateParameters(struct gl_context *ctx, GLuint unit)
  * Changes variables and flags for a state update, which will happen at the
  * next UpdateTextureState
  */
-static void r200TexParameter( struct gl_context *ctx, GLenum target,
+static void r200TexParameter( struct gl_context *ctx,
 				struct gl_texture_object *texObj,
 				GLenum pname, const GLfloat *params )
 {
    radeonTexObj* t = radeon_tex_obj(texObj);
 
    radeon_print(RADEON_TEXTURE | RADEON_STATE, RADEON_VERBOSE,
-		"%s(%p, tex %p)  target %s, pname %s\n",
+		"%s(%p, tex %p)  pname %s\n",
 		__FUNCTION__, ctx, texObj,
-		_mesa_lookup_enum_by_nr( target ),
 	       _mesa_lookup_enum_by_nr( pname ) );
 
    switch ( pname ) {

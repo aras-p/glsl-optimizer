@@ -328,7 +328,7 @@ void radeonTexUpdateParameters(struct gl_context *ctx, GLuint unit)
  * next UpdateTextureState
  */
 
-static void radeonTexParameter( struct gl_context *ctx, GLenum target,
+static void radeonTexParameter( struct gl_context *ctx,
 				struct gl_texture_object *texObj,
 				GLenum pname, const GLfloat *params )
 {

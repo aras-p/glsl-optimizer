@@ -784,7 +784,7 @@ _mesa_TexParameterf(GLenum target, GLenum pname, GLfloat param)
    }
 
    if (ctx->Driver.TexParameter && need_update) {
-      ctx->Driver.TexParameter(ctx, target, texObj, pname, &param);
+      ctx->Driver.TexParameter(ctx, texObj, pname, &param);
    }
 }
 
@@ -855,7 +855,7 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
    }
 
    if (ctx->Driver.TexParameter && need_update) {
-      ctx->Driver.TexParameter(ctx, target, texObj, pname, params);
+      ctx->Driver.TexParameter(ctx, texObj, pname, params);
    }
 }
 
@@ -898,7 +898,7 @@ _mesa_TexParameteri(GLenum target, GLenum pname, GLint param)
 
    if (ctx->Driver.TexParameter && need_update) {
       GLfloat fparam = (GLfloat) param;
-      ctx->Driver.TexParameter(ctx, target, texObj, pname, &fparam);
+      ctx->Driver.TexParameter(ctx, texObj, pname, &fparam);
    }
 }
 
@@ -954,7 +954,7 @@ _mesa_TexParameteriv(GLenum target, GLenum pname, const GLint *params)
          fparams[2] = INT_TO_FLOAT(params[2]);
          fparams[3] = INT_TO_FLOAT(params[3]);
       }
-      ctx->Driver.TexParameter(ctx, target, texObj, pname, fparams);
+      ctx->Driver.TexParameter(ctx, texObj, pname, fparams);
    }
 }
 
