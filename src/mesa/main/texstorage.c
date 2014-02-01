@@ -151,9 +151,8 @@ initialize_texture_fields(struct gl_context *ctx,
 
 
 /**
- * Clear all fields of texture object to zeros.  Used for proxy texture tests.
- * Used for proxy texture tests (and to clean up when a texture memory
- * allocation fails).
+ * Clear all fields of texture object to zeros.  Used for proxy texture tests
+ * and to clean up when a texture memory allocation fails.
  */
 static void
 clear_texture_fields(struct gl_context *ctx,
