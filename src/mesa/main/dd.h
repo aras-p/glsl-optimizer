@@ -256,6 +256,10 @@ struct dd_function_table {
 
    /**
     * Called by glGenerateMipmap() or when GL_GENERATE_MIPMAP_SGIS is enabled.
+    * Note that if the texture is a cube map, the <target> parameter will
+    * indicate which cube face to generate (GL_POSITIVE/NEGATIVE_X/Y/Z).
+    * texObj->BaseLevel is the level from which to generate the remaining
+    * mipmap levels.
     */
    void (*GenerateMipmap)(struct gl_context *ctx, GLenum target,
                           struct gl_texture_object *texObj);

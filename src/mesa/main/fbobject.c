@@ -2977,6 +2977,11 @@ invalid_pname_enum:
 }
 
 
+/**
+ * Generate all the mipmap levels below the base level.
+ * Note: this GL function would be more useful if one could specify a
+ * cube face, a set of array slices, etc.
+ */
 void GLAPIENTRY
 _mesa_GenerateMipmap(GLenum target)
 {
