@@ -203,10 +203,6 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
                                              GLenum pname, GLint *params);
 
 extern void GLAPIENTRY
-_mesa_GenerateMipmap(GLenum target);
-
-
-extern void GLAPIENTRY
 _mesa_InvalidateSubFramebuffer(GLenum target, GLsizei numAttachments,
                                const GLenum *attachments, GLint x, GLint y,
                                GLsizei width, GLsizei height);

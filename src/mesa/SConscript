@@ -78,6 +78,7 @@ main_sources = [
     'main/format_pack.c',
     'main/format_unpack.c',
     'main/framebuffer.c',
+    'main/genmipmap.c',
     'main/getstring.c',
     'main/glformats.c',
     'main/hash.c',
