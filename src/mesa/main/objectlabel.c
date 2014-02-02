@@ -158,7 +158,7 @@ get_label_pointer(struct gl_context *ctx, GLenum identifier, GLuint name,
       break;
    case GL_VERTEX_ARRAY:
       {
-         struct gl_vertex_array_object *obj = _mesa_lookup_arrayobj(ctx, name);
+         struct gl_vertex_array_object *obj = _mesa_lookup_vao(ctx, name);
          if (obj)
             labelPtr = &obj->Label;
       }

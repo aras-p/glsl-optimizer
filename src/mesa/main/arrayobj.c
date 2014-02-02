@@ -61,7 +61,7 @@
  */
 
 struct gl_vertex_array_object *
-_mesa_lookup_arrayobj(struct gl_context *ctx, GLuint id)
+_mesa_lookup_vao(struct gl_context *ctx, GLuint id)
 {
    if (id == 0)
       return NULL;
@@ -395,7 +395,7 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
    }
    else {
       /* non-default array object */
-      newObj = _mesa_lookup_arrayobj(ctx, id);
+      newObj = _mesa_lookup_vao(ctx, id);
       if (!newObj) {
          if (genRequired) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -482,7 +482,7 @@ _mesa_DeleteVertexArrays(GLsizei n, const GLuint *ids)
    }
 
    for (i = 0; i < n; i++) {
-      struct gl_vertex_array_object *obj = _mesa_lookup_arrayobj(ctx, ids[i]);
+      struct gl_vertex_array_object *obj = _mesa_lookup_vao(ctx, ids[i]);
 
       if ( obj != NULL ) {
 	 ASSERT( obj->Name == ids[i] );
@@ -588,7 +588,7 @@ _mesa_IsVertexArray( GLuint id )
    if (id == 0)
       return GL_FALSE;
 
-   obj = _mesa_lookup_arrayobj(ctx, id);
+   obj = _mesa_lookup_vao(ctx, id);
    if (obj == NULL)
       return GL_FALSE;
 
