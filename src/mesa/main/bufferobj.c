@@ -80,7 +80,7 @@ get_buffer_target(struct gl_context *ctx, GLenum target)
    case GL_ARRAY_BUFFER_ARB:
       return &ctx->Array.ArrayBufferObj;
    case GL_ELEMENT_ARRAY_BUFFER_ARB:
-      return &ctx->Array.VAO->ElementArrayBufferObj;
+      return &ctx->Array.VAO->IndexBufferObj;
    case GL_PIXEL_PACK_BUFFER_EXT:
       return &ctx->Pack.BufferObj;
    case GL_PIXEL_UNPACK_BUFFER_EXT:
@@ -451,7 +451,7 @@ _mesa_reference_buffer_object_(struct gl_context *ctx,
 #if 0
          /* unfortunately, these tests are invalid during context tear-down */
 	 ASSERT(ctx->Array.ArrayBufferObj != bufObj);
-	 ASSERT(ctx->Array.VAO->ElementArrayBufferObj != bufObj);
+	 ASSERT(ctx->Array.VAO->IndexBufferObj != bufObj);
 	 ASSERT(ctx->Array.VAO->Vertex.BufferObj != bufObj);
 #endif
 
@@ -1102,7 +1102,7 @@ _mesa_DeleteBuffers(GLsizei n, const GLuint *ids)
          if (ctx->Array.ArrayBufferObj == bufObj) {
             _mesa_BindBuffer( GL_ARRAY_BUFFER_ARB, 0 );
          }
-         if (vao->ElementArrayBufferObj == bufObj) {
+         if (vao->IndexBufferObj == bufObj) {
             _mesa_BindBuffer( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
          }
 

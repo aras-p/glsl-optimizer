@@ -1486,7 +1486,7 @@ copy_array_attrib(struct gl_context *ctx,
       copy_array_object(ctx, dest->VAO, src->VAO);
 
    /* skip ArrayBufferObj */
-   /* skip ElementArrayBufferObj */
+   /* skip IndexBufferObj */
 }
 
 /**
@@ -1506,8 +1506,8 @@ save_array_attrib(struct gl_context *ctx,
    /* Just reference them here */
    _mesa_reference_buffer_object(ctx, &dest->ArrayBufferObj,
                                  src->ArrayBufferObj);
-   _mesa_reference_buffer_object(ctx, &dest->VAO->ElementArrayBufferObj,
-                                 src->VAO->ElementArrayBufferObj);
+   _mesa_reference_buffer_object(ctx, &dest->VAO->IndexBufferObj,
+                                 src->VAO->IndexBufferObj);
 }
 
 /**
@@ -1552,10 +1552,10 @@ restore_array_attrib(struct gl_context *ctx,
    }
 
    if (!arb_vao
-       || src->VAO->ElementArrayBufferObj->Name == 0
-       || _mesa_IsBuffer(src->VAO->ElementArrayBufferObj->Name))
+       || src->VAO->IndexBufferObj->Name == 0
+       || _mesa_IsBuffer(src->VAO->IndexBufferObj->Name))
       _mesa_BindBuffer(GL_ELEMENT_ARRAY_BUFFER_ARB,
-			  src->VAO->ElementArrayBufferObj->Name);
+			  src->VAO->IndexBufferObj->Name);
 }
 
 /**

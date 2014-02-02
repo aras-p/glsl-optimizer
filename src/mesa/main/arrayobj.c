@@ -116,7 +116,7 @@ _mesa_delete_vao(struct gl_context *ctx, struct gl_vertex_array_object *obj)
 {
    (void) ctx;
    unbind_array_object_vbos(ctx, obj);
-   _mesa_reference_buffer_object(ctx, &obj->ElementArrayBufferObj, NULL);
+   _mesa_reference_buffer_object(ctx, &obj->IndexBufferObj, NULL);
    _glthread_DESTROY_MUTEX(obj->Mutex);
    free(obj->Label);
    free(obj);
@@ -257,7 +257,7 @@ _mesa_initialize_vao(struct gl_context *ctx,
       }
    }
 
-   _mesa_reference_buffer_object(ctx, &obj->ElementArrayBufferObj,
+   _mesa_reference_buffer_object(ctx, &obj->IndexBufferObj,
                                  ctx->Shared->NullBufferObj);
 }
 

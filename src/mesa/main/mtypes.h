@@ -1605,7 +1605,7 @@ struct gl_vertex_array_object
     */
    GLuint _MaxElement;
 
-   struct gl_buffer_object *ElementArrayBufferObj;
+   struct gl_buffer_object *IndexBufferObj;
 };
 
 

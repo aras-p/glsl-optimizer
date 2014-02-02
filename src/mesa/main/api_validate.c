@@ -180,7 +180,7 @@ check_index_bounds(struct gl_context *ctx, GLsizei count, GLenum type,
    memset(&ib, 0, sizeof(ib));
    ib.type = type;
    ib.ptr = indices;
-   ib.obj = ctx->Array.VAO->ElementArrayBufferObj;
+   ib.obj = ctx->Array.VAO->IndexBufferObj;
 
    vbo_get_minmax_indices(ctx, &prim, &ib, &min, &max, 1);
 
@@ -435,10 +435,10 @@ _mesa_validate_DrawElements(struct gl_context *ctx,
       return GL_FALSE;
 
    /* Vertex buffer object tests */
-   if (_mesa_is_bufferobj(ctx->Array.VAO->ElementArrayBufferObj)) {
+   if (_mesa_is_bufferobj(ctx->Array.VAO->IndexBufferObj)) {
       /* use indices in the buffer object */
       /* make sure count doesn't go outside buffer bounds */
-      if (index_bytes(type, count) > ctx->Array.VAO->ElementArrayBufferObj->Size) {
+      if (index_bytes(type, count) > ctx->Array.VAO->IndexBufferObj->Size) {
          _mesa_warning(ctx, "glDrawElements index out of buffer bounds");
          return GL_FALSE;
       }
@@ -493,12 +493,12 @@ _mesa_validate_MultiDrawElements(struct gl_context *ctx,
       return GL_FALSE;
 
    /* Vertex buffer object tests */
-   if (_mesa_is_bufferobj(ctx->Array.VAO->ElementArrayBufferObj)) {
+   if (_mesa_is_bufferobj(ctx->Array.VAO->IndexBufferObj)) {
       /* use indices in the buffer object */
       /* make sure count doesn't go outside buffer bounds */
       for (i = 0; i < primcount; i++) {
          if (index_bytes(type, count[i]) >
-             ctx->Array.VAO->ElementArrayBufferObj->Size) {
+             ctx->Array.VAO->IndexBufferObj->Size) {
             _mesa_warning(ctx,
                           "glMultiDrawElements index out of buffer bounds");
             return GL_FALSE;
@@ -570,10 +570,10 @@ _mesa_validate_DrawRangeElements(struct gl_context *ctx, GLenum mode,
       return GL_FALSE;
 
    /* Vertex buffer object tests */
-   if (_mesa_is_bufferobj(ctx->Array.VAO->ElementArrayBufferObj)) {
+   if (_mesa_is_bufferobj(ctx->Array.VAO->IndexBufferObj)) {
       /* use indices in the buffer object */
       /* make sure count doesn't go outside buffer bounds */
-      if (index_bytes(type, count) > ctx->Array.VAO->ElementArrayBufferObj->Size) {
+      if (index_bytes(type, count) > ctx->Array.VAO->IndexBufferObj->Size) {
          _mesa_warning(ctx, "glDrawRangeElements index out of buffer bounds");
          return GL_FALSE;
       }
@@ -769,10 +769,10 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
       return GL_FALSE;
 
    /* Vertex buffer object tests */
-   if (_mesa_is_bufferobj(ctx->Array.VAO->ElementArrayBufferObj)) {
+   if (_mesa_is_bufferobj(ctx->Array.VAO->IndexBufferObj)) {
       /* use indices in the buffer object */
       /* make sure count doesn't go outside buffer bounds */
-      if (index_bytes(type, count) > ctx->Array.VAO->ElementArrayBufferObj->Size) {
+      if (index_bytes(type, count) > ctx->Array.VAO->IndexBufferObj->Size) {
          _mesa_warning(ctx,
                        "glDrawElementsInstanced index out of buffer bounds");
          return GL_FALSE;
@@ -901,7 +901,7 @@ valid_draw_indirect_elements(struct gl_context *ctx,
     * If no element array buffer is bound, an INVALID_OPERATION error is
     * generated.
     */
-   if (!_mesa_is_bufferobj(ctx->Array.VAO->ElementArrayBufferObj)) {
+   if (!_mesa_is_bufferobj(ctx->Array.VAO->IndexBufferObj)) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
                   "%s(no buffer bound to GL_ELEMENT_ARRAY_BUFFER)", name);
       return GL_FALSE;

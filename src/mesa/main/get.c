@@ -839,7 +839,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
 	 ctx->Array.VAO->VertexBinding[VERT_ATTRIB_TEX(ctx->Array.ActiveTexture)].BufferObj->Name;
       break;
    case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
-      v->value_int = ctx->Array.VAO->ElementArrayBufferObj->Name;
+      v->value_int = ctx->Array.VAO->IndexBufferObj->Name;
       break;
 
    /* ARB_copy_buffer */

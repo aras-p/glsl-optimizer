@@ -1600,7 +1600,7 @@ _ae_update_state(struct gl_context *ctx)
       aa++;
    }
 
-   check_vbo(actx, vao->ElementArrayBufferObj);
+   check_vbo(actx, vao->IndexBufferObj);
 
    ASSERT(at - actx->attribs <= VERT_ATTRIB_MAX);
    ASSERT(aa - actx->arrays < 32);
