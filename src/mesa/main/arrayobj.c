@@ -480,7 +480,7 @@ _mesa_DeleteVertexArrays(GLsizei n, const GLuint *ids)
    GLsizei i;
 
    if (n < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteVertexArrayAPPLE(n)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteVertexArray(n)");
       return;
    }
 
@@ -524,7 +524,7 @@ gen_vertex_arrays(struct gl_context *ctx, GLsizei n, GLuint *arrays)
    GLint i;
 
    if (n < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGenVertexArraysAPPLE");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGenVertexArrays");
       return;
    }
 
@@ -541,7 +541,7 @@ gen_vertex_arrays(struct gl_context *ctx, GLsizei n, GLuint *arrays)
 
       obj = (*ctx->Driver.NewArrayObject)( ctx, name );
       if (!obj) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenVertexArraysAPPLE");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenVertexArrays");
          return;
       }
       save_array_object(ctx, obj);
