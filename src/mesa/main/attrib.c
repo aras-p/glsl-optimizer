@@ -1483,7 +1483,7 @@ copy_array_attrib(struct gl_context *ctx,
    /* skip RebindArrays */
 
    if (!vbo_deleted)
-      copy_array_object(ctx, dest->ArrayObj, src->ArrayObj);
+      copy_array_object(ctx, dest->VAO, src->VAO);
 
    /* skip ArrayBufferObj */
    /* skip ElementArrayBufferObj */
@@ -1499,15 +1499,15 @@ save_array_attrib(struct gl_context *ctx,
 {
    /* Set the Name, needed for restore, but do never overwrite.
     * Needs to match value in the object hash. */
-   dest->ArrayObj->Name = src->ArrayObj->Name;
+   dest->VAO->Name = src->VAO->Name;
    /* And copy all of the rest. */
    copy_array_attrib(ctx, dest, src, false);
 
    /* Just reference them here */
    _mesa_reference_buffer_object(ctx, &dest->ArrayBufferObj,
                                  src->ArrayBufferObj);
-   _mesa_reference_buffer_object(ctx, &dest->ArrayObj->ElementArrayBufferObj,
-                                 src->ArrayObj->ElementArrayBufferObj);
+   _mesa_reference_buffer_object(ctx, &dest->VAO->ElementArrayBufferObj,
+                                 src->VAO->ElementArrayBufferObj);
 }
 
 /**
@@ -1530,13 +1530,13 @@ restore_array_attrib(struct gl_context *ctx,
     * The semantics of objects created using APPLE_vertex_array_objects behave
     * differently.  These objects expect to be recreated by pop.  Alas.
     */
-   const bool arb_vao = (src->ArrayObj->Name != 0
-			 && src->ArrayObj->ARBsemantics);
+   const bool arb_vao = (src->VAO->Name != 0
+			 && src->VAO->ARBsemantics);
 
-   if (arb_vao && !_mesa_IsVertexArray(src->ArrayObj->Name))
+   if (arb_vao && !_mesa_IsVertexArray(src->VAO->Name))
       return;
 
-   _mesa_BindVertexArrayAPPLE(src->ArrayObj->Name);
+   _mesa_BindVertexArrayAPPLE(src->VAO->Name);
 
    /* Restore or recreate the buffer objects by the names ... */
    if (!arb_vao
@@ -1552,10 +1552,10 @@ restore_array_attrib(struct gl_context *ctx,
    }
 
    if (!arb_vao
-       || src->ArrayObj->ElementArrayBufferObj->Name == 0
-       || _mesa_IsBuffer(src->ArrayObj->ElementArrayBufferObj->Name))
+       || src->VAO->ElementArrayBufferObj->Name == 0
+       || _mesa_IsBuffer(src->VAO->ElementArrayBufferObj->Name))
       _mesa_BindBuffer(GL_ELEMENT_ARRAY_BUFFER_ARB,
-			  src->ArrayObj->ElementArrayBufferObj->Name);
+			  src->VAO->ElementArrayBufferObj->Name);
 }
 
 /**
@@ -1567,14 +1567,14 @@ init_array_attrib_data(struct gl_context *ctx,
                        struct gl_array_attrib *attrib)
 {
    /* Get a non driver gl_array_object. */
-   attrib->ArrayObj = CALLOC_STRUCT( gl_array_object );
+   attrib->VAO = CALLOC_STRUCT( gl_array_object );
 
-   if (attrib->ArrayObj == NULL) {
+   if (attrib->VAO == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
       return false;
    }
 
-   _mesa_initialize_array_object(ctx, attrib->ArrayObj, 0);
+   _mesa_initialize_array_object(ctx, attrib->VAO, 0);
    return true;
 }
 
@@ -1589,8 +1589,8 @@ free_array_attrib_data(struct gl_context *ctx,
 {
    /* We use a non driver array object, so don't just unref since we would
     * end up using the drivers DeleteArrayObject function for deletion. */
-   _mesa_delete_array_object(ctx, attrib->ArrayObj);
-   attrib->ArrayObj = 0;
+   _mesa_delete_array_object(ctx, attrib->VAO);
+   attrib->VAO = 0;
    _mesa_reference_buffer_object(ctx, &attrib->ArrayBufferObj, NULL);
 }
 

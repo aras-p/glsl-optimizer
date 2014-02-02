@@ -63,7 +63,7 @@ update_derived_primitive_restart_state(struct gl_context *ctx)
 static void
 client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
-   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
+   struct gl_array_object *arrayObj = ctx->Array.VAO;
    GLbitfield64 flag;
    GLboolean *var;
 
@@ -1423,41 +1423,41 @@ _mesa_IsEnabled( GLenum cap )
       case GL_VERTEX_ARRAY:
          if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
-         return ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled;
+         return ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_POS].Enabled;
       case GL_NORMAL_ARRAY:
          if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
-         return ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled;
+         return ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled;
       case GL_COLOR_ARRAY:
          if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
-         return ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled;
+         return ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled;
       case GL_INDEX_ARRAY:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         return ctx->Array.ArrayObj->
+         return ctx->Array.VAO->
             VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled;
       case GL_TEXTURE_COORD_ARRAY:
          if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_enum_error;
-         return ctx->Array.ArrayObj->
+         return ctx->Array.VAO->
             VertexAttrib[VERT_ATTRIB_TEX(ctx->Array.ActiveTexture)].Enabled;
       case GL_EDGE_FLAG_ARRAY:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         return ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled;
+         return ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled;
       case GL_FOG_COORDINATE_ARRAY_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         return ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_FOG].Enabled;
+         return ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_FOG].Enabled;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_enum_error;
-         return ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled;
+         return ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled;
       case GL_POINT_SIZE_ARRAY_OES:
          if (ctx->API != API_OPENGLES)
             goto invalid_enum_error;
-         return ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Enabled;
+         return ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Enabled;
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:

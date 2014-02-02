@@ -80,7 +80,7 @@ get_buffer_target(struct gl_context *ctx, GLenum target)
    case GL_ARRAY_BUFFER_ARB:
       return &ctx->Array.ArrayBufferObj;
    case GL_ELEMENT_ARRAY_BUFFER_ARB:
-      return &ctx->Array.ArrayObj->ElementArrayBufferObj;
+      return &ctx->Array.VAO->ElementArrayBufferObj;
    case GL_PIXEL_PACK_BUFFER_EXT:
       return &ctx->Pack.BufferObj;
    case GL_PIXEL_UNPACK_BUFFER_EXT:
@@ -451,8 +451,8 @@ _mesa_reference_buffer_object_(struct gl_context *ctx,
 #if 0
          /* unfortunately, these tests are invalid during context tear-down */
 	 ASSERT(ctx->Array.ArrayBufferObj != bufObj);
-	 ASSERT(ctx->Array.ArrayObj->ElementArrayBufferObj != bufObj);
-	 ASSERT(ctx->Array.ArrayObj->Vertex.BufferObj != bufObj);
+	 ASSERT(ctx->Array.VAO->ElementArrayBufferObj != bufObj);
+	 ASSERT(ctx->Array.VAO->Vertex.BufferObj != bufObj);
 #endif
 
 	 ASSERT(ctx->Driver.DeleteBuffer);
@@ -1082,7 +1082,7 @@ _mesa_DeleteBuffers(GLsizei n, const GLuint *ids)
    for (i = 0; i < n; i++) {
       struct gl_buffer_object *bufObj = _mesa_lookup_bufferobj(ctx, ids[i]);
       if (bufObj) {
-         struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
+         struct gl_array_object *arrayObj = ctx->Array.VAO;
          GLuint j;
 
          ASSERT(bufObj->Name == ids[i] || bufObj == &DummyBufferObject);

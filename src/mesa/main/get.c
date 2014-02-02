@@ -642,7 +642,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
    case GL_TEXTURE_COORD_ARRAY_SIZE:
    case GL_TEXTURE_COORD_ARRAY_TYPE:
    case GL_TEXTURE_COORD_ARRAY_STRIDE:
-      array = &ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_TEX(ctx->Array.ActiveTexture)];
+      array = &ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_TEX(ctx->Array.ActiveTexture)];
       v->value_int = *(GLuint *) ((char *) array + d->offset);
       break;
 
@@ -828,7 +828,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
    case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
    case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
       buffer_obj = (struct gl_buffer_object **)
-	 ((char *) ctx->Array.ArrayObj + d->offset);
+	 ((char *) ctx->Array.VAO + d->offset);
       v->value_int = (*buffer_obj)->Name;
       break;
    case GL_ARRAY_BUFFER_BINDING_ARB:
@@ -836,10 +836,10 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
    case GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING_ARB:
       v->value_int =
-	 ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_TEX(ctx->Array.ActiveTexture)].BufferObj->Name;
+	 ctx->Array.VAO->VertexBinding[VERT_ATTRIB_TEX(ctx->Array.ActiveTexture)].BufferObj->Name;
       break;
    case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
-      v->value_int = ctx->Array.ArrayObj->ElementArrayBufferObj->Name;
+      v->value_int = ctx->Array.VAO->ElementArrayBufferObj->Name;
       break;
 
    /* ARB_copy_buffer */
@@ -880,7 +880,7 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
 	 ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0;
       break;
    case GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES:
-      v->value_int = ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_POINT_SIZE].BufferObj->Name;
+      v->value_int = ctx->Array.VAO->VertexBinding[VERT_ATTRIB_POINT_SIZE].BufferObj->Name;
       break;
 
    case GL_FOG_COLOR:
@@ -1188,7 +1188,7 @@ find_value(const char *func, GLenum pname, void **p, union value *v)
       *p = ((char *) ctx + d->offset);
       return d;
    case LOC_ARRAY:
-      *p = ((char *) ctx->Array.ArrayObj + d->offset);
+      *p = ((char *) ctx->Array.VAO + d->offset);
       return d;
    case LOC_TEXUNIT:
       unit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -1851,7 +1851,7 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
           goto invalid_enum;
       if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs)
           goto invalid_value;
-      v->value_int = ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_GENERIC(index)].InstanceDivisor;
+      v->value_int = ctx->Array.VAO->VertexBinding[VERT_ATTRIB_GENERIC(index)].InstanceDivisor;
       return TYPE_INT;
 
    case GL_VERTEX_BINDING_OFFSET:
@@ -1859,7 +1859,7 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
           goto invalid_enum;
       if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs)
           goto invalid_value;
-      v->value_int = ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_GENERIC(index)].Offset;
+      v->value_int = ctx->Array.VAO->VertexBinding[VERT_ATTRIB_GENERIC(index)].Offset;
       return TYPE_INT;
 
    case GL_VERTEX_BINDING_STRIDE:
@@ -1867,7 +1867,7 @@ find_value_indexed(const char *func, GLenum pname, GLuint index, union value *v)
           goto invalid_enum;
       if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs)
           goto invalid_value;
-      v->value_int = ctx->Array.ArrayObj->VertexBinding[VERT_ATTRIB_GENERIC(index)].Stride;
+      v->value_int = ctx->Array.VAO->VertexBinding[VERT_ATTRIB_GENERIC(index)].Stride;
 
    /* ARB_shader_image_load_store */
    case GL_IMAGE_BINDING_NAME: {

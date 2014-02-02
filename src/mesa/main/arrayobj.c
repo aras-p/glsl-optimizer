@@ -376,7 +376,7 @@ _mesa_update_array_object_client_arrays(struct gl_context *ctx,
 static void
 bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
 {
-   struct gl_array_object * const oldObj = ctx->Array.ArrayObj;
+   struct gl_array_object * const oldObj = ctx->Array.VAO;
    struct gl_array_object *newObj = NULL;
 
    ASSERT(oldObj != NULL);
@@ -391,7 +391,7 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
       /* The spec says there is no array object named 0, but we use
        * one internally because it simplifies things.
        */
-      newObj = ctx->Array.DefaultArrayObj;
+      newObj = ctx->Array.DefaultVAO;
    }
    else {
       /* non-default array object */
@@ -426,7 +426,7 @@ bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
    }
 
    ctx->NewState |= _NEW_ARRAY;
-   _mesa_reference_array_object(ctx, &ctx->Array.ArrayObj, newObj);
+   _mesa_reference_array_object(ctx, &ctx->Array.VAO, newObj);
 
    /* Pass BindVertexArray call to device driver */
    if (ctx->Driver.BindArrayObject && newObj)
@@ -491,7 +491,7 @@ _mesa_DeleteVertexArrays(GLsizei n, const GLuint *ids)
 	  * for that object reverts to zero and the default vertex array
 	  * becomes current."
 	  */
-	 if ( obj == ctx->Array.ArrayObj ) {
+	 if ( obj == ctx->Array.VAO ) {
 	    _mesa_BindVertexArray(0);
 	 }
 

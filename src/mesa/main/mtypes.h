@@ -1615,10 +1615,10 @@ struct gl_array_object
 struct gl_array_attrib
 {
    /** Currently bound array object. See _mesa_BindVertexArrayAPPLE() */
-   struct gl_array_object *ArrayObj;
+   struct gl_array_object *VAO;
 
    /** The default vertex array object */
-   struct gl_array_object *DefaultArrayObj;
+   struct gl_array_object *DefaultVAO;
 
    /** Array objects (GL_ARB/APPLE_vertex_array_object) */
    struct _mesa_HashTable *Objects;

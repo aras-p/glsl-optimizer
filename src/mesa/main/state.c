@@ -417,11 +417,11 @@ _mesa_update_state_locked( struct gl_context *ctx )
    }
 
    if (new_state & _NEW_ARRAY)
-      _mesa_update_array_object_client_arrays(ctx, ctx->Array.ArrayObj);
+      _mesa_update_array_object_client_arrays(ctx, ctx->Array.VAO);
 
    if (ctx->Const.CheckArrayBounds &&
        new_state & (_NEW_ARRAY | _NEW_PROGRAM | _NEW_BUFFER_OBJECT)) {
-      _mesa_update_array_object_max_element(ctx, ctx->Array.ArrayObj);
+      _mesa_update_array_object_max_element(ctx, ctx->Array.VAO);
    }
 
  out:
@@ -439,7 +439,7 @@ _mesa_update_state_locked( struct gl_context *ctx )
    new_state = ctx->NewState | new_prog_state;
    ctx->NewState = 0;
    ctx->Driver.UpdateState(ctx, new_state);
-   ctx->Array.ArrayObj->NewArrays = 0x0;
+   ctx->Array.VAO->NewArrays = 0x0;
 }
 
 

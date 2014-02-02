@@ -228,7 +228,7 @@ static void make_state_key( struct gl_context *ctx, struct state_key *key )
    if (ctx->Point._Attenuated)
       key->point_attenuated = 1;
 
-   if (ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Enabled)
+   if (ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Enabled)
       key->point_array = 1;
 
    if (ctx->Texture._TexGenEnabled ||

@@ -200,42 +200,42 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
       case GL_VERTEX_ARRAY_POINTER:
          if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_pname;
-         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POS].Ptr;
+         *params = (GLvoid *) ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_POS].Ptr;
          break;
       case GL_NORMAL_ARRAY_POINTER:
          if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_pname;
-         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Ptr;
+         *params = (GLvoid *) ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_NORMAL].Ptr;
          break;
       case GL_COLOR_ARRAY_POINTER:
          if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_pname;
-         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Ptr;
+         *params = (GLvoid *) ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_COLOR0].Ptr;
          break;
       case GL_SECONDARY_COLOR_ARRAY_POINTER_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
-         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Ptr;
+         *params = (GLvoid *) ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_COLOR1].Ptr;
          break;
       case GL_FOG_COORDINATE_ARRAY_POINTER_EXT:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
-         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_FOG].Ptr;
+         *params = (GLvoid *) ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_FOG].Ptr;
          break;
       case GL_INDEX_ARRAY_POINTER:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
-         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Ptr;
+         *params = (GLvoid *) ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Ptr;
          break;
       case GL_TEXTURE_COORD_ARRAY_POINTER:
          if (ctx->API != API_OPENGL_COMPAT && ctx->API != API_OPENGLES)
             goto invalid_pname;
-         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_TEX(clientUnit)].Ptr;
+         *params = (GLvoid *) ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_TEX(clientUnit)].Ptr;
          break;
       case GL_EDGE_FLAG_ARRAY_POINTER:
          if (ctx->API != API_OPENGL_COMPAT)
             goto invalid_pname;
-         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Ptr;
+         *params = (GLvoid *) ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Ptr;
          break;
       case GL_FEEDBACK_BUFFER_POINTER:
          if (ctx->API != API_OPENGL_COMPAT)
@@ -250,7 +250,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
       case GL_POINT_SIZE_ARRAY_POINTER_OES:
          if (ctx->API != API_OPENGLES)
             goto invalid_pname;
-         *params = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Ptr;
+         *params = (GLvoid *) ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Ptr;
          break;
       case GL_DEBUG_CALLBACK_FUNCTION_ARB:
          if (!_mesa_is_desktop_gl(ctx))
