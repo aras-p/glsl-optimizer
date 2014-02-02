@@ -1551,12 +1551,13 @@ struct gl_vertex_buffer_binding
 
 
 /**
- * Collection of vertex arrays.  Defined by the GL_APPLE_vertex_array_object
- * extension, but a nice encapsulation in any case.
+ * A representation of "Vertex Array Objects" (VAOs) from OpenGL 3.1+,
+ * GL_ARB_vertex_array_object, or the original GL_APPLE_vertex_array_object
+ * extension.
  */
 struct gl_vertex_array_object
 {
-   /** Name of the array object as received from glGenVertexArrayAPPLE. */
+   /** Name of the VAO as received from glGenVertexArray. */
    GLuint Name;
    GLchar *Label;       /**< GL_KHR_debug */
 
@@ -1584,7 +1585,12 @@ struct gl_vertex_array_object
     */
    GLboolean EverBound;
 
-   /** Derived vertex attribute arrays */
+   /**
+    * Derived vertex attribute arrays
+    *
+    * This is a legacy data structure created from gl_vertex_attrib_array and
+    * gl_vertex_buffer_binding, for compatibility with existing driver code.
+    */
    struct gl_client_array _VertexAttrib[VERT_ATTRIB_MAX];
 
    /** Vertex attribute arrays */
@@ -1605,6 +1611,7 @@ struct gl_vertex_array_object
     */
    GLuint _MaxElement;
 
+   /** The index buffer (also known as the element array buffer in OpenGL). */
    struct gl_buffer_object *IndexBufferObj;
 };
 

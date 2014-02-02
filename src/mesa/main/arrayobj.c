@@ -27,7 +27,10 @@
 
 /**
  * \file arrayobj.c
- * Functions for the GL_APPLE_vertex_array_object extension.
+ *
+ * Implementation of Vertex Array Objects (VAOs), from OpenGL 3.1+,
+ * the GL_ARB_vertex_array_object extension, or the older
+ * GL_APPLE_vertex_array_object extension.
  *
  * \todo
  * The code in this file borrows a lot from bufferobj.c.  There's a certain
