@@ -311,7 +311,7 @@ brw_initialize_context_constants(struct brw_context *brw)
    ctx->Const.MaxTextureLevels = 14; /* 8192 */
    if (ctx->Const.MaxTextureLevels > MAX_TEXTURE_LEVELS)
       ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
-   ctx->Const.Max3DTextureLevels = 9;
+   ctx->Const.Max3DTextureLevels = 12; /* 2048 */
    ctx->Const.MaxCubeTextureLevels = 12;
 
    if (brw->gen >= 7)
