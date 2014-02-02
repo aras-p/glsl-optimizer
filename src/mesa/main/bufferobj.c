@@ -1082,7 +1082,7 @@ _mesa_DeleteBuffers(GLsizei n, const GLuint *ids)
    for (i = 0; i < n; i++) {
       struct gl_buffer_object *bufObj = _mesa_lookup_bufferobj(ctx, ids[i]);
       if (bufObj) {
-         struct gl_array_object *vao = ctx->Array.VAO;
+         struct gl_vertex_array_object *vao = ctx->Array.VAO;
          GLuint j;
 
          ASSERT(bufObj->Name == ids[i] || bufObj == &DummyBufferObject);

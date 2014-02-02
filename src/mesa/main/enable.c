@@ -63,7 +63,7 @@ update_derived_primitive_restart_state(struct gl_context *ctx)
 static void
 client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
-   struct gl_array_object *vao = ctx->Array.VAO;
+   struct gl_vertex_array_object *vao = ctx->Array.VAO;
    GLbitfield64 flag;
    GLboolean *var;
 

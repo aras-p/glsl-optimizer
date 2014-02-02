@@ -1554,7 +1554,7 @@ struct gl_vertex_buffer_binding
  * Collection of vertex arrays.  Defined by the GL_APPLE_vertex_array_object
  * extension, but a nice encapsulation in any case.
  */
-struct gl_array_object
+struct gl_vertex_array_object
 {
    /** Name of the array object as received from glGenVertexArrayAPPLE. */
    GLuint Name;
@@ -1615,10 +1615,10 @@ struct gl_array_object
 struct gl_array_attrib
 {
    /** Currently bound array object. See _mesa_BindVertexArrayAPPLE() */
-   struct gl_array_object *VAO;
+   struct gl_vertex_array_object *VAO;
 
    /** The default vertex array object */
-   struct gl_array_object *DefaultVAO;
+   struct gl_vertex_array_object *DefaultVAO;
 
    /** Array objects (GL_ARB/APPLE_vertex_array_object) */
    struct _mesa_HashTable *Objects;

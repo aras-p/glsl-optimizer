@@ -112,7 +112,7 @@ static void
 vertex_attrib_binding(struct gl_context *ctx, GLuint attribIndex,
                       GLuint bindingIndex)
 {
-   struct gl_array_object *vao = ctx->Array.VAO;
+   struct gl_vertex_array_object *vao = ctx->Array.VAO;
    struct gl_vertex_attrib_array *array = &vao->VertexAttrib[attribIndex];
 
    if (array->VertexBinding != bindingIndex) {
@@ -139,7 +139,7 @@ bind_vertex_buffer(struct gl_context *ctx, GLuint index,
                    struct gl_buffer_object *vbo,
                    GLintptr offset, GLsizei stride)
 {
-   struct gl_array_object *vao = ctx->Array.VAO;
+   struct gl_vertex_array_object *vao = ctx->Array.VAO;
    struct gl_vertex_buffer_binding *binding = &vao->VertexBinding[index];
 
    if (binding->BufferObj != vbo ||
@@ -166,7 +166,7 @@ static void
 vertex_binding_divisor(struct gl_context *ctx, GLuint bindingIndex,
                        GLuint divisor)
 {
-   struct gl_array_object *vao = ctx->Array.VAO;
+   struct gl_vertex_array_object *vao = ctx->Array.VAO;
    struct gl_vertex_buffer_binding *binding =
       &vao->VertexBinding[bindingIndex];
 
@@ -664,7 +664,7 @@ _mesa_VertexAttribIPointer(GLuint index, GLint size, GLenum type,
 void GLAPIENTRY
 _mesa_EnableVertexAttribArray(GLuint index)
 {
-   struct gl_array_object *vao;
+   struct gl_vertex_array_object *vao;
    GET_CURRENT_CONTEXT(ctx);
 
    if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
@@ -690,7 +690,7 @@ _mesa_EnableVertexAttribArray(GLuint index)
 void GLAPIENTRY
 _mesa_DisableVertexAttribArray(GLuint index)
 {
-   struct gl_array_object *vao;
+   struct gl_vertex_array_object *vao;
    GET_CURRENT_CONTEXT(ctx);
 
    if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
@@ -722,7 +722,7 @@ static GLuint
 get_vertex_array_attrib(struct gl_context *ctx, GLuint index, GLenum pname,
                   const char *caller)
 {
-   const struct gl_array_object *vao = ctx->Array.VAO;
+   const struct gl_vertex_array_object *vao = ctx->Array.VAO;
    const struct gl_vertex_attrib_array *array;
 
    if (index >= ctx->Const.Program[MESA_SHADER_VERTEX].MaxAttribs) {
@@ -1365,7 +1365,7 @@ _mesa_BindVertexBuffer(GLuint bindingIndex, GLuint buffer, GLintptr offset,
                        GLsizei stride)
 {
    GET_CURRENT_CONTEXT(ctx);
-   const struct gl_array_object *vao = ctx->Array.VAO;
+   const struct gl_vertex_array_object *vao = ctx->Array.VAO;
    struct gl_buffer_object *vbo;
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -1758,7 +1758,7 @@ print_array(const char *name, GLint index, const struct gl_client_array *array)
 void
 _mesa_print_arrays(struct gl_context *ctx)
 {
-   struct gl_array_object *vao = ctx->Array.VAO;
+   struct gl_vertex_array_object *vao = ctx->Array.VAO;
    GLuint i;
 
    _mesa_update_array_object_max_element(ctx, vao);
@@ -1801,7 +1801,7 @@ _mesa_init_varray(struct gl_context *ctx)
 static void
 delete_arrayobj_cb(GLuint id, void *data, void *userData)
 {
-   struct gl_array_object *vao = (struct gl_array_object *) data;
+   struct gl_vertex_array_object *vao = (struct gl_vertex_array_object *) data;
    struct gl_context *ctx = (struct gl_context *) userData;
    _mesa_delete_array_object(ctx, vao);
 }

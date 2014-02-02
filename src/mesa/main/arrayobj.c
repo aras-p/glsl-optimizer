@@ -60,13 +60,13 @@
  * non-existent.
  */
 
-struct gl_array_object *
+struct gl_vertex_array_object *
 _mesa_lookup_arrayobj(struct gl_context *ctx, GLuint id)
 {
    if (id == 0)
       return NULL;
    else
-      return (struct gl_array_object *)
+      return (struct gl_vertex_array_object *)
          _mesa_HashLookup(ctx->Array.Objects, id);
 }
 
@@ -77,7 +77,7 @@ _mesa_lookup_arrayobj(struct gl_context *ctx, GLuint id)
  * This is done just prior to array object destruction.
  */
 static void
-unbind_array_object_vbos(struct gl_context *ctx, struct gl_array_object *obj)
+unbind_array_object_vbos(struct gl_context *ctx, struct gl_vertex_array_object *obj)
 {
    GLuint i;
 
@@ -95,10 +95,10 @@ unbind_array_object_vbos(struct gl_context *ctx, struct gl_array_object *obj)
  * This function is intended to be called via
  * \c dd_function_table::NewArrayObject.
  */
-struct gl_array_object *
+struct gl_vertex_array_object *
 _mesa_new_array_object( struct gl_context *ctx, GLuint name )
 {
-   struct gl_array_object *obj = CALLOC_STRUCT(gl_array_object);
+   struct gl_vertex_array_object *obj = CALLOC_STRUCT(gl_vertex_array_object);
    if (obj)
       _mesa_initialize_array_object(ctx, obj, name);
    return obj;
@@ -112,7 +112,7 @@ _mesa_new_array_object( struct gl_context *ctx, GLuint name )
  * \c dd_function_table::DeleteArrayObject.
  */
 void
-_mesa_delete_array_object( struct gl_context *ctx, struct gl_array_object *obj )
+_mesa_delete_array_object( struct gl_context *ctx, struct gl_vertex_array_object *obj )
 {
    (void) ctx;
    unbind_array_object_vbos(ctx, obj);
@@ -130,15 +130,15 @@ _mesa_delete_array_object( struct gl_context *ctx, struct gl_array_object *obj )
  */
 void
 _mesa_reference_array_object_(struct gl_context *ctx,
-                              struct gl_array_object **ptr,
-                              struct gl_array_object *vao)
+                              struct gl_vertex_array_object **ptr,
+                              struct gl_vertex_array_object *vao)
 {
    assert(*ptr != vao);
 
    if (*ptr) {
       /* Unreference the old array object */
       GLboolean deleteFlag = GL_FALSE;
-      struct gl_array_object *oldObj = *ptr;
+      struct gl_vertex_array_object *oldObj = *ptr;
 
       _glthread_LOCK_MUTEX(oldObj->Mutex);
       ASSERT(oldObj->RefCount > 0);
@@ -184,7 +184,7 @@ _mesa_reference_array_object_(struct gl_context *ctx,
 
 static void
 init_array(struct gl_context *ctx,
-           struct gl_array_object *obj, GLuint index, GLint size, GLint type)
+           struct gl_vertex_array_object *obj, GLuint index, GLint size, GLint type)
 {
    struct gl_vertex_attrib_array *array = &obj->VertexAttrib[index];
    struct gl_vertex_buffer_binding *binding = &obj->VertexBinding[index];
@@ -213,11 +213,11 @@ init_array(struct gl_context *ctx,
 
 
 /**
- * Initialize a gl_array_object's arrays.
+ * Initialize a gl_vertex_array_object's arrays.
  */
 void
 _mesa_initialize_array_object( struct gl_context *ctx,
-			       struct gl_array_object *obj,
+			       struct gl_vertex_array_object *obj,
 			       GLuint name )
 {
    GLuint i;
@@ -266,7 +266,7 @@ _mesa_initialize_array_object( struct gl_context *ctx,
  * Add the given array object to the array object pool.
  */
 static void
-save_array_object( struct gl_context *ctx, struct gl_array_object *obj )
+save_array_object( struct gl_context *ctx, struct gl_vertex_array_object *obj )
 {
    if (obj->Name > 0) {
       /* insert into hash table */
@@ -280,7 +280,7 @@ save_array_object( struct gl_context *ctx, struct gl_array_object *obj )
  * Do not deallocate the array object though.
  */
 static void
-remove_array_object( struct gl_context *ctx, struct gl_array_object *obj )
+remove_array_object( struct gl_context *ctx, struct gl_vertex_array_object *obj )
 {
    if (obj->Name > 0) {
       /* remove from hash table */
@@ -295,7 +295,7 @@ remove_array_object( struct gl_context *ctx, struct gl_array_object *obj )
  * \return  min(vao->_VertexAttrib[*]._MaxElement).
  */
 static GLuint
-compute_max_element(struct gl_array_object *vao, GLbitfield64 enabled)
+compute_max_element(struct gl_vertex_array_object *vao, GLbitfield64 enabled)
 {
    GLuint min = ~((GLuint)0);
 
@@ -315,11 +315,11 @@ compute_max_element(struct gl_array_object *vao, GLbitfield64 enabled)
 
 
 /**
- * Examine vertex arrays to update the gl_array_object::_MaxElement field.
+ * Examine vertex arrays to update the gl_vertex_array_object::_MaxElement field.
  */
 void
 _mesa_update_array_object_max_element(struct gl_context *ctx,
-                                      struct gl_array_object *vao)
+                                      struct gl_vertex_array_object *vao)
 {
    GLbitfield64 enabled;
 
@@ -341,7 +341,7 @@ _mesa_update_array_object_max_element(struct gl_context *ctx,
  */
 void
 _mesa_update_array_object_client_arrays(struct gl_context *ctx,
-                                        struct gl_array_object *vao)
+                                        struct gl_vertex_array_object *vao)
 {
    GLbitfield64 arrays = vao->NewArrays;
 
@@ -376,8 +376,8 @@ _mesa_update_array_object_client_arrays(struct gl_context *ctx,
 static void
 bind_vertex_array(struct gl_context *ctx, GLuint id, GLboolean genRequired)
 {
-   struct gl_array_object * const oldObj = ctx->Array.VAO;
-   struct gl_array_object *newObj = NULL;
+   struct gl_vertex_array_object * const oldObj = ctx->Array.VAO;
+   struct gl_vertex_array_object *newObj = NULL;
 
    ASSERT(oldObj != NULL);
 
@@ -482,7 +482,7 @@ _mesa_DeleteVertexArrays(GLsizei n, const GLuint *ids)
    }
 
    for (i = 0; i < n; i++) {
-      struct gl_array_object *obj = _mesa_lookup_arrayobj(ctx, ids[i]);
+      struct gl_vertex_array_object *obj = _mesa_lookup_arrayobj(ctx, ids[i]);
 
       if ( obj != NULL ) {
 	 ASSERT( obj->Name == ids[i] );
@@ -533,7 +533,7 @@ gen_vertex_arrays(struct gl_context *ctx, GLsizei n, GLuint *arrays)
 
    /* Allocate new, empty array objects and return identifiers */
    for (i = 0; i < n; i++) {
-      struct gl_array_object *obj;
+      struct gl_vertex_array_object *obj;
       GLuint name = first + i;
 
       obj = (*ctx->Driver.NewArrayObject)( ctx, name );
@@ -581,7 +581,7 @@ _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *arrays)
 GLboolean GLAPIENTRY
 _mesa_IsVertexArray( GLuint id )
 {
-   struct gl_array_object * obj;
+   struct gl_vertex_array_object * obj;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 

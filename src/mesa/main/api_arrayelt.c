@@ -1472,7 +1472,7 @@ check_vbo(AEcontext *actx, struct gl_buffer_object *vbo)
 static inline void
 update_derived_client_arrays(struct gl_context *ctx)
 {
-   struct gl_array_object *vao = ctx->Array.VAO;
+   struct gl_vertex_array_object *vao = ctx->Array.VAO;
 
    if (vao->NewArrays) {
       _mesa_update_array_object_client_arrays(ctx, vao);
@@ -1494,7 +1494,7 @@ _ae_update_state(struct gl_context *ctx)
    AEarray *aa = actx->arrays;  /* non-indexed arrays (ex: glNormal) */
    AEattrib *at = actx->attribs;  /* indexed arrays (ex: glMultiTexCoord) */
    GLuint i;
-   struct gl_array_object *vao = ctx->Array.VAO;
+   struct gl_vertex_array_object *vao = ctx->Array.VAO;
 
    actx->nr_vbos = 0;
 

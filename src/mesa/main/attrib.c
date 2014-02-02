@@ -1433,13 +1433,13 @@ copy_pixelstore(struct gl_context *ctx,
 #define GL_CLIENT_UNPACK_BIT (1<<21)
 
 /**
- * Copy gl_array_object from src to dest.
+ * Copy gl_vertex_array_object from src to dest.
  * 'dest' must be in an initialized state.
  */
 static void
 copy_array_object(struct gl_context *ctx,
-                  struct gl_array_object *dest,
-                  struct gl_array_object *src)
+                  struct gl_vertex_array_object *dest,
+                  struct gl_vertex_array_object *src)
 {
    GLuint i;
 
@@ -1566,8 +1566,8 @@ static bool
 init_array_attrib_data(struct gl_context *ctx,
                        struct gl_array_attrib *attrib)
 {
-   /* Get a non driver gl_array_object. */
-   attrib->VAO = CALLOC_STRUCT( gl_array_object );
+   /* Get a non driver gl_vertex_array_object. */
+   attrib->VAO = CALLOC_STRUCT( gl_vertex_array_object );
 
    if (attrib->VAO == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");

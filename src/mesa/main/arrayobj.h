@@ -45,24 +45,24 @@ struct gl_context;
  * Internal functions
  */
 
-extern struct gl_array_object *
+extern struct gl_vertex_array_object *
 _mesa_lookup_arrayobj(struct gl_context *ctx, GLuint id);
 
-extern struct gl_array_object *
+extern struct gl_vertex_array_object *
 _mesa_new_array_object( struct gl_context *ctx, GLuint name );
 
 extern void
-_mesa_delete_array_object( struct gl_context *ctx, struct gl_array_object *obj );
+_mesa_delete_array_object( struct gl_context *ctx, struct gl_vertex_array_object *obj );
 
 extern void
 _mesa_reference_array_object_(struct gl_context *ctx,
-                              struct gl_array_object **ptr,
-                              struct gl_array_object *vao);
+                              struct gl_vertex_array_object **ptr,
+                              struct gl_vertex_array_object *vao);
 
 static inline void
 _mesa_reference_array_object(struct gl_context *ctx,
-                             struct gl_array_object **ptr,
-                             struct gl_array_object *vao)
+                             struct gl_vertex_array_object **ptr,
+                             struct gl_vertex_array_object *vao)
 {
    if (*ptr != vao)
       _mesa_reference_array_object_(ctx, ptr, vao);
@@ -71,16 +71,16 @@ _mesa_reference_array_object(struct gl_context *ctx,
 
 extern void
 _mesa_initialize_array_object( struct gl_context *ctx,
-                               struct gl_array_object *obj, GLuint name );
+                               struct gl_vertex_array_object *obj, GLuint name );
 
 
 extern void
 _mesa_update_array_object_max_element(struct gl_context *ctx,
-                                      struct gl_array_object *vao);
+                                      struct gl_vertex_array_object *vao);
 
 extern void
 _mesa_update_array_object_client_arrays(struct gl_context *ctx,
-                                        struct gl_array_object *vao);
+                                        struct gl_vertex_array_object *vao);
 
 
 /** Returns the bitmask of all enabled arrays in fixed function mode.
@@ -89,7 +89,7 @@ _mesa_update_array_object_client_arrays(struct gl_context *ctx,
  *  are available.
  */
 static inline GLbitfield64
-_mesa_array_object_get_enabled_ff(const struct gl_array_object *vao)
+_mesa_array_object_get_enabled_ff(const struct gl_vertex_array_object *vao)
 {
    return vao->_Enabled & VERT_BIT_FF_ALL;
 }
@@ -101,7 +101,7 @@ _mesa_array_object_get_enabled_ff(const struct gl_array_object *vao)
  *  precedence over the legacy position array.
  */
 static inline GLbitfield64
-_mesa_array_object_get_enabled_arb(const struct gl_array_object *vao)
+_mesa_array_object_get_enabled_arb(const struct gl_vertex_array_object *vao)
 {
    GLbitfield64 enabled = vao->_Enabled;
    return enabled & ~(VERT_BIT_POS & (enabled >> VERT_ATTRIB_GENERIC0));

@@ -164,7 +164,7 @@ struct save_state
    GLuint EnvMode;  /* unit[0] only */
 
    /** MESA_META_VERTEX */
-   struct gl_array_object *VAO;
+   struct gl_vertex_array_object *VAO;
    struct gl_buffer_object *ArrayBufferObj;
 
    /** MESA_META_VIEWPORT */
