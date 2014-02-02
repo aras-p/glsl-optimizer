@@ -374,6 +374,8 @@ brw_initialize_context_constants(struct brw_context *brw)
 
    if (brw->gen >= 7)
       ctx->Const.MaxProgramTextureGatherComponents = 4;
+   else if (brw->gen == 6)
+      ctx->Const.MaxProgramTextureGatherComponents = 1;
 
    ctx->Const.MinLineWidth = 1.0;
    ctx->Const.MinLineWidthAA = 1.0;
