@@ -63,46 +63,46 @@ update_derived_primitive_restart_state(struct gl_context *ctx)
 static void
 client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
 {
-   struct gl_array_object *arrayObj = ctx->Array.VAO;
+   struct gl_array_object *vao = ctx->Array.VAO;
    GLbitfield64 flag;
    GLboolean *var;
 
    switch (cap) {
       case GL_VERTEX_ARRAY:
-         var = &arrayObj->VertexAttrib[VERT_ATTRIB_POS].Enabled;
+         var = &vao->VertexAttrib[VERT_ATTRIB_POS].Enabled;
          flag = VERT_BIT_POS;
          break;
       case GL_NORMAL_ARRAY:
-         var = &arrayObj->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled;
+         var = &vao->VertexAttrib[VERT_ATTRIB_NORMAL].Enabled;
          flag = VERT_BIT_NORMAL;
          break;
       case GL_COLOR_ARRAY:
-         var = &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled;
+         var = &vao->VertexAttrib[VERT_ATTRIB_COLOR0].Enabled;
          flag = VERT_BIT_COLOR0;
          break;
       case GL_INDEX_ARRAY:
-         var = &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled;
+         var = &vao->VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled;
          flag = VERT_BIT_COLOR_INDEX;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         var = &arrayObj->VertexAttrib[VERT_ATTRIB_TEX(ctx->Array.ActiveTexture)].Enabled;
+         var = &vao->VertexAttrib[VERT_ATTRIB_TEX(ctx->Array.ActiveTexture)].Enabled;
          flag = VERT_BIT_TEX(ctx->Array.ActiveTexture);
          break;
       case GL_EDGE_FLAG_ARRAY:
-         var = &arrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled;
+         var = &vao->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled;
          flag = VERT_BIT_EDGEFLAG;
          break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         var = &arrayObj->VertexAttrib[VERT_ATTRIB_FOG].Enabled;
+         var = &vao->VertexAttrib[VERT_ATTRIB_FOG].Enabled;
          flag = VERT_BIT_FOG;
          break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
-         var = &arrayObj->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled;
+         var = &vao->VertexAttrib[VERT_ATTRIB_COLOR1].Enabled;
          flag = VERT_BIT_COLOR1;
          break;
 
       case GL_POINT_SIZE_ARRAY_OES:
-         var = &arrayObj->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Enabled;
+         var = &vao->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Enabled;
          flag = VERT_BIT_POINT_SIZE;
          break;
 
@@ -131,11 +131,11 @@ client_state(struct gl_context *ctx, GLenum cap, GLboolean state)
    update_derived_primitive_restart_state(ctx);
 
    if (state)
-      arrayObj->_Enabled |= flag;
+      vao->_Enabled |= flag;
    else
-      arrayObj->_Enabled &= ~flag;
+      vao->_Enabled &= ~flag;
 
-   arrayObj->NewArrays |= flag;
+   vao->NewArrays |= flag;
 
    if (ctx->Driver.Enable) {
       ctx->Driver.Enable( ctx, cap, state );

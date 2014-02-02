@@ -1472,11 +1472,11 @@ check_vbo(AEcontext *actx, struct gl_buffer_object *vbo)
 static inline void
 update_derived_client_arrays(struct gl_context *ctx)
 {
-   struct gl_array_object *arrayObj = ctx->Array.VAO;
+   struct gl_array_object *vao = ctx->Array.VAO;
 
-   if (arrayObj->NewArrays) {
-      _mesa_update_array_object_client_arrays(ctx, arrayObj);
-      arrayObj->NewArrays = 0;
+   if (vao->NewArrays) {
+      _mesa_update_array_object_client_arrays(ctx, vao);
+      vao->NewArrays = 0;
    }
 }
 
@@ -1494,50 +1494,50 @@ _ae_update_state(struct gl_context *ctx)
    AEarray *aa = actx->arrays;  /* non-indexed arrays (ex: glNormal) */
    AEattrib *at = actx->attribs;  /* indexed arrays (ex: glMultiTexCoord) */
    GLuint i;
-   struct gl_array_object *arrayObj = ctx->Array.VAO;
+   struct gl_array_object *vao = ctx->Array.VAO;
 
    actx->nr_vbos = 0;
 
    /* conventional vertex arrays */
-   if (arrayObj->_VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
-      aa->array = &arrayObj->_VertexAttrib[VERT_ATTRIB_COLOR_INDEX];
+   if (vao->_VertexAttrib[VERT_ATTRIB_COLOR_INDEX].Enabled) {
+      aa->array = &vao->_VertexAttrib[VERT_ATTRIB_COLOR_INDEX];
       aa->offset = IndexFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   if (arrayObj->_VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled) {
-      aa->array = &arrayObj->_VertexAttrib[VERT_ATTRIB_EDGEFLAG];
+   if (vao->_VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled) {
+      aa->array = &vao->_VertexAttrib[VERT_ATTRIB_EDGEFLAG];
       aa->offset = _gloffset_EdgeFlagv;
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   if (arrayObj->_VertexAttrib[VERT_ATTRIB_NORMAL].Enabled) {
-      aa->array = &arrayObj->_VertexAttrib[VERT_ATTRIB_NORMAL];
+   if (vao->_VertexAttrib[VERT_ATTRIB_NORMAL].Enabled) {
+      aa->array = &vao->_VertexAttrib[VERT_ATTRIB_NORMAL];
       aa->offset = NormalFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   if (arrayObj->_VertexAttrib[VERT_ATTRIB_COLOR0].Enabled) {
-      aa->array = &arrayObj->_VertexAttrib[VERT_ATTRIB_COLOR0];
+   if (vao->_VertexAttrib[VERT_ATTRIB_COLOR0].Enabled) {
+      aa->array = &vao->_VertexAttrib[VERT_ATTRIB_COLOR0];
       aa->offset = ColorFuncs[aa->array->Size-3][TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   if (arrayObj->_VertexAttrib[VERT_ATTRIB_COLOR1].Enabled) {
-      aa->array = &arrayObj->_VertexAttrib[VERT_ATTRIB_COLOR1];
+   if (vao->_VertexAttrib[VERT_ATTRIB_COLOR1].Enabled) {
+      aa->array = &vao->_VertexAttrib[VERT_ATTRIB_COLOR1];
       aa->offset = SecondaryColorFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   if (arrayObj->_VertexAttrib[VERT_ATTRIB_FOG].Enabled) {
-      aa->array = &arrayObj->_VertexAttrib[VERT_ATTRIB_FOG];
+   if (vao->_VertexAttrib[VERT_ATTRIB_FOG].Enabled) {
+      aa->array = &vao->_VertexAttrib[VERT_ATTRIB_FOG];
       aa->offset = FogCoordFuncs[TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       struct gl_client_array *attribArray =
-         &arrayObj->_VertexAttrib[VERT_ATTRIB_TEX(i)];
+         &vao->_VertexAttrib[VERT_ATTRIB_TEX(i)];
       if (attribArray->Enabled) {
          /* NOTE: we use generic glVertexAttribNV functions here.
           * If we ever remove GL_NV_vertex_program this will have to change.
@@ -1556,7 +1556,7 @@ _ae_update_state(struct gl_context *ctx)
    /* generic vertex attribute arrays */
    for (i = 1; i < VERT_ATTRIB_GENERIC_MAX; i++) {  /* skip zero! */
       struct gl_client_array *attribArray =
-         &arrayObj->_VertexAttrib[VERT_ATTRIB_GENERIC(i)];
+         &vao->_VertexAttrib[VERT_ATTRIB_GENERIC(i)];
       if (attribArray->Enabled) {
          GLint intOrNorm;
          at->array = attribArray;
@@ -1583,24 +1583,24 @@ _ae_update_state(struct gl_context *ctx)
    }
 
    /* finally, vertex position */
-   if (arrayObj->_VertexAttrib[VERT_ATTRIB_GENERIC0].Enabled) {
+   if (vao->_VertexAttrib[VERT_ATTRIB_GENERIC0].Enabled) {
       /* Use glVertex(v) instead of glVertexAttrib(0, v) to be sure it's
        * issued as the last (provoking) attribute).
        */
-      aa->array = &arrayObj->_VertexAttrib[VERT_ATTRIB_GENERIC0];
+      aa->array = &vao->_VertexAttrib[VERT_ATTRIB_GENERIC0];
       assert(aa->array->Size >= 2); /* XXX fix someday? */
       aa->offset = VertexFuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
-   else if (arrayObj->_VertexAttrib[VERT_ATTRIB_POS].Enabled) {
-      aa->array = &arrayObj->_VertexAttrib[VERT_ATTRIB_POS];
+   else if (vao->_VertexAttrib[VERT_ATTRIB_POS].Enabled) {
+      aa->array = &vao->_VertexAttrib[VERT_ATTRIB_POS];
       aa->offset = VertexFuncs[aa->array->Size-2][TYPE_IDX(aa->array->Type)];
       check_vbo(actx, aa->array->BufferObj);
       aa++;
    }
 
-   check_vbo(actx, arrayObj->ElementArrayBufferObj);
+   check_vbo(actx, vao->ElementArrayBufferObj);
 
    ASSERT(at - actx->attribs <= VERT_ATTRIB_MAX);
    ASSERT(aa - actx->arrays < 32);

@@ -1082,7 +1082,7 @@ _mesa_DeleteBuffers(GLsizei n, const GLuint *ids)
    for (i = 0; i < n; i++) {
       struct gl_buffer_object *bufObj = _mesa_lookup_bufferobj(ctx, ids[i]);
       if (bufObj) {
-         struct gl_array_object *arrayObj = ctx->Array.VAO;
+         struct gl_array_object *vao = ctx->Array.VAO;
          GLuint j;
 
          ASSERT(bufObj->Name == ids[i] || bufObj == &DummyBufferObject);
@@ -1095,14 +1095,14 @@ _mesa_DeleteBuffers(GLsizei n, const GLuint *ids)
          }
 
          /* unbind any vertex pointers bound to this buffer */
-         for (j = 0; j < Elements(arrayObj->VertexBinding); j++) {
-            unbind(ctx, &arrayObj->VertexBinding[j].BufferObj, bufObj);
+         for (j = 0; j < Elements(vao->VertexBinding); j++) {
+            unbind(ctx, &vao->VertexBinding[j].BufferObj, bufObj);
          }
 
          if (ctx->Array.ArrayBufferObj == bufObj) {
             _mesa_BindBuffer( GL_ARRAY_BUFFER_ARB, 0 );
          }
-         if (arrayObj->ElementArrayBufferObj == bufObj) {
+         if (vao->ElementArrayBufferObj == bufObj) {
             _mesa_BindBuffer( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
          }
 

@@ -287,7 +287,7 @@ static void
 check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
                          const void *elements, GLint basevertex)
 {
-   struct gl_array_object *arrayObj = ctx->Array.VAO;
+   struct gl_array_object *vao = ctx->Array.VAO;
    const void *elemMap;
    GLint i, k;
 
@@ -318,17 +318,17 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
       }
 
       /* check element j of each enabled array */
-      for (k = 0; k < Elements(arrayObj->_VertexAttrib); k++) {
-         check_array_data(ctx, &arrayObj->_VertexAttrib[k], k, j);
+      for (k = 0; k < Elements(vao->_VertexAttrib); k++) {
+         check_array_data(ctx, &vao->_VertexAttrib[k], k, j);
       }
    }
 
-   if (_mesa_is_bufferobj(arrayObj->ElementArrayBufferObj)) {
+   if (_mesa_is_bufferobj(vao->ElementArrayBufferObj)) {
       ctx->Driver.UnmapBuffer(ctx, ctx->Array.VAO->ElementArrayBufferObj);
    }
 
-   for (k = 0; k < Elements(arrayObj->_VertexAttrib); k++) {
-      unmap_array_buffer(ctx, &arrayObj->_VertexAttrib[k]);
+   for (k = 0; k < Elements(vao->_VertexAttrib); k++) {
+      unmap_array_buffer(ctx, &vao->_VertexAttrib[k]);
    }
 }
 
@@ -352,7 +352,7 @@ print_draw_arrays(struct gl_context *ctx,
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
-   struct gl_array_object *arrayObj = ctx->Array.VAO;
+   struct gl_array_object *vao = ctx->Array.VAO;
    int i;
 
    printf("vbo_exec_DrawArrays(mode 0x%x, start %d, count %d):\n",
@@ -368,7 +368,7 @@ print_draw_arrays(struct gl_context *ctx,
 	     exec->array.inputs[i]->Size,
 	     stride,
 	     /*exec->array.inputs[i]->Enabled,*/
-	     arrayObj->_VertexAttrib[VERT_ATTRIB_FF(i)].Enabled,
+	     vao->_VertexAttrib[VERT_ATTRIB_FF(i)].Enabled,
 	     exec->array.inputs[i]->Ptr,
 	     bufName);
 

@@ -124,16 +124,16 @@ _mesa_delete_array_object( struct gl_context *ctx, struct gl_array_object *obj )
 
 
 /**
- * Set ptr to arrayObj w/ reference counting.
+ * Set ptr to vao w/ reference counting.
  * Note: this should only be called from the _mesa_reference_array_object()
  * inline function.
  */
 void
 _mesa_reference_array_object_(struct gl_context *ctx,
                               struct gl_array_object **ptr,
-                              struct gl_array_object *arrayObj)
+                              struct gl_array_object *vao)
 {
-   assert(*ptr != arrayObj);
+   assert(*ptr != vao);
 
    if (*ptr) {
       /* Unreference the old array object */
@@ -159,24 +159,24 @@ _mesa_reference_array_object_(struct gl_context *ctx,
    }
    ASSERT(!*ptr);
 
-   if (arrayObj) {
+   if (vao) {
       /* reference new array object */
-      _glthread_LOCK_MUTEX(arrayObj->Mutex);
-      if (arrayObj->RefCount == 0) {
+      _glthread_LOCK_MUTEX(vao->Mutex);
+      if (vao->RefCount == 0) {
          /* this array's being deleted (look just above) */
          /* Not sure this can every really happen.  Warn if it does. */
          _mesa_problem(NULL, "referencing deleted array object");
          *ptr = NULL;
       }
       else {
-         arrayObj->RefCount++;
+         vao->RefCount++;
 #if 0
          printf("ArrayObj %p %d INCR to %d\n",
-                (void *) arrayObj, arrayObj->Name, arrayObj->RefCount);
+                (void *) vao, vao->Name, vao->RefCount);
 #endif
-         *ptr = arrayObj;
+         *ptr = vao;
       }
-      _glthread_UNLOCK_MUTEX(arrayObj->Mutex);
+      _glthread_UNLOCK_MUTEX(vao->Mutex);
    }
 }
 
@@ -292,10 +292,10 @@ remove_array_object( struct gl_context *ctx, struct gl_array_object *obj )
 
 /**
  * Helper for _mesa_update_array_object_max_element().
- * \return  min(arrayObj->_VertexAttrib[*]._MaxElement).
+ * \return  min(vao->_VertexAttrib[*]._MaxElement).
  */
 static GLuint
-compute_max_element(struct gl_array_object *arrayObj, GLbitfield64 enabled)
+compute_max_element(struct gl_array_object *vao, GLbitfield64 enabled)
 {
    GLuint min = ~((GLuint)0);
 
@@ -304,7 +304,7 @@ compute_max_element(struct gl_array_object *arrayObj, GLbitfield64 enabled)
       GLint attrib = ffsll(enabled) - 1;
       enabled ^= BITFIELD64_BIT(attrib);
 
-      client_array = &arrayObj->_VertexAttrib[attrib];
+      client_array = &vao->_VertexAttrib[attrib];
       assert(client_array->Enabled);
       _mesa_update_array_max_element(client_array);
       min = MIN2(min, client_array->_MaxElement);
@@ -319,19 +319,19 @@ compute_max_element(struct gl_array_object *arrayObj, GLbitfield64 enabled)
  */
 void
 _mesa_update_array_object_max_element(struct gl_context *ctx,
-                                      struct gl_array_object *arrayObj)
+                                      struct gl_array_object *vao)
 {
    GLbitfield64 enabled;
 
    if (!ctx->VertexProgram._Current ||
        ctx->VertexProgram._Current == ctx->VertexProgram._TnlProgram) {
-      enabled = _mesa_array_object_get_enabled_ff(arrayObj);
+      enabled = _mesa_array_object_get_enabled_ff(vao);
    } else {
-      enabled = _mesa_array_object_get_enabled_arb(arrayObj);
+      enabled = _mesa_array_object_get_enabled_arb(vao);
    }
 
    /* _MaxElement is one past the last legal array element */
-   arrayObj->_MaxElement = compute_max_element(arrayObj, enabled);
+   vao->_MaxElement = compute_max_element(vao, enabled);
 }
 
 
@@ -341,9 +341,9 @@ _mesa_update_array_object_max_element(struct gl_context *ctx,
  */
 void
 _mesa_update_array_object_client_arrays(struct gl_context *ctx,
-                                        struct gl_array_object *arrayObj)
+                                        struct gl_array_object *vao)
 {
-   GLbitfield64 arrays = arrayObj->NewArrays;
+   GLbitfield64 arrays = vao->NewArrays;
 
    while (arrays) {
       struct gl_client_array *client_array;
@@ -353,9 +353,9 @@ _mesa_update_array_object_client_arrays(struct gl_context *ctx,
       GLint attrib = ffsll(arrays) - 1;
       arrays ^= BITFIELD64_BIT(attrib);
 
-      attrib_array = &arrayObj->VertexAttrib[attrib];
-      buffer_binding = &arrayObj->VertexBinding[attrib_array->VertexBinding];
-      client_array = &arrayObj->_VertexAttrib[attrib];
+      attrib_array = &vao->VertexAttrib[attrib];
+      buffer_binding = &vao->VertexBinding[attrib_array->VertexBinding];
+      client_array = &vao->_VertexAttrib[attrib];
 
       _mesa_update_client_array(ctx, client_array, attrib_array,
                                 buffer_binding);
