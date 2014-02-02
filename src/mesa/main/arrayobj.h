@@ -49,38 +49,38 @@ extern struct gl_vertex_array_object *
 _mesa_lookup_arrayobj(struct gl_context *ctx, GLuint id);
 
 extern struct gl_vertex_array_object *
-_mesa_new_array_object( struct gl_context *ctx, GLuint name );
+_mesa_new_vao(struct gl_context *ctx, GLuint name);
 
 extern void
-_mesa_delete_array_object( struct gl_context *ctx, struct gl_vertex_array_object *obj );
+_mesa_delete_vao(struct gl_context *ctx, struct gl_vertex_array_object *obj);
 
 extern void
-_mesa_reference_array_object_(struct gl_context *ctx,
-                              struct gl_vertex_array_object **ptr,
-                              struct gl_vertex_array_object *vao);
+_mesa_reference_vao_(struct gl_context *ctx,
+                     struct gl_vertex_array_object **ptr,
+                     struct gl_vertex_array_object *vao);
 
 static inline void
-_mesa_reference_array_object(struct gl_context *ctx,
-                             struct gl_vertex_array_object **ptr,
-                             struct gl_vertex_array_object *vao)
+_mesa_reference_vao(struct gl_context *ctx,
+                    struct gl_vertex_array_object **ptr,
+                    struct gl_vertex_array_object *vao)
 {
    if (*ptr != vao)
-      _mesa_reference_array_object_(ctx, ptr, vao);
+      _mesa_reference_vao_(ctx, ptr, vao);
 }
 
 
 extern void
-_mesa_initialize_array_object( struct gl_context *ctx,
-                               struct gl_vertex_array_object *obj, GLuint name );
+_mesa_initialize_vao(struct gl_context *ctx,
+                     struct gl_vertex_array_object *obj, GLuint name);
 
 
 extern void
-_mesa_update_array_object_max_element(struct gl_context *ctx,
-                                      struct gl_vertex_array_object *vao);
+_mesa_update_vao_max_element(struct gl_context *ctx,
+                             struct gl_vertex_array_object *vao);
 
 extern void
-_mesa_update_array_object_client_arrays(struct gl_context *ctx,
-                                        struct gl_vertex_array_object *vao);
+_mesa_update_vao_client_arrays(struct gl_context *ctx,
+                               struct gl_vertex_array_object *vao);
 
 
 /** Returns the bitmask of all enabled arrays in fixed function mode.

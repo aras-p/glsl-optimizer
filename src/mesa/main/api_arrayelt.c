@@ -1475,7 +1475,7 @@ update_derived_client_arrays(struct gl_context *ctx)
    struct gl_vertex_array_object *vao = ctx->Array.VAO;
 
    if (vao->NewArrays) {
-      _mesa_update_array_object_client_arrays(ctx, vao);
+      _mesa_update_vao_client_arrays(ctx, vao);
       vao->NewArrays = 0;
    }
 }

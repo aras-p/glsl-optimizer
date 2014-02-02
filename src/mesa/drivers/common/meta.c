@@ -729,7 +729,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 
    if (state & MESA_META_VERTEX) {
       /* save vertex array object state */
-      _mesa_reference_array_object(ctx, &save->VAO,
+      _mesa_reference_vao(ctx, &save->VAO,
                                    ctx->Array.VAO);
       _mesa_reference_buffer_object(ctx, &save->ArrayBufferObj,
                                     ctx->Array.ArrayBufferObj);
@@ -1096,7 +1096,7 @@ _mesa_meta_end(struct gl_context *ctx)
 
       /* restore vertex array object */
       _mesa_BindVertexArray(save->VAO->Name);
-      _mesa_reference_array_object(ctx, &save->VAO, NULL);
+      _mesa_reference_vao(ctx, &save->VAO, NULL);
    }
 
    if (state & MESA_META_VIEWPORT) {

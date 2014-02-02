@@ -1574,7 +1574,7 @@ init_array_attrib_data(struct gl_context *ctx,
       return false;
    }
 
-   _mesa_initialize_array_object(ctx, attrib->VAO, 0);
+   _mesa_initialize_vao(ctx, attrib->VAO, 0);
    return true;
 }
 
@@ -1589,7 +1589,7 @@ free_array_attrib_data(struct gl_context *ctx,
 {
    /* We use a non driver array object, so don't just unref since we would
     * end up using the drivers DeleteArrayObject function for deletion. */
-   _mesa_delete_array_object(ctx, attrib->VAO);
+   _mesa_delete_vao(ctx, attrib->VAO);
    attrib->VAO = 0;
    _mesa_reference_buffer_object(ctx, &attrib->ArrayBufferObj, NULL);
 }

@@ -1761,7 +1761,7 @@ _mesa_print_arrays(struct gl_context *ctx)
    struct gl_vertex_array_object *vao = ctx->Array.VAO;
    GLuint i;
 
-   _mesa_update_array_object_max_element(ctx, vao);
+   _mesa_update_vao_max_element(ctx, vao);
 
    printf("Array Object %u\n", vao->Name);
    if (vao->_VertexAttrib[VERT_ATTRIB_POS].Enabled)
@@ -1787,8 +1787,7 @@ void
 _mesa_init_varray(struct gl_context *ctx)
 {
    ctx->Array.DefaultVAO = ctx->Driver.NewArrayObject(ctx, 0);
-   _mesa_reference_array_object(ctx, &ctx->Array.VAO,
-                                ctx->Array.DefaultVAO);
+   _mesa_reference_vao(ctx, &ctx->Array.VAO, ctx->Array.DefaultVAO);
    ctx->Array.ActiveTexture = 0;   /* GL_ARB_multitexture */
 
    ctx->Array.Objects = _mesa_NewHashTable();
@@ -1803,7 +1802,7 @@ delete_arrayobj_cb(GLuint id, void *data, void *userData)
 {
    struct gl_vertex_array_object *vao = (struct gl_vertex_array_object *) data;
    struct gl_context *ctx = (struct gl_context *) userData;
-   _mesa_delete_array_object(ctx, vao);
+   _mesa_delete_vao(ctx, vao);
 }
 
 

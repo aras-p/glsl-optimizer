@@ -1188,8 +1188,8 @@ _mesa_free_context_data( struct gl_context *ctx )
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram, NULL);
 
-   _mesa_reference_array_object(ctx, &ctx->Array.VAO, NULL);
-   _mesa_reference_array_object(ctx, &ctx->Array.DefaultVAO, NULL);
+   _mesa_reference_vao(ctx, &ctx->Array.VAO, NULL);
+   _mesa_reference_vao(ctx, &ctx->Array.DefaultVAO, NULL);
 
    _mesa_free_attrib_data(ctx);
    _mesa_free_buffer_objects(ctx);
