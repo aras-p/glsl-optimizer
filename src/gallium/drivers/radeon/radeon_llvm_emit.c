@@ -24,6 +24,7 @@
  *
  */
 #include "radeon_llvm_emit.h"
+#include "r600_pipe_common.h"
 #include "util/u_memory.h"
 
 #include <llvm-c/Target.h>
@@ -85,7 +86,7 @@ static LLVMTargetRef get_r600_target() {
  *
  * @returns 0 for success, 1 for failure
  */
-unsigned radeon_llvm_compile(LLVMModuleRef M, struct radeon_llvm_binary *binary,
+unsigned radeon_llvm_compile(LLVMModuleRef M, struct radeon_shader_binary *binary,
 					  const char * gpu_family, unsigned dump) {
 
 	LLVMTargetRef target;

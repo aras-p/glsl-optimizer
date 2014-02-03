@@ -91,6 +91,22 @@
 
 struct r600_common_context;
 
+struct radeon_shader_binary {
+	/** Shader code */
+	unsigned char *code;
+	unsigned code_size;
+
+	/** Config/Context register state that accompanies this shader.
+	 * This is a stream of dword pairs.  First dword contains the
+	 * register address, the second dword contains the value.*/
+	unsigned char *config;
+	unsigned config_size;
+
+	/** Set to 1 if the disassembly for this binary has been dumped to
+	 *  stderr. */
+	int disassembled;
+};
+
 struct r600_resource {
 	struct u_resource		b;
 
