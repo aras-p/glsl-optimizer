@@ -118,6 +118,7 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    ubo_layout_mask.flags.q.shared = 1;
 
    ast_type_qualifier ubo_binding_mask;
+   ubo_binding_mask.flags.i = 0;
    ubo_binding_mask.flags.q.explicit_binding = 1;
    ubo_binding_mask.flags.q.explicit_offset = 1;
 
