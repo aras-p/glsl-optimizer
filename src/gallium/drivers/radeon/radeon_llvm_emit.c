@@ -24,7 +24,7 @@
  *
  */
 #include "radeon_llvm_emit.h"
-#include "r600_pipe_common.h"
+#include "radeon_elf_util.h"
 #include "util/u_memory.h"
 
 #include <llvm-c/Target.h>
@@ -33,8 +33,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <libelf.h>
-#include <gelf.h>
 
 #define CPU_STRING_LEN 30
 #define FS_STRING_LEN 30
@@ -98,10 +96,6 @@ unsigned radeon_llvm_compile(LLVMModuleRef M, struct radeon_shader_binary *binar
 	unsigned buffer_size;
 	const char *buffer_data;
 	char triple[TRIPLE_STRING_LEN];
-	char *elf_buffer;
-	Elf *elf;
-	Elf_Scn *section = NULL;
-	size_t section_str_index;
 	LLVMBool r;
 
 	init_r600_target();
@@ -133,51 +127,8 @@ unsigned radeon_llvm_compile(LLVMModuleRef M, struct radeon_shader_binary *binar
 	buffer_size = LLVMGetBufferSize(out_buffer);
 	buffer_data = LLVMGetBufferStart(out_buffer);
 
-	/* One of the libelf implementations
-	 * (http://www.mr511.de/software/english.htm) requires calling
-	 * elf_version() before elf_memory().
-	 */
-	elf_version(EV_CURRENT);
-	elf_buffer = MALLOC(buffer_size);
-	memcpy(elf_buffer, buffer_data, buffer_size);
+	radeon_elf_read(buffer_data, buffer_size, binary, dump);
 
-	elf = elf_memory(elf_buffer, buffer_size);
-
-	elf_getshdrstrndx(elf, &section_str_index);
-	binary->disassembled = 0;
-
-	while ((section = elf_nextscn(elf, section))) {
-		const char *name;
-		Elf_Data *section_data = NULL;
-		GElf_Shdr section_header;
-		if (gelf_getshdr(section, &section_header) != &section_header) {
-			fprintf(stderr, "Failed to read ELF section header\n");
-			return 1;
-		}
-		name = elf_strptr(elf, section_str_index, section_header.sh_name);
-		if (!strcmp(name, ".text")) {
-			section_data = elf_getdata(section, section_data);
-			binary->code_size = section_data->d_size;
-			binary->code = MALLOC(binary->code_size * sizeof(unsigned char));
-			memcpy(binary->code, section_data->d_buf, binary->code_size);
-		} else if (!strcmp(name, ".AMDGPU.config")) {
-			section_data = elf_getdata(section, section_data);
-			binary->config_size = section_data->d_size;
-			binary->config = MALLOC(binary->config_size * sizeof(unsigned char));
-			memcpy(binary->config, section_data->d_buf, binary->config_size);
-		} else if (dump && !strcmp(name, ".AMDGPU.disasm")) {
-			binary->disassembled = 1;
-			section_data = elf_getdata(section, section_data);
-			fprintf(stderr, "\nShader Disassembly:\n\n");
-			fprintf(stderr, "%.*s\n", (int)section_data->d_size,
-						  (char *)section_data->d_buf);
-		}
-	}
-
-	if (elf){
-		elf_end(elf);
-	}
-	FREE(elf_buffer);
 	LLVMDisposeMemoryBuffer(out_buffer);
 	LLVMDisposeTargetMachine(tm);
 	return 0;
