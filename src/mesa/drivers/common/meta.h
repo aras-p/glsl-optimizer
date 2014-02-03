@@ -60,6 +60,289 @@
 #define MESA_META_OCCLUSION_QUERY      0x400000
 /**\}*/
 
+/**
+ * State which we may save/restore across meta ops.
+ * XXX this may be incomplete...
+ */
+struct save_state
+{
+   GLbitfield SavedState;  /**< bitmask of MESA_META_* flags */
+
+   /** MESA_META_CLEAR (and others?) */
+   struct gl_query_object *CurrentOcclusionObject;
+
+   /** MESA_META_ALPHA_TEST */
+   GLboolean AlphaEnabled;
+   GLenum AlphaFunc;
+   GLclampf AlphaRef;
+
+   /** MESA_META_BLEND */
+   GLbitfield BlendEnabled;
+   GLboolean ColorLogicOpEnabled;
+
+   /** MESA_META_COLOR_MASK */
+   GLubyte ColorMask[MAX_DRAW_BUFFERS][4];
+
+   /** MESA_META_DEPTH_TEST */
+   struct gl_depthbuffer_attrib Depth;
+
+   /** MESA_META_FOG */
+   GLboolean Fog;
+
+   /** MESA_META_PIXEL_STORE */
+   struct gl_pixelstore_attrib Pack, Unpack;
+
+   /** MESA_META_PIXEL_TRANSFER */
+   GLfloat RedBias, RedScale;
+   GLfloat GreenBias, GreenScale;
+   GLfloat BlueBias, BlueScale;
+   GLfloat AlphaBias, AlphaScale;
+   GLfloat DepthBias, DepthScale;
+   GLboolean MapColorFlag;
+
+   /** MESA_META_RASTERIZATION */
+   GLenum FrontPolygonMode, BackPolygonMode;
+   GLboolean PolygonOffset;
+   GLboolean PolygonSmooth;
+   GLboolean PolygonStipple;
+   GLboolean PolygonCull;
+
+   /** MESA_META_SCISSOR */
+   struct gl_scissor_attrib Scissor;
+
+   /** MESA_META_SHADER */
+   GLboolean VertexProgramEnabled;
+   struct gl_vertex_program *VertexProgram;
+   GLboolean FragmentProgramEnabled;
+   struct gl_fragment_program *FragmentProgram;
+   GLboolean ATIFragmentShaderEnabled;
+   struct gl_shader_program *Shader[MESA_SHADER_STAGES];
+   struct gl_shader_program *ActiveShader;
+
+   /** MESA_META_STENCIL_TEST */
+   struct gl_stencil_attrib Stencil;
+
+   /** MESA_META_TRANSFORM */
+   GLenum MatrixMode;
+   GLfloat ModelviewMatrix[16];
+   GLfloat ProjectionMatrix[16];
+   GLfloat TextureMatrix[16];
+
+   /** MESA_META_CLIP */
+   GLbitfield ClipPlanesEnabled;
+
+   /** MESA_META_TEXTURE */
+   GLuint ActiveUnit;
+   GLuint ClientActiveUnit;
+   /** for unit[0] only */
+   struct gl_texture_object *CurrentTexture[NUM_TEXTURE_TARGETS];
+   /** mask of TEXTURE_2D_BIT, etc */
+   GLbitfield TexEnabled[MAX_TEXTURE_UNITS];
+   GLbitfield TexGenEnabled[MAX_TEXTURE_UNITS];
+   GLuint EnvMode;  /* unit[0] only */
+
+   /** MESA_META_VERTEX */
+   struct gl_vertex_array_object *VAO;
+   struct gl_buffer_object *ArrayBufferObj;
+
+   /** MESA_META_VIEWPORT */
+   GLfloat ViewportX, ViewportY, ViewportW, ViewportH;
+   GLclampd DepthNear, DepthFar;
+
+   /** MESA_META_CLAMP_FRAGMENT_COLOR */
+   GLenum ClampFragmentColor;
+
+   /** MESA_META_CLAMP_VERTEX_COLOR */
+   GLenum ClampVertexColor;
+
+   /** MESA_META_CONDITIONAL_RENDER */
+   struct gl_query_object *CondRenderQuery;
+   GLenum CondRenderMode;
+
+   /** MESA_META_SELECT_FEEDBACK */
+   GLenum RenderMode;
+   struct gl_selection Select;
+   struct gl_feedback Feedback;
+
+   /** MESA_META_MULTISAMPLE */
+   GLboolean MultisampleEnabled;
+
+   /** MESA_META_FRAMEBUFFER_SRGB */
+   GLboolean sRGBEnabled;
+
+   /** Miscellaneous (always disabled) */
+   GLboolean Lighting;
+   GLboolean RasterDiscard;
+   GLboolean TransformFeedbackNeedsResume;
+};
+
+/**
+ * Temporary texture used for glBlitFramebuffer, glDrawPixels, etc.
+ * This is currently shared by all the meta ops.  But we could create a
+ * separate one for each of glDrawPixel, glBlitFramebuffer, glCopyPixels, etc.
+ */
+struct temp_texture
+{
+   GLuint TexObj;
+   GLenum Target;         /**< GL_TEXTURE_2D or GL_TEXTURE_RECTANGLE */
+   GLsizei MinSize;       /**< Min texture size to allocate */
+   GLsizei MaxSize;       /**< Max possible texture size */
+   GLboolean NPOT;        /**< Non-power of two size OK? */
+   GLsizei Width, Height; /**< Current texture size */
+   GLenum IntFormat;
+   GLfloat Sright, Ttop;  /**< right, top texcoords */
+};
+
+/**
+ * State for GLSL texture sampler which is used to generate fragment
+ * shader in _mesa_meta_generate_mipmap().
+ */
+struct blit_shader {
+   const char *type;
+   const char *func;
+   const char *texcoords;
+   GLuint shader_prog;
+};
+
+/**
+ * Table of all sampler types and shaders for accessing them.
+ */
+struct blit_shader_table {
+   struct blit_shader sampler_1d;
+   struct blit_shader sampler_2d;
+   struct blit_shader sampler_3d;
+   struct blit_shader sampler_rect;
+   struct blit_shader sampler_cubemap;
+   struct blit_shader sampler_1d_array;
+   struct blit_shader sampler_2d_array;
+   struct blit_shader sampler_cubemap_array;
+};
+
+/**
+ * State for glBlitFramebufer()
+ */
+struct blit_state
+{
+   GLuint VAO;
+   GLuint VBO;
+   GLuint DepthFP;
+   struct blit_shader_table shaders;
+   struct temp_texture depthTex;
+};
+
+
+/**
+ * State for glClear()
+ */
+struct clear_state
+{
+   GLuint VAO;
+   GLuint VBO;
+   GLuint ShaderProg;
+   GLint ColorLocation;
+   GLint LayerLocation;
+
+   GLuint IntegerShaderProg;
+   GLint IntegerColorLocation;
+   GLint IntegerLayerLocation;
+};
+
+
+/**
+ * State for glCopyPixels()
+ */
+struct copypix_state
+{
+   GLuint VAO;
+   GLuint VBO;
+};
+
+
+/**
+ * State for glDrawPixels()
+ */
+struct drawpix_state
+{
+   GLuint VAO;
+   GLuint VBO;
+
+   GLuint StencilFP;  /**< Fragment program for drawing stencil images */
+   GLuint DepthFP;  /**< Fragment program for drawing depth images */
+};
+
+
+/**
+ * State for glBitmap()
+ */
+struct bitmap_state
+{
+   GLuint VAO;
+   GLuint VBO;
+   struct temp_texture Tex;  /**< separate texture from other meta ops */
+};
+
+/**
+ * State for _mesa_meta_generate_mipmap()
+ */
+struct gen_mipmap_state
+{
+   GLuint VAO;
+   GLuint VBO;
+   GLuint FBO;
+   GLuint Sampler;
+
+   struct blit_shader_table shaders;
+};
+
+/**
+ * State for texture decompression
+ */
+struct decompress_state
+{
+   GLuint VAO;
+   GLuint VBO, FBO, RBO, Sampler;
+   GLint Width, Height;
+
+   struct blit_shader_table shaders;
+};
+
+/**
+ * State for glDrawTex()
+ */
+struct drawtex_state
+{
+   GLuint VAO;
+   GLuint VBO;
+};
+
+#define MAX_META_OPS_DEPTH      8
+/**
+ * All per-context meta state.
+ */
+struct gl_meta_state
+{
+   /** Stack of state saved during meta-ops */
+   struct save_state Save[MAX_META_OPS_DEPTH];
+   /** Save stack depth */
+   GLuint SaveStackDepth;
+
+   struct temp_texture TempTex;
+
+   struct blit_state Blit;    /**< For _mesa_meta_BlitFramebuffer() */
+   struct clear_state Clear;  /**< For _mesa_meta_Clear() */
+   struct copypix_state CopyPix;  /**< For _mesa_meta_CopyPixels() */
+   struct drawpix_state DrawPix;  /**< For _mesa_meta_DrawPixels() */
+   struct bitmap_state Bitmap;    /**< For _mesa_meta_Bitmap() */
+   struct gen_mipmap_state Mipmap;    /**< For _mesa_meta_GenerateMipmap() */
+   struct decompress_state Decompress;  /**< For texture decompression */
+   struct drawtex_state DrawTex;  /**< For _mesa_meta_DrawTex() */
+};
+
+struct vertex {
+   GLfloat x, y, z, tex[4];
+   GLfloat r, g, b, a;
+};
+
 extern void
 _mesa_meta_init(struct gl_context *ctx);
 
