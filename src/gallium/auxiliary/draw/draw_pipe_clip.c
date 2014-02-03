@@ -588,7 +588,12 @@ do_clip_line( struct draw_stage *stage,
 
    if (v0->clipmask) {
       interp( clipper, stage->tmp[0], t0, v0, v1, viewport_index );
-      copy_flat(stage, stage->tmp[0], v0);
+      if (stage->draw->rasterizer->flatshade_first) {
+         copy_flat(stage, stage->tmp[0], v0);  /* copy v0 color to tmp[0] */
+      }
+      else {
+         copy_flat(stage, stage->tmp[0], v1);  /* copy v1 color to tmp[0] */
+      }
       newprim.v[0] = stage->tmp[0];
    }
    else {
@@ -597,6 +602,12 @@ do_clip_line( struct draw_stage *stage,
 
    if (v1->clipmask) {
       interp( clipper, stage->tmp[1], t1, v1, v0, viewport_index );
+      if (stage->draw->rasterizer->flatshade_first) {
+         copy_flat(stage, stage->tmp[1], v0);  /* copy v0 color to tmp[1] */
+      }
+      else {
+         copy_flat(stage, stage->tmp[1], v1);  /* copy v1 color to tmp[1] */
+      }
       newprim.v[1] = stage->tmp[1];
    }
    else {
