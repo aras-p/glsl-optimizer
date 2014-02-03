@@ -1255,7 +1255,7 @@ vec4_generator::generate_code(exec_list *instructions)
    const void *last_annotation_ir = NULL;
 
    if (unlikely(debug_flag)) {
-      if (prog) {
+      if (shader_prog) {
          printf("Native code for vertex shader %d:\n", shader_prog->Name);
       } else {
          printf("Native code for vertex program %d:\n", prog->Id);
@@ -1271,7 +1271,7 @@ vec4_generator::generate_code(exec_list *instructions)
 	    last_annotation_ir = inst->ir;
 	    if (last_annotation_ir) {
 	       printf("   ");
-               if (prog) {
+               if (shader_prog) {
                   ((ir_instruction *) last_annotation_ir)->print();
                } else {
                   const prog_instruction *vpi;
