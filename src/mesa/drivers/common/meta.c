@@ -1539,16 +1539,19 @@ alloc_texture(struct temp_texture *tex,
 static void
 setup_copypix_texture(struct gl_context *ctx,
                       struct temp_texture *tex,
-                      GLboolean newTex,
                       GLint srcX, GLint srcY,
                       GLsizei width, GLsizei height, GLenum intFormat,
                       GLenum filter)
 {
+   bool newTex;
+
    _mesa_BindTexture(tex->Target, tex->TexObj);
    _mesa_TexParameteri(tex->Target, GL_TEXTURE_MIN_FILTER, filter);
    _mesa_TexParameteri(tex->Target, GL_TEXTURE_MAG_FILTER, filter);
    if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES)
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+   newTex = alloc_texture(tex, width, height, intFormat);
 
    /* copy framebuffer image to texture */
    if (newTex) {
@@ -1942,8 +1945,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
        * linear filtering along the edges. So, allocate the texture extended along
        * edges by one pixel in x, y directions.
        */
-      newTex = alloc_texture(tex, srcW + 2, srcH + 2, rb_base_format);
-      setup_copypix_texture(ctx, tex, newTex,
+      setup_copypix_texture(ctx, tex,
                             srcX - 1, srcY - 1, srcW + 2, srcH + 2,
                             rb_base_format, filter);
       /* texcoords (after texture allocation!) */
@@ -2439,8 +2441,6 @@ _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
    struct copypix_state *copypix = &ctx->Meta->CopyPix;
    struct temp_texture *tex = get_temp_texture(ctx);
    struct vertex verts[4];
-   GLboolean newTex;
-   GLenum intFormat = GL_RGBA;
 
    if (type != GL_COLOR ||
        ctx->_ImageTransferState ||
@@ -2465,10 +2465,12 @@ _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
 
    setup_vertex_objects(&copypix->VAO, &copypix->VBO, false, 3, 2, 0);
 
-   newTex = alloc_texture(tex, width, height, intFormat);
-
    /* Silence valgrind warnings about reading uninitialized stack. */
    memset(verts, 0, sizeof(verts));
+
+   /* Alloc/setup texture */
+   setup_copypix_texture(ctx, tex, srcX, srcY, width, height,
+                         GL_RGBA, GL_NEAREST);
 
    /* vertex positions, texcoords (after texture allocation!) */
    {
@@ -2502,10 +2504,6 @@ _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
       /* upload new vertex data */
       _mesa_BufferSubData(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
-
-   /* Alloc/setup texture */
-   setup_copypix_texture(ctx, tex, newTex, srcX, srcY, width, height,
-                         GL_RGBA, GL_NEAREST);
 
    _mesa_set_enable(ctx, tex->Target, GL_TRUE);
 
