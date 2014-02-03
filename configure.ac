@@ -945,7 +945,7 @@ AC_SUBST([DRI_DRIVER_SEARCH_DIR])
 dnl Which drivers to build - default is chosen by platform
 AC_ARG_WITH([dri-drivers],
     [AS_HELP_STRING([--with-dri-drivers@<:@=DIRS...@:>@],
-        [comma delimited DRI drivers list, e.g.
+        [comma delimited classic DRI drivers list, e.g.
         "swrast,i965,radeon" @<:@default=auto@:>@])],
     [with_dri_drivers="$withval"],
     [with_dri_drivers=yes])
@@ -969,7 +969,7 @@ yes)
     dri_drivers=`IFS=', '; echo $with_dri_drivers`
     for driver in $dri_drivers; do
         test -d "$srcdir/src/mesa/drivers/dri/$driver" || \
-            AC_MSG_ERROR([DRI driver directory '$driver' does not exist])
+            AC_MSG_ERROR([classic DRI driver directory '$driver' does not exist])
     done
     DRI_DIRS="$dri_drivers"
     if test -n "$DRI_DIRS" -a "x$enable_opengl" != xyes; then
@@ -990,11 +990,6 @@ if test "x$enable_dri" = xyes; then
         fi
 
         case "$host_cpu" in
-        x86_64|amd64)
-            if test "x$DRI_DIRS" = "xyes"; then
-                DRI_DIRS="i915 i965 nouveau r200 radeon swrast"
-            fi
-            ;;
         powerpc*)
             # Build only the drivers for cards that exist on PowerPC.
             if test "x$DRI_DIRS" = "xyes"; then
@@ -1012,10 +1007,6 @@ if test "x$enable_dri" = xyes; then
     *freebsd* | dragonfly* | *netbsd* | openbsd*)
         DEFINES="$DEFINES -DHAVE_PTHREAD -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DHAVE_ALIAS"
-
-        if test "x$DRI_DIRS" = "xyes"; then
-            DRI_DIRS="i915 i965 nouveau r200 radeon swrast"
-        fi
         ;;
     gnu*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
