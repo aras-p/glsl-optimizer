@@ -990,14 +990,8 @@ if test "x$enable_dri" = xyes; then
         fi
 
         case "$host_cpu" in
-        powerpc*)
-            # Build only the drivers for cards that exist on PowerPC.
-            if test "x$DRI_DIRS" = "xyes"; then
-                DRI_DIRS="r200 radeon swrast"
-            fi
-            ;;
-        sparc*)
-            # Build only the drivers for cards that exist on sparc
+        powerpc* | sparc*)
+            # Build only the drivers for cards that exist on PowerPC/sparc
             if test "x$DRI_DIRS" = "xyes"; then
                 DRI_DIRS="r200 radeon swrast"
             fi
