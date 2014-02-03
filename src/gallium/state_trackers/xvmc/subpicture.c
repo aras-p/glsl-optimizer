@@ -270,7 +270,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
       tex_templ.format = PIPE_FORMAT_R8G8B8X8_UNORM;
       tex_templ.width0 = subpicture->num_palette_entries;
       tex_templ.height0 = 1;
-      tex_templ.usage = PIPE_USAGE_STATIC;
+      tex_templ.usage = PIPE_USAGE_DEFAULT;
 
       tex = pipe->screen->resource_create(pipe->screen, &tex_templ);
 

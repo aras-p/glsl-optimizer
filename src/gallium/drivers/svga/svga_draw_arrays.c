@@ -50,7 +50,7 @@ generate_indices(struct svga_hwtnl *hwtnl,
    void *dst_map = NULL;
 
    dst = pipe_buffer_create(pipe->screen,
-                            PIPE_BIND_INDEX_BUFFER, PIPE_USAGE_STATIC, size);
+                            PIPE_BIND_INDEX_BUFFER, PIPE_USAGE_DEFAULT, size);
    if (dst == NULL)
       goto fail;
 

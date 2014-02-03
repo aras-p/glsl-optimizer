@@ -772,7 +772,7 @@ static void r300_msaa_resolve(struct pipe_context *pipe,
     templ.height0 = info->src.resource->height0;
     templ.depth0 = 1;
     templ.array_size = 1;
-    templ.usage = PIPE_USAGE_STATIC;
+    templ.usage = PIPE_USAGE_DEFAULT;
     templ.flags = R300_RESOURCE_FORCE_MICROTILING;
 
     tmp = screen->resource_create(screen, &templ);

@@ -229,7 +229,8 @@ st_bufferobj_data(struct gl_context *ctx,
    case GL_STATIC_DRAW:
    case GL_STATIC_READ:
    case GL_STATIC_COPY:
-      pipe_usage = PIPE_USAGE_STATIC;
+   default:
+      pipe_usage = PIPE_USAGE_DEFAULT;
       break;
    case GL_DYNAMIC_DRAW:
    case GL_DYNAMIC_READ:
@@ -241,8 +242,6 @@ st_bufferobj_data(struct gl_context *ctx,
    case GL_STREAM_COPY:
       pipe_usage = PIPE_USAGE_STREAM;
       break;
-   default:
-      pipe_usage = PIPE_USAGE_DEFAULT;
    }
 
    pipe_resource_reference( &st_obj->buffer, NULL );

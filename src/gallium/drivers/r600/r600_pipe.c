@@ -278,7 +278,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	}
 
 	rctx->allocator_fetch_shader = u_suballocator_create(&rctx->b.b, 64 * 1024, 256,
-							     0, PIPE_USAGE_STATIC, FALSE);
+							     0, PIPE_USAGE_DEFAULT, FALSE);
 	if (!rctx->allocator_fetch_shader)
 		goto fail;
 
@@ -647,7 +647,7 @@ struct pipe_screen *r600_screen_create(struct radeon_winsys *ws)
 	templ.array_size = 1;
 	templ.target = PIPE_TEXTURE_2D;
 	templ.format = PIPE_FORMAT_R8G8B8A8_UNORM;
-	templ.usage = PIPE_USAGE_STATIC;
+	templ.usage = PIPE_USAGE_DEFAULT;
 
 	struct r600_resource *res = r600_resource(rscreen->screen.resource_create(&rscreen->screen, &templ));
 	unsigned char *map = ws->buffer_map(res->cs_buf, NULL, PIPE_TRANSFER_WRITE);

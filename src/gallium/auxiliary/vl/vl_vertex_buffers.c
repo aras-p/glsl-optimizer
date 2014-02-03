@@ -53,7 +53,7 @@ vl_vb_upload_quads(struct pipe_context *pipe)
    (
       pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
-      PIPE_USAGE_STATIC,
+      PIPE_USAGE_DEFAULT,
       sizeof(struct vertex2f) * 4
    );
    quad.user_buffer = NULL;
@@ -98,7 +98,7 @@ vl_vb_upload_pos(struct pipe_context *pipe, unsigned width, unsigned height)
    (
       pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
-      PIPE_USAGE_STATIC,
+      PIPE_USAGE_DEFAULT,
       sizeof(struct vertex2s) * width * height
    );
    pos.user_buffer = NULL;

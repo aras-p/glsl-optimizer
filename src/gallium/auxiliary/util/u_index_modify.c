@@ -71,7 +71,7 @@ void util_shorten_ubyte_elts(struct pipe_context *context,
 
     new_elts = pipe_buffer_create(context->screen,
                                   PIPE_BIND_INDEX_BUFFER,
-                                  PIPE_USAGE_STATIC,
+                                  PIPE_USAGE_DEFAULT,
                                   2 * count);
 
     out_map = pipe_buffer_map(context, new_elts, PIPE_TRANSFER_WRITE,
@@ -130,7 +130,7 @@ void util_rebuild_ushort_elts(struct pipe_context *context,
 
     new_elts = pipe_buffer_create(context->screen,
                                   PIPE_BIND_INDEX_BUFFER,
-                                  PIPE_USAGE_STATIC,
+                                  PIPE_USAGE_DEFAULT,
                                   2 * count);
 
     out_map = pipe_buffer_map(context, new_elts,
@@ -189,7 +189,7 @@ void util_rebuild_uint_elts(struct pipe_context *context,
 
     new_elts = pipe_buffer_create(context->screen,
                                   PIPE_BIND_INDEX_BUFFER,
-                                  PIPE_USAGE_STATIC,
+                                  PIPE_USAGE_DEFAULT,
                                   2 * count);
 
     out_map = pipe_buffer_map(context, new_elts,

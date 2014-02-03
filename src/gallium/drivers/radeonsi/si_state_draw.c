@@ -548,13 +548,13 @@ static void si_init_gs_rings(struct si_context *sctx)
 
 	sctx->esgs_ring.buffer =
 		pipe_buffer_create(sctx->b.b.screen, PIPE_BIND_CUSTOM,
-				   PIPE_USAGE_STATIC, size);
+				   PIPE_USAGE_DEFAULT, size);
 	sctx->esgs_ring.buffer_size = size;
 
 	size = 64 * 1024 * 1024;
 	sctx->gsvs_ring.buffer =
 		pipe_buffer_create(sctx->b.b.screen, PIPE_BIND_CUSTOM,
-				   PIPE_USAGE_STATIC, size);
+				   PIPE_USAGE_DEFAULT, size);
 	sctx->gsvs_ring.buffer_size = size;
 
 	if (sctx->b.chip_class >= CIK) {

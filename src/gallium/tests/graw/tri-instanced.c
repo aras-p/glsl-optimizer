@@ -137,7 +137,7 @@ static void set_vertices( void )
    vbuf[0].buffer_offset = 0;
    vbuf[0].buffer = pipe_buffer_create_with_data(ctx,
                                                  PIPE_BIND_VERTEX_BUFFER,
-                                                 PIPE_USAGE_STATIC,
+                                                 PIPE_USAGE_DEFAULT,
                                                  sizeof(vertices),
                                                  vertices);
 
@@ -146,7 +146,7 @@ static void set_vertices( void )
    vbuf[1].buffer_offset = 0;
    vbuf[1].buffer = pipe_buffer_create_with_data(ctx,
                                                  PIPE_BIND_VERTEX_BUFFER,
-                                                 PIPE_USAGE_STATIC,
+                                                 PIPE_USAGE_DEFAULT,
                                                  sizeof(inst_data),
                                                  inst_data);
 
@@ -155,7 +155,7 @@ static void set_vertices( void )
    /* index data */
    ibuf.buffer = pipe_buffer_create_with_data(ctx,
                                               PIPE_BIND_INDEX_BUFFER,
-                                              PIPE_USAGE_STATIC,
+                                              PIPE_USAGE_DEFAULT,
                                               sizeof(indices),
                                               indices);
    ibuf.offset = 0;

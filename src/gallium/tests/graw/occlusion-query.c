@@ -96,7 +96,7 @@ set_vertices(struct vertex *vertices, unsigned bytes)
    vbuf.buffer_offset = 0;
    vbuf.buffer = pipe_buffer_create_with_data(info.ctx,
                                               PIPE_BIND_VERTEX_BUFFER,
-                                              PIPE_USAGE_STATIC,
+                                              PIPE_USAGE_DEFAULT,
                                               bytes,
                                               vertices);
 

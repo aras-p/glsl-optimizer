@@ -1064,7 +1064,7 @@ vl_compositor_init_state(struct vl_compositor_state *s, struct pipe_context *pip
    (
       pipe->screen,
       PIPE_BIND_CONSTANT_BUFFER,
-      PIPE_USAGE_STATIC,
+      PIPE_USAGE_DEFAULT,
       sizeof(csc_matrix)
    );
 

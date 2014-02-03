@@ -1244,7 +1244,7 @@ static struct r600_resource *r600_buffer_create_helper(struct r600_screen *rscre
 	buffer.target = PIPE_BUFFER;
 	buffer.format = PIPE_FORMAT_R8_UNORM;
 	buffer.bind = PIPE_BIND_CUSTOM;
-	buffer.usage = PIPE_USAGE_STATIC;
+	buffer.usage = PIPE_USAGE_DEFAULT;
 	buffer.flags = 0;
 	buffer.width0 = size;
 	buffer.height0 = 1;

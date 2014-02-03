@@ -58,7 +58,7 @@ translate_indices(struct svga_hwtnl *hwtnl, struct pipe_resource *src,
    size = index_size * nr;
 
    dst = pipe_buffer_create(pipe->screen,
-                            PIPE_BIND_INDEX_BUFFER, PIPE_USAGE_STATIC, size);
+                            PIPE_BIND_INDEX_BUFFER, PIPE_USAGE_DEFAULT, size);
    if (dst == NULL)
       goto fail;
 

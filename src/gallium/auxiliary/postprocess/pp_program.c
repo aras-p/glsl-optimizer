@@ -78,7 +78,7 @@ pp_init_prog(struct pp_queue_t *ppq, struct pipe_context *pipe,
       };
 
       p->vbuf = pipe_buffer_create(pipe->screen, PIPE_BIND_VERTEX_BUFFER,
-                                   PIPE_USAGE_STATIC, sizeof(verts));
+                                   PIPE_USAGE_DEFAULT, sizeof(verts));
       pipe_buffer_write(p->pipe, p->vbuf, 0, sizeof(verts), verts);
    }
 

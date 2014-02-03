@@ -811,7 +811,7 @@ nouveau_video_buffer_create(struct pipe_context *pipe,
    templ.depth0 = 1;
    templ.array_size = 1;
    templ.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   templ.usage = PIPE_USAGE_STATIC;
+   templ.usage = PIPE_USAGE_DEFAULT;
    templ.flags = NOUVEAU_RESOURCE_FLAG_LINEAR;
 
    buffer->resources[0] = pipe->screen->resource_create(pipe->screen, &templ);

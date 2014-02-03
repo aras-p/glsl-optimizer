@@ -126,7 +126,7 @@ static void si_init_descriptors(struct si_context *sctx,
 
 	desc->buffer = (struct r600_resource*)
 		pipe_buffer_create(sctx->b.b.screen, PIPE_BIND_CUSTOM,
-				   PIPE_USAGE_STATIC,
+				   PIPE_USAGE_DEFAULT,
 				   SI_NUM_CONTEXTS * desc->context_size);
 
 	r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx, desc->buffer, RADEON_USAGE_READWRITE);

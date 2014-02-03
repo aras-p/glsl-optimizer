@@ -453,7 +453,7 @@ void r600_texture_init_cmask(struct r600_common_screen *rscreen,
 
 	rtex->cmask_buffer = (struct r600_resource *)
 		pipe_buffer_create(&rscreen->b, PIPE_BIND_CUSTOM,
-				   PIPE_USAGE_STATIC, rtex->cmask.size);
+				   PIPE_USAGE_DEFAULT, rtex->cmask.size);
 	if (rtex->cmask_buffer == NULL) {
 		rtex->cmask.size = 0;
 	}
@@ -546,7 +546,7 @@ static void r600_texture_allocate_htile(struct r600_common_screen *rscreen,
 	/* XXX don't allocate it separately */
 	rtex->htile_buffer = (struct r600_resource*)
 			     pipe_buffer_create(&rscreen->b, PIPE_BIND_CUSTOM,
-						PIPE_USAGE_STATIC, htile_size);
+						PIPE_USAGE_DEFAULT, htile_size);
 	if (rtex->htile_buffer == NULL) {
 		/* this is not a fatal error as we can still keep rendering
 		 * without htile buffer */
@@ -827,7 +827,7 @@ bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 	resource.array_size = texture->array_size;
 	resource.last_level = texture->last_level;
 	resource.nr_samples = texture->nr_samples;
-	resource.usage = staging ? PIPE_USAGE_STAGING : PIPE_USAGE_STATIC;
+	resource.usage = staging ? PIPE_USAGE_STAGING : PIPE_USAGE_DEFAULT;
 	resource.bind = texture->bind & ~PIPE_BIND_DEPTH_STENCIL;
 	resource.flags = texture->flags | R600_RESOURCE_FLAG_FLUSHED_DEPTH;
 
@@ -861,7 +861,7 @@ static void r600_init_temp_resource_from_box(struct pipe_resource *res,
 	res->height0 = box->height;
 	res->depth0 = 1;
 	res->array_size = 1;
-	res->usage = flags & R600_RESOURCE_FLAG_TRANSFER ? PIPE_USAGE_STAGING : PIPE_USAGE_STATIC;
+	res->usage = flags & R600_RESOURCE_FLAG_TRANSFER ? PIPE_USAGE_STAGING : PIPE_USAGE_DEFAULT;
 	res->flags = flags;
 
 	/* We must set the correct texture target and dimensions for a 3D box. */

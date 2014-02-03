@@ -61,7 +61,7 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 	r600_query_init(rctx);
 
 	rctx->allocator_so_filled_size = u_suballocator_create(&rctx->b, 4096, 4,
-							       0, PIPE_USAGE_STATIC, TRUE);
+							       0, PIPE_USAGE_DEFAULT, TRUE);
 	if (!rctx->allocator_so_filled_size)
 		return false;
 

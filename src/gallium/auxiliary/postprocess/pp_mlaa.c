@@ -240,7 +240,7 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
 
    ppq->constbuf = pipe_buffer_create(ppq->p->screen,
                                       PIPE_BIND_CONSTANT_BUFFER,
-                                      PIPE_USAGE_STATIC,
+                                      PIPE_USAGE_DEFAULT,
                                       sizeof(constants));
    if (ppq->constbuf == NULL) {
       pp_debug("Failed to allocate constant buffer\n");
@@ -259,7 +259,7 @@ pp_jimenezmlaa_init_run(struct pp_queue_t *ppq, unsigned int n,
    res.format = PIPE_FORMAT_R8G8_UNORM;
    res.width0 = res.height0 = 165;
    res.bind = PIPE_BIND_SAMPLER_VIEW;
-   res.usage = PIPE_USAGE_STATIC;
+   res.usage = PIPE_USAGE_DEFAULT;
    res.depth0 = res.array_size = res.nr_samples = 1;
 
    if (!ppq->p->screen->is_format_supported(ppq->p->screen, res.format,

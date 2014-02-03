@@ -77,7 +77,7 @@ vlVdpBitmapSurfaceCreate(VdpDevice device,
    res_tmpl.depth0 = 1;
    res_tmpl.array_size = 1;
    res_tmpl.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   res_tmpl.usage = frequently_accessed ? PIPE_USAGE_DYNAMIC : PIPE_USAGE_STATIC;
+   res_tmpl.usage = frequently_accessed ? PIPE_USAGE_DYNAMIC : PIPE_USAGE_DEFAULT;
 
    pipe_mutex_lock(dev->mutex);
 

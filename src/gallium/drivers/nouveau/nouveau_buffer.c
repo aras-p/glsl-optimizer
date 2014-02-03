@@ -626,7 +626,6 @@ nouveau_buffer_create(struct pipe_screen *pscreen,
       switch (buffer->base.usage) {
       case PIPE_USAGE_DEFAULT:
       case PIPE_USAGE_IMMUTABLE:
-      case PIPE_USAGE_STATIC:
          buffer->domain = NOUVEAU_BO_VRAM;
          break;
       case PIPE_USAGE_DYNAMIC:

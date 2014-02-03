@@ -427,7 +427,7 @@ vl_video_buffer_create(struct pipe_context *pipe,
    result = vl_video_buffer_create_ex
    (
       pipe, &templat, resource_formats,
-      1, tmpl->interlaced ? 2 : 1, PIPE_USAGE_STATIC
+      1, tmpl->interlaced ? 2 : 1, PIPE_USAGE_DEFAULT
    );
 
 

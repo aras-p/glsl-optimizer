@@ -348,7 +348,6 @@ no matter which hint they got.
   not expected to be mapped or changed (even by the GPU) after the first upload.
 * ``PIPE_USAGE_DYNAMIC``: Expect frequent write-only CPU access. What is
   uploaded is expected to be used at least several times by the GPU.
-* ``PIPE_USAGE_STATIC``: Same as PIPE_USAGE_DEFAULT.
 * ``PIPE_USAGE_STREAM``: Expect frequent write-only CPU access. What is
   uploaded is expected to be used only once by the GPU.
 * ``PIPE_USAGE_STAGING``: Optimized for fast CPU access.

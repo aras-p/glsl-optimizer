@@ -380,7 +380,7 @@ renderer_set_constants(struct xa_context *r,
 
     pipe_resource_reference(cbuf, NULL);
     *cbuf = pipe_buffer_create(r->pipe->screen,
-			       PIPE_BIND_CONSTANT_BUFFER, PIPE_USAGE_STATIC,
+			       PIPE_BIND_CONSTANT_BUFFER, PIPE_USAGE_DEFAULT,
 			       param_bytes);
 
     if (*cbuf) {

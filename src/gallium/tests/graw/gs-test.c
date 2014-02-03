@@ -255,13 +255,13 @@ static void set_vertices( void )
    if (draw_strip) {
       vbuf.buffer = pipe_buffer_create_with_data(ctx,
                                                  PIPE_BIND_VERTEX_BUFFER,
-                                                 PIPE_USAGE_STATIC,
+                                                 PIPE_USAGE_DEFAULT,
                                                  sizeof(vertices_strip),
                                                  vertices_strip);
    } else {
       vbuf.buffer = pipe_buffer_create_with_data(ctx,
                                                  PIPE_BIND_VERTEX_BUFFER,
-                                                 PIPE_USAGE_STATIC,
+                                                 PIPE_USAGE_DEFAULT,
                                                  sizeof(vertices),
                                                  vertices);
    }

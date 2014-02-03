@@ -401,7 +401,7 @@ util_font_create_fixed_8x13(struct pipe_context *pipe,
    tex_templ.height0 = 256;
    tex_templ.depth0 = 1;
    tex_templ.array_size = 1;
-   tex_templ.usage = PIPE_USAGE_STATIC;
+   tex_templ.usage = PIPE_USAGE_DEFAULT;
    tex_templ.bind = PIPE_BIND_SAMPLER_VIEW;
 
    tex = screen->resource_create(screen, &tex_templ);

@@ -967,7 +967,7 @@ init_idct(struct vl_mpeg12_decoder *dec, const struct format_config* format_conf
    dec->idct_source = vl_video_buffer_create_ex
    (
       dec->context, &templat,
-      formats, 1, 1, PIPE_USAGE_STATIC
+      formats, 1, 1, PIPE_USAGE_DEFAULT
    );
 
    if (!dec->idct_source)
@@ -981,7 +981,7 @@ init_idct(struct vl_mpeg12_decoder *dec, const struct format_config* format_conf
    dec->mc_source = vl_video_buffer_create_ex
    (
       dec->context, &templat,
-      formats, nr_of_idct_render_targets, 1, PIPE_USAGE_STATIC
+      formats, nr_of_idct_render_targets, 1, PIPE_USAGE_DEFAULT
    );
 
    if (!dec->mc_source)
@@ -1032,7 +1032,7 @@ init_mc_source_widthout_idct(struct vl_mpeg12_decoder *dec, const struct format_
    dec->mc_source = vl_video_buffer_create_ex
    (
       dec->context, &templat,
-      formats, 1, 1, PIPE_USAGE_STATIC
+      formats, 1, 1, PIPE_USAGE_DEFAULT
    );
       
    return dec->mc_source != NULL;

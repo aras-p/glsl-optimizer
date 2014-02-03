@@ -115,7 +115,6 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 		res->domains = RADEON_DOMAIN_GTT;
 		break;
 	case PIPE_USAGE_DEFAULT:
-	case PIPE_USAGE_STATIC:
 	case PIPE_USAGE_IMMUTABLE:
 	default:
 		/* Not listing GTT here improves performance in some apps. */

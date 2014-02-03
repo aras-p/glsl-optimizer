@@ -363,7 +363,6 @@ enum pipe_flush_flags {
 #define PIPE_USAGE_DYNAMIC        2 /* uploaded data is used multiple times */
 #define PIPE_USAGE_STREAM         3 /* uploaded data is used once */
 #define PIPE_USAGE_STAGING        4 /* fast CPU access */
-#define PIPE_USAGE_STATIC         5 /* same as DEFAULT, will be removed */
 
 
 /**

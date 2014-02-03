@@ -1109,14 +1109,14 @@ static void update_gs_block_state(struct r600_context *rctx, unsigned enable)
 			unsigned size = 0x1C000;
 			rctx->gs_rings.esgs_ring.buffer =
 					pipe_buffer_create(rctx->b.b.screen, PIPE_BIND_CUSTOM,
-							PIPE_USAGE_STATIC, size);
+							PIPE_USAGE_DEFAULT, size);
 			rctx->gs_rings.esgs_ring.buffer_size = size;
 
 			size = 0x4000000;
 
 			rctx->gs_rings.gsvs_ring.buffer =
 					pipe_buffer_create(rctx->b.b.screen, PIPE_BIND_CUSTOM,
-							PIPE_USAGE_STATIC, size);
+							PIPE_USAGE_DEFAULT, size);
 			rctx->gs_rings.gsvs_ring.buffer_size = size;
 		}
 

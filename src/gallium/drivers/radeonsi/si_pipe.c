@@ -183,7 +183,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 	 * with a NULL buffer). We need to use a dummy buffer instead. */
 	if (sctx->b.chip_class == CIK) {
 		sctx->null_const_buf.buffer = pipe_buffer_create(screen, PIPE_BIND_CONSTANT_BUFFER,
-								 PIPE_USAGE_STATIC, 16);
+								 PIPE_USAGE_DEFAULT, 16);
 		sctx->null_const_buf.buffer_size = sctx->null_const_buf.buffer->width0;
 
 		for (shader = 0; shader < SI_NUM_SHADERS; shader++) {

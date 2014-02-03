@@ -451,7 +451,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         memset(&vb, 0, sizeof(vb));
         vb.target = PIPE_BUFFER;
         vb.format = PIPE_FORMAT_R8_UNORM;
-        vb.usage = PIPE_USAGE_STATIC;
+        vb.usage = PIPE_USAGE_DEFAULT;
         vb.width0 = sizeof(float) * 16;
         vb.height0 = 1;
         vb.depth0 = 1;

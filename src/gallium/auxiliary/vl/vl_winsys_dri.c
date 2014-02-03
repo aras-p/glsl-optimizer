@@ -234,7 +234,7 @@ vl_screen_texture_from_drawable(struct vl_screen *vscreen, Drawable drawable)
    template.height0 = reply->height;
    template.depth0 = 1;
    template.array_size = 1;
-   template.usage = PIPE_USAGE_STATIC;
+   template.usage = PIPE_USAGE_DEFAULT;
    template.bind = PIPE_BIND_RENDER_TARGET;
    template.flags = 0;
 
