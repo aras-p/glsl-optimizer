@@ -1076,49 +1076,26 @@ AC_SUBST([DRI_LIB_DEPS])
 AC_SUBST([GALLIUM_DRI_LIB_DEPS])
 
 case $DRI_DIRS in
-*i915*|*i965*)
+*i915*)
     PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
-
-    for d in $(echo $DRI_DIRS | sed 's/,/ /g'); do
-        case $d in
-        i915)
-            HAVE_I915_DRI=yes;
-            ;;
-        i965)
-            HAVE_I965_DRI=yes;
-            ;;
-        esac
-    done
-
+    HAVE_I915_DRI=yes;
     ;;
-esac
-
-case $DRI_DIRS in
+*i965*)
+    PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
+    HAVE_I965_DRI=yes;
+    ;;
 *nouveau*)
     PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NVVIEUX_REQUIRED])
     HAVE_NOUVEAU_DRI=yes;
     ;;
-esac
-
-case $DRI_DIRS in
-*radeon*|*r200*)
+*radeon*)
     PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
-
-    for d in $(echo $DRI_DIRS | sed 's/,/ /g'); do
-        case $d in
-        radeon)
-            HAVE_RADEON_DRI=yes;
-            ;;
-        r200)
-            HAVE_R200_DRI=yes;
-            ;;
-        esac
-    done
-
+    HAVE_RADEON_DRI=yes;
     ;;
-esac
-
-case $DRI_DIRS in
+*r200*)
+    PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
+    HAVE_R200_DRI=yes;
+    ;;
 *swrast*)
     HAVE_SWRAST_DRI=yes;
     ;;
