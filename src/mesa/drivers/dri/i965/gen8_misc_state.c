@@ -36,8 +36,8 @@ static void upload_state_base_address(struct brw_context *brw)
    BEGIN_BATCH(16);
    OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (16 - 2));
    /* General state base address: stateless DP read/write requests */
-   OUT_BATCH(1);
    OUT_BATCH(0);
+   OUT_BATCH(1);
    OUT_BATCH(0);
    /* Surface state base address: */
    OUT_RELOC64(brw->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0, 1);
@@ -45,8 +45,8 @@ static void upload_state_base_address(struct brw_context *brw)
    OUT_RELOC64(brw->batch.bo,
                I915_GEM_DOMAIN_RENDER | I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    /* Indirect object base address: MEDIA_OBJECT data */
-   OUT_BATCH(1);
    OUT_BATCH(0);
+   OUT_BATCH(1);
    /* Instruction base address: shader kernels (incl. SIP) */
    OUT_RELOC64(brw->cache.bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
 
