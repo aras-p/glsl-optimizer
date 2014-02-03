@@ -340,12 +340,18 @@ PIPE_USAGE_*
 ^^^^^^^^^^^^
 
 The PIPE_USAGE enums are hints about the expected usage pattern of a resource.
+Note that drivers must always support read and write CPU access at any time
+no matter which hint they got.
 
-* ``PIPE_USAGE_DEFAULT``: Expect many uploads to the resource, intermixed with draws.
-* ``PIPE_USAGE_DYNAMIC``: Expect many uploads to the resource, intermixed with draws.
-* ``PIPE_USAGE_STATIC``: Same as immutable (?)
-* ``PIPE_USAGE_IMMUTABLE``: Resource will not be changed after first upload.
-* ``PIPE_USAGE_STREAM``: Upload will be followed by draw, followed by upload, ...
+* ``PIPE_USAGE_DEFAULT``: Optimized for fast GPU access.
+* ``PIPE_USAGE_IMMUTABLE``: Optimized for fast GPU access and the resource is
+  not expected to be mapped or changed (even by the GPU) after the first upload.
+* ``PIPE_USAGE_DYNAMIC``: Expect frequent write-only CPU access. What is
+  uploaded is expected to be used at least several times by the GPU.
+* ``PIPE_USAGE_STATIC``: Same as PIPE_USAGE_DEFAULT.
+* ``PIPE_USAGE_STREAM``: Expect frequent write-only CPU access. What is
+  uploaded is expected to be used only once by the GPU.
+* ``PIPE_USAGE_STAGING``: Optimized for fast CPU access.
 
 
 Methods

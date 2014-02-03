@@ -356,13 +356,14 @@ enum pipe_flush_flags {
 #define PIPE_RESOURCE_FLAG_ST_PRIV     (1 << 24) /* state-tracker/winsys private */
 
 /* Hint about the expected lifecycle of a resource.
+ * Sorted according to GPU vs CPU access.
  */
-#define PIPE_USAGE_DEFAULT        0 /* many uploads, draws intermixed */
-#define PIPE_USAGE_DYNAMIC        1 /* many uploads, draws intermixed */
-#define PIPE_USAGE_STATIC         2 /* same as immutable?? */
-#define PIPE_USAGE_IMMUTABLE      3 /* no change after first upload */
-#define PIPE_USAGE_STREAM         4 /* upload, draw, upload, draw */
-#define PIPE_USAGE_STAGING        5 /* supports data transfers from the GPU to the CPU */
+#define PIPE_USAGE_DEFAULT        0 /* fast GPU access */
+#define PIPE_USAGE_IMMUTABLE      1 /* fast GPU access, immutable */
+#define PIPE_USAGE_DYNAMIC        2 /* uploaded data is used multiple times */
+#define PIPE_USAGE_STREAM         3 /* uploaded data is used once */
+#define PIPE_USAGE_STAGING        4 /* fast CPU access */
+#define PIPE_USAGE_STATIC         5 /* same as DEFAULT, will be removed */
 
 
 /**
