@@ -352,7 +352,6 @@ enum pipe_flush_flags {
 
 /* Flags for the driver about resource behaviour:
  */
-#define PIPE_RESOURCE_FLAG_GEN_MIPS    (1 << 0)  /* Driver performs autogen mips */
 #define PIPE_RESOURCE_FLAG_DRV_PRIV    (1 << 16) /* driver/winsys private */
 #define PIPE_RESOURCE_FLAG_ST_PRIV     (1 << 24) /* state-tracker/winsys private */
 
