@@ -1416,7 +1416,7 @@ static int emit_gs_ring_writes(struct r600_shader_ctx *ctx, bool ind)
 
 		if (ind) {
 			output.array_base = ring_offset >> 2; /* in dwords */
-			output.array_size = 0xff
+			output.array_size = 0xfff;
 			output.index_gpr = ctx->gs_export_gpr_treg;
 		} else
 			output.array_base = ring_offset >> 2; /* in dwords */
