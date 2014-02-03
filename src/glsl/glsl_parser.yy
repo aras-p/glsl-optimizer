@@ -2487,62 +2487,9 @@ layout_defaults:
 
    | layout_qualifier IN_TOK ';'
    {
-      void *ctx = state;
       $$ = NULL;
-      switch (state->stage) {
-      case MESA_SHADER_GEOMETRY: {
-         if (!$1.flags.q.prim_type) {
-            _mesa_glsl_error(& @1, state,
-                             "input layout qualifiers must specify a primitive"
-                             " type");
-         } else {
-            /* Make sure this is a valid input primitive type. */
-            switch ($1.prim_type) {
-            case GL_POINTS:
-            case GL_LINES:
-            case GL_LINES_ADJACENCY:
-            case GL_TRIANGLES:
-            case GL_TRIANGLES_ADJACENCY:
-               $$ = new(ctx) ast_gs_input_layout(@1, $1.prim_type);
-               break;
-            default:
-               _mesa_glsl_error(&@1, state,
-                                "invalid geometry shader input primitive type");
-               break;
-            }
-         }
-      }
-         break;
-      case MESA_SHADER_FRAGMENT:
-         if ($1.flags.q.early_fragment_tests) {
-            state->early_fragment_tests = true;
-         } else {
-            _mesa_glsl_error(& @1, state, "invalid input layout qualifier");
-         }
-         break;
-      case MESA_SHADER_COMPUTE: {
-         if ($1.flags.q.local_size == 0) {
-            _mesa_glsl_error(& @1, state,
-                             "input layout qualifiers must specify a local "
-                             "size");
-         } else {
-            /* Infer a local_size of 1 for every unspecified dimension */
-            unsigned local_size[3];
-            for (int i = 0; i < 3; i++) {
-               if ($1.flags.q.local_size & (1 << i))
-                  local_size[i] = $1.local_size[i];
-               else
-                  local_size[i] = 1;
-            }
-            $$ = new(ctx) ast_cs_input_layout(@1, local_size);
-         }
-      }
-         break;
-      default:
-         _mesa_glsl_error(& @1, state,
-                          "input layout qualifiers only valid in "
-                          "geometry, fragment and compute shaders");
-         break;
+      if (!state->in_qualifier->merge_in_qualifier(& @1, state, $1, $$)) {
+         YYERROR;
       }
    }
 

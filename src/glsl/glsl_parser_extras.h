@@ -190,11 +190,8 @@ struct _mesa_glsl_parse_state {
     */
    bool gs_input_prim_type_specified;
 
-   /**
-    * If gs_input_prim_type_specified is true, the primitive type that was
-    * specified.  Otherwise ignored.
-    */
-   GLenum gs_input_prim_type;
+   /** Input layout qualifiers from GLSL 1.50. (geometry shader controls)*/
+   struct ast_type_qualifier *in_qualifier;
 
    /**
     * True if a compute shader input local size was specified using a layout

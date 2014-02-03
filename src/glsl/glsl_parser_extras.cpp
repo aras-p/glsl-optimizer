@@ -202,8 +202,8 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->default_uniform_qualifier->flags.q.column_major = 1;
 
    this->gs_input_prim_type_specified = false;
-   this->gs_input_prim_type = GL_POINTS;
    this->gs_input_size = 0;
+   this->in_qualifier = new(this) ast_type_qualifier();
    this->out_qualifier = new(this) ast_type_qualifier();
    this->early_fragment_tests = false;
    memset(this->atomic_counter_offsets, 0,
@@ -1348,7 +1348,7 @@ set_shader_inout_layout(struct gl_shader *shader,
 {
    if (shader->Stage != MESA_SHADER_GEOMETRY) {
       /* Should have been prevented by the parser. */
-      assert(!state->gs_input_prim_type_specified);
+      assert(!state->in_qualifier->flags.i);
       assert(!state->out_qualifier->flags.i);
    }
 
@@ -1364,7 +1364,7 @@ set_shader_inout_layout(struct gl_shader *shader,
          shader->Geom.VerticesOut = state->out_qualifier->max_vertices;
 
       if (state->gs_input_prim_type_specified) {
-         shader->Geom.InputType = state->gs_input_prim_type;
+         shader->Geom.InputType = state->in_qualifier->prim_type;
       } else {
          shader->Geom.InputType = PRIM_UNKNOWN;
       }

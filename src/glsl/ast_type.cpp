@@ -198,3 +198,84 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    return true;
 }
 
+bool
+ast_type_qualifier::merge_in_qualifier(YYLTYPE *loc,
+                                       _mesa_glsl_parse_state *state,
+                                       ast_type_qualifier q,
+                                       ast_node* &node)
+{
+   void *mem_ctx = state;
+   bool create_gs_ast = false;
+   bool create_cs_ast = false;
+
+   switch (state->stage) {
+   case MESA_SHADER_GEOMETRY:
+      if (q.flags.q.prim_type) {
+         /* Make sure this is a valid input primitive type. */
+         switch (q.prim_type) {
+         case GL_POINTS:
+         case GL_LINES:
+         case GL_LINES_ADJACENCY:
+         case GL_TRIANGLES:
+         case GL_TRIANGLES_ADJACENCY:
+            break;
+         default:
+            _mesa_glsl_error(loc, state,
+                             "invalid geometry shader input primitive type");
+            break;
+         }
+      }
+
+      create_gs_ast |=
+         q.flags.q.prim_type &&
+         !state->in_qualifier->flags.q.prim_type;
+      break;
+   case MESA_SHADER_FRAGMENT:
+      if (q.flags.q.early_fragment_tests) {
+         state->early_fragment_tests = true;
+      } else {
+         _mesa_glsl_error(loc, state, "invalid input layout qualifier");
+      }
+      break;
+   case MESA_SHADER_COMPUTE:
+      create_cs_ast |=
+         q.flags.q.local_size != 0 &&
+         state->in_qualifier->flags.q.local_size == 0;
+      break;
+   default:
+      _mesa_glsl_error(loc, state,
+                       "input layout qualifiers only valid in "
+                       "geometry, fragment and compute shaders");
+      break;
+   }
+
+   /* Input layout qualifiers can be specified multiple
+    * times in separate declarations, as long as they match.
+    */
+   if (this->flags.q.prim_type) {
+      if (q.flags.q.prim_type &&
+          this->prim_type != q.prim_type) {
+         _mesa_glsl_error(loc, state,
+                          "conflicting input primitive types specified");
+      }
+   } else if (q.flags.q.prim_type) {
+      state->in_qualifier->flags.q.prim_type = 1;
+      state->in_qualifier->prim_type = q.prim_type;
+   }
+
+   if (create_gs_ast) {
+      node = new(mem_ctx) ast_gs_input_layout(*loc, q.prim_type);
+   } else if (create_cs_ast) {
+      /* Infer a local_size of 1 for every unspecified dimension */
+      unsigned local_size[3];
+      for (int i = 0; i < 3; i++) {
+         if (q.flags.q.local_size & (1 << i))
+            local_size[i] = q.local_size[i];
+         else
+            local_size[i] = 1;
+      }
+      node = new(mem_ctx) ast_cs_input_layout(*loc, local_size);
+   }
+
+   return true;
+}

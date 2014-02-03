@@ -2842,7 +2842,7 @@ handle_geometry_shader_input_decl(struct _mesa_glsl_parse_state *state,
 {
    unsigned num_vertices = 0;
    if (state->gs_input_prim_type_specified) {
-      num_vertices = vertices_per_prim(state->gs_input_prim_type);
+      num_vertices = vertices_per_prim(state->in_qualifier->prim_type);
    }
 
    /* Geometry shader input variables must be arrays.  Caller should have
@@ -5332,7 +5332,7 @@ ast_gs_input_layout::hir(exec_list *instructions,
     * was consistent with this one.
     */
    if (state->gs_input_prim_type_specified &&
-       state->gs_input_prim_type != this->prim_type) {
+       state->in_qualifier->prim_type != this->prim_type) {
       _mesa_glsl_error(&loc, state,
                        "geometry shader input layout does not match"
                        " previous declaration");
@@ -5353,7 +5353,6 @@ ast_gs_input_layout::hir(exec_list *instructions,
    }
 
    state->gs_input_prim_type_specified = true;
-   state->gs_input_prim_type = this->prim_type;
 
    /* If any shader inputs occurred before this declaration and did not
     * specify an array size, their size is determined now.

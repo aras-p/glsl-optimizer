@@ -587,6 +587,12 @@ struct ast_type_qualifier {
    bool merge_qualifier(YYLTYPE *loc,
 			_mesa_glsl_parse_state *state,
 			ast_type_qualifier q);
+
+   bool merge_in_qualifier(YYLTYPE *loc,
+                           _mesa_glsl_parse_state *state,
+                           ast_type_qualifier q,
+                           ast_node* &node);
+
 };
 
 class ast_declarator_list;
