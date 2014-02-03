@@ -107,7 +107,7 @@ create_shader(struct pipe_context *pctx, const struct pipe_shader_state *cso,
 		so->half_precision = true;
 
 
-	if (fd_mesa_debug & FD_DBG_OPTIMIZE) {
+	if (!(fd_mesa_debug & FD_DBG_NOOPT)) {
 		ret = fd3_compile_shader(so, tokens);
 		if (ret) {
 			debug_error("new compiler failed, trying fallback!");

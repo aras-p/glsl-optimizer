@@ -65,18 +65,17 @@ static const struct debug_named_value debug_options[] = {
 		{"direct",    FD_DBG_DIRECT, "Force inline (SS_DIRECT) state loads"},
 		{"dbypass",   FD_DBG_DBYPASS,"Disable GMEM bypass"},
 		{"fraghalf",  FD_DBG_FRAGHALF, "Use half-precision in fragment shader"},
-		{"binning",   FD_DBG_BINNING,  "Enable hw binning"},
-		{"dbinning",  FD_DBG_DBINNING, "Disable hw binning"},
-		{"optimize",  FD_DBG_OPTIMIZE, "Enable optimization passes in compiler"},
-		{"optmsgs",   FD_DBG_OPTMSGS,  "Enable optimizater debug messages"},
-		{"optdump",   FD_DBG_OPTDUMP,  "Dump shader DAG to .dot files"},
+		{"nobin",     FD_DBG_NOBIN,  "Disable hw binning"},
+		{"noopt",     FD_DBG_NOOPT , "Disable optimization passes in compiler"},
+		{"optmsgs",   FD_DBG_OPTMSGS,"Enable optimizater debug messages"},
+		{"optdump",   FD_DBG_OPTDUMP,"Dump shader DAG to .dot files"},
 		DEBUG_NAMED_VALUE_END
 };
 
 DEBUG_GET_ONCE_FLAGS_OPTION(fd_mesa_debug, "FD_MESA_DEBUG", debug_options, 0)
 
 int fd_mesa_debug = 0;
-bool fd_binning_enabled = false; /* default to off for now */
+bool fd_binning_enabled = true;
 
 static const char *
 fd_screen_get_name(struct pipe_screen *pscreen)
@@ -395,10 +394,7 @@ fd_screen_create(struct fd_device *dev)
 
 	fd_mesa_debug = debug_get_option_fd_mesa_debug();
 
-	if (fd_mesa_debug & FD_DBG_BINNING)
-		fd_binning_enabled = true;
-
-	if (fd_mesa_debug & FD_DBG_DBINNING)
+	if (fd_mesa_debug & FD_DBG_NOBIN)
 		fd_binning_enabled = false;
 
 	if (!screen)
