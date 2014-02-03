@@ -87,7 +87,7 @@ upload_vs_state(struct brw_context *brw)
    OUT_BATCH(_3DSTATE_VS << 16 | (9 - 2));
    OUT_BATCH(stage_state->prog_offset);
    OUT_BATCH(0);
-   OUT_BATCH(GEN6_VS_VECTOR_MASK_ENABLE | floating_point_mode |
+   OUT_BATCH(floating_point_mode |
              ((ALIGN(stage_state->sampler_count, 4) / 4) <<
                GEN6_VS_SAMPLER_COUNT_SHIFT) |
              ((prog_data->base.binding_table.size_bytes / 4) <<
