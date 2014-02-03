@@ -1,0 +1,206 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 10.0.3 Release Notes / (February 3, 2014)</h1>
+
+<p>
+Mesa 10.0.3 is a bug fix release which fixes bugs found since the 10.0.2 release.
+</p>
+<p>
+Mesa 10.0.3 implements the OpenGL 3.3 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.3.  OpenGL
+3.3 is <strong>only</strong> available if requested at context creation
+because compatibility contexts not supported.
+</p>
+
+
+<h2>MD5 checksums</h2>
+<pre>
+5f9f463ef08129f6762106b434910adb  MesaLib-10.0.3.tar.bz2
+fb3997b6500e153bc32370cb3fc4ca9e  MesaLib-10.0.3.tar.gz
+a07b4b6b9eb449b88a6cb5061e51c331  MesaLib-10.0.3.zip
+</pre>
+
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=72708">Bug 72708</a> - Master fails to build with older gcc due to -msse4.1</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=72926">Bug 72926</a> - [REGRESSION,swrast] Memory-related crash with anti-aliasing enabled</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=73096">Bug 73096</a> - Query GL_RGBA_SIGNED_COMPONENTS_EXT missing</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=73100">Bug 73100</a> - Please use AC_PATH_TOOL instead of AC_PATH_PROG for llvm-config</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=73418">Bug 73418</a> - OpenCL hangs graphics on CAYMAN</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=73473">Bug 73473</a> - Potential crash bug in src/gallium/auxiliary/rtasm/rtasm_execmem.c</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=73915">Bug 73915</a> - sample shading + centroid broken since f5cfb4a</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=73956">Bug 73956</a> - SIGSEGV when passing GL_NONE to glReadBuffer</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=74026">Bug 74026</a> - Compiler rejects chained assignments involving array dereferences</li>
+
+</ul>
+
+<h2>Changes</h2>
+
+<p>The full set of changes can be viewed by using the following git command:</p>
+
+<pre>
+  git log mesa-10.0.2..mesa-10.0.3
+</pre>
+
+<p>Aaron Watry (2):</p>
+<ul>
+  <li>radeon: Move gfx/dma cs cleanup to r600_common_context_cleanup</li>
+  <li>st/dri: prevent leak of dri option default values</li>
+</ul>
+
+<p>Andreas Fänger (1):</p>
+<ul>
+  <li>swrast: fix delayed texel buffer allocation regression for OpenMP</li>
+</ul>
+
+<p>Anuj Phogat (3):</p>
+<ul>
+  <li>glsl: Disable ARB_texture_rectangle in shader version 100.</li>
+  <li>i965: Use sample barycentric coordinates with per sample shading</li>
+  <li>i965: Ignore 'centroid' interpolation qualifier in case of persample shading</li>
+</ul>
+
+<p>Brian Paul (3):</p>
+<ul>
+  <li>mesa: implement missing glGet(GL_RGBA_SIGNED_COMPONENTS_EXT) query</li>
+  <li>st/mesa: fix glReadBuffer(GL_NONE) segfault</li>
+  <li>draw: fix incorrect vertex size computation in LLVM drawing code</li>
+</ul>
+
+<p>Carl Worth (5):</p>
+<ul>
+  <li>Add md5sums for 10.0.2. release.</li>
+  <li>cherry-ignore: Ignore several patches not yet ready for the stable branch</li>
+  <li>Drop another couple of patches.</li>
+  <li>cherry-ignore: Ignore 4 patches at teh request of the author, (Anuj).</li>
+  <li>Update version to 10.0.3</li>
+</ul>
+
+<p>Chad Versace (1):</p>
+<ul>
+  <li>i965/gen6/blorp: Emit more flushes to workaround hangs</li>
+</ul>
+
+<p>Chris Forbes (1):</p>
+<ul>
+  <li>i965: fold offset into coord for textureOffset(gsampler2DRect)</li>
+</ul>
+
+<p>Emil Velikov (5):</p>
+<ul>
+  <li>mesa: use signed temporary variable to store _ColorDrawBufferIndexes</li>
+  <li>st/mesa: use signed temporary variable to store _ColorDrawBufferIndexes</li>
+  <li>nv50: access only the available amount of textures</li>
+  <li>nv50: access only the available amount of constbuf</li>
+  <li>gallium/rtasm: handle mmap failures appropriately</li>
+</ul>
+
+<p>Eric Anholt (2):</p>
+<ul>
+  <li>i965: Fix handling of MESA_pack_invert in blit (PBO) readpixels.</li>
+  <li>i965: Don't do the temporary-and-blit-copy for INVALIDATE_RANGE maps.</li>
+</ul>
+
+<p>Ian Romanick (2):</p>
+<ul>
+  <li>mesa: Add COMPRESSED_RGBA_S3TC_DXT1_EXT to COMPRESSED_TEXTURE_FORMATS for GLES</li>
+  <li>radeon / r200: Pass the API into _mesa_initialize_context</li>
+</ul>
+
+<p>Ilia Mirkin (2):</p>
+<ul>
+  <li>mesa: fix GL_COLOR_SUM enum for drivers without ARB_vertex_program</li>
+  <li>st/vdpau: don't return a device if the screen doesn't support NPOT</li>
+</ul>
+
+<p>José Fonseca (1):</p>
+<ul>
+  <li>mesa: Use IROUND instead of roundf.</li>
+</ul>
+
+<p>Kenneth Graunke (2):</p>
+<ul>
+  <li>glsl: Rename "expr" to "lhs_expr" in vector_extract munging code.</li>
+  <li>glsl: Fix chained assignments of vector channels.</li>
+</ul>
+
+<p>Lauri Kasanen (1):</p>
+<ul>
+  <li>mesa: Fix build to properly check for supported compiler flags</li>
+</ul>
+
+<p>Marek Olšák (2):</p>
+<ul>
+  <li>st/mesa: use sRGB formats for MSAA resolving if destination is sRGB</li>
+  <li>gallium/util: util_format_srgb should not return FORMAT_NONE for sRGB formats</li>
+</ul>
+
+<p>Matt Turner (2):</p>
+<ul>
+  <li>glcpp: Define GL_EXT_shader_integer_mix in both GL and ES.</li>
+  <li>glx: Update glxext.h to revision 24777.</li>
+</ul>
+
+<p>Michał Górny (1):</p>
+<ul>
+  <li>Use AC_PATH_TOOL instead of AC_PATH_PROG for llvm-config.</li>
+</ul>
+
+<p>Paul Berry (1):</p>
+<ul>
+  <li>i965: Ensure that all necessary state is re-emitted if we run out of aperture.</li>
+</ul>
+
+<p>Paul Seidler (1):</p>
+<ul>
+  <li>build: move ARCH_LIBS definition outside of ASM definition</li>
+</ul>
+
+<p>Thomas Sondergaard (4):</p>
+<ul>
+  <li>mesa: Preliminary support for MSVC_VERSION=12.0</li>
+  <li>mesa: Fix compile error with MSVC 2013</li>
+  <li>mesa: Work around internal compiler error</li>
+  <li>mesa: Namespace qualify fma to override ambiguity with fma from math.h</li>
+</ul>
+
+<p>Tom Stellard (1):</p>
+<ul>
+  <li>r600g/compute: Emit DEALLOC_STATE on cayman after dispatching a compute shader.</li>
+</ul>
+
+</div>
+</body>
+</html>
