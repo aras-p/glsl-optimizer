@@ -282,15 +282,42 @@ brw_update_texture_surface(struct gl_context *ctx,
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
 			  6 * 4, 32, surf_offset);
 
-   (void) for_gather;   /* no w/a to apply for this gen */
+   uint32_t tex_format = translate_tex_format(brw, mt->format,
+                                              sampler->sRGBDecode);
+
+   if (for_gather) {
+      /* Sandybridge's gather4 message is broken for integer formats.
+       * To work around this, we pretend the surface is UNORM for
+       * 8 or 16-bit formats, and emit shader instructions to recover
+       * the real INT/UINT value.  For 32-bit formats, we pretend
+       * the surface is FLOAT, and simply reinterpret the resulting
+       * bits.
+       */
+      switch (tex_format) {
+      case BRW_SURFACEFORMAT_R8_SINT:
+      case BRW_SURFACEFORMAT_R8_UINT:
+         tex_format = BRW_SURFACEFORMAT_R8_UNORM;
+         break;
+
+      case BRW_SURFACEFORMAT_R16_SINT:
+      case BRW_SURFACEFORMAT_R16_UINT:
+         tex_format = BRW_SURFACEFORMAT_R16_UNORM;
+         break;
+
+      case BRW_SURFACEFORMAT_R32_SINT:
+      case BRW_SURFACEFORMAT_R32_UINT:
+         tex_format = BRW_SURFACEFORMAT_R32_FLOAT;
+         break;
+
+      default:
+         break;
+      }
+   }
 
    surf[0] = (translate_tex_target(tObj->Target) << BRW_SURFACE_TYPE_SHIFT |
 	      BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT |
 	      BRW_SURFACE_CUBEFACE_ENABLES |
-	      (translate_tex_format(brw,
-                                    mt->format,
-				    sampler->sRGBDecode) <<
-	       BRW_SURFACE_FORMAT_SHIFT));
+	      tex_format << BRW_SURFACE_FORMAT_SHIFT);
 
    surf[1] = intelObj->mt->region->bo->offset64 + intelObj->mt->offset; /* reloc */
 
