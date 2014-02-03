@@ -85,16 +85,15 @@
 static struct blit_shader *
 choose_blit_shader(GLenum target, struct blit_shader_table *table);
 
-static void meta_glsl_blit_cleanup(struct blit_state *blit);
 static void cleanup_temp_texture(struct temp_texture *tex);
 static void meta_glsl_clear_cleanup(struct clear_state *clear);
 static void meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap);
 static void meta_decompress_cleanup(struct decompress_state *decompress);
 static void meta_drawpix_cleanup(struct drawpix_state *drawpix);
-static void blit_shader_table_cleanup(struct blit_shader_table *table);
 
-static GLuint
-compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB *source)
+GLuint
+_mesa_meta_compile_shader_with_debug(struct gl_context *ctx, GLenum target,
+                                     const GLcharARB *source)
 {
    GLuint shader;
    GLint ok, size;
@@ -132,8 +131,8 @@ compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB
    return 0;
 }
 
-static GLuint
-link_program_with_debug(struct gl_context *ctx, GLuint program)
+GLuint
+_mesa_meta_link_program_with_debug(struct gl_context *ctx, GLuint program)
 {
    GLint ok, size;
    GLchar *info;
@@ -168,10 +167,10 @@ link_program_with_debug(struct gl_context *ctx, GLuint program)
  *
  * \returns a handle to a shader program on success or zero on failure.
  */
-static void
-setup_blit_shader(struct gl_context *ctx,
-                  GLenum target,
-                  struct blit_shader_table *table)
+void
+_mesa_meta_setup_blit_shader(struct gl_context *ctx,
+                             GLenum target,
+                             struct blit_shader_table *table)
 {
    const char *vs_source;
    char *fs_source;
@@ -250,8 +249,8 @@ setup_blit_shader(struct gl_context *ctx,
                                   shader->texcoords);
    }
 
-   vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
-   fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
+   vs = _mesa_meta_compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
+   fs = _mesa_meta_compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
 
    shader->shader_prog = _mesa_CreateProgramObjectARB();
    _mesa_AttachShader(shader->shader_prog, fs);
@@ -260,7 +259,7 @@ setup_blit_shader(struct gl_context *ctx,
    _mesa_DeleteObjectARB(vs);
    _mesa_BindAttribLocation(shader->shader_prog, 0, "position");
    _mesa_BindAttribLocation(shader->shader_prog, 1, "texcoords");
-   link_program_with_debug(ctx, shader->shader_prog);
+   _mesa_meta_link_program_with_debug(ctx, shader->shader_prog);
    ralloc_free(mem_ctx);
 
    _mesa_UseProgram(shader->shader_prog);
@@ -291,10 +290,11 @@ setup_blit_shader(struct gl_context *ctx,
  * \note If \c use_generic_attributes is \c true, \c color_size must be zero.
  * Use \c texcoord_size instead.
  */
-static void
-setup_vertex_objects(GLuint *VAO, GLuint *VBO, bool use_generic_attributes,
-                     unsigned vertex_size, unsigned texcoord_size,
-                     unsigned color_size)
+void
+_mesa_meta_setup_vertex_objects(GLuint *VAO, GLuint *VBO,
+                                bool use_generic_attributes,
+                                unsigned vertex_size, unsigned texcoord_size,
+                                unsigned color_size)
 {
    if (*VAO == 0) {
       assert(*VBO == 0);
@@ -367,7 +367,7 @@ _mesa_meta_free(struct gl_context *ctx)
 {
    GET_CURRENT_CONTEXT(old_context);
    _mesa_make_current(ctx, NULL, NULL);
-   meta_glsl_blit_cleanup(&ctx->Meta->Blit);
+   _mesa_meta_glsl_blit_cleanup(&ctx->Meta->Blit);
    meta_glsl_clear_cleanup(&ctx->Meta->Clear);
    meta_glsl_generate_mipmap_cleanup(&ctx->Meta->Mipmap);
    cleanup_temp_texture(&ctx->Meta->TempTex);
@@ -1145,8 +1145,8 @@ cleanup_temp_texture(struct temp_texture *tex)
  * Return pointer to temp_texture info for non-bitmap ops.
  * This does some one-time init if needed.
  */
-static struct temp_texture *
-get_temp_texture(struct gl_context *ctx)
+struct temp_texture *
+_mesa_meta_get_temp_texture(struct gl_context *ctx)
 {
    struct temp_texture *tex = &ctx->Meta->TempTex;
 
@@ -1179,8 +1179,8 @@ get_bitmap_temp_texture(struct gl_context *ctx)
  * Return pointer to depth temp_texture.
  * This does some one-time init if needed.
  */
-static struct temp_texture *
-get_temp_depth_texture(struct gl_context *ctx)
+struct temp_texture *
+_mesa_meta_get_temp_depth_texture(struct gl_context *ctx)
 {
    struct temp_texture *tex = &ctx->Meta->Blit.depthTex;
 
@@ -1200,9 +1200,9 @@ get_temp_depth_texture(struct gl_context *ctx)
  *
  * \return GL_TRUE if new texture is needed, GL_FALSE otherwise
  */
-static GLboolean
-alloc_texture(struct temp_texture *tex,
-              GLsizei width, GLsizei height, GLenum intFormat)
+GLboolean
+_mesa_meta_alloc_texture(struct temp_texture *tex,
+                         GLsizei width, GLsizei height, GLenum intFormat)
 {
    GLboolean newTex = GL_FALSE;
 
@@ -1253,12 +1253,13 @@ alloc_texture(struct temp_texture *tex,
 /**
  * Setup/load texture for glCopyPixels or glBlitFramebuffer.
  */
-static void
-setup_copypix_texture(struct gl_context *ctx,
-                      struct temp_texture *tex,
-                      GLint srcX, GLint srcY,
-                      GLsizei width, GLsizei height, GLenum intFormat,
-                      GLenum filter)
+void
+_mesa_meta_setup_copypix_texture(struct gl_context *ctx,
+                                 struct temp_texture *tex,
+                                 GLint srcX, GLint srcY,
+                                 GLsizei width, GLsizei height,
+                                 GLenum intFormat,
+                                 GLenum filter)
 {
    bool newTex;
 
@@ -1268,7 +1269,7 @@ setup_copypix_texture(struct gl_context *ctx,
    if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES)
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-   newTex = alloc_texture(tex, width, height, intFormat);
+   newTex = _mesa_meta_alloc_texture(tex, width, height, intFormat);
 
    /* copy framebuffer image to texture */
    if (newTex) {
@@ -1299,13 +1300,13 @@ setup_copypix_texture(struct gl_context *ctx,
 /**
  * Setup/load texture for glDrawPixels.
  */
-static void
-setup_drawpix_texture(struct gl_context *ctx,
-		      struct temp_texture *tex,
-                      GLboolean newTex,
-                      GLsizei width, GLsizei height,
-                      GLenum format, GLenum type,
-                      const GLvoid *pixels)
+void
+_mesa_meta_setup_drawpix_texture(struct gl_context *ctx,
+                                 struct temp_texture *tex,
+                                 GLboolean newTex,
+                                 GLsizei width, GLsizei height,
+                                 GLenum format, GLenum type,
+                                 const GLvoid *pixels)
 {
    _mesa_BindTexture(tex->Target, tex->TexObj);
    _mesa_TexParameteri(tex->Target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -1359,7 +1360,7 @@ init_blit_depth_pixels(struct gl_context *ctx)
       "END \n";
    char program2[200];
    struct blit_state *blit = &ctx->Meta->Blit;
-   struct temp_texture *tex = get_temp_texture(ctx);
+   struct temp_texture *tex = _mesa_meta_get_temp_texture(ctx);
    const char *texTarget;
 
    assert(blit->DepthFP == 0);
@@ -1378,10 +1379,11 @@ init_blit_depth_pixels(struct gl_context *ctx)
                           strlen(program2), (const GLubyte *) program2);
 }
 
-static void
-setup_ff_tnl_for_blit(GLuint *VAO, GLuint *VBO, unsigned texcoord_size)
+void
+_mesa_meta_setup_ff_tnl_for_blit(GLuint *VAO, GLuint *VBO,
+                                 unsigned texcoord_size)
 {
-   setup_vertex_objects(VAO, VBO, false, 2, texcoord_size, 0);
+   _mesa_meta_setup_vertex_objects(VAO, VBO, false, 2, texcoord_size, 0);
 
    /* setup projection matrix */
    _mesa_MatrixMode(GL_PROJECTION);
@@ -1396,9 +1398,9 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
    /* target = GL_TEXTURE_RECTANGLE is not supported in GLES 3.0 */
    assert(_mesa_is_desktop_gl(ctx) || target == GL_TEXTURE_2D);
 
-   setup_vertex_objects(&blit->VAO, &blit->VBO, true, 2, 2, 0);
+   _mesa_meta_setup_vertex_objects(&blit->VAO, &blit->VBO, true, 2, 2, 0);
 
-   setup_blit_shader(ctx, target, &blit->shaders);
+   _mesa_meta_setup_blit_shader(ctx, target, &blit->shaders);
 }
 
 /**
@@ -1447,9 +1449,9 @@ blitframebuffer_texture(struct gl_context *ctx,
             setup_glsl_blit_framebuffer(ctx, blit, target);
          }
          else {
-            setup_ff_tnl_for_blit(&ctx->Meta->Blit.VAO,
-                                  &ctx->Meta->Blit.VBO,
-                                  2);
+            _mesa_meta_setup_ff_tnl_for_blit(&ctx->Meta->Blit.VAO,
+                                             &ctx->Meta->Blit.VBO,
+                                             2);
          }
 
          _mesa_GenSamplers(1, &sampler);
@@ -1569,8 +1571,8 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
                            GLbitfield mask, GLenum filter)
 {
    struct blit_state *blit = &ctx->Meta->Blit;
-   struct temp_texture *tex = get_temp_texture(ctx);
-   struct temp_texture *depthTex = get_temp_depth_texture(ctx);
+   struct temp_texture *tex = _mesa_meta_get_temp_texture(ctx);
+   struct temp_texture *depthTex = _mesa_meta_get_temp_depth_texture(ctx);
    const GLsizei maxTexSize = tex->MaxSize;
    const GLint srcX = MIN2(srcX0, srcX1);
    const GLint srcY = MIN2(srcY0, srcY1);
@@ -1624,7 +1626,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
       setup_glsl_blit_framebuffer(ctx, blit, tex->Target);
    }
    else {
-      setup_ff_tnl_for_blit(&blit->VAO, &blit->VBO, 2);
+      _mesa_meta_setup_ff_tnl_for_blit(&blit->VAO, &blit->VBO, 2);
    }
 
    /* Silence valgrind warnings about reading uninitialized stack. */
@@ -1662,9 +1664,9 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
        * linear filtering along the edges. So, allocate the texture extended along
        * edges by one pixel in x, y directions.
        */
-      setup_copypix_texture(ctx, tex,
-                            srcX - 1, srcY - 1, srcW + 2, srcH + 2,
-                            rb_base_format, filter);
+      _mesa_meta_setup_copypix_texture(ctx, tex,
+                                       srcX - 1, srcY - 1, srcW + 2, srcH + 2,
+                                       rb_base_format, filter);
       /* texcoords (after texture allocation!) */
       {
          verts[0].tex[0] = 1.0F;
@@ -1697,12 +1699,13 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
 
       if (tmp) {
 
-         newTex = alloc_texture(depthTex, srcW, srcH, GL_DEPTH_COMPONENT);
+         newTex = _mesa_meta_alloc_texture(depthTex, srcW, srcH,
+                                           GL_DEPTH_COMPONENT);
          _mesa_ReadPixels(srcX, srcY, srcW, srcH, GL_DEPTH_COMPONENT,
                           GL_UNSIGNED_INT, tmp);
-         setup_drawpix_texture(ctx, depthTex, newTex,
-                               srcW, srcH, GL_DEPTH_COMPONENT,
-                               GL_UNSIGNED_INT, tmp);
+         _mesa_meta_setup_drawpix_texture(ctx, depthTex, newTex,
+                                          srcW, srcH, GL_DEPTH_COMPONENT,
+                                          GL_UNSIGNED_INT, tmp);
 
          /* texcoords (after texture allocation!) */
          {
@@ -1753,8 +1756,8 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    }
 }
 
-static void
-meta_glsl_blit_cleanup(struct blit_state *blit)
+void
+_mesa_meta_glsl_blit_cleanup(struct blit_state *blit)
 {
    if (blit->VAO) {
       _mesa_DeleteVertexArrays(1, &blit->VAO);
@@ -1767,7 +1770,7 @@ meta_glsl_blit_cleanup(struct blit_state *blit)
       blit->DepthFP = 0;
    }
 
-   blit_shader_table_cleanup(&blit->shaders);
+   _mesa_meta_blit_shader_table_cleanup(&blit->shaders);
 
    _mesa_DeleteTextures(1, &blit->depthTex.TexObj);
    blit->depthTex.TexObj = 0;
@@ -1797,7 +1800,7 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
 
    _mesa_meta_begin(ctx, metaSave);
 
-   setup_vertex_objects(&clear->VAO, &clear->VBO, false, 3, 0, 4);
+   _mesa_meta_setup_vertex_objects(&clear->VAO, &clear->VBO, false, 3, 0, 4);
 
    /* GL_COLOR_BUFFER_BIT */
    if (buffers & BUFFER_BITS_COLOR) {
@@ -1910,7 +1913,7 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
    GLuint vs, gs = 0, fs;
    bool has_integer_textures;
 
-   setup_vertex_objects(&clear->VAO, &clear->VBO, true, 3, 0, 0);
+   _mesa_meta_setup_vertex_objects(&clear->VAO, &clear->VBO, true, 3, 0, 0);
 
    if (clear->ShaderProg != 0)
       return;
@@ -1975,8 +1978,10 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
                          "}\n",
                          _mesa_is_desktop_gl(ctx) ? "130" : "300 es");
 
-      vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_int_source);
-      fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_int_source);
+      vs = _mesa_meta_compile_shader_with_debug(ctx, GL_VERTEX_SHADER,
+                                                vs_int_source);
+      fs = _mesa_meta_compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER,
+                                                fs_int_source);
       ralloc_free(shader_source_mem_ctx);
 
       clear->IntegerShaderProg = _mesa_CreateProgramObjectARB();
@@ -1993,7 +1998,7 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
        * BindFragDataLocation to 0.
        */
 
-      link_program_with_debug(ctx, clear->IntegerShaderProg);
+      _mesa_meta_link_program_with_debug(ctx, clear->IntegerShaderProg);
 
       clear->IntegerColorLocation =
 	 _mesa_GetUniformLocation(clear->IntegerShaderProg, "color");
@@ -2156,7 +2161,7 @@ _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
                       GLint dstX, GLint dstY, GLenum type)
 {
    struct copypix_state *copypix = &ctx->Meta->CopyPix;
-   struct temp_texture *tex = get_temp_texture(ctx);
+   struct temp_texture *tex = _mesa_meta_get_temp_texture(ctx);
    struct vertex verts[4];
 
    if (type != GL_COLOR ||
@@ -2180,14 +2185,15 @@ _mesa_meta_CopyPixels(struct gl_context *ctx, GLint srcX, GLint srcY,
                           MESA_META_VERTEX |
                           MESA_META_VIEWPORT));
 
-   setup_vertex_objects(&copypix->VAO, &copypix->VBO, false, 3, 2, 0);
+   _mesa_meta_setup_vertex_objects(&copypix->VAO, &copypix->VBO, false,
+                                   3, 2, 0);
 
    /* Silence valgrind warnings about reading uninitialized stack. */
    memset(verts, 0, sizeof(verts));
 
    /* Alloc/setup texture */
-   setup_copypix_texture(ctx, tex, srcX, srcY, width, height,
-                         GL_RGBA, GL_NEAREST);
+   _mesa_meta_setup_copypix_texture(ctx, tex, srcX, srcY, width, height,
+                                    GL_RGBA, GL_NEAREST);
 
    /* vertex positions, texcoords (after texture allocation!) */
    {
@@ -2336,7 +2342,7 @@ init_draw_stencil_pixels(struct gl_context *ctx)
       "END \n";
    char program2[1000];
    struct drawpix_state *drawpix = &ctx->Meta->DrawPix;
-   struct temp_texture *tex = get_temp_texture(ctx);
+   struct temp_texture *tex = _mesa_meta_get_temp_texture(ctx);
    const char *texTarget;
 
    assert(drawpix->StencilFP == 0);
@@ -2370,7 +2376,7 @@ init_draw_depth_pixels(struct gl_context *ctx)
       "END \n";
    char program2[200];
    struct drawpix_state *drawpix = &ctx->Meta->DrawPix;
-   struct temp_texture *tex = get_temp_texture(ctx);
+   struct temp_texture *tex = _mesa_meta_get_temp_texture(ctx);
    const char *texTarget;
 
    assert(drawpix->DepthFP == 0);
@@ -2402,7 +2408,7 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
                       const GLvoid *pixels)
 {
    struct drawpix_state *drawpix = &ctx->Meta->DrawPix;
-   struct temp_texture *tex = get_temp_texture(ctx);
+   struct temp_texture *tex = _mesa_meta_get_temp_texture(ctx);
    const struct gl_pixelstore_attrib unpackSave = ctx->Unpack;
    const GLuint origStencilMask = ctx->Stencil.WriteMask[0];
    struct vertex verts[4];
@@ -2498,9 +2504,10 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
                           MESA_META_VIEWPORT |
                           metaExtraSave));
 
-   newTex = alloc_texture(tex, width, height, texIntFormat);
+   newTex = _mesa_meta_alloc_texture(tex, width, height, texIntFormat);
 
-   setup_vertex_objects(&drawpix->VAO, &drawpix->VBO, false, 3, 2, 0);
+   _mesa_meta_setup_vertex_objects(&drawpix->VAO, &drawpix->VBO, false,
+                                   3, 2, 0);
 
    /* Silence valgrind warnings about reading uninitialized stack. */
    memset(verts, 0, sizeof(verts));
@@ -2551,8 +2558,8 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
       if (!drawpix->StencilFP)
          init_draw_stencil_pixels(ctx);
 
-      setup_drawpix_texture(ctx, tex, newTex, width, height,
-                            GL_ALPHA, type, pixels);
+      _mesa_meta_setup_drawpix_texture(ctx, tex, newTex, width, height,
+                                       GL_ALPHA, type, pixels);
 
       _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
@@ -2594,15 +2601,15 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
       _mesa_ProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0,
                                         ctx->Current.RasterColor);
 
-      setup_drawpix_texture(ctx, tex, newTex, width, height,
-                            format, type, pixels);
+      _mesa_meta_setup_drawpix_texture(ctx, tex, newTex, width, height,
+                                       format, type, pixels);
 
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
    else {
       /* Drawing RGBA */
-      setup_drawpix_texture(ctx, tex, newTex, width, height,
-                            format, type, pixels);
+      _mesa_meta_setup_drawpix_texture(ctx, tex, newTex, width, height,
+                                       format, type, pixels);
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
    }
 
@@ -2692,9 +2699,9 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
                           MESA_META_VERTEX |
                           MESA_META_VIEWPORT));
 
-   setup_vertex_objects(&bitmap->VAO, &bitmap->VBO, false, 3, 2, 4);
+   _mesa_meta_setup_vertex_objects(&bitmap->VAO, &bitmap->VBO, false, 3, 2, 4);
 
-   newTex = alloc_texture(tex, width, height, texIntFormat);
+   newTex = _mesa_meta_alloc_texture(tex, width, height, texIntFormat);
 
    /* Silence valgrind warnings about reading uninitialized stack. */
    memset(verts, 0, sizeof(verts));
@@ -2761,8 +2768,8 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
       _mesa_set_enable(ctx, GL_ALPHA_TEST, GL_TRUE);
       _mesa_AlphaFunc(GL_NOTEQUAL, UBYTE_TO_FLOAT(bg));
 
-      setup_drawpix_texture(ctx, tex, newTex, width, height,
-                            GL_ALPHA, GL_UNSIGNED_BYTE, bitmap8);
+      _mesa_meta_setup_drawpix_texture(ctx, tex, newTex, width, height,
+                                       GL_ALPHA, GL_UNSIGNED_BYTE, bitmap8);
 
       _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
@@ -3092,8 +3099,8 @@ choose_blit_shader(GLenum target, struct blit_shader_table *table)
    }
 }
 
-static void
-blit_shader_table_cleanup(struct blit_shader_table *table)
+void
+_mesa_meta_blit_shader_table_cleanup(struct blit_shader_table *table)
 {
    _mesa_DeleteObjectARB(table->sampler_1d.shader_prog);
    _mesa_DeleteObjectARB(table->sampler_2d.shader_prog);
@@ -3124,7 +3131,7 @@ meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap)
    _mesa_DeleteBuffers(1, &mipmap->VBO);
    mipmap->VBO = 0;
 
-   blit_shader_table_cleanup(&mipmap->shaders);
+   _mesa_meta_blit_shader_table_cleanup(&mipmap->shaders);
 }
 
 
@@ -3173,12 +3180,12 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
     * GenerateMipmap function.
     */
    if (use_glsl_version) {
-      setup_vertex_objects(&mipmap->VAO, &mipmap->VBO, true,
-                           2, 3, 0);
-      setup_blit_shader(ctx, target, &mipmap->shaders);
+      _mesa_meta_setup_vertex_objects(&mipmap->VAO, &mipmap->VBO, true,
+                                      2, 3, 0);
+      _mesa_meta_setup_blit_shader(ctx, target, &mipmap->shaders);
    }
    else {
-      setup_ff_tnl_for_blit(&mipmap->VAO, &mipmap->VBO, 3);
+      _mesa_meta_setup_ff_tnl_for_blit(&mipmap->VAO, &mipmap->VBO, 3);
       _mesa_set_enable(ctx, target, GL_TRUE);
    }
 
@@ -3613,12 +3620,12 @@ decompress_texture_image(struct gl_context *ctx,
    }
 
    if (use_glsl_version) {
-      setup_vertex_objects(&decompress->VAO, &decompress->VBO, true,
-                           2, 4, 0);
+      _mesa_meta_setup_vertex_objects(&decompress->VAO, &decompress->VBO, true,
+                                      2, 4, 0);
 
-      setup_blit_shader(ctx, target, &decompress->shaders);
+      _mesa_meta_setup_blit_shader(ctx, target, &decompress->shaders);
    } else {
-      setup_ff_tnl_for_blit(&decompress->VAO, &decompress->VBO, 3);
+      _mesa_meta_setup_ff_tnl_for_blit(&decompress->VAO, &decompress->VBO, 3);
    }
 
    if (!decompress->Sampler) {

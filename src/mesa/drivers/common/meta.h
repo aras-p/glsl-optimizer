@@ -413,4 +413,60 @@ extern void
 _mesa_meta_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
                    GLfloat width, GLfloat height);
 
+/* meta-internal functions */
+GLuint
+_mesa_meta_compile_shader_with_debug(struct gl_context *ctx, GLenum target,
+                                     const GLcharARB *source);
+
+
+GLuint
+_mesa_meta_link_program_with_debug(struct gl_context *ctx, GLuint program);
+
+GLboolean
+_mesa_meta_alloc_texture(struct temp_texture *tex,
+                         GLsizei width, GLsizei height, GLenum intFormat);
+
+struct temp_texture *
+_mesa_meta_get_temp_texture(struct gl_context *ctx);
+
+struct temp_texture *
+_mesa_meta_get_temp_depth_texture(struct gl_context *ctx);
+
+void
+_mesa_meta_setup_vertex_objects(GLuint *VAO, GLuint *VBO,
+                                bool use_generic_attributes,
+                                unsigned vertex_size, unsigned texcoord_size,
+                                unsigned color_size);
+
+void
+_mesa_meta_setup_ff_tnl_for_blit(GLuint *VAO, GLuint *VBO,
+                                 unsigned texcoord_size);
+
+void
+_mesa_meta_setup_drawpix_texture(struct gl_context *ctx,
+                                 struct temp_texture *tex,
+                                 GLboolean newTex,
+                                 GLsizei width, GLsizei height,
+                                 GLenum format, GLenum type,
+                                 const GLvoid *pixels);
+
+void
+_mesa_meta_setup_copypix_texture(struct gl_context *ctx,
+                                 struct temp_texture *tex,
+                                 GLint srcX, GLint srcY,
+                                 GLsizei width, GLsizei height,
+                                 GLenum intFormat,
+                                 GLenum filter);
+
+void
+_mesa_meta_setup_blit_shader(struct gl_context *ctx,
+                             GLenum target,
+                             struct blit_shader_table *table);
+
+void
+_mesa_meta_glsl_blit_cleanup(struct blit_state *blit);
+
+void
+_mesa_meta_blit_shader_table_cleanup(struct blit_shader_table *table);
+
 #endif /* META_H */
