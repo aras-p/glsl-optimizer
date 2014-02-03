@@ -2499,7 +2499,38 @@ vec4_visitor::visit(ir_texture *ir)
       }
    }
 
+   if (brw->gen == 6 && ir->op == ir_tg4) {
+      emit_gen6_gather_wa(key->tex.gen6_gather_wa[sampler], inst->dst);
+   }
+
    swizzle_result(ir, src_reg(inst->dst), sampler);
+}
+
+/**
+ * Apply workarounds for Gen6 gather with UINT/SINT
+ */
+void
+vec4_visitor::emit_gen6_gather_wa(uint8_t wa, dst_reg dst)
+{
+   if (!wa)
+      return;
+
+   int width = (wa & WA_8BIT) ? 8 : 16;
+   dst_reg dst_f = dst;
+   dst_f.type = BRW_REGISTER_TYPE_F;
+
+   /* Convert from UNORM to UINT */
+   emit(MUL(dst_f, src_reg(dst_f), src_reg((float)((1 << width) - 1))));
+   emit(MOV(dst, src_reg(dst_f)));
+
+   if (wa & WA_SIGN) {
+      /* Reinterpret the UINT value as a signed INT value by
+       * shifting the sign bit into place, then shifting back
+       * preserving sign.
+       */
+      emit(SHL(dst, src_reg(dst), src_reg(32 - width)));
+      emit(ASR(dst, src_reg(dst), src_reg(32 - width)));
+   }
 }
 
 /**

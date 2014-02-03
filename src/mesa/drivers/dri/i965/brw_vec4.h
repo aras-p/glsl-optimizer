@@ -482,6 +482,7 @@ public:
 
    uint32_t gather_channel(ir_texture *ir, int sampler);
    src_reg emit_mcs_fetch(ir_texture *ir, src_reg coordinate, int sampler);
+   void emit_gen6_gather_wa(uint8_t wa, dst_reg dst);
    void swizzle_result(ir_texture *ir, src_reg orig_val, int sampler);
 
    void emit_ndc_computation();
