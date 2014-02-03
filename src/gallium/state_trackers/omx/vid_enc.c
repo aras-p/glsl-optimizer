@@ -746,10 +746,24 @@ static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEAD
       views = vbuf->get_sampler_view_planes(vbuf);
       dst_surface = priv->scale_buffer->get_surfaces(priv->scale_buffer);
       vl_compositor_clear_layers(s);
+
       for (i = 0; i < VL_MAX_SURFACES; ++i) {
+         struct u_rect src_rect;
+
          if (!views[i] || !dst_surface[i])
             continue;
-         vl_compositor_set_rgba_layer(s, compositor, 0, views[i], NULL, NULL, NULL);
+
+         src_rect.x0 = 0;
+         src_rect.y0 = 0;
+         src_rect.x1 = port->sPortParam.format.video.nFrameWidth;
+         src_rect.y1 = port->sPortParam.format.video.nFrameHeight;
+
+         if (i > 0) {
+            src_rect.x1 /= 2;
+            src_rect.y1 /= 2;
+         }
+
+         vl_compositor_set_rgba_layer(s, compositor, 0, views[i], &src_rect, NULL, NULL);
          vl_compositor_render(s, compositor, dst_surface[i], NULL, false);
       }
       
