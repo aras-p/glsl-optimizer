@@ -360,6 +360,7 @@ public:
                               fs_reg shadow_comp, fs_reg lod, fs_reg lod2,
                               fs_reg sample_index, fs_reg mcs, int sampler);
    fs_reg emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, int sampler);
+   void emit_gen6_gather_wa(uint8_t wa, fs_reg dst);
    fs_reg fix_math_operand(fs_reg src);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0, fs_reg src1);
