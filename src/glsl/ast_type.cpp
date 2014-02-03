@@ -233,6 +233,7 @@ ast_type_qualifier::merge_in_qualifier(YYLTYPE *loc,
          !state->in_qualifier->flags.q.prim_type;
 
       valid_in_mask.flags.q.prim_type = 1;
+      valid_in_mask.flags.q.invocations = 1;
       break;
    case MESA_SHADER_FRAGMENT:
       if (q.flags.q.early_fragment_tests) {
@@ -274,6 +275,17 @@ ast_type_qualifier::merge_in_qualifier(YYLTYPE *loc,
    } else if (q.flags.q.prim_type) {
       state->in_qualifier->flags.q.prim_type = 1;
       state->in_qualifier->prim_type = q.prim_type;
+   }
+
+   if (this->flags.q.invocations &&
+       q.flags.q.invocations &&
+       this->invocations != q.invocations) {
+      _mesa_glsl_error(loc, state,
+                       "conflicting invocations counts specified");
+      return false;
+   } else if (q.flags.q.invocations) {
+      this->flags.q.invocations = 1;
+      this->invocations = q.invocations;
    }
 
    if (create_gs_ast) {

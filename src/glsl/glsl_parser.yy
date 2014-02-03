@@ -1387,6 +1387,29 @@ layout_qualifier_id:
          }
       }
 
+      if (match_layout_qualifier("invocations", $1, state) == 0) {
+         $$.flags.q.invocations = 1;
+
+         if ($3 <= 0) {
+            _mesa_glsl_error(& @3, state,
+                             "invalid invocations %d specified", $3);
+            YYERROR;
+         } else if ($3 > MAX_GEOMETRY_SHADER_INVOCATIONS) {
+            _mesa_glsl_error(& @3, state,
+                             "invocations (%d) exceeds "
+                             "GL_MAX_GEOMETRY_SHADER_INVOCATIONS", $3);
+            YYERROR;
+         } else {
+            $$.invocations = $3;
+            if (!state->is_version(400, 0) &&
+                !state->ARB_gpu_shader5_enable) {
+               _mesa_glsl_error(& @3, state,
+                                "GL_ARB_gpu_shader5 invocations "
+                                "qualifier specified", $3);
+            }
+         }
+      }
+
       /* If the identifier didn't match any known layout identifiers,
        * emit an error.
        */

@@ -477,6 +477,11 @@ struct ast_type_qualifier {
 	 unsigned read_only:1; /**< "readonly" qualifier. */
 	 unsigned write_only:1; /**< "writeonly" qualifier. */
 	 /** \} */
+
+         /** \name Layout qualifiers for GL_ARB_gpu_shader5 */
+         /** \{ */
+         unsigned invocations:1;
+         /** \} */
       }
       /** \brief Set of flags, accessed by name. */
       q;
@@ -487,6 +492,9 @@ struct ast_type_qualifier {
 
    /** Precision of the type (highp/medium/lowp). */
    unsigned precision:2;
+
+   /** Geometry shader invocations for GL_ARB_gpu_shader5. */
+   int invocations;
 
    /**
     * Location specified via GL_ARB_explicit_attrib_location layout
