@@ -317,6 +317,20 @@ brw_wm_debug_recompile(struct brw_context *brw,
    }
 }
 
+static uint8_t
+gen6_gather_workaround(GLenum internalformat)
+{
+   switch (internalformat) {
+      case GL_R8I: return WA_SIGN | WA_8BIT;
+      case GL_R8UI: return WA_8BIT;
+      case GL_R16I: return WA_SIGN | WA_16BIT;
+      case GL_R16UI: return WA_16BIT;
+      /* note that even though GL_R32I and GL_R32UI have format overrides
+       * in the surface state, there is no shader w/a required */
+      default: return 0;
+   }
+}
+
 void
 brw_populate_sampler_prog_key_data(struct gl_context *ctx,
 				   const struct gl_program *prog,
@@ -370,6 +384,13 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
          if (brw->gen == 7 && !brw->is_haswell && prog->UsesGather) {
             if (img->InternalFormat == GL_RG32F)
                key->gather_channel_quirk_mask |= 1 << s;
+         }
+
+         /* Gen6's gather4 is broken for UINT/SINT; we treat them as
+          * UNORM/FLOAT instead and fix it in the shader.
+          */
+         if (brw->gen == 6 && prog->UsesGather) {
+            key->gen6_gather_wa[s] = gen6_gather_workaround(img->InternalFormat);
          }
 
          /* If this is a multisample sampler, and uses the CMS MSAA layout,

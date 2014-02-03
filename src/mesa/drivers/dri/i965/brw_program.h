@@ -24,6 +24,12 @@
 #ifndef BRW_PROGRAM_H
 #define BRW_PROGRAM_H
 
+enum gen6_gather_sampler_wa {
+   WA_SIGN = 1,      /* whether we need to sign extend */
+   WA_8BIT = 2,      /* if we have an 8bit format needing wa */
+   WA_16BIT = 4,     /* if we have a 16bit format needing wa */
+};
+
 /**
  * Sampler information needed by VS, WM, and GS program cache keys.
  */
@@ -50,6 +56,11 @@ struct brw_sampler_prog_key_data {
     * Whether this sampler uses the compressed multisample surface layout.
     */
    uint16_t compressed_multisample_layout_mask;
+
+   /**
+    * For Sandybridge, which shader w/a we need for gather quirks.
+    */
+   uint8_t gen6_gather_wa[MAX_SAMPLERS];
 };
 
 #ifdef __cplusplus
