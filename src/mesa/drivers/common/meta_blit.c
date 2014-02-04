@@ -94,8 +94,10 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
 }
 
 /**
- * Try to do a glBlitFramebuffer using no-copy texturing.
- * We can do this when the src renderbuffer is actually a texture.
+ * Try to do a color-only glBlitFramebuffer using texturing.
+ *
+ * We can do this when the src renderbuffer is actually a texture, or when the
+ * driver exposes BindRenderbufferTexImage().
  */
 static bool
 blitframebuffer_texture(struct gl_context *ctx,
@@ -112,7 +114,7 @@ blitframebuffer_texture(struct gl_context *ctx,
    const GLint dstY = MIN2(dstY0, dstY1);
    const GLint dstW = abs(dstX1 - dstX0);
    const GLint dstH = abs(dstY1 - dstY0);
-   const struct gl_texture_object *texObj = readAtt->Texture;
+   struct gl_texture_object *texObj;
    GLuint srcLevel;
    GLint baseLevelSave;
    GLint maxLevelSave;
@@ -120,22 +122,55 @@ blitframebuffer_texture(struct gl_context *ctx,
    GLuint sampler, samplerSave =
       ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
       ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
-
-   if (target != GL_TEXTURE_2D && target != GL_TEXTURE_RECTANGLE_ARB) {
-      /* Can't handle other texture types at this time */
-      return mask;
-   }
+   GLuint tempTex = 0;
 
    if (readAtt->Texture) {
+      /* If there's a texture attached of a type we can handle, then just use
+       * it directly.
+       */
       srcLevel = readAtt->TextureLevel;
       texObj = readAtt->Texture;
+      target = texObj->Target;
+
+      if (target != GL_TEXTURE_2D && target != GL_TEXTURE_RECTANGLE_ARB)
+         return false;
+   } else if (ctx->Driver.BindRenderbufferTexImage) {
+      /* Otherwise, we need the driver to be able to bind a renderbuffer as
+       * a texture image.
+       */
+      struct gl_texture_image *texImage;
+      struct gl_renderbuffer *rb = readAtt->Renderbuffer;
+
+      target = GL_TEXTURE_2D;
+      _mesa_GenTextures(1, &tempTex);
+      _mesa_BindTexture(target, tempTex);
+      srcLevel = 0;
+      texObj = _mesa_lookup_texture(ctx, tempTex);
+      texImage = _mesa_get_tex_image(ctx, texObj, target, srcLevel);
+
+      if (!ctx->Driver.BindRenderbufferTexImage(ctx, rb, texImage)) {
+         _mesa_DeleteTextures(1, &tempTex);
+         return false;
+      } else {
+         if (ctx->Driver.FinishRenderTexture &&
+             !rb->NeedsFinishRenderTexture) {
+            rb->NeedsFinishRenderTexture = true;
+            ctx->Driver.FinishRenderTexture(ctx, rb);
+         }
+
+         if (_mesa_is_winsys_fbo(readFb)) {
+            GLint temp = srcY0;
+            srcY0 = rb->Height - srcY1;
+            srcY1 = rb->Height - temp;
+            flipY = -flipY;
+         }
+      }
    } else {
       return false;
    }
 
    baseLevelSave = texObj->BaseLevel;
    maxLevelSave = texObj->MaxLevel;
-   target = texObj->Target;
 
    if (glsl_version) {
       setup_glsl_blit_framebuffer(ctx, blit, target);
@@ -242,6 +277,8 @@ blitframebuffer_texture(struct gl_context *ctx,
 
    _mesa_BindSampler(ctx->Texture.CurrentUnit, samplerSave);
    _mesa_DeleteSamplers(1, &sampler);
+   if (tempTex)
+      _mesa_DeleteTextures(1, &tempTex);
 
    return true;
 }
