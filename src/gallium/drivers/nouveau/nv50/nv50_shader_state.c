@@ -401,8 +401,10 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
          if (vp->out[n].sn == fp->in[i].sn &&
              vp->out[n].si == fp->in[i].si)
             break;
-      if (i == fp->gp.primid) {
+      switch (fp->in[i].sn) {
+      case TGSI_SEMANTIC_PRIMID:
          primid = m;
+         break;
       }
       m = nv50_vec4_map(map, m, lin,
                         &fp->in[i], (n < vp->out_nr) ? &vp->out[n] : &dummy);
