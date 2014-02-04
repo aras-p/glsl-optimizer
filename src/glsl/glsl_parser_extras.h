@@ -200,6 +200,18 @@ struct _mesa_glsl_parse_state {
    struct ast_type_qualifier *default_uniform_qualifier;
 
    /**
+    * Variables to track different cases if a fragment shader redeclares
+    * built-in variable gl_FragCoord.
+    *
+    * Note: These values are computed at ast_to_hir time rather than at parse
+    * time.
+    */
+   bool fs_redeclares_gl_fragcoord;
+   bool fs_origin_upper_left;
+   bool fs_pixel_center_integer;
+   bool fs_redeclares_gl_fragcoord_with_no_layout_qualifiers;
+
+   /**
     * True if a geometry shader input primitive type was specified using a
     * layout directive.
     *

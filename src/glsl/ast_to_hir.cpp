@@ -2341,6 +2341,34 @@ apply_image_qualifier_to_variable(const struct ast_type_qualifier *qual,
    }
 }
 
+static inline const char*
+get_layout_qualifier_string(bool origin_upper_left, bool pixel_center_integer)
+{
+   if (origin_upper_left && pixel_center_integer)
+      return "origin_upper_left, pixel_center_integer";
+   else if (origin_upper_left)
+      return "origin_upper_left";
+   else if (pixel_center_integer)
+      return "pixel_center_integer";
+   else
+      return " ";
+}
+
+static inline bool
+is_conflicting_fragcoord_redeclaration(struct _mesa_glsl_parse_state *state,
+                                       const struct ast_type_qualifier *qual)
+{
+   /* If gl_FragCoord was previously declared, and the qualifiers were
+    * different in any way, return true.
+    */
+   if (state->fs_redeclares_gl_fragcoord) {
+      return (state->fs_pixel_center_integer != qual->flags.q.pixel_center_integer
+         || state->fs_origin_upper_left != qual->flags.q.origin_upper_left);
+   }
+
+   return false;
+}
+
 static void
 apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
                                  ir_variable *var,
@@ -2503,6 +2531,36 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 		       "layout qualifier `%s' can only be applied to "
 		       "fragment shader input `gl_FragCoord'",
 		       qual_string);
+   }
+
+   if (var->name != NULL && strcmp(var->name, "gl_FragCoord") == 0) {
+
+      /* Make sure all gl_FragCoord redeclarations specify the same layout
+       * qualifiers.
+       */
+      if (is_conflicting_fragcoord_redeclaration(state, qual)) {
+         const char *const qual_string =
+            get_layout_qualifier_string(qual->flags.q.origin_upper_left,
+                                        qual->flags.q.pixel_center_integer);
+
+         const char *const state_string =
+            get_layout_qualifier_string(state->fs_origin_upper_left,
+                                        state->fs_pixel_center_integer);
+
+         _mesa_glsl_error(loc, state,
+                          "gl_FragCoord redeclared with different layout "
+                          "qualifiers (%s) and (%s) ",
+                          state_string,
+                          qual_string);
+      }
+      state->fs_origin_upper_left = qual->flags.q.origin_upper_left;
+      state->fs_pixel_center_integer = qual->flags.q.pixel_center_integer;
+      state->fs_redeclares_gl_fragcoord_with_no_layout_qualifiers =
+         !qual->flags.q.origin_upper_left && !qual->flags.q.pixel_center_integer;
+      state->fs_redeclares_gl_fragcoord =
+         state->fs_origin_upper_left ||
+         state->fs_pixel_center_integer ||
+         state->fs_redeclares_gl_fragcoord_with_no_layout_qualifiers;
    }
 
    if (qual->flags.q.explicit_location) {
