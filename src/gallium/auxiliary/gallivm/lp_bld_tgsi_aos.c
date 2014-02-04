@@ -406,7 +406,7 @@ lp_emit_declaration_aos(
    for (idx = first; idx <= last; ++idx) {
       switch (decl->Declaration.File) {
       case TGSI_FILE_TEMPORARY:
-         assert(idx < LP_MAX_TGSI_TEMPS);
+         assert(idx < LP_MAX_INLINED_TEMPS);
          if (bld->indirect_files & (1 << TGSI_FILE_TEMPORARY)) {
             LLVMValueRef array_size = lp_build_const_int32(gallivm, last + 1);
             bld->temps_array = lp_build_array_alloca(bld->bld_base.base.gallivm,

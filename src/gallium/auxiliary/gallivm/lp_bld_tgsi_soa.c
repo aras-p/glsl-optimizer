@@ -2672,8 +2672,8 @@ lp_emit_declaration_soa(
       assert(last <= bld->bld_base.info->file_max[decl->Declaration.File]);
       switch (decl->Declaration.File) {
       case TGSI_FILE_TEMPORARY:
-         assert(idx < LP_MAX_TGSI_TEMPS);
          if (!(bld->indirect_files & (1 << TGSI_FILE_TEMPORARY))) {
+            assert(idx < LP_MAX_INLINED_TEMPS);
             for (i = 0; i < TGSI_NUM_CHANNELS; i++)
                bld->temps[idx][i] = lp_build_alloca(gallivm, vec_type, "temp");
          }
@@ -3620,6 +3620,15 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    bld.sampler = sampler;
    bld.bld_base.info = info;
    bld.indirect_files = info->indirect_files;
+
+   /*
+    * If the number of temporaries is rather large then we just
+    * allocate them as an array right from the start and treat
+    * like indirect temporaries.
+    */
+   if (info->file_max[TGSI_FILE_TEMPORARY] >= LP_MAX_INLINED_TEMPS) {
+      bld.indirect_files |= (1 << TGSI_FILE_TEMPORARY);
+   }
 
    bld.bld_base.soa = TRUE;
    bld.bld_base.emit_debug = emit_debug;

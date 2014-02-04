@@ -43,7 +43,7 @@
  * the state trackers.
  */
 
-#define LP_MAX_TGSI_TEMPS 256
+#define LP_MAX_TGSI_TEMPS 4096
 
 #define LP_MAX_TGSI_ADDRS 16
 
@@ -53,6 +53,12 @@
 
 #define LP_MAX_TGSI_CONST_BUFFERS 16
 
+/*
+ * For quick access we cache temps in a statically
+ * allocated array. This defines the maximum size
+ * of that array.
+ */
+#define LP_MAX_INLINED_TEMPS 256
 
 /**
  * Maximum control flow nesting
