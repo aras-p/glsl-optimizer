@@ -63,35 +63,35 @@ GL 3.1 --- all DONE: i965, nv50, nvc0, r600, radeonsi
   Signed normalized textures (GL_EXT_texture_snorm)     DONE (r300)
 
 
-GL 3.2 --- all DONE: i965, nv50, nvc0, radeonsi
+GL 3.2 --- all DONE: i965, nv50, nvc0, r600, radeonsi
 
   Core/compatibility profiles                           DONE
   GLSL 1.50                                             DONE ()
   Geometry shaders                                      DONE ()
-  BGRA vertex order (GL_ARB_vertex_array_bgra)          DONE (r300, r600, swrast)
-  Base vertex offset(GL_ARB_draw_elements_base_vertex)  DONE (r300, r600, swrast)
-  Frag shader coord (GL_ARB_fragment_coord_conventions) DONE (r300, r600, swrast)
-  Provoking vertex (GL_ARB_provoking_vertex)            DONE (r300, r600, swrast)
-  Seamless cubemaps (GL_ARB_seamless_cube_map)          DONE (r600)
-  Multisample textures (GL_ARB_texture_multisample)     DONE (r600)
-  Frag depth clamp (GL_ARB_depth_clamp)                 DONE (r600, swrast)
-  Fence objects (GL_ARB_sync)                           DONE (r300, r600, swrast)
+  BGRA vertex order (GL_ARB_vertex_array_bgra)          DONE (r300, swrast)
+  Base vertex offset(GL_ARB_draw_elements_base_vertex)  DONE (r300, swrast)
+  Frag shader coord (GL_ARB_fragment_coord_conventions) DONE (r300, swrast)
+  Provoking vertex (GL_ARB_provoking_vertex)            DONE (r300, swrast)
+  Seamless cubemaps (GL_ARB_seamless_cube_map)          DONE ()
+  Multisample textures (GL_ARB_texture_multisample)     DONE ()
+  Frag depth clamp (GL_ARB_depth_clamp)                 DONE (swrast)
+  Fence objects (GL_ARB_sync)                           DONE (r300, swrast)
   GLX_ARB_create_context_profile                        DONE
 
 
-GL 3.3 --- all DONE: i965, nv50, nvc0, radeonsi
+GL 3.3 --- all DONE: i965, nv50, nvc0, r600, radeonsi
 
   GLSL 3.30                                             DONE ()
-  GL_ARB_blend_func_extended                            DONE (r600, softpipe)
+  GL_ARB_blend_func_extended                            DONE (softpipe)
   GL_ARB_explicit_attrib_location                       DONE (all drivers that support GLSL)
-  GL_ARB_occlusion_query2                               DONE (r300, r600, swrast)
+  GL_ARB_occlusion_query2                               DONE (r300, swrast)
   GL_ARB_sampler_objects                                DONE (all drivers)
-  GL_ARB_shader_bit_encoding                            DONE (r600)
-  GL_ARB_texture_rgb10_a2ui                             DONE (r600)
-  GL_ARB_texture_swizzle                                DONE (r300, r600, swrast)
-  GL_ARB_timer_query                                    DONE (r600)
-  GL_ARB_instanced_arrays                               DONE (r300, r600)
-  GL_ARB_vertex_type_2_10_10_10_rev                     DONE (r600)
+  GL_ARB_shader_bit_encoding                            DONE ()
+  GL_ARB_texture_rgb10_a2ui                             DONE ()
+  GL_ARB_texture_swizzle                                DONE (r300, swrast)
+  GL_ARB_timer_query                                    DONE ()
+  GL_ARB_instanced_arrays                               DONE (r300)
+  GL_ARB_vertex_type_2_10_10_10_rev                     DONE ()
 
 
 GL 4.0:
