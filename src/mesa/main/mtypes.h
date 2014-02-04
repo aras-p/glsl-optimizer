@@ -1423,9 +1423,6 @@ struct gl_transform_attrib
    GLboolean RescaleNormals;			/**< GL_EXT_rescale_normal */
    GLboolean RasterPositionUnclipped;           /**< GL_IBM_rasterpos_clip */
    GLboolean DepthClamp;			/**< GL_ARB_depth_clamp */
-
-   GLfloat CullEyePos[4];
-   GLfloat CullObjPos[4];
 };
 
 

@@ -606,16 +606,8 @@ calculate_model_project_matrix( struct gl_context *ctx )
  */
 void _mesa_update_modelview_project( struct gl_context *ctx, GLuint new_state )
 {
-   if (new_state & _NEW_MODELVIEW) {
+   if (new_state & _NEW_MODELVIEW)
       _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
-    
-      /* Bring cull position up to date.
-       */
-      TRANSFORM_POINT3( ctx->Transform.CullObjPos, 
-			ctx->ModelviewMatrixStack.Top->inv,
-			ctx->Transform.CullEyePos );
-   }
-
 
    if (new_state & _NEW_PROJECTION)
       update_projection( ctx );
@@ -762,9 +754,6 @@ void _mesa_init_transform( struct gl_context *ctx )
       ASSIGN_4V( ctx->Transform.EyeUserPlane[i], 0.0, 0.0, 0.0, 0.0 );
    }
    ctx->Transform.ClipPlanesEnabled = 0;
-
-   ASSIGN_4V( ctx->Transform.CullObjPos, 0.0, 0.0, 1.0, 0.0 );
-   ASSIGN_4V( ctx->Transform.CullEyePos, 0.0, 0.0, 1.0, 0.0 );
 }
 
 
