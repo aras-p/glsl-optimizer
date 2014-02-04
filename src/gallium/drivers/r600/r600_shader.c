@@ -1287,6 +1287,7 @@ static int generate_gs_copy_shader(struct r600_context *rctx,
 		case TGSI_SEMANTIC_CLIPDIST:
 			/* spi_sid is 0 for clipdistance outputs that were generated
 			 * for clipvertex - we don't need to pass them to PS */
+			ctx.shader->clip_dist_write = gs->shader.clip_dist_write;
 			if (out->spi_sid) {
 				/* duplicate it as PARAM to pass to the pixel shader */
 				output.array_base = next_param++;
