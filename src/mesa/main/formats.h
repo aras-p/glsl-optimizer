@@ -41,8 +41,10 @@ extern "C" {
 #endif
 
 
-/* OpenGL doesn't have GL_UNSIGNED_BYTE_4_4, so we must define our own type
- * for GL_LUMINANCE4_ALPHA4. */
+/**
+ * OpenGL doesn't have GL_UNSIGNED_BYTE_4_4, so we must define our own type
+ * for GL_LUMINANCE4_ALPHA4.
+ */
 #define MESA_UNSIGNED_BYTE_4_4 (GL_UNSIGNED_BYTE<<1)
 
 
@@ -67,18 +69,20 @@ typedef enum
     * The mesa format name specification is as follows:
     *
     *  There shall be 3 naming format base types: those for component array
-    *  formats (type A); those for compressed formats (type C); and those for packed
-    *  component formats (type P). With type A formats, color component order does not
-    *  change with endianess. Each format name shall begin with MESA_FORMAT_,
-    *  followed by a component label (from the Component Label list below) for each
-    *  component in the order that the component(s) occur in the format, except for
-    *  non-linear color formats where the first letter shall be 'S'. For type P formats,
-    *  each component label is followed by the number of bits that represent it in the
-    *  fundamental data type used by the format.
+    *  formats (type A); those for compressed formats (type C); and those for
+    *  packed component formats (type P). With type A formats, color component
+    *  order does not change with endianess. Each format name shall begin with
+    *  MESA_FORMAT_, followed by a component label (from the Component Label
+    *  list below) for each component in the order that the component(s) occur
+    *  in the format, except for non-linear color formats where the first
+    *  letter shall be 'S'. For type P formats, each component label is
+    *  followed by the number of bits that represent it in the fundamental
+    *  data type used by the format.
     *
-    *  Following the listing of the component labels shall be an underscore; a compression
-    *  type followed by an underscore for Type C formats only; a storage type from the list
-    *  below; and a bit with for type A formats, which is the bit width for each array element.
+    *  Following the listing of the component labels shall be an underscore; a
+    *  compression type followed by an underscore for Type C formats only; a
+    *  storage type from the list below; and a bit with for type A formats,
+    *  which is the bit width for each array element.
     *
     *
     *  ----------    Format Base Type A: Array ----------
@@ -159,7 +163,8 @@ typedef enum
     *  UINT
     *  SNORM
     *  UNORM
-    *  SRGB - RGB components, or L are UNORMs in sRGB color space. Alpha, if present is linear.
+    *  SRGB - RGB components, or L are UNORMs in sRGB color space.
+    *         Alpha, if present is linear.
     *
     *
     *   ----------   Type A Format List (based on format_unpack.c):
