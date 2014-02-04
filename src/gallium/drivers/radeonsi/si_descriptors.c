@@ -706,8 +706,8 @@ static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource 
 	pb_reference(&rbuffer->buf, NULL);
 
 	/* Create a new one in the same pipe_resource. */
-	r600_init_resource(&sctx->screen->b, rbuffer, rbuffer->b.b.width0, alignment,
-			   TRUE, rbuffer->b.b.usage);
+	r600_init_resource(&sctx->screen->b, rbuffer, rbuffer->b.b.width0,
+			   alignment, TRUE);
 
 	/* We changed the buffer, now we need to bind it where the old one
 	 * was bound. This consists of 2 things:

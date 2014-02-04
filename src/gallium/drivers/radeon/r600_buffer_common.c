@@ -103,42 +103,41 @@ void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
 bool r600_init_resource(struct r600_common_screen *rscreen,
 			struct r600_resource *res,
 			unsigned size, unsigned alignment,
-			bool use_reusable_pool, unsigned usage)
+			bool use_reusable_pool)
 {
-	uint32_t initial_domain, domains;
+	struct r600_texture *rtex = (struct r600_texture*)res;
 
-	switch(usage) {
+	switch (res->b.b.usage) {
 	case PIPE_USAGE_STAGING:
 	case PIPE_USAGE_DYNAMIC:
 	case PIPE_USAGE_STREAM:
-		/* These resources participate in transfers, i.e. are used
-		 * for uploads and downloads from regular resources.
-		 * We generate them internally for some transfers.
-		 */
-		initial_domain = RADEON_DOMAIN_GTT;
-		domains = RADEON_DOMAIN_GTT;
+		/* Transfers are likely to occur more often with these resources. */
+		res->domains = RADEON_DOMAIN_GTT;
 		break;
 	case PIPE_USAGE_DEFAULT:
 	case PIPE_USAGE_STATIC:
 	case PIPE_USAGE_IMMUTABLE:
 	default:
-		/* Don't list GTT here, because the memory manager would put some
-		 * resources to GTT no matter what the initial domain is.
-		 * Not listing GTT in the domains improves performance a lot. */
-		initial_domain = RADEON_DOMAIN_VRAM;
-		domains = RADEON_DOMAIN_VRAM;
+		/* Not listing GTT here improves performance in some apps. */
+		res->domains = RADEON_DOMAIN_VRAM;
 		break;
 	}
 
+	/* Tiled textures are unmappable. Always put them in VRAM. */
+	if (res->b.b.target != PIPE_BUFFER &&
+	    rtex->surface.level[0].mode >= RADEON_SURF_MODE_1D) {
+		res->domains = RADEON_DOMAIN_VRAM;
+	}
+
+	/* Allocate the resource. */
 	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment,
                                               use_reusable_pool,
-                                              initial_domain);
+                                              res->domains);
 	if (!res->buf) {
 		return false;
 	}
 
 	res->cs_buf = rscreen->ws->buffer_get_cs_handle(res->buf);
-	res->domains = domains;
 	util_range_set_empty(&res->valid_buffer_range);
 
 	if (rscreen->debug_flags & DBG_VM && res->b.b.target == PIPE_BUFFER) {
@@ -327,7 +326,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->b.vtbl = &r600_buffer_vtbl;
 	util_range_init(&rbuffer->valid_buffer_range);
 
-	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, TRUE, templ->usage)) {
+	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, TRUE)) {
 		FREE(rbuffer);
 		return NULL;
 	}

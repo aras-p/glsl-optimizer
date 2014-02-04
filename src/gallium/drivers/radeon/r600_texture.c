@@ -616,11 +616,8 @@ r600_texture_create_object(struct pipe_screen *screen,
 
 	/* Now create the backing buffer. */
 	if (!buf) {
-		unsigned base_align = rtex->surface.bo_alignment;
-		unsigned usage = rtex->surface.level[0].mode >= RADEON_SURF_MODE_1D ?
-					 PIPE_USAGE_STATIC : base->usage;
-
-		if (!r600_init_resource(rscreen, resource, rtex->size, base_align, FALSE, usage)) {
+		if (!r600_init_resource(rscreen, resource, rtex->size,
+					rtex->surface.bo_alignment, FALSE)) {
 			FREE(rtex);
 			return NULL;
 		}
