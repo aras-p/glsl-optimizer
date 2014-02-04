@@ -2244,9 +2244,10 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
 
    /* This will detect any invalid internalFormat value */
    if (!_mesa_is_compressed_format(ctx, internalFormat)) {
-      reason = "internalFormat";
-      error = GL_INVALID_ENUM;
-      goto error;
+      _mesa_error(ctx, GL_INVALID_ENUM,
+                  "glCompressedTexImage%dD(internalFormat=%s)",
+                  dimensions, _mesa_lookup_enum_by_nr(internalFormat));
+      return GL_TRUE;
    }
 
    switch (internalFormat) {
@@ -2338,6 +2339,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    return GL_FALSE;
 
 error:
+   /* Note: not all error paths exit through here. */
    _mesa_error(ctx, error, "glCompressedTexImage%dD(%s)", dimensions, reason);
    return GL_TRUE;
 }
@@ -2553,7 +2555,8 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
          break;
       default:
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glCopyTexImage%dD(internalFormat)", dimensions);
+                     "glCopyTexImage%dD(internalFormat=%s)", dimensions,
+                     _mesa_lookup_enum_by_nr(internalFormat));
          return GL_TRUE;
       }
    }
@@ -2561,7 +2564,8 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
    baseFormat = _mesa_base_tex_format(ctx, internalFormat);
    if (baseFormat < 0) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glCopyTexImage%dD(internalFormat)", dimensions);
+                  "glCopyTexImage%dD(internalFormat=%s)", dimensions,
+                  _mesa_lookup_enum_by_nr(internalFormat));
       return GL_TRUE;
    }
 
@@ -2570,7 +2574,8 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
    if (_mesa_is_color_format(internalFormat)) {
       if (rb_base_format < 0) {
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glCopyTexImage%dD(internalFormat)", dimensions);
+                     "glCopyTexImage%dD(internalFormat=%s)", dimensions,
+                     _mesa_lookup_enum_by_nr(internalFormat));
          return GL_TRUE;
       }
    }
@@ -2596,7 +2601,8 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
       }
       if (!valid) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glCopyTexImage%dD(internalFormat)", dimensions);
+                     "glCopyTexImage%dD(internalFormat=%s)", dimensions,
+                     _mesa_lookup_enum_by_nr(internalFormat));
          return GL_TRUE;
       }
    }
