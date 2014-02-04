@@ -346,7 +346,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    struct nv50_varying dummy;
    int i, n, c, m;
    uint32_t primid = 0;
-   uint32_t layerid = vp->gp.layerid;
+   uint32_t layerid = 0;
    uint32_t psiz = 0x000;
    uint32_t interp = fp->fp.interp;
    uint32_t colors = fp->fp.colors;
@@ -405,15 +405,17 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
       case TGSI_SEMANTIC_PRIMID:
          primid = m;
          break;
+      case TGSI_SEMANTIC_LAYER:
+         layerid = m;
+         break;
       }
       m = nv50_vec4_map(map, m, lin,
                         &fp->in[i], (n < vp->out_nr) ? &vp->out[n] : &dummy);
    }
 
-   if (vp->gp.has_layer) {
-      // In GL4.x, layer can be an fp input, but not in 3.x. Make sure to add
-      // it to the output map.
-      map[m++] = layerid;
+   if (vp->gp.has_layer && !layerid) {
+      layerid = m;
+      map[m++] = vp->gp.layerid;
    }
 
    if (nv50->rast->pipe.point_size_per_vertex) {

@@ -89,7 +89,7 @@ struct nv50_program {
    struct {
       uint32_t vert_count;
       uint8_t prim_type; /* point, line strip or tri strip */
-      bool has_layer;
+      uint8_t has_layer;
       ubyte layerid; /* hw value of layer output */
    } gp;
 

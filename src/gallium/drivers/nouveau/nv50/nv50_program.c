@@ -104,7 +104,7 @@ nv50_vertprog_assign_slots(struct nv50_ir_prog_info *info)
          prog->vp.bfc[info->out[i].si] = i;
          break;
       case TGSI_SEMANTIC_LAYER:
-         prog->gp.has_layer = true;
+         prog->gp.has_layer = TRUE;
          prog->gp.layerid = n;
          break;
       default:
