@@ -720,10 +720,23 @@ sub_emit(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-	emit_data->output[emit_data->chan] = LLVMBuildFSub(
-				bld_base->base.gallivm->builder,
-				emit_data->args[0],
-				emit_data->args[1], "");
+   emit_data->output[emit_data->chan] =
+      LLVMBuildFSub(bld_base->base.gallivm->builder,
+                    emit_data->args[0],
+                    emit_data->args[1], "");
+}
+
+/* TGSI_OPCODE_F2U */
+static void
+f2u_emit(
+   const struct lp_build_tgsi_action * action,
+   struct lp_build_tgsi_context * bld_base,
+   struct lp_build_emit_data * emit_data)
+{
+   emit_data->output[emit_data->chan] =
+      LLVMBuildFPToUI(bld_base->base.gallivm->builder,
+                      emit_data->args[0],
+                      bld_base->base.int_vec_type, "");
 }
 
 /* TGSI_OPCODE_U2F */
@@ -733,9 +746,10 @@ u2f_emit(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = LLVMBuildUIToFP(bld_base->base.gallivm->builder,
-							emit_data->args[0],
-							bld_base->base.vec_type, "");
+   emit_data->output[emit_data->chan] =
+      LLVMBuildUIToFP(bld_base->base.gallivm->builder,
+                      emit_data->args[0],
+                      bld_base->base.vec_type, "");
 }
 
 static void
@@ -949,6 +963,7 @@ lp_set_default_actions(struct lp_build_tgsi_context * bld_base)
    bld_base->op_actions[TGSI_OPCODE_SUB].emit = sub_emit;
 
    bld_base->op_actions[TGSI_OPCODE_UARL].emit = mov_emit;
+   bld_base->op_actions[TGSI_OPCODE_F2U].emit = f2u_emit;
    bld_base->op_actions[TGSI_OPCODE_U2F].emit = u2f_emit;
    bld_base->op_actions[TGSI_OPCODE_UMAD].emit = umad_emit;
    bld_base->op_actions[TGSI_OPCODE_UMUL].emit = umul_emit;
@@ -1124,18 +1139,6 @@ f2i_emit_cpu(
    struct lp_build_tgsi_context * bld_base,
    struct lp_build_emit_data * emit_data)
 {
-   emit_data->output[emit_data->chan] = lp_build_itrunc(&bld_base->base,
-                                                        emit_data->args[0]);
-}
-
-/* TGSI_OPCODE_F2U (CPU Only) */
-static void
-f2u_emit_cpu(
-   const struct lp_build_tgsi_action * action,
-   struct lp_build_tgsi_context * bld_base,
-   struct lp_build_emit_data * emit_data)
-{
-   /* FIXME: implement and use lp_build_utrunc() */
    emit_data->output[emit_data->chan] = lp_build_itrunc(&bld_base->base,
                                                         emit_data->args[0]);
 }
@@ -1832,7 +1835,6 @@ lp_set_default_actions_cpu(
    bld_base->op_actions[TGSI_OPCODE_DIV].emit = div_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_EX2].emit = ex2_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_F2I].emit = f2i_emit_cpu;
-   bld_base->op_actions[TGSI_OPCODE_F2U].emit = f2u_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_FLR].emit = flr_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_FSEQ].emit = fseq_emit_cpu;
    bld_base->op_actions[TGSI_OPCODE_FSGE].emit = fsge_emit_cpu;
