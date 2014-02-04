@@ -948,37 +948,20 @@ AC_ARG_WITH([dri-drivers],
         [comma delimited classic DRI drivers list, e.g.
         "swrast,i965,radeon" @<:@default=auto@:>@])],
     [with_dri_drivers="$withval"],
-    [with_dri_drivers=yes])
-if test "x$with_dri_drivers" = x; then
-    with_dri_drivers=no
-fi
+    [with_dri_drivers=auto])
 
-dnl If $with_dri_drivers is yes, directories will be added through
-dnl platform checks
-DRI_DIRS=""
 case "$with_dri_drivers" in
 no) ;;
-yes)
+auto)
     # classic DRI drivers
     if test "x$enable_opengl" = xyes; then
-        DRI_DIRS="yes"
-    fi
-    ;;
-*)
-    # verify the requested driver directories exist
-    dri_drivers=`IFS=', '; echo $with_dri_drivers`
-    for driver in $dri_drivers; do
-        test -d "$srcdir/src/mesa/drivers/dri/$driver" || \
-            AC_MSG_ERROR([classic DRI driver directory '$driver' does not exist])
-    done
-    DRI_DIRS="$dri_drivers"
-    if test -n "$DRI_DIRS" -a "x$enable_opengl" != xyes; then
-        AC_MSG_ERROR([--with-dri-drivers requires OpenGL])
+        with_dri_drivers="yes"
     fi
     ;;
 esac
 
-dnl Set DRI_DIRS, DEFINES and LIB_DEPS
+dnl If $with_dri_drivers is yes, drivers will be added through
+dnl platform checks. Set DEFINES and LIB_DEPS
 if test "x$enable_dri" = xyes; then
     # Platform specific settings and drivers to build
     case "$host_os" in
@@ -992,8 +975,8 @@ if test "x$enable_dri" = xyes; then
         case "$host_cpu" in
         powerpc* | sparc*)
             # Build only the drivers for cards that exist on PowerPC/sparc
-            if test "x$DRI_DIRS" = "xyes"; then
-                DRI_DIRS="r200 radeon swrast"
+            if test "x$with_dri_drivers" = "xyes"; then
+                with_dri_drivers="r200 radeon swrast"
             fi
             ;;
         esac
@@ -1011,18 +994,16 @@ if test "x$enable_dri" = xyes; then
         ;;
     cygwin*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
-        if test "x$DRI_DIRS" = "xyes"; then
-            DRI_DIRS="swrast"
+        if test "x$with_dri_drivers" = "xyes"; then
+            with_dri_drivers="swrast"
         fi
         ;;
     esac
 
     # default drivers
-    if test "x$DRI_DIRS" = "xyes"; then
-        DRI_DIRS="i915 i965 nouveau r200 radeon swrast"
+    if test "x$with_dri_drivers" = "xyes"; then
+        with_dri_drivers="i915 i965 nouveau r200 radeon swrast"
     fi
-
-    DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
 
     # Check for expat
     PKG_CHECK_EXISTS([EXPAT], [have_expat=yes], [have_expat=no])
@@ -1035,8 +1016,8 @@ if test "x$enable_dri" = xyes; then
     fi
 
     # If we are building any DRI driver other than swrast.
-    if test -n "$DRI_DIRS"; then
-        if test x"$DRI_DIRS" != xswrast; then
+    if test -n "$with_dri_drivers"; then
+        if test "x$with_dri_drivers" != xswrast; then
             # ... libdrm is required
             if test "x$have_libdrm" != xyes; then
                 AC_MSG_ERROR([DRI drivers requires libdrm >= $LIBDRM_REQUIRED])
@@ -1053,38 +1034,55 @@ if test "x$enable_dri" = xyes; then
 
 fi
 
+AC_SUBST([DRI_LIB_DEPS])
+AC_SUBST([GALLIUM_DRI_LIB_DEPS])
+
+DRI_DIRS=""
+dnl Duplicates in DRI_DIRS are removed by sorting it after this block
+if test -n "$with_dri_drivers"; then
+    if test "x$enable_opengl" != xyes; then
+        AC_MSG_ERROR([--with-dri-drivers requires OpenGL])
+    fi
+
+    dri_drivers=`IFS=', '; echo $with_dri_drivers`
+    for driver in $dri_drivers; do
+        DRI_DIRS+="$driver "
+        case "x$driver" in
+        xi915)
+            HAVE_I915_DRI=yes;
+            PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
+            ;;
+        xi965)
+            HAVE_I965_DRI=yes;
+            PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
+            ;;
+        xnouveau)
+            HAVE_NOUVEAU_DRI=yes;
+            PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NVVIEUX_REQUIRED])
+            ;;
+        xradeon)
+            HAVE_RADEON_DRI=yes;
+            PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
+            ;;
+        xr200)
+            HAVE_R200_DRI=yes;
+            PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
+            ;;
+        xswrast)
+            HAVE_SWRAST_DRI=yes;
+            ;;
+        *)
+            AC_MSG_ERROR([classic DRI driver '$driver' does not exist])
+            ;;
+        esac
+    done
+fi
+DRI_DIRS=`echo $DRI_DIRS|tr " " "\n"|sort -u|tr "\n" " "`
+
 AM_CONDITIONAL(NEED_MEGADRIVER, test -n "$DRI_DIRS")
 AM_CONDITIONAL(NEED_LIBMESA, test "x$enable_xlib_glx" = xyes -o \
                                   "x$enable_osmesa" = xyes -o \
                                   -n "$DRI_DIRS")
-AC_SUBST([DRI_LIB_DEPS])
-AC_SUBST([GALLIUM_DRI_LIB_DEPS])
-
-case $DRI_DIRS in
-*i915*)
-    PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
-    HAVE_I915_DRI=yes;
-    ;;
-*i965*)
-    PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
-    HAVE_I965_DRI=yes;
-    ;;
-*nouveau*)
-    PKG_CHECK_MODULES([NOUVEAU], [libdrm_nouveau >= $LIBDRM_NVVIEUX_REQUIRED])
-    HAVE_NOUVEAU_DRI=yes;
-    ;;
-*radeon*)
-    PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
-    HAVE_RADEON_DRI=yes;
-    ;;
-*r200*)
-    PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
-    HAVE_R200_DRI=yes;
-    ;;
-*swrast*)
-    HAVE_SWRAST_DRI=yes;
-    ;;
-esac
 
 dnl
 dnl OSMesa configuration
@@ -2125,12 +2123,10 @@ xnono)
 esac
 
 if test "x$enable_dri" != xno; then
-        # cleanup the drivers var
-        dri_dirs=`echo $DRI_DIRS | $SED 's/^ *//;s/  */ /;s/ *$//'`
         if test "x$DRI_DIRS" = x; then
             echo "        DRI drivers:     no"
         else
-            echo "        DRI drivers:     $dri_dirs"
+            echo "        DRI drivers:     $DRI_DIRS"
         fi
         echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
 fi
