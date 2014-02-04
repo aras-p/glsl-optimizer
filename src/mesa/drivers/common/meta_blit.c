@@ -96,157 +96,154 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
 /**
  * Try to do a glBlitFramebuffer using no-copy texturing.
  * We can do this when the src renderbuffer is actually a texture.
- *
- * \return new buffer mask indicating the buffers left to blit using the
- *         normal path.
  */
-static GLbitfield
+static bool
 blitframebuffer_texture(struct gl_context *ctx,
                         GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                         GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
-                        GLbitfield mask, GLenum filter, GLint flipX,
-                        GLint flipY, GLboolean glsl_version)
+                        GLenum filter, GLint flipX, GLint flipY,
+                        GLboolean glsl_version)
 {
-   if (mask & GL_COLOR_BUFFER_BIT) {
-      const struct gl_framebuffer *readFb = ctx->ReadBuffer;
-      const struct gl_renderbuffer_attachment *readAtt =
-         &readFb->Attachment[readFb->_ColorReadBufferIndex];
+   const struct gl_framebuffer *readFb = ctx->ReadBuffer;
+   const struct gl_renderbuffer_attachment *readAtt =
+      &readFb->Attachment[readFb->_ColorReadBufferIndex];
+   struct blit_state *blit = &ctx->Meta->Blit;
+   const GLint dstX = MIN2(dstX0, dstX1);
+   const GLint dstY = MIN2(dstY0, dstY1);
+   const GLint dstW = abs(dstX1 - dstX0);
+   const GLint dstH = abs(dstY1 - dstY0);
+   const struct gl_texture_object *texObj = readAtt->Texture;
+   GLuint srcLevel;
+   GLint baseLevelSave;
+   GLint maxLevelSave;
+   GLenum target;
+   GLuint sampler, samplerSave =
+      ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
+      ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
 
-      if (readAtt && readAtt->Texture) {
-         struct blit_state *blit = &ctx->Meta->Blit;
-         const GLint dstX = MIN2(dstX0, dstX1);
-         const GLint dstY = MIN2(dstY0, dstY1);
-         const GLint dstW = abs(dstX1 - dstX0);
-         const GLint dstH = abs(dstY1 - dstY0);
-         const struct gl_texture_object *texObj = readAtt->Texture;
-         const GLuint srcLevel = readAtt->TextureLevel;
-         const GLint baseLevelSave = texObj->BaseLevel;
-         const GLint maxLevelSave = texObj->MaxLevel;
-         const GLenum target = texObj->Target;
-         GLuint sampler, samplerSave =
-            ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
-            ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
-
-         if (target != GL_TEXTURE_2D && target != GL_TEXTURE_RECTANGLE_ARB) {
-            /* Can't handle other texture types at this time */
-            return mask;
-         }
-
-         /* Choose between glsl version and fixed function version of
-          * BlitFramebuffer function.
-          */
-         if (glsl_version) {
-            setup_glsl_blit_framebuffer(ctx, blit, target);
-         }
-         else {
-            _mesa_meta_setup_ff_tnl_for_blit(&ctx->Meta->Blit.VAO,
-                                             &ctx->Meta->Blit.VBO,
-                                             2);
-         }
-
-         _mesa_GenSamplers(1, &sampler);
-         _mesa_BindSampler(ctx->Texture.CurrentUnit, sampler);
-
-         /*
-         printf("Blit from texture!\n");
-         printf("  srcAtt %p  dstAtt %p\n", readAtt, drawAtt);
-         printf("  srcTex %p  dstText %p\n", texObj, drawAtt->Texture);
-         */
-
-         /* Prepare src texture state */
-         _mesa_BindTexture(target, texObj->Name);
-         _mesa_SamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, filter);
-         _mesa_SamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, filter);
-         if (target != GL_TEXTURE_RECTANGLE_ARB) {
-            _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
-            _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
-         }
-         _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-         _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	 /* Always do our blits with no sRGB decode or encode.  Note that
-          * GL_FRAMEBUFFER_SRGB has already been disabled by
-          * _mesa_meta_begin().
-          */
-	 if (ctx->Extensions.EXT_texture_sRGB_decode) {
-	    _mesa_SamplerParameteri(sampler, GL_TEXTURE_SRGB_DECODE_EXT,
-				GL_SKIP_DECODE_EXT);
-	 }
-
-         if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) {
-            _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-            _mesa_set_enable(ctx, target, GL_TRUE);
-	 }
-
-         /* Prepare vertex data (the VBO was previously created and bound) */
-         {
-            struct vertex verts[4];
-            GLfloat s0, t0, s1, t1;
-
-            if (target == GL_TEXTURE_2D) {
-               const struct gl_texture_image *texImage
-                   = _mesa_select_tex_image(ctx, texObj, target, srcLevel);
-               s0 = srcX0 / (float) texImage->Width;
-               s1 = srcX1 / (float) texImage->Width;
-               t0 = srcY0 / (float) texImage->Height;
-               t1 = srcY1 / (float) texImage->Height;
-            }
-            else {
-               assert(target == GL_TEXTURE_RECTANGLE_ARB);
-               s0 = (float) srcX0;
-               s1 = (float) srcX1;
-               t0 = (float) srcY0;
-               t1 = (float) srcY1;
-            }
-
-            /* Silence valgrind warnings about reading uninitialized stack. */
-            memset(verts, 0, sizeof(verts));
-
-            /* setup vertex positions */
-            verts[0].x = -1.0F * flipX;
-            verts[0].y = -1.0F * flipY;
-            verts[1].x =  1.0F * flipX;
-            verts[1].y = -1.0F * flipY;
-            verts[2].x =  1.0F * flipX;
-            verts[2].y =  1.0F * flipY;
-            verts[3].x = -1.0F * flipX;
-            verts[3].y =  1.0F * flipY;
-
-            verts[0].tex[0] = s0;
-            verts[0].tex[1] = t0;
-            verts[1].tex[0] = s1;
-            verts[1].tex[1] = t0;
-            verts[2].tex[0] = s1;
-            verts[2].tex[1] = t1;
-            verts[3].tex[0] = s0;
-            verts[3].tex[1] = t1;
-
-            _mesa_BufferSubData(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
-         }
-
-         /* setup viewport */
-         _mesa_set_viewport(ctx, 0, dstX, dstY, dstW, dstH);
-         _mesa_ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-         _mesa_DepthMask(GL_FALSE);
-         _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-         /* Restore texture object state, the texture binding will
-          * be restored by _mesa_meta_end().
-          */
-         if (target != GL_TEXTURE_RECTANGLE_ARB) {
-            _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
-            _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
-         }
-
-         _mesa_BindSampler(ctx->Texture.CurrentUnit, samplerSave);
-         _mesa_DeleteSamplers(1, &sampler);
-
-         /* Done with color buffer */
-         mask &= ~GL_COLOR_BUFFER_BIT;
-      }
+   if (target != GL_TEXTURE_2D && target != GL_TEXTURE_RECTANGLE_ARB) {
+      /* Can't handle other texture types at this time */
+      return mask;
    }
 
-   return mask;
+   if (readAtt->Texture) {
+      srcLevel = readAtt->TextureLevel;
+      texObj = readAtt->Texture;
+   } else {
+      return false;
+   }
+
+   baseLevelSave = texObj->BaseLevel;
+   maxLevelSave = texObj->MaxLevel;
+   target = texObj->Target;
+
+   if (glsl_version) {
+      setup_glsl_blit_framebuffer(ctx, blit, target);
+   }
+   else {
+      _mesa_meta_setup_ff_tnl_for_blit(&ctx->Meta->Blit.VAO,
+                                       &ctx->Meta->Blit.VBO,
+                                       2);
+   }
+
+   _mesa_GenSamplers(1, &sampler);
+   _mesa_BindSampler(ctx->Texture.CurrentUnit, sampler);
+
+   /*
+     printf("Blit from texture!\n");
+     printf("  srcAtt %p  dstAtt %p\n", readAtt, drawAtt);
+     printf("  srcTex %p  dstText %p\n", texObj, drawAtt->Texture);
+   */
+
+   /* Prepare src texture state */
+   _mesa_BindTexture(target, texObj->Name);
+   _mesa_SamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, filter);
+   _mesa_SamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, filter);
+   if (target != GL_TEXTURE_RECTANGLE_ARB) {
+      _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
+      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
+   }
+   _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+   _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+   /* Always do our blits with no sRGB decode or encode.  Note that
+    * GL_FRAMEBUFFER_SRGB has already been disabled by
+    * _mesa_meta_begin().
+    */
+   if (ctx->Extensions.EXT_texture_sRGB_decode) {
+      _mesa_SamplerParameteri(sampler, GL_TEXTURE_SRGB_DECODE_EXT,
+                              GL_SKIP_DECODE_EXT);
+   }
+
+   if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) {
+      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      _mesa_set_enable(ctx, target, GL_TRUE);
+   }
+
+   /* Prepare vertex data (the VBO was previously created and bound) */
+   {
+      struct vertex verts[4];
+      GLfloat s0, t0, s1, t1;
+
+      if (target == GL_TEXTURE_2D) {
+         const struct gl_texture_image *texImage
+            = _mesa_select_tex_image(ctx, texObj, target, srcLevel);
+         s0 = srcX0 / (float) texImage->Width;
+         s1 = srcX1 / (float) texImage->Width;
+         t0 = srcY0 / (float) texImage->Height;
+         t1 = srcY1 / (float) texImage->Height;
+      }
+      else {
+         assert(target == GL_TEXTURE_RECTANGLE_ARB);
+         s0 = (float) srcX0;
+         s1 = (float) srcX1;
+         t0 = (float) srcY0;
+         t1 = (float) srcY1;
+      }
+
+      /* Silence valgrind warnings about reading uninitialized stack. */
+      memset(verts, 0, sizeof(verts));
+
+      /* setup vertex positions */
+      verts[0].x = -1.0F * flipX;
+      verts[0].y = -1.0F * flipY;
+      verts[1].x =  1.0F * flipX;
+      verts[1].y = -1.0F * flipY;
+      verts[2].x =  1.0F * flipX;
+      verts[2].y =  1.0F * flipY;
+      verts[3].x = -1.0F * flipX;
+      verts[3].y =  1.0F * flipY;
+
+      verts[0].tex[0] = s0;
+      verts[0].tex[1] = t0;
+      verts[1].tex[0] = s1;
+      verts[1].tex[1] = t0;
+      verts[2].tex[0] = s1;
+      verts[2].tex[1] = t1;
+      verts[3].tex[0] = s0;
+      verts[3].tex[1] = t1;
+
+      _mesa_BufferSubData(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
+   }
+
+   /* setup viewport */
+   _mesa_set_viewport(ctx, 0, dstX, dstY, dstW, dstH);
+   _mesa_ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+   _mesa_DepthMask(GL_FALSE);
+   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+   /* Restore texture object state, the texture binding will
+    * be restored by _mesa_meta_end().
+    */
+   if (target != GL_TEXTURE_RECTANGLE_ARB) {
+      _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
+      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
+   }
+
+   _mesa_BindSampler(ctx->Texture.CurrentUnit, samplerSave);
+   _mesa_DeleteSamplers(1, &sampler);
+
+   return true;
 }
 
 /**
@@ -300,12 +297,17 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    _mesa_meta_begin(ctx, ~MESA_META_SCISSOR);
 
    /* Try faster, direct texture approach first */
-   mask = blitframebuffer_texture(ctx, srcX0, srcY0, srcX1, srcY1,
-                                  dstX0, dstY0, dstX1, dstY1, mask, filter,
-                                  dstFlipX, dstFlipY, use_glsl_version);
-   if (mask == 0x0) {
-      _mesa_meta_end(ctx);
-      return;
+   if (mask & GL_COLOR_BUFFER_BIT) {
+      if (blitframebuffer_texture(ctx, srcX0, srcY0, srcX1, srcY1,
+                                  dstX0, dstY0, dstX1, dstY1,
+                                  filter, dstFlipX, dstFlipY,
+                                  use_glsl_version)) {
+         mask &= ~GL_COLOR_BUFFER_BIT;
+         if (mask == 0x0) {
+            _mesa_meta_end(ctx);
+            return;
+         }
+      }
    }
 
    /* Choose between glsl version and fixed function version of
