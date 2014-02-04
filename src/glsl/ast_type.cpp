@@ -207,6 +207,8 @@ ast_type_qualifier::merge_in_qualifier(YYLTYPE *loc,
    void *mem_ctx = state;
    bool create_gs_ast = false;
    bool create_cs_ast = false;
+   ast_type_qualifier valid_in_mask;
+   valid_in_mask.flags.i = 0;
 
    switch (state->stage) {
    case MESA_SHADER_GEOMETRY:
@@ -229,6 +231,8 @@ ast_type_qualifier::merge_in_qualifier(YYLTYPE *loc,
       create_gs_ast |=
          q.flags.q.prim_type &&
          !state->in_qualifier->flags.q.prim_type;
+
+      valid_in_mask.flags.q.prim_type = 1;
       break;
    case MESA_SHADER_FRAGMENT:
       if (q.flags.q.early_fragment_tests) {
@@ -241,12 +245,21 @@ ast_type_qualifier::merge_in_qualifier(YYLTYPE *loc,
       create_cs_ast |=
          q.flags.q.local_size != 0 &&
          state->in_qualifier->flags.q.local_size == 0;
+
+      valid_in_mask.flags.q.local_size = 1;
       break;
    default:
       _mesa_glsl_error(loc, state,
                        "input layout qualifiers only valid in "
                        "geometry, fragment and compute shaders");
       break;
+   }
+
+   /* Generate an error when invalid input layout qualifiers are used. */
+   if ((q.flags.i & ~valid_in_mask.flags.i) != 0) {
+      _mesa_glsl_error(loc, state,
+		       "invalid input layout qualifiers used");
+      return false;
    }
 
    /* Input layout qualifiers can be specified multiple
