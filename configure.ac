@@ -1305,7 +1305,7 @@ AC_ARG_WITH([libclc-path],
    [LIBCLC_PATH="$withval"],
    [LIBCLC_PATH=""])
 
-if test "x$LIBCLC_PATH" != x; then
+if test -n "$LIBCLC_PATH"; then
    AC_MSG_ERROR([The --with-libclc-path option has been deprecated.
                   Please review the updated build instructions for clover:
 		  http://dri.freedesktop.org/wiki/GalliumCompute])
@@ -1535,7 +1535,7 @@ if test "x$enable_gallium_llvm" = xauto; then
     esac
 fi
 if test "x$enable_gallium_llvm" = xyes; then
-    if test "x$llvm_prefix" != x; then
+    if test -n "$llvm_prefix"; then
         AC_PATH_TOOL([LLVM_CONFIG], [llvm-config], [no], ["$llvm_prefix/bin"])
     else
         AC_PATH_TOOL([LLVM_CONFIG], [llvm-config], [no])
@@ -1556,7 +1556,7 @@ if test "x$enable_gallium_llvm" = xyes; then
         AC_COMPUTE_INT([LLVM_VERSION_MINOR], [LLVM_VERSION_MINOR],
             [#include "${LLVM_INCLUDEDIR}/llvm/Config/llvm-config.h"])
 
-        if test "x${LLVM_VERSION_MAJOR}" != x; then
+        if test -n "${LLVM_VERSION_MAJOR}"; then
             LLVM_VERSION_INT="${LLVM_VERSION_MAJOR}0${LLVM_VERSION_MINOR}"
         else
             LLVM_VERSION_INT=`echo $LLVM_VERSION | sed -e 's/\([[0-9]]\)\.\([[0-9]]\)/\10\2/g'`
@@ -1653,16 +1653,16 @@ gallium_check_st() {
          fi
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
     fi
-    if test "x$enable_dri" = xyes && test "x$2" != x; then
+    if test "x$enable_dri" = xyes && test -n "$2"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $2"
     fi
-    if test "x$enable_xa" = xyes && test "x$3" != x; then
+    if test "x$enable_xa" = xyes && test -n "$3"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
     fi
-    if test "x$enable_xvmc" = xyes && test "x$4" != x; then
+    if test "x$enable_xvmc" = xyes && test -n "$4"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
     fi
-    if test "x$enable_vdpau" = xyes && test "x$5" != x; then
+    if test "x$enable_vdpau" = xyes && test -n "$5"; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
     fi
     if test "x$enable_omx" = xyes && test "x$6" != x; then
@@ -1718,7 +1718,7 @@ fi
 AM_CONDITIONAL(NEED_NONNULL_WINSYS, test "x$NEED_NONNULL_WINSYS" = xyes)
 
 dnl Duplicates in GALLIUM_DRIVERS_DIRS are removed by sorting it after this block
-if test "x$with_gallium_drivers" != x; then
+if test -n "$with_gallium_drivers"; then
     gallium_drivers=`IFS=', '; echo $with_gallium_drivers`
     for driver in $gallium_drivers; do
         case "x$driver" in
