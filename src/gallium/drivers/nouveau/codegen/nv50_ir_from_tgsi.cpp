@@ -1728,6 +1728,14 @@ Converter::handleTEX(Value *dst[4], int R, int S, int L, int C, int Dx, int Dy)
    if (tgsi.getOpcode() == TGSI_OPCODE_SAMPLE_C_LZ)
       texi->tex.levelZero = true;
 
+   for (s = 0; s < tgsi.getNumTexOffsets(); ++s) {
+      for (c = 0; c < 3; ++c) {
+         texi->tex.offset[s][c] = tgsi.getTexOffset(s).getValueU32(c, info);
+         if (texi->tex.offset[s][c])
+            texi->tex.useOffsets = s + 1;
+      }
+   }
+
    bb->insertTail(texi);
 }
 
