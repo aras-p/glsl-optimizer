@@ -399,6 +399,13 @@ struct dd_function_table {
    void (*UnmapRenderbuffer)(struct gl_context *ctx,
 			     struct gl_renderbuffer *rb);
 
+   /**
+    * Optional driver entrypoint that binds a non-texture renderbuffer's
+    * contents to a texture image.
+    */
+   GLboolean (*BindRenderbufferTexImage)(struct gl_context *ctx,
+                                         struct gl_renderbuffer *rb,
+                                         struct gl_texture_image *texImage);
    /*@}*/
 
 

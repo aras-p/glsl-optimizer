@@ -322,6 +322,41 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    _mesa_unlock_texture(&brw->ctx, texObj);
 }
 
+static GLboolean
+intel_bind_renderbuffer_tex_image(struct gl_context *ctx,
+                                  struct gl_renderbuffer *rb,
+                                  struct gl_texture_image *image)
+{
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   struct intel_texture_image *intel_image = intel_texture_image(image);
+   struct gl_texture_object *texobj = image->TexObject;
+   struct intel_texture_object *intel_texobj = intel_texture_object(texobj);
+
+   /* We can only handle RB allocated with AllocRenderbufferStorage, or
+    * window-system renderbuffers.
+    */
+   assert(!rb->TexImage);
+
+   if (!irb->mt)
+      return false;
+
+   _mesa_lock_texture(ctx, texobj);
+   _mesa_init_teximage_fields(ctx, image,
+			      rb->Width, rb->Height, 1,
+			      0, rb->InternalFormat, rb->Format);
+   image->NumSamples = rb->NumSamples;
+
+   intel_miptree_reference(&intel_image->mt, irb->mt);
+
+   /* Immediately validate the image to the object. */
+   intel_miptree_reference(&intel_texobj->mt, intel_image->mt);
+
+   intel_texobj->needs_validate = true;
+   _mesa_unlock_texture(ctx, texobj);
+
+   return true;
+}
+
 void
 intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 {
@@ -385,4 +420,5 @@ intelInitTextureImageFuncs(struct dd_function_table *functions)
 {
    functions->TexImage = intelTexImage;
    functions->EGLImageTargetTexture2D = intel_image_target_texture_2d;
+   functions->BindRenderbufferTexImage = intel_bind_renderbuffer_tex_image;
 }
