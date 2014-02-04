@@ -1498,11 +1498,11 @@ AC_ARG_ENABLE([gallium-llvm],
     [enable_gallium_llvm="$enableval"],
     [enable_gallium_llvm=auto])
 
-AC_ARG_WITH([llvm-shared-libs],
-    [AS_HELP_STRING([--with-llvm-shared-libs],
-        [link with LLVM shared libraries @<:@default=disabled@:>@])],
+AC_ARG_ENABLE([llvm-shared-libs],
+    [AS_HELP_STRING([--enable-llvm-shared-libs],
+        [link with LLVM shared libraries @<:@default=enabled@:>@])],
     [],
-    [with_llvm_shared_libs=no])
+    [with_llvm_shared_libs=yes])
 
 AC_ARG_WITH([llvm-prefix],
     [AS_HELP_STRING([--with-llvm-prefix],
