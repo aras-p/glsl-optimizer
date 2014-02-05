@@ -94,7 +94,7 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
 }
 
 /**
- * Try to do a color-only glBlitFramebuffer using texturing.
+ * Try to do a color or depth glBlitFramebuffer using texturing.
  *
  * We can do this when the src renderbuffer is actually a texture, or when the
  * driver exposes BindRenderbufferTexImage().
@@ -104,11 +104,12 @@ blitframebuffer_texture(struct gl_context *ctx,
                         GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
                         GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                         GLenum filter, GLint flipX, GLint flipY,
-                        GLboolean glsl_version)
+                        GLboolean glsl_version, GLboolean do_depth)
 {
    const struct gl_framebuffer *readFb = ctx->ReadBuffer;
+   int att_index = do_depth ? BUFFER_DEPTH : readFb->_ColorReadBufferIndex;
    const struct gl_renderbuffer_attachment *readAtt =
-      &readFb->Attachment[readFb->_ColorReadBufferIndex];
+      &readFb->Attachment[att_index];
    struct blit_state *blit = &ctx->Meta->Blit;
    const GLint dstX = MIN2(dstX0, dstX1);
    const GLint dstY = MIN2(dstY0, dstY1);
@@ -263,8 +264,11 @@ blitframebuffer_texture(struct gl_context *ctx,
 
    /* setup viewport */
    _mesa_set_viewport(ctx, 0, dstX, dstY, dstW, dstH);
-   _mesa_ColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-   _mesa_DepthMask(GL_FALSE);
+   _mesa_ColorMask(!do_depth, !do_depth, !do_depth, !do_depth);
+   _mesa_set_enable(ctx, GL_DEPTH_TEST, do_depth);
+   _mesa_DepthMask(do_depth);
+   _mesa_DepthFunc(GL_ALWAYS);
+
    _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
    /* Restore texture object state, the texture binding will
@@ -338,8 +342,21 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
       if (blitframebuffer_texture(ctx, srcX0, srcY0, srcX1, srcY1,
                                   dstX0, dstY0, dstX1, dstY1,
                                   filter, dstFlipX, dstFlipY,
-                                  use_glsl_version)) {
+                                  use_glsl_version, false)) {
          mask &= ~GL_COLOR_BUFFER_BIT;
+         if (mask == 0x0) {
+            _mesa_meta_end(ctx);
+            return;
+         }
+      }
+   }
+
+   if (mask & GL_DEPTH_BUFFER_BIT && use_glsl_version) {
+      if (blitframebuffer_texture(ctx, srcX0, srcY0, srcX1, srcY1,
+                                  dstX0, dstY0, dstX1, dstY1,
+                                  filter, dstFlipX, dstFlipY,
+                                  use_glsl_version, true)) {
+         mask &= ~GL_DEPTH_BUFFER_BIT;
          if (mask == 0x0) {
             _mesa_meta_end(ctx);
             return;
