@@ -47,8 +47,9 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 		if (parser->has_new_source_number)			\
 			yylloc->source = parser->new_source_number;	\
 		yylloc->first_column = yycolumn + 1;			\
-		yylloc->first_line = yylineno;				\
+		yylloc->first_line = yylloc->last_line = yylineno;	\
 		yycolumn += yyleng;					\
+		yylloc->last_column = yycolumn + 1;			\
 		parser->has_new_line_number = 0;			\
 		parser->has_new_source_number = 0;			\
  } while(0);

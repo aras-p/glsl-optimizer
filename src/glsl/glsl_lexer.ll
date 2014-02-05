@@ -38,8 +38,9 @@ static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
    do {								\
       yylloc->source = 0;					\
       yylloc->first_column = yycolumn + 1;			\
-      yylloc->first_line = yylineno + 1;			\
+      yylloc->first_line = yylloc->last_line = yylineno + 1;	\
       yycolumn += yyleng;					\
+      yylloc->last_column = yycolumn + 1;			\
    } while(0);
 
 #define YY_USER_INIT yylineno = 0; yycolumn = 0;
