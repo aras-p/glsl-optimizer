@@ -828,10 +828,7 @@ gen8_disassemble(FILE *file, struct gen8_instruction *inst, int gen)
       pad(file, 64);
       err |= src2_3src(file, inst);
    } else {
-      if (m_opcode[opcode].ndst > 0) {
-         pad(file, 16);
-         err |= dest(file, inst);
-      } else if (opcode == BRW_OPCODE_ENDIF) {
+      if (opcode == BRW_OPCODE_ENDIF) {
          format(file, " %d", gen8_jip(inst));
       } else if (opcode == BRW_OPCODE_IF ||
                  opcode == BRW_OPCODE_ELSE ||
@@ -840,15 +837,19 @@ gen8_disassemble(FILE *file, struct gen8_instruction *inst, int gen)
                  opcode == BRW_OPCODE_CONTINUE ||
                  opcode == BRW_OPCODE_HALT) {
          format(file, " %d %d", gen8_jip(inst), gen8_uip(inst));
-      }
-
-      if (m_opcode[opcode].nsrc > 0) {
-         pad(file, 32);
-         err |= src0(file, inst);
-      }
-      if (m_opcode[opcode].nsrc > 1) {
-         pad(file, 48);
-         err |= src1(file, inst);
+      } else {
+         if (m_opcode[opcode].ndst > 0) {
+            pad(file, 16);
+            err |= dest(file, inst);
+         }
+         if (m_opcode[opcode].nsrc > 0) {
+            pad(file, 32);
+            err |= src0(file, inst);
+         }
+         if (m_opcode[opcode].nsrc > 1) {
+            pad(file, 48);
+            err |= src1(file, inst);
+         }
       }
    }
 
