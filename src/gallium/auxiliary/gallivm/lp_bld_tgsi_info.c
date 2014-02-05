@@ -47,7 +47,7 @@ struct analysis_context
    struct lp_tgsi_info *info;
 
    unsigned num_imms;
-   float imm[128][4];
+   float imm[LP_MAX_TGSI_IMMEDIATES][4];
 
    struct lp_tgsi_channel_info temp[32][4];
 };
@@ -487,7 +487,7 @@ lp_build_tgsi_info(const struct tgsi_token *tokens,
                    struct lp_tgsi_info *info)
 {
    struct tgsi_parse_context parse;
-   struct analysis_context ctx;
+   struct analysis_context *ctx;
    unsigned index;
    unsigned chan;
 
@@ -495,8 +495,8 @@ lp_build_tgsi_info(const struct tgsi_token *tokens,
 
    tgsi_scan_shader(tokens, &info->base);
 
-   memset(&ctx, 0, sizeof ctx);
-   ctx.info = info;
+   ctx = CALLOC(1, sizeof(struct analysis_context));
+   ctx->info = info;
 
    tgsi_parse_init(&parse, tokens);
 
@@ -518,7 +518,7 @@ lp_build_tgsi_info(const struct tgsi_token *tokens,
                goto finished;
             }
 
-            analyse_instruction(&ctx, inst);
+            analyse_instruction(ctx, inst);
          }
          break;
 
@@ -527,16 +527,16 @@ lp_build_tgsi_info(const struct tgsi_token *tokens,
             const unsigned size =
                   parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
             assert(size <= 4);
-            if (ctx.num_imms < Elements(ctx.imm)) {
+            if (ctx->num_imms < Elements(ctx->imm)) {
                for (chan = 0; chan < size; ++chan) {
                   float value = parse.FullToken.FullImmediate.u[chan].Float;
-                  ctx.imm[ctx.num_imms][chan] = value;
+                  ctx->imm[ctx->num_imms][chan] = value;
 
                   if (value < 0.0f || value > 1.0f) {
                      info->unclamped_immediates = TRUE;
                   }
                }
-               ++ctx.num_imms;
+               ++ctx->num_imms;
             }
          }
          break;
@@ -551,6 +551,7 @@ lp_build_tgsi_info(const struct tgsi_token *tokens,
 finished:
 
    tgsi_parse_free(&parse);
+   FREE(ctx);
 
 
    /*
