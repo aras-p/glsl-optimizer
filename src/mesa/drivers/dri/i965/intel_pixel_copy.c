@@ -66,6 +66,8 @@ do_blit_copypixels(struct gl_context * ctx,
    /* Update draw buffer bounds */
    _mesa_update_state(ctx);
 
+   intel_prepare_render(brw);
+
    switch (type) {
    case GL_COLOR:
       if (fb->_NumColorDrawBuffers != 1) {
@@ -147,8 +149,6 @@ do_blit_copypixels(struct gl_context * ctx,
       perf_debug("glCopyPixles(): Unsupported pixel zoom\n");
       return false;
    }
-
-   intel_prepare_render(brw);
 
    intel_batchbuffer_flush(brw);
 

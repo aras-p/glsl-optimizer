@@ -72,6 +72,8 @@ do_blit_drawpixels(struct gl_context * ctx,
       return false;
    }
 
+   intel_prepare_render(brw);
+
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
@@ -100,8 +102,6 @@ do_blit_drawpixels(struct gl_context * ctx,
    src_offset = (GLintptr)pixels;
    src_offset += _mesa_image_offset(2, unpack, width, height,
 				    format, type, 0, 0, 0);
-
-   intel_prepare_render(brw);
 
    src_buffer = intel_bufferobj_buffer(brw, src,
 				       src_offset, width * height *
