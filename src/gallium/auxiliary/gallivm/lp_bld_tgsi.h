@@ -444,7 +444,7 @@ struct lp_build_tgsi_soa_context
 
    struct tgsi_declaration_sampler_view sv[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
-   LLVMValueRef immediates[LP_MAX_TGSI_IMMEDIATES][TGSI_NUM_CHANNELS];
+   LLVMValueRef immediates[LP_MAX_INLINED_IMMEDIATES][TGSI_NUM_CHANNELS];
    LLVMValueRef temps[LP_MAX_INLINED_TEMPS][TGSI_NUM_CHANNELS];
    LLVMValueRef addr[LP_MAX_TGSI_ADDRS][TGSI_NUM_CHANNELS];
    LLVMValueRef preds[LP_MAX_TGSI_PREDS][TGSI_NUM_CHANNELS];
@@ -482,7 +482,7 @@ struct lp_build_tgsi_soa_context
    struct lp_exec_mask exec_mask;
 
    uint num_immediates;
-
+   boolean use_immediates_array;
 };
 
 void
@@ -536,7 +536,7 @@ struct lp_build_tgsi_aos_context
 
    struct lp_build_sampler_aos *sampler;
 
-   LLVMValueRef immediates[LP_MAX_TGSI_IMMEDIATES];
+   LLVMValueRef immediates[LP_MAX_INLINED_IMMEDIATES];
    LLVMValueRef temps[LP_MAX_INLINED_TEMPS];
    LLVMValueRef addr[LP_MAX_TGSI_ADDRS];
    LLVMValueRef preds[LP_MAX_TGSI_PREDS];

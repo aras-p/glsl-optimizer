@@ -47,18 +47,20 @@
 
 #define LP_MAX_TGSI_ADDRS 16
 
-#define LP_MAX_TGSI_IMMEDIATES 256
+#define LP_MAX_TGSI_IMMEDIATES 4096
 
 #define LP_MAX_TGSI_PREDS 16
 
 #define LP_MAX_TGSI_CONST_BUFFERS 16
 
 /*
- * For quick access we cache temps in a statically
- * allocated array. This defines the maximum size
- * of that array.
+ * For quick access we cache registers in statically
+ * allocated arrays. Here we define the maximum size
+ * for those arrays.
  */
 #define LP_MAX_INLINED_TEMPS 256
+
+#define LP_MAX_INLINED_IMMEDIATES 256
 
 /**
  * Maximum control flow nesting

@@ -1042,7 +1042,7 @@ lp_build_tgsi_aos(struct gallivm_state *gallivm,
             const uint size = parse.FullToken.FullImmediate.Immediate.NrTokens - 1;
             float imm[4];
             assert(size <= 4);
-            assert(num_immediates < LP_MAX_TGSI_IMMEDIATES);
+            assert(num_immediates < LP_MAX_INLINED_IMMEDIATES);
             for (chan = 0; chan < 4; ++chan) {
                imm[chan] = 0.0f;
             }

@@ -1295,33 +1295,42 @@ emit_fetch_immediate(
    LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef res = NULL;
 
-   if (reg->Register.Indirect) {
-      LLVMValueRef indirect_index;
-      LLVMValueRef index_vec;  /* index into the immediate register array */
+   if (bld->use_immediates_array || reg->Register.Indirect) {
       LLVMValueRef imms_array;
       LLVMTypeRef fptr_type;
-
-      indirect_index = get_indirect_index(bld,
-                                          reg->Register.File,
-                                          reg->Register.Index,
-                                          &reg->Indirect);
-      /*
-       * Unlike for other reg classes, adding pixel offsets is unnecessary -
-       * immediates are stored as full vectors (FIXME??? - might be better
-       * to store them the same as constants) but all elements are the same
-       * in any case.
-       */
-      index_vec = get_soa_array_offsets(&bld_base->uint_bld,
-                                        indirect_index,
-                                        swizzle,
-                                        FALSE);
 
       /* cast imms_array pointer to float* */
       fptr_type = LLVMPointerType(LLVMFloatTypeInContext(gallivm->context), 0);
       imms_array = LLVMBuildBitCast(builder, bld->imms_array, fptr_type, "");
 
-      /* Gather values from the immediate register array */
-      res = build_gather(&bld_base->base, imms_array, index_vec, NULL);
+      if (reg->Register.Indirect) {
+         LLVMValueRef indirect_index;
+         LLVMValueRef index_vec;  /* index into the immediate register array */
+
+         indirect_index = get_indirect_index(bld,
+                                             reg->Register.File,
+                                             reg->Register.Index,
+                                             &reg->Indirect);
+         /*
+          * Unlike for other reg classes, adding pixel offsets is unnecessary -
+          * immediates are stored as full vectors (FIXME??? - might be better
+          * to store them the same as constants) but all elements are the same
+          * in any case.
+          */
+         index_vec = get_soa_array_offsets(&bld_base->uint_bld,
+                                           indirect_index,
+                                           swizzle,
+                                           FALSE);
+
+         /* Gather values from the immediate register array */
+         res = build_gather(&bld_base->base, imms_array, index_vec, NULL);
+      } else {
+         LLVMValueRef lindex = lp_build_const_int32(gallivm,
+                                        reg->Register.Index * 4 + swizzle);
+         LLVMValueRef imms_ptr =  LLVMBuildGEP(builder,
+                                                bld->imms_array, &lindex, 1, "");
+         res = LLVMBuildLoad(builder, imms_ptr, "");
+      }
    }
    else {
       res = bld->immediates[reg->Register.Index][swizzle];
@@ -2728,51 +2737,71 @@ void lp_emit_immediate_soa(
 {
    struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
    struct gallivm_state * gallivm = bld_base->base.gallivm;
-
-   /* simply copy the immediate values into the next immediates[] slot */
+   LLVMValueRef imms[4];
    unsigned i;
    const uint size = imm->Immediate.NrTokens - 1;
    assert(size <= 4);
-   assert(bld->num_immediates < LP_MAX_TGSI_IMMEDIATES);
    switch (imm->Immediate.DataType) {
    case TGSI_IMM_FLOAT32:
       for( i = 0; i < size; ++i )
-         bld->immediates[bld->num_immediates][i] =
-            lp_build_const_vec(gallivm, bld_base->base.type, imm->u[i].Float);
+         imms[i] =
+               lp_build_const_vec(gallivm, bld_base->base.type, imm->u[i].Float);
 
       break;
    case TGSI_IMM_UINT32:
       for( i = 0; i < size; ++i ) {
          LLVMValueRef tmp = lp_build_const_vec(gallivm, bld_base->uint_bld.type, imm->u[i].Uint);
-         bld->immediates[bld->num_immediates][i] =
-            LLVMConstBitCast(tmp, bld_base->base.vec_type);
+         imms[i] = LLVMConstBitCast(tmp, bld_base->base.vec_type);
       }
 
       break;
    case TGSI_IMM_INT32:
       for( i = 0; i < size; ++i ) {
          LLVMValueRef tmp = lp_build_const_vec(gallivm, bld_base->int_bld.type, imm->u[i].Int);
-         bld->immediates[bld->num_immediates][i] =
-            LLVMConstBitCast(tmp, bld_base->base.vec_type);
+         imms[i] = LLVMConstBitCast(tmp, bld_base->base.vec_type);
       }
-            
+
       break;
    }
    for( i = size; i < 4; ++i )
-      bld->immediates[bld->num_immediates][i] = bld_base->base.undef;
+      imms[i] = bld_base->base.undef;
 
-   if (bld->indirect_files & (1 << TGSI_FILE_IMMEDIATE)) {
+   if (bld->use_immediates_array) {
       unsigned index = bld->num_immediates;
       struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
       LLVMBuilderRef builder = gallivm->builder;
+
+      assert(bld->indirect_files & (1 << TGSI_FILE_IMMEDIATE));
       for (i = 0; i < 4; ++i ) {
          LLVMValueRef lindex = lp_build_const_int32(
-            bld->bld_base.base.gallivm, index * 4 + i);
+                  bld->bld_base.base.gallivm, index * 4 + i);
          LLVMValueRef imm_ptr = LLVMBuildGEP(builder,
                                              bld->imms_array, &lindex, 1, "");
-         LLVMBuildStore(builder, 
-                        bld->immediates[index][i],
-                        imm_ptr);
+         LLVMBuildStore(builder, imms[i], imm_ptr);
+      }
+   } else {
+      /* simply copy the immediate values into the next immediates[] slot */
+      unsigned i;
+      const uint size = imm->Immediate.NrTokens - 1;
+      assert(size <= 4);
+      assert(bld->num_immediates < LP_MAX_INLINED_IMMEDIATES);
+
+      for(i = 0; i < 4; ++i )
+         bld->immediates[bld->num_immediates][i] = imms[i];
+
+      if (bld->indirect_files & (1 << TGSI_FILE_IMMEDIATE)) {
+         unsigned index = bld->num_immediates;
+         struct gallivm_state *gallivm = bld->bld_base.base.gallivm;
+         LLVMBuilderRef builder = gallivm->builder;
+         for (i = 0; i < 4; ++i ) {
+            LLVMValueRef lindex = lp_build_const_int32(
+                     bld->bld_base.base.gallivm, index * 4 + i);
+            LLVMValueRef imm_ptr = LLVMBuildGEP(builder,
+                                                bld->imms_array, &lindex, 1, "");
+            LLVMBuildStore(builder,
+                           bld->immediates[index][i],
+                           imm_ptr);
+         }
       }
    }
 
@@ -3629,6 +3658,17 @@ lp_build_tgsi_soa(struct gallivm_state *gallivm,
    if (info->file_max[TGSI_FILE_TEMPORARY] >= LP_MAX_INLINED_TEMPS) {
       bld.indirect_files |= (1 << TGSI_FILE_TEMPORARY);
    }
+   /*
+    * For performance reason immediates are always backed in a static
+    * array, but if their number is too great, we have to use just
+    * a dynamically allocated array.
+    */
+   bld.use_immediates_array =
+         (info->file_max[TGSI_FILE_IMMEDIATE] >= LP_MAX_INLINED_IMMEDIATES);
+   if (bld.use_immediates_array) {
+      bld.indirect_files |= (1 << TGSI_FILE_IMMEDIATE);
+   }
+
 
    bld.bld_base.soa = TRUE;
    bld.bld_base.emit_debug = emit_debug;
