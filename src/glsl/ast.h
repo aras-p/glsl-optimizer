@@ -98,6 +98,20 @@ public:
    }
 
    /**
+    * Set the source location range of an AST node using two location nodes
+    *
+    * \sa ast_node::set_location
+    */
+   void set_location_range(const struct YYLTYPE &begin, const struct YYLTYPE &end)
+   {
+      this->location.source = begin.source;
+      this->location.first_line = begin.first_line;
+      this->location.last_line = end.last_line;
+      this->location.first_column = begin.first_column;
+      this->location.last_column = end.last_column;
+   }
+
+   /**
     * Source location of the AST node.
     */
    struct {
