@@ -828,11 +828,10 @@ gen8_disassemble(FILE *file, struct gen8_instruction *inst, int gen)
       pad(file, 64);
       err |= src2_3src(file, inst);
    } else {
-      if (opcode == BRW_OPCODE_ENDIF) {
+      if (opcode == BRW_OPCODE_ENDIF || opcode == BRW_OPCODE_WHILE) {
          format(file, " %d", gen8_jip(inst));
       } else if (opcode == BRW_OPCODE_IF ||
                  opcode == BRW_OPCODE_ELSE ||
-                 opcode == BRW_OPCODE_WHILE ||
                  opcode == BRW_OPCODE_BREAK ||
                  opcode == BRW_OPCODE_CONTINUE ||
                  opcode == BRW_OPCODE_HALT) {
