@@ -423,6 +423,7 @@ struct _mesa_glsl_parse_state {
    const struct gl_extensions *extensions;
 
    bool uses_builtin_functions;
+   bool fs_uses_gl_fragcoord;
 
    /**
     * For geometry shaders, size of the most recently seen input declaration

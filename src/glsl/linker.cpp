@@ -1195,6 +1195,82 @@ private:
 };
 
 /**
+ * Performs the cross-validation of layout qualifiers specified in
+ * redeclaration of gl_FragCoord for the attached fragment shaders,
+ * and propagates them to the linked FS and linked shader program.
+ */
+static void
+link_fs_input_layout_qualifiers(struct gl_shader_program *prog,
+	                        struct gl_shader *linked_shader,
+	                        struct gl_shader **shader_list,
+	                        unsigned num_shaders)
+{
+   linked_shader->redeclares_gl_fragcoord = false;
+   linked_shader->uses_gl_fragcoord = false;
+   linked_shader->origin_upper_left = false;
+   linked_shader->pixel_center_integer = false;
+
+   if (linked_shader->Stage != MESA_SHADER_FRAGMENT || prog->Version < 150)
+      return;
+
+   for (unsigned i = 0; i < num_shaders; i++) {
+      struct gl_shader *shader = shader_list[i];
+      /* From the GLSL 1.50 spec, page 39:
+       *
+       *   "If gl_FragCoord is redeclared in any fragment shader in a program,
+       *    it must be redeclared in all the fragment shaders in that program
+       *    that have a static use gl_FragCoord."
+       *
+       * Exclude the case when one of the 'linked_shader' or 'shader' redeclares
+       * gl_FragCoord with no layout qualifiers but the other one doesn't
+       * redeclare it. If we strictly follow GLSL 1.50 spec's language, it
+       * should be a link error. But, generating link error for this case will
+       * be a wrong behaviour which spec didn't intend to do and it could also
+       * break some applications.
+       */
+      if ((linked_shader->redeclares_gl_fragcoord
+           && !shader->redeclares_gl_fragcoord
+           && shader->uses_gl_fragcoord
+           && (linked_shader->origin_upper_left
+               || linked_shader->pixel_center_integer))
+          || (shader->redeclares_gl_fragcoord
+              && !linked_shader->redeclares_gl_fragcoord
+              && linked_shader->uses_gl_fragcoord
+              && (shader->origin_upper_left
+                  || shader->pixel_center_integer))) {
+             linker_error(prog, "fragment shader defined with conflicting "
+                         "layout qualifiers for gl_FragCoord\n");
+      }
+
+      /* From the GLSL 1.50 spec, page 39:
+       *
+       *   "All redeclarations of gl_FragCoord in all fragment shaders in a
+       *    single program must have the same set of qualifiers."
+       */
+      if (linked_shader->redeclares_gl_fragcoord && shader->redeclares_gl_fragcoord
+          && (shader->origin_upper_left != linked_shader->origin_upper_left
+          || shader->pixel_center_integer != linked_shader->pixel_center_integer)) {
+         linker_error(prog, "fragment shader defined with conflicting "
+                      "layout qualifiers for gl_FragCoord\n");
+      }
+
+      /* Update the linked shader state.  Note that uses_gl_fragcoord should
+       * accumulate the results.  The other values should replace.  If there
+       * are multiple redeclarations, all the fields except uses_gl_fragcoord
+       * are already known to be the same.
+       */
+      if (shader->redeclares_gl_fragcoord || shader->uses_gl_fragcoord) {
+         linked_shader->redeclares_gl_fragcoord =
+            shader->redeclares_gl_fragcoord;
+         linked_shader->uses_gl_fragcoord = linked_shader->uses_gl_fragcoord
+            || shader->uses_gl_fragcoord;
+         linked_shader->origin_upper_left = shader->origin_upper_left;
+         linked_shader->pixel_center_integer = shader->pixel_center_integer;
+      }
+   }
+}
+
+/**
  * Performs the cross-validation of geometry shader max_vertices and
  * primitive type layout qualifiers for the attached geometry shaders,
  * and propagates them to the linked GS and linked shader program.
@@ -1471,6 +1547,7 @@ link_intrastage_shaders(void *mem_ctx,
    linked->NumUniformBlocks = num_uniform_blocks;
    ralloc_steal(linked, linked->UniformBlocks);
 
+   link_fs_input_layout_qualifiers(prog, linked, shader_list, num_shaders);
    link_gs_inout_layout_qualifiers(prog, linked, shader_list, num_shaders);
    link_cs_input_layout_qualifiers(prog, linked, shader_list, num_shaders);
 

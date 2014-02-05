@@ -197,6 +197,12 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->default_uniform_qualifier->flags.q.shared = 1;
    this->default_uniform_qualifier->flags.q.column_major = 1;
 
+   this->fs_uses_gl_fragcoord = false;
+   this->fs_redeclares_gl_fragcoord = false;
+   this->fs_origin_upper_left = false;
+   this->fs_pixel_center_integer = false;
+   this->fs_redeclares_gl_fragcoord_with_no_layout_qualifiers = false;
+
    this->gs_input_prim_type_specified = false;
    this->gs_input_size = 0;
    this->in_qualifier = new(this) ast_type_qualifier();
@@ -1356,6 +1362,14 @@ set_shader_inout_layout(struct gl_shader *shader,
       assert(!state->cs_input_local_size_specified);
    }
 
+   if (shader->Stage != MESA_SHADER_FRAGMENT) {
+      /* Should have been prevented by the parser. */
+      assert(!state->fs_uses_gl_fragcoord);
+      assert(!state->fs_redeclares_gl_fragcoord);
+      assert(!state->fs_pixel_center_integer);
+      assert(!state->fs_origin_upper_left);
+   }
+
    switch (shader->Stage) {
    case MESA_SHADER_GEOMETRY:
       shader->Geom.VerticesOut = 0;
@@ -1387,6 +1401,13 @@ set_shader_inout_layout(struct gl_shader *shader,
          for (int i = 0; i < 3; i++)
             shader->Comp.LocalSize[i] = 0;
       }
+      break;
+
+   case MESA_SHADER_FRAGMENT:
+      shader->redeclares_gl_fragcoord = state->fs_redeclares_gl_fragcoord;
+      shader->uses_gl_fragcoord = state->fs_uses_gl_fragcoord;
+      shader->pixel_center_integer = state->fs_pixel_center_integer;
+      shader->origin_upper_left = state->fs_origin_upper_left;
       break;
 
    default:

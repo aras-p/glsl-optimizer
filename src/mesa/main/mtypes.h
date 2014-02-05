@@ -2432,6 +2432,14 @@ struct gl_shader
    struct glsl_symbol_table *symbols;
 
    bool uses_builtin_functions;
+   bool uses_gl_fragcoord;
+   bool redeclares_gl_fragcoord;
+
+   /**
+    * Fragment shader state from GLSL 1.50 layout qualifiers.
+    */
+   bool origin_upper_left;
+   bool pixel_center_integer;
 
    /**
     * Geometry shader state from GLSL 1.50 layout qualifiers.

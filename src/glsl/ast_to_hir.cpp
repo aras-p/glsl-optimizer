@@ -123,6 +123,11 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
       instructions->push_head(var);
    }
 
+   /* Figure out if gl_FragCoord is actually used in fragment shader */
+   ir_variable *const var = state->symbols->get_variable("gl_FragCoord");
+   if (var != NULL)
+      state->fs_uses_gl_fragcoord = var->data.used;
+
    /* From section 7.1 (Built-In Language Variables) of the GLSL 4.10 spec:
     *
     *     If multiple shaders using members of a built-in block belonging to
