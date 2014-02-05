@@ -174,7 +174,10 @@ upload_ps_state(struct brw_context *brw)
    if (ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT] == NULL)
       dw3 |= GEN7_PS_FLOATING_POINT_MODE_ALT;
 
-   dw6 |= (brw->max_wm_threads - 2) << HSW_PS_MAX_THREADS_SHIFT;
+   /* 3DSTATE_PS expects the number of threads per PSD, which is always 64;
+    * it implicitly scales for different GT levels (which have some # of PSDs).
+    */
+   dw6 |= (64 - 2) << HSW_PS_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->base.nr_params > 0)
