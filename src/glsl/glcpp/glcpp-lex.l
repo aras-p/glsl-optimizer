@@ -338,7 +338,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	return OTHER;
 }
 
-{HSPACE}+ {
+{HSPACE} {
 	if (yyextra->space_tokens) {
 		return SPACE;
 	}
