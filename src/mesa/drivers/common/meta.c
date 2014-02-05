@@ -1684,7 +1684,6 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
 /**
  * Try to do a glBlitFramebuffer using no-copy texturing.
  * We can do this when the src renderbuffer is actually a texture.
- * But if the src buffer == dst buffer we cannot do this.
  *
  * \return new buffer mask indicating the buffers left to blit using the
  *         normal path.
@@ -1697,9 +1696,7 @@ blitframebuffer_texture(struct gl_context *ctx,
                         GLint flipY, GLboolean glsl_version)
 {
    if (mask & GL_COLOR_BUFFER_BIT) {
-      const struct gl_framebuffer *drawFb = ctx->DrawBuffer;
       const struct gl_framebuffer *readFb = ctx->ReadBuffer;
-      const struct gl_renderbuffer_attachment *drawAtt;
       const struct gl_renderbuffer_attachment *readAtt =
          &readFb->Attachment[readFb->_ColorReadBufferIndex];
 
@@ -1717,23 +1714,6 @@ blitframebuffer_texture(struct gl_context *ctx,
          GLuint sampler, samplerSave =
             ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
             ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
-         int i;
-
-         /* Iterate through all draw buffers */
-         for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
-            int idx = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
-            if (idx == -1)
-               continue;
-            drawAtt = &drawFb->Attachment[idx];
-
-            if (drawAtt->Texture == readAtt->Texture) {
-               /* Can't use same texture as both the source and dest.  We need
-                * to handle overlapping blits and besides, some hw may not
-                * support this.
-                */
-               return mask;
-            }
-         }
 
          if (target != GL_TEXTURE_2D && target != GL_TEXTURE_RECTANGLE_ARB) {
             /* Can't handle other texture types at this time */
