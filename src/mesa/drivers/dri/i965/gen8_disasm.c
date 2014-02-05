@@ -829,13 +829,17 @@ gen8_disassemble(FILE *file, struct gen8_instruction *inst, int gen)
       err |= src2_3src(file, inst);
    } else {
       if (opcode == BRW_OPCODE_ENDIF || opcode == BRW_OPCODE_WHILE) {
-         format(file, " %d", gen8_jip(inst));
+         pad(file, 16);
+         format(file, "JIP: %d", gen8_jip(inst));
       } else if (opcode == BRW_OPCODE_IF ||
                  opcode == BRW_OPCODE_ELSE ||
                  opcode == BRW_OPCODE_BREAK ||
                  opcode == BRW_OPCODE_CONTINUE ||
                  opcode == BRW_OPCODE_HALT) {
-         format(file, " %d %d", gen8_jip(inst), gen8_uip(inst));
+         pad(file, 16);
+         format(file, "JIP: %d", gen8_jip(inst));
+         pad(file, 32);
+         format(file, "UIP: %d", gen8_uip(inst));
       } else {
          if (m_opcode[opcode].ndst > 0) {
             pad(file, 16);
