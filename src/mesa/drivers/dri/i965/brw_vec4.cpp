@@ -1168,7 +1168,7 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst)
       if (inst->dst.writemask & 8)
          printf("w");
    }
-   printf(":%s, ", reg_encoding[inst->dst.type]);
+   printf(":%s, ", brw_reg_type_letters(inst->dst.type));
 
    for (int i = 0; i < 3 && inst->src[i].file != BAD_FILE; i++) {
       if (inst->src[i].negate)

@@ -36,6 +36,35 @@
 
 #include "glsl/ralloc.h"
 
+/**
+ * Converts a BRW_REGISTER_TYPE_* enum to a short string (F, UD, and so on).
+ *
+ * This is different than reg_encoding from brw_disasm.c in that it operates
+ * on the abstract enum values, rather than the generation-specific encoding.
+ */
+const char *
+brw_reg_type_letters(unsigned type)
+{
+   const char *names[] = {
+      [BRW_REGISTER_TYPE_UD] = "UD",
+      [BRW_REGISTER_TYPE_D]  = "D",
+      [BRW_REGISTER_TYPE_UW] = "UW",
+      [BRW_REGISTER_TYPE_W]  = "W",
+      [BRW_REGISTER_TYPE_F]  = "F",
+      [BRW_REGISTER_TYPE_UB] = "UB",
+      [BRW_REGISTER_TYPE_B]  = "B",
+      [BRW_REGISTER_TYPE_UV] = "UV",
+      [BRW_REGISTER_TYPE_V]  = "V",
+      [BRW_REGISTER_TYPE_VF] = "VF",
+      [BRW_REGISTER_TYPE_DF] = "DF",
+      [BRW_REGISTER_TYPE_HF] = "HF",
+      [BRW_REGISTER_TYPE_UQ] = "UQ",
+      [BRW_REGISTER_TYPE_Q]  = "Q",
+   };
+   assert(type <= BRW_REGISTER_TYPE_UQ);
+   return names[type];
+}
+
 /* Returns the corresponding conditional mod for swapping src0 and
  * src1 in e.g. CMP.
  */

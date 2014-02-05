@@ -116,6 +116,7 @@ enum brw_reg_type {
 
 unsigned brw_reg_type_to_hw_type(const struct brw_context *brw,
                                  enum brw_reg_type type, unsigned file);
+const char *brw_reg_type_letters(unsigned brw_reg_type);
 
 #define REG_SIZE (8*4)
 

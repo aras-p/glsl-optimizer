@@ -3127,7 +3127,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
          printf("|");
 
       if (inst->src[i].file != IMM) {
-         printf(":%s", reg_encoding[inst->src[i].type]);
+         printf(":%s", brw_reg_type_letters(inst->src[i].type));
       }
 
       if (i < 2 && inst->src[i + 1].file != BAD_FILE)
