@@ -392,6 +392,9 @@ driFetchDrawable(struct glx_context *gc, GLXDrawable glxDrawable)
    if (priv == NULL)
       return NULL;
 
+   if (glxDrawable == None)
+      return NULL;
+
    psc = priv->screens[gc->screen];
    if (priv->drawHash == NULL)
       return NULL;

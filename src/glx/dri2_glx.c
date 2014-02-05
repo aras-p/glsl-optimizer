@@ -141,6 +141,7 @@ dri2_bind_context(struct glx_context *context, struct glx_context *old,
    struct dri2_context *pcp = (struct dri2_context *) context;
    struct dri2_screen *psc = (struct dri2_screen *) pcp->base.psc;
    struct dri2_drawable *pdraw, *pread;
+   __DRIdrawable *dri_draw = NULL, *dri_read = NULL;
    struct dri2_display *pdp;
 
    pdraw = (struct dri2_drawable *) driFetchDrawable(context, draw);
@@ -148,20 +149,26 @@ dri2_bind_context(struct glx_context *context, struct glx_context *old,
 
    driReleaseDrawables(&pcp->base);
 
-   if (pdraw == NULL || pread == NULL)
+   if (pdraw)
+      dri_draw = pdraw->driDrawable;
+   else if (draw != None)
       return GLXBadDrawable;
 
-   if (!(*psc->core->bindContext) (pcp->driContext,
-				   pdraw->driDrawable, pread->driDrawable))
+   if (pread)
+      dri_read = pread->driDrawable;
+   else if (read != None)
+      return GLXBadDrawable;
+
+   if (!(*psc->core->bindContext) (pcp->driContext, dri_draw, dri_read))
       return GLXBadContext;
 
    /* If the server doesn't send invalidate events, we may miss a
     * resize before the rendering starts.  Invalidate the buffers now
     * so the driver will recheck before rendering starts. */
    pdp = (struct dri2_display *) psc->base.display;
-   if (!pdp->invalidateAvailable) {
+   if (!pdp->invalidateAvailable && pdraw) {
       dri2InvalidateBuffers(psc->base.dpy, pdraw->base.xDrawable);
-      if (pread != pdraw)
+      if (pread != pdraw && pread)
 	 dri2InvalidateBuffers(psc->base.dpy, pread->base.xDrawable);
    }
 
