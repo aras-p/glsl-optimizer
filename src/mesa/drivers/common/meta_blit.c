@@ -211,7 +211,7 @@ blitframebuffer_texture(struct gl_context *ctx,
                               GL_SKIP_DECODE_EXT);
    }
 
-   if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) {
+   if (!glsl_version) {
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
       _mesa_set_enable(ctx, target, GL_TRUE);
    }
@@ -393,10 +393,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
 
    }
 
-   /* glEnable() in gles2 and gles3 doesn't allow GL_TEXTURE_{1D, 2D, etc.}
-    * tokens.
-    */
-   if (_mesa_is_desktop_gl(ctx) || ctx->API == API_OPENGLES)
+   if (!use_glsl_version)
       _mesa_set_enable(ctx, tex->Target, GL_TRUE);
 
    if (mask & GL_COLOR_BUFFER_BIT) {
@@ -490,7 +487,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
       /* XXX can't easily do stencil */
    }
 
-   if (_mesa_is_desktop_gl(ctx) || ctx->API == API_OPENGLES)
+   if (!use_glsl_version)
       _mesa_set_enable(ctx, tex->Target, GL_FALSE);
 
    _mesa_meta_end(ctx);
