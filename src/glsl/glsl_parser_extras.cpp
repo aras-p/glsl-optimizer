@@ -807,8 +807,10 @@ ast_node::print(void) const
 ast_node::ast_node(void)
 {
    this->location.source = 0;
-   this->location.line = 0;
-   this->location.column = 0;
+   this->location.first_line = 0;
+   this->location.first_column = 0;
+   this->location.last_line = 0;
+   this->location.last_column = 0;
 }
 
 
