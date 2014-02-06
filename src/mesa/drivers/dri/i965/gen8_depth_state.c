@@ -119,14 +119,23 @@ gen8_emit_depth_stencil_hiz(struct brw_context *brw,
    OUT_BATCH(depth_mt ? depth_mt->qpitch >> 2 : 0);
    ADVANCE_BATCH();
 
-   assert(!hiz); /* TODO: Implement HiZ. */
-   BEGIN_BATCH(5);
-   OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (5 - 2));
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
+   if (!hiz) {
+      BEGIN_BATCH(5);
+      OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (5 - 2));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else {
+      BEGIN_BATCH(5);
+      OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (5 - 2));
+      OUT_BATCH(depth_mt->hiz_mt->region->pitch - 1);
+      OUT_RELOC64(depth_mt->hiz_mt->region->bo,
+                  I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, 0);
+      OUT_BATCH(depth_mt->hiz_mt->qpitch >> 2);
+      ADVANCE_BATCH();
+   }
 
    if (stencil_mt == NULL) {
       BEGIN_BATCH(5);
