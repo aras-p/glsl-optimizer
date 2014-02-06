@@ -1494,7 +1494,7 @@ type_qualifier:
                           "just before storage qualifiers");
       }
       $$ = $1;
-      $$.flags.i |= $2.flags.i;
+      $$.merge_qualifier(&@1, state, $2);
    }
    | storage_qualifier type_qualifier
    {
