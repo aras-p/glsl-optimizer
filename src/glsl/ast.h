@@ -102,10 +102,10 @@ public:
     */
    struct {
       unsigned source;          /**< GLSL source number. */
-      unsigned first_line;      /**< Line number within the source string. */
-      unsigned first_column;    /**< Column in the line. */
-      unsigned last_line;       /**< Line number within the source string. */
-      unsigned last_column;     /**< Column in the line. */
+      unsigned first_line;      /**< First line number within the source string. */
+      unsigned first_column;    /**< First column in the first line. */
+      unsigned last_line;       /**< Last line number within the source string. */
+      unsigned last_column;     /**< Last column in the last line. */
    } location;
 
    exec_node link;
