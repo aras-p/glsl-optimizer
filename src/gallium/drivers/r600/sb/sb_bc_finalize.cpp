@@ -814,6 +814,8 @@ unsigned bc_finalizer::get_stack_depth(node *n, unsigned &loops,
 		if (has_non_wqm_push)
 			++stack_elements;
 		break;
+	case HW_CLASS_UNKNOWN:
+		assert(0);
 	}
 	return stack_elements;
 }

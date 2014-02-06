@@ -159,7 +159,7 @@ emit_fetch(
 	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
 	struct lp_build_tgsi_soa_context *bld = lp_soa_context(bld_base);
 	LLVMBuilderRef builder = bld_base->base.gallivm->builder;
-	LLVMValueRef result, ptr;
+	LLVMValueRef result = NULL, ptr;
 
 	if (swizzle == ~0) {
 		LLVMValueRef values[TGSI_NUM_CHANNELS];
@@ -409,8 +409,10 @@ emit_store(
 				break;
 
 			case TGSI_FILE_TEMPORARY:
-				if (uses_temp_indirect_addressing(bld_base))
+				if (uses_temp_indirect_addressing(bld_base)) {
+					temp_ptr = NULL;
 					break;
+				}
 				temp_ptr = ctx->temps[ TGSI_NUM_CHANNELS * reg->Register.Index + chan_index];
 				break;
 
