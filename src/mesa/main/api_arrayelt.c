@@ -1458,7 +1458,8 @@ _ae_destroy_context(struct gl_context *ctx)
 static void
 check_vbo(AEcontext *actx, struct gl_buffer_object *vbo)
 {
-   if (_mesa_is_bufferobj(vbo) && !_mesa_bufferobj_mapped(vbo)) {
+   if (_mesa_is_bufferobj(vbo) &&
+       !_mesa_bufferobj_mapped(vbo, MAP_INTERNAL)) {
       GLuint i;
       for (i = 0; i < actx->nr_vbos; i++)
          if (actx->vbo[i] == vbo)
@@ -1633,7 +1634,8 @@ _ae_map_vbos(struct gl_context *ctx)
       ctx->Driver.MapBufferRange(ctx, 0,
 				 actx->vbo[i]->Size,
 				 GL_MAP_READ_BIT,
-				 actx->vbo[i]);
+				 actx->vbo[i],
+                                 MAP_INTERNAL);
 
    if (actx->nr_vbos)
       actx->mapped_vbos = GL_TRUE;
@@ -1655,7 +1657,7 @@ _ae_unmap_vbos(struct gl_context *ctx)
    assert (!actx->NewState);
 
    for (i = 0; i < actx->nr_vbos; i++)
-      ctx->Driver.UnmapBuffer(ctx, actx->vbo[i]);
+      ctx->Driver.UnmapBuffer(ctx, actx->vbo[i], MAP_INTERNAL);
 
    actx->mapped_vbos = GL_FALSE;
 }
@@ -1701,7 +1703,8 @@ _ae_ArrayElement(GLint elt)
    /* emit generic attribute elements */
    for (at = actx->attribs; at->func; at++) {
       const GLubyte *src
-         = ADD_POINTERS(at->array->BufferObj->Pointer, at->array->Ptr)
+         = ADD_POINTERS(at->array->BufferObj->Mappings[MAP_INTERNAL].Pointer,
+                        at->array->Ptr)
          + elt * at->array->StrideB;
       at->func(at->index, src);
    }
@@ -1709,7 +1712,8 @@ _ae_ArrayElement(GLint elt)
    /* emit conventional arrays elements */
    for (aa = actx->arrays; aa->offset != -1 ; aa++) {
       const GLubyte *src
-         = ADD_POINTERS(aa->array->BufferObj->Pointer, aa->array->Ptr)
+         = ADD_POINTERS(aa->array->BufferObj->Mappings[MAP_INTERNAL].Pointer,
+                        aa->array->Ptr)
          + elt * aa->array->StrideB;
       CALL_by_offset(disp, (array_func), aa->offset, ((const void *) src));
    }

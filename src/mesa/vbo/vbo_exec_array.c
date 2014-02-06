@@ -101,7 +101,8 @@ vbo_get_minmax_index(struct gl_context *ctx,
    if (_mesa_is_bufferobj(ib->obj)) {
       GLsizeiptr size = MIN2(count * index_size, ib->obj->Size);
       indices = ctx->Driver.MapBufferRange(ctx, (GLintptr) indices, size,
-                                           GL_MAP_READ_BIT, ib->obj);
+                                           GL_MAP_READ_BIT, ib->obj,
+                                           MAP_INTERNAL);
    }
 
    switch (ib->type) {
@@ -177,7 +178,7 @@ vbo_get_minmax_index(struct gl_context *ctx,
    }
 
    if (_mesa_is_bufferobj(ib->obj)) {
-      ctx->Driver.UnmapBuffer(ctx, ib->obj);
+      ctx->Driver.UnmapBuffer(ctx, ib->obj, MAP_INTERNAL);
    }
 }
 
@@ -229,13 +230,15 @@ check_array_data(struct gl_context *ctx, struct gl_client_array *array,
    if (array->Enabled) {
       const void *data = array->Ptr;
       if (_mesa_is_bufferobj(array->BufferObj)) {
-         if (!array->BufferObj->Pointer) {
+         if (!array->BufferObj->Mappings[MAP_INTERNAL].Pointer) {
             /* need to map now */
-            array->BufferObj->Pointer =
+            array->BufferObj->Mappings[MAP_INTERNAL].Pointer =
                ctx->Driver.MapBufferRange(ctx, 0, array->BufferObj->Size,
-					  GL_MAP_READ_BIT, array->BufferObj);
+					  GL_MAP_READ_BIT, array->BufferObj,
+                                          MAP_INTERNAL);
          }
-         data = ADD_POINTERS(data, array->BufferObj->Pointer);
+         data = ADD_POINTERS(data,
+                             array->BufferObj->Mappings[MAP_INTERNAL].Pointer);
       }
       switch (array->Type) {
       case GL_FLOAT:
@@ -273,8 +276,8 @@ unmap_array_buffer(struct gl_context *ctx, struct gl_client_array *array)
 {
    if (array->Enabled &&
        _mesa_is_bufferobj(array->BufferObj) &&
-       _mesa_bufferobj_mapped(array->BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, array->BufferObj);
+       _mesa_bufferobj_mapped(array->BufferObj, MAP_INTERNAL)) {
+      ctx->Driver.UnmapBuffer(ctx, array->BufferObj, MAP_INTERNAL);
    }
 }
 
@@ -295,7 +298,8 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
       elemMap = ctx->Driver.MapBufferRange(ctx, 0,
 					   ctx->Array.VAO->IndexBufferObj->Size,
 					   GL_MAP_READ_BIT,
-					   ctx->Array.VAO->IndexBufferObj);
+					   ctx->Array.VAO->IndexBufferObj,
+                                           MAP_INTERNAL);
       elements = ADD_POINTERS(elements, elemMap);
    }
 
@@ -324,7 +328,8 @@ check_draw_elements_data(struct gl_context *ctx, GLsizei count, GLenum elemType,
    }
 
    if (_mesa_is_bufferobj(vao->IndexBufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, ctx->Array.VAO->IndexBufferObj);
+      ctx->Driver.UnmapBuffer(ctx, ctx->Array.VAO->IndexBufferObj,
+                              MAP_INTERNAL);
    }
 
    for (k = 0; k < Elements(vao->_VertexAttrib); k++) {
@@ -374,7 +379,8 @@ print_draw_arrays(struct gl_context *ctx,
 
       if (bufName) {
          GLubyte *p = ctx->Driver.MapBufferRange(ctx, 0, bufObj->Size,
-						 GL_MAP_READ_BIT, bufObj);
+						 GL_MAP_READ_BIT, bufObj,
+                                                 MAP_INTERNAL);
          int offset = (int) (GLintptr) exec->array.inputs[i]->Ptr;
          float *f = (float *) (p + offset);
          int *k = (int *) f;
@@ -386,7 +392,7 @@ print_draw_arrays(struct gl_context *ctx,
          for (i = 0; i < n; i++) {
             printf("    float[%d] = 0x%08x %f\n", i, k[i], f[i]);
          }
-         ctx->Driver.UnmapBuffer(ctx, bufObj);
+         ctx->Driver.UnmapBuffer(ctx, bufObj, MAP_INTERNAL);
       }
    }
 }
@@ -885,7 +891,8 @@ dump_element_buffer(struct gl_context *ctx, GLenum type)
       ctx->Driver.MapBufferRange(ctx, 0,
 				 ctx->Array.VAO->IndexBufferObj->Size,
 				 GL_MAP_READ_BIT,
-				 ctx->Array.VAO->IndexBufferObj);
+                                 ctx->Array.VAO->IndexBufferObj,
+                                 MAP_INTERNAL);
    switch (type) {
    case GL_UNSIGNED_BYTE:
       {
@@ -927,7 +934,8 @@ dump_element_buffer(struct gl_context *ctx, GLenum type)
       ;
    }
 
-   ctx->Driver.UnmapBuffer(ctx, ctx->Array.VAO->IndexBufferObj);
+   ctx->Driver.UnmapBuffer(ctx, ctx->Array.VAO->IndexBufferObj,
+                           MAP_INTERNAL);
 }
 #endif
 

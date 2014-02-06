@@ -60,9 +60,12 @@ radeonDeleteBufferObject(struct gl_context * ctx,
                          struct gl_buffer_object *obj)
 {
     struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);
+    int i;
 
-    if (obj->Pointer) {
-        radeon_bo_unmap(radeon_obj->bo);
+    for (i = 0; i < MAP_COUNT; i++) {
+       if (obj->Mappings[i].Pointer) {
+           radeon_bo_unmap(radeon_obj->bo);
+       }
     }
 
     if (radeon_obj->bo) {
@@ -175,7 +178,8 @@ radeonGetBufferSubData(struct gl_context * ctx,
 static void *
 radeonMapBufferRange(struct gl_context * ctx,
 		     GLintptr offset, GLsizeiptr length,
-		     GLbitfield access, struct gl_buffer_object *obj)
+		     GLbitfield access, struct gl_buffer_object *obj,
+                     gl_map_buffer_index index)
 {
     struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);
     const GLboolean write_only =
@@ -186,18 +190,18 @@ radeonMapBufferRange(struct gl_context * ctx,
     }
 
     if (radeon_obj->bo == NULL) {
-        obj->Pointer = NULL;
+        obj->Mappings[index].Pointer = NULL;
         return NULL;
     }
 
-    obj->Offset = offset;
-    obj->Length = length;
-    obj->AccessFlags = access;
+    obj->Mappings[index].Offset = offset;
+    obj->Mappings[index].Length = length;
+    obj->Mappings[index].AccessFlags = access;
 
     radeon_bo_map(radeon_obj->bo, write_only);
 
-    obj->Pointer = radeon_obj->bo->ptr + offset;
-    return obj->Pointer;
+    obj->Mappings[index].Pointer = radeon_obj->bo->ptr + offset;
+    return obj->Mappings[index].Pointer;
 }
 
 
@@ -206,7 +210,8 @@ radeonMapBufferRange(struct gl_context * ctx,
  */
 static GLboolean
 radeonUnmapBuffer(struct gl_context * ctx,
-                  struct gl_buffer_object *obj)
+                  struct gl_buffer_object *obj,
+                  gl_map_buffer_index index)
 {
     struct radeon_buffer_object *radeon_obj = get_radeon_buffer_object(obj);
 
@@ -214,9 +219,9 @@ radeonUnmapBuffer(struct gl_context * ctx,
         radeon_bo_unmap(radeon_obj->bo);
     }
 
-    obj->Pointer = NULL;
-    obj->Offset = 0;
-    obj->Length = 0;
+    obj->Mappings[index].Pointer = NULL;
+    obj->Mappings[index].Offset = 0;
+    obj->Mappings[index].Length = 0;
 
     return GL_TRUE;
 }

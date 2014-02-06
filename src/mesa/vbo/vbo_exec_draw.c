@@ -220,9 +220,10 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
 
          if (_mesa_is_bufferobj(exec->vtx.bufferobj)) {
             /* a real buffer obj: Ptr is an offset, not a pointer*/
-            assert(exec->vtx.bufferobj->Pointer);  /* buf should be mapped */
+            assert(exec->vtx.bufferobj->Mappings[MAP_INTERNAL].Pointer);
             assert(offset >= 0);
-            arrays[attr].Ptr = (GLubyte *)exec->vtx.bufferobj->Offset + offset;
+            arrays[attr].Ptr = (GLubyte *)
+               exec->vtx.bufferobj->Mappings[MAP_INTERNAL].Offset + offset;
          }
          else {
             /* Ptr into ordinary app memory */
@@ -261,12 +262,15 @@ vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
       struct gl_context *ctx = exec->ctx;
       
       if (ctx->Driver.FlushMappedBufferRange) {
-         GLintptr offset = exec->vtx.buffer_used - exec->vtx.bufferobj->Offset;
-         GLsizeiptr length = (exec->vtx.buffer_ptr - exec->vtx.buffer_map) * sizeof(float);
+         GLintptr offset = exec->vtx.buffer_used -
+                           exec->vtx.bufferobj->Mappings[MAP_INTERNAL].Offset;
+         GLsizeiptr length = (exec->vtx.buffer_ptr - exec->vtx.buffer_map) *
+                             sizeof(float);
 
          if (length)
             ctx->Driver.FlushMappedBufferRange(ctx, offset, length,
-                                               exec->vtx.bufferobj);
+                                               exec->vtx.bufferobj,
+                                               MAP_INTERNAL);
       }
 
       exec->vtx.buffer_used += (exec->vtx.buffer_ptr -
@@ -275,7 +279,7 @@ vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
       assert(exec->vtx.buffer_used <= VBO_VERT_BUFFER_SIZE);
       assert(exec->vtx.buffer_ptr != NULL);
       
-      ctx->Driver.UnmapBuffer(ctx, exec->vtx.bufferobj);
+      ctx->Driver.UnmapBuffer(ctx, exec->vtx.bufferobj, MAP_INTERNAL);
       exec->vtx.buffer_map = NULL;
       exec->vtx.buffer_ptr = NULL;
       exec->vtx.max_vert = 0;
@@ -312,7 +316,8 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
                                                   (VBO_VERT_BUFFER_SIZE - 
                                                    exec->vtx.buffer_used),
                                                   accessRange,
-                                                  exec->vtx.bufferobj);
+                                                  exec->vtx.bufferobj,
+                                                  MAP_INTERNAL);
          exec->vtx.buffer_ptr = exec->vtx.buffer_map;
       }
       else {
@@ -336,7 +341,8 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
             (GLfloat *)ctx->Driver.MapBufferRange(ctx,
                                                   0, VBO_VERT_BUFFER_SIZE,
                                                   accessRange,
-                                                  exec->vtx.bufferobj);
+                                                  exec->vtx.bufferobj,
+                                                  MAP_INTERNAL);
       }
       else {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "VBO allocation");

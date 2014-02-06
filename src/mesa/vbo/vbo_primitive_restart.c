@@ -177,7 +177,7 @@ vbo_sw_primitive_restart(struct gl_context *ctx,
    struct _mesa_prim temp_prim;
    struct vbo_context *vbo = vbo_context(ctx);
    vbo_draw_func draw_prims_func = vbo->draw_prims;
-   GLboolean map_ib = ib->obj->Name && !ib->obj->Pointer;
+   GLboolean map_ib = ib->obj->Name && !ib->obj->Mappings[MAP_INTERNAL].Pointer;
    void *ptr;
 
    /* If there is an indirect buffer, map it and extract the draw params */
@@ -186,7 +186,7 @@ vbo_sw_primitive_restart(struct gl_context *ctx,
       struct _mesa_index_buffer new_ib = *ib;
       const uint32_t *indirect_params;
       if (!ctx->Driver.MapBufferRange(ctx, 0, indirect->Size, GL_MAP_READ_BIT,
-            indirect)) {
+                                      indirect, MAP_INTERNAL)) {
 
          /* something went wrong with mapping, give up */
          _mesa_error(ctx, GL_OUT_OF_MEMORY,
@@ -195,8 +195,9 @@ vbo_sw_primitive_restart(struct gl_context *ctx,
       }
 
       assert(nr_prims == 1);
-      indirect_params = (const uint32_t *) ADD_POINTERS(indirect->Pointer,
-            new_prim.indirect_offset);
+      indirect_params = (const uint32_t *)
+                        ADD_POINTERS(indirect->Mappings[MAP_INTERNAL].Pointer,
+                                     new_prim.indirect_offset);
 
       new_prim.is_indirect = 0;
       new_prim.count = indirect_params[0];
@@ -210,7 +211,7 @@ vbo_sw_primitive_restart(struct gl_context *ctx,
       prims = &new_prim;
       ib = &new_ib;
 
-      ctx->Driver.UnmapBuffer(ctx, indirect);
+      ctx->Driver.UnmapBuffer(ctx, indirect, MAP_INTERNAL);
    }
 
    /* Find the sub-primitives. These are regions in the index buffer which
@@ -218,17 +219,17 @@ vbo_sw_primitive_restart(struct gl_context *ctx,
     */
    if (map_ib) {
       ctx->Driver.MapBufferRange(ctx, 0, ib->obj->Size, GL_MAP_READ_BIT,
-                                 ib->obj);
+                                 ib->obj, MAP_INTERNAL);
    }
 
-   ptr = ADD_POINTERS(ib->obj->Pointer, ib->ptr);
+   ptr = ADD_POINTERS(ib->obj->Mappings[MAP_INTERNAL].Pointer, ib->ptr);
 
    sub_prims = find_sub_primitives(ptr, vbo_sizeof_ib_type(ib->type),
                                    0, ib->count, restart_index,
                                    &num_sub_prims);
 
    if (map_ib) {
-      ctx->Driver.UnmapBuffer(ctx, ib->obj);
+      ctx->Driver.UnmapBuffer(ctx, ib->obj, MAP_INTERNAL);
    }
 
    /* Loop over the primitives, and use the located sub-primitives to draw

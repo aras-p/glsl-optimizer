@@ -635,7 +635,8 @@ _mesa_get_teximage(struct gl_context *ctx,
        */
       GLubyte *buf = (GLubyte *)
          ctx->Driver.MapBufferRange(ctx, 0, ctx->Pack.BufferObj->Size,
-				    GL_MAP_WRITE_BIT, ctx->Pack.BufferObj);
+				    GL_MAP_WRITE_BIT, ctx->Pack.BufferObj,
+                                    MAP_INTERNAL);
       if (!buf) {
          /* out of memory or other unexpected error */
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage(map PBO failed)");
@@ -664,7 +665,7 @@ _mesa_get_teximage(struct gl_context *ctx,
    }
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, ctx->Pack.BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, ctx->Pack.BufferObj, MAP_INTERNAL);
    }
 }
 
@@ -689,7 +690,8 @@ _mesa_get_compressed_teximage(struct gl_context *ctx,
       /* pack texture image into a PBO */
       GLubyte *buf = (GLubyte *)
          ctx->Driver.MapBufferRange(ctx, 0, ctx->Pack.BufferObj->Size,
-				    GL_MAP_WRITE_BIT, ctx->Pack.BufferObj);
+				    GL_MAP_WRITE_BIT, ctx->Pack.BufferObj,
+                                    MAP_INTERNAL);
       if (!buf) {
          /* out of memory or other unexpected error */
          _mesa_error(ctx, GL_OUT_OF_MEMORY,
@@ -731,7 +733,7 @@ _mesa_get_compressed_teximage(struct gl_context *ctx,
    }
 
    if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, ctx->Pack.BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, ctx->Pack.BufferObj, MAP_INTERNAL);
    }
 }
 

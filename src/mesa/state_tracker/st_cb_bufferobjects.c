@@ -76,7 +76,7 @@ st_bufferobj_free(struct gl_context *ctx, struct gl_buffer_object *obj)
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
    assert(obj->RefCount == 0);
-   assert(st_obj->transfer == NULL);
+   _mesa_buffer_unmap_all_mappings(ctx, obj);
 
    if (st_obj->buffer)
       pipe_resource_reference(&st_obj->buffer, NULL);
@@ -310,7 +310,8 @@ st_bufferobj_data(struct gl_context *ctx,
 static void *
 st_bufferobj_map_range(struct gl_context *ctx,
                        GLintptr offset, GLsizeiptr length, GLbitfield access,
-                       struct gl_buffer_object *obj)
+                       struct gl_buffer_object *obj,
+                       gl_map_buffer_index index)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
@@ -355,28 +356,29 @@ st_bufferobj_map_range(struct gl_context *ctx,
    assert(offset < obj->Size);
    assert(offset + length <= obj->Size);
 
-   obj->Pointer = pipe_buffer_map_range(pipe,
+   obj->Mappings[index].Pointer = pipe_buffer_map_range(pipe,
                                         st_obj->buffer,
                                         offset, length,
                                         flags,
-                                        &st_obj->transfer);
-   if (obj->Pointer) {
-      obj->Offset = offset;
-      obj->Length = length;
-      obj->AccessFlags = access;
+                                        &st_obj->transfer[index]);
+   if (obj->Mappings[index].Pointer) {
+      obj->Mappings[index].Offset = offset;
+      obj->Mappings[index].Length = length;
+      obj->Mappings[index].AccessFlags = access;
    }
    else {
-      st_obj->transfer = NULL;
+      st_obj->transfer[index] = NULL;
    }
 
-   return obj->Pointer;
+   return obj->Mappings[index].Pointer;
 }
 
 
 static void
 st_bufferobj_flush_mapped_range(struct gl_context *ctx,
                                 GLintptr offset, GLsizeiptr length,
-                                struct gl_buffer_object *obj)
+                                struct gl_buffer_object *obj,
+                                gl_map_buffer_index index)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
@@ -384,14 +386,15 @@ st_bufferobj_flush_mapped_range(struct gl_context *ctx,
    /* Subrange is relative to mapped range */
    assert(offset >= 0);
    assert(length >= 0);
-   assert(offset + length <= obj->Length);
-   assert(obj->Pointer);
+   assert(offset + length <= obj->Mappings[index].Length);
+   assert(obj->Mappings[index].Pointer);
 
    if (!length)
       return;
 
-   pipe_buffer_flush_mapped_range(pipe, st_obj->transfer,
-                                  obj->Offset + offset, length);
+   pipe_buffer_flush_mapped_range(pipe, st_obj->transfer[index],
+                                  obj->Mappings[index].Offset + offset,
+                                  length);
 }
 
 
@@ -399,18 +402,19 @@ st_bufferobj_flush_mapped_range(struct gl_context *ctx,
  * Called via glUnmapBufferARB().
  */
 static GLboolean
-st_bufferobj_unmap(struct gl_context *ctx, struct gl_buffer_object *obj)
+st_bufferobj_unmap(struct gl_context *ctx, struct gl_buffer_object *obj,
+                   gl_map_buffer_index index)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
-   if (obj->Length)
-      pipe_buffer_unmap(pipe, st_obj->transfer);
+   if (obj->Mappings[index].Length)
+      pipe_buffer_unmap(pipe, st_obj->transfer[index]);
 
-   st_obj->transfer = NULL;
-   obj->Pointer = NULL;
-   obj->Offset = 0;
-   obj->Length = 0;
+   st_obj->transfer[index] = NULL;
+   obj->Mappings[index].Pointer = NULL;
+   obj->Mappings[index].Offset = 0;
+   obj->Mappings[index].Length = 0;
    return GL_TRUE;
 }
 

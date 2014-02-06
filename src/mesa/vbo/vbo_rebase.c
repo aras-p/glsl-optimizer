@@ -157,15 +157,16 @@ void vbo_rebase_prims( struct gl_context *ctx,
    } else if (ib) {
       /* Unfortunately need to adjust each index individually.
        */
-      GLboolean map_ib = ib->obj->Name && !ib->obj->Pointer;
+      GLboolean map_ib = ib->obj->Name &&
+                         !ib->obj->Mappings[MAP_INTERNAL].Pointer;
       void *ptr;
 
       if (map_ib) 
 	 ctx->Driver.MapBufferRange(ctx, 0, ib->obj->Size, GL_MAP_READ_BIT,
-				    ib->obj);
+				    ib->obj, MAP_INTERNAL);
 
 
-      ptr = ADD_POINTERS(ib->obj->Pointer, ib->ptr);
+      ptr = ADD_POINTERS(ib->obj->Mappings[MAP_INTERNAL].Pointer, ib->ptr);
 
       /* Some users might prefer it if we translated elements to
        * GLuints here.  Others wouldn't...
@@ -183,7 +184,7 @@ void vbo_rebase_prims( struct gl_context *ctx,
       }      
 
       if (map_ib) 
-	 ctx->Driver.UnmapBuffer(ctx, ib->obj);
+	 ctx->Driver.UnmapBuffer(ctx, ib->obj, MAP_INTERNAL);
 
       tmp_ib.obj = ctx->Shared->NullBufferObj;
       tmp_ib.ptr = tmp_indices;

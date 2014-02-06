@@ -279,17 +279,18 @@ static void bind_inputs( struct gl_context *ctx,
       const void *ptr;
 
       if (inputs[i]->BufferObj->Name) { 
-	 if (!inputs[i]->BufferObj->Pointer) {
+	 if (!inputs[i]->BufferObj->Mappings[MAP_INTERNAL].Pointer) {
 	    bo[*nr_bo] = inputs[i]->BufferObj;
 	    (*nr_bo)++;
 	    ctx->Driver.MapBufferRange(ctx, 0, inputs[i]->BufferObj->Size,
 				       GL_MAP_READ_BIT,
-				       inputs[i]->BufferObj);
+				       inputs[i]->BufferObj,
+                                       MAP_INTERNAL);
 	    
-	    assert(inputs[i]->BufferObj->Pointer);
+	    assert(inputs[i]->BufferObj->Mappings[MAP_INTERNAL].Pointer);
 	 }
 	 
-	 ptr = ADD_POINTERS(inputs[i]->BufferObj->Pointer,
+	 ptr = ADD_POINTERS(inputs[i]->BufferObj->Mappings[MAP_INTERNAL].Pointer,
 			    inputs[i]->Ptr);
       }
       else
@@ -348,17 +349,19 @@ static void bind_indices( struct gl_context *ctx,
       return;
    }
 
-   if (_mesa_is_bufferobj(ib->obj) && !_mesa_bufferobj_mapped(ib->obj)) {
+   if (_mesa_is_bufferobj(ib->obj) &&
+       !_mesa_bufferobj_mapped(ib->obj, MAP_INTERNAL)) {
       /* if the buffer object isn't mapped yet, map it now */
       bo[*nr_bo] = ib->obj;
       (*nr_bo)++;
       ptr = ctx->Driver.MapBufferRange(ctx, (GLsizeiptr) ib->ptr,
                                        ib->count * vbo_sizeof_ib_type(ib->type),
-				       GL_MAP_READ_BIT, ib->obj);
-      assert(ib->obj->Pointer);
+				       GL_MAP_READ_BIT, ib->obj,
+                                       MAP_INTERNAL);
+      assert(ib->obj->Mappings[MAP_INTERNAL].Pointer);
    } else {
       /* user-space elements, or buffer already mapped */
-      ptr = ADD_POINTERS(ib->obj->Pointer, ib->ptr);
+      ptr = ADD_POINTERS(ib->obj->Mappings[MAP_INTERNAL].Pointer, ib->ptr);
    }
 
    if (ib->type == GL_UNSIGNED_INT && VB->Primitive[0].basevertex == 0) {
@@ -403,7 +406,7 @@ static void unmap_vbos( struct gl_context *ctx,
 {
    GLuint i;
    for (i = 0; i < nr_bo; i++) { 
-      ctx->Driver.UnmapBuffer(ctx, bo[i]);
+      ctx->Driver.UnmapBuffer(ctx, bo[i], MAP_INTERNAL);
    }
 }
 

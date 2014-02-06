@@ -366,12 +366,10 @@ xmesa_DrawPixels_8R8G8B( struct gl_context *ctx,
          buf = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0,
 						      unpack->BufferObj->Size,
 						      GL_MAP_READ_BIT,
-						      unpack->BufferObj);
+						      unpack->BufferObj,
+                                                      MAP_INTERNAL);
          if (!buf) {
-            /* buffer is already mapped - that's an error */
-            _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glDrawPixels(PBO is mapped)");
-            return;
+            return; /* error */
          }
          pixels = ADD_POINTERS(buf, pixels);
       }
@@ -417,7 +415,7 @@ xmesa_DrawPixels_8R8G8B( struct gl_context *ctx,
       }
 
       if (_mesa_is_bufferobj(unpack->BufferObj)) {
-         ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
+         ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj, MAP_INTERNAL);
       }
    }
    else {
@@ -500,12 +498,10 @@ xmesa_DrawPixels_5R6G5B( struct gl_context *ctx,
          buf = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0,
 						      unpack->BufferObj->Size,
 						      GL_MAP_READ_BIT,
-						      unpack->BufferObj);
+						      unpack->BufferObj,
+                                                      MAP_INTERNAL);
          if (!buf) {
-            /* buffer is already mapped - that's an error */
-            _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glDrawPixels(PBO is mapped)");
-            return;
+            return; /* error */
          }
          pixels = ADD_POINTERS(buf, pixels);
       }
@@ -550,7 +546,7 @@ xmesa_DrawPixels_5R6G5B( struct gl_context *ctx,
       }
 
       if (unpack->BufferObj->Name) {
-         ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
+         ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj, MAP_INTERNAL);
       }
    }
    else {

@@ -43,7 +43,7 @@ struct st_buffer_object
 {
    struct gl_buffer_object Base;
    struct pipe_resource *buffer;     /* GPU storage */
-   struct pipe_transfer *transfer; /* In-progress map information */
+   struct pipe_transfer *transfer[MAP_COUNT];
 };
 
 

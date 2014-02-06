@@ -40,7 +40,8 @@
 #include "intel_regions.h"
 
 static GLboolean
-intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj);
+intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj,
+                      gl_map_buffer_index index);
 
 /** Allocates a new drm_intel_bo to store the data for the buffer object. */
 static void
@@ -93,8 +94,7 @@ intel_bufferobj_free(struct gl_context * ctx, struct gl_buffer_object *obj)
     * to the spec, but Mesa doesn't do UnmapBuffer for us at context destroy
     * (though it does if you call glDeleteBuffers)
     */
-   if (obj->Pointer)
-      intel_bufferobj_unmap(ctx, obj);
+   _mesa_buffer_unmap_all_mappings(ctx, obj);
 
    free(intel_obj->sys_buffer);
 
@@ -127,7 +127,8 @@ intel_bufferobj_data(struct gl_context * ctx,
    intel_obj->Base.Usage = usage;
    intel_obj->Base.StorageFlags = storageFlags;
 
-   assert(!obj->Pointer); /* Mesa should have unmapped it */
+   assert(!obj->Mappings[MAP_USER].Pointer); /* Mesa should have unmapped it */
+   assert(!obj->Mappings[MAP_INTERNAL].Pointer);
 
    if (intel_obj->buffer != NULL)
       release_buffer(intel_obj);
@@ -272,7 +273,8 @@ intel_bufferobj_get_subdata(struct gl_context * ctx,
 static void *
 intel_bufferobj_map_range(struct gl_context * ctx,
 			  GLintptr offset, GLsizeiptr length,
-			  GLbitfield access, struct gl_buffer_object *obj)
+			  GLbitfield access, struct gl_buffer_object *obj,
+                          gl_map_buffer_index index)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
@@ -282,9 +284,9 @@ intel_bufferobj_map_range(struct gl_context * ctx,
    /* _mesa_MapBufferRange (GL entrypoint) sets these, but the vbo module also
     * internally uses our functions directly.
     */
-   obj->Offset = offset;
-   obj->Length = length;
-   obj->AccessFlags = access;
+   obj->Mappings[index].Offset = offset;
+   obj->Mappings[index].Length = length;
+   obj->Mappings[index].AccessFlags = access;
 
    if (intel_obj->sys_buffer) {
       const bool read_only =
@@ -294,8 +296,8 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 	 release_buffer(intel_obj);
 
       if (!intel_obj->buffer || intel_obj->source) {
-	 obj->Pointer = intel_obj->sys_buffer + offset;
-	 return obj->Pointer;
+	 obj->Mappings[index].Pointer = intel_obj->sys_buffer + offset;
+	 return obj->Mappings[index].Pointer;
       }
 
       free(intel_obj->sys_buffer);
@@ -303,7 +305,7 @@ intel_bufferobj_map_range(struct gl_context * ctx,
    }
 
    if (intel_obj->buffer == NULL) {
-      obj->Pointer = NULL;
+      obj->Mappings[index].Pointer = NULL;
       return NULL;
    }
 
@@ -346,23 +348,25 @@ intel_bufferobj_map_range(struct gl_context * ctx,
       const unsigned extra = (uintptr_t) offset % alignment;
 
       if (access & GL_MAP_FLUSH_EXPLICIT_BIT) {
-         intel_obj->range_map_buffer = _mesa_align_malloc(length + extra,
-                                                          alignment);
-         obj->Pointer = intel_obj->range_map_buffer + extra;
+         intel_obj->range_map_buffer[index] =
+            _mesa_align_malloc(length + extra, alignment);
+         obj->Mappings[index].Pointer =
+            intel_obj->range_map_buffer[index] + extra;
       } else {
-	 intel_obj->range_map_bo = drm_intel_bo_alloc(intel->bufmgr,
-						      "range map",
-                                                      length + extra,
-                                                      alignment);
+	 intel_obj->range_map_bo[index] = drm_intel_bo_alloc(intel->bufmgr,
+                                                             "range map",
+                                                             length + extra,
+                                                             alignment);
 	 if (!(access & GL_MAP_READ_BIT)) {
-	    drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo);
+	    drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo[index]);
 	 } else {
-	    drm_intel_bo_map(intel_obj->range_map_bo,
+	    drm_intel_bo_map(intel_obj->range_map_bo[index],
 			     (access & GL_MAP_WRITE_BIT) != 0);
 	 }
-	 obj->Pointer = intel_obj->range_map_bo->virtual + extra;
+	 obj->Mappings[index].Pointer =
+            intel_obj->range_map_bo[index]->virtual + extra;
       }
-      return obj->Pointer;
+      return obj->Mappings[index].Pointer;
    }
 
    if (access & GL_MAP_UNSYNCHRONIZED_BIT)
@@ -373,8 +377,8 @@ intel_bufferobj_map_range(struct gl_context * ctx,
       drm_intel_bo_map(intel_obj->buffer, (access & GL_MAP_WRITE_BIT) != 0);
    }
 
-   obj->Pointer = intel_obj->buffer->virtual + offset;
-   return obj->Pointer;
+   obj->Mappings[index].Pointer = intel_obj->buffer->virtual + offset;
+   return obj->Mappings[index].Pointer;
 }
 
 /* Ideally we'd use a BO to avoid taking up cache space for the temporary
@@ -385,7 +389,8 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 static void
 intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
 				   GLintptr offset, GLsizeiptr length,
-				   struct gl_buffer_object *obj)
+                                   struct gl_buffer_object *obj,
+                                   gl_map_buffer_index index)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
@@ -394,7 +399,7 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
    /* Unless we're in the range map using a temporary system buffer,
     * there's no work to do.
     */
-   if (intel_obj->range_map_buffer == NULL)
+   if (intel_obj->range_map_buffer[index] == NULL)
       return;
 
    if (length == 0)
@@ -406,10 +411,11 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
     * former points to the actual mapping while the latter may be offset to
     * meet alignment guarantees.
     */
-   drm_intel_bo_subdata(temp_bo, 0, length, obj->Pointer);
+   drm_intel_bo_subdata(temp_bo, 0, length, obj->Mappings[index].Pointer);
 
    intel_emit_linear_blit(intel,
-			  intel_obj->buffer, obj->Offset + offset,
+			  intel_obj->buffer,
+                          obj->Mappings[index].Offset + offset,
 			  temp_bo, 0,
 			  length);
 
@@ -421,33 +427,35 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
  * Called via glUnmapBuffer().
  */
 static GLboolean
-intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
+intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj,
+                      gl_map_buffer_index index)
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
-   assert(obj->Pointer);
+   assert(obj->Mappings[index].Pointer);
    if (intel_obj->sys_buffer != NULL) {
       /* always keep the mapping around. */
-   } else if (intel_obj->range_map_buffer != NULL) {
+   } else if (intel_obj->range_map_buffer[index] != NULL) {
       /* Since we've emitted some blits to buffers that will (likely) be used
        * in rendering operations in other cache domains in this batch, emit a
        * flush.  Once again, we wish for a domain tracker in libdrm to cover
        * usage inside of a batchbuffer.
        */
       intel_batchbuffer_emit_mi_flush(intel);
-      _mesa_align_free(intel_obj->range_map_buffer);
-      intel_obj->range_map_buffer = NULL;
-   } else if (intel_obj->range_map_bo != NULL) {
-      const unsigned extra = obj->Pointer - intel_obj->range_map_bo->virtual;
+      _mesa_align_free(intel_obj->range_map_buffer[index]);
+      intel_obj->range_map_buffer[index] = NULL;
+   } else if (intel_obj->range_map_bo[index] != NULL) {
+      const unsigned extra = obj->Mappings[index].Pointer -
+                             intel_obj->range_map_bo[index]->virtual;
 
-      drm_intel_bo_unmap(intel_obj->range_map_bo);
+      drm_intel_bo_unmap(intel_obj->range_map_bo[index]);
 
       intel_emit_linear_blit(intel,
-			     intel_obj->buffer, obj->Offset,
-			     intel_obj->range_map_bo, extra,
-			     obj->Length);
+			     intel_obj->buffer, obj->Mappings[index].Offset,
+			     intel_obj->range_map_bo[index], extra,
+			     obj->Mappings[index].Length);
 
       /* Since we've emitted some blits to buffers that will (likely) be used
        * in rendering operations in other cache domains in this batch, emit a
@@ -456,14 +464,14 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj)
        */
       intel_batchbuffer_emit_mi_flush(intel);
 
-      drm_intel_bo_unreference(intel_obj->range_map_bo);
-      intel_obj->range_map_bo = NULL;
+      drm_intel_bo_unreference(intel_obj->range_map_bo[index]);
+      intel_obj->range_map_bo[index] = NULL;
    } else if (intel_obj->buffer != NULL) {
       drm_intel_bo_unmap(intel_obj->buffer);
    }
-   obj->Pointer = NULL;
-   obj->Offset = 0;
-   obj->Length = 0;
+   obj->Mappings[index].Pointer = NULL;
+   obj->Mappings[index].Offset = 0;
+   obj->Mappings[index].Length = 0;
 
    return true;
 }
@@ -607,22 +615,24 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
 	 char *ptr = intel_bufferobj_map_range(ctx, 0, dst->Size,
 					       GL_MAP_READ_BIT |
 					       GL_MAP_WRITE_BIT,
-					       dst);
+					       dst, MAP_INTERNAL);
 	 memmove(ptr + write_offset, ptr + read_offset, size);
-	 intel_bufferobj_unmap(ctx, dst);
+	 intel_bufferobj_unmap(ctx, dst, MAP_INTERNAL);
       } else {
 	 const char *src_ptr;
 	 char *dst_ptr;
 
 	 src_ptr =  intel_bufferobj_map_range(ctx, 0, src->Size,
-					      GL_MAP_READ_BIT, src);
+					      GL_MAP_READ_BIT, src,
+                                              MAP_INTERNAL);
 	 dst_ptr =  intel_bufferobj_map_range(ctx, 0, dst->Size,
-					      GL_MAP_WRITE_BIT, dst);
+					      GL_MAP_WRITE_BIT, dst,
+                                              MAP_INTERNAL);
 
 	 memcpy(dst_ptr + write_offset, src_ptr + read_offset, size);
 
-	 intel_bufferobj_unmap(ctx, src);
-	 intel_bufferobj_unmap(ctx, dst);
+	 intel_bufferobj_unmap(ctx, src, MAP_INTERNAL);
+	 intel_bufferobj_unmap(ctx, dst, MAP_INTERNAL);
       }
       return;
    }

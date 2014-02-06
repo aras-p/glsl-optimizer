@@ -1118,8 +1118,8 @@ void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
 
    /* Free the vertex buffer.  Unmap first if needed.
     */
-   if (_mesa_bufferobj_mapped(exec->vtx.bufferobj)) {
-      ctx->Driver.UnmapBuffer(ctx, exec->vtx.bufferobj);
+   if (_mesa_bufferobj_mapped(exec->vtx.bufferobj, MAP_INTERNAL)) {
+      ctx->Driver.UnmapBuffer(ctx, exec->vtx.bufferobj, MAP_INTERNAL);
    }
    _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
 }

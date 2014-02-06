@@ -78,7 +78,8 @@ static const GLubyte *map_pbo( struct gl_context *ctx,
 
    buf = (GLubyte *) ctx->Driver.MapBufferRange(ctx, 0, unpack->BufferObj->Size,
 						GL_MAP_READ_BIT,
-						unpack->BufferObj);
+						unpack->BufferObj,
+                                                MAP_INTERNAL);
    if (!buf) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glBitmap(PBO is mapped)");
       return NULL;
@@ -311,7 +312,7 @@ out:
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
       /* done with PBO so unmap it now */
-      ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj);
+      ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj, MAP_INTERNAL);
    }
 
    intel_check_front_buffer_rendering(intel);

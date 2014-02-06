@@ -42,9 +42,8 @@ struct intel_buffer_object
    struct gl_buffer_object Base;
    drm_intel_bo *buffer;     /* the low-level buffer manager's buffer handle */
 
-   drm_intel_bo *range_map_bo;
-   void *range_map_buffer;
-   unsigned int range_map_offset;
+   drm_intel_bo *range_map_bo[MAP_COUNT];
+   void *range_map_buffer[MAP_COUNT];
 
    /** @{
     * Tracking for what range of the BO may currently be in use by the GPU.

@@ -451,11 +451,14 @@ replay_init( struct copy_context *copy )
 	 copy->varying[j].size = attr_size(copy->array[i]);
 	 copy->vertex_size += attr_size(copy->array[i]);
       
-	 if (_mesa_is_bufferobj(vbo) && !_mesa_bufferobj_mapped(vbo)) 
-	    ctx->Driver.MapBufferRange(ctx, 0, vbo->Size, GL_MAP_READ_BIT, vbo);
+	 if (_mesa_is_bufferobj(vbo) &&
+             !_mesa_bufferobj_mapped(vbo, MAP_INTERNAL))
+	    ctx->Driver.MapBufferRange(ctx, 0, vbo->Size, GL_MAP_READ_BIT, vbo,
+                                       MAP_INTERNAL);
 
-	 copy->varying[j].src_ptr = ADD_POINTERS(vbo->Pointer,
-						 copy->array[i]->Ptr);
+	 copy->varying[j].src_ptr =
+               ADD_POINTERS(vbo->Mappings[MAP_INTERNAL].Pointer,
+                            copy->array[i]->Ptr);
 
 	 copy->dstarray_ptr[i] = &copy->varying[j].dstarray;
       }
@@ -466,12 +469,13 @@ replay_init( struct copy_context *copy )
     * do it internally.
     */
    if (_mesa_is_bufferobj(copy->ib->obj) &&
-       !_mesa_bufferobj_mapped(copy->ib->obj)) 
+       !_mesa_bufferobj_mapped(copy->ib->obj, MAP_INTERNAL))
       ctx->Driver.MapBufferRange(ctx, 0, copy->ib->obj->Size, GL_MAP_READ_BIT,
-				 copy->ib->obj);
+				 copy->ib->obj, MAP_INTERNAL);
 
-   srcptr = (const GLubyte *) ADD_POINTERS(copy->ib->obj->Pointer,
-                                           copy->ib->ptr);
+   srcptr = (const GLubyte *)
+            ADD_POINTERS(copy->ib->obj->Mappings[MAP_INTERNAL].Pointer,
+                         copy->ib->ptr);
 
    switch (copy->ib->type) {
    case GL_UNSIGNED_BYTE:
@@ -572,15 +576,15 @@ replay_finish( struct copy_context *copy )
     */
    for (i = 0; i < copy->nr_varying; i++) {
       struct gl_buffer_object *vbo = copy->varying[i].array->BufferObj;
-      if (_mesa_is_bufferobj(vbo) && _mesa_bufferobj_mapped(vbo)) 
-	 ctx->Driver.UnmapBuffer(ctx, vbo);
+      if (_mesa_is_bufferobj(vbo) && _mesa_bufferobj_mapped(vbo, MAP_INTERNAL))
+	 ctx->Driver.UnmapBuffer(ctx, vbo, MAP_INTERNAL);
    }
 
    /* Unmap index buffer:
     */
    if (_mesa_is_bufferobj(copy->ib->obj) &&
-       _mesa_bufferobj_mapped(copy->ib->obj)) {
-      ctx->Driver.UnmapBuffer(ctx, copy->ib->obj);
+       _mesa_bufferobj_mapped(copy->ib->obj, MAP_INTERNAL)) {
+      ctx->Driver.UnmapBuffer(ctx, copy->ib->obj, MAP_INTERNAL);
    }
 }
 

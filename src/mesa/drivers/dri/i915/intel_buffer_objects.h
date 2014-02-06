@@ -46,10 +46,8 @@ struct intel_buffer_object
    /** System memory buffer data, if not using a BO to store the data. */
    void *sys_buffer;
 
-   drm_intel_bo *range_map_bo;
-   void *range_map_buffer;
-   unsigned int range_map_offset;
-   GLsizei range_map_size;
+   drm_intel_bo *range_map_bo[MAP_COUNT];
+   void *range_map_buffer[MAP_COUNT];
 
    bool source;
 };

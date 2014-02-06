@@ -253,7 +253,8 @@ vbo_save_map_vertex_store(struct gl_context *ctx,
       GLsizeiptr size = vertex_store->bufferobj->Size - offset;
       GLfloat *range = (GLfloat *)
          ctx->Driver.MapBufferRange(ctx, offset, size, access,
-                                    vertex_store->bufferobj);
+                                    vertex_store->bufferobj,
+                                    MAP_INTERNAL);
       if (range) {
          /* compute address of start of whole buffer (needed elsewhere) */
          vertex_store->buffer = range - vertex_store->used;
@@ -279,13 +280,14 @@ vbo_save_unmap_vertex_store(struct gl_context *ctx,
    if (vertex_store->bufferobj->Size > 0) {
       GLintptr offset = 0;
       GLsizeiptr length = vertex_store->used * sizeof(GLfloat)
-         - vertex_store->bufferobj->Offset;
+         - vertex_store->bufferobj->Mappings[MAP_INTERNAL].Offset;
 
       /* Explicitly flush the region we wrote to */
       ctx->Driver.FlushMappedBufferRange(ctx, offset, length,
-                                         vertex_store->bufferobj);
+                                         vertex_store->bufferobj,
+                                         MAP_INTERNAL);
 
-      ctx->Driver.UnmapBuffer(ctx, vertex_store->bufferobj);
+      ctx->Driver.UnmapBuffer(ctx, vertex_store->bufferobj, MAP_INTERNAL);
    }
    vertex_store->buffer = NULL;
 }
@@ -1118,6 +1120,7 @@ _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum type,
 {
    GET_CURRENT_CONTEXT(ctx);
    struct vbo_save_context *save = &vbo_context(ctx)->save;
+   struct gl_buffer_object *indexbuf = ctx->Array.VAO->IndexBufferObj;
    GLint i;
 
    if (!_mesa_is_valid_prim_mode(ctx, mode)) {
@@ -1140,9 +1143,9 @@ _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum type,
 
    _ae_map_vbos(ctx);
 
-   if (_mesa_is_bufferobj(ctx->Array.VAO->IndexBufferObj))
+   if (_mesa_is_bufferobj(indexbuf))
       indices =
-         ADD_POINTERS(ctx->Array.VAO->IndexBufferObj->Pointer, indices);
+         ADD_POINTERS(indexbuf->Mappings[MAP_INTERNAL].Pointer, indices);
 
    vbo_save_NotifyBegin(ctx, (mode | VBO_SAVE_PRIM_WEAK |
                               VBO_SAVE_PRIM_NO_CURRENT_UPDATE));

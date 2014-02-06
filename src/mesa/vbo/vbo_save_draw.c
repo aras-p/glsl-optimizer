@@ -225,7 +225,8 @@ vbo_save_loopback_vertex_list(struct gl_context *ctx,
       ctx->Driver.MapBufferRange(ctx, 0,
 				 list->vertex_store->bufferobj->Size,
 				 GL_MAP_READ_BIT, /* ? */
-				 list->vertex_store->bufferobj);
+				 list->vertex_store->bufferobj,
+                                 MAP_INTERNAL);
 
    vbo_loopback_vertex_list(ctx,
                             (const GLfloat *)(buffer + list->buffer_offset),
@@ -235,7 +236,8 @@ vbo_save_loopback_vertex_list(struct gl_context *ctx,
                             list->wrap_count,
                             list->vertex_size);
 
-   ctx->Driver.UnmapBuffer(ctx, list->vertex_store->bufferobj);
+   ctx->Driver.UnmapBuffer(ctx, list->vertex_store->bufferobj,
+                           MAP_INTERNAL);
 }
 
 

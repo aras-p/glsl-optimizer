@@ -1439,6 +1439,25 @@ struct gl_viewport_attrib
 };
 
 
+typedef enum {
+   MAP_USER,
+   MAP_INTERNAL,
+
+   MAP_COUNT
+} gl_map_buffer_index;
+
+
+/**
+ * Fields describing a mapped buffer range.
+ */
+struct gl_buffer_mapping {
+   GLbitfield AccessFlags; /**< Mask of GL_MAP_x_BIT flags */
+   GLvoid *Pointer;     /**< User-space address of mapping */
+   GLintptr Offset;     /**< Mapped offset */
+   GLsizeiptr Length;   /**< Mapped length */
+};
+
+
 /**
  * GL_ARB_vertex/pixel_buffer_object buffer object
  */
@@ -1452,17 +1471,12 @@ struct gl_buffer_object
    GLbitfield StorageFlags; /**< GL_MAP_PERSISTENT_BIT, etc. */
    GLsizeiptrARB Size;  /**< Size of buffer storage in bytes */
    GLubyte *Data;       /**< Location of storage either in RAM or VRAM. */
-   /** Fields describing a mapped buffer */
-   /*@{*/
-   GLbitfield AccessFlags; /**< Mask of GL_MAP_x_BIT flags */
-   GLvoid *Pointer;     /**< User-space address of mapping */
-   GLintptr Offset;     /**< Mapped offset */
-   GLsizeiptr Length;   /**< Mapped length */
-   /*@}*/
    GLboolean DeletePending;   /**< true if buffer object is removed from the hash */
    GLboolean Written;   /**< Ever written to? (for debugging) */
    GLboolean Purgeable; /**< Is the buffer purgeable under memory pressure? */
    GLboolean Immutable; /**< GL_ARB_buffer_storage */
+
+   struct gl_buffer_mapping Mappings[MAP_COUNT];
 };
 
 

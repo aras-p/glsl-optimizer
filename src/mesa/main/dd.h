@@ -605,14 +605,17 @@ struct dd_function_table {
     */
    void * (*MapBufferRange)( struct gl_context *ctx, GLintptr offset,
                              GLsizeiptr length, GLbitfield access,
-                             struct gl_buffer_object *obj);
+                             struct gl_buffer_object *obj,
+                             gl_map_buffer_index index);
 
    void (*FlushMappedBufferRange)(struct gl_context *ctx,
                                   GLintptr offset, GLsizeiptr length,
-                                  struct gl_buffer_object *obj);
+                                  struct gl_buffer_object *obj,
+                                  gl_map_buffer_index index);
 
    GLboolean (*UnmapBuffer)( struct gl_context *ctx,
-			     struct gl_buffer_object *obj );
+			     struct gl_buffer_object *obj,
+                             gl_map_buffer_index index);
    /*@}*/
 
    /**

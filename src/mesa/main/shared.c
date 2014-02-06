@@ -186,10 +186,8 @@ delete_bufferobj_cb(GLuint id, void *data, void *userData)
 {
    struct gl_buffer_object *bufObj = (struct gl_buffer_object *) data;
    struct gl_context *ctx = (struct gl_context *) userData;
-   if (_mesa_bufferobj_mapped(bufObj)) {
-      ctx->Driver.UnmapBuffer(ctx, bufObj);
-      bufObj->Pointer = NULL;
-   }
+
+   _mesa_buffer_unmap_all_mappings(ctx, bufObj);
    _mesa_reference_buffer_object(ctx, &bufObj, NULL);
 }
 
