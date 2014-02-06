@@ -1237,7 +1237,7 @@ intel_miptree_slice_enable_hiz(struct brw_context *brw,
 {
    assert(mt->hiz_mt);
 
-   if (brw->is_haswell) {
+   if (brw->gen >= 8 || brw->is_haswell) {
       uint32_t width = minify(mt->physical_width0, level);
       uint32_t height = minify(mt->physical_height0, level);
 
