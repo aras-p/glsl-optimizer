@@ -1483,6 +1483,12 @@ st_finalize_texture(struct gl_context *ctx,
    if (tObj->Target == GL_TEXTURE_BUFFER) {
       struct st_buffer_object *st_obj = st_buffer_object(tObj->BufferObject);
 
+      if (!st_obj) {
+         pipe_resource_reference(&stObj->pt, NULL);
+         pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+         return GL_TRUE;
+      }
+
       if (st_obj->buffer != stObj->pt) {
          pipe_resource_reference(&stObj->pt, st_obj->buffer);
          pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
