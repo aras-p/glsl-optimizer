@@ -4100,6 +4100,7 @@ builtin_builder::_mid3(const glsl_type *type)
 
 /* The singleton instance of builtin_builder. */
 static builtin_builder builtins;
+_glthread_DECLARE_STATIC_MUTEX(builtins_lock);
 
 /**
  * External API (exposing the built-in module to the rest of the compiler):
@@ -4108,20 +4109,28 @@ static builtin_builder builtins;
 void
 _mesa_glsl_initialize_builtin_functions()
 {
+   _glthread_LOCK_MUTEX(builtins_lock);
    builtins.initialize();
+   _glthread_UNLOCK_MUTEX(builtins_lock);
 }
 
 void
 _mesa_glsl_release_builtin_functions()
 {
+   _glthread_LOCK_MUTEX(builtins_lock);
    builtins.release();
+   _glthread_UNLOCK_MUTEX(builtins_lock);
 }
 
 ir_function_signature *
 _mesa_glsl_find_builtin_function(_mesa_glsl_parse_state *state,
                                  const char *name, exec_list *actual_parameters)
 {
-   return builtins.find(state, name, actual_parameters);
+   ir_function_signature * s;
+   _glthread_LOCK_MUTEX(builtins_lock);
+   s = builtins.find(state, name, actual_parameters);
+   _glthread_UNLOCK_MUTEX(builtins_lock);
+   return s;
 }
 
 gl_shader *
