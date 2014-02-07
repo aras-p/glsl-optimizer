@@ -160,7 +160,10 @@ brw_fast_clear_depth(struct gl_context *ctx)
       /* FALLTHROUGH */
 
    default:
-      depth_clear_value = fb->_DepthMax * ctx->Depth.Clear;
+      if (brw->gen >= 8)
+         depth_clear_value = float_as_int(ctx->Depth.Clear);
+      else
+         depth_clear_value = fb->_DepthMax * ctx->Depth.Clear;
       break;
    }
 
