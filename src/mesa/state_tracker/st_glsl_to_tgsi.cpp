@@ -87,7 +87,7 @@ extern "C" {
  */
 #define MAX_ARRAYS        256
 
-/* will be 4 for GLSL 4.00 */
+/* if we support a native gallium TG4 with the ability to take 4 texoffsets then bump this */
 #define MAX_GLSL_TEXTURE_OFFSET 1
 
 class st_src_reg;
@@ -249,7 +249,8 @@ public:
    int sampler; /**< sampler index */
    int tex_target; /**< One of TEXTURE_*_INDEX */
    GLboolean tex_shadow;
-   struct tgsi_texture_offset tex_offsets[MAX_GLSL_TEXTURE_OFFSET];
+
+   st_src_reg tex_offsets[MAX_GLSL_TEXTURE_OFFSET];
    unsigned tex_offset_num_offset;
    int dead_mask; /**< Used in dead code elimination */
 
@@ -2686,7 +2687,7 @@ glsl_to_tgsi_visitor::visit(ir_call *ir)
 void
 glsl_to_tgsi_visitor::visit(ir_texture *ir)
 {
-   st_src_reg result_src, coord, cube_sc, lod_info, projector, dx, dy, offset, sample_index;
+   st_src_reg result_src, coord, cube_sc, lod_info, projector, dx, dy, offset, sample_index, component;
    st_dst_reg result_dst, coord_dst, cube_sc_dst;
    glsl_to_tgsi_instruction *inst = NULL;
    unsigned opcode = TGSI_OPCODE_NOP;
@@ -2780,11 +2781,19 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       ir->lod_info.sample_index->accept(this);
       sample_index = this->result;
       break;
+   case ir_tg4:
+      opcode = TGSI_OPCODE_TG4;
+      ir->lod_info.component->accept(this);
+      component = this->result;
+      if (ir->offset) {
+         ir->offset->accept(this);
+         /* this should have been lowered */
+         assert(ir->offset->type->base_type != GLSL_TYPE_ARRAY);
+         offset = this->result;
+      }
+      break;
    case ir_lod:
       assert(!"Unexpected ir_lod opcode");
-      break;
-   case ir_tg4:
-      assert(!"Unexpected ir_tg4 opcode");
       break;
    case ir_query_levels:
       assert(!"Unexpected ir_query_levels opcode");
@@ -2893,7 +2902,13 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       inst = emit(ir, opcode, result_dst, coord, lod_info);
    } else if (opcode == TGSI_OPCODE_TEX2) {
       inst = emit(ir, opcode, result_dst, coord, cube_sc);
-   } else 
+   } else if (opcode == TGSI_OPCODE_TG4) {
+      if (is_cube_array && ir->shadow_comparitor) {
+         inst = emit(ir, opcode, result_dst, coord, cube_sc);
+      } else {
+         inst = emit(ir, opcode, result_dst, coord, component);
+      }
+   } else
       inst = emit(ir, opcode, result_dst, coord);
 
    if (ir->shadow_comparitor)
@@ -2904,12 +2919,8 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
         					   this->prog);
 
    if (ir->offset) {
-       inst->tex_offset_num_offset = 1;
-       inst->tex_offsets[0].Index = offset.index;
-       inst->tex_offsets[0].File = offset.file;
-       inst->tex_offsets[0].SwizzleX = GET_SWZ(offset.swizzle, 0);
-       inst->tex_offsets[0].SwizzleY = GET_SWZ(offset.swizzle, 1);
-       inst->tex_offsets[0].SwizzleZ = GET_SWZ(offset.swizzle, 2);
+      inst->tex_offset_num_offset = 1;
+      inst->tex_offsets[0] = offset;
    }
 
    switch (sampler_type->sampler_dimensionality) {
@@ -3267,6 +3278,13 @@ glsl_to_tgsi_visitor::rename_temp_register(int index, int new_index)
             inst->src[j].index = new_index;
          }
       }
+
+      for (j=0; j < inst->tex_offset_num_offset; j++) {
+         if (inst->tex_offsets[j].file == PROGRAM_TEMPORARY && 
+             inst->tex_offsets[j].index == index) {
+            inst->tex_offsets[j].index = new_index;
+         }
+      }
       
       if (inst->dst.file == PROGRAM_TEMPORARY && inst->dst.index == index) {
          inst->dst.index = new_index;
@@ -3287,6 +3305,12 @@ glsl_to_tgsi_visitor::get_first_temp_read(int index)
       for (j=0; j < num_inst_src_regs(inst->op); j++) {
          if (inst->src[j].file == PROGRAM_TEMPORARY && 
              inst->src[j].index == index) {
+            return (depth == 0) ? i : loop_start;
+         }
+      }
+      for (j=0; j < inst->tex_offset_num_offset; j++) {
+         if (inst->tex_offsets[j].file == PROGRAM_TEMPORARY && 
+             inst->tex_offsets[j].index == index) {
             return (depth == 0) ? i : loop_start;
          }
       }
@@ -3350,6 +3374,11 @@ glsl_to_tgsi_visitor::get_last_temp_read(int index)
              inst->src[j].index == index) {
             last = (depth == 0) ? i : -2;
          }
+      }
+      for (j=0; j < inst->tex_offset_num_offset; j++) {
+          if (inst->tex_offsets[j].file == PROGRAM_TEMPORARY &&
+              inst->tex_offsets[j].index == index)
+              last = (depth == 0) ? i : -2;
       }
       
       if (inst->op == TGSI_OPCODE_BGNLOOP)
@@ -3727,6 +3756,26 @@ glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
                }
             }
          }
+         for (unsigned i = 0; i < inst->tex_offset_num_offset; i++) {
+            if (inst->tex_offsets[i].file == PROGRAM_TEMPORARY && inst->tex_offsets[i].reladdr){
+               /* Any temporary might be read, so no dead code elimination 
+                * across this instruction.
+                */
+               memset(writes, 0, sizeof(*writes) * this->next_temp * 4);
+            } else if (inst->tex_offsets[i].file == PROGRAM_TEMPORARY) {
+               /* Clear where it's used as src. */
+               int src_chans = 1 << GET_SWZ(inst->tex_offsets[i].swizzle, 0);
+               src_chans |= 1 << GET_SWZ(inst->tex_offsets[i].swizzle, 1);
+               src_chans |= 1 << GET_SWZ(inst->tex_offsets[i].swizzle, 2);
+               src_chans |= 1 << GET_SWZ(inst->tex_offsets[i].swizzle, 3);
+               
+               for (int c = 0; c < 4; c++) {
+              	   if (src_chans & (1 << c)) {
+              	      writes[4 * inst->tex_offsets[i].index + c] = NULL;
+              	   }
+               }
+            }
+         }
          break;
       }
 
@@ -4080,7 +4129,7 @@ struct st_translate {
    struct ureg_dst address[2];
    struct ureg_src samplers[PIPE_MAX_SAMPLERS];
    struct ureg_src systemValues[SYSTEM_VALUE_MAX];
-
+   struct tgsi_texture_offset tex_offsets[MAX_GLSL_TEXTURE_OFFSET];
    unsigned array_sizes[MAX_ARRAYS];
 
    const GLuint *inputMapping;
@@ -4380,22 +4429,34 @@ translate_src(struct st_translate *t, const st_src_reg *src_reg)
 
 static struct tgsi_texture_offset
 translate_tex_offset(struct st_translate *t,
-                     const struct tgsi_texture_offset *in_offset)
+                     const st_src_reg *in_offset, int idx)
 {
    struct tgsi_texture_offset offset;
    struct ureg_src imm_src;
 
-   assert(in_offset->File == PROGRAM_IMMEDIATE);
-   imm_src = t->immediates[in_offset->Index];
+   switch (in_offset->file) {
+   case PROGRAM_IMMEDIATE:
+      imm_src = t->immediates[in_offset->index];
 
-   offset.File = imm_src.File;
-   offset.Index = imm_src.Index;
-   offset.SwizzleX = imm_src.SwizzleX;
-   offset.SwizzleY = imm_src.SwizzleY;
-   offset.SwizzleZ = imm_src.SwizzleZ;
-   offset.File = TGSI_FILE_IMMEDIATE;
-   offset.Padding = 0;
-
+      offset.File = imm_src.File;
+      offset.Index = imm_src.Index;
+      offset.SwizzleX = imm_src.SwizzleX;
+      offset.SwizzleY = imm_src.SwizzleY;
+      offset.SwizzleZ = imm_src.SwizzleZ;
+      offset.Padding = 0;
+      break;
+   case PROGRAM_TEMPORARY:
+      imm_src = ureg_src(t->temps[in_offset->index]);
+      offset.File = imm_src.File;
+      offset.Index = imm_src.Index;
+      offset.SwizzleX = GET_SWZ(in_offset->swizzle, 0);
+      offset.SwizzleY = GET_SWZ(in_offset->swizzle, 1);
+      offset.SwizzleZ = GET_SWZ(in_offset->swizzle, 2);
+      offset.Padding = 0;
+      break;
+   default:
+      break;
+   }
    return offset;
 }
 
@@ -4451,9 +4512,10 @@ compile_tgsi_instruction(struct st_translate *t,
    case TGSI_OPCODE_TEX2:
    case TGSI_OPCODE_TXB2:
    case TGSI_OPCODE_TXL2:
+   case TGSI_OPCODE_TG4:
       src[num_src++] = t->samplers[inst->sampler];
       for (i = 0; i < inst->tex_offset_num_offset; i++) {
-         texoffsets[i] = translate_tex_offset(t, &inst->tex_offsets[i]);
+         texoffsets[i] = translate_tex_offset(t, &inst->tex_offsets[i], i);
       }
       tex_target = st_translate_texture_target(inst->tex_target, inst->tex_shadow);
 
@@ -5270,6 +5332,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
          lower_packing_builtins(ir, lower_inst);
       }
 
+      lower_offset_arrays(ir);
       do_mat_op_to_vec(ir);
       lower_instructions(ir,
                          MOD_TO_FRACT |

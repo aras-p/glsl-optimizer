@@ -268,6 +268,7 @@ void st_init_limits(struct st_context *st)
    c->MinProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MIN_TEXEL_OFFSET);
    c->MaxProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MAX_TEXEL_OFFSET);
 
+   c->MaxProgramTextureGatherComponents = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS);
    c->UniformBooleanTrue = ~0;
 
    c->MaxTransformFeedbackBuffers =
@@ -787,4 +788,6 @@ void st_init_extensions(struct st_context *st)
          ctx->Extensions.ARB_viewport_array = GL_TRUE;
       }
    }
+   if (ctx->Const.MaxProgramTextureGatherComponents > 0)
+      ctx->Extensions.ARB_texture_gather = GL_TRUE;
 }
