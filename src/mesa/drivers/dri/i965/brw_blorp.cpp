@@ -195,8 +195,12 @@ intel_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
    DBG("%s %s to mt %p level %d layer %d\n",
        __FUNCTION__, opname, mt, level, layer);
 
-   brw_hiz_op_params params(mt, level, layer, op);
-   brw_blorp_exec(brw, &params);
+   if (brw->gen >= 8) {
+      gen8_hiz_exec(brw, mt, level, layer, op);
+   } else {
+      brw_hiz_op_params params(mt, level, layer, op);
+      brw_blorp_exec(brw, &params);
+   }
 }
 
 } /* extern "C" */

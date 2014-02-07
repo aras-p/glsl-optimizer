@@ -61,6 +61,7 @@ extern "C" {
 #include "intel_debug.h"
 #include "intel_screen.h"
 #include "intel_tex_obj.h"
+#include "intel_resolve_map.h"
 
 /* Glossary:
  *
@@ -1890,6 +1891,9 @@ gen8_emit_depth_stencil_hiz(struct brw_context *brw,
                             bool hiz, bool separate_stencil,
                             uint32_t width, uint32_t height,
                             uint32_t tile_x, uint32_t tile_y);
+
+void gen8_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
+                   unsigned int level, unsigned int layer, enum gen6_hiz_op op);
 
 extern const GLuint prim_to_hw_prim[GL_TRIANGLE_STRIP_ADJACENCY+1];
 
