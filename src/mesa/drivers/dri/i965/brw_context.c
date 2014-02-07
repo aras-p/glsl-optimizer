@@ -612,7 +612,7 @@ brwCreateContext(gl_api api,
    brw->is_baytrail = devinfo->is_baytrail;
    brw->is_haswell = devinfo->is_haswell;
    brw->has_llc = devinfo->has_llc;
-   brw->has_hiz = devinfo->has_hiz_and_separate_stencil && brw->gen < 8;
+   brw->has_hiz = devinfo->has_hiz_and_separate_stencil;
    brw->has_separate_stencil = devinfo->has_hiz_and_separate_stencil;
    brw->has_pln = devinfo->has_pln;
    brw->has_compr4 = devinfo->has_compr4;
