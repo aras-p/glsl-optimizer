@@ -361,6 +361,7 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
    nouveau_object_del(&screen->eng2d);
    nouveau_object_del(&screen->m2mf);
    nouveau_object_del(&screen->compute);
+   nouveau_object_del(&screen->nvsw);
 
    nouveau_screen_fini(&screen->base);
 
@@ -596,6 +597,14 @@ nvc0_screen_create(struct nouveau_device *dev)
    screen->fence.map = screen->fence.bo->map;
    screen->base.fence.emit = nvc0_screen_fence_emit;
    screen->base.fence.update = nvc0_screen_fence_update;
+
+
+   ret = nouveau_object_new(chan,
+                            (dev->chipset < 0xe0) ? 0x1f906e : 0x906e, 0x906e,
+                            NULL, 0, &screen->nvsw);
+   if (ret)
+      FAIL_SCREEN_INIT("Error creating SW object: %d\n", ret);
+
 
    switch (dev->chipset & ~0xf) {
    case 0x100:

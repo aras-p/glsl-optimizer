@@ -76,6 +76,7 @@ struct nvc0_screen {
    struct nouveau_object *eng2d;
    struct nouveau_object *m2mf;
    struct nouveau_object *compute;
+   struct nouveau_object *nvsw;
 };
 
 static INLINE struct nvc0_screen *
