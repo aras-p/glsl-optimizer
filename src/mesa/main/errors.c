@@ -346,9 +346,9 @@ remap_severity(GLenum severity) {
  * the null terminator this time.
  */
 static void
-_mesa_log_msg(struct gl_context *ctx, enum mesa_debug_source source,
-              enum mesa_debug_type type, GLuint id,
-              enum mesa_debug_severity severity, GLint len, const char *buf)
+log_msg(struct gl_context *ctx, enum mesa_debug_source source,
+        enum mesa_debug_type type, GLuint id,
+        enum mesa_debug_severity severity, GLint len, const char *buf)
 {
    GLint nextEmpty;
    struct gl_debug_msg *emptySlot;
@@ -400,9 +400,9 @@ _mesa_log_msg(struct gl_context *ctx, enum mesa_debug_source source,
  * indicates failure.
  */
 static GLsizei
-_mesa_get_msg(struct gl_context *ctx, GLenum *source, GLenum *type,
-              GLuint *id, GLenum *severity, GLsizei bufSize, char *buf,
-              unsigned caller)
+get_msg(struct gl_context *ctx, GLenum *source, GLenum *type,
+        GLuint *id, GLenum *severity, GLsizei bufSize, char *buf,
+        unsigned caller)
 {
    struct gl_debug_msg *msg;
    GLsizei length;
@@ -681,10 +681,10 @@ message_insert(GLenum source, GLenum type, GLuint id,
       return;
    }
 
-   _mesa_log_msg(ctx,
-                 gl_enum_to_debug_source(source),
-                 gl_enum_to_debug_type(type), id,
-                 gl_enum_to_debug_severity(severity), length, buf);
+   log_msg(ctx,
+           gl_enum_to_debug_source(source),
+           gl_enum_to_debug_type(type), id,
+           gl_enum_to_debug_severity(severity), length, buf);
 }
 
 /**
@@ -711,8 +711,8 @@ get_message_log(GLuint count, GLsizei logSize, GLenum* sources,
    }
 
    for (ret = 0; ret < count; ret++) {
-      GLsizei written = _mesa_get_msg(ctx, sources, types, ids, severities,
-                                      logSize, messageLog, caller);
+      GLsizei written = get_msg(ctx, sources, types, ids, severities,
+                                logSize, messageLog, caller);
       if (!written)
          break;
 
@@ -893,7 +893,7 @@ _mesa_PushDebugGroup(GLenum source, GLuint id, GLsizei length,
 }
 
 void GLAPIENTRY
-_mesa_PopDebugGroup()
+_mesa_PopDebugGroup(void)
 {
    const char *callerstr = "glPopDebugGroup";
    struct gl_debug_msg *gdmessage;
@@ -910,14 +910,14 @@ _mesa_PopDebugGroup()
    ctx->Debug.GroupStackDepth--;
 
    gdmessage = &ctx->Debug.DebugGroupMsgs[prevStackDepth];
-   /* using _mesa_log_msg() directly here as verification of parameters
+   /* using log_msg() directly here as verification of parameters
     * already done in push
     */
-   _mesa_log_msg(ctx, gdmessage->source,
-                 gl_enum_to_debug_type(GL_DEBUG_TYPE_POP_GROUP),
-                 gdmessage->id,
-                 gl_enum_to_debug_severity(GL_DEBUG_SEVERITY_NOTIFICATION),
-                 gdmessage->length, gdmessage->message);
+   log_msg(ctx, gdmessage->source,
+           gl_enum_to_debug_type(GL_DEBUG_TYPE_POP_GROUP),
+           gdmessage->id,
+           gl_enum_to_debug_severity(GL_DEBUG_SEVERITY_NOTIFICATION),
+           gdmessage->length, gdmessage->message);
 
    if (gdmessage->message != (char*)out_of_memory)
       free(gdmessage->message);
@@ -1202,8 +1202,7 @@ _mesa_gl_debug(struct gl_context *ctx,
    len = _mesa_vsnprintf(s, MAX_DEBUG_MESSAGE_LENGTH, fmtString, args);
    va_end(args);
 
-   _mesa_log_msg(ctx, MESA_DEBUG_SOURCE_API, type,
-                 *id, severity, len, s);
+   log_msg(ctx, MESA_DEBUG_SOURCE_API, type, *id, severity, len, s);
 }
 
 
@@ -1268,11 +1267,8 @@ _mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... )
 
       /* Log the error via ARB_debug_output if needed.*/
       if (do_log) {
-         _mesa_log_msg(ctx,
-                       MESA_DEBUG_SOURCE_API,
-                       MESA_DEBUG_TYPE_ERROR,
-                       error_msg_id,
-                       MESA_DEBUG_SEVERITY_HIGH, len, s2);
+         log_msg(ctx, MESA_DEBUG_SOURCE_API, MESA_DEBUG_TYPE_ERROR,
+                 error_msg_id, MESA_DEBUG_SEVERITY_HIGH, len, s2);
       }
    }
 
@@ -1329,7 +1325,7 @@ _mesa_shader_debug( struct gl_context *ctx, GLenum type, GLuint *id,
    if (len >= MAX_DEBUG_MESSAGE_LENGTH)
       len = MAX_DEBUG_MESSAGE_LENGTH - 1;
 
-   _mesa_log_msg(ctx, source, type, *id, severity, len, msg);
+   log_msg(ctx, source, type, *id, severity, len, msg);
 }
 
 /*@}*/
