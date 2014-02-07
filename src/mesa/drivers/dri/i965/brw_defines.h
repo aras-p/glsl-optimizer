@@ -1753,6 +1753,31 @@ enum brw_message_target {
 #define GEN8_BLEND_POST_BLEND_COLOR_CLAMP_ENABLE        (1 << 0)
 
 #define _3DSTATE_WM_HZ_OP                       0x7852 /* GEN8+ */
+/* DW1 */
+# define GEN8_WM_HZ_STENCIL_CLEAR                       (1 << 31)
+# define GEN8_WM_HZ_DEPTH_CLEAR                         (1 << 30)
+# define GEN8_WM_HZ_DEPTH_RESOLVE                       (1 << 28)
+# define GEN8_WM_HZ_HIZ_RESOLVE                         (1 << 27)
+# define GEN8_WM_HZ_PIXEL_OFFSET_ENABLE                 (1 << 26)
+# define GEN8_WM_HZ_FULL_SURFACE_DEPTH_CLEAR            (1 << 25)
+# define GEN8_WM_HZ_STENCIL_CLEAR_VALUE_MASK            INTEL_MASK(23, 16)
+# define GEN8_WM_HZ_STENCIL_CLEAR_VALUE_SHIFT           16
+# define GEN8_WM_HZ_NUM_SAMPLES_MASK                    INTEL_MASK(15, 13)
+# define GEN8_WM_HZ_NUM_SAMPLES_SHIFT                   13
+/* DW2 */
+# define GEN8_WM_HZ_CLEAR_RECTANGLE_Y_MIN_MASK          INTEL_MASK(31, 16)
+# define GEN8_WM_HZ_CLEAR_RECTANGLE_Y_MIN_SHIFT         16
+# define GEN8_WM_HZ_CLEAR_RECTANGLE_X_MIN_MASK          INTEL_MASK(15, 0)
+# define GEN8_WM_HZ_CLEAR_RECTANGLE_X_MIN_SHIFT         0
+/* DW3 */
+# define GEN8_WM_HZ_CLEAR_RECTANGLE_Y_MAX_MASK          INTEL_MASK(31, 16)
+# define GEN8_WM_HZ_CLEAR_RECTANGLE_Y_MAX_SHIFT         16
+# define GEN8_WM_HZ_CLEAR_RECTANGLE_X_MAX_MASK          INTEL_MASK(15, 0)
+# define GEN8_WM_HZ_CLEAR_RECTANGLE_X_MAX_SHIFT         0
+/* DW4 */
+# define GEN8_WM_HZ_SAMPLE_MASK_MASK                    INTEL_MASK(15, 0)
+# define GEN8_WM_HZ_SAMPLE_MASK_SHIFT                   0
+
 
 #define _3DSTATE_PS_BLEND                       0x784D /* GEN8+ */
 /* DW1 */
