@@ -1,6 +1,7 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
 AM_CPPFLAGS = $(DEFINES) \
+	$(VISIBILITY_CFLAGS) \
 	$(GALLIUM_PIPE_LOADER_DEFINES) \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/loader \
