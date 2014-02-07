@@ -113,6 +113,10 @@ __glX_send_client_info(struct glx_display *glx_dpy)
    }
 
    gl_extension_string = __glXGetClientGLExtensionString();
+   if (gl_extension_string == NULL) {
+      return;
+   }
+
    gl_extension_length = strlen(gl_extension_string) + 1;
 
    c = XGetXCBConnection(glx_dpy->dpy);
