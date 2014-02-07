@@ -424,7 +424,7 @@ XXX cleanup on aisle three
 
 .. math::
 
-  dst = (1 / src.x) > 0 ? clamp(1 / src.x, 5.42101e-020, 1.884467e+019) : clamp(1 / src.x, -1.884467e+019, -5.42101e-020)
+  dst = (1 / src.x) > 0 ? clamp(1 / src.x, 5.42101e-020, 1.84467e+019) : clamp(1 / src.x, -1.84467e+019, -5.42101e-020)
 
 
 .. opcode:: DPH - Homogeneous Dot Product
