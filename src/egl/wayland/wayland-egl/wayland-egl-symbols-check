@@ -1,0 +1,16 @@
+#!/bin/bash
+
+FUNCS=$(nm -D --defined-only ${1-.libs/libwayland-egl.so} | grep -o "T .*" | cut -c 3- | while read func; do
+( grep -q "^$func$" || echo $func )  <<EOF
+wl_egl_window_resize
+wl_egl_window_create
+wl_egl_window_destroy
+wl_egl_window_get_attached_size
+_fini
+_init
+EOF
+done)
+
+test ! -n "$FUNCS" || echo $FUNCS
+test ! -n "$FUNCS"
+
