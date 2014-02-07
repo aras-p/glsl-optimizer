@@ -253,14 +253,22 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
          *params = (GLvoid *) ctx->Array.VAO->VertexAttrib[VERT_ATTRIB_POINT_SIZE].Ptr;
          break;
       case GL_DEBUG_CALLBACK_FUNCTION_ARB:
-         if (!_mesa_is_desktop_gl(ctx))
+         if (!_mesa_is_desktop_gl(ctx)) {
             goto invalid_pname;
-         *params = (GLvoid *) ctx->Debug.Callback;
+         }
+         else {
+            struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
+            *params = debug ? (void *) debug->Callback : NULL;
+         }
          break;
       case GL_DEBUG_CALLBACK_USER_PARAM_ARB:
-         if (!_mesa_is_desktop_gl(ctx))
+         if (!_mesa_is_desktop_gl(ctx)) {
             goto invalid_pname;
-         *params = (GLvoid *) ctx->Debug.CallbackData;
+         }
+         else {
+            struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
+            *params = debug ? (void *) debug->CallbackData : NULL;
+         }
          break;
       default:
          goto invalid_pname;

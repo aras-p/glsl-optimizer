@@ -83,6 +83,9 @@ _mesa_gl_debug(struct gl_context *ctx,
    }                                                                      \
 } while (0)
 
+struct gl_debug_state *
+_mesa_get_debug_state(struct gl_context *ctx);
+
 extern void
 _mesa_shader_debug(struct gl_context *ctx, GLenum type, GLuint *id,
                    const char *msg, int len);

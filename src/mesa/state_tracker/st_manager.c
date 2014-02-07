@@ -30,6 +30,7 @@
 #include "main/texobj.h"
 #include "main/teximage.h"
 #include "main/texstate.h"
+#include "main/errors.h"
 #include "main/framebuffer.h"
 #include "main/fbobject.h"
 #include "main/renderbuffer.h"
@@ -626,10 +627,14 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       return NULL;
    }
 
-   st->ctx->Debug.DebugOutput = GL_FALSE;
    if (attribs->flags & ST_CONTEXT_FLAG_DEBUG){
+      struct gl_debug_state *debug = _mesa_get_debug_state(st->ctx);
+      if (!debug) {
+         *error = ST_CONTEXT_ERROR_NO_MEMORY;
+         return NULL;
+      }
       st->ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_DEBUG_BIT;
-      st->ctx->Debug.DebugOutput = GL_TRUE;
+      debug->DebugOutput = GL_TRUE;
    }
 
    if (attribs->flags & ST_CONTEXT_FLAG_FORWARD_COMPATIBLE)

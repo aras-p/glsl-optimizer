@@ -28,6 +28,7 @@
 #include "blend.h"
 #include "enable.h"
 #include "enums.h"
+#include "errors.h"
 #include "extensions.h"
 #include "get.h"
 #include "macros.h"
@@ -973,6 +974,26 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
          _mesa_problem(ctx, "driver doesn't implement GetTimestamp");
       }
       break;
+   /* GL_KHR_DEBUG */
+   case GL_DEBUG_LOGGED_MESSAGES:
+      {
+         struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
+         v->value_int = debug ? debug->NumMessages : 0;
+      }
+      break;
+   case GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH:
+      {
+         struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
+         v->value_int = debug ? debug->NextMsgLength : 0;
+      }
+      break;
+   case GL_DEBUG_GROUP_STACK_DEPTH:
+      {
+         struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
+         v->value_int = debug ? debug->GroupStackDepth : 0;
+      }
+      break;
+
    /* GL_ARB_shader_atomic_counters */
    case GL_ATOMIC_COUNTER_BUFFER_BINDING:
       v->value_int = ctx->AtomicBuffer->Name;
