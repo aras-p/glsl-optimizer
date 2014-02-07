@@ -64,7 +64,7 @@ nvc0_shader_output_address(unsigned sn, unsigned si, unsigned ubase)
    switch (sn) {
    case NV50_SEMANTIC_TESSFACTOR:    return 0x000 + si * 0x4;
    case TGSI_SEMANTIC_PRIMID:        return 0x060;
-   case NV50_SEMANTIC_LAYER:         return 0x064;
+   case TGSI_SEMANTIC_LAYER:         return 0x064;
    case NV50_SEMANTIC_VIEWPORTINDEX: return 0x068;
    case TGSI_SEMANTIC_PSIZE:         return 0x06c;
    case TGSI_SEMANTIC_POSITION:      return 0x070;

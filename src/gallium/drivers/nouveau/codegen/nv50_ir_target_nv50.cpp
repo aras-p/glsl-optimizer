@@ -532,7 +532,7 @@ recordLocation(uint16_t *locs, uint8_t *masks,
    case TGSI_SEMANTIC_INSTANCEID: locs[SV_INSTANCE_ID] = addr; break;
    case TGSI_SEMANTIC_VERTEXID: locs[SV_VERTEX_ID] = addr; break;
    case TGSI_SEMANTIC_PRIMID: locs[SV_PRIMITIVE_ID] = addr; break;
-   case NV50_SEMANTIC_LAYER: locs[SV_LAYER] = addr; break;
+   case TGSI_SEMANTIC_LAYER: locs[SV_LAYER] = addr; break;
    case NV50_SEMANTIC_VIEWPORTINDEX: locs[SV_VIEWPORT_INDEX] = addr; break;
    default:
       break;

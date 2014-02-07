@@ -861,8 +861,8 @@ int Source::inferSysValDirection(unsigned sn) const
    case TGSI_SEMANTIC_INSTANCEID:
    case TGSI_SEMANTIC_VERTEXID:
       return 1;
-#if 0
    case TGSI_SEMANTIC_LAYER:
+#if 0
    case TGSI_SEMANTIC_VIEWPORTINDEX:
       return 0;
 #endif
