@@ -385,7 +385,9 @@ glXCreateContext(Display * dpy, XVisualInfo * vis,
 #if defined(GLX_DIRECT_RENDERING) || defined(GLX_USE_APPLEGL)
    struct glx_screen *const psc = GetGLXScreenConfigs(dpy, vis->screen);
 
-   config = glx_config_find_visual(psc->visuals, vis->visualid);
+   if (psc)
+      config = glx_config_find_visual(psc->visuals, vis->visualid);
+
    if (config == NULL) {
       xError error;
 
@@ -694,6 +696,13 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
    GLXPixmap xid;
    CARD8 opcode;
 
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+   struct glx_display *const priv = __glXInitialize(dpy);
+
+   if (priv == NULL)
+      return None;
+#endif
+
    opcode = __glXSetupForCommand(dpy);
    if (!opcode) {
       return None;
@@ -725,7 +734,6 @@ glXCreateGLXPixmap(Display * dpy, XVisualInfo * vis, Pixmap pixmap)
       /* FIXME: Maybe delay __DRIdrawable creation until the drawable
        * is actually bound to a context... */
 
-      struct glx_display *const priv = __glXInitialize(dpy);
       __GLXDRIdrawable *pdraw;
       struct glx_screen *psc;
       struct glx_config *config;
@@ -799,7 +807,7 @@ glXDestroyGLXPixmap(Display * dpy, GLXPixmap glxpixmap)
       struct glx_display *const priv = __glXInitialize(dpy);
       __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, glxpixmap);
 
-      if (pdraw != NULL) {
+      if (priv != NULL && pdraw != NULL) {
          (*pdraw->destroyDrawable) (pdraw);
          __glxHashDelete(priv->drawHash, glxpixmap);
       }
@@ -1434,6 +1442,9 @@ glXImportContextEXT(Display *dpy, GLXContextID contextID)
    uint32_t screen = 0;
    Bool got_screen = False;
 
+   if (priv == NULL)
+      return NULL;
+
    /* The GLX_EXT_import_context spec says:
     *
     *     "If <contextID> does not refer to a valid context, then a BadContext
@@ -1750,7 +1761,8 @@ __glXSwapIntervalSGI(int interval)
    psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
 
 #ifdef GLX_DIRECT_RENDERING
-   if (gc->isDirect && psc->driScreen && psc->driScreen->setSwapInterval) {
+   if (gc->isDirect && psc && psc->driScreen &&
+          psc->driScreen->setSwapInterval) {
       __GLXDRIdrawable *pdraw =
 	 GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable);
       psc->driScreen->setSwapInterval(pdraw, interval);
@@ -1796,7 +1808,7 @@ __glXSwapIntervalMESA(unsigned int interval)
       struct glx_screen *psc;
 
       psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
-      if (psc->driScreen && psc->driScreen->setSwapInterval) {
+      if (psc && psc->driScreen && psc->driScreen->setSwapInterval) {
          __GLXDRIdrawable *pdraw =
 	    GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable);
 	 return psc->driScreen->setSwapInterval(pdraw, interval);
@@ -1818,7 +1830,7 @@ __glXGetSwapIntervalMESA(void)
       struct glx_screen *psc;
 
       psc = GetGLXScreenConfigs( gc->currentDpy, gc->screen);
-      if (psc->driScreen && psc->driScreen->getSwapInterval) {
+      if (psc && psc->driScreen && psc->driScreen->getSwapInterval) {
          __GLXDRIdrawable *pdraw =
 	    GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable);
 	 return psc->driScreen->getSwapInterval(pdraw);
@@ -1862,7 +1874,7 @@ __glXGetVideoSyncSGI(unsigned int *count)
     * FIXME: documentation for the GLX encoding.
     */
 #ifdef GLX_DIRECT_RENDERING
-   if (psc->driScreen && psc->driScreen->getDrawableMSC) {
+   if (psc && psc->driScreen && psc->driScreen->getDrawableMSC) {
       ret = psc->driScreen->getDrawableMSC(psc, pdraw, &ust, &msc, &sbc);
       *count = (unsigned) msc;
       return (ret == True) ? 0 : GLX_BAD_CONTEXT;
@@ -1900,7 +1912,7 @@ __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 #endif
 
 #ifdef GLX_DIRECT_RENDERING
-   if (psc->driScreen && psc->driScreen->waitForMSC) {
+   if (psc && psc->driScreen && psc->driScreen->waitForMSC) {
       ret = psc->driScreen->waitForMSC(pdraw, 0, divisor, remainder, &ust, &msc,
 				       &sbc);
       *count = (unsigned) msc;
