@@ -115,12 +115,12 @@ nv50_create_texture_view(struct pipe_context *pipe,
 
    addr = mt->base.address;
 
-   if (mt->base.base.target == PIPE_TEXTURE_1D_ARRAY ||
-       mt->base.base.target == PIPE_TEXTURE_2D_ARRAY) {
+   depth = MAX2(mt->base.base.array_size, mt->base.base.depth0);
+
+   if (mt->base.base.array_size > 1) {
+      /* there doesn't seem to be a base layer field in TIC */
       addr += view->pipe.u.tex.first_layer * mt->layer_stride;
       depth = view->pipe.u.tex.last_layer - view->pipe.u.tex.first_layer + 1;
-   } else {
-      depth = mt->base.base.depth0;
    }
 
    tic[2] = 0x10001000 | NV50_TIC_2_NO_BORDER;

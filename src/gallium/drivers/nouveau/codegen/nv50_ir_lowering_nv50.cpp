@@ -664,7 +664,7 @@ NV50LoweringPreSSA::handleTEX(TexInstruction *i)
          bld.mkOp2(OP_MIN, TYPE_U32, src, src, bld.loadImm(NULL, 511));
          i->setSrc(arg - 1, src);
       }
-      if (i->tex.target.isCube()) {
+      if (i->tex.target.isCube() && i->srcCount() > 4) {
          std::vector<Value *> acube, a2d;
          int c;
 
@@ -681,9 +681,10 @@ NV50LoweringPreSSA::handleTEX(TexInstruction *i)
 
          for (c = 0; c < 3; ++c)
             i->setSrc(c, a2d[c]);
-         i->setSrc(c, NULL);
          for (; i->srcExists(c + 1); ++c)
             i->setSrc(c, i->getSrc(c + 1));
+         i->setSrc(c, NULL);
+         assert(c <= 4);
 
          i->tex.target = i->tex.target.isShadow() ?
             TEX_TARGET_2D_ARRAY_SHADOW : TEX_TARGET_2D_ARRAY;
