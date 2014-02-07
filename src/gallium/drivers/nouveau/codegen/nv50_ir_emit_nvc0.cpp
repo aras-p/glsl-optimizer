@@ -1488,8 +1488,13 @@ CodeEmitterNVC0::emitOUT(const Instruction *i)
 
    // vertex stream
    if (i->src(1).getFile() == FILE_IMMEDIATE) {
-      code[1] |= 0xc000;
-      code[0] |= SDATA(i->src(1)).u32 << 26;
+      // Using immediate encoding here triggers an invalid opcode error
+      // or random results when error reporting is disabled.
+      // TODO: figure this out when we get multiple vertex streams
+      assert(SDATA(i->src(1)).u32 == 0);
+      srcId(NULL, 26);
+      // code[1] |= 0xc000;
+      // code[0] |= SDATA(i->src(1)).u32 << 26;
    } else {
       srcId(i->src(1), 26);
    }
