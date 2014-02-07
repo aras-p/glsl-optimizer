@@ -914,28 +914,10 @@ micro_rcc(union tgsi_exec_channel *dst,
    for (i = 0; i < 4; i++) {
       float recip = 1.0f / src->f[i];
 
-      if (recip > 0.0f) {
-         if (recip > 1.884467e+019f) {
-            dst->f[i] = 1.884467e+019f;
-         }
-         else if (recip < 5.42101e-020f) {
-            dst->f[i] = 5.42101e-020f;
-         }
-         else {
-            dst->f[i] = recip;
-         }
-      }
-      else {
-         if (recip < -1.884467e+019f) {
-            dst->f[i] = -1.884467e+019f;
-         }
-         else if (recip > -5.42101e-020f) {
-            dst->f[i] = -5.42101e-020f;
-         }
-         else {
-            dst->f[i] = recip;
-         }
-      }
+      if (recip > 0.0f)
+         dst->f[i] = CLAMP(recip, 5.42101e-020f, 1.884467e+019f);
+      else
+         dst->f[i] = CLAMP(recip, -1.884467e+019f, -5.42101e-020f);
    }
 }
 
