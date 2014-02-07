@@ -865,7 +865,9 @@ st_GetTexImage(struct gl_context * ctx,
    ubyte *map = NULL;
    boolean done = FALSE;
 
-   if (!st->prefer_blit_based_texture_transfer) {
+   if (!st->prefer_blit_based_texture_transfer &&
+       !_mesa_is_format_compressed(texImage->TexFormat)) {
+      /* Try to avoid the fallback if we're doing texture decompression here */
       goto fallback;
    }
 
