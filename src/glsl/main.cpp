@@ -232,7 +232,7 @@ load_text_file(void *ctx, const char *file_name)
 			if (bytes < size - total_read) {
 				free(text);
 				text = NULL;
-				break;
+				goto error;
 			}
 
 			if (bytes == 0) {
@@ -243,6 +243,7 @@ load_text_file(void *ctx, const char *file_name)
 		} while (total_read < size);
 
 		text[total_read] = '\0';
+error:;
 	}
 
 	fclose(fp);
