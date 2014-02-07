@@ -1,0 +1,33 @@
+#!/bin/bash
+
+FUNCS=$(nm -D --defined-only ${1-.libs/libgbm.so} | grep -o "T .*" | cut -c 3- | while read func; do
+( grep -q "^$func$" || echo $func )  <<EOF
+gbm_device_get_fd
+gbm_device_get_backend_name
+gbm_device_is_format_supported
+gbm_device_destroy
+gbm_create_device
+gbm_bo_create
+gbm_bo_import
+gbm_bo_get_width
+gbm_bo_get_height
+gbm_bo_get_stride
+gbm_bo_get_format
+gbm_bo_get_device
+gbm_bo_get_handle
+gbm_bo_write
+gbm_bo_set_user_data
+gbm_bo_get_user_data
+gbm_bo_destroy
+gbm_surface_create
+gbm_surface_lock_front_buffer
+gbm_surface_release_buffer
+gbm_surface_has_free_buffers
+gbm_surface_destroy
+_fini
+_init
+EOF
+done)
+
+test ! -n "$FUNCS" || echo $FUNCS
+test ! -n "$FUNCS"

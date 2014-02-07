@@ -1,0 +1,13 @@
+#!/bin/bash
+
+FUNCS=$(nm -D --defined-only ${1-.libs/gbm_gallium_drm.so} | egrep -o "T .*|D .*" | cut -c 3- | while read func; do
+( grep -q "^$func$" || echo $func )  <<EOF
+gbm_backend
+_edata
+_fini
+_init
+EOF
+done)
+
+test ! -n "$FUNCS" || echo $FUNCS
+test ! -n "$FUNCS"

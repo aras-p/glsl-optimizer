@@ -46,4 +46,6 @@ libgbm_la_LIBADD += \
 	libgbm_dri.la $(top_builddir)/src/mapi/shared-glapi/libglapi.la $(LIBDRM_LIBS)
 endif
 
+TESTS = gbm-symbols-check
+
 include $(top_srcdir)/install-lib-links.mk

@@ -65,3 +65,5 @@ gbm_gallium_drm_la_LINK = $(CXXLINK) $(gbm_gallium_drm_la_LDFLAGS)
 # Mention a dummy pure C file to trigger generation of the $(LINK) variable
 nodist_EXTRA_gbm_gallium_drm_la_SOURCES = dummy-c.c
 endif
+
+TESTS = gallium-gbm-symbols-check
