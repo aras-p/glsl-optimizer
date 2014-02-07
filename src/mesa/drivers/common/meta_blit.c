@@ -31,6 +31,7 @@
 #include "main/condrender.h"
 #include "main/depth.h"
 #include "main/enable.h"
+#include "main/enums.h"
 #include "main/fbobject.h"
 #include "main/macros.h"
 #include "main/matrix.h"
@@ -81,8 +82,158 @@ init_blit_depth_pixels(struct gl_context *ctx)
 }
 
 static void
+setup_glsl_msaa_blit_shader(struct gl_context *ctx,
+                            struct blit_state *blit,
+                            struct gl_renderbuffer *src_rb,
+                            GLenum target)
+{
+   const char *vs_source;
+   char *fs_source;
+   GLuint vs, fs;
+   void *mem_ctx;
+   enum blit_msaa_shader shader_index;
+   const char *samplers[] = {
+      [BLIT_MSAA_SHADER_2D_MULTISAMPLE] = "sampler2DMS",
+   };
+
+   switch (target) {
+   case GL_TEXTURE_2D_MULTISAMPLE:
+      if (src_rb->_BaseFormat == GL_DEPTH_COMPONENT ||
+          src_rb->_BaseFormat == GL_DEPTH_STENCIL) {
+         shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH;
+      } else {
+         shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE;
+      }
+      break;
+   default:
+      _mesa_problem(ctx, "Unkown texture target %s\n",
+                    _mesa_lookup_enum_by_nr(target));
+      shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE;
+   }
+
+   if (blit->msaa_shaders[shader_index]) {
+      _mesa_UseProgram(blit->msaa_shaders[shader_index]);
+      return;
+   }
+
+   mem_ctx = ralloc_context(NULL);
+
+   if (shader_index == BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH) {
+      /* From the GL 4.3 spec:
+       *
+       *     "If there is a multisample buffer (the value of SAMPLE_BUFFERS is
+       *      one), then values are obtained from the depth samples in this
+       *      buffer. It is recommended that the depth value of the centermost
+       *      sample be used, though implementations may choose any function
+       *      of the depth sample values at each pixel.
+       *
+       * We're slacking and instead of choosing centermost, we've got 0.
+       */
+      vs_source = ralloc_asprintf(mem_ctx,
+                                  "#version 130\n"
+                                  "in vec2 position;\n"
+                                  "in vec2 textureCoords;\n"
+                                  "out vec2 texCoords;\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "   texCoords = textureCoords;\n"
+                                  "   gl_Position = vec4(position, 0.0, 1.0);\n"
+                                  "}\n");
+      fs_source = ralloc_asprintf(mem_ctx,
+                                  "#version 130\n"
+                                  "#extension GL_ARB_texture_multisample : enable\n"
+                                  "uniform sampler2DMS texSampler;\n"
+                                  "in vec2 texCoords;\n"
+                                  "out vec4 out_color;\n"
+                                  "\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "   gl_FragDepth = texelFetch(texSampler, ivec2(texCoords), 0).r;\n"
+                                  "}\n");
+   } else if (shader_index == BLIT_MSAA_SHADER_2D_MULTISAMPLE) {
+      char *sample_resolve;
+      /* You can create 2D_MULTISAMPLE textures with 0 sample count (meaning 1
+       * sample).  Yes, this is ridiculous.
+       */
+      int samples = MAX2(src_rb->NumSamples, 1);
+
+      /* We're assuming power of two samples for this resolution procedure.
+       *
+       * To avoid losing any floating point precision if the samples all
+       * happen to have the same value, we merge pairs of values at a time (so
+       * the floating point exponent just gets increased), rather than doing a
+       * naive sum and dividing.
+       */
+      assert((samples & (samples - 1)) == 0);
+      /* Fetch each individual sample. */
+      sample_resolve = rzalloc_size(mem_ctx, 1);
+      for (int i = 0; i < samples; i++) {
+         ralloc_asprintf_append(&sample_resolve,
+                                "   vec4 sample_1_%d = texelFetch(texSampler, ivec2(texCoords), %d);\n",
+                                i, i);
+      }
+      /* Now, merge each pair of samples, then each pair of those merges, etc.
+       */
+      for (int step = 2; step <= samples; step *= 2) {
+         for (int i = 0; i < samples; i += step) {
+            ralloc_asprintf_append(&sample_resolve,
+                                   "vec4 sample_%d_%d = sample_%d_%d + sample_%d_%d;\n",
+                                   step, i,
+                                   step / 2, i,
+                                   step / 2, i + step / 2);
+         }
+      }
+
+      /* Scale the final result. */
+      ralloc_asprintf_append(&sample_resolve,
+                             "   out_color = sample_%d_0 / %f;\n",
+                             samples, (float)samples);
+
+      vs_source = ralloc_asprintf(mem_ctx,
+                                  "#version 130\n"
+                                  "in vec2 position;\n"
+                                  "in vec2 textureCoords;\n"
+                                  "out vec2 texCoords;\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "   texCoords = textureCoords;\n"
+                                  "   gl_Position = vec4(position, 0.0, 1.0);\n"
+                                  "}\n");
+      fs_source = ralloc_asprintf(mem_ctx,
+                                  "#version 130\n"
+                                  "#extension GL_ARB_texture_multisample : enable\n"
+                                  "uniform %s texSampler;\n"
+                                  "in vec2 texCoords;\n"
+                                  "out vec4 out_color;\n"
+                                  "\n"
+                                  "void main()\n"
+                                  "{\n"
+                                  "%s\n" /* sample_resolve */
+                                  "}\n",
+                                  samplers[shader_index],
+                                  sample_resolve);
+   }
+
+   vs = _mesa_meta_compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
+   fs = _mesa_meta_compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
+
+   blit->msaa_shaders[shader_index] = _mesa_CreateProgramObjectARB();
+   _mesa_AttachShader(blit->msaa_shaders[shader_index], fs);
+   _mesa_DeleteObjectARB(fs);
+   _mesa_AttachShader(blit->msaa_shaders[shader_index], vs);
+   _mesa_DeleteObjectARB(vs);
+   _mesa_BindAttribLocation(blit->msaa_shaders[shader_index], 0, "position");
+   _mesa_BindAttribLocation(blit->msaa_shaders[shader_index], 1, "texcoords");
+   _mesa_meta_link_program_with_debug(ctx, blit->msaa_shaders[shader_index]);
+   ralloc_free(mem_ctx);
+
+   _mesa_UseProgram(blit->msaa_shaders[shader_index]);
+}
+
+static void
 setup_glsl_blit_framebuffer(struct gl_context *ctx,
                             struct blit_state *blit,
+                            struct gl_renderbuffer *src_rb,
                             GLenum target)
 {
    /* target = GL_TEXTURE_RECTANGLE is not supported in GLES 3.0 */
@@ -90,7 +241,11 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
 
    _mesa_meta_setup_vertex_objects(&blit->VAO, &blit->VBO, true, 2, 2, 0);
 
-   _mesa_meta_setup_blit_shader(ctx, target, &blit->shaders);
+   if (target == GL_TEXTURE_2D_MULTISAMPLE) {
+      setup_glsl_msaa_blit_shader(ctx, blit, src_rb, target);
+   } else {
+      _mesa_meta_setup_blit_shader(ctx, target, &blit->shaders);
+   }
 }
 
 /**
@@ -124,6 +279,15 @@ blitframebuffer_texture(struct gl_context *ctx,
       ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
       ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
    GLuint tempTex = 0;
+   struct gl_renderbuffer *rb = readAtt->Renderbuffer;
+
+   if (rb->NumSamples && !ctx->Extensions.ARB_texture_multisample)
+      return false;
+
+   if (filter == GL_SCALED_RESOLVE_FASTEST_EXT ||
+       filter == GL_SCALED_RESOLVE_NICEST_EXT) {
+      filter = GL_LINEAR;
+   }
 
    if (readAtt->Texture) {
       /* If there's a texture attached of a type we can handle, then just use
@@ -133,16 +297,25 @@ blitframebuffer_texture(struct gl_context *ctx,
       texObj = readAtt->Texture;
       target = texObj->Target;
 
-      if (target != GL_TEXTURE_2D && target != GL_TEXTURE_RECTANGLE_ARB)
+      switch (target) {
+      case GL_TEXTURE_2D:
+      case GL_TEXTURE_RECTANGLE:
+      case GL_TEXTURE_2D_MULTISAMPLE:
+         break;
+      default:
          return false;
+      }
    } else if (ctx->Driver.BindRenderbufferTexImage) {
       /* Otherwise, we need the driver to be able to bind a renderbuffer as
        * a texture image.
        */
       struct gl_texture_image *texImage;
-      struct gl_renderbuffer *rb = readAtt->Renderbuffer;
 
-      target = GL_TEXTURE_2D;
+      if (rb->NumSamples > 1)
+         target = GL_TEXTURE_2D_MULTISAMPLE;
+      else
+         target = GL_TEXTURE_2D;
+
       _mesa_GenTextures(1, &tempTex);
       _mesa_BindTexture(target, tempTex);
       srcLevel = 0;
@@ -174,7 +347,7 @@ blitframebuffer_texture(struct gl_context *ctx,
    maxLevelSave = texObj->MaxLevel;
 
    if (glsl_version) {
-      setup_glsl_blit_framebuffer(ctx, blit, target);
+      setup_glsl_blit_framebuffer(ctx, blit, rb, target);
    }
    else {
       _mesa_meta_setup_ff_tnl_for_blit(&ctx->Meta->Blit.VAO,
@@ -230,7 +403,8 @@ blitframebuffer_texture(struct gl_context *ctx,
          t1 = srcY1 / (float) texImage->Height;
       }
       else {
-         assert(target == GL_TEXTURE_RECTANGLE_ARB);
+         assert(target == GL_TEXTURE_RECTANGLE_ARB ||
+                target == GL_TEXTURE_2D_MULTISAMPLE);
          s0 = (float) srcX0;
          s1 = (float) srcX1;
          t0 = (float) srcY0;
@@ -326,12 +500,15 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
     * texture size, fallback if the source is multisampled.  This fallback can
     * be removed once Mesa gets support ARB_texture_multisample.
     */
-   if (srcW > maxTexSize || srcH > maxTexSize
-       || ctx->ReadBuffer->Visual.samples > 0) {
+   if (srcW > maxTexSize || srcH > maxTexSize) {
       /* XXX avoid this fallback */
-      _swrast_BlitFramebuffer(ctx, srcX0, srcY0, srcX1, srcY1,
-                              dstX0, dstY0, dstX1, dstY1, mask, filter);
-      return;
+      goto fallback;
+   }
+
+   /* Multisample texture blit support requires texture multisample. */
+   if (ctx->ReadBuffer->Visual.samples > 0 &&
+       !ctx->Extensions.ARB_texture_multisample) {
+      goto fallback;
    }
 
    /* only scissor effects blit so save/clear all other relevant state */
@@ -368,7 +545,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
     * BlitFramebuffer function.
     */
    if (use_glsl_version) {
-      setup_glsl_blit_framebuffer(ctx, blit, tex->Target);
+      setup_glsl_blit_framebuffer(ctx, blit, NULL, tex->Target);
    }
    else {
       _mesa_meta_setup_ff_tnl_for_blit(&blit->VAO, &blit->VBO, 2);
@@ -492,6 +669,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
 
    _mesa_meta_end(ctx);
 
+fallback:
    if (mask) {
       _swrast_BlitFramebuffer(ctx, srcX0, srcY0, srcX1, srcY1,
                               dstX0, dstY0, dstX1, dstY1, mask, filter);

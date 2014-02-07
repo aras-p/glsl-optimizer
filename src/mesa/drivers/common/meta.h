@@ -221,6 +221,12 @@ struct blit_shader_table {
    struct blit_shader sampler_cubemap_array;
 };
 
+enum blit_msaa_shader {
+   BLIT_MSAA_SHADER_2D_MULTISAMPLE,
+   BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH,
+   BLIT_MSAA_SHADER_COUNT,
+};
+
 /**
  * State for glBlitFramebufer()
  */
@@ -230,6 +236,7 @@ struct blit_state
    GLuint VBO;
    GLuint DepthFP;
    struct blit_shader_table shaders;
+   GLuint msaa_shaders[BLIT_MSAA_SHADER_COUNT];
    struct temp_texture depthTex;
 };
 
