@@ -269,7 +269,8 @@ __glXCloseDisplay(Display * dpy, XExtCodes * codes)
    }
    _XUnlockMutex(_Xglobal_lock);
 
-   glx_display_free(priv);
+   if (priv != NULL)
+      glx_display_free(priv);
 
    return 1;
 }
