@@ -813,8 +813,9 @@ intel_miptree_create_for_renderbuffer(struct brw_context *brw,
    struct intel_mipmap_tree *mt;
    uint32_t depth = 1;
    bool ok;
+   GLenum target = num_samples > 1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
 
-   mt = intel_miptree_create(brw, GL_TEXTURE_2D, format, 0, 0,
+   mt = intel_miptree_create(brw, target, format, 0, 0,
 			     width, height, depth, true, num_samples,
                              INTEL_MIPTREE_TILING_ANY);
    if (!mt)
@@ -1651,7 +1652,8 @@ intel_miptree_updownsample(struct brw_context *brw,
 static void
 assert_is_flat(struct intel_mipmap_tree *mt)
 {
-   assert(mt->target == GL_TEXTURE_2D);
+   assert(mt->target == GL_TEXTURE_2D ||
+          mt->target == GL_TEXTURE_2D_MULTISAMPLE);
    assert(mt->first_level == 0);
    assert(mt->last_level == 0);
 }
@@ -2363,7 +2365,7 @@ intel_miptree_map_multisample(struct brw_context *brw,
    assert(mt->num_samples > 1);
 
    /* Only flat, renderbuffer-like miptrees are supported. */
-   if (mt->target != GL_TEXTURE_2D ||
+   if (mt->target != GL_TEXTURE_2D_MULTISAMPLE ||
        mt->first_level != 0 ||
        mt->last_level != 0) {
       _mesa_problem(ctx, "attempt to map a multisample miptree for "
