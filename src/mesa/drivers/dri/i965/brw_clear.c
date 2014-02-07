@@ -111,7 +111,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
    struct intel_mipmap_tree *mt = depth_irb->mt;
    struct gl_renderbuffer_attachment *depth_att = &fb->Attachment[BUFFER_DEPTH];
 
-   if (brw->gen < 6 || brw->gen >= 8)
+   if (brw->gen < 6)
       return false;
 
    if (!intel_renderbuffer_has_hiz(depth_irb))
