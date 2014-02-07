@@ -2190,6 +2190,10 @@ fs_visitor::dead_code_eliminate_local()
 
    ht = _mesa_hash_table_create(mem_ctx, dead_code_hash_compare);
 
+   if (ht == NULL) {
+      return false;
+   }
+
    foreach_list_safe(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
