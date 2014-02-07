@@ -60,7 +60,7 @@ warn_GLX_1_3(Display * dpy, const char *function_name)
 {
    struct glx_display *priv = __glXInitialize(dpy);
 
-   if (priv->minorVersion < 3) {
+   if (priv && priv->minorVersion < 3) {
       fprintf(stderr,
               "WARNING: Application calling GLX 1.3 function \"%s\" "
               "when GLX 1.3 is not supported!  This is an application bug!\n",
@@ -91,7 +91,7 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
    CARD8 opcode;
    int i;
 
-   if ((dpy == NULL) || (drawable == 0)) {
+   if ((priv == NULL) || (dpy == NULL) || (drawable == 0)) {
       return;
    }
 
@@ -197,6 +197,11 @@ CreateDRIDrawable(Display *dpy, struct glx_config *config,
    __GLXDRIdrawable *pdraw;
    struct glx_screen *psc;
 
+   if (priv == NULL) {
+      fprintf(stderr, "failed to create drawable\n");
+      return GL_FALSE;
+   }
+
    psc = priv->screens[config->screen];
    if (psc->driScreen == NULL)
       return GL_TRUE;
@@ -226,7 +231,7 @@ DestroyDRIDrawable(Display *dpy, GLXDrawable drawable, int destroy_xdrawable)
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
    XID xid;
 
-   if (pdraw != NULL) {
+   if (priv != NULL && pdraw != NULL) {
       xid = pdraw->xDrawable;
       (*pdraw->destroyDrawable) (pdraw);
       __glxHashDelete(priv->drawHash, drawable);
@@ -294,6 +299,9 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    }
 
    priv = __glXInitialize(dpy);
+   if (priv == NULL)
+      return 0;
+
    use_glx_1_3 = ((priv->majorVersion > 1) || (priv->minorVersion >= 3));
 
    *value = 0;
@@ -504,6 +512,9 @@ CreatePbuffer(Display * dpy, struct glx_config *config,
    Pixmap pixmap;
    GLboolean glx_1_3 = GL_FALSE;
 
+   if (priv == NULL)
+      return None;
+
    i = 0;
    if (attrib_list) {
       while (attrib_list[i * 2])
@@ -593,7 +604,7 @@ DestroyPbuffer(Display * dpy, GLXDrawable drawable)
    struct glx_display *priv = __glXInitialize(dpy);
    CARD8 opcode;
 
-   if ((dpy == NULL) || (drawable == 0)) {
+   if ((priv == NULL) || (dpy == NULL) || (drawable == 0)) {
       return;
    }
 
