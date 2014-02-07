@@ -25,90 +25,44 @@
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
 #include "intel_fbo.h"
+#include "intel_resolve_map.h"
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
 
-void
-gen8_emit_depth_stencil_hiz(struct brw_context *brw,
-                            struct intel_mipmap_tree *depth_mt,
-                            uint32_t depth_offset,
-                            uint32_t depthbuffer_format,
-                            uint32_t depth_surface_type,
-                            struct intel_mipmap_tree *stencil_mt,
-                            bool hiz, bool separate_stencil,
-                            uint32_t width, uint32_t height,
-                            uint32_t tile_x, uint32_t tile_y)
+/**
+ * Helper function to emit depth related command packets.
+ */
+static void
+emit_depth_packets(struct brw_context *brw,
+                   struct intel_mipmap_tree *depth_mt,
+                   uint32_t depthbuffer_format,
+                   uint32_t depth_surface_type,
+                   bool depth_writable,
+                   struct intel_mipmap_tree *stencil_mt,
+                   bool stencil_writable,
+                   uint32_t stencil_offset,
+                   bool hiz,
+                   uint32_t width,
+                   uint32_t height,
+                   uint32_t depth,
+                   uint32_t lod,
+                   uint32_t min_array_element)
 {
-   struct gl_context *ctx = &brw->ctx;
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-   uint32_t surftype;
-   unsigned int depth = 1;
-   unsigned int min_array_element;
-   GLenum gl_target = GL_TEXTURE_2D;
-   unsigned int lod;
-   const struct intel_mipmap_tree *mt = depth_mt ? depth_mt : stencil_mt;
-   const struct intel_renderbuffer *irb = NULL;
-   const struct gl_renderbuffer *rb = NULL;
-
    intel_emit_depth_stall_flushes(brw);
-
-   irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
-   if (!irb)
-      irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
-   rb = (struct gl_renderbuffer *) irb;
-
-   if (rb) {
-      depth = MAX2(rb->Depth, 1);
-      if (rb->TexImage)
-         gl_target = rb->TexImage->TexObject->Target;
-   }
-
-   switch (gl_target) {
-   case GL_TEXTURE_CUBE_MAP_ARRAY:
-   case GL_TEXTURE_CUBE_MAP:
-      /* The PRM claims that we should use BRW_SURFACE_CUBE for this
-       * situation, but experiments show that gl_Layer doesn't work when we do
-       * this.  So we use BRW_SURFACE_2D, since for rendering purposes this is
-       * equivalent.
-       */
-      surftype = BRW_SURFACE_2D;
-      depth *= 6;
-      break;
-   default:
-      surftype = translate_tex_target(gl_target);
-      break;
-   }
-
-   if (fb->MaxNumLayers > 0 || !irb) {
-      min_array_element = 0;
-   } else if (irb->mt->num_samples > 1) {
-      /* Convert physical to logical layer. */
-      min_array_element = irb->mt_layer / irb->mt->num_samples;
-   } else {
-      min_array_element = irb->mt_layer;
-   }
-
-   lod = irb ? irb->mt_level - irb->mt->first_level : 0;
-
-   if (mt) {
-      width = mt->logical_width0;
-      height = mt->logical_height0;
-   }
 
    /* _NEW_BUFFERS, _NEW_DEPTH, _NEW_STENCIL */
    BEGIN_BATCH(8);
    OUT_BATCH(GEN7_3DSTATE_DEPTH_BUFFER << 16 | (8 - 2));
-   OUT_BATCH((surftype << 29) |
-             ((ctx->Depth.Mask != 0) << 28) |
-             ((stencil_mt != NULL && ctx->Stencil._WriteEnabled) << 27) |
-             ((hiz ? 1 : 0) << 22) |
-             (depthbuffer_format << 18) |
+   OUT_BATCH(depth_surface_type << 29 |
+             (depth_writable ? (1 << 28) : 0) |
+             (stencil_mt != NULL && stencil_writable) << 27 |
+             (hiz ? 1 : 0) << 22 |
+             depthbuffer_format << 18 |
              (depth_mt ? depth_mt->region->pitch - 1 : 0));
    if (depth_mt) {
       OUT_RELOC64(depth_mt->region->bo,
-                  I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                  0);
+                  I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, 0);
    } else {
       OUT_BATCH(0);
       OUT_BATCH(0);
@@ -165,7 +119,7 @@ gen8_emit_depth_stencil_hiz(struct brw_context *brw,
       OUT_BATCH(HSW_STENCIL_ENABLED | (2 * stencil_mt->region->pitch - 1));
       OUT_RELOC64(stencil_mt->region->bo,
                   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-                  brw->depthstencil.stencil_offset);
+                  stencil_offset);
       OUT_BATCH(stencil_mt ? stencil_mt->qpitch >> 2 : 0);
       ADVANCE_BATCH();
    }
@@ -175,4 +129,77 @@ gen8_emit_depth_stencil_hiz(struct brw_context *brw,
    OUT_BATCH(depth_mt ? depth_mt->depth_clear_value : 0);
    OUT_BATCH(1);
    ADVANCE_BATCH();
+}
+
+/* Awful vtable-compatible function; should be cleaned up in the future. */
+void
+gen8_emit_depth_stencil_hiz(struct brw_context *brw,
+                            struct intel_mipmap_tree *depth_mt,
+                            uint32_t depth_offset,
+                            uint32_t depthbuffer_format,
+                            uint32_t depth_surface_type,
+                            struct intel_mipmap_tree *stencil_mt,
+                            bool hiz, bool separate_stencil,
+                            uint32_t width, uint32_t height,
+                            uint32_t tile_x, uint32_t tile_y)
+{
+   struct gl_context *ctx = &brw->ctx;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   uint32_t surftype;
+   unsigned int depth = 1;
+   unsigned int min_array_element;
+   GLenum gl_target = GL_TEXTURE_2D;
+   unsigned int lod;
+   const struct intel_mipmap_tree *mt = depth_mt ? depth_mt : stencil_mt;
+   const struct intel_renderbuffer *irb = NULL;
+   const struct gl_renderbuffer *rb = NULL;
+
+   irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
+   if (!irb)
+      irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
+   rb = (struct gl_renderbuffer *) irb;
+
+   if (rb) {
+      depth = MAX2(rb->Depth, 1);
+      if (rb->TexImage)
+         gl_target = rb->TexImage->TexObject->Target;
+   }
+
+   switch (gl_target) {
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
+   case GL_TEXTURE_CUBE_MAP:
+      /* The PRM claims that we should use BRW_SURFACE_CUBE for this
+       * situation, but experiments show that gl_Layer doesn't work when we do
+       * this.  So we use BRW_SURFACE_2D, since for rendering purposes this is
+       * equivalent.
+       */
+      surftype = BRW_SURFACE_2D;
+      depth *= 6;
+      break;
+   default:
+      surftype = translate_tex_target(gl_target);
+      break;
+   }
+
+   if (fb->MaxNumLayers > 0 || !irb) {
+      min_array_element = 0;
+   } else if (irb->mt->num_samples > 1) {
+      /* Convert physical to logical layer. */
+      min_array_element = irb->mt_layer / irb->mt->num_samples;
+   } else {
+      min_array_element = irb->mt_layer;
+   }
+
+   lod = irb ? irb->mt_level - irb->mt->first_level : 0;
+
+   if (mt) {
+      width = mt->logical_width0;
+      height = mt->logical_height0;
+   }
+
+   emit_depth_packets(brw, depth_mt, brw_depthbuffer_format(brw), surftype,
+                      ctx->Depth.Mask != 0,
+                      stencil_mt, ctx->Stencil._WriteEnabled,
+                      brw->depthstencil.stencil_offset,
+                      hiz, width, height, depth, lod, min_array_element);
 }
