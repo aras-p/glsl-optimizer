@@ -106,7 +106,7 @@ no_htab:
 /**
  * Create a VdpPresentationQueueTarget for use with X11.
  */
-PUBLIC VdpStatus
+VdpStatus
 vlVdpPresentationQueueTargetCreateX11(VdpDevice device, Drawable drawable,
                                       VdpPresentationQueueTarget *target)
 {

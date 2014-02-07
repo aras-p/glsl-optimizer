@@ -436,7 +436,6 @@ boolean vlGetFuncFTAB(VdpFuncId function_id, void **func);
 
 /* Public functions */
 VdpDeviceCreateX11 vdp_imp_device_create_x11;
-VdpPresentationQueueTargetCreateX11 vlVdpPresentationQueueTargetCreateX11;
 
 void vlVdpDefaultSamplerViewTemplate(struct pipe_sampler_view *templ, struct pipe_resource *res);
 
@@ -507,6 +506,9 @@ VdpVideoMixerGetParameterValues vlVdpVideoMixerGetParameterValues;
 VdpVideoMixerGetAttributeValues vlVdpVideoMixerGetAttributeValues;
 VdpVideoMixerDestroy vlVdpVideoMixerDestroy;
 VdpGenerateCSCMatrix vlVdpGenerateCSCMatrix;
+/* Winsys specific internal function pointers */
+VdpPresentationQueueTargetCreateX11 vlVdpPresentationQueueTargetCreateX11;
+
 
 /* interop to mesa state tracker */
 VdpVideoSurfaceGallium vlVdpVideoSurfaceGallium;
