@@ -1731,10 +1731,13 @@ gallium_require_drm_loader() {
 }
 
 radeon_llvm_check() {
+    if test "x$enable_gallium_llvm" != "xyes"; then
+        AC_MSG_ERROR([--enable-gallium-llvm is required when building $1])
+    fi
     LLVM_REQUIRED_VERSION_MAJOR="3"
     LLVM_REQUIRED_VERSION_MINOR="3"
     if test "$LLVM_VERSION_INT" -lt "${LLVM_REQUIRED_VERSION_MAJOR}0${LLVM_REQUIRED_VERSION_MINOR}"; then
-        AC_MSG_ERROR([LLVM $LLVM_REQUIRED_VERSION_MAJOR.$LLVM_REQUIRED_VERSION_MINOR or newer is required for r600g and radeonsi.])
+        AC_MSG_ERROR([LLVM $LLVM_REQUIRED_VERSION_MAJOR.$LLVM_REQUIRED_VERSION_MINOR or newer is required for $1])
     fi
     if test true && $LLVM_CONFIG --targets-built | grep -qvw 'R600' ; then
         AC_MSG_ERROR([LLVM R600 Target not enabled.  You can enable it when building the LLVM
@@ -1744,7 +1747,7 @@ radeon_llvm_check() {
     LLVM_COMPONENTS="${LLVM_COMPONENTS} r600 bitreader ipo"
     NEED_RADEON_LLVM=yes
     AC_CHECK_LIB([elf], [elf_memory], [ELF_LIB=-lelf],
-                                 [AC_MSG_ERROR([radeonsi and r600g require libelf when using LLVM])])
+                                 [AC_MSG_ERROR([$1 requires libelf when using LLVM])])
 }
 
 dnl Gallium drivers
@@ -1797,7 +1800,7 @@ if test "x$with_gallium_drivers" != x; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
             if test "x$enable_r600_llvm" = xyes -o "x$enable_opencl" = xyes; then
-                radeon_llvm_check
+                radeon_llvm_check "r600g"
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} bitreader asmparser"
             fi
             if test "x$enable_r600_llvm" = xyes; then
@@ -1814,7 +1817,7 @@ if test "x$with_gallium_drivers" != x; then
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
-            radeon_llvm_check
+            radeon_llvm_check "radeonsi"
             gallium_check_st "radeon/drm" "radeonsi/dri" "" "" "radeonsi/vdpau" "radeonsi/omx"
             DRICOMMON_NEED_LIBDRM=yes
             ;;
