@@ -322,11 +322,14 @@ emit_viewport( struct svga_context *svga,
       float adjust_y = 0.0;
 
       switch (svga->curr.reduced_prim) {
+      case PIPE_PRIM_POINTS:
+         adjust_x = -0.375;
+         adjust_y = -0.75;
+         break;
       case PIPE_PRIM_LINES:
          adjust_x = -0.5;
          adjust_y = 0;
          break;
-      case PIPE_PRIM_POINTS:
       case PIPE_PRIM_TRIANGLES:
          adjust_x = -0.5;
          adjust_y = -0.5;
