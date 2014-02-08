@@ -82,6 +82,7 @@ struct pb_cache_manager
    
    struct list_head delayed;
    pb_size numDelayed;
+   unsigned size_factor;
 };
 
 
@@ -231,7 +232,7 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
       return 0;
 
    /* be lenient with size */
-   if(buf->base.size >= 2*size)
+   if(buf->base.size > buf->mgr->size_factor*size)
       return 0;
    
    if(!pb_check_alignment(desc->alignment, buf->base.alignment))
@@ -387,7 +388,8 @@ pb_cache_manager_destroy(struct pb_manager *mgr)
 
 struct pb_manager *
 pb_cache_manager_create(struct pb_manager *provider, 
-                     	unsigned usecs) 
+                     	unsigned usecs,
+			unsigned size_factor) 
 {
    struct pb_cache_manager *mgr;
 
@@ -403,6 +405,7 @@ pb_cache_manager_create(struct pb_manager *provider,
    mgr->base.flush = pb_cache_manager_flush;
    mgr->provider = provider;
    mgr->usecs = usecs;
+   mgr->size_factor = size_factor;
    LIST_INITHEAD(&mgr->delayed);
    mgr->numDelayed = 0;
    pipe_mutex_init(mgr->mutex);
