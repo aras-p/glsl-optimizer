@@ -232,6 +232,7 @@ svga_texture_destroy(struct pipe_screen *screen,
 
    ss->total_resource_bytes -= tex->size;
 
+   FREE(tex->rendered_to);
    FREE(tex);
 }
 
@@ -475,9 +476,15 @@ svga_texture_create(struct pipe_screen *screen,
    tex->size = util_resource_size(template);
    svgascreen->total_resource_bytes += tex->size;
 
+   tex->rendered_to = CALLOC(template->depth0 * template->array_size,
+                             sizeof(tex->rendered_to[0]));
+   if (!tex->rendered_to)
+      goto error2;
+
    return &tex->b.b;
 
 error2:
+   FREE(tex->rendered_to);
    FREE(tex);
 error1:
    return NULL;
@@ -535,6 +542,8 @@ svga_texture_from_handle(struct pipe_screen *screen,
 
    tex->key.cachable = 0;
    tex->handle = srf;
+
+   tex->rendered_to = CALLOC(1, sizeof(tex->rendered_to[0]));
 
    return &tex->b.b;
 }
