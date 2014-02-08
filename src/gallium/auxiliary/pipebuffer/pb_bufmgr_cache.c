@@ -83,6 +83,7 @@ struct pb_cache_manager
    struct list_head delayed;
    pb_size numDelayed;
    unsigned size_factor;
+   unsigned bypass_usage;
 };
 
 
@@ -228,6 +229,9 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
                           pb_size size,
                           const struct pb_desc *desc)
 {
+   if (desc->usage & buf->mgr->bypass_usage)
+      return 0;
+
    if(buf->base.size < size)
       return 0;
 
@@ -339,7 +343,7 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
    
    assert(pipe_is_referenced(&buf->buffer->reference));
    assert(pb_check_alignment(desc->alignment, buf->buffer->alignment));
-   assert(pb_check_usage(desc->usage, buf->buffer->usage));
+   assert(pb_check_usage(desc->usage & ~mgr->bypass_usage, buf->buffer->usage));
    assert(buf->buffer->size >= size);
    
    pipe_reference_init(&buf->base.reference, 1);
@@ -385,11 +389,23 @@ pb_cache_manager_destroy(struct pb_manager *mgr)
    FREE(mgr);
 }
 
-
+/**
+ * Create a caching buffer manager
+ *
+ * @param provider The buffer manager to which cache miss buffer requests
+ * should be redirected.
+ * @param usecs Unused buffers may be released from the cache after this
+ * time
+ * @param size_factor Declare buffers that are size_factor times bigger than
+ * the requested size as cache hits.
+ * @param bypass_usage Bitmask. If (requested usage & bypass_usage) != 0,
+ * buffer allocation requests are redirected to the provider.
+ */
 struct pb_manager *
 pb_cache_manager_create(struct pb_manager *provider, 
                      	unsigned usecs,
-			unsigned size_factor) 
+			unsigned size_factor,
+                        unsigned bypass_usage)
 {
    struct pb_cache_manager *mgr;
 
@@ -406,6 +422,7 @@ pb_cache_manager_create(struct pb_manager *provider,
    mgr->provider = provider;
    mgr->usecs = usecs;
    mgr->size_factor = size_factor;
+   mgr->bypass_usage = bypass_usage;
    LIST_INITHEAD(&mgr->delayed);
    mgr->numDelayed = 0;
    pipe_mutex_init(mgr->mutex);

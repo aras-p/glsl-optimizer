@@ -162,7 +162,8 @@ pb_slab_range_manager_create(struct pb_manager *provider,
 struct pb_manager *
 pb_cache_manager_create(struct pb_manager *provider, 
                      	unsigned usecs,
-			unsigned size_factor); 
+			unsigned size_factor,
+                        unsigned bypass_usage);
 
 
 struct pb_fence_ops;
