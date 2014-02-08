@@ -524,16 +524,6 @@ static const struct format_cap format_cap_table[] = {
       0
    },
    {
-      SVGA3D_BC4_UNORM,
-      SVGA3D_DEVCAP_SURFACEFMT_BC4_UNORM,
-      0
-   },
-   {
-      SVGA3D_BC5_UNORM,
-      SVGA3D_DEVCAP_SURFACEFMT_BC5_UNORM,
-      0
-   },
-   {
       SVGA3D_Z_DF16,
       SVGA3D_DEVCAP_SURFACEFMT_Z_DF16,
       0

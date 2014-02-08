@@ -1,5 +1,5 @@
 /**********************************************************
- * Copyright 2007-2009 VMware, Inc.  All rights reserved.
+ * Copyright 2007-2014 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -78,6 +78,7 @@ typedef struct {
 #define SVGA3D_VS_10 ((SVGA3D_VS_TYPE << 16) | 1 << 8)
 #define SVGA3D_VS_11 (SVGA3D_VS_10 | 1)
 #define SVGA3D_VS_20 ((SVGA3D_VS_TYPE << 16) | 2 << 8)
+#define SVGA3D_VS_21 (SVGA3D_VS_20 | 1)
 #define SVGA3D_VS_30 ((SVGA3D_VS_TYPE << 16) | 3 << 8)
 
 #define SVGA3D_PS_10 ((SVGA3D_PS_TYPE << 16) | 1 << 8)
@@ -86,6 +87,7 @@ typedef struct {
 #define SVGA3D_PS_13 (SVGA3D_PS_10 | 3)
 #define SVGA3D_PS_14 (SVGA3D_PS_10 | 4)
 #define SVGA3D_PS_20 ((SVGA3D_PS_TYPE << 16) | 2 << 8)
+#define SVGA3D_PS_21 (SVGA3D_PS_20 | 1)
 #define SVGA3D_PS_30 ((SVGA3D_PS_TYPE << 16) | 3 << 8)
 
 /* The *_ENABLED are for backwards compatibility with old drivers */
@@ -268,27 +270,12 @@ typedef enum {
 
 typedef enum {
    SVGA3DSAMP_UNKNOWN = 0, /* Uninitialized value */
-   SVGA3DSAMP_2D = 2,      /* dcl_2d s# (for declaring a 2-D texture) */
+   SVGA3DSAMP_2D = 2,      /* dcl_2d s# (for declaring a 2D texture) */
    SVGA3DSAMP_CUBE,        /* dcl_cube s# (for declaring a cube texture) */
    SVGA3DSAMP_VOLUME,      /* dcl_volume s# (for declaring a volume texture) */
+   SVGA3DSAMP_2D_SHADOW,   /* dcl_2d s# (for declaring a 2D shadow texture) */
+   SVGA3DSAMP_MAX,
 } SVGA3dShaderSamplerType;
-
-/* SVGA3D sampler format classes */
-
-typedef enum {
-   SVGA3DSAMPFORMAT_ARGB,        /* ARGB formats */
-   SVGA3DSAMPFORMAT_V8U8,        /* Sign and normalize (SNORM) V & U */
-   SVGA3DSAMPFORMAT_Q8W8V8U8,    /* SNORM all */
-   SVGA3DSAMPFORMAT_CxV8U8,      /* SNORM V & U, C=SQRT(1-U^2-V^2) */
-   SVGA3DSAMPFORMAT_X8L8V8U8,    /* SNORM V & U */
-   SVGA3DSAMPFORMAT_A2W10V10U10, /* SNORM W, V & U */
-   SVGA3DSAMPFORMAT_DXT_PMA,     /* DXT pre-multiplied alpha */
-   SVGA3DSAMPFORMAT_YUV,         /* YUV video format */
-   SVGA3DSAMPFORMAT_UYVY,        /* UYVY video format */
-   SVGA3DSAMPFORMAT_Rx,          /* R16F/32F */
-   SVGA3DSAMPFORMAT_RxGx,        /* R16FG16F, R32FG32F */
-   SVGA3DSAMPFORMAT_V16U16,      /* SNORM all */
-} SVGA3DShaderSamplerFormatClass;
 
 /* SVGA3D write mask */
 
@@ -314,6 +301,18 @@ typedef enum {
  */
 
 #define SVGA3DDSTMOD_MSAMPCENTROID     4
+
+/* SVGA3D destination shift scale */
+
+typedef enum {
+   SVGA3DDSTSHFSCALE_X1 = 0,  /* 1.0 */
+   SVGA3DDSTSHFSCALE_X2 = 1,  /* 2.0 */
+   SVGA3DDSTSHFSCALE_X4 = 2,  /* 4.0 */
+   SVGA3DDSTSHFSCALE_X8 = 3,  /* 8.0 */
+   SVGA3DDSTSHFSCALE_D8 = 13, /* 0.125 */
+   SVGA3DDSTSHFSCALE_D4 = 14, /* 0.25 */
+   SVGA3DDSTSHFSCALE_D2 = 15  /* 0.5 */
+} SVGA3dShaderDstShfScaleType;
 
 /* SVGA3D source swizzle */
 

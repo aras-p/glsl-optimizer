@@ -1,5 +1,5 @@
 /**********************************************************
- * Copyright 2007-2009 VMware, Inc.  All rights reserved.
+ * Copyright 2007-2014 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -41,6 +41,14 @@
 #ifndef _SVGA3D_CAPS_H_
 #define _SVGA3D_CAPS_H_
 
+#define INCLUDE_ALLOW_MODULE
+#define INCLUDE_ALLOW_USERLEVEL
+
+#include "includeCheck.h"
+
+#include <string.h>
+#include "svga_reg.h"
+
 #define SVGA_FIFO_3D_CAPS_SIZE   (SVGA_FIFO_3D_CAPS_LAST - \
                                   SVGA_FIFO_3D_CAPS + 1)
 
@@ -72,10 +80,12 @@ typedef enum {
  */
 
 typedef
+#include "vmware_pack_begin.h"
 struct SVGA3dCapsRecordHeader {
    uint32 length;
    SVGA3dCapsRecordType type;
 }
+#include "vmware_pack_end.h"
 SVGA3dCapsRecordHeader;
 
 
@@ -89,51 +99,16 @@ SVGA3dCapsRecordHeader;
  */
 
 typedef
+#include "vmware_pack_begin.h"
 struct SVGA3dCapsRecord {
    SVGA3dCapsRecordHeader header;
    uint32 data[1];
 }
+#include "vmware_pack_end.h"
 SVGA3dCapsRecord;
 
 
 typedef uint32 SVGA3dCapPair[2];
-
-
-/*
- *----------------------------------------------------------------------
- *
- * SVGA3dCaps_FindRecord
- *
- *    Finds the record with the highest-valued type within the given range
- *    in the caps block.
- *
- *    Result: pointer to found record, or NULL if not found.
- *
- *----------------------------------------------------------------------
- */
-
-static INLINE SVGA3dCapsRecord *
-SVGA3dCaps_FindRecord(const uint32 *capsBlock,
-                      SVGA3dCapsRecordType recordTypeMin,
-                      SVGA3dCapsRecordType recordTypeMax)
-{
-   SVGA3dCapsRecord *record, *found = NULL;
-   uint32 offset;
-
-   /*
-    * Search linearly through the caps block records for the specified type.
-    */
-   for (offset = 0; capsBlock[offset] != 0; offset += capsBlock[offset]) {
-      record = (SVGA3dCapsRecord *) (capsBlock + offset);
-      if ((record->header.type >= recordTypeMin) &&
-          (record->header.type <= recordTypeMax) &&
-          (!found || (record->header.type > found->header.type))) {
-         found = record;
-      }
-   }
-
-   return found;
-}
 
 
 #endif // _SVGA3D_CAPS_H_

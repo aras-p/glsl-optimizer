@@ -1,5 +1,5 @@
 /**********************************************************
- * Copyright 1998-2009 VMware, Inc.  All rights reserved.
+ * Copyright 1998-2014 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -45,6 +45,13 @@ typedef uint8_t uint8;
 #endif /* HAIKU */
 
 typedef uint8_t Bool;
+
+typedef uint64    PA;
+typedef uint32    PPN;
+typedef uint64    PPN64;
+
+#undef MAX_UINT32
+#define MAX_UINT32 0xffffffffU
 
 #endif /* _SVGA_TYPES_H_ */
 

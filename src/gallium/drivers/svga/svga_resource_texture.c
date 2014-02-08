@@ -418,7 +418,7 @@ svga_texture_create(struct pipe_screen *screen,
    }
 
    if (template->target == PIPE_TEXTURE_3D) {
-      tex->key.flags |= SVGA3D_SURFACE_HINT_VOLUME;
+      tex->key.flags |= SVGA3D_SURFACE_VOLUME;
    }
 
    tex->key.cachable = 1;
