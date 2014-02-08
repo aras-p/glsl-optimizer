@@ -38,7 +38,7 @@
 
 #include "vl/vl_winsys.h"
 
-extern int omx_component_library_Setup(stLoaderComponentType **stComponents);
+PUBLIC extern int omx_component_library_Setup(stLoaderComponentType **stComponents);
 
 struct vl_screen *omx_get_screen(void);
 void omx_put_screen(void);
