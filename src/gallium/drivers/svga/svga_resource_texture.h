@@ -101,6 +101,8 @@ struct svga_transfer
    /* Temporary malloc buffer when we can't allocate a hardware buffer
     * big enough */
    void *swbuf;
+
+   boolean use_direct_map;
 };
 
 
