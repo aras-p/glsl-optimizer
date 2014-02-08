@@ -36,8 +36,10 @@
 
 #include "tgsi/tgsi_scan.h"
 
+#include "svga_screen.h"
 #include "svga_state.h"
 #include "svga_tgsi.h"
+#include "svga_winsys.h"
 #include "svga_hw_reg.h"
 #include "svga3d_shaderdefs.h"
 
@@ -480,6 +482,18 @@ svga_context( struct pipe_context *pipe )
    return (struct svga_context *)pipe;
 }
 
+
+static INLINE boolean
+svga_have_gb_objects(const struct svga_context *svga)
+{
+   return svga_screen(svga->pipe.screen)->sws->have_gb_objects;
+}
+
+static INLINE boolean
+svga_have_gb_dma(const struct svga_context *svga)
+{
+   return svga_screen(svga->pipe.screen)->sws->have_gb_dma;
+}
 
 
 #endif
