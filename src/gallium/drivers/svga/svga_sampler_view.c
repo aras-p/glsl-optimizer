@@ -150,7 +150,6 @@ svga_get_tex_sampler_view(struct pipe_context *pipe,
                                           &sv->key);
 
    if (!sv->handle) {
-      assert(0);
       sv->key.cachable = 0;
       sv->handle = tex->handle;
       debug_reference(&sv->reference,

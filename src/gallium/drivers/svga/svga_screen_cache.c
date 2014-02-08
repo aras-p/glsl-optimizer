@@ -210,7 +210,6 @@ svga_screen_cache_add(struct svga_screen *svgascreen,
    
    assert(key->cachable);
 
-   assert(handle);
    if (!handle)
       return;
    
