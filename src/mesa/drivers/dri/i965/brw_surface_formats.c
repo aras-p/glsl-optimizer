@@ -358,9 +358,9 @@ brw_format_for_mesa_format(mesa_format mesa_format)
       [MESA_FORMAT_G16R16_UNORM] = 0,
       [MESA_FORMAT_B10G10R10A2_UNORM] = BRW_SURFACEFORMAT_B10G10R10A2_UNORM,
       [MESA_FORMAT_S8_UINT_Z24_UNORM] = 0,
-      [MESA_FORMAT_Z24_UNORM_X8_UINT] = 0,
-      [MESA_FORMAT_Z_UNORM16] = 0,
       [MESA_FORMAT_Z24_UNORM_S8_UINT] = 0,
+      [MESA_FORMAT_Z_UNORM16] = 0,
+      [MESA_FORMAT_Z24_UNORM_X8_UINT] = 0,
       [MESA_FORMAT_X8Z24_UNORM] = 0,
       [MESA_FORMAT_Z_UNORM32] = 0,
       [MESA_FORMAT_S_UINT8] = 0,
@@ -600,8 +600,8 @@ brw_init_surface_formats(struct brw_context *brw)
    /* We will check this table for FBO completeness, but the surface format
     * table above only covered color rendering.
     */
-   brw->format_supported_as_render_target[MESA_FORMAT_Z24_UNORM_X8_UINT] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_Z24_UNORM_S8_UINT] = true;
+   brw->format_supported_as_render_target[MESA_FORMAT_Z24_UNORM_X8_UINT] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_S_UINT8] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_Z_UNORM16] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_Z_FLOAT32] = true;
@@ -610,8 +610,8 @@ brw_init_surface_formats(struct brw_context *brw)
    /* We remap depth formats to a supported texturing format in
     * translate_tex_format().
     */
-   ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_X8_UINT] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_S8_UINT] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_X8_UINT] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z_FLOAT32] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT_S8X24_UINT] = true;
 
@@ -697,8 +697,8 @@ translate_tex_format(struct brw_context *brw,
    case MESA_FORMAT_Z_UNORM16:
       return BRW_SURFACEFORMAT_R16_UNORM;
 
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
       return BRW_SURFACEFORMAT_R24_UNORM_X8_TYPELESS;
 
    case MESA_FORMAT_Z_FLOAT32:
@@ -740,8 +740,8 @@ brw_is_hiz_depth_format(struct brw_context *brw, mesa_format format)
    switch (format) {
    case MESA_FORMAT_Z_FLOAT32:
    case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
-   case MESA_FORMAT_Z24_UNORM_S8_UINT:
    case MESA_FORMAT_Z24_UNORM_X8_UINT:
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
    case MESA_FORMAT_Z_UNORM16:
       return true;
    default:

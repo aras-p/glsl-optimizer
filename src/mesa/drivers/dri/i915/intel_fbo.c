@@ -194,7 +194,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
       /* These aren't actual texture formats, so force them here. */
-      rb->Format = MESA_FORMAT_Z24_UNORM_X8_UINT;
+      rb->Format = MESA_FORMAT_Z24_UNORM_S8_UINT;
       break;
    }
 

@@ -209,7 +209,7 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
 	 rb->Format = MESA_FORMAT_S_UINT8;
       } else {
 	 assert(!brw->must_use_separate_stencil);
-	 rb->Format = MESA_FORMAT_Z24_UNORM_X8_UINT;
+	 rb->Format = MESA_FORMAT_Z24_UNORM_S8_UINT;
       }
       break;
    }

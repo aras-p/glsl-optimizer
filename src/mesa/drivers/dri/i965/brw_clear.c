@@ -130,7 +130,7 @@ brw_fast_clear_depth(struct gl_context *ctx)
    uint32_t depth_clear_value;
    switch (mt->format) {
    case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
       /* From the Sandy Bridge PRM, volume 2 part 1, page 314:
        *
        *     "[DevSNB+]: Several cases exist where Depth Buffer Clear cannot be

@@ -310,7 +310,7 @@ radeon_map_renderbuffer(struct gl_context *ctx,
    }
 
    if ((rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_DEPTH_ALWAYS_TILED) && !rrb->has_surface) {
-       if (rb->Format == MESA_FORMAT_Z24_UNORM_X8_UINT || rb->Format == MESA_FORMAT_Z24_UNORM_S8_UINT) {
+       if (rb->Format == MESA_FORMAT_Z24_UNORM_S8_UINT || rb->Format == MESA_FORMAT_Z24_UNORM_X8_UINT) {
 	   radeon_map_renderbuffer_s8z24(ctx, rb, x, y, w, h,
 					 mode, out_map, out_stride);
 	   return;
@@ -419,7 +419,7 @@ radeon_unmap_renderbuffer(struct gl_context *ctx,
    GLboolean ok;
 
    if ((rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_DEPTH_ALWAYS_TILED) && !rrb->has_surface) {
-       if (rb->Format == MESA_FORMAT_Z24_UNORM_X8_UINT || rb->Format == MESA_FORMAT_Z24_UNORM_S8_UINT) {
+       if (rb->Format == MESA_FORMAT_Z24_UNORM_S8_UINT || rb->Format == MESA_FORMAT_Z24_UNORM_X8_UINT) {
 	   radeon_unmap_renderbuffer_s8z24(ctx, rb);
 	   return;
        }
@@ -507,7 +507,7 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
       /* alloc a depth+stencil buffer */
-      rb->Format = MESA_FORMAT_Z24_UNORM_X8_UINT;
+      rb->Format = MESA_FORMAT_Z24_UNORM_S8_UINT;
       cpp = 4;
       break;
    case GL_DEPTH_COMPONENT16:
@@ -517,12 +517,12 @@ radeon_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffe
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
-      rb->Format = MESA_FORMAT_Z24_UNORM_S8_UINT;
+      rb->Format = MESA_FORMAT_Z24_UNORM_X8_UINT;
       cpp = 4;
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      rb->Format = MESA_FORMAT_Z24_UNORM_X8_UINT;
+      rb->Format = MESA_FORMAT_Z24_UNORM_S8_UINT;
       cpp = 4;
       break;
    default:

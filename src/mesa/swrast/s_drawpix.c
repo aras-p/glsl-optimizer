@@ -500,7 +500,7 @@ draw_rgba_pixels( struct gl_context *ctx, GLint x, GLint y,
 
 
 /**
- * Draw depth+stencil values into a MESA_FORAMT_Z24_S8 or MESA_FORMAT_Z24_UNORM_X8_UINT
+ * Draw depth+stencil values into a MESA_FORAMT_Z24_S8 or MESA_FORMAT_Z24_UNORM_S8_UINT
  * renderbuffer.  No masking, zooming, scaling, etc.
  */
 static void
@@ -573,7 +573,7 @@ draw_depth_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
 
    if (depthRb == stencilRb &&
        (depthRb->Format == MESA_FORMAT_S8_UINT_Z24_UNORM ||
-        depthRb->Format == MESA_FORMAT_Z24_UNORM_X8_UINT) &&
+        depthRb->Format == MESA_FORMAT_Z24_UNORM_S8_UINT) &&
        type == GL_UNSIGNED_INT_24_8 &&
        !scaleOrBias &&
        !zoom &&

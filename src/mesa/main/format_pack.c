@@ -1936,9 +1936,9 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
 
       /* should never convert RGBA to these formats */
       table[MESA_FORMAT_S8_UINT_Z24_UNORM] = NULL;
-      table[MESA_FORMAT_Z24_UNORM_X8_UINT] = NULL;
-      table[MESA_FORMAT_Z_UNORM16] = NULL;
       table[MESA_FORMAT_Z24_UNORM_S8_UINT] = NULL;
+      table[MESA_FORMAT_Z_UNORM16] = NULL;
+      table[MESA_FORMAT_Z24_UNORM_X8_UINT] = NULL;
       table[MESA_FORMAT_X8Z24_UNORM] = NULL;
       table[MESA_FORMAT_Z_UNORM32] = NULL;
       table[MESA_FORMAT_S_UINT8] = NULL;
@@ -2099,9 +2099,9 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
 
       /* should never convert RGBA to these formats */
       table[MESA_FORMAT_S8_UINT_Z24_UNORM] = NULL;
-      table[MESA_FORMAT_Z24_UNORM_X8_UINT] = NULL;
-      table[MESA_FORMAT_Z_UNORM16] = NULL;
       table[MESA_FORMAT_Z24_UNORM_S8_UINT] = NULL;
+      table[MESA_FORMAT_Z_UNORM16] = NULL;
+      table[MESA_FORMAT_Z24_UNORM_X8_UINT] = NULL;
       table[MESA_FORMAT_X8Z24_UNORM] = NULL;
       table[MESA_FORMAT_Z_UNORM32] = NULL;
       table[MESA_FORMAT_S_UINT8] = NULL;
@@ -2433,8 +2433,8 @@ _mesa_get_pack_float_z_func(mesa_format format)
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
    case MESA_FORMAT_X8Z24_UNORM:
       return pack_float_z_Z24_S8;
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
       return pack_float_z_S8_Z24;
    case MESA_FORMAT_Z_UNORM16:
       return pack_float_z_Z16;
@@ -2518,8 +2518,8 @@ _mesa_get_pack_uint_z_func(mesa_format format)
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
    case MESA_FORMAT_X8Z24_UNORM:
       return pack_uint_z_Z24_S8;
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
       return pack_uint_z_S8_Z24;
    case MESA_FORMAT_Z_UNORM16:
       return pack_uint_z_Z16;
@@ -2581,7 +2581,7 @@ _mesa_get_pack_ubyte_stencil_func(mesa_format format)
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
       return pack_ubyte_stencil_Z24_S8;
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
       return pack_ubyte_stencil_S8_Z24;
    case MESA_FORMAT_S_UINT8:
       return pack_ubyte_stencil_S8;
@@ -2616,8 +2616,8 @@ _mesa_pack_float_z_row(mesa_format format, GLuint n,
          }
       }
       break;
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
       {
          /* don't disturb the stencil values */
          GLuint *d = ((GLuint *) dst);
@@ -2690,8 +2690,8 @@ _mesa_pack_uint_z_row(mesa_format format, GLuint n,
          }
       }
       break;
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
       {
          /* don't disturb the stencil values */
          GLuint *d = ((GLuint *) dst);
@@ -2762,7 +2762,7 @@ _mesa_pack_ubyte_stencil_row(mesa_format format, GLuint n,
          }
       }
       break;
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
       {
          /* don't disturb the Z values */
          GLuint *d = ((GLuint *) dst);
@@ -2803,7 +2803,7 @@ _mesa_pack_uint_24_8_depth_stencil_row(mesa_format format, GLuint n,
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
       memcpy(dst, src, n * sizeof(GLuint));
       break;
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
       {
          GLuint *d = ((GLuint *) dst);
          GLuint i;

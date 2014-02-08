@@ -219,7 +219,7 @@ formats_match(GLbitfield buffer_bit, struct intel_renderbuffer *src_irb,
 {
    /* Note: don't just check gl_renderbuffer::Format, because in some cases
     * multiple gl_formats resolve to the same native type in the miptree (for
-    * example MESA_FORMAT_Z24_UNORM_S8_UINT and MESA_FORMAT_Z24_UNORM_X8_UINT), and we can blit
+    * example MESA_FORMAT_Z24_UNORM_X8_UINT and MESA_FORMAT_Z24_UNORM_S8_UINT), and we can blit
     * between those formats.
     */
    mesa_format src_format = find_miptree(buffer_bit, src_irb)->format;
@@ -368,8 +368,8 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
     * we have to lie about the surface format.  See the comments in
     * brw_blorp_surface_info::set().
     */
-   if ((src_mt->format == MESA_FORMAT_Z24_UNORM_S8_UINT) !=
-       (dst_mt->format == MESA_FORMAT_Z24_UNORM_S8_UINT)) {
+   if ((src_mt->format == MESA_FORMAT_Z24_UNORM_X8_UINT) !=
+       (dst_mt->format == MESA_FORMAT_Z24_UNORM_X8_UINT)) {
       return false;
    }
 

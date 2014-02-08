@@ -433,7 +433,7 @@ mesa_format radeonChooseTextureFormat(struct gl_context * ctx,
 	case GL_DEPTH_COMPONENT32:
 	case GL_DEPTH_STENCIL_EXT:
 	case GL_DEPTH24_STENCIL8_EXT:
-		return MESA_FORMAT_Z24_UNORM_X8_UINT;
+		return MESA_FORMAT_Z24_UNORM_S8_UINT;
 
 	/* EXT_texture_sRGB */
 	case GL_SRGB:
@@ -513,7 +513,7 @@ unsigned radeonIsFormatRenderable(mesa_format mesa_format)
 	switch (mesa_format)
 	{
 		case MESA_FORMAT_Z_UNORM16:
-		case MESA_FORMAT_Z24_UNORM_X8_UINT:
+		case MESA_FORMAT_Z24_UNORM_S8_UINT:
 			return 1;
 		default:
 			return 0;

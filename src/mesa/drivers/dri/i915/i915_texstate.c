@@ -88,8 +88,8 @@ translate_texture_format(mesa_format mesa_format, GLenum DepthMode)
    case MESA_FORMAT_RGBA_DXT5:
    case MESA_FORMAT_SRGBA_DXT5:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
       if (DepthMode == GL_ALPHA)
 	 return (MAPSURF_32BIT | MT_32BIT_x8A24);
       else if (DepthMode == GL_INTENSITY)

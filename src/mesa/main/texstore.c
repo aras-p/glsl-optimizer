@@ -1049,7 +1049,7 @@ _mesa_texstore_x8_z24(TEXSTORE_PARAMS)
    const GLuint depthScale = 0xffffff;
 
    (void) dims;
-   ASSERT(dstFormat == MESA_FORMAT_Z24_UNORM_S8_UINT);
+   ASSERT(dstFormat == MESA_FORMAT_Z24_UNORM_X8_UINT);
 
    {
       /* general path */
@@ -2558,7 +2558,7 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
    GLuint *depth;
    GLubyte *stencil;
 
-   ASSERT(dstFormat == MESA_FORMAT_Z24_UNORM_X8_UINT);
+   ASSERT(dstFormat == MESA_FORMAT_Z24_UNORM_S8_UINT);
    ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT ||
           srcFormat == GL_DEPTH_COMPONENT ||
           srcFormat == GL_STENCIL_INDEX);
@@ -3699,9 +3699,9 @@ _mesa_get_texstore_func(mesa_format format)
       table[MESA_FORMAT_G16R16_UNORM] = _mesa_texstore_unorm1616;
       table[MESA_FORMAT_B10G10R10A2_UNORM] = _mesa_texstore_argb2101010;
       table[MESA_FORMAT_S8_UINT_Z24_UNORM] = _mesa_texstore_z24_s8;
-      table[MESA_FORMAT_Z24_UNORM_X8_UINT] = _mesa_texstore_s8_z24;
+      table[MESA_FORMAT_Z24_UNORM_S8_UINT] = _mesa_texstore_s8_z24;
       table[MESA_FORMAT_Z_UNORM16] = _mesa_texstore_z16;
-      table[MESA_FORMAT_Z24_UNORM_S8_UINT] = _mesa_texstore_x8_z24;
+      table[MESA_FORMAT_Z24_UNORM_X8_UINT] = _mesa_texstore_x8_z24;
       table[MESA_FORMAT_X8Z24_UNORM] = _mesa_texstore_z24_x8;
       table[MESA_FORMAT_Z_UNORM32] = _mesa_texstore_z32;
       table[MESA_FORMAT_S_UINT8] = _mesa_texstore_s8;

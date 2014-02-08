@@ -614,7 +614,7 @@ _swrast_clear_stencil_buffer(struct gl_context *ctx)
          }
       }
       break;
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
       {
          GLuint clear = (ctx->Stencil.Clear & writeMask & 0xff) << 24;
          GLuint mask = (((~writeMask) & 0xff) << 24) | 0xffffff;

@@ -370,8 +370,8 @@ intel_miptree_create_layout(struct brw_context *brw,
       /* Fix up the Z miptree format for how we're splitting out separate
        * stencil.  Gen7 expects there to be no stencil bits in its depth buffer.
        */
-      if (mt->format == MESA_FORMAT_Z24_UNORM_X8_UINT) {
-	 mt->format = MESA_FORMAT_Z24_UNORM_S8_UINT;
+      if (mt->format == MESA_FORMAT_Z24_UNORM_S8_UINT) {
+	 mt->format = MESA_FORMAT_Z24_UNORM_X8_UINT;
       } else if (mt->format == MESA_FORMAT_Z32_FLOAT_S8X24_UINT) {
 	 mt->format = MESA_FORMAT_Z_FLOAT32;
 	 mt->cpp = 4;
@@ -918,8 +918,8 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    assert(target_to_target(image->TexObject->Target) == mt->target);
 
    mesa_format mt_format = mt->format;
-   if (mt->format == MESA_FORMAT_Z24_UNORM_S8_UINT && mt->stencil_mt)
-      mt_format = MESA_FORMAT_Z24_UNORM_X8_UINT;
+   if (mt->format == MESA_FORMAT_Z24_UNORM_X8_UINT && mt->stencil_mt)
+      mt_format = MESA_FORMAT_Z24_UNORM_S8_UINT;
    if (mt->format == MESA_FORMAT_Z_FLOAT32 && mt->stencil_mt)
       mt_format = MESA_FORMAT_Z32_FLOAT_S8X24_UINT;
    if (mt->etc_format != MESA_FORMAT_NONE)

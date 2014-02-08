@@ -142,7 +142,7 @@ brw_depthbuffer_format(struct brw_context *brw)
    if (!drb &&
        (srb = intel_get_renderbuffer(fb, BUFFER_STENCIL)) &&
        !srb->mt->stencil_mt &&
-       (intel_rb_format(srb) == MESA_FORMAT_Z24_UNORM_X8_UINT ||
+       (intel_rb_format(srb) == MESA_FORMAT_Z24_UNORM_S8_UINT ||
 	intel_rb_format(srb) == MESA_FORMAT_Z32_FLOAT_S8X24_UINT)) {
       drb = srb;
    }
@@ -155,7 +155,7 @@ brw_depthbuffer_format(struct brw_context *brw)
       return BRW_DEPTHFORMAT_D16_UNORM;
    case MESA_FORMAT_Z_FLOAT32:
       return BRW_DEPTHFORMAT_D32_FLOAT;
-   case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
       if (brw->gen >= 6) {
 	 return BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
       } else {
@@ -173,7 +173,7 @@ brw_depthbuffer_format(struct brw_context *brw)
 	  */
 	 return BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
       }
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
       return BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
    case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
       return BRW_DEPTHFORMAT_D32_FLOAT_S8X24_UINT;

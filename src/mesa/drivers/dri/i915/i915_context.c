@@ -114,8 +114,8 @@ intel_init_texture_formats(struct gl_context *ctx)
    ctx->TextureFormatSupported[MESA_FORMAT_L8A8_UNORM] = true;
 
    /* Depth and stencil */
-   ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_X8_UINT] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_S8_UINT] = true;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_X8_UINT] = true;
 
    /*
     * This was disabled in initial FBO enabling to avoid combinations

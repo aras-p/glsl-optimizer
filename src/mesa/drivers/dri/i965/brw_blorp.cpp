@@ -95,7 +95,7 @@ brw_blorp_surface_info::set(struct brw_context *brw,
       this->map_stencil_as_y_tiled = true;
       this->brw_surfaceformat = BRW_SURFACEFORMAT_R8_UNORM;
       break;
-   case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
       /* It would make sense to use BRW_SURFACEFORMAT_R24_UNORM_X8_TYPELESS
        * here, but unfortunately it isn't supported as a render target, which
        * would prevent us from blitting to 24-bit depth.
@@ -328,7 +328,7 @@ brw_hiz_op_params::brw_hiz_op_params(struct intel_mipmap_tree *mt,
    switch (mt->format) {
    case MESA_FORMAT_Z_UNORM16:       depth_format = BRW_DEPTHFORMAT_D16_UNORM; break;
    case MESA_FORMAT_Z_FLOAT32: depth_format = BRW_DEPTHFORMAT_D32_FLOAT; break;
-   case MESA_FORMAT_Z24_UNORM_S8_UINT:    depth_format = BRW_DEPTHFORMAT_D24_UNORM_X8_UINT; break;
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:    depth_format = BRW_DEPTHFORMAT_D24_UNORM_X8_UINT; break;
    default:                    assert(0); break;
    }
 }

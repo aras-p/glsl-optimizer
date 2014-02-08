@@ -1007,7 +1007,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
       assert(mesaVis->stencilBits == 8);
 
       if (screen->devinfo->has_hiz_and_separate_stencil) {
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_Z24_UNORM_S8_UINT,
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_Z24_UNORM_X8_UINT,
                                                 num_samples);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
          rb = intel_create_private_renderbuffer(MESA_FORMAT_S_UINT8,
@@ -1018,7 +1018,7 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
           * Use combined depth/stencil. Note that the renderbuffer is
           * attached to two attachment points.
           */
-         rb = intel_create_private_renderbuffer(MESA_FORMAT_Z24_UNORM_X8_UINT,
+         rb = intel_create_private_renderbuffer(MESA_FORMAT_Z24_UNORM_S8_UINT,
                                                 num_samples);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &rb->Base.Base);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &rb->Base.Base);

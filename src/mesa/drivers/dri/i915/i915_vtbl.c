@@ -562,8 +562,8 @@ i915_render_target_supported(struct intel_context *intel,
 {
    mesa_format format = rb->Format;
 
-   if (format == MESA_FORMAT_Z24_UNORM_X8_UINT ||
-       format == MESA_FORMAT_Z24_UNORM_S8_UINT ||
+   if (format == MESA_FORMAT_Z24_UNORM_S8_UINT ||
+       format == MESA_FORMAT_Z24_UNORM_X8_UINT ||
        format == MESA_FORMAT_Z_UNORM16) {
       return true;
    }
@@ -777,7 +777,7 @@ i915_update_draw_buffer(struct intel_context *intel)
 
    /* Check for stencil fallback. */
    if (irbStencil && irbStencil->mt) {
-      assert(intel_rb_format(irbStencil) == MESA_FORMAT_Z24_UNORM_X8_UINT);
+      assert(intel_rb_format(irbStencil) == MESA_FORMAT_Z24_UNORM_S8_UINT);
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, false);
    } else if (irbStencil && !irbStencil->mt) {
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, true);
@@ -790,7 +790,7 @@ i915_update_draw_buffer(struct intel_context *intel)
     * we still need to set up the shared depth/stencil state so we can use it.
     */
    if (depthRegion == NULL && irbStencil && irbStencil->mt
-       && intel_rb_format(irbStencil) == MESA_FORMAT_Z24_UNORM_X8_UINT) {
+       && intel_rb_format(irbStencil) == MESA_FORMAT_Z24_UNORM_S8_UINT) {
       depthRegion = irbStencil->mt->region;
    }
 

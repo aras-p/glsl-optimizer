@@ -439,8 +439,8 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 4                      /* BlockWidth/Height,Bytes */
    },
    {
-      MESA_FORMAT_Z24_UNORM_X8_UINT,          /* Name */
-      "MESA_FORMAT_Z24_UNORM_X8_UINT",        /* StrName */
+      MESA_FORMAT_Z24_UNORM_S8_UINT,          /* Name */
+      "MESA_FORMAT_Z24_UNORM_S8_UINT",        /* StrName */
       GL_DEPTH_STENCIL,            /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -457,8 +457,8 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 2                      /* BlockWidth/Height,Bytes */
    },
    {
-      MESA_FORMAT_Z24_UNORM_S8_UINT,          /* Name */
-      "MESA_FORMAT_Z24_UNORM_S8_UINT",        /* StrName */
+      MESA_FORMAT_Z24_UNORM_X8_UINT,          /* Name */
+      "MESA_FORMAT_Z24_UNORM_X8_UINT",        /* StrName */
       GL_DEPTH_COMPONENT,          /* BaseFormat */
       GL_UNSIGNED_NORMALIZED,      /* DataType */
       0, 0, 0, 0,                  /* Red/Green/Blue/AlphaBits */
@@ -2472,7 +2472,7 @@ _mesa_format_to_type_and_comps(mesa_format format,
       *comps = 2;
       return;
 
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
       *datatype = GL_UNSIGNED_INT_8_24_REV_MESA;
       *comps = 2;
       return;
@@ -2482,7 +2482,7 @@ _mesa_format_to_type_and_comps(mesa_format format,
       *comps = 1;
       return;
 
-   case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
       *datatype = GL_UNSIGNED_INT;
       *comps = 1;
       return;
@@ -3123,14 +3123,14 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
       return format == GL_DEPTH_STENCIL && type == GL_UNSIGNED_INT_24_8 &&
          !swapBytes;
    case MESA_FORMAT_X8Z24_UNORM:
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
       return GL_FALSE;
 
    case MESA_FORMAT_Z_UNORM16:
       return format == GL_DEPTH_COMPONENT && type == GL_UNSIGNED_SHORT &&
          !swapBytes;
 
-   case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
       return GL_FALSE;
 
    case MESA_FORMAT_Z_UNORM32:

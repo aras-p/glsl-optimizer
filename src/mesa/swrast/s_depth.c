@@ -552,8 +552,8 @@ _swrast_clear_depth_buffer(struct gl_context *ctx)
    height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
 
    mapMode = GL_MAP_WRITE_BIT;
-   if (rb->Format == MESA_FORMAT_Z24_UNORM_X8_UINT ||
-       rb->Format == MESA_FORMAT_Z24_UNORM_S8_UINT ||
+   if (rb->Format == MESA_FORMAT_Z24_UNORM_S8_UINT ||
+       rb->Format == MESA_FORMAT_Z24_UNORM_X8_UINT ||
        rb->Format == MESA_FORMAT_S8_UINT_Z24_UNORM ||
        rb->Format == MESA_FORMAT_X8Z24_UNORM) {
       mapMode |= GL_MAP_READ_BIT;
@@ -602,8 +602,8 @@ _swrast_clear_depth_buffer(struct gl_context *ctx)
          }
       }
       break;
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
    case MESA_FORMAT_X8Z24_UNORM:
       {
@@ -611,8 +611,8 @@ _swrast_clear_depth_buffer(struct gl_context *ctx)
          GLuint clearVal = 0;
          GLuint mask;
 
-         if (rb->Format == MESA_FORMAT_Z24_UNORM_X8_UINT ||
-             rb->Format == MESA_FORMAT_Z24_UNORM_S8_UINT)
+         if (rb->Format == MESA_FORMAT_Z24_UNORM_S8_UINT ||
+             rb->Format == MESA_FORMAT_Z24_UNORM_X8_UINT)
             mask = 0xff000000;
          else
             mask = 0xff;
@@ -692,7 +692,7 @@ _swrast_clear_depth_stencil_buffer(struct gl_context *ctx)
    }
 
    switch (rb->Format) {
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
       {
          GLfloat zClear = (GLfloat) ctx->Depth.Clear;
@@ -700,7 +700,7 @@ _swrast_clear_depth_stencil_buffer(struct gl_context *ctx)
 
          _mesa_pack_float_z_row(rb->Format, 1, &zClear, &clear);
 
-         if (rb->Format == MESA_FORMAT_Z24_UNORM_X8_UINT) {
+         if (rb->Format == MESA_FORMAT_Z24_UNORM_S8_UINT) {
             mask = ((~writeMask) & 0xff) << 24;
             clear |= (ctx->Stencil.Clear & writeMask & 0xff) << 24;
          }
