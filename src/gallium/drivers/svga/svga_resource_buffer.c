@@ -103,9 +103,13 @@ svga_buffer_transfer_map(struct pipe_context *pipe,
             /*
              * Instead of flushing the context command buffer, simply discard
              * the current hwbuf, and start a new one.
+             * With GB objects, the map operation takes care of this
+             * if passed the PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE flag,
+             * and the old backing store is busy.
              */
 
-            svga_buffer_destroy_hw_storage(ss, sbuf);
+            if (!svga_have_gb_objects(svga))
+               svga_buffer_destroy_hw_storage(ss, sbuf);
          }
 
          sbuf->map.num_ranges = 0;
@@ -132,7 +136,7 @@ svga_buffer_transfer_map(struct pipe_context *pipe,
          if (sbuf->dma.pending) {
             svga_buffer_upload_flush(svga, sbuf);
 
-            if (sbuf->hwbuf) {
+            if (svga_buffer_has_hw_storage(sbuf)) {
                /*
                 * We have a pending DMA upload from a hardware buffer, therefore
                 * we need to ensure that the host finishes processing that DMA
@@ -168,7 +172,7 @@ svga_buffer_transfer_map(struct pipe_context *pipe,
       }
    }
 
-   if (!sbuf->swbuf && !sbuf->hwbuf) {
+   if (!sbuf->swbuf && !svga_buffer_has_hw_storage(sbuf)) {
       if (svga_buffer_create_hw_storage(ss, sbuf) != PIPE_OK) {
          /*
           * We can't create a hardware buffer big enough, so create a malloc
@@ -193,11 +197,19 @@ svga_buffer_transfer_map(struct pipe_context *pipe,
       /* User/malloc buffer */
       map = sbuf->swbuf;
    }
-   else if (sbuf->hwbuf) {
-      struct svga_screen *ss = svga_screen(pipe->screen);
-      struct svga_winsys_screen *sws = ss->sws;
+   else if (svga_buffer_has_hw_storage(sbuf)) {
+      boolean retry;
 
-      map = sws->buffer_map(sws, sbuf->hwbuf, transfer->usage);
+      map = svga_buffer_hw_storage_map(svga, sbuf, transfer->usage, &retry);
+      if (map == NULL && retry) {
+         /*
+          * At this point, svga_buffer_get_transfer() has already
+          * hit the DISCARD_WHOLE_RESOURCE path and flushed HWTNL
+          * for this buffer.
+          */
+         svga_context_flush(svga, NULL);
+         map = svga_buffer_hw_storage_map(svga, sbuf, transfer->usage, &retry);
+      }
    }
    else {
       map = NULL;
@@ -240,7 +252,7 @@ svga_buffer_transfer_unmap( struct pipe_context *pipe,
                             struct pipe_transfer *transfer )
 {
    struct svga_screen *ss = svga_screen(pipe->screen);
-   struct svga_winsys_screen *sws = ss->sws;
+   struct svga_context *svga = svga_context(pipe);
    struct svga_buffer *sbuf = svga_buffer(transfer->resource);
    
    pipe_mutex_lock(ss->swc_mutex);
@@ -250,8 +262,8 @@ svga_buffer_transfer_unmap( struct pipe_context *pipe,
       --sbuf->map.count;
    }
 
-   if (sbuf->hwbuf) {
-      sws->buffer_unmap(sws, sbuf->hwbuf);
+   if (svga_buffer_has_hw_storage(sbuf)) {
+      svga_buffer_hw_storage_unmap(svga, sbuf);
    }
 
    if (transfer->usage & PIPE_TRANSFER_WRITE) {

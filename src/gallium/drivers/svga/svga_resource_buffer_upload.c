@@ -30,6 +30,7 @@
 #include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_double_list.h"
 
 #include "svga_cmd.h"
 #include "svga_context.h"
@@ -38,6 +39,20 @@
 #include "svga_resource_buffer_upload.h"
 #include "svga_screen.h"
 #include "svga_winsys.h"
+
+/**
+ * Describes a complete SVGA_3D_CMD_UPDATE_GB_IMAGE command
+ *
+ */
+struct svga_3d_update_gb_image {
+   SVGA3dCmdHeader header;
+   SVGA3dCmdUpdateGBImage body;
+};
+
+struct svga_3d_invalidate_gb_image {
+   SVGA3dCmdHeader header;
+   SVGA3dCmdInvalidateGBImage body;
+};
 
 
 /**
@@ -72,6 +87,11 @@ svga_winsys_buffer_create( struct svga_context *svga,
 }
 
 
+/**
+ * Destroy HW storage if separate from the host surface.
+ * In the GB case, the HW storage is associated with the host surface
+ * and is therefore a No-op.
+ */
 void
 svga_buffer_destroy_hw_storage(struct svga_screen *ss, struct svga_buffer *sbuf)
 {
@@ -88,7 +108,7 @@ svga_buffer_destroy_hw_storage(struct svga_screen *ss, struct svga_buffer *sbuf)
 
 
 /**
- * Allocate DMA'ble storage for the buffer.
+ * Allocate DMA'ble or Updatable storage for the buffer.
  *
  * Called before mapping a buffer.
  */
@@ -98,6 +118,10 @@ svga_buffer_create_hw_storage(struct svga_screen *ss,
 {
    assert(!sbuf->user);
 
+   if (ss->sws->have_gb_objects) {
+      assert(sbuf->handle || !sbuf->dma.pending);
+      return svga_buffer_create_host_surface(ss, sbuf);
+   }
    if (!sbuf->hwbuf) {
       struct svga_winsys_screen *sws = ss->sws;
       unsigned alignment = 16;
@@ -170,6 +194,104 @@ svga_buffer_destroy_host_surface(struct svga_screen *ss,
 
 
 /**
+ * Insert a number of preliminary UPDATE_GB_IMAGE commands in the
+ * command buffer, equal to the current number of mapped ranges.
+ * The UPDATE_GB_IMAGE commands will be patched with the
+ * actual ranges just before flush.
+ */
+static enum pipe_error
+svga_buffer_upload_gb_command(struct svga_context *svga,
+			      struct svga_buffer *sbuf)
+{
+   struct svga_winsys_context *swc = svga->swc;
+   SVGA3dCmdUpdateGBImage *cmd;
+   struct svga_3d_update_gb_image *ccmd = NULL;
+   uint32 numBoxes = sbuf->map.num_ranges;
+   struct pipe_resource *dummy;
+   unsigned int i;
+
+   assert(numBoxes);
+   assert(sbuf->dma.updates == NULL);
+
+   if (sbuf->dma.flags.discard) {
+      struct svga_3d_invalidate_gb_image *cicmd = NULL;
+      SVGA3dCmdInvalidateGBImage *icmd;
+
+      /* Allocate FIFO space for one INVALIDATE_GB_IMAGE command followed by
+       * 'numBoxes' UPDATE_GB_IMAGE commands.  Allocate all at once rather
+       * than with separate commands because we need to properly deal with
+       * filling the command buffer.
+       */
+      icmd = SVGA3D_FIFOReserve(swc,
+				SVGA_3D_CMD_INVALIDATE_GB_IMAGE,
+				sizeof *icmd + numBoxes * sizeof *ccmd,
+				2);
+      if (!icmd)
+	 return PIPE_ERROR_OUT_OF_MEMORY;
+
+      cicmd = container_of(icmd, cicmd, body);
+      cicmd->header.size = sizeof *icmd;
+      swc->surface_relocation(swc, &icmd->image.sid, NULL, sbuf->handle,
+                              (SVGA_RELOC_WRITE |
+                               SVGA_RELOC_INTERNAL |
+                               SVGA_RELOC_DMA));
+      icmd->image.face = 0;
+      icmd->image.mipmap = 0;
+
+      /* initialize the first UPDATE_GB_IMAGE command */
+      ccmd = (struct svga_3d_update_gb_image *) &icmd[1];
+      ccmd->header.id = SVGA_3D_CMD_UPDATE_GB_IMAGE;
+      cmd = &ccmd->body;
+
+   } else {
+      /* Allocate FIFO space for 'numBoxes' UPDATE_GB_IMAGE commands */
+      cmd = SVGA3D_FIFOReserve(swc,
+			       SVGA_3D_CMD_UPDATE_GB_IMAGE,
+			       sizeof *cmd + (numBoxes - 1) * sizeof *ccmd,
+			       1);
+      if (!cmd)
+	 return PIPE_ERROR_OUT_OF_MEMORY;
+
+      ccmd = container_of(cmd, ccmd, body);
+   }
+
+   /* Init the first UPDATE_GB_IMAGE command */
+   ccmd->header.size = sizeof *cmd;
+   swc->surface_relocation(swc, &cmd->image.sid, NULL, sbuf->handle,
+			   SVGA_RELOC_WRITE | SVGA_RELOC_INTERNAL);
+   cmd->image.face = 0;
+   cmd->image.mipmap = 0;
+
+   /* Save pointer to the first UPDATE_GB_IMAGE command so that we can
+    * fill in the box info below.
+    */
+   sbuf->dma.updates = ccmd;
+
+   /*
+    * Copy the relocation info, face and mipmap to all
+    * subsequent commands. NOTE: For winsyses that actually
+    * patch the image.sid member at flush time, this will fail
+    * miserably. For those we need to add as many relocations
+    * as there are copy boxes.
+    */
+
+   for (i = 1; i < numBoxes; ++i) {
+      memcpy(++ccmd, sbuf->dma.updates, sizeof *ccmd);
+   }
+
+   /* Increment reference count */
+   sbuf->dma.svga = svga;
+   dummy = NULL;
+   pipe_resource_reference(&dummy, &sbuf->b.b);
+   SVGA_FIFOCommitAll(swc);
+
+   sbuf->dma.flags.discard = FALSE;
+
+   return PIPE_OK;
+}
+
+
+/**
  * Variant of SVGA3D_BufferDMA which leaves the copy box temporarily in blank.
  */
 static enum pipe_error
@@ -187,6 +309,9 @@ svga_buffer_upload_command(struct svga_context *svga,
    unsigned region_flags;
    unsigned surface_flags;
    struct pipe_resource *dummy;
+
+   if (svga_have_gb_objects(svga))
+      return svga_buffer_upload_gb_command(svga, sbuf);
 
    if (transfer == SVGA3D_WRITE_HOST_VRAM) {
       region_flags = SVGA_RELOC_READ;
@@ -245,55 +370,86 @@ svga_buffer_upload_command(struct svga_context *svga,
  */
 void
 svga_buffer_upload_flush(struct svga_context *svga,
-                         struct svga_buffer *sbuf)
+			 struct svga_buffer *sbuf)
 {
-   SVGA3dCopyBox *boxes;
    unsigned i;
    struct pipe_resource *dummy;
 
    if (!sbuf->dma.pending) {
+      //debug_printf("no dma pending on buffer\n");
       return;
    }
 
    assert(sbuf->handle);
-   assert(sbuf->hwbuf);
    assert(sbuf->map.num_ranges);
    assert(sbuf->dma.svga == svga);
-   assert(sbuf->dma.boxes);
 
    /*
-    * Patch the DMA command with the final copy box.
+    * Patch the DMA/update command with the final copy box.
     */
+   if (svga_have_gb_objects(svga)) {
+      struct svga_3d_update_gb_image *update = sbuf->dma.updates;
+      assert(update);
 
-   SVGA_DBG(DEBUG_DMA, "dma to sid %p\n", sbuf->handle);
+      for (i = 0; i < sbuf->map.num_ranges; ++i, ++update) {
+         SVGA3dBox *box = &update->body.box;
 
-   boxes = sbuf->dma.boxes;
-   for (i = 0; i < sbuf->map.num_ranges; ++i) {
-      SVGA_DBG(DEBUG_DMA, "  bytes %u - %u\n",
+         SVGA_DBG(DEBUG_DMA, "  bytes %u - %u\n",
+                  sbuf->map.ranges[i].start, sbuf->map.ranges[i].end);
+
+         box->x = sbuf->map.ranges[i].start;
+         box->y = 0;
+         box->z = 0;
+         box->w = sbuf->map.ranges[i].end - sbuf->map.ranges[i].start;
+         box->h = 1;
+         box->d = 1;
+
+         assert(box->x <= sbuf->b.b.width0);
+         assert(box->x + box->w <= sbuf->b.b.width0);
+      }
+   }
+   else {
+      assert(sbuf->hwbuf);
+      assert(sbuf->dma.boxes);
+      SVGA_DBG(DEBUG_DMA, "dma to sid %p\n", sbuf->handle);
+
+      for (i = 0; i < sbuf->map.num_ranges; ++i) {
+         SVGA3dCopyBox *box = sbuf->dma.boxes + i;
+
+         SVGA_DBG(DEBUG_DMA, "  bytes %u - %u\n",
                sbuf->map.ranges[i].start, sbuf->map.ranges[i].end);
 
-      boxes[i].x = sbuf->map.ranges[i].start;
-      boxes[i].y = 0;
-      boxes[i].z = 0;
-      boxes[i].w = sbuf->map.ranges[i].end - sbuf->map.ranges[i].start;
-      boxes[i].h = 1;
-      boxes[i].d = 1;
-      boxes[i].srcx = sbuf->map.ranges[i].start;
-      boxes[i].srcy = 0;
-      boxes[i].srcz = 0;
+         box->x = sbuf->map.ranges[i].start;
+         box->y = 0;
+         box->z = 0;
+         box->w = sbuf->map.ranges[i].end - sbuf->map.ranges[i].start;
+         box->h = 1;
+         box->d = 1;
+         box->srcx = sbuf->map.ranges[i].start;
+         box->srcy = 0;
+         box->srcz = 0;
+
+         assert(box->x <= sbuf->b.b.width0);
+         assert(box->x + box->w <= sbuf->b.b.width0);
+      }
    }
+
+   /* Reset sbuf for next use/upload */
 
    sbuf->map.num_ranges = 0;
 
    assert(sbuf->head.prev && sbuf->head.next);
-   LIST_DEL(&sbuf->head);
-
+   LIST_DEL(&sbuf->head);  /* remove from svga->dirty_buffers list */
+#ifdef DEBUG
+   sbuf->head.next = sbuf->head.prev = NULL;
+#endif
    sbuf->dma.pending = FALSE;
    sbuf->dma.flags.discard = FALSE;
    sbuf->dma.flags.unsynchronized = FALSE;
 
    sbuf->dma.svga = NULL;
    sbuf->dma.boxes = NULL;
+   sbuf->dma.updates = NULL;
 
    /* Decrement reference count (and potentially destroy) */
    dummy = &sbuf->b.b;
@@ -409,24 +565,28 @@ svga_buffer_add_range(struct svga_buffer *sbuf,
  * Copy the contents of the malloc buffer to a hardware buffer.
  */
 static enum pipe_error
-svga_buffer_update_hw(struct svga_screen *ss, struct svga_buffer *sbuf)
+svga_buffer_update_hw(struct svga_context *svga, struct svga_buffer *sbuf)
 {
    assert(!sbuf->user);
-   if (!sbuf->hwbuf) {
+   if (!svga_buffer_has_hw_storage(sbuf)) {
+      struct svga_screen *ss = svga_screen(sbuf->b.b.screen);
       enum pipe_error ret;
+      boolean retry;
       void *map;
 
       assert(sbuf->swbuf);
       if (!sbuf->swbuf)
          return PIPE_ERROR;
 
-      ret = svga_buffer_create_hw_storage(ss, sbuf);
+      ret = svga_buffer_create_hw_storage(svga_screen(sbuf->b.b.screen),
+					  sbuf);
       if (ret != PIPE_OK)
          return ret;
 
       pipe_mutex_lock(ss->swc_mutex);
-      map = ss->sws->buffer_map(ss->sws, sbuf->hwbuf, PIPE_TRANSFER_WRITE);
+      map = svga_buffer_hw_storage_map(svga, sbuf, PIPE_TRANSFER_WRITE, &retry);
       assert(map);
+      assert(!retry);
       if (!map) {
 	 pipe_mutex_unlock(ss->swc_mutex);
          svga_buffer_destroy_hw_storage(ss, sbuf);
@@ -434,7 +594,7 @@ svga_buffer_update_hw(struct svga_screen *ss, struct svga_buffer *sbuf)
       }
 
       memcpy(map, sbuf->swbuf, sbuf->b.b.width0);
-      ss->sws->buffer_unmap(ss->sws, sbuf->hwbuf);
+      svga_buffer_hw_storage_unmap(svga, sbuf);
 
       /* This user/malloc buffer is now indistinguishable from a gpu buffer */
       assert(!sbuf->map.count);
@@ -457,6 +617,9 @@ svga_buffer_update_hw(struct svga_screen *ss, struct svga_buffer *sbuf)
  * Upload the buffer to the host in a piecewise fashion.
  *
  * Used when the buffer is too big to fit in the GMR aperture.
+ * This function should never get called in the guest-backed case
+ * since we always have a full-sized hardware storage backing the
+ * host surface.
  */
 static enum pipe_error
 svga_buffer_upload_piecewise(struct svga_screen *ss,
@@ -470,6 +633,7 @@ svga_buffer_upload_piecewise(struct svga_screen *ss,
 
    assert(sbuf->map.num_ranges);
    assert(!sbuf->dma.pending);
+   assert(!svga_have_gb_objects(svga));
 
    SVGA_DBG(DEBUG_DMA, "dma to sid %p\n", sbuf->handle);
 
@@ -533,10 +697,12 @@ svga_buffer_upload_piecewise(struct svga_screen *ss,
 }
 
 
-
-
-/* Get (or create/upload) the winsys surface handle so that we can
+/**
+ * Get (or create/upload) the winsys surface handle so that we can
  * refer to this buffer in fifo commands.
+ * This function will create the host surface, and in the GB case also the
+ * hardware storage. In the non-GB case, the hardware storage will be created
+ * if there are mapped ranges and the data is currently in a malloc'ed buffer.
  */
 struct svga_winsys_surface *
 svga_buffer_handle(struct svga_context *svga,
@@ -552,11 +718,15 @@ svga_buffer_handle(struct svga_context *svga,
 
    sbuf = svga_buffer(buf);
 
-   assert(!sbuf->map.count);
    assert(!sbuf->user);
 
    if (!sbuf->handle) {
-      ret = svga_buffer_create_host_surface(ss, sbuf);
+      /* This call will set sbuf->handle */
+      if (svga_have_gb_objects(svga)) {
+	 ret = svga_buffer_update_hw(svga, sbuf);
+      } else {
+	 ret = svga_buffer_create_host_surface(ss, sbuf);
+      }
       if (ret != PIPE_OK)
 	 return NULL;
    }
@@ -572,7 +742,7 @@ svga_buffer_handle(struct svga_context *svga,
          /*
           * Migrate the data from swbuf -> hwbuf if necessary.
           */
-         ret = svga_buffer_update_hw(ss, sbuf);
+         ret = svga_buffer_update_hw(svga, sbuf);
          if (ret == PIPE_OK) {
             /*
              * Queue a dma command.
