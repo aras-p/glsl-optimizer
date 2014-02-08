@@ -213,7 +213,7 @@ svga_buffer_upload_command(struct svga_context *svga,
    swc->region_relocation(swc, &cmd->guest.ptr, guest, 0, region_flags);
    cmd->guest.pitch = 0;
 
-   swc->surface_relocation(swc, &cmd->host.sid, host, surface_flags);
+   swc->surface_relocation(swc, &cmd->host.sid, NULL, host, surface_flags);
    cmd->host.face = 0;
    cmd->host.mipmap = 0;
 

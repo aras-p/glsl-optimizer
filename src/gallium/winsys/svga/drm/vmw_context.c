@@ -245,6 +245,7 @@ vmw_swc_reserve(struct svga_winsys_context *swc,
 static void
 vmw_swc_surface_relocation(struct svga_winsys_context *swc,
                            uint32 *where,
+                           uint32 *mobid,
                            struct svga_winsys_surface *surface,
                            unsigned flags)
 {

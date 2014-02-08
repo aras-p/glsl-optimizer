@@ -56,16 +56,37 @@ struct winsys_handle;
 
 #define SVGA_BUFFER_USAGE_PINNED  (1 << 0)
 #define SVGA_BUFFER_USAGE_WRAPPED (1 << 1)
+#define SVGA_BUFFER_USAGE_SHADER  (1 << 2)
 
-
-#define SVGA_RELOC_WRITE 0x1
-#define SVGA_RELOC_READ  0x2
+/**
+ * Relocation flags to help with dirty tracking
+ * SVGA_RELOC_WRITE -   The command will cause a GPU write to this
+ *                      resource.
+ * SVGA_RELOC_READ -    The command will cause a GPU read from this
+ *                      resource.
+ * SVGA_RELOC_INTERNAL  The command will only transfer data internally
+ *                      within the resource, and optionally clear
+ *                      dirty bits
+ * SVGA_RELOC_DMA -     Only set for resource buffer DMA uploads for winsys
+ *                      implementations that want to track the amount
+ *                      of such data referenced in the command stream.
+ */
+#define SVGA_RELOC_WRITE          (1 << 0)
+#define SVGA_RELOC_READ           (1 << 1)
+#define SVGA_RELOC_INTERNAL       (1 << 2)
+#define SVGA_RELOC_DMA            (1 << 3)
 
 #define SVGA_FENCE_FLAG_EXEC      (1 << 0)
 #define SVGA_FENCE_FLAG_QUERY     (1 << 1)
 
+
 /** Opaque surface handle */
 struct svga_winsys_surface;
+
+
+/** Opaque guest-backed objects */
+struct svga_winsys_gb_shader;
+
 
 
 /**
@@ -90,7 +111,8 @@ struct svga_winsys_context
     */
    void
    (*surface_relocation)(struct svga_winsys_context *swc, 
-	                 uint32 *sid, 
+	                 uint32 *sid,
+                         uint32 *mobid,
 	                 struct svga_winsys_surface *surface,
 	                 unsigned flags);
    
@@ -109,6 +131,47 @@ struct svga_winsys_context
 	                uint32 offset,
                         unsigned flags);
 
+   /**
+    * Emit a relocation for a guest-backed shader object.
+    * 
+    * NOTE: Order of this call does matter. It should be the same order
+    * as relocations appear in the command buffer.
+    */
+   void
+   (*shader_relocation)(struct svga_winsys_context *swc, 
+	                uint32 *shid,
+			uint32 *mobid,
+			uint32 *offset,
+	                struct svga_winsys_gb_shader *shader);
+
+   /**
+    * Emit a relocation for a guest-backed context.
+    * 
+    * NOTE: Order of this call does matter. It should be the same order
+    * as relocations appear in the command buffer.
+    */
+   void
+   (*context_relocation)(struct svga_winsys_context *swc, uint32 *cid);
+
+   /**
+    * Emit a relocation for a guest Memory OBject.
+    *
+    * @param flags bitmask of SVGA_RELOC_* flags
+    * @param offset_into_mob Buffer starts at this offset into the MOB.
+    *
+    * Note that not all commands accept an offset into the MOB and
+    * those commands can't use suballocated buffer pools. To trap
+    * errors from improper buffer pool usage, set the offset_into_mob
+    * pointer to NULL.
+    */
+   void
+   (*mob_relocation)(struct svga_winsys_context *swc,
+		     SVGAMobId *id,
+		     uint32 *offset_into_mob,
+		     struct svga_winsys_buffer *buffer,
+		     uint32 offset,
+		     unsigned flags);
+
    void
    (*commit)(struct svga_winsys_context *swc);
    
@@ -123,6 +186,38 @@ struct svga_winsys_context
     * global to the entire SVGA device.
     */
    uint32 cid;
+
+   /**
+    ** BEGIN new functions for guest-backed surfaces.
+    **/
+
+   boolean have_gb_objects;
+
+   /**
+    * Map a guest-backed surface.
+    * \param flags  bitmaks of PIPE_TRANSFER_x flags
+    *
+    * The surface_map() member is allowed to fail due to a
+    * shortage of command buffer space, if the
+    * PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE bit is set in flags.
+    * In that case, the caller must flush the current command
+    * buffer and reissue the map.
+    */
+   void *
+   (*surface_map)(struct svga_winsys_context *swc,
+                  struct svga_winsys_surface *surface,
+                  unsigned flags, boolean *retry);
+
+   /**
+    * Unmap a guest-backed surface.
+    * \param rebind  returns a flag indicating whether the caller should
+    *                issue a SVGA3D_BindGBSurface() call.
+    */
+   void
+   (*surface_unmap)(struct svga_winsys_context *swc,
+                    struct svga_winsys_surface *surface,
+                    boolean *rebind);
+
 };
 
 
@@ -285,6 +380,34 @@ struct svga_winsys_screen
    int (*fence_finish)( struct svga_winsys_screen *sws,
                         struct pipe_fence_handle *fence,
                         unsigned flag );
+
+
+   /**
+    ** BEGIN new functions for guest-backed surfaces.
+    **/
+
+   /** Are guest-backed objects enabled? */
+   bool have_gb_objects;
+
+   /** Can we do DMA with guest-backed objects enabled? */
+   bool have_gb_dma;
+
+   /**
+    * Create and define a GB shader.
+    */
+   struct svga_winsys_gb_shader *
+   (*shader_create)(struct svga_winsys_screen *sws,
+		    SVGA3dShaderType type,
+		    const uint32 *bytecode,
+		    uint32 bytecodeLen);
+
+   /**
+    * Destroy a GB shader. It's safe to call this function even
+    * if the shader is referenced in a context's command stream.
+    */
+   void
+   (*shader_destroy)(struct svga_winsys_screen *sws,
+		     struct svga_winsys_gb_shader *shader);
 
 };
 

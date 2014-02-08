@@ -153,6 +153,7 @@ update_tss_binding(struct svga_context *svga,
          }
          svga->swc->surface_relocation(svga->swc,
                                        &ts[i].value,
+                                       NULL,
                                        handle,
                                        SVGA_RELOC_READ);
          
@@ -220,6 +221,7 @@ svga_reemit_tss_bindings(struct svga_context *svga)
          handle = queue.bind[i].view->v->handle;
          svga->swc->surface_relocation(svga->swc,
                                        &ts[i].value,
+                                       NULL,
                                        handle,
                                        SVGA_RELOC_READ);
       }

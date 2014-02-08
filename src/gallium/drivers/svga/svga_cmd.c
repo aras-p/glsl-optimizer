@@ -62,12 +62,12 @@ surface_to_surfaceid(struct svga_winsys_context *swc, // IN
 {
    if (surface) {
       struct svga_surface *s = svga_surface(surface);
-      swc->surface_relocation(swc, &id->sid, s->handle, flags);
+      swc->surface_relocation(swc, &id->sid, NULL, s->handle, flags);
       id->face = s->real_face; /* faces have the same order */
       id->mipmap = s->real_level;
    }
    else {
-      swc->surface_relocation(swc, &id->sid, NULL, flags);
+      swc->surface_relocation(swc, &id->sid, NULL, NULL, flags);
       id->face = 0;
       id->mipmap = 0;
    }
@@ -280,7 +280,7 @@ SVGA3D_BeginDefineSurface(struct svga_winsys_context *swc,
    if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
-   swc->surface_relocation(swc, &cmd->sid, sid, SVGA_RELOC_WRITE);
+   swc->surface_relocation(swc, &cmd->sid, NULL, sid, SVGA_RELOC_WRITE);
    cmd->surfaceFlags = flags;
    cmd->format = format;
 
@@ -366,7 +366,7 @@ SVGA3D_DestroySurface(struct svga_winsys_context *swc,
    if (!cmd)
       return PIPE_ERROR_OUT_OF_MEMORY;
 
-   swc->surface_relocation(swc, &cmd->sid, sid, SVGA_RELOC_READ);
+   swc->surface_relocation(swc, &cmd->sid, NULL, sid, SVGA_RELOC_READ);
    swc->commit(swc);;
 
    return PIPE_OK;
@@ -453,7 +453,8 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
    swc->region_relocation(swc, &cmd->guest.ptr, st->hwbuf, 0, region_flags);
    cmd->guest.pitch = st->base.stride;
 
-   swc->surface_relocation(swc, &cmd->host.sid, texture->handle, surface_flags);
+   swc->surface_relocation(swc, &cmd->host.sid, NULL,
+                           texture->handle, surface_flags);
    cmd->host.face = st->face; /* PIPE_TEX_FACE_* and SVGA3D_CUBEFACE_* match */
    cmd->host.mipmap = st->base.level;
 
@@ -511,7 +512,8 @@ SVGA3D_BufferDMA(struct svga_winsys_context *swc,
    swc->region_relocation(swc, &cmd->guest.ptr, guest, 0, region_flags);
    cmd->guest.pitch = 0;
 
-   swc->surface_relocation(swc, &cmd->host.sid, host, surface_flags);
+   swc->surface_relocation(swc, &cmd->host.sid,
+                           NULL, host, surface_flags);
    cmd->host.face = 0;
    cmd->host.mipmap = 0;
 
