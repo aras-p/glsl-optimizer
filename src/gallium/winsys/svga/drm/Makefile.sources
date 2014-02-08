@@ -7,4 +7,6 @@ C_SOURCES := \
         vmw_screen_ioctl.c  \
         vmw_screen_pools.c  \
         vmw_screen_svga.c  \
-        vmw_surface.c
+        vmw_surface.c \
+        vmw_shader.c \
+        pb_buffer_simple_fenced.c

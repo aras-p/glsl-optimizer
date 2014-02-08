@@ -1,5 +1,5 @@
 /**********************************************************
- * Copyright 2009 VMware, Inc.  All rights reserved.
+ * Copyright 2009-2012 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -24,50 +24,44 @@
  **********************************************************/
 
 /**
+ * @file
+ * Shaders for VMware SVGA winsys.
+ *
  * @author Jose Fonseca <jfonseca@vmware.com>
+ * @author Thomas Hellstrom <thellstrom@vmware.com>
  */
 
+#ifndef VMW_SHADER_H_
 
-#ifndef VMW_CONTEXT_H_
-#define VMW_CONTEXT_H_
-
-#include <stdio.h>
 #include "pipe/p_compiler.h"
+#include "util/u_atomic.h"
+#include "util/u_inlines.h"
 
-struct svga_winsys_screen;
-struct svga_winsys_context;
-struct pipe_context;
-struct pipe_screen;
+struct vmw_svga_winsys_shader
+{
+   int32_t validated;
+   struct pipe_reference refcnt;
 
+   struct vmw_winsys_screen *screen;
+   struct svga_winsys_buffer *buf;
+   uint32_t shid;
+};
 
-/** Set to 1 to get extra debug info/output */
-#define VMW_DEBUG 0
+static INLINE struct svga_winsys_gb_shader *
+svga_winsys_shader(struct vmw_svga_winsys_shader *shader)
+{
+   assert(!shader || shader->shid != SVGA3D_INVALID_ID);
+   return (struct svga_winsys_gb_shader *)shader;
+}
 
-#if VMW_DEBUG
-#define vmw_printf debug_printf
-#define VMW_FUNC  debug_printf("%s\n", __FUNCTION__)
-#else
-#define VMW_FUNC
-#define vmw_printf(...)
-#endif
-
-
-/**
- * Called when an error/failure is encountered.
- * We want these messages reported for all build types.
- */
-#define vmw_error(...)  fprintf(stderr, "VMware: " __VA_ARGS__)
-
-
-struct svga_winsys_context *
-vmw_svga_winsys_context_create(struct svga_winsys_screen *sws);
-
-struct vmw_svga_winsys_surface;
-
+static INLINE struct vmw_svga_winsys_shader *
+vmw_svga_winsys_shader(struct svga_winsys_gb_shader *shader)
+{
+   return (struct vmw_svga_winsys_shader *)shader;
+}
 
 void
-vmw_swc_surface_clear_reference(struct svga_winsys_context *swc,
-                                struct vmw_svga_winsys_surface *vsurf);
+vmw_svga_winsys_shader_reference(struct vmw_svga_winsys_shader **pdst,
+                                  struct vmw_svga_winsys_shader *src);
 
-
-#endif /* VMW_CONTEXT_H_ */
+#endif /* VMW_SHADER_H_ */

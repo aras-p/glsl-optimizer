@@ -32,7 +32,9 @@
 #include "vmw_context.h"
 #include "vmw_screen.h"
 #include "vmw_surface.h"
+#include "vmw_buffer.h"
 #include "svga_drm_public.h"
+#include "svga3d_surfacedefs.h"
 
 #include "state_tracker/drm_driver.h"
 
@@ -52,6 +54,11 @@ static struct svga_winsys_surface *
 vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
 			    struct winsys_handle *whandle,
 			    SVGA3dSurfaceFormat *format);
+
+static struct svga_winsys_surface *
+vmw_drm_gb_surface_from_handle(struct svga_winsys_screen *sws,
+                               struct winsys_handle *whandle,
+                               SVGA3dSurfaceFormat *format);
 static boolean
 vmw_drm_surface_get_handle(struct svga_winsys_screen *sws,
 			   struct svga_winsys_surface *surface,
@@ -109,7 +116,8 @@ svga_drm_winsys_screen_create(int fd)
       goto out_no_vws;
 
    /* XXX do this properly */
-   vws->base.surface_from_handle = vmw_drm_surface_from_handle;
+   vws->base.surface_from_handle = vws->base.have_gb_objects ?
+      vmw_drm_gb_surface_from_handle : vmw_drm_surface_from_handle;
    vws->base.surface_get_handle = vmw_drm_surface_get_handle;
 
    return &vws->base;
@@ -150,6 +158,83 @@ vmw_dri1_intersect_src_bbox(struct drm_clip_rect *dst,
    return TRUE;
 }
 
+/**
+ * vmw_drm_gb_surface_from_handle - Create a shared surface
+ *
+ * @sws: Screen to register the surface with.
+ * @whandle: struct winsys_handle identifying the kernel surface object
+ * @format: On successful return points to a value describing the
+ * surface format.
+ *
+ * Returns a refcounted pointer to a struct svga_winsys_surface
+ * embedded in a struct vmw_svga_winsys_surface on success or NULL
+ * on failure.
+ */
+static struct svga_winsys_surface *
+vmw_drm_gb_surface_from_handle(struct svga_winsys_screen *sws,
+                               struct winsys_handle *whandle,
+                               SVGA3dSurfaceFormat *format)
+{
+    struct vmw_svga_winsys_surface *vsrf;
+    struct svga_winsys_surface *ssrf;
+    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
+    SVGA3dSurfaceFlags flags;
+    uint32_t mip_levels;
+    struct vmw_buffer_desc desc;
+    struct pb_manager *provider = vws->pools.gmr;
+    struct pb_buffer *pb_buf;
+    int ret;
+
+    ret = vmw_ioctl_gb_surface_ref(vws, whandle->handle, &flags, format,
+                                   &mip_levels, &desc.region);
+
+    if (ret) {
+	fprintf(stderr, "Failed referencing shared surface. SID %d.\n"
+		"Error %d (%s).\n",
+		whandle->handle, ret, strerror(-ret));
+	return NULL;
+    }
+
+    if (mip_levels != 1) {
+       fprintf(stderr, "Incorrect number of mipmap levels on shared surface."
+               " SID %d, levels %d\n",
+               whandle->handle, mip_levels);
+       goto out_mip;
+    }
+
+    vsrf = CALLOC_STRUCT(vmw_svga_winsys_surface);
+    if (!vsrf)
+	goto out_mip;
+
+    pipe_reference_init(&vsrf->refcnt, 1);
+    p_atomic_set(&vsrf->validated, 0);
+    vsrf->screen = vws;
+    vsrf->sid = whandle->handle;
+    vsrf->size = vmw_region_size(desc.region);
+
+    /*
+     * Synchronize backing buffers of shared surfaces using the
+     * kernel, since we don't pass fence objects around between
+     * processes.
+     */
+    desc.pb_desc.alignment = 4096;
+    desc.pb_desc.usage = VMW_BUFFER_USAGE_SHARED | VMW_BUFFER_USAGE_SYNC;
+    pb_buf = provider->create_buffer(provider, vsrf->size, &desc.pb_desc);
+    vsrf->buf = vmw_svga_winsys_buffer_wrap(pb_buf);
+    if (!vsrf->buf)
+       goto out_no_buf;
+    ssrf = svga_winsys_surface(vsrf);
+
+    return ssrf;
+
+out_no_buf:
+    FREE(vsrf);
+out_mip:
+    vmw_ioctl_region_destroy(desc.region);
+    vmw_ioctl_surface_destroy(vws, whandle->handle);
+    return NULL;
+}
+
 static struct svga_winsys_surface *
 vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
 			    struct winsys_handle *whandle,
@@ -162,6 +247,7 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
     struct drm_vmw_surface_arg *req = &arg.req;
     struct drm_vmw_surface_create_req *rep = &arg.rep;
     uint32_t handle = 0;
+    SVGA3dSize size;
     int ret;
     int i;
 
@@ -187,6 +273,7 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
 
     memset(&arg, 0, sizeof(arg));
     req->sid = handle;
+    rep->size_addr = (size_t)&size;
 
     ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_REF_SURFACE,
 			      &arg, sizeof(arg));
@@ -234,6 +321,11 @@ vmw_drm_surface_from_handle(struct svga_winsys_screen *sws,
     vsrf->sid = handle;
     ssrf = svga_winsys_surface(vsrf);
     *format = rep->format;
+
+    /* Estimate usage, for early flushing. */
+    vsrf->size = svga3dsurface_get_serialized_size(rep->format, size,
+                                                   rep->mip_levels[0],
+                                                   FALSE);
 
     return ssrf;
 

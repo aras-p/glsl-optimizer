@@ -29,6 +29,12 @@
 
 #include <assert.h>
 #include "pipe/p_compiler.h"
+#include "pipebuffer/pb_bufmgr.h"
+#include "util/u_debug_flush.h"
+
+
+#define VMW_BUFFER_USAGE_SHARED    (1 << 20)
+#define VMW_BUFFER_USAGE_SYNC      (1 << 21)
 
 struct SVGAGuestPtr;
 struct pb_buffer;
@@ -37,7 +43,22 @@ struct svga_winsys_buffer;
 struct svga_winsys_surface;
 struct vmw_winsys_screen;
 
+struct vmw_buffer_desc {
+   struct pb_desc pb_desc;
+   struct vmw_region *region;
+};
 
+
+#ifdef DEBUG
+
+struct pb_buffer *
+vmw_pb_buffer(struct svga_winsys_buffer *buffer);
+struct svga_winsys_buffer *
+vmw_svga_winsys_buffer_wrap(struct pb_buffer *buffer);
+struct debug_flush_buf *
+vmw_debug_flush_buf(struct svga_winsys_buffer *buffer);
+
+#else
 static INLINE struct pb_buffer *
 vmw_pb_buffer(struct svga_winsys_buffer *buffer)
 {
@@ -47,12 +68,23 @@ vmw_pb_buffer(struct svga_winsys_buffer *buffer)
 
 
 static INLINE struct svga_winsys_buffer *
-vmw_svga_winsys_buffer(struct pb_buffer *buffer)
+vmw_svga_winsys_buffer_wrap(struct pb_buffer *buffer)
 {
-   assert(buffer);
    return (struct svga_winsys_buffer *)buffer;
 }
+#endif
 
+void
+vmw_svga_winsys_buffer_destroy(struct svga_winsys_screen *sws,
+                               struct svga_winsys_buffer *buf);
+void *
+vmw_svga_winsys_buffer_map(struct svga_winsys_screen *sws,
+                           struct svga_winsys_buffer *buf,
+                           unsigned flags);
+
+void
+vmw_svga_winsys_buffer_unmap(struct svga_winsys_screen *sws,
+                             struct svga_winsys_buffer *buf);
 
 struct pb_manager *
 vmw_gmr_bufmgr_create(struct vmw_winsys_screen *vws);

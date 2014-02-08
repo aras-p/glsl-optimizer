@@ -1,5 +1,5 @@
 /**********************************************************
- * Copyright 2009 VMware, Inc.  All rights reserved.
+ * Copyright 2009-2012 VMware, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -23,51 +23,42 @@
  *
  **********************************************************/
 
-/**
- * @author Jose Fonseca <jfonseca@vmware.com>
- */
 
+#include "svga_cmd.h"
+#include "util/u_debug.h"
+#include "util/u_memory.h"
 
-#ifndef VMW_CONTEXT_H_
-#define VMW_CONTEXT_H_
-
-#include <stdio.h>
-#include "pipe/p_compiler.h"
-
-struct svga_winsys_screen;
-struct svga_winsys_context;
-struct pipe_context;
-struct pipe_screen;
-
-
-/** Set to 1 to get extra debug info/output */
-#define VMW_DEBUG 0
-
-#if VMW_DEBUG
-#define vmw_printf debug_printf
-#define VMW_FUNC  debug_printf("%s\n", __FUNCTION__)
-#else
-#define VMW_FUNC
-#define vmw_printf(...)
-#endif
-
-
-/**
- * Called when an error/failure is encountered.
- * We want these messages reported for all build types.
- */
-#define vmw_error(...)  fprintf(stderr, "VMware: " __VA_ARGS__)
-
-
-struct svga_winsys_context *
-vmw_svga_winsys_context_create(struct svga_winsys_screen *sws);
-
-struct vmw_svga_winsys_surface;
-
+#include "vmw_shader.h"
+#include "vmw_screen.h"
 
 void
-vmw_swc_surface_clear_reference(struct svga_winsys_context *swc,
-                                struct vmw_svga_winsys_surface *vsurf);
+vmw_svga_winsys_shader_reference(struct vmw_svga_winsys_shader **pdst,
+                                 struct vmw_svga_winsys_shader *src)
+{
+   struct pipe_reference *src_ref;
+   struct pipe_reference *dst_ref;
+   struct vmw_svga_winsys_shader *dst;
 
+   if(pdst == NULL || *pdst == src)
+      return;
 
-#endif /* VMW_CONTEXT_H_ */
+   dst = *pdst;
+
+   src_ref = src ? &src->refcnt : NULL;
+   dst_ref = dst ? &dst->refcnt : NULL;
+
+   if (pipe_reference(dst_ref, src_ref)) {
+      struct svga_winsys_screen *sws = &dst->screen->base;
+
+      vmw_ioctl_shader_destroy(dst->screen, dst->shid);
+#ifdef DEBUG
+      /* to detect dangling pointers */
+      assert(p_atomic_read(&dst->validated) == 0);
+      dst->shid = SVGA3D_INVALID_ID;
+#endif
+      sws->buffer_destroy(sws, dst->buf);
+      FREE(dst);
+   }
+
+   *pdst = src;
+}

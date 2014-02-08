@@ -51,7 +51,6 @@
 #include "vmw_screen.h"
 #include "vmw_buffer.h"
 
-
 struct vmw_gmr_bufmgr;
 
 
@@ -63,6 +62,7 @@ struct vmw_gmr_buffer
    
    struct vmw_region *region;
    void *map;
+   unsigned map_flags;
 };
 
 
@@ -113,6 +113,25 @@ vmw_gmr_buffer_map(struct pb_buffer *_buf,
                    void *flush_ctx)
 {
    struct vmw_gmr_buffer *buf = vmw_gmr_buffer(_buf);
+   int ret;
+
+   if (!buf->map)
+      buf->map = vmw_ioctl_region_map(buf->region);
+
+   if (!buf->map)
+      return NULL;
+
+
+   if ((_buf->usage & VMW_BUFFER_USAGE_SYNC) &&
+       !(flags & PB_USAGE_UNSYNCHRONIZED)) {
+      ret = vmw_ioctl_syncforcpu(buf->region,
+                                 !!(flags & PB_USAGE_DONTBLOCK),
+                                 !(flags & PB_USAGE_CPU_WRITE),
+                                 FALSE);
+      if (ret)
+         return NULL;
+   }
+
    return buf->map;
 }
 
@@ -120,8 +139,15 @@ vmw_gmr_buffer_map(struct pb_buffer *_buf,
 static void
 vmw_gmr_buffer_unmap(struct pb_buffer *_buf)
 {
-   /* Do nothing */
-   (void)_buf;
+   struct vmw_gmr_buffer *buf = vmw_gmr_buffer(_buf);
+   unsigned flags = buf->map_flags;
+
+   if ((_buf->usage & VMW_BUFFER_USAGE_SYNC) &&
+       !(flags & PB_USAGE_UNSYNCHRONIZED)) {
+      vmw_ioctl_releasefromcpu(buf->region,
+                               !(flags & PB_USAGE_CPU_WRITE),
+                               FALSE);
+   }
 }
 
 
@@ -167,35 +193,33 @@ const struct pb_vtbl vmw_gmr_buffer_vtbl = {
 static struct pb_buffer *
 vmw_gmr_bufmgr_create_buffer(struct pb_manager *_mgr,
                          pb_size size,
-                         const struct pb_desc *desc) 
+                         const struct pb_desc *pb_desc) 
 {
    struct vmw_gmr_bufmgr *mgr = vmw_gmr_bufmgr(_mgr);
    struct vmw_winsys_screen *vws = mgr->vws;
    struct vmw_gmr_buffer *buf;
+   const struct vmw_buffer_desc *desc =
+      (const struct vmw_buffer_desc *) pb_desc;
    
    buf = CALLOC_STRUCT(vmw_gmr_buffer);
    if(!buf)
       goto error1;
 
    pipe_reference_init(&buf->base.reference, 1);
-   buf->base.alignment = desc->alignment;
-   buf->base.usage = desc->usage;
-   buf->base.size = size;
+   buf->base.alignment = pb_desc->alignment;
+   buf->base.usage = pb_desc->usage & ~VMW_BUFFER_USAGE_SHARED;
    buf->base.vtbl = &vmw_gmr_buffer_vtbl;
    buf->mgr = mgr;
-
-   buf->region = vmw_ioctl_region_create(vws, size);
-   if(!buf->region)
-      goto error2;
+   buf->base.size = size;
+   if ((pb_desc->usage & VMW_BUFFER_USAGE_SHARED) && desc->region) {
+      buf->region = desc->region;
+   } else {
+      buf->region = vmw_ioctl_region_create(vws, size);
+      if(!buf->region)
+	 goto error2;
+   }
 	 
-   buf->map = vmw_ioctl_region_map(buf->region);
-   if(!buf->map)
-      goto error3;
-
    return &buf->base;
-
-error3:
-   vmw_ioctl_region_destroy(buf->region);
 error2:
    FREE(buf);
 error1:
@@ -256,4 +280,92 @@ vmw_gmr_bufmgr_region_ptr(struct pb_buffer *buf,
    ptr->offset += offset;
    
    return TRUE;
+}
+
+#ifdef DEBUG
+struct svga_winsys_buffer {
+   struct pb_buffer *pb_buf;
+   struct debug_flush_buf *fbuf;
+};
+
+struct pb_buffer *
+vmw_pb_buffer(struct svga_winsys_buffer *buffer)
+{
+   assert(buffer);
+   return buffer->pb_buf;
+}
+
+struct svga_winsys_buffer *
+vmw_svga_winsys_buffer_wrap(struct pb_buffer *buffer)
+{
+   struct svga_winsys_buffer *buf;
+
+   if (!buffer)
+      return NULL;
+
+   buf = CALLOC_STRUCT(svga_winsys_buffer);
+   if (!buf) {
+      pb_reference(&buffer, NULL);
+      return NULL;
+   }
+
+   buf->pb_buf = buffer;
+   buf->fbuf = debug_flush_buf_create(TRUE, VMW_DEBUG_FLUSH_STACK);
+   return buf;
+}
+
+struct debug_flush_buf *
+vmw_debug_flush_buf(struct svga_winsys_buffer *buffer)
+{
+   return buffer->fbuf;
+}
+
+#endif
+
+void
+vmw_svga_winsys_buffer_destroy(struct svga_winsys_screen *sws,
+                               struct svga_winsys_buffer *buf)
+{
+   struct pb_buffer *pbuf = vmw_pb_buffer(buf);
+   (void)sws;
+   pb_reference(&pbuf, NULL);
+#ifdef DEBUG
+   debug_flush_buf_reference(&buf->fbuf, NULL);
+   FREE(buf);
+#endif
+}
+
+void *
+vmw_svga_winsys_buffer_map(struct svga_winsys_screen *sws,
+                           struct svga_winsys_buffer *buf,
+                           unsigned flags)
+{
+   void *map;
+
+   (void)sws;
+   if (flags & PIPE_TRANSFER_UNSYNCHRONIZED)
+      flags &= ~PIPE_TRANSFER_DONTBLOCK;
+
+   map = pb_map(vmw_pb_buffer(buf), flags, NULL);
+
+#ifdef DEBUG
+   if (map != NULL)
+      debug_flush_map(buf->fbuf, flags);
+#endif
+
+   return map;
+}
+
+
+void
+vmw_svga_winsys_buffer_unmap(struct svga_winsys_screen *sws,
+                             struct svga_winsys_buffer *buf)
+{
+   (void)sws;
+
+#ifdef DEBUG
+   debug_flush_unmap(buf->fbuf);
+#endif
+
+   pb_unmap(vmw_pb_buffer(buf));
 }

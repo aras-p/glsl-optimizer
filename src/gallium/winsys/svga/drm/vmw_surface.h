@@ -38,6 +38,8 @@
 #include "pipe/p_compiler.h"
 #include "util/u_atomic.h"
 #include "util/u_inlines.h"
+#include "os/os_thread.h"
+#include "pipebuffer/pb_buffer.h"
 
 #define VMW_MAX_PRESENTS 3
 
@@ -54,6 +56,15 @@ struct vmw_svga_winsys_surface
    /* FIXME: make this thread safe */
    unsigned next_present_no;
    uint32_t present_fences[VMW_MAX_PRESENTS];
+
+   pipe_mutex mutex;
+   struct svga_winsys_buffer *buf; /* Current backing guest buffer */
+   uint32_t mapcount; /* Number of mappers */
+   uint32_t map_mode; /* PIPE_TRANSFER_[READ|WRITE] */
+   void *data; /* Pointer to data if mapcount != 0*/
+   boolean shared; /* Shared surface. Never discard */
+   uint32_t size; /* Size of backing buffer */
+   boolean rebind; /* Surface needs a rebind after next unmap */
 };
 
 
@@ -75,5 +86,13 @@ vmw_svga_winsys_surface(struct svga_winsys_surface *surf)
 void
 vmw_svga_winsys_surface_reference(struct vmw_svga_winsys_surface **pdst,
                                   struct vmw_svga_winsys_surface *src);
+void *
+vmw_svga_winsys_surface_map(struct svga_winsys_context *swc,
+			    struct svga_winsys_surface *srf,
+			    unsigned flags, boolean *retry);
+void
+vmw_svga_winsys_surface_unmap(struct svga_winsys_context *swc,
+                              struct svga_winsys_surface *srf,
+                              boolean *rebind);
 
 #endif /* VMW_SURFACE_H_ */
