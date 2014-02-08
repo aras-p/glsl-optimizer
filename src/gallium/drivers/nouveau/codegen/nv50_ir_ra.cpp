@@ -284,6 +284,7 @@ public:
    bool run(const std::list<ValuePair>&);
 
    Symbol *assignSlot(const Interval&, const unsigned int size);
+   Symbol *offsetSlot(Symbol *, const LValue *);
    inline int32_t getStackSize() const { return stackSize; }
 
 private:
@@ -774,6 +775,7 @@ GCRA::RIG_Node::init(const RegisterSet& regs, LValue *lval)
    weight = std::numeric_limits<float>::infinity();
    degree = 0;
    degreeLimit = regs.getFileSize(f, lval->reg.size);
+   degreeLimit -= relDegree[1][colors] - 1;
 
    livei.insert(lval->livei);
 }
@@ -1466,10 +1468,25 @@ SpillCodeInserter::assignSlot(const Interval &livei, const unsigned int size)
    return slot.sym;
 }
 
+Symbol *
+SpillCodeInserter::offsetSlot(Symbol *base, const LValue *lval)
+{
+   if (!base || !lval->compound || (lval->compMask & 0x1))
+      return base;
+   Symbol *slot = cloneShallow(func, base);
+
+   slot->reg.data.offset += (ffs(lval->compMask) - 1) * lval->reg.size;
+   slot->reg.size = lval->reg.size;
+
+   return slot;
+}
+
 void
 SpillCodeInserter::spill(Instruction *defi, Value *slot, LValue *lval)
 {
-   const DataType ty = typeOfSize(slot->reg.size);
+   const DataType ty = typeOfSize(lval->reg.size);
+
+   slot = offsetSlot(slot->asSym(), lval);
 
    Instruction *st;
    if (slot->reg.file == FILE_MEMORY_LOCAL) {
@@ -1488,8 +1505,9 @@ SpillCodeInserter::spill(Instruction *defi, Value *slot, LValue *lval)
 LValue *
 SpillCodeInserter::unspill(Instruction *usei, LValue *lval, Value *slot)
 {
-   const DataType ty = typeOfSize(slot->reg.size);
+   const DataType ty = typeOfSize(lval->reg.size);
 
+   slot = offsetSlot(slot->asSym(), lval);
    lval = cloneShallow(func, lval);
 
    Instruction *ld;
@@ -1506,6 +1524,16 @@ SpillCodeInserter::unspill(Instruction *usei, LValue *lval, Value *slot)
    return lval;
 }
 
+
+// For each value that is to be spilled, go through all its definitions.
+// A value can have multiple definitions if it has been coalesced before.
+// For each definition, first go through all its uses and insert an unspill
+// instruction before it, then replace the use with the temporary register.
+// Unspill can be either a load from memory or simply a move to another
+// register file.
+// For "Pseudo" instructions (like PHI, SPLIT, MERGE) we can erase the use
+// if we have spilled to a memory location, or simply with the new register.
+// No load or conversion instruction should be needed.
 bool
 SpillCodeInserter::run(const std::list<ValuePair>& lst)
 {
@@ -1524,12 +1552,13 @@ SpillCodeInserter::run(const std::list<ValuePair>& lst)
          LValue *dval = (*d)->get()->asLValue();
          Instruction *defi = (*d)->getInsn();
 
-         // handle uses first or they'll contain the spill stores
+         // Unspill at each use *before* inserting spill instructions,
+         // we don't want to have the spill instructions in the use list here.
          while (!dval->uses.empty()) {
             ValueRef *u = dval->uses.front();
             Instruction *usei = u->getInsn();
             assert(usei);
-            if (usei->op == OP_PHI) {
+            if (usei->isPseudo()) {
                tmp = (slot->reg.file == FILE_MEMORY_LOCAL) ? NULL : slot;
                last = NULL;
             } else
@@ -1541,7 +1570,7 @@ SpillCodeInserter::run(const std::list<ValuePair>& lst)
          }
 
          assert(defi);
-         if (defi->op == OP_PHI) {
+         if (defi->isPseudo()) {
             d = lval->defs.erase(d);
             --d;
             if (slot->reg.file == FILE_MEMORY_LOCAL)
