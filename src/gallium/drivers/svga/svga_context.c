@@ -53,6 +53,7 @@ DEBUG_GET_ONCE_BOOL_OPTION(force_hw_line_stipple, "SVGA_FORCE_HW_LINE_STIPPLE", 
 static void svga_destroy( struct pipe_context *pipe )
 {
    struct svga_context *svga = svga_context( pipe );
+   struct svga_winsys_screen *sws = svga_screen(pipe->screen)->sws;
    unsigned shader;
 
    util_blitter_destroy(svga->blitter);
@@ -70,8 +71,10 @@ static void svga_destroy( struct pipe_context *pipe )
 
    util_bitmask_destroy( svga->shader_id_bm );
 
-   for(shader = 0; shader < PIPE_SHADER_TYPES; ++shader)
-      pipe_resource_reference( &svga->curr.cb[shader], NULL );
+   for (shader = 0; shader < PIPE_SHADER_TYPES; ++shader) {
+      pipe_resource_reference( &svga->curr.cbufs[shader].buffer, NULL );
+      sws->surface_reference(sws, &svga->state.hw_draw.hw_cb[shader], NULL);
+   }
 
    FREE( svga );
 }
@@ -147,6 +150,7 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    memset(&svga->state.hw_draw, 0xcd, sizeof(svga->state.hw_draw));
    memset(&svga->state.hw_draw.views, 0x0, sizeof(svga->state.hw_draw.views));
    svga->state.hw_draw.num_views = 0;
+   memset(&svga->state.hw_draw.hw_cb, 0x0, sizeof(svga->state.hw_draw.hw_cb));
 
    svga->dirty = ~0;
 

@@ -61,8 +61,10 @@ static void svga_set_constant_buffer(struct pipe_context *pipe,
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
 
-   pipe_resource_reference( &svga->curr.cb[shader],
-                          buf );
+   pipe_resource_reference(&svga->curr.cbufs[shader].buffer, buf);
+   svga->curr.cbufs[shader].buffer_size = cb ? cb->buffer_size : 0;
+   svga->curr.cbufs[shader].buffer_offset = cb ? cb->buffer_offset : 0;
+   svga->curr.cbufs[shader].user_buffer = NULL; /* not used */
 
    if (shader == PIPE_SHADER_FRAGMENT)
       svga->dirty |= SVGA_NEW_FS_CONST_BUFFER;

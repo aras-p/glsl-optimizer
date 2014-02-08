@@ -219,7 +219,7 @@ struct svga_state
 
    struct pipe_vertex_buffer vb[PIPE_MAX_ATTRIBS];
    struct pipe_index_buffer ib;
-   struct pipe_resource *cb[PIPE_SHADER_TYPES];
+   struct pipe_constant_buffer cbufs[PIPE_SHADER_TYPES];
 
    struct pipe_framebuffer_state framebuffer;
    float depthscale;
@@ -286,6 +286,11 @@ struct svga_hw_draw_state
    unsigned rs[SVGA3D_RS_MAX];
    unsigned ts[SVGA3D_PIXEL_SAMPLERREG_MAX][SVGA3D_TS_MAX];
    float cb[PIPE_SHADER_TYPES][SVGA3D_CONSTREG_MAX][4];
+
+   /**
+    * For guest backed shader constants only.
+    */
+   struct svga_winsys_surface *hw_cb[PIPE_SHADER_TYPES];
 
    struct svga_shader_variant *fs;
    struct svga_shader_variant *vs;

@@ -88,16 +88,16 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
                        svga->curr.ib.index_size, ~0);
    }
 
-   if (svga->curr.cb[PIPE_SHADER_VERTEX]) {
+   if (svga->curr.cbufs[PIPE_SHADER_VERTEX].buffer) {
       map = pipe_buffer_map(&svga->pipe,
-                            svga->curr.cb[PIPE_SHADER_VERTEX],
+                            svga->curr.cbufs[PIPE_SHADER_VERTEX].buffer,
                             PIPE_TRANSFER_READ,
 			    &cb_transfer);
       assert(map);
       draw_set_mapped_constant_buffer(
          draw, PIPE_SHADER_VERTEX, 0,
          map,
-         svga->curr.cb[PIPE_SHADER_VERTEX]->width0);
+         svga->curr.cbufs[PIPE_SHADER_VERTEX].buffer->width0);
    }
 
    draw_vbo(draw, info);
@@ -122,7 +122,7 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
       draw_set_indexes(draw, NULL, 0, 0);
    }
 
-   if (svga->curr.cb[PIPE_SHADER_VERTEX]) {
+   if (svga->curr.cbufs[PIPE_SHADER_VERTEX].buffer) {
       pipe_buffer_unmap(&svga->pipe, cb_transfer);
    }
 
