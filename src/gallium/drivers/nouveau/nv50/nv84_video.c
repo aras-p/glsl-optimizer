@@ -741,16 +741,80 @@ error:
    return NULL;
 }
 
+#define FIRMWARE_BSP_KERN  0x01
+#define FIRMWARE_VP_KERN   0x02
+#define FIRMWARE_BSP_H264  0x04
+#define FIRMWARE_VP_MPEG2  0x08
+#define FIRMWARE_VP_H264_1 0x10
+#define FIRMWARE_VP_H264_2 0x20
+#define FIRMWARE_PRESENT(val, fw) (val & FIRMWARE_ ## fw)
+
+static int
+firmware_present(struct pipe_screen *pscreen, enum pipe_video_format codec)
+{
+   struct nouveau_screen *screen = nouveau_screen(pscreen);
+   struct nouveau_object *obj = NULL;
+   struct stat s;
+   int checked = screen->firmware_info.profiles_checked;
+   int present, ret;
+
+   if (!FIRMWARE_PRESENT(checked, VP_KERN)) {
+      nouveau_object_new(screen->channel, 0, 0x7476, NULL, 0, &obj);
+      if (obj)
+         screen->firmware_info.profiles_present |= FIRMWARE_VP_KERN;
+      nouveau_object_del(&obj);
+      screen->firmware_info.profiles_checked |= FIRMWARE_VP_KERN;
+   }
+
+   if (codec == PIPE_VIDEO_FORMAT_MPEG4_AVC) {
+      if (!FIRMWARE_PRESENT(checked, BSP_KERN)) {
+         nouveau_object_new(screen->channel, 0, 0x74b0, NULL, 0, &obj);
+         if (obj)
+            screen->firmware_info.profiles_present |= FIRMWARE_BSP_KERN;
+         nouveau_object_del(&obj);
+         screen->firmware_info.profiles_checked |= FIRMWARE_BSP_KERN;
+      }
+
+      if (!FIRMWARE_PRESENT(checked, VP_H264_1)) {
+         ret = stat("/lib/firmware/nouveau/nv84_vp-h264-1", &s);
+         if (!ret && s.st_size > 1000)
+            screen->firmware_info.profiles_present |= FIRMWARE_VP_H264_1;
+         screen->firmware_info.profiles_checked |= FIRMWARE_VP_H264_1;
+      }
+
+      /* should probably check the others, but assume that 1 means all */
+
+      present = screen->firmware_info.profiles_present;
+      return FIRMWARE_PRESENT(present, VP_KERN) &&
+         FIRMWARE_PRESENT(present, BSP_KERN) &&
+         FIRMWARE_PRESENT(present, VP_H264_1);
+   } else {
+      if (!FIRMWARE_PRESENT(checked, VP_MPEG2)) {
+         ret = stat("/lib/firmware/nouveau/nv84_vp-mpeg12", &s);
+         if (!ret && s.st_size > 1000)
+            screen->firmware_info.profiles_present |= FIRMWARE_VP_MPEG2;
+         screen->firmware_info.profiles_checked |= FIRMWARE_VP_MPEG2;
+      }
+      present = screen->firmware_info.profiles_present;
+      return FIRMWARE_PRESENT(present, VP_KERN) &&
+         FIRMWARE_PRESENT(present, VP_MPEG2);
+   }
+}
+
 int
 nv84_screen_get_video_param(struct pipe_screen *pscreen,
                             enum pipe_video_profile profile,
                             enum pipe_video_entrypoint entrypoint,
                             enum pipe_video_cap param)
 {
+   enum pipe_video_format codec;
+
    switch (param) {
    case PIPE_VIDEO_CAP_SUPPORTED:
-      return u_reduce_video_profile(profile) == PIPE_VIDEO_FORMAT_MPEG4_AVC ||
-         u_reduce_video_profile(profile) == PIPE_VIDEO_FORMAT_MPEG12;
+      codec = u_reduce_video_profile(profile);
+      return (codec == PIPE_VIDEO_FORMAT_MPEG4_AVC ||
+              codec == PIPE_VIDEO_FORMAT_MPEG12) &&
+         firmware_present(pscreen, codec);
    case PIPE_VIDEO_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_VIDEO_CAP_MAX_WIDTH:

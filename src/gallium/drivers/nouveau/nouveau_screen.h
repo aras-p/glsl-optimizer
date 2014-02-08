@@ -49,6 +49,11 @@ struct nouveau_screen {
 
 	boolean hint_buf_keep_sysmem_copy;
 
+	struct {
+		unsigned profiles_checked;
+		unsigned profiles_present;
+	} firmware_info;
+
 #ifdef NOUVEAU_ENABLE_DRIVER_STATISTICS
    union {
       uint64_t v[29];

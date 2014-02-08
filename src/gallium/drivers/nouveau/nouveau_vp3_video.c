@@ -21,6 +21,7 @@
  */
 
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <fcntl.h>
 
@@ -350,6 +351,77 @@ nouveau_vp3_load_firmware(struct nouveau_vp3_decoder *dec,
    return 0;
 }
 
+static int
+firmware_present(struct pipe_screen *pscreen, enum pipe_video_profile profile)
+{
+   struct nouveau_screen *screen = nouveau_screen(pscreen);
+   int chipset = screen->device->chipset;
+   int vp3 = chipset < 0xa3 || chipset == 0xaa || chipset == 0xac;
+   int vp5 = chipset >= 0xd0;
+   int ret;
+
+   /* For all chipsets, try to create a BSP objects. Assume that if firmware
+    * is present for it, firmware is also present for VP/PPP */
+   if (!(screen->firmware_info.profiles_checked & 1)) {
+      struct nouveau_object *channel = NULL, *bsp = NULL;
+      struct nv04_fifo nv04_data = {.vram = 0xbeef0201, .gart = 0xbeef0202};
+      struct nvc0_fifo nvc0_args = {};
+      struct nve0_fifo nve0_args = {.engine = NVE0_FIFO_ENGINE_BSP};
+      void *data = NULL;
+      int size, oclass;
+      if (chipset < 0xc0)
+         oclass = 0x85b1;
+      else if (vp5)
+         oclass = 0x95b1;
+      else
+         oclass = 0x90b1;
+
+      if (chipset < 0xc0) {
+         data = &nv04_data;
+         size = sizeof(nv04_data);
+      } else if (chipset < 0xe0) {
+         data = &nvc0_args;
+         size = sizeof(nvc0_args);
+      } else {
+         data = &nve0_args;
+         size = sizeof(nve0_args);
+      }
+
+      /* kepler must have its own channel, so just do this for everyone */
+      nouveau_object_new(&screen->device->object, 0,
+                         NOUVEAU_FIFO_CHANNEL_CLASS,
+                         data, size, &channel);
+
+      if (channel) {
+         nouveau_object_new(channel, 0, oclass, NULL, 0, &bsp);
+         if (bsp)
+            screen->firmware_info.profiles_present |= 1;
+         nouveau_object_del(&bsp);
+         nouveau_object_del(&channel);
+      }
+      screen->firmware_info.profiles_checked |= 1;
+   }
+
+   if (!(screen->firmware_info.profiles_present & 1))
+      return 0;
+
+   /* For vp3/vp4 chipsets, make sure that the relevant firmware is present */
+   if (!vp5 && !(screen->firmware_info.profiles_checked & (1 << profile))) {
+      char path[PATH_MAX];
+      struct stat s;
+      if (vp3)
+         vp3_getpath(profile, path);
+      else
+         vp4_getpath(profile, path);
+      ret = stat(path, &s);
+      if (!ret && s.st_size > 1000)
+         screen->firmware_info.profiles_present |= (1 << profile);
+      screen->firmware_info.profiles_checked |= (1 << profile);
+   }
+
+   return vp5 || (screen->firmware_info.profiles_present & (1 << profile));
+}
+
 int
 nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
                                    enum pipe_video_profile profile,
@@ -363,8 +435,10 @@ nouveau_vp3_screen_get_video_param(struct pipe_screen *pscreen,
    switch (param) {
    case PIPE_VIDEO_CAP_SUPPORTED:
       /* VP3 does not support MPEG4, VP4+ do. */
-      return profile >= PIPE_VIDEO_PROFILE_MPEG1 && (
-            !vp3 || codec != PIPE_VIDEO_FORMAT_MPEG4);
+      return entrypoint == PIPE_VIDEO_ENTRYPOINT_BITSTREAM &&
+         profile >= PIPE_VIDEO_PROFILE_MPEG1 &&
+         (!vp3 || codec != PIPE_VIDEO_FORMAT_MPEG4) &&
+         firmware_present(pscreen, profile);
    case PIPE_VIDEO_CAP_NPOT_TEXTURES:
       return 1;
    case PIPE_VIDEO_CAP_MAX_WIDTH:
