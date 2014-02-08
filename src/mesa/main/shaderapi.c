@@ -404,6 +404,7 @@ detach_shader(struct gl_context *ctx, GLuint program, GLuint shader)
          {
             for (j = 0; j < shProg->NumShaders; j++) {
                assert(shProg->Shaders[j]->Type == GL_VERTEX_SHADER ||
+                      shProg->Shaders[j]->Type == GL_GEOMETRY_SHADER ||
                       shProg->Shaders[j]->Type == GL_FRAGMENT_SHADER);
                assert(shProg->Shaders[j]->RefCount > 0);
             }
