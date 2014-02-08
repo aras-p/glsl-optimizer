@@ -109,10 +109,11 @@ vmw_ioctl_context_destroy(struct vmw_winsys_screen *vws, uint32 cid)
 
 uint32
 vmw_ioctl_surface_create(struct vmw_winsys_screen *vws,
-			      SVGA3dSurfaceFlags flags,
-			      SVGA3dSurfaceFormat format,
-			      SVGA3dSize size,
-			      uint32_t numFaces, uint32_t numMipLevels)
+                         SVGA3dSurfaceFlags flags,
+                         SVGA3dSurfaceFormat format,
+                         unsigned usage,
+                         SVGA3dSize size,
+                         uint32_t numFaces, uint32_t numMipLevels)
 {
    union drm_vmw_surface_create_arg s_arg;
    struct drm_vmw_surface_create_req *req = &s_arg.req;
@@ -139,7 +140,7 @@ vmw_ioctl_surface_create(struct vmw_winsys_screen *vws,
       req->scanout = false;
    }
    req->format = (uint32_t) format;
-   req->shareable = 1;
+   req->shareable = !!(usage & SVGA_SURFACE_USAGE_SHARED);
 
    assert(numFaces * numMipLevels < DRM_VMW_MAX_SURFACE_FACES*
 	  DRM_VMW_MAX_MIP_LEVELS);
@@ -180,6 +181,7 @@ uint32
 vmw_ioctl_gb_surface_create(struct vmw_winsys_screen *vws,
 			    SVGA3dSurfaceFlags flags,
 			    SVGA3dSurfaceFormat format,
+                            unsigned usage,
 			    SVGA3dSize size,
 			    uint32_t numFaces,
 			    uint32_t numMipLevels,
@@ -208,7 +210,8 @@ vmw_ioctl_gb_surface_create(struct vmw_winsys_screen *vws,
       req->svga3d_flags = (uint32_t) flags;
    }
    req->format = (uint32_t) format;
-   req->drm_surface_flags |= drm_vmw_surface_flag_shareable; 
+   if (usage & SVGA_SURFACE_USAGE_SHARED)
+      req->drm_surface_flags |= drm_vmw_surface_flag_shareable;
    req->drm_surface_flags |= drm_vmw_surface_flag_create_buffer; 
 
    assert(numFaces * numMipLevels < DRM_VMW_MAX_SURFACE_FACES*

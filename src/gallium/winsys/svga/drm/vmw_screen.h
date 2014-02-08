@@ -119,15 +119,17 @@ vmw_ioctl_context_destroy(struct vmw_winsys_screen *vws,
 
 uint32
 vmw_ioctl_surface_create(struct vmw_winsys_screen *vws,
-                              SVGA3dSurfaceFlags flags,
-                              SVGA3dSurfaceFormat format,
-                              SVGA3dSize size,
-                              uint32 numFaces,
-                              uint32 numMipLevels);
+                         SVGA3dSurfaceFlags flags,
+                         SVGA3dSurfaceFormat format,
+                         unsigned usage,
+                         SVGA3dSize size,
+                         uint32 numFaces,
+                         uint32 numMipLevels);
 uint32
 vmw_ioctl_gb_surface_create(struct vmw_winsys_screen *vws,
 			    SVGA3dSurfaceFlags flags,
 			    SVGA3dSurfaceFormat format,
+                            unsigned usage,
 			    SVGA3dSize size,
 			    uint32 numFaces,
 			    uint32 numMipLevels,

@@ -135,6 +135,7 @@ static struct svga_winsys_surface *
 vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
                                SVGA3dSurfaceFlags flags,
                                SVGA3dSurfaceFormat format,
+                               unsigned usage,
                                SVGA3dSize size,
                                uint32 numFaces,
                                uint32 numMipLevels)
@@ -142,7 +143,7 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
    struct vmw_winsys_screen *vws = vmw_winsys_screen(sws);
    struct vmw_svga_winsys_surface *surface;
    struct vmw_buffer_desc desc;
-   struct pb_manager *provider = vws->pools.mob_fenced;
+   struct pb_manager *provider;
    uint32_t buffer_size;
 
 
@@ -155,6 +156,8 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
    p_atomic_set(&surface->validated, 0);
    surface->screen = vws;
    pipe_mutex_init(surface->mutex);
+   surface->shared = !!(usage & SVGA_SURFACE_USAGE_SHARED);
+   provider = (surface->shared) ? vws->pools.gmr : vws->pools.mob_fenced;
 
    /*
     * Used for the backing buffer GB surfaces, and to approximate
@@ -169,7 +172,7 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
        * buffer out of the buffer cache. Otherwise, let the kernel allocate
        * a suitable buffer for us.
        */
-      if (buffer_size < VMW_TRY_CACHED_SIZE) {
+      if (buffer_size < VMW_TRY_CACHED_SIZE && !surface->shared) {
          struct pb_buffer *pb_buf;
 
          surface->size = buffer_size;
@@ -181,10 +184,9 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
             assert(0);
       }
 
-      surface->sid = vmw_ioctl_gb_surface_create(vws,
-						 flags, format, size,
-						 numFaces, numMipLevels,
-                                                 ptr.gmrId,
+      surface->sid = vmw_ioctl_gb_surface_create(vws, flags, format, usage,
+                                                 size, numFaces,
+                                                 numMipLevels, ptr.gmrId,
                                                  surface->buf ? NULL :
 						 &desc.region);
 
@@ -198,10 +200,9 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
           */
          vmw_svga_winsys_buffer_destroy(sws, surface->buf);
          surface->buf = NULL;
-         surface->sid = vmw_ioctl_gb_surface_create(vws,
-                                                    flags, format, size,
-                                                    numFaces, numMipLevels,
-                                                    0,
+         surface->sid = vmw_ioctl_gb_surface_create(vws, flags, format, usage,
+                                                    size, numFaces,
+                                                    numMipLevels, 0,
                                                     &desc.region);
          if (surface->sid == SVGA3D_INVALID_ID)
             goto no_sid;
@@ -227,9 +228,8 @@ vmw_svga_winsys_surface_create(struct svga_winsys_screen *sws,
          }
       }
    } else {
-      surface->sid = vmw_ioctl_surface_create(vws,
-                                              flags, format, size,
-                                              numFaces, numMipLevels);
+      surface->sid = vmw_ioctl_surface_create(vws, flags, format, usage,
+                                              size, numFaces, numMipLevels);
       if(surface->sid == SVGA3D_INVALID_ID)
          goto no_sid;
 

@@ -79,6 +79,7 @@ struct winsys_handle;
 #define SVGA_FENCE_FLAG_EXEC      (1 << 0)
 #define SVGA_FENCE_FLAG_QUERY     (1 << 1)
 
+#define SVGA_SURFACE_USAGE_SHARED (1 << 0)
 
 /** Opaque surface handle */
 struct svga_winsys_surface;
@@ -252,8 +253,17 @@ struct svga_winsys_screen
    
    
    /**
-    * This creates a "surface" object in the SVGA3D device,
-    * and returns the surface ID (sid). Surfaces are generic
+    * This creates a "surface" object in the SVGA3D device.
+    *
+    * \param sws Pointer to an svga_winsys_context
+    * \param flags Device surface create flags
+    * \param format Format Device surface format
+    * \param usage Winsys usage: bitmask of SVGA_SURFACE_USAGE_x flags
+    * \param size Surface size given in device format
+    * \param numFaces Number of faces of the surface (1 or 6)
+    * \param numMipLevels Number of mipmap levels for each face
+    *
+    * Returns the surface ID (sid). Surfaces are generic
     * containers for host VRAM objects like textures, vertex
     * buffers, and depth/stencil buffers.
     *
@@ -284,6 +294,7 @@ struct svga_winsys_screen
    (*surface_create)(struct svga_winsys_screen *sws,
                      SVGA3dSurfaceFlags flags,
                      SVGA3dSurfaceFormat format,
+                     unsigned usage,
                      SVGA3dSize size,
                      uint32 numFaces,
                      uint32 numMipLevels);
