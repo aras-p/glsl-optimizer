@@ -25,11 +25,13 @@
 
 #include "svga_cmd.h"
 
+#include "util/u_framebuffer.h"
 #include "util/u_inlines.h"
 
 #include "svga_context.h"
 #include "svga_screen.h"
 #include "svga_surface.h"
+#include "svga_resource_texture.h"
 
 
 static void svga_set_scissor_states( struct pipe_context *pipe,
@@ -86,19 +88,25 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
    dst->nr_cbufs = fb->nr_cbufs;
 
    /* check if we need to propagate any of the target surfaces */
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      if (dst->cbufs[i] && dst->cbufs[i] != fb->cbufs[i])
-         if (svga_surface_needs_propagation(dst->cbufs[i]))
+   for (i = 0; i < dst->nr_cbufs; i++) {
+      struct pipe_surface *s = i < fb->nr_cbufs ? fb->cbufs[i] : NULL;
+      if (dst->cbufs[i] && dst->cbufs[i] != s) {
+         if (svga_surface_needs_propagation(dst->cbufs[i])) {
             propagate = TRUE;
+            break;
+         }
+      }
    }
 
    if (propagate) {
       /* make sure that drawing calls comes before propagation calls */
       svga_hwtnl_flush_retry( svga );
    
-      for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
-         if (dst->cbufs[i] && dst->cbufs[i] != fb->cbufs[i])
+      for (i = 0; i < dst->nr_cbufs; i++) {
+         struct pipe_surface *s = i < fb->nr_cbufs ? fb->cbufs[i] : NULL;
+         if (dst->cbufs[i] && dst->cbufs[i] != s)
             svga_propagate_surface(svga, dst->cbufs[i]);
+      }
    }
 
    /* XXX: Actually the virtual hardware may support rendertargets with
@@ -111,12 +119,16 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
       }
    }
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      pipe_surface_reference(&dst->cbufs[i],
-                             (i < fb->nr_cbufs) ? fb->cbufs[i] : NULL);
-   }
-   pipe_surface_reference(&dst->zsbuf, fb->zsbuf);
+   util_copy_framebuffer_state(dst, fb);
 
+   /* Set the rendered-to flags */
+   for (i = 0; i < dst->nr_cbufs; i++) {
+      struct pipe_surface *s = dst->cbufs[i];
+      if (s) {
+         struct svga_texture *t = svga_texture(s->texture);
+         svga_set_texture_rendered_to(t, s->u.tex.first_layer, s->u.tex.level);
+      }
+   }
 
    if (svga->curr.framebuffer.zsbuf)
    {
@@ -139,6 +151,13 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
       default:
          svga->curr.depthscale = 0.0f;
          break;
+      }
+
+      /* Set rendered-to flag */
+      {
+         struct pipe_surface *s = dst->zsbuf;
+         struct svga_texture *t = svga_texture(s->texture);
+         svga_set_texture_rendered_to(t, s->u.tex.first_layer, s->u.tex.level);
       }
    }
    else {

@@ -158,7 +158,7 @@ svga_texture_view_surface(struct svga_context *svga,
 
    for (i = 0; i < key->numMipLevels; i++) {
       for (j = 0; j < key->numFaces; j++) {
-         if (tex->defined[j + face_pick][i + start_mip]) {
+         if (svga_is_texture_level_defined(tex, j + face_pick, i + start_mip)) {
             unsigned depth = (zslice_pick < 0 ?
                               u_minify(tex->b.b.depth0, i + start_mip) :
                               1);
@@ -304,18 +304,19 @@ svga_mark_surface_dirty(struct pipe_surface *surf)
       if (s->handle == tex->handle) {
          /* hmm so 3d textures always have all their slices marked ? */
          if (surf->texture->target == PIPE_TEXTURE_CUBE)
-            tex->defined[surf->u.tex.first_layer][surf->u.tex.level] = TRUE;
+            svga_define_texture_level(tex, surf->u.tex.first_layer,
+                                      surf->u.tex.level);
          else
-            tex->defined[0][surf->u.tex.level] = TRUE;
+            svga_define_texture_level(tex, 0, surf->u.tex.level);
       }
       else {
          /* this will happen later in svga_propagate_surface */
       }
 
-      /* Increment the view_age and texture age for this surface's slice
-       * so that any sampler views into the texture are re-validated too.
+      /* Increment the view_age and texture age for this surface's mipmap
+       * level so that any sampler views into the texture are re-validated too.
        */
-      svga_age_texture_view(tex, surf->u.tex.first_layer);
+      svga_age_texture_view(tex, surf->u.tex.level);
    }
 }
 
@@ -361,7 +362,7 @@ svga_propagate_surface(struct svga_context *svga, struct pipe_surface *surf)
 
    s->dirty = FALSE;
    ss->texture_timestamp++;
-   tex->view_age[surf->u.tex.level] = ++(tex->age);
+   svga_age_texture_view(tex, surf->u.tex.level);
 
    if (s->handle != tex->handle) {
       SVGA_DBG(DEBUG_VIEWS,
@@ -372,7 +373,7 @@ svga_propagate_surface(struct svga_context *svga, struct pipe_surface *surf)
                                tex->handle, 0, 0, zslice, surf->u.tex.level, face,
                                u_minify(tex->b.b.width0, surf->u.tex.level),
                                u_minify(tex->b.b.height0, surf->u.tex.level), 1);
-      tex->defined[face][surf->u.tex.level] = TRUE;
+      svga_define_texture_level(tex, face, surf->u.tex.level);
    }
 }
 
