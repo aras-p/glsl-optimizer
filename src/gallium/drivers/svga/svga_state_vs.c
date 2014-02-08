@@ -162,12 +162,32 @@ make_vs_key(struct svga_context *svga, struct svga_vs_compile_key *key)
 }
 
 
+/**
+ * svga_reemit_vs_bindings - Reemit the vertex shader bindings
+ */
+enum pipe_error
+svga_reemit_vs_bindings(struct svga_context *svga)
+{
+   enum pipe_error ret;
+   struct svga_winsys_gb_shader *gbshader =
+      svga->state.hw_draw.vs ? svga->state.hw_draw.vs->gb_shader : NULL;
+
+   assert(svga->rebind.vs);
+   assert(svga_have_gb_objects(svga));
+
+   ret = SVGA3D_SetGBShader(svga->swc, SVGA3D_SHADERTYPE_VS, gbshader);
+   if (ret != PIPE_OK)
+      return ret;
+
+   svga->rebind.vs = FALSE;
+   return PIPE_OK;
+}
+
 
 static enum pipe_error
 emit_hw_vs(struct svga_context *svga, unsigned dirty)
 {
    struct svga_shader_variant *variant = NULL;
-   unsigned id = SVGA3D_INVALID_ID;
    enum pipe_error ret = PIPE_OK;
 
    /* SVGA_NEW_NEED_SWTNL */
@@ -184,16 +204,36 @@ emit_hw_vs(struct svga_context *svga, unsigned dirty)
             return ret;
       }
 
-      assert (variant);
-      id = variant->id;
+      assert(variant);
    }
 
    if (variant != svga->state.hw_draw.vs) {
-      ret = SVGA3D_SetShader(svga->swc,
-                             SVGA3D_SHADERTYPE_VS,
-                             id );
-      if (ret != PIPE_OK)
-         return ret;
+      if (svga_have_gb_objects(svga)) {
+         struct svga_winsys_gb_shader *gbshader =
+            variant ? variant->gb_shader : NULL;
+
+         /*
+          * Bind is necessary here only because pipebuffer_fenced may move
+          * the shader contents around....
+          */
+         if (gbshader) {
+            ret = SVGA3D_BindGBShader(svga->swc, gbshader);
+            if (ret != PIPE_OK)
+               return ret;
+         }
+
+         ret = SVGA3D_SetGBShader(svga->swc, SVGA3D_SHADERTYPE_VS, gbshader);
+         if (ret != PIPE_OK)
+            return ret;
+
+         svga->rebind.vs = FALSE;
+      }
+      else {
+         unsigned id = variant ? variant->id : SVGA_ID_INVALID;
+         ret = SVGA3D_SetShader(svga->swc, SVGA3D_SHADERTYPE_VS, id);
+         if (ret != PIPE_OK)
+            return ret;
+      }
 
       svga->dirty |= SVGA_NEW_VS_VARIANT;
       svga->state.hw_draw.vs = variant;      

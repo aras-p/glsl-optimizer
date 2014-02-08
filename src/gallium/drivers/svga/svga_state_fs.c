@@ -321,13 +321,36 @@ make_fs_key(const struct svga_context *svga,
 }
 
 
+/**
+ * svga_reemit_fs_bindings - Reemit the fragment shader bindings
+ */
+enum pipe_error
+svga_reemit_fs_bindings(struct svga_context *svga)
+{
+   enum pipe_error ret;
+
+   assert(svga->rebind.fs);
+   assert(svga_have_gb_objects(svga));
+
+   if (!svga->state.hw_draw.fs)
+      return PIPE_OK;
+
+   ret = SVGA3D_SetGBShader(svga->swc, SVGA3D_SHADERTYPE_PS,
+                            svga->state.hw_draw.fs->gb_shader);
+   if (ret != PIPE_OK)
+      return ret;
+
+   svga->rebind.fs = FALSE;
+   return PIPE_OK;
+}
+
+
+
 static enum pipe_error
 emit_hw_fs(struct svga_context *svga, unsigned dirty)
 {
    struct svga_shader_variant *variant = NULL;
-   unsigned id = SVGA3D_INVALID_ID;
    enum pipe_error ret = PIPE_OK;
-
    struct svga_fragment_shader *fs = svga->curr.fs;
    struct svga_fs_compile_key key;
 
@@ -349,17 +372,30 @@ emit_hw_fs(struct svga_context *svga, unsigned dirty)
          return ret;
    }
 
-   assert (variant);
-   id = variant->id;
-
-   assert(id != SVGA3D_INVALID_ID);
+   assert(variant);
 
    if (variant != svga->state.hw_draw.fs) {
-      ret = SVGA3D_SetShader(svga->swc,
-                             SVGA3D_SHADERTYPE_PS,
-                             id );
-      if (ret != PIPE_OK)
-         return ret;
+      if (svga_have_gb_objects(svga)) {
+         /*
+          * Bind is necessary here only because pipebuffer_fenced may move
+          * the shader contents around....
+          */
+         ret = SVGA3D_BindGBShader(svga->swc, variant->gb_shader);
+         if (ret != PIPE_OK)
+            return ret;
+
+         ret = SVGA3D_SetGBShader(svga->swc, SVGA3D_SHADERTYPE_PS,
+                                  variant->gb_shader);
+         if (ret != PIPE_OK)
+            return ret;
+
+         svga->rebind.fs = FALSE;
+      }
+      else {
+         ret = SVGA3D_SetShader(svga->swc, SVGA3D_SHADERTYPE_PS, variant->id);
+         if (ret != PIPE_OK)
+            return ret;
+      }
 
       svga->dirty |= SVGA_NEW_FS_VARIANT;
       svga->state.hw_draw.fs = variant;      

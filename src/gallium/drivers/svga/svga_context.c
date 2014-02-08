@@ -197,6 +197,10 @@ void svga_context_flush( struct svga_context *svga,
     */
    svga->rebind.rendertargets = TRUE;
    svga->rebind.texture_samplers = TRUE;
+   if (svga_have_gb_objects(svga)) {
+      svga->rebind.vs = TRUE;
+      svga->rebind.fs = TRUE;
+   }
 
    if (SVGA_DEBUG & DEBUG_SYNC) {
       if (fence)

@@ -374,6 +374,8 @@ struct svga_context
    struct {
       unsigned rendertargets:1;
       unsigned texture_samplers:1;
+      unsigned vs:1;
+      unsigned fs:1;
    } rebind;
 
    struct svga_hwtnl *hwtnl;

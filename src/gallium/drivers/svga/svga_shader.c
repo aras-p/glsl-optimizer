@@ -43,7 +43,17 @@ svga_define_shader(struct svga_context *svga,
 {
    unsigned codeLen = variant->nr_tokens * sizeof(variant->tokens[0]);
 
-   {
+   if (svga_have_gb_objects(svga)) {
+      struct svga_winsys_screen *sws = svga_screen(svga->pipe.screen)->sws;
+
+      variant->gb_shader = sws->shader_create(sws, type,
+                                              variant->tokens, codeLen);
+      if (!variant->gb_shader)
+         return PIPE_ERROR_OUT_OF_MEMORY;
+
+      return PIPE_OK;
+   }
+   else {
       enum pipe_error ret;
 
       /* Allocate an integer ID for the shader */
@@ -79,6 +89,14 @@ svga_destroy_shader_variant(struct svga_context *svga,
 {
    enum pipe_error ret = PIPE_OK;
 
+   if (svga_have_gb_objects(svga)) {
+      struct svga_winsys_screen *sws = svga_screen(svga->pipe.screen)->sws;
+
+      sws->shader_destroy(sws, variant->gb_shader);
+      variant->gb_shader = NULL;
+      goto end;
+   }
+
    /* first try */
    if (variant->id != UTIL_BITMASK_INVALID_INDEX) {
       ret = SVGA3D_DestroyShader(svga->swc, variant->id, type);
@@ -94,6 +112,7 @@ svga_destroy_shader_variant(struct svga_context *svga,
       util_bitmask_clear(svga->shader_id_bm, variant->id);
    }
 
+end:
    FREE((unsigned *)variant->tokens);
    FREE(variant);
 

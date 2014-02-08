@@ -106,6 +106,9 @@ struct svga_shader_variant
     */
    unsigned id;
    
+   /* GB object buffer containing the bytecode */
+   struct svga_winsys_gb_shader *gb_shader;
+
    /** Next variant */
    struct svga_shader_variant *next;
 };
