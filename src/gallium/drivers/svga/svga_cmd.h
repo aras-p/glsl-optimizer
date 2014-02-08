@@ -46,6 +46,7 @@ struct svga_transfer;
 struct svga_winsys_context;
 struct svga_winsys_buffer;
 struct svga_winsys_surface;
+struct svga_winsys_gb_shader;
 
 
 /*
@@ -222,6 +223,91 @@ enum pipe_error
 SVGA3D_SetShader(struct svga_winsys_context *swc,
                  SVGA3dShaderType type, uint32 shid);
 
+
+/*
+ * Guest-backed surface functions
+ */
+
+enum pipe_error
+SVGA3D_DefineGBShader(struct svga_winsys_context *swc,
+                      struct svga_winsys_gb_shader *gbshader,
+                      SVGA3dShaderType type,
+                      uint32 sizeInBytes);
+
+enum pipe_error
+SVGA3D_BindGBShader(struct svga_winsys_context *swc,
+                    struct svga_winsys_gb_shader *gbshader);
+
+enum pipe_error
+SVGA3D_SetGBShader(struct svga_winsys_context *swc,
+                   SVGA3dShaderType type,
+                   struct svga_winsys_gb_shader *gbshader);
+
+enum pipe_error
+SVGA3D_DestroyGBShader(struct svga_winsys_context *swc,
+                       struct svga_winsys_gb_shader *gbshader);
+
+enum pipe_error
+SVGA3D_BindGBSurface(struct svga_winsys_context *swc,
+                     struct svga_winsys_surface *surface);
+
+enum pipe_error
+SVGA3D_DefineGBContext(struct svga_winsys_context *swc);
+
+enum pipe_error
+SVGA3D_DestroyGBContext(struct svga_winsys_context *swc);
+
+enum pipe_error
+SVGA3D_BindGBContext(struct svga_winsys_context *swc);
+
+enum pipe_error
+SVGA3D_InvalidateGBContext(struct svga_winsys_context *swc);
+
+enum pipe_error
+SVGA3D_UpdateGBImage(struct svga_winsys_context *swc,
+                     struct svga_winsys_surface *surface,
+                     const SVGA3dBox *box,
+                     unsigned face, unsigned mipLevel);
+
+enum pipe_error
+SVGA3D_UpdateGBSurface(struct svga_winsys_context *swc,
+                       struct svga_winsys_surface *surface);
+
+
+enum pipe_error
+SVGA3D_ReadbackGBImage(struct svga_winsys_context *swc,
+                       struct svga_winsys_surface *surface,
+                       unsigned face, unsigned mipLevel);
+
+
+enum pipe_error
+SVGA3D_ReadbackGBSurface(struct svga_winsys_context *swc,
+                         struct svga_winsys_surface *surface);
+
+
+enum pipe_error
+SVGA3D_ReadbackGBImagePartial(struct svga_winsys_context *swc,
+                              struct svga_winsys_surface *surface,
+                              unsigned face, unsigned mipLevel,
+                              const SVGA3dBox *box,
+                              bool invertBox);
+
+
+enum pipe_error
+SVGA3D_InvalidateGBImagePartial(struct svga_winsys_context *swc,
+                                struct svga_winsys_surface *surface,
+                                unsigned face, unsigned mipLevel,
+                                const SVGA3dBox *box,
+                                bool invertBox);
+
+
+enum pipe_error
+SVGA3D_SetGBShaderConstsInline(struct svga_winsys_context *swc,
+                               unsigned regStart,
+                               unsigned numRegs,
+                               SVGA3dShaderType shaderType,
+                               SVGA3dShaderConstType constType,
+                               const void *values);
 
 /*
  * Queries
