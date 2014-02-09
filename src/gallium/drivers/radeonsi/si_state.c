@@ -1731,29 +1731,17 @@ static void si_initialize_color_surface(struct si_context *sctx,
 	surf->color_initialized = true;
 }
 
-static void si_db(struct si_context *sctx, struct si_pm4_state *pm4,
-		  const struct pipe_framebuffer_state *state)
+static void si_init_depth_surface(struct si_context *sctx,
+				  struct r600_surface *surf)
 {
 	struct si_screen *sscreen = sctx->screen;
-	struct r600_texture *rtex;
-	struct r600_surface *surf;
-	unsigned level, pitch, slice, format, tile_mode_index, array_mode;
+	struct r600_texture *rtex = (struct r600_texture*)surf->base.texture;
+	unsigned level = surf->base.u.tex.level;
+	unsigned pitch, slice, format, tile_mode_index, array_mode;
 	unsigned macro_aspect, tile_split, stile_split, bankh, bankw, nbanks, pipe_config;
 	uint32_t z_info, s_info, db_depth_info;
 	uint64_t z_offs, s_offs;
 	uint32_t db_htile_data_base, db_htile_surface, pa_su_poly_offset_db_fmt_cntl;
-
-	if (state->zsbuf == NULL) {
-		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, S_028040_FORMAT(V_028040_Z_INVALID));
-		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, S_028044_FORMAT(V_028044_STENCIL_INVALID));
-		return;
-	}
-
-	surf = (struct r600_surface *)state->zsbuf;
-	level = surf->base.u.tex.level;
-	rtex = (struct r600_texture*)surf->base.texture;
-
-	format = si_translate_dbformat(rtex->resource.b.b.format);
 
 	switch (sctx->framebuffer.zsbuf->texture->format) {
 	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
@@ -1774,6 +1762,8 @@ static void si_db(struct si_context *sctx, struct si_pm4_state *pm4,
 		assert(0);
 	}
 
+	format = si_translate_dbformat(rtex->resource.b.b.format);
+
 	if (format == V_028040_Z_INVALID) {
 		R600_ERR("Invalid DB format: %d, disabling DB.\n", rtex->resource.b.b.format);
 	}
@@ -1782,9 +1772,6 @@ static void si_db(struct si_context *sctx, struct si_pm4_state *pm4,
 	s_offs = z_offs = r600_resource_va(sctx->b.b.screen, surf->base.texture);
 	z_offs += rtex->surface.level[level].offset;
 	s_offs += rtex->surface.stencil_level[level].offset;
-
-	z_offs >>= 8;
-	s_offs >>= 8;
 
 	pitch = (rtex->surface.level[level].nblk_x / 8) - 1;
 	slice = (rtex->surface.level[level].nblk_x * rtex->surface.level[level].nblk_y) / 64;
@@ -1867,33 +1854,25 @@ static void si_db(struct si_context *sctx, struct si_pm4_state *pm4,
 		uint64_t va = r600_resource_va(&sctx->screen->b.b, &rtex->htile_buffer->b.b);
 		db_htile_data_base = va >> 8;
 		db_htile_surface = S_028ABC_FULL_CACHE(1);
-
-		si_pm4_add_bo(pm4, rtex->htile_buffer, RADEON_USAGE_READWRITE);
 	} else {
 		db_htile_data_base = 0;
 		db_htile_surface = 0;
 	}
 
-	si_pm4_set_reg(pm4, R_028008_DB_DEPTH_VIEW,
-		       S_028008_SLICE_START(state->zsbuf->u.tex.first_layer) |
-		       S_028008_SLICE_MAX(state->zsbuf->u.tex.last_layer));
-	si_pm4_set_reg(pm4, R_028014_DB_HTILE_DATA_BASE, db_htile_data_base);
+	surf->db_depth_view = S_028008_SLICE_START(surf->base.u.tex.first_layer) |
+			      S_028008_SLICE_MAX(surf->base.u.tex.last_layer);
+	surf->db_htile_data_base = db_htile_data_base;
+	surf->db_depth_info = db_depth_info;
+	surf->db_z_info = z_info;
+	surf->db_stencil_info = s_info;
+	surf->db_depth_base = z_offs >> 8;
+	surf->db_stencil_base = s_offs >> 8;
+	surf->db_depth_size = S_028058_PITCH_TILE_MAX(pitch);
+	surf->db_depth_slice = S_02805C_SLICE_TILE_MAX(slice);
+	surf->db_htile_surface = db_htile_surface;
+	surf->pa_su_poly_offset_db_fmt_cntl = pa_su_poly_offset_db_fmt_cntl;
 
-	si_pm4_set_reg(pm4, R_02803C_DB_DEPTH_INFO, db_depth_info);
-	si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, z_info);
-	si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, s_info);
-
-	si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE);
-	si_pm4_set_reg(pm4, R_028048_DB_Z_READ_BASE, z_offs);
-	si_pm4_set_reg(pm4, R_02804C_DB_STENCIL_READ_BASE, s_offs);
-	si_pm4_set_reg(pm4, R_028050_DB_Z_WRITE_BASE, z_offs);
-	si_pm4_set_reg(pm4, R_028054_DB_STENCIL_WRITE_BASE, s_offs);
-
-	si_pm4_set_reg(pm4, R_028058_DB_DEPTH_SIZE, S_028058_PITCH_TILE_MAX(pitch));
-	si_pm4_set_reg(pm4, R_02805C_DB_DEPTH_SLICE, S_02805C_SLICE_TILE_MAX(slice));
-
-	si_pm4_set_reg(pm4, R_028ABC_DB_HTILE_SURFACE, db_htile_surface);
-	si_pm4_set_reg(pm4, R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL, pa_su_poly_offset_db_fmt_cntl);
+	surf->depth_initialized = true;
 }
 
 #define FILL_SREG(s0x, s0y, s1x, s1y, s2x, s2y, s3x, s3y)  \
@@ -2093,6 +2072,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct r600_surface *surf = NULL;
+	struct r600_texture *rtex;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
 	int nr_samples, i;
 
@@ -2115,8 +2095,6 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	sctx->fb_compressed_cb_mask = 0;
 
 	for (i = 0; i < state->nr_cbufs; i++) {
-		struct r600_texture *rtex;
-
 		if (!state->cbufs[i]) {
 			si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + i * 0x3C,
 				       S_028C70_FORMAT(V_028C70_COLOR_INVALID));
@@ -2165,7 +2143,39 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	}
 
 	assert(!(sctx->export_16bpc & ~0xff));
-	si_db(sctx, pm4, state);
+
+	if (state->zsbuf) {
+		surf = (struct r600_surface*)state->zsbuf;
+		rtex = (struct r600_texture*)surf->base.texture;
+
+		if (!surf->depth_initialized) {
+			si_init_depth_surface(sctx, surf);
+		}
+
+		if (surf->db_htile_data_base) {
+			si_pm4_add_bo(pm4, rtex->htile_buffer, RADEON_USAGE_READWRITE);
+		}
+		si_pm4_set_reg(pm4, R_028008_DB_DEPTH_VIEW, surf->db_depth_view);
+		si_pm4_set_reg(pm4, R_028014_DB_HTILE_DATA_BASE, surf->db_htile_data_base);
+
+		si_pm4_set_reg(pm4, R_02803C_DB_DEPTH_INFO, surf->db_depth_info);
+		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, surf->db_z_info);
+		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, surf->db_stencil_info);
+		si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE);
+		si_pm4_set_reg(pm4, R_028048_DB_Z_READ_BASE, surf->db_depth_base);
+		si_pm4_set_reg(pm4, R_02804C_DB_STENCIL_READ_BASE, surf->db_stencil_base);
+		si_pm4_set_reg(pm4, R_028050_DB_Z_WRITE_BASE, surf->db_depth_base);
+		si_pm4_set_reg(pm4, R_028054_DB_STENCIL_WRITE_BASE, surf->db_stencil_base);
+		si_pm4_set_reg(pm4, R_028058_DB_DEPTH_SIZE, surf->db_depth_size);
+		si_pm4_set_reg(pm4, R_02805C_DB_DEPTH_SLICE, surf->db_depth_slice);
+
+		si_pm4_set_reg(pm4, R_028ABC_DB_HTILE_SURFACE, surf->db_htile_surface);
+		si_pm4_set_reg(pm4, R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL,
+			       surf->pa_su_poly_offset_db_fmt_cntl);
+	} else {
+		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, S_028040_FORMAT(V_028040_Z_INVALID));
+		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, S_028044_FORMAT(V_028044_STENCIL_INVALID));
+	}
 
 	/* PA_SC_WINDOW_SCISSOR_TL is set in si_init_config() */
 	si_pm4_set_reg(pm4, R_028208_PA_SC_WINDOW_SCISSOR_BR,
