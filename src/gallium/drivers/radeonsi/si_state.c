@@ -1572,37 +1572,31 @@ static unsigned si_tile_mode_index(struct r600_texture *rtex, unsigned level, bo
  * framebuffer handling
  */
 
-static void si_cb(struct si_context *sctx, struct si_pm4_state *pm4,
-		  const struct pipe_framebuffer_state *state, int cb)
+static void si_initialize_color_surface(struct si_context *sctx,
+					struct r600_surface *surf)
 {
-	struct r600_texture *rtex;
-	struct r600_surface *surf;
-	unsigned level = state->cbufs[cb]->u.tex.level;
+	struct r600_texture *rtex = (struct r600_texture*)surf->base.texture;
+	unsigned level = surf->base.u.tex.level;
+	uint64_t offset = rtex->surface.level[level].offset;
 	unsigned pitch, slice;
 	unsigned color_info, color_attrib, color_pitch, color_view;
 	unsigned tile_mode_index;
 	unsigned format, swap, ntype, endian;
-	uint64_t offset;
 	const struct util_format_description *desc;
 	int i;
 	unsigned blend_clamp = 0, blend_bypass = 0;
 	unsigned max_comp_size;
 
-	surf = (struct r600_surface *)state->cbufs[cb];
-	rtex = (struct r600_texture*)state->cbufs[cb]->texture;
-
-	offset = rtex->surface.level[level].offset;
-
 	/* Layered rendering doesn't work with LINEAR_GENERAL.
 	 * (LINEAR_ALIGNED and others work) */
 	if (rtex->surface.level[level].mode == RADEON_SURF_MODE_LINEAR) {
-		assert(state->cbufs[cb]->u.tex.first_layer == state->cbufs[cb]->u.tex.last_layer);
+		assert(surf->base.u.tex.first_layer == surf->base.u.tex.last_layer);
 		offset += rtex->surface.level[level].slice_size *
-			  state->cbufs[cb]->u.tex.first_layer;
+			  surf->base.u.tex.first_layer;
 		color_view = 0;
 	} else {
-		color_view = S_028C6C_SLICE_START(state->cbufs[cb]->u.tex.first_layer) |
-			     S_028C6C_SLICE_MAX(state->cbufs[cb]->u.tex.last_layer);
+		color_view = S_028C6C_SLICE_START(surf->base.u.tex.first_layer) |
+			     S_028C6C_SLICE_MAX(surf->base.u.tex.last_layer);
 	}
 
 	pitch = (rtex->surface.level[level].nblk_x) / 8 - 1;
@@ -1707,34 +1701,22 @@ static void si_cb(struct si_context *sctx, struct si_pm4_state *pm4,
 		color_info |= S_028C70_FAST_CLEAR(1);
 	}
 
-	offset += r600_resource_va(sctx->b.b.screen, state->cbufs[cb]->texture);
-	offset >>= 8;
+	offset += r600_resource_va(sctx->b.b.screen, surf->base.texture);
 
-	si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE);
-	si_pm4_set_reg(pm4, R_028C60_CB_COLOR0_BASE + cb * 0x3C, offset);
-	si_pm4_set_reg(pm4, R_028C64_CB_COLOR0_PITCH + cb * 0x3C, color_pitch);
-	si_pm4_set_reg(pm4, R_028C68_CB_COLOR0_SLICE + cb * 0x3C, S_028C68_TILE_MAX(slice));
-	si_pm4_set_reg(pm4, R_028C6C_CB_COLOR0_VIEW + cb * 0x3C, color_view);
-	si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + cb * 0x3C, color_info);
-	si_pm4_set_reg(pm4, R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C, color_attrib);
+	surf->cb_color_base = offset >> 8;
+	surf->cb_color_pitch = color_pitch;
+	surf->cb_color_slice = S_028C68_TILE_MAX(slice);
+	surf->cb_color_view = color_view;
+	surf->cb_color_info = color_info;
+	surf->cb_color_attrib = color_attrib;
 
 	if (rtex->cmask.size) {
-		si_pm4_set_reg(pm4, R_028C7C_CB_COLOR0_CMASK + cb * 0x3C,
-			       offset + (rtex->cmask.offset >> 8));
-		si_pm4_set_reg(pm4, R_028C80_CB_COLOR0_CMASK_SLICE + cb * 0x3C,
-			       S_028C80_TILE_MAX(rtex->cmask.slice_tile_max));
+		surf->cb_color_cmask = (offset + rtex->cmask.offset) >> 8;
+		surf->cb_color_cmask_slice = S_028C80_TILE_MAX(rtex->cmask.slice_tile_max);
 	}
 	if (rtex->fmask.size) {
-		si_pm4_set_reg(pm4, R_028C84_CB_COLOR0_FMASK + cb * 0x3C,
-			       offset + (rtex->fmask.offset >> 8));
-		si_pm4_set_reg(pm4, R_028C88_CB_COLOR0_FMASK_SLICE + cb * 0x3C,
-			       S_028C88_TILE_MAX(rtex->fmask.slice_tile_max));
-	}
-
-	/* set CB_COLOR1_INFO for possible dual-src blending */
-	if (state->nr_cbufs == 1) {
-		assert(cb == 0);
-		si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + 1 * 0x3C, color_info);
+		surf->cb_color_fmask = (offset + rtex->fmask.offset) >> 8;
+		surf->cb_color_fmask_slice = S_028C88_TILE_MAX(rtex->fmask.slice_tile_max);
 	}
 
 	/* Determine pixel shader export format */
@@ -1743,11 +1725,10 @@ static void si_cb(struct si_context *sctx, struct si_pm4_state *pm4,
 	    ((ntype == V_028C70_NUMBER_UNORM || ntype == V_028C70_NUMBER_SNORM) &&
 	     max_comp_size <= 10) ||
 	    (ntype == V_028C70_NUMBER_FLOAT && max_comp_size <= 16)) {
-		sctx->export_16bpc |= 1 << cb;
-		/* set SPI_SHADER_COL_FORMAT for possible dual-src blending */
-		if (state->nr_cbufs == 1)
-			sctx->export_16bpc |= 1 << 1;
+		surf->export_16bpc = true;
 	}
+
+	surf->color_initialized = true;
 }
 
 static void si_db(struct si_context *sctx, struct si_pm4_state *pm4,
@@ -2111,6 +2092,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 				     const struct pipe_framebuffer_state *state)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
+	struct r600_surface *surf = NULL;
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
 	int nr_samples, i;
 
@@ -2131,6 +2113,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	/* build states */
 	sctx->export_16bpc = 0;
 	sctx->fb_compressed_cb_mask = 0;
+
 	for (i = 0; i < state->nr_cbufs; i++) {
 		struct r600_texture *rtex;
 
@@ -2140,13 +2123,41 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 			continue;
 		}
 
-		rtex = (struct r600_texture*)state->cbufs[i]->texture;
+		surf = (struct r600_surface*)state->cbufs[i];
+		rtex = (struct r600_texture*)surf->base.texture;
 
-		si_cb(sctx, pm4, state, i);
+		if (!surf->color_initialized) {
+			si_initialize_color_surface(sctx, surf);
+		}
+
+		if (surf->export_16bpc) {
+			sctx->export_16bpc |= 1 << i;
+		}
 
 		if (rtex->fmask.size || rtex->cmask.size) {
 			sctx->fb_compressed_cb_mask |= 1 << i;
 		}
+
+		si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE);
+		si_pm4_set_reg(pm4, R_028C60_CB_COLOR0_BASE + i * 0x3C, surf->cb_color_base);
+		si_pm4_set_reg(pm4, R_028C64_CB_COLOR0_PITCH + i * 0x3C, surf->cb_color_pitch);
+		si_pm4_set_reg(pm4, R_028C68_CB_COLOR0_SLICE + i * 0x3C, surf->cb_color_slice);
+		si_pm4_set_reg(pm4, R_028C6C_CB_COLOR0_VIEW + i * 0x3C, surf->cb_color_view);
+		si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + i * 0x3C, surf->cb_color_info);
+		si_pm4_set_reg(pm4, R_028C74_CB_COLOR0_ATTRIB + i * 0x3C, surf->cb_color_attrib);
+		si_pm4_set_reg(pm4, R_028C7C_CB_COLOR0_CMASK + i * 0x3C, surf->cb_color_cmask);
+		si_pm4_set_reg(pm4, R_028C80_CB_COLOR0_CMASK_SLICE + i * 0x3C, surf->cb_color_cmask_slice);
+		si_pm4_set_reg(pm4, R_028C84_CB_COLOR0_FMASK + i * 0x3C, surf->cb_color_fmask);
+		si_pm4_set_reg(pm4, R_028C88_CB_COLOR0_FMASK_SLICE + i * 0x3C, surf->cb_color_fmask_slice);
+	}
+	/* Set CB_COLOR1_INFO for possible dual-src blending. */
+	if (i == 1 && surf) {
+		si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + 1 * 0x3C, surf->cb_color_info);
+		/* Also set the 16BPC export. */
+		if (surf->export_16bpc) {
+			sctx->export_16bpc |= 1 << 1;
+		}
+		i++;
 	}
 	for (; i < 8; i++) {
 		si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + i * 0x3C,
