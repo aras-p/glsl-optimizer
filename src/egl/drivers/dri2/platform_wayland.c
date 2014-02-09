@@ -202,6 +202,22 @@ dri2_wl_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
    return surf;
 }
 
+static _EGLSurface *
+dri2_wl_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *disp,
+                              _EGLConfig *conf, void *native_window,
+                              const EGLint *attrib_list)
+{
+   /* From the EGL_EXT_platform_wayland spec, version 3:
+    *
+    *   It is not valid to call eglCreatePlatformPixmapSurfaceEXT with a <dpy>
+    *   that belongs to Wayland. Any such call fails and generates
+    *   EGL_BAD_PARAMETER.
+    */
+   _eglError(EGL_BAD_PARAMETER, "cannot create EGL pixmap surfaces on "
+             "Wayland");
+   return NULL;
+}
+
 /**
  * Called via eglDestroySurface(), drv->API.DestroySurface().
  */
@@ -936,7 +952,7 @@ dri2_wl_setup_swap_interval(struct dri2_egl_display *dri2_dpy)
 static struct dri2_egl_display_vtbl dri2_wl_display_vtbl = {
    .authenticate = dri2_wl_authenticate,
    .create_window_surface = dri2_wl_create_window_surface,
-   .create_pixmap_surface = dri2_fallback_create_pixmap_surface,
+   .create_pixmap_surface = dri2_wl_create_pixmap_surface,
    .create_pbuffer_surface = dri2_fallback_create_pbuffer_surface,
    .destroy_surface = dri2_wl_destroy_surface,
    .create_image = dri2_create_image_khr,
