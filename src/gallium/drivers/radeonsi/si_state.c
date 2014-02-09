@@ -484,7 +484,6 @@ static void si_update_fb_rs_state(struct si_context *sctx)
 {
 	struct si_state_rasterizer *rs = sctx->queued.named.rasterizer;
 	struct si_pm4_state *pm4;
-	unsigned offset_db_fmt_cntl = 0, depth;
 	float offset_units;
 
 	if (!rs || !sctx->framebuffer.zsbuf)
@@ -496,17 +495,13 @@ static void si_update_fb_rs_state(struct si_context *sctx)
 	case PIPE_FORMAT_X8Z24_UNORM:
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-		depth = -24;
 		offset_units *= 2.0f;
 		break;
 	case PIPE_FORMAT_Z32_FLOAT:
 	case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-		depth = -23;
 		offset_units *= 1.0f;
-		offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
 		break;
 	case PIPE_FORMAT_Z16_UNORM:
-		depth = -16;
 		offset_units *= 4.0f;
 		break;
 	default:
@@ -519,14 +514,12 @@ static void si_update_fb_rs_state(struct si_context *sctx)
 		return;
 
 	/* FIXME some of those reg can be computed with cso */
-	offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
 	si_pm4_set_reg(pm4, R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE,
 		       fui(sctx->queued.named.rasterizer->offset_scale));
 	si_pm4_set_reg(pm4, R_028B84_PA_SU_POLY_OFFSET_FRONT_OFFSET, fui(offset_units));
 	si_pm4_set_reg(pm4, R_028B88_PA_SU_POLY_OFFSET_BACK_SCALE,
 		       fui(sctx->queued.named.rasterizer->offset_scale));
 	si_pm4_set_reg(pm4, R_028B8C_PA_SU_POLY_OFFSET_BACK_OFFSET, fui(offset_units));
-	si_pm4_set_reg(pm4, R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL, offset_db_fmt_cntl);
 
 	si_pm4_set_state(sctx, fb_rs, pm4);
 }
@@ -1767,7 +1760,7 @@ static void si_db(struct si_context *sctx, struct si_pm4_state *pm4,
 	unsigned macro_aspect, tile_split, stile_split, bankh, bankw, nbanks, pipe_config;
 	uint32_t z_info, s_info, db_depth_info;
 	uint64_t z_offs, s_offs;
-	uint32_t db_htile_data_base, db_htile_surface;
+	uint32_t db_htile_data_base, db_htile_surface, pa_su_poly_offset_db_fmt_cntl;
 
 	if (state->zsbuf == NULL) {
 		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, S_028040_FORMAT(V_028040_Z_INVALID));
@@ -1780,6 +1773,25 @@ static void si_db(struct si_context *sctx, struct si_pm4_state *pm4,
 	rtex = (struct r600_texture*)surf->base.texture;
 
 	format = si_translate_dbformat(rtex->resource.b.b.format);
+
+	switch (sctx->framebuffer.zsbuf->texture->format) {
+	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
+	case PIPE_FORMAT_X8Z24_UNORM:
+	case PIPE_FORMAT_Z24X8_UNORM:
+	case PIPE_FORMAT_Z24_UNORM_S8_UINT:
+		pa_su_poly_offset_db_fmt_cntl = S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(-24);
+		break;
+	case PIPE_FORMAT_Z32_FLOAT:
+	case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
+		pa_su_poly_offset_db_fmt_cntl = S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(-23) |
+						S_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
+		break;
+	case PIPE_FORMAT_Z16_UNORM:
+		pa_su_poly_offset_db_fmt_cntl = S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(-16);
+		break;
+	default:
+		assert(0);
+	}
 
 	if (format == V_028040_Z_INVALID) {
 		R600_ERR("Invalid DB format: %d, disabling DB.\n", rtex->resource.b.b.format);
@@ -1900,6 +1912,7 @@ static void si_db(struct si_context *sctx, struct si_pm4_state *pm4,
 	si_pm4_set_reg(pm4, R_02805C_DB_DEPTH_SLICE, S_02805C_SLICE_TILE_MAX(slice));
 
 	si_pm4_set_reg(pm4, R_028ABC_DB_HTILE_SURFACE, db_htile_surface);
+	si_pm4_set_reg(pm4, R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL, pa_su_poly_offset_db_fmt_cntl);
 }
 
 #define FILL_SREG(s0x, s0y, s1x, s1y, s2x, s2y, s3x, s3y)  \
