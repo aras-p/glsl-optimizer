@@ -211,14 +211,30 @@ static struct radeon_winsys_cs *radeon_drm_cs_create(struct radeon_winsys *rws,
 #define OUT_CS(cs, value) (cs)->buf[(cs)->cdw++] = (value)
 
 static INLINE void update_reloc_domains(struct drm_radeon_cs_reloc *reloc,
-                                        enum radeon_bo_domain rd,
-                                        enum radeon_bo_domain wd,
+                                        enum radeon_bo_usage usage,
+                                        enum radeon_bo_domain new_domain,
                                         enum radeon_bo_domain *added_domains)
 {
-    *added_domains = (rd | wd) & ~(reloc->read_domains | reloc->write_domain);
+    enum radeon_bo_domain current = reloc->read_domains | reloc->write_domain;
+    enum radeon_bo_domain final;
 
-    reloc->read_domains |= rd;
-    reloc->write_domain |= wd;
+    /* If there is at least one command which wants the buffer to be in VRAM
+     * only, keep it in VRAM. */
+    if ((current & new_domain) == RADEON_DOMAIN_VRAM)
+        final = RADEON_DOMAIN_VRAM;
+    else
+        final = current | new_domain;
+
+    *added_domains = final & ~current;
+
+    /* If we have at least one write usage... */
+    if (usage & RADEON_USAGE_WRITE || reloc->write_domain) {
+        reloc->write_domain = final;
+        reloc->read_domains = 0;
+    } else {
+        /* write_domain is zero */
+        reloc->read_domains = final;
+    }
 }
 
 int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo)
@@ -267,8 +283,6 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
     struct radeon_cs_context *csc = cs->csc;
     struct drm_radeon_cs_reloc *reloc;
     unsigned hash = bo->handle & (sizeof(csc->is_handle_added)-1);
-    enum radeon_bo_domain rd = usage & RADEON_USAGE_READ ? domains : 0;
-    enum radeon_bo_domain wd = usage & RADEON_USAGE_WRITE ? domains : 0;
     bool update_hash = TRUE;
     int i;
 
@@ -298,7 +312,7 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
              * update the cmd stream with proper buffer offset).
              */
             update_hash = FALSE;
-            update_reloc_domains(reloc, rd, wd, added_domains);
+            update_reloc_domains(reloc, usage, domains, added_domains);
             if (cs->base.ring_type != RING_DMA) {
                 csc->reloc_indices_hashlist[hash] = i;
                 return i;
@@ -326,8 +340,10 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
     p_atomic_inc(&bo->num_cs_references);
     reloc = &csc->relocs[csc->crelocs];
     reloc->handle = bo->handle;
-    reloc->read_domains = rd;
-    reloc->write_domain = wd;
+    if (usage & RADEON_USAGE_WRITE)
+        reloc->write_domain = domains;
+    else
+        reloc->read_domains = domains;
     reloc->flags = 0;
 
     csc->is_handle_added[hash] = TRUE;
@@ -337,7 +353,7 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
 
     csc->chunks[1].length_dw += RELOC_DWORDS;
 
-    *added_domains = rd | wd;
+    *added_domains = domains;
     return csc->crelocs++;
 }
 
