@@ -149,6 +149,21 @@ dri2_drm_create_window_surface(_EGLDriver *drv, _EGLDisplay *disp,
                                   native_window, attrib_list);
 }
 
+static _EGLSurface *
+dri2_drm_create_pixmap_surface(_EGLDriver *drv, _EGLDisplay *disp,
+                               _EGLConfig *conf, void *native_window,
+                               const EGLint *attrib_list)
+{
+   /* From the EGL_MESA_platform_gbm spec, version 5:
+    *
+    *  It is not valid to call eglCreatePlatformPixmapSurfaceEXT with a <dpy>
+    *  that belongs to the GBM platform. Any such call fails and generates
+    *  EGL_BAD_PARAMETER.
+    */
+   _eglError(EGL_BAD_PARAMETER, "cannot create EGL pixmap surfaces on GBM");
+   return NULL;
+}
+
 static EGLBoolean
 dri2_drm_destroy_surface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 {
@@ -445,7 +460,7 @@ dri2_drm_authenticate(_EGLDisplay *disp, uint32_t id)
 static struct dri2_egl_display_vtbl dri2_drm_display_vtbl = {
    .authenticate = dri2_drm_authenticate,
    .create_window_surface = dri2_drm_create_window_surface,
-   .create_pixmap_surface = dri2_fallback_create_pixmap_surface,
+   .create_pixmap_surface = dri2_drm_create_pixmap_surface,
    .create_pbuffer_surface = dri2_fallback_create_pbuffer_surface,
    .destroy_surface = dri2_drm_destroy_surface,
    .create_image = dri2_drm_create_image_khr,
