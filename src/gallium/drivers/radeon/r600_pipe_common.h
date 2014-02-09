@@ -201,8 +201,6 @@ struct r600_surface {
 	unsigned db_htile_data_base;
 	unsigned db_preload_control;	/* EG and later */
 	unsigned pa_su_poly_offset_db_fmt_cntl;
-
-	unsigned htile_enabled;		/* XXX remove */
 };
 
 struct r600_tiling_info {

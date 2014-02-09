@@ -1699,11 +1699,9 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 					S_028044_FORMAT(V_028044_STENCIL_8);
 	}
 
-	surf->htile_enabled = 0;
 	/* use htile only for first level */
 	if (rtex->htile_buffer && !level) {
 		uint64_t va = r600_resource_va(&rctx->screen->b.b, &rtex->htile_buffer->b.b);
-		surf->htile_enabled = 1;
 		surf->db_htile_data_base = va >> 8;
 		surf->db_htile_surface = S_028ABC_HTILE_WIDTH(1) |
 					S_028ABC_HTILE_HEIGHT(1) |
@@ -2373,7 +2371,7 @@ static void evergreen_emit_db_state(struct r600_context *rctx, struct r600_atom 
 	struct radeon_winsys_cs *cs = rctx->b.rings.gfx.cs;
 	struct r600_db_state *a = (struct r600_db_state*)atom;
 
-	if (a->rsurf && a->rsurf->htile_enabled) {
+	if (a->rsurf && a->rsurf->db_htile_surface) {
 		struct r600_texture *rtex = (struct r600_texture *)a->rsurf->base.texture;
 		unsigned reloc_idx;
 
@@ -2414,7 +2412,7 @@ static void evergreen_emit_db_misc_state(struct r600_context *rctx, struct r600_
 	 *
 	 * Disable hyperz for now if not writing to zbuffer.
 	 */
-	if (rctx->db_state.rsurf && rctx->db_state.rsurf->htile_enabled && rctx->zwritemask) {
+	if (rctx->db_state.rsurf && rctx->db_state.rsurf->db_htile_surface && rctx->zwritemask) {
 		/* FORCE_OFF means HiZ/HiS are determined by DB_SHADER_CONTROL */
 		db_render_override |= S_02800C_FORCE_HIZ_ENABLE(V_02800C_FORCE_OFF);
 		/* This is to fix a lockup when hyperz and alpha test are enabled at
