@@ -1641,15 +1641,15 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 	nbanks = eg_num_banks(rscreen->b.tiling_info.num_banks);
 	offset >>= 8;
 
-	surf->db_depth_info = S_028040_ARRAY_MODE(array_mode) |
-			      S_028040_FORMAT(format) |
-			      S_028040_TILE_SPLIT(tile_split)|
-			      S_028040_NUM_BANKS(nbanks) |
-			      S_028040_BANK_WIDTH(bankw) |
-			      S_028040_BANK_HEIGHT(bankh) |
-			      S_028040_MACRO_TILE_ASPECT(macro_aspect);
+	surf->db_z_info = S_028040_ARRAY_MODE(array_mode) |
+			  S_028040_FORMAT(format) |
+			  S_028040_TILE_SPLIT(tile_split)|
+			  S_028040_NUM_BANKS(nbanks) |
+			  S_028040_BANK_WIDTH(bankw) |
+			  S_028040_BANK_HEIGHT(bankh) |
+			  S_028040_MACRO_TILE_ASPECT(macro_aspect);
 	if (rscreen->b.chip_class == CAYMAN && rtex->resource.b.b.nr_samples > 1) {
-		surf->db_depth_info |= S_028040_NUM_SAMPLES(util_logbase2(rtex->resource.b.b.nr_samples));
+		surf->db_z_info |= S_028040_NUM_SAMPLES(util_logbase2(rtex->resource.b.b.nr_samples));
 	}
 	surf->db_depth_base = offset;
 	surf->db_depth_view = S_028008_SLICE_START(surf->base.u.tex.first_layer) |
@@ -1709,7 +1709,7 @@ static void evergreen_init_depth_surface(struct r600_context *rctx,
 					S_028ABC_HTILE_HEIGHT(1) |
 					S_028ABC_FULL_CACHE(1) |
 					S_028ABC_LINEAR(1);
-		surf->db_depth_info |= S_028040_TILE_SURFACE_ENABLE(1);
+		surf->db_z_info |= S_028040_TILE_SURFACE_ENABLE(1);
 		surf->db_preload_control = 0;
 	}
 
@@ -2279,7 +2279,7 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 		r600_write_context_reg(cs, R_028008_DB_DEPTH_VIEW, zb->db_depth_view);
 
 		r600_write_context_reg_seq(cs, R_028040_DB_Z_INFO, 8);
-		radeon_emit(cs, zb->db_depth_info);	/* R_028040_DB_Z_INFO */
+		radeon_emit(cs, zb->db_z_info);		/* R_028040_DB_Z_INFO */
 		radeon_emit(cs, zb->db_stencil_info);	/* R_028044_DB_STENCIL_INFO */
 		radeon_emit(cs, zb->db_depth_base);	/* R_028048_DB_Z_READ_BASE */
 		radeon_emit(cs, zb->db_stencil_base);	/* R_02804C_DB_STENCIL_READ_BASE */
