@@ -39,7 +39,6 @@
 #include "util/u_framebuffer.h"
 #include "pipebuffer/pb_buffer.h"
 #include "evergreend.h"
-#include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
 #include "r600_formats.h"

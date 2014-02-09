@@ -33,7 +33,6 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "util/u_framebuffer.h"
-#include "r600_resource.h"
 #include "r600_shader.h"
 #include "r600_pipe.h"
 #include "r600_formats.h"
