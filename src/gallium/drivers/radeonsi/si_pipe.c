@@ -299,6 +299,12 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
 		return sscreen->b.has_streamout ? 32*4 : 0;
 
+	/* Geometry shader output. */
+	case PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES:
+		return 1024;
+	case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
+		return 4095;
+
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:

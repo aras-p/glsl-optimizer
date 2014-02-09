@@ -257,6 +257,11 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return 1;
 
+   /* Geometry shader output, unsupported. */
+   case PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES:
+   case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
+      return 0;
+
    /* Fragment coordinate conventions. */
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:

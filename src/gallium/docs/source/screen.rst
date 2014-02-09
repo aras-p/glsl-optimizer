@@ -176,6 +176,12 @@ The integer capabilities:
   ARB_framebuffer_object is provided.
 * ``PIPE_CAP_TGSI_VS_LAYER``: Whether TGSI_SEMANTIC_LAYER is supported
   as a vertex shader output.
+* ``PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES``: The maximum number of vertices
+  output by a single invocation of a geometry shader.
+* ``PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS``: The maximum number of
+  vertex components output by a single invocation of a geometry shader.
+  This is the product of the number of attribute components per vertex and
+  the number of output vertices.
 
 
 .. _pipe_capf:

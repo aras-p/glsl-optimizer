@@ -262,6 +262,8 @@ void st_init_limits(struct st_context *st)
    c->Program[MESA_SHADER_VERTEX].MaxOutputComponents = c->MaxVarying * 4;
    c->Program[MESA_SHADER_GEOMETRY].MaxInputComponents = c->MaxVarying * 4;
    c->Program[MESA_SHADER_GEOMETRY].MaxOutputComponents = c->MaxVarying * 4;
+   c->MaxGeometryOutputVertices = screen->get_param(screen, PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES);
+   c->MaxGeometryTotalOutputComponents = screen->get_param(screen, PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS);
 
    c->MinProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MIN_TEXEL_OFFSET);
    c->MaxProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MAX_TEXEL_OFFSET);

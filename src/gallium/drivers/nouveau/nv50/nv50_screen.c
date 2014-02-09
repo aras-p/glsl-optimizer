@@ -141,6 +141,9 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
    case PIPE_CAP_MAX_STREAM_OUTPUT_SEPARATE_COMPONENTS:
       return 64;
+   case PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES:
+   case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
+      return 1024;
    case PIPE_CAP_STREAM_OUTPUT_PAUSE_RESUME:
       return (class_3d >= NVA0_3D_CLASS) ? 1 : 0;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:

@@ -212,6 +212,11 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_STREAM_OUTPUT_INTERLEAVED_COMPONENTS:
 		return 0;
 
+	/* Geometry shader output, unsupported. */
+	case PIPE_CAP_MAX_GEOMETRY_OUTPUT_VERTICES:
+	case PIPE_CAP_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS:
+		return 0;
+
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
