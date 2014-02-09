@@ -70,10 +70,6 @@ struct si_textures_info {
 	unsigned			n_samplers;
 };
 
-struct si_surface {
-	struct pipe_surface		base;
-};
-
 #define SI_NUM_ATOMS(sctx) (sizeof((sctx)->atoms)/sizeof((sctx)->atoms.array[0]))
 
 #define SI_NUM_SHADERS (PIPE_SHADER_GEOMETRY+1)
