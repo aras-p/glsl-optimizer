@@ -62,6 +62,7 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 	rctx->b.transfer_inline_write = u_default_transfer_inline_write;
         rctx->b.memory_barrier = r600_memory_barrier;
 
+	r600_init_context_texture_functions(rctx);
 	r600_streamout_init(rctx);
 	r600_query_init(rctx);
 
@@ -613,7 +614,7 @@ bool r600_common_screen_init(struct r600_common_screen *rscreen,
 		rscreen->b.is_video_format_supported = vl_video_buffer_is_format_supported;
 	}
 
-	r600_init_texture_functions(rscreen);
+	r600_init_screen_texture_functions(rscreen);
 
 	rscreen->ws = ws;
 	rscreen->family = rscreen->info.family;

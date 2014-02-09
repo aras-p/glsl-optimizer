@@ -483,6 +483,7 @@ static void si_resource_copy_region(struct pipe_context *ctx,
 				    const struct pipe_box *src_box)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
+	struct r600_texture *rdst = (struct r600_texture*)dst;
 	struct pipe_surface *dst_view, dst_templ;
 	struct pipe_sampler_view src_templ, *src_view;
 	struct texture_orig_info orig_info[2];
@@ -566,7 +567,9 @@ static void si_resource_copy_region(struct pipe_context *ctx,
 
 	/* Initialize the surface. */
 	util_blitter_default_dst_texture(&dst_templ, dst, dst_level, dstz);
-	dst_view = ctx->create_surface(ctx, dst, &dst_templ);
+	dst_view = r600_create_surface_custom(ctx, dst, &dst_templ,
+					      rdst->surface.level[dst_level].npix_x,
+					      rdst->surface.level[dst_level].npix_y);
 
 	/* Initialize the sampler view. */
 	util_blitter_default_src_texture(&src_templ, src, src_level);

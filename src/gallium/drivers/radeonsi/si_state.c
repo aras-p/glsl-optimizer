@@ -3100,41 +3100,6 @@ static void *si_create_blend_custom(struct si_context *sctx, unsigned mode)
 	return si_create_blend_state_mode(&sctx->b.b, &blend, mode);
 }
 
-static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
-						struct pipe_resource *texture,
-						const struct pipe_surface *surf_tmpl)
-{
-	struct r600_texture *rtex = (struct r600_texture*)texture;
-	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
-	unsigned level = surf_tmpl->u.tex.level;
-
-	if (surface == NULL)
-		return NULL;
-
-	assert(surf_tmpl->u.tex.first_layer <= util_max_layer(texture, surf_tmpl->u.tex.level));
-	assert(surf_tmpl->u.tex.last_layer <= util_max_layer(texture, surf_tmpl->u.tex.level));
-
-	pipe_reference_init(&surface->base.reference, 1);
-	pipe_resource_reference(&surface->base.texture, texture);
-	surface->base.context = pipe;
-	surface->base.format = surf_tmpl->format;
-	surface->base.width = rtex->surface.level[level].npix_x;
-	surface->base.height = rtex->surface.level[level].npix_y;
-	surface->base.texture = texture;
-	surface->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
-	surface->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
-	surface->base.u.tex.level = level;
-
-	return &surface->base;
-}
-
-static void r600_surface_destroy(struct pipe_context *pipe,
-				 struct pipe_surface *surface)
-{
-	pipe_resource_reference(&surface->texture, NULL);
-	FREE(surface);
-}
-
 static boolean si_dma_copy(struct pipe_context *ctx,
 			   struct pipe_resource *dst,
 			   unsigned dst_level,
@@ -3224,8 +3189,6 @@ void si_init_state_functions(struct si_context *sctx)
 
 	sctx->b.b.texture_barrier = si_texture_barrier;
 	sctx->b.b.set_polygon_stipple = si_set_polygon_stipple;
-	sctx->b.b.create_surface = r600_create_surface;
-	sctx->b.b.surface_destroy = r600_surface_destroy;
 	sctx->b.dma_copy = si_dma_copy;
 	sctx->b.set_occlusion_query_state = si_set_occlusion_query_state;
 	sctx->b.need_gfx_cs_space = si_need_gfx_cs_space;

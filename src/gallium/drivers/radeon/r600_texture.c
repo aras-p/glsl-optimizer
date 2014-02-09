@@ -1076,8 +1076,58 @@ static const struct u_resource_vtbl r600_texture_vtbl =
 	NULL				/* transfer_inline_write */
 };
 
-void r600_init_texture_functions(struct r600_common_screen *rscreen)
+struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
+						struct pipe_resource *texture,
+						const struct pipe_surface *templ,
+						unsigned width, unsigned height)
+{
+	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
+
+	if (surface == NULL)
+		return NULL;
+
+	assert(templ->u.tex.first_layer <= util_max_layer(texture, templ->u.tex.level));
+	assert(templ->u.tex.last_layer <= util_max_layer(texture, templ->u.tex.level));
+
+	pipe_reference_init(&surface->base.reference, 1);
+	pipe_resource_reference(&surface->base.texture, texture);
+	surface->base.context = pipe;
+	surface->base.format = templ->format;
+	surface->base.width = width;
+	surface->base.height = height;
+	surface->base.u = templ->u;
+	return &surface->base;
+}
+
+static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
+						struct pipe_resource *tex,
+						const struct pipe_surface *templ)
+{
+	unsigned level = templ->u.tex.level;
+
+	return r600_create_surface_custom(pipe, tex, templ,
+					  u_minify(tex->width0, level),
+					  u_minify(tex->height0, level));
+}
+
+static void r600_surface_destroy(struct pipe_context *pipe,
+				 struct pipe_surface *surface)
+{
+	struct r600_surface *surf = (struct r600_surface*)surface;
+	pipe_resource_reference((struct pipe_resource**)&surf->cb_buffer_fmask, NULL);
+	pipe_resource_reference((struct pipe_resource**)&surf->cb_buffer_cmask, NULL);
+	pipe_resource_reference(&surface->texture, NULL);
+	FREE(surface);
+}
+
+void r600_init_screen_texture_functions(struct r600_common_screen *rscreen)
 {
 	rscreen->b.resource_from_handle = r600_texture_from_handle;
 	rscreen->b.resource_get_handle = r600_texture_get_handle;
+}
+
+void r600_init_context_texture_functions(struct r600_common_context *rctx)
+{
+	rctx->b.create_surface = r600_create_surface;
+	rctx->b.surface_destroy = r600_surface_destroy;
 }

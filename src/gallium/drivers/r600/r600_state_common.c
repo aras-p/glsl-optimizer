@@ -1727,48 +1727,6 @@ void r600_emit_shader(struct r600_context *rctx, struct r600_atom *a)
 	radeon_emit(cs, r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, shader->bo, RADEON_USAGE_READ));
 }
 
-struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
-						struct pipe_resource *texture,
-						const struct pipe_surface *templ,
-						unsigned width, unsigned height)
-{
-	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
-
-        assert(templ->u.tex.first_layer <= util_max_layer(texture, templ->u.tex.level));
-        assert(templ->u.tex.last_layer <= util_max_layer(texture, templ->u.tex.level));
-	if (surface == NULL)
-		return NULL;
-	pipe_reference_init(&surface->base.reference, 1);
-	pipe_resource_reference(&surface->base.texture, texture);
-	surface->base.context = pipe;
-	surface->base.format = templ->format;
-	surface->base.width = width;
-	surface->base.height = height;
-	surface->base.u = templ->u;
-	return &surface->base;
-}
-
-static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
-						struct pipe_resource *tex,
-						const struct pipe_surface *templ)
-{
-	unsigned level = templ->u.tex.level;
-
-	return r600_create_surface_custom(pipe, tex, templ,
-                                          u_minify(tex->width0, level),
-					  u_minify(tex->height0, level));
-}
-
-static void r600_surface_destroy(struct pipe_context *pipe,
-				 struct pipe_surface *surface)
-{
-	struct r600_surface *surf = (struct r600_surface*)surface;
-	pipe_resource_reference((struct pipe_resource**)&surf->cb_buffer_fmask, NULL);
-	pipe_resource_reference((struct pipe_resource**)&surf->cb_buffer_cmask, NULL);
-	pipe_resource_reference(&surface->texture, NULL);
-	FREE(surface);
-}
-
 unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
 				   const unsigned char *swizzle_view,
 				   boolean vtx)
@@ -2280,8 +2238,6 @@ void r600_init_common_state_functions(struct r600_context *rctx)
 	rctx->b.b.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->b.b.texture_barrier = r600_texture_barrier;
 	rctx->b.b.set_stream_output_targets = r600_set_streamout_targets;
-	rctx->b.b.create_surface = r600_create_surface;
-	rctx->b.b.surface_destroy = r600_surface_destroy;
 	rctx->b.b.draw_vbo = r600_draw_vbo;
 	rctx->b.invalidate_buffer = r600_invalidate_buffer;
 	rctx->b.set_occlusion_query_state = r600_set_occlusion_query_state;

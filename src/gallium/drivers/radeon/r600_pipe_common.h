@@ -416,7 +416,12 @@ bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct r600_texture **staging);
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 					const struct pipe_resource *templ);
-void r600_init_texture_functions(struct r600_common_screen *rscreen);
+struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
+						struct pipe_resource *texture,
+						const struct pipe_surface *templ,
+						unsigned width, unsigned height);
+void r600_init_screen_texture_functions(struct r600_common_screen *rscreen);
+void r600_init_context_texture_functions(struct r600_common_context *rctx);
 
 
 /* Inline helpers. */
