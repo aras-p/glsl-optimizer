@@ -82,12 +82,10 @@ gen7_surface_msaa_bits(unsigned num_samples, enum intel_msaa_layout layout)
 {
    uint32_t ss4 = 0;
 
-   if (num_samples > 4)
-      ss4 |= GEN7_SURFACE_MULTISAMPLECOUNT_8;
-   else if (num_samples > 1)
-      ss4 |= GEN7_SURFACE_MULTISAMPLECOUNT_4;
-   else
-      ss4 |= GEN7_SURFACE_MULTISAMPLECOUNT_1;
+   assert(num_samples <= 8);
+
+   /* The SURFACE_MULTISAMPLECOUNT_X enums are simply log2(num_samples) << 3. */
+   ss4 |= (ffs(MAX2(num_samples, 1)) - 1) << 3;
 
    if (layout == INTEL_MSAA_LAYOUT_IMS)
       ss4 |= GEN7_SURFACE_MSFMT_DEPTH_STENCIL;
