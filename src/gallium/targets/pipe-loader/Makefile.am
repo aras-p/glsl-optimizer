@@ -72,6 +72,7 @@ pipe_nouveau_la_LIBADD = \
 	$(PIPE_LIBS) \
 	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
 	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
+	$(LIBDRM_LIBS) \
 	$(NOUVEAU_LIBS)
 pipe_nouveau_la_LDFLAGS = -no-undefined -avoid-version -module
 if HAVE_MESA_LLVM
