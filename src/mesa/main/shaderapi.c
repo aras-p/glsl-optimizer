@@ -383,31 +383,31 @@ detach_shader(struct gl_context *ctx, GLuint program, GLuint shader)
          _mesa_reference_shader(ctx, &shProg->Shaders[i], NULL);
 
          /* alloc new, smaller array */
-         newList =
-            malloc((n - 1) * sizeof(struct gl_shader *));
+         newList = malloc((n - 1) * sizeof(struct gl_shader *));
          if (!newList) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDetachShader");
             return;
          }
+         /* Copy old list entries to new list, skipping removed entry at [i] */
          for (j = 0; j < i; j++) {
             newList[j] = shProg->Shaders[j];
          }
-         while (++i < n)
+         while (++i < n) {
             newList[j++] = shProg->Shaders[i];
-         free(shProg->Shaders);
+         }
 
+         /* Free old list and install new one */
+         free(shProg->Shaders);
          shProg->Shaders = newList;
          shProg->NumShaders = n - 1;
 
 #ifdef DEBUG
-         /* sanity check */
-         {
-            for (j = 0; j < shProg->NumShaders; j++) {
-               assert(shProg->Shaders[j]->Type == GL_VERTEX_SHADER ||
-                      shProg->Shaders[j]->Type == GL_GEOMETRY_SHADER ||
-                      shProg->Shaders[j]->Type == GL_FRAGMENT_SHADER);
-               assert(shProg->Shaders[j]->RefCount > 0);
-            }
+         /* sanity check - make sure the new list's entries are sensible */
+         for (j = 0; j < shProg->NumShaders; j++) {
+            assert(shProg->Shaders[j]->Type == GL_VERTEX_SHADER ||
+                   shProg->Shaders[j]->Type == GL_GEOMETRY_SHADER ||
+                   shProg->Shaders[j]->Type == GL_FRAGMENT_SHADER);
+            assert(shProg->Shaders[j]->RefCount > 0);
          }
 #endif
 
