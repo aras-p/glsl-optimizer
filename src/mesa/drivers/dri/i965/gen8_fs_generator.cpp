@@ -597,6 +597,40 @@ gen8_fs_generator::generate_set_simd4x2_offset(fs_inst *ir,
 }
 
 /**
+ * Sets vstride=16, width=8, hstride=2 or vstride=0, width=1, hstride=0
+ * (when mask is passed as a uniform) of register mask before moving it
+ * to register dst.
+ */
+void
+gen8_fs_generator::generate_set_omask(fs_inst *inst,
+                                      struct brw_reg dst,
+                                      struct brw_reg mask)
+{
+   assert(dst.type == BRW_REGISTER_TYPE_UW);
+
+   if (dispatch_width == 16)
+      dst = vec16(dst);
+
+   if (mask.vstride == BRW_VERTICAL_STRIDE_8 &&
+       mask.width == BRW_WIDTH_8 &&
+       mask.hstride == BRW_HORIZONTAL_STRIDE_1) {
+      mask = stride(mask, 16, 8, 2);
+   } else {
+      assert(mask.vstride == BRW_VERTICAL_STRIDE_0 &&
+             mask.width == BRW_WIDTH_1 &&
+             mask.hstride == BRW_HORIZONTAL_STRIDE_0);
+   }
+
+   unsigned save_exec_size = default_state.exec_size;
+   default_state.exec_size = BRW_EXECUTE_8;
+
+   gen8_instruction *mov = MOV(dst, retype(mask, dst.type));
+   gen8_set_mask_control(mov, BRW_MASK_DISABLE);
+
+   default_state.exec_size = save_exec_size;
+}
+
+/**
  * Do a special ADD with vstride=1, width=4, hstride=0 for src1.
  */
 void
@@ -998,7 +1032,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
          break;
 
       case FS_OPCODE_SET_OMASK:
-         assert(!"XXX: Missing Gen8 scalar support for SET_OMASK");
+         generate_set_omask(ir, dst, src[0]);
          break;
 
       case FS_OPCODE_SET_SAMPLE_ID:
