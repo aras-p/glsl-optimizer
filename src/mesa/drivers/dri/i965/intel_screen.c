@@ -1328,6 +1328,8 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 
    intelScreen->deviceID = drm_intel_bufmgr_gem_get_devid(intelScreen->bufmgr);
    intelScreen->devinfo = brw_get_device_info(intelScreen->deviceID);
+   if (!intelScreen->devinfo)
+      return false;
 
    intelScreen->hw_must_use_separate_stencil = intelScreen->devinfo->gen >= 7;
 

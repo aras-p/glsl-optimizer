@@ -229,7 +229,7 @@ brw_get_device_info(int devid)
 #define CHIPSET(id, family, name) case id: return &brw_device_info_##family;
 #include "pci_ids/i965_pci_ids.h"
    default:
-      fprintf(stderr, "Unknown Intel device.");
-      abort();
+      fprintf(stderr, "i965_dri.so does not support the 0x%x PCI ID.\n", devid);
+      return NULL;
    }
 }
