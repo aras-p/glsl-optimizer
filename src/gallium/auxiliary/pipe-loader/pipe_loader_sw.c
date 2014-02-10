@@ -58,6 +58,7 @@ pipe_loader_sw_probe(struct pipe_loader_device **devs, int ndev)
    for (i = 0; i < Elements(backends); i++) {
       if (i < ndev) {
          struct pipe_loader_sw_device *sdev = CALLOC_STRUCT(pipe_loader_sw_device);
+	 /* TODO: handle CALLOC_STRUCT failure */
 
          sdev->base.type = PIPE_LOADER_DEVICE_SOFTWARE;
          sdev->base.driver_name = "swrast";

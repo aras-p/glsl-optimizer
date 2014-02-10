@@ -123,6 +123,9 @@ pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd,
    struct pipe_loader_drm_device *ddev = CALLOC_STRUCT(pipe_loader_drm_device);
    int vendor_id, chip_id;
 
+   if (!ddev)
+      return FALSE;
+
    if (loader_get_pci_id_for_fd(fd, &vendor_id, &chip_id)) {
       ddev->base.type = PIPE_LOADER_DEVICE_PCI;
       ddev->base.u.pci.vendor_id = vendor_id;
