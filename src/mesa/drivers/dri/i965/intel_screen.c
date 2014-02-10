@@ -1111,11 +1111,14 @@ intel_detect_swizzling(struct intel_screen *screen)
 const int*
 intel_supported_msaa_modes(const struct intel_screen  *screen)
 {
+   static const int gen8_modes[] = {8, 4, 2, 0, -1};
    static const int gen7_modes[] = {8, 4, 0, -1};
    static const int gen6_modes[] = {4, 0, -1};
    static const int gen4_modes[] = {0, -1};
 
-   if (screen->devinfo->gen >= 7) {
+   if (screen->devinfo->gen >= 8) {
+      return gen8_modes;
+   } else if (screen->devinfo->gen >= 7) {
       return gen7_modes;
    } else if (screen->devinfo->gen == 6) {
       return gen6_modes;
