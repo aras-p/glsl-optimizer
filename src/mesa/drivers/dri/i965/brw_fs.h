@@ -720,6 +720,10 @@ private:
                                             struct brw_reg index,
                                             struct brw_reg offset);
    void generate_mov_dispatch_to_flags(fs_inst *ir);
+   void generate_set_sample_id(fs_inst *ir,
+                               struct brw_reg dst,
+                               struct brw_reg src0,
+                               struct brw_reg src1);
    void generate_set_simd4x2_offset(fs_inst *ir,
                                     struct brw_reg dst,
                                     struct brw_reg offset);

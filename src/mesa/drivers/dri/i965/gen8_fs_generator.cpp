@@ -596,6 +596,33 @@ gen8_fs_generator::generate_set_simd4x2_offset(fs_inst *ir,
    MOV_RAW(retype(brw_vec1_reg(dst.file, dst.nr, 0), value.type), value);
 }
 
+/**
+ * Do a special ADD with vstride=1, width=4, hstride=0 for src1.
+ */
+void
+gen8_fs_generator::generate_set_sample_id(fs_inst *ir,
+                                          struct brw_reg dst,
+                                          struct brw_reg src0,
+                                          struct brw_reg src1)
+{
+   assert(dst.type == BRW_REGISTER_TYPE_D || dst.type == BRW_REGISTER_TYPE_UD);
+   assert(src0.type == BRW_REGISTER_TYPE_D || src0.type == BRW_REGISTER_TYPE_UD);
+
+   struct brw_reg reg = retype(stride(src1, 1, 4, 0), BRW_REGISTER_TYPE_UW);
+
+   unsigned save_exec_size = default_state.exec_size;
+   default_state.exec_size = BRW_EXECUTE_8;
+
+   gen8_instruction *add = ADD(dst, src0, reg);
+   gen8_set_mask_control(add, BRW_MASK_DISABLE);
+   if (dispatch_width == 16) {
+      add = ADD(offset(dst, 1), offset(src0, 1), suboffset(reg, 2));
+      gen8_set_mask_control(add, BRW_MASK_DISABLE);
+   }
+
+   default_state.exec_size = save_exec_size;
+}
+
 void
 gen8_fs_generator::generate_code(exec_list *instructions)
 {
@@ -975,7 +1002,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
          break;
 
       case FS_OPCODE_SET_SAMPLE_ID:
-         assert(!"XXX: Missing Gen8 scalar support for SET_SAMPLE_ID");
+         generate_set_sample_id(ir, dst, src[0], src[1]);
          break;
 
       case FS_OPCODE_PACK_HALF_2x16_SPLIT:
