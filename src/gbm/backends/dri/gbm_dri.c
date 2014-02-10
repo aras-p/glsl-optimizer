@@ -611,7 +611,7 @@ gbm_dri_bo_create(struct gbm_device *gbm,
       dri_format = __DRI_IMAGE_FORMAT_XRGB2101010;
       break;
    default:
-      return NULL;
+      goto failed;
    }
 
    if (usage & GBM_BO_USE_SCANOUT)
@@ -628,7 +628,7 @@ gbm_dri_bo_create(struct gbm_device *gbm,
                               dri_format, dri_use,
                               bo);
    if (bo->image == NULL)
-      return NULL;
+      goto failed;
 
    dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_HANDLE,
                           &bo->base.base.handle.s32);
@@ -636,6 +636,10 @@ gbm_dri_bo_create(struct gbm_device *gbm,
                           (int *) &bo->base.base.stride);
 
    return &bo->base.base;
+
+failed:
+   free(bo);
+   return NULL;
 }
 
 static struct gbm_surface *
