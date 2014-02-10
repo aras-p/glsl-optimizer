@@ -82,6 +82,7 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_enter(ir_swizzle *);
+   virtual ir_visitor_status visit_enter(ir_dereference_array *);
    virtual ir_visitor_status visit_enter(ir_if *);
    virtual ir_visitor_status visit_enter(ir_loop *);
 
@@ -287,6 +288,19 @@ ir_vectorize_visitor::visit_enter(ir_swizzle *ir)
       }
    }
    return visit_continue;
+}
+
+/* Upon entering an ir_array_dereference, remove the current assignment from
+ * further consideration. Since the index of an array dereference must scalar,
+ * we are not able to vectorize it.
+ *
+ * FINISHME: If all of scalar indices are identical we could vectorize.
+ */
+ir_visitor_status
+ir_vectorize_visitor::visit_enter(ir_dereference_array *ir)
+{
+   this->current_assignment = NULL;
+   return visit_continue_with_parent;
 }
 
 /* Since there is no statement to visit between the "then" and "else"
