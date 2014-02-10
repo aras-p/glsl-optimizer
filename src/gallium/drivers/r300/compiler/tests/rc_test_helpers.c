@@ -557,6 +557,7 @@ unsigned load_program(
 		if (last_char && last_char != '\n') {
 			fprintf(stderr, "Error line cannot be longer than 100 "
 				"characters:\n%s\n", line);
+			fclose(file);
 			return 0;
 		}
 
@@ -605,5 +606,7 @@ unsigned load_program(
 		// XXX: Parse immediates from the file.
 		add_instruction(c, test->input[i]);
 	}
+
+	fclose(file);
 	return 1;
 }
