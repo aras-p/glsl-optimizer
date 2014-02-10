@@ -44,11 +44,31 @@ struct pipe_loader_sw_device {
 static struct pipe_loader_ops pipe_loader_sw_ops;
 
 static struct sw_winsys *(*backends[])() = {
-#ifdef HAVE_WINSYS_XLIB
-   x11_sw_create,
-#endif
    null_sw_create
 };
+
+#ifdef HAVE_WINSYS_XLIB
+bool
+pipe_loader_sw_probe_xlib(struct pipe_loader_device **devs, Display *display)
+{
+   struct pipe_loader_sw_device *sdev = CALLOC_STRUCT(pipe_loader_sw_device);
+
+   if (!sdev)
+      return false;
+
+   sdev->base.type = PIPE_LOADER_DEVICE_SOFTWARE;
+   sdev->base.driver_name = "swrast";
+   sdev->base.ops = &pipe_loader_sw_ops;
+   sdev->ws = xlib_create_sw_winsys(display);
+   if (!sdev->ws) {
+      FREE(sdev);
+      return false;
+   }
+   *devs = &sdev->base;
+
+   return true;
+}
+#endif
 
 int
 pipe_loader_sw_probe(struct pipe_loader_device **devs, int ndev)

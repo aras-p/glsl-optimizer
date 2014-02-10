@@ -35,6 +35,10 @@
 
 #include "pipe/p_compiler.h"
 
+#ifdef HAVE_WINSYS_XLIB
+#include <X11/Xlib.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -99,6 +103,20 @@ pipe_loader_create_screen(struct pipe_loader_device *dev,
  */
 void
 pipe_loader_release(struct pipe_loader_device **devs, int ndev);
+
+#ifdef HAVE_WINSYS_XLIB
+
+/**
+ * Initialize Xlib for an associated display.
+ *
+ * This function is platform-specific.
+ *
+ * \sa pipe_loader_probe
+ */
+bool
+pipe_loader_sw_probe_xlib(struct pipe_loader_device **devs, Display *display);
+
+#endif
 
 /**
  * Get a list of known software devices.
