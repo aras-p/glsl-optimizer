@@ -67,6 +67,7 @@ LIBGLSL_FILES = \
 	$(GLSL_SRCDIR)/lower_jumps.cpp \
 	$(GLSL_SRCDIR)/lower_mat_op_to_vec.cpp \
 	$(GLSL_SRCDIR)/lower_noise.cpp \
+	$(GLSL_SRCDIR)/lower_offset_array.cpp \
 	$(GLSL_SRCDIR)/lower_packed_varyings.cpp \
 	$(GLSL_SRCDIR)/lower_named_interface_blocks.cpp \
 	$(GLSL_SRCDIR)/lower_packing_builtins.cpp \

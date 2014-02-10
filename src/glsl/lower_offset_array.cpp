@@ -31,10 +31,11 @@
  * \author Chris Forbes <chrisf@ijw.co.nz>
  */
 
-#include "glsl/glsl_types.h"
-#include "glsl/ir.h"
-#include "glsl/ir_builder.h"
-#include "glsl/ir_rvalue_visitor.h"
+#include "glsl_types.h"
+#include "ir.h"
+#include "ir_builder.h"
+#include "ir_optimization.h"
+#include "ir_rvalue_visitor.h"
 
 using namespace ir_builder;
 
@@ -78,16 +79,12 @@ brw_lower_offset_array_visitor::handle_rvalue(ir_rvalue **rv)
    progress = true;
 }
 
-extern "C" {
-
 bool
-brw_do_lower_offset_arrays(exec_list *instructions)
+lower_offset_arrays(exec_list *instructions)
 {
    brw_lower_offset_array_visitor v;
 
    visit_list_elements(&v, instructions);
 
    return v.progress;
-}
-
 }

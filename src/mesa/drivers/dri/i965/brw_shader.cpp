@@ -167,7 +167,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       do_vec_index_to_cond_assign(shader->base.ir);
       lower_vector_insert(shader->base.ir, true);
       brw_do_cubemap_normalize(shader->base.ir);
-      brw_do_lower_offset_arrays(shader->base.ir);
+      lower_offset_arrays(shader->base.ir);
       brw_do_lower_unnormalized_offset(shader->base.ir);
       lower_noise(shader->base.ir);
       lower_quadop_vector(shader->base.ir, false);

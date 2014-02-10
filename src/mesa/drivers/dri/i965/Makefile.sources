@@ -73,7 +73,6 @@ i965_FILES = \
 	brw_gs_surface_state.c \
 	brw_interpolation_map.c \
 	brw_lower_texture_gradients.cpp \
-	brw_lower_offset_array.cpp \
 	brw_lower_unnormalized_offset.cpp \
 	brw_misc_state.c \
 	brw_object_purgeable.c \
