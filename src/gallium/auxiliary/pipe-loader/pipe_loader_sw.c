@@ -93,6 +93,27 @@ pipe_loader_sw_probe_dri(struct pipe_loader_device **devs, struct drisw_loader_f
    return true;
 }
 
+bool
+pipe_loader_sw_probe_null(struct pipe_loader_device **devs)
+{
+   struct pipe_loader_sw_device *sdev = CALLOC_STRUCT(pipe_loader_sw_device);
+
+   if (!sdev)
+      return false;
+
+   sdev->base.type = PIPE_LOADER_DEVICE_SOFTWARE;
+   sdev->base.driver_name = "swrast";
+   sdev->base.ops = &pipe_loader_sw_ops;
+   sdev->ws = null_sw_create();
+   if (!sdev->ws) {
+      FREE(sdev);
+      return false;
+   }
+   *devs = &sdev->base;
+
+   return true;
+}
+
 int
 pipe_loader_sw_probe(struct pipe_loader_device **devs, int ndev)
 {

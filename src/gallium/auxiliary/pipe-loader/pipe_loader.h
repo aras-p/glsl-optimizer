@@ -132,6 +132,16 @@ pipe_loader_sw_probe_dri(struct pipe_loader_device **devs,
 
 
 /**
+ * Initialize a null sw device.
+ *
+ * This function is platform-specific.
+ *
+ * \sa pipe_loader_probe
+ */
+bool
+pipe_loader_sw_probe_null(struct pipe_loader_device **devs);
+
+/**
  * Get a list of known software devices.
  *
  * This function is platform-specific.
