@@ -32,7 +32,7 @@
  * e     3
  */
 static const uint32_t
-brw_multisample_positions_4x[] = { 0xae2ae662 };
+brw_multisample_positions_4x = 0xae2ae662;
 
 /**
  * Sample positions are based on a solution to the "8 queens" puzzle.

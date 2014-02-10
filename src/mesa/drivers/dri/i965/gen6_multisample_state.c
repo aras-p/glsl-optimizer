@@ -39,7 +39,7 @@ gen6_get_sample_position(struct gl_context *ctx,
       result[0] = result[1] = 0.5f;
       return;
    case 4:
-      bits = brw_multisample_positions_4x[0] >> (8 * index);
+      bits = brw_multisample_positions_4x >> (8 * index);
       break;
    case 8:
       bits = brw_multisample_positions_8x[index >> 2] >> (8 * (index & 3));
@@ -74,7 +74,7 @@ gen6_emit_3dstate_multisample(struct brw_context *brw,
       break;
    case 4:
       number_of_multisamples = MS_NUMSAMPLES_4;
-      sample_positions_3210 = brw_multisample_positions_4x[0];
+      sample_positions_3210 = brw_multisample_positions_4x;
       break;
    case 8:
       number_of_multisamples = MS_NUMSAMPLES_8;

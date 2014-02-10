@@ -85,7 +85,7 @@ gen8_emit_3dstate_sample_pattern(struct brw_context *brw)
    OUT_BATCH(brw_multisample_positions_8x[0]); /* sample positions 3210 */
 
    /* 4x MSAA */
-   OUT_BATCH(brw_multisample_positions_4x[0]);
+   OUT_BATCH(brw_multisample_positions_4x);
 
    /* 2x and 1x MSAA patterns
     * XXX: need to program 2x.
