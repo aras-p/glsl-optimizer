@@ -1130,11 +1130,9 @@ fs_generator::generate_set_omask(fs_inst *inst,
    brw_set_mask_control(p, BRW_MASK_DISABLE);
 
    if (stride_8_8_1) {
-      brw_MOV(p, dst, stride(retype(brw_vec1_reg(mask.file, mask.nr, 0),
-                                    dst.type), 16, 8, 2));
+      brw_MOV(p, dst, retype(stride(mask, 16, 8, 2), dst.type));
    } else if (stride_0_1_0) {
-      brw_MOV(p, dst, stride(retype(brw_vec1_reg(mask.file, mask.nr, 0),
-                                    dst.type), 0, 1, 0));
+      brw_MOV(p, dst, retype(mask, dst.type));
    }
    brw_pop_insn_state(p);
 }
