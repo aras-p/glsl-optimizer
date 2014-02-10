@@ -32,25 +32,26 @@ gen6_get_sample_position(struct gl_context *ctx,
                          struct gl_framebuffer *fb,
                          GLuint index, GLfloat *result)
 {
+   uint8_t bits;
+
    switch (fb->Visual.samples) {
    case 1:
       result[0] = result[1] = 0.5f;
+      return;
+   case 4:
+      bits = brw_multisample_positions_4x[0] >> (8 * index);
       break;
-   case 4: {
-      uint8_t val = (uint8_t)(brw_multisample_positions_4x[0] >> (8*index));
-      result[0] = ((val >> 4) & 0xf) / 16.0f;
-      result[1] = (val & 0xf) / 16.0f;
+   case 8:
+      bits = brw_multisample_positions_8x[index >> 2] >> (8 * (index & 3));
       break;
-   }
-   case 8: {
-      uint8_t val = (uint8_t)(brw_multisample_positions_8x[index>>2] >> (8*(index & 3)));
-      result[0] = ((val >> 4) & 0xf) / 16.0f;
-      result[1] = (val & 0xf) / 16.0f;
-      break;
-   }
    default:
       assert(!"Not implemented");
+      return;
    }
+
+   /* Convert from U0.4 back to a floating point coordinate. */
+   result[0] = ((bits >> 4) & 0xf) / 16.0f;
+   result[1] = (bits & 0xf) / 16.0f;
 }
 
 /**
