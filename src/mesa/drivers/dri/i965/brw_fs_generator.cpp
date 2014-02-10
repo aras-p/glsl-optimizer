@@ -1156,8 +1156,7 @@ fs_generator::generate_set_sample_id(fs_inst *inst,
    brw_push_insn_state(p);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
-   struct brw_reg reg = stride(retype(brw_vec1_reg(src1.file, src1.nr, 0),
-                                      BRW_REGISTER_TYPE_UW), 1, 4, 0);
+   struct brw_reg reg = retype(stride(src1, 1, 4, 0), BRW_REGISTER_TYPE_UW);
    brw_ADD(p, dst, src0, reg);
    if (dispatch_width == 16)
       brw_ADD(p, offset(dst, 1), offset(src0, 1), suboffset(reg, 2));
