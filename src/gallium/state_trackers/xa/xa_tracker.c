@@ -368,6 +368,7 @@ xa_surface_from_handle(struct xa_tracker *xa,
 {
     struct winsys_handle whandle;
     memset(&whandle, 0, sizeof(whandle));
+    whandle.type = DRM_API_HANDLE_TYPE_SHARED;
     whandle.handle = handle;
     whandle.stride = stride;
     return surface_create(xa, width, height, depth, stype, xa_format, flags, &whandle);
