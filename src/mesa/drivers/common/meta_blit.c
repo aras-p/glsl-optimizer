@@ -375,13 +375,33 @@ blitframebuffer_texture(struct gl_context *ctx,
    _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
    _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-   /* Always do our blits with no sRGB decode or encode.  Note that
-    * GL_FRAMEBUFFER_SRGB has already been disabled by
-    * _mesa_meta_begin().
+   /* Always do our blits with no net sRGB decode or encode.
+    *
+    * However, if both the src and dst can be srgb decode/encoded, enable them
+    * so that we do any blending (from scaling or from MSAA resolves) in the
+    * right colorspace.
+    *
+    * Our choice of not doing any net encode/decode is from the GL 3.0
+    * specification:
+    *
+    *     "Blit operations bypass the fragment pipeline. The only fragment
+    *      operations which affect a blit are the pixel ownership test and the
+    *      scissor test."
+    *
+    * The GL 4.4 specification disagrees and says that the sRGB part of the
+    * fragment pipeline applies, but this was found to break applications.
     */
    if (ctx->Extensions.EXT_texture_sRGB_decode) {
-      _mesa_SamplerParameteri(sampler, GL_TEXTURE_SRGB_DECODE_EXT,
-                              GL_SKIP_DECODE_EXT);
+      if (_mesa_get_format_color_encoding(rb->Format) == GL_SRGB &&
+          ctx->DrawBuffer->Visual.sRGBCapable) {
+         _mesa_SamplerParameteri(sampler, GL_TEXTURE_SRGB_DECODE_EXT,
+                                 GL_DECODE_EXT);
+         _mesa_set_framebuffer_srgb(ctx, GL_TRUE);
+      } else {
+         _mesa_SamplerParameteri(sampler, GL_TEXTURE_SRGB_DECODE_EXT,
+                                 GL_SKIP_DECODE_EXT);
+         /* set_framebuffer_srgb was set by _mesa_meta_begin(). */
+      }
    }
 
    if (!glsl_version) {
