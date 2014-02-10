@@ -1408,6 +1408,8 @@ set_shader_inout_layout(struct gl_shader *shader,
       shader->uses_gl_fragcoord = state->fs_uses_gl_fragcoord;
       shader->pixel_center_integer = state->fs_pixel_center_integer;
       shader->origin_upper_left = state->fs_origin_upper_left;
+      shader->ARB_fragment_coord_conventions_enable =
+         state->ARB_fragment_coord_conventions_enable;
       break;
 
    default:

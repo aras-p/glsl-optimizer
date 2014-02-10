@@ -2434,6 +2434,7 @@ struct gl_shader
    bool uses_builtin_functions;
    bool uses_gl_fragcoord;
    bool redeclares_gl_fragcoord;
+   bool ARB_fragment_coord_conventions_enable;
 
    /**
     * Fragment shader state from GLSL 1.50 layout qualifiers.
@@ -2765,6 +2766,11 @@ struct gl_shader_program
     * \c NULL.
     */
    struct gl_shader *_LinkedShaders[MESA_SHADER_STAGES];
+
+   /* True if any of the fragment shaders attached to this program use:
+    * #extension ARB_fragment_coord_conventions: enable
+    */
+   GLboolean ARB_fragment_coord_conventions_enable;
 };   
 
 

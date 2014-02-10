@@ -1210,7 +1210,8 @@ link_fs_input_layout_qualifiers(struct gl_shader_program *prog,
    linked_shader->origin_upper_left = false;
    linked_shader->pixel_center_integer = false;
 
-   if (linked_shader->Stage != MESA_SHADER_FRAGMENT || prog->Version < 150)
+   if (linked_shader->Stage != MESA_SHADER_FRAGMENT ||
+       (prog->Version < 150 && !prog->ARB_fragment_coord_conventions_enable))
       return;
 
    for (unsigned i = 0; i < num_shaders; i++) {
@@ -2249,6 +2250,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    ralloc_free(prog->AtomicBuffers);
    prog->AtomicBuffers = NULL;
    prog->NumAtomicBuffers = 0;
+   prog->ARB_fragment_coord_conventions_enable = false;
 
    /* Separate the shaders into groups based on their type.
     */
@@ -2274,6 +2276,9 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 		      "language version\n");
 	 goto done;
       }
+
+      prog->ARB_fragment_coord_conventions_enable |=
+         prog->Shaders[i]->ARB_fragment_coord_conventions_enable;
 
       gl_shader_stage shader_type = prog->Shaders[i]->Stage;
       shader_list[shader_type][num_shaders[shader_type]] = prog->Shaders[i];
