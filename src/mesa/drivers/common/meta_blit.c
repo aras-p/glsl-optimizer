@@ -35,6 +35,7 @@
 #include "main/fbobject.h"
 #include "main/macros.h"
 #include "main/matrix.h"
+#include "main/multisample.h"
 #include "main/readpix.h"
 #include "main/shaderapi.h"
 #include "main/texobj.h"
@@ -93,22 +94,45 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    void *mem_ctx;
    enum blit_msaa_shader shader_index;
    const char *samplers[] = {
-      [BLIT_MSAA_SHADER_2D_MULTISAMPLE] = "sampler2DMS",
+      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE] = "sampler2DMS",
+      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY] = "sampler2DMS",
    };
+   bool dst_is_msaa = false;
+
+   if (ctx->DrawBuffer->Visual.samples > 1) {
+      /* If you're calling meta_BlitFramebuffer with the destination
+       * multisampled, this is the only path that will work -- swrast and
+       * CopyTexImage won't work on it either.
+       */
+      assert(ctx->Extensions.ARB_sample_shading);
+
+      dst_is_msaa = true;
+
+      /* We need shader invocation per sample, not per pixel */
+      _mesa_set_enable(ctx, GL_MULTISAMPLE, GL_TRUE);
+      _mesa_set_enable(ctx, GL_SAMPLE_SHADING, GL_TRUE);
+      _mesa_MinSampleShading(1.0);
+   }
 
    switch (target) {
    case GL_TEXTURE_2D_MULTISAMPLE:
       if (src_rb->_BaseFormat == GL_DEPTH_COMPONENT ||
           src_rb->_BaseFormat == GL_DEPTH_STENCIL) {
-         shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH;
+         if (dst_is_msaa)
+            shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH_COPY;
+         else
+            shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH_RESOLVE;
       } else {
-         shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE;
+         if (dst_is_msaa)
+            shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY;
+         else
+            shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE;
       }
       break;
    default:
       _mesa_problem(ctx, "Unkown texture target %s\n",
                     _mesa_lookup_enum_by_nr(target));
-      shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE;
+      shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE;
    }
 
    if (blit->msaa_shaders[shader_index]) {
@@ -118,17 +142,32 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
 
    mem_ctx = ralloc_context(NULL);
 
-   if (shader_index == BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH) {
-      /* From the GL 4.3 spec:
-       *
-       *     "If there is a multisample buffer (the value of SAMPLE_BUFFERS is
-       *      one), then values are obtained from the depth samples in this
-       *      buffer. It is recommended that the depth value of the centermost
-       *      sample be used, though implementations may choose any function
-       *      of the depth sample values at each pixel.
-       *
-       * We're slacking and instead of choosing centermost, we've got 0.
-       */
+   if (shader_index == BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH_RESOLVE ||
+       shader_index == BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH_COPY) {
+      char *sample_index;
+      const char *arb_sample_shading_extension_string;
+
+      if (dst_is_msaa) {
+         arb_sample_shading_extension_string = "#extension GL_ARB_sample_shading : enable";
+         sample_index = "gl_SampleID";
+      } else {
+         /* Don't need that extension, since we're drawing to a single-sampled
+          * destination.
+          */
+         arb_sample_shading_extension_string = "";
+         /* From the GL 4.3 spec:
+          *
+          *     "If there is a multisample buffer (the value of SAMPLE_BUFFERS
+          *      is one), then values are obtained from the depth samples in
+          *      this buffer. It is recommended that the depth value of the
+          *      centermost sample be used, though implementations may choose
+          *      any function of the depth sample values at each pixel.
+          *
+          * We're slacking and instead of choosing centermost, we've got 0.
+          */
+         sample_index = "0";
+      }
+
       vs_source = ralloc_asprintf(mem_ctx,
                                   "#version 130\n"
                                   "in vec2 position;\n"
@@ -142,52 +181,64 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
       fs_source = ralloc_asprintf(mem_ctx,
                                   "#version 130\n"
                                   "#extension GL_ARB_texture_multisample : enable\n"
+                                  "%s\n"
                                   "uniform sampler2DMS texSampler;\n"
                                   "in vec2 texCoords;\n"
                                   "out vec4 out_color;\n"
                                   "\n"
                                   "void main()\n"
                                   "{\n"
-                                  "   gl_FragDepth = texelFetch(texSampler, ivec2(texCoords), 0).r;\n"
-                                  "}\n");
-   } else if (shader_index == BLIT_MSAA_SHADER_2D_MULTISAMPLE) {
-      char *sample_resolve;
+                                  "   gl_FragDepth = texelFetch(texSampler, ivec2(texCoords), %s).r;\n"
+                                  "}\n",
+                                  arb_sample_shading_extension_string,
+                                  sample_index);
+   } else {
       /* You can create 2D_MULTISAMPLE textures with 0 sample count (meaning 1
        * sample).  Yes, this is ridiculous.
        */
       int samples = MAX2(src_rb->NumSamples, 1);
+      char *sample_resolve;
+      const char *arb_sample_shading_extension_string;
 
-      /* We're assuming power of two samples for this resolution procedure.
-       *
-       * To avoid losing any floating point precision if the samples all
-       * happen to have the same value, we merge pairs of values at a time (so
-       * the floating point exponent just gets increased), rather than doing a
-       * naive sum and dividing.
-       */
-      assert((samples & (samples - 1)) == 0);
-      /* Fetch each individual sample. */
-      sample_resolve = rzalloc_size(mem_ctx, 1);
-      for (int i = 0; i < samples; i++) {
-         ralloc_asprintf_append(&sample_resolve,
-                                "   vec4 sample_1_%d = texelFetch(texSampler, ivec2(texCoords), %d);\n",
-                                i, i);
-      }
-      /* Now, merge each pair of samples, then each pair of those merges, etc.
-       */
-      for (int step = 2; step <= samples; step *= 2) {
-         for (int i = 0; i < samples; i += step) {
+      if (dst_is_msaa) {
+         arb_sample_shading_extension_string = "#extension GL_ARB_sample_shading : enable";
+         sample_resolve = ralloc_asprintf(mem_ctx, "   out_color = texelFetch(texSampler, ivec2(texCoords), gl_SampleID);");
+      } else {
+         arb_sample_shading_extension_string = "";
+
+         /* We're assuming power of two samples for this resolution procedure.
+          *
+          * To avoid losing any floating point precision if the samples all
+          * happen to have the same value, we merge pairs of values at a time
+          * (so the floating point exponent just gets increased), rather than
+          * doing a naive sum and dividing.
+          */
+         assert((samples & (samples - 1)) == 0);
+         /* Fetch each individual sample. */
+         sample_resolve = rzalloc_size(mem_ctx, 1);
+         for (int i = 0; i < samples; i++) {
             ralloc_asprintf_append(&sample_resolve,
-                                   "vec4 sample_%d_%d = sample_%d_%d + sample_%d_%d;\n",
-                                   step, i,
-                                   step / 2, i,
-                                   step / 2, i + step / 2);
+                                   "   vec4 sample_1_%d = texelFetch(texSampler, ivec2(texCoords), %d);\n",
+                                   i, i);
          }
-      }
+         /* Now, merge each pair of samples, then merge each pair of those,
+          * etc.
+          */
+         for (int step = 2; step <= samples; step *= 2) {
+            for (int i = 0; i < samples; i += step) {
+               ralloc_asprintf_append(&sample_resolve,
+                                      "vec4 sample_%d_%d = sample_%d_%d + sample_%d_%d;\n",
+                                      step, i,
+                                      step / 2, i,
+                                      step / 2, i + step / 2);
+            }
+         }
 
-      /* Scale the final result. */
-      ralloc_asprintf_append(&sample_resolve,
-                             "   out_color = sample_%d_0 / %f;\n",
-                             samples, (float)samples);
+         /* Scale the final result. */
+         ralloc_asprintf_append(&sample_resolve,
+                                "   out_color = sample_%d_0 / %f;\n",
+                                samples, (float)samples);
+      }
 
       vs_source = ralloc_asprintf(mem_ctx,
                                   "#version 130\n"
@@ -202,6 +253,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
       fs_source = ralloc_asprintf(mem_ctx,
                                   "#version 130\n"
                                   "#extension GL_ARB_texture_multisample : enable\n"
+                                  "%s\n"
                                   "uniform %s texSampler;\n"
                                   "in vec2 texCoords;\n"
                                   "out vec4 out_color;\n"
@@ -210,6 +262,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
                                   "{\n"
                                   "%s\n" /* sample_resolve */
                                   "}\n",
+                                  arb_sample_shading_extension_string,
                                   samplers[shader_index],
                                   sample_resolve);
    }
