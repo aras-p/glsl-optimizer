@@ -61,7 +61,8 @@ enum radeon_bo_layout {
 
 enum radeon_bo_domain { /* bitfield */
     RADEON_DOMAIN_GTT  = 2,
-    RADEON_DOMAIN_VRAM = 4
+    RADEON_DOMAIN_VRAM = 4,
+    RADEON_DOMAIN_VRAM_GTT = RADEON_DOMAIN_VRAM | RADEON_DOMAIN_GTT
 };
 
 enum radeon_bo_usage { /* bitfield */
@@ -393,6 +394,11 @@ struct radeon_winsys {
      * \return          virtual address
      */
     uint64_t (*buffer_get_virtual_address)(struct radeon_winsys_cs_handle *buf);
+
+    /**
+     * Query the initial placement of the buffer from the kernel driver.
+     */
+    enum radeon_bo_domain (*buffer_get_initial_domain)(struct radeon_winsys_cs_handle *buf);
 
     /**************************************************************************
      * Command submission.

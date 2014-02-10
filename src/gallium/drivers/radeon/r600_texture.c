@@ -640,7 +640,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	} else {
 		resource->buf = buf;
 		resource->cs_buf = rscreen->ws->buffer_get_cs_handle(buf);
-		resource->domains = RADEON_DOMAIN_GTT | RADEON_DOMAIN_VRAM;
+		resource->domains = rscreen->ws->buffer_get_initial_domain(resource->cs_buf);
 	}
 
 	if (rtex->cmask.size) {

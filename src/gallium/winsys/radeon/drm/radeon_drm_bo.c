@@ -92,6 +92,19 @@ struct drm_radeon_gem_va {
 #define DRM_RADEON_GEM_VA   0x2b
 #endif
 
+#ifndef DRM_RADEON_GEM_OP
+#define DRM_RADEON_GEM_OP		0x2c
+
+/* Sets or returns a value associated with a buffer. */
+struct drm_radeon_gem_op {
+    uint32_t handle; /* buffer */
+    uint32_t op;     /* RADEON_GEM_OP_* */
+    uint64_t value;  /* input or return value */
+};
+
+#define RADEON_GEM_OP_GET_INITIAL_DOMAIN	0
+#define RADEON_GEM_OP_SET_INITIAL_DOMAIN	1
+#endif
 
 
 extern const struct pb_vtbl radeon_bo_vtbl;
@@ -201,6 +214,38 @@ static boolean radeon_bo_is_busy(struct pb_buffer *_buf,
         return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
                                    &args, sizeof(args)) != 0;
     }
+}
+
+static enum radeon_bo_domain get_valid_domain(enum radeon_bo_domain domain)
+{
+    /* Zero domains the driver doesn't understand. */
+    domain &= RADEON_DOMAIN_VRAM_GTT;
+
+    /* If no domain is set, we must set something... */
+    if (!domain)
+        domain = RADEON_DOMAIN_VRAM_GTT;
+
+    return domain;
+}
+
+static enum radeon_bo_domain radeon_bo_get_initial_domain(
+		struct radeon_winsys_cs_handle *buf)
+{
+    struct radeon_bo *bo = (struct radeon_bo*)buf;
+    struct drm_radeon_gem_op args;
+
+    if (bo->rws->info.drm_minor < 38)
+        return RADEON_DOMAIN_VRAM_GTT;
+
+    memset(&args, 0, sizeof(args));
+    args.handle = bo->handle;
+    args.op = RADEON_GEM_OP_GET_INITIAL_DOMAIN;
+
+    drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_OP,
+                        &args, sizeof(args));
+
+    /* GEM domains and winsys domains are defined the same. */
+    return get_valid_domain(args.value);
 }
 
 static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size, uint64_t alignment)
@@ -861,7 +906,6 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
     struct radeon_bo *bo;
     struct radeon_bomgr *mgr = radeon_bomgr(ws->kman);
-    struct drm_radeon_gem_busy args;
     int r;
     unsigned handle;
     uint64_t size = 0;
@@ -984,27 +1028,12 @@ done:
         pipe_mutex_unlock(mgr->bo_handles_mutex);
     }
 
-    memset(&args, 0, sizeof(args));
+    bo->initial_domain = radeon_bo_get_initial_domain((void*)bo);
 
-    args.handle = bo->handle;
-    r = drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY, &args, sizeof(args));
-    /* We don't mind if the bo is busy; we're just after the memory domain */
-    if (r && r != -EBUSY) {
-        fprintf(stderr, "radeon: Failed to find initial domain for imported bo\n");
-        radeon_bo_destroy(&bo->base);
-        return NULL;
-    }
-    bo->initial_domain = args.domain;
-
-    switch (bo->initial_domain) {
-    case RADEON_DOMAIN_GTT:
-        ws->allocated_gtt += align(size, 4096);
-        break;
-    case RADEON_DOMAIN_VRAM:
-        ws->allocated_vram += align(size, 4096);
-        break;
-    }
-
+    if (bo->initial_domain & RADEON_DOMAIN_VRAM)
+        ws->allocated_vram += align(bo->base.size, 4096);
+    else if (bo->initial_domain & RADEON_DOMAIN_GTT)
+        ws->allocated_gtt += align(bo->base.size, 4096);
 
     return (struct pb_buffer*)bo;
 
@@ -1067,4 +1096,5 @@ void radeon_bomgr_init_functions(struct radeon_drm_winsys *ws)
     ws->base.buffer_from_handle = radeon_winsys_bo_from_handle;
     ws->base.buffer_get_handle = radeon_winsys_bo_get_handle;
     ws->base.buffer_get_virtual_address = radeon_winsys_bo_va;
+    ws->base.buffer_get_initial_domain = radeon_bo_get_initial_domain;
 }
