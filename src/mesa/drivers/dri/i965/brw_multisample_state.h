@@ -24,6 +24,17 @@
 #include <stdint.h>
 
 /**
+ * 1x MSAA has a single sample at the center: (0.5, 0.5) -> (0x8, 0x8).
+ *
+ * 2x MSAA sample positions are (0.25, 0.25) and (0.75, 0.75):
+ *   4 c
+ * 4 0
+ * c   1
+ */
+static const uint32_t
+brw_multisample_positions_1x_2x = 0x0088cc44;
+
+/**
  * Sample positions:
  *   2 6 a e
  * 2   0

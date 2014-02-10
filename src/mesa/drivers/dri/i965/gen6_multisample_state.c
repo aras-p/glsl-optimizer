@@ -38,6 +38,9 @@ gen6_get_sample_position(struct gl_context *ctx,
    case 1:
       result[0] = result[1] = 0.5f;
       return;
+   case 2:
+      bits = brw_multisample_positions_1x_2x >> (8 * index);
+      break;
    case 4:
       bits = brw_multisample_positions_4x >> (8 * index);
       break;
