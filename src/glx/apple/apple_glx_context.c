@@ -142,6 +142,7 @@ apple_glx_create_context(void **ptr, Display * dpy, int screen,
    if (sharedac && !is_context_valid(sharedac)) {
       *errorptr = GLXBadContext;
       *x11errorptr = false;
+      free(ac);
       return true;
    }
 
