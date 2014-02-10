@@ -65,7 +65,7 @@ emit_mrt(struct fd_ringbuffer *ring, unsigned nr_bufs,
 		uint32_t stride = 0;
 		uint32_t base = 0;
 
-		if (i < nr_bufs) {
+		if ((i < nr_bufs) && bufs[i]) {
 			struct pipe_surface *psurf = bufs[i];
 
 			rsc = fd_resource(psurf->texture);

@@ -128,7 +128,12 @@ fd_draw_vbo(struct pipe_context *pctx, const struct pipe_draw_info *info)
 		ctx->gmem_reason |= FD_GMEM_LOGICOP_ENABLED;
 
 	for (i = 0; i < pfb->nr_cbufs; i++) {
-		struct pipe_resource *surf = pfb->cbufs[i]->texture;
+		struct pipe_resource *surf;
+
+		if (!pfb->cbufs[i])
+			continue;
+
+		surf = pfb->cbufs[i]->texture;
 
 		fd_resource(surf)->dirty = true;
 		buffers |= FD_BUFFER_COLOR;
