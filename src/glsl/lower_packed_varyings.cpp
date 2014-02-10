@@ -199,8 +199,8 @@ private:
 
    /**
     * Number of generic varying slots which are used by this shader.  This is
-    * used to allocate temporary intermediate data structures.  If any any
-    * varying used by this shader has a location greater than or equal to
+    * used to allocate temporary intermediate data structures.  If any varying
+    * used by this shader has a location greater than or equal to
     * location_base + locations_used, an assertion will fire.
     */
    const unsigned locations_used;
