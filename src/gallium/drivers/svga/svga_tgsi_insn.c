@@ -287,8 +287,10 @@ static SVGA3dShaderDestToken
 get_temp( struct svga_shader_emitter *emit )
 {
    int i = emit->nr_hw_temp + emit->internal_temp_count++;
-   assert(i < SVGA3D_TEMPREG_MAX);
-   i = MIN2(i, SVGA3D_TEMPREG_MAX - 1);
+   if (i >= SVGA3D_TEMPREG_MAX) {
+      debug_warn_once("svga: Too many temporary registers used in shader\n");
+      i = SVGA3D_TEMPREG_MAX - 1;
+   }
    return dst_register( SVGA3DREG_TEMP, i );
 }
 
