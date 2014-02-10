@@ -1913,6 +1913,11 @@ AM_CONDITIONAL(NEED_GALLIUM_LLVMPIPE_DRIVER, test "x$HAVE_GALLIUM_I915" = xyes -
                                                   "x$HAVE_GALLIUM_SOFTPIPE" = xyes \
                                                   && test "x$MESA_LLVM" = x1)
 
+# NOTE: anything using xcb or other client side libs ends up in separate
+#       _CLIENT variables.  The pipe loader is built in two variants,
+#       one that is standalone and does not link any x client libs (for
+#       use by XA tracker in particular, but could be used in any case
+#       where communication with xserver is not desired).
 if test "x$enable_gallium_loader" = xyes; then
     GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/null"
 
@@ -1921,13 +1926,18 @@ if test "x$enable_gallium_loader" = xyes; then
         PKG_CHECK_MODULES([GALLIUM_PIPE_LOADER_XCB], [xcb xcb-dri2],
                           pipe_loader_have_xcb=yes, pipe_loader_have_xcb=no)
         if test "x$pipe_loader_have_xcb" = xyes; then
-            GALLIUM_PIPE_LOADER_DEFINES="$GALLIUM_PIPE_LOADER_DEFINES -DHAVE_PIPE_LOADER_XCB"
-            GALLIUM_PIPE_LOADER_LIBS="$GALLIUM_PIPE_LOADER_LIBS $GALLIUM_PIPE_LOADER_XCB_LIBS $LIBDRM_LIBS"
+            GALLIUM_PIPE_LOADER_CLIENT_DEFINES="$GALLIUM_PIPE_LOADER_CLIENT_DEFINES -DHAVE_PIPE_LOADER_XCB"
+            GALLIUM_PIPE_LOADER_CLIENT_LIBS="$GALLIUM_PIPE_LOADER_CLIENT_LIBS $GALLIUM_PIPE_LOADER_XCB_LIBS $LIBDRM_LIBS"
         fi
     fi
 
+    GALLIUM_PIPE_LOADER_CLIENT_DEFINES="$GALLIUM_PIPE_LOADER_CLIENT_DEFINES $GALLIUM_PIPE_LOADER_DEFINES"
+    GALLIUM_PIPE_LOADER_CLIENT_LIBS="$GALLIUM_PIPE_LOADER_CLIENT_LIBS $GALLIUM_PIPE_LOADER_LIBS"
+
     AC_SUBST([GALLIUM_PIPE_LOADER_DEFINES])
     AC_SUBST([GALLIUM_PIPE_LOADER_LIBS])
+    AC_SUBST([GALLIUM_PIPE_LOADER_CLIENT_DEFINES])
+    AC_SUBST([GALLIUM_PIPE_LOADER_CLIENT_LIBS])
 fi
 
 AM_CONDITIONAL(HAVE_I915_DRI, test x$HAVE_I915_DRI = xyes)

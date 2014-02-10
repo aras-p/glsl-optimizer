@@ -7,11 +7,11 @@ lib@OPENCL_LIBNAME@_la_LDFLAGS = \
 	-version-number 1:0
 
 lib@OPENCL_LIBNAME@_la_LIBADD = \
-	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la \
+	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_client.la \
 	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/state_trackers/clover/libclover.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(GALLIUM_PIPE_LOADER_LIBS) \
+	$(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
 	-ldl \
 	-lclangCodeGen \
 	-lclangFrontendTool \

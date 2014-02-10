@@ -11,8 +11,8 @@ AM_CPPFLAGS = \
 	-DPIPE_SEARCH_DIR=\"$(PIPE_SRC_DIR)/.libs\" \
 	$(GALLIUM_PIPE_LOADER_DEFINES)
 
-LDADD = $(GALLIUM_PIPE_LOADER_LIBS) \
-	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la \
+LDADD = $(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
+	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_client.la \
 	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(DLOPEN_LIBS) \
