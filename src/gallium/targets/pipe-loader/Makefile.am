@@ -132,6 +132,23 @@ pipe_radeonsi_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
 endif
 
+if HAVE_GALLIUM_FREEDRENO
+pipe_LTLIBRARIES += pipe_msm.la
+pipe_msm_la_SOURCES = pipe_msm.c
+nodist_EXTRA_pipe_msm_la_SOURCES = dummy.cpp
+pipe_msm_la_LIBADD = \
+	$(PIPE_LIBS) \
+	$(top_builddir)/src/gallium/winsys/freedreno/drm/libfreedrenodrm.la \
+	$(top_builddir)/src/gallium/drivers/freedreno/libfreedreno.la \
+	$(LIBDRM_LIBS) \
+	$(FREEDRENO_LIBS)
+pipe_msm_la_LDFLAGS = -no-undefined -avoid-version -module
+if HAVE_MESA_LLVM
+pipe_msm_la_LIBADD += $(LLVM_LIBS)
+pipe_msm_la_LDFLAGS += $(LLVM_LDFLAGS)
+endif
+endif
+
 if HAVE_GALLIUM_SVGA
 pipe_LTLIBRARIES += pipe_vmwgfx.la
 pipe_vmwgfx_la_SOURCES = pipe_vmwgfx.c
