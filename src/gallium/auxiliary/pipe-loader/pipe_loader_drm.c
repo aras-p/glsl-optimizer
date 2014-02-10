@@ -66,7 +66,7 @@ static struct pipe_loader_ops pipe_loader_drm_ops;
 static void
 pipe_loader_drm_x_auth(int fd)
 {
-#if HAVE_PIPE_LOADER_XCB
+#ifdef HAVE_PIPE_LOADER_XCB
    /* Try authenticate with the X server to give us access to devices that X
     * is running on. */
    xcb_connection_t *xcb_conn;
