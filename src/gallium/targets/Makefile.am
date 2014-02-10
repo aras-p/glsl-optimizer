@@ -34,6 +34,10 @@ if HAVE_GALLIUM_GBM
 SUBDIRS += gbm
 endif
 
+if HAVE_ST_XA
+SUBDIRS += xa
+endif
+
 if HAVE_CLOVER
 SUBDIRS += opencl
 endif
@@ -41,10 +45,6 @@ endif
 if HAVE_GALLIUM_SVGA
 if HAVE_DRI
 SUBDIRS += dri-vmwgfx
-endif
-
-if HAVE_ST_XA
-SUBDIRS += xa-vmwgfx
 endif
 endif
 

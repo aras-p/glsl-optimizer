@@ -29,6 +29,9 @@ AM_CFLAGS = \
 	$(VISIBILITY_CFLAGS)
 
 AM_CPPFLAGS = \
+	$(GALLIUM_PIPE_LOADER_DEFINES) \
+	-DPIPE_SEARCH_DIR=\"$(libdir)/gallium-pipe\" \
+	-I$(top_srcdir)/src/gallium/targets/xa \
 	-I$(top_srcdir)/src/gallium/ \
 	-I$(top_srcdir)/src/gallium/winsys \
 	-I$(top_srcdir)/src/gallium/drivers

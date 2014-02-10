@@ -1269,6 +1269,7 @@ dnl XA configuration
 dnl
 if test "x$enable_xa" = xyes; then
     GALLIUM_STATE_TRACKERS_DIRS="xa $GALLIUM_STATE_TRACKERS_DIRS"
+    enable_gallium_loader=yes
 fi
 AM_CONDITIONAL(HAVE_ST_XA, test "x$enable_xa" = xyes)
 
@@ -1761,7 +1762,7 @@ if test "x$with_gallium_drivers" != x; then
         xsvga)
             HAVE_GALLIUM_SVGA=yes
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga softpipe"
-            gallium_check_st "svga/drm" "dri-vmwgfx" "xa-vmwgfx"
+            gallium_check_st "svga/drm" "dri-vmwgfx" ""
             ;;
         xi915)
             HAVE_GALLIUM_I915=yes
@@ -1980,7 +1981,7 @@ AC_SUBST([XVMC_MAJOR], 1)
 AC_SUBST([XVMC_MINOR], 0)
 
 AC_SUBST([XA_MAJOR], 2)
-AC_SUBST([XA_MINOR], 1)
+AC_SUBST([XA_MINOR], 2)
 AC_SUBST([XA_TINY], 0)
 AC_SUBST([XA_VERSION], "$XA_MAJOR.$XA_MINOR.$XA_TINY")
 
@@ -2053,6 +2054,8 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/egl-static/Makefile
 		src/gallium/targets/gbm/Makefile
 		src/gallium/targets/opencl/Makefile
+		src/gallium/targets/xa/Makefile
+		src/gallium/targets/xa/xatracker.pc
 		src/gallium/targets/osmesa/Makefile
 		src/gallium/targets/osmesa/osmesa.pc
 		src/gallium/targets/pipe-loader/Makefile
@@ -2066,8 +2069,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/targets/r600/xvmc/Makefile
 		src/gallium/targets/libgl-xlib/Makefile
 		src/gallium/targets/vdpau-nouveau/Makefile
-		src/gallium/targets/xa-vmwgfx/Makefile
-		src/gallium/targets/xa-vmwgfx/xatracker.pc
 		src/gallium/targets/xvmc-nouveau/Makefile
 		src/gallium/tests/trivial/Makefile
 		src/gallium/tests/unit/Makefile

@@ -22,40 +22,46 @@
 
 include $(top_srcdir)/src/gallium/Automake.inc
 
-AM_CFLAGS = \
-	-Wall -pedantic \
-	$(GALLIUM_CFLAGS) \
-	$(XORG_CFLAGS)
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/src/gallium/drivers \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/gallium/state_trackers/xa \
 	-I$(top_srcdir)/src/gallium/winsys
+
+AM_CFLAGS = \
+	$(GALLIUM_CFLAGS) \
+	$(LIBUDEV_CFLAGS) \
+	$(LIBDRM_CFLAGS)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xatracker.pc
 
 lib_LTLIBRARIES = libxatracker.la
 
-libxatracker_la_SOURCES = vmw_target.c
-
-libxatracker_la_LDFLAGS = -version-number $(XA_MAJOR):$(XA_MINOR):$(XA_TINY)
+libxatracker_la_SOURCES =
 
 libxatracker_la_LIBADD = \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(GALLIUM_PIPE_LOADER_LIBS) \
+	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader.la \
+	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/state_trackers/xa/libxatracker.la \
-	$(top_builddir)/src/gallium/winsys/svga/drm/libsvgadrm.la \
-	$(top_builddir)/src/gallium/drivers/svga/libsvga.la \
-	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
-	$(top_builddir)/src/gallium/drivers/rbug/librbug.la
+	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
+	$(LIBUDEV_LIBS) \
+	$(LIBDRM_LIBS)
 
-nodist_EXTRA_libxatracker_la_SOURCES = dummy.cpp
+libxatracker_la_LDFLAGS = \
+	-no-undefined \
+	-version-number $(XA_MAJOR):$(XA_MINOR):$(XA_TINY)
 
+# FIXME: this shouldn't be needed
 if HAVE_MESA_LLVM
-libxatracker_la_LDFLAGS += $(LLVM_LDFLAGS)
+# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
+nodist_EXTRA_libxatracker_la_SOURCES = dummy-cpp.cpp
+
 libxatracker_la_LIBADD += $(LLVM_LIBS)
+libxatracker_la_LDFLAGS += $(LLVM_LDFLAGS)
+else
+# Mention a dummy pure C file to trigger generation of the $(LINK) variable
+nodist_EXTRA_libxatracker_la_SOURCES = dummy-c.c
 endif
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: libxatracker.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/libxatracker.so* $(top_builddir)/$(LIB_DIR)/gallium/
+include $(top_srcdir)/install-lib-links.mk

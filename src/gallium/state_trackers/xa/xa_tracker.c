@@ -30,6 +30,7 @@
 #include "xa_priv.h"
 #include "pipe/p_state.h"
 #include "pipe/p_format.h"
+#include "pipe-loader/pipe_loader.h"
 #include "state_tracker/drm_driver.h"
 #include "util/u_inlines.h"
 
@@ -143,7 +144,8 @@ xa_tracker_create(int drm_fd)
     if (!xa)
 	return NULL;
 
-    xa->screen = driver_descriptor.create_screen(drm_fd);
+    if (pipe_loader_drm_probe_fd(&xa->dev, drm_fd, false))
+	xa->screen = pipe_loader_create_screen(xa->dev, PIPE_SEARCH_DIR);
     if (!xa->screen)
 	goto out_no_screen;
 
@@ -190,6 +192,8 @@ xa_tracker_create(int drm_fd)
  out_no_pipe:
     xa->screen->destroy(xa->screen);
  out_no_screen:
+    if (xa->dev)
+	pipe_loader_release(&xa->dev, 1);
     free(xa);
     return NULL;
 }
@@ -200,6 +204,7 @@ xa_tracker_destroy(struct xa_tracker *xa)
     free(xa->supported_formats);
     xa_context_destroy(xa->default_ctx);
     xa->screen->destroy(xa->screen);
+    pipe_loader_release(&xa->dev, 1);
     free(xa);
 }
 
