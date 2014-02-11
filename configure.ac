@@ -1707,7 +1707,7 @@ gallium_check_st() {
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
     fi
     if test "x$enable_omx" = xyes && test "x$6" != x; then
-         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $7"
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
     fi
 }
 
@@ -2028,8 +2028,8 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/state_trackers/egl/Makefile
 		src/gallium/state_trackers/gbm/Makefile
 		src/gallium/state_trackers/glx/xlib/Makefile
-		src/gallium/state_trackers/osmesa/Makefile
 		src/gallium/state_trackers/omx/Makefile
+		src/gallium/state_trackers/osmesa/Makefile
 		src/gallium/state_trackers/vdpau/Makefile
 		src/gallium/state_trackers/vega/Makefile
 		src/gallium/state_trackers/xa/Makefile
