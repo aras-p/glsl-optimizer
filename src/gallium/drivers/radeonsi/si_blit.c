@@ -485,7 +485,6 @@ static void si_resource_copy_region(struct pipe_context *ctx,
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct texture_orig_info orig_info[2];
 	struct pipe_box sbox;
-	const struct pipe_box *psbox = src_box;
 	boolean restore_orig[2];
 
 	/* Fallback for buffers. */
@@ -513,7 +512,7 @@ static void si_resource_copy_region(struct pipe_context *ctx,
 		sbox.width = util_format_get_nblocksx(orig_info[0].format, src_box->width);
 		sbox.height = util_format_get_nblocksy(orig_info[0].format, src_box->height);
 		sbox.depth = src_box->depth;
-		psbox=&sbox;
+		src_box = &sbox;
 
 		si_compressed_to_blittable(dst, dst_level, &orig_info[1]);
 		restore_orig[1] = TRUE;
@@ -565,7 +564,7 @@ static void si_resource_copy_region(struct pipe_context *ctx,
 
 	si_blitter_begin(ctx, SI_COPY);
 	util_blitter_copy_texture(sctx->blitter, dst, dst_level, dstx, dsty, dstz,
-				  src, src_level, psbox);
+				  src, src_level, src_box);
 	si_blitter_end(ctx);
 
 	if (restore_orig[0])
