@@ -1182,7 +1182,7 @@ dnl
 dnl EGL Gallium configuration
 dnl
 if test "x$enable_gallium_egl" = xyes; then
-    if test "x$with_gallium_drivers" = x; then
+    if test -z "$with_gallium_drivers"; then
         AC_MSG_ERROR([cannot enable egl_gallium without Gallium])
     fi
     if test "x$enable_egl" = xno; then
@@ -1209,7 +1209,7 @@ if test "x$enable_gallium_gbm" = xauto; then
     esac
 fi
 if test "x$enable_gallium_gbm" = xyes; then
-    if test "x$with_gallium_drivers" = x; then
+    if test -z "$with_gallium_drivers"; then
         AC_MSG_ERROR([cannot enable gbm_gallium without Gallium])
     fi
     if test "x$enable_gbm" = xno; then
@@ -1244,7 +1244,7 @@ if test "x$enable_openvg" = xyes; then
     if test "x$enable_egl" = xno; then
         AC_MSG_ERROR([cannot enable OpenVG without EGL])
     fi
-    if test "x$with_gallium_drivers" = x; then
+    if test -z "$with_gallium_drivers"; then
         AC_MSG_ERROR([cannot enable OpenVG without Gallium])
     fi
     if test "x$enable_gallium_egl" = xno; then
@@ -1321,7 +1321,7 @@ AC_ARG_WITH([clang-libdir],
 PKG_CHECK_EXISTS([libclc], [have_libclc=yes], [have_libclc=no])
 
 if test "x$enable_opencl" = xyes; then
-    if test "x$with_gallium_drivers" = x; then
+    if test -z "$with_gallium_drivers"; then
         AC_MSG_ERROR([cannot enable OpenCL without Gallium])
     fi
 
@@ -1526,7 +1526,7 @@ strip_unwanted_llvm_flags() {
 }
 
 
-if test "x$with_gallium_drivers" = x; then
+if test -z "$with_gallium_drivers"; then
     enable_gallium_llvm=no
 fi
 if test "x$enable_gallium_llvm" = xauto; then
@@ -1583,7 +1583,7 @@ if test "x$enable_gallium_llvm" = xyes; then
 
         dnl Check for Clang internal headers
         if test "x$enable_opencl" = xyes; then
-            if test "x$CLANG_LIBDIR" = x; then
+            if test -z "$CLANG_LIBDIR"; then
                 CLANG_LIBDIR=${LLVM_LIBDIR}
             fi
             CLANG_RESOURCE_DIR=$CLANG_LIBDIR/clang/${LLVM_VERSION}
@@ -2123,7 +2123,7 @@ xnono)
 esac
 
 if test "x$enable_dri" != xno; then
-        if test "x$DRI_DIRS" = x; then
+        if test -z "$DRI_DIRS"; then
             echo "        DRI drivers:     no"
         else
             echo "        DRI drivers:     $DRI_DIRS"
