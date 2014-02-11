@@ -26,9 +26,7 @@
  **************************************************************************/
 
 /*
- * vl targets use either a dri or sw based winsys backend, so their
- * Makefiles directly refer to either vl_winsys_dri.c or vl_winsys_xsp.c.
- * Both files implement the interface described in this header.
+ * Target makefiles directly refer to vl_winsys_dri.c to avoid DRI dependency
  */
 
 #ifndef vl_winsys_h

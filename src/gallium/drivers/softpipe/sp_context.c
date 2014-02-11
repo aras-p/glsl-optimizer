@@ -38,8 +38,6 @@
 #include "util/u_pstipple.h"
 #include "util/u_inlines.h"
 #include "tgsi/tgsi_exec.h"
-#include "vl/vl_decoder.h"
-#include "vl/vl_video_buffer.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_flush.h"
@@ -228,9 +226,6 @@ softpipe_create_context( struct pipe_screen *screen,
 
    softpipe->pipe.render_condition = softpipe_render_condition;
    
-   softpipe->pipe.create_video_codec = vl_create_decoder;
-   softpipe->pipe.create_video_buffer = vl_video_buffer_create;
-
    /*
     * Alloc caches for accessing drawing surfaces and textures.
     * Must be before quad stage setup!

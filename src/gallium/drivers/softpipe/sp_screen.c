@@ -34,8 +34,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "draw/draw_context.h"
-#include "vl/vl_decoder.h"
-#include "vl/vl_video_buffer.h"
 
 #include "state_tracker/sw_winsys.h"
 #include "tgsi/tgsi_exec.h"
@@ -250,33 +248,6 @@ softpipe_get_paramf(struct pipe_screen *screen, enum pipe_capf param)
    return 0.0;
 }
 
-static int
-softpipe_get_video_param(struct pipe_screen *screen,
-                         enum pipe_video_profile profile,
-			 enum pipe_video_entrypoint entrypoint,
-                         enum pipe_video_cap param)
-{
-   switch (param) {
-   case PIPE_VIDEO_CAP_SUPPORTED:
-       return vl_profile_supported(screen, profile, entrypoint);
-   case PIPE_VIDEO_CAP_NPOT_TEXTURES:
-      return 0;
-   case PIPE_VIDEO_CAP_MAX_WIDTH:
-   case PIPE_VIDEO_CAP_MAX_HEIGHT:
-      return vl_video_buffer_max_size(screen);
-   case PIPE_VIDEO_CAP_PREFERED_FORMAT:
-      return PIPE_FORMAT_NV12;
-   case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
-      return false;
-   case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
-      return false;
-   case PIPE_VIDEO_CAP_SUPPORTS_PROGRESSIVE:
-      return true;
-   default:
-      return 0;
-   }
-}
-
 /**
  * Query format support for creating a texture, drawing surface, etc.
  * \param format  the format to test
@@ -408,10 +379,8 @@ softpipe_create_screen(struct sw_winsys *winsys)
    screen->base.get_param = softpipe_get_param;
    screen->base.get_shader_param = softpipe_get_shader_param;
    screen->base.get_paramf = softpipe_get_paramf;
-   screen->base.get_video_param = softpipe_get_video_param;
    screen->base.get_timestamp = softpipe_get_timestamp;
    screen->base.is_format_supported = softpipe_is_format_supported;
-   screen->base.is_video_format_supported = vl_video_buffer_is_format_supported;
    screen->base.context_create = softpipe_create_context;
    screen->base.flush_frontbuffer = softpipe_flush_frontbuffer;
 
