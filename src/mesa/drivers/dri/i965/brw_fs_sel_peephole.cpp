@@ -175,7 +175,9 @@ fs_visitor::opt_peephole_sel()
             break;
          }
 
-         if (!then_mov[i]->src[0].equals(else_mov[i]->src[0])) {
+         if (then_mov[i]->src[0].equals(else_mov[i]->src[0])) {
+            sel_inst[i] = MOV(then_mov[i]->dst, then_mov[i]->src[0]);
+         } else {
             /* Only the last source register can be a constant, so if the MOV
              * in the "then" clause uses a constant, we need to put it in a
              * temporary.
@@ -197,8 +199,6 @@ fs_visitor::opt_peephole_sel()
                sel_inst[i]->predicate = if_inst->predicate;
                sel_inst[i]->predicate_inverse = if_inst->predicate_inverse;
             }
-         } else {
-            sel_inst[i] = MOV(then_mov[i]->dst, then_mov[i]->src[0]);
          }
       }
 
