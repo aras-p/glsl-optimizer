@@ -68,6 +68,9 @@ struct save_state
 {
    GLbitfield SavedState;  /**< bitmask of MESA_META_* flags */
 
+   /* Always saved/restored with meta. */
+   gl_api API;
+
    /** MESA_META_CLEAR (and others?) */
    struct gl_query_object *CurrentOcclusionObject;
 

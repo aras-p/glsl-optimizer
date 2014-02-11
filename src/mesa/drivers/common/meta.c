@@ -204,9 +204,6 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
       fs_source = ralloc_asprintf(mem_ctx,
                                   "#extension GL_EXT_texture_array : enable\n"
                                   "#extension GL_ARB_texture_cube_map_array: enable\n"
-                                  "#ifdef GL_ES\n"
-                                  "precision highp float;\n"
-                                  "#endif\n"
                                   "uniform %s texSampler;\n"
                                   "varying vec4 texCoords;\n"
                                   "void main()\n"
@@ -219,7 +216,7 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
    }
    else {
       vs_source = ralloc_asprintf(mem_ctx,
-                                  "#version %s\n"
+                                  "#version 130\n"
                                   "in vec2 position;\n"
                                   "in vec4 textureCoords;\n"
                                   "out vec4 texCoords;\n"
@@ -227,14 +224,10 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
                                   "{\n"
                                   "   texCoords = textureCoords;\n"
                                   "   gl_Position = vec4(position, 0.0, 1.0);\n"
-                                  "}\n",
-                                  _mesa_is_desktop_gl(ctx) ? "130" : "300 es");
+                                  "}\n");
       fs_source = ralloc_asprintf(mem_ctx,
-                                  "#version %s\n"
+                                  "#version 130\n"
                                   "#extension GL_ARB_texture_cube_map_array: enable\n"
-                                  "#ifdef GL_ES\n"
-                                  "precision highp float;\n"
-                                  "#endif\n"
                                   "uniform %s texSampler;\n"
                                   "in vec4 texCoords;\n"
                                   "out vec4 out_color;\n"
@@ -244,7 +237,6 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
                                   "   out_color = texture(texSampler, %s);\n"
                                   "   gl_FragDepth = out_color.x;\n"
                                   "}\n",
-                                  _mesa_is_desktop_gl(ctx) ? "130" : "300 es",
                                   shader->type,
                                   shader->texcoords);
    }
@@ -400,6 +392,13 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
    save = &ctx->Meta->Save[ctx->Meta->SaveStackDepth++];
    memset(save, 0, sizeof(*save));
    save->SavedState = state;
+
+   /* We always push into desktop GL mode and pop out at the end.  No sense in
+    * writing our shaders varying based on the user's context choice, when
+    * Mesa can handle either.
+    */
+   save->API = ctx->API;
+   ctx->API = API_OPENGL_COMPAT;
 
    /* Pausing transform feedback needs to be done early, or else we won't be
     * able to change other state.
@@ -752,6 +751,8 @@ _mesa_meta_end(struct gl_context *ctx)
    struct save_state *save = &ctx->Meta->Save[ctx->Meta->SaveStackDepth - 1];
    const GLbitfield state = save->SavedState;
    int i;
+
+   ctx->API = save->API;
 
    /* After starting a new occlusion query, initialize the results to the
     * values saved previously. The driver will then continue to increment
@@ -1482,9 +1483,6 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       "  }\n"
       "}\n";
    const char *fs_source =
-      "#ifdef GL_ES\n"
-      "precision highp float;\n"
-      "#endif\n"
       "uniform vec4 color;\n"
       "void main()\n"
       "{\n"
@@ -1536,27 +1534,22 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       void *shader_source_mem_ctx = ralloc_context(NULL);
       const char *vs_int_source =
          ralloc_asprintf(shader_source_mem_ctx,
-                         "#version %s\n"
+                         "#version 130\n"
                          "in vec4 position;\n"
                          "void main()\n"
                          "{\n"
                          "   gl_Position = position;\n"
-                         "}\n",
-                         _mesa_is_desktop_gl(ctx) ? "130" : "300 es");
+                         "}\n");
       const char *fs_int_source =
          ralloc_asprintf(shader_source_mem_ctx,
-                         "#version %s\n"
-                         "#ifdef GL_ES\n"
-                         "precision highp float;\n"
-                         "#endif\n"
+                         "#version 130\n"
                          "uniform ivec4 color;\n"
                          "out ivec4 out_color;\n"
                          "\n"
                          "void main()\n"
                          "{\n"
                          "   out_color = color;\n"
-                         "}\n",
-                         _mesa_is_desktop_gl(ctx) ? "130" : "300 es");
+                         "}\n");
 
       vs = _mesa_meta_compile_shader_with_debug(ctx, GL_VERTEX_SHADER,
                                                 vs_int_source);
