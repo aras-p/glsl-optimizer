@@ -156,6 +156,18 @@ fs_visitor::opt_peephole_sel()
       fs_inst *sel_inst[MAX_MOVS] = { NULL };
       fs_inst *mov_imm_inst[MAX_MOVS] = { NULL };
 
+      enum brw_predicate predicate;
+      bool predicate_inverse;
+      if (brw->gen == 6 && if_inst->conditional_mod) {
+         /* For Sandybridge with IF with embedded comparison */
+         predicate = BRW_PREDICATE_NORMAL;
+         predicate_inverse = false;
+      } else {
+         /* Separate CMP and IF instructions */
+         predicate = if_inst->predicate;
+         predicate_inverse = if_inst->predicate_inverse;
+      }
+
       /* Generate SEL instructions for pairs of MOVs to a common destination. */
       for (int i = 0; i < movs; i++) {
          if (!then_mov[i] || !else_mov[i])
@@ -190,15 +202,8 @@ fs_visitor::opt_peephole_sel()
             }
 
             sel_inst[i] = SEL(then_mov[i]->dst, src0, else_mov[i]->src[0]);
-
-            if (brw->gen == 6 && if_inst->conditional_mod) {
-               /* For Sandybridge with IF with embedded comparison */
-               sel_inst[i]->predicate = BRW_PREDICATE_NORMAL;
-            } else {
-               /* Separate CMP and IF instructions */
-               sel_inst[i]->predicate = if_inst->predicate;
-               sel_inst[i]->predicate_inverse = if_inst->predicate_inverse;
-            }
+            sel_inst[i]->predicate = predicate;
+            sel_inst[i]->predicate_inverse = predicate_inverse;
          }
       }
 
