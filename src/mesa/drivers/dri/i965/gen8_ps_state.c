@@ -184,6 +184,24 @@ upload_ps_state(struct brw_context *brw)
    if (brw->wm.prog_data->prog_offset_16)
       dw6 |= GEN7_PS_16_DISPATCH_ENABLE;
 
+   /* From the documentation for this packet:
+    * "If the PS kernel does not need the Position XY Offsets to
+    *  compute a Position Value, then this field should be programmed
+    *  to POSOFFSET_NONE."
+    *
+    * "SW Recommendation: If the PS kernel needs the Position Offsets
+    *  to compute a Position XY value, this field should match Position
+    *  ZW Interpolation Mode to ensure a consistent position.xyzw
+    *  computation."
+    *
+    * We only require XY sample offsets. So, this recommendation doesn't
+    * look useful at the moment. We might need this in future.
+    */
+   if (brw->wm.prog_data->uses_pos_offset)
+      dw6 |= GEN7_PS_POSOFFSET_SAMPLE;
+   else
+      dw6 |= GEN7_PS_POSOFFSET_NONE;
+
    dw7 |=
       brw->wm.prog_data->first_curbe_grf << GEN7_PS_DISPATCH_START_GRF_SHIFT_0 |
       brw->wm.prog_data->first_curbe_grf_16<< GEN7_PS_DISPATCH_START_GRF_SHIFT_2;
