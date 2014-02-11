@@ -221,9 +221,19 @@ struct blit_shader_table {
    struct blit_shader sampler_cubemap_array;
 };
 
+/**
+ * Indices in the blit_state->msaa_shaders[] array
+ *
+ * Note that setup_glsl_msaa_blit_shader() assumes that the _INT enums are one
+ * more than the non-_INT version and _UINT is one beyond that.
+ */
 enum blit_msaa_shader {
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE,
+   BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT,
+   BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY,
+   BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY_INT,
+   BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY_UINT,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH_RESOLVE,
    BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH_COPY,
    BLIT_MSAA_SHADER_COUNT,

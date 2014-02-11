@@ -95,9 +95,24 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    enum blit_msaa_shader shader_index;
    const char *samplers[] = {
       [BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE] = "sampler2DMS",
+      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT] = "isampler2DMS",
+      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT] = "usampler2DMS",
       [BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY] = "sampler2DMS",
+      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY_INT] = "isampler2DMS",
+      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY_UINT] = "usampler2DMS",
    };
    bool dst_is_msaa = false;
+   GLenum src_datatype;
+   const char *vec4_prefix;
+
+   if (src_rb) {
+      src_datatype = _mesa_get_format_datatype(src_rb->Format);
+   } else {
+      /* depth-or-color glCopyTexImage fallback path that passes a NULL rb and
+       * doesn't handle integer.
+       */
+      src_datatype = GL_UNSIGNED_NORMALIZED;
+   }
 
    if (ctx->DrawBuffer->Visual.samples > 1) {
       /* If you're calling meta_BlitFramebuffer with the destination
@@ -133,6 +148,21 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
       _mesa_problem(ctx, "Unkown texture target %s\n",
                     _mesa_lookup_enum_by_nr(target));
       shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE;
+   }
+
+   /* We rely on the enum being sorted this way. */
+   STATIC_ASSERT(BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT ==
+                 BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE + 1);
+   STATIC_ASSERT(BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT ==
+                 BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE + 2);
+   if (src_datatype == GL_INT) {
+      shader_index++;
+      vec4_prefix = "i";
+   } else if (src_datatype == GL_UNSIGNED_INT) {
+      shader_index += 2;
+      vec4_prefix = "u";
+   } else {
+      vec4_prefix = "";
    }
 
    if (blit->msaa_shaders[shader_index]) {
@@ -199,11 +229,25 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
       int samples = MAX2(src_rb->NumSamples, 1);
       char *sample_resolve;
       const char *arb_sample_shading_extension_string;
+      const char *merge_function;
 
       if (dst_is_msaa) {
          arb_sample_shading_extension_string = "#extension GL_ARB_sample_shading : enable";
          sample_resolve = ralloc_asprintf(mem_ctx, "   out_color = texelFetch(texSampler, ivec2(texCoords), gl_SampleID);");
+         merge_function = "";
       } else {
+         if (src_datatype == GL_INT) {
+            merge_function =
+               "ivec4 merge(ivec4 a, ivec4 b) { return (a >> ivec4(1)) + (b >> ivec4(1)) + (a & b & ivec4(1)); }\n";
+         } else if (src_datatype == GL_UNSIGNED_INT) {
+            merge_function =
+               "uvec4 merge(uvec4 a, uvec4 b) { return (a >> uvec4(1)) + (b >> uvec4(1)) + (a & b & uvec4(1)); }\n";
+         } else {
+            /* The divide will happen at the end for floats. */
+            merge_function =
+               "vec4 merge(vec4 a, vec4 b) { return (a + b); }\n";
+         }
+
          arb_sample_shading_extension_string = "";
 
          /* We're assuming power of two samples for this resolution procedure.
@@ -218,8 +262,8 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
          sample_resolve = rzalloc_size(mem_ctx, 1);
          for (int i = 0; i < samples; i++) {
             ralloc_asprintf_append(&sample_resolve,
-                                   "   vec4 sample_1_%d = texelFetch(texSampler, ivec2(texCoords), %d);\n",
-                                   i, i);
+                                   "   %svec4 sample_1_%d = texelFetch(texSampler, ivec2(texCoords), %d);\n",
+                                   vec4_prefix, i, i);
          }
          /* Now, merge each pair of samples, then merge each pair of those,
           * etc.
@@ -227,7 +271,8 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
          for (int step = 2; step <= samples; step *= 2) {
             for (int i = 0; i < samples; i += step) {
                ralloc_asprintf_append(&sample_resolve,
-                                      "vec4 sample_%d_%d = sample_%d_%d + sample_%d_%d;\n",
+                                      "   %svec4 sample_%d_%d = merge(sample_%d_%d, sample_%d_%d);\n",
+                                      vec4_prefix,
                                       step, i,
                                       step / 2, i,
                                       step / 2, i + step / 2);
@@ -235,9 +280,15 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
          }
 
          /* Scale the final result. */
-         ralloc_asprintf_append(&sample_resolve,
-                                "   out_color = sample_%d_0 / %f;\n",
-                                samples, (float)samples);
+         if (src_datatype == GL_UNSIGNED_INT || src_datatype == GL_INT) {
+            ralloc_asprintf_append(&sample_resolve,
+                                   "   out_color = sample_%d_0;\n",
+                                   samples);
+         } else {
+            ralloc_asprintf_append(&sample_resolve,
+                                   "   out_color = sample_%d_0 / %f;\n",
+                                   samples, (float)samples);
+         }
       }
 
       vs_source = ralloc_asprintf(mem_ctx,
@@ -256,14 +307,17 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
                                   "%s\n"
                                   "uniform %s texSampler;\n"
                                   "in vec2 texCoords;\n"
-                                  "out vec4 out_color;\n"
+                                  "out %svec4 out_color;\n"
                                   "\n"
+                                  "%s" /* merge_function */
                                   "void main()\n"
                                   "{\n"
                                   "%s\n" /* sample_resolve */
                                   "}\n",
                                   arb_sample_shading_extension_string,
                                   samplers[shader_index],
+                                  vec4_prefix,
+                                  merge_function,
                                   sample_resolve);
    }
 
