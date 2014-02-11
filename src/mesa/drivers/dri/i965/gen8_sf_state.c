@@ -139,8 +139,11 @@ upload_sf(struct brw_context *brw)
    if (!(ctx->VertexProgram.PointSizeEnabled || ctx->Point._Attenuated))
       dw3 |= GEN6_SF_USE_STATE_POINT_WIDTH;
 
-   if (ctx->Point.SmoothFlag)
+   /* _NEW_POINT | _NEW_MULTISAMPLE */
+   if ((ctx->Point.SmoothFlag || ctx->Multisample._Enabled) &&
+       !ctx->Point.PointSprite) {
       dw3 |= GEN8_SF_SMOOTH_POINT_ENABLE;
+   }
 
    dw3 |= GEN6_SF_LINE_AA_MODE_TRUE;
 
@@ -166,6 +169,7 @@ const struct brw_tracked_state gen8_sf_state = {
       .mesa  = _NEW_LIGHT |
                _NEW_PROGRAM |
                _NEW_LINE |
+               _NEW_MULTISAMPLE |
                _NEW_POINT,
       .brw   = BRW_NEW_CONTEXT,
       .cache = 0,
