@@ -209,6 +209,9 @@ upload_raster(struct brw_context *brw)
    if (ctx->Point.SmoothFlag)
       dw1 |= GEN8_RASTER_SMOOTH_POINT_ENABLE;
 
+   if (ctx->Multisample._Enabled)
+      dw1 |= GEN8_RASTER_API_MULTISAMPLE_ENABLE;
+
    if (ctx->Polygon.OffsetFill)
       dw1 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_SOLID;
 
@@ -274,6 +277,7 @@ const struct brw_tracked_state gen8_raster_state = {
    .dirty = {
       .mesa  = _NEW_BUFFERS |
                _NEW_LINE |
+               _NEW_MULTISAMPLE |
                _NEW_POINT |
                _NEW_POLYGON |
                _NEW_SCISSOR |

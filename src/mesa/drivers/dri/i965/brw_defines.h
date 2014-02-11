@@ -1707,6 +1707,7 @@ enum brw_message_target {
 # define GEN8_RASTER_CULL_FRONT                         (2 << 16)
 # define GEN8_RASTER_CULL_BACK                          (3 << 16)
 # define GEN8_RASTER_SMOOTH_POINT_ENABLE                (1 << 13)
+# define GEN8_RASTER_API_MULTISAMPLE_ENABLE             (1 << 12)
 # define GEN8_RASTER_LINE_AA_ENABLE                     (1 << 2)
 # define GEN8_RASTER_SCISSOR_ENABLE                     (1 << 1)
 # define GEN8_RASTER_VIEWPORT_Z_CLIP_TEST_ENABLE        (1 << 0)
