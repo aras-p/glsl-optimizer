@@ -51,6 +51,7 @@
 #include "main/macros.h"
 #include "main/matrix.h"
 #include "main/mipmap.h"
+#include "main/multisample.h"
 #include "main/pixel.h"
 #include "main/pbo.h"
 #include "main/polygon.h"
@@ -719,9 +720,20 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
    }
 
    if (state & MESA_META_MULTISAMPLE) {
-      save->MultisampleEnabled = ctx->Multisample.Enabled;
+      save->Multisample = ctx->Multisample; /* struct copy */
+
       if (ctx->Multisample.Enabled)
          _mesa_set_multisample(ctx, GL_FALSE);
+      if (ctx->Multisample.SampleCoverage)
+         _mesa_set_enable(ctx, GL_SAMPLE_COVERAGE, GL_FALSE);
+      if (ctx->Multisample.SampleAlphaToCoverage)
+         _mesa_set_enable(ctx, GL_SAMPLE_ALPHA_TO_COVERAGE, GL_FALSE);
+      if (ctx->Multisample.SampleAlphaToOne)
+         _mesa_set_enable(ctx, GL_SAMPLE_ALPHA_TO_ONE, GL_FALSE);
+      if (ctx->Multisample.SampleShading)
+         _mesa_set_enable(ctx, GL_SAMPLE_SHADING, GL_FALSE);
+      if (ctx->Multisample.SampleMask)
+         _mesa_set_enable(ctx, GL_SAMPLE_MASK, GL_FALSE);
    }
 
    if (state & MESA_META_FRAMEBUFFER_SRGB) {
@@ -1059,8 +1071,30 @@ _mesa_meta_end(struct gl_context *ctx)
    }
 
    if (state & MESA_META_MULTISAMPLE) {
-      if (ctx->Multisample.Enabled != save->MultisampleEnabled)
-         _mesa_set_multisample(ctx, save->MultisampleEnabled);
+      struct gl_multisample_attrib *ctx_ms = &ctx->Multisample;
+      struct gl_multisample_attrib *save_ms = &save->Multisample;
+
+      if (ctx_ms->Enabled != save_ms->Enabled)
+         _mesa_set_multisample(ctx, save_ms->Enabled);
+      if (ctx_ms->SampleCoverage != save_ms->SampleCoverage)
+         _mesa_set_enable(ctx, GL_SAMPLE_COVERAGE, save_ms->SampleCoverage);
+      if (ctx_ms->SampleAlphaToCoverage != save_ms->SampleAlphaToCoverage)
+         _mesa_set_enable(ctx, GL_SAMPLE_ALPHA_TO_COVERAGE, save_ms->SampleAlphaToCoverage);
+      if (ctx_ms->SampleAlphaToOne != save_ms->SampleAlphaToOne)
+         _mesa_set_enable(ctx, GL_SAMPLE_ALPHA_TO_ONE, save_ms->SampleAlphaToOne);
+      if (ctx_ms->SampleCoverageValue != save_ms->SampleCoverageValue ||
+          ctx_ms->SampleCoverageInvert != save_ms->SampleCoverageInvert) {
+         _mesa_SampleCoverage(save_ms->SampleCoverageValue,
+                              save_ms->SampleCoverageInvert);
+      }
+      if (ctx_ms->SampleShading != save_ms->SampleShading)
+         _mesa_set_enable(ctx, GL_SAMPLE_SHADING, save_ms->SampleShading);
+      if (ctx_ms->SampleMask != save_ms->SampleMask)
+         _mesa_set_enable(ctx, GL_SAMPLE_MASK, save_ms->SampleMask);
+      if (ctx_ms->SampleMaskValue != save_ms->SampleMaskValue)
+         _mesa_SampleMaski(0, save_ms->SampleMaskValue);
+      if (ctx_ms->MinSampleShadingValue != save_ms->MinSampleShadingValue)
+         _mesa_MinSampleShading(save_ms->MinSampleShadingValue);
    }
 
    if (state & MESA_META_FRAMEBUFFER_SRGB) {

@@ -168,7 +168,7 @@ struct save_state
    struct gl_feedback Feedback;
 
    /** MESA_META_MULTISAMPLE */
-   GLboolean MultisampleEnabled;
+   struct gl_multisample_attrib Multisample;
 
    /** MESA_META_FRAMEBUFFER_SRGB */
    GLboolean sRGBEnabled;
