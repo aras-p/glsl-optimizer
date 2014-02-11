@@ -1110,6 +1110,66 @@ get_matching_input(void *mem_ctx,
 
 }
 
+static int
+io_variable_cmp(const void *_a, const void *_b)
+{
+   const ir_variable *const a = *(const ir_variable **) _a;
+   const ir_variable *const b = *(const ir_variable **) _b;
+
+   if (a->data.explicit_location && b->data.explicit_location)
+      return b->data.location - a->data.location;
+
+   if (a->data.explicit_location && !b->data.explicit_location)
+      return 1;
+
+   if (!a->data.explicit_location && b->data.explicit_location)
+      return -1;
+
+   return -strcmp(a->name, b->name);
+}
+
+/**
+ * Sort the shader IO variables into canonical order
+ */
+static void
+canonicalize_shader_io(exec_list *ir, enum ir_variable_mode io_mode)
+{
+   ir_variable *var_table[MAX_PROGRAM_OUTPUTS * 4];
+   unsigned num_variables = 0;
+
+   foreach_list(node, ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var == NULL || var->data.mode != io_mode)
+         continue;
+
+      /* If we have already encountered more I/O variables that could
+       * successfully link, bail.
+       */
+      if (num_variables == ARRAY_SIZE(var_table))
+         return;
+
+      var_table[num_variables++] = var;
+   }
+
+   if (num_variables == 0)
+      return;
+
+   /* Sort the list in reverse order (io_variable_cmp handles this).  Later
+    * we're going to push the variables on to the IR list as a stack, so we
+    * want the last variable (in canonical order) to be first in the list.
+    */
+   qsort(var_table, num_variables, sizeof(var_table[0]), io_variable_cmp);
+
+   /* Remove the variable from it's current location in the IR, and put it at
+    * the front.
+    */
+   for (unsigned i = 0; i < num_variables; i++) {
+      var_table[i]->remove();
+      ir->push_head(var_table[i]);
+   }
+}
+
 /**
  * Assign locations for all variables that are produced in one pipeline stage
  * (the "producer") and consumed in the next stage (the "consumer").
@@ -1151,16 +1211,26 @@ assign_varying_locations(struct gl_context *ctx,
    hash_table *consumer_interface_inputs
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
 
-   /* Operate in a total of three passes.
+   /* Operate in a total of four passes.
     *
-    * 1. Assign locations for any matching inputs and outputs.
+    * 1. Sort inputs / outputs into a canonical order.  This is necessary so
+    *    that inputs / outputs of separable shaders will be assigned
+    *    predictable locations regardless of the order in which declarations
+    *    appeared in the shader source.
     *
-    * 2. Mark output variables in the producer that do not have locations as
+    * 2. Assign locations for any matching inputs and outputs.
+    *
+    * 3. Mark output variables in the producer that do not have locations as
     *    not being outputs.  This lets the optimizer eliminate them.
     *
-    * 3. Mark input variables in the consumer that do not have locations as
+    * 4. Mark input variables in the consumer that do not have locations as
     *    not being inputs.  This lets the optimizer eliminate them.
     */
+   if (consumer)
+      canonicalize_shader_io(consumer->ir, ir_var_shader_in);
+
+   if (producer)
+      canonicalize_shader_io(producer->ir, ir_var_shader_out);
 
    if (consumer
        && !linker::populate_consumer_input_sets(mem_ctx,
