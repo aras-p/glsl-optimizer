@@ -455,7 +455,9 @@ struct tgsi_property_data {
 
 #define TGSI_OPCODE_TG4                 182
 
-#define TGSI_OPCODE_LAST                183
+#define TGSI_OPCODE_LODQ                183
+
+#define TGSI_OPCODE_LAST                184
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */

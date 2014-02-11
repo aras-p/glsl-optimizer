@@ -1012,6 +1012,18 @@ XXX doesn't look like most of the opcodes really belong here.
 
    dst = texture\_gather (uint, coord, compare)
 
+.. opcode:: LODQ - level of detail query
+
+   Compute the LOD information that the texture pipe would use to access the
+   texture. The Y component contains the computed LOD lambda_prime. The X
+   component contains the LOD that will be accessed, based on min/max lod's
+   and mipmap filters.
+
+.. math::
+
+   coord = src0
+
+   dst.xy = lodq(uint, coord);
 
 Integer ISA
 ^^^^^^^^^^^^^^^^^^^^^^^^

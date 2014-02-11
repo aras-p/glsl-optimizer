@@ -207,6 +207,7 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_GATHER_SM5:
         case PIPE_CAP_BUFFER_MAP_PERSISTENT_COHERENT:
         case PIPE_CAP_FAKE_SW_MSAA:
+	case PIPE_CAP_TEXTURE_QUERY_LOD:
 		return 0;
 
 	/* Stream output. */
