@@ -313,6 +313,11 @@ intel_miptree_create_layout(struct brw_context *brw,
           * sample 3 is in that bottom right 2x2 block.
           */
          switch (num_samples) {
+         case 2:
+            assert(brw->gen >= 8);
+            width0 = ALIGN(width0, 2) * 2;
+            height0 = ALIGN(height0, 2);
+            break;
          case 4:
             width0 = ALIGN(width0, 2) * 2;
             height0 = ALIGN(height0, 2) * 2;
@@ -322,7 +327,7 @@ intel_miptree_create_layout(struct brw_context *brw,
             height0 = ALIGN(height0, 2) * 2;
             break;
          default:
-            /* num_samples should already have been quantized to 0, 1, 4, or
+            /* num_samples should already have been quantized to 0, 1, 2, 4, or
              * 8.
              */
             assert(false);
