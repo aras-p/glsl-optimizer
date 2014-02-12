@@ -495,9 +495,10 @@ dri2_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 }
 
 static const __DRIimageLoaderExtension image_loader_extension = {
-   { __DRI_IMAGE_LOADER, 1 },
-   image_get_buffers,
-   dri2_flush_front_buffer
+   .base = { __DRI_IMAGE_LOADER, 1 },
+
+   .getBuffers          = image_get_buffers,
+   .flushFrontBuffer    = dri2_flush_front_buffer,
 };
 
 static void
