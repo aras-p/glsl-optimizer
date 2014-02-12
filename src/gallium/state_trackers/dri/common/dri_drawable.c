@@ -258,10 +258,11 @@ dri_set_tex_buffer(__DRIcontext *pDRICtx, GLint target,
 }
 
 const __DRItexBufferExtension driTexBufferExtension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   dri_set_tex_buffer,
-   dri_set_tex_buffer2,
-   NULL,
+   .base = { __DRI_TEX_BUFFER, 2 },
+
+   .setTexBuffer       = dri_set_tex_buffer,
+   .setTexBuffer2      = dri_set_tex_buffer2,
+   .releaseTexBuffer   = NULL,
 };
 
 /**
@@ -561,8 +562,9 @@ dri_throttle(__DRIcontext *cPriv, __DRIdrawable *dPriv,
 
 
 const __DRI2throttleExtension dri2ThrottleExtension = {
-    .base = { __DRI2_THROTTLE, __DRI2_THROTTLE_VERSION },
-    .throttle = dri_throttle,
+    .base = { __DRI2_THROTTLE, 1 },
+
+    .throttle          = dri_throttle,
 };
 
 

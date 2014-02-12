@@ -95,10 +95,11 @@ dri2_invalidate_drawable(__DRIdrawable *dPriv)
 }
 
 static const __DRI2flushExtension dri2FlushExtension = {
-    { __DRI2_FLUSH, __DRI2_FLUSH_VERSION },
-    dri2_flush_drawable,
-    dri2_invalidate_drawable,
-    dri_flush,
+    .base = { __DRI2_FLUSH, 4 },
+
+    .flush                = dri2_flush_drawable,
+    .invalidate           = dri2_invalidate_drawable,
+    .flush_with_flags     = dri_flush,
 };
 
 /**
@@ -110,7 +111,7 @@ dri2_drawable_get_buffers(struct dri_drawable *drawable,
                           unsigned *count)
 {
    __DRIdrawable *dri_drawable = drawable->dPriv;
-   struct __DRIdri2LoaderExtensionRec *loader = drawable->sPriv->dri2.loader;
+   const __DRIdri2LoaderExtension *loader = drawable->sPriv->dri2.loader;
    boolean with_format;
    __DRIbuffer *buffers;
    int num_buffers;
@@ -522,7 +523,7 @@ dri2_flush_frontbuffer(struct dri_context *ctx,
                        enum st_attachment_type statt)
 {
    __DRIdrawable *dri_drawable = drawable->dPriv;
-   struct __DRIdri2LoaderExtensionRec *loader = drawable->sPriv->dri2.loader;
+   const __DRIdri2LoaderExtension *loader = drawable->sPriv->dri2.loader;
    struct pipe_context *pipe = ctx->st->pipe;
 
    if (statt != ST_ATTACHMENT_FRONT_LEFT)
@@ -557,7 +558,7 @@ dri2_update_tex_buffer(struct dri_drawable *drawable,
 static __DRIimage *
 dri2_lookup_egl_image(struct dri_screen *screen, void *handle)
 {
-   __DRIimageLookupExtension *loader = screen->sPriv->dri2.image;
+   const __DRIimageLookupExtension *loader = screen->sPriv->dri2.image;
    __DRIimage *img;
 
    if (!loader->lookupEGLImage)
@@ -1035,18 +1036,20 @@ dri2_destroy_image(__DRIimage *img)
    FREE(img);
 }
 
-static struct __DRIimageExtensionRec dri2ImageExtension = {
-    { __DRI_IMAGE, 6 },
-    dri2_create_image_from_name,
-    dri2_create_image_from_renderbuffer,
-    dri2_destroy_image,
-    dri2_create_image,
-    dri2_query_image,
-    dri2_dup_image,
-    dri2_validate_usage,
-    dri2_from_names,
-    dri2_from_planar,
-    dri2_create_from_texture,
+/* The extension is modified during runtime if DRI_PRIME is detected */
+static __DRIimageExtension dri2ImageExtension = {
+    .base = { __DRI_IMAGE, 6 },
+
+    .createImageFromName          = dri2_create_image_from_name,
+    .createImageFromRenderbuffer  = dri2_create_image_from_renderbuffer,
+    .destroyImage                 = dri2_destroy_image,
+    .createImage                  = dri2_create_image,
+    .queryImage                   = dri2_query_image,
+    .dupImage                     = dri2_dup_image,
+    .validateUsage                = dri2_validate_usage,
+    .createImageFromNames         = dri2_from_names,
+    .fromPlanar                   = dri2_from_planar,
+    .createImageFromTexture       = dri2_create_from_texture,
 };
 
 /*
