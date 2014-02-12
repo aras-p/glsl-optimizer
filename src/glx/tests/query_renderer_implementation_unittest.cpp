@@ -140,11 +140,11 @@ fake_queryString(__DRIscreen *screen, int attribute, const char **val)
    return -1;
 }
 
-struct __DRI2rendererQueryExtensionRec rendererQueryExt = {
-   { __DRI2_RENDERER_QUERY, 1 },
+static const __DRI2rendererQueryExtension rendererQueryExt = {
+   .base = { __DRI2_RENDERER_QUERY, 1 },
 
-   fake_queryInteger,
-   fake_queryString
+   .queryInteger = fake_queryInteger,
+   .queryString = fake_queryString
 };
 
 void dri2_query_renderer_string_test::SetUp()
