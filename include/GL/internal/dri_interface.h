@@ -854,6 +854,8 @@ struct __DRIdri2LoaderExtensionRec {
      * \param driDrawable    Drawable whose front-buffer is to be flushed
      * \param loaderPrivate  Loader's private data that was previously passed
      *                       into __DRIdri2ExtensionRec::createNewDrawable
+     *
+     * \since 2
      */
     void (*flushFrontBuffer)(__DRIdrawable *driDrawable, void *loaderPrivate);
 
@@ -876,6 +878,8 @@ struct __DRIdri2LoaderExtensionRec {
      *                       \c attachments.
      * \param loaderPrivate  Loader's private data that was previously passed
      *                       into __DRIdri2ExtensionRec::createNewDrawable.
+     *
+     * \since 3
      */
     __DRIbuffer *(*getBuffersWithFormat)(__DRIdrawable *driDrawable,
 					 int *width, int *height,
