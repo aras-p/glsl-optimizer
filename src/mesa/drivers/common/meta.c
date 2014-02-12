@@ -219,7 +219,7 @@ struct temp_texture
  * State for GLSL texture sampler which is used to generate fragment
  * shader in _mesa_meta_generate_mipmap().
  */
-struct glsl_sampler {
+struct blit_shader {
    const char *type;
    const char *func;
    const char *texcoords;
@@ -229,15 +229,15 @@ struct glsl_sampler {
 /**
  * Table of all sampler types and shaders for accessing them.
  */
-struct sampler_table {
-   struct glsl_sampler sampler_1d;
-   struct glsl_sampler sampler_2d;
-   struct glsl_sampler sampler_3d;
-   struct glsl_sampler sampler_rect;
-   struct glsl_sampler sampler_cubemap;
-   struct glsl_sampler sampler_1d_array;
-   struct glsl_sampler sampler_2d_array;
-   struct glsl_sampler sampler_cubemap_array;
+struct blit_shader_table {
+   struct blit_shader sampler_1d;
+   struct blit_shader sampler_2d;
+   struct blit_shader sampler_3d;
+   struct blit_shader sampler_rect;
+   struct blit_shader sampler_cubemap;
+   struct blit_shader sampler_1d_array;
+   struct blit_shader sampler_2d_array;
+   struct blit_shader sampler_cubemap_array;
 };
 
 /**
@@ -248,7 +248,7 @@ struct blit_state
    GLuint VAO;
    GLuint VBO;
    GLuint DepthFP;
-   struct sampler_table samplers;
+   struct blit_shader_table shaders;
    struct temp_texture depthTex;
 };
 
@@ -313,7 +313,7 @@ struct gen_mipmap_state
    GLuint FBO;
    GLuint Sampler;
 
-   struct sampler_table samplers;
+   struct blit_shader_table shaders;
 };
 
 /**
@@ -325,7 +325,7 @@ struct decompress_state
    GLuint VBO, FBO, RBO, Sampler;
    GLint Width, Height;
 
-   struct sampler_table samplers;
+   struct blit_shader_table shaders;
 };
 
 /**
@@ -365,8 +365,8 @@ struct vertex {
    GLfloat r, g, b, a;
 };
 
-static struct glsl_sampler *
-setup_texture_sampler(GLenum target, struct sampler_table *table);
+static struct blit_shader *
+choose_blit_shader(GLenum target, struct blit_shader_table *table);
 
 static void meta_glsl_blit_cleanup(struct blit_state *blit);
 static void cleanup_temp_texture(struct temp_texture *tex);
@@ -374,7 +374,7 @@ static void meta_glsl_clear_cleanup(struct clear_state *clear);
 static void meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap);
 static void meta_decompress_cleanup(struct decompress_state *decompress);
 static void meta_drawpix_cleanup(struct drawpix_state *drawpix);
-static void sampler_table_cleanup(struct sampler_table *table);
+static void blit_shader_table_cleanup(struct blit_shader_table *table);
 
 static GLuint
 compile_shader_with_debug(struct gl_context *ctx, GLenum target, const GLcharARB *source)
@@ -454,19 +454,18 @@ link_program_with_debug(struct gl_context *ctx, GLuint program)
 static void
 setup_blit_shader(struct gl_context *ctx,
                   GLenum target,
-                  struct sampler_table *table)
+                  struct blit_shader_table *table)
 {
    const char *vs_source;
    char *fs_source;
    GLuint vs, fs;
    void *const mem_ctx = ralloc_context(NULL);
-   struct glsl_sampler *sampler =
-      setup_texture_sampler(target, table);
+   struct blit_shader *shader = choose_blit_shader(target, table);
 
-   assert(sampler != NULL);
+   assert(shader != NULL);
 
-   if (sampler->shader_prog != 0) {
-      _mesa_UseProgram(sampler->shader_prog);
+   if (shader->shader_prog != 0) {
+      _mesa_UseProgram(shader->shader_prog);
       return;
    }
 
@@ -499,8 +498,8 @@ setup_blit_shader(struct gl_context *ctx,
                                   "   gl_FragColor = %s(texSampler, %s);\n"
                                   "   gl_FragDepth = gl_FragColor.x;\n"
                                   "}\n",
-                                  sampler->type,
-                                  sampler->func, sampler->texcoords);
+                                  shader->type,
+                                  shader->func, shader->texcoords);
    }
    else {
       vs_source = ralloc_asprintf(mem_ctx,
@@ -530,24 +529,24 @@ setup_blit_shader(struct gl_context *ctx,
                                   "   gl_FragDepth = out_color.x;\n"
                                   "}\n",
                                   _mesa_is_desktop_gl(ctx) ? "130" : "300 es",
-                                  sampler->type,
-                                  sampler->texcoords);
+                                  shader->type,
+                                  shader->texcoords);
    }
 
    vs = compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
    fs = compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
 
-   sampler->shader_prog = _mesa_CreateProgramObjectARB();
-   _mesa_AttachShader(sampler->shader_prog, fs);
+   shader->shader_prog = _mesa_CreateProgramObjectARB();
+   _mesa_AttachShader(shader->shader_prog, fs);
    _mesa_DeleteObjectARB(fs);
-   _mesa_AttachShader(sampler->shader_prog, vs);
+   _mesa_AttachShader(shader->shader_prog, vs);
    _mesa_DeleteObjectARB(vs);
-   _mesa_BindAttribLocation(sampler->shader_prog, 0, "position");
-   _mesa_BindAttribLocation(sampler->shader_prog, 1, "texcoords");
-   link_program_with_debug(ctx, sampler->shader_prog);
+   _mesa_BindAttribLocation(shader->shader_prog, 0, "position");
+   _mesa_BindAttribLocation(shader->shader_prog, 1, "texcoords");
+   link_program_with_debug(ctx, shader->shader_prog);
    ralloc_free(mem_ctx);
 
-   _mesa_UseProgram(sampler->shader_prog);
+   _mesa_UseProgram(shader->shader_prog);
 }
 
 /**
@@ -1679,7 +1678,7 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
 
    setup_vertex_objects(&blit->VAO, &blit->VBO, true, 2, 2, 0);
 
-   setup_blit_shader(ctx, target, &blit->samplers);
+   setup_blit_shader(ctx, target, &blit->shaders);
 }
 
 /**
@@ -2069,7 +2068,7 @@ meta_glsl_blit_cleanup(struct blit_state *blit)
       blit->DepthFP = 0;
    }
 
-   sampler_table_cleanup(&blit->samplers);
+   blit_shader_table_cleanup(&blit->shaders);
 
    _mesa_DeleteTextures(1, &blit->depthTex.TexObj);
    blit->depthTex.TexObj = 0;
@@ -3344,8 +3343,8 @@ setup_texture_coords(GLenum faceTarget,
    }
 }
 
-static struct glsl_sampler *
-setup_texture_sampler(GLenum target, struct sampler_table *table)
+static struct blit_shader *
+choose_blit_shader(GLenum target, struct blit_shader_table *table)
 {
    switch(target) {
    case GL_TEXTURE_1D:
@@ -3399,7 +3398,7 @@ setup_texture_sampler(GLenum target, struct sampler_table *table)
 }
 
 static void
-sampler_table_cleanup(struct sampler_table *table)
+blit_shader_table_cleanup(struct blit_shader_table *table)
 {
    _mesa_DeleteObjectARB(table->sampler_1d.shader_prog);
    _mesa_DeleteObjectARB(table->sampler_2d.shader_prog);
@@ -3430,7 +3429,7 @@ meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap)
    _mesa_DeleteBuffers(1, &mipmap->VBO);
    mipmap->VBO = 0;
 
-   sampler_table_cleanup(&mipmap->samplers);
+   blit_shader_table_cleanup(&mipmap->shaders);
 }
 
 
@@ -3481,7 +3480,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    if (use_glsl_version) {
       setup_vertex_objects(&mipmap->VAO, &mipmap->VBO, true,
                            2, 3, 0);
-      setup_blit_shader(ctx, target, &mipmap->samplers);
+      setup_blit_shader(ctx, target, &mipmap->shaders);
    }
    else {
       setup_ff_tnl_for_blit(&mipmap->VAO, &mipmap->VBO, 3);
@@ -3922,7 +3921,7 @@ decompress_texture_image(struct gl_context *ctx,
       setup_vertex_objects(&decompress->VAO, &decompress->VBO, true,
                            2, 4, 0);
 
-      setup_blit_shader(ctx, target, &decompress->samplers);
+      setup_blit_shader(ctx, target, &decompress->shaders);
    } else {
       setup_ff_tnl_for_blit(&decompress->VAO, &decompress->VBO, 3);
    }
