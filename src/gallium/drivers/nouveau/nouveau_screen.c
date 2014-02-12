@@ -144,6 +144,12 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 	if (nv_dbg)
 	   nouveau_mesa_debug = atoi(nv_dbg);
 
+	/*
+	 * this is initialized to 1 in nouveau_drm_screen_create after screen
+	 * is fully constructed and added to the global screen list.
+	 */
+	screen->refcount = -1;
+
 	if (dev->chipset < 0xc0) {
 		data = &nv04_data;
 		size = sizeof(nv04_data);
