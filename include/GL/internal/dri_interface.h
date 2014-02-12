@@ -251,6 +251,8 @@ struct __DRItexBufferExtensionRec {
      * __DRIdrawable, including the required texture format attribute.
      *
      * For GLX_EXT_texture_from_pixmap with AIGLX.
+     *
+     * \since 2
      */
     void (*setTexBuffer2)(__DRIcontext *pDRICtx,
 			  GLint target,
@@ -261,6 +263,8 @@ struct __DRItexBufferExtensionRec {
      * need this.
      *
      * For GLX_EXT_texture_from_pixmap with AIGLX.
+     *
+     * \since 3
      */
     void (*releaseTexBuffer)(__DRIcontext *pDRICtx,
 			GLint target,
