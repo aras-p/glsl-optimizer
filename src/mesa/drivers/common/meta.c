@@ -453,12 +453,18 @@ link_program_with_debug(struct gl_context *ctx, GLuint program)
  * \returns a handle to a shader program on success or zero on failure.
  */
 static GLuint
-setup_shader_for_sampler(struct gl_context *ctx, struct glsl_sampler *sampler)
+setup_blit_shader(struct gl_context *ctx,
+                  GLenum target,
+                  struct sampler_table *table)
 {
    const char *vs_source;
    char *fs_source;
    GLuint vs, fs;
    void *const mem_ctx = ralloc_context(NULL);
+   struct glsl_sampler *sampler =
+      setup_texture_sampler(target, table);
+
+   assert(sampler != NULL);
 
    if (sampler->shader_prog != 0)
       return sampler->shader_prog;
@@ -1667,18 +1673,12 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
                             struct blit_state *blit,
                             GLenum target)
 {
-   struct glsl_sampler *sampler;
-
    /* target = GL_TEXTURE_RECTANGLE is not supported in GLES 3.0 */
    assert(_mesa_is_desktop_gl(ctx) || target == GL_TEXTURE_2D);
 
    setup_vertex_objects(&blit->VAO, &blit->VBO, true, 2, 2, 0);
 
-   /* Generate a relevant fragment shader program for the texture target */
-   sampler = setup_texture_sampler(target, &blit->samplers);
-   assert(sampler != NULL);
-
-   setup_shader_for_sampler(ctx, sampler);
+   setup_blit_shader(ctx, target, &blit->samplers);
 }
 
 /**
@@ -3432,15 +3432,10 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
                            struct gen_mipmap_state *mipmap,
                            GLenum target)
 {
-   struct glsl_sampler *sampler;
-
    setup_vertex_objects(&mipmap->VAO, &mipmap->VBO, true, 2, 3, 0);
 
-   /* Generate a fragment shader program appropriate for the texture target */
-   sampler = setup_texture_sampler(target, &mipmap->samplers);
-   assert(sampler != NULL);
-
-   mipmap->ShaderProg = setup_shader_for_sampler(ctx, sampler);
+   mipmap->ShaderProg = setup_blit_shader(ctx, target,
+                                          &mipmap->samplers);
 }
 
 
@@ -3943,16 +3938,10 @@ decompress_texture_image(struct gl_context *ctx,
    }
 
    if (use_glsl_version) {
-      struct glsl_sampler *sampler;
-
       setup_vertex_objects(&decompress->VAO, &decompress->VBO, true,
                            2, 4, 0);
 
-      /* Generate a relevant fragment shader program for the texture target */
-      sampler = setup_texture_sampler(target, &decompress->samplers);
-      assert(sampler != NULL);
-
-      shaderProg = setup_shader_for_sampler(ctx, sampler);
+      shaderProg = setup_blit_shader(ctx, target, &decompress->samplers);
    } else {
       setup_ff_tnl_for_blit(&decompress->VAO, &decompress->VBO, 3);
    }
