@@ -101,6 +101,12 @@
 #define RADEON_INFO_VCE_FW_VERSION 0x1b
 #endif
 
+#ifndef RADEON_INFO_NUM_BYTES_MOVED
+#define RADEON_INFO_NUM_BYTES_MOVED         0x1d
+#define RADEON_INFO_VRAM_USAGE              0x1e
+#define RADEON_INFO_GTT_USAGE               0x1f
+#endif
+
 #ifndef RADEON_CS_RING_UVD
 #define RADEON_CS_RING_UVD	3
 #endif
@@ -523,7 +529,7 @@ static uint64_t radeon_query_value(struct radeon_winsys *rws,
                                    enum radeon_value_id value)
 {
     struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
-    uint64_t ts = 0;
+    uint64_t retval = 0;
 
     switch (value) {
     case RADEON_REQUESTED_VRAM_MEMORY:
@@ -539,8 +545,22 @@ static uint64_t radeon_query_value(struct radeon_winsys *rws,
         }
 
         radeon_get_drm_value(ws->fd, RADEON_INFO_TIMESTAMP, "timestamp",
-                             (uint32_t*)&ts);
-        return ts;
+                             (uint32_t*)&retval);
+        return retval;
+    case RADEON_NUM_CS_FLUSHES:
+        return ws->num_cs_flushes;
+    case RADEON_NUM_BYTES_MOVED:
+        radeon_get_drm_value(ws->fd, RADEON_INFO_NUM_BYTES_MOVED,
+                             "num-bytes-moved", (uint32_t*)&retval);
+        return retval;
+    case RADEON_VRAM_USAGE:
+        radeon_get_drm_value(ws->fd, RADEON_INFO_VRAM_USAGE,
+                             "vram-usage", (uint32_t*)&retval);
+        return retval;
+    case RADEON_GTT_USAGE:
+        radeon_get_drm_value(ws->fd, RADEON_INFO_GTT_USAGE,
+                             "gtt-usage", (uint32_t*)&retval);
+        return retval;
     }
     return 0;
 }

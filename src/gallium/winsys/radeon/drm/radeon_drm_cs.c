@@ -596,6 +596,8 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags, ui
     /* Prepare a new CS. */
     cs->base.buf = cs->csc->buf;
     cs->base.cdw = 0;
+
+    cs->ws->num_cs_flushes++;
 }
 
 static void radeon_drm_cs_destroy(struct radeon_winsys_cs *rcs)
