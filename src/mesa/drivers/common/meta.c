@@ -312,7 +312,6 @@ struct gen_mipmap_state
    GLuint VBO;
    GLuint FBO;
    GLuint Sampler;
-   GLuint ShaderProg;
 
    struct sampler_table samplers;
 };
@@ -452,7 +451,7 @@ link_program_with_debug(struct gl_context *ctx, GLuint program)
  *
  * \returns a handle to a shader program on success or zero on failure.
  */
-static GLuint
+static void
 setup_blit_shader(struct gl_context *ctx,
                   GLenum target,
                   struct sampler_table *table)
@@ -466,8 +465,10 @@ setup_blit_shader(struct gl_context *ctx,
 
    assert(sampler != NULL);
 
-   if (sampler->shader_prog != 0)
-      return sampler->shader_prog;
+   if (sampler->shader_prog != 0) {
+      _mesa_UseProgram(sampler->shader_prog);
+      return;
+   }
 
    /* The version check is a little tricky.  API is set to API_OPENGLES2 even
     * for OpenGL ES 3.0 contexts, and GLSLVersion may be set to 140, for
@@ -546,7 +547,7 @@ setup_blit_shader(struct gl_context *ctx,
    link_program_with_debug(ctx, sampler->shader_prog);
    ralloc_free(mem_ctx);
 
-   return sampler->shader_prog;
+   _mesa_UseProgram(sampler->shader_prog);
 }
 
 /**
@@ -1745,10 +1746,6 @@ blitframebuffer_texture(struct gl_context *ctx,
           */
          if (glsl_version) {
             setup_glsl_blit_framebuffer(ctx, blit, target);
-            if (target == GL_TEXTURE_2D)
-               _mesa_UseProgram(blit->samplers.sampler_2d.shader_prog);
-            else
-               _mesa_UseProgram(blit->samplers.sampler_rect.shader_prog);
          }
          else {
             setup_ff_tnl_for_blit(&ctx->Meta->Blit.VAO,
@@ -1926,10 +1923,6 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
     */
    if (use_glsl_version) {
       setup_glsl_blit_framebuffer(ctx, blit, tex->Target);
-      if (tex->Target == GL_TEXTURE_2D)
-         _mesa_UseProgram(blit->samplers.sampler_2d.shader_prog);
-      else
-         _mesa_UseProgram(blit->samplers.sampler_rect.shader_prog);
    }
    else {
       setup_ff_tnl_for_blit(&blit->VAO, &blit->VBO, 2);
@@ -3434,8 +3427,7 @@ setup_glsl_generate_mipmap(struct gl_context *ctx,
 {
    setup_vertex_objects(&mipmap->VAO, &mipmap->VBO, true, 2, 3, 0);
 
-   mipmap->ShaderProg = setup_blit_shader(ctx, target,
-                                          &mipmap->samplers);
+   setup_blit_shader(ctx, target, &mipmap->samplers);
 }
 
 
@@ -3499,7 +3491,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
     */
    if (use_glsl_version) {
       setup_glsl_generate_mipmap(ctx, mipmap, target);
-      _mesa_UseProgram(mipmap->ShaderProg);
    }
    else {
       setup_ff_tnl_for_blit(&mipmap->VAO, &mipmap->VBO, 3);
@@ -3872,7 +3863,6 @@ decompress_texture_image(struct gl_context *ctx,
    const bool use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
                                       ctx->Extensions.ARB_fragment_shader &&
                                       (ctx->API != API_OPENGLES);
-   GLuint shaderProg = 0;
 
    if (slice > 0) {
       assert(target == GL_TEXTURE_3D ||
@@ -3941,7 +3931,7 @@ decompress_texture_image(struct gl_context *ctx,
       setup_vertex_objects(&decompress->VAO, &decompress->VBO, true,
                            2, 4, 0);
 
-      shaderProg = setup_blit_shader(ctx, target, &decompress->samplers);
+      setup_blit_shader(ctx, target, &decompress->samplers);
    } else {
       setup_ff_tnl_for_blit(&decompress->VAO, &decompress->VBO, 3);
    }
@@ -3991,10 +3981,6 @@ decompress_texture_image(struct gl_context *ctx,
 
    if (!use_glsl_version)
       _mesa_set_enable(ctx, target, GL_TRUE);
-   else {
-      assert(shaderProg != 0);
-      _mesa_UseProgram(shaderProg);
-   }
 
    {
       /* save texture object state */
