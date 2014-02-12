@@ -768,12 +768,13 @@ const __DRIdri2Extension driDRI2Extension = {
 };
 
 const __DRIswrastExtension driSWRastExtension = {
-    { __DRI_SWRAST, 4 },
-    driSWRastCreateNewScreen,
-    driCreateNewDrawable,
-    driCreateNewContextForAPI,
-    driCreateContextAttribs,
-    driSWRastCreateNewScreen2,
+    .base = { __DRI_SWRAST, 4 },
+
+    .createNewScreen            = driSWRastCreateNewScreen,
+    .createNewDrawable          = driCreateNewDrawable,
+    .createNewContextForAPI     = driCreateNewContextForAPI,
+    .createContextAttribs       = driCreateContextAttribs,
+    .createNewScreen2           = driSWRastCreateNewScreen2,
 };
 
 const __DRI2configQueryExtension dri2ConfigQueryExtension = {
