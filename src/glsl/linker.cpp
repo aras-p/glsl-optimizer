@@ -2303,17 +2303,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    }
 
    /* Mark all generic shader inputs and outputs as unpaired. */
-   if (prog->_LinkedShaders[MESA_SHADER_VERTEX] != NULL) {
-      link_invalidate_variable_locations(
-            prog->_LinkedShaders[MESA_SHADER_VERTEX]->ir);
-   }
-   if (prog->_LinkedShaders[MESA_SHADER_GEOMETRY] != NULL) {
-      link_invalidate_variable_locations(
-            prog->_LinkedShaders[MESA_SHADER_GEOMETRY]->ir);
-   }
-   if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] != NULL) {
-      link_invalidate_variable_locations(
-            prog->_LinkedShaders[MESA_SHADER_FRAGMENT]->ir);
+   for (unsigned i = MESA_SHADER_VERTEX; i <= MESA_SHADER_FRAGMENT; i++) {
+      if (prog->_LinkedShaders[i] != NULL) {
+         link_invalidate_variable_locations(prog->_LinkedShaders[i]->ir);
+      }
    }
 
    /* FINISHME: The value of the max_attribute_index parameter is
