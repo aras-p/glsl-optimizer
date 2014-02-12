@@ -174,13 +174,13 @@ struct __DRIscreenRec {
     struct {
 	/* Flag to indicate that this is a DRI2 screen.  Many of the above
 	 * fields will not be valid or initializaed in that case. */
-	__DRIdri2LoaderExtension *loader;
-	__DRIimageLookupExtension *image;
-	__DRIuseInvalidateExtension *useInvalidate;
+	const __DRIdri2LoaderExtension *loader;
+	const __DRIimageLookupExtension *image;
+	const __DRIuseInvalidateExtension *useInvalidate;
     } dri2;
 
     struct {
-        __DRIimageLoaderExtension *loader;
+        const __DRIimageLoaderExtension *loader;
     } image;
 
     driOptionCache optionInfo;

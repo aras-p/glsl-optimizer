@@ -775,7 +775,7 @@ const __DRIswrastExtension driSWRastExtension = {
 };
 
 const __DRI2configQueryExtension dri2ConfigQueryExtension = {
-   .base = { __DRI2_CONFIG_QUERY, __DRI2_CONFIG_QUERY_VERSION },
+   .base = { __DRI2_CONFIG_QUERY, 1 },
 
    .configQueryb        = dri2ConfigQueryb,
    .configQueryi        = dri2ConfigQueryi,
