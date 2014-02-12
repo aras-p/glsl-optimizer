@@ -969,7 +969,7 @@ static const __DRIdri2LoaderExtension dri2LoaderExtension_old = {
 };
 
 static const __DRIuseInvalidateExtension dri2UseInvalidate = {
-   { __DRI_USE_INVALIDATE, __DRI_USE_INVALIDATE_VERSION }
+   .base = { __DRI_USE_INVALIDATE, 1 }
 };
 
 _X_HIDDEN void
