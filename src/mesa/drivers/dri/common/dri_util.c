@@ -893,6 +893,7 @@ static void driCopySubBuffer(__DRIdrawable *pdp, int x, int y,
 
 /* for swrast only */
 const __DRIcopySubBufferExtension driCopySubBufferExtension = {
-   { __DRI_COPY_SUB_BUFFER, 1 },
-   .copySubBuffer = driCopySubBuffer,
+   .base = { __DRI_COPY_SUB_BUFFER, 1 },
+
+   .copySubBuffer               = driCopySubBuffer,
 };
