@@ -3421,17 +3421,6 @@ sampler_table_cleanup(struct sampler_table *table)
 }
 
 static void
-setup_glsl_generate_mipmap(struct gl_context *ctx,
-                           struct gen_mipmap_state *mipmap,
-                           GLenum target)
-{
-   setup_vertex_objects(&mipmap->VAO, &mipmap->VBO, true, 2, 3, 0);
-
-   setup_blit_shader(ctx, target, &mipmap->samplers);
-}
-
-
-static void
 meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap)
 {
    if (mipmap->VAO == 0)
@@ -3490,7 +3479,9 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
     * GenerateMipmap function.
     */
    if (use_glsl_version) {
-      setup_glsl_generate_mipmap(ctx, mipmap, target);
+      setup_vertex_objects(&mipmap->VAO, &mipmap->VBO, true,
+                           2, 3, 0);
+      setup_blit_shader(ctx, target, &mipmap->samplers);
    }
    else {
       setup_ff_tnl_for_blit(&mipmap->VAO, &mipmap->VBO, 3);
