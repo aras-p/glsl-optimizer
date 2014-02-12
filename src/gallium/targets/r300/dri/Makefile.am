@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+DRI_VERSION_SCRIPT = $(srcdir)/radeon.link
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \

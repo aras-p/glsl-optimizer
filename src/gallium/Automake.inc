@@ -51,12 +51,14 @@ GALLIUM_VIDEO_CFLAGS = \
 	$(VISIBILITY_CFLAGS)
 
 
-# TODO: add -export-symbols-regex
+DRI_VERSION_SCRIPT ?= $(top_srcdir)/src/gallium/state_trackers/dri/dri.link
+
 GALLIUM_DRI_LINKER_FLAGS = \
 	-module \
 	-avoid-version \
+	-Wl,--version-script=$(DRI_VERSION_SCRIPT) \
 	-shared \
-	-Wl,-Bsymbolic
+	-no-undefined
 
 GALLIUM_VDPAU_LINKER_FLAGS = \
 	-module \

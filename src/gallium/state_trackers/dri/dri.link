@@ -1,0 +1,5 @@
+VERSION {
+	global:
+		__driDriverExtensions;
+	local: *;
+};
