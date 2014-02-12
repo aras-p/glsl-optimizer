@@ -596,7 +596,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	if (rtex->is_depth) {
 		if (!(base->flags & (R600_RESOURCE_FLAG_TRANSFER |
 				     R600_RESOURCE_FLAG_FLUSHED_DEPTH)) &&
-		    !(rscreen->debug_flags & DBG_NO_HYPERZ)) {
+		    (rscreen->debug_flags & DBG_HYPERZ)) {
 
 			r600_texture_allocate_htile(rscreen, rtex);
 		}
