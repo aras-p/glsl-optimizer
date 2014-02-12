@@ -1231,6 +1231,15 @@ layout_qualifier_id:
          }
       }
 
+      /* Layout qualifiers for ARB_shader_image_load_store. */
+      if (state->ARB_shader_image_load_store_enable ||
+          state->is_version(420, 0)) {
+         if (!$$.flags.i &&
+             match_layout_qualifier($1, "early_fragment_tests", state) == 0) {
+            $$.flags.q.early_fragment_tests = 1;
+         }
+      }
+
       if (!$$.flags.i) {
          _mesa_glsl_error(& @1, state, "unrecognized layout identifier "
                           "`%s'", $1);
@@ -2388,6 +2397,13 @@ layout_defaults:
          }
       }
          break;
+      case MESA_SHADER_FRAGMENT:
+         if ($1.flags.q.early_fragment_tests) {
+            state->early_fragment_tests = true;
+         } else {
+            _mesa_glsl_error(& @1, state, "invalid input layout qualifier");
+         }
+         break;
       case MESA_SHADER_COMPUTE: {
          if ($1.flags.q.local_size == 0) {
             _mesa_glsl_error(& @1, state,
@@ -2409,7 +2425,7 @@ layout_defaults:
       default:
          _mesa_glsl_error(& @1, state,
                           "input layout qualifiers only valid in "
-                          "geometry and compute shaders");
+                          "geometry, fragment and compute shaders");
          break;
       }
    }
