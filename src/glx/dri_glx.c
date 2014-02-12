@@ -271,8 +271,9 @@ __glXReportDamage(__DRIdrawable * driDraw,
 }
 
 static const __DRIdamageExtension damageExtension = {
-   {__DRI_DAMAGE, __DRI_DAMAGE_VERSION},
-   __glXReportDamage,
+   .base = {__DRI_DAMAGE, 1 },
+
+   .reportDamage        = __glXReportDamage,
 };
 
 #endif
