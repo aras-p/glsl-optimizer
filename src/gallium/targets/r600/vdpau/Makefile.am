@@ -44,17 +44,13 @@ libvdpau_r600_la_LIBADD = \
 	$(GALLIUM_DRI_LIB_DEPS) \
 	$(RADEON_LIBS)
 
-if HAVE_MESA_LLVM
 libvdpau_r600_la_LINK = $(CXXLINK) $(libvdpau_r600_la_LDFLAGS)
 # Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
 nodist_EXTRA_libvdpau_r600_la_SOURCES = dummy-cpp.cpp
 
+if HAVE_MESA_LLVM
 libvdpau_r600_la_LDFLAGS += $(LLVM_LDFLAGS)
 libvdpau_r600_la_LIBADD += $(LLVM_LIBS)
-else
-libvdpau_r600_la_LINK = $(LINK) $(libvdpau_r600_la_LDFLAGS)
-# Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_libvdpau_r600_la_SOURCES = dummy-c.c
 endif
 
 # Provide compatibility with scripts for the old Mesa build system for
