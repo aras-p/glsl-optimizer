@@ -150,14 +150,14 @@ struct dri2_egl_display
    int                       own_dri_screen;
    const __DRIconfig       **driver_configs;
    void                     *driver;
-   __DRIcoreExtension       *core;
-   __DRIdri2Extension       *dri2;
-   __DRIswrastExtension     *swrast;
-   __DRI2flushExtension     *flush;
-   __DRItexBufferExtension  *tex_buffer;
-   __DRIimageExtension      *image;
-   __DRIrobustnessExtension *robustness;
-   __DRI2configQueryExtension *config;
+   const __DRIcoreExtension       *core;
+   const __DRIdri2Extension       *dri2;
+   const __DRIswrastExtension     *swrast;
+   const __DRI2flushExtension     *flush;
+   const __DRItexBufferExtension  *tex_buffer;
+   const __DRIimageExtension      *image;
+   const __DRIrobustnessExtension *robustness;
+   const __DRI2configQueryExtension *config;
    int                       fd;
 
    int                       own_device;

@@ -52,7 +52,7 @@
 #include "egl_dri2.h"
 
 const __DRIuseInvalidateExtension use_invalidate = {
-   { __DRI_USE_INVALIDATE, 1 }
+   .base = { __DRI_USE_INVALIDATE, 1 }
 };
 
 EGLint dri2_to_egl_attribute_map[] = {
@@ -299,8 +299,9 @@ dri2_lookup_egl_image(__DRIscreen *screen, void *image, void *data)
 }
 
 const __DRIimageLookupExtension image_lookup_extension = {
-   { __DRI_IMAGE_LOOKUP, 1 },
-   dri2_lookup_egl_image
+   .base = { __DRI_IMAGE_LOOKUP, 1 },
+
+   .lookupEGLImage       = dri2_lookup_egl_image
 };
 
 static const char dri_driver_path[] = DEFAULT_DRIVER_DIR;
