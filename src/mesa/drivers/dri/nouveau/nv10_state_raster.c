@@ -28,6 +28,7 @@
 #include "nouveau_context.h"
 #include "nouveau_gldefs.h"
 #include "nouveau_util.h"
+#include "nv_object.xml.h"
 #include "nv10_3d.xml.h"
 #include "nv10_driver.h"
 
@@ -120,7 +121,7 @@ nv10_emit_logic_opcode(struct gl_context *ctx, int emit)
 	struct nouveau_pushbuf *push = context_push(ctx);
 
 	assert(!ctx->Color.ColorLogicOpEnabled
-	       || context_chipset(ctx) >= 0x11);
+	       || context_eng3d(ctx)->oclass >= NV15_3D_CLASS);
 
 	BEGIN_NV04(push, NV11_3D(COLOR_LOGIC_OP_ENABLE), 2);
 	PUSH_DATAb(push, ctx->Color.ColorLogicOpEnabled);

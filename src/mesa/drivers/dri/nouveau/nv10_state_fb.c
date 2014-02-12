@@ -106,7 +106,7 @@ nv10_emit_framebuffer(struct gl_context *ctx, int emit)
 
 	/* At least nv11 seems to get sad if we don't do this before
 	 * swapping RTs.*/
-	if (context_chipset(ctx) < 0x17) {
+	if (context_eng3d(ctx)->oclass < NV17_3D_CLASS) {
 		int i;
 
 		for (i = 0; i < 6; i++) {
@@ -140,7 +140,7 @@ nv10_emit_framebuffer(struct gl_context *ctx, int emit)
 		PUSH_MTHDl(push, NV10_3D(ZETA_OFFSET), BUFCTX_FB,
 				 s->bo, 0, bo_flags);
 
-		if (context_chipset(ctx) >= 0x17) {
+		if (context_eng3d(ctx)->oclass >= NV17_3D_CLASS) {
 			setup_hierz_buffer(ctx);
 			context_dirty(ctx, ZCLEAR);
 		}
