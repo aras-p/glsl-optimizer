@@ -1307,9 +1307,10 @@ dri3_get_buffers(__DRIdrawable *driDrawable,
 /* The image loader extension record for DRI3
  */
 static const __DRIimageLoaderExtension imageLoaderExtension = {
-   {__DRI_IMAGE_LOADER, __DRI_IMAGE_LOADER_VERSION},
-   .getBuffers = dri3_get_buffers,
-   .flushFrontBuffer = dri3_flush_front_buffer,
+   .base = { __DRI_IMAGE_LOADER, 1 },
+
+   .getBuffers          = dri3_get_buffers,
+   .flushFrontBuffer    = dri3_flush_front_buffer,
 };
 
 /** dri3_swap_buffers
