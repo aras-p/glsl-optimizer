@@ -141,9 +141,10 @@ static const __DRIdri2LoaderExtension dri2_loader_extension = {
 };
 
 static const __DRIimageLoaderExtension image_loader_extension = {
-   { __DRI_IMAGE_LOADER, 1 },
-   image_get_buffers,
-   dri_flush_front_buffer,
+   .base = { __DRI_IMAGE_LOADER, 1 },
+
+   .getBuffers          = image_get_buffers,
+   .flushFrontBuffer    = dri_flush_front_buffer,
 };
 
 
