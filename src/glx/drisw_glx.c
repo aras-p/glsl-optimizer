@@ -240,11 +240,12 @@ swrastGetImage(__DRIdrawable * read,
 }
 
 static const __DRIswrastLoaderExtension swrastLoaderExtension = {
-   {__DRI_SWRAST_LOADER, __DRI_SWRAST_LOADER_VERSION},
-   swrastGetDrawableInfo,
-   swrastPutImage,
-   swrastGetImage,
-   swrastPutImage2,
+   .base = {__DRI_SWRAST_LOADER, 2 },
+
+   .getDrawableInfo     = swrastGetDrawableInfo,
+   .putImage            = swrastPutImage,
+   .getImage            = swrastGetImage,
+   .putImage2           = swrastPutImage2,
 };
 
 static const __DRIextension *loader_extensions[] = {
