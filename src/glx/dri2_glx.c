@@ -955,17 +955,19 @@ dri2GetSwapInterval(__GLXDRIdrawable *pdraw)
 }
 
 static const __DRIdri2LoaderExtension dri2LoaderExtension = {
-   {__DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION},
-   dri2GetBuffers,
-   dri2FlushFrontBuffer,
-   dri2GetBuffersWithFormat,
+   .base = { __DRI_DRI2_LOADER, 3 },
+
+   .getBuffers              = dri2GetBuffers,
+   .flushFrontBuffer        = dri2FlushFrontBuffer,
+   .getBuffersWithFormat    = dri2GetBuffersWithFormat,
 };
 
 static const __DRIdri2LoaderExtension dri2LoaderExtension_old = {
-   {__DRI_DRI2_LOADER, __DRI_DRI2_LOADER_VERSION},
-   dri2GetBuffers,
-   dri2FlushFrontBuffer,
-   NULL,
+   .base = { __DRI_DRI2_LOADER, 3 },
+
+   .getBuffers              = dri2GetBuffers,
+   .flushFrontBuffer        = dri2FlushFrontBuffer,
+   .getBuffersWithFormat    = NULL,
 };
 
 static const __DRIuseInvalidateExtension dri2UseInvalidate = {
