@@ -110,9 +110,11 @@ static void swrastSetTexBuffer(__DRIcontext *pDRICtx, GLint target,
 }
 
 static const __DRItexBufferExtension swrastTexBufferExtension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-    swrastSetTexBuffer,
-    swrastSetTexBuffer2,
+   .base = { __DRI_TEX_BUFFER, 3 },
+
+   .setTexBuffer        = swrastSetTexBuffer,
+   .setTexBuffer2       = swrastSetTexBuffer2,
+   .releaseTexBuffer    = NULL,
 };
 
 static const __DRIextension *dri_screen_extensions[] = {

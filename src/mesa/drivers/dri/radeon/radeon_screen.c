@@ -170,15 +170,19 @@ radeonGetParam(__DRIscreen *sPriv, int param, void *value)
 
 #if defined(RADEON_R100)
 static const __DRItexBufferExtension radeonTexBufferExtension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   radeonSetTexBuffer,
-   radeonSetTexBuffer2,
+   .base = { __DRI_TEX_BUFFER, 3 },
+
+   .setTexBuffer        = radeonSetTexBuffer,
+   .setTexBuffer2       = radeonSetTexBuffer2,
+   .releaseTexBuffer    = NULL,
 };
 #elif defined(RADEON_R200)
 static const __DRItexBufferExtension r200TexBufferExtension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-   r200SetTexBuffer,
-   r200SetTexBuffer2,
+   .base = { __DRI_TEX_BUFFER, 3 },
+
+   .setTexBuffer        = r200SetTexBuffer,
+   .setTexBuffer2       = r200SetTexBuffer2,
+   .releaseTexBuffer    = NULL,
 };
 #endif
 
@@ -373,13 +377,14 @@ radeon_query_image(__DRIimage *image, int attrib, int *value)
    }
 }
 
-static struct __DRIimageExtensionRec radeonImageExtension = {
-    { __DRI_IMAGE, 1 },
-   radeon_create_image_from_name,
-   radeon_create_image_from_renderbuffer,
-   radeon_destroy_image,
-   radeon_create_image,
-   radeon_query_image
+static const __DRIimageExtension radeonImageExtension = {
+   .base = { __DRI_IMAGE, 1 },
+
+   .createImageFromName         = radeon_create_image_from_name,
+   .createImageFromRenderbuffer = radeon_create_image_from_renderbuffer,
+   .destroyImage                = radeon_destroy_image,
+   .createImage                 = radeon_create_image,
+   .queryImage                  = radeon_query_image
 };
 
 static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)

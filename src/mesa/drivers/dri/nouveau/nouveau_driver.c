@@ -65,7 +65,7 @@ nouveau_flush(struct gl_context *ctx)
 	if (_mesa_is_winsys_fbo(ctx->DrawBuffer) &&
 	    ctx->DrawBuffer->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
 		__DRIscreen *screen = nctx->screen->dri_screen;
-		__DRIdri2LoaderExtension *dri2 = screen->dri2.loader;
+		const __DRIdri2LoaderExtension *dri2 = screen->dri2.loader;
 		__DRIdrawable *drawable = nctx->dri_context->driDrawablePriv;
 
 		if (drawable && drawable->loaderPrivate)

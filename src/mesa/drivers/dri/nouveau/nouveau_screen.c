@@ -234,9 +234,11 @@ static const struct __DRI2flushExtensionRec nouveau_flush_extension = {
 };
 
 static const struct __DRItexBufferExtensionRec nouveau_texbuffer_extension = {
-    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
-    NULL,
-    nouveau_set_texbuffer,
+   .base = { __DRI_TEX_BUFFER, 3 },
+
+   .setTexBuffer        = NULL,
+   .setTexBuffer2       = nouveau_set_texbuffer,
+   .releaseTexBuffer    = NULL,
 };
 
 static const __DRIextension *nouveau_screen_extensions[] = {
