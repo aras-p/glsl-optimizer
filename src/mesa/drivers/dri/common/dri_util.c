@@ -874,7 +874,7 @@ driImageFormatToGLFormat(uint32_t image_format)
 
 /** Image driver interface */
 const __DRIimageDriverExtension driImageDriverExtension = {
-    .base = { __DRI_IMAGE_DRIVER, __DRI_IMAGE_DRIVER_VERSION },
+    .base = { __DRI_IMAGE_DRIVER, 1 },
 
     .createNewScreen2           = driCreateNewScreen2,
     .createNewDrawable          = driCreateNewDrawable,
