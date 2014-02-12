@@ -547,6 +547,8 @@ def generate(env):
         linkflags += [
             '/fixed:no',
             '/incremental:no',
+            '/dynamicbase',
+            '/nxcompat',
         ]
     env.Append(LINKFLAGS = linkflags)
     env.Append(SHLINKFLAGS = shlinkflags)
