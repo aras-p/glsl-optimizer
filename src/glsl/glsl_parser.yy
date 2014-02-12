@@ -1655,7 +1655,7 @@ storage_qualifier:
    {
       STATIC_ASSERT(sizeof($$.flags.q) <= sizeof($$.flags.i));
       memset(& $$, 0, sizeof($$));
-      $$.flags.q._restrict = 1;
+      $$.flags.q.restrict_flag = 1;
    }
    | READONLY
    {

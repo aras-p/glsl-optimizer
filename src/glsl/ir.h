@@ -698,7 +698,7 @@ public:
          bool write_only; /**< "writeonly" qualifier. */
          bool coherent;
          bool _volatile;
-         bool _restrict;
+         bool restrict_flag;
 
          /** Image internal format if specified explicitly, otherwise GL_NONE. */
          GLenum format;

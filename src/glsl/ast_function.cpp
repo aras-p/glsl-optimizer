@@ -120,7 +120,7 @@ verify_image_parameter(YYLTYPE *loc, _mesa_glsl_parse_state *state,
       return false;
    }
 
-   if (actual->data.image._restrict && !formal->data.image._restrict) {
+   if (actual->data.image.restrict_flag && !formal->data.image.restrict_flag) {
       _mesa_glsl_error(loc, state,
                        "function call parameter `%s' drops "
                        "`restrict' qualifier", formal->name);

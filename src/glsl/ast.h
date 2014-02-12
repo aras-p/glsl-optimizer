@@ -473,7 +473,7 @@ struct ast_type_qualifier {
 	 unsigned explicit_image_format:1;
 	 unsigned coherent:1;
 	 unsigned _volatile:1;
-	 unsigned _restrict:1;
+	 unsigned restrict_flag:1;
 	 unsigned read_only:1; /**< "readonly" qualifier. */
 	 unsigned write_only:1; /**< "writeonly" qualifier. */
 	 /** \} */

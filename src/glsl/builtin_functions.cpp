@@ -4293,7 +4293,7 @@ builtin_builder::_image_prototype(const glsl_type *image_type,
    image->data.image.write_only = flags & IMAGE_FUNCTION_WRITE_ONLY;
    image->data.image.coherent = true;
    image->data.image._volatile = true;
-   image->data.image._restrict = true;
+   image->data.image.restrict_flag = true;
 
    return sig;
 }

@@ -2232,7 +2232,7 @@ apply_image_qualifier_to_variable(const struct ast_type_qualifier *qual,
       var->data.image.write_only |= qual->flags.q.write_only;
       var->data.image.coherent |= qual->flags.q.coherent;
       var->data.image._volatile |= qual->flags.q._volatile;
-      var->data.image._restrict |= qual->flags.q._restrict;
+      var->data.image.restrict_flag |= qual->flags.q.restrict_flag;
       var->data.read_only = true;
 
       if (qual->flags.q.explicit_image_format) {

@@ -1558,7 +1558,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->data.image.write_only = false;
    this->data.image.coherent = false;
    this->data.image._volatile = false;
-   this->data.image._restrict = false;
+   this->data.image.restrict_flag = false;
 
    if (type != NULL) {
       if (type->base_type == GLSL_TYPE_SAMPLER)
@@ -1668,7 +1668,7 @@ ir_function_signature::qualifiers_match(exec_list *params)
           a->data.image.write_only != b->data.image.write_only ||
           a->data.image.coherent != b->data.image.coherent ||
           a->data.image._volatile != b->data.image._volatile ||
-          a->data.image._restrict != b->data.image._restrict) {
+          a->data.image.restrict_flag != b->data.image.restrict_flag) {
 
 	 /* parameter a's qualifiers don't match */
 	 return a->name;
