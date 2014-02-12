@@ -319,28 +319,28 @@ brw_update_texture_surface(struct gl_context *ctx,
 	      BRW_SURFACE_CUBEFACE_ENABLES |
 	      tex_format << BRW_SURFACE_FORMAT_SHIFT);
 
-   surf[1] = intelObj->mt->region->bo->offset64 + intelObj->mt->offset; /* reloc */
+   surf[1] = mt->region->bo->offset64 + mt->offset; /* reloc */
 
    surf[2] = ((intelObj->_MaxLevel - tObj->BaseLevel) << BRW_SURFACE_LOD_SHIFT |
 	      (mt->logical_width0 - 1) << BRW_SURFACE_WIDTH_SHIFT |
 	      (mt->logical_height0 - 1) << BRW_SURFACE_HEIGHT_SHIFT);
 
-   surf[3] = (brw_get_surface_tiling_bits(intelObj->mt->region->tiling) |
+   surf[3] = (brw_get_surface_tiling_bits(mt->region->tiling) |
 	      (mt->logical_depth0 - 1) << BRW_SURFACE_DEPTH_SHIFT |
-	      (intelObj->mt->region->pitch - 1) <<
+	      (mt->region->pitch - 1) <<
 	      BRW_SURFACE_PITCH_SHIFT);
 
-   surf[4] = (brw_get_surface_num_multisamples(intelObj->mt->num_samples) |
+   surf[4] = (brw_get_surface_num_multisamples(mt->num_samples) |
               SET_FIELD(tObj->BaseLevel - mt->first_level, BRW_SURFACE_MIN_LOD));
 
    surf[5] = mt->align_h == 4 ? BRW_SURFACE_VERTICAL_ALIGN_ENABLE : 0;
 
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->batch.bo,
-			   *surf_offset + 4,
-			   intelObj->mt->region->bo,
-                           surf[1] - intelObj->mt->region->bo->offset64,
-			   I915_GEM_DOMAIN_SAMPLER, 0);
+                           *surf_offset + 4,
+                           mt->region->bo,
+                           surf[1] - mt->region->bo->offset64,
+                           I915_GEM_DOMAIN_SAMPLER, 0);
 }
 
 /**

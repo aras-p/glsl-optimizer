@@ -318,7 +318,7 @@ gen7_update_texture_surface(struct gl_context *ctx,
    surf[2] = SET_FIELD(mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);
    surf[3] = SET_FIELD(mt->logical_depth0 - 1, BRW_SURFACE_DEPTH) |
-             ((intelObj->mt->region->pitch) - 1);
+             (mt->region->pitch - 1);
 
    surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout);
 
@@ -356,10 +356,10 @@ gen7_update_texture_surface(struct gl_context *ctx,
 
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->batch.bo,
-			   *surf_offset + 4,
-			   intelObj->mt->region->bo,
-                           surf[1] - intelObj->mt->region->bo->offset64,
-			   I915_GEM_DOMAIN_SAMPLER, 0);
+                           *surf_offset + 4,
+                           mt->region->bo,
+                           surf[1] - mt->region->bo->offset64,
+                           I915_GEM_DOMAIN_SAMPLER, 0);
 
    gen7_check_surface_setup(surf, false /* is_render_target */);
 }
