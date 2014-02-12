@@ -466,12 +466,23 @@ struct ast_type_qualifier {
           * local_size_x, and so on.
           */
          unsigned local_size:3;
+
+	 /** \name Layout and memory qualifiers for ARB_shader_image_load_store. */
+	 /** \{ */
+	 unsigned early_fragment_tests:1;
+	 unsigned explicit_image_format:1;
+	 unsigned coherent:1;
+	 unsigned _volatile:1;
+	 unsigned _restrict:1;
+	 unsigned read_only:1; /**< "readonly" qualifier. */
+	 unsigned write_only:1; /**< "writeonly" qualifier. */
+	 /** \} */
       }
       /** \brief Set of flags, accessed by name. */
       q;
 
       /** \brief Set of flags, accessed as a bitmask. */
-      unsigned i;
+      uint64_t i;
    } flags;
 
    /** Precision of the type (highp/medium/lowp). */
@@ -521,6 +532,25 @@ struct ast_type_qualifier {
     * flags.q.local_size & (1 << i) is set.
     */
    int local_size[3];
+
+   /**
+    * Image format specified with an ARB_shader_image_load_store
+    * layout qualifier.
+    *
+    * \note
+    * This field is only valid if \c explicit_image_format is set.
+    */
+   GLenum image_format;
+
+   /**
+    * Base type of the data read from or written to this image.  Only
+    * the following enumerants are allowed: GLSL_TYPE_UINT,
+    * GLSL_TYPE_INT, GLSL_TYPE_FLOAT.
+    *
+    * \note
+    * This field is only valid if \c explicit_image_format is set.
+    */
+   glsl_base_type image_base_type;
 
    /**
     * Return true if and only if an interpolation qualifier is present.

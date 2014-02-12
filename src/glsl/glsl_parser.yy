@@ -2228,7 +2228,7 @@ basic_interface_block:
                                "an instance name are not allowed");
       }
 
-      unsigned interface_type_mask;
+      uint64_t interface_type_mask;
       struct ast_type_qualifier temp_type_qualifier;
 
       /* Get a bitmask containing only the in/out/uniform flags, allowing us
@@ -2244,7 +2244,7 @@ basic_interface_block:
        * production rule guarantees that only one bit will be set (and
        * it will be in/out/uniform).
        */
-       unsigned block_interface_qualifier = $1.flags.i;
+      uint64_t block_interface_qualifier = $1.flags.i;
 
       block->layout.flags.i |= block_interface_qualifier;
 

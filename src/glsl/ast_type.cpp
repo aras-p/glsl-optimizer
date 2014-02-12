@@ -190,6 +190,11 @@ ast_type_qualifier::merge_qualifier(YYLTYPE *loc,
    if (q.precision != ast_precision_none)
       this->precision = q.precision;
 
+   if (q.flags.q.explicit_image_format) {
+      this->image_format = q.image_format;
+      this->image_base_type = q.image_base_type;
+   }
+
    return true;
 }
 
