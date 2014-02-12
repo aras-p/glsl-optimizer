@@ -227,9 +227,10 @@ nouveau_drawable_flush(__DRIdrawable *draw)
 }
 
 static const struct __DRI2flushExtensionRec nouveau_flush_extension = {
-    { __DRI2_FLUSH, 3 },
-    nouveau_drawable_flush,
-    dri2InvalidateDrawable,
+   .base = { __DRI2_FLUSH, 3 },
+
+   .flush               = nouveau_drawable_flush,
+   .invalidate          = dri2InvalidateDrawable,
 };
 
 static const struct __DRItexBufferExtensionRec nouveau_texbuffer_extension = {

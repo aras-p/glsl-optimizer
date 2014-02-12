@@ -192,9 +192,10 @@ radeonDRI2Flush(__DRIdrawable *drawable)
 }
 
 static const struct __DRI2flushExtensionRec radeonFlushExtension = {
-    { __DRI2_FLUSH, 3 },
-    radeonDRI2Flush,
-    dri2InvalidateDrawable,
+   .base = { __DRI2_FLUSH, 3 },
+
+   .flush               = radeonDRI2Flush,
+   .invalidate          = dri2InvalidateDrawable,
 };
 
 static __DRIimage *
