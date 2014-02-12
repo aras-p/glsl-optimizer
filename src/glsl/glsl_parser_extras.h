@@ -377,6 +377,8 @@ struct _mesa_glsl_parse_state {
    bool ARB_viewport_array_warn;
    bool ARB_compute_shader_enable;
    bool ARB_compute_shader_warn;
+   bool ARB_shader_image_load_store_enable;
+   bool ARB_shader_image_load_store_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
