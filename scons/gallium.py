@@ -533,11 +533,9 @@ def generate(env):
     env.PkgCheckModules('X11', ['x11', 'xext', 'xdamage', 'xfixes'])
     env.PkgCheckModules('XCB', ['x11-xcb', 'xcb-glx >= 1.8.1'])
     env.PkgCheckModules('XF86VIDMODE', ['xxf86vm'])
-    env.PkgCheckModules('DRM', ['libdrm >= 2.4.24'])
-    env.PkgCheckModules('DRM_INTEL', ['libdrm_intel >= 2.4.30'])
-    env.PkgCheckModules('XORG', ['xorg-server >= 1.6.0'])
-    env.PkgCheckModules('KMS', ['libkms >= 2.4.24'])
-    env.PkgCheckModules('UDEV', ['libudev > 150'])
+    env.PkgCheckModules('DRM', ['libdrm >= 2.4.38'])
+    env.PkgCheckModules('DRM_INTEL', ['libdrm_intel >= 2.4.52'])
+    env.PkgCheckModules('UDEV', ['libudev >= 151'])
 
     env['dri'] = env['x11'] and env['drm']
 
