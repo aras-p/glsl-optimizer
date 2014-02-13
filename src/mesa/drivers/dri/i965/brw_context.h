@@ -1484,6 +1484,12 @@ GLboolean brwCreateContext(gl_api api,
 /*======================================================================
  * brw_misc_state.c
  */
+void brw_meta_updownsample(struct brw_context *brw,
+                           struct intel_mipmap_tree *src,
+                           struct intel_mipmap_tree *dst);
+/*======================================================================
+ * brw_misc_state.c
+ */
 void brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
                                      uint32_t depth_level,
                                      uint32_t depth_layer,

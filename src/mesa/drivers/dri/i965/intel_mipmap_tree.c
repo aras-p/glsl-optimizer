@@ -41,6 +41,7 @@
 #include "brw_context.h"
 
 #include "main/enums.h"
+#include "main/fbobject.h"
 #include "main/formats.h"
 #include "main/glformats.h"
 #include "main/texcompress_etc.h"
@@ -1555,14 +1556,18 @@ intel_miptree_updownsample(struct brw_context *brw,
                            struct intel_mipmap_tree *src,
                            struct intel_mipmap_tree *dst)
 {
-   brw_blorp_blit_miptrees(brw,
-                           src, 0 /* level */, 0 /* layer */,
-                           dst, 0 /* level */, 0 /* layer */,
-                           0, 0,
-                           src->logical_width0, src->logical_height0,
-                           0, 0,
-                           dst->logical_width0, dst->logical_height0,
-                           GL_NEAREST, false, false /*mirror x, y*/);
+   if (brw->gen < 8 || src->format == MESA_FORMAT_S_UINT8) {
+      brw_blorp_blit_miptrees(brw,
+                              src, 0 /* level */, 0 /* layer */,
+                              dst, 0 /* level */, 0 /* layer */,
+                              0, 0,
+                              src->logical_width0, src->logical_height0,
+                              0, 0,
+                              dst->logical_width0, dst->logical_height0,
+                              GL_NEAREST, false, false /*mirror x, y*/);
+   } else {
+      brw_meta_updownsample(brw, src, dst);
+   }
 
    if (src->stencil_mt) {
       brw_blorp_blit_miptrees(brw,
