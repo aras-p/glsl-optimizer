@@ -1619,32 +1619,25 @@ intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y, bool swizzled)
 static void
 intel_miptree_updownsample(struct brw_context *brw,
                            struct intel_mipmap_tree *src,
-                           struct intel_mipmap_tree *dst,
-                           unsigned width,
-                           unsigned height)
+                           struct intel_mipmap_tree *dst)
 {
-   int src_x0 = 0;
-   int src_y0 = 0;
-   int dst_x0 = 0;
-   int dst_y0 = 0;
-
    brw_blorp_blit_miptrees(brw,
                            src, 0 /* level */, 0 /* layer */,
                            dst, 0 /* level */, 0 /* layer */,
-                           src_x0, src_y0,
-                           width, height,
-                           dst_x0, dst_y0,
-                           width, height,
+                           0, 0,
+                           src->logical_width0, src->logical_height0,
+                           0, 0,
+                           dst->logical_width0, dst->logical_height0,
                            GL_NEAREST, false, false /*mirror x, y*/);
 
    if (src->stencil_mt) {
       brw_blorp_blit_miptrees(brw,
                               src->stencil_mt, 0 /* level */, 0 /* layer */,
                               dst->stencil_mt, 0 /* level */, 0 /* layer */,
-                              src_x0, src_y0,
-                              width, height,
-                              dst_x0, dst_y0,
-                              width, height,
+                              0, 0,
+                              src->logical_width0, src->logical_height0,
+                              0, 0,
+                              dst->logical_width0, dst->logical_height0,
                               GL_NEAREST, false, false /*mirror x, y*/);
    }
 }
@@ -1672,10 +1665,7 @@ intel_miptree_downsample(struct brw_context *brw,
 
    if (!mt->need_downsample)
       return;
-   intel_miptree_updownsample(brw,
-                              mt, mt->singlesample_mt,
-                              mt->logical_width0,
-                              mt->logical_height0);
+   intel_miptree_updownsample(brw, mt, mt->singlesample_mt);
    mt->need_downsample = false;
 }
 
@@ -1692,10 +1682,7 @@ intel_miptree_upsample(struct brw_context *brw,
    assert_is_flat(mt);
    assert(!mt->need_downsample);
 
-   intel_miptree_updownsample(brw,
-                              mt->singlesample_mt, mt,
-                              mt->logical_width0,
-                              mt->logical_height0);
+   intel_miptree_updownsample(brw, mt->singlesample_mt, mt);
 }
 
 void *
