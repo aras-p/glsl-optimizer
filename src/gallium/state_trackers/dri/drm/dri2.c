@@ -1053,7 +1053,6 @@ dri2_init_screen(__DRIscreen * sPriv)
       screen->default_throttle_frames = throttle_ret->val.val_int;
    }
 
-#ifdef DRM_CAP_PRIME /* Old libdrm? */
    if (dmabuf_ret && dmabuf_ret->val.val_bool) {
       uint64_t cap;
 
@@ -1064,7 +1063,6 @@ dri2_init_screen(__DRIscreen * sPriv)
          dri2ImageExtension.createImageFromFds = dri2_from_fds;
       }
    }
-#endif /* DRM_CAP_PRIME */
 
    sPriv->extensions = dri_screen_extensions;
 
