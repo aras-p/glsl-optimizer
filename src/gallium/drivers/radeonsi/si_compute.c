@@ -107,8 +107,12 @@ static void si_set_global_binding(
 
 	for (i = first; i < first + n; i++) {
 		uint64_t va;
+		uint32_t offset;
 		program->global_buffers[i] = resources[i];
 		va = r600_resource_va(ctx->screen, resources[i]);
+		offset = util_le32_to_cpu(*handles[i]);
+		va += offset;
+		va = util_cpu_to_le64(va);
 		memcpy(handles[i], &va, sizeof(va));
 	}
 }

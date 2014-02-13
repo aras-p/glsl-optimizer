@@ -337,8 +337,17 @@ kernel::global_argument::bind(exec_context &ctx,
    align(ctx.input, marg.target_align);
 
    if (buf) {
-      ctx.g_handles.push_back(allocate(ctx.input, marg.target_size));
-      ctx.g_buffers.push_back(buf->resource(*ctx.q).pipe);
+      const resource &r = buf->resource(*ctx.q);
+      ctx.g_handles.push_back(ctx.input.size());
+      ctx.g_buffers.push_back(r.pipe);
+
+      // How to handle multi-demensional offsets?
+      // We don't need to.  Buffer offsets are always
+      // one-dimensional.
+      auto v = bytes(r.offset[0]);
+      extend(v, marg.ext_type, marg.target_size);
+      byteswap(v, ctx.q->device().endianness());
+      insert(ctx.input, v);
    } else {
       // Null pointer.
       allocate(ctx.input, marg.target_size);
@@ -395,13 +404,14 @@ kernel::constant_argument::bind(exec_context &ctx,
    align(ctx.input, marg.target_align);
 
    if (buf) {
-      auto v = bytes(ctx.resources.size() << 24);
+      resource &r = buf->resource(*ctx.q);
+      auto v = bytes(ctx.resources.size() << 24 | r.offset[0]);
 
       extend(v, module::argument::zero_ext, marg.target_size);
       byteswap(v, ctx.q->device().endianness());
       insert(ctx.input, v);
 
-      st = buf->resource(*ctx.q).bind_surface(*ctx.q, false);
+      st = r.bind_surface(*ctx.q, false);
       ctx.resources.push_back(st);
    } else {
       // Null pointer.

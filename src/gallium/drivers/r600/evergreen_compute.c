@@ -662,10 +662,15 @@ static void evergreen_set_global_binding(
 
 	for (int i = 0; i < n; i++)
 	{
+		uint32_t buffer_offset;
+		uint32_t handle;
 		assert(resources[i]->target == PIPE_BUFFER);
 		assert(resources[i]->bind & PIPE_BIND_GLOBAL);
 
-		*(handles[i]) = buffers[i]->chunk->start_in_dw * 4;
+		buffer_offset = util_le32_to_cpu(*(handles[i]));
+		handle = buffer_offset + buffers[i]->chunk->start_in_dw * 4;
+
+		*(handles[i]) = util_cpu_to_le32(handle);
 	}
 
 	evergreen_set_rat(ctx->cs_shader_state.shader, 0, pool->bo, 0, pool->size_in_dw * 4);
