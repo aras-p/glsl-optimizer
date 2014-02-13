@@ -308,7 +308,7 @@ static void seq_parameter_set(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp)
 
    if (sps->pic_order_cnt_type == 0)
       sps->log2_max_pic_order_cnt_lsb_minus4 = vl_rbsp_ue(rbsp);
-   else {
+   else if (sps->pic_order_cnt_type == 1) {
       sps->delta_pic_order_always_zero_flag = vl_rbsp_u(rbsp, 1);
 
       sps->offset_for_non_ref_pic = vl_rbsp_se(rbsp);
