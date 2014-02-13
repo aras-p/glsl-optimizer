@@ -592,7 +592,7 @@ brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
             return false;
       }
 
-      intel_renderbuffer_set_needs_downsample(irb);
+      irb->need_downsample = true;
    }
 
    return true;

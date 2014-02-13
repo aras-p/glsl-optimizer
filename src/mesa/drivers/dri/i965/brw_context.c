@@ -997,7 +997,7 @@ intel_resolve_for_dri2_flush(struct brw_context *brw,
       if (rb->mt->num_samples <= 1)
          intel_miptree_resolve_color(brw, rb->mt);
       else
-         intel_miptree_downsample(brw, rb->mt);
+         intel_renderbuffer_downsample(brw, rb);
    }
 }
 
@@ -1270,10 +1270,9 @@ intel_process_dri2_buffer(struct brw_context *brw,
            rb->mt->region->name == buffer->name)
           return;
    } else {
-       if (rb->mt &&
-           rb->mt->singlesample_mt &&
-           rb->mt->singlesample_mt->region &&
-           rb->mt->singlesample_mt->region->name == buffer->name)
+       if (rb->singlesample_mt &&
+           rb->singlesample_mt->region &&
+           rb->singlesample_mt->region->name == buffer->name)
           return;
    }
 
@@ -1308,7 +1307,7 @@ intel_process_dri2_buffer(struct brw_context *brw,
        (buffer->attachment == __DRI_BUFFER_FRONT_LEFT ||
         buffer->attachment == __DRI_BUFFER_FAKE_FRONT_LEFT) &&
        rb->Base.Base.NumSamples > 1) {
-      intel_miptree_upsample(brw, rb->mt);
+      intel_renderbuffer_upsample(brw, rb);
    }
 
    assert(rb->mt);
@@ -1355,10 +1354,9 @@ intel_update_image_buffer(struct brw_context *intel,
            rb->mt->region->bo == region->bo)
           return;
    } else {
-       if (rb->mt &&
-           rb->mt->singlesample_mt &&
-           rb->mt->singlesample_mt->region &&
-           rb->mt->singlesample_mt->region->bo == region->bo)
+       if (rb->singlesample_mt &&
+           rb->singlesample_mt->region &&
+           rb->singlesample_mt->region->bo == region->bo)
           return;
    }
 
@@ -1367,7 +1365,7 @@ intel_update_image_buffer(struct brw_context *intel,
    if (intel->is_front_buffer_rendering &&
        buffer_type == __DRI_IMAGE_BUFFER_FRONT &&
        rb->Base.Base.NumSamples > 1) {
-      intel_miptree_upsample(intel, rb->mt);
+      intel_renderbuffer_upsample(intel, rb);
    }
 }
 

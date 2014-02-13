@@ -74,8 +74,38 @@ intel_delete_renderbuffer(struct gl_context *ctx, struct gl_renderbuffer *rb)
    ASSERT(irb);
 
    intel_miptree_release(&irb->mt);
+   intel_miptree_release(&irb->singlesample_mt);
 
    _mesa_delete_renderbuffer(ctx, rb);
+}
+
+/**
+ * \brief Downsample a winsys renderbuffer from mt to singlesample_mt.
+ *
+ * If the miptree needs no downsample, then skip.
+ */
+void
+intel_renderbuffer_downsample(struct brw_context *brw,
+                              struct intel_renderbuffer *irb)
+{
+   if (!irb->need_downsample)
+      return;
+   intel_miptree_updownsample(brw, irb->mt, irb->singlesample_mt);
+   irb->need_downsample = false;
+}
+
+/**
+ * \brief Upsample a winsys renderbuffer from singlesample_mt to mt.
+ *
+ * The upsample is done unconditionally.
+ */
+void
+intel_renderbuffer_upsample(struct brw_context *brw,
+                            struct intel_renderbuffer *irb)
+{
+   assert(!irb->need_downsample);
+
+   intel_miptree_updownsample(brw, irb->singlesample_mt, irb->mt);
 }
 
 /**
@@ -92,6 +122,7 @@ intel_map_renderbuffer(struct gl_context *ctx,
    struct brw_context *brw = brw_context(ctx);
    struct swrast_renderbuffer *srb = (struct swrast_renderbuffer *)rb;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   struct intel_mipmap_tree *mt;
    void *map;
    int stride;
 
@@ -106,6 +137,39 @@ intel_map_renderbuffer(struct gl_context *ctx,
 
    intel_prepare_render(brw);
 
+   /* The MapRenderbuffer API should always return a single-sampled mapping.
+    * The case we are asked to map multisampled RBs is in glReadPixels() (or
+    * swrast paths like glCopyTexImage()) from a window-system MSAA buffer,
+    * and GL expects an automatic resolve to happen.
+    *
+    * If it's a color miptree, there is a ->singlesample_mt which wraps the
+    * actual window system renderbuffer (which we may resolve to at any time),
+    * while the miptree itself is our driver-private allocation.  If it's a
+    * depth or stencil miptree, we have a private MSAA buffer and no shared
+    * singlesample buffer, and since we don't expect anybody to ever actually
+    * resolve it, we just make a temporary singlesample buffer now when we
+    * have to.
+    */
+   if (rb->NumSamples > 1) {
+      if (!irb->singlesample_mt) {
+         irb->singlesample_mt =
+            intel_miptree_create_for_renderbuffer(brw, irb->mt->format,
+                                                  rb->Width, rb->Height,
+                                                  0 /*num_samples*/);
+         if (!irb->singlesample_mt)
+            goto fail;
+         irb->singlesample_mt_is_tmp = true;
+         irb->need_downsample = true;
+      }
+
+      intel_renderbuffer_downsample(brw, irb);
+      mt = irb->singlesample_mt;
+
+      irb->need_map_upsample = mode & GL_MAP_WRITE_BIT;
+   } else {
+      mt = irb->mt;
+   }
+
    /* For a window-system renderbuffer, we need to flip the mapping we receive
     * upside-down.  So we need to ask for a rectangle on flipped vertically, and
     * we then return a pointer to the bottom of it with a negative stride.
@@ -114,7 +178,7 @@ intel_map_renderbuffer(struct gl_context *ctx,
       y = rb->Height - y - h;
    }
 
-   intel_miptree_map(brw, irb->mt, irb->mt_level, irb->mt_layer,
+   intel_miptree_map(brw, mt, irb->mt_level, irb->mt_layer,
 		     x, y, w, h, mode, &map, &stride);
 
    if (rb->Name == 0) {
@@ -128,6 +192,11 @@ intel_map_renderbuffer(struct gl_context *ctx,
 
    *out_map = map;
    *out_stride = stride;
+   return;
+
+fail:
+   *out_map = NULL;
+   *out_stride = 0;
 }
 
 /**
@@ -140,6 +209,7 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
    struct brw_context *brw = brw_context(ctx);
    struct swrast_renderbuffer *srb = (struct swrast_renderbuffer *)rb;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   struct intel_mipmap_tree *mt;
 
    DBG("%s: rb %d (%s)\n", __FUNCTION__,
        rb->Name, _mesa_get_format_name(rb->Format));
@@ -150,7 +220,21 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
       return;
    }
 
-   intel_miptree_unmap(brw, irb->mt, irb->mt_level, irb->mt_layer);
+   if (rb->NumSamples > 1) {
+      mt = irb->singlesample_mt;
+   } else {
+      mt = irb->mt;
+   }
+
+   intel_miptree_unmap(brw, mt, irb->mt_level, irb->mt_layer);
+
+   if (irb->need_map_upsample) {
+      intel_renderbuffer_upsample(brw, irb);
+      irb->need_map_upsample = false;
+   }
+
+   if (irb->singlesample_mt_is_tmp)
+      intel_miptree_release(&irb->singlesample_mt);
 }
 
 
@@ -785,16 +869,6 @@ intel_blit_framebuffer(struct gl_context *ctx,
                               srcX0, srcY0, srcX1, srcY1,
                               dstX0, dstY0, dstX1, dstY1,
                               mask, filter);
-}
-
-/**
- * This is a no-op except on multisample buffers shared with DRI2.
- */
-void
-intel_renderbuffer_set_needs_downsample(struct intel_renderbuffer *irb)
-{
-   if (irb->mt && irb->mt->singlesample_mt)
-      irb->mt->need_downsample = true;
 }
 
 /**

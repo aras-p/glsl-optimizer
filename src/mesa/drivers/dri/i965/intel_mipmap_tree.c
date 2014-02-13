@@ -728,10 +728,9 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
       return NULL;
    }
 
-   multisample_mt->singlesample_mt = singlesample_mt;
-   multisample_mt->need_downsample = false;
-
+   irb->need_downsample = false;
    irb->mt = multisample_mt;
+   irb->singlesample_mt = singlesample_mt;
 }
 
 struct intel_mipmap_tree*
@@ -799,7 +798,6 @@ intel_miptree_release(struct intel_mipmap_tree **mt)
       intel_miptree_release(&(*mt)->stencil_mt);
       intel_miptree_release(&(*mt)->hiz_mt);
       intel_miptree_release(&(*mt)->mcs_mt);
-      intel_miptree_release(&(*mt)->singlesample_mt);
       intel_resolve_map_clear(&(*mt)->hiz_map);
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
@@ -1547,7 +1545,7 @@ intel_offset_S8(uint32_t stride, uint32_t x, uint32_t y, bool swizzled)
    return u;
 }
 
-static void
+void
 intel_miptree_updownsample(struct brw_context *brw,
                            struct intel_mipmap_tree *src,
                            struct intel_mipmap_tree *dst)
@@ -1571,49 +1569,6 @@ intel_miptree_updownsample(struct brw_context *brw,
                               dst->logical_width0, dst->logical_height0,
                               GL_NEAREST, false, false /*mirror x, y*/);
    }
-}
-
-static void
-assert_is_flat(struct intel_mipmap_tree *mt)
-{
-   assert(mt->target == GL_TEXTURE_2D ||
-          mt->target == GL_TEXTURE_2D_MULTISAMPLE);
-   assert(mt->first_level == 0);
-   assert(mt->last_level == 0);
-}
-
-/**
- * \brief Downsample from mt to mt->singlesample_mt.
- *
- * If the miptree needs no downsample, then skip.
- */
-void
-intel_miptree_downsample(struct brw_context *brw,
-                         struct intel_mipmap_tree *mt)
-{
-   /* Only flat, renderbuffer-like miptrees are supported. */
-   assert_is_flat(mt);
-
-   if (!mt->need_downsample)
-      return;
-   intel_miptree_updownsample(brw, mt, mt->singlesample_mt);
-   mt->need_downsample = false;
-}
-
-/**
- * \brief Upsample from mt->singlesample_mt to mt.
- *
- * The upsample is done unconditionally.
- */
-void
-intel_miptree_upsample(struct brw_context *brw,
-                       struct intel_mipmap_tree *mt)
-{
-   /* Only flat, renderbuffer-like miptrees are supported. */
-   assert_is_flat(mt);
-   assert(!mt->need_downsample);
-
-   intel_miptree_updownsample(brw, mt->singlesample_mt, mt);
 }
 
 void *
@@ -2164,18 +2119,18 @@ can_blit_slice(struct intel_mipmap_tree *mt,
    return true;
 }
 
-static void
-intel_miptree_map_singlesample(struct brw_context *brw,
-                               struct intel_mipmap_tree *mt,
-                               unsigned int level,
-                               unsigned int slice,
-                               unsigned int x,
-                               unsigned int y,
-                               unsigned int w,
-                               unsigned int h,
-                               GLbitfield mode,
-                               void **out_ptr,
-                               int *out_stride)
+void
+intel_miptree_map(struct brw_context *brw,
+                  struct intel_mipmap_tree *mt,
+                  unsigned int level,
+                  unsigned int slice,
+                  unsigned int x,
+                  unsigned int y,
+                  unsigned int w,
+                  unsigned int h,
+                  GLbitfield mode,
+                  void **out_ptr,
+                  int *out_stride)
 {
    struct intel_miptree_map *map;
 
@@ -2228,11 +2183,11 @@ intel_miptree_map_singlesample(struct brw_context *brw,
       intel_miptree_release_map(mt, level, slice);
 }
 
-static void
-intel_miptree_unmap_singlesample(struct brw_context *brw,
-                                 struct intel_mipmap_tree *mt,
-                                 unsigned int level,
-                                 unsigned int slice)
+void
+intel_miptree_unmap(struct brw_context *brw,
+                    struct intel_mipmap_tree *mt,
+                    unsigned int level,
+                    unsigned int slice)
 {
    struct intel_miptree_map *map = mt->level[level].slice[slice].map;
 
@@ -2262,128 +2217,4 @@ intel_miptree_unmap_singlesample(struct brw_context *brw,
    }
 
    intel_miptree_release_map(mt, level, slice);
-}
-
-static void
-intel_miptree_map_multisample(struct brw_context *brw,
-                              struct intel_mipmap_tree *mt,
-                              unsigned int level,
-                              unsigned int slice,
-                              unsigned int x,
-                              unsigned int y,
-                              unsigned int w,
-                              unsigned int h,
-                              GLbitfield mode,
-                              void **out_ptr,
-                              int *out_stride)
-{
-   struct gl_context *ctx = &brw->ctx;
-   struct intel_miptree_map *map;
-
-   assert(mt->num_samples > 1);
-
-   /* Only flat, renderbuffer-like miptrees are supported. */
-   if (mt->target != GL_TEXTURE_2D_MULTISAMPLE ||
-       mt->first_level != 0 ||
-       mt->last_level != 0) {
-      _mesa_problem(ctx, "attempt to map a multisample miptree for "
-                    "which (target, first_level, last_level != "
-                    "(GL_TEXTURE_2D, 0, 0)");
-      goto fail;
-   }
-
-   map = intel_miptree_attach_map(mt, level, slice, x, y, w, h, mode);
-   if (!map)
-      goto fail;
-
-   if (!mt->singlesample_mt) {
-      mt->singlesample_mt =
-         intel_miptree_create_for_renderbuffer(brw,
-                                               mt->format,
-                                               mt->logical_width0,
-                                               mt->logical_height0,
-                                               0 /*num_samples*/);
-      if (!mt->singlesample_mt)
-         goto fail;
-
-      map->singlesample_mt_is_tmp = true;
-      mt->need_downsample = true;
-   }
-
-   intel_miptree_downsample(brw, mt);
-   intel_miptree_map_singlesample(brw, mt->singlesample_mt,
-                                  level, slice,
-                                  x, y, w, h,
-                                  mode,
-                                  out_ptr, out_stride);
-   return;
-
-fail:
-   intel_miptree_release_map(mt, level, slice);
-   *out_ptr = NULL;
-   *out_stride = 0;
-}
-
-static void
-intel_miptree_unmap_multisample(struct brw_context *brw,
-                                struct intel_mipmap_tree *mt,
-                                unsigned int level,
-                                unsigned int slice)
-{
-   struct intel_miptree_map *map = mt->level[level].slice[slice].map;
-
-   assert(mt->num_samples > 1);
-
-   if (!map)
-      return;
-
-   intel_miptree_unmap_singlesample(brw, mt->singlesample_mt, level, slice);
-
-   mt->need_downsample = false;
-   if (map->mode & GL_MAP_WRITE_BIT)
-      intel_miptree_upsample(brw, mt);
-
-   if (map->singlesample_mt_is_tmp)
-      intel_miptree_release(&mt->singlesample_mt);
-
-   intel_miptree_release_map(mt, level, slice);
-}
-
-void
-intel_miptree_map(struct brw_context *brw,
-		  struct intel_mipmap_tree *mt,
-		  unsigned int level,
-		  unsigned int slice,
-		  unsigned int x,
-		  unsigned int y,
-		  unsigned int w,
-		  unsigned int h,
-		  GLbitfield mode,
-		  void **out_ptr,
-		  int *out_stride)
-{
-   if (mt->num_samples <= 1)
-      intel_miptree_map_singlesample(brw, mt,
-                                     level, slice,
-                                     x, y, w, h,
-                                     mode,
-                                     out_ptr, out_stride);
-   else
-      intel_miptree_map_multisample(brw, mt,
-                                    level, slice,
-                                    x, y, w, h,
-                                    mode,
-                                    out_ptr, out_stride);
-}
-
-void
-intel_miptree_unmap(struct brw_context *brw,
-		    struct intel_mipmap_tree *mt,
-		    unsigned int level,
-		    unsigned int slice)
-{
-   if (mt->num_samples <= 1)
-      intel_miptree_unmap_singlesample(brw, mt, level, slice);
-   else
-      intel_miptree_unmap_multisample(brw, mt, level, slice);
 }

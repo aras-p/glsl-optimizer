@@ -93,12 +93,6 @@ struct intel_miptree_map {
    void *ptr;
    /** Stride of the mapping. */
    int stride;
-
-   /**
-    * intel_mipmap_tree::singlesample_mt is temporary storage that persists
-    * only for the duration of the map.
-    */
-   bool singlesample_mt_is_tmp;
 };
 
 /**
@@ -369,50 +363,6 @@ struct intel_mipmap_tree
    /* Offset into region bo where miptree starts:
     */
    uint32_t offset;
-
-   /**
-    * \brief Singlesample miptree.
-    *
-    * This is used under two cases.
-    *
-    * --- Case 1: As persistent singlesample storage for multisample window
-    *  system front and back buffers ---
-    *
-    * Suppose that the window system FBO was created with a multisample
-    * config.  Let `back_irb` be the `intel_renderbuffer` for the FBO's back
-    * buffer. Then `back_irb` contains two miptrees: a parent multisample
-    * miptree (back_irb->mt) and a child singlesample miptree
-    * (back_irb->mt->singlesample_mt).  The DRM buffer shared with DRI2
-    * belongs to `back_irb->mt->singlesample_mt` and contains singlesample
-    * data.  The singlesample miptree is created at the same time as and
-    * persists for the lifetime of its parent multisample miptree.
-    *
-    * When access to the singlesample data is needed, such as at
-    * eglSwapBuffers and glReadPixels, an automatic downsample occurs from
-    * `back_rb->mt` to `back_rb->mt->singlesample_mt` when necessary.
-    *
-    * This description of the back buffer applies analogously to the front
-    * buffer.
-    *
-    *
-    * --- Case 2: As temporary singlesample storage for mapping multisample
-    *  miptrees ---
-    *
-    * Suppose the intel_miptree_map is called on a multisample miptree, `mt`,
-    * for which case 1 does not apply (that is, `mt` does not belong to
-    * a front or back buffer).  Then `mt->singlesample_mt` is null at the
-    * start of the call. intel_miptree_map will create a temporary
-    * singlesample miptree, store it at `mt->singlesample_mt`, downsample from
-    * `mt` to `mt->singlesample_mt` if necessary, then map
-    * `mt->singlesample_mt`. The temporary miptree is later deleted during
-    * intel_miptree_unmap.
-    */
-   struct intel_mipmap_tree *singlesample_mt;
-
-   /**
-    * \brief A downsample is needed from this miptree to singlesample_mt.
-    */
-   bool need_downsample;
 
    /**
     * \brief HiZ miptree
@@ -699,12 +649,9 @@ intel_miptree_make_shareable(struct brw_context *brw,
                              struct intel_mipmap_tree *mt);
 
 void
-intel_miptree_downsample(struct brw_context *brw,
-                         struct intel_mipmap_tree *mt);
-
-void
-intel_miptree_upsample(struct brw_context *brw,
-                       struct intel_mipmap_tree *mt);
+intel_miptree_updownsample(struct brw_context *brw,
+                           struct intel_mipmap_tree *src,
+                           struct intel_mipmap_tree *dst);
 
 void brw_miptree_layout(struct brw_context *brw, struct intel_mipmap_tree *mt);
 

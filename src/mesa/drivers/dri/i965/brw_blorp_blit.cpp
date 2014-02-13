@@ -193,7 +193,7 @@ do_blorp_blit(struct brw_context *brw, GLbitfield buffer_bit,
                            dstX0, dstY0, dstX1, dstY1,
                            filter, mirror_x, mirror_y);
 
-   intel_renderbuffer_set_needs_downsample(dst_irb);
+   dst_irb->need_downsample = true;
 }
 
 static bool
