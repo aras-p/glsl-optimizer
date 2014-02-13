@@ -29,7 +29,8 @@
 #include "util/u_format.h"
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
-#include "state_tracker/xlib_sw_winsys.h"
+#include "state_tracker/xlibsw_api.h"
+#include "sw/xlib/xlib_sw_winsys.h"
 #include "util/u_debug.h"
 #include "egllog.h"
 

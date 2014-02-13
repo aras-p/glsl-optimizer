@@ -42,6 +42,7 @@ AM_CFLAGS += \
 	$(LIBDRM_CFLAGS) \
 	$(DRI2PROTO_CFLAGS)
 AM_CPPFLAGS += \
+	-I$(top_srcdir)/src/gallium/winsys \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/src/glx \
 	-I$(top_srcdir)/src/mapi \

@@ -5,8 +5,9 @@
 #include "util/u_memory.h"
 #include "target-helpers/inline_sw_helper.h"
 #include "target-helpers/inline_debug_helper.h"
-#include "state_tracker/xlib_sw_winsys.h"
+#include "state_tracker/xlibsw_api.h"
 #include "state_tracker/graw.h"
+#include "sw/xlib/xlib_sw_winsys.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>

@@ -61,7 +61,7 @@ and create a window, you must do the following to use the X/Mesa interface:
 #include "state_tracker/st_api.h"
 #include "os/os_thread.h"
 
-#include "state_tracker/xlib_sw_winsys.h"
+#include "state_tracker/xlibsw_api.h"
 
 # include <X11/Xlib.h>
 # include <X11/Xlibint.h>

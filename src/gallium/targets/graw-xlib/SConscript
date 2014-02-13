@@ -16,6 +16,7 @@ env.Append(LIBPATH = env['X11_LIBPATH'])
 env.Append(CPPPATH = [
     '#src/gallium/drivers',
     '#src/gallium/include/state_tracker',
+    '#src/gallium/winsys',
 ])
 
 env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE', 'GALLIUM_GALAHAD'])
