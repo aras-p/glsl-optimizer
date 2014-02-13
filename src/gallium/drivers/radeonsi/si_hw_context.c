@@ -81,7 +81,7 @@ void si_context_flush(struct si_context *ctx, unsigned flags)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 
-	if (!cs->cdw)
+	if (cs->cdw == ctx->b.initial_gfx_cs_size)
 		return;
 
 	/* suspend queries */
@@ -177,6 +177,8 @@ void si_begin_new_cs(struct si_context *ctx)
 	}
 
 	si_all_descriptors_begin_new_cs(ctx);
+
+	ctx->b.initial_gfx_cs_size = ctx->b.rings.gfx.cs->cdw;
 }
 
 #if SI_TRACE_CS

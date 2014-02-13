@@ -60,7 +60,7 @@ void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
 		rusage = RADEON_USAGE_WRITE;
 	}
 
-	if (ctx->rings.gfx.cs->cdw &&
+	if (ctx->rings.gfx.cs->cdw != ctx->initial_gfx_cs_size &&
 	    ctx->ws->cs_is_buffer_referenced(ctx->rings.gfx.cs,
 					     resource->cs_buf, rusage)) {
 		if (usage & PIPE_TRANSFER_DONTBLOCK) {

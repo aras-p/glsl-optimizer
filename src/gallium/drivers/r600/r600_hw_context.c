@@ -355,7 +355,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 	ctx->last_primitive_type = -1;
 	ctx->last_start_instance = -1;
 
-	ctx->initial_gfx_cs_size = ctx->b.rings.gfx.cs->cdw;
+	ctx->b.initial_gfx_cs_size = ctx->b.rings.gfx.cs->cdw;
 }
 
 /* The max number of bytes to copy per packet. */

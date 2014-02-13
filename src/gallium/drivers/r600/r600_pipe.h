@@ -377,7 +377,6 @@ struct r600_context {
 	struct r600_screen		*screen;
 	struct blitter_context		*blitter;
 	struct u_suballocator		*allocator_fetch_shader;
-	unsigned			initial_gfx_cs_size;
 
 	/* Hardware info. */
 	boolean				has_vertex_cache;
