@@ -366,6 +366,8 @@ nv50_switch_pipe_context(struct nv50_context *ctx_to)
       ctx_to->state = ctx_from->state;
 
    ctx_to->dirty = ~0;
+   ctx_to->viewports_dirty = ~0;
+   ctx_to->scissors_dirty = ~0;
 
    if (!ctx_to->vertex)
       ctx_to->dirty &= ~(NV50_NEW_VERTEX | NV50_NEW_ARRAYS);
