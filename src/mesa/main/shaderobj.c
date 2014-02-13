@@ -355,6 +355,7 @@ _mesa_free_shader_program_data(struct gl_context *ctx,
    }
 
    free(shProg->Label);
+   shProg->Label = NULL;
 }
 
 
