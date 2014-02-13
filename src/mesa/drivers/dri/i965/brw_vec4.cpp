@@ -849,6 +849,14 @@ vec4_visitor::opt_set_dependency_control()
             continue;
          }
 
+         /* Dependency control does not work well over math instructions.
+          */
+         if (inst->is_math()) {
+            memset(last_grf_write, 0, sizeof(last_grf_write));
+            memset(last_mrf_write, 0, sizeof(last_mrf_write));
+            continue;
+         }
+
          /* Now, see if we can do dependency control for this instruction
           * against a previous one writing to its destination.
           */
