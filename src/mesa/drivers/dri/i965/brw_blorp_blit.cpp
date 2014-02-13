@@ -1974,7 +1974,6 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
                                              bool mirror_x, bool mirror_y)
 {
    struct gl_context *ctx = &brw->ctx;
-   const struct gl_framebuffer *read_fb = ctx->ReadBuffer;
 
    src.set(brw, src_mt, src_level, src_layer, false);
    dst.set(brw, dst_mt, dst_level, dst_layer, true);
@@ -2127,8 +2126,10 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
    y0 = wm_push_consts.dst_y0 = dst_y0;
    x1 = wm_push_consts.dst_x1 = dst_x1;
    y1 = wm_push_consts.dst_y1 = dst_y1;
-   wm_push_consts.rect_grid_x1 = read_fb->Width * wm_prog_key.x_scale - 1.0;
-   wm_push_consts.rect_grid_y1 = read_fb->Height * wm_prog_key.y_scale - 1.0;
+   wm_push_consts.rect_grid_x1 = (minify(src_mt->logical_width0, src_level) *
+                                  wm_prog_key.x_scale - 1.0);
+   wm_push_consts.rect_grid_y1 = (minify(src_mt->logical_height0, src_level) *
+                                  wm_prog_key.y_scale - 1.0);
 
    wm_push_consts.x_transform.setup(src_x0, src_x1, dst_x0, dst_x1, mirror_x);
    wm_push_consts.y_transform.setup(src_y0, src_y1, dst_y0, dst_y1, mirror_y);
