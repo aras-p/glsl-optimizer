@@ -65,6 +65,7 @@ nv50_validate_fb(struct nv50_context *nv50)
          PUSH_DATA (push, sf->height);
          BEGIN_NV04(push, NV50_3D(RT_ARRAY_MODE), 1);
          PUSH_DATA (push, array_mode | array_size);
+         nv50->rt_array_mode = array_mode | array_size;
       } else {
          PUSH_DATA (push, 0);
          PUSH_DATA (push, 0);

@@ -295,7 +295,7 @@ nv50_clear_render_target(struct pipe_context *pipe,
    PUSH_DATA (push, bo->offset + sf->offset);
    PUSH_DATA (push, nv50_format_table[dst->format].rt);
    PUSH_DATA (push, mt->level[sf->base.u.tex.level].tile_mode);
-   PUSH_DATA (push, 0);
+   PUSH_DATA (push, mt->layer_stride >> 2);
    BEGIN_NV04(push, NV50_3D(RT_HORIZ(0)), 2);
    if (nouveau_bo_memtype(bo))
       PUSH_DATA(push, sf->width);
@@ -303,7 +303,10 @@ nv50_clear_render_target(struct pipe_context *pipe,
       PUSH_DATA(push, NV50_3D_RT_HORIZ_LINEAR | mt->level[0].pitch);
    PUSH_DATA (push, sf->height);
    BEGIN_NV04(push, NV50_3D(RT_ARRAY_MODE), 1);
-   PUSH_DATA (push, 1);
+   if (mt->layout_3d)
+      PUSH_DATA(push, NV50_3D_RT_ARRAY_MODE_MODE_3D | 512);
+   else
+      PUSH_DATA(push, 512);
 
    if (!nouveau_bo_memtype(bo)) {
       BEGIN_NV04(push, NV50_3D(ZETA_ENABLE), 1);
@@ -366,13 +369,16 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
    PUSH_DATA (push, bo->offset + sf->offset);
    PUSH_DATA (push, nv50_format_table[dst->format].rt);
    PUSH_DATA (push, mt->level[sf->base.u.tex.level].tile_mode);
-   PUSH_DATA (push, 0);
+   PUSH_DATA (push, mt->layer_stride >> 2);
    BEGIN_NV04(push, NV50_3D(ZETA_ENABLE), 1);
    PUSH_DATA (push, 1);
    BEGIN_NV04(push, NV50_3D(ZETA_HORIZ), 3);
    PUSH_DATA (push, sf->width);
    PUSH_DATA (push, sf->height);
    PUSH_DATA (push, (1 << 16) | 1);
+
+   BEGIN_NV04(push, NV50_3D(RT_ARRAY_MODE), 1);
+   PUSH_DATA (push, 512);
 
    BEGIN_NV04(push, NV50_3D(VIEWPORT_HORIZ(0)), 2);
    PUSH_DATA (push, (width << 16) | dstx);
@@ -401,6 +407,11 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
    /* don't need NEW_BLEND, COLOR_MASK doesn't affect CLEAR_BUFFERS */
    if (!nv50_state_validate(nv50, NV50_NEW_FRAMEBUFFER, 9 + (fb->nr_cbufs * 2)))
       return;
+
+   /* We have to clear ALL of the layers, not up to the min number of layers
+    * of any attachment. */
+   BEGIN_NV04(push, NV50_3D(RT_ARRAY_MODE), 1);
+   PUSH_DATA (push, (nv50->rt_array_mode & NV50_3D_RT_ARRAY_MODE_MODE_3D) | 512);
 
    if (buffers & PIPE_CLEAR_COLOR && fb->nr_cbufs) {
       BEGIN_NV04(push, NV50_3D(CLEAR_COLOR(0)), 4);
@@ -459,6 +470,10 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
                     (j << NV50_3D_CLEAR_BUFFERS_LAYER__SHIFT));
       }
    }
+
+   /* restore the array mode */
+   BEGIN_NV04(push, NV50_3D(RT_ARRAY_MODE), 1);
+   PUSH_DATA (push, nv50->rt_array_mode);
 }
 
 

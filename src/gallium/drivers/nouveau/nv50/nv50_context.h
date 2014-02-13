@@ -173,6 +173,8 @@ struct nv50_context {
 
    boolean vbo_push_hint;
 
+   uint32_t rt_array_mode;
+
    struct pipe_query *cond_query;
    boolean cond_cond;
    uint cond_mode;
