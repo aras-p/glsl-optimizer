@@ -648,8 +648,8 @@ private:
       PACKING_ORDER_VEC3,
    };
 
-   static unsigned compute_packing_class(ir_variable *var);
-   static packing_order_enum compute_packing_order(ir_variable *var);
+   static unsigned compute_packing_class(const ir_variable *var);
+   static packing_order_enum compute_packing_order(const ir_variable *var);
    static int match_comparator(const void *x_generic, const void *y_generic);
 
    /**
@@ -869,7 +869,7 @@ varying_matches::store_locations(unsigned producer_base,
  * be safely backed into the same vec4.
  */
 unsigned
-varying_matches::compute_packing_class(ir_variable *var)
+varying_matches::compute_packing_class(const ir_variable *var)
 {
    /* Without help from the back-end, there is no way to pack together
     * variables with different interpolation types, because
@@ -900,7 +900,7 @@ varying_matches::compute_packing_class(ir_variable *var)
  * other varyings in the same packing class.
  */
 varying_matches::packing_order_enum
-varying_matches::compute_packing_order(ir_variable *var)
+varying_matches::compute_packing_order(const ir_variable *var)
 {
    const glsl_type *element_type = var->type;
 
