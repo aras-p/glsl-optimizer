@@ -925,13 +925,10 @@ init_fbconfig_for_chooser(struct glx_config * config,
    if (fbconfig_style_tags) {
       config->rgbMode = GL_TRUE;
       config->doubleBufferMode = GLX_DONT_CARE;
-      /* allow any kind of drawable, including those for off-screen buffers */
-      config->drawableType = 0;
-   } else {
-       /* allow configs which support on-screen drawing */
-       config->drawableType = GLX_WINDOW_BIT;
+      config->renderType = GLX_RGBA_BIT;
    }
 
+   config->drawableType = GLX_WINDOW_BIT;
    config->visualRating = GLX_DONT_CARE;
    config->transparentPixel = GLX_NONE;
    config->transparentRed = GLX_DONT_CARE;
@@ -940,8 +937,6 @@ init_fbconfig_for_chooser(struct glx_config * config,
    config->transparentAlpha = GLX_DONT_CARE;
    config->transparentIndex = GLX_DONT_CARE;
 
-   /* Set GLX_RENDER_TYPE property to not expect any flags by default. */
-   config->renderType = 0;
    config->xRenderable = GLX_DONT_CARE;
    config->fbconfigID = (GLXFBConfigID) (GLX_DONT_CARE);
 
