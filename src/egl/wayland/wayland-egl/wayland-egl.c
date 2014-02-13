@@ -9,6 +9,9 @@ wl_egl_window_resize(struct wl_egl_window *egl_window,
 		     int width, int height,
 		     int dx, int dy)
 {
+	if (width <= 0 || height <= 0)
+		return;
+
 	egl_window->width  = width;
 	egl_window->height = height;
 	egl_window->dx     = dx;
@@ -23,6 +26,9 @@ wl_egl_window_create(struct wl_surface *surface,
 		     int width, int height)
 {
 	struct wl_egl_window *egl_window;
+
+	if (width <= 0 || height <= 0)
+		return NULL;
 
 	egl_window = malloc(sizeof *egl_window);
 	if (!egl_window)
