@@ -42,8 +42,10 @@
 #include "util/u_rect.h"
 #include "os/os_thread.h"
 
+#include "vl/vl_video_buffer.h"
 #include "vl/vl_compositor.h"
 #include "vl/vl_csc.h"
+#include "vl/vl_deint_filter.h"
 #include "vl/vl_matrix_filter.h"
 #include "vl/vl_median_filter.h"
 #include "vl/vl_winsys.h"
@@ -357,6 +359,11 @@ typedef struct
 {
    vlVdpDevice *device;
    struct vl_compositor_state cstate;
+
+   struct {
+	  bool supported, enabled, spatial;
+	  struct vl_deint_filter *filter;
+   } deint;
 
    struct {
       bool supported, enabled;

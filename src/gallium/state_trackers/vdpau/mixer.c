@@ -80,7 +80,6 @@ vlVdpVideoMixerCreate(VdpDevice device,
    for (i = 0; i < feature_count; ++i) {
       switch (features[i]) {
       /* they are valid, but we doesn't support them */
-      case VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL:
       case VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL:
       case VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1:
       case VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L2:
@@ -93,6 +92,10 @@ vlVdpVideoMixerCreate(VdpDevice device,
       case VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L9:
       case VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE:
       case VDP_VIDEO_MIXER_FEATURE_LUMA_KEY:
+         break;
+
+      case VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL:
+         vmixer->deint.supported = true;
          break;
 
       case VDP_VIDEO_MIXER_FEATURE_SHARPNESS:
@@ -181,6 +184,11 @@ vlVdpVideoMixerDestroy(VdpVideoMixer mixer)
 
    vl_compositor_cleanup_state(&vmixer->cstate);
 
+   if (vmixer->deint.filter) {
+      vl_deint_filter_cleanup(vmixer->deint.filter);
+      FREE(vmixer->deint.filter);
+   }
+
    if (vmixer->noise_reduction.filter) {
       vl_median_filter_cleanup(vmixer->noise_reduction.filter);
       FREE(vmixer->noise_reduction.filter);
@@ -219,6 +227,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    enum vl_compositor_deinterlace deinterlace;
    struct u_rect rect, clip, *prect;
    unsigned i, layer = 0;
+   struct pipe_video_buffer *video_buffer;
 
    vlVdpVideoMixer *vmixer;
    vlVdpSurface *surf;
@@ -233,6 +242,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    compositor = &vmixer->device->compositor;
 
    surf = vlGetDataHTAB(video_surface_current);
+   video_buffer = surf->video_buffer;
    if (!surf)
       return VDP_STATUS_INVALID_HANDLE;
 
@@ -283,6 +293,24 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
       pipe_mutex_unlock(vmixer->device->mutex);
       return VDP_STATUS_INVALID_VIDEO_MIXER_PICTURE_STRUCTURE;
    };
+
+   if (deinterlace != VL_COMPOSITOR_WEAVE && vmixer->deint.enabled &&
+       video_surface_past_count > 1 && video_surface_future_count > 0) {
+      vlVdpSurface *prevprev = vlGetDataHTAB(video_surface_past[1]);
+      vlVdpSurface *prev = vlGetDataHTAB(video_surface_past[0]);
+      vlVdpSurface *next = vlGetDataHTAB(video_surface_future[0]);
+      if (prevprev && prev && next &&
+          vl_deint_filter_check_buffers(vmixer->deint.filter,
+          prevprev->video_buffer, prev->video_buffer, surf->video_buffer, next->video_buffer)) {
+         vl_deint_filter_render(vmixer->deint.filter, prevprev->video_buffer,
+                                prev->video_buffer, surf->video_buffer,
+                                next->video_buffer,
+                                deinterlace == VL_COMPOSITOR_BOB_BOTTOM);
+         deinterlace = VL_COMPOSITOR_WEAVE;
+         video_buffer = vmixer->deint.filter->video_buffer;
+      }
+   }
+
    prect = RectToPipe(video_source_rect, &rect);
    if (!prect) {
       rect.x0 = 0;
@@ -291,7 +319,7 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
       rect.y1 = surf->templat.height;
       prect = &rect;
    }
-   vl_compositor_set_buffer_layer(&vmixer->cstate, compositor, layer, surf->video_buffer, prect, NULL, deinterlace);
+   vl_compositor_set_buffer_layer(&vmixer->cstate, compositor, layer, video_buffer, prect, NULL, deinterlace);
    vl_compositor_set_layer_dst_area(&vmixer->cstate, layer++, RectToPipe(destination_video_rect, &rect));
 
    for (i = 0; i < layer_count; ++i) {
@@ -330,6 +358,31 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    pipe_mutex_unlock(vmixer->device->mutex);
 
    return VDP_STATUS_OK;
+}
+
+static void
+vlVdpVideoMixerUpdateDeinterlaceFilter(vlVdpVideoMixer *vmixer)
+{
+   struct pipe_context *pipe = vmixer->device->context;
+   assert(vmixer);
+
+   /* remove existing filter */
+   if (vmixer->deint.filter) {
+      vl_deint_filter_cleanup(vmixer->deint.filter);
+      FREE(vmixer->deint.filter);
+      vmixer->deint.filter = NULL;
+   }
+
+   /* create a new filter if requested */
+   if (vmixer->deint.enabled && vmixer->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
+      vmixer->deint.filter = MALLOC(sizeof(struct vl_deint_filter));
+      vmixer->deint.enabled = vl_deint_filter_init(vmixer->deint.filter, pipe,
+            vmixer->video_width, vmixer->video_height,
+            vmixer->skip_chroma_deint, vmixer->deint.spatial);
+      if (!vmixer->deint.enabled) {
+         FREE(vmixer->deint.filter);
+      }
+   }
 }
 
 /**
@@ -424,7 +477,6 @@ vlVdpVideoMixerGetFeatureSupport(VdpVideoMixer mixer,
    for (i = 0; i < feature_count; ++i) {
       switch (features[i]) {
       /* they are valid, but we doesn't support them */
-      case VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL:
       case VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL:
       case VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1:
       case VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L2:
@@ -438,6 +490,10 @@ vlVdpVideoMixerGetFeatureSupport(VdpVideoMixer mixer,
       case VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE:
       case VDP_VIDEO_MIXER_FEATURE_LUMA_KEY:
          feature_supports[i] = false;
+         break;
+
+      case VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL:
+         feature_supports[i] = vmixer->deint.supported;
          break;
 
       case VDP_VIDEO_MIXER_FEATURE_SHARPNESS:
@@ -479,7 +535,6 @@ vlVdpVideoMixerSetFeatureEnables(VdpVideoMixer mixer,
    for (i = 0; i < feature_count; ++i) {
       switch (features[i]) {
       /* they are valid, but we doesn't support them */
-      case VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL:
       case VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL:
       case VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L1:
       case VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L2:
@@ -492,6 +547,11 @@ vlVdpVideoMixerSetFeatureEnables(VdpVideoMixer mixer,
       case VDP_VIDEO_MIXER_FEATURE_HIGH_QUALITY_SCALING_L9:
       case VDP_VIDEO_MIXER_FEATURE_INVERSE_TELECINE:
       case VDP_VIDEO_MIXER_FEATURE_LUMA_KEY:
+         break;
+
+      case VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL:
+         vmixer->deint.enabled = feature_enables[i];
+         vlVdpVideoMixerUpdateDeinterlaceFilter(vmixer);
          break;
 
       case VDP_VIDEO_MIXER_FEATURE_SHARPNESS:
@@ -648,6 +708,7 @@ vlVdpVideoMixerSetAttributeValues(VdpVideoMixer mixer,
          if (*(uint8_t*)attribute_values[i] > 1)
             return VDP_STATUS_INVALID_VALUE;
          vmixer->skip_chroma_deint = *(uint8_t*)attribute_values[i];
+         vlVdpVideoMixerUpdateDeinterlaceFilter(vmixer);
          break;
       default:
          pipe_mutex_unlock(vmixer->device->mutex);
