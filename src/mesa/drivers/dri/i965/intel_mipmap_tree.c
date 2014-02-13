@@ -35,6 +35,7 @@
 #include "intel_resolve_map.h"
 #include "intel_tex.h"
 #include "intel_blit.h"
+#include "intel_fbo.h"
 
 #include "brw_blorp.h"
 #include "brw_context.h"
@@ -666,78 +667,6 @@ intel_miptree_create_for_bo(struct brw_context *brw,
    return mt;
 }
 
-
-/**
- * For a singlesample DRI2 buffer, this simply wraps the given region with a miptree.
- *
- * For a multisample DRI2 buffer, this wraps the given region with
- * a singlesample miptree, then creates a multisample miptree into which the
- * singlesample miptree is embedded as a child.
- */
-struct intel_mipmap_tree*
-intel_miptree_create_for_dri2_buffer(struct brw_context *brw,
-                                     unsigned dri_attachment,
-                                     mesa_format format,
-                                     uint32_t num_samples,
-                                     struct intel_region *region)
-{
-   struct intel_mipmap_tree *singlesample_mt = NULL;
-   struct intel_mipmap_tree *multisample_mt = NULL;
-
-   /* Only the front and back buffers, which are color buffers, are shared
-    * through DRI2.
-    */
-   assert(dri_attachment == __DRI_BUFFER_BACK_LEFT ||
-          dri_attachment == __DRI_BUFFER_FRONT_LEFT ||
-          dri_attachment == __DRI_BUFFER_FAKE_FRONT_LEFT);
-   assert(_mesa_get_format_base_format(format) == GL_RGB ||
-          _mesa_get_format_base_format(format) == GL_RGBA);
-
-   singlesample_mt = intel_miptree_create_for_bo(brw,
-                                                 region->bo,
-                                                 format,
-                                                 0,
-                                                 region->width,
-                                                 region->height,
-                                                 region->pitch,
-                                                 region->tiling);
-   if (!singlesample_mt)
-      return NULL;
-   singlesample_mt->region->name = region->name;
-
-   /* If this miptree is capable of supporting fast color clears, set
-    * fast_clear_state appropriately to ensure that fast clears will occur.
-    * Allocation of the MCS miptree will be deferred until the first fast
-    * clear actually occurs.
-    */
-   if (intel_is_non_msrt_mcs_buffer_supported(brw, singlesample_mt))
-      singlesample_mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_RESOLVED;
-
-   if (num_samples == 0)
-      return singlesample_mt;
-
-   multisample_mt = intel_miptree_create_for_renderbuffer(brw,
-                                                          format,
-                                                          region->width,
-                                                          region->height,
-                                                          num_samples);
-   if (!multisample_mt) {
-      intel_miptree_release(&singlesample_mt);
-      return NULL;
-   }
-
-   multisample_mt->singlesample_mt = singlesample_mt;
-   multisample_mt->need_downsample = false;
-
-   if (brw->is_front_buffer_rendering &&
-       (dri_attachment == __DRI_BUFFER_FRONT_LEFT ||
-        dri_attachment == __DRI_BUFFER_FAKE_FRONT_LEFT)) {
-      intel_miptree_upsample(brw, multisample_mt);
-   }
-
-   return multisample_mt;
-}
-
 /**
  * For a singlesample image buffer, this simply wraps the given region with a miptree.
  *
@@ -745,15 +674,18 @@ intel_miptree_create_for_dri2_buffer(struct brw_context *brw,
  * a singlesample miptree, then creates a multisample miptree into which the
  * singlesample miptree is embedded as a child.
  */
-struct intel_mipmap_tree*
-intel_miptree_create_for_image_buffer(struct brw_context *intel,
-                                      enum __DRIimageBufferMask buffer_type,
-                                      mesa_format format,
-                                      uint32_t num_samples,
-                                      struct intel_region *region)
+void
+intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
+                                         struct intel_renderbuffer *irb,
+                                         struct intel_region *region)
 {
    struct intel_mipmap_tree *singlesample_mt = NULL;
    struct intel_mipmap_tree *multisample_mt = NULL;
+   struct gl_renderbuffer *rb = &irb->Base.Base;
+   mesa_format format = rb->Format;
+   int num_samples = rb->NumSamples;
+
+   intel_miptree_release(&irb->mt);
 
    /* Only the front and back buffers, which are color buffers, are allocated
     * through the image loader.
@@ -770,7 +702,8 @@ intel_miptree_create_for_image_buffer(struct brw_context *intel,
                                                  region->pitch,
                                                  region->tiling);
    if (!singlesample_mt)
-      return NULL;
+      return;
+   singlesample_mt->region->name = region->name;
 
    /* If this miptree is capable of supporting fast color clears, set
     * mcs_state appropriately to ensure that fast clears will occur.
@@ -780,8 +713,10 @@ intel_miptree_create_for_image_buffer(struct brw_context *intel,
    if (intel_is_non_msrt_mcs_buffer_supported(intel, singlesample_mt))
       singlesample_mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_RESOLVED;
 
-   if (num_samples == 0)
-      return singlesample_mt;
+   if (num_samples == 0) {
+      irb->mt = singlesample_mt;
+      return;
+   }
 
    multisample_mt = intel_miptree_create_for_renderbuffer(intel,
                                                           format,
@@ -796,11 +731,7 @@ intel_miptree_create_for_image_buffer(struct brw_context *intel,
    multisample_mt->singlesample_mt = singlesample_mt;
    multisample_mt->need_downsample = false;
 
-   if (intel->is_front_buffer_rendering && buffer_type == __DRI_IMAGE_BUFFER_FRONT) {
-      intel_miptree_upsample(intel, multisample_mt);
-   }
-
-   return multisample_mt;
+   irb->mt = multisample_mt;
 }
 
 struct intel_mipmap_tree*

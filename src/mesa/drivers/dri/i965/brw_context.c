@@ -1302,11 +1302,14 @@ intel_process_dri2_buffer(struct brw_context *brw,
       return;
    }
 
-   rb->mt = intel_miptree_create_for_dri2_buffer(brw,
-                                                 buffer->attachment,
-                                                 intel_rb_format(rb),
-                                                 num_samples,
-                                                 region);
+   intel_update_winsys_renderbuffer_miptree(brw, rb, region);
+
+   if (brw->is_front_buffer_rendering &&
+       (buffer->attachment == __DRI_BUFFER_FRONT_LEFT ||
+        buffer->attachment == __DRI_BUFFER_FAKE_FRONT_LEFT) &&
+       rb->Base.Base.NumSamples > 1) {
+      intel_miptree_upsample(brw, rb->mt);
+   }
 
    assert(rb->mt);
 
@@ -1359,12 +1362,13 @@ intel_update_image_buffer(struct brw_context *intel,
           return;
    }
 
-   intel_miptree_release(&rb->mt);
-   rb->mt = intel_miptree_create_for_image_buffer(intel,
-                                                  buffer_type,
-                                                  intel_rb_format(rb),
-                                                  num_samples,
-                                                  region);
+   intel_update_winsys_renderbuffer_miptree(intel, rb, region);
+
+   if (intel->is_front_buffer_rendering &&
+       buffer_type == __DRI_IMAGE_BUFFER_FRONT &&
+       rb->Base.Base.NumSamples > 1) {
+      intel_miptree_upsample(intel, rb->mt);
+   }
 }
 
 static void

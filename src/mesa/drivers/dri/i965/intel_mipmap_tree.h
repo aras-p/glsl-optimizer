@@ -38,6 +38,8 @@
 extern "C" {
 #endif
 
+struct intel_renderbuffer;
+
 /* A layer on top of the intel_regions code which adds:
  *
  * - Code to size and layout a region to hold a set of mipmaps.
@@ -529,19 +531,10 @@ intel_miptree_create_for_bo(struct brw_context *brw,
                             int pitch,
                             uint32_t tiling);
 
-struct intel_mipmap_tree*
-intel_miptree_create_for_dri2_buffer(struct brw_context *brw,
-                                     unsigned dri_attachment,
-                                     mesa_format format,
-                                     uint32_t num_samples,
-                                     struct intel_region *region);
-
-struct intel_mipmap_tree*
-intel_miptree_create_for_image_buffer(struct brw_context *intel,
-                                     enum __DRIimageBufferMask buffer_type,
-                                     mesa_format format,
-                                     uint32_t num_samples,
-                                     struct intel_region *region);
+void
+intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
+                                         struct intel_renderbuffer *irb,
+                                         struct intel_region *region);
 
 /**
  * Create a miptree appropriate as the storage for a non-texture renderbuffer.
