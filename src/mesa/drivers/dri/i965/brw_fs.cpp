@@ -1108,12 +1108,6 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	 } else {
 	    /* Smooth/noperspective interpolation case. */
 	    for (unsigned int k = 0; k < type->vector_elements; k++) {
-	       /* FINISHME: At some point we probably want to push
-		* this farther by giving similar treatment to the
-		* other potentially constant components of the
-		* attribute, as well as making brw_vs_constval.c
-		* handle varyings other than gl_TexCoord.
-		*/
                struct brw_reg interp = interp_reg(location, k);
                emit_linterp(attr, fs_reg(interp), interpolation_mode,
                             ir->data.centroid && !c->key.persample_shading,
