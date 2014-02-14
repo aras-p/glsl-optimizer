@@ -2942,16 +2942,11 @@ fs_visitor::fs_visitor(struct brw_context *brw,
                        struct gl_shader_program *shader_prog,
                        struct gl_fragment_program *fp,
                        unsigned dispatch_width)
-   : dispatch_width(dispatch_width)
+   : backend_visitor(brw, shader_prog, &fp->Base, &c->prog_data.base),
+     dispatch_width(dispatch_width)
 {
    this->c = c;
-   this->brw = brw;
    this->fp = fp;
-   this->prog = &fp->Base;
-   this->shader_prog = shader_prog;
-   this->prog = &fp->Base;
-   this->stage_prog_data = &c->prog_data.base;
-   this->ctx = &brw->ctx;
    this->mem_ctx = ralloc_context(NULL);
    if (shader_prog)
       shader = (struct brw_shader *)

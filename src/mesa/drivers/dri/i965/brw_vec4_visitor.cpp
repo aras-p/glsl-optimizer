@@ -3363,7 +3363,8 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
                            shader_time_shader_type st_base,
                            shader_time_shader_type st_written,
                            shader_time_shader_type st_reset)
-   : c(c),
+   : backend_visitor(brw, shader_prog, prog, &prog_data->base),
+     c(c),
      key(key),
      prog_data(prog_data),
      sanity_param_count(0),
@@ -3376,9 +3377,6 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
      st_written(st_written),
      st_reset(st_reset)
 {
-   this->brw = brw;
-   this->ctx = &brw->ctx;
-   this->shader_prog = shader_prog;
    this->shader = shader;
 
    this->mem_ctx = mem_ctx;
@@ -3387,9 +3385,6 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
    this->base_ir = NULL;
    this->current_annotation = NULL;
    memset(this->output_reg_annotation, 0, sizeof(this->output_reg_annotation));
-
-   this->prog = prog;
-   this->stage_prog_data = &prog_data->base;
 
    this->variable_ht = hash_table_ctor(0,
 				       hash_table_pointer_hash,
