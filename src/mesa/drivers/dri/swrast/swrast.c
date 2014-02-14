@@ -61,6 +61,9 @@
 
 const __DRIextension **__driDriverGetExtensions_swrast(void);
 
+const char const *swrast_vendor_string = "Mesa Project";
+const char const *swrast_renderer_string = "Software Rasterizer";
+
 /**
  * Screen and config-related functions
  */
@@ -117,8 +120,74 @@ static const __DRItexBufferExtension swrastTexBufferExtension = {
    .releaseTexBuffer    = NULL,
 };
 
+
+static int
+swrast_query_renderer_integer(__DRIscreen *psp, int param,
+			       unsigned int *value)
+{
+   switch (param) {
+   case __DRI2_RENDERER_VENDOR_ID:
+   case __DRI2_RENDERER_DEVICE_ID:
+      /* Return 0xffffffff for both vendor and device id */
+      value[0] = 0xffffffff;
+      return 0;
+   case __DRI2_RENDERER_ACCELERATED:
+      value[0] = 0;
+      return 0;
+   case __DRI2_RENDERER_VIDEO_MEMORY: {
+      /* XXX: Do we want to return the full amount of system memory ? */
+      const long system_memory_pages = sysconf(_SC_PHYS_PAGES);
+      const long system_page_size = sysconf(_SC_PAGE_SIZE);
+
+      if (system_memory_pages <= 0 || system_page_size <= 0)
+         return -1;
+
+      const uint64_t system_memory_bytes = (uint64_t) system_memory_pages
+         * (uint64_t) system_page_size;
+
+      const unsigned system_memory_megabytes =
+         (unsigned) (system_memory_bytes / (1024 * 1024));
+
+      value[0] = system_memory_megabytes;
+      return 0;
+   }
+   case __DRI2_RENDERER_UNIFIED_MEMORY_ARCHITECTURE:
+      /**
+       * XXX: Perhaps we should return 1 ?
+       * See issue #7 from the spec, currently UNRESOLVED.
+       */
+      value[0] = 0;
+      return 0;
+   default:
+      return driQueryRendererIntegerCommon(psp, param, value);
+   }
+}
+
+static int
+swrast_query_renderer_string(__DRIscreen *psp, int param, const char **value)
+{
+   switch (param) {
+   case __DRI2_RENDERER_VENDOR_ID:
+      value[0] = swrast_vendor_string;
+      return 0;
+   case __DRI2_RENDERER_DEVICE_ID:
+      value[0] = swrast_renderer_string;
+      return 0;
+   default:
+      return -1;
+   }
+}
+
+static const __DRI2rendererQueryExtension swrast_query_renderer_extension = {
+   .base = { __DRI2_RENDERER_QUERY, 1 },
+
+   .queryInteger        = swrast_query_renderer_integer,
+   .queryString         = swrast_query_renderer_string
+};
+
 static const __DRIextension *dri_screen_extensions[] = {
     &swrastTexBufferExtension.base,
+    &swrast_query_renderer_extension.base,
     NULL
 };
 
@@ -599,9 +668,9 @@ get_string(struct gl_context *ctx, GLenum pname)
     (void) ctx;
     switch (pname) {
 	case GL_VENDOR:
-	    return (const GLubyte *) "Mesa Project";
+	    return (const GLubyte *) swrast_vendor_string;
 	case GL_RENDERER:
-	    return (const GLubyte *) "Software Rasterizer";
+	    return (const GLubyte *) swrast_renderer_string;
 	default:
 	    return NULL;
     }
