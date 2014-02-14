@@ -215,10 +215,10 @@ intel_miptree_blit(struct brw_context *brw,
    intel_miptree_resolve_color(brw, dst_mt);
 
    if (src_flip)
-      src_y = src_mt->level[src_level].height - src_y - height;
+      src_y = minify(src_mt->physical_height0, src_level) - src_y - height;
 
    if (dst_flip)
-      dst_y = dst_mt->level[dst_level].height - dst_y - height;
+      dst_y = minify(dst_mt->physical_height0, dst_level) - dst_y - height;
 
    int src_pitch = src_mt->region->pitch;
    if (src_flip != dst_flip)

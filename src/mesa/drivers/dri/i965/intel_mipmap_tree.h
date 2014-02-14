@@ -104,8 +104,6 @@ struct intel_mipmap_level
    GLuint level_x;
    /** Offset to this miptree level, used in computing y_offset. */
    GLuint level_y;
-   GLuint width;
-   GLuint height;
 
    /**
     * \brief Number of 2D slices in this miplevel.
@@ -538,8 +536,7 @@ intel_miptree_get_tile_offsets(struct intel_mipmap_tree *mt,
 
 void intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
                                   GLuint level,
-                                  GLuint x, GLuint y,
-                                  GLuint w, GLuint h, GLuint d);
+                                  GLuint x, GLuint y, GLuint d);
 
 void intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
                                     GLuint level,

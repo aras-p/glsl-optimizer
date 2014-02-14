@@ -197,8 +197,7 @@ brw_miptree_layout_2d(struct intel_mipmap_tree *mt)
    for (unsigned level = mt->first_level; level <= mt->last_level; level++) {
       unsigned img_height;
 
-      intel_miptree_set_level_info(mt, level, x, y, width,
-				   height, depth);
+      intel_miptree_set_level_info(mt, level, x, y, depth);
 
       img_height = ALIGN(height, mt->align_h);
       if (mt->compressed)
@@ -281,7 +280,7 @@ brw_miptree_layout_texture_3d(struct brw_context *brw,
       if (mt->target == GL_TEXTURE_CUBE_MAP)
          DL = 6;
 
-      intel_miptree_set_level_info(mt, level, 0, 0, WL, HL, DL);
+      intel_miptree_set_level_info(mt, level, 0, 0, DL);
 
       for (unsigned q = 0; q < DL; q++) {
          unsigned x = (q % (1 << level)) * wL;

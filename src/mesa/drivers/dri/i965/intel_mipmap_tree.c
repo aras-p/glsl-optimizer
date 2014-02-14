@@ -867,24 +867,10 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
     * minification.  This will also catch images not present in the
     * tree, changed targets, etc.
     */
-   if (mt->target == GL_TEXTURE_2D_MULTISAMPLE ||
-         mt->target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
-      /* nonzero level here is always bogus */
-      assert(level == 0);
-
-      if (width != mt->logical_width0 ||
-            height != mt->logical_height0 ||
-            depth != mt->logical_depth0) {
-         return false;
-      }
-   }
-   else {
-      /* all normal textures, renderbuffers, etc */
-      if (width != mt->level[level].width ||
-          height != mt->level[level].height ||
-          depth != mt->level[level].depth) {
-         return false;
-      }
+   if (width != minify(mt->logical_width0, level) ||
+       height != minify(mt->logical_height0, level) ||
+       depth != mt->level[level].depth) {
+      return false;
    }
 
    if (image->NumSamples != mt->num_samples)
@@ -897,17 +883,14 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
 void
 intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
 			     GLuint level,
-			     GLuint x, GLuint y,
-			     GLuint w, GLuint h, GLuint d)
+			     GLuint x, GLuint y, GLuint d)
 {
-   mt->level[level].width = w;
-   mt->level[level].height = h;
    mt->level[level].depth = d;
    mt->level[level].level_x = x;
    mt->level[level].level_y = y;
 
-   DBG("%s level %d size: %d,%d,%d offset %d,%d\n", __FUNCTION__,
-       level, w, h, d, x, y);
+   DBG("%s level %d, depth %d, offset %d,%d\n", __FUNCTION__,
+       level, d, x, y);
 
    assert(mt->level[level].slice == NULL);
 
@@ -1049,8 +1032,8 @@ intel_miptree_copy_slice(struct brw_context *brw,
 
 {
    mesa_format format = src_mt->format;
-   uint32_t width = src_mt->level[level].width;
-   uint32_t height = src_mt->level[level].height;
+   uint32_t width = minify(src_mt->physical_width0, level);
+   uint32_t height = minify(src_mt->physical_height0, level);
    int slice;
 
    if (face > 0)
@@ -1255,7 +1238,8 @@ intel_miptree_slice_enable_hiz(struct brw_context *brw,
    assert(mt->hiz_mt);
 
    if (brw->is_haswell) {
-      const struct intel_mipmap_level *l = &mt->level[level];
+      uint32_t width = minify(mt->physical_width0, level);
+      uint32_t height = minify(mt->physical_height0, level);
 
       /* Disable HiZ for LOD > 0 unless the width is 8 aligned
        * and the height is 4 aligned. This allows our HiZ support
@@ -1263,7 +1247,7 @@ intel_miptree_slice_enable_hiz(struct brw_context *brw,
        * we can grow the width & height to allow the HiZ op to
        * force the proper size alignments.
        */
-      if (level > 0 && ((l->width & 7) || (l->height & 3))) {
+      if (level > 0 && ((width & 7) || (height & 3))) {
          return false;
       }
    }
