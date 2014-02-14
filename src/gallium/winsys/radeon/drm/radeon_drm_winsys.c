@@ -645,7 +645,7 @@ PUBLIC struct radeon_winsys *radeon_drm_winsys_create(int fd)
     ws->kman = radeon_bomgr_create(ws);
     if (!ws->kman)
         goto fail;
-    ws->cman = pb_cache_manager_create(ws->kman, 1000000, 2, 0);
+    ws->cman = pb_cache_manager_create(ws->kman, 1000000, 2.0f, 0);
     if (!ws->cman)
         goto fail;
 

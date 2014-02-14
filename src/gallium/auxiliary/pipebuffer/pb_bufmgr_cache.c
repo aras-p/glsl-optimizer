@@ -82,7 +82,7 @@ struct pb_cache_manager
    
    struct list_head delayed;
    pb_size numDelayed;
-   unsigned size_factor;
+   float size_factor;
    unsigned bypass_usage;
 };
 
@@ -236,7 +236,7 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
       return 0;
 
    /* be lenient with size */
-   if(buf->base.size > buf->mgr->size_factor*size)
+   if(buf->base.size > (unsigned) (buf->mgr->size_factor * size))
       return 0;
    
    if(!pb_check_alignment(desc->alignment, buf->base.alignment))
@@ -403,8 +403,8 @@ pb_cache_manager_destroy(struct pb_manager *mgr)
  */
 struct pb_manager *
 pb_cache_manager_create(struct pb_manager *provider, 
-                     	unsigned usecs,
-			unsigned size_factor,
+                        unsigned usecs,
+                        float size_factor,
                         unsigned bypass_usage)
 {
    struct pb_cache_manager *mgr;
