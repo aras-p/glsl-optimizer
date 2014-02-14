@@ -193,7 +193,7 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
        || ctx->Const.GLSLVersion < 130) {
       vs_source =
          "attribute vec2 position;\n"
-         "attribute vec3 textureCoords;\n"
+         "attribute vec4 textureCoords;\n"
          "varying vec4 texCoords;\n"
          "void main()\n"
          "{\n"
