@@ -2743,7 +2743,7 @@ fs_visitor::emit_fb_writes()
     *      thread message and on all dual-source messages."
     */
    if (brw->gen >= 6 &&
-       !this->fp->UsesKill &&
+       (brw->is_haswell || brw->gen >= 8 || !this->fp->UsesKill) &&
        !do_dual_src &&
        c->key.nr_color_regions == 1) {
       header_present = false;
@@ -2840,6 +2840,10 @@ fs_visitor::emit_fb_writes()
       inst->mlen = nr - base_mrf;
       inst->eot = true;
       inst->header_present = header_present;
+      if ((brw->gen >= 8 || brw->is_haswell) && fp->UsesKill) {
+         inst->predicate = BRW_PREDICATE_NORMAL;
+         inst->flag_subreg = 1;
+      }
 
       c->prog_data.dual_src_blend = true;
       this->current_annotation = NULL;
@@ -2885,6 +2889,10 @@ fs_visitor::emit_fb_writes()
          inst->mlen = nr - base_mrf;
       inst->eot = eot;
       inst->header_present = header_present;
+      if ((brw->gen >= 8 || brw->is_haswell) && fp->UsesKill) {
+         inst->predicate = BRW_PREDICATE_NORMAL;
+         inst->flag_subreg = 1;
+      }
    }
 
    if (c->key.nr_color_regions == 0) {
@@ -2902,6 +2910,10 @@ fs_visitor::emit_fb_writes()
       inst->mlen = nr - base_mrf;
       inst->eot = true;
       inst->header_present = header_present;
+      if ((brw->gen >= 8 || brw->is_haswell) && fp->UsesKill) {
+         inst->predicate = BRW_PREDICATE_NORMAL;
+         inst->flag_subreg = 1;
+      }
    }
 
    this->current_annotation = NULL;

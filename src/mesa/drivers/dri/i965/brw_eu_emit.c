@@ -2241,8 +2241,6 @@ void brw_fb_WRITE(struct brw_compile *p,
    } else {
       insn = next_insn(p, BRW_OPCODE_SEND);
    }
-   /* The execution mask is ignored for render target writes. */
-   insn->header.predicate_control = 0;
    insn->header.compression_control = BRW_COMPRESSION_NONE;
 
    if (brw->gen >= 6) {

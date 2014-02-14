@@ -61,14 +61,21 @@ gen8_fs_generator::mark_surface_used(unsigned surf_index)
 void
 gen8_fs_generator::generate_fb_write(fs_inst *ir)
 {
-   if (fp && fp->UsesKill) {
-      gen8_instruction *mov =
-         MOV(retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW),
-             brw_flag_reg(0, 1));
-      gen8_set_mask_control(mov, BRW_MASK_DISABLE);
-   }
+   /* Disable the discard condition while setting up the header. */
+   default_state.predicate = BRW_PREDICATE_NONE;
+   default_state.predicate_inverse = false;
+   default_state.flag_subreg_nr = 0;
 
    if (ir->header_present) {
+      /* The GPU will use the predicate on SENDC, unless the header is present.
+       */
+      if (fp && fp->UsesKill) {
+         gen8_instruction *mov =
+            MOV(retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW),
+                brw_flag_reg(0, 1));
+         gen8_set_mask_control(mov, BRW_MASK_DISABLE);
+      }
+
       gen8_instruction *mov =
          MOV_RAW(brw_message_reg(ir->base_mrf), brw_vec8_grf(0, 0));
       gen8_set_exec_size(mov, BRW_EXECUTE_16);
@@ -87,6 +94,13 @@ gen8_fs_generator::generate_fb_write(fs_inst *ir)
              brw_imm_ud(ir->target));
       }
    }
+
+   /* Set the predicate back to get the conditional write if necessary for
+    * discards.
+    */
+   default_state.predicate = ir->predicate;
+   default_state.predicate_inverse = ir->predicate_inverse;
+   default_state.flag_subreg_nr = ir->flag_subreg;
 
    gen8_instruction *inst = next_inst(BRW_OPCODE_SENDC);
    gen8_set_dst(brw, inst, retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW));
