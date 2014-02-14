@@ -69,6 +69,11 @@ struct nouveau_driver {
 #define nouveau_error(format, ...) \
 	fprintf(stderr, "%s: " format, __func__, ## __VA_ARGS__)
 
+extern const char const *nouveau_vendor_string;
+
+const char *
+nouveau_get_renderer_string(unsigned chipset);
+
 void
 nouveau_clear(struct gl_context *ctx, GLbitfield buffers);
 

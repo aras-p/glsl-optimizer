@@ -24,6 +24,8 @@
  *
  */
 
+#include <xf86drm.h>
+#include <nouveau_drm.h>
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_fbo.h"
@@ -104,27 +106,21 @@ nouveau_init_screen2(__DRIscreen *dri_screen)
 	switch (screen->device->chipset & 0xf0) {
 	case 0x00:
 		screen->driver = &nv04_driver;
+		dri_screen->max_gl_compat_version = 12;
 		break;
 	case 0x10:
 		screen->driver = &nv10_driver;
+		dri_screen->max_gl_compat_version = 12;
+		dri_screen->max_gl_es1_version = 10;
 		break;
 	case 0x20:
 		screen->driver = &nv20_driver;
+		dri_screen->max_gl_compat_version = 13;
+		dri_screen->max_gl_es1_version = 10;
 		break;
 	default:
 		assert(0);
 	}
-
-	/* Compat version validation will occur at context init after
-	 * _mesa_compute_version().
-	 */
-	dri_screen->max_gl_compat_version = 15;
-
-	/* NV10 and NV20 can support OpenGL ES 1.0 only.  Older chips
-	 * cannot do even that.
-	 */
-	if ((screen->device->chipset & 0xf0) != 0x00)
-		dri_screen->max_gl_es1_version = 10;
 
 	dri_screen->driverPrivate = screen;
 	dri_screen->extensions = nouveau_screen_extensions;
@@ -140,6 +136,69 @@ fail:
 	return NULL;
 
 }
+
+static int
+nouveau_query_renderer_integer(__DRIscreen *psp, int param,
+			       unsigned int *value)
+{
+	const struct nouveau_screen *const screen =
+		(struct nouveau_screen *) psp->driverPrivate;
+
+	switch (param) {
+	case __DRI2_RENDERER_VENDOR_ID:
+		value[0] = 0x10de;
+		return 0;
+	case __DRI2_RENDERER_DEVICE_ID: {
+		uint64_t device_id;
+
+		if (nouveau_getparam(screen->device,
+				     NOUVEAU_GETPARAM_PCI_DEVICE,
+				     &device_id)) {
+			nouveau_error("Error retrieving the device PCIID.\n");
+			device_id = -1;
+		}
+		value[0] = (unsigned int) device_id;
+		return 0;
+	}
+	case __DRI2_RENDERER_ACCELERATED:
+		value[0] = 1;
+		return 0;
+	case __DRI2_RENDERER_VIDEO_MEMORY:
+		/* XXX: return vram_size or vram_limit ? */
+		value[0] = screen->device->vram_size >> 20;
+		return 0;
+	case __DRI2_RENDERER_UNIFIED_MEMORY_ARCHITECTURE:
+		value[0] = 0;
+		return 0;
+	default:
+		return driQueryRendererIntegerCommon(psp, param, value);
+	}
+}
+
+static int
+nouveau_query_renderer_string(__DRIscreen *psp, int param, const char **value)
+{
+	const struct nouveau_screen *const screen =
+		(struct nouveau_screen *) psp->driverPrivate;
+
+	switch (param) {
+	case __DRI2_RENDERER_VENDOR_ID:
+		value[0] = nouveau_vendor_string;
+		return 0;
+	case __DRI2_RENDERER_DEVICE_ID:
+		value[0] = nouveau_get_renderer_string(screen->device->chipset);
+		return 0;
+	default:
+		return -1;
+   }
+}
+
+static const __DRI2rendererQueryExtension nouveau_renderer_query_extension = {
+	.base = { __DRI2_RENDERER_QUERY, 1 },
+
+	.queryInteger        = nouveau_query_renderer_integer,
+	.queryString         = nouveau_query_renderer_string
+};
 
 static void
 nouveau_destroy_screen(__DRIscreen *dri_screen)
@@ -244,6 +303,7 @@ static const struct __DRItexBufferExtensionRec nouveau_texbuffer_extension = {
 static const __DRIextension *nouveau_screen_extensions[] = {
     &nouveau_flush_extension.base,
     &nouveau_texbuffer_extension.base,
+    &nouveau_renderer_query_extension.base,
     &dri2ConfigQueryExtension.base,
     NULL
 };
