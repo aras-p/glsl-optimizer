@@ -746,7 +746,10 @@ varying_matches::~varying_matches()
 void
 varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
 {
-   if (!producer_var->data.is_unmatched_generic_inout) {
+   assert(producer_var != NULL || consumer_var != NULL);
+
+   if ((producer_var && !producer_var->data.is_unmatched_generic_inout)
+       || (consumer_var && !consumer_var->data.is_unmatched_generic_inout)) {
       /* Either a location already exists for this variable (since it is part
        * of fixed functionality), or it has already been recorded as part of a
        * previous match.
@@ -781,24 +784,28 @@ varying_matches::record(ir_variable *producer_var, ir_variable *consumer_var)
          realloc(this->matches,
                  sizeof(*this->matches) * this->matches_capacity);
    }
+
+   const ir_variable *const var = (producer_var != NULL)
+      ? producer_var : consumer_var;
+
    this->matches[this->num_matches].packing_class
-      = this->compute_packing_class(producer_var);
+      = this->compute_packing_class(var);
    this->matches[this->num_matches].packing_order
-      = this->compute_packing_order(producer_var);
+      = this->compute_packing_order(var);
    if (this->disable_varying_packing) {
-      unsigned slots = producer_var->type->is_array()
-         ? (producer_var->type->length
-            * producer_var->type->fields.array->matrix_columns)
-         : producer_var->type->matrix_columns;
+      unsigned slots = var->type->is_array()
+         ? (var->type->length * var->type->fields.array->matrix_columns)
+         : var->type->matrix_columns;
       this->matches[this->num_matches].num_components = 4 * slots;
    } else {
       this->matches[this->num_matches].num_components
-         = producer_var->type->component_slots();
+         = var->type->component_slots();
    }
    this->matches[this->num_matches].producer_var = producer_var;
    this->matches[this->num_matches].consumer_var = consumer_var;
    this->num_matches++;
-   producer_var->data.is_unmatched_generic_inout = 0;
+   if (producer_var)
+      producer_var->data.is_unmatched_generic_inout = 0;
    if (consumer_var)
       consumer_var->data.is_unmatched_generic_inout = 0;
 }
@@ -851,8 +858,11 @@ varying_matches::store_locations() const
       unsigned slot = generic_location / 4;
       unsigned offset = generic_location % 4;
 
-      producer_var->data.location = VARYING_SLOT_VAR0 + slot;
-      producer_var->data.location_frac = offset;
+      if (producer_var) {
+         producer_var->data.location = VARYING_SLOT_VAR0 + slot;
+         producer_var->data.location_frac = offset;
+      }
+
       if (consumer_var) {
          assert(consumer_var->data.location == -1);
          consumer_var->data.location = VARYING_SLOT_VAR0 + slot;
@@ -1164,20 +1174,29 @@ assign_varying_locations(struct gl_context *ctx,
       return false;
    }
 
-   foreach_list(node, producer->ir) {
-      ir_variable *const output_var = ((ir_instruction *) node)->as_variable();
+   if (producer) {
+      foreach_list(node, producer->ir) {
+         ir_variable *const output_var =
+            ((ir_instruction *) node)->as_variable();
 
-      if ((output_var == NULL) || (output_var->data.mode != ir_var_shader_out))
-	 continue;
+         if ((output_var == NULL) ||
+             (output_var->data.mode != ir_var_shader_out))
+            continue;
 
-      tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates);
-      g.process(output_var);
+         tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates);
+         g.process(output_var);
 
-      ir_variable *const input_var =
-         linker::get_matching_input(mem_ctx, output_var, consumer_inputs,
-                                    consumer_interface_inputs);
-      if (input_var) {
-         matches.record(output_var, input_var);
+         ir_variable *const input_var =
+            linker::get_matching_input(mem_ctx, output_var, consumer_inputs,
+                                       consumer_interface_inputs);
+
+         /* If a matching input variable was found, add this ouptut (and the
+          * input) to the set.  If this is a separable program and there is no
+          * consumer stage, add the output.
+          */
+         if (input_var || (prog->SeparateShader && consumer == NULL)) {
+            matches.record(output_var, input_var);
+         }
       }
    }
 
@@ -1225,15 +1244,17 @@ assign_varying_locations(struct gl_context *ctx,
        */
       assert(!ctx->Extensions.EXT_transform_feedback);
    } else {
-      lower_packed_varyings(mem_ctx, slots_used, ir_var_shader_out,
-                            0, producer);
+      if (producer) {
+         lower_packed_varyings(mem_ctx, slots_used, ir_var_shader_out,
+                               0, producer);
+      }
       if (consumer) {
          lower_packed_varyings(mem_ctx, slots_used, ir_var_shader_in,
                                gs_input_vertices, consumer);
       }
    }
 
-   if (consumer) {
+   if (consumer && producer) {
       foreach_list(node, consumer->ir) {
          ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
