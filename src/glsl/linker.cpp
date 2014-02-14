@@ -2502,7 +2502,7 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
    if (last >= 0 && last < MESA_SHADER_FRAGMENT) {
       gl_shader *const sh = prog->_LinkedShaders[last];
 
-      if (num_tfeedback_decls != 0) {
+      if (num_tfeedback_decls != 0 || prog->SeparateShader) {
          /* There was no fragment shader, but we still have to assign varying
           * locations for use by transform feedback.
           */
@@ -2516,7 +2516,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       do_dead_builtin_varyings(ctx, sh, NULL,
                                num_tfeedback_decls, tfeedback_decls);
 
-      demote_shader_inputs_and_outputs(sh, ir_var_shader_out);
+      if (!prog->SeparateShader)
+         demote_shader_inputs_and_outputs(sh, ir_var_shader_out);
 
       /* Eliminate code that is now dead due to unused outputs being demoted.
        */
@@ -2531,7 +2532,16 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       do_dead_builtin_varyings(ctx, NULL, sh,
                                num_tfeedback_decls, tfeedback_decls);
 
-      demote_shader_inputs_and_outputs(sh, ir_var_shader_in);
+      if (prog->SeparateShader) {
+         if (!assign_varying_locations(ctx, mem_ctx, prog,
+                                       NULL /* producer */,
+                                       sh /* consumer */,
+                                       0 /* num_tfeedback_decls */,
+                                       NULL /* tfeedback_decls */,
+                                       0 /* gs_input_vertices */))
+            goto done;
+      } else
+         demote_shader_inputs_and_outputs(sh, ir_var_shader_in);
 
       while (do_dead_code(sh->ir, false))
          ;

@@ -1198,6 +1198,23 @@ assign_varying_locations(struct gl_context *ctx,
             matches.record(output_var, input_var);
          }
       }
+   } else {
+      /* If there's no producer stage, then this must be a separable program.
+       * For example, we may have a program that has just a fragment shader.
+       * Later this program will be used with some arbitrary vertex (or
+       * geometry) shader program.  This means that locations must be assigned
+       * for all the inputs.
+       */
+      foreach_list(node, consumer->ir) {
+         ir_variable *const input_var =
+            ((ir_instruction *) node)->as_variable();
+
+         if ((input_var == NULL) ||
+             (input_var->data.mode != ir_var_shader_in))
+            continue;
+
+         matches.record(NULL, input_var);
+      }
    }
 
    for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
