@@ -3304,6 +3304,37 @@ fs_visitor::calculate_register_pressure()
    }
 }
 
+/**
+ * Look for repeated FS_OPCODE_MOV_DISPATCH_TO_FLAGS and drop the later ones.
+ *
+ * The needs_unlit_centroid_workaround ends up producing one of these per
+ * channel of centroid input, so it's good to clean them up.
+ *
+ * An assumption here is that nothing ever modifies the dispatched pixels
+ * value that FS_OPCODE_MOV_DISPATCH_TO_FLAGS reads from, but the hardware
+ * dictates that anyway.
+ */
+void
+fs_visitor::opt_drop_redundant_mov_to_flags()
+{
+   bool flag_mov_found[2] = {false};
+
+   foreach_list_safe(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
+
+      if (inst->is_control_flow()) {
+         memset(flag_mov_found, 0, sizeof(flag_mov_found));
+      } else if (inst->opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS) {
+         if (!flag_mov_found[inst->flag_subreg])
+            flag_mov_found[inst->flag_subreg] = true;
+         else
+            inst->remove();
+      } else if (inst->writes_flag()) {
+         flag_mov_found[inst->flag_subreg] = false;
+      }
+   }
+}
+
 bool
 fs_visitor::run()
 {
@@ -3368,6 +3399,8 @@ fs_visitor::run()
       move_uniform_array_access_to_pull_constants();
       remove_dead_constants();
       setup_pull_constants();
+
+      opt_drop_redundant_mov_to_flags();
 
       bool progress;
       do {
