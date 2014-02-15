@@ -187,9 +187,9 @@ brw_fast_clear_depth(struct gl_context *ctx)
    intel_batchbuffer_emit_mi_flush(brw);
 
    if (fb->MaxNumLayers > 0) {
-      unsigned num_layers = depth_irb->mt->level[depth_irb->mt_level].depth;
-      for (unsigned layer = 0; layer < num_layers; layer++) {
-         intel_hiz_exec(brw, mt, depth_irb->mt_level, layer,
+      for (unsigned layer = 0; layer < depth_irb->layer_count; layer++) {
+         intel_hiz_exec(brw, mt, depth_irb->mt_level,
+                        depth_irb->mt_layer + layer,
                         GEN6_HIZ_OP_DEPTH_CLEAR);
       }
    } else {
