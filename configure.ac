@@ -506,13 +506,15 @@ AC_ARG_ENABLE([selinux],
     [MESA_SELINUX="$enableval"],
     [MESA_SELINUX=no])
 if test "x$enable_selinux" = "xyes"; then
-    AC_CHECK_HEADER([selinux/selinux.h],[],
-                    [AC_MSG_ERROR([SELinux headers not found])])
-    AC_CHECK_LIB([selinux],[is_selinux_enabled],[],
-                 [AC_MSG_ERROR([SELinux library not found])])
-    SELINUX_LIBS="-lselinux"
+    PKG_CHECK_MODULES([SELINUX], [libselinux], [],
+        [AC_CHECK_HEADER([selinux/selinux.h],[],
+                         [AC_MSG_ERROR([SELinux headers not found])])
+         AC_CHECK_LIB([selinux],[is_selinux_enabled],[],
+                      [AC_MSG_ERROR([SELinux library not found])])
+         SELINUX_LIBS="-lselinux"])
     DEFINES="$DEFINES -DMESA_SELINUX"
 fi
+AC_SUBST([SELINUX_CFLAGS])
 AC_SUBST([SELINUX_LIBS])
 
 dnl Options for APIs

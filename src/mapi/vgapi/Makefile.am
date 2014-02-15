@@ -21,6 +21,7 @@
 
 AM_CPPFLAGS = \
 	$(DEFINES) \
+	$(SELINUX_CFLAGS) \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
 	-DMAPI_ABI_HEADER=\"vgapi_tmp.h\"

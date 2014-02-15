@@ -27,6 +27,7 @@ include ../Makefile.sources
 
 AM_CPPFLAGS = \
         $(DEFINES) \
+        $(SELINUX_CFLAGS) \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src/mapi \
         -I$(top_builddir)/src/mapi \
