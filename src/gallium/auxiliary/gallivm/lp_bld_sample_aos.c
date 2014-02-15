@@ -567,10 +567,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                               LLVMValueRef *colors)
 {
    const unsigned dims = bld->dims;
-   LLVMBuilderRef builder = bld->gallivm->builder;
    struct lp_build_context i32;
-   LLVMTypeRef i32_vec_type;
-   LLVMValueRef i32_c8;
    LLVMValueRef width_vec, height_vec, depth_vec;
    LLVMValueRef s_ipart, t_ipart = NULL, r_ipart = NULL;
    LLVMValueRef s_float, t_float = NULL, r_float = NULL;
@@ -579,8 +576,6 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    LLVMValueRef x_subcoord, y_subcoord, z_subcoord;
 
    lp_build_context_init(&i32, bld->gallivm, lp_type_int_vec(32, bld->vector_width));
-
-   i32_vec_type = lp_build_vec_type(bld->gallivm, i32.type);
 
    lp_build_extract_image_sizes(bld,
                                 &bld->int_size_bld,
@@ -593,39 +588,24 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    s_float = s; t_float = t; r_float = r;
 
    if (bld->static_sampler_state->normalized_coords) {
-      LLVMValueRef scaled_size;
       LLVMValueRef flt_size;
 
-      /* scale size by 256 (8 fractional bits) */
-      scaled_size = lp_build_shl_imm(&bld->int_size_bld, int_size, 8);
-
-      flt_size = lp_build_int_to_float(&bld->float_size_bld, scaled_size);
+      flt_size = lp_build_int_to_float(&bld->float_size_bld, int_size);
 
       lp_build_unnormalized_coords(bld, flt_size, &s, &t, &r);
    }
-   else {
-      /* scale coords by 256 (8 fractional bits) */
-      s = lp_build_mul_imm(&bld->coord_bld, s, 256);
-      if (dims >= 2)
-         t = lp_build_mul_imm(&bld->coord_bld, t, 256);
-      if (dims >= 3)
-         r = lp_build_mul_imm(&bld->coord_bld, r, 256);
-   }
 
    /* convert float to int */
-   s = LLVMBuildFPToSI(builder, s, i32_vec_type, "");
+   /* For correct rounding, need floor, not truncation here.
+    * Note that in some cases (clamp to edge, no texel offsets) we
+    * could use a non-signed build context which would help archs
+    * greatly which don't have arch rounding.
+    */
+   s_ipart = lp_build_ifloor(&bld->coord_bld, s);
    if (dims >= 2)
-      t = LLVMBuildFPToSI(builder, t, i32_vec_type, "");
+      t_ipart = lp_build_ifloor(&bld->coord_bld, t);
    if (dims >= 3)
-      r = LLVMBuildFPToSI(builder, r, i32_vec_type, "");
-
-   /* compute floor (shift right 8) */
-   i32_c8 = lp_build_const_int_vec(bld->gallivm, i32.type, 8);
-   s_ipart = LLVMBuildAShr(builder, s, i32_c8, "");
-   if (dims >= 2)
-      t_ipart = LLVMBuildAShr(builder, t, i32_c8, "");
-   if (dims >= 3)
-      r_ipart = LLVMBuildAShr(builder, r, i32_c8, "");
+      r_ipart = lp_build_ifloor(&bld->coord_bld, r);
 
    /* add texel offsets */
    if (offsets[0]) {
