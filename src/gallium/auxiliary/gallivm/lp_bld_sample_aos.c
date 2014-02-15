@@ -987,7 +987,6 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    const unsigned dims = bld->dims;
    LLVMBuilderRef builder = bld->gallivm->builder;
    struct lp_build_context i32;
-   LLVMTypeRef i32_vec_type;
    LLVMValueRef i32_c8, i32_c128, i32_c255;
    LLVMValueRef width_vec, height_vec, depth_vec;
    LLVMValueRef s_ipart, s_fpart, s_float;
@@ -1002,8 +1001,6 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    unsigned x, y, z;
 
    lp_build_context_init(&i32, bld->gallivm, lp_type_int_vec(32, bld->vector_width));
-
-   i32_vec_type = lp_build_vec_type(bld->gallivm, i32.type);
 
    lp_build_extract_image_sizes(bld,
                                 &bld->int_size_bld,
@@ -1036,11 +1033,16 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    }
 
    /* convert float to int */
-   s = LLVMBuildFPToSI(builder, s, i32_vec_type, "");
+   /* For correct rounding, need round to nearest, not truncation here.
+    * Note that in some cases (clamp to edge, no texel offsets) we
+    * could use a non-signed build context which would help archs which
+    * don't have fptosi intrinsic with nearest rounding implemented.
+    */
+   s = lp_build_iround(&bld->coord_bld, s);
    if (dims >= 2)
-      t = LLVMBuildFPToSI(builder, t, i32_vec_type, "");
+      t = lp_build_iround(&bld->coord_bld, t);
    if (dims >= 3)
-      r = LLVMBuildFPToSI(builder, r, i32_vec_type, "");
+      r = lp_build_iround(&bld->coord_bld, r);
 
    /* subtract 0.5 (add -128) */
    i32_c128 = lp_build_const_int_vec(bld->gallivm, i32.type, -128);
