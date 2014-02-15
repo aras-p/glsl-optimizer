@@ -1573,14 +1573,27 @@ vec4_visitor::visit(ir_expression *ir)
          emit(SHR(dst_reg(offset), op[1], src_reg(4)));
       }
 
-      vec4_instruction *pull =
+      if (brw->gen >= 7) {
+         dst_reg grf_offset = dst_reg(this, glsl_type::int_type);
+         grf_offset.type = offset.type;
+
+         emit(MOV(grf_offset, offset));
+
          emit(new(mem_ctx) vec4_instruction(this,
-                                            VS_OPCODE_PULL_CONSTANT_LOAD,
+                                            VS_OPCODE_PULL_CONSTANT_LOAD_GEN7,
                                             dst_reg(packed_consts),
                                             surf_index,
-                                            offset));
-      pull->base_mrf = 14;
-      pull->mlen = 1;
+                                            src_reg(grf_offset)));
+      } else {
+         vec4_instruction *pull =
+            emit(new(mem_ctx) vec4_instruction(this,
+                                               VS_OPCODE_PULL_CONSTANT_LOAD,
+                                               dst_reg(packed_consts),
+                                               surf_index,
+                                               offset));
+         pull->base_mrf = 14;
+         pull->mlen = 1;
+      }
 
       packed_consts.swizzle = swizzle_for_size(ir->type->vector_elements);
       packed_consts.swizzle += BRW_SWIZZLE4(const_offset % 16 / 4,
