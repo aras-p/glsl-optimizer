@@ -986,6 +986,9 @@ legal_get_tex_level_parameter_target(struct gl_context *ctx, GLenum target)
    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
    case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
       return ctx->Extensions.ARB_texture_cube_map;
+   case GL_TEXTURE_CUBE_MAP_ARRAY_ARB:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARRAY_ARB:
+      return ctx->Extensions.ARB_texture_cube_map_array;
    case GL_TEXTURE_RECTANGLE_NV:
    case GL_PROXY_TEXTURE_RECTANGLE_NV:
       return ctx->Extensions.NV_texture_rectangle;
