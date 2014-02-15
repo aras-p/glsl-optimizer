@@ -311,9 +311,9 @@ public:
       return dst_reg(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
    }
 
-   struct brw_vec4_compile *c;
-   const struct brw_vec4_prog_key *key;
-   struct brw_vec4_prog_data *prog_data;
+   struct brw_vec4_compile * const c;
+   const struct brw_vec4_prog_key * const key;
+   struct brw_vec4_prog_data * const prog_data;
    unsigned int sanity_param_count;
 
    char *fail_msg;
