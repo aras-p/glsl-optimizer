@@ -194,6 +194,62 @@ lp_build_sample_wrap_nearest_float(struct lp_build_sample_context *bld,
 
 
 /**
+ * Helper to compute the first coord and the weight for
+ * linear wrap repeat npot textures
+ */
+static void
+lp_build_coord_repeat_npot_linear_int(struct lp_build_sample_context *bld,
+                                      LLVMValueRef coord_f,
+                                      LLVMValueRef length_i,
+                                      LLVMValueRef length_f,
+                                      LLVMValueRef *coord0_i,
+                                      LLVMValueRef *weight_i)
+{
+   struct lp_build_context *coord_bld = &bld->coord_bld;
+   struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   struct lp_build_context abs_coord_bld;
+   struct lp_type abs_type;
+   LLVMValueRef length_minus_one = lp_build_sub(int_coord_bld, length_i,
+                                                int_coord_bld->one);
+   LLVMValueRef mask, i32_c8, i32_c128, i32_c255;
+
+   /* wrap with normalized floats is just fract */
+   coord_f = lp_build_fract(coord_bld, coord_f);
+   /* mul by size */
+   coord_f = lp_build_mul(coord_bld, coord_f, length_f);
+   /* convert to int, compute lerp weight */
+   coord_f = lp_build_mul_imm(&bld->coord_bld, coord_f, 256);
+
+   /* At this point we don't have any negative numbers so use non-signed
+    * build context which might help on some archs.
+    */
+   abs_type = coord_bld->type;
+   abs_type.sign = 0;
+   lp_build_context_init(&abs_coord_bld, bld->gallivm, abs_type);
+   *coord0_i = lp_build_iround(&abs_coord_bld, coord_f);
+
+   /* subtract 0.5 (add -128) */
+   i32_c128 = lp_build_const_int_vec(bld->gallivm, bld->int_coord_type, -128);
+   *coord0_i = LLVMBuildAdd(bld->gallivm->builder, *coord0_i, i32_c128, "");
+
+   /* compute fractional part (AND with 0xff) */
+   i32_c255 = lp_build_const_int_vec(bld->gallivm, bld->int_coord_type, 255);
+   *weight_i = LLVMBuildAnd(bld->gallivm->builder, *coord0_i, i32_c255, "");
+
+   /* compute floor (shift right 8) */
+   i32_c8 = lp_build_const_int_vec(bld->gallivm, bld->int_coord_type, 8);
+   *coord0_i = LLVMBuildAShr(bld->gallivm->builder, *coord0_i, i32_c8, "");
+   /*
+    * we avoided the 0.5/length division before the repeat wrap,
+    * now need to fix up edge cases with selects
+    */
+   mask = lp_build_compare(int_coord_bld->gallivm, int_coord_bld->type,
+                           PIPE_FUNC_LESS, *coord0_i, int_coord_bld->zero);
+   *coord0_i = lp_build_select(int_coord_bld, mask, length_minus_one, *coord0_i);
+}
+
+
+/**
  * Build LLVM code for texture coord wrapping, for linear filtering,
  * for scaled integer texcoords.
  * \param block_length  is the length of the pixel block along the
@@ -251,24 +307,21 @@ lp_build_sample_wrap_linear_int(struct lp_build_sample_context *bld,
          }
          else {
             LLVMValueRef mask;
-            LLVMValueRef weight;
             LLVMValueRef length_f = lp_build_int_to_float(&bld->coord_bld, length);
             if (offset) {
                offset = lp_build_int_to_float(&bld->coord_bld, offset);
                offset = lp_build_div(&bld->coord_bld, offset, length_f);
                coord_f = lp_build_add(&bld->coord_bld, coord_f, offset);
             }
-            lp_build_coord_repeat_npot_linear(bld, coord_f,
-                                              length, length_f,
-                                              &coord0, &weight);
+            lp_build_coord_repeat_npot_linear_int(bld, coord_f,
+                                                  length, length_f,
+                                                  &coord0, weight_i);
             mask = lp_build_compare(bld->gallivm, int_coord_bld->type,
                                     PIPE_FUNC_NOTEQUAL, coord0, length_minus_one);
             coord1 = LLVMBuildAnd(builder,
                                   lp_build_add(int_coord_bld, coord0,
                                                int_coord_bld->one),
                                   mask, "");
-            weight = lp_build_mul_imm(&bld->coord_bld, weight, 256);
-            *weight_i = lp_build_itrunc(&bld->coord_bld, weight);
          }
          break;
 
@@ -308,18 +361,15 @@ lp_build_sample_wrap_linear_int(struct lp_build_sample_context *bld,
          coord0 = LLVMBuildAnd(builder, coord0, length_minus_one, "");
       }
       else {
-         LLVMValueRef weight;
          LLVMValueRef length_f = lp_build_int_to_float(&bld->coord_bld, length);
          if (offset) {
             offset = lp_build_int_to_float(&bld->coord_bld, offset);
             offset = lp_build_div(&bld->coord_bld, offset, length_f);
             coord_f = lp_build_add(&bld->coord_bld, coord_f, offset);
          }
-         lp_build_coord_repeat_npot_linear(bld, coord_f,
-                                           length, length_f,
-                                           &coord0, &weight);
-         weight = lp_build_mul_imm(&bld->coord_bld, weight, 256);
-         *weight_i = lp_build_itrunc(&bld->coord_bld, weight);
+         lp_build_coord_repeat_npot_linear_int(bld, coord_f,
+                                               length, length_f,
+                                               &coord0, weight_i);
       }
 
       mask = lp_build_compare(bld->gallivm, int_coord_bld->type,
