@@ -1105,7 +1105,7 @@ static int
 fbconfig_compare(struct glx_config **a, struct glx_config **b)
 {
    /* The order of these comparisons must NOT change.  It is defined by
-    * the GLX 1.3 spec and ARB_multisample.
+    * the GLX 1.4 specification.
     */
 
    PREFER_SMALLER(visualSelectGroup);
@@ -1134,6 +1134,9 @@ fbconfig_compare(struct glx_config **a, struct glx_config **b)
 
    PREFER_SMALLER(numAuxBuffers);
 
+   PREFER_SMALLER(sampleBuffers);
+   PREFER_SMALLER(samples);
+
    PREFER_LARGER_OR_ZERO(depthBits);
    PREFER_SMALLER(stencilBits);
 
@@ -1146,12 +1149,6 @@ fbconfig_compare(struct glx_config **a, struct glx_config **b)
    PREFER_LARGER_OR_ZERO(accumAlphaBits);
 
    PREFER_SMALLER(visualType);
-
-   /* None of the multisample specs say where this comparison should happen,
-    * so I put it near the end.
-    */
-   PREFER_SMALLER(sampleBuffers);
-   PREFER_SMALLER(samples);
 
    /* None of the pbuffer or fbconfig specs say that this comparison needs
     * to happen at all, but it seems like it should.
