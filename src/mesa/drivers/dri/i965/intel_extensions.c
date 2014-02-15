@@ -303,6 +303,10 @@ intelInitExtensions(struct gl_context *ctx)
          ctx->Extensions.ARB_compute_shader = true;
    }
 
+   if (brw->gen == 7) {
+      ctx->Extensions.ARB_texture_view = true;
+   }
+
    if (brw->gen >= 8) {
       ctx->Extensions.ARB_stencil_texturing = true;
    }
