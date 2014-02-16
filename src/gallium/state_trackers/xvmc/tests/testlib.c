@@ -85,7 +85,7 @@ int GetPort
 					{
 						for (k = 0; k < num_mc_types && !found_port; ++k)
 						{
-							if (surface_info[j].mc_type == mc_types[k])
+							if ((surface_info[j].mc_type & mc_types[k]) == mc_types[k])
 							{
 								for (l = 0; l < adaptor_info[i].num_ports && !found_port; ++l)
 								{

@@ -165,8 +165,12 @@ int main(int argc, char **argv)
 		assert(subpicture.xvimage_id == subpics[i].id);
 		/* Test width & height assigned and correct */
 		assert(subpicture.width == width && subpicture.height == height);
-		/* Test no palette support */
-		assert(subpicture.num_palette_entries == 0 && subpicture.entry_bytes == 0);
+		if (subpics[i].type == XvRGB)
+			/* Test no palette support */
+			assert(subpicture.num_palette_entries == 0 && subpicture.entry_bytes == 0);
+		else
+			/* Test palette support */
+			assert(subpicture.num_palette_entries == 16 && subpicture.entry_bytes == 4);
 		/* Test valid params */
 		assert(XvMCDestroySubpicture(display, &subpicture) == Success);
 	}

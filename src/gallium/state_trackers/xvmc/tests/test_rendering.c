@@ -50,9 +50,7 @@
 #define DEFAULT_OUTPUT_HEIGHT		INPUT_HEIGHT
 #define DEFAULT_ACCEPTABLE_ERR		0.01
 
-void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *output_height, double *acceptable_error, int *prompt);
-
-void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *output_height, double *acceptable_error, int *prompt)
+static void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *output_height, double *acceptable_error, int *prompt)
 {
 	int fail = 0;
 	int i;
@@ -60,7 +58,7 @@ void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *
 	*output_width = DEFAULT_OUTPUT_WIDTH;
 	*output_height = DEFAULT_OUTPUT_HEIGHT;
 	*acceptable_error = DEFAULT_ACCEPTABLE_ERR;
-	*prompt = 1;
+	*prompt = 0;
 
 	for (i = 1; i < argc && !fail; ++i)
 	{
@@ -79,8 +77,8 @@ void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *
 			if (sscanf(argv[++i], "%lf", acceptable_error) != 1)
 				fail = 1;
 		}
-		else if (strcmp(argv[i], "-n"))
-			*prompt = 0;
+		else if (!strcmp(argv[i], "-p"))
+			*prompt = 1;
 		else
 			fail = 1;
 	}
@@ -95,7 +93,7 @@ void ParseArgs(int argc, char **argv, unsigned int *output_width, unsigned int *
 			"\t-w <width>\tOutput width\n"
 			"\t-h <height>\tOutput height\n"
 			"\t-e <error>\tAcceptable margin of error per pixel, from 0 to 1\n"
-			"\t-n\tDon't prompt for quit\n",
+			"\t-p\tPrompt for quit\n",
 			argv[0]
 		);
 }
