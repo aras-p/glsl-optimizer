@@ -456,6 +456,10 @@ static void ir3_instr_ra(struct ir3_ra_ctx *ctx,
 	if (instr->regs_count == 0)
 		return;
 
+	/* skip writes to a0, p0, etc */
+	if (!reg_gpr(instr->regs[0]))
+		return;
+
 	/* if we've already visited this instruction, bail now: */
 	if (instr->flags & IR3_INSTR_MARK)
 		return;
@@ -493,7 +497,7 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 		for (i = 1; i < n->regs_count; i++) {
 			struct ir3_register *reg = n->regs[i];
 
-			if (is_gpr(reg)) {
+			if (reg_gpr(reg)) {
 
 				/* TODO: we probably only need (ss) for alu
 				 * instr consuming sfu result.. need to make

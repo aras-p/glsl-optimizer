@@ -307,6 +307,11 @@ static inline uint32_t reg_comp(struct ir3_register *reg)
 	return reg->num & 0x3;
 }
 
+static inline bool is_flow(struct ir3_instruction *instr)
+{
+	return (instr->category == 0);
+}
+
 static inline bool is_alu(struct ir3_instruction *instr)
 {
 	return (1 <= instr->category) && (instr->category <= 3);
@@ -334,11 +339,6 @@ static inline bool is_meta(struct ir3_instruction *instr)
 	 * result?
 	 */
 	return (instr->category == -1);
-}
-
-static inline bool is_gpr(struct ir3_register *reg)
-{
-	return !(reg->flags & (IR3_REG_CONST | IR3_REG_IMMED));
 }
 
 /* TODO combine is_gpr()/reg_gpr().. */

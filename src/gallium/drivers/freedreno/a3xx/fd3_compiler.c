@@ -103,8 +103,15 @@ struct fd3_compile_context {
 	/* stack of branch instructions that mark (potentially nested)
 	 * branch if/else/loop/etc
 	 */
-	struct ir3_instruction *branch[16];
+	struct {
+		struct ir3_instruction *instr, *cond;
+		bool inv;   /* true iff in else leg of branch */
+	} branch[16];
 	unsigned int branch_count;
+
+	/* list of kill instructions: */
+	struct ir3_instruction *kill[16];
+	unsigned int kill_count;
 
 	/* used when dst is same as one of the src, to avoid overwriting a
 	 * src element before the remaining scalar instructions that make
@@ -135,6 +142,7 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 	ctx->next_inloc = 8;
 	ctx->num_internal_temps = 0;
 	ctx->branch_count = 0;
+	ctx->kill_count = 0;
 	ctx->block = NULL;
 	ctx->current_instr = NULL;
 	ctx->num_output_updates = 0;
@@ -274,6 +282,9 @@ push_block(struct fd3_compile_context *ctx)
 	ntmp = SCALAR_REGS(TEMPORARY);
 	ntmp += 4 * 4;
 
+	nout = SCALAR_REGS(OUTPUT);
+	nin  = SCALAR_REGS(INPUT);
+
 	/* for outermost block, 'inputs' are the actual shader INPUT
 	 * register file.  Reads from INPUT registers always go back to
 	 * top block.  For nested blocks, 'inputs' is used to track any
@@ -284,16 +295,18 @@ push_block(struct fd3_compile_context *ctx)
 		/* NOTE: fragment shaders actually have two inputs (r0.xy, the
 		 * position)
 		 */
-		nin = SCALAR_REGS(INPUT);
-		if (ctx->type == TGSI_PROCESSOR_FRAGMENT)
+		if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
 			nin = MAX2(2, nin);
+			nout += ARRAY_SIZE(ctx->kill);
+		}
 	} else {
 		nin = ntmp;
 	}
 
-	nout = SCALAR_REGS(OUTPUT);
-
 	block = ir3_block_create(ctx->ir, ntmp, nin, nout);
+
+	if ((ctx->type == TGSI_PROCESSOR_FRAGMENT) && !ctx->block)
+		block->noutputs -= ARRAY_SIZE(ctx->kill);
 
 	block->parent = ctx->block;
 	ctx->block = block;
@@ -1246,15 +1259,23 @@ trans_cmp(const struct instr_translater *t,
  */
 
 static void
-push_branch(struct fd3_compile_context *ctx, struct ir3_instruction *instr)
+push_branch(struct fd3_compile_context *ctx, bool inv,
+		struct ir3_instruction *instr, struct ir3_instruction *cond)
 {
-	ctx->branch[ctx->branch_count++] = instr;
+	unsigned int idx = ctx->branch_count++;
+	compile_assert(ctx, idx < ARRAY_SIZE(ctx->branch));
+	ctx->branch[idx].instr = instr;
+	ctx->branch[idx].inv = inv;
+	/* else side of branch has same condition: */
+	if (!inv)
+		ctx->branch[idx].cond = cond;
 }
 
 static struct ir3_instruction *
 pop_branch(struct fd3_compile_context *ctx)
 {
-	return ctx->branch[--ctx->branch_count];
+	unsigned int idx = --ctx->branch_count;
+	return ctx->branch[idx].instr;
 }
 
 static void
@@ -1262,7 +1283,7 @@ trans_if(const struct instr_translater *t,
 		struct fd3_compile_context *ctx,
 		struct tgsi_full_instruction *inst)
 {
-	struct ir3_instruction *instr;
+	struct ir3_instruction *instr, *cond;
 	struct tgsi_src_register *src = &inst->Src[0].Register;
 	struct tgsi_dst_register tmp_dst;
 	struct tgsi_src_register *tmp_src;
@@ -1274,25 +1295,22 @@ trans_if(const struct instr_translater *t,
 	if (is_const(src))
 		src = get_unconst(ctx, src);
 
-	/* cmps.f.eq tmp0, b, {0.0} */
+	/* cmps.f.ne tmp0, b, {0.0} */
 	instr = instr_create(ctx, 2, OPC_CMPS_F);
 	add_dst_reg(ctx, instr, &tmp_dst, 0);
 	add_src_reg(ctx, instr, src, src->SwizzleX);
 	add_src_reg(ctx, instr, &constval, constval.SwizzleX);
-	instr->cat2.condition = IR3_COND_EQ;
+	instr->cat2.condition = IR3_COND_NE;
 
-	/* add.s tmp0, tmp0, -1 */
-	instr = instr_create(ctx, 2, OPC_ADD_S);
-	add_dst_reg(ctx, instr, &tmp_dst, TGSI_SWIZZLE_X);
-	add_src_reg(ctx, instr, tmp_src, TGSI_SWIZZLE_X);
-	ir3_reg_create(instr, 0, IR3_REG_IMMED)->iim_val = -1;
+	compile_assert(ctx, instr->regs[1]->flags & IR3_REG_SSA); /* because get_unconst() */
+	cond = instr->regs[1]->instr;
 
 	/* meta:flow tmp0 */
 	instr = instr_create(ctx, -1, OPC_META_FLOW);
 	ir3_reg_create(instr, 0, 0);  /* dummy dst */
 	add_src_reg(ctx, instr, tmp_src, TGSI_SWIZZLE_X);
 
-	push_branch(ctx, instr);
+	push_branch(ctx, false, instr, cond);
 	instr->flow.if_block = push_block(ctx);
 }
 
@@ -1310,7 +1328,7 @@ trans_else(const struct instr_translater *t,
 	compile_assert(ctx, (instr->category == -1) &&
 			(instr->opc == OPC_META_FLOW));
 
-	push_branch(ctx, instr);
+	push_branch(ctx, true, instr, NULL);
 	instr->flow.else_block = push_block(ctx);
 }
 
@@ -1481,6 +1499,53 @@ trans_endif(const struct instr_translater *t,
 	}
 
 	// TODO maybe we want to compact block->inputs?
+}
+
+/*
+ * Kill / Kill-if
+ */
+
+static void
+trans_kill(const struct instr_translater *t,
+		struct fd3_compile_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct ir3_instruction *instr, *immed, *cond = NULL;
+	bool inv = false;
+
+	switch (t->tgsi_opc) {
+	case TGSI_OPCODE_KILL:
+		/* unconditional kill, use enclosing if condition: */
+		if (ctx->branch_count > 0) {
+			unsigned int idx = ctx->branch_count - 1;
+			cond = ctx->branch[idx].cond;
+			inv = ctx->branch[idx].inv;
+		} else {
+			cond = create_immed(ctx, 1.0);
+		}
+
+		break;
+	}
+
+	compile_assert(ctx, cond);
+
+	immed = create_immed(ctx, 0.0);
+
+	/* cmps.f.ne p0.x, cond, {0.0} */
+	instr = instr_create(ctx, 2, OPC_CMPS_F);
+	instr->cat2.condition = IR3_COND_NE;
+	ir3_reg_create(instr, regid(REG_P0, 0), 0);
+	ir3_reg_create(instr, 0, IR3_REG_SSA)->instr = cond;
+	ir3_reg_create(instr, 0, IR3_REG_SSA)->instr = immed;
+	cond = instr;
+
+	/* kill p0.x */
+	instr = instr_create(ctx, 0, OPC_KILL);
+	instr->cat0.inv = inv;
+	ir3_reg_create(instr, 0, 0);  /* dummy dst */
+	ir3_reg_create(instr, 0, IR3_REG_SSA)->instr = cond;
+
+	ctx->kill[ctx->kill_count++] = instr;
 }
 
 /*
@@ -1672,7 +1737,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(ELSE,         trans_else),
 	INSTR(ENDIF,        trans_endif),
 	INSTR(END,          instr_cat0, .opc = OPC_END),
-	INSTR(KILL,         instr_cat0, .opc = OPC_KILL),
+	INSTR(KILL,         trans_kill, .opc = OPC_KILL),
 };
 
 static fd3_semantic
@@ -1943,6 +2008,16 @@ fd3_compile_shader(struct fd3_shader_stateobj *so,
 	}
 
 	compile_instructions(&ctx);
+
+	/* at this point, we want the kill's in the outputs array too,
+	 * so that they get scheduled (since they have no dst).. we've
+	 * already ensured that the array is big enough in push_block():
+	 */
+	if (ctx.type == TGSI_PROCESSOR_FRAGMENT) {
+		struct ir3_block *block = ctx.block;
+		for (i = 0; i < ctx.kill_count; i++)
+			block->outputs[block->noutputs++] = ctx.kill[i];
+	}
 
 	if (fd_mesa_debug & FD_DBG_OPTDUMP)
 		compile_dump(&ctx);
