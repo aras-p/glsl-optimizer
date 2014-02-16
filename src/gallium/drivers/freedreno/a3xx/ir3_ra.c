@@ -306,7 +306,7 @@ static void ra_calc_src_fanin(struct ir3_visitor *v,
 {
 	struct ra_calc_visitor *c = ra_calc_visitor(v);
 	unsigned srcn = ir3_instr_regno(instr, reg) - 1;
-	c->a.off -= srcn;
+	c->a.off += srcn;
 	c->a.num += srcn;
 	c->a.num = MAX2(c->a.num, instr->regs_count - 1);
 }
