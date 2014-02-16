@@ -1130,36 +1130,32 @@ trans_samp(const struct instr_translater *t,
 
 /*
  * SEQ(a,b) = (a == b) ? 1.0 : 0.0
- *   cmps.f.eq tmp0, b, a
+ *   cmps.f.eq tmp0, a, b
  *   cov.u16f16 dst, tmp0
  *
  * SNE(a,b) = (a != b) ? 1.0 : 0.0
- *   cmps.f.eq tmp0, b, a
- *   add.s tmp0, tmp0, -1
- *   sel.f16 dst, {0.0}, tmp0, {1.0}
+ *   cmps.f.ne tmp0, a, b
+ *   cov.u16f16 dst, tmp0
  *
  * SGE(a,b) = (a >= b) ? 1.0 : 0.0
  *   cmps.f.ge tmp0, a, b
  *   cov.u16f16 dst, tmp0
  *
  * SLE(a,b) = (a <= b) ? 1.0 : 0.0
- *   cmps.f.ge tmp0, b, a
+ *   cmps.f.le tmp0, a, b
  *   cov.u16f16 dst, tmp0
  *
  * SGT(a,b) = (a > b)  ? 1.0 : 0.0
- *   cmps.f.ge tmp0, b, a
- *   add.s tmp0, tmp0, -1
- *   sel.f16 dst, {0.0}, tmp0, {1.0}
+ *   cmps.f.gt tmp0, a, b
+ *   cov.u16f16 dst, tmp0
  *
  * SLT(a,b) = (a < b)  ? 1.0 : 0.0
- *   cmps.f.ge tmp0, a, b
- *   add.s tmp0, tmp0, -1
- *   sel.f16 dst, {0.0}, tmp0, {1.0}
+ *   cmps.f.lt tmp0, a, b
+ *   cov.u16f16 dst, tmp0
  *
  * CMP(a,b,c) = (a < 0.0) ? b : c
- *   cmps.f.ge tmp0, a, {0.0}
- *   add.s tmp0, tmp0, -1
- *   sel.f16 dst, c, tmp0, b
+ *   cmps.f.lt tmp0, a, {0.0}
+ *   sel.b16 dst, b, tmp0, c
  */
 static void
 trans_cmp(const struct instr_translater *t,
@@ -1169,38 +1165,41 @@ trans_cmp(const struct instr_translater *t,
 	struct ir3_instruction *instr;
 	struct tgsi_dst_register tmp_dst;
 	struct tgsi_src_register *tmp_src;
-	struct tgsi_src_register constval0, constval1;
+	struct tgsi_src_register constval0;
 	/* final instruction for CMP() uses orig src1 and src2: */
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
-	struct tgsi_src_register *a0, *a1;
+	struct tgsi_src_register *a0, *a1, *a2;
 	unsigned condition;
 
 	tmp_src = get_internal_temp(ctx, &tmp_dst);
 
+	a0 = &inst->Src[0].Register;  /* a */
+	a1 = &inst->Src[1].Register;  /* b */
+
 	switch (t->tgsi_opc) {
 	case TGSI_OPCODE_SEQ:
-	case TGSI_OPCODE_SNE:
-		a0 = &inst->Src[1].Register;  /* b */
-		a1 = &inst->Src[0].Register;  /* a */
 		condition = IR3_COND_EQ;
 		break;
+	case TGSI_OPCODE_SNE:
+		condition = IR3_COND_NE;
+		break;
 	case TGSI_OPCODE_SGE:
-	case TGSI_OPCODE_SLT:
-		a0 = &inst->Src[0].Register;  /* a */
-		a1 = &inst->Src[1].Register;  /* b */
 		condition = IR3_COND_GE;
 		break;
+	case TGSI_OPCODE_SLT:
+		condition = IR3_COND_LT;
+		break;
 	case TGSI_OPCODE_SLE:
+		condition = IR3_COND_LE;
+		break;
 	case TGSI_OPCODE_SGT:
-		a0 = &inst->Src[1].Register;  /* b */
-		a1 = &inst->Src[0].Register;  /* a */
-		condition = IR3_COND_GE;
+		condition = IR3_COND_GT;
 		break;
 	case TGSI_OPCODE_CMP:
 		get_immediate(ctx, &constval0, fui(0.0));
 		a0 = &inst->Src[0].Register;  /* a */
 		a1 = &constval0;              /* {0.0} */
-		condition = IR3_COND_GE;
+		condition = IR3_COND_LT;
 		break;
 	default:
 		compile_assert(ctx, 0);
@@ -1210,7 +1209,7 @@ trans_cmp(const struct instr_translater *t,
 	if (is_const(a0) && is_const(a1))
 		a0 = get_unconst(ctx, a0);
 
-	/* cmps.f.ge tmp, a0, a1 */
+	/* cmps.f.<cond> tmp, a0, a1 */
 	instr = instr_create(ctx, 2, OPC_CMPS_F);
 	instr->cat2.condition = condition;
 	vectorize(ctx, instr, &tmp_dst, 2, a0, 0, a1, 0);
@@ -1219,37 +1218,22 @@ trans_cmp(const struct instr_translater *t,
 	case TGSI_OPCODE_SEQ:
 	case TGSI_OPCODE_SGE:
 	case TGSI_OPCODE_SLE:
+	case TGSI_OPCODE_SNE:
+	case TGSI_OPCODE_SGT:
+	case TGSI_OPCODE_SLT:
 		/* cov.u16f16 dst, tmp0 */
 		instr = instr_create(ctx, 1, 0);
 		instr->cat1.src_type = get_utype(ctx);
 		instr->cat1.dst_type = get_ftype(ctx);
 		vectorize(ctx, instr, dst, 1, tmp_src, 0);
 		break;
-	case TGSI_OPCODE_SNE:
-	case TGSI_OPCODE_SGT:
-	case TGSI_OPCODE_SLT:
 	case TGSI_OPCODE_CMP:
-		/* add.s tmp, tmp, -1 */
-		instr = instr_create(ctx, 2, OPC_ADD_S);
-		vectorize(ctx, instr, &tmp_dst, 2, tmp_src, 0, -1, IR3_REG_IMMED);
-
-		if (t->tgsi_opc == TGSI_OPCODE_CMP) {
-			/* sel.{f32,f16} dst, src2, tmp, src1 */
-			instr = instr_create(ctx, 3,
-					ctx->so->half_precision ? OPC_SEL_F16 : OPC_SEL_F32);
-			vectorize(ctx, instr, dst, 3,
-					&inst->Src[2].Register, 0,
-					tmp_src, 0,
-					&inst->Src[1].Register, 0);
-		} else {
-			get_immediate(ctx, &constval0, fui(0.0));
-			get_immediate(ctx, &constval1, fui(1.0));
-			/* sel.{f32,f16} dst, {0.0}, tmp0, {1.0} */
-			instr = instr_create(ctx, 3,
-					ctx->so->half_precision ? OPC_SEL_F16 : OPC_SEL_F32);
-			vectorize(ctx, instr, dst, 3,
-					&constval0, 0, tmp_src, 0, &constval1, 0);
-		}
+		a1 = &inst->Src[1].Register;
+		a2 = &inst->Src[2].Register;
+		/* sel.{b32,b16} dst, src2, tmp, src1 */
+		instr = instr_create(ctx, 3,
+				ctx->so->half_precision ? OPC_SEL_B16 : OPC_SEL_B32);
+		vectorize(ctx, instr, dst, 3, a1, 0, tmp_src, 0, a2, 0);
 
 		break;
 	}
