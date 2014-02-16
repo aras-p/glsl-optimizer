@@ -480,22 +480,25 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 	struct ir3_instruction *end =
 			ir3_instr_create(block, 0, OPC_END);
 	struct ir3_instruction *last_input = NULL;
+	regmask_t needs_ss_war;
 	regmask_t needs_ss;
 	regmask_t needs_sy;
 
+	regmask_init(&needs_ss_war);
 	regmask_init(&needs_ss);
 	regmask_init(&needs_sy);
 
 	shader->instrs_count = 0;
 
 	for (n = block->head; n; n = n->next) {
+		struct ir3_register *reg;
 		unsigned i;
 
 		if (is_meta(n))
 			continue;
 
 		for (i = 1; i < n->regs_count; i++) {
-			struct ir3_register *reg = n->regs[i];
+			reg = n->regs[i];
 
 			if (reg_gpr(reg)) {
 
@@ -515,12 +518,26 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 			}
 		}
 
+		if (n->regs_count > 0) {
+			reg = n->regs[0];
+			if (regmask_get(&needs_ss_war, reg)) {
+				n->flags |= IR3_INSTR_SS;
+				regmask_init(&needs_ss_war); // ??? I assume?
+			}
+		}
+
 		shader->instrs[shader->instrs_count++] = n;
 
 		if (is_sfu(n))
 			regmask_set(&needs_ss, n->regs[0]);
-		if (is_tex(n))
+		if (is_tex(n)) {
 			regmask_set(&needs_sy, n->regs[0]);
+			for (i = 1; i < n->regs_count; i++) {
+				reg = n->regs[i];
+				if (reg_gpr(reg))
+					regmask_set(&needs_ss_war, reg);
+			}
+		}
 		if (is_input(n))
 			last_input = n;
 	}
