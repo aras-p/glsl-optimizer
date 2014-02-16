@@ -411,7 +411,8 @@ kernel::constant_argument::bind(exec_context &ctx,
 
 void
 kernel::constant_argument::unbind(exec_context &ctx) {
-   buf->resource(*ctx.q).unbind_surface(*ctx.q, st);
+   if (buf)
+      buf->resource(*ctx.q).unbind_surface(*ctx.q, st);
 }
 
 void
