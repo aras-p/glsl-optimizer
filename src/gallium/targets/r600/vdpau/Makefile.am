@@ -41,7 +41,6 @@ libvdpau_r600_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(GALLIUM_VDPAU_LIB_DEPS) \
-	$(GALLIUM_DRI_LIB_DEPS) \
 	$(RADEON_LIBS)
 
 libvdpau_r600_la_LINK = $(CXXLINK) $(libvdpau_r600_la_LDFLAGS)

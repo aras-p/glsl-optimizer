@@ -42,7 +42,6 @@ libvdpau_nouveau_la_LIBADD = \
 	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
 	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
 	$(GALLIUM_VDPAU_LIB_DEPS) \
-	$(GALLIUM_DRI_LIB_DEPS) \
 	$(NOUVEAU_LIBS)
 
 if HAVE_MESA_LLVM

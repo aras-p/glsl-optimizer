@@ -42,7 +42,6 @@ libvdpau_radeonsi_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(GALLIUM_VDPAU_LIB_DEPS) \
-	$(GALLIUM_DRI_LIB_DEPS) \
 	$(RADEON_LIBS)
 
 if HAVE_MESA_LLVM
