@@ -1797,7 +1797,7 @@ ast_compound_statement::hir(exec_list *instructions,
  * Evaluate the given exec_node (which should be an ast_node representing
  * a single array dimension) and return its integer value.
  */
-static const unsigned
+static unsigned
 process_array_size(exec_node *node,
                    struct _mesa_glsl_parse_state *state)
 {
