@@ -16,11 +16,11 @@ IP Status
 
 Status
 
-    Incomplete.  DO NOT SHIP.
+    Shipping as of Mesa 10.0
 
 Version
 
-    Version 6, 7-November-2013
+    Version 7, 7-November-2013
 
 Number
 
