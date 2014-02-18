@@ -531,6 +531,17 @@ _eglBindTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surface,
    return EGL_TRUE;
 }
 
+EGLBoolean
+_eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf,
+                    EGLint buffer)
+{
+   /* TODO: do basic error checking and return success/fail.
+    * Drivers must implement the real stuff.
+    */
+
+  return EGL_TRUE;
+}
+
 
 EGLBoolean
 _eglSwapInterval(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,

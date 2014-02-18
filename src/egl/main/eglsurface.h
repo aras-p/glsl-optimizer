@@ -94,6 +94,9 @@ _eglSurfaceAttrib(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint a
 PUBLIC extern EGLBoolean
 _eglBindTexImage(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint buffer);
 
+PUBLIC extern EGLBoolean
+_eglReleaseTexImage(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf, EGLint buffer);
+
 
 extern EGLBoolean
 _eglSwapInterval(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf, EGLint interval);

@@ -1189,7 +1189,6 @@ static EGLBoolean
 dri2_release_tex_image(_EGLDriver *drv,
 		       _EGLDisplay *disp, _EGLSurface *surf, EGLint buffer)
 {
-#if __DRI_TEX_BUFFER_VERSION >= 3
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
    struct dri2_egl_context *dri2_ctx;
@@ -1209,11 +1208,13 @@ dri2_release_tex_image(_EGLDriver *drv,
    default:
       assert(0);
    }
-   if (dri2_dpy->tex_buffer->releaseTexBuffer!=NULL)
-    (*dri2_dpy->tex_buffer->releaseTexBuffer)(dri2_ctx->dri_context,
-                                             target,
-                                             dri2_surf->dri_drawable);
-#endif
+
+   if (dri2_dpy->tex_buffer->base.version >= 3 &&
+       dri2_dpy->tex_buffer->releaseTexBuffer != NULL) {
+      (*dri2_dpy->tex_buffer->releaseTexBuffer)(dri2_ctx->dri_context,
+                                                target,
+                                                dri2_surf->dri_drawable);
+   }
 
    return EGL_TRUE;
 }

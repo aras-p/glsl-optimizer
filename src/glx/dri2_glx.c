@@ -1032,17 +1032,14 @@ dri2_bind_tex_image(Display * dpy,
 static void
 dri2_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 {
-#if __DRI_TEX_BUFFER_VERSION >= 3
    struct glx_context *gc = __glXGetCurrentContext();
    struct dri2_context *pcp = (struct dri2_context *) gc;
    __GLXDRIdrawable *base = GetGLXDRIDrawable(dpy, drawable);
    struct glx_display *dpyPriv = __glXInitialize(dpy);
    struct dri2_drawable *pdraw = (struct dri2_drawable *) base;
-   struct dri2_display *pdp =
-      (struct dri2_display *) dpyPriv->dri2Display;
    struct dri2_screen *psc;
 
-   if (pdraw != NULL) {
+   if (dpyPriv != NULL && pdraw != NULL) {
       psc = (struct dri2_screen *) base->psc;
 
       if (psc->texBuffer->base.version >= 3 &&
@@ -1052,7 +1049,6 @@ dri2_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
                                            pdraw->driDrawable);
       }
    }
-#endif
 }
 
 static const struct glx_context_vtable dri2_context_vtable = {

@@ -231,7 +231,7 @@ struct __DRItexOffsetExtensionRec {
 #define __DRI_TEXTURE_FORMAT_RGBA        0x20DA
 
 #define __DRI_TEX_BUFFER "DRI_TexBuffer"
-#define __DRI_TEX_BUFFER_VERSION 2
+#define __DRI_TEX_BUFFER_VERSION 3
 struct __DRItexBufferExtensionRec {
     __DRIextension base;
 

@@ -1527,7 +1527,8 @@ dri3_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
    if (pdraw != NULL) {
       psc = (struct dri3_screen *) base->psc;
 
-      if (psc->texBuffer->releaseTexBuffer)
+      if (psc->texBuffer->base.version >= 3 &&
+          psc->texBuffer->releaseTexBuffer != NULL)
          (*psc->texBuffer->releaseTexBuffer) (pcp->driContext,
                                               pdraw->base.textureTarget,
                                               pdraw->driDrawable);
