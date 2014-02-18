@@ -1542,15 +1542,15 @@ dri3_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 }
 
 static const struct glx_context_vtable dri3_context_vtable = {
-   dri3_destroy_context,
-   dri3_bind_context,
-   dri3_unbind_context,
-   dri3_wait_gl,
-   dri3_wait_x,
-   DRI_glXUseXFont,
-   dri3_bind_tex_image,
-   dri3_release_tex_image,
-   NULL, /* get_proc_address */
+   .destroy             = dri3_destroy_context,
+   .bind                = dri3_bind_context,
+   .unbind              = dri3_unbind_context,
+   .wait_gl             = dri3_wait_gl,
+   .wait_x              = dri3_wait_x,
+   .use_x_font          = DRI_glXUseXFont,
+   .bind_tex_image      = dri3_bind_tex_image,
+   .release_tex_image   = dri3_release_tex_image,
+   .get_proc_address    = NULL,
 };
 
 /** dri3_bind_extensions
@@ -1603,8 +1603,10 @@ dri3_bind_extensions(struct dri3_screen *psc, struct glx_display * priv,
 }
 
 static const struct glx_screen_vtable dri3_screen_vtable = {
-   dri3_create_context,
-   dri3_create_context_attribs
+   .create_context         = dri3_create_context,
+   .create_context_attribs = dri3_create_context_attribs,
+   .query_renderer_integer = NULL,
+   .query_renderer_string  = NULL,
 };
 
 /** dri3_create_screen
