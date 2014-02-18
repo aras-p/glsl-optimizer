@@ -38,25 +38,25 @@ namespace clover {
    template<typename T, typename V>
    struct range_store_traits;
 
-   template<typename T>
-   struct range_store_traits<T, std::vector<T>> {
+   template<typename T, typename S>
+   struct range_store_traits<T, std::vector<S>> {
       typedef void enable;
 
       template<typename R>
-      static std::vector<T>
+      static std::vector<S>
       create(const R &r) {
          return { r.begin(), r.end() };
       }
    };
 
-   template<typename T, std::size_t N>
-   struct range_store_traits<T, std::array<T, N>> {
+   template<typename T, typename S, std::size_t N>
+   struct range_store_traits<T, std::array<S, N>> {
       typedef void enable;
 
       template<typename R>
-      static std::array<T, N>
+      static std::array<S, N>
       create(const R &r) {
-         std::array<T, N> v;
+         std::array<S, N> v;
          assert(r.size() == v.size());
          copy(r, v.begin());
          return v;
