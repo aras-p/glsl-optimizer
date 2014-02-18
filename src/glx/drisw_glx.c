@@ -365,15 +365,15 @@ drisw_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 }
 
 static const struct glx_context_vtable drisw_context_vtable = {
-   drisw_destroy_context,
-   drisw_bind_context,
-   drisw_unbind_context,
-   NULL,
-   NULL,
-   DRI_glXUseXFont,
-   drisw_bind_tex_image,
-   drisw_release_tex_image,
-   NULL, /* get_proc_address */
+   .destroy             = drisw_destroy_context,
+   .bind                = drisw_bind_context,
+   .unbind              = drisw_unbind_context,
+   .wait_gl             = NULL,
+   .wait_x              = NULL,
+   .use_x_font          = DRI_glXUseXFont,
+   .bind_tex_image      = drisw_bind_tex_image,
+   .release_tex_image   = drisw_release_tex_image,
+   .get_proc_address    = NULL,
 };
 
 static struct glx_context *
@@ -635,8 +635,10 @@ driOpenSwrast(void)
 }
 
 static const struct glx_screen_vtable drisw_screen_vtable = {
-   drisw_create_context,
-   drisw_create_context_attribs
+   .create_context         = drisw_create_context,
+   .create_context_attribs = drisw_create_context_attribs,
+   .query_renderer_integer = NULL,
+   .query_renderer_string  = NULL,
 };
 
 static void
