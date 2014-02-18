@@ -2928,10 +2928,17 @@ validate_identifier(const char *identifier, YYLTYPE loc,
        *     "In addition, all identifiers containing two
        *      consecutive underscores (__) are reserved as
        *      possible future keywords."
+       *
+       * The intention is that names containing __ are reserved for internal
+       * use by the implementation, and names prefixed with GL_ are reserved
+       * for use by Khronos.  Names simply containing __ are dangerous to use,
+       * but should be allowed.
+       *
+       * A future version of the GLSL specification will clarify this.
        */
-      _mesa_glsl_error(&loc, state,
-                       "identifier `%s' uses reserved `__' string",
-                       identifier);
+      _mesa_glsl_warning(&loc, state,
+                         "identifier `%s' uses reserved `__' string",
+                         identifier);
    }
 }
 
