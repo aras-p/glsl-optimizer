@@ -79,12 +79,12 @@ protected:
 
 public:
 
-   struct brw_context *brw;
-   struct gl_context *ctx;
-   struct brw_shader *shader;
-   struct gl_shader_program *shader_prog;
-   struct gl_program *prog;
-   struct brw_stage_prog_data *stage_prog_data;
+   struct brw_context * const brw;
+   struct gl_context * const ctx;
+   struct brw_shader * const shader;
+   struct gl_shader_program * const shader_prog;
+   struct gl_program * const prog;
+   struct brw_stage_prog_data * const stage_prog_data;
 
    /** ralloc context for temporary data used during compile */
    void *mem_ctx;
