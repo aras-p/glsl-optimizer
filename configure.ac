@@ -950,15 +950,13 @@ AC_ARG_WITH([dri-drivers],
     [with_dri_drivers="$withval"],
     [with_dri_drivers=auto])
 
-case "$with_dri_drivers" in
-no) ;;
-auto)
-    # classic DRI drivers
-    if test "x$enable_opengl" = xyes; then
+if test "x$with_dri_drivers" = xauto; then
+    if test "x$enable_opengl" = xyes -a "x$enable_dri" = xyes; then
         with_dri_drivers="yes"
+    else
+        with_dri_drivers="no"
     fi
-    ;;
-esac
+fi
 
 dnl If $with_dri_drivers is yes, drivers will be added through
 dnl platform checks. Set DEFINES and LIB_DEPS
@@ -1039,7 +1037,7 @@ AC_SUBST([GALLIUM_DRI_LIB_DEPS])
 
 DRI_DIRS=""
 dnl Duplicates in DRI_DIRS are removed by sorting it after this block
-if test -n "$with_dri_drivers"; then
+if test "x$with_dri_drivers" != xno; then
     if test "x$enable_opengl" != xyes; then
         AC_MSG_ERROR([--with-dri-drivers requires OpenGL])
     fi
