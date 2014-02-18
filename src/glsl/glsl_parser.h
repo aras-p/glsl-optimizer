@@ -127,136 +127,148 @@
      ISAMPLER2DMSARRAY = 343,
      USAMPLER2DMSARRAY = 344,
      SAMPLEREXTERNALOES = 345,
-     ATOMIC_UINT = 346,
-     STRUCT = 347,
-     VOID_TOK = 348,
-     WHILE = 349,
-     IDENTIFIER = 350,
-     TYPE_IDENTIFIER = 351,
-     NEW_IDENTIFIER = 352,
-     FLOATCONSTANT = 353,
-     INTCONSTANT = 354,
-     UINTCONSTANT = 355,
-     BOOLCONSTANT = 356,
-     FIELD_SELECTION = 357,
-     LEFT_OP = 358,
-     RIGHT_OP = 359,
-     INC_OP = 360,
-     DEC_OP = 361,
-     LE_OP = 362,
-     GE_OP = 363,
-     EQ_OP = 364,
-     NE_OP = 365,
-     AND_OP = 366,
-     OR_OP = 367,
-     XOR_OP = 368,
-     MUL_ASSIGN = 369,
-     DIV_ASSIGN = 370,
-     ADD_ASSIGN = 371,
-     MOD_ASSIGN = 372,
-     LEFT_ASSIGN = 373,
-     RIGHT_ASSIGN = 374,
-     AND_ASSIGN = 375,
-     XOR_ASSIGN = 376,
-     OR_ASSIGN = 377,
-     SUB_ASSIGN = 378,
-     INVARIANT = 379,
-     LOWP = 380,
-     MEDIUMP = 381,
-     HIGHP = 382,
-     SUPERP = 383,
-     PRECISION = 384,
-     VERSION_TOK = 385,
-     EXTENSION = 386,
-     LINE = 387,
-     COLON = 388,
-     EOL = 389,
-     INTERFACE = 390,
-     OUTPUT = 391,
-     PRAGMA_DEBUG_ON = 392,
-     PRAGMA_DEBUG_OFF = 393,
-     PRAGMA_OPTIMIZE_ON = 394,
-     PRAGMA_OPTIMIZE_OFF = 395,
-     PRAGMA_INVARIANT_ALL = 396,
-     LAYOUT_TOK = 397,
-     ASM = 398,
-     CLASS = 399,
-     UNION = 400,
-     ENUM = 401,
-     TYPEDEF = 402,
-     TEMPLATE = 403,
-     THIS = 404,
-     PACKED_TOK = 405,
-     GOTO = 406,
-     INLINE_TOK = 407,
-     NOINLINE = 408,
-     VOLATILE = 409,
-     PUBLIC_TOK = 410,
-     STATIC = 411,
-     EXTERN = 412,
-     EXTERNAL = 413,
-     LONG_TOK = 414,
-     SHORT_TOK = 415,
-     DOUBLE_TOK = 416,
-     HALF = 417,
-     FIXED_TOK = 418,
-     UNSIGNED = 419,
-     INPUT_TOK = 420,
-     OUPTUT = 421,
-     HVEC2 = 422,
-     HVEC3 = 423,
-     HVEC4 = 424,
-     DVEC2 = 425,
-     DVEC3 = 426,
-     DVEC4 = 427,
-     FVEC2 = 428,
-     FVEC3 = 429,
-     FVEC4 = 430,
-     SAMPLER3DRECT = 431,
-     SIZEOF = 432,
-     CAST = 433,
-     NAMESPACE = 434,
-     USING = 435,
-     COHERENT = 436,
-     RESTRICT = 437,
-     READONLY = 438,
-     WRITEONLY = 439,
-     RESOURCE = 440,
-     PATCH = 441,
-     SAMPLE = 442,
-     SUBROUTINE = 443,
-     ERROR_TOK = 444,
-     COMMON = 445,
-     PARTITION = 446,
-     ACTIVE = 447,
-     FILTER = 448,
-     IMAGE1D = 449,
-     IMAGE2D = 450,
-     IMAGE3D = 451,
-     IMAGECUBE = 452,
-     IMAGE1DARRAY = 453,
-     IMAGE2DARRAY = 454,
-     IIMAGE1D = 455,
-     IIMAGE2D = 456,
-     IIMAGE3D = 457,
-     IIMAGECUBE = 458,
-     IIMAGE1DARRAY = 459,
-     IIMAGE2DARRAY = 460,
-     UIMAGE1D = 461,
-     UIMAGE2D = 462,
-     UIMAGE3D = 463,
-     UIMAGECUBE = 464,
-     UIMAGE1DARRAY = 465,
-     UIMAGE2DARRAY = 466,
-     IMAGE1DSHADOW = 467,
-     IMAGE2DSHADOW = 468,
-     IMAGEBUFFER = 469,
-     IIMAGEBUFFER = 470,
-     UIMAGEBUFFER = 471,
-     IMAGE1DARRAYSHADOW = 472,
-     IMAGE2DARRAYSHADOW = 473,
-     ROW_MAJOR = 474,
-     THEN = 475
+     IMAGE1D = 346,
+     IMAGE2D = 347,
+     IMAGE3D = 348,
+     IMAGE2DRECT = 349,
+     IMAGECUBE = 350,
+     IMAGEBUFFER = 351,
+     IMAGE1DARRAY = 352,
+     IMAGE2DARRAY = 353,
+     IMAGECUBEARRAY = 354,
+     IMAGE2DMS = 355,
+     IMAGE2DMSARRAY = 356,
+     IIMAGE1D = 357,
+     IIMAGE2D = 358,
+     IIMAGE3D = 359,
+     IIMAGE2DRECT = 360,
+     IIMAGECUBE = 361,
+     IIMAGEBUFFER = 362,
+     IIMAGE1DARRAY = 363,
+     IIMAGE2DARRAY = 364,
+     IIMAGECUBEARRAY = 365,
+     IIMAGE2DMS = 366,
+     IIMAGE2DMSARRAY = 367,
+     UIMAGE1D = 368,
+     UIMAGE2D = 369,
+     UIMAGE3D = 370,
+     UIMAGE2DRECT = 371,
+     UIMAGECUBE = 372,
+     UIMAGEBUFFER = 373,
+     UIMAGE1DARRAY = 374,
+     UIMAGE2DARRAY = 375,
+     UIMAGECUBEARRAY = 376,
+     UIMAGE2DMS = 377,
+     UIMAGE2DMSARRAY = 378,
+     IMAGE1DSHADOW = 379,
+     IMAGE2DSHADOW = 380,
+     IMAGE1DARRAYSHADOW = 381,
+     IMAGE2DARRAYSHADOW = 382,
+     COHERENT = 383,
+     VOLATILE = 384,
+     RESTRICT = 385,
+     READONLY = 386,
+     WRITEONLY = 387,
+     ATOMIC_UINT = 388,
+     STRUCT = 389,
+     VOID_TOK = 390,
+     WHILE = 391,
+     IDENTIFIER = 392,
+     TYPE_IDENTIFIER = 393,
+     NEW_IDENTIFIER = 394,
+     FLOATCONSTANT = 395,
+     INTCONSTANT = 396,
+     UINTCONSTANT = 397,
+     BOOLCONSTANT = 398,
+     FIELD_SELECTION = 399,
+     LEFT_OP = 400,
+     RIGHT_OP = 401,
+     INC_OP = 402,
+     DEC_OP = 403,
+     LE_OP = 404,
+     GE_OP = 405,
+     EQ_OP = 406,
+     NE_OP = 407,
+     AND_OP = 408,
+     OR_OP = 409,
+     XOR_OP = 410,
+     MUL_ASSIGN = 411,
+     DIV_ASSIGN = 412,
+     ADD_ASSIGN = 413,
+     MOD_ASSIGN = 414,
+     LEFT_ASSIGN = 415,
+     RIGHT_ASSIGN = 416,
+     AND_ASSIGN = 417,
+     XOR_ASSIGN = 418,
+     OR_ASSIGN = 419,
+     SUB_ASSIGN = 420,
+     INVARIANT = 421,
+     LOWP = 422,
+     MEDIUMP = 423,
+     HIGHP = 424,
+     SUPERP = 425,
+     PRECISION = 426,
+     VERSION_TOK = 427,
+     EXTENSION = 428,
+     LINE = 429,
+     COLON = 430,
+     EOL = 431,
+     INTERFACE = 432,
+     OUTPUT = 433,
+     PRAGMA_DEBUG_ON = 434,
+     PRAGMA_DEBUG_OFF = 435,
+     PRAGMA_OPTIMIZE_ON = 436,
+     PRAGMA_OPTIMIZE_OFF = 437,
+     PRAGMA_INVARIANT_ALL = 438,
+     LAYOUT_TOK = 439,
+     ASM = 440,
+     CLASS = 441,
+     UNION = 442,
+     ENUM = 443,
+     TYPEDEF = 444,
+     TEMPLATE = 445,
+     THIS = 446,
+     PACKED_TOK = 447,
+     GOTO = 448,
+     INLINE_TOK = 449,
+     NOINLINE = 450,
+     PUBLIC_TOK = 451,
+     STATIC = 452,
+     EXTERN = 453,
+     EXTERNAL = 454,
+     LONG_TOK = 455,
+     SHORT_TOK = 456,
+     DOUBLE_TOK = 457,
+     HALF = 458,
+     FIXED_TOK = 459,
+     UNSIGNED = 460,
+     INPUT_TOK = 461,
+     OUPTUT = 462,
+     HVEC2 = 463,
+     HVEC3 = 464,
+     HVEC4 = 465,
+     DVEC2 = 466,
+     DVEC3 = 467,
+     DVEC4 = 468,
+     FVEC2 = 469,
+     FVEC3 = 470,
+     FVEC4 = 471,
+     SAMPLER3DRECT = 472,
+     SIZEOF = 473,
+     CAST = 474,
+     NAMESPACE = 475,
+     USING = 476,
+     RESOURCE = 477,
+     PATCH = 478,
+     SAMPLE = 479,
+     SUBROUTINE = 480,
+     ERROR_TOK = 481,
+     COMMON = 482,
+     PARTITION = 483,
+     ACTIVE = 484,
+     FILTER = 485,
+     ROW_MAJOR = 486,
+     THEN = 487
    };
 #endif
 /* Tokens.  */
@@ -348,136 +360,148 @@
 #define ISAMPLER2DMSARRAY 343
 #define USAMPLER2DMSARRAY 344
 #define SAMPLEREXTERNALOES 345
-#define ATOMIC_UINT 346
-#define STRUCT 347
-#define VOID_TOK 348
-#define WHILE 349
-#define IDENTIFIER 350
-#define TYPE_IDENTIFIER 351
-#define NEW_IDENTIFIER 352
-#define FLOATCONSTANT 353
-#define INTCONSTANT 354
-#define UINTCONSTANT 355
-#define BOOLCONSTANT 356
-#define FIELD_SELECTION 357
-#define LEFT_OP 358
-#define RIGHT_OP 359
-#define INC_OP 360
-#define DEC_OP 361
-#define LE_OP 362
-#define GE_OP 363
-#define EQ_OP 364
-#define NE_OP 365
-#define AND_OP 366
-#define OR_OP 367
-#define XOR_OP 368
-#define MUL_ASSIGN 369
-#define DIV_ASSIGN 370
-#define ADD_ASSIGN 371
-#define MOD_ASSIGN 372
-#define LEFT_ASSIGN 373
-#define RIGHT_ASSIGN 374
-#define AND_ASSIGN 375
-#define XOR_ASSIGN 376
-#define OR_ASSIGN 377
-#define SUB_ASSIGN 378
-#define INVARIANT 379
-#define LOWP 380
-#define MEDIUMP 381
-#define HIGHP 382
-#define SUPERP 383
-#define PRECISION 384
-#define VERSION_TOK 385
-#define EXTENSION 386
-#define LINE 387
-#define COLON 388
-#define EOL 389
-#define INTERFACE 390
-#define OUTPUT 391
-#define PRAGMA_DEBUG_ON 392
-#define PRAGMA_DEBUG_OFF 393
-#define PRAGMA_OPTIMIZE_ON 394
-#define PRAGMA_OPTIMIZE_OFF 395
-#define PRAGMA_INVARIANT_ALL 396
-#define LAYOUT_TOK 397
-#define ASM 398
-#define CLASS 399
-#define UNION 400
-#define ENUM 401
-#define TYPEDEF 402
-#define TEMPLATE 403
-#define THIS 404
-#define PACKED_TOK 405
-#define GOTO 406
-#define INLINE_TOK 407
-#define NOINLINE 408
-#define VOLATILE 409
-#define PUBLIC_TOK 410
-#define STATIC 411
-#define EXTERN 412
-#define EXTERNAL 413
-#define LONG_TOK 414
-#define SHORT_TOK 415
-#define DOUBLE_TOK 416
-#define HALF 417
-#define FIXED_TOK 418
-#define UNSIGNED 419
-#define INPUT_TOK 420
-#define OUPTUT 421
-#define HVEC2 422
-#define HVEC3 423
-#define HVEC4 424
-#define DVEC2 425
-#define DVEC3 426
-#define DVEC4 427
-#define FVEC2 428
-#define FVEC3 429
-#define FVEC4 430
-#define SAMPLER3DRECT 431
-#define SIZEOF 432
-#define CAST 433
-#define NAMESPACE 434
-#define USING 435
-#define COHERENT 436
-#define RESTRICT 437
-#define READONLY 438
-#define WRITEONLY 439
-#define RESOURCE 440
-#define PATCH 441
-#define SAMPLE 442
-#define SUBROUTINE 443
-#define ERROR_TOK 444
-#define COMMON 445
-#define PARTITION 446
-#define ACTIVE 447
-#define FILTER 448
-#define IMAGE1D 449
-#define IMAGE2D 450
-#define IMAGE3D 451
-#define IMAGECUBE 452
-#define IMAGE1DARRAY 453
-#define IMAGE2DARRAY 454
-#define IIMAGE1D 455
-#define IIMAGE2D 456
-#define IIMAGE3D 457
-#define IIMAGECUBE 458
-#define IIMAGE1DARRAY 459
-#define IIMAGE2DARRAY 460
-#define UIMAGE1D 461
-#define UIMAGE2D 462
-#define UIMAGE3D 463
-#define UIMAGECUBE 464
-#define UIMAGE1DARRAY 465
-#define UIMAGE2DARRAY 466
-#define IMAGE1DSHADOW 467
-#define IMAGE2DSHADOW 468
-#define IMAGEBUFFER 469
-#define IIMAGEBUFFER 470
-#define UIMAGEBUFFER 471
-#define IMAGE1DARRAYSHADOW 472
-#define IMAGE2DARRAYSHADOW 473
-#define ROW_MAJOR 474
-#define THEN 475
+#define IMAGE1D 346
+#define IMAGE2D 347
+#define IMAGE3D 348
+#define IMAGE2DRECT 349
+#define IMAGECUBE 350
+#define IMAGEBUFFER 351
+#define IMAGE1DARRAY 352
+#define IMAGE2DARRAY 353
+#define IMAGECUBEARRAY 354
+#define IMAGE2DMS 355
+#define IMAGE2DMSARRAY 356
+#define IIMAGE1D 357
+#define IIMAGE2D 358
+#define IIMAGE3D 359
+#define IIMAGE2DRECT 360
+#define IIMAGECUBE 361
+#define IIMAGEBUFFER 362
+#define IIMAGE1DARRAY 363
+#define IIMAGE2DARRAY 364
+#define IIMAGECUBEARRAY 365
+#define IIMAGE2DMS 366
+#define IIMAGE2DMSARRAY 367
+#define UIMAGE1D 368
+#define UIMAGE2D 369
+#define UIMAGE3D 370
+#define UIMAGE2DRECT 371
+#define UIMAGECUBE 372
+#define UIMAGEBUFFER 373
+#define UIMAGE1DARRAY 374
+#define UIMAGE2DARRAY 375
+#define UIMAGECUBEARRAY 376
+#define UIMAGE2DMS 377
+#define UIMAGE2DMSARRAY 378
+#define IMAGE1DSHADOW 379
+#define IMAGE2DSHADOW 380
+#define IMAGE1DARRAYSHADOW 381
+#define IMAGE2DARRAYSHADOW 382
+#define COHERENT 383
+#define VOLATILE 384
+#define RESTRICT 385
+#define READONLY 386
+#define WRITEONLY 387
+#define ATOMIC_UINT 388
+#define STRUCT 389
+#define VOID_TOK 390
+#define WHILE 391
+#define IDENTIFIER 392
+#define TYPE_IDENTIFIER 393
+#define NEW_IDENTIFIER 394
+#define FLOATCONSTANT 395
+#define INTCONSTANT 396
+#define UINTCONSTANT 397
+#define BOOLCONSTANT 398
+#define FIELD_SELECTION 399
+#define LEFT_OP 400
+#define RIGHT_OP 401
+#define INC_OP 402
+#define DEC_OP 403
+#define LE_OP 404
+#define GE_OP 405
+#define EQ_OP 406
+#define NE_OP 407
+#define AND_OP 408
+#define OR_OP 409
+#define XOR_OP 410
+#define MUL_ASSIGN 411
+#define DIV_ASSIGN 412
+#define ADD_ASSIGN 413
+#define MOD_ASSIGN 414
+#define LEFT_ASSIGN 415
+#define RIGHT_ASSIGN 416
+#define AND_ASSIGN 417
+#define XOR_ASSIGN 418
+#define OR_ASSIGN 419
+#define SUB_ASSIGN 420
+#define INVARIANT 421
+#define LOWP 422
+#define MEDIUMP 423
+#define HIGHP 424
+#define SUPERP 425
+#define PRECISION 426
+#define VERSION_TOK 427
+#define EXTENSION 428
+#define LINE 429
+#define COLON 430
+#define EOL 431
+#define INTERFACE 432
+#define OUTPUT 433
+#define PRAGMA_DEBUG_ON 434
+#define PRAGMA_DEBUG_OFF 435
+#define PRAGMA_OPTIMIZE_ON 436
+#define PRAGMA_OPTIMIZE_OFF 437
+#define PRAGMA_INVARIANT_ALL 438
+#define LAYOUT_TOK 439
+#define ASM 440
+#define CLASS 441
+#define UNION 442
+#define ENUM 443
+#define TYPEDEF 444
+#define TEMPLATE 445
+#define THIS 446
+#define PACKED_TOK 447
+#define GOTO 448
+#define INLINE_TOK 449
+#define NOINLINE 450
+#define PUBLIC_TOK 451
+#define STATIC 452
+#define EXTERN 453
+#define EXTERNAL 454
+#define LONG_TOK 455
+#define SHORT_TOK 456
+#define DOUBLE_TOK 457
+#define HALF 458
+#define FIXED_TOK 459
+#define UNSIGNED 460
+#define INPUT_TOK 461
+#define OUPTUT 462
+#define HVEC2 463
+#define HVEC3 464
+#define HVEC4 465
+#define DVEC2 466
+#define DVEC3 467
+#define DVEC4 468
+#define FVEC2 469
+#define FVEC3 470
+#define FVEC4 471
+#define SAMPLER3DRECT 472
+#define SIZEOF 473
+#define CAST 474
+#define NAMESPACE 475
+#define USING 476
+#define RESOURCE 477
+#define PATCH 478
+#define SAMPLE 479
+#define SUBROUTINE 480
+#define ERROR_TOK 481
+#define COMMON 482
+#define PARTITION 483
+#define ACTIVE 484
+#define FILTER 485
+#define ROW_MAJOR 486
+#define THEN 487
 
 
 
@@ -522,7 +546,7 @@ typedef union YYSTYPE
    } selection_rest_statement;
 }
 /* Line 1529 of yacc.c.  */
-#line 526 "src/glsl/glsl_parser.h"
+#line 550 "src/glsl/glsl_parser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
