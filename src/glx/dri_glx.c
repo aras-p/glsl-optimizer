@@ -90,8 +90,6 @@ struct dri_drawable
    __DRIdrawable *driDrawable;
 };
 
-static const struct glx_context_vtable dri_context_vtable;
-
 /*
  * Given a display pointer and screen number, determine the name of
  * the DRI driver for the screen (i.e., "i965", "radeon", "nouveau", etc).
@@ -569,15 +567,15 @@ dri_unbind_context(struct glx_context *context, struct glx_context *new)
 }
 
 static const struct glx_context_vtable dri_context_vtable = {
-   dri_destroy_context,
-   dri_bind_context,
-   dri_unbind_context,
-   NULL,
-   NULL,
-   DRI_glXUseXFont,
-   NULL,
-   NULL,
-   NULL, /* get_proc_address */
+   .destroy             = dri_destroy_context,
+   .bind                = dri_bind_context,
+   .unbind              = dri_unbind_context,
+   .wait_gl             = NULL,
+   .wait_x              = NULL,
+   .use_x_font          = DRI_glXUseXFont,
+   .bind_tex_image      = NULL,
+   .release_tex_image   = NULL,
+   .get_proc_address    = NULL,
 };
 
 static struct glx_context *
@@ -808,8 +806,10 @@ driBindExtensions(struct dri_screen *psc, const __DRIextension **extensions)
 }
 
 static const struct glx_screen_vtable dri_screen_vtable = {
-   dri_create_context,
-   NULL
+   .create_context         = dri_create_context,
+   .create_context_attribs = NULL,
+   .query_renderer_integer = NULL,
+   .query_renderer_string  = NULL,
 };
 
 static struct glx_screen *
