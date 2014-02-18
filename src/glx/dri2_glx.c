@@ -1052,15 +1052,15 @@ dri2_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 }
 
 static const struct glx_context_vtable dri2_context_vtable = {
-   dri2_destroy_context,
-   dri2_bind_context,
-   dri2_unbind_context,
-   dri2_wait_gl,
-   dri2_wait_x,
-   DRI_glXUseXFont,
-   dri2_bind_tex_image,
-   dri2_release_tex_image,
-   NULL, /* get_proc_address */
+   .destroy             = dri2_destroy_context,
+   .bind                = dri2_bind_context,
+   .unbind              = dri2_unbind_context,
+   .wait_gl             = dri2_wait_gl,
+   .wait_x              = dri2_wait_x,
+   .use_x_font          = DRI_glXUseXFont,
+   .bind_tex_image      = dri2_bind_tex_image,
+   .release_tex_image   = dri2_release_tex_image,
+   .get_proc_address    = NULL,
 };
 
 static void
@@ -1144,10 +1144,10 @@ dri2BindExtensions(struct dri2_screen *psc, struct glx_display * priv,
 }
 
 static const struct glx_screen_vtable dri2_screen_vtable = {
-   dri2_create_context,
-   dri2_create_context_attribs,
-   dri2_query_renderer_integer,
-   dri2_query_renderer_string,
+   .create_context         = dri2_create_context,
+   .create_context_attribs = dri2_create_context_attribs,
+   .query_renderer_integer = dri2_query_renderer_integer,
+   .query_renderer_string  = dri2_query_renderer_string,
 };
 
 static struct glx_screen *
