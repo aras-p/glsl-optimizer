@@ -134,6 +134,72 @@ namespace clover {
    }
 
    ///
+   /// Intrusive smart reference for objects that implement the
+   /// clover::ref_counter interface.
+   ///
+   template<typename T>
+   class intrusive_ref {
+   public:
+      intrusive_ref(T &o) : p(&o) {
+         p->retain();
+      }
+
+      intrusive_ref(const intrusive_ref &ref) :
+         intrusive_ref(*ref.p) {
+      }
+
+      intrusive_ref(intrusive_ref &&ref) :
+         p(ref.p) {
+         ref.p = NULL;
+      }
+
+      ~intrusive_ref() {
+         if (p && p->release())
+            delete p;
+      }
+
+      intrusive_ref &
+      operator=(intrusive_ref ref) {
+         std::swap(ref.p, p);
+         return *this;
+      }
+
+      bool
+      operator==(const intrusive_ref &ref) const {
+         return p == ref.p;
+      }
+
+      bool
+      operator!=(const intrusive_ref &ref) const {
+         return p != ref.p;
+      }
+
+      T &
+      operator()() const {
+         return *p;
+      }
+
+      operator T &() const {
+         return *p;
+      }
+
+   private:
+      T *p;
+   };
+
+   ///
+   /// Transfer the caller's ownership of a reference-counted object
+   /// to a clover::intrusive_ref smart reference.
+   ///
+   template<typename T>
+   inline intrusive_ref<T>
+   transfer(T &o) {
+      intrusive_ref<T> ref { o };
+      o.release();
+      return ref;
+   }
+
+   ///
    /// Class that implements the usual pointer interface but in fact
    /// contains the object it seems to be pointing to.
    ///
