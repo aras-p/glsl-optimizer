@@ -109,15 +109,15 @@ applegl_get_proc_address(const char *symbol)
 }
 
 static const struct glx_context_vtable applegl_context_vtable = {
-   applegl_destroy_context,
-   applegl_bind_context,
-   applegl_unbind_context,
-   applegl_wait_gl,
-   applegl_wait_x,
-   DRI_glXUseXFont,
-   NULL, /* bind_tex_image, */
-   NULL, /* release_tex_image, */
-   applegl_get_proc_address,
+   .destroy             = applegl_destroy_context,
+   .bind                = applegl_bind_context,
+   .unbind              = applegl_unbind_context,
+   .wait_gl             = applegl_wait_gl,
+   .wait_x              = applegl_wait_x,
+   .use_x_font          = DRI_glXUseXFont,
+   .bind_tex_image      = NULL,
+   .release_tex_image   = NULL,
+   .get_proc_address    = applegl_get_proc_address,
 };
 
 struct glx_context *
@@ -164,8 +164,11 @@ applegl_create_context(struct glx_screen *psc,
    return gc;
 }
 
-struct glx_screen_vtable applegl_screen_vtable = {
-   applegl_create_context
+static const struct glx_screen_vtable applegl_screen_vtable = {
+   .create_context         = applegl_create_context,
+   .create_context_attribs = NULL,
+   .query_renderer_integer = NULL,
+   .query_renderer_string  = NULL,
 };
 
 _X_HIDDEN struct glx_screen *
