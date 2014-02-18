@@ -36,11 +36,10 @@ namespace brw {
 vec4_gs_visitor::vec4_gs_visitor(struct brw_context *brw,
                                  struct brw_gs_compile *c,
                                  struct gl_shader_program *prog,
-                                 struct brw_shader *shader,
                                  void *mem_ctx,
                                  bool no_spills)
    : vec4_visitor(brw, &c->base, &c->gp->program.Base, &c->key.base,
-                  &c->prog_data.base, prog, shader, mem_ctx,
+                  &c->prog_data.base, prog, MESA_SHADER_GEOMETRY, mem_ctx,
                   INTEL_DEBUG & DEBUG_GS, no_spills,
                   ST_GS, ST_GS_WRITTEN, ST_GS_RESET),
      c(c)
@@ -585,11 +584,12 @@ brw_gs_emit(struct brw_context *brw,
             void *mem_ctx,
             unsigned *final_assembly_size)
 {
-   struct brw_shader *shader =
-      (brw_shader *) prog->_LinkedShaders[MESA_SHADER_GEOMETRY];
+   if (unlikely(INTEL_DEBUG & DEBUG_GS)) {
+      struct brw_shader *shader =
+         (brw_shader *) prog->_LinkedShaders[MESA_SHADER_GEOMETRY];
 
-   if (unlikely(INTEL_DEBUG & DEBUG_GS))
       brw_dump_ir(brw, "geometry", prog, &shader->base, NULL);
+   }
 
    /* Compile the geometry shader in DUAL_OBJECT dispatch mode, if we can do
     * so without spilling. If the GS invocations count > 1, then we can't use
@@ -599,7 +599,7 @@ brw_gs_emit(struct brw_context *brw,
        likely(!(INTEL_DEBUG & DEBUG_NO_DUAL_OBJECT_GS))) {
       c->prog_data.dual_instanced_dispatch = false;
 
-      vec4_gs_visitor v(brw, c, prog, shader, mem_ctx, true /* no_spills */);
+      vec4_gs_visitor v(brw, c, prog, mem_ctx, true /* no_spills */);
       if (v.run()) {
          return generate_assembly(brw, prog, &c->gp->program.Base,
                                   &c->prog_data.base, mem_ctx, &v.instructions,
@@ -619,7 +619,7 @@ brw_gs_emit(struct brw_context *brw,
     */
    c->prog_data.dual_instanced_dispatch = true;
 
-   vec4_gs_visitor v(brw, c, prog, shader, mem_ctx, false /* no_spills */);
+   vec4_gs_visitor v(brw, c, prog, mem_ctx, false /* no_spills */);
    if (!v.run()) {
       prog->LinkStatus = false;
       ralloc_strcat(&prog->InfoLog, v.fail_msg);

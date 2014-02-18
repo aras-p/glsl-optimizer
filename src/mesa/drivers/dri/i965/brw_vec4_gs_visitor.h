@@ -80,7 +80,6 @@ public:
    vec4_gs_visitor(struct brw_context *brw,
                    struct brw_gs_compile *c,
                    struct gl_shader_program *prog,
-                   struct brw_shader *shader,
                    void *mem_ctx,
                    bool no_spills);
 

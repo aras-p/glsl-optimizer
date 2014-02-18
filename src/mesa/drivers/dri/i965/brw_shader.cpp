@@ -539,9 +539,12 @@ brw_instruction_name(enum opcode op)
 backend_visitor::backend_visitor(struct brw_context *brw,
                                  struct gl_shader_program *shader_prog,
                                  struct gl_program *prog,
-                                 struct brw_stage_prog_data *stage_prog_data)
+                                 struct brw_stage_prog_data *stage_prog_data,
+                                 gl_shader_stage stage)
    : brw(brw),
      ctx(&brw->ctx),
+     shader(shader_prog ?
+        (struct brw_shader *)shader_prog->_LinkedShaders[stage] : NULL),
      shader_prog(shader_prog),
      prog(prog),
      stage_prog_data(stage_prog_data)

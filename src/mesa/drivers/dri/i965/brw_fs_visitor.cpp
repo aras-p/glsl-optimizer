@@ -2942,17 +2942,13 @@ fs_visitor::fs_visitor(struct brw_context *brw,
                        struct gl_shader_program *shader_prog,
                        struct gl_fragment_program *fp,
                        unsigned dispatch_width)
-   : backend_visitor(brw, shader_prog, &fp->Base, &c->prog_data.base),
+   : backend_visitor(brw, shader_prog, &fp->Base, &c->prog_data.base,
+                     MESA_SHADER_FRAGMENT),
      dispatch_width(dispatch_width)
 {
    this->c = c;
    this->fp = fp;
    this->mem_ctx = ralloc_context(NULL);
-   if (shader_prog)
-      shader = (struct brw_shader *)
-         shader_prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
-   else
-      shader = NULL;
    this->failed = false;
    this->variable_ht = hash_table_ctor(0,
                                        hash_table_pointer_hash,

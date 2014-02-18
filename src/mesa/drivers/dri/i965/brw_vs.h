@@ -108,7 +108,6 @@ public:
                    struct brw_vs_compile *vs_compile,
                    struct brw_vs_prog_data *vs_prog_data,
                    struct gl_shader_program *prog,
-                   struct brw_shader *shader,
                    void *mem_ctx);
 
 protected:

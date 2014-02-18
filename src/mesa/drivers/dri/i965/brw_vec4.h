@@ -287,7 +287,7 @@ public:
                 const struct brw_vec4_prog_key *key,
                 struct brw_vec4_prog_data *prog_data,
 		struct gl_shader_program *shader_prog,
-		struct brw_shader *shader,
+                gl_shader_stage stage,
 		void *mem_ctx,
                 bool debug_flag,
                 bool no_spills,

@@ -1668,7 +1668,7 @@ brw_vs_emit(struct brw_context *brw,
    if (unlikely(INTEL_DEBUG & DEBUG_VS))
       brw_dump_ir(brw, "vertex", prog, &shader->base, &c->vp->program.Base);
 
-   vec4_vs_visitor v(brw, c, prog_data, prog, shader, mem_ctx);
+   vec4_vs_visitor v(brw, c, prog_data, prog, mem_ctx);
    if (!v.run()) {
       if (prog) {
          prog->LinkStatus = false;

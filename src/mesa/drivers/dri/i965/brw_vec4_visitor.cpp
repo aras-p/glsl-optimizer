@@ -3356,14 +3356,14 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
                            const struct brw_vec4_prog_key *key,
                            struct brw_vec4_prog_data *prog_data,
 			   struct gl_shader_program *shader_prog,
-			   struct brw_shader *shader,
+                           gl_shader_stage stage,
 			   void *mem_ctx,
                            bool debug_flag,
                            bool no_spills,
                            shader_time_shader_type st_base,
                            shader_time_shader_type st_written,
                            shader_time_shader_type st_reset)
-   : backend_visitor(brw, shader_prog, prog, &prog_data->base),
+   : backend_visitor(brw, shader_prog, prog, &prog_data->base, stage),
      c(c),
      key(key),
      prog_data(prog_data),
@@ -3377,8 +3377,6 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
      st_written(st_written),
      st_reset(st_reset)
 {
-   this->shader = shader;
-
    this->mem_ctx = mem_ctx;
    this->failed = false;
 
