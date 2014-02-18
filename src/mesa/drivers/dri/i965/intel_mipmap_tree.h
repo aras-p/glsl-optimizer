@@ -115,6 +115,8 @@ struct intel_mipmap_level
     *    - For GL_TEXTURE_3D, it is the texture's depth at this miplevel. Its
     *      value, like width and height, varies with miplevel.
     *    - For other texture types, depth is 1.
+    *    - Additionally, for UMS and CMS miptrees, depth is multiplied by
+    *      sample count.
     */
    GLuint depth;
 

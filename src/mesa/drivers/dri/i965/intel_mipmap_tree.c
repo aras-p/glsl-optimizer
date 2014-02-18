@@ -876,13 +876,26 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
    if (mt->target == GL_TEXTURE_CUBE_MAP)
       depth = 6;
 
+   int level_depth = mt->level[level].depth;
+   if (mt->num_samples > 1) {
+      switch (mt->msaa_layout) {
+      case INTEL_MSAA_LAYOUT_NONE:
+      case INTEL_MSAA_LAYOUT_IMS:
+         break;
+      case INTEL_MSAA_LAYOUT_UMS:
+      case INTEL_MSAA_LAYOUT_CMS:
+         level_depth /= mt->num_samples;
+         break;
+      }
+   }
+
    /* Test image dimensions against the base level image adjusted for
     * minification.  This will also catch images not present in the
     * tree, changed targets, etc.
     */
    if (width != minify(mt->logical_width0, level) ||
        height != minify(mt->logical_height0, level) ||
-       depth != mt->level[level].depth) {
+       depth != level_depth) {
       return false;
    }
 
