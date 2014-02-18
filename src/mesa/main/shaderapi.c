@@ -1879,6 +1879,11 @@ _mesa_copy_linked_program_data(gl_shader_stage type,
       dst_gp->UsesEndPrimitive = src->Geom.UsesEndPrimitive;
    }
       break;
+   case MESA_SHADER_FRAGMENT: {
+      struct gl_fragment_program *dst_fp = (struct gl_fragment_program *) dst;
+      dst_fp->FragDepthLayout = src->FragDepthLayout;
+   }
+      break;
    case MESA_SHADER_COMPUTE: {
       struct gl_compute_program *dst_cp = (struct gl_compute_program *) dst;
       int i;
