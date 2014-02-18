@@ -33,13 +33,12 @@ namespace clover {
    class program : public ref_counter, public _cl_program {
    private:
       typedef adaptor_range<
-         derefs, adaptor_range<
-             keys, const std::map<device *, module> &>> device_range;
+         evals, const std::vector<intrusive_ref<device>> &> device_range;
 
    public:
-      program(context &ctx,
+      program(clover::context &ctx,
               const std::string &source);
-      program(context &ctx,
+      program(clover::context &ctx,
               const ref_vector<device> &devs,
               const std::vector<module> &binaries);
 
@@ -61,10 +60,11 @@ namespace clover {
 
       const compat::vector<module::symbol> &symbols() const;
 
-      context &ctx;
+      const intrusive_ref<clover::context> context;
 
    private:
-      std::map<device *, module> _binaries;
+      std::vector<intrusive_ref<device>> _devices;
+      std::map<const device *, module> _binaries;
       std::map<const device *, std::string> _logs;
       std::map<const device *, std::string> _opts;
       std::string _source;

@@ -63,7 +63,7 @@ clWaitForEvents(cl_uint num_evs, const cl_event *d_evs) try {
    auto evs = objs(d_evs, num_evs);
 
    for (auto &ev : evs) {
-      if (ev.ctx != evs.front().ctx)
+      if (ev.context() != evs.front().context())
          throw error(CL_INVALID_CONTEXT);
 
       if (ev.status() < 0)
@@ -73,7 +73,7 @@ clWaitForEvents(cl_uint num_evs, const cl_event *d_evs) try {
    // Create a temporary soft event that depends on all the events in
    // the wait list
    intrusive_ptr<soft_event> sev =
-      transfer(new soft_event(evs.front().ctx, evs, true));
+      transfer(new soft_event(evs.front().context(), evs, true));
 
    // ...and wait on it.
    sev->wait();
@@ -96,7 +96,7 @@ clGetEventInfo(cl_event d_ev, cl_event_info param,
       break;
 
    case CL_EVENT_CONTEXT:
-      buf.as_scalar<cl_context>() = desc(ev.ctx);
+      buf.as_scalar<cl_context>() = desc(ev.context());
       break;
 
    case CL_EVENT_COMMAND_TYPE:
@@ -133,7 +133,7 @@ clSetEventCallback(cl_event d_ev, cl_int type,
    // Create a temporary soft event that depends on ev, with
    // pfn_notify as completion action.
    intrusive_ptr<soft_event> sev = transfer(
-      new soft_event(ev.ctx, { ev }, true,
+      new soft_event(ev.context(), { ev }, true,
                      [=, &ev](event &) {
                         ev.wait();
                         pfn_notify(desc(ev), ev.status(), user_data);
@@ -199,8 +199,8 @@ clEnqueueWaitForEvents(cl_command_queue d_q, cl_uint num_evs,
    auto evs = objs(d_evs, num_evs);
 
    for (auto &ev : evs) {
-         if (ev.ctx != q.ctx)
-            throw error(CL_INVALID_CONTEXT);
+      if (ev.context() != q.context())
+         throw error(CL_INVALID_CONTEXT);
    }
 
    // Create a hard event that depends on the events in the wait list:

@@ -230,12 +230,12 @@ clGetMemObjectInfo(cl_mem d_mem, cl_mem_info param,
       break;
 
    case CL_MEM_CONTEXT:
-      buf.as_scalar<cl_context>() = desc(mem.ctx);
+      buf.as_scalar<cl_context>() = desc(mem.context());
       break;
 
    case CL_MEM_ASSOCIATED_MEMOBJECT: {
       sub_buffer *sub = dynamic_cast<sub_buffer *>(&mem);
-      buf.as_scalar<cl_mem>() = (sub ? desc(sub->parent) : NULL);
+      buf.as_scalar<cl_mem>() = (sub ? desc(sub->parent()) : NULL);
       break;
    }
    case CL_MEM_OFFSET: {

@@ -21,6 +21,7 @@
 //
 
 #include "core/device.hpp"
+#include "core/platform.hpp"
 #include "pipe/p_screen.h"
 #include "pipe/p_state.h"
 

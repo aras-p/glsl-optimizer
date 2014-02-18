@@ -40,14 +40,14 @@ timestamp::query::query(query &&other) :
 
 timestamp::query::~query() {
    if (_query)
-      q.pipe->destroy_query(q.pipe, _query);
+      q().pipe->destroy_query(q().pipe, _query);
 }
 
 cl_ulong
 timestamp::query::operator()() const {
    pipe_query_result result;
 
-   if (!q.pipe->get_query_result(q.pipe, _query, false, &result))
+   if (!q().pipe->get_query_result(q().pipe, _query, false, &result))
       throw error(CL_PROFILING_INFO_NOT_AVAILABLE);
 
    return result.u64;

@@ -75,11 +75,11 @@ clGetCommandQueueInfo(cl_command_queue d_q, cl_command_queue_info param,
 
    switch (param) {
    case CL_QUEUE_CONTEXT:
-      buf.as_scalar<cl_context>() = desc(q.ctx);
+      buf.as_scalar<cl_context>() = desc(q.context());
       break;
 
    case CL_QUEUE_DEVICE:
-      buf.as_scalar<cl_device_id>() = desc(q.dev);
+      buf.as_scalar<cl_device_id>() = desc(q.device());
       break;
 
    case CL_QUEUE_REFERENCE_COUNT:

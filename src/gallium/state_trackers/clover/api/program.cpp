@@ -133,7 +133,7 @@ clBuildProgram(cl_program d_prog, cl_uint num_devs,
                void *user_data) try {
    auto &prog = obj(d_prog);
    auto devs = (d_devs ? objs(d_devs, num_devs) :
-                ref_vector<device>(prog.ctx.devs()));
+                ref_vector<device>(prog.context().devs()));
    auto opts = (p_opts ? p_opts : "");
 
    if (bool(num_devs) != bool(d_devs) ||
@@ -141,7 +141,7 @@ clBuildProgram(cl_program d_prog, cl_uint num_devs,
       throw error(CL_INVALID_VALUE);
 
    if (any_of([&](const device &dev) {
-            return !count(dev, prog.ctx.devs());
+            return !count(dev, prog.context().devs());
          }, devs))
       throw error(CL_INVALID_DEVICE);
 
@@ -169,19 +169,19 @@ clGetProgramInfo(cl_program d_prog, cl_program_info param,
       break;
 
    case CL_PROGRAM_CONTEXT:
-      buf.as_scalar<cl_context>() = desc(prog.ctx);
+      buf.as_scalar<cl_context>() = desc(prog.context());
       break;
 
    case CL_PROGRAM_NUM_DEVICES:
-      buf.as_scalar<cl_uint>() = prog.devices().size() ?
-                                 prog.devices().size() :
-                                 prog.ctx.devs().size();
+      buf.as_scalar<cl_uint>() = (prog.devices().size() ?
+                                  prog.devices().size() :
+                                  prog.context().devs().size());
       break;
 
    case CL_PROGRAM_DEVICES:
-      buf.as_vector<cl_device_id>() = prog.devices().size() ?
-                                      descs(prog.devices()) :
-                                      descs(prog.ctx.devs());
+      buf.as_vector<cl_device_id>() = (prog.devices().size() ?
+                                       descs(prog.devices()) :
+                                       descs(prog.context().devs()));
       break;
 
    case CL_PROGRAM_SOURCE:
@@ -226,7 +226,7 @@ clGetProgramBuildInfo(cl_program d_prog, cl_device_id d_dev,
    auto &prog = obj(d_prog);
    auto &dev = obj(d_dev);
 
-   if (!count(dev, prog.ctx.devs()))
+   if (!count(dev, prog.context().devs()))
       return CL_INVALID_DEVICE;
 
    switch (param) {

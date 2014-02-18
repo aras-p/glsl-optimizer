@@ -28,9 +28,9 @@
 
 using namespace clover;
 
-kernel::kernel(program &prog, const std::string &name,
+kernel::kernel(clover::program &prog, const std::string &name,
                const std::vector<module::argument> &margs) :
-   prog(prog), _name(name), exec(*this) {
+   program(prog), _name(name), exec(*this) {
    for (auto &marg : margs) {
       if (marg.type == module::argument::scalar)
          _args.emplace_back(new scalar_argument(marg.size));
@@ -57,7 +57,7 @@ template<typename V>
 static inline std::vector<uint>
 pad_vector(command_queue &q, const V &v, uint x) {
    std::vector<uint> w { v.begin(), v.end() };
-   w.resize(q.dev.max_block_size().size(), x);
+   w.resize(q.device().max_block_size().size(), x);
    return w;
 }
 
@@ -66,7 +66,7 @@ kernel::launch(command_queue &q,
                const std::vector<size_t> &grid_offset,
                const std::vector<size_t> &grid_size,
                const std::vector<size_t> &block_size) {
-   const auto m = prog.binary(q.dev);
+   const auto m = program().binary(q.device());
    const auto reduced_grid_size =
       map(divides(), grid_size, block_size);
    void *st = exec.bind(&q);
@@ -130,7 +130,7 @@ std::vector<size_t>
 kernel::optimal_block_size(const command_queue &q,
                            const std::vector<size_t> &grid_size) const {
    return factor::find_grid_optimal_factor<size_t>(
-      q.dev.max_threads_per_block(), q.dev.max_block_size(),
+      q.device().max_threads_per_block(), q.device().max_block_size(),
       grid_size);
 }
 
@@ -151,7 +151,7 @@ kernel::args() const {
 
 const module &
 kernel::module(const command_queue &q) const {
-   return prog.binary(q.dev);
+   return program().binary(q.device());
 }
 
 kernel::exec_context::exec_context(kernel &kern) :
@@ -164,11 +164,11 @@ kernel::exec_context::~exec_context() {
 }
 
 void *
-kernel::exec_context::bind(command_queue *_q) {
+kernel::exec_context::bind(intrusive_ptr<command_queue> _q) {
    std::swap(q, _q);
 
    // Bind kernel arguments.
-   auto &m = kern.prog.binary(q->dev);
+   auto &m = kern.program().binary(q->device());
    auto margs = find(name_equals(kern.name()), m.syms).args;
    auto msec = find(type_equals(module::section::text), m.secs);
 
@@ -313,7 +313,7 @@ kernel::scalar_argument::bind(exec_context &ctx,
    auto w = v;
 
    extend(w, marg.ext_type, marg.target_size);
-   byteswap(w, ctx.q->dev.endianness());
+   byteswap(w, ctx.q->device().endianness());
    align(ctx.input, marg.target_align);
    insert(ctx.input, w);
 }
@@ -369,7 +369,7 @@ kernel::local_argument::bind(exec_context &ctx,
    auto v = bytes(ctx.mem_local);
 
    extend(v, module::argument::zero_ext, marg.target_size);
-   byteswap(v, ctx.q->dev.endianness());
+   byteswap(v, ctx.q->device().endianness());
    align(ctx.input, marg.target_align);
    insert(ctx.input, v);
 
@@ -398,7 +398,7 @@ kernel::constant_argument::bind(exec_context &ctx,
       auto v = bytes(ctx.resources.size() << 24);
 
       extend(v, module::argument::zero_ext, marg.target_size);
-      byteswap(v, ctx.q->dev.endianness());
+      byteswap(v, ctx.q->device().endianness());
       insert(ctx.input, v);
 
       st = buf->resource(*ctx.q).bind_surface(*ctx.q, false);
@@ -430,7 +430,7 @@ kernel::image_rd_argument::bind(exec_context &ctx,
    auto v = bytes(ctx.sviews.size());
 
    extend(v, module::argument::zero_ext, marg.target_size);
-   byteswap(v, ctx.q->dev.endianness());
+   byteswap(v, ctx.q->device().endianness());
    align(ctx.input, marg.target_align);
    insert(ctx.input, v);
 
@@ -458,7 +458,7 @@ kernel::image_wr_argument::bind(exec_context &ctx,
    auto v = bytes(ctx.resources.size());
 
    extend(v, module::argument::zero_ext, marg.target_size);
-   byteswap(v, ctx.q->dev.endianness());
+   byteswap(v, ctx.q->device().endianness());
    align(ctx.input, marg.target_align);
    insert(ctx.input, v);
 

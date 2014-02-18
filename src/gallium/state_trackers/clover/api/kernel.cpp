@@ -125,11 +125,11 @@ clGetKernelInfo(cl_kernel d_kern, cl_kernel_info param,
       break;
 
    case CL_KERNEL_CONTEXT:
-      buf.as_scalar<cl_context>() = desc(kern.prog.ctx);
+      buf.as_scalar<cl_context>() = desc(kern.program().context());
       break;
 
    case CL_KERNEL_PROGRAM:
-      buf.as_scalar<cl_program>() = desc(kern.prog);
+      buf.as_scalar<cl_program>() = desc(kern.program());
       break;
 
    default:
@@ -148,9 +148,9 @@ clGetKernelWorkGroupInfo(cl_kernel d_kern, cl_device_id d_dev,
                          size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
    auto &kern = obj(d_kern);
-   auto &dev = (d_dev ? *pobj(d_dev) : unique(kern.prog.devices()));
+   auto &dev = (d_dev ? *pobj(d_dev) : unique(kern.program().devices()));
 
-   if (!count(dev, kern.prog.devices()))
+   if (!count(dev, kern.program().devices()))
       throw error(CL_INVALID_DEVICE);
 
    switch (param) {
@@ -194,9 +194,9 @@ namespace {
    void
    validate_common(const command_queue &q, kernel &kern,
                    const ref_vector<event> &deps) {
-      if (kern.prog.ctx != q.ctx ||
+      if (kern.program().context() != q.context() ||
           any_of([&](const event &ev) {
-                return ev.ctx != q.ctx;
+                return ev.context() != q.context();
              }, deps))
          throw error(CL_INVALID_CONTEXT);
 
@@ -205,7 +205,7 @@ namespace {
             }, kern.args()))
          throw error(CL_INVALID_KERNEL_ARGS);
 
-      if (!count(q.dev, kern.prog.devices()))
+      if (!count(q.device(), kern.program().devices()))
          throw error(CL_INVALID_PROGRAM_EXECUTABLE);
    }
 
@@ -214,7 +214,7 @@ namespace {
                       const size_t *d_grid_size) {
       auto grid_size = range(d_grid_size, dims);
 
-      if (dims < 1 || dims > q.dev.max_block_size().size())
+      if (dims < 1 || dims > q.device().max_block_size().size())
          throw error(CL_INVALID_WORK_DIMENSION);
 
       if (!d_grid_size || any_of(is_zero(), grid_size))
@@ -242,14 +242,14 @@ namespace {
          auto block_size = range(d_block_size, dims);
 
          if (any_of(is_zero(), block_size) ||
-             any_of(greater(), block_size, q.dev.max_block_size()))
+             any_of(greater(), block_size, q.device().max_block_size()))
             throw error(CL_INVALID_WORK_ITEM_SIZE);
 
          if (any_of(modulus(), grid_size, block_size))
             throw error(CL_INVALID_WORK_GROUP_SIZE);
 
          if (fold(multiplies(), 1u, block_size) >
-             q.dev.max_threads_per_block())
+             q.device().max_threads_per_block())
             throw error(CL_INVALID_WORK_GROUP_SIZE);
 
          return block_size;

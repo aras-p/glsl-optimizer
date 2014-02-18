@@ -29,7 +29,7 @@
 namespace clover {
    class sampler : public ref_counter, public _cl_sampler {
    public:
-      sampler(context &ctx, bool norm_mode,
+      sampler(clover::context &ctx, bool norm_mode,
               cl_addressing_mode addr_mode,
               cl_filter_mode filter_mode);
 
@@ -41,7 +41,7 @@ namespace clover {
       cl_addressing_mode addr_mode();
       cl_filter_mode filter_mode();
 
-      context &ctx;
+      const intrusive_ref<clover::context> context;
 
       friend class kernel;
 

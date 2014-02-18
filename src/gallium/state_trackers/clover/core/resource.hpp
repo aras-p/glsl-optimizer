@@ -25,11 +25,12 @@
 
 #include <list>
 
-#include "core/memory.hpp"
+#include "core/queue.hpp"
 #include "util/algebra.hpp"
 #include "pipe/p_state.h"
 
 namespace clover {
+   class memory_obj;
    class mapping;
 
    ///
@@ -54,7 +55,7 @@ namespace clover {
       void del_map(void *p);
       unsigned map_count() const;
 
-      device &dev;
+      const intrusive_ref<clover::device> device;
       memory_obj &obj;
 
       friend class sub_resource;
@@ -62,7 +63,7 @@ namespace clover {
       friend class kernel;
 
    protected:
-      resource(device &dev, memory_obj &obj);
+      resource(clover::device &dev, memory_obj &obj);
 
       pipe_sampler_view *bind_sampler_view(command_queue &q);
       void unbind_sampler_view(command_queue &q,
@@ -84,9 +85,9 @@ namespace clover {
    ///
    class root_resource : public resource {
    public:
-      root_resource(device &dev, memory_obj &obj,
+      root_resource(clover::device &dev, memory_obj &obj,
                     command_queue &q, const std::string &data);
-      root_resource(device &dev, memory_obj &obj, root_resource &r);
+      root_resource(clover::device &dev, memory_obj &obj, root_resource &r);
       virtual ~root_resource();
    };
 

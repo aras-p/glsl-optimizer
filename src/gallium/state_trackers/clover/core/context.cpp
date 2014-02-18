@@ -26,7 +26,7 @@ using namespace clover;
 
 context::context(const property_list &props,
                  const ref_vector<device> &devs) :
-   _props(props), _devs(map(addresses(), devs)) {
+   _props(props), _devs(devs) {
 }
 
 bool
@@ -46,5 +46,5 @@ context::props() const {
 
 context::device_range
 context::devs() const {
-   return map(derefs(), _devs);
+   return map(evals(), _devs);
 }

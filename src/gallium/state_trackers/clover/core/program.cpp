@@ -25,14 +25,15 @@
 
 using namespace clover;
 
-program::program(context &ctx, const std::string &source) :
-   has_source(true), ctx(ctx), _source(source) {
+program::program(clover::context &ctx, const std::string &source) :
+   has_source(true), context(ctx), _source(source) {
 }
 
-program::program(context &ctx,
+program::program(clover::context &ctx,
                  const ref_vector<device> &devs,
                  const std::vector<module> &binaries) :
-   has_source(false), ctx(ctx) {
+   has_source(false), context(ctx),
+   _devices(devs) {
    for_each([&](device &dev, const module &bin) {
          _binaries.insert({ &dev, bin });
       },
@@ -42,6 +43,8 @@ program::program(context &ctx,
 void
 program::build(const ref_vector<device> &devs, const char *opts) {
    if (has_source) {
+      _devices = devs;
+
       for (auto &dev : devs) {
          _binaries.erase(&dev);
          _logs.erase(&dev);
@@ -71,17 +74,17 @@ program::source() const {
 
 program::device_range
 program::devices() const {
-   return map(derefs(), map(keys(), _binaries));
+   return map(evals(), _devices);
 }
 
 const module &
 program::binary(const device &dev) const {
-   return _binaries.find(const_cast<device *>(&dev))->second;
+   return _binaries.find(&dev)->second;
 }
 
 cl_build_status
 program::build_status(const device &dev) const {
-   if (_binaries.count(const_cast<device *>(&dev)))
+   if (_binaries.count(&dev))
       return CL_BUILD_SUCCESS;
    else
       return CL_BUILD_NONE;

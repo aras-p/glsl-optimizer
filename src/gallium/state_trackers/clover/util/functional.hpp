@@ -202,6 +202,14 @@ namespace clover {
       }
    };
 
+   struct evals {
+      template<typename T>
+      auto
+      operator()(T &&x) const -> decltype(x()) {
+         return x();
+      }
+   };
+
    struct derefs {
       template<typename T>
       auto

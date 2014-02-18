@@ -24,7 +24,7 @@
 
 #include "api/util.hpp"
 #include "core/event.hpp"
-#include "core/resource.hpp"
+#include "core/memory.hpp"
 
 using namespace clover;
 
@@ -56,7 +56,7 @@ namespace {
    validate_common(command_queue &q,
                    const ref_vector<event> &deps) {
       if (any_of([&](const event &ev) {
-               return &ev.ctx != &q.ctx;
+               return ev.context() != q.context();
             }, deps))
          throw error(CL_INVALID_CONTEXT);
    }
@@ -67,7 +67,7 @@ namespace {
    void
    validate_object(command_queue &q, buffer &mem, const vector_t &origin,
                    const vector_t &pitch, const vector_t &region) {
-      if (mem.ctx != q.ctx)
+      if (mem.context() != q.context())
          throw error(CL_INVALID_CONTEXT);
 
       // The region must fit within the specified pitch,
@@ -90,7 +90,7 @@ namespace {
                    const vector_t &orig, const vector_t &region) {
       vector_t size = { img.width(), img.height(), img.depth() };
 
-      if (img.ctx != q.ctx)
+      if (img.context() != q.context())
          throw error(CL_INVALID_CONTEXT);
 
       if (any_of(greater(), orig + region, size))

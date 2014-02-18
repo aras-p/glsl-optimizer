@@ -26,9 +26,9 @@
 
 using namespace clover;
 
-memory_obj::memory_obj(context &ctx, cl_mem_flags flags,
+memory_obj::memory_obj(clover::context &ctx, cl_mem_flags flags,
                        size_t size, void *host_ptr) :
-   ctx(ctx), _flags(flags),
+   context(ctx), _flags(flags),
    _size(size), _host_ptr(host_ptr),
    _destroy_notify([]{}) {
    if (flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR))
@@ -64,7 +64,7 @@ memory_obj::host_ptr() const {
    return _host_ptr;
 }
 
-buffer::buffer(context &ctx, cl_mem_flags flags,
+buffer::buffer(clover::context &ctx, cl_mem_flags flags,
                size_t size, void *host_ptr) :
    memory_obj(ctx, flags, size, host_ptr) {
 }
@@ -74,7 +74,7 @@ buffer::type() const {
    return CL_MEM_OBJECT_BUFFER;
 }
 
-root_buffer::root_buffer(context &ctx, cl_mem_flags flags,
+root_buffer::root_buffer(clover::context &ctx, cl_mem_flags flags,
                          size_t size, void *host_ptr) :
    buffer(ctx, flags, size, host_ptr) {
 }
@@ -82,22 +82,23 @@ root_buffer::root_buffer(context &ctx, cl_mem_flags flags,
 resource &
 root_buffer::resource(command_queue &q) {
    // Create a new resource if there's none for this device yet.
-   if (!resources.count(&q.dev)) {
+   if (!resources.count(&q.device())) {
       auto r = (!resources.empty() ?
-                new root_resource(q.dev, *this, *resources.begin()->second) :
-                new root_resource(q.dev, *this, q, data));
+                new root_resource(q.device(), *this,
+                                  *resources.begin()->second) :
+                new root_resource(q.device(), *this, q, data));
 
-      resources.insert(std::make_pair(&q.dev,
+      resources.insert(std::make_pair(&q.device(),
                                       std::unique_ptr<root_resource>(r)));
       data.clear();
    }
 
-   return *resources.find(&q.dev)->second;
+   return *resources.find(&q.device())->second;
 }
 
 sub_buffer::sub_buffer(root_buffer &parent, cl_mem_flags flags,
                        size_t offset, size_t size) :
-   buffer(parent.ctx, flags, size,
+   buffer(parent.context(), flags, size,
           (char *)parent.host_ptr() + offset),
    parent(parent), _offset(offset) {
 }
@@ -105,14 +106,14 @@ sub_buffer::sub_buffer(root_buffer &parent, cl_mem_flags flags,
 resource &
 sub_buffer::resource(command_queue &q) {
    // Create a new resource if there's none for this device yet.
-   if (!resources.count(&q.dev)) {
-      auto r = new sub_resource(parent.resource(q), {{ offset() }});
+   if (!resources.count(&q.device())) {
+      auto r = new sub_resource(parent().resource(q), {{ offset() }});
 
-      resources.insert(std::make_pair(&q.dev,
+      resources.insert(std::make_pair(&q.device(),
                                       std::unique_ptr<sub_resource>(r)));
    }
 
-   return *resources.find(&q.dev)->second;
+   return *resources.find(&q.device())->second;
 }
 
 size_t
@@ -120,7 +121,7 @@ sub_buffer::offset() const {
    return _offset;
 }
 
-image::image(context &ctx, cl_mem_flags flags,
+image::image(clover::context &ctx, cl_mem_flags flags,
              const cl_image_format *format,
              size_t width, size_t height, size_t depth,
              size_t row_pitch, size_t slice_pitch, size_t size,
@@ -133,17 +134,18 @@ image::image(context &ctx, cl_mem_flags flags,
 resource &
 image::resource(command_queue &q) {
    // Create a new resource if there's none for this device yet.
-   if (!resources.count(&q.dev)) {
+   if (!resources.count(&q.device())) {
       auto r = (!resources.empty() ?
-                new root_resource(q.dev, *this, *resources.begin()->second) :
-                new root_resource(q.dev, *this, q, data));
+                new root_resource(q.device(), *this,
+                                  *resources.begin()->second) :
+                new root_resource(q.device(), *this, q, data));
 
-      resources.insert(std::make_pair(&q.dev,
+      resources.insert(std::make_pair(&q.device(),
                                       std::unique_ptr<root_resource>(r)));
       data.clear();
    }
 
-   return *resources.find(&q.dev)->second;
+   return *resources.find(&q.device())->second;
 }
 
 cl_image_format
@@ -181,7 +183,7 @@ image::slice_pitch() const {
    return _slice_pitch;
 }
 
-image2d::image2d(context &ctx, cl_mem_flags flags,
+image2d::image2d(clover::context &ctx, cl_mem_flags flags,
                  const cl_image_format *format, size_t width,
                  size_t height, size_t row_pitch,
                  void *host_ptr) :
@@ -194,7 +196,7 @@ image2d::type() const {
    return CL_MEM_OBJECT_IMAGE2D;
 }
 
-image3d::image3d(context &ctx, cl_mem_flags flags,
+image3d::image3d(clover::context &ctx, cl_mem_flags flags,
                  const cl_image_format *format,
                  size_t width, size_t height, size_t depth,
                  size_t row_pitch, size_t slice_pitch,

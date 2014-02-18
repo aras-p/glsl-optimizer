@@ -49,7 +49,7 @@ namespace clover {
          cl_ulong operator()() const;
 
       private:
-         command_queue &q;
+         const intrusive_ref<command_queue> q;
          pipe_query *_query;
       };
 

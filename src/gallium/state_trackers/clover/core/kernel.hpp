@@ -46,11 +46,11 @@ namespace clover {
          exec_context &
          operator=(const exec_context &) = delete;
 
-         void *bind(command_queue *q);
+         void *bind(intrusive_ptr<command_queue> _q);
          void unbind();
 
          kernel &kern;
-         command_queue *q;
+         intrusive_ptr<command_queue> q;
 
          std::vector<uint8_t> input;
          std::vector<void *> samplers;
@@ -105,7 +105,7 @@ namespace clover {
          > const_argument_range;
 
    public:
-      kernel(program &prog, const std::string &name,
+      kernel(clover::program &prog, const std::string &name,
              const std::vector<clover::module::argument> &margs);
 
       kernel(const kernel &kern) = delete;
@@ -131,7 +131,7 @@ namespace clover {
       argument_range args();
       const_argument_range args() const;
 
-      program &prog;
+      const intrusive_ref<clover::program> program;
 
    private:
       const clover::module &module(const command_queue &q) const;

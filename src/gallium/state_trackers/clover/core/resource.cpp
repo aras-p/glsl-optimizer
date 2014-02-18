@@ -21,6 +21,7 @@
 //
 
 #include "core/resource.hpp"
+#include "core/memory.hpp"
 #include "pipe/p_screen.h"
 #include "util/u_sampler.h"
 #include "util/u_format.h"
@@ -45,8 +46,8 @@ namespace {
    };
 }
 
-resource::resource(device &dev, memory_obj &obj) :
-   dev(dev), obj(obj), pipe(NULL), offset() {
+resource::resource(clover::device &dev, memory_obj &obj) :
+   device(dev), obj(obj), pipe(NULL), offset() {
 }
 
 resource::~resource() {
@@ -113,7 +114,7 @@ resource::unbind_surface(command_queue &q, pipe_surface *st) {
    q.pipe->surface_destroy(q.pipe, st);
 }
 
-root_resource::root_resource(device &dev, memory_obj &obj,
+root_resource::root_resource(clover::device &dev, memory_obj &obj,
                              command_queue &q, const std::string &data) :
    resource(dev, obj) {
    pipe_resource info {};
@@ -150,18 +151,18 @@ root_resource::root_resource(device &dev, memory_obj &obj,
    }
 }
 
-root_resource::root_resource(device &dev, memory_obj &obj,
+root_resource::root_resource(clover::device &dev, memory_obj &obj,
                              root_resource &r) :
    resource(dev, obj) {
    assert(0); // XXX -- resource shared among dev and r.dev
 }
 
 root_resource::~root_resource() {
-   dev.pipe->resource_destroy(dev.pipe, pipe);
+   device().pipe->resource_destroy(device().pipe, pipe);
 }
 
 sub_resource::sub_resource(resource &r, const vector &offset) :
-   resource(r.dev, r.obj) {
+   resource(r.device(), r.obj) {
    this->pipe = r.pipe;
    this->offset = r.offset + offset;
 }

@@ -71,7 +71,7 @@ clGetSamplerInfo(cl_sampler d_s, cl_sampler_info param,
       break;
 
    case CL_SAMPLER_CONTEXT:
-      buf.as_scalar<cl_context>() = desc(s.ctx);
+      buf.as_scalar<cl_context>() = desc(s.context());
       break;
 
    case CL_SAMPLER_NORMALIZED_COORDS:

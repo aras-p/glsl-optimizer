@@ -25,10 +25,10 @@
 
 using namespace clover;
 
-sampler::sampler(context &ctx, bool norm_mode,
+sampler::sampler(clover::context &ctx, bool norm_mode,
                  cl_addressing_mode addr_mode,
                  cl_filter_mode filter_mode) :
-   ctx(ctx), _norm_mode(norm_mode),
+   context(ctx), _norm_mode(norm_mode),
    _addr_mode(addr_mode), _filter_mode(filter_mode) {
 }
 

@@ -53,7 +53,7 @@ namespace clover {
    public:
       typedef std::function<void (event &)> action;
 
-      event(context &ctx, const ref_vector<event> &deps,
+      event(clover::context &ctx, const ref_vector<event> &deps,
             action action_ok, action action_fail);
       virtual ~event();
 
@@ -70,19 +70,19 @@ namespace clover {
       virtual cl_command_type command() const = 0;
       virtual void wait() const = 0;
 
-      context &ctx;
+      const intrusive_ref<clover::context> context;
 
    protected:
-      void chain(event *ev);
+      void chain(event &ev);
 
       cl_int _status;
-      std::vector<intrusive_ptr<event>> deps;
+      std::vector<intrusive_ref<event>> deps;
 
    private:
       unsigned wait_count;
       action action_ok;
       action action_fail;
-      std::vector<intrusive_ptr<event>> _chain;
+      std::vector<intrusive_ref<event>> _chain;
    };
 
    ///
@@ -120,7 +120,7 @@ namespace clover {
       virtual void fence(pipe_fence_handle *fence);
       action profile(command_queue &q, const action &action) const;
 
-      command_queue &_queue;
+      const intrusive_ref<command_queue> _queue;
       cl_command_type _command;
       pipe_fence_handle *_fence;
       lazy<cl_ulong> _time_queued, _time_submit, _time_start, _time_end;
@@ -135,7 +135,7 @@ namespace clover {
    ///
    class soft_event : public event {
    public:
-      soft_event(context &ctx, const ref_vector<event> &deps,
+      soft_event(clover::context &ctx, const ref_vector<event> &deps,
                  bool trigger, action action = [](event &){});
 
       virtual cl_int status() const;
