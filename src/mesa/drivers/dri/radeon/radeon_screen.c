@@ -481,11 +481,23 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    return 0;
 }
 
+
+static const __DRIextension *radeon_screen_extensions[] = {
+    &dri2ConfigQueryExtension.base,
+#if defined(RADEON_R100)
+    &radeonTexBufferExtension.base,
+#elif defined(RADEON_R200)
+    &r200TexBufferExtension.base,
+#endif
+    &radeonFlushExtension.base,
+    &radeonImageExtension.base,
+    NULL
+};
+
 static radeonScreenPtr
 radeonCreateScreen2(__DRIscreen *sPriv)
 {
    radeonScreenPtr screen;
-   int i;
    int ret;
    uint32_t device_id = 0;
 
@@ -522,20 +534,7 @@ radeonCreateScreen2(__DRIscreen *sPriv)
    if (getenv("RADEON_NO_TCL"))
 	   screen->chip_flags &= ~RADEON_CHIPSET_TCL;
 
-   i = 0;
-   screen->extensions[i++] = &dri2ConfigQueryExtension.base;
-
-#if defined(RADEON_R100)
-   screen->extensions[i++] = &radeonTexBufferExtension.base;
-#elif defined(RADEON_R200)
-   screen->extensions[i++] = &r200TexBufferExtension.base;
-#endif
-
-   screen->extensions[i++] = &radeonFlushExtension.base;
-   screen->extensions[i++] = &radeonImageExtension.base;
-
-   screen->extensions[i++] = NULL;
-   sPriv->extensions = screen->extensions;
+   sPriv->extensions = radeon_screen_extensions;
 
    screen->driScreen = sPriv;
    screen->bom = radeon_bo_manager_gem_ctor(sPriv->fd);
