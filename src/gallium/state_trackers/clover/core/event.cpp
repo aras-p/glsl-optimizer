@@ -186,7 +186,7 @@ soft_event::status() const {
       return _status;
 
    else if (!signalled() ||
-            any_of([](const ref_ptr<event> &ev) {
+            any_of([](const intrusive_ptr<event> &ev) {
                   return ev->status() != CL_COMPLETE;
                }, deps))
       return CL_SUBMITTED;

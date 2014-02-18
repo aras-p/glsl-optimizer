@@ -76,13 +76,13 @@ namespace clover {
       void chain(event *ev);
 
       cl_int _status;
-      std::vector<ref_ptr<event>> deps;
+      std::vector<intrusive_ptr<event>> deps;
 
    private:
       unsigned wait_count;
       action action_ok;
       action action_fail;
-      std::vector<ref_ptr<event>> _chain;
+      std::vector<intrusive_ptr<event>> _chain;
    };
 
    ///

@@ -32,7 +32,7 @@
 namespace clover {
    class platform : public _cl_platform_id,
                     public adaptor_range<
-      derefs, std::vector<ref_ptr<device>> &> {
+      derefs, std::vector<intrusive_ptr<device>> &> {
    public:
       platform();
 
@@ -41,7 +41,7 @@ namespace clover {
       operator=(const platform &platform) = delete;
 
    protected:
-      std::vector<ref_ptr<device>> devs;
+      std::vector<intrusive_ptr<device>> devs;
    };
 }
 

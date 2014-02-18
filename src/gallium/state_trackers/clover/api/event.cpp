@@ -72,7 +72,7 @@ clWaitForEvents(cl_uint num_evs, const cl_event *d_evs) try {
 
    // Create a temporary soft event that depends on all the events in
    // the wait list
-   ref_ptr<soft_event> sev =
+   intrusive_ptr<soft_event> sev =
       transfer(new soft_event(evs.front().ctx, evs, true));
 
    // ...and wait on it.
@@ -132,7 +132,7 @@ clSetEventCallback(cl_event d_ev, cl_int type,
 
    // Create a temporary soft event that depends on ev, with
    // pfn_notify as completion action.
-   ref_ptr<soft_event> sev = transfer(
+   intrusive_ptr<soft_event> sev = transfer(
       new soft_event(ev.ctx, { ev }, true,
                      [=, &ev](event &) {
                         ev.wait();
@@ -206,7 +206,7 @@ clEnqueueWaitForEvents(cl_command_queue d_q, cl_uint num_evs,
    // Create a hard event that depends on the events in the wait list:
    // subsequent commands in the same queue will be implicitly
    // serialized with respect to it -- hard events always are.
-   ref_ptr<hard_event> hev = transfer(new hard_event(q, 0, evs));
+   intrusive_ptr<hard_event> hev = transfer(new hard_event(q, 0, evs));
 
    return CL_SUCCESS;
 
@@ -262,7 +262,7 @@ clFinish(cl_command_queue d_q) try {
 
    // Create a temporary hard event -- it implicitly depends on all
    // the previously queued hard events.
-   ref_ptr<hard_event> hev = transfer(new hard_event(q, 0, { }));
+   intrusive_ptr<hard_event> hev = transfer(new hard_event(q, 0, { }));
 
    // And wait on it.
    hev->wait();

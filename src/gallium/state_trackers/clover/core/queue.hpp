@@ -69,9 +69,7 @@ namespace clover {
 
       cl_command_queue_properties _props;
       pipe_context *pipe;
-
-      typedef ref_ptr<hard_event> event_ptr;
-      std::deque<event_ptr> queued_events;
+      std::deque<intrusive_ptr<hard_event>> queued_events;
    };
 }
 
