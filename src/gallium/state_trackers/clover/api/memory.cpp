@@ -38,7 +38,7 @@ clCreateBuffer(cl_context d_ctx, cl_mem_flags flags, size_t size,
 
    if (!size ||
        size > fold(maximum(), cl_ulong(0),
-                   map(std::mem_fn(&device::max_mem_alloc_size), ctx.devs())
+                   map(std::mem_fn(&device::max_mem_alloc_size), ctx.devices())
           ))
       throw error(CL_INVALID_BUFFER_SIZE);
 

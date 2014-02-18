@@ -155,7 +155,7 @@ namespace clover {
          if (all_of([=](const device &dev) {
                   return dev.pipe->is_format_supported(
                      dev.pipe, f.second, target, 1, bindings);
-               }, ctx.devs()))
+               }, ctx.devices()))
             s.insert(f.first);
       }
 

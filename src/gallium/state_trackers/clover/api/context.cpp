@@ -117,15 +117,15 @@ clGetContextInfo(cl_context d_ctx, cl_context_info param,
       break;
 
    case CL_CONTEXT_NUM_DEVICES:
-      buf.as_scalar<cl_uint>() = ctx.devs().size();
+      buf.as_scalar<cl_uint>() = ctx.devices().size();
       break;
 
    case CL_CONTEXT_DEVICES:
-      buf.as_vector<cl_device_id>() = descs(ctx.devs());
+      buf.as_vector<cl_device_id>() = descs(ctx.devices());
       break;
 
    case CL_CONTEXT_PROPERTIES:
-      buf.as_vector<cl_context_properties>() = desc(ctx.props());
+      buf.as_vector<cl_context_properties>() = desc(ctx.properties());
       break;
 
    default:

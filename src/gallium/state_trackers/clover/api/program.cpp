@@ -64,7 +64,7 @@ clCreateProgramWithBinary(cl_context d_ctx, cl_uint n,
       throw error(CL_INVALID_VALUE);
 
    if (any_of([&](const device &dev) {
-            return !count(dev, ctx.devs());
+            return !count(dev, ctx.devices());
          }, devs))
       throw error(CL_INVALID_DEVICE);
 
@@ -133,7 +133,7 @@ clBuildProgram(cl_program d_prog, cl_uint num_devs,
                void *user_data) try {
    auto &prog = obj(d_prog);
    auto devs = (d_devs ? objs(d_devs, num_devs) :
-                ref_vector<device>(prog.context().devs()));
+                ref_vector<device>(prog.context().devices()));
    auto opts = (p_opts ? p_opts : "");
 
    if (bool(num_devs) != bool(d_devs) ||
@@ -141,7 +141,7 @@ clBuildProgram(cl_program d_prog, cl_uint num_devs,
       throw error(CL_INVALID_VALUE);
 
    if (any_of([&](const device &dev) {
-            return !count(dev, prog.context().devs());
+            return !count(dev, prog.context().devices());
          }, devs))
       throw error(CL_INVALID_DEVICE);
 
@@ -175,13 +175,13 @@ clGetProgramInfo(cl_program d_prog, cl_program_info param,
    case CL_PROGRAM_NUM_DEVICES:
       buf.as_scalar<cl_uint>() = (prog.devices().size() ?
                                   prog.devices().size() :
-                                  prog.context().devs().size());
+                                  prog.context().devices().size());
       break;
 
    case CL_PROGRAM_DEVICES:
       buf.as_vector<cl_device_id>() = (prog.devices().size() ?
                                        descs(prog.devices()) :
-                                       descs(prog.context().devs()));
+                                       descs(prog.context().devices()));
       break;
 
    case CL_PROGRAM_SOURCE:
@@ -226,7 +226,7 @@ clGetProgramBuildInfo(cl_program d_prog, cl_device_id d_dev,
    auto &prog = obj(d_prog);
    auto &dev = obj(d_dev);
 
-   if (!count(dev, prog.context().devs()))
+   if (!count(dev, prog.context().devices()))
       return CL_INVALID_DEVICE;
 
    switch (param) {

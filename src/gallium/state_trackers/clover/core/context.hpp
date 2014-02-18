@@ -48,14 +48,14 @@ namespace clover {
       operator!=(const context &ctx) const;
 
       const property_list &
-      props() const;
+      properties() const;
 
       device_range
-      devs() const;
+      devices() const;
 
    private:
-      property_list _props;
-      const std::vector<intrusive_ref<device>> _devs;
+      property_list props;
+      const std::vector<intrusive_ref<device>> devs;
    };
 }
 

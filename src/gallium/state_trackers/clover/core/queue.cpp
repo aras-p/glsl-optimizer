@@ -29,7 +29,7 @@ using namespace clover;
 
 command_queue::command_queue(clover::context &ctx, clover::device &dev,
                              cl_command_queue_properties props) :
-   context(ctx), device(dev), _props(props) {
+   context(ctx), device(dev), props(props) {
    pipe = dev.pipe->context_create(dev.pipe, NULL);
    if (!pipe)
       throw error(CL_INVALID_DEVICE);
@@ -58,13 +58,13 @@ command_queue::flush() {
 }
 
 cl_command_queue_properties
-command_queue::props() const {
-   return _props;
+command_queue::properties() const {
+   return props;
 }
 
 bool
 command_queue::profiling_enabled() const {
-   return _props & CL_QUEUE_PROFILING_ENABLE;
+   return props & CL_QUEUE_PROFILING_ENABLE;
 }
 
 void
