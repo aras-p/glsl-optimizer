@@ -1770,11 +1770,27 @@ static void
 _check_for_reserved_macro_name (glcpp_parser_t *parser, YYLTYPE *loc,
 				const char *identifier)
 {
-	/* According to the GLSL specification, macro names starting with "__"
-	 * or "GL_" are reserved for future use.  So, don't allow them.
+	/* Section 3.3 (Preprocessor) of the GLSL 1.30 spec (and later) and
+	 * the GLSL ES spec (all versions) say:
+	 *
+	 *     "All macro names containing two consecutive underscores ( __ )
+	 *     are reserved for future use as predefined macro names. All
+	 *     macro names prefixed with "GL_" ("GL" followed by a single
+	 *     underscore) are also reserved."
+	 *
+	 * The intention is that names containing __ are reserved for internal
+	 * use by the implementation, and names prefixed with GL_ are reserved
+	 * for use by Khronos.  Since every extension adds a name prefixed
+	 * with GL_ (i.e., the name of the extension), that should be an
+	 * error.  Names simply containing __ are dangerous to use, but should
+	 * be allowed.
+	 *
+	 * A future version of the GLSL specification will clarify this.
 	 */
 	if (strstr(identifier, "__")) {
-		glcpp_error (loc, parser, "Macro names containing \"__\" are reserved.\n");
+		glcpp_warning(loc, parser,
+			      "Macro names containing \"__\" are reserved "
+			      "for use by the implementation.\n");
 	}
 	if (strncmp(identifier, "GL_", 3) == 0) {
 		glcpp_error (loc, parser, "Macro names starting with \"GL_\" are reserved.\n");
