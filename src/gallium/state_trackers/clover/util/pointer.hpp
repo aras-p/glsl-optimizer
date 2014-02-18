@@ -122,18 +122,6 @@ namespace clover {
    };
 
    ///
-   /// Transfer the caller's ownership of a reference-counted object
-   /// to a clover::intrusive_ptr smart pointer.
-   ///
-   template<typename T>
-   inline intrusive_ptr<T>
-   transfer(T *p) {
-      intrusive_ptr<T> ref { p };
-      p->release();
-      return ref;
-   }
-
-   ///
    /// Intrusive smart reference for objects that implement the
    /// clover::ref_counter interface.
    ///
@@ -188,14 +176,14 @@ namespace clover {
    };
 
    ///
-   /// Transfer the caller's ownership of a reference-counted object
-   /// to a clover::intrusive_ref smart reference.
+   /// Initialize a clover::intrusive_ref from a newly created object
+   /// using the specified constructor arguments.
    ///
-   template<typename T>
-   inline intrusive_ref<T>
-   transfer(T &o) {
-      intrusive_ref<T> ref { o };
-      o.release();
+   template<typename T, typename... As>
+   intrusive_ref<T>
+   create(As &&... as) {
+      intrusive_ref<T> ref { *new T(std::forward<As>(as)...) };
+      ref().release();
       return ref;
    }
 

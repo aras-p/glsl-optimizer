@@ -276,7 +276,7 @@ clEnqueueNDRangeKernel(cl_command_queue d_q, cl_kernel d_kern,
 
    validate_common(q, kern, deps);
 
-   hard_event *hev = new hard_event(
+   auto hev = create<hard_event>(
       q, CL_COMMAND_NDRANGE_KERNEL, deps,
       [=, &kern, &q](event &) {
          kern.launch(q, grid_offset, grid_size, block_size);
@@ -299,7 +299,7 @@ clEnqueueTask(cl_command_queue d_q, cl_kernel d_kern,
 
    validate_common(q, kern, deps);
 
-   hard_event *hev = new hard_event(
+   auto hev = create<hard_event>(
       q, CL_COMMAND_TASK, deps,
       [=, &kern, &q](event &) {
          kern.launch(q, { 0 }, { 1 }, { 1 });
