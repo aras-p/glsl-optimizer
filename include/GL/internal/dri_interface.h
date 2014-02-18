@@ -464,6 +464,8 @@ struct __DRIswrastLoaderExtensionRec {
 
     /**
      * Put image to drawable
+     *
+     * \since 2
      */
     void (*putImage2)(__DRIdrawable *drawable, int op,
                       int x, int y, int width, int height, int stride,
