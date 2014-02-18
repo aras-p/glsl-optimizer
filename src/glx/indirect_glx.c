@@ -323,15 +323,15 @@ indirect_release_tex_image(Display * dpy, GLXDrawable drawable, int buffer)
 }
 
 static const struct glx_context_vtable indirect_context_vtable = {
-   indirect_destroy_context,
-   indirect_bind_context,
-   indirect_unbind_context,
-   indirect_wait_gl,
-   indirect_wait_x,
-   indirect_use_x_font,
-   indirect_bind_tex_image,
-   indirect_release_tex_image,
-   NULL, /* get_proc_address */
+   .destroy             = indirect_destroy_context,
+   .bind                = indirect_bind_context,
+   .unbind              = indirect_unbind_context,
+   .wait_gl             = indirect_wait_gl,
+   .wait_x              = indirect_wait_x,
+   .use_x_font          = indirect_use_x_font,
+   .bind_tex_image      = indirect_bind_tex_image,
+   .release_tex_image   = indirect_release_tex_image,
+   .get_proc_address    = NULL,
 };
 
 /**
@@ -467,9 +467,11 @@ indirect_create_context_attribs(struct glx_screen *base,
    return indirect_create_context(base, config_base, shareList, renderType);
 }
 
-struct glx_screen_vtable indirect_screen_vtable = {
-   indirect_create_context,
-   indirect_create_context_attribs
+static const struct glx_screen_vtable indirect_screen_vtable = {
+   .create_context         = indirect_create_context,
+   .create_context_attribs = indirect_create_context_attribs,
+   .query_renderer_integer = NULL,
+   .query_renderer_string  = NULL,
 };
 
 _X_HIDDEN struct glx_screen *
