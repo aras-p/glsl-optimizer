@@ -727,13 +727,16 @@ AC_ARG_ENABLE([shared-glapi],
     [AS_HELP_STRING([--enable-shared-glapi],
         [Enable shared glapi for OpenGL @<:@default=yes@:>@])],
     [enable_shared_glapi="$enableval"],
-    [enable_shared_glapi="$enable_dri"])
+    [enable_shared_glapi=yes])
 
-# Shared GLAPI is only useful for DRI
-if test "x$enable_dri" = xno; then
-    AC_MSG_NOTICE([Shared GLAPI is only useful for DRI, disabling])
-    enable_shared_glapi=no
-fi
+case "x$enable_opengl$enable_gles1$enable_gles2" in
+x*yes*yes*)
+    if test "x$enable_shared_glapi" = xno; then
+        AC_MSG_ERROR([shared GLAPI required when building two or more of
+                      the following APIs - opengl, gles1 gles2])
+    fi
+    ;;
+esac
 
 AM_CONDITIONAL(HAVE_SHARED_GLAPI, test "x$enable_shared_glapi" = xyes)
 
