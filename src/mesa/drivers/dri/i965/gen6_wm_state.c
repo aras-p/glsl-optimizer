@@ -51,23 +51,23 @@ gen6_upload_wm_push_constants(struct brw_context *brw)
    /* XXX: Should this happen somewhere before to get our state flag set? */
    _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
 
-   if (prog_data->nr_params == 0) {
+   if (prog_data->base.nr_params == 0) {
       brw->wm.base.push_const_size = 0;
    } else {
       float *constants;
       unsigned int i;
 
       constants = brw_state_batch(brw, AUB_TRACE_WM_CONSTANTS,
-				  prog_data->nr_params * sizeof(float),
+				  prog_data->base.nr_params * sizeof(float),
 				  32, &brw->wm.base.push_const_offset);
 
-      for (i = 0; i < prog_data->nr_params; i++) {
-	 constants[i] = *prog_data->param[i];
+      for (i = 0; i < prog_data->base.nr_params; i++) {
+	 constants[i] = *prog_data->base.param[i];
       }
 
       if (0) {
 	 printf("WM constants:\n");
-	 for (i = 0; i < prog_data->nr_params; i++) {
+	 for (i = 0; i < prog_data->base.nr_params; i++) {
 	    if ((i & 7) == 0)
 	       printf("g%d: ", prog_data->first_curbe_grf + i / 8);
 	    printf("%8f ", constants[i]);
@@ -79,7 +79,7 @@ gen6_upload_wm_push_constants(struct brw_context *brw)
 	 printf("\n");
       }
 
-      brw->wm.base.push_const_size = ALIGN(prog_data->nr_params, 8) / 8;
+      brw->wm.base.push_const_size = ALIGN(prog_data->base.nr_params, 8) / 8;
    }
 }
 
@@ -105,7 +105,7 @@ upload_wm_state(struct brw_context *brw)
    bool multisampled_fbo = ctx->DrawBuffer->Visual.samples > 1;
 
     /* CACHE_NEW_WM_PROG */
-   if (brw->wm.prog_data->nr_params == 0) {
+   if (brw->wm.prog_data->base.nr_params == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
       OUT_BATCH(_3DSTATE_CONSTANT_PS << 16 | (5 - 2));

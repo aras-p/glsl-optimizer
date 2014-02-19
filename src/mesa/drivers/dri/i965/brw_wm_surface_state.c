@@ -464,7 +464,7 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
    struct gl_program_parameter_list *params = fp->program.Base.Parameters;
-   const int size = brw->wm.prog_data->nr_pull_params * sizeof(float);
+   const int size = brw->wm.prog_data->base.nr_pull_params * sizeof(float);
    const int surf_index =
       brw->wm.prog_data->base.binding_table.pull_constants_start;
    float *constants;
@@ -473,7 +473,7 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    _mesa_load_state_parameters(ctx, params);
 
    /* CACHE_NEW_WM_PROG */
-   if (brw->wm.prog_data->nr_pull_params == 0) {
+   if (brw->wm.prog_data->base.nr_pull_params == 0) {
       if (brw->wm.base.const_bo) {
 	 drm_intel_bo_unreference(brw->wm.base.const_bo);
 	 brw->wm.base.const_bo = NULL;
@@ -490,8 +490,8 @@ brw_upload_wm_pull_constants(struct brw_context *brw)
    /* _NEW_PROGRAM_CONSTANTS */
    drm_intel_gem_bo_map_gtt(brw->wm.base.const_bo);
    constants = brw->wm.base.const_bo->virtual;
-   for (i = 0; i < brw->wm.prog_data->nr_pull_params; i++) {
-      constants[i] = *brw->wm.prog_data->pull_param[i];
+   for (i = 0; i < brw->wm.prog_data->base.nr_pull_params; i++) {
+      constants[i] = *brw->wm.prog_data->base.pull_param[i];
    }
    drm_intel_gem_bo_unmap_gtt(brw->wm.base.const_bo);
 

@@ -163,7 +163,7 @@ upload_ps_state(struct brw_context *brw)
    dw6 |= (brw->max_wm_threads - 2) << HSW_PS_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
-   if (brw->wm.prog_data->nr_params > 0)
+   if (brw->wm.prog_data->base.nr_params > 0)
       dw6 |= GEN7_PS_PUSH_CONSTANT_ENABLE;
 
    dw6 |= GEN7_PS_8_DISPATCH_ENABLE;

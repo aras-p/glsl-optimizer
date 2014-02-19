@@ -182,12 +182,12 @@ brw_vs_prog_data_compare(const void *in_a, const void *in_b)
    const struct brw_vs_prog_data *a = in_a;
    const struct brw_vs_prog_data *b = in_b;
 
-   /* Compare the base vec4 structure. */
-   if (!brw_vec4_prog_data_compare(&a->base, &b->base))
+   /* Compare the base structure. */
+   if (!brw_stage_prog_data_compare(&a->base.base, &b->base.base))
       return false;
 
    /* Compare the rest of the struct. */
-   const unsigned offset = sizeof(struct brw_vec4_prog_data);
+   const unsigned offset = sizeof(struct brw_stage_prog_data);
    if (memcmp(((char *) a) + offset, ((char *) b) + offset,
               sizeof(struct brw_vs_prog_data) - offset)) {
       return false;
@@ -206,6 +206,7 @@ do_vs_prog(struct brw_context *brw,
    const GLuint *program;
    struct brw_vs_compile c;
    struct brw_vs_prog_data prog_data;
+   struct brw_stage_prog_data *stage_prog_data = &prog_data.base.base;
    void *mem_ctx;
    int i;
    struct gl_shader *vs = NULL;
@@ -241,8 +242,8 @@ do_vs_prog(struct brw_context *brw,
     */
    param_count += c.key.base.nr_userclip_plane_consts * 4;
 
-   prog_data.base.param = rzalloc_array(NULL, const float *, param_count);
-   prog_data.base.pull_param = rzalloc_array(NULL, const float *, param_count);
+   stage_prog_data->param = rzalloc_array(NULL, const float *, param_count);
+   stage_prog_data->pull_param = rzalloc_array(NULL, const float *, param_count);
 
    GLbitfield64 outputs_written = vp->program.Base.OutputsWritten;
    prog_data.inputs_read = vp->program.Base.InputsRead;
@@ -544,13 +545,4 @@ brw_vs_precompile(struct gl_context *ctx, struct gl_shader_program *prog)
    brw->vs.prog_data = old_prog_data;
 
    return success;
-}
-
-
-void
-brw_vs_prog_data_free(const void *in_prog_data)
-{
-   const struct brw_vs_prog_data *prog_data = in_prog_data;
-
-   brw_vec4_prog_data_free(&prog_data->base);
 }

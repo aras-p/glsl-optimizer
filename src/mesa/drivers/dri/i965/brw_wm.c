@@ -122,26 +122,17 @@ brw_wm_prog_data_compare(const void *in_a, const void *in_b)
    const struct brw_wm_prog_data *a = in_a;
    const struct brw_wm_prog_data *b = in_b;
 
-   /* Compare all the struct (including the base) up to the pointers. */
-   if (memcmp(a, b, offsetof(struct brw_wm_prog_data, param)))
+   /* Compare the base structure. */
+   if (!brw_stage_prog_data_compare(&a->base, &b->base))
       return false;
 
-   if (memcmp(a->param, b->param, a->nr_params * sizeof(void *)))
-      return false;
-
-   if (memcmp(a->pull_param, b->pull_param, a->nr_pull_params * sizeof(void *)))
+   /* Compare the rest of the structure. */
+   const unsigned offset = sizeof(struct brw_stage_prog_data);
+   if (memcmp(((char *) a) + offset, ((char *) b) + offset,
+              sizeof(struct brw_wm_prog_data) - offset))
       return false;
 
    return true;
-}
-
-void
-brw_wm_prog_data_free(const void *in_prog_data)
-{
-   const struct brw_wm_prog_data *prog_data = in_prog_data;
-
-   ralloc_free((void *)prog_data->param);
-   ralloc_free((void *)prog_data->pull_param);
 }
 
 /**
@@ -177,8 +168,9 @@ bool do_wm_prog(struct brw_context *brw,
    }
    /* The backend also sometimes adds params for texture size. */
    param_count += 2 * ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits;
-   c->prog_data.param = rzalloc_array(NULL, const float *, param_count);
-   c->prog_data.pull_param = rzalloc_array(NULL, const float *, param_count);
+   c->prog_data.base.param = rzalloc_array(NULL, const float *, param_count);
+   c->prog_data.base.pull_param =
+      rzalloc_array(NULL, const float *, param_count);
 
    memcpy(&c->key, key, sizeof(*key));
 

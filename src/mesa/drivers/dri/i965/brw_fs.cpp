@@ -912,7 +912,7 @@ fs_visitor::setup_uniform_values(ir_variable *ir)
     * order we'd walk the type, so walk the list of storage and find anything
     * with our name, or the prefix of a component that starts with our name.
     */
-   unsigned params_before = c->prog_data.nr_params;
+   unsigned params_before = stage_prog_data->nr_params;
    for (unsigned u = 0; u < shader_prog->NumUserUniformStorage; u++) {
       struct gl_uniform_storage *storage = &shader_prog->UniformStorage[u];
 
@@ -928,14 +928,14 @@ fs_visitor::setup_uniform_values(ir_variable *ir)
          slots *= storage->array_elements;
 
       for (unsigned i = 0; i < slots; i++) {
-         c->prog_data.param[c->prog_data.nr_params++] =
+         stage_prog_data->param[stage_prog_data->nr_params++] =
             &storage->storage[i].f;
       }
    }
 
    /* Make sure we actually initialized the right amount of stuff here. */
    assert(params_before + ir->type->component_slots() ==
-          c->prog_data.nr_params);
+          stage_prog_data->nr_params);
    (void)params_before;
 }
 
@@ -968,7 +968,7 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	    break;
 	 last_swiz = swiz;
 
-	 c->prog_data.param[c->prog_data.nr_params++] =
+	 stage_prog_data->param[stage_prog_data->nr_params++] =
             &fp->Base.Parameters->ParameterValues[index][swiz].f;
       }
    }
@@ -1404,7 +1404,7 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
 void
 fs_visitor::assign_curb_setup()
 {
-   c->prog_data.curb_read_length = ALIGN(c->prog_data.nr_params, 8) / 8;
+   c->prog_data.curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
    if (dispatch_width == 8) {
       c->prog_data.first_curbe_grf = c->nr_payload_regs;
    } else {
@@ -1733,10 +1733,10 @@ bool
 fs_visitor::remove_dead_constants()
 {
    if (dispatch_width == 8) {
-      this->params_remap = ralloc_array(mem_ctx, int, c->prog_data.nr_params);
-      this->nr_params_remap = c->prog_data.nr_params;
+      this->params_remap = ralloc_array(mem_ctx, int, stage_prog_data->nr_params);
+      this->nr_params_remap = stage_prog_data->nr_params;
 
-      for (unsigned int i = 0; i < c->prog_data.nr_params; i++)
+      for (unsigned int i = 0; i < stage_prog_data->nr_params; i++)
 	 this->params_remap[i] = -1;
 
       /* Find which params are still in use. */
@@ -1754,7 +1754,8 @@ fs_visitor::remove_dead_constants()
 	     *     "Out-of-bounds reads return undefined values, which include
 	     *     values from other variables of the active program or zero."
 	     */
-	    if (constant_nr < 0 || constant_nr >= (int)c->prog_data.nr_params) {
+	    if (constant_nr < 0 ||
+                constant_nr >= (int)stage_prog_data->nr_params) {
 	       constant_nr = 0;
 	    }
 
@@ -1772,23 +1773,23 @@ fs_visitor::remove_dead_constants()
        * now we don't care.
        */
       unsigned int new_nr_params = 0;
-      for (unsigned int i = 0; i < c->prog_data.nr_params; i++) {
+      for (unsigned int i = 0; i < stage_prog_data->nr_params; i++) {
 	 if (this->params_remap[i] != -1) {
 	    this->params_remap[i] = new_nr_params++;
 	 }
       }
 
       /* Update the list of params to be uploaded to match our new numbering. */
-      for (unsigned int i = 0; i < c->prog_data.nr_params; i++) {
+      for (unsigned int i = 0; i < stage_prog_data->nr_params; i++) {
 	 int remapped = this->params_remap[i];
 
 	 if (remapped == -1)
 	    continue;
 
-	 c->prog_data.param[remapped] = c->prog_data.param[i];
+	 stage_prog_data->param[remapped] = stage_prog_data->param[i];
       }
 
-      c->prog_data.nr_params = new_nr_params;
+      stage_prog_data->nr_params = new_nr_params;
    } else {
       /* This should have been generated in the SIMD8 pass already. */
       assert(this->params_remap);
@@ -1832,9 +1833,9 @@ fs_visitor::remove_dead_constants()
 void
 fs_visitor::move_uniform_array_access_to_pull_constants()
 {
-   int pull_constant_loc[c->prog_data.nr_params];
+   int pull_constant_loc[stage_prog_data->nr_params];
 
-   for (unsigned int i = 0; i < c->prog_data.nr_params; i++) {
+   for (unsigned int i = 0; i < stage_prog_data->nr_params; i++) {
       pull_constant_loc[i] = -1;
    }
 
@@ -1857,14 +1858,14 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
           * add it.
           */
          if (pull_constant_loc[uniform] == -1) {
-            const float **values = &c->prog_data.param[uniform];
+            const float **values = &stage_prog_data->param[uniform];
 
-            pull_constant_loc[uniform] = c->prog_data.nr_pull_params;
+            pull_constant_loc[uniform] = stage_prog_data->nr_pull_params;
 
             assert(param_size[uniform]);
 
             for (int j = 0; j < param_size[uniform]; j++) {
-               c->prog_data.pull_param[c->prog_data.nr_pull_params++] =
+               stage_prog_data->pull_param[stage_prog_data->nr_pull_params++] =
                   values[j];
             }
          }
@@ -1873,7 +1874,7 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
          base_ir = inst->ir;
          current_annotation = inst->annotation;
 
-         fs_reg surf_index = fs_reg(c->prog_data.base.binding_table.pull_constants_start);
+         fs_reg surf_index(stage_prog_data->binding_table.pull_constants_start);
          fs_reg temp = fs_reg(this, glsl_type::float_type);
          exec_list list = VARYING_PULL_CONSTANT_LOAD(temp,
                                                      surf_index,
@@ -1905,7 +1906,7 @@ fs_visitor::setup_pull_constants()
 {
    /* Only allow 16 registers (128 uniform components) as push constants. */
    unsigned int max_uniform_components = 16 * 8;
-   if (c->prog_data.nr_params <= max_uniform_components)
+   if (stage_prog_data->nr_params <= max_uniform_components)
       return;
 
    if (dispatch_width == 16) {
@@ -1918,8 +1919,8 @@ fs_visitor::setup_pull_constants()
     */
    unsigned int pull_uniform_base = max_uniform_components;
 
-   int pull_constant_loc[c->prog_data.nr_params];
-   for (unsigned int i = 0; i < c->prog_data.nr_params; i++) {
+   int pull_constant_loc[stage_prog_data->nr_params];
+   for (unsigned int i = 0; i < stage_prog_data->nr_params; i++) {
       if (i < pull_uniform_base) {
          pull_constant_loc[i] = -1;
       } else {
@@ -1927,20 +1928,20 @@ fs_visitor::setup_pull_constants()
          /* If our constant is already being uploaded for reladdr purposes,
           * reuse it.
           */
-         for (unsigned int j = 0; j < c->prog_data.nr_pull_params; j++) {
-            if (c->prog_data.pull_param[j] == c->prog_data.param[i]) {
+         for (unsigned int j = 0; j < stage_prog_data->nr_pull_params; j++) {
+            if (stage_prog_data->pull_param[j] == stage_prog_data->param[i]) {
                pull_constant_loc[i] = j;
                break;
             }
          }
          if (pull_constant_loc[i] == -1) {
-            int pull_index = c->prog_data.nr_pull_params++;
-            c->prog_data.pull_param[pull_index] = c->prog_data.param[i];
-            pull_constant_loc[i] = pull_index;;
+            int pull_index = stage_prog_data->nr_pull_params++;
+            stage_prog_data->pull_param[pull_index] = stage_prog_data->param[i];
+            pull_constant_loc[i] = pull_index;
          }
       }
    }
-   c->prog_data.nr_params = pull_uniform_base;
+   stage_prog_data->nr_params = pull_uniform_base;
 
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
@@ -1957,7 +1958,7 @@ fs_visitor::setup_pull_constants()
          assert(!inst->src[i].reladdr);
 
 	 fs_reg dst = fs_reg(this, glsl_type::float_type);
-	 fs_reg index = fs_reg(c->prog_data.base.binding_table.pull_constants_start);
+	 fs_reg index(stage_prog_data->binding_table.pull_constants_start);
 	 fs_reg offset = fs_reg((unsigned)(pull_index * 4) & ~15);
 	 fs_inst *pull =
             new(mem_ctx) fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
@@ -3314,7 +3315,7 @@ bool
 fs_visitor::run()
 {
    sanity_param_count = fp->Base.Parameters->NumParameters;
-   uint32_t orig_nr_params = c->prog_data.nr_params;
+   uint32_t orig_nr_params = stage_prog_data->nr_params;
    bool allocated_without_spills;
 
    assign_binding_table_offsets();
@@ -3464,7 +3465,7 @@ fs_visitor::run()
       c->prog_data.reg_blocks_16 = brw_register_blocks(grf_used);
 
       /* Make sure we didn't try to sneak in an extra uniform */
-      assert(orig_nr_params == c->prog_data.nr_params);
+      assert(orig_nr_params == stage_prog_data->nr_params);
       (void) orig_nr_params;
    }
 
@@ -3527,7 +3528,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    exec_list *simd16_instructions = NULL;
    fs_visitor v2(brw, c, prog, fp, 16);
    if (brw->gen >= 5 && likely(!(INTEL_DEBUG & DEBUG_NO16))) {
-      if (c->prog_data.nr_pull_params == 0) {
+      if (c->prog_data.base.nr_pull_params == 0) {
          /* Try a SIMD16 compile */
          v2.import_uniforms(&v);
          if (!v2.run()) {

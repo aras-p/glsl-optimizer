@@ -48,7 +48,7 @@ gen6_upload_vec4_push_constants(struct brw_context *brw,
    /* XXX: Should this happen somewhere before to get our state flag set? */
    _mesa_load_state_parameters(ctx, prog->Parameters);
 
-   if (prog_data->nr_params == 0) {
+   if (prog_data->base.nr_params == 0) {
       stage_state->push_const_size = 0;
    } else {
       int params_uploaded;
@@ -56,7 +56,7 @@ gen6_upload_vec4_push_constants(struct brw_context *brw,
       int i;
 
       param = brw_state_batch(brw, type,
-			      prog_data->nr_params * sizeof(float),
+			      prog_data->base.nr_params * sizeof(float),
 			      32, &stage_state->push_const_offset);
 
       /* _NEW_PROGRAM_CONSTANTS
@@ -65,10 +65,10 @@ gen6_upload_vec4_push_constants(struct brw_context *brw,
        * side effect of dereferencing uniforms, so _NEW_PROGRAM_CONSTANTS
        * wouldn't be set for them.
       */
-      for (i = 0; i < prog_data->nr_params; i++) {
-         param[i] = *prog_data->param[i];
+      for (i = 0; i < prog_data->base.nr_params; i++) {
+         param[i] = *prog_data->base.param[i];
       }
-      params_uploaded = prog_data->nr_params / 4;
+      params_uploaded = prog_data->base.nr_params / 4;
 
       if (0) {
 	 printf("Constant buffer:\n");

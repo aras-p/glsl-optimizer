@@ -76,6 +76,13 @@ bool brw_debug_recompile_sampler_key(struct brw_context *brw,
                                      const struct brw_sampler_prog_key_data *key);
 void brw_add_texrect_params(struct gl_program *prog);
 
+bool
+brw_stage_prog_data_compare(const struct brw_stage_prog_data *a,
+                            const struct brw_stage_prog_data *b);
+
+void
+brw_stage_prog_data_free(const void *prog_data);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

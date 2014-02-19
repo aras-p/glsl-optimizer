@@ -35,7 +35,6 @@ struct gl_shader_program;
 
 bool brw_gs_precompile(struct gl_context *ctx, struct gl_shader_program *prog);
 bool brw_gs_prog_data_compare(const void *a, const void *b);
-void brw_gs_prog_data_free(const void *in_prog_data);
 
 #ifdef __cplusplus
 } /* extern "C" */

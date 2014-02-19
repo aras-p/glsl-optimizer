@@ -443,8 +443,8 @@ vec4_visitor::pack_uniform_registers()
 
 	 /* Move the references to the data */
 	 for (int j = 0; j < size; j++) {
-	    prog_data->param[dst * 4 + new_chan[src] + j] =
-	       prog_data->param[src * 4 + j];
+	    stage_prog_data->param[dst * 4 + new_chan[src] + j] =
+	       stage_prog_data->param[src * 4 + j];
 	 }
 
 	 this->uniform_vector_size[dst] += size;
@@ -595,16 +595,16 @@ vec4_visitor::move_push_constants_to_pull_constants()
       pull_constant_loc[i / 4] = -1;
 
       if (i >= max_uniform_components) {
-	 const float **values = &prog_data->param[i];
+	 const float **values = &stage_prog_data->param[i];
 
 	 /* Try to find an existing copy of this uniform in the pull
 	  * constants if it was part of an array access already.
 	  */
-	 for (unsigned int j = 0; j < prog_data->nr_pull_params; j += 4) {
+	 for (unsigned int j = 0; j < stage_prog_data->nr_pull_params; j += 4) {
 	    int matches;
 
 	    for (matches = 0; matches < 4; matches++) {
-	       if (prog_data->pull_param[j + matches] != values[matches])
+	       if (stage_prog_data->pull_param[j + matches] != values[matches])
 		  break;
 	    }
 
@@ -615,11 +615,12 @@ vec4_visitor::move_push_constants_to_pull_constants()
 	 }
 
 	 if (pull_constant_loc[i / 4] == -1) {
-	    assert(prog_data->nr_pull_params % 4 == 0);
-	    pull_constant_loc[i / 4] = prog_data->nr_pull_params / 4;
+	    assert(stage_prog_data->nr_pull_params % 4 == 0);
+	    pull_constant_loc[i / 4] = stage_prog_data->nr_pull_params / 4;
 
 	    for (int j = 0; j < 4; j++) {
-	       prog_data->pull_param[prog_data->nr_pull_params++] = values[j];
+	       stage_prog_data->pull_param[stage_prog_data->nr_pull_params++] =
+                  values[j];
 	    }
 	 }
       }
@@ -1403,11 +1404,12 @@ vec4_visitor::setup_uniforms(int reg)
    if (brw->gen < 6 && this->uniforms == 0) {
       this->uniform_vector_size[this->uniforms] = 1;
 
-      prog_data->param = reralloc(NULL, prog_data->param, const float *, 4);
+      stage_prog_data->param =
+         reralloc(NULL, stage_prog_data->param, const float *, 4);
       for (unsigned int i = 0; i < 4; i++) {
 	 unsigned int slot = this->uniforms * 4 + i;
 	 static float zero = 0.0;
-	 prog_data->param[slot] = &zero;
+	 stage_prog_data->param[slot] = &zero;
       }
 
       this->uniforms++;
@@ -1416,7 +1418,7 @@ vec4_visitor::setup_uniforms(int reg)
       reg += ALIGN(uniforms, 2) / 2;
    }
 
-   prog_data->nr_params = this->uniforms * 4;
+   stage_prog_data->nr_params = this->uniforms * 4;
 
    prog_data->curb_read_length = reg - prog_data->dispatch_grf_start_reg;
 
@@ -1730,32 +1732,5 @@ brw_vec4_setup_prog_key_for_precompile(struct gl_context *ctx,
       }
    }
 }
-
-
-bool
-brw_vec4_prog_data_compare(const struct brw_vec4_prog_data *a,
-                           const struct brw_vec4_prog_data *b)
-{
-   /* Compare all the struct (including the base) up to the pointers. */
-   if (memcmp(a, b, offsetof(struct brw_vec4_prog_data, param)))
-      return false;
-
-   if (memcmp(a->param, b->param, a->nr_params * sizeof(void *)))
-      return false;
-
-   if (memcmp(a->pull_param, b->pull_param, a->nr_pull_params * sizeof(void *)))
-      return false;
-
-   return true;
-}
-
-
-void
-brw_vec4_prog_data_free(const struct brw_vec4_prog_data *prog_data)
-{
-   ralloc_free((void *)prog_data->param);
-   ralloc_free((void *)prog_data->pull_param);
-}
-
 
 } /* extern "C" */

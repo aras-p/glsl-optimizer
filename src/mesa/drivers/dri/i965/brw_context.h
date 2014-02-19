@@ -332,8 +332,7 @@ struct brw_shader {
 };
 
 /* Note: If adding fields that need anything besides a normal memcmp() for
- * comparing them, be sure to go fix the the stage-specific
- * prog_data_compare().
+ * comparing them, be sure to go fix brw_stage_prog_data_compare().
  */
 struct brw_stage_prog_data {
    struct {
@@ -351,6 +350,18 @@ struct brw_stage_prog_data {
       uint32_t shader_time_start;
       /** @} */
    } binding_table;
+
+   GLuint nr_params;       /**< number of float params/constants */
+   GLuint nr_pull_params;
+
+   /* Pointers to tracked values (only valid once
+    * _mesa_load_state_parameters has been called at runtime).
+    *
+    * These must be the last fields of the struct (see
+    * brw_stage_prog_data_compare()).
+    */
+   const float **param;
+   const float **pull_param;
 };
 
 /* Data about a particular attempt to compile a program.  Note that
@@ -381,8 +392,6 @@ struct brw_wm_prog_data {
       /** @} */
    } binding_table;
 
-   GLuint nr_params;       /**< number of float params/constants */
-   GLuint nr_pull_params;
    bool dual_src_blend;
    bool uses_pos_offset;
    bool uses_omask;
@@ -400,15 +409,6 @@ struct brw_wm_prog_data {
     * For varying slots that are not used by the FS, the value is -1.
     */
    int urb_setup[VARYING_SLOT_MAX];
-
-   /* Pointers to tracked values (only valid once
-    * _mesa_load_state_parameters has been called at runtime).
-    *
-    * These must be the last fields of the struct (see
-    * brw_wm_prog_data_compare()).
-    */
-   const float **param;
-   const float **pull_param;
 };
 
 /**
@@ -590,8 +590,6 @@ struct brw_vec4_prog_data {
    GLuint curb_read_length;
    GLuint urb_read_length;
    GLuint total_grf;
-   GLuint nr_params;       /**< number of float params/constants */
-   GLuint nr_pull_params; /**< number of dwords referenced by pull_param[] */
    GLuint total_scratch;
 
    /* Used for calculating urb partitions.  In the VS, this is the size of the
@@ -599,10 +597,6 @@ struct brw_vec4_prog_data {
     * is the size of the URB entry used for output.
     */
    GLuint urb_entry_size;
-
-   /* These pointers must appear last.  See brw_vec4_prog_data_compare(). */
-   const float **param;
-   const float **pull_param;
 };
 
 

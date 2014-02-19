@@ -593,7 +593,7 @@ fs_visitor::setup_fp_regs()
       for (unsigned p = 0;
            p < prog->Parameters->NumParameters; p++) {
          for (unsigned int i = 0; i < 4; i++) {
-            c->prog_data.param[c->prog_data.nr_params++] =
+            stage_prog_data->param[stage_prog_data->nr_params++] =
                &prog->Parameters->ParameterValues[p][i].f;
          }
       }

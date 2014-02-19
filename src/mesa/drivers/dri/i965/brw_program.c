@@ -544,3 +544,29 @@ brw_destroy_shader_time(struct brw_context *brw)
    drm_intel_bo_unreference(brw->shader_time.bo);
    brw->shader_time.bo = NULL;
 }
+
+bool
+brw_stage_prog_data_compare(const struct brw_stage_prog_data *a,
+                            const struct brw_stage_prog_data *b)
+{
+   /* Compare all the struct up to the pointers. */
+   if (memcmp(a, b, offsetof(struct brw_stage_prog_data, param)))
+      return false;
+
+   if (memcmp(a->param, b->param, a->nr_params * sizeof(void *)))
+      return false;
+
+   if (memcmp(a->pull_param, b->pull_param, a->nr_pull_params * sizeof(void *)))
+      return false;
+
+   return true;
+}
+
+void
+brw_stage_prog_data_free(const void *p)
+{
+   struct brw_stage_prog_data *prog_data = (struct brw_stage_prog_data *)p;
+
+   ralloc_free(prog_data->param);
+   ralloc_free(prog_data->pull_param);
+}

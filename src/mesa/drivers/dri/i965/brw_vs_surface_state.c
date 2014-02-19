@@ -51,7 +51,7 @@ brw_upload_vec4_pull_constants(struct brw_context *brw,
     */
    _mesa_load_state_parameters(&brw->ctx, prog->Parameters);
 
-   if (!prog_data->nr_pull_params) {
+   if (!prog_data->base.nr_pull_params) {
       if (stage_state->const_bo) {
 	 drm_intel_bo_unreference(stage_state->const_bo);
 	 stage_state->const_bo = NULL;
@@ -63,20 +63,20 @@ brw_upload_vec4_pull_constants(struct brw_context *brw,
 
    /* _NEW_PROGRAM_CONSTANTS */
    drm_intel_bo_unreference(stage_state->const_bo);
-   uint32_t size = prog_data->nr_pull_params * 4;
+   uint32_t size = prog_data->base.nr_pull_params * 4;
    stage_state->const_bo = drm_intel_bo_alloc(brw->bufmgr, "vec4_const_buffer",
                                            size, 64);
 
    drm_intel_gem_bo_map_gtt(stage_state->const_bo);
 
-   for (i = 0; i < prog_data->nr_pull_params; i++) {
+   for (i = 0; i < prog_data->base.nr_pull_params; i++) {
       memcpy(stage_state->const_bo->virtual + i * 4,
-	     prog_data->pull_param[i],
+	     prog_data->base.pull_param[i],
 	     4);
    }
 
    if (0) {
-      for (i = 0; i < ALIGN(prog_data->nr_pull_params, 4) / 4; i++) {
+      for (i = 0; i < ALIGN(prog_data->base.nr_pull_params, 4) / 4; i++) {
 	 float *row = (float *)stage_state->const_bo->virtual + i * 4;
 	 printf("const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
 		i, row[0], row[1], row[2], row[3]);
