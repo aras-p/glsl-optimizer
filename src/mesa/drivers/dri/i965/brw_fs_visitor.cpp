@@ -2992,7 +2992,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
 
    this->spilled_any_registers = false;
 
-   memset(&this->param_size, 0, sizeof(this->param_size));
+   this->param_size = rzalloc_array(mem_ctx, int, stage_prog_data->nr_params);
 }
 
 fs_visitor::~fs_visitor()

@@ -491,7 +491,7 @@ public:
    struct brw_wm_compile *c;
    unsigned int sanity_param_count;
 
-   int param_size[MAX_UNIFORMS * 4];
+   int *param_size;
 
    int *virtual_grf_sizes;
    int virtual_grf_count;
