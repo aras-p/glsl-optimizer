@@ -765,6 +765,8 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
       else
          FrameNumOffset = priv->codec_data.h264.prevFrameNumOffset;
 
+      priv->codec_data.h264.prevFrameNumOffset = FrameNumOffset;
+
       if (sps->num_ref_frames_in_pic_order_cnt_cycle != 0)
          absFrameNum = FrameNumOffset + frame_num;
       else
@@ -813,6 +815,8 @@ static void slice_header(vid_dec_PrivateType *priv, struct vl_rbsp *rbsp,
          FrameNumOffset = priv->codec_data.h264.prevFrameNumOffset + MaxFrameNum;
       else
          FrameNumOffset = priv->codec_data.h264.prevFrameNumOffset;
+
+      priv->codec_data.h264.prevFrameNumOffset = FrameNumOffset;
 
       if (IdrPicFlag)
          tempPicOrderCnt = 0;
