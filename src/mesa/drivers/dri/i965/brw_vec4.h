@@ -140,6 +140,14 @@ public:
    src_reg *reladdr;
 };
 
+static inline src_reg
+offset(src_reg reg, unsigned delta)
+{
+   assert(delta == 0 || (reg.file != HW_REG && reg.file != IMM));
+   reg.reg_offset += delta;
+   return reg;
+}
+
 class dst_reg : public reg
 {
 public:
@@ -159,6 +167,14 @@ public:
 
    src_reg *reladdr;
 };
+
+static inline dst_reg
+offset(dst_reg reg, unsigned delta)
+{
+   assert(delta == 0 || (reg.file != HW_REG && reg.file != IMM));
+   reg.reg_offset += delta;
+   return reg;
+}
 
 dst_reg
 with_writemask(dst_reg const &r, int mask);

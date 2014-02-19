@@ -130,6 +130,14 @@ public:
 };
 
 static inline fs_reg
+offset(fs_reg reg, unsigned delta)
+{
+   assert(delta == 0 || (reg.file != HW_REG && reg.file != IMM));
+   reg.reg_offset += delta;
+   return reg;
+}
+
+static inline fs_reg
 byte_offset(fs_reg reg, unsigned delta)
 {
    assert(delta == 0 || (reg.file != HW_REG && reg.file != IMM));
