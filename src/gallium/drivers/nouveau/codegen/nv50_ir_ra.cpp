@@ -284,7 +284,7 @@ public:
    bool run(const std::list<ValuePair>&);
 
    Symbol *assignSlot(const Interval&, const unsigned int size);
-   Symbol *offsetSlot(Symbol *, const LValue *);
+   Value *offsetSlot(Value *, const LValue *);
    inline int32_t getStackSize() const { return stackSize; }
 
 private:
@@ -1468,12 +1468,12 @@ SpillCodeInserter::assignSlot(const Interval &livei, const unsigned int size)
    return slot.sym;
 }
 
-Symbol *
-SpillCodeInserter::offsetSlot(Symbol *base, const LValue *lval)
+Value *
+SpillCodeInserter::offsetSlot(Value *base, const LValue *lval)
 {
-   if (!base || !lval->compound || (lval->compMask & 0x1))
+   if (!lval->compound || (lval->compMask & 0x1))
       return base;
-   Symbol *slot = cloneShallow(func, base);
+   Value *slot = cloneShallow(func, base);
 
    slot->reg.data.offset += (ffs(lval->compMask) - 1) * lval->reg.size;
    slot->reg.size = lval->reg.size;
@@ -1486,7 +1486,7 @@ SpillCodeInserter::spill(Instruction *defi, Value *slot, LValue *lval)
 {
    const DataType ty = typeOfSize(lval->reg.size);
 
-   slot = offsetSlot(slot->asSym(), lval);
+   slot = offsetSlot(slot, lval);
 
    Instruction *st;
    if (slot->reg.file == FILE_MEMORY_LOCAL) {
@@ -1507,7 +1507,7 @@ SpillCodeInserter::unspill(Instruction *usei, LValue *lval, Value *slot)
 {
    const DataType ty = typeOfSize(lval->reg.size);
 
-   slot = offsetSlot(slot->asSym(), lval);
+   slot = offsetSlot(slot, lval);
    lval = cloneShallow(func, lval);
 
    Instruction *ld;
