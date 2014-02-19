@@ -366,8 +366,7 @@ _eglInitContext(_EGLContext *ctx, _EGLDisplay *dpy, _EGLConfig *conf,
       return EGL_FALSE;
    }
 
-   memset(ctx, 0, sizeof(_EGLContext));
-   _eglInitResource(&ctx->Resource, sizeof(_EGLResource), dpy);
+   _eglInitResource(&ctx->Resource, sizeof(*ctx), dpy);
    ctx->ClientAPI = api;
    ctx->Config = conf;
    ctx->WindowRenderBuffer = EGL_NONE;
