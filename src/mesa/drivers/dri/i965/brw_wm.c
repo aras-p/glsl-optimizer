@@ -171,6 +171,7 @@ bool do_wm_prog(struct brw_context *brw,
    c->prog_data.base.param = rzalloc_array(NULL, const float *, param_count);
    c->prog_data.base.pull_param =
       rzalloc_array(NULL, const float *, param_count);
+   c->prog_data.base.nr_params = param_count;
 
    memcpy(&c->key, key, sizeof(*key));
 
