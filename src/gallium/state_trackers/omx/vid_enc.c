@@ -273,8 +273,9 @@ static OMX_ERRORTYPE vid_enc_Destructor(OMX_COMPONENTTYPE *comp)
    vl_compositor_cleanup_state(&priv->cstate);
    vl_compositor_cleanup(&priv->compositor);
  
-   if (priv->scale_buffer)
-     priv->scale_buffer->destroy(priv->scale_buffer);
+   for (i = 0; i < OMX_VID_ENC_NUM_SCALING_BUFFERS; ++i)
+      if (priv->scale_buffer[i])
+         priv->scale_buffer[i]->destroy(priv->scale_buffer[i]);
 
    if (priv->s_pipe)
       priv->s_pipe->destroy(priv->s_pipe);
@@ -447,7 +448,8 @@ static OMX_ERRORTYPE vid_enc_SetConfig(OMX_HANDLETYPE handle, OMX_INDEXTYPE idx,
    OMX_COMPONENTTYPE *comp = handle;
    vid_enc_PrivateType *priv = comp->pComponentPrivate;
    OMX_ERRORTYPE r;
-    
+   int i;
+ 
    if (!config)
       return OMX_ErrorBadParameter;
                          
@@ -473,9 +475,11 @@ static OMX_ERRORTYPE vid_enc_SetConfig(OMX_HANDLETYPE handle, OMX_INDEXTYPE idx,
       if (scale->xWidth < 176 || scale->xHeight < 144)
          return OMX_ErrorBadParameter;
 
-      if (priv->scale_buffer) {
-         priv->scale_buffer->destroy(priv->scale_buffer);
-         priv->scale_buffer = NULL;
+      for (i = 0; i < OMX_VID_ENC_NUM_SCALING_BUFFERS; ++i) {
+         if (priv->scale_buffer[i]) {
+            priv->scale_buffer[i]->destroy(priv->scale_buffer[i]);
+            priv->scale_buffer[i] = NULL;
+         }
       }
 
       priv->scale = *scale;
@@ -487,9 +491,11 @@ static OMX_ERRORTYPE vid_enc_SetConfig(OMX_HANDLETYPE handle, OMX_INDEXTYPE idx,
          templat.width = priv->scale.xWidth; 
          templat.height = priv->scale.xHeight; 
          templat.interlaced = false;
-         priv->scale_buffer = priv->s_pipe->create_video_buffer(priv->s_pipe, &templat);
-         if (!priv->scale_buffer)
-            return OMX_ErrorInsufficientResources;
+         for (i = 0; i < OMX_VID_ENC_NUM_SCALING_BUFFERS; ++i) {
+            priv->scale_buffer[i] = priv->s_pipe->create_video_buffer(priv->s_pipe, &templat);
+            if (!priv->scale_buffer[i])
+               return OMX_ErrorInsufficientResources;
+         }
       }
 
       break;
@@ -545,8 +551,10 @@ static OMX_ERRORTYPE vid_enc_MessageHandler(OMX_COMPONENTTYPE* comp, internalReq
          templat.profile = PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE;
          templat.entrypoint = PIPE_VIDEO_ENTRYPOINT_ENCODE;
          templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
-         templat.width = priv->scale_buffer ? priv->scale.xWidth : port->sPortParam.format.video.nFrameWidth;
-         templat.height = priv->scale_buffer ? priv->scale.xHeight : port->sPortParam.format.video.nFrameHeight;
+         templat.width = priv->scale_buffer[priv->current_scale_buffer] ?
+                            priv->scale.xWidth : port->sPortParam.format.video.nFrameWidth;
+         templat.height = priv->scale_buffer[priv->current_scale_buffer] ?
+                            priv->scale.xHeight : port->sPortParam.format.video.nFrameHeight;
          templat.max_references = 1;
 
          priv->codec = priv->s_pipe->create_video_codec(priv->s_pipe, &templat);
@@ -736,7 +744,7 @@ static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEAD
 
    /* -------------- scale input image --------- */
 
-   if (priv->scale_buffer) {
+   if (priv->scale_buffer[priv->current_scale_buffer]) {
       struct vl_compositor *compositor = &priv->compositor;
       struct vl_compositor_state *s = &priv->cstate;
       struct pipe_sampler_view **views;
@@ -744,7 +752,8 @@ static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEAD
       unsigned i;
 
       views = vbuf->get_sampler_view_planes(vbuf);
-      dst_surface = priv->scale_buffer->get_surfaces(priv->scale_buffer);
+      dst_surface = priv->scale_buffer[priv->current_scale_buffer]->get_surfaces
+                       (priv->scale_buffer[priv->current_scale_buffer]);
       vl_compositor_clear_layers(s);
 
       for (i = 0; i < VL_MAX_SURFACES; ++i) {
@@ -768,7 +777,8 @@ static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEAD
       }
       
       size  = priv->scale.xWidth * priv->scale.xHeight * 2; 
-      vbuf = priv->scale_buffer; 
+      vbuf = priv->scale_buffer[priv->current_scale_buffer++];
+      priv->current_scale_buffer %= OMX_VID_ENC_NUM_SCALING_BUFFERS;
    }
 
    priv->s_pipe->flush(priv->s_pipe, NULL, 0);

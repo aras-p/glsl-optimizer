@@ -59,6 +59,8 @@
 #define OMX_VID_ENC_SCALING_HEIGHT_DEFAULT 0xffffffff
 #define OMX_VID_ENC_IDR_PERIOD_DEFAULT 1000
 
+#define OMX_VID_ENC_NUM_SCALING_BUFFERS 4
+
 DERIVEDCLASS(vid_enc_PrivateType, omx_base_filter_PrivateType)
 #define vid_enc_PrivateType_FIELDS omx_base_filter_PrivateType_FIELDS \
 	struct vl_screen *screen; \
@@ -72,8 +74,9 @@ DERIVEDCLASS(vid_enc_PrivateType, omx_base_filter_PrivateType)
 	OMX_CONFIG_INTRAREFRESHVOPTYPE force_pic_type; \
 	struct vl_compositor compositor; \
 	struct vl_compositor_state cstate; \
-	struct pipe_video_buffer *scale_buffer; \
-	OMX_CONFIG_SCALEFACTORTYPE scale; 
+	struct pipe_video_buffer *scale_buffer[OMX_VID_ENC_NUM_SCALING_BUFFERS]; \
+	OMX_CONFIG_SCALEFACTORTYPE scale; \
+	OMX_U32 current_scale_buffer;
 ENDCLASS(vid_enc_PrivateType)
 
 OMX_ERRORTYPE vid_enc_LoaderComponent(stLoaderComponentType *comp);
