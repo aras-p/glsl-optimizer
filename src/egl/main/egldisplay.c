@@ -375,7 +375,11 @@ _eglCheckResource(void *res, _EGLResourceType type, _EGLDisplay *dpy)
 
 
 /**
- * Initialize a display resource.
+ * Initialize a display resource.  The size of the subclass object is
+ * specified.
+ *
+ * This is supposed to be called from the initializers of subclasses, such as
+ * _eglInitContext or _eglInitSurface.
  */
 void
 _eglInitResource(_EGLResource *res, EGLint size, _EGLDisplay *dpy)
