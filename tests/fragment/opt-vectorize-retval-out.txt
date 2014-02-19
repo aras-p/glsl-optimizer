@@ -17,11 +17,12 @@ void main ()
   vec2 tmpvar_4;
   tmpvar_4.x = (1.0 - _Fresnel);
   tmpvar_4.y = _Fresnel;
-  p_1.xy = dot (tmpvar_3.xy, tmpvar_4);
+  p_1.x = dot (tmpvar_3.xy, tmpvar_4);
+  p_1.y = dot (tmpvar_3.yz, tmpvar_4);
   gl_FragColor = vec4(((0.05 + (0.95 * 
     dot (p_1.xy, tmpvar_4)
   )) * _SpecIntensity));
 }
 
 
-// inputs: 2, stats: 13 alu 0 tex 0 flow
+// inputs: 2, stats: 14 alu 0 tex 0 flow

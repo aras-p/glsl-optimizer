@@ -83,10 +83,12 @@ public:
    virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_enter(ir_swizzle *);
    virtual ir_visitor_status visit_enter(ir_dereference_array *);
+   virtual ir_visitor_status visit_enter(ir_expression *);
    virtual ir_visitor_status visit_enter(ir_if *);
    virtual ir_visitor_status visit_enter(ir_loop *);
 
    virtual ir_visitor_status visit_leave(ir_assignment *);
+
 
    void try_vectorize();
 
@@ -291,6 +293,20 @@ ir_vectorize_visitor::visit_enter(ir_swizzle *ir)
       } else {
          this->current_assignment = NULL;
       }
+   }
+   return visit_continue;
+}
+
+/* Upon entering an ir_binop_dot, remove the current assignment from
+ * further consideration. Dot product is "horizontal" instruction
+ * that we can't vectorize.
+ */
+ir_visitor_status
+ir_vectorize_visitor::visit_enter(ir_expression *ir)
+{
+   if (ir->operation == ir_binop_dot) {
+      this->current_assignment = NULL;
+      return visit_continue_with_parent;
    }
    return visit_continue;
 }
