@@ -200,7 +200,7 @@ fd_context_init(struct fd_context *ctx, struct pipe_screen *pscreen,
 	pctx->flush = fd_context_flush;
 
 	for (i = 0; i < ARRAY_SIZE(ctx->rings); i++) {
-		ctx->rings[i] = fd_ringbuffer_new(screen->pipe, 0x400000);
+		ctx->rings[i] = fd_ringbuffer_new(screen->pipe, 0x100000);
 		if (!ctx->rings[i])
 			goto fail;
 	}

@@ -154,7 +154,7 @@ struct fd_context {
 	 * normally have to wait before resetting to the start of the next
 	 * rb.
 	 */
-	struct fd_ringbuffer *rings[4];
+	struct fd_ringbuffer *rings[8];
 	unsigned rings_idx;
 
 	/* normal draw/clear cmds: */
