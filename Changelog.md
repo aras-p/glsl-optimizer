@@ -1,6 +1,13 @@
 GLSL optimizer Change Log
 =========================
 
+2014 02
+-------
+
+Fixes:
+
+* Fixed vectorize pass introduced last month going wrong with dot products.
+
 2014 01
 -------
 
