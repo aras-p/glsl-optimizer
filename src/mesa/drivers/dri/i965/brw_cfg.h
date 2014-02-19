@@ -25,6 +25,10 @@
  *
  */
 
+#pragma once
+#ifndef BRW_CFG_H
+#define BRW_CFG_H
+
 #include "brw_shader.h"
 
 class bblock_t;
@@ -89,3 +93,5 @@ public:
    bblock_t **blocks;
    int num_blocks;
 };
+
+#endif /* BRW_CFG_H */
