@@ -122,6 +122,7 @@ fi
 
 dnl Check for compiler builtins
 AX_GCC_BUILTIN([__builtin_bswap32])
+AX_GCC_BUILTIN([__builtin_bswap64])
 
 AM_CONDITIONAL([GEN_ASM_OFFSETS], test "x$GEN_ASM_OFFSETS" = xyes)
 

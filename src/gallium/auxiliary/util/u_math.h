@@ -717,9 +717,11 @@ util_bitcount(unsigned n)
  */
 
 #ifdef PIPE_ARCH_BIG_ENDIAN
+#define util_le64_to_cpu(x) util_bswap64(x)
 #define util_le32_to_cpu(x) util_bswap32(x)
 #define util_le16_to_cpu(x) util_bswap16(x)
 #else
+#define util_le64_to_cpu(x) (x)
 #define util_le32_to_cpu(x) (x)
 #define util_le16_to_cpu(x) (x)
 #endif
@@ -739,6 +741,20 @@ util_bswap32(uint32_t n)
           ((n >> 8) & 0x0000ff00) |
           ((n << 8) & 0x00ff0000) |
           (n << 24);
+#endif
+}
+
+/**
+ * Reverse byte order of a 64bit word.
+ */
+static INLINE uint64_t
+util_bswap64(uint64_t n)
+{
+#if defined(HAVE___BUILTIN_BSWAP64)
+   return __builtin_bswap64(n);
+#else
+   return ((uint64_t)util_bswap32(n) << 32) |
+          util_bswap32((n >> 32));
 #endif
 }
 
