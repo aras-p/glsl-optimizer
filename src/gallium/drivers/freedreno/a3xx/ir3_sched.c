@@ -77,7 +77,7 @@ static unsigned distance(struct ir3_sched_ctx *ctx,
 	struct ir3_instruction *n = ctx->scheduled;
 	unsigned d = 0;
 	while (n && (n != instr) && (d < maxd)) {
-		if (!is_meta(n))
+		if (is_alu(n) || is_flow(n))
 			d++;
 		n = n->next;
 	}

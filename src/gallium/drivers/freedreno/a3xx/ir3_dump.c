@@ -48,6 +48,11 @@ static void dump_instr_name(struct ir3_dump_ctx *ctx,
 		fprintf(ctx->f, "%03u: ", instr->depth);
 	}
 
+	if (instr->flags & IR3_INSTR_SY)
+		fprintf(ctx->f, "(sy)");
+	if (instr->flags & IR3_INSTR_SS)
+		fprintf(ctx->f, "(ss)");
+
 	if (is_meta(instr)) {
 		switch(instr->opc) {
 		case OPC_META_PHI:

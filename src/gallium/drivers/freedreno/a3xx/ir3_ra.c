@@ -526,18 +526,41 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 			}
 		}
 
+		/* cat5+ does not have an (ss) bit, if needed we need to
+		 * insert a nop to carry the sync flag.  Would be kinda
+		 * clever if we were aware of this during scheduling, but
+		 * this should be a pretty rare case:
+		 */
+		if ((n->flags & IR3_INSTR_SS) && (n->category >= 5)) {
+			struct ir3_instruction *nop;
+			nop = ir3_instr_create(block, 0, OPC_NOP);
+			nop->flags |= IR3_INSTR_SS;
+			n->flags &= ~IR3_INSTR_SS;
+		}
+
+		/* need to be able to set (ss) on first instruction: */
+		if ((shader->instrs_count == 0) && (n->category >= 5))
+			ir3_instr_create(block, 0, OPC_NOP);
+
 		shader->instrs[shader->instrs_count++] = n;
 
 		if (is_sfu(n))
 			regmask_set(&needs_ss, n->regs[0]);
-		if (is_tex(n)) {
+
+		if (is_tex(n))
 			regmask_set(&needs_sy, n->regs[0]);
+
+		/* both tex/sfu appear to not always immediately consume
+		 * their src register(s):
+		 */
+		if (is_tex(n) || is_sfu(n)) {
 			for (i = 1; i < n->regs_count; i++) {
 				reg = n->regs[i];
 				if (reg_gpr(reg))
 					regmask_set(&needs_ss_war, reg);
 			}
 		}
+
 		if (is_input(n))
 			last_input = n;
 	}
