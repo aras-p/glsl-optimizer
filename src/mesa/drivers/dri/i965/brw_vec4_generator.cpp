@@ -50,6 +50,7 @@ vec4_instruction::get_dst(void)
       break;
 
    case HW_REG:
+      assert(dst.type == dst.fixed_hw_reg.type);
       brw_reg = dst.fixed_hw_reg;
       break;
 
@@ -116,6 +117,7 @@ vec4_instruction::get_src(const struct brw_vec4_prog_data *prog_data, int i)
       break;
 
    case HW_REG:
+      assert(src[i].type == src[i].fixed_hw_reg.type);
       brw_reg = src[i].fixed_hw_reg;
       break;
 

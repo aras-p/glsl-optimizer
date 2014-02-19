@@ -141,6 +141,13 @@ public:
 };
 
 static inline src_reg
+retype(src_reg reg, unsigned type)
+{
+   reg.fixed_hw_reg.type = reg.type = type;
+   return reg;
+}
+
+static inline src_reg
 offset(src_reg reg, unsigned delta)
 {
    assert(delta == 0 || (reg.file != HW_REG && reg.file != IMM));
@@ -191,6 +198,13 @@ public:
 
    src_reg *reladdr;
 };
+
+static inline dst_reg
+retype(dst_reg reg, unsigned type)
+{
+   reg.fixed_hw_reg.type = reg.type = type;
+   return reg;
+}
 
 static inline dst_reg
 offset(dst_reg reg, unsigned delta)

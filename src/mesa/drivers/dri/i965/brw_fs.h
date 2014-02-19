@@ -130,6 +130,13 @@ public:
 };
 
 static inline fs_reg
+retype(fs_reg reg, unsigned type)
+{
+   reg.fixed_hw_reg.type = reg.type = type;
+   return reg;
+}
+
+static inline fs_reg
 offset(fs_reg reg, unsigned delta)
 {
    assert(delta == 0 || (reg.file != HW_REG && reg.file != IMM));

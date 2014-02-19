@@ -1053,6 +1053,7 @@ brw_reg_from_fs_reg(fs_reg *reg)
       }
       break;
    case HW_REG:
+      assert(reg->type == reg->fixed_hw_reg.type);
       brw_reg = reg->fixed_hw_reg;
       break;
    case BAD_FILE:
