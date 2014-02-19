@@ -84,10 +84,9 @@ static const GLubyte *radeonGetString(struct gl_context * ctx, GLenum name)
 
 	case GL_RENDERER:
 	{
-		unsigned offset;
+		char hardwarename[32];
 		GLuint agp_mode = (radeon->radeonScreen->card_type==RADEON_CARD_PCI) ? 0 :
 			radeon->radeonScreen->AGPMode;
-		char hardwarename[32];
 
 		sprintf(hardwarename, "%s (%s %04X)",
 #if defined(RADEON_R100)
@@ -98,11 +97,7 @@ static const GLubyte *radeonGetString(struct gl_context * ctx, GLenum name)
 		        get_chip_family_name(radeon->radeonScreen->chip_family),
 		        radeon->radeonScreen->device_id);
 
-		offset = driGetRendererString(buffer, hardwarename, agp_mode);
-
-		sprintf(&buffer[offset], " %sTCL",
-			!(radeon->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)
-			? "" : "NO-");
+		driGetRendererString(buffer, hardwarename, agp_mode);
 
 		strcat(buffer, " DRI2");
 
