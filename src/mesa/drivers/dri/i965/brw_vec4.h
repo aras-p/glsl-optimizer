@@ -148,6 +148,30 @@ offset(src_reg reg, unsigned delta)
    return reg;
 }
 
+/**
+ * Reswizzle a given source register.
+ * \sa brw_swizzle().
+ */
+static inline src_reg
+swizzle(src_reg reg, unsigned swizzle)
+{
+   assert(reg.file != HW_REG);
+   reg.swizzle = BRW_SWIZZLE4(
+      BRW_GET_SWZ(reg.swizzle, BRW_GET_SWZ(swizzle, 0)),
+      BRW_GET_SWZ(reg.swizzle, BRW_GET_SWZ(swizzle, 1)),
+      BRW_GET_SWZ(reg.swizzle, BRW_GET_SWZ(swizzle, 2)),
+      BRW_GET_SWZ(reg.swizzle, BRW_GET_SWZ(swizzle, 3)));
+   return reg;
+}
+
+static inline src_reg
+negate(src_reg reg)
+{
+   assert(reg.file != HW_REG && reg.file != IMM);
+   reg.negate = !reg.negate;
+   return reg;
+}
+
 class dst_reg : public reg
 {
 public:
