@@ -52,11 +52,12 @@ extern "C" {
 #include "glsl/glsl_types.h"
 
 void
-fs_inst::init()
+fs_inst::init(int sources)
 {
    memset(this, 0, sizeof(*this));
 
-   this->src = ralloc_array(this, fs_reg, 3);
+   this->sources = sources;
+   this->src = ralloc_array(this, fs_reg, sources);
 
    this->conditional_mod = BRW_CONDITIONAL_NONE;
 
@@ -73,19 +74,19 @@ fs_inst::init()
 
 fs_inst::fs_inst()
 {
-   init();
+   init(3);
    this->opcode = BRW_OPCODE_NOP;
 }
 
 fs_inst::fs_inst(enum opcode opcode)
 {
-   init();
+   init(3);
    this->opcode = opcode;
 }
 
 fs_inst::fs_inst(enum opcode opcode, fs_reg dst)
 {
-   init();
+   init(3);
    this->opcode = opcode;
    this->dst = dst;
 
@@ -95,7 +96,7 @@ fs_inst::fs_inst(enum opcode opcode, fs_reg dst)
 
 fs_inst::fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0)
 {
-   init();
+   init(3);
    this->opcode = opcode;
    this->dst = dst;
    this->src[0] = src0;
@@ -108,7 +109,7 @@ fs_inst::fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0)
 
 fs_inst::fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
 {
-   init();
+   init(3);
    this->opcode = opcode;
    this->dst = dst;
    this->src[0] = src0;
@@ -125,7 +126,7 @@ fs_inst::fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
 fs_inst::fs_inst(enum opcode opcode, fs_reg dst,
 		 fs_reg src0, fs_reg src1, fs_reg src2)
 {
-   init();
+   init(3);
    this->opcode = opcode;
    this->dst = dst;
    this->src[0] = src0;
@@ -146,9 +147,9 @@ fs_inst::fs_inst(const fs_inst &that)
 {
    memcpy(this, &that, sizeof(that));
 
-   this->src = ralloc_array(this, fs_reg, 3);
+   this->src = ralloc_array(this, fs_reg, that.sources);
 
-   for (int i = 0; i < 3; i++)
+   for (int i = 0; i < that.sources; i++)
       this->src[i] = that.src[i];
 }
 

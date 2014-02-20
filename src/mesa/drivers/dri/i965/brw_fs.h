@@ -190,7 +190,7 @@ class fs_inst : public backend_instruction {
 public:
    DECLARE_RALLOC_CXX_OPERATORS(fs_inst)
 
-   void init();
+   void init(int sources);
 
    fs_inst();
    fs_inst(enum opcode opcode);
@@ -216,6 +216,7 @@ public:
    uint32_t texture_offset; /**< Texture offset bitfield */
    uint32_t offset; /* spill/unspill offset */
 
+   uint8_t sources; /**< Number of fs_reg sources. */
    uint8_t conditional_mod; /**< BRW_CONDITIONAL_* */
 
    /* Chooses which flag subregister (f0.0 or f0.1) is used for conditional
