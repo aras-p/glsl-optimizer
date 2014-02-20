@@ -139,6 +139,11 @@ fs_inst::fs_inst(enum opcode opcode, fs_reg dst,
       assert(src[2].reg_offset >= 0);
 }
 
+fs_inst::fs_inst(const fs_inst &that)
+{
+   memcpy(this, &that, sizeof(that));
+}
+
 #define ALU1(op)                                                        \
    fs_inst *                                                            \
    fs_visitor::op(fs_reg dst, fs_reg src0)                              \

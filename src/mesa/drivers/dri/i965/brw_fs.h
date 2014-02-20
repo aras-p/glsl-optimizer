@@ -197,6 +197,7 @@ public:
    fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1);
    fs_inst(enum opcode opcode, fs_reg dst,
            fs_reg src0, fs_reg src1,fs_reg src2);
+   fs_inst(const fs_inst &that);
 
    bool equals(fs_inst *inst) const;
    bool overwrites_reg(const fs_reg &reg) const;
