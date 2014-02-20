@@ -423,7 +423,7 @@ fs_reg::fs_reg(struct brw_reg fixed_hw_reg)
    init();
    this->file = HW_REG;
    this->fixed_hw_reg = fixed_hw_reg;
-   this->type = fixed_hw_reg.type;
+   this->type = (enum brw_reg_type)fixed_hw_reg.type;
 }
 
 bool
@@ -836,7 +836,7 @@ fs_reg::fs_reg(enum register_file file, int reg)
 }
 
 /** Fixed HW reg constructor. */
-fs_reg::fs_reg(enum register_file file, int reg, uint32_t type)
+fs_reg::fs_reg(enum register_file file, int reg, enum brw_reg_type type)
 {
    init();
    this->file = file;

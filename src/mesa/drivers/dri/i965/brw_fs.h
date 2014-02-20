@@ -74,7 +74,7 @@ public:
    fs_reg(uint32_t u);
    fs_reg(struct brw_reg fixed_hw_reg);
    fs_reg(enum register_file file, int reg);
-   fs_reg(enum register_file file, int reg, uint32_t type);
+   fs_reg(enum register_file file, int reg, enum brw_reg_type type);
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
    bool equals(const fs_reg &r) const;
@@ -102,7 +102,7 @@ public:
     */
    int reg_offset;
    /** Register type.  BRW_REGISTER_TYPE_* */
-   uint8_t type;
+   enum brw_reg_type type;
    bool negate;
    bool abs;
    struct brw_reg fixed_hw_reg;
