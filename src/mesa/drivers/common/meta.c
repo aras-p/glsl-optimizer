@@ -52,6 +52,7 @@
 #include "main/matrix.h"
 #include "main/mipmap.h"
 #include "main/multisample.h"
+#include "main/objectlabel.h"
 #include "main/pixel.h"
 #include "main/pbo.h"
 #include "main/polygon.h"
@@ -178,6 +179,7 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
    GLuint vs, fs;
    void *const mem_ctx = ralloc_context(NULL);
    struct blit_shader *shader = choose_blit_shader(target, table);
+   char *name;
 
    assert(shader != NULL);
 
@@ -253,6 +255,8 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
    _mesa_BindAttribLocation(shader->shader_prog, 0, "position");
    _mesa_BindAttribLocation(shader->shader_prog, 1, "texcoords");
    _mesa_meta_link_program_with_debug(ctx, shader->shader_prog);
+   name = ralloc_asprintf(mem_ctx, "%s blit", shader->type);
+   _mesa_ObjectLabel(GL_PROGRAM, shader->shader_prog, -1, name);
    ralloc_free(mem_ctx);
 
    _mesa_UseProgram(shader->shader_prog);
@@ -1605,6 +1609,8 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
        * BindFragDataLocation to 0.
        */
 
+      _mesa_ObjectLabel(GL_PROGRAM, clear->IntegerShaderProg, -1,
+                        "integer clear");
       _mesa_meta_link_program_with_debug(ctx, clear->IntegerShaderProg);
 
       clear->IntegerColorLocation =

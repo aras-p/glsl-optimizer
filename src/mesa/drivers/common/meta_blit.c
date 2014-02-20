@@ -36,6 +36,7 @@
 #include "main/macros.h"
 #include "main/matrix.h"
 #include "main/multisample.h"
+#include "main/objectlabel.h"
 #include "main/readpix.h"
 #include "main/shaderapi.h"
 #include "main/texobj.h"
@@ -96,6 +97,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    bool dst_is_msaa = false;
    GLenum src_datatype;
    const char *vec4_prefix;
+   char *name;
 
    if (src_rb) {
       src_datatype = _mesa_get_format_datatype(src_rb->Format);
@@ -172,6 +174,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
       if (dst_is_msaa) {
          arb_sample_shading_extension_string = "#extension GL_ARB_sample_shading : enable";
          sample_index = "gl_SampleID";
+         name = "depth MSAA copy";
       } else {
          /* Don't need that extension, since we're drawing to a single-sampled
           * destination.
@@ -188,6 +191,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
           * We're slacking and instead of choosing centermost, we've got 0.
           */
          sample_index = "0";
+         name = "depth MSAA resolve";
       }
 
       vs_source = ralloc_asprintf(mem_ctx,
@@ -222,6 +226,9 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
       char *sample_resolve;
       const char *arb_sample_shading_extension_string;
       const char *merge_function;
+      name = ralloc_asprintf(mem_ctx, "%svec4 MSAA %s",
+                             vec4_prefix,
+                             dst_is_msaa ? "copy" : "resolve");
 
       samples = MAX2(src_rb->NumSamples, 1);
 
@@ -329,6 +336,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    _mesa_BindAttribLocation(blit->msaa_shaders[shader_index], 0, "position");
    _mesa_BindAttribLocation(blit->msaa_shaders[shader_index], 1, "texcoords");
    _mesa_meta_link_program_with_debug(ctx, blit->msaa_shaders[shader_index]);
+   _mesa_ObjectLabel(GL_PROGRAM, blit->msaa_shaders[shader_index], -1, name);
    ralloc_free(mem_ctx);
 
    _mesa_UseProgram(blit->msaa_shaders[shader_index]);
