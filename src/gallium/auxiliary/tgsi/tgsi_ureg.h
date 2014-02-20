@@ -165,6 +165,10 @@ ureg_property_gs_max_vertices(struct ureg_program *ureg,
                               unsigned max_vertices);
 
 void
+ureg_property_gs_invocations(struct ureg_program *ureg,
+                             unsigned invocations);
+
+void
 ureg_property_fs_coord_origin(struct ureg_program *ureg,
                             unsigned fs_coord_origin);
 

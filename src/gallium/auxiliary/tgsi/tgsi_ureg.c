@@ -168,6 +168,7 @@ struct ureg_program
    unsigned property_gs_input_prim;
    unsigned property_gs_output_prim;
    unsigned property_gs_max_vertices;
+   unsigned property_gs_invocations;
    unsigned char property_fs_coord_origin; /* = TGSI_FS_COORD_ORIGIN_* */
    unsigned char property_fs_coord_pixel_center; /* = TGSI_FS_COORD_PIXEL_CENTER_* */
    unsigned char property_fs_color0_writes_all_cbufs; /* = TGSI_FS_COLOR0_WRITES_ALL_CBUFS * */
@@ -294,6 +295,12 @@ ureg_property_gs_max_vertices(struct ureg_program *ureg,
                               unsigned max_vertices)
 {
    ureg->property_gs_max_vertices = max_vertices;
+}
+void
+ureg_property_gs_invocations(struct ureg_program *ureg,
+                             unsigned invocations)
+{
+   ureg->property_gs_invocations = invocations;
 }
 
 void
