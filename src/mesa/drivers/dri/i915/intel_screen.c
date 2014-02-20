@@ -94,10 +94,6 @@ DRI_CONF_END
 
 #include "i915_drm.h"
 
-#ifdef USE_NEW_INTERFACE
-static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
-#endif /*USE_NEW_INTERFACE */
-
 /**
  * For debugging purposes, this returns a time in seconds.
  */
