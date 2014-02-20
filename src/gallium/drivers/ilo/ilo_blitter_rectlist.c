@@ -472,6 +472,8 @@ ilo_blitter_rectlist_resolve_z(struct ilo_blitter *blitter,
 {
    struct ilo_texture *tex = ilo_texture(res);
    struct pipe_depth_stencil_alpha_state dsa_state;
+   const struct ilo_texture_slice *s =
+      ilo_texture_get_slice(tex, level, slice);
 
    if (!ilo_texture_can_enable_hiz(tex, level, slice, 1))
       return;
@@ -492,6 +494,7 @@ ilo_blitter_rectlist_resolve_z(struct ilo_blitter *blitter,
    ilo_blitter_set_op(blitter, ILO_BLITTER_RECTLIST_RESOLVE_Z);
 
    ilo_blitter_set_dsa(blitter, &dsa_state);
+   ilo_blitter_set_clear_values(blitter, s->clear_value, 0);
    ilo_blitter_set_fb_from_resource(blitter, res, res->format, level, slice);
    ilo_blitter_set_uses(blitter,
          ILO_BLITTER_USE_DSA | ILO_BLITTER_USE_FB_DEPTH);

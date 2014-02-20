@@ -545,24 +545,28 @@ gen7_pipeline_wm(struct ilo_3d_pipeline *p,
    /* 3DSTATE_DEPTH_BUFFER and 3DSTATE_CLEAR_PARAMS */
    if (DIRTY(FB) || session->batch_bo_changed) {
       const struct ilo_zs_surface *zs;
+      uint32_t clear_params;
 
       if (ilo->fb.state.zsbuf) {
          const struct ilo_surface_cso *surface =
             (const struct ilo_surface_cso *) ilo->fb.state.zsbuf;
+         const struct ilo_texture_slice *slice =
+            ilo_texture_get_slice(ilo_texture(surface->base.texture),
+                  surface->base.u.tex.level, surface->base.u.tex.first_layer);
 
          assert(!surface->is_rt);
          zs = &surface->u.zs;
+         clear_params = slice->clear_value;
       }
       else {
          zs = &ilo->fb.null_zs;
+         clear_params = 0;
       }
 
       gen6_emit_3DSTATE_DEPTH_BUFFER(p->dev, zs, p->cp);
       gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(p->dev, zs, p->cp);
       gen6_emit_3DSTATE_STENCIL_BUFFER(p->dev, zs, p->cp);
-
-      /* TODO */
-      gen7_emit_3DSTATE_CLEAR_PARAMS(p->dev, 0, p->cp);
+      gen7_emit_3DSTATE_CLEAR_PARAMS(p->dev, clear_params, p->cp);
    }
 }
 

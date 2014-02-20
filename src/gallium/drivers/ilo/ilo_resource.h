@@ -61,7 +61,7 @@ enum ilo_texture_flags {
     * Set when the texture is cleared.
     *
     * When set in resolve flags, the new writer will clear.  When set in slice
-    * flags, the slice has been cleared.
+    * flags, the slice has been cleared to ilo_texture_slice::clear_value.
     */
    ILO_TEXTURE_CLEAR          = 1 << 6,
 
@@ -91,6 +91,18 @@ struct ilo_texture_slice {
    /* 2D offset to the slice */
    unsigned x, y;
    unsigned flags;
+
+   /*
+    * Slice clear value.  It is served for two purposes
+    *
+    *  - the clear value used in commands such as 3DSTATE_CLEAR_PARAMS
+    *  - the clear value when ILO_TEXTURE_CLEAR is set
+    *
+    * Since commands such as 3DSTATE_CLEAR_PARAMS expect a single clear value
+    * for all slices, ilo_blit_resolve_slices() will silently make all slices
+    * to have the same clear value.
+    */
+   uint32_t clear_value;
 };
 
 struct ilo_texture {
@@ -185,6 +197,22 @@ ilo_texture_set_slice_flags(struct ilo_texture *tex, unsigned level,
 
    while (slice <= last) {
       slice->flags = (slice->flags & ~mask) | (value & mask);
+      slice++;
+   }
+}
+
+static inline void
+ilo_texture_set_slice_clear_value(struct ilo_texture *tex, unsigned level,
+                                  unsigned first_slice, unsigned num_slices,
+                                  uint32_t clear_value)
+{
+   const struct ilo_texture_slice *last =
+      ilo_texture_get_slice(tex, level, first_slice + num_slices - 1);
+   struct ilo_texture_slice *slice =
+      ilo_texture_get_slice(tex, level, first_slice);
+
+   while (slice <= last) {
+      slice->clear_value = clear_value;
       slice++;
    }
 }
