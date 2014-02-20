@@ -1326,7 +1326,8 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       if (prog) {
-         printf("Native code for fragment shader %d (SIMD%d dispatch):\n",
+         printf("Native code for %s fragment shader %d (SIMD%d dispatch):\n",
+                prog->Label ? prog->Label : "unnamed",
                 prog->Name, dispatch_width);
       } else if (fp) {
          printf("Native code for fragment program %d (SIMD%d dispatch):\n",

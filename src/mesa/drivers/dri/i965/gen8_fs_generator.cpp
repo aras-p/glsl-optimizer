@@ -838,7 +838,8 @@ gen8_fs_generator::generate_code(exec_list *instructions)
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       if (prog) {
-         printf("Native code for fragment shader %d (SIMD%d dispatch):\n",
+         printf("Native code for %s fragment shader %d (SIMD%d dispatch):\n",
+                shader_prog->Label ? shader_prog->Label : "unnamed",
                 shader_prog->Name, dispatch_width);
       } else if (fp) {
          printf("Native code for fragment program %d (SIMD%d dispatch):\n",
