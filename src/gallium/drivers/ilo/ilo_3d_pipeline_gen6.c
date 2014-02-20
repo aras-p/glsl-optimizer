@@ -1571,10 +1571,13 @@ gen6_rectlist_wm_depth(struct ilo_3d_pipeline *p,
 {
    gen6_wa_pipe_control_wm_depth_flush(p);
 
-   if (blitter->uses & ILO_BLITTER_USE_FB_DEPTH) {
+   if (blitter->uses & (ILO_BLITTER_USE_FB_DEPTH |
+                        ILO_BLITTER_USE_FB_STENCIL)) {
       gen6_emit_3DSTATE_DEPTH_BUFFER(p->dev,
             &blitter->fb.dst.u.zs, p->cp);
+   }
 
+   if (blitter->uses & ILO_BLITTER_USE_FB_DEPTH) {
       gen6_emit_3DSTATE_HIER_DEPTH_BUFFER(p->dev,
             &blitter->fb.dst.u.zs, p->cp);
    }
