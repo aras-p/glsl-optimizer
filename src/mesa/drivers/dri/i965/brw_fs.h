@@ -92,7 +92,7 @@ public:
     * Register number.  For MRF, it's the hardware register.  For
     * GRF, it's a virtual register number until register allocation
     */
-   int reg;
+   uint16_t reg;
    /**
     * Offset from the start of the contiguous register block.
     *
@@ -102,7 +102,7 @@ public:
     */
    int reg_offset;
    /** Register type.  BRW_REGISTER_TYPE_* */
-   int type;
+   uint8_t type;
    bool negate;
    bool abs;
    struct brw_reg fixed_hw_reg;
@@ -124,7 +124,7 @@ public:
    int subreg_offset;
 
    /** Register region horizontal stride */
-   int stride;
+   uint8_t stride;
 
    fs_reg *reladdr;
 };
