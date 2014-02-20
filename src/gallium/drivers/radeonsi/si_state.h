@@ -162,6 +162,7 @@ struct si_buffer_resources {
 	struct si_descriptors		desc;
 	unsigned			num_buffers;
 	enum radeon_bo_usage		shader_usage; /* READ, WRITE, or READWRITE */
+	enum radeon_bo_priority		priority;
 	struct pipe_resource		**buffers; /* this has num_buffers elements */
 	uint32_t			*desc_storage; /* this has num_buffers*4 elements */
 	uint32_t			**desc_data; /* an array of pointers pointing to desc_storage */

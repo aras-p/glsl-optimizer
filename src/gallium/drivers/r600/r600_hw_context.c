@@ -412,8 +412,10 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 		}
 
 		/* This must be done after r600_need_cs_space. */
-		src_reloc = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, (struct r600_resource*)src, RADEON_USAGE_READ);
-		dst_reloc = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, (struct r600_resource*)dst, RADEON_USAGE_WRITE);
+		src_reloc = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, (struct r600_resource*)src,
+						  RADEON_USAGE_READ, RADEON_PRIO_MIN);
+		dst_reloc = r600_context_bo_reloc(&rctx->b, &rctx->b.rings.gfx, (struct r600_resource*)dst,
+						  RADEON_USAGE_WRITE, RADEON_PRIO_MIN);
 
 		radeon_emit(cs, PKT3(PKT3_CP_DMA, 4, 0));
 		radeon_emit(cs, src_offset);	/* SRC_ADDR_LO [31:0] */
@@ -477,8 +479,10 @@ void r600_dma_copy(struct r600_context *rctx,
 	for (i = 0; i < ncopy; i++) {
 		csize = size < 0xffff ? size : 0xffff;
 		/* emit reloc before writting cs so that cs is always in consistent state */
-		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.dma, rsrc, RADEON_USAGE_READ);
-		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.dma, rdst, RADEON_USAGE_WRITE);
+		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.dma, rsrc, RADEON_USAGE_READ,
+				      RADEON_PRIO_MIN);
+		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.dma, rdst, RADEON_USAGE_WRITE,
+				      RADEON_PRIO_MIN);
 		cs->buf[cs->cdw++] = DMA_PACKET(DMA_PACKET_COPY, 0, 0, csize);
 		cs->buf[cs->cdw++] = dst_offset & 0xfffffffc;
 		cs->buf[cs->cdw++] = src_offset & 0xfffffffc;

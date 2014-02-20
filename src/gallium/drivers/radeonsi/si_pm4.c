@@ -92,13 +92,15 @@ void si_pm4_set_reg(struct si_pm4_state *state, unsigned reg, uint32_t val)
 
 void si_pm4_add_bo(struct si_pm4_state *state,
                    struct r600_resource *bo,
-                   enum radeon_bo_usage usage)
+                   enum radeon_bo_usage usage,
+		   enum radeon_bo_priority priority)
 {
 	unsigned idx = state->nbo++;
 	assert(idx < SI_PM4_MAX_BO);
 
 	r600_resource_reference(&state->bo[idx], bo);
 	state->bo_usage[idx] = usage;
+	state->bo_priority[idx] = priority;
 }
 
 void si_pm4_sh_data_begin(struct si_pm4_state *state)
@@ -215,7 +217,7 @@ void si_pm4_emit(struct si_context *sctx, struct si_pm4_state *state)
 	struct radeon_winsys_cs *cs = sctx->b.rings.gfx.cs;
 	for (int i = 0; i < state->nbo; ++i) {
 		r600_context_bo_reloc(&sctx->b, &sctx->b.rings.gfx, state->bo[i],
-				      state->bo_usage[i]);
+				      state->bo_usage[i], state->bo_priority[i]);
 	}
 
 	memcpy(&cs->buf[cs->cdw], state->pm4, state->ndw * 4);

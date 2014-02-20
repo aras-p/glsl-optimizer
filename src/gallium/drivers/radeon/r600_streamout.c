@@ -244,7 +244,7 @@ static void r600_emit_streamout_begin(struct r600_common_context *rctx, struct r
 			radeon_emit(cs, va >> 8);			/* BUFFER_BASE */
 
 			r600_emit_reloc(rctx, &rctx->rings.gfx, r600_resource(t[i]->b.buffer),
-					RADEON_USAGE_WRITE);
+					RADEON_USAGE_WRITE, RADEON_PRIO_SHADER_RESOURCE_RW);
 
 			/* R7xx requires this packet after updating BUFFER_BASE.
 			 * Without this, R7xx locks up. */
@@ -254,7 +254,7 @@ static void r600_emit_streamout_begin(struct r600_common_context *rctx, struct r
 				radeon_emit(cs, va >> 8);
 
 				r600_emit_reloc(rctx, &rctx->rings.gfx, r600_resource(t[i]->b.buffer),
-						RADEON_USAGE_WRITE);
+						RADEON_USAGE_WRITE, RADEON_PRIO_SHADER_RESOURCE_RW);
 			}
 		}
 
@@ -273,7 +273,7 @@ static void r600_emit_streamout_begin(struct r600_common_context *rctx, struct r
 			radeon_emit(cs, va >> 32); /* src address hi */
 
 			r600_emit_reloc(rctx,  &rctx->rings.gfx, t[i]->buf_filled_size,
-					RADEON_USAGE_READ);
+					RADEON_USAGE_READ, RADEON_PRIO_MIN);
 		} else {
 			/* Start from the beginning. */
 			radeon_emit(cs, PKT3(PKT3_STRMOUT_BUFFER_UPDATE, 4, 0));
@@ -318,7 +318,7 @@ void r600_emit_streamout_end(struct r600_common_context *rctx)
 		radeon_emit(cs, 0); /* unused */
 
 		r600_emit_reloc(rctx,  &rctx->rings.gfx, t[i]->buf_filled_size,
-				RADEON_USAGE_WRITE);
+				RADEON_USAGE_WRITE, RADEON_PRIO_MIN);
 	}
 
 	if (rctx->chip_class >= EVERGREEN) {

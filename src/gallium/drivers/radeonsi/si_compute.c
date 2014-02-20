@@ -169,7 +169,7 @@ static void si_launch_grid(
 				(struct pipe_resource*)kernel_args_buffer);
 	kernel_args_va += kernel_args_offset;
 
-	si_pm4_add_bo(pm4, kernel_args_buffer, RADEON_USAGE_READ);
+	si_pm4_add_bo(pm4, kernel_args_buffer, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 
 	si_pm4_set_reg(pm4, R_00B900_COMPUTE_USER_DATA_0, kernel_args_va);
 	si_pm4_set_reg(pm4, R_00B900_COMPUTE_USER_DATA_0 + 4, S_008F04_BASE_ADDRESS_HI (kernel_args_va >> 32) | S_008F04_STRIDE(0));
@@ -192,7 +192,7 @@ static void si_launch_grid(
 		if (!buffer) {
 			continue;
 		}
-		si_pm4_add_bo(pm4, buffer, RADEON_USAGE_READWRITE);
+		si_pm4_add_bo(pm4, buffer, RADEON_USAGE_READWRITE, RADEON_PRIO_SHADER_RESOURCE_RW);
 	}
 
 	/* This register has been moved to R_00CD20_COMPUTE_MAX_WAVE_ID
@@ -209,7 +209,7 @@ static void si_launch_grid(
 	}
 
 	shader_va = r600_resource_va(ctx->screen, (void *)shader->bo);
-	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
+	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 	si_pm4_set_reg(pm4, R_00B830_COMPUTE_PGM_LO, (shader_va >> 8) & 0xffffffff);
 	si_pm4_set_reg(pm4, R_00B834_COMPUTE_PGM_HI, shader_va >> 40);
 

@@ -2064,7 +2064,9 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 			sctx->fb_compressed_cb_mask |= 1 << i;
 		}
 
-		si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE);
+		si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE,
+			      rtex->surface.nsamples > 1 ? RADEON_PRIO_COLOR_BUFFER_MSAA :
+							   RADEON_PRIO_COLOR_BUFFER);
 		si_pm4_set_reg(pm4, R_028C60_CB_COLOR0_BASE + i * 0x3C, surf->cb_color_base);
 		si_pm4_set_reg(pm4, R_028C64_CB_COLOR0_PITCH + i * 0x3C, surf->cb_color_pitch);
 		si_pm4_set_reg(pm4, R_028C68_CB_COLOR0_SLICE + i * 0x3C, surf->cb_color_slice);
@@ -2101,7 +2103,8 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 		}
 
 		if (surf->db_htile_data_base) {
-			si_pm4_add_bo(pm4, rtex->htile_buffer, RADEON_USAGE_READWRITE);
+			si_pm4_add_bo(pm4, rtex->htile_buffer, RADEON_USAGE_READWRITE,
+				      RADEON_PRIO_DEPTH_META);
 		}
 		si_pm4_set_reg(pm4, R_028008_DB_DEPTH_VIEW, surf->db_depth_view);
 		si_pm4_set_reg(pm4, R_028014_DB_HTILE_DATA_BASE, surf->db_htile_data_base);
@@ -2109,7 +2112,9 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 		si_pm4_set_reg(pm4, R_02803C_DB_DEPTH_INFO, surf->db_depth_info);
 		si_pm4_set_reg(pm4, R_028040_DB_Z_INFO, surf->db_z_info);
 		si_pm4_set_reg(pm4, R_028044_DB_STENCIL_INFO, surf->db_stencil_info);
-		si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE);
+		si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE,
+			      rtex->surface.nsamples > 1 ? RADEON_PRIO_DEPTH_BUFFER_MSAA :
+							   RADEON_PRIO_DEPTH_BUFFER);
 		si_pm4_set_reg(pm4, R_028048_DB_Z_READ_BASE, surf->db_depth_base);
 		si_pm4_set_reg(pm4, R_02804C_DB_STENCIL_READ_BASE, surf->db_stencil_base);
 		si_pm4_set_reg(pm4, R_028050_DB_Z_WRITE_BASE, surf->db_depth_base);
@@ -2863,7 +2868,8 @@ static void si_set_sampler_states(struct si_context *sctx,
 		if (sctx->b.chip_class >= CIK)
 			si_pm4_set_reg(pm4, R_028084_TA_BC_BASE_ADDR_HI, va_offset >> 40);
 		sctx->b.ws->buffer_unmap(sctx->border_color_table->cs_buf);
-		si_pm4_add_bo(pm4, sctx->border_color_table, RADEON_USAGE_READ);
+		si_pm4_add_bo(pm4, sctx->border_color_table, RADEON_USAGE_READ,
+			      RADEON_PRIO_SHADER_DATA);
 	}
 
 	memcpy(samplers->samplers, states, sizeof(void*) * count);

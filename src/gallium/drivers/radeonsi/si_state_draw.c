@@ -54,7 +54,7 @@ static void si_pipe_shader_es(struct pipe_context *ctx, struct si_pipe_shader *s
 		return;
 
 	va = r600_resource_va(ctx->screen, (void *)shader->bo);
-	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
+	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 
 	vgpr_comp_cnt = shader->shader.uses_instanceid ? 3 : 0;
 
@@ -129,7 +129,7 @@ static void si_pipe_shader_gs(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_028B5C_VGT_GS_VERT_ITEMSIZE, gs_vert_itemsize);
 
 	va = r600_resource_va(ctx->screen, (void *)shader->bo);
-	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
+	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 	si_pm4_set_reg(pm4, R_00B220_SPI_SHADER_PGM_LO_GS, va >> 8);
 	si_pm4_set_reg(pm4, R_00B224_SPI_SHADER_PGM_HI_GS, va >> 40);
 
@@ -166,7 +166,7 @@ static void si_pipe_shader_vs(struct pipe_context *ctx, struct si_pipe_shader *s
 		return;
 
 	va = r600_resource_va(ctx->screen, (void *)shader->bo);
-	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
+	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 
 	vgpr_comp_cnt = shader->shader.uses_instanceid ? 3 : 0;
 
@@ -315,7 +315,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_02823C_CB_SHADER_MASK, shader->cb_shader_mask);
 
 	va = r600_resource_va(ctx->screen, (void *)shader->bo);
-	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ);
+	si_pm4_add_bo(pm4, shader->bo, RADEON_USAGE_READ, RADEON_PRIO_SHADER_DATA);
 	si_pm4_set_reg(pm4, R_00B020_SPI_SHADER_PGM_LO_PS, va >> 8);
 	si_pm4_set_reg(pm4, R_00B024_SPI_SHADER_PGM_HI_PS, va >> 40);
 
@@ -728,7 +728,8 @@ static void si_vertex_buffer_update(struct si_context *sctx)
 		si_pm4_sh_data_add(pm4, sctx->vertex_elements->rsrc_word3[i]);
 
 		if (!bound[ve->vertex_buffer_index]) {
-			si_pm4_add_bo(pm4, rbuffer, RADEON_USAGE_READ);
+			si_pm4_add_bo(pm4, rbuffer, RADEON_USAGE_READ,
+				      RADEON_PRIO_SHADER_BUFFER_RO);
 			bound[ve->vertex_buffer_index] = true;
 		}
 	}
@@ -784,7 +785,8 @@ static void si_state_draw(struct si_context *sctx,
 		si_pm4_cmd_add(pm4, va >> 32UL); /* src address hi */
 		si_pm4_cmd_add(pm4, R_028B2C_VGT_STRMOUT_DRAW_OPAQUE_BUFFER_FILLED_SIZE >> 2);
 		si_pm4_cmd_add(pm4, 0); /* unused */
-		si_pm4_add_bo(pm4, t->buf_filled_size, RADEON_USAGE_READ);
+		si_pm4_add_bo(pm4, t->buf_filled_size, RADEON_USAGE_READ,
+			      RADEON_PRIO_MIN);
 		si_pm4_cmd_end(pm4, true);
 	}
 
@@ -810,7 +812,8 @@ static void si_state_draw(struct si_context *sctx,
 		va = r600_resource_va(&sctx->screen->b.b, ib->buffer);
 		va += ib->offset;
 
-		si_pm4_add_bo(pm4, (struct r600_resource *)ib->buffer, RADEON_USAGE_READ);
+		si_pm4_add_bo(pm4, (struct r600_resource *)ib->buffer, RADEON_USAGE_READ,
+			      RADEON_PRIO_MIN);
 		si_cmd_draw_index_2(pm4, max_size, va, info->count,
 				    V_0287F0_DI_SRC_SEL_DMA,
 				    sctx->b.predicate_drawing);

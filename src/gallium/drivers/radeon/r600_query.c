@@ -206,7 +206,8 @@ static void r600_emit_query_begin(struct r600_common_context *ctx, struct r600_q
 	default:
 		assert(0);
 	}
-	r600_emit_reloc(ctx, &ctx->rings.gfx, query->buffer.buf, RADEON_USAGE_WRITE);
+	r600_emit_reloc(ctx, &ctx->rings.gfx, query->buffer.buf, RADEON_USAGE_WRITE,
+			RADEON_PRIO_MIN);
 
 	if (!r600_is_timer_query(query->type)) {
 		ctx->num_cs_dw_nontimer_queries_suspend += query->num_cs_dw;
@@ -271,7 +272,8 @@ static void r600_emit_query_end(struct r600_common_context *ctx, struct r600_que
 	default:
 		assert(0);
 	}
-	r600_emit_reloc(ctx, &ctx->rings.gfx, query->buffer.buf, RADEON_USAGE_WRITE);
+	r600_emit_reloc(ctx, &ctx->rings.gfx, query->buffer.buf, RADEON_USAGE_WRITE,
+			RADEON_PRIO_MIN);
 
 	query->buffer.results_end += query->result_size;
 
@@ -320,7 +322,8 @@ static void r600_emit_query_predication(struct r600_common_context *ctx, struct 
 				radeon_emit(cs, PKT3(PKT3_SET_PREDICATION, 1, 0));
 				radeon_emit(cs, (va + results_base) & 0xFFFFFFFFUL);
 				radeon_emit(cs, op | (((va + results_base) >> 32UL) & 0xFF));
-				r600_emit_reloc(ctx, &ctx->rings.gfx, qbuf->buf, RADEON_USAGE_READ);
+				r600_emit_reloc(ctx, &ctx->rings.gfx, qbuf->buf, RADEON_USAGE_READ,
+						RADEON_PRIO_MIN);
 				results_base += query->result_size;
 
 				/* set CONTINUE bit for all packets except the first */
@@ -817,7 +820,7 @@ void r600_query_init_backend_mask(struct r600_common_context *ctx)
 		radeon_emit(cs, va);
 		radeon_emit(cs, va >> 32);
 
-		r600_emit_reloc(ctx, &ctx->rings.gfx, buffer, RADEON_USAGE_WRITE);
+		r600_emit_reloc(ctx, &ctx->rings.gfx, buffer, RADEON_USAGE_WRITE, RADEON_PRIO_MIN);
 
 		/* analyze results */
 		results = r600_buffer_map_sync_with_rings(ctx, buffer, PIPE_TRANSFER_READ);

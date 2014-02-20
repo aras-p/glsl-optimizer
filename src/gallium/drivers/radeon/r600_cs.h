@@ -45,7 +45,8 @@ static INLINE uint64_t r600_resource_va(struct pipe_screen *screen,
 static INLINE unsigned r600_context_bo_reloc(struct r600_common_context *rctx,
 					     struct r600_ring *ring,
 					     struct r600_resource *rbo,
-					     enum radeon_bo_usage usage)
+					     enum radeon_bo_usage usage,
+					     enum radeon_bo_priority priority)
 {
 	assert(usage);
 
@@ -64,16 +65,17 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_common_context *rctx,
 		}
 	}
 	return rctx->ws->cs_add_reloc(ring->cs, rbo->cs_buf, usage,
-				      rbo->domains, RADEON_PRIO_MIN) * 4;
+				      rbo->domains, priority) * 4;
 }
 
 static INLINE void r600_emit_reloc(struct r600_common_context *rctx,
 				   struct r600_ring *ring, struct r600_resource *rbo,
-				   enum radeon_bo_usage usage)
+				   enum radeon_bo_usage usage,
+				   enum radeon_bo_priority priority)
 {
 	struct radeon_winsys_cs *cs = ring->cs;
 	bool has_vm = ((struct r600_common_screen*)rctx->b.screen)->info.r600_virtual_address;
-	unsigned reloc = r600_context_bo_reloc(rctx, ring, rbo, usage);
+	unsigned reloc = r600_context_bo_reloc(rctx, ring, rbo, usage, priority);
 
 	if (!has_vm) {
 		radeon_emit(cs, PKT3(PKT3_NOP, 0, 0));
