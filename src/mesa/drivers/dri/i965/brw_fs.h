@@ -208,19 +208,19 @@ public:
    fs_reg dst;
    fs_reg src[3];
    bool saturate;
-   int conditional_mod; /**< BRW_CONDITIONAL_* */
+   uint8_t conditional_mod; /**< BRW_CONDITIONAL_* */
 
    /* Chooses which flag subregister (f0.0 or f0.1) is used for conditional
     * mod and predication.
     */
    uint8_t flag_subreg;
 
-   int mlen; /**< SEND message length */
-   int regs_written; /**< Number of vgrfs written by a SEND message, or 1 */
-   int base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
+   uint8_t mlen; /**< SEND message length */
+   uint8_t regs_written; /**< Number of vgrfs written by a SEND message, or 1 */
+   int8_t base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
    uint32_t texture_offset; /**< Texture offset bitfield */
-   int sampler;
-   int target; /**< MRT target. */
+   uint8_t sampler;
+   uint8_t target; /**< MRT target. */
    bool eot;
    bool header_present;
    bool shadow_compare;
