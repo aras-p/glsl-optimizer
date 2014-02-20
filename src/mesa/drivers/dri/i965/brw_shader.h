@@ -23,11 +23,12 @@
 
 #include <stdint.h>
 #include "brw_defines.h"
+#include "main/compiler.h"
 #include "glsl/ir.h"
 
 #pragma once
 
-enum register_file {
+enum PACKED register_file {
    BAD_FILE,
    GRF,
    MRF,

@@ -44,6 +44,7 @@
 
 #include <stdbool.h>
 #include "main/imports.h"
+#include "main/compiler.h"
 #include "program/prog_instruction.h"
 #include "brw_defines.h"
 
@@ -91,7 +92,7 @@ brw_is_single_value_swizzle(int swiz)
            swiz == BRW_SWIZZLE_WWWW);
 }
 
-enum brw_reg_type {
+enum PACKED brw_reg_type {
    BRW_REGISTER_TYPE_UD = 0,
    BRW_REGISTER_TYPE_D,
    BRW_REGISTER_TYPE_UW,
