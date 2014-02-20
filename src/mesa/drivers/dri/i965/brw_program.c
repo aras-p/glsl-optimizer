@@ -318,7 +318,7 @@ static void
 print_shader_time_line(const char *stage, const char *name,
                        int shader_num, uint64_t time, uint64_t total)
 {
-   printf("%-6s%-6s", stage, name);
+   printf("%-6s%-18s", stage, name);
 
    if (shader_num != -1)
       printf("%4d: ", shader_num);
@@ -406,24 +406,27 @@ brw_report_shader_time(struct brw_context *brw)
    qsort(sorted, brw->shader_time.num_entries, sizeof(sorted[0]), compare_time);
 
    printf("\n");
-   printf("type          ID      cycles spent                   %% of total\n");
+   printf("type          ID                  cycles spent                   %% of total\n");
    for (int s = 0; s < brw->shader_time.num_entries; s++) {
       const char *shader_name;
       const char *stage;
       /* Work back from the sorted pointers times to a time to print. */
       int i = sorted[s] - scaled;
+      struct gl_shader_program *prog = brw->shader_time.shader_programs[i];
 
       if (scaled[i] == 0)
          continue;
 
       int shader_num = -1;
-      if (brw->shader_time.shader_programs[i]) {
-         shader_num = brw->shader_time.shader_programs[i]->Name;
+      if (prog) {
+         shader_num = prog->Name;
 
          /* The fixed function fragment shader generates GLSL IR with a Name
           * of 0, and nothing else does.
           */
-         if (shader_num == 0 &&
+         if (prog->Label) {
+            shader_name = prog->Label;
+         } else if (shader_num == 0 &&
              (brw->shader_time.types[i] == ST_FS8 ||
               brw->shader_time.types[i] == ST_FS16)) {
             shader_name = "ff";
