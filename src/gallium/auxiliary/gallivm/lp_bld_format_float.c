@@ -309,33 +309,78 @@ lp_build_smallfloat_to_float(struct gallivm_state *gallivm,
                                     ((1 << (mantissa_bits + exponent_bits)) - 1)
                                     << (23 - mantissa_bits));
    srcabs = lp_build_and(&i32_bld, src, maskabs);
-   srcabs = LLVMBuildBitCast(builder, srcabs, f32_bld.vec_type, "");
 
    /* now do the actual scaling */
    smallexpmask = lp_build_const_int_vec(gallivm, i32_type,
                                          ((1 << exponent_bits) - 1) << 23);
    i32_floatexpmask = lp_build_const_int_vec(gallivm, i32_type, 0xff << 23);
-   /*
-    * magic number has exponent new exp bias + (new exp bias - old exp bias),
-    * mantissa is 0.
-    */
-   magic = lp_build_const_int_vec(gallivm, i32_type,
-                                  (255 - (1 << (exponent_bits - 1))) << 23);
-   magic = LLVMBuildBitCast(builder, magic, f32_bld.vec_type, "");
 
-   /* adjust exponent and fix denorms */
-   res = lp_build_mul(&f32_bld, srcabs, magic);
+   if (0) {
+     /*
+      * Note that this code path, while simpler, will convert small
+      * float denorms to floats according to current cpu denorm mode, if
+      * denorms are disabled it will flush them to zero!
+      * If cpu denorms are enabled, it should be faster though as long as
+      * there's no denorms in the inputs, but if there are actually denorms
+      * it's likely to be an order of magnitude slower (on x86 cpus).
+      */
 
-   /*
-    * if exp was max (== NaN or Inf) set new exp to max (keep mantissa),
-    * so a simple "or" will do (because exp adjust will leave mantissa intact)
-    */
-   /* use float compare (better for AVX 8-wide / no AVX2 but else should use int) */
-   smallexpmask = LLVMBuildBitCast(builder, smallexpmask, f32_bld.vec_type, "");
-   wasinfnan = lp_build_compare(gallivm, f32_type, PIPE_FUNC_GEQUAL, srcabs, smallexpmask);
-   res = LLVMBuildBitCast(builder, res, i32_bld.vec_type, "");
-   tmp = lp_build_and(&i32_bld, i32_floatexpmask, wasinfnan);
-   res = lp_build_or(&i32_bld, tmp, res);
+      srcabs = LLVMBuildBitCast(builder, srcabs, f32_bld.vec_type, "");
+
+      /*
+       * magic number has exponent new exp bias + (new exp bias - old exp bias),
+       * mantissa is 0.
+       */
+      magic = lp_build_const_int_vec(gallivm, i32_type,
+                                     (255 - (1 << (exponent_bits - 1))) << 23);
+      magic = LLVMBuildBitCast(builder, magic, f32_bld.vec_type, "");
+
+      /* adjust exponent and fix denorms */
+      res = lp_build_mul(&f32_bld, srcabs, magic);
+
+      /*
+       * if exp was max (== NaN or Inf) set new exp to max (keep mantissa),
+       * so a simple "or" will do (because exp adjust will leave mantissa intact)
+       */
+      /* use float compare (better for AVX 8-wide / no AVX2 but else should use int) */
+      smallexpmask = LLVMBuildBitCast(builder, smallexpmask, f32_bld.vec_type, "");
+      wasinfnan = lp_build_compare(gallivm, f32_type, PIPE_FUNC_GEQUAL, srcabs, smallexpmask);
+      res = LLVMBuildBitCast(builder, res, i32_bld.vec_type, "");
+      tmp = lp_build_and(&i32_bld, i32_floatexpmask, wasinfnan);
+      res = lp_build_or(&i32_bld, tmp, res);
+   }
+
+   else {
+      LLVMValueRef exp_one, isdenorm, denorm, normal, exp_adj;
+
+      /* denorm (or zero) if exponent is zero */
+      exp_one = lp_build_const_int_vec(gallivm, i32_type, 1 << 23);
+      isdenorm = lp_build_cmp(&i32_bld, PIPE_FUNC_LESS, srcabs, exp_one);
+
+      /* inf or nan if exponent is max */
+      wasinfnan = lp_build_cmp(&i32_bld, PIPE_FUNC_GEQUAL, srcabs, smallexpmask);
+
+      /* for denormal (or zero), add (== or) magic exp to mantissa (== srcabs) (as int)
+       * then subtract it (as float).
+       * Another option would be to just do inttofp then do a rescale mul.
+       */
+      magic = lp_build_const_int_vec(gallivm, i32_type,
+                                     (127 - ((1 << (exponent_bits - 1)) - 2)) << 23);
+      denorm = lp_build_or(&i32_bld, srcabs, magic);
+      denorm = LLVMBuildBitCast(builder, denorm, f32_bld.vec_type, "");
+      denorm = lp_build_sub(&f32_bld, denorm,
+                            LLVMBuildBitCast(builder, magic, f32_bld.vec_type, ""));
+      denorm = LLVMBuildBitCast(builder, denorm, i32_bld.vec_type, "");
+
+      /* for normals, Infs, Nans fix up exponent */
+      exp_adj = lp_build_const_int_vec(gallivm, i32_type,
+                                      (127 - ((1 << (exponent_bits - 1)) - 1)) << 23);
+      normal = lp_build_add(&i32_bld, srcabs, exp_adj);
+      tmp = lp_build_and(&i32_bld, wasinfnan, i32_floatexpmask);
+      normal = lp_build_or(&i32_bld, tmp, normal);
+
+      res = lp_build_select(&i32_bld, isdenorm, denorm, normal);
+   }
 
    if (has_sign) {
       LLVMValueRef signmask = lp_build_const_int_vec(gallivm, i32_type, 0x80000000);
