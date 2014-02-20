@@ -200,6 +200,8 @@ public:
            const fs_reg &src1, const fs_reg &src2);
    fs_inst(const fs_inst &that);
 
+   void resize_sources(uint8_t num_sources);
+
    bool equals(fs_inst *inst) const;
    bool overwrites_reg(const fs_reg &reg) const;
    bool is_send_from_grf() const;

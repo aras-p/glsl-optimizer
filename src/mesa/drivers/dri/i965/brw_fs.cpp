@@ -111,6 +111,15 @@ fs_inst::fs_inst(const fs_inst &that)
       this->src[i] = that.src[i];
 }
 
+void
+fs_inst::resize_sources(uint8_t num_sources)
+{
+   if (this->sources != num_sources) {
+      this->src = reralloc(this, this->src, fs_reg, num_sources);
+      this->sources = num_sources;
+   }
+}
+
 #define ALU1(op)                                                        \
    fs_inst *                                                            \
    fs_visitor::op(fs_reg dst, fs_reg src0)                              \
