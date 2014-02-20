@@ -218,7 +218,6 @@ public:
    uint32_t texture_offset; /**< Texture offset bitfield */
    uint32_t offset; /* spill/unspill offset */
 
-   bool saturate;
    uint8_t conditional_mod; /**< BRW_CONDITIONAL_* */
 
    /* Chooses which flag subregister (f0.0 or f0.1) is used for conditional
@@ -231,12 +230,13 @@ public:
    int8_t base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
    uint8_t sampler;
    uint8_t target; /**< MRT target. */
-   bool eot;
-   bool header_present;
-   bool shadow_compare;
-   bool force_uncompressed;
-   bool force_sechalf;
-   bool force_writemask_all;
+   bool saturate:1;
+   bool eot:1;
+   bool header_present:1;
+   bool shadow_compare:1;
+   bool force_uncompressed:1;
+   bool force_sechalf:1;
+   bool force_writemask_all:1;
 };
 
 /**
