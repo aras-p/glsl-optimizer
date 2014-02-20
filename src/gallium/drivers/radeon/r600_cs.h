@@ -63,7 +63,8 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_common_context *rctx,
 			rctx->rings.gfx.flush(rctx, RADEON_FLUSH_ASYNC);
 		}
 	}
-	return rctx->ws->cs_add_reloc(ring->cs, rbo->cs_buf, usage, rbo->domains) * 4;
+	return rctx->ws->cs_add_reloc(ring->cs, rbo->cs_buf, usage,
+				      rbo->domains, RADEON_PRIO_MIN) * 4;
 }
 
 static INLINE void r600_emit_reloc(struct r600_common_context *rctx,

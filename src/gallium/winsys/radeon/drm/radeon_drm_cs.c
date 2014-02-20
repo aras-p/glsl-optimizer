@@ -349,12 +349,13 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
 static unsigned radeon_drm_cs_add_reloc(struct radeon_winsys_cs *rcs,
                                         struct radeon_winsys_cs_handle *buf,
                                         enum radeon_bo_usage usage,
-                                        enum radeon_bo_domain domains)
+                                        enum radeon_bo_domain domains,
+                                        enum radeon_bo_priority priority)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_bo *bo = (struct radeon_bo*)buf;
     enum radeon_bo_domain added_domains;
-    unsigned index = radeon_add_reloc(cs, bo, usage, domains, 0, &added_domains);
+    unsigned index = radeon_add_reloc(cs, bo, usage, domains, priority, &added_domains);
 
     if (added_domains & RADEON_DOMAIN_GTT)
         cs->csc->used_gart += bo->base.size;
@@ -654,7 +655,8 @@ radeon_cs_create_fence(struct radeon_winsys_cs *rcs)
                                        RADEON_DOMAIN_GTT);
     /* Add the fence as a dummy relocation. */
     cs->ws->base.cs_add_reloc(rcs, cs->ws->base.buffer_get_cs_handle(fence),
-                              RADEON_USAGE_READWRITE, RADEON_DOMAIN_GTT);
+                              RADEON_USAGE_READWRITE, RADEON_DOMAIN_GTT,
+                              RADEON_PRIO_MIN);
     return (struct pipe_fence_handle*)fence;
 }
 

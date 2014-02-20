@@ -434,8 +434,8 @@ struct radeon_winsys {
     unsigned (*cs_add_reloc)(struct radeon_winsys_cs *cs,
                              struct radeon_winsys_cs_handle *buf,
                              enum radeon_bo_usage usage,
-                             enum radeon_bo_domain domain/*,
-                             enum radeon_bo_priority priority*/);
+                             enum radeon_bo_domain domain,
+                             enum radeon_bo_priority priority);
 
     /**
      * Return TRUE if there is enough memory in VRAM and GTT for the relocs

@@ -34,7 +34,7 @@
 #ifndef RADEON_VCE_H
 #define RADEON_VCE_H
 
-#define RVCE_RELOC(buf, usage, domain) (enc->ws->cs_add_reloc(enc->cs, (buf), (usage), domain))
+#define RVCE_RELOC(buf, usage, domain) (enc->ws->cs_add_reloc(enc->cs, (buf), (usage), domain, RADEON_PRIO_MIN))
 
 #define RVCE_CS(value) (enc->cs->buf[enc->cs->cdw++] = (value))
 #define RVCE_BEGIN(cmd) { uint32_t *begin = &enc->cs->buf[enc->cs->cdw++]; RVCE_CS(cmd)

@@ -105,7 +105,8 @@ static void send_cmd(struct ruvd_decoder *dec, unsigned cmd,
 {
 	int reloc_idx;
 
-	reloc_idx = dec->ws->cs_add_reloc(dec->cs, cs_buf, usage, domain);
+	reloc_idx = dec->ws->cs_add_reloc(dec->cs, cs_buf, usage, domain,
+					  RADEON_PRIO_MIN);
 	set_reg(dec, RUVD_GPCOM_VCPU_DATA0, off);
 	set_reg(dec, RUVD_GPCOM_VCPU_DATA1, reloc_idx * 4);
 	set_reg(dec, RUVD_GPCOM_VCPU_CMD, cmd << 1);
