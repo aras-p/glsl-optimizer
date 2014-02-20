@@ -700,12 +700,6 @@ brwCreateContext(gl_api api,
 
    intel_batchbuffer_init(brw);
 
-   brw_init_state(brw);
-
-   intelInitExtensions(ctx);
-
-   intel_fbo_init(brw);
-
    if (brw->gen >= 6) {
       /* Create a new hardware context.  Using a hardware context means that
        * our GPU state will be saved/restored on context switch, allowing us
@@ -722,6 +716,12 @@ brwCreateContext(gl_api api,
          return false;
       }
    }
+
+   brw_init_state(brw);
+
+   intelInitExtensions(ctx);
+
+   intel_fbo_init(brw);
 
    brw_init_surface_formats(brw);
 
