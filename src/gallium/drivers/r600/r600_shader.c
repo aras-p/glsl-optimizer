@@ -119,7 +119,7 @@ static int store_shader(struct pipe_context *ctx,
 		ptr = r600_buffer_map_sync_with_rings(&rctx->b, shader->bo, PIPE_TRANSFER_WRITE);
 		if (R600_BIG_ENDIAN) {
 			for (i = 0; i < shader->shader.bc.ndw; ++i) {
-				ptr[i] = util_bswap32(shader->shader.bc.bytecode[i]);
+				ptr[i] = util_cpu_to_le32(shader->shader.bc.bytecode[i]);
 			}
 		} else {
 			memcpy(ptr, shader->shader.bc.bytecode, shader->shader.bc.ndw * sizeof(*ptr));

@@ -2431,7 +2431,7 @@ void *r600_create_vertex_fetch_shader(struct pipe_context *ctx,
 
 	if (R600_BIG_ENDIAN) {
 		for (i = 0; i < fs_size / 4; ++i) {
-			bytecode[i] = util_bswap32(bc.bytecode[i]);
+			bytecode[i] = util_cpu_to_le32(bc.bytecode[i]);
 		}
 	} else {
 		memcpy(bytecode, bc.bytecode, fs_size);

@@ -936,7 +936,7 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 			}
 
 			for (i = 0; i < size / 4; ++i) {
-				tmpPtr[i] = util_bswap32(((uint32_t *)ptr)[i]);
+				tmpPtr[i] = util_cpu_to_le32(((uint32_t *)ptr)[i]);
 			}
 
 			u_upload_data(rctx->b.uploader, 0, size, tmpPtr, &cb->buffer_offset, &cb->buffer);
