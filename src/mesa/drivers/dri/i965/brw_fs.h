@@ -332,10 +332,11 @@ public:
    int type_size(const struct glsl_type *type);
    fs_inst *get_instruction_generating_reg(fs_inst *start,
 					   fs_inst *end,
-					   fs_reg reg);
+					   const fs_reg &reg);
 
-   exec_list VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
-                                        fs_reg varying_offset,
+   exec_list VARYING_PULL_CONSTANT_LOAD(const fs_reg &dst,
+                                        const fs_reg &surf_index,
+                                        const fs_reg &varying_offset,
                                         uint32_t const_offset);
 
    bool run();
@@ -415,9 +416,10 @@ public:
    fs_reg fix_math_operand(fs_reg src);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0);
    fs_inst *emit_math(enum opcode op, fs_reg dst, fs_reg src0, fs_reg src1);
-   void emit_lrp(fs_reg dst, fs_reg x, fs_reg y, fs_reg a);
-   void emit_minmax(uint32_t conditionalmod, fs_reg dst,
-                    fs_reg src0, fs_reg src1);
+   void emit_lrp(const fs_reg &dst, const fs_reg &x, const fs_reg &y,
+                 const fs_reg &a);
+   void emit_minmax(uint32_t conditionalmod, const fs_reg &dst,
+                    const fs_reg &src0, const fs_reg &src1);
    bool try_emit_saturate(ir_expression *ir);
    bool try_emit_mad(ir_expression *ir, int mul_arg);
    void try_replace_with_sel();

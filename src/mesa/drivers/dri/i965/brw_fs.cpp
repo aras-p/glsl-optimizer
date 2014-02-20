@@ -244,8 +244,9 @@ fs_visitor::CMP(fs_reg dst, fs_reg src0, fs_reg src1, uint32_t condition)
 }
 
 exec_list
-fs_visitor::VARYING_PULL_CONSTANT_LOAD(fs_reg dst, fs_reg surf_index,
-                                       fs_reg varying_offset,
+fs_visitor::VARYING_PULL_CONSTANT_LOAD(const fs_reg &dst,
+                                       const fs_reg &surf_index,
+                                       const fs_reg &varying_offset,
                                        uint32_t const_offset)
 {
    exec_list instructions;
@@ -3185,7 +3186,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
 fs_inst *
 fs_visitor::get_instruction_generating_reg(fs_inst *start,
 					   fs_inst *end,
-					   fs_reg reg)
+					   const fs_reg &reg)
 {
    if (end == start ||
        end->is_partial_write() ||

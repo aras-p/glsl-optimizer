@@ -212,7 +212,8 @@ fs_visitor::visit(ir_dereference_array *ir)
 }
 
 void
-fs_visitor::emit_lrp(fs_reg dst, fs_reg x, fs_reg y, fs_reg a)
+fs_visitor::emit_lrp(const fs_reg &dst, const fs_reg &x, const fs_reg &y,
+                     const fs_reg &a)
 {
    if (brw->gen < 6 ||
        !x.is_valid_3src() ||
@@ -225,8 +226,9 @@ fs_visitor::emit_lrp(fs_reg dst, fs_reg x, fs_reg y, fs_reg a)
 
       emit(MUL(y_times_a, y, a));
 
-      a.negate = !a.negate;
-      emit(ADD(one_minus_a, a, fs_reg(1.0f)));
+      fs_reg negative_a = a;
+      negative_a.negate = !a.negate;
+      emit(ADD(one_minus_a, negative_a, fs_reg(1.0f)));
       emit(MUL(x_times_one_minus_a, x, one_minus_a));
 
       emit(ADD(dst, x_times_one_minus_a, y_times_a));
@@ -239,8 +241,8 @@ fs_visitor::emit_lrp(fs_reg dst, fs_reg x, fs_reg y, fs_reg a)
 }
 
 void
-fs_visitor::emit_minmax(uint32_t conditionalmod, fs_reg dst,
-                        fs_reg src0, fs_reg src1)
+fs_visitor::emit_minmax(uint32_t conditionalmod, const fs_reg &dst,
+                        const fs_reg &src0, const fs_reg &src1)
 {
    fs_inst *inst;
 
