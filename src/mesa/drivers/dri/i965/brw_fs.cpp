@@ -55,7 +55,6 @@ void
 fs_inst::init()
 {
    memset(this, 0, sizeof(*this));
-   this->opcode = BRW_OPCODE_NOP;
    this->conditional_mod = BRW_CONDITIONAL_NONE;
 
    this->dst = reg_undef;
@@ -70,6 +69,7 @@ fs_inst::init()
 fs_inst::fs_inst()
 {
    init();
+   this->opcode = BRW_OPCODE_NOP;
 }
 
 fs_inst::fs_inst(enum opcode opcode)
