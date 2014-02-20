@@ -185,6 +185,8 @@ public:
 };
 
 class fs_inst : public backend_instruction {
+   fs_inst &operator=(const fs_inst &);
+
 public:
    DECLARE_RALLOC_CXX_OPERATORS(fs_inst)
 
