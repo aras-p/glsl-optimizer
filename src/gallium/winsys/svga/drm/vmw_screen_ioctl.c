@@ -762,7 +762,7 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
    int ret;
    uint32_t *cap_buffer;
    drmVersionPtr version;
-   boolean drm_gb_capable;
+   boolean have_drm_2_5;
 
    VMW_FUNC;
 
@@ -770,7 +770,7 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
    if (!version)
       goto out_no_version;
 
-   drm_gb_capable = version->version_major > 2 ||
+   have_drm_2_5 = version->version_major > 2 ||
       (version->version_major == 2 && version->version_minor > 4);
 
    memset(&gp_arg, 0, sizeof(gp_arg));
@@ -803,7 +803,7 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
       vws->base.have_gb_objects =
          !!(gp_arg.value & (uint64_t) SVGA_CAP_GBOBJECTS);
    
-   if (vws->base.have_gb_objects && !drm_gb_capable)
+   if (vws->base.have_gb_objects && !have_drm_2_5)
       goto out_no_3d;
 
    if (vws->base.have_gb_objects) {
@@ -839,11 +839,12 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
 
       memset(&gp_arg, 0, sizeof(gp_arg));
       gp_arg.param = DRM_VMW_PARAM_MAX_SURF_MEMORY;
-      ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_GET_PARAM,
-                                &gp_arg, sizeof(gp_arg));
-      if (ret) {
+      if (have_drm_2_5)
+         ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_GET_PARAM,
+                                   &gp_arg, sizeof(gp_arg));
+      if (!have_drm_2_5 || ret) {
          /* Just guess a large enough value, around 800mb. */
-         vws->ioctl.max_surface_memory = 0x300000000;
+         vws->ioctl.max_surface_memory = 0x30000000;
       } else {
          vws->ioctl.max_surface_memory = gp_arg.value;
       }
