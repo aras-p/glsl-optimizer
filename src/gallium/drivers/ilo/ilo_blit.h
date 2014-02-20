@@ -39,16 +39,16 @@ void
 ilo_blit_resolve_slices_for_hiz(struct ilo_context *ilo,
                                 struct pipe_resource *res, unsigned level,
                                 unsigned first_slice, unsigned num_slices,
-                                unsigned flags);
+                                unsigned resolve_flags);
 
 static inline void
 ilo_blit_resolve_slices(struct ilo_context *ilo,
                         struct pipe_resource *res, unsigned level,
                         unsigned first_slice, unsigned num_slices,
-                        unsigned flags)
+                        unsigned resolve_flags)
 {
    struct ilo_texture *tex;
-   unsigned flag_mask;
+   unsigned slice_mask;
 
    if (res->target == PIPE_BUFFER)
       return;
@@ -63,38 +63,27 @@ ilo_blit_resolve_slices(struct ilo_context *ilo,
    if (!ilo_texture_can_enable_hiz(tex, level, first_slice, num_slices))
       return;
 
-   /*
-    * flags may be
-    *
-    *  - ILO_TEXTURE_CPU_{READ,WRITE} (transfer)
-    *  - ILO_TEXTURE_BLT_{READ,WRITE} (BLT copy or clear)
-    *  - ILO_TEXTURE_RENDER_{READ,WRITE} (sample or render)
-    *  - ILO_TEXTURE_CLEAR
-    *
-    * It is assumed there is at most one writer, and that readers read before
-    * writers write.
-    */
    if (ilo_texture_can_enable_hiz(tex, level, first_slice, num_slices)) {
       ilo_blit_resolve_slices_for_hiz(ilo, res, level,
-            first_slice, num_slices, flags);
+            first_slice, num_slices, resolve_flags);
    }
 
-   /* clear writers and clear state that are not set */
-   flag_mask =
+   slice_mask =
       ILO_TEXTURE_CPU_WRITE |
       ILO_TEXTURE_BLT_WRITE |
       ILO_TEXTURE_RENDER_WRITE;
-   if (flags & flag_mask)
-      flag_mask |= ILO_TEXTURE_CLEAR;
+   /* when there is a new writer, we may need to clear ILO_TEXTURE_CLEAR */
+   if (resolve_flags & slice_mask)
+      slice_mask |= ILO_TEXTURE_CLEAR;
 
    ilo_texture_set_slice_flags(tex, level,
-         first_slice, num_slices, flag_mask, flags);
+         first_slice, num_slices, slice_mask, resolve_flags);
 }
 
 static inline void
 ilo_blit_resolve_resource(struct ilo_context *ilo,
                           struct pipe_resource *res,
-                          unsigned flags)
+                          unsigned resolve_flags)
 {
    unsigned lv;
 
@@ -102,14 +91,14 @@ ilo_blit_resolve_resource(struct ilo_context *ilo,
       const unsigned num_slices = (res->target == PIPE_TEXTURE_3D) ?
          u_minify(res->depth0, lv) : res->array_size;
 
-      ilo_blit_resolve_slices(ilo, res, lv, 0, num_slices, flags);
+      ilo_blit_resolve_slices(ilo, res, lv, 0, num_slices, resolve_flags);
    }
 }
 
 static inline void
 ilo_blit_resolve_surface(struct ilo_context *ilo,
                          struct pipe_surface *surf,
-                         unsigned flags)
+                         unsigned resolve_flags)
 {
    if (surf->texture->target == PIPE_BUFFER)
       return;
@@ -117,32 +106,32 @@ ilo_blit_resolve_surface(struct ilo_context *ilo,
    ilo_blit_resolve_slices(ilo, surf->texture,
          surf->u.tex.level, surf->u.tex.first_layer,
          surf->u.tex.last_layer - surf->u.tex.first_layer + 1,
-         flags);
+         resolve_flags);
 }
 
 static inline void
 ilo_blit_resolve_transfer(struct ilo_context *ilo,
                           const struct pipe_transfer *xfer)
 {
-   unsigned flags = 0;
+   unsigned resolve_flags = 0;
 
    if (xfer->resource->target == PIPE_BUFFER)
       return;
 
    if (xfer->usage & PIPE_TRANSFER_READ)
-      flags |= ILO_TEXTURE_CPU_READ;
+      resolve_flags |= ILO_TEXTURE_CPU_READ;
    if (xfer->usage & PIPE_TRANSFER_WRITE)
-      flags |= ILO_TEXTURE_CPU_WRITE;
+      resolve_flags |= ILO_TEXTURE_CPU_WRITE;
 
    ilo_blit_resolve_slices(ilo, xfer->resource, xfer->level,
-         xfer->box.z, xfer->box.depth, flags);
+         xfer->box.z, xfer->box.depth, resolve_flags);
 }
 
 static inline void
 ilo_blit_resolve_view(struct ilo_context *ilo,
                       const struct pipe_sampler_view *view)
 {
-   const unsigned flags = ILO_TEXTURE_RENDER_READ;
+   const unsigned resolve_flags = ILO_TEXTURE_RENDER_READ;
    unsigned lv;
 
    if (view->texture->target == PIPE_BUFFER)
@@ -161,7 +150,7 @@ ilo_blit_resolve_view(struct ilo_context *ilo,
       }
 
       ilo_blit_resolve_slices(ilo, view->texture,
-            lv, first_slice, num_slices, flags);
+            lv, first_slice, num_slices, resolve_flags);
    }
 }
 

@@ -34,13 +34,45 @@
 #include "ilo_screen.h"
 
 enum ilo_texture_flags {
+   /*
+    * Possible writers of a texture.  There can be at most one writer at any
+    * time.
+    *
+    * Wine set in resolve flags (in ilo_blit_resolve_slices()), they indicate
+    * the new writer.  When set in slice flags (ilo_texture_slice::flags),
+    * they indicate the writer since last resolve.
+    */
    ILO_TEXTURE_RENDER_WRITE   = 1 << 0,
    ILO_TEXTURE_BLT_WRITE      = 1 << 1,
    ILO_TEXTURE_CPU_WRITE      = 1 << 2,
+
+   /*
+    * Possible readers of a texture.  There may be multiple readers at any
+    * time.
+    *
+    * When set in resolve flags, they indicate the new readers.  They are
+    * never set in slice flags.
+    */
    ILO_TEXTURE_RENDER_READ    = 1 << 3,
    ILO_TEXTURE_BLT_READ       = 1 << 4,
    ILO_TEXTURE_CPU_READ       = 1 << 5,
+
+   /*
+    * Set when the texture is cleared.
+    *
+    * When set in resolve flags, the new writer will clear.  When set in slice
+    * flags, the slice has been cleared.
+    */
    ILO_TEXTURE_CLEAR          = 1 << 6,
+
+   /*
+    * Set when HiZ can be enabled.
+    *
+    * It is never set in resolve flags.  When set in slice flags, the slice
+    * can have HiZ enabled.  It is to be noted that this bit is always set for
+    * either all or none of the slices in a level, allowing quick check in
+    * case of layered rendering.
+    */
    ILO_TEXTURE_HIZ            = 1 << 7,
 };
 
