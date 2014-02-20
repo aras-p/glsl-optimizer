@@ -738,7 +738,7 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
                                                           num_samples);
    if (!multisample_mt) {
       intel_miptree_release(&singlesample_mt);
-      return NULL;
+      return;
    }
 
    irb->need_downsample = false;
