@@ -432,7 +432,7 @@ void si_upload_const_buffer(struct si_context *sctx, struct r600_resource **rbuf
 		}
 
 		for (i = 0; i < size / 4; ++i) {
-			tmpPtr[i] = util_bswap32(((uint32_t *)ptr)[i]);
+			tmpPtr[i] = util_cpu_to_le32(((uint32_t *)ptr)[i]);
 		}
 
 		u_upload_data(sctx->b.uploader, 0, size, tmpPtr, const_offset,

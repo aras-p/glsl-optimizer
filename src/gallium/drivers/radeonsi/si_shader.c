@@ -2335,7 +2335,7 @@ int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
 	ptr = (uint32_t*)sctx->b.ws->buffer_map(shader->bo->cs_buf, sctx->b.rings.gfx.cs, PIPE_TRANSFER_WRITE);
 	if (0 /*SI_BIG_ENDIAN*/) {
 		for (i = 0; i < binary.code_size / 4; ++i) {
-			ptr[i] = util_bswap32(*(uint32_t*)(binary.code + i*4));
+			ptr[i] = util_cpu_to_le32((*(uint32_t*)(binary.code + i*4)));
 		}
 	} else {
 		memcpy(ptr, binary.code, binary.code_size);
