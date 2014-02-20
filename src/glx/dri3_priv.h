@@ -130,6 +130,7 @@ struct dri3_screen {
    const __DRI2flushExtension *f;
    const __DRI2configQueryExtension *config;
    const __DRItexBufferExtension *texBuffer;
+   const __DRI2rendererQueryExtension *rendererQuery;
    const __DRIconfig **driver_configs;
 
    void *driver;
