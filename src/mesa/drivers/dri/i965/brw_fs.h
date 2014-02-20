@@ -85,9 +85,13 @@ public:
    bool is_contiguous() const;
 
    fs_reg &apply_stride(unsigned stride);
+   /** Smear a channel of the reg to all channels. */
+   fs_reg &set_smear(unsigned subreg);
 
    /** Register file: GRF, MRF, IMM. */
    enum register_file file;
+   /** Register type.  BRW_REGISTER_TYPE_* */
+   enum brw_reg_type type;
    /**
     * Register number.  For MRF, it's the hardware register.  For
     * GRF, it's a virtual register number until register allocation
@@ -101,14 +105,11 @@ public:
     * For uniforms, this is in units of 1 float.
     */
    int reg_offset;
-   /** Register type.  BRW_REGISTER_TYPE_* */
-   enum brw_reg_type type;
-   bool negate;
-   bool abs;
-   struct brw_reg fixed_hw_reg;
-
-   /** Smear a channel of the reg to all channels. */
-   fs_reg &set_smear(unsigned subreg);
+   /**
+    * Offset in bytes from the start of the register.  Values up to a
+    * backend_reg::reg_offset unit are valid.
+    */
+   int subreg_offset;
 
    /** Value for file == IMM */
    union {
@@ -117,16 +118,15 @@ public:
       float f;
    } imm;
 
-   /**
-    * Offset in bytes from the start of the register.  Values up to a
-    * backend_reg::reg_offset unit are valid.
-    */
-   int subreg_offset;
+   struct brw_reg fixed_hw_reg;
+
+   fs_reg *reladdr;
+
+   bool negate;
+   bool abs;
 
    /** Register region horizontal stride */
    uint8_t stride;
-
-   fs_reg *reladdr;
 };
 
 static inline fs_reg
