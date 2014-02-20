@@ -119,6 +119,10 @@ if test "x$GCC" = xyes -a "x$acv_mesa_CLANG" = xno; then
         GEN_ASM_OFFSETS=yes
     fi
 fi
+
+dnl Check for compiler builtins
+AX_GCC_BUILTIN([__builtin_bswap32])
+
 AM_CONDITIONAL([GEN_ASM_OFFSETS], test "x$GEN_ASM_OFFSETS" = xyes)
 
 dnl Make sure the pkg-config macros are defined

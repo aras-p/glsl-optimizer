@@ -731,7 +731,8 @@ util_bitcount(unsigned n)
 static INLINE uint32_t
 util_bswap32(uint32_t n)
 {
-#if defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 403)
+/* We need the gcc version checks for non-autoconf build system */
+#if defined(HAVE___BUILTIN_BSWAP32) || (defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 403))
    return __builtin_bswap32(n);
 #else
    return (n >> 24) |
