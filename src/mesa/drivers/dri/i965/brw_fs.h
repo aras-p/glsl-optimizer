@@ -211,7 +211,7 @@ public:
    bool writes_flag() const;
 
    fs_reg dst;
-   fs_reg src[3];
+   fs_reg *src;
 
    uint32_t texture_offset; /**< Texture offset bitfield */
    uint32_t offset; /* spill/unspill offset */

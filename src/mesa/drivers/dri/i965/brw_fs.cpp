@@ -55,6 +55,9 @@ void
 fs_inst::init()
 {
    memset(this, 0, sizeof(*this));
+
+   this->src = ralloc_array(this, fs_reg, 3);
+
    this->conditional_mod = BRW_CONDITIONAL_NONE;
 
    this->dst = reg_undef;
@@ -142,6 +145,11 @@ fs_inst::fs_inst(enum opcode opcode, fs_reg dst,
 fs_inst::fs_inst(const fs_inst &that)
 {
    memcpy(this, &that, sizeof(that));
+
+   this->src = ralloc_array(this, fs_reg, 3);
+
+   for (int i = 0; i < 3; i++)
+      this->src[i] = that.src[i];
 }
 
 #define ALU1(op)                                                        \
