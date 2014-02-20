@@ -481,6 +481,73 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
    return 0;
 }
 
+static int
+radeonQueryRendererInteger(__DRIscreen *psp, int param,
+			       unsigned int *value)
+{
+   radeonScreenPtr screen = (radeonScreenPtr)psp->driverPrivate;
+
+   switch (param) {
+   case __DRI2_RENDERER_VENDOR_ID:
+      value[0] = 0x1002;
+      return 0;
+   case __DRI2_RENDERER_DEVICE_ID:
+      value[0] = screen->device_id;
+      return 0;
+   case __DRI2_RENDERER_ACCELERATED:
+      value[0] = 1;
+      return 0;
+   case __DRI2_RENDERER_VIDEO_MEMORY: {
+      struct drm_radeon_gem_info gem_info;
+      int retval;
+      memset(&gem_info, 0, sizeof(gem_info));
+
+      /* Get GEM info. */
+      retval = drmCommandWriteRead(psp->fd, DRM_RADEON_GEM_INFO, &gem_info,
+				   sizeof(gem_info));
+
+      if (retval) {
+         fprintf(stderr, "radeon: Failed to get MM info, error number %d\n",
+                retval);
+         return -1;
+
+      }
+      /* XXX: Do we want to return vram_size or vram_visible ? */
+      value[0] = gem_info.vram_size >> 20;
+      return 0;
+   }
+   case __DRI2_RENDERER_UNIFIED_MEMORY_ARCHITECTURE:
+      value[0] = 0;
+      return 0;
+   default:
+      return driQueryRendererIntegerCommon(psp, param, value);
+   }
+}
+
+static int
+radeonQueryRendererString(__DRIscreen *psp, int param, const char **value)
+{
+   radeonScreenPtr screen = (radeonScreenPtr)psp->driverPrivate;
+
+   switch (param) {
+   case __DRI2_RENDERER_VENDOR_ID:
+      value[0] = radeonVendorString;
+      return 0;
+   case __DRI2_RENDERER_DEVICE_ID:
+      value[0] = radeonGetRendererString(screen);
+      return 0;
+   default:
+      return -1;
+   }
+}
+
+static const __DRI2rendererQueryExtension radeonRendererQueryExtension = {
+   .base = { __DRI2_RENDERER_QUERY, 1 },
+
+   .queryInteger        = radeonQueryRendererInteger,
+   .queryString         = radeonQueryRendererString
+};
+
 
 static const __DRIextension *radeon_screen_extensions[] = {
     &dri2ConfigQueryExtension.base,
@@ -491,6 +558,7 @@ static const __DRIextension *radeon_screen_extensions[] = {
 #endif
     &radeonFlushExtension.base,
     &radeonImageExtension.base,
+    &radeonRendererQueryExtension.base,
     NULL
 };
 

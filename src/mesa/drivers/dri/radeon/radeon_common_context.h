@@ -515,6 +515,10 @@ static inline __DRIdrawable* radeon_get_readable(radeonContextPtr radeon)
 	return radeon->dri.context->driReadablePriv;
 }
 
+extern const char const *radeonVendorString;
+
+const char *radeonGetRendererString(radeonScreenPtr radeonScreen);
+
 GLboolean radeonInitContext(radeonContextPtr radeon,
                             gl_api api,
 			    struct dd_function_table* functions,

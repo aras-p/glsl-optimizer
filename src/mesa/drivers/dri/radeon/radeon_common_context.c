@@ -70,39 +70,47 @@ static const char* get_chip_family_name(int chip_family)
 	}
 }
 
+const char const *radeonVendorString = "Mesa Project";
+
+/* Return complete renderer string.
+ */
+const char *radeonGetRendererString(radeonScreenPtr radeonScreen)
+{
+	static char buffer[128];
+	char hardwarename[32];
+
+	GLuint agp_mode = (radeonScreen->card_type==RADEON_CARD_PCI) ? 0 :
+		radeonScreen->AGPMode;
+
+	snprintf(hardwarename, sizeof(hardwarename), "%s (%s %04X)",
+#if defined(RADEON_R100)
+	        "R100",
+#elif defined(RADEON_R200)
+	        "R200",
+#endif
+	        get_chip_family_name(radeonScreen->chip_family),
+	        radeonScreen->device_id);
+
+	driGetRendererString(buffer, hardwarename, agp_mode);
+
+	strcat(buffer, " DRI2");
+
+	return buffer;
+}
+
 
 /* Return various strings for glGetString().
  */
 static const GLubyte *radeonGetString(struct gl_context * ctx, GLenum name)
 {
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
-	static char buffer[128];
 
 	switch (name) {
 	case GL_VENDOR:
-		return (GLubyte *) "Mesa Project";
+		return (GLubyte *) radeonVendorString;
 
 	case GL_RENDERER:
-	{
-		char hardwarename[32];
-		GLuint agp_mode = (radeon->radeonScreen->card_type==RADEON_CARD_PCI) ? 0 :
-			radeon->radeonScreen->AGPMode;
-
-		sprintf(hardwarename, "%s (%s %04X)",
-#if defined(RADEON_R100)
-		        "R100",
-#elif defined(RADEON_R200)
-		        "R200",
-#endif
-		        get_chip_family_name(radeon->radeonScreen->chip_family),
-		        radeon->radeonScreen->device_id);
-
-		driGetRendererString(buffer, hardwarename, agp_mode);
-
-		strcat(buffer, " DRI2");
-
-		return (GLubyte *) buffer;
-	}
+		return (GLubyte *) radeonGetRendererString(radeon->radeonScreen);
 
 	default:
 		return NULL;

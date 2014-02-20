@@ -209,6 +209,8 @@ struct __DRIimageRec {
 #define untile_image                        r200_untile_image
 #define set_re_cntl_d3d                     r200_set_re_cntl_d3d
 #define radeonDestroyBuffer                 r200_radeonDestroyBuffer
+#define radeonVendorString                  r200_radeonVendorString
+#define radeonGetRendererString             r200_radeonGetRendererString
 #endif
 
 extern void radeonDestroyBuffer(__DRIdrawable *driDrawPriv);
