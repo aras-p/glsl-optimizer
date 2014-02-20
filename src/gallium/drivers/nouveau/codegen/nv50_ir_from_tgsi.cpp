@@ -558,6 +558,7 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(SAD, SAD);
    NV50_IR_OPCODE_CASE(TXF, TXF);
    NV50_IR_OPCODE_CASE(TXQ, TXQ);
+   NV50_IR_OPCODE_CASE(TG4, TXG);
 
    NV50_IR_OPCODE_CASE(EMIT, EMIT);
    NV50_IR_OPCODE_CASE(ENDPRIM, RESTART);
@@ -2433,6 +2434,9 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       break;
    case TGSI_OPCODE_TXD:
       handleTEX(dst0, 3, 3, 0x03, 0x0f, 0x10, 0x20);
+      break;
+   case TGSI_OPCODE_TG4:
+      handleTEX(dst0, 2, 2, 0x03, 0x0f, 0x00, 0x00);
       break;
    case TGSI_OPCODE_TEX2:
       handleTEX(dst0, 2, 2, 0x03, 0x10, 0x00, 0x00);

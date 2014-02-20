@@ -1447,7 +1447,7 @@ CodeEmitterNV50::emitTEX(const TexInstruction *i)
       code[0] |= 0x01000000;
       break;
    case OP_TXG:
-      code[0] = 0x01000000;
+      code[0] |= 0x01000000;
       code[1] = 0x80000000;
       break;
    default:
@@ -1790,6 +1790,7 @@ CodeEmitterNV50::emitInstruction(Instruction *insn)
    case OP_TXB:
    case OP_TXL:
    case OP_TXF:
+   case OP_TXG:
       emitTEX(insn->asTex());
       break;
    case OP_TXQ:
