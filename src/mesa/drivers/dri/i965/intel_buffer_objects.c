@@ -55,7 +55,7 @@ brw_bo_map(struct brw_context *brw,
    if (likely(!brw->perf_debug) || !drm_intel_bo_busy(bo))
       return drm_intel_bo_map(bo, write_enable);
 
-   float start_time = get_time();
+   double start_time = get_time();
 
    int ret = drm_intel_bo_map(bo, write_enable);
 
@@ -71,7 +71,7 @@ brw_bo_map_gtt(struct brw_context *brw, drm_intel_bo *bo, const char *bo_name)
    if (likely(!brw->perf_debug) || !drm_intel_bo_busy(bo))
       return drm_intel_gem_bo_map_gtt(bo);
 
-   float start_time = get_time();
+   double start_time = get_time();
 
    int ret = drm_intel_gem_bo_map_gtt(bo);
 

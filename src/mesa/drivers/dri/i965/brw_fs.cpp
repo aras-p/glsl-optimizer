@@ -3506,7 +3506,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
                unsigned *final_assembly_size)
 {
    bool start_busy = false;
-   float start_time = 0;
+   double start_time = 0;
 
    if (unlikely(brw->perf_debug)) {
       start_busy = (brw->batch.last_bo &&
