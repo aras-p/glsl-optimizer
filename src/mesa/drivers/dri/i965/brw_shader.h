@@ -56,7 +56,7 @@ public:
 
    enum opcode opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
 
-   uint32_t predicate;
+   uint8_t predicate;
    bool predicate_inverse;
 };
 
