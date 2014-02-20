@@ -207,6 +207,17 @@ public:
 
    fs_reg dst;
    fs_reg src[3];
+
+   /** @{
+    * Annotation for the generated IR.  One of the two can be set.
+    */
+   const void *ir;
+   const char *annotation;
+   /** @} */
+
+   uint32_t texture_offset; /**< Texture offset bitfield */
+   uint32_t offset; /* spill/unspill offset */
+
    bool saturate;
    uint8_t conditional_mod; /**< BRW_CONDITIONAL_* */
 
@@ -218,7 +229,6 @@ public:
    uint8_t mlen; /**< SEND message length */
    uint8_t regs_written; /**< Number of vgrfs written by a SEND message, or 1 */
    int8_t base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
-   uint32_t texture_offset; /**< Texture offset bitfield */
    uint8_t sampler;
    uint8_t target; /**< MRT target. */
    bool eot;
@@ -227,14 +237,6 @@ public:
    bool force_uncompressed;
    bool force_sechalf;
    bool force_writemask_all;
-   uint32_t offset; /* spill/unspill offset */
-
-   /** @{
-    * Annotation for the generated IR.  One of the two can be set.
-    */
-   const void *ir;
-   const char *annotation;
-   /** @} */
 };
 
 /**
