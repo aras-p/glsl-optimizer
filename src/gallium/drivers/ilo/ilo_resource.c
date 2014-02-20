@@ -608,7 +608,7 @@ tex_layout_init_hiz(struct tex_layout *layout)
    layout->hiz = true;
 
    /* no point in having HiZ */
-   if (templ->usage & PIPE_USAGE_STAGING)
+   if (templ->usage == PIPE_USAGE_STAGING)
       layout->hiz = false;
 
    if (layout->dev->gen == ILO_GEN(6)) {
