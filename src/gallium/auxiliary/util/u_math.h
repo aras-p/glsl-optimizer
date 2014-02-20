@@ -726,6 +726,9 @@ util_bitcount(unsigned n)
 #define util_le16_to_cpu(x) (x)
 #endif
 
+#define util_cpu_to_le64(x) util_le64_to_cpu(x)
+#define util_cpu_to_le32(x) util_le32_to_cpu(x)
+#define util_cpu_to_le16(x) util_le16_to_cpu(x)
 
 /**
  * Reverse byte order of a 32 bit word.
