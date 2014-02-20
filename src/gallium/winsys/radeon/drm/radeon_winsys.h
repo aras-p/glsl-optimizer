@@ -160,6 +160,22 @@ enum radeon_value_id {
     RADEON_TIMESTAMP
 };
 
+enum radeon_bo_priority {
+    RADEON_PRIO_MIN,
+    RADEON_PRIO_SHADER_DATA, /* shader code, resource descriptors */
+    RADEON_PRIO_SHADER_BUFFER_RO, /* read-only */
+    RADEON_PRIO_SHADER_TEXTURE_RO, /* read-only */
+    RADEON_PRIO_SHADER_RESOURCE_RW, /* buffers, textures, streamout, GS rings, RATs; read/write */
+    RADEON_PRIO_COLOR_BUFFER,
+    RADEON_PRIO_DEPTH_BUFFER,
+    RADEON_PRIO_SHADER_TEXTURE_MSAA,
+    RADEON_PRIO_COLOR_BUFFER_MSAA,
+    RADEON_PRIO_DEPTH_BUFFER_MSAA,
+    RADEON_PRIO_COLOR_META,
+    RADEON_PRIO_DEPTH_META,
+    RADEON_PRIO_MAX /* must be <= 15 */
+};
+
 struct winsys_handle;
 struct radeon_winsys_cs_handle;
 
@@ -411,12 +427,15 @@ struct radeon_winsys {
      * \param buf A winsys buffer to validate.
      * \param usage   Whether the buffer is used for read and/or write.
      * \param domain  Bitmask of the RADEON_DOMAIN_* flags.
+     * \param priority  A higher number means a greater chance of being
+     *                  placed in the requested domain. 15 is the maximum.
      * \return Relocation index.
      */
     unsigned (*cs_add_reloc)(struct radeon_winsys_cs *cs,
                              struct radeon_winsys_cs_handle *buf,
                              enum radeon_bo_usage usage,
-                             enum radeon_bo_domain domain);
+                             enum radeon_bo_domain domain/*,
+                             enum radeon_bo_priority priority*/);
 
     /**
      * Return TRUE if there is enough memory in VRAM and GTT for the relocs

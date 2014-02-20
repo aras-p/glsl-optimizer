@@ -210,15 +210,17 @@ static struct radeon_winsys_cs *radeon_drm_cs_create(struct radeon_winsys *rws,
 
 #define OUT_CS(cs, value) (cs)->buf[(cs)->cdw++] = (value)
 
-static INLINE void update_reloc_domains(struct drm_radeon_cs_reloc *reloc,
-                                        enum radeon_bo_domain rd,
-                                        enum radeon_bo_domain wd,
-                                        enum radeon_bo_domain *added_domains)
+static INLINE void update_reloc(struct drm_radeon_cs_reloc *reloc,
+				enum radeon_bo_domain rd,
+				enum radeon_bo_domain wd,
+				unsigned priority,
+				enum radeon_bo_domain *added_domains)
 {
     *added_domains = (rd | wd) & ~(reloc->read_domains | reloc->write_domain);
 
     reloc->read_domains |= rd;
     reloc->write_domain |= wd;
+    reloc->flags = MAX2(reloc->flags, priority);
 }
 
 int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo)
@@ -262,6 +264,7 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
                                  struct radeon_bo *bo,
                                  enum radeon_bo_usage usage,
                                  enum radeon_bo_domain domains,
+                                 unsigned priority,
                                  enum radeon_bo_domain *added_domains)
 {
     struct radeon_cs_context *csc = cs->csc;
@@ -272,7 +275,9 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
     bool update_hash = TRUE;
     int i;
 
+    priority = MIN2(priority, 15);
     *added_domains = 0;
+
     if (csc->is_handle_added[hash]) {
         i = csc->reloc_indices_hashlist[hash];
         reloc = &csc->relocs[i];
@@ -298,7 +303,7 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
              * update the cmd stream with proper buffer offset).
              */
             update_hash = FALSE;
-            update_reloc_domains(reloc, rd, wd, added_domains);
+            update_reloc(reloc, rd, wd, priority, added_domains);
             if (cs->base.ring_type != RING_DMA) {
                 csc->reloc_indices_hashlist[hash] = i;
                 return i;
@@ -328,7 +333,7 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
     reloc->handle = bo->handle;
     reloc->read_domains = rd;
     reloc->write_domain = wd;
-    reloc->flags = 0;
+    reloc->flags = priority;
 
     csc->is_handle_added[hash] = TRUE;
     if (update_hash) {
@@ -349,7 +354,7 @@ static unsigned radeon_drm_cs_add_reloc(struct radeon_winsys_cs *rcs,
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_bo *bo = (struct radeon_bo*)buf;
     enum radeon_bo_domain added_domains;
-    unsigned index = radeon_add_reloc(cs, bo, usage, domains, &added_domains);
+    unsigned index = radeon_add_reloc(cs, bo, usage, domains, 0, &added_domains);
 
     if (added_domains & RADEON_DOMAIN_GTT)
         cs->csc->used_gart += bo->base.size;
