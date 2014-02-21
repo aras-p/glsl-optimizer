@@ -34,6 +34,8 @@
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_parse.h"
 
+#include "freedreno_program.h"
+
 #include "fd2_program.h"
 #include "fd2_compiler.h"
 #include "fd2_texture.h"
@@ -141,15 +143,6 @@ fd2_fp_state_delete(struct pipe_context *pctx, void *hwcso)
 	delete_shader(so);
 }
 
-static void
-fd2_fp_state_bind(struct pipe_context *pctx, void *hwcso)
-{
-	struct fd_context *ctx = fd_context(pctx);
-	ctx->prog.fp = hwcso;
-	ctx->prog.dirty |= FD_SHADER_DIRTY_FP;
-	ctx->dirty |= FD_DIRTY_PROG;
-}
-
 static void *
 fd2_vp_state_create(struct pipe_context *pctx,
 		const struct pipe_shader_state *cso)
@@ -166,15 +159,6 @@ fd2_vp_state_delete(struct pipe_context *pctx, void *hwcso)
 {
 	struct fd2_shader_stateobj *so = hwcso;
 	delete_shader(so);
-}
-
-static void
-fd2_vp_state_bind(struct pipe_context *pctx, void *hwcso)
-{
-	struct fd_context *ctx = fd_context(pctx);
-	ctx->prog.vp = hwcso;
-	ctx->prog.dirty |= FD_SHADER_DIRTY_VP;
-	ctx->dirty |= FD_DIRTY_PROG;
 }
 
 static void
@@ -481,26 +465,15 @@ fd2_prog_init(struct pipe_context *pctx)
 	struct fd_context *ctx = fd_context(pctx);
 
 	pctx->create_fs_state = fd2_fp_state_create;
-	pctx->bind_fs_state = fd2_fp_state_bind;
 	pctx->delete_fs_state = fd2_fp_state_delete;
 
 	pctx->create_vs_state = fd2_vp_state_create;
-	pctx->bind_vs_state = fd2_vp_state_bind;
 	pctx->delete_vs_state = fd2_vp_state_delete;
+
+	fd_prog_init(pctx);
 
 	ctx->solid_prog.fp = create_solid_fp();
 	ctx->solid_prog.vp = create_solid_vp();
 	ctx->blit_prog.fp = create_blit_fp();
 	ctx->blit_prog.vp = create_blit_vp();
-}
-
-void
-fd2_prog_fini(struct pipe_context *pctx)
-{
-	struct fd_context *ctx = fd_context(pctx);
-
-	delete_shader(ctx->solid_prog.vp);
-	delete_shader(ctx->solid_prog.fp);
-	delete_shader(ctx->blit_prog.vp);
-	delete_shader(ctx->blit_prog.fp);
 }

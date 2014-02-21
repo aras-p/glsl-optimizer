@@ -28,6 +28,7 @@
 
 #include "freedreno_context.h"
 #include "freedreno_draw.h"
+#include "freedreno_program.h"
 #include "freedreno_resource.h"
 #include "freedreno_texture.h"
 #include "freedreno_state.h"
@@ -142,6 +143,8 @@ fd_context_destroy(struct pipe_context *pctx)
 	unsigned i;
 
 	DBG("");
+
+	fd_prog_fini(pctx);
 
 	util_slab_destroy(&ctx->transfer_pool);
 

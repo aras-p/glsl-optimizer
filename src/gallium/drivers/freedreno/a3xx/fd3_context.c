@@ -42,8 +42,6 @@ fd3_context_destroy(struct pipe_context *pctx)
 {
 	struct fd3_context *fd3_ctx = fd3_context(fd_context(pctx));
 
-	fd3_prog_fini(pctx);
-
 	util_dynarray_fini(&fd3_ctx->rbrc_patches);
 
 	fd_bo_del(fd3_ctx->vs_pvt_mem);

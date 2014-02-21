@@ -128,6 +128,5 @@ void fd3_program_emit(struct fd_ringbuffer *ring,
 		struct fd_program_stateobj *prog, bool binning);
 
 void fd3_prog_init(struct pipe_context *pctx);
-void fd3_prog_fini(struct pipe_context *pctx);
 
 #endif /* FD3_PROGRAM_H_ */

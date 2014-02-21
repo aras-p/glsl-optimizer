@@ -35,6 +35,7 @@
 #include "tgsi/tgsi_parse.h"
 
 #include "freedreno_lowering.h"
+#include "freedreno_program.h"
 
 #include "fd3_program.h"
 #include "fd3_compiler.h"
@@ -165,15 +166,6 @@ fd3_fp_state_delete(struct pipe_context *pctx, void *hwcso)
 	delete_shader(so);
 }
 
-static void
-fd3_fp_state_bind(struct pipe_context *pctx, void *hwcso)
-{
-	struct fd_context *ctx = fd_context(pctx);
-	ctx->prog.fp = hwcso;
-	ctx->prog.dirty |= FD_SHADER_DIRTY_FP;
-	ctx->dirty |= FD_DIRTY_PROG;
-}
-
 static void *
 fd3_vp_state_create(struct pipe_context *pctx,
 		const struct pipe_shader_state *cso)
@@ -186,15 +178,6 @@ fd3_vp_state_delete(struct pipe_context *pctx, void *hwcso)
 {
 	struct fd3_shader_stateobj *so = hwcso;
 	delete_shader(so);
-}
-
-static void
-fd3_vp_state_bind(struct pipe_context *pctx, void *hwcso)
-{
-	struct fd_context *ctx = fd_context(pctx);
-	ctx->prog.vp = hwcso;
-	ctx->prog.dirty |= FD_SHADER_DIRTY_VP;
-	ctx->dirty |= FD_DIRTY_PROG;
 }
 
 static void
@@ -476,255 +459,29 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 			A3XX_VFD_CONTROL_1_REGID4INST(regid(63,0)));
 }
 
-/* once the compiler is good enough, we should construct TGSI in the
- * core freedreno driver, and then let the a2xx/a3xx parts compile
- * the internal shaders from TGSI the same as regular shaders.  This
- * would be the first step towards handling most of clear (and the
- * gmem<->mem blits) from the core via normal state changes and shader
- * state objects.
- *
- * (Well, there would still be some special bits, because there are
- * some registers that don't get set for normal draw, but this should
- * be relatively small and could be handled via callbacks from core
- * into a2xx/a3xx..)
- */
-static struct fd3_shader_stateobj *
-create_internal_shader(struct pipe_context *pctx, enum shader_t type,
-		struct ir3_shader *ir)
+/* hack.. until we figure out how to deal w/ vpsrepl properly.. */
+static void
+fix_blit_fp(struct pipe_context *pctx)
 {
-	struct fd3_shader_stateobj *so = CALLOC_STRUCT(fd3_shader_stateobj);
-
-	if (!so) {
-		ir3_shader_destroy(ir);
-		return NULL;
-	}
-
-	so->type = type;
-	so->ir = ir;
-
-	assemble_shader(pctx, so);
-	assert(so->bo);
-
-	return so;
-}
-
-/* Creates shader:
- *    (sy)(ss)(rpt1)bary.f (ei)r0.z, (r)0, r0.x
- *    (rpt5)nop
- *    sam (f32)(xyzw)r0.x, r0.z, s#0, t#0
- *    (sy)(rpt3)cov.f32f16 hr0.x, (r)r0.x
- *    end
- */
-static struct fd3_shader_stateobj *
-create_blit_fp(struct pipe_context *pctx)
-{
-	struct fd3_shader_stateobj *so;
-	struct ir3_shader *ir = ir3_shader_create();
-	struct ir3_block *block = ir3_block_create(ir, 0, 0, 0);
-	struct ir3_instruction *instr;
-
-	/* (sy)(ss)(rpt1)bary.f (ei)r0.z, (r)0, r0.x */
-	instr = ir3_instr_create(block, 2, OPC_BARY_F);
-	instr->flags = IR3_INSTR_SY | IR3_INSTR_SS;
-	instr->repeat = 1;
-
-	ir3_reg_create(instr, regid(0,2), IR3_REG_EI);    /* (ei)r0.z */
-	ir3_reg_create(instr, 0, IR3_REG_R |              /* (r)0 */
-			IR3_REG_IMMED)->iim_val = 0;
-	ir3_reg_create(instr, regid(0,0), 0);             /* r0.x */
-
-	/* (rpt5)nop */
-	instr = ir3_instr_create(block, 0, OPC_NOP);
-	instr->repeat = 5;
-
-	/* sam (f32)(xyzw)r0.x, r0.z, s#0, t#0 */
-	instr = ir3_instr_create(block, 5, OPC_SAM);
-	instr->cat5.samp = 0;
-	instr->cat5.tex  = 0;
-	instr->cat5.type = TYPE_F32;
-
-	ir3_reg_create(instr, regid(0,0),                 /* (xyzw)r0.x */
-			0)->wrmask = 0xf;
-	ir3_reg_create(instr, regid(0,2), 0);             /* r0.z */
-
-	/* (sy)(rpt3)cov.f32f16 hr0.x, (r)r0.x */
-	instr = ir3_instr_create(block, 1, 0);  /* mov/cov instructions have no opc */
-	instr->flags = IR3_INSTR_SY;
-	instr->repeat = 3;
-	instr->cat1.src_type = TYPE_F32;
-	instr->cat1.dst_type = TYPE_F16;
-
-	ir3_reg_create(instr, regid(0,0), IR3_REG_HALF);  /* hr0.x */
-	ir3_reg_create(instr, regid(0,0), IR3_REG_R);     /* (r)r0.x */
-
-	/* end */
-	instr = ir3_instr_create(block, 0, OPC_END);
-
-	so = create_internal_shader(pctx, SHADER_FRAGMENT, ir);
-	if (!so)
-		return NULL;
-
-	so->half_precision = true;
-	so->inputs_count = 1;
-	so->inputs[0].semantic =
-		fd3_semantic_name(TGSI_SEMANTIC_TEXCOORD, 0);
-	so->inputs[0].inloc = 8;
-	so->inputs[0].compmask = 0x3;
-	so->total_in = 2;
-	so->outputs_count = 1;
-	so->outputs[0].semantic =
-		fd3_semantic_name(TGSI_SEMANTIC_COLOR, 0);
-	so->outputs[0].regid = regid(0,0);
-	so->samplers_count = 1;
+	struct fd_context *ctx = fd_context(pctx);
+	struct fd3_shader_stateobj *so = ctx->blit_prog.fp;
 
 	so->vpsrepl[0] = 0x99999999;
 	so->vpsrepl[1] = 0x99999999;
 	so->vpsrepl[2] = 0x99999999;
 	so->vpsrepl[3] = 0x99999999;
-
-	return so;
-}
-
-/* Creates shader:
- *    (sy)(ss)end
- */
-static struct fd3_shader_stateobj *
-create_blit_vp(struct pipe_context *pctx)
-{
-	struct fd3_shader_stateobj *so;
-	struct ir3_shader *ir = ir3_shader_create();
-	struct ir3_block *block = ir3_block_create(ir, 0, 0, 0);
-	struct ir3_instruction *instr;
-
-	/* (sy)(ss)end */
-	instr = ir3_instr_create(block, 0, OPC_END);
-	instr->flags = IR3_INSTR_SY | IR3_INSTR_SS;
-
-	so = create_internal_shader(pctx, SHADER_VERTEX, ir);
-	if (!so)
-		return NULL;
-
-	so->inputs_count = 2;
-	so->inputs[0].regid = regid(0,0);
-	so->inputs[0].compmask = 0xf;
-	so->inputs[1].regid = regid(1,0);
-	so->inputs[1].compmask = 0xf;
-	so->total_in = 8;
-	so->outputs_count = 2;
-	so->outputs[0].semantic =
-		fd3_semantic_name(TGSI_SEMANTIC_TEXCOORD, 0);
-	so->outputs[0].regid = regid(0,0);
-	so->outputs[1].semantic =
-		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0);
-	so->outputs[1].regid = regid(1,0);
-
-	fixup_vp_regfootprint(so);
-
-	return so;
-}
-
-/* Creates shader:
- *    (sy)(ss)(rpt3)mov.f16f16 hr0.x, (r)hc0.x
- *    end
- */
-static struct fd3_shader_stateobj *
-create_solid_fp(struct pipe_context *pctx)
-{
-	struct fd3_shader_stateobj *so;
-	struct ir3_shader *ir = ir3_shader_create();
-	struct ir3_block *block = ir3_block_create(ir, 0, 0, 0);
-	struct ir3_instruction *instr;
-
-	/* (sy)(ss)(rpt3)mov.f16f16 hr0.x, (r)hc0.x */
-	instr = ir3_instr_create(block, 1, 0);  /* mov/cov instructions have no opc */
-	instr->flags = IR3_INSTR_SY | IR3_INSTR_SS;
-	instr->repeat = 3;
-	instr->cat1.src_type = TYPE_F16;
-	instr->cat1.dst_type = TYPE_F16;
-
-	ir3_reg_create(instr, regid(0,0), IR3_REG_HALF);  /* hr0.x */
-	ir3_reg_create(instr, regid(0,0), IR3_REG_HALF |  /* (r)hc0.x */
-			IR3_REG_CONST | IR3_REG_R);
-
-	/* end */
-	instr = ir3_instr_create(block, 0, OPC_END);
-
-	so = create_internal_shader(pctx, SHADER_FRAGMENT, ir);
-	if (!so)
-		return NULL;
-
-	so->half_precision = true;
-	so->inputs_count = 0;
-	so->outputs_count = 1;
-	so->outputs[0].semantic =
-		fd3_semantic_name(TGSI_SEMANTIC_COLOR, 0);
-	so->outputs[0].regid = regid(0, 0);
-	so->total_in = 0;
-
-	return so;
-}
-
-/* Creates shader:
- *    (sy)(ss)end
- */
-static struct fd3_shader_stateobj *
-create_solid_vp(struct pipe_context *pctx)
-{
-	struct fd3_shader_stateobj *so;
-	struct ir3_shader *ir = ir3_shader_create();
-	struct ir3_block *block = ir3_block_create(ir, 0, 0, 0);
-	struct ir3_instruction *instr;
-
-	/* (sy)(ss)end */
-	instr = ir3_instr_create(block, 0, OPC_END);
-	instr->flags = IR3_INSTR_SY | IR3_INSTR_SS;
-
-
-	so = create_internal_shader(pctx, SHADER_VERTEX, ir);
-	if (!so)
-		return NULL;
-
-	so->inputs_count = 1;
-	so->inputs[0].regid = regid(0,0);
-	so->inputs[0].compmask = 0xf;
-	so->total_in = 4;
-
-	so->outputs_count = 1;
-	so->outputs[0].semantic =
-		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0);
-	so->outputs[0].regid = regid(0,0);
-
-	fixup_vp_regfootprint(so);
-
-	return so;
 }
 
 void
 fd3_prog_init(struct pipe_context *pctx)
 {
-	struct fd_context *ctx = fd_context(pctx);
-
 	pctx->create_fs_state = fd3_fp_state_create;
-	pctx->bind_fs_state = fd3_fp_state_bind;
 	pctx->delete_fs_state = fd3_fp_state_delete;
 
 	pctx->create_vs_state = fd3_vp_state_create;
-	pctx->bind_vs_state = fd3_vp_state_bind;
 	pctx->delete_vs_state = fd3_vp_state_delete;
 
-	ctx->solid_prog.fp = create_solid_fp(pctx);
-	ctx->solid_prog.vp = create_solid_vp(pctx);
-	ctx->blit_prog.fp = create_blit_fp(pctx);
-	ctx->blit_prog.vp = create_blit_vp(pctx);
-}
+	fd_prog_init(pctx);
 
-void
-fd3_prog_fini(struct pipe_context *pctx)
-{
-	struct fd_context *ctx = fd_context(pctx);
-
-	delete_shader(ctx->solid_prog.vp);
-	delete_shader(ctx->solid_prog.fp);
-	delete_shader(ctx->blit_prog.vp);
-	delete_shader(ctx->blit_prog.fp);
+	fix_blit_fp(pctx);
 }
