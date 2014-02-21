@@ -496,6 +496,47 @@ intel_miptree_choose_tiling(struct brw_context *brw,
    return I915_TILING_Y | I915_TILING_X;
 }
 
+
+/**
+ * Choose an appropriate uncompressed format for a requested
+ * compressed format, if unsupported.
+ */
+mesa_format
+intel_lower_compressed_format(struct brw_context *brw, mesa_format format)
+{
+   /* No need to lower ETC formats on these platforms,
+    * they are supported natively.
+    */
+   if (brw->gen >= 8 || brw->is_baytrail)
+      return format;
+
+   switch (format) {
+   case MESA_FORMAT_ETC1_RGB8:
+      return MESA_FORMAT_R8G8B8X8_UNORM;
+   case MESA_FORMAT_ETC2_RGB8:
+      return MESA_FORMAT_R8G8B8X8_UNORM;
+   case MESA_FORMAT_ETC2_SRGB8:
+   case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
+   case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+      return MESA_FORMAT_B8G8R8A8_SRGB;
+   case MESA_FORMAT_ETC2_RGBA8_EAC:
+   case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
+      return MESA_FORMAT_R8G8B8A8_UNORM;
+   case MESA_FORMAT_ETC2_R11_EAC:
+      return MESA_FORMAT_R_UNORM16;
+   case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
+      return MESA_FORMAT_R_SNORM16;
+   case MESA_FORMAT_ETC2_RG11_EAC:
+      return MESA_FORMAT_R16G16_UNORM;
+   case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
+      return MESA_FORMAT_R16G16_SNORM;
+   default:
+      /* Non ETC1 / ETC2 format */
+      return format;
+   }
+}
+
+
 struct intel_mipmap_tree *
 intel_miptree_create(struct brw_context *brw,
 		     GLenum target,
@@ -514,40 +555,7 @@ intel_miptree_create(struct brw_context *brw,
    mesa_format etc_format = MESA_FORMAT_NONE;
    GLuint total_width, total_height;
 
-   if (brw->gen < 8 && !brw->is_baytrail) {
-      switch (format) {
-      case MESA_FORMAT_ETC1_RGB8:
-         format = MESA_FORMAT_R8G8B8X8_UNORM;
-         break;
-      case MESA_FORMAT_ETC2_RGB8:
-         format = MESA_FORMAT_R8G8B8X8_UNORM;
-         break;
-      case MESA_FORMAT_ETC2_SRGB8:
-      case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
-      case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
-         format = MESA_FORMAT_B8G8R8A8_SRGB;
-         break;
-      case MESA_FORMAT_ETC2_RGBA8_EAC:
-      case MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1:
-         format = MESA_FORMAT_R8G8B8A8_UNORM;
-         break;
-      case MESA_FORMAT_ETC2_R11_EAC:
-         format = MESA_FORMAT_R_UNORM16;
-         break;
-      case MESA_FORMAT_ETC2_SIGNED_R11_EAC:
-         format = MESA_FORMAT_R_SNORM16;
-         break;
-      case MESA_FORMAT_ETC2_RG11_EAC:
-         format = MESA_FORMAT_R16G16_UNORM;
-         break;
-      case MESA_FORMAT_ETC2_SIGNED_RG11_EAC:
-         format = MESA_FORMAT_R16G16_SNORM;
-         break;
-      default:
-         /* Non ETC1 / ETC2 format */
-         break;
-      }
-   }
+   format = intel_lower_compressed_format(brw, format);
 
    etc_format = (format != tex_format) ? tex_format : MESA_FORMAT_NONE;
 

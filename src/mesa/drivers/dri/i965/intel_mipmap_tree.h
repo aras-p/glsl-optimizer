@@ -503,6 +503,9 @@ intel_miptree_create_for_renderbuffer(struct brw_context *brw,
 mesa_format
 intel_depth_format_for_depthstencil_format(mesa_format format);
 
+mesa_format
+intel_lower_compressed_format(struct brw_context *brw, mesa_format format);
+
 /** \brief Assert that the level and layer are valid for the miptree. */
 static inline void
 intel_miptree_check_level_layer(struct intel_mipmap_tree *mt,
