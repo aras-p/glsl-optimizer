@@ -20,7 +20,7 @@ Status
 
 Version
 
-    Version 7, 7-November-2013
+    Version 8, 14-February-2014
 
 Number
 
@@ -211,7 +211,7 @@ Additions to the GLX 1.4 Specification
 
     The attribute name GLX_RENDERER_ID_MESA specified the index of the render
     against which the context should be created.  The default value of
-    GLX_RENDER_ID_MESA is 0.
+    GLX_RENDERER_ID_MESA is 0.
 
 
     [Add to list of errors for glXCreateContextAttribsARB in section section
@@ -373,7 +373,7 @@ Issues
         should make every attempt to return as much information as is
         possible.  For example, if the implementation is running on a non-PCI
         SoC with a Qualcomm GPU, GLX_RENDERER_VENDOR_ID_MESA should return
-        0x168C, but GLX_RENDERER_DEVICE_ID_MESA will return 0x0000.
+        0x5143, but GLX_RENDERER_DEVICE_ID_MESA will return 0xFFFFFFFF.
 
 Revision History
 
@@ -403,3 +403,8 @@ Revision History
 
     Version 7, 2013/11/07 - Fix a couple more typos.  Add issue #17 regarding
                             the PCI queries on systems that don't have PCI.
+
+    Version 8, 2014/02/14 - Fix a couple typos. GLX_RENDER_ID_MESA should
+                            read GLX_RENDERER_ID_MESA. The VENDOR/DEVICE_ID
+                            example given in issue #17 should be 0x5143 and
+                            0xFFFFFFFF respectively.
