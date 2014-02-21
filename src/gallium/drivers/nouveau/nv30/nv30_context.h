@@ -119,16 +119,12 @@ struct nv30_context {
    struct nouveau_heap  *blit_vp;
    struct pipe_resource *blit_fp;
 
-   /*XXX: nvfx state, DO NOT USE EVER OUTSIDE "STOLEN" NVFX code */
-   unsigned is_nv4x;
-   bool hw_pointsprite_control;
-   enum {
-      HW,
-   } render_mode;
-
    struct pipe_query *render_cond_query;
    unsigned render_cond_mode;
    boolean render_cond_cond;
+
+   /*XXX: nvfx state, DO NOT USE EVER OUTSIDE "STOLEN" NVFX code */
+   unsigned is_nv4x;
 };
 
 static INLINE struct nv30_context *
