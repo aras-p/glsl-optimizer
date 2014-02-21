@@ -2535,6 +2535,23 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 
    if (var->name != NULL && strcmp(var->name, "gl_FragCoord") == 0) {
 
+      /* Section 4.3.8.1, page 39 of GLSL 1.50 spec says:
+       *
+       *    "Within any shader, the first redeclarations of gl_FragCoord
+       *     must appear before any use of gl_FragCoord."
+       *
+       * Generate a compiler error if above condition is not met by the
+       * fragment shader.
+       */
+      ir_variable *earlier = state->symbols->get_variable("gl_FragCoord");
+      if (earlier != NULL &&
+          earlier->data.used &&
+          !state->fs_redeclares_gl_fragcoord) {
+         _mesa_glsl_error(loc, state,
+                          "gl_FragCoord used before its first redeclaration "
+                          "in fragment shader");
+      }
+
       /* Make sure all gl_FragCoord redeclarations specify the same layout
        * qualifiers.
        */
