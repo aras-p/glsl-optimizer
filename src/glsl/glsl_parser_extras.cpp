@@ -1434,7 +1434,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
 
       /* Print out the unoptimized IR. */
       if (dump_hir) {
-         _mesa_print_ir(shader->ir, state);
+         _mesa_print_ir(stdout, shader->ir, state);
       }
    }
 

@@ -235,7 +235,7 @@ int test_optpass(int argc, char **argv)
    /* Print out the initial IR */
    if (!state->error && !quiet) {
       printf("*** pre-optimization IR:\n");
-      _mesa_print_ir(shader->ir, state);
+      _mesa_print_ir(stdout, shader->ir, state);
       printf("\n--\n");
    }
 
@@ -255,7 +255,7 @@ int test_optpass(int argc, char **argv)
       if (!quiet) {
          printf("*** resulting IR:\n");
       }
-      _mesa_print_ir(shader->ir, state);
+      _mesa_print_ir(stdout, shader->ir, state);
       if (!quiet) {
          printf("\n--\n");
       }

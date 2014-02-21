@@ -400,7 +400,7 @@ optimize_split_arrays(exec_list *instructions, bool linked)
    visit_list_elements(&split, instructions);
 
    if (debug)
-      _mesa_print_ir(instructions, NULL);
+      _mesa_print_ir(stdout, instructions, NULL);
 
    ralloc_free(mem_ctx);
 

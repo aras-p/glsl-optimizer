@@ -2921,7 +2921,7 @@ get_mesa_program(struct gl_context *ctx,
       printf("\n");
       printf("GLSL IR for linked %s program %d:\n", target_string,
 	     shader_program->Name);
-      _mesa_print_ir(shader->ir, NULL);
+      _mesa_print_ir(stdout, shader->ir, NULL);
       printf("\n");
       printf("\n");
       printf("Mesa IR for linked %s program %d:\n", target_string,

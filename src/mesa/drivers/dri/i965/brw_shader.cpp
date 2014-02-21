@@ -255,7 +255,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
          printf("GLSL IR for linked %s program %d:\n",
                 _mesa_shader_stage_to_string(shader->base.Stage),
                 shProg->Name);
-         _mesa_print_ir(shader->base.ir, NULL);
+         _mesa_print_ir(stdout, shader->base.ir, NULL);
          printf("\n");
       }
    }

@@ -106,6 +106,7 @@ public:
 
    /** ir_print_visitor helper for debugging. */
    void print(void) const;
+   void fprint(FILE *f) const;
 
    virtual void accept(ir_visitor *) = 0;
    virtual ir_visitor_status accept(ir_hierarchical_visitor *) = 0;
@@ -2353,7 +2354,7 @@ mode_string(const ir_variable *var);
 extern "C" {
 #endif /* __cplusplus */
 
-extern void _mesa_print_ir(struct exec_list *instructions,
+extern void _mesa_print_ir(FILE *f, struct exec_list *instructions,
                            struct _mesa_glsl_parse_state *state);
 
 #ifdef __cplusplus

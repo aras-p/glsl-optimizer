@@ -855,7 +855,7 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
       if (ctx->Shader.Flags & GLSL_DUMP) {
          if (sh->CompileStatus) {
             printf("GLSL IR for shader %d:\n", sh->Name);
-            _mesa_print_ir(sh->ir, NULL);
+            _mesa_print_ir(stdout, sh->ir, NULL);
             printf("\n\n");
          } else {
             printf("GLSL shader %d failed to compile.\n", sh->Name);
