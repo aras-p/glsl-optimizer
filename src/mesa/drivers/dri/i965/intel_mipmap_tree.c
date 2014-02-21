@@ -49,23 +49,6 @@
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
-static GLenum
-target_to_target(GLenum target)
-{
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-      return GL_TEXTURE_CUBE_MAP_ARB;
-   default:
-      return target;
-   }
-}
-
-
 /**
  * Determine which MSAA layout should be used by the MSAA surface being
  * created, based on the chip generation and the surface type.
@@ -252,7 +235,7 @@ intel_miptree_create_layout(struct brw_context *brw,
        _mesa_get_format_name(format),
        first_level, last_level, mt);
 
-   mt->target = target_to_target(target);
+   mt->target = target;
    mt->format = format;
    mt->first_level = first_level;
    mt->last_level = last_level;
@@ -858,7 +841,7 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
     * objects can't change targets over their lifetimes, so this should be
     * true.
     */
-   assert(target_to_target(image->TexObject->Target) == mt->target);
+   assert(image->TexObject->Target == mt->target);
 
    mesa_format mt_format = mt->format;
    if (mt->format == MESA_FORMAT_Z24_UNORM_X8_UINT && mt->stencil_mt)
