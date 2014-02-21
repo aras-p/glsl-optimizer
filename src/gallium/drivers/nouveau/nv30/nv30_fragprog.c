@@ -67,7 +67,7 @@ nv30_fragprog_validate(struct nv30_context *nv30)
    int i;
 
    if (!fp->translated) {
-      _nvfx_fragprog_translate(nv30, fp, FALSE);
+      _nvfx_fragprog_translate(nv30, fp);
       if (!fp->translated)
          return;
 

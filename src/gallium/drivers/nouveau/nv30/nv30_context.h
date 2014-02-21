@@ -214,8 +214,7 @@ nv30_state_release(struct nv30_context *nv30);
 
 //XXX: needed to make it build, clean this up!
 void
-_nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp,
-         boolean emulate_sprite_flipping);
+_nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp);
 
 boolean
 _nvfx_vertprog_translate(struct nv30_context *nv30, struct nv30_vertprog *vp);

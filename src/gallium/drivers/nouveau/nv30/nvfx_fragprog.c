@@ -1114,8 +1114,7 @@ out_err:
 DEBUG_GET_ONCE_BOOL_OPTION(nvfx_dump_fp, "NVFX_DUMP_FP", FALSE)
 
 void
-_nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp,
-         boolean emulate_sprite_flipping)
+_nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp)
 {
    struct tgsi_parse_context parse;
    struct nvfx_fpc *fpc = NULL;
