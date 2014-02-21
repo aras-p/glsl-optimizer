@@ -54,6 +54,12 @@ struct intel_texture_object
     * might not all be the mipmap tree above.
     */
    bool needs_validate;
+
+   /* Mesa format for the validated texture object. For non-views this
+    * will always be the same as mt->format. For views, it may differ
+    * since the mt is shared across views with differing formats.
+    */
+   mesa_format _Format;
 };
 
 

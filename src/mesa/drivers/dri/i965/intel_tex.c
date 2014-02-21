@@ -168,6 +168,7 @@ intel_alloc_texture_storage(struct gl_context *ctx,
    intel_texobj->needs_validate = false;
    intel_texobj->validated_first_level = 0;
    intel_texobj->validated_last_level = levels - 1;
+   intel_texobj->_Format = intel_texobj->mt->format;
 
    return true;
 }
@@ -242,6 +243,7 @@ intel_texture_view(struct gl_context *ctx,
                    struct gl_texture_object *texObj,
                    struct gl_texture_object *origTexObj)
 {
+   struct brw_context *brw = brw_context(ctx);
    struct intel_texture_object *intel_tex = intel_texture_object(texObj);
    struct intel_texture_object *intel_orig_tex = intel_texture_object(origTexObj);
 
@@ -273,6 +275,13 @@ intel_texture_view(struct gl_context *ctx,
    intel_tex->needs_validate = false;
    intel_tex->validated_first_level = 0;
    intel_tex->validated_last_level = numLevels - 1;
+
+   /* Set the validated texture format, with the same adjustments that
+    * would have been applied to determine the underlying texture's
+    * mt->format.
+    */
+   intel_tex->_Format = intel_depth_format_for_depthstencil_format(
+         intel_lower_compressed_format(brw, texObj->Image[0][0]->TexFormat));
 
    return GL_TRUE;
 }
