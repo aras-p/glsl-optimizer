@@ -429,8 +429,7 @@ etc2_rgb8_parse_block(struct etc2_block *block,
       block->is_planar_mode = true;
 
       /* opaque bit must be set in planar mode */
-      if (!block->opaque)
-         block->opaque = true;
+      block->opaque = true;
 
       for (i = 0; i < 3; i++) {
          block->base_colors[0][i] = etc2_base_color_o_planar(src, i);
