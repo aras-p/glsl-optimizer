@@ -741,7 +741,7 @@ brw_depth_format(struct brw_context *brw, mesa_format format)
       return BRW_DEPTHFORMAT_D16_UNORM;
    case MESA_FORMAT_Z_FLOAT32:
       return BRW_DEPTHFORMAT_D32_FLOAT;
-   case MESA_FORMAT_Z24_UNORM_S8_UINT:
+   case MESA_FORMAT_Z24_UNORM_X8_UINT:
       if (brw->gen >= 6) {
          return BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
       } else {
@@ -761,8 +761,8 @@ brw_depth_format(struct brw_context *brw, mesa_format format)
           */
          return BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
       }
-   case MESA_FORMAT_Z24_UNORM_X8_UINT:
-      return BRW_DEPTHFORMAT_D24_UNORM_X8_UINT;
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
+      return BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
    case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
       return BRW_DEPTHFORMAT_D32_FLOAT_S8X24_UINT;
    default:
