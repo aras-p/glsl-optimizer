@@ -542,6 +542,16 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 		if ((shader->instrs_count == 0) && (n->category >= 5))
 			ir3_instr_create(block, 0, OPC_NOP);
 
+		if (is_nop(n) && shader->instrs_count) {
+			struct ir3_instruction *last =
+					shader->instrs[shader->instrs_count-1];
+			if (is_nop(last) && (last->repeat < 5)) {
+				last->repeat++;
+				last->flags |= n->flags;
+				continue;
+			}
+		}
+
 		shader->instrs[shader->instrs_count++] = n;
 
 		if (is_sfu(n))

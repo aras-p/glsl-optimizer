@@ -312,6 +312,11 @@ static inline bool is_flow(struct ir3_instruction *instr)
 	return (instr->category == 0);
 }
 
+static inline bool is_nop(struct ir3_instruction *instr)
+{
+	return is_flow(instr) && (instr->opc == OPC_NOP);
+}
+
 static inline bool is_alu(struct ir3_instruction *instr)
 {
 	return (1 <= instr->category) && (instr->category <= 3);
