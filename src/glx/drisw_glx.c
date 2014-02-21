@@ -27,46 +27,7 @@
 #include "glxclient.h"
 #include <dlfcn.h>
 #include "dri_common.h"
-
-struct drisw_display
-{
-   __GLXDRIdisplay base;
-};
-
-struct drisw_context
-{
-   struct glx_context base;
-   __DRIcontext *driContext;
-
-};
-
-struct drisw_screen
-{
-   struct glx_screen base;
-
-   __DRIscreen *driScreen;
-   __GLXDRIscreen vtable;
-   const __DRIcoreExtension *core;
-   const __DRIswrastExtension *swrast;
-   const __DRItexBufferExtension *texBuffer;
-   const __DRIcopySubBufferExtension *copySubBuffer;
-
-   const __DRIconfig **driver_configs;
-
-   void *driver;
-};
-
-struct drisw_drawable
-{
-   __GLXDRIdrawable base;
-
-   GC gc;
-   GC swapgc;
-
-   __DRIdrawable *driDrawable;
-   XVisualInfo *visinfo;
-   XImage *ximage;
-};
+#include "drisw_priv.h"
 
 static Bool
 XCreateDrawable(struct drisw_drawable * pdp,
