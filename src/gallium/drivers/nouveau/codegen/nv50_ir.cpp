@@ -25,8 +25,8 @@
 #include "codegen/nv50_ir_driver.h"
 
 extern "C" {
+#include "nouveau_debug.h"
 #include "nv50/nv50_program.h"
-#include "nv50/nv50_debug.h"
 }
 
 namespace nv50_ir {

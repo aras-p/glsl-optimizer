@@ -10,7 +10,7 @@
 /* this will resolve to either the NV30 or the NV40 version
  * depending on the current hardware */
 /* unusual, but very fast and compact method */
-#define NVFX_VP(c) ((NV30_VP_##c) + (nv30->is_nv4x & ((NV40_VP_##c) - (NV30_VP_##c))))
+#define NVFX_VP(c) ((NV30_VP_##c) + (vpc->is_nv4x & ((NV40_VP_##c) - (NV30_VP_##c))))
 
 #define NVFX_VP_INST_SLOT_VEC 0
 #define NVFX_VP_INST_SLOT_SCA 1
@@ -521,5 +521,15 @@ struct nvfx_relocation {
         unsigned location;
         unsigned target;
 };
+
+struct nv30_fragprog;
+struct nv30_vertprog;
+
+//XXX: needed to make it build, clean this up!
+void
+_nvfx_fragprog_translate(uint16_t oclass, struct nv30_fragprog *fp);
+
+boolean
+_nvfx_vertprog_translate(uint16_t oclass, struct nv30_vertprog *vp);
 
 #endif

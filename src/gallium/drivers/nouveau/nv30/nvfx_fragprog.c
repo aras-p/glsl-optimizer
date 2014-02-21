@@ -2,6 +2,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "util/u_dynarray.h"
 #include "util/u_linkage.h"
 #include "util/u_inlines.h"
 #include "util/u_debug.h"
@@ -12,9 +13,11 @@
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_ureg.h"
 
+#include "nouveau_debug.h"
+#include "nv_object.xml.h"
 #include "nv30/nv30-40_3d.xml.h"
-#include "nv30/nv30_context.h"
 #include "nv30/nvfx_shader.h"
+#include "nv30/nv30_state.h"
 
 struct nvfx_fpc {
    struct nv30_fragprog *fp;
@@ -30,6 +33,7 @@ struct nvfx_fpc {
 
    unsigned inst_offset;
    unsigned have_const;
+   unsigned is_nv4x;
 
    struct util_dynarray imm_data;
 
@@ -437,7 +441,7 @@ tgsi_mask(uint tgsi)
 }
 
 static boolean
-nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
+nvfx_fragprog_parse_instruction(struct nvfx_fpc *fpc,
             const struct tgsi_full_instruction *finst)
 {
    const struct nvfx_src none = nvfx_src(nvfx_reg(NVFXSR_NONE, 0));
@@ -621,7 +625,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
       nvfx_fp_emit(fpc, arith(sat, LG2, dst, mask, src[0], none, none));
       break;
    case TGSI_OPCODE_LIT:
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          nvfx_fp_emit(fpc, arith(sat, LIT_NV30, dst, mask, src[0], none, none));
       else {
          /* we use FLT_MIN, so that log2 never gives -infinity, and thus multiplication by
@@ -642,7 +646,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
       }
       break;
    case TGSI_OPCODE_LRP:
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          nvfx_fp_emit(fpc, arith(sat, LRP_NV30, dst, mask, src[0], src[1], src[2]));
       else {
          tmp = nvfx_src(temp(fpc));
@@ -668,7 +672,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
    case TGSI_OPCODE_NOP:
       break;
    case TGSI_OPCODE_POW:
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          nvfx_fp_emit(fpc, arith(sat, POW_NV30, dst, mask, src[0], src[1], none));
       else {
          tmp = nvfx_src(temp(fpc));
@@ -681,7 +685,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
       nvfx_fp_emit(fpc, arith(sat, RCP, dst, mask, src[0], none, none));
       break;
    case TGSI_OPCODE_RFL:
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          nvfx_fp_emit(fpc, arith(0, RFL_NV30, dst, mask, src[0], src[1], none));
       else {
          tmp = nvfx_src(temp(fpc));
@@ -694,7 +698,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
       }
       break;
    case TGSI_OPCODE_RSQ:
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          nvfx_fp_emit(fpc, arith(sat, RSQ_NV30, dst, mask, abs(swz(src[0], X, X, X, X)), none, none));
       else {
          tmp = nvfx_src(temp(fpc));
@@ -790,7 +794,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
                 nvfx_fp_emit(fpc, tex(sat, TXB, unit, dst, mask, src[0], none, none));
                 break;
         case TGSI_OPCODE_TXL:
-                if(nvfx->is_nv4x)
+                if(fpc->is_nv4x)
                         nvfx_fp_emit(fpc, tex(sat, TXL_NV40, unit, dst, mask, src[0], none, none));
                 else /* unsupported on nv30, use TEX and hope they like it */
                         nvfx_fp_emit(fpc, tex(sat, TEX, unit, dst, mask, src[0], none, none));
@@ -807,7 +811,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
    case TGSI_OPCODE_IF:
       // MOVRC0 R31 (TR0.xyzw), R<src>:
       // IF (NE.xxxx) ELSE <else> END <end>
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          goto nv3x_cflow;
       nv40_fp_if(fpc, src[0]);
       break;
@@ -815,7 +819,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
    case TGSI_OPCODE_ELSE:
    {
       uint32_t *hw;
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          goto nv3x_cflow;
       assert(util_dynarray_contains(&fpc->if_stack, unsigned));
       hw = &fpc->fp->insn[util_dynarray_top(&fpc->if_stack, unsigned)];
@@ -826,7 +830,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
    case TGSI_OPCODE_ENDIF:
    {
       uint32_t *hw;
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          goto nv3x_cflow;
       assert(util_dynarray_contains(&fpc->if_stack, unsigned));
       hw = &fpc->fp->insn[util_dynarray_pop(&fpc->if_stack, unsigned)];
@@ -849,19 +853,19 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
       break;
 
    case TGSI_OPCODE_CAL:
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          goto nv3x_cflow;
       nv40_fp_cal(fpc, finst->Label.Label);
       break;
 
    case TGSI_OPCODE_RET:
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          goto nv3x_cflow;
       nv40_fp_ret(fpc);
       break;
 
    case TGSI_OPCODE_BGNLOOP:
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          goto nv3x_cflow;
       /* TODO: we should support using two nested REPs to allow a > 255 iteration count */
       nv40_fp_rep(fpc, 255, finst->Label.Label);
@@ -871,7 +875,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
       break;
 
    case TGSI_OPCODE_BRK:
-      if(!nvfx->is_nv4x)
+      if(!fpc->is_nv4x)
          goto nv3x_cflow;
       nv40_fp_brk(fpc);
       break;
@@ -908,7 +912,7 @@ nv3x_cflow:
 }
 
 static boolean
-nvfx_fragprog_parse_decl_input(struct nv30_context *nvfx, struct nvfx_fpc *fpc,
+nvfx_fragprog_parse_decl_input(struct nvfx_fpc *fpc,
                                const struct tgsi_full_declaration *fdec)
 {
    unsigned idx = fdec->Range.First;
@@ -948,10 +952,10 @@ nvfx_fragprog_parse_decl_input(struct nv30_context *nvfx, struct nvfx_fpc *fpc,
 }
 
 static boolean
-nvfx_fragprog_assign_generic(struct nv30_context *nvfx, struct nvfx_fpc *fpc,
+nvfx_fragprog_assign_generic(struct nvfx_fpc *fpc,
                              const struct tgsi_full_declaration *fdec)
 {
-   unsigned num_texcoords = nvfx->is_nv4x ? 10 : 8;
+   unsigned num_texcoords = fpc->is_nv4x ? 10 : 8;
    unsigned idx = fdec->Range.First;
    unsigned hw;
 
@@ -984,7 +988,7 @@ nvfx_fragprog_assign_generic(struct nv30_context *nvfx, struct nvfx_fpc *fpc,
 }
 
 static boolean
-nvfx_fragprog_parse_decl_output(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
+nvfx_fragprog_parse_decl_output(struct nvfx_fpc *fpc,
             const struct tgsi_full_declaration *fdec)
 {
    unsigned idx = fdec->Range.First;
@@ -1002,7 +1006,7 @@ nvfx_fragprog_parse_decl_output(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
       case 2: hw = 3; break;
       case 3: hw = 4; break;
       }
-      if(hw > ((nvfx->is_nv4x) ? 4 : 2)) {
+      if(hw > ((fpc->is_nv4x) ? 4 : 2)) {
          NOUVEAU_ERR("bad rcol index\n");
          return FALSE;
       }
@@ -1018,7 +1022,7 @@ nvfx_fragprog_parse_decl_output(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
 }
 
 static boolean
-nvfx_fragprog_prepare(struct nv30_context* nvfx, struct nvfx_fpc *fpc)
+nvfx_fragprog_prepare(struct nvfx_fpc *fpc)
 {
    struct tgsi_parse_context p;
    int high_temp = -1, i;
@@ -1037,11 +1041,11 @@ nvfx_fragprog_prepare(struct nv30_context* nvfx, struct nvfx_fpc *fpc)
          fdec = &p.FullToken.FullDeclaration;
          switch (fdec->Declaration.File) {
          case TGSI_FILE_INPUT:
-            if (!nvfx_fragprog_parse_decl_input(nvfx, fpc, fdec))
+            if (!nvfx_fragprog_parse_decl_input(fpc, fdec))
                goto out_err;
             break;
          case TGSI_FILE_OUTPUT:
-            if (!nvfx_fragprog_parse_decl_output(nvfx, fpc, fdec))
+            if (!nvfx_fragprog_parse_decl_output(fpc, fdec))
                goto out_err;
             break;
          case TGSI_FILE_TEMPORARY:
@@ -1081,7 +1085,7 @@ nvfx_fragprog_prepare(struct nv30_context* nvfx, struct nvfx_fpc *fpc)
          fdec = &p.FullToken.FullDeclaration;
          switch (fdec->Declaration.File) {
          case TGSI_FILE_INPUT:
-            if (!nvfx_fragprog_assign_generic(nvfx, fpc, fdec))
+            if (!nvfx_fragprog_assign_generic(fpc, fdec))
                goto out_err;
             break;
          default:
@@ -1114,7 +1118,7 @@ out_err:
 DEBUG_GET_ONCE_BOOL_OPTION(nvfx_dump_fp, "NVFX_DUMP_FP", FALSE)
 
 void
-_nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp)
+_nvfx_fragprog_translate(uint16_t oclass, struct nv30_fragprog *fp)
 {
    struct tgsi_parse_context parse;
    struct nvfx_fpc *fpc = NULL;
@@ -1128,7 +1132,8 @@ _nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp)
    if (!fpc)
       goto out_err;
 
-   fpc->max_temps = nvfx->is_nv4x ? 48 : 32;
+   fpc->is_nv4x = (oclass >= NV40_3D_CLASS) ? ~0 : 0;
+   fpc->max_temps = fpc->is_nv4x ? 48 : 32;
    fpc->fp = fp;
    fpc->num_regs = 2;
    memset(fp->texcoord, 0xff, sizeof(fp->texcoord));
@@ -1152,7 +1157,7 @@ _nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp)
       }
    }
 
-   if (!nvfx_fragprog_prepare(nvfx, fpc))
+   if (!nvfx_fragprog_prepare(fpc))
       goto out_err;
 
    tgsi_parse_init(&parse, fp->pipe.tokens);
@@ -1168,7 +1173,7 @@ _nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp)
 
          util_dynarray_append(&insns, unsigned, fp->insn_len);
          finst = &parse.FullToken.FullInstruction;
-         if (!nvfx_fragprog_parse_instruction(nvfx, fpc, finst))
+         if (!nvfx_fragprog_parse_instruction(fpc, finst))
             goto out_err;
       }
          break;
@@ -1185,7 +1190,7 @@ _nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp)
    }
    util_dynarray_fini(&insns);
 
-   if(!nvfx->is_nv4x)
+   if(!fpc->is_nv4x)
       fp->fp_control |= (fpc->num_regs-1)/2;
    else
       fp->fp_control |= fpc->num_regs << NV40_3D_FP_CONTROL_TEMP_COUNT__SHIFT;
@@ -1207,7 +1212,7 @@ _nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp)
       debug_printf("\n");
       tgsi_dump(fp->pipe.tokens, 0);
 
-      debug_printf("\n%s fragment program:\n", nvfx->is_nv4x ? "nv4x" : "nv3x");
+      debug_printf("\n%s fragment program:\n", fpc->is_nv4x ? "nv4x" : "nv3x");
       for (unsigned i = 0; i < fp->insn_len; i += 4)
          debug_printf("%3u: %08x %08x %08x %08x\n", i >> 2, fp->insn[i], fp->insn[i + 1], fp->insn[i + 2], fp->insn[i + 3]);
       debug_printf("\n");

@@ -14,7 +14,6 @@
 #include "draw/draw_vertex.h"
 #endif
 
-#include "nv50/nv50_debug.h"
 #include "nv50/nv50_winsys.h"
 #include "nv50/nv50_stateobj.h"
 #include "nv50/nv50_screen.h"
@@ -23,6 +22,7 @@
 #include "nv50/nv50_transfer.h"
 
 #include "nouveau_context.h"
+#include "nouveau_debug.h"
 #include "nv_object.xml.h"
 #include "nv_m2mf.xml.h"
 #include "nv50/nv50_3ddefs.xml.h"

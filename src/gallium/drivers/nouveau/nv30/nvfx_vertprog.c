@@ -1,6 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "util/u_dynarray.h"
 #include "util/u_linkage.h"
 #include "util/u_debug.h"
 
@@ -12,9 +13,10 @@
 
 #include "draw/draw_context.h"
 
+#include "nv_object.xml.h"
+#include "nouveau_debug.h"
 #include "nv30/nv30-40_3d.xml.h"
-#include "nv30/nv30_context.h"
-#include "nv30/nv30_resource.h"
+#include "nv30/nv30_state.h"
 
 /* TODO (at least...):
  *  1. Indexed consts  + ARL
@@ -36,7 +38,6 @@ struct nvfx_loop_entry {
 };
 
 struct nvfx_vpc {
-   struct nv30_context* nv30;
    struct pipe_shader_state pipe;
    struct nv30_vertprog *vp;
    struct tgsi_shader_info* info;
@@ -56,6 +57,8 @@ struct nvfx_vpc {
 
    int hpos_idx;
    int cvtx_idx;
+
+   unsigned is_nv4x;
 
    struct util_dynarray label_relocs;
    struct util_dynarray loop_stack;
@@ -114,7 +117,7 @@ constant(struct nvfx_vpc *vpc, int pipe, float x, float y, float z, float w)
    nvfx_insn((s), (NVFX_VP_INST_SLOT_##t << 7) | NVFX_VP_INST_##t##_OP_##o, -1, (d), (m), (s0), (s1), (s2))
 
 static void
-emit_src(struct nv30_context *nv30, struct nvfx_vpc *vpc, uint32_t *hw,
+emit_src(struct nvfx_vpc *vpc, uint32_t *hw,
          int pos, struct nvfx_src src)
 {
    struct nv30_vertprog *vp = vpc->vp;
@@ -198,14 +201,14 @@ emit_src(struct nv30_context *nv30, struct nvfx_vpc *vpc, uint32_t *hw,
 }
 
 static void
-emit_dst(struct nv30_context *nv30, struct nvfx_vpc *vpc, uint32_t *hw,
+emit_dst(struct nvfx_vpc *vpc, uint32_t *hw,
          int slot, struct nvfx_reg dst)
 {
    struct nv30_vertprog *vp = vpc->vp;
 
    switch (dst.type) {
    case NVFXSR_NONE:
-      if(!nv30->is_nv4x)
+      if(!vpc->is_nv4x)
          hw[0] |= NV30_VP_INST_DEST_TEMP_ID_MASK;
       else {
          hw[3] |= NV40_VP_INST_DEST_MASK;
@@ -216,7 +219,7 @@ emit_dst(struct nv30_context *nv30, struct nvfx_vpc *vpc, uint32_t *hw,
       }
       break;
    case NVFXSR_TEMP:
-      if(!nv30->is_nv4x)
+      if(!vpc->is_nv4x)
          hw[0] |= (dst.index << NV30_VP_INST_DEST_TEMP_ID_SHIFT);
       else {
          hw[3] |= NV40_VP_INST_DEST_MASK;
@@ -228,7 +231,7 @@ emit_dst(struct nv30_context *nv30, struct nvfx_vpc *vpc, uint32_t *hw,
       break;
    case NVFXSR_OUTPUT:
       /* TODO: this may be wrong because on nv30 COL0 and BFC0 are swapped */
-      if(nv30->is_nv4x) {
+      if(vpc->is_nv4x) {
          switch (dst.index) {
          case NV30_VP_INST_DEST_CLP(0):
             dst.index = NVFX_VP(INST_DEST_FOGC);
@@ -263,7 +266,7 @@ emit_dst(struct nv30_context *nv30, struct nvfx_vpc *vpc, uint32_t *hw,
          }
       }
 
-      if(!nv30->is_nv4x) {
+      if(!vpc->is_nv4x) {
          hw[3] |= (dst.index << NV30_VP_INST_DEST_SHIFT);
          hw[0] |= NV30_VP_INST_VEC_DEST_TEMP_MASK;
 
@@ -290,7 +293,6 @@ emit_dst(struct nv30_context *nv30, struct nvfx_vpc *vpc, uint32_t *hw,
 static void
 nvfx_vp_emit(struct nvfx_vpc *vpc, struct nvfx_insn insn)
 {
-   struct nv30_context *nv30 = vpc->nv30;
    struct nv30_vertprog *vp = vpc->vp;
    unsigned slot = insn.op >> 7;
    unsigned op = insn.op & 0x7f;
@@ -313,12 +315,12 @@ nvfx_vp_emit(struct nvfx_vpc *vpc, struct nvfx_insn insn)
       hw[0] |= NVFX_VP(INST_COND_UPDATE_ENABLE);
 
    if(insn.sat) {
-      assert(nv30->is_nv4x);
-      if(nv30->is_nv4x)
+      assert(vpc->is_nv4x);
+      if(vpc->is_nv4x)
          hw[0] |= NV40_VP_INST_SATURATE;
    }
 
-   if(!nv30->is_nv4x) {
+   if(!vpc->is_nv4x) {
       if(slot == 0)
          hw[1] |= (op << NV30_VP_INST_VEC_OPCODE_SHIFT);
       else {
@@ -351,10 +353,10 @@ nvfx_vp_emit(struct nvfx_vpc *vpc, struct nvfx_insn insn)
       }
    }
 
-   emit_dst(nv30, vpc, hw, slot, insn.dst);
-   emit_src(nv30, vpc, hw, 0, insn.src[0]);
-   emit_src(nv30, vpc, hw, 1, insn.src[1]);
-   emit_src(nv30, vpc, hw, 2, insn.src[2]);
+   emit_dst(vpc, hw, slot, insn.dst);
+   emit_src(vpc, hw, 0, insn.src[0]);
+   emit_src(vpc, hw, 1, insn.src[1]);
+   emit_src(vpc, hw, 2, insn.src[2]);
 
 //   if(insn.src[0].indirect || op == NVFX_VP_INST_VEC_OP_ARL)
 //      hw[3] |= NV40_VP_INST_SCA_RESULT;
@@ -455,7 +457,7 @@ tgsi_mask(uint tgsi)
 }
 
 static boolean
-nvfx_vertprog_parse_instruction(struct nv30_context *nv30, struct nvfx_vpc *vpc,
+nvfx_vertprog_parse_instruction(struct nvfx_vpc *vpc,
             unsigned idx, const struct tgsi_full_instruction *finst)
 {
    struct nvfx_src src[3], tmp;
@@ -540,7 +542,7 @@ nvfx_vertprog_parse_instruction(struct nv30_context *nv30, struct nvfx_vpc *vpc,
    mask = tgsi_mask(finst->Dst[0].Register.WriteMask);
    if(finst->Instruction.Saturate == TGSI_SAT_ZERO_ONE) {
       assert(finst->Instruction.Opcode != TGSI_OPCODE_ARL);
-      if (nv30->is_nv4x)
+      if (vpc->is_nv4x)
          sat = TRUE;
       else
       if(dst.type != NVFXSR_TEMP)
@@ -802,7 +804,7 @@ nvfx_vertprog_parse_instruction(struct nv30_context *nv30, struct nvfx_vpc *vpc,
       return FALSE;
    }
 
-   if(finst->Instruction.Saturate == TGSI_SAT_ZERO_ONE && !nv30->is_nv4x) {
+   if(finst->Instruction.Saturate == TGSI_SAT_ZERO_ONE && !vpc->is_nv4x) {
       if (!vpc->r_0_1.type)
          vpc->r_0_1 = constant(vpc, -1, 0, 1, 0, 0);
       nvfx_vp_emit(vpc, arith(0, VEC, MAX, dst, mask, nvfx_src(dst), swz(nvfx_src(vpc->r_0_1), X, X, X, X), none));
@@ -814,10 +816,10 @@ nvfx_vertprog_parse_instruction(struct nv30_context *nv30, struct nvfx_vpc *vpc,
 }
 
 static boolean
-nvfx_vertprog_parse_decl_output(struct nv30_context *nv30, struct nvfx_vpc *vpc,
+nvfx_vertprog_parse_decl_output(struct nvfx_vpc *vpc,
                                 const struct tgsi_full_declaration *fdec)
 {
-   unsigned num_texcoords = nv30->is_nv4x ? 10 : 8;
+   unsigned num_texcoords = vpc->is_nv4x ? 10 : 8;
    unsigned idx = fdec->Range.First;
    unsigned semantic_index = fdec->Semantic.Index;
    int hw = 0, i;
@@ -891,7 +893,7 @@ nvfx_vertprog_parse_decl_output(struct nv30_context *nv30, struct nvfx_vpc *vpc,
 }
 
 static boolean
-nvfx_vertprog_prepare(struct nv30_context *nv30, struct nvfx_vpc *vpc)
+nvfx_vertprog_prepare(struct nvfx_vpc *vpc)
 {
    struct tgsi_parse_context p;
    int high_const = -1, high_temp = -1, high_addr = -1, nr_imm = 0, i;
@@ -930,7 +932,7 @@ nvfx_vertprog_prepare(struct nv30_context *nv30, struct nvfx_vpc *vpc)
             }
             break;
          case TGSI_FILE_OUTPUT:
-            if (!nvfx_vertprog_parse_decl_output(nv30, vpc, fdec))
+            if (!nvfx_vertprog_parse_decl_output(vpc, fdec))
                return FALSE;
             break;
          default:
@@ -974,7 +976,7 @@ nvfx_vertprog_prepare(struct nv30_context *nv30, struct nvfx_vpc *vpc)
 DEBUG_GET_ONCE_BOOL_OPTION(nvfx_dump_vp, "NVFX_DUMP_VP", FALSE)
 
 boolean
-_nvfx_vertprog_translate(struct nv30_context *nv30, struct nv30_vertprog *vp)
+_nvfx_vertprog_translate(uint16_t oclass, struct nv30_vertprog *vp)
 {
    struct tgsi_parse_context parse;
    struct nvfx_vpc *vpc = NULL;
@@ -989,13 +991,13 @@ _nvfx_vertprog_translate(struct nv30_context *nv30, struct nv30_vertprog *vp)
    vpc = CALLOC_STRUCT(nvfx_vpc);
    if (!vpc)
       return FALSE;
-   vpc->nv30 = nv30;
+   vpc->is_nv4x = (oclass >= NV40_3D_CLASS) ? ~0 : 0;
    vpc->vp   = vp;
    vpc->pipe = vp->pipe;
    vpc->info = &vp->info;
    vpc->cvtx_idx = -1;
 
-   if (!nvfx_vertprog_prepare(nv30, vpc)) {
+   if (!nvfx_vertprog_prepare(vpc)) {
       FREE(vpc);
       return FALSE;
    }
@@ -1038,7 +1040,7 @@ _nvfx_vertprog_translate(struct nv30_context *nv30, struct nv30_vertprog *vp)
          unsigned idx = insns.size >> 2;
          util_dynarray_append(&insns, unsigned, vp->nr_insns);
          finst = &parse.FullToken.FullInstruction;
-         if (!nvfx_vertprog_parse_instruction(nv30, vpc, idx, finst))
+         if (!nvfx_vertprog_parse_instruction(vpc, idx, finst))
             goto out;
       }
          break;
@@ -1084,7 +1086,7 @@ _nvfx_vertprog_translate(struct nv30_context *nv30, struct nv30_vertprog *vp)
       struct nvfx_src htmp = nvfx_src(vpc->r_result[vpc->cvtx_idx]);
       unsigned mask;
 
-      if(nv30->is_nv4x)
+      if(vpc->is_nv4x)
       {
          switch (i) {
          case 0: case 3: mask = NVFX_VP_MASK_Y; break;
@@ -1109,7 +1111,7 @@ _nvfx_vertprog_translate(struct nv30_context *nv30, struct nv30_vertprog *vp)
       debug_printf("\n");
       tgsi_dump(vpc->pipe.tokens, 0);
 
-      debug_printf("\n%s vertex program:\n", nv30->is_nv4x ? "nv4x" : "nv3x");
+      debug_printf("\n%s vertex program:\n", vpc->is_nv4x ? "nv4x" : "nv3x");
       for (i = 0; i < vp->nr_insns; i++)
          debug_printf("%3u: %08x %08x %08x %08x\n", i, vp->insns[i].data[0], vp->insns[i].data[1], vp->insns[i].data[2], vp->insns[i].data[3]);
       debug_printf("\n");

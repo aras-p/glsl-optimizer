@@ -122,9 +122,6 @@ struct nv30_context {
    struct pipe_query *render_cond_query;
    unsigned render_cond_mode;
    boolean render_cond_cond;
-
-   /*XXX: nvfx state, DO NOT USE EVER OUTSIDE "STOLEN" NVFX code */
-   unsigned is_nv4x;
 };
 
 static INLINE struct nv30_context *
@@ -211,13 +208,6 @@ nv30_state_validate(struct nv30_context *nv30, boolean hwtnl);
 
 void
 nv30_state_release(struct nv30_context *nv30);
-
-//XXX: needed to make it build, clean this up!
-void
-_nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp);
-
-boolean
-_nvfx_vertprog_translate(struct nv30_context *nv30, struct nv30_vertprog *vp);
 
 #ifdef NV30_3D_VERTEX_BEGIN_END
 #define NV30_PRIM_GL_CASE(n) \

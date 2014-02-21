@@ -29,6 +29,7 @@
 #include "nv_object.xml.h"
 #include "nv30/nv30-40_3d.xml.h"
 #include "nv30/nv30_context.h"
+#include "nv30/nvfx_shader.h"
 #include "nv30/nv30_state.h"
 
 static void
@@ -75,7 +76,7 @@ nv30_vertprog_validate(struct nv30_context *nv30)
    }
 
    if (!vp->translated) {
-      vp->translated = _nvfx_vertprog_translate(nv30, vp);
+      vp->translated = _nvfx_vertprog_translate(eng3d->oclass, vp);
       if (!vp->translated) {
          nv30->draw_flags |= NV30_NEW_VERTPROG;
          return;

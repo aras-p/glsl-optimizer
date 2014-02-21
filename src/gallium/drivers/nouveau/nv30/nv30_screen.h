@@ -3,11 +3,9 @@
 
 #include <stdio.h>
 
-#define NOUVEAU_ERR(fmt, args...) \
-   fprintf(stderr, "%s:%d -  "fmt, __FUNCTION__, __LINE__, ##args);
-
 #include "util/u_double_list.h"
 
+#include "nouveau_debug.h"
 #include "nouveau_screen.h"
 #include "nouveau_fence.h"
 #include "nouveau_heap.h"
