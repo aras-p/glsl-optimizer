@@ -211,6 +211,23 @@ intel_is_non_msrt_mcs_buffer_supported(struct brw_context *brw,
 
 
 /**
+ * Determine depth format corresponding to a depth+stencil format,
+ * for separate stencil.
+ */
+mesa_format
+intel_depth_format_for_depthstencil_format(mesa_format format) {
+   switch (format) {
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
+      return MESA_FORMAT_Z24_UNORM_X8_UINT;
+   case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
+      return MESA_FORMAT_Z_FLOAT32;
+   default:
+      return format;
+   }
+}
+
+
+/**
  * @param for_bo Indicates that the caller is
  *        intel_miptree_create_for_bo(). If true, then do not create
  *        \c stencil_mt.
@@ -368,14 +385,12 @@ intel_miptree_create_layout(struct brw_context *brw,
       /* Fix up the Z miptree format for how we're splitting out separate
        * stencil.  Gen7 expects there to be no stencil bits in its depth buffer.
        */
-      if (mt->format == MESA_FORMAT_Z24_UNORM_S8_UINT) {
-	 mt->format = MESA_FORMAT_Z24_UNORM_X8_UINT;
-      } else if (mt->format == MESA_FORMAT_Z32_FLOAT_S8X24_UINT) {
-	 mt->format = MESA_FORMAT_Z_FLOAT32;
-	 mt->cpp = 4;
-      } else {
-	 _mesa_problem(NULL, "Unknown format %s in separate stencil mt\n",
-		       _mesa_get_format_name(mt->format));
+      mt->format = intel_depth_format_for_depthstencil_format(mt->format);
+      mt->cpp = 4;
+
+      if (format == mt->format) {
+         _mesa_problem(NULL, "Unknown format %s in separate stencil mt\n",
+                       _mesa_get_format_name(mt->format));
       }
    }
 
