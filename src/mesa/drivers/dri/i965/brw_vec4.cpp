@@ -1663,17 +1663,8 @@ brw_vs_emit(struct brw_context *brw,
    if (prog)
       shader = (brw_shader *) prog->_LinkedShaders[MESA_SHADER_VERTEX];
 
-   if (unlikely(INTEL_DEBUG & DEBUG_VS)) {
-      if (prog) {
-         printf("GLSL IR for native vertex shader %d:\n", prog->Name);
-         _mesa_print_ir(shader->base.ir, NULL);
-         printf("\n\n");
-      } else {
-         printf("ARB_vertex_program %d for native vertex shader\n",
-                c->vp->program.Base.Id);
-         _mesa_print_program(&c->vp->program.Base);
-      }
-   }
+   if (unlikely(INTEL_DEBUG & DEBUG_VS))
+      brw_dump_ir(brw, "vertex", prog, &shader->base, &c->vp->program.Base);
 
    vec4_vs_visitor v(brw, c, prog_data, prog, shader, mem_ctx);
    if (!v.run()) {

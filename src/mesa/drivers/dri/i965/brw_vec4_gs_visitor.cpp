@@ -588,11 +588,8 @@ brw_gs_emit(struct brw_context *brw,
    struct brw_shader *shader =
       (brw_shader *) prog->_LinkedShaders[MESA_SHADER_GEOMETRY];
 
-   if (unlikely(INTEL_DEBUG & DEBUG_GS)) {
-      printf("GLSL IR for native geometry shader %d:\n", prog->Name);
-      _mesa_print_ir(shader->base.ir, NULL);
-      printf("\n\n");
-   }
+   if (unlikely(INTEL_DEBUG & DEBUG_GS))
+      brw_dump_ir(brw, "geometry", prog, &shader->base, NULL);
 
    /* Compile the geometry shader in DUAL_OBJECT dispatch mode, if we can do
     * so without spilling. If the GS invocations count > 1, then we can't use

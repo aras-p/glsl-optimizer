@@ -34,10 +34,12 @@
 #include "main/enums.h"
 #include "main/shaderobj.h"
 #include "program/prog_parameter.h"
+#include "program/prog_print.h"
 #include "program/program.h"
 #include "program/programopt.h"
 #include "tnl/tnl.h"
 #include "glsl/ralloc.h"
+#include "glsl/ir.h"
 
 #include "brw_context.h"
 #include "brw_wm.h"
@@ -582,4 +584,20 @@ brw_stage_prog_data_free(const void *p)
 
    ralloc_free(prog_data->param);
    ralloc_free(prog_data->pull_param);
+}
+
+void
+brw_dump_ir(struct brw_context *brw, const char *stage,
+            struct gl_shader_program *shader_prog,
+            struct gl_shader *shader, struct gl_program *prog)
+{
+   if (shader_prog) {
+      printf("GLSL IR for native %s shader %d:\n", stage, shader_prog->Name);
+      _mesa_print_ir(shader->ir, NULL);
+      printf("\n\n");
+   } else {
+      printf("ARB_%s_program %d ir for native %s shader\n",
+             stage, prog->Id, stage);
+      _mesa_print_program(prog);
+   }
 }

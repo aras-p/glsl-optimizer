@@ -3519,17 +3519,8 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    if (prog)
       shader = (brw_shader *) prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
-   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      if (prog) {
-         printf("GLSL IR for native fragment shader %d:\n", prog->Name);
-         _mesa_print_ir(shader->base.ir, NULL);
-         printf("\n\n");
-      } else {
-         printf("ARB_fragment_program %d ir for native fragment shader\n",
-                fp->Base.Id);
-         _mesa_print_program(&fp->Base);
-      }
-   }
+   if (unlikely(INTEL_DEBUG & DEBUG_WM))
+      brw_dump_ir(brw, "fragment", prog, &shader->base, &fp->Base);
 
    /* Now the main event: Visit the shader IR and generate our FS IR for it.
     */
