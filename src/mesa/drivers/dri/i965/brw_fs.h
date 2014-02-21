@@ -284,7 +284,6 @@ public:
 
    bool can_do_source_mods(fs_inst *inst);
 
-   fs_inst *emit(fs_inst inst);
    fs_inst *emit(fs_inst *inst);
    void emit(exec_list list);
 

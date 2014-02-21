@@ -642,8 +642,8 @@ fs_visitor::emit_shader_time_write(enum shader_time_shader_type type,
    else
       payload = fs_reg(this, glsl_type::uint_type);
 
-   emit(fs_inst(SHADER_OPCODE_SHADER_TIME_ADD,
-                fs_reg(), payload, offset, value));
+   emit(new(mem_ctx) fs_inst(SHADER_OPCODE_SHADER_TIME_ADD,
+                             fs_reg(), payload, offset, value));
 }
 
 void
@@ -672,32 +672,32 @@ fs_visitor::fail(const char *format, ...)
 fs_inst *
 fs_visitor::emit(enum opcode opcode)
 {
-   return emit(fs_inst(opcode));
+   return emit(new(mem_ctx) fs_inst(opcode));
 }
 
 fs_inst *
 fs_visitor::emit(enum opcode opcode, fs_reg dst)
 {
-   return emit(fs_inst(opcode, dst));
+   return emit(new(mem_ctx) fs_inst(opcode, dst));
 }
 
 fs_inst *
 fs_visitor::emit(enum opcode opcode, fs_reg dst, fs_reg src0)
 {
-   return emit(fs_inst(opcode, dst, src0));
+   return emit(new(mem_ctx) fs_inst(opcode, dst, src0));
 }
 
 fs_inst *
 fs_visitor::emit(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
 {
-   return emit(fs_inst(opcode, dst, src0, src1));
+   return emit(new(mem_ctx) fs_inst(opcode, dst, src0, src1));
 }
 
 fs_inst *
 fs_visitor::emit(enum opcode opcode, fs_reg dst,
                  fs_reg src0, fs_reg src1, fs_reg src2)
 {
-   return emit(fs_inst(opcode, dst, src0, src1, src2));
+   return emit(new(mem_ctx) fs_inst(opcode, dst, src0, src1, src2));
 }
 
 void

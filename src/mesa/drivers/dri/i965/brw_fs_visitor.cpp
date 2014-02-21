@@ -743,8 +743,8 @@ fs_visitor::visit(ir_expression *ir)
          packed_consts.type = result.type;
 
          fs_reg const_offset_reg = fs_reg(const_offset->value.u[0] & ~15);
-         emit(fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
-                      packed_consts, surf_index, const_offset_reg));
+         emit(new(mem_ctx) fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
+                                   packed_consts, surf_index, const_offset_reg));
 
          for (int i = 0; i < ir->type->vector_elements; i++) {
             packed_consts.set_smear(const_offset->value.u[0] % 16 / 4 + i);
@@ -2399,9 +2399,10 @@ fs_visitor::emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
    }
 
    /* Emit the instruction. */
-   fs_inst inst(SHADER_OPCODE_UNTYPED_ATOMIC, dst, atomic_op, surf_index);
-   inst.base_mrf = 0;
-   inst.mlen = mlen;
+   fs_inst *inst = new(mem_ctx) fs_inst(SHADER_OPCODE_UNTYPED_ATOMIC, dst,
+                                        atomic_op, surf_index);
+   inst->base_mrf = 0;
+   inst->mlen = mlen;
    emit(inst);
 }
 
@@ -2432,19 +2433,11 @@ fs_visitor::emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
    mlen += operand_len;
 
    /* Emit the instruction. */
-   fs_inst inst(SHADER_OPCODE_UNTYPED_SURFACE_READ, dst, surf_index);
-   inst.base_mrf = 0;
-   inst.mlen = mlen;
+   fs_inst *inst = new(mem_ctx)
+      fs_inst(SHADER_OPCODE_UNTYPED_SURFACE_READ, dst, surf_index);
+   inst->base_mrf = 0;
+   inst->mlen = mlen;
    emit(inst);
-}
-
-fs_inst *
-fs_visitor::emit(fs_inst inst)
-{
-   fs_inst *list_inst = new(mem_ctx) fs_inst;
-   *list_inst = inst;
-   emit(list_inst);
-   return list_inst;
 }
 
 fs_inst *
