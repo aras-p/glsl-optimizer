@@ -807,7 +807,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
    case TGSI_OPCODE_IF:
       // MOVRC0 R31 (TR0.xyzw), R<src>:
       // IF (NE.xxxx) ELSE <else> END <end>
-      if(!nvfx->use_nv4x)
+      if(!nvfx->is_nv4x)
          goto nv3x_cflow;
       nv40_fp_if(fpc, src[0]);
       break;
@@ -815,7 +815,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
    case TGSI_OPCODE_ELSE:
    {
       uint32_t *hw;
-      if(!nvfx->use_nv4x)
+      if(!nvfx->is_nv4x)
          goto nv3x_cflow;
       assert(util_dynarray_contains(&fpc->if_stack, unsigned));
       hw = &fpc->fp->insn[util_dynarray_top(&fpc->if_stack, unsigned)];
@@ -826,7 +826,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
    case TGSI_OPCODE_ENDIF:
    {
       uint32_t *hw;
-      if(!nvfx->use_nv4x)
+      if(!nvfx->is_nv4x)
          goto nv3x_cflow;
       assert(util_dynarray_contains(&fpc->if_stack, unsigned));
       hw = &fpc->fp->insn[util_dynarray_pop(&fpc->if_stack, unsigned)];
@@ -849,19 +849,19 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
       break;
 
    case TGSI_OPCODE_CAL:
-      if(!nvfx->use_nv4x)
+      if(!nvfx->is_nv4x)
          goto nv3x_cflow;
       nv40_fp_cal(fpc, finst->Label.Label);
       break;
 
    case TGSI_OPCODE_RET:
-      if(!nvfx->use_nv4x)
+      if(!nvfx->is_nv4x)
          goto nv3x_cflow;
       nv40_fp_ret(fpc);
       break;
 
    case TGSI_OPCODE_BGNLOOP:
-      if(!nvfx->use_nv4x)
+      if(!nvfx->is_nv4x)
          goto nv3x_cflow;
       /* TODO: we should support using two nested REPs to allow a > 255 iteration count */
       nv40_fp_rep(fpc, 255, finst->Label.Label);
@@ -871,7 +871,7 @@ nvfx_fragprog_parse_instruction(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
       break;
 
    case TGSI_OPCODE_BRK:
-      if(!nvfx->use_nv4x)
+      if(!nvfx->is_nv4x)
          goto nv3x_cflow;
       nv40_fp_brk(fpc);
       break;
@@ -951,7 +951,7 @@ static boolean
 nvfx_fragprog_assign_generic(struct nv30_context *nvfx, struct nvfx_fpc *fpc,
                              const struct tgsi_full_declaration *fdec)
 {
-   unsigned num_texcoords = nvfx->use_nv4x ? 10 : 8;
+   unsigned num_texcoords = nvfx->is_nv4x ? 10 : 8;
    unsigned idx = fdec->Range.First;
    unsigned hw;
 
@@ -1002,7 +1002,7 @@ nvfx_fragprog_parse_decl_output(struct nv30_context* nvfx, struct nvfx_fpc *fpc,
       case 2: hw = 3; break;
       case 3: hw = 4; break;
       }
-      if(hw > ((nvfx->use_nv4x) ? 4 : 2)) {
+      if(hw > ((nvfx->is_nv4x) ? 4 : 2)) {
          NOUVEAU_ERR("bad rcol index\n");
          return FALSE;
       }
@@ -1129,7 +1129,7 @@ _nvfx_fragprog_translate(struct nv30_context *nvfx, struct nv30_fragprog *fp,
    if (!fpc)
       goto out_err;
 
-   fpc->max_temps = nvfx->use_nv4x ? 48 : 32;
+   fpc->max_temps = nvfx->is_nv4x ? 48 : 32;
    fpc->fp = fp;
    fpc->num_regs = 2;
    memset(fp->texcoord, 0xff, sizeof(fp->texcoord));

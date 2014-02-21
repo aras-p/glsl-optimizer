@@ -121,7 +121,6 @@ struct nv30_context {
 
    /*XXX: nvfx state, DO NOT USE EVER OUTSIDE "STOLEN" NVFX code */
    unsigned is_nv4x;
-   unsigned use_nv4x;
    bool hw_pointsprite_control;
    enum {
       HW,
