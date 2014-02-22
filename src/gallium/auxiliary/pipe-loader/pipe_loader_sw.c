@@ -29,9 +29,11 @@
 
 #include "util/u_memory.h"
 #include "util/u_dl.h"
+#include "sw/dri/dri_sw_winsys.h"
 #include "sw/null/null_sw_winsys.h"
 #include "sw/xlib/xlib_sw_winsys.h"
 #include "target-helpers/inline_sw_helper.h"
+#include "state_tracker/drisw_api.h"
 
 struct pipe_loader_sw_device {
    struct pipe_loader_device base;
@@ -69,6 +71,27 @@ pipe_loader_sw_probe_xlib(struct pipe_loader_device **devs, Display *display)
    return true;
 }
 #endif
+
+bool
+pipe_loader_sw_probe_dri(struct pipe_loader_device **devs, struct drisw_loader_funcs *drisw_lf)
+{
+   struct pipe_loader_sw_device *sdev = CALLOC_STRUCT(pipe_loader_sw_device);
+
+   if (!sdev)
+      return false;
+
+   sdev->base.type = PIPE_LOADER_DEVICE_SOFTWARE;
+   sdev->base.driver_name = "swrast";
+   sdev->base.ops = &pipe_loader_sw_ops;
+   sdev->ws = dri_create_sw_winsys(drisw_lf);
+   if (!sdev->ws) {
+      FREE(sdev);
+      return false;
+   }
+   *devs = &sdev->base;
+
+   return true;
+}
 
 int
 pipe_loader_sw_probe(struct pipe_loader_device **devs, int ndev)

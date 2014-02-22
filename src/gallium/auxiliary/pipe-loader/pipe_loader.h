@@ -44,6 +44,7 @@ extern "C" {
 #endif
 
 struct pipe_screen;
+struct drisw_loader_funcs;
 
 enum pipe_loader_device_type {
    PIPE_LOADER_DEVICE_SOFTWARE,
@@ -117,6 +118,18 @@ bool
 pipe_loader_sw_probe_xlib(struct pipe_loader_device **devs, Display *display);
 
 #endif
+
+/**
+ * Initialize sw dri device give the drisw_loader_funcs.
+ *
+ * This function is platform-specific.
+ *
+ * \sa pipe_loader_probe
+ */
+bool
+pipe_loader_sw_probe_dri(struct pipe_loader_device **devs,
+                         struct drisw_loader_funcs *drisw_lf);
+
 
 /**
  * Get a list of known software devices.
