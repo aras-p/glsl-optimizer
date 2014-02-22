@@ -284,6 +284,15 @@ ra_class_add_reg(struct ra_regs *regs, unsigned int c, unsigned int r)
 }
 
 /**
+ * Returns true if the register belongs to the given class.
+ */
+static bool
+reg_belongs_to_class(unsigned int r, struct ra_class *c)
+{
+   return c->regs[r];
+}
+
+/**
  * Must be called after all conflicts and register classes have been
  * set up and before the register set is used for allocation.
  * To avoid costly q value computation, use the q_values paramater
@@ -319,7 +328,7 @@ ra_set_finalize(struct ra_regs *regs, unsigned int **q_values)
 	    int conflicts = 0;
 	    int i;
 
-	    if (!regs->classes[c]->regs[rc])
+            if (!reg_belongs_to_class(rc, regs->classes[c]))
 	       continue;
 
 	    for (i = 0; i < regs->regs[rc].num_conflicts; i++) {
@@ -479,7 +488,7 @@ ra_select(struct ra_graph *g)
        */
       for (ri = 0; ri < g->regs->count; ri++) {
          r = (start_search_reg + ri) % g->regs->count;
-	 if (!c->regs[r])
+         if (!reg_belongs_to_class(r, c))
 	    continue;
 
 	 /* Check if any of our neighbors conflict with this register choice. */
