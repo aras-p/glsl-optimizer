@@ -101,7 +101,8 @@ create_variant(struct fd3_shader_stateobj *so, struct fd3_shader_key key)
 	v->type = so->type;
 
 	if (fd_mesa_debug & FD_DBG_DISASM) {
-		DBG("dump tgsi: type=%d", so->type);
+		DBG("dump tgsi: type=%d, k={bp=%u,cts=%u,hp=%u}", so->type,
+			key.binning_pass, key.color_two_side, key.half_precision);
 		tgsi_dump(tokens, 0);
 	}
 
@@ -138,7 +139,8 @@ create_variant(struct fd3_shader_stateobj *so, struct fd3_shader_key key)
 		fixup_vp_regfootprint(v);
 
 	if (fd_mesa_debug & FD_DBG_DISASM) {
-		DBG("disassemble: type=%d", v->type);
+		DBG("disassemble: type=%d, k={bp=%u,cts=%u,hp=%u}", v->type,
+			key.binning_pass, key.color_two_side, key.half_precision);
 		disasm_a3xx(fd_bo_map(v->bo), v->info.sizedwords, 0, v->type);
 	}
 

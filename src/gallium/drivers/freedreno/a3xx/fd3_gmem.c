@@ -44,6 +44,9 @@
 #include "fd3_zsa.h"
 
 static const struct fd3_shader_key key = {
+		// XXX should set this based on render target format!  We don't
+		// want half_precision if float32 render target!!!
+		.half_precision = true,
 };
 
 static void

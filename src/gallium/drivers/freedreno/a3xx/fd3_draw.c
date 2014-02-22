@@ -103,6 +103,9 @@ fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 			/* do binning pass first: */
 			.binning_pass = true,
 			.color_two_side = ctx->rasterizer ? ctx->rasterizer->light_twoside : false,
+			// TODO set .half_precision based on render target format,
+			// ie. float16 and smaller use half, float32 use full..
+			.half_precision = !!(fd_mesa_debug & FD_DBG_FRAGHALF),
 	};
 	draw_impl(ctx, info, ctx->binning_ring,
 			dirty & ~(FD_DIRTY_BLEND), key);
@@ -126,6 +129,7 @@ fd3_clear_binning(struct fd_context *ctx, unsigned dirty)
 	struct fd_ringbuffer *ring = ctx->binning_ring;
 	struct fd3_shader_key key = {
 			.binning_pass = true,
+			.half_precision = true,
 	};
 
 	fd3_emit_state(ctx, ring, &ctx->solid_prog, dirty, key);
@@ -166,6 +170,7 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	unsigned dirty = ctx->dirty;
 	unsigned ce, i;
 	struct fd3_shader_key key = {
+			.half_precision = true,
 	};
 
 	dirty &= FD_DIRTY_VIEWPORT | FD_DIRTY_FRAMEBUFFER | FD_DIRTY_SCISSOR;

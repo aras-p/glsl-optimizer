@@ -53,9 +53,18 @@
 struct ir3_ra_ctx {
 	struct ir3_block *block;
 	enum shader_t type;
+	bool half_precision;
 	int cnt;
 	bool error;
 };
+
+/* sorta ugly way to retrofit half-precision support.. rather than
+ * passing extra param around, just OR in a high bit.  All the low
+ * value arithmetic (ie. +/- offset within a contiguous vec4, etc)
+ * will continue to work as long as you don't underflow (and that
+ * would go badly anyways).
+ */
+#define REG_HALF  0x8000
 
 struct ir3_ra_assignment {
 	int8_t  off;        /* offset of instruction dst within range */
@@ -91,7 +100,7 @@ static int output_base(struct ir3_ra_ctx *ctx)
 	 * see how because the blob driver always uses r0.x (ie.
 	 * all zeros)
 	 */
-	if (ctx->type == SHADER_FRAGMENT)
+	if ((ctx->type == SHADER_FRAGMENT) && !ctx->half_precision)
 		return 2;
 	return 0;
 }
@@ -348,12 +357,88 @@ static inline struct ra_assign_visitor *ra_assign_visitor(struct ir3_visitor *v)
 	return (struct ra_assign_visitor *)v;
 }
 
+static type_t half_type(type_t type)
+{
+	switch (type) {
+	case TYPE_F32: return TYPE_F16;
+	case TYPE_U32: return TYPE_U16;
+	case TYPE_S32: return TYPE_S16;
+	/* instructions may already be fixed up: */
+	case TYPE_F16:
+	case TYPE_U16:
+	case TYPE_S16:
+		return type;
+	default:
+		assert(0);
+		return ~0;
+	}
+}
+
+/* some instructions need fix-up if dst register is half precision: */
+static void fixup_half_instr_dst(struct ir3_instruction *instr)
+{
+	switch (instr->category) {
+	case 1: /* move instructions */
+		instr->cat1.dst_type = half_type(instr->cat1.dst_type);
+		break;
+	case 3:
+		switch (instr->opc) {
+		case OPC_MAD_F32:
+			instr->opc = OPC_MAD_F16;
+			break;
+		case OPC_SEL_B32:
+			instr->opc = OPC_SEL_B16;
+			break;
+		case OPC_SEL_S32:
+			instr->opc = OPC_SEL_S16;
+			break;
+		case OPC_SEL_F32:
+			instr->opc = OPC_SEL_F16;
+			break;
+		case OPC_SAD_S32:
+			instr->opc = OPC_SAD_S16;
+			break;
+		/* instructions may already be fixed up: */
+		case OPC_MAD_F16:
+		case OPC_SEL_B16:
+		case OPC_SEL_S16:
+		case OPC_SEL_F16:
+		case OPC_SAD_S16:
+			break;
+		default:
+			assert(0);
+			break;
+		}
+		break;
+	case 5:
+		instr->cat5.type = half_type(instr->cat5.type);
+		break;
+	}
+}
+/* some instructions need fix-up if src register is half precision: */
+static void fixup_half_instr_src(struct ir3_instruction *instr)
+{
+	switch (instr->category) {
+	case 1: /* move instructions */
+		instr->cat1.src_type = half_type(instr->cat1.src_type);
+		break;
+	}
+}
+
 static void ra_assign_reg(struct ir3_visitor *v,
 		struct ir3_instruction *instr, struct ir3_register *reg)
 {
 	struct ra_assign_visitor *a = ra_assign_visitor(v);
 	reg->flags &= ~IR3_REG_SSA;
-	reg->num = a->num;
+	reg->num = a->num & ~REG_HALF;
+	if (a->num & REG_HALF) {
+		reg->flags |= IR3_REG_HALF;
+		/* if dst reg being assigned, patch up the instr: */
+		if (reg == instr->regs[0])
+			fixup_half_instr_dst(instr);
+		else
+			fixup_half_instr_src(instr);
+	}
 }
 
 static void ra_assign_dst_shader_input(struct ir3_visitor *v,
@@ -429,8 +514,8 @@ static void ra_assign(struct ir3_ra_ctx *ctx,
 
 	/* if we've already visited this instruction, bail now: */
 	if (ir3_instr_check_mark(assigner)) {
-		debug_assert(assigner->regs[0]->num == num);
-		if (assigner->regs[0]->num != num) {
+		debug_assert(assigner->regs[0]->num == (num & ~REG_HALF));
+		if (assigner->regs[0]->num != (num & ~REG_HALF)) {
 			/* impossible situation, should have been resolved
 			 * at an earlier stage by inserting extra mov's:
 			 */
@@ -593,6 +678,9 @@ static int block_ra(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 
 		base = alloc_block(ctx, NULL, block->noutputs + off);
 
+		if (ctx->half_precision)
+			base |= REG_HALF;
+
 		for (i = 0; i < block->noutputs; i++)
 			if (block->outputs[i])
 				ra_assign(ctx, block->outputs[i], base + i + off);
@@ -600,7 +688,7 @@ static int block_ra(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 		if (ctx->type == SHADER_FRAGMENT) {
 			for (i = 0; i < block->ninputs; i++)
 				if (block->inputs[i])
-					ra_assign(ctx, block->inputs[i], base + i);
+					ra_assign(ctx, block->inputs[i], (base & ~REG_HALF) + i);
 		} else {
 			for (i = 0; i < block->ninputs; i++)
 				if (block->inputs[i])
@@ -623,11 +711,13 @@ static int block_ra(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 	return 0;
 }
 
-int ir3_block_ra(struct ir3_block *block, enum shader_t type)
+int ir3_block_ra(struct ir3_block *block, enum shader_t type,
+		bool half_precision)
 {
 	struct ir3_ra_ctx ctx = {
 			.block = block,
 			.type = type,
+			.half_precision = half_precision,
 	};
 	ir3_shader_clear_mark(block->shader);
 	return block_ra(&ctx, block);
