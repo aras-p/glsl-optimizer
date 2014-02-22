@@ -99,7 +99,12 @@ struct ra_regs {
 };
 
 struct ra_class {
-   bool *regs;
+   /**
+    * Bitset indicating which registers belong to this class.
+    *
+    * (If bit N is set, then register N belongs to this class.)
+    */
+   BITSET_WORD *regs;
 
    /**
     * p(B) in Runeson/Nyström paper.
@@ -269,7 +274,7 @@ ra_alloc_reg_class(struct ra_regs *regs)
    class = rzalloc(regs, struct ra_class);
    regs->classes[regs->class_count] = class;
 
-   class->regs = rzalloc_array(class, bool, regs->count);
+   class->regs = rzalloc_array(class, BITSET_WORD, BITSET_WORDS(regs->count));
 
    return regs->class_count++;
 }
@@ -279,7 +284,7 @@ ra_class_add_reg(struct ra_regs *regs, unsigned int c, unsigned int r)
 {
    struct ra_class *class = regs->classes[c];
 
-   class->regs[r] = true;
+   BITSET_SET(class->regs, r);
    class->p++;
 }
 
@@ -289,7 +294,7 @@ ra_class_add_reg(struct ra_regs *regs, unsigned int c, unsigned int r)
 static bool
 reg_belongs_to_class(unsigned int r, struct ra_class *c)
 {
-   return c->regs[r];
+   return BITSET_TEST(c->regs, r);
 }
 
 /**
@@ -333,7 +338,7 @@ ra_set_finalize(struct ra_regs *regs, unsigned int **q_values)
 
 	    for (i = 0; i < regs->regs[rc].num_conflicts; i++) {
 	       unsigned int rb = regs->regs[rc].conflict_list[i];
-	       if (regs->classes[b]->regs[rb])
+	       if (BITSET_TEST(regs->classes[b]->regs, rb))
 		  conflicts++;
 	    }
 	    max_conflicts = MAX2(max_conflicts, conflicts);
