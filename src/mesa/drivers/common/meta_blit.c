@@ -240,12 +240,9 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
          int i;
          int step;
 
-         if (src_datatype == GL_INT) {
+         if (src_datatype == GL_INT || src_datatype == GL_UNSIGNED_INT) {
             merge_function =
-               "ivec4 merge(ivec4 a, ivec4 b) { return (a >> ivec4(1)) + (b >> ivec4(1)) + (a & b & ivec4(1)); }\n";
-         } else if (src_datatype == GL_UNSIGNED_INT) {
-            merge_function =
-               "uvec4 merge(uvec4 a, uvec4 b) { return (a >> uvec4(1)) + (b >> uvec4(1)) + (a & b & uvec4(1)); }\n";
+               "gvec4 merge(gvec4 a, gvec4 b) { return (a >> gvec4(1)) + (b >> gvec4(1)) + (a & b & gvec4(1)); }\n";
          } else {
             /* The divide will happen at the end for floats. */
             merge_function =
@@ -266,8 +263,8 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
          sample_resolve = rzalloc_size(mem_ctx, 1);
          for (i = 0; i < samples; i++) {
             ralloc_asprintf_append(&sample_resolve,
-                                   "   %svec4 sample_1_%d = texelFetch(texSampler, ivec2(texCoords), %d);\n",
-                                   vec4_prefix, i, i);
+                                   "   gvec4 sample_1_%d = texelFetch(texSampler, ivec2(texCoords), %d);\n",
+                                   i, i);
          }
          /* Now, merge each pair of samples, then merge each pair of those,
           * etc.
@@ -275,8 +272,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
          for (step = 2; step <= samples; step *= 2) {
             for (i = 0; i < samples; i += step) {
                ralloc_asprintf_append(&sample_resolve,
-                                      "   %svec4 sample_%d_%d = merge(sample_%d_%d, sample_%d_%d);\n",
-                                      vec4_prefix,
+                                      "   gvec4 sample_%d_%d = merge(sample_%d_%d, sample_%d_%d);\n",
                                       step, i,
                                       step / 2, i,
                                       step / 2, i + step / 2);
@@ -309,9 +305,10 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
                                   "#version 130\n"
                                   "#extension GL_ARB_texture_multisample : enable\n"
                                   "%s\n"
+                                  "#define gvec4 %svec4\n"
                                   "uniform %ssampler2DMS texSampler;\n"
                                   "in vec2 texCoords;\n"
-                                  "out %svec4 out_color;\n"
+                                  "out gvec4 out_color;\n"
                                   "\n"
                                   "%s" /* merge_function */
                                   "void main()\n"
