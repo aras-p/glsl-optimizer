@@ -218,16 +218,21 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
       /* You can create 2D_MULTISAMPLE textures with 0 sample count (meaning 1
        * sample).  Yes, this is ridiculous.
        */
-      int samples = MAX2(src_rb->NumSamples, 1);
+      int samples;
       char *sample_resolve;
       const char *arb_sample_shading_extension_string;
       const char *merge_function;
+
+      samples = MAX2(src_rb->NumSamples, 1);
 
       if (dst_is_msaa) {
          arb_sample_shading_extension_string = "#extension GL_ARB_sample_shading : enable";
          sample_resolve = ralloc_asprintf(mem_ctx, "   out_color = texelFetch(texSampler, ivec2(texCoords), gl_SampleID);");
          merge_function = "";
       } else {
+         int i;
+         int step;
+
          if (src_datatype == GL_INT) {
             merge_function =
                "ivec4 merge(ivec4 a, ivec4 b) { return (a >> ivec4(1)) + (b >> ivec4(1)) + (a & b & ivec4(1)); }\n";
@@ -252,7 +257,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
          assert((samples & (samples - 1)) == 0);
          /* Fetch each individual sample. */
          sample_resolve = rzalloc_size(mem_ctx, 1);
-         for (int i = 0; i < samples; i++) {
+         for (i = 0; i < samples; i++) {
             ralloc_asprintf_append(&sample_resolve,
                                    "   %svec4 sample_1_%d = texelFetch(texSampler, ivec2(texCoords), %d);\n",
                                    vec4_prefix, i, i);
@@ -260,8 +265,8 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
          /* Now, merge each pair of samples, then merge each pair of those,
           * etc.
           */
-         for (int step = 2; step <= samples; step *= 2) {
-            for (int i = 0; i < samples; i += step) {
+         for (step = 2; step <= samples; step *= 2) {
+            for (i = 0; i < samples; i += step) {
                ralloc_asprintf_append(&sample_resolve,
                                       "   %svec4 sample_%d_%d = merge(sample_%d_%d, sample_%d_%d);\n",
                                       vec4_prefix,
