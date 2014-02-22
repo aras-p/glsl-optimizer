@@ -49,13 +49,14 @@ int
 gallium_screen_create(struct gbm_gallium_drm_device *gdrm)
 {
    struct pipe_loader_device *dev;
-#ifdef HAVE_PIPE_LOADER_DRM
-   int ret;
+   int ret = 0;
 
+#ifdef HAVE_PIPE_LOADER_DRM
    ret = pipe_loader_drm_probe_fd(&dev, gdrm->base.base.fd, true);
+#endif /* HAVE_PIPE_LOADER_DRM */
+
    if (!ret)
       return -1;
-#endif /* HAVE_PIPE_LOADER_DRM */
 
    gdrm->screen = pipe_loader_create_screen(dev, get_library_search_path());
    if (gdrm->screen == NULL) {
