@@ -93,14 +93,6 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    GLuint vs, fs;
    void *mem_ctx;
    enum blit_msaa_shader shader_index;
-   const char *samplers[] = {
-      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE] = "sampler2DMS",
-      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_INT] = "isampler2DMS",
-      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE_UINT] = "usampler2DMS",
-      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY] = "sampler2DMS",
-      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY_INT] = "isampler2DMS",
-      [BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY_UINT] = "usampler2DMS",
-   };
    bool dst_is_msaa = false;
    GLenum src_datatype;
    const char *vec4_prefix;
@@ -305,7 +297,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
                                   "#version 130\n"
                                   "#extension GL_ARB_texture_multisample : enable\n"
                                   "%s\n"
-                                  "uniform %s texSampler;\n"
+                                  "uniform %ssampler2DMS texSampler;\n"
                                   "in vec2 texCoords;\n"
                                   "out %svec4 out_color;\n"
                                   "\n"
@@ -315,7 +307,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
                                   "%s\n" /* sample_resolve */
                                   "}\n",
                                   arb_sample_shading_extension_string,
-                                  samplers[shader_index],
+                                  vec4_prefix,
                                   vec4_prefix,
                                   merge_function,
                                   sample_resolve);
