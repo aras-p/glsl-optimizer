@@ -32,7 +32,7 @@
  */
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
-#include "state_tracker/xlib_sw_winsys.h"
+#include "sw/xlib/xlib_sw_winsys.h"
 #include "xm_public.h"
 
 #include "state_tracker/st_gl_api.h"
