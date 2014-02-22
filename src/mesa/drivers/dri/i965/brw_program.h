@@ -42,12 +42,6 @@ struct brw_sampler_prog_key_data {
    uint32_t gl_clamp_mask[3];
 
    /**
-    * YUV conversions, needed for the GL_MESA_ycbcr extension.
-    */
-   uint16_t yuvtex_mask;
-   uint16_t yuvtex_swap_mask; /**< UV swaped */
-
-   /**
     * For RG32F, gather4's channel select is broken.
     */
    uint32_t gather_channel_quirk_mask;
