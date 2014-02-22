@@ -43,7 +43,8 @@
 
 
 static void
-emit_vertexbufs(struct fd_context *ctx, struct fd_ringbuffer *ring)
+emit_vertexbufs(struct fd_context *ctx, struct fd_ringbuffer *ring,
+		struct fd3_shader_key key)
 {
 	struct fd_vertex_stateobj *vtx = ctx->vtx;
 	struct fd_vertexbuf_stateobj *vertexbuf = &ctx->vertexbuf;
@@ -63,20 +64,21 @@ emit_vertexbufs(struct fd_context *ctx, struct fd_ringbuffer *ring)
 		bufs[i].format = elem->src_format;
 	}
 
-	fd3_emit_vertex_bufs(ring, &ctx->prog, bufs, vtx->num_elements);
+	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->prog.vp, key),
+			bufs, vtx->num_elements);
 }
 
 static void
 draw_impl(struct fd_context *ctx, const struct pipe_draw_info *info,
-		struct fd_ringbuffer *ring, unsigned dirty, bool binning)
+		struct fd_ringbuffer *ring, unsigned dirty, struct fd3_shader_key key)
 {
-	fd3_emit_state(ctx, ring, &ctx->prog, dirty, binning);
+	fd3_emit_state(ctx, ring, &ctx->prog, dirty, key);
 
 	if (dirty & FD_DIRTY_VTXBUF)
-		emit_vertexbufs(ctx, ring);
+		emit_vertexbufs(ctx, ring, key);
 
 	OUT_PKT0(ring, REG_A3XX_PC_VERTEX_REUSE_BLOCK_CNTL, 1);
-	OUT_RING(ring, 0x0000000b);                  /* PC_VERTEX_REUSE_BLOCK_CNTL */
+	OUT_RING(ring, 0x0000000b);             /* PC_VERTEX_REUSE_BLOCK_CNTL */
 
 	OUT_PKT0(ring, REG_A3XX_VFD_INDEX_MIN, 4);
 	OUT_RING(ring, info->min_index);        /* VFD_INDEX_MIN */
@@ -88,16 +90,25 @@ draw_impl(struct fd_context *ctx, const struct pipe_draw_info *info,
 	OUT_RING(ring, info->primitive_restart ? /* PC_RESTART_INDEX */
 			info->restart_index : 0xffffffff);
 
-	fd_draw_emit(ctx, ring, binning ? IGNORE_VISIBILITY : USE_VISIBILITY, info);
+	fd_draw_emit(ctx, ring,
+			key.binning_pass ? IGNORE_VISIBILITY : USE_VISIBILITY,
+			info);
 }
 
 static void
 fd3_draw(struct fd_context *ctx, const struct pipe_draw_info *info)
 {
 	unsigned dirty = ctx->dirty;
+	struct fd3_shader_key key = {
+			/* do binning pass first: */
+			.binning_pass = true,
+			.color_two_side = ctx->rasterizer ? ctx->rasterizer->light_twoside : false,
+	};
 	draw_impl(ctx, info, ctx->binning_ring,
-			dirty & ~(FD_DIRTY_BLEND), true);
-	draw_impl(ctx, info, ctx->ring, dirty, false);
+			dirty & ~(FD_DIRTY_BLEND), key);
+	/* and now regular (non-binning) pass: */
+	key.binning_pass = false;
+	draw_impl(ctx, info, ctx->ring, dirty, key);
 }
 
 /* binning pass cmds for a clear:
@@ -113,12 +124,18 @@ fd3_clear_binning(struct fd_context *ctx, unsigned dirty)
 {
 	struct fd3_context *fd3_ctx = fd3_context(ctx);
 	struct fd_ringbuffer *ring = ctx->binning_ring;
+	struct fd3_shader_key key = {
+			.binning_pass = true,
+	};
 
-	fd3_emit_state(ctx, ring, &ctx->solid_prog, dirty, true);
+	fd3_emit_state(ctx, ring, &ctx->solid_prog, dirty, key);
 
-	fd3_emit_vertex_bufs(ring, &ctx->solid_prog, (struct fd3_vertex_buf[]) {
-			{ .prsc = fd3_ctx->solid_vbuf, .stride = 12, .format = PIPE_FORMAT_R32G32B32_FLOAT },
-		}, 1);
+	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->solid_prog.vp, key),
+			(struct fd3_vertex_buf[]) {{
+				.prsc = fd3_ctx->solid_vbuf,
+				.stride = 12,
+				.format = PIPE_FORMAT_R32G32B32_FLOAT,
+			}}, 1);
 
 	OUT_PKT0(ring, REG_A3XX_PC_PRIM_VTX_CNTL, 1);
 	OUT_RING(ring, A3XX_PC_PRIM_VTX_CNTL_STRIDE_IN_VPC(0) |
@@ -148,6 +165,8 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	struct fd_ringbuffer *ring = ctx->ring;
 	unsigned dirty = ctx->dirty;
 	unsigned ce, i;
+	struct fd3_shader_key key = {
+	};
 
 	dirty &= FD_DIRTY_VIEWPORT | FD_DIRTY_FRAMEBUFFER | FD_DIRTY_SCISSOR;
 	dirty |= FD_DIRTY_PROG;
@@ -155,7 +174,7 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	fd3_clear_binning(ctx, dirty);
 
 	/* emit generic state now: */
-	fd3_emit_state(ctx, ring, &ctx->solid_prog, dirty, false);
+	fd3_emit_state(ctx, ring, &ctx->solid_prog, dirty, key);
 
 	OUT_PKT0(ring, REG_A3XX_RB_BLEND_ALPHA, 1);
 	OUT_RING(ring, A3XX_RB_BLEND_ALPHA_UINT(0xff) |
@@ -245,9 +264,12 @@ fd3_clear(struct fd_context *ctx, unsigned buffers,
 	OUT_PKT0(ring, REG_A3XX_GRAS_SU_MODE_CONTROL, 1);
 	OUT_RING(ring, A3XX_GRAS_SU_MODE_CONTROL_LINEHALFWIDTH(0));
 
-	fd3_emit_vertex_bufs(ring, &ctx->solid_prog, (struct fd3_vertex_buf[]) {
-			{ .prsc = fd3_ctx->solid_vbuf, .stride = 12, .format = PIPE_FORMAT_R32G32B32_FLOAT },
-		}, 1);
+	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->solid_prog.vp, key),
+			(struct fd3_vertex_buf[]) {{
+				.prsc = fd3_ctx->solid_vbuf,
+				.stride = 12,
+				.format = PIPE_FORMAT_R32G32B32_FLOAT,
+			}}, 1);
 
 	fd_wfi(ctx, ring);
 	fd3_emit_constant(ring, SB_FRAG_SHADER, 0, 0, 4, color->ui, NULL);

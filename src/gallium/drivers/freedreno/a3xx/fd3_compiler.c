@@ -53,7 +53,7 @@ struct fd3_compile_context {
 	const struct tgsi_token *tokens;
 	bool free_tokens;
 	struct ir3_shader *ir;
-	struct fd3_shader_stateobj *so;
+	struct fd3_shader_variant *so;
 
 	struct ir3_block *block;
 	struct ir3_instruction *current_instr;
@@ -90,16 +90,6 @@ struct fd3_compile_context {
 	unsigned num_internal_temps;
 	struct tgsi_src_register internal_temps[6];
 
-	/* inputs start at r0, temporaries start after last input, and
-	 * outputs start after last temporary.
-	 *
-	 * We could be more clever, because this is not a hw restriction,
-	 * but probably best just to implement an optimizing pass to
-	 * reduce the # of registers used and get rid of redundant mov's
-	 * (to output register).
-	 */
-	unsigned base_reg[TGSI_FILE_COUNT];
-
 	/* idx/slot for last compiler generated immediate */
 	unsigned immediate_idx;
 
@@ -133,10 +123,10 @@ static void create_mov(struct fd3_compile_context *ctx,
 static type_t get_ftype(struct fd3_compile_context *ctx);
 
 static unsigned
-compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
+compile_init(struct fd3_compile_context *ctx, struct fd3_shader_variant *so,
 		const struct tgsi_token *tokens)
 {
-	unsigned ret, base = 0;
+	unsigned ret;
 	struct tgsi_shader_info *info = &ctx->info;
 	const struct fd_lowering_config lconfig = {
 			.lower_DST  = true,
@@ -172,8 +162,6 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 	ctx->num_output_updates = 0;
 	ctx->atomic = false;
 
-	memset(ctx->base_reg, 0, sizeof(ctx->base_reg));
-
 #define FM(x) (1 << TGSI_FILE_##x)
 	/* optimize can't deal with relative addressing: */
 	if (info->indirect_files & (FM(TEMPORARY) | FM(INPUT) |
@@ -181,25 +169,7 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 		return TGSI_PARSE_ERROR;
 
 	/* Immediates go after constants: */
-	ctx->base_reg[TGSI_FILE_CONSTANT]  = 0;
-	ctx->base_reg[TGSI_FILE_IMMEDIATE] =
-			info->file_max[TGSI_FILE_CONSTANT] + 1;
-
-	/* if full precision and fragment shader, don't clobber
-	 * r0.xy w/ bary fetch:
-	 */
-	if ((so->type == SHADER_FRAGMENT) && !so->half_precision)
-		base = 1;
-
-	/* Temporaries after outputs after inputs: */
-	ctx->base_reg[TGSI_FILE_INPUT]     = base;
-	ctx->base_reg[TGSI_FILE_OUTPUT]    = base +
-			info->file_max[TGSI_FILE_INPUT] + 1;
-	ctx->base_reg[TGSI_FILE_TEMPORARY] = base +
-			info->file_max[TGSI_FILE_INPUT] + 1 +
-			info->file_max[TGSI_FILE_OUTPUT] + 1;
-
-	so->first_immediate = ctx->base_reg[TGSI_FILE_IMMEDIATE];
+	so->first_immediate = info->file_max[TGSI_FILE_CONSTANT] + 1;
 	ctx->immediate_idx = 4 * (ctx->info.file_max[TGSI_FILE_IMMEDIATE] + 1);
 
 	ret = tgsi_parse_init(&ctx->parser, ctx->tokens);
@@ -520,7 +490,7 @@ add_dst_reg_wrmask(struct fd3_compile_context *ctx,
 	switch (dst->File) {
 	case TGSI_FILE_OUTPUT:
 	case TGSI_FILE_TEMPORARY:
-		num = dst->Index + ctx->base_reg[dst->File];
+		/* uses SSA */
 		break;
 	case TGSI_FILE_ADDRESS:
 		num = REG_A0;
@@ -533,8 +503,6 @@ add_dst_reg_wrmask(struct fd3_compile_context *ctx,
 
 	if (dst->Indirect)
 		flags |= IR3_REG_RELATIV;
-	if (ctx->so->half_precision)
-		flags |= IR3_REG_HALF;
 
 	reg = ir3_reg_create(instr, regid(num, chan), flags);
 
@@ -602,9 +570,12 @@ add_src_reg_wrmask(struct fd3_compile_context *ctx,
 		 * TGSI has vec4 immediates, we can only embed scalar (of limited
 		 * size, depending on instruction..)
 		 */
+		flags |= IR3_REG_CONST;
+		num = src->Index + ctx->so->first_immediate;
+		break;
 	case TGSI_FILE_CONSTANT:
 		flags |= IR3_REG_CONST;
-		num = src->Index + ctx->base_reg[src->File];
+		num = src->Index;
 		break;
 	case TGSI_FILE_OUTPUT:
 		/* NOTE: we should only end up w/ OUTPUT file for things like
@@ -612,7 +583,7 @@ add_src_reg_wrmask(struct fd3_compile_context *ctx,
 		 */
 	case TGSI_FILE_INPUT:
 	case TGSI_FILE_TEMPORARY:
-		num = src->Index + ctx->base_reg[src->File];
+		/* uses SSA */
 		break;
 	default:
 		compile_error(ctx, "unsupported src register file: %s\n",
@@ -626,8 +597,6 @@ add_src_reg_wrmask(struct fd3_compile_context *ctx,
 		flags |= IR3_REG_NEGATE;
 	if (src->Indirect)
 		flags |= IR3_REG_RELATIV;
-	if (ctx->so->half_precision)
-		flags |= IR3_REG_HALF;
 
 	reg = ir3_reg_create(instr, regid(num, chan), flags);
 
@@ -726,9 +695,6 @@ get_internal_temp_hr(struct fd3_compile_context *ctx,
 	struct tgsi_src_register *tmp_src;
 	int n;
 
-	if (ctx->so->half_precision)
-		return get_internal_temp(ctx, tmp_dst);
-
 	tmp_dst->File      = TGSI_FILE_TEMPORARY;
 	tmp_dst->WriteMask = TGSI_WRITEMASK_XYZW;
 	tmp_dst->Indirect  = 0;
@@ -771,13 +737,13 @@ is_rel_or_const(struct tgsi_src_register *src)
 static type_t
 get_ftype(struct fd3_compile_context *ctx)
 {
-	return ctx->so->half_precision ? TYPE_F16 : TYPE_F32;
+	return TYPE_F32;
 }
 
 static type_t
 get_utype(struct fd3_compile_context *ctx)
 {
-	return ctx->so->half_precision ? TYPE_U16 : TYPE_U32;
+	return TYPE_U32;
 }
 
 static unsigned
@@ -1268,8 +1234,7 @@ trans_cmp(const struct instr_translater *t,
 		a1 = &inst->Src[1].Register;
 		a2 = &inst->Src[2].Register;
 		/* sel.{b32,b16} dst, src2, tmp, src1 */
-		instr = instr_create(ctx, 3,
-				ctx->so->half_precision ? OPC_SEL_B16 : OPC_SEL_B32);
+		instr = instr_create(ctx, 3, OPC_SEL_B32);
 		vectorize(ctx, instr, dst, 3, a1, 0, tmp_src, 0, a2, 0);
 
 		break;
@@ -1691,8 +1656,7 @@ instr_cat3(const struct instr_translater *t,
 		}
 	}
 
-	instr = instr_create(ctx, 3,
-			ctx->so->half_precision ? t->hopc : t->opc);
+	instr = instr_create(ctx, 3, t->opc);
 	vectorize(ctx, instr, dst, 3, src0, 0, src1, 0,
 			&inst->Src[2].Register, 0);
 	put_dst(ctx, inst, dst);
@@ -1773,8 +1737,7 @@ decl_semantic(const struct tgsi_declaration_semantic *sem)
 static void
 decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 {
-	struct fd3_shader_stateobj *so = ctx->so;
-	unsigned base = ctx->base_reg[TGSI_FILE_INPUT];
+	struct fd3_shader_variant *so = ctx->so;
 	unsigned i, flags = 0;
 
 	/* I don't think we should get frag shader input without
@@ -1784,18 +1747,15 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 	compile_assert(ctx, (ctx->type == TGSI_PROCESSOR_VERTEX) ||
 			decl->Declaration.Semantic);
 
-	if (ctx->so->half_precision)
-		flags |= IR3_REG_HALF;
-
 	for (i = decl->Range.First; i <= decl->Range.Last; i++) {
 		unsigned n = so->inputs_count++;
-		unsigned r = regid(i + base, 0);
+		unsigned r = regid(i, 0);
 		unsigned ncomp, j;
 
 		/* TODO use ctx->info.input_usage_mask[decl->Range.n] to figure out ncomp: */
 		ncomp = 4;
 
-		DBG("decl in -> r%d", i + base);
+		DBG("decl in -> r%d", i);
 
 		so->inputs[n].semantic = decl_semantic(&decl->Semantic);
 		so->inputs[n].compmask = (1 << ncomp) - 1;
@@ -1837,15 +1797,14 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 static void
 decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 {
-	struct fd3_shader_stateobj *so = ctx->so;
-	unsigned base = ctx->base_reg[TGSI_FILE_OUTPUT];
+	struct fd3_shader_variant *so = ctx->so;
 	unsigned comp = 0;
 	unsigned name = decl->Semantic.Name;
 	unsigned i;
 
 	compile_assert(ctx, decl->Declaration.Semantic);
 
-	DBG("decl out[%d] -> r%d", name, decl->Range.First + base);
+	DBG("decl out[%d] -> r%d", name, decl->Range.First);
 
 	if (ctx->type == TGSI_PROCESSOR_VERTEX) {
 		switch (name) {
@@ -1883,7 +1842,7 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 		ncomp = 4;
 
 		so->outputs[n].semantic = decl_semantic(&decl->Semantic);
-		so->outputs[n].regid = regid(i + base, comp);
+		so->outputs[n].regid = regid(i, comp);
 
 		/* avoid undefined outputs, stick a dummy mov from imm{0.0},
 		 * which if the output is actually assigned will be over-
@@ -2013,8 +1972,8 @@ compile_dump(struct fd3_compile_context *ctx)
 }
 
 int
-fd3_compile_shader(struct fd3_shader_stateobj *so,
-		const struct tgsi_token *tokens)
+fd3_compile_shader(struct fd3_shader_variant *so,
+		const struct tgsi_token *tokens, struct fd3_shader_key key)
 {
 	struct fd3_compile_context ctx;
 	unsigned i, actual_in;

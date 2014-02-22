@@ -54,7 +54,7 @@ struct fd3_compile_context {
 	bool free_tokens;
 	struct ir3_shader *ir;
 	struct ir3_block *block;
-	struct fd3_shader_stateobj *so;
+	struct fd3_shader_variant *so;
 
 	struct tgsi_parse_context parser;
 	unsigned type;
@@ -120,7 +120,7 @@ static void create_mov(struct fd3_compile_context *ctx,
 		struct tgsi_dst_register *dst, struct tgsi_src_register *src);
 
 static unsigned
-compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
+compile_init(struct fd3_compile_context *ctx, struct fd3_shader_variant *so,
 		const struct tgsi_token *tokens)
 {
 	unsigned ret, base = 0;
@@ -169,7 +169,7 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 	/* if full precision and fragment shader, don't clobber
 	 * r0.x w/ bary fetch:
 	 */
-	if ((so->type == SHADER_FRAGMENT) && !so->half_precision)
+	if ((so->type == SHADER_FRAGMENT) && !so->key.half_precision)
 		base = 1;
 
 	/* Temporaries after outputs after inputs: */
@@ -291,7 +291,7 @@ add_dst_reg(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
 
 	if (dst->Indirect)
 		flags |= IR3_REG_RELATIV;
-	if (ctx->so->half_precision)
+	if (ctx->so->key.half_precision)
 		flags |= IR3_REG_HALF;
 
 	reg = ir3_reg_create(instr, regid(num, chan), flags);
@@ -344,7 +344,7 @@ add_src_reg(struct fd3_compile_context *ctx, struct ir3_instruction *instr,
 		flags |= IR3_REG_NEGATE;
 	if (src->Indirect)
 		flags |= IR3_REG_RELATIV;
-	if (ctx->so->half_precision)
+	if (ctx->so->key.half_precision)
 		flags |= IR3_REG_HALF;
 
 	reg = ir3_reg_create(instr, regid(num, chan), flags);
@@ -409,7 +409,7 @@ get_internal_temp_hr(struct fd3_compile_context *ctx,
 	struct tgsi_src_register *tmp_src;
 	int n;
 
-	if (ctx->so->half_precision)
+	if (ctx->so->key.half_precision)
 		return get_internal_temp(ctx, tmp_dst);
 
 	tmp_dst->File      = TGSI_FILE_TEMPORARY;
@@ -454,13 +454,13 @@ is_rel_or_const(struct tgsi_src_register *src)
 static type_t
 get_ftype(struct fd3_compile_context *ctx)
 {
-	return ctx->so->half_precision ? TYPE_F16 : TYPE_F32;
+	return ctx->so->key.half_precision ? TYPE_F16 : TYPE_F32;
 }
 
 static type_t
 get_utype(struct fd3_compile_context *ctx)
 {
-	return ctx->so->half_precision ? TYPE_U16 : TYPE_U32;
+	return ctx->so->key.half_precision ? TYPE_U16 : TYPE_U32;
 }
 
 static unsigned
@@ -980,7 +980,7 @@ trans_cmp(const struct instr_translater *t,
 		if (t->tgsi_opc == TGSI_OPCODE_CMP) {
 			/* sel.{f32,f16} dst, src2, tmp, src1 */
 			instr = instr_create(ctx, 3,
-					ctx->so->half_precision ? OPC_SEL_F16 : OPC_SEL_F32);
+					ctx->so->key.half_precision ? OPC_SEL_F16 : OPC_SEL_F32);
 			vectorize(ctx, instr, dst, 3,
 					&inst->Src[2].Register, 0,
 					tmp_src, 0,
@@ -990,7 +990,7 @@ trans_cmp(const struct instr_translater *t,
 			get_immediate(ctx, &constval1, fui(1.0));
 			/* sel.{f32,f16} dst, {0.0}, tmp0, {1.0} */
 			instr = instr_create(ctx, 3,
-					ctx->so->half_precision ? OPC_SEL_F16 : OPC_SEL_F32);
+					ctx->so->key.half_precision ? OPC_SEL_F16 : OPC_SEL_F32);
 			vectorize(ctx, instr, dst, 3,
 					&constval0, 0, tmp_src, 0, &constval1, 0);
 		}
@@ -1210,7 +1210,7 @@ instr_cat3(const struct instr_translater *t,
 	}
 
 	instr = instr_create(ctx, 3,
-			ctx->so->half_precision ? t->hopc : t->opc);
+			ctx->so->key.half_precision ? t->hopc : t->opc);
 	vectorize(ctx, instr, dst, 3, src0, 0, src1, 0,
 			&inst->Src[2].Register, 0);
 	put_dst(ctx, inst, dst);
@@ -1297,7 +1297,7 @@ decl_semantic(const struct tgsi_declaration_semantic *sem)
 static int
 decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 {
-	struct fd3_shader_stateobj *so = ctx->so;
+	struct fd3_shader_variant *so = ctx->so;
 	unsigned base = ctx->base_reg[TGSI_FILE_INPUT];
 	unsigned i, flags = 0;
 	int nop = 0;
@@ -1309,7 +1309,7 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 	compile_assert(ctx, (ctx->type == TGSI_PROCESSOR_VERTEX) ||
 			decl->Declaration.Semantic);
 
-	if (ctx->so->half_precision)
+	if (ctx->so->key.half_precision)
 		flags |= IR3_REG_HALF;
 
 	for (i = decl->Range.First; i <= decl->Range.Last; i++) {
@@ -1362,7 +1362,7 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 static void
 decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 {
-	struct fd3_shader_stateobj *so = ctx->so;
+	struct fd3_shader_variant *so = ctx->so;
 	unsigned base = ctx->base_reg[TGSI_FILE_OUTPUT];
 	unsigned comp = 0;
 	unsigned name = decl->Semantic.Name;
@@ -1492,8 +1492,8 @@ compile_instructions(struct fd3_compile_context *ctx)
 }
 
 int
-fd3_compile_shader_old(struct fd3_shader_stateobj *so,
-		const struct tgsi_token *tokens)
+fd3_compile_shader_old(struct fd3_shader_variant *so,
+		const struct tgsi_token *tokens, struct fd3_shader_key key)
 {
 	struct fd3_compile_context ctx;
 

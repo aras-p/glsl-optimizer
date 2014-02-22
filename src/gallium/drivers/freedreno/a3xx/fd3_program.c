@@ -44,17 +44,17 @@
 #include "fd3_util.h"
 
 static void
-delete_shader(struct fd3_shader_stateobj *so)
+delete_variant(struct fd3_shader_variant *v)
 {
-	ir3_shader_destroy(so->ir);
-	fd_bo_del(so->bo);
-	free(so);
+	ir3_shader_destroy(v->ir);
+	fd_bo_del(v->bo);
+	free(v);
 }
 
 static void
-assemble_shader(struct pipe_context *pctx, struct fd3_shader_stateobj *so)
+assemble_variant(struct fd3_shader_variant *so)
 {
-	struct fd_context *ctx = fd_context(pctx);
+	struct fd_context *ctx = fd_context(so->so->pctx);
 	uint32_t sz, *bin;
 
 	bin = ir3_shader_assemble(so->ir, &so->info);
@@ -77,7 +77,7 @@ assemble_shader(struct pipe_context *pctx, struct fd3_shader_stateobj *so)
  * reflect the # of registers actually used:
  */
 static void
-fixup_vp_regfootprint(struct fd3_shader_stateobj *so)
+fixup_vp_regfootprint(struct fd3_shader_variant *so)
 {
 	unsigned i;
 	for (i = 0; i < so->inputs_count; i++)
@@ -86,70 +86,121 @@ fixup_vp_regfootprint(struct fd3_shader_stateobj *so)
 		so->info.max_reg = MAX2(so->info.max_reg, (so->outputs[i].regid + 3) >> 2);
 }
 
-static struct fd3_shader_stateobj *
-create_shader(struct pipe_context *pctx, const struct pipe_shader_state *cso,
-		enum shader_t type)
+static struct fd3_shader_variant *
+create_variant(struct fd3_shader_stateobj *so, struct fd3_shader_key key)
 {
-	struct fd3_shader_stateobj *so = CALLOC_STRUCT(fd3_shader_stateobj);
-	const struct tgsi_token *tokens = cso->tokens;
+	struct fd3_shader_variant *v = CALLOC_STRUCT(fd3_shader_variant);
+	const struct tgsi_token *tokens = so->tokens;
 	int ret;
 
-	if (!so)
+	if (!v)
 		return NULL;
 
-	so->type = type;
+	v->so = so;
+	v->key = key;
+	v->type = so->type;
 
 	if (fd_mesa_debug & FD_DBG_DISASM) {
 		DBG("dump tgsi: type=%d", so->type);
 		tgsi_dump(tokens, 0);
 	}
 
-	if ((type == SHADER_FRAGMENT) && (fd_mesa_debug & FD_DBG_FRAGHALF))
-		so->half_precision = true;
-
-
 	if (!(fd_mesa_debug & FD_DBG_NOOPT)) {
-		ret = fd3_compile_shader(so, tokens);
+		ret = fd3_compile_shader(v, tokens, key);
 		if (ret) {
 			debug_error("new compiler failed, trying fallback!");
 
-			so->inputs_count = 0;
-			so->outputs_count = 0;
-			so->total_in = 0;
-			so->samplers_count = 0;
-			so->immediates_count = 0;
+			v->inputs_count = 0;
+			v->outputs_count = 0;
+			v->total_in = 0;
+			v->samplers_count = 0;
+			v->immediates_count = 0;
 		}
 	} else {
 		ret = -1;  /* force fallback to old compiler */
 	}
 
 	if (ret)
-		ret = fd3_compile_shader_old(so, tokens);
+		ret = fd3_compile_shader_old(v, tokens, key);
 
 	if (ret) {
 		debug_error("compile failed!");
 		goto fail;
 	}
 
-	assemble_shader(pctx, so);
-	if (!so->bo) {
+	assemble_variant(v);
+	if (!v->bo) {
 		debug_error("assemble failed!");
 		goto fail;
 	}
 
-	if (type == SHADER_VERTEX)
-		fixup_vp_regfootprint(so);
+	if (so->type == SHADER_VERTEX)
+		fixup_vp_regfootprint(v);
 
 	if (fd_mesa_debug & FD_DBG_DISASM) {
-		DBG("disassemble: type=%d", so->type);
-		disasm_a3xx(fd_bo_map(so->bo), so->info.sizedwords, 0, so->type);
+		DBG("disassemble: type=%d", v->type);
+		disasm_a3xx(fd_bo_map(v->bo), v->info.sizedwords, 0, v->type);
 	}
 
-	return so;
+	return v;
 
 fail:
-	delete_shader(so);
+	delete_variant(v);
 	return NULL;
+}
+
+struct fd3_shader_variant *
+fd3_shader_variant(struct fd3_shader_stateobj *so, struct fd3_shader_key key)
+{
+	struct fd3_shader_variant *v;
+
+	/* some shader key values only apply to vertex or frag shader,
+	 * so normalize the key to avoid constructing multiple identical
+	 * variants:
+	 */
+	if (so->type == SHADER_FRAGMENT) {
+		key.binning_pass = false;
+	}
+	if (so->type == SHADER_VERTEX) {
+		key.color_two_side = false;
+		key.half_precision = false;
+	}
+
+	for (v = so->variants; v; v = v->next)
+		if (!memcmp(&key, &v->key, sizeof(key)))
+			return v;
+
+	/* compile new variant if it doesn't exist already: */
+	v = create_variant(so, key);
+	v->next = so->variants;
+	so->variants = v;
+
+	return v;
+}
+
+
+static void
+delete_shader(struct fd3_shader_stateobj *so)
+{
+	struct fd3_shader_variant *v, *t;
+	for (v = so->variants; v; ) {
+		t = v;
+		v = v->next;
+		delete_variant(t);
+	}
+	free((void *)so->tokens);
+	free(so);
+}
+
+static struct fd3_shader_stateobj *
+create_shader(struct pipe_context *pctx, const struct pipe_shader_state *cso,
+		enum shader_t type)
+{
+	struct fd3_shader_stateobj *so = CALLOC_STRUCT(fd3_shader_stateobj);
+	so->pctx = pctx;
+	so->type = type;
+	so->tokens = tgsi_dup_tokens(cso->tokens);
+	return so;
 }
 
 static void *
@@ -181,7 +232,7 @@ fd3_vp_state_delete(struct pipe_context *pctx, void *hwcso)
 }
 
 static void
-emit_shader(struct fd_ringbuffer *ring, const struct fd3_shader_stateobj *so)
+emit_shader(struct fd_ringbuffer *ring, const struct fd3_shader_variant *so)
 {
 	const struct ir3_shader_info *si = &so->info;
 	enum adreno_state_block sb;
@@ -222,7 +273,7 @@ emit_shader(struct fd_ringbuffer *ring, const struct fd3_shader_stateobj *so)
 }
 
 static int
-find_output(const struct fd3_shader_stateobj *so, fd3_semantic semantic)
+find_output(const struct fd3_shader_variant *so, fd3_semantic semantic)
 {
 	int j;
 	for (j = 0; j < so->outputs_count; j++)
@@ -232,7 +283,7 @@ find_output(const struct fd3_shader_stateobj *so, fd3_semantic semantic)
 }
 
 static uint32_t
-find_output_regid(const struct fd3_shader_stateobj *so, fd3_semantic semantic)
+find_output_regid(const struct fd3_shader_variant *so, fd3_semantic semantic)
 {
 	int j;
 	for (j = 0; j < so->outputs_count; j++)
@@ -243,21 +294,25 @@ find_output_regid(const struct fd3_shader_stateobj *so, fd3_semantic semantic)
 
 void
 fd3_program_emit(struct fd_ringbuffer *ring,
-		struct fd_program_stateobj *prog, bool binning)
+		struct fd_program_stateobj *prog, struct fd3_shader_key key)
 {
-	const struct fd3_shader_stateobj *vp = prog->vp;
-	const struct fd3_shader_stateobj *fp = prog->fp;
-	const struct ir3_shader_info *vsi = &vp->info;
-	const struct ir3_shader_info *fsi = &fp->info;
+	const struct fd3_shader_variant *vp, *fp;
+	const struct ir3_shader_info *vsi, *fsi;
 	uint32_t pos_regid, posz_regid, psize_regid, color_regid;
 	int i;
 
-	if (binning) {
+	vp = fd3_shader_variant(prog->vp, key);
+
+	if (key.binning_pass) {
 		/* use dummy stateobj to simplify binning vs non-binning: */
-		static const struct fd3_shader_stateobj binning_fp = {};
+		static const struct fd3_shader_variant binning_fp = {};
 		fp = &binning_fp;
-		fsi = &fp->info;
+	} else {
+		fp = fd3_shader_variant(prog->fp, key);
 	}
+
+	vsi = &vp->info;
+	fsi = &fp->info;
 
 	pos_regid = find_output_regid(vp,
 		fd3_semantic_name(TGSI_SEMANTIC_POSITION, 0));
@@ -293,7 +348,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 
 	OUT_PKT0(ring, REG_A3XX_SP_SP_CTRL_REG, 1);
 	OUT_RING(ring, A3XX_SP_SP_CTRL_REG_CONSTMODE(0) |
-			COND(binning, A3XX_SP_SP_CTRL_REG_BINNING) |
+			COND(key.binning_pass, A3XX_SP_SP_CTRL_REG_BINNING) |
 			A3XX_SP_SP_CTRL_REG_SLEEPMODE(1) |
 			A3XX_SP_SP_CTRL_REG_L0MODE(0));
 
@@ -355,7 +410,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 			A3XX_SP_VS_OBJ_OFFSET_REG_SHADEROBJOFFSET(0));
 	OUT_RELOC(ring, vp->bo, 0, 0, 0);  /* SP_VS_OBJ_START_REG */
 
-	if (binning) {
+	if (key.binning_pass) {
 		OUT_PKT0(ring, REG_A3XX_SP_FS_LENGTH_REG, 1);
 		OUT_RING(ring, 0x00000000);
 
@@ -402,12 +457,12 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 
 	OUT_PKT0(ring, REG_A3XX_SP_FS_MRT_REG(0), 4);
 	OUT_RING(ring, A3XX_SP_FS_MRT_REG_REGID(color_regid) |
-			COND(fp->half_precision, A3XX_SP_FS_MRT_REG_HALF_PRECISION));
+			COND(fp->key.half_precision, A3XX_SP_FS_MRT_REG_HALF_PRECISION));
 	OUT_RING(ring, A3XX_SP_FS_MRT_REG_REGID(0));
 	OUT_RING(ring, A3XX_SP_FS_MRT_REG_REGID(0));
 	OUT_RING(ring, A3XX_SP_FS_MRT_REG_REGID(0));
 
-	if (binning) {
+	if (key.binning_pass) {
 		OUT_PKT0(ring, REG_A3XX_VPC_ATTR, 2);
 		OUT_RING(ring, A3XX_VPC_ATTR_THRDASSIGN(1) |
 				A3XX_VPC_ATTR_LMSIZE(1));
@@ -421,16 +476,16 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 				A3XX_VPC_PACK_NUMNONPOSVSVAR(fp->total_in));
 
 		OUT_PKT0(ring, REG_A3XX_VPC_VARYING_INTERP_MODE(0), 4);
-		OUT_RING(ring, fp->vinterp[0]);    /* VPC_VARYING_INTERP[0].MODE */
-		OUT_RING(ring, fp->vinterp[1]);    /* VPC_VARYING_INTERP[1].MODE */
-		OUT_RING(ring, fp->vinterp[2]);    /* VPC_VARYING_INTERP[2].MODE */
-		OUT_RING(ring, fp->vinterp[3]);    /* VPC_VARYING_INTERP[3].MODE */
+		OUT_RING(ring, fp->so->vinterp[0]);    /* VPC_VARYING_INTERP[0].MODE */
+		OUT_RING(ring, fp->so->vinterp[1]);    /* VPC_VARYING_INTERP[1].MODE */
+		OUT_RING(ring, fp->so->vinterp[2]);    /* VPC_VARYING_INTERP[2].MODE */
+		OUT_RING(ring, fp->so->vinterp[3]);    /* VPC_VARYING_INTERP[3].MODE */
 
 		OUT_PKT0(ring, REG_A3XX_VPC_VARYING_PS_REPL_MODE(0), 4);
-		OUT_RING(ring, fp->vpsrepl[0]);    /* VPC_VARYING_PS_REPL[0].MODE */
-		OUT_RING(ring, fp->vpsrepl[1]);    /* VPC_VARYING_PS_REPL[1].MODE */
-		OUT_RING(ring, fp->vpsrepl[2]);    /* VPC_VARYING_PS_REPL[2].MODE */
-		OUT_RING(ring, fp->vpsrepl[3]);    /* VPC_VARYING_PS_REPL[3].MODE */
+		OUT_RING(ring, fp->so->vpsrepl[0]);    /* VPC_VARYING_PS_REPL[0].MODE */
+		OUT_RING(ring, fp->so->vpsrepl[1]);    /* VPC_VARYING_PS_REPL[1].MODE */
+		OUT_RING(ring, fp->so->vpsrepl[2]);    /* VPC_VARYING_PS_REPL[2].MODE */
+		OUT_RING(ring, fp->so->vpsrepl[3]);    /* VPC_VARYING_PS_REPL[3].MODE */
 	}
 
 	OUT_PKT0(ring, REG_A3XX_VFD_VS_THREADING_THRESHOLD, 1);
@@ -442,7 +497,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	OUT_PKT0(ring, REG_A3XX_VFD_PERFCOUNTER0_SELECT, 1);
 	OUT_RING(ring, 0x00000000);        /* VFD_PERFCOUNTER0_SELECT */
 
-	if (!binning) {
+	if (!key.binning_pass) {
 		emit_shader(ring, fp);
 
 		OUT_PKT0(ring, REG_A3XX_VFD_PERFCOUNTER0_SELECT, 1);

@@ -43,6 +43,8 @@
 #include "fd3_util.h"
 #include "fd3_zsa.h"
 
+static const struct fd3_shader_key key = {
+};
 
 static void
 emit_mrt(struct fd_ringbuffer *ring, unsigned nr_bufs,
@@ -147,11 +149,13 @@ emit_binning_workaround(struct fd_context *ctx)
 			A3XX_GRAS_SC_CONTROL_RASTER_MODE(1));
 
 	fd_wfi(ctx, ring);
-	fd3_program_emit(ring, &ctx->solid_prog, false);
-
-	fd3_emit_vertex_bufs(ring, &ctx->solid_prog, (struct fd3_vertex_buf[]) {
-			{ .prsc = fd3_ctx->solid_vbuf, .stride = 12, .format = PIPE_FORMAT_R32G32B32_FLOAT },
-		}, 1);
+	fd3_program_emit(ring, &ctx->solid_prog, key);
+	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->solid_prog.vp, key),
+			(struct fd3_vertex_buf[]) {{
+				.prsc = fd3_ctx->solid_vbuf,
+				.stride = 12,
+				.format = PIPE_FORMAT_R32G32B32_FLOAT,
+			}}, 1);
 
 	OUT_PKT0(ring, REG_A3XX_HLSQ_CONTROL_0_REG, 4);
 	OUT_RING(ring, A3XX_HLSQ_CONTROL_0_REG_FSTHREADSIZE(FOUR_QUADS) |
@@ -365,11 +369,13 @@ fd3_emit_tile_gmem2mem(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_RING(ring, 0);            /* VFD_INDEX_OFFSET */
 
 	fd_wfi(ctx, ring);
-	fd3_program_emit(ring, &ctx->solid_prog, false);
-
-	fd3_emit_vertex_bufs(ring, &ctx->solid_prog, (struct fd3_vertex_buf[]) {
-			{ .prsc = fd3_ctx->solid_vbuf, .stride = 12, .format = PIPE_FORMAT_R32G32B32_FLOAT },
-		}, 1);
+	fd3_program_emit(ring, &ctx->solid_prog, key);
+	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->solid_prog.vp, key),
+			(struct fd3_vertex_buf[]) {{
+				.prsc = fd3_ctx->solid_vbuf,
+				.stride = 12,
+				.format = PIPE_FORMAT_R32G32B32_FLOAT,
+			}}, 1);
 
 	if (ctx->resolve & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL)) {
 		uint32_t base = 0;
@@ -512,12 +518,17 @@ fd3_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 	OUT_RING(ring, 0);            /* VFD_INDEX_OFFSET */
 
 	fd_wfi(ctx, ring);
-	fd3_program_emit(ring, &ctx->blit_prog, false);
-
-	fd3_emit_vertex_bufs(ring, &ctx->blit_prog, (struct fd3_vertex_buf[]) {
-			{ .prsc = fd3_ctx->blit_texcoord_vbuf, .stride = 8, .format = PIPE_FORMAT_R32G32_FLOAT },
-			{ .prsc = fd3_ctx->solid_vbuf, .stride = 12, .format = PIPE_FORMAT_R32G32B32_FLOAT },
-		}, 2);
+	fd3_program_emit(ring, &ctx->blit_prog, key);
+	fd3_emit_vertex_bufs(ring, fd3_shader_variant(ctx->blit_prog.vp, key),
+			(struct fd3_vertex_buf[]) {{
+				.prsc = fd3_ctx->blit_texcoord_vbuf,
+				.stride = 8,
+				.format = PIPE_FORMAT_R32G32_FLOAT,
+			}, {
+				.prsc = fd3_ctx->solid_vbuf,
+				.stride = 12,
+				.format = PIPE_FORMAT_R32G32B32_FLOAT,
+			}}, 2);
 
 	/* for gmem pitch/base calculations, we need to use the non-
 	 * truncated tile sizes:

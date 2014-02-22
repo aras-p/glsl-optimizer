@@ -32,7 +32,7 @@
 #include "pipe/p_context.h"
 
 #include "freedreno_context.h"
-
+#include "fd3_util.h"
 #include "ir3.h"
 #include "disasm.h"
 
@@ -53,18 +53,13 @@ static inline uint16_t sem2idx(fd3_semantic sem)
 	return sem & 0xff;
 }
 
-struct fd3_shader_stateobj {
-	enum shader_t type;
-
+struct fd3_shader_variant {
 	struct fd_bo *bo;
+
+	struct fd3_shader_key key;
 
 	struct ir3_shader_info info;
 	struct ir3_shader *ir;
-
-	/* is shader using (or more precisely, is color_regid) half-
-	 * precision register?
-	 */
-	bool half_precision;
 
 	/* the instructions length is in units of instruction groups
 	 * (4 instructions, 8 dwords):
@@ -118,14 +113,35 @@ struct fd3_shader_stateobj {
 		uint32_t val[4];
 	} immediates[64];
 
+	/* shader varients form a linked list: */
+	struct fd3_shader_variant *next;
+
+	/* replicated here to avoid passing extra ptrs everywhere: */
+	enum shader_t type;
+	struct fd3_shader_stateobj *so;
+};
+
+struct fd3_shader_stateobj {
+	enum shader_t type;
+
+	struct pipe_context *pctx;
+	const struct tgsi_token *tokens;
+
+	struct fd3_shader_variant *variants;
+
 	/* so far, only used for blit_prog shader.. values for
 	 * VPC_VARYING_INTERP[i].MODE and VPC_VARYING_PS_REPL[i].MODE
+	 *
+	 * Possibly should be in fd3_program_variant?
 	 */
 	uint32_t vinterp[4], vpsrepl[4];
 };
 
+struct fd3_shader_variant * fd3_shader_variant(struct fd3_shader_stateobj *so,
+		struct fd3_shader_key key);
+
 void fd3_program_emit(struct fd_ringbuffer *ring,
-		struct fd_program_stateobj *prog, bool binning);
+		struct fd_program_stateobj *prog, struct fd3_shader_key key);
 
 void fd3_prog_init(struct pipe_context *pctx);
 
