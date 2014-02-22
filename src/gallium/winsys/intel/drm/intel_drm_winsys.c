@@ -324,7 +324,6 @@ intel_winsys_export_handle(struct intel_winsys *winsys,
    case DRM_API_HANDLE_TYPE_KMS:
       handle->handle = ((drm_intel_bo *) bo)->handle;
       break;
-#if 0
    case DRM_API_HANDLE_TYPE_FD:
       {
          int fd;
@@ -334,7 +333,6 @@ intel_winsys_export_handle(struct intel_winsys *winsys,
             handle->handle = fd;
       }
       break;
-#endif
    default:
       err = -EINVAL;
       break;
