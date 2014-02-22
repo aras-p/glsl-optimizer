@@ -90,12 +90,20 @@ emit_constants(struct fd_ringbuffer *ring,
 		struct fd3_shader_variant *shader)
 {
 	uint32_t enabled_mask = constbuf->enabled_mask;
+	uint32_t first_immediate;
 	uint32_t base = 0;
 	unsigned i;
 
 	// XXX TODO only emit dirty consts.. but we need to keep track if
 	// they are clobbered by a clear, gmem2mem, or mem2gmem..
 	constbuf->dirty_mask = enabled_mask;
+
+	/* in particular, with binning shader and a unneeded consts no
+	 * longer referenced, we could end up w/ constlen that is smaller
+	 * than first_immediate.  In that case truncate the user consts
+	 * early to avoid HLSQ lockup caused by writing too many consts
+	 */
+	first_immediate = MIN2(shader->first_immediate, shader->constlen);
 
 	/* emit user constants: */
 	while (enabled_mask) {
@@ -109,10 +117,14 @@ emit_constants(struct fd_ringbuffer *ring,
 		/* gallium could leave const buffers bound above what the
 		 * current shader uses.. don't let that confuse us.
 		 */
-		if (base >= (4 * shader->first_immediate))
+		if (base >= (4 * first_immediate))
 			break;
 
 		if (constbuf->dirty_mask & (1 << index)) {
+			/* and even if the start of the const buffer is before
+			 * first_immediate, the end may not be:
+			 */
+			size = MIN2(size, (4 * first_immediate) - base);
 			fd3_emit_constant(ring, sb, base,
 					cb->buffer_offset, size,
 					cb->user_buffer, cb->buffer);
@@ -332,6 +344,15 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 			j++;
 		}
 	}
+
+	OUT_PKT0(ring, REG_A3XX_VFD_CONTROL_0, 2);
+	OUT_RING(ring, A3XX_VFD_CONTROL_0_TOTALATTRTOVS(vp->total_in) |
+			A3XX_VFD_CONTROL_0_PACKETSIZE(2) |
+			A3XX_VFD_CONTROL_0_STRMDECINSTRCNT(j) |
+			A3XX_VFD_CONTROL_0_STRMFETCHINSTRCNT(j));
+	OUT_RING(ring, A3XX_VFD_CONTROL_1_MAXSTORAGE(1) | // XXX
+			A3XX_VFD_CONTROL_1_REGID4VTX(regid(63,0)) |
+			A3XX_VFD_CONTROL_1_REGID4INST(regid(63,0)));
 }
 
 void
@@ -429,11 +450,13 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	if (dirty & (FD_DIRTY_RASTERIZER | FD_DIRTY_PROG)) {
 		struct fd3_rasterizer_stateobj *rasterizer =
 				fd3_rasterizer_stateobj(ctx->rasterizer);
-		uint32_t stride_in_vpc;
+		uint32_t stride_in_vpc = 0;
 
-		stride_in_vpc = align(fp->total_in, 4) / 4;
-		if (stride_in_vpc > 0)
-			stride_in_vpc = MAX2(stride_in_vpc, 2);
+		if (!key.binning_pass) {
+			stride_in_vpc = align(fp->total_in, 4) / 4;
+			if (stride_in_vpc > 0)
+				stride_in_vpc = MAX2(stride_in_vpc, 2);
+		}
 
 		OUT_PKT0(ring, REG_A3XX_PC_PRIM_VTX_CNTL, 1);
 		OUT_RING(ring, rasterizer->pc_prim_vtx_cntl |
@@ -480,9 +503,11 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		emit_constants(ring,  SB_VERT_SHADER,
 				&ctx->constbuf[PIPE_SHADER_VERTEX],
 				(prog->dirty & FD_SHADER_DIRTY_VP) ? vp : NULL);
-		emit_constants(ring, SB_FRAG_SHADER,
-				&ctx->constbuf[PIPE_SHADER_FRAGMENT],
-				(prog->dirty & FD_SHADER_DIRTY_FP) ? fp : NULL);
+		if (!key.binning_pass) {
+			emit_constants(ring, SB_FRAG_SHADER,
+					&ctx->constbuf[PIPE_SHADER_FRAGMENT],
+					(prog->dirty & FD_SHADER_DIRTY_FP) ? fp : NULL);
+		}
 	}
 
 	if ((dirty & FD_DIRTY_BLEND) && ctx->blend) {

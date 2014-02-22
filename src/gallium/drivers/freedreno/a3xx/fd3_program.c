@@ -532,15 +532,6 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 		OUT_PKT0(ring, REG_A3XX_VFD_PERFCOUNTER0_SELECT, 1);
 		OUT_RING(ring, 0x00000000);        /* VFD_PERFCOUNTER0_SELECT */
 	}
-
-	OUT_PKT0(ring, REG_A3XX_VFD_CONTROL_0, 2);
-	OUT_RING(ring, A3XX_VFD_CONTROL_0_TOTALATTRTOVS(vp->total_in) |
-			A3XX_VFD_CONTROL_0_PACKETSIZE(2) |
-			A3XX_VFD_CONTROL_0_STRMDECINSTRCNT(vp->inputs_count) |
-			A3XX_VFD_CONTROL_0_STRMFETCHINSTRCNT(vp->inputs_count));
-	OUT_RING(ring, A3XX_VFD_CONTROL_1_MAXSTORAGE(1) | // XXX
-			A3XX_VFD_CONTROL_1_REGID4VTX(regid(63,0)) |
-			A3XX_VFD_CONTROL_1_REGID4INST(regid(63,0)));
 }
 
 /* hack.. until we figure out how to deal w/ vpsrepl properly.. */

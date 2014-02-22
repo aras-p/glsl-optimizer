@@ -2214,7 +2214,7 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 {
 	struct fd3_compile_context ctx;
 	struct ir3_block *block;
-	unsigned i, actual_in;
+	unsigned i, j, actual_in;
 	int ret = 0;
 
 	assert(!so->ir);
@@ -2231,6 +2231,29 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 	compile_instructions(&ctx);
 
 	block = ctx.block;
+
+	/* at this point, for binning pass, throw away unneeded outputs: */
+	if (key.binning_pass) {
+		for (i = 0, j = 0; i < so->outputs_count; i++) {
+			unsigned name = sem2name(so->outputs[i].semantic);
+			unsigned idx = sem2name(so->outputs[i].semantic);
+
+			/* throw away everything but first position/psize */
+			if ((idx == 0) && ((name == TGSI_SEMANTIC_POSITION) ||
+					(name == TGSI_SEMANTIC_PSIZE))) {
+				if (i != j) {
+					so->outputs[j] = so->outputs[i];
+					block->outputs[(j*4)+0] = block->outputs[(i*4)+0];
+					block->outputs[(j*4)+1] = block->outputs[(i*4)+1];
+					block->outputs[(j*4)+2] = block->outputs[(i*4)+2];
+					block->outputs[(j*4)+3] = block->outputs[(i*4)+3];
+				}
+				j++;
+			}
+		}
+		so->outputs_count = j;
+		block->noutputs = j * 4;
+	}
 
 	/* at this point, we want the kill's in the outputs array too,
 	 * so that they get scheduled (since they have no dst).. we've
