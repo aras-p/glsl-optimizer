@@ -158,6 +158,10 @@ intel_miptree_blit(struct brw_context *brw,
                    uint32_t width, uint32_t height,
                    GLenum logicop)
 {
+   /* The blitter doesn't understand multisampling at all. */
+   if (src_mt->num_samples > 0 || dst_mt->num_samples > 0)
+      return false;
+
    /* No sRGB decode or encode is done by the hardware blitter, which is
     * consistent with what we want in the callers (glCopyTexSubImage(),
     * glBlitFramebuffer(), texture validation, etc.).
