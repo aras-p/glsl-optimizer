@@ -28,7 +28,7 @@
          <param name="type" type="GLenum" />
          <param name="count" type="GLsizei" />
          <param name="strings" type="const GLchar * const *" />
-         <return type="uint"/>
+         <return type="GLuint"/>
       </function>
       <function name="BindProgramPipeline" offset="assign">
          <param name="pipeline" type="GLuint" />
