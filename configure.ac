@@ -1448,6 +1448,7 @@ else
 fi
 
 if echo "$egl_platforms" | grep 'x11' >/dev/null 2>&1; then
+    GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/xlib"
     NEED_WINSYS_XLIB=yes
 fi
 AM_CONDITIONAL(HAVE_EGL_PLATFORM_X11, echo "$egl_platforms" | grep 'x11' >/dev/null 2>&1)
