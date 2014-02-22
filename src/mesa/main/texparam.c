@@ -1038,9 +1038,16 @@ get_tex_level_parameter_image(struct gl_context *ctx,
 
    img = _mesa_select_tex_image(ctx, texObj, target, level);
    if (!img || img->TexFormat == MESA_FORMAT_NONE) {
-      /* undefined texture image */
-      if (pname == GL_TEXTURE_COMPONENTS)
-         *params = 1;
+      /* In case of undefined texture image return the default values.
+       *
+       * From OpenGL 4.0 spec, page 398:
+       *    "The initial internal format of a texel array is RGBA
+       *     instead of 1. TEXTURE_COMPONENTS is deprecated; always
+       *     use TEXTURE_INTERNAL_FORMAT."
+       */
+
+      if (pname == GL_TEXTURE_INTERNAL_FORMAT)
+         *params = GL_RGBA;
       else
          *params = 0;
       return;
