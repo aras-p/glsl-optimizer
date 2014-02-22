@@ -286,11 +286,10 @@ _mesa_ProgramUniform2f(GLuint program, GLint location, GLfloat v0, GLfloat v1)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat v[2];
+   struct gl_shader_program *shProg;
    v[0] = v0;
    v[1] = v1;
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program_err(ctx, program,
-            "glProgramUniform2f");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glProgramUniform2f");
    _mesa_uniform(ctx, shProg, location, 1, v, GL_FLOAT_VEC2);
 }
 
@@ -300,12 +299,11 @@ _mesa_ProgramUniform3f(GLuint program, GLint location, GLfloat v0, GLfloat v1,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat v[3];
+   struct gl_shader_program *shProg;
    v[0] = v0;
    v[1] = v1;
    v[2] = v2;
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program_err(ctx, program,
-            "glProgramUniform3f");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glProgramUniform3f");
    _mesa_uniform(ctx, shProg, location, 1, v, GL_FLOAT_VEC3);
 }
 
@@ -315,13 +313,12 @@ _mesa_ProgramUniform4f(GLuint program, GLint location, GLfloat v0, GLfloat v1,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLfloat v[4];
+   struct gl_shader_program *shProg;
    v[0] = v0;
    v[1] = v1;
    v[2] = v2;
    v[3] = v3;
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program_err(ctx, program,
-            "glProgramUniform4f");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glProgramUniform4f");
    _mesa_uniform(ctx, shProg, location, 1, v, GL_FLOAT_VEC4);
 }
 
@@ -340,11 +337,10 @@ _mesa_ProgramUniform2i(GLuint program, GLint location, GLint v0, GLint v1)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint v[2];
+   struct gl_shader_program *shProg;
    v[0] = v0;
    v[1] = v1;
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program_err(ctx, program,
-            "glProgramUniform2i");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glProgramUniform2i");
    _mesa_uniform(ctx, shProg, location, 1, v, GL_INT_VEC2);
 }
 
@@ -354,12 +350,11 @@ _mesa_ProgramUniform3i(GLuint program, GLint location, GLint v0, GLint v1,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint v[3];
+   struct gl_shader_program *shProg;
    v[0] = v0;
    v[1] = v1;
    v[2] = v2;
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program_err(ctx, program,
-            "glProgramUniform3i");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glProgramUniform3i");
    _mesa_uniform(ctx, shProg, location, 1, v, GL_INT_VEC3);
 }
 
@@ -369,13 +364,12 @@ _mesa_ProgramUniform4i(GLuint program, GLint location, GLint v0, GLint v1,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint v[4];
+   struct gl_shader_program *shProg;
    v[0] = v0;
    v[1] = v1;
    v[2] = v2;
    v[3] = v3;
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program_err(ctx, program,
-            "glProgramUniform4i");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glProgramUniform4i");
    _mesa_uniform(ctx, shProg, location, 1, v, GL_INT_VEC4);
 }
 
@@ -583,11 +577,11 @@ _mesa_ProgramUniform2ui(GLuint program, GLint location, GLuint v0, GLuint v1)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint v[2];
+   struct gl_shader_program *shProg;
    v[0] = v0;
    v[1] = v1;
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program_err(ctx, program,
-            "glProgramUniform2ui");
+   shProg = _mesa_lookup_shader_program_err(ctx, program,
+                                            "glProgramUniform2ui");
    _mesa_uniform(ctx, shProg, location, 1, v, GL_UNSIGNED_INT_VEC2);
 }
 
@@ -597,12 +591,12 @@ _mesa_ProgramUniform3ui(GLuint program, GLint location, GLuint v0, GLuint v1,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint v[3];
+   struct gl_shader_program *shProg;
    v[0] = v0;
    v[1] = v1;
    v[2] = v2;
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program_err(ctx, program,
-            "glProgramUniform3ui");
+   shProg = _mesa_lookup_shader_program_err(ctx, program,
+                                            "glProgramUniform3ui");
    _mesa_uniform(ctx, shProg, location, 1, v, GL_UNSIGNED_INT_VEC3);
 }
 
@@ -612,13 +606,12 @@ _mesa_ProgramUniform4ui(GLuint program, GLint location, GLuint v0, GLuint v1,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint v[4];
+   struct gl_shader_program *shProg;
    v[0] = v0;
    v[1] = v1;
    v[2] = v2;
    v[3] = v3;
-   struct gl_shader_program *shProg =
-      _mesa_lookup_shader_program_err(ctx, program,
-            "glProgramUniform4ui");
+   shProg = _mesa_lookup_shader_program_err(ctx, program, "glProgramUniform4ui");
    _mesa_uniform(ctx, shProg, location, 1, v, GL_UNSIGNED_INT_VEC4);
 }
 
