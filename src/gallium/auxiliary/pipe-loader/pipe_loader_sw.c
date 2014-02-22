@@ -31,7 +31,10 @@
 #include "util/u_dl.h"
 #include "sw/dri/dri_sw_winsys.h"
 #include "sw/null/null_sw_winsys.h"
+#ifdef HAVE_PIPE_LOADER_XLIB
+/* Explicitly wrap the header to ease build without X11 headers */
 #include "sw/xlib/xlib_sw_winsys.h"
+#endif
 #include "target-helpers/inline_sw_helper.h"
 #include "state_tracker/drisw_api.h"
 
@@ -49,7 +52,7 @@ static struct sw_winsys *(*backends[])() = {
    null_sw_create
 };
 
-#ifdef HAVE_WINSYS_XLIB
+#ifdef HAVE_PIPE_LOADER_XLIB
 bool
 pipe_loader_sw_probe_xlib(struct pipe_loader_device **devs, Display *display)
 {

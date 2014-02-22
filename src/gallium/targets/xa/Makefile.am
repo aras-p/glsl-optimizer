@@ -48,6 +48,13 @@ libxatracker_la_LIBADD = \
 	$(LIBUDEV_LIBS) \
 	$(LIBDRM_LIBS)
 
+if NEED_PIPE_LOADER_XLIB
+libxatracker_la_LIBADD += \
+	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
+	-lX11 -lXext -lXfixes \
+	$(LIBDRM_LIBS)
+endif
+
 libxatracker_la_LDFLAGS = \
 	-no-undefined \
 	-version-number $(XA_MAJOR):$(XA_MINOR):$(XA_TINY)

@@ -28,6 +28,13 @@ lib@OPENCL_LIBNAME@_la_LIBADD = \
 	-lclangBasic \
 	$(LLVM_LIBS)
 
+if NEED_PIPE_LOADER_XLIB
+lib@OPENCL_LIBNAME@_la_LIBADD += \
+	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
+	-lX11 -lXext -lXfixes \
+	$(LIBDRM_LIBS)
+endif
+
 lib@OPENCL_LIBNAME@_la_SOURCES =
 
 # Force usage of a C++ linker

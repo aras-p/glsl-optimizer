@@ -8,10 +8,6 @@ AM_CPPFLAGS = $(DEFINES) \
 	-I$(top_srcdir)/src/gallium/auxiliary \
 	-I$(top_srcdir)/src/gallium/winsys
 
-if NEED_WINSYS_XLIB
-AM_CPPFLAGS += -DHAVE_WINSYS_XLIB
-endif
-
 noinst_LTLIBRARIES =
 
 if HAVE_LOADER_GALLIUM

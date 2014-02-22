@@ -35,7 +35,7 @@
 
 #include "pipe/p_compiler.h"
 
-#ifdef HAVE_WINSYS_XLIB
+#ifdef HAVE_PIPE_LOADER_XLIB
 #include <X11/Xlib.h>
 #endif
 
@@ -105,7 +105,7 @@ pipe_loader_create_screen(struct pipe_loader_device *dev,
 void
 pipe_loader_release(struct pipe_loader_device **devs, int ndev);
 
-#ifdef HAVE_WINSYS_XLIB
+#ifdef HAVE_PIPE_LOADER_XLIB
 
 /**
  * Initialize Xlib for an associated display.

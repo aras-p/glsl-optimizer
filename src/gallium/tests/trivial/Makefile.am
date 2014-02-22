@@ -20,6 +20,13 @@ LDADD = $(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
 	$(PTHREAD_LIBS) \
 	-lm
 
+if NEED_PIPE_LOADER_XLIB
+LDADD += \
+	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
+	-lX11 -lXext -lXfixes \
+	$(LIBDRM_LIBS)
+endif
+
 noinst_PROGRAMS = compute tri quad-tex
 
 compute_SOURCES = compute.c

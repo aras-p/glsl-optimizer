@@ -50,6 +50,13 @@ gbm_gallium_drm_la_LIBADD = \
 	$(LIBDRM_LIBS) \
 	-lm
 
+if NEED_PIPE_LOADER_XLIB
+gbm_gallium_drm_la_LIBADD += \
+	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
+	-lX11 -lXext -lXfixes \
+	$(LIBDRM_LIBS)
+endif
+
 gbm_gallium_drm_la_LDFLAGS = -no-undefined -avoid-version -module
 
 # FIXME: this shouldn't be needed
