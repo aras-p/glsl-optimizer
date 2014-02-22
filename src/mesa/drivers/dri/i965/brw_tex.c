@@ -47,7 +47,7 @@ void brw_validate_textures( struct brw_context *brw )
    struct gl_context *ctx = &brw->ctx;
    int i;
 
-   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+   for (i = 0; i < ctx->Const.MaxCombinedTextureImageUnits; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 
       if (texUnit->_ReallyEnabled) {

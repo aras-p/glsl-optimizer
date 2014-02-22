@@ -317,7 +317,7 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
    /* Resolve depth buffer of each enabled depth texture, and color buffer of
     * each fast-clear-enabled color texture.
     */
-   for (int i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+   for (int i = 0; i < ctx->Const.MaxCombinedTextureImageUnits; i++) {
       if (!ctx->Texture.Unit[i]._ReallyEnabled)
 	 continue;
       tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
