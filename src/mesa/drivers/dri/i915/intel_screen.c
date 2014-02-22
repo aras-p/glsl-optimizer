@@ -740,7 +740,7 @@ i915_query_renderer_integer(__DRIscreen *psp, int param, unsigned int *value)
          * (uint64_t) system_page_size;
 
       const unsigned system_memory_megabytes =
-         (unsigned) (system_memory_bytes / 1024);
+         (unsigned) (system_memory_bytes / (1024 * 1024));
 
       value[0] = MIN2(system_memory_megabytes, gpu_mappable_megabytes);
       return 0;
