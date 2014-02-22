@@ -98,6 +98,7 @@ main_sources = [
     'main/pack.c',
     'main/pbo.c',
     'main/performance_monitor.c',
+    'main/pipelineobj.c',
     'main/pixel.c',
     'main/pixelstore.c',
     'main/pixeltransfer.c',
