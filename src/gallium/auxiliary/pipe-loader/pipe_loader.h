@@ -132,7 +132,7 @@ pipe_loader_drm_probe(struct pipe_loader_device **devs, int ndev);
  * \param auth_x If true, the pipe-loader will attempt to
  *               authenticate with the X server.
  */
-boolean
+bool
 pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd,
                          boolean auth_x);
 

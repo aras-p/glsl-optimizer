@@ -116,7 +116,7 @@ disconnect:
 #endif
 }
 
-boolean
+bool
 pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd,
                          boolean auth_x)
 {
@@ -124,7 +124,7 @@ pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd,
    int vendor_id, chip_id;
 
    if (!ddev)
-      return FALSE;
+      return false;
 
    if (loader_get_pci_id_for_fd(fd, &vendor_id, &chip_id)) {
       ddev->base.type = PIPE_LOADER_DEVICE_PCI;
@@ -144,11 +144,11 @@ pipe_loader_drm_probe_fd(struct pipe_loader_device **dev, int fd,
       goto fail;
 
    *dev = &ddev->base;
-   return TRUE;
+   return true;
 
   fail:
    FREE(ddev);
-   return FALSE;
+   return false;
 }
 
 static int
