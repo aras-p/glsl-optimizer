@@ -846,10 +846,6 @@ brw_query_renderer_integer(__DRIscreen *psp, int param, unsigned int *value)
    case __DRI2_RENDERER_UNIFIED_MEMORY_ARCHITECTURE:
       value[0] = 1;
       return 0;
-   case __DRI2_RENDERER_PREFERRED_PROFILE:
-      value[0] = (psp->max_gl_core_version != 0)
-         ? (1U << __DRI_API_OPENGL_CORE) : (1U << __DRI_API_OPENGL);
-      return 0;
    default:
       return driQueryRendererIntegerCommon(psp, param, value);
    }

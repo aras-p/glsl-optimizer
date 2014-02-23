@@ -519,6 +519,10 @@ driQueryRendererIntegerCommon(__DRIscreen *psp, int param, unsigned int *value)
       value[2] = v[2];
       return 0;
    }
+   case __DRI2_RENDERER_PREFERRED_PROFILE:
+      value[0] = (psp->max_gl_core_version != 0)
+         ? (1U << __DRI_API_OPENGL_CORE) : (1U << __DRI_API_OPENGL);
+      return 0;
    case __DRI2_RENDERER_OPENGL_CORE_PROFILE_VERSION:
       value[0] = psp->max_gl_core_version / 10;
       value[1] = psp->max_gl_core_version % 10;
