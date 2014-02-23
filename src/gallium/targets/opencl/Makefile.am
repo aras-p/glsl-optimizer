@@ -4,6 +4,7 @@ lib_LTLIBRARIES = lib@OPENCL_LIBNAME@.la
 
 lib@OPENCL_LIBNAME@_la_LDFLAGS = \
 	$(LLVM_LDFLAGS) \
+	-no-undefined \
 	-version-number 1:0
 
 lib@OPENCL_LIBNAME@_la_LIBADD = \
