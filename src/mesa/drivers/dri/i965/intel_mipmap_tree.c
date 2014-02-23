@@ -876,8 +876,8 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
     * minification.  This will also catch images not present in the
     * tree, changed targets, etc.
     */
-   if (width != minify(mt->logical_width0, level) ||
-       height != minify(mt->logical_height0, level) ||
+   if (width != minify(mt->logical_width0, level - mt->first_level) ||
+       height != minify(mt->logical_height0, level - mt->first_level) ||
        depth != level_depth) {
       return false;
    }
@@ -1041,8 +1041,8 @@ intel_miptree_copy_slice(struct brw_context *brw,
 
 {
    mesa_format format = src_mt->format;
-   uint32_t width = minify(src_mt->physical_width0, level);
-   uint32_t height = minify(src_mt->physical_height0, level);
+   uint32_t width = minify(src_mt->physical_width0, level - src_mt->first_level);
+   uint32_t height = minify(src_mt->physical_height0, level - src_mt->first_level);
    int slice;
 
    if (face > 0)

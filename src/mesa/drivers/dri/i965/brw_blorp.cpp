@@ -68,8 +68,8 @@ brw_blorp_mip_info::set(struct intel_mipmap_tree *mt,
    this->mt = mt;
    this->level = level;
    this->layer = layer;
-   this->width = minify(mt->physical_width0, level);
-   this->height = minify(mt->physical_height0, level);
+   this->width = minify(mt->physical_width0, level - mt->first_level);
+   this->height = minify(mt->physical_height0, level - mt->first_level);
 
    intel_miptree_get_image_offset(mt, level, layer, &x_offset, &y_offset);
 }

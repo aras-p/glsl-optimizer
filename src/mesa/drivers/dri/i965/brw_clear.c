@@ -155,8 +155,9 @@ brw_fast_clear_depth(struct gl_context *ctx)
        *        width of the map (LOD0) is not multiple of 16, fast clear
        *        optimization must be disabled.
        */
-      if (brw->gen == 6 && (minify(mt->physical_width0,
-                                   depth_irb->mt_level) % 16) != 0)
+      if (brw->gen == 6 &&
+          (minify(mt->physical_width0,
+                  depth_irb->mt_level - mt->first_level) % 16) != 0)
 	 return false;
       /* FALLTHROUGH */
 

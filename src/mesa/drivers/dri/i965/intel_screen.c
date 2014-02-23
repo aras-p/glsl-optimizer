@@ -329,8 +329,8 @@ intel_setup_image_from_mipmap_tree(struct brw_context *brw, __DRIimage *image,
    intel_region_get_tile_masks(mt->region, &mask_x, &mask_y, false);
    intel_miptree_get_image_offset(mt, level, zoffset, &draw_x, &draw_y);
 
-   image->width = minify(mt->physical_width0, level);
-   image->height = minify(mt->physical_height0, level);
+   image->width = minify(mt->physical_width0, level - mt->first_level);
+   image->height = minify(mt->physical_height0, level - mt->first_level);
    image->tile_x = draw_x & mask_x;
    image->tile_y = draw_y & mask_y;
 
