@@ -13,7 +13,7 @@ The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32840 bytes, from 2014-01-05 14:44:21)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   9009 bytes, from 2014-01-11 16:56:35)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  12362 bytes, from 2014-01-07 14:47:36)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  55460 bytes, from 2014-01-14 23:57:14)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  56345 bytes, from 2014-02-23 00:00:17)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (   8344 bytes, from 2013-11-30 14:49:47)
 
 Copyright (C) 2013-2014 by the following authors:
@@ -169,6 +169,8 @@ enum a3xx_color_fmt {
 	RB_R8G8B8A8_UNORM = 8,
 	RB_Z16_UNORM = 12,
 	RB_A8_UNORM = 20,
+	RB_R16G16B16A16_FLOAT = 27,
+	RB_R32G32B32A32_FLOAT = 51,
 };
 
 enum a3xx_color_swap {
@@ -575,6 +577,8 @@ static inline uint32_t REG_A3XX_CP_PROTECT_REG(uint32_t i0) { return 0x00000460 
 #define A3XX_GRAS_CL_CLIP_CNTL_VP_CLIP_CODE_IGNORE		0x00080000
 #define A3XX_GRAS_CL_CLIP_CNTL_VP_XFORM_DISABLE			0x00100000
 #define A3XX_GRAS_CL_CLIP_CNTL_PERSP_DIVISION_DISABLE		0x00200000
+#define A3XX_GRAS_CL_CLIP_CNTL_ZCOORD				0x00800000
+#define A3XX_GRAS_CL_CLIP_CNTL_WCOORD				0x01000000
 #define A3XX_GRAS_CL_CLIP_CNTL_ZCLIP_DISABLE			0x02000000
 
 #define REG_A3XX_GRAS_CL_GB_CLIP_ADJ				0x00002044
@@ -763,6 +767,7 @@ static inline uint32_t A3XX_RB_MODE_CONTROL_RENDER_MODE(enum a3xx_render_mode va
 #define A3XX_RB_MODE_CONTROL_PACKER_TIMER_ENABLE		0x00010000
 
 #define REG_A3XX_RB_RENDER_CONTROL				0x000020c1
+#define A3XX_RB_RENDER_CONTROL_FACENESS				0x00000008
 #define A3XX_RB_RENDER_CONTROL_BIN_WIDTH__MASK			0x00000ff0
 #define A3XX_RB_RENDER_CONTROL_BIN_WIDTH__SHIFT			4
 static inline uint32_t A3XX_RB_RENDER_CONTROL_BIN_WIDTH(uint32_t val)
@@ -771,6 +776,10 @@ static inline uint32_t A3XX_RB_RENDER_CONTROL_BIN_WIDTH(uint32_t val)
 }
 #define A3XX_RB_RENDER_CONTROL_DISABLE_COLOR_PIPE		0x00001000
 #define A3XX_RB_RENDER_CONTROL_ENABLE_GMEM			0x00002000
+#define A3XX_RB_RENDER_CONTROL_XCOORD				0x00004000
+#define A3XX_RB_RENDER_CONTROL_YCOORD				0x00008000
+#define A3XX_RB_RENDER_CONTROL_ZCOORD				0x00010000
+#define A3XX_RB_RENDER_CONTROL_WCOORD				0x00020000
 #define A3XX_RB_RENDER_CONTROL_ALPHA_TEST			0x00400000
 #define A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC__MASK		0x07000000
 #define A3XX_RB_RENDER_CONTROL_ALPHA_TEST_FUNC__SHIFT		24
@@ -1269,6 +1278,7 @@ static inline uint32_t A3XX_HLSQ_CONTROL_1_REG_VSTHREADSIZE(enum a3xx_threadsize
 }
 #define A3XX_HLSQ_CONTROL_1_REG_VSSUPERTHREADENABLE		0x00000100
 #define A3XX_HLSQ_CONTROL_1_REG_RESERVED1			0x00000200
+#define A3XX_HLSQ_CONTROL_1_REG_ZWCOORD				0x02000000
 
 #define REG_A3XX_HLSQ_CONTROL_2_REG				0x00002202
 #define A3XX_HLSQ_CONTROL_2_REG_PRIMALLOCTHRESHOLD__MASK	0xfc000000
@@ -1279,6 +1289,12 @@ static inline uint32_t A3XX_HLSQ_CONTROL_2_REG_PRIMALLOCTHRESHOLD(uint32_t val)
 }
 
 #define REG_A3XX_HLSQ_CONTROL_3_REG				0x00002203
+#define A3XX_HLSQ_CONTROL_3_REG_REGID__MASK			0x000000ff
+#define A3XX_HLSQ_CONTROL_3_REG_REGID__SHIFT			0
+static inline uint32_t A3XX_HLSQ_CONTROL_3_REG_REGID(uint32_t val)
+{
+	return ((val) << A3XX_HLSQ_CONTROL_3_REG_REGID__SHIFT) & A3XX_HLSQ_CONTROL_3_REG_REGID__MASK;
+}
 
 #define REG_A3XX_HLSQ_VS_CONTROL_REG				0x00002204
 #define A3XX_HLSQ_VS_CONTROL_REG_CONSTLENGTH__MASK		0x00000fff
