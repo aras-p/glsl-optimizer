@@ -1120,6 +1120,60 @@ static void r600_surface_destroy(struct pipe_context *pipe,
 	FREE(surface);
 }
 
+unsigned r600_translate_colorswap(enum pipe_format format)
+{
+	const struct util_format_description *desc = util_format_description(format);
+
+#define HAS_SWIZZLE(chan,swz) (desc->swizzle[chan] == UTIL_FORMAT_SWIZZLE_##swz)
+
+	if (format == PIPE_FORMAT_R11G11B10_FLOAT) /* isn't plain */
+		return V_0280A0_SWAP_STD;
+
+	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
+		return ~0U;
+
+	switch (desc->nr_channels) {
+	case 1:
+		if (HAS_SWIZZLE(0,X))
+			return V_0280A0_SWAP_STD; /* X___ */
+		else if (HAS_SWIZZLE(3,X))
+			return V_0280A0_SWAP_ALT_REV; /* ___X */
+		break;
+	case 2:
+		if ((HAS_SWIZZLE(0,X) && HAS_SWIZZLE(1,Y)) ||
+		    (HAS_SWIZZLE(0,X) && HAS_SWIZZLE(1,NONE)) ||
+		    (HAS_SWIZZLE(0,NONE) && HAS_SWIZZLE(1,Y)))
+			return V_0280A0_SWAP_STD; /* XY__ */
+		else if ((HAS_SWIZZLE(0,Y) && HAS_SWIZZLE(1,X)) ||
+			 (HAS_SWIZZLE(0,Y) && HAS_SWIZZLE(1,NONE)) ||
+		         (HAS_SWIZZLE(0,NONE) && HAS_SWIZZLE(1,X)))
+			return V_0280A0_SWAP_STD_REV; /* YX__ */
+		else if (HAS_SWIZZLE(0,X) && HAS_SWIZZLE(3,Y))
+			return V_0280A0_SWAP_ALT; /* X__Y */
+		else if (HAS_SWIZZLE(0,Y) && HAS_SWIZZLE(3,X))
+			return V_0280A0_SWAP_ALT_REV; /* Y__X */
+		break;
+	case 3:
+		if (HAS_SWIZZLE(0,X))
+			return V_0280A0_SWAP_STD; /* XYZ */
+		else if (HAS_SWIZZLE(0,Z))
+			return V_0280A0_SWAP_STD_REV; /* ZYX */
+		break;
+	case 4:
+		/* check the middle channels, the 1st and 4th channel can be NONE */
+		if (HAS_SWIZZLE(1,Y) && HAS_SWIZZLE(2,Z))
+			return V_0280A0_SWAP_STD; /* XYZW */
+		else if (HAS_SWIZZLE(1,Z) && HAS_SWIZZLE(2,Y))
+			return V_0280A0_SWAP_STD_REV; /* WZYX */
+		else if (HAS_SWIZZLE(1,Y) && HAS_SWIZZLE(2,X))
+			return V_0280A0_SWAP_ALT; /* ZYXW */
+		else if (HAS_SWIZZLE(1,X) && HAS_SWIZZLE(2,Y))
+			return V_0280A0_SWAP_ALT_REV; /* WXYZ */
+		break;
+	}
+	return ~0U;
+}
+
 void r600_init_screen_texture_functions(struct r600_common_screen *rscreen)
 {
 	rscreen->b.resource_from_handle = r600_texture_from_handle;

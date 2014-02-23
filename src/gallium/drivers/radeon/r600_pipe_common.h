@@ -420,6 +420,7 @@ struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
 						struct pipe_resource *texture,
 						const struct pipe_surface *templ,
 						unsigned width, unsigned height);
+unsigned r600_translate_colorswap(enum pipe_format format);
 void r600_init_screen_texture_functions(struct r600_common_screen *rscreen);
 void r600_init_context_texture_functions(struct r600_common_context *rctx);
 

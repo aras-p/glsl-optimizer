@@ -116,6 +116,11 @@
 #define   C_028B20_BUFFER_3_EN                         0xFFFFFFF7
 #define R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0                              0x028AD0
 
+#define     V_0280A0_SWAP_STD                          0x00000000
+#define     V_0280A0_SWAP_ALT                          0x00000001
+#define     V_0280A0_SWAP_STD_REV                      0x00000002
+#define     V_0280A0_SWAP_ALT_REV                      0x00000003
+
 /* EG+ */
 #define R_0084FC_CP_STRMOUT_CNTL		     0x0084FC
 #define   S_0084FC_OFFSET_UPDATE_DONE(x)		(((x) & 0x1) << 0)

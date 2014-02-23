@@ -905,58 +905,6 @@ static uint32_t si_translate_colorformat(enum pipe_format format)
 	return V_028C70_COLOR_INVALID;
 }
 
-static uint32_t si_translate_colorswap(enum pipe_format format)
-{
-	const struct util_format_description *desc = util_format_description(format);
-
-#define HAS_SWIZZLE(chan,swz) (desc->swizzle[chan] == UTIL_FORMAT_SWIZZLE_##swz)
-
-	if (format == PIPE_FORMAT_R11G11B10_FLOAT) /* isn't plain */
-		return V_028C70_SWAP_STD;
-
-	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN)
-		return ~0;
-
-	switch (desc->nr_channels) {
-	case 1:
-		if (HAS_SWIZZLE(0,X))
-			return V_028C70_SWAP_STD; /* X___ */
-		else if (HAS_SWIZZLE(3,X))
-			return V_028C70_SWAP_ALT_REV; /* ___X */
-		break;
-	case 2:
-		if ((HAS_SWIZZLE(0,X) && HAS_SWIZZLE(1,Y)) ||
-		    (HAS_SWIZZLE(0,X) && HAS_SWIZZLE(1,NONE)) ||
-		    (HAS_SWIZZLE(0,NONE) && HAS_SWIZZLE(1,Y)))
-			return V_028C70_SWAP_STD; /* XY__ */
-		else if ((HAS_SWIZZLE(0,Y) && HAS_SWIZZLE(1,X)) ||
-			 (HAS_SWIZZLE(0,Y) && HAS_SWIZZLE(1,NONE)) ||
-		         (HAS_SWIZZLE(0,NONE) && HAS_SWIZZLE(1,X)))
-			return V_028C70_SWAP_STD_REV; /* YX__ */
-		else if (HAS_SWIZZLE(0,X) && HAS_SWIZZLE(3,Y))
-			return V_028C70_SWAP_ALT; /* X__Y */
-		break;
-	case 3:
-		if (HAS_SWIZZLE(0,X))
-			return V_028C70_SWAP_STD; /* XYZ */
-		else if (HAS_SWIZZLE(0,Z))
-			return V_028C70_SWAP_STD_REV; /* ZYX */
-		break;
-	case 4:
-		/* check the middle channels, the 1st and 4th channel can be NONE */
-		if (HAS_SWIZZLE(1,Y) && HAS_SWIZZLE(2,Z))
-			return V_028C70_SWAP_STD; /* XYZW */
-		else if (HAS_SWIZZLE(1,Z) && HAS_SWIZZLE(2,Y))
-			return V_028C70_SWAP_STD_REV; /* WZYX */
-		else if (HAS_SWIZZLE(1,Y) && HAS_SWIZZLE(2,X))
-			return V_028C70_SWAP_ALT; /* ZYXW */
-		else if (HAS_SWIZZLE(1,X) && HAS_SWIZZLE(2,Y))
-			return V_028C70_SWAP_ALT_REV; /* WXYZ */
-		break;
-	}
-	return ~0U;
-}
-
 static uint32_t si_colorformat_endian_swap(uint32_t colorformat)
 {
 	if (SI_BIG_ENDIAN) {
@@ -1473,7 +1421,7 @@ static bool si_is_vertex_format_supported(struct pipe_screen *screen, enum pipe_
 static bool si_is_colorbuffer_format_supported(enum pipe_format format)
 {
 	return si_translate_colorformat(format) != V_028C70_COLOR_INVALID &&
-		si_translate_colorswap(format) != ~0U;
+		r600_translate_colorswap(format) != ~0U;
 }
 
 static bool si_is_zs_format_supported(enum pipe_format format)
@@ -1641,7 +1589,7 @@ static void si_initialize_color_surface(struct si_context *sctx,
 		R600_ERR("Invalid CB format: %d, disabling CB.\n", surf->base.format);
 	}
 	assert(format != V_028C70_COLOR_INVALID);
-	swap = si_translate_colorswap(surf->base.format);
+	swap = r600_translate_colorswap(surf->base.format);
 	if (rtex->resource.b.b.usage == PIPE_USAGE_STAGING) {
 		endian = V_028C70_ENDIAN_NONE;
 	} else {
