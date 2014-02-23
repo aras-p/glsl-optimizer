@@ -650,6 +650,8 @@ unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
 uint32_t r600_translate_texformat(struct pipe_screen *screen, enum pipe_format format,
 				  const unsigned char *swizzle_view,
 				  uint32_t *word4_p, uint32_t *yuv_format_p);
+uint32_t r600_translate_colorformat(enum chip_class chip, enum pipe_format format);
+uint32_t r600_colorformat_endian_swap(uint32_t colorformat);
 
 /* r600_uvd.c */
 struct pipe_video_codec *r600_uvd_create_decoder(struct pipe_context *context,
