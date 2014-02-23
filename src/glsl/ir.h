@@ -1459,6 +1459,18 @@ public:
    }
 
    /**
+    * Return whether the expression operates on vectors horizontally.
+    */
+   bool is_horizontal() const
+   {
+      return operation == ir_binop_all_equal ||
+             operation == ir_binop_any_nequal ||
+             operation == ir_unop_any ||
+             operation == ir_binop_dot ||
+             operation == ir_quadop_vector;
+   }
+
+   /**
     * Return a string representing this expression's operator.
     */
    const char *operator_string();
