@@ -183,6 +183,10 @@ fd3_pipe2vtx(enum pipe_format format)
 	case PIPE_FORMAT_R32G32_FIXED:
 		return VFMT_FIXED_32_32;
 
+	case PIPE_FORMAT_R16G16B16A16_FLOAT:
+	case PIPE_FORMAT_R16G16B16X16_FLOAT:
+		return VFMT_FLOAT_16_16_16_16;
+
 /* TODO probably need gles3 blob drivers to find the 32bit int formats:
 	case PIPE_FORMAT_R32G32_SINT:
 	case PIPE_FORMAT_R32G32_UINT:
@@ -199,6 +203,7 @@ fd3_pipe2vtx(enum pipe_format format)
 
 	/* 128-bit buffers. */
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+	case PIPE_FORMAT_R32G32B32X32_FLOAT:
 		return VFMT_FLOAT_32_32_32_32;
 
 	case PIPE_FORMAT_R32G32B32A32_FIXED:
@@ -229,6 +234,7 @@ fd3_pipe2tex(enum pipe_format format)
 	case PIPE_FORMAT_B8G8R8A8_UNORM:
 	case PIPE_FORMAT_B8G8R8X8_UNORM:
 	case PIPE_FORMAT_R8G8B8A8_UNORM:
+	case PIPE_FORMAT_R8G8B8X8_UNORM:
 		return TFMT_NORM_UINT_8_8_8_8;
 
 	case PIPE_FORMAT_Z24X8_UNORM:
@@ -239,6 +245,14 @@ fd3_pipe2tex(enum pipe_format format)
 
 	case PIPE_FORMAT_Z16_UNORM:
 		return TFMT_NORM_UINT_8_8;
+
+	case PIPE_FORMAT_R16G16B16A16_FLOAT:
+	case PIPE_FORMAT_R16G16B16X16_FLOAT:
+		return TFMT_FLOAT_16_16_16_16;
+
+	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+	case PIPE_FORMAT_R32G32B32X32_FLOAT:
+		return TFMT_FLOAT_32_32_32_32;
 
 	// TODO add more..
 
@@ -294,6 +308,14 @@ fd3_pipe2color(enum pipe_format format)
 	case PIPE_FORMAT_L8_UNORM:
 	case PIPE_FORMAT_A8_UNORM:
 		return RB_A8_UNORM;
+
+	case PIPE_FORMAT_R16G16B16A16_FLOAT:
+	case PIPE_FORMAT_R16G16B16X16_FLOAT:
+		return RB_R16G16B16A16_FLOAT;
+
+	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+	case PIPE_FORMAT_R32G32B32X32_FLOAT:
+		return RB_R32G32B32A32_FLOAT;
 
 	// TODO add more..
 
