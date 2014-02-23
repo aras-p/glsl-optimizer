@@ -83,6 +83,7 @@ public:
    virtual ir_visitor_status visit_enter(ir_assignment *);
    virtual ir_visitor_status visit_enter(ir_swizzle *);
    virtual ir_visitor_status visit_enter(ir_dereference_array *);
+   virtual ir_visitor_status visit_enter(ir_expression *);
    virtual ir_visitor_status visit_enter(ir_if *);
    virtual ir_visitor_status visit_enter(ir_loop *);
 
@@ -301,6 +302,20 @@ ir_vectorize_visitor::visit_enter(ir_dereference_array *ir)
 {
    this->current_assignment = NULL;
    return visit_continue_with_parent;
+}
+
+/**
+ * Upon entering an ir_expression, remove the current assignment from further
+ * consideration if the expression operates horizontally on vectors.
+ */
+ir_visitor_status
+ir_vectorize_visitor::visit_enter(ir_expression *ir)
+{
+   if (ir->is_horizontal()) {
+      this->current_assignment = NULL;
+      return visit_continue_with_parent;
+   }
+   return visit_continue;
 }
 
 /* Since there is no statement to visit between the "then" and "else"
