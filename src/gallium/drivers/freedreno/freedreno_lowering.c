@@ -39,6 +39,10 @@ struct fd_lowering_context {
 	struct tgsi_transform_context base;
 	const struct fd_lowering_config *config;
 	struct tgsi_shader_info *info;
+	unsigned two_side_colors;
+	unsigned two_side_idx[PIPE_MAX_SHADER_INPUTS];
+	unsigned color_base;  /* base register for chosen COLOR/BCOLOR's */
+	int face_idx;
 	unsigned numtmp;
 	struct {
 		struct tgsi_full_src_register src;
@@ -977,6 +981,171 @@ transform_dotp(struct tgsi_transform_context *tctx,
 	}
 }
 
+
+/* Two-sided color emulation:
+ * For each COLOR input, create a corresponding BCOLOR input, plus
+ * CMP instruction to select front or back color based on FACE
+ */
+#define TWOSIDE_GROW(n)  (                       \
+			2 +         /* FACE */               \
+			((n) * 2) + /* IN[] BCOLOR[n] */     \
+			((n) * 1) + /* TEMP[] */             \
+			((n) * 5)   /* CMP instr */          \
+		)
+
+static void
+emit_twoside(struct tgsi_transform_context *tctx)
+{
+	struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+	struct tgsi_shader_info *info = ctx->info;
+	struct tgsi_full_declaration decl;
+	struct tgsi_full_instruction new_inst;
+	unsigned inbase, tmpbase;
+	int i;
+
+	inbase  = info->file_max[TGSI_FILE_INPUT] + 1;
+	tmpbase = info->file_max[TGSI_FILE_TEMPORARY] + 1;
+
+	/* additional inputs for BCOLOR's */
+	for (i = 0; i < ctx->two_side_colors; i++) {
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_INPUT;
+		decl.Declaration.Semantic = true;
+		decl.Range.First = decl.Range.Last = inbase + i;
+		decl.Semantic.Name = TGSI_SEMANTIC_BCOLOR;
+		decl.Semantic.Index =
+			info->input_semantic_index[ctx->two_side_idx[i]];
+		tctx->emit_declaration(tctx, &decl);
+	}
+
+	/* additional input for FACE */
+	if (ctx->two_side_colors && (ctx->face_idx == -1)) {
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_INPUT;
+		decl.Declaration.Semantic = true;
+		decl.Range.First = decl.Range.Last = inbase + ctx->two_side_colors;
+		decl.Semantic.Name = TGSI_SEMANTIC_FACE;
+		decl.Semantic.Index = 0;
+		tctx->emit_declaration(tctx, &decl);
+
+		ctx->face_idx = decl.Range.First;
+	}
+
+	/* additional temps for COLOR/BCOLOR selection: */
+	for (i = 0; i < ctx->two_side_colors; i++) {
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_TEMPORARY;
+		decl.Range.First = decl.Range.Last = tmpbase + ctx->numtmp + i;
+		tctx->emit_declaration(tctx, &decl);
+	}
+
+	/* and finally additional instructions to select COLOR/BCOLOR: */
+	for (i = 0; i < ctx->two_side_colors; i++) {
+		new_inst = tgsi_default_full_instruction();
+		new_inst.Instruction.Opcode = TGSI_OPCODE_CMP;
+
+		new_inst.Instruction.NumDstRegs = 1;
+		new_inst.Dst[0].Register.File  = TGSI_FILE_TEMPORARY;
+		new_inst.Dst[0].Register.Index = tmpbase + ctx->numtmp + i;
+		new_inst.Dst[0].Register.WriteMask = TGSI_WRITEMASK_XYZW;
+
+		new_inst.Instruction.NumSrcRegs = 3;
+		new_inst.Src[0].Register.File  = TGSI_FILE_INPUT;
+		new_inst.Src[0].Register.Index = ctx->face_idx;
+		new_inst.Src[0].Register.SwizzleX = TGSI_SWIZZLE_X;
+		new_inst.Src[0].Register.SwizzleY = TGSI_SWIZZLE_X;
+		new_inst.Src[0].Register.SwizzleZ = TGSI_SWIZZLE_X;
+		new_inst.Src[0].Register.SwizzleW = TGSI_SWIZZLE_X;
+		new_inst.Src[1].Register.File  = TGSI_FILE_INPUT;
+		new_inst.Src[1].Register.Index = inbase + i;
+		new_inst.Src[1].Register.SwizzleX = TGSI_SWIZZLE_X;
+		new_inst.Src[1].Register.SwizzleY = TGSI_SWIZZLE_Y;
+		new_inst.Src[1].Register.SwizzleZ = TGSI_SWIZZLE_Z;
+		new_inst.Src[1].Register.SwizzleW = TGSI_SWIZZLE_W;
+		new_inst.Src[2].Register.File  = TGSI_FILE_INPUT;
+		new_inst.Src[2].Register.Index = ctx->two_side_idx[i];
+		new_inst.Src[2].Register.SwizzleX = TGSI_SWIZZLE_X;
+		new_inst.Src[2].Register.SwizzleY = TGSI_SWIZZLE_Y;
+		new_inst.Src[2].Register.SwizzleZ = TGSI_SWIZZLE_Z;
+		new_inst.Src[2].Register.SwizzleW = TGSI_SWIZZLE_W;
+
+		tctx->emit_instruction(tctx, &new_inst);
+	}
+}
+
+static void
+emit_decls(struct tgsi_transform_context *tctx)
+{
+	struct fd_lowering_context *ctx = fd_lowering_context(tctx);
+	struct tgsi_shader_info *info = ctx->info;
+	struct tgsi_full_declaration decl;
+	struct tgsi_full_immediate immed;
+	unsigned tmpbase;
+	int i;
+
+	tmpbase = info->file_max[TGSI_FILE_TEMPORARY] + 1;
+
+	ctx->color_base = tmpbase + ctx->numtmp;
+
+	/* declare immediate: */
+	immed = tgsi_default_full_immediate();
+	immed.Immediate.NrTokens = 1 + 4; /* one for the token itself */
+	immed.u[0].Float = 0.0;
+	immed.u[1].Float = 1.0;
+	immed.u[2].Float = 128.0;
+	immed.u[3].Float = 0.0;
+	tctx->emit_immediate(tctx, &immed);
+
+	ctx->imm.Register.File = TGSI_FILE_IMMEDIATE;
+	ctx->imm.Register.Index = info->immediate_count;
+	ctx->imm.Register.SwizzleX = TGSI_SWIZZLE_X;
+	ctx->imm.Register.SwizzleY = TGSI_SWIZZLE_Y;
+	ctx->imm.Register.SwizzleZ = TGSI_SWIZZLE_Z;
+	ctx->imm.Register.SwizzleW = TGSI_SWIZZLE_W;
+
+	/* declare temp regs: */
+	for (i = 0; i < ctx->numtmp; i++) {
+		decl = tgsi_default_full_declaration();
+		decl.Declaration.File = TGSI_FILE_TEMPORARY;
+		decl.Range.First = decl.Range.Last = tmpbase + i;
+		tctx->emit_declaration(tctx, &decl);
+
+		ctx->tmp[i].src.Register.File  = TGSI_FILE_TEMPORARY;
+		ctx->tmp[i].src.Register.Index = tmpbase + i;
+		ctx->tmp[i].src.Register.SwizzleX = TGSI_SWIZZLE_X;
+		ctx->tmp[i].src.Register.SwizzleY = TGSI_SWIZZLE_Y;
+		ctx->tmp[i].src.Register.SwizzleZ = TGSI_SWIZZLE_Z;
+		ctx->tmp[i].src.Register.SwizzleW = TGSI_SWIZZLE_W;
+
+		ctx->tmp[i].dst.Register.File  = TGSI_FILE_TEMPORARY;
+		ctx->tmp[i].dst.Register.Index = tmpbase + i;
+		ctx->tmp[i].dst.Register.WriteMask = TGSI_WRITEMASK_XYZW;
+	}
+
+	if (ctx->two_side_colors)
+		emit_twoside(tctx);
+}
+
+static void
+rename_color_inputs(struct fd_lowering_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	unsigned i, j;
+	for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
+		struct tgsi_src_register *src = &inst->Src[i].Register;
+		if (src->File == TGSI_FILE_INPUT) {
+			for (j = 0; j < ctx->two_side_colors; j++) {
+				if (src->Index == ctx->two_side_idx[j]) {
+					src->File = TGSI_FILE_TEMPORARY;
+					src->Index = ctx->color_base + j;
+					break;
+				}
+			}
+		}
+	}
+
+}
+
 static void
 transform_instr(struct tgsi_transform_context *tctx,
 		struct tgsi_full_instruction *inst)
@@ -984,48 +1153,15 @@ transform_instr(struct tgsi_transform_context *tctx,
 	struct fd_lowering_context *ctx = fd_lowering_context(tctx);
 
 	if (!ctx->emitted_decls) {
-		struct tgsi_full_declaration decl;
-		struct tgsi_full_immediate immed;
-		unsigned tmpbase = ctx->info->file_max[TGSI_FILE_TEMPORARY] + 1;
-		int i;
-
-		/* declare immediate: */
-		immed = tgsi_default_full_immediate();
-		immed.Immediate.NrTokens = 1 + 4; /* one for the token itself */
-		immed.u[0].Float = 0.0;
-		immed.u[1].Float = 1.0;
-		immed.u[2].Float = 128.0;
-		immed.u[3].Float = 0.0;
-		tctx->emit_immediate(tctx, &immed);
-
-		ctx->imm.Register.File = TGSI_FILE_IMMEDIATE;
-		ctx->imm.Register.Index = ctx->info->immediate_count;
-		ctx->imm.Register.SwizzleX = TGSI_SWIZZLE_X;
-		ctx->imm.Register.SwizzleY = TGSI_SWIZZLE_Y;
-		ctx->imm.Register.SwizzleZ = TGSI_SWIZZLE_Z;
-		ctx->imm.Register.SwizzleW = TGSI_SWIZZLE_W;
-
-		/* declare temp regs: */
-		for (i = 0; i < ctx->numtmp; i++) {
-			decl = tgsi_default_full_declaration();
-			decl.Declaration.File = TGSI_FILE_TEMPORARY;
-			decl.Range.First = decl.Range.Last = tmpbase + i;
-			tctx->emit_declaration(tctx, &decl);
-
-			ctx->tmp[i].src.Register.File  = TGSI_FILE_TEMPORARY;
-			ctx->tmp[i].src.Register.Index = tmpbase + i;
-			ctx->tmp[i].src.Register.SwizzleX = TGSI_SWIZZLE_X;
-			ctx->tmp[i].src.Register.SwizzleY = TGSI_SWIZZLE_Y;
-			ctx->tmp[i].src.Register.SwizzleZ = TGSI_SWIZZLE_Z;
-			ctx->tmp[i].src.Register.SwizzleW = TGSI_SWIZZLE_W;
-
-			ctx->tmp[i].dst.Register.File  = TGSI_FILE_TEMPORARY;
-			ctx->tmp[i].dst.Register.Index = tmpbase + i;
-			ctx->tmp[i].dst.Register.WriteMask = TGSI_WRITEMASK_XYZW;
-		}
-
+		emit_decls(tctx);
 		ctx->emitted_decls = 1;
 	}
+
+	/* if emulating two-sided-color, we need to re-write some
+	 * src registers:
+	 */
+	if (ctx->two_side_colors)
+		rename_color_inputs(ctx, inst);
 
 	switch (inst->Instruction.Opcode) {
 	case TGSI_OPCODE_DST:
@@ -1125,6 +1261,22 @@ fd_transform_lowering(const struct fd_lowering_config *config,
 
 	tgsi_scan_shader(tokens, info);
 
+	/* if we are adding fragment shader support to emulate two-sided
+	 * color, then figure out the number of additional inputs we need
+	 * to create for BCOLOR's..
+	 */
+	if ((info->processor == TGSI_PROCESSOR_FRAGMENT) &&
+			config->color_two_side) {
+		int i;
+		ctx.face_idx = -1;
+		for (i = 0; i <= info->file_max[TGSI_FILE_INPUT]; i++) {
+			if (info->input_semantic_name[i] == TGSI_SEMANTIC_COLOR)
+				ctx.two_side_idx[ctx.two_side_colors++] = i;
+			if (info->input_semantic_name[i] == TGSI_SEMANTIC_FACE)
+				ctx.face_idx = i;
+		}
+	}
+
 #define OPCS(x) ((config->lower_ ## x) ? info->opcode_count[TGSI_OPCODE_ ## x] : 0)
 	/* if there are no instructions to lower, then we are done: */
 	if (!(OPCS(DST) ||
@@ -1140,7 +1292,8 @@ fd_transform_lowering(const struct fd_lowering_config *config,
 			OPCS(DP3) ||
 			OPCS(DPH) ||
 			OPCS(DP2) ||
-			OPCS(DP2A)))
+			OPCS(DP2A) ||
+			ctx.two_side_colors))
 		return NULL;
 
 #if 0  /* debug */
@@ -1207,7 +1360,17 @@ fd_transform_lowering(const struct fd_lowering_config *config,
 		numtmp = MAX2(numtmp, DOTP_TMP);
 	}
 
+	/* specifically don't include two_side_colors temps in the count: */
 	ctx.numtmp = numtmp;
+
+	if (ctx.two_side_colors) {
+		newlen += TWOSIDE_GROW(ctx.two_side_colors);
+		/* note: we permanently consume temp regs, re-writing references
+		 * to IN.COLOR[n] to TEMP[m] (holding the output of of the CMP
+		 * instruction that selects which varying to use):
+		 */
+		numtmp += ctx.two_side_colors;
+	}
 
 	newlen += 2 * numtmp;
 	newlen += 5;        /* immediate */

@@ -152,6 +152,7 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_variant *so,
 	unsigned ret;
 	struct tgsi_shader_info *info = &ctx->info;
 	const struct fd_lowering_config lconfig = {
+			.color_two_side = so->key.color_two_side,
 			.lower_DST  = true,
 			.lower_XPD  = true,
 			.lower_SCS  = true,
@@ -2003,6 +2004,7 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 			so->writes_psize = true;
 			break;
 		case TGSI_SEMANTIC_COLOR:
+		case TGSI_SEMANTIC_BCOLOR:
 		case TGSI_SEMANTIC_GENERIC:
 		case TGSI_SEMANTIC_FOG:
 		case TGSI_SEMANTIC_TEXCOORD:
@@ -2059,24 +2061,31 @@ fixup_frag_inputs(struct fd3_compile_context *ctx)
 {
 	struct fd3_shader_variant *so = ctx->so;
 	struct ir3_block *block = ctx->block;
+	struct ir3_instruction **inputs;
 	struct ir3_instruction *instr;
-	int regid = 0;
+	int n, regid = 0;
 
 	block->ninputs = 0;
+
+	n  = 4;  /* always have frag_pos */
+	n += COND(so->frag_face, 4);
+	n += COND(so->frag_coord, 4);
+
+	inputs = ir3_alloc(ctx->ir, n * (sizeof(struct ir3_instruction *)));
 
 	if (so->frag_face) {
 		/* this ultimately gets assigned to hr0.x so doesn't conflict
 		 * with frag_coord/frag_pos..
 		 */
-		block->inputs[block->ninputs++] = ctx->frag_face;
+		inputs[block->ninputs++] = ctx->frag_face;
 		ctx->frag_face->regs[0]->num = 0;
 
 		/* remaining channels not used, but let's avoid confusing
 		 * other parts that expect inputs to come in groups of vec4
 		 */
-		block->inputs[block->ninputs++] = NULL;
-		block->inputs[block->ninputs++] = NULL;
-		block->inputs[block->ninputs++] = NULL;
+		inputs[block->ninputs++] = NULL;
+		inputs[block->ninputs++] = NULL;
+		inputs[block->ninputs++] = NULL;
 	}
 
 	/* since we don't know where to set the regid for frag_coord,
@@ -2090,10 +2099,10 @@ fixup_frag_inputs(struct fd3_compile_context *ctx)
 		ctx->frag_coord[2]->regs[0]->num = regid++;
 		ctx->frag_coord[3]->regs[0]->num = regid++;
 
-		block->inputs[block->ninputs++] = ctx->frag_coord[0];
-		block->inputs[block->ninputs++] = ctx->frag_coord[1];
-		block->inputs[block->ninputs++] = ctx->frag_coord[2];
-		block->inputs[block->ninputs++] = ctx->frag_coord[3];
+		inputs[block->ninputs++] = ctx->frag_coord[0];
+		inputs[block->ninputs++] = ctx->frag_coord[1];
+		inputs[block->ninputs++] = ctx->frag_coord[2];
+		inputs[block->ninputs++] = ctx->frag_coord[3];
 	}
 
 	/* we always have frag_pos: */
@@ -2102,14 +2111,16 @@ fixup_frag_inputs(struct fd3_compile_context *ctx)
 	/* r0.x */
 	instr = create_input(block, NULL, block->ninputs);
 	instr->regs[0]->num = regid++;
-	block->inputs[block->ninputs++] = instr;
+	inputs[block->ninputs++] = instr;
 	ctx->frag_pos->regs[1]->instr = instr;
 
 	/* r0.y */
 	instr = create_input(block, NULL, block->ninputs);
 	instr->regs[0]->num = regid++;
-	block->inputs[block->ninputs++] = instr;
+	inputs[block->ninputs++] = instr;
 	ctx->frag_pos->regs[2]->instr = instr;
+
+	block->inputs = inputs;
 }
 
 static void
@@ -2189,10 +2200,6 @@ compile_instructions(struct fd3_compile_context *ctx)
 			break;
 		}
 	}
-
-	/* fixup actual inputs for frag shader: */
-	if (ctx->type == TGSI_PROCESSOR_FRAGMENT)
-		fixup_frag_inputs(ctx);
 }
 
 static void
@@ -2217,6 +2224,7 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 {
 	struct fd3_compile_context ctx;
 	struct ir3_block *block;
+	struct ir3_instruction **inputs;
 	unsigned i, j, actual_in;
 	int ret = 0;
 
@@ -2234,6 +2242,13 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 	compile_instructions(&ctx);
 
 	block = ctx.block;
+
+	/* keep track of the inputs from TGSI perspective.. */
+	inputs = block->inputs;
+
+	/* but fixup actual inputs for frag shader: */
+	if (ctx.type == TGSI_PROCESSOR_FRAGMENT)
+		fixup_frag_inputs(&ctx);
 
 	/* at this point, for binning pass, throw away unneeded outputs: */
 	if (key.binning_pass) {
@@ -2320,7 +2335,7 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 	for (i = 0; i < so->inputs_count; i++) {
 		unsigned j, regid = ~0, compmask = 0;
 		for (j = 0; j < 4; j++) {
-			struct ir3_instruction *in = block->inputs[(i*4) + j];
+			struct ir3_instruction *in = inputs[(i*4) + j];
 			if (in) {
 				compmask |= (1 << j);
 				regid = in->regs[0]->num - j;

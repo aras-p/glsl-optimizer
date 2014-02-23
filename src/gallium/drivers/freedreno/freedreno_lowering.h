@@ -33,6 +33,25 @@
 #include "tgsi/tgsi_scan.h"
 
 struct fd_lowering_config {
+	/* For fragment shaders, generate a shader that emulates two
+	 * sided color by inserting a BGCOLOR input for each COLOR
+	 * input, and insert a CMP instruction to select the correct
+	 * color to use based on the TGSI_SEMANTIC_FACE input.
+	 *
+	 * Note that drivers which use this to emulate two sided color
+	 * will:
+	 *  a) need to generate (on demand) alternate shaders to use
+	 *     depending on the rasterizer state (ie. whether two
+	 *     sided shading enabled)
+	 *  b) expect to see the BGCOLOR semantic name in fragment
+	 *     shaders.  During linkage, the driver should simply
+	 *     map VS.OUT.BGCOLOR[n] to FS.IN.BGCOLOR[n] (in the
+	 *     same was as linking other outs/ins).
+	 */
+	unsigned color_two_side : 1;
+
+	/* TODO support for alpha_to_one as well?? */
+
 	/* Individual OPC lowerings, if lower_<opc> is TRUE then
 	 * enable lowering of TGSI_OPCODE_<opc>
 	 */

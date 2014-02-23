@@ -284,9 +284,22 @@ static int
 find_output(const struct fd3_shader_variant *so, fd3_semantic semantic)
 {
 	int j;
+
 	for (j = 0; j < so->outputs_count; j++)
 		if (so->outputs[j].semantic == semantic)
 			return j;
+
+	/* it seems optional to have a OUT.BCOLOR[n] for each OUT.COLOR[n]
+	 * in the vertex shader.. but the fragment shader doesn't know this
+	 * so  it will always have both IN.COLOR[n] and IN.BCOLOR[n].  So
+	 * at link time if there is no matching OUT.BCOLOR[n], we must map
+	 * OUT.COLOR[n] to IN.BCOLOR[n].
+	 */
+	if (sem2name(semantic) == TGSI_SEMANTIC_BCOLOR) {
+		unsigned idx = sem2idx(semantic);
+		return find_output(so, fd3_semantic_name(TGSI_SEMANTIC_COLOR, idx));
+	}
+
 	return 0;
 }
 
