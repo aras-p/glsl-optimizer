@@ -37,7 +37,8 @@
 
 struct fd_lowering_context {
 	struct tgsi_transform_context base;
-	struct tgsi_shader_info info;
+	const struct fd_lowering_config *config;
+	struct tgsi_shader_info *info;
 	unsigned numtmp;
 	struct {
 		struct tgsi_full_src_register src;
@@ -985,7 +986,7 @@ transform_instr(struct tgsi_transform_context *tctx,
 	if (!ctx->emitted_decls) {
 		struct tgsi_full_declaration decl;
 		struct tgsi_full_immediate immed;
-		unsigned tmpbase = ctx->info.file_max[TGSI_FILE_TEMPORARY] + 1;
+		unsigned tmpbase = ctx->info->file_max[TGSI_FILE_TEMPORARY] + 1;
 		int i;
 
 		/* declare immediate: */
@@ -998,7 +999,7 @@ transform_instr(struct tgsi_transform_context *tctx,
 		tctx->emit_immediate(tctx, &immed);
 
 		ctx->imm.Register.File = TGSI_FILE_IMMEDIATE;
-		ctx->imm.Register.Index = ctx->info.immediate_count;
+		ctx->imm.Register.Index = ctx->info->immediate_count;
 		ctx->imm.Register.SwizzleX = TGSI_SWIZZLE_X;
 		ctx->imm.Register.SwizzleY = TGSI_SWIZZLE_Y;
 		ctx->imm.Register.SwizzleZ = TGSI_SWIZZLE_Z;
@@ -1028,47 +1029,90 @@ transform_instr(struct tgsi_transform_context *tctx,
 
 	switch (inst->Instruction.Opcode) {
 	case TGSI_OPCODE_DST:
+		if (!ctx->config->lower_DST)
+			goto skip;
 		transform_dst(tctx, inst);
 		break;
 	case TGSI_OPCODE_XPD:
+		if (!ctx->config->lower_XPD)
+			goto skip;
 		transform_xpd(tctx, inst);
 		break;
 	case TGSI_OPCODE_SCS:
+		if (!ctx->config->lower_SCS)
+			goto skip;
 		transform_scs(tctx, inst);
 		break;
 	case TGSI_OPCODE_LRP:
+		if (!ctx->config->lower_LRP)
+			goto skip;
 		transform_lrp(tctx, inst);
 		break;
 	case TGSI_OPCODE_FRC:
+		if (!ctx->config->lower_FRC)
+			goto skip;
 		transform_frc(tctx, inst);
 		break;
 	case TGSI_OPCODE_POW:
+		if (!ctx->config->lower_POW)
+			goto skip;
 		transform_pow(tctx, inst);
 		break;
 	case TGSI_OPCODE_LIT:
+		if (!ctx->config->lower_LIT)
+			goto skip;
 		transform_lit(tctx, inst);
 		break;
 	case TGSI_OPCODE_EXP:
+		if (!ctx->config->lower_EXP)
+			goto skip;
 		transform_exp(tctx, inst);
 		break;
 	case TGSI_OPCODE_LOG:
+		if (!ctx->config->lower_LOG)
+			goto skip;
 		transform_log(tctx, inst);
 		break;
 	case TGSI_OPCODE_DP4:
+		if (!ctx->config->lower_DP4)
+			goto skip;
+		transform_dotp(tctx, inst);
+		break;
 	case TGSI_OPCODE_DP3:
+		if (!ctx->config->lower_DP3)
+			goto skip;
+		transform_dotp(tctx, inst);
+		break;
 	case TGSI_OPCODE_DPH:
+		if (!ctx->config->lower_DPH)
+			goto skip;
+		transform_dotp(tctx, inst);
+		break;
 	case TGSI_OPCODE_DP2:
+		if (!ctx->config->lower_DP2)
+			goto skip;
+		transform_dotp(tctx, inst);
+		break;
 	case TGSI_OPCODE_DP2A:
+		if (!ctx->config->lower_DP2A)
+			goto skip;
 		transform_dotp(tctx, inst);
 		break;
 	default:
+	skip:
 		tctx->emit_instruction(tctx, inst);
 		break;
 	}
 }
 
+/* returns NULL if no lowering required, else returns the new
+ * tokens (which caller is required to free()).  In either case
+ * returns the current info.
+ */
 const struct tgsi_token *
-fd_transform_lowering(const struct tgsi_token *tokens)
+fd_transform_lowering(const struct fd_lowering_config *config,
+		const struct tgsi_token *tokens,
+		struct tgsi_shader_info *info)
 {
 	struct fd_lowering_context ctx;
 	struct tgsi_token *newtoks;
@@ -1076,10 +1120,12 @@ fd_transform_lowering(const struct tgsi_token *tokens)
 
 	memset(&ctx, 0, sizeof(ctx));
 	ctx.base.transform_instruction = transform_instr;
+	ctx.info = info;
+	ctx.config = config;
 
-	tgsi_scan_shader(tokens, &ctx.info);
+	tgsi_scan_shader(tokens, info);
 
-#define OPCS(x) (ctx.info.opcode_count[TGSI_OPCODE_ ## x])
+#define OPCS(x) ((config->lower_ ## x) ? info->opcode_count[TGSI_OPCODE_ ## x] : 0)
 	/* if there are no instructions to lower, then we are done: */
 	if (!(OPCS(DST) ||
 			OPCS(XPD) ||
@@ -1095,7 +1141,7 @@ fd_transform_lowering(const struct tgsi_token *tokens)
 			OPCS(DPH) ||
 			OPCS(DP2) ||
 			OPCS(DP2A)))
-		return tokens;
+		return NULL;
 
 #if 0  /* debug */
 	_debug_printf("BEFORE:");
@@ -1168,20 +1214,16 @@ fd_transform_lowering(const struct tgsi_token *tokens)
 
 	newtoks = tgsi_alloc_tokens(newlen);
 	if (!newtoks)
-		goto out;
+		return NULL;
 
 	tgsi_transform_shader(tokens, newtoks, newlen, &ctx.base);
+
+	tgsi_scan_shader(newtoks, info);
 
 #if 0  /* debug */
 	_debug_printf("AFTER:");
 	tgsi_dump(newtoks, 0);
 #endif
 
-out:
-// XXX caller frees orig tokens.. need to change the api around so
-// called by compiler.. compiler then would have to know to free
-// new tokens.  Should be able to get rid of an extra tgsi_scan step..
-// but need to move the tgsi dump stuff into compiler then??
-//	free((struct tgsi_token *)tokens);
 	return newtoks;
 }

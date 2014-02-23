@@ -30,7 +30,31 @@
 #define FREEDRENO_LOWERING_H_
 
 #include "pipe/p_shader_tokens.h"
+#include "tgsi/tgsi_scan.h"
 
-const struct tgsi_token * fd_transform_lowering(const struct tgsi_token *tokens);
+struct fd_lowering_config {
+	/* Individual OPC lowerings, if lower_<opc> is TRUE then
+	 * enable lowering of TGSI_OPCODE_<opc>
+	 */
+	unsigned lower_DST : 1;
+	unsigned lower_XPD : 1;
+	unsigned lower_SCS : 1;
+	unsigned lower_LRP : 1;
+	unsigned lower_FRC : 1;
+	unsigned lower_POW : 1;
+	unsigned lower_LIT : 1;
+	unsigned lower_EXP : 1;
+	unsigned lower_LOG : 1;
+	unsigned lower_DP4 : 1;
+	unsigned lower_DP3 : 1;
+	unsigned lower_DPH : 1;
+	unsigned lower_DP2 : 1;
+	unsigned lower_DP2A : 1;
+};
+
+const struct tgsi_token * fd_transform_lowering(
+		const struct fd_lowering_config *config,
+		const struct tgsi_token *tokens,
+		struct tgsi_shader_info *info);
 
 #endif /* FREEDRENO_LOWERING_H_ */

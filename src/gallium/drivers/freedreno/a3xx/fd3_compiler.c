@@ -39,6 +39,8 @@
 #include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_scan.h"
 
+#include "freedreno_lowering.h"
+
 #include "fd3_compiler.h"
 #include "fd3_program.h"
 #include "fd3_util.h"
@@ -49,6 +51,7 @@
 
 struct fd3_compile_context {
 	const struct tgsi_token *tokens;
+	bool free_tokens;
 	struct ir3_shader *ir;
 	struct fd3_shader_stateobj *so;
 
@@ -135,8 +138,29 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 {
 	unsigned ret, base = 0;
 	struct tgsi_shader_info *info = &ctx->info;
+	const struct fd_lowering_config lconfig = {
+			.lower_DST  = true,
+			.lower_XPD  = true,
+			.lower_SCS  = true,
+			.lower_LRP  = true,
+			.lower_FRC  = true,
+			.lower_POW  = true,
+			.lower_LIT  = true,
+			.lower_EXP  = true,
+			.lower_LOG  = true,
+			.lower_DP4  = true,
+			.lower_DP3  = true,
+			.lower_DPH  = true,
+			.lower_DP2  = true,
+			.lower_DP2A = true,
+	};
 
-	ctx->tokens = tokens;
+	ctx->tokens = fd_transform_lowering(&lconfig, tokens, &ctx->info);
+	ctx->free_tokens = !!ctx->tokens;
+	if (!ctx->tokens) {
+		/* no lowering */
+		ctx->tokens = tokens;
+	}
 	ctx->ir = so->ir;
 	ctx->so = so;
 	ctx->next_inloc = 8;
@@ -149,8 +173,6 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 	ctx->atomic = false;
 
 	memset(ctx->base_reg, 0, sizeof(ctx->base_reg));
-
-	tgsi_scan_shader(tokens, &ctx->info);
 
 #define FM(x) (1 << TGSI_FILE_##x)
 	/* optimize can't deal with relative addressing: */
@@ -180,7 +202,7 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_stateobj *so,
 	so->first_immediate = ctx->base_reg[TGSI_FILE_IMMEDIATE];
 	ctx->immediate_idx = 4 * (ctx->info.file_max[TGSI_FILE_IMMEDIATE] + 1);
 
-	ret = tgsi_parse_init(&ctx->parser, tokens);
+	ret = tgsi_parse_init(&ctx->parser, ctx->tokens);
 	if (ret != TGSI_PARSE_OK)
 		return ret;
 
@@ -207,6 +229,8 @@ compile_error(struct fd3_compile_context *ctx, const char *format, ...)
 static void
 compile_free(struct fd3_compile_context *ctx)
 {
+	if (ctx->free_tokens)
+		free((void *)ctx->tokens);
 	tgsi_parse_free(&ctx->parser);
 }
 

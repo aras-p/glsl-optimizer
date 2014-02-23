@@ -90,7 +90,7 @@ create_shader(struct pipe_context *pctx, const struct pipe_shader_state *cso,
 		enum shader_t type)
 {
 	struct fd3_shader_stateobj *so = CALLOC_STRUCT(fd3_shader_stateobj);
-	const struct tgsi_token *tokens = fd_transform_lowering(cso->tokens);
+	const struct tgsi_token *tokens = cso->tokens;
 	int ret;
 
 	if (!so)
