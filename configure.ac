@@ -1249,7 +1249,6 @@ if test "x$enable_xa" = xyes; then
     fi
     GALLIUM_STATE_TRACKERS_DIRS="xa $GALLIUM_STATE_TRACKERS_DIRS"
     enable_gallium_loader=yes
-    enable_gallium_drm_loader=yes
 fi
 AM_CONDITIONAL(HAVE_ST_XA, test "x$enable_xa" = xyes)
 
@@ -1745,11 +1744,13 @@ if test -n "$with_gallium_drivers"; then
         xsvga)
             HAVE_GALLIUM_SVGA=yes
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS svga softpipe"
+            gallium_require_drm_loader
             gallium_check_st "svga/drm" "dri-vmwgfx" ""
             ;;
         xi915)
             HAVE_GALLIUM_I915=yes
             PKG_CHECK_MODULES([INTEL], [libdrm_intel >= $LIBDRM_INTEL_REQUIRED])
+            gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS i915 softpipe"
             if test "x$MESA_LLVM" = x1; then
                 GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
@@ -1769,6 +1770,7 @@ if test -n "$with_gallium_drivers"; then
         xr300)
             HAVE_GALLIUM_R300=yes
             PKG_CHECK_MODULES([RADEON], [libdrm_radeon >= $LIBDRM_RADEON_REQUIRED])
+            gallium_require_drm_loader
             gallium_require_llvm "Gallium R300"
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
             gallium_check_st "radeon/drm" "r300/dri" "" "" ""
