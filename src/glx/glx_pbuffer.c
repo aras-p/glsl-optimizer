@@ -350,6 +350,9 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
          _XEatData(dpy, length);
       }
       else {
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+         __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
+#endif
          _XRead(dpy, (char *) data, length * sizeof(CARD32));
 
          /* Search the set of returned attributes for the attribute requested by
@@ -363,13 +366,11 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
          }
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-         {
-            __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
-
-            if (pdraw != NULL && !pdraw->textureTarget)
+         if (pdraw != NULL) {
+            if (!pdraw->textureTarget)
                pdraw->textureTarget =
                   determineTextureTarget((const int *) data, num_attributes);
-            if (pdraw != NULL && !pdraw->textureFormat)
+            if (!pdraw->textureFormat)
                pdraw->textureFormat =
                   determineTextureFormat((const int *) data, num_attributes);
          }
