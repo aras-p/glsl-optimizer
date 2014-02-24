@@ -1239,6 +1239,14 @@ dnl
 dnl XA configuration
 dnl
 if test "x$enable_xa" = xyes; then
+    if test "x$with_gallium_drivers" = xswrast; then
+       AC_MSG_ERROR([
+          Building xa requires at least one non swrast gallium driver.
+          If you are looking to use libxatracker.so with vmware's virtual gpu,
+          make sure to include svga in the gallium drivers list, apart from
+          enabling XA.
+          Example: ./configure --enable-xa --with-gallium-drivers=svga...])
+    fi
     GALLIUM_STATE_TRACKERS_DIRS="xa $GALLIUM_STATE_TRACKERS_DIRS"
     enable_gallium_loader=yes
     enable_gallium_drm_loader=yes
