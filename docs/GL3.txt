@@ -158,7 +158,7 @@ GL 4.3:
   GL_ARB_robust_buffer_access_behavior                 not started
   GL_ARB_shader_image_size                             not started
   GL_ARB_shader_storage_buffer_object                  not started
-  GL_ARB_stencil_texturing                             not started
+  GL_ARB_stencil_texturing                             API exists, no drivers
   GL_ARB_texture_buffer_range                          DONE (nv50, nvc0, i965, r600, radeonsi)
   GL_ARB_texture_query_levels                          DONE (i965)
   GL_ARB_texture_storage_multisample                   DONE (all drivers that support GL_ARB_texture_multisample)

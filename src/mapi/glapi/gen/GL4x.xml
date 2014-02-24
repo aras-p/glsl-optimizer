@@ -15,7 +15,7 @@
 </category>
 
 <category name="4.3">
-
+  <enum name="DEPTH_STENCIL_TEXTURE_MODE"              value="0x90EA"/>
 </category>
 
 </OpenGLAPI>

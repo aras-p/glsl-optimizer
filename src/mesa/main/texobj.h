@@ -114,6 +114,20 @@ _mesa_is_texture_complete(const struct gl_texture_object *texObj,
       return GL_FALSE;
    }
 
+   /* From the ARB_stencil_texturing specification:
+    * "Add a new bullet point for the conditions that cause the texture
+    *  to not be complete:
+    *
+    *  * The internal format of the texture is DEPTH_STENCIL, the
+    *    DEPTH_STENCIL_TEXTURE_MODE for the texture is STENCIL_INDEX and either
+    *    the magnification filter or the minification filter is not NEAREST."
+    */
+   if (texObj->StencilSampling &&
+       texObj->Image[0][texObj->BaseLevel]->_BaseFormat == GL_DEPTH_STENCIL &&
+       (sampler->MagFilter != GL_NEAREST || sampler->MinFilter != GL_NEAREST)) {
+      return GL_FALSE;
+   }
+
    if (_mesa_is_mipmap_filter(sampler))
       return texObj->_MipmapComplete;
    else
