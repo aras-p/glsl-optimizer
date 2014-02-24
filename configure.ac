@@ -965,6 +965,9 @@ if test "x$with_dri_drivers" = xauto; then
         with_dri_drivers="no"
     fi
 fi
+if test "x$with_dri_drivers" = xno; then
+    with_dri_drivers=''
+fi
 
 dnl If $with_dri_drivers is yes, drivers will be added through
 dnl platform checks. Set DEFINES and LIB_DEPS
@@ -1043,9 +1046,9 @@ fi
 AC_SUBST([DRI_LIB_DEPS])
 AC_SUBST([GALLIUM_DRI_LIB_DEPS])
 
-DRI_DIRS=""
-dnl Duplicates in DRI_DIRS are removed by sorting it after this block
-if test "x$with_dri_drivers" != xno; then
+DRI_DIRS=''
+dnl Duplicates in DRI_DIRS are removed by sorting it at the end of this block
+if test -n "$with_dri_drivers"; then
     if test "x$enable_opengl" != xyes; then
         AC_MSG_ERROR([--with-dri-drivers requires OpenGL])
     fi
@@ -1082,8 +1085,8 @@ if test "x$with_dri_drivers" != xno; then
             ;;
         esac
     done
+    DRI_DIRS=`echo $DRI_DIRS|tr " " "\n"|sort -u|tr "\n" " "`
 fi
-DRI_DIRS=`echo $DRI_DIRS|tr " " "\n"|sort -u|tr "\n" " "`
 
 AM_CONDITIONAL(NEED_MEGADRIVER, test -n "$DRI_DIRS")
 AM_CONDITIONAL(NEED_LIBMESA, test "x$enable_xlib_glx" = xyes -o \
