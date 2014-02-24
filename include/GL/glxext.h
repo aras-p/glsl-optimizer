@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 /*
-** Copyright (c) 2013 The Khronos Group Inc.
+** Copyright (c) 2013-2014 The Khronos Group Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and/or associated documentation files (the
@@ -33,10 +33,10 @@ extern "C" {
 ** used to make the header, and the header can be found at
 **   http://www.opengl.org/registry/
 **
-** Khronos $Revision: 24777 $ on $Date: 2014-01-14 14:02:32 -0800 (Tue, 14 Jan 2014) $
+** Khronos $Revision: 25407 $ on $Date: 2014-02-18 16:51:56 -0800 (Tue, 18 Feb 2014) $
 */
 
-#define GLX_GLXEXT_VERSION 20140114
+#define GLX_GLXEXT_VERSION 20140218
 
 /* Generated C header for:
  * API: glx
@@ -406,6 +406,32 @@ typedef GLXPixmap ( *PFNGLXCREATEGLXPIXMAPMESAPROC) (Display *dpy, XVisualInfo *
 GLXPixmap glXCreateGLXPixmapMESA (Display *dpy, XVisualInfo *visual, Pixmap pixmap, Colormap cmap);
 #endif
 #endif /* GLX_MESA_pixmap_colormap */
+
+#ifndef GLX_MESA_query_renderer
+#define GLX_MESA_query_renderer 1
+#define GLX_RENDERER_VENDOR_ID_MESA       0x8183
+#define GLX_RENDERER_DEVICE_ID_MESA       0x8184
+#define GLX_RENDERER_VERSION_MESA         0x8185
+#define GLX_RENDERER_ACCELERATED_MESA     0x8186
+#define GLX_RENDERER_VIDEO_MEMORY_MESA    0x8187
+#define GLX_RENDERER_UNIFIED_MEMORY_ARCHITECTURE_MESA 0x8188
+#define GLX_RENDERER_PREFERRED_PROFILE_MESA 0x8189
+#define GLX_RENDERER_OPENGL_CORE_PROFILE_VERSION_MESA 0x818A
+#define GLX_RENDERER_OPENGL_COMPATIBILITY_PROFILE_VERSION_MESA 0x818B
+#define GLX_RENDERER_OPENGL_ES_PROFILE_VERSION_MESA 0x818C
+#define GLX_RENDERER_OPENGL_ES2_PROFILE_VERSION_MESA 0x818D
+#define GLX_RENDERER_ID_MESA              0x818E
+typedef Bool ( *PFNGLXQUERYCURRENTRENDERERINTEGERMESAPROC) (int attribute, unsigned int *value);
+typedef const char *( *PFNGLXQUERYCURRENTRENDERERSTRINGMESAPROC) (int attribute);
+typedef Bool ( *PFNGLXQUERYRENDERERINTEGERMESAPROC) (Display *dpy, int screen, int renderer, int attribute, unsigned int *value);
+typedef const char *( *PFNGLXQUERYRENDERERSTRINGMESAPROC) (Display *dpy, int screen, int renderer, int attribute);
+#ifdef GLX_GLXEXT_PROTOTYPES
+Bool glXQueryCurrentRendererIntegerMESA (int attribute, unsigned int *value);
+const char *glXQueryCurrentRendererStringMESA (int attribute);
+Bool glXQueryRendererIntegerMESA (Display *dpy, int screen, int renderer, int attribute, unsigned int *value);
+const char *glXQueryRendererStringMESA (Display *dpy, int screen, int renderer, int attribute);
+#endif
+#endif /* GLX_MESA_query_renderer */
 
 #ifndef GLX_MESA_release_buffers
 #define GLX_MESA_release_buffers 1
