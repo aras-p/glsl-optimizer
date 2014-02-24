@@ -145,7 +145,6 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       const int bitfield_insert = brw->gen >= 7
                                   ? BITFIELD_INSERT_TO_BFM_BFI
                                   : 0;
-      const int lrp_to_arith = brw->gen < 6 ? LRP_TO_ARITH : 0;
       lower_instructions(shader->base.ir,
 			 MOD_TO_FRACT |
 			 DIV_TO_MUL_RCP |
@@ -153,7 +152,6 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 			 EXP_TO_EXP2 |
 			 LOG_TO_LOG2 |
                          bitfield_insert |
-                         lrp_to_arith |
                          LDEXP_TO_ARITH);
 
       /* Pre-gen6 HW can only nest if-statements 16 deep.  Beyond this,
