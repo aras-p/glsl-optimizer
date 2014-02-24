@@ -128,6 +128,7 @@ vec4_visitor::emit(enum opcode opcode)
    vec4_instruction *							\
    vec4_visitor::op(dst_reg dst, src_reg src0, src_reg src1, src_reg src2)\
    {									\
+      assert(brw->gen >= 6);						\
       return new(mem_ctx) vec4_instruction(this, BRW_OPCODE_##op, dst,	\
 					   src0, src1, src2);		\
    }
