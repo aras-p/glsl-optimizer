@@ -877,14 +877,15 @@ emit_texenv(texenv_fragment_program *p, GLuint unit)
 	 shift = new(p->mem_ctx) ir_constant((float)(1 << rgb_shift));
       }
       else {
-	 float const_data[4] = {
-	    float(1 << rgb_shift),
-	    float(1 << rgb_shift),
-	    float(1 << rgb_shift),
-	    float(1 << alpha_shift)
-	 };
-	 shift = new(p->mem_ctx) ir_constant(glsl_type::vec4_type,
-					     (ir_constant_data *)const_data);
+         ir_constant_data const_data;
+
+         const_data.f[0] = float(1 << rgb_shift);
+         const_data.f[1] = float(1 << rgb_shift);
+         const_data.f[2] = float(1 << rgb_shift);
+         const_data.f[3] = float(1 << alpha_shift);
+
+         shift = new(p->mem_ctx) ir_constant(glsl_type::vec4_type,
+                                             &const_data);
       }
 
       return saturate(mul(deref, shift));
