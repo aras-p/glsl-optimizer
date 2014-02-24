@@ -278,7 +278,7 @@ nv50_miptree_transfer_map(struct pipe_context *pctx,
 
    if (util_format_is_plain(res->format)) {
       tx->nblocksx = box->width << mt->ms_x;
-      tx->nblocksy = box->height << mt->ms_x;
+      tx->nblocksy = box->height << mt->ms_y;
    } else {
       tx->nblocksx = util_format_get_nblocksx(res->format, box->width);
       tx->nblocksy = util_format_get_nblocksy(res->format, box->height);
