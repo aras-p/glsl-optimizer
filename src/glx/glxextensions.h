@@ -66,6 +66,7 @@ enum
    SGIX_visual_select_group_bit,
    EXT_texture_from_pixmap_bit,
    INTEL_swap_event_bit,
+   EXT_buffer_age_bit,
 };
 
 /* From the GLX perspective, the ARB and EXT extensions are identical.  Use a

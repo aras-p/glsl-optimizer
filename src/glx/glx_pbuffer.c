@@ -285,6 +285,10 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    unsigned int num_attributes;
    GLboolean use_glx_1_3;
 
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+   __GLXDRIdrawable *pdraw;
+#endif
+
    if (dpy == NULL)
       return 0;
 
@@ -310,6 +314,32 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    opcode = __glXSetupForCommand(dpy);
    if (!opcode)
       return 0;
+
+#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+   pdraw = GetGLXDRIDrawable(dpy, drawable);
+
+   if (attribute == GLX_BACK_BUFFER_AGE_EXT) {
+      struct glx_screen *psc = pdraw->psc;
+      struct glx_context *gc = __glXGetCurrentContext();
+
+      /* The GLX_EXT_buffer_age spec says:
+       *
+       *   "If querying GLX_BACK_BUFFER_AGE_EXT and <draw> is not bound to
+       *   the calling thread's current context a GLXBadDrawable error is
+       *   generated."
+       */
+      if (gc == NULL || gc->currentDpy != dpy ||
+         (gc->currentDrawable != drawable && gc->currentReadable != drawable)) {
+         __glXSendError(dpy, GLXBadDrawable, drawable, X_GLXGetDrawableAttributes, false);
+         return 0;
+      }
+
+      if (psc->driScreen->getBufferAge != NULL)
+         *value = psc->driScreen->getBufferAge(pdraw);
+
+      return 0;
+   }
+#endif
 
    LockDisplay(dpy);
 
@@ -350,9 +380,6 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
          _XEatData(dpy, length);
       }
       else {
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
-         __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
-#endif
          _XRead(dpy, (char *) data, length * sizeof(CARD32));
 
          /* Search the set of returned attributes for the attribute requested by

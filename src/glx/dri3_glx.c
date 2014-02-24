@@ -1340,6 +1340,7 @@ dri3_swap_buffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
          target_msc = priv->msc + priv->swap_interval * (priv->send_sbc - priv->recv_sbc);
 
       priv->buffers[buf_id]->busy = 1;
+      priv->buffers[buf_id]->last_swap = priv->send_sbc;
       xcb_present_pixmap(c,
                          priv->base.xDrawable,
                          priv->buffers[buf_id]->pixmap,
@@ -1377,6 +1378,22 @@ dri3_swap_buffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
    }
 
    return ret;
+}
+
+static int
+dri3_get_buffer_age(__GLXDRIdrawable *pdraw)
+{
+   xcb_connection_t *c = XGetXCBConnection(pdraw->psc->dpy);
+   struct dri3_drawable *priv = (struct dri3_drawable *) pdraw;
+   int back_id = DRI3_BACK_ID(dri3_find_back(c, priv));
+
+   if (back_id < 0 || !priv->buffers[back_id])
+      return 0;
+
+   if (priv->buffers[back_id]->last_swap != 0)
+      return priv->send_sbc - priv->buffers[back_id]->last_swap + 1;
+   else
+      return 0;
 }
 
 /** dri3_open
@@ -1736,6 +1753,9 @@ dri3_create_screen(int screen, struct glx_display * priv)
 
    psp->copySubBuffer = dri3_copy_sub_buffer;
    __glXEnableDirectExtension(&psc->base, "GLX_MESA_copy_sub_buffer");
+
+   psp->getBufferAge = dri3_get_buffer_age;
+   __glXEnableDirectExtension(&psc->base, "GLX_EXT_buffer_age");
 
    free(driverName);
    free(deviceName);

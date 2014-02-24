@@ -125,6 +125,7 @@ struct __GLXDRIscreenRec {
 		     int64_t *msc, int64_t *sbc);
    int (*setSwapInterval)(__GLXDRIdrawable *pdraw, int interval);
    int (*getSwapInterval)(__GLXDRIdrawable *pdraw);
+   int (*getBufferAge)(__GLXDRIdrawable *pdraw);
 };
 
 struct __GLXDRIdrawableRec

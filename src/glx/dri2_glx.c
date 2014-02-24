@@ -1287,6 +1287,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    psp->waitForSBC = NULL;
    psp->setSwapInterval = NULL;
    psp->getSwapInterval = NULL;
+   psp->getBufferAge = NULL;
 
    if (pdp->driMinor >= 2) {
       psp->getDrawableMSC = dri2DrawableGetMSC;
