@@ -139,6 +139,18 @@ gen8_update_texture_surface(struct gl_context *ctx,
       return;
    }
 
+   if (tObj->StencilSampling && firstImage->_BaseFormat == GL_DEPTH_STENCIL)
+      mt = mt->stencil_mt;
+
+   unsigned tiling_mode, pitch;
+   if (mt->format == MESA_FORMAT_S_UINT8) {
+      tiling_mode = GEN8_SURFACE_TILING_W;
+      pitch = 2 * mt->region->pitch;
+   } else {
+      tiling_mode = surface_tiling_mode(mt->region->tiling);
+      pitch = mt->region->pitch;
+   }
+
    uint32_t tex_format = translate_tex_format(brw,
                                               mt->format,
                                               sampler->sRGBDecode);
@@ -150,7 +162,7 @@ gen8_update_texture_surface(struct gl_context *ctx,
              tex_format << BRW_SURFACE_FORMAT_SHIFT |
              vertical_alignment(mt) |
              horizontal_alignment(mt) |
-             surface_tiling_mode(mt->region->tiling);
+             tiling_mode;
 
    if (tObj->Target == GL_TEXTURE_CUBE_MAP ||
        tObj->Target == GL_TEXTURE_CUBE_MAP_ARRAY) {
@@ -165,8 +177,7 @@ gen8_update_texture_surface(struct gl_context *ctx,
    surf[2] = SET_FIELD(mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);
 
-   surf[3] = SET_FIELD(mt->logical_depth0 - 1, BRW_SURFACE_DEPTH) |
-             (mt->region->pitch - 1);
+   surf[3] = SET_FIELD(mt->logical_depth0 - 1, BRW_SURFACE_DEPTH) | (pitch - 1);
 
    surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout);
 

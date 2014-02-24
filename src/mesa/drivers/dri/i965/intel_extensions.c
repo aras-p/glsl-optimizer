@@ -303,6 +303,10 @@ intelInitExtensions(struct gl_context *ctx)
          ctx->Extensions.ARB_compute_shader = true;
    }
 
+   if (brw->gen >= 8) {
+      ctx->Extensions.ARB_stencil_texturing = true;
+   }
+
    if (brw->gen == 5 || can_write_oacontrol(brw))
       ctx->Extensions.AMD_performance_monitor = true;
 

@@ -264,6 +264,7 @@
 #define GEN8_SURFACE_HALIGN_8                       (2 << 14)
 #define GEN8_SURFACE_HALIGN_16                      (3 << 14)
 #define GEN8_SURFACE_TILING_NONE                    (0 << 12)
+#define GEN8_SURFACE_TILING_W                       (1 << 12)
 #define GEN8_SURFACE_TILING_X                       (2 << 12)
 #define GEN8_SURFACE_TILING_Y                       (3 << 12)
 #define BRW_SURFACE_RC_READ_WRITE	(1 << 8)

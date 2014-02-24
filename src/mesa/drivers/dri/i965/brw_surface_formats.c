@@ -363,7 +363,7 @@ brw_format_for_mesa_format(mesa_format mesa_format)
       [MESA_FORMAT_Z24_UNORM_X8_UINT] = 0,
       [MESA_FORMAT_X8Z24_UNORM] = 0,
       [MESA_FORMAT_Z_UNORM32] = 0,
-      [MESA_FORMAT_S_UINT8] = 0,
+      [MESA_FORMAT_S_UINT8] = BRW_SURFACEFORMAT_R8_UINT,
 
       [MESA_FORMAT_BGR_SRGB8] = 0,
       [MESA_FORMAT_A8B8G8R8_SRGB] = 0,
