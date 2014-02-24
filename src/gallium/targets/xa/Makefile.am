@@ -48,6 +48,11 @@ libxatracker_la_LIBADD = \
 	$(LIBUDEV_LIBS) \
 	$(LIBDRM_LIBS)
 
+if HAVE_DRI
+libxatracker_la_LIBADD += \
+	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la
+endif
+
 if NEED_PIPE_LOADER_XLIB
 libxatracker_la_LIBADD += \
 	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \

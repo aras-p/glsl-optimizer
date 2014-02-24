@@ -28,6 +28,11 @@ lib@OPENCL_LIBNAME@_la_LIBADD = \
 	-lclangBasic \
 	$(LLVM_LIBS)
 
+if HAVE_DRI
+lib@OPENCL_LIBNAME@_la_LIBADD += \
+	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la
+endif
+
 if NEED_PIPE_LOADER_XLIB
 lib@OPENCL_LIBNAME@_la_LIBADD += \
 	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \

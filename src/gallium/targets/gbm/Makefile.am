@@ -50,6 +50,11 @@ gbm_gallium_drm_la_LIBADD = \
 	$(LIBDRM_LIBS) \
 	-lm
 
+if HAVE_DRI
+gbm_gallium_drm_la_LIBADD += \
+	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la
+endif
+
 if NEED_PIPE_LOADER_XLIB
 gbm_gallium_drm_la_LIBADD += \
 	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
