@@ -506,6 +506,9 @@ public:
 
    void emit_minmax(uint32_t condmod, dst_reg dst, src_reg src0, src_reg src1);
 
+   void emit_lrp(const dst_reg &dst,
+                 const src_reg &x, const src_reg &y, const src_reg &a);
+
    void emit_block_move(dst_reg *dst, src_reg *src,
 			const struct glsl_type *type, uint32_t predicate);
 

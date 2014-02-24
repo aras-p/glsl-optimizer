@@ -1132,6 +1132,40 @@ vec4_visitor::emit_minmax(uint32_t conditionalmod, dst_reg dst,
    }
 }
 
+void
+vec4_visitor::emit_lrp(const dst_reg &dst,
+                       const src_reg &x, const src_reg &y, const src_reg &a)
+{
+   if (brw->gen >= 6) {
+      /* Note that the instruction's argument order is reversed from GLSL
+       * and the IR.
+       */
+      emit(LRP(dst,
+               fix_3src_operand(a), fix_3src_operand(y), fix_3src_operand(x)));
+   } else {
+      /* Earlier generations don't support three source operations, so we
+       * need to emit x*(1-a) + y*a.
+       *
+       * A better way to do this would be:
+       *    ADD one_minus_a, negate(a), 1.0f
+       *    MUL null, y, a
+       *    MAC dst, x, one_minus_a
+       * but we would need to support MAC and implicit accumulator.
+       */
+      dst_reg y_times_a           = dst_reg(this, glsl_type::vec4_type);
+      dst_reg one_minus_a         = dst_reg(this, glsl_type::vec4_type);
+      dst_reg x_times_one_minus_a = dst_reg(this, glsl_type::vec4_type);
+      y_times_a.writemask           = dst.writemask;
+      one_minus_a.writemask         = dst.writemask;
+      x_times_one_minus_a.writemask = dst.writemask;
+
+      emit(MUL(y_times_a, y, a));
+      emit(ADD(one_minus_a, negate(a), src_reg(1.0f)));
+      emit(MUL(x_times_one_minus_a, x, src_reg(one_minus_a)));
+      emit(ADD(dst, src_reg(x_times_one_minus_a), src_reg(y_times_a)));
+   }
+}
+
 static bool
 is_16bit_constant(ir_rvalue *rvalue)
 {
@@ -1628,13 +1662,7 @@ vec4_visitor::visit(ir_expression *ir)
       break;
 
    case ir_triop_lrp:
-      op[0] = fix_3src_operand(op[0]);
-      op[1] = fix_3src_operand(op[1]);
-      op[2] = fix_3src_operand(op[2]);
-      /* Note that the instruction's argument order is reversed from GLSL
-       * and the IR.
-       */
-      emit(LRP(result_dst, op[2], op[1], op[0]));
+      emit_lrp(result_dst, op[0], op[1], op[2]);
       break;
 
    case ir_triop_csel:
