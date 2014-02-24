@@ -1313,7 +1313,7 @@ AC_ARG_WITH([libclc-path],
    [AS_HELP_STRING([--with-libclc-path],
          [DEPRECATED: See http://dri.freedesktop.org/wiki/GalliumCompute#How_to_Install])],
    [LIBCLC_PATH="$withval"],
-   [LIBCLC_PATH=""])
+   [LIBCLC_PATH=''])
 
 if test -n "$LIBCLC_PATH"; then
    AC_MSG_ERROR([The --with-libclc-path option has been deprecated.
@@ -1326,7 +1326,7 @@ AC_ARG_WITH([clang-libdir],
    [AS_HELP_STRING([--with-clang-libdir],
          [Path to Clang libraries @<:@default=llvm-config --libdir@:>@])],
    [CLANG_LIBDIR="$withval"],
-   [CLANG_LIBDIR=""])
+   [CLANG_LIBDIR=''])
 
 PKG_CHECK_EXISTS([libclc], [have_libclc=yes], [have_libclc=no])
 
@@ -1518,7 +1518,7 @@ AC_ARG_WITH([llvm-prefix],
     [AS_HELP_STRING([--with-llvm-prefix],
         [Prefix for LLVM installations in non-standard locations])],
     [llvm_prefix="$withval"],
-    [llvm_prefix=""])
+    [llvm_prefix=''])
 
 
 # Call this inside ` ` to get the return value.
