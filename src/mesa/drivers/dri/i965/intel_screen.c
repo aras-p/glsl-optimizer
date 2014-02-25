@@ -37,7 +37,7 @@
 #include "main/fbobject.h"
 #include "main/version.h"
 #include "swrast/s_renderbuffer.h"
-#include "glsl/ralloc.h"
+#include "util/ralloc.h"
 
 #include "utils.h"
 #include "xmlpool.h"

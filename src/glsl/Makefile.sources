@@ -6,7 +6,6 @@ GLSL_BUILDDIR = $(top_builddir)/src/glsl
 # libglcpp
 
 LIBGLCPP_FILES = \
-	$(GLSL_SRCDIR)/ralloc.c \
 	$(GLSL_SRCDIR)/glcpp/pp.c
 
 LIBGLCPP_GENERATED_FILES = \

@@ -16,6 +16,7 @@ env.Prepend(LIBPATH = env['X11_LIBPATH'])
 
 env.Prepend(LIBS = [
     glapi,
+    mesautil,
     glsl,
     mesa,
 ])

@@ -43,7 +43,7 @@
 #include "mtypes.h"
 #include "performance_monitor.h"
 #include "bitset.h"
-#include "ralloc.h"
+#include "util/ralloc.h"
 
 void
 _mesa_init_performance_monitors(struct gl_context *ctx)

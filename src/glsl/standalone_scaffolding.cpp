@@ -31,7 +31,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "ralloc.h"
+#include "util/ralloc.h"
 
 void
 _mesa_warning(struct gl_context *ctx, const char *fmt, ...)

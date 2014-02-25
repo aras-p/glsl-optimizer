@@ -31,7 +31,7 @@ extern "C" {
 #include "main/shaderobj.h"
 }
 
-#include "ralloc.h"
+#include "util/ralloc.h"
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"

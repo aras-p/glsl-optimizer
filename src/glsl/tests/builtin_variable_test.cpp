@@ -25,7 +25,6 @@
 #include "main/compiler.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
-#include "ralloc.h"
 #include "ir.h"
 #include "glsl_parser_extras.h"
 #include "glsl_symbol_table.h"

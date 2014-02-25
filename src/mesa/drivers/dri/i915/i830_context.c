@@ -35,7 +35,7 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "intel_tris.h"
-#include "../glsl/ralloc.h"
+#include "util/ralloc.h"
 
 /***************************************
  * Mesa's Driver Functions

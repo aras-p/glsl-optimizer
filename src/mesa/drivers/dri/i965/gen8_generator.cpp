@@ -32,7 +32,7 @@ extern "C" {
 #include "brw_context.h"
 } /* extern "C" */
 
-#include "glsl/ralloc.h"
+#include "util/ralloc.h"
 #include "brw_eu.h"
 #include "brw_reg.h"
 #include "gen8_generator.h"

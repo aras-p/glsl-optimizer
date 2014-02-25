@@ -1,4 +1,4 @@
-# Copyright © 2013 Intel Corporation
+# Copyright © 2014 Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,47 +19,35 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-SUBDIRS = util gtest mapi
+SUBDIRS = . tests
 
-if NEED_OPENGL_COMMON
-SUBDIRS += glsl mesa
-endif
+include Makefile.sources
 
-SUBDIRS += loader
+noinst_LTLIBRARIES = libmesautil.la
 
-if HAVE_DRI_GLX
-SUBDIRS += glx
-endif
+libmesautil_la_CPPFLAGS = \
+	$(DEFINES) \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/mesa \
+	$(VISIBILITY_CFLAGS)
 
-if HAVE_EGL_PLATFORM_WAYLAND
-SUBDIRS += egl/wayland
-endif
+libmesautil_la_SOURCES = $(MESA_UTIL_FILES)
 
-if HAVE_EGL_DRIVER_DRI2
-SUBDIRS += egl/drivers/dri2
-endif
+### Tests:
 
-if HAVE_GBM
-SUBDIRS += gbm
-endif
+CFLAGS_FOR_TESTS = $(PTHREAD_CFLAGS)
+CPPFLAGS_FOR_TESTS = \
+	$(libmesautil_la_CPPFLAGS) \
+	-I$(top_srcdir)/src/gtest/include
+LDADD_FOR_TESTS =                               \
+	$(top_builddir)/src/gtest/libgtest.la   \
+	$(top_builddir)/src/util/libmesautil.la \
+	$(PTHREAD_LIBS)
 
-if HAVE_EGL
-SUBDIRS += egl/main
-endif
+TESTS = tests/ralloc_test
+check_PROGRAMS = $(TESTS)
 
-if HAVE_GALLIUM
-SUBDIRS +=			\
-	gallium/auxiliary	\
-	gallium/drivers		\
-	gallium/state_trackers	\
-	gallium/winsys		\
-	gallium/targets
-
-if HAVE_GALLIUM_TESTS
-SUBDIRS +=			\
-	gallium/tests/trivial	\
-	gallium/tests/unit
-endif
-endif
-
-EXTRA_DIST = getopt
+tests_ralloc_test_SOURCES = tests/ralloc_test.cpp
+tests_ralloc_test_CFLAGS = $(CFLAGS_FOR_TESTS)
+tests_ralloc_test_CPPFLAGS = $(CPPFLAGS_FOR_TESTS)
+tests_ralloc_test_LDADD = $(LDADD_FOR_TESTS)

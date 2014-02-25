@@ -28,7 +28,7 @@ extern "C" {
 #include "main/renderbuffer.h"
 }
 
-#include "glsl/ralloc.h"
+#include "util/ralloc.h"
 
 #include "intel_fbo.h"
 

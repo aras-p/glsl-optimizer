@@ -81,7 +81,7 @@ enum glsl_interface_packing {
 
 #ifdef __cplusplus
 #include "GL/gl.h"
-#include "ralloc.h"
+#include "util/ralloc.h"
 
 struct glsl_type {
    GLenum gl_type;

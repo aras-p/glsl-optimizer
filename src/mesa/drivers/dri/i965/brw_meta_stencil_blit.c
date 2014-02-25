@@ -57,7 +57,7 @@
 #include "main/blend.h"
 #include "main/varray.h"
 #include "main/shaderapi.h"
-#include "glsl/ralloc.h"
+#include "util/ralloc.h"
 
 #include "drivers/common/meta.h"
 #include "brw_meta_util.h"

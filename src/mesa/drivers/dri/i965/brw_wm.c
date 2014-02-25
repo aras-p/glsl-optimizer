@@ -40,7 +40,7 @@
 #include "program/program.h"
 #include "intel_mipmap_tree.h"
 
-#include "glsl/ralloc.h"
+#include "util/ralloc.h"
 
 /**
  * Return a bitfield where bit n is set if barycentric interpolation mode n

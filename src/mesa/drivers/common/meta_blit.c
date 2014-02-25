@@ -49,7 +49,7 @@
 #include "main/viewport.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
-#include "../glsl/ralloc.h"
+#include "util/ralloc.h"
 
 /** Return offset in bytes of the field within a vertex struct */
 #define OFFSET(FIELD) ((void *) offsetof(struct vertex, FIELD))

@@ -38,7 +38,7 @@
 #include "program/prog_print.h"
 #include "program/prog_parameter.h"
 
-#include "glsl/ralloc.h"
+#include "util/ralloc.h"
 
 static inline void assign_vue_slot(struct brw_vue_map *vue_map,
                                    int varying)

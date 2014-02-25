@@ -71,8 +71,8 @@
  */
 
 #include <stdbool.h>
-#include <ralloc.h>
 
+#include "util/ralloc.h"
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mtypes.h"

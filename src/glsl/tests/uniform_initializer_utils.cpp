@@ -23,7 +23,7 @@
 #include <gtest/gtest.h>
 #include "main/mtypes.h"
 #include "main/macros.h"
-#include "ralloc.h"
+#include "util/ralloc.h"
 #include "uniform_initializer_utils.h"
 #include <stdio.h>
 

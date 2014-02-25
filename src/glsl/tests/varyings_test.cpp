@@ -24,7 +24,7 @@
 #include "main/compiler.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
-#include "ralloc.h"
+#include "util/ralloc.h"
 #include "ir.h"
 #include "program/hash_table.h"
 

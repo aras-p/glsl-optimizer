@@ -56,7 +56,7 @@
 #include "intel_mipmap_tree.h"
 
 #include "utils.h"
-#include "../glsl/ralloc.h"
+#include "util/ralloc.h"
 
 int INTEL_DEBUG = (0);
 

@@ -1,4 +1,4 @@
-# Copyright © 2013 Intel Corporation
+# Copyright © 2014 Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,47 +19,22 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-SUBDIRS = util gtest mapi
+AM_CFLAGS = \
+	$(PTHREAD_CFLAGS)
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src \
+	-I$(top_srcdir)/src/util \
+	-I$(top_srcdir)/src/mesa \
+	-I$(top_srcdir)/src/gtest/include \
+	$(DEFINES) $(INCLUDE_DIRS)
 
-if NEED_OPENGL_COMMON
-SUBDIRS += glsl mesa
-endif
+LDADD = \
+	$(top_builddir)/src/gtest/libgtest.la \
+	$(top_builddir)/src/util/libmesautil.la \
+	$(PTHREAD_LIBS)
 
-SUBDIRS += loader
+TESTS = ralloc_test
+check_PROGRAMS = $(TESTS)
 
-if HAVE_DRI_GLX
-SUBDIRS += glx
-endif
-
-if HAVE_EGL_PLATFORM_WAYLAND
-SUBDIRS += egl/wayland
-endif
-
-if HAVE_EGL_DRIVER_DRI2
-SUBDIRS += egl/drivers/dri2
-endif
-
-if HAVE_GBM
-SUBDIRS += gbm
-endif
-
-if HAVE_EGL
-SUBDIRS += egl/main
-endif
-
-if HAVE_GALLIUM
-SUBDIRS +=			\
-	gallium/auxiliary	\
-	gallium/drivers		\
-	gallium/state_trackers	\
-	gallium/winsys		\
-	gallium/targets
-
-if HAVE_GALLIUM_TESTS
-SUBDIRS +=			\
-	gallium/tests/trivial	\
-	gallium/tests/unit
-endif
-endif
-
-EXTRA_DIST = getopt
+ralloc_test_SOURCES = ralloc_test.cpp

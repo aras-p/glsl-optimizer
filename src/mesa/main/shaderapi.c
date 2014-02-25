@@ -52,7 +52,7 @@
 #include "program/program.h"
 #include "program/prog_print.h"
 #include "program/prog_parameter.h"
-#include "ralloc.h"
+#include "util/ralloc.h"
 #include <stdbool.h>
 #include "../glsl/glsl_parser_extras.h"
 #include "../glsl/ir.h"

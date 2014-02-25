@@ -21,7 +21,7 @@
  * IN THE SOFTWARE.
  */
 
-#include "glsl/ralloc.h"
+#include "util/ralloc.h"
 #include "brw_blorp_blit_eu.h"
 #include "brw_blorp.h"
 

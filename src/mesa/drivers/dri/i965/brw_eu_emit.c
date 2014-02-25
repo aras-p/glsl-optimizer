@@ -34,7 +34,7 @@
 #include "brw_defines.h"
 #include "brw_eu.h"
 
-#include "glsl/ralloc.h"
+#include "util/ralloc.h"
 
 /***********************************************************************
  * Internal helper for constructing instructions

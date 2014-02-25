@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "glsl/ralloc.h"
+#include "util/ralloc.h"
 #include "brw_context.h"
 #include "brw_eu.h"
 

@@ -40,7 +40,7 @@
 #include "program/program.h"
 #include "program/prog_parameter.h"
 #include "program/hash_table.h"
-#include "ralloc.h"
+#include "util/ralloc.h"
 
 /**********************************************************************/
 /*** Shader object functions                                        ***/

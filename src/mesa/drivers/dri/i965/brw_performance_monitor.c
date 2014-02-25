@@ -50,7 +50,7 @@
 #include "main/mtypes.h"
 #include "main/performance_monitor.h"
 
-#include "glsl/ralloc.h"
+#include "util/ralloc.h"
 
 #include "brw_context.h"
 #include "brw_defines.h"

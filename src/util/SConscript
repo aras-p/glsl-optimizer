@@ -1,0 +1,26 @@
+import common
+
+Import('*')
+
+from sys import executable as python_cmd
+
+env = env.Clone()
+
+env.Prepend(CPPPATH = [
+    '#include',
+    '#src/mesa',
+    '#src/util',
+])
+
+# parse Makefile.sources
+source_lists = env.ParseSourceList('Makefile.sources')
+
+mesautil_sources = source_lists['MESA_UTIL_FILES']
+
+mesautil = env.ConvenienceLibrary(
+    target = 'mesautil',
+    source = mesautil_sources,
+)
+
+env.Alias('mesautil', mesautil)
+Export('mesautil')

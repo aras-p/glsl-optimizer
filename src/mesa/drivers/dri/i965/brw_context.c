@@ -65,7 +65,7 @@
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
-#include "glsl/ralloc.h"
+#include "util/ralloc.h"
 
 /***************************************
  * Mesa's Driver Functions

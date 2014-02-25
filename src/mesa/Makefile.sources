@@ -352,6 +352,7 @@ MESA_GALLIUM_FILES = \
 
 INCLUDE_DIRS = \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src \
 	-I$(top_srcdir)/src/glsl \
 	-I$(top_builddir)/src/glsl \
 	-I$(top_srcdir)/src/glsl/glcpp \

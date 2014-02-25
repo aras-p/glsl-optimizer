@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ralloc.h"
+#include "util/ralloc.h"
 #include "glsl_types.h"
 #include "list.h"
 #include "ir_visitor.h"
