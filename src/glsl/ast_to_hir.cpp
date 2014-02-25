@@ -2221,6 +2221,9 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
                ? (qual->location + FRAG_RESULT_DATA0)
                : (qual->location + VARYING_SLOT_VAR0);
             break;
+         case MESA_SHADER_COMPUTE:
+            assert(!"Unexpected shader type");
+            break;
          }
       } else {
          var->data.location = qual->location;
