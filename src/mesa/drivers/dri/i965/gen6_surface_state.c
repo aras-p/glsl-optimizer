@@ -99,8 +99,24 @@ gen6_update_renderbuffer_surface(struct brw_context *brw,
    /* reloc */
    surf[1] = mt->bo->offset64;
 
+   /* In the gen6 PRM Volume 1 Part 1: Graphics Core, Section 7.18.3.7.1
+    * (Surface Arrays For all surfaces other than separate stencil buffer):
+    *
+    * "[DevSNB] Errata: Sampler MSAA Qpitch will be 4 greater than the value
+    *  calculated in the equation above , for every other odd Surface Height
+    *  starting from 1 i.e. 1,5,9,13"
+    *
+    * Since this Qpitch errata only impacts the sampler, we have to adjust the
+    * input for the rendering surface to achieve the same qpitch. For the
+    * affected heights, we increment the height by 1 for the rendering
+    * surface.
+    */
+   int height0 = irb->mt->logical_height0;
+   if (brw->gen == 6 && irb->mt->num_samples > 1 && (height0 % 4) == 1)
+      height0++;
+
    surf[2] = SET_FIELD(mt->logical_width0 - 1, BRW_SURFACE_WIDTH) |
-             SET_FIELD(mt->logical_height0 - 1, BRW_SURFACE_HEIGHT) |
+             SET_FIELD(height0 - 1, BRW_SURFACE_HEIGHT) |
              SET_FIELD(irb->mt_level - irb->mt->first_level, BRW_SURFACE_LOD);
 
    surf[3] = brw_get_surface_tiling_bits(mt->tiling) |
