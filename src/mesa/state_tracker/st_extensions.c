@@ -39,6 +39,12 @@
 #include "st_extensions.h"
 #include "st_format.h"
 
+
+/*
+ * Note: we use these function rather than the MIN2, MAX2, CLAMP macros to
+ * avoid evaluating arguments (which are often function calls) more than once.
+ */
+
 static unsigned _min(unsigned a, unsigned b)
 {
    return (a < b) ? a : b;
