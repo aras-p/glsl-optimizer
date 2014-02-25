@@ -2793,7 +2793,7 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       }
       break;
    case ir_lod:
-      assert(!"Unexpected ir_lod opcode");
+      opcode = TGSI_OPCODE_LODQ;
       break;
    case ir_query_levels:
       assert(!"Unexpected ir_query_levels opcode");
@@ -4513,6 +4513,7 @@ compile_tgsi_instruction(struct st_translate *t,
    case TGSI_OPCODE_TXB2:
    case TGSI_OPCODE_TXL2:
    case TGSI_OPCODE_TG4:
+   case TGSI_OPCODE_LODQ:
       src[num_src++] = t->samplers[inst->sampler];
       for (i = 0; i < inst->tex_offset_num_offset; i++) {
          texoffsets[i] = translate_tex_offset(t, &inst->tex_offsets[i], i);
