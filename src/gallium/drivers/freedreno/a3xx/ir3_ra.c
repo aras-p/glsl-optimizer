@@ -565,7 +565,7 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 	struct ir3_instruction *end =
 			ir3_instr_create(block, 0, OPC_END);
 	struct ir3_instruction *last_input = NULL;
-	regmask_t needs_ss_war;
+	regmask_t needs_ss_war;       /* write after read */
 	regmask_t needs_ss;
 	regmask_t needs_sy;
 

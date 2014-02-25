@@ -80,10 +80,16 @@ static void
 fixup_vp_regfootprint(struct fd3_shader_variant *so)
 {
 	unsigned i;
-	for (i = 0; i < so->inputs_count; i++)
-		so->info.max_reg = MAX2(so->info.max_reg, (so->inputs[i].regid + 3) >> 2);
-	for (i = 0; i < so->outputs_count; i++)
-		so->info.max_reg = MAX2(so->info.max_reg, (so->outputs[i].regid + 3) >> 2);
+	for (i = 0; i < so->inputs_count; i++) {
+		if (so->inputs[i].compmask) {
+			uint32_t regid = (so->inputs[i].regid + 3) >> 2;
+			so->info.max_reg = MAX2(so->info.max_reg, regid);
+		}
+	}
+	for (i = 0; i < so->outputs_count; i++) {
+		uint32_t regid = (so->outputs[i].regid + 3) >> 2;
+		so->info.max_reg = MAX2(so->info.max_reg, regid);
+	}
 }
 
 static struct fd3_shader_variant *
