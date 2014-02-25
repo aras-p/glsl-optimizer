@@ -280,14 +280,14 @@ class ast_array_specifier : public ast_node {
 public:
    /** Unsized array specifier ([]) */
    explicit ast_array_specifier(const struct YYLTYPE &locp)
-     : dimension_count(1), is_unsized_array(true)
+     : is_unsized_array(true)
    {
       set_location(locp);
    }
 
    /** Sized array specifier ([dim]) */
    ast_array_specifier(const struct YYLTYPE &locp, ast_expression *dim)
-     : dimension_count(1), is_unsized_array(false)
+     : is_unsized_array(false)
    {
       set_location(locp);
       array_dimensions.push_tail(&dim->link);
@@ -296,13 +296,9 @@ public:
    void add_dimension(ast_expression *dim)
    {
       array_dimensions.push_tail(&dim->link);
-      dimension_count++;
    }
 
    virtual void print(void) const;
-
-   /* Count including sized and unsized dimensions */
-   unsigned dimension_count;
 
    /* If true, this means that the array has an unsized outermost dimension. */
    bool is_unsized_array;
