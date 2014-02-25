@@ -95,8 +95,12 @@ struct fd3_compile_context {
 	 * But TGSI doesn't know that, it still declares things as
 	 * IN[] registers.  So we do all the input tracking normally
 	 * and fix things up after compile_instructions()
+	 *
+	 * NOTE that frag_pos is the hardware position (possibly it
+	 * is actually an index or tag or some such.. it is *not*
+	 * values that can be directly used for gl_FragCoord..)
 	 */
-	struct ir3_instruction *frag_pos;
+	struct ir3_instruction *frag_pos, *frag_face, *frag_coord[4];
 
 	struct tgsi_parse_context parser;
 	unsigned type;
@@ -180,6 +184,10 @@ compile_init(struct fd3_compile_context *ctx, struct fd3_shader_variant *so,
 	ctx->current_instr = NULL;
 	ctx->num_output_updates = 0;
 	ctx->atomic = false;
+	ctx->frag_pos = NULL;
+	ctx->frag_face = NULL;
+
+	memset(ctx->frag_coord, 0, sizeof(ctx->frag_coord));
 
 #define FM(x) (1 << TGSI_FILE_##x)
 	/* optimize can't deal with relative addressing: */
@@ -309,7 +317,12 @@ push_block(struct fd3_compile_context *ctx)
 		 * position)
 		 */
 		if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
-			nin = MAX2(2, nin);
+			int n = 2;
+			if (ctx->info.reads_position)
+				n += 4;
+			if (ctx->info.uses_frontface)
+				n += 4;
+			nin = MAX2(n, nin);
 			nout += ARRAY_SIZE(ctx->kill);
 		}
 	} else {
@@ -1753,11 +1766,164 @@ decl_semantic(const struct tgsi_declaration_semantic *sem)
 	return fd3_semantic_name(sem->Name, sem->Index);
 }
 
+static struct ir3_instruction *
+decl_in_frag_bary(struct fd3_compile_context *ctx, unsigned regid,
+		unsigned j, unsigned inloc)
+{
+	struct ir3_instruction *instr;
+	struct ir3_register *src;
+
+	/* bary.f dst, #inloc, r0.x */
+	instr = instr_create(ctx, 2, OPC_BARY_F);
+	ir3_reg_create(instr, regid, 0);   /* dummy dst */
+	ir3_reg_create(instr, 0, IR3_REG_IMMED)->iim_val = inloc;
+	src = ir3_reg_create(instr, 0, IR3_REG_SSA);
+	src->wrmask = 0x3;
+	src->instr = ctx->frag_pos;
+
+	return instr;
+}
+
+/* TGSI_SEMANTIC_POSITION
+ * """"""""""""""""""""""
+ *
+ * For fragment shaders, TGSI_SEMANTIC_POSITION is used to indicate that
+ * fragment shader input contains the fragment's window position.  The X
+ * component starts at zero and always increases from left to right.
+ * The Y component starts at zero and always increases but Y=0 may either
+ * indicate the top of the window or the bottom depending on the fragment
+ * coordinate origin convention (see TGSI_PROPERTY_FS_COORD_ORIGIN).
+ * The Z coordinate ranges from 0 to 1 to represent depth from the front
+ * to the back of the Z buffer.  The W component contains the reciprocol
+ * of the interpolated vertex position W component.
+ */
+static struct ir3_instruction *
+decl_in_frag_coord(struct fd3_compile_context *ctx, unsigned regid,
+		unsigned j)
+{
+	struct ir3_instruction *instr, *src;
+
+	compile_assert(ctx, !ctx->frag_coord[j]);
+
+	ctx->frag_coord[j] = create_input(ctx->block, NULL, 0);
+
+
+	switch (j) {
+	case 0: /* .x */
+	case 1: /* .y */
+		/* for frag_coord, we get unsigned values.. we need
+		 * to subtract (integer) 8 and divide by 16 (right-
+		 * shift by 4) then convert to float:
+		 */
+
+		/* add.s tmp, src, -8 */
+		instr = instr_create(ctx, 2, OPC_ADD_S);
+		ir3_reg_create(instr, regid, 0);    /* dummy dst */
+		ir3_reg_create(instr, 0, IR3_REG_SSA)->instr = ctx->frag_coord[j];
+		ir3_reg_create(instr, 0, IR3_REG_IMMED)->iim_val = -8;
+		src = instr;
+
+		/* shr.b tmp, tmp, 4 */
+		instr = instr_create(ctx, 2, OPC_SHR_B);
+		ir3_reg_create(instr, regid, 0);    /* dummy dst */
+		ir3_reg_create(instr, 0, IR3_REG_SSA)->instr = src;
+		ir3_reg_create(instr, 0, IR3_REG_IMMED)->iim_val = 4;
+		src = instr;
+
+		/* mov.u32f32 dst, tmp */
+		instr = instr_create(ctx, 1, 0);
+		instr->cat1.src_type = TYPE_U32;
+		instr->cat1.dst_type = TYPE_F32;
+		ir3_reg_create(instr, regid, 0);    /* dummy dst */
+		ir3_reg_create(instr, 0, IR3_REG_SSA)->instr = src;
+
+		break;
+	case 2: /* .z */
+	case 3: /* .w */
+		/* seems that we can use these as-is: */
+		instr = ctx->frag_coord[j];
+		break;
+	default:
+		compile_error(ctx, "invalid channel\n");
+		instr = create_immed(ctx, 0.0);
+		break;
+	}
+
+	return instr;
+}
+
+/* TGSI_SEMANTIC_FACE
+ * """"""""""""""""""
+ *
+ * This label applies to fragment shader inputs only and indicates that
+ * the register contains front/back-face information of the form (F, 0,
+ * 0, 1).  The first component will be positive when the fragment belongs
+ * to a front-facing polygon, and negative when the fragment belongs to a
+ * back-facing polygon.
+ */
+static struct ir3_instruction *
+decl_in_frag_face(struct fd3_compile_context *ctx, unsigned regid,
+		unsigned j)
+{
+	struct ir3_instruction *instr, *src;
+
+	switch (j) {
+	case 0: /* .x */
+		compile_assert(ctx, !ctx->frag_face);
+
+		ctx->frag_face = create_input(ctx->block, NULL, 0);
+
+		/* for faceness, we always get -1 or 0 (int).. but TGSI expects
+		 * positive vs negative float.. and piglit further seems to
+		 * expect -1.0 or 1.0:
+		 *
+		 *    mul.s tmp, hr0.x, 2
+		 *    add.s tmp, tmp, 1
+		 *    mov.s16f32, dst, tmp
+		 *
+		 */
+
+		instr = instr_create(ctx, 2, OPC_MUL_S);
+		ir3_reg_create(instr, regid, 0);    /* dummy dst */
+		ir3_reg_create(instr, 0, IR3_REG_SSA)->instr = ctx->frag_face;
+		ir3_reg_create(instr, 0, IR3_REG_IMMED)->iim_val = 2;
+		src = instr;
+
+		instr = instr_create(ctx, 2, OPC_ADD_S);
+		ir3_reg_create(instr, regid, 0);    /* dummy dst */
+		ir3_reg_create(instr, 0, IR3_REG_SSA)->instr = src;
+		ir3_reg_create(instr, 0, IR3_REG_IMMED)->iim_val = 1;
+		src = instr;
+
+		instr = instr_create(ctx, 1, 0); /* mov */
+		instr->cat1.src_type = TYPE_S32;
+		instr->cat1.dst_type = TYPE_F32;
+		ir3_reg_create(instr, regid, 0);    /* dummy dst */
+		ir3_reg_create(instr, 0, IR3_REG_SSA)->instr = src;
+
+		break;
+	case 1: /* .y */
+	case 2: /* .z */
+		instr = create_immed(ctx, 0.0);
+		break;
+	case 3: /* .w */
+		instr = create_immed(ctx, 1.0);
+		break;
+	default:
+		compile_error(ctx, "invalid channel\n");
+		instr = create_immed(ctx, 0.0);
+		break;
+	}
+
+	return instr;
+}
+
 static void
 decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 {
 	struct fd3_shader_variant *so = ctx->so;
-	unsigned i, flags = 0;
+	unsigned name = decl->Semantic.Name;
+	unsigned i;
 
 	/* I don't think we should get frag shader input without
 	 * semantic info?  Otherwise how do inputs get linked to
@@ -1771,7 +1937,7 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 		unsigned r = regid(i, 0);
 		unsigned ncomp, j;
 
-		/* TODO use ctx->info.input_usage_mask[decl->Range.n] to figure out ncomp: */
+		/* we'll figure out the actual components used after scheduling */
 		ncomp = 4;
 
 		DBG("decl in -> r%d", i);
@@ -1780,35 +1946,37 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 		so->inputs[n].compmask = (1 << ncomp) - 1;
 		so->inputs[n].regid = r;
 		so->inputs[n].inloc = ctx->next_inloc;
-		ctx->next_inloc += ncomp;
-
-		so->total_in += ncomp;
 
 		for (j = 0; j < ncomp; j++) {
-			struct ir3_instruction *instr;
+			struct ir3_instruction *instr = NULL;
 
 			if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
-				struct ir3_register *src;
-
-				instr = instr_create(ctx, 2, OPC_BARY_F);
-
-				/* dst register: */
-				ir3_reg_create(instr, r + j, flags);
-
-				/* input position: */
-				ir3_reg_create(instr, 0, IR3_REG_IMMED)->iim_val =
-						so->inputs[n].inloc + j - 8;
-
-				/* input base (always r0.xy): */
-				src = ir3_reg_create(instr, regid(0,0), IR3_REG_SSA);
-				src->wrmask = 0x3;
-				src->instr = ctx->frag_pos;
-
+				/* for fragment shaders, POSITION and FACE are handled
+				 * specially, not using normal varying / bary.f
+				 */
+				if (name == TGSI_SEMANTIC_POSITION) {
+					so->inputs[n].bary = false;
+					so->frag_coord = true;
+					instr = decl_in_frag_coord(ctx, r + j, j);
+				} else if (name == TGSI_SEMANTIC_FACE) {
+					so->inputs[n].bary = false;
+					so->frag_face = true;
+					instr = decl_in_frag_face(ctx, r + j, j);
+				} else {
+					so->inputs[n].bary = true;
+					instr = decl_in_frag_bary(ctx, r + j, j,
+							so->inputs[n].inloc + j - 8);
+				}
 			} else {
 				instr = create_input(ctx->block, NULL, (i * 4) + j);
 			}
 
 			ctx->block->inputs[(i * 4) + j] = instr;
+		}
+
+		if (so->inputs[n].bary || (ctx->type == TGSI_PROCESSOR_VERTEX)) {
+			ctx->next_inloc += ncomp;
+			so->total_in += ncomp;
 		}
 	}
 }
@@ -1878,13 +2046,76 @@ decl_samp(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 	ctx->so->samplers_count++;
 }
 
+/* from TGSI perspective, we actually have inputs.  But most of the "inputs"
+ * for a fragment shader are just bary.f instructions.  The *actual* inputs
+ * from the hw perspective are the frag_pos and optionally frag_coord and
+ * frag_face.
+ */
+static void
+fixup_frag_inputs(struct fd3_compile_context *ctx)
+{
+	struct fd3_shader_variant *so = ctx->so;
+	struct ir3_block *block = ctx->block;
+	struct ir3_instruction *instr;
+	int regid = 0;
+
+	block->ninputs = 0;
+
+	if (so->frag_face) {
+		/* this ultimately gets assigned to hr0.x so doesn't conflict
+		 * with frag_coord/frag_pos..
+		 */
+		block->inputs[block->ninputs++] = ctx->frag_face;
+		ctx->frag_face->regs[0]->num = 0;
+
+		/* remaining channels not used, but let's avoid confusing
+		 * other parts that expect inputs to come in groups of vec4
+		 */
+		block->inputs[block->ninputs++] = NULL;
+		block->inputs[block->ninputs++] = NULL;
+		block->inputs[block->ninputs++] = NULL;
+	}
+
+	/* since we don't know where to set the regid for frag_coord,
+	 * we have to use r0.x for it.  But we don't want to *always*
+	 * use r1.x for frag_pos as that could increase the register
+	 * footprint on simple shaders:
+	 */
+	if (so->frag_coord) {
+		ctx->frag_coord[0]->regs[0]->num = regid++;
+		ctx->frag_coord[1]->regs[0]->num = regid++;
+		ctx->frag_coord[2]->regs[0]->num = regid++;
+		ctx->frag_coord[3]->regs[0]->num = regid++;
+
+		block->inputs[block->ninputs++] = ctx->frag_coord[0];
+		block->inputs[block->ninputs++] = ctx->frag_coord[1];
+		block->inputs[block->ninputs++] = ctx->frag_coord[2];
+		block->inputs[block->ninputs++] = ctx->frag_coord[3];
+	}
+
+	/* we always have frag_pos: */
+	so->pos_regid = regid;
+
+	/* r0.x */
+	instr = create_input(block, NULL, block->ninputs);
+	instr->regs[0]->num = regid++;
+	block->inputs[block->ninputs++] = instr;
+	ctx->frag_pos->regs[1]->instr = instr;
+
+	/* r0.y */
+	instr = create_input(block, NULL, block->ninputs);
+	instr->regs[0]->num = regid++;
+	block->inputs[block->ninputs++] = instr;
+	ctx->frag_pos->regs[2]->instr = instr;
+}
+
 static void
 compile_instructions(struct fd3_compile_context *ctx)
 {
 	push_block(ctx);
 
-	/* for fragment shader, we have a single input register (r0.xy)
-	 * which is used as the base for bary.f varying fetch instrs:
+	/* for fragment shader, we have a single input register (usually
+	 * r0.xy) which is used as the base for bary.f varying fetch instrs:
 	 */
 	if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
 		struct ir3_instruction *instr;
@@ -1957,21 +2188,8 @@ compile_instructions(struct fd3_compile_context *ctx)
 	}
 
 	/* fixup actual inputs for frag shader: */
-	if (ctx->type == TGSI_PROCESSOR_FRAGMENT) {
-		struct ir3_instruction *instr;
-
-		ctx->block->ninputs = 2;
-
-		/* r0.x */
-		instr = create_input(ctx->block, NULL, 0);
-		ctx->block->inputs[0] = instr;
-		ctx->frag_pos->regs[1]->instr = instr;
-
-		/* r0.y */
-		instr = create_input(ctx->block, NULL, 1);
-		ctx->block->inputs[1] = instr;
-		ctx->frag_pos->regs[2]->instr = instr;
-	}
+	if (ctx->type == TGSI_PROCESSOR_FRAGMENT)
+		fixup_frag_inputs(ctx);
 }
 
 static void
@@ -1995,6 +2213,7 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 		const struct tgsi_token *tokens, struct fd3_shader_key key)
 {
 	struct fd3_compile_context ctx;
+	struct ir3_block *block;
 	unsigned i, actual_in;
 	int ret = 0;
 
@@ -2011,12 +2230,13 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 
 	compile_instructions(&ctx);
 
+	block = ctx.block;
+
 	/* at this point, we want the kill's in the outputs array too,
 	 * so that they get scheduled (since they have no dst).. we've
 	 * already ensured that the array is big enough in push_block():
 	 */
 	if (ctx.type == TGSI_PROCESSOR_FRAGMENT) {
-		struct ir3_block *block = ctx.block;
 		for (i = 0; i < ctx.kill_count; i++)
 			block->outputs[block->noutputs++] = ctx.kill[i];
 	}
@@ -2024,43 +2244,44 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 	if (fd_mesa_debug & FD_DBG_OPTDUMP)
 		compile_dump(&ctx);
 
-	ret = ir3_block_flatten(ctx.block);
+	ret = ir3_block_flatten(block);
 	if (ret < 0)
 		goto out;
 	if ((ret > 0) && (fd_mesa_debug & FD_DBG_OPTDUMP))
 		compile_dump(&ctx);
 
-	ir3_block_cp(ctx.block);
+	ir3_block_cp(block);
 
 	if (fd_mesa_debug & FD_DBG_OPTDUMP)
 		compile_dump(&ctx);
 
-	ir3_block_depth(ctx.block);
+	ir3_block_depth(block);
 
 	if (fd_mesa_debug & FD_DBG_OPTMSGS) {
 		printf("AFTER DEPTH:\n");
-		ir3_dump_instr_list(ctx.block->head);
+		ir3_dump_instr_list(block->head);
 	}
 
-	ir3_block_sched(ctx.block);
+	ir3_block_sched(block);
 
 	if (fd_mesa_debug & FD_DBG_OPTMSGS) {
 		printf("AFTER SCHED:\n");
-		ir3_dump_instr_list(ctx.block->head);
+		ir3_dump_instr_list(block->head);
 	}
 
-	ret = ir3_block_ra(ctx.block, so->type, key.half_precision);
+	ret = ir3_block_ra(block, so->type, key.half_precision,
+			so->frag_coord, so->frag_face);
 	if (ret)
 		goto out;
 
 	if (fd_mesa_debug & FD_DBG_OPTMSGS) {
 		printf("AFTER RA:\n");
-		ir3_dump_instr_list(ctx.block->head);
+		ir3_dump_instr_list(block->head);
 	}
 
 	/* fixup input/outputs: */
 	for (i = 0; i < so->outputs_count; i++) {
-		so->outputs[i].regid = ctx.block->outputs[i*4]->regs[0]->num;
+		so->outputs[i].regid = block->outputs[i*4]->regs[0]->num;
 		/* preserve hack for depth output.. tgsi writes depth to .z,
 		 * but what we give the hw is the scalar register:
 		 */
@@ -2073,7 +2294,7 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 	for (i = 0; i < so->inputs_count; i++) {
 		unsigned j, regid = ~0, compmask = 0;
 		for (j = 0; j < 4; j++) {
-			struct ir3_instruction *in = ctx.block->inputs[(i*4) + j];
+			struct ir3_instruction *in = block->inputs[(i*4) + j];
 			if (in) {
 				compmask |= (1 << j);
 				regid = in->regs[0]->num - j;

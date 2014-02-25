@@ -296,33 +296,41 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 		struct fd3_shader_variant *vp,
 		struct fd3_vertex_buf *vbufs, uint32_t n)
 {
-	uint32_t i;
+	uint32_t i, j, last = 0;
 
 	n = MIN2(n, vp->inputs_count);
 
-	for (i = 0; i < n; i++) {
-		struct pipe_resource *prsc = vbufs[i].prsc;
-		struct fd_resource *rsc = fd_resource(prsc);
-		enum a3xx_vtx_fmt fmt = fd3_pipe2vtx(vbufs[i].format);
-		bool switchnext = (i != (n - 1));
-		uint32_t fs = util_format_get_blocksize(vbufs[i].format);
+	for (i = 0; i < n; i++)
+		if (vp->inputs[i].compmask)
+			last = i;
 
-		OUT_PKT0(ring, REG_A3XX_VFD_FETCH(i), 2);
-		OUT_RING(ring, A3XX_VFD_FETCH_INSTR_0_FETCHSIZE(fs - 1) |
-				A3XX_VFD_FETCH_INSTR_0_BUFSTRIDE(vbufs[i].stride) |
-				COND(switchnext, A3XX_VFD_FETCH_INSTR_0_SWITCHNEXT) |
-				A3XX_VFD_FETCH_INSTR_0_INDEXCODE(i) |
-				A3XX_VFD_FETCH_INSTR_0_STEPRATE(1));
-		OUT_RELOC(ring, rsc->bo, vbufs[i].offset, 0, 0);
+	for (i = 0, j = 0; i <= last; i++) {
+		if (vp->inputs[i].compmask) {
+			struct pipe_resource *prsc = vbufs[i].prsc;
+			struct fd_resource *rsc = fd_resource(prsc);
+			enum a3xx_vtx_fmt fmt = fd3_pipe2vtx(vbufs[i].format);
+			bool switchnext = (i != last);
+			uint32_t fs = util_format_get_blocksize(vbufs[i].format);
 
-		OUT_PKT0(ring, REG_A3XX_VFD_DECODE_INSTR(i), 1);
-		OUT_RING(ring, A3XX_VFD_DECODE_INSTR_CONSTFILL |
-				A3XX_VFD_DECODE_INSTR_WRITEMASK(vp->inputs[i].compmask) |
-				A3XX_VFD_DECODE_INSTR_FORMAT(fmt) |
-				A3XX_VFD_DECODE_INSTR_REGID(vp->inputs[i].regid) |
-				A3XX_VFD_DECODE_INSTR_SHIFTCNT(fs) |
-				A3XX_VFD_DECODE_INSTR_LASTCOMPVALID |
-				COND(switchnext, A3XX_VFD_DECODE_INSTR_SWITCHNEXT));
+			OUT_PKT0(ring, REG_A3XX_VFD_FETCH(j), 2);
+			OUT_RING(ring, A3XX_VFD_FETCH_INSTR_0_FETCHSIZE(fs - 1) |
+					A3XX_VFD_FETCH_INSTR_0_BUFSTRIDE(vbufs[i].stride) |
+					COND(switchnext, A3XX_VFD_FETCH_INSTR_0_SWITCHNEXT) |
+					A3XX_VFD_FETCH_INSTR_0_INDEXCODE(j) |
+					A3XX_VFD_FETCH_INSTR_0_STEPRATE(1));
+			OUT_RELOC(ring, rsc->bo, vbufs[i].offset, 0, 0);
+
+			OUT_PKT0(ring, REG_A3XX_VFD_DECODE_INSTR(j), 1);
+			OUT_RING(ring, A3XX_VFD_DECODE_INSTR_CONSTFILL |
+					A3XX_VFD_DECODE_INSTR_WRITEMASK(vp->inputs[i].compmask) |
+					A3XX_VFD_DECODE_INSTR_FORMAT(fmt) |
+					A3XX_VFD_DECODE_INSTR_REGID(vp->inputs[i].regid) |
+					A3XX_VFD_DECODE_INSTR_SHIFTCNT(fs) |
+					A3XX_VFD_DECODE_INSTR_LASTCOMPVALID |
+					COND(switchnext, A3XX_VFD_DECODE_INSTR_SWITCHNEXT));
+
+			j++;
+		}
 	}
 }
 
@@ -346,23 +354,28 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 				A3XX_RB_MSAA_CONTROL_SAMPLE_MASK(ctx->sample_mask));
 	}
 
+	if ((dirty & (FD_DIRTY_ZSA | FD_DIRTY_PROG)) && !key.binning_pass) {
+		uint32_t val = fd3_zsa_stateobj(ctx->zsa)->rb_render_control;
+
+		val |= COND(fp->frag_face, A3XX_RB_RENDER_CONTROL_FACENESS);
+		val |= COND(fp->frag_coord, A3XX_RB_RENDER_CONTROL_XCOORD |
+				A3XX_RB_RENDER_CONTROL_YCOORD |
+				A3XX_RB_RENDER_CONTROL_ZCOORD |
+				A3XX_RB_RENDER_CONTROL_WCOORD);
+
+		/* I suppose if we needed to (which I don't *think* we need
+		 * to), we could emit this for binning pass too.  But we
+		 * would need to keep a different patch-list for binning
+		 * vs render pass.
+		 */
+
+		OUT_PKT0(ring, REG_A3XX_RB_RENDER_CONTROL, 1);
+		OUT_RINGP(ring, val, &fd3_context(ctx)->rbrc_patches);
+	}
+
 	if (dirty & (FD_DIRTY_ZSA | FD_DIRTY_STENCIL_REF)) {
 		struct fd3_zsa_stateobj *zsa = fd3_zsa_stateobj(ctx->zsa);
 		struct pipe_stencil_ref *sr = &ctx->stencil_ref;
-
-		if (!key.binning_pass) {
-			struct fd3_context *fd3_ctx = fd3_context(ctx);
-
-			/* I suppose if we needed to (which I don't *think* we need
-			 * to), we could emit this for binning pass too.  But we
-			 * would need to keep a different patch-list for binning
-			 * vs render pass.
-			 */
-
-			OUT_PKT0(ring, REG_A3XX_RB_RENDER_CONTROL, 1);
-			OUT_RINGP(ring, zsa->rb_render_control,
-					&fd3_ctx->rbrc_patches);
-		}
 
 		OUT_PKT0(ring, REG_A3XX_RB_ALPHA_REF, 1);
 		OUT_RING(ring, zsa->rb_alpha_ref);
@@ -406,9 +419,9 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	if (dirty & (FD_DIRTY_RASTERIZER | FD_DIRTY_PROG)) {
 		uint32_t val = fd3_rasterizer_stateobj(ctx->rasterizer)
 				->gras_cl_clip_cntl;
-		if (fp->writes_pos) {
-			val |= A3XX_GRAS_CL_CLIP_CNTL_ZCLIP_DISABLE;
-		}
+		val |= COND(fp->writes_pos, A3XX_GRAS_CL_CLIP_CNTL_ZCLIP_DISABLE);
+		val |= COND(fp->frag_coord, A3XX_GRAS_CL_CLIP_CNTL_ZCOORD |
+				A3XX_GRAS_CL_CLIP_CNTL_WCOORD);
 		OUT_PKT0(ring, REG_A3XX_GRAS_CL_CLIP_CNTL, 1);
 		OUT_RING(ring, val);
 	}

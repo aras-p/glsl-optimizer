@@ -312,6 +312,11 @@ static inline bool is_flow(struct ir3_instruction *instr)
 	return (instr->category == 0);
 }
 
+static inline bool is_kill(struct ir3_instruction *instr)
+{
+	return is_flow(instr) && (instr->opc == OPC_KILL);
+}
+
 static inline bool is_nop(struct ir3_instruction *instr)
 {
 	return is_flow(instr) && (instr->opc == OPC_NOP);
@@ -380,7 +385,7 @@ void ir3_block_sched(struct ir3_block *block);
 
 /* register assignment: */
 int ir3_block_ra(struct ir3_block *block, enum shader_t type,
-		bool half_precision);
+		bool half_precision, bool frag_coord, bool frag_face);
 
 
 #ifndef ARRAY_SIZE

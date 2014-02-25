@@ -80,6 +80,12 @@ struct fd3_shader_variant {
 	 *   + From the vert shader, we only need the output regid
 	 */
 
+	/* for frag shader, pos_regid holds the frag_pos, ie. what is passed
+	 * to bary.f instructions
+	 */
+	uint8_t pos_regid;
+	bool frag_coord, frag_face;
+
 	/* varyings/outputs: */
 	unsigned outputs_count;
 	struct {
@@ -96,6 +102,7 @@ struct fd3_shader_variant {
 		uint8_t compmask;
 		/* in theory inloc of fs should match outloc of vs: */
 		uint8_t inloc;
+		uint8_t bary;
 	} inputs[16];
 
 	unsigned total_in;       /* sum of inputs (scalar) */

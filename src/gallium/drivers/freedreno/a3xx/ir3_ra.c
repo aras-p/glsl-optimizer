@@ -54,6 +54,8 @@ struct ir3_ra_ctx {
 	struct ir3_block *block;
 	enum shader_t type;
 	bool half_precision;
+	bool frag_coord;
+	bool frag_face;
 	int cnt;
 	bool error;
 };
@@ -100,8 +102,11 @@ static int output_base(struct ir3_ra_ctx *ctx)
 	 * see how because the blob driver always uses r0.x (ie.
 	 * all zeros)
 	 */
-	if ((ctx->type == SHADER_FRAGMENT) && !ctx->half_precision)
-		return 2;
+	if (ctx->type == SHADER_FRAGMENT) {
+		if (ctx->half_precision)
+			return ctx->frag_face ? 1 : 0;
+		return ctx->frag_coord ? 6 : 2;
+	}
 	return 0;
 }
 
@@ -429,6 +434,10 @@ static void ra_assign_reg(struct ir3_visitor *v,
 		struct ir3_instruction *instr, struct ir3_register *reg)
 {
 	struct ra_assign_visitor *a = ra_assign_visitor(v);
+
+	if (is_flow(instr) && (instr->opc == OPC_KILL))
+		return;
+
 	reg->flags &= ~IR3_REG_SSA;
 	reg->num = a->num & ~REG_HALF;
 	if (a->num & REG_HALF) {
@@ -673,7 +682,7 @@ static int block_ra(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 	struct ir3_instruction *n;
 
 	if (!block->parent) {
-		unsigned i;
+		unsigned i, j;
 		int base, off = output_base(ctx);
 
 		base = alloc_block(ctx, NULL, block->noutputs + off);
@@ -682,13 +691,19 @@ static int block_ra(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 			base |= REG_HALF;
 
 		for (i = 0; i < block->noutputs; i++)
-			if (block->outputs[i])
+			if (block->outputs[i] && !is_kill(block->outputs[i]))
 				ra_assign(ctx, block->outputs[i], base + i + off);
 
 		if (ctx->type == SHADER_FRAGMENT) {
-			for (i = 0; i < block->ninputs; i++)
+			i = 0;
+			if (ctx->frag_face) {
+				/* if we have frag_face, it gets hr0.x */
+				ra_assign(ctx, block->inputs[i], REG_HALF | 0);
+				i += 4;
+			}
+			for (j = 0; i < block->ninputs; i++, j++)
 				if (block->inputs[i])
-					ra_assign(ctx, block->inputs[i], (base & ~REG_HALF) + i);
+					ra_assign(ctx, block->inputs[i], (base & ~REG_HALF) + j);
 		} else {
 			for (i = 0; i < block->ninputs; i++)
 				if (block->inputs[i])
@@ -712,12 +727,14 @@ static int block_ra(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 }
 
 int ir3_block_ra(struct ir3_block *block, enum shader_t type,
-		bool half_precision)
+		bool half_precision, bool frag_coord, bool frag_face)
 {
 	struct ir3_ra_ctx ctx = {
 			.block = block,
 			.type = type,
 			.half_precision = half_precision,
+			.frag_coord = frag_coord,
+			.frag_face = frag_face,
 	};
 	ir3_shader_clear_mark(block->shader);
 	return block_ra(&ctx, block);
