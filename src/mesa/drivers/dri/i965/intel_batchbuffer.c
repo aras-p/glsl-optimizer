@@ -583,7 +583,7 @@ intel_emit_depth_stall_flushes(struct brw_context *brw)
 void
 gen7_emit_vs_workaround_flush(struct brw_context *brw)
 {
-   assert(brw->gen >= 7 && brw->gen <= 8);
+   assert(brw->gen == 7);
    brw_emit_pipe_control_write(brw,
                                PIPE_CONTROL_WRITE_IMMEDIATE
                                | PIPE_CONTROL_DEPTH_STALL,

@@ -263,7 +263,8 @@ gen7_upload_urb(struct brw_context *brw)
    brw->urb.vs_start = push_constant_chunks;
    brw->urb.gs_start = push_constant_chunks + vs_chunks;
 
-   gen7_emit_vs_workaround_flush(brw);
+   if (brw->gen == 7 && !brw->is_haswell)
+      gen7_emit_vs_workaround_flush(brw);
    gen7_emit_urb_state(brw,
                        brw->urb.nr_vs_entries, vs_size, brw->urb.vs_start,
                        brw->urb.nr_gs_entries, gs_size, brw->urb.gs_start);
