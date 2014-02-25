@@ -297,10 +297,8 @@ namespace {
             llvm::Argument &arg = *I;
 #if HAVE_LLVM < 0x0302
             llvm::TargetData TD(kernel_func->getParent());
-#elif HAVE_LLVM < 0x0304
-            llvm::DataLayout TD(kernel_func->getParent()->getDataLayout());
 #else
-            llvm::DataLayout TD(mod);
+            llvm::DataLayout TD(kernel_func->getParent()->getDataLayout());
 #endif
 
             llvm::Type *arg_type = arg.getType();
