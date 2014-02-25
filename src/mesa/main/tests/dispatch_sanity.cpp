@@ -933,6 +933,9 @@ const struct function gl_core_functions_possible[] = {
    { "glVDPAUMapSurfacesNV", 11, -1 },
    { "glVDPAUUnmapSurfacesNV", 11, -1 },
 
+   /* GL_ARB_buffer_storage */
+   { "glBufferStorage", 43, -1 },
+
    { NULL, 0, -1 }
 };
 
