@@ -523,7 +523,7 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj,
       intel_batchbuffer_emit_mi_flush(brw);
       _mesa_align_free(intel_obj->range_map_buffer[index]);
       intel_obj->range_map_buffer[index] = NULL;
-   } else if (intel_obj->range_map_bo != NULL) {
+   } else if (intel_obj->range_map_bo[index] != NULL) {
       const unsigned extra = obj->Mappings[index].Pointer -
                              intel_obj->range_map_bo[index]->virtual;
 
