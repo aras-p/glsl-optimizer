@@ -82,9 +82,7 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
    /* VUE header: format depends on chip generation and whether clipping is
     * enabled.
     */
-   switch (brw->gen) {
-   case 4:
-   case 5:
+   if (brw->gen < 6) {
       /* There are 8 dwords in VUE header pre-Ironlake:
        * dword 0-3 is indices, point width, clip flags.
        * dword 4-7 is ndc position
@@ -96,10 +94,7 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
       assign_vue_slot(vue_map, VARYING_SLOT_PSIZ);
       assign_vue_slot(vue_map, BRW_VARYING_SLOT_NDC);
       assign_vue_slot(vue_map, VARYING_SLOT_POS);
-      break;
-   case 6:
-   case 7:
-   case 8:
+   } else {
       /* There are 8 or 16 DWs (D0-D15) in VUE header on Sandybridge:
        * dword 0-3 of the header is indices, point width, clip flags.
        * dword 4-7 is the 4D space position
@@ -126,10 +121,6 @@ brw_compute_vue_map(struct brw_context *brw, struct brw_vue_map *vue_map,
          assign_vue_slot(vue_map, VARYING_SLOT_COL1);
       if (slots_valid & BITFIELD64_BIT(VARYING_SLOT_BFC1))
          assign_vue_slot(vue_map, VARYING_SLOT_BFC1);
-      break;
-   default:
-      assert (!"VUE map not known for this chip generation");
-      break;
    }
 
    /* The hardware doesn't care about the rest of the vertex outputs, so just
