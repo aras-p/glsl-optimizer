@@ -172,6 +172,11 @@ _mesa_symbol_table_push_scope(struct _mesa_symbol_table *table)
 {
     struct scope_level *const scope = calloc(1, sizeof(*scope));
     
+    if (scope == NULL) {
+       _mesa_error_no_memory(__func__);
+       return;
+    }
+
     scope->next = table->current_scope;
     table->current_scope = scope;
     table->depth++;
@@ -254,7 +259,17 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
 
     if (hdr == NULL) {
        hdr = calloc(1, sizeof(*hdr));
+       if (hdr == NULL) {
+          _mesa_error_no_memory(__func__);
+          return -1;
+       }
+
        hdr->name = strdup(name);
+       if (hdr->name == NULL) {
+          free(hdr);
+          _mesa_error_no_memory(__func__);
+          return -1;
+       }
 
        hash_table_insert(table->ht, hdr, hdr->name);
        hdr->next = table->hdr;
@@ -276,6 +291,11 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
        return -1;
 
     sym = calloc(1, sizeof(*sym));
+    if (sym == NULL) {
+       _mesa_error_no_memory(__func__);
+       return -1;
+    }
+
     sym->next_with_same_name = hdr->symbols;
     sym->next_with_same_scope = table->current_scope->symbols;
     sym->hdr = hdr;
@@ -311,6 +331,11 @@ _mesa_symbol_table_add_global_symbol(struct _mesa_symbol_table *table,
 
     if (hdr == NULL) {
         hdr = calloc(1, sizeof(*hdr));
+        if (hdr == NULL) {
+           _mesa_error_no_memory(__func__);
+           return -1;
+        }
+
         hdr->name = strdup(name);
 
         hash_table_insert(table->ht, hdr, hdr->name);
@@ -340,6 +365,11 @@ _mesa_symbol_table_add_global_symbol(struct _mesa_symbol_table *table,
     }
 
     sym = calloc(1, sizeof(*sym));
+    if (sym == NULL) {
+       _mesa_error_no_memory(__func__);
+       return -1;
+    }
+
     sym->next_with_same_scope = top_scope->symbols;
     sym->hdr = hdr;
     sym->name_space = name_space;
