@@ -43,7 +43,12 @@ struct intel_buffer_object
    drm_intel_bo *buffer;     /* the low-level buffer manager's buffer handle */
 
    drm_intel_bo *range_map_bo[MAP_COUNT];
-   void *range_map_buffer[MAP_COUNT];
+
+   /**
+    * Alignment offset from the range_map_bo temporary mapping to the returned
+    * obj->Pointer (caused by GL_ARB_map_buffer_alignment).
+    */
+   unsigned map_extra[MAP_COUNT];
 
    /** @{
     * Tracking for what range of the BO may currently be in use by the GPU.

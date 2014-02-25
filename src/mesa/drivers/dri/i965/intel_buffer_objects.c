@@ -409,27 +409,21 @@ intel_bufferobj_map_range(struct gl_context * ctx,
        * guarantees the driver has advertised to the application.
        */
       const unsigned alignment = ctx->Const.MinMapBufferAlignment;
-      const unsigned extra = (uintptr_t) offset % alignment;
 
-      if (access & GL_MAP_FLUSH_EXPLICIT_BIT) {
-         intel_obj->range_map_buffer[index] = _mesa_align_malloc(length + extra,
-                                                                 alignment);
-         obj->Mappings[index].Pointer =
-            intel_obj->range_map_buffer[index] + extra;
+      intel_obj->map_extra[index] = (uintptr_t) offset % alignment;
+      intel_obj->range_map_bo[index] = drm_intel_bo_alloc(brw->bufmgr,
+                                                          "BO blit temp",
+                                                          length +
+                                                          intel_obj->map_extra[index],
+                                                          alignment);
+      if (brw->has_llc) {
+         drm_intel_bo_map(intel_obj->range_map_bo[index],
+                          (access & GL_MAP_WRITE_BIT) != 0);
       } else {
-	 intel_obj->range_map_bo[index] = drm_intel_bo_alloc(brw->bufmgr,
-                                                             "range map",
-                                                             length + extra,
-                                                             alignment);
-	 if (brw->has_llc) {
-	    drm_intel_bo_map(intel_obj->range_map_bo[index],
-			     (access & GL_MAP_WRITE_BIT) != 0);
-	 } else {
-	    drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo[index]);
-	 }
-	 obj->Mappings[index].Pointer =
-            intel_obj->range_map_bo[index]->virtual + extra;
+         drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo[index]);
       }
+      obj->Mappings[index].Pointer =
+         intel_obj->range_map_bo[index]->virtual + intel_obj->map_extra[index];
       return obj->Mappings[index].Pointer;
    }
 
@@ -468,35 +462,51 @@ intel_bufferobj_flush_mapped_range(struct gl_context *ctx,
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
-   drm_intel_bo *temp_bo;
+   GLbitfield access = obj->Mappings[index].AccessFlags;
 
-   /* Unless we're in the range map using a temporary system buffer,
-    * there's no work to do.
+   assert(access & GL_MAP_FLUSH_EXPLICIT_BIT);
+
+   /* If we gave a direct mapping of the buffer instead of using a temporary,
+    * then there's nothing to do.
     */
-   if (intel_obj->range_map_buffer[index] == NULL)
+   if (intel_obj->range_map_bo[index] == NULL)
       return;
 
    if (length == 0)
       return;
 
-   temp_bo = drm_intel_bo_alloc(brw->bufmgr, "range map flush", length, 64);
-
-   /* Use obj->Pointer instead of intel_obj->range_map_buffer because the
-    * former points to the actual mapping while the latter may be offset to
-    * meet alignment guarantees.
+   /* Note that we're not unmapping our buffer while executing the blit.  We
+    * need to have a mapping still at the end of this call, since the user
+    * gets to make further modifications and glFlushMappedBufferRange() calls.
+    * This is safe, because:
+    *
+    * - On LLC platforms, we're using a CPU mapping that's coherent with the
+    *   GPU (except for the render caches), so the kernel doesn't need to do
+    *   any flushing work for us except for what happens at batch exec time
+    *   anyway.
+    *
+    * - On non-LLC platforms, we're using a GTT mapping that writes directly
+    *   to system memory (except for the chipset cache that gets flushed at
+    *   batch exec time).
+    *
+    * In both cases we don't need to stall for the previous blit to complete
+    * so we can re-map (and we definitely don't want to, since that would be
+    * slow): If the user edits a part of their buffer that's previously been
+    * blitted, then our lack of synchoronization is fine, because either
+    * they'll get some too-new data in the first blit and not do another blit
+    * of that area (but in that case the results are undefined), or they'll do
+    * another blit of that area and the complete newer data will land the
+    * second time.
     */
-   drm_intel_bo_subdata(temp_bo, 0, length, obj->Mappings[index].Pointer);
-
    intel_emit_linear_blit(brw,
 			  intel_obj->buffer,
                           obj->Mappings[index].Offset + offset,
-			  temp_bo, 0,
+			  intel_obj->range_map_bo[index],
+                          intel_obj->map_extra[index] + offset,
 			  length);
    intel_bufferobj_mark_gpu_usage(intel_obj,
                                   obj->Mappings[index].Offset + offset,
                                   length);
-
-   drm_intel_bo_unreference(temp_bo);
 }
 
 
@@ -514,27 +524,18 @@ intel_bufferobj_unmap(struct gl_context * ctx, struct gl_buffer_object *obj,
 
    assert(intel_obj);
    assert(obj->Mappings[index].Pointer);
-   if (intel_obj->range_map_buffer[index] != NULL) {
-      /* Since we've emitted some blits to buffers that will (likely) be used
-       * in rendering operations in other cache domains in this batch, emit a
-       * flush.  Once again, we wish for a domain tracker in libdrm to cover
-       * usage inside of a batchbuffer.
-       */
-      intel_batchbuffer_emit_mi_flush(brw);
-      _mesa_align_free(intel_obj->range_map_buffer[index]);
-      intel_obj->range_map_buffer[index] = NULL;
-   } else if (intel_obj->range_map_bo[index] != NULL) {
-      const unsigned extra = obj->Mappings[index].Pointer -
-                             intel_obj->range_map_bo[index]->virtual;
-
+   if (intel_obj->range_map_bo[index] != NULL) {
       drm_intel_bo_unmap(intel_obj->range_map_bo[index]);
 
-      intel_emit_linear_blit(brw,
-			     intel_obj->buffer, obj->Mappings[index].Offset,
-			     intel_obj->range_map_bo[index], extra,
-			     obj->Mappings[index].Length);
-      intel_bufferobj_mark_gpu_usage(intel_obj, obj->Mappings[index].Offset,
-                                     obj->Mappings[index].Length);
+      if (!(obj->Mappings[index].AccessFlags & GL_MAP_FLUSH_EXPLICIT_BIT)) {
+         intel_emit_linear_blit(brw,
+                                intel_obj->buffer, obj->Mappings[index].Offset,
+                                intel_obj->range_map_bo[index],
+                                intel_obj->map_extra[index],
+                                obj->Mappings[index].Length);
+         intel_bufferobj_mark_gpu_usage(intel_obj, obj->Mappings[index].Offset,
+                                        obj->Mappings[index].Length);
+      }
 
       /* Since we've emitted some blits to buffers that will (likely) be used
        * in rendering operations in other cache domains in this batch, emit a
