@@ -33,6 +33,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers \
 	-I$(top_srcdir)/src/gallium/state_trackers/glx/xlib \
 	-I$(top_srcdir)/src/gallium/auxiliary \
+	-I$(top_srcdir)/src/gallium/winsys \
 	-DGALLIUM_SOFTPIPE \
 	-DGALLIUM_RBUG \
 	-DGALLIUM_TRACE \
