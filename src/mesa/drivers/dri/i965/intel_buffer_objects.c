@@ -421,11 +421,11 @@ intel_bufferobj_map_range(struct gl_context * ctx,
                                                              "range map",
                                                              length + extra,
                                                              alignment);
-	 if (!(access & GL_MAP_READ_BIT)) {
-	    drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo[index]);
-	 } else {
+	 if (brw->has_llc) {
 	    drm_intel_bo_map(intel_obj->range_map_bo[index],
 			     (access & GL_MAP_WRITE_BIT) != 0);
+	 } else {
+	    drm_intel_gem_bo_map_gtt(intel_obj->range_map_bo[index]);
 	 }
 	 obj->Mappings[index].Pointer =
             intel_obj->range_map_bo[index]->virtual + extra;
