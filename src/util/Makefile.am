@@ -28,6 +28,7 @@ noinst_LTLIBRARIES = libmesautil.la
 libmesautil_la_CPPFLAGS = \
 	$(DEFINES) \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/mapi \
 	-I$(top_srcdir)/src/mesa \
 	$(VISIBILITY_CFLAGS)
 

@@ -53,7 +53,6 @@ check_PROGRAMS =					\
 noinst_PROGRAMS = glsl_compiler
 
 tests_general_ir_test_SOURCES =		\
-	$(top_srcdir)/src/mesa/main/hash_table.c	\
 	$(top_srcdir)/src/mesa/main/imports.c		\
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c\
 	$(top_srcdir)/src/mesa/program/symbol_table.c	\
@@ -71,7 +70,6 @@ tests_general_ir_test_LDADD =				\
 	$(PTHREAD_LIBS)
 
 tests_uniform_initializer_test_SOURCES =		\
-	$(top_srcdir)/src/mesa/main/hash_table.c	\
 	$(top_srcdir)/src/mesa/main/imports.c		\
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c\
 	$(top_srcdir)/src/mesa/program/symbol_table.c	\
@@ -120,7 +118,6 @@ libglsl_la_SOURCES =					\
 	$(LIBGLSL_FILES)
 
 glsl_compiler_SOURCES = \
-	$(top_srcdir)/src/mesa/main/hash_table.c \
 	$(top_srcdir)/src/mesa/main/imports.c \
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c \
 	$(top_srcdir)/src/mesa/program/symbol_table.c \
@@ -131,7 +128,6 @@ glsl_compiler_LDADD =					\
 	$(PTHREAD_LIBS)
 
 glsl_test_SOURCES = \
-	$(top_srcdir)/src/mesa/main/hash_table.c \
 	$(top_srcdir)/src/mesa/main/imports.c \
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c \
 	$(top_srcdir)/src/mesa/program/symbol_table.c \

@@ -1,5 +1,3 @@
-SUBDIRS = hash_table
-
 AM_CFLAGS = \
 	$(X11_CFLAGS) \
 	$(PTHREAD_CFLAGS)

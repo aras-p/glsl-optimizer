@@ -37,7 +37,7 @@
 #include "glheader.h"
 #include "imports.h"
 #include "hash.h"
-#include "hash_table.h"
+#include "util/hash_table.h"
 
 /**
  * Magic GLuint object name that gets stored outside of the struct hash_table.

@@ -42,7 +42,6 @@
 #include "main/dispatch.h"
 #include "main/enums.h"
 #include "main/hash.h"
-#include "main/hash_table.h"
 #include "main/mtypes.h"
 #include "main/pipelineobj.h"
 #include "main/shaderapi.h"
@@ -53,6 +52,7 @@
 #include "program/prog_print.h"
 #include "program/prog_parameter.h"
 #include "util/ralloc.h"
+#include "util/hash_table.h"
 #include <stdbool.h>
 #include "../glsl/glsl_parser_extras.h"
 #include "../glsl/ir.h"

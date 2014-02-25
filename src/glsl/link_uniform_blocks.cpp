@@ -26,7 +26,7 @@
 #include "linker.h"
 #include "ir_uniform.h"
 #include "link_uniform_block_active_visitor.h"
-#include "main/hash_table.h"
+#include "util/hash_table.h"
 #include "program.h"
 
 namespace {

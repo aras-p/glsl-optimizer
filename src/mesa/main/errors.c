@@ -36,7 +36,7 @@
 #include "hash.h"
 #include "mtypes.h"
 #include "version.h"
-#include "hash_table.h"
+#include "util/hash_table.h"
 
 static mtx_t DynamicIDMutex = _MTX_INITIALIZER_NP;
 static GLuint NextDynamicID = 1;

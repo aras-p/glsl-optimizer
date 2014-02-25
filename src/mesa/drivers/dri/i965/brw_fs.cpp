@@ -32,7 +32,7 @@ extern "C" {
 
 #include <sys/types.h>
 
-#include "main/hash_table.h"
+#include "util/hash_table.h"
 #include "main/macros.h"
 #include "main/shaderobj.h"
 #include "main/fbobject.h"

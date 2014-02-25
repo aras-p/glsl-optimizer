@@ -31,7 +31,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include "compiler.h"
+#include "main/compiler.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -26,7 +26,7 @@
 #define LINK_UNIFORM_BLOCK_ACTIVE_VISITOR_H
 
 #include "ir.h"
-#include "main/hash_table.h"
+#include "util/hash_table.h"
 
 struct link_uniform_block_active {
    const glsl_type *type;

@@ -1,2 +1,3 @@
-MESA_UTIL_FILES := \
+MESA_UTIL_FILES :=	\
+	hash_table.c	\
 	ralloc.c

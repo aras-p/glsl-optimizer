@@ -20,6 +20,8 @@
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/util \
+	-I$(top_srcdir)/src/mesa \
 	-I$(top_srcdir)/src/mesa/main \
 	$(DEFINES) $(INCLUDE_DIRS)
 

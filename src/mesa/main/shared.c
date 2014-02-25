@@ -30,7 +30,6 @@
 #include "imports.h"
 #include "mtypes.h"
 #include "hash.h"
-#include "hash_table.h"
 #include "atifragshader.h"
 #include "bufferobj.h"
 #include "shared.h"
@@ -42,6 +41,7 @@
 #include "shaderobj.h"
 #include "syncobj.h"
 
+#include "util/hash_table.h"
 
 /**
  * Allocate and initialize a shared context state structure.

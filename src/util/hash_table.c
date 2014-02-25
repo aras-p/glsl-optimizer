@@ -43,9 +43,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "main/hash_table.h"
+#include "hash_table.h"
 #include "main/macros.h"
-#include "util/ralloc.h"
+#include "ralloc.h"
 
 static const uint32_t deleted_key_value;
 

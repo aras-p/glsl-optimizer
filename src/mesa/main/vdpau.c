@@ -32,9 +32,9 @@
  */
 
 #include <stdbool.h>
+#include "util/hash_table.h"
 #include "context.h"
 #include "glformats.h"
-#include "hash_table.h"
 #include "set.h"
 #include "texobj.h"
 #include "teximage.h"
