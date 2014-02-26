@@ -39,7 +39,7 @@ struct brw_sampler_prog_key_data {
     */
    uint16_t swizzles[MAX_SAMPLERS];
 
-   uint16_t gl_clamp_mask[3];
+   uint32_t gl_clamp_mask[3];
 
    /**
     * YUV conversions, needed for the GL_MESA_ycbcr extension.
@@ -50,12 +50,12 @@ struct brw_sampler_prog_key_data {
    /**
     * For RG32F, gather4's channel select is broken.
     */
-   uint16_t gather_channel_quirk_mask;
+   uint32_t gather_channel_quirk_mask;
 
    /**
     * Whether this sampler uses the compressed multisample surface layout.
     */
-   uint16_t compressed_multisample_layout_mask;
+   uint32_t compressed_multisample_layout_mask;
 
    /**
     * For Sandybridge, which shader w/a we need for gather quirks.
