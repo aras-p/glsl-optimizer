@@ -145,13 +145,6 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
       return NULL;
    }
 
-   ilo->uploader = u_upload_create(&ilo->base, 1024 * 1024, 16,
-         PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_INDEX_BUFFER);
-   if (!ilo->uploader) {
-      ilo_context_destroy(&ilo->base);
-      return NULL;
-   }
-
    ilo_cp_set_flush_callback(ilo->cp,
          ilo_context_cp_flushed, (void *) ilo);
 
@@ -171,7 +164,17 @@ ilo_context_create(struct pipe_screen *screen, void *priv)
 
    ilo_init_states(ilo);
 
-   /* this must be called last as u_blitter is a client of the pipe context */
+   /*
+    * These must be called last as u_upload/u_blitter are clients of the pipe
+    * context.
+    */
+   ilo->uploader = u_upload_create(&ilo->base, 1024 * 1024, 16,
+         PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_INDEX_BUFFER);
+   if (!ilo->uploader) {
+      ilo_context_destroy(&ilo->base);
+      return NULL;
+   }
+
    ilo->blitter = ilo_blitter_create(ilo);
    if (!ilo->blitter) {
       ilo_context_destroy(&ilo->base);
