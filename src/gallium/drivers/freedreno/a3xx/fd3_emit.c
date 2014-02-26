@@ -448,19 +448,20 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	}
 
 	if (dirty & (FD_DIRTY_RASTERIZER | FD_DIRTY_PROG)) {
-		struct fd3_rasterizer_stateobj *rasterizer =
-				fd3_rasterizer_stateobj(ctx->rasterizer);
-		uint32_t stride_in_vpc = 0;
+		uint32_t val = fd3_rasterizer_stateobj(ctx->rasterizer)
+				->pc_prim_vtx_cntl;
 
 		if (!key.binning_pass) {
-			stride_in_vpc = align(fp->total_in, 4) / 4;
+			uint32_t stride_in_vpc = align(fp->total_in, 4) / 4;
 			if (stride_in_vpc > 0)
 				stride_in_vpc = MAX2(stride_in_vpc, 2);
+			val |= A3XX_PC_PRIM_VTX_CNTL_STRIDE_IN_VPC(stride_in_vpc);
 		}
 
+		val |= COND(vp->writes_psize, A3XX_PC_PRIM_VTX_CNTL_PSIZE);
+
 		OUT_PKT0(ring, REG_A3XX_PC_PRIM_VTX_CNTL, 1);
-		OUT_RING(ring, rasterizer->pc_prim_vtx_cntl |
-				A3XX_PC_PRIM_VTX_CNTL_STRIDE_IN_VPC(stride_in_vpc));
+		OUT_RING(ring, val);
 	}
 
 	if (dirty & FD_DIRTY_SCISSOR) {

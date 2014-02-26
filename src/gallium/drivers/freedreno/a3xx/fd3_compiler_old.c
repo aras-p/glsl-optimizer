@@ -1377,8 +1377,10 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 		switch (name) {
 		case TGSI_SEMANTIC_POSITION:
 			so->writes_pos = true;
-			/* fallthrough */
+			break;
 		case TGSI_SEMANTIC_PSIZE:
+			so->writes_psize = true;
+			break;
 		case TGSI_SEMANTIC_COLOR:
 		case TGSI_SEMANTIC_GENERIC:
 		case TGSI_SEMANTIC_FOG:
@@ -1393,7 +1395,7 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 		case TGSI_SEMANTIC_POSITION:
 			comp = 2;  /* tgsi will write to .z component */
 			so->writes_pos = true;
-			/* fallthrough */
+			break;
 		case TGSI_SEMANTIC_COLOR:
 			break;
 		default:

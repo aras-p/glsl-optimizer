@@ -494,13 +494,15 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 	if (key.binning_pass) {
 		OUT_PKT0(ring, REG_A3XX_VPC_ATTR, 2);
 		OUT_RING(ring, A3XX_VPC_ATTR_THRDASSIGN(1) |
-				A3XX_VPC_ATTR_LMSIZE(1));
+				A3XX_VPC_ATTR_LMSIZE(1) |
+				COND(vp->writes_psize, A3XX_VPC_ATTR_PSIZE));
 		OUT_RING(ring, 0x00000000);
 	} else {
 		OUT_PKT0(ring, REG_A3XX_VPC_ATTR, 2);
 		OUT_RING(ring, A3XX_VPC_ATTR_TOTALATTR(fp->total_in) |
 				A3XX_VPC_ATTR_THRDASSIGN(1) |
-				A3XX_VPC_ATTR_LMSIZE(1));
+				A3XX_VPC_ATTR_LMSIZE(1) |
+				COND(vp->writes_psize, A3XX_VPC_ATTR_PSIZE));
 		OUT_RING(ring, A3XX_VPC_PACK_NUMFPNONPOSVAR(fp->total_in) |
 				A3XX_VPC_PACK_NUMNONPOSVSVAR(fp->total_in));
 

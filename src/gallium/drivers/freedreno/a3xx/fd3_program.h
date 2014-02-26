@@ -92,7 +92,7 @@ struct fd3_shader_variant {
 		fd3_semantic semantic;
 		uint8_t regid;
 	} outputs[16];
-	bool writes_pos;
+	bool writes_pos, writes_psize;
 
 	/* vertices/inputs: */
 	unsigned inputs_count;
