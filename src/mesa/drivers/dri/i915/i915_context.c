@@ -193,6 +193,7 @@ i915CreateContext(int api,
 
    ctx->Const.MaxTextureUnits = I915_TEX_UNITS;
    ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits = I915_TEX_UNITS;
+   ctx->Const.Program[MESA_SHADER_VERTEX].MaxTextureImageUnits = I915_TEX_UNITS;
    ctx->Const.MaxTextureCoordUnits = I915_TEX_UNITS;
    ctx->Const.MaxVarying = I915_TEX_UNITS;
    ctx->Const.Program[MESA_SHADER_VERTEX].MaxOutputComponents =
