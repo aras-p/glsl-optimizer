@@ -1973,8 +1973,6 @@ brw_blorp_blit_params::brw_blorp_blit_params(struct brw_context *brw,
                                              GLenum filter,
                                              bool mirror_x, bool mirror_y)
 {
-   struct gl_context *ctx = &brw->ctx;
-
    src.set(brw, src_mt, src_level, src_layer, false);
    dst.set(brw, dst_mt, dst_level, dst_layer, true);
 
