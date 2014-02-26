@@ -117,6 +117,7 @@ enum operation
    OP_TXQ, // texture size query
    OP_TXD, // texture derivatives
    OP_TXG, // texture gather
+   OP_TXLQ, // texture query lod
    OP_TEXCSAA, // texture op for coverage sampling
    OP_TEXPREP, // turn cube map array into 2d array coordinates
    OP_SULDB, // surface load (raw)

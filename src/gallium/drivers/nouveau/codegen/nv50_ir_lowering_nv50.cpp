@@ -543,6 +543,7 @@ private:
    bool handleTXB(TexInstruction *); // I really
    bool handleTXL(TexInstruction *); // hate
    bool handleTXD(TexInstruction *); // these 3
+   bool handleTXLQ(TexInstruction *);
 
    bool handleCALL(Instruction *);
    bool handlePRECONT(Instruction *);
@@ -853,6 +854,26 @@ NV50LoweringPreSSA::handleTXD(TexInstruction *i)
    }
 
    i->bb->remove(i);
+   return true;
+}
+
+bool
+NV50LoweringPreSSA::handleTXLQ(TexInstruction *i)
+{
+   handleTEX(i);
+   bld.setPosition(i, true);
+
+   /* The returned values are not quite what we want:
+    * (a) convert from s32 to f32
+    * (b) multiply by 1/256
+    */
+   for (int def = 0; def < 2; ++def) {
+      if (!i->defExists(def))
+         continue;
+      bld.mkCvt(OP_CVT, TYPE_F32, i->getDef(def), TYPE_S32, i->getDef(def));
+      bld.mkOp2(OP_MUL, TYPE_F32, i->getDef(def),
+                i->getDef(def), bld.loadImm(NULL, 1.0f / 256));
+   }
    return true;
 }
 
@@ -1197,6 +1218,8 @@ NV50LoweringPreSSA::visit(Instruction *i)
       return handleTXL(i->asTex());
    case OP_TXD:
       return handleTXD(i->asTex());
+   case OP_TXLQ:
+      return handleTXLQ(i->asTex());
    case OP_EX2:
       bld.mkOp1(OP_PREEX2, TYPE_F32, i->getDef(0), i->getSrc(0));
       i->setSrc(0, i->getDef(0));

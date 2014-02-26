@@ -147,6 +147,7 @@ const char *operationStr[OP_LAST + 1] =
    "texquery",
    "texgrad",
    "texgather",
+   "texquerylod",
    "texcsaa",
    "texprep",
    "suldb",

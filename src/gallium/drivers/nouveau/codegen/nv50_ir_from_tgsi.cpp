@@ -255,6 +255,7 @@ unsigned int Instruction::srcMask(unsigned int s) const
    case TGSI_OPCODE_TXD:
    case TGSI_OPCODE_TXL:
    case TGSI_OPCODE_TXP:
+   case TGSI_OPCODE_LODQ:
    {
       const struct tgsi_instruction_texture *tex = &insn->Texture;
 
@@ -559,6 +560,7 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(TXF, TXF);
    NV50_IR_OPCODE_CASE(TXQ, TXQ);
    NV50_IR_OPCODE_CASE(TG4, TXG);
+   NV50_IR_OPCODE_CASE(LODQ, TXLQ);
 
    NV50_IR_OPCODE_CASE(EMIT, EMIT);
    NV50_IR_OPCODE_CASE(ENDPRIM, RESTART);
@@ -2429,6 +2431,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
    case TGSI_OPCODE_TXB:
    case TGSI_OPCODE_TXL:
    case TGSI_OPCODE_TXP:
+   case TGSI_OPCODE_LODQ:
       //              R  S     L     C    Dx    Dy
       handleTEX(dst0, 1, 1, 0x03, 0x0f, 0x00, 0x00);
       break;

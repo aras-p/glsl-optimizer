@@ -1450,6 +1450,9 @@ CodeEmitterNV50::emitTEX(const TexInstruction *i)
       code[0] |= 0x01000000;
       code[1] = 0x80000000;
       break;
+   case OP_TXLQ:
+      code[1] = 0x60020000;
+      break;
    default:
       assert(i->op == OP_TEX);
       break;
@@ -1791,6 +1794,7 @@ CodeEmitterNV50::emitInstruction(Instruction *insn)
    case OP_TXL:
    case OP_TXF:
    case OP_TXG:
+   case OP_TXLQ:
       emitTEX(insn->asTex());
       break;
    case OP_TXQ:
