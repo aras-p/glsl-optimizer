@@ -258,7 +258,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       }
    }
 
-   if (ctx->Shader.Flags & GLSL_DUMP) {
+   if ((ctx->Shader.Flags & GLSL_DUMP) && shProg->Name != 0) {
       for (unsigned i = 0; i < shProg->NumShaders; i++) {
          const struct gl_shader *sh = shProg->Shaders[i];
          if (!sh)
