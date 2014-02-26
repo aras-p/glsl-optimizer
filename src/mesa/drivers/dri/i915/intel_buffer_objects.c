@@ -96,7 +96,7 @@ intel_bufferobj_free(struct gl_context * ctx, struct gl_buffer_object *obj)
     */
    _mesa_buffer_unmap_all_mappings(ctx, obj);
 
-   free(intel_obj->sys_buffer);
+   _mesa_align_free(intel_obj->sys_buffer);
 
    drm_intel_bo_unreference(intel_obj->buffer);
    free(intel_obj);
@@ -133,7 +133,7 @@ intel_bufferobj_data(struct gl_context * ctx,
    if (intel_obj->buffer != NULL)
       release_buffer(intel_obj);
 
-   free(intel_obj->sys_buffer);
+   _mesa_align_free(intel_obj->sys_buffer);
    intel_obj->sys_buffer = NULL;
 
    if (size != 0) {
@@ -141,7 +141,8 @@ intel_bufferobj_data(struct gl_context * ctx,
        * contents anyway.
        */
       if (target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER) {
-	 intel_obj->sys_buffer = malloc(size);
+	 intel_obj->sys_buffer =
+            _mesa_align_malloc(size, ctx->Const.MinMapBufferAlignment);
 	 if (intel_obj->sys_buffer != NULL) {
 	    if (data != NULL)
 	       memcpy(intel_obj->sys_buffer, data, size);
@@ -192,7 +193,7 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 	 return;
       }
 
-      free(intel_obj->sys_buffer);
+      _mesa_align_free(intel_obj->sys_buffer);
       intel_obj->sys_buffer = NULL;
    }
 
@@ -300,7 +301,7 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 	 return obj->Mappings[index].Pointer;
       }
 
-      free(intel_obj->sys_buffer);
+      _mesa_align_free(intel_obj->sys_buffer);
       intel_obj->sys_buffer = NULL;
    }
 
@@ -489,7 +490,7 @@ intel_bufferobj_buffer(struct intel_context *intel,
 			   0, intel_obj->Base.Size,
 			   intel_obj->sys_buffer);
 
-      free(intel_obj->sys_buffer);
+      _mesa_align_free(intel_obj->sys_buffer);
       intel_obj->sys_buffer = NULL;
       intel_obj->offset = 0;
    }
@@ -676,7 +677,7 @@ intel_buffer_object_purgeable(struct gl_context * ctx,
       return intel_buffer_purgeable(intel_obj->buffer);
 
    if (option == GL_RELEASED_APPLE) {
-      free(intel_obj->sys_buffer);
+      _mesa_align_free(intel_obj->sys_buffer);
       intel_obj->sys_buffer = NULL;
 
       return GL_RELEASED_APPLE;
