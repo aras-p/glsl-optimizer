@@ -1190,7 +1190,7 @@ util_format_write_4i(enum pipe_format format,
 boolean
 util_format_fits_8unorm(const struct util_format_description *format_desc);
 
-void
+boolean
 util_format_translate(enum pipe_format dst_format,
                       void *dst, unsigned dst_stride,
                       unsigned dst_x, unsigned dst_y,
