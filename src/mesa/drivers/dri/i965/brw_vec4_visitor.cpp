@@ -3401,6 +3401,17 @@ vec4_visitor::vec4_visitor(struct brw_context *brw,
    this->max_grf = brw->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
 
    this->uniforms = 0;
+
+   /* Initialize uniform_array_size to at least 1 because pre-gen6 VS requires
+    * at least one. See setup_uniforms() in brw_vec4.cpp.
+    */
+   this->uniform_array_size = 1;
+   if (prog_data) {
+      this->uniform_array_size = MAX2(stage_prog_data->nr_params, 1);
+   }
+
+   this->uniform_size = rzalloc_array(mem_ctx, int, this->uniform_array_size);
+   this->uniform_vector_size = rzalloc_array(mem_ctx, int, this->uniform_array_size);
 }
 
 vec4_visitor::~vec4_visitor()

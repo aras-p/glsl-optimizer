@@ -387,8 +387,9 @@ public:
     */
    dst_reg output_reg[BRW_VARYING_SLOT_COUNT];
    const char *output_reg_annotation[BRW_VARYING_SLOT_COUNT];
-   int uniform_size[MAX_UNIFORMS];
-   int uniform_vector_size[MAX_UNIFORMS];
+   int *uniform_size;
+   int *uniform_vector_size;
+   int uniform_array_size; /*< Size of uniform_[vector_]size arrays */
    int uniforms;
 
    src_reg shader_start_time;
