@@ -112,24 +112,6 @@ struct _mesa_symbol_table {
 };
 
 
-struct _mesa_symbol_table_iterator {
-    /**
-     * Name space of symbols returned by this iterator.
-     */
-    int name_space;
-
-
-    /**
-     * Currently iterated symbol
-     *
-     * The next call to \c _mesa_symbol_table_iterator_get will return this
-     * value.  It will also update this value to the value that should be
-     * returned by the next call.
-     */
-    struct symbol *curr;
-};
-
-
 static void
 check_symbol_table(struct _mesa_symbol_table *table)
 {
@@ -198,74 +180,6 @@ static struct symbol_header *
 find_symbol(struct _mesa_symbol_table *table, const char *name)
 {
     return (struct symbol_header *) hash_table_find(table->ht, name);
-}
-
-
-struct _mesa_symbol_table_iterator *
-_mesa_symbol_table_iterator_ctor(struct _mesa_symbol_table *table,
-                                 int name_space, const char *name)
-{
-    struct _mesa_symbol_table_iterator *iter = calloc(1, sizeof(*iter));
-    struct symbol_header *const hdr = find_symbol(table, name);
-    
-    iter->name_space = name_space;
-
-    if (hdr != NULL) {
-        struct symbol *sym;
-
-        for (sym = hdr->symbols; sym != NULL; sym = sym->next_with_same_name) {
-            assert(sym->hdr == hdr);
-
-            if ((name_space == -1) || (sym->name_space == name_space)) {
-                iter->curr = sym;
-                break;
-            }
-        }
-    }
-
-    return iter;
-}
-
-
-void
-_mesa_symbol_table_iterator_dtor(struct _mesa_symbol_table_iterator *iter)
-{
-    free(iter);
-}
-
-
-void *
-_mesa_symbol_table_iterator_get(struct _mesa_symbol_table_iterator *iter)
-{
-    return (iter->curr == NULL) ? NULL : iter->curr->data;
-}
-
-
-int
-_mesa_symbol_table_iterator_next(struct _mesa_symbol_table_iterator *iter)
-{
-    struct symbol_header *hdr;
-
-    if (iter->curr == NULL) {
-        return 0;
-    }
-
-    hdr = iter->curr->hdr;
-    iter->curr = iter->curr->next_with_same_name;
-
-    while (iter->curr != NULL) {
-        assert(iter->curr->hdr == hdr);
-        (void)hdr;
-
-        if ((iter->name_space == -1)
-            || (iter->curr->name_space == iter->name_space)) {
-            return 1;
-        }
-
-        iter->curr = iter->curr->next_with_same_name;
-    }
-
-    return 0;
 }
 
 
