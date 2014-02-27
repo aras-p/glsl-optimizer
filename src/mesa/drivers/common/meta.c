@@ -768,8 +768,6 @@ _mesa_meta_end(struct gl_context *ctx)
    const GLbitfield state = save->SavedState;
    int i;
 
-   ctx->API = save->API;
-
    /* After starting a new occlusion query, initialize the results to the
     * values saved previously. The driver will then continue to increment
     * these values.
@@ -1117,6 +1115,8 @@ _mesa_meta_end(struct gl_context *ctx)
       _mesa_ResumeTransformFeedback();
 
    ctx->Meta->SaveStackDepth--;
+
+   ctx->API = save->API;
 }
 
 
