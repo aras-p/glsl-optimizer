@@ -42,11 +42,11 @@ enum PACKED register_file {
 
 class backend_instruction : public exec_node {
 public:
-   bool is_tex();
-   bool is_math();
-   bool is_control_flow();
-   bool can_do_source_mods();
-   bool can_do_saturate();
+   bool is_tex() const;
+   bool is_math() const;
+   bool is_control_flow() const;
+   bool can_do_source_mods() const;
+   bool can_do_saturate() const;
 
    /**
     * True if the instruction has side effects other than writing to

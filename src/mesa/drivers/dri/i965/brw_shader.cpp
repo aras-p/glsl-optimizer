@@ -552,7 +552,7 @@ backend_visitor::backend_visitor(struct brw_context *brw,
 }
 
 bool
-backend_instruction::is_tex()
+backend_instruction::is_tex() const
 {
    return (opcode == SHADER_OPCODE_TEX ||
            opcode == FS_OPCODE_TXB ||
@@ -569,7 +569,7 @@ backend_instruction::is_tex()
 }
 
 bool
-backend_instruction::is_math()
+backend_instruction::is_math() const
 {
    return (opcode == SHADER_OPCODE_RCP ||
            opcode == SHADER_OPCODE_RSQ ||
@@ -584,7 +584,7 @@ backend_instruction::is_math()
 }
 
 bool
-backend_instruction::is_control_flow()
+backend_instruction::is_control_flow() const
 {
    switch (opcode) {
    case BRW_OPCODE_DO:
@@ -601,7 +601,7 @@ backend_instruction::is_control_flow()
 }
 
 bool
-backend_instruction::can_do_source_mods()
+backend_instruction::can_do_source_mods() const
 {
    switch (opcode) {
    case BRW_OPCODE_ADDC:
@@ -620,7 +620,7 @@ backend_instruction::can_do_source_mods()
 }
 
 bool
-backend_instruction::can_do_saturate()
+backend_instruction::can_do_saturate() const
 {
    switch (opcode) {
    case BRW_OPCODE_ADD:
