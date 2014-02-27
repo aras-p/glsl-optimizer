@@ -422,6 +422,7 @@ vec4_visitor::pack_uniform_registers()
     * push constants.
     */
    for (int src = 0; src < uniforms; src++) {
+      assert(src < uniform_array_size);
       int size = this->uniform_vector_size[src];
 
       if (!uniform_used[src]) {
@@ -1404,6 +1405,7 @@ vec4_visitor::setup_uniforms(int reg)
     * matter what, or the GPU would hang.
     */
    if (brw->gen < 6 && this->uniforms == 0) {
+      assert(this->uniforms < this->uniform_array_size);
       this->uniform_vector_size[this->uniforms] = 1;
 
       stage_prog_data->param =

@@ -664,6 +664,7 @@ vec4_visitor::setup_uniform_values(ir_variable *ir)
                                storage->type->matrix_columns);
 
       for (unsigned s = 0; s < vector_count; s++) {
+         assert(uniforms < uniform_array_size);
          uniform_vector_size[uniforms] = storage->type->vector_elements;
 
          int i;
@@ -687,6 +688,7 @@ vec4_visitor::setup_uniform_clipplane_values()
    gl_clip_plane *clip_planes = brw_select_clip_planes(ctx);
 
    for (int i = 0; i < key->nr_userclip_plane_consts; ++i) {
+      assert(this->uniforms < uniform_array_size);
       this->uniform_vector_size[this->uniforms] = 4;
       this->userplane[i] = dst_reg(UNIFORM, this->uniforms);
       this->userplane[i].type = BRW_REGISTER_TYPE_F;
@@ -717,6 +719,7 @@ vec4_visitor::setup_builtin_uniform_values(ir_variable *ir)
 					    (gl_state_index *)slots[i].tokens);
       float *values = &this->prog->Parameters->ParameterValues[index][0].f;
 
+      assert(this->uniforms < uniform_array_size);
       this->uniform_vector_size[this->uniforms] = 0;
       /* Add each of the unique swizzled channels of the element.
        * This will end up matching the size of the glsl_type of this field.
@@ -727,6 +730,7 @@ vec4_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	 last_swiz = swiz;
 
 	 stage_prog_data->param[this->uniforms * 4 + j] = &values[swiz];
+	 assert(this->uniforms < uniform_array_size);
 	 if (swiz <= last_swiz)
 	    this->uniform_vector_size[this->uniforms]++;
       }
@@ -976,6 +980,7 @@ vec4_visitor::visit(ir_variable *ir)
       /* Track how big the whole uniform variable is, in case we need to put a
        * copy of its data into pull constants for array access.
        */
+      assert(this->uniforms < uniform_array_size);
       this->uniform_size[this->uniforms] = type_size(ir->type);
 
       if (!strncmp(ir->name, "gl_", 3)) {
@@ -3302,6 +3307,7 @@ vec4_visitor::move_uniform_array_access_to_pull_constants()
 
 	    pull_constant_loc[uniform] = stage_prog_data->nr_pull_params / 4;
 
+	    assert(uniform < uniform_array_size);
 	    for (int j = 0; j < uniform_size[uniform] * 4; j++) {
 	       stage_prog_data->pull_param[stage_prog_data->nr_pull_params++]
                   = values[j];
