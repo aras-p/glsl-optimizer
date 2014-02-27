@@ -429,7 +429,7 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 
    if (access & GL_MAP_UNSYNCHRONIZED_BIT)
       drm_intel_gem_bo_map_unsynchronized(intel_obj->buffer);
-   else if (!(access & GL_MAP_READ_BIT)) {
+   else if (!brw->has_llc && !(access & GL_MAP_READ_BIT)) {
       drm_intel_gem_bo_map_gtt(intel_obj->buffer);
       intel_bufferobj_mark_inactive(intel_obj);
    } else {
