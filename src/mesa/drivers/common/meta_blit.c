@@ -622,8 +622,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    struct vertex verts[4];
    GLboolean newTex;
    const GLboolean use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
-                                      ctx->Extensions.ARB_fragment_shader &&
-                                      (ctx->API != API_OPENGLES);
+                                      ctx->Extensions.ARB_fragment_shader;
 
    /* In addition to falling back if the blit size is larger than the maximum
     * texture size, fallback if the source is multisampled.  This fallback can

@@ -188,12 +188,7 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
       return;
    }
 
-   /* The version check is a little tricky.  API is set to API_OPENGLES2 even
-    * for OpenGL ES 3.0 contexts, and GLSLVersion may be set to 140, for
-    * example, in an OpenGL ES 2.0 context.
-    */
-   if ((ctx->API == API_OPENGLES2 && ctx->Version < 30)
-       || ctx->Const.GLSLVersion < 130) {
+   if (ctx->Const.GLSLVersion < 130) {
       vs_source =
          "attribute vec2 position;\n"
          "attribute vec4 textureCoords;\n"
@@ -464,9 +459,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
          _mesa_set_enable(ctx, GL_DEPTH_TEST, GL_FALSE);
    }
 
-   if ((state & MESA_META_FOG)
-       && ctx->API != API_OPENGL_CORE
-       && ctx->API != API_OPENGLES2) {
+   if (state & MESA_META_FOG) {
       save->Fog = ctx->Fog.Enabled;
       if (ctx->Fog.Enabled)
          _mesa_set_enable(ctx, GL_FOG, GL_FALSE);
@@ -511,10 +504,8 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       save->PolygonCull = ctx->Polygon.CullFlag;
       _mesa_PolygonMode(GL_FRONT_AND_BACK, GL_FILL);
       _mesa_set_enable(ctx, GL_POLYGON_OFFSET_FILL, GL_FALSE);
-      if (ctx->API == API_OPENGL_COMPAT) {
-         _mesa_set_enable(ctx, GL_POLYGON_SMOOTH, GL_FALSE);
-         _mesa_set_enable(ctx, GL_POLYGON_STIPPLE, GL_FALSE);
-      }
+      _mesa_set_enable(ctx, GL_POLYGON_SMOOTH, GL_FALSE);
+      _mesa_set_enable(ctx, GL_POLYGON_STIPPLE, GL_FALSE);
       _mesa_set_enable(ctx, GL_CULL_FACE, GL_FALSE);
    }
 
@@ -526,21 +517,21 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
    if (state & MESA_META_SHADER) {
       int i;
 
-      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ARB_vertex_program) {
+      if (ctx->Extensions.ARB_vertex_program) {
          save->VertexProgramEnabled = ctx->VertexProgram.Enabled;
          _mesa_reference_vertprog(ctx, &save->VertexProgram,
 				  ctx->VertexProgram.Current);
          _mesa_set_enable(ctx, GL_VERTEX_PROGRAM_ARB, GL_FALSE);
       }
 
-      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ARB_fragment_program) {
+      if (ctx->Extensions.ARB_fragment_program) {
          save->FragmentProgramEnabled = ctx->FragmentProgram.Enabled;
          _mesa_reference_fragprog(ctx, &save->FragmentProgram,
 				  ctx->FragmentProgram.Current);
          _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_FALSE);
       }
 
-      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ATI_fragment_shader) {
+      if (ctx->Extensions.ATI_fragment_shader) {
          save->ATIFragmentShaderEnabled = ctx->ATIFragmentShader.Enabled;
          _mesa_set_enable(ctx, GL_FRAGMENT_SHADER_ATI, GL_FALSE);
       }
@@ -570,33 +561,24 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       save->EnvMode = ctx->Texture.Unit[0].EnvMode;
 
       /* Disable all texture units */
-      if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) {
-         for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-            save->TexEnabled[u] = ctx->Texture.Unit[u].Enabled;
-            save->TexGenEnabled[u] = ctx->Texture.Unit[u].TexGenEnabled;
-            if (ctx->Texture.Unit[u].Enabled ||
-                ctx->Texture.Unit[u].TexGenEnabled) {
-               _mesa_ActiveTexture(GL_TEXTURE0 + u);
-               _mesa_set_enable(ctx, GL_TEXTURE_2D, GL_FALSE);
-               if (ctx->Extensions.ARB_texture_cube_map)
-                  _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE);
-               if (_mesa_is_gles(ctx) &&
-                   ctx->Extensions.OES_EGL_image_external)
-                  _mesa_set_enable(ctx, GL_TEXTURE_EXTERNAL_OES, GL_FALSE);
+      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+         save->TexEnabled[u] = ctx->Texture.Unit[u].Enabled;
+         save->TexGenEnabled[u] = ctx->Texture.Unit[u].TexGenEnabled;
+         if (ctx->Texture.Unit[u].Enabled ||
+             ctx->Texture.Unit[u].TexGenEnabled) {
+            _mesa_ActiveTexture(GL_TEXTURE0 + u);
+            _mesa_set_enable(ctx, GL_TEXTURE_2D, GL_FALSE);
+            if (ctx->Extensions.ARB_texture_cube_map)
+               _mesa_set_enable(ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE);
 
-               if (ctx->API == API_OPENGL_COMPAT) {
-                  _mesa_set_enable(ctx, GL_TEXTURE_1D, GL_FALSE);
-                  _mesa_set_enable(ctx, GL_TEXTURE_3D, GL_FALSE);
-                  if (ctx->Extensions.NV_texture_rectangle)
-                     _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE, GL_FALSE);
-                  _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, GL_FALSE);
-                  _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, GL_FALSE);
-                  _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, GL_FALSE);
-                  _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
-               } else {
-                  _mesa_set_enable(ctx, GL_TEXTURE_GEN_STR_OES, GL_FALSE);
-               }
-            }
+            _mesa_set_enable(ctx, GL_TEXTURE_1D, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_3D, GL_FALSE);
+            if (ctx->Extensions.NV_texture_rectangle)
+               _mesa_set_enable(ctx, GL_TEXTURE_RECTANGLE, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_GEN_S, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_GEN_T, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_GEN_R, GL_FALSE);
+            _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q, GL_FALSE);
          }
       }
 
@@ -609,9 +591,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       /* set defaults for unit[0] */
       _mesa_ActiveTexture(GL_TEXTURE0);
       _mesa_ClientActiveTexture(GL_TEXTURE0);
-      if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) {
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-      }
+      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
    }
 
    if (state & MESA_META_TRANSFORM) {
@@ -828,9 +808,7 @@ _mesa_meta_end(struct gl_context *ctx)
       _mesa_DepthMask(save->Depth.Mask);
    }
 
-   if ((state & MESA_META_FOG)
-       && ctx->API != API_OPENGL_CORE
-       && ctx->API != API_OPENGLES2) {
+   if (state & MESA_META_FOG) {
       _mesa_set_enable(ctx, GL_FOG, save->Fog);
    }
 
@@ -854,18 +832,10 @@ _mesa_meta_end(struct gl_context *ctx)
    }
 
    if (state & MESA_META_RASTERIZATION) {
-      /* Core context requires that front and back mode be the same.
-       */
-      if (ctx->API == API_OPENGL_CORE) {
-         _mesa_PolygonMode(GL_FRONT_AND_BACK, save->FrontPolygonMode);
-      } else {
-         _mesa_PolygonMode(GL_FRONT, save->FrontPolygonMode);
-         _mesa_PolygonMode(GL_BACK, save->BackPolygonMode);
-      }
-      if (ctx->API == API_OPENGL_COMPAT) {
-         _mesa_set_enable(ctx, GL_POLYGON_STIPPLE, save->PolygonStipple);
-         _mesa_set_enable(ctx, GL_POLYGON_SMOOTH, save->PolygonSmooth);
-      }
+      _mesa_PolygonMode(GL_FRONT, save->FrontPolygonMode);
+      _mesa_PolygonMode(GL_BACK, save->BackPolygonMode);
+      _mesa_set_enable(ctx, GL_POLYGON_STIPPLE, save->PolygonStipple);
+      _mesa_set_enable(ctx, GL_POLYGON_SMOOTH, save->PolygonSmooth);
       _mesa_set_enable(ctx, GL_POLYGON_OFFSET_FILL, save->PolygonOffset);
       _mesa_set_enable(ctx, GL_CULL_FACE, save->PolygonCull);
    }
@@ -885,7 +855,7 @@ _mesa_meta_end(struct gl_context *ctx)
    }
 
    if (state & MESA_META_SHADER) {
-      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ARB_vertex_program) {
+      if (ctx->Extensions.ARB_vertex_program) {
          _mesa_set_enable(ctx, GL_VERTEX_PROGRAM_ARB,
                           save->VertexProgramEnabled);
          _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current, 
@@ -893,7 +863,7 @@ _mesa_meta_end(struct gl_context *ctx)
 	 _mesa_reference_vertprog(ctx, &save->VertexProgram, NULL);
       }
 
-      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ARB_fragment_program) {
+      if (ctx->Extensions.ARB_fragment_program) {
          _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB,
                           save->FragmentProgramEnabled);
          _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
@@ -901,7 +871,7 @@ _mesa_meta_end(struct gl_context *ctx)
 	 _mesa_reference_fragprog(ctx, &save->FragmentProgram, NULL);
       }
 
-      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.ATI_fragment_shader) {
+      if (ctx->Extensions.ATI_fragment_shader) {
          _mesa_set_enable(ctx, GL_FRAGMENT_SHADER_ATI,
                           save->ATIFragmentShaderEnabled);
       }
@@ -932,7 +902,7 @@ _mesa_meta_end(struct gl_context *ctx)
 
       _mesa_set_enable(ctx, GL_STENCIL_TEST, stencil->Enabled);
       _mesa_ClearStencil(stencil->Clear);
-      if (ctx->API == API_OPENGL_COMPAT && ctx->Extensions.EXT_stencil_two_side) {
+      if (ctx->Extensions.EXT_stencil_two_side) {
          _mesa_set_enable(ctx, GL_STENCIL_TEST_TWO_SIDE_EXT,
                           stencil->TestTwoSide);
          _mesa_ActiveStencilFaceEXT(stencil->ActiveFace
@@ -964,9 +934,7 @@ _mesa_meta_end(struct gl_context *ctx)
       ASSERT(ctx->Texture.CurrentUnit == 0);
 
       /* restore texenv for unit[0] */
-      if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) {
-         _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, save->EnvMode);
-      }
+      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, save->EnvMode);
 
       /* restore texture objects for unit[0] only */
       for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
@@ -979,17 +947,15 @@ _mesa_meta_end(struct gl_context *ctx)
       }
 
       /* Restore fixed function texture enables, texgen */
-      if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES) {
-         for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-            if (ctx->Texture.Unit[u].Enabled != save->TexEnabled[u]) {
-               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               ctx->Texture.Unit[u].Enabled = save->TexEnabled[u];
-            }
+      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+         if (ctx->Texture.Unit[u].Enabled != save->TexEnabled[u]) {
+            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            ctx->Texture.Unit[u].Enabled = save->TexEnabled[u];
+         }
 
-            if (ctx->Texture.Unit[u].TexGenEnabled != save->TexGenEnabled[u]) {
-               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               ctx->Texture.Unit[u].TexGenEnabled = save->TexGenEnabled[u];
-            }
+         if (ctx->Texture.Unit[u].TexGenEnabled != save->TexGenEnabled[u]) {
+            FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+            ctx->Texture.Unit[u].TexGenEnabled = save->TexGenEnabled[u];
          }
       }
 
@@ -1305,8 +1271,7 @@ _mesa_meta_setup_copypix_texture(struct gl_context *ctx,
    _mesa_BindTexture(tex->Target, tex->TexObj);
    _mesa_TexParameteri(tex->Target, GL_TEXTURE_MIN_FILTER, filter);
    _mesa_TexParameteri(tex->Target, GL_TEXTURE_MAG_FILTER, filter);
-   if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES)
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+   _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
    newTex = _mesa_meta_alloc_texture(tex, width, height, intFormat);
 
@@ -1350,8 +1315,7 @@ _mesa_meta_setup_drawpix_texture(struct gl_context *ctx,
    _mesa_BindTexture(tex->Target, tex->TexObj);
    _mesa_TexParameteri(tex->Target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    _mesa_TexParameteri(tex->Target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES)
-      _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+   _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
    /* copy pixel data to texture */
    if (newTex) {
@@ -2766,8 +2730,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    const GLuint fboSave = ctx->DrawBuffer->Name;
    const GLuint currentTexUnitSave = ctx->Texture.CurrentUnit;
    const GLboolean use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
-                                      ctx->Extensions.ARB_fragment_shader &&
-				      (ctx->API != API_OPENGLES);
+                                      ctx->Extensions.ARB_fragment_shader;
    GLenum faceTarget;
    GLuint dstLevel;
    const GLint slice = 0;
@@ -2839,10 +2802,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
    _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, mipmap->FBO);
 
-   if (ctx->API == API_OPENGL_COMPAT || ctx->API == API_OPENGLES)
-      _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
-   else
-      assert(!genMipmapSave);
+   _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
 
    /* Silence valgrind warnings about reading uninitialized stack. */
    memset(verts, 0, sizeof(verts));
@@ -3166,8 +3126,7 @@ decompress_texture_image(struct gl_context *ctx,
    GLuint rbSave;
    GLuint samplerSave;
    const bool use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
-                                      ctx->Extensions.ARB_fragment_shader &&
-                                      (ctx->API != API_OPENGLES);
+                                      ctx->Extensions.ARB_fragment_shader;
 
    if (slice > 0) {
       assert(target == GL_TEXTURE_3D ||
