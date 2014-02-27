@@ -992,6 +992,7 @@ nvc0_so_target_create(struct pipe_context *pipe,
                       struct pipe_resource *res,
                       unsigned offset, unsigned size)
 {
+   struct nv04_resource *buf = (struct nv04_resource *)res;
    struct nvc0_so_target *targ = MALLOC_STRUCT(nvc0_so_target);
    if (!targ)
       return NULL;
@@ -1009,6 +1010,9 @@ nvc0_so_target_create(struct pipe_context *pipe,
    targ->pipe.buffer = NULL;
    pipe_resource_reference(&targ->pipe.buffer, res);
    pipe_reference_init(&targ->pipe.reference, 1);
+
+   assert(buf->base.target == PIPE_BUFFER);
+   util_range_add(&buf->valid_buffer_range, offset, offset + size);
 
    return &targ->pipe;
 }

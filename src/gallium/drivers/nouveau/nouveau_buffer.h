@@ -1,6 +1,7 @@
 #ifndef __NOUVEAU_BUFFER_H__
 #define __NOUVEAU_BUFFER_H__
 
+#include "util/u_range.h"
 #include "util/u_transfer.h"
 #include "util/u_double_list.h"
 
@@ -44,6 +45,9 @@ struct nv04_resource {
    struct nouveau_fence *fence_wr;
 
    struct nouveau_mm_allocation *mm;
+
+   /* buffer range that has been initialized */
+   struct util_range valid_buffer_range;
 };
 
 void

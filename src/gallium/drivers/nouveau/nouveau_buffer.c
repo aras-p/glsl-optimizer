@@ -69,6 +69,8 @@ nouveau_buffer_allocate(struct nouveau_screen *screen,
    if (buf->bo)
       buf->address = buf->bo->offset + buf->offset;
 
+   util_range_set_empty(&buf->valid_buffer_range);
+
    return TRUE;
 }
 
@@ -123,6 +125,8 @@ nouveau_buffer_destroy(struct pipe_screen *pscreen,
 
    nouveau_fence_ref(NULL, &res->fence);
    nouveau_fence_ref(NULL, &res->fence_wr);
+
+   util_range_destroy(&res->valid_buffer_range);
 
    FREE(res);
 
@@ -387,6 +391,17 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
    if (usage & PIPE_TRANSFER_WRITE)
       NOUVEAU_DRV_STAT(nv->screen, buf_transfers_wr, 1);
 
+   /* If we are trying to write to an uninitialized range, the user shouldn't
+    * care what was there before. So we can treat the write as if the target
+    * range were being discarded. Furthermore, since we know that even if this
+    * buffer is busy due to GPU activity, because the contents were
+    * uninitialized, the GPU can't care what was there, and so we can treat
+    * the write as being unsynchronized.
+    */
+   if ((usage & PIPE_TRANSFER_WRITE) &&
+       !util_ranges_intersect(&buf->valid_buffer_range, box->x, box->x + box->width))
+      usage |= PIPE_TRANSFER_DISCARD_RANGE | PIPE_TRANSFER_UNSYNCHRONIZED;
+
    if (buf->domain == NOUVEAU_BO_VRAM) {
       if (usage & NOUVEAU_TRANSFER_DISCARD) {
          /* Set up a staging area for the user to write to. It will be copied
@@ -492,8 +507,14 @@ nouveau_buffer_transfer_flush_region(struct pipe_context *pipe,
                                      const struct pipe_box *box)
 {
    struct nouveau_transfer *tx = nouveau_transfer(transfer);
+   struct nv04_resource *buf = nv04_resource(transfer->resource);
+
    if (tx->map)
       nouveau_transfer_write(nouveau_context(pipe), tx, box->x, box->width);
+
+   util_range_add(&buf->valid_buffer_range,
+                  tx->base.box.x + box->x,
+                  tx->base.box.x + box->x + box->width);
 }
 
 /* Unmap stage of the transfer. If it was a WRITE transfer and the map that
@@ -522,6 +543,9 @@ nouveau_buffer_transfer_unmap(struct pipe_context *pipe,
          if (bind & (PIPE_BIND_CONSTANT_BUFFER))
             nv->cb_dirty = TRUE;
       }
+
+      util_range_add(&buf->valid_buffer_range,
+                     tx->base.box.x, tx->base.box.x + tx->base.box.width);
    }
 
    if (!tx->bo && (tx->base.usage & PIPE_TRANSFER_WRITE))
@@ -562,6 +586,8 @@ nouveau_copy_buffer(struct nouveau_context *nv,
                                 &dst->base, 0, dstx, 0, 0,
                                 &src->base, 0, &src_box);
    }
+
+   util_range_add(&dst->valid_buffer_range, dstx, dstx + size);
 }
 
 
@@ -659,6 +685,8 @@ nouveau_buffer_create(struct pipe_screen *pscreen,
 
    NOUVEAU_DRV_STAT(screen, buf_obj_current_count, 1);
 
+   util_range_init(&buffer->valid_buffer_range);
+
    return &buffer->base;
 
 fail:
@@ -689,6 +717,9 @@ nouveau_user_buffer_create(struct pipe_screen *pscreen, void *ptr,
 
    buffer->data = ptr;
    buffer->status = NOUVEAU_BUFFER_STATUS_USER_MEMORY;
+
+   util_range_init(&buffer->valid_buffer_range);
+   util_range_add(&buffer->valid_buffer_range, 0, bytes);
 
    return &buffer->base;
 }
