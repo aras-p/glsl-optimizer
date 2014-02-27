@@ -81,7 +81,7 @@ gbm_device_get_backend_name(struct gbm_device *gbm)
  *
  * \sa enum gbm_bo_format for the list of formats
  */
-int
+GBM_EXPORT int
 gbm_device_is_format_supported(struct gbm_device *gbm,
                                uint32_t format, uint32_t usage)
 {
