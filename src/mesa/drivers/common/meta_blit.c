@@ -603,7 +603,6 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    struct blit_state *blit = &ctx->Meta->Blit;
    struct temp_texture *tex = _mesa_meta_get_temp_texture(ctx);
    struct temp_texture *depthTex = _mesa_meta_get_temp_depth_texture(ctx);
-   const GLsizei maxTexSize = tex->MaxSize;
    const GLint srcX = MIN2(srcX0, srcX1);
    const GLint srcY = MIN2(srcY0, srcY1);
    const GLint srcW = abs(srcX1 - srcX0);
@@ -623,15 +622,6 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    GLboolean newTex;
    const GLboolean use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
                                       ctx->Extensions.ARB_fragment_shader;
-
-   /* In addition to falling back if the blit size is larger than the maximum
-    * texture size, fallback if the source is multisampled.  This fallback can
-    * be removed once Mesa gets support ARB_texture_multisample.
-    */
-   if (srcW > maxTexSize || srcH > maxTexSize) {
-      /* XXX avoid this fallback */
-      goto fallback;
-   }
 
    /* Multisample texture blit support requires texture multisample. */
    if (ctx->ReadBuffer->Visual.samples > 0 &&
