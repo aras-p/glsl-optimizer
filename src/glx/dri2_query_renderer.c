@@ -25,7 +25,6 @@
 
 #include "glxclient.h"
 #include "glx_error.h"
-#include "xf86drm.h"
 #include "dri2.h"
 #include "dri_interface.h"
 #include "dri2_priv.h"

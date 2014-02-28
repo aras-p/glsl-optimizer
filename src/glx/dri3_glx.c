@@ -65,9 +65,7 @@
 #include <xcb/dri3.h>
 #include <xcb/present.h>
 #include <GL/gl.h>
-#include "glapi.h"
 #include "glxclient.h"
-#include "xf86dri.h"
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -75,7 +73,6 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 
-#include "xf86drm.h"
 #include "dri_common.h"
 #include "dri3_priv.h"
 #include "loader.h"

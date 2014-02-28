@@ -38,7 +38,6 @@
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
 #include <X11/extensions/dri2proto.h>
-#include "xf86drm.h"
 #include "dri2.h"
 #include "glxclient.h"
 #include "GL/glxext.h"

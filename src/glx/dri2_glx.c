@@ -37,17 +37,14 @@
 #include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
 #include <xcb/dri2.h>
-#include "glapi.h"
 #include "glxclient.h"
 #include <X11/extensions/dri2proto.h>
-#include "xf86dri.h"
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/time.h>
-#include "xf86drm.h"
 #include "dri2.h"
 #include "dri_common.h"
 #include "dri2_priv.h"
