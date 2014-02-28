@@ -44,7 +44,6 @@ struct hash_entry {
 };
 
 struct hash_table {
-   void *mem_ctx;
    struct hash_entry *table;
    bool (*key_equals_function)(const void *a, const void *b);
    const void *deleted_key;

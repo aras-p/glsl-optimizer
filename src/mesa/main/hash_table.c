@@ -119,7 +119,6 @@ _mesa_hash_table_create(void *mem_ctx,
    if (ht == NULL)
       return NULL;
 
-   ht->mem_ctx = mem_ctx;
    ht->size_index = 0;
    ht->size = hash_sizes[ht->size_index].size;
    ht->rehash = hash_sizes[ht->size_index].rehash;
