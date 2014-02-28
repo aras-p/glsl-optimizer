@@ -52,37 +52,6 @@
 /** Return offset in bytes of the field within a vertex struct */
 #define OFFSET(FIELD) ((void *) offsetof(struct vertex, FIELD))
 
-/**
- * One-time init for drawing depth pixels.
- */
-static void
-init_blit_depth_pixels(struct gl_context *ctx)
-{
-   static const char *program =
-      "!!ARBfp1.0\n"
-      "TEX result.depth, fragment.texcoord[0], texture[0], %s; \n"
-      "END \n";
-   char program2[200];
-   struct blit_state *blit = &ctx->Meta->Blit;
-   struct temp_texture *tex = _mesa_meta_get_temp_texture(ctx);
-   const char *texTarget;
-
-   assert(blit->DepthFP == 0);
-
-   /* replace %s with "RECT" or "2D" */
-   assert(strlen(program) + 4 < sizeof(program2));
-   if (tex->Target == GL_TEXTURE_RECTANGLE)
-      texTarget = "RECT";
-   else
-      texTarget = "2D";
-   _mesa_snprintf(program2, sizeof(program2), program, texTarget);
-
-   _mesa_GenProgramsARB(1, &blit->DepthFP);
-   _mesa_BindProgramARB(GL_FRAGMENT_PROGRAM_ARB, blit->DepthFP);
-   _mesa_ProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB,
-                          strlen(program2), (const GLubyte *) program2);
-}
-
 static void
 setup_glsl_msaa_blit_shader(struct gl_context *ctx,
                             struct blit_state *blit,
@@ -454,7 +423,8 @@ blitframebuffer_texture(struct gl_context *ctx,
          return false;
 
       if (do_depth) {
-         return false;
+         meta_temp_texture = _mesa_meta_get_temp_depth_texture(ctx);
+         tex_base_format = GL_DEPTH_COMPONENT;
       } else {
          meta_temp_texture = _mesa_meta_get_temp_texture(ctx);
          tex_base_format =
@@ -626,25 +596,10 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
                            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                            GLbitfield mask, GLenum filter)
 {
-   struct blit_state *blit = &ctx->Meta->Blit;
-   struct temp_texture *depthTex = _mesa_meta_get_temp_depth_texture(ctx);
-   const GLint srcX = MIN2(srcX0, srcX1);
-   const GLint srcY = MIN2(srcY0, srcY1);
-   const GLint srcW = abs(srcX1 - srcX0);
-   const GLint srcH = abs(srcY1 - srcY0);
-   const GLint dstX = MIN2(dstX0, dstX1);
-   const GLint dstY = MIN2(dstY0, dstY1);
    const GLint dstW = abs(dstX1 - dstX0);
    const GLint dstH = abs(dstY1 - dstY0);
-   const GLint srcFlipX = (srcX1 - srcX0) / srcW;
-   const GLint srcFlipY = (srcY1 - srcY0) / srcH;
    const GLint dstFlipX = (dstX1 - dstX0) / dstW;
    const GLint dstFlipY = (dstY1 - dstY0) / dstH;
-   const GLint flipX = srcFlipX * dstFlipX;
-   const GLint flipY = srcFlipY * dstFlipY;
-
-   struct vertex verts[4];
-   GLboolean newTex;
    const GLboolean use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
                                       ctx->Extensions.ARB_fragment_shader;
 
@@ -684,95 +639,9 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
       }
    }
 
-   /* Choose between glsl version and fixed function version of
-    * BlitFramebuffer function.
-    */
-   if (use_glsl_version) {
-      setup_glsl_blit_framebuffer(ctx, blit, NULL, depthTex->Target);
-   }
-   else {
-      _mesa_meta_setup_ff_tnl_for_blit(&blit->VAO, &blit->VBO, 2);
-   }
-
-   /* Silence valgrind warnings about reading uninitialized stack. */
-   memset(verts, 0, sizeof(verts));
-
-   /* Continue with "normal" approach which involves copying the src rect
-    * into a temporary texture and is "blitted" by drawing a textured quad.
-    */
-   {
-      /* setup vertex positions */
-      verts[0].x = -1.0F * flipX;
-      verts[0].y = -1.0F * flipY;
-      verts[1].x =  1.0F * flipX;
-      verts[1].y = -1.0F * flipY;
-      verts[2].x =  1.0F * flipX;
-      verts[2].y =  1.0F * flipY;
-      verts[3].x = -1.0F * flipX;
-      verts[3].y =  1.0F * flipY;
-
-   }
-
-   if (!use_glsl_version)
-      _mesa_set_enable(ctx, depthTex->Target, GL_TRUE);
-
-   if ((mask & GL_DEPTH_BUFFER_BIT) &&
-       _mesa_is_desktop_gl(ctx) &&
-       ctx->Extensions.ARB_depth_texture &&
-       ctx->Extensions.ARB_fragment_program) {
-
-      GLuint *tmp = malloc(srcW * srcH * sizeof(GLuint));
-
-      if (tmp) {
-
-         newTex = _mesa_meta_alloc_texture(depthTex, srcW, srcH,
-                                           GL_DEPTH_COMPONENT);
-         _mesa_ReadPixels(srcX, srcY, srcW, srcH, GL_DEPTH_COMPONENT,
-                          GL_UNSIGNED_INT, tmp);
-         _mesa_meta_setup_drawpix_texture(ctx, depthTex, newTex,
-                                          srcW, srcH, GL_DEPTH_COMPONENT,
-                                          GL_UNSIGNED_INT, tmp);
-
-         /* texcoords (after texture allocation!) */
-         {
-            verts[0].tex[0] = 0.0F;
-            verts[0].tex[1] = 0.0F;
-            verts[1].tex[0] = depthTex->Sright;
-            verts[1].tex[1] = 0.0F;
-            verts[2].tex[0] = depthTex->Sright;
-            verts[2].tex[1] = depthTex->Ttop;
-            verts[3].tex[0] = 0.0F;
-            verts[3].tex[1] = depthTex->Ttop;
-
-            /* upload new vertex data */
-            _mesa_BufferSubData(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
-         }
-
-         if (!blit->DepthFP)
-            init_blit_depth_pixels(ctx);
-
-         _mesa_BindProgramARB(GL_FRAGMENT_PROGRAM_ARB, blit->DepthFP);
-         _mesa_set_enable(ctx, GL_FRAGMENT_PROGRAM_ARB, GL_TRUE);
-         _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-         _mesa_set_enable(ctx, GL_DEPTH_TEST, GL_TRUE);
-         _mesa_DepthFunc(GL_ALWAYS);
-         _mesa_DepthMask(GL_TRUE);
-
-         _mesa_set_viewport(ctx, 0, dstX, dstY, dstW, dstH);
-         _mesa_BufferSubData(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
-         _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
-         mask &= ~GL_DEPTH_BUFFER_BIT;
-
-         free(tmp);
-      }
-   }
-
    if (mask & GL_STENCIL_BUFFER_BIT) {
       /* XXX can't easily do stencil */
    }
-
-   if (!use_glsl_version)
-      _mesa_set_enable(ctx, depthTex->Target, GL_FALSE);
 
    _mesa_meta_end(ctx);
 
@@ -791,10 +660,6 @@ _mesa_meta_glsl_blit_cleanup(struct blit_state *blit)
       blit->VAO = 0;
       _mesa_DeleteBuffers(1, &blit->VBO);
       blit->VBO = 0;
-   }
-   if (blit->DepthFP) {
-      _mesa_DeleteProgramsARB(1, &blit->DepthFP);
-      blit->DepthFP = 0;
    }
 
    _mesa_meta_blit_shader_table_cleanup(&blit->shaders);

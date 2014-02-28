@@ -250,7 +250,6 @@ struct blit_state
 {
    GLuint VAO;
    GLuint VBO;
-   GLuint DepthFP;
    struct blit_shader_table shaders;
    GLuint msaa_shaders[BLIT_MSAA_SHADER_COUNT];
    struct temp_texture depthTex;
