@@ -253,6 +253,7 @@ struct blit_state
    struct blit_shader_table shaders;
    GLuint msaa_shaders[BLIT_MSAA_SHADER_COUNT];
    struct temp_texture depthTex;
+   bool no_ctsi_fallback;
 };
 
 
@@ -505,6 +506,7 @@ void
 _mesa_meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap);
 
 void
-_mesa_meta_bind_fbo_image(struct gl_texture_image *texImage, GLuint layer);
+_mesa_meta_bind_fbo_image(GLenum attachment,
+                          struct gl_texture_image *texImage, GLuint layer);
 
 #endif /* META_H */

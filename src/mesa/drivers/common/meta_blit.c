@@ -419,6 +419,9 @@ blitframebuffer_texture(struct gl_context *ctx,
       /* Fall back to doing a CopyTexSubImage to get the destination
        * renderbuffer into a texture.
        */
+      if (ctx->Meta->Blit.no_ctsi_fallback)
+         return false;
+
       if (rb->NumSamples > 1)
          return false;
 
