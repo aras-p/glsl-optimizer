@@ -87,6 +87,13 @@ const char *
 os_get_option(const char *name);
 
 
+/*
+ * Get the total amount of physical memory available on the system.
+ */
+bool
+os_get_total_physical_memory(uint64_t *size);
+
+
 #ifdef	__cplusplus
 }
 #endif
