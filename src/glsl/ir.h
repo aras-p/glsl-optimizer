@@ -2186,8 +2186,6 @@ private:
    ir_constant(void);
 };
 
-/*@}*/
-
 /**
  * IR instruction to emit a vertex in a geometry shader.
  */
@@ -2234,6 +2232,8 @@ public:
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 };
+
+/*@}*/
 
 /**
  * Apply a visitor to each IR node in a list
