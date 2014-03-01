@@ -480,12 +480,13 @@ osmesa_create_buffer(enum pipe_format color_format,
 
 
 /**
- * Search linked list for a buffer with matching pixel formats.
+ * Search linked list for a buffer with matching pixel formats and size.
  */
 static struct osmesa_buffer *
 osmesa_find_buffer(enum pipe_format color_format,
                    enum pipe_format ds_format,
-                   enum pipe_format accum_format)
+                   enum pipe_format accum_format,
+                   GLsizei width, GLsizei height)
 {
    struct osmesa_buffer *b;
 
@@ -493,7 +494,9 @@ osmesa_find_buffer(enum pipe_format color_format,
    for (b = BufferList; b; b = b->next) {
       if (b->visual.color_format == color_format &&
           b->visual.depth_stencil_format == ds_format &&
-          b->visual.accum_format == accum_format) {
+          b->visual.accum_format == accum_format &&
+          b->width == width &&
+          b->height == height) {
          return b;
       }
    }
@@ -673,7 +676,7 @@ OSMesaMakeCurrent(OSMesaContext osmesa, void *buffer, GLenum type,
    /* See if we already have a buffer that uses these pixel formats */
    osbuffer = osmesa_find_buffer(color_format,
                                  osmesa->depth_stencil_format,
-                                 osmesa->accum_format);
+                                 osmesa->accum_format, width, height);
    if (!osbuffer) {
       /* Existing buffer found, create new buffer */
       osbuffer = osmesa_create_buffer(color_format,
