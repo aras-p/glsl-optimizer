@@ -89,9 +89,9 @@ delete_dummy_framebuffer(struct gl_framebuffer *fb)
 void
 _mesa_init_fbobjects(struct gl_context *ctx)
 {
-   _glthread_INIT_MUTEX(DummyFramebuffer.Mutex);
-   _glthread_INIT_MUTEX(DummyRenderbuffer.Mutex);
-   _glthread_INIT_MUTEX(IncompleteFramebuffer.Mutex);
+   mtx_init(&DummyFramebuffer.Mutex, mtx_plain);
+   mtx_init(&DummyRenderbuffer.Mutex, mtx_plain);
+   mtx_init(&IncompleteFramebuffer.Mutex, mtx_plain);
    DummyFramebuffer.Delete = delete_dummy_framebuffer;
    DummyRenderbuffer.Delete = delete_dummy_renderbuffer;
    IncompleteFramebuffer.Delete = delete_dummy_framebuffer;
@@ -484,7 +484,7 @@ _mesa_framebuffer_renderbuffer(struct gl_context *ctx,
 {
    struct gl_renderbuffer_attachment *att;
 
-   _glthread_LOCK_MUTEX(fb->Mutex);
+   mtx_lock(&fb->Mutex);
 
    att = get_attachment(ctx, fb, attachment);
    ASSERT(att);
@@ -504,7 +504,7 @@ _mesa_framebuffer_renderbuffer(struct gl_context *ctx,
 
    invalidate_framebuffer(fb);
 
-   _glthread_UNLOCK_MUTEX(fb->Mutex);
+   mtx_unlock(&fb->Mutex);
 }
 
 
@@ -1352,9 +1352,9 @@ _mesa_GenRenderbuffers(GLsizei n, GLuint *renderbuffers)
       GLuint name = first + i;
       renderbuffers[i] = name;
       /* insert dummy placeholder into hash table */
-      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+      mtx_lock(&ctx->Shared->Mutex);
       _mesa_HashInsert(ctx->Shared->RenderBuffers, name, &DummyRenderbuffer);
-      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+      mtx_unlock(&ctx->Shared->Mutex);
    }
 }
 
@@ -2218,9 +2218,9 @@ _mesa_GenFramebuffers(GLsizei n, GLuint *framebuffers)
       GLuint name = first + i;
       framebuffers[i] = name;
       /* insert dummy placeholder into hash table */
-      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+      mtx_lock(&ctx->Shared->Mutex);
       _mesa_HashInsert(ctx->Shared->FrameBuffers, name, &DummyFramebuffer);
-      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+      mtx_unlock(&ctx->Shared->Mutex);
    }
 }
 
@@ -2433,7 +2433,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
 
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
 
-   _glthread_LOCK_MUTEX(fb->Mutex);
+   mtx_lock(&fb->Mutex);
    if (texObj) {
       if (attachment == GL_DEPTH_ATTACHMENT &&
           texObj == fb->Attachment[BUFFER_STENCIL].Texture &&
@@ -2491,7 +2491,7 @@ framebuffer_texture(struct gl_context *ctx, const char *caller, GLenum target,
 
    invalidate_framebuffer(fb);
 
-   _glthread_UNLOCK_MUTEX(fb->Mutex);
+   mtx_unlock(&fb->Mutex);
 }
 
 

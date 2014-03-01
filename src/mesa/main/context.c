@@ -364,7 +364,7 @@ dummy_enum_func(void)
  *
  * \sa Used by one_time_init().
  */
-_glthread_DECLARE_STATIC_MUTEX(OneTimeLock);
+mtx_t OneTimeLock = _MTX_INITIALIZER_NP;
 
 
 
@@ -382,7 +382,7 @@ one_time_init( struct gl_context *ctx )
 {
    static GLbitfield api_init_mask = 0x0;
 
-   _glthread_LOCK_MUTEX(OneTimeLock);
+   mtx_lock(&OneTimeLock);
 
    /* truly one-time init */
    if (!api_init_mask) {
@@ -423,7 +423,7 @@ one_time_init( struct gl_context *ctx )
 
    api_init_mask |= 1 << ctx->API;
 
-   _glthread_UNLOCK_MUTEX(OneTimeLock);
+   mtx_unlock(&OneTimeLock);
 
    /* Hopefully atexit() is widely available.  If not, we may need some
     * #ifdef tests here.

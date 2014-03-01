@@ -130,7 +130,7 @@ _mesa_initialize_window_framebuffer(struct gl_framebuffer *fb,
 
    memset(fb, 0, sizeof(struct gl_framebuffer));
 
-   _glthread_INIT_MUTEX(fb->Mutex);
+   mtx_init(&fb->Mutex, mtx_plain);
 
    fb->RefCount = 1;
 
@@ -182,7 +182,7 @@ _mesa_initialize_user_framebuffer(struct gl_framebuffer *fb, GLuint name)
    fb->ColorReadBuffer = GL_COLOR_ATTACHMENT0_EXT;
    fb->_ColorReadBufferIndex = BUFFER_COLOR0;
    fb->Delete = _mesa_destroy_framebuffer;
-   _glthread_INIT_MUTEX(fb->Mutex);
+   mtx_init(&fb->Mutex, mtx_plain);
 }
 
 
@@ -213,7 +213,7 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
    assert(fb);
    assert(fb->RefCount == 0);
 
-   _glthread_DESTROY_MUTEX(fb->Mutex);
+   mtx_destroy(&fb->Mutex);
 
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
@@ -244,11 +244,11 @@ _mesa_reference_framebuffer_(struct gl_framebuffer **ptr,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_framebuffer *oldFb = *ptr;
 
-      _glthread_LOCK_MUTEX(oldFb->Mutex);
+      mtx_lock(&oldFb->Mutex);
       ASSERT(oldFb->RefCount > 0);
       oldFb->RefCount--;
       deleteFlag = (oldFb->RefCount == 0);
-      _glthread_UNLOCK_MUTEX(oldFb->Mutex);
+      mtx_unlock(&oldFb->Mutex);
       
       if (deleteFlag)
          oldFb->Delete(oldFb);
@@ -258,9 +258,9 @@ _mesa_reference_framebuffer_(struct gl_framebuffer **ptr,
    assert(!*ptr);
 
    if (fb) {
-      _glthread_LOCK_MUTEX(fb->Mutex);
+      mtx_lock(&fb->Mutex);
       fb->RefCount++;
-      _glthread_UNLOCK_MUTEX(fb->Mutex);
+      mtx_unlock(&fb->Mutex);
       *ptr = fb;
    }
 }

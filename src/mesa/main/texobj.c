@@ -115,7 +115,7 @@ _mesa_initialize_texture_object( struct gl_context *ctx,
 
    memset(obj, 0, sizeof(*obj));
    /* init the non-zero fields */
-   _glthread_INIT_MUTEX(obj->Mutex);
+   mtx_init(&obj->Mutex, mtx_plain);
    obj->RefCount = 1;
    obj->Name = name;
    obj->Target = target;
@@ -237,7 +237,7 @@ _mesa_delete_texture_object(struct gl_context *ctx,
    _mesa_reference_buffer_object(ctx, &texObj->BufferObject, NULL);
 
    /* destroy the mutex -- it may have allocated memory (eg on bsd) */
-   _glthread_DESTROY_MUTEX(texObj->Mutex);
+   mtx_destroy(&texObj->Mutex);
 
    free(texObj->Label);
 
@@ -374,12 +374,12 @@ _mesa_reference_texobj_(struct gl_texture_object **ptr,
       ASSERT(valid_texture_object(oldTex));
       (void) valid_texture_object; /* silence warning in release builds */
 
-      _glthread_LOCK_MUTEX(oldTex->Mutex);
+      mtx_lock(&oldTex->Mutex);
       ASSERT(oldTex->RefCount > 0);
       oldTex->RefCount--;
 
       deleteFlag = (oldTex->RefCount == 0);
-      _glthread_UNLOCK_MUTEX(oldTex->Mutex);
+      mtx_unlock(&oldTex->Mutex);
 
       if (deleteFlag) {
          GET_CURRENT_CONTEXT(ctx);
@@ -396,7 +396,7 @@ _mesa_reference_texobj_(struct gl_texture_object **ptr,
    if (tex) {
       /* reference new texture */
       ASSERT(valid_texture_object(tex));
-      _glthread_LOCK_MUTEX(tex->Mutex);
+      mtx_lock(&tex->Mutex);
       if (tex->RefCount == 0) {
          /* this texture's being deleted (look just above) */
          /* Not sure this can every really happen.  Warn if it does. */
@@ -407,7 +407,7 @@ _mesa_reference_texobj_(struct gl_texture_object **ptr,
          tex->RefCount++;
          *ptr = tex;
       }
-      _glthread_UNLOCK_MUTEX(tex->Mutex);
+      mtx_unlock(&tex->Mutex);
    }
 }
 
@@ -1009,7 +1009,7 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
    /*
     * This must be atomic (generation and allocation of texture IDs)
     */
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_lock(&ctx->Shared->Mutex);
 
    first = _mesa_HashFindFreeKeyBlock(ctx->Shared->TexObjects, n);
 
@@ -1020,7 +1020,7 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
       GLenum target = 0;
       texObj = ctx->Driver.NewTextureObject(ctx, name, target);
       if (!texObj) {
-         _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+         mtx_unlock(&ctx->Shared->Mutex);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenTextures");
          return;
       }
@@ -1031,7 +1031,7 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
       textures[i] = name;
    }
 
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_unlock(&ctx->Shared->Mutex);
 }
 
 
@@ -1178,9 +1178,9 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
             /* The texture _name_ is now free for re-use.
              * Remove it from the hash table now.
              */
-            _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+            mtx_lock(&ctx->Shared->Mutex);
             _mesa_HashRemove(ctx->Shared->TexObjects, delObj->Name);
-            _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+            mtx_unlock(&ctx->Shared->Mutex);
 
             /* Unreference the texobj.  If refcount hits zero, the texture
              * will be deleted.
@@ -1313,9 +1313,9 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          }
 
          /* and insert it into hash table */
-         _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+         mtx_lock(&ctx->Shared->Mutex);
          _mesa_HashInsert(ctx->Shared->TexObjects, texName, newTexObj);
-         _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+         mtx_unlock(&ctx->Shared->Mutex);
       }
       newTexObj->Target = target;
    }
@@ -1327,10 +1327,10 @@ _mesa_BindTexture( GLenum target, GLuint texName )
     */
    {
       GLboolean early_out;
-      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+      mtx_lock(&ctx->Shared->Mutex);
       early_out = ((ctx->Shared->RefCount == 1)
                    && (newTexObj == texUnit->CurrentTex[targetIndex]));
-      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+      mtx_unlock(&ctx->Shared->Mutex);
       if (early_out) {
          return;
       }
@@ -1493,7 +1493,7 @@ _mesa_IsTexture( GLuint texture )
 void
 _mesa_lock_context_textures( struct gl_context *ctx )
 {
-   _glthread_LOCK_MUTEX(ctx->Shared->TexMutex);
+   mtx_lock(&ctx->Shared->TexMutex);
 
    if (ctx->Shared->TextureStateStamp != ctx->TextureStateTimestamp) {
       ctx->NewState |= _NEW_TEXTURE;
@@ -1506,7 +1506,7 @@ void
 _mesa_unlock_context_textures( struct gl_context *ctx )
 {
    assert(ctx->Shared->TextureStateStamp == ctx->TextureStateTimestamp);
-   _glthread_UNLOCK_MUTEX(ctx->Shared->TexMutex);
+   mtx_unlock(&ctx->Shared->TexMutex);
 }
 
 void GLAPIENTRY

@@ -64,7 +64,7 @@ _mesa_delete_pipeline_object(struct gl_context *ctx,
       _mesa_reference_shader_program(ctx, &obj->CurrentProgram[i], NULL);
 
    _mesa_reference_shader_program(ctx, &obj->ActiveProgram, NULL);
-   _glthread_DESTROY_MUTEX(obj->Mutex);
+   mtx_destroy(&obj->Mutex);
    ralloc_free(obj);
 }
 
@@ -77,7 +77,7 @@ _mesa_new_pipeline_object(struct gl_context *ctx, GLuint name)
    struct gl_pipeline_object *obj = rzalloc(NULL, struct gl_pipeline_object);
    if (obj) {
       obj->Name = name;
-      _glthread_INIT_MUTEX(obj->Mutex);
+      mtx_init(&obj->Mutex, mtx_plain);
       obj->RefCount = 1;
       obj->Flags = _mesa_get_shader_flags();
    }
@@ -177,11 +177,11 @@ _mesa_reference_pipeline_object_(struct gl_context *ctx,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_pipeline_object *oldObj = *ptr;
 
-      _glthread_LOCK_MUTEX(oldObj->Mutex);
+      mtx_lock(&oldObj->Mutex);
       ASSERT(oldObj->RefCount > 0);
       oldObj->RefCount--;
       deleteFlag = (oldObj->RefCount == 0);
-      _glthread_UNLOCK_MUTEX(oldObj->Mutex);
+      mtx_unlock(&oldObj->Mutex);
 
       if (deleteFlag) {
          _mesa_delete_pipeline_object(ctx, oldObj);
@@ -193,7 +193,7 @@ _mesa_reference_pipeline_object_(struct gl_context *ctx,
 
    if (obj) {
       /* reference new pipeline object */
-      _glthread_LOCK_MUTEX(obj->Mutex);
+      mtx_lock(&obj->Mutex);
       if (obj->RefCount == 0) {
          /* this pipeline's being deleted (look just above) */
          /* Not sure this can ever really happen.  Warn if it does. */
@@ -204,7 +204,7 @@ _mesa_reference_pipeline_object_(struct gl_context *ctx,
          obj->RefCount++;
          *ptr = obj;
       }
-      _glthread_UNLOCK_MUTEX(obj->Mutex);
+      mtx_unlock(&obj->Mutex);
    }
 }
 

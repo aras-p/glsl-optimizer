@@ -334,7 +334,7 @@ _mesa_GetGraphicsResetStatusARB( void )
        */
       status = ctx->Driver.GetGraphicsResetStatus(ctx);
 
-      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+      mtx_lock(&ctx->Shared->Mutex);
 
       /* If this context has not been affected by a GPU reset, check to see if
        * some other context in the share group has been affected by a reset.
@@ -348,7 +348,7 @@ _mesa_GetGraphicsResetStatusARB( void )
       }
 
       ctx->ShareGroupReset = ctx->Shared->ShareGroupReset;
-      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+      mtx_unlock(&ctx->Shared->Mutex);
    }
 
    if (!ctx->Driver.GetGraphicsResetStatus && (MESA_VERBOSE & VERBOSE_API))

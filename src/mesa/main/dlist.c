@@ -8177,7 +8177,7 @@ _mesa_GenLists(GLsizei range)
    /*
     * Make this an atomic operation
     */
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_lock(&ctx->Shared->Mutex);
 
    base = _mesa_HashFindFreeKeyBlock(ctx->Shared->DisplayList, range);
    if (base) {
@@ -8189,7 +8189,7 @@ _mesa_GenLists(GLsizei range)
       }
    }
 
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_unlock(&ctx->Shared->Mutex);
 
    return base;
 }

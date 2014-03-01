@@ -417,7 +417,7 @@ _mesa_delete_buffer_object(struct gl_context *ctx,
    bufObj->RefCount = -1000;
    bufObj->Name = ~0;
 
-   _glthread_DESTROY_MUTEX(bufObj->Mutex);
+   mtx_destroy(&bufObj->Mutex);
    free(bufObj->Label);
    free(bufObj);
 }
@@ -439,7 +439,7 @@ _mesa_reference_buffer_object_(struct gl_context *ctx,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_buffer_object *oldObj = *ptr;
 
-      _glthread_LOCK_MUTEX(oldObj->Mutex);
+      mtx_lock(&oldObj->Mutex);
       ASSERT(oldObj->RefCount > 0);
       oldObj->RefCount--;
 #if 0
@@ -447,7 +447,7 @@ _mesa_reference_buffer_object_(struct gl_context *ctx,
              (void *) oldObj, oldObj->Name, oldObj->RefCount);
 #endif
       deleteFlag = (oldObj->RefCount == 0);
-      _glthread_UNLOCK_MUTEX(oldObj->Mutex);
+      mtx_unlock(&oldObj->Mutex);
 
       if (deleteFlag) {
 
@@ -469,7 +469,7 @@ _mesa_reference_buffer_object_(struct gl_context *ctx,
 
    if (bufObj) {
       /* reference new buffer */
-      _glthread_LOCK_MUTEX(bufObj->Mutex);
+      mtx_lock(&bufObj->Mutex);
       if (bufObj->RefCount == 0) {
          /* this buffer's being deleted (look just above) */
          /* Not sure this can every really happen.  Warn if it does. */
@@ -484,7 +484,7 @@ _mesa_reference_buffer_object_(struct gl_context *ctx,
 #endif
          *ptr = bufObj;
       }
-      _glthread_UNLOCK_MUTEX(bufObj->Mutex);
+      mtx_unlock(&bufObj->Mutex);
    }
 }
 
@@ -500,7 +500,7 @@ _mesa_initialize_buffer_object( struct gl_context *ctx,
    (void) target;
 
    memset(obj, 0, sizeof(struct gl_buffer_object));
-   _glthread_INIT_MUTEX(obj->Mutex);
+   mtx_init(&obj->Mutex, mtx_plain);
    obj->RefCount = 1;
    obj->Name = name;
    obj->Usage = GL_STATIC_DRAW_ARB;
@@ -818,7 +818,7 @@ _mesa_init_buffer_objects( struct gl_context *ctx )
    GLuint i;
 
    memset(&DummyBufferObject, 0, sizeof(DummyBufferObject));
-   _glthread_INIT_MUTEX(DummyBufferObject.Mutex);
+   mtx_init(&DummyBufferObject.Mutex, mtx_plain);
    DummyBufferObject.RefCount = 1000*1000*1000; /* never delete */
 
    _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj,
@@ -1070,7 +1070,7 @@ _mesa_DeleteBuffers(GLsizei n, const GLuint *ids)
       return;
    }
 
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_lock(&ctx->Shared->Mutex);
 
    for (i = 0; i < n; i++) {
       struct gl_buffer_object *bufObj = _mesa_lookup_bufferobj(ctx, ids[i]);
@@ -1157,7 +1157,7 @@ _mesa_DeleteBuffers(GLsizei n, const GLuint *ids)
       }
    }
 
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_unlock(&ctx->Shared->Mutex);
 }
 
 
@@ -1189,7 +1189,7 @@ _mesa_GenBuffers(GLsizei n, GLuint *buffer)
    /*
     * This must be atomic (generation and allocation of buffer object IDs)
     */
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_lock(&ctx->Shared->Mutex);
 
    first = _mesa_HashFindFreeKeyBlock(ctx->Shared->BufferObjects, n);
 
@@ -1200,7 +1200,7 @@ _mesa_GenBuffers(GLsizei n, GLuint *buffer)
       buffer[i] = first + i;
    }
 
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_unlock(&ctx->Shared->Mutex);
 }
 
 
@@ -1218,9 +1218,9 @@ _mesa_IsBuffer(GLuint id)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_lock(&ctx->Shared->Mutex);
    bufObj = _mesa_lookup_bufferobj(ctx, id);
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_unlock(&ctx->Shared->Mutex);
 
    return bufObj && bufObj != &DummyBufferObject;
 }

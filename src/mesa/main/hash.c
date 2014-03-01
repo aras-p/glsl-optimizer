@@ -59,8 +59,8 @@
 struct _mesa_HashTable {
    struct hash_table *ht;
    GLuint MaxKey;                        /**< highest key inserted so far */
-   _glthread_Mutex Mutex;                /**< mutual exclusion lock */
-   _glthread_Mutex WalkMutex;            /**< for _mesa_HashWalk() */
+   mtx_t Mutex;                /**< mutual exclusion lock */
+   mtx_t WalkMutex;            /**< for _mesa_HashWalk() */
    GLboolean InDeleteAll;                /**< Debug check */
    /** Value that would be in the table for DELETED_KEY_VALUE. */
    void *deleted_key_data;
@@ -117,8 +117,8 @@ _mesa_NewHashTable(void)
    if (table) {
       table->ht = _mesa_hash_table_create(NULL, uint_key_compare);
       _mesa_hash_table_set_deleted_key(table->ht, uint_key(DELETED_KEY_VALUE));
-      _glthread_INIT_MUTEX(table->Mutex);
-      _glthread_INIT_MUTEX(table->WalkMutex);
+      mtx_init(&table->Mutex, mtx_plain);
+      mtx_init(&table->WalkMutex, mtx_plain);
    }
    return table;
 }
@@ -144,8 +144,8 @@ _mesa_DeleteHashTable(struct _mesa_HashTable *table)
 
    _mesa_hash_table_destroy(table->ht, NULL);
 
-   _glthread_DESTROY_MUTEX(table->Mutex);
-   _glthread_DESTROY_MUTEX(table->WalkMutex);
+   mtx_destroy(&table->Mutex);
+   mtx_destroy(&table->WalkMutex);
    free(table);
 }
 
@@ -187,9 +187,9 @@ _mesa_HashLookup(struct _mesa_HashTable *table, GLuint key)
 {
    void *res;
    assert(table);
-   _glthread_LOCK_MUTEX(table->Mutex);
+   mtx_lock(&table->Mutex);
    res = _mesa_HashLookup_unlocked(table, key);
-   _glthread_UNLOCK_MUTEX(table->Mutex);
+   mtx_unlock(&table->Mutex);
    return res;
 }
 
@@ -211,7 +211,7 @@ _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
    assert(table);
    assert(key);
 
-   _glthread_LOCK_MUTEX(table->Mutex);
+   mtx_lock(&table->Mutex);
 
    if (key > table->MaxKey)
       table->MaxKey = key;
@@ -227,7 +227,7 @@ _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
       }
    }
 
-   _glthread_UNLOCK_MUTEX(table->Mutex);
+   mtx_unlock(&table->Mutex);
 }
 
 
@@ -256,14 +256,14 @@ _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
       return;
    }
 
-   _glthread_LOCK_MUTEX(table->Mutex);
+   mtx_lock(&table->Mutex);
    if (key == DELETED_KEY_VALUE) {
       table->deleted_key_data = NULL;
    } else {
       entry = _mesa_hash_table_search(table->ht, uint_hash(key), uint_key(key));
       _mesa_hash_table_remove(table->ht, entry);
    }
-   _glthread_UNLOCK_MUTEX(table->Mutex);
+   mtx_unlock(&table->Mutex);
 }
 
 
@@ -286,7 +286,7 @@ _mesa_HashDeleteAll(struct _mesa_HashTable *table,
 
    ASSERT(table);
    ASSERT(callback);
-   _glthread_LOCK_MUTEX(table->Mutex);
+   mtx_lock(&table->Mutex);
    table->InDeleteAll = GL_TRUE;
    hash_table_foreach(table->ht, entry) {
       callback((uintptr_t)entry->key, entry->data, userData);
@@ -297,7 +297,7 @@ _mesa_HashDeleteAll(struct _mesa_HashTable *table,
       table->deleted_key_data = NULL;
    }
    table->InDeleteAll = GL_FALSE;
-   _glthread_UNLOCK_MUTEX(table->Mutex);
+   mtx_unlock(&table->Mutex);
 }
 
 
@@ -315,7 +315,7 @@ _mesa_HashClone(const struct _mesa_HashTable *table)
    struct _mesa_HashTable *clonetable;
 
    ASSERT(table);
-   _glthread_LOCK_MUTEX(table2->Mutex);
+   mtx_lock(&table2->Mutex);
 
    clonetable = _mesa_NewHashTable();
    assert(clonetable);
@@ -323,7 +323,7 @@ _mesa_HashClone(const struct _mesa_HashTable *table)
       _mesa_HashInsert(clonetable, (GLint)(uintptr_t)entry->key, entry->data);
    }
 
-   _glthread_UNLOCK_MUTEX(table2->Mutex);
+   mtx_unlock(&table2->Mutex);
 
    return clonetable;
 }
@@ -352,13 +352,13 @@ _mesa_HashWalk(const struct _mesa_HashTable *table,
 
    ASSERT(table);
    ASSERT(callback);
-   _glthread_LOCK_MUTEX(table2->WalkMutex);
+   mtx_lock(&table2->WalkMutex);
    hash_table_foreach(table->ht, entry) {
       callback((uintptr_t)entry->key, entry->data, userData);
    }
    if (table->deleted_key_data)
       callback(DELETED_KEY_VALUE, table->deleted_key_data, userData);
-   _glthread_UNLOCK_MUTEX(table2->WalkMutex);
+   mtx_unlock(&table2->WalkMutex);
 }
 
 static void
@@ -398,10 +398,10 @@ GLuint
 _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys)
 {
    const GLuint maxKey = ~((GLuint) 0) - 1;
-   _glthread_LOCK_MUTEX(table->Mutex);
+   mtx_lock(&table->Mutex);
    if (maxKey - numKeys > table->MaxKey) {
       /* the quick solution */
-      _glthread_UNLOCK_MUTEX(table->Mutex);
+      mtx_unlock(&table->Mutex);
       return table->MaxKey + 1;
    }
    else {
@@ -419,13 +419,13 @@ _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys)
 	    /* this key not in use, check if we've found enough */
 	    freeCount++;
 	    if (freeCount == numKeys) {
-               _glthread_UNLOCK_MUTEX(table->Mutex);
+               mtx_unlock(&table->Mutex);
 	       return freeStart;
 	    }
 	 }
       }
       /* cannot allocate a block of numKeys consecutive keys */
-      _glthread_UNLOCK_MUTEX(table->Mutex);
+      mtx_unlock(&table->Mutex);
       return 0;
    }
 }

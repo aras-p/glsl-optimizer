@@ -42,7 +42,7 @@
 #define MESSAGE_LOG 1
 #define MESSAGE_LOG_ARB 2
 
-_glthread_DECLARE_STATIC_MUTEX(DynamicIDMutex);
+static mtx_t DynamicIDMutex = _MTX_INITIALIZER_NP;
 static GLuint NextDynamicID = 1;
 
 struct gl_debug_severity
@@ -136,10 +136,10 @@ static void
 debug_get_id(GLuint *id)
 {
    if (!(*id)) {
-      _glthread_LOCK_MUTEX(DynamicIDMutex);
+      mtx_lock(&DynamicIDMutex);
       if (!(*id))
          *id = NextDynamicID++;
-      _glthread_UNLOCK_MUTEX(DynamicIDMutex);
+      mtx_unlock(&DynamicIDMutex);
    }
 }
 

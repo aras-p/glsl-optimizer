@@ -163,7 +163,7 @@ _mesa_legal_texture_base_format_for_target(struct gl_context *ctx,
 static inline void
 _mesa_lock_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
-   _glthread_LOCK_MUTEX(ctx->Shared->TexMutex);
+   mtx_lock(&ctx->Shared->TexMutex);
    ctx->Shared->TextureStateStamp++;
    (void) texObj;
 }
@@ -172,7 +172,7 @@ static inline void
 _mesa_unlock_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
    (void) texObj;
-   _glthread_UNLOCK_MUTEX(ctx->Shared->TexMutex);
+   mtx_unlock(&ctx->Shared->TexMutex);
 }
 
 /*@}*/

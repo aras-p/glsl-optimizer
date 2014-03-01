@@ -124,7 +124,7 @@ _mesa_init_shader_state(struct gl_context *ctx)
 
    /* Extended for ARB_separate_shader_objects */
    ctx->Shader.RefCount = 1;
-   _glthread_INIT_MUTEX(ctx->Shader.Mutex);
+   mtx_init(&ctx->Shader.Mutex, mtx_plain);
 }
 
 
@@ -145,7 +145,7 @@ _mesa_free_shader_state(struct gl_context *ctx)
 
    /* Extended for ARB_separate_shader_objects */
    assert(ctx->Shader.RefCount == 1);
-   _glthread_DESTROY_MUTEX(ctx->Shader.Mutex);
+   mtx_destroy(&ctx->Shader.Mutex);
 }
 
 

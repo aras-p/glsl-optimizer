@@ -119,7 +119,7 @@ _mesa_delete_vao(struct gl_context *ctx, struct gl_vertex_array_object *obj)
 {
    unbind_array_object_vbos(ctx, obj);
    _mesa_reference_buffer_object(ctx, &obj->IndexBufferObj, NULL);
-   _glthread_DESTROY_MUTEX(obj->Mutex);
+   mtx_destroy(&obj->Mutex);
    free(obj->Label);
    free(obj);
 }
@@ -142,7 +142,7 @@ _mesa_reference_vao_(struct gl_context *ctx,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_vertex_array_object *oldObj = *ptr;
 
-      _glthread_LOCK_MUTEX(oldObj->Mutex);
+      mtx_lock(&oldObj->Mutex);
       ASSERT(oldObj->RefCount > 0);
       oldObj->RefCount--;
 #if 0
@@ -150,7 +150,7 @@ _mesa_reference_vao_(struct gl_context *ctx,
              (void *) oldObj, oldObj->Name, oldObj->RefCount);
 #endif
       deleteFlag = (oldObj->RefCount == 0);
-      _glthread_UNLOCK_MUTEX(oldObj->Mutex);
+      mtx_unlock(&oldObj->Mutex);
 
       if (deleteFlag) {
 	 ASSERT(ctx->Driver.DeleteArrayObject);
@@ -163,7 +163,7 @@ _mesa_reference_vao_(struct gl_context *ctx,
 
    if (vao) {
       /* reference new array object */
-      _glthread_LOCK_MUTEX(vao->Mutex);
+      mtx_lock(&vao->Mutex);
       if (vao->RefCount == 0) {
          /* this array's being deleted (look just above) */
          /* Not sure this can every really happen.  Warn if it does. */
@@ -178,7 +178,7 @@ _mesa_reference_vao_(struct gl_context *ctx,
 #endif
          *ptr = vao;
       }
-      _glthread_UNLOCK_MUTEX(vao->Mutex);
+      mtx_unlock(&vao->Mutex);
    }
 }
 
@@ -226,7 +226,7 @@ _mesa_initialize_vao(struct gl_context *ctx,
 
    obj->Name = name;
 
-   _glthread_INIT_MUTEX(obj->Mutex);
+   mtx_init(&obj->Mutex, mtx_plain);
    obj->RefCount = 1;
 
    /* Init the individual arrays */

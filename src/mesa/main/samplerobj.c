@@ -66,7 +66,7 @@ _mesa_reference_sampler_object_(struct gl_context *ctx,
       GLboolean deleteFlag = GL_FALSE;
       struct gl_sampler_object *oldSamp = *ptr;
 
-      /*_glthread_LOCK_MUTEX(oldSamp->Mutex);*/
+      /*mtx_lock(&oldSamp->Mutex);*/
       ASSERT(oldSamp->RefCount > 0);
       oldSamp->RefCount--;
 #if 0
@@ -74,7 +74,7 @@ _mesa_reference_sampler_object_(struct gl_context *ctx,
              (void *) oldSamp, oldSamp->Name, oldSamp->RefCount);
 #endif
       deleteFlag = (oldSamp->RefCount == 0);
-      /*_glthread_UNLOCK_MUTEX(oldSamp->Mutex);*/
+      /*mtx_unlock(&oldSamp->Mutex);*/
 
       if (deleteFlag) {
 	 ASSERT(ctx->Driver.DeleteSamplerObject);
@@ -87,7 +87,7 @@ _mesa_reference_sampler_object_(struct gl_context *ctx,
 
    if (samp) {
       /* reference new sampler */
-      /*_glthread_LOCK_MUTEX(samp->Mutex);*/
+      /*mtx_lock(&samp->Mutex);*/
       if (samp->RefCount == 0) {
          /* this sampler's being deleted (look just above) */
          /* Not sure this can every really happen.  Warn if it does. */
@@ -102,7 +102,7 @@ _mesa_reference_sampler_object_(struct gl_context *ctx,
 #endif
          *ptr = samp;
       }
-      /*_glthread_UNLOCK_MUTEX(samp->Mutex);*/
+      /*mtx_unlock(&samp->Mutex);*/
    }
 }
 
@@ -203,7 +203,7 @@ _mesa_DeleteSamplers(GLsizei count, const GLuint *samplers)
       return;
    }
 
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_lock(&ctx->Shared->Mutex);
 
    for (i = 0; i < count; i++) {
       if (samplers[i]) {
@@ -228,7 +228,7 @@ _mesa_DeleteSamplers(GLsizei count, const GLuint *samplers)
       }
    }
 
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+   mtx_unlock(&ctx->Shared->Mutex);
 }
 
 
