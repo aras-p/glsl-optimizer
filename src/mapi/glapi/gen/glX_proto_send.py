@@ -167,7 +167,6 @@ class PrintGlxProtoStubs(glX_proto_common.glx_print_proto):
         print '#include "glxclient.h"'
         print '#include "indirect_size.h"'
         print '#include "glapi.h"'
-        print '#include "glthread.h"'
         print '#include <GL/glxproto.h>'
         print '#include <X11/Xlib-xcb.h>'
         print '#include <xcb/xcb.h>'

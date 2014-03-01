@@ -37,7 +37,6 @@
 #include "mtypes.h"
 #include "version.h"
 #include "hash_table.h"
-#include "glapi/glthread.h"
 
 #define MESSAGE_LOG 1
 #define MESSAGE_LOG_ARB 2

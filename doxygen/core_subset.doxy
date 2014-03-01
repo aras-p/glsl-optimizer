@@ -73,7 +73,6 @@ FILE_PATTERNS          = \
 			fog.h \
 			get.h \
 			glheader.h \
-			glthread.h \
 			hash.[ch] \
 			hint.h \
 			histogram.h \

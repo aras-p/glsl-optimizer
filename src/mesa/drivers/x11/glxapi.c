@@ -131,7 +131,7 @@ get_dispatch(Display *dpy)
 }
 
 
-/* Don't use the GET_DISPATCH defined in glthread.h */
+/* Don't use the GET_DISPATCH macro */
 #undef GET_DISPATCH
 
 #define GET_DISPATCH(DPY, TABLE)	\

@@ -32,7 +32,6 @@
 #include "main/macros.h" // ?
 #include "main/mtypes.h" // ?
 #include "glapi/glapi.h" // ?
-#include "glapi/glthread.h" // ?
 #include "main/dispatch.h" // ?
 #include "main/context.h" // ?
 

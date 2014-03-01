@@ -31,7 +31,6 @@
 #include "packsingle.h"
 #include "indirect.h"
 #include "glapi.h"
-#include "glthread.h"
 #include <GL/glxproto.h>
 
 void
