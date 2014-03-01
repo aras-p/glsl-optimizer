@@ -182,14 +182,21 @@ static OMX_ERRORTYPE vid_enc_Constructor(OMX_COMPONENTTYPE *comp, OMX_STRING nam
    if (!priv->s_pipe)
       return OMX_ErrorInsufficientResources;
 
+   if (!vl_compositor_init(&priv->compositor, priv->s_pipe)) {
+      priv->s_pipe->destroy(priv->s_pipe);
+      priv->s_pipe = NULL;
+      return OMX_ErrorInsufficientResources;
+   }
+
+   if (!vl_compositor_init_state(&priv->cstate, priv->s_pipe)) {
+      vl_compositor_cleanup(&priv->compositor);
+      priv->s_pipe->destroy(priv->s_pipe);
+      priv->s_pipe = NULL;
+      return OMX_ErrorInsufficientResources;
+   }
+
    priv->t_pipe = screen->context_create(screen, priv->screen);
    if (!priv->t_pipe)
-      return OMX_ErrorInsufficientResources;
-
-   if (!vl_compositor_init(&priv->compositor, priv->s_pipe))
-      return OMX_ErrorInsufficientResources;
-
-   if (!vl_compositor_init_state(&priv->cstate, priv->s_pipe))
       return OMX_ErrorInsufficientResources;
 
    priv->sPortTypesParam[OMX_PortDomainVideo].nStartPortNumber = 0;
@@ -259,15 +266,15 @@ static OMX_ERRORTYPE vid_enc_Destructor(OMX_COMPONENTTYPE *comp)
       priv->ports=NULL;
    }
 
-   vl_compositor_cleanup_state(&priv->cstate);
-   vl_compositor_cleanup(&priv->compositor);
- 
    for (i = 0; i < OMX_VID_ENC_NUM_SCALING_BUFFERS; ++i)
       if (priv->scale_buffer[i])
          priv->scale_buffer[i]->destroy(priv->scale_buffer[i]);
 
-   if (priv->s_pipe)
+   if (priv->s_pipe) {
+      vl_compositor_cleanup_state(&priv->cstate);
+      vl_compositor_cleanup(&priv->compositor);
       priv->s_pipe->destroy(priv->s_pipe);
+   }
 
    if (priv->t_pipe)
       priv->t_pipe->destroy(priv->t_pipe);
