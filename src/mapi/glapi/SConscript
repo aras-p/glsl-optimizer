@@ -34,7 +34,6 @@ glapi_sources = [
     'glapi_entrypoint.c',
     'glapi_getproc.c',
     'glapi_nop.c',
-    'glthread.c',
     'glapi.c',
 ]
 

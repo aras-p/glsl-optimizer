@@ -6,7 +6,6 @@ GLAPI_SOURCES = \
 	glapi_gentable.c \
 	glapi_getproc.c \
 	glapi_nop.c \
-	glthread.c \
 	glapi.c
 
 X86_API =			\
