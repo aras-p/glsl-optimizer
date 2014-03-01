@@ -2918,16 +2918,17 @@ get_mesa_program(struct gl_context *ctx,
    set_branchtargets(&v, mesa_instructions, num_instructions);
 
    if (ctx->Shader.Flags & GLSL_DUMP) {
-      printf("\n");
-      printf("GLSL IR for linked %s program %d:\n", target_string,
-	     shader_program->Name);
-      _mesa_print_ir(stdout, shader->ir, NULL);
-      printf("\n");
-      printf("\n");
-      printf("Mesa IR for linked %s program %d:\n", target_string,
-	     shader_program->Name);
+      fprintf(stderr, "\n");
+      fprintf(stderr, "GLSL IR for linked %s program %d:\n", target_string,
+	      shader_program->Name);
+      _mesa_print_ir(stderr, shader->ir, NULL);
+      fprintf(stderr, "\n");
+      fprintf(stderr, "\n");
+      fprintf(stderr, "Mesa IR for linked %s program %d:\n", target_string,
+	      shader_program->Name);
       print_program(mesa_instructions, mesa_instruction_annotation,
 		    num_instructions);
+      fflush(stderr);
    }
 
    prog->Instructions = mesa_instructions;
@@ -3097,12 +3098,12 @@ _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
    if (ctx->Shader.Flags & GLSL_DUMP) {
       if (!prog->LinkStatus) {
-	 printf("GLSL shader program %d failed to link\n", prog->Name);
+	 fprintf(stderr, "GLSL shader program %d failed to link\n", prog->Name);
       }
 
       if (prog->InfoLog && prog->InfoLog[0] != 0) {
-	 printf("GLSL shader program %d info log:\n", prog->Name);
-	 printf("%s\n", prog->InfoLog);
+	 fprintf(stderr, "GLSL shader program %d info log:\n", prog->Name);
+	 fprintf(stderr, "%s\n", prog->InfoLog);
       }
    }
 }

@@ -838,9 +838,10 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
       sh->CompileStatus = GL_FALSE;
    } else {
       if (ctx->Shader.Flags & GLSL_DUMP) {
-         printf("GLSL source for %s shader %d:\n",
-                _mesa_shader_stage_to_string(sh->Stage), sh->Name);
-         printf("%s\n", sh->Source);
+         fprintf(stderr, "GLSL source for %s shader %d:\n",
+                 _mesa_shader_stage_to_string(sh->Stage), sh->Name);
+         fprintf(stderr, "%s\n", sh->Source);
+         fflush(stderr);
       }
 
       /* this call will set the shader->CompileStatus field to indicate if
@@ -854,16 +855,17 @@ compile_shader(struct gl_context *ctx, GLuint shaderObj)
 
       if (ctx->Shader.Flags & GLSL_DUMP) {
          if (sh->CompileStatus) {
-            printf("GLSL IR for shader %d:\n", sh->Name);
-            _mesa_print_ir(stdout, sh->ir, NULL);
-            printf("\n\n");
+            fprintf(stderr, "GLSL IR for shader %d:\n", sh->Name);
+            _mesa_print_ir(stderr, sh->ir, NULL);
+            fprintf(stderr, "\n\n");
          } else {
-            printf("GLSL shader %d failed to compile.\n", sh->Name);
+            fprintf(stderr, "GLSL shader %d failed to compile.\n", sh->Name);
          }
          if (sh->InfoLog && sh->InfoLog[0] != 0) {
-            printf("GLSL shader %d info log:\n", sh->Name);
-            printf("%s\n", sh->InfoLog);
+            fprintf(stderr, "GLSL shader %d info log:\n", sh->Name);
+            fprintf(stderr, "%s\n", sh->InfoLog);
          }
+         fflush(stderr);
       }
 
    }
