@@ -51,7 +51,9 @@ static struct ir3_register *unwrap(struct ir3_register *reg)
 			switch (instr->opc) {
 			case OPC_META_OUTPUT:
 			case OPC_META_FLOW:
-				return instr->regs[1];
+				if (instr->regs_count > 1)
+					return instr->regs[1];
+				return NULL;
 			default:
 				break;
 			}
@@ -78,25 +80,38 @@ static void ir3_instr_flatten(struct ir3_flatten_ctx *ctx,
 		if (instr->opc == OPC_META_PHI) {
 			struct ir3_register *cond, *t, *f;
 
-			/* convert the PHI instruction to sel.{f16,f32} */
-			instr->category = 3;
+			cond = unwrap(instr->regs[1]);
+			t    = unwrap(instr->regs[2]);  /* true val */
+			f    = unwrap(instr->regs[3]);  /* false val */
 
-			/* instruction type based on dst size: */
-			if (instr->regs[0]->flags & IR3_REG_HALF)
-				instr->opc = OPC_SEL_F16;
-			else
-				instr->opc = OPC_SEL_F32;
-
-			/* swap around src register order, to match what
-			 * hw expects:
+			/* must have cond, but t or f may be null if only written
+			 * one one side of the if/else (in which case we can just
+			 * convert the PHI to a simple move).
 			 */
-			cond = instr->regs[1];
-			t    = instr->regs[2];  /* true val */
-			f    = instr->regs[3];  /* false val */
+			assert(cond);
+			assert(t || f);
 
-			instr->regs[1] = unwrap(f);
-			instr->regs[2] = unwrap(cond);
-			instr->regs[3] = unwrap(t);
+			if (t && f) {
+				/* convert the PHI instruction to sel.{b16,b32} */
+				instr->category = 3;
+
+				/* instruction type based on dst size: */
+				if (instr->regs[0]->flags & IR3_REG_HALF)
+					instr->opc = OPC_SEL_B16;
+				else
+					instr->opc = OPC_SEL_B32;
+
+				instr->regs[1] = t;
+				instr->regs[2] = cond;
+				instr->regs[3] = f;
+			} else {
+				/* convert to simple mov: */
+				instr->category = 1;
+				instr->cat1.dst_type = TYPE_F32;
+				instr->cat1.src_type = TYPE_F32;
+				instr->regs_count = 2;
+				instr->regs[1] = t ? t : f;
+			}
 
 			ctx->cnt++;
 		} else if ((instr->opc == OPC_META_INPUT) &&
