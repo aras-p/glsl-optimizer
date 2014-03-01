@@ -177,7 +177,7 @@ GL 4.4:
   GL_ARB_query_buffer_object                           not started
   GL_ARB_texture_mirror_clamp_to_edge                  DONE (i965, nv30, nv50, nvc0, r300, r600, radeonsi, swrast)
   GL_ARB_texture_stencil8                              not started
-  GL_ARB_vertex_type_10f_11f_11f_rev                   DONE (i965, r600)
+  GL_ARB_vertex_type_10f_11f_11f_rev                   DONE (i965, nv50, nvc0, r600)
 
 
 More info about these features and the work involved can be found at
