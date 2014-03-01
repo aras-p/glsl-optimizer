@@ -24,9 +24,9 @@
 
 
 /*
- * This is the GLX API dispatcher.  Calls to the glX* functions are
- * either routed to the real GLX encoders or to Mesa's pseudo-GLX functions.
- * See the glxapi.h file for more details.
+ * This is the GLX API dispatcher.  It uses a dispatch table but that's
+ * not really needed anymore since the table always points to the "fake"
+ * GLX functions.
  */
 
 
@@ -40,7 +40,6 @@
 #include "glxapi.h"
 
 
-extern struct _glxapi_table *_real_GetGLXDispatchTable(void);
 extern struct _glxapi_table *_mesa_GetGLXDispatchTable(void);
 
 
@@ -107,9 +106,7 @@ get_dispatch(Display *dpy)
       }
    }
 
-   /* A new display, determine if we should use real GLX
-    * or Mesa's pseudo-GLX.
-    */
+   /* Setup the dispatch table */
    {
       struct _glxapi_table *t = _mesa_GetGLXDispatchTable();
 
@@ -130,10 +127,6 @@ get_dispatch(Display *dpy)
       }
    }
 
-   /* If we get here that means we can't use real GLX on this display
-    * and the Mesa pseudo-GLX software renderer wasn't compiled in.
-    * Or, we ran out of memory!
-    */
    return NULL;
 }
 
