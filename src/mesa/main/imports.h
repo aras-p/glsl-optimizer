@@ -132,7 +132,7 @@ typedef union { GLfloat f; GLint i; GLuint u; } fi_type;
 #define atanhf(f) ((float) atanh(f))
 #endif
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && (_MSC_VER < 1800)  /* Not req'd on VS2013 and above */
 static inline float truncf(float x) { return x < 0.0f ? ceilf(x) : floorf(x); }
 static inline float exp2f(float x) { return powf(2.0f, x); }
 static inline float log2f(float x) { return logf(x) * 1.442695041f; }
