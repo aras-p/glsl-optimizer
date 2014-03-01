@@ -66,7 +66,9 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    bool dst_is_msaa = false;
    GLenum src_datatype;
    const char *vec4_prefix;
+   const char *sampler_array_suffix = "";
    char *name;
+   const char *texcoord_type = "vec2";
 
    if (src_rb) {
       src_datatype = _mesa_get_format_datatype(src_rb->Format);
@@ -94,6 +96,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
 
    switch (target) {
    case GL_TEXTURE_2D_MULTISAMPLE:
+   case GL_TEXTURE_2D_MULTISAMPLE_ARRAY:
       if (src_rb->_BaseFormat == GL_DEPTH_COMPONENT ||
           src_rb->_BaseFormat == GL_DEPTH_STENCIL) {
          if (dst_is_msaa)
@@ -105,6 +108,13 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
             shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_COPY;
          else
             shader_index = BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE;
+      }
+
+      if (target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
+         shader_index += (BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_RESOLVE -
+                          BLIT_MSAA_SHADER_2D_MULTISAMPLE_RESOLVE);
+         sampler_array_suffix = "Array";
+         texcoord_type = "vec3";
       }
       break;
    default:
@@ -136,6 +146,8 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    mem_ctx = ralloc_context(NULL);
 
    if (shader_index == BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH_RESOLVE ||
+       shader_index == BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_DEPTH_RESOLVE ||
+       shader_index == BLIT_MSAA_SHADER_2D_MULTISAMPLE_ARRAY_DEPTH_COPY ||
        shader_index == BLIT_MSAA_SHADER_2D_MULTISAMPLE_DEPTH_COPY) {
       char *sample_index;
       const char *arb_sample_shading_extension_string;
@@ -166,26 +178,31 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
       vs_source = ralloc_asprintf(mem_ctx,
                                   "#version 130\n"
                                   "in vec2 position;\n"
-                                  "in vec2 textureCoords;\n"
-                                  "out vec2 texCoords;\n"
+                                  "in %s textureCoords;\n"
+                                  "out %s texCoords;\n"
                                   "void main()\n"
                                   "{\n"
                                   "   texCoords = textureCoords;\n"
                                   "   gl_Position = vec4(position, 0.0, 1.0);\n"
-                                  "}\n");
+                                  "}\n",
+                                  texcoord_type,
+                                  texcoord_type);
       fs_source = ralloc_asprintf(mem_ctx,
                                   "#version 130\n"
                                   "#extension GL_ARB_texture_multisample : enable\n"
                                   "%s\n"
-                                  "uniform sampler2DMS texSampler;\n"
-                                  "in vec2 texCoords;\n"
+                                  "uniform sampler2DMS%s texSampler;\n"
+                                  "in %s texCoords;\n"
                                   "out vec4 out_color;\n"
                                   "\n"
                                   "void main()\n"
                                   "{\n"
-                                  "   gl_FragDepth = texelFetch(texSampler, ivec2(texCoords), %s).r;\n"
+                                  "   gl_FragDepth = texelFetch(texSampler, i%s(texCoords), %s).r;\n"
                                   "}\n",
                                   arb_sample_shading_extension_string,
+                                  sampler_array_suffix,
+                                  texcoord_type,
+                                  texcoord_type,
                                   sample_index);
    } else {
       /* You can create 2D_MULTISAMPLE textures with 0 sample count (meaning 1
@@ -203,7 +220,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
 
       if (dst_is_msaa) {
          arb_sample_shading_extension_string = "#extension GL_ARB_sample_shading : enable";
-         sample_resolve = ralloc_asprintf(mem_ctx, "   out_color = texelFetch(texSampler, ivec2(texCoords), gl_SampleID);");
+         sample_resolve = ralloc_asprintf(mem_ctx, "   out_color = texelFetch(texSampler, i%s(texCoords), gl_SampleID);", texcoord_type);
          merge_function = "";
       } else {
          int i;
@@ -232,8 +249,8 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
          sample_resolve = rzalloc_size(mem_ctx, 1);
          for (i = 0; i < samples; i++) {
             ralloc_asprintf_append(&sample_resolve,
-                                   "   gvec4 sample_1_%d = texelFetch(texSampler, ivec2(texCoords), %d);\n",
-                                   i, i);
+                                   "   gvec4 sample_1_%d = texelFetch(texSampler, i%s(texCoords), %d);\n",
+                                   i, texcoord_type, i);
          }
          /* Now, merge each pair of samples, then merge each pair of those,
           * etc.
@@ -263,20 +280,22 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
       vs_source = ralloc_asprintf(mem_ctx,
                                   "#version 130\n"
                                   "in vec2 position;\n"
-                                  "in vec2 textureCoords;\n"
-                                  "out vec2 texCoords;\n"
+                                  "in %s textureCoords;\n"
+                                  "out %s texCoords;\n"
                                   "void main()\n"
                                   "{\n"
                                   "   texCoords = textureCoords;\n"
                                   "   gl_Position = vec4(position, 0.0, 1.0);\n"
-                                  "}\n");
+                                  "}\n",
+                                  texcoord_type,
+                                  texcoord_type);
       fs_source = ralloc_asprintf(mem_ctx,
                                   "#version 130\n"
                                   "#extension GL_ARB_texture_multisample : enable\n"
                                   "%s\n"
                                   "#define gvec4 %svec4\n"
-                                  "uniform %ssampler2DMS texSampler;\n"
-                                  "in vec2 texCoords;\n"
+                                  "uniform %ssampler2DMS%s texSampler;\n"
+                                  "in %s texCoords;\n"
                                   "out gvec4 out_color;\n"
                                   "\n"
                                   "%s" /* merge_function */
@@ -287,6 +306,8 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
                                   arb_sample_shading_extension_string,
                                   vec4_prefix,
                                   vec4_prefix,
+                                  sampler_array_suffix,
+                                  texcoord_type,
                                   merge_function,
                                   sample_resolve);
    }
@@ -319,7 +340,8 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
 
    _mesa_meta_setup_vertex_objects(&blit->VAO, &blit->VBO, true, 2, 2, 0);
 
-   if (target == GL_TEXTURE_2D_MULTISAMPLE) {
+   if (target == GL_TEXTURE_2D_MULTISAMPLE ||
+       target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
       setup_glsl_msaa_blit_shader(ctx, blit, src_rb, target);
    } else {
       _mesa_meta_setup_blit_shader(ctx, target, &blit->shaders);
@@ -371,7 +393,8 @@ blitframebuffer_texture(struct gl_context *ctx,
    if (readAtt->Texture &&
        (readAtt->Texture->Target == GL_TEXTURE_2D ||
         readAtt->Texture->Target == GL_TEXTURE_RECTANGLE ||
-        readAtt->Texture->Target == GL_TEXTURE_2D_MULTISAMPLE)) {
+        readAtt->Texture->Target == GL_TEXTURE_2D_MULTISAMPLE ||
+        readAtt->Texture->Target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)) {
       /* If there's a texture attached of a type we can handle, then just use
        * it directly.
        */
@@ -532,7 +555,8 @@ blitframebuffer_texture(struct gl_context *ctx,
       }
       else {
          assert(target == GL_TEXTURE_RECTANGLE_ARB ||
-                target == GL_TEXTURE_2D_MULTISAMPLE);
+                target == GL_TEXTURE_2D_MULTISAMPLE ||
+                target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY);
          s0 = (float) srcX0;
          s1 = (float) srcX1;
          t0 = (float) srcY0;
