@@ -95,25 +95,12 @@ static void vid_enc_name_avc(char str[OMX_MAX_STRINGNAME_SIZE])
 
 OMX_ERRORTYPE vid_enc_LoaderComponent(stLoaderComponentType *comp)
 {
-   struct vl_screen *vscreen = omx_get_screen();
-   struct pipe_screen *screen = vscreen ? vscreen->pscreen : NULL;
-
-   if (!screen)
-      return OMX_ErrorInsufficientResources;
-
    comp->componentVersion.s.nVersionMajor = 0;
    comp->componentVersion.s.nVersionMinor = 0;
    comp->componentVersion.s.nRevision = 0;
    comp->componentVersion.s.nStep = 1;
+   comp->name_specific_length = 1;
    comp->constructor = vid_enc_Constructor;
-
-   if (screen->get_video_param(screen, PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH,
-			       PIPE_VIDEO_ENTRYPOINT_ENCODE, PIPE_VIDEO_CAP_SUPPORTED))
-      comp->name_specific_length = 1;
-   else
-      comp->name_specific_length = 0;
-
-   omx_put_screen();
 
    comp->name = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
    if (!comp->name)
@@ -121,27 +108,25 @@ OMX_ERRORTYPE vid_enc_LoaderComponent(stLoaderComponentType *comp)
 
    vid_enc_name(comp->name);
 
-   comp->name_specific = CALLOC(comp->name_specific_length, sizeof(char *));
+   comp->name_specific = CALLOC(1, sizeof(char *));
    if (!comp->name_specific)
       goto error_arrays;
 
-   comp->role_specific = CALLOC(comp->name_specific_length, sizeof(char *));
+   comp->role_specific = CALLOC(1, sizeof(char *));
    if (!comp->role_specific)
       goto error_arrays;
 
-   if (comp->name_specific_length) {
-      comp->name_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-      if (!comp->name_specific[0])
-         goto error_specific;
+   comp->name_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
+   if (!comp->name_specific[0])
+      goto error_specific;
 
-      vid_enc_name_avc(comp->name_specific[0]);
+   vid_enc_name_avc(comp->name_specific[0]);
 
-      comp->role_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
-      if (!comp->role_specific[0])
-         goto error_specific;
+   comp->role_specific[0] = CALLOC(1, OMX_MAX_STRINGNAME_SIZE);
+   if (!comp->role_specific[0])
+      goto error_specific;
 
-      strcpy(comp->role_specific[0], OMX_VID_ENC_AVC_ROLE);
-   }
+   strcpy(comp->role_specific[0], OMX_VID_ENC_AVC_ROLE);
 
    return OMX_ErrorNone;
 
@@ -189,6 +174,10 @@ static OMX_ERRORTYPE vid_enc_Constructor(OMX_COMPONENTTYPE *comp, OMX_STRING nam
       return OMX_ErrorInsufficientResources;
 
    screen = priv->screen->pscreen;
+   if (!screen->get_video_param(screen, PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH,
+                                PIPE_VIDEO_ENTRYPOINT_ENCODE, PIPE_VIDEO_CAP_SUPPORTED))
+      return OMX_ErrorBadParameter;
+ 
    priv->s_pipe = screen->context_create(screen, priv->screen);
    if (!priv->s_pipe)
       return OMX_ErrorInsufficientResources;

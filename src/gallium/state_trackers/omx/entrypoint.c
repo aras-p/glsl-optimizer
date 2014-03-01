@@ -51,21 +51,22 @@ static unsigned omx_usecount = 0;
 int omx_component_library_Setup(stLoaderComponentType **stComponents)
 {
    OMX_ERRORTYPE r;
+   unsigned i = 0;
 
    if (stComponents == NULL)
       return 2;
 
    /* component 0 - video decoder */
-   r = vid_dec_LoaderComponent(stComponents[0]);
-   if (r != OMX_ErrorNone)
-      return r;
+   r = vid_dec_LoaderComponent(stComponents[i]);
+   if (r == OMX_ErrorNone)
+      ++i;
 
    /* component 1 - video encoder */
-   r = vid_enc_LoaderComponent(stComponents[1]);
-   if (r != OMX_ErrorNone)
-      return r;
+   r = vid_enc_LoaderComponent(stComponents[i]);
+   if (r == OMX_ErrorNone)
+      ++i;
 
-   return 2;
+   return i;
 }
 
 struct vl_screen *omx_get_screen(void)
