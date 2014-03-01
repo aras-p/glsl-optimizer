@@ -54,9 +54,9 @@ finish_or_flush( struct gl_context *ctx )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (xmesa) {
-      _glthread_LOCK_MUTEX(_xmesa_lock);
+      mtx_lock(&_xmesa_lock);
       XSync( xmesa->display, False );
-      _glthread_UNLOCK_MUTEX(_xmesa_lock);
+      mtx_unlock(&_xmesa_lock);
    }
 }
 

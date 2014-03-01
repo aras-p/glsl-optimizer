@@ -27,12 +27,13 @@
 #define XMESAP_H
 
 
+#include "c11/threads.h"
 #include "xmesa.h"
 #include "main/mtypes.h"
 #include "swrast/s_context.h"
 
 
-extern _glthread_Mutex _xmesa_lock;
+extern mtx_t _xmesa_lock;
 
 extern XMesaBuffer XMesaBufferList;
 
