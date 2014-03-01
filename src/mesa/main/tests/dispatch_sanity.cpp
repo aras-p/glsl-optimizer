@@ -947,6 +947,10 @@ const struct function gl_core_functions_possible[] = {
    /* GL_ARB_buffer_storage */
    { "glBufferStorage", 43, -1 },
 
+   /* GL_ARB_clear_texture */
+   { "glClearTexImage", 13, -1 },
+   { "glClearTexSubImage", 13, -1 },
+
    { NULL, 0, -1 }
 };
 

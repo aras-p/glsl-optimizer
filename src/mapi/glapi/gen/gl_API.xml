@@ -8358,7 +8358,9 @@
     </function>
 </category>
 
-<!-- ARB extensions #145...#146 -->
+<xi:include href="ARB_clear_texture.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- ARB extension #146 -->
 
 <xi:include href="ARB_multi_bind.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 

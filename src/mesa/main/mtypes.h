@@ -3527,6 +3527,7 @@ struct gl_extensions
    GLboolean ARB_base_instance;
    GLboolean ARB_blend_func_extended;
    GLboolean ARB_buffer_storage;
+   GLboolean ARB_clear_texture;
    GLboolean ARB_color_buffer_float;
    GLboolean ARB_compute_shader;
    GLboolean ARB_conservative_depth;

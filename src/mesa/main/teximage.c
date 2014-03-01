@@ -3818,6 +3818,22 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
                    x, y, width, height);
 }
 
+void GLAPIENTRY
+_mesa_ClearTexSubImage( GLuint texture, GLint level,
+                        GLint xoffset, GLint yoffset, GLint zoffset,
+                        GLsizei width, GLsizei height, GLsizei depth,
+                        GLenum format, GLenum type, const void *data )
+{
+
+}
+
+void GLAPIENTRY
+_mesa_ClearTexImage( GLuint texture, GLint level,
+                     GLenum format, GLenum type, const void *data )
+{
+
+}
+
 
 
 
