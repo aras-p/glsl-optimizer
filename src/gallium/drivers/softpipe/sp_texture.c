@@ -60,7 +60,7 @@ softpipe_resource_layout(struct pipe_screen *screen,
    unsigned width = pt->width0;
    unsigned height = pt->height0;
    unsigned depth = pt->depth0;
-   unsigned buffer_size = 0;
+   uint64_t buffer_size = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
       unsigned slices;
@@ -76,8 +76,8 @@ softpipe_resource_layout(struct pipe_screen *screen,
 
       spr->level_offset[level] = buffer_size;
 
-      buffer_size += (util_format_get_nblocksy(pt->format, height) *
-                      slices * spr->stride[level]);
+      buffer_size += (uint64_t) util_format_get_nblocksy(pt->format, height) *
+                     slices * spr->stride[level];
 
       width  = u_minify(width, 1);
       height = u_minify(height, 1);
