@@ -928,6 +928,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
 
    /* finish up xmesa context initializations */
+   c->direct = GL_TRUE;
    c->swapbytes = CHECK_BYTE_ORDER(v) ? GL_FALSE : GL_TRUE;
    c->xm_visual = v;
    c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */

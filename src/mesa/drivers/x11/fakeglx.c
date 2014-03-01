@@ -81,21 +81,6 @@
    "GLX_SGIX_fbconfig " \
    "GLX_SGIX_pbuffer "
 
-/*
- * Our fake GLX context will contain a "real" GLX context and an XMesa context.
- *
- * Note that a pointer to a __GLXcontext is a pointer to a fake_glx_context,
- * and vice versa.
- *
- * We really just need this structure in order to make the libGL functions
- * glXGetCurrentContext(), glXGetCurrentDrawable() and glXGetCurrentDisplay()
- * work correctly.
- */
-struct fake_glx_context {
-   __GLXcontext glxContext;   /* this MUST be first! */
-   XMesaContext xmesaContext;
-};
-
 
 
 /**********************************************************************/
@@ -1272,38 +1257,14 @@ Fake_glXChooseVisual( Display *dpy, int screen, int *list )
 }
 
 
-/**
- * Init basic fields of a new fake_glx_context.
- */
-static void
-init_glx_context(struct fake_glx_context *glxCtx, Display *dpy)
-{
-   /* Always return True.  See if anyone's confused... */
-   GLboolean direct = GL_TRUE;
-
-   glxCtx->xmesaContext->direct = direct;
-   glxCtx->glxContext.isDirect = direct;
-   glxCtx->glxContext.currentDpy = dpy;
-   glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
-
-   assert((void *) glxCtx == (void *) &(glxCtx->glxContext));
-}
-
-
-
 static GLXContext
 Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
                        GLXContext share_list, Bool direct )
 {
    XMesaVisual xmvis;
-   struct fake_glx_context *glxCtx;
-   struct fake_glx_context *shareCtx = (struct fake_glx_context *) share_list;
+   XMesaContext xmesaCtx;
 
    if (!dpy || !visinfo)
-      return 0;
-
-   glxCtx = CALLOC_STRUCT(fake_glx_context);
-   if (!glxCtx)
       return 0;
 
    /* deallocate unused windows/buffers */
@@ -1316,22 +1277,13 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
       /* This visual wasn't found with glXChooseVisual() */
       xmvis = create_glx_visual( dpy, visinfo );
       if (!xmvis) {
-         /* unusable visual */
-         free(glxCtx);
          return NULL;
       }
    }
 
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
-   if (!glxCtx->xmesaContext) {
-      free(glxCtx);
-      return NULL;
-   }
+   xmesaCtx = XMesaCreateContext(xmvis, (XMesaContext) share_list);
 
-   init_glx_context(glxCtx, dpy);
-
-   return (GLXContext) glxCtx;
+   return (GLXContext) xmesaCtx;
 }
 
 
@@ -1348,11 +1300,9 @@ static Bool
 Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
                             GLXDrawable read, GLXContext ctx )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
-
    if (ctx && draw && read) {
       XMesaBuffer drawBuffer, readBuffer;
-      XMesaContext xmctx = glxCtx->xmesaContext;
+      XMesaContext xmctx = (XMesaContext) ctx;
 
       /* Find the XMesaBuffer which corresponds to the GLXDrawable 'draw' */
       if (ctx == MakeCurrent_PrevContext
@@ -1395,15 +1345,7 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       MakeCurrent_PrevReadBuffer = readBuffer;
 
       /* Now make current! */
-      if (XMesaMakeCurrent2(xmctx, drawBuffer, readBuffer)) {
-         ((__GLXcontext *) ctx)->currentDpy = dpy;
-         ((__GLXcontext *) ctx)->currentDrawable = draw;
-         ((__GLXcontext *) ctx)->currentReadable = read;
-         return True;
-      }
-      else {
-         return False;
-      }
+      return XMesaMakeCurrent2(xmctx, drawBuffer, readBuffer);
    }
    else if (!ctx && !draw && !read) {
       /* release current context w/out assigning new one. */
@@ -1497,15 +1439,13 @@ static void
 Fake_glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
                      unsigned long mask )
 {
-   struct fake_glx_context *fakeSrc = (struct fake_glx_context *) src;
-   struct fake_glx_context *fakeDst = (struct fake_glx_context *) dst;
-   XMesaContext xm_src = fakeSrc->xmesaContext;
-   XMesaContext xm_dst = fakeDst->xmesaContext;
+   XMesaContext xmSrc = (XMesaContext) src;
+   XMesaContext xmDst = (XMesaContext) dst;
    (void) dpy;
    if (MakeCurrent_PrevContext == src) {
       _mesa_Flush();
    }
-   _mesa_copy_context( &(xm_src->mesa), &(xm_dst->mesa), (GLuint) mask );
+   _mesa_copy_context( &xmSrc->mesa, &xmDst->mesa, (GLuint) mask );
 }
 
 
@@ -1536,16 +1476,14 @@ static void
 Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
 {
    if (ctx) {
-      struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
       (void) dpy;
       MakeCurrent_PrevContext = 0;
       MakeCurrent_PrevDrawable = 0;
       MakeCurrent_PrevReadable = 0;
       MakeCurrent_PrevDrawBuffer = 0;
       MakeCurrent_PrevReadBuffer = 0;
-      XMesaDestroyContext( glxCtx->xmesaContext );
+      XMesaDestroyContext((XMesaContext) ctx);
       XMesaGarbageCollect(dpy);
-      free(glxCtx);
    }
 }
 
@@ -1553,9 +1491,8 @@ Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
 static Bool
 Fake_glXIsDirect( Display *dpy, GLXContext ctx )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
-   (void) dpy;
-   return glxCtx ? glxCtx->xmesaContext->direct : False;
+   XMesaContext xmCtx = (XMesaContext) ctx;
+   return xmCtx ? xmCtx->direct : False;
 }
 
 
@@ -1861,6 +1798,13 @@ Fake_glXGetConfig( Display *dpy, XVisualInfo *visinfo,
    return k;
 }
 
+
+static GLXContext
+Fake_glXGetCurrentContext(void)
+{
+   XMesaContext xmesa = XMesaGetCurrentContext();
+   return (GLXContext) xmesa;
+}
 
 static void
 Fake_glXWaitGL( void )
@@ -2320,8 +2264,7 @@ static GLXContext
 Fake_glXCreateNewContext( Display *dpy, GLXFBConfig config,
                           int renderType, GLXContext shareList, Bool direct )
 {
-   struct fake_glx_context *glxCtx;
-   struct fake_glx_context *shareCtx = (struct fake_glx_context *) shareList;
+   XMesaContext xmCtx;
    XMesaVisual xmvis = (XMesaVisual) config;
 
    if (!dpy || !config ||
@@ -2331,32 +2274,19 @@ Fake_glXCreateNewContext( Display *dpy, GLXFBConfig config,
         renderType != GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT))
       return 0;
 
-   glxCtx = CALLOC_STRUCT(fake_glx_context);
-   if (!glxCtx)
-      return 0;
-
    /* deallocate unused windows/buffers */
    XMesaGarbageCollect(dpy);
 
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
-   if (!glxCtx->xmesaContext) {
-      free(glxCtx);
-      return NULL;
-   }
+   xmCtx = XMesaCreateContext(xmvis, (XMesaContext) shareList);
 
-   init_glx_context(glxCtx, dpy);
-
-   return (GLXContext) glxCtx;
+   return (GLXContext) xmCtx;
 }
 
 
 static int
 Fake_glXQueryContext( Display *dpy, GLXContext ctx, int attribute, int *value )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
-   XMesaContext xmctx = glxCtx->xmesaContext;
-
+   XMesaContext xmctx = (XMesaContext) ctx;
    (void) dpy;
    (void) ctx;
 
@@ -2542,27 +2472,15 @@ Fake_glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, Pixm
 static GLXContext
 Fake_glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int render_type, GLXContext share_list, Bool direct)
 {
+   XMesaContext xmCtx;
    XMesaVisual xmvis = (XMesaVisual) config;
-   struct fake_glx_context *glxCtx;
-   struct fake_glx_context *shareCtx = (struct fake_glx_context *) share_list;
-
-   glxCtx = CALLOC_STRUCT(fake_glx_context);
-   if (!glxCtx)
-      return 0;
 
    /* deallocate unused windows/buffers */
    XMesaGarbageCollect(dpy);
 
-   glxCtx->xmesaContext = XMesaCreateContext(xmvis,
-                                   shareCtx ? shareCtx->xmesaContext : NULL);
-   if (!glxCtx->xmesaContext) {
-      free(glxCtx);
-      return NULL;
-   }
+   xmCtx = XMesaCreateContext(xmvis, (XMesaContext) share_list);
 
-   init_glx_context(glxCtx, dpy);
-
-   return (GLXContext) glxCtx;
+   return (GLXContext) xmCtx;
 }
 
 
@@ -2948,7 +2866,7 @@ _mesa_GetGLXDispatchTable(void)
    glx.DestroyContext = Fake_glXDestroyContext;
    glx.DestroyGLXPixmap = Fake_glXDestroyGLXPixmap;
    glx.GetConfig = Fake_glXGetConfig;
-   /*glx.GetCurrentContext = Fake_glXGetCurrentContext;*/
+   glx.GetCurrentContext = Fake_glXGetCurrentContext;
    /*glx.GetCurrentDrawable = Fake_glXGetCurrentDrawable;*/
    glx.IsDirect = Fake_glXIsDirect;
    glx.MakeCurrent = Fake_glXMakeCurrent;

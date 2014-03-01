@@ -68,7 +68,7 @@ struct _glxapi_table {
    void (*DestroyContext)(Display *dpy, GLXContext ctx);
    void (*DestroyGLXPixmap)(Display *dpy, GLXPixmap pixmap);
    int (*GetConfig)(Display *dpy, XVisualInfo *visinfo, int attrib, int *value);
-   /*GLXContext (*GetCurrentContext)(void);*/
+   GLXContext (*GetCurrentContext)(void);
    /*GLXDrawable (*GetCurrentDrawable)(void);*/
    Bool (*IsDirect)(Display *dpy, GLXContext ctx);
    Bool (*MakeCurrent)(Display *dpy, GLXDrawable drawable, GLXContext ctx);
