@@ -112,10 +112,13 @@ static INLINE float logf( float f )
 #define logf(x) ((float)log((double)(x)))
 #endif /* logf */
 
+#if _MSC_VER < 1800
 #define isfinite(x) _finite((double)(x))
 #define isnan(x) _isnan((double)(x))
+#endif /* _MSC_VER < 1800 */
 #endif /* _MSC_VER < 1400 && !defined(__cplusplus) */
 
+#if _MSC_VER < 1800
 static INLINE double log2( double x )
 {
    const double invln2 = 1.442695041;
@@ -133,6 +136,7 @@ roundf(float x)
 {
    return x >= 0.0f ? floorf(x + 0.5f) : ceilf(x - 0.5f);
 }
+#endif
 
 #define INFINITY (DBL_MAX + DBL_MAX)
 #define NAN (INFINITY - INFINITY)
