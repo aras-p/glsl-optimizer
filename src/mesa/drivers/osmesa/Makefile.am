@@ -37,14 +37,14 @@ lib@OSMESA_LIB@_la_SOURCES = osmesa.c
 
 lib@OSMESA_LIB@_la_LDFLAGS = -module -version-number @OSMESA_VERSION@ -no-undefined
 
-GLAPI_LIB = $(top_builddir)/src/mapi/glapi/libglapi.la
 if HAVE_SHARED_GLAPI
-GLAPI_LIB += $(top_builddir)/src/mapi/shared-glapi/libglapi.la
+SHARED_GLAPI_LIB = $(top_builddir)/src/mapi/shared-glapi/libglapi.la
 endif
 
 lib@OSMESA_LIB@_la_LIBADD = \
 	$(top_builddir)/src/mesa/libmesa.la \
-	$(GLAPI_LIB) \
+	$(top_builddir)/src/mapi/glapi/libglapi.la \
+	$(SHARED_GLAPI_LIB) \
 	$(OSMESA_LIB_DEPS)
 
 if BUILD_SHARED

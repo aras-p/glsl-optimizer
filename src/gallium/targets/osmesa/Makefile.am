@@ -40,9 +40,8 @@ lib@OSMESA_LIB@_la_SOURCES = target.c
 
 lib@OSMESA_LIB@_la_LDFLAGS = -module -version-number @OSMESA_VERSION@ -no-undefined
 
-GLAPI_LIB = $(top_builddir)/src/mapi/glapi/libglapi.la
 if HAVE_SHARED_GLAPI
-GLAPI_LIB += $(top_builddir)/src/mapi/shared-glapi/libglapi.la
+SHARED_GLAPI_LIB = $(top_builddir)/src/mapi/shared-glapi/libglapi.la
 endif
 
 lib@OSMESA_LIB@_la_LIBADD = \
@@ -51,8 +50,9 @@ lib@OSMESA_LIB@_la_LIBADD = \
 	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la \
-        $(top_builddir)/src/gallium/state_trackers/osmesa/libosmesa.la \
-	$(GLAPI_LIB) \
+	$(top_builddir)/src/gallium/state_trackers/osmesa/libosmesa.la \
+	$(top_builddir)/src/mapi/glapi/libglapi.la \
+	$(SHARED_GLAPI_LIB) \
 	$(OSMESA_LIB_DEPS) \
 	$(CLOCK_LIB)
 

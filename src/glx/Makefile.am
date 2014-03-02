@@ -21,12 +21,10 @@
 
 if HAVE_SHARED_GLAPI
 SHARED_GLAPI_CFLAGS = -DGLX_SHARED_GLAPI
-SHARED_GLAPI_LIBS = $(top_builddir)/src/mapi/shared-glapi/libglapi.la
+SHARED_GLAPI_LIB = $(top_builddir)/src/mapi/shared-glapi/libglapi.la
 endif
 
 SUBDIRS=. tests
-
-GLAPI_LIB = $(top_builddir)/src/mapi/glapi/libglapi.la
 
 if HAVE_XF86VIDMODE
 EXTRA_DEFINES_XF86VIDMODE = -DXF86VIDMODE
@@ -106,8 +104,8 @@ libglx_la_LIBADD = $(top_builddir)/src/loader/libloader.la
 
 GL_LIBS = \
 	libglx.la \
-	$(SHARED_GLAPI_LIBS) \
-	$(GLAPI_LIB) \
+	$(top_builddir)/src/mapi/glapi/libglapi.la \
+	$(SHARED_GLAPI_LIB) \
 	$(GL_LIB_DEPS)
 
 GL_LDFLAGS = \
