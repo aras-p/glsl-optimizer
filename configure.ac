@@ -1549,8 +1549,15 @@ strip_unwanted_llvm_flags() {
 	-e 's/-O.\>//g' \
 	-e 's/-g\>//g' \
 	-e 's/-Wall\>//g' \
+	-e 's/-Wcast-qual\>//g' \
+	-e 's/-Woverloaded-virtual\>//g' \
 	-e 's/-fcolor-diagnostics\>//g' \
-	-e 's/-fomit-frame-pointer\>//g'
+	-e 's/-fdata-sections\>//g' \
+	-e 's/-ffunction-sections\>//g' \
+	-e 's/-fno-exceptions\>//g' \
+	-e 's/-fomit-frame-pointer\>//g' \
+	-e 's/-fvisibility-inlines-hidden\>//g' \
+	-e 's/-fPIC\>//g'
 }
 
 
