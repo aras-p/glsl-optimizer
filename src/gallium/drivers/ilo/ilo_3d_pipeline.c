@@ -257,6 +257,17 @@ ilo_3d_pipeline_emit_write_depth_count(struct ilo_3d_pipeline *p,
    p->emit_write_depth_count(p, bo, index);
 }
 
+/**
+ * Emit MI_STORE_REGISTER_MEM to store statistics registers.
+ */
+void
+ilo_3d_pipeline_emit_write_statistics(struct ilo_3d_pipeline *p,
+                                      struct intel_bo *bo, int index)
+{
+   handle_invalid_batch_bo(p, true);
+   p->emit_write_statistics(p, bo, index);
+}
+
 void
 ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
                               const struct ilo_blitter *blitter)

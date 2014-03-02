@@ -161,6 +161,10 @@ ilo_3d_pipeline_emit_write_depth_count_gen6(struct ilo_3d_pipeline *p,
                                             struct intel_bo *bo, int index);
 
 void
+ilo_3d_pipeline_emit_write_statistics_gen6(struct ilo_3d_pipeline *p,
+                                           struct intel_bo *bo, int index);
+
+void
 ilo_3d_pipeline_init_gen6(struct ilo_3d_pipeline *p);
 
 #endif /* ILO_3D_PIPELINE_GEN6_H */

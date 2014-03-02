@@ -50,6 +50,7 @@ enum ilo_3d_pipeline_action {
    ILO_3D_PIPELINE_FLUSH,
    ILO_3D_PIPELINE_WRITE_TIMESTAMP,
    ILO_3D_PIPELINE_WRITE_DEPTH_COUNT,
+   ILO_3D_PIPELINE_WRITE_STATISTICS,
    ILO_3D_PIPELINE_RECTLIST,
 };
 
@@ -82,6 +83,9 @@ struct ilo_3d_pipeline {
 
    void (*emit_write_depth_count)(struct ilo_3d_pipeline *pipeline,
                                   struct intel_bo *bo, int index);
+
+   void (*emit_write_statistics)(struct ilo_3d_pipeline *pipeline,
+                                 struct intel_bo *bo, int index);
 
    void (*emit_rectlist)(struct ilo_3d_pipeline *pipeline,
                          const struct ilo_blitter *blitter);
@@ -175,6 +179,10 @@ ilo_3d_pipeline_emit_write_timestamp(struct ilo_3d_pipeline *p,
 void
 ilo_3d_pipeline_emit_write_depth_count(struct ilo_3d_pipeline *p,
                                        struct intel_bo *bo, int index);
+
+void
+ilo_3d_pipeline_emit_write_statistics(struct ilo_3d_pipeline *p,
+                                      struct intel_bo *bo, int index);
 
 void
 ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
