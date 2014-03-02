@@ -11,3 +11,5 @@ libwayland_egl_la_SOURCES = wayland-egl.c
 libwayland_egl_la_LDFLAGS = -version-info 1
 
 TESTS = wayland-egl-symbols-check
+
+include $(top_srcdir)/install-lib-links.mk

@@ -48,13 +48,7 @@ lib@OSMESA_LIB@_la_LIBADD = \
 	$(OSMESA_LIB_DEPS)
 
 if BUILD_SHARED
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: lib@OSMESA_LIB@.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
-	ln -f .libs/lib@OSMESA_LIB@.so $(top_builddir)/$(LIB_DIR)/lib@OSMESA_LIB@.so;
-	ln -f .libs/lib@OSMESA_LIB@.so.@OSMESA_VERSION@ $(top_builddir)/$(LIB_DIR)/lib@OSMESA_LIB@.so.@OSMESA_VERSION@;
-	ln -f .libs/lib@OSMESA_LIB@.so.@OSMESA_VERSION@.0.0 $(top_builddir)/$(LIB_DIR)/
+include $(top_srcdir)/install-lib-links.mk
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig
