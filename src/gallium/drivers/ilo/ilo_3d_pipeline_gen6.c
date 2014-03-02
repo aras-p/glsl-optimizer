@@ -1506,7 +1506,7 @@ ilo_3d_pipeline_emit_write_timestamp_gen6(struct ilo_3d_pipeline *p,
 
    gen6_emit_PIPE_CONTROL(p->dev,
          PIPE_CONTROL_WRITE_TIMESTAMP,
-         bo, index * sizeof(uint64_t) | PIPE_CONTROL_GLOBAL_GTT_WRITE,
+         bo, index * sizeof(uint64_t),
          true, p->cp);
 }
 
@@ -1520,7 +1520,7 @@ ilo_3d_pipeline_emit_write_depth_count_gen6(struct ilo_3d_pipeline *p,
    gen6_emit_PIPE_CONTROL(p->dev,
          PIPE_CONTROL_DEPTH_STALL |
          PIPE_CONTROL_WRITE_DEPTH_COUNT,
-         bo, index * sizeof(uint64_t) | PIPE_CONTROL_GLOBAL_GTT_WRITE,
+         bo, index * sizeof(uint64_t),
          true, p->cp);
 }
 

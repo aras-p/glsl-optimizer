@@ -1769,6 +1769,8 @@ gen6_emit_PIPE_CONTROL(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
+   assert(bo_offset % ((write_qword) ? 8 : 4) == 0);
+
    if (dw1 & PIPE_CONTROL_CS_STALL) {
       /*
        * From the Sandy Bridge PRM, volume 2 part 1, page 73:
@@ -1820,6 +1822,18 @@ gen6_emit_PIPE_CONTROL(const struct ilo_dev_info *dev,
       assert(!(dw1 & (PIPE_CONTROL_WRITE_FLUSH |
                       PIPE_CONTROL_DEPTH_CACHE_FLUSH)));
    }
+
+   /*
+    * From the Sandy Bridge PRM, volume 1 part 3, page 19:
+    *
+    *     "[DevSNB] PPGTT memory writes by MI_* (such as MI_STORE_DATA_IMM)
+    *      and PIPE_CONTROL are not supported."
+    *
+    * The kernel will add the mapping automatically (when write domain is
+    * INTEL_DOMAIN_INSTRUCTION).
+    */
+   if (dev->gen == ILO_GEN(6) && bo)
+      bo_offset |= PIPE_CONTROL_GLOBAL_GTT_WRITE;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
