@@ -242,16 +242,16 @@ VdpStatus vlVdpVideoMixerRender(VdpVideoMixer mixer,
    compositor = &vmixer->device->compositor;
 
    surf = vlGetDataHTAB(video_surface_current);
-   video_buffer = surf->video_buffer;
    if (!surf)
       return VDP_STATUS_INVALID_HANDLE;
+   video_buffer = surf->video_buffer;
 
    if (surf->device != vmixer->device)
       return VDP_STATUS_HANDLE_DEVICE_MISMATCH;
 
-   if (vmixer->video_width > surf->video_buffer->width ||
-       vmixer->video_height > surf->video_buffer->height ||
-       vmixer->chroma_format != surf->video_buffer->chroma_format)
+   if (vmixer->video_width > video_buffer->width ||
+       vmixer->video_height > video_buffer->height ||
+       vmixer->chroma_format != video_buffer->chroma_format)
       return VDP_STATUS_INVALID_SIZE;
 
    if (layer_count > vmixer->max_layers)
