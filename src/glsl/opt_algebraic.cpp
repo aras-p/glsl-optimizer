@@ -119,6 +119,44 @@ update_type(ir_expression *ir)
       ir->type = ir->operands[1]->type;
 }
 
+/* Recognize (v.x + v.y) + (v.z + v.w) as dot(v, 1.0) */
+static ir_expression *
+try_replace_with_dot(ir_expression *expr0, ir_expression *expr1, void *mem_ctx)
+{
+   if (expr0 && expr0->operation == ir_binop_add &&
+       expr1 && expr1->operation == ir_binop_add) {
+      ir_swizzle *x = expr0->operands[0]->as_swizzle();
+      ir_swizzle *y = expr0->operands[1]->as_swizzle();
+      ir_swizzle *z = expr1->operands[0]->as_swizzle();
+      ir_swizzle *w = expr1->operands[1]->as_swizzle();
+
+      if (!x || x->mask.num_components != 1 ||
+          !y || y->mask.num_components != 1 ||
+          !z || z->mask.num_components != 1 ||
+          !w || w->mask.num_components != 1) {
+         return NULL;
+      }
+
+      bool swiz_seen[4] = {false, false, false, false};
+      swiz_seen[x->mask.x] = true;
+      swiz_seen[y->mask.x] = true;
+      swiz_seen[z->mask.x] = true;
+      swiz_seen[w->mask.x] = true;
+
+      if (!swiz_seen[0] || !swiz_seen[1] ||
+          !swiz_seen[2] || !swiz_seen[3]) {
+         return NULL;
+      }
+
+      if (x->val->equals(y->val) &&
+          x->val->equals(z->val) &&
+          x->val->equals(w->val)) {
+         return dot(x->val, new(mem_ctx) ir_constant(1.0f, 4));
+      }
+   }
+   return NULL;
+}
+
 void
 ir_algebraic_visitor::reassociate_operands(ir_expression *ir1,
 					   int op1,
@@ -331,6 +369,14 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
 	 reassociate_constant(ir, 0, op_const[0], op_expr[1]);
       if (op_const[1] && !op_const[0])
 	 reassociate_constant(ir, 1, op_const[1], op_expr[0]);
+
+      /* Recognize (v.x + v.y) + (v.z + v.w) as dot(v, 1.0) */
+      if (options->OptimizeForAOS) {
+         ir_expression *expr = try_replace_with_dot(op_expr[0], op_expr[1],
+                                                    mem_ctx);
+         if (expr)
+            return expr;
+      }
 
       /* Replace (-x + y) * a + x and commutative variations with lrp(x, y, a).
        *
