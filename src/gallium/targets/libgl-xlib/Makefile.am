@@ -72,8 +72,4 @@ libGL_la_LINK = $(CXXLINK) $(libGL_la_LDFLAGS)
 nodist_EXTRA_libGL_la_SOURCES = dummy-c.c
 endif
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: libGL.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/libGL.so* $(top_builddir)/$(LIB_DIR)/gallium/
+include $(top_srcdir)/install-gallium-links.mk

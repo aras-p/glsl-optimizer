@@ -242,22 +242,4 @@ endif
 endif
 endif
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-if HAVE_OPENGL
-if !HAVE_SHARED_GLAPI
-all-local: egl_gallium.la st_GL.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/egl
-	ln -f .libs/egl_gallium.so $(top_builddir)/$(LIB_DIR)/egl/egl_gallium.so
-	ln -f .libs/st_GL.so $(top_builddir)/$(LIB_DIR)/egl/st_GL.so
-else
-all-local: egl_gallium.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/egl
-	ln -f .libs/egl_gallium.so $(top_builddir)/$(LIB_DIR)/egl/egl_gallium.so
-
-endif
-else
-all-local: egl_gallium.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/egl
-	ln -f .libs/egl_gallium.so $(top_builddir)/$(LIB_DIR)/egl/egl_gallium.so
-endif
+include $(top_srcdir)/install-gallium-links.mk

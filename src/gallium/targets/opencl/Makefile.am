@@ -51,8 +51,4 @@ icddir = /etc/OpenCL/vendors/
 icd_DATA = mesa.icd
 endif
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: lib@OPENCL_LIBNAME@.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)
-	ln -f .libs/lib@OPENCL_LIBNAME@.so* $(top_builddir)/$(LIB_DIR)/
+include $(top_srcdir)/install-gallium-links.mk
