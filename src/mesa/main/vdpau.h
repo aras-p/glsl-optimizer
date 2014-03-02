@@ -50,7 +50,7 @@ _mesa_VDPAURegisterOutputSurfaceNV(const GLvoid *vdpSurface, GLenum target,
                                    GLsizei numTextureNames,
                                    const GLuint *textureNames);
 
-extern void GLAPIENTRY
+extern GLboolean GLAPIENTRY
 _mesa_VDPAUIsSurfaceNV(GLintptr surface);
 
 extern void GLAPIENTRY

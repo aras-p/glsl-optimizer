@@ -29,6 +29,7 @@
     </function>
 
     <function name="VDPAUIsSurfaceNV" offset="assign">
+        <return type="GLboolean"/>
 	<param name="surface" type="GLintptr"/>
     </function>
 

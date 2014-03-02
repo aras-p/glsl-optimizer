@@ -205,7 +205,7 @@ _mesa_VDPAURegisterOutputSurfaceNV(const GLvoid *vdpSurface, GLenum target,
                            numTextureNames, textureNames);
 }
 
-void GLAPIENTRY
+GLboolean GLAPIENTRY
 _mesa_VDPAUIsSurfaceNV(GLintptr surface)
 {
    struct vdp_surface *surf = (struct vdp_surface *)surface;
@@ -213,13 +213,14 @@ _mesa_VDPAUIsSurfaceNV(GLintptr surface)
 
    if (!ctx->vdpDevice || !ctx->vdpGetProcAddress || !ctx->vdpSurfaces) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "VDPAUIsSurfaceNV");
-      return;
+      return false;
    }
 
    if (!_mesa_set_search(ctx->vdpSurfaces, _mesa_hash_pointer(surf), surf)) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "VDPAUIsSurfaceNV");
-      return;
+      return false;
    }
+
+   return true;
 }
 
 void GLAPIENTRY
