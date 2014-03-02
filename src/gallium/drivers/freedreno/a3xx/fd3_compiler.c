@@ -1427,19 +1427,9 @@ trans_endif(const struct instr_translater *t,
 	if (!elseb)
 		elseb = ifb->parent;
 
-	/* count up number of outputs for each block: */
-	for (i = 0; i < ifb->ntemporaries; i++) {
-		if (ifb->temporaries[i])
-			ifnout++;
-		if (elseb->temporaries[i])
-			elsenout++;
-	}
-	for (i = 0; i < ifb->noutputs; i++) {
-		if (ifb->outputs[i])
-			ifnout++;
-		if (elseb->outputs[i])
-			elsenout++;
-	}
+	/* worst case sizes: */
+	ifnout = ifb->ntemporaries + ifb->noutputs;
+	elsenout = elseb->ntemporaries + elseb->noutputs;
 
 	ifout = ir3_alloc(ctx->ir, sizeof(ifb->outputs[0]) * ifnout);
 	if (elseb != ifb->parent)
@@ -1479,6 +1469,8 @@ trans_endif(const struct instr_translater *t,
 			ctx->block->temporaries[i] = phi;
 		}
 	}
+
+	compile_assert(ctx, ifb->noutputs == elseb->noutputs);
 
 	/* .. and any outputs written: */
 	for (i = 0; i < ifb->noutputs; i++) {
