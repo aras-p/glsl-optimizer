@@ -40,6 +40,10 @@
  * Commands that GEN7 GPE could emit.
  */
 enum ilo_gpe_gen7_command {
+   ILO_GPE_GEN7_MI_STORE_DATA_IMM,                   /* ILO_GPE_MI(0x20) */
+   ILO_GPE_GEN7_MI_LOAD_REGISTER_IMM,                /* ILO_GPE_MI(0x22) */
+   ILO_GPE_GEN7_MI_STORE_REGISTER_MEM,               /* ILO_GPE_MI(0x24) */
+   ILO_GPE_GEN7_MI_REPORT_PERF_COUNT,                /* ILO_GPE_MI(0x28) */
    ILO_GPE_GEN7_STATE_BASE_ADDRESS,                  /* (0x0, 0x1, 0x01) */
    ILO_GPE_GEN7_STATE_SIP,                           /* (0x0, 0x1, 0x02) */
    ILO_GPE_GEN7_3DSTATE_VF_STATISTICS,               /* (0x1, 0x0, 0x0b) */

@@ -679,6 +679,10 @@ ilo_gpe_gen7_estimate_command_size(const struct ilo_dev_info *dev,
       int header;
       int body;
    } gen7_command_size_table[ILO_GPE_GEN7_COMMAND_COUNT] = {
+      [ILO_GPE_GEN7_MI_STORE_DATA_IMM]                        = { 0,  5  },
+      [ILO_GPE_GEN7_MI_LOAD_REGISTER_IMM]                     = { 0,  3  },
+      [ILO_GPE_GEN7_MI_STORE_REGISTER_MEM]                    = { 0,  3  },
+      [ILO_GPE_GEN7_MI_REPORT_PERF_COUNT]                     = { 0,  3  },
       [ILO_GPE_GEN7_STATE_BASE_ADDRESS]                       = { 0,  10 },
       [ILO_GPE_GEN7_STATE_SIP]                                = { 0,  2  },
       [ILO_GPE_GEN7_3DSTATE_VF_STATISTICS]                    = { 0,  1  },
