@@ -251,13 +251,8 @@ ir_expression *round_even(operand a)
    return expr(ir_unop_round_even, a);
 }
 
-ir_expression *dot(operand a, operand b)
-{
-   return expr(ir_binop_dot, a, b);
-}
-
 /* dot for vectors, mul for scalars */
-ir_expression *dotlike(operand a, operand b)
+ir_expression *dot(operand a, operand b)
 {
    assert(a.val->type == b.val->type);
 

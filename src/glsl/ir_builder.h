@@ -139,7 +139,6 @@ ir_expression *carry(operand a, operand b);
 ir_expression *borrow(operand a, operand b);
 ir_expression *round_even(operand a);
 ir_expression *dot(operand a, operand b);
-ir_expression *dotlike(operand a, operand b);
 ir_expression *clamp(operand a, operand b, operand c);
 ir_expression *saturate(operand a);
 ir_expression *abs(operand a);
