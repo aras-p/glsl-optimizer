@@ -57,7 +57,7 @@ static const struct {
    [PIPE_QUERY_SO_STATISTICS]          = INFOX(ilo_3d, "so statistics"),
    [PIPE_QUERY_SO_OVERFLOW_PREDICATE]  = INFOX(ilo_3d, "so overflow pred."),
    [PIPE_QUERY_GPU_FINISHED]           = INFOX(ilo_3d, "gpu finished"),
-   [PIPE_QUERY_PIPELINE_STATISTICS]    = INFOX(ilo_3d, "pipeline statistics"),
+   [PIPE_QUERY_PIPELINE_STATISTICS]    = INFO(ilo_3d, "pipeline statistics"),
 
 #undef INFO
 #undef INFOX
@@ -80,6 +80,7 @@ ilo_create_query(struct pipe_context *pipe, unsigned query_type)
    case PIPE_QUERY_TIME_ELAPSED:
    case PIPE_QUERY_PRIMITIVES_GENERATED:
    case PIPE_QUERY_PRIMITIVES_EMITTED:
+   case PIPE_QUERY_PIPELINE_STATISTICS:
       break;
    default:
       return NULL;
@@ -149,6 +150,22 @@ serialize_query_data(unsigned type, const union pipe_query_result *data,
       {
          uint64_t *r = buf;
          r[0] = data->u64;
+      }
+      break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      {
+         uint64_t *r = buf;
+         r[0] = data->pipeline_statistics.ia_vertices;
+         r[1] = data->pipeline_statistics.ia_primitives;
+         r[2] = data->pipeline_statistics.vs_invocations;
+         r[3] = data->pipeline_statistics.gs_invocations;
+         r[4] = data->pipeline_statistics.gs_primitives;
+         r[5] = data->pipeline_statistics.c_invocations;
+         r[6] = data->pipeline_statistics.c_primitives;
+         r[7] = data->pipeline_statistics.ps_invocations;
+         r[8] = data->pipeline_statistics.hs_invocations;
+         r[9] = data->pipeline_statistics.ds_invocations;
+         r[10] = data->pipeline_statistics.cs_invocations;
       }
       break;
    default:

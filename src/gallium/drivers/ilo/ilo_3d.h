@@ -60,6 +60,7 @@ struct ilo_3d {
    struct list_head time_elapsed_queries;
    struct list_head prim_generated_queries;
    struct list_head prim_emitted_queries;
+   struct list_head pipeline_statistics_queries;
 
    struct ilo_3d_pipeline *pipeline;
 };

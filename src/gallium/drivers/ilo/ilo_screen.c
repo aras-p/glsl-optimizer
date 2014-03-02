@@ -419,9 +419,8 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TGSI_TEXCOORD:
       return false;
    case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
-      return true;
    case PIPE_CAP_QUERY_PIPELINE_STATISTICS:
-      return false; /* TODO */
+      return true;
    case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
       return 0;
    case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
