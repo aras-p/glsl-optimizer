@@ -59,9 +59,4 @@ ilo_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
 ilo_dri_la_LIBADD += $(LLVM_LIBS)
 endif
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: ilo_dri.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/ilo_dri.so $(top_builddir)/$(LIB_DIR)/gallium/ilo_dri.so
-	ln -sf ilo_dri.so $(top_builddir)/$(LIB_DIR)/gallium/i965_dri.so
+include $(top_srcdir)/install-gallium-links.mk

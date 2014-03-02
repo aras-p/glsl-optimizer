@@ -62,8 +62,4 @@ swrast_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
 swrast_dri_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la $(LLVM_LIBS)
 endif
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: swrast_dri.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/swrast_dri.so $(top_builddir)/$(LIB_DIR)/gallium/swrast_dri.so
+include $(top_srcdir)/install-gallium-links.mk

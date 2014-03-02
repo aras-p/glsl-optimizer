@@ -58,8 +58,4 @@ vmwgfx_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
 vmwgfx_dri_la_LIBADD += $(LLVM_LIBS)
 endif
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: vmwgfx_dri.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/vmwgfx_dri.so $(top_builddir)/$(LIB_DIR)/gallium/vmwgfx_dri.so
+include $(top_srcdir)/install-gallium-links.mk

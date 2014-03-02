@@ -61,8 +61,4 @@ r600_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
 r600_dri_la_LIBADD += $(LLVM_LIBS)
 endif
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: r600_dri.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/r600_dri.so $(top_builddir)/$(LIB_DIR)/gallium/r600_dri.so
+include $(top_srcdir)/install-gallium-links.mk
