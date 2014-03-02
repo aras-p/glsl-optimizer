@@ -841,12 +841,10 @@ static void brw_upload_indices(struct brw_context *brw)
    /* Turn into a proper VBO:
     */
    if (!_mesa_is_bufferobj(bufferobj)) {
-
       /* Get new bufferobj, offset:
        */
       intel_upload_data(brw, index_buffer->ptr, ib_size, ib_type_size,
 			&bo, &offset);
-      brw->ib.start_vertex_offset = offset / ib_type_size;
    } else {
       offset = (GLuint) (unsigned long) index_buffer->ptr;
 
@@ -865,21 +863,20 @@ static void brw_upload_indices(struct brw_context *brw)
                                                     MAP_INTERNAL);
 
           intel_upload_data(brw, map, ib_size, ib_type_size, &bo, &offset);
-          brw->ib.start_vertex_offset = offset / ib_type_size;
 
           ctx->Driver.UnmapBuffer(ctx, bufferobj, MAP_INTERNAL);
        } else {
-	  /* Use CMD_3D_PRIM's start_vertex_offset to avoid re-uploading
-	   * the index buffer state when we're just moving the start index
-	   * of our drawing.
-	   */
-	  brw->ib.start_vertex_offset = offset / ib_type_size;
-
 	  bo = intel_bufferobj_buffer(brw, intel_buffer_object(bufferobj),
 				      offset, ib_size);
 	  drm_intel_bo_reference(bo);
        }
    }
+
+   /* Use 3DPRIMITIVE's start_vertex_offset to avoid re-uploading
+    * the index buffer state when we're just moving the start index
+    * of our drawing.
+    */
+   brw->ib.start_vertex_offset = offset / ib_type_size;
 
    if (brw->ib.bo != bo) {
       drm_intel_bo_unreference(brw->ib.bo);
