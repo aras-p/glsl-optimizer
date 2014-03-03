@@ -286,6 +286,7 @@ struct r600_shader_ctx {
 	int					colors_used;
 	boolean                 clip_vertex_write;
 	unsigned                cv_output;
+	unsigned		edgeflag_output;
 	int					fragcoord_input;
 	int					native_integers;
 	int					next_ring_offset;
@@ -490,10 +491,11 @@ static int r600_spi_sid(struct r600_shader_io * io)
 	 * semantic indices, so we'll use 0 for them.
 	 */
 	if (name == TGSI_SEMANTIC_POSITION ||
-		name == TGSI_SEMANTIC_PSIZE ||
-		name == TGSI_SEMANTIC_LAYER ||
-		name == TGSI_SEMANTIC_VIEWPORT_INDEX ||
-		name == TGSI_SEMANTIC_FACE)
+	    name == TGSI_SEMANTIC_PSIZE ||
+	    name == TGSI_SEMANTIC_EDGEFLAG ||
+	    name == TGSI_SEMANTIC_LAYER ||
+	    name == TGSI_SEMANTIC_VIEWPORT_INDEX ||
+	    name == TGSI_SEMANTIC_FACE)
 		index = 0;
 	else {
 		if (name == TGSI_SEMANTIC_GENERIC) {
@@ -623,6 +625,11 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 			case TGSI_SEMANTIC_PSIZE:
 				ctx->shader->vs_out_misc_write = 1;
 				ctx->shader->vs_out_point_size = 1;
+				break;
+			case TGSI_SEMANTIC_EDGEFLAG:
+				ctx->shader->vs_out_misc_write = 1;
+				ctx->shader->vs_out_edgeflag = 1;
+				ctx->edgeflag_output = i;
 				break;
 			case TGSI_SEMANTIC_VIEWPORT_INDEX:
 				ctx->shader->vs_out_misc_write = 1;
@@ -1160,6 +1167,35 @@ static int emit_streamout(struct r600_shader_ctx *ctx, struct pipe_stream_output
 	return 0;
 out_err:
 	return r;
+}
+
+static void convert_edgeflag_to_int(struct r600_shader_ctx *ctx)
+{
+	struct r600_bytecode_alu alu;
+	unsigned reg;
+
+	if (!ctx->shader->vs_out_edgeflag)
+		return;
+
+	reg = ctx->shader->output[ctx->edgeflag_output].gpr;
+
+	/* clamp(x, 0, 1) */
+	memset(&alu, 0, sizeof(alu));
+	alu.op = ALU_OP1_MOV;
+	alu.src[0].sel = reg;
+	alu.dst.sel = reg;
+	alu.dst.write = 1;
+	alu.dst.clamp = 1;
+	alu.last = 1;
+	r600_bytecode_add_alu(ctx->bc, &alu);
+
+	memset(&alu, 0, sizeof(alu));
+	alu.op = ALU_OP1_FLT_TO_INT;
+	alu.src[0].sel = reg;
+	alu.dst.sel = reg;
+	alu.dst.write = 1;
+	alu.last = 1;
+	r600_bytecode_add_alu(ctx->bc, &alu);
 }
 
 static int generate_gs_copy_shader(struct r600_context *rctx,
@@ -1918,6 +1954,8 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 	    so.num_outputs && !use_llvm)
 		emit_streamout(&ctx, &so);
 
+	convert_edgeflag_to_int(&ctx);
+
 	if (ring_outputs) {
 		if (key.vs_as_es)
 			emit_gs_ring_writes(&ctx, FALSE);
@@ -1948,6 +1986,15 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 				case TGSI_SEMANTIC_PSIZE:
 					output[j].array_base = 61;
 					output[j].swizzle_y = 7;
+					output[j].swizzle_z = 7;
+					output[j].swizzle_w = 7;
+					output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
+					pos_emitted = true;
+					break;
+				case TGSI_SEMANTIC_EDGEFLAG:
+					output[j].array_base = 61;
+					output[j].swizzle_x = 7;
+					output[j].swizzle_y = 0;
 					output[j].swizzle_z = 7;
 					output[j].swizzle_w = 7;
 					output[j].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_POS;
