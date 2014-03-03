@@ -229,7 +229,7 @@ public:
 
    int next_temp;
 
-   variable_storage *find_variable_storage(ir_variable *var);
+   variable_storage *find_variable_storage(const ir_variable *var);
 
    src_reg get_temp(const glsl_type *type);
    void reladdr_to_temp(ir_instruction *ir, src_reg *reg, int *num_reladdr);
@@ -661,9 +661,8 @@ ir_to_mesa_visitor::get_temp(const glsl_type *type)
 }
 
 variable_storage *
-ir_to_mesa_visitor::find_variable_storage(ir_variable *var)
+ir_to_mesa_visitor::find_variable_storage(const ir_variable *var)
 {
-   
    variable_storage *entry;
 
    foreach_list(node, &this->variables) {
