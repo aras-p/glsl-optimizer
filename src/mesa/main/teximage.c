@@ -4427,8 +4427,7 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
       }
       else {
          /* clear all image fields */
-         _mesa_init_teximage_fields(ctx, texImage,
-               0, 0, 0, 0, GL_NONE, MESA_FORMAT_NONE);
+         clear_teximage_fields(texImage);
       }
    }
    else {
