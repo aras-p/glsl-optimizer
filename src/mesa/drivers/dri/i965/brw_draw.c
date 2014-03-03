@@ -48,6 +48,7 @@
 #include "brw_state.h"
 
 #include "intel_batchbuffer.h"
+#include "intel_buffers.h"
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
@@ -350,7 +351,7 @@ static void brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
    struct intel_renderbuffer *stencil_irb = intel_get_renderbuffer(fb, BUFFER_STENCIL);
    struct gl_renderbuffer_attachment *depth_att = &fb->Attachment[BUFFER_DEPTH];
 
-   if (brw->is_front_buffer_rendering)
+   if (brw_is_front_buffer_drawing(fb))
       front_irb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
 
    if (front_irb)

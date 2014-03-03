@@ -1063,23 +1063,6 @@ struct brw_context
     */
    bool front_buffer_dirty;
 
-   /**
-    * Track whether front-buffer rendering is currently enabled
-    *
-    * A separate flag is used to track this in order to support MRT more
-    * easily.
-    */
-   bool is_front_buffer_rendering;
-
-   /**
-    * Track whether front-buffer is the current read target.
-    *
-    * This is closely associated with is_front_buffer_rendering, but may
-    * be set separately.  The DRI2 fake front buffer must be referenced
-    * either way.
-    */
-   bool is_front_buffer_reading;
-
    /** Framerate throttling: @{ */
    drm_intel_bo *first_post_swapbuffers_batch;
    bool need_throttle;

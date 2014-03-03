@@ -204,7 +204,7 @@ intel_glFlush(struct gl_context *ctx)
 
    intel_batchbuffer_flush(brw);
    intel_flush_front(ctx);
-   if (brw->is_front_buffer_rendering)
+   if (brw_is_front_buffer_drawing(ctx->DrawBuffer))
       brw->need_throttle = true;
 }
 
@@ -1115,6 +1115,7 @@ intel_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable)
 void
 intel_prepare_render(struct brw_context *brw)
 {
+   struct gl_context *ctx = &brw->ctx;
    __DRIcontext *driContext = brw->driContext;
    __DRIdrawable *drawable;
 
@@ -1136,7 +1137,7 @@ intel_prepare_render(struct brw_context *brw)
     * that will happen next will probably dirty the front buffer.  So
     * mark it as dirty here.
     */
-   if (brw->is_front_buffer_rendering)
+   if (brw_is_front_buffer_drawing(ctx->DrawBuffer))
       brw->front_buffer_dirty = true;
 
    /* Wait for the swapbuffers before the one we just emitted, so we
@@ -1198,8 +1199,8 @@ intel_query_dri2_buffers(struct brw_context *brw,
    back_rb = intel_get_renderbuffer(fb, BUFFER_BACK_LEFT);
 
    memset(attachments, 0, sizeof(attachments));
-   if ((brw->is_front_buffer_rendering ||
-        brw->is_front_buffer_reading ||
+   if ((brw_is_front_buffer_drawing(fb) ||
+        brw_is_front_buffer_reading(fb) ||
         !back_rb) && front_rb) {
       /* If a fake front buffer is in use, then querying for
        * __DRI_BUFFER_FRONT_LEFT will cause the server to copy the image from
@@ -1261,6 +1262,7 @@ intel_process_dri2_buffer(struct brw_context *brw,
                           const char *buffer_name)
 {
    struct intel_region *region = NULL;
+   struct gl_framebuffer *fb = drawable->driverPrivate;
 
    if (!rb)
       return;
@@ -1310,7 +1312,7 @@ intel_process_dri2_buffer(struct brw_context *brw,
 
    intel_update_winsys_renderbuffer_miptree(brw, rb, region);
 
-   if (brw->is_front_buffer_rendering &&
+   if (brw_is_front_buffer_drawing(fb) &&
        (buffer->attachment == __DRI_BUFFER_FRONT_LEFT ||
         buffer->attachment == __DRI_BUFFER_FAKE_FRONT_LEFT) &&
        rb->Base.Base.NumSamples > 1) {
@@ -1346,6 +1348,7 @@ intel_update_image_buffer(struct brw_context *intel,
                           enum __DRIimageBufferMask buffer_type)
 {
    struct intel_region *region = buffer->region;
+   struct gl_framebuffer *fb = drawable->driverPrivate;
 
    if (!rb || !region)
       return;
@@ -1369,7 +1372,7 @@ intel_update_image_buffer(struct brw_context *intel,
 
    intel_update_winsys_renderbuffer_miptree(intel, rb, region);
 
-   if (intel->is_front_buffer_rendering &&
+   if (brw_is_front_buffer_drawing(fb) &&
        buffer_type == __DRI_IMAGE_BUFFER_FRONT &&
        rb->Base.Base.NumSamples > 1) {
       intel_renderbuffer_upsample(intel, rb);
@@ -1397,8 +1400,10 @@ intel_update_image_buffers(struct brw_context *brw, __DRIdrawable *drawable)
    else
       return;
 
-   if ((brw->is_front_buffer_rendering || brw->is_front_buffer_reading || !back_rb) && front_rb)
+   if (front_rb && (brw_is_front_buffer_drawing(fb) ||
+                    brw_is_front_buffer_reading(fb) || !back_rb)) {
       buffer_mask |= __DRI_IMAGE_BUFFER_FRONT;
+   }
 
    if (back_rb)
       buffer_mask |= __DRI_IMAGE_BUFFER_BACK;
