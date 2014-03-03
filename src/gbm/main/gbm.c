@@ -43,7 +43,7 @@
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
-struct gbm_device *devices[16];
+static struct gbm_device *devices[16];
 
 static int device_num = 0;
 
