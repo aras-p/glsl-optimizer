@@ -342,14 +342,14 @@ st_translate_vertex_program(struct st_context *st,
                                    stvp->glsl_to_tgsi,
                                    &stvp->Base.Base,
                                    /* inputs */
-                                   stvp->num_inputs,
+                                   vpv->num_inputs,
                                    stvp->input_to_index,
                                    NULL, /* input semantic name */
                                    NULL, /* input semantic index */
                                    NULL, /* interp mode */
                                    NULL, /* is centroid */
                                    /* outputs */
-                                   stvp->num_outputs,
+                                   num_outputs,
                                    stvp->result_to_output,
                                    stvp->output_semantic_name,
                                    stvp->output_semantic_index,
