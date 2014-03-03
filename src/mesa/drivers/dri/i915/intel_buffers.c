@@ -78,7 +78,7 @@ intelDrawBuffer(struct gl_context * ctx, GLenum mode)
 static void
 intelReadBuffer(struct gl_context * ctx, GLenum mode)
 {
-   if (ctx->DrawBuffer && _mesa_is_winsys_fbo(ctx->DrawBuffer)) {
+   if (ctx->ReadBuffer && _mesa_is_winsys_fbo(ctx->ReadBuffer)) {
       struct intel_context *const intel = intel_context(ctx);
       const bool was_front_buffer_reading =
 	intel->is_front_buffer_reading;
