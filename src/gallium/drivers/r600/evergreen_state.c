@@ -644,7 +644,8 @@ struct pipe_sampler_view *
 evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
 				     const struct pipe_sampler_view *state,
-				     unsigned width0, unsigned height0)
+				     unsigned width0, unsigned height0,
+				     unsigned force_level)
 {
 	struct r600_screen *rscreen = (struct r600_screen*)ctx->screen;
 	struct r600_pipe_sampler_view *view = CALLOC_STRUCT(r600_pipe_sampler_view);
@@ -656,6 +657,8 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 	unsigned macro_aspect, tile_split, bankh, bankw, nbanks, fmask_bankh;
 	enum pipe_format pipe_format = state->format;
 	struct radeon_surface_level *surflevel;
+	unsigned base_level, first_level, last_level;
+	uint64_t va;
 
 	if (view == NULL)
 		return NULL;
@@ -712,13 +715,26 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 
 	endian = r600_colorformat_endian_swap(format);
 
+	base_level = 0;
+	first_level = state->u.tex.first_level;
+	last_level = state->u.tex.last_level;
 	width = width0;
 	height = height0;
 	depth = texture->depth0;
-	pitch = surflevel[0].nblk_x * util_format_get_blockwidth(pipe_format);
+
+	if (force_level) {
+		base_level = force_level;
+		first_level = 0;
+		last_level = 0;
+		width = u_minify(width, force_level);
+		height = u_minify(height, force_level);
+		depth = u_minify(depth, force_level);
+	}
+
+	pitch = surflevel[base_level].nblk_x * util_format_get_blockwidth(pipe_format);
 	non_disp_tiling = tmp->non_disp_tiling;
 
-	switch (surflevel[0].mode) {
+	switch (surflevel[base_level].mode) {
 	case RADEON_SURF_MODE_LINEAR_ALIGNED:
 		array_mode = V_028C70_ARRAY_LINEAR_ALIGNED;
 		break;
@@ -757,6 +773,8 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 	} else if (texture->target == PIPE_TEXTURE_CUBE_ARRAY)
 		depth = texture->array_size / 6;
 
+	va = r600_resource_va(ctx->screen, texture);
+
 	view->tex_resource = &tmp->resource;
 	view->tex_resource_words[0] = (S_030000_DIM(r600_tex_dim(texture->target, texture->nr_samples)) |
 				       S_030000_PITCH((pitch / 8) - 1) |
@@ -768,7 +786,7 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 	view->tex_resource_words[1] = (S_030004_TEX_HEIGHT(height - 1) |
 				       S_030004_TEX_DEPTH(depth - 1) |
 				       S_030004_ARRAY_MODE(array_mode));
-	view->tex_resource_words[2] = (surflevel[0].offset + r600_resource_va(ctx->screen, texture)) >> 8;
+	view->tex_resource_words[2] = (surflevel[base_level].offset + va) >> 8;
 
 	/* TEX_RESOURCE_WORD3.MIP_ADDRESS */
 	if (texture->nr_samples > 1 && rscreen->has_compressed_msaa_texturing) {
@@ -778,12 +796,12 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 			view->skip_mip_address_reloc = true;
 		} else {
 			/* FMASK should be in MIP_ADDRESS for multisample textures */
-			view->tex_resource_words[3] = (tmp->fmask.offset + r600_resource_va(ctx->screen, texture)) >> 8;
+			view->tex_resource_words[3] = (tmp->fmask.offset + va) >> 8;
 		}
-	} else if (state->u.tex.last_level && texture->nr_samples <= 1) {
-		view->tex_resource_words[3] = (surflevel[1].offset + r600_resource_va(ctx->screen, texture)) >> 8;
+	} else if (last_level && texture->nr_samples <= 1) {
+		view->tex_resource_words[3] = (surflevel[1].offset + va) >> 8;
 	} else {
-		view->tex_resource_words[3] = (surflevel[0].offset + r600_resource_va(ctx->screen, texture)) >> 8;
+		view->tex_resource_words[3] = (surflevel[base_level].offset + va) >> 8;
 	}
 
 	view->tex_resource_words[4] = (word4 |
@@ -802,8 +820,8 @@ evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 		view->tex_resource_words[5] |= S_030014_LAST_LEVEL(log_samples);
 		view->tex_resource_words[6] |= S_030018_FMASK_BANK_HEIGHT(fmask_bankh);
 	} else {
-		view->tex_resource_words[4] |= S_030010_BASE_LEVEL(state->u.tex.first_level);
-		view->tex_resource_words[5] |= S_030014_LAST_LEVEL(state->u.tex.last_level);
+		view->tex_resource_words[4] |= S_030010_BASE_LEVEL(first_level);
+		view->tex_resource_words[5] |= S_030014_LAST_LEVEL(last_level);
 		/* aniso max 16 samples */
 		view->tex_resource_words[6] |= S_030018_MAX_ANISO(4);
 	}
@@ -824,7 +842,7 @@ evergreen_create_sampler_view(struct pipe_context *ctx,
 			      const struct pipe_sampler_view *state)
 {
 	return evergreen_create_sampler_view_custom(ctx, tex, state,
-						    tex->width0, tex->height0);
+						    tex->width0, tex->height0, 0);
 }
 
 static void evergreen_emit_clip_state(struct r600_context *rctx, struct r600_atom *atom)

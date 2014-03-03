@@ -512,7 +512,8 @@ struct pipe_sampler_view *
 evergreen_create_sampler_view_custom(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
 				     const struct pipe_sampler_view *state,
-				     unsigned width0, unsigned height0);
+				     unsigned width0, unsigned height0,
+				     unsigned force_level);
 void evergreen_init_common_regs(struct r600_command_buffer *cb,
 				enum chip_class ctx_chip_class,
 				enum radeon_family ctx_family,
