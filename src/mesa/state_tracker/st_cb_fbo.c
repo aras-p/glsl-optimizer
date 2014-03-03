@@ -295,7 +295,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    strb->Base.Format = st_pipe_format_to_mesa_format(format);
    strb->Base._BaseFormat = _mesa_get_format_base_format(strb->Base.Format);
    strb->software = sw;
-   
+
    switch (format) {
    case PIPE_FORMAT_R8G8B8A8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
@@ -306,6 +306,16 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    case PIPE_FORMAT_B8G8R8X8_UNORM:
    case PIPE_FORMAT_X8R8G8B8_UNORM:
       strb->Base.InternalFormat = GL_RGB8;
+      break;
+   case PIPE_FORMAT_R8G8B8A8_SRGB:
+   case PIPE_FORMAT_B8G8R8A8_SRGB:
+   case PIPE_FORMAT_A8R8G8B8_SRGB:
+      strb->Base.InternalFormat = GL_SRGB8_ALPHA8;
+      break;
+   case PIPE_FORMAT_R8G8B8X8_SRGB:
+   case PIPE_FORMAT_B8G8R8X8_SRGB:
+   case PIPE_FORMAT_X8R8G8B8_SRGB:
+      strb->Base.InternalFormat = GL_SRGB8;
       break;
    case PIPE_FORMAT_B5G5R5A1_UNORM:
       strb->Base.InternalFormat = GL_RGB5_A1;
@@ -401,8 +411,17 @@ st_update_renderbuffer_surface(struct st_context *st,
    int rtt_width = strb->Base.Width;
    int rtt_height = strb->Base.Height;
    int rtt_depth = strb->Base.Depth;
-   enum pipe_format format = st->ctx->Color.sRGBEnabled ? resource->format :
-         util_format_linear(resource->format);
+   /*
+    * For winsys fbo, it is possible that the renderbuffer is sRGB-capable but
+    * the format of strb->texture is linear (because we have no control over
+    * the format).  Check strb->Base.Format instead of strb->texture->format
+    * to determine if the rb is sRGB-capable.
+    */
+   boolean enable_srgb = (st->ctx->Color.sRGBEnabled &&
+         _mesa_get_format_color_encoding(strb->Base.Format) == GL_SRGB);
+   enum pipe_format format = (enable_srgb) ?
+      util_format_srgb(resource->format) :
+      util_format_linear(resource->format);
    unsigned first_layer, last_layer, level;
 
    if (resource->target == PIPE_TEXTURE_1D_ARRAY) {

@@ -302,6 +302,8 @@ st_framebuffer_add_renderbuffer(struct st_framebuffer *stfb,
       break;
    default:
       format = stfb->iface->visual->color_format;
+      if (stfb->Base.Visual.sRGBCapable)
+         format = util_format_srgb(format);
       sw = FALSE;
       break;
    }
@@ -400,7 +402,8 @@ st_visual_to_context_mode(const struct st_visual *visual,
  * Create a framebuffer from a manager interface.
  */
 static struct st_framebuffer *
-st_framebuffer_create(struct st_framebuffer_iface *stfbi)
+st_framebuffer_create(struct st_context *st,
+                      struct st_framebuffer_iface *stfbi)
 {
    struct st_framebuffer *stfb;
    struct gl_config mode;
@@ -414,6 +417,37 @@ st_framebuffer_create(struct st_framebuffer_iface *stfbi)
       return NULL;
 
    st_visual_to_context_mode(stfbi->visual, &mode);
+
+   /*
+    * For desktop GL, sRGB framebuffer write is controlled by both the
+    * capability of the framebuffer and GL_FRAMEBUFFER_SRGB.  We should
+    * advertise the capability when the pipe driver supports it so that
+    * applications can enable sRGB write when they want to.
+    *
+    * This is not to be confused with GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB.  When
+    * the attribute is GLX_TRUE, it tells the st manager to pick a color
+    * format such that util_format_srgb(visual->color_format) can be supported
+    * by the pipe driver.  We still need to advertise the capability here.
+    *
+    * For GLES, however, sRGB framebuffer write is controlled only by the
+    * capability of the framebuffer.  There is GL_EXT_sRGB_write_control to
+    * give applications the control back, but sRGB write is still enabled by
+    * default.  To avoid unexpected results, we should not advertise the
+    * capability.  This could change when we add support for
+    * EGL_KHR_gl_colorspace.
+    */
+   if (_mesa_is_desktop_gl(st->ctx)) {
+      struct pipe_screen *screen = st->pipe->screen;
+      const enum pipe_format srgb_format =
+         util_format_srgb(stfbi->visual->color_format);
+
+      if (srgb_format != PIPE_FORMAT_NONE &&
+          screen->is_format_supported(screen, srgb_format,
+                                      PIPE_TEXTURE_2D, stfbi->visual->samples,
+                                      PIPE_BIND_RENDER_TARGET))
+         mode.sRGBCapable = GL_TRUE;
+   }
+
    _mesa_initialize_window_framebuffer(&stfb->Base, &mode);
 
    stfb->iface = stfbi;
@@ -677,7 +711,8 @@ st_api_get_current(struct st_api *stapi)
 }
 
 static struct st_framebuffer *
-st_framebuffer_reuse_or_create(struct gl_framebuffer *fb,
+st_framebuffer_reuse_or_create(struct st_context *st,
+                               struct gl_framebuffer *fb,
                                struct st_framebuffer_iface *stfbi)
 {
    struct st_framebuffer *cur = st_ws_framebuffer(fb), *stfb = NULL;
@@ -690,7 +725,7 @@ st_framebuffer_reuse_or_create(struct gl_framebuffer *fb,
    }
    else {
       /* create a new one */
-      stfb = st_framebuffer_create(stfbi);
+      stfb = st_framebuffer_create(st, stfbi);
    }
 
    return stfb;
@@ -709,12 +744,12 @@ st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
 
    if (st) {
       /* reuse or create the draw fb */
-      stdraw = st_framebuffer_reuse_or_create(st->ctx->WinSysDrawBuffer,
-                                              stdrawi);
+      stdraw = st_framebuffer_reuse_or_create(st,
+            st->ctx->WinSysDrawBuffer, stdrawi);
       if (streadi != stdrawi) {
          /* do the same for the read fb */
-         stread = st_framebuffer_reuse_or_create(st->ctx->WinSysReadBuffer,
-                                                 streadi);
+         stread = st_framebuffer_reuse_or_create(st,
+               st->ctx->WinSysReadBuffer, streadi);
       }
       else {
          stread = NULL;
