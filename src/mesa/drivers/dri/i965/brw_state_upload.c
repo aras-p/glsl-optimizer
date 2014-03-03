@@ -607,8 +607,6 @@ void brw_upload_state(struct brw_context *brw)
    if ((state->mesa | state->cache | state->brw) == 0)
       return;
 
-   intel_check_front_buffer_rendering(brw);
-
    if (unlikely(INTEL_DEBUG)) {
       /* Debug version which enforces various sanity checks on the
        * state flags which are generated and checked to help ensure

@@ -321,8 +321,6 @@ out:
       ctx->Driver.UnmapBuffer(ctx, unpack->BufferObj, MAP_INTERNAL);
    }
 
-   intel_check_front_buffer_rendering(brw);
-
    return true;
 }
 

@@ -133,8 +133,6 @@ do_blit_drawpixels(struct gl_context * ctx,
    if (ctx->Query.CurrentOcclusionObject)
       ctx->Query.CurrentOcclusionObject->Result += width * height;
 
-   intel_check_front_buffer_rendering(brw);
-
    DBG("%s: success\n", __FUNCTION__);
    return true;
 }

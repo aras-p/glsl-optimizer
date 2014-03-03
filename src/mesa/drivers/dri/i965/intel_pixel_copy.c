@@ -190,7 +190,6 @@ do_blit_copypixels(struct gl_context * ctx,
       ctx->Query.CurrentOcclusionObject->Result += width * height;
 
 out:
-   intel_check_front_buffer_rendering(brw);
 
    DBG("%s: success\n", __FUNCTION__);
    return true;

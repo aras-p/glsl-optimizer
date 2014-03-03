@@ -34,24 +34,6 @@
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 
-/**
- * Check if we're about to draw into the front color buffer.
- * If so, set the brw->front_buffer_dirty field to true.
- */
-void
-intel_check_front_buffer_rendering(struct brw_context *brw)
-{
-   struct gl_context *ctx = &brw->ctx;
-   const struct gl_framebuffer *fb = ctx->DrawBuffer;
-   if (_mesa_is_winsys_fbo(fb)) {
-      /* drawing to window system buffer */
-      if (fb->_NumColorDrawBuffers > 0) {
-         if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
-	    brw->front_buffer_dirty = true;
-	 }
-      }
-   }
-}
 
 bool
 brw_is_front_buffer_reading(struct gl_framebuffer *fb)
