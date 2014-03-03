@@ -45,6 +45,12 @@
 
 #define INTEL_UPLOAD_SIZE (64*1024)
 
+/**
+ * Like ALIGN(), but works with a non-power-of-two alignment.
+ */
+#define ALIGN_NPOT(value, alignment) \
+   (((value) + (alignment) - 1) / (alignment) * (alignment))
+
 void
 intel_upload_finish(struct brw_context *brw)
 {
@@ -83,7 +89,7 @@ intel_upload_data(struct brw_context *brw,
 {
    GLuint base, delta;
 
-   base = (brw->upload.offset + align - 1) / align * align;
+   base = ALIGN_NPOT(brw->upload.offset, align);
    if (brw->upload.bo == NULL || base + size > brw->upload.bo->size) {
       wrap_buffers(brw, size);
       base = 0;
@@ -124,7 +130,7 @@ intel_upload_map(struct brw_context *brw, GLuint size, GLuint align)
    GLuint base, delta;
    char *ptr;
 
-   base = (brw->upload.offset + align - 1) / align * align;
+   base = ALIGN_NPOT(brw->upload.offset, align);
    if (brw->upload.bo == NULL || base + size > brw->upload.bo->size) {
       wrap_buffers(brw, size);
       base = 0;
@@ -163,7 +169,7 @@ intel_upload_unmap(struct brw_context *brw,
 {
    GLuint base;
 
-   base = (brw->upload.offset + align - 1) / align * align;
+   base = ALIGN_NPOT(brw->upload.offset, align);
    if (size > sizeof(brw->upload.buffer)) {
       drm_intel_bo_subdata(brw->upload.bo, base, size, ptr);
       free((void*)ptr);
