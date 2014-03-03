@@ -2004,8 +2004,9 @@ check_begin_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 static void
 check_end_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
-   if (_mesa_is_winsys_fbo(fb))
-      return; /* can't render to texture with winsys framebuffers */
+   /* Skip if we know NeedsFinishRenderTexture won't be set. */
+   if (_mesa_is_winsys_fbo(fb) && !ctx->Driver.BindRenderbufferTexImage)
+      return;
 
    if (ctx->Driver.FinishRenderTexture) {
       GLuint i;
