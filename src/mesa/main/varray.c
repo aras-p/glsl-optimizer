@@ -569,8 +569,8 @@ void GLAPIENTRY
 _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr)
 {
    const GLbitfield legalTypes = UNSIGNED_BYTE_BIT;
-   /* see table 2.4 edits in GL_EXT_gpu_shader4 spec: */
-   const GLboolean integer = GL_TRUE;
+   /* this is the same type that glEdgeFlag uses */
+   const GLboolean integer = GL_FALSE;
    GET_CURRENT_CONTEXT(ctx);
 
    FLUSH_VERTICES(ctx, 0);
