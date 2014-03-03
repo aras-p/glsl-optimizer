@@ -1508,8 +1508,10 @@ _mesa_ClearBufferSubData(GLenum target, GLenum internalformat,
 
    if (data == NULL) {
       /* clear to zeros, per the spec */
-      ctx->Driver.ClearBufferSubData(ctx, offset, size,
-                                     NULL, 0, bufObj);
+      if (size > 0) {
+         ctx->Driver.ClearBufferSubData(ctx, offset, size,
+                                        NULL, 0, bufObj);
+      }
       return;
    }
 
@@ -1519,8 +1521,10 @@ _mesa_ClearBufferSubData(GLenum target, GLenum internalformat,
       return;
    }
 
-   ctx->Driver.ClearBufferSubData(ctx, offset, size,
-                                  clearValue, clearValueSize, bufObj);
+   if (size > 0) {
+      ctx->Driver.ClearBufferSubData(ctx, offset, size,
+                                     clearValue, clearValueSize, bufObj);
+   }
 }
 
 
