@@ -194,7 +194,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    const GLuint maxLevel = texObj->MaxLevel;
    const GLint maxLevelSave = texObj->MaxLevel;
    const GLboolean genMipmapSave = texObj->GenerateMipmap;
-   const GLuint fboSave = ctx->DrawBuffer->Name;
    const GLuint currentTexUnitSave = ctx->Texture.CurrentUnit;
    const GLboolean use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
                                       ctx->Extensions.ARB_fragment_shader;
@@ -378,6 +377,4 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
    if (genMipmapSave)
       _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, genMipmapSave);
-
-   _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, fboSave);
 }

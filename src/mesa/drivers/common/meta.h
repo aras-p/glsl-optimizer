@@ -177,6 +177,8 @@ struct save_state
    GLboolean Lighting;
    GLboolean RasterDiscard;
    GLboolean TransformFeedbackNeedsResume;
+
+   GLuint DrawBufferName, ReadBufferName, RenderbufferName;
 };
 
 /**

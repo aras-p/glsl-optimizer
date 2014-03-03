@@ -733,6 +733,11 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       save->RasterDiscard = ctx->RasterDiscard;
       if (ctx->RasterDiscard)
          _mesa_set_enable(ctx, GL_RASTERIZER_DISCARD, GL_FALSE);
+
+      save->DrawBufferName = ctx->DrawBuffer->Name;
+      save->ReadBufferName = ctx->ReadBuffer->Name;
+      save->RenderbufferName = (ctx->CurrentRenderbuffer ?
+                                ctx->CurrentRenderbuffer->Name : 0);
    }
 }
 
@@ -1078,6 +1083,16 @@ _mesa_meta_end(struct gl_context *ctx)
    }
    if (save->TransformFeedbackNeedsResume)
       _mesa_ResumeTransformFeedback();
+
+   if (ctx->DrawBuffer->Name != save->DrawBufferName)
+      _mesa_BindFramebuffer(GL_DRAW_FRAMEBUFFER, save->DrawBufferName);
+
+   if (ctx->ReadBuffer->Name != save->ReadBufferName)
+      _mesa_BindFramebuffer(GL_READ_FRAMEBUFFER, save->ReadBufferName);
+
+   if (!ctx->CurrentRenderbuffer ||
+       ctx->CurrentRenderbuffer->Name != save->RenderbufferName)
+      _mesa_BindRenderbuffer(GL_RENDERBUFFER, save->RenderbufferName);
 
    ctx->Meta->SaveStackDepth--;
 
@@ -2652,7 +2667,6 @@ get_temp_image_type(struct gl_context *ctx, mesa_format format)
    }
 }
 
-
 /**
  * Helper for _mesa_meta_CopyTexSubImage1/2/3D() functions.
  * Have to be careful with locking and meta state for pixel transfer.
@@ -2786,8 +2800,6 @@ decompress_texture_image(struct gl_context *ctx,
    const GLenum target = texObj->Target;
    GLenum faceTarget;
    struct vertex verts[4];
-   GLuint fboDrawSave, fboReadSave;
-   GLuint rbSave;
    GLuint samplerSave;
    const bool use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
                                       ctx->Extensions.ARB_fragment_shader;
@@ -2820,11 +2832,6 @@ decompress_texture_image(struct gl_context *ctx,
       faceTarget = target;
       break;
    }
-
-   /* save fbo bindings (not saved by _mesa_meta_begin()) */
-   fboDrawSave = ctx->DrawBuffer->Name;
-   fboReadSave = ctx->ReadBuffer->Name;
-   rbSave = ctx->CurrentRenderbuffer ? ctx->CurrentRenderbuffer->Name : 0;
 
    _mesa_meta_begin(ctx, MESA_META_ALL & ~MESA_META_PIXEL_STORE);
 
@@ -2974,16 +2981,6 @@ decompress_texture_image(struct gl_context *ctx,
    _mesa_BindSampler(ctx->Texture.CurrentUnit, samplerSave);
 
    _mesa_meta_end(ctx);
-
-   /* restore fbo bindings */
-   if (fboDrawSave == fboReadSave) {
-      _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, fboDrawSave);
-   }
-   else {
-      _mesa_BindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, fboDrawSave);
-      _mesa_BindFramebuffer(GL_READ_FRAMEBUFFER_EXT, fboReadSave);
-   }
-   _mesa_BindRenderbuffer(GL_RENDERBUFFER_EXT, rbSave);
 }
 
 
