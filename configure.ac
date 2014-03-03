@@ -1650,11 +1650,16 @@ AC_ARG_WITH([vdpau-libdir],
     [VDPAU_LIB_INSTALL_DIR='${libdir}/vdpau'])
 AC_SUBST([VDPAU_LIB_INSTALL_DIR])
 
+OMX_LIB_INSTALL_DIR_DEFAULT=''
+if test "x$enable_omx" = xyes; then
+    OMX_LIB_INSTALL_DIR_DEFAULT=`$PKG_CONFIG --variable=pluginsdir libomxil-bellagio`
+fi
+
 AC_ARG_WITH([omx-libdir],
     [AS_HELP_STRING([--with-omx-libdir=DIR],
         [directory for the OMX libraries])],
     [OMX_LIB_INSTALL_DIR="$withval"],
-    [OMX_LIB_INSTALL_DIR=`$PKG_CONFIG --variable=pluginsdir libomxil-bellagio`])
+    [OMX_LIB_INSTALL_DIR="$OMX_LIB_INSTALL_DIR_DEFAULT"])
 AC_SUBST([OMX_LIB_INSTALL_DIR])
 
 dnl Directory for OpenCL libs
