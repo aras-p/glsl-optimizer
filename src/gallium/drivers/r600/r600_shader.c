@@ -4402,11 +4402,16 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 				    (inst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ||
 				     inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA);
 
+	bool txf_add_offsets = inst->Texture.NumOffsets &&
+			     inst->Instruction.Opcode == TGSI_OPCODE_TXF &&
+			     inst->Texture.Texture != TGSI_TEXTURE_BUFFER;
+
 	/* Texture fetch instructions can only use gprs as source.
 	 * Also they cannot negate the source or take the absolute value */
 	const boolean src_requires_loading = (inst->Instruction.Opcode != TGSI_OPCODE_TXQ_LZ &&
                                               tgsi_tex_src_requires_loading(ctx, 0)) ||
-					     read_compressed_msaa;
+					     read_compressed_msaa || txf_add_offsets;
+
 	boolean src_loaded = FALSE;
 	unsigned sampler_src_reg = inst->Instruction.Opcode == TGSI_OPCODE_TXQ_LZ ? 0 : 1;
 	int8_t offset_x = 0, offset_y = 0, offset_z = 0;
@@ -4437,15 +4442,6 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 				ctx->shader->uses_tex_buffers = true;
 			return do_vtx_fetch_inst(ctx, src_requires_loading);
 		}
-	}
-
-	/* get offset values */
-	if (inst->Texture.NumOffsets) {
-		assert(inst->Texture.NumOffsets == 1);
-
-		offset_x = ctx->literals[4 * inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleX] << 1;
-		offset_y = ctx->literals[4 * inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleY] << 1;
-		offset_z = ctx->literals[4 * inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleZ] << 1;
 	}
 
 	if (inst->Instruction.Opcode == TGSI_OPCODE_TXD) {
@@ -4798,6 +4794,77 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		}
 		src_loaded = TRUE;
 		src_gpr = ctx->temp_reg;
+	}
+
+	/* get offset values */
+	if (inst->Texture.NumOffsets) {
+		assert(inst->Texture.NumOffsets == 1);
+
+		if (txf_add_offsets) {
+			/* Add the offsets for texelFetch manually. */
+			const struct tgsi_texture_offset *off = inst->TexOffsets;
+
+			switch (inst->Texture.Texture) {
+			case TGSI_TEXTURE_3D:
+				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+				alu.op = ALU_OP2_ADD_INT;
+				alu.src[0].sel = src_gpr;
+				alu.src[0].chan = 2;
+				alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
+				alu.src[1].value = ctx->literals[4 * off[0].Index + off[0].SwizzleZ];
+				alu.dst.sel = src_gpr;
+				alu.dst.chan = 2;
+				alu.dst.write = 1;
+				alu.last = 1;
+				r = r600_bytecode_add_alu(ctx->bc, &alu);
+				if (r)
+					return r;
+				/* fall through */
+
+			case TGSI_TEXTURE_2D:
+			case TGSI_TEXTURE_SHADOW2D:
+			case TGSI_TEXTURE_RECT:
+			case TGSI_TEXTURE_SHADOWRECT:
+			case TGSI_TEXTURE_2D_ARRAY:
+			case TGSI_TEXTURE_SHADOW2D_ARRAY:
+				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+				alu.op = ALU_OP2_ADD_INT;
+				alu.src[0].sel = src_gpr;
+				alu.src[0].chan = 1;
+				alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
+				alu.src[1].value = ctx->literals[4 * off[0].Index + off[0].SwizzleY];
+				alu.dst.sel = src_gpr;
+				alu.dst.chan = 1;
+				alu.dst.write = 1;
+				alu.last = 1;
+				r = r600_bytecode_add_alu(ctx->bc, &alu);
+				if (r)
+					return r;
+				/* fall through */
+
+			case TGSI_TEXTURE_1D:
+			case TGSI_TEXTURE_SHADOW1D:
+			case TGSI_TEXTURE_1D_ARRAY:
+			case TGSI_TEXTURE_SHADOW1D_ARRAY:
+				memset(&alu, 0, sizeof(struct r600_bytecode_alu));
+				alu.op = ALU_OP2_ADD_INT;
+				alu.src[0].sel = src_gpr;
+				alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
+				alu.src[1].value = ctx->literals[4 * off[0].Index + off[0].SwizzleX];
+				alu.dst.sel = src_gpr;
+				alu.dst.write = 1;
+				alu.last = 1;
+				r = r600_bytecode_add_alu(ctx->bc, &alu);
+				if (r)
+					return r;
+				break;
+				/* texture offsets do not apply to other texture targets */
+			}
+		} else {
+			offset_x = ctx->literals[4 * inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleX] << 1;
+			offset_y = ctx->literals[4 * inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleY] << 1;
+			offset_z = ctx->literals[4 * inst->TexOffsets[0].Index + inst->TexOffsets[0].SwizzleZ] << 1;
+		}
 	}
 
 	/* Obtain the sample index for reading a compressed MSAA color texture.
