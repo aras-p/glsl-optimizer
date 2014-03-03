@@ -67,7 +67,7 @@ dri_LTLIBRARIES = mesa_dri_drivers.la
 
 # Add a link to allow setting LD_LIBRARY_PATH/LIBGL_DRIVERS_PATH to /lib of the build tree.
 all-local: mesa_dri_drivers.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
+	$(AM_V_at)$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
 	$(AM_V_GEN)ln -f .libs/mesa_dri_drivers.so \
 			 $(top_builddir)/$(LIB_DIR)/mesa_dri_drivers.so;
 	$(AM_V_GEN)for i in $(MEGADRIVERS); do \

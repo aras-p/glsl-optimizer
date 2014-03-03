@@ -178,11 +178,11 @@ glsl_lexer.cpp: glsl_lexer.ll
 	$(AM_V_LEX) $(LEX) $(LFLAGS) -o $@ $<
 
 glcpp/glcpp-parse.c glcpp/glcpp-parse.h: glcpp/glcpp-parse.y
-	$(MKDIR_P) $(GLSL_BUILDDIR)/glcpp
+	$(AM_V_at)$(MKDIR_P) $(GLSL_BUILDDIR)/glcpp
 	$(AM_V_YACC) $(YACC) $(YFLAGS) -o $@ -p "glcpp_parser_" --defines=$(GLSL_BUILDDIR)/glcpp/glcpp-parse.h $<
 
 glcpp/glcpp-lex.c: glcpp/glcpp-lex.l
-	$(MKDIR_P) $(GLSL_BUILDDIR)/glcpp
+	$(AM_V_at)$(MKDIR_P) $(GLSL_BUILDDIR)/glcpp
 	$(AM_V_LEX) $(LEX) $(LFLAGS) -o $@ $<
 
 # Only the parsers (specifically the header files generated at the same time)
