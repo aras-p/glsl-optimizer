@@ -4,7 +4,7 @@
 all-local : .libs/install-mesa-links
 
 .libs/install-mesa-links : $(lib_LTLIBRARIES)
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)
+	$(AM_V_GEN)$(MKDIR_P) $(top_builddir)/$(LIB_DIR);	\
 	for f in $(lib_LTLIBRARIES:%.la=.libs/%.so*); do	\
 		if test -h .libs/$$f; then			\
 			cp -d $$f $(top_builddir)/$(LIB_DIR);	\
