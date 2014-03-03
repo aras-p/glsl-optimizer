@@ -851,25 +851,25 @@ static void brw_upload_indices(struct brw_context *brw)
       /* If the index buffer isn't aligned to its element size, we have to
        * rebase it into a temporary.
        */
-       if ((ib_type_size - 1) & offset) {
-          perf_debug("copying index buffer to a temporary to work around "
-                     "misaligned offset %d\n", offset);
+      if ((ib_type_size - 1) & offset) {
+         perf_debug("copying index buffer to a temporary to work around "
+                    "misaligned offset %d\n", offset);
 
-          GLubyte *map = ctx->Driver.MapBufferRange(ctx,
-                                                    offset,
-                                                    ib_size,
-                                                    GL_MAP_READ_BIT,
-                                                    bufferobj,
-                                                    MAP_INTERNAL);
+         GLubyte *map = ctx->Driver.MapBufferRange(ctx,
+                                                   offset,
+                                                   ib_size,
+                                                   GL_MAP_READ_BIT,
+                                                   bufferobj,
+                                                   MAP_INTERNAL);
 
-          intel_upload_data(brw, map, ib_size, ib_type_size, &bo, &offset);
+         intel_upload_data(brw, map, ib_size, ib_type_size, &bo, &offset);
 
-          ctx->Driver.UnmapBuffer(ctx, bufferobj, MAP_INTERNAL);
-       } else {
-	  bo = intel_bufferobj_buffer(brw, intel_buffer_object(bufferobj),
-				      offset, ib_size);
-	  drm_intel_bo_reference(bo);
-       }
+         ctx->Driver.UnmapBuffer(ctx, bufferobj, MAP_INTERNAL);
+      } else {
+         bo = intel_bufferobj_buffer(brw, intel_buffer_object(bufferobj),
+                                     offset, ib_size);
+         drm_intel_bo_reference(bo);
+      }
    }
 
    /* Use 3DPRIMITIVE's start_vertex_offset to avoid re-uploading
