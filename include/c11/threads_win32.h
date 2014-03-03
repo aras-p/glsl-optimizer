@@ -146,7 +146,7 @@ static unsigned __stdcall impl_thrd_routine(void *p)
 
 static DWORD impl_xtime2msec(const xtime *xt)
 {
-    return (DWORD)((xt->sec * 1000u) + (xt->nsec / 1000));
+    return (DWORD)((xt->sec * 1000U) + (xt->nsec / 1000000L));
 }
 
 #ifdef EMULATED_THREADS_USE_NATIVE_CALL_ONCE
