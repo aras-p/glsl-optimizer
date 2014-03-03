@@ -2588,7 +2588,8 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 
 	va = r600_resource_va(ctx->screen, texture);
 	va += surflevel[0].offset;
-	va += tmp->mipmap_shift * surflevel[texture->last_level].slice_size;
+	va += tmp->mipmap_shift * surflevel[texture->last_level].slice_size * tmp->surface.array_size;
+
 	view->state[0] = va >> 8;
 	view->state[1] = (S_008F14_BASE_ADDRESS_HI(va >> 40) |
 			  S_008F14_DATA_FORMAT(format) |
