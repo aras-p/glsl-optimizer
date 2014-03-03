@@ -69,7 +69,7 @@ options.h: t_options.h $(MOS)
 	@mo="$@"; \
 	lang=$${mo%%/*}; \
 	echo "Updating ($$lang) $@ from $?."; \
-	mkdir -p $$lang/LC_MESSAGES; \
+	$(MKDIR_P) $$lang/LC_MESSAGES; \
 	msgfmt -o $@ $?
 
 # Use this target to create or update .po files with new messages in
