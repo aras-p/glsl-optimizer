@@ -73,7 +73,7 @@ struct translate_generic {
        */
       int copy_size;
 
-   } attrib[PIPE_MAX_ATTRIBS];
+   } attrib[TRANSLATE_MAX_ATTRIBS];
 
    unsigned nr_attrib;
 };
@@ -798,6 +798,8 @@ struct translate *translate_generic_create( const struct translate_key *key )
 
    if (tg == NULL)
       return NULL;
+
+   assert(key->nr_elements <= TRANSLATE_MAX_ATTRIBS);
 
    tg->translate.key = *key;
    tg->translate.release = generic_release;

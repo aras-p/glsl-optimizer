@@ -44,6 +44,14 @@
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
 
+/**
+ * Translate has to work on one more attribute because
+ * the draw module has to be able to pass the vertex
+ * position even if the fragment shader already consumes
+ * PIPE_MAX_ATTRIBS inputs.
+ */
+#define TRANSLATE_MAX_ATTRIBS (PIPE_MAX_ATTRIBS + 1)
+
 enum translate_element_type {
    TRANSLATE_ELEMENT_NORMAL,
    TRANSLATE_ELEMENT_INSTANCE_ID
@@ -64,7 +72,7 @@ struct translate_element
 struct translate_key {
    unsigned output_stride;
    unsigned nr_elements;
-   struct translate_element element[PIPE_MAX_ATTRIBS + 1];
+   struct translate_element element[TRANSLATE_MAX_ATTRIBS];
 };
 
 

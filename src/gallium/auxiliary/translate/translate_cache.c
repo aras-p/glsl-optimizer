@@ -73,7 +73,7 @@ void translate_cache_destroy(struct translate_cache *cache)
 static INLINE unsigned translate_hash_key_size(struct translate_key *key)
 {
    unsigned size = sizeof(struct translate_key) -
-                   sizeof(struct translate_element) * (PIPE_MAX_ATTRIBS - key->nr_elements);
+                   sizeof(struct translate_element) * (TRANSLATE_MAX_ATTRIBS - key->nr_elements);
    return size;
 }
 
