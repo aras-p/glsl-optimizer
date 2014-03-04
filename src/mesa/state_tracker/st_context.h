@@ -131,6 +131,7 @@ struct st_context
 
    GLboolean missing_textures;
    GLboolean vertdata_edgeflags;
+   GLboolean edgeflag_culls_prims;
 
    /** Mapping from VARYING_SLOT_x to post-transformed vertex slot */
    const GLuint *vertex_result_to_slot;

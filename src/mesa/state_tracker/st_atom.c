@@ -132,7 +132,7 @@ static void check_program_state( struct st_context *st )
 static void check_attrib_edgeflag(struct st_context *st)
 {
    const struct gl_client_array **arrays = st->ctx->Array._DrawArrays;
-   GLboolean vertdata_edgeflags;
+   GLboolean vertdata_edgeflags, edgeflag_culls_prims;
 
    if (!arrays)
       return;
@@ -141,6 +141,13 @@ static void check_attrib_edgeflag(struct st_context *st)
    if (vertdata_edgeflags != st->vertdata_edgeflags) {
       st->vertdata_edgeflags = vertdata_edgeflags;
       st->dirty.st |= ST_NEW_EDGEFLAGS_DATA;
+   }
+
+   edgeflag_culls_prims = !vertdata_edgeflags &&
+                          !st->ctx->Current.Attrib[VERT_ATTRIB_EDGEFLAG][0];
+   if (edgeflag_culls_prims != st->edgeflag_culls_prims) {
+      st->edgeflag_culls_prims = edgeflag_culls_prims;
+      st->dirty.st |= ST_NEW_RASTERIZER;
    }
 }
 

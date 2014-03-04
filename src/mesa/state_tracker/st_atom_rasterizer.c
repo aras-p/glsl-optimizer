@@ -236,6 +236,14 @@ static void update_raster_state( struct st_context *st )
    /* ST_NEW_RASTERIZER */
    raster->rasterizer_discard = ctx->RasterDiscard;
 
+   if (st->edgeflag_culls_prims) {
+      /* All edge flags are FALSE. Cull the affected faces. */
+      if (raster->fill_front != PIPE_POLYGON_MODE_FILL)
+         raster->cull_face |= PIPE_FACE_FRONT;
+      if (raster->fill_back != PIPE_POLYGON_MODE_FILL)
+         raster->cull_face |= PIPE_FACE_BACK;
+   }
+
    /* _NEW_TRANSFORM */
    raster->depth_clip = ctx->Transform.DepthClamp == GL_FALSE;
    raster->clip_plane_enable = ctx->Transform.ClipPlanesEnabled;
