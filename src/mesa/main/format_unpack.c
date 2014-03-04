@@ -267,10 +267,10 @@ unpack_ARGB4444_REV(const void *src, GLfloat dst[][4], GLuint n)
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i][RCOMP] = ((s[i]      ) & 0xf) * (1.0F / 15.0F);
-      dst[i][GCOMP] = ((s[i] >> 12) & 0xf) * (1.0F / 15.0F);
-      dst[i][BCOMP] = ((s[i] >>  8) & 0xf) * (1.0F / 15.0F);
-      dst[i][ACOMP] = ((s[i] >>  4) & 0xf) * (1.0F / 15.0F);
+      dst[i][RCOMP] = ((s[i] >>  4) & 0xf) * (1.0F / 15.0F);
+      dst[i][GCOMP] = ((s[i] >>  8) & 0xf) * (1.0F / 15.0F);
+      dst[i][BCOMP] = ((s[i] >> 12) & 0xf) * (1.0F / 15.0F);
+      dst[i][ACOMP] = ((s[i]      ) & 0xf) * (1.0F / 15.0F);
    }
 }
 
@@ -2738,10 +2738,10 @@ unpack_ubyte_ARGB4444_REV(const void *src, GLubyte dst[][4], GLuint n)
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
    for (i = 0; i < n; i++) {
-      dst[i][RCOMP] = EXPAND_4_8((s[i]      ) & 0xf);
-      dst[i][GCOMP] = EXPAND_4_8((s[i] >> 12) & 0xf);
-      dst[i][BCOMP] = EXPAND_4_8((s[i] >>  8) & 0xf);
-      dst[i][ACOMP] = EXPAND_4_8((s[i] >>  4) & 0xf);
+      dst[i][RCOMP] = EXPAND_4_8((s[i] >>  4) & 0xf);
+      dst[i][GCOMP] = EXPAND_4_8((s[i] >>  8) & 0xf);
+      dst[i][BCOMP] = EXPAND_4_8((s[i] >> 12) & 0xf);
+      dst[i][ACOMP] = EXPAND_4_8((s[i]      ) & 0xf);
    }
 }
 

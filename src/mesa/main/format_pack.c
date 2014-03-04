@@ -567,7 +567,7 @@ static void
 pack_ubyte_ARGB4444_REV(const GLubyte src[4], void *dst)
 {
    GLushort *d = ((GLushort *) dst);
-   *d = PACK_COLOR_4444(src[GCOMP], src[BCOMP], src[ACOMP], src[RCOMP]);
+   *d = PACK_COLOR_4444(src[BCOMP], src[GCOMP], src[RCOMP], src[ACOMP]);
 }
 
 static void

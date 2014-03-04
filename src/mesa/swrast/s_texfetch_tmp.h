@@ -611,10 +611,10 @@ static void FETCH(f_argb4444_rev)( const struct swrast_texture_image *texImage,
                                    GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
-   texel[RCOMP] = ((s      ) & 0xf) * (1.0F / 15.0F);
-   texel[GCOMP] = ((s >> 12) & 0xf) * (1.0F / 15.0F);
-   texel[BCOMP] = ((s >>  8) & 0xf) * (1.0F / 15.0F);
-   texel[ACOMP] = ((s >>  4) & 0xf) * (1.0F / 15.0F);
+   texel[RCOMP] = ((s >>  4) & 0xf) * (1.0F / 15.0F);
+   texel[GCOMP] = ((s >>  8) & 0xf) * (1.0F / 15.0F);
+   texel[BCOMP] = ((s >> 12) & 0xf) * (1.0F / 15.0F);
+   texel[ACOMP] = ((s      ) & 0xf) * (1.0F / 15.0F);
 }
 
 
