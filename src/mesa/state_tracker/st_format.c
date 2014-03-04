@@ -393,6 +393,9 @@ st_mesa_format_to_pipe_format(mesa_format mesaFormat)
    case MESA_FORMAT_RGBX_SINT32:
       return PIPE_FORMAT_R32G32B32X32_SINT;
 
+   case MESA_FORMAT_B8G8R8X8_SRGB:
+      return PIPE_FORMAT_B8G8R8X8_SRGB;
+
    default:
       return PIPE_FORMAT_NONE;
    }
@@ -748,6 +751,9 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_R32G32B32X32_SINT:
       return MESA_FORMAT_RGBX_SINT32;
 
+   case PIPE_FORMAT_B8G8R8X8_SRGB:
+      return MESA_FORMAT_B8G8R8X8_SRGB;
+
    default:
       assert(0);
       return MESA_FORMAT_NONE;
@@ -1006,7 +1012,8 @@ static const struct format_mapping format_map[] = {
    /* sRGB formats */
    {
       { GL_SRGB_EXT, GL_SRGB8_EXT, 0 },
-      { PIPE_FORMAT_R8G8B8X8_SRGB, DEFAULT_SRGBA_FORMATS }
+      { PIPE_FORMAT_R8G8B8X8_SRGB, PIPE_FORMAT_B8G8R8X8_SRGB,
+        DEFAULT_SRGBA_FORMATS }
    },
    {
       { GL_SRGB_ALPHA_EXT, GL_SRGB8_ALPHA8_EXT, 0 },
@@ -1015,7 +1022,7 @@ static const struct format_mapping format_map[] = {
    {
       { GL_COMPRESSED_SRGB_EXT, GL_COMPRESSED_SRGB_S3TC_DXT1_EXT, 0 },
       { PIPE_FORMAT_DXT1_SRGB, PIPE_FORMAT_R8G8B8X8_SRGB,
-        DEFAULT_SRGBA_FORMATS }
+        PIPE_FORMAT_B8G8R8X8_SRGB, DEFAULT_SRGBA_FORMATS }
    },
    {
       { GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT, 0 },
