@@ -1414,6 +1414,12 @@ _mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... )
    _mesa_record_error(ctx, error);
 }
 
+void
+_mesa_error_no_memory(const char *caller)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   _mesa_error(ctx, GL_OUT_OF_MEMORY, "out of memory in %s", caller);
+}
 
 /**
  * Report debug information.  Print error message to stderr via fprintf().
