@@ -364,6 +364,8 @@ void util_blitter_destroy(struct blitter_context *blitter)
    pipe->delete_vs_state(pipe, ctx->vs);
    if (ctx->vs_pos_only)
       pipe->delete_vs_state(pipe, ctx->vs_pos_only);
+   if (ctx->vs_layered)
+      pipe->delete_vs_state(pipe, ctx->vs_layered);
    pipe->delete_vertex_elements_state(pipe, ctx->velem_state);
    for (i = 0; i < 4; i++) {
       if (ctx->velem_state_readbuf[i]) {
