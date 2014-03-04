@@ -209,7 +209,7 @@ static void si_update_fb_blend_state(struct si_context *sctx)
 	if (pm4 == NULL)
 		return;
 
-	mask = (1ULL << ((unsigned)sctx->framebuffer.nr_cbufs * 4)) - 1;
+	mask = (1ULL << ((unsigned)sctx->framebuffer.state.nr_cbufs * 4)) - 1;
 	mask &= blend->cb_target_mask;
 	si_pm4_set_reg(pm4, R_028238_CB_TARGET_MASK, mask);
 
@@ -486,11 +486,11 @@ static void si_update_fb_rs_state(struct si_context *sctx)
 	struct si_pm4_state *pm4;
 	float offset_units;
 
-	if (!rs || !sctx->framebuffer.zsbuf)
+	if (!rs || !sctx->framebuffer.state.zsbuf)
 		return;
 
 	offset_units = sctx->queued.named.rasterizer->offset_units;
-	switch (sctx->framebuffer.zsbuf->texture->format) {
+	switch (sctx->framebuffer.state.zsbuf->texture->format) {
 	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
 	case PIPE_FORMAT_X8Z24_UNORM:
 	case PIPE_FORMAT_Z24X8_UNORM:
@@ -1691,7 +1691,7 @@ static void si_init_depth_surface(struct si_context *sctx,
 	uint64_t z_offs, s_offs;
 	uint32_t db_htile_data_base, db_htile_surface, pa_su_poly_offset_db_fmt_cntl;
 
-	switch (sctx->framebuffer.zsbuf->texture->format) {
+	switch (sctx->framebuffer.state.zsbuf->texture->format) {
 	case PIPE_FORMAT_S8_UINT_Z24_UNORM:
 	case PIPE_FORMAT_X8Z24_UNORM:
 	case PIPE_FORMAT_Z24X8_UNORM:
@@ -2027,20 +2027,20 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	if (pm4 == NULL)
 		return;
 
-	if (sctx->framebuffer.nr_cbufs) {
+	if (sctx->framebuffer.state.nr_cbufs) {
 		sctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB |
 				 R600_CONTEXT_FLUSH_AND_INV_CB_META;
 	}
-	if (sctx->framebuffer.zsbuf) {
+	if (sctx->framebuffer.state.zsbuf) {
 		sctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_DB |
 				 R600_CONTEXT_FLUSH_AND_INV_DB_META;
 	}
 
-	util_copy_framebuffer_state(&sctx->framebuffer, state);
+	util_copy_framebuffer_state(&sctx->framebuffer.state, state);
 
 	/* build states */
-	sctx->export_16bpc = 0;
-	sctx->fb_compressed_cb_mask = 0;
+	sctx->framebuffer.export_16bpc = 0;
+	sctx->framebuffer.compressed_cb_mask = 0;
 
 	for (i = 0; i < state->nr_cbufs; i++) {
 		if (!state->cbufs[i]) {
@@ -2057,11 +2057,11 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 		}
 
 		if (surf->export_16bpc) {
-			sctx->export_16bpc |= 1 << i;
+			sctx->framebuffer.export_16bpc |= 1 << i;
 		}
 
 		if (rtex->fmask.size || rtex->cmask.size) {
-			sctx->fb_compressed_cb_mask |= 1 << i;
+			sctx->framebuffer.compressed_cb_mask |= 1 << i;
 		}
 
 		si_pm4_add_bo(pm4, &rtex->resource, RADEON_USAGE_READWRITE,
@@ -2083,7 +2083,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 		si_pm4_set_reg(pm4, R_028C70_CB_COLOR0_INFO + 1 * 0x3C, surf->cb_color_info);
 		/* Also set the 16BPC export. */
 		if (surf->export_16bpc) {
-			sctx->export_16bpc |= 1 << 1;
+			sctx->framebuffer.export_16bpc |= 1 << 1;
 		}
 		i++;
 	}
@@ -2092,7 +2092,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 			       S_028C70_FORMAT(V_028C70_COLOR_INVALID));
 	}
 
-	assert(!(sctx->export_16bpc & ~0xff));
+	assert(!(sctx->framebuffer.export_16bpc & ~0xff));
 
 	if (state->zsbuf) {
 		surf = (struct r600_surface*)state->zsbuf;
@@ -2137,8 +2137,8 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	nr_samples = util_framebuffer_get_num_samples(state);
 
 	si_set_msaa_state(sctx, pm4, nr_samples);
-	sctx->fb_log_samples = util_logbase2(nr_samples);
-	sctx->fb_cb0_is_integer = state->nr_cbufs && state->cbufs[0] &&
+	sctx->framebuffer.log_samples = util_logbase2(nr_samples);
+	sctx->framebuffer.cb0_is_integer = state->nr_cbufs && state->cbufs[0] &&
 				  util_format_is_pure_integer(state->cbufs[0]->format);
 
 	si_pm4_set_state(sctx, framebuffer, pm4);
@@ -2177,8 +2177,8 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 		key->vs.as_es = sctx->gs_shader != NULL;
 	} else if (sel->type == PIPE_SHADER_FRAGMENT) {
 		if (sel->fs_write_all)
-			key->ps.nr_cbufs = sctx->framebuffer.nr_cbufs;
-		key->ps.export_16bpc = sctx->export_16bpc;
+			key->ps.nr_cbufs = sctx->framebuffer.state.nr_cbufs;
+		key->ps.export_16bpc = sctx->framebuffer.export_16bpc;
 
 		if (sctx->queued.named.rasterizer) {
 			key->ps.color_two_side = sctx->queued.named.rasterizer->two_side;
@@ -2187,16 +2187,14 @@ static INLINE void si_shader_selector_key(struct pipe_context *ctx,
 			if (sctx->queued.named.blend) {
 				key->ps.alpha_to_one = sctx->queued.named.blend->alpha_to_one &&
 						       sctx->queued.named.rasterizer->multisample_enable &&
-						       !sctx->fb_cb0_is_integer;
+						       !sctx->framebuffer.cb0_is_integer;
 			}
 		}
 		if (sctx->queued.named.dsa) {
 			key->ps.alpha_func = sctx->queued.named.dsa->alpha_func;
 
 			/* Alpha-test should be disabled if colorbuffer 0 is integer. */
-			if (sctx->framebuffer.nr_cbufs &&
-			    sctx->framebuffer.cbufs[0] &&
-			    util_format_is_pure_integer(sctx->framebuffer.cbufs[0]->texture->format))
+			if (sctx->framebuffer.cb0_is_integer)
 				key->ps.alpha_func = PIPE_FUNC_ALWAYS;
 		} else {
 			key->ps.alpha_func = PIPE_FUNC_ALWAYS;

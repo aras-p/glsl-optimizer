@@ -68,7 +68,7 @@ static void si_blitter_begin(struct pipe_context *ctx, enum si_blitter_op op)
 				     (struct pipe_stream_output_target**)sctx->b.streamout.targets);
 
 	if (op & SI_SAVE_FRAMEBUFFER)
-		util_blitter_save_framebuffer(sctx->blitter, &sctx->framebuffer);
+		util_blitter_save_framebuffer(sctx->blitter, &sctx->framebuffer.state);
 
 	if (op & SI_SAVE_TEXTURES) {
 		util_blitter_save_fragment_sampler_states(
@@ -320,7 +320,7 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 		     double depth, unsigned stencil)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
-	struct pipe_framebuffer_state *fb = &sctx->framebuffer;
+	struct pipe_framebuffer_state *fb = &sctx->framebuffer.state;
 
 	si_blitter_begin(ctx, SI_CLEAR);
 	util_blitter_clear(sctx->blitter, fb->width, fb->height,

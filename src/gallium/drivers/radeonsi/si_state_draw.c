@@ -243,7 +243,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		return;
 
 	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z) |
-			    S_02880C_ALPHA_TO_MASK_DISABLE(sctx->fb_cb0_is_integer);
+			    S_02880C_ALPHA_TO_MASK_DISABLE(sctx->framebuffer.cb0_is_integer);
 
 	for (i = 0; i < shader->shader.ninput; i++) {
 		switch (shader->shader.input[i].name) {
@@ -337,7 +337,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 
 	si_pm4_set_reg(pm4, R_02880C_DB_SHADER_CONTROL, db_shader_control);
 
-	shader->cb0_is_integer = sctx->fb_cb0_is_integer;
+	shader->cb0_is_integer = sctx->framebuffer.cb0_is_integer;
 	shader->sprite_coord_enable = sctx->sprite_coord_enable;
 	sctx->b.flags |= R600_CONTEXT_INV_SHADER_CACHE;
 }
@@ -663,7 +663,7 @@ static void si_update_derived_state(struct si_context *sctx)
 	si_shader_select(ctx, sctx->ps_shader);
 
 	if (!sctx->ps_shader->current->pm4 ||
-	    sctx->ps_shader->current->cb0_is_integer != sctx->fb_cb0_is_integer)
+	    sctx->ps_shader->current->cb0_is_integer != sctx->framebuffer.cb0_is_integer)
 		si_pipe_shader_ps(ctx, sctx->ps_shader->current);
 
 	si_pm4_bind_state(sctx, ps, sctx->ps_shader->current->pm4);
@@ -755,14 +755,14 @@ static void si_state_draw(struct si_context *sctx,
 		if (sctx->b.chip_class >= CIK) {
 			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,
 				       S_028004_PERFECT_ZPASS_COUNTS(1) |
-				       S_028004_SAMPLE_RATE(sctx->fb_log_samples) |
+				       S_028004_SAMPLE_RATE(sctx->framebuffer.log_samples) |
 				       S_028004_ZPASS_ENABLE(1) |
 				       S_028004_SLICE_EVEN_ENABLE(1) |
 				       S_028004_SLICE_ODD_ENABLE(1));
 		} else {
 			si_pm4_set_reg(pm4, R_028004_DB_COUNT_CONTROL,
 				       S_028004_PERFECT_ZPASS_COUNTS(1) |
-				       S_028004_SAMPLE_RATE(sctx->fb_log_samples));
+				       S_028004_SAMPLE_RATE(sctx->framebuffer.log_samples));
 		}
 	}
 
@@ -986,20 +986,20 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 #endif
 
 	/* Set the depth buffer as dirty. */
-	if (sctx->framebuffer.zsbuf) {
-		struct pipe_surface *surf = sctx->framebuffer.zsbuf;
+	if (sctx->framebuffer.state.zsbuf) {
+		struct pipe_surface *surf = sctx->framebuffer.state.zsbuf;
 		struct r600_texture *rtex = (struct r600_texture *)surf->texture;
 
 		rtex->dirty_level_mask |= 1 << surf->u.tex.level;
 	}
-	if (sctx->fb_compressed_cb_mask) {
+	if (sctx->framebuffer.compressed_cb_mask) {
 		struct pipe_surface *surf;
 		struct r600_texture *rtex;
-		unsigned mask = sctx->fb_compressed_cb_mask;
+		unsigned mask = sctx->framebuffer.compressed_cb_mask;
 
 		do {
 			unsigned i = u_bit_scan(&mask);
-			surf = sctx->framebuffer.cbufs[i];
+			surf = sctx->framebuffer.state.cbufs[i];
 			rtex = (struct r600_texture*)surf->texture;
 
 			rtex->dirty_level_mask |= 1 << surf->u.tex.level;

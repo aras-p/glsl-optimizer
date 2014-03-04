@@ -98,7 +98,7 @@ static void si_destroy_context(struct pipe_context *context)
 	sctx->b.b.delete_depth_stencil_alpha_state(&sctx->b.b, sctx->custom_dsa_flush_inplace);
 	sctx->b.b.delete_blend_state(&sctx->b.b, sctx->custom_blend_resolve);
 	sctx->b.b.delete_blend_state(&sctx->b.b, sctx->custom_blend_decompress);
-	util_unreference_framebuffer_state(&sctx->framebuffer);
+	util_unreference_framebuffer_state(&sctx->framebuffer.state);
 
 	util_blitter_destroy(sctx->blitter);
 

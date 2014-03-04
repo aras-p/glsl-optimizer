@@ -70,6 +70,14 @@ struct si_textures_info {
 	unsigned			n_samplers;
 };
 
+struct si_framebuffer {
+	struct pipe_framebuffer_state	state;
+	unsigned			log_samples;
+	unsigned			cb0_is_integer;
+	unsigned			compressed_cb_mask;
+	unsigned			export_16bpc;
+};
+
 #define SI_NUM_ATOMS(sctx) (sizeof((sctx)->atoms)/sizeof((sctx)->atoms.array[0]))
 
 #define SI_NUM_SHADERS (PIPE_SHADER_GEOMETRY+1)
@@ -101,11 +109,8 @@ struct si_context {
 		struct r600_atom *array[0];
 	} atoms;
 
+	struct si_framebuffer		framebuffer;
 	struct si_vertex_element	*vertex_elements;
-	struct pipe_framebuffer_state	framebuffer;
-	unsigned			fb_log_samples;
-	unsigned			fb_cb0_is_integer;
-	unsigned			fb_compressed_cb_mask;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_su_sc_mode_cntl;
 	/* for saving when using blitter */
@@ -116,7 +121,6 @@ struct si_context {
 	struct si_cs_shader_state	cs_shader_state;
 	/* shader information */
 	unsigned			sprite_coord_enable;
-	unsigned			export_16bpc;
 	struct si_buffer_resources	const_buffers[SI_NUM_SHADERS];
 	struct si_buffer_resources	rw_buffers[SI_NUM_SHADERS];
 	struct si_textures_info	samplers[SI_NUM_SHADERS];
