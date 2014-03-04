@@ -3290,10 +3290,17 @@ _mesa_texstore_sargb8(TEXSTORE_PARAMS)
    mesa_format newDstFormat;
    GLboolean k;
 
-   ASSERT(dstFormat == MESA_FORMAT_B8G8R8A8_SRGB);
-
-   /* reuse normal rgba texstore code */
-   newDstFormat = MESA_FORMAT_B8G8R8A8_UNORM;
+   switch (dstFormat) {
+   case MESA_FORMAT_B8G8R8A8_SRGB:
+      newDstFormat = MESA_FORMAT_B8G8R8A8_UNORM;
+      break;
+   case MESA_FORMAT_B8G8R8X8_SRGB:
+      newDstFormat = MESA_FORMAT_B8G8R8X8_UNORM;
+      break;
+   default:
+      ASSERT(0);
+      return GL_FALSE;
+   }
 
    k = _mesa_texstore_argb8888(ctx, dims, baseInternalFormat,
                                newDstFormat,
@@ -3858,6 +3865,8 @@ _mesa_get_texstore_func(mesa_format format)
 
       table[MESA_FORMAT_G8R8_SNORM] = _mesa_texstore_snorm88;
       table[MESA_FORMAT_G16R16_SNORM] = _mesa_texstore_snorm1616;
+
+      table[MESA_FORMAT_B8G8R8X8_SRGB] = _mesa_texstore_sargb8;
 
       initialized = GL_TRUE;
    }

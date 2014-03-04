@@ -333,6 +333,7 @@ typedef enum
     *  R10G10B10A2_UNORM
     *  G8R8_SINT
     *  G16R16_SINT
+    *  B8G8R8X8_SRGB
     *
     */
    /*@{*/
@@ -646,6 +647,8 @@ typedef enum
    MESA_FORMAT_R10G10B10A2_UNORM, /* AABB BBBB BBBB GGGG GGGG GGRR RRRR RRRR */
    MESA_FORMAT_G8R8_SNORM,        /*                     RRRR RRRR GGGG GGGG */
    MESA_FORMAT_G16R16_SNORM,      /* RRRR RRRR RRRR RRRR GGGG GGGG GGGG GGGG */
+
+   MESA_FORMAT_B8G8R8X8_SRGB,     /* xxxx xxxx RRRR RRRR GGGG GGGG BBBB BBBB */
 
    MESA_FORMAT_COUNT
 } mesa_format;

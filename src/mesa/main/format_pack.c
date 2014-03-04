@@ -1880,6 +1880,20 @@ pack_float_SIGNED_RG1616(const GLfloat src[4], void *dst)
    *d = (r << 16) | (g & 0xffff);
 }
 
+/*
+ * MESA_FORMAT_B8G8R8X8_SRGB
+ */
+
+static void
+pack_float_XRGB8888_SRGB(const GLfloat src[4], void *dst)
+{
+   GLuint *d = (GLuint *) dst;
+   GLubyte r = linear_float_to_srgb_ubyte(src[RCOMP]);
+   GLubyte g = linear_float_to_srgb_ubyte(src[GCOMP]);
+   GLubyte b = linear_float_to_srgb_ubyte(src[BCOMP]);
+   *d = PACK_COLOR_8888(127, r, g, b);
+}
+
 /**
  * Return a function that can pack a GLubyte rgba[4] color.
  */
@@ -2033,6 +2047,8 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBX_SINT32] = NULL;
 
       table[MESA_FORMAT_R10G10B10A2_UNORM] = pack_ubyte_ABGR2101010;
+
+      table[MESA_FORMAT_B8G8R8X8_SRGB] = NULL;
 
       initialized = GL_TRUE;
    }
@@ -2196,6 +2212,8 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
 
       table[MESA_FORMAT_G8R8_SNORM] = pack_float_SIGNED_RG88;
       table[MESA_FORMAT_G16R16_SNORM] = pack_float_SIGNED_RG1616;
+
+      table[MESA_FORMAT_B8G8R8X8_SRGB] = pack_float_XRGB8888_SRGB;
 
       initialized = GL_TRUE;
    }

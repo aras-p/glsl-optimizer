@@ -2313,6 +2313,19 @@ unpack_SIGNED_RG1616(const void *src, GLfloat dst[][4], GLuint n)
    }
 }
 
+static void
+unpack_XRGB8888_SRGB(const void *src, GLfloat dst[][4], GLuint n)
+{
+   const GLuint *s = ((const GLuint *) src);
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      dst[i][RCOMP] = _mesa_nonlinear_to_linear( (s[i] >> 16) & 0xff );
+      dst[i][GCOMP] = _mesa_nonlinear_to_linear( (s[i] >>  8) & 0xff );
+      dst[i][BCOMP] = _mesa_nonlinear_to_linear( (s[i]      ) & 0xff );
+      dst[i][ACOMP] = 1.0F;
+   }
+}
+
 /**
  * Return the unpacker function for the given format.
  */
@@ -2529,6 +2542,8 @@ get_unpack_rgba_function(mesa_format format)
 
       table[MESA_FORMAT_G8R8_SNORM] = unpack_SIGNED_RG88;
       table[MESA_FORMAT_G16R16_SNORM] = unpack_SIGNED_RG1616;
+
+      table[MESA_FORMAT_B8G8R8X8_SRGB] = unpack_XRGB8888_SRGB;
 
       initialized = GL_TRUE;
    }

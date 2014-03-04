@@ -1790,6 +1790,15 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       0, 0, 0, 0, 0,
       1, 1, 4
    },
+   {
+      MESA_FORMAT_B8G8R8X8_SRGB,
+      "MESA_FORMAT_B8G8R8X8_SRGB",
+      GL_RGB,
+      GL_UNSIGNED_NORMALIZED,
+      8, 8, 8, 0,
+      0, 0, 0, 0, 0,
+      1, 1, 4
+   },
 };
 
 
@@ -2035,6 +2044,7 @@ _mesa_get_format_color_encoding(mesa_format format)
    case MESA_FORMAT_ETC2_SRGB8:
    case MESA_FORMAT_ETC2_SRGB8_ALPHA8_EAC:
    case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
+   case MESA_FORMAT_B8G8R8X8_SRGB:
       return GL_SRGB;
    default:
       return GL_LINEAR;
@@ -2088,6 +2098,9 @@ _mesa_get_srgb_format_linear(mesa_format format)
       break;
    case MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1:
       format = MESA_FORMAT_ETC2_RGB8_PUNCHTHROUGH_ALPHA1;
+      break;
+   case MESA_FORMAT_B8G8R8X8_SRGB:
+      format = MESA_FORMAT_B8G8R8X8_UNORM;
       break;
    default:
       break;
@@ -2895,6 +2908,11 @@ _mesa_format_to_type_and_comps(mesa_format format,
       *comps = 2;
       return;
 
+   case MESA_FORMAT_B8G8R8X8_SRGB:
+      *datatype = GL_UNSIGNED_BYTE;
+      *comps = 4;
+      return;
+
    case MESA_FORMAT_COUNT:
       assert(0);
       return;
@@ -3448,6 +3466,9 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
    case MESA_FORMAT_G16R16_SNORM:
       return format == GL_RG && type == GL_SHORT && !littleEndian &&
          !swapBytes;
+
+   case MESA_FORMAT_B8G8R8X8_SRGB:
+      return GL_FALSE;
    }
 
    return GL_FALSE;

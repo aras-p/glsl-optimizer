@@ -1304,6 +1304,12 @@ texfetch_funcs[] =
       NULL,
       NULL
    },
+   {
+      MESA_FORMAT_B8G8R8X8_SRGB,
+      NULL,
+      NULL,
+      NULL
+   },
 };
 
 
