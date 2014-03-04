@@ -1072,7 +1072,7 @@ if test -n "$with_dri_drivers"; then
 
     dri_drivers=`IFS=', '; echo $with_dri_drivers`
     for driver in $dri_drivers; do
-        DRI_DIRS+="$driver "
+        DRI_DIRS="$DRI_DIRS $driver"
         case "x$driver" in
         xi915)
             HAVE_I915_DRI=yes;
