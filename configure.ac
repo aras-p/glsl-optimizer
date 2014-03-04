@@ -589,10 +589,8 @@ AC_ARG_ENABLE([omx],
    [enable_omx=no])
 AC_ARG_ENABLE([opencl],
    [AS_HELP_STRING([--enable-opencl],
-         [enable OpenCL library NOTE: Enabling this option will also enable
-          --enable-llvm-shared-libs
-          @<:@default=no@:>@])],
-   [],
+         [enable OpenCL library @<:@default=no@:>@])],
+   [enable_opencl="$enableval"],
    [enable_opencl=no])
 AC_ARG_ENABLE([opencl_icd],
    [AS_HELP_STRING([--enable-opencl-icd],
@@ -1514,8 +1512,8 @@ AC_ARG_ENABLE([gallium-llvm],
 AC_ARG_ENABLE([llvm-shared-libs],
     [AS_HELP_STRING([--enable-llvm-shared-libs],
         [link with LLVM shared libraries @<:@default=enabled@:>@])],
-    [],
-    [with_llvm_shared_libs=yes])
+    [enable_llvm_shared_libs="$enableval"],
+    [enable_llvm_shared_libs=yes])
 
 AC_ARG_WITH([llvm-prefix],
     [AS_HELP_STRING([--with-llvm-prefix],
@@ -1857,7 +1855,7 @@ if test "x$MESA_LLVM" != x0; then
 
     LLVM_LIBS="`$LLVM_CONFIG --libs ${LLVM_COMPONENTS}`"
 
-    if test "x$with_llvm_shared_libs" = xyes; then
+    if test "x$enable_llvm_shared_libs" = xyes; then
         dnl We can't use $LLVM_VERSION because it has 'svn' stripped out,
         LLVM_SO_NAME=LLVM-`$LLVM_CONFIG --version`
         AS_IF([test -f "$LLVM_LIBDIR/lib$LLVM_SO_NAME.so"], [llvm_have_one_so=yes])
@@ -1874,18 +1872,17 @@ if test "x$MESA_LLVM" != x0; then
 	and that your llvm libraries are installed in $LLVM_LIBDIR
 	If you have installed your llvm libraries to a different directory you
 	can use the --with-llvm-prefix= configure flag to specify this directory.
-	NOTE: Mesa is attempting to use llvm shared libraries because you have
-	passed one of the following options to configure:
-		--enable-llvm-shared-libs
-		--enable-opencl
+	NOTE: Mesa is attempting to use llvm shared libraries by default.
 	If you do not want to build with llvm shared libraries and instead want to
-	use llvm static libraries then remove these options from your configure
-	invocation and reconfigure.])])
+	use llvm static libraries then add --disable-llvm-shared-libs to your configure
+	invocation and rebuild.])])
 
            dnl We don't need to update LLVM_LIBS in this case because the LLVM
            dnl install uses a shared object for each compoenent and we have
            dnl already added all of these objects to LLVM_LIBS.
         fi
+    else
+        AC_MSG_WARN([Building mesa with staticly linked LLVM may cause compilation issues])
     fi
 fi
 
