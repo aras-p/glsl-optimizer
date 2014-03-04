@@ -440,6 +440,15 @@ unsigned r600_translate_colorswap(enum pipe_format format);
 void r600_init_screen_texture_functions(struct r600_common_screen *rscreen);
 void r600_init_context_texture_functions(struct r600_common_context *rctx);
 
+/* cayman_msaa.c */
+extern const uint32_t eg_sample_locs_2x[4];
+extern const unsigned eg_max_dist_2x;
+extern const uint32_t eg_sample_locs_4x[4];
+extern const unsigned eg_max_dist_4x;
+void cayman_get_sample_position(struct pipe_context *ctx, unsigned sample_count,
+				unsigned sample_index, float *out_value);
+void cayman_emit_msaa_state(struct radeon_winsys_cs *cs, int nr_samples);
+
 
 /* Inline helpers. */
 
@@ -457,5 +466,12 @@ r600_resource_reference(struct r600_resource **ptr, struct r600_resource *res)
 
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
+
+/* For MSAA sample positions. */
+#define FILL_SREG(s0x, s0y, s1x, s1y, s2x, s2y, s3x, s3y)  \
+	(((s0x) & 0xf) | (((s0y) & 0xf) << 4) |		   \
+	(((s1x) & 0xf) << 8) | (((s1y) & 0xf) << 12) |	   \
+	(((s2x) & 0xf) << 16) | (((s2y) & 0xf) << 20) |	   \
+	 (((s3x) & 0xf) << 24) | (((s3y) & 0xf) << 28))
 
 #endif

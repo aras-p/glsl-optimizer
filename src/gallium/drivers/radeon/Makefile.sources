@@ -1,4 +1,5 @@
 C_SOURCES := \
+        cayman_msaa.c \
 	r600_buffer_common.c \
 	r600_pipe_common.c \
         r600_query.c \

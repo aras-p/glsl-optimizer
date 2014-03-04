@@ -160,6 +160,35 @@
 #define   G_028B98_STREAM_3_BUFFER_EN(x)                              (((x) >> 12) & 0x0F)
 #define   C_028B98_STREAM_3_BUFFER_EN                                 0xFFFF0FFF
 
+#define CM_R_028804_DB_EQAA                          0x00028804
+#define   S_028804_MAX_ANCHOR_SAMPLES(x)		(((x) & 0x7) << 0)
+#define   S_028804_PS_ITER_SAMPLES(x)			(((x) & 0x7) << 4)
+#define   S_028804_MASK_EXPORT_NUM_SAMPLES(x)		(((x) & 0x7) << 8)
+#define   S_028804_ALPHA_TO_MASK_NUM_SAMPLES(x)		(((x) & 0x7) << 12)
+#define   S_028804_HIGH_QUALITY_INTERSECTIONS(x)	(((x) & 0x1) << 16)
+#define   S_028804_INCOHERENT_EQAA_READS(x)		(((x) & 0x1) << 17)
+#define   S_028804_INTERPOLATE_COMP_Z(x)		(((x) & 0x1) << 18)
+#define   S_028804_INTERPOLATE_SRC_Z(x)			(((x) & 0x1) << 19)
+#define   S_028804_STATIC_ANCHOR_ASSOCIATIONS(x)	(((x) & 0x1) << 20)
+#define   S_028804_ALPHA_TO_MASK_EQAA_DISABLE(x)	(((x) & 0x1) << 21)
+#define CM_R_028BDC_PA_SC_LINE_CNTL                  0x28bdc
+#define   S_028BDC_EXPAND_LINE_WIDTH(x)                (((x) & 0x1) << 9)
+#define   G_028BDC_EXPAND_LINE_WIDTH(x)                (((x) >> 9) & 0x1)
+#define   C_028BDC_EXPAND_LINE_WIDTH                   0xFFFFFDFF
+#define   S_028BDC_LAST_PIXEL(x)                       (((x) & 0x1) << 10)
+#define   G_028BDC_LAST_PIXEL(x)                       (((x) >> 10) & 0x1)
+#define   C_028BDC_LAST_PIXEL                          0xFFFFFBFF
+#define CM_R_028BE0_PA_SC_AA_CONFIG                  0x28be0
+#define   S_028BE0_MSAA_NUM_SAMPLES(x)                  (((x) & 0x7) << 0)
+#define   S_028BE0_AA_MASK_CENTROID_DTMN(x)		(((x) & 0x1) << 4)
+#define   S_028BE0_MAX_SAMPLE_DIST(x)			(((x) & 0xf) << 13)
+#define   S_028BE0_MSAA_EXPOSED_SAMPLES(x)		(((x) & 0x7) << 20)
+#define   S_028BE0_DETAIL_TO_EXPOSED_MODE(x)		(((x) & 0x3) << 24)
+#define CM_R_028BF8_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_0 0x28bf8
+#define CM_R_028C08_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_0 0x28c08
+#define CM_R_028C18_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_0 0x28c18
+#define CM_R_028C28_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_0 0x28c28
+
 /*CIK+*/
 #define R_0300FC_CP_STRMOUT_CNTL		     0x0300FC
 

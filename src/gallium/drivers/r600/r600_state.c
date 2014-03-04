@@ -1240,13 +1240,6 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	rctx->framebuffer.atom.dirty = true;
 }
 
-#define FILL_SREG(s0x, s0y, s1x, s1y, s2x, s2y, s3x, s3y)  \
-	(((s0x) & 0xf) | (((s0y) & 0xf) << 4) |		   \
-	(((s1x) & 0xf) << 8) | (((s1y) & 0xf) << 12) |	   \
-	(((s2x) & 0xf) << 16) | (((s2y) & 0xf) << 20) |	   \
-	 (((s3x) & 0xf) << 24) | (((s3y) & 0xf) << 28))
-
-
 static uint32_t sample_locs_2x[] = {
 	FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
 	FILL_SREG(-4, 4, 4, -4, -4, 4, 4, -4),
