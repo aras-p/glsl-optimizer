@@ -103,14 +103,14 @@ fs_generator::generate_fb_write(fs_inst *inst)
     */
    brw_push_insn_state(p);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
    if (inst->header_present) {
       /* On HSW, the GPU will use the predicate on SENDC, unless the header is
        * present.
        */
-      if (!brw->is_haswell && ((fp && fp->UsesKill) ||
-                               c->key.alpha_test_func)) {
+      if ((fp && fp->UsesKill) || c->key.alpha_test_func) {
          struct brw_reg pixel_mask;
 
          if (brw->gen >= 6)
