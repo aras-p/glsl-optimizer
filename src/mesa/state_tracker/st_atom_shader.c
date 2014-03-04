@@ -141,11 +141,8 @@ update_vp( struct st_context *st )
     * edgeflag semantics, and extend the vertex shader to pass through
     * the input to the output.  We'll need to use similar logic to set
     * up the extra vertex_element input for edgeflags.
-    * _NEW_POLYGON, ST_NEW_EDGEFLAGS_DATA
     */
-   key.passthrough_edgeflags = (st->vertdata_edgeflags && (
-                                st->ctx->Polygon.FrontMode != GL_FILL ||
-                                st->ctx->Polygon.BackMode != GL_FILL));
+   key.passthrough_edgeflags = st->vertdata_edgeflags;
 
    key.clamp_color = st->clamp_vert_color_in_shader &&
                      st->ctx->Light._ClampVertexColor;
@@ -164,8 +161,8 @@ update_vp( struct st_context *st )
 const struct st_tracked_state st_update_vp = {
    "st_update_vp",					/* name */
    {							/* dirty */
-      _NEW_POLYGON,					/* mesa */
-      ST_NEW_VERTEX_PROGRAM | ST_NEW_EDGEFLAGS_DATA	/* st */
+      0,                                                /* mesa */
+      ST_NEW_VERTEX_PROGRAM                             /* st */
    },
    update_vp						/* update */
 };
