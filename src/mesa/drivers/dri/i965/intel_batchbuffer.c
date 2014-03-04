@@ -30,6 +30,7 @@
 #include "intel_reg.h"
 #include "intel_bufmgr.h"
 #include "intel_buffers.h"
+#include "intel_fbo.h"
 #include "brw_context.h"
 
 static void
@@ -88,6 +89,7 @@ intel_batchbuffer_reset(struct brw_context *brw)
    brw->batch.last_bo = brw->batch.bo;
 
    intel_batchbuffer_clear_cache(brw);
+   brw_render_cache_set_clear(brw);
 
    brw->batch.bo = drm_intel_bo_alloc(brw->bufmgr, "batchbuffer",
 					BATCH_SZ, 4096);
@@ -696,6 +698,8 @@ intel_batchbuffer_emit_mi_flush(struct brw_context *brw)
       }
       brw_emit_pipe_control_flush(brw, flags);
    }
+
+   brw_render_cache_set_clear(brw);
 }
 
 void

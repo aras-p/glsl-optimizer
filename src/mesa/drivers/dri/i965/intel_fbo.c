@@ -36,6 +36,8 @@
 #include "main/context.h"
 #include "main/teximage.h"
 #include "main/image.h"
+#include "main/hash_table.h"
+#include "main/set.h"
 
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
@@ -600,24 +602,6 @@ intel_render_texture(struct gl_context * ctx,
 }
 
 
-/**
- * Called by Mesa when rendering to a texture is done.
- */
-static void
-intel_finish_render_texture(struct gl_context * ctx, struct gl_renderbuffer *rb)
-{
-   struct brw_context *brw = brw_context(ctx);
-
-   DBG("Finish render %s texture\n", _mesa_get_format_name(rb->Format));
-
-   /* Since we've (probably) rendered to the texture and will (likely) use
-    * it in the texture domain later on in this batchbuffer, flush the
-    * batch.  Once again, we wish for a domain tracker in libdrm to cover
-    * usage inside of a batchbuffer like GEM does in the kernel.
-    */
-   intel_batchbuffer_emit_mi_flush(brw);
-}
-
 #define fbo_incomplete(fb, ...) do {                                          \
       static GLuint msg_id = 0;                                               \
       if (unlikely(ctx->Const.ContextFlags & GL_CONTEXT_FLAG_DEBUG_BIT)) {    \
@@ -953,6 +937,43 @@ intel_renderbuffer_move_to_temp(struct brw_context *brw,
    intel_miptree_release(&new_mt);
 }
 
+void
+brw_render_cache_set_clear(struct brw_context *brw)
+{
+   struct set_entry *entry;
+
+   set_foreach(brw->render_cache, entry) {
+      _mesa_set_remove(brw->render_cache, entry);
+   }
+}
+
+void
+brw_render_cache_set_add_bo(struct brw_context *brw, drm_intel_bo *bo)
+{
+   _mesa_set_add(brw->render_cache, _mesa_hash_pointer(bo), bo);
+}
+
+/**
+ * Emits an appropriate flush for a BO if it has been rendered to within the
+ * same batchbuffer as a read that's about to be emitted.
+ *
+ * The GPU has separate, incoherent caches for the render cache and the
+ * sampler cache, along with other caches.  Usually data in the different
+ * caches don't interact (e.g. we don't render to our driver-generated
+ * immediate constant data), but for render-to-texture in FBOs we definitely
+ * do.  When a batchbuffer is flushed, the kernel will ensure that everything
+ * necessary is flushed before another use of that BO, but for reuse from
+ * different caches within a batchbuffer, it's all our responsibility.
+ */
+void
+brw_render_cache_set_check_flush(struct brw_context *brw, drm_intel_bo *bo)
+{
+   if (!_mesa_set_search(brw->render_cache, _mesa_hash_pointer(bo), bo))
+      return;
+
+   intel_batchbuffer_emit_mi_flush(brw);
+}
+
 /**
  * Do one-time context initializations related to GL_EXT_framebuffer_object.
  * Hook in device driver functions.
@@ -966,9 +987,10 @@ intel_fbo_init(struct brw_context *brw)
    dd->MapRenderbuffer = intel_map_renderbuffer;
    dd->UnmapRenderbuffer = intel_unmap_renderbuffer;
    dd->RenderTexture = intel_render_texture;
-   dd->FinishRenderTexture = intel_finish_render_texture;
    dd->ValidateFramebuffer = intel_validate_framebuffer;
    dd->BlitFramebuffer = intel_blit_framebuffer;
    dd->EGLImageTargetRenderbufferStorage =
       intel_image_target_renderbuffer_storage;
+
+   brw->render_cache = _mesa_set_create(brw, _mesa_key_pointer_equal);
 }

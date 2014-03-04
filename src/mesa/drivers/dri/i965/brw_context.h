@@ -1030,6 +1030,13 @@ struct brw_context
    drm_intel_context *hw_ctx;
 
    /**
+    * Set of drm_intel_bo * that have been rendered to within this batchbuffer
+    * and would need flushing before being used from another cache domain that
+    * isn't coherent with it (i.e. the sampler).
+    */
+   struct set *render_cache;
+
+   /**
     * Number of resets observed in the system at context creation.
     *
     * This is tracked in the context so that we can determine that another
