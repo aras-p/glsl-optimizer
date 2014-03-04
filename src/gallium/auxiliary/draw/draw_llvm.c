@@ -1104,7 +1104,7 @@ generate_viewport(struct draw_llvm_variant *variant,
    int i;
    struct gallivm_state *gallivm = variant->gallivm;
    struct lp_type f32_type = vs_type;
-   const unsigned pos = draw_current_shader_position_output(variant->llvm->draw);
+   const unsigned pos = variant->llvm->draw->vs.position_output;
    LLVMTypeRef vs_type_llvm = lp_build_vec_type(gallivm, vs_type);
    LLVMValueRef out3 = LLVMBuildLoad(builder, outputs[pos][3], ""); /*w0 w1 .. wn*/
    LLVMValueRef const1 = lp_build_const_vec(gallivm, f32_type, 1.0);       /*1.0 1.0 1.0 1.0*/
@@ -1173,14 +1173,14 @@ generate_clipmask(struct draw_llvm *llvm,
    LLVMValueRef plane1, planes, plane_ptr, sum;
    struct lp_type f32_type = vs_type;
    struct lp_type i32_type = lp_int_type(vs_type);
-   const unsigned pos = draw_current_shader_position_output(llvm->draw);
-   const unsigned cv = draw_current_shader_clipvertex_output(llvm->draw);
+   const unsigned pos = llvm->draw->vs.position_output;
+   const unsigned cv = llvm->draw->vs.clipvertex_output;
    int num_written_clipdistance = llvm->draw->vs.vertex_shader->info.num_written_clipdistance;
    bool have_cd = false;
    unsigned cd[2];
 
-   cd[0] = draw_current_shader_clipdistance_output(llvm->draw, 0);
-   cd[1] = draw_current_shader_clipdistance_output(llvm->draw, 1);
+   cd[0] = llvm->draw->vs.clipdistance_output[0];
+   cd[1] = llvm->draw->vs.clipdistance_output[1];
 
    if (cd[0] != pos || cd[1] != pos)
       have_cd = true;
@@ -1551,8 +1551,8 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
                                            key->clip_z  ||
                                            key->clip_user);
    LLVMValueRef variant_func;
-   const unsigned pos = draw_current_shader_position_output(llvm->draw);
-   const unsigned cv = draw_current_shader_clipvertex_output(llvm->draw);
+   const unsigned pos = llvm->draw->vs.position_output;
+   const unsigned cv = llvm->draw->vs.clipvertex_output;
    boolean have_clipdist = FALSE;
    struct lp_bld_tgsi_system_values system_values;
 
