@@ -137,7 +137,7 @@ static void send_msg_buf(struct ruvd_decoder *dec)
 	if (!dec->msg || !dec->fb)
 		return;
 
-	/* grap the current message buffer */
+	/* grab the current message buffer */
 	buf = &dec->msg_fb_buffers[dec->cur_buffer];
 
 	/* unmap the buffer */
