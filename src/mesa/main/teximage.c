@@ -1290,16 +1290,19 @@ clear_teximage_fields(struct gl_texture_image *img)
  * \param border image border.
  * \param internalFormat internal format.
  * \param format  the actual hardware format (one of MESA_FORMAT_*)
+ * \param numSamples  number of samples per texel, or zero for non-MS.
+ * \param fixedSampleLocations  are sample locations fixed?
  *
  * Fills in the fields of \p img with the given information.
  * Note: width, height and depth include the border.
  */
-void
-_mesa_init_teximage_fields(struct gl_context *ctx,
-                           struct gl_texture_image *img,
-                           GLsizei width, GLsizei height, GLsizei depth,
-                           GLint border, GLenum internalFormat,
-                           mesa_format format)
+static void
+init_teximage_fields_ms(struct gl_context *ctx,
+                        struct gl_texture_image *img,
+                        GLsizei width, GLsizei height, GLsizei depth,
+                        GLint border, GLenum internalFormat,
+                        mesa_format format,
+                        GLuint numSamples, GLboolean fixedSampleLocations)
 {
    GLenum target;
    ASSERT(img);
@@ -1397,6 +1400,20 @@ _mesa_init_teximage_fields(struct gl_context *ctx,
       _mesa_get_tex_max_num_levels(target,
                                    img->Width2, img->Height2, img->Depth2);
    img->TexFormat = format;
+   img->NumSamples = numSamples;
+   img->FixedSampleLocations = fixedSampleLocations;
+}
+
+
+void
+_mesa_init_teximage_fields(struct gl_context *ctx,
+                           struct gl_texture_image *img,
+                           GLsizei width, GLsizei height, GLsizei depth,
+                           GLint border, GLenum internalFormat,
+                           mesa_format format)
+{
+   init_teximage_fields_ms(ctx, img, width, height, depth, border,
+                           internalFormat, format, 0, GL_TRUE);
 }
 
 
@@ -4429,10 +4446,9 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
 
    if (_mesa_is_proxy_texture(target)) {
       if (dimensionsOK && sizeOK) {
-         _mesa_init_teximage_fields(ctx, texImage,
-               width, height, depth, 0, internalformat, texFormat);
-         texImage->NumSamples = samples;
-         texImage->FixedSampleLocations = fixedsamplelocations;
+         init_teximage_fields_ms(ctx, texImage, width, height, depth, 0,
+                                 internalformat, texFormat,
+                                 samples, fixedsamplelocations);
       }
       else {
          /* clear all image fields */
@@ -4460,11 +4476,9 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
 
       ctx->Driver.FreeTextureImageBuffer(ctx, texImage);
 
-      _mesa_init_teximage_fields(ctx, texImage,
-            width, height, depth, 0, internalformat, texFormat);
-
-      texImage->NumSamples = samples;
-      texImage->FixedSampleLocations = fixedsamplelocations;
+      init_teximage_fields_ms(ctx, texImage, width, height, depth, 0,
+                              internalformat, texFormat,
+                              samples, fixedsamplelocations);
 
       if (width > 0 && height > 0 && depth > 0) {
          if (!ctx->Driver.AllocTextureStorage(ctx, texObj, 1,
