@@ -703,16 +703,13 @@ AM_CONDITIONAL(NEED_OPENGL_COMMON, test "x$enable_opengl" = xyes -o \
                                         "x$enable_gles1" = xyes -o \
                                         "x$enable_gles2" = xyes)
 
-enable_dri_glx=$enable_dri
-
 if test "x$enable_glx" = xno; then
     AC_MSG_WARN([GLX disabled, disabling Xlib-GLX])
     enable_xlib_glx=no
-    enable_dri_glx=no
 fi
 
-if test "x$enable_dri_glx$enable_xlib_glx" = xyesyes; then
-    AC_MSG_ERROR([DRI-GLX and Xlib-GLX cannot be built together])
+if test "x$enable_dri$enable_xlib_glx" = xyesyes; then
+    AC_MSG_ERROR([DRI and Xlib-GLX cannot be built together])
 fi
 
 if test "x$enable_opengl$enable_xlib_glx" = xnoyes; then
@@ -725,16 +722,16 @@ if test "x$enable_glx$enable_opengl" = xyesno; then
     enable_glx=no
 fi
 
-# Disable GLX if DRI-GLX and Xlib-GLX are not enabled
+# Disable GLX if DRI and Xlib-GLX are not enabled
 if test "x$enable_glx" = xyes -a \
-        "x$enable_dri_glx" = xno -a \
+        "x$enable_dri" = xno -a \
         "x$enable_xlib_glx" = xno; then
-    AC_MSG_WARN([Neither DRI-GLX nor Xlib-GLX enabled, disabling GLX])
+    AC_MSG_WARN([Neither DRI nor Xlib-GLX enabled, disabling GLX])
     enable_glx=no
 fi
 
 AM_CONDITIONAL(HAVE_DRI_GLX, test "x$enable_glx" = xyes -a \
-                                  "x$enable_dri_glx" = xyes)
+                                  "x$enable_dri" = xyes)
 AM_CONDITIONAL(HAVE_DRI, test "x$enable_dri" = xyes)
 AM_CONDITIONAL(HAVE_DRI3, test "x$enable_dri3" = xyes)
 
