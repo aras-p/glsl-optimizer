@@ -209,9 +209,9 @@ FormatIndexedToPipe(VdpRGBAFormat vdpau_format)
 {
    switch (vdpau_format) {
       case VDP_INDEXED_FORMAT_A4I4:
-         return PIPE_FORMAT_A4R4_UNORM;
-      case VDP_INDEXED_FORMAT_I4A4:
          return PIPE_FORMAT_R4A4_UNORM;
+      case VDP_INDEXED_FORMAT_I4A4:
+         return PIPE_FORMAT_A4R4_UNORM;
       case VDP_INDEXED_FORMAT_A8I8:
          return PIPE_FORMAT_A8R8_UNORM;
       case VDP_INDEXED_FORMAT_I8A8:
