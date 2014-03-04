@@ -82,6 +82,7 @@ gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
    if (gl_sampler->MaxAnisotropy > 1.0) {
       sampler->ss0.min_filter = BRW_MAPFILTER_ANISOTROPIC;
       sampler->ss0.mag_filter = BRW_MAPFILTER_ANISOTROPIC;
+      sampler->ss0.aniso_algorithm = 1;
 
       if (gl_sampler->MaxAnisotropy > 2.0) {
 	 sampler->ss3.max_aniso = MIN2((gl_sampler->MaxAnisotropy - 2) / 2,
