@@ -645,10 +645,10 @@ start_oa_counters(struct brw_context *brw)
    case 5:
       return; /* Ironlake counters are always running. */
    case 6:
-      counter_format = 1; /* 0b001 */
+      counter_format = 0b001;
       break;
    case 7:
-      counter_format = 5; /* 0b101 */
+      counter_format = 0b101;
       break;
    default:
       assert(!"Tried to enable OA counters on an unsupported generation.");
