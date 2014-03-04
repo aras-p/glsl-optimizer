@@ -297,7 +297,7 @@ namespace {
             llvm::Argument &arg = *I;
 #if HAVE_LLVM < 0x0302
             llvm::TargetData TD(kernel_func->getParent());
-#elif HAVE_LLVM < 0x0304
+#elif HAVE_LLVM < 0x0305
             llvm::DataLayout TD(kernel_func->getParent()->getDataLayout());
 #else
             llvm::DataLayout TD(mod);
