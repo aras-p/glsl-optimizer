@@ -101,8 +101,8 @@ u_thread_self(void)
     * So for now, we side-step this mess and use Windows thread primitives
     * directly here.
     *
-    * FIXME: On the other hand, u_thread_self() and _glthread_GetID() are bad
-    * abstractions.  Even with pthreads, there is no guarantee that
+    * FIXME: On the other hand, u_thread_self() is a bad
+    * abstraction.  Even with pthreads, there is no guarantee that
     * pthread_self() will return numeric IDs -- we should be using
     * pthread_equal() instead of assuming we can compare thread ids...
     */

@@ -222,12 +222,6 @@ _glapi_get_proc_name(unsigned int offset)
    return stub ? stub_get_name(stub) : NULL;
 }
 
-unsigned long
-_glthread_GetID(void)
-{
-   return u_thread_self();
-}
-
 void
 _glapi_noop_enable_warnings(unsigned char enable)
 {

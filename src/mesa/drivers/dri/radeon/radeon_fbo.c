@@ -783,8 +783,7 @@ radeon_render_texture(struct gl_context * ctx,
        return;
    }
 
-   DBG("Begin render texture tid %lx tex=%u w=%d h=%d refcount=%d\n",
-       _glthread_GetID(),
+   DBG("Begin render texture tex=%u w=%d h=%d refcount=%d\n",
        att->Texture->Name, newImage->Width, newImage->Height,
        rb->RefCount);
 
