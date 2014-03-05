@@ -57,9 +57,9 @@
 /*
  * Error messages
  */
-#define INIT_TSD_ERROR "_glthread_: failed to allocate key for thread specific data"
-#define GET_TSD_ERROR "_glthread_: failed to get thread specific data"
-#define SET_TSD_ERROR "_glthread_: thread failed to set thread specific data"
+#define INIT_TSD_ERROR "Mesa: failed to allocate key for thread specific data"
+#define GET_TSD_ERROR "Mesa: failed to get thread specific data"
+#define SET_TSD_ERROR "Mesa: thread failed to set thread specific data"
 
 
 /*
