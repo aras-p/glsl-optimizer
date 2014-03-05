@@ -170,6 +170,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_draw_instanced = true;
    ctx->Extensions.ARB_ES2_compatibility = true;
    ctx->Extensions.ARB_explicit_attrib_location = true;
+   ctx->Extensions.ARB_explicit_uniform_location = true;
    ctx->Extensions.ARB_fragment_coord_conventions = true;
    ctx->Extensions.ARB_fragment_program = true;
    ctx->Extensions.ARB_fragment_program_shadow = true;
