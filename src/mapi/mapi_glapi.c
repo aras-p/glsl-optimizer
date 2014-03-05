@@ -58,7 +58,7 @@ _glapi_check_multithread(void)
 void
 _glapi_set_context(void *context)
 {
-   u_current_set_user((const void *) context);
+   u_current_set_context((const void *) context);
 }
 
 void

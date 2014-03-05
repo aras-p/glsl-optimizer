@@ -11,14 +11,14 @@
 
 #ifdef GLX_USE_TLS
 #define u_current_table _glapi_tls_Dispatch
-#define u_current_user _glapi_tls_Context
+#define u_current_context _glapi_tls_Context
 #else
 #define u_current_table _glapi_Dispatch
-#define u_current_user _glapi_Context
+#define u_current_context _glapi_Context
 #endif
 
 #define u_current_get_internal _glapi_get_dispatch
-#define u_current_get_user_internal _glapi_get_context
+#define u_current_get_context_internal _glapi_get_context
 
 #define u_current_table_tsd _gl_DispatchTSD
 
@@ -33,13 +33,13 @@ struct mapi_table;
 extern __thread struct mapi_table *u_current_table
     __attribute__((tls_model("initial-exec")));
 
-extern __thread void *u_current_user
+extern __thread void *u_current_context
     __attribute__((tls_model("initial-exec")));
 
 #else /* GLX_USE_TLS */
 
 extern struct mapi_table *u_current_table;
-extern void *u_current_user;
+extern void *u_current_context;
 
 #endif /* GLX_USE_TLS */
 
@@ -58,10 +58,10 @@ struct mapi_table *
 u_current_get_internal(void);
 
 void
-u_current_set_user(const void *ptr);
+u_current_set_context(const void *ptr);
 
 void *
-u_current_get_user_internal(void);
+u_current_get_context_internal(void);
 
 static INLINE const struct mapi_table *
 u_current_get(void)
@@ -75,12 +75,12 @@ u_current_get(void)
 }
 
 static INLINE const void *
-u_current_get_user(void)
+u_current_get_context(void)
 {
 #ifdef GLX_USE_TLS
-   return u_current_user;
+   return u_current_context;
 #else
-   return likely(u_current_user) ? u_current_user : u_current_get_user_internal();
+   return likely(u_current_context) ? u_current_context : u_current_get_context_internal();
 #endif
 }
 
