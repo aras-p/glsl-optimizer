@@ -72,15 +72,15 @@ get_stub(const char *name, const struct mapi_stub *alias)
 void
 mapi_init(const char *spec)
 {
-   u_mutex_declare_static(mutex);
+   static mtx_t mutex = _MTX_INITIALIZER_NP;
    const char *p;
    int ver, count;
 
-   u_mutex_lock(mutex);
+   mtx_lock(&mutex);
 
    /* already initialized */
    if (mapi_num_stubs) {
-      u_mutex_unlock(mutex);
+      mtx_unlock(&mutex);
       return;
    }
 
@@ -90,7 +90,7 @@ mapi_init(const char *spec)
    /* parse version string */
    ver = atoi(p);
    if (ver != 1) {
-      u_mutex_unlock(mutex);
+      mtx_unlock(&mutex);
       return;
    }
    p += strlen(p) + 1;
@@ -115,7 +115,7 @@ mapi_init(const char *spec)
 
    mapi_num_stubs = count;
 
-   u_mutex_unlock(mutex);
+   mtx_unlock(&mutex);
 }
 
 /**

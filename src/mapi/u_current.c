@@ -144,7 +144,7 @@ u_current_init_tsd(void)
 /**
  * Mutex for multithread check.
  */
-u_mutex_declare_static(ThreadCheckMutex);
+static mtx_t ThreadCheckMutex = _MTX_INITIALIZER_NP;
 
 /**
  * We should call this periodically from a function such as glXMakeCurrent
@@ -159,7 +159,7 @@ u_current_init(void)
    if (ThreadSafe)
       return;
 
-   u_mutex_lock(ThreadCheckMutex);
+   mtx_lock(&ThreadCheckMutex);
    if (firstCall) {
       u_current_init_tsd();
 
@@ -171,7 +171,7 @@ u_current_init(void)
       u_current_set_table(NULL);
       u_current_set_context(NULL);
    }
-   u_mutex_unlock(ThreadCheckMutex);
+   mtx_unlock(&ThreadCheckMutex);
 }
 
 #else

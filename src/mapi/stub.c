@@ -126,11 +126,11 @@ stub_add_dynamic(const char *name)
 struct mapi_stub *
 stub_find_dynamic(const char *name, int generate)
 {
-   u_mutex_declare_static(dynamic_mutex);
+   static mtx_t dynamic_mutex = _MTX_INITIALIZER_NP;
    struct mapi_stub *stub = NULL;
    int count, i;
    
-   u_mutex_lock(dynamic_mutex);
+   mtx_lock(&dynamic_mutex);
 
    if (generate)
       assert(!stub_find_public(name));
@@ -147,7 +147,7 @@ stub_find_dynamic(const char *name, int generate)
    if (generate && !stub)
          stub = stub_add_dynamic(name);
 
-   u_mutex_unlock(dynamic_mutex);
+   mtx_unlock(&dynamic_mutex);
 
    return stub;
 }

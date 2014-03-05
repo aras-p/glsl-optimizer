@@ -79,16 +79,6 @@ struct u_tsd {
    unsigned initMagic;
 };
 
-typedef mtx_t u_mutex;
-
-#define u_mutex_declare_static(name) \
-   static u_mutex name = _MTX_INITIALIZER_NP
-
-#define u_mutex_init(name)    mtx_init(&(name), mtx_plain)
-#define u_mutex_destroy(name) mtx_destroy(&(name))
-#define u_mutex_lock(name)    (void) mtx_lock(&(name))
-#define u_mutex_unlock(name)  (void) mtx_unlock(&(name))
-
 
 static INLINE unsigned long
 u_thread_self(void)
