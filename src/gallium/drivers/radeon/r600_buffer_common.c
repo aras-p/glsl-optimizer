@@ -260,6 +260,42 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 		/* At this point, the buffer is always idle (we checked it above). */
 		usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
 	}
+	/* Using DMA for larger reads is much faster */
+	else if ((usage & PIPE_TRANSFER_READ) &&
+		 !(usage & PIPE_TRANSFER_WRITE) &&
+		 (rbuffer->domains == RADEON_DOMAIN_VRAM)) {
+		unsigned offset;
+		struct r600_resource *staging = NULL;
+
+		u_upload_alloc(rctx->uploader, 0,
+			       box->width + (box->x % R600_MAP_BUFFER_ALIGNMENT),
+			       &offset, (struct pipe_resource**)&staging, (void**)&data);
+
+		if (staging) {
+			data += box->x % R600_MAP_BUFFER_ALIGNMENT;
+
+			/* Copy the staging buffer into the original one. */
+			if (rctx->dma_copy(ctx, (struct pipe_resource*)staging, 0,
+						 box->x % R600_MAP_BUFFER_ALIGNMENT,
+						 0, 0, resource, level, box)) {
+				rctx->rings.gfx.flush(rctx, 0);
+				if (rctx->rings.dma.cs)
+					rctx->rings.dma.flush(rctx, 0);
+
+				/* Wait for any offloaded CS flush to complete
+				 * to avoid busy-waiting in the winsys. */
+				rctx->ws->cs_sync_flush(rctx->rings.gfx.cs);
+				if (rctx->rings.dma.cs)
+					rctx->ws->cs_sync_flush(rctx->rings.dma.cs);
+
+				rctx->ws->buffer_wait(staging->buf, RADEON_USAGE_WRITE);
+				return r600_buffer_get_transfer(ctx, resource, level, usage, box,
+								ptransfer, data, staging, offset);
+			} else {
+				pipe_resource_reference((struct pipe_resource**)&staging, NULL);
+			}
+		}
+	}
 
 	data = r600_buffer_map_sync_with_rings(rctx, rbuffer, usage);
 	if (!data) {
@@ -279,24 +315,26 @@ static void r600_buffer_transfer_unmap(struct pipe_context *ctx,
 	struct r600_resource *rbuffer = r600_resource(transfer->resource);
 
 	if (rtransfer->staging) {
-		struct pipe_resource *dst, *src;
-		unsigned soffset, doffset, size;
-		struct pipe_box box;
+		if (rtransfer->transfer.usage & PIPE_TRANSFER_WRITE) {
+			struct pipe_resource *dst, *src;
+			unsigned soffset, doffset, size;
+			struct pipe_box box;
 
-		dst = transfer->resource;
-		src = &rtransfer->staging->b.b;
-		size = transfer->box.width;
-		doffset = transfer->box.x;
-		soffset = rtransfer->offset + transfer->box.x % R600_MAP_BUFFER_ALIGNMENT;
+			dst = transfer->resource;
+			src = &rtransfer->staging->b.b;
+			size = transfer->box.width;
+			doffset = transfer->box.x;
+			soffset = rtransfer->offset + transfer->box.x % R600_MAP_BUFFER_ALIGNMENT;
 
-		u_box_1d(soffset, size, &box);
+			u_box_1d(soffset, size, &box);
 
-		/* Copy the staging buffer into the original one. */
-		if (!(size % 4) && !(doffset % 4) && !(soffset % 4) &&
-		    rctx->dma_copy(ctx, dst, 0, doffset, 0, 0, src, 0, &box)) {
-			/* DONE. */
-		} else {
-			ctx->resource_copy_region(ctx, dst, 0, doffset, 0, 0, src, 0, &box);
+			/* Copy the staging buffer into the original one. */
+			if (!(size % 4) && !(doffset % 4) && !(soffset % 4) &&
+			    rctx->dma_copy(ctx, dst, 0, doffset, 0, 0, src, 0, &box)) {
+				/* DONE. */
+			} else {
+				ctx->resource_copy_region(ctx, dst, 0, doffset, 0, 0, src, 0, &box);
+			}
 		}
 		pipe_resource_reference((struct pipe_resource**)&rtransfer->staging, NULL);
 	}
