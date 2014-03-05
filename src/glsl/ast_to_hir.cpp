@@ -2181,6 +2181,41 @@ validate_explicit_location(const struct ast_type_qualifier *qual,
 {
    bool fail = false;
 
+   /* Checks for GL_ARB_explicit_uniform_location. */
+   if (qual->flags.q.uniform) {
+      if (!state->check_explicit_uniform_location_allowed(loc, var))
+         return;
+
+      const struct gl_context *const ctx = state->ctx;
+      unsigned max_loc = qual->location + var->type->uniform_locations() - 1;
+
+      /* ARB_explicit_uniform_location specification states:
+       *
+       *     "The explicitly defined locations and the generated locations
+       *     must be in the range of 0 to MAX_UNIFORM_LOCATIONS minus one."
+       *
+       *     "Valid locations for default-block uniform variable locations
+       *     are in the range of 0 to the implementation-defined maximum
+       *     number of uniform locations."
+       */
+      if (qual->location < 0) {
+         _mesa_glsl_error(loc, state,
+                          "explicit location < 0 for uniform %s", var->name);
+         return;
+      }
+
+      if (max_loc >= ctx->Const.MaxUserAssignableUniformLocations) {
+         _mesa_glsl_error(loc, state, "location(s) consumed by uniform %s "
+                          ">= MAX_UNIFORM_LOCATIONS (%u)", var->name,
+                          ctx->Const.MaxUserAssignableUniformLocations);
+         return;
+      }
+
+      var->data.explicit_location = true;
+      var->data.location = qual->location;
+      return;
+   }
+
    /* Between GL_ARB_explicit_attrib_location an
     * GL_ARB_separate_shader_objects, the inputs and outputs of any shader
     * stage can be assigned explicit locations.  The checking here associates

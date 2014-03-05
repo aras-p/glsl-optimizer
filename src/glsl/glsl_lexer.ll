@@ -396,6 +396,7 @@ layout		{
 		      || yyextra->AMD_conservative_depth_enable
 		      || yyextra->ARB_conservative_depth_enable
 		      || yyextra->ARB_explicit_attrib_location_enable
+		      || yyextra->ARB_explicit_uniform_location_enable
                       || yyextra->has_separate_shader_objects()
 		      || yyextra->ARB_uniform_buffer_object_enable
 		      || yyextra->ARB_fragment_coord_conventions_enable

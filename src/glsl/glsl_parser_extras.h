@@ -151,6 +151,21 @@ struct _mesa_glsl_parse_state {
       return true;
    }
 
+   bool check_explicit_uniform_location_allowed(YYLTYPE *locp,
+                                                const ir_variable *var)
+   {
+      if (!this->has_explicit_attrib_location() ||
+          !this->ARB_explicit_uniform_location_enable) {
+         _mesa_glsl_error(locp, this,
+                          "uniform explicit location requires "
+                          "GL_ARB_explicit_uniform_location and either "
+                          "GL_ARB_explicit_attrib_location or GLSL 330.");
+         return false;
+      }
+
+      return true;
+   }
+
    bool has_explicit_attrib_location() const
    {
       return ARB_explicit_attrib_location_enable || is_version(330, 300);
