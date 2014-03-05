@@ -176,6 +176,7 @@ void si_begin_new_cs(struct si_context *ctx)
 		r600_resume_nontimer_queries(&ctx->b);
 	}
 
+	ctx->framebuffer.atom.dirty = true;
 	si_all_descriptors_begin_new_cs(ctx);
 
 	ctx->b.initial_gfx_cs_size = ctx->b.rings.gfx.cs->cdw;

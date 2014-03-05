@@ -71,7 +71,9 @@ struct si_textures_info {
 };
 
 struct si_framebuffer {
+	struct r600_atom		atom;
 	struct pipe_framebuffer_state	state;
+	unsigned			nr_samples;
 	unsigned			log_samples;
 	unsigned			cb0_is_integer;
 	unsigned			compressed_cb_mask;
@@ -105,6 +107,7 @@ struct si_context {
 			 * updated in memory. */
 			struct r600_atom *cache_flush;
 			struct r600_atom *streamout_begin;
+			struct r600_atom *framebuffer;
 		};
 		struct r600_atom *array[0];
 	} atoms;

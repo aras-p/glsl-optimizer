@@ -82,7 +82,6 @@ union si_state {
 		struct si_pm4_state		*sample_mask;
 		struct si_pm4_state		*scissor;
 		struct si_state_viewport	*viewport;
-		struct si_pm4_state		*framebuffer;
 		struct si_state_rasterizer	*rasterizer;
 		struct si_state_dsa		*dsa;
 		struct si_pm4_state		*fb_rs;

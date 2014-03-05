@@ -7948,22 +7948,6 @@
 #define   S_028BDC_DX10_DIAMOND_TEST_ENA(x)                           (((x) & 0x1) << 12)
 #define   G_028BDC_DX10_DIAMOND_TEST_ENA(x)                           (((x) >> 12) & 0x1)
 #define   C_028BDC_DX10_DIAMOND_TEST_ENA                              0xFFFFEFFF
-#define R_028BE0_PA_SC_AA_CONFIG                                        0x028BE0
-#define   S_028BE0_MSAA_NUM_SAMPLES(x)                                (((x) & 0x07) << 0)
-#define   G_028BE0_MSAA_NUM_SAMPLES(x)                                (((x) >> 0) & 0x07)
-#define   C_028BE0_MSAA_NUM_SAMPLES                                   0xFFFFFFF8
-#define   S_028BE0_AA_MASK_CENTROID_DTMN(x)                           (((x) & 0x1) << 4)
-#define   G_028BE0_AA_MASK_CENTROID_DTMN(x)                           (((x) >> 4) & 0x1)
-#define   C_028BE0_AA_MASK_CENTROID_DTMN                              0xFFFFFFEF
-#define   S_028BE0_MAX_SAMPLE_DIST(x)                                 (((x) & 0x0F) << 13)
-#define   G_028BE0_MAX_SAMPLE_DIST(x)                                 (((x) >> 13) & 0x0F)
-#define   C_028BE0_MAX_SAMPLE_DIST                                    0xFFFE1FFF
-#define   S_028BE0_MSAA_EXPOSED_SAMPLES(x)                            (((x) & 0x07) << 20)
-#define   G_028BE0_MSAA_EXPOSED_SAMPLES(x)                            (((x) >> 20) & 0x07)
-#define   C_028BE0_MSAA_EXPOSED_SAMPLES                               0xFF8FFFFF
-#define   S_028BE0_DETAIL_TO_EXPOSED_MODE(x)                          (((x) & 0x03) << 24)
-#define   G_028BE0_DETAIL_TO_EXPOSED_MODE(x)                          (((x) >> 24) & 0x03)
-#define   C_028BE0_DETAIL_TO_EXPOSED_MODE                             0xFCFFFFFF
 #define R_028BE4_PA_SU_VTX_CNTL                                         0x028BE4
 #define   S_028BE4_PIX_CENTER(x)                                      (((x) & 0x1) << 0)
 #define   G_028BE4_PIX_CENTER(x)                                      (((x) >> 0) & 0x1)
