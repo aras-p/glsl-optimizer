@@ -101,6 +101,7 @@ gen8_emit_buffer_surface_state(struct brw_context *brw,
    surf[0] = BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
              surface_format << BRW_SURFACE_FORMAT_SHIFT |
              BRW_SURFACE_RC_READ_WRITE;
+   surf[1] = SET_FIELD(mocs, GEN8_SURFACE_MOCS);
 
    surf[2] = SET_FIELD((buffer_size - 1) & 0x7f, GEN7_SURFACE_WIDTH) |
              SET_FIELD(((buffer_size - 1) >> 7) & 0x3fff, GEN7_SURFACE_HEIGHT);
@@ -172,7 +173,7 @@ gen8_update_texture_surface(struct gl_context *ctx,
    if (mt->logical_depth0 > 1 && tObj->Target != GL_TEXTURE_3D)
       surf[0] |= GEN8_SURFACE_IS_ARRAY;
 
-   surf[1] = mt->qpitch >> 2;
+   surf[1] = SET_FIELD(BDW_MOCS_WB, GEN8_SURFACE_MOCS) | mt->qpitch >> 2;
 
    surf[2] = SET_FIELD(mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);
@@ -313,7 +314,7 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
              horizontal_alignment(mt) |
              surface_tiling_mode(region->tiling);
 
-   surf[1] = mt->qpitch >> 2;
+   surf[1] = SET_FIELD(BDW_MOCS_WT, GEN8_SURFACE_MOCS) | mt->qpitch >> 2;
 
    surf[2] = SET_FIELD(mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);

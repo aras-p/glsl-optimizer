@@ -105,6 +105,7 @@ gen8_emit_vertices(struct brw_context *brw)
          dw0 |= i << GEN6_VB0_INDEX_SHIFT;
          dw0 |= GEN7_VB0_ADDRESS_MODIFYENABLE;
          dw0 |= buffer->stride << BRW_VB0_PITCH_SHIFT;
+         dw0 |= BDW_MOCS_WB << 16;
 
          OUT_BATCH(dw0);
          OUT_RELOC64(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->offset);

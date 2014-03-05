@@ -521,6 +521,10 @@
 #define GEN7_SURFACE_ARYSPC_FULL	(0 << 10)
 #define GEN7_SURFACE_ARYSPC_LOD0	(1 << 10)
 
+/* Surface state DW0 */
+#define GEN8_SURFACE_MOCS_SHIFT         24
+#define GEN8_SURFACE_MOCS_MASK          INTEL_MASK(30, 24)
+
 /* Surface state DW2 */
 #define BRW_SURFACE_HEIGHT_SHIFT	19
 #define BRW_SURFACE_HEIGHT_MASK		INTEL_MASK(31, 19)
@@ -2192,6 +2196,10 @@ enum brw_wm_barycentric_interp_mode {
 #define HSW_MOCS_UC_LLC_UC_ELLC         (1 << 1)
 #define HSW_MOCS_WB_LLC_WB_ELLC         (2 << 1)
 #define HSW_MOCS_UC_LLC_WB_ELLC         (3 << 1)
+
+/* Broadwell: write-back or write-through; always use all the caches. */
+#define BDW_MOCS_WB 0x78
+#define BDW_MOCS_WT 0x58
 
 #include "intel_chipset.h"
 

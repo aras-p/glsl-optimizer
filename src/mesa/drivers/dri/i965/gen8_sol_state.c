@@ -79,7 +79,8 @@ gen8_upload_3dstate_so_buffers(struct brw_context *brw)
       OUT_BATCH(_3DSTATE_SO_BUFFER << 16 | (8 - 2));
       OUT_BATCH(GEN8_SO_BUFFER_ENABLE | (i << SO_BUFFER_INDEX_SHIFT) |
                 GEN8_SO_BUFFER_OFFSET_WRITE_ENABLE |
-                GEN8_SO_BUFFER_OFFSET_ADDRESS_ENABLE);
+                GEN8_SO_BUFFER_OFFSET_ADDRESS_ENABLE |
+                (BDW_MOCS_WB << 22));
       OUT_RELOC64(bo, I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, start);
       OUT_BATCH(xfb_obj->Size[i] / 4 - 1);
       OUT_RELOC64(brw_obj->offset_bo,

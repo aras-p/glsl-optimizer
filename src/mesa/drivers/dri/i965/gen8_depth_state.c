@@ -68,7 +68,7 @@ emit_depth_packets(struct brw_context *brw,
       OUT_BATCH(0);
    }
    OUT_BATCH(((width - 1) << 4) | ((height - 1) << 18) | lod);
-   OUT_BATCH(((depth - 1) << 21) | (min_array_element << 10));
+   OUT_BATCH(((depth - 1) << 21) | (min_array_element << 10) | BDW_MOCS_WB);
    OUT_BATCH(0);
    OUT_BATCH(depth_mt ? depth_mt->qpitch >> 2 : 0);
    ADVANCE_BATCH();
@@ -84,7 +84,7 @@ emit_depth_packets(struct brw_context *brw,
    } else {
       BEGIN_BATCH(5);
       OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (5 - 2));
-      OUT_BATCH(depth_mt->hiz_mt->region->pitch - 1);
+      OUT_BATCH((depth_mt->hiz_mt->region->pitch - 1) | BDW_MOCS_WB << 25);
       OUT_RELOC64(depth_mt->hiz_mt->region->bo,
                   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, 0);
       OUT_BATCH(depth_mt->hiz_mt->qpitch >> 2);
@@ -116,7 +116,8 @@ emit_depth_packets(struct brw_context *brw,
        * page (which would imply that it does).  Experiments with the hardware
        * indicate that it does.
        */
-      OUT_BATCH(HSW_STENCIL_ENABLED | (2 * stencil_mt->region->pitch - 1));
+      OUT_BATCH(HSW_STENCIL_ENABLED | BDW_MOCS_WB << 22 |
+                (2 * stencil_mt->region->pitch - 1));
       OUT_RELOC64(stencil_mt->region->bo,
                   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                   stencil_offset);
