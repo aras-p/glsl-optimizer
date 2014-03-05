@@ -15,6 +15,8 @@
 #include "main/teximage.h"
 #include "main/texstore.h"
 
+#include "drivers/common/meta.h"
+
 #include "intel_mipmap_tree.h"
 #include "intel_buffer_objects.h"
 #include "intel_batchbuffer.h"
@@ -413,10 +415,118 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
                               image->tile_x, image->tile_y);
 }
 
+static bool
+blit_texture_to_pbo(struct gl_context *ctx,
+                    GLenum format, GLenum type,
+                    GLvoid * pixels, struct gl_texture_image *texImage)
+{
+   struct intel_texture_image *intelImage = intel_texture_image(texImage);
+   struct brw_context *brw = brw_context(ctx);
+   const struct gl_pixelstore_attrib *pack = &ctx->Pack;
+   struct intel_buffer_object *dst = intel_buffer_object(pack->BufferObj);
+   GLuint dst_offset;
+   drm_intel_bo *dst_buffer;
+   GLenum target = texImage->TexObject->Target;
+
+   /* Check if we can use GPU blit to copy from the hardware texture
+    * format to the user's format/type.
+    * Note that GL's pixel transfer ops don't apply to glGetTexImage()
+    */
+
+   if (!_mesa_format_matches_format_and_type(intelImage->mt->format, format,
+                                             type, false))
+   {
+      perf_debug("%s: unsupported format, fallback to CPU mapping for PBO\n",
+                 __FUNCTION__);
+
+      return false;
+   }
+
+   if (ctx->_ImageTransferState) {
+      perf_debug("%s: bad transfer state, fallback to CPU mapping for PBO\n",
+                 __FUNCTION__);
+      return false;
+   }
+
+   if (pack->SwapBytes || pack->LsbFirst) {
+      perf_debug("%s: unsupported pack swap params\n",
+                 __FUNCTION__);
+      return false;
+   }
+
+   if (target == GL_TEXTURE_1D_ARRAY ||
+       target == GL_TEXTURE_2D_ARRAY ||
+       target == GL_TEXTURE_CUBE_MAP_ARRAY ||
+       target == GL_TEXTURE_3D) {
+      perf_debug("%s: no support for multiple slices, fallback to CPU mapping "
+                 "for PBO\n", __FUNCTION__);
+      return false;
+   }
+
+   int dst_stride = _mesa_image_row_stride(pack, texImage->Width, format, type);
+   bool dst_flip = false;
+   /* Mesa flips the dst_stride for ctx->Pack.Invert, our mt must have a
+    * normal dst_stride.
+    */
+   struct gl_pixelstore_attrib uninverted_pack = *pack;
+   if (ctx->Pack.Invert) {
+      dst_stride = -dst_stride;
+      dst_flip = true;
+      uninverted_pack.Invert = false;
+   }
+   dst_offset = (GLintptr) pixels;
+   dst_offset += _mesa_image_offset(2, &uninverted_pack, texImage->Width,
+                                    texImage->Height, format, type, 0, 0, 0);
+   dst_buffer = intel_bufferobj_buffer(brw, dst, dst_offset,
+                                       texImage->Height * dst_stride);
+
+   struct intel_mipmap_tree *pbo_mt =
+      intel_miptree_create_for_bo(brw,
+                                  dst_buffer,
+                                  intelImage->mt->format,
+                                  dst_offset,
+                                  texImage->Width, texImage->Height,
+                                  dst_stride);
+
+   if (!pbo_mt)
+      return false;
+
+   if (!intel_miptree_blit(brw,
+                           intelImage->mt, texImage->Level, texImage->Face,
+                           0, 0, false,
+                           pbo_mt, 0, 0,
+                           0, 0, dst_flip,
+                           texImage->Width, texImage->Height, GL_COPY))
+      return false;
+
+   intel_miptree_release(&pbo_mt);
+
+   return true;
+}
+
+static void
+intel_get_tex_image(struct gl_context *ctx,
+                    GLenum format, GLenum type, GLvoid *pixels,
+                    struct gl_texture_image *texImage) {
+   DBG("%s\n", __FUNCTION__);
+
+   if (_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
+      /* Using PBOs, so try the BLT based path. */
+      if (blit_texture_to_pbo(ctx, format, type, pixels, texImage))
+         return;
+
+   }
+
+   _mesa_meta_GetTexImage(ctx, format, type, pixels, texImage);
+
+   DBG("%s - DONE\n", __FUNCTION__);
+}
+
 void
 intelInitTextureImageFuncs(struct dd_function_table *functions)
 {
    functions->TexImage = intelTexImage;
    functions->EGLImageTargetTexture2D = intel_image_target_texture_2d;
    functions->BindRenderbufferTexImage = intel_bind_renderbuffer_tex_image;
+   functions->GetTexImage = intel_get_tex_image;
 }
