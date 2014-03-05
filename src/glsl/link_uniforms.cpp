@@ -775,9 +775,10 @@ link_set_image_access_qualifiers(struct gl_shader_program *prog)
 
          if (var && var->data.mode == ir_var_uniform &&
              var->type->contains_image()) {
-            unsigned id;
+            unsigned id = 0;
             bool found = prog->UniformHash->get(id, var->name);
             assert(found);
+            (void) found;
             const gl_uniform_storage *storage = &prog->UniformStorage[id];
             const unsigned index = storage->image[i].index;
             const GLenum access = (var->data.image.read_only ? GL_READ_ONLY :
