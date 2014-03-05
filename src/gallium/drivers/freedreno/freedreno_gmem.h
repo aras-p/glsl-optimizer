@@ -50,6 +50,7 @@ struct fd_gmem_stateobj {
 	uint cpp;
 	uint16_t bin_h, nbins_y;
 	uint16_t bin_w, nbins_x;
+	uint16_t minx, miny;
 	uint16_t width, height;
 	bool has_zs;  /* gmem config using depth/stencil? */
 };

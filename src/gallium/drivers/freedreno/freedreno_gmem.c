@@ -143,6 +143,8 @@ calculate_tiles(struct fd_context *ctx)
 	gmem->bin_w = bin_w;
 	gmem->nbins_x = nbins_x;
 	gmem->nbins_y = nbins_y;
+	gmem->minx = minx;
+	gmem->miny = miny;
 	gmem->width = width;
 	gmem->height = height;
 
