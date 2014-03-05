@@ -168,7 +168,7 @@ u_current_init(void)
    }
    else if (knownID != u_thread_self()) {
       ThreadSafe = 1;
-      u_current_set(NULL);
+      u_current_set_table(NULL);
       u_current_set_context(NULL);
    }
    u_mutex_unlock(ThreadCheckMutex);
@@ -230,7 +230,7 @@ u_current_get_context_internal(void)
  * table (__glapi_noop_table).
  */
 void
-u_current_set(const struct mapi_table *tbl)
+u_current_set_table(const struct mapi_table *tbl)
 {
    u_current_init();
 
@@ -253,7 +253,7 @@ u_current_set(const struct mapi_table *tbl)
  * Return pointer to current dispatch table for calling thread.
  */
 struct mapi_table *
-u_current_get_internal(void)
+u_current_get_table_internal(void)
 {
 #if defined(GLX_USE_TLS)
    return u_current_table;

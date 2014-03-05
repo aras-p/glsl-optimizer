@@ -186,5 +186,5 @@ mapi_table_fill(struct mapi_table *tbl, const mapi_proc *procs)
 void
 mapi_table_make_current(const struct mapi_table *tbl)
 {
-   u_current_set(tbl);
+   u_current_set_table(tbl);
 }

@@ -64,7 +64,7 @@ _glapi_set_context(void *context)
 void
 _glapi_set_dispatch(struct _glapi_table *dispatch)
 {
-   u_current_set((const struct mapi_table *) dispatch);
+   u_current_set_table((const struct mapi_table *) dispatch);
 }
 
 /**

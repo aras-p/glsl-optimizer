@@ -17,7 +17,7 @@
 #define u_current_context _glapi_Context
 #endif
 
-#define u_current_get_internal _glapi_get_dispatch
+#define u_current_get_table_internal _glapi_get_dispatch
 #define u_current_get_context_internal _glapi_get_context
 
 #define u_current_table_tsd _gl_DispatchTSD
@@ -52,10 +52,10 @@ void
 u_current_destroy(void);
 
 void
-u_current_set(const struct mapi_table *tbl);
+u_current_set_table(const struct mapi_table *tbl);
 
 struct mapi_table *
-u_current_get_internal(void);
+u_current_get_table_internal(void);
 
 void
 u_current_set_context(const void *ptr);
@@ -64,13 +64,13 @@ void *
 u_current_get_context_internal(void);
 
 static INLINE const struct mapi_table *
-u_current_get(void)
+u_current_get_table(void)
 {
 #ifdef GLX_USE_TLS
    return u_current_table;
 #else
    return (likely(u_current_table) ?
-         u_current_table : u_current_get_internal());
+         u_current_table : u_current_get_table_internal());
 #endif
 }
 
