@@ -70,7 +70,7 @@ BUILT_SOURCES = \
 CLEANFILES = \
 	$(BUILT_SOURCES) \
 	$(BUILDDIR)program/program_parse.tab.h \
-	git_sha1.h.tmp
+	$(BUILDDIR)main/git_sha1.h.tmp
 
 GET_HASH_GEN = main/get_hash_generator.py
 
