@@ -1798,10 +1798,12 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 	     *     active attribute array, both of which require multiple
 	     *     contiguous generic attributes."
 	     *
-	     * Previous versions of the spec contain similar language but omit
-	     * the bit about attribute arrays.
+	     * I think above text prohibits the aliasing of explicit and
+	     * automatic assignments. But, aliasing is allowed in manual
+	     * assignments of attribute locations. See below comments for
+	     * the details.
 	     *
-	     * Page 61 of the OpenGL 4.0 spec also says:
+	     * From OpenGL 4.0 spec, page 61:
 	     *
 	     *     "It is possible for an application to bind more than one
 	     *     attribute name to the same location. This is referred to as
@@ -1814,29 +1816,84 @@ assign_attribute_or_color_locations(gl_shader_program *prog,
 	     *     but implementations are not required to generate an error
 	     *     in this case."
 	     *
-	     * These two paragraphs are either somewhat contradictory, or I
-	     * don't fully understand one or both of them.
+	     * From GLSL 4.30 spec, page 54:
+	     *
+	     *    "A program will fail to link if any two non-vertex shader
+	     *     input variables are assigned to the same location. For
+	     *     vertex shaders, multiple input variables may be assigned
+	     *     to the same location using either layout qualifiers or via
+	     *     the OpenGL API. However, such aliasing is intended only to
+	     *     support vertex shaders where each execution path accesses
+	     *     at most one input per each location. Implementations are
+	     *     permitted, but not required, to generate link-time errors
+	     *     if they detect that every path through the vertex shader
+	     *     executable accesses multiple inputs assigned to any single
+	     *     location. For all shader types, a program will fail to link
+	     *     if explicit location assignments leave the linker unable
+	     *     to find space for other variables without explicit
+	     *     assignments."
+	     *
+	     * From OpenGL ES 3.0 spec, page 56:
+	     *
+	     *    "Binding more than one attribute name to the same location
+	     *     is referred to as aliasing, and is not permitted in OpenGL
+	     *     ES Shading Language 3.00 vertex shaders. LinkProgram will
+	     *     fail when this condition exists. However, aliasing is
+	     *     possible in OpenGL ES Shading Language 1.00 vertex shaders.
+	     *     This will only work if only one of the aliased attributes
+	     *     is active in the executable program, or if no path through
+	     *     the shader consumes more than one attribute of a set of
+	     *     attributes aliased to the same location. A link error can
+	     *     occur if the linker determines that every path through the
+	     *     shader consumes multiple aliased attributes, but implemen-
+	     *     tations are not required to generate an error in this case."
+	     *
+	     * After looking at above references from OpenGL, OpenGL ES and
+	     * GLSL specifications, we allow aliasing of vertex input variables
+	     * in: OpenGL 2.0 (and above) and OpenGL ES 2.0.
+	     *
+	     * NOTE: This is not required by the spec but its worth mentioning
+	     * here that we're not doing anything to make sure that no path
+	     * through the vertex shader executable accesses multiple inputs
+	     * assigned to any single location.
 	     */
-	    /* FINISHME: The code as currently written does not support
-	     * FINISHME: attribute location aliasing (see comment above).
-	     */
+
 	    /* Mask representing the contiguous slots that will be used by
 	     * this attribute.
 	     */
 	    const unsigned attr = var->data.location - generic_base;
 	    const unsigned use_mask = (1 << slots) - 1;
+            const char *const string = (target_index == MESA_SHADER_VERTEX)
+               ? "vertex shader input" : "fragment shader output";
+
+            /* Generate a link error if the requested locations for this
+             * attribute exceed the maximum allowed attribute location.
+             */
+            if (attr + slots > max_index) {
+               linker_error(prog,
+                           "insufficient contiguous locations "
+                           "available for %s `%s' %d %d %d", string,
+                           var->name, used_locations, use_mask, attr);
+               return false;
+            }
 
 	    /* Generate a link error if the set of bits requested for this
 	     * attribute overlaps any previously allocated bits.
 	     */
 	    if ((~(use_mask << attr) & used_locations) != used_locations) {
-	       const char *const string = (target_index == MESA_SHADER_VERTEX)
-		  ? "vertex shader input" : "fragment shader output";
-	       linker_error(prog,
-			    "insufficient contiguous locations "
-			    "available for %s `%s' %d %d %d", string,
-			    var->name, used_locations, use_mask, attr);
-	       return false;
+               if (target_index == MESA_SHADER_FRAGMENT ||
+                   (prog->IsES && prog->Version >= 300)) {
+                  linker_error(prog,
+                               "overlapping location is assigned "
+                               "to %s `%s' %d %d %d\n", string,
+                               var->name, used_locations, use_mask, attr);
+                  return false;
+               } else {
+                  linker_warning(prog,
+                                 "overlapping location is assigned "
+                                 "to %s `%s' %d %d %d\n", string,
+                                 var->name, used_locations, use_mask, attr);
+               }
 	    }
 
 	    used_locations |= (use_mask << attr);
