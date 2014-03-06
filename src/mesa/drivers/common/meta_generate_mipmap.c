@@ -208,10 +208,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    if (currentTexUnitSave != 0)
       _mesa_BindTexture(target, texObj->Name);
 
-   if (!mipmap->FBO) {
-      _mesa_GenFramebuffers(1, &mipmap->FBO);
-   }
-
    if (!mipmap->Sampler) {
       _mesa_GenSamplers(1, &mipmap->Sampler);
       _mesa_BindSampler(ctx->Texture.CurrentUnit, mipmap->Sampler);
@@ -236,6 +232,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       _mesa_BindSampler(ctx->Texture.CurrentUnit, mipmap->Sampler);
    }
 
+   assert(mipmap->FBO != 0);
    _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, mipmap->FBO);
 
    _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
