@@ -977,6 +977,7 @@ nv50_blit_3d(struct nv50_context *nv50, const struct pipe_blit_info *info)
    float x0, x1, y0, y1, z;
    float dz;
    float x_range, y_range;
+   float tri_x, tri_y;
 
    blit->mode = nv50_blit_select_mode(info);
    blit->color_mask = nv50_blit_derive_color_mask(info);
@@ -996,11 +997,14 @@ nv50_blit_3d(struct nv50_context *nv50, const struct pipe_blit_info *info)
    x_range = (float)info->src.box.width / (float)info->dst.box.width;
    y_range = (float)info->src.box.height / (float)info->dst.box.height;
 
+   tri_x = 16384 << nv50_miptree(dst)->ms_x;
+   tri_y = 16384 << nv50_miptree(dst)->ms_y;
+
    x0 = (float)info->src.box.x - x_range * (float)info->dst.box.x;
    y0 = (float)info->src.box.y - y_range * (float)info->dst.box.y;
 
-   x1 = x0 + 16384.0f * x_range;
-   y1 = y0 + 16384.0f * y_range;
+   x1 = x0 + tri_x * x_range;
+   y1 = y0 + tri_y * y_range;
 
    x0 *= (float)(1 << nv50_miptree(src)->ms_x);
    x1 *= (float)(1 << nv50_miptree(src)->ms_x);
@@ -1069,7 +1073,7 @@ nv50_blit_3d(struct nv50_context *nv50, const struct pipe_blit_info *info)
       PUSH_DATAf(push, y0);
       PUSH_DATAf(push, z);
       BEGIN_NV04(push, NV50_3D(VTX_ATTR_2F_X(0)), 2);
-      PUSH_DATAf(push, 16384 << nv50_miptree(dst)->ms_x);
+      PUSH_DATAf(push, tri_x);
       PUSH_DATAf(push, 0.0f);
       BEGIN_NV04(push, NV50_3D(VTX_ATTR_3F_X(1)), 3);
       PUSH_DATAf(push, x0);
@@ -1077,7 +1081,7 @@ nv50_blit_3d(struct nv50_context *nv50, const struct pipe_blit_info *info)
       PUSH_DATAf(push, z);
       BEGIN_NV04(push, NV50_3D(VTX_ATTR_2F_X(0)), 2);
       PUSH_DATAf(push, 0.0f);
-      PUSH_DATAf(push, 16384 << nv50_miptree(dst)->ms_y);
+      PUSH_DATAf(push, tri_y);
       BEGIN_NV04(push, NV50_3D(VERTEX_END_GL), 1);
       PUSH_DATA (push, 0);
    }
