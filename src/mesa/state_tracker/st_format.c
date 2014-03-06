@@ -121,6 +121,8 @@ st_mesa_format_to_pipe_format(mesa_format mesaFormat)
       return PIPE_FORMAT_Z32_FLOAT_S8X24_UINT;
    case MESA_FORMAT_YCBCR:
       return PIPE_FORMAT_UYVY;
+   case MESA_FORMAT_YCBCR_REV:
+      return PIPE_FORMAT_YUYV;
    case MESA_FORMAT_RGB_DXT1:
       return PIPE_FORMAT_DXT1_RGB;
    case MESA_FORMAT_RGBA_DXT1:
@@ -759,8 +761,36 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_R8G8B8A8_SRGB;
 
    default:
-      assert(0);
       return MESA_FORMAT_NONE;
+   }
+}
+
+
+/**
+ * Debug only: check that the two functions above correctly map
+ * Mesa formats to Gallium formats and back again.
+ */
+static void
+test_format_conversion(void)
+{
+   GLuint i;
+
+   /* test all Mesa formats */
+   for (i = 1; i < MESA_FORMAT_COUNT; i++) {
+      enum pipe_format pf = st_mesa_format_to_pipe_format(i);
+      if (pf != PIPE_FORMAT_NONE) {
+         mesa_format mf = st_pipe_format_to_mesa_format(pf);
+         assert(mf == i);
+      }
+   }
+
+   /* Test all Gallium formats */
+   for (i = 1; i < PIPE_FORMAT_COUNT; i++) {
+      mesa_format mf = st_pipe_format_to_mesa_format(i);
+      if (mf != MESA_FORMAT_NONE) {
+         enum pipe_format pf = st_mesa_format_to_pipe_format(mf);
+         assert(pf == i);
+      }
    }
 }
 
@@ -1640,6 +1670,18 @@ st_choose_format(struct st_context *st, GLenum internalFormat,
    struct pipe_screen *screen = st->pipe->screen;
    int i, j;
    enum pipe_format pf;
+
+#ifdef DEBUG
+   {
+      static boolean firstCall = TRUE;
+      if (firstCall) {
+         test_format_conversion();
+         firstCall = FALSE;
+      }
+   }
+#else
+   (void) test_format_conversion;
+#endif
 
    /* can't render to compressed formats at this time */
    if (_mesa_is_compressed_format(st->ctx, internalFormat)
