@@ -284,9 +284,9 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       dstHeight = minify(srcHeight, 1);
       dstDepth = target == GL_TEXTURE_3D ? minify(srcDepth, 1) : srcDepth;
 
-      if (dstWidth == srcImage->Width &&
-          dstHeight == srcImage->Height &&
-          dstDepth == srcImage->Depth) {
+      if (dstWidth == srcWidth &&
+          dstHeight == srcHeight &&
+          dstDepth == srcDepth) {
          /* all done */
          break;
       }
