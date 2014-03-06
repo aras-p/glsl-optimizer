@@ -56,6 +56,9 @@
 #include "glsl_types.h"
 #include "program/hash_table.h"
 #include "ir.h"
+#include "ir_builder.h"
+
+using namespace ir_builder;
 
 static void
 detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
@@ -733,10 +736,12 @@ mark_whole_array_access(ir_rvalue *access)
    }
 }
 
-ir_rvalue *
+static bool
 do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 	      const char *non_lvalue_description,
-	      ir_rvalue *lhs, ir_rvalue *rhs, bool is_initializer,
+	      ir_rvalue *lhs, ir_rvalue *rhs,
+              ir_rvalue **out_rvalue, bool needs_rvalue,
+              bool is_initializer,
 	      YYLTYPE lhs_loc)
 {
    void *ctx = state;
@@ -855,27 +860,33 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
     * to handle things like:
     *
     * i = j += 1;
-    *
-    * So we always just store the computed value being assigned to a
-    * temporary and return a deref of that temporary.  If the rvalue
-    * ends up not being used, the temp will get copy-propagated out.
     */
-   ir_variable *var = new(ctx) ir_variable(rhs->type, "assignment_tmp",
-					   ir_var_temporary);
-   ir_dereference_variable *deref_var = new(ctx) ir_dereference_variable(var);
-   instructions->push_tail(var);
-   instructions->push_tail(new(ctx) ir_assignment(deref_var, rhs));
-   deref_var = new(ctx) ir_dereference_variable(var);
+   if (needs_rvalue) {
+      ir_variable *var = new(ctx) ir_variable(rhs->type, "assignment_tmp",
+                                              ir_var_temporary);
+      instructions->push_tail(var);
+      instructions->push_tail(assign(var, rhs));
 
-   if (!error_emitted)
-      instructions->push_tail(new(ctx) ir_assignment(lhs, deref_var));
+      if (!error_emitted) {
+         ir_dereference_variable *deref_var = new(ctx) ir_dereference_variable(var);
+         instructions->push_tail(new(ctx) ir_assignment(lhs, deref_var));
+      }
+      ir_rvalue *rvalue = new(ctx) ir_dereference_variable(var);
 
-   if (extract_channel) {
-      return new(ctx) ir_expression(ir_binop_vector_extract,
-                                    new(ctx) ir_dereference_variable(var),
-                                    extract_channel->clone(ctx, NULL));
+      if (extract_channel) {
+         rvalue = new(ctx) ir_expression(ir_binop_vector_extract,
+                                         rvalue,
+                                         extract_channel->clone(ctx, NULL));
+      }
+
+      *out_rvalue = rvalue;
+   } else {
+      if (!error_emitted)
+         instructions->push_tail(new(ctx) ir_assignment(lhs, rhs));
+      *out_rvalue = NULL;
    }
-   return new(ctx) ir_dereference_variable(var);
+
+   return error_emitted;
 }
 
 static ir_rvalue *
@@ -904,6 +915,20 @@ ast_node::hir(exec_list *instructions,
    (void) state;
 
    return NULL;
+}
+
+void
+ast_function_expression::hir_no_rvalue(exec_list *instructions,
+                                       struct _mesa_glsl_parse_state *state)
+{
+   (void)hir(instructions, state);
+}
+
+void
+ast_aggregate_initializer::hir_no_rvalue(exec_list *instructions,
+                                         struct _mesa_glsl_parse_state *state)
+{
+   (void)hir(instructions, state);
 }
 
 static ir_rvalue *
@@ -1075,6 +1100,21 @@ ir_rvalue *
 ast_expression::hir(exec_list *instructions,
 		    struct _mesa_glsl_parse_state *state)
 {
+   return do_hir(instructions, state, true);
+}
+
+void
+ast_expression::hir_no_rvalue(exec_list *instructions,
+                              struct _mesa_glsl_parse_state *state)
+{
+   do_hir(instructions, state, false);
+}
+
+ir_rvalue *
+ast_expression::do_hir(exec_list *instructions,
+                       struct _mesa_glsl_parse_state *state,
+                       bool needs_rvalue)
+{
    void *ctx = state;
    static const int operations[AST_NUM_OPERATORS] = {
       -1,               /* ast_assign doesn't convert to ir_expression. */
@@ -1148,11 +1188,11 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      result = do_assignment(instructions, state,
-			     this->subexpressions[0]->non_lvalue_description,
-			     op[0], op[1], false,
-			     this->subexpressions[0]->get_location());
-      error_emitted = result->type->is_error();
+      error_emitted =
+         do_assignment(instructions, state,
+                       this->subexpressions[0]->non_lvalue_description,
+                       op[0], op[1], &result, needs_rvalue, false,
+                       this->subexpressions[0]->get_location());
       break;
    }
 
@@ -1418,11 +1458,12 @@ ast_expression::hir(exec_list *instructions,
       ir_rvalue *temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
 						   op[0], op[1]);
 
-      result = do_assignment(instructions, state,
-			     this->subexpressions[0]->non_lvalue_description,
-			     op[0]->clone(ctx, NULL), temp_rhs, false,
-			     this->subexpressions[0]->get_location());
-      error_emitted = (op[0]->type->is_error());
+      error_emitted =
+         do_assignment(instructions, state,
+                       this->subexpressions[0]->non_lvalue_description,
+                       op[0]->clone(ctx, NULL), temp_rhs,
+                       &result, needs_rvalue, false,
+                       this->subexpressions[0]->get_location());
 
       /* GLSL 1.10 does not allow array assignment.  However, we don't have to
        * explicitly test for this because none of the binary expression
@@ -1444,11 +1485,12 @@ ast_expression::hir(exec_list *instructions,
       temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
 					op[0], op[1]);
 
-      result = do_assignment(instructions, state,
-			     this->subexpressions[0]->non_lvalue_description,
-			     op[0]->clone(ctx, NULL), temp_rhs, false,
-			     this->subexpressions[0]->get_location());
-      error_emitted = type->is_error();
+      error_emitted =
+         do_assignment(instructions, state,
+                       this->subexpressions[0]->non_lvalue_description,
+                       op[0]->clone(ctx, NULL), temp_rhs,
+                       &result, needs_rvalue, false,
+                       this->subexpressions[0]->get_location());
       break;
    }
 
@@ -1460,11 +1502,12 @@ ast_expression::hir(exec_list *instructions,
                                &loc);
       ir_rvalue *temp_rhs = new(ctx) ir_expression(operations[this->oper],
                                                    type, op[0], op[1]);
-      result = do_assignment(instructions, state,
-			     this->subexpressions[0]->non_lvalue_description,
-			     op[0]->clone(ctx, NULL), temp_rhs, false,
-                             this->subexpressions[0]->get_location());
-      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
+      error_emitted =
+         do_assignment(instructions, state,
+                       this->subexpressions[0]->non_lvalue_description,
+                       op[0]->clone(ctx, NULL), temp_rhs,
+                       &result, needs_rvalue, false,
+                       this->subexpressions[0]->get_location());
       break;
    }
 
@@ -1477,11 +1520,12 @@ ast_expression::hir(exec_list *instructions,
                                    state, &loc);
       ir_rvalue *temp_rhs = new(ctx) ir_expression(operations[this->oper],
                                                    type, op[0], op[1]);
-      result = do_assignment(instructions, state,
-			     this->subexpressions[0]->non_lvalue_description,
-			     op[0]->clone(ctx, NULL), temp_rhs, false,
-                             this->subexpressions[0]->get_location());
-      error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
+      error_emitted =
+         do_assignment(instructions, state,
+                       this->subexpressions[0]->non_lvalue_description,
+                       op[0]->clone(ctx, NULL), temp_rhs,
+                       &result, needs_rvalue, false,
+                       this->subexpressions[0]->get_location());
       break;
    }
 
@@ -1589,11 +1633,12 @@ ast_expression::hir(exec_list *instructions,
       temp_rhs = new(ctx) ir_expression(operations[this->oper], type,
 					op[0], op[1]);
 
-      result = do_assignment(instructions, state,
-			     this->subexpressions[0]->non_lvalue_description,
-			     op[0]->clone(ctx, NULL), temp_rhs, false,
-			     this->subexpressions[0]->get_location());
-      error_emitted = op[0]->type->is_error();
+      error_emitted =
+         do_assignment(instructions, state,
+                       this->subexpressions[0]->non_lvalue_description,
+                       op[0]->clone(ctx, NULL), temp_rhs,
+                       &result, needs_rvalue, false,
+                       this->subexpressions[0]->get_location());
       break;
    }
 
@@ -1617,12 +1662,14 @@ ast_expression::hir(exec_list *instructions,
        */
       result = get_lvalue_copy(instructions, op[0]->clone(ctx, NULL));
 
-      (void)do_assignment(instructions, state,
-			  this->subexpressions[0]->non_lvalue_description,
-			  op[0]->clone(ctx, NULL), temp_rhs, false,
-			  this->subexpressions[0]->get_location());
+      ir_rvalue *junk_rvalue;
+      error_emitted =
+         do_assignment(instructions, state,
+                       this->subexpressions[0]->non_lvalue_description,
+                       op[0]->clone(ctx, NULL), temp_rhs,
+                       &junk_rvalue, false, false,
+                       this->subexpressions[0]->get_location());
 
-      error_emitted = op[0]->type->is_error();
       break;
    }
 
@@ -1744,9 +1791,9 @@ ast_expression::hir(exec_list *instructions,
    }
    }
    type = NULL; /* use result->type, not type. */
-   assert(result != NULL);
+   assert(result != NULL || !needs_rvalue);
 
-   if (result->type->is_error() && !error_emitted)
+   if (result && result->type->is_error() && !error_emitted)
       _mesa_glsl_error(& loc, state, "type mismatch");
 
    return result;
@@ -1767,7 +1814,7 @@ ast_expression_statement::hir(exec_list *instructions,
     * anything in that case.
     */
    if (expression != NULL)
-      expression->hir(instructions, state);
+      expression->hir_no_rvalue(instructions, state);
 
    /* Statements do not have r-values.
     */
@@ -2831,10 +2878,12 @@ process_initializer(ir_variable *var, ast_declaration *decl,
        */
       const glsl_type *initializer_type;
       if (!type->qualifier.flags.q.uniform) {
-	 result = do_assignment(initializer_instructions, state,
-				NULL,
-				lhs, rhs, true,
-				type->get_location());
+	 do_assignment(initializer_instructions, state,
+                       NULL,
+                       lhs, rhs,
+                       &result, true,
+                       true,
+                       type->get_location());
 	 initializer_type = result->type;
       } else
 	 initializer_type = rhs->type;
