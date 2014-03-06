@@ -410,10 +410,6 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
                   const struct gl_pixelstore_attrib *unpack,
                   const GLubyte *bitmap);
 
-extern GLboolean
-_mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
-                                          struct gl_texture_object *texObj);
-
 extern void
 _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
                           struct gl_texture_object *texObj);

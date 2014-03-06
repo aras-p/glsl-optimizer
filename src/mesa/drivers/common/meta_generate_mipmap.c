@@ -50,9 +50,9 @@
  * images are mapped.
  * \return GL_TRUE if a fallback is needed, GL_FALSE otherwise
  */
-GLboolean
-_mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
-                                          struct gl_texture_object *texObj)
+static GLboolean
+fallback_required(struct gl_context *ctx, GLenum target,
+                  struct gl_texture_object *texObj)
 {
    const GLuint fboSave = ctx->DrawBuffer->Name;
    struct gen_mipmap_state *mipmap = &ctx->Meta->Mipmap;
@@ -175,7 +175,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    const GLint slice = 0;
    GLuint samplerSave;
 
-   if (_mesa_meta_check_generate_mipmap_fallback(ctx, target, texObj)) {
+   if (fallback_required(ctx, target, texObj)) {
       _mesa_generate_mipmap(ctx, target, texObj);
       return;
    }
