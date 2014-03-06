@@ -36,7 +36,8 @@ libvdpau_nouveau_la_SOURCES = \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
 libvdpau_nouveau_la_LDFLAGS = \
-	$(GALLIUM_VDPAU_LINKER_FLAGS)
+	$(GALLIUM_VDPAU_LINKER_FLAGS) \
+	-Wl,--dynamic-list=$(srcdir)/../dri-nouveau/nouveau_dri.dyn
 
 libvdpau_nouveau_la_LIBADD = \
 	$(top_builddir)/src/gallium/winsys/nouveau/drm/libnouveaudrm.la \
