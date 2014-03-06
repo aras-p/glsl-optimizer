@@ -32,9 +32,11 @@
 
 #include <stdbool.h>
 
+#define STRING_CONF_MAXLEN 25
+
 /** \brief Option data types */
 typedef enum driOptionType {
-    DRI_BOOL, DRI_ENUM, DRI_INT, DRI_FLOAT
+    DRI_BOOL, DRI_ENUM, DRI_INT, DRI_FLOAT, DRI_STRING
 } driOptionType;
 
 /** \brief Option value */
@@ -42,6 +44,7 @@ typedef union driOptionValue {
     bool _bool; /**< \brief Boolean */
     int _int;      /**< \brief Integer or Enum */
     float _float;  /**< \brief Floating-point */
+    char *_string;   /**< \brief String */
 } driOptionValue;
 
 /** \brief Single range of valid values
@@ -120,5 +123,7 @@ bool driQueryOptionb (const driOptionCache *cache, const char *name);
 int driQueryOptioni (const driOptionCache *cache, const char *name);
 /** \brief Query a floating-point option value */
 float driQueryOptionf (const driOptionCache *cache, const char *name);
+/** \brief Query a string option value */
+char *driQueryOptionstr (const driOptionCache *cache, const char *name);
 
 #endif

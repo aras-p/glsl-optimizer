@@ -309,6 +309,11 @@ static bool parseValue (driOptionValue *v, driOptionType type,
       case DRI_FLOAT:
 	v->_float = strToF (string, &tail);
 	break;
+      case DRI_STRING:
+	if (v->_string)
+	    free (v->_string);
+	v->_string = strndup(string, STRING_CONF_MAXLEN);
+	return GL_TRUE;
     }
 
     if (tail == string)
@@ -401,6 +406,8 @@ static bool checkValue (const driOptionValue *v, const driOptionInfo *info) {
 	    if (v->_float >= info->ranges[i].start._float &&
 		v->_float <= info->ranges[i].end._float)
 		return true;
+	break;
+      case DRI_STRING:
 	break;
       default:
 	assert (0); /* should never happen */
@@ -565,6 +572,8 @@ static void parseOptInfoAttr (struct OptInfoData *data, const XML_Char **attr) {
 	cache->info[opt].type = DRI_INT;
     else if (!strcmp (attrVal[OA_TYPE], "float"))
 	cache->info[opt].type = DRI_FLOAT;
+    else if (!strcmp (attrVal[OA_TYPE], "string"))
+	cache->info[opt].type = DRI_STRING;
     else
 	XML_FATAL ("illegal type in option: %s.", attrVal[OA_TYPE]);
 
@@ -865,6 +874,7 @@ static void optConfEndElem (void *userData, const XML_Char *name) {
 
 /** \brief Initialize an option cache based on info */
 static void initOptionCache (driOptionCache *cache, const driOptionCache *info) {
+    GLuint i, size = 1 << info->tableSize;
     cache->info = info->info;
     cache->tableSize = info->tableSize;
     cache->values = malloc((1<<info->tableSize) * sizeof (driOptionValue));
@@ -874,6 +884,10 @@ static void initOptionCache (driOptionCache *cache, const driOptionCache *info) 
     }
     memcpy (cache->values, info->values,
 	    (1<<info->tableSize) * sizeof (driOptionValue));
+    for (i = 0; i < size; ++i) {
+	if (cache->info[i].type == DRI_STRING)
+	    XSTRDUP(cache->values[i]._string, info->values[i]._string);
+    }
 }
 
 /** \brief Parse the named configuration file */
@@ -979,6 +993,13 @@ void driDestroyOptionInfo (driOptionCache *info) {
 }
 
 void driDestroyOptionCache (driOptionCache *cache) {
+    if (cache->info) {
+	GLuint i, size = 1 << cache->tableSize;
+	for (i = 0; i < size; ++i) {
+	    if (cache->info[i].type == DRI_STRING)
+		free(cache->values[i]._string);
+	}
+    }
     free(cache->values);
 }
 
@@ -1010,4 +1031,12 @@ float driQueryOptionf (const driOptionCache *cache, const char *name) {
     assert (cache->info[i].name != NULL);
     assert (cache->info[i].type == DRI_FLOAT);
     return cache->values[i]._float;
+}
+
+char *driQueryOptionstr (const driOptionCache *cache, const char *name) {
+    GLuint i = findOption (cache, name);
+  /* make sure the option is defined and has the correct type */
+    assert (cache->info[i].name != NULL);
+    assert (cache->info[i].type == DRI_STRING);
+    return cache->values[i]._string;
 }
