@@ -448,6 +448,17 @@ GLboolean
 _mesa_meta_alloc_texture(struct temp_texture *tex,
                          GLsizei width, GLsizei height, GLenum intFormat);
 
+void
+_mesa_meta_setup_texture_coords(GLenum faceTarget,
+                                GLint slice,
+                                GLint width,
+                                GLint height,
+                                GLint depth,
+                                GLfloat coords0[4],
+                                GLfloat coords1[4],
+                                GLfloat coords2[4],
+                                GLfloat coords3[4]);
+
 struct temp_texture *
 _mesa_meta_get_temp_texture(struct gl_context *ctx);
 

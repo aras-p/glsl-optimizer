@@ -2465,16 +2465,16 @@ _mesa_meta_check_generate_mipmap_fallback(struct gl_context *ctx, GLenum target,
  * \param height  height of the texture image
  * \param coords0/1/2/3  returns the computed texcoords
  */
-static void
-setup_texture_coords(GLenum faceTarget,
-                     GLint slice,
-                     GLint width,
-                     GLint height,
-                     GLint depth,
-                     GLfloat coords0[4],
-                     GLfloat coords1[4],
-                     GLfloat coords2[4],
-                     GLfloat coords3[4])
+void
+_mesa_meta_setup_texture_coords(GLenum faceTarget,
+                                GLint slice,
+                                GLint width,
+                                GLint height,
+                                GLint depth,
+                                GLfloat coords0[4],
+                                GLfloat coords1[4],
+                                GLfloat coords2[4],
+                                GLfloat coords3[4])
 {
    static const GLfloat st[4][2] = {
       {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
@@ -2618,7 +2618,7 @@ setup_texture_coords(GLenum faceTarget,
       }
       break;
    default:
-      assert(0 && "unexpected target in meta setup_texture_coords()");
+      assert(!"unexpected target in _mesa_meta_setup_texture_coords()");
    }
 }
 
@@ -2808,13 +2808,13 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    memset(verts, 0, sizeof(verts));
 
    /* Setup texture coordinates */
-   setup_texture_coords(faceTarget,
-                        slice,
-                        0, 0, 1, /* width, height never used here */
-                        verts[0].tex,
-                        verts[1].tex,
-                        verts[2].tex,
-                        verts[3].tex);
+   _mesa_meta_setup_texture_coords(faceTarget,
+                                   slice,
+                                   0, 0, 1, /* width, height never used here */
+                                   verts[0].tex,
+                                   verts[1].tex,
+                                   verts[2].tex,
+                                   verts[3].tex);
 
    /* setup vertex positions */
    verts[0].x = -1.0F;
@@ -3219,11 +3219,11 @@ decompress_texture_image(struct gl_context *ctx,
    /* Silence valgrind warnings about reading uninitialized stack. */
    memset(verts, 0, sizeof(verts));
 
-   setup_texture_coords(faceTarget, slice, width, height, depth,
-                        verts[0].tex,
-                        verts[1].tex,
-                        verts[2].tex,
-                        verts[3].tex);
+   _mesa_meta_setup_texture_coords(faceTarget, slice, width, height, depth,
+                                   verts[0].tex,
+                                   verts[1].tex,
+                                   verts[2].tex,
+                                   verts[3].tex);
 
    /* setup vertex positions */
    verts[0].x = -1.0F;
