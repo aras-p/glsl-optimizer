@@ -580,6 +580,16 @@
 #define GEN7_SURFACE_MCS_ENABLE                 (1 << 0)
 #define GEN7_SURFACE_MCS_PITCH_SHIFT            3
 #define GEN7_SURFACE_MCS_PITCH_MASK             INTEL_MASK(11, 3)
+#define GEN8_SURFACE_AUX_QPITCH_SHIFT           16
+#define GEN8_SURFACE_AUX_QPITCH_MASK            INTEL_MASK(30, 16)
+#define GEN8_SURFACE_AUX_PITCH_SHIFT            3
+#define GEN8_SURFACE_AUX_PITCH_MASK             INTEL_MASK(11, 3)
+#define GEN8_SURFACE_AUX_MODE_MASK              INTEL_MASK(2, 0)
+
+#define GEN8_SURFACE_AUX_MODE_NONE              0
+#define GEN8_SURFACE_AUX_MODE_MCS               1
+#define GEN8_SURFACE_AUX_MODE_APPEND            2
+#define GEN8_SURFACE_AUX_MODE_HIZ               3
 
 /* Surface state DW7 */
 #define GEN7_SURFACE_CLEAR_COLOR_SHIFT		28
