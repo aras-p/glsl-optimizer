@@ -94,9 +94,7 @@ fallback_required(struct gl_context *ctx, GLenum target,
    GLenum status;
 
    /* check for fallbacks */
-   if (target == GL_TEXTURE_3D ||
-       target == GL_TEXTURE_1D_ARRAY ||
-       target == GL_TEXTURE_2D_ARRAY) {
+   if (target == GL_TEXTURE_3D || target == GL_TEXTURE_1D_ARRAY) {
       _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
                        "glGenerateMipmap() to %s target\n",
                        _mesa_lookup_enum_by_nr(target));
@@ -186,7 +184,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
                                       ctx->Extensions.ARB_fragment_shader;
    GLenum faceTarget;
    GLuint dstLevel;
-   const GLint slice = 0;
    GLuint samplerSave;
 
    if (fallback_required(ctx, target, texObj)) {
@@ -254,15 +251,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    /* Silence valgrind warnings about reading uninitialized stack. */
    memset(verts, 0, sizeof(verts));
 
-   /* Setup texture coordinates */
-   _mesa_meta_setup_texture_coords(faceTarget,
-                                   slice,
-                                   0, 0, 1, /* width, height never used here */
-                                   verts[0].tex,
-                                   verts[1].tex,
-                                   verts[2].tex,
-                                   verts[3].tex);
-
    /* setup vertex positions */
    verts[0].x = -1.0F;
    verts[0].y = -1.0F;
@@ -273,16 +261,13 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    verts[3].x = -1.0F;
    verts[3].y =  1.0F;
 
-   /* upload vertex data */
-   _mesa_BufferData(GL_ARRAY_BUFFER_ARB, sizeof(verts),
-                       verts, GL_DYNAMIC_DRAW_ARB);
-
    /* texture is already locked, unlock now */
    _mesa_unlock_texture(ctx, texObj);
 
    for (dstLevel = baseLevel + 1; dstLevel <= maxLevel; dstLevel++) {
       const struct gl_texture_image *srcImage;
       const GLuint srcLevel = dstLevel - 1;
+      GLuint layer;
       GLsizei srcWidth, srcHeight, srcDepth;
       GLsizei dstWidth, dstHeight, dstDepth;
 
@@ -297,7 +282,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       /* new dst size */
       dstWidth = minify(srcWidth, 1);
       dstHeight = minify(srcHeight, 1);
-      dstDepth = minify(srcDepth, 1);
+      dstDepth = target == GL_TEXTURE_3D ? minify(srcDepth, 1) : srcDepth;
 
       if (dstWidth == srcImage->Width &&
           dstHeight == srcImage->Height &&
@@ -325,25 +310,39 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       /* limit minification to src level */
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
 
-      bind_fbo_image(texObj, faceTarget, dstLevel, 0);
-
-      _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-
-      /* sanity check */
-      if (_mesa_CheckFramebufferStatus(GL_FRAMEBUFFER) !=
-          GL_FRAMEBUFFER_COMPLETE) {
-         _mesa_problem(ctx, "Unexpected incomplete framebuffer in "
-                       "_mesa_meta_GenerateMipmap()");
-         break;
-      }
-
-      assert(dstWidth == ctx->DrawBuffer->Width);
-      assert(dstHeight == ctx->DrawBuffer->Height);
-
       /* setup viewport */
       _mesa_set_viewport(ctx, 0, 0, 0, dstWidth, dstHeight);
+      _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0);
 
-      _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+      for (layer = 0; layer < dstDepth; ++layer) {
+         /* Setup texture coordinates */
+         _mesa_meta_setup_texture_coords(faceTarget,
+                                         layer,
+                                         0, 0, 1, /* width, height never used here */
+                                         verts[0].tex,
+                                         verts[1].tex,
+                                         verts[2].tex,
+                                         verts[3].tex);
+
+         /* upload vertex data */
+         _mesa_BufferData(GL_ARRAY_BUFFER_ARB, sizeof(verts),
+                          verts, GL_DYNAMIC_DRAW_ARB);
+
+         bind_fbo_image(texObj, faceTarget, dstLevel, layer);
+
+         /* sanity check */
+         if (_mesa_CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+             GL_FRAMEBUFFER_COMPLETE) {
+            _mesa_problem(ctx, "Unexpected incomplete framebuffer in "
+                          "_mesa_meta_GenerateMipmap()");
+            break;
+         }
+
+         assert(dstWidth == ctx->DrawBuffer->Width);
+         assert(dstHeight == ctx->DrawBuffer->Height);
+
+         _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+      }
    }
 
    _mesa_lock_texture(ctx, texObj); /* relock */
