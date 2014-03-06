@@ -1090,8 +1090,8 @@ pack_ubyte_SARGB8(const GLubyte src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLubyte r = linear_ubyte_to_srgb_ubyte(src[RCOMP]);
-   GLubyte g = linear_ubyte_to_srgb_ubyte(src[RCOMP]);
-   GLubyte b = linear_ubyte_to_srgb_ubyte(src[RCOMP]);
+   GLubyte g = linear_ubyte_to_srgb_ubyte(src[GCOMP]);
+   GLubyte b = linear_ubyte_to_srgb_ubyte(src[BCOMP]);
    *d = PACK_COLOR_8888(src[ACOMP], r, g, b);
 }
 
