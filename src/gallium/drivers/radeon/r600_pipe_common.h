@@ -426,8 +426,6 @@ void r600_texture_get_fmask_info(struct r600_common_screen *rscreen,
 void r600_texture_get_cmask_info(struct r600_common_screen *rscreen,
 				 struct r600_texture *rtex,
 				 struct r600_cmask_info *out);
-void r600_texture_alloc_cmask_separate(struct r600_common_screen *rscreen,
-				       struct r600_texture *rtex);
 bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
 				     struct r600_texture **staging);
@@ -438,6 +436,11 @@ struct pipe_surface *r600_create_surface_custom(struct pipe_context *pipe,
 						const struct pipe_surface *templ,
 						unsigned width, unsigned height);
 unsigned r600_translate_colorswap(enum pipe_format format);
+void evergreen_do_fast_color_clear(struct r600_common_context *rctx,
+				   struct pipe_framebuffer_state *fb,
+				   struct r600_atom *fb_state,
+				   unsigned *buffers,
+				   const union pipe_color_union *color);
 void r600_init_screen_texture_functions(struct r600_common_screen *rscreen);
 void r600_init_context_texture_functions(struct r600_common_context *rctx);
 

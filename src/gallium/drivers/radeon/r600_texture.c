@@ -28,6 +28,7 @@
 #include "r600_cs.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
+#include "util/u_pack_color.h"
 #include <errno.h>
 #include <inttypes.h>
 
@@ -449,8 +450,8 @@ static void r600_texture_allocate_cmask(struct r600_common_screen *rscreen,
 		rtex->cb_color_info |= EG_S_028C70_FAST_CLEAR(1);
 }
 
-void r600_texture_alloc_cmask_separate(struct r600_common_screen *rscreen,
-				       struct r600_texture *rtex)
+static void r600_texture_alloc_cmask_separate(struct r600_common_screen *rscreen,
+					      struct r600_texture *rtex)
 {
 	if (rtex->cmask_buffer)
                 return;
@@ -1195,6 +1196,84 @@ unsigned r600_translate_colorswap(enum pipe_format format)
 		break;
 	}
 	return ~0U;
+}
+
+static void evergreen_set_clear_color(struct r600_texture *rtex,
+				      enum pipe_format surface_format,
+				      const union pipe_color_union *color)
+{
+	union util_color uc;
+
+	memset(&uc, 0, sizeof(uc));
+
+	if (util_format_is_pure_uint(surface_format)) {
+		util_format_write_4ui(surface_format, color->ui, 0, &uc, 0, 0, 0, 1, 1);
+	} else if (util_format_is_pure_sint(surface_format)) {
+		util_format_write_4i(surface_format, color->i, 0, &uc, 0, 0, 0, 1, 1);
+	} else {
+		util_pack_color(color->f, surface_format, &uc);
+	}
+
+	memcpy(rtex->color_clear_value, &uc, 2 * sizeof(uint32_t));
+}
+
+void evergreen_do_fast_color_clear(struct r600_common_context *rctx,
+				   struct pipe_framebuffer_state *fb,
+				   struct r600_atom *fb_state,
+				   unsigned *buffers,
+				   const union pipe_color_union *color)
+{
+	int i;
+
+	for (i = 0; i < fb->nr_cbufs; i++) {
+		struct r600_texture *tex;
+		unsigned clear_bit = PIPE_CLEAR_COLOR0 << i;
+
+		if (!fb->cbufs[i])
+			continue;
+
+		/* if this colorbuffer is not being cleared */
+		if (!(*buffers & clear_bit))
+			continue;
+
+		tex = (struct r600_texture *)fb->cbufs[i]->texture;
+
+		/* 128-bit formats are unusupported */
+		if (util_format_get_blocksizebits(fb->cbufs[i]->format) > 64) {
+			continue;
+		}
+
+		/* the clear is allowed if all layers are bound */
+		if (fb->cbufs[i]->u.tex.first_layer != 0 ||
+		    fb->cbufs[i]->u.tex.last_layer != util_max_layer(&tex->resource.b.b, 0)) {
+			continue;
+		}
+
+		/* cannot clear mipmapped textures */
+		if (fb->cbufs[i]->texture->last_level != 0) {
+			continue;
+		}
+
+		/* only supported on tiled surfaces */
+		if (tex->surface.level[0].mode < RADEON_SURF_MODE_1D) {
+			continue;
+		}
+
+		/* ensure CMASK is enabled */
+		r600_texture_alloc_cmask_separate(rctx->screen, tex);
+		if (tex->cmask.size == 0) {
+			continue;
+		}
+
+		/* Do the fast clear. */
+		evergreen_set_clear_color(tex, fb->cbufs[i]->format, color);
+		rctx->clear_buffer(&rctx->b, &tex->cmask_buffer->b.b,
+				   tex->cmask.offset, tex->cmask.size, 0);
+
+		tex->dirty_level_mask |= 1 << fb->cbufs[i]->u.tex.level;
+		fb_state->dirty = true;
+		*buffers &= ~clear_bit;
+	}
 }
 
 void r600_init_screen_texture_functions(struct r600_common_screen *rscreen)
