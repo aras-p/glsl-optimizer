@@ -308,10 +308,16 @@ nv30_screen_destroy(struct pipe_screen *pscreen)
    if (!nouveau_drm_screen_unref(&screen->base))
       return;
 
-   if (screen->base.fence.current &&
-       screen->base.fence.current->state >= NOUVEAU_FENCE_STATE_EMITTED) {
-      nouveau_fence_wait(screen->base.fence.current);
-      nouveau_fence_ref (NULL, &screen->base.fence.current);
+   if (screen->base.fence.current) {
+      struct nouveau_fence *current = NULL;
+
+      /* nouveau_fence_wait will create a new current fence, so wait on the
+       * _current_ one, and remove both.
+       */
+      nouveau_fence_ref(screen->base.fence.current, &current);
+      nouveau_fence_wait(current);
+      nouveau_fence_ref(NULL, &current);
+      nouveau_fence_ref(NULL, &screen->base.fence.current);
    }
 
    nouveau_object_del(&screen->query);
