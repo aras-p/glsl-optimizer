@@ -520,6 +520,15 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 4
    },
    {
+      MESA_FORMAT_R8G8B8A8_SRGB,
+      "MESA_FORMAT_R8G8B8A8_SRGB",
+      GL_RGBA,
+      GL_UNSIGNED_NORMALIZED,    
+      8, 8, 8, 8,
+      0, 0, 0, 0, 0,
+      1, 1, 4
+   },
+   {
       MESA_FORMAT_L_SRGB8,
       "MESA_FORMAT_L_SRGB8",
       GL_LUMINANCE,
@@ -2034,6 +2043,7 @@ _mesa_get_format_color_encoding(mesa_format format)
    case MESA_FORMAT_BGR_SRGB8:
    case MESA_FORMAT_A8B8G8R8_SRGB:
    case MESA_FORMAT_B8G8R8A8_SRGB:
+   case MESA_FORMAT_R8G8B8A8_SRGB:
    case MESA_FORMAT_L_SRGB8:
    case MESA_FORMAT_L8A8_SRGB:
    case MESA_FORMAT_SRGB_DXT1:
@@ -2068,6 +2078,9 @@ _mesa_get_srgb_format_linear(mesa_format format)
       break;
    case MESA_FORMAT_B8G8R8A8_SRGB:
       format = MESA_FORMAT_B8G8R8A8_UNORM;
+      break;
+   case MESA_FORMAT_R8G8B8A8_SRGB:
+      format = MESA_FORMAT_R8G8B8A8_UNORM;
       break;
    case MESA_FORMAT_L_SRGB8:
       format = MESA_FORMAT_L_UNORM8;
@@ -2576,6 +2589,7 @@ _mesa_format_to_type_and_comps(mesa_format format,
       return;
    case MESA_FORMAT_A8B8G8R8_SRGB:
    case MESA_FORMAT_B8G8R8A8_SRGB:
+   case MESA_FORMAT_R8G8B8A8_SRGB:
       *datatype = GL_UNSIGNED_BYTE;
       *comps = 4;
       return;
@@ -2985,6 +2999,7 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
       return GL_FALSE;
 
    case MESA_FORMAT_R8G8B8A8_UNORM:
+   case MESA_FORMAT_R8G8B8A8_SRGB:
       if (format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8_REV &&
           !swapBytes)
          return GL_TRUE;

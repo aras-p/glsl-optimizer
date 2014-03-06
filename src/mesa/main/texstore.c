@@ -3294,6 +3294,9 @@ _mesa_texstore_sargb8(TEXSTORE_PARAMS)
    case MESA_FORMAT_B8G8R8A8_SRGB:
       newDstFormat = MESA_FORMAT_B8G8R8A8_UNORM;
       break;
+   case MESA_FORMAT_R8G8B8A8_SRGB:
+      newDstFormat = MESA_FORMAT_R8G8B8A8_UNORM;
+      break;
    case MESA_FORMAT_B8G8R8X8_SRGB:
       newDstFormat = MESA_FORMAT_B8G8R8X8_UNORM;
       break;
