@@ -753,6 +753,8 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
 
    case PIPE_FORMAT_B8G8R8X8_SRGB:
       return MESA_FORMAT_B8G8R8X8_SRGB;
+   case PIPE_FORMAT_R8G8B8A8_SRGB:
+      return MESA_FORMAT_B8G8R8A8_SRGB;
 
    default:
       assert(0);
