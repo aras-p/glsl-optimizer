@@ -50,7 +50,7 @@
  * images are mapped.
  * \return GL_TRUE if a fallback is needed, GL_FALSE otherwise
  */
-static GLboolean
+static bool
 fallback_required(struct gl_context *ctx, GLenum target,
                   struct gl_texture_object *texObj)
 {
@@ -67,7 +67,7 @@ fallback_required(struct gl_context *ctx, GLenum target,
       _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
                        "glGenerateMipmap() to %s target\n",
                        _mesa_lookup_enum_by_nr(target));
-      return GL_TRUE;
+      return true;
    }
 
    srcLevel = texObj->BaseLevel;
@@ -75,14 +75,14 @@ fallback_required(struct gl_context *ctx, GLenum target,
    if (!baseImage) {
       _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
                        "glGenerateMipmap() couldn't find base teximage\n");
-      return GL_TRUE;
+      return true;
    }
 
    if (_mesa_is_format_compressed(baseImage->TexFormat)) {
       _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
                        "glGenerateMipmap() with %s format\n",
                        _mesa_get_format_name(baseImage->TexFormat));
-      return GL_TRUE;
+      return true;
    }
 
    if (_mesa_get_format_color_encoding(baseImage->TexFormat) == GL_SRGB &&
@@ -94,7 +94,7 @@ fallback_required(struct gl_context *ctx, GLenum target,
       _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
                        "glGenerateMipmap() of sRGB texture without "
                        "sRGB decode\n");
-      return GL_TRUE;
+      return true;
    }
 
    /*
@@ -132,10 +132,10 @@ fallback_required(struct gl_context *ctx, GLenum target,
    if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
                        "glGenerateMipmap() got incomplete FBO\n");
-      return GL_TRUE;
+      return true;
    }
 
-   return GL_FALSE;
+   return false;
 }
 
 void
