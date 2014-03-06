@@ -340,39 +340,46 @@ struct gl_builtin_uniform_desc {
  * element.  We could insert dummy entries in the list for each array
  * element after [0] but that causes complications elsewhere.
  *
- * We solve this problem by encoding two values in the location that's
- * returned by glGetUniformLocation():
- *  a) index into gl_uniform_list::Uniforms[] for the uniform
- *  b) an array/field offset (0 for simple types)
+ * We solve this problem by creating multiple entries for uniform arrays
+ * in the UniformRemapTable so that their elements get sequential locations.
  *
- * These two values are encoded in the high and low halves of a GLint.
- * By putting the uniform number in the high part and the offset in the
- * low part, we can support the unofficial ability to index into arrays
- * by adding offsets to the location value.
+ * Utility functions below offer functionality to split UniformRemapTable
+ * location in to location of the uniform in UniformStorage + offset to the
+ * array element (0 if not an array) and also merge it back again as the
+ * UniformRemapTable location.
+ *
  */
 /*@{*/
 /**
- * Combine the uniform's base location and the offset
+ * Combine the uniform's storage index and the array index
  */
 static inline GLint
 _mesa_uniform_merge_location_offset(const struct gl_shader_program *prog,
-                                    unsigned base_location, unsigned offset)
+                                    unsigned storage_index,
+                                    unsigned uniform_array_index)
 {
-   assert(prog->UniformLocationBaseScale >= 1);
-   assert(offset < prog->UniformLocationBaseScale);
-   return (base_location * prog->UniformLocationBaseScale) + offset;
+   /* location in remap table + array element offset */
+   return prog->UniformStorage[storage_index].remap_location +
+      uniform_array_index;
 }
 
 /**
- * Separate the uniform base location and parameter offset
+ * Separate the uniform storage index and array index
  */
 static inline void
 _mesa_uniform_split_location_offset(const struct gl_shader_program *prog,
-                                    GLint location, unsigned *base_location,
-				    unsigned *offset)
+                                    GLint location, unsigned *storage_index,
+				    unsigned *uniform_array_index)
 {
-   *offset = location % prog->UniformLocationBaseScale;
-   *base_location = location / prog->UniformLocationBaseScale;
+   *storage_index = prog->UniformRemapTable[location] - prog->UniformStorage;
+   *uniform_array_index = location -
+      prog->UniformRemapTable[location]->remap_location;
+
+   /*gl_uniform_storage in UniformStorage with the calculated base_location
+    * must match with the entry in remap table
+    */
+   assert(&prog->UniformStorage[*storage_index] ==
+          prog->UniformRemapTable[location]);
 }
 /*@}*/
 

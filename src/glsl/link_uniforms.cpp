@@ -799,6 +799,10 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
    prog->UniformStorage = NULL;
    prog->NumUserUniformStorage = 0;
 
+   ralloc_free(prog->UniformRemapTable);
+   prog->UniformRemapTable = NULL;
+   prog->NumUniformRemapTable = 0;
+
    if (prog->UniformHash != NULL) {
       prog->UniformHash->clear();
    } else {
@@ -911,19 +915,28 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
              sizeof(prog->_LinkedShaders[i]->SamplerTargets));
    }
 
-   /* Determine the size of the largest uniform array queryable via
-    * glGetUniformLocation.  Using this as the location scale guarantees that
-    * there is enough "room" for the array index to be stored in the low order
-    * part of the uniform location.  It also makes the locations be more
-    * tightly packed.
-    */
-   unsigned max_array_size = 1;
+   /* Build the uniform remap table that is used to set/get uniform locations */
    for (unsigned i = 0; i < num_user_uniforms; i++) {
-      if (uniforms[i].array_elements > max_array_size)
-         max_array_size = uniforms[i].array_elements;
-   }
 
-   prog->UniformLocationBaseScale = max_array_size;
+      /* how many new entries for this uniform? */
+      const unsigned entries = MAX2(1, uniforms[i].array_elements);
+
+      /* resize remap table to fit new entries */
+      prog->UniformRemapTable =
+         reralloc(prog,
+                  prog->UniformRemapTable,
+                  gl_uniform_storage *,
+                  prog->NumUniformRemapTable + entries);
+
+      /* set pointers for this uniform */
+      for (unsigned j = 0; j < entries; j++)
+         prog->UniformRemapTable[prog->NumUniformRemapTable+j] = &uniforms[i];
+
+      /* set the base location in remap table for the uniform */
+      uniforms[i].remap_location = prog->NumUniformRemapTable;
+
+      prog->NumUniformRemapTable += entries;
+   }
 
 #ifndef NDEBUG
    for (unsigned i = 0; i < num_user_uniforms; i++) {

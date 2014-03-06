@@ -178,6 +178,12 @@ struct gl_uniform_storage {
     * an atomic counter.
     */
    int atomic_buffer_index;
+
+   /**
+    * The 'base location' for this uniform in the uniform remap table. For
+    * arrays this is the first element in the array.
+    */
+   unsigned remap_location;
 };
 
 #ifdef __cplusplus

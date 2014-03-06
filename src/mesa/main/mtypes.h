@@ -2702,6 +2702,14 @@ struct gl_shader_program
    struct gl_uniform_storage *UniformStorage;
 
    /**
+    * Mapping from GL uniform locations returned by \c glUniformLocation to
+    * UniformStorage entries. Arrays will have multiple contiguous slots
+    * in the UniformRemapTable, all pointing to the same UniformStorage entry.
+    */
+   unsigned NumUniformRemapTable;
+   struct gl_uniform_storage **UniformRemapTable;
+
+   /**
     * Size of the gl_ClipDistance array that is output from the last pipeline
     * stage before the fragment shader.
     */
@@ -2709,21 +2717,6 @@ struct gl_shader_program
 
    struct gl_uniform_block *UniformBlocks;
    unsigned NumUniformBlocks;
-
-   /**
-    * Scale factor for the uniform base location
-    *
-    * This is used to generate locations (returned by \c glGetUniformLocation)
-    * of uniforms.  The base location of the uniform is multiplied by this
-    * value, and the array index is added.
-    *
-    * \note
-    * Must be >= 1.
-    *
-    * \sa
-    * _mesa_uniform_merge_location_offset, _mesa_uniform_split_location_offset
-    */
-   unsigned UniformLocationBaseScale;
 
    /**
     * Indices into the _LinkedShaders's UniformBlocks[] array for each stage
