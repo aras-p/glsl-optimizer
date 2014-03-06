@@ -48,7 +48,8 @@
  * Bind a particular texture level/layer to mipmap->FBO's GL_COLOR_ATTACHMENT0.
  */
 static void
-bind_fbo_image(struct gl_texture_object *texObj, GLenum target, GLuint level)
+bind_fbo_image(struct gl_texture_object *texObj, GLenum target,
+               GLuint level, GLuint layer)
 {
    switch (target) {
    case GL_TEXTURE_1D:
@@ -58,13 +59,14 @@ bind_fbo_image(struct gl_texture_object *texObj, GLenum target, GLuint level)
                                  texObj->Name,
                                  level);
       break;
+   case GL_TEXTURE_1D_ARRAY:
+   case GL_TEXTURE_2D_ARRAY:
    case GL_TEXTURE_3D:
-      _mesa_FramebufferTexture3D(GL_FRAMEBUFFER,
-                                 GL_COLOR_ATTACHMENT0,
-                                 target,
-                                 texObj->Name,
-                                 level,
-                                 0); /* XXX: Unfinished */
+      _mesa_FramebufferTextureLayer(GL_FRAMEBUFFER,
+                                    GL_COLOR_ATTACHMENT0,
+                                    texObj->Name,
+                                    level,
+                                    layer);
       break;
    default: /* 2D / cube */
       _mesa_FramebufferTexture2D(GL_FRAMEBUFFER,
@@ -135,7 +137,7 @@ fallback_required(struct gl_context *ctx, GLenum target,
       _mesa_GenFramebuffers(1, &mipmap->FBO);
    _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, mipmap->FBO);
 
-   bind_fbo_image(texObj, target, srcLevel);
+   bind_fbo_image(texObj, target, srcLevel, 0);
 
    status = _mesa_CheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
 
@@ -323,7 +325,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       /* limit minification to src level */
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
 
-      bind_fbo_image(texObj, faceTarget, dstLevel);
+      bind_fbo_image(texObj, faceTarget, dstLevel, 0);
 
       _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
