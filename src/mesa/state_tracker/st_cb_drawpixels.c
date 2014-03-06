@@ -788,7 +788,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    }
 
    cso_set_vertex_elements(cso, 3, st->velems_util_draw);
-   cso_set_stream_outputs(st->cso_context, 0, NULL, 0);
+   cso_set_stream_outputs(st->cso_context, 0, NULL, NULL);
 
    /* texture state: */
    cso_set_sampler_views(cso, PIPE_SHADER_FRAGMENT, num_sampler_view, sv);

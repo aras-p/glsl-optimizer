@@ -115,7 +115,7 @@ unsigned cso_get_aux_vertex_buffer_slot(struct cso_context *ctx);
 void cso_set_stream_outputs(struct cso_context *ctx,
                             unsigned num_targets,
                             struct pipe_stream_output_target **targets,
-                            unsigned append_bitmask);
+                            const unsigned *offsets);
 void cso_save_stream_outputs(struct cso_context *ctx);
 void cso_restore_stream_outputs(struct cso_context *ctx);
 

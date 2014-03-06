@@ -108,10 +108,11 @@ void r600_streamout_buffers_dirty(struct r600_common_context *rctx)
 void r600_set_streamout_targets(struct pipe_context *ctx,
 				unsigned num_targets,
 				struct pipe_stream_output_target **targets,
-				unsigned append_bitmask)
+				const unsigned *offsets)
 {
 	struct r600_common_context *rctx = (struct r600_common_context *)ctx;
 	unsigned i;
+        unsigned append_bitmask = 0;
 
 	/* Stop streamout. */
 	if (rctx->streamout.num_targets && rctx->streamout.begin_emitted) {
@@ -122,6 +123,8 @@ void r600_set_streamout_targets(struct pipe_context *ctx,
 	for (i = 0; i < num_targets; i++) {
 		pipe_so_target_reference((struct pipe_stream_output_target**)&rctx->streamout.targets[i], targets[i]);
 		r600_context_add_resource_size(ctx, targets[i]->buffer);
+		if (offsets[i] == ((unsigned)-1))
+			append_bitmask |=  1 << i;
 	}
 	for (; i < rctx->streamout.num_targets; i++) {
 		pipe_so_target_reference((struct pipe_stream_output_target**)&rctx->streamout.targets[i], NULL);

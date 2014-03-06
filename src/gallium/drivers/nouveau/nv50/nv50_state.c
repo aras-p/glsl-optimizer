@@ -1055,7 +1055,7 @@ static void
 nv50_set_stream_output_targets(struct pipe_context *pipe,
                                unsigned num_targets,
                                struct pipe_stream_output_target **targets,
-                               unsigned append_mask)
+                               const unsigned *offsets)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
    unsigned i;
@@ -1066,7 +1066,8 @@ nv50_set_stream_output_targets(struct pipe_context *pipe,
 
    for (i = 0; i < num_targets; ++i) {
       const boolean changed = nv50->so_target[i] != targets[i];
-      if (!changed && (append_mask & (1 << i)))
+      const boolean append = (offsets[i] == (unsigned)-1);
+      if (!changed && append)
          continue;
       nv50->so_targets_dirty |= 1 << i;
 
@@ -1075,7 +1076,7 @@ nv50_set_stream_output_targets(struct pipe_context *pipe,
          serialize = FALSE;
       }
 
-      if (targets[i] && !(append_mask & (1 << i)))
+      if (targets[i] && !append)
          nv50_so_target(targets[i])->clean = TRUE;
 
       pipe_so_target_reference(&nv50->so_target[i], targets[i]);

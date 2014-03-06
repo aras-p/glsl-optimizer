@@ -513,7 +513,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    }
 
    cso_set_vertex_elements(cso, 3, st->velems_util_draw);
-   cso_set_stream_outputs(st->cso_context, 0, NULL, 0);
+   cso_set_stream_outputs(st->cso_context, 0, NULL, NULL);
 
    /* convert Z from [0,1] to [-1,-1] to match viewport Z scale/bias */
    z = z * 2.0f - 1.0f;

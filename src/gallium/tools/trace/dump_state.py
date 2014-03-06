@@ -536,9 +536,9 @@ class Context(Dispatcher):
         self._state.render_condition_condition = condition
         self._state.render_condition_mode = mode
 
-    def set_stream_output_targets(self, num_targets, tgs, append_bitmask):
+    def set_stream_output_targets(self, num_targets, tgs, offsets):
         self._state.so_targets = tgs
-        self._state.so_append_bitmask = append_bitmask
+        self._state.offsets = offsets
 
     def draw_vbo(self, info):
         self._draw_no += 1

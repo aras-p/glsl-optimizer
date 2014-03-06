@@ -260,7 +260,7 @@ struct pipe_context {
    void (*set_stream_output_targets)(struct pipe_context *,
                               unsigned num_targets,
                               struct pipe_stream_output_target **targets,
-                              unsigned append_bitmask);
+                              const unsigned *offsets);
 
    /*@}*/
 

@@ -537,7 +537,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_sample_mask(ctx->cso, ~0);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
-   cso_set_stream_outputs(ctx->cso, 0, NULL, 0);
+   cso_set_stream_outputs(ctx->cso, 0, NULL, NULL);
 
    /* sampler */
    ctx->sampler.normalized_coords = normalized;

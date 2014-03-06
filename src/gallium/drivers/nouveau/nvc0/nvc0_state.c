@@ -1031,7 +1031,7 @@ static void
 nvc0_set_transform_feedback_targets(struct pipe_context *pipe,
                                     unsigned num_targets,
                                     struct pipe_stream_output_target **targets,
-                                    unsigned append_mask)
+                                    unsigned *offsets)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
    unsigned i;
@@ -1040,14 +1040,15 @@ nvc0_set_transform_feedback_targets(struct pipe_context *pipe,
    assert(num_targets <= 4);
 
    for (i = 0; i < num_targets; ++i) {
-      if (nvc0->tfbbuf[i] == targets[i] && (append_mask & (1 << i)))
+      boolean append = (offsets[i] == ((unsigned)-1));
+      if (nvc0->tfbbuf[i] == targets[i] && append)
          continue;
       nvc0->tfbbuf_dirty |= 1 << i;
 
       if (nvc0->tfbbuf[i] && nvc0->tfbbuf[i] != targets[i])
          nvc0_so_target_save_offset(pipe, nvc0->tfbbuf[i], i, &serialize);
 
-      if (targets[i] && !(append_mask & (1 << i)))
+      if (targets[i] && !append)
          nvc0_so_target(targets[i])->clean = TRUE;
 
       pipe_so_target_reference(&nvc0->tfbbuf[i], targets[i]);

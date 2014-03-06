@@ -1080,7 +1080,7 @@ static INLINE void
 trace_context_set_stream_output_targets(struct pipe_context *_pipe,
                                         unsigned num_targets,
                                         struct pipe_stream_output_target **tgs,
-                                        unsigned append_bitmask)
+                                        const unsigned *offsets)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
@@ -1090,9 +1090,9 @@ trace_context_set_stream_output_targets(struct pipe_context *_pipe,
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(uint, num_targets);
    trace_dump_arg_array(ptr, tgs, num_targets);
-   trace_dump_arg(uint, append_bitmask);
+   trace_dump_arg_array(uint, offsets, num_targets);
 
-   pipe->set_stream_output_targets(pipe, num_targets, tgs, append_bitmask);
+   pipe->set_stream_output_targets(pipe, num_targets, tgs, offsets);
 
    trace_dump_call_end();
 }

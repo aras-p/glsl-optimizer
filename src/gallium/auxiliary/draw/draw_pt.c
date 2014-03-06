@@ -431,14 +431,16 @@ draw_pt_arrays_restart(struct draw_context *draw,
  */
 static void
 resolve_draw_info(const struct pipe_draw_info *raw_info,
-                  struct pipe_draw_info *info)
+                  struct pipe_draw_info *info,
+                  struct pipe_vertex_buffer *vertex_buffer)
 {
    memcpy(info, raw_info, sizeof(struct pipe_draw_info));
 
    if (raw_info->count_from_stream_output) {
       struct draw_so_target *target =
          (struct draw_so_target *)info->count_from_stream_output;
-      info->count = target->emitted_vertices;
+      assert(vertex_buffer != NULL);
+      info->count = target->internal_offset / vertex_buffer->stride;
 
       /* Stream output draw can not be indexed */
       debug_assert(!info->indexed);
@@ -467,7 +469,7 @@ draw_vbo(struct draw_context *draw,
     */
    util_fpstate_set_denorms_to_zero(fpstate);
 
-   resolve_draw_info(info, &resolved_info);
+   resolve_draw_info(info, &resolved_info, &(draw->pt.vertex_buffer[0]));
    info = &resolved_info;
 
    assert(info->instance_count > 0);

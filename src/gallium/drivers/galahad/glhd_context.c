@@ -613,12 +613,12 @@ static INLINE void
 galahad_context_set_stream_output_targets(struct pipe_context *_pipe,
                                           unsigned num_targets,
                                           struct pipe_stream_output_target **tgs,
-                                          unsigned append_bitmask)
+                                          const unsigned *offsets)
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
 
-   pipe->set_stream_output_targets(pipe, num_targets, tgs, append_bitmask);
+   pipe->set_stream_output_targets(pipe, num_targets, tgs, offsets);
 }
 
 static void

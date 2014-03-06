@@ -856,10 +856,11 @@ static void
 ilo_set_stream_output_targets(struct pipe_context *pipe,
                               unsigned num_targets,
                               struct pipe_stream_output_target **targets,
-                              unsigned append_bitmask)
+                              const unsigned *offset)
 {
    struct ilo_context *ilo = ilo_context(pipe);
    unsigned i;
+   unsigned append_bitmask = 0;
 
    if (!targets)
       num_targets = 0;
@@ -868,8 +869,11 @@ ilo_set_stream_output_targets(struct pipe_context *pipe,
    if (!ilo->so.count && !num_targets)
       return;
 
-   for (i = 0; i < num_targets; i++)
+   for (i = 0; i < num_targets; i++) {
       pipe_so_target_reference(&ilo->so.states[i], targets[i]);
+      if (offset[i] == (unsigned)-1)
+         append_bitmask |= 1 << i;
+   }
 
    for (; i < ilo->so.count; i++)
       pipe_so_target_reference(&ilo->so.states[i], NULL);

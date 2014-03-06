@@ -53,14 +53,13 @@ struct tgsi_sampler;
  * structure to contain driver internal information 
  * for stream out support. mapping stores the pointer
  * to the buffer contents, and internal offset stores
- * stores an internal counter to how much of the stream
+ * an internal counter to how much of the stream
  * out buffer is used (in bytes).
  */
 struct draw_so_target {
    struct pipe_stream_output_target target;
    void *mapping;
    int internal_offset;
-   int emitted_vertices;
 };
 
 struct draw_context *draw_create( struct pipe_context *pipe );

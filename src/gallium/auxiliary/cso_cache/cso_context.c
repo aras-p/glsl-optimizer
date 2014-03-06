@@ -332,7 +332,7 @@ void cso_release_all( struct cso_context *ctx )
       ctx->pipe->bind_vertex_elements_state( ctx->pipe, NULL );
 
       if (ctx->pipe->set_stream_output_targets)
-         ctx->pipe->set_stream_output_targets(ctx->pipe, 0, NULL, 0);
+         ctx->pipe->set_stream_output_targets(ctx->pipe, 0, NULL, NULL);
    }
 
    /* free fragment sampler views */
@@ -1241,7 +1241,7 @@ void
 cso_set_stream_outputs(struct cso_context *ctx,
                        unsigned num_targets,
                        struct pipe_stream_output_target **targets,
-                       unsigned append_bitmask)
+                       const unsigned *offsets)
 {
    struct pipe_context *pipe = ctx->pipe;
    uint i;
@@ -1266,7 +1266,7 @@ cso_set_stream_outputs(struct cso_context *ctx,
    }
 
    pipe->set_stream_output_targets(pipe, num_targets, targets,
-                                   append_bitmask);
+                                   offsets);
    ctx->nr_so_targets = num_targets;
 }
 
@@ -1292,6 +1292,7 @@ cso_restore_stream_outputs(struct cso_context *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
    uint i;
+   unsigned offset[PIPE_MAX_SO_BUFFERS];
 
    if (!ctx->has_streamout) {
       return;
@@ -1302,19 +1303,21 @@ cso_restore_stream_outputs(struct cso_context *ctx)
       return;
    }
 
+   assert(ctx->nr_so_targets_saved <= PIPE_MAX_SO_BUFFERS);
    for (i = 0; i < ctx->nr_so_targets_saved; i++) {
       pipe_so_target_reference(&ctx->so_targets[i], NULL);
       /* move the reference from one pointer to another */
       ctx->so_targets[i] = ctx->so_targets_saved[i];
       ctx->so_targets_saved[i] = NULL;
+      /* -1 means append */
+      offset[i] = (unsigned)-1;
    }
    for (; i < ctx->nr_so_targets; i++) {
       pipe_so_target_reference(&ctx->so_targets[i], NULL);
    }
 
-   /* ~0 means append */
    pipe->set_stream_output_targets(pipe, ctx->nr_so_targets_saved,
-                                   ctx->so_targets, ~0);
+                                   ctx->so_targets, offset);
 
    ctx->nr_so_targets = ctx->nr_so_targets_saved;
    ctx->nr_so_targets_saved = 0;

@@ -472,9 +472,12 @@ static void blitter_restore_vertex_states(struct blitter_context_priv *ctx)
 
    /* Stream outputs. */
    if (ctx->has_stream_out) {
+      unsigned offsets[PIPE_MAX_SO_BUFFERS];
+      for (i = 0; i < ctx->base.saved_num_so_targets; i++)
+         offsets[i] = (unsigned)-1;
       pipe->set_stream_output_targets(pipe,
                                       ctx->base.saved_num_so_targets,
-                                      ctx->base.saved_so_targets, ~0);
+                                      ctx->base.saved_so_targets, offsets);
 
       for (i = 0; i < ctx->base.saved_num_so_targets; i++)
          pipe_so_target_reference(&ctx->base.saved_so_targets[i], NULL);
@@ -1013,7 +1016,7 @@ static void blitter_set_common_draw_rect_state(struct blitter_context_priv *ctx,
    if (ctx->has_geometry_shader)
       pipe->bind_gs_state(pipe, NULL);
    if (ctx->has_stream_out)
-      pipe->set_stream_output_targets(pipe, 0, NULL, 0);
+      pipe->set_stream_output_targets(pipe, 0, NULL, NULL);
 }
 
 static void blitter_draw(struct blitter_context_priv *ctx,
@@ -1806,6 +1809,7 @@ void util_blitter_copy_buffer(struct blitter_context *blitter,
    struct pipe_context *pipe = ctx->base.pipe;
    struct pipe_vertex_buffer vb;
    struct pipe_stream_output_target *so_target;
+   unsigned offsets[PIPE_MAX_SO_BUFFERS] = {0};
 
    if (srcx >= src->width0 ||
        dstx >= dst->width0) {
@@ -1847,7 +1851,7 @@ void util_blitter_copy_buffer(struct blitter_context *blitter,
    pipe->bind_rasterizer_state(pipe, ctx->rs_discard_state);
 
    so_target = pipe->create_stream_output_target(pipe, dst, dstx, size);
-   pipe->set_stream_output_targets(pipe, 1, &so_target, 0);
+   pipe->set_stream_output_targets(pipe, 1, &so_target, offsets);
 
    util_draw_arrays(pipe, PIPE_PRIM_POINTS, 0, size / 4);
 
@@ -1867,6 +1871,7 @@ void util_blitter_clear_buffer(struct blitter_context *blitter,
    struct pipe_context *pipe = ctx->base.pipe;
    struct pipe_vertex_buffer vb = {0};
    struct pipe_stream_output_target *so_target;
+   unsigned offsets[PIPE_MAX_SO_BUFFERS] = {0};
 
    assert(num_channels >= 1);
    assert(num_channels <= 4);
@@ -1906,7 +1911,7 @@ void util_blitter_clear_buffer(struct blitter_context *blitter,
    pipe->bind_rasterizer_state(pipe, ctx->rs_discard_state);
 
    so_target = pipe->create_stream_output_target(pipe, dst, offset, size);
-   pipe->set_stream_output_targets(pipe, 1, &so_target, 0);
+   pipe->set_stream_output_targets(pipe, 1, &so_target, offsets);
 
    util_draw_arrays(pipe, PIPE_PRIM_POINTS, 0, size / 4);
 

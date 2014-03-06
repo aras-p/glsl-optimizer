@@ -307,7 +307,7 @@ clear_with_quad(struct gl_context *ctx, unsigned clear_buffers)
    }
 
    cso_set_vertex_elements(st->cso_context, 2, st->velems_util_draw);
-   cso_set_stream_outputs(st->cso_context, 0, NULL, 0);
+   cso_set_stream_outputs(st->cso_context, 0, NULL, NULL);
    cso_set_sample_mask(st->cso_context, ~0);
    cso_set_rasterizer(st->cso_context, &st->clear.raster);
 

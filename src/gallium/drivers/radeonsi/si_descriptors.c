@@ -605,7 +605,7 @@ void si_set_ring_buffer(struct pipe_context *ctx, uint shader, uint slot,
 static void si_set_streamout_targets(struct pipe_context *ctx,
 				     unsigned num_targets,
 				     struct pipe_stream_output_target **targets,
-				     unsigned append_bitmask)
+				     const unsigned *offsets)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_buffer_resources *buffers = &sctx->rw_buffers[PIPE_SHADER_VERTEX];
@@ -618,7 +618,7 @@ static void si_set_streamout_targets(struct pipe_context *ctx,
 	 */
 
 	/* Set the VGT regs. */
-	r600_set_streamout_targets(ctx, num_targets, targets, append_bitmask);
+	r600_set_streamout_targets(ctx, num_targets, targets, offsets);
 
 	/* Set the shader resources.*/
 	for (i = 0; i < num_targets; i++) {

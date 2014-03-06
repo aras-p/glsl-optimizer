@@ -194,7 +194,7 @@ static void so_emit_prim(struct pt_so_emit *so,
          {
             int j;
             debug_printf("VERT[%d], offset = %d, slot[%d] sc = %d, num_c = %d, idx = %d = [",
-                         i + draw->so.targets[ob]->emitted_vertices,
+                         i,
                          draw->so.targets[ob]->internal_offset,
                          slot, start_comp, num_comps, idx);
             for (j = 0; j < num_comps; ++j) {
@@ -209,7 +209,6 @@ static void so_emit_prim(struct pt_so_emit *so,
          struct draw_so_target *target = draw->so.targets[ob];
          if (target && buffer_written[ob]) {
             target->internal_offset += state->stride[ob] * sizeof(float);
-            target->emitted_vertices += 1;
          }
       }
    }

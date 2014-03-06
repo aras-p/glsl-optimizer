@@ -182,10 +182,11 @@ discussed above.
   use pipe_so_target_reference instead.
 
 * ``set_stream_output_targets`` binds stream output targets. The parameter
-  append_bitmask is a bitmask, where the i-th bit specifies whether new
-  primitives should be appended to the i-th buffer (writing starts at
-  the internal offset), or whether writing should start at the beginning
-  (the internal offset is effectively set to 0).
+  offset is an array which specifies the internal offset of the buffer. The
+  internal offset is, besides writing, used for reading the data during the
+  draw_auto stage, i.e. it specifies how much data there is in the buffer
+  for the purposes of the draw_auto stage. -1 means the buffer should
+  be appended to, and everything else sets the internal offset.
 
 NOTE: The currently-bound vertex or geometry shader must be compiled with
 the properly-filled-in structure pipe_stream_output_info describing which
