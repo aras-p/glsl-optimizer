@@ -282,9 +282,9 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       srcDepth = srcImage->Depth;
 
       /* new dst size */
-      dstWidth = MAX2(1, srcWidth / 2);
-      dstHeight = MAX2(1, srcHeight / 2);
-      dstDepth = MAX2(1, srcDepth / 2);
+      dstWidth = minify(srcWidth, 1);
+      dstHeight = minify(srcHeight, 1);
+      dstDepth = minify(srcDepth, 1);
 
       if (dstWidth == srcImage->Width &&
           dstHeight == srcImage->Height &&
