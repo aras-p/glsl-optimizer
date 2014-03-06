@@ -147,6 +147,8 @@ st_mesa_format_to_pipe_format(mesa_format mesaFormat)
       return PIPE_FORMAT_A8B8G8R8_SRGB;
    case MESA_FORMAT_B8G8R8A8_SRGB:
       return PIPE_FORMAT_B8G8R8A8_SRGB;
+   case MESA_FORMAT_R8G8B8A8_SRGB:
+      return PIPE_FORMAT_R8G8B8A8_SRGB;
    case MESA_FORMAT_RGBA_FLOAT32:
       return PIPE_FORMAT_R32G32B32A32_FLOAT;
    case MESA_FORMAT_RGBA_FLOAT16:
