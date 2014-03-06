@@ -408,27 +408,6 @@ static void evergreen_set_clear_color(struct pipe_surface *cbuf,
 	memcpy(clear_value, &uc, 2 * sizeof(uint32_t));
 }
 
-static void evergreen_check_alloc_cmask(struct pipe_context *ctx,
-                                        struct pipe_surface *cbuf)
-{
-        struct r600_context *rctx = (struct r600_context *)ctx;
-        struct r600_texture *tex = (struct r600_texture *)cbuf->texture;
-        struct r600_surface *surf = (struct r600_surface *)cbuf;
-
-        if (tex->cmask_buffer)
-                return;
-
-        r600_texture_init_cmask(&rctx->screen->b, tex);
-
-        /* update colorbuffer state bits */
-        if (tex->cmask_buffer != NULL) {
-                uint64_t va = r600_resource_va(rctx->b.b.screen, &tex->cmask_buffer->b.b);
-                surf->cb_color_cmask = va >> 8;
-                surf->cb_color_cmask_slice = S_028C80_TILE_MAX(tex->cmask.slice_tile_max);
-                surf->cb_color_info |= S_028C70_FAST_CLEAR(1);
-        }
-}
-
 static void r600_try_fast_color_clear(struct r600_context *rctx, unsigned *buffers,
 				      const union pipe_color_union *color)
 {
@@ -470,7 +449,7 @@ static void r600_try_fast_color_clear(struct r600_context *rctx, unsigned *buffe
 		}
 
 		/* ensure CMASK is enabled */
-		evergreen_check_alloc_cmask(&rctx->b.b, fb->cbufs[i]);
+		r600_texture_alloc_cmask_separate(&rctx->screen->b, tex);
 		if (tex->cmask.size == 0) {
 			continue;
 		}

@@ -964,8 +964,6 @@ void evergreen_init_color_surface_rat(struct r600_context *rctx,
 	util_range_add(&r600_resource(pipe_buffer)->valid_buffer_range,
 		       0, pipe_buffer->width0);
 
-	surf->cb_color_cmask = surf->cb_color_base;
-	surf->cb_color_cmask_slice = 0;
 	surf->cb_color_fmask = surf->cb_color_base;
 	surf->cb_color_fmask_slice = 0;
 }
@@ -1133,9 +1131,6 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 	if (rtex->fmask.size) {
 		color_info |= S_028C70_COMPRESSION(1);
 	}
-	if (rtex->cmask.size) {
-		color_info |= S_028C70_FAST_CLEAR(1);
-	}
 
 	base_offset = r600_resource_va(rctx->b.b.screen, pipe_tex);
 
@@ -1152,14 +1147,7 @@ void evergreen_init_color_surface(struct r600_context *rctx,
 	} else {
 		surf->cb_color_fmask = surf->cb_color_base;
 	}
-	if (rtex->cmask.size) {
-		uint64_t va = r600_resource_va(rctx->b.b.screen, &rtex->cmask_buffer->b.b);
-		surf->cb_color_cmask = (va + rtex->cmask.offset) >> 8;
-	} else {
-		surf->cb_color_cmask = surf->cb_color_base;
-	}
 	surf->cb_color_fmask_slice = S_028C88_TILE_MAX(rtex->fmask.slice_tile_max);
-	surf->cb_color_cmask_slice = S_028C80_TILE_MAX(rtex->cmask.slice_tile_max);
 
 	surf->color_initialized = true;
 }
@@ -1547,6 +1535,8 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 	struct pipe_framebuffer_state *state = &rctx->framebuffer.state;
 	unsigned nr_cbufs = state->nr_cbufs;
 	unsigned i, tl, br;
+	struct r600_texture *tex = NULL;
+	struct r600_surface *cb = NULL;
 
 	/* XXX support more colorbuffers once we need them */
 	assert(nr_cbufs <= 8);
@@ -1555,10 +1545,9 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 
 	/* Colorbuffers. */
 	for (i = 0; i < nr_cbufs; i++) {
-		struct r600_surface *cb = (struct r600_surface*)state->cbufs[i];
-		struct r600_texture *tex;
 		unsigned reloc, cmask_reloc;
 
+		cb = (struct r600_surface*)state->cbufs[i];
 		if (!cb) {
 			r600_write_context_reg(cs, R_028C70_CB_COLOR0_INFO + i * 0x3C,
 					       S_028C70_FORMAT(V_028C70_COLOR_INVALID));
@@ -1587,11 +1576,11 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 		radeon_emit(cs, cb->cb_color_pitch);	/* R_028C64_CB_COLOR0_PITCH */
 		radeon_emit(cs, cb->cb_color_slice);	/* R_028C68_CB_COLOR0_SLICE */
 		radeon_emit(cs, cb->cb_color_view);	/* R_028C6C_CB_COLOR0_VIEW */
-		radeon_emit(cs, cb->cb_color_info);	/* R_028C70_CB_COLOR0_INFO */
+		radeon_emit(cs, cb->cb_color_info | tex->cb_color_info); /* R_028C70_CB_COLOR0_INFO */
 		radeon_emit(cs, cb->cb_color_attrib);	/* R_028C74_CB_COLOR0_ATTRIB */
 		radeon_emit(cs, cb->cb_color_dim);		/* R_028C78_CB_COLOR0_DIM */
-		radeon_emit(cs, cb->cb_color_cmask);	/* R_028C7C_CB_COLOR0_CMASK */
-		radeon_emit(cs, cb->cb_color_cmask_slice);	/* R_028C80_CB_COLOR0_CMASK_SLICE */
+		radeon_emit(cs, tex->cmask.base_address_reg);	/* R_028C7C_CB_COLOR0_CMASK */
+		radeon_emit(cs, tex->cmask.slice_tile_max);	/* R_028C80_CB_COLOR0_CMASK_SLICE */
 		radeon_emit(cs, cb->cb_color_fmask);	/* R_028C84_CB_COLOR0_FMASK */
 		radeon_emit(cs, cb->cb_color_fmask_slice); /* R_028C88_CB_COLOR0_FMASK_SLICE */
 		radeon_emit(cs, tex->color_clear_value[0]); /* R_028C8C_CB_COLOR0_CLEAR_WORD0 */
@@ -1617,7 +1606,7 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 	/* set CB_COLOR1_INFO for possible dual-src blending */
 	if (i == 1 && state->cbufs[0]) {
 		r600_write_context_reg(cs, R_028C70_CB_COLOR0_INFO + 1 * 0x3C,
-				       ((struct r600_surface*)state->cbufs[0])->cb_color_info);
+				       cb->cb_color_info | tex->cb_color_info);
 
 		if (!rctx->keep_tiling_flags) {
 			unsigned reloc = r600_context_bo_reloc(&rctx->b,

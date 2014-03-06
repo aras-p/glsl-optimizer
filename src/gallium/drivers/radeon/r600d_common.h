@@ -189,6 +189,9 @@
 #define CM_R_028C18_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_0 0x28c18
 #define CM_R_028C28_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_0 0x28c28
 
+#define   EG_S_028C70_FAST_CLEAR(x)                       (((x) & 0x1) << 17)
+#define   SI_S_028C70_FAST_CLEAR(x)                       (((x) & 0x1) << 13)
+
 /*CIK+*/
 #define R_0300FC_CP_STRMOUT_CNTL		     0x0300FC
 

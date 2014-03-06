@@ -149,6 +149,7 @@ struct r600_cmask_info {
 	unsigned size;
 	unsigned alignment;
 	unsigned slice_tile_max;
+	unsigned base_address_reg;
 };
 
 struct r600_texture {
@@ -166,6 +167,7 @@ struct r600_texture {
 	struct r600_fmask_info		fmask;
 	struct r600_cmask_info		cmask;
 	struct r600_resource		*cmask_buffer;
+	unsigned			cb_color_info; /* fast clear enable bit */
 	unsigned			color_clear_value[2];
 
 	/* Depth buffer compression and fast clear. */
@@ -197,8 +199,7 @@ struct r600_surface {
 	unsigned cb_color_attrib;	/* EG and later */
 	unsigned cb_color_fmask;	/* CB_COLORn_FMASK (EG and later) or CB_COLORn_FRAG (r600) */
 	unsigned cb_color_fmask_slice;	/* EG and later */
-	unsigned cb_color_cmask;	/* CB_COLORn_CMASK (EG and later) or CB_COLORn_TILE (r600) */
-	unsigned cb_color_cmask_slice;	/* EG and later */
+	unsigned cb_color_cmask;	/* CB_COLORn_TILE (r600 only) */
 	unsigned cb_color_mask;		/* R600 only */
 	struct r600_resource *cb_buffer_fmask; /* Used for FMASK relocations. R600 only */
 	struct r600_resource *cb_buffer_cmask; /* Used for CMASK relocations. R600 only */
@@ -425,8 +426,8 @@ void r600_texture_get_fmask_info(struct r600_common_screen *rscreen,
 void r600_texture_get_cmask_info(struct r600_common_screen *rscreen,
 				 struct r600_texture *rtex,
 				 struct r600_cmask_info *out);
-void r600_texture_init_cmask(struct r600_common_screen *rscreen,
-			     struct r600_texture *rtex);
+void r600_texture_alloc_cmask_separate(struct r600_common_screen *rscreen,
+				       struct r600_texture *rtex);
 bool r600_init_flushed_depth_texture(struct pipe_context *ctx,
 				     struct pipe_resource *texture,
 				     struct r600_texture **staging);

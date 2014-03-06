@@ -442,11 +442,19 @@ static void r600_texture_allocate_cmask(struct r600_common_screen *rscreen,
 
 	rtex->cmask.offset = align(rtex->size, rtex->cmask.alignment);
 	rtex->size = rtex->cmask.offset + rtex->cmask.size;
+
+	if (rscreen->chip_class >= SI)
+		rtex->cb_color_info |= SI_S_028C70_FAST_CLEAR(1);
+	else
+		rtex->cb_color_info |= EG_S_028C70_FAST_CLEAR(1);
 }
 
-void r600_texture_init_cmask(struct r600_common_screen *rscreen,
-			     struct r600_texture *rtex)
+void r600_texture_alloc_cmask_separate(struct r600_common_screen *rscreen,
+				       struct r600_texture *rtex)
 {
+	if (rtex->cmask_buffer)
+                return;
+
 	assert(rtex->cmask.size == 0);
 
 	r600_texture_get_cmask_info(rscreen, rtex, &rtex->cmask);
@@ -456,7 +464,17 @@ void r600_texture_init_cmask(struct r600_common_screen *rscreen,
 				   PIPE_USAGE_DEFAULT, rtex->cmask.size);
 	if (rtex->cmask_buffer == NULL) {
 		rtex->cmask.size = 0;
+		return;
 	}
+
+	/* update colorbuffer state bits */
+	rtex->cmask.base_address_reg =
+		r600_resource_va(&rscreen->b, &rtex->cmask_buffer->b.b) >> 8;
+
+	if (rscreen->chip_class >= SI)
+		rtex->cb_color_info |= SI_S_028C70_FAST_CLEAR(1);
+	else
+		rtex->cb_color_info |= EG_S_028C70_FAST_CLEAR(1);
 }
 
 static unsigned si_texture_htile_alloc_size(struct r600_common_screen *rscreen,
@@ -567,6 +585,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	struct r600_texture *rtex;
 	struct r600_resource *resource;
 	struct r600_common_screen *rscreen = (struct r600_common_screen*)screen;
+	uint64_t va;
 
 	rtex = CALLOC_STRUCT(r600_texture);
 	if (rtex == NULL)
@@ -632,6 +651,10 @@ r600_texture_create_object(struct pipe_screen *screen,
 		r600_screen_clear_buffer(rscreen, &rtex->cmask_buffer->b.b,
 					 rtex->cmask.offset, rtex->cmask.size, 0xCCCCCCCC);
 	}
+
+	/* Initialize the CMASK base register value. */
+	va = r600_resource_va(&rscreen->b, &rtex->resource.b.b);
+	rtex->cmask.base_address_reg = (va + rtex->cmask.offset) >> 8;
 
 	if (rscreen->debug_flags & DBG_VM) {
 		fprintf(stderr, "VM start=0x%"PRIu64"  end=0x%"PRIu64" | Texture %ix%ix%i, %i levels, %i samples, %s\n",
