@@ -94,7 +94,7 @@ fallback_required(struct gl_context *ctx, GLenum target,
    GLenum status;
 
    /* check for fallbacks */
-   if (target == GL_TEXTURE_3D || target == GL_TEXTURE_1D_ARRAY) {
+   if (target == GL_TEXTURE_3D) {
       _mesa_perf_debug(ctx, MESA_DEBUG_SEVERITY_HIGH,
                        "glGenerateMipmap() to %s target\n",
                        _mesa_lookup_enum_by_nr(target));
@@ -161,6 +161,22 @@ _mesa_meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap)
    mipmap->VBO = 0;
 
    _mesa_meta_blit_shader_table_cleanup(&mipmap->shaders);
+}
+
+static GLboolean
+prepare_mipmap_level(struct gl_context *ctx,
+                     struct gl_texture_object *texObj, GLuint level,
+                     GLsizei width, GLsizei height, GLsizei depth,
+                     GLenum intFormat, mesa_format format)
+{
+   if (texObj->Target == GL_TEXTURE_1D_ARRAY) {
+      /* Work around Mesa expecting the number of array slices in "height". */
+      height = depth;
+      depth = 1;
+   }
+
+   return _mesa_prepare_mipmap_level(ctx, texObj, level, width, height, depth,
+                                     0, intFormat, format);
 }
 
 /**
@@ -276,8 +292,13 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
       /* src size */
       srcWidth = srcImage->Width;
-      srcHeight = srcImage->Height;
-      srcDepth = srcImage->Depth;
+      if (target == GL_TEXTURE_1D_ARRAY) {
+         srcHeight = 1;
+         srcDepth = srcImage->Height;
+      } else {
+         srcHeight = srcImage->Height;
+         srcDepth = srcImage->Depth;
+      }
 
       /* new dst size */
       dstWidth = minify(srcWidth, 1);
@@ -296,11 +317,10 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       /* Set MaxLevel large enough to hold the new level when we allocate it */
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, dstLevel);
 
-      if (!_mesa_prepare_mipmap_level(ctx, texObj, dstLevel,
-                                      dstWidth, dstHeight, dstDepth,
-                                      srcImage->Border,
-                                      srcImage->InternalFormat,
-                                      srcImage->TexFormat)) {
+      if (!prepare_mipmap_level(ctx, texObj, dstLevel,
+                                dstWidth, dstHeight, dstDepth,
+                                srcImage->InternalFormat,
+                                srcImage->TexFormat)) {
          /* All done.  We either ran out of memory or we would go beyond the
           * last valid level of an immutable texture if we continued.
           */
@@ -339,7 +359,11 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
          }
 
          assert(dstWidth == ctx->DrawBuffer->Width);
-         assert(dstHeight == ctx->DrawBuffer->Height);
+         if (target == GL_TEXTURE_1D_ARRAY) {
+            assert(dstHeight == 1);
+         } else {
+            assert(dstHeight == ctx->DrawBuffer->Height);
+         }
 
          _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
       }
