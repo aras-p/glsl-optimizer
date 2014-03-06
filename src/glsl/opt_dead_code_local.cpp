@@ -51,14 +51,14 @@ public:
       assert(ir);
       this->lhs = lhs;
       this->ir = ir;
-      this->available = ir->write_mask;
+      this->unused = ir->write_mask;
    }
 
    ir_variable *lhs;
    ir_assignment *ir;
 
    /* bitmask of xyzw channels written that haven't been used so far. */
-   int available;
+   int unused;
 };
 
 class kill_for_derefs_visitor : public ir_hierarchical_visitor {
@@ -68,7 +68,7 @@ public:
       this->assignments = assignments;
    }
 
-   void kill_channels(ir_variable *const var, int used)
+   void use_channels(ir_variable *const var, int used)
    {
       foreach_list_safe(n, this->assignments) {
 	 assignment_entry *entry = (assignment_entry *) n;
@@ -76,14 +76,14 @@ public:
 	 if (entry->lhs == var) {
 	    if (var->type->is_scalar() || var->type->is_vector()) {
 	       if (debug)
-		  printf("kill %s (0x%01x - 0x%01x)\n", entry->lhs->name,
-			 entry->available, used);
-	       entry->available &= ~used;
-	       if (!entry->available)
+		  printf("used %s (0x%01x - 0x%01x)\n", entry->lhs->name,
+			 entry->unused, used & 0xf);
+	       entry->unused &= ~used;
+	       if (!entry->unused)
 		  entry->remove();
 	    } else {
 	       if (debug)
-		  printf("kill %s\n", entry->lhs->name);
+		  printf("used %s\n", entry->lhs->name);
 	       entry->remove();
 	    }
 	 }
@@ -92,7 +92,7 @@ public:
 
    virtual ir_visitor_status visit(ir_dereference_variable *ir)
    {
-      kill_channels(ir->var, ~0);
+      use_channels(ir->var, ~0);
 
       return visit_continue;
    }
@@ -109,7 +109,7 @@ public:
       used |= 1 << ir->mask.z;
       used |= 1 << ir->mask.w;
 
-      kill_channels(deref->var, used);
+      use_channels(deref->var, used);
 
       return visit_continue_with_parent;
    }
@@ -202,7 +202,7 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
 	    if (entry->lhs != var)
 	       continue;
 
-	    int remove = entry->available & ir->write_mask;
+	    int remove = entry->unused & ir->write_mask;
 	    if (debug) {
 	       printf("%s 0x%01x - 0x%01x = 0x%01x\n",
 		      var->name,
@@ -219,7 +219,7 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
 	       }
 
 	       entry->ir->write_mask &= ~remove;
-	       entry->available &= ~remove;
+	       entry->unused &= ~remove;
 	       if (entry->ir->write_mask == 0) {
 		  /* Delete the dead assignment. */
 		  entry->ir->remove();
@@ -283,7 +283,7 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
       foreach_list(n, assignments) {
 	 assignment_entry *entry = (assignment_entry *) n;
 
-	 printf("    %s (0x%01x)\n", entry->lhs->name, entry->available);
+	 printf("    %s (0x%01x)\n", entry->lhs->name, entry->unused);
       }
    }
 
