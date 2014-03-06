@@ -58,27 +58,28 @@ brw_upload_binding_table(struct brw_context *brw,
    /* CACHE_NEW_*_PROG */
    struct brw_stage_prog_data *prog_data = stage_state->prog_data;
 
-   /* If there are no surfaces, skip making the binding table altogether. */
    if (prog_data->binding_table.size_bytes == 0) {
-      if (stage_state->bind_bo_offset != 0) {
-         brw->state.dirty.brw |= brw_new_binding_table;
-         stage_state->bind_bo_offset = 0;
+      /* There are no surfaces; skip making the binding table altogether. */
+      if (stage_state->bind_bo_offset == 0)
+         return;
+
+      stage_state->bind_bo_offset = 0;
+   } else {
+      /* Upload a new binding table. */
+      if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
+         brw->vtbl.create_raw_surface(
+            brw, brw->shader_time.bo, 0, brw->shader_time.bo->size,
+            &stage_state->surf_offset[prog_data->binding_table.shader_time_start], true);
       }
-      return;
+
+      uint32_t *bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
+                                       prog_data->binding_table.size_bytes, 32,
+                                       &stage_state->bind_bo_offset);
+
+      /* BRW_NEW_SURFACES and BRW_NEW_*_CONSTBUF */
+      memcpy(bind, stage_state->surf_offset,
+             prog_data->binding_table.size_bytes);
    }
-
-   if (INTEL_DEBUG & DEBUG_SHADER_TIME) {
-      brw->vtbl.create_raw_surface(
-         brw, brw->shader_time.bo, 0, brw->shader_time.bo->size,
-         &stage_state->surf_offset[prog_data->binding_table.shader_time_start], true);
-   }
-
-   uint32_t *bind = brw_state_batch(brw, AUB_TRACE_BINDING_TABLE,
-                                    prog_data->binding_table.size_bytes, 32,
-                                    &stage_state->bind_bo_offset);
-
-   /* BRW_NEW_SURFACES and BRW_NEW_*_CONSTBUF */
-   memcpy(bind, stage_state->surf_offset, prog_data->binding_table.size_bytes);
 
    brw->state.dirty.brw |= brw_new_binding_table;
 }
