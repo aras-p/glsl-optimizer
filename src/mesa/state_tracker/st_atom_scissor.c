@@ -85,7 +85,7 @@ update_scissor( struct st_context *st )
          scissor[i].maxy = maxy;
       }
 
-      if (memcmp(&scissor[i], &st->state.scissor[i], sizeof(scissor)) != 0) {
+      if (memcmp(&scissor[i], &st->state.scissor[i], sizeof(scissor[0])) != 0) {
          /* state has changed */
          st->state.scissor[i] = scissor[i];  /* struct copy */
          changed = true;
