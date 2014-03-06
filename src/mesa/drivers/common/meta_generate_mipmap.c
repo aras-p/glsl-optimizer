@@ -45,6 +45,37 @@
 #include "drivers/common/meta.h"
 
 /**
+ * Bind a particular texture level/layer to mipmap->FBO's GL_COLOR_ATTACHMENT0.
+ */
+static void
+bind_fbo_image(struct gl_texture_object *texObj, GLenum target, GLuint level)
+{
+   switch (target) {
+   case GL_TEXTURE_1D:
+      _mesa_FramebufferTexture1D(GL_FRAMEBUFFER,
+                                 GL_COLOR_ATTACHMENT0,
+                                 target,
+                                 texObj->Name,
+                                 level);
+      break;
+   case GL_TEXTURE_3D:
+      _mesa_FramebufferTexture3D(GL_FRAMEBUFFER,
+                                 GL_COLOR_ATTACHMENT0,
+                                 target,
+                                 texObj->Name,
+                                 level,
+                                 0); /* XXX: Unfinished */
+      break;
+   default: /* 2D / cube */
+      _mesa_FramebufferTexture2D(GL_FRAMEBUFFER,
+                                 GL_COLOR_ATTACHMENT0,
+                                 target,
+                                 texObj->Name,
+                                 level);
+   }
+}
+
+/**
  * Check if the call to _mesa_meta_GenerateMipmap() will require a
  * software fallback.  The fallback path will require that the texture
  * images are mapped.
@@ -104,26 +135,7 @@ fallback_required(struct gl_context *ctx, GLenum target,
       _mesa_GenFramebuffers(1, &mipmap->FBO);
    _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, mipmap->FBO);
 
-   if (target == GL_TEXTURE_1D) {
-      _mesa_FramebufferTexture1D(GL_FRAMEBUFFER_EXT,
-                                    GL_COLOR_ATTACHMENT0_EXT,
-                                    target, texObj->Name, srcLevel);
-   }
-#if 0
-   /* other work is needed to enable 3D mipmap generation */
-   else if (target == GL_TEXTURE_3D) {
-      GLint zoffset = 0;
-      _mesa_FramebufferTexture3D(GL_FRAMEBUFFER_EXT,
-                                    GL_COLOR_ATTACHMENT0_EXT,
-                                    target, texObj->Name, srcLevel, zoffset);
-   }
-#endif
-   else {
-      /* 2D / cube */
-      _mesa_FramebufferTexture2D(GL_FRAMEBUFFER_EXT,
-                                    GL_COLOR_ATTACHMENT0_EXT,
-                                    target, texObj->Name, srcLevel);
-   }
+   bind_fbo_image(texObj, target, srcLevel);
 
    status = _mesa_CheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
 
@@ -271,7 +283,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       const GLuint srcLevel = dstLevel - 1;
       GLsizei srcWidth, srcHeight, srcDepth;
       GLsizei dstWidth, dstHeight, dstDepth;
-      GLenum status;
 
       srcImage = _mesa_select_tex_image(ctx, texObj, faceTarget, srcLevel);
       assert(srcImage->Border == 0);
@@ -312,35 +323,13 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       /* limit minification to src level */
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
 
-      /* Set to draw into the current dstLevel */
-      if (target == GL_TEXTURE_1D) {
-         _mesa_FramebufferTexture1D(GL_FRAMEBUFFER_EXT,
-                                       GL_COLOR_ATTACHMENT0_EXT,
-                                       target,
-                                       texObj->Name,
-                                       dstLevel);
-      }
-      else if (target == GL_TEXTURE_3D) {
-         GLint zoffset = 0; /* XXX unfinished */
-         _mesa_FramebufferTexture3D(GL_FRAMEBUFFER_EXT,
-                                       GL_COLOR_ATTACHMENT0_EXT,
-                                       target,
-                                       texObj->Name,
-                                       dstLevel, zoffset);
-      } else {
-         /* 2D / cube */
-         _mesa_FramebufferTexture2D(GL_FRAMEBUFFER_EXT,
-                                       GL_COLOR_ATTACHMENT0_EXT,
-                                       faceTarget,
-                                       texObj->Name,
-                                       dstLevel);
-      }
+      bind_fbo_image(texObj, faceTarget, dstLevel);
 
       _mesa_DrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
       /* sanity check */
-      status = _mesa_CheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
-      if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+      if (_mesa_CheckFramebufferStatus(GL_FRAMEBUFFER) !=
+          GL_FRAMEBUFFER_COMPLETE) {
          _mesa_problem(ctx, "Unexpected incomplete framebuffer in "
                        "_mesa_meta_GenerateMipmap()");
          break;
