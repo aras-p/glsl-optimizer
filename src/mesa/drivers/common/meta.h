@@ -502,4 +502,7 @@ _mesa_meta_glsl_blit_cleanup(struct blit_state *blit);
 void
 _mesa_meta_blit_shader_table_cleanup(struct blit_shader_table *table);
 
+void
+_mesa_meta_glsl_generate_mipmap_cleanup(struct gen_mipmap_state *mipmap);
+
 #endif /* META_H */
