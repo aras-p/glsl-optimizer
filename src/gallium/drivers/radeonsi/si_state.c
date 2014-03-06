@@ -1667,6 +1667,20 @@ static void si_initialize_color_surface(struct si_context *sctx,
 	if (rtex->fmask.size) {
 		surf->cb_color_fmask = (offset + rtex->fmask.offset) >> 8;
 		surf->cb_color_fmask_slice = S_028C88_TILE_MAX(rtex->fmask.slice_tile_max);
+	} else {
+		/* This must be set for fast clear to work without FMASK. */
+		surf->cb_color_fmask = surf->cb_color_base;
+		surf->cb_color_fmask_slice = surf->cb_color_slice;
+		surf->cb_color_attrib |= S_028C74_FMASK_TILE_MODE_INDEX(tile_mode_index);
+
+		if (sctx->b.chip_class == SI) {
+			unsigned bankh = util_logbase2(rtex->surface.bankh);
+			surf->cb_color_attrib |= S_028C74_FMASK_BANK_HEIGHT(bankh);
+		}
+
+		if (sctx->b.chip_class >= CIK) {
+			surf->cb_color_pitch |= S_028C64_FMASK_TILE_MAX(pitch);
+		}
 	}
 
 	/* Determine pixel shader export format */
@@ -1866,7 +1880,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 			sctx->framebuffer.export_16bpc |= 1 << i;
 		}
 
-		if (rtex->fmask.size || rtex->cmask.size) {
+		if (rtex->fmask.size && rtex->cmask.size) {
 			sctx->framebuffer.compressed_cb_mask |= 1 << i;
 		}
 	}
@@ -2964,6 +2978,7 @@ void si_init_state_functions(struct si_context *sctx)
 	sctx->custom_dsa_flush_inplace = si_create_db_flush_dsa(sctx, false, false, 0);
 	sctx->custom_blend_resolve = si_create_blend_custom(sctx, V_028808_CB_RESOLVE);
 	sctx->custom_blend_decompress = si_create_blend_custom(sctx, V_028808_CB_FMASK_DECOMPRESS);
+	sctx->custom_blend_fastclear = si_create_blend_custom(sctx, V_028808_CB_ELIMINATE_FAST_CLEAR);
 
 	sctx->b.b.set_clip_state = si_set_clip_state;
 	sctx->b.b.set_scissor_states = si_set_scissor_states;

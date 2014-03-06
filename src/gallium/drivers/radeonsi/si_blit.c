@@ -277,7 +277,8 @@ static void si_blit_decompress_color(struct pipe_context *ctx,
 
 			si_blitter_begin(ctx, SI_DECOMPRESS);
 			util_blitter_custom_color(sctx->blitter, cbsurf,
-						  sctx->custom_blend_decompress);
+				rtex->fmask.size ? sctx->custom_blend_decompress :
+						   sctx->custom_blend_fastclear);
 			si_blitter_end(ctx);
 
 			pipe_surface_reference(&cbsurf, NULL);
@@ -321,6 +322,31 @@ static void si_clear(struct pipe_context *ctx, unsigned buffers,
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct pipe_framebuffer_state *fb = &sctx->framebuffer.state;
+
+	if (buffers & PIPE_CLEAR_COLOR) {
+		evergreen_do_fast_color_clear(&sctx->b, fb, &sctx->framebuffer.atom,
+					      &buffers, color);
+	}
+
+	if (buffers & PIPE_CLEAR_COLOR) {
+		int i;
+
+		/* These buffers cannot use fast clear, make sure to disable expansion. */
+		for (i = 0; i < fb->nr_cbufs; i++) {
+			struct r600_texture *tex;
+
+			/* If not clearing this buffer, skip. */
+			if (!(buffers & (PIPE_CLEAR_COLOR0 << i)))
+				continue;
+
+			if (!fb->cbufs[i])
+				continue;
+
+			tex = (struct r600_texture *)fb->cbufs[i]->texture;
+			if (tex->fmask.size == 0)
+				tex->dirty_level_mask &= ~(1 << fb->cbufs[i]->u.tex.level);
+		}
+	}
 
 	si_blitter_begin(ctx, SI_CLEAR);
 	util_blitter_clear(sctx->blitter, fb->width, fb->height,
@@ -700,8 +726,16 @@ static void si_blit(struct pipe_context *ctx,
 }
 
 static void si_flush_resource(struct pipe_context *ctx,
-			      struct pipe_resource *resource)
+			      struct pipe_resource *res)
 {
+	struct r600_texture *rtex = (struct r600_texture*)res;
+
+	assert(res->target != PIPE_BUFFER);
+
+	if (!rtex->is_depth && rtex->cmask.size) {
+		si_blit_decompress_color(ctx, rtex, 0, res->last_level,
+					 0, res->array_size - 1);
+	}
 }
 
 void si_init_blit_functions(struct si_context *sctx)

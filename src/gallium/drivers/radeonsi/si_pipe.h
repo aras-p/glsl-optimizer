@@ -95,6 +95,7 @@ struct si_context {
 	void				*custom_dsa_flush_inplace;
 	void				*custom_blend_resolve;
 	void				*custom_blend_decompress;
+	void				*custom_blend_fastclear;
 	struct si_screen		*screen;
 
 	union {

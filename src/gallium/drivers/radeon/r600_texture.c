@@ -458,7 +458,11 @@ static void r600_texture_alloc_cmask_separate(struct r600_common_screen *rscreen
 
 	assert(rtex->cmask.size == 0);
 
-	r600_texture_get_cmask_info(rscreen, rtex, &rtex->cmask);
+	if (rscreen->chip_class >= SI) {
+		si_texture_get_cmask_info(rscreen, rtex, &rtex->cmask);
+	} else {
+		r600_texture_get_cmask_info(rscreen, rtex, &rtex->cmask);
+	}
 
 	rtex->cmask_buffer = (struct r600_resource *)
 		pipe_buffer_create(&rscreen->b, PIPE_BIND_CUSTOM,
