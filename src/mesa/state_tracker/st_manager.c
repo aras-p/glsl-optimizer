@@ -421,8 +421,8 @@ st_framebuffer_create(struct st_context *st,
    /*
     * For desktop GL, sRGB framebuffer write is controlled by both the
     * capability of the framebuffer and GL_FRAMEBUFFER_SRGB.  We should
-    * advertise the capability when the pipe driver supports it so that
-    * applications can enable sRGB write when they want to.
+    * advertise the capability when the pipe driver (and core Mesa) supports
+    * it so that applications can enable sRGB write when they want to.
     *
     * This is not to be confused with GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB.  When
     * the attribute is GLX_TRUE, it tells the st manager to pick a color
@@ -442,6 +442,7 @@ st_framebuffer_create(struct st_context *st,
          util_format_srgb(stfbi->visual->color_format);
 
       if (srgb_format != PIPE_FORMAT_NONE &&
+          st_pipe_format_to_mesa_format(srgb_format) != MESA_FORMAT_NONE &&
           screen->is_format_supported(screen, srgb_format,
                                       PIPE_TEXTURE_2D, stfbi->visual->samples,
                                       PIPE_BIND_RENDER_TARGET))
