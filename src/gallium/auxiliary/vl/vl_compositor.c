@@ -577,10 +577,48 @@ calc_src_and_dst(struct vl_compositor_layer *layer, unsigned width, unsigned hei
 static void
 gen_rect_verts(struct vertex2f *vb, struct vl_compositor_layer *layer)
 {
+   struct vertex2f tl, tr, br, bl;
+
    assert(vb && layer);
 
-   vb[ 0].x = layer->dst.tl.x;
-   vb[ 0].y = layer->dst.tl.y;
+   switch (layer->rotate) {
+   default:
+   case VL_COMPOSITOR_ROTATE_0:
+      tl = layer->dst.tl;
+      tr.x = layer->dst.br.x;
+      tr.y = layer->dst.tl.y;
+      br = layer->dst.br;
+      bl.x = layer->dst.tl.x;
+      bl.y = layer->dst.br.y;
+      break;
+   case VL_COMPOSITOR_ROTATE_90:
+      tl.x = layer->dst.br.x;
+      tl.y = layer->dst.tl.y;
+      tr = layer->dst.br;
+      br.x = layer->dst.tl.x;
+      br.y = layer->dst.br.y;
+      bl = layer->dst.tl;
+      break;
+   case VL_COMPOSITOR_ROTATE_180:
+      tl = layer->dst.br;
+      tr.x = layer->dst.tl.x;
+      tr.y = layer->dst.br.y;
+      br = layer->dst.tl;
+      bl.x = layer->dst.br.x;
+      bl.y = layer->dst.tl.y;
+      break;
+   case VL_COMPOSITOR_ROTATE_270:
+      tl.x = layer->dst.tl.x;
+      tl.y = layer->dst.br.y;
+      tr = layer->dst.tl;
+      br.x = layer->dst.br.x;
+      br.y = layer->dst.tl.y;
+      bl = layer->dst.br;
+      break;
+   }
+
+   vb[ 0].x = tl.x;
+   vb[ 0].y = tl.y;
    vb[ 1].x = layer->src.tl.x;
    vb[ 1].y = layer->src.tl.y;
    vb[ 2] = layer->zw;
@@ -589,8 +627,8 @@ gen_rect_verts(struct vertex2f *vb, struct vl_compositor_layer *layer)
    vb[ 4].x = layer->colors[0].z;
    vb[ 4].y = layer->colors[0].w;
 
-   vb[ 5].x = layer->dst.br.x;
-   vb[ 5].y = layer->dst.tl.y;
+   vb[ 5].x = tr.x;
+   vb[ 5].y = tr.y;
    vb[ 6].x = layer->src.br.x;
    vb[ 6].y = layer->src.tl.y;
    vb[ 7] = layer->zw;
@@ -599,8 +637,8 @@ gen_rect_verts(struct vertex2f *vb, struct vl_compositor_layer *layer)
    vb[ 9].x = layer->colors[1].z;
    vb[ 9].y = layer->colors[1].w;
 
-   vb[10].x = layer->dst.br.x;
-   vb[10].y = layer->dst.br.y;
+   vb[10].x = br.x;
+   vb[10].y = br.y;
    vb[11].x = layer->src.br.x;
    vb[11].y = layer->src.br.y;
    vb[12] = layer->zw;
@@ -609,8 +647,8 @@ gen_rect_verts(struct vertex2f *vb, struct vl_compositor_layer *layer)
    vb[14].x = layer->colors[2].z;
    vb[14].y = layer->colors[2].w;
 
-   vb[15].x = layer->dst.tl.x;
-   vb[15].y = layer->dst.br.y;
+   vb[15].x = bl.x;
+   vb[15].y = bl.y;
    vb[16].x = layer->src.tl.x;
    vb[16].y = layer->src.br.y;
    vb[17] = layer->zw;
@@ -623,13 +661,41 @@ gen_rect_verts(struct vertex2f *vb, struct vl_compositor_layer *layer)
 static INLINE struct u_rect
 calc_drawn_area(struct vl_compositor_state *s, struct vl_compositor_layer *layer)
 {
+   struct vertex2f tl, br;
    struct u_rect result;
 
+   assert(s && layer);
+
+   // rotate
+   switch (layer->rotate) {
+   default:
+   case VL_COMPOSITOR_ROTATE_0:
+      tl = layer->dst.tl;
+      br = layer->dst.br;
+      break;
+   case VL_COMPOSITOR_ROTATE_90:
+      tl.x = layer->dst.br.x;
+      tl.y = layer->dst.tl.y;
+      br.x = layer->dst.tl.x;
+      br.y = layer->dst.br.y;
+      break;
+   case VL_COMPOSITOR_ROTATE_180:
+      tl = layer->dst.br;
+      br = layer->dst.tl;
+      break;
+   case VL_COMPOSITOR_ROTATE_270:
+      tl.x = layer->dst.tl.x;
+      tl.y = layer->dst.br.y;
+      br.x = layer->dst.br.x;
+      br.y = layer->dst.tl.y;
+      break;
+   }
+
    // scale
-   result.x0 = layer->dst.tl.x * layer->viewport.scale[0] + layer->viewport.translate[0];
-   result.y0 = layer->dst.tl.y * layer->viewport.scale[1] + layer->viewport.translate[1];
-   result.x1 = layer->dst.br.x * layer->viewport.scale[0] + layer->viewport.translate[0];
-   result.y1 = layer->dst.br.y * layer->viewport.scale[1] + layer->viewport.translate[1];
+   result.x0 = tl.x * layer->viewport.scale[0] + layer->viewport.translate[0];
+   result.y0 = tl.y * layer->viewport.scale[1] + layer->viewport.translate[1];
+   result.x1 = br.x * layer->viewport.scale[0] + layer->viewport.translate[0];
+   result.y1 = br.y * layer->viewport.scale[1] + layer->viewport.translate[1];
 
    // and clip
    result.x0 = MAX2(result.x0, s->scissor.minx);
@@ -766,6 +832,7 @@ vl_compositor_clear_layers(struct vl_compositor_state *s)
       s->layers[i].viewport.scale[3] = 1;
       s->layers[i].viewport.translate[2] = 0;
       s->layers[i].viewport.translate[3] = 0;
+      s->layers[i].rotate = VL_COMPOSITOR_ROTATE_0;
 
       for ( j = 0; j < 3; j++)
          pipe_sampler_view_reference(&s->layers[i].sampler_views[j], NULL);
@@ -961,6 +1028,16 @@ vl_compositor_set_rgba_layer(struct vl_compositor_state *s,
    if (colors)
       for (i = 0; i < 4; ++i)
          s->layers[layer].colors[i] = colors[i];
+}
+
+void
+vl_compositor_set_layer_rotation(struct vl_compositor_state *s,
+                                 unsigned layer,
+                                 enum vl_compositor_rotation rotate)
+{
+   assert(s);
+   assert(layer < VL_COMPOSITOR_MAX_LAYERS);
+   s->layers[layer].rotate = rotate;
 }
 
 void

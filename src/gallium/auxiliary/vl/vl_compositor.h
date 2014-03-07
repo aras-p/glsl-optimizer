@@ -53,6 +53,15 @@ enum vl_compositor_deinterlace
    VL_COMPOSITOR_BOB_BOTTOM
 };
 
+/* clockwise degree */
+enum vl_compositor_rotation
+{
+   VL_COMPOSITOR_ROTATE_0,
+   VL_COMPOSITOR_ROTATE_90,
+   VL_COMPOSITOR_ROTATE_180,
+   VL_COMPOSITOR_ROTATE_270
+};
+
 struct vl_compositor_layer
 {
    bool clearing;
@@ -70,6 +79,7 @@ struct vl_compositor_layer
    } src, dst;
    struct vertex2f zw;
    struct vertex4f colors[4];
+   enum vl_compositor_rotation rotate;
 };
 
 struct vl_compositor_state
@@ -215,6 +225,14 @@ vl_compositor_set_rgba_layer(struct vl_compositor_state *state,
                              struct u_rect *src_rect,
                              struct u_rect *dst_rect,
                              struct vertex4f *colors);
+
+/**
+ * set the layer rotation
+ */
+void
+vl_compositor_set_layer_rotation(struct vl_compositor_state *state,
+                                 unsigned layer,
+                                 enum vl_compositor_rotation rotate);
 
 /*@}*/
 
