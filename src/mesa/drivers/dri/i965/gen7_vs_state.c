@@ -75,12 +75,6 @@ upload_vs_state(struct brw_context *brw)
    if (!brw->is_haswell)
       gen7_emit_vs_workaround_flush(brw);
 
-   /* BRW_NEW_VS_BINDING_TABLE */
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_VS << 16 | (2 - 2));
-   OUT_BATCH(stage_state->bind_bo_offset);
-   ADVANCE_BATCH();
-
    /* CACHE_NEW_SAMPLER */
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS_VS << 16 | (2 - 2));

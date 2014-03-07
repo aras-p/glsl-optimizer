@@ -52,6 +52,7 @@
  */
 static void
 brw_upload_binding_table(struct brw_context *brw,
+                         uint32_t packet_name,
                          GLbitfield brw_new_binding_table,
                          struct brw_stage_state *stage_state)
 {
@@ -82,6 +83,13 @@ brw_upload_binding_table(struct brw_context *brw,
    }
 
    brw->state.dirty.brw |= brw_new_binding_table;
+
+   if (brw->gen >= 7) {
+      BEGIN_BATCH(2);
+      OUT_BATCH(packet_name << 16 | (2 - 2));
+      OUT_BATCH(stage_state->bind_bo_offset);
+      ADVANCE_BATCH();
+   }
 }
 
 /**
@@ -93,7 +101,9 @@ brw_upload_binding_table(struct brw_context *brw,
 static void
 brw_vs_upload_binding_table(struct brw_context *brw)
 {
-   brw_upload_binding_table(brw, BRW_NEW_VS_BINDING_TABLE, &brw->vs.base);
+   brw_upload_binding_table(brw,
+                            _3DSTATE_BINDING_TABLE_POINTERS_VS,
+                            BRW_NEW_VS_BINDING_TABLE, &brw->vs.base);
 }
 
 const struct brw_tracked_state brw_vs_binding_table = {
@@ -112,7 +122,9 @@ const struct brw_tracked_state brw_vs_binding_table = {
 static void
 brw_upload_wm_binding_table(struct brw_context *brw)
 {
-   brw_upload_binding_table(brw, BRW_NEW_PS_BINDING_TABLE, &brw->wm.base);
+   brw_upload_binding_table(brw,
+                            _3DSTATE_BINDING_TABLE_POINTERS_PS,
+                            BRW_NEW_PS_BINDING_TABLE, &brw->wm.base);
 }
 
 const struct brw_tracked_state brw_wm_binding_table = {
@@ -132,7 +144,9 @@ brw_gs_upload_binding_table(struct brw_context *brw)
    if (brw->geometry_program == NULL)
       return;
 
-   brw_upload_binding_table(brw, BRW_NEW_GS_BINDING_TABLE, &brw->gs.base);
+   brw_upload_binding_table(brw,
+                            _3DSTATE_BINDING_TABLE_POINTERS_GS,
+                            BRW_NEW_GS_BINDING_TABLE, &brw->gs.base);
 }
 
 const struct brw_tracked_state brw_gs_binding_table = {
