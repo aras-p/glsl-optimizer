@@ -658,6 +658,11 @@ vlVdpOutputSurfaceRenderOutputSurface(VdpOutputSurface destination_surface,
    vl_compositor_set_rgba_layer(cstate, compositor, 0, src_vlsurface->sampler_view,
                                 RectToPipe(source_rect, &src_rect), NULL,
                                 ColorsToPipe(colors, flags, vlcolors));
+   STATIC_ASSERT(VL_COMPOSITOR_ROTATE_0 == VDP_OUTPUT_SURFACE_RENDER_ROTATE_0);
+   STATIC_ASSERT(VL_COMPOSITOR_ROTATE_90 == VDP_OUTPUT_SURFACE_RENDER_ROTATE_90);
+   STATIC_ASSERT(VL_COMPOSITOR_ROTATE_180 == VDP_OUTPUT_SURFACE_RENDER_ROTATE_180);
+   STATIC_ASSERT(VL_COMPOSITOR_ROTATE_270 == VDP_OUTPUT_SURFACE_RENDER_ROTATE_270);
+   vl_compositor_set_layer_rotation(cstate, 0, flags & 3);
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
    vl_compositor_render(cstate, compositor, dst_vlsurface->surface, &dst_vlsurface->dirty_area, false);
 
@@ -717,6 +722,7 @@ vlVdpOutputSurfaceRenderBitmapSurface(VdpOutputSurface destination_surface,
    vl_compositor_set_rgba_layer(cstate, compositor, 0, src_vlsurface->sampler_view,
                                 RectToPipe(source_rect, &src_rect), NULL,
                                 ColorsToPipe(colors, flags, vlcolors));
+   vl_compositor_set_layer_rotation(cstate, 0, flags & 3);
    vl_compositor_set_layer_dst_area(cstate, 0, RectToPipe(destination_rect, &dst_rect));
    vl_compositor_render(cstate, compositor, dst_vlsurface->surface, &dst_vlsurface->dirty_area, false);
 
