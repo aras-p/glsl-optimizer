@@ -911,7 +911,9 @@ void _mesa_init_color( struct gl_context * ctx )
    ctx->Color.LogicOp = GL_COPY;
    ctx->Color.DitherFlag = GL_TRUE;
 
-   if (ctx->Visual.doubleBufferMode) {
+   /* GL_FRONT is not possible on GLES. Instead GL_BACK will render to either
+    * the front or the back buffer depending on the config */
+   if (ctx->Visual.doubleBufferMode || _mesa_is_gles(ctx)) {
       ctx->Color.DrawBuffer[0] = GL_BACK;
    }
    else {
