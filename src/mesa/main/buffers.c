@@ -101,7 +101,7 @@ draw_buffer_enum_to_bitmask(const struct gl_context *ctx, GLenum buffer)
       case GL_FRONT:
          return BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT;
       case GL_BACK:
-         if (_mesa_is_gles3(ctx)) {
+         if (_mesa_is_gles(ctx)) {
             /* Page 181 (page 192 of the PDF) in section 4.2.1 of the OpenGL
              * ES 3.0.1 specification says:
              *
@@ -111,6 +111,11 @@ draw_buffer_enum_to_bitmask(const struct gl_context *ctx, GLenum buffer)
              *
              * Since there is no stereo rendering in ES 3.0, only return the
              * LEFT bits.  This also satisfies the "n must be 1" requirement.
+             *
+             * We also do this for GLES 1 and 2 because those APIs have no
+             * concept of selecting the front and back buffer anyway and it's
+             * convenient to be able to maintain the magic behaviour of
+             * GL_BACK in that case.
              */
             if (ctx->DrawBuffer->Visual.doubleBufferMode)
                return BUFFER_BIT_BACK_LEFT;
