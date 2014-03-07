@@ -98,6 +98,7 @@ static void rvce_destroy(struct pipe_video_codec *encoder)
 		rvid_destroy_buffer(&fb);
 	}
 	rvid_destroy_buffer(&enc->cpb);
+	enc->ws->cs_destroy(enc->cs);
 	FREE(enc);
 }
 
