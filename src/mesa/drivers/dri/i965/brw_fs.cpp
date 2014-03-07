@@ -1827,7 +1827,7 @@ fs_visitor::remove_dead_constants()
 void
 fs_visitor::move_uniform_array_access_to_pull_constants()
 {
-   int pull_constant_loc[uniforms];
+   pull_constant_loc = ralloc_array(mem_ctx, int, uniforms);
 
    for (unsigned int i = 0; i < uniforms; i++) {
       pull_constant_loc[i] = -1;
@@ -1884,6 +1884,9 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
       }
    }
    invalidate_live_intervals();
+
+   ralloc_free(pull_constant_loc);
+   pull_constant_loc = NULL;
 }
 
 /**
@@ -1909,7 +1912,7 @@ fs_visitor::setup_pull_constants()
     */
    unsigned int pull_uniform_base = max_uniform_components;
 
-   int pull_constant_loc[uniforms];
+   pull_constant_loc = ralloc_array(mem_ctx, int, uniforms);
    for (unsigned int i = 0; i < uniforms; i++) {
       if (i < pull_uniform_base) {
          pull_constant_loc[i] = -1;
