@@ -29,7 +29,11 @@
 #include <clang/Basic/TargetInfo.h>
 #include <llvm/Bitcode/BitstreamWriter.h>
 #include <llvm/Bitcode/ReaderWriter.h>
+#if HAVE_LLVM < 0x0305
 #include <llvm/Linker.h>
+#else
+#include <llvm/Linker/Linker.h>
+#endif
 #if HAVE_LLVM < 0x0303
 #include <llvm/DerivedTypes.h>
 #include <llvm/LLVMContext.h>
