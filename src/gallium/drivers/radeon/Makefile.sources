@@ -1,6 +1,5 @@
 C_SOURCES := \
 	r600_buffer_common.c \
-	radeon_elf_util.c \
 	r600_pipe_common.c \
         r600_query.c \
 	r600_streamout.c \
@@ -11,6 +10,7 @@ C_SOURCES := \
 	radeon_vce_40_2_2.c
 
 LLVM_C_FILES := \
+	radeon_elf_util.c \
 	radeon_setup_tgsi_llvm.c \
 	radeon_llvm_emit.c \
 	radeon_llvm_util.c

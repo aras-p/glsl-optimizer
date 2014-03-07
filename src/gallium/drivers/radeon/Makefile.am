@@ -17,6 +17,7 @@ noinst_LTLIBRARIES += libllvmradeon.la
 
 libllvmradeon_la_CFLAGS = \
 	$(GALLIUM_DRIVER_CFLAGS) \
+	$(RADEON_CFLAGS) \
 	$(LLVM_CFLAGS)
 
 libllvmradeon_la_SOURCES = \
