@@ -410,18 +410,12 @@ intelInitContext(struct intel_context *intel,
    __DRIscreen *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *intelScreen = sPriv->driverPrivate;
    int bo_reuse_mode;
-   struct gl_config visual;
 
    /* Can't rely on invalidate events, fall back to glViewport hack */
    if (!driContextPriv->driScreenPriv->dri2.useInvalidate)
       functions->Viewport = intel_noninvalidate_viewport;
    else
       functions->Viewport = intel_viewport;
-
-   if (mesaVis == NULL) {
-      memset(&visual, 0, sizeof visual);
-      mesaVis = &visual;
-   }
 
    intel->intelScreen = intelScreen;
 

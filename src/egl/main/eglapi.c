@@ -431,7 +431,7 @@ eglCreateContext(EGLDisplay dpy, EGLConfig config, EGLContext share_list,
 
    _EGL_CHECK_DISPLAY(disp, EGL_NO_CONTEXT, drv);
 
-   if (!config)
+   if (!config && !disp->Extensions.MESA_configless_context)
       RETURN_EGL_ERROR(disp, EGL_BAD_CONFIG, EGL_NO_CONTEXT);
 
    if (!share && share_list != EGL_NO_CONTEXT)

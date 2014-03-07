@@ -523,10 +523,22 @@ _eglCheckMakeCurrent(_EGLContext *ctx, _EGLSurface *draw, _EGLSurface *read)
          return _eglError(EGL_BAD_ACCESS, "eglMakeCurrent");
    }
 
-   /* simply require the configs to be equal */
-   if ((draw && draw->Config != ctx->Config) ||
-       (read && read->Config != ctx->Config))
-      return _eglError(EGL_BAD_MATCH, "eglMakeCurrent");
+   /* If the context has a config then it must match that of the two
+    * surfaces */
+   if (ctx->Config) {
+      if ((draw && draw->Config != ctx->Config) ||
+          (read && read->Config != ctx->Config))
+         return _eglError(EGL_BAD_MATCH, "eglMakeCurrent");
+   } else {
+      /* Otherwise we must be using the EGL_MESA_configless_context
+       * extension */
+      assert(dpy->Extensions.MESA_configless_context);
+
+      /* The extension doesn't permit binding draw and read buffers with
+       * differing contexts */
+      if (draw && read && draw->Config != read->Config)
+         return _eglError(EGL_BAD_MATCH, "eglMakeCurrent");
+   }
 
    switch (ctx->ClientAPI) {
    /* OpenGL and OpenGL ES are conflicting */

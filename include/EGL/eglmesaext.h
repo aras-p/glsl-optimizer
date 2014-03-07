@@ -165,6 +165,11 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLSWAPBUFFERSREGIONNOK) (EGLDisplay dpy, EG
 #define EGL_NATIVE_BUFFER_ANDROID       0x3140  /* eglCreateImageKHR target */
 #endif
 
+#ifndef EGL_MESA_configless_context
+#define EGL_MESA_configless_context 1
+#define EGL_NO_CONFIG_MESA			((EGLConfig)0)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

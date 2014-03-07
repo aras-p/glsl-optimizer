@@ -4212,6 +4212,12 @@ struct gl_context
    GLboolean FirstTimeCurrent;
    /*@}*/
 
+   /**
+    * False if this context was created without a config. This is needed
+    * because the initial state of glDrawBuffers depends on this
+    */
+   GLboolean HasConfig;
+
    /** software compression/decompression supported or not */
    GLboolean Mesa_DXTn;
 

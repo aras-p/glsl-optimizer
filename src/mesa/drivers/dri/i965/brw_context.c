@@ -584,7 +584,6 @@ brwCreateContext(gl_api api,
    struct intel_screen *screen = sPriv->driverPrivate;
    const struct brw_device_info *devinfo = screen->devinfo;
    struct dd_function_table functions;
-   struct gl_config visual;
 
    /* Only allow the __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS flag if the kernel
     * provides us with context reset notifications.
@@ -650,11 +649,6 @@ brwCreateContext(gl_api api,
       functions.GetGraphicsResetStatus = brw_get_graphics_reset_status;
 
    struct gl_context *ctx = &brw->ctx;
-
-   if (mesaVis == NULL) {
-      memset(&visual, 0, sizeof visual);
-      mesaVis = &visual;
-   }
 
    if (!_mesa_initialize_context(ctx, api, mesaVis, shareCtx, &functions)) {
       *dri_ctx_error = __DRI_CTX_ERROR_NO_MEMORY;

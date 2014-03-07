@@ -90,6 +90,7 @@ _eglUpdateExtensionsString(_EGLDisplay *dpy)
    _EGL_CHECK_EXTENSION(MESA_copy_context);
    _EGL_CHECK_EXTENSION(MESA_drm_display);
    _EGL_CHECK_EXTENSION(MESA_drm_image);
+   _EGL_CHECK_EXTENSION(MESA_configless_context);
 
    _EGL_CHECK_EXTENSION(WL_bind_wayland_display);
    _EGL_CHECK_EXTENSION(WL_create_wayland_buffer_from_image);

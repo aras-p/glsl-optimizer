@@ -1013,7 +1013,8 @@ _mesa_initialize_dispatch_tables(struct gl_context *ctx)
  *
  * \param ctx the context to initialize
  * \param api the GL API type to create the context for
- * \param visual describes the visual attributes for this context
+ * \param visual describes the visual attributes for this context or NULL to
+ *               create a configless context
  * \param share_list points to context to share textures, display lists,
  *        etc with, or NULL
  * \param driverFunctions table of device driver functions for this context
@@ -1033,11 +1034,19 @@ _mesa_initialize_context(struct gl_context *ctx,
    assert(driverFunctions->FreeTextureImageBuffer);
 
    ctx->API = api;
-   ctx->Visual = *visual;
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
    ctx->WinSysDrawBuffer = NULL;
    ctx->WinSysReadBuffer = NULL;
+
+   if (visual) {
+      ctx->Visual = *visual;
+      ctx->HasConfig = GL_TRUE;
+   }
+   else {
+      memset(&ctx->Visual, 0, sizeof ctx->Visual);
+      ctx->HasConfig = GL_FALSE;
+   }
 
    if (_mesa_is_desktop_gl(ctx)) {
       _mesa_override_gl_version(ctx);
@@ -1145,7 +1154,8 @@ fail:
  * the rendering context.
  *
  * \param api the GL API type to create the context for
- * \param visual a struct gl_config pointer (we copy the struct contents)
+ * \param visual a struct gl_config pointer (we copy the struct contents) or
+ *               NULL to create a configless context
  * \param share_list another context to share display lists with or NULL
  * \param driverFunctions points to the dd_function_table into which the
  *        driver has plugged in all its special functions.
@@ -1159,8 +1169,6 @@ _mesa_create_context(gl_api api,
                      const struct dd_function_table *driverFunctions)
 {
    struct gl_context *ctx;
-
-   ASSERT(visual);
 
    ctx = calloc(1, sizeof(struct gl_context));
    if (!ctx)
@@ -1475,6 +1483,54 @@ _mesa_check_init_viewport(struct gl_context *ctx, GLuint width, GLuint height)
    }
 }
 
+static void
+handle_first_current(struct gl_context *ctx)
+{
+   GLenum buffer;
+   GLint bufferIndex;
+
+   assert(ctx->Version > 0);
+
+   ctx->Extensions.String = _mesa_make_extension_string(ctx);
+
+   check_context_limits(ctx);
+
+   /* According to GL_MESA_configless_context the default value of
+    * glDrawBuffers depends on the config of the first surface it is bound to.
+    * For GLES it is always GL_BACK which has a magic interpretation */
+   if (!ctx->HasConfig && _mesa_is_desktop_gl(ctx)) {
+      if (ctx->DrawBuffer != _mesa_get_incomplete_framebuffer()) {
+         if (ctx->DrawBuffer->Visual.doubleBufferMode)
+            buffer = GL_BACK;
+         else
+            buffer = GL_FRONT;
+
+         _mesa_drawbuffers(ctx, 1, &buffer, NULL /* destMask */);
+      }
+
+      if (ctx->ReadBuffer != _mesa_get_incomplete_framebuffer()) {
+         if (ctx->ReadBuffer->Visual.doubleBufferMode) {
+            buffer = GL_BACK;
+            bufferIndex = BUFFER_BACK_LEFT;
+         }
+         else {
+            buffer = GL_FRONT;
+            bufferIndex = BUFFER_FRONT_LEFT;
+         }
+
+         _mesa_readbuffer(ctx, buffer, bufferIndex);
+      }
+   }
+
+   /* We can use this to help debug user's problems.  Tell them to set
+    * the MESA_INFO env variable before running their app.  Then the
+    * first time each context is made current we'll print some useful
+    * information.
+    */
+   if (_mesa_getenv("MESA_INFO")) {
+      _mesa_print_info(ctx);
+   }
+}
 
 /**
  * Bind the given context to the given drawBuffer and readBuffer and
@@ -1567,21 +1623,7 @@ _mesa_make_current( struct gl_context *newCtx,
       }
 
       if (newCtx->FirstTimeCurrent) {
-         assert(newCtx->Version > 0);
-
-         newCtx->Extensions.String = _mesa_make_extension_string(newCtx);
-
-         check_context_limits(newCtx);
-
-         /* We can use this to help debug user's problems.  Tell them to set
-          * the MESA_INFO env variable before running their app.  Then the
-          * first time each context is made current we'll print some useful
-          * information.
-          */
-	 if (_mesa_getenv("MESA_INFO")) {
-	    _mesa_print_info(newCtx);
-	 }
-
+         handle_first_current(newCtx);
 	 newCtx->FirstTimeCurrent = GL_FALSE;
       }
    }

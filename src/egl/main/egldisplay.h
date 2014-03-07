@@ -89,6 +89,7 @@ struct _egl_extensions
    EGLBoolean MESA_copy_context;
    EGLBoolean MESA_drm_display;
    EGLBoolean MESA_drm_image;
+   EGLBoolean MESA_configless_context;
 
    EGLBoolean WL_bind_wayland_display;
    EGLBoolean WL_create_wayland_buffer_from_image;
