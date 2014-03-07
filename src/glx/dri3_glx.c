@@ -1090,13 +1090,13 @@ dri3_find_back(xcb_connection_t *c, struct dri3_drawable *priv)
 
    for (;;) {
       for (b = 0; b < priv->num_back; b++) {
-         int id = DRI3_BACK_ID(b);
+         int id = DRI3_BACK_ID((b + priv->cur_back) % priv->num_back);
          struct dri3_buffer *buffer = priv->buffers[id];
 
-         if (!buffer)
-            return b;
-         if (!buffer->busy)
-            return b;
+         if (!buffer || !buffer->busy) {
+            priv->cur_back = id;
+            return id;
+         }
       }
       xcb_flush(c);
       ev = xcb_wait_for_special_event(c, priv->special_event);
@@ -1123,13 +1123,10 @@ dri3_get_buffer(__DRIdrawable *driDrawable,
    int                  buf_id;
 
    if (buffer_type == dri3_buffer_back) {
-      int back = dri3_find_back(c, priv);
+      buf_id = dri3_find_back(c, priv);
 
-      if (back < 0)
+      if (buf_id < 0)
          return NULL;
-
-      priv->cur_back = back;
-      buf_id = DRI3_BACK_ID(priv->cur_back);
    } else {
       buf_id = DRI3_FRONT_ID;
    }
