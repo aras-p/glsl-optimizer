@@ -1854,11 +1854,11 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
          if (pull_constant_loc[uniform] == -1) {
             const float **values = &stage_prog_data->param[uniform];
 
-            pull_constant_loc[uniform] = stage_prog_data->nr_pull_params;
-
             assert(param_size[uniform]);
 
             for (int j = 0; j < param_size[uniform]; j++) {
+               pull_constant_loc[uniform + j] = stage_prog_data->nr_pull_params;
+
                stage_prog_data->pull_param[stage_prog_data->nr_pull_params++] =
                   values[j];
             }
