@@ -102,6 +102,8 @@ static void si_destroy_context(struct pipe_context *context)
 
 	util_blitter_destroy(sctx->blitter);
 
+	si_pm4_cleanup(sctx);
+
 	r600_common_context_cleanup(&sctx->b);
 	FREE(sctx);
 }

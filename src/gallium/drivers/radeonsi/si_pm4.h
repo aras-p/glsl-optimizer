@@ -91,5 +91,6 @@ unsigned si_pm4_dirty_dw(struct si_context *sctx);
 void si_pm4_emit(struct si_context *sctx, struct si_pm4_state *state);
 void si_pm4_emit_dirty(struct si_context *sctx);
 void si_pm4_reset_emitted(struct si_context *sctx);
+void si_pm4_cleanup(struct si_context *sctx);
 
 #endif

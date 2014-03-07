@@ -251,3 +251,10 @@ void si_pm4_reset_emitted(struct si_context *sctx)
 {
 	memset(&sctx->emitted, 0, sizeof(sctx->emitted));
 }
+
+void si_pm4_cleanup(struct si_context *sctx)
+{
+	for (int i = 0; i < NUMBER_OF_STATES; ++i) {
+		si_pm4_free_state(sctx, sctx->queued.array[i], i);
+	}
+}
