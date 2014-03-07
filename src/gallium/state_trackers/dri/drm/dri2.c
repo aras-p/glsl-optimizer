@@ -237,6 +237,14 @@ dri2_drawable_process_buffers(struct dri_context *ctx,
       if (i == ST_ATTACHMENT_DEPTH_STENCIL && alloc_depthstencil)
          continue;
 
+      /* Flush the texture before unreferencing, so that other clients can
+       * see what the driver has rendered.
+       */
+      if (i != ST_ATTACHMENT_DEPTH_STENCIL && drawable->textures[i]) {
+         struct pipe_context *pipe = ctx->st->pipe;
+         pipe->flush_resource(pipe, drawable->textures[i]);
+      }
+
       pipe_resource_reference(&drawable->textures[i], NULL);
    }
 
