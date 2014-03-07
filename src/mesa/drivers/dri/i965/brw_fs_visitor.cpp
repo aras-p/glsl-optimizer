@@ -462,8 +462,8 @@ fs_visitor::visit(ir_expression *ir)
 	  * FINISHME: Emit just the MUL if we know an operand is small
 	  * enough.
 	  */
-	 if (brw->gen >= 7 && dispatch_width == 16)
-	    fail("SIMD16 explicit accumulator operands unsupported\n");
+	 if (brw->gen >= 7)
+	    no16("SIMD16 explicit accumulator operands unsupported\n");
 
 	 struct brw_reg acc = retype(brw_acc_reg(), this->result.type);
 
@@ -475,8 +475,8 @@ fs_visitor::visit(ir_expression *ir)
       }
       break;
    case ir_binop_imul_high: {
-      if (brw->gen >= 7 && dispatch_width == 16)
-         fail("SIMD16 explicit accumulator operands unsupported\n");
+      if (brw->gen >= 7)
+         no16("SIMD16 explicit accumulator operands unsupported\n");
 
       struct brw_reg acc = retype(brw_acc_reg(), this->result.type);
 
@@ -490,8 +490,8 @@ fs_visitor::visit(ir_expression *ir)
       emit_math(SHADER_OPCODE_INT_QUOTIENT, this->result, op[0], op[1]);
       break;
    case ir_binop_carry: {
-      if (brw->gen >= 7 && dispatch_width == 16)
-         fail("SIMD16 explicit accumulator operands unsupported\n");
+      if (brw->gen >= 7)
+         no16("SIMD16 explicit accumulator operands unsupported\n");
 
       struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_UD);
 
@@ -500,8 +500,8 @@ fs_visitor::visit(ir_expression *ir)
       break;
    }
    case ir_binop_borrow: {
-      if (brw->gen >= 7 && dispatch_width == 16)
-         fail("SIMD16 explicit accumulator operands unsupported\n");
+      if (brw->gen >= 7)
+         no16("SIMD16 explicit accumulator operands unsupported\n");
 
       struct brw_reg acc = retype(brw_acc_reg(), BRW_REGISTER_TYPE_UD);
 
@@ -1290,8 +1290,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       next.reg_offset++;
       break;
    case ir_txd: {
-      if (dispatch_width == 16)
-	 fail("Gen7 does not support sample_d/sample_d_c in SIMD16 mode.");
+      no16("Gen7 does not support sample_d/sample_d_c in SIMD16 mode.");
 
       /* Load dPdx and the coordinate together:
        * [hdr], [ref], x, dPdx.x, dPdy.x, y, dPdx.y, dPdy.y, z, dPdx.z, dPdy.z
@@ -1364,8 +1363,8 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       break;
    case ir_tg4:
       if (has_nonconstant_offset) {
-         if (ir->shadow_comparitor && dispatch_width == 16)
-            fail("Gen7 does not support gather4_po_c in SIMD16 mode.");
+         if (ir->shadow_comparitor)
+            no16("Gen7 does not support gather4_po_c in SIMD16 mode.");
 
          /* More crazy intermixing */
          ir->offset->accept(this);
@@ -1464,8 +1463,8 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
 	 0
       };
 
+      no16("rectangle scale uniform setup not supported on SIMD16\n");
       if (dispatch_width == 16) {
-	 fail("rectangle scale uniform setup not supported on SIMD16\n");
 	 return coordinate;
       }
 
@@ -2183,8 +2182,8 @@ fs_visitor::try_replace_with_sel()
 void
 fs_visitor::visit(ir_if *ir)
 {
-   if (brw->gen < 6 && dispatch_width == 16) {
-      fail("Can't support (non-uniform) control flow on SIMD16\n");
+   if (brw->gen < 6) {
+      no16("Can't support (non-uniform) control flow on SIMD16\n");
    }
 
    /* Don't point the annotation at the if statement, because then it plus
@@ -2226,8 +2225,8 @@ fs_visitor::visit(ir_if *ir)
 void
 fs_visitor::visit(ir_loop *ir)
 {
-   if (brw->gen < 6 && dispatch_width == 16) {
-      fail("Can't support (non-uniform) control flow on SIMD16\n");
+   if (brw->gen < 6) {
+      no16("Can't support (non-uniform) control flow on SIMD16\n");
    }
 
    this->base_ir = NULL;
@@ -2725,9 +2724,10 @@ fs_visitor::emit_fb_writes()
    bool do_dual_src = this->dual_src_output.file != BAD_FILE;
    bool src0_alpha_to_render_target = false;
 
-   if (dispatch_width == 16 && do_dual_src) {
-      fail("GL_ARB_blend_func_extended not yet supported in SIMD16.");
-      do_dual_src = false;
+   if (do_dual_src) {
+      no16("GL_ARB_blend_func_extended not yet supported in SIMD16.");
+      if (dispatch_width == 16)
+         do_dual_src = false;
    }
 
    /* From the Sandy Bridge PRM, volume 4, page 198:
@@ -2778,13 +2778,13 @@ fs_visitor::emit_fb_writes()
       nr += reg_width;
 
    if (c->source_depth_to_render_target) {
-      if (brw->gen == 6 && dispatch_width == 16) {
+      if (brw->gen == 6) {
 	 /* For outputting oDepth on gen6, SIMD8 writes have to be
 	  * used.  This would require SIMD8 moves of each half to
 	  * message regs, kind of like pre-gen5 SIMD16 FB writes.
 	  * Just bail on doing so for now.
 	  */
-	 fail("Missing support for simd16 depth writes on gen6\n");
+	 no16("Missing support for simd16 depth writes on gen6\n");
       }
 
       if (prog->OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {

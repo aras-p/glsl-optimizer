@@ -647,9 +647,8 @@ fs_visitor::emit_shader_time_write(enum shader_time_shader_type type,
 }
 
 void
-fs_visitor::fail(const char *format, ...)
+fs_visitor::vfail(const char *format, va_list va)
 {
-   va_list va;
    char *msg;
 
    if (failed)
@@ -657,9 +656,7 @@ fs_visitor::fail(const char *format, ...)
 
    failed = true;
 
-   va_start(va, format);
    msg = ralloc_vasprintf(mem_ctx, format, va);
-   va_end(va);
    msg = ralloc_asprintf(mem_ctx, "FS compile failed: %s\n", msg);
 
    this->fail_msg = msg;
@@ -667,6 +664,48 @@ fs_visitor::fail(const char *format, ...)
    if (INTEL_DEBUG & DEBUG_WM) {
       fprintf(stderr, "%s",  msg);
    }
+}
+
+void
+fs_visitor::fail(const char *format, ...)
+{
+   va_list va;
+
+   va_start(va, format);
+   vfail(format, va);
+   va_end(va);
+}
+
+/**
+ * Mark this program as impossible to compile in SIMD16 mode.
+ *
+ * During the SIMD8 compile (which happens first), we can detect and flag
+ * things that are unsupported in SIMD16 mode, so the compiler can skip
+ * the SIMD16 compile altogether.
+ *
+ * During a SIMD16 compile (if one happens anyway), this just calls fail().
+ */
+void
+fs_visitor::no16(const char *format, ...)
+{
+   va_list va;
+
+   va_start(va, format);
+
+   if (dispatch_width == 16) {
+      vfail(format, va);
+   } else {
+      simd16_unsupported = true;
+
+      if (INTEL_DEBUG & DEBUG_PERF) {
+         if (no16_msg)
+            ralloc_vasprintf_append(&no16_msg, format, va);
+         else
+            no16_msg = ralloc_vasprintf(mem_ctx, format, va);
+      }
+   }
+
+   va_end(va);
 }
 
 fs_inst *
@@ -1356,8 +1395,8 @@ fs_visitor::emit_math(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    switch (opcode) {
    case SHADER_OPCODE_INT_QUOTIENT:
    case SHADER_OPCODE_INT_REMAINDER:
-      if (brw->gen >= 7 && dispatch_width == 16)
-	 fail("SIMD16 INTDIV unsupported\n");
+      if (brw->gen >= 7)
+	 no16("SIMD16 INTDIV unsupported\n");
       break;
    case SHADER_OPCODE_POW:
       break;
@@ -3505,13 +3544,18 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    exec_list *simd16_instructions = NULL;
    fs_visitor v2(brw, c, prog, fp, 16);
    if (brw->gen >= 5 && likely(!(INTEL_DEBUG & DEBUG_NO16))) {
-      /* Try a SIMD16 compile */
-      v2.import_uniforms(&v);
-      if (!v2.run()) {
-         perf_debug("SIMD16 shader failed to compile, falling back to "
-                    "SIMD8 at a 10-20%% performance cost: %s", v2.fail_msg);
+      if (!v.simd16_unsupported) {
+         /* Try a SIMD16 compile */
+         v2.import_uniforms(&v);
+         if (!v2.run()) {
+            perf_debug("SIMD16 shader failed to compile, falling back to "
+                       "SIMD8 at a 10-20%% performance cost: %s", v2.fail_msg);
+         } else {
+            simd16_instructions = &v2.instructions;
+         }
       } else {
-         simd16_instructions = &v2.instructions;
+         perf_debug("SIMD16 shader unsupported, falling back to "
+                    "SIMD8 at a 10-20%% performance cost: %s", v.no16_msg);
       }
    }
 

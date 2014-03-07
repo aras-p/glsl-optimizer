@@ -381,7 +381,9 @@ public:
    void insert_gen4_send_dependency_workarounds();
    void insert_gen4_pre_send_dependency_workarounds(fs_inst *inst);
    void insert_gen4_post_send_dependency_workarounds(fs_inst *inst);
+   void vfail(const char *msg, va_list args);
    void fail(const char *msg, ...);
+   void no16(const char *msg, ...);
    void lower_uniform_pull_constant_loads();
 
    void push_force_uncompressed();
@@ -541,6 +543,8 @@ public:
 
    bool failed;
    char *fail_msg;
+   bool simd16_unsupported;
+   char *no16_msg;
 
    /* Result of last visit() method. */
    fs_reg result;
