@@ -99,7 +99,20 @@ init_info(struct intel_winsys *winsys)
    struct intel_winsys_info *info = &winsys->info;
    int val;
 
-   /* follow the classic driver here */
+   /*
+    * When we need the Nth vertex from a user vertex buffer, and the vertex is
+    * uploaded to, say, the beginning of a bo, we want the first vertex in the
+    * bo to be fetched.  One way to do this is to set the base address of the
+    * vertex buffer to
+    *
+    *   bo->offset64 + (vb->buffer_offset - vb->stride * N).
+    *
+    * The second term may be negative, and we need kernel support to do that.
+    *
+    * This check is taken from the classic driver.  u_vbuf_upload_buffers()
+    * guarantees the term is never negative, but it is good to require a
+    * recent kernel.
+    */
    get_param(winsys, I915_PARAM_HAS_RELAXED_DELTA, &val);
    if (!val) {
       debug_error("kernel 2.6.39 required");
@@ -143,7 +156,17 @@ intel_winsys_create_for_fd(int fd)
       return NULL;
    }
 
+   /*
+    * No need to implicitly set up a fence register for each non-linear reloc
+    * entry.  When a fence register is needed for a reloc entry,
+    * drm_intel_bo_emit_reloc_fence() will be called explicitly.
+    *
+    * intel_bo_add_reloc() currently lacks "bool fenced" for this to work.
+    * But we never need a fence register on GEN4+ so we do not need to worry
+    * about it yet.
+    */
    drm_intel_bufmgr_gem_enable_fenced_relocs(winsys->bufmgr);
+
    drm_intel_bufmgr_gem_enable_reuse(winsys->bufmgr);
 
    return winsys;

@@ -88,23 +88,54 @@ intel_winsys_destroy(struct intel_winsys *winsys);
 const struct intel_winsys_info *
 intel_winsys_get_info(const struct intel_winsys *winsys);
 
+/**
+ * Create a logical context for use with the render ring.
+ */
 struct intel_context *
 intel_winsys_create_context(struct intel_winsys *winsys);
 
+/**
+ * Destroy a logical context.
+ */
 void
 intel_winsys_destroy_context(struct intel_winsys *winsys,
                              struct intel_context *ctx);
 
+/**
+ * Read a register.  Only registers that are considered safe, such as
+ *
+ *   TIMESTAMP (0x2358)
+ *
+ * can be read.
+ */
 int
 intel_winsys_read_reg(struct intel_winsys *winsys,
                       uint32_t reg, uint64_t *val);
 
+/**
+ * Allocate a linear buffer object.
+ *
+ * \param name             Informative description of the bo.
+ * \param size             Size of the bo.
+ * \param flags            bitmask of enum intel_alloc_flag.
+ */
 struct intel_bo *
 intel_winsys_alloc_buffer(struct intel_winsys *winsys,
                           const char *name,
                           unsigned long size,
                           unsigned long flags);
 
+/**
+ * Allocate a 2-dimentional buffer object.
+ *
+ * \param name             Informative description of the bo.
+ * \param width            Width of the bo.
+ * \param height           Height of the bo.
+ * \param cpp              Bytes per texel.
+ * \param tiling           Tiling mode.
+ * \param flags            bitmask of enum intel_alloc_flag.
+ * \param pitch            Pitch of the bo.
+ */
 struct intel_bo *
 intel_winsys_alloc_texture(struct intel_winsys *winsys,
                            const char *name,
@@ -113,6 +144,9 @@ intel_winsys_alloc_texture(struct intel_winsys *winsys,
                            unsigned long flags,
                            unsigned long *pitch);
 
+/**
+ * Create a bo from a winsys handle.
+ */
 struct intel_bo *
 intel_winsys_import_handle(struct intel_winsys *winsys,
                            const char *name,
@@ -122,7 +156,7 @@ intel_winsys_import_handle(struct intel_winsys *winsys,
                            unsigned long *pitch);
 
 /**
- * Export a handle for inter-process sharing.
+ * Export \p bo as a winsys handle for inter-process sharing.
  */
 int
 intel_winsys_export_handle(struct intel_winsys *winsys,
@@ -131,45 +165,73 @@ intel_winsys_export_handle(struct intel_winsys *winsys,
                            unsigned long pitch,
                            struct winsys_handle *handle);
 
+/**
+ * Check that buffer objects directly specified in \p bo_array, and those
+ * indirectly referenced by them, can fit in the aperture space.
+ */
 int
 intel_winsys_check_aperture_space(struct intel_winsys *winsys,
                                   struct intel_bo **bo_array,
                                   int count);
 
+/**
+ * Decode the commands contained in \p bo.  For debugging.
+ *
+ * \param bo      Batch buffer to decode.
+ * \param used    Size of the commands in bytes.
+ */
 void
 intel_winsys_decode_commands(struct intel_winsys *winsys,
                              struct intel_bo *bo, int used);
 
+/**
+ * Increase the reference count of \p bo.
+ */
 void
 intel_bo_reference(struct intel_bo *bo);
 
+/**
+ * Decrease the reference count of \p bo.  When the reference count reaches
+ * zero, \p bo is destroyed.
+ */
 void
 intel_bo_unreference(struct intel_bo *bo);
 
+/**
+ * Return the real size of \p bo.  It may be larger than the size specified
+ * in allocation due to alignment and padding requirements.
+ */
 unsigned long
 intel_bo_get_size(const struct intel_bo *bo);
 
+/**
+ * Return the last-seen-by-GPU offset of \p bo.
+ */
 unsigned long
 intel_bo_get_offset(const struct intel_bo *bo);
 
+/**
+ * Return the pointer to the memory area of the mapped \p bo.
+ */
 void *
 intel_bo_get_virtual(const struct intel_bo *bo);
 
 /**
- * Map/unmap \p bo for CPU access.
+ * Map \p bo for CPU access.  Recursive mapping is allowed.
  *
- * map() maps the backing store into CPU address space, cached.  This
- * variant allows for fast random reads and writes.  But the caller needs
- * handle tiling or swizzling manually if the bo is tiled or swizzled.  If
- * write is enabled and there is no shared last-level cache (LLC), unmap()
- * needs to flush the cache, which is rather expensive.
+ * map() maps the backing store into CPU address space, cached.  It will block
+ * if the bo is busy.  This variant allows fastest random reads and writes,
+ * but the caller needs to handle tiling or swizzling manually if the bo is
+ * tiled or swizzled.  If write is enabled and there is no shared last-level
+ * cache (LLC), the CPU cache will be flushed, which is expensive.
  *
- * map_gtt() maps the bo for MMIO access, uncached but write-combined.
- * This variant promises a reasonable speed for sequential writes, but
- * reads would be very slow.  Callers always have a linear view of the bo.
+ * map_gtt() maps the bo for MMIO access, uncached but write-combined.  It
+ * will block if the bo is busy.  This variant promises a reasonable speed for
+ * sequential writes, but reads would be very slow.  Callers always have a
+ * linear view of the bo.
  *
  * map_unsynchronized() is similar to map_gtt(), except that it does not
- * wait until the bo is idle.
+ * block.
  */
 int
 intel_bo_map(struct intel_bo *bo, bool write_enable);
@@ -180,15 +242,22 @@ intel_bo_map_gtt(struct intel_bo *bo);
 int
 intel_bo_map_unsynchronized(struct intel_bo *bo);
 
+/**
+ * Unmap \p bo.
+ */
 void
 intel_bo_unmap(struct intel_bo *bo);
 
 /**
- * Move data in to or out of the bo.
+ * Write data to \p bo.
  */
 int
 intel_bo_pwrite(struct intel_bo *bo, unsigned long offset,
                 unsigned long size, const void *data);
+
+/**
+ * Read data from the bo.
+ */
 int
 intel_bo_pread(struct intel_bo *bo, unsigned long offset,
                unsigned long size, void *data);
@@ -214,8 +283,8 @@ intel_bo_get_reloc_count(struct intel_bo *bo);
 /**
  * Discard all relocations except the first \p start ones.
  *
- * Combined with \p get_reloc_count(), they can be used to undo
- * the \p emit_reloc() calls that were just made.
+ * Combined with \p intel_bo_get_reloc_count(), they can be used to undo the
+ * \p intel_bo_emit_reloc() calls that were just made.
  */
 void
 intel_bo_clear_relocs(struct intel_bo *bo, int start);
