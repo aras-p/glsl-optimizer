@@ -997,9 +997,14 @@ tex_create_bo(struct ilo_texture *tex,
             &tiling, &pitch);
    }
    else {
+      const uint32_t initial_domain =
+         (tex->base.bind & (PIPE_BIND_DEPTH_STENCIL |
+                            PIPE_BIND_RENDER_TARGET)) ?
+         INTEL_DOMAIN_RENDER : 0;
+
       bo = intel_winsys_alloc_texture(is->winsys, name,
             tex->bo_width, tex->bo_height, tex->bo_cpp,
-            tex->tiling, tex->bo_flags, &pitch);
+            tex->tiling, initial_domain, &pitch);
 
       tiling = tex->tiling;
    }
@@ -1090,7 +1095,7 @@ tex_create_hiz(struct ilo_texture *tex, const struct tex_layout *layout)
 
    tex->hiz.bo = intel_winsys_alloc_texture(is->winsys,
          "hiz texture", hz_width, hz_height, 1,
-         INTEL_TILING_Y, INTEL_ALLOC_FOR_RENDER, &pitch);
+         INTEL_TILING_Y, INTEL_DOMAIN_RENDER, &pitch);
    if (!tex->hiz.bo)
       return false;
 
@@ -1209,10 +1214,6 @@ tex_create(struct pipe_screen *screen,
 
    tex->imported = (handle != NULL);
 
-   if (tex->base.bind & (PIPE_BIND_DEPTH_STENCIL |
-                         PIPE_BIND_RENDER_TARGET))
-      tex->bo_flags |= INTEL_ALLOC_FOR_RENDER;
-
    tex_layout_init(&layout, screen, templ, tex->slices);
 
    switch (templ->target) {
@@ -1316,6 +1317,9 @@ tex_estimate_size(struct pipe_screen *screen,
 static bool
 buf_create_bo(struct ilo_buffer *buf)
 {
+   const uint32_t initial_domain =
+      (buf->base.bind & PIPE_BIND_STREAM_OUTPUT) ?
+      INTEL_DOMAIN_RENDER : 0;
    struct ilo_screen *is = ilo_screen(buf->base.screen);
    const char *name;
    struct intel_bo *bo;
@@ -1339,7 +1343,7 @@ buf_create_bo(struct ilo_buffer *buf)
    }
 
    bo = intel_winsys_alloc_buffer(is->winsys,
-         name, buf->bo_size, buf->bo_flags);
+         name, buf->bo_size, initial_domain);
    if (!bo)
       return false;
 
@@ -1372,7 +1376,6 @@ buf_create(struct pipe_screen *screen, const struct pipe_resource *templ)
    pipe_reference_init(&buf->base.reference, 1);
 
    buf->bo_size = templ->width0;
-   buf->bo_flags = 0;
 
    /*
     * From the Sandy Bridge PRM, volume 1 part 1, page 118:

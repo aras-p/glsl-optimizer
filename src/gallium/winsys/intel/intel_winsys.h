@@ -62,11 +62,6 @@ enum intel_tiling_mode {
    INTEL_TILING_Y    = 2,
 };
 
-/* this is compatible with intel_bufmgr.h's definitions */
-enum intel_alloc_flag {
-   INTEL_ALLOC_FOR_RENDER     = 1 << 0,
-};
-
 struct winsys_handle;
 struct intel_winsys;
 struct intel_context;
@@ -117,13 +112,13 @@ intel_winsys_read_reg(struct intel_winsys *winsys,
  *
  * \param name             Informative description of the bo.
  * \param size             Size of the bo.
- * \param flags            bitmask of enum intel_alloc_flag.
+ * \param initial_domain   Initial (write) domain.
  */
 struct intel_bo *
 intel_winsys_alloc_buffer(struct intel_winsys *winsys,
                           const char *name,
                           unsigned long size,
-                          unsigned long flags);
+                          uint32_t initial_domain);
 
 /**
  * Allocate a 2-dimentional buffer object.
@@ -133,7 +128,7 @@ intel_winsys_alloc_buffer(struct intel_winsys *winsys,
  * \param height           Height of the bo.
  * \param cpp              Bytes per texel.
  * \param tiling           Tiling mode.
- * \param flags            bitmask of enum intel_alloc_flag.
+ * \param initial_domain   Initial (write) domain.
  * \param pitch            Pitch of the bo.
  */
 struct intel_bo *
@@ -141,7 +136,7 @@ intel_winsys_alloc_texture(struct intel_winsys *winsys,
                            const char *name,
                            int width, int height, int cpp,
                            enum intel_tiling_mode tiling,
-                           unsigned long flags,
+                           uint32_t initial_domain,
                            unsigned long *pitch);
 
 /**

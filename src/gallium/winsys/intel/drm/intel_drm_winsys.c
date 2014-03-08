@@ -219,17 +219,18 @@ struct intel_bo *
 intel_winsys_alloc_buffer(struct intel_winsys *winsys,
                           const char *name,
                           unsigned long size,
-                          unsigned long flags)
+                          uint32_t initial_domain)
 {
+   const bool for_render =
+      (initial_domain & (INTEL_DOMAIN_RENDER | INTEL_DOMAIN_INSTRUCTION));
    const int alignment = 4096; /* always page-aligned */
    drm_intel_bo *bo;
 
-   if (flags == INTEL_ALLOC_FOR_RENDER) {
+   if (for_render) {
       bo = drm_intel_bo_alloc_for_render(winsys->bufmgr,
             name, size, alignment);
    }
    else {
-      assert(!flags);
       bo = drm_intel_bo_alloc(winsys->bufmgr, name, size, alignment);
    }
 
@@ -241,9 +242,12 @@ intel_winsys_alloc_texture(struct intel_winsys *winsys,
                            const char *name,
                            int width, int height, int cpp,
                            enum intel_tiling_mode tiling,
-                           unsigned long flags,
+                           uint32_t initial_domain,
                            unsigned long *pitch)
 {
+   const unsigned long flags =
+      (initial_domain & (INTEL_DOMAIN_RENDER | INTEL_DOMAIN_INSTRUCTION)) ?
+      BO_ALLOC_FOR_RENDER : 0;
    uint32_t real_tiling = tiling;
    drm_intel_bo *bo;
 

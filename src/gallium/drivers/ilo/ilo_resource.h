@@ -81,7 +81,6 @@ struct ilo_buffer {
 
    struct intel_bo *bo;
    unsigned bo_size;
-   unsigned bo_flags;
 };
 
 /**
@@ -109,7 +108,6 @@ struct ilo_texture {
    struct pipe_resource base;
 
    bool imported;
-   unsigned bo_flags;
 
    enum pipe_format bo_format;
    struct intel_bo *bo;

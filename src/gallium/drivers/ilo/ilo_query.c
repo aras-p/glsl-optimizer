@@ -211,7 +211,8 @@ ilo_query_alloc_bo(struct ilo_query *q, int reg_count, int repeat_count,
       if (q->bo)
          intel_bo_unreference(q->bo);
 
-      q->bo = intel_winsys_alloc_buffer(winsys, name, size, 0);
+      q->bo = intel_winsys_alloc_buffer(winsys,
+            name, size, INTEL_DOMAIN_INSTRUCTION);
       q->reg_total = (q->bo) ? reg_total : 0;
    }
 

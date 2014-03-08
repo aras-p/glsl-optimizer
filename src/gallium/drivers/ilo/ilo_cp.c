@@ -160,7 +160,7 @@ ilo_cp_realloc_bo(struct ilo_cp *cp)
     * won't point at the same address, which is needed for jmpbuf
     */
    bo = intel_winsys_alloc_buffer(cp->winsys,
-         "batch buffer", cp->bo_size * 4, 0);
+         "batch buffer", cp->bo_size * 4, INTEL_DOMAIN_CPU);
    if (unlikely(!bo)) {
       /* reuse the old one */
       bo = cp->bo;
