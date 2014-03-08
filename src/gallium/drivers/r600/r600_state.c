@@ -2882,13 +2882,13 @@ static boolean r600_dma_copy_tile(struct r600_context *rctx,
 	return TRUE;
 }
 
-static boolean r600_dma_blit(struct pipe_context *ctx,
-			     struct pipe_resource *dst,
-			     unsigned dst_level,
-			     unsigned dst_x, unsigned dst_y, unsigned dst_z,
-			     struct pipe_resource *src,
-			     unsigned src_level,
-			     const struct pipe_box *src_box)
+static void r600_dma_blit(struct pipe_context *ctx,
+			  struct pipe_resource *dst,
+			  unsigned dst_level,
+			  unsigned dstx, unsigned dsty, unsigned dstz,
+			  struct pipe_resource *src,
+			  unsigned src_level,
+			  const struct pipe_box *src_box)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_texture *rsrc = (struct r600_texture*)src;
@@ -2896,18 +2896,22 @@ static boolean r600_dma_blit(struct pipe_context *ctx,
 	unsigned dst_pitch, src_pitch, bpp, dst_mode, src_mode, copy_height;
 	unsigned src_w, dst_w;
 	unsigned src_x, src_y;
+	unsigned dst_x = dstx, dst_y = dsty, dst_z = dstz;
 
 	if (rctx->b.rings.dma.cs == NULL) {
-		return FALSE;
+		goto fallback;
 	}
 
 	if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+		if (dst_x % 4 || src_box->x % 4 || src_box->width % 4)
+			goto fallback;
+
 		r600_dma_copy(rctx, dst, src, dst_x, src_box->x, src_box->width);
-		return TRUE;
+		return;
 	}
 
-	if (src->format != dst->format) {
-		return FALSE;
+	if (src->format != dst->format || src_box->depth > 1) {
+		goto fallback;
 	}
 
 	src_x = util_format_get_nblocksx(src->format, src_box->x);
@@ -2930,11 +2934,11 @@ static boolean r600_dma_blit(struct pipe_context *ctx,
 
 	if (src_pitch != dst_pitch || src_box->x || dst_x || src_w != dst_w) {
 		/* strick requirement on r6xx/r7xx */
-		return FALSE;
+		goto fallback;
 	}
 	/* lot of constraint on alignment this should capture them all */
 	if ((src_pitch & 0x7) || (src_box->y & 0x7) || (dst_y & 0x7)) {
-		return FALSE;
+		goto fallback;
 	}
 
 	if (src_mode == dst_mode) {
@@ -2954,15 +2958,21 @@ static boolean r600_dma_blit(struct pipe_context *ctx,
 		size = src_box->height * src_pitch;
 		/* must be dw aligned */
 		if ((dst_offset & 0x3) || (src_offset & 0x3) || (size & 0x3)) {
-			return FALSE;
+			goto fallback;
 		}
 		r600_dma_copy(rctx, dst, src, dst_offset, src_offset, size);
 	} else {
-		return r600_dma_copy_tile(rctx, dst, dst_level, dst_x, dst_y, dst_z,
+		if (!r600_dma_copy_tile(rctx, dst, dst_level, dst_x, dst_y, dst_z,
 					src, src_level, src_x, src_y, src_box->z,
-					copy_height, dst_pitch, bpp);
+					copy_height, dst_pitch, bpp)) {
+			goto fallback;
+		}
 	}
-	return TRUE;
+	return;
+
+fallback:
+	ctx->resource_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
+				  src, src_level, src_box);
 }
 
 void r600_init_state_functions(struct r600_context *rctx)

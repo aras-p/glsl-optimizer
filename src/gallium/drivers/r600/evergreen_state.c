@@ -3325,13 +3325,13 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 	}
 }
 
-static boolean evergreen_dma_blit(struct pipe_context *ctx,
-				  struct pipe_resource *dst,
-				  unsigned dst_level,
-				  unsigned dst_x, unsigned dst_y, unsigned dst_z,
-				  struct pipe_resource *src,
-				  unsigned src_level,
-				  const struct pipe_box *src_box)
+static void evergreen_dma_blit(struct pipe_context *ctx,
+			       struct pipe_resource *dst,
+			       unsigned dst_level,
+			       unsigned dstx, unsigned dsty, unsigned dstz,
+			       struct pipe_resource *src,
+			       unsigned src_level,
+			       const struct pipe_box *src_box)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct r600_texture *rsrc = (struct r600_texture*)src;
@@ -3339,22 +3339,22 @@ static boolean evergreen_dma_blit(struct pipe_context *ctx,
 	unsigned dst_pitch, src_pitch, bpp, dst_mode, src_mode, copy_height;
 	unsigned src_w, dst_w;
 	unsigned src_x, src_y;
+	unsigned dst_x = dstx, dst_y = dsty, dst_z = dstz;
 
 	if (rctx->b.rings.dma.cs == NULL) {
-		return FALSE;
+		goto fallback;
 	}
 
 	if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
 		evergreen_dma_copy(rctx, dst, src, dst_x, src_box->x, src_box->width);
-		return TRUE;
+		return;
 	}
 
-	if (src->format != dst->format) {
-		return FALSE;
+	if (src->format != dst->format || src_box->depth > 1 ||
+	    rdst->dirty_level_mask != 0) {
+		goto fallback;
 	}
-	if (rdst->dirty_level_mask != 0) {
-		return FALSE;
-	}
+
 	if (rsrc->dirty_level_mask) {
 		ctx->flush_resource(ctx, src);
 	}
@@ -3379,13 +3379,13 @@ static boolean evergreen_dma_blit(struct pipe_context *ctx,
 
 	if (src_pitch != dst_pitch || src_box->x || dst_x || src_w != dst_w) {
 		/* FIXME evergreen can do partial blit */
-		return FALSE;
+		goto fallback;
 	}
 	/* the x test here are currently useless (because we don't support partial blit)
 	 * but keep them around so we don't forget about those
 	 */
 	if ((src_pitch & 0x7) || (src_box->x & 0x7) || (dst_x & 0x7) || (src_box->y & 0x7) || (dst_y & 0x7)) {
-		return FALSE;
+		goto fallback;
 	}
 
 	/* 128 bpp surfaces require non_disp_tiling for both
@@ -3396,7 +3396,7 @@ static boolean evergreen_dma_blit(struct pipe_context *ctx,
 	if ((rctx->b.chip_class == CAYMAN) &&
 	    (src_mode != dst_mode) &&
 	    (util_format_get_blocksize(src->format) >= 16)) {
-		return FALSE;
+		goto fallback;
 	}
 
 	if (src_mode == dst_mode) {
@@ -3419,7 +3419,11 @@ static boolean evergreen_dma_blit(struct pipe_context *ctx,
 					src, src_level, src_x, src_y, src_box->z,
 					copy_height, dst_pitch, bpp);
 	}
-	return TRUE;
+	return;
+
+fallback:
+	ctx->resource_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
+				  src, src_level, src_box);
 }
 
 void evergreen_init_state_functions(struct r600_context *rctx)

@@ -190,6 +190,17 @@ static void *r600_buffer_get_transfer(struct pipe_context *ctx,
 	return data;
 }
 
+static bool r600_can_dma_copy_buffer(struct r600_common_context *rctx,
+				     unsigned dstx, unsigned srcx, unsigned size)
+{
+	bool dword_aligned = !(dstx % 4) && !(srcx % 4) && !(size % 4);
+
+	return rctx->screen->has_cp_dma ||
+	       (dword_aligned && (rctx->rings.dma.cs ||
+				  rctx->screen->has_streamout));
+
+}
+
 static void *r600_buffer_transfer_map(struct pipe_context *ctx,
                                       struct pipe_resource *resource,
                                       unsigned level,
@@ -233,10 +244,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 	else if ((usage & PIPE_TRANSFER_DISCARD_RANGE) &&
 		 !(usage & PIPE_TRANSFER_UNSYNCHRONIZED) &&
 		 !(rscreen->debug_flags & DBG_NO_DISCARD_RANGE) &&
-		 (rscreen->has_cp_dma ||
-		  (rscreen->has_streamout &&
-		   /* The buffer range must be aligned to 4 with streamout. */
-		   box->x % 4 == 0 && box->width % 4 == 0))) {
+		 r600_can_dma_copy_buffer(rctx, box->x, 0, box->width)) {
 		assert(usage & PIPE_TRANSFER_WRITE);
 
 		/* Check if mapping this buffer would cause waiting for the GPU. */
@@ -260,10 +268,11 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 		/* At this point, the buffer is always idle (we checked it above). */
 		usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
 	}
-	/* Using DMA for larger reads is much faster */
+	/* Using a staging buffer in GTT for larger reads is much faster. */
 	else if ((usage & PIPE_TRANSFER_READ) &&
 		 !(usage & PIPE_TRANSFER_WRITE) &&
-		 (rbuffer->domains == RADEON_DOMAIN_VRAM)) {
+		 rbuffer->domains == RADEON_DOMAIN_VRAM &&
+		 r600_can_dma_copy_buffer(rctx, 0, box->x, box->width)) {
 		unsigned offset;
 		struct r600_resource *staging = NULL;
 
@@ -274,26 +283,16 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 		if (staging) {
 			data += box->x % R600_MAP_BUFFER_ALIGNMENT;
 
-			/* Copy the staging buffer into the original one. */
-			if (rctx->dma_copy(ctx, (struct pipe_resource*)staging, 0,
-						 box->x % R600_MAP_BUFFER_ALIGNMENT,
-						 0, 0, resource, level, box)) {
-				rctx->rings.gfx.flush(rctx, 0);
-				if (rctx->rings.dma.cs)
-					rctx->rings.dma.flush(rctx, 0);
+			/* Copy the VRAM buffer to the staging buffer. */
+			rctx->dma_copy(ctx, &staging->b.b, 0,
+				       box->x % R600_MAP_BUFFER_ALIGNMENT,
+				       0, 0, resource, level, box);
 
-				/* Wait for any offloaded CS flush to complete
-				 * to avoid busy-waiting in the winsys. */
-				rctx->ws->cs_sync_flush(rctx->rings.gfx.cs);
-				if (rctx->rings.dma.cs)
-					rctx->ws->cs_sync_flush(rctx->rings.dma.cs);
+			/* Just do the synchronization. The buffer is mapped already. */
+			r600_buffer_map_sync_with_rings(rctx, staging, PIPE_TRANSFER_READ);
 
-				rctx->ws->buffer_wait(staging->buf, RADEON_USAGE_WRITE);
-				return r600_buffer_get_transfer(ctx, resource, level, usage, box,
-								ptransfer, data, staging, offset);
-			} else {
-				pipe_resource_reference((struct pipe_resource**)&staging, NULL);
-			}
+			return r600_buffer_get_transfer(ctx, resource, level, usage, box,
+							ptransfer, data, staging, offset);
 		}
 	}
 
@@ -329,12 +328,7 @@ static void r600_buffer_transfer_unmap(struct pipe_context *ctx,
 			u_box_1d(soffset, size, &box);
 
 			/* Copy the staging buffer into the original one. */
-			if (!(size % 4) && !(doffset % 4) && !(soffset % 4) &&
-			    rctx->dma_copy(ctx, dst, 0, doffset, 0, 0, src, 0, &box)) {
-				/* DONE. */
-			} else {
-				ctx->resource_copy_region(ctx, dst, 0, doffset, 0, 0, src, 0, &box);
-			}
+			rctx->dma_copy(ctx, dst, 0, doffset, 0, 0, src, 0, &box);
 		}
 		pipe_resource_reference((struct pipe_resource**)&rtransfer->staging, NULL);
 	}

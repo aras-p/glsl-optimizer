@@ -346,15 +346,14 @@ struct r600_common_context {
 	boolean				current_render_cond_cond;
 	boolean				predicate_drawing;
 
-	/* Copy one resource to another using async DMA.
-	 * False is returned if the copy couldn't be done. */
-	boolean (*dma_copy)(struct pipe_context *ctx,
-			    struct pipe_resource *dst,
-			    unsigned dst_level,
-			    unsigned dst_x, unsigned dst_y, unsigned dst_z,
-			    struct pipe_resource *src,
-			    unsigned src_level,
-			    const struct pipe_box *src_box);
+	/* Copy one resource to another using async DMA. */
+	void (*dma_copy)(struct pipe_context *ctx,
+			 struct pipe_resource *dst,
+			 unsigned dst_level,
+			 unsigned dst_x, unsigned dst_y, unsigned dst_z,
+			 struct pipe_resource *src,
+			 unsigned src_level,
+			 const struct pipe_box *src_box);
 
 	void (*clear_buffer)(struct pipe_context *ctx, struct pipe_resource *dst,
 			     unsigned offset, unsigned size, unsigned value);

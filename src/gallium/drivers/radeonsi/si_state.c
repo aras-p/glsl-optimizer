@@ -2926,16 +2926,19 @@ static void *si_create_blend_custom(struct si_context *sctx, unsigned mode)
 	return si_create_blend_state_mode(&sctx->b.b, &blend, mode);
 }
 
-static boolean si_dma_copy(struct pipe_context *ctx,
-			   struct pipe_resource *dst,
-			   unsigned dst_level,
-			   unsigned dst_x, unsigned dst_y, unsigned dst_z,
-			   struct pipe_resource *src,
-			   unsigned src_level,
-			   const struct pipe_box *src_box)
+static void si_dma_copy(struct pipe_context *ctx,
+			struct pipe_resource *dst,
+			unsigned dst_level,
+			unsigned dst_x, unsigned dst_y, unsigned dst_z,
+			struct pipe_resource *src,
+			unsigned src_level,
+			const struct pipe_box *src_box)
 {
 	/* XXX implement this or share evergreen_dma_blit with r600g */
-	return FALSE;
+
+	/* Fallback: */
+	ctx->resource_copy_region(ctx, dst, dst_level, dst_x, dst_y, dst_z,
+				  src, src_level, src_box);
 }
 
 static void si_set_occlusion_query_state(struct pipe_context *ctx, bool enable)
