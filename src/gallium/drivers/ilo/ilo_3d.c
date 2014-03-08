@@ -47,8 +47,7 @@ process_query_for_occlusion_counter(struct ilo_3d *hw3d,
    /* in pairs */
    assert(q->reg_read % 2 == 0);
 
-   intel_bo_map(q->bo, false);
-   vals = intel_bo_get_virtual(q->bo);
+   vals = intel_bo_map(q->bo, false);
    for (i = 1; i < q->reg_read; i += 2)
       depth_count += vals[i] - vals[i - 1];
    intel_bo_unmap(q->bo);
@@ -72,8 +71,7 @@ process_query_for_timestamp(struct ilo_3d *hw3d, struct ilo_query *q)
 
    assert(q->reg_read == 1);
 
-   intel_bo_map(q->bo, false);
-   vals = intel_bo_get_virtual(q->bo);
+   vals = intel_bo_map(q->bo, false);
    timestamp = vals[0];
    intel_bo_unmap(q->bo);
 
@@ -90,8 +88,7 @@ process_query_for_time_elapsed(struct ilo_3d *hw3d, struct ilo_query *q)
    /* in pairs */
    assert(q->reg_read % 2 == 0);
 
-   intel_bo_map(q->bo, false);
-   vals = intel_bo_get_virtual(q->bo);
+   vals = intel_bo_map(q->bo, false);
 
    for (i = 1; i < q->reg_read; i += 2)
       elapsed += vals[i] - vals[i - 1];

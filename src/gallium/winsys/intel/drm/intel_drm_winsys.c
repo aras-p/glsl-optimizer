@@ -365,7 +365,7 @@ void
 intel_winsys_decode_commands(struct intel_winsys *winsys,
                              struct intel_bo *bo, int used)
 {
-   int err;
+   void *ptr;
 
    if (!winsys->decode) {
       winsys->decode = drm_intel_decode_context_alloc(winsys->info.devid);
@@ -376,8 +376,8 @@ intel_winsys_decode_commands(struct intel_winsys *winsys,
       drm_intel_decode_set_output_file(winsys->decode, stderr);
    }
 
-   err = intel_bo_map(bo, false);
-   if (err) {
+   ptr = intel_bo_map(bo, false);
+   if (!ptr) {
       debug_printf("failed to map buffer for decoding\n");
       return;
    }
@@ -386,7 +386,7 @@ intel_winsys_decode_commands(struct intel_winsys *winsys,
    used /= 4;
 
    drm_intel_decode_set_batch_pointer(winsys->decode,
-         gem_bo(bo)->virtual, gem_bo(bo)->offset64, used);
+         ptr, gem_bo(bo)->offset64, used);
 
    drm_intel_decode(winsys->decode);
 
@@ -412,27 +412,45 @@ intel_bo_get_size(const struct intel_bo *bo)
 }
 
 void *
-intel_bo_get_virtual(const struct intel_bo *bo)
+intel_bo_map(struct intel_bo *bo, bool write_enable)
 {
+   int err;
+
+   err = drm_intel_bo_map(gem_bo(bo), write_enable);
+   if (err) {
+      debug_error("failed to map bo");
+      return NULL;
+   }
+
    return gem_bo(bo)->virtual;
 }
 
-int
-intel_bo_map(struct intel_bo *bo, bool write_enable)
-{
-   return drm_intel_bo_map(gem_bo(bo), write_enable);
-}
-
-int
+void *
 intel_bo_map_gtt(struct intel_bo *bo)
 {
-   return drm_intel_gem_bo_map_gtt(gem_bo(bo));
+   int err;
+
+   err = drm_intel_gem_bo_map_gtt(gem_bo(bo));
+   if (err) {
+      debug_error("failed to map bo");
+      return NULL;
+   }
+
+   return gem_bo(bo)->virtual;
 }
 
-int
+void *
 intel_bo_map_unsynchronized(struct intel_bo *bo)
 {
-   return drm_intel_gem_bo_map_unsynchronized(gem_bo(bo));
+   int err;
+
+   err = drm_intel_gem_bo_map_unsynchronized(gem_bo(bo));
+   if (err) {
+      debug_error("failed to map bo");
+      return NULL;
+   }
+
+   return gem_bo(bo)->virtual;
 }
 
 void

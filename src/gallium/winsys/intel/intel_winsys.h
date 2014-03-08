@@ -205,12 +205,6 @@ unsigned long
 intel_bo_get_size(const struct intel_bo *bo);
 
 /**
- * Return the pointer to the memory area of the mapped \p bo.
- */
-void *
-intel_bo_get_virtual(const struct intel_bo *bo);
-
-/**
  * Map \p bo for CPU access.  Recursive mapping is allowed.
  *
  * map() maps the backing store into CPU address space, cached.  It will block
@@ -227,13 +221,13 @@ intel_bo_get_virtual(const struct intel_bo *bo);
  * map_unsynchronized() is similar to map_gtt(), except that it does not
  * block.
  */
-int
+void *
 intel_bo_map(struct intel_bo *bo, bool write_enable);
 
-int
+void *
 intel_bo_map_gtt(struct intel_bo *bo);
 
-int
+void *
 intel_bo_map_unsynchronized(struct intel_bo *bo);
 
 /**

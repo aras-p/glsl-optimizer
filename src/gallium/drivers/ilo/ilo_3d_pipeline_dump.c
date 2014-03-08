@@ -517,12 +517,17 @@ static void dump_binding_table(struct brw_context *brw, uint32_t offset,
    }
 }
 
-static void
+static bool
 init_brw(struct brw_context *brw, struct ilo_3d_pipeline *p)
 {
    brw->intel.gen = ILO_GEN_GET_MAJOR(p->dev->gen);
-   brw->intel.batch.bo_dst.virtual = intel_bo_get_virtual(p->cp->bo);
    brw->intel.batch.bo = &brw->intel.batch.bo_dst;
+
+   brw->intel.batch.bo_dst.virtual = intel_bo_map(p->cp->bo, false);
+   if (!brw->intel.batch.bo_dst.virtual)
+      return false;
+
+   return true;
 }
 
 static void
@@ -531,7 +536,8 @@ dump_3d_state(struct ilo_3d_pipeline *p)
    struct brw_context brw;
    int num_states, i;
 
-   init_brw(&brw, p);
+   if (!init_brw(&brw, p))
+      return;
 
    if (brw.intel.gen >= 7) {
       dump_cc_viewport_state(&brw, p->state.CC_VIEWPORT);
@@ -627,6 +633,8 @@ dump_3d_state(struct ilo_3d_pipeline *p)
    (void) dump_sf_state;
    (void) dump_wm_state;
    (void) dump_cc_state_gen4;
+
+   intel_bo_unmap(p->cp->bo);
 }
 
 /**
@@ -635,13 +643,6 @@ dump_3d_state(struct ilo_3d_pipeline *p)
 void
 ilo_3d_pipeline_dump(struct ilo_3d_pipeline *p)
 {
-   int err;
-
    ilo_cp_dump(p->cp);
-
-   err = intel_bo_map(p->cp->bo, false);
-   if (!err) {
-      dump_3d_state(p);
-      intel_bo_unmap(p->cp->bo);
-   }
+   dump_3d_state(p);
 }

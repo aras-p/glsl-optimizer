@@ -171,10 +171,8 @@ ilo_cp_realloc_bo(struct ilo_cp *cp)
       intel_bo_unreference(cp->bo);
    cp->bo = bo;
 
-   if (!cp->sys) {
-      intel_bo_map(cp->bo, true);
-      cp->ptr = intel_bo_get_virtual(cp->bo);
-   }
+   if (!cp->sys)
+      cp->ptr = intel_bo_map(cp->bo, true);
 }
 
 /**
