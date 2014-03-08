@@ -326,7 +326,8 @@ program_sources = [
 common_driver_sources =	[
     'drivers/common/driverfuncs.c',
     'drivers/common/meta.c',
-    'drivers/common/meta_blit.c'
+    'drivers/common/meta_blit.c',
+    'drivers/common/meta_generate_mipmap.c'
 ]
 
 mesa_sources = (
