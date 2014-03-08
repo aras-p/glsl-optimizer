@@ -277,6 +277,9 @@ vec4_visitor::fix_3src_operand(src_reg src)
    if (src.file != UNIFORM && src.file != IMM)
       return src;
 
+   if (src.file == UNIFORM && brw_is_single_value_swizzle(src.swizzle))
+      return src;
+
    dst_reg expanded = dst_reg(this, glsl_type::vec4_type);
    expanded.type = src.type;
    emit(MOV(expanded, src));
