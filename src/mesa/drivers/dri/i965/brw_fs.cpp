@@ -886,7 +886,9 @@ fs_visitor::import_uniforms(fs_visitor *v)
 			   import_uniforms_callback,
 			   variable_ht);
    this->push_constant_loc = v->push_constant_loc;
+   this->pull_constant_loc = v->pull_constant_loc;
    this->uniforms = v->uniforms;
+   this->param_size = v->param_size;
 }
 
 /* Our support for uniforms is piggy-backed on the struct
@@ -1748,6 +1750,9 @@ fs_visitor::compact_virtual_grfs()
 void
 fs_visitor::move_uniform_array_access_to_pull_constants()
 {
+   if (dispatch_width != 8)
+      return;
+
    pull_constant_loc = ralloc_array(mem_ctx, int, uniforms);
 
    for (unsigned int i = 0; i < uniforms; i++) {
@@ -3500,17 +3505,13 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    exec_list *simd16_instructions = NULL;
    fs_visitor v2(brw, c, prog, fp, 16);
    if (brw->gen >= 5 && likely(!(INTEL_DEBUG & DEBUG_NO16))) {
-      if (c->prog_data.base.nr_pull_params == 0) {
-         /* Try a SIMD16 compile */
-         v2.import_uniforms(&v);
-         if (!v2.run()) {
-            perf_debug("SIMD16 shader failed to compile, falling back to "
-                       "SIMD8 at a 10-20%% performance cost: %s", v2.fail_msg);
-         } else {
-            simd16_instructions = &v2.instructions;
-         }
+      /* Try a SIMD16 compile */
+      v2.import_uniforms(&v);
+      if (!v2.run()) {
+         perf_debug("SIMD16 shader failed to compile, falling back to "
+                    "SIMD8 at a 10-20%% performance cost: %s", v2.fail_msg);
       } else {
-         perf_debug("Skipping SIMD16 due to pull parameters.\n");
+         simd16_instructions = &v2.instructions;
       }
    }
 
