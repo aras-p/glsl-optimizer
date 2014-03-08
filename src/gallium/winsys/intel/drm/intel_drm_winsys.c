@@ -100,6 +100,14 @@ test_address_swizzling(struct intel_winsys *winsys)
 }
 
 static bool
+test_reg_read(struct intel_winsys *winsys, uint32_t reg)
+{
+   uint64_t dummy;
+
+   return !drm_intel_reg_read(winsys->bufmgr, reg, &dummy);
+}
+
+static bool
 init_info(struct intel_winsys *winsys)
 {
    struct intel_winsys_info *info = &winsys->info;
@@ -129,6 +137,9 @@ init_info(struct intel_winsys *winsys)
 
    get_param(winsys, I915_PARAM_HAS_LLC, &val);
    info->has_llc = val;
+
+   /* test TIMESTAMP read */
+   info->has_timestamp = test_reg_read(winsys, 0x2358);
 
    get_param(winsys, I915_PARAM_HAS_GEN7_SOL_RESET, &val);
    info->has_gen7_sol_reset = val;

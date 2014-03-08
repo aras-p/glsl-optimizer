@@ -71,6 +71,7 @@ struct ilo_dev_info {
    bool has_llc;
    bool has_gen7_sol_reset;
    bool has_address_swizzling;
+   bool has_timestamp;
 
    int gen;
    int gt;

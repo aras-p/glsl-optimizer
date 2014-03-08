@@ -404,8 +404,9 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
       /* imposed by OWord (Dual) Block Read */
       return 16;
    case PIPE_CAP_START_INSTANCE:
-   case PIPE_CAP_QUERY_TIMESTAMP:
       return true;
+   case PIPE_CAP_QUERY_TIMESTAMP:
+      return is->dev.has_timestamp;
    case PIPE_CAP_TEXTURE_MULTISAMPLE:
       return false; /* TODO */
    case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
@@ -650,6 +651,7 @@ init_dev(struct ilo_dev_info *dev, const struct intel_winsys_info *info)
    dev->has_llc = info->has_llc;
    dev->has_gen7_sol_reset = info->has_gen7_sol_reset;
    dev->has_address_swizzling = info->has_address_swizzling;
+   dev->has_timestamp = info->has_timestamp;
 
    /*
     * From the Sandy Bridge PRM, volume 4 part 2, page 18:

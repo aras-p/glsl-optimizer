@@ -69,9 +69,13 @@ struct intel_bo;
 
 struct intel_winsys_info {
    int devid;
+
    bool has_llc;
    bool has_gen7_sol_reset;
    bool has_address_swizzling;
+
+   /* valid registers for intel_winsys_read_reg() */
+   bool has_timestamp;
 };
 
 struct intel_winsys *
