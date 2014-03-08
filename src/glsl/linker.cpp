@@ -297,7 +297,7 @@ linker_warning(gl_shader_program *prog, const char *fmt, ...)
 {
    va_list ap;
 
-   ralloc_strcat(&prog->InfoLog, "error: ");
+   ralloc_strcat(&prog->InfoLog, "warning: ");
    va_start(ap, fmt);
    ralloc_vasprintf_append(&prog->InfoLog, fmt, ap);
    va_end(ap);
