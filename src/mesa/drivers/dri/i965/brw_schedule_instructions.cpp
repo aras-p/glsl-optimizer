@@ -132,20 +132,20 @@ schedule_node::set_latency_gen7(bool is_haswell)
    case BRW_OPCODE_MAD:
       /* 2 cycles
        *  (since the last two src operands are in different register banks):
-       * mad(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g3.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * mad(8) g4<1>F g2.2<4,4,1>F.x  g2<4,4,1>F.x g3.1<4,4,1>F.x { align16 WE_normal 1Q };
        *
        * 3 cycles on IVB, 4 on HSW
        *  (since the last two src operands are in the same register bank):
-       * mad(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g2.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * mad(8) g4<1>F g2.2<4,4,1>F.x  g2<4,4,1>F.x g2.1<4,4,1>F.x { align16 WE_normal 1Q };
        *
        * 18 cycles on IVB, 16 on HSW
        *  (since the last two src operands are in different register banks):
-       * mad(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g3.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * mad(8) g4<1>F g2.2<4,4,1>F.x  g2<4,4,1>F.x g3.1<4,4,1>F.x { align16 WE_normal 1Q };
        * mov(8) null   g4<4,5,1>F                     { align16 WE_normal 1Q };
        *
        * 20 cycles on IVB, 18 on HSW
        *  (since the last two src operands are in the same register bank):
-       * mad(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g2.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * mad(8) g4<1>F g2.2<4,4,1>F.x  g2<4,4,1>F.x g2.1<4,4,1>F.x { align16 WE_normal 1Q };
        * mov(8) null   g4<4,4,1>F                     { align16 WE_normal 1Q };
        */
 
@@ -158,20 +158,20 @@ schedule_node::set_latency_gen7(bool is_haswell)
    case BRW_OPCODE_LRP:
       /* 2 cycles
        *  (since the last two src operands are in different register banks):
-       * lrp(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g3.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * lrp(8) g4<1>F g2.2<4,4,1>F.x  g2<4,4,1>F.x g3.1<4,4,1>F.x { align16 WE_normal 1Q };
        *
        * 3 cycles on IVB, 4 on HSW
        *  (since the last two src operands are in the same register bank):
-       * lrp(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g2.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * lrp(8) g4<1>F g2.2<4,4,1>F.x  g2<4,4,1>F.x g2.1<4,4,1>F.x { align16 WE_normal 1Q };
        *
        * 16 cycles on IVB, 14 on HSW
        *  (since the last two src operands are in different register banks):
-       * lrp(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g3.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * lrp(8) g4<1>F g2.2<4,4,1>F.x  g2<4,4,1>F.x g3.1<4,4,1>F.x { align16 WE_normal 1Q };
        * mov(8) null   g4<4,4,1>F                     { align16 WE_normal 1Q };
        *
        * 16 cycles
        *  (since the last two src operands are in the same register bank):
-       * lrp(8) g4<1>F g2.2<4,1,1>F.x  g2<4,1,1>F.x g2.1<4,1,1>F.x { align16 WE_normal 1Q };
+       * lrp(8) g4<1>F g2.2<4,4,1>F.x  g2<4,4,1>F.x g2.1<4,4,1>F.x { align16 WE_normal 1Q };
        * mov(8) null   g4<4,4,1>F                     { align16 WE_normal 1Q };
        */
 
