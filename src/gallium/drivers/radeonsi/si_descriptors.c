@@ -723,10 +723,7 @@ static void si_invalidate_buffer(struct pipe_context *ctx, struct pipe_resource 
 	unsigned i, shader, alignment = rbuffer->buf->alignment;
 	uint64_t old_va = r600_resource_va(ctx->screen, buf);
 
-	/* Discard the buffer. */
-	pb_reference(&rbuffer->buf, NULL);
-
-	/* Create a new one in the same pipe_resource. */
+	/* Reallocate the buffer in the same pipe_resource. */
 	r600_init_resource(&sctx->screen->b, rbuffer, rbuffer->b.b.width0,
 			   alignment, TRUE);
 

@@ -2292,10 +2292,7 @@ static void r600_invalidate_buffer(struct pipe_context *ctx, struct pipe_resourc
 	struct r600_resource *rbuffer = r600_resource(buf);
 	unsigned i, shader, mask, alignment = rbuffer->buf->alignment;
 
-	/* Discard the buffer. */
-	pb_reference(&rbuffer->buf, NULL);
-
-	/* Create a new one in the same pipe_resource. */
+	/* Reallocate the buffer in the same pipe_resource. */
 	r600_init_resource(&rctx->screen->b, rbuffer, rbuffer->b.b.width0,
 			   alignment, TRUE);
 

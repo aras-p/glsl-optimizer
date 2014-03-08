@@ -106,6 +106,7 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 			bool use_reusable_pool)
 {
 	struct r600_texture *rtex = (struct r600_texture*)res;
+	struct pb_buffer *old_buf, *new_buf;
 
 	switch (res->b.b.usage) {
 	case PIPE_USAGE_STAGING:
@@ -136,15 +137,23 @@ bool r600_init_resource(struct r600_common_screen *rscreen,
 		res->domains = RADEON_DOMAIN_VRAM;
 	}
 
-	/* Allocate the resource. */
-	res->buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment,
-                                              use_reusable_pool,
-                                              res->domains);
-	if (!res->buf) {
+	/* Allocate a new resource. */
+	new_buf = rscreen->ws->buffer_create(rscreen->ws, size, alignment,
+					     use_reusable_pool,
+					     res->domains);
+	if (!new_buf) {
 		return false;
 	}
 
-	res->cs_buf = rscreen->ws->buffer_get_cs_handle(res->buf);
+	/* Replace the pointer such that if res->buf wasn't NULL, it won't be
+	 * NULL. This should prevent crashes with multiple contexts using
+	 * the same buffer where one of the contexts invalidates it while
+	 * the others are using it. */
+	old_buf = res->buf;
+	res->cs_buf = rscreen->ws->buffer_get_cs_handle(new_buf); /* should be atomic */
+	res->buf = new_buf; /* should be atomic */
+	pb_reference(&old_buf, NULL);
+
 	util_range_set_empty(&res->valid_buffer_range);
 
 	if (rscreen->debug_flags & DBG_VM && res->b.b.target == PIPE_BUFFER) {
@@ -363,6 +372,7 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	pipe_reference_init(&rbuffer->b.b.reference, 1);
 	rbuffer->b.b.screen = screen;
 	rbuffer->b.vtbl = &r600_buffer_vtbl;
+	rbuffer->buf = NULL;
 	util_range_init(&rbuffer->valid_buffer_range);
 
 	if (!r600_init_resource(rscreen, rbuffer, templ->width0, alignment, TRUE)) {
