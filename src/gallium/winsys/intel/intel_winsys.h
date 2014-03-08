@@ -161,13 +161,26 @@ intel_winsys_export_handle(struct intel_winsys *winsys,
                            struct winsys_handle *handle);
 
 /**
- * Check that buffer objects directly specified in \p bo_array, and those
- * indirectly referenced by them, can fit in the aperture space.
+ * Return true when buffer objects directly specified in \p bo_array, and
+ * those indirectly referenced by them, can fit in the aperture space.
+ */
+bool
+intel_winsys_can_submit_bo(struct intel_winsys *winsys,
+                           struct intel_bo **bo_array,
+                           int count);
+
+/**
+ * Submit \p bo for execution.
+ *
+ * \p bo and all bos referenced by \p bo will be considered busy until all
+ * commands are parsed and executed.  \p ctx is ignored when the bo is not
+ * submitted to the render ring.
  */
 int
-intel_winsys_check_aperture_space(struct intel_winsys *winsys,
-                                  struct intel_bo **bo_array,
-                                  int count);
+intel_winsys_submit_bo(struct intel_winsys *winsys,
+                       struct intel_bo *bo, int used,
+                       struct intel_context *ctx,
+                       unsigned long flags);
 
 /**
  * Decode the commands contained in \p bo.  For debugging.
@@ -176,8 +189,8 @@ intel_winsys_check_aperture_space(struct intel_winsys *winsys,
  * \param used    Size of the commands in bytes.
  */
 void
-intel_winsys_decode_commands(struct intel_winsys *winsys,
-                             struct intel_bo *bo, int used);
+intel_winsys_decode_bo(struct intel_winsys *winsys,
+                       struct intel_bo *bo, int used);
 
 /**
  * Increase the reference count of \p bo.
@@ -272,16 +285,6 @@ intel_bo_truncate_relocs(struct intel_bo *bo, int start);
  */
 bool
 intel_bo_has_reloc(struct intel_bo *bo, struct intel_bo *target_bo);
-
-/**
- * Submit \p bo for execution.
- *
- * \p bo and all bos referenced by \p bo will be considered busy until all
- * commands are parsed and executed.
- */
-int
-intel_bo_exec(struct intel_bo *bo, int used,
-              struct intel_context *ctx, unsigned long flags);
 
 /**
  * Wait until \bo is idle, or \p timeout nanoseconds have passed.  A

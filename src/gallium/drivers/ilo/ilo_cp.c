@@ -42,7 +42,7 @@ ilo_cp_dump(struct ilo_cp *cp)
 {
    ilo_printf("dumping %d bytes\n", cp->used * 4);
    if (cp->used)
-      intel_winsys_decode_commands(cp->winsys, cp->bo, cp->used * 4);
+      intel_winsys_decode_bo(cp->winsys, cp->bo, cp->used * 4);
 }
 
 /**
@@ -182,31 +182,31 @@ static int
 ilo_cp_exec_bo(struct ilo_cp *cp)
 {
    const bool do_exec = !(ilo_debug & ILO_DEBUG_NOHW);
-   struct intel_context *ctx;
    unsigned long flags;
    int err;
 
    switch (cp->ring) {
    case ILO_CP_RING_RENDER:
-      ctx = cp->render_ctx;
       flags = INTEL_EXEC_RENDER;
       break;
    case ILO_CP_RING_BLT:
-      ctx = NULL;
       flags = INTEL_EXEC_BLT;
       break;
    default:
-      ctx = NULL;
+      assert(!"unknown cp ring");
       flags = 0;
       break;
    }
 
    flags |= cp->one_off_flags;
 
-   if (likely(do_exec))
-      err = intel_bo_exec(cp->bo, cp->used * 4, ctx, flags);
-   else
+   if (likely(do_exec)) {
+      err = intel_winsys_submit_bo(cp->winsys,
+            cp->bo, cp->used * 4, cp->render_ctx, flags);
+   }
+   else {
       err = 0;
+   }
 
    cp->one_off_flags = 0;
 

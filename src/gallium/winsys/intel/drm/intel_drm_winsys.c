@@ -356,18 +356,38 @@ intel_winsys_export_handle(struct intel_winsys *winsys,
    return 0;
 }
 
-int
-intel_winsys_check_aperture_space(struct intel_winsys *winsys,
-                                  struct intel_bo **bo_array,
-                                  int count)
+bool
+intel_winsys_can_submit_bo(struct intel_winsys *winsys,
+                           struct intel_bo **bo_array,
+                           int count)
 {
-   return drm_intel_bufmgr_check_aperture_space((drm_intel_bo **) bo_array,
-                                                count);
+   return !drm_intel_bufmgr_check_aperture_space((drm_intel_bo **) bo_array,
+                                                 count);
+}
+
+int
+intel_winsys_submit_bo(struct intel_winsys *winsys,
+                       struct intel_bo *bo, int used,
+                       struct intel_context *ctx,
+                       unsigned long flags)
+{
+   /* logical contexts are only available for the render ring */
+   if ((flags & 0x7) > INTEL_EXEC_RENDER)
+      ctx = NULL;
+
+   if (ctx) {
+      return drm_intel_gem_bo_context_exec(gem_bo(bo),
+            (drm_intel_context *) ctx, used, flags);
+   }
+   else {
+      return drm_intel_bo_mrb_exec(gem_bo(bo),
+            used, NULL, 0, 0, flags);
+   }
 }
 
 void
-intel_winsys_decode_commands(struct intel_winsys *winsys,
-                             struct intel_bo *bo, int used)
+intel_winsys_decode_bo(struct intel_winsys *winsys,
+                       struct intel_bo *bo, int used)
 {
    void *ptr;
 
@@ -507,20 +527,6 @@ bool
 intel_bo_has_reloc(struct intel_bo *bo, struct intel_bo *target_bo)
 {
    return drm_intel_bo_references(gem_bo(bo), gem_bo(target_bo));
-}
-
-int
-intel_bo_exec(struct intel_bo *bo, int used,
-              struct intel_context *ctx, unsigned long flags)
-{
-   if (ctx) {
-      return drm_intel_gem_bo_context_exec(gem_bo(bo),
-            (drm_intel_context *) ctx, used, flags);
-   }
-   else {
-      return drm_intel_bo_mrb_exec(gem_bo(bo),
-            used, NULL, 0, 0, flags);
-   }
 }
 
 int

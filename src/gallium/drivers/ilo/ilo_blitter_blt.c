@@ -349,7 +349,7 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
       count++;
    }
 
-   if (intel_winsys_check_aperture_space(ilo->winsys, aper_check, count))
+   if (!intel_winsys_can_submit_bo(ilo->winsys, aper_check, count))
       ilo_cp_flush(ilo->cp, "out of aperture");
 
    /* set BCS_SWCTRL */

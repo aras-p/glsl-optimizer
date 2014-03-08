@@ -173,7 +173,6 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
 
    while (true) {
       struct ilo_cp_jmp_buf jmp;
-      int err;
 
       /* we will rewind if aperture check below fails */
       ilo_cp_setjmp(p->cp, &jmp);
@@ -185,8 +184,7 @@ ilo_3d_pipeline_emit_draw(struct ilo_3d_pipeline *p,
       p->emit_draw(p, ilo);
       ilo_cp_assert_no_implicit_flush(p->cp, false);
 
-      err = intel_winsys_check_aperture_space(ilo->winsys, &p->cp->bo, 1);
-      if (!err) {
+      if (intel_winsys_can_submit_bo(ilo->winsys, &p->cp->bo, 1)) {
          success = true;
          break;
       }
@@ -271,7 +269,6 @@ ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
 
    while (true) {
       struct ilo_cp_jmp_buf jmp;
-      int err;
 
       /* we will rewind if aperture check below fails */
       ilo_cp_setjmp(p->cp, &jmp);
@@ -282,9 +279,7 @@ ilo_3d_pipeline_emit_rectlist(struct ilo_3d_pipeline *p,
       p->emit_rectlist(p, blitter);
       ilo_cp_assert_no_implicit_flush(p->cp, false);
 
-      err = intel_winsys_check_aperture_space(blitter->ilo->winsys,
-            &p->cp->bo, 1);
-      if (err) {
+      if (!intel_winsys_can_submit_bo(blitter->ilo->winsys, &p->cp->bo, 1)) {
          /* rewind */
          ilo_cp_longjmp(p->cp, &jmp);
 
