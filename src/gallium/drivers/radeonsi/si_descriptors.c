@@ -387,7 +387,7 @@ static void si_release_buffer_resources(struct si_buffer_resources *buffers)
 {
 	int i;
 
-	for (i = 0; i < Elements(buffers->buffers); i++) {
+	for (i = 0; i < buffers->num_buffers; i++) {
 		pipe_resource_reference(&buffers->buffers[i], NULL);
 	}
 
