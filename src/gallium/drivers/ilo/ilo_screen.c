@@ -729,8 +729,6 @@ ilo_screen_create(struct intel_winsys *ws)
 
    is->winsys = ws;
 
-   intel_winsys_enable_reuse(is->winsys);
-
    info = intel_winsys_get_info(is->winsys);
    if (!init_dev(&is->dev, info)) {
       FREE(is);

@@ -1,7 +1,7 @@
 /*
  * Mesa 3-D graphics library
  *
- * Copyright (C) 2012-2013 LunarG, Inc.
+ * Copyright (C) 2012-2014 LunarG, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -87,9 +87,6 @@ intel_winsys_destroy(struct intel_winsys *winsys);
 
 const struct intel_winsys_info *
 intel_winsys_get_info(const struct intel_winsys *winsys);
-
-void
-intel_winsys_enable_reuse(struct intel_winsys *winsys);
 
 struct intel_context *
 intel_winsys_create_context(struct intel_winsys *winsys);
