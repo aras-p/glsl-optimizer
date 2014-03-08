@@ -52,7 +52,7 @@
     <enum name="DEBUG_SEVERITY_LOW_ARB"                    value="0x9148"/>
 
 
-    <function name="DebugMessageControlARB" offset="assign">
+    <function name="DebugMessageControlARB" alias="DebugMessageControl">
         <param name="source" type="GLenum"/>
         <param name="type" type="GLenum"/>
         <param name="severity" type="GLenum"/>
@@ -61,7 +61,7 @@
         <param name="enabled" type="GLboolean"/>
     </function>
 
-    <function name="DebugMessageInsertARB" offset="assign">
+    <function name="DebugMessageInsertARB" alias="DebugMessageInsert">
         <param name="source" type="GLenum"/>
         <param name="type" type="GLenum"/>
         <param name="id" type="GLuint"/>
@@ -70,12 +70,12 @@
         <param name="buf" type="const GLcharARB *"/>
     </function>
 
-    <function name="DebugMessageCallbackARB" offset="assign">
+    <function name="DebugMessageCallbackARB" alias="DebugMessageCallback">
         <param name="callback" type="GLDEBUGPROCARB"/>
         <param name="userParam" type="const GLvoid *"/>
     </function>
 
-    <function name="GetDebugMessageLogARB" offset="assign">
+    <function name="GetDebugMessageLogARB" alias="GetDebugMessageLog">
         <return type="GLuint"/>
         <param name="count" type="GLuint"/>
         <param name="bufsize" type="GLsizei"/>

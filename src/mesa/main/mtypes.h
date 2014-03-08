@@ -3845,7 +3845,6 @@ struct gl_debug_state
    const void *CallbackData;
    GLboolean SyncOutput;
    GLboolean DebugOutput;
-   GLboolean ARBCallback; /* Used to track if current callback is of type ARB_debug_output or KHR_debug */
    GLboolean Defaults[MAX_DEBUG_GROUP_STACK_DEPTH][MESA_DEBUG_SEVERITY_COUNT][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
    struct gl_debug_namespace Namespaces[MAX_DEBUG_GROUP_STACK_DEPTH][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
    struct gl_debug_msg Log[MAX_DEBUG_LOGGED_MESSAGES];

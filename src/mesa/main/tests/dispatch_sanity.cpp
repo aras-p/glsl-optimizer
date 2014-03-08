@@ -797,10 +797,6 @@ const struct function gl_core_functions_possible[] = {
    { "glGetFloati_v", 43, -1 },
    { "glGetDoublei_v", 43, -1 },
 // { "glCreateSyncFromCLeventARB", 43, -1 },            // XXX: Add to xml
-   { "glDebugMessageControlARB", 43, -1 },
-   { "glDebugMessageInsertARB", 43, -1 },
-   { "glDebugMessageCallbackARB", 43, -1 },
-   { "glGetDebugMessageLogARB", 43, -1 },
    { "glGetGraphicsResetStatusARB", 43, -1 },
    { "glGetnMapdvARB", 43, -1 },
    { "glGetnMapfvARB", 43, -1 },
@@ -836,16 +832,6 @@ const struct function gl_core_functions_possible[] = {
    { "glTextureStorage1DEXT", 43, -1 },
    { "glTextureStorage2DEXT", 43, -1 },
    { "glTextureStorage3DEXT", 43, -1 },
-// { "glDebugMessageControl", 43, -1 },                 // XXX: Add to xml
-// { "glDebugMessageInsert", 43, -1 },                  // XXX: Add to xml
-// { "glDebugMessageCallback", 43, -1 },                // XXX: Add to xml
-// { "glGetDebugMessageLog", 43, -1 },                  // XXX: Add to xml
-// { "glPushDebugGroup", 43, -1 },                      // XXX: Add to xml
-// { "glPopDebugGroup", 43, -1 },                       // XXX: Add to xml
-// { "glObjectLabel", 43, -1 },                         // XXX: Add to xml
-// { "glGetObjectLabel", 43, -1 },                      // XXX: Add to xml
-// { "glObjectPtrLabel", 43, -1 },                      // XXX: Add to xml
-// { "glGetObjectPtrLabel", 43, -1 },                   // XXX: Add to xml
    { "glClearBufferData", 43, -1 },
    { "glClearBufferSubData", 43, -1 },
 // { "glClearNamedBufferDataEXT", 43, -1 },             // XXX: Add to xml
@@ -896,7 +882,7 @@ const struct function gl_core_functions_possible[] = {
    /* GL_ARB_internalformat_query */
    { "glGetInternalformativ", 30, -1 },
 
-   /* GL_KHR_debug */
+   /* GL_KHR_debug/GL_ARB_debug_output */
    { "glPushDebugGroup", 11, -1 },
    { "glPopDebugGroup", 11, -1 },
    { "glDebugMessageCallback", 11, -1 },
@@ -907,6 +893,11 @@ const struct function gl_core_functions_possible[] = {
    { "glGetObjectPtrLabel", 11, -1 },
    { "glObjectLabel", 11, -1 },
    { "glObjectPtrLabel", 11, -1 },
+   /* aliased versions checked above */
+   //{ "glDebugMessageControlARB", 11, -1 },
+   //{ "glDebugMessageInsertARB", 11, -1 },
+   //{ "glDebugMessageCallbackARB", 11, -1 },
+   //{ "glGetDebugMessageLogARB", 11, -1 },
 
    /* GL_AMD_performance_monitor */
    { "glGetPerfMonitorGroupsAMD", 11, -1 },
