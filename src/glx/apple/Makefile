@@ -23,7 +23,7 @@ RM=rm
 #The directory with the final binaries.
 BUILD_DIR=builds
 
-default: $(TOP)/$(LIB_DIR)/lib$(GL_LIB).$(LIB_EXTENSION)
+default: $(TOP)/$(LIB_DIR)/lib$(GL_LIB).$(LIB_EXT)
 
 SOURCES = \
 	apple_cgl.c \
@@ -88,10 +88,10 @@ INCLUDES = -I. -Iinclude -I..\
 
 ##### TARGETS #####
 
-default: depend $(TOP)/$(LIB_DIR)/lib$(GL_LIB).$(LIB_EXTENSION)
+default: depend $(TOP)/$(LIB_DIR)/lib$(GL_LIB).$(LIB_EXT)
 
 # Make libGL
-$(TOP)/$(LIB_DIR)/lib$(GL_LIB).$(LIB_EXTENSION):  $(OBJECTS) $(GLAPI_LIB) Makefile
+$(TOP)/$(LIB_DIR)/lib$(GL_LIB).$(LIB_EXT):  $(OBJECTS) $(GLAPI_LIB) Makefile
 	$(MKLIB) -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major 1 -minor 2 $(MKLIB_OPTIONS) \
 		-install $(TOP)/$(LIB_DIR) -id $(INSTALL_LIB_DIR)/lib$(GL_LIB).1.dylib \
@@ -114,7 +114,7 @@ install_headers: include/GL/gl.h
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
 	$(INSTALL) -m 644 include/GL/gl.h $(DESTDIR)$(INSTALL_DIR)/include/GL
 
-install_libraries: $(TOP)/$(LIB_DIR)/lib$(GL_LIB).$(LIB_EXTENSION)
+install_libraries: $(TOP)/$(LIB_DIR)/lib$(GL_LIB).$(LIB_EXT)
 	$(MAKE) -C $(TOP)/src/mesa install-libgl
 
 install: install_libraries

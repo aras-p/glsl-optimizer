@@ -320,19 +320,22 @@ dnl
 dnl library names
 dnl
 if test "$enable_static" = yes; then
-    LIB_EXTENSION='a'
+    LIB_EXT='a'
 else
     case "$host_os" in
     darwin* )
-        LIB_EXTENSION='dylib' ;;
+        LIB_EXT='dylib' ;;
     cygwin* )
-        LIB_EXTENSION='dll' ;;
+        LIB_EXT='dll' ;;
     aix* )
-        LIB_EXTENSION='a' ;;
+        LIB_EXT='a' ;;
     * )
-        LIB_EXTENSION='so' ;;
+        LIB_EXT='so' ;;
     esac
 fi
+
+AC_SUBST([LIB_EXT])
+
 AC_ARG_WITH([gl-lib-name],
   [AS_HELP_STRING([--with-gl-lib-name@<:@=NAME@:>@],
     [specify GL library name @<:@default=GL@:>@])],
