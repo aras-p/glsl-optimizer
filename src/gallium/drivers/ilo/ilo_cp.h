@@ -330,15 +330,20 @@ static inline void
 ilo_cp_write_bo(struct ilo_cp *cp, uint32_t val, struct intel_bo *bo,
                 uint32_t read_domains, uint32_t write_domain)
 {
-   if (bo) {
-      intel_bo_emit_reloc(cp->bo, cp->cmd_cur * 4,
-            bo, val, read_domains, write_domain);
+   uint64_t presumed_offset;
 
-      ilo_cp_write(cp, val + intel_bo_get_offset(bo));
+   if (bo) {
+      intel_bo_add_reloc(cp->bo, cp->cmd_cur * 4, bo, val,
+            read_domains, write_domain, &presumed_offset);
    }
    else {
-      ilo_cp_write(cp, val);
+      presumed_offset = 0;
    }
+
+   /* 32-bit addressing */
+   assert(presumed_offset == (uint64_t) ((uint32_t) presumed_offset));
+
+   ilo_cp_write(cp, (uint32_t) presumed_offset);
 }
 
 /**

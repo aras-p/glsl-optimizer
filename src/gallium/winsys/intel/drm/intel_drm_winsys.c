@@ -386,7 +386,7 @@ intel_winsys_decode_commands(struct intel_winsys *winsys,
    used /= 4;
 
    drm_intel_decode_set_batch_pointer(winsys->decode,
-         intel_bo_get_virtual(bo), intel_bo_get_offset(bo), used);
+         gem_bo(bo)->virtual, gem_bo(bo)->offset64, used);
 
    drm_intel_decode(winsys->decode);
 
@@ -409,12 +409,6 @@ unsigned long
 intel_bo_get_size(const struct intel_bo *bo)
 {
    return gem_bo(bo)->size;
-}
-
-unsigned long
-intel_bo_get_offset(const struct intel_bo *bo)
-{
-   return gem_bo(bo)->offset;
 }
 
 void *
@@ -465,13 +459,20 @@ intel_bo_pread(struct intel_bo *bo, unsigned long offset,
 }
 
 int
-intel_bo_emit_reloc(struct intel_bo *bo, uint32_t offset,
-                    struct intel_bo *target_bo, uint32_t target_offset,
-                    uint32_t read_domains, uint32_t write_domain)
+intel_bo_add_reloc(struct intel_bo *bo, uint32_t offset,
+                   struct intel_bo *target_bo, uint32_t target_offset,
+                   uint32_t read_domains, uint32_t write_domain,
+                   uint64_t *presumed_offset)
 {
-   return drm_intel_bo_emit_reloc(gem_bo(bo), offset,
+   int err;
+
+   err = drm_intel_bo_emit_reloc(gem_bo(bo), offset,
          gem_bo(target_bo), target_offset,
          read_domains, write_domain);
+
+   *presumed_offset = gem_bo(target_bo)->offset64 + target_offset;
+
+   return err;
 }
 
 int
@@ -481,13 +482,13 @@ intel_bo_get_reloc_count(struct intel_bo *bo)
 }
 
 void
-intel_bo_clear_relocs(struct intel_bo *bo, int start)
+intel_bo_truncate_relocs(struct intel_bo *bo, int start)
 {
    drm_intel_gem_bo_clear_relocs(gem_bo(bo), start);
 }
 
 bool
-intel_bo_references(struct intel_bo *bo, struct intel_bo *target_bo)
+intel_bo_has_reloc(struct intel_bo *bo, struct intel_bo *target_bo)
 {
    return drm_intel_bo_references(gem_bo(bo), gem_bo(target_bo));
 }

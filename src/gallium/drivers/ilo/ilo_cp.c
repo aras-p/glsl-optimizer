@@ -77,7 +77,7 @@ ilo_cp_longjmp(struct ilo_cp *cp, const struct ilo_cp_jmp_buf *jmp)
    cp->size = jmp->size;
    cp->used = jmp->used;
    cp->stolen = jmp->stolen;
-   intel_bo_clear_relocs(cp->bo, jmp->reloc_count);
+   intel_bo_truncate_relocs(cp->bo, jmp->reloc_count);
 }
 
 /**

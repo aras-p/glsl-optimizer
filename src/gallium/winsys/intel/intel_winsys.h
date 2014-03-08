@@ -205,12 +205,6 @@ unsigned long
 intel_bo_get_size(const struct intel_bo *bo);
 
 /**
- * Return the last-seen-by-GPU offset of \p bo.
- */
-unsigned long
-intel_bo_get_offset(const struct intel_bo *bo);
-
-/**
  * Return the pointer to the memory area of the mapped \p bo.
  */
 void *
@@ -270,9 +264,10 @@ intel_bo_pread(struct intel_bo *bo, unsigned long offset,
  * \p target_offset.
  */
 int
-intel_bo_emit_reloc(struct intel_bo *bo, uint32_t offset,
-                    struct intel_bo *target_bo, uint32_t target_offset,
-                    uint32_t read_domains, uint32_t write_domain);
+intel_bo_add_reloc(struct intel_bo *bo, uint32_t offset,
+                   struct intel_bo *target_bo, uint32_t target_offset,
+                   uint32_t read_domains, uint32_t write_domain,
+                   uint64_t *presumed_offset);
 
 /**
  * Return the current number of relocations.
@@ -281,20 +276,20 @@ int
 intel_bo_get_reloc_count(struct intel_bo *bo);
 
 /**
- * Discard all relocations except the first \p start ones.
+ * Truncate all relocations except the first \p start ones.
  *
  * Combined with \p intel_bo_get_reloc_count(), they can be used to undo the
- * \p intel_bo_emit_reloc() calls that were just made.
+ * \p intel_bo_add_reloc() calls that were just made.
  */
 void
-intel_bo_clear_relocs(struct intel_bo *bo, int start);
+intel_bo_truncate_relocs(struct intel_bo *bo, int start);
 
 /**
  * Return true if \p target_bo is on the relocation list of \p bo, or on
  * the relocation list of some bo that is referenced by \p bo.
  */
 bool
-intel_bo_references(struct intel_bo *bo, struct intel_bo *target_bo);
+intel_bo_has_reloc(struct intel_bo *bo, struct intel_bo *target_bo);
 
 /**
  * Submit \p bo for execution.
