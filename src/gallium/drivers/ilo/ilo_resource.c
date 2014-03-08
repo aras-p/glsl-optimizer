@@ -1385,6 +1385,23 @@ buf_create(struct pipe_screen *screen, const struct pipe_resource *templ)
    if (templ->bind & PIPE_BIND_SAMPLER_VIEW)
       buf->bo_size = align(buf->bo_size, 256) + 16;
 
+   if (templ->bind & PIPE_BIND_VERTEX_BUFFER) {
+      /*
+       * As noted in ilo_translate_format(), we treat some 3-component formats
+       * as 4-component formats to work around hardware limitations.  Imagine
+       * the case where the vertex buffer holds a single
+       * PIPE_FORMAT_R16G16B16_FLOAT vertex, and buf->bo_size is 6.  The
+       * hardware would fail to fetch it at boundary check because the vertex
+       * buffer is expected to hold a PIPE_FORMAT_R16G16B16A16_FLOAT vertex
+       * and that takes at least 8 bytes.
+       *
+       * For the workaround to work, we should add 2 to the bo size.  But that
+       * would waste a page when the bo size is already page aligned.  Let's
+       * round it to page size for now and revisit this when needed.
+       */
+      buf->bo_size = align(buf->bo_size, 4096);
+   }
+
    if (!buf_create_bo(buf)) {
       FREE(buf);
       return NULL;

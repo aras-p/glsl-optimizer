@@ -405,12 +405,6 @@ intel_bo_unreference(struct intel_bo *bo)
    drm_intel_bo_unreference(gem_bo(bo));
 }
 
-unsigned long
-intel_bo_get_size(const struct intel_bo *bo)
-{
-   return gem_bo(bo)->size;
-}
-
 void *
 intel_bo_map(struct intel_bo *bo, bool write_enable)
 {

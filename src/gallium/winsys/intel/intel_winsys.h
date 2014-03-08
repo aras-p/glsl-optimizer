@@ -198,13 +198,6 @@ void
 intel_bo_unreference(struct intel_bo *bo);
 
 /**
- * Return the real size of \p bo.  It may be larger than the size specified
- * in allocation due to alignment and padding requirements.
- */
-unsigned long
-intel_bo_get_size(const struct intel_bo *bo);
-
-/**
  * Map \p bo for CPU access.  Recursive mapping is allowed.
  *
  * map() maps the backing store into CPU address space, cached.  It will block

@@ -731,20 +731,7 @@ gen6_emit_3DSTATE_VERTEX_BUFFERS(const struct ilo_dev_info *dev,
       if (cso->buffer && cso->stride <= 2048) {
          const struct ilo_buffer *buf = ilo_buffer(cso->buffer);
          const uint32_t start_offset = cso->buffer_offset;
-         /*
-          * As noted in ilo_translate_format(), we treat some 3-component
-          * formats as 4-component formats to work around hardware
-          * limitations.  Imagine the case where the vertex buffer holds a
-          * single PIPE_FORMAT_R16G16B16_FLOAT vertex, and buf->bo_size is 6.
-          * The hardware would not be able to fetch it because the vertex
-          * buffer is expected to hold a PIPE_FORMAT_R16G16B16A16_FLOAT vertex
-          * and that takes at least 8 bytes.
-          *
-          * For the workaround to work, we query the physical size, which is
-          * page aligned, to calculate end_offset so that the last vertex has
-          * a better chance to be fetched.
-          */
-         const uint32_t end_offset = intel_bo_get_size(buf->bo) - 1;
+         const uint32_t end_offset = buf->bo_size - 1;
 
          dw |= cso->stride << BRW_VB0_PITCH_SHIFT;
 
