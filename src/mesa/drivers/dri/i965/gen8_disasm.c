@@ -569,7 +569,10 @@ src0_3src(FILE *file, struct gen8_instruction *inst)
       return 0;
    if (gen8_src0_3src_subreg_nr(inst))
       format(file, ".%d", gen8_src0_3src_subreg_nr(inst));
-   string(file, "<4,4,1>");
+   if (gen8_src0_3src_rep_ctrl(inst))
+      string(file, "<0,1,0>");
+   else
+      string(file, "<4,4,1>");
    err |= control(file, "src da16 reg type", m_three_source_reg_encoding,
                   gen8_src_3src_type(inst), NULL);
    err |= src_swizzle(file, swz_x, swz_y, swz_z, swz_w);
@@ -595,7 +598,10 @@ src1_3src(FILE *file, struct gen8_instruction *inst)
       return 0;
    if (src1_subreg_nr)
       format(file, ".%d", src1_subreg_nr);
-   string(file, "<4,4,1>");
+   if (gen8_src1_3src_rep_ctrl(inst))
+      string(file, "<0,1,0>");
+   else
+      string(file, "<4,4,1>");
    err |= control(file, "src da16 reg type", m_three_source_reg_encoding,
                   gen8_src_3src_type(inst), NULL);
    err |= src_swizzle(file, swz_x, swz_y, swz_z, swz_w);
@@ -620,7 +626,10 @@ src2_3src(FILE *file, struct gen8_instruction *inst)
       return 0;
    if (gen8_src2_3src_subreg_nr(inst))
       format(file, ".%d", gen8_src2_3src_subreg_nr(inst));
-   string(file, "<4,4,1>");
+   if (gen8_src2_3src_rep_ctrl(inst))
+      string(file, "<0,1,0>");
+   else
+      string(file, "<4,4,1>");
    err |= control(file, "src da16 reg type", m_three_source_reg_encoding,
                   gen8_src_3src_type(inst), NULL);
    err |= src_swizzle(file, swz_x, swz_y, swz_z, swz_w);
