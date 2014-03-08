@@ -50,8 +50,4 @@ libvdpau_nouveau_la_LDFLAGS += $(LLVM_LDFLAGS)
 libvdpau_nouveau_la_LIBADD += $(LLVM_LIBS)
 endif
 
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: libvdpau_nouveau.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/libvdpau_nouveau.so* $(top_builddir)/$(LIB_DIR)/gallium/
+include $(top_srcdir)/install-gallium-links.mk
