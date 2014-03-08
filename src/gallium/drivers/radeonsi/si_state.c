@@ -2356,7 +2356,12 @@ static void si_delete_shader_selector(struct pipe_context *ctx,
 
 	while (p) {
 		c = p->next_variant;
-		si_pm4_delete_state(sctx, vs, p->pm4);
+		if (sel->type == PIPE_SHADER_GEOMETRY)
+			si_pm4_delete_state(sctx, gs, p->pm4);
+		else if (sel->type == PIPE_SHADER_FRAGMENT)
+			si_pm4_delete_state(sctx, ps, p->pm4);
+		else
+			si_pm4_delete_state(sctx, vs, p->pm4);
 		si_pipe_shader_destroy(ctx, p);
 		free(p);
 		p = c;
