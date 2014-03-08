@@ -47,9 +47,3 @@ if HAVE_MESA_LLVM
 libXvMCnouveau_la_LDFLAGS += $(LLVM_LDFLAGS)
 libXvMCnouveau_la_LIBADD += $(LLVM_LIBS)
 endif
-
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: libXvMCnouveau.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/libXvMCnouveau.so* $(top_builddir)/$(LIB_DIR)/gallium/

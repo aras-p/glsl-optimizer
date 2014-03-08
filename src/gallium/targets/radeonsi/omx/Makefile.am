@@ -65,9 +65,3 @@ nodist_EXTRA_libomx_radeonsi_la_SOURCES = dummy-cpp.cpp
 libomx_radeonsi_la_LDFLAGS += $(LLVM_LDFLAGS)
 libomx_radeonsi_la_LIBADD += $(LLVM_LIBS)
 endif
-
-# Provide compatibility with scripts for the old Mesa build system for
-# a while by putting a link to the driver into /lib of the build tree.
-all-local: libomx_radeonsi.la
-	$(MKDIR_P) $(top_builddir)/$(LIB_DIR)/gallium
-	ln -f .libs/libomx_radeonsi.so* $(top_builddir)/$(LIB_DIR)/gallium/
