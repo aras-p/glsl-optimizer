@@ -52,6 +52,12 @@ struct intel_winsys {
    struct drm_intel_decode *decode;
 };
 
+static drm_intel_bo *
+gem_bo(const struct intel_bo *bo)
+{
+   return (drm_intel_bo *) bo;
+}
+
 static bool
 get_param(struct intel_winsys *winsys, int param, int *value)
 {
@@ -316,19 +322,19 @@ intel_winsys_export_handle(struct intel_winsys *winsys,
       {
          uint32_t name;
 
-         err = drm_intel_bo_flink((drm_intel_bo *) bo, &name);
+         err = drm_intel_bo_flink(gem_bo(bo), &name);
          if (!err)
             handle->handle = name;
       }
       break;
    case DRM_API_HANDLE_TYPE_KMS:
-      handle->handle = ((drm_intel_bo *) bo)->handle;
+      handle->handle = gem_bo(bo)->handle;
       break;
    case DRM_API_HANDLE_TYPE_FD:
       {
          int fd;
 
-         err = drm_intel_bo_gem_export_to_prime((drm_intel_bo *) bo, &fd);
+         err = drm_intel_bo_gem_export_to_prime(gem_bo(bo), &fd);
          if (!err)
             handle->handle = fd;
       }
@@ -390,49 +396,49 @@ intel_winsys_decode_commands(struct intel_winsys *winsys,
 void
 intel_bo_reference(struct intel_bo *bo)
 {
-   drm_intel_bo_reference((drm_intel_bo *) bo);
+   drm_intel_bo_reference(gem_bo(bo));
 }
 
 void
 intel_bo_unreference(struct intel_bo *bo)
 {
-   drm_intel_bo_unreference((drm_intel_bo *) bo);
+   drm_intel_bo_unreference(gem_bo(bo));
 }
 
 unsigned long
 intel_bo_get_size(const struct intel_bo *bo)
 {
-   return ((drm_intel_bo *) bo)->size;
+   return gem_bo(bo)->size;
 }
 
 unsigned long
 intel_bo_get_offset(const struct intel_bo *bo)
 {
-   return ((drm_intel_bo *) bo)->offset;
+   return gem_bo(bo)->offset;
 }
 
 void *
 intel_bo_get_virtual(const struct intel_bo *bo)
 {
-   return ((drm_intel_bo *) bo)->virtual;
+   return gem_bo(bo)->virtual;
 }
 
 int
 intel_bo_map(struct intel_bo *bo, bool write_enable)
 {
-   return drm_intel_bo_map((drm_intel_bo *) bo, write_enable);
+   return drm_intel_bo_map(gem_bo(bo), write_enable);
 }
 
 int
 intel_bo_map_gtt(struct intel_bo *bo)
 {
-   return drm_intel_gem_bo_map_gtt((drm_intel_bo *) bo);
+   return drm_intel_gem_bo_map_gtt(gem_bo(bo));
 }
 
 int
 intel_bo_map_unsynchronized(struct intel_bo *bo)
 {
-   return drm_intel_gem_bo_map_unsynchronized((drm_intel_bo *) bo);
+   return drm_intel_gem_bo_map_unsynchronized(gem_bo(bo));
 }
 
 void
@@ -440,7 +446,7 @@ intel_bo_unmap(struct intel_bo *bo)
 {
    int err;
 
-   err = drm_intel_bo_unmap((drm_intel_bo *) bo);
+   err = drm_intel_bo_unmap(gem_bo(bo));
    assert(!err);
 }
 
@@ -448,14 +454,14 @@ int
 intel_bo_pwrite(struct intel_bo *bo, unsigned long offset,
                 unsigned long size, const void *data)
 {
-   return drm_intel_bo_subdata((drm_intel_bo *) bo, offset, size, data);
+   return drm_intel_bo_subdata(gem_bo(bo), offset, size, data);
 }
 
 int
 intel_bo_pread(struct intel_bo *bo, unsigned long offset,
                unsigned long size, void *data)
 {
-   return drm_intel_bo_get_subdata((drm_intel_bo *) bo, offset, size, data);
+   return drm_intel_bo_get_subdata(gem_bo(bo), offset, size, data);
 }
 
 int
@@ -463,28 +469,27 @@ intel_bo_emit_reloc(struct intel_bo *bo, uint32_t offset,
                     struct intel_bo *target_bo, uint32_t target_offset,
                     uint32_t read_domains, uint32_t write_domain)
 {
-   return drm_intel_bo_emit_reloc((drm_intel_bo *) bo, offset,
-         (drm_intel_bo *) target_bo, target_offset,
+   return drm_intel_bo_emit_reloc(gem_bo(bo), offset,
+         gem_bo(target_bo), target_offset,
          read_domains, write_domain);
 }
 
 int
 intel_bo_get_reloc_count(struct intel_bo *bo)
 {
-   return drm_intel_gem_bo_get_reloc_count((drm_intel_bo *) bo);
+   return drm_intel_gem_bo_get_reloc_count(gem_bo(bo));
 }
 
 void
 intel_bo_clear_relocs(struct intel_bo *bo, int start)
 {
-   return drm_intel_gem_bo_clear_relocs((drm_intel_bo *) bo, start);
+   drm_intel_gem_bo_clear_relocs(gem_bo(bo), start);
 }
 
 bool
 intel_bo_references(struct intel_bo *bo, struct intel_bo *target_bo)
 {
-   return drm_intel_bo_references((drm_intel_bo *) bo,
-         (drm_intel_bo *) target_bo);
+   return drm_intel_bo_references(gem_bo(bo), gem_bo(target_bo));
 }
 
 int
@@ -492,11 +497,11 @@ intel_bo_exec(struct intel_bo *bo, int used,
               struct intel_context *ctx, unsigned long flags)
 {
    if (ctx) {
-      return drm_intel_gem_bo_context_exec((drm_intel_bo *) bo,
+      return drm_intel_gem_bo_context_exec(gem_bo(bo),
             (drm_intel_context *) ctx, used, flags);
    }
    else {
-      return drm_intel_bo_mrb_exec((drm_intel_bo *) bo,
+      return drm_intel_bo_mrb_exec(gem_bo(bo),
             used, NULL, 0, 0, flags);
    }
 }
@@ -506,7 +511,7 @@ intel_bo_wait(struct intel_bo *bo, int64_t timeout)
 {
    int err;
 
-   err = drm_intel_gem_bo_wait((drm_intel_bo *) bo, timeout);
+   err = drm_intel_gem_bo_wait(gem_bo(bo), timeout);
    /* consider the bo idle on errors */
    if (err && err != -ETIME)
       err = 0;
