@@ -85,7 +85,7 @@ struct ilo_cp_jmp_buf {
 };
 
 struct ilo_cp *
-ilo_cp_create(struct intel_winsys *winsys, bool direct_map);
+ilo_cp_create(struct intel_winsys *winsys, int size, bool direct_map);
 
 void
 ilo_cp_destroy(struct ilo_cp *cp);

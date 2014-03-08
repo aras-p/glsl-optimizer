@@ -648,6 +648,7 @@ static bool
 init_dev(struct ilo_dev_info *dev, const struct intel_winsys_info *info)
 {
    dev->devid = info->devid;
+   dev->max_batch_size = info->max_batch_size;
    dev->has_llc = info->has_llc;
    dev->has_gen7_sol_reset = info->has_gen7_sol_reset;
    dev->has_address_swizzling = info->has_address_swizzling;

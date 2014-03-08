@@ -272,7 +272,7 @@ ilo_cp_destroy(struct ilo_cp *cp)
  * Create a command parser.
  */
 struct ilo_cp *
-ilo_cp_create(struct intel_winsys *winsys, bool direct_map)
+ilo_cp_create(struct intel_winsys *winsys, int size, bool direct_map)
 {
    struct ilo_cp *cp;
 
@@ -286,7 +286,7 @@ ilo_cp_create(struct intel_winsys *winsys, bool direct_map)
    cp->ring = ILO_CP_RING_RENDER;
    cp->no_implicit_flush = false;
 
-   cp->bo_size = 8192;
+   cp->bo_size = size;
 
    if (!direct_map) {
       cp->sys = MALLOC(cp->bo_size * 4);

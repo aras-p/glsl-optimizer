@@ -135,6 +135,8 @@ init_info(struct intel_winsys *winsys)
 
    info->devid = drm_intel_bufmgr_gem_get_devid(winsys->bufmgr);
 
+   info->max_batch_size = BATCH_SZ;
+
    get_param(winsys, I915_PARAM_HAS_LLC, &val);
    info->has_llc = val;
 
