@@ -79,6 +79,9 @@ void r600_streamout_buffers_dirty(struct r600_common_context *rctx)
 	unsigned num_bufs_appended = util_bitcount(rctx->streamout.enabled_mask &
 						   rctx->streamout.append_bitmask);
 
+	if (!num_bufs)
+		return;
+
 	rctx->streamout.num_dw_for_end =
 		12 + /* flush_vgt_streamout */
 		num_bufs * 8 + /* STRMOUT_BUFFER_UPDATE */
@@ -99,8 +102,7 @@ void r600_streamout_buffers_dirty(struct r600_common_context *rctx)
 	begin->num_dw +=
 		num_bufs_appended * 8 + /* STRMOUT_BUFFER_UPDATE */
 		(num_bufs - num_bufs_appended) * 6 + /* STRMOUT_BUFFER_UPDATE */
-		(rctx->family > CHIP_R600 && rctx->family < CHIP_RS780 ? 2 : 0) + /* SURFACE_BASE_UPDATE */
-		rctx->streamout.num_dw_for_end;
+		(rctx->family > CHIP_R600 && rctx->family < CHIP_RS780 ? 2 : 0); /* SURFACE_BASE_UPDATE */
 
 	begin->dirty = true;
 }
