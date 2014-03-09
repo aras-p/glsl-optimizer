@@ -423,15 +423,17 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
 		if (family >= CHIP_CEDAR)
 			return 15;
 		else
 			return 14;
+	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
+		/* textures support 8192, but layered rendering supports 2048 */
+		return 12;
 	case PIPE_CAP_MAX_TEXTURE_ARRAY_LAYERS:
-		return rscreen->b.info.drm_minor >= 9 ?
-			(family >= CHIP_CEDAR ? 16384 : 8192) : 0;
+		/* textures support 8192, but layered rendering supports 2048 */
+		return rscreen->b.info.drm_minor >= 9 ? 2048 : 0;
 
 	/* Render targets. */
 	case PIPE_CAP_MAX_RENDER_TARGETS:
