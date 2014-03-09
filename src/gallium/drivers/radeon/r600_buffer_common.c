@@ -285,7 +285,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *ctx,
 
 			/* Copy the VRAM buffer to the staging buffer. */
 			rctx->dma_copy(ctx, &staging->b.b, 0,
-				       box->x % R600_MAP_BUFFER_ALIGNMENT,
+				       offset + box->x % R600_MAP_BUFFER_ALIGNMENT,
 				       0, 0, resource, level, box);
 
 			/* Just do the synchronization. The buffer is mapped already. */
