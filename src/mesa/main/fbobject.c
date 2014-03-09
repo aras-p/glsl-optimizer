@@ -1565,10 +1565,6 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
       return ctx->API == API_OPENGL_COMPAT &&
              ctx->Extensions.ARB_texture_float &&
              ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
-   case GL_RGB9_E5:
-      return (_mesa_is_desktop_gl(ctx)
-              && ctx->Extensions.EXT_texture_shared_exponent)
-         ? GL_RGB : 0;
    case GL_R11F_G11F_B10F:
       return ((_mesa_is_desktop_gl(ctx) && ctx->Extensions.EXT_packed_float) ||
               _mesa_is_gles3(ctx) /* EXT_color_buffer_float */ )
