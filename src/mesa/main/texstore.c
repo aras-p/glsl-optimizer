@@ -1079,7 +1079,7 @@ _mesa_texstore_z24_x8(TEXSTORE_PARAMS)
    const GLuint depthScale = 0xffffff;
 
    (void) dims;
-   ASSERT(dstFormat == MESA_FORMAT_X8Z24_UNORM);
+   ASSERT(dstFormat == MESA_FORMAT_X8_UINT_Z24_UNORM);
 
    {
       /* general path */
@@ -3712,7 +3712,7 @@ _mesa_get_texstore_func(mesa_format format)
       table[MESA_FORMAT_Z24_UNORM_S8_UINT] = _mesa_texstore_s8_z24;
       table[MESA_FORMAT_Z_UNORM16] = _mesa_texstore_z16;
       table[MESA_FORMAT_Z24_UNORM_X8_UINT] = _mesa_texstore_x8_z24;
-      table[MESA_FORMAT_X8Z24_UNORM] = _mesa_texstore_z24_x8;
+      table[MESA_FORMAT_X8_UINT_Z24_UNORM] = _mesa_texstore_z24_x8;
       table[MESA_FORMAT_Z_UNORM32] = _mesa_texstore_z32;
       table[MESA_FORMAT_S_UINT8] = _mesa_texstore_s8;
       table[MESA_FORMAT_BGR_SRGB8] = _mesa_texstore_srgb8;

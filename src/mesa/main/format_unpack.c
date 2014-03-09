@@ -2395,7 +2395,7 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_Z24_UNORM_S8_UINT] = unpack_S8_Z24;
       table[MESA_FORMAT_Z_UNORM16] = unpack_Z16;
       table[MESA_FORMAT_Z24_UNORM_X8_UINT] = unpack_X8_Z24;
-      table[MESA_FORMAT_X8Z24_UNORM] = unpack_Z24_X8;
+      table[MESA_FORMAT_X8_UINT_Z24_UNORM] = unpack_Z24_X8;
       table[MESA_FORMAT_Z_UNORM32] = unpack_Z32;
       table[MESA_FORMAT_S_UINT8] = unpack_S8;
       table[MESA_FORMAT_BGR_SRGB8] = unpack_SRGB8;
@@ -4012,7 +4012,7 @@ _mesa_unpack_float_z_row(mesa_format format, GLuint n,
 
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
-   case MESA_FORMAT_X8Z24_UNORM:
+   case MESA_FORMAT_X8_UINT_Z24_UNORM:
       unpack = unpack_float_z_Z24_X8;
       break;
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
@@ -4117,7 +4117,7 @@ _mesa_unpack_uint_z_row(mesa_format format, GLuint n,
 
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
-   case MESA_FORMAT_X8Z24_UNORM:
+   case MESA_FORMAT_X8_UINT_Z24_UNORM:
       unpack = unpack_uint_z_Z24_X8;
       break;
    case MESA_FORMAT_Z24_UNORM_S8_UINT:

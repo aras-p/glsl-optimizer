@@ -555,7 +555,7 @@ _swrast_clear_depth_buffer(struct gl_context *ctx)
    if (rb->Format == MESA_FORMAT_Z24_UNORM_S8_UINT ||
        rb->Format == MESA_FORMAT_Z24_UNORM_X8_UINT ||
        rb->Format == MESA_FORMAT_S8_UINT_Z24_UNORM ||
-       rb->Format == MESA_FORMAT_X8Z24_UNORM) {
+       rb->Format == MESA_FORMAT_X8_UINT_Z24_UNORM) {
       mapMode |= GL_MAP_READ_BIT;
    }
 
@@ -605,7 +605,7 @@ _swrast_clear_depth_buffer(struct gl_context *ctx)
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
    case MESA_FORMAT_Z24_UNORM_X8_UINT:
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
-   case MESA_FORMAT_X8Z24_UNORM:
+   case MESA_FORMAT_X8_UINT_Z24_UNORM:
       {
          GLfloat clear = (GLfloat) ctx->Depth.Clear;
          GLuint clearVal = 0;

@@ -1563,7 +1563,7 @@ static void FETCH(f_z24_s8)( const struct swrast_texture_image *texImage,
    const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
    texel[0] = (GLfloat) (((*src) >> 8) * scale);
    ASSERT(texImage->Base.TexFormat == MESA_FORMAT_S8_UINT_Z24_UNORM ||
-	  texImage->Base.TexFormat == MESA_FORMAT_X8Z24_UNORM);
+	  texImage->Base.TexFormat == MESA_FORMAT_X8_UINT_Z24_UNORM);
    ASSERT(texel[0] >= 0.0F);
    ASSERT(texel[0] <= 1.0F);
 }

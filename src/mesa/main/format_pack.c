@@ -1978,7 +1978,7 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
       table[MESA_FORMAT_Z24_UNORM_S8_UINT] = NULL;
       table[MESA_FORMAT_Z_UNORM16] = NULL;
       table[MESA_FORMAT_Z24_UNORM_X8_UINT] = NULL;
-      table[MESA_FORMAT_X8Z24_UNORM] = NULL;
+      table[MESA_FORMAT_X8_UINT_Z24_UNORM] = NULL;
       table[MESA_FORMAT_Z_UNORM32] = NULL;
       table[MESA_FORMAT_S_UINT8] = NULL;
 
@@ -2144,7 +2144,7 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
       table[MESA_FORMAT_Z24_UNORM_S8_UINT] = NULL;
       table[MESA_FORMAT_Z_UNORM16] = NULL;
       table[MESA_FORMAT_Z24_UNORM_X8_UINT] = NULL;
-      table[MESA_FORMAT_X8Z24_UNORM] = NULL;
+      table[MESA_FORMAT_X8_UINT_Z24_UNORM] = NULL;
       table[MESA_FORMAT_Z_UNORM32] = NULL;
       table[MESA_FORMAT_S_UINT8] = NULL;
 
@@ -2476,7 +2476,7 @@ _mesa_get_pack_float_z_func(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
-   case MESA_FORMAT_X8Z24_UNORM:
+   case MESA_FORMAT_X8_UINT_Z24_UNORM:
       return pack_float_z_Z24_S8;
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
    case MESA_FORMAT_Z24_UNORM_X8_UINT:
@@ -2561,7 +2561,7 @@ _mesa_get_pack_uint_z_func(mesa_format format)
 {
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
-   case MESA_FORMAT_X8Z24_UNORM:
+   case MESA_FORMAT_X8_UINT_Z24_UNORM:
       return pack_uint_z_Z24_S8;
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
    case MESA_FORMAT_Z24_UNORM_X8_UINT:
@@ -2647,7 +2647,7 @@ _mesa_pack_float_z_row(mesa_format format, GLuint n,
 {
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
-   case MESA_FORMAT_X8Z24_UNORM:
+   case MESA_FORMAT_X8_UINT_Z24_UNORM:
       {
          /* don't disturb the stencil values */
          GLuint *d = ((GLuint *) dst);
@@ -2723,7 +2723,7 @@ _mesa_pack_uint_z_row(mesa_format format, GLuint n,
 {
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
-   case MESA_FORMAT_X8Z24_UNORM:
+   case MESA_FORMAT_X8_UINT_Z24_UNORM:
       {
          /* don't disturb the stencil values */
          GLuint *d = ((GLuint *) dst);

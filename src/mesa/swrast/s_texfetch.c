@@ -336,7 +336,7 @@ texfetch_funcs[] =
       fetch_texel_3d_f_z24_s8
    },
    {
-      MESA_FORMAT_X8Z24_UNORM,
+      MESA_FORMAT_X8_UINT_Z24_UNORM,
       fetch_texel_1d_f_z24_s8,
       fetch_texel_2d_f_z24_s8,
       fetch_texel_3d_f_z24_s8

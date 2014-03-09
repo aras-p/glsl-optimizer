@@ -59,7 +59,7 @@ pack_zs_i(mesa_format f, uint32_t z, uint8_t s)
 	switch (f) {
 	case MESA_FORMAT_S8_UINT_Z24_UNORM:
 		return (z & 0xffffff00) | (s & 0xff);
-	case MESA_FORMAT_X8Z24_UNORM:
+	case MESA_FORMAT_X8_UINT_Z24_UNORM:
 		return (z & 0xffffff00);
 	case MESA_FORMAT_Z_UNORM16:
 		return (z & 0xffff0000) >> 16;
