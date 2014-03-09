@@ -157,7 +157,7 @@ ilo_3d_release_render_ring(struct ilo_cp *cp, void *data)
 void
 ilo_3d_own_render_ring(struct ilo_3d *hw3d)
 {
-   ilo_cp_set_ring(hw3d->cp, ILO_CP_RING_RENDER);
+   ilo_cp_set_ring(hw3d->cp, INTEL_RING_RENDER);
 
    if (ilo_cp_set_owner(hw3d->cp, &hw3d->owner, hw3d->owner_reserve))
       ilo_3d_resume_queries(hw3d);
@@ -775,7 +775,7 @@ ilo_texture_barrier(struct pipe_context *pipe)
    struct ilo_context *ilo = ilo_context(pipe);
    struct ilo_3d *hw3d = ilo->hw3d;
 
-   if (ilo->cp->ring != ILO_CP_RING_RENDER)
+   if (ilo->cp->ring != INTEL_RING_RENDER)
       return;
 
    ilo_3d_pipeline_emit_flush(hw3d->pipeline);

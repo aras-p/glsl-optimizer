@@ -336,7 +336,7 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
    uint32_t swctrl;
 
    /* change ring */
-   ilo_cp_set_ring(ilo->cp, ILO_CP_RING_BLT);
+   ilo_cp_set_ring(ilo->cp, INTEL_RING_BLT);
    ilo_cp_set_owner(ilo->cp, NULL, 0);
 
    /* check aperture space */

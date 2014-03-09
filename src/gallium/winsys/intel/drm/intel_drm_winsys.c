@@ -139,14 +139,13 @@ init_info(struct intel_winsys *winsys)
 
    get_param(winsys, I915_PARAM_HAS_LLC, &val);
    info->has_llc = val;
+   info->has_address_swizzling = test_address_swizzling(winsys);
 
    /* test TIMESTAMP read */
    info->has_timestamp = test_reg_read(winsys, 0x2358);
 
    get_param(winsys, I915_PARAM_HAS_GEN7_SOL_RESET, &val);
    info->has_gen7_sol_reset = val;
-
-   info->has_address_swizzling = test_address_swizzling(winsys);
 
    return true;
 }
@@ -380,21 +379,24 @@ intel_winsys_can_submit_bo(struct intel_winsys *winsys,
 
 int
 intel_winsys_submit_bo(struct intel_winsys *winsys,
+                       enum intel_ring_type ring,
                        struct intel_bo *bo, int used,
                        struct intel_context *ctx,
                        unsigned long flags)
 {
+   const unsigned long exec_flags = (unsigned long) ring | flags;
+
    /* logical contexts are only available for the render ring */
-   if ((flags & 0x7) > INTEL_EXEC_RENDER)
+   if (ring != INTEL_RING_RENDER)
       ctx = NULL;
 
    if (ctx) {
       return drm_intel_gem_bo_context_exec(gem_bo(bo),
-            (drm_intel_context *) ctx, used, flags);
+            (drm_intel_context *) ctx, used, exec_flags);
    }
    else {
       return drm_intel_bo_mrb_exec(gem_bo(bo),
-            used, NULL, 0, 0, flags);
+            used, NULL, 0, 0, exec_flags);
    }
 }
 

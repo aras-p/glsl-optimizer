@@ -31,16 +31,15 @@
 #include "pipe/p_compiler.h"
 
 /* this is compatible with i915_drm.h's definitions */
+enum intel_ring_type {
+   INTEL_RING_RENDER    = 1,
+   INTEL_RING_BSD       = 2,
+   INTEL_RING_BLT       = 3,
+   INTEL_RING_VEBOX     = 4,
+};
+
+/* this is compatible with i915_drm.h's definitions */
 enum intel_exec_flag {
-   /* bits[2:0]: ring type */
-   INTEL_EXEC_DEFAULT         = 0 << 0,
-   INTEL_EXEC_RENDER          = 1 << 0,
-   INTEL_EXEC_BSD             = 2 << 0,
-   INTEL_EXEC_BLT             = 3 << 0,
-
-   /* bits[7:6]: constant buffer addressing mode */
-
-   /* bits[8]: reset SO write offset register on GEN7+ */
    INTEL_EXEC_GEN7_SOL_RESET  = 1 << 8,
 };
 
@@ -72,11 +71,13 @@ struct intel_winsys_info {
 
    int max_batch_size;
    bool has_llc;
-   bool has_gen7_sol_reset;
    bool has_address_swizzling;
 
    /* valid registers for intel_winsys_read_reg() */
    bool has_timestamp;
+
+   /* valid flags for intel_winsys_submit_bo() */
+   bool has_gen7_sol_reset;
 };
 
 struct intel_winsys *
@@ -183,6 +184,7 @@ intel_winsys_can_submit_bo(struct intel_winsys *winsys,
  */
 int
 intel_winsys_submit_bo(struct intel_winsys *winsys,
+                       enum intel_ring_type ring,
                        struct intel_bo *bo, int used,
                        struct intel_context *ctx,
                        unsigned long flags);

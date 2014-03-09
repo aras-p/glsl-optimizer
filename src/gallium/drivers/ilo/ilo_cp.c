@@ -182,27 +182,11 @@ static int
 ilo_cp_exec_bo(struct ilo_cp *cp)
 {
    const bool do_exec = !(ilo_debug & ILO_DEBUG_NOHW);
-   unsigned long flags;
    int err;
 
-   switch (cp->ring) {
-   case ILO_CP_RING_RENDER:
-      flags = INTEL_EXEC_RENDER;
-      break;
-   case ILO_CP_RING_BLT:
-      flags = INTEL_EXEC_BLT;
-      break;
-   default:
-      assert(!"unknown cp ring");
-      flags = 0;
-      break;
-   }
-
-   flags |= cp->one_off_flags;
-
    if (likely(do_exec)) {
-      err = intel_winsys_submit_bo(cp->winsys,
-            cp->bo, cp->used * 4, cp->render_ctx, flags);
+      err = intel_winsys_submit_bo(cp->winsys, cp->ring,
+            cp->bo, cp->used * 4, cp->render_ctx, cp->one_off_flags);
    }
    else {
       err = 0;
@@ -283,7 +267,7 @@ ilo_cp_create(struct intel_winsys *winsys, int size, bool direct_map)
    cp->winsys = winsys;
    cp->render_ctx = intel_winsys_create_context(winsys);
 
-   cp->ring = ILO_CP_RING_RENDER;
+   cp->ring = INTEL_RING_RENDER;
    cp->no_implicit_flush = false;
 
    cp->bo_size = size;

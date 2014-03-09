@@ -34,13 +34,6 @@
 
 struct ilo_cp;
 
-enum ilo_cp_ring {
-   ILO_CP_RING_RENDER,
-   ILO_CP_RING_BLT,
-
-   ILO_CP_RING_COUNT,
-};
-
 typedef void (*ilo_cp_callback)(struct ilo_cp *cp, void *data);
 
 struct ilo_cp_owner {
@@ -61,7 +54,7 @@ struct ilo_cp {
    const struct ilo_cp_owner *owner;
    int owner_reserve;
 
-   enum ilo_cp_ring ring;
+   enum intel_ring_type ring;
    bool no_implicit_flush;
    unsigned one_off_flags;
 
@@ -98,7 +91,7 @@ ilo_cp_flush(struct ilo_cp *cp, const char *reason)
 {
    if (ilo_debug & ILO_DEBUG_FLUSH) {
       ilo_printf("cp flushed for %s with %d+%d DWords (%.1f%%) because of %s\n",
-            (cp->ring == ILO_CP_RING_RENDER) ? "render" : "blt",
+            (cp->ring == INTEL_RING_RENDER) ? "render" : "other",
              cp->used, cp->stolen,
              (float) (100 * (cp->used + cp->stolen)) / cp->bo_size,
              reason);
@@ -153,7 +146,7 @@ ilo_cp_implicit_flush(struct ilo_cp *cp)
  * Set the ring buffer.
  */
 static inline void
-ilo_cp_set_ring(struct ilo_cp *cp, enum ilo_cp_ring ring)
+ilo_cp_set_ring(struct ilo_cp *cp, enum intel_ring_type ring)
 {
    if (cp->ring != ring) {
       ilo_cp_implicit_flush(cp);
