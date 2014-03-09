@@ -148,29 +148,12 @@ texfetch_funcs[] =
       fetch_null_texelf
    },
 
+   /* Packed unorm formats */
    {
       MESA_FORMAT_A8B8G8R8_UNORM,
       fetch_texel_1d_f_rgba8888,
       fetch_texel_2d_f_rgba8888,
       fetch_texel_3d_f_rgba8888
-   },
-   {
-      MESA_FORMAT_R8G8B8A8_UNORM,
-      fetch_texel_1d_f_rgba8888_rev,
-      fetch_texel_2d_f_rgba8888_rev,
-      fetch_texel_3d_f_rgba8888_rev
-   },
-   {
-      MESA_FORMAT_B8G8R8A8_UNORM,
-      fetch_texel_1d_f_argb8888,
-      fetch_texel_2d_f_argb8888,
-      fetch_texel_3d_f_argb8888
-   },
-   {
-      MESA_FORMAT_A8R8G8B8_UNORM,
-      fetch_texel_1d_f_argb8888_rev,
-      fetch_texel_2d_f_argb8888_rev,
-      fetch_texel_3d_f_argb8888_rev
    },
    {
       MESA_FORMAT_X8B8G8R8_UNORM,
@@ -179,10 +162,22 @@ texfetch_funcs[] =
       fetch_texel_3d_f_rgbx8888
    },
    {
+      MESA_FORMAT_R8G8B8A8_UNORM,
+      fetch_texel_1d_f_rgba8888_rev,
+      fetch_texel_2d_f_rgba8888_rev,
+      fetch_texel_3d_f_rgba8888_rev
+   },
+   {
       MESA_FORMAT_R8G8B8X8_UNORM,
       fetch_texel_1d_f_rgbx8888_rev,
       fetch_texel_2d_f_rgbx8888_rev,
       fetch_texel_3d_f_rgbx8888_rev
+   },
+   {
+      MESA_FORMAT_B8G8R8A8_UNORM,
+      fetch_texel_1d_f_argb8888,
+      fetch_texel_2d_f_argb8888,
+      fetch_texel_3d_f_argb8888
    },
    {
       MESA_FORMAT_B8G8R8X8_UNORM,
@@ -191,22 +186,28 @@ texfetch_funcs[] =
       fetch_texel_3d_f_xrgb8888
    },
    {
+      MESA_FORMAT_A8R8G8B8_UNORM,
+      fetch_texel_1d_f_argb8888_rev,
+      fetch_texel_2d_f_argb8888_rev,
+      fetch_texel_3d_f_argb8888_rev
+   },
+   {
       MESA_FORMAT_X8R8G8B8_UNORM,
       fetch_texel_1d_f_xrgb8888_rev,
       fetch_texel_2d_f_xrgb8888_rev,
       fetch_texel_3d_f_xrgb8888_rev
    },
    {
-      MESA_FORMAT_BGR_UNORM8,
-      fetch_texel_1d_f_rgb888,
-      fetch_texel_2d_f_rgb888,
-      fetch_texel_3d_f_rgb888
+      MESA_FORMAT_L16A16_UNORM,
+      fetch_texel_1d_f_al1616,
+      fetch_texel_2d_f_al1616,
+      fetch_texel_3d_f_al1616
    },
    {
-      MESA_FORMAT_RGB_UNORM8,
-      fetch_texel_1d_f_bgr888,
-      fetch_texel_2d_f_bgr888,
-      fetch_texel_3d_f_bgr888
+      MESA_FORMAT_A16L16_UNORM,
+      fetch_texel_1d_f_al1616_rev,
+      fetch_texel_2d_f_al1616_rev,
+      fetch_texel_3d_f_al1616_rev
    },
    {
       MESA_FORMAT_B5G6R5_UNORM,
@@ -227,6 +228,12 @@ texfetch_funcs[] =
       fetch_texel_3d_f_argb4444
    },
    {
+      MESA_FORMAT_B4G4R4X4_UNORM,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
       MESA_FORMAT_A4R4G4B4_UNORM,
       fetch_texel_1d_f_argb4444_rev,
       fetch_texel_2d_f_argb4444_rev,
@@ -245,16 +252,16 @@ texfetch_funcs[] =
       fetch_texel_3d_f_argb1555
    },
    {
+      MESA_FORMAT_B5G5R5X1_UNORM,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
       MESA_FORMAT_A1R5G5B5_UNORM,
       fetch_texel_1d_f_argb1555_rev,
       fetch_texel_2d_f_argb1555_rev,
       fetch_texel_3d_f_argb1555_rev
-   },
-   {
-      MESA_FORMAT_L4A4_UNORM,
-      fetch_texel_1d_f_al44,
-      fetch_texel_2d_f_al44,
-      fetch_texel_3d_f_al44
    },
    {
       MESA_FORMAT_L8A8_UNORM,
@@ -269,16 +276,22 @@ texfetch_funcs[] =
       fetch_texel_3d_f_al88_rev
    },
    {
-      MESA_FORMAT_L16A16_UNORM,
-      fetch_texel_1d_f_al1616,
-      fetch_texel_2d_f_al1616,
-      fetch_texel_3d_f_al1616
+      MESA_FORMAT_R8G8_UNORM,
+      fetch_texel_1d_f_gr88,
+      fetch_texel_2d_f_gr88,
+      fetch_texel_3d_f_gr88
    },
    {
-      MESA_FORMAT_A16L16_UNORM,
-      fetch_texel_1d_f_al1616_rev,
-      fetch_texel_2d_f_al1616_rev,
-      fetch_texel_3d_f_al1616_rev
+      MESA_FORMAT_G8R8_UNORM,
+      fetch_texel_1d_f_rg88,
+      fetch_texel_2d_f_rg88,
+      fetch_texel_3d_f_rg88
+   },
+   {
+      MESA_FORMAT_L4A4_UNORM,
+      fetch_texel_1d_f_al44,
+      fetch_texel_2d_f_al44,
+      fetch_texel_3d_f_al44
    },
    {
       MESA_FORMAT_B2G3R3_UNORM,
@@ -286,6 +299,80 @@ texfetch_funcs[] =
       fetch_texel_2d_f_rgb332,
       fetch_texel_3d_f_rgb332
    },
+   {
+      MESA_FORMAT_R16G16_UNORM,
+      fetch_texel_1d_f_rg1616,
+      fetch_texel_2d_f_rg1616,
+      fetch_texel_3d_f_rg1616
+   },
+   {
+      MESA_FORMAT_G16R16_UNORM,
+      fetch_texel_1d_f_rg1616_rev,
+      fetch_texel_2d_f_rg1616_rev,
+      fetch_texel_3d_f_rg1616_rev
+   },
+   {
+      MESA_FORMAT_B10G10R10A2_UNORM,
+      fetch_texel_1d_f_argb2101010,
+      fetch_texel_2d_f_argb2101010,
+      fetch_texel_3d_f_argb2101010
+   },
+   {
+      MESA_FORMAT_B10G10R10X2_UNORM,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_R10G10B10A2_UNORM,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_S8_UINT_Z24_UNORM,
+      fetch_texel_1d_f_z24_s8,
+      fetch_texel_2d_f_z24_s8,
+      fetch_texel_3d_f_z24_s8
+   },
+   {
+      MESA_FORMAT_X8Z24_UNORM,
+      fetch_texel_1d_f_z24_s8,
+      fetch_texel_2d_f_z24_s8,
+      fetch_texel_3d_f_z24_s8
+   },
+   {
+      MESA_FORMAT_Z24_UNORM_S8_UINT,
+      fetch_texel_1d_f_s8_z24,
+      fetch_texel_2d_f_s8_z24,
+      fetch_texel_3d_f_s8_z24
+   },
+   {
+      MESA_FORMAT_Z24_UNORM_X8_UINT,
+      fetch_texel_1d_f_s8_z24,
+      fetch_texel_2d_f_s8_z24,
+      fetch_texel_3d_f_s8_z24
+   },
+   {
+      MESA_FORMAT_YCBCR,
+      fetch_texel_1d_f_ycbcr,
+      fetch_texel_2d_f_ycbcr,
+      fetch_texel_3d_f_ycbcr
+   },
+   {
+      MESA_FORMAT_YCBCR_REV,
+      fetch_texel_1d_f_ycbcr_rev,
+      fetch_texel_2d_f_ycbcr_rev,
+      fetch_texel_3d_f_ycbcr_rev
+   },
+   {
+      MESA_FORMAT_DUDV8,
+      fetch_texel_1d_dudv8,
+      fetch_texel_2d_dudv8,
+      fetch_texel_3d_dudv8
+   },
+
+   /* Array unorm formats */
    {
       MESA_FORMAT_A_UNORM8,
       fetch_texel_1d_f_a8,
@@ -323,34 +410,10 @@ texfetch_funcs[] =
       fetch_texel_3d_f_i16
    },
    {
-      MESA_FORMAT_YCBCR,
-      fetch_texel_1d_f_ycbcr,
-      fetch_texel_2d_f_ycbcr,
-      fetch_texel_3d_f_ycbcr
-   },
-   {
-      MESA_FORMAT_YCBCR_REV,
-      fetch_texel_1d_f_ycbcr_rev,
-      fetch_texel_2d_f_ycbcr_rev,
-      fetch_texel_3d_f_ycbcr_rev
-   },
-   {
       MESA_FORMAT_R_UNORM8,
       fetch_texel_1d_f_r8,
       fetch_texel_2d_f_r8,
       fetch_texel_3d_f_r8
-   },
-   {
-      MESA_FORMAT_R8G8_UNORM,
-      fetch_texel_1d_f_gr88,
-      fetch_texel_2d_f_gr88,
-      fetch_texel_3d_f_gr88
-   },
-   {
-      MESA_FORMAT_G8R8_UNORM,
-      fetch_texel_1d_f_rg88,
-      fetch_texel_2d_f_rg88,
-      fetch_texel_3d_f_rg88
    },
    {
       MESA_FORMAT_R_UNORM16,
@@ -359,52 +422,34 @@ texfetch_funcs[] =
       fetch_texel_3d_f_r16
    },
    {
-      MESA_FORMAT_R16G16_UNORM,
-      fetch_texel_1d_f_rg1616,
-      fetch_texel_2d_f_rg1616,
-      fetch_texel_3d_f_rg1616
+      MESA_FORMAT_BGR_UNORM8,
+      fetch_texel_1d_f_rgb888,
+      fetch_texel_2d_f_rgb888,
+      fetch_texel_3d_f_rgb888
    },
    {
-      MESA_FORMAT_G16R16_UNORM,
-      fetch_texel_1d_f_rg1616_rev,
-      fetch_texel_2d_f_rg1616_rev,
-      fetch_texel_3d_f_rg1616_rev
+      MESA_FORMAT_RGB_UNORM8,
+      fetch_texel_1d_f_bgr888,
+      fetch_texel_2d_f_bgr888,
+      fetch_texel_3d_f_bgr888
    },
    {
-      MESA_FORMAT_B10G10R10A2_UNORM,
-      fetch_texel_1d_f_argb2101010,
-      fetch_texel_2d_f_argb2101010,
-      fetch_texel_3d_f_argb2101010
+      MESA_FORMAT_RGBA_UNORM16,
+      fetch_texel_1d_rgba_16,
+      fetch_texel_2d_rgba_16,
+      fetch_texel_3d_rgba_16
    },
    {
-      MESA_FORMAT_S8_UINT_Z24_UNORM,
-      fetch_texel_1d_f_z24_s8,
-      fetch_texel_2d_f_z24_s8,
-      fetch_texel_3d_f_z24_s8
-   },
-   {
-      MESA_FORMAT_Z24_UNORM_S8_UINT,
-      fetch_texel_1d_f_s8_z24,
-      fetch_texel_2d_f_s8_z24,
-      fetch_texel_3d_f_s8_z24
+      MESA_FORMAT_RGBX_UNORM16,
+      fetch_texel_1d_xbgr16161616_unorm,
+      fetch_texel_2d_xbgr16161616_unorm,
+      fetch_texel_3d_xbgr16161616_unorm
    },
    {
       MESA_FORMAT_Z_UNORM16,
       fetch_texel_1d_f_z16,
       fetch_texel_2d_f_z16,
       fetch_texel_3d_f_z16
-   },
-   {
-      MESA_FORMAT_Z24_UNORM_X8_UINT,
-      fetch_texel_1d_f_s8_z24,
-      fetch_texel_2d_f_s8_z24,
-      fetch_texel_3d_f_s8_z24
-   },
-   {
-      MESA_FORMAT_X8Z24_UNORM,
-      fetch_texel_1d_f_z24_s8,
-      fetch_texel_2d_f_z24_s8,
-      fetch_texel_3d_f_z24_s8
    },
    {
       MESA_FORMAT_Z_UNORM32,
@@ -418,12 +463,138 @@ texfetch_funcs[] =
       NULL,
       NULL
    },
+
+   /* Packed signed/normalized formats */
    {
-      MESA_FORMAT_BGR_SRGB8,
-      fetch_texel_1d_srgb8,
-      fetch_texel_2d_srgb8,
-      fetch_texel_3d_srgb8
+      MESA_FORMAT_A8B8G8R8_SNORM,
+      fetch_texel_1d_signed_rgba8888,
+      fetch_texel_2d_signed_rgba8888,
+      fetch_texel_3d_signed_rgba8888
    },
+   {
+      MESA_FORMAT_X8B8G8R8_SNORM,
+      fetch_texel_1d_signed_rgbx8888,
+      fetch_texel_2d_signed_rgbx8888,
+      fetch_texel_3d_signed_rgbx8888
+   },
+   {
+      MESA_FORMAT_R8G8B8A8_SNORM,
+      fetch_texel_1d_signed_rgba8888_rev,
+      fetch_texel_2d_signed_rgba8888_rev,
+      fetch_texel_3d_signed_rgba8888_rev
+   },
+   {
+      MESA_FORMAT_R8G8B8X8_SNORM,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_R16G16_SNORM,
+      fetch_texel_1d_signed_rg1616,
+      fetch_texel_2d_signed_rg1616,
+      fetch_texel_3d_signed_rg1616
+   },
+   {
+      MESA_FORMAT_G16R16_SNORM,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_R8G8_SNORM,
+      fetch_texel_1d_signed_rg88_rev,
+      fetch_texel_2d_signed_rg88_rev,
+      fetch_texel_3d_signed_rg88_rev
+   },
+   {
+      MESA_FORMAT_G8R8_SNORM,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_L8A8_SNORM,
+      fetch_texel_1d_signed_al88,
+      fetch_texel_2d_signed_al88,
+      fetch_texel_3d_signed_al88
+   },
+
+   /* Array signed/normalized formats */
+   {
+      MESA_FORMAT_A_SNORM8,
+      fetch_texel_1d_signed_a8,
+      fetch_texel_2d_signed_a8,
+      fetch_texel_3d_signed_a8
+   },
+   {
+      MESA_FORMAT_A_SNORM16,
+      fetch_texel_1d_signed_a16,
+      fetch_texel_2d_signed_a16,
+      fetch_texel_3d_signed_a16
+   },
+   {
+      MESA_FORMAT_L_SNORM8,
+      fetch_texel_1d_signed_l8,
+      fetch_texel_2d_signed_l8,
+      fetch_texel_3d_signed_l8
+   },
+   {
+      MESA_FORMAT_L_SNORM16,
+      fetch_texel_1d_signed_l16,
+      fetch_texel_2d_signed_l16,
+      fetch_texel_3d_signed_l16
+   },
+   {
+      MESA_FORMAT_I_SNORM8,
+      fetch_texel_1d_signed_i8,
+      fetch_texel_2d_signed_i8,
+      fetch_texel_3d_signed_i8
+   },
+   {
+      MESA_FORMAT_I_SNORM16,
+      fetch_texel_1d_signed_i16,
+      fetch_texel_2d_signed_i16,
+      fetch_texel_3d_signed_i16
+   },
+   {
+      MESA_FORMAT_R_SNORM8,
+      fetch_texel_1d_signed_r8,
+      fetch_texel_2d_signed_r8,
+      fetch_texel_3d_signed_r8
+   },
+   {
+      MESA_FORMAT_R_SNORM16,
+      fetch_texel_1d_signed_r16,
+      fetch_texel_2d_signed_r16,
+      fetch_texel_3d_signed_r16
+   },
+   {
+      MESA_FORMAT_LA_SNORM16,
+      fetch_texel_1d_signed_al1616,
+      fetch_texel_2d_signed_al1616,
+      fetch_texel_3d_signed_al1616
+   },
+   {
+      MESA_FORMAT_RGB_SNORM16,
+      fetch_texel_1d_signed_rgb_16,
+      fetch_texel_2d_signed_rgb_16,
+      fetch_texel_3d_signed_rgb_16
+   },
+   {
+      MESA_FORMAT_RGBA_SNORM16,
+      fetch_texel_1d_signed_rgba_16,
+      fetch_texel_2d_signed_rgba_16,
+      fetch_texel_3d_signed_rgba_16
+   },
+   {
+      MESA_FORMAT_RGBX_SNORM16,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   /* Packed sRGB formats */
    {
       MESA_FORMAT_A8B8G8R8_SRGB,
       fetch_texel_1d_srgba8,
@@ -437,16 +608,22 @@ texfetch_funcs[] =
       fetch_texel_3d_sargb8
    },
    {
+      MESA_FORMAT_B8G8R8X8_SRGB,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
       MESA_FORMAT_R8G8B8A8_SRGB,
       fetch_texel_1d_sabgr8,
       fetch_texel_2d_sabgr8,
       fetch_texel_3d_sabgr8
    },
    {
-      MESA_FORMAT_L_SRGB8,
-      fetch_texel_1d_sl8,
-      fetch_texel_2d_sl8,
-      fetch_texel_3d_sl8
+      MESA_FORMAT_R8G8B8X8_SRGB,
+      fetch_texel_1d_sxbgr8,
+      fetch_texel_2d_sxbgr8,
+      fetch_texel_3d_sxbgr8
    },
    {
       MESA_FORMAT_L8A8_SRGB,
@@ -454,6 +631,524 @@ texfetch_funcs[] =
       fetch_texel_2d_sla8,
       fetch_texel_3d_sla8
    },
+
+   /* Array sRGB formats */
+   {
+      MESA_FORMAT_L_SRGB8,
+      fetch_texel_1d_sl8,
+      fetch_texel_2d_sl8,
+      fetch_texel_3d_sl8
+   },
+   {
+      MESA_FORMAT_BGR_SRGB8,
+      fetch_texel_1d_srgb8,
+      fetch_texel_2d_srgb8,
+      fetch_texel_3d_srgb8
+   },
+
+   /* Packed float formats */
+   {
+      MESA_FORMAT_R9G9B9E5_FLOAT,
+      fetch_texel_1d_rgb9_e5,
+      fetch_texel_2d_rgb9_e5,
+      fetch_texel_3d_rgb9_e5
+   },
+   {
+      MESA_FORMAT_R11G11B10_FLOAT,
+      fetch_texel_1d_r11_g11_b10f,
+      fetch_texel_2d_r11_g11_b10f,
+      fetch_texel_3d_r11_g11_b10f
+   },
+   {
+      MESA_FORMAT_Z32_FLOAT_S8X24_UINT,
+      fetch_texel_1d_z32f_x24s8,
+      fetch_texel_2d_z32f_x24s8,
+      fetch_texel_3d_z32f_x24s8
+   },
+
+   /* Array float formats */
+   {
+      MESA_FORMAT_A_FLOAT16,
+      fetch_texel_1d_f_alpha_f16,
+      fetch_texel_2d_f_alpha_f16,
+      fetch_texel_3d_f_alpha_f16
+   },
+   {
+      MESA_FORMAT_A_FLOAT32,
+      fetch_texel_1d_f_alpha_f32,
+      fetch_texel_2d_f_alpha_f32,
+      fetch_texel_3d_f_alpha_f32
+   },
+   {
+      MESA_FORMAT_L_FLOAT16,
+      fetch_texel_1d_f_luminance_f16,
+      fetch_texel_2d_f_luminance_f16,
+      fetch_texel_3d_f_luminance_f16
+   },
+   {
+      MESA_FORMAT_L_FLOAT32,
+      fetch_texel_1d_f_luminance_f32,
+      fetch_texel_2d_f_luminance_f32,
+      fetch_texel_3d_f_luminance_f32
+   },
+   {
+      MESA_FORMAT_LA_FLOAT16,
+      fetch_texel_1d_f_luminance_alpha_f16,
+      fetch_texel_2d_f_luminance_alpha_f16,
+      fetch_texel_3d_f_luminance_alpha_f16
+   },
+   {
+      MESA_FORMAT_LA_FLOAT32,
+      fetch_texel_1d_f_luminance_alpha_f32,
+      fetch_texel_2d_f_luminance_alpha_f32,
+      fetch_texel_3d_f_luminance_alpha_f32
+   },
+   {
+      MESA_FORMAT_I_FLOAT16,
+      fetch_texel_1d_f_intensity_f16,
+      fetch_texel_2d_f_intensity_f16,
+      fetch_texel_3d_f_intensity_f16
+   },
+   {
+      MESA_FORMAT_I_FLOAT32,
+      fetch_texel_1d_f_intensity_f32,
+      fetch_texel_2d_f_intensity_f32,
+      fetch_texel_3d_f_intensity_f32
+   },
+   {
+      MESA_FORMAT_R_FLOAT16,
+      fetch_texel_1d_f_r_f16,
+      fetch_texel_2d_f_r_f16,
+      fetch_texel_3d_f_r_f16
+   },
+   {
+      MESA_FORMAT_R_FLOAT32,
+      fetch_texel_1d_f_r_f32,
+      fetch_texel_2d_f_r_f32,
+      fetch_texel_3d_f_r_f32
+   },
+   {
+      MESA_FORMAT_RG_FLOAT16,
+      fetch_texel_1d_f_rg_f16,
+      fetch_texel_2d_f_rg_f16,
+      fetch_texel_3d_f_rg_f16
+   },
+   {
+      MESA_FORMAT_RG_FLOAT32,
+      fetch_texel_1d_f_rg_f32,
+      fetch_texel_2d_f_rg_f32,
+      fetch_texel_3d_f_rg_f32
+   },
+   {
+      MESA_FORMAT_RGB_FLOAT16,
+      fetch_texel_1d_f_rgb_f16,
+      fetch_texel_2d_f_rgb_f16,
+      fetch_texel_3d_f_rgb_f16
+   },
+   {
+      MESA_FORMAT_RGB_FLOAT32,
+      fetch_texel_1d_f_rgb_f32,
+      fetch_texel_2d_f_rgb_f32,
+      fetch_texel_3d_f_rgb_f32
+   },
+   {
+      MESA_FORMAT_RGBA_FLOAT16,
+      fetch_texel_1d_f_rgba_f16,
+      fetch_texel_2d_f_rgba_f16,
+      fetch_texel_3d_f_rgba_f16
+   },
+   {
+      MESA_FORMAT_RGBA_FLOAT32,
+      fetch_texel_1d_f_rgba_f32,
+      fetch_texel_2d_f_rgba_f32,
+      fetch_texel_3d_f_rgba_f32
+   },
+   {
+      MESA_FORMAT_RGBX_FLOAT16,
+      fetch_texel_1d_xbgr16161616_float,
+      fetch_texel_2d_xbgr16161616_float,
+      fetch_texel_3d_xbgr16161616_float
+   },
+   {
+      MESA_FORMAT_RGBX_FLOAT32,
+      fetch_texel_1d_xbgr32323232_float,
+      fetch_texel_2d_xbgr32323232_float,
+      fetch_texel_3d_xbgr32323232_float
+   },
+   {
+      MESA_FORMAT_Z_FLOAT32,
+      fetch_texel_1d_f_r_f32, /* Reuse the R32F functions. */
+      fetch_texel_2d_f_r_f32,
+      fetch_texel_3d_f_r_f32
+   },
+
+   /* Packed signed/unsigned non-normalized integer formats */
+   {
+      MESA_FORMAT_B10G10R10A2_UINT,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_R10G10B10A2_UINT,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   /* Array signed/unsigned non-normalized integer formats */
+   {
+      MESA_FORMAT_A_UINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_A_UINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_A_UINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_A_SINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_A_SINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_A_SINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_I_UINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_I_UINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_I_UINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_I_SINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_I_SINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_I_SINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_L_UINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_L_UINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_L_UINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_L_SINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_L_SINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_L_SINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_LA_UINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_LA_UINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_LA_UINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_LA_SINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_LA_SINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_LA_SINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_R_UINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_R_UINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_R_UINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_R_SINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_R_SINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_R_SINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_UINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_UINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_UINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_SINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_SINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_SINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGB_UINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGB_UINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGB_UINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGB_SINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGB_SINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGB_SINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGBA_UINT8,
+      fetch_texel_1d_rgba_uint8,
+      fetch_texel_2d_rgba_uint8,
+      fetch_texel_3d_rgba_uint8
+   },
+   {
+      MESA_FORMAT_RGBA_UINT16,
+      fetch_texel_1d_rgba_uint16,
+      fetch_texel_2d_rgba_uint16,
+      fetch_texel_3d_rgba_uint16
+   },
+   {
+      MESA_FORMAT_RGBA_UINT32,
+      fetch_texel_1d_rgba_uint32,
+      fetch_texel_2d_rgba_uint32,
+      fetch_texel_3d_rgba_uint32
+   },
+   {
+      MESA_FORMAT_RGBA_SINT8,
+      fetch_texel_1d_rgba_int8,
+      fetch_texel_2d_rgba_int8,
+      fetch_texel_3d_rgba_int8
+   },
+   {
+      MESA_FORMAT_RGBA_SINT16,
+      fetch_texel_1d_rgba_int16,
+      fetch_texel_2d_rgba_int16,
+      fetch_texel_3d_rgba_int16
+   },
+   {
+      MESA_FORMAT_RGBA_SINT32,
+      fetch_texel_1d_rgba_int32,
+      fetch_texel_2d_rgba_int32,
+      fetch_texel_3d_rgba_int32
+   },
+   {
+      MESA_FORMAT_RGBX_UINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGBX_UINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGBX_UINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGBX_SINT8,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGBX_SINT16,
+      NULL,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RGBX_SINT32,
+      NULL,
+      NULL,
+      NULL
+   },
+
+   /* DXT compressed formats */
+   {
+      MESA_FORMAT_RGB_DXT1,
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
+   },
+   {
+      MESA_FORMAT_RGBA_DXT1,
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
+   },
+   {
+      MESA_FORMAT_RGBA_DXT3,
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
+   },
+   {
+      MESA_FORMAT_RGBA_DXT5,
+      fetch_compressed,
+      fetch_compressed,
+      fetch_compressed
+   },
+
+   /* DXT sRGB compressed formats */
    {
       MESA_FORMAT_SRGB_DXT1,
       fetch_compressed,
@@ -479,6 +1174,7 @@ texfetch_funcs[] =
       fetch_compressed
    },
 
+   /* FXT1 compressed formats */
    {
       MESA_FORMAT_RGB_FXT1,
       fetch_compressed,
@@ -491,519 +1187,8 @@ texfetch_funcs[] =
       fetch_compressed,
       fetch_compressed
    },
-   {
-      MESA_FORMAT_RGB_DXT1,
-      fetch_compressed,
-      fetch_compressed,
-      fetch_compressed
-   },
-   {
-      MESA_FORMAT_RGBA_DXT1,
-      fetch_compressed,
-      fetch_compressed,
-      fetch_compressed
-   },
-   {
-      MESA_FORMAT_RGBA_DXT3,
-      fetch_compressed,
-      fetch_compressed,
-      fetch_compressed
-   },
-   {
-      MESA_FORMAT_RGBA_DXT5,
-      fetch_compressed,
-      fetch_compressed,
-      fetch_compressed
-   },
-   {
-      MESA_FORMAT_RGBA_FLOAT32,
-      fetch_texel_1d_f_rgba_f32,
-      fetch_texel_2d_f_rgba_f32,
-      fetch_texel_3d_f_rgba_f32
-   },
-   {
-      MESA_FORMAT_RGBA_FLOAT16,
-      fetch_texel_1d_f_rgba_f16,
-      fetch_texel_2d_f_rgba_f16,
-      fetch_texel_3d_f_rgba_f16
-   },
-   {
-      MESA_FORMAT_RGB_FLOAT32,
-      fetch_texel_1d_f_rgb_f32,
-      fetch_texel_2d_f_rgb_f32,
-      fetch_texel_3d_f_rgb_f32
-   },
-   {
-      MESA_FORMAT_RGB_FLOAT16,
-      fetch_texel_1d_f_rgb_f16,
-      fetch_texel_2d_f_rgb_f16,
-      fetch_texel_3d_f_rgb_f16
-   },
-   {
-      MESA_FORMAT_A_FLOAT32,
-      fetch_texel_1d_f_alpha_f32,
-      fetch_texel_2d_f_alpha_f32,
-      fetch_texel_3d_f_alpha_f32
-   },
-   {
-      MESA_FORMAT_A_FLOAT16,
-      fetch_texel_1d_f_alpha_f16,
-      fetch_texel_2d_f_alpha_f16,
-      fetch_texel_3d_f_alpha_f16
-   },
-   {
-      MESA_FORMAT_L_FLOAT32,
-      fetch_texel_1d_f_luminance_f32,
-      fetch_texel_2d_f_luminance_f32,
-      fetch_texel_3d_f_luminance_f32
-   },
-   {
-      MESA_FORMAT_L_FLOAT16,
-      fetch_texel_1d_f_luminance_f16,
-      fetch_texel_2d_f_luminance_f16,
-      fetch_texel_3d_f_luminance_f16
-   },
-   {
-      MESA_FORMAT_LA_FLOAT32,
-      fetch_texel_1d_f_luminance_alpha_f32,
-      fetch_texel_2d_f_luminance_alpha_f32,
-      fetch_texel_3d_f_luminance_alpha_f32
-   },
-   {
-      MESA_FORMAT_LA_FLOAT16,
-      fetch_texel_1d_f_luminance_alpha_f16,
-      fetch_texel_2d_f_luminance_alpha_f16,
-      fetch_texel_3d_f_luminance_alpha_f16
-   },
-   {
-      MESA_FORMAT_I_FLOAT32,
-      fetch_texel_1d_f_intensity_f32,
-      fetch_texel_2d_f_intensity_f32,
-      fetch_texel_3d_f_intensity_f32
-   },
-   {
-      MESA_FORMAT_I_FLOAT16,
-      fetch_texel_1d_f_intensity_f16,
-      fetch_texel_2d_f_intensity_f16,
-      fetch_texel_3d_f_intensity_f16
-   },
-   {
-      MESA_FORMAT_R_FLOAT32,
-      fetch_texel_1d_f_r_f32,
-      fetch_texel_2d_f_r_f32,
-      fetch_texel_3d_f_r_f32
-   },
-   {
-      MESA_FORMAT_R_FLOAT16,
-      fetch_texel_1d_f_r_f16,
-      fetch_texel_2d_f_r_f16,
-      fetch_texel_3d_f_r_f16
-   },
-   {
-      MESA_FORMAT_RG_FLOAT32,
-      fetch_texel_1d_f_rg_f32,
-      fetch_texel_2d_f_rg_f32,
-      fetch_texel_3d_f_rg_f32
-   },
-   {
-      MESA_FORMAT_RG_FLOAT16,
-      fetch_texel_1d_f_rg_f16,
-      fetch_texel_2d_f_rg_f16,
-      fetch_texel_3d_f_rg_f16
-   },
 
-   {
-      MESA_FORMAT_A_UINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_A_UINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_A_UINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_A_SINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_A_SINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_A_SINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-
-
-   {
-      MESA_FORMAT_I_UINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_I_UINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_I_UINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_I_SINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_I_SINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_I_SINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-
-
-   {
-      MESA_FORMAT_L_UINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_L_UINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_L_UINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_L_SINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_L_SINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_L_SINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-
-
-   {
-      MESA_FORMAT_LA_UINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_LA_UINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_LA_UINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_LA_SINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_LA_SINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_LA_SINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-
-
-   {
-      MESA_FORMAT_R_SINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_RG_SINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   {
-      MESA_FORMAT_RGB_SINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-
-   /* non-normalized, signed int */
-   {
-      MESA_FORMAT_RGBA_SINT8,
-      fetch_texel_1d_rgba_int8,
-      fetch_texel_2d_rgba_int8,
-      fetch_texel_3d_rgba_int8
-   },
-   {
-      MESA_FORMAT_R_SINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RG_SINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGB_SINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBA_SINT16,
-      fetch_texel_1d_rgba_int16,
-      fetch_texel_2d_rgba_int16,
-      fetch_texel_3d_rgba_int16
-   },
-   {
-      MESA_FORMAT_R_SINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RG_SINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGB_SINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBA_SINT32,
-      fetch_texel_1d_rgba_int32,
-      fetch_texel_2d_rgba_int32,
-      fetch_texel_3d_rgba_int32
-   },
-
-   /* non-normalized, unsigned int */
-   {
-      MESA_FORMAT_R_UINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RG_UINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGB_UINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBA_UINT8,
-      fetch_texel_1d_rgba_uint8,
-      fetch_texel_2d_rgba_uint8,
-      fetch_texel_3d_rgba_uint8
-   },
-   {
-      MESA_FORMAT_R_UINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RG_UINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGB_UINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBA_UINT16,
-      fetch_texel_1d_rgba_uint16,
-      fetch_texel_2d_rgba_uint16,
-      fetch_texel_3d_rgba_uint16
-   },
-   {
-      MESA_FORMAT_R_UINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RG_UINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGB_UINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBA_UINT32,
-      fetch_texel_1d_rgba_uint32,
-      fetch_texel_2d_rgba_uint32,
-      fetch_texel_3d_rgba_uint32
-   },
-
-   /* dudv */
-   {
-      MESA_FORMAT_DUDV8,
-      fetch_texel_1d_dudv8,
-      fetch_texel_2d_dudv8,
-      fetch_texel_3d_dudv8
-   },
-
-   /* signed, normalized */
-   {
-      MESA_FORMAT_R_SNORM8,
-      fetch_texel_1d_signed_r8,
-      fetch_texel_2d_signed_r8,
-      fetch_texel_3d_signed_r8
-   },
-   {
-      MESA_FORMAT_R8G8_SNORM,
-      fetch_texel_1d_signed_rg88_rev,
-      fetch_texel_2d_signed_rg88_rev,
-      fetch_texel_3d_signed_rg88_rev
-   },
-   {
-      MESA_FORMAT_X8B8G8R8_SNORM,
-      fetch_texel_1d_signed_rgbx8888,
-      fetch_texel_2d_signed_rgbx8888,
-      fetch_texel_3d_signed_rgbx8888
-   },
-   {
-      MESA_FORMAT_A8B8G8R8_SNORM,
-      fetch_texel_1d_signed_rgba8888,
-      fetch_texel_2d_signed_rgba8888,
-      fetch_texel_3d_signed_rgba8888
-   },
-   {
-      MESA_FORMAT_R8G8B8A8_SNORM,
-      fetch_texel_1d_signed_rgba8888_rev,
-      fetch_texel_2d_signed_rgba8888_rev,
-      fetch_texel_3d_signed_rgba8888_rev
-   },
-   {
-      MESA_FORMAT_R_SNORM16,
-      fetch_texel_1d_signed_r16,
-      fetch_texel_2d_signed_r16,
-      fetch_texel_3d_signed_r16
-   },
-   {
-      MESA_FORMAT_R16G16_SNORM,
-      fetch_texel_1d_signed_rg1616,
-      fetch_texel_2d_signed_rg1616,
-      fetch_texel_3d_signed_rg1616
-   },
-   {
-      MESA_FORMAT_RGB_SNORM16,
-      fetch_texel_1d_signed_rgb_16,
-      fetch_texel_2d_signed_rgb_16,
-      fetch_texel_3d_signed_rgb_16
-   },
-   {
-      MESA_FORMAT_RGBA_SNORM16,
-      fetch_texel_1d_signed_rgba_16,
-      fetch_texel_2d_signed_rgba_16,
-      fetch_texel_3d_signed_rgba_16
-   },
-   {
-      MESA_FORMAT_RGBA_UNORM16,
-      fetch_texel_1d_rgba_16,
-      fetch_texel_2d_rgba_16,
-      fetch_texel_3d_rgba_16
-   },
+   /* RGTC compressed formats */
    {
       MESA_FORMAT_R_RGTC1_UNORM,
       fetch_compressed,
@@ -1028,6 +1213,8 @@ texfetch_funcs[] =
       fetch_compressed,
       fetch_compressed
    },
+
+   /* LATC1/2 compressed formats */
    {
       MESA_FORMAT_L_LATC1_UNORM,
       fetch_compressed,
@@ -1052,6 +1239,8 @@ texfetch_funcs[] =
       fetch_compressed,
       fetch_compressed
    },
+
+   /* ETC1/2 compressed formats */
    {
       MESA_FORMAT_ETC1_RGB8,
       fetch_compressed,
@@ -1117,205 +1306,7 @@ texfetch_funcs[] =
       fetch_compressed,
       fetch_compressed,
       fetch_compressed
-   },
-   {
-      MESA_FORMAT_A_SNORM8,
-      fetch_texel_1d_signed_a8,
-      fetch_texel_2d_signed_a8,
-      fetch_texel_3d_signed_a8
-   },
-   {
-      MESA_FORMAT_L_SNORM8,
-      fetch_texel_1d_signed_l8,
-      fetch_texel_2d_signed_l8,
-      fetch_texel_3d_signed_l8
-   },
-   {
-      MESA_FORMAT_L8A8_SNORM,
-      fetch_texel_1d_signed_al88,
-      fetch_texel_2d_signed_al88,
-      fetch_texel_3d_signed_al88
-   },
-   {
-      MESA_FORMAT_I_SNORM8,
-      fetch_texel_1d_signed_i8,
-      fetch_texel_2d_signed_i8,
-      fetch_texel_3d_signed_i8
-   },
-   {
-      MESA_FORMAT_A_SNORM16,
-      fetch_texel_1d_signed_a16,
-      fetch_texel_2d_signed_a16,
-      fetch_texel_3d_signed_a16
-   },
-   {
-      MESA_FORMAT_L_SNORM16,
-      fetch_texel_1d_signed_l16,
-      fetch_texel_2d_signed_l16,
-      fetch_texel_3d_signed_l16
-   },
-   {
-      MESA_FORMAT_LA_SNORM16,
-      fetch_texel_1d_signed_al1616,
-      fetch_texel_2d_signed_al1616,
-      fetch_texel_3d_signed_al1616
-   },
-   {
-      MESA_FORMAT_I_SNORM16,
-      fetch_texel_1d_signed_i16,
-      fetch_texel_2d_signed_i16,
-      fetch_texel_3d_signed_i16
-   },
-   {
-      MESA_FORMAT_R9G9B9E5_FLOAT,
-      fetch_texel_1d_rgb9_e5,
-      fetch_texel_2d_rgb9_e5,
-      fetch_texel_3d_rgb9_e5
-   },
-   {
-      MESA_FORMAT_R11G11B10_FLOAT,
-      fetch_texel_1d_r11_g11_b10f,
-      fetch_texel_2d_r11_g11_b10f,
-      fetch_texel_3d_r11_g11_b10f
-   },
-   {
-      MESA_FORMAT_Z_FLOAT32,
-      fetch_texel_1d_f_r_f32, /* Reuse the R32F functions. */
-      fetch_texel_2d_f_r_f32,
-      fetch_texel_3d_f_r_f32
-   },
-   {
-      MESA_FORMAT_Z32_FLOAT_S8X24_UINT,
-      fetch_texel_1d_z32f_x24s8,
-      fetch_texel_2d_z32f_x24s8,
-      fetch_texel_3d_z32f_x24s8
-   },
-   {
-      MESA_FORMAT_B10G10R10A2_UINT,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_R10G10B10A2_UINT,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_B4G4R4X4_UNORM,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_B5G5R5X1_UNORM,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_R8G8B8X8_SNORM,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_R8G8B8X8_SRGB,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBX_UINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBX_SINT8,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_B10G10R10X2_UNORM,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBX_UNORM16,
-      fetch_texel_1d_xbgr16161616_unorm,
-      fetch_texel_2d_xbgr16161616_unorm,
-      fetch_texel_3d_xbgr16161616_unorm
-   },
-   {
-      MESA_FORMAT_RGBX_SNORM16,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBX_FLOAT16,
-      fetch_texel_1d_xbgr16161616_float,
-      fetch_texel_2d_xbgr16161616_float,
-      fetch_texel_3d_xbgr16161616_float
-   },
-   {
-      MESA_FORMAT_RGBX_UINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBX_SINT16,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBX_FLOAT32,
-      fetch_texel_1d_xbgr32323232_float,
-      fetch_texel_2d_xbgr32323232_float,
-      fetch_texel_3d_xbgr32323232_float
-   },
-   {
-      MESA_FORMAT_RGBX_UINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_RGBX_SINT32,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_R10G10B10A2_UNORM,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_G8R8_SNORM,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_G16R16_SNORM,
-      NULL,
-      NULL,
-      NULL
-   },
-   {
-      MESA_FORMAT_B8G8R8X8_SRGB,
-      NULL,
-      NULL,
-      NULL
-   },
+   }
 };
 
 
