@@ -265,13 +265,12 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
                 return 64;
 
 	case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
-		return 256;
+	case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
+		return 4;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
 		return HAVE_LLVM >= 0x0305 ? 330 : 140;
 
-	case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
-		return 1;
 	case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
 		return MIN2(sscreen->b.info.vram_size, 0xFFFFFFFF);
 
