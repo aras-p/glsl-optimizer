@@ -317,6 +317,18 @@ if test "x$enable_debug" = xyes; then
 fi
 
 dnl
+dnl compatibility symlinks
+dnl
+case "$host_os" in
+linux* )
+    HAVE_COMPAT_SYMLINKS=yes ;;
+* )
+    HAVE_COMPAT_SYMLINKS=no ;;
+esac
+
+AM_CONDITIONAL(HAVE_COMPAT_SYMLINKS, test "x$HAVE_COMPAT_SYMLINKS" = xyes)
+
+dnl
 dnl library names
 dnl
 if test "$enable_static" = yes; then

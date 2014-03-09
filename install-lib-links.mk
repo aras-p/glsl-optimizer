@@ -1,6 +1,7 @@
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
 
+if HAVE_COMPAT_SYMLINKS
 all-local : .libs/install-mesa-links
 
 .libs/install-mesa-links : $(lib_LTLIBRARIES)
@@ -12,3 +13,4 @@ all-local : .libs/install-mesa-links
 			ln -f $$f $(top_builddir)/$(LIB_DIR);	\
 		fi;						\
 	done && touch $@
+endif

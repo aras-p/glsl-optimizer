@@ -1,6 +1,7 @@
 # Provide compatibility with scripts for the old Mesa build system for
 # a while by putting a link to the driver into /lib of the build tree.
 
+if HAVE_COMPAT_SYMLINKS
 all-local : .libs/install-gallium-links
 
 .libs/install-gallium-links : $(dri_LTLIBRARIES) $(vdpau_LTLIBRARIES) $(egl_LTLIBRARIES) $(lib_LTLIBRARIES)
@@ -21,3 +22,4 @@ all-local : .libs/install-gallium-links
 			ln -f $$f $$link_dir;			\
 		fi;						\
 	done && touch $@
+endif

@@ -65,6 +65,7 @@ mesa_dri_drivers_la_LIBADD = \
 if NEED_MEGADRIVER
 dri_LTLIBRARIES = mesa_dri_drivers.la
 
+if HAVE_COMPAT_SYMLINKS
 # Add a link to allow setting LD_LIBRARY_PATH/LIBGL_DRIVERS_PATH to /lib of the build tree.
 all-local: mesa_dri_drivers.la
 	$(AM_V_at)$(MKDIR_P) $(top_builddir)/$(LIB_DIR);
@@ -74,6 +75,7 @@ all-local: mesa_dri_drivers.la
 		ln -f $(top_builddir)/$(LIB_DIR)/mesa_dri_drivers.@LIB_EXT@ \
 		      $(top_builddir)/$(LIB_DIR)/$$i; \
 	done;
+endif
 
 # hardlink each megadriver instance, but don't actually have
 # mesa_dri_drivers.@LIB_EXT@ in the set of final installed files.
