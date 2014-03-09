@@ -40,9 +40,9 @@
 
 
 extern "C" void GLAPIENTRY
-_mesa_GetActiveUniform(GLhandleARB program, GLuint index,
-                          GLsizei maxLength, GLsizei *length, GLint *size,
-                          GLenum *type, GLcharARB *nameOut)
+_mesa_GetActiveUniform(GLuint program, GLuint index,
+                       GLsizei maxLength, GLsizei *length, GLint *size,
+                       GLenum *type, GLcharARB *nameOut)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct gl_shader_program *shProg =

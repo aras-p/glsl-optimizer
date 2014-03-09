@@ -152,28 +152,28 @@
 
 <!-- OpenGL 2.0 sized buffer queries -->
     <function name="GetnUniformfvARB" offset="assign">
-        <param name="program" type="GLhandleARB"/>
+        <param name="program" type="GLuint"/>
         <param name="location" type="GLint"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="params" type="GLfloat *" output="true"/>
     </function>
 
     <function name="GetnUniformivARB" offset="assign">
-        <param name="program" type="GLhandleARB"/>
+        <param name="program" type="GLuint"/>
         <param name="location" type="GLint"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="params" type="GLint *" output="true"/>
     </function>
 
     <function name="GetnUniformuivARB" offset="assign">
-        <param name="program" type="GLhandleARB"/>
+        <param name="program" type="GLuint"/>
         <param name="location" type="GLint"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="params" type="GLuint *" output="true"/>
     </function>
 
     <function name="GetnUniformdvARB" offset="assign">
-        <param name="program" type="GLhandleARB"/>
+        <param name="program" type="GLuint"/>
         <param name="location" type="GLint"/>
         <param name="bufSize" type="GLsizei"/>
         <param name="params" type="GLdouble *" output="true"/>

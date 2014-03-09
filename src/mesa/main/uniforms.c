@@ -822,7 +822,7 @@ _mesa_ProgramUniformMatrix4x3fv(GLuint program, GLint location, GLsizei count,
 
 
 void GLAPIENTRY
-_mesa_GetnUniformfvARB(GLhandleARB program, GLint location,
+_mesa_GetnUniformfvARB(GLuint program, GLint location,
                        GLsizei bufSize, GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -830,14 +830,14 @@ _mesa_GetnUniformfvARB(GLhandleARB program, GLint location,
 }
 
 void GLAPIENTRY
-_mesa_GetUniformfv(GLhandleARB program, GLint location, GLfloat *params)
+_mesa_GetUniformfv(GLuint program, GLint location, GLfloat *params)
 {
    _mesa_GetnUniformfvARB(program, location, INT_MAX, params);
 }
 
 
 void GLAPIENTRY
-_mesa_GetnUniformivARB(GLhandleARB program, GLint location,
+_mesa_GetnUniformivARB(GLuint program, GLint location,
                        GLsizei bufSize, GLint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -845,7 +845,7 @@ _mesa_GetnUniformivARB(GLhandleARB program, GLint location,
 }
 
 void GLAPIENTRY
-_mesa_GetUniformiv(GLhandleARB program, GLint location, GLint *params)
+_mesa_GetUniformiv(GLuint program, GLint location, GLint *params)
 {
    _mesa_GetnUniformivARB(program, location, INT_MAX, params);
 }
@@ -853,7 +853,7 @@ _mesa_GetUniformiv(GLhandleARB program, GLint location, GLint *params)
 
 /* GL3 */
 void GLAPIENTRY
-_mesa_GetnUniformuivARB(GLhandleARB program, GLint location,
+_mesa_GetnUniformuivARB(GLuint program, GLint location,
                         GLsizei bufSize, GLuint *params)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -861,7 +861,7 @@ _mesa_GetnUniformuivARB(GLhandleARB program, GLint location,
 }
 
 void GLAPIENTRY
-_mesa_GetUniformuiv(GLhandleARB program, GLint location, GLuint *params)
+_mesa_GetUniformuiv(GLuint program, GLint location, GLuint *params)
 {
    _mesa_GetnUniformuivARB(program, location, INT_MAX, params);
 }
@@ -869,8 +869,8 @@ _mesa_GetUniformuiv(GLhandleARB program, GLint location, GLuint *params)
 
 /* GL4 */
 void GLAPIENTRY
-_mesa_GetnUniformdvARB(GLhandleARB program, GLint location,
-                        GLsizei bufSize, GLdouble *params)
+_mesa_GetnUniformdvARB(GLuint program, GLint location,
+                       GLsizei bufSize, GLdouble *params)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -887,14 +887,14 @@ _mesa_GetnUniformdvARB(GLhandleARB program, GLint location,
 }
 
 void GLAPIENTRY
-_mesa_GetUniformdv(GLhandleARB program, GLint location, GLdouble *params)
+_mesa_GetUniformdv(GLuint program, GLint location, GLdouble *params)
 {
    _mesa_GetnUniformdvARB(program, location, INT_MAX, params);
 }
 
 
 GLint GLAPIENTRY
-_mesa_GetUniformLocation(GLhandleARB programObj, const GLcharARB *name)
+_mesa_GetUniformLocation(GLuint programObj, const GLcharARB *name)
 {
    struct gl_shader_program *shProg;
    GLuint index, offset;

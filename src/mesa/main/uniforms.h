@@ -195,23 +195,23 @@ _mesa_ProgramUniformMatrix4x3fv(GLuint program, GLint location, GLsizei count,
                                 GLboolean transpose, const GLfloat *value);
 
 void GLAPIENTRY
-_mesa_GetnUniformfvARB(GLhandleARB, GLint, GLsizei, GLfloat *);
+_mesa_GetnUniformfvARB(GLuint, GLint, GLsizei, GLfloat *);
 void GLAPIENTRY
-_mesa_GetUniformfv(GLhandleARB, GLint, GLfloat *);
+_mesa_GetUniformfv(GLuint, GLint, GLfloat *);
 void GLAPIENTRY
-_mesa_GetnUniformivARB(GLhandleARB, GLint, GLsizei, GLint *);
+_mesa_GetnUniformivARB(GLuint, GLint, GLsizei, GLint *);
 void GLAPIENTRY
-_mesa_GetUniformuiv(GLhandleARB, GLint, GLuint *);
+_mesa_GetUniformuiv(GLuint, GLint, GLuint *);
 void GLAPIENTRY
-_mesa_GetnUniformuivARB(GLhandleARB, GLint, GLsizei, GLuint *);
+_mesa_GetnUniformuivARB(GLuint, GLint, GLsizei, GLuint *);
 void GLAPIENTRY
-_mesa_GetUniformuiv(GLhandleARB program, GLint location, GLuint *params);
+_mesa_GetUniformuiv(GLuint program, GLint location, GLuint *params);
 void GLAPIENTRY
-_mesa_GetnUniformdvARB(GLhandleARB, GLint, GLsizei, GLdouble *);
+_mesa_GetnUniformdvARB(GLuint, GLint, GLsizei, GLdouble *);
 void GLAPIENTRY
-_mesa_GetUniformdv(GLhandleARB, GLint, GLdouble *);
+_mesa_GetUniformdv(GLuint, GLint, GLdouble *);
 GLint GLAPIENTRY
-_mesa_GetUniformLocation(GLhandleARB, const GLcharARB *);
+_mesa_GetUniformLocation(GLuint, const GLcharARB *);
 GLuint GLAPIENTRY
 _mesa_GetUniformBlockIndex(GLuint program,
 			   const GLchar *uniformBlockName);
@@ -243,8 +243,8 @@ _mesa_GetActiveUniformName(GLuint program, GLuint uniformIndex,
 			   GLsizei bufSize, GLsizei *length,
 			   GLchar *uniformName);
 void GLAPIENTRY
-_mesa_GetActiveUniform(GLhandleARB, GLuint, GLsizei, GLsizei *,
-                          GLint *, GLenum *, GLcharARB *);
+_mesa_GetActiveUniform(GLuint, GLuint, GLsizei, GLsizei *,
+                       GLint *, GLenum *, GLcharARB *);
 void GLAPIENTRY
 _mesa_GetActiveUniformsiv(GLuint program,
 			  GLsizei uniformCount,
@@ -252,7 +252,7 @@ _mesa_GetActiveUniformsiv(GLuint program,
 			  GLenum pname,
 			  GLint *params);
 void GLAPIENTRY
-_mesa_GetUniformiv(GLhandleARB, GLint, GLint *);
+_mesa_GetUniformiv(GLuint, GLint, GLint *);
 
 long
 _mesa_parse_program_resource_name(const GLchar *name,
