@@ -258,11 +258,8 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return HAVE_LLVM >= 0x0304 && (sscreen->b.chip_class < CIK ||
 					       sscreen->b.info.drm_minor >= 35);
 
-	case PIPE_CAP_TGSI_TEXCOORD:
-		return 0;
-
         case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
-                return 64;
+                return R600_MAP_BUFFER_ALIGNMENT;
 
 	case PIPE_CAP_CONSTANT_BUFFER_OFFSET_ALIGNMENT:
 	case PIPE_CAP_TEXTURE_BUFFER_OFFSET_ALIGNMENT:
@@ -285,6 +282,7 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_CUBE_MAP_ARRAY:
 	case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
 	case PIPE_CAP_TEXTURE_GATHER_SM5:
+	case PIPE_CAP_TGSI_TEXCOORD:
 		return 0;
 
 	case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
