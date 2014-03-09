@@ -4800,8 +4800,9 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	if (inst->Texture.NumOffsets) {
 		assert(inst->Texture.NumOffsets == 1);
 
+		/* The texture offset feature doesn't work with the TXF instruction
+		 * and must be emulated by adding the offset to the texture coordinates. */
 		if (txf_add_offsets) {
-			/* Add the offsets for texelFetch manually. */
 			const struct tgsi_texture_offset *off = inst->TexOffsets;
 
 			switch (inst->Texture.Texture) {
