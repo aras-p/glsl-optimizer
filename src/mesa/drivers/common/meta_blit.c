@@ -325,11 +325,11 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
    vs = _mesa_meta_compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
    fs = _mesa_meta_compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
 
-   blit->msaa_shaders[shader_index] = _mesa_CreateProgramObjectARB();
+   blit->msaa_shaders[shader_index] = _mesa_CreateProgram();
    _mesa_AttachShader(blit->msaa_shaders[shader_index], fs);
-   _mesa_DeleteObjectARB(fs);
+   _mesa_DeleteShader(fs);
    _mesa_AttachShader(blit->msaa_shaders[shader_index], vs);
-   _mesa_DeleteObjectARB(vs);
+   _mesa_DeleteShader(vs);
    _mesa_BindAttribLocation(blit->msaa_shaders[shader_index], 0, "position");
    _mesa_BindAttribLocation(blit->msaa_shaders[shader_index], 1, "texcoords");
    _mesa_meta_link_program_with_debug(ctx, blit->msaa_shaders[shader_index]);

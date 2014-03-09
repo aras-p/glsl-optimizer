@@ -100,7 +100,7 @@ _mesa_meta_compile_shader_with_debug(struct gl_context *ctx, GLenum target,
    GLint ok, size;
    GLchar *info;
 
-   shader = _mesa_CreateShaderObjectARB(target);
+   shader = _mesa_CreateShader(target);
    _mesa_ShaderSource(shader, 1, &source, NULL);
    _mesa_CompileShader(shader);
 
@@ -110,13 +110,13 @@ _mesa_meta_compile_shader_with_debug(struct gl_context *ctx, GLenum target,
 
    _mesa_GetShaderiv(shader, GL_INFO_LOG_LENGTH, &size);
    if (size == 0) {
-      _mesa_DeleteObjectARB(shader);
+      _mesa_DeleteShader(shader);
       return 0;
    }
 
    info = malloc(size);
    if (!info) {
-      _mesa_DeleteObjectARB(shader);
+      _mesa_DeleteShader(shader);
       return 0;
    }
 
@@ -127,7 +127,7 @@ _mesa_meta_compile_shader_with_debug(struct gl_context *ctx, GLenum target,
 		 info, source);
 
    free(info);
-   _mesa_DeleteObjectARB(shader);
+   _mesa_DeleteShader(shader);
 
    return 0;
 }
@@ -241,11 +241,11 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
    vs = _mesa_meta_compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
    fs = _mesa_meta_compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
 
-   shader->shader_prog = _mesa_CreateProgramObjectARB();
+   shader->shader_prog = _mesa_CreateProgram();
    _mesa_AttachShader(shader->shader_prog, fs);
-   _mesa_DeleteObjectARB(fs);
+   _mesa_DeleteShader(fs);
    _mesa_AttachShader(shader->shader_prog, vs);
-   _mesa_DeleteObjectARB(vs);
+   _mesa_DeleteShader(vs);
    _mesa_BindAttribLocation(shader->shader_prog, 0, "position");
    _mesa_BindAttribLocation(shader->shader_prog, 1, "texcoords");
    _mesa_meta_link_program_with_debug(ctx, shader->shader_prog);
@@ -1497,27 +1497,27 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
    if (clear->ShaderProg != 0)
       return;
 
-   vs = _mesa_CreateShaderObjectARB(GL_VERTEX_SHADER);
+   vs = _mesa_CreateShader(GL_VERTEX_SHADER);
    _mesa_ShaderSource(vs, 1, &vs_source, NULL);
    _mesa_CompileShader(vs);
 
    if (_mesa_has_geometry_shaders(ctx)) {
-      gs = _mesa_CreateShaderObjectARB(GL_GEOMETRY_SHADER);
+      gs = _mesa_CreateShader(GL_GEOMETRY_SHADER);
       _mesa_ShaderSource(gs, 1, &gs_source, NULL);
       _mesa_CompileShader(gs);
    }
 
-   fs = _mesa_CreateShaderObjectARB(GL_FRAGMENT_SHADER);
+   fs = _mesa_CreateShader(GL_FRAGMENT_SHADER);
    _mesa_ShaderSource(fs, 1, &fs_source, NULL);
    _mesa_CompileShader(fs);
 
-   clear->ShaderProg = _mesa_CreateProgramObjectARB();
+   clear->ShaderProg = _mesa_CreateProgram();
    _mesa_AttachShader(clear->ShaderProg, fs);
-   _mesa_DeleteObjectARB(fs);
+   _mesa_DeleteShader(fs);
    if (gs != 0)
       _mesa_AttachShader(clear->ShaderProg, gs);
    _mesa_AttachShader(clear->ShaderProg, vs);
-   _mesa_DeleteObjectARB(vs);
+   _mesa_DeleteShader(vs);
    _mesa_BindAttribLocation(clear->ShaderProg, 0, "position");
    _mesa_LinkProgram(clear->ShaderProg);
 
@@ -1558,13 +1558,13 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
                                                 fs_int_source);
       ralloc_free(shader_source_mem_ctx);
 
-      clear->IntegerShaderProg = _mesa_CreateProgramObjectARB();
+      clear->IntegerShaderProg = _mesa_CreateProgram();
       _mesa_AttachShader(clear->IntegerShaderProg, fs);
-      _mesa_DeleteObjectARB(fs);
+      _mesa_DeleteShader(fs);
       if (gs != 0)
          _mesa_AttachShader(clear->IntegerShaderProg, gs);
       _mesa_AttachShader(clear->IntegerShaderProg, vs);
-      _mesa_DeleteObjectARB(vs);
+      _mesa_DeleteShader(vs);
       _mesa_BindAttribLocation(clear->IntegerShaderProg, 0, "position");
 
       /* Note that user-defined out attributes get automatically assigned
@@ -1584,7 +1584,7 @@ meta_glsl_clear_init(struct gl_context *ctx, struct clear_state *clear)
       }
    }
    if (gs != 0)
-      _mesa_DeleteObjectARB(gs);
+      _mesa_DeleteShader(gs);
 }
 
 static void
@@ -1596,11 +1596,11 @@ meta_glsl_clear_cleanup(struct clear_state *clear)
    clear->VAO = 0;
    _mesa_DeleteBuffers(1, &clear->VBO);
    clear->VBO = 0;
-   _mesa_DeleteObjectARB(clear->ShaderProg);
+   _mesa_DeleteProgram(clear->ShaderProg);
    clear->ShaderProg = 0;
 
    if (clear->IntegerShaderProg) {
-      _mesa_DeleteObjectARB(clear->IntegerShaderProg);
+      _mesa_DeleteProgram(clear->IntegerShaderProg);
       clear->IntegerShaderProg = 0;
    }
 }
@@ -2582,14 +2582,14 @@ choose_blit_shader(GLenum target, struct blit_shader_table *table)
 void
 _mesa_meta_blit_shader_table_cleanup(struct blit_shader_table *table)
 {
-   _mesa_DeleteObjectARB(table->sampler_1d.shader_prog);
-   _mesa_DeleteObjectARB(table->sampler_2d.shader_prog);
-   _mesa_DeleteObjectARB(table->sampler_3d.shader_prog);
-   _mesa_DeleteObjectARB(table->sampler_rect.shader_prog);
-   _mesa_DeleteObjectARB(table->sampler_cubemap.shader_prog);
-   _mesa_DeleteObjectARB(table->sampler_1d_array.shader_prog);
-   _mesa_DeleteObjectARB(table->sampler_2d_array.shader_prog);
-   _mesa_DeleteObjectARB(table->sampler_cubemap_array.shader_prog);
+   _mesa_DeleteProgram(table->sampler_1d.shader_prog);
+   _mesa_DeleteProgram(table->sampler_2d.shader_prog);
+   _mesa_DeleteProgram(table->sampler_3d.shader_prog);
+   _mesa_DeleteProgram(table->sampler_rect.shader_prog);
+   _mesa_DeleteProgram(table->sampler_cubemap.shader_prog);
+   _mesa_DeleteProgram(table->sampler_1d_array.shader_prog);
+   _mesa_DeleteProgram(table->sampler_2d_array.shader_prog);
+   _mesa_DeleteProgram(table->sampler_cubemap_array.shader_prog);
 
    table->sampler_1d.shader_prog = 0;
    table->sampler_2d.shader_prog = 0;
