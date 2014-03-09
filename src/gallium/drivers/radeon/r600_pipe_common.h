@@ -280,6 +280,12 @@ struct r600_streamout {
 	/* External state which comes from the vertex shader,
 	 * it must be set explicitly when binding a shader. */
 	unsigned			*stride_in_dw;
+
+	/* The state of VGT_STRMOUT_(CONFIG|EN). */
+	struct r600_atom		enable_atom;
+	bool				streamout_enabled;
+	bool				prims_gen_query_enabled;
+	int				num_prims_gen_queries;
 };
 
 struct r600_ring {
@@ -416,6 +422,8 @@ void r600_set_streamout_targets(struct pipe_context *ctx,
 				struct pipe_stream_output_target **targets,
 				const unsigned *offset);
 void r600_emit_streamout_end(struct r600_common_context *rctx);
+void r600_update_prims_generated_query_state(struct r600_common_context *rctx,
+					     unsigned type, int diff);
 void r600_streamout_init(struct r600_common_context *rctx);
 
 /* r600_texture.c */

@@ -3064,7 +3064,6 @@ void si_init_config(struct si_context *sctx)
 	si_pm4_set_reg(pm4, R_028B68_VGT_GS_VERT_ITEMSIZE_3, 0);
 	si_pm4_set_reg(pm4, R_028B90_VGT_GS_INSTANCE_CNT, 0);
 
-	si_pm4_set_reg(pm4, R_028B94_VGT_STRMOUT_CONFIG, 0x0);
 	si_pm4_set_reg(pm4, R_028B98_VGT_STRMOUT_BUFFER_CONFIG, 0x0);
 	if (sctx->b.chip_class == SI) {
 		si_pm4_set_reg(pm4, R_028AA8_IA_MULTI_VGT_PARAM,

@@ -108,6 +108,7 @@ struct si_context {
 			 * updated in memory. */
 			struct r600_atom *cache_flush;
 			struct r600_atom *streamout_begin;
+			struct r600_atom *streamout_enable; /* must be after streamout_begin */
 			struct r600_atom *framebuffer;
 		};
 		struct r600_atom *array[0];

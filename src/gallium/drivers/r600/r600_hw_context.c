@@ -311,7 +311,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 		ctx->gs_rings.atom.dirty = true;
 	}
 	ctx->vertex_shader.atom.dirty = true;
-
+	ctx->b.streamout.enable_atom.dirty = true;
 
 	if (ctx->blend_state.cso)
 		ctx->blend_state.atom.dirty = true;

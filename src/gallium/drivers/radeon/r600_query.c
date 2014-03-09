@@ -152,6 +152,7 @@ static void r600_emit_query_begin(struct r600_common_context *ctx, struct r600_q
 	uint64_t va;
 
 	r600_update_occlusion_query_state(ctx, query->type, 1);
+	r600_update_prims_generated_query_state(ctx, query->type, 1);
 	ctx->need_gfx_cs_space(&ctx->b, query->num_cs_dw * 2, TRUE);
 
 	/* Get a new query buffer if needed. */
@@ -284,6 +285,7 @@ static void r600_emit_query_end(struct r600_common_context *ctx, struct r600_que
 	}
 
 	r600_update_occlusion_query_state(ctx, query->type, -1);
+	r600_update_prims_generated_query_state(ctx, query->type, -1);
 }
 
 static void r600_emit_query_predication(struct r600_common_context *ctx, struct r600_query *query,

@@ -37,7 +37,7 @@
 #include "util/u_double_list.h"
 #include "util/u_transfer.h"
 
-#define R600_NUM_ATOMS 72
+#define R600_NUM_ATOMS 73
 
 /* the number of CS dwords for flushing and drawing */
 #define R600_MAX_FLUSH_CS_DWORDS	16

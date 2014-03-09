@@ -2316,8 +2316,7 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 	r600_store_context_reg(cb, R_028AA0_VGT_INSTANCE_STEP_RATE_0, 0);
 	r600_store_context_reg(cb, R_028AA4_VGT_INSTANCE_STEP_RATE_1, 0);
 
-	r600_store_context_reg_seq(cb, R_028AB0_VGT_STRMOUT_EN, 3);
-	r600_store_value(cb, 0); /* R_028AB0_VGT_STRMOUT_EN */
+	r600_store_context_reg_seq(cb, R_028AB4_VGT_REUSE_OFF, 2);
 	r600_store_value(cb, 1); /* R_028AB4_VGT_REUSE_OFF */
 	r600_store_value(cb, 0); /* R_028AB8_VGT_VTX_CNT_EN */
 
@@ -3027,6 +3026,7 @@ void r600_init_state_functions(struct r600_context *rctx)
 	r600_init_atom(rctx, &rctx->stencil_ref.atom, id++, r600_emit_stencil_ref, 4);
 	r600_init_atom(rctx, &rctx->vertex_fetch_shader.atom, id++, r600_emit_vertex_fetch_shader, 5);
 	rctx->atoms[id++] = &rctx->b.streamout.begin_atom;
+	rctx->atoms[id++] = &rctx->b.streamout.enable_atom;
 	r600_init_atom(rctx, &rctx->vertex_shader.atom, id++, r600_emit_shader, 23);
 	r600_init_atom(rctx, &rctx->pixel_shader.atom, id++, r600_emit_shader, 0);
 	r600_init_atom(rctx, &rctx->geometry_shader.atom, id++, r600_emit_shader, 0);

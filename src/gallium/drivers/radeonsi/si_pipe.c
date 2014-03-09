@@ -148,6 +148,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 	sctx->atoms.cache_flush = &sctx->cache_flush;
 
 	sctx->atoms.streamout_begin = &sctx->b.streamout.begin_atom;
+	sctx->atoms.streamout_enable = &sctx->b.streamout.enable_atom;
 
 	switch (sctx->b.chip_class) {
 	case SI:

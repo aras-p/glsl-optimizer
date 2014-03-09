@@ -29,6 +29,8 @@
 
 #include "util/u_memory.h"
 
+static void r600_set_streamout_enable(struct r600_common_context *rctx, bool enable);
+
 static struct pipe_stream_output_target *
 r600_create_so_target(struct pipe_context *ctx,
 		      struct pipe_resource *buffer,
@@ -84,11 +86,10 @@ void r600_streamout_buffers_dirty(struct r600_common_context *rctx)
 
 	rctx->streamout.num_dw_for_end =
 		12 + /* flush_vgt_streamout */
-		num_bufs * 8 + /* STRMOUT_BUFFER_UPDATE */
-		3 /* set_streamout_enable(0) */;
+		num_bufs * 11; /* STRMOUT_BUFFER_UPDATE, BUFFER_SIZE */
 
 	begin->num_dw = 12 + /* flush_vgt_streamout */
-			6; /* set_streamout_enable */
+			3; /* VGT_STRMOUT_BUFFER_CONFIG */
 
 	if (rctx->chip_class >= SI) {
 		begin->num_dw += num_bufs * 4; /* SET_CONTEXT_REG */
@@ -105,6 +106,8 @@ void r600_streamout_buffers_dirty(struct r600_common_context *rctx)
 		(rctx->family > CHIP_R600 && rctx->family < CHIP_RS780 ? 2 : 0); /* SURFACE_BASE_UPDATE */
 
 	begin->dirty = true;
+
+	r600_set_streamout_enable(rctx, true);
 }
 
 void r600_set_streamout_targets(struct pipe_context *ctx,
@@ -144,6 +147,7 @@ void r600_set_streamout_targets(struct pipe_context *ctx,
 		r600_streamout_buffers_dirty(rctx);
 	} else {
 		rctx->streamout.begin_atom.dirty = false;
+		r600_set_streamout_enable(rctx, false);
 	}
 }
 
@@ -179,31 +183,6 @@ static void r600_flush_vgt_streamout(struct r600_common_context *rctx)
 	radeon_emit(cs, 4); /* poll interval */
 }
 
-static void r600_set_streamout_enable(struct r600_common_context *rctx, unsigned buffer_enable_bit)
-{
-	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
-
-	if (buffer_enable_bit) {
-		r600_write_context_reg(cs, R_028AB0_VGT_STRMOUT_EN, S_028AB0_STREAMOUT(1));
-		r600_write_context_reg(cs, R_028B20_VGT_STRMOUT_BUFFER_EN, buffer_enable_bit);
-	} else {
-		r600_write_context_reg(cs, R_028AB0_VGT_STRMOUT_EN, S_028AB0_STREAMOUT(0));
-	}
-}
-
-static void evergreen_set_streamout_enable(struct r600_common_context *rctx, unsigned buffer_enable_bit)
-{
-	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
-
-	if (buffer_enable_bit) {
-		r600_write_context_reg_seq(cs, R_028B94_VGT_STRMOUT_CONFIG, 2);
-		radeon_emit(cs, S_028B94_STREAMOUT_0_EN(1)); /* R_028B94_VGT_STRMOUT_CONFIG */
-		radeon_emit(cs, S_028B98_STREAM_0_BUFFER_EN(buffer_enable_bit)); /* R_028B98_VGT_STRMOUT_BUFFER_CONFIG */
-	} else {
-		r600_write_context_reg(cs, R_028B94_VGT_STRMOUT_CONFIG, S_028B94_STREAMOUT_0_EN(0));
-	}
-}
-
 static void r600_emit_streamout_begin(struct r600_common_context *rctx, struct r600_atom *atom)
 {
 	struct radeon_winsys_cs *cs = rctx->rings.gfx.cs;
@@ -213,11 +192,10 @@ static void r600_emit_streamout_begin(struct r600_common_context *rctx, struct r
 
 	r600_flush_vgt_streamout(rctx);
 
-	if (rctx->chip_class >= EVERGREEN) {
-		evergreen_set_streamout_enable(rctx, rctx->streamout.enabled_mask);
-	} else {
-		r600_set_streamout_enable(rctx, rctx->streamout.enabled_mask);
-	}
+	r600_write_context_reg(cs, rctx->chip_class >= EVERGREEN ?
+				       R_028B98_VGT_STRMOUT_BUFFER_CONFIG :
+				       R_028B20_VGT_STRMOUT_BUFFER_EN,
+			       rctx->streamout.enabled_mask);
 
 	for (i = 0; i < rctx->streamout.num_targets; i++) {
 		if (!t[i])
@@ -321,12 +299,12 @@ void r600_emit_streamout_end(struct r600_common_context *rctx)
 
 		r600_emit_reloc(rctx,  &rctx->rings.gfx, t[i]->buf_filled_size,
 				RADEON_USAGE_WRITE, RADEON_PRIO_MIN);
-	}
 
-	if (rctx->chip_class >= EVERGREEN) {
-		evergreen_set_streamout_enable(rctx, 0);
-	} else {
-		r600_set_streamout_enable(rctx, 0);
+		/* Zero the buffer size. The counters (primitives generated,
+		 * primitives emitted) may be enabled even if there is not
+		 * buffer bound. This ensures that the primitives-emitted query
+		 * won't increment. */
+		r600_write_context_reg(cs, R_028AD0_VGT_STRMOUT_BUFFER_SIZE_0 + 16*i, 0);
 	}
 
 	rctx->streamout.begin_emitted = false;
@@ -338,9 +316,60 @@ void r600_emit_streamout_end(struct r600_common_context *rctx)
 	}
 }
 
+/* STREAMOUT CONFIG DERIVED STATE
+ *
+ * Streamout must be enabled for the PRIMITIVES_GENERATED query to work.
+ * The buffer mask is an independent state, so no writes occur if there
+ * are no buffers bound.
+ */
+
+static bool r600_get_strmout_en(struct r600_common_context *rctx)
+{
+	return rctx->streamout.streamout_enabled ||
+	       rctx->streamout.prims_gen_query_enabled;
+}
+
+static void r600_emit_streamout_enable(struct r600_common_context *rctx,
+				       struct r600_atom *atom)
+{
+	r600_write_context_reg(rctx->rings.gfx.cs,
+			       rctx->chip_class >= EVERGREEN ?
+				       R_028B94_VGT_STRMOUT_CONFIG :
+				       R_028AB0_VGT_STRMOUT_EN,
+			       S_028B94_STREAMOUT_0_EN(r600_get_strmout_en(rctx)));
+}
+
+static void r600_set_streamout_enable(struct r600_common_context *rctx, bool enable)
+{
+	bool old_strmout_en = r600_get_strmout_en(rctx);
+
+	rctx->streamout.streamout_enabled = enable;
+	if (old_strmout_en != r600_get_strmout_en(rctx))
+		rctx->streamout.enable_atom.dirty = true;
+}
+
+void r600_update_prims_generated_query_state(struct r600_common_context *rctx,
+					     unsigned type, int diff)
+{
+	if (type == PIPE_QUERY_PRIMITIVES_GENERATED) {
+		bool old_strmout_en = r600_get_strmout_en(rctx);
+
+		rctx->streamout.num_prims_gen_queries += diff;
+		assert(rctx->streamout.num_prims_gen_queries >= 0);
+
+		rctx->streamout.prims_gen_query_enabled =
+			rctx->streamout.num_prims_gen_queries != 0;
+
+		if (old_strmout_en != r600_get_strmout_en(rctx))
+			rctx->streamout.enable_atom.dirty = true;
+	}
+}
+
 void r600_streamout_init(struct r600_common_context *rctx)
 {
 	rctx->b.create_stream_output_target = r600_create_so_target;
 	rctx->b.stream_output_target_destroy = r600_so_target_destroy;
 	rctx->streamout.begin_atom.emit = r600_emit_streamout_begin;
+	rctx->streamout.enable_atom.emit = r600_emit_streamout_enable;
+	rctx->streamout.enable_atom.num_dw = 3;
 }
