@@ -164,16 +164,6 @@ translate_prim(const struct gl_context *ctx, unsigned prim)
    STATIC_ASSERT(GL_QUADS == PIPE_PRIM_QUADS);
    STATIC_ASSERT(GL_TRIANGLE_STRIP_ADJACENCY == PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY);
 
-   /* Avoid quadstrips if it's easy to do so:
-    * Note: it's important to do the correct trimming if we change the
-    * prim type!  We do that wherever this function is called.
-    */
-   if (prim == GL_QUAD_STRIP &&
-       ctx->Light.ShadeModel != GL_FLAT &&
-       ctx->Polygon.FrontMode == GL_FILL &&
-       ctx->Polygon.BackMode == GL_FILL)
-      prim = GL_TRIANGLE_STRIP;
-
    return prim;
 }
 
