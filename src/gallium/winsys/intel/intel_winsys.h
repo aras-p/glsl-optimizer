@@ -264,6 +264,8 @@ intel_bo_pread(struct intel_bo *bo, unsigned long offset,
  * When \p bo is submitted for execution, and if \p target_bo has moved,
  * the kernel will patch \p bo at \p offset to \p target_bo->offset plus
  * \p target_offset.
+ *
+ * \p presumed_offset should be written to \p bo at \p offset.
  */
 int
 intel_bo_add_reloc(struct intel_bo *bo, uint32_t offset,
