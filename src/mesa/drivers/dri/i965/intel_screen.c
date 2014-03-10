@@ -646,6 +646,7 @@ intel_create_image_from_fds(__DRIscreen *screen,
 {
    struct intel_screen *intelScreen = screen->driverPrivate;
    struct intel_image_format *f;
+   uint32_t mask_x, mask_y;
    __DRIimage *image;
    int i, index;
 
@@ -677,6 +678,14 @@ intel_create_image_from_fds(__DRIscreen *screen,
       index = f->planes[i].buffer_index;
       image->offsets[index] = offsets[index];
       image->strides[index] = strides[index];
+   }
+
+   if (f->nplanes == 1) {
+      image->offset = image->offsets[0];
+      intel_region_get_tile_masks(image->region, &mask_x, &mask_y, false);
+      if (image->offset & mask_x)
+         _mesa_warning(NULL,
+                       "intel_create_image_from_fds: offset not on tile boundary");
    }
 
    intel_setup_image_from_dimensions(image);
