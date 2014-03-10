@@ -241,11 +241,13 @@ GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
                      enum pipe_transfer_usage usage,
                      GLuint x, GLuint y, GLuint z,
-                     GLuint w, GLuint h, GLuint d)
+                     GLuint w, GLuint h, GLuint d,
+                     struct pipe_transfer **transfer)
 {
    struct st_texture_object *stObj =
       st_texture_object(stImage->base.TexObject);
    GLuint level;
+   void *map;
 
    DBG("%s \n", __FUNCTION__);
 
@@ -257,22 +259,41 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
    else
       level = stImage->base.Level;
 
-   return pipe_transfer_map_3d(st->pipe, stImage->pt, level, usage,
-                               x, y, z + stImage->base.Face,
-                               w, h, d, &stImage->transfer);
+   z += stImage->base.Face;
+
+   map = pipe_transfer_map_3d(st->pipe, stImage->pt, level, usage,
+                              x, y, z, w, h, d, transfer);
+   if (map) {
+      /* Enlarge the transfer array if it's not large enough. */
+      if (z >= stImage->num_transfers) {
+         unsigned new_size = z + 1;
+
+         stImage->transfer = realloc(stImage->transfer,
+                                     new_size * sizeof(void*));
+         memset(&stImage->transfer[stImage->num_transfers], 0,
+               (new_size - stImage->num_transfers) * sizeof(void*));
+         stImage->num_transfers = new_size;
+      }
+
+      assert(!stImage->transfer[z]);
+      stImage->transfer[z] = *transfer;
+   }
+   return map;
 }
 
 
 void
 st_texture_image_unmap(struct st_context *st,
-                       struct st_texture_image *stImage)
+                       struct st_texture_image *stImage, unsigned slice)
 {
    struct pipe_context *pipe = st->pipe;
+   struct pipe_transfer **transfer =
+      &stImage->transfer[slice + stImage->base.Face];
 
    DBG("%s\n", __FUNCTION__);
 
-   pipe_transfer_unmap(pipe, stImage->transfer);
-   stImage->transfer = NULL;
+   pipe_transfer_unmap(pipe, *transfer);
+   *transfer = NULL;
 }
 
 
