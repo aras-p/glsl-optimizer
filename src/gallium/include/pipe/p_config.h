@@ -157,6 +157,16 @@
 # define PIPE_ARCH_BIG_ENDIAN
 #endif
 
+#elif defined(__OpenBSD__)
+#include <sys/types.h>
+#include <machine/endian.h>
+
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+# define PIPE_ARCH_LITTLE_ENDIAN
+#elif _BYTE_ORDER == _BIG_ENDIAN
+# define PIPE_ARCH_BIG_ENDIAN
+#endif
+
 #else
 
 #if defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64) || defined(PIPE_ARCH_ARM) || defined(PIPE_ARCH_AARCH64)
