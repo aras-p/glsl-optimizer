@@ -358,6 +358,7 @@ public:
    void compact_virtual_grfs();
    void move_uniform_array_access_to_pull_constants();
    void setup_pull_constants();
+   void demote_pull_constants(bool reladdr_only);
    void invalidate_live_intervals();
    void calculate_live_intervals();
    void calculate_register_pressure();

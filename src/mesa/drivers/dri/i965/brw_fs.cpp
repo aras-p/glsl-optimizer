@@ -1863,27 +1863,9 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
                   values[j];
             }
          }
-
-         /* Set up the annotation tracking for new generated instructions. */
-         base_ir = inst->ir;
-         current_annotation = inst->annotation;
-
-         fs_reg surf_index(stage_prog_data->binding_table.pull_constants_start);
-         fs_reg temp = fs_reg(this, glsl_type::float_type);
-         exec_list list = VARYING_PULL_CONSTANT_LOAD(temp,
-                                                     surf_index,
-                                                     *inst->src[i].reladdr,
-                                                     pull_constant_loc[uniform] +
-                                                     inst->src[i].reg_offset);
-         inst->insert_before(&list);
-
-         inst->src[i].file = temp.file;
-         inst->src[i].reg = temp.reg;
-         inst->src[i].reg_offset = temp.reg_offset;
-         inst->src[i].reladdr = NULL;
       }
    }
-   invalidate_live_intervals();
+   demote_pull_constants(true);
 
    ralloc_free(pull_constant_loc);
    pull_constant_loc = NULL;
@@ -1936,6 +1918,16 @@ fs_visitor::setup_pull_constants()
    }
    uniforms = pull_uniform_base;
 
+   demote_pull_constants(false);
+}
+
+/**
+ * Replace UNIFORM register file access with either UNIFORM_PULL_CONSTANT_LOAD
+ * or VARYING_PULL_CONSTANT_LOAD instructions which load values into VGRFs.
+ */
+void
+fs_visitor::demote_pull_constants(bool reladdr_only)
+{
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
@@ -1948,23 +1940,37 @@ fs_visitor::setup_pull_constants()
          if (pull_index == -1)
 	    continue;
 
-         assert(!inst->src[i].reladdr);
+         /* Set up the annotation tracking for new generated instructions. */
+         base_ir = inst->ir;
+         current_annotation = inst->annotation;
 
-	 fs_reg dst = fs_reg(this, glsl_type::float_type);
-	 fs_reg index(stage_prog_data->binding_table.pull_constants_start);
-	 fs_reg offset = fs_reg((unsigned)(pull_index * 4) & ~15);
-	 fs_inst *pull =
-            new(mem_ctx) fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
-                                 dst, index, offset);
-	 pull->ir = inst->ir;
-	 pull->annotation = inst->annotation;
+         fs_reg surf_index(stage_prog_data->binding_table.pull_constants_start);
+         fs_reg dst = fs_reg(this, glsl_type::float_type);
 
-	 inst->insert_before(pull);
+         if (reladdr_only != (inst->src[i].reladdr != NULL))
+            continue;
 
-	 inst->src[i].file = GRF;
-	 inst->src[i].reg = dst.reg;
-	 inst->src[i].reg_offset = 0;
-	 inst->src[i].set_smear(pull_index & 3);
+         /* Generate a pull load into dst. */
+         if (inst->src[i].reladdr) {
+            exec_list list = VARYING_PULL_CONSTANT_LOAD(dst,
+                                                        surf_index,
+                                                        *inst->src[i].reladdr,
+                                                        pull_index);
+            inst->insert_before(&list);
+            inst->src[i].reladdr = NULL;
+         } else {
+            fs_reg offset = fs_reg((unsigned)(pull_index * 4) & ~15);
+            fs_inst *pull =
+               new(mem_ctx) fs_inst(FS_OPCODE_UNIFORM_PULL_CONSTANT_LOAD,
+                                    dst, surf_index, offset);
+            inst->insert_before(pull);
+            inst->src[i].set_smear(pull_index & 3);
+         }
+
+         /* Rewrite the instruction to use the temporary VGRF. */
+         inst->src[i].file = GRF;
+         inst->src[i].reg = dst.reg;
+         inst->src[i].reg_offset = 0;
       }
    }
    invalidate_live_intervals();
