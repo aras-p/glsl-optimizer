@@ -128,7 +128,9 @@ glsl_compiler_SOURCES = \
 	$(top_srcdir)/src/mesa/program/symbol_table.c \
 	$(GLSL_COMPILER_CXX_FILES)
 
-glsl_compiler_LDADD = libglsl.la
+glsl_compiler_LDADD =					\
+	libglsl.la					\
+	$(PTHREAD_LIBS)
 
 glsl_test_SOURCES = \
 	$(top_srcdir)/src/mesa/main/hash_table.c \
