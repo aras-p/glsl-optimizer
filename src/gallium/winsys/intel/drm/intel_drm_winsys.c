@@ -35,6 +35,7 @@
 #include <i915_drm.h>
 #include <intel_bufmgr.h>
 
+#include "os/os_thread.h"
 #include "state_tracker/drm_driver.h"
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
@@ -50,6 +51,8 @@ struct intel_winsys {
    struct intel_winsys_info info;
    unsigned long exec_flags;
 
+   /* these are protected by the mutex */
+   pipe_mutex mutex;
    struct drm_intel_decode *decode;
 };
 
@@ -177,6 +180,8 @@ intel_winsys_create_for_fd(int fd)
       return NULL;
    }
 
+   pipe_mutex_init(winsys->mutex);
+
    if (!probe_winsys(winsys)) {
       drm_intel_bufmgr_destroy(winsys->bufmgr);
       FREE(winsys);
@@ -205,6 +210,7 @@ intel_winsys_destroy(struct intel_winsys *winsys)
    if (winsys->decode)
       drm_intel_decode_context_free(winsys->decode);
 
+   pipe_mutex_destroy(winsys->mutex);
    drm_intel_bufmgr_destroy(winsys->bufmgr);
    FREE(winsys);
 }
@@ -416,19 +422,24 @@ intel_winsys_decode_bo(struct intel_winsys *winsys,
 {
    void *ptr;
 
-   if (!winsys->decode) {
-      winsys->decode = drm_intel_decode_context_alloc(winsys->info.devid);
-      if (!winsys->decode)
-         return;
-
-      /* debug_printf()/debug_error() uses stderr by default */
-      drm_intel_decode_set_output_file(winsys->decode, stderr);
-   }
-
    ptr = intel_bo_map(bo, false);
    if (!ptr) {
       debug_printf("failed to map buffer for decoding\n");
       return;
+   }
+
+   pipe_mutex_lock(winsys->mutex);
+
+   if (!winsys->decode) {
+      winsys->decode = drm_intel_decode_context_alloc(winsys->info.devid);
+      if (!winsys->decode) {
+         pipe_mutex_unlock(winsys->mutex);
+         intel_bo_unmap(bo);
+         return;
+      }
+
+      /* debug_printf()/debug_error() uses stderr by default */
+      drm_intel_decode_set_output_file(winsys->decode, stderr);
    }
 
    /* in dwords */
@@ -438,6 +449,8 @@ intel_winsys_decode_bo(struct intel_winsys *winsys,
          ptr, gem_bo(bo)->offset64, used);
 
    drm_intel_decode(winsys->decode);
+
+   pipe_mutex_unlock(winsys->mutex);
 
    intel_bo_unmap(bo);
 }
