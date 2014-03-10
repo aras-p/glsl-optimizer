@@ -49,7 +49,6 @@ struct intel_winsys {
    int fd;
    drm_intel_bufmgr *bufmgr;
    struct intel_winsys_info info;
-   unsigned long exec_flags;
 
    /* these are protected by the mutex */
    pipe_mutex mutex;
@@ -157,14 +156,6 @@ probe_winsys(struct intel_winsys *winsys)
 
    get_param(winsys, I915_PARAM_HAS_GEN7_SOL_RESET, &val);
    info->has_gen7_sol_reset = val;
-
-   /*
-    * pipe drivers are expected to write the presumed offsets after adding
-    * reloc entries
-    */
-   get_param(winsys, I915_PARAM_HAS_EXEC_NO_RELOC, &val);
-   if (val)
-      winsys->exec_flags |= I915_EXEC_NO_RELOC;
 
    return true;
 }
@@ -419,8 +410,7 @@ intel_winsys_submit_bo(struct intel_winsys *winsys,
                        struct intel_context *ctx,
                        unsigned long flags)
 {
-   const unsigned long exec_flags =
-      winsys->exec_flags | (unsigned long) ring | flags;
+   const unsigned long exec_flags = (unsigned long) ring | flags;
 
    /* logical contexts are only available for the render ring */
    if (ring != INTEL_RING_RENDER)
