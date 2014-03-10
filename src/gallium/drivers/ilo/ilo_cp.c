@@ -245,8 +245,7 @@ ilo_cp_destroy(struct ilo_cp *cp)
       intel_bo_unreference(cp->bo);
    }
 
-   if (cp->render_ctx)
-      intel_winsys_destroy_context(cp->winsys, cp->render_ctx);
+   intel_winsys_destroy_context(cp->winsys, cp->render_ctx);
 
    FREE(cp->sys);
    FREE(cp);
@@ -266,6 +265,10 @@ ilo_cp_create(struct intel_winsys *winsys, int size, bool direct_map)
 
    cp->winsys = winsys;
    cp->render_ctx = intel_winsys_create_context(winsys);
+   if (!cp->render_ctx) {
+      FREE(cp);
+      return NULL;
+   }
 
    cp->ring = INTEL_RING_RENDER;
    cp->no_implicit_flush = false;

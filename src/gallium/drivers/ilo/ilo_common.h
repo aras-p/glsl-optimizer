@@ -71,6 +71,7 @@ struct ilo_dev_info {
    int max_batch_size;
    bool has_llc;
    bool has_address_swizzling;
+   bool has_logical_context;
    bool has_timestamp;
    bool has_gen7_sol_reset;
 

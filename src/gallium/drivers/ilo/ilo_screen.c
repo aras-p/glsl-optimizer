@@ -651,8 +651,14 @@ init_dev(struct ilo_dev_info *dev, const struct intel_winsys_info *info)
    dev->max_batch_size = info->max_batch_size;
    dev->has_llc = info->has_llc;
    dev->has_address_swizzling = info->has_address_swizzling;
+   dev->has_logical_context = info->has_logical_context;
    dev->has_timestamp = info->has_timestamp;
    dev->has_gen7_sol_reset = info->has_gen7_sol_reset;
+
+   if (!dev->has_logical_context) {
+      ilo_err("missing hardware logical context support\n");
+      return false;
+   }
 
    /*
     * From the Sandy Bridge PRM, volume 4 part 2, page 18:

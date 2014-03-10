@@ -53,6 +53,7 @@ struct intel_winsys {
 
    /* these are protected by the mutex */
    pipe_mutex mutex;
+   drm_intel_context *first_gem_ctx;
    struct drm_intel_decode *decode;
 };
 
@@ -145,6 +146,9 @@ probe_winsys(struct intel_winsys *winsys)
    info->has_llc = val;
    info->has_address_swizzling = test_address_swizzling(winsys);
 
+   winsys->first_gem_ctx = drm_intel_gem_context_create(winsys->bufmgr);
+   info->has_logical_context = (winsys->first_gem_ctx != NULL);
+
    /* test TIMESTAMP read */
    info->has_timestamp = test_reg_read(winsys, 0x2358);
 
@@ -210,6 +214,9 @@ intel_winsys_destroy(struct intel_winsys *winsys)
    if (winsys->decode)
       drm_intel_decode_context_free(winsys->decode);
 
+   if (winsys->first_gem_ctx)
+      drm_intel_gem_context_destroy(winsys->first_gem_ctx);
+
    pipe_mutex_destroy(winsys->mutex);
    drm_intel_bufmgr_destroy(winsys->bufmgr);
    FREE(winsys);
@@ -224,8 +231,18 @@ intel_winsys_get_info(const struct intel_winsys *winsys)
 struct intel_context *
 intel_winsys_create_context(struct intel_winsys *winsys)
 {
-   return (struct intel_context *)
-      drm_intel_gem_context_create(winsys->bufmgr);
+   drm_intel_context *gem_ctx;
+
+   /* try the preallocated context first */
+   pipe_mutex_lock(winsys->mutex);
+   gem_ctx = winsys->first_gem_ctx;
+   winsys->first_gem_ctx = NULL;
+   pipe_mutex_unlock(winsys->mutex);
+
+   if (!gem_ctx)
+      gem_ctx = drm_intel_gem_context_create(winsys->bufmgr);
+
+   return (struct intel_context *) gem_ctx;
 }
 
 void

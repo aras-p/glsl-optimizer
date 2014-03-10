@@ -422,12 +422,6 @@ gen7_pipeline_sol(struct ilo_3d_pipeline *p,
          const int stride = so_info->stride[i] * 4; /* in bytes */
          int base = 0;
 
-         /* reset HW write offsets and offset buffer base */
-         if (!p->cp->render_ctx) {
-            ilo_cp_set_one_off_flags(p->cp, INTEL_EXEC_GEN7_SOL_RESET);
-            base += p->state.so_num_vertices * stride;
-         }
-
          gen7_emit_3DSTATE_SO_BUFFER(p->dev, i, base, stride,
                ilo->so.states[i], p->cp);
       }
