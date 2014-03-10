@@ -149,6 +149,9 @@ probe_winsys(struct intel_winsys *winsys)
    winsys->first_gem_ctx = drm_intel_gem_context_create(winsys->bufmgr);
    info->has_logical_context = (winsys->first_gem_ctx != NULL);
 
+   get_param(winsys, I915_PARAM_HAS_ALIASING_PPGTT, &val);
+   info->has_ppgtt = val;
+
    /* test TIMESTAMP read */
    info->has_timestamp = test_reg_read(winsys, 0x2358);
 

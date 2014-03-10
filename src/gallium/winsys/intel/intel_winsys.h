@@ -73,6 +73,7 @@ struct intel_winsys_info {
    bool has_llc;
    bool has_address_swizzling;
    bool has_logical_context;
+   bool has_ppgtt;
 
    /* valid registers for intel_winsys_read_reg() */
    bool has_timestamp;

@@ -652,12 +652,31 @@ init_dev(struct ilo_dev_info *dev, const struct intel_winsys_info *info)
    dev->has_llc = info->has_llc;
    dev->has_address_swizzling = info->has_address_swizzling;
    dev->has_logical_context = info->has_logical_context;
+   dev->has_ppgtt = info->has_ppgtt;
    dev->has_timestamp = info->has_timestamp;
    dev->has_gen7_sol_reset = info->has_gen7_sol_reset;
 
    if (!dev->has_logical_context) {
       ilo_err("missing hardware logical context support\n");
       return false;
+   }
+
+   /*
+    * PIPE_CONTROL and MI_* use PPGTT writes on GEN7+ and privileged GGTT
+    * writes on GEN6.
+    *
+    * From the Sandy Bridge PRM, volume 1 part 3, page 101:
+    *
+    *     "[DevSNB] When Per-Process GTT Enable is set, it is assumed that all
+    *      code is in a secure environment, independent of address space.
+    *      Under this condition, this bit only specifies the address space
+    *      (GGTT or PPGTT). All commands are executed "as-is""
+    *
+    * We need PPGTT to be enabled on GEN6 too.
+    */
+   if (!dev->has_ppgtt) {
+      /* experiments show that it does not really matter... */
+      ilo_warn("PPGTT disabled\n");
    }
 
    /*

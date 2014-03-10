@@ -72,6 +72,7 @@ struct ilo_dev_info {
    bool has_llc;
    bool has_address_swizzling;
    bool has_logical_context;
+   bool has_ppgtt;
    bool has_timestamp;
    bool has_gen7_sol_reset;
 
