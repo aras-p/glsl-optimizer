@@ -343,8 +343,20 @@ vec4_visitor::dead_code_eliminate()
       if (inst->dst.file != GRF || inst->has_side_effects())
          continue;
 
-      assert(this->virtual_grf_end[inst->dst.reg] >= pc);
-      if (this->virtual_grf_end[inst->dst.reg] == pc) {
+      int write_mask = inst->dst.writemask;
+
+      for (int c = 0; c < 4; c++) {
+         if (write_mask & (1 << c)) {
+            assert(this->virtual_grf_end[inst->dst.reg * 4 + c] >= pc);
+            if (this->virtual_grf_end[inst->dst.reg * 4 + c] == pc) {
+               write_mask &= ~(1 << c);
+            }
+         }
+      }
+
+      if (write_mask == 0) {
+         progress = true;
+
          /* Don't dead code eliminate instructions that write to the
           * accumulator as a side-effect. Instead just set the destination
           * to the null register to free it.
@@ -363,7 +375,18 @@ vec4_visitor::dead_code_eliminate()
             }
             break;
          }
-         progress = true;
+      } else if (inst->dst.writemask != write_mask) {
+         switch (inst->opcode) {
+         case SHADER_OPCODE_TXF_CMS:
+         case SHADER_OPCODE_GEN4_SCRATCH_READ:
+         case VS_OPCODE_PULL_CONSTANT_LOAD:
+         case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
+            break;
+         default:
+            progress = true;
+            inst->dst.writemask = write_mask;
+            break;
+         }
       }
    }
 
