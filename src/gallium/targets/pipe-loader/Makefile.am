@@ -22,8 +22,6 @@
 
 include $(top_srcdir)/src/gallium/Automake.inc
 
-LDFLAGS += -Wl,--version-script=$(top_srcdir)/src/gallium/targets/pipe-loader/pipe.link
-
 AM_CPPFLAGS = \
 	$(GALLIUM_CFLAGS) \
 	-I$(top_srcdir)/include \
@@ -47,6 +45,16 @@ PIPE_LIBS = \
 	-lpthread \
 	-lm
 
+AM_LDFLAGS = \
+	-module \
+	-no-undefined \
+	-avoid-version \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/pipe-loader/pipe.link
+
+if HAVE_MESA_LLVM
+AM_LDFLAGS += $(LLVM_LDFLAGS)
+endif
+
 if HAVE_GALLIUM_I915
 pipe_LTLIBRARIES += pipe_i915.la
 pipe_i915_la_SOURCES = pipe_i915.c
@@ -56,11 +64,10 @@ pipe_i915_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/i915/libi915.la \
 	$(LIBDRM_LIBS) \
 	$(INTEL_LIBS)
-pipe_i915_la_LDFLAGS = -no-undefined -avoid-version -module
+
 if HAVE_MESA_LLVM
 nodist_EXTRA_pipe_i915_la_SOURCES = dummy.cpp
 pipe_i915_la_LIBADD += $(LLVM_LIBS)
-pipe_i915_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
 endif
 
@@ -74,10 +81,9 @@ pipe_nouveau_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/nouveau/libnouveau.la \
 	$(LIBDRM_LIBS) \
 	$(NOUVEAU_LIBS)
-pipe_nouveau_la_LDFLAGS = -no-undefined -avoid-version -module
+
 if HAVE_MESA_LLVM
 pipe_nouveau_la_LIBADD += $(LLVM_LIBS)
-pipe_nouveau_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
 endif
 
@@ -92,10 +98,9 @@ pipe_r300_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/r300/libr300.la \
 	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
-pipe_r300_la_LDFLAGS = -no-undefined -avoid-version -module
+
 if HAVE_MESA_LLVM
 pipe_r300_la_LIBADD += $(LLVM_LIBS)
-pipe_r300_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
 endif
 
@@ -108,11 +113,10 @@ pipe_r600_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
 	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
-pipe_r600_la_LDFLAGS = -no-undefined -avoid-version -module
+
 if HAVE_MESA_LLVM
 nodist_EXTRA_pipe_r600_la_SOURCES = dummy.cpp
 pipe_r600_la_LIBADD += $(LLVM_LIBS)
-pipe_r600_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
 endif
 
@@ -126,10 +130,9 @@ pipe_radeonsi_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
 	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
-pipe_radeonsi_la_LDFLAGS = -no-undefined -avoid-version -module
+
 if HAVE_MESA_LLVM
 pipe_radeonsi_la_LIBADD += $(LLVM_LIBS)
-pipe_radeonsi_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
 endif
 
@@ -143,10 +146,9 @@ pipe_msm_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/freedreno/libfreedreno.la \
 	$(LIBDRM_LIBS) \
 	$(FREEDRENO_LIBS)
-pipe_msm_la_LDFLAGS = -no-undefined -avoid-version -module
+
 if HAVE_MESA_LLVM
 pipe_msm_la_LIBADD += $(LLVM_LIBS)
-pipe_msm_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
 endif
 
@@ -158,11 +160,10 @@ pipe_vmwgfx_la_LIBADD = \
 	$(top_builddir)/src/gallium/winsys/svga/drm/libsvgadrm.la \
 	$(top_builddir)/src/gallium/drivers/svga/libsvga.la \
 	$(LIBDRM_LIBS)
-pipe_vmwgfx_la_LDFLAGS = -no-undefined -avoid-version -module
+
 if HAVE_MESA_LLVM
 nodist_EXTRA_pipe_vmwgfx_la_SOURCES = dummy.cpp
 pipe_vmwgfx_la_LIBADD += $(LLVM_LIBS)
-pipe_vmwgfx_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
 endif
 
@@ -174,7 +175,6 @@ pipe_swrast_la_SOURCES = pipe_swrast.c
 pipe_swrast_la_LIBADD = \
 	$(PIPE_LIBS) \
 	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la
-pipe_swrast_la_LDFLAGS = -no-undefined -avoid-version -module
 
 if HAVE_GALLIUM_LLVMPIPE
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
@@ -184,6 +184,5 @@ nodist_EXTRA_pipe_swrast_la_SOURCES = dummy.cpp
 pipe_swrast_la_LIBADD += \
 	$(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la \
 	$(LLVM_LIBS)
-pipe_swrast_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
 endif
