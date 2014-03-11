@@ -952,7 +952,7 @@ void CodeEmitterGK110::emitTEXCSAA(const TexInstruction *i)
    code[0] = 0x00000002;
    code[1] = 0x76c00000;
 
-   // code[1] |= i->tex.r << 9;
+   code[1] |= i->tex.r << 9;
    // code[1] |= i->tex.s << (9 + 8);
 
    if (i->tex.liveOnly)
@@ -995,17 +995,19 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
       case OP_TXD:
          code[0] = 0x00000002;
          code[1] = 0x76000000;
+         code[1] |= i->tex.r << 9;
          break;
       case OP_TXF:
          code[0] = 0x00000002;
          code[1] = 0x70000000;
+         code[1] |= i->tex.r << 13;
          break;
       default:
          code[0] = 0x00000001;
          code[1] = 0x60000000;
+         code[1] |= i->tex.r << 15;
          break;
       }
-      code[1] |= i->tex.r << 15;
    }
 
    code[1] |= isNextIndependentTex(i) ? 0x1 : 0x2; // t : p mode
@@ -1084,13 +1086,10 @@ CodeEmitterGK110::emitTXQ(const TexInstruction *i)
       break;
    }
 
-   // TODO:
-   // code[1] |= i->tex.mask << 14;
-   //
-   // code[1] |= i->tex.r << 9;
-   // code[1] |= i->tex.s << 2;
-   // if (i->tex.sIndirectSrc >= 0 || i->tex.rIndirectSrc >= 0)
-   //   ?
+   code[1] |= i->tex.mask << 2;
+   code[1] |= i->tex.r << 9;
+   if (/*i->tex.sIndirectSrc >= 0 || */i->tex.rIndirectSrc >= 0)
+      code[1] |= 0x08000000;
 
    defId(i->def(0), 2);
    srcId(i->src(0), 10);
