@@ -1035,8 +1035,8 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
       code[1] |= 0x1000;
    }
 
-   // if (i->op != OP_TXD && i->tex.derivAll)
-   //   code[1] |= 1 << 13;
+   if (i->op != OP_TXD && i->tex.derivAll)
+      code[1] |= 0x200;
 
    emitPredicate(i);
 
@@ -1064,8 +1064,12 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
       // ?
    }
 
-   if (i->tex.useOffsets)
-      code[1] |= 0x200;
+   if (i->tex.useOffsets) {
+      switch (i->op) {
+      case OP_TXF: code[1] |= 0x200; break;
+      default: code[1] |= 0x800; break;
+      }
+   }
 }
 
 void
