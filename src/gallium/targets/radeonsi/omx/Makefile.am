@@ -47,13 +47,10 @@ libomx_radeonsi_la_LDFLAGS = \
 	-no-undefined
 
 libomx_radeonsi_la_LIBADD = \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
-	$(top_builddir)/src/gallium/state_trackers/omx/libomxtracker.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
-	$(GALLIUM_DRI_LIB_DEPS) \
-	$(OMX_LIBS) \
+	$(GALLIUM_OMX_LIB_DEPS) \
 	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
 
