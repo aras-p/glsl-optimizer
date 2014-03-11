@@ -36,6 +36,7 @@ AM_CPPFLAGS = \
 omxdir = $(OMX_LIB_INSTALL_DIR)
 omx_LTLIBRARIES = libomx_radeonsi.la
 
+nodist_EXTRA_libomx_radeonsi_la_SOURCES = dummy.cpp
 libomx_radeonsi_la_SOURCES = \
 	drm_target.c \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
@@ -49,10 +50,3 @@ libomx_radeonsi_la_LIBADD = \
 	$(GALLIUM_OMX_LIB_DEPS) \
 	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
-
-if HAVE_MESA_LLVM
-libomx_radeonsi_la_LINK = $(CXXLINK) $(libomx_radeonsi_la_LDFLAGS)
-# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_libomx_radeonsi_la_SOURCES = dummy-cpp.cpp
-
-endif

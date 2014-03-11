@@ -36,6 +36,7 @@ AM_CPPFLAGS = \
 
 lib_LTLIBRARIES = lib@OSMESA_LIB@.la
 
+nodist_EXTRA_lib@OSMESA_LIB@_la_SOURCES = dummy.cpp
 lib@OSMESA_LIB@_la_SOURCES = target.c
 
 lib@OSMESA_LIB@_la_LDFLAGS = -module -version-number @OSMESA_VERSION@ -no-undefined
@@ -55,9 +56,6 @@ lib@OSMESA_LIB@_la_LIBADD = \
 	$(SHARED_GLAPI_LIB) \
 	$(OSMESA_LIB_DEPS) \
 	$(CLOCK_LIB)
-
-
-nodist_EXTRA_lib@OSMESA_LIB@_la_SOURCES = dummy.cpp
 
 if HAVE_MESA_LLVM
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE

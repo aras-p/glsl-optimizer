@@ -33,6 +33,7 @@ AM_CPPFLAGS = \
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = i915_dri.la
 
+nodist_EXTRA_i915_dri_la_SOURCES = dummy.cpp
 i915_dri_la_SOURCES = target.c
 
 i915_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
@@ -51,8 +52,6 @@ i915_dri_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/i915/libi915.la \
 	$(GALLIUM_DRI_LIB_DEPS) \
 	$(INTEL_LIBS)
-
-nodist_EXTRA_i915_dri_la_SOURCES = dummy.cpp
 
 if HAVE_MESA_LLVM
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE

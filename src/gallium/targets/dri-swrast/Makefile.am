@@ -36,6 +36,7 @@ AM_CPPFLAGS = \
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = swrast_dri.la
 
+nodist_EXTRA_swrast_dri_la_SOURCES = dummy.cpp
 swrast_dri_la_SOURCES = \
 	swrast_drm_api.c \
 	$(top_srcdir)/src/mesa/drivers/dri/common/utils.c \
@@ -53,8 +54,6 @@ swrast_dri_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(GALLIUM_DRI_LIB_DEPS)
-
-nodist_EXTRA_swrast_dri_la_SOURCES = dummy.cpp
 
 if HAVE_MESA_LLVM
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE

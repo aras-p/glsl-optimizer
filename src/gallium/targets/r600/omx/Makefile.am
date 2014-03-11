@@ -36,6 +36,7 @@ AM_CPPFLAGS = \
 omxdir = $(OMX_LIB_INSTALL_DIR)
 omx_LTLIBRARIES = libomx_r600.la
 
+nodist_EXTRA_libomx_r600_la_SOURCES = dummy.cpp
 libomx_r600_la_SOURCES = \
 	drm_target.c \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
@@ -50,14 +51,3 @@ libomx_r600_la_LIBADD = \
 	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS) \
 	-lstdc++
-
-if HAVE_MESA_LLVM
-libomx_r600_la_LINK = $(CXXLINK) $(libomx_r600_la_LDFLAGS)
-# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_libomx_r600_la_SOURCES = dummy-cpp.cpp
-
-else
-libomx_r600_la_LINK = $(LINK) $(libomx_r600_la_LDFLAGS)
-# Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_libomx_r600_la_SOURCES = dummy-c.c
-endif

@@ -41,10 +41,9 @@ lib@OPENCL_LIBNAME@_la_LIBADD += \
 	$(LIBDRM_LIBS)
 endif
 
+nodist_EXTRA_lib@OPENCL_LIBNAME@_la_SOURCES = dummy.cpp
 lib@OPENCL_LIBNAME@_la_SOURCES =
 
-# Force usage of a C++ linker
-nodist_EXTRA_lib@OPENCL_LIBNAME@_la_SOURCES = dummy.cpp
 
 if HAVE_CLOVER_ICD
 icddir = /etc/OpenCL/vendors/

@@ -31,6 +31,7 @@ AM_CPPFLAGS = \
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = vmwgfx_dri.la
 
+nodist_EXTRA_vmwgfx_dri_la_SOURCES = dummy.cpp
 vmwgfx_dri_la_SOURCES = \
 	target.c \
 	vmw_powf.c
@@ -48,9 +49,5 @@ vmwgfx_dri_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(top_builddir)/src/gallium/drivers/svga/libsvga.la \
 	$(GALLIUM_DRI_LIB_DEPS)
-
-vmwgfx_dri_la_LINK = $(CXXLINK) $(vmwgfx_dri_la_LDFLAGS)
-# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_vmwgfx_dri_la_SOURCES = dummy-cpp.cpp
 
 include $(top_srcdir)/install-gallium-links.mk

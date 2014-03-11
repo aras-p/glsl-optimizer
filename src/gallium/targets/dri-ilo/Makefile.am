@@ -33,6 +33,7 @@ AM_CPPFLAGS = \
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = ilo_dri.la
 
+nodist_EXTRA_ilo_dri_la_SOURCES = dummy.cpp
 ilo_dri_la_SOURCES = target.c
 
 ilo_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
@@ -49,8 +50,5 @@ ilo_dri_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/ilo/libilo.la \
 	$(GALLIUM_DRI_LIB_DEPS) \
 	$(INTEL_LIBS)
-
-# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_ilo_dri_la_SOURCES = dummy-cpp.cpp
 
 include $(top_srcdir)/install-gallium-links.mk

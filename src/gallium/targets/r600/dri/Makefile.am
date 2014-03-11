@@ -33,6 +33,7 @@ AM_CPPFLAGS = \
 dridir = $(DRI_DRIVER_INSTALL_DIR)
 dri_LTLIBRARIES = r600_dri.la
 
+nodist_EXTRA_r600_dri_la_SOURCES = dummy.cpp
 r600_dri_la_SOURCES = \
 	drm_target.c
 
@@ -53,7 +54,5 @@ r600_dri_la_LIBADD = \
 	$(GALLIUM_DRI_LIB_DEPS) \
 	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
-
-nodist_EXTRA_r600_dri_la_SOURCES = dummy.cpp
 
 include $(top_srcdir)/install-gallium-links.mk

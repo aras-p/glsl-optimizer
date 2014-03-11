@@ -42,6 +42,7 @@ AM_CFLAGS = $(X11_INCLUDES)
 
 lib_LTLIBRARIES = libGL.la
 
+nodist_EXTRA_libGL_la_SOURCES = dummy.cpp
 libGL_la_SOURCES = xlib.c
 libGL_la_LDFLAGS = -version-number $(GL_MAJOR):$(GL_MINOR):$(GL_TINY) -no-undefined
 
@@ -59,17 +60,9 @@ libGL_la_LIBADD = \
 	$(CLOCK_LIB)
 
 if HAVE_MESA_LLVM
-libGL_la_LINK = $(CXXLINK) $(libGL_la_LDFLAGS)
-# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_libGL_la_SOURCES = dummy-cpp.cpp
-
 libGL_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la $(LLVM_LIBS)
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
 libGL_la_LDFLAGS += $(LLVM_LDFLAGS)
-else
-libGL_la_LINK = $(CXXLINK) $(libGL_la_LDFLAGS)
-# Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_libGL_la_SOURCES = dummy-c.c
 endif
 
 include $(top_srcdir)/install-gallium-links.mk

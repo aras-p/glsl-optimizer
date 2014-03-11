@@ -39,6 +39,7 @@ AM_CFLAGS = \
 
 gbm_LTLIBRARIES = gbm_gallium_drm.la
 
+nodist_EXTRA_gbm_gallium_drm_la_SOURCES = dummy.cpp
 gbm_gallium_drm_la_SOURCES = gbm.c
 
 gbm_gallium_drm_la_LIBADD = \
@@ -64,18 +65,9 @@ endif
 
 gbm_gallium_drm_la_LDFLAGS = -no-undefined -avoid-version -module
 
-# FIXME: this shouldn't be needed
 if HAVE_MESA_LLVM
-gbm_gallium_drm_la_LINK = $(CXXLINK) $(gbm_gallium_drm_la_LDFLAGS)
-# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_gbm_gallium_drm_la_SOURCES = dummy-cpp.cpp
-
 gbm_gallium_drm_la_LIBADD += $(LLVM_LIBS)
 gbm_gallium_drm_la_LDFLAGS += $(LLVM_LDFLAGS)
-else
-gbm_gallium_drm_la_LINK = $(CXXLINK) $(gbm_gallium_drm_la_LDFLAGS)
-# Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_gbm_gallium_drm_la_SOURCES = dummy-c.c
 endif
 
 TESTS = gallium-gbm-symbols-check

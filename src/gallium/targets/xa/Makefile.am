@@ -36,6 +36,7 @@ pkgconfig_DATA = xatracker.pc
 
 lib_LTLIBRARIES = libxatracker.la
 
+nodist_EXTRA_libxatracker_la_SOURCES = dummy.cpp
 libxatracker_la_SOURCES =
 
 libxatracker_la_LIBADD = \
@@ -62,16 +63,9 @@ libxatracker_la_LDFLAGS = \
 	-no-undefined \
 	-version-number $(XA_MAJOR):$(XA_MINOR):$(XA_TINY)
 
-# FIXME: this shouldn't be needed
 if HAVE_MESA_LLVM
-# Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
-nodist_EXTRA_libxatracker_la_SOURCES = dummy-cpp.cpp
-
 libxatracker_la_LIBADD += $(LLVM_LIBS)
 libxatracker_la_LDFLAGS += $(LLVM_LDFLAGS)
-else
-# Mention a dummy pure C file to trigger generation of the $(LINK) variable
-nodist_EXTRA_libxatracker_la_SOURCES = dummy-c.c
 endif
 
 include $(top_srcdir)/install-lib-links.mk
