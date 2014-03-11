@@ -1269,7 +1269,7 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst)
          fprintf(stderr, "|");
 
       if (inst->src[i].file != IMM) {
-         fprintf(stderr, ":%s", reg_encoding[inst->src[i].type]);
+         fprintf(stderr, ":%s", brw_reg_type_letters(inst->src[i].type));
       }
 
       if (i < 2 && inst->src[i + 1].file != BAD_FILE)

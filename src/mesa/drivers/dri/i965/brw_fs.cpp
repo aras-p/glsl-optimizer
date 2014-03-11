@@ -3068,7 +3068,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
       fprintf(stderr, "???");
       break;
    }
-   fprintf(stderr, ":%s, ", reg_encoding[inst->dst.type]);
+   fprintf(stderr, ":%s, ", brw_reg_type_letters(inst->dst.type));
 
    for (int i = 0; i < 3 && inst->src[i].file != BAD_FILE; i++) {
       if (inst->src[i].negate)

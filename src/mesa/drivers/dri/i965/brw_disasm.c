@@ -244,7 +244,7 @@ static const char * const access_mode[2] = {
     [1] = "align16",
 };
 
-const char * const reg_encoding[8] = {
+static const char * const reg_encoding[8] = {
     [0] = "UD",
     [1] = "D",
     [2] = "UW",
