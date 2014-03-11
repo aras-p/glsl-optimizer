@@ -356,7 +356,11 @@ vec4_visitor::dead_code_eliminate()
             inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
             break;
          default:
-            inst->remove();
+            if (inst->writes_flag()) {
+               inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
+            } else {
+               inst->remove();
+            }
             break;
          }
          progress = true;
