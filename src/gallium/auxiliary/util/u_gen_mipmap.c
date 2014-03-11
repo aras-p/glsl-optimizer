@@ -1382,7 +1382,7 @@ get_next_slot(struct gen_mipmap_state *ctx)
 static unsigned
 set_vertex_data(struct gen_mipmap_state *ctx,
                 enum pipe_texture_target tex_target,
-                uint layer, float r)
+                uint face, float r)
 {
    unsigned offset;
 
@@ -1403,14 +1403,21 @@ set_vertex_data(struct gen_mipmap_state *ctx,
    ctx->vertices[3][0][1] = 1.0f;
 
    /* Setup vertex texcoords.  This is a little tricky for cube maps. */
-   if (tex_target == PIPE_TEXTURE_CUBE) {
+   if (tex_target == PIPE_TEXTURE_CUBE ||
+       tex_target == PIPE_TEXTURE_CUBE_ARRAY) {
       static const float st[4][2] = {
          {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
       };
 
-      util_map_texcoords2d_onto_cubemap(layer, &st[0][0], 2,
+      util_map_texcoords2d_onto_cubemap(face, &st[0][0], 2,
                                         &ctx->vertices[0][1][0], 8,
                                         FALSE);
+
+      /* set the layer for cube arrays */
+      ctx->vertices[0][1][3] = r;
+      ctx->vertices[1][1][3] = r;
+      ctx->vertices[2][1][3] = r;
+      ctx->vertices[3][1][3] = r;
    }
    else if (tex_target == PIPE_TEXTURE_1D_ARRAY) {
       /* 1D texture array  */
@@ -1520,29 +1527,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    assert(filter == PIPE_TEX_FILTER_LINEAR ||
           filter == PIPE_TEX_FILTER_NEAREST);
 
-   switch (pt->target) {
-   case PIPE_TEXTURE_1D:
-      type = TGSI_TEXTURE_1D;
-      break;
-   case PIPE_TEXTURE_2D:
-      type = TGSI_TEXTURE_2D;
-      break;
-   case PIPE_TEXTURE_3D:
-      type = TGSI_TEXTURE_3D;
-      break;
-   case PIPE_TEXTURE_CUBE:
-      type = TGSI_TEXTURE_CUBE;
-      break;
-   case PIPE_TEXTURE_1D_ARRAY:
-      type = TGSI_TEXTURE_1D_ARRAY;
-      break;
-   case PIPE_TEXTURE_2D_ARRAY:
-      type = TGSI_TEXTURE_2D_ARRAY;
-      break;
-   default:
-      assert(0);
-      type = TGSI_TEXTURE_2D;
-   }
+   type = util_pipe_tex_to_tgsi_tex(pt->target, 1);
 
    /* check if we can render in the texture's format */
    if (!screen->is_format_supported(screen, psv->format, pt->target,
@@ -1600,7 +1585,9 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
       if (pt->target == PIPE_TEXTURE_3D)
          nr_layers = u_minify(pt->depth0, dstLevel);
-      else if (pt->target == PIPE_TEXTURE_2D_ARRAY || pt->target == PIPE_TEXTURE_1D_ARRAY)
+      else if (pt->target == PIPE_TEXTURE_2D_ARRAY ||
+               pt->target == PIPE_TEXTURE_1D_ARRAY ||
+               pt->target == PIPE_TEXTURE_CUBE_ARRAY)
 	 nr_layers = pt->array_size;
       else
          nr_layers = 1;
@@ -1613,9 +1600,14 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
             layer = i;
             /* XXX hmm really? */
             rcoord = (float)layer / (float)nr_layers + 1.0f / (float)(nr_layers * 2);
-         } else if (pt->target == PIPE_TEXTURE_2D_ARRAY || pt->target == PIPE_TEXTURE_1D_ARRAY) {
+         } else if (pt->target == PIPE_TEXTURE_2D_ARRAY ||
+                    pt->target == PIPE_TEXTURE_1D_ARRAY) {
 	    layer = i;
 	    rcoord = (float)layer;
+         } else if (pt->target == PIPE_TEXTURE_CUBE_ARRAY) {
+            layer = i;
+            face = layer % 6;
+            rcoord = layer / 6;
 	 } else
             layer = face;
 

@@ -221,7 +221,8 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
       else {
          dstHeight = u_minify(pt->height0, dstLevel);
       }
-      if (texObj->Target == GL_TEXTURE_2D_ARRAY) {
+      if (texObj->Target == GL_TEXTURE_2D_ARRAY ||
+          texObj->Target == GL_TEXTURE_CUBE_MAP_ARRAY) {
          dstDepth = pt->array_size;
       }
       else {
