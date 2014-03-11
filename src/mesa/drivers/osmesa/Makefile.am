@@ -39,6 +39,7 @@ lib@OSMESA_LIB@_la_LDFLAGS = \
 	-module \
 	-no-undefined \
 	-version-number @OSMESA_VERSION@ \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
 

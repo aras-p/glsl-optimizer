@@ -51,6 +51,7 @@ libGLESv2_la_LIBADD = $(GLESv2_LIB_DEPS)
 libGLESv2_la_LDFLAGS = \
 	-no-undefined \
 	-version-number 2 \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
 if HAVE_SHARED_GLAPI

@@ -22,6 +22,7 @@ libgbm_la_SOURCES = \
 libgbm_la_LDFLAGS = \
 	-no-undefined \
 	-version-info 1:0 \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
 libgbm_la_LIBADD = \

@@ -70,6 +70,7 @@ gbm_gallium_drm_la_LDFLAGS = \
 	-module \
 	-no-undefined \
 	-avoid-version \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
 if HAVE_MESA_LLVM

@@ -53,6 +53,7 @@ mesa_dri_drivers_la_SOURCES =
 mesa_dri_drivers_la_LDFLAGS = \
         -module -avoid-version -shared \
         -Wl,-Bsymbolic \
+        $(GC_SECTIONS) \
         $()
 mesa_dri_drivers_la_LIBADD = \
         ../../libmesa.la \

@@ -77,6 +77,7 @@ libEGL_la_LDFLAGS = \
 	-no-undefined \
 	-version-number 1:0 \
 	-Wl,-Bsymbolic \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
 if HAVE_EGL_PLATFORM_X11

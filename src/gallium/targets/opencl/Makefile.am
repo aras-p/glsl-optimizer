@@ -6,6 +6,7 @@ lib@OPENCL_LIBNAME@_la_LDFLAGS = \
 	$(LLVM_LDFLAGS) \
 	-no-undefined \
 	-version-number 1:0 \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
 

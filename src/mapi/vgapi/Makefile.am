@@ -47,6 +47,7 @@ libOpenVG_la_LIBADD = $(VG_LIB_DEPS)
 libOpenVG_la_LDFLAGS = \
 	-no-undefined \
 	-version-number 1 \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
 vgapi_tmp.h: $(srcdir)/vgapi.csv $(top_srcdir)/src/mapi/mapi_abi.py

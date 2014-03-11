@@ -48,6 +48,7 @@ AM_LDFLAGS = \
 	-module \
 	-no-undefined \
 	-avoid-version \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/egl-static/egl.link
 

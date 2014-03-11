@@ -11,6 +11,7 @@ libglapi_la_SOURCES = $(MAPI_GLAPI_FILES)
 libglapi_la_LIBADD = $(PTHREAD_LIBS) $(SELINUX_LIBS)
 libglapi_la_LDFLAGS = \
 	-no-undefined \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
 include $(GLAPI)/gen/glapi_gen.mk

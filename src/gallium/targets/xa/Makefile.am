@@ -67,6 +67,7 @@ endif
 libxatracker_la_LDFLAGS = \
 	-no-undefined \
 	-version-number $(XA_MAJOR):$(XA_MINOR):$(XA_TINY) \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
 if HAVE_MESA_LLVM

@@ -47,6 +47,7 @@ libGL_la_SOURCES = xlib.c
 libGL_la_LDFLAGS = \
 	-no-undefined \
 	-version-number $(GL_MAJOR):$(GL_MINOR):$(GL_TINY) \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
 libGL_la_LIBADD = \

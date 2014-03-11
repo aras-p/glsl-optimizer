@@ -11,6 +11,7 @@ libwayland_egl_la_SOURCES = wayland-egl.c
 libwayland_egl_la_LDFLAGS = \
 	-no-undefined \
 	-version-info 1 \
+	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
 TESTS = wayland-egl-symbols-check
