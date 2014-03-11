@@ -29,7 +29,6 @@ AM_CPPFLAGS = \
 
 AM_CFLAGS = \
 	$(GALLIUM_CFLAGS) \
-	$(LIBUDEV_CFLAGS) \
 	$(LIBDRM_CFLAGS)
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -45,7 +44,6 @@ libxatracker_la_LIBADD = \
 	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/state_trackers/xa/libxatracker.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(LIBUDEV_LIBS) \
 	$(LIBDRM_LIBS)
 
 if HAVE_DRI
