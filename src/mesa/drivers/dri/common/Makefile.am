@@ -48,7 +48,7 @@ sysconf_DATA = drirc
 
 if DRICOMMON_NEED_LIBDRM
 AM_CFLAGS += $(LIBDRM_CFLAGS)
-libdricommon_la_LDFLAGS = $(LIBDRM_LIBS)
+libdricommon_la_LIBADD = $(LIBDRM_LIBS)
 else
 AM_CFLAGS += -D__NOT_HAVE_DRM_H
 endif
