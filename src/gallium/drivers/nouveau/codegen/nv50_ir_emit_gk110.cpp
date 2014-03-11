@@ -1472,7 +1472,11 @@ CodeEmitterGK110::emitMOV(const Instruction *i)
       setImmediate32(i, 0, Modifier(0));
    } else
    if (i->src(0).getFile() == FILE_PREDICATE) {
-      // TODO
+      code[0] = 0x00000002;
+      code[1] = 0x84401c07;
+      emitPredicate(i);
+      defId(i->def(0), 2);
+      srcId(i->src(0), 14);
    } else {
       emitForm_C(i, 0x24c, 2);
       code[1] |= i->lanes << 10;
