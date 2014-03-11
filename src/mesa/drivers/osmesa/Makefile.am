@@ -47,9 +47,7 @@ lib@OSMESA_LIB@_la_LIBADD = \
 	$(SHARED_GLAPI_LIB) \
 	$(OSMESA_LIB_DEPS)
 
-if BUILD_SHARED
 include $(top_srcdir)/install-lib-links.mk
-endif
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = osmesa.pc

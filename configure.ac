@@ -285,17 +285,14 @@ dnl Can't have static and shared libraries, default to static if user
 dnl explicitly requested. If both disabled, set to static since shared
 dnl was explicitly requested.
 case "x$enable_static$enable_shared" in
-xyesyes )
-    AC_MSG_WARN([Cannot build static and shared libraries, disabling shared])
-    enable_shared=no
+xnoyes )
     ;;
-xnono )
-    AC_MSG_WARN([Cannot disable both static and shared libraries, enabling static])
-    enable_static=yes
+* )
+    AC_MSG_WARN([Messa build supports only shared libraries, enabling shared])
+    enable_shared=yes
+    enable_static=no
     ;;
 esac
-
-AM_CONDITIONAL(BUILD_SHARED, test "x$enable_shared" = xyes)
 
 dnl
 dnl other compiler options
@@ -331,20 +328,16 @@ AM_CONDITIONAL(HAVE_COMPAT_SYMLINKS, test "x$HAVE_COMPAT_SYMLINKS" = xyes)
 dnl
 dnl library names
 dnl
-if test "$enable_static" = yes; then
-    LIB_EXT='a'
-else
-    case "$host_os" in
-    darwin* )
-        LIB_EXT='dylib' ;;
-    cygwin* )
-        LIB_EXT='dll' ;;
-    aix* )
-        LIB_EXT='a' ;;
-    * )
-        LIB_EXT='so' ;;
-    esac
-fi
+case "$host_os" in
+darwin* )
+    LIB_EXT='dylib' ;;
+cygwin* )
+    LIB_EXT='dll' ;;
+aix* )
+    LIB_EXT='a' ;;
+* )
+    LIB_EXT='so' ;;
+esac
 
 AC_SUBST([LIB_EXT])
 
@@ -781,11 +774,6 @@ PKG_CHECK_MODULES([LIBUDEV], [libudev >= $LIBUDEV_REQUIRED],
                   have_libudev=yes, have_libudev=no)
 
 if test "x$enable_dri" = xyes; then
-    # DRI must be shared, I think
-    if test "$enable_static" = yes; then
-        AC_MSG_ERROR([Cannot use static libraries for DRI drivers])
-    fi
-
     # not a hard requirement as swrast does not depend on it
     if test "x$have_libdrm" = xyes; then
         DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
@@ -1117,12 +1105,7 @@ x16|x32)
 esac
 
 if test "x$enable_osmesa" = xyes -o "x$enable_gallium_osmesa" = xyes; then
-    # only link libraries with osmesa if shared
-    if test "$enable_static" = no; then
-        OSMESA_LIB_DEPS="-lm $PTHREAD_LIBS $SELINUX_LIBS $DLOPEN_LIBS"
-    else
-        OSMESA_LIB_DEPS=""
-    fi
+    OSMESA_LIB_DEPS="-lm $PTHREAD_LIBS $SELINUX_LIBS $DLOPEN_LIBS"
     OSMESA_MESA_DEPS=""
     OSMESA_PC_LIB_PRIV="-lm $PTHREAD_LIBS $SELINUX_LIBS $DLOPEN_LIBS"
 fi
@@ -1171,11 +1154,8 @@ if test "x$enable_egl" = xyes; then
 
     AC_CHECK_FUNC(mincore, [DEFINES="$DEFINES -DHAVE_MINCORE"])
 
-    if test "$enable_static" != yes; then
-        if test "x$enable_dri" = xyes; then
-	    HAVE_EGL_DRIVER_DRI2=1
-	fi
-
+    if test "x$enable_dri" = xyes; then
+        HAVE_EGL_DRIVER_DRI2=1
     fi
 fi
 AM_CONDITIONAL(HAVE_EGL, test "x$enable_egl" = xyes)
