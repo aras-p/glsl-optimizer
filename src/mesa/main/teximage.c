@@ -1657,7 +1657,10 @@ error_check_subtexture_dimensions(struct gl_context *ctx,
 
    /* check zoffset and depth */
    if (dims > 2) {
-      GLint zBorder = (target == GL_TEXTURE_2D_ARRAY) ? 0 : destImage->Border;
+      GLint zBorder = (target == GL_TEXTURE_2D_ARRAY ||
+                       target == GL_TEXTURE_CUBE_MAP_ARRAY) ?
+                         0 : destImage->Border;
+
       if (zoffset < -zBorder) {
          _mesa_error(ctx, GL_INVALID_VALUE, "%s3D(zoffset)", function);
          return GL_TRUE;
