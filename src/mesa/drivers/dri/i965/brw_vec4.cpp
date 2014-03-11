@@ -369,6 +369,7 @@ bool
 vec4_visitor::dead_code_eliminate()
 {
    bool progress = false;
+   bool seen_control_flow = false;
    int pc = -1;
 
    calculate_live_intervals();
@@ -377,6 +378,8 @@ vec4_visitor::dead_code_eliminate()
       vec4_instruction *inst = (vec4_instruction *)node;
 
       pc++;
+
+      seen_control_flow = inst->is_control_flow() || seen_control_flow;
 
       if (inst->dst.file != GRF || inst->has_side_effects())
          continue;
@@ -393,6 +396,49 @@ vec4_visitor::dead_code_eliminate()
       }
 
       progress = try_eliminate_instruction(inst, write_mask) || progress;
+
+      if (seen_control_flow || inst->predicate || inst->prev == NULL)
+         continue;
+
+      int dead_channels = inst->dst.writemask;
+
+      for (int i = 0; i < 3; i++) {
+         if (inst->src[i].file != GRF ||
+             inst->src[i].reg != inst->dst.reg)
+               continue;
+
+         for (int j = 0; j < 4; j++) {
+            int swiz = BRW_GET_SWZ(inst->src[i].swizzle, j);
+            dead_channels &= ~(1 << swiz);
+         }
+      }
+
+      for (exec_node *node = inst->prev, *prev = node->prev;
+           prev != NULL && dead_channels != 0;
+           node = prev, prev = prev->prev) {
+         vec4_instruction *scan_inst = (vec4_instruction  *)node;
+
+         if (scan_inst->dst.file != GRF || scan_inst->has_side_effects())
+            continue;
+
+         if (inst->dst.reg == scan_inst->dst.reg) {
+            int new_writemask = scan_inst->dst.writemask & ~dead_channels;
+
+            progress = try_eliminate_instruction(scan_inst, new_writemask) ||
+                       progress;
+         }
+
+         for (int i = 0; i < 3; i++) {
+            if (scan_inst->src[i].file != GRF ||
+                scan_inst->src[i].reg != inst->dst.reg)
+               continue;
+
+            for (int j = 0; j < 4; j++) {
+               int swiz = BRW_GET_SWZ(scan_inst->src[i].swizzle, j);
+               dead_channels &= ~(1 << swiz);
+            }
+         }
+      }
    }
 
    if (progress)
