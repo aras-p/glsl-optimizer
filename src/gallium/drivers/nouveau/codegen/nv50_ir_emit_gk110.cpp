@@ -973,6 +973,9 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
       case OP_TXD:
          code[1] = 0x7e000000;
          break;
+      case OP_TXF:
+         code[1] = 0x78000000;
+         break;
       default:
          code[1] = 0x7d800000;
          break;
@@ -982,6 +985,10 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
       case OP_TXD:
          code[0] = 0x00000002;
          code[1] = 0x76000000;
+         break;
+      case OP_TXF:
+         code[0] = 0x00000002;
+         code[1] = 0x70000000;
          break;
       default:
          code[0] = 0x00000001;
@@ -993,25 +1000,25 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
 
    code[1] |= isNextIndependentTex(i) ? 0x1 : 0x2; // t : p mode
 
-   // if (i->tex.liveOnly)
-   //    ?
+   if (i->tex.liveOnly)
+      code[0] |= 0x80000000;
 
    switch (i->op) {
    case OP_TEX: break;
    case OP_TXB: code[1] |= 0x2000; break;
    case OP_TXL: code[1] |= 0x3000; break;
-   case OP_TXF: break; // XXX
+   case OP_TXF: break;
    case OP_TXG: break; // XXX
    case OP_TXD: break;
    default:
       assert(!"invalid texture op");
       break;
    }
-   /*
+
    if (i->op == OP_TXF) {
       if (!i->tex.levelZero)
-         code[1] |= 0x02000000;
-   } else */
+         code[1] |= 0x1000;
+   } else
    if (i->tex.levelZero) {
       code[1] |= 0x1000;
    }
@@ -1035,18 +1042,18 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
    code[1] |= (i->tex.target.isCube() ? 3 : (i->tex.target.getDim() - 1)) << 7;
    if (i->tex.target.isArray())
       code[1] |= 0x40;
-   // if (i->tex.target.isShadow())
-   //   ?
-   // if (i->tex.target == TEX_TARGET_2D_MS ||
-   //     i->tex.target == TEX_TARGET_2D_MS_ARRAY)
-   //   ?
+   if (i->tex.target.isShadow())
+      code[1] |= 0x400;
+   if (i->tex.target == TEX_TARGET_2D_MS ||
+       i->tex.target == TEX_TARGET_2D_MS_ARRAY)
+      code[1] |= 0x800;
 
    if (i->srcExists(src1) && i->src(src1).getFile() == FILE_IMMEDIATE) {
       // ?
    }
 
-   // if (i->tex.useOffsets)
-   //   ?
+   if (i->tex.useOffsets)
+      code[1] |= 0x200;
 }
 
 void
