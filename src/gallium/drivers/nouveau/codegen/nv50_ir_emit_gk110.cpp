@@ -949,7 +949,17 @@ void CodeEmitterGK110::emitTEXBAR(const Instruction *i)
 
 void CodeEmitterGK110::emitTEXCSAA(const TexInstruction *i)
 {
-   emitNOP(i); // TODO
+   code[0] = 0x00000002;
+   code[1] = 0x76c00000;
+
+   // code[1] |= i->tex.r << 9;
+   // code[1] |= i->tex.s << (9 + 8);
+
+   if (i->tex.liveOnly)
+      code[0] |= 0x80000000;
+
+   defId(i->def(0), 2);
+   srcId(i->src(0), 10);
 }
 
 static inline bool
