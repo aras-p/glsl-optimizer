@@ -885,8 +885,8 @@ fs_visitor::import_uniforms(fs_visitor *v)
    hash_table_call_foreach(v->variable_ht,
 			   import_uniforms_callback,
 			   variable_ht);
-   this->params_remap = v->params_remap;
-   this->nr_params_remap = v->nr_params_remap;
+   this->push_constant_loc = v->push_constant_loc;
+   this->uniforms = v->uniforms;
 }
 
 /* Our support for uniforms is piggy-backed on the struct
@@ -1397,11 +1397,8 @@ fs_visitor::assign_curb_setup()
 {
    if (dispatch_width == 8) {
       c->prog_data.first_curbe_grf = c->nr_payload_regs;
-      stage_prog_data->nr_params = uniforms;
    } else {
       c->prog_data.first_curbe_grf_16 = c->nr_payload_regs;
-      /* Make sure we didn't try to sneak in an extra uniform */
-      assert(uniforms == 0);
    }
 
    c->prog_data.curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
@@ -1412,7 +1409,19 @@ fs_visitor::assign_curb_setup()
 
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == UNIFORM) {
-	    int constant_nr = inst->src[i].reg + inst->src[i].reg_offset;
+            int uniform_nr = inst->src[i].reg + inst->src[i].reg_offset;
+            int constant_nr;
+            if (uniform_nr >= 0 && uniform_nr < (int) uniforms) {
+               constant_nr = push_constant_loc[uniform_nr];
+            } else {
+               /* Section 5.11 of the OpenGL 4.1 spec says:
+                * "Out-of-bounds reads return undefined values, which include
+                *  values from other variables of the active program or zero."
+                * Just return the first push constant.
+                */
+               constant_nr = 0;
+            }
+
 	    struct brw_reg brw_reg = brw_vec1_grf(c->nr_payload_regs +
 						  constant_nr / 8,
 						  constant_nr % 8);
@@ -1724,94 +1733,6 @@ fs_visitor::compact_virtual_grfs()
    }
 }
 
-bool
-fs_visitor::remove_dead_constants()
-{
-   if (dispatch_width == 8) {
-      this->params_remap = ralloc_array(mem_ctx, int, uniforms);
-      this->nr_params_remap = uniforms;
-
-      for (unsigned int i = 0; i < uniforms; i++)
-	 this->params_remap[i] = -1;
-
-      /* Find which params are still in use. */
-      foreach_list(node, &this->instructions) {
-	 fs_inst *inst = (fs_inst *)node;
-
-	 for (int i = 0; i < 3; i++) {
-	    int constant_nr = inst->src[i].reg + inst->src[i].reg_offset;
-
-	    if (inst->src[i].file != UNIFORM)
-	       continue;
-
-	    /* Section 5.11 of the OpenGL 4.3 spec says:
-	     *
-	     *     "Out-of-bounds reads return undefined values, which include
-	     *     values from other variables of the active program or zero."
-	     */
-	    if (constant_nr < 0 || constant_nr >= (int)uniforms) {
-	       constant_nr = 0;
-	    }
-
-	    /* For now, set this to non-negative.  We'll give it the
-	     * actual new number in a moment, in order to keep the
-	     * register numbers nicely ordered.
-	     */
-	    this->params_remap[constant_nr] = 0;
-	 }
-      }
-
-      /* Figure out what the new numbers for the params will be.  At some
-       * point when we're doing uniform array access, we're going to want
-       * to keep the distinction between .reg and .reg_offset, but for
-       * now we don't care.
-       */
-      unsigned int new_nr_params = 0;
-      for (unsigned int i = 0; i < uniforms; i++) {
-	 if (this->params_remap[i] != -1) {
-	    this->params_remap[i] = new_nr_params++;
-	 }
-      }
-
-      /* Update the list of params to be uploaded to match our new numbering. */
-      for (unsigned int i = 0; i < uniforms; i++) {
-	 int remapped = this->params_remap[i];
-
-	 if (remapped == -1)
-	    continue;
-
-	 stage_prog_data->param[remapped] = stage_prog_data->param[i];
-      }
-
-      uniforms = new_nr_params;
-   } else {
-      /* This should have been generated in the SIMD8 pass already. */
-      assert(this->params_remap);
-   }
-
-   /* Now do the renumbering of the shader to remove unused params. */
-   foreach_list(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
-      for (int i = 0; i < 3; i++) {
-	 int constant_nr = inst->src[i].reg + inst->src[i].reg_offset;
-
-	 if (inst->src[i].file != UNIFORM)
-	    continue;
-
-	 /* as above alias to 0 */
-	 if (constant_nr < 0 || constant_nr >= (int)this->nr_params_remap) {
-	    constant_nr = 0;
-	 }
-	 assert(this->params_remap[constant_nr] != -1);
-	 inst->src[i].reg = this->params_remap[constant_nr];
-	 inst->src[i].reg_offset = 0;
-      }
-   }
-
-   return true;
-}
-
 /*
  * Implements array access of uniforms by inserting a
  * PULL_CONSTANT_LOAD instruction.
@@ -1872,8 +1793,7 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
 }
 
 /**
- * Choose accesses from the UNIFORM file to demote to using the pull
- * constant buffer.
+ * Assign UNIFORM file registers to either push constants or pull constants.
  *
  * We allow a fragment shader to have more than the specified minimum
  * maximum number of fragment shader uniform components (64).  If
@@ -1882,24 +1802,62 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
  * update the program to load them.
  */
 void
-fs_visitor::setup_pull_constants()
+fs_visitor::assign_constant_locations()
 {
-   /* Only allow 16 registers (128 uniform components) as push constants. */
-   unsigned int max_uniform_components = 16 * 8;
-   if (uniforms <= max_uniform_components)
+   /* Only the first compile (SIMD8 mode) gets to decide on locations. */
+   if (dispatch_width != 8)
       return;
 
-   /* Just demote the end of the list.  We could probably do better
+   /* Find which UNIFORM registers are still in use. */
+   bool is_live[uniforms];
+   for (unsigned int i = 0; i < uniforms; i++) {
+      is_live[i] = false;
+   }
+
+   foreach_list(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *) node;
+
+      for (int i = 0; i < 3; i++) {
+         if (inst->src[i].file != UNIFORM)
+            continue;
+
+         int constant_nr = inst->src[i].reg + inst->src[i].reg_offset;
+         if (constant_nr >= 0 && constant_nr < (int) uniforms)
+            is_live[constant_nr] = true;
+      }
+   }
+
+   /* Only allow 16 registers (128 uniform components) as push constants.
+    *
+    * Just demote the end of the list.  We could probably do better
     * here, demoting things that are rarely used in the program first.
     */
-   unsigned int pull_uniform_base = max_uniform_components;
+   unsigned int max_push_components = 16 * 8;
+   unsigned int num_push_constants = 0;
 
+   push_constant_loc = ralloc_array(mem_ctx, int, uniforms);
    pull_constant_loc = ralloc_array(mem_ctx, int, uniforms);
+   for (unsigned int i = 0; i < uniforms; i++)
+      pull_constant_loc[i] = -1;
+
    for (unsigned int i = 0; i < uniforms; i++) {
-      if (i < pull_uniform_base) {
-         pull_constant_loc[i] = -1;
+      if (!is_live[i] || pull_constant_loc[i] != -1) {
+         /* This UNIFORM register is either dead, or has already been demoted
+          * to a pull const.  Mark it as no longer living in the param[] array.
+          */
+         push_constant_loc[i] = -1;
+         continue;
+      }
+
+      if (num_push_constants < max_push_components) {
+         /* Retain as a push constant.  Record the location in the params[]
+          * array.
+          */
+         push_constant_loc[i] = num_push_constants++;
       } else {
-         pull_constant_loc[i] = -1;
+         /* Demote to a pull constant. */
+         push_constant_loc[i] = -1;
+
          /* If our constant is already being uploaded for reladdr purposes,
           * reuse it.
           */
@@ -1916,7 +1874,22 @@ fs_visitor::setup_pull_constants()
          }
       }
    }
-   uniforms = pull_uniform_base;
+
+   stage_prog_data->nr_params = num_push_constants;
+
+   /* Up until now, the param[] array has been indexed by reg + reg_offset
+    * of UNIFORM registers.  Condense it to only contain the uniforms we
+    * chose to upload as push constants.
+    */
+   for (unsigned int i = 0; i < uniforms; i++) {
+      int remapped = push_constant_loc[i];
+
+      if (remapped == -1)
+         continue;
+
+      assert(remapped <= i);
+      stage_prog_data->param[remapped] = stage_prog_data->param[i];
+   }
 
    demote_pull_constants(false);
 }
@@ -3408,8 +3381,7 @@ fs_visitor::run()
       split_virtual_grfs();
 
       move_uniform_array_access_to_pull_constants();
-      remove_dead_constants();
-      setup_pull_constants();
+      assign_constant_locations();
 
       opt_drop_redundant_mov_to_flags();
 

@@ -2972,8 +2972,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
 
    this->uniforms = 0;
    this->pull_constant_loc = NULL;
-   this->params_remap = NULL;
-   this->nr_params_remap = 0;
+   this->push_constant_loc = NULL;
 
    this->force_uncompressed_stack = 0;
 
