@@ -1059,7 +1059,33 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
 void
 CodeEmitterGK110::emitTXQ(const TexInstruction *i)
 {
-   emitNOP(i); // TODO
+   code[0] = 0x00000002;
+   code[1] = 0x75400001;
+
+   switch (i->tex.query) {
+   case TXQ_DIMS:            code[0] |= 0x01 << 25; break;
+   case TXQ_TYPE:            code[0] |= 0x02 << 25; break;
+   case TXQ_SAMPLE_POSITION: code[0] |= 0x05 << 25; break;
+   case TXQ_FILTER:          code[0] |= 0x10 << 25; break;
+   case TXQ_LOD:             code[0] |= 0x12 << 25; break;
+   case TXQ_BORDER_COLOUR:   code[0] |= 0x16 << 25; break;
+   default:
+      assert(!"invalid texture query");
+      break;
+   }
+
+   // TODO:
+   // code[1] |= i->tex.mask << 14;
+   //
+   // code[1] |= i->tex.r << 9;
+   // code[1] |= i->tex.s << 2;
+   // if (i->tex.sIndirectSrc >= 0 || i->tex.rIndirectSrc >= 0)
+   //   ?
+
+   defId(i->def(0), 2);
+   srcId(i->src(0), 10);
+
+   emitPredicate(i);
 }
 
 void
