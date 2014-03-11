@@ -3088,10 +3088,13 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
          break;
       case UNIFORM:
          fprintf(stderr, "u%d", inst->src[i].reg);
-         if (virtual_grf_sizes[inst->src[i].reg] != 1 ||
-             inst->src[i].subreg_offset)
+         if (inst->src[i].reladdr) {
+            fprintf(stderr, "+reladdr");
+         } else if (virtual_grf_sizes[inst->src[i].reg] != 1 ||
+             inst->src[i].subreg_offset) {
             fprintf(stderr, "+%d.%d", inst->src[i].reg_offset,
                     inst->src[i].subreg_offset);
+         }
          break;
       case BAD_FILE:
          fprintf(stderr, "(null)");
