@@ -969,7 +969,7 @@ _mesa_init_errors(struct gl_context *ctx)
 
 /**
  * Loop through debug group stack tearing down states for
- * filtering debug messages.
+ * filtering debug messages.  Then free debug output state.
  */
 void
 _mesa_free_errors_data(struct gl_context *ctx)
@@ -980,6 +980,9 @@ _mesa_free_errors_data(struct gl_context *ctx)
       for (i = 0; i <= ctx->Debug->GroupStackDepth; i++) {
          free_errors_data(ctx, i);
       }
+      FREE(ctx->Debug);
+      /* set to NULL just in case it is used before context is completely gone. */
+      ctx->Debug = NULL;
    }
 }
 
