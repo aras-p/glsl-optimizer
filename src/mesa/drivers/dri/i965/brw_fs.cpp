@@ -1904,11 +1904,6 @@ fs_visitor::setup_pull_constants()
    if (uniforms <= max_uniform_components)
       return;
 
-   if (dispatch_width == 16) {
-      fail("Pull constants not supported in SIMD16\n");
-      return;
-   }
-
    /* Just demote the end of the list.  We could probably do better
     * here, demoting things that are rarely used in the program first.
     */
