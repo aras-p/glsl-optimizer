@@ -30,8 +30,6 @@
 #
 include $(top_srcdir)/src/gallium/Automake.inc
 
-LDFLAGS += -Wl,--version-script=$(top_srcdir)/src/gallium/targets/egl-static/egl.link
-
 AM_CFLAGS = $(PTHREAD_CFLAGS)
 AM_CPPFLAGS = \
 	$(GALLIUM_CFLAGS) \
@@ -45,6 +43,12 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/state_trackers/egl \
 	-I$(top_srcdir)/src/egl/main \
 	-D_EGL_MAIN=_eglMain
+
+AM_LDFLAGS = \
+	-module \
+	-avoid-version \
+	-Wl,--no-undefined \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/egl-static/egl.link
 
 egldir = $(EGL_DRIVER_INSTALL_DIR)
 egl_LTLIBRARIES = egl_gallium.la
@@ -68,7 +72,13 @@ egl_gallium_la_LIBADD = \
 	$(PTHREAD_LIBS) \
 	-lm
 
-egl_gallium_la_LDFLAGS = -Wl,--no-undefined -Wl,--allow-multiple-definition -avoid-version -module
+if HAVE_MESA_LLVM
+AM_LDFLAGS += $(LLVM_LDFLAGS)
+endif
+
+egl_gallium_la_LDFLAGS = \
+	$(AM_LDFLAGS) \
+	-Wl,--allow-multiple-definition
 
 if HAVE_EGL_PLATFORM_X11
 AM_CPPFLAGS += $(LIBDRM_CFLAGS)
@@ -121,7 +131,6 @@ egl_LTLIBRARIES += st_GL.la
 
 nodist_EXTRA_st_GL_la_SOURCES = dummy.cpp
 st_GL_la_SOURCES = st_GL.c
-st_GL_la_LDFLAGS = -Wl,--no-undefined -avoid-version -module
 
 # st_GL, built only when shared glapi is not enabled
 st_GL_la_LIBADD = \
@@ -232,12 +241,10 @@ endif
 
 if HAVE_MESA_LLVM
 egl_gallium_la_LIBADD += $(LLVM_LIBS)
-egl_gallium_la_LDFLAGS += $(LLVM_LDFLAGS)
 
 if HAVE_OPENGL
 if !HAVE_SHARED_GLAPI
 st_GL_la_LIBADD += $(LLVM_LIBS)
-st_GL_la_LDFLAGS += $(LLVM_LDFLAGS)
 endif
 endif
 endif
