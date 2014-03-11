@@ -58,10 +58,11 @@ GL_PATCH = 0
 
 lib@GL_LIB@_la_LIBADD = \
 	$(top_builddir)/src/mesa/libmesa.la \
-	$(top_builddir)/src/mapi/glapi/libglapi.la
+	$(top_builddir)/src/mapi/glapi/libglapi.la \
+	$(GL_LIB_DEPS)
+
 lib@GL_LIB@_la_LDFLAGS = \
 	-version-number $(GL_MAJOR):$(GL_MINOR):$(GL_PATCH) \
-	-no-undefined \
-	$(GL_LIB_DEPS)
+	-no-undefined
 
 include $(top_srcdir)/install-lib-links.mk
