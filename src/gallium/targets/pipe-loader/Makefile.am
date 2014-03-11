@@ -58,6 +58,7 @@ endif
 if HAVE_GALLIUM_I915
 pipe_LTLIBRARIES += pipe_i915.la
 pipe_i915_la_SOURCES = pipe_i915.c
+nodist_EXTRA_pipe_i915_la_SOURCES = dummy.cpp
 pipe_i915_la_LIBADD = \
 	$(PIPE_LIBS) \
 	$(top_builddir)/src/gallium/winsys/i915/drm/libi915drm.la \
@@ -66,7 +67,6 @@ pipe_i915_la_LIBADD = \
 	$(INTEL_LIBS)
 
 if HAVE_MESA_LLVM
-nodist_EXTRA_pipe_i915_la_SOURCES = dummy.cpp
 pipe_i915_la_LIBADD += $(LLVM_LIBS)
 endif
 endif
@@ -107,6 +107,7 @@ endif
 if HAVE_GALLIUM_R600
 pipe_LTLIBRARIES += pipe_r600.la
 pipe_r600_la_SOURCES = pipe_r600.c
+nodist_EXTRA_pipe_r600_la_SOURCES = dummy.cpp
 pipe_r600_la_LIBADD = \
 	$(PIPE_LIBS) \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
@@ -115,7 +116,6 @@ pipe_r600_la_LIBADD = \
 	$(RADEON_LIBS)
 
 if HAVE_MESA_LLVM
-nodist_EXTRA_pipe_r600_la_SOURCES = dummy.cpp
 pipe_r600_la_LIBADD += $(LLVM_LIBS)
 endif
 endif
@@ -155,6 +155,7 @@ endif
 if HAVE_GALLIUM_SVGA
 pipe_LTLIBRARIES += pipe_vmwgfx.la
 pipe_vmwgfx_la_SOURCES = pipe_vmwgfx.c
+nodist_EXTRA_pipe_vmwgfx_la_SOURCES = dummy.cpp
 pipe_vmwgfx_la_LIBADD = \
 	$(PIPE_LIBS) \
 	$(top_builddir)/src/gallium/winsys/svga/drm/libsvgadrm.la \
@@ -162,7 +163,6 @@ pipe_vmwgfx_la_LIBADD = \
 	$(LIBDRM_LIBS)
 
 if HAVE_MESA_LLVM
-nodist_EXTRA_pipe_vmwgfx_la_SOURCES = dummy.cpp
 pipe_vmwgfx_la_LIBADD += $(LLVM_LIBS)
 endif
 endif
@@ -172,14 +172,13 @@ AM_CPPFLAGS += -DGALLIUM_SOFTPIPE
 
 pipe_LTLIBRARIES += pipe_swrast.la
 pipe_swrast_la_SOURCES = pipe_swrast.c
+nodist_EXTRA_pipe_swrast_la_SOURCES = dummy.cpp
 pipe_swrast_la_LIBADD = \
 	$(PIPE_LIBS) \
 	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la
 
 if HAVE_GALLIUM_LLVMPIPE
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
-
-nodist_EXTRA_pipe_swrast_la_SOURCES = dummy.cpp
 
 pipe_swrast_la_LIBADD += \
 	$(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la \
