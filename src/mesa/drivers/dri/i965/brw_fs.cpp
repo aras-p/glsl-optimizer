@@ -1883,6 +1883,7 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
          inst->src[i].reladdr = NULL;
       }
    }
+   invalidate_live_intervals();
 }
 
 /**
@@ -1968,6 +1969,7 @@ fs_visitor::setup_pull_constants()
 	 inst->src[i].set_smear(pull_index & 3);
       }
    }
+   invalidate_live_intervals();
 }
 
 bool
