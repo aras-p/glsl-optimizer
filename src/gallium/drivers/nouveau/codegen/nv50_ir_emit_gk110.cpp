@@ -1175,7 +1175,15 @@ CodeEmitterGK110::emitFlow(const Instruction *i)
 void
 CodeEmitterGK110::emitPFETCH(const Instruction *i)
 {
-   emitNOP(i); // TODO
+   uint32_t prim = i->src(0).get()->reg.data.u32;
+
+   code[0] = 0x00000002 | ((prim & 0xff) << 23);
+   code[1] = 0x7f800000;
+
+   emitPredicate(i);
+
+   defId(i->def(0), 2);
+   srcId(i->src(1), 10);
 }
 
 void
