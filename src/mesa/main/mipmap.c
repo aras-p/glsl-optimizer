@@ -1746,6 +1746,7 @@ _mesa_generate_mipmap_level(GLenum target,
       }
       break;
    case GL_TEXTURE_2D_ARRAY_EXT:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
       for (i = 0; i < dstDepth; i++) {
 	 make_2d_mipmap(datatype, comps, border,
 			srcWidth, srcHeight, srcData[i], srcRowStride,
@@ -1788,7 +1789,8 @@ _mesa_next_mipmap_level_size(GLenum target, GLint border,
    }
 
    if ((srcDepth - 2 * border > 1) &&
-       (target != GL_TEXTURE_2D_ARRAY_EXT)) {
+       (target != GL_TEXTURE_2D_ARRAY_EXT &&
+        target != GL_TEXTURE_CUBE_MAP_ARRAY)) {
       *dstDepth = (srcDepth - 2 * border) / 2 + 2 * border;
    }
    else {
@@ -2029,7 +2031,8 @@ generate_mipmap_compressed(struct gl_context *ctx, GLenum target,
    /* only two types of compressed textures at this time */
    assert(texObj->Target == GL_TEXTURE_2D ||
 	  texObj->Target == GL_TEXTURE_2D_ARRAY ||
-	  texObj->Target == GL_TEXTURE_CUBE_MAP_ARB);
+	  texObj->Target == GL_TEXTURE_CUBE_MAP_ARB ||
+          texObj->Target == GL_TEXTURE_CUBE_MAP_ARRAY);
 
    /*
     * Choose a format for the temporary, uncompressed base image.
