@@ -167,13 +167,18 @@ endif
 endif
 
 if HAVE_GALLIUM_SOFTPIPE
+AM_CPPFLAGS += -DGALLIUM_SOFTPIPE
+
 pipe_LTLIBRARIES += pipe_swrast.la
 pipe_swrast_la_SOURCES = pipe_swrast.c
 pipe_swrast_la_LIBADD = \
 	$(PIPE_LIBS) \
 	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la
 pipe_swrast_la_LDFLAGS = -no-undefined -avoid-version -module
+
 if HAVE_GALLIUM_LLVMPIPE
+AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
+
 nodist_EXTRA_pipe_swrast_la_SOURCES = dummy.cpp
 
 pipe_swrast_la_LIBADD += \
