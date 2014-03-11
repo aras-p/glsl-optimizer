@@ -322,7 +322,7 @@ src_reg::equals(src_reg *r)
 }
 
 /**
- * Must be called after calculate_live_intervales() to remove unused
+ * Must be called after calculate_live_intervals() to remove unused
  * writes to registers -- register allocation will fail otherwise
  * because something deffed but not used won't be considered to
  * interfere with other regs.
@@ -331,35 +331,36 @@ bool
 vec4_visitor::dead_code_eliminate()
 {
    bool progress = false;
-   int pc = 0;
+   int pc = -1;
 
    calculate_live_intervals();
 
    foreach_list_safe(node, &this->instructions) {
       vec4_instruction *inst = (vec4_instruction *)node;
 
-      if (inst->dst.file == GRF && !inst->has_side_effects()) {
-         assert(this->virtual_grf_end[inst->dst.reg] >= pc);
-         if (this->virtual_grf_end[inst->dst.reg] == pc) {
-            /* Don't dead code eliminate instructions that write to the
-             * accumulator as a side-effect. Instead just set the destination
-             * to the null register to free it.
-             */
-            switch (inst->opcode) {
-            case BRW_OPCODE_ADDC:
-            case BRW_OPCODE_SUBB:
-            case BRW_OPCODE_MACH:
-               inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
-               break;
-            default:
-               inst->remove();
-               break;
-            }
-            progress = true;
-         }
-      }
-
       pc++;
+
+      if (inst->dst.file != GRF || inst->has_side_effects())
+         continue;
+
+      assert(this->virtual_grf_end[inst->dst.reg] >= pc);
+      if (this->virtual_grf_end[inst->dst.reg] == pc) {
+         /* Don't dead code eliminate instructions that write to the
+          * accumulator as a side-effect. Instead just set the destination
+          * to the null register to free it.
+          */
+         switch (inst->opcode) {
+         case BRW_OPCODE_ADDC:
+         case BRW_OPCODE_SUBB:
+         case BRW_OPCODE_MACH:
+            inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
+            break;
+         default:
+            inst->remove();
+            break;
+         }
+         progress = true;
+      }
    }
 
    if (progress)
