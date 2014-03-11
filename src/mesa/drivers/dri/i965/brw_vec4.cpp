@@ -888,7 +888,10 @@ vec4_visitor::opt_register_coalesce()
       /* Can't coalesce this GRF if someone else was going to
        * read it later.
        */
-      if (this->virtual_grf_end[inst->src[0].reg] > ip)
+      if (this->virtual_grf_end[inst->src[0].reg * 4 + 0] > ip ||
+          this->virtual_grf_end[inst->src[0].reg * 4 + 1] > ip ||
+          this->virtual_grf_end[inst->src[0].reg * 4 + 2] > ip ||
+          this->virtual_grf_end[inst->src[0].reg * 4 + 3] > ip)
 	 continue;
 
       /* We need to check interference with the final destination between this

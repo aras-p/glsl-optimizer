@@ -203,14 +203,14 @@ vec4_visitor::calculate_live_intervals()
    if (this->live_intervals_valid)
       return;
 
-   int *start = ralloc_array(mem_ctx, int, this->virtual_grf_count);
-   int *end = ralloc_array(mem_ctx, int, this->virtual_grf_count);
+   int *start = ralloc_array(mem_ctx, int, this->virtual_grf_count * 4);
+   int *end = ralloc_array(mem_ctx, int, this->virtual_grf_count * 4);
    ralloc_free(this->virtual_grf_start);
    ralloc_free(this->virtual_grf_end);
    this->virtual_grf_start = start;
    this->virtual_grf_end = end;
 
-   for (int i = 0; i < this->virtual_grf_count; i++) {
+   for (int i = 0; i < this->virtual_grf_count * 4; i++) {
       start[i] = MAX_INSTRUCTION;
       end[i] = -1;
    }
@@ -226,16 +226,24 @@ vec4_visitor::calculate_live_intervals()
 	 if (inst->src[i].file == GRF) {
 	    int reg = inst->src[i].reg;
 
-            start[reg] = MIN2(start[reg], ip);
-            end[reg] = ip;
+            for (int j = 0; j < 4; j++) {
+               int c = BRW_GET_SWZ(inst->src[i].swizzle, j);
+
+               start[reg * 4 + c] = MIN2(start[reg * 4 + c], ip);
+               end[reg * 4 + c] = ip;
+            }
 	 }
       }
 
       if (inst->dst.file == GRF) {
          int reg = inst->dst.reg;
 
-         start[reg] = MIN2(start[reg], ip);
-         end[reg] = ip;
+         for (int c = 0; c < 4; c++) {
+            if (inst->dst.writemask & (1 << c)) {
+               start[reg * 4 + c] = MIN2(start[reg * 4 + c], ip);
+               end[reg * 4 + c] = ip;
+            }
+         }
       }
 
       ip++;
@@ -252,13 +260,13 @@ vec4_visitor::calculate_live_intervals()
    for (int b = 0; b < cfg.num_blocks; b++) {
       for (int i = 0; i < livevars.num_vars; i++) {
 	 if (BITSET_TEST(livevars.bd[b].livein, i)) {
-	    start[i / 4] = MIN2(start[i / 4], cfg.blocks[b]->start_ip);
-	    end[i / 4] = MAX2(end[i / 4], cfg.blocks[b]->start_ip);
+	    start[i] = MIN2(start[i], cfg.blocks[b]->start_ip);
+	    end[i] = MAX2(end[i], cfg.blocks[b]->start_ip);
 	 }
 
 	 if (BITSET_TEST(livevars.bd[b].liveout, i)) {
-	    start[i / 4] = MIN2(start[i / 4], cfg.blocks[b]->end_ip);
-	    end[i / 4] = MAX2(end[i / 4], cfg.blocks[b]->end_ip);
+	    start[i] = MIN2(start[i], cfg.blocks[b]->end_ip);
+	    end[i] = MAX2(end[i], cfg.blocks[b]->end_ip);
 	 }
       }
    }
@@ -275,6 +283,22 @@ vec4_visitor::invalidate_live_intervals()
 bool
 vec4_visitor::virtual_grf_interferes(int a, int b)
 {
-   return !(virtual_grf_end[a] <= virtual_grf_start[b] ||
-            virtual_grf_end[b] <= virtual_grf_start[a]);
+   int start_a = MIN2(MIN2(virtual_grf_start[a * 4 + 0],
+                           virtual_grf_start[a * 4 + 1]),
+                      MIN2(virtual_grf_start[a * 4 + 2],
+                           virtual_grf_start[a * 4 + 3]));
+   int start_b = MIN2(MIN2(virtual_grf_start[b * 4 + 0],
+                           virtual_grf_start[b * 4 + 1]),
+                      MIN2(virtual_grf_start[b * 4 + 2],
+                           virtual_grf_start[b * 4 + 3]));
+   int end_a = MAX2(MAX2(virtual_grf_end[a * 4 + 0],
+                         virtual_grf_end[a * 4 + 1]),
+                    MAX2(virtual_grf_end[a * 4 + 2],
+                         virtual_grf_end[a * 4 + 3]));
+   int end_b = MAX2(MAX2(virtual_grf_end[b * 4 + 0],
+                         virtual_grf_end[b * 4 + 1]),
+                    MAX2(virtual_grf_end[b * 4 + 2],
+                         virtual_grf_end[b * 4 + 3]));
+   return !(end_a <= start_b ||
+            end_b <= start_a);
 }
