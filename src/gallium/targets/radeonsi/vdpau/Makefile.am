@@ -46,8 +46,4 @@ libvdpau_radeonsi_la_LIBADD = \
 	$(GALLIUM_VDPAU_LIB_DEPS) \
 	$(RADEON_LIBS)
 
-if HAVE_MESA_LLVM
-libvdpau_radeonsi_la_LIBADD += $(LLVM_LIBS)
-endif
-
 include $(top_srcdir)/install-gallium-links.mk

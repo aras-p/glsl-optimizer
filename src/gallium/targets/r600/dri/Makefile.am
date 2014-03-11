@@ -56,8 +56,4 @@ r600_dri_la_LIBADD = \
 
 nodist_EXTRA_r600_dri_la_SOURCES = dummy.cpp
 
-if HAVE_MESA_LLVM
-r600_dri_la_LIBADD += $(LLVM_LIBS)
-endif
-
 include $(top_srcdir)/install-gallium-links.mk

@@ -54,8 +54,4 @@ r300_dri_la_LIBADD = \
 	$(GALLIUM_DRI_LIB_DEPS) \
 	$(RADEON_LIBS)
 
-if HAVE_MESA_LLVM
-r300_dri_la_LIBADD += $(LLVM_LIBS)
-endif
-
 include $(top_srcdir)/install-gallium-links.mk

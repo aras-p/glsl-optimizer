@@ -53,8 +53,4 @@ vmwgfx_dri_la_LINK = $(CXXLINK) $(vmwgfx_dri_la_LDFLAGS)
 # Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
 nodist_EXTRA_vmwgfx_dri_la_SOURCES = dummy-cpp.cpp
 
-if HAVE_MESA_LLVM
-vmwgfx_dri_la_LIBADD += $(LLVM_LIBS)
-endif
-
 include $(top_srcdir)/install-gallium-links.mk

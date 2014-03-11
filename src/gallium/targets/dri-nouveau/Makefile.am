@@ -52,8 +52,4 @@ nouveau_dri_la_LIBADD = \
 	$(LIBDRM_LIBS) \
 	$(NOUVEAU_LIBS)
 
-if HAVE_MESA_LLVM
-nouveau_dri_la_LIBADD += $(LLVM_LIBS)
-endif
-
 include $(top_srcdir)/install-gallium-links.mk

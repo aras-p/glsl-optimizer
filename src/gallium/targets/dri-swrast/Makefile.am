@@ -58,7 +58,7 @@ nodist_EXTRA_swrast_dri_la_SOURCES = dummy.cpp
 
 if HAVE_MESA_LLVM
 AM_CPPFLAGS += -DGALLIUM_LLVMPIPE
-swrast_dri_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la $(LLVM_LIBS)
+swrast_dri_la_LIBADD += $(top_builddir)/src/gallium/drivers/llvmpipe/libllvmpipe.la
 endif
 
 include $(top_srcdir)/install-gallium-links.mk

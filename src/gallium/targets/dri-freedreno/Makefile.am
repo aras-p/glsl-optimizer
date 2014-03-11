@@ -48,10 +48,6 @@ COMMON_LIBADD = \
 	$(LIBDRM_LIBS) \
 	$(FREEDRENO_LIBS)
 
-if HAVE_MESA_LLVM
-COMMON_LIBADD += $(LLVM_LIBS)
-endif
-
 nodist_EXTRA_kgsl_dri_la_SOURCES = dummy.cpp
 kgsl_dri_la_SOURCES = target-kgsl.c
 kgsl_dri_la_LDFLAGS = $(COMMON_LDFLAGS)

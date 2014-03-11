@@ -42,7 +42,3 @@ libXvMCnouveau_la_LIBADD = \
 	$(GALLIUM_XVMC_LIB_DEPS) \
 	$(GALLIUM_DRI_LIB_DEPS) \
 	$(NOUVEAU_LIBS)
-
-if HAVE_MESA_LLVM
-libXvMCnouveau_la_LIBADD += $(LLVM_LIBS)
-endif
