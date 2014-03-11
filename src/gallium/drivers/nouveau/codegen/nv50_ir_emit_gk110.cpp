@@ -1225,7 +1225,14 @@ CodeEmitterGK110::emitEXPORT(const Instruction *i)
 void
 CodeEmitterGK110::emitOUT(const Instruction *i)
 {
-   emitNOP(i); // TODO
+   assert(i->src(0).getFile() == FILE_GPR);
+
+   emitForm_21(i, 0x1f0, 0xb70);
+
+   if (i->op == OP_EMIT)
+      code[1] |= 1 << 10;
+   if (i->op == OP_RESTART || i->subOp == NV50_IR_SUBOP_EMIT_RESTART)
+      code[1] |= 1 << 11;
 }
 
 void
