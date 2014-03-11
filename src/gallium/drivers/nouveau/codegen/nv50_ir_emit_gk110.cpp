@@ -1482,7 +1482,7 @@ CodeEmitterGK110::emitInstruction(Instruction *insn)
       case 1: data[0] |= insn->sched << 10; break;
       case 2: data[0] |= insn->sched << 18; break;
       case 3: data[0] |= insn->sched << 26; data[1] |= insn->sched >> 6; break;
-      case 4: data[1] |= insn->sched << 2;
+      case 4: data[1] |= insn->sched << 2; break;
       case 5: data[1] |= insn->sched << 10; break;
       case 6: data[1] |= insn->sched << 18; break;
       default:
