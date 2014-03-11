@@ -56,7 +56,6 @@ libomx_r600_la_LINK = $(CXXLINK) $(libomx_r600_la_LDFLAGS)
 # Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
 nodist_EXTRA_libomx_r600_la_SOURCES = dummy-cpp.cpp
 
-libomx_r600_la_LDFLAGS += $(LLVM_LDFLAGS)
 libomx_r600_la_LIBADD += $(LLVM_LIBS)
 else
 libomx_r600_la_LINK = $(LINK) $(libomx_r600_la_LDFLAGS)

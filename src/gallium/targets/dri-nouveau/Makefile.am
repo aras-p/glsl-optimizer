@@ -53,7 +53,6 @@ nouveau_dri_la_LIBADD = \
 	$(NOUVEAU_LIBS)
 
 if HAVE_MESA_LLVM
-nouveau_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
 nouveau_dri_la_LIBADD += $(LLVM_LIBS)
 endif
 

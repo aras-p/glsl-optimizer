@@ -47,7 +47,6 @@ libXvMCr600_la_LINK = $(CXXLINK) $(libXvMCr600_la_LDFLAGS)
 # Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
 nodist_EXTRA_libXvMCr600_la_SOURCES = dummy-cpp.cpp
 
-libXvMCr600_la_LDFLAGS += $(LLVM_LDFLAGS)
 libXvMCr600_la_LIBADD += $(LLVM_LIBS)
 else
 libXvMCr600_la_LINK = $(LINK) $(libXvMCr600_la_LDFLAGS)

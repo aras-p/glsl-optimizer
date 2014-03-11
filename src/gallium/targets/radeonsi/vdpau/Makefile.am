@@ -47,7 +47,6 @@ libvdpau_radeonsi_la_LIBADD = \
 	$(RADEON_LIBS)
 
 if HAVE_MESA_LLVM
-libvdpau_radeonsi_la_LDFLAGS += $(LLVM_LDFLAGS)
 libvdpau_radeonsi_la_LIBADD += $(LLVM_LIBS)
 endif
 

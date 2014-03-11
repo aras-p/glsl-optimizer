@@ -54,7 +54,6 @@ vmwgfx_dri_la_LINK = $(CXXLINK) $(vmwgfx_dri_la_LDFLAGS)
 nodist_EXTRA_vmwgfx_dri_la_SOURCES = dummy-cpp.cpp
 
 if HAVE_MESA_LLVM
-vmwgfx_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
 vmwgfx_dri_la_LIBADD += $(LLVM_LIBS)
 endif
 

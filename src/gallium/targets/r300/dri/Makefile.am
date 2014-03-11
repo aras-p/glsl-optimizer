@@ -55,7 +55,6 @@ r300_dri_la_LIBADD = \
 	$(RADEON_LIBS)
 
 if HAVE_MESA_LLVM
-r300_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
 r300_dri_la_LIBADD += $(LLVM_LIBS)
 endif
 

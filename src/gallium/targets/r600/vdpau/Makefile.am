@@ -49,7 +49,6 @@ libvdpau_r600_la_LINK = $(CXXLINK) $(libvdpau_r600_la_LDFLAGS)
 nodist_EXTRA_libvdpau_r600_la_SOURCES = dummy-cpp.cpp
 
 if HAVE_MESA_LLVM
-libvdpau_r600_la_LDFLAGS += $(LLVM_LDFLAGS)
 libvdpau_r600_la_LIBADD += $(LLVM_LIBS)
 endif
 

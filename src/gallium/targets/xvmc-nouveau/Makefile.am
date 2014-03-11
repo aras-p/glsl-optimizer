@@ -44,6 +44,5 @@ libXvMCnouveau_la_LIBADD = \
 	$(NOUVEAU_LIBS)
 
 if HAVE_MESA_LLVM
-libXvMCnouveau_la_LDFLAGS += $(LLVM_LDFLAGS)
 libXvMCnouveau_la_LIBADD += $(LLVM_LIBS)
 endif

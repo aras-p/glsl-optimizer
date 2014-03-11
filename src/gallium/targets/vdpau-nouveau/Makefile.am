@@ -46,7 +46,6 @@ libvdpau_nouveau_la_LIBADD = \
 	$(NOUVEAU_LIBS)
 
 if HAVE_MESA_LLVM
-libvdpau_nouveau_la_LDFLAGS += $(LLVM_LDFLAGS)
 libvdpau_nouveau_la_LIBADD += $(LLVM_LIBS)
 endif
 

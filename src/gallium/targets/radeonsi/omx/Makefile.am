@@ -55,6 +55,5 @@ libomx_radeonsi_la_LINK = $(CXXLINK) $(libomx_radeonsi_la_LDFLAGS)
 # Mention a dummy pure C++ file to trigger generation of the $(LINK) variable
 nodist_EXTRA_libomx_radeonsi_la_SOURCES = dummy-cpp.cpp
 
-libomx_radeonsi_la_LDFLAGS += $(LLVM_LDFLAGS)
 libomx_radeonsi_la_LIBADD += $(LLVM_LIBS)
 endif

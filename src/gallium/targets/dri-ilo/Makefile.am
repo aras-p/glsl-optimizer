@@ -54,7 +54,6 @@ ilo_dri_la_LIBADD = \
 nodist_EXTRA_ilo_dri_la_SOURCES = dummy-cpp.cpp
 
 if HAVE_MESA_LLVM
-ilo_dri_la_LDFLAGS += $(LLVM_LDFLAGS)
 ilo_dri_la_LIBADD += $(LLVM_LIBS)
 endif
 
