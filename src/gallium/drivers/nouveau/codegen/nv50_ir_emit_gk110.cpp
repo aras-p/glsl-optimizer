@@ -738,8 +738,7 @@ CodeEmitterGK110::emitSFnOp(const Instruction *i, uint8_t subOp)
 
    NEG_(33, 0);
    ABS_(31, 0);
-
-   // XXX: find saturate
+   SAT_(35);
 }
 
 void
@@ -1073,32 +1072,32 @@ CodeEmitterGK110::emitFlow(const Instruction *i)
 
    switch (i->op) {
    case OP_BRA:
-      code[1] = f->absolute ? 0x00000 : 0x12000000; // XXX
-      // if (i->srcExists(0) && i->src(0).getFile() == FILE_MEMORY_CONST)
-      //   code[0] |= 0x4000;
+      code[1] = f->absolute ? 0x10800000 : 0x12000000;
+      if (i->srcExists(0) && i->src(0).getFile() == FILE_MEMORY_CONST)
+         code[0] |= 0x80;
       mask = 3;
       break;
    case OP_CALL:
-      code[1] = f->absolute ? 0x00000 : 0x13000000; // XXX
-      // if (i->srcExists(0) && i->src(0).getFile() == FILE_MEMORY_CONST)
-      //   code[0] |= 0x4000;
+      code[1] = f->absolute ? 0x11000000 : 0x13000000;
+      if (i->srcExists(0) && i->src(0).getFile() == FILE_MEMORY_CONST)
+         code[0] |= 0x80;
       mask = 2;
       break;
 
    case OP_EXIT:    code[1] = 0x18000000; mask = 1; break;
    case OP_RET:     code[1] = 0x19000000; mask = 1; break;
-   case OP_DISCARD: code[1] = 0x19800000; mask = 1; break; // XXX: guess
-   case OP_BREAK:   code[1] = 0x1a800000; mask = 1; break; // XXX: guess
-   case OP_CONT:    code[1] = 0x1b000000; mask = 1; break; // XXX: guess
+   case OP_DISCARD: code[1] = 0x19800000; mask = 1; break;
+   case OP_BREAK:   code[1] = 0x1a000000; mask = 1; break;
+   case OP_CONT:    code[1] = 0x1a800000; mask = 1; break;
 
    case OP_JOINAT:   code[1] = 0x14800000; mask = 2; break;
-   case OP_PREBREAK: code[1] = 0x15000000; mask = 2; break; // XXX: guess
-   case OP_PRECONT:  code[1] = 0x15800000; mask = 2; break; // XXX: guess
-   case OP_PRERET:   code[1] = 0x16000000; mask = 2; break; // XXX: guess
+   case OP_PREBREAK: code[1] = 0x15000000; mask = 2; break;
+   case OP_PRECONT:  code[1] = 0x15800000; mask = 2; break;
+   case OP_PRERET:   code[1] = 0x13800000; mask = 2; break;
 
-   case OP_QUADON:  code[1] = 0x1c000000; mask = 0; break; // XXX: guess
-   case OP_QUADPOP: code[1] = 0x1c800000; mask = 0; break; // XXX: guess
-   case OP_BRKPT:   code[1] = 0x1d000000; mask = 0; break; // XXX: guess
+   case OP_QUADON:  code[1] = 0x1b000000; mask = 0; break;
+   case OP_QUADPOP: code[1] = 0x1c000000; mask = 0; break;
+   case OP_BRKPT:   code[1] = 0x00000000; mask = 0; break;
    default:
       assert(!"invalid flow operation");
       return;
@@ -1113,13 +1112,10 @@ CodeEmitterGK110::emitFlow(const Instruction *i)
    if (!f)
       return;
 
-   // TODO
-   /*
    if (f->allWarp)
-      code[0] |= 1 << 15;
+      code[0] |= 1 << 9;
    if (f->limit)
-      code[0] |= 1 << 16;
-   */
+      code[0] |= 1 << 8;
 
    if (f->op == OP_CALL) {
       if (f->builtin) {
