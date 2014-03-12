@@ -267,7 +267,7 @@ public:
    bool can_reswizzle_dst(int dst_writemask, int swizzle, int swizzle_mask);
    void reswizzle_dst(int dst_writemask, int swizzle);
 
-   bool depends_on_flags()
+   bool reads_flag()
    {
       return predicate || opcode == VS_OPCODE_UNPACK_FLAGS_SIMD4X2;
    }
