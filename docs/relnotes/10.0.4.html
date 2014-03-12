@@ -1,0 +1,191 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 10.0.4 Release Notes / (March 12, 2014)</h1>
+
+<p>
+Mesa 10.0.4 is a bug fix release which fixes bugs found since the 10.0.3 release.
+</p>
+<p>
+Mesa 10.0.4 implements the OpenGL 3.3 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.3.  OpenGL
+3.3 is <strong>only</strong> available if requested at context creation
+because compatibility contexts not supported.
+</p>
+
+
+<h2>MD5 checksums</h2>
+<pre>
+5a3c5b90776ec8a9fcd777c99e0607e2  MesaLib-10.0.4.tar.gz
+8b148869d2620b0720c8a8d2b7eb3e38  MesaLib-10.0.4.tar.bz2
+da2418d25bfbc273660af7e755fb367e  MesaLib-10.0.4.zip
+</pre>
+
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=71870">Bug 71870</a> - Metro: Last Light rendering issues</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=72895">Bug 72895</a> - Missing trees in flightgear 2.12.1 with mesa 10.0.1</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=74251">Bug 74251</a> - Segfault in st_finalize_texture with Texture Buffer</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=74723">Bug 74723</a> - main/shaderapi.c:407: detach_shader: Assertion `shProg-&gt;Shaders[j]-&gt;Type == 0x8B31 || shProg-&gt;Shaders[j]-&gt;Type == 0x8B30' failed.</li>
+
+</ul>
+
+<h2>Changes</h2>
+
+<p>The full set of changes can be viewed by using the following git command:</p>
+
+<pre>
+  git log mesa-10.0.3..mesa-10.0.4
+</pre>
+
+<p>Anuj Phogat (4):</p>
+<ul>
+  <li>mesa: Generate correct error code in glDrawBuffers()</li>
+  <li>mesa: Add GL_TEXTURE_CUBE_MAP_ARRAY to legal_get_tex_level_parameter_target()</li>
+  <li>glsl: Fix condition to generate shader link error</li>
+  <li>i965: Fix the region's pitch condition to use blitter</li>
+</ul>
+
+<p>Brian Paul (8):</p>
+<ul>
+  <li>r200: move driContextSetFlags(ctx) call after ctx var is initialized</li>
+  <li>radeon: move driContextSetFlags(ctx) call after ctx var is initialized</li>
+  <li>gallium/auxiliary/indices: replace free() with FREE()</li>
+  <li>draw: fix incorrect color of flat-shaded clipped lines</li>
+  <li>st/mesa: avoid sw fallback for getting/decompressing textures</li>
+  <li>mesa: update assertion in detach_shader() for geom shaders</li>
+  <li>mesa: do depth/stencil format conversion in glGetTexImage</li>
+  <li>softpipe: use 64-bit arithmetic in softpipe_resource_layout()</li>
+</ul>
+
+<p>Carl Worth (4):</p>
+<ul>
+  <li>docs: Add md5sums for 10.0.3 release</li>
+  <li>main: Avoid double-free of shader Label</li>
+  <li>get-pick-list: Update to only find patches nominated for the 10.0 branch</li>
+  <li>Update version to 10.0.4</li>
+</ul>
+
+<p>Chris Forbes (1):</p>
+<ul>
+  <li>i965: Validate (and resolve) all the bound textures.</li>
+</ul>
+
+<p>Christian König (1):</p>
+<ul>
+  <li>radeon/uvd: fix feedback buffer handling v2</li>
+</ul>
+
+<p>Daniel Kurtz (1):</p>
+<ul>
+  <li>glsl: Add locking to builtin_builder singleton</li>
+</ul>
+
+<p>Emil Velikov (3):</p>
+<ul>
+  <li>dri/nouveau: Pass the API into _mesa_initialize_context</li>
+  <li>nv50: correctly calculate the number of vertical blocks during transfer map</li>
+  <li>dri/i9*5: correctly calculate the amount of system memory</li>
+</ul>
+
+<p>Fredrik Höglund (3):</p>
+<ul>
+  <li>mesa: Preserve the NewArrays state when copying a VAO</li>
+  <li>glx: Fix the default values for GLXFBConfig attributes</li>
+  <li>glx: Fix the GLXFBConfig attrib sort priorities</li>
+</ul>
+
+<p>Hans (2):</p>
+<ul>
+  <li>util: don't define isfinite(), isnan() for MSVC &gt;= 1800</li>
+  <li>mesa: don't define c99 math functions for MSVC &gt;= 1800</li>
+</ul>
+
+<p>Ian Romanick (6):</p>
+<ul>
+  <li>meta: Release resources used by decompress_texture_image</li>
+  <li>meta: Release resources used by _mesa_meta_DrawPixels</li>
+  <li>meta: Fallback to software for GetTexImage of compressed GL_TEXTURE_CUBE_MAP_ARRAY</li>
+  <li>meta: Consistenly use non-Apple VAO functions</li>
+  <li>glcpp: Only warn for macro names containing __</li>
+  <li>glsl: Only warn for macro names containing __</li>
+</ul>
+
+<p>Ilia Mirkin (3):</p>
+<ul>
+  <li>nv30: report 8 maximum inputs</li>
+  <li>nouveau/video: make sure that firmware is present when checking caps</li>
+  <li>nouveau: fix chipset checks for nv1a by using the oclass instead</li>
+</ul>
+
+<p>Julien Cristau (1):</p>
+<ul>
+  <li>glx/dri2: fix build failure on HURD</li>
+</ul>
+
+<p>Kenneth Graunke (2):</p>
+<ul>
+  <li>glsl: Don't lose precision qualifiers when encountering "centroid".</li>
+  <li>i965: Create a hardware context before initializing state module.</li>
+</ul>
+
+<p>Kusanagi Kouichi (1):</p>
+<ul>
+  <li>targets/vdpau: Always use c++ to link</li>
+</ul>
+
+<p>Marek Olšák (1):</p>
+<ul>
+  <li>st/mesa: fix crash when a shader uses a TBO and it's not bound</li>
+</ul>
+
+<p>Matt Turner (1):</p>
+<ul>
+  <li>glsl: Initialize ubo_binding_mask flags to zero.</li>
+</ul>
+
+<p>Paul Berry (2):</p>
+<ul>
+  <li>glsl: Make condition_to_hir() callable from outside ast_iteration_statement.</li>
+  <li>glsl: Fix continue statements in do-while loops.</li>
+</ul>
+
+<p>Tom Stellard (1):</p>
+<ul>
+  <li>r600g/compute: PIPE_CAP_COMPUTE should be false for pre-evergreen GPUs</li>
+</ul>
+
+<p>Topi Pohjolainen (1):</p>
+<ul>
+  <li>i965/blorp: do not use unnecessary hw-blending support</li>
+</ul>
+
+</div>
+</body>
+</html>
