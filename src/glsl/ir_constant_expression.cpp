@@ -387,14 +387,11 @@ unpack_half_1x16(uint16_t u)
 }
 
 /**
- * \name Functions to get the constant referenced by an r-value
- *
  * Get the constant that is ultimately referenced by an r-value, in a constant
  * expression evaluation context.
  *
  * The offset is used when the reference is to a specific column of a matrix.
  */
-/*@{*/
 static bool
 constant_referenced(const ir_dereference *deref,
                     struct hash_table *variable_context,
@@ -488,28 +485,6 @@ constant_referenced(const ir_dereference *deref,
 
    return store != NULL;
 }
-
-void
-ir_dereference_variable::constant_referenced(struct hash_table *variable_context,
-					     ir_constant *&store, int &offset) const
-{
-   ::constant_referenced(this, variable_context, store, offset);
-}
-
-void
-ir_dereference_array::constant_referenced(struct hash_table *variable_context,
-					  ir_constant *&store, int &offset) const
-{
-   ::constant_referenced(this, variable_context, store, offset);
-}
-
-void
-ir_dereference_record::constant_referenced(struct hash_table *variable_context,
-					   ir_constant *&store, int &offset) const
-{
-   ::constant_referenced(this, variable_context, store, offset);
-}
-/*@}*/
 
 
 ir_constant *

@@ -1914,15 +1914,6 @@ public:
     * Get the variable that is ultimately referenced by an r-value
     */
    virtual ir_variable *variable_referenced() const = 0;
-
-   /**
-    * Get the constant that is ultimately referenced by an r-value,
-    * in a constant expression evaluation context.
-    *
-    * The offset is used when the reference is to a specific column of
-    * a matrix.
-    */
-  virtual void constant_referenced(struct hash_table *variable_context, ir_constant *&store, int &offset) const = 0;
 };
 
 
@@ -1949,15 +1940,6 @@ public:
    {
       return this->var;
    }
-
-   /**
-    * Get the constant that is ultimately referenced by an r-value,
-    * in a constant expression evaluation context.
-    *
-    * The offset is used when the reference is to a specific column of
-    * a matrix.
-    */
-   virtual void constant_referenced(struct hash_table *variable_context, ir_constant *&store, int &offset) const;
 
    virtual ir_variable *whole_variable_referenced()
    {
@@ -2010,15 +1992,6 @@ public:
       return this->array->variable_referenced();
    }
 
-   /**
-    * Get the constant that is ultimately referenced by an r-value,
-    * in a constant expression evaluation context.
-    *
-    * The offset is used when the reference is to a specific column of
-    * a matrix.
-    */
-   virtual void constant_referenced(struct hash_table *variable_context, ir_constant *&store, int &offset) const;
-
    virtual void accept(ir_visitor *v)
    {
       v->visit(this);
@@ -2057,15 +2030,6 @@ public:
    {
       return this->record->variable_referenced();
    }
-
-   /**
-    * Get the constant that is ultimately referenced by an r-value,
-    * in a constant expression evaluation context.
-    *
-    * The offset is used when the reference is to a specific column of
-    * a matrix.
-    */
-   virtual void constant_referenced(struct hash_table *variable_context, ir_constant *&store, int &offset) const;
 
    virtual void accept(ir_visitor *v)
    {
