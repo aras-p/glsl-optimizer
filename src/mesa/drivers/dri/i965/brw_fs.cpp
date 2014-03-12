@@ -1786,10 +1786,6 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
          }
       }
    }
-   demote_pull_constants(true);
-
-   ralloc_free(pull_constant_loc);
-   pull_constant_loc = NULL;
 }
 
 /**
@@ -1836,9 +1832,6 @@ fs_visitor::assign_constant_locations()
    unsigned int num_push_constants = 0;
 
    push_constant_loc = ralloc_array(mem_ctx, int, uniforms);
-   pull_constant_loc = ralloc_array(mem_ctx, int, uniforms);
-   for (unsigned int i = 0; i < uniforms; i++)
-      pull_constant_loc[i] = -1;
 
    for (unsigned int i = 0; i < uniforms; i++) {
       if (!is_live[i] || pull_constant_loc[i] != -1) {
@@ -1858,20 +1851,9 @@ fs_visitor::assign_constant_locations()
          /* Demote to a pull constant. */
          push_constant_loc[i] = -1;
 
-         /* If our constant is already being uploaded for reladdr purposes,
-          * reuse it.
-          */
-         for (unsigned int j = 0; j < stage_prog_data->nr_pull_params; j++) {
-            if (stage_prog_data->pull_param[j] == stage_prog_data->param[i]) {
-               pull_constant_loc[i] = j;
-               break;
-            }
-         }
-         if (pull_constant_loc[i] == -1) {
-            int pull_index = stage_prog_data->nr_pull_params++;
-            stage_prog_data->pull_param[pull_index] = stage_prog_data->param[i];
-            pull_constant_loc[i] = pull_index;
-         }
+         int pull_index = stage_prog_data->nr_pull_params++;
+         stage_prog_data->pull_param[pull_index] = stage_prog_data->param[i];
+         pull_constant_loc[i] = pull_index;
       }
    }
 
@@ -1890,8 +1872,6 @@ fs_visitor::assign_constant_locations()
       assert(remapped <= i);
       stage_prog_data->param[remapped] = stage_prog_data->param[i];
    }
-
-   demote_pull_constants(false);
 }
 
 /**
@@ -1899,7 +1879,7 @@ fs_visitor::assign_constant_locations()
  * or VARYING_PULL_CONSTANT_LOAD instructions which load values into VGRFs.
  */
 void
-fs_visitor::demote_pull_constants(bool reladdr_only)
+fs_visitor::demote_pull_constants()
 {
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
@@ -1919,9 +1899,6 @@ fs_visitor::demote_pull_constants(bool reladdr_only)
 
          fs_reg surf_index(stage_prog_data->binding_table.pull_constants_start);
          fs_reg dst = fs_reg(this, glsl_type::float_type);
-
-         if (reladdr_only != (inst->src[i].reladdr != NULL))
-            continue;
 
          /* Generate a pull load into dst. */
          if (inst->src[i].reladdr) {
@@ -3382,6 +3359,7 @@ fs_visitor::run()
 
       move_uniform_array_access_to_pull_constants();
       assign_constant_locations();
+      demote_pull_constants();
 
       opt_drop_redundant_mov_to_flags();
 
