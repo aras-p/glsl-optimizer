@@ -1367,13 +1367,18 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
     * no error.  If the ioctl is not supported, it always generate EINVAL.
     * Use this to determine whether to advertise the __DRI2_ROBUSTNESS
     * extension to the loader.
+    *
+    * Don't even try on pre-Gen6, since we don't attempt to use contexts there.
     */
-   struct drm_i915_reset_stats stats;
-   memset(&stats, 0, sizeof(stats));
+   if (intelScreen->devinfo->gen >= 6) {
+      struct drm_i915_reset_stats stats;
+      memset(&stats, 0, sizeof(stats));
 
-   const int ret = drmIoctl(psp->fd, DRM_IOCTL_I915_GET_RESET_STATS, &stats);
+      const int ret = drmIoctl(psp->fd, DRM_IOCTL_I915_GET_RESET_STATS, &stats);
 
-   intelScreen->has_context_reset_notification = (ret != -1 || errno != EINVAL);
+      intelScreen->has_context_reset_notification =
+         (ret != -1 || errno != EINVAL);
+   }
 
    psp->extensions = !intelScreen->has_context_reset_notification
       ? intelScreenExtensions : intelRobustScreenExtensions;
