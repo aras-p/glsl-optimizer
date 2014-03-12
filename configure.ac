@@ -762,8 +762,8 @@ if test "x$enable_dri" = xyes; then
 fi
 
 if test "x$enable_gallium_osmesa" = xyes; then
-    if test -z "$with_gallium_drivers"; then
-        AC_MSG_ERROR([Cannot enable gallium_osmesa without Gallium])
+    if ! echo "$with_gallium_drivers" | grep -q 'swrast'; then
+        AC_MSG_ERROR([gallium_osmesa requires the gallium swrast driver])
     fi
     if test "x$enable_osmesa" = xyes; then
         AC_MSG_ERROR([Cannot enable both classic and Gallium OSMesa implementations])
