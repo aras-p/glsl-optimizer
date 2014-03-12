@@ -395,6 +395,37 @@ unpack_half_1x16(uint16_t u)
  * The offset is used when the reference is to a specific column of a matrix.
  */
 /*@{*/
+static bool
+constant_referenced(const ir_dereference *deref,
+                    struct hash_table *variable_context,
+                    ir_constant *&store, int &offset)
+{
+   switch (deref->ir_type) {
+   case ir_type_dereference_array:
+      ((ir_dereference_array *) deref)->constant_referenced(variable_context,
+                                                            store, offset);
+      break;
+
+   case ir_type_dereference_record:
+      ((ir_dereference_record *) deref)->constant_referenced(variable_context,
+                                                             store, offset);
+      break;
+
+   case ir_type_dereference_variable:
+      ((ir_dereference_variable *) deref)->constant_referenced(variable_context,
+                                                               store, offset);
+      break;
+
+   default:
+      assert(!"Should not get here.");
+      store = NULL;
+      offset = 0;
+      break;
+   }
+
+   return store != NULL;
+}
+
 void
 ir_dereference_variable::constant_referenced(struct hash_table *variable_context,
 					     ir_constant *&store, int &offset) const
@@ -433,13 +464,8 @@ ir_dereference_array::constant_referenced(struct hash_table *variable_context,
       return;
    }
 
-   deref->constant_referenced(variable_context, substore, suboffset);
-
-   if (!substore) {
-      store = 0;
-      offset = 0;
+   if (!::constant_referenced(deref, variable_context, substore, suboffset))
       return;
-   }
 
    const glsl_type *vt = array->type;
    if (vt->is_array()) {
@@ -475,13 +501,8 @@ ir_dereference_record::constant_referenced(struct hash_table *variable_context,
       return;
    }
 
-   deref->constant_referenced(variable_context, substore, suboffset);
-
-   if (!substore) {
-      store = 0;
-      offset = 0;
+   if (!::constant_referenced(deref, variable_context, substore, suboffset))
       return;
-   }
 
    store = substore->get_record_field(field);
    offset = 0;
@@ -1814,9 +1835,8 @@ bool ir_function_signature::constant_expression_evaluate_expression_list(const s
 
 	 ir_constant *store = NULL;
 	 int offset = 0;
-	 asg->lhs->constant_referenced(variable_context, store, offset);
 
-	 if (!store)
+	 if (!constant_referenced(asg->lhs, variable_context, store, offset))
 	    return false;
 
 	 ir_constant *value = asg->rhs->constant_expression_value(variable_context);
@@ -1847,9 +1867,9 @@ bool ir_function_signature::constant_expression_evaluate_expression_list(const s
 
 	 ir_constant *store = NULL;
 	 int offset = 0;
-	 call->return_deref->constant_referenced(variable_context, store, offset);
 
-	 if (!store)
+	 if (!constant_referenced(call->return_deref, variable_context,
+                                  store, offset))
 	    return false;
 
 	 ir_constant *value = call->constant_expression_value(variable_context);
