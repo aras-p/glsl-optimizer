@@ -123,7 +123,7 @@ nouveau_screen_bo_get_handle(struct pipe_screen *pscreen,
 		whandle->handle = bo->handle;
 		return TRUE;
 	} else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
-		return nouveau_bo_set_prime(bo, &whandle->handle) == 0;
+		return nouveau_bo_set_prime(bo, (int *)&whandle->handle) == 0;
 	} else {
 		return FALSE;
 	}
