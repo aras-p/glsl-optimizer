@@ -50,7 +50,7 @@ TEST_LIBS = \
 	../common/libmegadriver_stub.la \
         ../../../libmesa.la \
 	$(DRI_LIB_DEPS) \
-        -lrt \
+        $(CLOCK_LIB) \
 	../common/libdri_test_stubs.la
 
 TESTS = \
