@@ -301,6 +301,12 @@ static void si_delete_compute_state(struct pipe_context *ctx, void* state){
 	}
 
 	if (program->kernels) {
+		for (int i = 0; i < program->num_kernels; i++){
+			if (program->kernels[i].bo){
+				si_pipe_shader_destroy(ctx, &program->kernels[i]);
+			}
+		}
+		
 		FREE(program->kernels);
 	}
 
