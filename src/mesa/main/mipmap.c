@@ -1548,23 +1548,18 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
    const GLint dstDepthNB = dstDepth - 2 * border;
    GLint img, row;
    GLint bytesPerSrcImage, bytesPerDstImage;
-   GLint bytesPerSrcRow, bytesPerDstRow;
    GLint srcImageOffset, srcRowOffset;
 
    (void) srcDepthNB; /* silence warnings */
 
-
-   bytesPerSrcImage = srcWidth * srcHeight * bpt;
-   bytesPerDstImage = dstWidth * dstHeight * bpt;
-
-   bytesPerSrcRow = srcWidth * bpt;
-   bytesPerDstRow = dstWidth * bpt;
+   bytesPerSrcImage = srcRowStride * srcHeight * bpt;
+   bytesPerDstImage = dstRowStride * dstHeight * bpt;
 
    /* Offset between adjacent src images to be averaged together */
    srcImageOffset = (srcDepth == dstDepth) ? 0 : 1;
 
    /* Offset between adjacent src rows to be averaged together */
-   srcRowOffset = (srcHeight == dstHeight) ? 0 : srcWidth * bpt;
+   srcRowOffset = (srcHeight == dstHeight) ? 0 : srcRowStride;
 
    /*
     * Need to average together up to 8 src pixels for each dest pixel.
@@ -1582,14 +1577,14 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
    for (img = 0; img < dstDepthNB; img++) {
       /* first source image pointer, skipping border */
       const GLubyte *imgSrcA = srcPtr[img * 2 + border]
-         + bytesPerSrcRow * border + bpt * border;
+         + srcRowStride * border + bpt * border;
       /* second source image pointer, skipping border */
       const GLubyte *imgSrcB = srcPtr[img * 2 + srcImageOffset + border]
-         + bytesPerSrcRow * border + bpt * border;
+         + srcRowStride * border + bpt * border;
 
       /* address of the dest image, skipping border */
       GLubyte *imgDst = dstPtr[img + border]
-         + bytesPerDstRow * border + bpt * border;
+         + dstRowStride * border + bpt * border;
 
       /* setup the four source row pointers and the dest row pointer */
       const GLubyte *srcImgARowA = imgSrcA;
@@ -1605,11 +1600,11 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
                    dstWidthNB, dstImgRow);
 
          /* advance to next rows */
-         srcImgARowA += bytesPerSrcRow + srcRowOffset;
-         srcImgARowB += bytesPerSrcRow + srcRowOffset;
-         srcImgBRowA += bytesPerSrcRow + srcRowOffset;
-         srcImgBRowB += bytesPerSrcRow + srcRowOffset;
-         dstImgRow += bytesPerDstRow;
+         srcImgARowA += srcRowStride + srcRowOffset;
+         srcImgARowB += srcRowStride + srcRowOffset;
+         srcImgBRowA += srcRowStride + srcRowOffset;
+         srcImgBRowB += srcRowStride + srcRowOffset;
+         dstImgRow += dstRowStride;
       }
    }
 
@@ -1638,8 +1633,8 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
             memcpy(dst, src, bpt);
 
             /* do border along [img][row=dstHeight-1][col=0] */
-            src = srcPtr[img * 2] + (srcHeight - 1) * bytesPerSrcRow;
-            dst = dstPtr[img] + (dstHeight - 1) * bytesPerDstRow;
+            src = srcPtr[img * 2] + (srcHeight - 1) * srcRowStride;
+            dst = dstPtr[img] + (dstHeight - 1) * dstRowStride;
             memcpy(dst, src, bpt);
 
             /* do border along [img][row=0][col=dstWidth-1] */
@@ -1668,10 +1663,10 @@ make_3d_mipmap(GLenum datatype, GLuint comps, GLint border,
 
             /* do border along [img][row=dstHeight-1][col=0] */
             srcA = srcPtr[img * 2 + 0]
-               + (srcHeight - 1) * bytesPerSrcRow;
+               + (srcHeight - 1) * srcRowStride;
             srcB = srcPtr[img * 2 + srcImageOffset]
-               + (srcHeight - 1) * bytesPerSrcRow;
-            dst = dstPtr[img] + (dstHeight - 1) * bytesPerDstRow;
+               + (srcHeight - 1) * srcRowStride;
+            dst = dstPtr[img] + (dstHeight - 1) * dstRowStride;
             do_row(datatype, comps, 1, srcA, srcB, 1, dst);
 
             /* do border along [img][row=0][col=dstWidth-1] */
