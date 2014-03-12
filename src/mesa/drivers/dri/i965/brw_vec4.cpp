@@ -321,6 +321,44 @@ src_reg::equals(src_reg *r)
 	   imm.u == r->imm.u);
 }
 
+static bool
+try_eliminate_instruction(vec4_instruction *inst, int new_writemask)
+{
+   if (new_writemask == 0) {
+      /* Don't dead code eliminate instructions that write to the
+       * accumulator as a side-effect. Instead just set the destination
+       * to the null register to free it.
+       */
+      switch (inst->opcode) {
+      case BRW_OPCODE_ADDC:
+      case BRW_OPCODE_SUBB:
+      case BRW_OPCODE_MACH:
+         inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
+         break;
+      default:
+         if (inst->writes_flag()) {
+            inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
+         } else {
+            inst->remove();
+         }
+      }
+      return true;
+   } else if (inst->dst.writemask != new_writemask) {
+      switch (inst->opcode) {
+      case SHADER_OPCODE_TXF_CMS:
+      case SHADER_OPCODE_GEN4_SCRATCH_READ:
+      case VS_OPCODE_PULL_CONSTANT_LOAD:
+      case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
+         break;
+      default:
+         inst->dst.writemask = new_writemask;
+         return true;
+      }
+   }
+
+   return false;
+}
+
 /**
  * Must be called after calculate_live_intervals() to remove unused
  * writes to registers -- register allocation will fail otherwise
@@ -354,40 +392,7 @@ vec4_visitor::dead_code_eliminate()
          }
       }
 
-      if (write_mask == 0) {
-         progress = true;
-
-         /* Don't dead code eliminate instructions that write to the
-          * accumulator as a side-effect. Instead just set the destination
-          * to the null register to free it.
-          */
-         switch (inst->opcode) {
-         case BRW_OPCODE_ADDC:
-         case BRW_OPCODE_SUBB:
-         case BRW_OPCODE_MACH:
-            inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
-            break;
-         default:
-            if (inst->writes_flag()) {
-               inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
-            } else {
-               inst->remove();
-            }
-            break;
-         }
-      } else if (inst->dst.writemask != write_mask) {
-         switch (inst->opcode) {
-         case SHADER_OPCODE_TXF_CMS:
-         case SHADER_OPCODE_GEN4_SCRATCH_READ:
-         case VS_OPCODE_PULL_CONSTANT_LOAD:
-         case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
-            break;
-         default:
-            progress = true;
-            inst->dst.writemask = write_mask;
-            break;
-         }
-      }
+      progress = try_eliminate_instruction(inst, write_mask) || progress;
    }
 
    if (progress)
