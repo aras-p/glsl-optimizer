@@ -1963,7 +1963,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 }
 
 void
-ir_to_mesa_visitor::visit(ir_call *ir)
+ir_to_mesa_visitor::visit(ir_call *)
 {
    assert(!"ir_to_mesa: All function calls should have been inlined by now.");
 }
@@ -2227,13 +2227,13 @@ ir_to_mesa_visitor::visit(ir_if *ir)
 }
 
 void
-ir_to_mesa_visitor::visit(ir_emit_vertex *ir)
+ir_to_mesa_visitor::visit(ir_emit_vertex *)
 {
    assert(!"Geometry shaders not supported.");
 }
 
 void
-ir_to_mesa_visitor::visit(ir_end_primitive *ir)
+ir_to_mesa_visitor::visit(ir_end_primitive *)
 {
    assert(!"Geometry shaders not supported.");
 }
