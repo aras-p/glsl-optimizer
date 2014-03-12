@@ -271,6 +271,11 @@ public:
    {
       return predicate || opcode == VS_OPCODE_UNPACK_FLAGS_SIMD4X2;
    }
+
+   bool writes_flag()
+   {
+      return conditional_mod && opcode != BRW_OPCODE_SEL;
+   }
 };
 
 /**

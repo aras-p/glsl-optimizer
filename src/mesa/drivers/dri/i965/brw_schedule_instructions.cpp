@@ -1060,7 +1060,7 @@ vec4_instruction_scheduler::calculate_deps()
          }
       }
 
-      if (inst->conditional_mod) {
+      if (inst->writes_flag()) {
          add_dep(last_conditional_mod, n, 0);
          last_conditional_mod = n;
       }
@@ -1129,7 +1129,7 @@ vec4_instruction_scheduler::calculate_deps()
          }
       }
 
-      if (inst->conditional_mod) {
+      if (inst->writes_flag()) {
          last_conditional_mod = n;
       }
    }
