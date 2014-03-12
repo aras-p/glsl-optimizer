@@ -412,10 +412,27 @@ constant_referenced(const ir_dereference *deref,
                                                             store, offset);
       break;
 
-   case ir_type_dereference_record:
-      ((ir_dereference_record *) deref)->constant_referenced(variable_context,
-                                                             store, offset);
+   case ir_type_dereference_record: {
+      const ir_dereference_record *const dr =
+         (const ir_dereference_record *) deref;
+
+      const ir_dereference *const deref = dr->record->as_dereference();
+      if (!deref)
+         break;
+
+      ir_constant *substore;
+      int suboffset;
+
+      if (!constant_referenced(deref, variable_context, substore, suboffset))
+         break;
+
+      /* Since we're dropping it on the floor...
+       */
+      assert(suboffset == 0);
+
+      store = substore->get_record_field(dr->field);
       break;
+   }
 
    case ir_type_dereference_variable: {
       const ir_dereference_variable *const dv =
@@ -493,20 +510,7 @@ void
 ir_dereference_record::constant_referenced(struct hash_table *variable_context,
 					   ir_constant *&store, int &offset) const
 {
-   ir_constant *substore;
-   int suboffset;
-   const ir_dereference *deref = record->as_dereference();
-   if (!deref) {
-      store = 0;
-      offset = 0;
-      return;
-   }
-
-   if (!::constant_referenced(deref, variable_context, substore, suboffset))
-      return;
-
-   store = substore->get_record_field(field);
-   offset = 0;
+   ::constant_referenced(this, variable_context, store, offset);
 }
 /*@}*/
 
