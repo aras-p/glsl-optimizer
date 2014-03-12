@@ -408,41 +408,36 @@ constant_referenced(const ir_dereference *deref,
       const ir_dereference_array *const da =
          (const ir_dereference_array *) deref;
 
-      ir_constant *index_c =
+      ir_constant *const index_c =
          da->array_index->constant_expression_value(variable_context);
 
       if (!index_c || !index_c->type->is_scalar() || !index_c->type->is_integer())
          break;
 
-      int index = index_c->type->base_type == GLSL_TYPE_INT ?
+      const int index = index_c->type->base_type == GLSL_TYPE_INT ?
          index_c->get_int_component(0) :
          index_c->get_uint_component(0);
 
       ir_constant *substore;
       int suboffset;
 
-      const ir_dereference *deref = da->array->as_dereference();
+      const ir_dereference *const deref = da->array->as_dereference();
       if (!deref)
          break;
 
       if (!constant_referenced(deref, variable_context, substore, suboffset))
          break;
 
-      const glsl_type *vt = da->array->type;
+      const glsl_type *const vt = da->array->type;
       if (vt->is_array()) {
          store = substore->get_array_element(index);
          offset = 0;
-         break;
-      }
-      if (vt->is_matrix()) {
+      } else if (vt->is_matrix()) {
          store = substore;
          offset = index * vt->vector_elements;
-         break;
-      }
-      if (vt->is_vector()) {
+      } else if (vt->is_vector()) {
          store = substore;
          offset = suboffset + index;
-         break;
       }
 
       break;
