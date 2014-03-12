@@ -407,10 +407,49 @@ constant_referenced(const ir_dereference *deref,
       return false;
 
    switch (deref->ir_type) {
-   case ir_type_dereference_array:
-      ((ir_dereference_array *) deref)->constant_referenced(variable_context,
-                                                            store, offset);
+   case ir_type_dereference_array: {
+      const ir_dereference_array *const da =
+         (const ir_dereference_array *) deref;
+
+      ir_constant *index_c =
+         da->array_index->constant_expression_value(variable_context);
+
+      if (!index_c || !index_c->type->is_scalar() || !index_c->type->is_integer())
+         break;
+
+      int index = index_c->type->base_type == GLSL_TYPE_INT ?
+         index_c->get_int_component(0) :
+         index_c->get_uint_component(0);
+
+      ir_constant *substore;
+      int suboffset;
+
+      const ir_dereference *deref = da->array->as_dereference();
+      if (!deref)
+         break;
+
+      if (!constant_referenced(deref, variable_context, substore, suboffset))
+         break;
+
+      const glsl_type *vt = da->array->type;
+      if (vt->is_array()) {
+         store = substore->get_array_element(index);
+         offset = 0;
+         break;
+      }
+      if (vt->is_matrix()) {
+         store = substore;
+         offset = index * vt->vector_elements;
+         break;
+      }
+      if (vt->is_vector()) {
+         store = substore;
+         offset = suboffset + index;
+         break;
+      }
+
       break;
+   }
 
    case ir_type_dereference_record: {
       const ir_dereference_record *const dr =
@@ -461,49 +500,7 @@ void
 ir_dereference_array::constant_referenced(struct hash_table *variable_context,
 					  ir_constant *&store, int &offset) const
 {
-   ir_constant *index_c = array_index->constant_expression_value(variable_context);
-
-   if (!index_c || !index_c->type->is_scalar() || !index_c->type->is_integer()) {
-      store = 0;
-      offset = 0;
-      return;
-   }
-
-   int index = index_c->type->base_type == GLSL_TYPE_INT ?
-      index_c->get_int_component(0) :
-      index_c->get_uint_component(0);
-
-   ir_constant *substore;
-   int suboffset;
-   const ir_dereference *deref = array->as_dereference();
-   if (!deref) {
-      store = 0;
-      offset = 0;
-      return;
-   }
-
-   if (!::constant_referenced(deref, variable_context, substore, suboffset))
-      return;
-
-   const glsl_type *vt = array->type;
-   if (vt->is_array()) {
-      store = substore->get_array_element(index);
-      offset = 0;
-      return;
-   }
-   if (vt->is_matrix()) {
-      store = substore;
-      offset = index * vt->vector_elements;
-      return;
-   }
-   if (vt->is_vector()) {
-      store = substore;
-      offset = suboffset + index;
-      return;
-   }
-
-   store = 0;
-   offset = 0;
+   ::constant_referenced(this, variable_context, store, offset);
 }
 
 void
