@@ -558,11 +558,12 @@ nv50_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 {
    unsigned s, i;
 
-   for (s = 0; s < 3; ++s)
+   for (s = 0; s < 3; ++s) {
       assert(nv50_context(pipe)->num_samplers[s] <= PIPE_MAX_SAMPLERS);
       for (i = 0; i < nv50_context(pipe)->num_samplers[s]; ++i)
          if (nv50_context(pipe)->samplers[s][i] == hwcso)
             nv50_context(pipe)->samplers[s][i] = NULL;
+   }
 
    nv50_screen_tsc_free(nv50_context(pipe)->screen, nv50_tsc_entry(hwcso));
 
