@@ -2770,6 +2770,19 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
    }
 
    if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
+      if (pname == GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE) {
+         /* This behavior is first specified in OpenGL 4.4 specification.
+          *
+          * From the OpenGL 4.4 spec page 275:
+          *   "This query cannot be performed for a combined depth+stencil
+          *    attachment, since it does not have a single format."
+          */
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glGetFramebufferAttachmentParameteriv("
+                     "GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE"
+                     " is invalid for depth+stencil attachment)");
+         return;
+      }
       /* the depth and stencil attachments must point to the same buffer */
       const struct gl_renderbuffer_attachment *depthAtt, *stencilAtt;
       depthAtt = get_attachment(ctx, buffer, GL_DEPTH_ATTACHMENT);
