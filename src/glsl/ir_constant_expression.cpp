@@ -400,6 +400,12 @@ constant_referenced(const ir_dereference *deref,
                     struct hash_table *variable_context,
                     ir_constant *&store, int &offset)
 {
+   store = NULL;
+   offset = 0;
+
+   if (variable_context == NULL)
+      return false;
+
    switch (deref->ir_type) {
    case ir_type_dereference_array:
       ((ir_dereference_array *) deref)->constant_referenced(variable_context,
@@ -411,15 +417,16 @@ constant_referenced(const ir_dereference *deref,
                                                              store, offset);
       break;
 
-   case ir_type_dereference_variable:
-      ((ir_dereference_variable *) deref)->constant_referenced(variable_context,
-                                                               store, offset);
+   case ir_type_dereference_variable: {
+      const ir_dereference_variable *const dv =
+         (const ir_dereference_variable *) deref;
+
+      store = (ir_constant *) hash_table_find(variable_context, dv->var);
       break;
+   }
 
    default:
       assert(!"Should not get here.");
-      store = NULL;
-      offset = 0;
       break;
    }
 
@@ -430,13 +437,7 @@ void
 ir_dereference_variable::constant_referenced(struct hash_table *variable_context,
 					     ir_constant *&store, int &offset) const
 {
-   if (variable_context) {
-      store = (ir_constant *)hash_table_find(variable_context, var);
-      offset = 0;
-   } else {
-      store = NULL;
-      offset = 0;
-   }
+   ::constant_referenced(this, variable_context, store, offset);
 }
 
 void
