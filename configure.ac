@@ -284,14 +284,17 @@ dnl Can't have static and shared libraries, default to static if user
 dnl explicitly requested. If both disabled, set to static since shared
 dnl was explicitly requested.
 case "x$enable_static$enable_shared" in
-xnoyes )
+xyesyes)
+    AC_MSG_WARN([Cannot build static and shared libraries, disabling shared])
+    enable_shared=no
     ;;
-* )
-    AC_MSG_WARN([Messa build supports only shared libraries, enabling shared])
+xnono)
+    AC_MSG_WARN([Cannot disable both static and shared libraries, enabling shared])
     enable_shared=yes
-    enable_static=no
     ;;
 esac
+
+AM_CONDITIONAL(BUILD_SHARED, test "x$enable_shared" = xyes)
 
 dnl
 dnl other compiler options
@@ -782,6 +785,10 @@ PKG_CHECK_MODULES([LIBUDEV], [libudev >= $LIBUDEV_REQUIRED],
                   have_libudev=yes, have_libudev=no)
 
 if test "x$enable_dri" = xyes; then
+    if test "$enable_static" = yes; then
+        AC_MSG_ERROR([Cannot use static libraries for DRI drivers])
+    fi
+
     # not a hard requirement as swrast does not depend on it
     if test "x$have_libdrm" = xyes; then
         DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
@@ -1110,7 +1117,12 @@ x16|x32)
 esac
 
 if test "x$enable_osmesa" = xyes -o "x$enable_gallium_osmesa" = xyes; then
-    OSMESA_LIB_DEPS="-lm $PTHREAD_LIBS $SELINUX_LIBS $DLOPEN_LIBS"
+    # only link libraries with osmesa if shared
+    if test "$enable_static" = no; then
+        OSMESA_LIB_DEPS="-lm $PTHREAD_LIBS $SELINUX_LIBS $DLOPEN_LIBS"
+    else
+        OSMESA_LIB_DEPS=""
+    fi
     OSMESA_MESA_DEPS=""
     OSMESA_PC_LIB_PRIV="-lm $PTHREAD_LIBS $SELINUX_LIBS $DLOPEN_LIBS"
 fi
@@ -1159,8 +1171,11 @@ if test "x$enable_egl" = xyes; then
 
     AC_CHECK_FUNC(mincore, [DEFINES="$DEFINES -DHAVE_MINCORE"])
 
-    if test "x$enable_dri" = xyes; then
-        HAVE_EGL_DRIVER_DRI2=1
+    if test "$enable_static" != yes; then
+        if test "x$enable_dri" = xyes; then
+	    HAVE_EGL_DRIVER_DRI2=1
+	fi
+
     fi
 fi
 AM_CONDITIONAL(HAVE_EGL, test "x$enable_egl" = xyes)
