@@ -1104,7 +1104,17 @@ CodeEmitterGK110::emitTXQ(const TexInstruction *i)
 void
 CodeEmitterGK110::emitQUADOP(const Instruction *i, uint8_t qOp, uint8_t laneMask)
 {
-   emitNOP(i); // TODO
+   code[0] = 0x00000002 | ((qOp & 1) << 31);
+   code[1] = 0x7fc00000 | (qOp >> 1) | (laneMask << 12);
+
+   defId(i->def(0), 2);
+   srcId(i->src(0), 10);
+   srcId(i->srcExists(1) ? i->src(1) : i->src(0), 23);
+
+   if (i->op == OP_QUADOP && progType != Program::TYPE_FRAGMENT)
+      code[1] |= 1 << 9; // dall
+
+   emitPredicate(i);
 }
 
 void
