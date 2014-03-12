@@ -173,9 +173,9 @@ main(int argc, char *argv[])
       return 1;
    }
 
-   fread(text, 1, sizeof(text), f);
-   if (ferror(f)) {
+   if (!fread(text, 1, sizeof(text), f) || ferror(f)) {
       _debug_printf("Error reading file '%s'\n", filename);
+      fclose(f);
       return 1;
    }
    fclose(f);
