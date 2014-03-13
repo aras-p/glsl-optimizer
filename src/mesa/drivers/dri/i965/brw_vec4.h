@@ -194,6 +194,8 @@ public:
 
    explicit dst_reg(src_reg reg);
 
+   bool is_null() const;
+
    int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
 
    src_reg *reladdr;

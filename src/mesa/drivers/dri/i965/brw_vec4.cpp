@@ -213,6 +213,14 @@ dst_reg::dst_reg(src_reg reg)
 }
 
 bool
+dst_reg::is_null() const
+{
+   return file == HW_REG &&
+          fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
+          fixed_hw_reg.nr == BRW_ARF_NULL;
+}
+
+bool
 vec4_instruction::is_send_from_grf()
 {
    switch (opcode) {
