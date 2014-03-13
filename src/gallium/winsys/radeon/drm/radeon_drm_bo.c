@@ -120,6 +120,8 @@ struct radeon_bomgr {
     struct util_hash_table *bo_names;
     /* List of buffer handles. Protectded by bo_handles_mutex. */
     struct util_hash_table *bo_handles;
+    /* List of buffer virtual memory ranges. Protectded by bo_handles_mutex. */
+    struct util_hash_table *bo_vas;
     pipe_mutex bo_handles_mutex;
     pipe_mutex bo_va_mutex;
 
@@ -258,48 +260,6 @@ static uint64_t radeon_bomgr_find_va(struct radeon_bomgr *mgr, uint64_t size, ui
     mgr->va_offset += size + waste;
     pipe_mutex_unlock(mgr->bo_va_mutex);
     return offset;
-}
-
-static void radeon_bomgr_force_va(struct radeon_bomgr *mgr, uint64_t va, uint64_t size)
-{
-    size = align(size, 4096);
-
-    pipe_mutex_lock(mgr->bo_va_mutex);
-    if (va >= mgr->va_offset) {
-        if (va > mgr->va_offset) {
-            struct radeon_bo_va_hole *hole;
-            hole = CALLOC_STRUCT(radeon_bo_va_hole);
-            if (hole) {
-                hole->size = va - mgr->va_offset;
-                hole->offset = mgr->va_offset;
-                list_add(&hole->list, &mgr->va_holes);
-            }
-        }
-        mgr->va_offset = va + size;
-    } else {
-        struct radeon_bo_va_hole *hole, *n;
-        uint64_t hole_end, va_end;
-
-        /* Prune/free all holes that fall into the range
-         */
-        LIST_FOR_EACH_ENTRY_SAFE(hole, n, &mgr->va_holes, list) {
-            hole_end = hole->offset + hole->size;
-            va_end = va + size;
-            if (hole->offset >= va_end || hole_end <= va)
-                continue;
-            if (hole->offset >= va && hole_end <= va_end) {
-                list_del(&hole->list);
-                FREE(hole);
-                continue;
-            }
-            if (hole->offset >= va)
-                hole->offset = va_end;
-            else
-                hole_end = va;
-            hole->size = hole_end - hole->offset;
-        }
-    }
-    pipe_mutex_unlock(mgr->bo_va_mutex);
 }
 
 static void radeon_bomgr_free_va(struct radeon_bomgr *mgr, uint64_t va, uint64_t size)
@@ -625,11 +585,19 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
             radeon_bo_destroy(&bo->base);
             return NULL;
         }
+        pipe_mutex_lock(mgr->bo_handles_mutex);
         if (va.operation == RADEON_VA_RESULT_VA_EXIST) {
-            radeon_bomgr_free_va(mgr, bo->va, size);
-            bo->va = va.offset;
-            radeon_bomgr_force_va(mgr, bo->va, size);
+            struct pb_buffer *b = &bo->base;
+            struct radeon_bo *old_bo =
+                util_hash_table_get(mgr->bo_vas, (void*)(uintptr_t)va.offset);
+
+            pipe_mutex_unlock(mgr->bo_handles_mutex);
+            pb_reference(&b, &old_bo->base);
+            return b;
         }
+
+        util_hash_table_set(mgr->bo_vas, (void*)(uintptr_t)bo->va, bo);
+        pipe_mutex_unlock(mgr->bo_handles_mutex);
     }
 
     if (rdesc->initial_domains & RADEON_DOMAIN_VRAM)
@@ -667,6 +635,7 @@ static void radeon_bomgr_destroy(struct pb_manager *_mgr)
     struct radeon_bomgr *mgr = radeon_bomgr(_mgr);
     util_hash_table_destroy(mgr->bo_names);
     util_hash_table_destroy(mgr->bo_handles);
+    util_hash_table_destroy(mgr->bo_vas);
     pipe_mutex_destroy(mgr->bo_handles_mutex);
     pipe_mutex_destroy(mgr->bo_va_mutex);
     FREE(mgr);
@@ -700,6 +669,7 @@ struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws)
     mgr->rws = rws;
     mgr->bo_names = util_hash_table_create(handle_hash, handle_compare);
     mgr->bo_handles = util_hash_table_create(handle_hash, handle_compare);
+    mgr->bo_vas = util_hash_table_create(handle_hash, handle_compare);
     pipe_mutex_init(mgr->bo_handles_mutex);
     pipe_mutex_init(mgr->bo_va_mutex);
 
@@ -999,11 +969,19 @@ done:
             radeon_bo_destroy(&bo->base);
             return NULL;
         }
+        pipe_mutex_lock(mgr->bo_handles_mutex);
         if (va.operation == RADEON_VA_RESULT_VA_EXIST) {
-            radeon_bomgr_free_va(mgr, bo->va, bo->base.size);
-            bo->va = va.offset;
-            radeon_bomgr_force_va(mgr, bo->va, bo->base.size);
+            struct pb_buffer *b = &bo->base;
+            struct radeon_bo *old_bo =
+                util_hash_table_get(mgr->bo_vas, (void*)(uintptr_t)va.offset);
+
+            pipe_mutex_unlock(mgr->bo_handles_mutex);
+            pb_reference(&b, &old_bo->base);
+            return b;
         }
+
+        util_hash_table_set(mgr->bo_vas, (void*)(uintptr_t)bo->va, bo);
+        pipe_mutex_unlock(mgr->bo_handles_mutex);
     }
 
     memset(&args, 0, sizeof(args));
