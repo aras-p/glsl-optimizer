@@ -820,12 +820,6 @@ enum shader_time_shader_type {
 #define CACHE_NEW_CLIP_UNIT              (1<<BRW_CLIP_UNIT)
 #define CACHE_NEW_CLIP_PROG              (1<<BRW_CLIP_PROG)
 
-struct brw_cached_batch_item {
-   struct header *header;
-   GLuint sz;
-   struct brw_cached_batch_item *next;
-};
-
 struct brw_vertex_buffer {
    /** Buffer object containing the uploaded vertex data */
    drm_intel_bo *bo;
@@ -876,8 +870,6 @@ struct intel_batchbuffer {
    /** BO for post-sync nonzero writes for gen6 workaround. */
    drm_intel_bo *workaround_bo;
    bool need_workaround_flush;
-
-   struct cached_batch_item *cached_items;
 
    uint16_t emit, total;
    uint16_t used, reserved_space;
@@ -1129,7 +1121,6 @@ struct brw_context
    } state;
 
    struct brw_cache cache;
-   struct brw_cached_batch_item *cached_batch_items;
 
    /* Whether a meta-operation is in progress. */
    bool meta_in_progress;

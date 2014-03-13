@@ -36,26 +36,6 @@
 static void
 intel_batchbuffer_reset(struct brw_context *brw);
 
-struct cached_batch_item {
-   struct cached_batch_item *next;
-   uint16_t header;
-   uint16_t size;
-};
-
-void
-intel_batchbuffer_clear_cache(struct brw_context *brw)
-{
-   struct cached_batch_item *item = brw->batch.cached_items;
-
-   while (item) {
-      struct cached_batch_item *next = item->next;
-      free(item);
-      item = next;
-   }
-
-   brw->batch.cached_items = NULL;
-}
-
 void
 intel_batchbuffer_init(struct brw_context *brw)
 {
@@ -88,7 +68,6 @@ intel_batchbuffer_reset(struct brw_context *brw)
    }
    brw->batch.last_bo = brw->batch.bo;
 
-   intel_batchbuffer_clear_cache(brw);
    brw_render_cache_set_clear(brw);
 
    brw->batch.bo = drm_intel_bo_alloc(brw->bufmgr, "batchbuffer",
@@ -125,11 +104,6 @@ intel_batchbuffer_reset_to_saved(struct brw_context *brw)
    brw->batch.used = brw->batch.saved.used;
    if (brw->batch.used == 0)
       brw->batch.ring = UNKNOWN_RING;
-
-   /* Cached batch state is dead, since we just cleared some unknown part of the
-    * batchbuffer.  Assume that the caller resets any other state necessary.
-    */
-   intel_batchbuffer_clear_cache(brw);
 }
 
 void
@@ -139,7 +113,6 @@ intel_batchbuffer_free(struct brw_context *brw)
    drm_intel_bo_unreference(brw->batch.last_bo);
    drm_intel_bo_unreference(brw->batch.bo);
    drm_intel_bo_unreference(brw->batch.workaround_bo);
-   intel_batchbuffer_clear_cache(brw);
 }
 
 static void

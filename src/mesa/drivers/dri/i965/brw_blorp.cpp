@@ -279,7 +279,6 @@ retry:
    brw->state.dirty.brw = ~0;
    brw->state.dirty.cache = ~0;
    brw->ib.type = -1;
-   intel_batchbuffer_clear_cache(brw);
 
    /* Flush the sampler cache so any texturing from the destination is
     * coherent.
