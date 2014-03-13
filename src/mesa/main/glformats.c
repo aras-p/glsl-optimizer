@@ -1238,6 +1238,22 @@ GLenum
 _mesa_error_check_format_and_type(const struct gl_context *ctx,
                                   GLenum format, GLenum type)
 {
+   /* From OpenGL 3.3 spec, page 220:
+    *    "If the format is DEPTH_STENCIL, then values are taken from
+    *    both the depth buffer and the stencil buffer. If there is no
+    *    depth buffer or if there is no stencil buffer, then the error
+    *    INVALID_OPERATION occurs. If the type parameter is not
+    *    UNSIGNED_INT_24_8 or FLOAT_32_UNSIGNED_INT_24_8_REV, then the
+    *    error INVALID_ENUM occurs."
+    *
+    * OpenGL ES still generates GL_INVALID_OPERATION because glReadPixels
+    * cannot be used to read depth or stencil in that API.
+    */
+   if (_mesa_is_desktop_gl(ctx) && format == GL_DEPTH_STENCIL
+       && type != GL_UNSIGNED_INT_24_8
+       && type != GL_FLOAT_32_UNSIGNED_INT_24_8_REV)
+      return GL_INVALID_ENUM;
+
    /* special type-based checks (see glReadPixels, glDrawPixels error lists) */
    switch (type) {
    case GL_BITMAP:
