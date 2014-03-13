@@ -225,6 +225,7 @@ nouveau_choose_tex_format(struct gl_context *ctx, GLenum target,
 	case GL_INTENSITY12:
 	case GL_INTENSITY16:
 	case GL_INTENSITY8:
+	case GL_COMPRESSED_INTENSITY:
 		return MESA_FORMAT_I_UNORM8;
 
 	case GL_RGB_S3TC:
