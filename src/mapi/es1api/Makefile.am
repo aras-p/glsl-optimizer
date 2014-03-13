@@ -44,7 +44,10 @@ lib_LTLIBRARIES = libGLESv1_CM.la
 
 libGLESv1_CM_la_SOURCES = ../entry.c glapi_mapi_tmp.h
 libGLESv1_CM_la_LIBADD = $(GLESv1_CM_LIB_DEPS)
-libGLESv1_CM_la_LDFLAGS = -version-number 1:1 -no-undefined
+libGLESv1_CM_la_LDFLAGS = \
+	-no-undefined \
+	-version-number 1:1 \
+	-Wl,--no-undefined
 
 if HAVE_SHARED_GLAPI
 libGLESv1_CM_la_LIBADD += ../shared-glapi/libglapi.la

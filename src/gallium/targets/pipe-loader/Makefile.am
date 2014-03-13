@@ -49,6 +49,7 @@ AM_LDFLAGS = \
 	-module \
 	-no-undefined \
 	-avoid-version \
+	-Wl,--no-undefined \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/pipe-loader/pipe.link
 
 if HAVE_MESA_LLVM

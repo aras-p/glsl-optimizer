@@ -5,7 +5,9 @@ lib_LTLIBRARIES = lib@OPENCL_LIBNAME@.la
 lib@OPENCL_LIBNAME@_la_LDFLAGS = \
 	$(LLVM_LDFLAGS) \
 	-no-undefined \
-	-version-number 1:0
+	-version-number 1:0 \
+	-Wl,--no-undefined
+
 
 lib@OPENCL_LIBNAME@_la_LIBADD = \
 	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_client.la \

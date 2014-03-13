@@ -73,7 +73,11 @@ libEGL_la_SOURCES = \
 
 libEGL_la_LIBADD = \
 	$(EGL_LIB_DEPS)
-libEGL_la_LDFLAGS = -Wl,-Bsymbolic -version-number 1:0 -no-undefined
+libEGL_la_LDFLAGS = \
+	-no-undefined \
+	-version-number 1:0 \
+	-Wl,-Bsymbolic \
+	-Wl,--no-undefined
 
 if HAVE_EGL_PLATFORM_X11
 AM_CFLAGS += -DHAVE_X11_PLATFORM

@@ -109,8 +109,10 @@ GL_LIBS = \
 	$(GL_LIB_DEPS)
 
 GL_LDFLAGS = \
+	-no-undefined \
+	-version-number 1:2 \
 	-Wl,-Bsymbolic \
-	-version-number 1:2 -no-undefined
+	-Wl,--no-undefined
 
 lib@GL_LIB@_la_SOURCES =
 lib@GL_LIB@_la_LIBADD = $(GL_LIBS)

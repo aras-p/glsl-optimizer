@@ -66,7 +66,11 @@ gbm_gallium_drm_la_LIBADD += \
 	$(LIBDRM_LIBS)
 endif
 
-gbm_gallium_drm_la_LDFLAGS = -no-undefined -avoid-version -module
+gbm_gallium_drm_la_LDFLAGS = \
+	-module \
+	-no-undefined \
+	-avoid-version \
+	-Wl,--no-undefined
 
 if HAVE_MESA_LLVM
 gbm_gallium_drm_la_LIBADD += $(LLVM_LIBS)

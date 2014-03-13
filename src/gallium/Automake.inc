@@ -64,20 +64,23 @@ GALLIUM_VDPAU_LINKER_FLAGS = \
 	-module \
 	-no-undefined \
 	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
-	-export-symbols-regex $(VDPAU_EXPORTS)
+	-export-symbols-regex $(VDPAU_EXPORTS) \
+	-Wl,--no-undefined
 
 GALLIUM_XVMC_LINKER_FLAGS = \
 	-shared \
 	-module \
 	-no-undefined \
 	-version-number $(XVMC_MAJOR):$(XVMC_MINOR) \
-	-export-symbols-regex '^XvMC'
+	-export-symbols-regex '^XvMC' \
+	-Wl,--no-undefined
 
 GALLIUM_OMX_LINKER_FLAGS = \
 	-shared \
 	-module \
 	-no-undefined \
-	-export-symbols-regex $(EXPORTS)
+	-export-symbols-regex $(EXPORTS) \
+	-Wl,--no-undefined
 
 GALLIUM_VDPAU_LIB_DEPS = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \

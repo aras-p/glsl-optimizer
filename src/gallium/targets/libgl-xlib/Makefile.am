@@ -44,7 +44,10 @@ lib_LTLIBRARIES = libGL.la
 
 nodist_EXTRA_libGL_la_SOURCES = dummy.cpp
 libGL_la_SOURCES = xlib.c
-libGL_la_LDFLAGS = -version-number $(GL_MAJOR):$(GL_MINOR):$(GL_TINY) -no-undefined
+libGL_la_LDFLAGS = \
+	-no-undefined \
+	-version-number $(GL_MAJOR):$(GL_MINOR):$(GL_TINY) \
+	-Wl,--no-undefined
 
 libGL_la_LIBADD = \
 	$(top_builddir)/src/gallium/state_trackers/glx/xlib/libxlib.la \

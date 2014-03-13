@@ -21,7 +21,9 @@ libgbm_la_SOURCES = \
 	main/backend.c
 libgbm_la_LDFLAGS = \
 	-no-undefined \
-	-version-info 1:0
+	-version-info 1:0 \
+	-Wl,--no-undefined
+
 libgbm_la_LIBADD = \
 	$(top_builddir)/src/loader/libloader.la \
 	$(DLOPEN_LIBS)

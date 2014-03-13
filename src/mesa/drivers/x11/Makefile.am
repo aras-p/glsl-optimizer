@@ -62,7 +62,8 @@ lib@GL_LIB@_la_LIBADD = \
 	$(GL_LIB_DEPS)
 
 lib@GL_LIB@_la_LDFLAGS = \
+	-no-undefined \
 	-version-number $(GL_MAJOR):$(GL_MINOR):$(GL_PATCH) \
-	-no-undefined
+	-Wl,--no-undefined
 
 include $(top_srcdir)/install-lib-links.mk
