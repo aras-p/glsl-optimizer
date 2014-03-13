@@ -37,6 +37,11 @@
  */
 
 /**
+ * Used by linker to indicate uniforms that have no location set.
+ */
+#define UNMAPPED_UNIFORM_LOC ~0u
+
+/**
  * Count the backing storage requirements for a type
  */
 static unsigned
@@ -386,6 +391,9 @@ public:
    void set_and_process(struct gl_shader_program *prog,
 			ir_variable *var)
    {
+      current_var = var;
+      field_counter = 0;
+
       ubo_block_index = -1;
       if (var->is_in_uniform_block()) {
          if (var->is_interface_instance() && var->type->is_array()) {
@@ -542,6 +550,22 @@ private:
          return;
       }
 
+      /* Assign explicit locations. */
+      if (current_var->data.explicit_location) {
+         /* Set sequential locations for struct fields. */
+         if (record_type != NULL) {
+            const unsigned entries = MAX2(1, this->uniforms[id].array_elements);
+            this->uniforms[id].remap_location =
+               current_var->data.location + field_counter;
+            field_counter += entries;
+         } else {
+            this->uniforms[id].remap_location = current_var->data.location;
+         }
+      } else {
+         /* Initialize to to indicate that no location is set */
+         this->uniforms[id].remap_location = UNMAPPED_UNIFORM_LOC;
+      }
+
       this->uniforms[id].name = ralloc_strdup(this->uniforms, name);
       this->uniforms[id].type = base_type;
       this->uniforms[id].initialized = 0;
@@ -595,6 +619,17 @@ public:
    union gl_constant_value *values;
 
    gl_texture_index targets[MAX_SAMPLERS];
+
+   /**
+    * Current variable being processed.
+    */
+   ir_variable *current_var;
+
+   /**
+    * Field counter is used to take care that uniform structures
+    * with explicit locations get sequential locations.
+    */
+   unsigned field_counter;
 
    /**
     * Mask of samplers used by the current shader stage.
@@ -798,10 +833,6 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
    prog->UniformStorage = NULL;
    prog->NumUserUniformStorage = 0;
 
-   ralloc_free(prog->UniformRemapTable);
-   prog->UniformRemapTable = NULL;
-   prog->NumUniformRemapTable = 0;
-
    if (prog->UniformHash != NULL) {
       prog->UniformHash->clear();
    } else {
@@ -914,8 +945,28 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
              sizeof(prog->_LinkedShaders[i]->SamplerTargets));
    }
 
-   /* Build the uniform remap table that is used to set/get uniform locations */
+   /* Reserve all the explicit locations of the active uniforms. */
    for (unsigned i = 0; i < num_user_uniforms; i++) {
+      if (uniforms[i].remap_location != UNMAPPED_UNIFORM_LOC) {
+         /* How many new entries for this uniform? */
+         const unsigned entries = MAX2(1, uniforms[i].array_elements);
+
+         /* Set remap table entries point to correct gl_uniform_storage. */
+         for (unsigned j = 0; j < entries; j++) {
+            unsigned element_loc = uniforms[i].remap_location + j;
+            assert(prog->UniformRemapTable[element_loc] ==
+                   INACTIVE_UNIFORM_EXPLICIT_LOCATION);
+            prog->UniformRemapTable[element_loc] = &uniforms[i];
+         }
+      }
+   }
+
+   /* Reserve locations for rest of the uniforms. */
+   for (unsigned i = 0; i < num_user_uniforms; i++) {
+
+      /* Explicit ones have been set already. */
+      if (uniforms[i].remap_location != UNMAPPED_UNIFORM_LOC)
+         continue;
 
       /* how many new entries for this uniform? */
       const unsigned entries = MAX2(1, uniforms[i].array_elements);
