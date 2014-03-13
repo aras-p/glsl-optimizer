@@ -74,6 +74,12 @@ GALLIUM_XVMC_LINKER_FLAGS = \
 	-export-symbols-regex '^XvMC' \
 	-no-undefined
 
+GALLIUM_OMX_LINKER_FLAGS = \
+	-shared \
+	-module \
+	-no-undefined \
+	-export-symbols-regex $(EXPORTS)
+
 GALLIUM_VDPAU_LIB_DEPS = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/state_trackers/vdpau/libvdpautracker.la \

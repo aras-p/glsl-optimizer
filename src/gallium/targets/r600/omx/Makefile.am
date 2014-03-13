@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+EXPORTS = '^(omx_component_library_Setup|radeon_drm_winsys_create)$$'
+
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
@@ -34,17 +36,11 @@ AM_CPPFLAGS = \
 omxdir = $(OMX_LIB_INSTALL_DIR)
 omx_LTLIBRARIES = libomx_r600.la
 
-EXPORTS = '^(omx_component_library_Setup|radeon_drm_winsys_create)$$'
-
 libomx_r600_la_SOURCES = \
 	drm_target.c \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
-libomx_r600_la_LDFLAGS = \
-	-module \
-	-export-symbols-regex $(EXPORTS) \
-	-shared \
-	-no-undefined
+libomx_r600_la_LDFLAGS = $(GALLIUM_OMX_LINKER_FLAGS)
 
 libomx_r600_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \

@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+EXPORTS = '^(omx_component_library_Setup|radeon_drm_winsys_create)$$'
+
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
@@ -34,17 +36,11 @@ AM_CPPFLAGS = \
 omxdir = $(OMX_LIB_INSTALL_DIR)
 omx_LTLIBRARIES = libomx_radeonsi.la
 
-EXPORTS = '^(omx_component_library_Setup|radeon_drm_winsys_create)$$'
-
 libomx_radeonsi_la_SOURCES = \
 	drm_target.c \
 	$(top_srcdir)/src/gallium/auxiliary/vl/vl_winsys_dri.c
 
-libomx_radeonsi_la_LDFLAGS = \
-	-module \
-	-export-symbols-regex $(EXPORTS) \
-	-shared \
-	-no-undefined
+libomx_radeonsi_la_LDFLAGS = $(GALLIUM_OMX_LINKER_FLAGS)
 
 libomx_radeonsi_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
