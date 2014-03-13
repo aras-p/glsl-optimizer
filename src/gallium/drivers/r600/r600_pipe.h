@@ -197,7 +197,6 @@ struct r600_gs_rings_state {
 /* features */
 #define DBG_NO_LLVM		(1 << 17)
 #define DBG_NO_CP_DMA		(1 << 18)
-#define DBG_NO_ASYNC_DMA	(1 << 19)
 /* shader backend */
 #define DBG_NO_SB		(1 << 21)
 #define DBG_SB_CS		(1 << 22)

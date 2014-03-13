@@ -43,6 +43,27 @@ static void r600_memory_barrier(struct pipe_context *ctx, unsigned flags)
 {
 }
 
+static void r600_flush_dma_ring(void *ctx, unsigned flags)
+{
+	struct r600_common_context *rctx = (struct r600_common_context *)ctx;
+	struct radeon_winsys_cs *cs = rctx->rings.dma.cs;
+
+	if (!cs->cdw) {
+		return;
+	}
+
+	rctx->rings.dma.flushing = true;
+	rctx->ws->cs_flush(cs, flags, 0);
+	rctx->rings.dma.flushing = false;
+}
+
+static void r600_flush_dma_from_winsys(void *ctx, unsigned flags)
+{
+	struct r600_common_context *rctx = (struct r600_common_context *)ctx;
+
+	rctx->rings.dma.flush(rctx, flags);
+}
+
 bool r600_common_context_init(struct r600_common_context *rctx,
 			      struct r600_common_screen *rscreen)
 {
@@ -76,6 +97,12 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 					PIPE_BIND_CONSTANT_BUFFER);
 	if (!rctx->uploader)
 		return false;
+
+	if (rscreen->info.r600_has_dma && !(rscreen->debug_flags & DBG_NO_ASYNC_DMA)) {
+		rctx->rings.dma.cs = rctx->ws->cs_create(rctx->ws, RING_DMA, NULL);
+		rctx->rings.dma.flush = r600_flush_dma_ring;
+		rctx->ws->cs_set_flush_callback(rctx->rings.dma.cs, r600_flush_dma_from_winsys, rctx);
+	}
 
 	return true;
 }
@@ -135,6 +162,9 @@ static const struct debug_named_value common_debug_options[] = {
 	{ "compute", DBG_COMPUTE, "Print compute info" },
 	{ "vm", DBG_VM, "Print virtual addresses when creating resources" },
 	{ "trace_cs", DBG_TRACE_CS, "Trace cs and write rlockup_<csid>.c file with faulty cs" },
+
+	/* features */
+	{ "nodma", DBG_NO_ASYNC_DMA, "Disable asynchronous DMA" },
 
 	/* shaders */
 	{ "fs", DBG_FS, "Print fetch shaders" },

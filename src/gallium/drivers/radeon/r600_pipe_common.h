@@ -76,6 +76,8 @@
 #define DBG_COMPUTE		(1 << 2)
 #define DBG_VM			(1 << 3)
 #define DBG_TRACE_CS		(1 << 4)
+/* features */
+#define DBG_NO_ASYNC_DMA	(1 << 5)
 /* shaders */
 #define DBG_FS			(1 << 8)
 #define DBG_VS			(1 << 9)
