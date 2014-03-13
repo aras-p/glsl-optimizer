@@ -738,7 +738,7 @@ get_vertex_array_attrib(struct gl_context *ctx, GLuint index, GLenum pname,
    case GL_VERTEX_ATTRIB_ARRAY_ENABLED_ARB:
       return array->Enabled;
    case GL_VERTEX_ATTRIB_ARRAY_SIZE_ARB:
-      return array->Size;
+      return (array->Format == GL_BGRA) ? GL_BGRA : array->Size;
    case GL_VERTEX_ATTRIB_ARRAY_STRIDE_ARB:
       return array->Stride;
    case GL_VERTEX_ATTRIB_ARRAY_TYPE_ARB:
