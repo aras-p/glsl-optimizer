@@ -1122,6 +1122,11 @@ vec4_visitor::dump_instruction(backend_instruction *be_inst)
 {
    vec4_instruction *inst = (vec4_instruction *)be_inst;
 
+   if (inst->predicate) {
+      fprintf(stderr, "(%cf0) ",
+             inst->predicate_inverse ? '-' : '+');
+   }
+
    fprintf(stderr, "%s", brw_instruction_name(inst->opcode));
    if (inst->conditional_mod) {
       fprintf(stderr, "%s", conditional_modifier[inst->conditional_mod]);
