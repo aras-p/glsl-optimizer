@@ -19,7 +19,9 @@ include_HEADERS = main/gbm.h
 libgbm_la_SOURCES = \
 	main/gbm.c \
 	main/backend.c
-libgbm_la_LDFLAGS = -version-info 1:0
+libgbm_la_LDFLAGS = \
+	-no-undefined \
+	-version-info 1:0
 libgbm_la_LIBADD = \
 	$(top_builddir)/src/loader/libloader.la \
 	$(DLOPEN_LIBS)

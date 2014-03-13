@@ -54,25 +54,24 @@ GALLIUM_VIDEO_CFLAGS = \
 DRI_VERSION_SCRIPT ?= $(top_srcdir)/src/gallium/state_trackers/dri/dri.link
 
 GALLIUM_DRI_LINKER_FLAGS = \
+	-shared \
 	-module \
 	-avoid-version \
-	-Wl,--version-script=$(DRI_VERSION_SCRIPT) \
-	-shared \
-	-no-undefined
+	-Wl,--version-script=$(DRI_VERSION_SCRIPT)
 
 GALLIUM_VDPAU_LINKER_FLAGS = \
-	-module \
-	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
-	-export-symbols-regex $(VDPAU_EXPORTS) \
 	-shared \
-	-no-undefined
+	-module \
+	-no-undefined \
+	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
+	-export-symbols-regex $(VDPAU_EXPORTS)
 
 GALLIUM_XVMC_LINKER_FLAGS = \
-	-module \
-	-version-number $(XVMC_MAJOR):$(XVMC_MINOR) \
 	-shared \
-	-export-symbols-regex '^XvMC' \
-	-no-undefined
+	-module \
+	-no-undefined \
+	-version-number $(XVMC_MAJOR):$(XVMC_MINOR) \
+	-export-symbols-regex '^XvMC'
 
 GALLIUM_OMX_LINKER_FLAGS = \
 	-shared \
