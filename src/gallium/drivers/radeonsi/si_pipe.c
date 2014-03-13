@@ -65,6 +65,13 @@ static void si_flush_from_st(struct pipe_context *ctx,
 			     struct pipe_fence_handle **fence,
 			     unsigned flags)
 {
+	struct si_context *sctx = (struct si_context *)ctx;
+
+	if (sctx->b.rings.dma.cs) {
+		sctx->b.rings.dma.flush(sctx,
+					flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0);
+	}
+
 	si_flush(ctx, fence,
 		 flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0);
 }
