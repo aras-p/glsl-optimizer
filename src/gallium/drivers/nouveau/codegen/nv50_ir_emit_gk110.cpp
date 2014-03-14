@@ -716,7 +716,7 @@ CodeEmitterGK110::emitShift(const Instruction *i)
 void
 CodeEmitterGK110::emitPreOp(const Instruction *i)
 {
-   emitForm_21(i, 0x248, -1);
+   emitForm_C(i, 0x248, 0x2);
 
    if (i->op == OP_PREEX2)
       code[1] |= 1 << 10;
