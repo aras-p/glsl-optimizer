@@ -534,7 +534,10 @@ CodeEmitterGK110::emitFADD(const Instruction *i)
       assert(i->rnd == ROUND_N);
       assert(!i->saturate);
 
-      emitForm_L(i, 0x400, 0, i->src(1).mod);
+      Modifier mod = i->src(1).mod ^
+         Modifier(i->op == OP_SUB ? NV50_IR_MOD_NEG : 0);
+
+      emitForm_L(i, 0x400, 0, mod);
 
       FTZ_(3a);
       NEG_(3b, 0);
@@ -549,9 +552,11 @@ CodeEmitterGK110::emitFADD(const Instruction *i)
 
       if (code[0] & 0x1) {
          modNegAbsF32_3b(i, 1);
+         if (i->op == OP_SUB) code[1] ^= 1 << 27;
       } else {
          ABS_(34, 1);
          NEG_(30, 1);
+         if (i->op == OP_SUB) code[1] ^= 1 << 16;
       }
    }
 }
