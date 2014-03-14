@@ -50,6 +50,17 @@ namespace {
    }
 
    ///
+   /// Size of a region in bytes.
+   ///
+   size_t
+   size(const vector_t &pitch, const vector_t &region) {
+      if (any_of(is_zero(), region))
+         return 0;
+      else
+         return dot(pitch, region - vector_t{ 0, 1, 1 });
+   }
+
+   ///
    /// Common argument checking shared by memory transfer commands.
    ///
    void
@@ -75,7 +86,7 @@ namespace {
          throw error(CL_INVALID_VALUE);
 
       // ...and within the specified object.
-      if (dot(pitch, origin) + pitch[2] * region[2] > mem.size())
+      if (dot(pitch, origin) + size(pitch, origin) > mem.size())
          throw error(CL_INVALID_VALUE);
 
       if (any_of(is_zero(), region))
@@ -128,8 +139,8 @@ namespace {
          auto src_offset = dot(src_pitch, src_orig);
 
          if (interval_overlaps()(
-                dst_offset, dst_offset + dst_pitch[2] * region[2],
-                src_offset, src_offset + src_pitch[2] * region[2]))
+                dst_offset, dst_offset + size(dst_pitch, region),
+                src_offset, src_offset + size(src_pitch, region)))
             throw error(CL_MEM_COPY_OVERLAP);
       }
    }
@@ -199,10 +210,10 @@ namespace {
       return [=, &q](event &) {
          auto dst = _map<T>::get(q, dst_obj, CL_MAP_WRITE,
                                  dot(dst_pitch, dst_orig),
-                                 dst_pitch[2] * region[2]);
+                                 size(dst_pitch, region));
          auto src = _map<S>::get(q, src_obj, CL_MAP_READ,
                                  dot(src_pitch, src_orig),
-                                 src_pitch[2] * region[2]);
+                                 size(src_pitch, region));
          vector_t v = {};
 
          for (v[2] = 0; v[2] < region[2]; ++v[2]) {
