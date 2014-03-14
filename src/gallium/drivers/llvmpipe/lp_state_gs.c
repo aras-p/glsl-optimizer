@@ -48,7 +48,7 @@ llvmpipe_create_gs_state(struct pipe_context *pipe,
 
    state = CALLOC_STRUCT(lp_geometry_shader);
    if (state == NULL )
-      goto fail;
+      goto no_state;
 
    /* debug */
    if (LP_DEBUG & DEBUG_TGSI) {
@@ -57,26 +57,19 @@ llvmpipe_create_gs_state(struct pipe_context *pipe,
    }
 
    /* copy stream output info */
-   state->shader = *templ;
-   if (templ->tokens) {
-      /* copy shader tokens, the ones passed in will go away. */
-      state->shader.tokens = tgsi_dup_tokens(templ->tokens);
-      if (state->shader.tokens == NULL)
-         goto fail;
+   state->no_tokens = !templ->tokens;
+   memcpy(&state->stream_output, &templ->stream_output, sizeof state->stream_output);
 
-      state->draw_data = draw_create_geometry_shader(llvmpipe->draw, templ);
-      if (state->draw_data == NULL)
-         goto fail;
+   state->dgs = draw_create_geometry_shader(llvmpipe->draw, templ);
+   if (state->dgs == NULL) {
+      goto no_dgs;
    }
 
    return state;
 
-fail:
-   if (state) {
-      FREE( (void *)state->shader.tokens );
-      FREE( state->draw_data );
-      FREE( state );
-   }
+no_dgs:
+   FREE( state );
+no_state:
    return NULL;
 }
 
@@ -89,7 +82,7 @@ llvmpipe_bind_gs_state(struct pipe_context *pipe, void *gs)
    llvmpipe->gs = (struct lp_geometry_shader *)gs;
 
    draw_bind_geometry_shader(llvmpipe->draw,
-                             (llvmpipe->gs ? llvmpipe->gs->draw_data : NULL));
+                             (llvmpipe->gs ? llvmpipe->gs->dgs : NULL));
 
    llvmpipe->dirty |= LP_NEW_GS;
 }
@@ -107,8 +100,7 @@ llvmpipe_delete_gs_state(struct pipe_context *pipe, void *gs)
       return;
    }
 
-   draw_delete_geometry_shader(llvmpipe->draw, state->draw_data);
-   FREE( (void *)state->shader.tokens );
+   draw_delete_geometry_shader(llvmpipe->draw, state->dgs);
    FREE(state);
 }
 

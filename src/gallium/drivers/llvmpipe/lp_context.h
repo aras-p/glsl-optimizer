@@ -46,8 +46,8 @@
 struct llvmpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
+struct draw_vertex_shader;
 struct lp_fragment_shader;
-struct lp_vertex_shader;
 struct lp_blend_state;
 struct lp_setup_context;
 struct lp_setup_variant;
@@ -63,7 +63,7 @@ struct llvmpipe_context {
    const struct pipe_depth_stencil_alpha_state *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
    struct lp_fragment_shader *fs;
-   const struct lp_vertex_shader *vs;
+   struct draw_vertex_shader *vs;
    const struct lp_geometry_shader *gs;
    const struct lp_velems_state *velems;
    const struct lp_so_state *so;

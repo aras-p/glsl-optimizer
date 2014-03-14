@@ -43,36 +43,19 @@ llvmpipe_create_vs_state(struct pipe_context *pipe,
                          const struct pipe_shader_state *templ)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   struct lp_vertex_shader *state;
+   struct draw_vertex_shader *vs;
 
-   state = CALLOC_STRUCT(lp_vertex_shader);
-   if (state == NULL ) 
-      goto fail;
-
-   /* copy shader tokens, the ones passed in will go away.
-    */
-   state->shader.tokens = tgsi_dup_tokens(templ->tokens);
-   if (state->shader.tokens == NULL)
-      goto fail;
-
-   state->draw_data = draw_create_vertex_shader(llvmpipe->draw, templ);
-   if (state->draw_data == NULL) 
-      goto fail;
+   vs = draw_create_vertex_shader(llvmpipe->draw, templ);
+   if (vs == NULL) {
+      return NULL;
+   }
 
    if (LP_DEBUG & DEBUG_TGSI) {
-      debug_printf("llvmpipe: Create vertex shader %p:\n", (void *) state);
+      debug_printf("llvmpipe: Create vertex shader %p:\n", (void *) vs);
       tgsi_dump(templ->tokens, 0);
    }
 
-   return state;
-
-fail:
-   if (state) {
-      FREE( (void *)state->shader.tokens );
-      FREE( state->draw_data );
-      FREE( state );
-   }
-   return NULL;
+   return vs;
 }
 
 
@@ -80,13 +63,12 @@ static void
 llvmpipe_bind_vs_state(struct pipe_context *pipe, void *_vs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
-   const struct lp_vertex_shader *vs = (const struct lp_vertex_shader *)_vs;
+   struct draw_vertex_shader *vs = (struct draw_vertex_shader *)_vs;
 
    if (llvmpipe->vs == vs)
       return;
 
-   draw_bind_vertex_shader(llvmpipe->draw, 
-                           vs ? vs->draw_data : NULL);
+   draw_bind_vertex_shader(llvmpipe->draw, vs);
 
    llvmpipe->vs = vs;
 
@@ -95,16 +77,12 @@ llvmpipe_bind_vs_state(struct pipe_context *pipe, void *_vs)
 
 
 static void
-llvmpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
+llvmpipe_delete_vs_state(struct pipe_context *pipe, void *_vs)
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
+   struct draw_vertex_shader *vs = (struct draw_vertex_shader *)_vs;
 
-   struct lp_vertex_shader *state =
-      (struct lp_vertex_shader *)vs;
-
-   draw_delete_vertex_shader(llvmpipe->draw, state->draw_data);
-   FREE( (void *)state->shader.tokens );
-   FREE( state );
+   draw_delete_vertex_shader(llvmpipe->draw, vs);
 }
 
 

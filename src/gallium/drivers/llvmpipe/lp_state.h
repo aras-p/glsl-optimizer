@@ -65,17 +65,10 @@ struct llvmpipe_context;
 
 
 
-/** Subclass of pipe_shader_state */
-struct lp_vertex_shader
-{
-   struct pipe_shader_state shader;
-   struct draw_vertex_shader *draw_data;
-};
-
-/** Subclass of pipe_shader_state */
 struct lp_geometry_shader {
-   struct pipe_shader_state shader;
-   struct draw_geometry_shader *draw_data;
+   boolean no_tokens;
+   struct pipe_stream_output_info stream_output;
+   struct draw_geometry_shader *dgs;
 };
 
 /** Vertex element state */
