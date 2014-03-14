@@ -673,7 +673,7 @@ pstip_create_fs_state(struct pipe_context *pipe,
    struct pstip_fragment_shader *pstipfs = CALLOC_STRUCT(pstip_fragment_shader);
 
    if (pstipfs) {
-      pstipfs->state = *fs;
+      pstipfs->state.tokens = tgsi_dup_tokens(fs->tokens);
 
       /* pass-through */
       pstipfs->driver_fs = pstip->driver_create_fs_state(pstip->pipe, fs);
@@ -707,6 +707,7 @@ pstip_delete_fs_state(struct pipe_context *pipe, void *fs)
    if (pstipfs->pstip_fs)
       pstip->driver_delete_fs_state(pstip->pipe, pstipfs->pstip_fs);
 
+   FREE((void*)pstipfs->state.tokens);
    FREE(pstipfs);
 }
 
