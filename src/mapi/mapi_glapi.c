@@ -222,6 +222,16 @@ _glapi_get_proc_name(unsigned int offset)
    return stub ? stub_get_name(stub) : NULL;
 }
 
+/**
+ * This is a deprecated function which should not be used anymore.
+ * It's only present to satisfy linking with older versions of libGL.
+ */
+unsigned long
+_glthread_GetID(void)
+{
+   return 0;
+}
+
 void
 _glapi_noop_enable_warnings(unsigned char enable)
 {
