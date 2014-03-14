@@ -402,9 +402,13 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
       mirror_y = true;
    }
 
+   /* Account for face selection and texture view MinLayer */
+   int dst_slice = slice + dst_image->TexObject->MinLayer + dst_image->Face;
+   int dst_level = dst_image->Level + dst_image->TexObject->MinLevel;
+
    brw_blorp_blit_miptrees(brw,
                            src_mt, src_irb->mt_level, src_irb->mt_layer,
-                           dst_mt, dst_image->Level, dst_image->Face + slice,
+                           dst_mt, dst_level, dst_slice,
                            srcX0, srcY0, srcX1, srcY1,
                            dstX0, dstY0, dstX1, dstY1,
                            GL_NEAREST, false, mirror_y);
@@ -427,8 +431,7 @@ brw_blorp_copytexsubimage(struct brw_context *brw,
       if (src_mt != dst_mt) {
          brw_blorp_blit_miptrees(brw,
                                  src_mt, src_irb->mt_level, src_irb->mt_layer,
-                                 dst_mt, dst_image->Level,
-                                 dst_image->Face + slice,
+                                 dst_mt, dst_level, dst_slice,
                                  srcX0, srcY0, srcX1, srcY1,
                                  dstX0, dstY0, dstX1, dstY1,
                                  GL_NEAREST, false, mirror_y);
