@@ -74,12 +74,17 @@ intel_copy_texsubimage(struct brw_context *brw,
       return false;
    }
 
+   /* account for view parameters and face index */
+   int dst_level = intelImage->base.Base.Level +
+                   intelImage->base.Base.TexObject->MinLevel;
+   int dst_slice = slice + intelImage->base.Base.Face +
+                   intelImage->base.Base.TexObject->MinLayer;
+
    /* blit from src buffer to texture */
    if (!intel_miptree_blit(brw,
                            irb->mt, irb->mt_level, irb->mt_layer,
                            x, y, irb->Base.Base.Name == 0,
-                           intelImage->mt, intelImage->base.Base.Level,
-                           intelImage->base.Base.Face + slice,
+                           intelImage->mt, dst_level, dst_slice,
                            dstx, dsty, false,
                            width, height, GL_COPY)) {
       return false;
