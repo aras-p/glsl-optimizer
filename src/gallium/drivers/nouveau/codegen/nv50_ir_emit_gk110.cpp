@@ -695,27 +695,16 @@ CodeEmitterGK110::emitINSBF(const Instruction *i)
 void
 CodeEmitterGK110::emitShift(const Instruction *i)
 {
-   const bool sar = i->op == OP_SHR && isSignedType(i->sType);
-
-   if (sar) {
-      emitForm_21(i, 0x214, 0x014);
-      code[1] |= 1 << 19;
-   } else
    if (i->op == OP_SHR) {
-      // this is actually RSHF
-      emitForm_21(i, 0x27c, 0x87c);
-      code[1] |= GK110_GPR_ZERO << 10;
+      emitForm_21(i, 0x214, 0xc14);
+      if (isSignedType(i->dType))
+         code[1] |= 1 << 19;
    } else {
-      // this is actually LSHF
-      emitForm_21(i, 0x1fc, 0xb7c);
-      code[1] |= GK110_GPR_ZERO << 10;
+      emitForm_21(i, 0x224, 0xc24);
    }
 
-   if (i->subOp == NV50_IR_SUBOP_SHIFT_WRAP) {
-      if (!sar)
-         code[1] |= 1 << 21;
-      // XXX: find wrap modifier for SHR S32
-   }
+   if (i->subOp == NV50_IR_SUBOP_SHIFT_WRAP)
+      code[1] |= 1 << 10;
 }
 
 void
