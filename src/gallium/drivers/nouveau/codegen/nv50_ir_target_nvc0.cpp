@@ -361,13 +361,6 @@ TargetNVC0::isAccessSupported(DataFile file, DataType ty) const
       return typeSizeof(ty) <= 8;
    if (ty == TYPE_B96)
       return false;
-   if (getChipset() >= 0xf0) {
-      // XXX: find wide vfetch/export
-      if (ty == TYPE_B128)
-         return false;
-      if (ty == TYPE_U64)
-         return false;
-   }
    return true;
 }
 

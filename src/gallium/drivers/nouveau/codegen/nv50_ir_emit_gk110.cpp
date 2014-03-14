@@ -1217,10 +1217,12 @@ CodeEmitterGK110::emitPFETCH(const Instruction *i)
 void
 CodeEmitterGK110::emitVFETCH(const Instruction *i)
 {
+   unsigned int size = typeSizeof(i->dType);
    uint32_t offset = i->src(0).get()->reg.data.offset;
 
    code[0] = 0x00000002 | (offset << 23);
    code[1] = 0x7ec00000 | (offset >> 9);
+   code[1] |= (size / 4 - 1) << 18;
 
 #if 0
    if (i->perPatch)
@@ -1239,10 +1241,12 @@ CodeEmitterGK110::emitVFETCH(const Instruction *i)
 void
 CodeEmitterGK110::emitEXPORT(const Instruction *i)
 {
+   unsigned int size = typeSizeof(i->dType);
    uint32_t offset = i->src(0).get()->reg.data.offset;
 
    code[0] = 0x00000002 | (offset << 23);
    code[1] = 0x7f000000 | (offset >> 9);
+   code[1] |= (size / 4 - 1) << 18;
 
 #if 0
    if (i->perPatch)
