@@ -504,7 +504,7 @@ static OMX_ERRORTYPE vid_dec_DecodeBuffer(omx_base_PortType *port, OMX_BUFFERHEA
       }
 
       if (--priv->num_in_buffers) {
-         unsigned delta = (min_bits_left - vl_vlc_bits_left(&vlc)) / 8;
+         unsigned delta = MIN2((min_bits_left - vl_vlc_bits_left(&vlc)) / 8, priv->sizes[1]);
 
          priv->in_buffers[0] = priv->in_buffers[1];
          priv->sizes[0] = priv->sizes[1] - delta;
