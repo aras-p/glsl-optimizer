@@ -57,6 +57,12 @@ struct tgsi_transform_context
                               struct tgsi_full_property *prop);
 
    /**
+    * Called after last declaration, before first instruction.  This is
+    * where the user might insert new declarations and/or instructions.
+    */
+   void (*prolog)(struct tgsi_transform_context *ctx);
+
+   /**
     * Called at end of input program to allow caller to append extra
     * instructions.  Return number of tokens emitted.
     */

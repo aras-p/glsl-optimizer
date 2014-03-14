@@ -109,6 +109,7 @@ tgsi_transform_shader(const struct tgsi_token *tokens_in,
                       struct tgsi_transform_context *ctx)
 {
    uint procType;
+   boolean first_instruction = TRUE;
 
    /* input shader */
    struct tgsi_parse_context parse;
@@ -166,10 +167,16 @@ tgsi_transform_shader(const struct tgsi_token *tokens_in,
             struct tgsi_full_instruction *fullinst
                = &parse.FullToken.FullInstruction;
 
+            if (first_instruction && ctx->prolog) {
+               ctx->prolog(ctx);
+            }
+
             if (ctx->transform_instruction)
                ctx->transform_instruction(ctx, fullinst);
             else
                ctx->emit_instruction(ctx, fullinst);
+
+            first_instruction = FALSE;
          }
          break;
 
