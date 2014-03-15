@@ -489,6 +489,8 @@ CodeEmitterGK110::emitFMUL(const Instruction *i)
       assert(i->postFactor == 0);
    } else {
       emitForm_21(i, 0x234, 0xc34);
+      code[1] |= ((i->postFactor > 0) ?
+                  (7 - i->postFactor) : (0 - i->postFactor)) << 12;
 
       RND_(2a, F);
       FTZ_(2f);
