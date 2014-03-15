@@ -30,13 +30,12 @@ AM_CPPFLAGS = \
 	-DGALLIUM_TRACE \
 	-DGALLIUM_GALAHAD
 
-noinst_LTLIBRARIES = ilo_dri.la
+dridir = $(DRI_DRIVER_INSTALL_DIR)
+dri_LTLIBRARIES = ilo_dri.la
 
 ilo_dri_la_SOURCES = target.c
 
-# need -rpath to create a noinst shared library
-ilo_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS) \
-		     -rpath $(abs_builddir)
+ilo_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
 
 ilo_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
