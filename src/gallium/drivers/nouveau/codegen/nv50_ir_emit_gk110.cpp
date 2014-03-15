@@ -661,17 +661,16 @@ CodeEmitterGK110::emitNOT(const Instruction *i)
 void
 CodeEmitterGK110::emitLogicOp(const Instruction *i, uint8_t subOp)
 {
-   assert(!(i->src(0).mod & Modifier(NV50_IR_MOD_NOT))); // XXX: find me
-
    if (isLIMM(i->src(1), TYPE_S32)) {
       emitForm_L(i, 0x200, 0, i->src(1).mod);
       code[1] |= subOp << 24;
+      NOT_(3a, 0);
    } else {
       emitForm_21(i, 0x220, 0xc20);
       code[1] |= subOp << 12;
+      NOT_(2a, 0);
       NOT_(2b, 1);
    }
-   assert(!(code[0] & 0x1) || !(i->src(1).mod & Modifier(NV50_IR_MOD_NOT)));
 }
 
 void
