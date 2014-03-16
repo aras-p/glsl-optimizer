@@ -188,7 +188,6 @@ struct st_context
    void *passthrough_fs;  /**< simple pass-through frag shader */
 
    enum pipe_texture_target internal_target;
-   struct gen_mipmap_state *gen_mipmap;
 
    struct cso_context *cso_context;
 

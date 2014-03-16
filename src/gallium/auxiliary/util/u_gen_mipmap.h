@@ -35,26 +35,13 @@
 extern "C" {
 #endif
 
-   
+
 struct pipe_context;
-struct pipe_resource;
-struct cso_context;
 
-struct gen_mipmap_state;
-
-
-extern struct gen_mipmap_state *
-util_create_gen_mipmap(struct pipe_context *pipe, struct cso_context *cso);
-
-
-extern void
-util_destroy_gen_mipmap(struct gen_mipmap_state *ctx);
-
-
-extern void
-util_gen_mipmap(struct gen_mipmap_state *ctx,
-                struct pipe_sampler_view *psv,
-                uint layer, uint baseLevel, uint lastLevel, uint filter);
+extern boolean
+util_gen_mipmap(struct pipe_context *pipe, struct pipe_resource *pt,
+                enum pipe_format format, uint base_level, uint last_level,
+                uint first_layer, uint last_layer, uint filter);
 
 
 #ifdef __cplusplus

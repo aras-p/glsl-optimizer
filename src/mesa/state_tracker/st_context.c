@@ -152,7 +152,6 @@ st_create_context_priv( struct gl_context *ctx, struct pipe_context *pipe,
    st_init_bitmap(st);
    st_init_clear(st);
    st_init_draw( st );
-   st_init_generate_mipmap(st);
 
    /* Choose texture target for glDrawPixels, glBitmap, renderbuffers */
    if (pipe->screen->get_param(pipe->screen, PIPE_CAP_NPOT_TEXTURES))
@@ -254,7 +253,6 @@ static void st_destroy_context_priv( struct st_context *st )
 
    st_destroy_atoms( st );
    st_destroy_draw( st );
-   st_destroy_generate_mipmap(st);
    st_destroy_clear(st);
    st_destroy_bitmap(st);
    st_destroy_drawpix(st);

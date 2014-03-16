@@ -34,14 +34,6 @@
 
 struct gl_context;
 struct gl_texture_object;
-struct st_context;
-
-extern void
-st_init_generate_mipmap(struct st_context *st);
-
-
-extern void
-st_destroy_generate_mipmap(struct st_context *st);
 
 
 extern void

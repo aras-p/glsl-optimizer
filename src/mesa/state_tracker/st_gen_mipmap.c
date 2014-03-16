@@ -44,64 +44,6 @@
 
 
 /**
- * one-time init for generate mipmap
- * XXX Note: there may be other times we need no-op/simple state like this.
- * In that case, some code refactoring would be good.
- */
-void
-st_init_generate_mipmap(struct st_context *st)
-{
-   st->gen_mipmap = util_create_gen_mipmap(st->pipe, st->cso_context);
-}
-
-
-void
-st_destroy_generate_mipmap(struct st_context *st)
-{
-   util_destroy_gen_mipmap(st->gen_mipmap);
-   st->gen_mipmap = NULL;
-}
-
-
-/**
- * Generate mipmap levels using hardware rendering.
- * \return TRUE if successful, FALSE if not possible
- */
-static boolean
-st_render_mipmap(struct st_context *st,
-                 GLenum target,
-                 struct st_texture_object *stObj,
-                 uint baseLevel, uint lastLevel)
-{
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   struct pipe_sampler_view *psv;
-   const uint face = _mesa_tex_target_to_face(target);
-
-#if 0
-   assert(target != GL_TEXTURE_3D); /* implemented but untested */
-#endif
-
-   /* check if we can render in the texture's format */
-   /* XXX should probably kill this and always use util_gen_mipmap
-      since this implements a sw fallback as well */
-   if (!screen->is_format_supported(screen, stObj->pt->format,
-                                    stObj->pt->target,
-                                    0, PIPE_BIND_RENDER_TARGET)) {
-      return FALSE;
-   }
-
-   psv = st_create_texture_sampler_view(pipe, stObj->pt);
-
-   util_gen_mipmap(st->gen_mipmap, psv, face, baseLevel, lastLevel,
-                   PIPE_TEX_FILTER_LINEAR);
-
-   pipe_sampler_view_reference(&psv, NULL);
-
-   return TRUE;
-}
-
-/**
  * Compute the expected number of mipmap levels in the texture given
  * the width/height/depth of the base image and the GL_TEXTURE_BASE_LEVEL/
  * GL_TEXTURE_MAX_LEVEL settings.  This will tell us how many mipmap
@@ -136,7 +78,7 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct pipe_resource *pt = st_get_texobj_resource(texObj);
    const uint baseLevel = texObj->BaseLevel;
-   uint lastLevel;
+   uint lastLevel, first_layer, last_layer;
    uint dstLevel;
 
    if (!pt)
@@ -195,12 +137,19 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
 
    assert(pt->last_level >= lastLevel);
 
+   if (pt->target == PIPE_TEXTURE_CUBE) {
+      first_layer = last_layer = _mesa_tex_target_to_face(target);
+   }
+   else {
+      first_layer = 0;
+      last_layer = util_max_layer(pt, baseLevel);
+   }
+
    /* Try to generate the mipmap by rendering/texturing.  If that fails,
     * use the software fallback.
     */
-   if (!st_render_mipmap(st, target, stObj, baseLevel, lastLevel)) {
-      /* since the util code actually also has a fallback, should
-         probably make it never fail and kill this */
+   if (!util_gen_mipmap(st->pipe, pt, pt->format, baseLevel, lastLevel,
+                        first_layer, last_layer, PIPE_TEX_FILTER_LINEAR)) {
       _mesa_generate_mipmap(ctx, target, texObj);
    }
 
