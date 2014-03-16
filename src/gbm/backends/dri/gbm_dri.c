@@ -125,12 +125,13 @@ image_get_buffers(__DRIdrawable *driDrawable,
 }
 
 static const __DRIuseInvalidateExtension use_invalidate = {
-   { __DRI_USE_INVALIDATE, 1 }
+   .base = { __DRI_USE_INVALIDATE, 1 }
 };
 
 static const __DRIimageLookupExtension image_lookup_extension = {
-   { __DRI_IMAGE_LOOKUP, 1 },
-   dri_lookup_egl_image
+   .base = { __DRI_IMAGE_LOOKUP, 1 },
+
+   .lookupEGLImage          = dri_lookup_egl_image
 };
 
 static const __DRIdri2LoaderExtension dri2_loader_extension = {
@@ -148,6 +149,13 @@ static const __DRIimageLoaderExtension image_loader_extension = {
    .flushFrontBuffer    = dri_flush_front_buffer,
 };
 
+static const __DRIextension *gbm_dri_screen_extensions[] = {
+   &image_lookup_extension.base,
+   &use_invalidate.base,
+   &dri2_loader_extension.base,
+   &image_loader_extension.base,
+   NULL,
+};
 
 struct dri_extension_match {
    const char *name;
@@ -285,11 +293,7 @@ dri_screen_create(struct gbm_dri_device *dri)
       return ret;
    };
 
-   dri->extensions[0] = &image_lookup_extension.base;
-   dri->extensions[1] = &use_invalidate.base;
-   dri->extensions[2] = &dri2_loader_extension.base;
-   dri->extensions[3] = &image_loader_extension.base;
-   dri->extensions[4] = NULL;
+   dri->extensions = gbm_dri_screen_extensions;
 
    if (dri->dri2 == NULL)
       return -1;

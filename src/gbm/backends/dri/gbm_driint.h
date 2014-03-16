@@ -44,14 +44,14 @@ struct gbm_dri_device {
 
    __DRIscreen *screen;
 
-   __DRIcoreExtension   *core;
-   __DRIdri2Extension   *dri2;
-   __DRIimageExtension  *image;
-   __DRI2flushExtension *flush;
-   __DRIdri2LoaderExtension *loader;
+   const __DRIcoreExtension   *core;
+   const __DRIdri2Extension   *dri2;
+   const __DRIimageExtension  *image;
+   const __DRI2flushExtension *flush;
+   const __DRIdri2LoaderExtension *loader;
 
    const __DRIconfig   **driver_configs;
-   const __DRIextension *extensions[5];
+   const __DRIextension **extensions;
    const __DRIextension **driver_extensions;
 
    __DRIimage *(*lookup_image)(__DRIscreen *screen, void *image, void *data);
