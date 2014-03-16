@@ -1307,6 +1307,12 @@ static const __DRIimageLoaderExtension imageLoaderExtension = {
    .flushFrontBuffer    = dri3_flush_front_buffer,
 };
 
+static const __DRIextension *loader_extensions[] = {
+   &imageLoaderExtension.base,
+   &systemTimeExtension.base,
+   NULL
+};
+
 /** dri3_swap_buffers
  *
  * Make the current back buffer visible using the present extension
@@ -1689,8 +1695,7 @@ dri3_create_screen(int screen, struct glx_display * priv)
 
    psc->driScreen =
       psc->image_driver->createNewScreen2(screen, psc->fd,
-                                          (const __DRIextension **)
-                                          &pdp->loader_extensions[0],
+                                          pdp->loader_extensions,
                                           extensions,
                                           &driver_configs, psc);
 
@@ -1807,7 +1812,6 @@ _X_HIDDEN __GLXDRIdisplay *
 dri3_create_display(Display * dpy)
 {
    struct dri3_display                  *pdp;
-   int                                  i;
    xcb_connection_t                     *c = XGetXCBConnection(dpy);
    xcb_dri3_query_version_cookie_t      dri3_cookie;
    xcb_dri3_query_version_reply_t       *dri3_reply;
@@ -1863,13 +1867,8 @@ dri3_create_display(Display * dpy)
    pdp->base.createScreen = dri3_create_screen;
 
    loader_set_logger(dri_message);
-   i = 0;
 
-   pdp->loader_extensions[i++] = &imageLoaderExtension.base;
-
-   pdp->loader_extensions[i++] = &systemTimeExtension.base;
-
-   pdp->loader_extensions[i++] = NULL;
+   pdp->loader_extensions = loader_extensions;
 
    return &pdp->base;
 no_extension:

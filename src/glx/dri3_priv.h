@@ -106,7 +106,7 @@ struct dri3_display
 {
    __GLXDRIdisplay base;
 
-   const __DRIextension *loader_extensions[8];
+   const __DRIextension **loader_extensions;
 
    /* DRI3 bits */
    int dri3Major;
