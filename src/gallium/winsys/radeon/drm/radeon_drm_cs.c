@@ -281,6 +281,7 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
     if (csc->is_handle_added[hash]) {
         i = csc->reloc_indices_hashlist[hash];
         reloc = &csc->relocs[i];
+
         if (reloc->handle != bo->handle) {
             /* Hash collision, look for the BO in the list of relocs linearly. */
             for (i = csc->crelocs - 1; i >= 0; i--) {
@@ -293,21 +294,23 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
         }
 
         if (i >= 0) {
-            /* On DMA ring we need to emit as many relocation as there is use of the bo
-             * thus each time this function is call we should grow add again the bo to
-             * the relocation buffer
-             *
-             * Do not update the hash table if it's dma ring, so that first hash always point
-             * to first bo relocation which will the one used by the kernel. Following relocation
-             * will be ignore by the kernel memory placement (but still use by the kernel to
-             * update the cmd stream with proper buffer offset).
-             */
-            update_hash = FALSE;
             update_reloc(reloc, rd, wd, priority, added_domains);
-            if (cs->base.ring_type != RING_DMA) {
+
+            /* For async DMA, every add_reloc call must add a buffer to the list
+             * no matter how many duplicates there are. This is due to the fact
+             * the DMA CS checker doesn't use NOP packets for offset patching,
+             * but always uses the i-th buffer from the list to patch the i-th
+             * offset. If there are N offsets in a DMA CS, there must also be N
+             * buffers in the relocation list.
+             *
+             * This doesn't have to be done if virtual memory is enabled,
+             * because there is no offset patching with virtual memory.
+             */
+            if (cs->base.ring_type != RING_DMA || cs->ws->info.r600_virtual_address) {
                 csc->reloc_indices_hashlist[hash] = i;
                 return i;
             }
+            update_hash = FALSE;
         }
     }
 
