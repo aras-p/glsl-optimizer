@@ -2793,9 +2793,6 @@ static boolean r600_dma_copy_tile(struct r600_context *rctx,
 	unsigned ncopy, height, cheight, detile, i, x, y, z, src_mode, dst_mode;
 	uint64_t base, addr;
 
-	/* make sure that the dma ring is only one active */
-	rctx->b.rings.gfx.flush(rctx, RADEON_FLUSH_ASYNC);
-
 	dst_mode = rdst->surface.level[dst_level].mode;
 	src_mode = rsrc->surface.level[src_level].mode;
 	/* downcast linear aligned to linear to simplify test */

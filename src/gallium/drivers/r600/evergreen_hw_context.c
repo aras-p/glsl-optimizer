@@ -46,8 +46,6 @@ void evergreen_dma_copy(struct r600_context *rctx,
 	util_range_add(&rdst->valid_buffer_range, dst_offset,
 		       dst_offset + size);
 
-	/* make sure that the dma ring is only one active */
-	rctx->b.rings.gfx.flush(rctx, RADEON_FLUSH_ASYNC);
 	dst_offset += r600_resource_va(&rctx->screen->b.b, dst);
 	src_offset += r600_resource_va(&rctx->screen->b.b, src);
 
