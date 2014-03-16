@@ -688,7 +688,7 @@ static void set_texcoords_in_vertices(const float coord[4],
 static void blitter_set_texcoords(struct blitter_context_priv *ctx,
                                   struct pipe_sampler_view *src,
                                   unsigned src_width0, unsigned src_height0,
-                                  unsigned layer, unsigned sample,
+                                  float layer, unsigned sample,
                                   int x1, int y1, int x2, int y2)
 {
    unsigned i;
@@ -700,7 +700,7 @@ static void blitter_set_texcoords(struct blitter_context_priv *ctx,
    if (src->texture->target == PIPE_TEXTURE_CUBE ||
        src->texture->target == PIPE_TEXTURE_CUBE_ARRAY) {
       set_texcoords_in_vertices(coord, &face_coord[0][0], 2);
-      util_map_texcoords2d_onto_cubemap(layer % 6,
+      util_map_texcoords2d_onto_cubemap((unsigned)layer % 6,
                                         /* pointer, stride in floats */
                                         &face_coord[0][0], 2,
                                         &ctx->vertices[0][1][0], 8,
@@ -734,7 +734,7 @@ static void blitter_set_texcoords(struct blitter_context_priv *ctx,
 
    case PIPE_TEXTURE_CUBE_ARRAY:
       for (i = 0; i < 4; i++)
-         ctx->vertices[i][1][3] = (float) (layer / 6); /*w*/
+         ctx->vertices[i][1][3] = (float) ((unsigned)layer / 6); /*w*/
       break;
 
    case PIPE_TEXTURE_2D:
@@ -1528,9 +1528,31 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
                               UTIL_BLITTER_ATTRIB_TEXCOORD, &coord);
    } else {
       /* Draw the quad with the generic codepath. */
-      int z;
-      for (z = 0; z < dstbox->depth; z++) {
+      int dst_z;
+      for (dst_z = 0; dst_z < dstbox->depth; dst_z++) {
          struct pipe_surface *old;
+         float dst2src_scale = srcbox->depth / (float)dstbox->depth;
+
+         /* Scale Z properly if the blit is scaled.
+          *
+          * When downscaling, we want the coordinates centered, so that
+          * mipmapping works for 3D textures. For example, when generating
+          * a 4x4x4 level, this wouldn't average the pixels:
+          *
+          *   src Z:  0 1 2 3 4 5 6 7
+          *   dst Z:  0   1   2   3
+          *
+          * Because the pixels are not centered below the pixels of the higher
+          * level. Therefore, we want this:
+          *   src Z:  0 1 2 3 4 5 6 7
+          *   dst Z:   0   1   2   3
+          *
+          * dst_offset defines the offset needed for centering the pixels and
+          * it works with any scaling (not just 2x).
+          */
+         float dst_offset = ((srcbox->depth - 1) -
+                             (dstbox->depth - 1) * dst2src_scale) * 0.5;
+         float src_z = (dst_z + dst_offset) * dst2src_scale;
 
          /* Set framebuffer state. */
          if (blit_depth || blit_stencil) {
@@ -1548,7 +1570,7 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
             for (i = 0; i <= max_sample; i++) {
                pipe->set_sample_mask(pipe, 1 << i);
                blitter_set_texcoords(ctx, src, src_width0, src_height0,
-                                     srcbox->z + z,
+                                     srcbox->z + src_z,
                                      i, srcbox->x, srcbox->y,
                                      srcbox->x + srcbox->width,
                                      srcbox->y + srcbox->height);
@@ -1560,7 +1582,7 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
             /* Normal copy, MSAA upsampling, or MSAA resolve. */
             pipe->set_sample_mask(pipe, ~0);
             blitter_set_texcoords(ctx, src, src_width0, src_height0,
-                                  srcbox->z + z, 0,
+                                  srcbox->z + src_z, 0,
                                   srcbox->x, srcbox->y,
                                   srcbox->x + srcbox->width,
                                   srcbox->y + srcbox->height);
@@ -1572,10 +1594,10 @@ void util_blitter_blit_generic(struct blitter_context *blitter,
          /* Get the next surface or (if this is the last iteration)
           * just unreference the last one. */
          old = dst;
-         if (z < dstbox->depth-1) {
+         if (dst_z < dstbox->depth-1) {
             dst = ctx->base.get_next_surface_layer(ctx->base.pipe, dst);
          }
-         if (z) {
+         if (dst_z) {
             pipe_surface_reference(&old, NULL);
          }
       }
