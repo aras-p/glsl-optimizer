@@ -265,7 +265,8 @@ static void
 nouveau_finish_render_texture(struct gl_context *ctx,
 			      struct gl_renderbuffer *rb)
 {
-	texture_dirty(rb->TexImage->TexObject);
+	if (rb && rb->TexImage)
+		texture_dirty(rb->TexImage->TexObject);
 }
 
 static int
