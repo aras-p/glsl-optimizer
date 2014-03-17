@@ -93,6 +93,36 @@ static void meta_glsl_clear_cleanup(struct clear_state *clear);
 static void meta_decompress_cleanup(struct decompress_state *decompress);
 static void meta_drawpix_cleanup(struct drawpix_state *drawpix);
 
+void
+_mesa_meta_bind_fbo_image(struct gl_texture_object *texObj, GLenum target,
+                          GLuint level, GLuint layer)
+{
+   switch (target) {
+   case GL_TEXTURE_1D:
+      _mesa_FramebufferTexture1D(GL_FRAMEBUFFER,
+                                 GL_COLOR_ATTACHMENT0,
+                                 target,
+                                 texObj->Name,
+                                 level);
+      break;
+   case GL_TEXTURE_1D_ARRAY:
+   case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_3D:
+      _mesa_FramebufferTextureLayer(GL_FRAMEBUFFER,
+                                    GL_COLOR_ATTACHMENT0,
+                                    texObj->Name,
+                                    level,
+                                    layer);
+      break;
+   default: /* 2D / cube */
+      _mesa_FramebufferTexture2D(GL_FRAMEBUFFER,
+                                 GL_COLOR_ATTACHMENT0,
+                                 target,
+                                 texObj->Name,
+                                 level);
+   }
+}
+
 GLuint
 _mesa_meta_compile_shader_with_debug(struct gl_context *ctx, GLenum target,
                                      const GLcharARB *source)
