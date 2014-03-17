@@ -59,12 +59,15 @@ static const int vmwgfx_chip_ids[] = {
 #undef CHIPSET
 };
 
+int is_nouveau_vieux(int fd);
+
 static const struct {
    int vendor_id;
    const char *driver;
    const int *chip_ids;
    int num_chips_ids;
    unsigned driver_types;
+   int (*predicate)(int fd);
 } driver_map[] = {
    { 0x8086, "i915", i915_chip_ids, ARRAY_SIZE(i915_chip_ids), _LOADER_DRI | _LOADER_GALLIUM },
    { 0x8086, "i965", i965_chip_ids, ARRAY_SIZE(i965_chip_ids), _LOADER_DRI | _LOADER_GALLIUM },
@@ -73,7 +76,8 @@ static const struct {
    { 0x1002, "r300", r300_chip_ids, ARRAY_SIZE(r300_chip_ids), _LOADER_GALLIUM },
    { 0x1002, "r600", r600_chip_ids, ARRAY_SIZE(r600_chip_ids), _LOADER_GALLIUM },
    { 0x1002, "radeonsi", radeonsi_chip_ids, ARRAY_SIZE(radeonsi_chip_ids), _LOADER_GALLIUM},
-   { 0x10de, "nouveau", NULL, -1,  _LOADER_GALLIUM  },
+   { 0x10de, "nouveau_vieux", NULL, -1,  _LOADER_DRI, is_nouveau_vieux },
+   { 0x10de, "nouveau", NULL, -1,  _LOADER_GALLIUM },
    { 0x15ad, "vmwgfx", vmwgfx_chip_ids, ARRAY_SIZE(vmwgfx_chip_ids), _LOADER_GALLIUM },
    { 0x0000, NULL, NULL, 0 },
 };

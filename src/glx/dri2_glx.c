@@ -1201,6 +1201,16 @@ dri2CreateScreen(int screen, struct glx_display * priv)
       goto handle_error;
    }
 
+   if (drmGetMagic(psc->fd, &magic)) {
+      ErrorMessageF("failed to get magic\n");
+      goto handle_error;
+   }
+
+   if (!DRI2Authenticate(priv->dpy, RootWindow(priv->dpy, screen), magic)) {
+      ErrorMessageF("failed to authenticate magic %d\n", magic);
+      goto handle_error;
+   }
+
    /* If Mesa knows about the appropriate driver for this fd, then trust it.
     * Otherwise, default to the server's value.
     */
@@ -1229,16 +1239,6 @@ dri2CreateScreen(int screen, struct glx_display * priv)
 
    if (psc->core == NULL || psc->dri2 == NULL) {
       ErrorMessageF("core dri or dri2 extension not found\n");
-      goto handle_error;
-   }
-
-   if (drmGetMagic(psc->fd, &magic)) {
-      ErrorMessageF("failed to get magic\n");
-      goto handle_error;
-   }
-
-   if (!DRI2Authenticate(priv->dpy, RootWindow(priv->dpy, screen), magic)) {
-      ErrorMessageF("failed to authenticate magic %d\n", magic);
       goto handle_error;
    }
 

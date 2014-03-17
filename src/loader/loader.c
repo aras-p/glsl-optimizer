@@ -78,7 +78,7 @@
 #endif
 
 #define __IS_LOADER
-#include "pci_ids/pci_id_driver_map.h"
+#include "pci_id_driver_map.h"
 
 static void default_logger(int level, const char *fmt, ...)
 {
@@ -350,6 +350,9 @@ loader_get_driver_for_fd(int fd, unsigned driver_types)
          continue;
 
       if (!(driver_types & driver_map[i].driver_types))
+         continue;
+
+      if (driver_map[i].predicate && !driver_map[i].predicate(fd))
          continue;
 
       if (driver_map[i].num_chips_ids == -1) {
