@@ -103,7 +103,7 @@ fallback_required(struct gl_context *ctx, GLenum target,
       _mesa_GenFramebuffers(1, &mipmap->FBO);
    _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, mipmap->FBO);
 
-   _mesa_meta_bind_fbo_image(texObj, target, srcLevel, 0);
+   _mesa_meta_bind_fbo_image(baseImage, 0);
 
    status = _mesa_CheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
 
@@ -249,6 +249,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
    for (dstLevel = baseLevel + 1; dstLevel <= maxLevel; dstLevel++) {
       const struct gl_texture_image *srcImage;
+      struct gl_texture_image *dstImage;
       const GLuint srcLevel = dstLevel - 1;
       GLuint layer;
       GLsizei srcWidth, srcHeight, srcDepth;
@@ -293,6 +294,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
           */
          break;
       }
+      dstImage = _mesa_select_tex_image(ctx, texObj, faceTarget, dstLevel);
 
       /* limit minification to src level */
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
@@ -315,7 +317,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
          _mesa_BufferData(GL_ARRAY_BUFFER_ARB, sizeof(verts),
                           verts, GL_DYNAMIC_DRAW_ARB);
 
-         _mesa_meta_bind_fbo_image(texObj, faceTarget, dstLevel, layer);
+         _mesa_meta_bind_fbo_image(dstImage, layer);
 
          /* sanity check */
          if (_mesa_CheckFramebufferStatus(GL_FRAMEBUFFER) !=

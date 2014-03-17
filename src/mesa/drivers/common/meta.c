@@ -94,9 +94,12 @@ static void meta_decompress_cleanup(struct decompress_state *decompress);
 static void meta_drawpix_cleanup(struct drawpix_state *drawpix);
 
 void
-_mesa_meta_bind_fbo_image(struct gl_texture_object *texObj, GLenum target,
-                          GLuint level, GLuint layer)
+_mesa_meta_bind_fbo_image(struct gl_texture_image *texImage, GLuint layer)
 {
+   struct gl_texture_object *texObj = texImage->TexObject;
+   int level = texImage->Level;
+   GLenum target = texObj->Target;
+
    switch (target) {
    case GL_TEXTURE_1D:
       _mesa_FramebufferTexture1D(GL_FRAMEBUFFER,
@@ -115,6 +118,9 @@ _mesa_meta_bind_fbo_image(struct gl_texture_object *texObj, GLenum target,
                                     layer);
       break;
    default: /* 2D / cube */
+      if (target == GL_TEXTURE_CUBE_MAP)
+         target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + texImage->Face;
+
       _mesa_FramebufferTexture2D(GL_FRAMEBUFFER,
                                  GL_COLOR_ATTACHMENT0,
                                  target,
