@@ -39,6 +39,16 @@
  * pipe_context
  */
 
+void r600_need_dma_space(struct r600_common_context *ctx, unsigned num_dw)
+{
+	/* The number of dwords we already used in the DMA so far. */
+	num_dw += ctx->rings.dma.cs->cdw;
+	/* Flush if there's not enough space. */
+	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {
+		ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
+	}
+}
+
 static void r600_memory_barrier(struct pipe_context *ctx, unsigned flags)
 {
 }

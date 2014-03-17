@@ -62,7 +62,7 @@ void evergreen_dma_copy(struct r600_context *rctx,
 	}
 	ncopy = (size / 0x000fffff) + !!(size % 0x000fffff);
 
-	r600_need_dma_space(rctx, ncopy * 5);
+	r600_need_dma_space(&rctx->b, ncopy * 5);
 	for (i = 0; i < ncopy; i++) {
 		csize = size < 0x000fffff ? size : 0x000fffff;
 		/* emit reloc before writting cs so that cs is always in consistent state */

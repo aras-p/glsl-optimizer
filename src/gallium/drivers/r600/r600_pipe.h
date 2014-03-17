@@ -586,7 +586,6 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags);
 void r600_begin_new_cs(struct r600_context *ctx);
 void r600_flush_emit(struct r600_context *ctx);
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);
-void r600_need_dma_space(struct r600_context *ctx, unsigned num_dw);
 void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 			     struct pipe_resource *dst, uint64_t dst_offset,
 			     struct pipe_resource *src, uint64_t src_offset,

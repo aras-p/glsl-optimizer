@@ -440,16 +440,6 @@ void r600_cp_dma_copy_buffer(struct r600_context *rctx,
 			 R600_CONTEXT_INV_TEX_CACHE;
 }
 
-void r600_need_dma_space(struct r600_context *ctx, unsigned num_dw)
-{
-	/* The number of dwords we already used in the DMA so far. */
-	num_dw += ctx->b.rings.dma.cs->cdw;
-	/* Flush if there's not enough space. */
-	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {
-		ctx->b.rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
-	}
-}
-
 void r600_dma_copy(struct r600_context *rctx,
 		struct pipe_resource *dst,
 		struct pipe_resource *src,
@@ -475,7 +465,7 @@ void r600_dma_copy(struct r600_context *rctx,
 	shift = 2;
 	ncopy = (size / 0xffff) + !!(size % 0xffff);
 
-	r600_need_dma_space(rctx, ncopy * 5);
+	r600_need_dma_space(&rctx->b, ncopy * 5);
 	for (i = 0; i < ncopy; i++) {
 		csize = size < 0xffff ? size : 0xffff;
 		/* emit reloc before writting cs so that cs is always in consistent state */
