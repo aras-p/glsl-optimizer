@@ -82,7 +82,7 @@
 #define NO_REG ~0
 
 struct ra_reg {
-   bool *conflicts;
+   BITSET_WORD *conflicts;
    unsigned int *conflict_list;
    unsigned int conflict_list_size;
    unsigned int num_conflicts;
@@ -191,8 +191,9 @@ ra_alloc_reg_set(void *mem_ctx, unsigned int count)
    regs->regs = rzalloc_array(regs, struct ra_reg, count);
 
    for (i = 0; i < count; i++) {
-      regs->regs[i].conflicts = rzalloc_array(regs->regs, bool, count);
-      regs->regs[i].conflicts[i] = true;
+      regs->regs[i].conflicts = rzalloc_array(regs->regs, BITSET_WORD,
+                                              BITSET_WORDS(count));
+      BITSET_SET(regs->regs[i].conflicts, i);
 
       regs->regs[i].conflict_list = ralloc_array(regs->regs, unsigned int, 4);
       regs->regs[i].conflict_list_size = 4;
@@ -230,13 +231,13 @@ ra_add_conflict_list(struct ra_regs *regs, unsigned int r1, unsigned int r2)
 				     unsigned int, reg1->conflict_list_size);
    }
    reg1->conflict_list[reg1->num_conflicts++] = r2;
-   reg1->conflicts[r2] = true;
+   BITSET_SET(reg1->conflicts, r2);
 }
 
 void
 ra_add_reg_conflict(struct ra_regs *regs, unsigned int r1, unsigned int r2)
 {
-   if (!regs->regs[r1].conflicts[r2]) {
+   if (!BITSET_TEST(regs->regs[r1].conflicts, r2)) {
       ra_add_conflict_list(regs, r1, r2);
       ra_add_conflict_list(regs, r2, r1);
    }
@@ -501,7 +502,7 @@ ra_select(struct ra_graph *g)
 	    unsigned int n2 = g->nodes[n].adjacency_list[i];
 
 	    if (!g->nodes[n2].in_stack &&
-		g->regs->regs[r].conflicts[g->nodes[n2].reg]) {
+		BITSET_TEST(g->regs->regs[r].conflicts, g->nodes[n2].reg)) {
 	       break;
 	    }
 	 }
