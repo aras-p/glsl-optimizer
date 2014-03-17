@@ -3322,7 +3322,7 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 	}
 }
 
-static void evergreen_dma_blit(struct pipe_context *ctx,
+static void evergreen_dma_copy(struct pipe_context *ctx,
 			       struct pipe_resource *dst,
 			       unsigned dst_level,
 			       unsigned dstx, unsigned dsty, unsigned dstz,
@@ -3343,7 +3343,7 @@ static void evergreen_dma_blit(struct pipe_context *ctx,
 	}
 
 	if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
-		evergreen_dma_copy(rctx, dst, src, dst_x, src_box->x, src_box->width);
+		evergreen_dma_copy_buffer(rctx, dst, src, dst_x, src_box->x, src_box->width);
 		return;
 	}
 
@@ -3409,7 +3409,7 @@ static void evergreen_dma_blit(struct pipe_context *ctx,
 		dst_offset = rdst->surface.level[dst_level].offset;
 		dst_offset += rdst->surface.level[dst_level].slice_size * dst_z;
 		dst_offset += dst_y * dst_pitch + dst_x * bpp;
-		evergreen_dma_copy(rctx, dst, src, dst_offset, src_offset,
+		evergreen_dma_copy_buffer(rctx, dst, src, dst_offset, src_offset,
 					src_box->height * src_pitch);
 	} else {
 		evergreen_dma_copy_tile(rctx, dst, dst_level, dst_x, dst_y, dst_z,
@@ -3506,7 +3506,7 @@ void evergreen_init_state_functions(struct r600_context *rctx)
                 rctx->b.b.get_sample_position = evergreen_get_sample_position;
         else
                 rctx->b.b.get_sample_position = cayman_get_sample_position;
-	rctx->b.dma_copy = evergreen_dma_blit;
+	rctx->b.dma_copy = evergreen_dma_copy;
 
 	evergreen_init_compute_state_functions(rctx);
 }

@@ -2879,7 +2879,7 @@ static boolean r600_dma_copy_tile(struct r600_context *rctx,
 	return TRUE;
 }
 
-static void r600_dma_blit(struct pipe_context *ctx,
+static void r600_dma_copy(struct pipe_context *ctx,
 			  struct pipe_resource *dst,
 			  unsigned dst_level,
 			  unsigned dstx, unsigned dsty, unsigned dstz,
@@ -2903,7 +2903,7 @@ static void r600_dma_blit(struct pipe_context *ctx,
 		if (dst_x % 4 || src_box->x % 4 || src_box->width % 4)
 			goto fallback;
 
-		r600_dma_copy(rctx, dst, src, dst_x, src_box->x, src_box->width);
+		r600_dma_copy_buffer(rctx, dst, src, dst_x, src_box->x, src_box->width);
 		return;
 	}
 
@@ -2957,7 +2957,7 @@ static void r600_dma_blit(struct pipe_context *ctx,
 		if (dst_offset % 4 || src_offset % 4 || size % 4) {
 			goto fallback;
 		}
-		r600_dma_copy(rctx, dst, src, dst_offset, src_offset, size);
+		r600_dma_copy_buffer(rctx, dst, src, dst_offset, src_offset, size);
 	} else {
 		if (!r600_dma_copy_tile(rctx, dst, dst_level, dst_x, dst_y, dst_z,
 					src, src_level, src_x, src_y, src_box->z,
@@ -3050,6 +3050,6 @@ void r600_init_state_functions(struct r600_context *rctx)
 	rctx->b.b.set_polygon_stipple = r600_set_polygon_stipple;
 	rctx->b.b.set_scissor_states = r600_set_scissor_states;
 	rctx->b.b.get_sample_position = r600_get_sample_position;
-	rctx->b.dma_copy = r600_dma_blit;
+	rctx->b.dma_copy = r600_dma_copy;
 }
 /* this function must be last */

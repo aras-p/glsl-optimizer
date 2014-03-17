@@ -28,12 +28,12 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 
-void evergreen_dma_copy(struct r600_context *rctx,
-		struct pipe_resource *dst,
-		struct pipe_resource *src,
-		uint64_t dst_offset,
-		uint64_t src_offset,
-		uint64_t size)
+void evergreen_dma_copy_buffer(struct r600_context *rctx,
+			       struct pipe_resource *dst,
+			       struct pipe_resource *src,
+			       uint64_t dst_offset,
+			       uint64_t src_offset,
+			       uint64_t size)
 {
 	struct radeon_winsys_cs *cs = rctx->b.rings.dma.cs;
 	unsigned i, ncopy, csize, sub_cmd, shift;
