@@ -78,7 +78,7 @@ static uint32_t cik_num_banks(struct si_screen *sscreen, unsigned bpe, unsigned 
 	}
 }
 
-static unsigned cik_tile_split(unsigned tile_split)
+unsigned cik_tile_split(unsigned tile_split)
 {
 	switch (tile_split) {
 	case 64:
@@ -107,7 +107,7 @@ static unsigned cik_tile_split(unsigned tile_split)
 	return tile_split;
 }
 
-static unsigned cik_macro_tile_aspect(unsigned macro_tile_aspect)
+unsigned cik_macro_tile_aspect(unsigned macro_tile_aspect)
 {
 	switch (macro_tile_aspect) {
 	default:
@@ -127,7 +127,7 @@ static unsigned cik_macro_tile_aspect(unsigned macro_tile_aspect)
 	return macro_tile_aspect;
 }
 
-static unsigned cik_bank_wh(unsigned bankwh)
+unsigned cik_bank_wh(unsigned bankwh)
 {
 	switch (bankwh) {
 	default:
@@ -147,7 +147,7 @@ static unsigned cik_bank_wh(unsigned bankwh)
 	return bankwh;
 }
 
-static unsigned cik_db_pipe_config(struct si_screen *sscreen, unsigned tile_mode)
+unsigned cik_db_pipe_config(struct si_screen *sscreen, unsigned tile_mode)
 {
 	if (sscreen->b.info.si_tile_mode_array_valid) {
 		uint32_t gb_tile_mode = sscreen->b.info.si_tile_mode_array[tile_mode];
@@ -1514,7 +1514,7 @@ boolean si_is_format_supported(struct pipe_screen *screen,
 	return retval == usage;
 }
 
-static unsigned si_tile_mode_index(struct r600_texture *rtex, unsigned level, bool stencil)
+unsigned si_tile_mode_index(struct r600_texture *rtex, unsigned level, bool stencil)
 {
 	unsigned tile_mode_index = 0;
 
@@ -2924,21 +2924,6 @@ static void *si_create_blend_custom(struct si_context *sctx, unsigned mode)
 	blend.independent_blend_enable = true;
 	blend.rt[0].colormask = 0xf;
 	return si_create_blend_state_mode(&sctx->b.b, &blend, mode);
-}
-
-static void si_dma_copy(struct pipe_context *ctx,
-			struct pipe_resource *dst,
-			unsigned dst_level,
-			unsigned dst_x, unsigned dst_y, unsigned dst_z,
-			struct pipe_resource *src,
-			unsigned src_level,
-			const struct pipe_box *src_box)
-{
-	/* XXX implement this or share evergreen_dma_blit with r600g */
-
-	/* Fallback: */
-	ctx->resource_copy_region(ctx, dst, dst_level, dst_x, dst_y, dst_z,
-				  src, src_level, src_box);
 }
 
 static void si_set_occlusion_query_state(struct pipe_context *ctx, bool enable)

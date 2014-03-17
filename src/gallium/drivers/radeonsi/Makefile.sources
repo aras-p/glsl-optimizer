@@ -3,6 +3,7 @@ C_SOURCES := \
 	si_commands.c \
 	si_compute.c \
 	si_descriptors.c \
+	si_dma.c \
 	si_hw_context.c \
 	si_pipe.c \
 	si_pm4.c \

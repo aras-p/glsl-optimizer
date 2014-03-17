@@ -167,6 +167,15 @@ void si_flush_depth_textures(struct si_context *sctx,
 void si_decompress_color_textures(struct si_context *sctx,
 				  struct si_textures_info *textures);
 
+/* si_dma.c */
+void si_dma_copy(struct pipe_context *ctx,
+		 struct pipe_resource *dst,
+		 unsigned dst_level,
+		 unsigned dstx, unsigned dsty, unsigned dstz,
+		 struct pipe_resource *src,
+		 unsigned src_level,
+		 const struct pipe_box *src_box);
+
 /* si_hw_context.c */
 void si_context_flush(struct si_context *ctx, unsigned flags);
 void si_begin_new_cs(struct si_context *ctx);

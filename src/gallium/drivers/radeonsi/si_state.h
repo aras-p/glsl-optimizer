@@ -30,6 +30,8 @@
 #include "si_pm4.h"
 #include "../radeon/r600_pipe_common.h"
 
+struct si_screen;
+
 struct si_state_blend {
 	struct si_pm4_state	pm4;
 	uint32_t		cb_target_mask;
@@ -227,6 +229,11 @@ int si_shader_select(struct pipe_context *ctx,
 		     struct si_pipe_shader_selector *sel);
 void si_init_state_functions(struct si_context *sctx);
 void si_init_config(struct si_context *sctx);
+unsigned cik_bank_wh(unsigned bankwh);
+unsigned cik_db_pipe_config(struct si_screen *sscreen, unsigned tile_mode);
+unsigned cik_macro_tile_aspect(unsigned macro_tile_aspect);
+unsigned cik_tile_split(unsigned tile_split);
+unsigned si_tile_mode_index(struct r600_texture *rtex, unsigned level, bool stencil);
 
 /* si_state_draw.c */
 extern const struct r600_atom si_atom_cache_flush;
