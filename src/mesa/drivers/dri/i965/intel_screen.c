@@ -37,6 +37,7 @@
 #include "main/fbobject.h"
 #include "main/version.h"
 #include "swrast/s_renderbuffer.h"
+#include "glsl/ralloc.h"
 
 #include "utils.h"
 #include "xmlpool.h"
@@ -946,7 +947,7 @@ intelDestroyScreen(__DRIscreen * sPriv)
    dri_bufmgr_destroy(intelScreen->bufmgr);
    driDestroyOptionInfo(&intelScreen->optionCache);
 
-   free(intelScreen);
+   ralloc_free(intelScreen);
    sPriv->driverPrivate = NULL;
 }
 
@@ -1311,7 +1312,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    }
 
    /* Allocate the private area */
-   intelScreen = calloc(1, sizeof *intelScreen);
+   intelScreen = rzalloc(NULL, struct intel_screen);
    if (!intelScreen) {
       fprintf(stderr, "\nERROR!  Allocating private area failed\n");
       return false;
