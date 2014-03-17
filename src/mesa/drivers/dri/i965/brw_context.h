@@ -1272,26 +1272,6 @@ struct brw_context
     */
    struct brw_vue_map vue_map_geom_out;
 
-   /**
-    * Data structures used by all vec4 program compiles (not specific to any
-    * particular program).
-    */
-   struct {
-      struct ra_regs *regs;
-
-      /**
-       * Array of the ra classes for the unaligned contiguous register
-       * block sizes used.
-       */
-      int *classes;
-
-      /**
-       * Mapping for register-allocated objects in *regs to the first
-       * GRF for that object.
-      */
-      uint8_t *ra_reg_to_grf;
-   } vec4;
-
    struct {
       struct brw_stage_state base;
       struct brw_vs_prog_data *prog_data;
@@ -1356,28 +1336,6 @@ struct brw_context
        * Gen6.  See brw_update_null_renderbuffer_surface().
        */
       drm_intel_bo *multisampled_null_render_target_bo;
-
-      struct {
-         struct ra_regs *regs;
-
-         /**
-          * Array of the ra classes for the unaligned contiguous register
-          * block sizes used, indexed by register size.
-          */
-         int classes[16];
-
-         /**
-          * Mapping for register-allocated objects in *regs to the first
-          * GRF for that object.
-          */
-         uint8_t *ra_reg_to_grf;
-
-         /**
-          * ra class for the aligned pairs we use for PLN, which doesn't
-          * appear in *classes.
-          */
-         int aligned_pairs_class;
-      } reg_sets[2];
    } wm;
 
 
@@ -1607,10 +1565,10 @@ void brw_upload_cs_urb_state(struct brw_context *brw);
 
 /* brw_fs_reg_allocate.cpp
  */
-void brw_fs_alloc_reg_sets(struct brw_context *brw);
+void brw_fs_alloc_reg_sets(struct intel_screen *screen);
 
 /* brw_vec4_reg_allocate.cpp */
-void brw_vec4_alloc_reg_set(struct brw_context *brw);
+void brw_vec4_alloc_reg_set(struct intel_screen *screen);
 
 /* brw_disasm.c */
 int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);

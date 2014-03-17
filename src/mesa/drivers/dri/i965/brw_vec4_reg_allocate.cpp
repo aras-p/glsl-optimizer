@@ -97,9 +97,10 @@ vec4_visitor::reg_allocate_trivial()
 }
 
 extern "C" void
-brw_vec4_alloc_reg_set(struct brw_context *brw)
+brw_vec4_alloc_reg_set(struct intel_screen *screen)
 {
-   int base_reg_count = brw->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
+   int base_reg_count =
+      screen->devinfo->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
 
    /* After running split_virtual_grfs(), almost all VGRFs will be of size 1.
     * SEND-from-GRF sources cannot be split, so we also need classes for each
@@ -114,14 +115,14 @@ brw_vec4_alloc_reg_set(struct brw_context *brw)
       ra_reg_count += base_reg_count - (class_sizes[i] - 1);
    }
 
-   ralloc_free(brw->vec4.ra_reg_to_grf);
-   brw->vec4.ra_reg_to_grf = ralloc_array(brw, uint8_t, ra_reg_count);
-   ralloc_free(brw->vec4.regs);
-   brw->vec4.regs = ra_alloc_reg_set(brw, ra_reg_count);
-   if (brw->gen >= 6)
-      ra_set_allocate_round_robin(brw->vec4.regs);
-   ralloc_free(brw->vec4.classes);
-   brw->vec4.classes = ralloc_array(brw, int, class_count);
+   ralloc_free(screen->vec4_reg_set.ra_reg_to_grf);
+   screen->vec4_reg_set.ra_reg_to_grf = ralloc_array(screen, uint8_t, ra_reg_count);
+   ralloc_free(screen->vec4_reg_set.regs);
+   screen->vec4_reg_set.regs = ra_alloc_reg_set(screen, ra_reg_count);
+   if (screen->devinfo->gen >= 6)
+      ra_set_allocate_round_robin(screen->vec4_reg_set.regs);
+   ralloc_free(screen->vec4_reg_set.classes);
+   screen->vec4_reg_set.classes = ralloc_array(screen, int, class_count);
 
    /* Now, add the registers to their classes, and add the conflicts
     * between them and the base GRF registers (and also each other).
@@ -129,17 +130,17 @@ brw_vec4_alloc_reg_set(struct brw_context *brw)
    int reg = 0;
    for (int i = 0; i < class_count; i++) {
       int class_reg_count = base_reg_count - (class_sizes[i] - 1);
-      brw->vec4.classes[i] = ra_alloc_reg_class(brw->vec4.regs);
+      screen->vec4_reg_set.classes[i] = ra_alloc_reg_class(screen->vec4_reg_set.regs);
 
       for (int j = 0; j < class_reg_count; j++) {
-	 ra_class_add_reg(brw->vec4.regs, brw->vec4.classes[i], reg);
+	 ra_class_add_reg(screen->vec4_reg_set.regs, screen->vec4_reg_set.classes[i], reg);
 
-	 brw->vec4.ra_reg_to_grf[reg] = j;
+	 screen->vec4_reg_set.ra_reg_to_grf[reg] = j;
 
 	 for (int base_reg = j;
 	      base_reg < j + class_sizes[i];
 	      base_reg++) {
-	    ra_add_transitive_reg_conflict(brw->vec4.regs, base_reg, reg);
+	    ra_add_transitive_reg_conflict(screen->vec4_reg_set.regs, base_reg, reg);
 	 }
 
 	 reg++;
@@ -147,7 +148,7 @@ brw_vec4_alloc_reg_set(struct brw_context *brw)
    }
    assert(reg == ra_reg_count);
 
-   ra_set_finalize(brw->vec4.regs, NULL);
+   ra_set_finalize(screen->vec4_reg_set.regs, NULL);
 }
 
 void
@@ -177,6 +178,7 @@ vec4_visitor::setup_payload_interference(struct ra_graph *g,
 bool
 vec4_visitor::reg_allocate()
 {
+   struct intel_screen *screen = brw->intelScreen;
    unsigned int hw_reg_mapping[virtual_grf_count];
    int payload_reg_count = this->first_non_payload_grf;
 
@@ -192,13 +194,13 @@ vec4_visitor::reg_allocate()
    int first_payload_node = node_count;
    node_count += payload_reg_count;
    struct ra_graph *g =
-      ra_alloc_interference_graph(brw->vec4.regs, node_count);
+      ra_alloc_interference_graph(screen->vec4_reg_set.regs, node_count);
 
    for (int i = 0; i < virtual_grf_count; i++) {
       int size = this->virtual_grf_sizes[i];
       assert(size >= 1 && size <= 2 &&
              "Register allocation relies on split_virtual_grfs().");
-      ra_set_node_class(g, i, brw->vec4.classes[size - 1]);
+      ra_set_node_class(g, i, screen->vec4_reg_set.classes[size - 1]);
 
       for (int j = 0; j < i; j++) {
 	 if (virtual_grf_interferes(i, j)) {
@@ -234,7 +236,7 @@ vec4_visitor::reg_allocate()
    for (int i = 0; i < virtual_grf_count; i++) {
       int reg = ra_get_node_reg(g, i);
 
-      hw_reg_mapping[i] = brw->vec4.ra_reg_to_grf[reg];
+      hw_reg_mapping[i] = screen->vec4_reg_set.ra_reg_to_grf[reg];
       prog_data->total_grf = MAX2(prog_data->total_grf,
 				  hw_reg_mapping[i] + virtual_grf_sizes[i]);
    }

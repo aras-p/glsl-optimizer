@@ -1354,6 +1354,9 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    psp->extensions = !intelScreen->has_context_reset_notification
       ? intelScreenExtensions : intelRobustScreenExtensions;
 
+   brw_fs_alloc_reg_sets(intelScreen);
+   brw_vec4_alloc_reg_set(intelScreen);
+
    return (const __DRIconfig**) intel_screen_make_configs(psp);
 }
 

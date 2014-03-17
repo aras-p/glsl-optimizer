@@ -71,8 +71,9 @@ fs_visitor::assign_regs_trivial()
 }
 
 static void
-brw_alloc_reg_set(struct brw_context *brw, int reg_width)
+brw_alloc_reg_set(struct intel_screen *screen, int reg_width)
 {
+   const struct brw_device_info *devinfo = screen->devinfo;
    int base_reg_count = BRW_MAX_GRF / reg_width;
    int index = reg_width - 1;
 
@@ -102,7 +103,7 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
    int class_count;
    int class_sizes[BRW_MAX_MRF];
 
-   if (brw->gen >= 7) {
+   if (devinfo->gen >= 7) {
       for (class_count = 0; class_count < MAX_SAMPLER_MESSAGE_SIZE;
            class_count++)
          class_sizes[class_count] = class_count + 1;
@@ -118,11 +119,11 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
       ra_reg_count += base_reg_count - (class_sizes[i] - 1);
    }
 
-   uint8_t *ra_reg_to_grf = ralloc_array(brw, uint8_t, ra_reg_count);
-   struct ra_regs *regs = ra_alloc_reg_set(brw, ra_reg_count);
-   if (brw->gen >= 6)
+   uint8_t *ra_reg_to_grf = ralloc_array(screen, uint8_t, ra_reg_count);
+   struct ra_regs *regs = ra_alloc_reg_set(screen, ra_reg_count);
+   if (devinfo->gen >= 6)
       ra_set_allocate_round_robin(regs);
-   int *classes = ralloc_array(brw, int, class_count);
+   int *classes = ralloc_array(screen, int, class_count);
    int aligned_pairs_class = -1;
 
    /* Now, add the registers to their classes, and add the conflicts
@@ -160,7 +161,7 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
    /* Add a special class for aligned pairs, which we'll put delta_x/y
     * in on gen5 so that we can do PLN.
     */
-   if (brw->has_pln && reg_width == 1 && brw->gen < 6) {
+   if (devinfo->has_pln && reg_width == 1 && devinfo->gen < 6) {
       aligned_pairs_class = ra_alloc_reg_class(regs);
 
       for (int i = 0; i < pairs_reg_count; i++) {
@@ -172,20 +173,20 @@ brw_alloc_reg_set(struct brw_context *brw, int reg_width)
 
    ra_set_finalize(regs, NULL);
 
-   brw->wm.reg_sets[index].regs = regs;
-   for (unsigned i = 0; i < ARRAY_SIZE(brw->wm.reg_sets[index].classes); i++)
-      brw->wm.reg_sets[index].classes[i] = -1;
+   screen->wm_reg_sets[index].regs = regs;
+   for (unsigned i = 0; i < ARRAY_SIZE(screen->wm_reg_sets[index].classes); i++)
+      screen->wm_reg_sets[index].classes[i] = -1;
    for (int i = 0; i < class_count; i++)
-      brw->wm.reg_sets[index].classes[class_sizes[i] - 1] = classes[i];
-   brw->wm.reg_sets[index].ra_reg_to_grf = ra_reg_to_grf;
-   brw->wm.reg_sets[index].aligned_pairs_class = aligned_pairs_class;
+      screen->wm_reg_sets[index].classes[class_sizes[i] - 1] = classes[i];
+   screen->wm_reg_sets[index].ra_reg_to_grf = ra_reg_to_grf;
+   screen->wm_reg_sets[index].aligned_pairs_class = aligned_pairs_class;
 }
 
 void
-brw_fs_alloc_reg_sets(struct brw_context *brw)
+brw_fs_alloc_reg_sets(struct intel_screen *screen)
 {
-   brw_alloc_reg_set(brw, 1);
-   brw_alloc_reg_set(brw, 2);
+   brw_alloc_reg_set(screen, 1);
+   brw_alloc_reg_set(screen, 2);
 }
 
 int
@@ -420,6 +421,7 @@ fs_visitor::setup_mrf_hack_interference(struct ra_graph *g, int first_mrf_node)
 bool
 fs_visitor::assign_regs(bool allow_spilling)
 {
+   struct intel_screen *screen = brw->intelScreen;
    /* Most of this allocation was written for a reg_width of 1
     * (dispatch_width == 8).  In extending to SIMD16, the code was
     * left in place and it was converted to have the hardware
@@ -430,7 +432,7 @@ fs_visitor::assign_regs(bool allow_spilling)
    int hw_reg_mapping[this->virtual_grf_count];
    int payload_node_count = (ALIGN(this->first_non_payload_grf, reg_width) /
                             reg_width);
-   int rsi = reg_width - 1; /* Which brw->wm.reg_sets[] to use */
+   int rsi = reg_width - 1; /* Which screen->wm_reg_sets[] to use */
    calculate_live_intervals();
 
    int node_count = this->virtual_grf_count;
@@ -439,16 +441,16 @@ fs_visitor::assign_regs(bool allow_spilling)
    int first_mrf_hack_node = node_count;
    if (brw->gen >= 7)
       node_count += BRW_MAX_GRF - GEN7_MRF_HACK_START;
-   struct ra_graph *g = ra_alloc_interference_graph(brw->wm.reg_sets[rsi].regs,
+   struct ra_graph *g = ra_alloc_interference_graph(screen->wm_reg_sets[rsi].regs,
                                                     node_count);
 
    for (int i = 0; i < this->virtual_grf_count; i++) {
       unsigned size = this->virtual_grf_sizes[i];
       int c;
 
-      assert(size <= ARRAY_SIZE(brw->wm.reg_sets[rsi].classes) &&
+      assert(size <= ARRAY_SIZE(screen->wm_reg_sets[rsi].classes) &&
              "Register allocation relies on split_virtual_grfs()");
-      c = brw->wm.reg_sets[rsi].classes[size - 1];
+      c = screen->wm_reg_sets[rsi].classes[size - 1];
 
       /* Special case: on pre-GEN6 hardware that supports PLN, the
        * second operand of a PLN instruction needs to be an
@@ -459,9 +461,9 @@ fs_visitor::assign_regs(bool allow_spilling)
        * any other interpolation modes).  So all we need to do is find
        * that register and set it to the appropriate class.
        */
-      if (brw->wm.reg_sets[rsi].aligned_pairs_class >= 0 &&
+      if (screen->wm_reg_sets[rsi].aligned_pairs_class >= 0 &&
           this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC].reg == i) {
-         c = brw->wm.reg_sets[rsi].aligned_pairs_class;
+         c = screen->wm_reg_sets[rsi].aligned_pairs_class;
       }
 
       ra_set_node_class(g, i, c);
@@ -514,7 +516,7 @@ fs_visitor::assign_regs(bool allow_spilling)
    for (int i = 0; i < this->virtual_grf_count; i++) {
       int reg = ra_get_node_reg(g, i);
 
-      hw_reg_mapping[i] = brw->wm.reg_sets[rsi].ra_reg_to_grf[reg] * reg_width;
+      hw_reg_mapping[i] = screen->wm_reg_sets[rsi].ra_reg_to_grf[reg] * reg_width;
       this->grf_used = MAX2(this->grf_used,
 			    hw_reg_mapping[i] + this->virtual_grf_sizes[i] *
 			    reg_width);

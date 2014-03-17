@@ -775,9 +775,6 @@ brwCreateContext(gl_api api,
    if ((flags & __DRI_CTX_FLAG_ROBUST_BUFFER_ACCESS) != 0)
       ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT_ARB;
 
-   brw_fs_alloc_reg_sets(brw);
-   brw_vec4_alloc_reg_set(brw);
-
    if (INTEL_DEBUG & DEBUG_SHADER_TIME)
       brw_init_shader_time(brw);
 

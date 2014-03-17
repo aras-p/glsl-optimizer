@@ -62,6 +62,44 @@ struct intel_screen
     */
    unsigned program_id;
 
+   struct {
+      struct ra_regs *regs;
+
+      /**
+       * Array of the ra classes for the unaligned contiguous register
+       * block sizes used.
+       */
+      int *classes;
+
+      /**
+       * Mapping for register-allocated objects in *regs to the first
+       * GRF for that object.
+       */
+      uint8_t *ra_reg_to_grf;
+   } vec4_reg_set;
+
+   struct {
+      struct ra_regs *regs;
+
+      /**
+       * Array of the ra classes for the unaligned contiguous register
+       * block sizes used, indexed by register size.
+       */
+      int classes[16];
+
+      /**
+       * Mapping for register-allocated objects in *regs to the first
+       * GRF for that object.
+       */
+      uint8_t *ra_reg_to_grf;
+
+      /**
+       * ra class for the aligned pairs we use for PLN, which doesn't
+       * appear in *classes.
+       */
+      int aligned_pairs_class;
+   } wm_reg_sets[2];
+
    /**
    * Configuration cache with default values for all contexts
    */
