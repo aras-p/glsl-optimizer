@@ -3233,15 +3233,15 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 		non_disp_tiling = 1;
 
 	y = 0;
-	sub_cmd = 0x8;
+	sub_cmd = EG_DMA_COPY_TILED;
 	lbpp = util_logbase2(bpp);
-	pitch_tile_max = ((pitch / bpp) >> 3) - 1;
+	pitch_tile_max = ((pitch / bpp) / 8) - 1;
 	nbanks = eg_num_banks(rctx->screen->b.tiling_info.num_banks);
 
 	if (dst_mode == RADEON_SURF_MODE_LINEAR) {
 		/* T2L */
 		array_mode = evergreen_array_mode(src_mode);
-		slice_tile_max = (rsrc->surface.level[src_level].nblk_x * rsrc->surface.level[src_level].nblk_y) >> 6;
+		slice_tile_max = (rsrc->surface.level[src_level].nblk_x * rsrc->surface.level[src_level].nblk_y) / (8*8);
 		slice_tile_max = slice_tile_max ? slice_tile_max - 1 : 0;
 		/* linear height must be the same as the slice tile max height, it's ok even
 		 * if the linear destination/source have smaller heigh as the size of the
@@ -3266,7 +3266,7 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 	} else {
 		/* L2T */
 		array_mode = evergreen_array_mode(dst_mode);
-		slice_tile_max = (rdst->surface.level[dst_level].nblk_x * rdst->surface.level[dst_level].nblk_y) >> 6;
+		slice_tile_max = (rdst->surface.level[dst_level].nblk_x * rdst->surface.level[dst_level].nblk_y) / (8*8);
 		slice_tile_max = slice_tile_max ? slice_tile_max - 1 : 0;
 		/* linear height must be the same as the slice tile max height, it's ok even
 		 * if the linear destination/source have smaller heigh as the size of the
@@ -3290,16 +3290,16 @@ static void evergreen_dma_copy_tile(struct r600_context *rctx,
 		addr += r600_resource_va(&rctx->screen->b.b, src);
 	}
 
-	size = (copy_height * pitch) >> 2;
-	ncopy = (size / 0x000fffff) + !!(size % 0x000fffff);
+	size = (copy_height * pitch) / 4;
+	ncopy = (size / EG_DMA_COPY_MAX_SIZE) + !!(size % EG_DMA_COPY_MAX_SIZE);
 	r600_need_dma_space(&rctx->b, ncopy * 9);
 
 	for (i = 0; i < ncopy; i++) {
 		cheight = copy_height;
-		if (((cheight * pitch) >> 2) > 0x000fffff) {
-			cheight = (0x000fffff << 2) / pitch;
+		if (((cheight * pitch) / 4) > EG_DMA_COPY_MAX_SIZE) {
+			cheight = (EG_DMA_COPY_MAX_SIZE * 4) / pitch;
 		}
-		size = (cheight * pitch) >> 2;
+		size = (cheight * pitch) / 4;
 		/* emit reloc before writting cs so that cs is always in consistent state */
 		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.dma, &rsrc->resource,
 				      RADEON_USAGE_READ, RADEON_PRIO_MIN);
@@ -3381,7 +3381,7 @@ static void evergreen_dma_blit(struct pipe_context *ctx,
 	/* the x test here are currently useless (because we don't support partial blit)
 	 * but keep them around so we don't forget about those
 	 */
-	if ((src_pitch & 0x7) || (src_box->x & 0x7) || (dst_x & 0x7) || (src_box->y & 0x7) || (dst_y & 0x7)) {
+	if (src_pitch % 8 || src_box->x % 8 || dst_x % 8 || src_box->y % 8 || dst_y % 8) {
 		goto fallback;
 	}
 

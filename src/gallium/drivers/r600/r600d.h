@@ -3743,6 +3743,7 @@
 /* async DMA Packet types */
 #define DMA_PACKET_WRITE		0x2
 #define DMA_PACKET_COPY			0x3
+#define R600_DMA_COPY_MAX_SIZE_DW		0xffff
 #define DMA_PACKET_INDIRECT_BUFFER	0x4
 #define DMA_PACKET_SEMAPHORE		0x5
 #define DMA_PACKET_FENCE		0x6

@@ -2802,12 +2802,12 @@ static boolean r600_dma_copy_tile(struct r600_context *rctx,
 
 	y = 0;
 	lbpp = util_logbase2(bpp);
-	pitch_tile_max = ((pitch / bpp) >> 3) - 1;
+	pitch_tile_max = ((pitch / bpp) / 8) - 1;
 
 	if (dst_mode == RADEON_SURF_MODE_LINEAR) {
 		/* T2L */
 		array_mode = r600_array_mode(src_mode);
-		slice_tile_max = (rsrc->surface.level[src_level].nblk_x * rsrc->surface.level[src_level].nblk_y) >> 6;
+		slice_tile_max = (rsrc->surface.level[src_level].nblk_x * rsrc->surface.level[src_level].nblk_y) / (8*8);
 		slice_tile_max = slice_tile_max ? slice_tile_max - 1 : 0;
 		/* linear height must be the same as the slice tile max height, it's ok even
 		 * if the linear destination/source have smaller heigh as the size of the
@@ -2826,7 +2826,7 @@ static boolean r600_dma_copy_tile(struct r600_context *rctx,
 	} else {
 		/* L2T */
 		array_mode = r600_array_mode(dst_mode);
-		slice_tile_max = (rdst->surface.level[dst_level].nblk_x * rdst->surface.level[dst_level].nblk_y) >> 6;
+		slice_tile_max = (rdst->surface.level[dst_level].nblk_x * rdst->surface.level[dst_level].nblk_y) / (8*8);
 		slice_tile_max = slice_tile_max ? slice_tile_max - 1 : 0;
 		/* linear height must be the same as the slice tile max height, it's ok even
 		 * if the linear destination/source have smaller heigh as the size of the
@@ -2844,20 +2844,20 @@ static boolean r600_dma_copy_tile(struct r600_context *rctx,
 		addr += src_y * pitch + src_x * bpp;
 	}
 	/* check that we are in dw/base alignment constraint */
-	if ((addr & 0x3) || (base & 0xff)) {
+	if (addr % 4 || base % 256) {
 		return FALSE;
 	}
 
 	/* It's a r6xx/r7xx limitation, the blit must be on 8 boundary for number
 	 * line in the blit. Compute max 8 line we can copy in the size limit
 	 */
-	cheight = ((0x0000ffff << 2) / pitch) & 0xfffffff8;
+	cheight = ((R600_DMA_COPY_MAX_SIZE_DW * 4) / pitch) & 0xfffffff8;
 	ncopy = (copy_height / cheight) + !!(copy_height % cheight);
 	r600_need_dma_space(&rctx->b, ncopy * 7);
 
 	for (i = 0; i < ncopy; i++) {
 		cheight = cheight > copy_height ? copy_height : cheight;
-		size = (cheight * pitch) >> 2;
+		size = (cheight * pitch) / 4;
 		/* emit reloc before writting cs so that cs is always in consistent state */
 		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.dma, &rsrc->resource, RADEON_USAGE_READ,
 				      RADEON_PRIO_MIN);
@@ -2930,11 +2930,11 @@ static void r600_dma_blit(struct pipe_context *ctx,
 	dst_mode = dst_mode == RADEON_SURF_MODE_LINEAR_ALIGNED ? RADEON_SURF_MODE_LINEAR : dst_mode;
 
 	if (src_pitch != dst_pitch || src_box->x || dst_x || src_w != dst_w) {
-		/* strick requirement on r6xx/r7xx */
+		/* strict requirement on r6xx/r7xx */
 		goto fallback;
 	}
 	/* lot of constraint on alignment this should capture them all */
-	if ((src_pitch & 0x7) || (src_box->y & 0x7) || (dst_y & 0x7)) {
+	if (src_pitch % 8 || src_box->y % 8 || dst_y % 8) {
 		goto fallback;
 	}
 
@@ -2954,7 +2954,7 @@ static void r600_dma_blit(struct pipe_context *ctx,
 		dst_offset += dst_y * dst_pitch + dst_x * bpp;
 		size = src_box->height * src_pitch;
 		/* must be dw aligned */
-		if ((dst_offset & 0x3) || (src_offset & 0x3) || (size & 0x3)) {
+		if (dst_offset % 4 || src_offset % 4 || size % 4) {
 			goto fallback;
 		}
 		r600_dma_copy(rctx, dst, src, dst_offset, src_offset, size);

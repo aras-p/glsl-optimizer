@@ -2445,6 +2445,10 @@
 /* async DMA Packet types */
 #define    DMA_PACKET_WRITE                     0x2
 #define    DMA_PACKET_COPY                      0x3
+#define    EG_DMA_COPY_MAX_SIZE			0xfffff
+#define    EG_DMA_COPY_DWORD_ALIGNED		0x00
+#define    EG_DMA_COPY_BYTE_ALIGNED		0x40
+#define    EG_DMA_COPY_TILED			0x8
 #define    DMA_PACKET_INDIRECT_BUFFER           0x4
 #define    DMA_PACKET_SEMAPHORE                 0x5
 #define    DMA_PACKET_FENCE                     0x6

@@ -448,7 +448,7 @@ void r600_dma_copy(struct r600_context *rctx,
 		uint64_t size)
 {
 	struct radeon_winsys_cs *cs = rctx->b.rings.dma.cs;
-	unsigned i, ncopy, csize, shift;
+	unsigned i, ncopy, csize;
 	struct r600_resource *rdst = (struct r600_resource*)dst;
 	struct r600_resource *rsrc = (struct r600_resource*)src;
 
@@ -458,13 +458,12 @@ void r600_dma_copy(struct r600_context *rctx,
 	util_range_add(&rdst->valid_buffer_range, dst_offset,
 		       dst_offset + size);
 
-	size >>= 2;
-	shift = 2;
-	ncopy = (size / 0xffff) + !!(size % 0xffff);
+	size >>= 2; /* convert to dwords */
+	ncopy = (size / R600_DMA_COPY_MAX_SIZE_DW) + !!(size % R600_DMA_COPY_MAX_SIZE_DW);
 
 	r600_need_dma_space(&rctx->b, ncopy * 5);
 	for (i = 0; i < ncopy; i++) {
-		csize = size < 0xffff ? size : 0xffff;
+		csize = size < R600_DMA_COPY_MAX_SIZE_DW ? size : R600_DMA_COPY_MAX_SIZE_DW;
 		/* emit reloc before writting cs so that cs is always in consistent state */
 		r600_context_bo_reloc(&rctx->b, &rctx->b.rings.dma, rsrc, RADEON_USAGE_READ,
 				      RADEON_PRIO_MIN);
@@ -475,8 +474,8 @@ void r600_dma_copy(struct r600_context *rctx,
 		cs->buf[cs->cdw++] = src_offset & 0xfffffffc;
 		cs->buf[cs->cdw++] = (dst_offset >> 32UL) & 0xff;
 		cs->buf[cs->cdw++] = (src_offset >> 32UL) & 0xff;
-		dst_offset += csize << shift;
-		src_offset += csize << shift;
+		dst_offset += csize << 2;
+		src_offset += csize << 2;
 		size -= csize;
 	}
 }
