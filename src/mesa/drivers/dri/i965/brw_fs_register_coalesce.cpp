@@ -209,7 +209,7 @@ fs_visitor::register_coalesce()
                   scan_inst->dst.reg = reg_to;
                   scan_inst->dst.reg_offset = reg_to_offset[i];
                }
-               for (int j = 0; j < 3; j++) {
+               for (int j = 0; j < scan_inst->sources; j++) {
                   if (scan_inst->src[j].file == GRF &&
                       scan_inst->src[j].reg == reg_from &&
                       scan_inst->src[j].reg_offset == i) {

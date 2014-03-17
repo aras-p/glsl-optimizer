@@ -1352,7 +1352,7 @@ fs_generator::generate_code(exec_list *instructions,
       if (unlikely(debug_flag))
          annotate(brw, annotation, cfg, inst, p->next_insn_offset);
 
-      for (unsigned int i = 0; i < 3; i++) {
+      for (unsigned int i = 0; i < inst->sources; i++) {
 	 src[i] = brw_reg_from_fs_reg(&inst->src[i]);
 
 	 /* The accumulator result appears to get used for the

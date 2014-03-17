@@ -273,7 +273,7 @@ fs_visitor::setup_payload_interference(struct ra_graph *g,
        * assign_curbe_setup(), and interpolation uses fixed hardware regs from
        * the start (see interp_reg()).
        */
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < inst->sources; i++) {
          if (inst->src[i].file == HW_REG &&
              inst->src[i].fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
             int node_nr = inst->src[i].fixed_hw_reg.nr / reg_width;
@@ -583,7 +583,7 @@ fs_visitor::choose_spill_reg(struct ra_graph *g)
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
-      for (unsigned int i = 0; i < 3; i++) {
+      for (unsigned int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == GRF) {
 	    spill_costs[inst->src[i].reg] += loop_scale;
 
@@ -682,7 +682,7 @@ fs_visitor::spill_reg(int spill_reg)
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
-      for (unsigned int i = 0; i < 3; i++) {
+      for (unsigned int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == GRF &&
 	     inst->src[i].reg == spill_reg) {
             int regs_read = inst->regs_read(this, i);

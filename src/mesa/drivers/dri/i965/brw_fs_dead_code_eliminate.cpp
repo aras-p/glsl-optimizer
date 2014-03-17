@@ -90,7 +90,7 @@ fs_visitor::dead_code_eliminate()
             }
          }
 
-         for (int i = 0; i < 3; i++) {
+         for (int i = 0; i < inst->sources; i++) {
             if (inst->src[i].file == GRF) {
                int var = live_intervals->var_from_vgrf[inst->src[i].reg];
 

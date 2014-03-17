@@ -353,7 +353,7 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
    if (entry->src.file != IMM)
       return false;
 
-   for (int i = 2; i >= 0; i--) {
+   for (int i = inst->sources - 1; i >= 0; i--) {
       if (inst->src[i].file != entry->dst.file ||
           inst->src[i].reg != entry->dst.reg ||
           inst->src[i].reg_offset != entry->dst.reg_offset ||
@@ -492,7 +492,7 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
 	inst = (fs_inst *)inst->next) {
 
       /* Try propagating into this instruction. */
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < inst->sources; i++) {
          if (inst->src[i].file != GRF)
             continue;
 

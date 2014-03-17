@@ -1472,7 +1472,7 @@ fs_visitor::assign_curb_setup()
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
-      for (unsigned int i = 0; i < 3; i++) {
+      for (unsigned int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == UNIFORM) {
             int uniform_nr = inst->src[i].reg + inst->src[i].reg_offset;
             int constant_nr;
@@ -1670,7 +1670,7 @@ fs_visitor::split_virtual_grfs()
        * the send is reading the whole thing.
        */
       if (inst->is_send_from_grf()) {
-         for (int i = 0; i < 3; i++) {
+         for (int i = 0; i < inst->sources; i++) {
             if (inst->src[i].file == GRF) {
                split_grf[inst->src[i].reg] = false;
             }
@@ -1703,7 +1703,7 @@ fs_visitor::split_virtual_grfs()
 			  inst->dst.reg_offset - 1);
 	 inst->dst.reg_offset = 0;
       }
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == GRF &&
 	     split_grf[inst->src[i].reg] &&
 	     inst->src[i].reg_offset != 0) {
@@ -1741,7 +1741,7 @@ fs_visitor::compact_virtual_grfs()
       if (inst->dst.file == GRF)
          remap_table[inst->dst.reg] = 0;
 
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < inst->sources; i++) {
          if (inst->src[i].file == GRF)
             remap_table[inst->src[i].reg] = 0;
       }
@@ -1767,7 +1767,7 @@ fs_visitor::compact_virtual_grfs()
       if (inst->dst.file == GRF)
          inst->dst.reg = remap_table[inst->dst.reg];
 
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < inst->sources; i++) {
          if (inst->src[i].file == GRF)
             inst->src[i].reg = remap_table[inst->src[i].reg];
       }
@@ -1807,7 +1807,7 @@ fs_visitor::move_uniform_array_access_to_pull_constants()
    foreach_list_safe(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
-      for (int i = 0 ; i < 3; i++) {
+      for (int i = 0 ; i < inst->sources; i++) {
          if (inst->src[i].file != UNIFORM || !inst->src[i].reladdr)
             continue;
 
@@ -1857,7 +1857,7 @@ fs_visitor::assign_constant_locations()
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *) node;
 
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < inst->sources; i++) {
          if (inst->src[i].file != UNIFORM)
             continue;
 
@@ -1928,7 +1928,7 @@ fs_visitor::demote_pull_constants()
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file != UNIFORM)
 	    continue;
 
@@ -2180,7 +2180,7 @@ fs_visitor::compute_to_mrf()
 	  * MRF's source GRF that we wanted to rewrite, that stops us.
 	  */
 	 bool interfered = false;
-	 for (int i = 0; i < 3; i++) {
+	 for (int i = 0; i < scan_inst->sources; i++) {
 	    if (scan_inst->src[i].file == GRF &&
 		scan_inst->src[i].reg == inst->src[0].reg &&
 		scan_inst->src[i].reg_offset == inst->src[0].reg_offset) {
@@ -2319,7 +2319,7 @@ clear_deps_for_inst_src(fs_inst *inst, int dispatch_width, bool *deps,
                        !inst->force_sechalf);
 
    /* Clear the flag for registers that actually got read (as expected). */
-   for (int i = 0; i < 3; i++) {
+   for (int i = 0; i < inst->sources; i++) {
       int grf;
       if (inst->src[i].file == GRF) {
          grf = inst->src[i].reg;
@@ -2699,7 +2699,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
    }
    fprintf(file, ":%s, ", brw_reg_type_letters(inst->dst.type));
 
-   for (int i = 0; i < 3 && inst->src[i].file != BAD_FILE; i++) {
+   for (int i = 0; i < inst->sources && inst->src[i].file != BAD_FILE; i++) {
       if (inst->src[i].negate)
          fprintf(file, "-");
       if (inst->src[i].abs)
@@ -2788,7 +2788,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
          fprintf(file, ":%s", brw_reg_type_letters(inst->src[i].type));
       }
 
-      if (i < 2 && inst->src[i + 1].file != BAD_FILE)
+      if (i < inst->sources - 1 && inst->src[i + 1].file != BAD_FILE)
          fprintf(file, ", ");
    }
 

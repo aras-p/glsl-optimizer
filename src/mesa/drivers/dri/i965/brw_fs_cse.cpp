@@ -228,7 +228,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
             }
          }
 
-	 for (int i = 0; i < 3; i++) {
+	 for (int i = 0; i < entry->generator->sources; i++) {
             fs_reg *src_reg = &entry->generator->src[i];
 
             /* Kill all AEB entries that use the destination we just

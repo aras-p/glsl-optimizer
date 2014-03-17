@@ -505,7 +505,7 @@ fs_instruction_scheduler::count_remaining_grf_uses(backend_instruction *be)
    if (inst->dst.file == GRF)
       remaining_grf_uses[inst->dst.reg]++;
 
-   for (int i = 0; i < 3; i++) {
+   for (int i = 0; i < inst->sources; i++) {
       if (inst->src[i].file != GRF)
          continue;
 
@@ -526,7 +526,7 @@ fs_instruction_scheduler::update_register_pressure(backend_instruction *be)
       grf_active[inst->dst.reg] = true;
    }
 
-   for (int i = 0; i < 3; i++) {
+   for (int i = 0; i < inst->sources; i++) {
       if (inst->src[i].file == GRF) {
          remaining_grf_uses[inst->src[i].reg]--;
          grf_active[inst->src[i].reg] = true;
@@ -547,7 +547,7 @@ fs_instruction_scheduler::get_register_pressure_benefit(backend_instruction *be)
          benefit -= v->virtual_grf_sizes[inst->dst.reg];
    }
 
-   for (int i = 0; i < 3; i++) {
+   for (int i = 0; i < inst->sources; i++) {
       if (inst->src[i].file != GRF)
          continue;
 
@@ -781,7 +781,7 @@ fs_instruction_scheduler::calculate_deps()
          add_barrier_deps(n);
 
       /* read-after-write deps. */
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == GRF) {
             if (post_reg_alloc) {
                for (int r = 0; r < reg_width * inst->regs_read(v, i); r++)
@@ -905,7 +905,7 @@ fs_instruction_scheduler::calculate_deps()
       fs_inst *inst = (fs_inst *)n->inst;
 
       /* write-after-read deps. */
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < inst->sources; i++) {
 	 if (inst->src[i].file == GRF) {
             if (post_reg_alloc) {
                for (int r = 0; r < reg_width * inst->regs_read(v, i); r++)

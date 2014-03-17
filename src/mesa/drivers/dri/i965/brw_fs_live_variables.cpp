@@ -149,7 +149,7 @@ fs_live_variables::setup_def_use()
 	   inst = (fs_inst *)inst->next) {
 
 	 /* Set use[] for this instruction */
-	 for (unsigned int i = 0; i < 3; i++) {
+	 for (unsigned int i = 0; i < inst->sources; i++) {
             fs_reg reg = inst->src[i];
 
             if (reg.file != GRF)
