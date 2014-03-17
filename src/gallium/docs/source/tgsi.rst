@@ -223,26 +223,26 @@ This instruction replicates its result.
 
 .. math::
 
-  dst.x = (src0.x < src1.x) ? 1 : 0
+  dst.x = (src0.x < src1.x) ? 1.0F : 0.0F
 
-  dst.y = (src0.y < src1.y) ? 1 : 0
+  dst.y = (src0.y < src1.y) ? 1.0F : 0.0F
 
-  dst.z = (src0.z < src1.z) ? 1 : 0
+  dst.z = (src0.z < src1.z) ? 1.0F : 0.0F
 
-  dst.w = (src0.w < src1.w) ? 1 : 0
+  dst.w = (src0.w < src1.w) ? 1.0F : 0.0F
 
 
 .. opcode:: SGE - Set On Greater Equal Than
 
 .. math::
 
-  dst.x = (src0.x >= src1.x) ? 1 : 0
+  dst.x = (src0.x >= src1.x) ? 1.0F : 0.0F
 
-  dst.y = (src0.y >= src1.y) ? 1 : 0
+  dst.y = (src0.y >= src1.y) ? 1.0F : 0.0F
 
-  dst.z = (src0.z >= src1.z) ? 1 : 0
+  dst.z = (src0.z >= src1.z) ? 1.0F : 0.0F
 
-  dst.w = (src0.w >= src1.w) ? 1 : 0
+  dst.w = (src0.w >= src1.w) ? 1.0F : 0.0F
 
 
 .. opcode:: MAD - Multiply And Add
@@ -527,7 +527,7 @@ This instruction replicates its result.
 
 .. math::
 
-  dst = 0
+  dst = 0.0F
 
 .. note::
 
@@ -588,7 +588,7 @@ This instruction replicates its result.
 
 .. math::
 
-  dst = 1
+  dst = 1.0F
 
 
 .. opcode:: TEX - Texture Lookup
