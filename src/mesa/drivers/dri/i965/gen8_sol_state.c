@@ -101,14 +101,11 @@ gen8_upload_3dstate_streamout(struct brw_context *brw, bool active,
 {
    struct gl_context *ctx = &brw->ctx;
 
-   /* BRW_NEW_VERTEX_PROGRAM */
-   const struct gl_shader_program *vs_prog =
-      ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX];
    /* BRW_NEW_TRANSFORM_FEEDBACK */
-   const struct gl_transform_feedback_info *linked_xfb_info =
-      &vs_prog->LinkedTransformFeedback;
    struct gl_transform_feedback_object *xfb_obj =
       ctx->TransformFeedback.CurrentObject;
+   const struct gl_transform_feedback_info *linked_xfb_info =
+      &xfb_obj->shader_program->LinkedTransformFeedback;
    uint32_t dw1 = 0, dw2 = 0, dw3 = 0, dw4 = 0;
 
    if (active) {
@@ -172,7 +169,6 @@ const struct brw_tracked_state gen8_sol_state = {
       .brw   = BRW_NEW_BATCH |
                BRW_NEW_RASTERIZER_DISCARD |
                BRW_NEW_TRANSFORM_FEEDBACK |
-               BRW_NEW_VERTEX_PROGRAM |
                BRW_NEW_VUE_MAP_GEOM_OUT,
       .cache = 0,
    },
