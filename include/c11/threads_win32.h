@@ -26,7 +26,9 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#ifndef assert
 #include <assert.h>
+#endif
 #include <limits.h>
 #include <errno.h>
 #include <process.h>  // MSVCRT
