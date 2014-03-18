@@ -219,12 +219,12 @@ loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
    version = drmGetVersion(fd);
    if (!version) {
       log_(_LOADER_WARNING, "MESA-LOADER: invalid drm fd\n");
-      return FALSE;
+      return 0;
    }
    if (!version->name) {
       log_(_LOADER_WARNING, "MESA-LOADER: unable to determine the driver name\n");
       drmFreeVersion(version);
-      return FALSE;
+      return 0;
    }
 
    if (strcmp(version->name, "i915") == 0) {
