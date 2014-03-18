@@ -2950,6 +2950,8 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->fp = fp;
    this->mem_ctx = ralloc_context(NULL);
    this->failed = false;
+   this->simd16_unsupported = false;
+   this->no16_msg = NULL;
    this->variable_ht = hash_table_ctor(0,
                                        hash_table_pointer_hash,
                                        hash_table_pointer_compare);
