@@ -98,11 +98,16 @@ nvc0_push_map_edgeflag(struct push_context *ctx, struct nvc0_context *nvc0,
    struct pipe_vertex_element *ve = &nvc0->vertex->element[attr].pipe;
    struct pipe_vertex_buffer *vb = &nvc0->vtxbuf[ve->vertex_buffer_index];
    struct nv04_resource *buf = nv04_resource(vb->buffer);
-   unsigned offset = vb->buffer_offset + ve->src_offset;
 
    ctx->edgeflag.stride = vb->stride;
-   ctx->edgeflag.data = nouveau_resource_map_offset(&nvc0->base,
+   if (buf) {
+      unsigned offset = vb->buffer_offset + ve->src_offset;
+      ctx->edgeflag.data = nouveau_resource_map_offset(&nvc0->base,
                            buf, offset, NOUVEAU_BO_RD);
+   } else {
+      ctx->edgeflag.data = (const uint8_t *)vb->user_buffer + ve->src_offset;
+   }
+
    if (index_bias)
       ctx->edgeflag.data += (intptr_t)index_bias * vb->stride;
 }
