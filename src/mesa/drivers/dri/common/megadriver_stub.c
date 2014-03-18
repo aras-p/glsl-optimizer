@@ -31,7 +31,7 @@
  * Dl_info, and RTLD_DEFAULT are only defined when _GNU_SOURCE is
  * defined.)
  */
-#ifdef _GNU_SOURCE
+#ifdef RTLD_DEFAULT
 
 #define MEGADRIVER_STUB_MAX_EXTENSIONS 10
 #define LIB_PATH_SUFFIX "_dri.so"
@@ -148,7 +148,7 @@ megadriver_stub_init(void)
    }
 }
 
-#endif /* _GNU_SOURCE */
+#endif /* RTLD_DEFAULT */
 
 static const
 __DRIconfig **stub_error_init_screen(__DRIscreen *psp)
