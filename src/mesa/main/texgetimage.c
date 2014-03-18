@@ -838,6 +838,11 @@ getteximage_error_check(struct gl_context *ctx, GLenum target, GLint level,
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
+   else if (_mesa_is_stencil_format(format)
+            && !ctx->Extensions.ARB_texture_stencil8) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetTexImage(format=GL_STENCIL_INDEX)");
+      return GL_TRUE;
+   }
    else if (_mesa_is_ycbcr_format(format)
             && !_mesa_is_ycbcr_format(baseFormat)) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
