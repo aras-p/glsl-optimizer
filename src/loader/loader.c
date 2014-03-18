@@ -202,7 +202,7 @@ out:
    return (*chip_id >= 0);
 }
 
-#elif defined(ANDROID) && !defined(__NOT_HAVE_DRM_H)
+#elif !defined(__NOT_HAVE_DRM_H)
 
 /* for i915 */
 #include <i915_drm.h>
