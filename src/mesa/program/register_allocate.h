@@ -25,6 +25,8 @@
  *
  */
 
+#include <stdbool.h>
+
 struct ra_class;
 struct ra_regs;
 
