@@ -167,7 +167,6 @@ const struct brw_tracked_state gen8_sol_state = {
    .dirty = {
       .mesa  = _NEW_LIGHT,
       .brw   = BRW_NEW_BATCH |
-               BRW_NEW_RASTERIZER_DISCARD |
                BRW_NEW_TRANSFORM_FEEDBACK |
                BRW_NEW_VUE_MAP_GEOM_OUT,
       .cache = 0,
