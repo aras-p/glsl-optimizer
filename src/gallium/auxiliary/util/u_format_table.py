@@ -94,6 +94,35 @@ def write_format_table(formats):
     
     u_format_pack.generate(formats)
     
+    def do_channel_array(channels, swizzles):
+        print "   {"
+        for i in range(4):
+            channel = channels[i]
+            if i < 3:
+                sep = ","
+            else:
+                sep = ""
+            if channel.size:
+                print "      {%s, %s, %s, %u, %u}%s\t/* %s = %s */" % (type_map[channel.type], bool_map(channel.norm), bool_map(channel.pure), channel.size, channel.shift, sep, "xyzw"[i], channel.name)
+            else:
+                print "      {0, 0, 0, 0, 0}%s" % (sep,)
+        print "   },"
+
+    def do_swizzle_array(channels, swizzles):
+        print "   {"
+        for i in range(4):
+            swizzle = swizzles[i]
+            if i < 3:
+                sep = ","
+            else:
+                sep = ""
+            try:
+                comment = colorspace_channels_map[format.colorspace][i]
+            except (KeyError, IndexError):
+                comment = 'ignored'
+            print "      %s%s\t/* %s */" % (swizzle_map[swizzle], sep, comment)
+        print "   },"
+
     for format in formats:
         print 'const struct util_format_description'
         print 'util_format_%s_description = {' % (format.short_name(),)
@@ -106,31 +135,8 @@ def write_format_table(formats):
         print "   %s,\t/* is_array */" % (bool_map(format.is_array()),)
         print "   %s,\t/* is_bitmask */" % (bool_map(format.is_bitmask()),)
         print "   %s,\t/* is_mixed */" % (bool_map(format.is_mixed()),)
-        print "   {"
-        for i in range(4):
-            channel = format.channels[i]
-            if i < 3:
-                sep = ","
-            else:
-                sep = ""
-            if channel.size:
-                print "      {%s, %s, %s, %u, %u}%s\t/* %s = %s */" % (type_map[channel.type], bool_map(channel.norm), bool_map(channel.pure), channel.size, channel.shift, sep, "xyzw"[i], channel.name)
-            else:
-                print "      {0, 0, 0, 0, 0}%s" % (sep,)
-        print "   },"
-        print "   {"
-        for i in range(4):
-            swizzle = format.swizzles[i]
-            if i < 3:
-                sep = ","
-            else:
-                sep = ""
-            try:
-                comment = colorspace_channels_map[format.colorspace][i]
-            except (KeyError, IndexError):
-                comment = 'ignored'
-            print "      %s%s\t/* %s */" % (swizzle_map[swizzle], sep, comment)
-        print "   },"
+        u_format_pack.print_channels(format, do_channel_array)
+        u_format_pack.print_channels(format, do_swizzle_array)
         print "   %s," % (colorspace_map(format.colorspace),)
         if format.colorspace != ZS and not format.is_pure_color():
             print "   &util_format_%s_unpack_rgba_8unorm," % format.short_name() 

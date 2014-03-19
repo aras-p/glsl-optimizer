@@ -50,24 +50,16 @@ def inv_swizzles(swizzles):
             inv_swizzle[swizzle] = i
     return inv_swizzle
 
+def print_channels(format, func):
+    func(format.channels, format.swizzles)
+
 def generate_format_type(format):
     '''Generate a structure that describes the format.'''
 
     assert format.layout == PLAIN
     
-    print 'union util_format_%s {' % format.short_name()
-    
-    if format.block_size() in (8, 16, 32, 64):
-        print '   uint%u_t value;' % (format.block_size(),)
-
-    use_bitfields = False
-    for channel in format.channels:
-        if channel.size % 8 or not is_pot(channel.size):
-            use_bitfields = True
-
-    print '   struct {'
-    for channel in format.channels:
-        if use_bitfields:
+    def generate_bitfields(channels, swizzles):
+        for channel in channels:
             if channel.type == VOID:
                 if channel.size:
                     print '      unsigned %s:%u;' % (channel.name, channel.size)
@@ -84,7 +76,9 @@ def generate_format_type(format):
                     print '      unsigned %s:%u;' % (channel.name, channel.size)
             else:
                 assert 0
-        else:
+
+    def generate_full_fields(channels, swizzles):
+        for channel in channels:
             assert channel.size % 8 == 0 and is_pot(channel.size)
             if channel.type == VOID:
                 if channel.size:
@@ -104,6 +98,22 @@ def generate_format_type(format):
                     assert 0
             else:
                 assert 0
+
+    print 'union util_format_%s {' % format.short_name()
+    
+    if format.block_size() in (8, 16, 32, 64):
+        print '   uint%u_t value;' % (format.block_size(),)
+
+    use_bitfields = False
+    for channel in format.channels:
+        if channel.size % 8 or not is_pot(channel.size):
+            use_bitfields = True
+
+    print '   struct {'
+    if use_bitfields:
+        print_channels(format, generate_bitfields)
+    else:
+        print_channels(format, generate_full_fields)
     print '   } chan;'
     print '};'
     print
@@ -399,13 +409,13 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
 
     src_native_type = native_type(format)
 
-    if format.is_bitmask():
+    def unpack_from_bitmask(channels, swizzles):
         depth = format.block_size()
         print '         uint%u_t value = *(const uint%u_t *)src;' % (depth, depth) 
 
         # Declare the intermediate variables
         for i in range(format.nr_channels()):
-            src_channel = format.channels[i]
+            src_channel = channels[i]
             if src_channel.type == UNSIGNED:
                 print '         uint%u_t %s;' % (depth, src_channel.name)
             elif src_channel.type == SIGNED:
@@ -413,7 +423,7 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
 
         # Compute the intermediate unshifted values 
         for i in range(format.nr_channels()):
-            src_channel = format.channels[i]
+            src_channel = channels[i]
             value = 'value'
             shift = src_channel.shift
             if src_channel.type == UNSIGNED:
@@ -440,9 +450,9 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
                 
         # Convert, swizzle, and store final values
         for i in range(4):
-            swizzle = format.swizzles[i]
+            swizzle = swizzles[i]
             if swizzle < 4:
-                src_channel = format.channels[swizzle]
+                src_channel = channels[swizzle]
                 src_colorspace = format.colorspace
                 if src_colorspace == SRGB and i == 3:
                     # Alpha channel is linear
@@ -462,14 +472,14 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
                 assert False
             print '         dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
         
-    else:
+    def unpack_from_union(channels, swizzles):
         print '         union util_format_%s pixel;' % format.short_name()
         print '         memcpy(&pixel, src, sizeof pixel);'
     
         for i in range(4):
-            swizzle = format.swizzles[i]
+            swizzle = swizzles[i]
             if swizzle < 4:
-                src_channel = format.channels[swizzle]
+                src_channel = channels[swizzle]
                 src_colorspace = format.colorspace
                 if src_colorspace == SRGB and i == 3:
                     # Alpha channel is linear
@@ -489,6 +499,11 @@ def generate_unpack_kernel(format, dst_channel, dst_native_type):
                 assert False
             print '         dst[%u] = %s; /* %s */' % (i, value, 'rgba'[i])
     
+    if format.is_bitmask():
+        print_channels(format, unpack_from_bitmask)
+    else:
+        print_channels(format, unpack_from_union)
+
 
 def generate_pack_kernel(format, src_channel, src_native_type):
 
@@ -499,14 +514,14 @@ def generate_pack_kernel(format, src_channel, src_native_type):
 
     assert format.layout == PLAIN
 
-    inv_swizzle = inv_swizzles(format.swizzles)
+    def pack_into_bitmask(channels, swizzles):
+        inv_swizzle = inv_swizzles(swizzles)
 
-    if format.is_bitmask():
         depth = format.block_size()
         print '         uint%u_t value = 0;' % depth 
 
         for i in range(4):
-            dst_channel = format.channels[i]
+            dst_channel = channels[i]
             shift = dst_channel.shift
             if inv_swizzle[i] is not None:
                 value ='src[%u]' % inv_swizzle[i]
@@ -533,11 +548,13 @@ def generate_pack_kernel(format, src_channel, src_native_type):
                 
         print '         *(uint%u_t *)dst = value;' % depth 
 
-    else:
+    def pack_into_union(channels, swizzles):
+        inv_swizzle = inv_swizzles(swizzles)
+
         print '         union util_format_%s pixel;' % format.short_name()
     
         for i in range(4):
-            dst_channel = format.channels[i]
+            dst_channel = channels[i]
             width = dst_channel.size
             if inv_swizzle[i] is None:
                 continue
@@ -554,6 +571,11 @@ def generate_pack_kernel(format, src_channel, src_native_type):
     
         print '         memcpy(dst, &pixel, sizeof pixel);'
     
+    if format.is_bitmask():
+        print_channels(format, pack_into_bitmask)
+    else:
+        print_channels(format, pack_into_union)
+
 
 def generate_format_unpack(format, dst_channel, dst_native_type, dst_suffix):
     '''Generate the function to unpack pixels from a particular format'''
