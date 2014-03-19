@@ -55,7 +55,7 @@ static char* loadFile(const char* filename)
 
 static bool saveFile(const char* filename, const char* data)
 {
-	int size = (int)strlen(data)+1;
+	int size = (int)strlen(data);
 
 	FILE* file = fopen(filename, "wt");
 	if( !file )
