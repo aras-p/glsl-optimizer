@@ -40,6 +40,16 @@
 from u_format_parse import *
 
 
+def inv_swizzles(swizzles):
+    '''Return an array[4] of inverse swizzle terms'''
+    '''Only pick the first matching value to avoid l8 getting blue and i8 getting alpha'''
+    inv_swizzle = [None]*4
+    for i in range(4):
+        swizzle = swizzles[i]
+        if swizzle < 4 and inv_swizzle[swizzle] == None:
+            inv_swizzle[swizzle] = i
+    return inv_swizzle
+
 def generate_format_type(format):
     '''Generate a structure that describes the format.'''
 
@@ -489,7 +499,7 @@ def generate_pack_kernel(format, src_channel, src_native_type):
 
     assert format.layout == PLAIN
 
-    inv_swizzle = format.inv_swizzles()
+    inv_swizzle = inv_swizzles(format.swizzles)
 
     if format.is_bitmask():
         depth = format.block_size()
