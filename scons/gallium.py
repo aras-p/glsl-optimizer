@@ -269,6 +269,11 @@ def generate(env):
             cppdefines += ['HAVE_ALIAS']
         else:
             cppdefines += ['GLX_ALIAS_UNSUPPORTED']
+    if env['platform'] == 'haiku':
+        cppdefines += [
+            'HAVE_PTHREAD',
+            'HAVE_POSIX_MEMALIGN'
+        ]
     if platform == 'windows':
         cppdefines += [
             'WIN32',

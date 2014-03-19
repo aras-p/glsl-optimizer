@@ -44,9 +44,15 @@ extern "C" {
 
 
 static void
-hgl_viewport(struct gl_context* glContext, GLint x, GLint y,
-	GLsizei width, GLsizei height)
+hgl_viewport(struct gl_context* glContext)
 {
+	// TODO: We should try to eliminate this function
+
+	GLint x = glContext->ViewportArray[0].X;
+	GLint y = glContext->ViewportArray[0].Y;
+	GLint width = glContext->ViewportArray[0].Width;
+	GLint height = glContext->ViewportArray[0].Height;
+
 	TRACE("%s(glContext: %p, x: %d, y: %d, w: %d, h: %d\n", __func__,
 		glContext, x, y, width, height);
 
@@ -525,7 +531,7 @@ GalliumContext::ResizeViewport(int32 width, int32 height)
 	for (context_id i = 0; i < CONTEXT_MAX; i++) {
 		if (fContext[i] && fContext[i]->st) {
 			struct st_context *stContext = (struct st_context*)fContext[i]->st;
-			_mesa_set_viewport(stContext->ctx, 0, 0, width, height);
+			_mesa_set_viewport(stContext->ctx, 0, 0, 0, width, height);
         		st_manager_validate_framebuffers(stContext);
 		}
 	}
