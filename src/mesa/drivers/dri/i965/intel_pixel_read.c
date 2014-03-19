@@ -34,6 +34,7 @@
 #include "main/bufferobj.h"
 #include "main/readpix.h"
 #include "main/state.h"
+#include "main/glformats.h"
 
 #include "brw_context.h"
 #include "intel_screen.h"
@@ -88,6 +89,12 @@ do_blit_readpixels(struct gl_context * ctx,
 
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+
+   /* Currently this function only supports reading from color buffers. */
+   if (!_mesa_is_color_format(format))
+      return false;
+
+   assert(irb != NULL);
 
    if (ctx->_ImageTransferState ||
        !_mesa_format_matches_format_and_type(irb->mt->format, format, type,
