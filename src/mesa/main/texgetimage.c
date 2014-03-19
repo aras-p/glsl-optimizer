@@ -853,6 +853,11 @@ getteximage_error_check(struct gl_context *ctx, GLenum target, GLint level,
       _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
       return GL_TRUE;
    }
+   else if (_mesa_is_enum_format_integer(format) !=
+            _mesa_is_format_integer(texImage->TexFormat)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetTexImage(format mismatch)");
+      return GL_TRUE;
+   }
 
    if (!_mesa_validate_pbo_access(dimensions, &ctx->Pack, texImage->Width,
                                   texImage->Height, texImage->Depth,
