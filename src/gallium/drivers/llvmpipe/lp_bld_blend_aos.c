@@ -255,7 +255,7 @@ lp_build_blend_factor(struct lp_build_blend_aos_context *bld,
    LLVMValueRef rgb_factor_, alpha_factor_;
    enum lp_build_blend_swizzle rgb_swizzle;
 
-   if (alpha_swizzle == 0) {
+   if (alpha_swizzle == UTIL_FORMAT_SWIZZLE_X && num_channels == 1) {
       return lp_build_blend_factor_unswizzled(bld, alpha_factor, TRUE);
    }
 
