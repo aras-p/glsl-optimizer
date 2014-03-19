@@ -253,6 +253,21 @@ validate_uniform_parameters(struct gl_context *ctx,
       return false;
    }
 
+   /* If the driver storage pointer in remap table is -1, we ignore silently.
+    *
+    * GL_ARB_explicit_uniform_location spec says:
+    *     "What happens if Uniform* is called with an explicitly defined
+    *     uniform location, but that uniform is deemed inactive by the
+    *     linker?
+    *
+    *     RESOLVED: The call is ignored for inactive uniform variables and
+    *     no error is generated."
+    *
+    */
+   if (shProg->UniformRemapTable[location] ==
+       INACTIVE_UNIFORM_EXPLICIT_LOCATION)
+      return false;
+
    _mesa_uniform_split_location_offset(shProg, location, loc, array_index);
 
    if (shProg->UniformStorage[*loc].array_elements == 0 && count > 1) {
