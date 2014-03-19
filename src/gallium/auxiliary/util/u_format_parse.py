@@ -30,8 +30,6 @@
 '''
 
 
-import sys
-
 VOID, UNSIGNED, SIGNED, FIXED, FLOAT = range(5)
 
 SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W, SWIZZLE_0, SWIZZLE_1, SWIZZLE_NONE, = range(7)
@@ -43,9 +41,6 @@ SRGB = 'srgb'
 YUV = 'yuv'
 ZS = 'zs'
 
-
-# Not cross-compiler friendly
-is_big_endian = sys.byteorder == 'big'
 
 def is_pot(x):
    return (x & (x - 1)) == 0
@@ -109,13 +104,15 @@ class Channel:
 class Format:
     '''Describe a pixel format.'''
 
-    def __init__(self, name, layout, block_width, block_height, channels, swizzles, colorspace):
+    def __init__(self, name, layout, block_width, block_height, le_channels, le_swizzles, be_channels, be_swizzles, colorspace):
         self.name = name
         self.layout = layout
         self.block_width = block_width
         self.block_height = block_height
-        self.channels = channels
-        self.swizzles = swizzles
+        self.le_channels = le_channels
+        self.le_swizzles = le_swizzles
+        self.be_channels = be_channels
+        self.be_swizzles = be_swizzles
         self.name = name
         self.colorspace = colorspace
 
@@ -134,13 +131,13 @@ class Format:
 
     def block_size(self):
         size = 0
-        for channel in self.channels:
+        for channel in self.le_channels:
             size += channel.size
         return size
 
     def nr_channels(self):
         nr_channels = 0
-        for channel in self.channels:
+        for channel in self.le_channels:
             if channel.size:
                 nr_channels += 1
         return nr_channels
@@ -148,10 +145,10 @@ class Format:
     def array_element(self):
         if self.layout != PLAIN:
             return None
-        ref_channel = self.channels[0]
+        ref_channel = self.le_channels[0]
         if ref_channel.type == VOID:
-           ref_channel = self.channels[1]
-        for channel in self.channels:
+           ref_channel = self.le_channels[1]
+        for channel in self.le_channels:
             if channel.size and (channel.size != ref_channel.size or channel.size % 8):
                 return None
             if channel.type != VOID:
@@ -169,10 +166,10 @@ class Format:
     def is_mixed(self):
         if self.layout != PLAIN:
             return False
-        ref_channel = self.channels[0]
+        ref_channel = self.le_channels[0]
         if ref_channel.type == VOID:
-           ref_channel = self.channels[1]
-        for channel in self.channels[1:]:
+           ref_channel = self.le_channels[1]
+        for channel in self.le_channels[1:]:
             if channel.type != VOID:
                 if channel.type != ref_channel.type:
                     return True
@@ -188,7 +185,7 @@ class Format:
     def is_int(self):
         if self.layout != PLAIN:
             return False
-        for channel in self.channels:
+        for channel in self.le_channels:
             if channel.type not in (VOID, UNSIGNED, SIGNED):
                 return False
         return True
@@ -196,7 +193,7 @@ class Format:
     def is_float(self):
         if self.layout != PLAIN:
             return False
-        for channel in self.channels:
+        for channel in self.le_channels:
             if channel.type not in (VOID, FLOAT):
                 return False
         return True
@@ -206,7 +203,7 @@ class Format:
             return False
         if self.block_size() not in (8, 16, 32):
             return False
-        for channel in self.channels:
+        for channel in self.le_channels:
             if channel.type not in (VOID, UNSIGNED, SIGNED):
                 return False
         return True
@@ -215,7 +212,7 @@ class Format:
         if self.layout != PLAIN or self.colorspace == ZS:
             return False
         pures = [channel.pure
-                 for channel in self.channels
+                 for channel in self.le_channels
                  if channel.type != VOID]
         for x in pures:
            assert x == pures[0]
@@ -223,7 +220,7 @@ class Format:
 
     def channel_type(self):
         types = [channel.type
-                 for channel in self.channels
+                 for channel in self.le_channels
                  if channel.type != VOID]
         for x in types:
            assert x == types[0]
@@ -236,7 +233,7 @@ class Format:
         return self.is_pure_color() and self.channel_type() == UNSIGNED
 
     def has_channel(self, id):
-        return self.swizzles[id] != SWIZZLE_NONE
+        return self.le_swizzles[id] != SWIZZLE_NONE
 
     def has_depth(self):
         return self.colorspace == ZS and self.has_channel(0)
@@ -339,15 +336,25 @@ def parse(filename):
         block_width, block_height = map(int, fields[2:4])
         colorspace = fields[9]
 
-        swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
-        channels = _parse_channels(fields[4:8], layout, colorspace, swizzles)
+        le_swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
+        le_channels = _parse_channels(fields[4:8], layout, colorspace, le_swizzles)
 
-        shift = 0
-        for channel in channels[3::-1] if is_big_endian else channels:
-            channel.shift = shift
-            shift += channel.size
+        be_swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
+        be_channels = _parse_channels(fields[4:8], layout, colorspace, be_swizzles)
 
-        format = Format(name, layout, block_width, block_height, channels, swizzles, colorspace)
+        le_shift = 0
+        for channel in le_channels:
+            channel.shift = le_shift
+            le_shift += channel.size
+
+        be_shift = 0
+        for channel in be_channels[3::-1]:
+            channel.shift = be_shift
+            be_shift += channel.size
+
+        assert le_shift == be_shift
+
+        format = Format(name, layout, block_width, block_height, le_channels, le_swizzles, be_channels, be_swizzles, colorspace)
         formats.append(format)
     return formats
 

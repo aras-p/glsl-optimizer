@@ -51,7 +51,14 @@ def inv_swizzles(swizzles):
     return inv_swizzle
 
 def print_channels(format, func):
-    func(format.channels, format.swizzles)
+    if format.nr_channels() <= 1:
+        func(format.le_channels, format.le_swizzles)
+    else:
+        print '#ifdef PIPE_ARCH_BIG_ENDIAN'
+        func(format.be_channels, format.be_swizzles)
+        print '#else'
+        func(format.le_channels, format.le_swizzles)
+        print '#endif'
 
 def generate_format_type(format):
     '''Generate a structure that describes the format.'''
@@ -105,7 +112,7 @@ def generate_format_type(format):
         print '   uint%u_t value;' % (format.block_size(),)
 
     use_bitfields = False
-    for channel in format.channels:
+    for channel in format.le_channels:
         if channel.size % 8 or not is_pot(channel.size):
             use_bitfields = True
 
@@ -129,7 +136,7 @@ def is_format_supported(format):
         return False
 
     for i in range(4):
-        channel = format.channels[i]
+        channel = format.le_channels[i]
         if channel.type not in (VOID, UNSIGNED, SIGNED, FLOAT, FIXED):
             return False
         if channel.type == FLOAT and channel.size not in (16, 32, 64):
