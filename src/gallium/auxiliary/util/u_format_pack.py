@@ -117,27 +117,6 @@ def is_format_supported(format):
 
     return True
 
-def is_format_pure_unsigned(format):
-    for i in range(4):
-        channel = format.channels[i]
-        if channel.type not in (VOID, UNSIGNED):
-            return False
-        if channel.type == UNSIGNED and channel.pure == False:
-            return False
-
-    return True
-
-
-def is_format_pure_signed(format):
-    for i in range(4):
-        channel = format.channels[i]
-        if channel.type not in (VOID, SIGNED):
-            return False
-        if channel.type == SIGNED and channel.pure == False:
-            return False
-
-    return True
-
 def native_type(format):
     '''Get the native appropriate for a format.'''
 
@@ -152,7 +131,7 @@ def native_type(format):
             return 'uint%u_t' % format.block_size()
         else:
             # For array pixel formats return the integer type that matches the color channel
-            channel = format.channels[0]
+            channel = format.array_element()
             if channel.type in (UNSIGNED, VOID):
                 return 'uint%u_t' % channel.size
             elif channel.type in (SIGNED, FIXED):
@@ -662,7 +641,7 @@ def generate(formats):
             if is_format_supported(format):
                 generate_format_type(format)
 
-            if is_format_pure_unsigned(format):
+            if format.is_pure_unsigned():
                 native_type = 'unsigned'
                 suffix = 'unsigned'
                 channel = Channel(UNSIGNED, False, True, 32)
@@ -676,7 +655,7 @@ def generate(formats):
                 suffix = 'signed'
                 generate_format_unpack(format, channel, native_type, suffix)
                 generate_format_pack(format, channel, native_type, suffix)   
-            elif is_format_pure_signed(format):
+            elif format.is_pure_signed():
                 native_type = 'int'
                 suffix = 'signed'
                 channel = Channel(SIGNED, False, True, 32)

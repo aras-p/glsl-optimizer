@@ -132,7 +132,7 @@ def write_format_table(formats):
             print "      %s%s\t/* %s */" % (swizzle_map[swizzle], sep, comment)
         print "   },"
         print "   %s," % (colorspace_map(format.colorspace),)
-        if format.colorspace != ZS and format.channels[0].pure == False:
+        if format.colorspace != ZS and not format.is_pure_color():
             print "   &util_format_%s_unpack_rgba_8unorm," % format.short_name() 
             print "   &util_format_%s_pack_rgba_8unorm," % format.short_name() 
             if format.layout == 's3tc' or format.layout == 'rgtc':
@@ -149,7 +149,7 @@ def write_format_table(formats):
             print "   NULL, /* unpack_rgba_float */" 
             print "   NULL, /* pack_rgba_float */" 
             print "   NULL, /* fetch_rgba_float */" 
-        if format.colorspace == ZS and format.swizzles[0] != SWIZZLE_NONE:
+        if format.has_depth():
             print "   &util_format_%s_unpack_z_32unorm," % format.short_name() 
             print "   &util_format_%s_pack_z_32unorm," % format.short_name() 
             print "   &util_format_%s_unpack_z_float," % format.short_name() 
@@ -159,20 +159,20 @@ def write_format_table(formats):
             print "   NULL, /* pack_z_32unorm */" 
             print "   NULL, /* unpack_z_float */" 
             print "   NULL, /* pack_z_float */" 
-        if format.colorspace == ZS and format.swizzles[1] != SWIZZLE_NONE:
+        if format.has_stencil():
             print "   &util_format_%s_unpack_s_8uint," % format.short_name() 
             print "   &util_format_%s_pack_s_8uint," % format.short_name() 
         else:
             print "   NULL, /* unpack_s_8uint */" 
             print "   NULL, /* pack_s_8uint */"
-        if format.colorspace != ZS and format.channels[0].pure == True and format.channels[0].type == UNSIGNED:
+        if format.is_pure_unsigned():
             print "   &util_format_%s_unpack_unsigned, /* unpack_rgba_uint */" % format.short_name() 
             print "   &util_format_%s_pack_unsigned, /* pack_rgba_uint */" % format.short_name()
             print "   &util_format_%s_unpack_signed, /* unpack_rgba_sint */" % format.short_name()
             print "   &util_format_%s_pack_signed,  /* pack_rgba_sint */" % format.short_name()
             print "   &util_format_%s_fetch_unsigned,  /* fetch_rgba_uint */" % format.short_name()
             print "   NULL  /* fetch_rgba_sint */"
-        elif format.colorspace != ZS and format.channels[0].pure == True and format.channels[0].type == SIGNED:
+        elif format.is_pure_signed():
             print "   &util_format_%s_unpack_unsigned, /* unpack_rgba_uint */" % format.short_name()
             print "   &util_format_%s_pack_unsigned, /* pack_rgba_uint */" % format.short_name()
             print "   &util_format_%s_unpack_signed, /* unpack_rgba_sint */" % format.short_name()

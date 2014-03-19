@@ -145,23 +145,26 @@ class Format:
                 nr_channels += 1
         return nr_channels
 
-    def is_array(self):
+    def array_element(self):
         if self.layout != PLAIN:
-            return False
+            return None
         ref_channel = self.channels[0]
         if ref_channel.type == VOID:
            ref_channel = self.channels[1]
         for channel in self.channels:
             if channel.size and (channel.size != ref_channel.size or channel.size % 8):
-                return False
+                return None
             if channel.type != VOID:
                 if channel.type != ref_channel.type:
-                    return False
+                    return None
                 if channel.norm != ref_channel.norm:
-                    return False
+                    return None
                 if channel.pure != ref_channel.pure:
-                    return False
-        return True
+                    return None
+        return ref_channel
+
+    def is_array(self):
+        return self.array_element() != None
 
     def is_mixed(self):
         if self.layout != PLAIN:
@@ -207,6 +210,39 @@ class Format:
             if channel.type not in (VOID, UNSIGNED, SIGNED):
                 return False
         return True
+
+    def is_pure_color(self):
+        if self.layout != PLAIN or self.colorspace == ZS:
+            return False
+        pures = [channel.pure
+                 for channel in self.channels
+                 if channel.type != VOID]
+        for x in pures:
+           assert x == pures[0]
+        return pures[0]
+
+    def channel_type(self):
+        types = [channel.type
+                 for channel in self.channels
+                 if channel.type != VOID]
+        for x in types:
+           assert x == types[0]
+        return types[0]
+
+    def is_pure_signed(self):
+        return self.is_pure_color() and self.channel_type() == SIGNED
+
+    def is_pure_unsigned(self):
+        return self.is_pure_color() and self.channel_type() == UNSIGNED
+
+    def has_channel(self, id):
+        return self.swizzles[id] != SWIZZLE_NONE
+
+    def has_depth(self):
+        return self.colorspace == ZS and self.has_channel(0)
+
+    def has_stencil(self):
+        return self.colorspace == ZS and self.has_channel(1)
 
     def inv_swizzles(self):
         '''Return an array[4] of inverse swizzle terms'''
