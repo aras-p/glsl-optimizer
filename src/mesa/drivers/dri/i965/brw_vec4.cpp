@@ -381,35 +381,53 @@ vec4_visitor::dead_code_eliminate()
 
       seen_control_flow = inst->is_control_flow() || seen_control_flow;
 
-      if (inst->dst.file != GRF || inst->has_side_effects())
+      if (inst->has_side_effects())
          continue;
 
-      int write_mask = inst->dst.writemask;
-
-      for (int c = 0; c < 4; c++) {
-         if (write_mask & (1 << c)) {
-            assert(this->virtual_grf_end[inst->dst.reg * 4 + c] >= pc);
-            if (this->virtual_grf_end[inst->dst.reg * 4 + c] == pc) {
-               write_mask &= ~(1 << c);
-            }
+      bool inst_writes_flag = false;
+      if (inst->dst.file != GRF) {
+         if (inst->dst.is_null() && inst->writes_flag()) {
+            inst_writes_flag = true;
+         } else {
+            continue;
          }
       }
 
-      progress = try_eliminate_instruction(inst, write_mask) || progress;
+      if (inst->dst.file == GRF) {
+         int write_mask = inst->dst.writemask;
+
+         for (int c = 0; c < 4; c++) {
+            if (write_mask & (1 << c)) {
+               assert(this->virtual_grf_end[inst->dst.reg * 4 + c] >= pc);
+               if (this->virtual_grf_end[inst->dst.reg * 4 + c] == pc) {
+                  write_mask &= ~(1 << c);
+               }
+            }
+         }
+
+         progress = try_eliminate_instruction(inst, write_mask) || progress;
+      }
 
       if (seen_control_flow || inst->predicate || inst->prev == NULL)
          continue;
 
-      int dead_channels = inst->dst.writemask;
+      int dead_channels;
+      if (inst_writes_flag) {
+/* Arbitrarily chosen, other than not being an xyzw writemask. */
+#define FLAG_WRITEMASK (1 << 5)
+         dead_channels = inst->reads_flag() ? 0 : FLAG_WRITEMASK;
+      } else {
+         dead_channels = inst->dst.writemask;
 
-      for (int i = 0; i < 3; i++) {
-         if (inst->src[i].file != GRF ||
-             inst->src[i].reg != inst->dst.reg)
-               continue;
+         for (int i = 0; i < 3; i++) {
+            if (inst->src[i].file != GRF ||
+                inst->src[i].reg != inst->dst.reg)
+                  continue;
 
-         for (int j = 0; j < 4; j++) {
-            int swiz = BRW_GET_SWZ(inst->src[i].swizzle, j);
-            dead_channels &= ~(1 << swiz);
+            for (int j = 0; j < 4; j++) {
+               int swiz = BRW_GET_SWZ(inst->src[i].swizzle, j);
+               dead_channels &= ~(1 << swiz);
+            }
          }
       }
 
@@ -418,8 +436,20 @@ vec4_visitor::dead_code_eliminate()
            node = prev, prev = prev->prev) {
          vec4_instruction *scan_inst = (vec4_instruction  *)node;
 
-         if (scan_inst->dst.file != GRF || scan_inst->has_side_effects())
+         if (scan_inst->has_side_effects())
             continue;
+
+         if (inst_writes_flag) {
+            if (scan_inst->dst.is_null() && scan_inst->writes_flag()) {
+               scan_inst->remove();
+               progress = true;
+            } else if (scan_inst->reads_flag()) {
+               dead_channels = 0;
+            }
+            continue;
+         } else if (scan_inst->dst.file != GRF) {
+            continue;
+         }
 
          if (inst->dst.reg == scan_inst->dst.reg) {
             int new_writemask = scan_inst->dst.writemask & ~dead_channels;
