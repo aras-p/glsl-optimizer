@@ -267,6 +267,54 @@ _swizzle_parse_map = {
     '_': SWIZZLE_NONE,
 }
 
+def _parse_channels(fields, layout, colorspace, swizzles):
+    if layout == PLAIN:
+        names = ['']*4
+        if colorspace in (RGB, SRGB):
+            for i in range(4):
+                swizzle = swizzles[i]
+                if swizzle < 4:
+                    names[swizzle] += 'rgba'[i]
+        elif colorspace == ZS:
+            for i in range(4):
+                swizzle = swizzles[i]
+                if swizzle < 4:
+                    names[swizzle] += 'zs'[i]
+        else:
+            assert False
+        for i in range(4):
+            if names[i] == '':
+                names[i] = 'x'
+    else:
+        names = ['x', 'y', 'z', 'w']
+
+    channels = []
+    for i in range(0, 4):
+        field = fields[i]
+        if field:
+            type = _type_parse_map[field[0]]
+            if field[1] == 'n':
+                norm = True
+                pure = False
+                size = int(field[2:])
+            elif field[1] == 'p':
+                pure = True
+                norm = False
+                size = int(field[2:])
+            else:
+                norm = False
+                pure = False
+                size = int(field[1:])
+        else:
+            type = VOID
+            norm = False
+            pure = False
+            size = 0
+        channel = Channel(type, norm, pure, size, names[i])
+        channels.append(channel)
+
+    return channels
+
 def parse(filename):
     '''Parse the format descrition in CSV format in terms of the 
     Channel and Format classes above.'''
@@ -289,54 +337,10 @@ def parse(filename):
         name = fields[0]
         layout = fields[1]
         block_width, block_height = map(int, fields[2:4])
+        colorspace = fields[9]
 
         swizzles = [_swizzle_parse_map[swizzle] for swizzle in fields[8]]
-        colorspace = fields[9]
-        
-        if layout == PLAIN:
-            names = ['']*4
-            if colorspace in (RGB, SRGB):
-                for i in range(4):
-                    swizzle = swizzles[i]
-                    if swizzle < 4:
-                        names[swizzle] += 'rgba'[i]
-            elif colorspace == ZS:
-                for i in range(4):
-                    swizzle = swizzles[i]
-                    if swizzle < 4:
-                        names[swizzle] += 'zs'[i]
-            else:
-                assert False
-            for i in range(4):
-                if names[i] == '':
-                    names[i] = 'x'
-        else:
-            names = ['x', 'y', 'z', 'w']
-
-        channels = []
-        for i in range(0, 4):
-            field = fields[4 + i]
-            if field:
-                type = _type_parse_map[field[0]]
-                if field[1] == 'n':
-                    norm = True
-                    pure = False
-                    size = int(field[2:])
-                elif field[1] == 'p':
-                    pure = True
-                    norm = False
-                    size = int(field[2:])
-                else:
-                    norm = False
-                    pure = False
-                    size = int(field[1:])
-            else:
-                type = VOID
-                norm = False
-                pure = False
-                size = 0
-            channel = Channel(type, norm, pure, size, names[i])
-            channels.append(channel)
+        channels = _parse_channels(fields[4:8], layout, colorspace, swizzles)
 
         shift = 0
         for channel in channels[3::-1] if is_big_endian else channels:
