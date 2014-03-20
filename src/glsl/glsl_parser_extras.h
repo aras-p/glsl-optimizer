@@ -175,10 +175,6 @@ struct _mesa_glsl_parse_state {
    exec_list translation_unit;
    glsl_symbol_table *symbols;
 
-   unsigned num_uniform_blocks;
-   unsigned uniform_block_array_size;
-   struct gl_uniform_block *uniform_blocks;
-
    unsigned num_supported_versions;
    struct {
       unsigned ver;

@@ -66,10 +66,6 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    this->translation_unit.make_empty();
    this->symbols = new(mem_ctx) glsl_symbol_table;
 
-   this->num_uniform_blocks = 0;
-   this->uniform_block_array_size = 0;
-   this->uniform_blocks = NULL;
-
    this->info_log = ralloc_strdup(mem_ctx, "");
    this->error = false;
    this->loop_nesting_ast = NULL;
@@ -1463,12 +1459,6 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
    shader->Version = state->language_version;
    shader->IsES = state->es_shader;
    shader->uses_builtin_functions = state->uses_builtin_functions;
-
-   if (shader->UniformBlocks)
-      ralloc_free(shader->UniformBlocks);
-   shader->NumUniformBlocks = state->num_uniform_blocks;
-   shader->UniformBlocks = state->uniform_blocks;
-   ralloc_steal(shader, shader->UniformBlocks);
 
    if (!state->error)
       set_shader_inout_layout(shader, state);
