@@ -125,8 +125,11 @@ check_valid_to_render(struct gl_context *ctx, const char *function)
 	 return GL_FALSE;
       break;
 
-   case API_OPENGL_COMPAT:
    case API_OPENGL_CORE:
+      if (ctx->Array.VAO == ctx->Array.DefaultVAO)
+         return GL_FALSE;
+      /* fallthrough */
+   case API_OPENGL_COMPAT:
       {
          const struct gl_shader_program *vsProg =
             ctx->_Shader->CurrentProgram[MESA_SHADER_VERTEX];
