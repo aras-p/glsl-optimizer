@@ -14,7 +14,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include <libdrm/nouveau_drm.h>
+#include <nouveau_drm.h>
 
 #include "nouveau_winsys.h"
 #include "nouveau_screen.h"

@@ -6,7 +6,7 @@
 
 #include "pipe/p_defines.h"
 
-#include <libdrm/nouveau.h>
+#include <nouveau.h>
 
 #ifndef NV04_PFIFO_MAX_PACKET_LEN
 #define NV04_PFIFO_MAX_PACKET_LEN 2047

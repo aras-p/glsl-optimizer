@@ -38,7 +38,7 @@
 #undef NDEBUG
 #include <assert.h>
 
-#include <libdrm/nouveau.h>
+#include <nouveau.h>
 #include "nouveau_screen.h"
 #include "nouveau_state.h"
 #include "nouveau_surface.h"

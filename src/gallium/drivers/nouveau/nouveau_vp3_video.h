@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <libdrm/nouveau.h>
+#include <nouveau.h>
 
 #include "pipe/p_defines.h"
 #include "vl/vl_video_buffer.h"

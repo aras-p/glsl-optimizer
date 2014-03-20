@@ -2,7 +2,7 @@
 #define __NOUVEAU_CONTEXT_H__
 
 #include "pipe/p_context.h"
-#include <libdrm/nouveau.h>
+#include <nouveau.h>
 
 #define NOUVEAU_MAX_SCRATCH_BUFS 4
 
