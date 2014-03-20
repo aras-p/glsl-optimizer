@@ -162,23 +162,6 @@ bool glsl_symbol_table::add_type(const char *name, const glsl_type *t)
    return _mesa_symbol_table_add_symbol(table, -1, name, entry) == 0;
 }
 
-static char *make_ast_name(const char *name)
-{
-   char *ast_name = new char[strlen("#ast.") + strlen(name) + 1];
-   strcpy(ast_name, "#ast.");
-   strcat(ast_name + strlen("#ast."), name);
-   return ast_name;
-}
-
-bool glsl_symbol_table::add_type_ast(const char *name, const class ast_type_specifier *a)
-{
-   symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(a);
-   char *ast_name = make_ast_name(name);
-   bool ret = _mesa_symbol_table_add_symbol(table, -1, ast_name, entry) == 0;
-   delete [] ast_name;
-   return ret;
-}
-
 bool glsl_symbol_table::add_interface(const char *name, const glsl_type *i,
                                       enum ir_variable_mode mode)
 {
@@ -228,14 +211,6 @@ const glsl_type *glsl_symbol_table::get_type(const char *name)
 {
    symbol_table_entry *entry = get_entry(name);
    return entry != NULL ? entry->t : NULL;
-}
-
-const class ast_type_specifier *glsl_symbol_table::get_type_ast(const char *name)
-{
-   char *ast_name = make_ast_name(name);
-   symbol_table_entry *entry = get_entry(ast_name);
-   delete [] ast_name;
-   return entry != NULL ? entry->a : NULL;
 }
 
 const glsl_type *glsl_symbol_table::get_interface(const char *name,

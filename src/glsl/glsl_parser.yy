@@ -1901,7 +1901,6 @@ struct_specifier:
       $$ = new(ctx) ast_struct_specifier($2, $4);
       $$->set_location_range(@2, @5);
       state->symbols->add_type($2, glsl_type::void_type);
-      state->symbols->add_type_ast($2, new(ctx) ast_type_specifier($$));
    }
    | STRUCT '{' struct_declaration_list '}'
    {
