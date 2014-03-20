@@ -666,8 +666,9 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
    const int dim = i->tex.target.getDim() + i->tex.target.isCube();
    const int arg = i->tex.target.getArgCount();
    const int lyr = arg - (i->tex.target.isMS() ? 2 : 1);
+   const int chipset = prog->getTarget()->getChipset();
 
-   if (prog->getTarget()->getChipset() >= NVISA_GK104_CHIPSET) {
+   if (chipset >= NVISA_GK104_CHIPSET) {
       if (i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
          WARN("indirect TEX not implemented\n");
       }
@@ -697,7 +698,7 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
       }
    } else
    // (nvc0) generate and move the tsc/tic/array source to the front
-   if (dim != arg || i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
+   if (i->tex.target.isArray() || i->tex.rIndirectSrc >= 0 || i->tex.sIndirectSrc >= 0) {
       LValue *src = new_LValue(func, FILE_GPR); // 0xttxsaaaa
 
       Value *arrayIndex = i->tex.target.isArray() ? i->getSrc(lyr) : NULL;
@@ -728,6 +729,13 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
       i->setSrc(0, src);
    }
 
+   // For nvc0, the sample id has to be in the second operand, as the offset
+   // does. Right now we don't know how to pass both in, and this case can't
+   // happen with OpenGL. On nve0, the sample id is part of the texture
+   // coordinate argument.
+   assert(chipset >= NVISA_GK104_CHIPSET ||
+          !i->tex.useOffsets || !i->tex.target.isMS());
+
    // offset is last source (lod 1st, dc 2nd)
    if (i->tex.useOffsets) {
       uint32_t value = 0;
@@ -741,7 +749,7 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
       i->setSrc(s, bld.loadImm(NULL, value));
    }
 
-   if (prog->getTarget()->getChipset() >= NVISA_GK104_CHIPSET) {
+   if (chipset >= NVISA_GK104_CHIPSET) {
       //
       // If TEX requires more than 4 sources, the 2nd register tuple must be
       // aligned to 4, even if it consists of just a single 4-byte register.

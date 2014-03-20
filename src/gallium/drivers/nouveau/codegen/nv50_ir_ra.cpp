@@ -1914,7 +1914,7 @@ RegAlloc::InsertConstraintsPass::texConstraintNVC0(TexInstruction *tex)
       s = tex->srcCount(0xff);
       n = 0;
    } else {
-      s = tex->tex.target.getArgCount();
+      s = tex->tex.target.getArgCount() - tex->tex.target.isMS();
       if (!tex->tex.target.isArray() &&
           (tex->tex.rIndirectSrc >= 0 || tex->tex.sIndirectSrc >= 0))
          ++s;
