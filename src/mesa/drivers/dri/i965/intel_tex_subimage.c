@@ -98,8 +98,8 @@ intel_blit_texsubimage(struct gl_context * ctx,
    if (!intelImage->mt)
       return false;
 
-   /* The blitter can't handle Y tiling */
-   if (intelImage->mt->region->tiling == I915_TILING_Y)
+   /* Prior to Sandybridge, the blitter can't handle Y tiling */
+   if (brw->gen < 6 && intelImage->mt->region->tiling == I915_TILING_Y)
       return false;
 
    if (texImage->TexObject->Target != GL_TEXTURE_2D)
