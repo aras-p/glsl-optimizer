@@ -88,11 +88,12 @@
  *   (3rd order polynomial is required for crappy but just sufficient accuracy)
  *
  * @param src   integer (vector) value(s) to convert
- *              (8 bit values unpacked to 32 bit already).
+ *              (chan_bits bit values unpacked to 32 bit already).
  */
 LLVMValueRef
 lp_build_srgb_to_linear(struct gallivm_state *gallivm,
                         struct lp_type src_type,
+                        unsigned chan_bits,
                         LLVMValueRef src)
 {
    struct lp_type f32_type = lp_type_float_vec(32, src_type.length * 32);
@@ -105,6 +106,8 @@ lp_build_srgb_to_linear(struct gallivm_state *gallivm,
    };
 
    assert(src_type.width == 32);
+   /* Technically this would work with more bits too but would be inaccurate. */
+   assert(chan_bits <= 8);
 
    lp_build_context_init(&f32_bld, gallivm, f32_type);
 
@@ -124,6 +127,12 @@ lp_build_srgb_to_linear(struct gallivm_state *gallivm,
     */
    /* doing the 1/255 mul as part of the approximation */
    srcf = lp_build_int_to_float(&f32_bld, src);
+   if (chan_bits != 8) {
+      /* could adjust all the constants instead */
+      LLVMValueRef rescale_const = lp_build_const_vec(gallivm, f32_type,
+                                                      255.0f / ((1 << chan_bits) - 1));
+      srcf = lp_build_mul(&f32_bld, srcf, rescale_const);
+   }
    lin_const = lp_build_const_vec(gallivm, f32_type, 1.0f / (12.6f * 255.0f));
    part_lin = lp_build_mul(&f32_bld, srcf, lin_const);
 
@@ -150,6 +159,7 @@ lp_build_srgb_to_linear(struct gallivm_state *gallivm,
 static LLVMValueRef
 lp_build_linear_to_srgb(struct gallivm_state *gallivm,
                         struct lp_type src_type,
+                        unsigned chan_bits,
                         LLVMValueRef src)
 {
    LLVMBuilderRef builder = gallivm->builder;
@@ -292,6 +302,13 @@ lp_build_linear_to_srgb(struct gallivm_state *gallivm,
    is_linear = lp_build_compare(gallivm, src_type, PIPE_FUNC_LEQUAL, src, lin_thresh);
    tmp = lp_build_select(&f32_bld, is_linear, lin, pow_final);
 
+   if (chan_bits != 8) {
+      /* could adjust all the constants instead */
+      LLVMValueRef rescale_const = lp_build_const_vec(gallivm, src_type,
+                                                      ((1 << chan_bits) - 1) / 255.0f);
+      tmp = lp_build_mul(&f32_bld, tmp, rescale_const);
+   }
+
    f32_bld.type.sign = 0;
    return lp_build_iround(&f32_bld, tmp);
 }
@@ -300,7 +317,9 @@ lp_build_linear_to_srgb(struct gallivm_state *gallivm,
 /**
  * Convert linear float soa values to packed srgb AoS values.
  * This only handles packed formats which are 4x8bit in size
- * (rgba and rgbx plus swizzles).
+ * (rgba and rgbx plus swizzles), and 16bit 565-style formats
+ * with no alpha. (In the latter case the return values won't be
+ * fully packed, it will look like r5g6b5x16r5g6b5x16...)
  *
  * @param src   float SoA (vector) values to convert.
  */
@@ -320,7 +339,8 @@ lp_build_float_to_srgb_packed(struct gallivm_state *gallivm,
 
    /* rgb is subject to linear->srgb conversion, alpha is not */
    for (chan = 0; chan < 3; chan++) {
-      tmpsrgb[chan] = lp_build_linear_to_srgb(gallivm, src_type, src[chan]);
+      unsigned chan_bits = dst_fmt->channel[dst_fmt->swizzle[chan]].size;
+      tmpsrgb[chan] = lp_build_linear_to_srgb(gallivm, src_type, chan_bits, src[chan]);
    }
    /*
     * can't use lp_build_conv since we want to keep values as 32bit

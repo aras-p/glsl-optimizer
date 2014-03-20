@@ -165,13 +165,12 @@ lp_build_unpack_rgba_soa(struct gallivm_state *gallivm,
 
          if (type.floating) {
             if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
-               assert(width == 8);
                if (format_desc->swizzle[3] == chan) {
                   input = lp_build_unsigned_norm_to_float(gallivm, width, type, input);
                }
                else {
                   struct lp_type conv_type = lp_uint_type(type);
-                  input = lp_build_srgb_to_linear(gallivm, conv_type, input);
+                  input = lp_build_srgb_to_linear(gallivm, conv_type, width, input);
                }
             }
             else {

@@ -342,6 +342,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
 
    if (bind & PIPE_BIND_RENDER_TARGET) {
       if (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB) {
+         /* this is a lie actually other formats COULD exist where we would fail */
          if (format_desc->nr_channels < 3)
             return FALSE;
       }

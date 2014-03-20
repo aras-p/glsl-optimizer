@@ -167,6 +167,7 @@ lp_build_float_to_srgb_packed(struct gallivm_state *gallivm,
 LLVMValueRef
 lp_build_srgb_to_linear(struct gallivm_state *gallivm,
                         struct lp_type src_type,
+                        unsigned chan_bits,
                         LLVMValueRef src);
 
 

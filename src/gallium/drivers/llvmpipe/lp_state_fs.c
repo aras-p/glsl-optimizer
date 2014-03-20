@@ -868,12 +868,12 @@ lp_mem_type_from_format_desc(const struct util_format_description *format_desc,
    unsigned chan;
 
    if (format_expands_to_float_soa(format_desc)) {
-      /* just make this a 32bit uint */
+      /* just make this a uint with width of block */
       type->floating = false;
       type->fixed = false;
       type->sign = false;
       type->norm = false;
-      type->width = 32;
+      type->width = format_desc->block.bits;
       type->length = 1;
       return;
    }
@@ -1137,12 +1137,24 @@ convert_to_blend_type(struct gallivm_state *gallivm,
        * This is pretty suboptimal for this case blending in SoA would be much
        * better, since conversion gets us SoA values so need to convert back.
        */
-      assert(src_type.width == 32);
+      assert(src_type.width == 32 || src_type.width == 16);
       assert(dst_type.floating);
       assert(dst_type.width == 32);
       assert(dst_type.length % 4 == 0);
       assert(num_srcs % 4 == 0);
 
+      if (src_type.width == 16) {
+         /* expand 4x16bit values to 4x32bit */
+         struct lp_type type32x4 = src_type;
+         LLVMTypeRef ltype32x4;
+         unsigned num_fetch = dst_type.length == 8 ? num_srcs / 2 : num_srcs / 4;
+         type32x4.width = 32;
+         ltype32x4 = lp_build_vec_type(gallivm, type32x4);
+         for (i = 0; i < num_fetch; i++) {
+            src[i] = LLVMBuildZExt(builder, src[i], ltype32x4, "");
+         }
+         src_type.width = 32;
+      }
       for (i = 0; i < 4; i++) {
          tmpsrc[i] = src[i];
       }
@@ -1298,7 +1310,7 @@ convert_from_blend_type(struct gallivm_state *gallivm,
       assert(src_type.floating);
       assert(src_type.width == 32);
       assert(src_type.length % 4 == 0);
-      assert(dst_type.width == 32);
+      assert(dst_type.width == 32 || dst_type.width == 16);
 
       for (i = 0; i < num_srcs / 4; i++) {
          LLVMValueRef tmpsoa[4], tmpdst;
@@ -1331,6 +1343,25 @@ convert_from_blend_type(struct gallivm_state *gallivm,
          }
          else {
             src[i] = tmpdst;
+         }
+      }
+      if (dst_type.width == 16) {
+         struct lp_type type16x8 = dst_type;
+         struct lp_type type32x4 = dst_type;
+         LLVMTypeRef ltype16x4, ltypei64, ltypei128;
+         unsigned num_fetch = src_type.length == 8 ? num_srcs / 2 : num_srcs / 4;
+         type16x8.length = 8;
+         type32x4.width = 32;
+         ltypei128 = LLVMIntTypeInContext(gallivm->context, 128);
+         ltypei64 = LLVMIntTypeInContext(gallivm->context, 64);
+         ltype16x4 = lp_build_vec_type(gallivm, dst_type);
+         /* We could do vector truncation but it doesn't generate very good code */
+         for (i = 0; i < num_fetch; i++) {
+            src[i] = lp_build_pack2(gallivm, type32x4, type16x8,
+                                    src[i], lp_build_zero(gallivm, type32x4));
+            src[i] = LLVMBuildBitCast(builder, src[i], ltypei128, "");
+            src[i] = LLVMBuildTrunc(builder, src[i], ltypei64, "");
+            src[i] = LLVMBuildBitCast(builder, src[i], ltype16x4, "");
          }
       }
       return;
