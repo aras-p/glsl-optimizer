@@ -342,6 +342,8 @@ enum pipe_format {
    PIPE_FORMAT_R32A32_SINT             = 252,
    PIPE_FORMAT_R10G10B10A2_UINT        = 253,
 
+   PIPE_FORMAT_B5G6R5_SRGB             = 254,
+
    PIPE_FORMAT_COUNT
 };
 

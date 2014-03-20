@@ -272,8 +272,11 @@ def conversion_expr(src_channel,
         if src_colorspace == SRGB:
             assert src_channel.type == UNSIGNED
             assert src_channel.norm
-            assert src_channel.size == 8
+            assert src_channel.size <= 8
+            assert src_channel.size >= 4
             assert dst_colorspace == RGB
+            if src_channel.size < 8:
+                value = '%s << %x | %s >> %x' % (value, 8 - src_channel.size, value, 2 * src_channel.size - 8)
             if dst_channel.type == FLOAT:
                 return 'util_format_srgb_8unorm_to_linear_float(%s)' % value
             else:
@@ -284,15 +287,20 @@ def conversion_expr(src_channel,
         elif dst_colorspace == SRGB:
             assert dst_channel.type == UNSIGNED
             assert dst_channel.norm
-            assert dst_channel.size == 8
+            assert dst_channel.size <= 8
             assert src_colorspace == RGB
             if src_channel.type == FLOAT:
-                return 'util_format_linear_float_to_srgb_8unorm(%s)' % value
+                value =  'util_format_linear_float_to_srgb_8unorm(%s)' % value
             else:
                 assert src_channel.type == UNSIGNED
                 assert src_channel.norm
                 assert src_channel.size == 8
-                return 'util_format_linear_to_srgb_8unorm(%s)' % value
+                value = 'util_format_linear_to_srgb_8unorm(%s)' % value
+            # XXX rounding is all wrong.
+            if dst_channel.size < 8:
+                return '%s >> %x' % (value, 8 - dst_channel.size)
+            else:
+                return value
         elif src_colorspace == ZS:
             pass
         elif dst_colorspace == ZS:
