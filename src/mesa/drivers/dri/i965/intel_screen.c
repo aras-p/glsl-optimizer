@@ -975,6 +975,11 @@ intelCreateBuffer(__DRIscreen * driScrnPriv,
 
    _mesa_initialize_window_framebuffer(fb, mesaVis);
 
+   if (screen->winsys_msaa_samples_override != -1) {
+      num_samples = screen->winsys_msaa_samples_override;
+      fb->Visual.samples = num_samples;
+   }
+
    if (mesaVis->redBits == 5)
       rgbFormat = MESA_FORMAT_B5G6R5_UNORM;
    else if (mesaVis->sRGBCapable)
@@ -1334,6 +1339,16 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    intelScreen->hw_must_use_separate_stencil = intelScreen->devinfo->gen >= 7;
 
    intelScreen->hw_has_swizzling = intel_detect_swizzling(intelScreen);
+
+   const char *force_msaa = getenv("INTEL_FORCE_MSAA");
+   if (force_msaa) {
+      intelScreen->winsys_msaa_samples_override =
+         intel_quantize_num_samples(intelScreen, atoi(force_msaa));
+      printf("Forcing winsys sample count to %d\n",
+             intelScreen->winsys_msaa_samples_override);
+   } else {
+      intelScreen->winsys_msaa_samples_override = -1;
+   }
 
    set_max_gl_versions(intelScreen);
 

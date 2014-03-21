@@ -62,6 +62,8 @@ struct intel_screen
     */
    unsigned program_id;
 
+   int winsys_msaa_samples_override;
+
    struct {
       struct ra_regs *regs;
 
