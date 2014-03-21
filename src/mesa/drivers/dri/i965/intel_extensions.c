@@ -201,6 +201,7 @@ intelInitExtensions(struct gl_context *ctx)
    ctx->Extensions.ARB_vertex_program = true;
    ctx->Extensions.ARB_vertex_shader = true;
    ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = true;
+   ctx->Extensions.ARB_vertex_type_10f_11f_11f_rev = true;
    ctx->Extensions.EXT_blend_color = true;
    ctx->Extensions.EXT_blend_equation_separate = true;
    ctx->Extensions.EXT_blend_func_separate = true;
@@ -269,7 +270,6 @@ intelInitExtensions(struct gl_context *ctx)
       ctx->Extensions.ARB_shading_language_packing = true;
       ctx->Extensions.ARB_texture_multisample = true;
       ctx->Extensions.ARB_sample_shading = true;
-      ctx->Extensions.ARB_vertex_type_10f_11f_11f_rev = true;
       ctx->Extensions.ARB_texture_gather = true;
 
       /* Test if the kernel has the ioctl. */
