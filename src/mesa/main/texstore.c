@@ -2478,7 +2478,9 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
    ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT ||
           srcFormat == GL_DEPTH_COMPONENT ||
           srcFormat == GL_STENCIL_INDEX);
-   ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT || srcType == GL_UNSIGNED_INT_24_8_EXT);
+   ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT ||
+          srcType == GL_UNSIGNED_INT_24_8_EXT ||
+          srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    if (srcFormat == GL_DEPTH_COMPONENT ||
        srcFormat == GL_STENCIL_INDEX) {
@@ -2563,7 +2565,8 @@ _mesa_texstore_s8_z24(TEXSTORE_PARAMS)
           srcFormat == GL_DEPTH_COMPONENT ||
           srcFormat == GL_STENCIL_INDEX);
    ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT ||
-          srcType == GL_UNSIGNED_INT_24_8_EXT);
+          srcType == GL_UNSIGNED_INT_24_8_EXT ||
+          srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    depth = malloc(srcWidth * sizeof(GLuint));
    stencil = malloc(srcWidth * sizeof(GLubyte));
@@ -3422,6 +3425,7 @@ _mesa_texstore_z32f_x24s8(TEXSTORE_PARAMS)
           srcFormat == GL_DEPTH_COMPONENT ||
           srcFormat == GL_STENCIL_INDEX);
    ASSERT(srcFormat != GL_DEPTH_STENCIL ||
+          srcType == GL_UNSIGNED_INT_24_8 ||
           srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    if (srcFormat == GL_DEPTH_COMPONENT ||
