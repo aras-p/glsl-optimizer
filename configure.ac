@@ -527,11 +527,20 @@ AC_ARG_ENABLE([dri],
         [enable DRI modules @<:@default=enabled@:>@])],
     [enable_dri="$enableval"],
     [enable_dri=yes])
+
+case "$host_os" in
+linux*)
+    dri3_default=yes
+    ;;
+*)
+    dri3_default=no
+    ;;
+esac
 AC_ARG_ENABLE([dri3],
     [AS_HELP_STRING([--enable-dri3],
-        [enable DRI3 @<:@default=enabled@:>@])],
+        [enable DRI3 @<:@default=auto@:>@])],
     [enable_dri3="$enableval"],
-    [enable_dri3=yes])
+    [enable_dri3="$dri3_default"])
 AC_ARG_ENABLE([glx],
     [AS_HELP_STRING([--enable-glx],
         [enable GLX library @<:@default=enabled@:>@])],
@@ -823,9 +832,6 @@ xyesno)
         PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
         GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV libdrm >= $LIBDRM_REQUIRED"
         if test x"$enable_dri3" = xyes; then
-            if test x"$have_libudev" != xyes; then
-              AC_MSG_ERROR([DRI3 requires libudev >= $LIBUDEV_REQUIRED])
-            fi
             PKG_CHECK_MODULES([DRI3PROTO], [dri3proto >= $DRI3PROTO_REQUIRED])
             PKG_CHECK_MODULES([PRESENTPROTO], [presentproto >= $PRESENTPROTO_REQUIRED])
         fi
@@ -978,7 +984,7 @@ if test "x$enable_dri" = xyes; then
     gnu*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DHAVE_ALIAS"
-	;;
+        ;;
     solaris*)
         DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1"
         ;;
