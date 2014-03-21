@@ -231,7 +231,8 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
     * state.  This is not documented.
     */
    for (int i = 0; i < 4; i++) {
-      if (!color_mask[i]) {
+      if (_mesa_format_has_color_component(irb->mt->format, i) &&
+          !color_mask[i]) {
          color_write_disable[i] = true;
          wm_prog_key.use_simd16_replicated_data = false;
       }
