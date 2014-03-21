@@ -107,6 +107,31 @@ _mesa_ClearColorIuiEXT(GLuint r, GLuint g, GLuint b, GLuint a)
 
 
 /**
+ * Returns true if color writes are enabled for the given color attachment.
+ *
+ * Beyond checking ColorMask, this uses _mesa_format_has_color_component to
+ * ignore components that don't actually exist in the format (such as X in
+ * XRGB).
+ */
+static bool
+color_buffer_writes_enabled(const struct gl_context *ctx, unsigned idx)
+{
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[idx];
+   GLuint c;
+   GLubyte colorMask = 0;
+
+   if (rb) {
+      for (c = 0; c < 4; c++) {
+         if (_mesa_format_has_color_component(rb->Format, c))
+            colorMask |= ctx->Color.ColorMask[idx][c];
+      }
+   }
+
+   return colorMask != 0;
+}
+
+
+/**
  * Clear buffers.
  * 
  * \param mask bit-mask indicating the buffers to be cleared.
@@ -181,7 +206,7 @@ _mesa_Clear( GLbitfield mask )
          for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
             GLint buf = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
 
-            if (buf >= 0) {
+            if (buf >= 0 && color_buffer_writes_enabled(ctx, i)) {
                bufferMask |= 1 << buf;
             }
          }
