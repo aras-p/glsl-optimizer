@@ -86,7 +86,7 @@ namespace {
          throw error(CL_INVALID_VALUE);
 
       // ...and within the specified object.
-      if (dot(pitch, origin) + size(pitch, origin) > mem.size())
+      if (dot(pitch, origin) + size(pitch, region) > mem.size())
          throw error(CL_INVALID_VALUE);
 
       if (any_of(is_zero(), region))
