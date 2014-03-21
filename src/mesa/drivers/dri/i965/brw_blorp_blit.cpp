@@ -151,12 +151,12 @@ brw_blorp_blit_miptrees(struct brw_context *brw,
    intel_miptree_slice_resolve_depth(brw, src_mt, src_level, src_layer);
    intel_miptree_slice_resolve_depth(brw, dst_mt, dst_level, dst_layer);
 
-   DBG("%s from %s mt %p %d %d (%f,%f) (%f,%f)"
-       "to %s mt %p %d %d (%f,%f) (%f,%f) (flip %d,%d)\n",
+   DBG("%s from %dx %s mt %p %d %d (%f,%f) (%f,%f)"
+       "to %dx %s mt %p %d %d (%f,%f) (%f,%f) (flip %d,%d)\n",
        __FUNCTION__,
-       _mesa_get_format_name(src_mt->format), src_mt,
+       src_mt->num_samples, _mesa_get_format_name(src_mt->format), src_mt,
        src_level, src_layer, src_x0, src_y0, src_x1, src_y1,
-       _mesa_get_format_name(dst_mt->format), dst_mt,
+       dst_mt->num_samples, _mesa_get_format_name(dst_mt->format), dst_mt,
        dst_level, dst_layer, dst_x0, dst_y0, dst_x1, dst_y1,
        mirror_x, mirror_y);
 
