@@ -681,9 +681,6 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
    mesa_format format = rb->Format;
    int num_samples = rb->NumSamples;
 
-   intel_miptree_release(&irb->mt);
-   intel_miptree_release(&irb->singlesample_mt);
-
    /* Only the front and back buffers, which are color buffers, are allocated
     * through the image loader.
     */
@@ -699,7 +696,8 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
                                                  region->pitch,
                                                  region->tiling);
    if (!singlesample_mt)
-      return;
+      goto fail;
+
    singlesample_mt->region->name = region->name;
 
    /* If this miptree is capable of supporting fast color clears, set
@@ -711,23 +709,36 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
       singlesample_mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_RESOLVED;
 
    if (num_samples == 0) {
+      intel_miptree_release(&irb->mt);
       irb->mt = singlesample_mt;
-      return;
-   }
 
-   multisample_mt = intel_miptree_create_for_renderbuffer(intel,
-                                                          format,
-                                                          region->width,
-                                                          region->height,
-                                                          num_samples);
-   if (!multisample_mt) {
-      intel_miptree_release(&singlesample_mt);
-      return;
-   }
+      assert(!irb->singlesample_mt);
+   } else {
+      intel_miptree_release(&irb->singlesample_mt);
+      irb->singlesample_mt = singlesample_mt;
 
-   irb->need_downsample = false;
-   irb->mt = multisample_mt;
-   irb->singlesample_mt = singlesample_mt;
+      if (!irb->mt ||
+          irb->mt->logical_width0 != region->width ||
+          irb->mt->logical_height0 != region->height) {
+         multisample_mt = intel_miptree_create_for_renderbuffer(intel,
+                                                                format,
+                                                                region->width,
+                                                                region->height,
+                                                                num_samples);
+         if (!multisample_mt)
+            goto fail;
+
+         irb->need_downsample = false;
+         intel_miptree_release(&irb->mt);
+         irb->mt = multisample_mt;
+      }
+   }
+   return;
+
+fail:
+   intel_miptree_release(&irb->singlesample_mt);
+   intel_miptree_release(&irb->mt);
+   return;
 }
 
 struct intel_mipmap_tree*
