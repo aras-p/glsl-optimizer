@@ -682,6 +682,7 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
    int num_samples = rb->NumSamples;
 
    intel_miptree_release(&irb->mt);
+   intel_miptree_release(&irb->singlesample_mt);
 
    /* Only the front and back buffers, which are color buffers, are allocated
     * through the image loader.
