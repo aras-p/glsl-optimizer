@@ -131,8 +131,8 @@ get_tex_depth_stencil(struct gl_context *ctx, GLuint dimensions,
    GLint img, row;
 
    assert(format == GL_DEPTH_STENCIL);
-   assert(type == GL_UNSIGNED_INT_24_8);
-   /* XXX type == GL_FLOAT_32_UNSIGNED_INT_24_8_REV is not handled yet */
+   assert(type == GL_UNSIGNED_INT_24_8 ||
+          type == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    for (img = 0; img < depth; img++) {
       GLubyte *srcMap;
