@@ -63,5 +63,8 @@ void
 _mesa_unpack_uint_24_8_depth_stencil_row(mesa_format format, GLuint n,
 					 const void *src, GLuint *dst);
 
-
+void
+_mesa_unpack_depth_stencil_row(mesa_format format, GLuint n,
+                              const void *src, GLenum type,
+                              GLuint *dst);
 #endif /* FORMAT_UNPACK_H */

@@ -149,11 +149,10 @@ get_tex_depth_stencil(struct gl_context *ctx, GLuint dimensions,
             void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
                                              width, height, format, type,
                                              img, row, 0);
-            /* Unpack from texture's format to GL's z24_s8 layout */
-            _mesa_unpack_uint_24_8_depth_stencil_row(texImage->TexFormat,
-                                                     width,
-                                                     (const GLuint *) src,
-                                                     dest);
+            _mesa_unpack_depth_stencil_row(texImage->TexFormat,
+                                           width,
+                                           (const GLuint *) src,
+                                           type, dest);
             if (ctx->Pack.SwapBytes) {
                _mesa_swap4((GLuint *) dest, width);
             }

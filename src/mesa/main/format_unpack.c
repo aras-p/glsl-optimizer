@@ -4263,3 +4263,27 @@ _mesa_unpack_uint_24_8_depth_stencil_row(mesa_format format, GLuint n,
       return;
    }
 }
+
+/**
+ * Unpack depth/stencil
+ * \param format  the source data format
+ * \param type the destination data type
+ */
+void
+_mesa_unpack_depth_stencil_row(mesa_format format, GLuint n,
+	                       const void *src, GLenum type,
+                               GLuint *dst)
+{
+   assert(type == GL_UNSIGNED_INT_24_8);
+
+   switch (type) {
+   case GL_UNSIGNED_INT_24_8:
+      _mesa_unpack_uint_24_8_depth_stencil_row(format, n, src, dst);
+      break;
+   default:
+      _mesa_problem(NULL,
+                    "bad type 0x%x in _mesa_unpack_depth_stencil_row",
+                    type);
+      return;
+   }
+}
