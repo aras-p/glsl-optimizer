@@ -1264,17 +1264,14 @@ intel_process_dri2_buffer(struct brw_context *brw,
     * use of a mapping of the buffer involves a bunch of page faulting which is
     * moderately expensive.
     */
-   if (num_samples == 0) {
-       if (rb->mt &&
-           rb->mt->region &&
-           rb->mt->region->name == buffer->name)
-          return;
-   } else {
-       if (rb->singlesample_mt &&
-           rb->singlesample_mt->region &&
-           rb->singlesample_mt->region->name == buffer->name)
-          return;
-   }
+   struct intel_mipmap_tree *last_mt;
+   if (num_samples == 0)
+      last_mt = rb->mt;
+   else
+      last_mt = rb->singlesample_mt;
+
+   if (last_mt && last_mt->region->name == buffer->name)
+      return;
 
    if (unlikely(INTEL_DEBUG & DEBUG_DRI)) {
       fprintf(stderr,
@@ -1349,17 +1346,14 @@ intel_update_image_buffer(struct brw_context *intel,
    /* Check and see if we're already bound to the right
     * buffer object
     */
-   if (num_samples == 0) {
-       if (rb->mt &&
-           rb->mt->region &&
-           rb->mt->region->bo == region->bo)
-          return;
-   } else {
-       if (rb->singlesample_mt &&
-           rb->singlesample_mt->region &&
-           rb->singlesample_mt->region->bo == region->bo)
-          return;
-   }
+   struct intel_mipmap_tree *last_mt;
+   if (num_samples == 0)
+      last_mt = rb->mt;
+   else
+      last_mt = rb->singlesample_mt;
+
+   if (last_mt && last_mt->region->bo == region->bo)
+      return;
 
    intel_update_winsys_renderbuffer_miptree(intel, rb, region);
 
