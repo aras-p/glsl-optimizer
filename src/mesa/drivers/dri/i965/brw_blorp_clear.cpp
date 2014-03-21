@@ -231,7 +231,7 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
    /* Constant color writes ignore everyting in blend and color calculator
     * state.  This is not documented.
     */
-   for (int i = 0; i < 4; i++) {
+   for (int i = 0; i < _mesa_format_num_components(irb->mt->format); i++) {
       if (!color_mask[i]) {
          color_write_disable[i] = true;
          wm_prog_key.use_simd16_replicated_data = false;
