@@ -2483,7 +2483,8 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
           srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    if (srcFormat == GL_DEPTH_COMPONENT ||
-       srcFormat == GL_STENCIL_INDEX) {
+       srcFormat == GL_STENCIL_INDEX ||
+       srcFormat == GL_DEPTH_STENCIL) {
       GLuint *depth = malloc(srcWidth * sizeof(GLuint));
       GLubyte *stencil = malloc(srcWidth * sizeof(GLubyte));
 
@@ -3429,7 +3430,8 @@ _mesa_texstore_z32f_x24s8(TEXSTORE_PARAMS)
           srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    if (srcFormat == GL_DEPTH_COMPONENT ||
-       srcFormat == GL_STENCIL_INDEX) {
+       srcFormat == GL_STENCIL_INDEX ||
+       srcFormat == GL_DEPTH_STENCIL) {
       GLint img, row;
       const GLint srcRowStride
          = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
