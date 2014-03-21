@@ -214,13 +214,14 @@ stw_pixelformat_add(
 /**
  * Add the depth/stencil/accum/ms variants for a particular color format.
  */
-static void
+static unsigned
 add_color_format_variants(const struct stw_pf_color_info *color,
                           boolean extended)
 {
    struct pipe_screen *screen = stw_dev->screen;
    unsigned ms, db, ds, acc;
    unsigned bind_flags = PIPE_BIND_RENDER_TARGET;
+   unsigned num_added = 0;
 
    if (!extended) {
       bind_flags |= PIPE_BIND_DISPLAY_TARGET;
@@ -228,7 +229,7 @@ add_color_format_variants(const struct stw_pf_color_info *color,
 
    if (!screen->is_format_supported(screen, color->format,
                                     PIPE_TEXTURE_2D, 0, bind_flags)) {
-      return;
+      return 0;
    }
 
    for (ms = 0; ms < Elements(stw_pf_multisample); ms++) {
@@ -253,10 +254,13 @@ add_color_format_variants(const struct stw_pf_color_info *color,
             for (acc = 0; acc < 2; acc++) {
                stw_pixelformat_add(stw_dev, extended, color, depth,
                                    acc * 16, doublebuffer, samples);
+               num_added++;
             }
          }
       }
    }
+
+   return num_added;
 }
 
 
@@ -264,14 +268,16 @@ void
 stw_pixelformat_init( void )
 {
    unsigned i;
+   unsigned num_formats = 0;
 
    assert( !stw_dev->pixelformat_count );
    assert( !stw_dev->pixelformat_extended_count );
 
    /* normal, displayable formats */
    for (i = 0; i < Elements(stw_pf_color); i++) {
-      add_color_format_variants(&stw_pf_color[i], FALSE);
+      num_formats += add_color_format_variants(&stw_pf_color[i], FALSE);
    }
+   assert(num_formats > 0);
 
    /* extended, pbuffer-only formats */
    for (i = 0; i < Elements(stw_pf_color_extended); i++) {
