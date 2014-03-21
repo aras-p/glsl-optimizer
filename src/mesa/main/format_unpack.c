@@ -4264,6 +4264,83 @@ _mesa_unpack_uint_24_8_depth_stencil_row(mesa_format format, GLuint n,
    }
 }
 
+static void
+unpack_float_32_uint_24_8_Z24_UNORM_S8_UINT(const GLuint *src,
+                                            GLuint *dst, GLuint n)
+{
+   GLuint i;
+   struct z32f_x24s8 *d = (struct z32f_x24s8 *) dst;
+   const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
+
+   for (i = 0; i < n; i++) {
+      const GLuint z24 = src[i] & 0xffffff;
+      d[i].z = z24 * scale;
+      d[i].x24s8 = src[i] >> 24;
+      assert(d[i].z >= 0.0f);
+      assert(d[i].z <= 1.0f);
+   }
+}
+
+static void
+unpack_float_32_uint_24_8_Z32_FLOAT_S8X24_UINT(const GLuint *src,
+                                               GLuint *dst, GLuint n)
+{
+   memcpy(dst, src, n * sizeof(struct z32f_x24s8));
+}
+
+static void
+unpack_float_32_uint_24_8_S8_UINT_Z24_UNORM(const GLuint *src,
+                                            GLuint *dst, GLuint n)
+{
+   GLuint i;
+   struct z32f_x24s8 *d = (struct z32f_x24s8 *) dst;
+   const GLdouble scale = 1.0 / (GLdouble) 0xffffff;
+
+   for (i = 0; i < n; i++) {
+      const GLuint z24 = src[i] >> 8;
+      d[i].z = z24 * scale;
+      d[i].x24s8 = src[i] & 0xff;
+      assert(d[i].z >= 0.0f);
+      assert(d[i].z <= 1.0f);
+   }
+}
+
+/**
+ * Unpack depth/stencil returning as GL_FLOAT_32_UNSIGNED_INT_24_8_REV.
+ * \param format  the source data format
+ *
+ * In GL_FLOAT_32_UNSIGNED_INT_24_8_REV lower 4 bytes contain float
+ * component and higher 4 bytes contain packed 24-bit and 8-bit
+ * components.
+ *
+ *    31 30 29 28 ... 4 3 2 1 0    31 30 29 ... 9 8 7 6 5 ... 2 1 0
+ *    +-------------------------+  +--------------------------------+
+ *    |    Float Component      |  | Unused         | 8 bit stencil |
+ *    +-------------------------+  +--------------------------------+
+ *          lower 4 bytes                  higher 4 bytes
+ */
+void
+_mesa_unpack_float_32_uint_24_8_depth_stencil_row(mesa_format format, GLuint n,
+			                          const void *src, GLuint *dst)
+{
+   switch (format) {
+   case MESA_FORMAT_S8_UINT_Z24_UNORM:
+      unpack_float_32_uint_24_8_S8_UINT_Z24_UNORM(src, dst, n);
+      break;
+   case MESA_FORMAT_Z24_UNORM_S8_UINT:
+      unpack_float_32_uint_24_8_Z24_UNORM_S8_UINT(src, dst, n);
+      break;
+   case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
+      unpack_float_32_uint_24_8_Z32_FLOAT_S8X24_UINT(src, dst, n);
+      break;
+   default:
+      _mesa_problem(NULL,
+                    "bad format %s in _mesa_unpack_uint_24_8_depth_stencil_row",
+                    _mesa_get_format_name(format));
+      return;
+   }
+}
+
 /**
  * Unpack depth/stencil
  * \param format  the source data format
@@ -4274,11 +4351,15 @@ _mesa_unpack_depth_stencil_row(mesa_format format, GLuint n,
 	                       const void *src, GLenum type,
                                GLuint *dst)
 {
-   assert(type == GL_UNSIGNED_INT_24_8);
+   assert(type == GL_UNSIGNED_INT_24_8 ||
+          type == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
 
    switch (type) {
    case GL_UNSIGNED_INT_24_8:
       _mesa_unpack_uint_24_8_depth_stencil_row(format, n, src, dst);
+      break;
+   case GL_FLOAT_32_UNSIGNED_INT_24_8_REV:
+      _mesa_unpack_float_32_uint_24_8_depth_stencil_row(format, n, src, dst);
       break;
    default:
       _mesa_problem(NULL,
