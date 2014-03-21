@@ -56,7 +56,6 @@ public:
    virtual uint32_t get_wm_prog(struct brw_context *brw,
                                 brw_blorp_prog_data **prog_data) const;
 
-protected:
    brw_blorp_const_color_prog_key wm_prog_key;
 };
 
@@ -540,7 +539,15 @@ do_single_blorp_clear(struct brw_context *brw, struct gl_framebuffer *fb,
       }
    }
 
-   DBG("%s to mt %p level %d layer %d\n", __FUNCTION__,
+   const char *clear_type;
+   if (is_fast_clear)
+      clear_type = "fast";
+   else if (params.wm_prog_key.use_simd16_replicated_data)
+      clear_type = "replicated";
+   else
+      clear_type = "slow";
+
+   DBG("%s (%s) to mt %p level %d layer %d\n", __FUNCTION__, clear_type,
        irb->mt, irb->mt_level, irb->mt_layer);
 
    brw_blorp_exec(brw, &params);
