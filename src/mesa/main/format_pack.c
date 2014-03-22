@@ -2425,7 +2425,7 @@ _mesa_pack_ubyte_rgba_rect(mesa_format format, GLuint width, GLuint height,
  **/
 
 static void
-pack_float_z_Z24_S8(const GLfloat *src, void *dst)
+pack_float_S8_UINT_Z24_UNORM(const GLfloat *src, void *dst)
 {
    /* don't disturb the stencil values */
    GLuint *d = ((GLuint *) dst);
@@ -2437,7 +2437,7 @@ pack_float_z_Z24_S8(const GLfloat *src, void *dst)
 }
 
 static void
-pack_float_z_S8_Z24(const GLfloat *src, void *dst)
+pack_float_Z24_UNORM_S8_UINT(const GLfloat *src, void *dst)
 {
    /* don't disturb the stencil values */
    GLuint *d = ((GLuint *) dst);
@@ -2449,7 +2449,7 @@ pack_float_z_S8_Z24(const GLfloat *src, void *dst)
 }
 
 static void
-pack_float_z_Z16(const GLfloat *src, void *dst)
+pack_float_Z_UNORM16(const GLfloat *src, void *dst)
 {
    GLushort *d = ((GLushort *) dst);
    const GLfloat scale = (GLfloat) 0xffff;
@@ -2457,7 +2457,7 @@ pack_float_z_Z16(const GLfloat *src, void *dst)
 }
 
 static void
-pack_float_z_Z32(const GLfloat *src, void *dst)
+pack_float_Z_UNORM32(const GLfloat *src, void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    const GLdouble scale = (GLdouble) 0xffffffff;
@@ -2465,7 +2465,7 @@ pack_float_z_Z32(const GLfloat *src, void *dst)
 }
 
 static void
-pack_float_z_Z32_FLOAT(const GLfloat *src, void *dst)
+pack_float_Z_FLOAT32(const GLfloat *src, void *dst)
 {
    GLfloat *d = (GLfloat *) dst;
    *d = *src;
@@ -2477,17 +2477,17 @@ _mesa_get_pack_float_z_func(mesa_format format)
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
    case MESA_FORMAT_X8_UINT_Z24_UNORM:
-      return pack_float_z_Z24_S8;
+      return pack_float_S8_UINT_Z24_UNORM;
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
    case MESA_FORMAT_Z24_UNORM_X8_UINT:
-      return pack_float_z_S8_Z24;
+      return pack_float_Z24_UNORM_S8_UINT;
    case MESA_FORMAT_Z_UNORM16:
-      return pack_float_z_Z16;
+      return pack_float_Z_UNORM16;
    case MESA_FORMAT_Z_UNORM32:
-      return pack_float_z_Z32;
+      return pack_float_Z_UNORM32;
    case MESA_FORMAT_Z_FLOAT32:
    case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
-      return pack_float_z_Z32_FLOAT;
+      return pack_float_Z_FLOAT32;
    default:
       _mesa_problem(NULL,
                     "unexpected format in _mesa_get_pack_float_z_func()");
@@ -2503,7 +2503,7 @@ _mesa_get_pack_float_z_func(mesa_format format)
  **/
 
 static void
-pack_uint_z_Z24_S8(const GLuint *src, void *dst)
+pack_uint_S8_UINT_Z24_UNORM(const GLuint *src, void *dst)
 {
    /* don't disturb the stencil values */
    GLuint *d = ((GLuint *) dst);
@@ -2513,7 +2513,7 @@ pack_uint_z_Z24_S8(const GLuint *src, void *dst)
 }
 
 static void
-pack_uint_z_S8_Z24(const GLuint *src, void *dst)
+pack_uint_Z24_UNORM_S8_UINT(const GLuint *src, void *dst)
 {
    /* don't disturb the stencil values */
    GLuint *d = ((GLuint *) dst);
@@ -2523,21 +2523,21 @@ pack_uint_z_S8_Z24(const GLuint *src, void *dst)
 }
 
 static void
-pack_uint_z_Z16(const GLuint *src, void *dst)
+pack_uint_Z_UNORM16(const GLuint *src, void *dst)
 {
    GLushort *d = ((GLushort *) dst);
    *d = *src >> 16;
 }
 
 static void
-pack_uint_z_Z32(const GLuint *src, void *dst)
+pack_uint_Z_UNORM32(const GLuint *src, void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    *d = *src;
 }
 
 static void
-pack_uint_z_Z32_FLOAT(const GLuint *src, void *dst)
+pack_uint_Z_FLOAT32(const GLuint *src, void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    const GLdouble scale = 1.0 / (GLdouble) 0xffffffff;
@@ -2547,7 +2547,7 @@ pack_uint_z_Z32_FLOAT(const GLuint *src, void *dst)
 }
 
 static void
-pack_uint_z_Z32_FLOAT_X24S8(const GLuint *src, void *dst)
+pack_uint_Z_FLOAT32_X24S8(const GLuint *src, void *dst)
 {
    GLfloat *d = ((GLfloat *) dst);
    const GLdouble scale = 1.0 / (GLdouble) 0xffffffff;
@@ -2562,18 +2562,18 @@ _mesa_get_pack_uint_z_func(mesa_format format)
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
    case MESA_FORMAT_X8_UINT_Z24_UNORM:
-      return pack_uint_z_Z24_S8;
+      return pack_uint_S8_UINT_Z24_UNORM;
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
    case MESA_FORMAT_Z24_UNORM_X8_UINT:
-      return pack_uint_z_S8_Z24;
+      return pack_uint_Z24_UNORM_S8_UINT;
    case MESA_FORMAT_Z_UNORM16:
-      return pack_uint_z_Z16;
+      return pack_uint_Z_UNORM16;
    case MESA_FORMAT_Z_UNORM32:
-      return pack_uint_z_Z32;
+      return pack_uint_Z_UNORM32;
    case MESA_FORMAT_Z_FLOAT32:
-      return pack_uint_z_Z32_FLOAT;
+      return pack_uint_Z_FLOAT32;
    case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
-      return pack_uint_z_Z32_FLOAT_X24S8;
+      return pack_uint_Z_FLOAT32_X24S8;
    default:
       _mesa_problem(NULL, "unexpected format in _mesa_get_pack_uint_z_func()");
       return NULL;

@@ -3963,7 +3963,7 @@ unpack_float_z_X8_Z24(GLuint n, const void *src, GLfloat *dst)
 }
 
 static void
-unpack_float_z_Z16(GLuint n, const void *src, GLfloat *dst)
+unpack_float_Z_UNORM16(GLuint n, const void *src, GLfloat *dst)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -3973,7 +3973,7 @@ unpack_float_z_Z16(GLuint n, const void *src, GLfloat *dst)
 }
 
 static void
-unpack_float_z_Z32(GLuint n, const void *src, GLfloat *dst)
+unpack_float_Z_UNORM32(GLuint n, const void *src, GLfloat *dst)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -4020,10 +4020,10 @@ _mesa_unpack_float_z_row(mesa_format format, GLuint n,
       unpack = unpack_float_z_X8_Z24;
       break;
    case MESA_FORMAT_Z_UNORM16:
-      unpack = unpack_float_z_Z16;
+      unpack = unpack_float_Z_UNORM16;
       break;
    case MESA_FORMAT_Z_UNORM32:
-      unpack = unpack_float_z_Z32;
+      unpack = unpack_float_Z_UNORM32;
       break;
    case MESA_FORMAT_Z_FLOAT32:
       unpack = unpack_float_z_Z32F;
@@ -4067,7 +4067,7 @@ unpack_uint_z_X8_Z24(const void *src, GLuint *dst, GLuint n)
 }
 
 static void
-unpack_uint_z_Z16(const void *src, GLuint *dst, GLuint n)
+unpack_uint_Z_UNORM16(const void *src, GLuint *dst, GLuint n)
 {
    const GLushort *s = ((const GLushort *)src);
    GLuint i;
@@ -4077,13 +4077,13 @@ unpack_uint_z_Z16(const void *src, GLuint *dst, GLuint n)
 }
 
 static void
-unpack_uint_z_Z32(const void *src, GLuint *dst, GLuint n)
+unpack_uint_Z_UNORM32(const void *src, GLuint *dst, GLuint n)
 {
    memcpy(dst, src, n * sizeof(GLuint));
 }
 
 static void
-unpack_uint_z_Z32_FLOAT(const void *src, GLuint *dst, GLuint n)
+unpack_uint_Z_FLOAT32(const void *src, GLuint *dst, GLuint n)
 {
    const float *s = (const float *)src;
    GLuint i;
@@ -4093,7 +4093,7 @@ unpack_uint_z_Z32_FLOAT(const void *src, GLuint *dst, GLuint n)
 }
 
 static void
-unpack_uint_z_Z32_FLOAT_X24S8(const void *src, GLuint *dst, GLuint n)
+unpack_uint_Z_FLOAT32_X24S8(const void *src, GLuint *dst, GLuint n)
 {
    const struct z32f_x24s8 *s = (const struct z32f_x24s8 *) src;
    GLuint i;
@@ -4125,16 +4125,16 @@ _mesa_unpack_uint_z_row(mesa_format format, GLuint n,
       unpack = unpack_uint_z_X8_Z24;
       break;
    case MESA_FORMAT_Z_UNORM16:
-      unpack = unpack_uint_z_Z16;
+      unpack = unpack_uint_Z_UNORM16;
       break;
    case MESA_FORMAT_Z_UNORM32:
-      unpack = unpack_uint_z_Z32;
+      unpack = unpack_uint_Z_UNORM32;
       break;
    case MESA_FORMAT_Z_FLOAT32:
-      unpack = unpack_uint_z_Z32_FLOAT;
+      unpack = unpack_uint_Z_FLOAT32;
       break;
    case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
-      unpack = unpack_uint_z_Z32_FLOAT_X24S8;
+      unpack = unpack_uint_Z_FLOAT32_X24S8;
       break;
    default:
       _mesa_problem(NULL, "bad format %s in _mesa_unpack_uint_z_row",
