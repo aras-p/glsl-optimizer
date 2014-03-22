@@ -1255,6 +1255,12 @@ void evergreen_do_fast_color_clear(struct r600_common_context *rctx,
 			continue;
 		}
 
+		/* fast color clear with 1D tiling doesn't work on CIK */
+		if (tex->surface.level[0].mode == RADEON_SURF_MODE_1D &&
+		    rctx->chip_class >= CIK) {
+			continue;
+		}
+
 		/* ensure CMASK is enabled */
 		r600_texture_alloc_cmask_separate(rctx->screen, tex);
 		if (tex->cmask.size == 0) {
