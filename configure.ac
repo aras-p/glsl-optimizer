@@ -1025,7 +1025,7 @@ if test "x$enable_dri" = xyes; then
     fi
 
     # Check for expat
-    PKG_CHECK_EXISTS([EXPAT], [have_expat=yes], [have_expat=no])
+    PKG_CHECK_EXISTS([expat], [have_expat=yes], [have_expat=no])
     if test "x$have_expat" = "xyes"; then
        PKG_CHECK_MODULES([EXPAT], [expat], [],
                          AC_MSG_ERROR([Expat required for DRI.]))
