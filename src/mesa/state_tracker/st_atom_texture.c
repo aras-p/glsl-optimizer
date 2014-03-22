@@ -198,6 +198,16 @@ st_get_texture_sampler_view_from_stobj(struct st_texture_object *stObj,
    if (!stObj->sampler_view) {
       stObj->sampler_view =
          st_create_texture_sampler_view_from_stobj(pipe, stObj, samp, format);
+
+   } else if (stObj->sampler_view->context != pipe) {
+      /* Recreate view in correct context, use existing view as template */
+      /* XXX: This isn't optimal, we should try to use more than one view.
+              Otherwise we create/destroy the view all the time
+       */
+      struct pipe_sampler_view *sv =
+         pipe->create_sampler_view(pipe, stObj->pt, stObj->sampler_view);
+      pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+      stObj->sampler_view = sv;
    }
 
    return stObj->sampler_view;
