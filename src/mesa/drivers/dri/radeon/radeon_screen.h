@@ -40,8 +40,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * IMPORTS: these headers contain all the DRI, X and kernel-related
  * definitions that we need.
  */
+#include <xf86drm.h>
+#include <radeon_drm.h>
 #include "dri_util.h"
-#include "radeon_dri.h"
 #include "radeon_chipset.h"
 #include "radeon_reg.h"
 #include "drm_sarea.h"

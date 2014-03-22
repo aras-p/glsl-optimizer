@@ -45,7 +45,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast/s_renderbuffer.h"
 
 #include "radeon_chipset.h"
-#include "radeon_macros.h"
 #include "radeon_screen.h"
 #include "radeon_common.h"
 #include "radeon_common_context.h"
