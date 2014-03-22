@@ -1014,7 +1014,7 @@ pack_float_B10G10R10A2_UNORM(const GLfloat src[4], void *dst)
 /* MESA_FORMAT_R10G10B10A2_UINT */
 
 static void
-pack_ubyte_ABGR2101010_UINT(const GLubyte src[4], void *dst)
+pack_ubyte_R10G10B10A2_UINT(const GLubyte src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLushort r = UBYTE_TO_USHORT(src[RCOMP]);
@@ -1025,7 +1025,7 @@ pack_ubyte_ABGR2101010_UINT(const GLubyte src[4], void *dst)
 }
 
 static void
-pack_float_ABGR2101010_UINT(const GLfloat src[4], void *dst)
+pack_float_R10G10B10A2_UINT(const GLfloat src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLushort r, g, b, a;
@@ -1971,7 +1971,7 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
       table[MESA_FORMAT_R16G16_UNORM] = pack_ubyte_R16G16_UNORM;
       table[MESA_FORMAT_G16R16_UNORM] = pack_ubyte_G16R16_UNORM;
       table[MESA_FORMAT_B10G10R10A2_UNORM] = pack_ubyte_B10G10R10A2_UNORM;
-      table[MESA_FORMAT_R10G10B10A2_UINT] = pack_ubyte_ABGR2101010_UINT;
+      table[MESA_FORMAT_R10G10B10A2_UINT] = pack_ubyte_R10G10B10A2_UINT;
 
       /* should never convert RGBA to these formats */
       table[MESA_FORMAT_S8_UINT_Z24_UNORM] = NULL;
@@ -2137,7 +2137,7 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
       table[MESA_FORMAT_R16G16_UNORM] = pack_float_R16G16_UNORM;
       table[MESA_FORMAT_G16R16_UNORM] = pack_float_G16R16_UNORM;
       table[MESA_FORMAT_B10G10R10A2_UNORM] = pack_float_B10G10R10A2_UNORM;
-      table[MESA_FORMAT_R10G10B10A2_UINT] = pack_float_ABGR2101010_UINT;
+      table[MESA_FORMAT_R10G10B10A2_UINT] = pack_float_R10G10B10A2_UINT;
 
       /* should never convert RGBA to these formats */
       table[MESA_FORMAT_S8_UINT_Z24_UNORM] = NULL;

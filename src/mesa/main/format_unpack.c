@@ -617,7 +617,7 @@ unpack_B10G10R10A2_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 
 
 static void
-unpack_ARGB2101010_UINT(const void *src, GLfloat dst[][4], GLuint n)
+unpack_B10G10R10A2_UINT(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = (const GLuint *) src;
    GLuint i;
@@ -631,7 +631,7 @@ unpack_ARGB2101010_UINT(const void *src, GLfloat dst[][4], GLuint n)
 
 
 static void
-unpack_ABGR2101010_UINT(const void *src, GLfloat dst[][4], GLuint n)
+unpack_R10G10B10A2_UINT(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -2389,8 +2389,8 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_R16G16_UNORM] = unpack_R16G16_UNORM;
       table[MESA_FORMAT_G16R16_UNORM] = unpack_G16R16_UNORM;
       table[MESA_FORMAT_B10G10R10A2_UNORM] = unpack_B10G10R10A2_UNORM;
-      table[MESA_FORMAT_B10G10R10A2_UINT] = unpack_ARGB2101010_UINT;
-      table[MESA_FORMAT_R10G10B10A2_UINT] = unpack_ABGR2101010_UINT;
+      table[MESA_FORMAT_B10G10R10A2_UINT] = unpack_B10G10R10A2_UINT;
+      table[MESA_FORMAT_R10G10B10A2_UINT] = unpack_R10G10B10A2_UINT;
       table[MESA_FORMAT_S8_UINT_Z24_UNORM] = unpack_Z24_S8;
       table[MESA_FORMAT_Z24_UNORM_S8_UINT] = unpack_S8_Z24;
       table[MESA_FORMAT_Z_UNORM16] = unpack_Z16;
@@ -3560,7 +3560,7 @@ unpack_int_rgba_INTENSITY_INT8(const GLbyte *src, GLuint dst[][4], GLuint n)
 }
 
 static void
-unpack_int_rgba_ARGB2101010_UINT(const GLuint *src, GLuint dst[][4], GLuint n)
+unpack_int_rgba_B10G10R10A2_UINT(const GLuint *src, GLuint dst[][4], GLuint n)
 {
    unsigned int i;
 
@@ -3574,7 +3574,7 @@ unpack_int_rgba_ARGB2101010_UINT(const GLuint *src, GLuint dst[][4], GLuint n)
 }
 
 static void
-unpack_int_rgba_ABGR2101010_UINT(const GLuint *src, GLuint dst[][4], GLuint n)
+unpack_int_rgba_R10G10B10A2_UINT(const GLuint *src, GLuint dst[][4], GLuint n)
 {
    unsigned int i;
 
@@ -3848,11 +3848,11 @@ _mesa_unpack_uint_rgba_row(mesa_format format, GLuint n,
       break;
 
    case MESA_FORMAT_B10G10R10A2_UINT:
-      unpack_int_rgba_ARGB2101010_UINT(src, dst, n);
+      unpack_int_rgba_B10G10R10A2_UINT(src, dst, n);
       break;
 
    case MESA_FORMAT_R10G10B10A2_UINT:
-      unpack_int_rgba_ABGR2101010_UINT(src, dst, n);
+      unpack_int_rgba_R10G10B10A2_UINT(src, dst, n);
       break;
 
    case MESA_FORMAT_B10G10R10A2_UNORM:
