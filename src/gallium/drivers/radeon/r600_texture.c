@@ -481,9 +481,9 @@ static unsigned si_texture_htile_alloc_size(struct r600_common_screen *rscreen,
 	unsigned slice_elements, slice_bytes, pipe_interleave_bytes, base_align;
 	unsigned num_pipes = rscreen->tiling_info.num_channels;
 
-	/* HTILE doesn't work with 1D tiling (there's massive corruption
-	 * in glxgears). */
-	if (rtex->surface.level[0].mode != RADEON_SURF_MODE_2D)
+	/* HTILE is broken with 1D tiling on old kernels and CIK. */
+	if (rtex->surface.level[0].mode == RADEON_SURF_MODE_1D &&
+	    rscreen->chip_class >= CIK && rscreen->info.drm_minor < 38)
 		return 0;
 
 	switch (num_pipes) {
@@ -1255,9 +1255,9 @@ void evergreen_do_fast_color_clear(struct r600_common_context *rctx,
 			continue;
 		}
 
-		/* fast color clear with 1D tiling doesn't work on CIK */
+		/* fast color clear with 1D tiling doesn't work on old kernels and CIK */
 		if (tex->surface.level[0].mode == RADEON_SURF_MODE_1D &&
-		    rctx->chip_class >= CIK) {
+		    rctx->chip_class >= CIK && rctx->screen->info.drm_minor < 38) {
 			continue;
 		}
 
