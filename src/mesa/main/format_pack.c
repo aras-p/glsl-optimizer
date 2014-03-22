@@ -1773,7 +1773,7 @@ pack_float_XBGR8888_SRGB(const GLfloat src[4], void *dst)
 /* MESA_FORMAT_B10G10R10X2_UNORM */
 
 static void
-pack_ubyte_XRGB2101010_UNORM(const GLubyte src[4], void *dst)
+pack_ubyte_B10G10R10X2_UNORM(const GLubyte src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLushort r = UBYTE_TO_USHORT(src[RCOMP]);
@@ -1783,7 +1783,7 @@ pack_ubyte_XRGB2101010_UNORM(const GLubyte src[4], void *dst)
 }
 
 static void
-pack_float_XRGB2101010_UNORM(const GLfloat src[4], void *dst)
+pack_float_B10G10R10X2_UNORM(const GLfloat src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLushort r, g, b;
@@ -1797,7 +1797,7 @@ pack_float_XRGB2101010_UNORM(const GLfloat src[4], void *dst)
 /* MESA_FORMAT_RGBX_UNORM16 */
 
 static void
-pack_ubyte_XBGR16161616_UNORM(const GLubyte src[4], void *dst)
+pack_ubyte_RGBX_UNORM16(const GLubyte src[4], void *dst)
 {
    GLushort *d = ((GLushort *) dst);
    d[0] = UBYTE_TO_USHORT(src[RCOMP]);
@@ -1807,7 +1807,7 @@ pack_ubyte_XBGR16161616_UNORM(const GLubyte src[4], void *dst)
 }
 
 static void
-pack_float_XBGR16161616_UNORM(const GLfloat src[4], void *dst)
+pack_float_RGBX_UNORM16(const GLfloat src[4], void *dst)
 {
    GLushort *d = ((GLushort *) dst);
    UNCLAMPED_FLOAT_TO_USHORT(d[0], src[RCOMP]);
@@ -1857,7 +1857,7 @@ pack_float_XBGR32323232_FLOAT(const GLfloat src[4], void *dst)
 /* MESA_FORMAT_R10G10B10A2_UNORM */
 
 static void
-pack_ubyte_ABGR2101010(const GLubyte src[4], void *dst)
+pack_ubyte_R10G10B10A2_UNORM(const GLubyte src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLushort r = UBYTE_TO_USHORT(src[RCOMP]);
@@ -1868,7 +1868,7 @@ pack_ubyte_ABGR2101010(const GLubyte src[4], void *dst)
 }
 
 static void
-pack_float_ABGR2101010(const GLfloat src[4], void *dst)
+pack_float_R10G10B10A2_UNORM(const GLfloat src[4], void *dst)
 {
    GLuint *d = ((GLuint *) dst);
    GLushort r, g, b, a;
@@ -2062,8 +2062,8 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
       table[MESA_FORMAT_R8G8B8X8_SRGB] = NULL;
       table[MESA_FORMAT_RGBX_UINT8] = NULL;
       table[MESA_FORMAT_RGBX_SINT8] = NULL;
-      table[MESA_FORMAT_B10G10R10X2_UNORM] = pack_ubyte_XRGB2101010_UNORM;
-      table[MESA_FORMAT_RGBX_UNORM16] = pack_ubyte_XBGR16161616_UNORM;
+      table[MESA_FORMAT_B10G10R10X2_UNORM] = pack_ubyte_B10G10R10X2_UNORM;
+      table[MESA_FORMAT_RGBX_UNORM16] = pack_ubyte_RGBX_UNORM16;
       table[MESA_FORMAT_RGBX_SNORM16] = NULL;
       table[MESA_FORMAT_RGBX_FLOAT16] = NULL;
       table[MESA_FORMAT_RGBX_UINT16] = NULL;
@@ -2072,7 +2072,7 @@ _mesa_get_pack_ubyte_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBX_UINT32] = NULL;
       table[MESA_FORMAT_RGBX_SINT32] = NULL;
 
-      table[MESA_FORMAT_R10G10B10A2_UNORM] = pack_ubyte_ABGR2101010;
+      table[MESA_FORMAT_R10G10B10A2_UNORM] = pack_ubyte_R10G10B10A2_UNORM;
 
       table[MESA_FORMAT_B8G8R8X8_SRGB] = NULL;
 
@@ -2225,8 +2225,8 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
       table[MESA_FORMAT_R8G8B8X8_SRGB] = pack_float_XBGR8888_SRGB;
       table[MESA_FORMAT_RGBX_UINT8] = NULL;
       table[MESA_FORMAT_RGBX_SINT8] = NULL;
-      table[MESA_FORMAT_B10G10R10X2_UNORM] = pack_float_XRGB2101010_UNORM;
-      table[MESA_FORMAT_RGBX_UNORM16] = pack_float_XBGR16161616_UNORM;
+      table[MESA_FORMAT_B10G10R10X2_UNORM] = pack_float_B10G10R10X2_UNORM;
+      table[MESA_FORMAT_RGBX_UNORM16] = pack_float_RGBX_UNORM16;
       table[MESA_FORMAT_RGBX_SNORM16] = pack_float_XBGR16161616_SNORM;
       table[MESA_FORMAT_RGBX_FLOAT16] = pack_float_XBGR16161616_FLOAT;
       table[MESA_FORMAT_RGBX_UINT16] = NULL;
@@ -2235,7 +2235,7 @@ _mesa_get_pack_float_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBX_UINT32] = NULL;
       table[MESA_FORMAT_RGBX_SINT32] = NULL;
 
-      table[MESA_FORMAT_R10G10B10A2_UNORM] = pack_float_ABGR2101010;
+      table[MESA_FORMAT_R10G10B10A2_UNORM] = pack_float_R10G10B10A2_UNORM;
 
       table[MESA_FORMAT_G8R8_SNORM] = pack_float_SIGNED_G8R8_UNORM;
       table[MESA_FORMAT_G16R16_SNORM] = pack_float_SIGNED_G16R16_UNORM;
