@@ -89,7 +89,7 @@ typedef void (*unpack_rgba_func)(const void *src, GLfloat dst[][4], GLuint n);
 
 
 static void
-unpack_RGBA8888(const void *src, GLfloat dst[][4], GLuint n)
+unpack_A8B8G8R8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -102,7 +102,7 @@ unpack_RGBA8888(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RGBA8888_REV(const void *src, GLfloat dst[][4], GLuint n)
+unpack_R8G8B8A8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -115,7 +115,7 @@ unpack_RGBA8888_REV(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_ARGB8888(const void *src, GLfloat dst[][4], GLuint n)
+unpack_B8G8R8A8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -128,7 +128,7 @@ unpack_ARGB8888(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_ARGB8888_REV(const void *src, GLfloat dst[][4], GLuint n)
+unpack_A8R8G8B8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -167,7 +167,7 @@ unpack_RGBX8888_REV(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_XRGB8888(const void *src, GLfloat dst[][4], GLuint n)
+unpack_B8G8R8X8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -180,7 +180,7 @@ unpack_XRGB8888(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_XRGB8888_REV(const void *src, GLfloat dst[][4], GLuint n)
+unpack_X8R8G8B8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -193,7 +193,7 @@ unpack_XRGB8888_REV(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RGB888(const void *src, GLfloat dst[][4], GLuint n)
+unpack_BGR_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLubyte *s = (const GLubyte *) src;
    GLuint i;
@@ -206,7 +206,7 @@ unpack_RGB888(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_BGR888(const void *src, GLfloat dst[][4], GLuint n)
+unpack_RGB_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLubyte *s = (const GLubyte *) src;
    GLuint i;
@@ -219,7 +219,7 @@ unpack_BGR888(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RGB565(const void *src, GLfloat dst[][4], GLuint n)
+unpack_B5G6R5_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -232,7 +232,7 @@ unpack_RGB565(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RGB565_REV(const void *src, GLfloat dst[][4], GLuint n)
+unpack_R5G6B5_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    /* Warning: this function does not match the current Mesa definition
     * of MESA_FORMAT_R5G6B5_UNORM.
@@ -249,7 +249,7 @@ unpack_RGB565_REV(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_ARGB4444(const void *src, GLfloat dst[][4], GLuint n)
+unpack_B4G4R4A4_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -262,7 +262,7 @@ unpack_ARGB4444(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_ARGB4444_REV(const void *src, GLfloat dst[][4], GLuint n)
+unpack_A4R4G4B4_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -275,7 +275,7 @@ unpack_ARGB4444_REV(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RGBA5551(const void *src, GLfloat dst[][4], GLuint n)
+unpack_A1B5G5R5_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -288,7 +288,7 @@ unpack_RGBA5551(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_ARGB1555(const void *src, GLfloat dst[][4], GLuint n)
+unpack_B5G5R5A1_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -301,7 +301,7 @@ unpack_ARGB1555(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_ARGB1555_REV(const void *src, GLfloat dst[][4], GLuint n)
+unpack_A1R5G5B5_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    /* Warning: this function does not match the current Mesa definition
     * of MESA_FORMAT_A1R5G5B5_UNORM.
@@ -318,7 +318,7 @@ unpack_ARGB1555_REV(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_AL44(const void *src, GLfloat dst[][4], GLuint n)
+unpack_L4A4_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLubyte *s = ((const GLubyte *) src);
    GLuint i;
@@ -331,7 +331,7 @@ unpack_AL44(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_AL88(const void *src, GLfloat dst[][4], GLuint n)
+unpack_L8A8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -344,7 +344,7 @@ unpack_AL88(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_AL88_REV(const void *src, GLfloat dst[][4], GLuint n)
+unpack_A8L8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -357,7 +357,7 @@ unpack_AL88_REV(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_AL1616(const void *src, GLfloat dst[][4], GLuint n)
+unpack_L16A16_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -370,7 +370,7 @@ unpack_AL1616(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_AL1616_REV(const void *src, GLfloat dst[][4], GLuint n)
+unpack_A16L16_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -383,7 +383,7 @@ unpack_AL1616_REV(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RGB332(const void *src, GLfloat dst[][4], GLuint n)
+unpack_B2G3R3_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLubyte *s = ((const GLubyte *) src);
    GLuint i;
@@ -397,7 +397,7 @@ unpack_RGB332(const void *src, GLfloat dst[][4], GLuint n)
 
 
 static void
-unpack_A8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_A_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLubyte *s = ((const GLubyte *) src);
    GLuint i;
@@ -410,7 +410,7 @@ unpack_A8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_A16(const void *src, GLfloat dst[][4], GLuint n)
+unpack_A_UNORM16(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -423,7 +423,7 @@ unpack_A16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_L8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_L_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLubyte *s = ((const GLubyte *) src);
    GLuint i;
@@ -436,7 +436,7 @@ unpack_L8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_L16(const void *src, GLfloat dst[][4], GLuint n)
+unpack_L_UNORM16(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -525,7 +525,7 @@ unpack_YCBCR_REV(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_R8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_R_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLubyte *s = ((const GLubyte *) src);
    GLuint i;
@@ -538,7 +538,7 @@ unpack_R8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_GR88(const void *src, GLfloat dst[][4], GLuint n)
+unpack_R8G8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -551,7 +551,7 @@ unpack_GR88(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RG88(const void *src, GLfloat dst[][4], GLuint n)
+unpack_G8R8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -564,7 +564,7 @@ unpack_RG88(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_R16(const void *src, GLfloat dst[][4], GLuint n)
+unpack_R_UNORM16(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -577,7 +577,7 @@ unpack_R16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_GR1616(const void *src, GLfloat dst[][4], GLuint n)
+unpack_R16G16_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -590,7 +590,7 @@ unpack_GR1616(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RG1616(const void *src, GLfloat dst[][4], GLuint n)
+unpack_G16R16_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -603,7 +603,7 @@ unpack_RG1616(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_ARGB2101010(const void *src, GLfloat dst[][4], GLuint n)
+unpack_B10G10R10A2_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -771,7 +771,7 @@ unpack_SRGB8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SRGBA8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SRGBA_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -797,7 +797,7 @@ unpack_SARGB8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SABGR8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SABGR_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -810,7 +810,7 @@ unpack_SABGR8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SL8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SL_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLubyte *s = ((const GLubyte *) src);
    GLuint i;
@@ -823,7 +823,7 @@ unpack_SL8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SLA8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SLA_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = (const GLushort *) src;
    GLuint i;
@@ -1721,7 +1721,7 @@ unpack_DUDV8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_R8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_R_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLbyte *s = ((const GLbyte *) src);
    GLuint i;
@@ -1760,7 +1760,7 @@ unpack_SIGNED_RGBX8888(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_RGBA8888(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_A8B8G8R8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -1773,7 +1773,7 @@ unpack_SIGNED_RGBA8888(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_RGBA8888_REV(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_R8G8B8A8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -1786,7 +1786,7 @@ unpack_SIGNED_RGBA8888_REV(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_R16(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_R_UNORM16(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLshort *s = ((const GLshort *) src);
    GLuint i;
@@ -1799,7 +1799,7 @@ unpack_SIGNED_R16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_GR1616(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_R16G16_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -1967,7 +1967,7 @@ unpack_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1(const void *src, GLfloat dst[][4],
 }
 
 static void
-unpack_SIGNED_A8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_A_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLbyte *s = ((const GLbyte *) src);
    GLuint i;
@@ -1980,7 +1980,7 @@ unpack_SIGNED_A8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_L8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_L_UNORM8(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLbyte *s = ((const GLbyte *) src);
    GLuint i;
@@ -1993,7 +1993,7 @@ unpack_SIGNED_L8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_AL88(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_L8A8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLshort *s = ((const GLshort *) src);
    GLuint i;
@@ -2019,7 +2019,7 @@ unpack_SIGNED_I8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_A16(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_A_UNORM16(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLshort *s = ((const GLshort *) src);
    GLuint i;
@@ -2032,7 +2032,7 @@ unpack_SIGNED_A16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_L16(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_L_UNORM16(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLshort *s = ((const GLshort *) src);
    GLuint i;
@@ -2045,7 +2045,7 @@ unpack_SIGNED_L16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_AL1616(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_L16A16_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLshort *s = (const GLshort *) src;
    GLuint i;
@@ -2301,7 +2301,7 @@ unpack_ABGR2101010(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_RG88(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_G8R8_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -2314,7 +2314,7 @@ unpack_SIGNED_RG88(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_SIGNED_RG1616(const void *src, GLfloat dst[][4], GLuint n)
+unpack_SIGNED_G16R16_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -2351,44 +2351,44 @@ get_unpack_rgba_function(mesa_format format)
    if (!initialized) {
       table[MESA_FORMAT_NONE] = NULL;
 
-      table[MESA_FORMAT_A8B8G8R8_UNORM] = unpack_RGBA8888;
-      table[MESA_FORMAT_R8G8B8A8_UNORM] = unpack_RGBA8888_REV;
-      table[MESA_FORMAT_B8G8R8A8_UNORM] = unpack_ARGB8888;
-      table[MESA_FORMAT_A8R8G8B8_UNORM] = unpack_ARGB8888_REV;
+      table[MESA_FORMAT_A8B8G8R8_UNORM] = unpack_A8B8G8R8_UNORM;
+      table[MESA_FORMAT_R8G8B8A8_UNORM] = unpack_R8G8B8A8_UNORM;
+      table[MESA_FORMAT_B8G8R8A8_UNORM] = unpack_B8G8R8A8_UNORM;
+      table[MESA_FORMAT_A8R8G8B8_UNORM] = unpack_A8R8G8B8_UNORM;
       table[MESA_FORMAT_X8B8G8R8_UNORM] = unpack_RGBX8888;
       table[MESA_FORMAT_R8G8B8X8_UNORM] = unpack_RGBX8888_REV;
-      table[MESA_FORMAT_B8G8R8X8_UNORM] = unpack_XRGB8888;
-      table[MESA_FORMAT_X8R8G8B8_UNORM] = unpack_XRGB8888_REV;
-      table[MESA_FORMAT_BGR_UNORM8] = unpack_RGB888;
-      table[MESA_FORMAT_RGB_UNORM8] = unpack_BGR888;
-      table[MESA_FORMAT_B5G6R5_UNORM] = unpack_RGB565;
-      table[MESA_FORMAT_R5G6B5_UNORM] = unpack_RGB565_REV;
-      table[MESA_FORMAT_B4G4R4A4_UNORM] = unpack_ARGB4444;
-      table[MESA_FORMAT_A4R4G4B4_UNORM] = unpack_ARGB4444_REV;
-      table[MESA_FORMAT_A1B5G5R5_UNORM] = unpack_RGBA5551;
-      table[MESA_FORMAT_B5G5R5A1_UNORM] = unpack_ARGB1555;
-      table[MESA_FORMAT_A1R5G5B5_UNORM] = unpack_ARGB1555_REV;
-      table[MESA_FORMAT_L4A4_UNORM] = unpack_AL44;
-      table[MESA_FORMAT_L8A8_UNORM] = unpack_AL88;
-      table[MESA_FORMAT_A8L8_UNORM] = unpack_AL88_REV;
-      table[MESA_FORMAT_L16A16_UNORM] = unpack_AL1616;
-      table[MESA_FORMAT_A16L16_UNORM] = unpack_AL1616_REV;
-      table[MESA_FORMAT_B2G3R3_UNORM] = unpack_RGB332;
-      table[MESA_FORMAT_A_UNORM8] = unpack_A8;
-      table[MESA_FORMAT_A_UNORM16] = unpack_A16;
-      table[MESA_FORMAT_L_UNORM8] = unpack_L8;
-      table[MESA_FORMAT_L_UNORM16] = unpack_L16;
+      table[MESA_FORMAT_B8G8R8X8_UNORM] = unpack_B8G8R8X8_UNORM;
+      table[MESA_FORMAT_X8R8G8B8_UNORM] = unpack_X8R8G8B8_UNORM;
+      table[MESA_FORMAT_BGR_UNORM8] = unpack_BGR_UNORM8;
+      table[MESA_FORMAT_RGB_UNORM8] = unpack_RGB_UNORM8;
+      table[MESA_FORMAT_B5G6R5_UNORM] = unpack_B5G6R5_UNORM;
+      table[MESA_FORMAT_R5G6B5_UNORM] = unpack_R5G6B5_UNORM;
+      table[MESA_FORMAT_B4G4R4A4_UNORM] = unpack_B4G4R4A4_UNORM;
+      table[MESA_FORMAT_A4R4G4B4_UNORM] = unpack_A4R4G4B4_UNORM;
+      table[MESA_FORMAT_A1B5G5R5_UNORM] = unpack_A1B5G5R5_UNORM;
+      table[MESA_FORMAT_B5G5R5A1_UNORM] = unpack_B5G5R5A1_UNORM;
+      table[MESA_FORMAT_A1R5G5B5_UNORM] = unpack_A1R5G5B5_UNORM;
+      table[MESA_FORMAT_L4A4_UNORM] = unpack_L4A4_UNORM;
+      table[MESA_FORMAT_L8A8_UNORM] = unpack_L8A8_UNORM;
+      table[MESA_FORMAT_A8L8_UNORM] = unpack_A8L8_UNORM;
+      table[MESA_FORMAT_L16A16_UNORM] = unpack_L16A16_UNORM;
+      table[MESA_FORMAT_A16L16_UNORM] = unpack_A16L16_UNORM;
+      table[MESA_FORMAT_B2G3R3_UNORM] = unpack_B2G3R3_UNORM;
+      table[MESA_FORMAT_A_UNORM8] = unpack_A_UNORM8;
+      table[MESA_FORMAT_A_UNORM16] = unpack_A_UNORM16;
+      table[MESA_FORMAT_L_UNORM8] = unpack_L_UNORM8;
+      table[MESA_FORMAT_L_UNORM16] = unpack_L_UNORM16;
       table[MESA_FORMAT_I_UNORM8] = unpack_I8;
       table[MESA_FORMAT_I_UNORM16] = unpack_I16;
       table[MESA_FORMAT_YCBCR] = unpack_YCBCR;
       table[MESA_FORMAT_YCBCR_REV] = unpack_YCBCR_REV;
-      table[MESA_FORMAT_R_UNORM8] = unpack_R8;
-      table[MESA_FORMAT_R8G8_UNORM] = unpack_GR88;
-      table[MESA_FORMAT_G8R8_UNORM] = unpack_RG88;
-      table[MESA_FORMAT_R_UNORM16] = unpack_R16;
-      table[MESA_FORMAT_R16G16_UNORM] = unpack_GR1616;
-      table[MESA_FORMAT_G16R16_UNORM] = unpack_RG1616;
-      table[MESA_FORMAT_B10G10R10A2_UNORM] = unpack_ARGB2101010;
+      table[MESA_FORMAT_R_UNORM8] = unpack_R_UNORM8;
+      table[MESA_FORMAT_R8G8_UNORM] = unpack_R8G8_UNORM;
+      table[MESA_FORMAT_G8R8_UNORM] = unpack_G8R8_UNORM;
+      table[MESA_FORMAT_R_UNORM16] = unpack_R_UNORM16;
+      table[MESA_FORMAT_R16G16_UNORM] = unpack_R16G16_UNORM;
+      table[MESA_FORMAT_G16R16_UNORM] = unpack_G16R16_UNORM;
+      table[MESA_FORMAT_B10G10R10A2_UNORM] = unpack_B10G10R10A2_UNORM;
       table[MESA_FORMAT_B10G10R10A2_UINT] = unpack_ARGB2101010_UINT;
       table[MESA_FORMAT_R10G10B10A2_UINT] = unpack_ABGR2101010_UINT;
       table[MESA_FORMAT_S8_UINT_Z24_UNORM] = unpack_Z24_S8;
@@ -2399,11 +2399,11 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_Z_UNORM32] = unpack_Z32;
       table[MESA_FORMAT_S_UINT8] = unpack_S8;
       table[MESA_FORMAT_BGR_SRGB8] = unpack_SRGB8;
-      table[MESA_FORMAT_A8B8G8R8_SRGB] = unpack_SRGBA8;
+      table[MESA_FORMAT_A8B8G8R8_SRGB] = unpack_SRGBA_UNORM8;
       table[MESA_FORMAT_B8G8R8A8_SRGB] = unpack_SARGB8;
-      table[MESA_FORMAT_R8G8B8A8_SRGB] = unpack_SABGR8;
-      table[MESA_FORMAT_L_SRGB8] = unpack_SL8;
-      table[MESA_FORMAT_L8A8_SRGB] = unpack_SLA8;
+      table[MESA_FORMAT_R8G8B8A8_SRGB] = unpack_SABGR_UNORM8;
+      table[MESA_FORMAT_L_SRGB8] = unpack_SL_UNORM8;
+      table[MESA_FORMAT_L8A8_SRGB] = unpack_SLA_UNORM8;
       table[MESA_FORMAT_SRGB_DXT1] = unpack_SRGB_DXT1;
       table[MESA_FORMAT_SRGBA_DXT1] = unpack_SRGBA_DXT1;
       table[MESA_FORMAT_SRGBA_DXT3] = unpack_SRGBA_DXT3;
@@ -2487,13 +2487,13 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBA_UINT32] = unpack_RGBA_UINT32;
 
       table[MESA_FORMAT_DUDV8] = unpack_DUDV8;
-      table[MESA_FORMAT_R_SNORM8] = unpack_SIGNED_R8;
+      table[MESA_FORMAT_R_SNORM8] = unpack_SIGNED_R_UNORM8;
       table[MESA_FORMAT_R8G8_SNORM] = unpack_SIGNED_RG88_REV;
       table[MESA_FORMAT_X8B8G8R8_SNORM] = unpack_SIGNED_RGBX8888;
-      table[MESA_FORMAT_A8B8G8R8_SNORM] = unpack_SIGNED_RGBA8888;
-      table[MESA_FORMAT_R8G8B8A8_SNORM] = unpack_SIGNED_RGBA8888_REV;
-      table[MESA_FORMAT_R_SNORM16] = unpack_SIGNED_R16;
-      table[MESA_FORMAT_R16G16_SNORM] = unpack_SIGNED_GR1616;
+      table[MESA_FORMAT_A8B8G8R8_SNORM] = unpack_SIGNED_A8B8G8R8_UNORM;
+      table[MESA_FORMAT_R8G8B8A8_SNORM] = unpack_SIGNED_R8G8B8A8_UNORM;
+      table[MESA_FORMAT_R_SNORM16] = unpack_SIGNED_R_UNORM16;
+      table[MESA_FORMAT_R16G16_SNORM] = unpack_SIGNED_R16G16_UNORM;
       table[MESA_FORMAT_RGB_SNORM16] = unpack_SIGNED_RGB_16;
       table[MESA_FORMAT_RGBA_SNORM16] = unpack_SIGNED_RGBA_16;
       table[MESA_FORMAT_RGBA_UNORM16] = unpack_RGBA_16;
@@ -2521,13 +2521,13 @@ get_unpack_rgba_function(mesa_format format)
          unpack_ETC2_RGB8_PUNCHTHROUGH_ALPHA1;
       table[MESA_FORMAT_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1] =
          unpack_ETC2_SRGB8_PUNCHTHROUGH_ALPHA1;
-      table[MESA_FORMAT_A_SNORM8] = unpack_SIGNED_A8;
-      table[MESA_FORMAT_L_SNORM8] = unpack_SIGNED_L8;
-      table[MESA_FORMAT_L8A8_SNORM] = unpack_SIGNED_AL88;
+      table[MESA_FORMAT_A_SNORM8] = unpack_SIGNED_A_UNORM8;
+      table[MESA_FORMAT_L_SNORM8] = unpack_SIGNED_L_UNORM8;
+      table[MESA_FORMAT_L8A8_SNORM] = unpack_SIGNED_L8A8_UNORM;
       table[MESA_FORMAT_I_SNORM8] = unpack_SIGNED_I8;
-      table[MESA_FORMAT_A_SNORM16] = unpack_SIGNED_A16;
-      table[MESA_FORMAT_L_SNORM16] = unpack_SIGNED_L16;
-      table[MESA_FORMAT_LA_SNORM16] = unpack_SIGNED_AL1616;
+      table[MESA_FORMAT_A_SNORM16] = unpack_SIGNED_A_UNORM16;
+      table[MESA_FORMAT_L_SNORM16] = unpack_SIGNED_L_UNORM16;
+      table[MESA_FORMAT_LA_SNORM16] = unpack_SIGNED_L16A16_UNORM;
       table[MESA_FORMAT_I_SNORM16] = unpack_SIGNED_I16;
 
       table[MESA_FORMAT_R9G9B9E5_FLOAT] = unpack_RGB9_E5_FLOAT;
@@ -2554,8 +2554,8 @@ get_unpack_rgba_function(mesa_format format)
 
       table[MESA_FORMAT_R10G10B10A2_UNORM] = unpack_ABGR2101010;
 
-      table[MESA_FORMAT_G8R8_SNORM] = unpack_SIGNED_RG88;
-      table[MESA_FORMAT_G16R16_SNORM] = unpack_SIGNED_RG1616;
+      table[MESA_FORMAT_G8R8_SNORM] = unpack_SIGNED_G8R8_UNORM;
+      table[MESA_FORMAT_G16R16_SNORM] = unpack_SIGNED_G16R16_UNORM;
 
       table[MESA_FORMAT_B8G8R8X8_SRGB] = unpack_XRGB8888_SRGB;
 
@@ -2589,7 +2589,7 @@ _mesa_unpack_rgba_row(mesa_format format, GLuint n,
 
 
 static void
-unpack_ubyte_RGBA8888(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_A8B8G8R8_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -2602,7 +2602,7 @@ unpack_ubyte_RGBA8888(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_RGBA8888_REV(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_R8G8B8A8_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -2615,7 +2615,7 @@ unpack_ubyte_RGBA8888_REV(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_ARGB8888(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_B8G8R8A8_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -2628,7 +2628,7 @@ unpack_ubyte_ARGB8888(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_ARGB8888_REV(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_A8R8G8B8_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -2667,7 +2667,7 @@ unpack_ubyte_RGBX8888_REV(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_XRGB8888(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_B8G8R8X8_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -2680,7 +2680,7 @@ unpack_ubyte_XRGB8888(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_XRGB8888_REV(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_X8R8G8B8_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -2693,7 +2693,7 @@ unpack_ubyte_XRGB8888_REV(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_RGB888(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_BGR_UNORM8(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLubyte *s = (const GLubyte *) src;
    GLuint i;
@@ -2706,7 +2706,7 @@ unpack_ubyte_RGB888(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_BGR888(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_RGB_UNORM8(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLubyte *s = (const GLubyte *) src;
    GLuint i;
@@ -2719,7 +2719,7 @@ unpack_ubyte_BGR888(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_RGB565(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_B5G6R5_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -2732,7 +2732,7 @@ unpack_ubyte_RGB565(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_RGB565_REV(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_R5G6B5_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    /* Warning: this function does not match the current Mesa definition
     * of MESA_FORMAT_R5G6B5_UNORM.
@@ -2749,7 +2749,7 @@ unpack_ubyte_RGB565_REV(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_ARGB4444(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_B4G4R4A4_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -2762,7 +2762,7 @@ unpack_ubyte_ARGB4444(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_ARGB4444_REV(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_A4R4G4B4_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -2775,7 +2775,7 @@ unpack_ubyte_ARGB4444_REV(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_RGBA5551(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_A1B5G5R5_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -2788,7 +2788,7 @@ unpack_ubyte_RGBA5551(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_ARGB1555(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_B5G5R5A1_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -2801,7 +2801,7 @@ unpack_ubyte_ARGB1555(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_ARGB1555_REV(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_A1R5G5B5_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    /* Warning: this function does not match the current Mesa definition
     * of MESA_FORMAT_A1R5G5B5_UNORM.
@@ -2818,7 +2818,7 @@ unpack_ubyte_ARGB1555_REV(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_AL44(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_L4A4_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLubyte *s = ((const GLubyte *) src);
    GLuint i;
@@ -2831,7 +2831,7 @@ unpack_ubyte_AL44(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_AL88(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_L8A8_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -2844,7 +2844,7 @@ unpack_ubyte_AL88(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_AL88_REV(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_A8L8_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -2857,7 +2857,7 @@ unpack_ubyte_AL88_REV(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_RGB332(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_B2G3R3_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLubyte *s = ((const GLubyte *) src);
    GLuint i;
@@ -2870,7 +2870,7 @@ unpack_ubyte_RGB332(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_A8(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_A_UNORM8(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLubyte *s = ((const GLubyte *) src);
    GLuint i;
@@ -2883,7 +2883,7 @@ unpack_ubyte_A8(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_L8(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_L_UNORM8(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLubyte *s = ((const GLubyte *) src);
    GLuint i;
@@ -2910,7 +2910,7 @@ unpack_ubyte_I8(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_R8(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_R_UNORM8(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLubyte *s = ((const GLubyte *) src);
    GLuint i;
@@ -2923,7 +2923,7 @@ unpack_ubyte_R8(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_GR88(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_R8G8_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -2936,7 +2936,7 @@ unpack_ubyte_GR88(const void *src, GLubyte dst[][4], GLuint n)
 }
 
 static void
-unpack_ubyte_RG88(const void *src, GLubyte dst[][4], GLuint n)
+unpack_ubyte_G8R8_UNORM(const void *src, GLubyte dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -2959,16 +2959,16 @@ _mesa_unpack_ubyte_rgba_row(mesa_format format, GLuint n,
 {
    switch (format) {
    case MESA_FORMAT_A8B8G8R8_UNORM:
-      unpack_ubyte_RGBA8888(src, dst, n);
+      unpack_ubyte_A8B8G8R8_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_R8G8B8A8_UNORM:
-      unpack_ubyte_RGBA8888_REV(src, dst, n);
+      unpack_ubyte_R8G8B8A8_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_B8G8R8A8_UNORM:
-      unpack_ubyte_ARGB8888(src, dst, n);
+      unpack_ubyte_B8G8R8A8_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_A8R8G8B8_UNORM:
-      unpack_ubyte_ARGB8888_REV(src, dst, n);
+      unpack_ubyte_A8R8G8B8_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_X8B8G8R8_UNORM:
       unpack_ubyte_RGBX8888(src, dst, n);
@@ -2977,67 +2977,67 @@ _mesa_unpack_ubyte_rgba_row(mesa_format format, GLuint n,
       unpack_ubyte_RGBX8888_REV(src, dst, n);
       break;
    case MESA_FORMAT_B8G8R8X8_UNORM:
-      unpack_ubyte_XRGB8888(src, dst, n);
+      unpack_ubyte_B8G8R8X8_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_X8R8G8B8_UNORM:
-      unpack_ubyte_XRGB8888_REV(src, dst, n);
+      unpack_ubyte_X8R8G8B8_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_BGR_UNORM8:
-      unpack_ubyte_RGB888(src, dst, n);
+      unpack_ubyte_BGR_UNORM8(src, dst, n);
       break;
    case MESA_FORMAT_RGB_UNORM8:
-      unpack_ubyte_BGR888(src, dst, n);
+      unpack_ubyte_RGB_UNORM8(src, dst, n);
       break;
    case MESA_FORMAT_B5G6R5_UNORM:
-      unpack_ubyte_RGB565(src, dst, n);
+      unpack_ubyte_B5G6R5_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_R5G6B5_UNORM:
-      unpack_ubyte_RGB565_REV(src, dst, n);
+      unpack_ubyte_R5G6B5_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_B4G4R4A4_UNORM:
-      unpack_ubyte_ARGB4444(src, dst, n);
+      unpack_ubyte_B4G4R4A4_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_A4R4G4B4_UNORM:
-      unpack_ubyte_ARGB4444_REV(src, dst, n);
+      unpack_ubyte_A4R4G4B4_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_A1B5G5R5_UNORM:
-      unpack_ubyte_RGBA5551(src, dst, n);
+      unpack_ubyte_A1B5G5R5_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_B5G5R5A1_UNORM:
-      unpack_ubyte_ARGB1555(src, dst, n);
+      unpack_ubyte_B5G5R5A1_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_A1R5G5B5_UNORM:
-      unpack_ubyte_ARGB1555_REV(src, dst, n);
+      unpack_ubyte_A1R5G5B5_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_L4A4_UNORM:
-      unpack_ubyte_AL44(src, dst, n);
+      unpack_ubyte_L4A4_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_L8A8_UNORM:
-      unpack_ubyte_AL88(src, dst, n);
+      unpack_ubyte_L8A8_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_A8L8_UNORM:
-      unpack_ubyte_AL88_REV(src, dst, n);
+      unpack_ubyte_A8L8_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_B2G3R3_UNORM:
-      unpack_ubyte_RGB332(src, dst, n);
+      unpack_ubyte_B2G3R3_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_A_UNORM8:
-      unpack_ubyte_A8(src, dst, n);
+      unpack_ubyte_A_UNORM8(src, dst, n);
       break;
    case MESA_FORMAT_L_UNORM8:
-      unpack_ubyte_L8(src, dst, n);
+      unpack_ubyte_L_UNORM8(src, dst, n);
       break;
    case MESA_FORMAT_I_UNORM8:
       unpack_ubyte_I8(src, dst, n);
       break;
    case MESA_FORMAT_R_UNORM8:
-      unpack_ubyte_R8(src, dst, n);
+      unpack_ubyte_R_UNORM8(src, dst, n);
       break;
    case MESA_FORMAT_R8G8_UNORM:
-      unpack_ubyte_GR88(src, dst, n);
+      unpack_ubyte_R8G8_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_G8R8_UNORM:
-      unpack_ubyte_RG88(src, dst, n);
+      unpack_ubyte_G8R8_UNORM(src, dst, n);
       break;
    default:
       /* get float values, convert to ubyte */
@@ -3123,7 +3123,7 @@ unpack_int_rgba_RGBA_INT8(const GLbyte *src, GLuint dst[][4], GLuint n)
 }
 
 static void
-unpack_int_rgba_ARGB8888(const GLbyte *src, GLuint dst[][4], GLuint n)
+unpack_int_rgba_B8G8R8A8_UNORM(const GLbyte *src, GLuint dst[][4], GLuint n)
 {
    unsigned int i;
 
@@ -3136,7 +3136,7 @@ unpack_int_rgba_ARGB8888(const GLbyte *src, GLuint dst[][4], GLuint n)
 }
 
 static void
-unpack_int_rgba_XRGB8888(const GLbyte *src, GLuint dst[][4], GLuint n)
+unpack_int_rgba_B8G8R8X8_UNORM(const GLbyte *src, GLuint dst[][4], GLuint n)
 {
    unsigned int i;
 
@@ -3588,7 +3588,7 @@ unpack_int_rgba_ABGR2101010_UINT(const GLuint *src, GLuint dst[][4], GLuint n)
 }
 
 static void
-unpack_int_rgba_ARGB2101010(const GLuint *src, GLuint dst[][4], GLuint n)
+unpack_int_rgba_B10G10R10A2_UNORM(const GLuint *src, GLuint dst[][4], GLuint n)
 {
    unsigned int i;
 
@@ -3708,11 +3708,11 @@ _mesa_unpack_uint_rgba_row(mesa_format format, GLuint n,
       break;
 
    case MESA_FORMAT_B8G8R8A8_UNORM:
-      unpack_int_rgba_ARGB8888(src, dst, n);
+      unpack_int_rgba_B8G8R8A8_UNORM(src, dst, n);
       break;
 
    case MESA_FORMAT_B8G8R8X8_UNORM:
-      unpack_int_rgba_XRGB8888(src, dst, n);
+      unpack_int_rgba_B8G8R8X8_UNORM(src, dst, n);
       break;
 
    case MESA_FORMAT_RGB_UINT32:
@@ -3856,7 +3856,7 @@ _mesa_unpack_uint_rgba_row(mesa_format format, GLuint n,
       break;
 
    case MESA_FORMAT_B10G10R10A2_UNORM:
-      unpack_int_rgba_ARGB2101010(src, dst, n);
+      unpack_int_rgba_B10G10R10A2_UNORM(src, dst, n);
       break;
 
    case MESA_FORMAT_RGBX_UINT8:
