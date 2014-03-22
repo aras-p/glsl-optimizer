@@ -939,7 +939,7 @@ unpack_RGB_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_ALPHA_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
+unpack_A_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLfloat *s = (const GLfloat *) src;
    GLuint i;
@@ -952,7 +952,7 @@ unpack_ALPHA_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_ALPHA_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
+unpack_A_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLhalfARB *s = (const GLhalfARB *) src;
    GLuint i;
@@ -965,7 +965,7 @@ unpack_ALPHA_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_LUMINANCE_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
+unpack_L_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLfloat *s = (const GLfloat *) src;
    GLuint i;
@@ -978,7 +978,7 @@ unpack_LUMINANCE_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_LUMINANCE_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
+unpack_L_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLhalfARB *s = (const GLhalfARB *) src;
    GLuint i;
@@ -991,7 +991,7 @@ unpack_LUMINANCE_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_LUMINANCE_ALPHA_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
+unpack_LA_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLfloat *s = (const GLfloat *) src;
    GLuint i;
@@ -1004,7 +1004,7 @@ unpack_LUMINANCE_ALPHA_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_LUMINANCE_ALPHA_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
+unpack_LA_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLhalfARB *s = (const GLhalfARB *) src;
    GLuint i;
@@ -1017,7 +1017,7 @@ unpack_LUMINANCE_ALPHA_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_INTENSITY_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
+unpack_I_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLfloat *s = (const GLfloat *) src;
    GLuint i;
@@ -1030,7 +1030,7 @@ unpack_INTENSITY_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_INTENSITY_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
+unpack_I_FLOAT16(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLhalfARB *s = (const GLhalfARB *) src;
    GLuint i;
@@ -2071,7 +2071,7 @@ unpack_SIGNED_I_UNORM16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_RGB9_E5_FLOAT(const void *src, GLfloat dst[][4], GLuint n)
+unpack_R9G9B9E5_FLOAT(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = (const GLuint *) src;
    GLuint i;
@@ -2082,7 +2082,7 @@ unpack_RGB9_E5_FLOAT(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_R11_G11_B10_FLOAT(const void *src, GLfloat dst[][4], GLuint n)
+unpack_R11G11B10_FLOAT(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = (const GLuint *) src;
    GLuint i;
@@ -2249,7 +2249,7 @@ unpack_XBGR16161616_SINT(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_XBGR32323232_FLOAT(const void *src, GLfloat dst[][4], GLuint n)
+unpack_RGBX_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLfloat *s = (const GLfloat *) src;
    GLuint i;
@@ -2420,14 +2420,14 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBA_FLOAT16] = unpack_RGBA_FLOAT16;
       table[MESA_FORMAT_RGB_FLOAT32] = unpack_RGB_FLOAT32;
       table[MESA_FORMAT_RGB_FLOAT16] = unpack_RGB_FLOAT16;
-      table[MESA_FORMAT_A_FLOAT32] = unpack_ALPHA_FLOAT32;
-      table[MESA_FORMAT_A_FLOAT16] = unpack_ALPHA_FLOAT16;
-      table[MESA_FORMAT_L_FLOAT32] = unpack_LUMINANCE_FLOAT32;
-      table[MESA_FORMAT_L_FLOAT16] = unpack_LUMINANCE_FLOAT16;
-      table[MESA_FORMAT_LA_FLOAT32] = unpack_LUMINANCE_ALPHA_FLOAT32;
-      table[MESA_FORMAT_LA_FLOAT16] = unpack_LUMINANCE_ALPHA_FLOAT16;
-      table[MESA_FORMAT_I_FLOAT32] = unpack_INTENSITY_FLOAT32;
-      table[MESA_FORMAT_I_FLOAT16] = unpack_INTENSITY_FLOAT16;
+      table[MESA_FORMAT_A_FLOAT32] = unpack_A_FLOAT32;
+      table[MESA_FORMAT_A_FLOAT16] = unpack_A_FLOAT16;
+      table[MESA_FORMAT_L_FLOAT32] = unpack_L_FLOAT32;
+      table[MESA_FORMAT_L_FLOAT16] = unpack_L_FLOAT16;
+      table[MESA_FORMAT_LA_FLOAT32] = unpack_LA_FLOAT32;
+      table[MESA_FORMAT_LA_FLOAT16] = unpack_LA_FLOAT16;
+      table[MESA_FORMAT_I_FLOAT32] = unpack_I_FLOAT32;
+      table[MESA_FORMAT_I_FLOAT16] = unpack_I_FLOAT16;
       table[MESA_FORMAT_R_FLOAT32] = unpack_R_FLOAT32;
       table[MESA_FORMAT_R_FLOAT16] = unpack_R_FLOAT16;
       table[MESA_FORMAT_RG_FLOAT32] = unpack_RG_FLOAT32;
@@ -2530,8 +2530,8 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_LA_SNORM16] = unpack_LA_SNORM16;
       table[MESA_FORMAT_I_SNORM16] = unpack_SIGNED_I_UNORM16;
 
-      table[MESA_FORMAT_R9G9B9E5_FLOAT] = unpack_RGB9_E5_FLOAT;
-      table[MESA_FORMAT_R11G11B10_FLOAT] = unpack_R11_G11_B10_FLOAT;
+      table[MESA_FORMAT_R9G9B9E5_FLOAT] = unpack_R9G9B9E5_FLOAT;
+      table[MESA_FORMAT_R11G11B10_FLOAT] = unpack_R11G11B10_FLOAT;
 
       table[MESA_FORMAT_Z_FLOAT32] = unpack_Z32_FLOAT;
       table[MESA_FORMAT_Z32_FLOAT_S8X24_UINT] = unpack_Z32_FLOAT_X24S8;
@@ -2548,7 +2548,7 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_RGBX_FLOAT16] = unpack_XBGR16161616_FLOAT;
       table[MESA_FORMAT_RGBX_UINT16] = unpack_XBGR16161616_UINT;
       table[MESA_FORMAT_RGBX_SINT16] = unpack_XBGR16161616_SINT;
-      table[MESA_FORMAT_RGBX_FLOAT32] = unpack_XBGR32323232_FLOAT;
+      table[MESA_FORMAT_RGBX_FLOAT32] = unpack_RGBX_FLOAT32;
       table[MESA_FORMAT_RGBX_UINT32] = unpack_XBGR32323232_UINT;
       table[MESA_FORMAT_RGBX_SINT32] = unpack_XBGR32323232_SINT;
 
