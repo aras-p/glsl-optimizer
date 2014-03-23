@@ -412,3 +412,10 @@ st_create_color_map_texture(struct gl_context *ctx)
    return pt;
 }
 
+void
+st_texture_release_sampler_view(struct st_context *st,
+                                struct st_texture_object *stObj)
+{
+   if (stObj->sampler_view && stObj->sampler_view->context == st->pipe)
+      pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+}

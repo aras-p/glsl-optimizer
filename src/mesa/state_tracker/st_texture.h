@@ -227,4 +227,8 @@ st_texture_image_copy(struct pipe_context *pipe,
 extern struct pipe_resource *
 st_create_color_map_texture(struct gl_context *ctx);
 
+extern void
+st_texture_release_sampler_view(struct st_context *st,
+                                struct st_texture_object *stObj);
+
 #endif

@@ -33,6 +33,7 @@
 #include "main/shaderobj.h"
 #include "main/version.h"
 #include "main/vtxfmt.h"
+#include "main/hash.h"
 #include "program/prog_cache.h"
 #include "vbo/vbo.h"
 #include "glapi/glapi.h"
@@ -66,6 +67,7 @@
 #include "st_gen_mipmap.h"
 #include "st_program.h"
 #include "st_vdpau.h"
+#include "st_texture.h"
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
 #include "util/u_upload_mgr.h"
@@ -280,6 +282,19 @@ static void st_destroy_context_priv( struct st_context *st )
    free( st );
 }
 
+
+/**
+ * Callback to release the sampler view attached to a texture object.
+ * Called by _mesa_HashWalk().
+ */
+static void
+destroy_tex_sampler_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_texture_object *texObj = (struct gl_texture_object *) data;
+   struct st_context *st = (struct st_context *) userData;
+
+   st_texture_release_sampler_view(st, st_texture_object(texObj));
+}
  
 void st_destroy_context( struct st_context *st )
 {
@@ -287,6 +302,8 @@ void st_destroy_context( struct st_context *st )
    struct cso_context *cso = st->cso_context;
    struct gl_context *ctx = st->ctx;
    GLuint i;
+
+   _mesa_HashWalk(ctx->Shared->TexObjects, destroy_tex_sampler_cb, st);
 
    /* need to unbind and destroy CSO objects before anything else */
    cso_release_all(st->cso_context);
