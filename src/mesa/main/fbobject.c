@@ -1080,6 +1080,12 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
 
    fb->MaxNumLayers = max_layer_count;
 
+   if (numImages == 0) {
+      fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT;
+      fbo_incomplete(ctx, "no attachments", -1);
+      return;
+   }
+
    if (_mesa_is_desktop_gl(ctx) && !ctx->Extensions.ARB_ES2_compatibility) {
       /* Check that all DrawBuffers are present */
       for (j = 0; j < ctx->Const.MaxDrawBuffers; j++) {
@@ -1106,12 +1112,6 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
 	    return;
 	 }
       }
-   }
-
-   if (numImages == 0) {
-      fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT;
-      fbo_incomplete(ctx, "no attachments", -1);
-      return;
    }
 
    /* Provisionally set status = COMPLETE ... */
