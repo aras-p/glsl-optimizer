@@ -630,7 +630,6 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp)
       return dri2_initialize_x11(drv, disp);
 #endif
 
-#ifdef HAVE_LIBUDEV
 #ifdef HAVE_DRM_PLATFORM
    case _EGL_PLATFORM_DRM:
       if (disp->Options.TestOnly)
@@ -642,7 +641,6 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp)
       if (disp->Options.TestOnly)
          return EGL_TRUE;
       return dri2_initialize_wayland(drv, disp);
-#endif
 #endif
 #ifdef HAVE_ANDROID_PLATFORM
    case _EGL_PLATFORM_ANDROID:
