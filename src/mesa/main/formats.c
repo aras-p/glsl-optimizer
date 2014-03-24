@@ -2207,6 +2207,35 @@ _mesa_format_num_components(mesa_format format)
 
 
 /**
+ * Returns true if a color format has data stored in the R/G/B/A channels,
+ * given an index from 0 to 3.
+ */
+bool
+_mesa_format_has_color_component(mesa_format format, int component)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+
+   assert(info->BaseFormat != GL_DEPTH_COMPONENT &&
+          info->BaseFormat != GL_DEPTH_STENCIL &&
+          info->BaseFormat != GL_STENCIL_INDEX);
+
+   switch (component) {
+   case 0:
+      return (info->RedBits + info->IntensityBits + info->LuminanceBits) > 0;
+   case 1:
+      return (info->GreenBits + info->IntensityBits + info->LuminanceBits) > 0;
+   case 2:
+      return (info->BlueBits + info->IntensityBits + info->LuminanceBits) > 0;
+   case 3:
+      return (info->AlphaBits + info->IntensityBits) > 0;
+   default:
+      assert(!"Invalid color component: must be 0..3");
+      return false;
+   }
+}
+
+
+/**
  * Return number of bytes needed to store an image of the given size
  * in the given format.
  */
