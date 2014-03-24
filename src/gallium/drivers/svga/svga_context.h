@@ -389,6 +389,11 @@ struct svga_context
    /** performance / info queries */
    uint64_t num_draw_calls;  /**< SVGA_QUERY_DRAW_CALLS */
    uint64_t num_fallbacks;   /**< SVGA_QUERY_FALLBACKS */
+
+   /** quirks / work-around flags for particular apps */
+   struct {
+      boolean use_decltype_ubyte4n;
+   } workaround;
 };
 
 /* A flag for each state_tracker state object:

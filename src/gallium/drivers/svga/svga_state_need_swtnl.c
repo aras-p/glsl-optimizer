@@ -36,7 +36,8 @@
  * format.  Return SVGA3D_DECLTYPE_MAX for unsupported gallium formats.
  */
 static INLINE SVGA3dDeclType
-svga_translate_vertex_format(enum pipe_format format)
+svga_translate_vertex_format(const struct svga_context *svga,
+                             enum pipe_format format)
 {
    switch (format) {
    case PIPE_FORMAT_R32_FLOAT:            return SVGA3D_DECLTYPE_FLOAT1;
@@ -56,6 +57,12 @@ svga_translate_vertex_format(enum pipe_format format)
    case PIPE_FORMAT_R10G10B10X2_SNORM:    return SVGA3D_DECLTYPE_DEC3N;
    case PIPE_FORMAT_R16G16_FLOAT:         return SVGA3D_DECLTYPE_FLOAT16_2;
    case PIPE_FORMAT_R16G16B16A16_FLOAT:   return SVGA3D_DECLTYPE_FLOAT16_4;
+
+   case PIPE_FORMAT_R8G8B8_SNORM:
+      if (svga->workaround.use_decltype_ubyte4n) {
+         return SVGA3D_DECLTYPE_UBYTE4N;
+      }
+      /* fall-through */
 
    default:
       /* There are many formats without hardware support.  This case
@@ -78,7 +85,9 @@ update_need_swvfetch(struct svga_context *svga, unsigned dirty)
    }
 
    for (i = 0; i < svga->curr.velems->count; i++) {
-      svga->state.sw.ve_format[i] = svga_translate_vertex_format(svga->curr.velems->velem[i].src_format);
+      svga->state.sw.ve_format[i] =
+         svga_translate_vertex_format(svga,
+                                      svga->curr.velems->velem[i].src_format);
       if (svga->state.sw.ve_format[i] == SVGA3D_DECLTYPE_MAX) {
          /* Unsupported format - use software fetch */
          need_swvfetch = TRUE;
