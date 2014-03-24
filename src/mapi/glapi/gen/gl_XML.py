@@ -26,20 +26,19 @@
 #    Ian Romanick <idr@us.ibm.com>
 
 from decimal import Decimal
-import libxml2
+import xml.etree.ElementTree as ET
 import re, sys, string
+import os.path
 import typeexpr
 
 
 def parse_GL_API( file_name, factory = None ):
-    doc = libxml2.readFile( file_name, None, libxml2.XML_PARSE_XINCLUDE + libxml2.XML_PARSE_NOBLANKS + libxml2.XML_PARSE_DTDVALID + libxml2.XML_PARSE_DTDATTR + libxml2.XML_PARSE_DTDLOAD + libxml2.XML_PARSE_NOENT )
-    ret = doc.xincludeProcess()
 
     if not factory:
         factory = gl_item_factory()
 
-    api = factory.create_item( "api", None, None )
-    api.process_element( doc )
+    api = factory.create_api()
+    api.parse_file( file_name )
 
     # After the XML has been processed, we need to go back and assign
     # dispatch offsets to the functions that request that their offsets
@@ -51,12 +50,10 @@ def parse_GL_API( file_name, factory = None ):
             func.offset = api.next_offset;
             api.next_offset += 1
 
-    doc.freeDoc()
-
     return api
 
 
-def is_attr_true( element, name ):
+def is_attr_true( element, name, default = "false" ):
     """Read a name value from an element's attributes.
 
     The value read from the attribute list must be either 'true' or
@@ -64,7 +61,7 @@ def is_attr_true( element, name ):
     value is 'true', non-zero will be returned.  An exception will be
     raised for any other value."""
 
-    value = element.nsProp( name, None )
+    value = element.get( name, default )
     if value == "true":
         return 1
     elif value == "false":
@@ -254,8 +251,8 @@ class gl_print_base(object):
 
 
 def real_function_name(element):
-    name = element.nsProp( "name", None )
-    alias = element.nsProp( "alias", None )
+    name = element.get( "name" )
+    alias = element.get( "alias" )
 
     if alias:
         return alias
@@ -324,21 +321,22 @@ def create_parameter_string(parameters, include_names):
 
 
 class gl_item(object):
-    def __init__(self, element, context):
+    def __init__(self, element, context, category):
         self.context = context
-        self.name = element.nsProp( "name", None )
-        self.category = real_category_name( element.parent.nsProp( "name", None ) )
+        self.name = element.get( "name" )
+        self.category = real_category_name( category )
+
         return
 
 
 class gl_type( gl_item ):
-    def __init__(self, element, context):
-        gl_item.__init__(self, element, context)
-        self.size = int( element.nsProp( "size", None ), 0 )
+    def __init__(self, element, context, category):
+        gl_item.__init__(self, element, context, category)
+        self.size = int( element.get( "size" ), 0 )
 
         te = typeexpr.type_expression( None )
         tn = typeexpr.type_node()
-        tn.size = int( element.nsProp( "size", None ), 0 )
+        tn.size = int( element.get( "size" ), 0 )
         tn.integer = not is_attr_true( element, "float" )
         tn.unsigned = is_attr_true( element, "unsigned" )
         tn.pointer = is_attr_true( element, "pointer" )
@@ -354,11 +352,11 @@ class gl_type( gl_item ):
 
 
 class gl_enum( gl_item ):
-    def __init__(self, element, context):
-        gl_item.__init__(self, element, context)
-        self.value = int( element.nsProp( "value", None ), 0 )
+    def __init__(self, element, context, category):
+        gl_item.__init__(self, element, context, category)
+        self.value = int( element.get( "value" ), 0 )
 
-        temp = element.nsProp( "count", None )
+        temp = element.get( "count" )
         if not temp or temp == "?":
             self.default_count = -1
         else:
@@ -404,12 +402,12 @@ class gl_enum( gl_item ):
 
 class gl_parameter(object):
     def __init__(self, element, context):
-        self.name = element.nsProp( "name", None )
+        self.name = element.get( "name" )
 
-        ts = element.nsProp( "type", None )
+        ts = element.get( "type" )
         self.type_expr = typeexpr.type_expression( ts, context )
 
-        temp = element.nsProp( "variable_param", None )
+        temp = element.get( "variable_param" )
         if temp:
             self.count_parameter_list = temp.split( ' ' )
         else:
@@ -420,7 +418,7 @@ class gl_parameter(object):
         # statement will throw an exception, and the except block will
         # take over.
 
-        c = element.nsProp( "count", None )
+        c = element.get( "count" )
         try: 
             count = int(c)
             self.count = count
@@ -430,7 +428,7 @@ class gl_parameter(object):
             self.count = 0
             self.counter = c
 
-        self.count_scale = int(element.nsProp( "count_scale", None ))
+        self.count_scale = int(element.get( "count_scale", "1" ))
 
         elements = (count * self.count_scale)
         if elements == 1:
@@ -450,19 +448,19 @@ class gl_parameter(object):
 
         # Pixel data has special parameters.
 
-        self.width      = element.nsProp('img_width',  None)
-        self.height     = element.nsProp('img_height', None)
-        self.depth      = element.nsProp('img_depth',  None)
-        self.extent     = element.nsProp('img_extent', None)
+        self.width      = element.get('img_width')
+        self.height     = element.get('img_height')
+        self.depth      = element.get('img_depth')
+        self.extent     = element.get('img_extent')
 
-        self.img_xoff   = element.nsProp('img_xoff',   None)
-        self.img_yoff   = element.nsProp('img_yoff',   None)
-        self.img_zoff   = element.nsProp('img_zoff',   None)
-        self.img_woff   = element.nsProp('img_woff',   None)
+        self.img_xoff   = element.get('img_xoff')
+        self.img_yoff   = element.get('img_yoff')
+        self.img_zoff   = element.get('img_zoff')
+        self.img_woff   = element.get('img_woff')
 
-        self.img_format = element.nsProp('img_format', None)
-        self.img_type   = element.nsProp('img_type',   None)
-        self.img_target = element.nsProp('img_target', None)
+        self.img_format = element.get('img_format')
+        self.img_type   = element.get('img_type')
+        self.img_target = element.get('img_target')
 
         self.img_pad_dimensions = is_attr_true( element, 'img_pad_dimensions' )
         self.img_null_flag      = is_attr_true( element, 'img_null_flag' )
@@ -648,17 +646,17 @@ class gl_function( gl_item ):
 
 
     def process_element(self, element):
-        name = element.nsProp( "name", None )
-        alias = element.nsProp( "alias", None )
+        name = element.get( "name" )
+        alias = element.get( "alias" )
 
-        if is_attr_true(element, "static_dispatch"):
+        if is_attr_true(element, "static_dispatch", "true"):
             self.static_entry_points.append(name)
 
         self.entry_points.append( name )
 
         self.entry_point_api_map[name] = {}
         for api in ('es1', 'es2'):
-            version_str = element.nsProp(api, None)
+            version_str = element.get(api, 'none')
             assert version_str is not None
             if version_str != 'none':
                 version_decimal = Decimal(version_str)
@@ -667,15 +665,15 @@ class gl_function( gl_item ):
                         version_decimal < self.api_map[api]:
                     self.api_map[api] = version_decimal
 
-        exec_flavor = element.nsProp('exec', None)
+        exec_flavor = element.get('exec')
         if exec_flavor:
             self.exec_flavor = exec_flavor
 
-        deprecated = element.nsProp('deprecated', None)
+        deprecated = element.get('deprecated', 'none')
         if deprecated != 'none':
             self.deprecated = Decimal(deprecated)
 
-        if not is_attr_true(element, 'desktop'):
+        if not is_attr_true(element, 'desktop', 'true'):
             self.desktop = False
 
         if alias:
@@ -686,7 +684,7 @@ class gl_function( gl_item ):
             # Only try to set the offset when a non-alias entry-point
             # is being processed.
 
-            offset = element.nsProp( "offset", None )
+            offset = element.get( "offset" )
             if offset:
                 try:
                     o = int( offset )
@@ -712,16 +710,12 @@ class gl_function( gl_item ):
 
         parameters = []
         return_type = "void"
-        child = element.children
-        while child:
-            if child.type == "element":
-                if child.name == "return":
-                    return_type = child.nsProp( "type", None )
-                elif child.name == "param":
-                    param = self.context.factory.create_item( "parameter", child, self.context)
-                    parameters.append( param )
-
-            child = child.next
+        for child in element.getchildren():
+            if child.tag == "return":
+                return_type = child.get( "type", "void" )
+            elif child.tag == "param":
+                param = self.context.factory.create_parameter(child, self.context)
+                parameters.append( param )
 
 
         if self.initialized:
@@ -746,7 +740,7 @@ class gl_function( gl_item ):
                 if param.is_image():
                     self.images.append( param )
 
-        if element.children:
+        if element.getchildren():
             self.initialized = 1
             self.entry_point_parameters[name] = parameters
         else:
@@ -848,19 +842,20 @@ class gl_function( gl_item ):
 class gl_item_factory(object):
     """Factory to create objects derived from gl_item."""
 
-    def create_item(self, item_name, element, context):
-        if item_name == "function":
-            return gl_function(element, context)
-        if item_name == "type":
-            return gl_type(element, context)
-        elif item_name == "enum":
-            return gl_enum(element, context)
-        elif item_name == "parameter":
-            return gl_parameter(element, context)
-        elif item_name == "api":
-            return gl_api(self)
-        else:
-            return None
+    def create_function(self, element, context):
+        return gl_function(element, context)
+
+    def create_type(self, element, context, category):
+        return gl_type(element, context, category)
+
+    def create_enum(self, element, context, category):
+        return gl_enum(element, context, category)
+
+    def create_parameter(self, element, context):
+        return gl_parameter(element, context)
+
+    def create_api(self):
+        return gl_api(self)
 
 
 class gl_api(object):
@@ -903,66 +898,64 @@ class gl_api(object):
 
         self.functions_by_name = functions_by_name
 
-    def process_element(self, doc):
-        element = doc.children
-        while element.type != "element" or element.name != "OpenGLAPI":
-            element = element.next
 
-        if element:
-            self.process_OpenGLAPI(element)
+    def parse_file(self, file_name):
+        doc = ET.parse( file_name )
+        self.process_element(file_name, doc)
+
+
+    def process_element(self, file_name, doc):
+        element = doc.getroot()
+        if element.tag == "OpenGLAPI":
+            self.process_OpenGLAPI(file_name, element)
         return
 
 
-    def process_OpenGLAPI(self, element):
-        child = element.children
-        while child:
-            if child.type == "element":
-                if child.name == "category":
-                    self.process_category( child )
-                elif child.name == "OpenGLAPI":
-                    self.process_OpenGLAPI( child )
-
-            child = child.next
+    def process_OpenGLAPI(self, file_name, element):
+        for child in element.getchildren():
+            if child.tag == "category":
+                self.process_category( child )
+            elif child.tag == "OpenGLAPI":
+                self.process_OpenGLAPI( file_name, child )
+            elif child.tag == '{http://www.w3.org/2001/XInclude}include':
+                href = child.get('href')
+                href = os.path.join(os.path.dirname(file_name), href)
+                self.parse_file(href)
 
         return
 
 
     def process_category(self, cat):
-        cat_name = cat.nsProp( "name", None )
-        cat_number = cat.nsProp( "number", None )
+        cat_name = cat.get( "name" )
+        cat_number = cat.get( "number" )
 
         [cat_type, key] = classify_category(cat_name, cat_number)
         self.categories[cat_type][key] = [cat_name, cat_number]
 
-        child = cat.children
-        while child:
-            if child.type == "element":
-                if child.name == "function":
-                    func_name = real_function_name( child )
+        for child in cat.getchildren():
+            if child.tag == "function":
+                func_name = real_function_name( child )
 
-                    temp_name = child.nsProp( "name", None )
-                    self.category_dict[ temp_name ] = [cat_name, cat_number]
+                temp_name = child.get( "name" )
+                self.category_dict[ temp_name ] = [cat_name, cat_number]
 
-                    if self.functions_by_name.has_key( func_name ):
-                        func = self.functions_by_name[ func_name ]
-                        func.process_element( child )
-                    else:
-                        func = self.factory.create_item( "function", child, self )
-                        self.functions_by_name[ func_name ] = func
+                if self.functions_by_name.has_key( func_name ):
+                    func = self.functions_by_name[ func_name ]
+                    func.process_element( child )
+                else:
+                    func = self.factory.create_function( child, self )
+                    self.functions_by_name[ func_name ] = func
 
-                    if func.offset >= self.next_offset:
-                        self.next_offset = func.offset + 1
+                if func.offset >= self.next_offset:
+                    self.next_offset = func.offset + 1
 
 
-                elif child.name == "enum":
-                    enum = self.factory.create_item( "enum", child, self )
-                    self.enums_by_name[ enum.name ] = enum
-                elif child.name == "type":
-                    t = self.factory.create_item( "type", child, self )
-                    self.types_by_name[ "GL" + t.name ] = t
-
-
-            child = child.next
+            elif child.tag == "enum":
+                enum = self.factory.create_enum( child, self, cat_name )
+                self.enums_by_name[ enum.name ] = enum
+            elif child.tag == "type":
+                t = self.factory.create_type( child, self, cat_name )
+                self.types_by_name[ "GL" + t.name ] = t
 
         return
 

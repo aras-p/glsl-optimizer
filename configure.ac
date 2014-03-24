@@ -54,7 +54,6 @@ AM_PROG_CC_C_O
 AM_PROG_AS
 AC_CHECK_PROGS([MAKE], [gmake make])
 AC_CHECK_PROGS([PYTHON2], [python2 python])
-AX_PYTHON_MODULE([libxml2], [needed])
 AC_PROG_SED
 AC_PROG_MKDIR_P
 

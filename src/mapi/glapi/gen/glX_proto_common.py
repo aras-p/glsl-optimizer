@@ -32,18 +32,15 @@ import string
 class glx_proto_item_factory(glX_XML.glx_item_factory):
     """Factory to create GLX protocol oriented objects derived from gl_item."""
 
-    def create_item(self, name, element, context):
-        if name == "type":
-            return glx_proto_type(element, context)
-        else:
-            return glX_XML.glx_item_factory.create_item(self, name, element, context)
+    def create_type(self, element, context, category):
+        return glx_proto_type(element, context, category)
 
 
 class glx_proto_type(gl_XML.gl_type):
-    def __init__(self, element, context):
-        gl_XML.gl_type.__init__(self, element, context)
+    def __init__(self, element, context, category):
+        gl_XML.gl_type.__init__(self, element, context, category)
 
-        self.glx_name = element.nsProp( "glx_name", None )
+        self.glx_name = element.get( "glx_name" )
         return
 
 

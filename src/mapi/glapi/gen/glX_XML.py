@@ -33,29 +33,27 @@ import sys, getopt, string
 class glx_item_factory(gl_XML.gl_item_factory):
     """Factory to create GLX protocol oriented objects derived from gl_item."""
 
-    def create_item(self, name, element, context):
-        if name == "function":
-            return glx_function(element, context)
-        elif name == "enum":
-            return glx_enum(element, context)
-        elif name == "api":
-            return glx_api(self)
-        else:
-            return gl_XML.gl_item_factory.create_item(self, name, element, context)
+    def create_function(self, element, context):
+        return glx_function(element, context)
+
+    def create_enum(self, element, context, category):
+        return glx_enum(element, context, category)
+
+    def create_api(self):
+        return glx_api(self)
 
 
 class glx_enum(gl_XML.gl_enum):
-    def __init__(self, element, context):
-        gl_XML.gl_enum.__init__(self, element, context)
+    def __init__(self, element, context, category):
+        gl_XML.gl_enum.__init__(self, element, context, category)
 
         self.functions = {}
 
-        child = element.children
-        while child:
-            if child.type == "element" and child.name == "size":
-                n = child.nsProp( "name", None )
-                c = child.nsProp( "count", None )
-                m = child.nsProp( "mode", None )
+        for child in element.getchildren():
+            if child.tag == "size":
+                n = child.get( "name" )
+                c = child.get( "count" )
+                m = child.get( "mode", "set" )
 
                 if not c:
                     c = self.default_count
@@ -69,8 +67,6 @@ class glx_enum(gl_XML.gl_enum):
 
                 if not self.functions.has_key(n):
                     self.functions[ n ] = [c, mode]
-
-            child = child.next
 
         return
 
@@ -120,10 +116,10 @@ class glx_function(gl_XML.gl_function):
         # appears after the function that it aliases.
 
         if not self.vectorequiv:
-            self.vectorequiv = element.nsProp("vectorequiv", None)
+            self.vectorequiv = element.get("vectorequiv")
 
 
-        name = element.nsProp("name", None)
+        name = element.get("name")
         if name == self.name:
             for param in self.parameters:
                 self.parameters_by_name[ param.name ] = param
@@ -135,12 +131,11 @@ class glx_function(gl_XML.gl_function):
                     self.counter_list.append(param.counter)
 
 
-        child = element.children
-        while child:
-            if child.type == "element" and child.name == "glx":
-                rop = child.nsProp( 'rop', None )
-                sop = child.nsProp( 'sop', None )
-                vop = child.nsProp( 'vendorpriv', None )
+        for child in element.getchildren():
+            if child.tag == "glx":
+                rop = child.get( 'rop' )
+                sop = child.get( 'sop' )
+                vop = child.get( 'vendorpriv' )
 
                 if rop:
                     self.glx_rop = int(rop)
@@ -152,12 +147,12 @@ class glx_function(gl_XML.gl_function):
                     self.glx_vendorpriv = int(vop)
                     self.glx_vendorpriv_names.append(name)
 
-                self.img_reset = child.nsProp( 'img_reset', None )
+                self.img_reset = child.get( 'img_reset' )
 
                 # The 'handcode' attribute can be one of 'true',
                 # 'false', 'client', or 'server'.
 
-                handcode = child.nsProp( 'handcode', None )
+                handcode = child.get( 'handcode', 'false' )
                 if handcode == "false":
                     self.server_handcode = 0
                     self.client_handcode = 0
@@ -178,8 +173,6 @@ class glx_function(gl_XML.gl_function):
                 self.glx_doubles_in_order = gl_XML.is_attr_true( child, 'doubles_in_order' )
                 self.reply_always_array   = gl_XML.is_attr_true( child, 'always_array' )
                 self.dimensions_in_reply  = gl_XML.is_attr_true( child, 'dimensions_in_reply' )
-
-            child = child.next
 
 
         # Do some validation of the GLX protocol information.  As
