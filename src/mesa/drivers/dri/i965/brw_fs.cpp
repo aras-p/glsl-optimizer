@@ -1913,7 +1913,7 @@ fs_visitor::assign_constant_locations()
       if (remapped == -1)
          continue;
 
-      assert(remapped <= i);
+      assert(remapped <= (int)i);
       stage_prog_data->param[remapped] = stage_prog_data->param[i];
    }
 }
