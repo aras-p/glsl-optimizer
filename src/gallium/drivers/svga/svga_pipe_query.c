@@ -94,13 +94,17 @@ svga_create_query( struct pipe_context *pipe, unsigned query_type )
       sq->hwbuf = svga_winsys_buffer_create(svga, 1,
                                             SVGA_BUFFER_USAGE_PINNED,
                                             sizeof *sq->queryResult);
-      if (!sq->hwbuf)
+      if (!sq->hwbuf) {
+         debug_printf("svga: failed to alloc query object!\n");
          goto no_hwbuf;
+      }
 
       sq->queryResult = (SVGA3dQueryResult *)
          sws->buffer_map(sws, sq->hwbuf, PIPE_TRANSFER_WRITE);
-      if (!sq->queryResult)
+      if (!sq->queryResult) {
+         debug_printf("svga: failed to map query object!\n");
          goto no_query_result;
+      }
 
       sq->queryResult->totalSize = sizeof *sq->queryResult;
       sq->queryResult->state = SVGA3D_QUERYSTATE_NEW;
