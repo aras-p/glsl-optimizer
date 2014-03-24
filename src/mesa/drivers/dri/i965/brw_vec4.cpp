@@ -378,7 +378,6 @@ bool
 vec4_visitor::dead_code_eliminate()
 {
    bool progress = false;
-   bool seen_control_flow = false;
    int pc = -1;
 
    calculate_live_intervals();
@@ -387,8 +386,6 @@ vec4_visitor::dead_code_eliminate()
       vec4_instruction *inst = (vec4_instruction *)node;
 
       pc++;
-
-      seen_control_flow = inst->is_control_flow() || seen_control_flow;
 
       bool inst_writes_flag = false;
       if (inst->dst.file != GRF) {
@@ -415,7 +412,7 @@ vec4_visitor::dead_code_eliminate()
                     progress;
       }
 
-      if (seen_control_flow || inst->predicate || inst->prev == NULL)
+      if (inst->predicate || inst->prev == NULL)
          continue;
 
       int dead_channels;
@@ -442,6 +439,9 @@ vec4_visitor::dead_code_eliminate()
            prev != NULL && dead_channels != 0;
            node = prev, prev = prev->prev) {
          vec4_instruction *scan_inst = (vec4_instruction  *)node;
+
+         if (scan_inst->is_control_flow())
+            break;
 
          if (inst_writes_flag) {
             if (scan_inst->dst.is_null() && scan_inst->writes_flag()) {
