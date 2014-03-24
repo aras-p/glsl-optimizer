@@ -175,7 +175,7 @@ svga_bind_sampler_states(struct pipe_context *pipe,
    for (i = 0; i < num; i++)
       svga->curr.sampler[start + i] = samplers[i];
 
-   /* find highest non-null sampler_views[] entry */
+   /* find highest non-null sampler[] entry */
    {
       unsigned j = MAX2(svga->curr.num_samplers, start + num);
       while (j > 0 && svga->curr.sampler[j - 1] == NULL)
