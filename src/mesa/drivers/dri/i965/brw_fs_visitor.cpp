@@ -1739,7 +1739,20 @@ fs_visitor::visit(ir_texture *ir)
           type->sampler_array) {
          fs_reg depth = dst;
          depth.reg_offset = 2;
-         emit_math(SHADER_OPCODE_INT_QUOTIENT, depth, depth, fs_reg(6));
+         fs_reg fixed_depth = fs_reg(this, glsl_type::int_type);
+         emit_math(SHADER_OPCODE_INT_QUOTIENT, fixed_depth, depth, fs_reg(6));
+
+         fs_reg *fixed_payload = ralloc_array(mem_ctx, fs_reg, inst->regs_written);
+         fs_reg d = dst;
+         for (int i = 0; i < inst->regs_written; i++) {
+            if (i == 2) {
+               fixed_payload[i] = fixed_depth;
+            } else {
+               d.reg_offset = i;
+               fixed_payload[i] = d;
+            }
+         }
+         emit(LOAD_PAYLOAD(dst, fixed_payload, inst->regs_written));
       }
    }
 
