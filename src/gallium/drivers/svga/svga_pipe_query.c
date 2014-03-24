@@ -148,6 +148,7 @@ svga_destroy_query(struct pipe_context *pipe, struct pipe_query *q)
    switch (sq->type) {
    case PIPE_QUERY_OCCLUSION_COUNTER:
       sws->buffer_destroy(sws, sq->hwbuf);
+      sq->hwbuf = NULL;
       sws->fence_reference(sws, &sq->fence, NULL);
       break;
    case SVGA_QUERY_DRAW_CALLS:
