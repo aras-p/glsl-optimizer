@@ -447,6 +447,33 @@ st_copy_buffer_subdata(struct gl_context *ctx,
                               srcObj->buffer, 0, &box);
 }
 
+/**
+ * Called via glClearBufferSubData().
+ */
+static void
+st_clear_buffer_subdata(struct gl_context *ctx,
+                        GLintptr offset, GLsizeiptr size,
+                        const GLvoid *clearValue,
+                        GLsizeiptr clearValueSize,
+                        struct gl_buffer_object *bufObj)
+{
+   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_buffer_object *buf = st_buffer_object(bufObj);
+   static const char zeros[16] = {0};
+
+   if (!pipe->clear_buffer) {
+      _mesa_buffer_clear_subdata(ctx, offset, size,
+                                 clearValue, clearValueSize, bufObj);
+      return;
+   }
+
+   if (!clearValue)
+      clearValue = zeros;
+
+   pipe->clear_buffer(pipe, buf->buffer, offset, size,
+                      clearValue, clearValueSize);
+}
+
 
 /* TODO: if buffer wasn't created with appropriate usage flags, need
  * to recreate it now and copy contents -- or possibly create a
@@ -476,6 +503,7 @@ st_init_bufferobject_functions(struct dd_function_table *functions)
    functions->FlushMappedBufferRange = st_bufferobj_flush_mapped_range;
    functions->UnmapBuffer = st_bufferobj_unmap;
    functions->CopyBufferSubData = st_copy_buffer_subdata;
+   functions->ClearBufferSubData = st_clear_buffer_subdata;
 
    /* For GL_APPLE_vertex_array_object */
    functions->NewArrayObject = _mesa_new_vao;

@@ -115,6 +115,13 @@ extern void
 _mesa_buffer_unmap_all_mappings(struct gl_context *ctx,
                                 struct gl_buffer_object *bufObj);
 
+extern void
+_mesa_buffer_clear_subdata(struct gl_context *ctx,
+                           GLintptr offset, GLsizeiptr size,
+                           const GLvoid *clearValue,
+                           GLsizeiptr clearValueSize,
+                           struct gl_buffer_object *bufObj);
+
 /*
  * API functions
  */

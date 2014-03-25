@@ -665,7 +665,7 @@ _mesa_buffer_get_subdata( struct gl_context *ctx, GLintptrARB offset,
  * \sa glClearBufferSubData, glClearBufferData and
  * dd_function_table::ClearBufferSubData.
  */
-static void
+void
 _mesa_buffer_clear_subdata(struct gl_context *ctx,
                            GLintptr offset, GLsizeiptr size,
                            const GLvoid *clearValue,
@@ -1458,7 +1458,7 @@ _mesa_ClearBufferData(GLenum target, GLenum internalformat, GLenum format,
    if (data == NULL) {
       /* clear to zeros, per the spec */
       ctx->Driver.ClearBufferSubData(ctx, 0, bufObj->Size,
-                                     NULL, 0, bufObj);
+                                     NULL, clearValueSize, bufObj);
       return;
    }
 
@@ -1510,7 +1510,7 @@ _mesa_ClearBufferSubData(GLenum target, GLenum internalformat,
       /* clear to zeros, per the spec */
       if (size > 0) {
          ctx->Driver.ClearBufferSubData(ctx, offset, size,
-                                        NULL, 0, bufObj);
+                                        NULL, clearValueSize, bufObj);
       }
       return;
    }
