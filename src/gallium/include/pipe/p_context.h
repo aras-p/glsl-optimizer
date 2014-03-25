@@ -332,6 +332,17 @@ struct pipe_context {
                                unsigned dstx, unsigned dsty,
                                unsigned width, unsigned height);
 
+   /**
+    * Clear a buffer. Runs a memset over the specified region with the element
+    * value passed in through clear_value of size clear_value_size.
+    */
+   void (*clear_buffer)(struct pipe_context *pipe,
+                        struct pipe_resource *res,
+                        unsigned offset,
+                        unsigned size,
+                        const void *clear_value,
+                        int clear_value_size);
+
    /** Flush draw commands
     *
     * \param flags  bitfield of enum pipe_flush_flags values.
