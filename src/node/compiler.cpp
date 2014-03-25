@@ -5,9 +5,9 @@ using namespace node;
 
 //----------------------------------------------------------------------
 
-Compiler::Compiler(bool essl)
+Compiler::Compiler(glslopt_target target)
 {
-	_binding = glslopt_initialize(essl);
+	_binding = glslopt_initialize(target);
 }
 
 //----------------------------------------------------------------------
@@ -52,9 +52,25 @@ Handle<Value> Compiler::New(const Arguments& args)
 {
 	HandleScope scope;
 
-	bool essl = args[0]->IsUndefined() ? true : args[0]->BooleanValue();
+	glslopt_target target = kGlslTargetOpenGLES20;
+	if (!args[0]->IsUndefined())
+	{
+		glslopt_target target_value = (glslopt_target)args[0]->Uint32Value();
+		switch (target_value)
+		{
+			case kGlslTargetOpenGL:
+			case kGlslTargetOpenGLES20:
+			case kGlslTargetOpenGLES30:
+				target = target_value;
+				break;
+			default:
+				return ThrowException(Exception::TypeError(
+					String::New("Invalid optimization target"))
+				);
+		}
+	}
 
-	Compiler* obj = new Compiler(essl);
+	Compiler* obj = new Compiler(target);
 
 	obj->Wrap(args.This());
 
