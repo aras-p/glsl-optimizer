@@ -188,15 +188,20 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
                entry->tmp = tmp;
                entry->generator->dst = tmp;
 
-               for (int i = 0; i < written; i++) {
-                  fs_inst *copy = MOV(orig_dst, tmp);
+               fs_inst *copy;
+               if (written > 1) {
+                  fs_reg *sources = ralloc_array(mem_ctx, fs_reg, written);
+                  for (int i = 0; i < written; i++) {
+                     sources[i] = tmp;
+                     sources[i].reg_offset = i;
+                  }
+                  copy = LOAD_PAYLOAD(orig_dst, sources, written);
+               } else {
+                  copy = MOV(orig_dst, tmp);
                   copy->force_writemask_all =
                      entry->generator->force_writemask_all;
-                  entry->generator->insert_after(copy);
-
-                  orig_dst.reg_offset++;
-                  tmp.reg_offset++;
                }
+               entry->generator->insert_after(copy);
             }
 
             /* dest <- temp */
@@ -206,15 +211,19 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
                assert(inst->dst.type == entry->tmp.type);
                fs_reg dst = inst->dst;
                fs_reg tmp = entry->tmp;
-               fs_inst *copy = NULL;
-               for (int i = 0; i < written; i++) {
+               fs_inst *copy;
+               if (written > 1) {
+                  fs_reg *sources = ralloc_array(mem_ctx, fs_reg, written);
+                  for (int i = 0; i < written; i++) {
+                     sources[i] = tmp;
+                     sources[i].reg_offset = i;
+                  }
+                  copy = LOAD_PAYLOAD(dst, sources, written);
+               } else {
                   copy = MOV(dst, tmp);
                   copy->force_writemask_all = inst->force_writemask_all;
-                  inst->insert_before(copy);
-
-                  dst.reg_offset++;
-                  tmp.reg_offset++;
                }
+               inst->insert_before(copy);
             }
 
             /* Set our iterator so that next time through the loop inst->next
