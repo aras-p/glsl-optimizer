@@ -1723,22 +1723,27 @@ fs_visitor::compact_virtual_grfs()
    /* In addition to registers used in instructions, fs_visitor keeps
     * direct references to certain special values which must be patched:
     */
-   fs_reg *special[] = {
-      &frag_depth, &pixel_x, &pixel_y, &pixel_w, &wpos_w, &dual_src_output,
-      &outputs[0], &outputs[1], &outputs[2], &outputs[3],
-      &outputs[4], &outputs[5], &outputs[6], &outputs[7],
-      &delta_x[0], &delta_x[1], &delta_x[2],
-      &delta_x[3], &delta_x[4], &delta_x[5],
-      &delta_y[0], &delta_y[1], &delta_y[2],
-      &delta_y[3], &delta_y[4], &delta_y[5],
+   struct {
+      fs_reg *reg;
+      unsigned count;
+   } special[] = {
+      { &frag_depth, 1 },
+      { &pixel_x, 1 },
+      { &pixel_y, 1 },
+      { &pixel_w, 1 },
+      { &wpos_w, 1 },
+      { &dual_src_output, 1 },
+      { outputs, ARRAY_SIZE(outputs) },
+      { delta_x, ARRAY_SIZE(delta_x) },
+      { delta_y, ARRAY_SIZE(delta_y) },
    };
-   STATIC_ASSERT(BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT == 6);
-   STATIC_ASSERT(BRW_MAX_DRAW_BUFFERS == 8);
 
    /* Treat all special values as used, to be conservative */
    for (unsigned i = 0; i < ARRAY_SIZE(special); i++) {
-      if (special[i]->file == GRF)
-	 remap_table[special[i]->reg] = 0;
+      for (unsigned j = 0; j < special[i].count; j++) {
+         if (special[i].reg[j].file == GRF)
+            remap_table[special[i].reg[j].reg] = 0;
+      }
    }
 
    /* Compact the GRF arrays. */
@@ -1769,8 +1774,11 @@ fs_visitor::compact_virtual_grfs()
 
    /* Patch all the references to special values */
    for (unsigned i = 0; i < ARRAY_SIZE(special); i++) {
-      if (special[i]->file == GRF && remap_table[special[i]->reg] != -1)
-	 special[i]->reg = remap_table[special[i]->reg];
+      for (unsigned j = 0; j < special[i].count; j++) {
+         fs_reg *reg = &special[i].reg[j];
+         if (reg->file == GRF && remap_table[reg->reg] != -1)
+            reg->reg = remap_table[reg->reg];
+      }
    }
 }
 
