@@ -710,9 +710,6 @@ lp_build_resize(struct gallivm_state *gallivm,
    /* We must not loose or gain channels. Only precision */
    assert(src_type.length * num_srcs == dst_type.length * num_dsts);
 
-   /* We don't support M:N conversion, only 1:N, M:1, or 1:1 */
-   assert(num_srcs == 1 || num_dsts == 1);
-
    assert(src_type.length <= LP_MAX_VECTOR_LENGTH);
    assert(dst_type.length <= LP_MAX_VECTOR_LENGTH);
    assert(num_srcs <= LP_MAX_VECTOR_LENGTH);
@@ -723,6 +720,7 @@ lp_build_resize(struct gallivm_state *gallivm,
        * Truncate bit width.
        */
 
+      /* Conversion must be M:1 */
       assert(num_dsts == 1);
 
       if (src_type.width * src_type.length == dst_type.width * dst_type.length) {
@@ -775,6 +773,7 @@ lp_build_resize(struct gallivm_state *gallivm,
        * Expand bit width.
        */
 
+      /* Conversion must be 1:N */
       assert(num_srcs == 1);
 
       if (src_type.width * src_type.length == dst_type.width * dst_type.length) {
@@ -813,10 +812,11 @@ lp_build_resize(struct gallivm_state *gallivm,
        * No-op
        */
 
-      assert(num_srcs == 1);
-      assert(num_dsts == 1);
+      /* "Conversion" must be N:N */
+      assert(num_srcs == num_dsts);
 
-      tmp[0] = src[0];
+      for(i = 0; i < num_dsts; ++i)
+         tmp[i] = src[i];
    }
 
    for(i = 0; i < num_dsts; ++i)
