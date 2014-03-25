@@ -184,7 +184,6 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
                     "back to very inefficient code generation\n");
       }
 
-      /* FINISHME: Do this before the variable index lowering. */
       lower_ubo_reference(&shader->base, shader->base.ir);
 
       do {
