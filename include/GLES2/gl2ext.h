@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 /*
-** Copyright (c) 2013 The Khronos Group Inc.
+** Copyright (c) 2013-2014 The Khronos Group Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and/or associated documentation files (the
@@ -33,14 +33,14 @@ extern "C" {
 ** used to make the header, and the header can be found at
 **   http://www.opengl.org/registry/
 **
-** Khronos $Revision: 24614 $ on $Date: 2013-12-30 04:44:46 -0800 (Mon, 30 Dec 2013) $
+** Khronos $Revision: 25922 $ on $Date: 2014-03-17 03:54:32 -0700 (Mon, 17 Mar 2014) $
 */
 
 #ifndef GL_APIENTRYP
 #define GL_APIENTRYP GL_APIENTRY*
 #endif
 
-/* Generated on date 20131230 */
+/* Generated on date 20140317 */
 
 /* Generated C header for:
  * API: gles2
@@ -51,6 +51,30 @@ extern "C" {
  * Additional extensions included: _nomatch_^
  * Extensions removed: _nomatch_^
  */
+
+#ifndef GL_KHR_blend_equation_advanced
+#define GL_KHR_blend_equation_advanced 1
+#define GL_BLEND_ADVANCED_COHERENT_KHR    0x9285
+#define GL_MULTIPLY_KHR                   0x9294
+#define GL_SCREEN_KHR                     0x9295
+#define GL_OVERLAY_KHR                    0x9296
+#define GL_DARKEN_KHR                     0x9297
+#define GL_LIGHTEN_KHR                    0x9298
+#define GL_COLORDODGE_KHR                 0x9299
+#define GL_COLORBURN_KHR                  0x929A
+#define GL_HARDLIGHT_KHR                  0x929B
+#define GL_SOFTLIGHT_KHR                  0x929C
+#define GL_DIFFERENCE_KHR                 0x929E
+#define GL_EXCLUSION_KHR                  0x92A0
+#define GL_HSL_HUE_KHR                    0x92AD
+#define GL_HSL_SATURATION_KHR             0x92AE
+#define GL_HSL_COLOR_KHR                  0x92AF
+#define GL_HSL_LUMINOSITY_KHR             0x92B0
+typedef void (GL_APIENTRYP PFNGLBLENDBARRIERKHRPROC) (void);
+#ifdef GL_GLEXT_PROTOTYPES
+GL_APICALL void GL_APIENTRY glBlendBarrierKHR (void);
+#endif
+#endif /* GL_KHR_blend_equation_advanced */
 
 #ifndef GL_KHR_debug
 #define GL_KHR_debug 1
@@ -277,6 +301,31 @@ GL_APICALL void GL_APIENTRY glGetBufferPointervOES (GLenum target, GLenum pname,
 #define GL_OES_rgb8_rgba8 1
 #endif /* GL_OES_rgb8_rgba8 */
 
+#ifndef GL_OES_sample_shading
+#define GL_OES_sample_shading 1
+#define GL_SAMPLE_SHADING_OES             0x8C36
+#define GL_MIN_SAMPLE_SHADING_VALUE_OES   0x8C37
+typedef void (GL_APIENTRYP PFNGLMINSAMPLESHADINGOESPROC) (GLfloat value);
+#ifdef GL_GLEXT_PROTOTYPES
+GL_APICALL void GL_APIENTRY glMinSampleShadingOES (GLfloat value);
+#endif
+#endif /* GL_OES_sample_shading */
+
+#ifndef GL_OES_sample_variables
+#define GL_OES_sample_variables 1
+#endif /* GL_OES_sample_variables */
+
+#ifndef GL_OES_shader_image_atomic
+#define GL_OES_shader_image_atomic 1
+#endif /* GL_OES_shader_image_atomic */
+
+#ifndef GL_OES_shader_multisample_interpolation
+#define GL_OES_shader_multisample_interpolation 1
+#define GL_MIN_FRAGMENT_INTERPOLATION_OFFSET_OES 0x8E5B
+#define GL_MAX_FRAGMENT_INTERPOLATION_OFFSET_OES 0x8E5C
+#define GL_FRAGMENT_INTERPOLATION_OFFSET_BITS_OES 0x8E5D
+#endif /* GL_OES_shader_multisample_interpolation */
+
 #ifndef GL_OES_standard_derivatives
 #define GL_OES_standard_derivatives 1
 #define GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES 0x8B8B
@@ -365,6 +414,25 @@ GL_APICALL void GL_APIENTRY glFramebufferTexture3DOES (GLenum target, GLenum att
 #ifndef GL_OES_texture_npot
 #define GL_OES_texture_npot 1
 #endif /* GL_OES_texture_npot */
+
+#ifndef GL_OES_texture_stencil8
+#define GL_OES_texture_stencil8 1
+#define GL_STENCIL_INDEX_OES              0x1901
+#define GL_STENCIL_INDEX8_OES             0x8D48
+#endif /* GL_OES_texture_stencil8 */
+
+#ifndef GL_OES_texture_storage_multisample_2d_array
+#define GL_OES_texture_storage_multisample_2d_array 1
+#define GL_TEXTURE_2D_MULTISAMPLE_ARRAY_OES 0x9102
+#define GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY_OES 0x9105
+#define GL_SAMPLER_2D_MULTISAMPLE_ARRAY_OES 0x910B
+#define GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY_OES 0x910C
+#define GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY_OES 0x910D
+typedef void (GL_APIENTRYP PFNGLTEXSTORAGE3DMULTISAMPLEOESPROC) (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations);
+#ifdef GL_GLEXT_PROTOTYPES
+GL_APICALL void GL_APIENTRY glTexStorage3DMultisampleOES (GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations);
+#endif
+#endif /* GL_OES_texture_storage_multisample_2d_array */
 
 #ifndef GL_OES_vertex_array_object
 #define GL_OES_vertex_array_object 1
@@ -612,6 +680,16 @@ GL_APICALL void GL_APIENTRY glGetSyncivAPPLE (GLsync sync, GLenum pname, GLsizei
 #ifndef GL_ARM_rgba8
 #define GL_ARM_rgba8 1
 #endif /* GL_ARM_rgba8 */
+
+#ifndef GL_ARM_shader_framebuffer_fetch
+#define GL_ARM_shader_framebuffer_fetch 1
+#define GL_FETCH_PER_SAMPLE_ARM           0x8F65
+#define GL_FRAGMENT_SHADER_FRAMEBUFFER_FETCH_MRT_ARM 0x8F66
+#endif /* GL_ARM_shader_framebuffer_fetch */
+
+#ifndef GL_ARM_shader_framebuffer_fetch_depth_stencil
+#define GL_ARM_shader_framebuffer_fetch_depth_stencil 1
+#endif /* GL_ARM_shader_framebuffer_fetch_depth_stencil */
 
 #ifndef GL_DMP_shader_binary
 #define GL_DMP_shader_binary 1
@@ -989,6 +1067,13 @@ GL_APICALL void GL_APIENTRY glProgramUniformMatrix4x3fvEXT (GLuint program, GLin
 #ifndef GL_EXT_shader_integer_mix
 #define GL_EXT_shader_integer_mix 1
 #endif /* GL_EXT_shader_integer_mix */
+
+#ifndef GL_EXT_shader_pixel_local_storage
+#define GL_EXT_shader_pixel_local_storage 1
+#define GL_MAX_SHADER_PIXEL_LOCAL_STORAGE_FAST_SIZE_EXT 0x8F63
+#define GL_MAX_SHADER_PIXEL_LOCAL_STORAGE_SIZE_EXT 0x8F67
+#define GL_SHADER_PIXEL_LOCAL_STORAGE_EXT 0x8F64
+#endif /* GL_EXT_shader_pixel_local_storage */
 
 #ifndef GL_EXT_shader_texture_lod
 #define GL_EXT_shader_texture_lod 1

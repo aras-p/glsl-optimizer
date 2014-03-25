@@ -41,6 +41,7 @@ GLES2_include_HEADERS = \
 GLES3_includedir = $(includedir)/GLES3
 GLES3_include_HEADERS = \
 	$(top_srcdir)/include/GLES3/gl3.h \
+	$(top_srcdir)/include/GLES3/gl31.h \
 	$(top_srcdir)/include/GLES3/gl3ext.h \
 	$(top_srcdir)/include/GLES3/gl3platform.h
 
