@@ -50,6 +50,39 @@
 
 
 /**
+ * Return swizzle1(swizzle2)
+ */
+static unsigned
+swizzle_swizzle(unsigned swizzle1, unsigned swizzle2)
+{
+   unsigned i, swz[4];
+
+   for (i = 0; i < 4; i++) {
+      unsigned s = GET_SWZ(swizzle1, i);
+      switch (s) {
+      case SWIZZLE_X:
+      case SWIZZLE_Y:
+      case SWIZZLE_Z:
+      case SWIZZLE_W:
+         swz[i] = GET_SWZ(swizzle2, s);
+         break;
+      case SWIZZLE_ZERO:
+         swz[i] = SWIZZLE_ZERO;
+         break;
+      case SWIZZLE_ONE:
+         swz[i] = SWIZZLE_ONE;
+         break;
+      default:
+         assert(!"Bad swizzle term");
+         swz[i] = SWIZZLE_X;
+      }
+   }
+
+   return MAKE_SWIZZLE4(swz[0], swz[1], swz[2], swz[3]);
+}
+
+
+/**
  * Combine depth texture mode with "swizzle" so that depth mode swizzling
  * takes place before texture swizzling, and return the resulting swizzle.
  * If the format is not a depth format, return "swizzle" unchanged.
@@ -63,8 +96,7 @@ apply_depthmode(enum pipe_format format, GLuint swizzle, GLenum depthmode)
 {
    const struct util_format_description *desc =
          util_format_description(format);
-   unsigned char swiz[4];
-   unsigned i;
+   unsigned swz;
 
    if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS ||
        desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_NONE) {
@@ -72,45 +104,22 @@ apply_depthmode(enum pipe_format format, GLuint swizzle, GLenum depthmode)
       return swizzle;
    }
 
-   for (i = 0; i < 4; i++)
-      swiz[i] = GET_SWZ(swizzle, i);
-
    switch (depthmode) {
-      case GL_LUMINANCE:
-         /* Rewrite reads from W to ONE, and reads from XYZ to XXX. */
-         for (i = 0; i < 4; i++)
-            if (swiz[i] == SWIZZLE_W)
-               swiz[i] = SWIZZLE_ONE;
-            else if (swiz[i] < SWIZZLE_W)
-               swiz[i] = SWIZZLE_X;
-         break;
-
-      case GL_INTENSITY:
-         /* Rewrite reads from XYZW to XXXX. */
-         for (i = 0; i < 4; i++)
-            if (swiz[i] <= SWIZZLE_W)
-               swiz[i] = SWIZZLE_X;
-         break;
-
-      case GL_ALPHA:
-         /* Rewrite reads from W to X, and reads from XYZ to 000. */
-         for (i = 0; i < 4; i++)
-            if (swiz[i] == SWIZZLE_W)
-               swiz[i] = SWIZZLE_X;
-            else if (swiz[i] < SWIZZLE_W)
-               swiz[i] = SWIZZLE_ZERO;
-         break;
-      case GL_RED:
-	 /* Rewrite reads W to 1, XYZ to X00 */
-	 for (i = 0; i < 4; i++)
-	    if (swiz[i] == SWIZZLE_W)
-	       swiz[i] = SWIZZLE_ONE;
-	    else if (swiz[i] == SWIZZLE_Y || swiz[i] == SWIZZLE_Z)
-	       swiz[i] = SWIZZLE_ZERO;
-	 break;
+   case GL_LUMINANCE:
+      swz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_ONE);
+      break;
+   case GL_INTENSITY:
+      swz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X);
+      break;
+   case GL_ALPHA:
+      swz = MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_X);
+      break;
+   case GL_RED:
+      swz = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ONE);
+      break;
    }
 
-   return MAKE_SWIZZLE4(swiz[0], swiz[1], swiz[2], swiz[3]);
+   return swizzle_swizzle(swizzle, swz);
 }
 
 
