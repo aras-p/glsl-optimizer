@@ -3153,9 +3153,9 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
    case MESA_FORMAT_L_UNORM16:
       return format == GL_LUMINANCE && type == GL_UNSIGNED_SHORT && !swapBytes;
    case MESA_FORMAT_I_UNORM8:
-      return format == GL_RED && type == GL_UNSIGNED_BYTE;
+      return format == GL_INTENSITY && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_I_UNORM16:
-      return format == GL_RED && type == GL_UNSIGNED_SHORT && !swapBytes;
+      return format == GL_INTENSITY && type == GL_UNSIGNED_SHORT && !swapBytes;
 
    case MESA_FORMAT_YCBCR:
       return format == GL_YCBCR_MESA &&
@@ -3247,9 +3247,9 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
       return format == GL_LUMINANCE_ALPHA && type == GL_HALF_FLOAT && !swapBytes;
 
    case MESA_FORMAT_I_FLOAT32:
-      return format == GL_RED && type == GL_FLOAT && !swapBytes;
+      return format == GL_INTENSITY && type == GL_FLOAT && !swapBytes;
    case MESA_FORMAT_I_FLOAT16:
-      return format == GL_RED && type == GL_HALF_FLOAT && !swapBytes;
+      return format == GL_INTENSITY && type == GL_HALF_FLOAT && !swapBytes;
 
    case MESA_FORMAT_R_FLOAT32:
       return format == GL_RED && type == GL_FLOAT && !swapBytes;
@@ -3277,17 +3277,13 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
       return format == GL_ALPHA_INTEGER && type == GL_INT && !swapBytes;
 
    case MESA_FORMAT_I_UINT8:
-      return format == GL_RED_INTEGER && type == GL_UNSIGNED_BYTE;
    case MESA_FORMAT_I_UINT16:
-      return format == GL_RED_INTEGER && type == GL_UNSIGNED_SHORT && !swapBytes;
    case MESA_FORMAT_I_UINT32:
-      return format == GL_RED_INTEGER && type == GL_UNSIGNED_INT && !swapBytes;
    case MESA_FORMAT_I_SINT8:
-      return format == GL_RED_INTEGER && type == GL_BYTE;
    case MESA_FORMAT_I_SINT16:
-      return format == GL_RED_INTEGER && type == GL_SHORT && !swapBytes;
    case MESA_FORMAT_I_SINT32:
-      return format == GL_RED_INTEGER && type == GL_INT && !swapBytes;
+      /* GL_INTENSITY_INTEGER_EXT doesn't exist. */
+      return GL_FALSE;
 
    case MESA_FORMAT_L_UINT8:
       return format == GL_LUMINANCE_INTEGER_EXT && type == GL_UNSIGNED_BYTE;
@@ -3454,7 +3450,7 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
       return format == GL_LUMINANCE_ALPHA && type == GL_BYTE &&
              littleEndian && !swapBytes;
    case MESA_FORMAT_I_SNORM8:
-      return format == GL_RED && type == GL_BYTE;
+      return format == GL_INTENSITY && type == GL_BYTE;
    case MESA_FORMAT_A_SNORM16:
       return format == GL_ALPHA && type == GL_SHORT && !swapBytes;
    case MESA_FORMAT_L_SNORM16:
@@ -3463,7 +3459,7 @@ _mesa_format_matches_format_and_type(mesa_format mesa_format,
       return format == GL_LUMINANCE_ALPHA && type == GL_SHORT &&
              littleEndian && !swapBytes;
    case MESA_FORMAT_I_SNORM16:
-      return format == GL_RED && type == GL_SHORT && littleEndian &&
+      return format == GL_INTENSITY && type == GL_SHORT && littleEndian &&
              !swapBytes;
 
    case MESA_FORMAT_B10G10R10A2_UINT:
