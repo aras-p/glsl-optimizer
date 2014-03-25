@@ -2035,6 +2035,15 @@ _mesa_is_format_signed(mesa_format format)
    }
 }
 
+/**
+ * Is the given format an integer format?
+ */
+GLboolean
+_mesa_is_format_integer(mesa_format format)
+{
+   const struct gl_format_info *info = _mesa_get_format_info(format);
+   return (info->DataType == GL_INT || info->DataType == GL_UNSIGNED_INT);
+}
 
 /**
  * Return color encoding for given format.
