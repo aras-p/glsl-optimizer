@@ -200,9 +200,9 @@ get_texture_format_swizzle(const struct st_texture_object *stObj)
  * \param stObj  the st texture object,
  */
 static boolean
-check_sampler_swizzle(const struct st_texture_object *stObj)
+check_sampler_swizzle(const struct st_texture_object *stObj,
+		      struct pipe_sampler_view *sv)
 {
-   const struct pipe_sampler_view *sv = stObj->sampler_view;
    unsigned swizzle = get_texture_format_swizzle(stObj);
 
    return ((sv->swizzle_r != GET_SWZ(swizzle, 0)) ||
@@ -258,40 +258,47 @@ st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
 
 
 static struct pipe_sampler_view *
-st_get_texture_sampler_view_from_stobj(struct st_texture_object *stObj,
-				       struct pipe_context *pipe,
+st_get_texture_sampler_view_from_stobj(struct st_context *st,
+                                       struct st_texture_object *stObj,
                                        const struct gl_sampler_object *samp,
 				       enum pipe_format format)
 {
+   struct pipe_sampler_view **sv;
+
    if (!stObj || !stObj->pt) {
       return NULL;
    }
 
-   if (!stObj->sampler_view) {
-      stObj->sampler_view =
-         st_create_texture_sampler_view_from_stobj(pipe, stObj, samp, format);
+   sv = st_texture_get_sampler_view(st, stObj);
 
-   } else if (stObj->sampler_view->context != pipe) {
-      /* Recreate view in correct context, use existing view as template */
-      /* XXX: This isn't optimal, we should try to use more than one view.
-              Otherwise we create/destroy the view all the time
-       */
-      struct pipe_sampler_view *sv =
-         pipe->create_sampler_view(pipe, stObj->pt, stObj->sampler_view);
-      pipe_sampler_view_reference(&stObj->sampler_view, NULL);
-      stObj->sampler_view = sv;
+   /* if sampler view has changed dereference it */
+   if (*sv) {
+      if (check_sampler_swizzle(stObj, *sv) ||
+	  (format != (*sv)->format) ||
+	  stObj->base.BaseLevel != (*sv)->u.tex.first_level) {
+	 pipe_sampler_view_reference(sv, NULL);
+      }
    }
 
-   return stObj->sampler_view;
-}
+   if (!*sv) {
+      *sv = st_create_texture_sampler_view_from_stobj(st->pipe, stObj, samp, format);
 
+   } else if ((*sv)->context != st->pipe) {
+      /* Recreate view in correct context, use existing view as template */
+      struct pipe_sampler_view *new_sv =
+         st->pipe->create_sampler_view(st->pipe, stObj->pt, *sv);
+      pipe_sampler_view_reference(sv, NULL);
+      *sv = new_sv;
+   }
+
+   return *sv;
+}
 
 static GLboolean
 update_single_texture(struct st_context *st,
                       struct pipe_sampler_view **sampler_view,
 		      GLuint texUnit)
 {
-   struct pipe_context *pipe = st->pipe;
    struct gl_context *ctx = st->ctx;
    const struct gl_sampler_object *samp;
    struct gl_texture_object *texObj;
@@ -330,17 +337,7 @@ update_single_texture(struct st_context *st,
       }
    }
 
-   /* if sampler view has changed dereference it */
-   if (stObj->sampler_view) {
-      if (check_sampler_swizzle(stObj) ||
-	  (view_format != stObj->sampler_view->format) ||
-	  stObj->base.BaseLevel != stObj->sampler_view->u.tex.first_level) {
-	 pipe_sampler_view_release(pipe, &stObj->sampler_view);
-      }
-   }
-
-   *sampler_view = st_get_texture_sampler_view_from_stobj(stObj, pipe,
-							  samp,
+   *sampler_view = st_get_texture_sampler_view_from_stobj(st, stObj, samp,
 							  view_format);
    return GL_TRUE;
 }

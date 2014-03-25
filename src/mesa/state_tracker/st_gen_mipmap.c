@@ -182,7 +182,7 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
 
       /* release the old tex (will likely be freed too) */
       pipe_resource_reference(&oldTex, NULL);
-      pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+      st_texture_release_all_sampler_views(stObj);
    }
    else {
       /* Make sure that the base texture image data is present in the

@@ -40,6 +40,7 @@
 #include "util/u_format.h"
 #include "util/u_rect.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 
 
 #define DBG if(0) printf
@@ -412,10 +413,73 @@ st_create_color_map_texture(struct gl_context *ctx)
    return pt;
 }
 
+/**
+ * Try to find a matching sampler view for the given context.
+ * If none is found an empty slot is initialized with a
+ * template and returned instead.
+ */
+struct pipe_sampler_view **
+st_texture_get_sampler_view(struct st_context *st,
+                            struct st_texture_object *stObj)
+{
+   struct pipe_sampler_view **used = NULL, **free = NULL;
+   GLuint i;
+
+   for (i = 0; i < stObj->num_sampler_views; ++i) {
+      struct pipe_sampler_view **sv = &stObj->sampler_views[i];
+      /* Is the array entry used ? */
+      if (*sv) {
+         /* Yes, check if it's the right one */
+         if ((*sv)->context == st->pipe)
+            return sv;
+
+         /* Wasn't the right one, but remember it as template */
+         used = sv;
+      } else {
+         /* Found a free slot, remember that */
+         free = sv;
+      }
+   }
+
+   /* Couldn't find a slot for our context, create a new one */
+
+   if (!free) {
+      /* Haven't even found a free one, resize the array */
+      GLuint old_size = stObj->num_sampler_views * sizeof(void *);
+      GLuint new_size = old_size + sizeof(void *);
+      stObj->sampler_views = REALLOC(stObj->sampler_views, old_size, new_size);
+      free = &stObj->sampler_views[stObj->num_sampler_views++];
+      *free = NULL;
+   }
+
+   /* Add just any sampler view to be used as a template */
+   if (used)
+      pipe_sampler_view_reference(free, *used);
+
+   return free;
+}
+
 void
 st_texture_release_sampler_view(struct st_context *st,
                                 struct st_texture_object *stObj)
 {
-   if (stObj->sampler_view && stObj->sampler_view->context == st->pipe)
-      pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+   GLuint i;
+
+   for (i = 0; i < stObj->num_sampler_views; ++i) {
+      struct pipe_sampler_view **sv = &stObj->sampler_views[i];
+
+      if (*sv && (*sv)->context == st->pipe) {
+         pipe_sampler_view_reference(sv, NULL);
+         break;
+      }
+   }
+}
+
+void
+st_texture_release_all_sampler_views(struct st_texture_object *stObj)
+{
+   GLuint i;
+
+   for (i = 0; i < stObj->num_sampler_views; ++i)
+      pipe_sampler_view_reference(&stObj->sampler_views[i], NULL);
 }

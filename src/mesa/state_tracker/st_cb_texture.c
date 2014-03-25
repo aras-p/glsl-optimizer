@@ -151,13 +151,11 @@ static void
 st_DeleteTextureObject(struct gl_context *ctx,
                        struct gl_texture_object *texObj)
 {
-   struct st_context *st = st_context(ctx);
    struct st_texture_object *stObj = st_texture_object(texObj);
-   if (stObj->pt)
-      pipe_resource_reference(&stObj->pt, NULL);
-   if (stObj->sampler_view) {
-      pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
-   }
+
+   pipe_resource_reference(&stObj->pt, NULL);
+   st_texture_release_all_sampler_views(stObj);
+   FREE(stObj->sampler_views);
    _mesa_delete_texture_object(ctx, texObj);
 }
 
@@ -454,7 +452,7 @@ st_AllocTextureImageBuffer(struct gl_context *ctx,
    /* The parent texture object does not have space for this image */
 
    pipe_resource_reference(&stObj->pt, NULL);
-   pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
+   st_texture_release_all_sampler_views(stObj);
 
    if (!guess_and_alloc_texture(st, stObj, stImage)) {
       /* Probably out of memory.
@@ -1487,13 +1485,13 @@ st_finalize_texture(struct gl_context *ctx,
 
       if (!st_obj) {
          pipe_resource_reference(&stObj->pt, NULL);
-         pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+         st_texture_release_all_sampler_views(stObj);
          return GL_TRUE;
       }
 
       if (st_obj->buffer != stObj->pt) {
          pipe_resource_reference(&stObj->pt, st_obj->buffer);
-         pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
+         st_texture_release_all_sampler_views(stObj);
          stObj->width0 = stObj->pt->width0 / _mesa_get_format_bytes(tObj->_BufferObjectFormat);
          stObj->height0 = 1;
          stObj->depth0 = 1;
@@ -1514,7 +1512,7 @@ st_finalize_texture(struct gl_context *ctx,
        firstImage->pt != stObj->pt &&
        (!stObj->pt || firstImage->pt->last_level >= stObj->pt->last_level)) {
       pipe_resource_reference(&stObj->pt, firstImage->pt);
-      pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
+      st_texture_release_all_sampler_views(stObj);
    }
 
    /* If this texture comes from a window system, there is nothing else to do. */
@@ -1561,7 +1559,7 @@ st_finalize_texture(struct gl_context *ctx,
           * gallium texture now.  We'll make a new one below.
           */
          pipe_resource_reference(&stObj->pt, NULL);
-         pipe_sampler_view_release(st->pipe, &stObj->sampler_view);
+         st_texture_release_all_sampler_views(stObj);
          st->dirty.st |= ST_NEW_FRAMEBUFFER;
       }
    }

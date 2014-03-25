@@ -182,15 +182,27 @@ convert_sampler(struct st_context *st,
        msamp->BorderColor.ui[3]) {
       const struct st_texture_object *stobj = st_texture_object_const(texobj);
       const GLboolean is_integer = texobj->_IsIntegerFormat;
+      const struct pipe_sampler_view *sv = NULL;
       union pipe_color_union border_color;
+      GLuint i;
 
-      if (st->apply_texture_swizzle_to_border_color && stobj->sampler_view) {
+      /* Just search for the first used view. We can do this because the
+         swizzle is per-texture, not per context. */
+      /* XXX: clean that up to not use the sampler view at all */
+      for (i = 0; i < stobj->num_sampler_views; ++i) {
+         if (stobj->sampler_views[i]) {
+            sv = stobj->sampler_views[i];
+            break;
+         }
+      }
+
+      if (st->apply_texture_swizzle_to_border_color && sv) {
          const unsigned char swz[4] =
          {
-            stobj->sampler_view->swizzle_r,
-            stobj->sampler_view->swizzle_g,
-            stobj->sampler_view->swizzle_b,
-            stobj->sampler_view->swizzle_a,
+            sv->swizzle_r,
+            sv->swizzle_g,
+            sv->swizzle_b,
+            sv->swizzle_a,
          };
 
          st_translate_color(&msamp->BorderColor,

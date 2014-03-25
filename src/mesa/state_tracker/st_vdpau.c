@@ -63,7 +63,7 @@ st_vdpau_map_surface(struct gl_context *ctx, GLenum target, GLenum access,
    struct st_texture_image *stImage = st_texture_image(texImage);
  
    struct pipe_resource *res;
-   struct pipe_sampler_view *sv, templ;
+   struct pipe_sampler_view templ, **sampler_view;
    mesa_format texFormat;
 
    getProcAddr = ctx->vdpGetProcAddress;
@@ -83,6 +83,7 @@ st_vdpau_map_surface(struct gl_context *ctx, GLenum target, GLenum access,
       }
 
    } else {
+      struct pipe_sampler_view *sv;
       VdpVideoSurfaceGallium *f;
 
       struct pipe_video_buffer *buffer;
@@ -138,7 +139,7 @@ st_vdpau_map_surface(struct gl_context *ctx, GLenum target, GLenum access,
                               texFormat);
 
    pipe_resource_reference(&stObj->pt, res);
-   pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+   st_texture_release_all_sampler_views(stObj);
    pipe_resource_reference(&stImage->pt, res);
 
    u_sampler_view_default_template(&templ, res, res->format);
@@ -148,7 +149,9 @@ st_vdpau_map_surface(struct gl_context *ctx, GLenum target, GLenum access,
    templ.swizzle_g = GET_SWZ(stObj->base._Swizzle, 1);
    templ.swizzle_b = GET_SWZ(stObj->base._Swizzle, 2);
    templ.swizzle_a = GET_SWZ(stObj->base._Swizzle, 3);
-   stObj->sampler_view = st->pipe->create_sampler_view(st->pipe, res, &templ);
+
+   sampler_view = st_texture_get_sampler_view(st, stObj);
+   *sampler_view = st->pipe->create_sampler_view(st->pipe, res, &templ);
 
    stObj->width0 = res->width0;
    stObj->height0 = res->height0;
@@ -169,7 +172,7 @@ st_vdpau_unmap_surface(struct gl_context *ctx, GLenum target, GLenum access,
    struct st_texture_image *stImage = st_texture_image(texImage);
 
    pipe_resource_reference(&stObj->pt, NULL);
-   pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+   st_texture_release_all_sampler_views(stObj);
    pipe_resource_reference(&stImage->pt, NULL);
 
    _mesa_dirty_texobj(ctx, texObj);

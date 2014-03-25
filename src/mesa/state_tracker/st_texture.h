@@ -82,10 +82,13 @@ struct st_texture_object
     */
    struct pipe_resource *pt;
 
-   /* Default sampler view attached to this texture object. Created lazily
-    * on first binding.
+   /* Number of views in sampler_views array */
+   GLuint num_sampler_views;
+
+   /* Array of sampler views (one per context) attached to this texture
+    * object. Created lazily on first binding in context.
     */
-   struct pipe_sampler_view *sampler_view;
+   struct pipe_sampler_view **sampler_views;
 
    /* True if this texture comes from the window system. Such a texture
     * cannot be reallocated and the format can only be changed with a sampler
@@ -227,8 +230,15 @@ st_texture_image_copy(struct pipe_context *pipe,
 extern struct pipe_resource *
 st_create_color_map_texture(struct gl_context *ctx);
 
+extern struct pipe_sampler_view **
+st_texture_get_sampler_view(struct st_context *st,
+                            struct st_texture_object *stObj);
+
 extern void
 st_texture_release_sampler_view(struct st_context *st,
                                 struct st_texture_object *stObj);
+
+extern void
+st_texture_release_all_sampler_views(struct st_texture_object *stObj);
 
 #endif
