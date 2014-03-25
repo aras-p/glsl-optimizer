@@ -105,10 +105,20 @@ is_expression_commutative(enum opcode op)
 }
 
 static bool
-operands_match(enum opcode op, fs_reg *xs, fs_reg *ys)
+operands_match(fs_inst *a, fs_inst *b)
 {
-   if (!is_expression_commutative(op)) {
-      return xs[0].equals(ys[0]) && xs[1].equals(ys[1]) && xs[2].equals(ys[2]);
+   fs_reg *xs = a->src;
+   fs_reg *ys = b->src;
+
+   if (!is_expression_commutative(a->opcode)) {
+      bool match = true;
+      for (int i = 0; i < a->sources; i++) {
+         if (!xs[i].equals(ys[i])) {
+            match = false;
+            break;
+         }
+      }
+      return match;
    } else {
       return (xs[0].equals(ys[0]) && xs[1].equals(ys[1])) ||
              (xs[1].equals(ys[0]) && xs[0].equals(ys[1]));
@@ -124,7 +134,8 @@ instructions_match(fs_inst *a, fs_inst *b)
           a->predicate_inverse == b->predicate_inverse &&
           a->conditional_mod == b->conditional_mod &&
           a->dst.type == b->dst.type &&
-          operands_match(a->opcode, a->src, b->src);
+          a->sources == b->sources &&
+          operands_match(a, b);
 }
 
 bool
