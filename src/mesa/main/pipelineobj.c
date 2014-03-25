@@ -227,6 +227,7 @@ _mesa_UseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program)
 
    struct gl_pipeline_object *pipe = lookup_pipeline_object(ctx, pipeline);
    struct gl_shader_program *shProg = NULL;
+   GLbitfield any_valid_stages;
 
    if (!pipe) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUseProgramStages(pipeline)");
@@ -247,7 +248,7 @@ _mesa_UseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program)
     * GL_TESS_CONTROL_SHADER_BIT
     * GL_TESS_EVALUATION_SHADER_BIT
     */
-   GLbitfield any_valid_stages = GL_VERTEX_SHADER_BIT | GL_FRAGMENT_SHADER_BIT;
+   any_valid_stages = GL_VERTEX_SHADER_BIT | GL_FRAGMENT_SHADER_BIT;
    if (_mesa_has_geometry_shaders(ctx))
       any_valid_stages |= GL_GEOMETRY_SHADER_BIT;
 
