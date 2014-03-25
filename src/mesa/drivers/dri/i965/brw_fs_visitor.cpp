@@ -74,6 +74,7 @@ fs_visitor::visit(ir_variable *ir)
 	 assert(ir->data.location == FRAG_RESULT_DATA0);
 	 assert(ir->data.index == 1);
 	 this->dual_src_output = *reg;
+         this->do_dual_src = true;
       } else if (ir->data.location == FRAG_RESULT_COLOR) {
 	 /* Writing gl_FragColor outputs to all color regions. */
 	 for (unsigned int i = 0; i < MAX2(c->key.nr_color_regions, 1); i++) {
@@ -2730,7 +2731,6 @@ fs_visitor::emit_fb_writes()
    int base_mrf = 1;
    int nr = base_mrf;
    int reg_width = dispatch_width / 8;
-   bool do_dual_src = this->dual_src_output.file != BAD_FILE;
    bool src0_alpha_to_render_target = false;
 
    if (do_dual_src) {
@@ -2988,6 +2988,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->force_uncompressed_stack = 0;
 
    this->spilled_any_registers = false;
+   this->do_dual_src = false;
 
    if (dispatch_width == 8)
       this->param_size = rzalloc_array(mem_ctx, int, stage_prog_data->nr_params);
