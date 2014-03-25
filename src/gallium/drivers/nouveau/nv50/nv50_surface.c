@@ -476,6 +476,120 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
    PUSH_DATA (push, nv50->rt_array_mode);
 }
 
+static void
+nv50_clear_buffer(struct pipe_context *pipe,
+                  struct pipe_resource *res,
+                  unsigned offset, unsigned size,
+                  const void *data, int data_size)
+{
+   struct nv50_context *nv50 = nv50_context(pipe);
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
+   struct nv04_resource *buf = (struct nv04_resource *)res;
+   union pipe_color_union color;
+   enum pipe_format dst_fmt;
+   unsigned width, height, elements;
+
+   assert(res->target == PIPE_BUFFER);
+   assert(nouveau_bo_memtype(buf->bo) == 0);
+
+   switch (data_size) {
+   case 16:
+      dst_fmt = PIPE_FORMAT_R32G32B32A32_UINT;
+      memcpy(&color.ui, data, 16);
+      break;
+   case 8:
+      dst_fmt = PIPE_FORMAT_R32G32_UINT;
+      memcpy(&color.ui, data, 8);
+      memset(&color.ui[2], 0, 8);
+      break;
+   case 4:
+      dst_fmt = PIPE_FORMAT_R32_UINT;
+      memcpy(&color.ui, data, 4);
+      memset(&color.ui[1], 0, 12);
+      break;
+   case 2:
+      dst_fmt = PIPE_FORMAT_R16_UINT;
+      color.ui[0] = util_cpu_to_le32(
+            util_le16_to_cpu(*(unsigned short *)data));
+      memset(&color.ui[1], 0, 12);
+      break;
+   case 1:
+      dst_fmt = PIPE_FORMAT_R8_UINT;
+      color.ui[0] = util_cpu_to_le32(*(unsigned char *)data);
+      memset(&color.ui[1], 0, 12);
+      break;
+   default:
+      assert(!"Unsupported element size");
+      return;
+   }
+
+   assert(size % data_size == 0);
+
+   elements = size / data_size;
+   height = (elements + 8191) / 8192;
+   width = elements / height;
+
+   BEGIN_NV04(push, NV50_3D(CLEAR_COLOR(0)), 4);
+   PUSH_DATAf(push, color.f[0]);
+   PUSH_DATAf(push, color.f[1]);
+   PUSH_DATAf(push, color.f[2]);
+   PUSH_DATAf(push, color.f[3]);
+
+   if (nouveau_pushbuf_space(push, 32, 1, 0))
+      return;
+
+   PUSH_REFN(push, buf->bo, buf->domain | NOUVEAU_BO_WR);
+
+   BEGIN_NV04(push, NV50_3D(SCREEN_SCISSOR_HORIZ), 2);
+   PUSH_DATA (push, width << 16);
+   PUSH_DATA (push, height << 16);
+   BEGIN_NV04(push, NV50_3D(SCISSOR_HORIZ(0)), 2);
+   PUSH_DATA (push, 8192 << 16);
+   PUSH_DATA (push, 8192 << 16);
+   nv50->scissors_dirty |= 1;
+
+   BEGIN_NV04(push, NV50_3D(RT_CONTROL), 1);
+   PUSH_DATA (push, 1);
+   BEGIN_NV04(push, NV50_3D(RT_ADDRESS_HIGH(0)), 5);
+   PUSH_DATAh(push, buf->bo->offset + buf->offset + offset);
+   PUSH_DATA (push, buf->bo->offset + buf->offset + offset);
+   PUSH_DATA (push, nv50_format_table[dst_fmt].rt);
+   PUSH_DATA (push, 0);
+   PUSH_DATA (push, 0);
+   BEGIN_NV04(push, NV50_3D(RT_HORIZ(0)), 2);
+   PUSH_DATA (push, NV50_3D_RT_HORIZ_LINEAR | (width * data_size));
+   PUSH_DATA (push, height);
+   BEGIN_NV04(push, NV50_3D(ZETA_ENABLE), 1);
+   PUSH_DATA (push, 0);
+
+   /* NOTE: only works with D3D clear flag (5097/0x143c bit 4) */
+
+   BEGIN_NV04(push, NV50_3D(VIEWPORT_HORIZ(0)), 2);
+   PUSH_DATA (push, (width << 16));
+   PUSH_DATA (push, (height << 16));
+
+   BEGIN_NI04(push, NV50_3D(CLEAR_BUFFERS), 1);
+   PUSH_DATA (push, 0x3c);
+
+   if (width * height != elements) {
+      offset += width * height * data_size;
+      width = elements - width * height;
+      height = 1;
+      BEGIN_NV04(push, NV50_3D(RT_ADDRESS_HIGH(0)), 2);
+      PUSH_DATAh(push, buf->bo->offset + buf->offset + offset);
+      PUSH_DATA (push, buf->bo->offset + buf->offset + offset);
+      BEGIN_NV04(push, NV50_3D(RT_HORIZ(0)), 2);
+      PUSH_DATA (push, NV50_3D_RT_HORIZ_LINEAR | (width * data_size));
+      PUSH_DATA (push, height);
+      BEGIN_NI04(push, NV50_3D(CLEAR_BUFFERS), 1);
+      PUSH_DATA (push, 0x3c);
+   }
+
+   nouveau_fence_ref(nv50->screen->base.fence.current, &buf->fence);
+   nouveau_fence_ref(nv50->screen->base.fence.current, &buf->fence_wr);
+
+   nv50->dirty |= NV50_NEW_FRAMEBUFFER | NV50_NEW_SCISSOR;
+}
 
 /* =============================== BLIT CODE ===================================
  */
@@ -1403,4 +1517,5 @@ nv50_init_surface_functions(struct nv50_context *nv50)
    pipe->flush_resource = nv50_flush_resource;
    pipe->clear_render_target = nv50_clear_render_target;
    pipe->clear_depth_stencil = nv50_clear_depth_stencil;
+   pipe->clear_buffer = nv50_clear_buffer;
 }
