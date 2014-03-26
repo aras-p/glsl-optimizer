@@ -18,53 +18,45 @@
     <type name="fixed"   size="4"                                    />
     <type name="clampx"  size="4"                                    />
 
-    <function name="AlphaFuncx" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="AlphaFuncx" es1="1.0" desktop="false" offset="assign">
         <param name="func" type="GLenum"/>
         <param name="ref" type="GLclampx"/>
     </function>
 
-    <function name="ClearColorx" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="ClearColorx" es1="1.0" desktop="false" offset="assign">
         <param name="red" type="GLclampx"/>
         <param name="green" type="GLclampx"/>
         <param name="blue" type="GLclampx"/>
         <param name="alpha" type="GLclampx"/>
     </function>
 
-    <function name="ClearDepthx" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="ClearDepthx" es1="1.0" desktop="false" offset="assign">
         <param name="depth" type="GLclampx"/>
     </function>
 
-    <function name="Color4x" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Color4x" es1="1.0" desktop="false" offset="assign">
         <param name="red" type="GLfixed"/>
         <param name="green" type="GLfixed"/>
         <param name="blue" type="GLfixed"/>
         <param name="alpha" type="GLfixed"/>
     </function>
 
-    <function name="DepthRangex" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="DepthRangex" es1="1.0" desktop="false" offset="assign">
         <param name="zNear" type="GLclampx"/>
         <param name="zFar" type="GLclampx"/>
     </function>
 
-    <function name="Fogx" static_dispatch="false" es1="1.0"
-              desktop="false" offset="assign">
+    <function name="Fogx" es1="1.0" desktop="false" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfixed"/>
     </function>
 
-    <function name="Fogxv" static_dispatch="false" es1="1.0"
-              desktop="false" offset="assign">
+    <function name="Fogxv" es1="1.0" desktop="false" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfixed *" variable_param="pname"/>
     </function>
 
-    <function name="Frustumx" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Frustumx" es1="1.0" desktop="false" offset="assign">
         <param name="left" type="GLfixed"/>
         <param name="right" type="GLfixed"/>
         <param name="bottom" type="GLfixed"/>
@@ -73,63 +65,53 @@
         <param name="zFar" type="GLfixed"/>
     </function>
 
-    <function name="LightModelx" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="LightModelx" es1="1.0" desktop="false" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfixed"/>
     </function>
 
-    <function name="LightModelxv"
-              static_dispatch="false" es1="1.0" desktop="false" offset="assign">
+    <function name="LightModelxv" es1="1.0" desktop="false" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfixed *" variable_param="pname"/>
     </function>
 
-    <function name="Lightx" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Lightx" es1="1.0" desktop="false" offset="assign">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfixed"/>
     </function>
 
-    <function name="Lightxv" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Lightxv" es1="1.0" desktop="false" offset="assign">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfixed *" variable_param="pname"/>
     </function>
 
-    <function name="LineWidthx" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="LineWidthx" es1="1.0" desktop="false" offset="assign">
         <param name="width" type="GLfixed"/>
     </function>
 
-    <function name="LoadMatrixx" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="LoadMatrixx" es1="1.0" desktop="false" offset="assign">
         <param name="m" type="const GLfixed *" count="16"/>
     </function>
 
-    <function name="Materialx" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Materialx" es1="1.0" desktop="false" offset="assign">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfixed"/>
     </function>
 
-    <function name="Materialxv" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Materialxv" es1="1.0" desktop="false" offset="assign">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfixed *" variable_param="pname"/>
     </function>
 
-    <function name="MultMatrixx" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="MultMatrixx" es1="1.0" desktop="false" offset="assign">
         <param name="m" type="const GLfixed *" count="16"/>
     </function>
 
-    <function name="MultiTexCoord4x"
-              static_dispatch="false" es1="1.0" desktop="false" offset="assign">
+    <function name="MultiTexCoord4x" es1="1.0" desktop="false" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="s" type="GLfixed"/>
         <param name="t" type="GLfixed"/>
@@ -137,15 +119,13 @@
         <param name="q" type="GLfixed"/>
     </function>
 
-    <function name="Normal3x" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Normal3x" es1="1.0" desktop="false" offset="assign">
         <param name="nx" type="GLfixed"/>
         <param name="ny" type="GLfixed"/>
         <param name="nz" type="GLfixed"/>
     </function>
 
-    <function name="Orthox" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Orthox" es1="1.0" desktop="false" offset="assign">
         <param name="left" type="GLfixed"/>
         <param name="right" type="GLfixed"/>
         <param name="bottom" type="GLfixed"/>
@@ -154,69 +134,59 @@
         <param name="zFar" type="GLfixed"/>
     </function>
 
-    <function name="PointSizex" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="PointSizex" es1="1.0" desktop="false" offset="assign">
         <param name="size" type="GLfixed"/>
     </function>
 
-    <function name="PolygonOffsetx"
-              static_dispatch="false" es1="1.0" desktop="false" offset="assign">
+    <function name="PolygonOffsetx" es1="1.0" desktop="false" offset="assign">
         <param name="factor" type="GLfixed"/>
         <param name="units" type="GLfixed"/>
     </function>
 
-    <function name="Rotatex" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Rotatex" es1="1.0" desktop="false" offset="assign">
         <param name="angle" type="GLfixed"/>
         <param name="x" type="GLfixed"/>
         <param name="y" type="GLfixed"/>
         <param name="z" type="GLfixed"/>
     </function>
 
-    <function name="SampleCoveragex"
-              static_dispatch="false" es1="1.0" desktop="false" offset="assign">
+    <function name="SampleCoveragex" es1="1.0" desktop="false" offset="assign">
         <param name="value" type="GLclampx"/>
         <param name="invert" type="GLboolean"/>
     </function>
 
-    <function name="Scalex" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Scalex" es1="1.0" desktop="false" offset="assign">
         <param name="x" type="GLfixed"/>
         <param name="y" type="GLfixed"/>
         <param name="z" type="GLfixed"/>
     </function>
 
-    <function name="TexEnvx" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="TexEnvx" es1="1.0" desktop="false" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfixed"/>
     </function>
 
-    <function name="TexEnvxv" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="TexEnvxv" es1="1.0" desktop="false" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfixed *" variable_param="pname"/>
     </function>
 
-    <function name="TexParameterx"
-              static_dispatch="false" es1="1.0" desktop="false" offset="assign">
+    <function name="TexParameterx" es1="1.0" desktop="false" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfixed"/>
     </function>
 
-    <function name="Translatex" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Translatex" es1="1.0" desktop="false" offset="assign">
         <param name="x" type="GLfixed"/>
         <param name="y" type="GLfixed"/>
         <param name="z" type="GLfixed"/>
     </function>
 
     <!-- from GL_OES_single_precision -->
-    <function name="Frustumf" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Frustumf" es1="1.0" desktop="false" offset="assign">
         <param name="left" type="GLfloat"/>
         <param name="right" type="GLfloat"/>
         <param name="bottom" type="GLfloat"/>
@@ -225,8 +195,7 @@
         <param name="zFar" type="GLfloat"/>
     </function>
 
-    <function name="Orthof" static_dispatch="false"
-              es1="1.0" desktop="false" offset="assign">
+    <function name="Orthof" es1="1.0" desktop="false" offset="assign">
         <param name="left" type="GLfloat"/>
         <param name="right" type="GLfloat"/>
         <param name="bottom" type="GLfloat"/>
@@ -238,80 +207,68 @@
 
 <category name="es1.1">
     <!-- from GL_OES_fixed_point -->
-    <function name="ClipPlanex" static_dispatch="false"
-              es1="1.1" desktop="false" offset="assign">
+    <function name="ClipPlanex" es1="1.1" desktop="false" offset="assign">
         <param name="plane" type="GLenum"/>
         <param name="equation" type="const GLfixed *" count="4"/>
     </function>
 
-    <function name="GetClipPlanex"
-              static_dispatch="false" es1="1.1" offset="assign">
+    <function name="GetClipPlanex" es1="1.1" offset="assign">
         <param name="plane" type="GLenum"/>
         <param name="equation" type="GLfixed *" output="true" count="4"/>
     </function>
 
-    <function name="GetFixedv" static_dispatch="false"
-              es1="1.1" desktop="false" offset="assign">
+    <function name="GetFixedv" es1="1.1" desktop="false" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfixed *" output="true" variable_param="pname"/>
     </function>
 
-    <function name="GetLightxv" static_dispatch="false"
-              es1="1.1" desktop="false" offset="assign">
+    <function name="GetLightxv" es1="1.1" desktop="false" offset="assign">
         <param name="light" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfixed *" output="true" variable_param="pname"/>
     </function>
 
-    <function name="GetMaterialxv"
-              static_dispatch="false" es1="1.1" desktop="false" offset="assign">
+    <function name="GetMaterialxv" es1="1.1" desktop="false" offset="assign">
         <param name="face" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfixed *" output="true" variable_param="pname"/>
     </function>
 
-    <function name="GetTexEnvxv" static_dispatch="false"
-              es1="1.1" desktop="false" offset="assign">
+    <function name="GetTexEnvxv" es1="1.1" desktop="false" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfixed *" output="true" variable_param="pname"/>
     </function>
 
-    <function name="GetTexParameterxv"
-              static_dispatch="false" es1="1.1" desktop="false" offset="assign">
+    <function name="GetTexParameterxv" es1="1.1" desktop="false" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="GLfixed *" output="true" variable_param="pname"/>
     </function>
 
-    <function name="PointParameterx"
-              static_dispatch="false" es1="1.1" desktop="false" offset="assign">
+    <function name="PointParameterx" es1="1.1" desktop="false" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="param" type="GLfixed"/>
     </function>
 
-    <function name="PointParameterxv"
-              static_dispatch="false" es1="1.1" desktop="false" offset="assign">
+    <function name="PointParameterxv" es1="1.1" desktop="false" offset="assign">
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfixed *"/>
     </function>
 
-    <function name="TexParameterxv"
-              static_dispatch="false" es1="1.1" desktop="false" offset="assign">
+    <function name="TexParameterxv" es1="1.1" desktop="false" offset="assign">
         <param name="target" type="GLenum"/>
         <param name="pname" type="GLenum"/>
         <param name="params" type="const GLfixed *" variable_param="pname"/>
     </function>
 
     <!-- from GL_OES_single_precision -->
-    <function name="ClipPlanef" static_dispatch="false"
-              es1="1.1" desktop="false" offset="assign">
+    <function name="ClipPlanef" es1="1.1" desktop="false" offset="assign">
         <param name="plane" type="GLenum"/>
         <param name="equation" type="const GLfloat *" count="4"/>
     </function>
 
-    <function name="GetClipPlanef"
-              static_dispatch="false" es1="1.1" offset="assign">
+    <function name="GetClipPlanef" es1="1.1" offset="assign">
         <param name="plane" type="GLenum"/>
         <param name="equation" type="GLfloat *" output="true" count="4"/>
     </function>
