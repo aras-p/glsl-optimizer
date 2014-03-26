@@ -2854,7 +2854,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
       fprintf(stderr, "(null)");
       break;
    case UNIFORM:
-      fprintf(stderr, "***u%d***", inst->dst.reg);
+      fprintf(stderr, "***u%d***", inst->dst.reg + inst->dst.reg_offset);
       break;
    case HW_REG:
       if (inst->dst.fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE) {
@@ -2906,7 +2906,7 @@ fs_visitor::dump_instruction(backend_instruction *be_inst)
          fprintf(stderr, "***m%d***", inst->src[i].reg);
          break;
       case UNIFORM:
-         fprintf(stderr, "u%d", inst->src[i].reg);
+         fprintf(stderr, "u%d", inst->src[i].reg + inst->src[i].reg_offset);
          if (inst->src[i].reladdr) {
             fprintf(stderr, "+reladdr");
          } else if (virtual_grf_sizes[inst->src[i].reg] != 1 ||
