@@ -56,10 +56,11 @@
 #define OMX_VID_ENC_CONTROL_FRAME_RATE_DEN_DEFAULT 1001
 #define OMX_VID_ENC_QUANT_I_FRAMES_DEFAULT 0x1c
 #define OMX_VID_ENC_QUANT_P_FRAMES_DEFAULT 0x1c
-#define OMX_VID_ENC_QUANT_B_FRAMES_DEFAULT 0
+#define OMX_VID_ENC_QUANT_B_FRAMES_DEFAULT 0x1c
 #define OMX_VID_ENC_SCALING_WIDTH_DEFAULT 0xffffffff
 #define OMX_VID_ENC_SCALING_HEIGHT_DEFAULT 0xffffffff
 #define OMX_VID_ENC_IDR_PERIOD_DEFAULT 1000
+#define OMX_VID_ENC_P_PERIOD_DEFAULT 1
 
 #define OMX_VID_ENC_NUM_SCALING_BUFFERS 4
 
@@ -71,8 +72,11 @@ DERIVEDCLASS(vid_enc_PrivateType, omx_base_filter_PrivateType)
 	struct pipe_video_codec *codec; \
 	struct list_head free_tasks; \
 	struct list_head used_tasks; \
+	struct list_head b_frames; \
 	OMX_U32 frame_rate; \
 	OMX_U32 frame_num; \
+	OMX_U32 pic_order_cnt; \
+	OMX_U32 ref_idx_l0, ref_idx_l1; \
 	OMX_VIDEO_PARAM_BITRATETYPE bitrate; \
 	OMX_VIDEO_PARAM_QUANTIZATIONTYPE quant; \
 	OMX_CONFIG_INTRAREFRESHVOPTYPE force_pic_type; \
