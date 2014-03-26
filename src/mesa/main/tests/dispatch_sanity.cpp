@@ -1303,6 +1303,43 @@ const struct function gles2_functions_possible[] = {
    { "glGetProgramBinaryOES", 20, -1 },
    { "glProgramBinaryOES", 20, -1 },
 
+   /* GL_EXT_separate_shader_objects - Also part of OpenGL ES 3.1. */
+   { "glProgramParameteriEXT", 20, -1 },
+   { "glUseProgramStagesEXT", 20, -1 },
+   { "glActiveShaderProgramEXT", 20, -1 },
+   { "glCreateShaderProgramvEXT", 20, -1 },
+   { "glBindProgramPipelineEXT", 20, -1 },
+   { "glDeleteProgramPipelinesEXT", 20, -1 },
+   { "glGenProgramPipelinesEXT", 20, -1 },
+   { "glIsProgramPipelineEXT", 20, -1 },
+   { "glGetProgramPipelineivEXT", 20, -1 },
+   { "glProgramUniform1iEXT", 20, -1 },
+   { "glProgramUniform1ivEXT", 20, -1 },
+   { "glProgramUniform1fEXT", 20, -1 },
+   { "glProgramUniform1fvEXT", 20, -1 },
+   { "glProgramUniform2iEXT", 20, -1 },
+   { "glProgramUniform2ivEXT", 20, -1 },
+   { "glProgramUniform2fEXT", 20, -1 },
+   { "glProgramUniform2fvEXT", 20, -1 },
+   { "glProgramUniform3iEXT", 20, -1 },
+   { "glProgramUniform3ivEXT", 20, -1 },
+   { "glProgramUniform3fEXT", 20, -1 },
+   { "glProgramUniform3fvEXT", 20, -1 },
+   { "glProgramUniform4iEXT", 20, -1 },
+   { "glProgramUniform4ivEXT", 20, -1 },
+   { "glProgramUniform4fEXT", 20, -1 },
+   { "glProgramUniform4fvEXT", 20, -1 },
+   { "glProgramUniformMatrix2fvEXT", 20, -1 },
+   { "glProgramUniformMatrix3fvEXT", 20, -1 },
+   { "glProgramUniformMatrix4fvEXT", 20, -1 },
+   { "glProgramUniformMatrix2x3fvEXT", 20, -1 },
+   { "glProgramUniformMatrix3x2fvEXT", 20, -1 },
+   { "glProgramUniformMatrix2x4fvEXT", 20, -1 },
+   { "glProgramUniformMatrix4x2fvEXT", 20, -1 },
+   { "glProgramUniformMatrix3x4fvEXT", 20, -1 },
+   { "glProgramUniformMatrix4x3fvEXT", 20, -1 },
+   { "glValidateProgramPipelineEXT", 20, -1 },
+   { "glGetProgramPipelineInfoLogEXT", 20, -1 },
    { NULL, 0, -1 }
 };
 
@@ -1386,7 +1423,7 @@ const struct function gles3_functions_possible[] = {
    // { "glMapBufferRange", 30, -1 },
    { "glPauseTransformFeedback", 30, -1 },
    // glProgramBinary aliases glProgramBinaryOES in GLES 2
-   { "glProgramParameteri", 30, -1 },
+   // glProgramParameteri aliases glProgramParameteriEXT in GLES 2
    // We check for the aliased -NV version in GLES 2
    // { "glReadBuffer", 30, -1 },
    { "glRenderbufferStorageMultisample", 30, -1 },
@@ -1426,5 +1463,16 @@ const struct function gles3_functions_possible[] = {
    { "glVertexAttribI4uiv", 30, -1 },
    { "glVertexAttribIPointer", 30, -1 },
    { "glWaitSync", 30, -1 },
+
+   /* GL_EXT_separate_shader_objects - Also part of OpenGL ES 3.1. */
+   { "glProgramUniform1uiEXT", 30, -1 },
+   { "glProgramUniform1uivEXT", 30, -1 },
+   { "glProgramUniform2uiEXT", 30, -1 },
+   { "glProgramUniform2uivEXT", 30, -1 },
+   { "glProgramUniform3uiEXT", 30, -1 },
+   { "glProgramUniform3uivEXT", 30, -1 },
+   { "glProgramUniform4uiEXT", 30, -1 },
+   { "glProgramUniform4uivEXT", 30, -1 },
+
    { NULL, 0, -1 }
 };

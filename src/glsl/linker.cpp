@@ -2607,7 +2607,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
     * fragment shader) is absent. So, the extension shouldn't change the
     * behavior specified in GLSL specification.
     */
-   if (!prog->InternalSeparateShader && ctx->API == API_OPENGLES2) {
+   if (!prog->InternalSeparateShader && !prog->SeparateShader
+       && ctx->API == API_OPENGLES2) {
       if (prog->_LinkedShaders[MESA_SHADER_VERTEX] == NULL) {
 	 linker_error(prog, "program lacks a vertex shader\n");
       } else if (prog->_LinkedShaders[MESA_SHADER_FRAGMENT] == NULL) {

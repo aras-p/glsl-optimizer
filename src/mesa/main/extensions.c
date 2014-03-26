@@ -218,6 +218,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_provoking_vertex",                    o(EXT_provoking_vertex),                    GL,             2009 },
    { "GL_EXT_rescale_normal",                      o(dummy_true),                              GLL,            1997 },
    { "GL_EXT_secondary_color",                     o(dummy_true),                              GLL,            1999 },
+   { "GL_EXT_separate_shader_objects",             o(dummy_true),                                         ES2, 2013 },
    { "GL_EXT_separate_specular_color",             o(dummy_true),                              GLL,            1997 },
    { "GL_EXT_shader_integer_mix",                  o(EXT_shader_integer_mix),                  GL       | ES3, 2013 },
    { "GL_EXT_shadow_funcs",                        o(ARB_shadow),                              GLL,            2002 },

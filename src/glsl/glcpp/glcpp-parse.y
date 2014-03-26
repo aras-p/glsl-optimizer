@@ -2062,6 +2062,7 @@ _glcpp_parser_handle_version_declaration(glcpp_parser_t *parser, intmax_t versio
 	/* Add pre-defined macros. */
 	if (parser->is_gles) {
 	   add_builtin_define(parser, "GL_ES", 1);
+           add_builtin_define(parser, "GL_EXT_separate_shader_objects", 1);
 
 	   if (extensions != NULL) {
 	      if (extensions->OES_EGL_image_external)

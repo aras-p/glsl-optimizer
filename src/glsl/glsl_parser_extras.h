@@ -140,8 +140,7 @@ struct _mesa_glsl_parse_state {
    {
       if (!this->has_separate_shader_objects()) {
          const char *const requirement = this->es_shader
-            ? "GL_EXT_separate_shader_objects (not supported by this "
-              "implementation)"
+            ? "GL_EXT_separate_shader_objects extension"
             : "GL_ARB_separate_shader_objects extension or GLSL 420";
 
          _mesa_glsl_error(locp, this, "%s explicit location requires %s",
@@ -164,7 +163,8 @@ struct _mesa_glsl_parse_state {
 
    bool has_separate_shader_objects() const
    {
-      return ARB_separate_shader_objects_enable || is_version(410, 0);
+      return ARB_separate_shader_objects_enable || is_version(410, 0)
+         || EXT_separate_shader_objects_enable;
    }
 
    void process_version_directive(YYLTYPE *locp, int version,
@@ -424,6 +424,8 @@ struct _mesa_glsl_parse_state {
    bool AMD_shader_trinary_minmax_warn;
    bool AMD_vertex_shader_layer_enable;
    bool AMD_vertex_shader_layer_warn;
+   bool EXT_separate_shader_objects_enable;
+   bool EXT_separate_shader_objects_warn;
    bool EXT_shader_integer_mix_enable;
    bool EXT_shader_integer_mix_warn;
    bool EXT_texture_array_enable;
