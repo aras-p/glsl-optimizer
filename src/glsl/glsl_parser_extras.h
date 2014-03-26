@@ -349,8 +349,14 @@ struct _mesa_glsl_parse_state {
     * \name Enable bits for GLSL extensions
     */
    /*@{*/
+   /* ARB extensions go here, sorted alphabetically.
+    */
    bool ARB_arrays_of_arrays_enable;
    bool ARB_arrays_of_arrays_warn;
+   bool ARB_compute_shader_enable;
+   bool ARB_compute_shader_warn;
+   bool ARB_conservative_depth_enable;
+   bool ARB_conservative_depth_warn;
    bool ARB_draw_buffers_enable;
    bool ARB_draw_buffers_warn;
    bool ARB_draw_instanced_enable;
@@ -359,64 +365,69 @@ struct _mesa_glsl_parse_state {
    bool ARB_explicit_attrib_location_warn;
    bool ARB_fragment_coord_conventions_enable;
    bool ARB_fragment_coord_conventions_warn;
-   bool ARB_texture_rectangle_enable;
-   bool ARB_texture_rectangle_warn;
-   bool ARB_texture_gather_enable;
-   bool ARB_texture_gather_warn;
-   bool EXT_texture_array_enable;
-   bool EXT_texture_array_warn;
+   bool ARB_gpu_shader5_enable;
+   bool ARB_gpu_shader5_warn;
+   bool ARB_sample_shading_enable;
+   bool ARB_sample_shading_warn;
    bool ARB_separate_shader_objects_enable;
    bool ARB_separate_shader_objects_warn;
-   bool ARB_shader_texture_lod_enable;
-   bool ARB_shader_texture_lod_warn;
-   bool ARB_shader_stencil_export_enable;
-   bool ARB_shader_stencil_export_warn;
-   bool AMD_conservative_depth_enable;
-   bool AMD_conservative_depth_warn;
-   bool ARB_conservative_depth_enable;
-   bool ARB_conservative_depth_warn;
-   bool AMD_shader_stencil_export_enable;
-   bool AMD_shader_stencil_export_warn;
-   bool OES_texture_3D_enable;
-   bool OES_texture_3D_warn;
-   bool OES_EGL_image_external_enable;
-   bool OES_EGL_image_external_warn;
+   bool ARB_shader_atomic_counters_enable;
+   bool ARB_shader_atomic_counters_warn;
    bool ARB_shader_bit_encoding_enable;
    bool ARB_shader_bit_encoding_warn;
-   bool ARB_uniform_buffer_object_enable;
-   bool ARB_uniform_buffer_object_warn;
-   bool OES_standard_derivatives_enable;
-   bool OES_standard_derivatives_warn;
-   bool ARB_texture_cube_map_array_enable;
-   bool ARB_texture_cube_map_array_warn;
+   bool ARB_shader_image_load_store_enable;
+   bool ARB_shader_image_load_store_warn;
+   bool ARB_shader_stencil_export_enable;
+   bool ARB_shader_stencil_export_warn;
+   bool ARB_shader_texture_lod_enable;
+   bool ARB_shader_texture_lod_warn;
+   bool ARB_shading_language_420pack_enable;
+   bool ARB_shading_language_420pack_warn;
    bool ARB_shading_language_packing_enable;
    bool ARB_shading_language_packing_warn;
+   bool ARB_texture_cube_map_array_enable;
+   bool ARB_texture_cube_map_array_warn;
+   bool ARB_texture_gather_enable;
+   bool ARB_texture_gather_warn;
    bool ARB_texture_multisample_enable;
    bool ARB_texture_multisample_warn;
    bool ARB_texture_query_levels_enable;
    bool ARB_texture_query_levels_warn;
    bool ARB_texture_query_lod_enable;
    bool ARB_texture_query_lod_warn;
-   bool ARB_gpu_shader5_enable;
-   bool ARB_gpu_shader5_warn;
-   bool AMD_vertex_shader_layer_enable;
-   bool AMD_vertex_shader_layer_warn;
-   bool ARB_shading_language_420pack_enable;
-   bool ARB_shading_language_420pack_warn;
-   bool ARB_sample_shading_enable;
-   bool ARB_sample_shading_warn;
-   bool EXT_shader_integer_mix_enable;
-   bool EXT_shader_integer_mix_warn;
-   bool ARB_shader_atomic_counters_enable;
-   bool ARB_shader_atomic_counters_warn;
-   bool AMD_shader_trinary_minmax_enable;
-   bool AMD_shader_trinary_minmax_warn;
+   bool ARB_texture_rectangle_enable;
+   bool ARB_texture_rectangle_warn;
+   bool ARB_uniform_buffer_object_enable;
+   bool ARB_uniform_buffer_object_warn;
    bool ARB_viewport_array_enable;
    bool ARB_viewport_array_warn;
-   bool ARB_compute_shader_enable;
-   bool ARB_compute_shader_warn;
-   bool ARB_shader_image_load_store_enable;
-   bool ARB_shader_image_load_store_warn;
+
+   /* KHR extensions go here, sorted alphabetically.
+    */
+
+   /* OES extensions go here, sorted alphabetically.
+    */
+   bool OES_EGL_image_external_enable;
+   bool OES_EGL_image_external_warn;
+   bool OES_standard_derivatives_enable;
+   bool OES_standard_derivatives_warn;
+   bool OES_texture_3D_enable;
+   bool OES_texture_3D_warn;
+
+   /* All other extensions go here, sorted alphabetically.
+    */
+   bool AMD_conservative_depth_enable;
+   bool AMD_conservative_depth_warn;
+   bool AMD_shader_stencil_export_enable;
+   bool AMD_shader_stencil_export_warn;
+   bool AMD_shader_trinary_minmax_enable;
+   bool AMD_shader_trinary_minmax_warn;
+   bool AMD_vertex_shader_layer_enable;
+   bool AMD_vertex_shader_layer_warn;
+   bool EXT_shader_integer_mix_enable;
+   bool EXT_shader_integer_mix_warn;
+   bool EXT_texture_array_enable;
+   bool EXT_texture_array_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */

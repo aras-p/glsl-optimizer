@@ -506,40 +506,52 @@ struct _mesa_glsl_extension {
 static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    /*                                  API availability */
    /* name                             GL     ES         supported flag */
+
+   /* ARB extensions go here, sorted alphabetically.
+    */
    EXT(ARB_arrays_of_arrays,           true,  false,     ARB_arrays_of_arrays),
+   EXT(ARB_compute_shader,             true,  false,     ARB_compute_shader),
    EXT(ARB_conservative_depth,         true,  false,     ARB_conservative_depth),
    EXT(ARB_draw_buffers,               true,  false,     dummy_true),
    EXT(ARB_draw_instanced,             true,  false,     ARB_draw_instanced),
    EXT(ARB_explicit_attrib_location,   true,  false,     ARB_explicit_attrib_location),
    EXT(ARB_fragment_coord_conventions, true,  false,     ARB_fragment_coord_conventions),
-   EXT(ARB_texture_rectangle,          true,  false,     dummy_true),
-   EXT(EXT_texture_array,              true,  false,     EXT_texture_array),
+   EXT(ARB_gpu_shader5,                true,  false,     ARB_gpu_shader5),
+   EXT(ARB_sample_shading,             true,  false,     ARB_sample_shading),
    EXT(ARB_separate_shader_objects,    true,  false,     dummy_true),
-   EXT(ARB_shader_texture_lod,         true,  false,     ARB_shader_texture_lod),
-   EXT(ARB_shader_stencil_export,      true,  false,     ARB_shader_stencil_export),
-   EXT(AMD_conservative_depth,         true,  false,     ARB_conservative_depth),
-   EXT(AMD_shader_stencil_export,      true,  false,     ARB_shader_stencil_export),
-   EXT(OES_texture_3D,                 false, true,      EXT_texture3D),
-   EXT(OES_EGL_image_external,         false, true,      OES_EGL_image_external),
+   EXT(ARB_shader_atomic_counters,     true,  false,     ARB_shader_atomic_counters),
    EXT(ARB_shader_bit_encoding,        true,  false,     ARB_shader_bit_encoding),
-   EXT(ARB_uniform_buffer_object,      true,  false,     ARB_uniform_buffer_object),
-   EXT(OES_standard_derivatives,       false,  true,     OES_standard_derivatives),
-   EXT(ARB_texture_cube_map_array,     true,  false,     ARB_texture_cube_map_array),
-   EXT(ARB_shading_language_packing,   true,  false,     ARB_shading_language_packing),
+   EXT(ARB_shader_image_load_store,    true,  false,     ARB_shader_image_load_store),
+   EXT(ARB_shader_stencil_export,      true,  false,     ARB_shader_stencil_export),
+   EXT(ARB_shader_texture_lod,         true,  false,     ARB_shader_texture_lod),
    EXT(ARB_shading_language_420pack,   true,  false,     ARB_shading_language_420pack),
+   EXT(ARB_shading_language_packing,   true,  false,     ARB_shading_language_packing),
+   EXT(ARB_texture_cube_map_array,     true,  false,     ARB_texture_cube_map_array),
+   EXT(ARB_texture_gather,             true,  false,     ARB_texture_gather),
    EXT(ARB_texture_multisample,        true,  false,     ARB_texture_multisample),
    EXT(ARB_texture_query_levels,       true,  false,     ARB_texture_query_levels),
    EXT(ARB_texture_query_lod,          true,  false,     ARB_texture_query_lod),
-   EXT(ARB_gpu_shader5,                true,  false,     ARB_gpu_shader5),
+   EXT(ARB_texture_rectangle,          true,  false,     dummy_true),
+   EXT(ARB_uniform_buffer_object,      true,  false,     ARB_uniform_buffer_object),
+   EXT(ARB_viewport_array,             true,  false,     ARB_viewport_array),
+
+   /* KHR extensions go here, sorted alphabetically.
+    */
+
+   /* OES extensions go here, sorted alphabetically.
+    */
+   EXT(OES_EGL_image_external,         false, true,      OES_EGL_image_external),
+   EXT(OES_standard_derivatives,       false, true,      OES_standard_derivatives),
+   EXT(OES_texture_3D,                 false, true,      EXT_texture3D),
+
+   /* All other extensions go here, sorted alphabetically.
+    */
+   EXT(AMD_conservative_depth,         true,  false,     ARB_conservative_depth),
+   EXT(AMD_shader_stencil_export,      true,  false,     ARB_shader_stencil_export),
+   EXT(AMD_shader_trinary_minmax,      true,  false,     dummy_true),
    EXT(AMD_vertex_shader_layer,        true,  false,     AMD_vertex_shader_layer),
    EXT(EXT_shader_integer_mix,         true,  true,      EXT_shader_integer_mix),
-   EXT(ARB_texture_gather,             true,  false,     ARB_texture_gather),
-   EXT(ARB_shader_atomic_counters,     true,  false,     ARB_shader_atomic_counters),
-   EXT(ARB_sample_shading,             true,  false,     ARB_sample_shading),
-   EXT(AMD_shader_trinary_minmax,      true,  false,     dummy_true),
-   EXT(ARB_viewport_array,             true,  false,     ARB_viewport_array),
-   EXT(ARB_compute_shader,             true,  false,     ARB_compute_shader),
-   EXT(ARB_shader_image_load_store,    true,  false,     ARB_shader_image_load_store),
+   EXT(EXT_texture_array,              true,  false,     EXT_texture_array),
 };
 
 #undef EXT
