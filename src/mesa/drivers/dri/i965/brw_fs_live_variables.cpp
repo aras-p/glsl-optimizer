@@ -86,8 +86,10 @@ fs_live_variables::setup_one_read(bblock_t *block, fs_inst *inst,
     */
    int end_ip = ip;
    if (v->dispatch_width == 16 && (reg.stride == 0 ||
-                                   (v->pixel_x.reg == reg.reg ||
-                                    v->pixel_y.reg == reg.reg))) {
+                                   ((v->pixel_x.file == GRF &&
+                                     v->pixel_x.reg == reg.reg) ||
+                                    (v->pixel_y.file == GRF &&
+                                     v->pixel_y.reg == reg.reg)))) {
       end_ip++;
    }
 
