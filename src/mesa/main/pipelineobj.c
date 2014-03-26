@@ -412,8 +412,15 @@ _mesa_BindProgramPipeline(GLuint pipeline)
       newObj->EverBound = GL_TRUE;
    }
 
+   _mesa_bind_pipeline(ctx, newObj);
+}
+
+void
+_mesa_bind_pipeline(struct gl_context *ctx,
+                    struct gl_pipeline_object *pipe)
+{
    /* First bind the Pipeline to pipeline binding point */
-   _mesa_reference_pipeline_object(ctx, &ctx->Pipeline.Current, newObj);
+   _mesa_reference_pipeline_object(ctx, &ctx->Pipeline.Current, pipe);
 
    /* Section 2.11.3 (Program Objects) of the OpenGL 4.1 spec says:
     *
@@ -424,11 +431,11 @@ _mesa_BindProgramPipeline(GLuint pipeline)
     *     considered current."
     */
    if (&ctx->Shader != ctx->_Shader) {
-      if (pipeline) {
+      if (pipe != NULL) {
          /* Bound the pipeline to the current program and
           * restore the pipeline state
           */
-         _mesa_reference_pipeline_object(ctx, &ctx->_Shader, newObj);
+         _mesa_reference_pipeline_object(ctx, &ctx->_Shader, pipe);
       } else {
          /* Unbind the pipeline */
          _mesa_reference_pipeline_object(ctx, &ctx->_Shader,

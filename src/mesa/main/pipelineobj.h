@@ -59,6 +59,10 @@ _mesa_reference_pipeline_object(struct gl_context *ctx,
       _mesa_reference_pipeline_object_(ctx, ptr, obj);
 }
 
+extern void
+_mesa_bind_pipeline(struct gl_context *ctx,
+                    struct gl_pipeline_object *pipe);
+
 extern GLboolean
 _mesa_validate_program_pipeline(struct gl_context * ctx, struct gl_pipeline_object *pipe, GLboolean IsBound);
 
