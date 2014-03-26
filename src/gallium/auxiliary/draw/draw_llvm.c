@@ -939,11 +939,11 @@ store_aos_array(struct gallivm_state *gallivm,
          LLVMValueRef id_ptr = draw_jit_header_id(gallivm, io_ptrs[i]);
          val = LLVMBuildExtractElement(builder, cliptmp, linear_inds[i], "");
          val = adjust_mask(gallivm, val);
-         LLVMBuildStore(builder, val, id_ptr);
 #if DEBUG_STORE
          lp_build_printf(gallivm, "io = %p, index %d, clipmask = %x\n",
                          io_ptrs[i], inds[i], val);
 #endif
+         LLVMBuildStore(builder, val, id_ptr);
       }
    }
 

@@ -3569,7 +3569,8 @@ static void emit_prologue(struct lp_build_tgsi_context * bld_base)
    if (DEBUG_EXECUTION) {
       lp_build_printf(gallivm, "\n");
       emit_dump_file(bld, TGSI_FILE_CONSTANT);
-      emit_dump_file(bld, TGSI_FILE_INPUT);
+      if (!bld->gs_iface)
+         emit_dump_file(bld, TGSI_FILE_INPUT);
    }
 }
 
