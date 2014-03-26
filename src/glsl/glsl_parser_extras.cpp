@@ -83,6 +83,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
                             ctx->Const.ForceGLSLVersion : 110;
    this->es_shader = false;
    this->had_version_string = false;
+   this->had_float_precision = false;
    this->ARB_texture_rectangle_enable = true;
 
    /* OpenGL ES 2.0 has different defaults from desktop GL. */
