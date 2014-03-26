@@ -9,106 +9,106 @@ uniform highp vec4 _Params;
 uniform highp vec4 _ProjectionParams;
 varying highp vec2 xlv_TEXCOORD0;
 varying highp vec2 xlv_TEXCOORD1;
-float xll_saturate_f (
-  in float x_1
+mediump float xll_saturate_f (
+  in mediump float x_1
 )
 {
-  float tmpvar_2;
+  mediump float tmpvar_2;
   tmpvar_2 = clamp (x_1, 0.0, 1.0);
   return tmpvar_2;
 }
 
-vec2 xll_saturate_vf2 (
-  in vec2 x_3
+mediump vec2 xll_saturate_vf2 (
+  in mediump vec2 x_3
 )
 {
-  vec2 tmpvar_4;
+  mediump vec2 tmpvar_4;
   tmpvar_4 = clamp (x_3, 0.0, 1.0);
   return tmpvar_4;
 }
 
-vec3 xll_saturate_vf3 (
-  in vec3 x_5
+mediump vec3 xll_saturate_vf3 (
+  in mediump vec3 x_5
 )
 {
-  vec3 tmpvar_6;
+  mediump vec3 tmpvar_6;
   tmpvar_6 = clamp (x_5, 0.0, 1.0);
   return tmpvar_6;
 }
 
-vec4 xll_saturate_vf4 (
-  in vec4 x_7
+mediump vec4 xll_saturate_vf4 (
+  in mediump vec4 x_7
 )
 {
-  vec4 tmpvar_8;
+  mediump vec4 tmpvar_8;
   tmpvar_8 = clamp (x_7, 0.0, 1.0);
   return tmpvar_8;
 }
 
-mat2 xll_saturate_mf2x2 (
-  in mat2 m_9
+mediump mat2 xll_saturate_mf2x2 (
+  in mediump mat2 m_9
 )
 {
-  vec2 tmpvar_10;
+  mediump vec2 tmpvar_10;
   tmpvar_10 = clamp (m_9[0], 0.0, 1.0);
-  vec2 tmpvar_11;
+  mediump vec2 tmpvar_11;
   tmpvar_11 = clamp (m_9[1], 0.0, 1.0);
-  mat2 tmpvar_12;
-  vec2 tmpvar_13;
+  mediump mat2 tmpvar_12;
+  mediump vec2 tmpvar_13;
   tmpvar_13 = tmpvar_10;
   tmpvar_12[0] = tmpvar_13;
-  vec2 tmpvar_14;
+  mediump vec2 tmpvar_14;
   tmpvar_14 = tmpvar_11;
   tmpvar_12[1] = tmpvar_14;
   return tmpvar_12;
 }
 
-mat3 xll_saturate_mf3x3 (
-  in mat3 m_15
+mediump mat3 xll_saturate_mf3x3 (
+  in mediump mat3 m_15
 )
 {
-  vec3 tmpvar_16;
+  mediump vec3 tmpvar_16;
   tmpvar_16 = clamp (m_15[0], 0.0, 1.0);
-  vec3 tmpvar_17;
+  mediump vec3 tmpvar_17;
   tmpvar_17 = clamp (m_15[1], 0.0, 1.0);
-  vec3 tmpvar_18;
+  mediump vec3 tmpvar_18;
   tmpvar_18 = clamp (m_15[2], 0.0, 1.0);
-  mat3 tmpvar_19;
-  vec3 tmpvar_20;
+  mediump mat3 tmpvar_19;
+  mediump vec3 tmpvar_20;
   tmpvar_20 = tmpvar_16;
   tmpvar_19[0] = tmpvar_20;
-  vec3 tmpvar_21;
+  mediump vec3 tmpvar_21;
   tmpvar_21 = tmpvar_17;
   tmpvar_19[1] = tmpvar_21;
-  vec3 tmpvar_22;
+  mediump vec3 tmpvar_22;
   tmpvar_22 = tmpvar_18;
   tmpvar_19[2] = tmpvar_22;
   return tmpvar_19;
 }
 
-mat4 xll_saturate_mf4x4 (
-  in mat4 m_23
+mediump mat4 xll_saturate_mf4x4 (
+  in mediump mat4 m_23
 )
 {
-  vec4 tmpvar_24;
+  mediump vec4 tmpvar_24;
   tmpvar_24 = clamp (m_23[0], 0.0, 1.0);
-  vec4 tmpvar_25;
+  mediump vec4 tmpvar_25;
   tmpvar_25 = clamp (m_23[1], 0.0, 1.0);
-  vec4 tmpvar_26;
+  mediump vec4 tmpvar_26;
   tmpvar_26 = clamp (m_23[2], 0.0, 1.0);
-  vec4 tmpvar_27;
+  mediump vec4 tmpvar_27;
   tmpvar_27 = clamp (m_23[3], 0.0, 1.0);
-  mat4 tmpvar_28;
-  vec4 tmpvar_29;
+  mediump mat4 tmpvar_28;
+  mediump vec4 tmpvar_29;
   tmpvar_29 = tmpvar_24;
   tmpvar_28[0] = tmpvar_29;
-  vec4 tmpvar_30;
+  mediump vec4 tmpvar_30;
   tmpvar_30 = tmpvar_25;
   tmpvar_28[1] = tmpvar_30;
-  vec4 tmpvar_31;
+  mediump vec4 tmpvar_31;
   tmpvar_31 = tmpvar_26;
   tmpvar_28[2] = tmpvar_31;
-  vec4 tmpvar_32;
+  mediump vec4 tmpvar_32;
   tmpvar_32 = tmpvar_27;
   tmpvar_28[3] = tmpvar_32;
   return tmpvar_28;
@@ -119,7 +119,7 @@ float DecodeFloatRG (
 )
 {
   highp vec2 kDecodeDot_34;
-  vec2 tmpvar_35;
+  mediump vec2 tmpvar_35;
   tmpvar_35 = vec2(1.0, 0.00392157);
   kDecodeDot_34 = tmpvar_35;
   highp float tmpvar_36;
@@ -135,7 +135,7 @@ vec3 DecodeViewNormalStereo (
   highp float g_39;
   highp vec3 nn_40;
   highp float kScale_41;
-  float tmpvar_42;
+  mediump float tmpvar_42;
   tmpvar_42 = 1.7777;
   kScale_41 = tmpvar_42;
   highp vec3 tmpvar_43;
@@ -211,7 +211,7 @@ mediump float frag_ao (
   highp float tmpvar_72;
   tmpvar_72 = (_Params.x / depth_63);
   scale_62 = tmpvar_72;
-  float tmpvar_73;
+  mediump float tmpvar_73;
   tmpvar_73 = 0.0;
   occ_61 = tmpvar_73;
   int tmpvar_74;
@@ -236,13 +236,13 @@ mediump float frag_ao (
     randomDir_82 = tmpvar_84;
     highp float tmpvar_85;
     tmpvar_85 = dot (viewNorm_64, randomDir_82);
-    float tmpvar_86;
+    mediump float tmpvar_86;
     if ((tmpvar_85 < 0.0)) {
       tmpvar_86 = 1.0;
     } else {
       tmpvar_86 = -(1.0);
     };
-    float tmpvar_87;
+    mediump float tmpvar_87;
     tmpvar_87 = tmpvar_86;
     flip_81 = tmpvar_87;
     mediump vec3 tmpvar_88;
@@ -266,9 +266,9 @@ mediump float frag_ao (
     highp float tmpvar_94;
     tmpvar_94 = (sampleD_77 * _ProjectionParams.z);
     sampleD_77 = tmpvar_94;
-    float tmpvar_95;
+    mediump float tmpvar_95;
     tmpvar_95 = xll_saturate_f ((sD_79 - sampleD_77));
-    float tmpvar_96;
+    mediump float tmpvar_96;
     tmpvar_96 = tmpvar_95;
     zd_75 = tmpvar_96;
     if ((zd_75 > _Params.y)) {
@@ -293,28 +293,28 @@ mediump vec4 xlat_main (
 )
 {
   highp vec3 RAND_SAMPLES_102[8];
-  vec3 tmpvar_103;
+  mediump vec3 tmpvar_103;
   tmpvar_103 = vec3(0.0130572, 0.587232, -0.119337);
   RAND_SAMPLES_102[0] = tmpvar_103;
-  vec3 tmpvar_104;
+  mediump vec3 tmpvar_104;
   tmpvar_104 = vec3(0.323078, 0.0220727, -0.418873);
   RAND_SAMPLES_102[1] = tmpvar_104;
-  vec3 tmpvar_105;
+  mediump vec3 tmpvar_105;
   tmpvar_105 = vec3(-0.310725, -0.191367, 0.0561369);
   RAND_SAMPLES_102[2] = tmpvar_105;
-  vec3 tmpvar_106;
+  mediump vec3 tmpvar_106;
   tmpvar_106 = vec3(-0.479646, 0.0939877, -0.580265);
   RAND_SAMPLES_102[3] = tmpvar_106;
-  vec3 tmpvar_107;
+  mediump vec3 tmpvar_107;
   tmpvar_107 = vec3(0.139999, -0.33577, 0.559679);
   RAND_SAMPLES_102[4] = tmpvar_107;
-  vec3 tmpvar_108;
+  mediump vec3 tmpvar_108;
   tmpvar_108 = vec3(-0.248458, 0.255532, 0.348944);
   RAND_SAMPLES_102[5] = tmpvar_108;
-  vec3 tmpvar_109;
+  mediump vec3 tmpvar_109;
   tmpvar_109 = vec3(0.18719, -0.702764, -0.231748);
   RAND_SAMPLES_102[6] = tmpvar_109;
-  vec3 tmpvar_110;
+  mediump vec3 tmpvar_110;
   tmpvar_110 = vec3(0.884915, 0.284208, 0.368524);
   RAND_SAMPLES_102[7] = tmpvar_110;
   mediump float tmpvar_111;
@@ -328,7 +328,7 @@ void main ()
 {
   v2f_ao xlt_i_113;
   mediump vec4 xl_retval_114;
-  vec4 tmpvar_115;
+  mediump vec4 tmpvar_115;
   tmpvar_115 = vec4(0.0, 0.0, 0.0, 0.0);
   xlt_i_113.pos = tmpvar_115;
   highp vec2 tmpvar_116;

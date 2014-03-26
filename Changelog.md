@@ -1,6 +1,13 @@
 GLSL optimizer Change Log
 =========================
 
+2014 03
+-------
+
+Fixes:
+
+* Fixed missing precision qualifier in some ES shaders (mostly due to expansion of ternary ?: check).
+
 2014 02
 -------
 
