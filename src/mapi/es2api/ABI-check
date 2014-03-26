@@ -2,16 +2,8 @@
 
 # Print defined gl.* functions not in GL ES 3.0 or in
 # (FIXME, none of these should be part of the ABI)
-# GL_EXT_discard_framebuffer
-# GL_EXT_map_buffer_range
 # GL_EXT_multi_draw_arrays
-# GL_NV_draw_buffers
-# GL_NV_read_buffer
 # GL_OES_EGL_image
-# GL_OES_get_program_binary
-# GL_OES_mapbuffer
-# GL_OES_texture_3D
-# GL_OES_vertex_array_object
 
 FUNCS=$(nm -D --defined-only ${1-.libs/libGLESv2.so.2} | grep -o 'T gl.*' | cut -c 3- | while read func; do
 ( grep -q "^$func$" || echo $func )  <<EOF
@@ -29,7 +21,6 @@ glBindSampler
 glBindTexture
 glBindTransformFeedback
 glBindVertexArray
-glBindVertexArrayOES
 glBlendColor
 glBlendEquation
 glBlendEquationSeparate
@@ -52,15 +43,12 @@ glColorMask
 glCompileShader
 glCompressedTexImage2D
 glCompressedTexImage3D
-glCompressedTexImage3DOES
 glCompressedTexSubImage2D
 glCompressedTexSubImage3D
-glCompressedTexSubImage3DOES
 glCopyBufferSubData
 glCopyTexImage2D
 glCopyTexSubImage2D
 glCopyTexSubImage3D
-glCopyTexSubImage3DOES
 glCreateProgram
 glCreateShader
 glCullFace
@@ -75,18 +63,15 @@ glDeleteSync
 glDeleteTextures
 glDeleteTransformFeedbacks
 glDeleteVertexArrays
-glDeleteVertexArraysOES
 glDepthFunc
 glDepthMask
 glDepthRangef
 glDetachShader
 glDisable
 glDisableVertexAttribArray
-glDiscardFramebufferEXT
 glDrawArrays
 glDrawArraysInstanced
 glDrawBuffers
-glDrawBuffersNV
 glDrawElements
 glDrawElementsInstanced
 glDrawRangeElements
@@ -100,10 +85,8 @@ glFenceSync
 glFinish
 glFlush
 glFlushMappedBufferRange
-glFlushMappedBufferRangeEXT
 glFramebufferRenderbuffer
 glFramebufferTexture2D
-glFramebufferTexture3DOES
 glFramebufferTextureLayer
 glFrontFace
 glGenBuffers
@@ -115,7 +98,6 @@ glGenSamplers
 glGenTextures
 glGenTransformFeedbacks
 glGenVertexArrays
-glGenVertexArraysOES
 glGetActiveAttrib
 glGetActiveUniform
 glGetActiveUniformBlockiv
@@ -127,7 +109,6 @@ glGetBooleanv
 glGetBufferParameteri64v
 glGetBufferParameteriv
 glGetBufferPointerv
-glGetBufferPointervOES
 glGetError
 glGetFloatv
 glGetFragDataLocation
@@ -138,7 +119,6 @@ glGetIntegeri_v
 glGetIntegerv
 glGetInternalformativ
 glGetProgramBinary
-glGetProgramBinaryOES
 glGetProgramInfoLog
 glGetProgramiv
 glGetQueryiv
@@ -182,22 +162,17 @@ glIsSync
 glIsTexture
 glIsTransformFeedback
 glIsVertexArray
-glIsVertexArrayOES
 glLineWidth
 glLinkProgram
-glMapBufferOES
 glMapBufferRange
-glMapBufferRangeEXT
 glMultiDrawArraysEXT
 glMultiDrawElementsEXT
 glPauseTransformFeedback
 glPixelStorei
 glPolygonOffset
 glProgramBinary
-glProgramBinaryOES
 glProgramParameteri
 glReadBuffer
-glReadBufferNV
 glReadPixels
 glReleaseShaderCompiler
 glRenderbufferStorage
@@ -219,7 +194,6 @@ glStencilOp
 glStencilOpSeparate
 glTexImage2D
 glTexImage3D
-glTexImage3DOES
 glTexParameterf
 glTexParameterfv
 glTexParameteri
@@ -228,7 +202,6 @@ glTexStorage2D
 glTexStorage3D
 glTexSubImage2D
 glTexSubImage3D
-glTexSubImage3DOES
 glTransformFeedbackVaryings
 glUniform1f
 glUniform1fv
@@ -265,7 +238,6 @@ glUniformMatrix4fv
 glUniformMatrix4x2fv
 glUniformMatrix4x3fv
 glUnmapBuffer
-glUnmapBufferOES
 glUseProgram
 glValidateProgram
 glVertexAttrib1f
