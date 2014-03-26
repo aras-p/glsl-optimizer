@@ -17,7 +17,8 @@
         ],
       },
       'sources': [
-        '<!@(find {glsl,mesa} -name "*.cpp" -or -name "*.c" -or -name "*.h")',
+        '<!@(find glsl -name "*.cpp" -or -name "*.c" -or -name "*.h")',
+        '<!@(find mesa -name "*.cpp" -or -name "*.c" -or -name "*.h")',
       ],
       'conditions': [
         ['OS=="win"', {
