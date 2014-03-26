@@ -121,7 +121,6 @@ struct save_state
    GLboolean ATIFragmentShaderEnabled;
    struct gl_shader_program *Shader[MESA_SHADER_STAGES];
    struct gl_shader_program *ActiveShader;
-   struct gl_pipeline_object   *_Shader;
    struct gl_pipeline_object   *Pipeline;
 
    /** MESA_META_STENCIL_TEST */

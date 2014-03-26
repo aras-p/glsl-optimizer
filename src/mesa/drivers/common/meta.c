@@ -577,19 +577,21 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       }
 
       if (ctx->Extensions.ARB_separate_shader_objects) {
-         /* Warning it must be done before _mesa_UseProgram call */
-         _mesa_reference_pipeline_object(ctx, &save->_Shader, ctx->_Shader);
-         _mesa_reference_pipeline_object(ctx, &save->Pipeline,
-                                         ctx->Pipeline.Current);
-         _mesa_BindProgramPipeline(0);
+         if (ctx->Pipeline.Current) {
+            _mesa_reference_pipeline_object(ctx, &save->Pipeline,
+                                            ctx->Pipeline.Current);
+            _mesa_BindProgramPipeline(0);
       }
 
-      for (i = 0; i < MESA_SHADER_STAGES; i++) {
+      /* Save the shader state from ctx->Shader (instead of ctx->_Shader) so
+       * that we don't have to worry about the current pipeline state.
+       */
+      for (i = 0; i <= MESA_SHADER_FRAGMENT; i++) {
          _mesa_reference_shader_program(ctx, &save->Shader[i],
-                                     ctx->_Shader->CurrentProgram[i]);
+                                        ctx->Shader.CurrentProgram[i]);
       }
       _mesa_reference_shader_program(ctx, &save->ActiveShader,
-                                     ctx->_Shader->ActiveProgram);
+                                     ctx->Shader.ActiveProgram);
 
       _mesa_UseProgram(0);
    }
@@ -908,6 +910,14 @@ _mesa_meta_end(struct gl_context *ctx)
    }
 
    if (state & MESA_META_SHADER) {
+      static const GLenum targets[] = {
+         GL_VERTEX_SHADER,
+         GL_GEOMETRY_SHADER,
+         GL_FRAGMENT_SHADER,
+      };
+
+      bool any_shader;
+
       if (ctx->Extensions.ARB_vertex_program) {
          _mesa_set_enable(ctx, GL_VERTEX_PROGRAM_ARB,
                           save->VertexProgramEnabled);
@@ -929,37 +939,47 @@ _mesa_meta_end(struct gl_context *ctx)
                           save->ATIFragmentShaderEnabled);
       }
 
-      /* Warning it must be done before _mesa_use_shader_program call */
-      if (ctx->Extensions.ARB_separate_shader_objects) {
-         _mesa_reference_pipeline_object(ctx, &ctx->_Shader, save->_Shader);
-         _mesa_reference_pipeline_object(ctx, &ctx->Pipeline.Current,
-                                         save->Pipeline);
+      any_shader = false;
+      for (i = 0; i <= MESA_SHADER_FRAGMENT; i++) {
+         /* It is safe to call _mesa_use_shader_program even if the extension
+          * necessary for that program state is not supported.  In that case,
+          * the saved program object must be NULL and the currently bound
+          * program object must be NULL.  _mesa_use_shader_program is a no-op
+          * in that case.
+          */
+         _mesa_use_shader_program(ctx, targets[i],
+                                  save->Shader[i],
+                                  &ctx->Shader);
+
+         /* Do this *before* killing the reference. :)
+          */
+         if (save->Shader[i] != NULL)
+            any_shader = true;
+
+         _mesa_reference_shader_program(ctx, &save->Shader[i], NULL);
+      }
+
+      _mesa_reference_shader_program(ctx, &ctx->Shader.ActiveProgram,
+                                     save->ActiveShader);
+      _mesa_reference_shader_program(ctx, &save->ActiveShader, NULL);
+
+      /* If there were any stages set with programs, use ctx->Shader as the
+       * current shader state.  Otherwise, use Pipeline.Default.  The pipeline
+       * hasn't been restored yet, and that may modify ctx->_Shader further.
+       */
+      if (any_shader)
+         _mesa_reference_pipeline_object(ctx, &ctx->_Shader,
+                                         &ctx->Shader);
+      else
+         _mesa_reference_pipeline_object(ctx, &ctx->_Shader,
+                                         ctx->Pipeline.Default);
+
+      if (save->Pipeline) {
+         assert(ctx->Extensions.ARB_separate_shader_objects);
+         _mesa_bind_pipeline(ctx, save->Pipeline);
+
          _mesa_reference_pipeline_object(ctx, &save->Pipeline, NULL);
       }
-
-      if (ctx->Extensions.ARB_vertex_shader) {
-	 _mesa_use_shader_program(ctx, GL_VERTEX_SHADER,
-                                  save->Shader[MESA_SHADER_VERTEX],
-                                  ctx->_Shader);
-      }
-
-      if (_mesa_has_geometry_shaders(ctx))
-	 _mesa_use_shader_program(ctx, GL_GEOMETRY_SHADER_ARB,
-                                  save->Shader[MESA_SHADER_GEOMETRY],
-                                  ctx->_Shader);
-
-      if (ctx->Extensions.ARB_fragment_shader)
-	 _mesa_use_shader_program(ctx, GL_FRAGMENT_SHADER,
-                                  save->Shader[MESA_SHADER_FRAGMENT],
-                                  ctx->_Shader);
-
-      _mesa_reference_shader_program(ctx, &ctx->_Shader->ActiveProgram,
-				     save->ActiveShader);
-
-      for (i = 0; i < MESA_SHADER_STAGES; i++)
-         _mesa_reference_shader_program(ctx, &save->Shader[i], NULL);
-      _mesa_reference_shader_program(ctx, &save->ActiveShader, NULL);
-      _mesa_reference_pipeline_object(ctx, &save->_Shader, NULL);
    }
 
    if (state & MESA_META_STENCIL_TEST) {
