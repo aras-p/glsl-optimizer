@@ -3294,6 +3294,7 @@ fs_visitor::assign_binding_table_offsets()
 void
 fs_visitor::calculate_register_pressure()
 {
+   invalidate_live_intervals();
    calculate_live_intervals();
 
    int num_instructions = 0;
