@@ -792,7 +792,7 @@ get_shader_source(struct gl_context *ctx, GLuint shader, GLsizei maxLength,
 
 /**
  * Set/replace shader source code.  A helper function used by
- * glShaderSource[ARB] and glCreateShaderProgramEXT.
+ * glShaderSource[ARB].
  */
 static void
 shader_source(struct gl_context *ctx, GLuint shader, const GLchar *source)
@@ -1545,15 +1545,14 @@ _mesa_UseProgram(GLhandleARB program)
       shProg = NULL;
    }
 
-   /* The "Dependencies on EXT_separate_shader_objects" section of the
-    * ARB_separate_shader_object spec says:
+   /* The ARB_separate_shader_object spec says:
     *
     *     "The executable code for an individual shader stage is taken from
     *     the current program for that stage.  If there is a current program
-    *     object for any shader stage or for uniform updates established by
-    *     UseProgram, UseShaderProgramEXT, or ActiveProgramEXT, the current
-    *     program for that stage (if any) is considered current.  Otherwise,
-    *     if there is a bound program pipeline object ..."
+    *     object established by UseProgram, that program is considered current
+    *     for all stages.  Otherwise, if there is a bound program pipeline
+    *     object (section 2.14.PPO), the program bound to the appropriate
+    *     stage of the pipeline object is considered current."
     */
    if (program) {
       /* Attach shader state to the binding point */
@@ -1808,124 +1807,6 @@ _mesa_use_shader_program(struct gl_context *ctx, GLenum type,
 }
 
 
-/**
- * For GL_EXT_separate_shader_objects
- */
-void GLAPIENTRY
-_mesa_UseShaderProgramEXT(GLenum type, GLuint program)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   struct gl_shader_program *shProg = NULL;
-
-   if (!_mesa_validate_shader_target(ctx, type)) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glUseShaderProgramEXT(type)");
-      return;
-   }
-
-   if (_mesa_is_xfb_active_and_unpaused(ctx)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glUseShaderProgramEXT(transform feedback is active)");
-      return;
-   }
-
-   if (program) {
-      shProg = _mesa_lookup_shader_program_err(ctx, program,
-					       "glUseShaderProgramEXT");
-      if (shProg == NULL)
-	 return;
-
-      if (!shProg->LinkStatus) {
-	 _mesa_error(ctx, GL_INVALID_OPERATION,
-		     "glUseShaderProgramEXT(program not linked)");
-	 return;
-      }
-   }
-
-   /* The "Dependencies on EXT_separate_shader_objects" section of the
-    * ARB_separate_shader_object spec says:
-    *
-    *     "The executable code for an individual shader stage is taken from
-    *     the current program for that stage.  If there is a current program
-    *     object for any shader stage or for uniform updates established by
-    *     UseProgram, UseShaderProgramEXT, or ActiveProgramEXT, the current
-    *     program for that stage (if any) is considered current.  Otherwise,
-    *     if there is a bound program pipeline object ..."
-    */
-   if (program) {
-      /* Attach shader state to the binding point */
-      _mesa_reference_pipeline_object(ctx, &ctx->_Shader, &ctx->Shader);
-      /* Update the program */
-      _mesa_use_shader_program(ctx, type, shProg, ctx->_Shader);
-   } else {
-      /* Must be done first: detach the progam */
-      _mesa_use_shader_program(ctx, type, shProg, ctx->_Shader);
-
-      /* Nothing remains current */
-      if (!ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX] &&
-          !ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY] &&
-          !ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT] &&
-          !ctx->Shader.ActiveProgram) {
-
-         /* Unattach shader_state binding point */
-         _mesa_reference_pipeline_object(ctx, &ctx->_Shader,
-                                         ctx->Pipeline.Default);
-
-         /* If a pipeline was bound, rebind it */
-         if (ctx->Pipeline.Current) {
-            _mesa_BindProgramPipeline(ctx->Pipeline.Current->Name);
-         }
-      }
-   }
-}
-
-
-/**
- * For GL_EXT_separate_shader_objects
- */
-void GLAPIENTRY
-_mesa_ActiveProgramEXT(GLuint program)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   struct gl_shader_program *shProg = (program != 0)
-      ? _mesa_lookup_shader_program_err(ctx, program, "glActiveProgramEXT")
-      : NULL;
-
-   /* The "Dependencies on EXT_separate_shader_objects" section of the
-    * ARB_separate_shader_object spec says:
-    *
-    *     "The executable code for an individual shader stage is taken from
-    *     the current program for that stage.  If there is a current program
-    *     object for any shader stage or for uniform updates established by
-    *     UseProgram, UseShaderProgramEXT, or ActiveProgramEXT, the current
-    *     program for that stage (if any) is considered current.  Otherwise,
-    *     if there is a bound program pipeline object ..."
-    */
-   if (shProg != NULL) {
-      /* Attach shader state to the binding point */
-      _mesa_reference_pipeline_object(ctx, &ctx->_Shader, &ctx->Shader);
-      _mesa_active_program(ctx, shProg, "glActiveProgramEXT");
-   } else {
-      /* Must be done first: unset the current active progam */
-      _mesa_active_program(ctx, shProg, "glActiveProgramEXT");
-
-      /* Nothing remains current */
-      if (!ctx->Shader.CurrentProgram[MESA_SHADER_VERTEX] &&
-          !ctx->Shader.CurrentProgram[MESA_SHADER_GEOMETRY] &&
-          !ctx->Shader.CurrentProgram[MESA_SHADER_FRAGMENT] &&
-          !ctx->Shader.ActiveProgram) {
-
-         /* Unattach shader_state binding point */
-         _mesa_reference_pipeline_object(ctx, &ctx->_Shader, ctx->Pipeline.Default);
-         /* If a pipeline was bound, rebind it */
-         if (ctx->Pipeline.Current) {
-            _mesa_BindProgramPipeline(ctx->Pipeline.Current->Name);
-         }
-      }
-   }
-
-   return;
-}
-
 static GLuint
 _mesa_create_shader_program(struct gl_context* ctx, GLboolean separate,
                             GLenum type, GLsizei count, const GLchar* const *strings)
@@ -2010,23 +1891,8 @@ _mesa_copy_linked_program_data(gl_shader_stage type,
    }
 }
 
-
-/**
- * For GL_EXT_separate_shader_objects
- */
-GLuint GLAPIENTRY
-_mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string)
-{
-   GET_CURRENT_CONTEXT(ctx);
-
-   return _mesa_create_shader_program(ctx, GL_FALSE, type, 1, &string);
-}
-
 /**
  * ARB_separate_shader_objects: Compile & Link Program
- *
- * Basically the same as _mesa_CreateShaderProgramEXT but with support of
- * multiple strings and sets the SeparateShader flag to true.
  */
 GLuint GLAPIENTRY
 _mesa_CreateShaderProgramv(GLenum type, GLsizei count,

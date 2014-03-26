@@ -218,7 +218,6 @@ static const struct extension extension_table[] = {
    { "GL_EXT_provoking_vertex",                    o(EXT_provoking_vertex),                    GL,             2009 },
    { "GL_EXT_rescale_normal",                      o(dummy_true),                              GLL,            1997 },
    { "GL_EXT_secondary_color",                     o(dummy_true),                              GLL,            1999 },
-   { "GL_EXT_separate_shader_objects",             o(EXT_separate_shader_objects),             GLL,            2008 },
    { "GL_EXT_separate_specular_color",             o(dummy_true),                              GLL,            1997 },
    { "GL_EXT_shader_integer_mix",                  o(EXT_shader_integer_mix),                  GL       | ES3, 2013 },
    { "GL_EXT_shadow_funcs",                        o(ARB_shadow),                              GLL,            2002 },
@@ -410,7 +409,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
    ctx->Extensions.ARB_occlusion_query2 = GL_TRUE;
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
-   ctx->Extensions.EXT_separate_shader_objects = GL_TRUE;
    ctx->Extensions.ARB_shadow = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE;
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;

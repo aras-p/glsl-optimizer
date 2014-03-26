@@ -518,14 +518,9 @@ do_dead_builtin_varyings(struct gl_context *ctx,
 
    /* Lowering of built-in varyings has no effect with the core context and
     * GLES2, because they are not available there.
-    *
-    * EXT_separate_shader_objects doesn't allow this optimization,
-    * because a program object can be bound partially (e.g. only one
-    * stage of a program object can be bound).
     */
    if (ctx->API == API_OPENGL_CORE ||
-       ctx->API == API_OPENGLES2 ||
-       ctx->Extensions.EXT_separate_shader_objects) {
+       ctx->API == API_OPENGLES2) {
       return;
    }
 

@@ -2809,9 +2809,7 @@ struct gl_pipeline_object
    /**
     * Programs used for rendering
     *
-    * There is a separate program set for each shader stage.  If
-    * GL_EXT_separate_shader_objects is not supported, each of these must point
-    * to \c NULL or to the same program.
+    * There is a separate program set for each shader stage.
     */
    struct gl_shader_program *CurrentProgram[MESA_SHADER_STAGES];
 
@@ -3596,7 +3594,6 @@ struct gl_extensions
    GLboolean EXT_pixel_buffer_object;
    GLboolean EXT_point_parameters;
    GLboolean EXT_provoking_vertex;
-   GLboolean EXT_separate_shader_objects;
    GLboolean EXT_shader_integer_mix;
    GLboolean EXT_stencil_two_side;
    GLboolean EXT_texture3D;
