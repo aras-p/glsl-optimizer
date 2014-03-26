@@ -121,7 +121,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 {
    bool progress = false;
 
-   void *mem_ctx = ralloc_context(this->mem_ctx);
+   void *cse_ctx = ralloc_context(NULL);
 
    int ip = block->start_ip;
    for (fs_inst *inst = (fs_inst *)block->start;
@@ -148,7 +148,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
 
 	 if (!found) {
 	    /* Our first sighting of this expression.  Create an entry. */
-	    aeb_entry *entry = ralloc(mem_ctx, aeb_entry);
+	    aeb_entry *entry = ralloc(cse_ctx, aeb_entry);
 	    entry->tmp = reg_undef;
 	    entry->generator = inst;
 	    aeb->push_tail(entry);
@@ -254,7 +254,7 @@ fs_visitor::opt_cse_local(bblock_t *block, exec_list *aeb)
       ip++;
    }
 
-   ralloc_free(mem_ctx);
+   ralloc_free(cse_ctx);
 
    if (progress)
       invalidate_live_intervals();

@@ -483,7 +483,7 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
  * list.
  */
 bool
-fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block,
+fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
                                      exec_list *acp)
 {
    bool progress = false;
@@ -543,7 +543,7 @@ fs_visitor::opt_copy_propagate_local(void *mem_ctx, bblock_t *block,
 	  inst->src[0].type == inst->dst.type &&
 	  !inst->saturate &&
 	  !inst->is_partial_write()) {
-	 acp_entry *entry = ralloc(mem_ctx, acp_entry);
+	 acp_entry *entry = ralloc(copy_prop_ctx, acp_entry);
 	 entry->dst = inst->dst;
 	 entry->src = inst->src[0];
 	 acp[entry->dst.reg % ACP_HASH_SIZE].push_tail(entry);
@@ -557,7 +557,7 @@ bool
 fs_visitor::opt_copy_propagate()
 {
    bool progress = false;
-   void *mem_ctx = ralloc_context(this->mem_ctx);
+   void *copy_prop_ctx = ralloc_context(NULL);
    cfg_t cfg(&instructions);
    exec_list *out_acp[cfg.num_blocks];
    for (int i = 0; i < cfg.num_blocks; i++)
@@ -569,12 +569,12 @@ fs_visitor::opt_copy_propagate()
    for (int b = 0; b < cfg.num_blocks; b++) {
       bblock_t *block = cfg.blocks[b];
 
-      progress = opt_copy_propagate_local(mem_ctx, block,
+      progress = opt_copy_propagate_local(copy_prop_ctx, block,
                                           out_acp[b]) || progress;
    }
 
    /* Do dataflow analysis for those available copies. */
-   fs_copy_prop_dataflow dataflow(mem_ctx, &cfg, out_acp);
+   fs_copy_prop_dataflow dataflow(copy_prop_ctx, &cfg, out_acp);
 
    /* Next, re-run local copy propagation, this time with the set of copies
     * provided by the dataflow analysis available at the start of a block.
@@ -590,12 +590,12 @@ fs_visitor::opt_copy_propagate()
          }
       }
 
-      progress = opt_copy_propagate_local(mem_ctx, block, in_acp) || progress;
+      progress = opt_copy_propagate_local(copy_prop_ctx, block, in_acp) || progress;
    }
 
    for (int i = 0; i < cfg.num_blocks; i++)
       delete [] out_acp[i];
-   ralloc_free(mem_ctx);
+   ralloc_free(copy_prop_ctx);
 
    if (progress)
       invalidate_live_intervals();
