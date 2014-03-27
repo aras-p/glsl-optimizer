@@ -46,7 +46,16 @@
 static bool
 is_nop_mov(const fs_inst *inst)
 {
-   if (inst->opcode == BRW_OPCODE_MOV) {
+   if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD) {
+      fs_reg dst = inst->dst;
+      for (int i = 0; i < inst->sources; i++) {
+         dst.reg_offset = i;
+         if (!dst.equals(inst->src[i])) {
+            return false;
+         }
+      }
+      return true;
+   } else if (inst->opcode == BRW_OPCODE_MOV) {
       return inst->dst.equals(inst->src[0]);
    }
 
@@ -54,9 +63,29 @@ is_nop_mov(const fs_inst *inst)
 }
 
 static bool
+is_copy_payload(const fs_inst *inst, int src_size)
+{
+   if (src_size != inst->sources)
+      return false;
+
+   const int reg = inst->src[0].reg;
+   if (inst->src[0].reg_offset != 0)
+      return false;
+
+   for (int i = 1; i < inst->sources; i++) {
+      if (inst->src[i].reg != reg ||
+          inst->src[i].reg_offset != i) {
+         return false;
+      }
+   }
+   return true;
+}
+
+static bool
 is_coalesce_candidate(const fs_inst *inst, const int *virtual_grf_sizes)
 {
-   if (inst->opcode != BRW_OPCODE_MOV ||
+   if ((inst->opcode != BRW_OPCODE_MOV &&
+        inst->opcode != SHADER_OPCODE_LOAD_PAYLOAD) ||
        inst->is_partial_write() ||
        inst->saturate ||
        inst->src[0].file != GRF ||
@@ -71,6 +100,12 @@ is_coalesce_candidate(const fs_inst *inst, const int *virtual_grf_sizes)
    if (virtual_grf_sizes[inst->src[0].reg] >
        virtual_grf_sizes[inst->dst.reg])
       return false;
+
+   if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD) {
+      if (!is_copy_payload(inst, virtual_grf_sizes[inst->src[0].reg])) {
+         return false;
+      }
+   }
 
    return true;
 }
@@ -161,10 +196,18 @@ fs_visitor::register_coalesce()
       if (reg_to != inst->dst.reg)
          continue;
 
-      const int offset = inst->src[0].reg_offset;
-      reg_to_offset[offset] = inst->dst.reg_offset;
-      mov[offset] = inst;
-      channels_remaining--;
+      if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD) {
+         for (int i = 0; i < src_size; i++) {
+            reg_to_offset[i] = i;
+         }
+         mov[0] = inst;
+         channels_remaining -= inst->sources;
+      } else {
+         const int offset = inst->src[0].reg_offset;
+         reg_to_offset[offset] = inst->dst.reg_offset;
+         mov[offset] = inst;
+         channels_remaining--;
+      }
 
       if (channels_remaining)
          continue;
@@ -186,15 +229,16 @@ fs_visitor::register_coalesce()
          continue;
 
       progress = true;
+      bool was_load_payload = inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD;
 
       for (int i = 0; i < src_size; i++) {
          if (mov[i]) {
             mov[i]->opcode = BRW_OPCODE_NOP;
             mov[i]->conditional_mod = BRW_CONDITIONAL_NONE;
             mov[i]->dst = reg_undef;
-            mov[i]->src[0] = reg_undef;
-            mov[i]->src[1] = reg_undef;
-            mov[i]->src[2] = reg_undef;
+            for (int j = 0; j < mov[i]->sources; j++) {
+               mov[i]->src[j] = reg_undef;
+            }
          }
       }
 
@@ -202,7 +246,7 @@ fs_visitor::register_coalesce()
          fs_inst *scan_inst = (fs_inst *)node;
 
          for (int i = 0; i < src_size; i++) {
-            if (mov[i]) {
+            if (mov[i] || was_load_payload) {
                if (scan_inst->dst.file == GRF &&
                    scan_inst->dst.reg == reg_from &&
                    scan_inst->dst.reg_offset == i) {
