@@ -124,13 +124,16 @@ emit_texture(struct fd_ringbuffer *ring, struct fd_context *ctx,
 		struct fd_texture_stateobj *tex, unsigned samp_id, texmask emitted)
 {
 	unsigned const_idx = fd2_get_const_idx(ctx, tex, samp_id);
+	static const struct fd2_sampler_stateobj dummy_sampler = {};
 	struct fd2_sampler_stateobj *sampler;
 	struct fd2_pipe_sampler_view *view;
 
 	if (emitted & (1 << const_idx))
 		return 0;
 
-	sampler = fd2_sampler_stateobj(tex->samplers[samp_id]);
+	sampler = tex->samplers[samp_id] ?
+			fd2_sampler_stateobj(tex->samplers[samp_id]) :
+			&dummy_sampler;
 	view = fd2_pipe_sampler_view(tex->textures[samp_id]);
 
 	OUT_PKT3(ring, CP_SET_CONSTANT, 7);
