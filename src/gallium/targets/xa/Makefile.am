@@ -45,7 +45,12 @@ libxatracker_la_LIBADD = \
 	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/state_trackers/xa/libxatracker.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(LIBDRM_LIBS)
+	$(LIBDRM_LIBS) \
+	-lm \
+	$(CLOCK_LIB) \
+	$(PTHREAD_LIBS) \
+	$(DLOPEN_LIBS)
+
 
 if HAVE_DRI
 libxatracker_la_LIBADD += \

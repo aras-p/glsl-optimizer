@@ -49,7 +49,10 @@ gbm_gallium_drm_la_LIBADD = \
 	$(top_builddir)/src/gallium/state_trackers/gbm/libgbm.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(LIBDRM_LIBS) \
-	-lm
+	-lm \
+	$(CLOCK_LIB) \
+	$(PTHREAD_LIBS) \
+	$(DLOPEN_LIBS)
 
 if HAVE_DRI
 gbm_gallium_drm_la_LIBADD += \
