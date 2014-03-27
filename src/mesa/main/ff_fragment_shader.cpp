@@ -1299,7 +1299,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key)
     * fixed function program in a GLES2 context at all, but that's a
     * big mess to clean up.
     */
-   p.shader_program->InternalSeparateShader = GL_TRUE;
+   p.shader_program->SeparateShader = GL_TRUE;
 
    state->language_version = 130;
    state->es_shader = false;
