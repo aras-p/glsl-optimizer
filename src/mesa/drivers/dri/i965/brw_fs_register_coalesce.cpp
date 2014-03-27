@@ -169,11 +169,8 @@ fs_visitor::register_coalesce()
       if (!can_coalesce)
          continue;
 
-      bool removed = false;
       for (int i = 0; i < src_size; i++) {
          if (mov[i]) {
-            removed = true;
-
             mov[i]->opcode = BRW_OPCODE_NOP;
             mov[i]->conditional_mod = BRW_CONDITIONAL_NONE;
             mov[i]->dst = reg_undef;
@@ -206,17 +203,15 @@ fs_visitor::register_coalesce()
          }
       }
 
-      if (removed) {
-         for (int i = 0; i < src_size; i++) {
-            live_intervals->start[var_to[i]] =
-               MIN2(live_intervals->start[var_to[i]],
-                    live_intervals->start[var_from[i]]);
-            live_intervals->end[var_to[i]] =
-               MAX2(live_intervals->end[var_to[i]],
-                    live_intervals->end[var_from[i]]);
-            reg_from = -1;
-         }
+      for (int i = 0; i < src_size; i++) {
+         live_intervals->start[var_to[i]] =
+            MIN2(live_intervals->start[var_to[i]],
+                 live_intervals->start[var_from[i]]);
+         live_intervals->end[var_to[i]] =
+            MAX2(live_intervals->end[var_to[i]],
+                 live_intervals->end[var_from[i]]);
       }
+      reg_from = -1;
    }
 
    foreach_list_safe(node, &this->instructions) {
