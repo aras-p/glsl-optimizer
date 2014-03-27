@@ -42,7 +42,7 @@ PIPE_LIBS = \
 	$(top_builddir)/src/gallium/drivers/galahad/libgalahad.la \
 	$(DLOPEN_LIBS) \
 	$(CLOCK_LIB) \
-	-lpthread \
+	$(PTHREAD_LIBS) \
 	-lm
 
 AM_LDFLAGS = \
