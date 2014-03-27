@@ -33,7 +33,6 @@
 #include <GL/wglext.h>
 
 #include "glapi/glapi.h"
-#include "stw_ext_gallium.h"
 #include "stw_device.h"
 #include "stw_icd.h"
 
@@ -68,10 +67,6 @@ static const struct stw_extension_entry stw_extension_entries[] = {
    /* WGL_EXT_swap_interval */
    STW_EXTENSION_ENTRY( wglGetSwapIntervalEXT ),
    STW_EXTENSION_ENTRY( wglSwapIntervalEXT ),
-
-   /* WGL_EXT_gallium ? */
-   STW_EXTENSION_ENTRY( wglGetGalliumScreenMESA ),
-   STW_EXTENSION_ENTRY( wglCreateGalliumContextMESA ),
 
    /* WGL_ARB_create_context */
    STW_EXTENSION_ENTRY( wglCreateContextAttribsARB ),
