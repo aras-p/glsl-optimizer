@@ -122,17 +122,13 @@ fs_visitor::register_coalesce()
    int reg_from = -1, reg_to = -1;
    int reg_to_offset[MAX_SAMPLER_MESSAGE_SIZE];
    fs_inst *mov[MAX_SAMPLER_MESSAGE_SIZE];
+   int var_to[MAX_SAMPLER_MESSAGE_SIZE];
+   int var_from[MAX_SAMPLER_MESSAGE_SIZE];
 
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
       if (!is_coalesce_candidate(inst, virtual_grf_sizes))
-         continue;
-
-      int var_from = live_intervals->var_from_reg(&inst->src[0]);
-      int var_to = live_intervals->var_from_reg(&inst->dst);
-
-      if (!can_coalesce_vars(live_intervals, &instructions, inst, var_to, var_from))
          continue;
 
       if (reg_from != inst->src[0].reg) {
@@ -156,6 +152,21 @@ fs_visitor::register_coalesce()
       channels_remaining--;
 
       if (channels_remaining)
+         continue;
+
+      bool can_coalesce = true;
+      for (int i = 0; i < src_size; i++) {
+         var_to[i] = live_intervals->var_from_vgrf[reg_to] + reg_to_offset[i];
+         var_from[i] = live_intervals->var_from_vgrf[reg_from] + i;
+
+         if (!can_coalesce_vars(live_intervals, &instructions, inst,
+                                var_to[i], var_from[i])) {
+            can_coalesce = false;
+            break;
+         }
+      }
+
+      if (!can_coalesce)
          continue;
 
       bool removed = false;
@@ -196,11 +207,15 @@ fs_visitor::register_coalesce()
       }
 
       if (removed) {
-         live_intervals->start[var_to] = MIN2(live_intervals->start[var_to],
-                                              live_intervals->start[var_from]);
-         live_intervals->end[var_to] = MAX2(live_intervals->end[var_to],
-                                            live_intervals->end[var_from]);
-         reg_from = -1;
+         for (int i = 0; i < src_size; i++) {
+            live_intervals->start[var_to[i]] =
+               MIN2(live_intervals->start[var_to[i]],
+                    live_intervals->start[var_from[i]]);
+            live_intervals->end[var_to[i]] =
+               MAX2(live_intervals->end[var_to[i]],
+                    live_intervals->end[var_from[i]]);
+            reg_from = -1;
+         }
       }
    }
 
