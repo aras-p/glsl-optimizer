@@ -186,7 +186,7 @@ ir_copy_propagation_elements_visitor::visit_leave(ir_assignment *ir)
 }
 
 ir_visitor_status
-ir_copy_propagation_elements_visitor::visit_leave(ir_swizzle *ir)
+ir_copy_propagation_elements_visitor::visit_leave(ir_swizzle *)
 {
    /* Don't visit the values of swizzles since they are handled while
     * visiting the swizzle itself.

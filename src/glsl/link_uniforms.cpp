@@ -212,7 +212,7 @@ program_resource_visitor::recursion(const glsl_type *t, char **name,
 void
 program_resource_visitor::visit_field(const glsl_type *type, const char *name,
                                       bool row_major,
-                                      const glsl_type *record_type)
+                                      const glsl_type *)
 {
    visit_field(type, name, row_major);
 }

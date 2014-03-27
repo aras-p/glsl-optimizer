@@ -399,7 +399,7 @@ cse_visitor::visit_enter(ir_loop *ir)
 }
 
 ir_visitor_status
-cse_visitor::visit_enter(ir_call *ir)
+cse_visitor::visit_enter(ir_call *)
 {
    /* Because call is an exec_list of ir_rvalues, handle_rvalue gets passed a
     * pointer to the (ir_rvalue *) on the stack.  Since we save those pointers

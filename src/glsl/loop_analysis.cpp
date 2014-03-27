@@ -222,7 +222,7 @@ loop_analysis::visit(ir_loop_jump *ir)
 
 
 ir_visitor_status
-loop_analysis::visit_enter(ir_call *ir)
+loop_analysis::visit_enter(ir_call *)
 {
    /* Mark every loop that we're currently analyzing as containing an ir_call
     * (even those at outer nesting levels).

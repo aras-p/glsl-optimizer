@@ -28,7 +28,7 @@
 #include "program/hash_table.h"
 
 ir_rvalue *
-ir_rvalue::clone(void *mem_ctx, struct hash_table *ht) const
+ir_rvalue::clone(void *mem_ctx, struct hash_table *) const
 {
    /* The only possible instantiation is the generic error value. */
    return error_value(mem_ctx);

@@ -146,7 +146,7 @@ print_type(FILE *f, const glsl_type *t)
    }
 }
 
-void ir_print_visitor::visit(ir_rvalue *ir)
+void ir_print_visitor::visit(ir_rvalue *)
 {
    fprintf(f, "error");
 }
@@ -553,13 +553,13 @@ ir_print_visitor::visit(ir_loop_jump *ir)
 }
 
 void
-ir_print_visitor::visit(ir_emit_vertex *ir)
+ir_print_visitor::visit(ir_emit_vertex *)
 {
    fprintf(f, "(emit-vertex)");
 }
 
 void
-ir_print_visitor::visit(ir_end_primitive *ir)
+ir_print_visitor::visit(ir_end_primitive *)
 {
    fprintf(f, "(end-primitive)");
 }

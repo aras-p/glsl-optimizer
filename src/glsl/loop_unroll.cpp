@@ -70,19 +70,19 @@ public:
       run(list);
    }
 
-   virtual ir_visitor_status visit_enter(ir_assignment *ir)
+   virtual ir_visitor_status visit_enter(ir_assignment *)
    {
       nodes++;
       return visit_continue;
    }
 
-   virtual ir_visitor_status visit_enter(ir_expression *ir)
+   virtual ir_visitor_status visit_enter(ir_expression *)
    {
       nodes++;
       return visit_continue;
    }
 
-   virtual ir_visitor_status visit_enter(ir_loop *ir)
+   virtual ir_visitor_status visit_enter(ir_loop *)
    {
       fail = true;
       return visit_continue;

@@ -298,7 +298,7 @@ ir_vectorize_visitor::visit_enter(ir_swizzle *ir)
  * FINISHME: If all of scalar indices are identical we could vectorize.
  */
 ir_visitor_status
-ir_vectorize_visitor::visit_enter(ir_dereference_array *ir)
+ir_vectorize_visitor::visit_enter(ir_dereference_array *)
 {
    this->current_assignment = NULL;
    return visit_continue_with_parent;

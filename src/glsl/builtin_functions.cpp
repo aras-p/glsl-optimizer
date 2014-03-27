@@ -69,7 +69,7 @@ using namespace ir_builder;
  *  @{
  */
 static bool
-always_available(const _mesa_glsl_parse_state *state)
+always_available(const _mesa_glsl_parse_state *)
 {
    return true;
 }
