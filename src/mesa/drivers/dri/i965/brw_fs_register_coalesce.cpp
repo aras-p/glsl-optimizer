@@ -65,6 +65,51 @@ is_coalesce_candidate(const fs_inst *inst, const int *virtual_grf_sizes)
    return true;
 }
 
+static bool
+can_coalesce_vars(brw::fs_live_variables *live_intervals,
+                  const exec_list *instructions, const fs_inst *inst,
+                  int var_to, int var_from)
+{
+   if (live_intervals->vars_interfere(var_from, var_to) &&
+       !inst->dst.equals(inst->src[0])) {
+
+      /* We know that the live ranges of A (var_from) and B (var_to)
+       * interfere because of the ->vars_interfere() call above. If the end
+       * of B's live range is after the end of A's range, then we know two
+       * things:
+       *  - the start of B's live range must be in A's live range (since we
+       *    already know the two ranges interfere, this is the only remaining
+       *    possibility)
+       *  - the interference isn't of the form we're looking for (where B is
+       *    entirely inside A)
+       */
+      if (live_intervals->end[var_to] > live_intervals->end[var_from])
+         return false;
+
+      int scan_ip = -1;
+
+      foreach_list(n, instructions) {
+         fs_inst *scan_inst = (fs_inst *)n;
+         scan_ip++;
+
+         if (scan_inst->is_control_flow())
+            return false;
+
+         if (scan_ip <= live_intervals->start[var_to])
+            continue;
+
+         if (scan_ip > live_intervals->end[var_to])
+            break;
+
+         if (scan_inst->dst.equals(inst->dst) ||
+             scan_inst->dst.equals(inst->src[0]))
+            return false;
+      }
+   }
+
+   return true;
+}
+
 bool
 fs_visitor::register_coalesce()
 {
@@ -87,50 +132,8 @@ fs_visitor::register_coalesce()
       int var_from = live_intervals->var_from_reg(&inst->src[0]);
       int var_to = live_intervals->var_from_reg(&inst->dst);
 
-      if (live_intervals->vars_interfere(var_from, var_to) &&
-          !inst->dst.equals(inst->src[0])) {
-
-         /* We know that the live ranges of A (var_from) and B (var_to)
-          * interfere because of the ->vars_interfere() call above. If the end
-          * of B's live range is after the end of A's range, then we know two
-          * things:
-          *  - the start of B's live range must be in A's live range (since we
-          *    already know the two ranges interfere, this is the only remaining
-          *    possibility)
-          *  - the interference isn't of the form we're looking for (where B is
-          *    entirely inside A)
-          */
-         if (live_intervals->end[var_to] > live_intervals->end[var_from])
-            continue;
-
-         bool overwritten = false;
-         int scan_ip = -1;
-
-         foreach_list(n, &this->instructions) {
-            fs_inst *scan_inst = (fs_inst *)n;
-            scan_ip++;
-
-            if (scan_inst->is_control_flow()) {
-               overwritten = true;
-               break;
-            }
-
-            if (scan_ip <= live_intervals->start[var_to])
-               continue;
-
-            if (scan_ip > live_intervals->end[var_to])
-               break;
-
-            if (scan_inst->dst.equals(inst->dst) ||
-                scan_inst->dst.equals(inst->src[0])) {
-               overwritten = true;
-               break;
-            }
-         }
-
-         if (overwritten)
-            continue;
-      }
+      if (!can_coalesce_vars(live_intervals, &instructions, inst, var_to, var_from))
+         continue;
 
       if (reg_from != inst->src[0].reg) {
          reg_from = inst->src[0].reg;
