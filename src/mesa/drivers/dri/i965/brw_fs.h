@@ -196,14 +196,14 @@ public:
    fs_inst(enum opcode opcode, fs_reg dst,
            fs_reg src0, fs_reg src1,fs_reg src2);
 
-   bool equals(fs_inst *inst);
-   bool overwrites_reg(const fs_reg &reg);
-   bool is_send_from_grf();
-   bool is_partial_write();
-   int regs_read(fs_visitor *v, int arg);
+   bool equals(fs_inst *inst) const;
+   bool overwrites_reg(const fs_reg &reg) const;
+   bool is_send_from_grf() const;
+   bool is_partial_write() const;
+   int regs_read(fs_visitor *v, int arg) const;
 
-   bool reads_flag();
-   bool writes_flag();
+   bool reads_flag() const;
+   bool writes_flag() const;
 
    fs_reg dst;
    fs_reg src[3];

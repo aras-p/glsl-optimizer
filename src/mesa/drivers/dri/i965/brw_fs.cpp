@@ -323,7 +323,7 @@ fs_visitor::DEP_RESOLVE_MOV(int grf)
 }
 
 bool
-fs_inst::equals(fs_inst *inst)
+fs_inst::equals(fs_inst *inst) const
 {
    return (opcode == inst->opcode &&
            dst.equals(inst->dst) &&
@@ -344,7 +344,7 @@ fs_inst::equals(fs_inst *inst)
 }
 
 bool
-fs_inst::overwrites_reg(const fs_reg &reg)
+fs_inst::overwrites_reg(const fs_reg &reg) const
 {
    return (reg.file == dst.file &&
            reg.reg == dst.reg &&
@@ -353,7 +353,7 @@ fs_inst::overwrites_reg(const fs_reg &reg)
 }
 
 bool
-fs_inst::is_send_from_grf()
+fs_inst::is_send_from_grf() const
 {
    return (opcode == FS_OPCODE_VARYING_PULL_CONSTANT_LOAD_GEN7 ||
            opcode == SHADER_OPCODE_SHADER_TIME_ADD ||
@@ -761,7 +761,7 @@ fs_visitor::pop_force_uncompressed()
  * it.
  */
 bool
-fs_inst::is_partial_write()
+fs_inst::is_partial_write() const
 {
    return ((this->predicate && this->opcode != BRW_OPCODE_SEL) ||
            this->force_uncompressed ||
@@ -769,7 +769,7 @@ fs_inst::is_partial_write()
 }
 
 int
-fs_inst::regs_read(fs_visitor *v, int arg)
+fs_inst::regs_read(fs_visitor *v, int arg) const
 {
    if (is_tex() && arg == 0 && src[0].file == GRF) {
       if (v->dispatch_width == 16)
@@ -781,13 +781,13 @@ fs_inst::regs_read(fs_visitor *v, int arg)
 }
 
 bool
-fs_inst::reads_flag()
+fs_inst::reads_flag() const
 {
    return predicate;
 }
 
 bool
-fs_inst::writes_flag()
+fs_inst::writes_flag() const
 {
    return (conditional_mod && opcode != BRW_OPCODE_SEL) ||
           opcode == FS_OPCODE_MOV_DISPATCH_TO_FLAGS;
