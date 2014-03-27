@@ -43,6 +43,28 @@
 #include "brw_fs.h"
 #include "brw_fs_live_variables.h"
 
+static bool
+is_coalesce_candidate(const fs_inst *inst, const int *virtual_grf_sizes)
+{
+   if (inst->opcode != BRW_OPCODE_MOV ||
+       inst->is_partial_write() ||
+       inst->saturate ||
+       inst->src[0].file != GRF ||
+       inst->src[0].negate ||
+       inst->src[0].abs ||
+       !inst->src[0].is_contiguous() ||
+       inst->dst.file != GRF ||
+       inst->dst.type != inst->src[0].type) {
+      return false;
+   }
+
+   if (virtual_grf_sizes[inst->src[0].reg] >
+       virtual_grf_sizes[inst->dst.reg])
+      return false;
+
+   return true;
+}
+
 bool
 fs_visitor::register_coalesce()
 {
@@ -59,20 +81,7 @@ fs_visitor::register_coalesce()
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
 
-      if (inst->opcode != BRW_OPCODE_MOV ||
-	  inst->is_partial_write() ||
-	  inst->saturate ||
-	  inst->src[0].file != GRF ||
-	  inst->src[0].negate ||
-	  inst->src[0].abs ||
-	  !inst->src[0].is_contiguous() ||
-	  inst->dst.file != GRF ||
-	  inst->dst.type != inst->src[0].type) {
-	 continue;
-      }
-
-      if (virtual_grf_sizes[inst->src[0].reg] >
-          virtual_grf_sizes[inst->dst.reg])
+      if (!is_coalesce_candidate(inst, virtual_grf_sizes))
          continue;
 
       int var_from = live_intervals->var_from_reg(&inst->src[0]);
