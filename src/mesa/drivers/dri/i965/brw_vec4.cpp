@@ -351,8 +351,10 @@ try_eliminate_instruction(vec4_instruction *inst, int new_writemask)
       case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
          break;
       default:
-         inst->dst.writemask = new_writemask;
-         return true;
+         if (!inst->is_tex()) {
+            inst->dst.writemask = new_writemask;
+            return true;
+         }
       }
    }
 
