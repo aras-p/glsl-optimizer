@@ -448,7 +448,7 @@ gbm_dri_bo_import(struct gbm_device *gbm,
       if (!wb)
          return NULL;
 
-      image = wb->driver_buffer;
+      image = dri->image->dupImage(wb->driver_buffer, NULL);
 
       switch (wb->format) {
       case WL_DRM_FORMAT_XRGB8888:
@@ -477,10 +477,27 @@ gbm_dri_bo_import(struct gbm_device *gbm,
          return NULL;
 
       image = dri->lookup_image(dri->screen, buffer, dri->lookup_user_data);
+      image = dri->image->dupImage(image, NULL);
       dri->image->queryImage(image, __DRI_IMAGE_ATTRIB_FORMAT, &dri_format);
       gbm_format = gbm_dri_to_gbm_format(dri_format);
       if (gbm_format == 0)
          return NULL;
+      break;
+   }
+
+   case GBM_BO_IMPORT_FD:
+   {
+      struct gbm_import_fd_data *fd_data = buffer;
+      int stride = fd_data->stride, offset = 0;
+
+      image = dri->image->createImageFromFds(dri->screen,
+                                             fd_data->width,
+                                             fd_data->height,
+                                             fd_data->format,
+                                             &fd_data->fd, 1,
+                                             &stride, &offset,
+                                             NULL);
+      gbm_format = fd_data->format;
       break;
    }
 
@@ -493,7 +510,7 @@ gbm_dri_bo_import(struct gbm_device *gbm,
    if (bo == NULL)
       return NULL;
 
-   bo->image = dri->image->dupImage(image, NULL);
+   bo->image = image;
 
    if (usage & GBM_BO_USE_SCANOUT)
       dri_use |= __DRI_IMAGE_USE_SCANOUT;
