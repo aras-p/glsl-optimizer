@@ -554,7 +554,8 @@ void brw_draw_prims( struct gl_context *ctx,
     * get the minimum and maximum of their index buffer so we know what range
     * to upload.
     */
-   if (!vbo_all_varyings_in_vbos(arrays) && !index_bounds_valid) {
+   if (!index_bounds_valid &&
+       (ctx->RenderMode != GL_RENDER || !vbo_all_varyings_in_vbos(arrays))) {
       perf_debug("Scanning index buffer to compute index buffer bounds.  "
                  "Use glDrawRangeElements() to avoid this.\n");
       vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index, nr_prims);
