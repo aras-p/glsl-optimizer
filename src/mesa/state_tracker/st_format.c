@@ -1750,6 +1750,12 @@ st_choose_matching_format(struct pipe_screen *screen, unsigned bind,
       if (_mesa_get_format_color_encoding(mesa_format) == GL_SRGB) {
          continue;
       }
+      if (_mesa_get_format_bits(mesa_format, GL_TEXTURE_INTENSITY_SIZE) > 0) {
+         /* If `format` is GL_RED/GL_RED_INTEGER, then we might match some
+          * intensity formats, which we don't want.
+          */
+         continue;
+      }
 
       if (_mesa_format_matches_format_and_type(mesa_format, format, type,
                                                swapBytes)) {
