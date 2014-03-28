@@ -1545,6 +1545,9 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
          assert(brw->gen >= 7);
          brw_SUBB(p, dst, src[0], src[1]);
          break;
+      case BRW_OPCODE_MAC:
+         brw_MAC(p, dst, src[0], src[1]);
+         break;
 
       case BRW_OPCODE_BFE:
          assert(brw->gen >= 7);
