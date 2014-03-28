@@ -256,6 +256,9 @@ union gbm_bo_handle
 gbm_bo_get_handle(struct gbm_bo *bo);
 
 int
+gbm_bo_get_fd(struct gbm_bo *bo);
+
+int
 gbm_bo_write(struct gbm_bo *bo, const void *buf, size_t count);
 
 void

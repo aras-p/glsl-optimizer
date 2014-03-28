@@ -361,6 +361,21 @@ gbm_dri_bo_write(struct gbm_bo *_bo, const void *buf, size_t count)
    return 0;
 }
 
+static int
+gbm_dri_bo_get_fd(struct gbm_bo *_bo)
+{
+   struct gbm_dri_device *dri = gbm_dri_device(_bo->gbm);
+   struct gbm_dri_bo *bo = gbm_dri_bo(_bo);
+   int fd;
+
+   if (bo->image == NULL)
+      return -1;
+
+   dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_FD, &fd);
+
+   return fd;
+}
+
 static void
 gbm_dri_bo_destroy(struct gbm_bo *_bo)
 {
@@ -696,6 +711,7 @@ dri_device_create(int fd)
    dri->base.base.bo_import = gbm_dri_bo_import;
    dri->base.base.is_format_supported = gbm_dri_is_format_supported;
    dri->base.base.bo_write = gbm_dri_bo_write;
+   dri->base.base.bo_get_fd = gbm_dri_bo_get_fd;
    dri->base.base.bo_destroy = gbm_dri_bo_destroy;
    dri->base.base.destroy = dri_destroy;
    dri->base.base.surface_create = gbm_dri_surface_create;
