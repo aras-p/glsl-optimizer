@@ -175,6 +175,7 @@ ALU1(CBIT)
 ALU3(MAD)
 ALU2_ACC(ADDC)
 ALU2_ACC(SUBB)
+ALU2(MAC)
 
 /** Gen4 predicated IF. */
 vec4_instruction *

@@ -1081,6 +1081,9 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       assert(brw->gen >= 7);
       brw_SUBB(p, dst, src[0], src[1]);
       break;
+   case BRW_OPCODE_MAC:
+      brw_MAC(p, dst, src[0], src[1]);
+      break;
 
    case BRW_OPCODE_BFE:
       assert(brw->gen >= 7);
