@@ -325,9 +325,9 @@ texfetch_funcs[] =
    },
    {
       MESA_FORMAT_R10G10B10A2_UNORM,
-      NULL,
-      NULL,
-      NULL
+      fetch_texel_1d_R10G10B10A2_UNORM,
+      fetch_texel_2d_R10G10B10A2_UNORM,
+      fetch_texel_3d_R10G10B10A2_UNORM
    },
    {
       MESA_FORMAT_S8_UINT_Z24_UNORM,

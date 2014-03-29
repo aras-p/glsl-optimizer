@@ -503,6 +503,19 @@ FETCH(B10G10R10A2_UNORM)(const struct swrast_texture_image *texImage,
 
 
 static void
+FETCH(R10G10B10A2_UNORM)(const struct swrast_texture_image *texImage,
+                         GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   const GLuint *src = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
+   const GLuint s = *src;
+   texel[RCOMP] = ((s >>  0) & 0x3ff) * (1.0F / 1023.0F);
+   texel[GCOMP] = ((s >> 10) & 0x3ff) * (1.0F / 1023.0F);
+   texel[BCOMP] = ((s >> 20) & 0x3ff) * (1.0F / 1023.0F);
+   texel[ACOMP] = ((s >> 30) & 0x03) * (1.0F / 3.0F);
+}
+
+
+static void
 FETCH(R8G8_UNORM)(const struct swrast_texture_image *texImage,
                   GLint i, GLint j, GLint k, GLfloat *texel)
 {
