@@ -440,6 +440,9 @@ static void ra_assign_reg(struct ir3_visitor *v,
 
 	reg->flags &= ~IR3_REG_SSA;
 	reg->num = a->num & ~REG_HALF;
+
+	assert(reg->num >= 0);
+
 	if (a->num & REG_HALF) {
 		reg->flags |= IR3_REG_HALF;
 		/* if dst reg being assigned, patch up the instr: */

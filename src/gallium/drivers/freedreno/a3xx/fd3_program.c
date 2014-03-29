@@ -300,6 +300,8 @@ find_output(const struct fd3_shader_variant *so, fd3_semantic semantic)
 		return find_output(so, fd3_semantic_name(TGSI_SEMANTIC_COLOR, idx));
 	}
 
+	assert(0);
+
 	return 0;
 }
 
