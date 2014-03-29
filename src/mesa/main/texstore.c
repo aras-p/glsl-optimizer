@@ -3260,11 +3260,15 @@ _mesa_texstore_srgba8(TEXSTORE_PARAMS)
    GLboolean k;
 
    ASSERT(dstFormat == MESA_FORMAT_A8B8G8R8_SRGB ||
-          dstFormat == MESA_FORMAT_R8G8B8X8_SRGB);
+          dstFormat == MESA_FORMAT_R8G8B8X8_SRGB ||
+          dstFormat == MESA_FORMAT_R8G8B8A8_SRGB);
 
    /* reuse normal rgba texstore code */
    if (dstFormat == MESA_FORMAT_A8B8G8R8_SRGB) {
       newDstFormat = MESA_FORMAT_A8B8G8R8_UNORM;
+   }
+   else if (dstFormat == MESA_FORMAT_R8G8B8A8_SRGB) {
+      newDstFormat = MESA_FORMAT_R8G8B8A8_UNORM;
    }
    else if (dstFormat == MESA_FORMAT_R8G8B8X8_SRGB) {
       newDstFormat = MESA_FORMAT_R8G8B8X8_UNORM;
@@ -3293,9 +3297,6 @@ _mesa_texstore_sargb8(TEXSTORE_PARAMS)
    switch (dstFormat) {
    case MESA_FORMAT_B8G8R8A8_SRGB:
       newDstFormat = MESA_FORMAT_B8G8R8A8_UNORM;
-      break;
-   case MESA_FORMAT_R8G8B8A8_SRGB:
-      newDstFormat = MESA_FORMAT_R8G8B8A8_UNORM;
       break;
    case MESA_FORMAT_B8G8R8X8_SRGB:
       newDstFormat = MESA_FORMAT_B8G8R8X8_UNORM;
@@ -3852,6 +3853,7 @@ _mesa_get_texstore_func(mesa_format format)
       table[MESA_FORMAT_B5G5R5X1_UNORM] = store_ubyte_texture;
       table[MESA_FORMAT_R8G8B8X8_SNORM] = _mesa_texstore_signed_rgbx8888;
       table[MESA_FORMAT_R8G8B8X8_SRGB] = _mesa_texstore_srgba8;
+      table[MESA_FORMAT_R8G8B8A8_SRGB] = _mesa_texstore_srgba8;
       table[MESA_FORMAT_RGBX_UINT8] = _mesa_texstore_rgba_uint8;
       table[MESA_FORMAT_RGBX_SINT8] = _mesa_texstore_rgba_int8;
       table[MESA_FORMAT_B10G10R10X2_UNORM] = _mesa_texstore_argb2101010;
