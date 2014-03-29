@@ -445,6 +445,28 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
       }
       break;
 
+   case ir_binop_less:
+   case ir_binop_lequal:
+   case ir_binop_greater:
+   case ir_binop_gequal:
+   case ir_binop_equal:
+   case ir_binop_nequal:
+      for (int add_pos = 0; add_pos < 2; add_pos++) {
+         ir_expression *add = op_expr[add_pos];
+
+         if (!add || add->operation != ir_binop_add)
+            continue;
+
+         ir_constant *zero = op_const[1 - add_pos];
+         if (!is_vec_zero(zero))
+            continue;
+
+         return new(mem_ctx) ir_expression(ir->operation,
+                                           add->operands[0],
+                                           neg(add->operands[1]));
+      }
+      break;
+
    case ir_binop_rshift:
    case ir_binop_lshift:
       /* 0 >> x == 0 */
