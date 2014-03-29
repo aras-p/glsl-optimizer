@@ -106,6 +106,22 @@ _mesa_update_client_array(struct gl_context *ctx,
    _mesa_reference_buffer_object(ctx, &dst->BufferObj, binding->BufferObj);
 }
 
+static inline bool
+_mesa_attr_zero_aliases_vertex(struct gl_context *ctx)
+{
+   const bool is_forward_compatible_context =
+      ctx->Const.ContextFlags & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;
+
+   /* In OpenGL 3.1 attribute 0 becomes non-magic, just like in OpenGL ES
+    * 2.0.  Note that we cannot just check for API_OPENGL_COMPAT here because
+    * that will erroneously allow this usage in a 3.0 forward-compatible
+    * context too.
+    */
+   return (ctx->API == API_OPENGLES
+           || (ctx->API == API_OPENGL_COMPAT
+               && !is_forward_compatible_context));
+}
+
 extern void GLAPIENTRY
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride,
                     const GLvoid *ptr);

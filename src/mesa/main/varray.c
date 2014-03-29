@@ -784,13 +784,7 @@ static const GLfloat *
 get_current_attrib(struct gl_context *ctx, GLuint index, const char *function)
 {
    if (index == 0) {
-      /* In OpenGL 3.1 attribute 0 becomes non-magic, just like in OpenGL ES
-       * 2.0.  Note that we cannot just check for API_OPENGL_CORE here because
-       * that will erroneously allow this usage in a 3.0 forward-compatible
-       * context too.
-       */
-      if ((ctx->API != API_OPENGL_CORE || ctx->Version < 31)
-          && ctx->API != API_OPENGLES2) {
+      if (_mesa_attr_zero_aliases_vertex(ctx)) {
 	 _mesa_error(ctx, GL_INVALID_OPERATION, "%s(index==0)", function);
 	 return NULL;
       }
