@@ -583,6 +583,9 @@ brw_init_surface_formats(struct brw_context *brw)
 	  */
 	 render = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 break;
+      case BRW_SURFACEFORMAT_R8G8B8X8_UNORM:
+         render = BRW_SURFACEFORMAT_R8G8B8A8_UNORM;
+         break;
       }
 
       rinfo = &surface_formats[render];
