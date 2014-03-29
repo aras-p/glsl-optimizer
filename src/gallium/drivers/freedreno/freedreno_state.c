@@ -130,6 +130,11 @@ fd_set_framebuffer_state(struct pipe_context *pctx,
 		pipe_surface_reference(&cso->cbufs[i], NULL);
 
 	cso->nr_cbufs = framebuffer->nr_cbufs;
+
+	if ((cso->width != framebuffer->width) ||
+			(cso->height != framebuffer->height))
+		ctx->needs_rb_fbd = true;
+
 	cso->width = framebuffer->width;
 	cso->height = framebuffer->height;
 

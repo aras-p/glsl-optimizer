@@ -170,6 +170,12 @@ struct fd_context {
 	 */
 	bool needs_wfi;
 
+	/* Do we need to re-emit RB_FRAME_BUFFER_DIMENSION?  At least on a3xx
+	 * it is not a banked context register, so it needs a WFI to update.
+	 * Keep track if it has actually changed, to avoid unneeded WFI.
+	 * */
+	bool needs_rb_fbd;
+
 	/* Keep track of DRAW initiators that need to be patched up depending
 	 * on whether we using binning or not:
 	 */

@@ -680,4 +680,6 @@ fd3_emit_restore(struct fd_context *ctx)
 
 	emit_cache_flush(ring);
 	fd_wfi(ctx, ring);
+
+	ctx->needs_rb_fbd = true;
 }

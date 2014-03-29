@@ -839,9 +839,13 @@ fd3_emit_tile_prep(struct fd_context *ctx, struct fd_tile *tile)
 		OUT_RING(ring, 0x00000000);
 	}
 
-	OUT_PKT0(ring, REG_A3XX_RB_FRAME_BUFFER_DIMENSION, 1);
-	OUT_RING(ring, A3XX_RB_FRAME_BUFFER_DIMENSION_WIDTH(pfb->width) |
-			A3XX_RB_FRAME_BUFFER_DIMENSION_HEIGHT(pfb->height));
+	if (ctx->needs_rb_fbd) {
+		fd_wfi(ctx, ring);
+		OUT_PKT0(ring, REG_A3XX_RB_FRAME_BUFFER_DIMENSION, 1);
+		OUT_RING(ring, A3XX_RB_FRAME_BUFFER_DIMENSION_WIDTH(pfb->width) |
+				A3XX_RB_FRAME_BUFFER_DIMENSION_HEIGHT(pfb->height));
+		ctx->needs_rb_fbd = false;
+	}
 
 	OUT_PKT0(ring, REG_A3XX_RB_MODE_CONTROL, 1);
 	OUT_RING(ring, A3XX_RB_MODE_CONTROL_RENDER_MODE(RB_RENDERING_PASS) |
