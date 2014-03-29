@@ -104,8 +104,8 @@ static int output_base(struct ir3_ra_ctx *ctx)
 	 */
 	if (ctx->type == SHADER_FRAGMENT) {
 		if (ctx->half_precision)
-			return ctx->frag_face ? 1 : 0;
-		return ctx->frag_coord ? 6 : 2;
+			return ctx->frag_face ? 4 : 3;
+		return ctx->frag_coord ? 8 : 4;
 	}
 	return 0;
 }
