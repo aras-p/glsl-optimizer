@@ -120,6 +120,7 @@ struct cso_context {
    struct pipe_viewport_state vp, vp_saved;
    struct pipe_blend_color blend_color;
    unsigned sample_mask, sample_mask_saved;
+   unsigned min_samples, min_samples_saved;
    struct pipe_stencil_ref stencil_ref, stencil_ref_saved;
 };
 
@@ -714,6 +715,24 @@ void cso_save_sample_mask(struct cso_context *ctx)
 void cso_restore_sample_mask(struct cso_context *ctx)
 {
    cso_set_sample_mask(ctx, ctx->sample_mask_saved);
+}
+
+void cso_set_min_samples(struct cso_context *ctx, unsigned min_samples)
+{
+   if (ctx->min_samples != min_samples && ctx->pipe->set_min_samples) {
+      ctx->min_samples = min_samples;
+      ctx->pipe->set_min_samples(ctx->pipe, min_samples);
+   }
+}
+
+void cso_save_min_samples(struct cso_context *ctx)
+{
+   ctx->min_samples_saved = ctx->min_samples;
+}
+
+void cso_restore_min_samples(struct cso_context *ctx)
+{
+   cso_set_min_samples(ctx, ctx->min_samples_saved);
 }
 
 void cso_set_stencil_ref(struct cso_context *ctx,

@@ -520,6 +520,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_save_depth_stencil_alpha(ctx->cso);
    cso_save_rasterizer(ctx->cso);
    cso_save_sample_mask(ctx->cso);
+   cso_save_min_samples(ctx->cso);
    cso_save_samplers(ctx->cso, PIPE_SHADER_FRAGMENT);
    cso_save_sampler_views(ctx->cso, PIPE_SHADER_FRAGMENT);
    cso_save_stream_outputs(ctx->cso);
@@ -535,6 +536,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_blend(ctx->cso, &ctx->blend_write_color);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->dsa_keep_depthstencil);
    cso_set_sample_mask(ctx->cso, ~0);
+   cso_set_min_samples(ctx->cso, 1);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
    cso_set_vertex_elements(ctx->cso, 2, ctx->velem);
    cso_set_stream_outputs(ctx->cso, 0, NULL, NULL);
@@ -597,6 +599,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_restore_depth_stencil_alpha(ctx->cso);
    cso_restore_rasterizer(ctx->cso);
    cso_restore_sample_mask(ctx->cso);
+   cso_restore_min_samples(ctx->cso);
    cso_restore_samplers(ctx->cso, PIPE_SHADER_FRAGMENT);
    cso_restore_sampler_views(ctx->cso, PIPE_SHADER_FRAGMENT);
    cso_restore_viewport(ctx->cso);

@@ -27,8 +27,10 @@
 
 
 #include "st_context.h"
+#include "pipe/p_screen.h"
 #include "pipe/p_context.h"
 #include "st_atom.h"
+#include "st_program.h"
 
 #include "cso_cache/cso_context.h"
 #include "util/u_framebuffer.h"
@@ -70,6 +72,18 @@ static void update_sample_mask( struct st_context *st )
    }
 }
 
+static void update_sample_shading( struct st_context *st )
+{
+   if (!st->fp)
+      return;
+
+   if (!st->ctx->Extensions.ARB_sample_shading)
+      return;
+
+   cso_set_min_samples(
+	 st->cso_context,
+         _mesa_get_min_invocations_per_fragment(st->ctx, &st->fp->Base, false));
+}
 
 const struct st_tracked_state st_update_msaa = {
    "st_update_msaa",					/* name */
@@ -78,4 +92,13 @@ const struct st_tracked_state st_update_msaa = {
       ST_NEW_FRAMEBUFFER,				/* st */
    },
    update_sample_mask					/* update */
+};
+
+const struct st_tracked_state st_update_sample_shading = {
+   "st_update_sample_shading",				/* name */
+   {							/* dirty */
+      (_NEW_MULTISAMPLE | _NEW_PROGRAM | _NEW_BUFFERS),	/* mesa */
+      ST_NEW_FRAGMENT_PROGRAM | ST_NEW_FRAMEBUFFER,	/* st */
+   },
+   update_sample_shading				/* update */
 };

@@ -425,7 +425,8 @@ void st_init_extensions(struct st_context *st)
       { o(OES_standard_derivatives),         PIPE_CAP_SM3                              },
       { o(ARB_texture_cube_map_array),       PIPE_CAP_CUBE_MAP_ARRAY                   },
       { o(ARB_texture_multisample),          PIPE_CAP_TEXTURE_MULTISAMPLE              },
-      { o(ARB_texture_query_lod),            PIPE_CAP_TEXTURE_QUERY_LOD                }
+      { o(ARB_texture_query_lod),            PIPE_CAP_TEXTURE_QUERY_LOD                },
+      { o(ARB_sample_shading),               PIPE_CAP_SAMPLE_SHADING                   },
    };
 
    /* Required: render target and sampler support */

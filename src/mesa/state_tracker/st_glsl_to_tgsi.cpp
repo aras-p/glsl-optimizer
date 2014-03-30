@@ -4163,7 +4163,9 @@ struct st_translate {
 static unsigned mesa_sysval_to_semantic[SYSTEM_VALUE_MAX] = {
    TGSI_SEMANTIC_FACE,
    TGSI_SEMANTIC_VERTEXID,
-   TGSI_SEMANTIC_INSTANCEID
+   TGSI_SEMANTIC_INSTANCEID,
+   TGSI_SEMANTIC_SAMPLEID,
+   TGSI_SEMANTIC_SAMPLEPOS,
 };
 
 /**
@@ -4381,7 +4383,8 @@ translate_dst(struct st_translate *t,
          break;
 
       case TGSI_PROCESSOR_FRAGMENT:
-         if (dst_reg->index >= FRAG_RESULT_COLOR) {
+         if (dst_reg->index == FRAG_RESULT_COLOR ||
+             dst_reg->index >= FRAG_RESULT_DATA0) {
             dst = ureg_saturate(dst);
          }
          break;
@@ -4875,6 +4878,15 @@ st_translate_program(
             t->outputs[i] = ureg_DECL_output(ureg,
                                              TGSI_SEMANTIC_COLOR,
                                              outputSemanticIndex[i]);
+            break;
+         case TGSI_SEMANTIC_SAMPLEMASK:
+            t->outputs[i] = ureg_DECL_output(ureg,
+                                             TGSI_SEMANTIC_SAMPLEMASK,
+                                             outputSemanticIndex[i]);
+            /* TODO: If we ever support more than 32 samples, this will have
+             * to become an array.
+             */
+            t->outputs[i] = ureg_writemask(t->outputs[i], TGSI_WRITEMASK_X);
             break;
          default:
             assert(!"fragment shader outputs must be POSITION/STENCIL/COLOR");

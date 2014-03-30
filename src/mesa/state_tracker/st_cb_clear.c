@@ -240,6 +240,7 @@ clear_with_quad(struct gl_context *ctx, unsigned clear_buffers)
    cso_save_depth_stencil_alpha(st->cso_context);
    cso_save_rasterizer(st->cso_context);
    cso_save_sample_mask(st->cso_context);
+   cso_save_min_samples(st->cso_context);
    cso_save_viewport(st->cso_context);
    cso_save_fragment_shader(st->cso_context);
    cso_save_stream_outputs(st->cso_context);
@@ -309,6 +310,7 @@ clear_with_quad(struct gl_context *ctx, unsigned clear_buffers)
    cso_set_vertex_elements(st->cso_context, 2, st->velems_util_draw);
    cso_set_stream_outputs(st->cso_context, 0, NULL, NULL);
    cso_set_sample_mask(st->cso_context, ~0);
+   cso_set_min_samples(st->cso_context, 1);
    cso_set_rasterizer(st->cso_context, &st->clear.raster);
 
    /* viewport state: viewport matching window dims */
@@ -348,6 +350,7 @@ clear_with_quad(struct gl_context *ctx, unsigned clear_buffers)
    cso_restore_depth_stencil_alpha(st->cso_context);
    cso_restore_rasterizer(st->cso_context);
    cso_restore_sample_mask(st->cso_context);
+   cso_restore_min_samples(st->cso_context);
    cso_restore_viewport(st->cso_context);
    cso_restore_fragment_shader(st->cso_context);
    cso_restore_vertex_shader(st->cso_context);

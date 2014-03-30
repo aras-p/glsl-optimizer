@@ -59,6 +59,7 @@ extern const struct st_tracked_state st_update_viewport;
 extern const struct st_tracked_state st_update_scissor;
 extern const struct st_tracked_state st_update_blend;
 extern const struct st_tracked_state st_update_msaa;
+extern const struct st_tracked_state st_update_sample_shading;
 extern const struct st_tracked_state st_update_sampler;
 extern const struct st_tracked_state st_update_fragment_texture;
 extern const struct st_tracked_state st_update_vertex_texture;
