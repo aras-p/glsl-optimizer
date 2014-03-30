@@ -172,6 +172,8 @@ nv50_fragprog_validate(struct nv50_context *nv50)
    struct nouveau_pushbuf *push = nv50->base.pushbuf;
    struct nv50_program *fp = nv50->fragprog;
 
+   fp->fp.sample_interp = nv50->min_samples > 1;
+
    if (!nv50_program_validate(nv50, fp))
          return;
    nv50_program_update_context_state(nv50, fp, 1);
@@ -186,6 +188,17 @@ nv50_fragprog_validate(struct nv50_context *nv50)
    PUSH_DATA (push, fp->fp.flags[1]);
    BEGIN_NV04(push, NV50_3D(FP_START_ID), 1);
    PUSH_DATA (push, fp->code_base);
+
+   if (nv50->screen->tesla->oclass >= NVA3_3D_CLASS) {
+      BEGIN_NV04(push, SUBC_3D(NVA3_3D_FP_MULTISAMPLE), 1);
+      if (nv50->min_samples > 1 || fp->fp.has_samplemask)
+         PUSH_DATA(push,
+                   NVA3_3D_FP_MULTISAMPLE_FORCE_PER_SAMPLE |
+                   (NVA3_3D_FP_MULTISAMPLE_EXPORT_SAMPLE_MASK *
+                    fp->fp.has_samplemask));
+      else
+         PUSH_DATA(push, 0);
+   }
 }
 
 void

@@ -84,6 +84,8 @@ struct nv50_program {
       uint32_t flags[2]; /* 0x19a8, 196c */
       uint32_t interp; /* 0x1988 */
       uint32_t colors; /* 0x1904 */
+      uint8_t has_samplemask;
+      uint8_t sample_interp;
    } fp;
 
    struct {

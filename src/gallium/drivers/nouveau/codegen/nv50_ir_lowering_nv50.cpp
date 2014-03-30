@@ -1032,6 +1032,18 @@ NV50LoweringPreSSA::handleRDSV(Instruction *i)
          bld.mkMov(def, bld.mkImm(0));
       }
       break;
+   case SV_SAMPLE_POS: {
+      Value *off = new_LValue(func, FILE_ADDRESS);
+      bld.mkOp1(OP_RDSV, TYPE_U32, def, bld.mkSysVal(SV_SAMPLE_INDEX, 0));
+      bld.mkOp2(OP_SHL, TYPE_U32, off, def, bld.mkImm(3));
+      bld.mkLoad(TYPE_F32,
+                 def,
+                 bld.mkSymbol(
+                       FILE_MEMORY_CONST, prog->driver->io.resInfoCBSlot,
+                       TYPE_U32, prog->driver->io.sampleInfoBase + 4 * idx),
+                 off);
+      break;
+   }
    default:
       bld.mkFetch(i->getDef(0), i->dType,
                   FILE_SHADER_INPUT, addr, i->getIndirect(0, 0), NULL);

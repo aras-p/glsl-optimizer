@@ -346,6 +346,8 @@ static nv50_ir::SVSemantic translateSysVal(uint sysval)
    case TGSI_SEMANTIC_BLOCK_ID:   return nv50_ir::SV_CTAID;
    case TGSI_SEMANTIC_BLOCK_SIZE: return nv50_ir::SV_NTID;
    case TGSI_SEMANTIC_THREAD_ID:  return nv50_ir::SV_TID;
+   case TGSI_SEMANTIC_SAMPLEID:   return nv50_ir::SV_SAMPLE_INDEX;
+   case TGSI_SEMANTIC_SAMPLEPOS:  return nv50_ir::SV_SAMPLE_POS;
    default:
       assert(0);
       return nv50_ir::SV_CLOCK;
@@ -925,7 +927,7 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
                default:
                   break;
                }
-               if (decl->Interp.Centroid)
+               if (decl->Interp.Centroid || info->io.sampleInterp)
                   info->in[i].centroid = 1;
             }
          }
@@ -955,6 +957,9 @@ bool Source::scanDeclaration(const struct tgsi_full_declaration *decl)
             info->io.clipDistanceMask |=
                decl->Declaration.UsageMask << (si * 4);
             info->io.genUserClip = -1;
+            break;
+         case TGSI_SEMANTIC_SAMPLEMASK:
+            info->io.sampleMask = i;
             break;
          default:
             break;

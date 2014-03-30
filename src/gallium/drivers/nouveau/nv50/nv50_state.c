@@ -864,6 +864,16 @@ nv50_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
    nv50->dirty |= NV50_NEW_SAMPLE_MASK;
 }
 
+static void
+nv50_set_min_samples(struct pipe_context *pipe, unsigned min_samples)
+{
+   struct nv50_context *nv50 = nv50_context(pipe);
+
+   if (nv50->min_samples != min_samples) {
+      nv50->min_samples = min_samples;
+      nv50->dirty |= NV50_NEW_MIN_SAMPLES;
+   }
+}
 
 static void
 nv50_set_framebuffer_state(struct pipe_context *pipe,
@@ -1135,6 +1145,7 @@ nv50_init_state_functions(struct nv50_context *nv50)
    pipe->set_stencil_ref = nv50_set_stencil_ref;
    pipe->set_clip_state = nv50_set_clip_state;
    pipe->set_sample_mask = nv50_set_sample_mask;
+   pipe->set_min_samples = nv50_set_min_samples;
    pipe->set_constant_buffer = nv50_set_constant_buffer;
    pipe->set_framebuffer_state = nv50_set_framebuffer_state;
    pipe->set_polygon_stipple = nv50_set_polygon_stipple;
@@ -1153,4 +1164,5 @@ nv50_init_state_functions(struct nv50_context *nv50)
    pipe->set_stream_output_targets = nv50_set_stream_output_targets;
 
    nv50->sample_mask = ~0;
+   nv50->min_samples = 1;
 }

@@ -234,8 +234,10 @@ nv50_fragprog_assign_slots(struct nv50_ir_prog_info *info)
       prog->max_out = MAX2(prog->max_out, prog->out[i].hw + 4);
    }
 
-   if (info->io.sampleMask < PIPE_MAX_SHADER_OUTPUTS)
+   if (info->io.sampleMask < PIPE_MAX_SHADER_OUTPUTS) {
       info->out[info->io.sampleMask].slot[0] = prog->max_out++;
+      prog->fp.has_samplemask = 1;
+   }
 
    if (info->io.fragDepth < PIPE_MAX_SHADER_OUTPUTS)
       info->out[info->io.fragDepth].slot[2] = prog->max_out++;
@@ -333,9 +335,11 @@ nv50_program_translate(struct nv50_program *prog, uint16_t chipset)
    info->io.ucpCBSlot = 15;
    info->io.ucpBase = NV50_CB_AUX_UCP_OFFSET;
    info->io.genUserClip = prog->vp.clpd_nr;
+   info->io.sampleInterp = prog->fp.sample_interp;
 
    info->io.resInfoCBSlot = 15;
    info->io.suInfoBase = NV50_CB_AUX_TEX_MS_OFFSET;
+   info->io.sampleInfoBase = NV50_CB_AUX_SAMPLE_OFFSET;
    info->io.msInfoCBSlot = 15;
    info->io.msInfoBase = NV50_CB_AUX_MS_OFFSET;
 

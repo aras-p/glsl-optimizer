@@ -129,6 +129,19 @@ nv50_validate_fb(struct nv50_context *nv50)
    BEGIN_NV04(push, NV50_3D(VIEWPORT_HORIZ(0)), 2);
    PUSH_DATA (push, fb->width << 16);
    PUSH_DATA (push, fb->height << 16);
+
+   if (nv50->screen->tesla->oclass >= NVA3_3D_CLASS) {
+      unsigned ms = 1 << ms_mode;
+      BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
+      PUSH_DATA (push, (NV50_CB_AUX_SAMPLE_OFFSET << (8 - 2)) | NV50_CB_AUX);
+      BEGIN_NI04(push, NV50_3D(CB_DATA(0)), 2 * ms);
+      for (i = 0; i < ms; i++) {
+         float xy[2];
+         nv50->base.pipe.get_sample_position(&nv50->base.pipe, ms, i, xy);
+         PUSH_DATAf(push, xy[0]);
+         PUSH_DATAf(push, xy[1]);
+      }
+   }
 }
 
 static void
@@ -359,6 +372,23 @@ nv50_validate_sample_mask(struct nv50_context *nv50)
 }
 
 static void
+nv50_validate_min_samples(struct nv50_context *nv50)
+{
+   struct nouveau_pushbuf *push = nv50->base.pushbuf;
+   int samples;
+
+   if (nv50->screen->tesla->oclass < NVA3_3D_CLASS)
+      return;
+
+   samples = util_next_power_of_two(nv50->min_samples);
+   if (samples > 1)
+      samples |= NVA3_3D_SAMPLE_SHADING_ENABLE;
+
+   BEGIN_NV04(push, SUBC_3D(NVA3_3D_SAMPLE_SHADING), 1);
+   PUSH_DATA (push, samples);
+}
+
+static void
 nv50_switch_pipe_context(struct nv50_context *ctx_to)
 {
    struct nv50_context *ctx_from = ctx_to->screen->cur_ctx;
@@ -414,7 +444,8 @@ static struct state_validate {
     { nv50_validate_viewport,      NV50_NEW_VIEWPORT },
     { nv50_vertprog_validate,      NV50_NEW_VERTPROG },
     { nv50_gmtyprog_validate,      NV50_NEW_GMTYPROG },
-    { nv50_fragprog_validate,      NV50_NEW_FRAGPROG },
+    { nv50_fragprog_validate,      NV50_NEW_FRAGPROG |
+                                   NV50_NEW_MIN_SAMPLES },
     { nv50_fp_linkage_validate,    NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
                                    NV50_NEW_GMTYPROG | NV50_NEW_RASTERIZER },
     { nv50_gp_linkage_validate,    NV50_NEW_GMTYPROG | NV50_NEW_VERTPROG },
@@ -427,7 +458,8 @@ static struct state_validate {
     { nv50_validate_samplers,      NV50_NEW_SAMPLERS },
     { nv50_stream_output_validate, NV50_NEW_STRMOUT |
                                    NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG },
-    { nv50_vertex_arrays_validate, NV50_NEW_VERTEX | NV50_NEW_ARRAYS }
+    { nv50_vertex_arrays_validate, NV50_NEW_VERTEX | NV50_NEW_ARRAYS },
+    { nv50_validate_min_samples,   NV50_NEW_MIN_SAMPLES },
 };
 #define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
 

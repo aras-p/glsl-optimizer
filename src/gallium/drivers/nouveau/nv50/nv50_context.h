@@ -49,6 +49,7 @@
 #define NV50_NEW_TEXTURES     (1 << 19)
 #define NV50_NEW_SAMPLERS     (1 << 20)
 #define NV50_NEW_STRMOUT      (1 << 21)
+#define NV50_NEW_MIN_SAMPLES  (1 << 22)
 #define NV50_NEW_CONTEXT      (1 << 31)
 
 #define NV50_BIND_FB          0
@@ -83,7 +84,10 @@
 /* For each MS level (4), 8 sets of 32-bit integer pairs sample offsets */
 #define NV50_CB_AUX_MS_OFFSET     0x880
 #define NV50_CB_AUX_MS_SIZE       (4 * 8 * 4 * 2)
-/* next spot: 0x980 */
+/* Sample position pairs for the current output MS level */
+#define NV50_CB_AUX_SAMPLE_OFFSET 0x980
+#define NV50_CB_AUX_SAMPLE_OFFSET_SIZE (4 * 8 * 2)
+/* next spot: 0x9c0 */
 /* 4 32-bit floats for the vertex runout, put at the end */
 #define NV50_CB_AUX_RUNOUT_OFFSET (NV50_CB_AUX_SIZE - 0x10)
 
@@ -170,6 +174,7 @@ struct nv50_context {
    struct pipe_clip_state clip;
 
    unsigned sample_mask;
+   unsigned min_samples;
 
    boolean vbo_push_hint;
 

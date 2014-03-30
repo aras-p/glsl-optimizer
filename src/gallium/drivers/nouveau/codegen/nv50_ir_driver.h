@@ -74,7 +74,6 @@ struct nv50_ir_varying
 #define NV50_SEMANTIC_INVOCATIONID  (TGSI_SEMANTIC_COUNT + 6)
 #define NV50_SEMANTIC_TESSFACTOR    (TGSI_SEMANTIC_COUNT + 7)
 #define NV50_SEMANTIC_TESSCOORD     (TGSI_SEMANTIC_COUNT + 8)
-#define NV50_SEMANTIC_SAMPLEMASK    (TGSI_SEMANTIC_COUNT + 9)
 #define NV50_SEMANTIC_COUNT         (TGSI_SEMANTIC_COUNT + 10)
 
 #define NV50_TESS_PART_FRACT_ODD  0
@@ -181,12 +180,14 @@ struct nv50_ir_prog_info
       uint8_t edgeFlagOut;
       uint8_t fragDepth;         /* output index of FragDepth */
       uint8_t sampleMask;        /* output index of SampleMask */
+      boolean sampleInterp;      /* perform sample interp on all fp inputs */
       uint8_t backFaceColor[2];  /* input/output indices of back face colour */
       uint8_t globalAccess;      /* 1 for read, 2 for wr, 3 for rw */
       boolean nv50styleSurfaces; /* generate gX[] access for raw buffers */
       uint8_t resInfoCBSlot;     /* cX[] used for tex handles, surface info */
       uint16_t texBindBase;      /* base address for tex handles (nve4) */
       uint16_t suInfoBase;       /* base address for surface info (nve4) */
+      uint16_t sampleInfoBase;   /* base address for sample positions */
       uint8_t msInfoCBSlot;      /* cX[] used for multisample info */
       uint16_t msInfoBase;       /* base address for multisample info */
    } io;
