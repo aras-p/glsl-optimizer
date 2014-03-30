@@ -43,6 +43,22 @@ struct aeb_entry : public exec_node {
 }
 
 static bool
+is_copy_payload(const fs_inst *inst)
+{
+   const int reg = inst->src[0].reg;
+   if (inst->src[0].reg_offset != 0)
+      return false;
+
+   for (int i = 1; i < inst->sources; i++) {
+      if (inst->src[i].reg != reg ||
+          inst->src[i].reg_offset != i) {
+         return false;
+      }
+   }
+   return true;
+}
+
+static bool
 is_expression(const fs_inst *const inst)
 {
    switch (inst->opcode) {
@@ -84,6 +100,8 @@ is_expression(const fs_inst *const inst)
    case SHADER_OPCODE_SIN:
    case SHADER_OPCODE_COS:
       return inst->mlen == 0;
+   case SHADER_OPCODE_LOAD_PAYLOAD:
+      return !is_copy_payload(inst);
    default:
       return false;
    }
