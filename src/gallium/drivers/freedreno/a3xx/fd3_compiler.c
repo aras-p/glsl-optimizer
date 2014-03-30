@@ -1090,21 +1090,41 @@ trans_samp(const struct instr_translater *t,
 
 	switch (t->arg) {
 	case TGSI_OPCODE_TEX:
-		if (tex == TGSI_TEXTURE_2D) {
+		switch (tex) {
+		case TGSI_TEXTURE_2D:
+		case TGSI_TEXTURE_RECT:
 			order = (int8_t[4]){ 0,  1, -1, -1 };
 			src_wrmask = TGSI_WRITEMASK_XY;
-		} else {
+			break;
+		case TGSI_TEXTURE_3D:
+		case TGSI_TEXTURE_CUBE:
 			order = (int8_t[4]){ 0,  1,  2, -1 };
 			src_wrmask = TGSI_WRITEMASK_XYZ;
+			flags |= IR3_INSTR_3D;
+			break;
+		default:
+			compile_error(ctx, "unknown texture type: %s\n",
+					tgsi_texture_names[tex]);
+			break;
 		}
 		break;
 	case TGSI_OPCODE_TXP:
-		if (tex == TGSI_TEXTURE_2D) {
+		switch (tex) {
+		case TGSI_TEXTURE_2D:
+		case TGSI_TEXTURE_RECT:
 			order = (int8_t[4]){ 0,  1,  3, -1 };
 			src_wrmask = TGSI_WRITEMASK_XYZ;
-		} else {
+			break;
+		case TGSI_TEXTURE_3D:
+		case TGSI_TEXTURE_CUBE:
 			order = (int8_t[4]){ 0,  1,  2,  3 };
 			src_wrmask = TGSI_WRITEMASK_XYZW;
+			flags |= IR3_INSTR_3D;
+			break;
+		default:
+			compile_error(ctx, "unknown texture type: %s\n",
+					tgsi_texture_names[tex]);
+			break;
 		}
 		flags |= IR3_INSTR_P;
 		break;
@@ -1112,9 +1132,6 @@ trans_samp(const struct instr_translater *t,
 		compile_assert(ctx, 0);
 		break;
 	}
-
-	if ((tex == TGSI_TEXTURE_3D) || (tex == TGSI_TEXTURE_CUBE))
-		flags |= IR3_INSTR_3D;
 
 	/* cat5 instruction cannot seem to handle const or relative: */
 	if (is_rel_or_const(coord))
