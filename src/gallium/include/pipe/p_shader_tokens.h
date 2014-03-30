@@ -167,7 +167,10 @@ struct tgsi_declaration_interp
 #define TGSI_SEMANTIC_VIEWPORT_INDEX 21 /**< viewport index */
 #define TGSI_SEMANTIC_LAYER      22 /**< layer (rendertarget index) */
 #define TGSI_SEMANTIC_CULLDIST   23
-#define TGSI_SEMANTIC_COUNT      24 /**< number of semantic values */
+#define TGSI_SEMANTIC_SAMPLEID   24
+#define TGSI_SEMANTIC_SAMPLEPOS  25
+#define TGSI_SEMANTIC_SAMPLEMASK 26
+#define TGSI_SEMANTIC_COUNT      27 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {

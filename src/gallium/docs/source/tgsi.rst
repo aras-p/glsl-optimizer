@@ -2621,6 +2621,26 @@ distances and by the PIPE_MAX_CLIP_OR_CULL_DISTANCE_ELEMENT_COUNT
 which specifies the maximum number of registers which can be
 annotated with those semantics.
 
+TGSI_SEMANTIC_SAMPLEID
+""""""""""""""""""""""
+
+For fragment shaders, this semantic label indicates that a system value
+contains the current sample id (i.e. gl_SampleID). Only the X value is used.
+
+TGSI_SEMANTIC_SAMPLEPOS
+"""""""""""""""""""""""
+
+For fragment shaders, this semantic label indicates that a system value
+contains the current sample's position (i.e. gl_SamplePosition). Only the X
+and Y values are used.
+
+TGSI_SEMANTIC_SAMPLEMASK
+""""""""""""""""""""""""
+
+For fragment shaders, this semantic label indicates that an output contains
+the sample mask used to disable further sample processing
+(i.e. gl_SampleMask). Only the X value is used, up to 32x MS.
+
 
 Declaration Interpolate
 ^^^^^^^^^^^^^^^^^^^^^^^

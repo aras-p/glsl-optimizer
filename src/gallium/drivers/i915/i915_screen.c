@@ -220,6 +220,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_TEXTURE_GATHER_SM5:
    case PIPE_CAP_FAKE_SW_MSAA:
    case PIPE_CAP_TEXTURE_QUERY_LOD:
+   case PIPE_CAP_SAMPLE_SHADING:
       return 0;
 
    case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:

@@ -67,6 +67,7 @@ objects. They all follow simple, one-method binding calls, e.g.
   which are used as comparison values in stencil test.
 * ``set_blend_color``
 * ``set_sample_mask``
+* ``set_min_samples`` sets the minimum number of samples that must be run.
 * ``set_clip_state``
 * ``set_polygon_stipple``
 * ``set_scissor_states`` sets the bounds for the scissor test, which culls

@@ -190,6 +190,9 @@ struct pipe_context {
    void (*set_sample_mask)( struct pipe_context *,
                             unsigned sample_mask );
 
+   void (*set_min_samples)( struct pipe_context *,
+                            unsigned min_samples );
+
    void (*set_clip_state)( struct pipe_context *,
                             const struct pipe_clip_state * );
 

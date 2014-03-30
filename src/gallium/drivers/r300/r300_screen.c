@@ -173,6 +173,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TEXTURE_GATHER_SM5:
         case PIPE_CAP_TEXTURE_QUERY_LOD:
         case PIPE_CAP_FAKE_SW_MSAA:
+        case PIPE_CAP_SAMPLE_SHADING:
             return 0;
 
         /* SWTCL-only features. */
