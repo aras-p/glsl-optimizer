@@ -408,7 +408,8 @@ vec4_gs_visitor::emit_control_data_bits()
          src_reg channel_mask(this, glsl_type::uint_type);
          inst = emit(SHL(dst_reg(channel_mask), one, channel));
          inst->force_writemask_all = true;
-         emit(GS_OPCODE_PREPARE_CHANNEL_MASKS, dst_reg(channel_mask));
+         emit(GS_OPCODE_PREPARE_CHANNEL_MASKS, dst_reg(channel_mask),
+                                               channel_mask);
          emit(GS_OPCODE_SET_CHANNEL_MASKS, mrf_reg, channel_mask);
       }
 
