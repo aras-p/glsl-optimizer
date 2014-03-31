@@ -614,7 +614,7 @@ This instruction replicates its result.
 
   bias = 0.0
 
-  dst = texture_sample(unit, coord, bias)
+  dst = texture\_sample(unit, coord, bias)
 
 .. opcode:: TXD - Texture Lookup with Derivatives
 
@@ -628,7 +628,7 @@ This instruction replicates its result.
 
   bias = 0.0
 
-  dst = texture_sample_deriv(unit, coord, bias, ddx, ddy)
+  dst = texture\_sample\_deriv(unit, coord, bias, ddx, ddy)
 
 
 .. opcode:: TXP - Projective Texture Lookup
@@ -645,7 +645,7 @@ This instruction replicates its result.
 
   bias = 0.0
 
-  dst = texture_sample(unit, coord, bias)
+  dst = texture\_sample(unit, coord, bias)
 
 
 .. opcode:: UP2H - Unpack Two 16-Bit Floats
@@ -787,7 +787,7 @@ This instruction replicates its result.
 
   bias = src.z
 
-  dst = texture_sample(unit, coord, bias)
+  dst = texture\_sample(unit, coord, bias)
 
 
 .. opcode:: NRM - 3-component Vector Normalise
@@ -839,7 +839,7 @@ This instruction replicates its result.
 
   lod = src0.w
 
-  dst = texture_sample(unit, coord, lod)
+  dst = texture\_sample(unit, coord, lod)
 
 
 .. opcode:: PUSHA - Push Address Register On Stack
@@ -982,11 +982,11 @@ XXX doesn't look like most of the opcodes really belong here.
 
   lod = src0.x
 
-  dst.x = texture_width(unit, lod)
+  dst.x = texture\_width(unit, lod)
 
-  dst.y = texture_height(unit, lod)
+  dst.y = texture\_height(unit, lod)
 
-  dst.z = texture_depth(unit, lod)
+  dst.z = texture\_depth(unit, lod)
 
 .. opcode:: TG4 - Texture Gather
 
@@ -1012,7 +1012,7 @@ XXX doesn't look like most of the opcodes really belong here.
 
    component = src1
 
-   dst = texture_gather4 (unit, coord, component)
+   dst = texture\_gather4 (unit, coord, component)
 
 (with SM5 - cube array shadow)
 
@@ -1022,7 +1022,7 @@ XXX doesn't look like most of the opcodes really belong here.
 
    compare = src1
 
-   dst = texture_gather (uint, coord, compare)
+   dst = texture\_gather (uint, coord, compare)
 
 
 Integer ISA
