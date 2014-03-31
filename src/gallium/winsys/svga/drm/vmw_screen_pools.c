@@ -76,15 +76,23 @@ vmw_pools_cleanup(struct vmw_winsys_screen *vws)
  *
  * Typically this pool should be created on demand when we
  * detect that the app will be using queries. There's nothing
- * special with this pool other than the backing kernel buffer size,
- * which is limited to 8192.
+ * special with this pool other than the backing kernel buffer sizes,
+ * which are limited to 8192.
+ * If there is a performance issue with allocation and freeing of the
+ * query slabs, it should be easily fixable by allocating them out
+ * of a buffer cache.
  */
 boolean
 vmw_query_pools_init(struct vmw_winsys_screen *vws)
 {
-   vws->pools.query_mm = mm_bufmgr_create(vws->pools.gmr,
-					  VMW_QUERY_POOL_SIZE,
-					  3 /* 8 alignment */);
+   struct pb_desc desc;
+
+   desc.alignment = 16;
+   desc.usage = ~(VMW_BUFFER_USAGE_SHARED | VMW_BUFFER_USAGE_SYNC);
+
+   vws->pools.query_mm = pb_slab_range_manager_create(vws->pools.gmr, 16, 128,
+                                                      VMW_QUERY_POOL_SIZE,
+                                                      &desc);
    if (!vws->pools.query_mm)
       return FALSE;
 
