@@ -16,6 +16,7 @@ Contents:
    tgsi
    screen
    resources
+   format
    context
    cso
    distro

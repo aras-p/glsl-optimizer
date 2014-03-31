@@ -6,12 +6,12 @@ Gallium format names mostly follow D3D10 conventions, with some extensions.
 Format names like XnYnZnWn have the X component in the lowest-address n bits
 and the W component in the highest-address n bits; for B8G8R8A8, byte 0 is
 blue and byte 3 is alpha.  Note that platform endianness is not considered
-in this definition.  In C:
+in this definition.  In C::
 
     struct x8y8z8w8 { uint8_t x, y, z, w; };
 
 Format aliases like XYZWstrq are (s+t+r+q)-bit integers in host endianness,
-with the X component in the s least-significant bits of the integer.  In C:
+with the X component in the s least-significant bits of the integer.  In C::
 
     uint32_t xyzw8888 = (x << 0) | (y << 8) | (z << 16) | (w << 24);
 
