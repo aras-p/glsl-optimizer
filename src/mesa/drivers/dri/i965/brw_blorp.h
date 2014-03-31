@@ -48,7 +48,7 @@ brw_blorp_blit_miptrees(struct brw_context *brw,
 
 bool
 brw_blorp_clear_color(struct brw_context *brw, struct gl_framebuffer *fb,
-                      bool partial_clear);
+                      GLbitfield mask, bool partial_clear);
 
 void
 brw_blorp_resolve_color(struct brw_context *brw,
