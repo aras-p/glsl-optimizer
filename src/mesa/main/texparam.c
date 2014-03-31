@@ -352,7 +352,8 @@ set_tex_parameteri(struct gl_context *ctx,
       if (texObj->MaxLevel == params[0])
          return GL_FALSE;
 
-      if (params[0] < 0 || texObj->Target == GL_TEXTURE_RECTANGLE_ARB) {
+      if (params[0] < 0 ||
+          (texObj->Target == GL_TEXTURE_RECTANGLE_ARB && params[0] > 0)) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glTexParameter(param=%d)", params[0]);
          return GL_FALSE;
