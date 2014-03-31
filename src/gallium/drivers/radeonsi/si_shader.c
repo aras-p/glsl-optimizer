@@ -2293,14 +2293,19 @@ static void preload_streamout_buffers(struct si_shader_context *si_shader_ctx)
 int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
 							LLVMModuleRef mod)
 {
+	unsigned r; /* llvm_compile result */
 	unsigned i;
 	uint32_t *ptr;
 	struct radeon_shader_binary binary;
 	bool dump = r600_can_dump_shader(&sctx->screen->b,
 			shader->selector ? shader->selector->tokens : NULL);
+	const char * gpu_family = r600_get_llvm_processor_name(sctx->screen->b.family);
+
+	/* Use LLVM to compile shader */
 	memset(&binary, 0, sizeof(binary));
-	radeon_llvm_compile(mod, &binary,
-		r600_get_llvm_processor_name(sctx->screen->b.family), dump);
+	r = radeon_llvm_compile(mod, &binary, gpu_family, dump);
+
+	/* Output binary dump if rscreen->debug_flags are set */
 	if (dump && ! binary.disassembled) {
 		fprintf(stderr, "SI CODE:\n");
 		for (i = 0; i < binary.code_size; i+=4 ) {
@@ -2313,6 +2318,7 @@ int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
 	/* XXX: We may be able to emit some of these values directly rather than
 	 * extracting fields to be emitted later.
 	 */
+	/* Parse config data in compiled binary */
 	for (i = 0; i < binary.config_size; i+= 8) {
 		unsigned reg = util_le32_to_cpu(*(uint32_t*)(binary.config + i));
 		unsigned value = util_le32_to_cpu(*(uint32_t*)(binary.config + i + 4));
@@ -2361,7 +2367,7 @@ int si_compile_llvm(struct si_context *sctx, struct si_pipe_shader *shader,
 	free(binary.code);
 	free(binary.config);
 
-	return 0;
+	return r;
 }
 
 /* Generate code for the hardware VS shader stage to go with a geometry shader */

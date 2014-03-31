@@ -2208,9 +2208,11 @@ static void si_bind_ps_shader(struct pipe_context *ctx, void *state)
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pipe_shader_selector *sel = state;
 
+	/* skip if supplied shader is one already in use */
 	if (sctx->ps_shader == sel)
 		return;
 
+	/* use dummy shader if supplied shader is corrupt */
 	if (!sel || !sel->current)
 		sel = sctx->dummy_pixel_shader;
 
