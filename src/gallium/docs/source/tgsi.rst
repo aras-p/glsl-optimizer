@@ -1208,26 +1208,26 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
 .. math::
 
-  dst.x = ~src.x
+  dst.x = \sim src.x
 
-  dst.y = ~src.y
+  dst.y = \sim src.y
 
-  dst.z = ~src.z
+  dst.z = \sim src.z
 
-  dst.w = ~src.w
+  dst.w = \sim src.w
 
 
 .. opcode:: AND - Bitwise And
 
 .. math::
 
-  dst.x = src0.x & src1.x
+  dst.x = src0.x \& src1.x
 
-  dst.y = src0.y & src1.y
+  dst.y = src0.y \& src1.y
 
-  dst.z = src0.z & src1.z
+  dst.z = src0.z \& src1.z
 
-  dst.w = src0.w & src1.w
+  dst.w = src0.w \& src1.w
 
 
 .. opcode:: OR - Bitwise Or
@@ -1314,13 +1314,13 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
 .. math::
 
-  dst.x = src0.x << (0x1f & src1.x)
+  dst.x = src0.x << (0x1f \& src1.x)
 
-  dst.y = src0.y << (0x1f & src1.y)
+  dst.y = src0.y << (0x1f \& src1.y)
 
-  dst.z = src0.z << (0x1f & src1.z)
+  dst.z = src0.z << (0x1f \& src1.z)
 
-  dst.w = src0.w << (0x1f & src1.w)
+  dst.w = src0.w << (0x1f \& src1.w)
 
 
 .. opcode:: ISHR - Arithmetic Shift Right (of Signed Integer)
@@ -1329,13 +1329,13 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
 .. math::
 
-  dst.x = src0.x >> (0x1f & src1.x)
+  dst.x = src0.x >> (0x1f \& src1.x)
 
-  dst.y = src0.y >> (0x1f & src1.y)
+  dst.y = src0.y >> (0x1f \& src1.y)
 
-  dst.z = src0.z >> (0x1f & src1.z)
+  dst.z = src0.z >> (0x1f \& src1.z)
 
-  dst.w = src0.w >> (0x1f & src1.w)
+  dst.w = src0.w >> (0x1f \& src1.w)
 
 
 .. opcode:: USHR - Logical Shift Right
@@ -1344,13 +1344,13 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
 .. math::
 
-  dst.x = src0.x >> (unsigned) (0x1f & src1.x)
+  dst.x = src0.x >> (unsigned) (0x1f \& src1.x)
 
-  dst.y = src0.y >> (unsigned) (0x1f & src1.y)
+  dst.y = src0.y >> (unsigned) (0x1f \& src1.y)
 
-  dst.z = src0.z >> (unsigned) (0x1f & src1.z)
+  dst.z = src0.z >> (unsigned) (0x1f \& src1.z)
 
-  dst.w = src0.w >> (unsigned) (0x1f & src1.w)
+  dst.w = src0.w >> (unsigned) (0x1f \& src1.w)
 
 
 .. opcode:: UCMP - Integer Conditional Move
@@ -1387,39 +1387,39 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
 .. math::
 
-  dst.x = (src0.x < src1.x) ? ~0 : 0
+  dst.x = (src0.x < src1.x) ? \sim 0 : 0
 
-  dst.y = (src0.y < src1.y) ? ~0 : 0
+  dst.y = (src0.y < src1.y) ? \sim 0 : 0
 
-  dst.z = (src0.z < src1.z) ? ~0 : 0
+  dst.z = (src0.z < src1.z) ? \sim 0 : 0
 
-  dst.w = (src0.w < src1.w) ? ~0 : 0
+  dst.w = (src0.w < src1.w) ? \sim 0 : 0
 
 
 .. opcode:: ISLT - Signed Integer Set On Less Than
 
 .. math::
 
-  dst.x = (src0.x < src1.x) ? ~0 : 0
+  dst.x = (src0.x < src1.x) ? \sim 0 : 0
 
-  dst.y = (src0.y < src1.y) ? ~0 : 0
+  dst.y = (src0.y < src1.y) ? \sim 0 : 0
 
-  dst.z = (src0.z < src1.z) ? ~0 : 0
+  dst.z = (src0.z < src1.z) ? \sim 0 : 0
 
-  dst.w = (src0.w < src1.w) ? ~0 : 0
+  dst.w = (src0.w < src1.w) ? \sim 0 : 0
 
 
 .. opcode:: USLT - Unsigned Integer Set On Less Than
 
 .. math::
 
-  dst.x = (src0.x < src1.x) ? ~0 : 0
+  dst.x = (src0.x < src1.x) ? \sim 0 : 0
 
-  dst.y = (src0.y < src1.y) ? ~0 : 0
+  dst.y = (src0.y < src1.y) ? \sim 0 : 0
 
-  dst.z = (src0.z < src1.z) ? ~0 : 0
+  dst.z = (src0.z < src1.z) ? \sim 0 : 0
 
-  dst.w = (src0.w < src1.w) ? ~0 : 0
+  dst.w = (src0.w < src1.w) ? \sim 0 : 0
 
 
 .. opcode:: FSGE - Float Set On Greater Equal Than (ordered)
@@ -1428,39 +1428,39 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
 .. math::
 
-  dst.x = (src0.x >= src1.x) ? ~0 : 0
+  dst.x = (src0.x >= src1.x) ? \sim 0 : 0
 
-  dst.y = (src0.y >= src1.y) ? ~0 : 0
+  dst.y = (src0.y >= src1.y) ? \sim 0 : 0
 
-  dst.z = (src0.z >= src1.z) ? ~0 : 0
+  dst.z = (src0.z >= src1.z) ? \sim 0 : 0
 
-  dst.w = (src0.w >= src1.w) ? ~0 : 0
+  dst.w = (src0.w >= src1.w) ? \sim 0 : 0
 
 
 .. opcode:: ISGE - Signed Integer Set On Greater Equal Than
 
 .. math::
 
-  dst.x = (src0.x >= src1.x) ? ~0 : 0
+  dst.x = (src0.x >= src1.x) ? \sim 0 : 0
 
-  dst.y = (src0.y >= src1.y) ? ~0 : 0
+  dst.y = (src0.y >= src1.y) ? \sim 0 : 0
 
-  dst.z = (src0.z >= src1.z) ? ~0 : 0
+  dst.z = (src0.z >= src1.z) ? \sim 0 : 0
 
-  dst.w = (src0.w >= src1.w) ? ~0 : 0
+  dst.w = (src0.w >= src1.w) ? \sim 0 : 0
 
 
 .. opcode:: USGE - Unsigned Integer Set On Greater Equal Than
 
 .. math::
 
-  dst.x = (src0.x >= src1.x) ? ~0 : 0
+  dst.x = (src0.x >= src1.x) ? \sim 0 : 0
 
-  dst.y = (src0.y >= src1.y) ? ~0 : 0
+  dst.y = (src0.y >= src1.y) ? \sim 0 : 0
 
-  dst.z = (src0.z >= src1.z) ? ~0 : 0
+  dst.z = (src0.z >= src1.z) ? \sim 0 : 0
 
-  dst.w = (src0.w >= src1.w) ? ~0 : 0
+  dst.w = (src0.w >= src1.w) ? \sim 0 : 0
 
 
 .. opcode:: FSEQ - Float Set On Equal (ordered)
@@ -1469,26 +1469,26 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
 .. math::
 
-  dst.x = (src0.x == src1.x) ? ~0 : 0
+  dst.x = (src0.x == src1.x) ? \sim 0 : 0
 
-  dst.y = (src0.y == src1.y) ? ~0 : 0
+  dst.y = (src0.y == src1.y) ? \sim 0 : 0
 
-  dst.z = (src0.z == src1.z) ? ~0 : 0
+  dst.z = (src0.z == src1.z) ? \sim 0 : 0
 
-  dst.w = (src0.w == src1.w) ? ~0 : 0
+  dst.w = (src0.w == src1.w) ? \sim 0 : 0
 
 
 .. opcode:: USEQ - Integer Set On Equal
 
 .. math::
 
-  dst.x = (src0.x == src1.x) ? ~0 : 0
+  dst.x = (src0.x == src1.x) ? \sim 0 : 0
 
-  dst.y = (src0.y == src1.y) ? ~0 : 0
+  dst.y = (src0.y == src1.y) ? \sim 0 : 0
 
-  dst.z = (src0.z == src1.z) ? ~0 : 0
+  dst.z = (src0.z == src1.z) ? \sim 0 : 0
 
-  dst.w = (src0.w == src1.w) ? ~0 : 0
+  dst.w = (src0.w == src1.w) ? \sim 0 : 0
 
 
 .. opcode:: FSNE - Float Set On Not Equal (unordered)
@@ -1497,26 +1497,26 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
 .. math::
 
-  dst.x = (src0.x != src1.x) ? ~0 : 0
+  dst.x = (src0.x != src1.x) ? \sim 0 : 0
 
-  dst.y = (src0.y != src1.y) ? ~0 : 0
+  dst.y = (src0.y != src1.y) ? \sim 0 : 0
 
-  dst.z = (src0.z != src1.z) ? ~0 : 0
+  dst.z = (src0.z != src1.z) ? \sim 0 : 0
 
-  dst.w = (src0.w != src1.w) ? ~0 : 0
+  dst.w = (src0.w != src1.w) ? \sim 0 : 0
 
 
 .. opcode:: USNE - Integer Set On Not Equal
 
 .. math::
 
-  dst.x = (src0.x != src1.x) ? ~0 : 0
+  dst.x = (src0.x != src1.x) ? \sim 0 : 0
 
-  dst.y = (src0.y != src1.y) ? ~0 : 0
+  dst.y = (src0.y != src1.y) ? \sim 0 : 0
 
-  dst.z = (src0.z != src1.z) ? ~0 : 0
+  dst.z = (src0.z != src1.z) ? \sim 0 : 0
 
-  dst.w = (src0.w != src1.w) ? ~0 : 0
+  dst.w = (src0.w != src1.w) ? \sim 0 : 0
 
 
 .. opcode:: INEG - Integer Negate
