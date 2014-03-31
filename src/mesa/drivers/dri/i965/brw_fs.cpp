@@ -1736,6 +1736,8 @@ fs_visitor::compact_virtual_grfs()
       { outputs, ARRAY_SIZE(outputs) },
       { delta_x, ARRAY_SIZE(delta_x) },
       { delta_y, ARRAY_SIZE(delta_y) },
+      { &sample_mask, 1 },
+      { &shader_start_time, 1 },
    };
 
    /* Treat all special values as used, to be conservative */
