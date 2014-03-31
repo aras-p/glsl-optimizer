@@ -31,10 +31,10 @@ CSO objects handled by the context object:
   the CSO module will always replace all samplers at once (no sub-ranges).
   This may change in the future.
 * :ref:`Rasterizer`: ``*_rasterizer_state``
-* :ref:`Depth, Stencil, & Alpha`: ``*_depth_stencil_alpha_state``
+* :ref:`depth-stencil-alpha`: ``*_depth_stencil_alpha_state``
 * :ref:`Shader`: These are create, bind and destroy methods for vertex,
   fragment and geometry shaders.
-* :ref:`Vertex Elements`: ``*_vertex_elements_state``
+* :ref:`vertexelements`: ``*_vertex_elements_state``
 
 
 Resource Binding State
@@ -310,7 +310,7 @@ The interface currently includes the following types of queries:
 
 ``PIPE_QUERY_OCCLUSION_COUNTER`` counts the number of fragments which
 are written to the framebuffer without being culled by
-:ref:`Depth, Stencil, & Alpha` testing or shader KILL instructions.
+:ref:`depth-stencil-alpha` testing or shader KILL instructions.
 The result is an unsigned 64-bit integer.
 This query can be used with ``render_condition``.
 

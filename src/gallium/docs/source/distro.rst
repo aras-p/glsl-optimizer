@@ -67,6 +67,8 @@ Softpipe
 
 Reference software rasterizer. Slow but accurate.
 
+.. _trace:
+
 Trace
 ^^^^^
 

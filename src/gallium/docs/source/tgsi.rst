@@ -17,7 +17,7 @@ one.
 
 Some instructions, like :opcode:`I2F`, permit re-interpretation of vector
 components as integers. Other instructions permit using registers as
-two-component vectors with double precision; see :ref:`Double Opcodes`.
+two-component vectors with double precision; see :ref:`doubleopcodes`.
 
 When an instruction has a scalar result, the result is usually copied into
 each of the components of *dst*. When this happens, the result is said to be

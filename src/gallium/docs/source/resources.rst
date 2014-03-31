@@ -1,3 +1,5 @@
+.. _resource:
+
 Resources and derived objects
 =============================
 

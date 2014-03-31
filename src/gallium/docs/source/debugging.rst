@@ -31,7 +31,7 @@ Controls if the :ref:`rbug` should be used.
 
 .. envvar:: GALLIUM_TRACE <string> ("")
 
-If set, this variable will cause the :ref:`Trace` output to be written to the
+If set, this variable will cause the :ref:`trace` output to be written to the
 specified file. Paths may be relative or absolute; relative paths are relative
 to the working directory.  For example, setting it to "trace.xml" will cause
 the trace to be written to a file of the same name in the working directory.

@@ -1,4 +1,4 @@
-.. _depth,stencil,&alpha:
+.. _depth-stencil-alpha:
 
 Depth, Stencil, & Alpha
 =======================
