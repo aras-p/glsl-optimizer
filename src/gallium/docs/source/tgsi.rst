@@ -74,13 +74,10 @@ used.
 
 .. math::
 
-  dst.x = 1
-
-  dst.y = max(src.x, 0)
-
-  dst.z = (src.x > 0) ? max(src.y, 0)^{clamp(src.w, -128, 128))} : 0
-
-  dst.w = 1
+  dst.x &= 1 \\
+  dst.y &= max(src.x, 0) \\
+  dst.z &= (src.x > 0) ? max(src.y, 0)^{clamp(src.w, -128, 128))} : 0 \\
+  dst.w &= 1
 
 
 .. opcode:: RCP - Reciprocal
@@ -114,26 +111,20 @@ This instruction replicates its result. The results are undefined for src < 0.
 
 .. math::
 
-  dst.x = 2^{\lfloor src.x\rfloor}
-
-  dst.y = src.x - \lfloor src.x\rfloor
-
-  dst.z = 2^{src.x}
-
-  dst.w = 1
+  dst.x &= 2^{\lfloor src.x\rfloor} \\
+  dst.y &= src.x - \lfloor src.x\rfloor \\
+  dst.z &= 2^{src.x} \\
+  dst.w &= 1
 
 
 .. opcode:: LOG - Approximate Logarithm Base 2
 
 .. math::
 
-  dst.x = \lfloor\log_2{|src.x|}\rfloor
-
-  dst.y = \frac{|src.x|}{2^{\lfloor\log_2{|src.x|}\rfloor}}
-
-  dst.z = \log_2{|src.x|}
-
-  dst.w = 1
+  dst.x &= \lfloor\log_2{|src.x|}\rfloor \\
+  dst.y &= \frac{|src.x|}{2^{\lfloor\log_2{|src.x|}\rfloor}} \\
+  dst.z &= \log_2{|src.x|} \\
+  dst.w &= 1
 
 
 .. opcode:: MUL - Multiply
@@ -184,13 +175,10 @@ This instruction replicates its result.
 
 .. math::
 
-  dst.x = 1
-
-  dst.y = src0.y \times src1.y
-
-  dst.z = src0.z
-
-  dst.w = src1.w
+  dst.x &= 1\\
+  dst.y &= src0.y \times src1.y\\
+  dst.z &= src0.z\\
+  dst.w &= src1.w
 
 
 .. opcode:: MIN - Minimum
