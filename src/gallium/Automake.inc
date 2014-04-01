@@ -86,24 +86,24 @@ GALLIUM_OMX_LINKER_FLAGS = \
 	$(GC_SECTIONS) \
 	-Wl,--no-undefined
 
-GALLIUM_DRI_LIB_DEPS = \
-	$(SELINUX_LIBS) \
-	$(LIBDRM_LIBS) \
-	$(EXPAT_LIBS) \
+GALLIUM_COMMON_LIB_DEPS = \
 	-lm \
 	$(CLOCK_LIB) \
 	$(PTHREAD_LIBS) \
 	$(DLOPEN_LIBS)
+
+GALLIUM_DRI_LIB_DEPS = \
+	$(SELINUX_LIBS) \
+	$(LIBDRM_LIBS) \
+	$(EXPAT_LIBS) \
+	$(GALLIUM_COMMON_LIB_DEPS)
 
 GALLIUM_VDPAU_LIB_DEPS = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/state_trackers/vdpau/libvdpautracker.la \
 	$(VDPAU_LIBS) \
 	$(LIBDRM_LIBS) \
-	-lm \
-	$(CLOCK_LIB) \
-	$(PTHREAD_LIBS) \
-	$(DLOPEN_LIBS)
+	$(GALLIUM_COMMON_LIB_DEPS)
 
 GALLIUM_XVMC_LIB_DEPS = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \

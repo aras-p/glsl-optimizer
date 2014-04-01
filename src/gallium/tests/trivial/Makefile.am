@@ -16,9 +16,7 @@ LDADD = $(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
 	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la \
 	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(DLOPEN_LIBS) \
-	$(PTHREAD_LIBS) \
-	-lm
+	$(GALLIUM_COMMON_LIB_DEPS)
 
 if NEED_PIPE_LOADER_XLIB
 LDADD += \

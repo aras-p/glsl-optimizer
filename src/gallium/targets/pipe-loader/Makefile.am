@@ -40,10 +40,7 @@ PIPE_LIBS = \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
 	$(top_builddir)/src/gallium/drivers/galahad/libgalahad.la \
-	-lm \
-	$(CLOCK_LIB) \
-	$(PTHREAD_LIBS) \
-	$(DLOPEN_LIBS)
+	$(GALLIUM_COMMON_LIB_DEPS)
 
 AM_LDFLAGS = \
 	-module \
