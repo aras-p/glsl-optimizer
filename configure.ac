@@ -1049,12 +1049,9 @@ if test "x$enable_dri" = xyes; then
 
     # put all the necessary libs together
     DRI_LIB_DEPS="$DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIBS -lm $PTHREAD_LIBS $DLOPEN_LIBS"
-    GALLIUM_DRI_LIB_DEPS="$GALLIUM_DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIBS -lm $CLOCK_LIB $PTHREAD_LIBS $DLOPEN_LIBS"
-
 fi
 
 AC_SUBST([DRI_LIB_DEPS])
-AC_SUBST([GALLIUM_DRI_LIB_DEPS])
 
 DRI_DIRS=''
 dnl Duplicates in DRI_DIRS are removed by sorting it at the end of this block
