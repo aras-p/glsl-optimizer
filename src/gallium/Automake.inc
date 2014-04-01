@@ -115,8 +115,8 @@ GALLIUM_XVMC_LIB_DEPS = \
 GALLIUM_OMX_LIB_DEPS = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/state_trackers/omx/libomxtracker.la \
-	$(GALLIUM_DRI_LIB_DEPS) \
-	$(OMX_LIBS)
+	$(OMX_LIBS) \
+	$(GALLIUM_COMMON_LIB_DEPS)
 
 GALLIUM_WINSYS_CFLAGS = \
 	-I$(top_srcdir)/include \
