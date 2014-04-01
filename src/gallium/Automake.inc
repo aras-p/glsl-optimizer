@@ -109,7 +109,8 @@ GALLIUM_XVMC_LIB_DEPS = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/state_trackers/xvmc/libxvmctracker.la \
 	$(XVMC_LIBS) \
-	$(LIBDRM_LIBS)
+	$(LIBDRM_LIBS) \
+	$(GALLIUM_COMMON_LIB_DEPS)
 
 GALLIUM_OMX_LIB_DEPS = \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
