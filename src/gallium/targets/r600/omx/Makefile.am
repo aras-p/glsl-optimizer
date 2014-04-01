@@ -48,5 +48,4 @@ libomx_r600_la_LIBADD = \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(GALLIUM_OMX_LIB_DEPS) \
 	$(LIBDRM_LIBS) \
-	$(RADEON_LIBS) \
-	-lstdc++
+	$(RADEON_LIBS)
