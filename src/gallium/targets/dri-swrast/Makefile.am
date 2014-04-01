@@ -46,8 +46,6 @@ swrast_dri_la_SOURCES = \
 swrast_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
 
 swrast_dri_la_LIBADD = \
-	$(top_builddir)/src/mesa/libmesagallium.la \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/state_trackers/dri/sw/libdrisw.la \
 	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la \
 	$(top_builddir)/src/gallium/drivers/softpipe/libsoftpipe.la \

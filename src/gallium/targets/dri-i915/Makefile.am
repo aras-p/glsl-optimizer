@@ -40,8 +40,6 @@ i915_dri_la_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
 
 i915_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
-	$(top_builddir)/src/mesa/libmesagallium.la \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/state_trackers/dri/drm/libdridrm.la \
 	$(top_builddir)/src/gallium/winsys/i915/drm/libi915drm.la \
 	$(top_builddir)/src/gallium/winsys/sw/wrapper/libwsw.la \

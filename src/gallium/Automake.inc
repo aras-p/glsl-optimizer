@@ -93,6 +93,8 @@ GALLIUM_COMMON_LIB_DEPS = \
 	$(DLOPEN_LIBS)
 
 GALLIUM_DRI_LIB_DEPS = \
+	$(top_builddir)/src/mesa/libmesagallium.la \
+	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(SELINUX_LIBS) \
 	$(LIBDRM_LIBS) \
 	$(EXPAT_LIBS) \

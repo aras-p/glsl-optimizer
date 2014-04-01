@@ -36,8 +36,6 @@ COMMON_LDFLAGS = $(GALLIUM_DRI_LINKER_FLAGS)
 
 COMMON_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
-	$(top_builddir)/src/mesa/libmesagallium.la \
-	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/state_trackers/dri/drm/libdridrm.la \
 	$(top_builddir)/src/gallium/winsys/freedreno/drm/libfreedrenodrm.la \
 	$(top_builddir)/src/gallium/drivers/freedreno/libfreedreno.la \
