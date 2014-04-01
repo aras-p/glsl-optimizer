@@ -18,7 +18,7 @@ TESTS = r300_compiler_tests
 
 r300_compiler_tests_LDADD = libr300.la libr300-helper.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
-	$(GALLIUM_DRI_LIB_DEPS)
+	$(GALLIUM_COMMON_LIB_DEPS)
 r300_compiler_tests_CPPFLAGS = \
 	-I$(top_srcdir)/src/gallium/drivers/r300/compiler
 r300_compiler_tests_SOURCES = $(COMPILER_TESTS_SOURCES)
