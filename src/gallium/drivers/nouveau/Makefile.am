@@ -49,5 +49,4 @@ nouveau_compiler_LDADD = \
 	libnouveau.la \
 	../../auxiliary/libgallium.la \
 	-lstdc++ \
-	-lm \
-	$(DLOPEN_LIBS)
+	$(GALLIUM_COMMON_LIB_DEPS)
