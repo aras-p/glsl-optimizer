@@ -422,7 +422,7 @@ public:
    void emit_minmax(uint32_t conditionalmod, const fs_reg &dst,
                     const fs_reg &src0, const fs_reg &src1);
    bool try_emit_saturate(ir_expression *ir);
-   bool try_emit_mad(ir_expression *ir, int mul_arg);
+   bool try_emit_mad(ir_expression *ir);
    void try_replace_with_sel();
    bool opt_peephole_sel();
    bool opt_peephole_predicated_break();

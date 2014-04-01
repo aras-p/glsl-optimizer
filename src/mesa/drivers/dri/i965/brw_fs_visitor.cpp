@@ -291,7 +291,7 @@ fs_visitor::try_emit_saturate(ir_expression *ir)
 }
 
 bool
-fs_visitor::try_emit_mad(ir_expression *ir, int mul_arg)
+fs_visitor::try_emit_mad(ir_expression *ir)
 {
    /* 3-src instructions were introduced in gen6. */
    if (brw->gen < 6)
@@ -301,11 +301,16 @@ fs_visitor::try_emit_mad(ir_expression *ir, int mul_arg)
    if (ir->type != glsl_type::float_type)
       return false;
 
-   ir_rvalue *nonmul = ir->operands[1 - mul_arg];
-   ir_expression *mul = ir->operands[mul_arg]->as_expression();
+   ir_rvalue *nonmul = ir->operands[1];
+   ir_expression *mul = ir->operands[0]->as_expression();
 
-   if (!mul || mul->operation != ir_binop_mul)
-      return false;
+   if (!mul || mul->operation != ir_binop_mul) {
+      nonmul = ir->operands[0];
+      mul = ir->operands[1]->as_expression();
+
+      if (!mul || mul->operation != ir_binop_mul)
+         return false;
+   }
 
    if (nonmul->as_constant() ||
        mul->operands[0]->as_constant() ||
@@ -339,7 +344,7 @@ fs_visitor::visit(ir_expression *ir)
    if (try_emit_saturate(ir))
       return;
    if (ir->operation == ir_binop_add) {
-      if (try_emit_mad(ir, 0) || try_emit_mad(ir, 1))
+      if (try_emit_mad(ir))
 	 return;
    }
 
