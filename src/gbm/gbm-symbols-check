@@ -15,6 +15,7 @@ gbm_bo_get_stride
 gbm_bo_get_format
 gbm_bo_get_device
 gbm_bo_get_handle
+gbm_bo_get_fd
 gbm_bo_write
 gbm_bo_set_user_data
 gbm_bo_get_user_data
