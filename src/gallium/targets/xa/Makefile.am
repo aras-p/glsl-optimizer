@@ -53,7 +53,7 @@ libxatracker_la_LIBADD += \
 	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la
 endif
 
-if NEED_PIPE_LOADER_XLIB
+if NEED_WINSYS_XLIB
 libxatracker_la_LIBADD += \
 	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
 	-lX11 -lXext -lXfixes \

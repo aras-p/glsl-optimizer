@@ -18,7 +18,7 @@ LDADD = $(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
-if NEED_PIPE_LOADER_XLIB
+if NEED_WINSYS_XLIB
 LDADD += \
 	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
 	-lX11 -lXext -lXfixes \
