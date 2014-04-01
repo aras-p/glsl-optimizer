@@ -38,7 +38,7 @@ env.CodeGenerate(
     target = '../../../mapi/glapi/glprocs.h',
     script = 'gl_procs.py',
     source = sources,
-    command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET'
+    command = python_cmd + ' -c $SCRIPT -f $SOURCE > $TARGET'
     )
 
 env.CodeGenerate(

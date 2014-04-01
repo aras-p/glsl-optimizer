@@ -208,7 +208,7 @@ $(MESA_GLAPI_DIR)/glapi_mapi_tmp.h: $(MESA_MAPI_DIR)/mapi_abi.py $(COMMON)
 		--printer glapi --mode lib $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glprocs.h: gl_procs.py $(COMMON)
-	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
+	$(PYTHON_GEN) $< -c -f $(srcdir)/gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glapitemp.h: gl_apitemp.py $(COMMON)
 	$(PYTHON_GEN) $< -f $(srcdir)/gl_and_es_API.xml > $@
