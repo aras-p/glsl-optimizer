@@ -325,6 +325,9 @@ static bool
 try_eliminate_instruction(vec4_instruction *inst, int new_writemask,
                           const struct brw_context *brw)
 {
+   if (inst->has_side_effects())
+      return false;
+
    if (new_writemask == 0) {
       /* Don't dead code eliminate instructions that write to the
        * accumulator as a side-effect. Instead just set the destination
@@ -387,9 +390,6 @@ vec4_visitor::dead_code_eliminate()
 
       seen_control_flow = inst->is_control_flow() || seen_control_flow;
 
-      if (inst->has_side_effects())
-         continue;
-
       bool inst_writes_flag = false;
       if (inst->dst.file != GRF) {
          if (inst->dst.is_null() && inst->writes_flag()) {
@@ -443,22 +443,18 @@ vec4_visitor::dead_code_eliminate()
            node = prev, prev = prev->prev) {
          vec4_instruction *scan_inst = (vec4_instruction  *)node;
 
-         if (scan_inst->has_side_effects())
-            continue;
-
          if (inst_writes_flag) {
             if (scan_inst->dst.is_null() && scan_inst->writes_flag()) {
                scan_inst->remove();
                progress = true;
+               continue;
             } else if (scan_inst->reads_flag()) {
-               dead_channels = 0;
+               break;
             }
-            continue;
-         } else if (scan_inst->dst.file != GRF) {
-            continue;
          }
 
-         if (inst->dst.reg == scan_inst->dst.reg) {
+         if (inst->dst.file == scan_inst->dst.file &&
+             inst->dst.reg == scan_inst->dst.reg) {
             int new_writemask = scan_inst->dst.writemask & ~dead_channels;
 
             progress = try_eliminate_instruction(scan_inst, new_writemask, brw) ||
@@ -466,7 +462,7 @@ vec4_visitor::dead_code_eliminate()
          }
 
          for (int i = 0; i < 3; i++) {
-            if (scan_inst->src[i].file != GRF ||
+            if (scan_inst->src[i].file != inst->dst.file ||
                 scan_inst->src[i].reg != inst->dst.reg)
                continue;
 
