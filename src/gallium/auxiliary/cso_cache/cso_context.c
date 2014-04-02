@@ -1177,20 +1177,25 @@ cso_set_sampler_views(struct cso_context *ctx,
 {
    struct sampler_info *info = &ctx->samplers[shader_stage];
    unsigned i;
+   boolean any_change = FALSE;
 
    /* reference new views */
    for (i = 0; i < count; i++) {
+      any_change |= info->views[i] != views[i];
       pipe_sampler_view_reference(&info->views[i], views[i]);
    }
    /* unref extra old views, if any */
    for (; i < info->nr_views; i++) {
+      any_change |= info->views[i] != NULL;
       pipe_sampler_view_reference(&info->views[i], NULL);
    }
 
    /* bind the new sampler views */
-   ctx->pipe->set_sampler_views(ctx->pipe, shader_stage, 0,
-                                MAX2(info->nr_views, count),
-                                info->views);
+   if (any_change) {
+      ctx->pipe->set_sampler_views(ctx->pipe, shader_stage, 0,
+                                   MAX2(info->nr_views, count),
+                                   info->views);
+   }
 
    info->nr_views = count;
 }
