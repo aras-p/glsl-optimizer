@@ -1187,11 +1187,12 @@ cso_set_sampler_views(struct cso_context *ctx,
       pipe_sampler_view_reference(&info->views[i], NULL);
    }
 
-   info->nr_views = count;
-
    /* bind the new sampler views */
-   ctx->pipe->set_sampler_views(ctx->pipe, shader_stage, 0, count,
+   ctx->pipe->set_sampler_views(ctx->pipe, shader_stage, 0,
+                                MAX2(info->nr_views, count),
                                 info->views);
+
+   info->nr_views = count;
 }
 
 
