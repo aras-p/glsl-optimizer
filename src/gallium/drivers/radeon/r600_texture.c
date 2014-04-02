@@ -928,8 +928,8 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 	if (rtex->surface.level[level].mode >= RADEON_SURF_MODE_1D)
 		use_staging_texture = TRUE;
 
-	/* Untiled buffers in VRAM, which is slow for CPU reads and writes */
-	if (!(usage & PIPE_TRANSFER_MAP_DIRECTLY) &&
+	/* Untiled buffers in VRAM, which is slow for CPU reads */
+	if ((usage & PIPE_TRANSFER_READ) && !(usage & PIPE_TRANSFER_MAP_DIRECTLY) &&
 	    (rtex->resource.domains == RADEON_DOMAIN_VRAM)) {
 		use_staging_texture = TRUE;
 	}
