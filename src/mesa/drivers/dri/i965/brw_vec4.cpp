@@ -322,7 +322,8 @@ src_reg::equals(src_reg *r)
 }
 
 static bool
-try_eliminate_instruction(vec4_instruction *inst, int new_writemask)
+try_eliminate_instruction(vec4_instruction *inst, int new_writemask,
+                          const struct brw_context *brw)
 {
    if (new_writemask == 0) {
       /* Don't dead code eliminate instructions that write to the
@@ -351,7 +352,10 @@ try_eliminate_instruction(vec4_instruction *inst, int new_writemask)
       case VS_OPCODE_PULL_CONSTANT_LOAD_GEN7:
          break;
       default:
-         if (!inst->is_tex()) {
+         /* Do not set a writemask on Gen6 for math instructions, those are
+          * executed using align1 mode that does not support a destination mask.
+          */
+         if (!(brw->gen == 6 && inst->is_math()) && !inst->is_tex()) {
             inst->dst.writemask = new_writemask;
             return true;
          }
@@ -407,7 +411,8 @@ vec4_visitor::dead_code_eliminate()
             }
          }
 
-         progress = try_eliminate_instruction(inst, write_mask) || progress;
+         progress = try_eliminate_instruction(inst, write_mask, brw) ||
+                    progress;
       }
 
       if (seen_control_flow || inst->predicate || inst->prev == NULL)
@@ -456,7 +461,7 @@ vec4_visitor::dead_code_eliminate()
          if (inst->dst.reg == scan_inst->dst.reg) {
             int new_writemask = scan_inst->dst.writemask & ~dead_channels;
 
-            progress = try_eliminate_instruction(scan_inst, new_writemask) ||
+            progress = try_eliminate_instruction(scan_inst, new_writemask, brw) ||
                        progress;
          }
 
