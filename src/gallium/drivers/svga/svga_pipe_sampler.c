@@ -165,13 +165,6 @@ svga_bind_sampler_states(struct pipe_context *pipe,
    if (shader != PIPE_SHADER_FRAGMENT)
       return;
 
-   /* Check for no-op */
-   if (start + num <= svga->curr.num_samplers &&
-       !memcmp(svga->curr.sampler + start, samplers, num * sizeof(void *))) {
-      if (0) debug_printf("sampler noop\n");
-      return;
-   }
-
    for (i = 0; i < num; i++)
       svga->curr.sampler[start + i] = samplers[i];
 
@@ -239,14 +232,6 @@ svga_set_sampler_views(struct pipe_context *pipe,
    /* we only support fragment shader sampler views at this time */
    if (shader != PIPE_SHADER_FRAGMENT)
       return;
-
-   /* Check for no-op */
-   if (start + num <= svga->curr.num_sampler_views &&
-       !memcmp(svga->curr.sampler_views + start, views,
-               num * sizeof(struct pipe_sampler_view *))) {
-      if (0) debug_printf("texture noop\n");
-      return;
-   }
 
    for (i = 0; i < num; i++) {
       if (svga->curr.sampler_views[start + i] != views[i]) {
