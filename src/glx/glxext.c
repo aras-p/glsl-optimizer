@@ -677,6 +677,10 @@ static GLboolean
    psc->serverGLXexts =
       __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
 
+   if (psc->serverGLXexts == NULL) {
+      return GL_FALSE;
+   }
+
    LockDisplay(dpy);
 
    psc->configs = NULL;
