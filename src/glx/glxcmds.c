@@ -1378,19 +1378,6 @@ glXQueryServerString(Display * dpy, int screen, int name)
    return *str;
 }
 
-void
-__glXClientInfo(Display * dpy, int opcode)
-{
-   char *ext_str = __glXGetClientGLExtensionString();
-   int size = strlen(ext_str) + 1;
-
-   xcb_connection_t *c = XGetXCBConnection(dpy);
-   xcb_glx_client_info(c,
-                       GLX_MAJOR_VERSION, GLX_MINOR_VERSION, size, ext_str);
-
-   free(ext_str);
-}
-
 
 /*
 ** EXT_import_context
