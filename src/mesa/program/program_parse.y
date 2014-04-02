@@ -2749,6 +2749,11 @@ _mesa_parse_arb_program(struct gl_context *ctx, GLenum target, const GLubyte *st
     */
    state->prog->Instructions =
       _mesa_alloc_instructions(state->prog->NumInstructions + 1);
+
+   if (state->prog->Instructions == NULL) {
+      goto error;
+   }
+
    inst = state->inst_head;
    for (i = 0; i < state->prog->NumInstructions; i++) {
       struct asm_instruction *const temp = inst->next;
