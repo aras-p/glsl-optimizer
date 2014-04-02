@@ -343,7 +343,7 @@
     <enum name="POINT_SIZE_ARRAY_BUFFER_BINDING_OES"	  value="0x8B9F"/>
 
     <function name="PointSizePointerOES" offset="assign"
-              static_dispatch="false" es1="1.0" desktop="false">
+              static_dispatch="true" es1="1.0" desktop="false">
         <param name="type" type="GLenum"/>
         <param name="stride" type="GLsizei"/>
         <param name="pointer" type="const GLvoid *"/>
