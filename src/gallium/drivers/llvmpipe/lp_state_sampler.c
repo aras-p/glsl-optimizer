@@ -77,13 +77,6 @@ llvmpipe_bind_sampler_states(struct pipe_context *pipe,
    assert(shader < PIPE_SHADER_TYPES);
    assert(start + num <= Elements(llvmpipe->samplers[shader]));
 
-   /* Check for no-op */
-   if (start + num <= llvmpipe->num_samplers[shader] &&
-       !memcmp(llvmpipe->samplers[shader] + start, samplers,
-               num * sizeof(void *))) {
-      return;
-   }
-
    draw_flush(llvmpipe->draw);
 
    /* set the new samplers */
@@ -124,13 +117,6 @@ llvmpipe_set_sampler_views(struct pipe_context *pipe,
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(start + num <= Elements(llvmpipe->sampler_views[shader]));
-
-   /* Check for no-op */
-   if (start + num <= llvmpipe->num_sampler_views[shader] &&
-       !memcmp(llvmpipe->sampler_views[shader] + start, views,
-               num * sizeof(struct pipe_sampler_view *))) {
-      return;
-   }
 
    draw_flush(llvmpipe->draw);
 
