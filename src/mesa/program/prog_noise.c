@@ -257,12 +257,12 @@ _mesa_noise2(GLfloat x, GLfloat y)
    float y0 = y - Y0;
 
    float x1, y1, x2, y2;
-   int ii, jj;
+   unsigned int ii, jj;
    float t0, t1, t2;
 
    /* For the 2D case, the simplex shape is an equilateral triangle. */
    /* Determine which simplex we are in. */
-   int i1, j1;                  /* Offsets for second (middle) corner of simplex in (i,j) coords */
+   unsigned int i1, j1;         /* Offsets for second (middle) corner of simplex in (i,j) coords */
    if (x0 > y0) {
       i1 = 1;
       j1 = 0;
@@ -282,8 +282,8 @@ _mesa_noise2(GLfloat x, GLfloat y)
    y2 = y0 - 1.0f + 2.0f * G2;
 
    /* Wrap the integer indices at 256, to avoid indexing perm[] out of bounds */
-   ii = i % 256;
-   jj = j % 256;
+   ii = i & 0xff;
+   jj = j & 0xff;
 
    /* Calculate the contribution from the three corners */
    t0 = 0.5f - x0 * x0 - y0 * y0;
@@ -344,13 +344,13 @@ _mesa_noise3(GLfloat x, GLfloat y, GLfloat z)
    float z0 = z - Z0;
 
    float x1, y1, z1, x2, y2, z2, x3, y3, z3;
-   int ii, jj, kk;
+   unsigned int ii, jj, kk;
    float t0, t1, t2, t3;
 
    /* For the 3D case, the simplex shape is a slightly irregular tetrahedron. */
    /* Determine which simplex we are in. */
-   int i1, j1, k1;              /* Offsets for second corner of simplex in (i,j,k) coords */
-   int i2, j2, k2;              /* Offsets for third corner of simplex in (i,j,k) coords */
+   unsigned int i1, j1, k1;     /* Offsets for second corner of simplex in (i,j,k) coords */
+   unsigned int i2, j2, k2;     /* Offsets for third corner of simplex in (i,j,k) coords */
 
 /* This code would benefit from a backport from the GLSL version! */
    if (x0 >= y0) {
@@ -423,9 +423,9 @@ _mesa_noise3(GLfloat x, GLfloat y, GLfloat z)
    z3 = z0 - 1.0f + 3.0f * G3;
 
    /* Wrap the integer indices at 256 to avoid indexing perm[] out of bounds */
-   ii = i % 256;
-   jj = j % 256;
-   kk = k % 256;
+   ii = i & 0xff;
+   jj = j & 0xff;
+   kk = k & 0xff;
 
    /* Calculate the contribution from the four corners */
    t0 = 0.6f - x0 * x0 - y0 * y0 - z0 * z0;
@@ -522,12 +522,12 @@ _mesa_noise4(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    int c6 = (z0 > w0) ? 1 : 0;
    int c = c1 + c2 + c3 + c4 + c5 + c6;
 
-   int i1, j1, k1, l1;  /* The integer offsets for the second simplex corner */
-   int i2, j2, k2, l2;  /* The integer offsets for the third simplex corner */
-   int i3, j3, k3, l3;  /* The integer offsets for the fourth simplex corner */
+   unsigned int i1, j1, k1, l1;  /* The integer offsets for the second simplex corner */
+   unsigned int i2, j2, k2, l2;  /* The integer offsets for the third simplex corner */
+   unsigned int i3, j3, k3, l3;  /* The integer offsets for the fourth simplex corner */
 
    float x1, y1, z1, w1, x2, y2, z2, w2, x3, y3, z3, w3, x4, y4, z4, w4;
-   int ii, jj, kk, ll;
+   unsigned int ii, jj, kk, ll;
    float t0, t1, t2, t3, t4;
 
    /*
@@ -573,10 +573,10 @@ _mesa_noise4(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    w4 = w0 - 1.0f + 4.0f * G4;
 
    /* Wrap the integer indices at 256, to avoid indexing perm[] out of bounds */
-   ii = i % 256;
-   jj = j % 256;
-   kk = k % 256;
-   ll = l % 256;
+   ii = i & 0xff;
+   jj = j & 0xff;
+   kk = k & 0xff;
+   ll = l & 0xff;
 
    /* Calculate the contribution from the five corners */
    t0 = 0.6f - x0 * x0 - y0 * y0 - z0 * z0 - w0 * w0;
