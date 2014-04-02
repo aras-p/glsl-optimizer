@@ -122,6 +122,7 @@ glPointParameterfv
 glPointParameterx
 glPointParameterxv
 glPointSize
+glPointSizePointerOES
 glPointSizex
 glPolygonOffset
 glPolygonOffsetx
