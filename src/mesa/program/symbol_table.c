@@ -115,7 +115,7 @@ struct _mesa_symbol_table {
 static void
 check_symbol_table(struct _mesa_symbol_table *table)
 {
-#if 1
+#if !defined(NDEBUG)
     struct scope_level *scope;
 
     for (scope = table->current_scope; scope != NULL; scope = scope->next) {
@@ -134,7 +134,9 @@ check_symbol_table(struct _mesa_symbol_table *table)
             }
         }
     }
-#endif
+#else
+    (void) table;
+#endif /* !defined(NDEBUG) */
 }
 
 void
