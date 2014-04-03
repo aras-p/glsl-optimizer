@@ -48,7 +48,7 @@ libOpenVG_la_LDFLAGS = \
 	-no-undefined \
 	-version-number 1 \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 vgapi_tmp.h: $(srcdir)/vgapi.csv $(top_srcdir)/src/mapi/mapi_abi.py
 	$(AM_V_GEN) $(PYTHON2) $(PYTHON_FLAGS) $(top_srcdir)/src/mapi/mapi_abi.py \

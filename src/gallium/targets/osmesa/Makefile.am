@@ -44,7 +44,7 @@ lib@OSMESA_LIB@_la_LDFLAGS = \
 	-no-undefined \
 	-version-number @OSMESA_VERSION@ \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 
 if HAVE_SHARED_GLAPI

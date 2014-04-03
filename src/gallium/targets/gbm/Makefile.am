@@ -68,7 +68,7 @@ gbm_gallium_drm_la_LDFLAGS = \
 	-no-undefined \
 	-avoid-version \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 if HAVE_MESA_LLVM
 gbm_gallium_drm_la_LIBADD += $(LLVM_LIBS)

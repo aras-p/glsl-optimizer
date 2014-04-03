@@ -23,7 +23,7 @@ libgbm_la_LDFLAGS = \
 	-no-undefined \
 	-version-info 1:0 \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 libgbm_la_LIBADD = \
 	$(top_builddir)/src/loader/libloader.la \

@@ -49,7 +49,7 @@ AM_LDFLAGS = \
 	-no-undefined \
 	-avoid-version \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined \
+	$(LD_NO_UNDEFINED) \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/egl-static/egl.link
 
 egldir = $(EGL_DRIVER_INSTALL_DIR)

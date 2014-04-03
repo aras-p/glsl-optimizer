@@ -113,7 +113,7 @@ GL_LDFLAGS = \
 	-version-number 1:2 \
 	-Wl,-Bsymbolic \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 lib@GL_LIB@_la_SOURCES =
 lib@GL_LIB@_la_LIBADD = $(GL_LIBS)

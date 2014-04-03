@@ -12,7 +12,7 @@ libwayland_egl_la_LDFLAGS = \
 	-no-undefined \
 	-version-info 1 \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 TESTS = wayland-egl-symbols-check
 

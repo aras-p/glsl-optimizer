@@ -47,7 +47,7 @@ AM_LDFLAGS = \
 	-no-undefined \
 	-avoid-version \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined \
+	$(LD_NO_UNDEFINED) \
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/pipe-loader/pipe.link
 
 if HAVE_MESA_LLVM

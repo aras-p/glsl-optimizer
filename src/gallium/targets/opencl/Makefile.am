@@ -7,7 +7,7 @@ lib@OPENCL_LIBNAME@_la_LDFLAGS = \
 	-no-undefined \
 	-version-number 1:0 \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 
 lib@OPENCL_LIBNAME@_la_LIBADD = \

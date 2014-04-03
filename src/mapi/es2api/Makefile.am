@@ -53,7 +53,7 @@ libGLESv2_la_LDFLAGS = \
 	-no-undefined \
 	-version-number 2 \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 if HAVE_SHARED_GLAPI
 libGLESv2_la_LIBADD += ../shared-glapi/libglapi.la

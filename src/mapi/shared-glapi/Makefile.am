@@ -12,7 +12,7 @@ libglapi_la_LIBADD = $(PTHREAD_LIBS) $(SELINUX_LIBS)
 libglapi_la_LDFLAGS = \
 	-no-undefined \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 include $(GLAPI)/gen/glapi_gen.mk
 glapi_mapi_tmp.h : $(GLAPI)/gen/gl_and_es_API.xml $(glapi_gen_mapi_deps)

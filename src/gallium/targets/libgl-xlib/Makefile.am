@@ -48,7 +48,7 @@ libGL_la_LDFLAGS = \
 	-no-undefined \
 	-version-number $(GL_MAJOR):$(GL_MINOR):$(GL_TINY) \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 libGL_la_LIBADD = \
 	$(top_builddir)/src/gallium/state_trackers/glx/xlib/libxlib.la \

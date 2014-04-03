@@ -67,7 +67,7 @@ GALLIUM_VDPAU_LINKER_FLAGS = \
 	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
 	-export-symbols-regex $(VDPAU_EXPORTS) \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 GALLIUM_XVMC_LINKER_FLAGS = \
 	-shared \
@@ -76,7 +76,7 @@ GALLIUM_XVMC_LINKER_FLAGS = \
 	-version-number $(XVMC_MAJOR):$(XVMC_MINOR) \
 	-export-symbols-regex '^XvMC' \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 GALLIUM_OMX_LINKER_FLAGS = \
 	-shared \
@@ -84,7 +84,7 @@ GALLIUM_OMX_LINKER_FLAGS = \
 	-no-undefined \
 	-export-symbols-regex $(EXPORTS) \
 	$(GC_SECTIONS) \
-	-Wl,--no-undefined
+	$(LD_NO_UNDEFINED)
 
 GALLIUM_COMMON_LIB_DEPS = \
 	-lm \
