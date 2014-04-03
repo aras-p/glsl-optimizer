@@ -42,6 +42,8 @@ opt_saturate_propagation_local(fs_visitor *v, bblock_t *block)
       if (inst->opcode != BRW_OPCODE_MOV ||
           inst->dst.file != GRF ||
           inst->src[0].file != GRF ||
+          inst->src[0].abs ||
+          inst->src[0].negate ||
           !inst->saturate)
          continue;
 
