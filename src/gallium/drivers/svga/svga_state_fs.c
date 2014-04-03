@@ -235,15 +235,43 @@ make_fs_key(const struct svga_context *svga,
    if (svga->curr.blend->need_white_fragments) {
       key->white_fragments = 1;
    }
-   
+
+#ifdef DEBUG
+   /*
+    * We expect a consistent set of samplers and sampler views.
+    * Do some debug checks/warnings here.
+    */
+   {
+      static boolean warned = FALSE;
+      unsigned i, n = MAX2(svga->curr.num_sampler_views,
+                           svga->curr.num_samplers);
+      /* Only warn once to prevent too much debug output */
+      if (!warned) {
+         if (svga->curr.num_sampler_views != svga->curr.num_samplers) {
+            debug_printf("svga: mismatched number of sampler views (%u) "
+                         "vs. samplers (%u)\n",
+                         svga->curr.num_sampler_views,
+                         svga->curr.num_samplers);
+         }
+         for (i = 0; i < n; i++) {
+            if ((svga->curr.sampler_views[i] == NULL) !=
+                (svga->curr.sampler[i] == NULL))
+               debug_printf("sampler_view[%u] = %p but sampler[%u] = %p\n",
+                            i, svga->curr.sampler_views[i],
+                            i, svga->curr.sampler[i]);
+         }
+         warned = TRUE;
+      }
+   }
+#endif
+
    /* XXX: want to limit this to the textures that the shader actually
     * refers to.
     *
     * SVGA_NEW_TEXTURE_BINDING | SVGA_NEW_SAMPLER
     */
    for (i = 0; i < svga->curr.num_sampler_views; i++) {
-      if (svga->curr.sampler_views[i]) {
-         assert(svga->curr.sampler[i]);
+      if (svga->curr.sampler_views[i] && svga->curr.sampler[i]) {
          assert(svga->curr.sampler_views[i]->texture);
          key->tex[i].texture_target = svga->curr.sampler_views[i]->texture->target;
          if (!svga->curr.sampler[i]->normalized_coords) {
@@ -262,7 +290,7 @@ make_fs_key(const struct svga_context *svga,
 
    idx = 0;
    for (i = 0; i < svga->curr.num_samplers; ++i) {
-      if (svga->curr.sampler_views[i]) {
+      if (svga->curr.sampler_views[i] && svga->curr.sampler[i]) {
          struct pipe_resource *tex = svga->curr.sampler_views[i]->texture;
          struct svga_texture *stex = svga_texture(tex);
          SVGA3dSurfaceFormat format = stex->key.format;
