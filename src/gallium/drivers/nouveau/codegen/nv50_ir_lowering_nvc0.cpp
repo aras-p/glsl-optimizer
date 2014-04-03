@@ -598,6 +598,7 @@ private:
    bool handleTXD(TexInstruction *);
    bool handleTXQ(TexInstruction *);
    bool handleManualTXD(TexInstruction *);
+   bool handleTXLQ(TexInstruction *);
    bool handleATOM(Instruction *);
    bool handleCasExch(Instruction *, bool needCctl);
    void handleSurfaceOpNVE4(TexInstruction *);
@@ -858,6 +859,44 @@ NVC0LoweringPass::handleTXQ(TexInstruction *txq)
    // TODO: indirect resource/sampler index
    return true;
 }
+
+bool
+NVC0LoweringPass::handleTXLQ(TexInstruction *i)
+{
+   /* The outputs are inverted compared to what the TGSI instruction
+    * expects. Take that into account in the mask.
+    */
+   assert((i->tex.mask & ~3) == 0);
+   if (i->tex.mask == 1)
+      i->tex.mask = 2;
+   else if (i->tex.mask == 2)
+      i->tex.mask = 1;
+   handleTEX(i);
+   bld.setPosition(i, true);
+
+   /* The returned values are not quite what we want:
+    * (a) convert from s16/u16 to f32
+    * (b) multiply by 1/256
+    */
+   for (int def = 0; def < 2; ++def) {
+      if (!i->defExists(def))
+         continue;
+      enum DataType type = TYPE_S16;
+      if (i->tex.mask == 2 || def > 0)
+         type = TYPE_U16;
+      bld.mkCvt(OP_CVT, TYPE_F32, i->getDef(def), type, i->getDef(def));
+      bld.mkOp2(OP_MUL, TYPE_F32, i->getDef(def),
+                i->getDef(def), bld.loadImm(NULL, 1.0f / 256));
+   }
+   if (i->tex.mask == 3) {
+      LValue *t = new_LValue(func, FILE_GPR);
+      bld.mkMov(t, i->getDef(0));
+      bld.mkMov(i->getDef(0), i->getDef(1));
+      bld.mkMov(i->getDef(1), t);
+   }
+   return true;
+}
+
 
 bool
 NVC0LoweringPass::handleATOM(Instruction *atom)
@@ -1528,6 +1567,8 @@ NVC0LoweringPass::visit(Instruction *i)
       return handleTEX(i->asTex());
    case OP_TXD:
       return handleTXD(i->asTex());
+   case OP_TXLQ:
+      return handleTXLQ(i->asTex());
    case OP_TXQ:
      return handleTXQ(i->asTex());
    case OP_EX2:

@@ -978,6 +978,9 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
       case OP_TXD:
          code[1] = 0x7e000000;
          break;
+      case OP_TXLQ:
+         code[1] = 0x7e800000;
+         break;
       case OP_TXF:
          code[1] = 0x78000000;
          break;
@@ -990,6 +993,11 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
       case OP_TXD:
          code[0] = 0x00000002;
          code[1] = 0x76000000;
+         code[1] |= i->tex.r << 9;
+         break;
+      case OP_TXLQ:
+         code[0] = 0x00000002;
+         code[1] = 0x76800000;
          code[1] |= i->tex.r << 9;
          break;
       case OP_TXF:
@@ -1017,6 +1025,7 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
    case OP_TXF: break;
    case OP_TXG: break; // XXX
    case OP_TXD: break;
+   case OP_TXLQ: break;
    default:
       assert(!"invalid texture op");
       break;
@@ -1657,6 +1666,7 @@ CodeEmitterGK110::emitInstruction(Instruction *insn)
    case OP_TXL:
    case OP_TXD:
    case OP_TXF:
+   case OP_TXLQ:
       emitTEX(insn->asTex());
       break;
    case OP_TXQ:

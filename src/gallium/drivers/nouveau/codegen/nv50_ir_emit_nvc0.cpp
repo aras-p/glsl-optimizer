@@ -1138,6 +1138,7 @@ CodeEmitterNVC0::emitTEX(const TexInstruction *i)
    case OP_TXL: code[1] = 0x86000000; break;
    case OP_TXF: code[1] = 0x90000000; break;
    case OP_TXG: code[1] = 0xa0000000; break;
+   case OP_TXLQ: code[1] = 0xb0000000; break;
    case OP_TXD: code[1] = 0xe0000000; break;
    default:
       assert(!"invalid texture op");
@@ -2302,6 +2303,7 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
    case OP_TXL:
    case OP_TXD:
    case OP_TXF:
+   case OP_TXLQ:
       emitTEX(insn->asTex());
       break;
    case OP_TXQ:
