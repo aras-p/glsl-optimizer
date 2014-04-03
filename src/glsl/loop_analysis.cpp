@@ -589,8 +589,10 @@ get_basic_induction_increment(ir_assignment *ir, hash_table *var_hash)
 	 loop_variable *lv =
 	    (loop_variable *) hash_table_find(var_hash, inc_var);
 
-	 if (!lv->is_loop_constant())
-	    inc = NULL;
+         if (lv == NULL || !lv->is_loop_constant()) {
+            assert(lv != NULL);
+            inc = NULL;
+         }
       } else
 	 inc = NULL;
    }
