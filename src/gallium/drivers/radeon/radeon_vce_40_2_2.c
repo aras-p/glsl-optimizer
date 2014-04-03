@@ -218,14 +218,22 @@ static void rdo(struct rvce_encoder *enc)
 	RVCE_END();
 }
 
-static void encode(struct rvce_encoder *enc)
+static void frame_offset(struct rvce_encoder *enc, unsigned frame_num,
+			 unsigned *luma_offset, unsigned *chroma_offset)
 {
-	int i;
 	unsigned pitch = align(enc->luma->level[0].pitch_bytes, 128);
 	unsigned vpitch = align(enc->luma->npix_y, 16);
 	unsigned fsize = pitch * (vpitch + vpitch / 2);
-	unsigned chroma_offset = pitch * vpitch;
-	unsigned luma_offset;
+	unsigned base_offset = RVCE_NUM_CPB_EXTRA_FRAMES * fsize;
+
+	*luma_offset = base_offset + (frame_num % RVCE_NUM_CPB_FRAMES) * fsize;
+	*chroma_offset = *luma_offset + pitch * vpitch;
+}
+
+static void encode(struct rvce_encoder *enc)
+{
+	int i;
+	unsigned luma_offset, chroma_offset;
 
 	task_info(enc, 0x00000003);
 
@@ -282,7 +290,6 @@ static void encode(struct rvce_encoder *enc)
 
 	RVCE_CS(0x00000000); // pictureStructure
 
-	luma_offset = (2 * ((enc->pic.frame_num - 1) % 2) * fsize + 2 * fsize); 
 	if (enc->pic.picture_type == PIPE_H264_ENC_PICTURE_TYPE_IDR) { 
 		RVCE_CS(0x00000000); // encPicType
 		RVCE_CS(0x00000000); // frameNumber
@@ -291,11 +298,12 @@ static void encode(struct rvce_encoder *enc)
 		RVCE_CS(0xffffffff); // chromaOffset
 	}
 	else if(enc->pic.picture_type == PIPE_H264_ENC_PICTURE_TYPE_P) {
+		frame_offset(enc, enc->pic.frame_num - 1, &luma_offset, &chroma_offset);
 		RVCE_CS(0x00000000); // encPicType
 		RVCE_CS(enc->pic.frame_num - 1); // frameNumber
 		RVCE_CS(enc->pic.frame_num - 1); // pictureOrderCount
 		RVCE_CS(luma_offset); // lumaOffset
-		RVCE_CS(chroma_offset + luma_offset); // chromaOffset
+		RVCE_CS(chroma_offset); // chromaOffset
 	}
 	for (i = 0; i < 2; ++i) {
 		RVCE_CS(0x00000000); // pictureStructure
@@ -306,9 +314,9 @@ static void encode(struct rvce_encoder *enc)
 		RVCE_CS(0xffffffff); // chromaOffset
 	}
 	
-	luma_offset = (2 * (enc->pic.frame_num % 2) * fsize + 2 * fsize);
+	frame_offset(enc, enc->pic.frame_num, &luma_offset, &chroma_offset);
 	RVCE_CS(luma_offset); // encReconstructedLumaOffset
-	RVCE_CS(chroma_offset + luma_offset); // encReconstructedChromaOffset
+	RVCE_CS(chroma_offset); // encReconstructedChromaOffset
 	RVCE_CS(0x00000000); // encColocBufferOffset
 	RVCE_CS(0x00000000); // encReconstructedRefBasePictureLumaOffset
 	RVCE_CS(0x00000000); // encReconstructedRefBasePictureChromaOffset

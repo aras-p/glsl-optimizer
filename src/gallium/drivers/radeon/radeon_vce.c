@@ -45,8 +45,6 @@
 #include "radeon_video.h"
 #include "radeon_vce.h"
 
-#define CPB_SIZE (40 * 1024 * 1024)
-
 /**
  * flush commands to the hardware
  */
@@ -213,6 +211,9 @@ struct pipe_video_codec *rvce_create_encoder(struct pipe_context *context,
 {
 	struct r600_common_screen *rscreen = (struct r600_common_screen *)context->screen;
 	struct rvce_encoder *enc;
+	struct pipe_video_buffer *tmp_buf, templat = {};
+	struct radeon_surface *tmp_surf;
+	unsigned pitch, vpitch;
 
 	if (!rscreen->info.vce_fw_version) {
 		RVID_ERR("Kernel doesn't supports VCE!\n");
@@ -246,8 +247,23 @@ struct pipe_video_codec *rvce_create_encoder(struct pipe_context *context,
 	}
 
 	enc->ws->cs_set_flush_callback(enc->cs, rvce_cs_flush, enc);
+	templat.buffer_format = PIPE_FORMAT_NV12;
+	templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
+	templat.width = enc->base.width;
+	templat.height = enc->base.height;
+	templat.interlaced = false;
+	if (!(tmp_buf = context->create_video_buffer(context, &templat))) {
+		RVID_ERR("Can't create video buffer.\n");
+		goto error;
+	}
 
-	if (!rvid_create_buffer(enc->ws, &enc->cpb, CPB_SIZE, RADEON_DOMAIN_VRAM)) {
+	get_buffer(((struct vl_video_buffer *)tmp_buf)->resources[0], NULL, &tmp_surf);
+	pitch = align(tmp_surf->level[0].pitch_bytes, 128);
+	vpitch = align(tmp_surf->npix_y, 16);
+	tmp_buf->destroy(tmp_buf);
+	if (!rvid_create_buffer(enc->ws, &enc->cpb,
+			pitch * vpitch * 1.5 * (RVCE_NUM_CPB_FRAMES + RVCE_NUM_CPB_EXTRA_FRAMES),
+			RADEON_DOMAIN_VRAM)) {
 		RVID_ERR("Can't create CPB buffer.\n");
 		goto error;
 	}
