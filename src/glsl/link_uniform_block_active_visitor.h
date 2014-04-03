@@ -36,7 +36,10 @@ struct link_uniform_block_active {
    unsigned *array_elements;
    unsigned num_array_elements;
 
+   unsigned binding;
+
    bool has_instance_name;
+   bool has_binding;
 };
 
 class link_uniform_block_active_visitor : public ir_hierarchical_visitor {

@@ -46,6 +46,14 @@ process_block(void *mem_ctx, struct hash_table *ht, ir_variable *var)
       b->type = block_type;
       b->has_instance_name = var->is_interface_instance();
 
+      if (var->data.explicit_binding) {
+         b->has_binding = true;
+         b->binding = var->data.binding;
+      } else {
+         b->has_binding = false;
+         b->binding = 0;
+      }
+
       _mesa_hash_table_insert(ht, h, var->get_interface_type()->name,
 			      (void *) b);
       return b;
