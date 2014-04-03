@@ -59,7 +59,8 @@ opt_saturate_propagation_local(fs_visitor *v, bblock_t *block)
 
          if (scan_inst->dst.file == GRF &&
              scan_inst->dst.reg == inst->src[0].reg &&
-             scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
+             scan_inst->dst.reg_offset == inst->src[0].reg_offset &&
+             !scan_inst->is_partial_write()) {
             if (scan_inst->can_do_saturate()) {
                scan_inst->saturate = true;
                inst->saturate = false;
