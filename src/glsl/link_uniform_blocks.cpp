@@ -170,6 +170,12 @@ link_uniform_blocks(void *mem_ctx,
    struct hash_table *block_hash =
       _mesa_hash_table_create(mem_ctx, _mesa_key_string_equal);
 
+   if (block_hash == NULL) {
+      _mesa_error_no_memory(__func__);
+      linker_error(prog, "out of memory\n");
+      return 0;
+   }
+
    /* Determine which uniform blocks are active.
     */
    link_uniform_block_active_visitor v(mem_ctx, block_hash, prog);

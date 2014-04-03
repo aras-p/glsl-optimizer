@@ -1479,6 +1479,8 @@ link_intrastage_shaders(void *mem_ctx,
    const unsigned num_uniform_blocks =
       link_uniform_blocks(mem_ctx, prog, shader_list, num_shaders,
                           &uniform_blocks);
+   if (!prog->LinkStatus)
+      return NULL;
 
    /* Check that there is only a single definition of each function signature
     * across all shaders.
