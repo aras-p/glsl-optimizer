@@ -2676,8 +2676,7 @@ _mesa_FramebufferRenderbuffer(GLenum target, GLenum attachment,
 	 return;
       }
       else if (rb == &DummyRenderbuffer) {
-         /* This is what NVIDIA does */
-	 _mesa_error(ctx, GL_INVALID_VALUE,
+	 _mesa_error(ctx, GL_INVALID_OPERATION,
 		     "glFramebufferRenderbufferEXT(renderbuffer %u)",
                      renderbuffer);
 	 return;
