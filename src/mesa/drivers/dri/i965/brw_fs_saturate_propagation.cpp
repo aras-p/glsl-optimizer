@@ -32,7 +32,7 @@ static bool
 opt_saturate_propagation_local(fs_visitor *v, bblock_t *block)
 {
    bool progress = false;
-   int ip = block->start_ip;
+   int ip = block->start_ip - 1;
 
    for (fs_inst *inst = (fs_inst *)block->start;
         inst != block->end->next;
