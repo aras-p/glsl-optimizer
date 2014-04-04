@@ -64,7 +64,7 @@ GALLIUM_VDPAU_LINKER_FLAGS = \
 	-module \
 	-no-undefined \
 	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
-	-export-symbols-regex $(VDPAU_EXPORTS) \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/vdpau.sym \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 

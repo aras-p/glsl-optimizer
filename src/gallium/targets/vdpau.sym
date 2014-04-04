@@ -1,0 +1,8 @@
+{
+       global:
+               vdp_imp_device_create_x11;
+               nouveau_drm_screen_create;
+               radeon_drm_winsys_create;
+       local:
+               *;
+};
