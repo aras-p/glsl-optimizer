@@ -60,6 +60,7 @@ public:
 
    uint8_t predicate;
    bool predicate_inverse;
+   bool writes_accumulator; /**< instruction implicitly writes accumulator */
 };
 
 enum instruction_scheduler_mode {

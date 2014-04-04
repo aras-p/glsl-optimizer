@@ -971,9 +971,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       brw_MUL(p, dst, src[0], src[1]);
       break;
    case BRW_OPCODE_MACH:
-      brw_set_acc_write_control(p, 1);
       brw_MACH(p, dst, src[0], src[1]);
-      brw_set_acc_write_control(p, 0);
       break;
 
    case BRW_OPCODE_MAD:
@@ -1077,15 +1075,11 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       break;
    case BRW_OPCODE_ADDC:
       assert(brw->gen >= 7);
-      brw_set_acc_write_control(p, 1);
       brw_ADDC(p, dst, src[0], src[1]);
-      brw_set_acc_write_control(p, 0);
       break;
    case BRW_OPCODE_SUBB:
       assert(brw->gen >= 7);
-      brw_set_acc_write_control(p, 1);
       brw_SUBB(p, dst, src[0], src[1]);
-      brw_set_acc_write_control(p, 0);
       break;
 
    case BRW_OPCODE_BFE:
@@ -1317,6 +1311,7 @@ vec4_generator::generate_code(exec_list *instructions)
       brw_set_predicate_inverse(p, inst->predicate_inverse);
       brw_set_saturate(p, inst->saturate);
       brw_set_mask_control(p, inst->force_writemask_all);
+      brw_set_acc_write_control(p, inst->writes_accumulator);
 
       unsigned pre_emit_nr_insn = p->nr_insn;
 

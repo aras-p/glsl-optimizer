@@ -64,6 +64,8 @@ fs_inst::init()
 
    /* This will be the case for almost all instructions. */
    this->regs_written = 1;
+
+   this->writes_accumulator = false;
 }
 
 fs_inst::fs_inst()
@@ -151,6 +153,15 @@ fs_inst::fs_inst(enum opcode opcode, fs_reg dst,
       return new(mem_ctx) fs_inst(BRW_OPCODE_##op, dst, src0, src1);    \
    }
 
+#define ALU2_ACC(op)                                                    \
+   fs_inst *                                                            \
+   fs_visitor::op(fs_reg dst, fs_reg src0, fs_reg src1)                 \
+   {                                                                    \
+      fs_inst *inst = new(mem_ctx) fs_inst(BRW_OPCODE_##op, dst, src0, src1);\
+      inst->writes_accumulator = true;                                  \
+      return inst;                                                      \
+   }
+
 #define ALU3(op)                                                        \
    fs_inst *                                                            \
    fs_visitor::op(fs_reg dst, fs_reg src0, fs_reg src1, fs_reg src2)    \
@@ -166,7 +177,7 @@ ALU1(RNDE)
 ALU1(RNDZ)
 ALU2(ADD)
 ALU2(MUL)
-ALU2(MACH)
+ALU2_ACC(MACH)
 ALU2(AND)
 ALU2(OR)
 ALU2(XOR)
@@ -182,8 +193,8 @@ ALU1(FBH)
 ALU1(FBL)
 ALU1(CBIT)
 ALU3(MAD)
-ALU2(ADDC)
-ALU2(SUBB)
+ALU2_ACC(ADDC)
+ALU2_ACC(SUBB)
 ALU2(SEL)
 
 /** Gen4 predicated IF. */

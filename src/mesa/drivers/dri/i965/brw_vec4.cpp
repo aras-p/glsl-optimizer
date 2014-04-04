@@ -350,19 +350,12 @@ try_eliminate_instruction(vec4_instruction *inst, int new_writemask,
        * accumulator as a side-effect. Instead just set the destination
        * to the null register to free it.
        */
-      switch (inst->opcode) {
-      case BRW_OPCODE_ADDC:
-      case BRW_OPCODE_SUBB:
-      case BRW_OPCODE_MACH:
+      if (inst->writes_accumulator || inst->writes_flag()) {
          inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
-         break;
-      default:
-         if (inst->writes_flag()) {
-            inst->dst = dst_reg(retype(brw_null_reg(), inst->dst.type));
-         } else {
-            inst->remove();
-         }
+      } else {
+         inst->remove();
       }
+
       return true;
    } else if (inst->dst.writemask != new_writemask) {
       switch (inst->opcode) {

@@ -42,6 +42,7 @@ vec4_instruction::vec4_instruction(vec4_visitor *v,
    this->force_writemask_all = false;
    this->no_dd_clear = false;
    this->no_dd_check = false;
+   this->writes_accumulator = false;
    this->conditional_mod = BRW_CONDITIONAL_NONE;
    this->sampler = 0;
    this->texture_offset = 0;
@@ -124,6 +125,16 @@ vec4_visitor::emit(enum opcode opcode)
 					   src0, src1);			\
    }
 
+#define ALU2_ACC(op)							\
+   vec4_instruction *							\
+   vec4_visitor::op(dst_reg dst, src_reg src0, src_reg src1)		\
+   {									\
+      vec4_instruction *inst = new(mem_ctx) vec4_instruction(this,     \
+                       BRW_OPCODE_##op, dst, src0, src1);		\
+      inst->writes_accumulator = true;                                 \
+      return inst;                                                     \
+   }
+
 #define ALU3(op)							\
    vec4_instruction *							\
    vec4_visitor::op(dst_reg dst, src_reg src0, src_reg src1, src_reg src2)\
@@ -143,7 +154,7 @@ ALU1(F32TO16)
 ALU1(F16TO32)
 ALU2(ADD)
 ALU2(MUL)
-ALU2(MACH)
+ALU2_ACC(MACH)
 ALU2(AND)
 ALU2(OR)
 ALU2(XOR)
@@ -162,8 +173,8 @@ ALU1(FBH)
 ALU1(FBL)
 ALU1(CBIT)
 ALU3(MAD)
-ALU2(ADDC)
-ALU2(SUBB)
+ALU2_ACC(ADDC)
+ALU2_ACC(SUBB)
 
 /** Gen4 predicated IF. */
 vec4_instruction *

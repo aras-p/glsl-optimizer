@@ -72,13 +72,9 @@ fs_visitor::dead_code_eliminate()
             if (!result_live) {
                progress = true;
 
-               switch (inst->opcode) {
-               case BRW_OPCODE_ADDC:
-               case BRW_OPCODE_SUBB:
-               case BRW_OPCODE_MACH:
+               if (inst->writes_accumulator) {
                   inst->dst = fs_reg(retype(brw_null_reg(), inst->dst.type));
-                  break;
-               default:
+               } else {
                   inst->opcode = BRW_OPCODE_NOP;
                   continue;
                }

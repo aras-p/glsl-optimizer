@@ -742,6 +742,8 @@ fs_instruction_scheduler::is_compressed(fs_inst *inst)
 void
 fs_instruction_scheduler::calculate_deps()
 {
+   const bool gen6plus = v->brw->gen >= 6;
+
    /* Pre-register-allocation, this tracks the last write per VGRF (so
     * different reg_offsets within it can interfere when they shouldn't).
     * After register allocation, reg_offsets are gone and we track individual
@@ -750,6 +752,7 @@ fs_instruction_scheduler::calculate_deps()
    schedule_node *last_grf_write[grf_count];
    schedule_node *last_mrf_write[BRW_MAX_MRF];
    schedule_node *last_conditional_mod[2] = { NULL, NULL };
+   schedule_node *last_accumulator_write = NULL;
    /* Fixed HW registers are assumed to be separate from the virtual
     * GRFs, so they can be tracked separately.  We don't really write
     * to fixed GRFs much, so don't bother tracking them on a more
@@ -800,6 +803,8 @@ fs_instruction_scheduler::calculate_deps()
             } else {
                add_dep(last_fixed_grf_write, n);
             }
+         } else if (inst->src[i].is_accumulator() && gen6plus) {
+            add_dep(last_accumulator_write, n);
 	 } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
 		    inst->src[i].file != UNIFORM) {
@@ -820,6 +825,14 @@ fs_instruction_scheduler::calculate_deps()
 
       if (inst->reads_flag()) {
 	 add_dep(last_conditional_mod[inst->flag_subreg], n);
+      }
+
+      if (inst->reads_accumulator_implicitly()) {
+         if (gen6plus) {
+            add_dep(last_accumulator_write, n);
+         } else {
+            add_barrier_deps(n);
+         }
       }
 
       /* write-after-write deps. */
@@ -854,6 +867,9 @@ fs_instruction_scheduler::calculate_deps()
          } else {
             last_fixed_grf_write = n;
          }
+      } else if (inst->dst.is_accumulator() && gen6plus) {
+         add_dep(last_accumulator_write, n);
+         last_accumulator_write = n;
       } else if (inst->dst.file != BAD_FILE) {
 	 add_barrier_deps(n);
       }
@@ -869,12 +885,22 @@ fs_instruction_scheduler::calculate_deps()
 	 add_dep(last_conditional_mod[inst->flag_subreg], n, 0);
 	 last_conditional_mod[inst->flag_subreg] = n;
       }
+
+      if (inst->writes_accumulator) {
+         if (gen6plus) {
+            add_dep(last_accumulator_write, n);
+            last_accumulator_write = n;
+         } else {
+            add_barrier_deps(n);
+         }
+      }
    }
 
    /* bottom-to-top dependencies: WAR */
    memset(last_grf_write, 0, sizeof(last_grf_write));
    memset(last_mrf_write, 0, sizeof(last_mrf_write));
    memset(last_conditional_mod, 0, sizeof(last_conditional_mod));
+   last_accumulator_write = NULL;
    last_fixed_grf_write = NULL;
 
    exec_node *node;
@@ -906,6 +932,8 @@ fs_instruction_scheduler::calculate_deps()
             } else {
                add_dep(n, last_fixed_grf_write);
             }
+         } else if (inst->src[i].is_accumulator() && gen6plus) {
+            add_dep(n, last_accumulator_write);
          } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
 		    inst->src[i].file != UNIFORM) {
@@ -926,6 +954,14 @@ fs_instruction_scheduler::calculate_deps()
 
       if (inst->reads_flag()) {
 	 add_dep(n, last_conditional_mod[inst->flag_subreg]);
+      }
+
+      if (inst->reads_accumulator_implicitly()) {
+         if (gen6plus) {
+            add_dep(n, last_accumulator_write);
+         } else {
+            add_barrier_deps(n);
+         }
       }
 
       /* Update the things this instruction wrote, so earlier reads
@@ -959,6 +995,8 @@ fs_instruction_scheduler::calculate_deps()
          } else {
             last_fixed_grf_write = n;
          }
+      } else if (inst->dst.is_accumulator() && gen6plus) {
+         last_accumulator_write = n;
       } else if (inst->dst.file != BAD_FILE) {
 	 add_barrier_deps(n);
       }
@@ -972,15 +1010,26 @@ fs_instruction_scheduler::calculate_deps()
       if (inst->writes_flag()) {
 	 last_conditional_mod[inst->flag_subreg] = n;
       }
+
+      if (inst->writes_accumulator) {
+         if (gen6plus) {
+            last_accumulator_write = n;
+         } else {
+            add_barrier_deps(n);
+         }
+      }
    }
 }
 
 void
 vec4_instruction_scheduler::calculate_deps()
 {
+   const bool gen6plus = v->brw->gen >= 6;
+
    schedule_node *last_grf_write[grf_count];
    schedule_node *last_mrf_write[BRW_MAX_MRF];
    schedule_node *last_conditional_mod = NULL;
+   schedule_node *last_accumulator_write = NULL;
    /* Fixed HW registers are assumed to be separate from the virtual
     * GRFs, so they can be tracked separately.  We don't really write
     * to fixed GRFs much, so don't bother tracking them on a more
@@ -1016,6 +1065,9 @@ vec4_instruction_scheduler::calculate_deps()
                     (inst->src[i].fixed_hw_reg.file ==
                      BRW_GENERAL_REGISTER_FILE)) {
             add_dep(last_fixed_grf_write, n);
+         } else if (inst->src[i].is_accumulator() && gen6plus) {
+            assert(last_accumulator_write);
+            add_dep(last_accumulator_write, n);
          } else if (inst->src[i].file != BAD_FILE &&
                     inst->src[i].file != IMM &&
                     inst->src[i].file != UNIFORM) {
@@ -1039,6 +1091,15 @@ vec4_instruction_scheduler::calculate_deps()
          add_dep(last_conditional_mod, n);
       }
 
+      if (inst->reads_accumulator_implicitly()) {
+         if (gen6plus) {
+            assert(last_accumulator_write);
+            add_dep(last_accumulator_write, n);
+         } else {
+            add_barrier_deps(n);
+         }
+      }
+
       /* write-after-write deps. */
       if (inst->dst.file == GRF) {
          add_dep(last_grf_write[inst->dst.reg], n);
@@ -1049,6 +1110,9 @@ vec4_instruction_scheduler::calculate_deps()
      } else if (inst->dst.file == HW_REG &&
                  inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
          last_fixed_grf_write = n;
+      } else if (inst->dst.is_accumulator() && gen6plus) {
+         add_dep(last_accumulator_write, n);
+         last_accumulator_write = n;
       } else if (inst->dst.file != BAD_FILE) {
          add_barrier_deps(n);
       }
@@ -1064,12 +1128,22 @@ vec4_instruction_scheduler::calculate_deps()
          add_dep(last_conditional_mod, n, 0);
          last_conditional_mod = n;
       }
+
+      if (inst->writes_accumulator) {
+         if (gen6plus) {
+            add_dep(last_accumulator_write, n);
+            last_accumulator_write = n;
+         } else {
+            add_barrier_deps(n);
+         }
+      }
    }
 
    /* bottom-to-top dependencies: WAR */
    memset(last_grf_write, 0, sizeof(last_grf_write));
    memset(last_mrf_write, 0, sizeof(last_mrf_write));
    last_conditional_mod = NULL;
+   last_accumulator_write = NULL;
    last_fixed_grf_write = NULL;
 
    exec_node *node;
@@ -1088,6 +1162,8 @@ vec4_instruction_scheduler::calculate_deps()
                     (inst->src[i].fixed_hw_reg.file ==
                      BRW_GENERAL_REGISTER_FILE)) {
             add_dep(n, last_fixed_grf_write);
+         } else if (inst->src[i].is_accumulator() && gen6plus) {
+            add_dep(n, last_accumulator_write);
          } else if (inst->src[i].file != BAD_FILE &&
                     inst->src[i].file != IMM &&
                     inst->src[i].file != UNIFORM) {
@@ -1109,6 +1185,14 @@ vec4_instruction_scheduler::calculate_deps()
          add_dep(n, last_conditional_mod);
       }
 
+      if (inst->reads_accumulator_implicitly()) {
+         if (gen6plus) {
+            add_dep(n, last_accumulator_write);
+         } else {
+            add_barrier_deps(n);
+         }
+      }
+
       /* Update the things this instruction wrote, so earlier reads
        * can mark this as WAR dependency.
        */
@@ -1119,6 +1203,8 @@ vec4_instruction_scheduler::calculate_deps()
       } else if (inst->dst.file == HW_REG &&
                  inst->dst.fixed_hw_reg.file == BRW_GENERAL_REGISTER_FILE) {
          last_fixed_grf_write = n;
+      } else if (inst->dst.is_accumulator() && gen6plus) {
+         last_accumulator_write = n;
       } else if (inst->dst.file != BAD_FILE) {
          add_barrier_deps(n);
       }
@@ -1131,6 +1217,14 @@ vec4_instruction_scheduler::calculate_deps()
 
       if (inst->writes_flag()) {
          last_conditional_mod = n;
+      }
+
+      if (inst->writes_accumulator) {
+         if (gen6plus) {
+            last_accumulator_write = n;
+         } else {
+            add_barrier_deps(n);
+         }
       }
    }
 }
