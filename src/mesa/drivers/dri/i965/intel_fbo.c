@@ -38,6 +38,7 @@
 #include "main/image.h"
 #include "main/hash_table.h"
 #include "main/set.h"
+#include "main/condrender.h"
 
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
@@ -851,6 +852,13 @@ intel_blit_framebuffer(struct gl_context *ctx,
                        GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
                        GLbitfield mask, GLenum filter)
 {
+   /* Page 679 of OpenGL 4.4 spec says:
+    *    "Added BlitFramebuffer to commands affected by conditional rendering in
+    *     section 10.10 (Bug 9562)."
+    */
+   if (!_mesa_check_conditional_render(ctx))
+      return;
+
    mask = brw_blorp_framebuffer(brw_context(ctx),
                                 srcX0, srcY0, srcX1, srcY1,
                                 dstX0, dstY0, dstX1, dstY1,
