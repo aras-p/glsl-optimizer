@@ -151,25 +151,6 @@ set_block_binding(void *mem_ctx, gl_shader_program *prog,
 }
 
 void
-set_uniform_binding(void *mem_ctx, gl_shader_program *prog,
-                    const char *name, const glsl_type *type, int binding)
-{
-   struct gl_uniform_storage *const storage =
-      get_storage(prog->UniformStorage, prog->NumUserUniformStorage, name);
-
-   if (storage == NULL) {
-      assert(storage != NULL);
-      return;
-   }
-
-   if (storage->type->is_sampler()) {
-      set_sampler_binding(mem_ctx, prog, name, type, binding);
-   } else if (storage->block_index != -1) {
-      set_block_binding(mem_ctx, prog, name, type, binding);
-   }
-}
-
-void
 set_uniform_initializer(void *mem_ctx, gl_shader_program *prog,
 			const char *name, const glsl_type *type,
 			ir_constant *val)
@@ -268,8 +249,18 @@ link_set_uniform_initializers(struct gl_shader_program *prog)
 	    mem_ctx = ralloc_context(NULL);
 
          if (var->data.explicit_binding) {
-            linker::set_uniform_binding(mem_ctx, prog, var->name,
-                                        var->type, var->data.binding);
+            const glsl_type *const type = var->type;
+
+            if (type->is_sampler()
+                || (type->is_array() && type->fields.array->is_sampler())) {
+               linker::set_sampler_binding(mem_ctx, prog, var->name,
+                                           type, var->data.binding);
+            } else if (var->is_in_uniform_block()) {
+               linker::set_block_binding(mem_ctx, prog, var->name,
+                                         type, var->data.binding);
+            } else {
+               assert(!"Explicit binding not on a sampler or UBO.");
+            }
          } else if (var->constant_value) {
             linker::set_uniform_initializer(mem_ctx, prog, var->name,
                                             var->type, var->constant_value);
