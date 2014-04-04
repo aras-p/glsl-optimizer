@@ -156,8 +156,8 @@ static void pic_control(struct rvce_encoder *enc)
 	RVCE_CS(0x00000040); // encConstraintSetFlags
 	RVCE_CS(0x00000000); // encBPicPattern
 	RVCE_CS(0x00000000); // weightPredModeBPicture
-	RVCE_CS(0x00000001); // encNumberOfReferenceFrames
-	RVCE_CS(0x00000001); // encMaxNumRefFrames
+	RVCE_CS(MIN2(enc->base.max_references, 2)); // encNumberOfReferenceFrames
+	RVCE_CS(enc->base.max_references + 1); // encMaxNumRefFrames
 	RVCE_CS(0x00000000); // encNumDefaultActiveRefL0
 	RVCE_CS(0x00000000); // encNumDefaultActiveRefL1
 	RVCE_CS(0x00000000); // encSliceMode
@@ -297,8 +297,9 @@ static void encode(struct rvce_encoder *enc)
 		RVCE_CS(0xffffffff); // chromaOffset
 	}
 	else if(enc->pic.picture_type == PIPE_H264_ENC_PICTURE_TYPE_P) {
-		frame_offset(enc, enc->pic.frame_num - 1, &luma_offset, &chroma_offset);
+		frame_offset(enc, enc->pic.ref_idx_l0, &luma_offset, &chroma_offset);
 		RVCE_CS(0x00000000); // encPicType
+		// TODO: Stores these in the CPB backtrack
 		RVCE_CS(enc->pic.frame_num - 1); // frameNumber
 		RVCE_CS(enc->pic.frame_num - 1); // pictureOrderCount
 		RVCE_CS(luma_offset); // lumaOffset
@@ -322,8 +323,8 @@ static void encode(struct rvce_encoder *enc)
 	RVCE_CS(0x00000000); // encReferenceRefBasePictureLumaOffset
 	RVCE_CS(0x00000000); // encReferenceRefBasePictureChromaOffset
 	RVCE_CS(0x00000000); // pictureCount
-	RVCE_CS(0x00000000); // frameNumber
-	RVCE_CS(0x00000000); // pictureOrderCount
+	RVCE_CS(enc->pic.frame_num); // frameNumber
+	RVCE_CS(enc->pic.pic_order_cnt); // pictureOrderCount
 	RVCE_CS(0x00000000); // numIPicRemainInRCGOP
 	RVCE_CS(0x00000000); // numPPicRemainInRCGOP
 	RVCE_CS(0x00000000); // numBPicRemainInRCGOP

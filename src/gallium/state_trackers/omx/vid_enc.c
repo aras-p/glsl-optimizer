@@ -769,11 +769,17 @@ static void enc_ControlPicture(omx_base_PortType *port,
 
    if (!(priv->frame_num % OMX_VID_ENC_IDR_PERIOD_DEFAULT) || priv->force_pic_type.IntraRefreshVOP) {
       picture->picture_type = PIPE_H264_ENC_PICTURE_TYPE_IDR;
+      picture->ref_idx_l0 = 0;
+      picture->ref_idx_l1 = 0;
       priv->frame_num = 0;
-   } else
+   } else {
       picture->picture_type = PIPE_H264_ENC_PICTURE_TYPE_P;
+      picture->ref_idx_l0 = priv->frame_num - 1;
+      picture->ref_idx_l1 = 0;
+   }
    
    picture->frame_num = priv->frame_num++;
+   picture->pic_order_cnt = picture->frame_num;
    priv->force_pic_type.IntraRefreshVOP = OMX_FALSE; 
 }
 
