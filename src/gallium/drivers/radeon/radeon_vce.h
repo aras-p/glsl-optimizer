@@ -34,6 +34,8 @@
 #ifndef RADEON_VCE_H
 #define RADEON_VCE_H
 
+#include "util/u_double_list.h"
+
 #define RVCE_RELOC(buf, usage, domain) (enc->ws->cs_add_reloc(enc->cs, (buf), (usage), domain, RADEON_PRIO_MIN))
 
 #define RVCE_CS(value) (enc->cs->buf[enc->cs->cdw++] = (value))
@@ -51,6 +53,16 @@ struct r600_common_screen;
 typedef void (*rvce_get_buffer)(struct pipe_resource *resource,
 				struct radeon_winsys_cs_handle **handle,
 				struct radeon_surface **surface);
+
+/* Coded picture buffer slot */
+struct rvce_cpb_slot {
+	struct list_head		list;
+
+	unsigned			index;
+	enum pipe_h264_enc_picture_type	picture_type;
+	unsigned			frame_num;
+	unsigned			pic_order_cnt;
+};
 
 /* VCE encoder representation */
 struct rvce_encoder {
@@ -81,6 +93,9 @@ struct rvce_encoder {
 
 	struct radeon_winsys_cs_handle*	bs_handle;
 	unsigned			bs_size;
+
+	struct rvce_cpb_slot		*cpb_array;
+	struct list_head		cpb_slots;
 
 	struct rvid_buffer		*fb;
 	struct rvid_buffer		cpb;

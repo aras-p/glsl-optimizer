@@ -44,6 +44,27 @@
 #include "radeon_video.h"
 #include "radeon_vce.h"
 
+static struct rvce_cpb_slot *current_slot(struct rvce_encoder *enc)
+{
+	return LIST_ENTRY(struct rvce_cpb_slot, enc->cpb_slots.prev, list);
+}
+
+static struct rvce_cpb_slot *l0_slot(struct rvce_encoder *enc)
+{
+	return LIST_ENTRY(struct rvce_cpb_slot, enc->cpb_slots.next, list);
+}
+
+static void frame_offset(struct rvce_encoder *enc, struct rvce_cpb_slot *slot,
+			 unsigned *luma_offset, unsigned *chroma_offset)
+{
+	unsigned pitch = align(enc->luma->level[0].pitch_bytes, 128);
+	unsigned vpitch = align(enc->luma->npix_y, 16);
+	unsigned fsize = pitch * (vpitch + vpitch / 2);
+
+	*luma_offset = slot->index * fsize;
+	*chroma_offset = *luma_offset + pitch * vpitch;
+}
+
 static void session(struct rvce_encoder *enc)
 {
 	RVCE_BEGIN(0x00000001); // session cmd
@@ -218,17 +239,6 @@ static void rdo(struct rvce_encoder *enc)
 	RVCE_END();
 }
 
-static void frame_offset(struct rvce_encoder *enc, unsigned frame_num,
-			 unsigned *luma_offset, unsigned *chroma_offset)
-{
-	unsigned pitch = align(enc->luma->level[0].pitch_bytes, 128);
-	unsigned vpitch = align(enc->luma->npix_y, 16);
-	unsigned fsize = pitch * (vpitch + vpitch / 2);
-
-	*luma_offset = (frame_num % RVCE_NUM_CPB_FRAMES) * fsize;
-	*chroma_offset = *luma_offset + pitch * vpitch;
-}
-
 static void encode(struct rvce_encoder *enc)
 {
 	int i;
@@ -297,11 +307,11 @@ static void encode(struct rvce_encoder *enc)
 		RVCE_CS(0xffffffff); // chromaOffset
 	}
 	else if(enc->pic.picture_type == PIPE_H264_ENC_PICTURE_TYPE_P) {
-		frame_offset(enc, enc->pic.ref_idx_l0, &luma_offset, &chroma_offset);
-		RVCE_CS(0x00000000); // encPicType
-		// TODO: Stores these in the CPB backtrack
-		RVCE_CS(enc->pic.frame_num - 1); // frameNumber
-		RVCE_CS(enc->pic.frame_num - 1); // pictureOrderCount
+		struct rvce_cpb_slot *l0 = l0_slot(enc);
+		frame_offset(enc, l0, &luma_offset, &chroma_offset);
+		RVCE_CS(l0->picture_type); // encPicType
+		RVCE_CS(l0->frame_num); // frameNumber
+		RVCE_CS(l0->pic_order_cnt); // pictureOrderCount
 		RVCE_CS(luma_offset); // lumaOffset
 		RVCE_CS(chroma_offset); // chromaOffset
 	}
@@ -314,7 +324,7 @@ static void encode(struct rvce_encoder *enc)
 		RVCE_CS(0xffffffff); // chromaOffset
 	}
 	
-	frame_offset(enc, enc->pic.frame_num, &luma_offset, &chroma_offset);
+	frame_offset(enc, current_slot(enc), &luma_offset, &chroma_offset);
 	RVCE_CS(luma_offset); // encReconstructedLumaOffset
 	RVCE_CS(chroma_offset); // encReconstructedChromaOffset
 	RVCE_CS(0x00000000); // encColocBufferOffset

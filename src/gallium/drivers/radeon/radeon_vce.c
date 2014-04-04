@@ -80,6 +80,57 @@ static void dump_feedback(struct rvce_encoder *enc, struct rvid_buffer *fb)
 #endif
 
 /**
+ * reset the CPB handling
+ */
+static void reset_cpb(struct rvce_encoder *enc)
+{
+	unsigned i;
+
+	LIST_INITHEAD(&enc->cpb_slots);
+	for (i = 0; i < RVCE_NUM_CPB_FRAMES; ++i) {
+		struct rvce_cpb_slot *slot = &enc->cpb_array[i];
+		slot->index = i;
+		slot->picture_type = PIPE_H264_ENC_PICTURE_TYPE_SKIP;
+		slot->frame_num = 0;
+		slot->pic_order_cnt = 0;
+		LIST_ADDTAIL(&slot->list, &enc->cpb_slots);
+	}
+}
+
+/**
+ * sort l0 and l1 to the top of the list
+ */
+static void sort_cpb(struct rvce_encoder *enc)
+{
+	struct rvce_cpb_slot *i, *l0 = NULL, *l1 = NULL;
+
+	LIST_FOR_EACH_ENTRY(i, &enc->cpb_slots, list) {
+		if (i->frame_num == enc->pic.ref_idx_l0)
+			l0 = i;
+
+		if (i->frame_num == enc->pic.ref_idx_l1)
+			l1 = i;
+
+		if (enc->pic.picture_type == PIPE_H264_ENC_PICTURE_TYPE_P && l0)
+			break;
+
+		if (enc->pic.picture_type == PIPE_H264_ENC_PICTURE_TYPE_B &&
+		    l0 && l1)
+			break;
+	}
+
+	if (l1) {
+		LIST_DEL(&l1->list);
+		LIST_ADD(&l1->list, &enc->cpb_slots);
+	}
+
+	if (l0) {
+		LIST_DEL(&l0->list);
+		LIST_ADD(&l0->list, &enc->cpb_slots);
+	}
+}
+
+/**
  * destroy this video encoder
  */
 static void rvce_destroy(struct pipe_video_codec *encoder)
@@ -97,6 +148,7 @@ static void rvce_destroy(struct pipe_video_codec *encoder)
 	}
 	rvid_destroy_buffer(&enc->cpb);
 	enc->ws->cs_destroy(enc->cs);
+	FREE(enc->cpb_array);
 	FREE(enc);
 }
 
@@ -118,6 +170,12 @@ static void rvce_begin_frame(struct pipe_video_codec *encoder,
 
 	enc->get_buffer(vid_buf->resources[0], &enc->handle, &enc->luma);
 	enc->get_buffer(vid_buf->resources[1], NULL, &enc->chroma);
+
+	if (pic->picture_type == PIPE_H264_ENC_PICTURE_TYPE_IDR)
+		reset_cpb(enc);
+	else if (pic->picture_type == PIPE_H264_ENC_PICTURE_TYPE_P ||
+	         pic->picture_type == PIPE_H264_ENC_PICTURE_TYPE_B)
+		sort_cpb(enc);
 	
 	if (!enc->stream_handle) {
 		struct rvid_buffer fb;
@@ -167,7 +225,17 @@ static void rvce_end_frame(struct pipe_video_codec *encoder,
 			   struct pipe_picture_desc *picture)
 {
 	struct rvce_encoder *enc = (struct rvce_encoder*)encoder;
+	struct rvce_cpb_slot *slot = LIST_ENTRY(
+		struct rvce_cpb_slot, enc->cpb_slots.prev, list);
+
 	flush(enc);
+
+	/* update the CPB backtrack with the just encoded frame */
+	LIST_DEL(&slot->list);
+	slot->picture_type = enc->pic.picture_type;
+	slot->frame_num = enc->pic.frame_num;
+	slot->pic_order_cnt = enc->pic.pic_order_cnt;
+	LIST_ADD(&slot->list, &enc->cpb_slots);
 }
 
 static void rvce_get_feedback(struct pipe_video_codec *encoder,
@@ -213,7 +281,7 @@ struct pipe_video_codec *rvce_create_encoder(struct pipe_context *context,
 	struct rvce_encoder *enc;
 	struct pipe_video_buffer *tmp_buf, templat = {};
 	struct radeon_surface *tmp_surf;
-	unsigned pitch, vpitch;
+	unsigned cpb_size;
 
 	if (!rscreen->info.vce_fw_version) {
 		RVID_ERR("Kernel doesn't supports VCE!\n");
@@ -258,15 +326,21 @@ struct pipe_video_codec *rvce_create_encoder(struct pipe_context *context,
 	}
 
 	get_buffer(((struct vl_video_buffer *)tmp_buf)->resources[0], NULL, &tmp_surf);
-	pitch = align(tmp_surf->level[0].pitch_bytes, 128);
-	vpitch = align(tmp_surf->npix_y, 16);
+	cpb_size = align(tmp_surf->level[0].pitch_bytes, 128);
+	cpb_size = cpb_size * align(tmp_surf->npix_y, 16);
+	cpb_size = cpb_size * 3 / 2;
+	cpb_size = cpb_size * RVCE_NUM_CPB_FRAMES;
 	tmp_buf->destroy(tmp_buf);
-	if (!rvid_create_buffer(enc->ws, &enc->cpb,
-			pitch * vpitch * 1.5 * RVCE_NUM_CPB_FRAMES,
-			RADEON_DOMAIN_VRAM)) {
+	if (!rvid_create_buffer(enc->ws, &enc->cpb, cpb_size, RADEON_DOMAIN_VRAM)) {
 		RVID_ERR("Can't create CPB buffer.\n");
 		goto error;
 	}
+
+	enc->cpb_array = CALLOC(RVCE_NUM_CPB_FRAMES, sizeof(struct rvce_cpb_slot));
+	if (!enc->cpb_array)
+		goto error;
+
+	reset_cpb(enc);
 
 	radeon_vce_40_2_2_init(enc);
 
@@ -278,6 +352,7 @@ error:
 
 	rvid_destroy_buffer(&enc->cpb);
 
+	FREE(enc->cpb_array);
 	FREE(enc);
 	return NULL;
 }
