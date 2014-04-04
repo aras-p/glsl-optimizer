@@ -779,6 +779,8 @@ static void radeon_bo_get_tiling(struct pb_buffer *_buf,
     *macrotiled = RADEON_LAYOUT_LINEAR;
     if (args.tiling_flags & RADEON_BO_FLAGS_MICRO_TILE)
         *microtiled = RADEON_LAYOUT_TILED;
+    else if (args.tiling_flags & RADEON_TILING_MICRO_SQUARE)
+        *microtiled = RADEON_LAYOUT_SQUARETILED;
 
     if (args.tiling_flags & RADEON_BO_FLAGS_MACRO_TILE)
         *macrotiled = RADEON_LAYOUT_TILED;
