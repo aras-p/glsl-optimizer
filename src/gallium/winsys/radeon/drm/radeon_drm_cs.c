@@ -72,41 +72,6 @@
 #include <stdint.h>
 #include <xf86drm.h>
 
-/*
- * this are copy from radeon_drm, once an updated libdrm is released
- * we should bump configure.ac requirement for it and remove the following
- * field
- */
-#ifndef RADEON_CHUNK_ID_FLAGS
-#define RADEON_CHUNK_ID_FLAGS       0x03
-
-/* The first dword of RADEON_CHUNK_ID_FLAGS is a uint32 of these flags: */
-#define RADEON_CS_KEEP_TILING_FLAGS 0x01
-#endif
-
-#ifndef RADEON_CS_USE_VM
-#define RADEON_CS_USE_VM            0x02
-/* The second dword of RADEON_CHUNK_ID_FLAGS is a uint32 that sets the ring type */
-#define RADEON_CS_RING_GFX          0
-#define RADEON_CS_RING_COMPUTE      1
-#endif
-
-#ifndef RADEON_CS_RING_DMA
-#define RADEON_CS_RING_DMA          2
-#endif
-
-#ifndef RADEON_CS_RING_UVD
-#define RADEON_CS_RING_UVD          3
-#endif
-
-#ifndef RADEON_CS_RING_VCE
-#define RADEON_CS_RING_VCE          4
-#endif
-
-#ifndef RADEON_CS_END_OF_FRAME
-#define RADEON_CS_END_OF_FRAME      0x04
-#endif
-
 
 #define RELOC_DWORDS (sizeof(struct drm_radeon_cs_reloc) / sizeof(uint32_t))
 

@@ -37,36 +37,6 @@
 #include "xf86drm.h"
 #include "radeon_drm.h"
 
-#ifndef RADEON_CHUNK_ID_FLAGS
-#define RADEON_CHUNK_ID_FLAGS       0x03
-/* The first dword of RADEON_CHUNK_ID_FLAGS is a uint32 of these flags: */
-#define RADEON_CS_KEEP_TILING_FLAGS 0x01
-#endif
-
-
-#ifndef RADEON_VA_MAP
-
-#define RADEON_VA_MAP               1
-#define RADEON_VA_UNMAP             2
-#define RADEON_VA_RESULT_OK         0
-#define RADEON_VA_RESULT_ERROR      1
-#define RADEON_VA_RESULT_VA_EXIST   2
-#define RADEON_VM_PAGE_VALID        (1 << 0)
-#define RADEON_VM_PAGE_READABLE     (1 << 1)
-#define RADEON_VM_PAGE_WRITEABLE    (1 << 2)
-#define RADEON_VM_PAGE_SYSTEM       (1 << 3)
-#define RADEON_VM_PAGE_SNOOPED      (1 << 4)
-struct drm_radeon_gem_va {
-    uint32_t    handle;
-    uint32_t    operation;
-    uint32_t    vm_id;
-    uint32_t    flags;
-    uint64_t    offset;
-};
-#define DRM_RADEON_GEM_VA   0x2b
-#endif
-
-
 struct ctx {
     int                         fd;
 };

@@ -43,72 +43,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-/*
- * this are copy from radeon_drm, once an updated libdrm is released
- * we should bump configure.ac requirement for it and remove the following
- * field
- */
-#define RADEON_BO_FLAGS_MACRO_TILE  1
-#define RADEON_BO_FLAGS_MICRO_TILE  2
-#define RADEON_BO_FLAGS_MICRO_TILE_SQUARE 0x20
-
-#ifndef DRM_RADEON_GEM_WAIT
-#define DRM_RADEON_GEM_WAIT     0x2b
-
-#define RADEON_GEM_NO_WAIT      0x1
-#define RADEON_GEM_USAGE_READ   0x2
-#define RADEON_GEM_USAGE_WRITE  0x4
-
-struct drm_radeon_gem_wait {
-    uint32_t    handle;
-    uint32_t    flags;  /* one of RADEON_GEM_* */
-};
-
-#endif
-
-#ifndef RADEON_VA_MAP
-
-#define RADEON_VA_MAP               1
-#define RADEON_VA_UNMAP             2
-
-#define RADEON_VA_RESULT_OK         0
-#define RADEON_VA_RESULT_ERROR      1
-#define RADEON_VA_RESULT_VA_EXIST   2
-
-#define RADEON_VM_PAGE_VALID        (1 << 0)
-#define RADEON_VM_PAGE_READABLE     (1 << 1)
-#define RADEON_VM_PAGE_WRITEABLE    (1 << 2)
-#define RADEON_VM_PAGE_SYSTEM       (1 << 3)
-#define RADEON_VM_PAGE_SNOOPED      (1 << 4)
-
-struct drm_radeon_gem_va {
-    uint32_t    handle;
-    uint32_t    operation;
-    uint32_t    vm_id;
-    uint32_t    flags;
-    uint64_t    offset;
-};
-
-#define DRM_RADEON_GEM_VA   0x2b
-#endif
-
-#ifndef DRM_RADEON_GEM_OP
-#define DRM_RADEON_GEM_OP		0x2c
-
-/* Sets or returns a value associated with a buffer. */
-struct drm_radeon_gem_op {
-    uint32_t handle; /* buffer */
-    uint32_t op;     /* RADEON_GEM_OP_* */
-    uint64_t value;  /* input or return value */
-};
-
-#define RADEON_GEM_OP_GET_INITIAL_DOMAIN	0
-#define RADEON_GEM_OP_SET_INITIAL_DOMAIN	1
-#endif
-
-
 extern const struct pb_vtbl radeon_bo_vtbl;
-
 
 static INLINE struct radeon_bo *radeon_bo(struct pb_buffer *bo)
 {
@@ -777,12 +712,12 @@ static void radeon_bo_get_tiling(struct pb_buffer *_buf,
 
     *microtiled = RADEON_LAYOUT_LINEAR;
     *macrotiled = RADEON_LAYOUT_LINEAR;
-    if (args.tiling_flags & RADEON_BO_FLAGS_MICRO_TILE)
+    if (args.tiling_flags & RADEON_TILING_MICRO)
         *microtiled = RADEON_LAYOUT_TILED;
     else if (args.tiling_flags & RADEON_TILING_MICRO_SQUARE)
         *microtiled = RADEON_LAYOUT_SQUARETILED;
 
-    if (args.tiling_flags & RADEON_BO_FLAGS_MACRO_TILE)
+    if (args.tiling_flags & RADEON_TILING_MACRO)
         *macrotiled = RADEON_LAYOUT_TILED;
     if (bankw && tile_split && stencil_tile_split && mtilea && tile_split) {
         *bankw = (args.tiling_flags >> RADEON_TILING_EG_BANKW_SHIFT) & RADEON_TILING_EG_BANKW_MASK;
@@ -824,12 +759,12 @@ static void radeon_bo_set_tiling(struct pb_buffer *_buf,
     }
 
     if (microtiled == RADEON_LAYOUT_TILED)
-        args.tiling_flags |= RADEON_BO_FLAGS_MICRO_TILE;
+        args.tiling_flags |= RADEON_TILING_MICRO;
     else if (microtiled == RADEON_LAYOUT_SQUARETILED)
-        args.tiling_flags |= RADEON_BO_FLAGS_MICRO_TILE_SQUARE;
+        args.tiling_flags |= RADEON_TILING_MICRO_SQUARE;
 
     if (macrotiled == RADEON_LAYOUT_TILED)
-        args.tiling_flags |= RADEON_BO_FLAGS_MACRO_TILE;
+        args.tiling_flags |= RADEON_TILING_MACRO;
 
     args.tiling_flags |= (bankw & RADEON_TILING_EG_BANKW_MASK) <<
         RADEON_TILING_EG_BANKW_SHIFT;
