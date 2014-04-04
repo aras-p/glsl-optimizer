@@ -317,9 +317,9 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
 
     pipe_mutex_lock(bo->mgr->bo_handles_mutex);
     util_hash_table_remove(bo->mgr->bo_handles, (void*)(uintptr_t)bo->handle);
-    if (bo->name) {
+    if (bo->flink_name) {
         util_hash_table_remove(bo->mgr->bo_names,
-                               (void*)(uintptr_t)bo->name);
+                               (void*)(uintptr_t)bo->flink_name);
     }
     pipe_mutex_unlock(bo->mgr->bo_handles_mutex);
 
@@ -893,7 +893,7 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
         }
         handle = open_arg.handle;
         size = open_arg.size;
-        bo->name = whandle->handle;
+        bo->flink_name = whandle->handle;
     } else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {
         size = lseek(whandle->handle, 0, SEEK_END);
         /* 
@@ -920,8 +920,8 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
     bo->va = 0;
     pipe_mutex_init(bo->map_mutex);
 
-    if (bo->name)
-        util_hash_table_set(mgr->bo_names, (void*)(uintptr_t)bo->name, bo);
+    if (bo->flink_name)
+        util_hash_table_set(mgr->bo_names, (void*)(uintptr_t)bo->flink_name, bo);
 
     util_hash_table_set(mgr->bo_handles, (void*)(uintptr_t)bo->handle, bo);
 
@@ -989,21 +989,20 @@ static boolean radeon_winsys_bo_get_handle(struct pb_buffer *buffer,
     memset(&flink, 0, sizeof(flink));
 
     if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
-        if (!bo->flinked) {
+        if (!bo->flink_name) {
             flink.handle = bo->handle;
 
             if (ioctl(bo->rws->fd, DRM_IOCTL_GEM_FLINK, &flink)) {
                 return FALSE;
             }
 
-            bo->flinked = TRUE;
-            bo->flink = flink.name;
+            bo->flink_name = flink.name;
 
             pipe_mutex_lock(bo->mgr->bo_handles_mutex);
-            util_hash_table_set(bo->mgr->bo_names, (void*)(uintptr_t)bo->flink, bo);
+            util_hash_table_set(bo->mgr->bo_names, (void*)(uintptr_t)bo->flink_name, bo);
             pipe_mutex_unlock(bo->mgr->bo_handles_mutex);
         }
-        whandle->handle = bo->flink;
+        whandle->handle = bo->flink_name;
     } else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
         whandle->handle = bo->handle;
     } else if (whandle->type == DRM_API_HANDLE_TYPE_FD) {

@@ -54,7 +54,7 @@ struct radeon_bo {
     pipe_mutex map_mutex;
 
     uint32_t handle;
-    uint32_t name;
+    uint32_t flink_name;
     uint64_t va;
     enum radeon_bo_domain initial_domain;
 
@@ -64,9 +64,6 @@ struct radeon_bo {
     /* how many command streams, which are being emitted in a separate
      * thread, is this bo referenced in? */
     int num_active_ioctls;
-
-    boolean flinked;
-    uint32_t flink;
 };
 
 struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws);
