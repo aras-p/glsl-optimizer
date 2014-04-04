@@ -46,6 +46,18 @@ get_storage(gl_uniform_storage *storage, unsigned num_storage,
    return NULL;
 }
 
+static unsigned
+get_uniform_block_index(const gl_shader_program *shProg,
+                        const char *uniformBlockName)
+{
+   for (unsigned i = 0; i < shProg->NumUniformBlocks; i++) {
+      if (!strcmp(shProg->UniformBlocks[i].Name, uniformBlockName))
+	 return i;
+   }
+
+   return GL_INVALID_INDEX;
+}
+
 void
 copy_constant_to_storage(union gl_constant_value *storage,
 			 const ir_constant *val,
@@ -123,29 +135,24 @@ set_sampler_binding(gl_shader_program *prog, const char *name, int binding)
 }
 
 void
-set_block_binding(gl_shader_program *prog, const char *name, int binding)
+set_block_binding(gl_shader_program *prog, const char *block_name, int binding)
 {
-   struct gl_uniform_storage *const storage =
-      get_storage(prog->UniformStorage, prog->NumUserUniformStorage, name);
+   const unsigned block_index = get_uniform_block_index(prog, block_name);
 
-   if (storage == NULL) {
-      assert(storage != NULL);
+   if (block_index == GL_INVALID_INDEX) {
+      assert(block_index != GL_INVALID_INDEX);
       return;
    }
 
-   if (storage->block_index != -1) {
       /* This is a field of a UBO.  val is the binding index. */
       for (int i = 0; i < MESA_SHADER_STAGES; i++) {
-         int stage_index = prog->UniformBlockStageIndex[i][storage->block_index];
+         int stage_index = prog->UniformBlockStageIndex[i][block_index];
 
          if (stage_index != -1) {
             struct gl_shader *sh = prog->_LinkedShaders[i];
             sh->UniformBlocks[stage_index].Binding = binding;
          }
       }
-   }
-
-   storage->initialized = true;
 }
 
 void
@@ -253,7 +260,10 @@ link_set_uniform_initializers(struct gl_shader_program *prog)
                 || (type->is_array() && type->fields.array->is_sampler())) {
                linker::set_sampler_binding(prog, var->name, var->data.binding);
             } else if (var->is_in_uniform_block()) {
-               linker::set_block_binding(prog, var->name, var->data.binding);
+               const glsl_type *const iface_type = var->get_interface_type();
+
+               linker::set_block_binding(prog, iface_type->name,
+                                         var->data.binding);
             } else {
                assert(!"Explicit binding not on a sampler or UBO.");
             }
