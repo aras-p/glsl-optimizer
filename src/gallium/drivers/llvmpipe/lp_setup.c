@@ -953,7 +953,7 @@ try_update_scene_state( struct lp_setup_context *setup )
       /* Alloc u8_blend_color (16 x i8) and f_blend_color (4 or 8 x f32) */
       size  = 4 * 16 * sizeof(uint8_t);
       size += (LP_MAX_VECTOR_LENGTH / 4) * sizeof(float);
-      stored = lp_scene_alloc_aligned(scene, size, LP_MAX_VECTOR_LENGTH);
+      stored = lp_scene_alloc_aligned(scene, size, LP_MIN_VECTOR_ALIGN);
 
       if (!stored) {
          assert(!new_scene);
