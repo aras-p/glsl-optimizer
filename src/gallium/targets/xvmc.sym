@@ -1,0 +1,32 @@
+{
+	global:
+		XvMCBlendSubpicture;
+		XvMCBlendSubpicture2;
+		XvMCClearSubpicture;
+		XvMCCompositeSubpicture;
+		XvMCCreateBlocks;
+		XvMCCreateContext;
+		XvMCCreateMacroBlocks;
+		XvMCCreateSubpicture;
+		XvMCCreateSurface;
+		XvMCDestroyBlocks;
+		XvMCDestroyContext;
+		XvMCDestroyMacroBlocks;
+		XvMCDestroySubpicture;
+		XvMCDestroySurface;
+		XvMCFlushSubpicture;
+		XvMCFlushSurface;
+		XvMCGetAttribute;
+		XvMCGetSubpictureStatus;
+		XvMCGetSurfaceStatus;
+		XvMCHideSurface;
+		XvMCPutSurface;
+		XvMCQueryAttributes;
+		XvMCRenderSurface;
+		XvMCSetAttribute;
+		XvMCSetSubpicturePalette;
+		XvMCSyncSubpicture;
+		XvMCSyncSurface;
+	local:
+		*;
+};

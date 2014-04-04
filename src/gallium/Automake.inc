@@ -75,7 +75,7 @@ GALLIUM_XVMC_LINKER_FLAGS = \
 	-module \
 	-no-undefined \
 	-version-number $(XVMC_MAJOR):$(XVMC_MINOR) \
-	-export-symbols-regex '^XvMC' \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/xvmc.sym \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
