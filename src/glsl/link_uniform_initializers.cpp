@@ -84,8 +84,7 @@ copy_constant_to_storage(union gl_constant_value *storage,
 }
 
 void
-set_sampler_binding(void *mem_ctx, gl_shader_program *prog,
-                    const char *name, const glsl_type *type, int binding)
+set_sampler_binding(gl_shader_program *prog, const char *name, int binding)
 {
    struct gl_uniform_storage *const storage =
       get_storage(prog->UniformStorage, prog->NumUserUniformStorage, name);
@@ -124,8 +123,7 @@ set_sampler_binding(void *mem_ctx, gl_shader_program *prog,
 }
 
 void
-set_block_binding(void *mem_ctx, gl_shader_program *prog,
-                  const char *name, const glsl_type *type, int binding)
+set_block_binding(gl_shader_program *prog, const char *name, int binding)
 {
    struct gl_uniform_storage *const storage =
       get_storage(prog->UniformStorage, prog->NumUserUniformStorage, name);
@@ -253,11 +251,9 @@ link_set_uniform_initializers(struct gl_shader_program *prog)
 
             if (type->is_sampler()
                 || (type->is_array() && type->fields.array->is_sampler())) {
-               linker::set_sampler_binding(mem_ctx, prog, var->name,
-                                           type, var->data.binding);
+               linker::set_sampler_binding(prog, var->name, var->data.binding);
             } else if (var->is_in_uniform_block()) {
-               linker::set_block_binding(mem_ctx, prog, var->name,
-                                         type, var->data.binding);
+               linker::set_block_binding(prog, var->name, var->data.binding);
             } else {
                assert(!"Explicit binding not on a sampler or UBO.");
             }
