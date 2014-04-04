@@ -6,6 +6,7 @@ lib@OPENCL_LIBNAME@_la_LDFLAGS = \
 	$(LLVM_LDFLAGS) \
 	-no-undefined \
 	-version-number 1:0 \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/opencl/opencl.sym \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
