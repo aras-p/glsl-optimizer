@@ -81,7 +81,7 @@ GALLIUM_OMX_LINKER_FLAGS = \
 	-shared \
 	-module \
 	-no-undefined \
-	-export-symbols-regex $(EXPORTS) \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/omx.sym \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 

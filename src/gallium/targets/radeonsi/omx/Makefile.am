@@ -20,8 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-EXPORTS = '^(omx_component_library_Setup|radeon_drm_winsys_create)$$'
-
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \

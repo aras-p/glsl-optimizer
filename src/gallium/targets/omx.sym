@@ -1,0 +1,6 @@
+{
+	global:
+		omx_component_library_Setup;
+	local:
+		*;
+};
