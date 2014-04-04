@@ -68,7 +68,7 @@ static const struct brw_device_info brw_device_info_ilk = {
 
 static const struct brw_device_info brw_device_info_snb_gt1 = {
    .gen = 6,
-   .gt = 2,
+   .gt = 1,
    .has_hiz_and_separate_stencil = true,
    .has_llc = true,
    .has_pln = true,
