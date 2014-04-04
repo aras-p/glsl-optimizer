@@ -4374,7 +4374,7 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   GLboolean sizeOK, dimensionsOK;
+   GLboolean sizeOK, dimensionsOK, samplesOK;
    mesa_format texFormat;
    GLenum sample_count_error;
 
@@ -4411,7 +4411,17 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
 
    sample_count_error = _mesa_check_sample_count(ctx, target,
          internalformat, samples);
-   if (sample_count_error != GL_NO_ERROR) {
+   samplesOK = sample_count_error == GL_NO_ERROR;
+
+   /* Page 254 of OpenGL 4.4 spec says:
+    *   "Proxy arrays for two-dimensional multisample and two-dimensional
+    *    multisample array textures are operated on in the same way when
+    *    TexImage2DMultisample is called with target specified as
+    *    PROXY_TEXTURE_2D_MULTISAMPLE, or TexImage3DMultisample is called
+    *    with target specified as PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY.
+    *    However, if samples is not supported, then no error is generated.
+    */
+   if (!samplesOK && !_mesa_is_proxy_texture(target)) {
       _mesa_error(ctx, sample_count_error, "%s(samples)", func);
       return;
    }
@@ -4443,7 +4453,7 @@ teximagemultisample(GLuint dims, GLenum target, GLsizei samples,
          width, height, depth, 0);
 
    if (_mesa_is_proxy_texture(target)) {
-      if (dimensionsOK && sizeOK) {
+      if (samplesOK && dimensionsOK && sizeOK) {
          init_teximage_fields_ms(ctx, texImage, width, height, depth, 0,
                                  internalformat, texFormat,
                                  samples, fixedsamplelocations);
