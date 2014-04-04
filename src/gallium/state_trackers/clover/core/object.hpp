@@ -113,7 +113,8 @@ namespace clover {
    }
 
    ///
-   /// Get a Clover object from an API object.
+   /// Get a Clover object from an API object performing object
+   /// validation.
    ///
    /// \a T can either be the Clover object type to return or a \a tag
    /// object to select some special validation behavior by means of a
@@ -131,8 +132,8 @@ namespace clover {
    }
 
    ///
-   /// Get a pointer to a Clover object from an API object. Returns
-   /// \c NULL if its argument is \c NULL.
+   /// Get a pointer to a Clover object from an API object performing
+   /// object validation.  Returns \c NULL if its argument is \c NULL.
    ///
    /// \sa obj
    ///
@@ -165,7 +166,8 @@ namespace clover {
    }
 
    ///
-   /// Get a range of Clover objects from a range of API objects.
+   /// Get a range of Clover objects from a range of API objects
+   /// performing object validation.
    ///
    /// \sa obj
    ///
