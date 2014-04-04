@@ -84,7 +84,7 @@ copy_constant_to_storage(union gl_constant_value *storage,
 }
 
 void
-set_uniform_binding(void *mem_ctx, gl_shader_program *prog,
+set_sampler_binding(void *mem_ctx, gl_shader_program *prog,
                     const char *name, const glsl_type *type, int binding)
 {
    struct gl_uniform_storage *const storage =
@@ -95,7 +95,7 @@ set_uniform_binding(void *mem_ctx, gl_shader_program *prog,
       return;
    }
 
-   if (storage->type->is_sampler()) {
+   {
       unsigned elements = MAX2(storage->array_elements, 1);
 
       /* From section 4.4.4 of the GLSL 4.20 specification:
@@ -118,7 +118,24 @@ set_uniform_binding(void *mem_ctx, gl_shader_program *prog,
             }
          }
       }
-   } else if (storage->block_index != -1) {
+   }
+
+   storage->initialized = true;
+}
+
+void
+set_block_binding(void *mem_ctx, gl_shader_program *prog,
+                  const char *name, const glsl_type *type, int binding)
+{
+   struct gl_uniform_storage *const storage =
+      get_storage(prog->UniformStorage, prog->NumUserUniformStorage, name);
+
+   if (storage == NULL) {
+      assert(storage != NULL);
+      return;
+   }
+
+   if (storage->block_index != -1) {
       /* This is a field of a UBO.  val is the binding index. */
       for (int i = 0; i < MESA_SHADER_STAGES; i++) {
          int stage_index = prog->UniformBlockStageIndex[i][storage->block_index];
@@ -131,6 +148,25 @@ set_uniform_binding(void *mem_ctx, gl_shader_program *prog,
    }
 
    storage->initialized = true;
+}
+
+void
+set_uniform_binding(void *mem_ctx, gl_shader_program *prog,
+                    const char *name, const glsl_type *type, int binding)
+{
+   struct gl_uniform_storage *const storage =
+      get_storage(prog->UniformStorage, prog->NumUserUniformStorage, name);
+
+   if (storage == NULL) {
+      assert(storage != NULL);
+      return;
+   }
+
+   if (storage->type->is_sampler()) {
+      set_sampler_binding(mem_ctx, prog, name, type, binding);
+   } else if (storage->block_index != -1) {
+      set_block_binding(mem_ctx, prog, name, type, binding);
+   }
 }
 
 void
