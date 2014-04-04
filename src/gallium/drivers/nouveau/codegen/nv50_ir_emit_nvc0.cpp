@@ -2303,6 +2303,7 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
    case OP_TXL:
    case OP_TXD:
    case OP_TXF:
+   case OP_TXG:
    case OP_TXLQ:
       emitTEX(insn->asTex());
       break;

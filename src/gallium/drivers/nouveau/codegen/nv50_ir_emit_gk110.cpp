@@ -984,6 +984,9 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
       case OP_TXF:
          code[1] = 0x78000000;
          break;
+      case OP_TXG:
+         code[1] = 0x7dc00000;
+         break;
       default:
          code[1] = 0x7d800000;
          break;
@@ -1005,6 +1008,11 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
          code[1] = 0x70000000;
          code[1] |= i->tex.r << 13;
          break;
+      case OP_TXG:
+         code[0] = 0x00000001;
+         code[1] = 0x70000000;
+         code[1] |= i->tex.r << 15;
+         break;
       default:
          code[0] = 0x00000001;
          code[1] = 0x60000000;
@@ -1023,7 +1031,7 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
    case OP_TXB: code[1] |= 0x2000; break;
    case OP_TXL: code[1] |= 0x3000; break;
    case OP_TXF: break;
-   case OP_TXG: break; // XXX
+   case OP_TXG: break;
    case OP_TXD: break;
    case OP_TXLQ: break;
    default:
@@ -1052,7 +1060,7 @@ CodeEmitterGK110::emitTEX(const TexInstruction *i)
    srcId(i->src(0), 10);
    srcId(i, src1, 23);
 
-   // if (i->op == OP_TXG) code[0] |= i->tex.gatherComp << 5;
+   if (i->op == OP_TXG) code[1] |= i->tex.gatherComp << 13;
 
    // texture target:
    code[1] |= (i->tex.target.isCube() ? 3 : (i->tex.target.getDim() - 1)) << 7;
@@ -1666,6 +1674,7 @@ CodeEmitterGK110::emitInstruction(Instruction *insn)
    case OP_TXL:
    case OP_TXD:
    case OP_TXF:
+   case OP_TXG:
    case OP_TXLQ:
       emitTEX(insn->asTex());
       break;

@@ -744,9 +744,15 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
       int s = i->srcCount(0xff, true);
       if (i->srcExists(s)) // move potential predicate out of the way
          i->moveSources(s, 1);
-      for (n = 0; n < i->tex.useOffsets; ++n)
+      if (i->op == OP_TXG) {
+         assert(i->tex.useOffsets == 1);
          for (c = 0; c < 3; ++c)
-            value |= (i->tex.offset[n][c] & 0xf) << (n * 12 + c * 4);
+            value |= (i->tex.offset[0][c] & 0xff) << (c * 8);
+      } else {
+         for (n = 0; n < i->tex.useOffsets; ++n)
+            for (c = 0; c < 3; ++c)
+               value |= (i->tex.offset[n][c] & 0xf) << (n * 12 + c * 4);
+      }
       i->setSrc(s, bld.loadImm(NULL, value));
    }
 
