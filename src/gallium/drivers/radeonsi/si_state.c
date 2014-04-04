@@ -1705,7 +1705,7 @@ static void si_init_depth_surface(struct si_context *sctx,
 	unsigned macro_aspect, tile_split, stile_split, bankh, bankw, nbanks, pipe_config;
 	uint32_t z_info, s_info, db_depth_info;
 	uint64_t z_offs, s_offs;
-	uint32_t db_htile_data_base, db_htile_surface, pa_su_poly_offset_db_fmt_cntl;
+	uint32_t db_htile_data_base, db_htile_surface, pa_su_poly_offset_db_fmt_cntl = 0;
 
 	switch (sctx->framebuffer.state.zsbuf->texture->format) {
 	case PIPE_FORMAT_S8_UINT_Z24_UNORM:

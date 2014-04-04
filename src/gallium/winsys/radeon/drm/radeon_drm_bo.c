@@ -864,7 +864,7 @@ static struct pb_buffer *radeon_winsys_bo_from_handle(struct radeon_winsys *rws,
     struct drm_radeon_gem_busy args;
     int r;
     unsigned handle;
-    uint64_t size;
+    uint64_t size = 0;
 
     /* We must maintain a list of pairs <handle, bo>, so that we always return
      * the same BO for one particular handle. If we didn't do that and created
