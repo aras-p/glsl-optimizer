@@ -1,6 +1,8 @@
-VERSION {
+{
 	global:
 		__driDriverExtensions;
 		nouveau_drm_screen_create;
-	local: *;
+		radeon_drm_winsys_create;
+	local:
+		*;
 };

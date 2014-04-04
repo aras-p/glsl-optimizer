@@ -1,6 +1,0 @@
-VERSION {
-	global:
-		__driDriverExtensions;
-		radeon_drm_winsys_create;
-	local: *;
-};

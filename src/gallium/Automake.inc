@@ -51,15 +51,13 @@ GALLIUM_VIDEO_CFLAGS = \
 	$(VISIBILITY_CFLAGS)
 
 
-DRI_VERSION_SCRIPT ?= $(top_srcdir)/src/gallium/state_trackers/dri/dri.link
-
 GALLIUM_DRI_LINKER_FLAGS = \
 	-shared \
 	-shrext .so \
 	-module \
 	-avoid-version \
-	$(GC_SECTIONS) \
-	-Wl,--version-script=$(DRI_VERSION_SCRIPT)
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/dri.sym \
+	$(GC_SECTIONS)
 
 GALLIUM_VDPAU_LINKER_FLAGS = \
 	-shared \
