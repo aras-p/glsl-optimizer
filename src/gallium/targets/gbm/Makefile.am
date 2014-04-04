@@ -67,6 +67,7 @@ gbm_gallium_drm_la_LDFLAGS = \
 	-module \
 	-no-undefined \
 	-avoid-version \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/gbm/gbm.sym \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
