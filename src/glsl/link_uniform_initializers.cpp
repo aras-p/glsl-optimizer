@@ -262,8 +262,40 @@ link_set_uniform_initializers(struct gl_shader_program *prog)
             } else if (var->is_in_uniform_block()) {
                const glsl_type *const iface_type = var->get_interface_type();
 
-               linker::set_block_binding(prog, iface_type->name,
-                                         var->data.binding);
+               /* If the variable is an array and it is an interface instance,
+                * we need to set the binding for each array element.  Just
+                * checking that the variable is an array is not sufficient.
+                * The variable could be an array element of a uniform block
+                * that lacks an instance name.  For example:
+                *
+                *     uniform U {
+                *         float f[4];
+                *     };
+                *
+                * In this case "f" would pass is_in_uniform_block (above) and
+                * type->is_array(), but it will fail is_interface_instance().
+                */
+               if (var->is_interface_instance() && var->type->is_array()) {
+                  for (unsigned i = 0; i < var->type->length; i++) {
+                     const char *name =
+                        ralloc_asprintf(mem_ctx, "%s[%u]", iface_type->name, i);
+
+                     /* Section 4.4.3 (Uniform Block Layout Qualifiers) of the
+                      * GLSL 4.20 spec says:
+                      *
+                      *     "If the binding identifier is used with a uniform
+                      *     block instanced as an array then the first element
+                      *     of the array takes the specified block binding and
+                      *     each subsequent element takes the next consecutive
+                      *     uniform block binding point."
+                      */
+                     linker::set_block_binding(prog, name,
+                                               var->data.binding + i);
+                  }
+               } else {
+                  linker::set_block_binding(prog, iface_type->name,
+                                            var->data.binding);
+               }
             } else {
                assert(!"Explicit binding not on a sampler or UBO.");
             }
