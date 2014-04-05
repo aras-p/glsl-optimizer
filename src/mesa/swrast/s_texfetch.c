@@ -301,21 +301,21 @@ texfetch_funcs[] =
    },
    {
       MESA_FORMAT_R16G16_UNORM,
-      fetch_texel_1d_f_rg1616,
-      fetch_texel_2d_f_rg1616,
-      fetch_texel_3d_f_rg1616
+      fetch_texel_1d_R16G16_UNORM,
+      fetch_texel_2d_R16G16_UNORM,
+      fetch_texel_3d_R16G16_UNORM
    },
    {
       MESA_FORMAT_G16R16_UNORM,
-      fetch_texel_1d_f_rg1616_rev,
-      fetch_texel_2d_f_rg1616_rev,
-      fetch_texel_3d_f_rg1616_rev
+      fetch_texel_1d_G16R16_UNORM,
+      fetch_texel_2d_G16R16_UNORM,
+      fetch_texel_3d_G16R16_UNORM
    },
    {
       MESA_FORMAT_B10G10R10A2_UNORM,
-      fetch_texel_1d_f_argb2101010,
-      fetch_texel_2d_f_argb2101010,
-      fetch_texel_3d_f_argb2101010
+      fetch_texel_1d_B10G10R10A2_UNORM,
+      fetch_texel_2d_B10G10R10A2_UNORM,
+      fetch_texel_3d_B10G10R10A2_UNORM
    },
    {
       MESA_FORMAT_B10G10R10X2_UNORM,
@@ -375,63 +375,63 @@ texfetch_funcs[] =
    /* Array unorm formats */
    {
       MESA_FORMAT_A_UNORM8,
-      fetch_texel_1d_f_a8,
-      fetch_texel_2d_f_a8,
-      fetch_texel_3d_f_a8
+      fetch_texel_1d_A_UNORM8,
+      fetch_texel_2d_A_UNORM8,
+      fetch_texel_3d_A_UNORM8
    },
    {
       MESA_FORMAT_A_UNORM16,
-      fetch_texel_1d_f_a16,
-      fetch_texel_2d_f_a16,
-      fetch_texel_3d_f_a16
+      fetch_texel_1d_A_UNORM16,
+      fetch_texel_2d_A_UNORM16,
+      fetch_texel_3d_A_UNORM16
    },
    {
       MESA_FORMAT_L_UNORM8,
-      fetch_texel_1d_f_l8,
-      fetch_texel_2d_f_l8,
-      fetch_texel_3d_f_l8
+      fetch_texel_1d_L_UNORM8,
+      fetch_texel_2d_L_UNORM8,
+      fetch_texel_3d_L_UNORM8
    },
    {
       MESA_FORMAT_L_UNORM16,
-      fetch_texel_1d_f_l16,
-      fetch_texel_2d_f_l16,
-      fetch_texel_3d_f_l16
+      fetch_texel_1d_L_UNORM16,
+      fetch_texel_2d_L_UNORM16,
+      fetch_texel_3d_L_UNORM16
    },
    {
       MESA_FORMAT_I_UNORM8,
-      fetch_texel_1d_f_i8,
-      fetch_texel_2d_f_i8,
-      fetch_texel_3d_f_i8
+      fetch_texel_1d_I_UNORM8,
+      fetch_texel_2d_I_UNORM8,
+      fetch_texel_3d_I_UNORM8
    },
    {
       MESA_FORMAT_I_UNORM16,
-      fetch_texel_1d_f_i16,
-      fetch_texel_2d_f_i16,
-      fetch_texel_3d_f_i16
+      fetch_texel_1d_I_UNORM16,
+      fetch_texel_2d_I_UNORM16,
+      fetch_texel_3d_I_UNORM16
    },
    {
       MESA_FORMAT_R_UNORM8,
-      fetch_texel_1d_f_r8,
-      fetch_texel_2d_f_r8,
-      fetch_texel_3d_f_r8
+      fetch_texel_1d_R_UNORM8,
+      fetch_texel_2d_R_UNORM8,
+      fetch_texel_3d_R_UNORM8
    },
    {
       MESA_FORMAT_R_UNORM16,
-      fetch_texel_1d_f_r16,
-      fetch_texel_2d_f_r16,
-      fetch_texel_3d_f_r16
+      fetch_texel_1d_R_UNORM16,
+      fetch_texel_2d_R_UNORM16,
+      fetch_texel_3d_R_UNORM16
    },
    {
       MESA_FORMAT_BGR_UNORM8,
-      fetch_texel_1d_f_rgb888,
-      fetch_texel_2d_f_rgb888,
-      fetch_texel_3d_f_rgb888
+      fetch_texel_1d_BGR_UNORM8,
+      fetch_texel_2d_BGR_UNORM8,
+      fetch_texel_3d_BGR_UNORM8
    },
    {
       MESA_FORMAT_RGB_UNORM8,
-      fetch_texel_1d_f_bgr888,
-      fetch_texel_2d_f_bgr888,
-      fetch_texel_3d_f_bgr888
+      fetch_texel_1d_RGB_UNORM8,
+      fetch_texel_2d_RGB_UNORM8,
+      fetch_texel_3d_RGB_UNORM8
    },
    {
       MESA_FORMAT_RGBA_UNORM16,
@@ -441,9 +441,9 @@ texfetch_funcs[] =
    },
    {
       MESA_FORMAT_RGBX_UNORM16,
-      fetch_texel_1d_xbgr16161616_unorm,
-      fetch_texel_2d_xbgr16161616_unorm,
-      fetch_texel_3d_xbgr16161616_unorm
+      fetch_texel_1d_RGBX_UNORM16,
+      fetch_texel_2d_RGBX_UNORM16,
+      fetch_texel_3d_RGBX_UNORM16
    },
    {
       MESA_FORMAT_Z_UNORM16,
