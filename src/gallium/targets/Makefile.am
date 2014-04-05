@@ -116,6 +116,10 @@ endif
 if HAVE_ST_VDPAU
 SUBDIRS += vdpau-nouveau
 endif
+
+if HAVE_ST_OMX
+SUBDIRS += omx-nouveau
+endif
 endif
 
 if HAVE_GALLIUM_SOFTPIPE
