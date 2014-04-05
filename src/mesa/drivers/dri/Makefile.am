@@ -85,7 +85,6 @@ install-data-hook:
 		ln -f $(DESTDIR)$(dridir)/mesa_dri_drivers.so \
 		      $(DESTDIR)$(dridir)/$$i; \
 	done;
-	$(RM) -f $(DESTDIR)$(dridir)/mesa_dri_drivers.so
-	$(RM) -f $(DESTDIR)$(dridir)/mesa_dri_drivers.la
+	$(RM) -f $(DESTDIR)$(dridir)/mesa_dri_drivers.*
 
 endif
