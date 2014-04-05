@@ -75,7 +75,7 @@
  * returning 1 GLfloat.
  * Note: no GLchan version of this function.
  */
-static void FETCH(f_z32)( const struct swrast_texture_image *texImage,
+static void FETCH(Z_UNORM32)( const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint *src = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
@@ -89,7 +89,7 @@ static void FETCH(f_z32)( const struct swrast_texture_image *texImage,
  * returning 1 GLfloat.
  * Note: no GLchan version of this function.
  */
-static void FETCH(f_z16)(const struct swrast_texture_image *texImage,
+static void FETCH(Z_UNORM16)(const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -1166,7 +1166,7 @@ FETCH(rgba_uint32)(const struct swrast_texture_image *texImage,
 
 /* this format by definition produces 0,0,0,1 as rgba values,
    however we'll return the dudv values as rg and fix up elsewhere */
-static void FETCH(dudv8)(const struct swrast_texture_image *texImage,
+static void FETCH(DUDV8)(const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLbyte *src = TEXEL_ADDR(GLbyte, texImage, i, j, k, 2);
@@ -1498,7 +1498,7 @@ FETCH(RGBX_FLOAT32)(const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D ycbcr texture, return 4 GLfloats.
  * We convert YCbCr to RGB here.
  */
-static void FETCH(f_ycbcr)( const struct swrast_texture_image *texImage,
+static void FETCH(YCBCR)( const struct swrast_texture_image *texImage,
                             GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src0 = TEXEL_ADDR(GLushort, texImage, (i & ~1), j, k, 1); /* even */
@@ -1528,7 +1528,7 @@ static void FETCH(f_ycbcr)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D ycbcr_rev texture, return 4 GLfloats.
  * We convert YCbCr to RGB here.
  */
-static void FETCH(f_ycbcr_rev)( const struct swrast_texture_image *texImage,
+static void FETCH(YCBCR_REV)( const struct swrast_texture_image *texImage,
                                 GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src0 = TEXEL_ADDR(GLushort, texImage, (i & ~1), j, k, 1); /* even */
@@ -1555,7 +1555,7 @@ static void FETCH(f_ycbcr_rev)( const struct swrast_texture_image *texImage,
 
 /* MESA_TEXFORMAT_Z24_S8 ***************************************************/
 
-static void FETCH(f_z24_s8)( const struct swrast_texture_image *texImage,
+static void FETCH(S8_UINT_Z24_UNORM)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
    /* only return Z, not stencil data */
@@ -1573,7 +1573,7 @@ static void FETCH(f_z24_s8)( const struct swrast_texture_image *texImage,
 
 /* MESA_TEXFORMAT_S8_Z24 ***************************************************/
 
-static void FETCH(f_s8_z24)( const struct swrast_texture_image *texImage,
+static void FETCH(Z24_UNORM_S8_UINT)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
    /* only return Z, not stencil data */
@@ -1617,7 +1617,7 @@ static void FETCH(R11G11B10_FLOAT)( const struct swrast_texture_image *texImage,
 
 /* MESA_FORMAT_Z32_FLOAT_S8X24_UINT ***********************************************/
 
-static void FETCH(z32f_x24s8)(const struct swrast_texture_image *texImage,
+static void FETCH(Z32_FLOAT_S8X24_UINT)(const struct swrast_texture_image *texImage,
 			      GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLfloat *src = TEXEL_ADDR(GLfloat, texImage, i, j, k, 2);
