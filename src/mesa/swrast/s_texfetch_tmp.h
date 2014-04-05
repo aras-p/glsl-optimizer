@@ -102,7 +102,7 @@ static void FETCH(f_z16)(const struct swrast_texture_image *texImage,
 
 /* Fetch texel from 1D, 2D or 3D RGBA_FLOAT32 texture, returning 4 GLfloats.
  */
-static void FETCH(f_rgba_f32)( const struct swrast_texture_image *texImage,
+static void FETCH(RGBA_FLOAT32)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLfloat *src = TEXEL_ADDR(GLfloat, texImage, i, j, k, 4);
@@ -120,7 +120,7 @@ static void FETCH(f_rgba_f32)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D RGBA_FLOAT16 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_rgba_f16)( const struct swrast_texture_image *texImage,
+static void FETCH(RGBA_FLOAT16)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLhalfARB *src = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 4);
@@ -137,7 +137,7 @@ static void FETCH(f_rgba_f16)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D RGB_FLOAT32 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_rgb_f32)( const struct swrast_texture_image *texImage,
+static void FETCH(RGB_FLOAT32)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLfloat *src = TEXEL_ADDR(GLfloat, texImage, i, j, k, 3);
@@ -155,7 +155,7 @@ static void FETCH(f_rgb_f32)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D RGB_FLOAT16 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_rgb_f16)( const struct swrast_texture_image *texImage,
+static void FETCH(RGB_FLOAT16)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLhalfARB *src = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 3);
@@ -173,7 +173,7 @@ static void FETCH(f_rgb_f16)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D ALPHA_FLOAT32 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_alpha_f32)( const struct swrast_texture_image *texImage,
+static void FETCH(A_FLOAT32)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLfloat *src = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
@@ -191,7 +191,7 @@ static void FETCH(f_alpha_f32)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D ALPHA_FLOAT16 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_alpha_f16)( const struct swrast_texture_image *texImage,
+static void FETCH(A_FLOAT16)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLhalfARB *src = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 1);
@@ -209,7 +209,7 @@ static void FETCH(f_alpha_f16)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D LUMINANCE_FLOAT32 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_luminance_f32)( const struct swrast_texture_image *texImage,
+static void FETCH(L_FLOAT32)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLfloat *src = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
@@ -227,7 +227,7 @@ static void FETCH(f_luminance_f32)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D LUMINANCE_FLOAT16 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_luminance_f16)( const struct swrast_texture_image *texImage,
+static void FETCH(L_FLOAT16)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLhalfARB *src = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 1);
@@ -245,7 +245,7 @@ static void FETCH(f_luminance_f16)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D LUMINANCE_ALPHA_FLOAT32 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_luminance_alpha_f32)( const struct swrast_texture_image *texImage,
+static void FETCH(LA_FLOAT32)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLfloat *src = TEXEL_ADDR(GLfloat, texImage, i, j, k, 2);
@@ -263,7 +263,7 @@ static void FETCH(f_luminance_alpha_f32)( const struct swrast_texture_image *tex
 /* Fetch texel from 1D, 2D or 3D LUMINANCE_ALPHA_FLOAT16 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_luminance_alpha_f16)( const struct swrast_texture_image *texImage,
+static void FETCH(LA_FLOAT16)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLhalfARB *src = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 2);
@@ -281,7 +281,7 @@ static void FETCH(f_luminance_alpha_f16)( const struct swrast_texture_image *tex
 /* Fetch texel from 1D, 2D or 3D INTENSITY_FLOAT32 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_intensity_f32)( const struct swrast_texture_image *texImage,
+static void FETCH(I_FLOAT32)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLfloat *src = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
@@ -299,7 +299,7 @@ static void FETCH(f_intensity_f32)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D INTENSITY_FLOAT16 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_intensity_f16)( const struct swrast_texture_image *texImage,
+static void FETCH(I_FLOAT16)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLhalfARB *src = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 1);
@@ -317,7 +317,7 @@ static void FETCH(f_intensity_f16)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D R_FLOAT32 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_r_f32)( const struct swrast_texture_image *texImage,
+static void FETCH(R_FLOAT32)( const struct swrast_texture_image *texImage,
                             GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLfloat *src = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
@@ -335,7 +335,7 @@ static void FETCH(f_r_f32)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D R_FLOAT16 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_r_f16)( const struct swrast_texture_image *texImage,
+static void FETCH(R_FLOAT16)( const struct swrast_texture_image *texImage,
                             GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLhalfARB *src = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 1);
@@ -353,7 +353,7 @@ static void FETCH(f_r_f16)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D RG_FLOAT32 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_rg_f32)( const struct swrast_texture_image *texImage,
+static void FETCH(RG_FLOAT32)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLfloat *src = TEXEL_ADDR(GLfloat, texImage, i, j, k, 2);
@@ -371,7 +371,7 @@ static void FETCH(f_rg_f32)( const struct swrast_texture_image *texImage,
 /* Fetch texel from 1D, 2D or 3D RG_FLOAT16 texture,
  * returning 4 GLfloats.
  */
-static void FETCH(f_rg_f16)( const struct swrast_texture_image *texImage,
+static void FETCH(RG_FLOAT16)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLhalfARB *src = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 2);
@@ -1468,7 +1468,7 @@ FETCH(RGBX_UNORM16)(const struct swrast_texture_image *texImage,
 }
 
 static void
-FETCH(xbgr16161616_float)(const struct swrast_texture_image *texImage,
+FETCH(RGBX_FLOAT16)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLhalfARB *s = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 4);
@@ -1479,7 +1479,7 @@ FETCH(xbgr16161616_float)(const struct swrast_texture_image *texImage,
 }
 
 static void
-FETCH(xbgr32323232_float)(const struct swrast_texture_image *texImage,
+FETCH(RGBX_FLOAT32)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLfloat *s = TEXEL_ADDR(GLfloat, texImage, i, j, k, 4);
@@ -1591,7 +1591,7 @@ static void FETCH(f_s8_z24)( const struct swrast_texture_image *texImage,
 
 /* MESA_FORMAT_RGB9_E5 ******************************************************/
 
-static void FETCH(rgb9_e5)( const struct swrast_texture_image *texImage,
+static void FETCH(R9G9B9E5_FLOAT)( const struct swrast_texture_image *texImage,
                             GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint *src = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
@@ -1604,7 +1604,7 @@ static void FETCH(rgb9_e5)( const struct swrast_texture_image *texImage,
 
 /* MESA_FORMAT_R11G11B10_FLOAT *********************************************/
 
-static void FETCH(r11_g11_b10f)( const struct swrast_texture_image *texImage,
+static void FETCH(R11G11B10_FLOAT)( const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint *src = TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
