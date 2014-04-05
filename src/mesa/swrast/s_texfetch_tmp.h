@@ -69,12 +69,6 @@
 #endif
 
 
-/* MESA_FORMAT_Z_UNORM32 ***********************************************************/
-
-/* Fetch depth texel from 1D, 2D or 3D 32-bit depth texture,
- * returning 1 GLfloat.
- * Note: no GLchan version of this function.
- */
 static void FETCH(Z_UNORM32)( const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -83,12 +77,6 @@ static void FETCH(Z_UNORM32)( const struct swrast_texture_image *texImage,
 }
 
 
-/* MESA_FORMAT_Z_UNORM16 ***********************************************************/
-
-/* Fetch depth texel from 1D, 2D or 3D 16-bit depth texture,
- * returning 1 GLfloat.
- * Note: no GLchan version of this function.
- */
 static void FETCH(Z_UNORM16)(const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -97,11 +85,6 @@ static void FETCH(Z_UNORM16)(const struct swrast_texture_image *texImage,
 }
 
 
-
-/* MESA_FORMAT_RGBA_F32 ******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D RGBA_FLOAT32 texture, returning 4 GLfloats.
- */
 static void FETCH(RGBA_FLOAT32)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -113,13 +96,6 @@ static void FETCH(RGBA_FLOAT32)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_RGBA_F16 ******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D RGBA_FLOAT16 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(RGBA_FLOAT16)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -131,12 +107,6 @@ static void FETCH(RGBA_FLOAT16)( const struct swrast_texture_image *texImage,
 }
 
 
-
-/* MESA_FORMAT_RGB_F32 *******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D RGB_FLOAT32 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(RGB_FLOAT32)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -148,13 +118,6 @@ static void FETCH(RGB_FLOAT32)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_RGB_F16 *******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D RGB_FLOAT16 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(RGB_FLOAT16)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -166,13 +129,6 @@ static void FETCH(RGB_FLOAT16)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_ALPHA_F32 *****************************************************/
-
-/* Fetch texel from 1D, 2D or 3D ALPHA_FLOAT32 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(A_FLOAT32)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -184,13 +140,6 @@ static void FETCH(A_FLOAT32)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_ALPHA_F32 *****************************************************/
-
-/* Fetch texel from 1D, 2D or 3D ALPHA_FLOAT16 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(A_FLOAT16)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -202,13 +151,6 @@ static void FETCH(A_FLOAT16)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_LUMINANCE_F32 *************************************************/
-
-/* Fetch texel from 1D, 2D or 3D LUMINANCE_FLOAT32 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(L_FLOAT32)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -220,13 +162,6 @@ static void FETCH(L_FLOAT32)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_LUMINANCE_F16 *************************************************/
-
-/* Fetch texel from 1D, 2D or 3D LUMINANCE_FLOAT16 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(L_FLOAT16)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -238,13 +173,6 @@ static void FETCH(L_FLOAT16)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_LUMINANCE_ALPHA_F32 *******************************************/
-
-/* Fetch texel from 1D, 2D or 3D LUMINANCE_ALPHA_FLOAT32 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(LA_FLOAT32)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -256,13 +184,6 @@ static void FETCH(LA_FLOAT32)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_LUMINANCE_ALPHA_F16 *******************************************/
-
-/* Fetch texel from 1D, 2D or 3D LUMINANCE_ALPHA_FLOAT16 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(LA_FLOAT16)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -274,13 +195,6 @@ static void FETCH(LA_FLOAT16)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_INTENSITY_F32 *************************************************/
-
-/* Fetch texel from 1D, 2D or 3D INTENSITY_FLOAT32 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(I_FLOAT32)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -292,13 +206,6 @@ static void FETCH(I_FLOAT32)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_INTENSITY_F16 *************************************************/
-
-/* Fetch texel from 1D, 2D or 3D INTENSITY_FLOAT16 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(I_FLOAT16)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -310,13 +217,6 @@ static void FETCH(I_FLOAT16)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_R_FLOAT32 *****************************************************/
-
-/* Fetch texel from 1D, 2D or 3D R_FLOAT32 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(R_FLOAT32)( const struct swrast_texture_image *texImage,
                             GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -328,13 +228,6 @@ static void FETCH(R_FLOAT32)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_R_FLOAT16 *****************************************************/
-
-/* Fetch texel from 1D, 2D or 3D R_FLOAT16 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(R_FLOAT16)( const struct swrast_texture_image *texImage,
                             GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -346,13 +239,6 @@ static void FETCH(R_FLOAT16)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_RG_FLOAT32 ****************************************************/
-
-/* Fetch texel from 1D, 2D or 3D RG_FLOAT32 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(RG_FLOAT32)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -364,13 +250,6 @@ static void FETCH(RG_FLOAT32)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_RG_FLOAT16 ****************************************************/
-
-/* Fetch texel from 1D, 2D or 3D RG_FLOAT16 texture,
- * returning 4 GLfloats.
- */
 static void FETCH(RG_FLOAT16)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -382,15 +261,6 @@ static void FETCH(RG_FLOAT16)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/*
- * Begin Hardware formats
- */
-
-/* MESA_FORMAT_A8B8G8R8_UNORM ******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rgba8888 texture, return 4 GLfloats */
 static void FETCH(A8B8G8R8_UNORM)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -402,13 +272,6 @@ static void FETCH(A8B8G8R8_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-
-
-/* MESA_FORMAT_RGBA888_REV ***************************************************/
-
-/* Fetch texel from 1D, 2D or 3D abgr8888 texture, return 4 GLchans */
 static void FETCH(R8G8B8A_UNORM)( const struct swrast_texture_image *texImage,
                                    GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -420,11 +283,6 @@ static void FETCH(R8G8B8A_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_B8G8R8A8_UNORM ******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D argb8888 texture, return 4 GLchans */
 static void FETCH(B8G8R8A8_UNORM)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -436,11 +294,6 @@ static void FETCH(B8G8R8A8_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_A8R8G8B8_UNORM **************************************************/
-
-/* Fetch texel from 1D, 2D or 3D argb8888_rev texture, return 4 GLfloats */
 static void FETCH(A8R8G8B8_UNORM)( const struct swrast_texture_image *texImage,
                                    GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -452,11 +305,6 @@ static void FETCH(A8R8G8B8_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_X8B8G8R8_UNORM ******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rgbx8888 texture, return 4 GLfloats */
 static void FETCH(X8B8G8R8_UNORM)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -468,11 +316,6 @@ static void FETCH(X8B8G8R8_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_RGBX888_REV ***************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rgbx8888_rev texture, return 4 GLchans */
 static void FETCH(R8G8B8X8_UNORM)( const struct swrast_texture_image *texImage,
                                    GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -484,11 +327,6 @@ static void FETCH(R8G8B8X8_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_B8G8R8X8_UNORM ******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D xrgb8888 texture, return 4 GLchans */
 static void FETCH(B8G8R8X8_UNORM)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -500,11 +338,6 @@ static void FETCH(B8G8R8X8_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_X8R8G8B8_UNORM **************************************************/
-
-/* Fetch texel from 1D, 2D or 3D xrgb8888_rev texture, return 4 GLfloats */
 static void FETCH(X8R8G8B8_UNORM)( const struct swrast_texture_image *texImage,
                                    GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -516,11 +349,6 @@ static void FETCH(X8R8G8B8_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_BGR_UNORM8 ********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rgb888 texture, return 4 GLchans */
 static void FETCH(BGR_UNORM8)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -532,11 +360,6 @@ static void FETCH(BGR_UNORM8)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_RGB_UNORM8 ********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D bgr888 texture, return 4 GLchans */
 static void FETCH(RGB_UNORM8)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -548,14 +371,6 @@ static void FETCH(RGB_UNORM8)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* use color expansion like (g << 2) | (g >> 4) (does somewhat random rounding)
-   instead of slow (g << 2) * 255 / 252 (always rounds down) */
-
-/* MESA_FORMAT_B5G6R5_UNORM ********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rgb565 texture, return 4 GLchans */
 static void FETCH(B5G6R5_UNORM)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -568,11 +383,6 @@ static void FETCH(B5G6R5_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_R5G6B5_UNORM ****************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rgb565_rev texture, return 4 GLchans */
 static void FETCH(R5G6B5_UNORM)( const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -585,11 +395,6 @@ static void FETCH(R5G6B5_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_B4G4R4A4_UNORM ******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D argb444 texture, return 4 GLchans */
 static void FETCH(B4G4R4A4_UNORM)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -602,11 +407,6 @@ static void FETCH(B4G4R4A4_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_A4R4G4B4_UNORM **************************************************/
-
-/* Fetch texel from 1D, 2D or 3D argb4444_rev texture, return 4 GLchans */
 static void FETCH(A4R4G4B4_UNORM)( const struct swrast_texture_image *texImage,
                                    GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -618,10 +418,6 @@ static void FETCH(A4R4G4B4_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-/* MESA_FORMAT_A1B5G5R5_UNORM ******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D argb1555 texture, return 4 GLchans */
 static void FETCH(A1B5G5R5_UNORM)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -634,10 +430,6 @@ static void FETCH(A1B5G5R5_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-/* MESA_FORMAT_B5G5R5A1_UNORM ******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D argb1555 texture, return 4 GLchans */
 static void FETCH(B5G5R5A1_UNORM)( const struct swrast_texture_image *texImage,
 			     GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -650,11 +442,6 @@ static void FETCH(B5G5R5A1_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_A1R5G5B5_UNORM **************************************************/
-
-/* Fetch texel from 1D, 2D or 3D argb1555_rev texture, return 4 GLchans */
 static void FETCH(A1R5G5B5_UNORM)( const struct swrast_texture_image *texImage,
                                    GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -667,11 +454,6 @@ static void FETCH(A1R5G5B5_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_B10G10R10A2_UNORM ***************************************************/
-
-/* Fetch texel from 1D, 2D or 3D argb2101010 texture, return 4 GLchans */
 static void FETCH(B10G10R10A2_UNORM)( const struct swrast_texture_image *texImage,
                                   GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -684,11 +466,6 @@ static void FETCH(B10G10R10A2_UNORM)( const struct swrast_texture_image *texImag
 }
 
 
-
-
-/* MESA_FORMAT_R8G8_UNORM **********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rg88 texture, return 4 GLchans */
 static void FETCH(R8G8_UNORM)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -700,11 +477,6 @@ static void FETCH(R8G8_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_G8R8_UNORM ******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rg88_rev texture, return 4 GLchans */
 static void FETCH(G8R8_UNORM)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -716,11 +488,6 @@ static void FETCH(G8R8_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_L4A4_UNORM **********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D al44 texture, return 4 GLchans */
 static void FETCH(L4A4_UNORM)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -732,11 +499,6 @@ static void FETCH(L4A4_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_L8A8_UNORM **********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D al88 texture, return 4 GLchans */
 static void FETCH(L8A8_UNORM)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -748,11 +510,6 @@ static void FETCH(L8A8_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_R_UNORM8 ************************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rg88 texture, return 4 GLchans */
 static void FETCH(R_UNORM8)(const struct swrast_texture_image *texImage,
 			GLint i, GLint j, GLint k, GLfloat *texel)
 {
@@ -764,11 +521,6 @@ static void FETCH(R_UNORM8)(const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_R_UNORM16 ***********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D r16 texture, return 4 GLchans */
 static void FETCH(R_UNORM16)(const struct swrast_texture_image *texImage,
 			GLint i, GLint j, GLint k, GLfloat *texel)
 {
@@ -780,11 +532,6 @@ static void FETCH(R_UNORM16)(const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_A8L8_UNORM ******************************************************/
-
-/* Fetch texel from 1D, 2D or 3D al88_rev texture, return 4 GLchans */
 static void FETCH(A8L8_UNORM)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -796,11 +543,6 @@ static void FETCH(A8L8_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_R16G16_UNORM ********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rg1616 texture, return 4 GLchans */
 static void FETCH(R16G16_UNORM)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -812,11 +554,6 @@ static void FETCH(R16G16_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_G16R16_UNORM ****************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rg1616_rev texture, return 4 GLchans */
 static void FETCH(G16R16_UNORM)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -828,11 +565,6 @@ static void FETCH(G16R16_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_L16A16_UNORM ********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D al1616 texture, return 4 GLchans */
 static void FETCH(L16A16_UNORM)( const struct swrast_texture_image *texImage,
 			     GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -844,11 +576,6 @@ static void FETCH(L16A16_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_A16L16_UNORM ****************************************************/
-
-/* Fetch texel from 1D, 2D or 3D al1616_rev texture, return 4 GLchans */
 static void FETCH(A16L16_UNORM)( const struct swrast_texture_image *texImage,
 				 GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -860,11 +587,6 @@ static void FETCH(A16L16_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_B2G3R3_UNORM ********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D rgb332 texture, return 4 GLchans */
 static void FETCH(B2G3R3_UNORM)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -877,11 +599,6 @@ static void FETCH(B2G3R3_UNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_A_UNORM8 ************************************************************/
-
-/* Fetch texel from 1D, 2D or 3D a8 texture, return 4 GLchans */
 static void FETCH(A_UNORM8)( const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -893,11 +610,6 @@ static void FETCH(A_UNORM8)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_A_UNORM16 ************************************************************/
-
-/* Fetch texel from 1D, 2D or 3D a8 texture, return 4 GLchans */
 static void FETCH(A_UNORM16)( const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -909,11 +621,6 @@ static void FETCH(A_UNORM16)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_L_UNORM8 ************************************************************/
-
-/* Fetch texel from 1D, 2D or 3D l8 texture, return 4 GLchans */
 static void FETCH(L_UNORM8)( const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -925,11 +632,6 @@ static void FETCH(L_UNORM8)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_L_UNORM16 ***********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D l16 texture, return 4 GLchans */
 static void FETCH(L_UNORM16)( const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -941,11 +643,6 @@ static void FETCH(L_UNORM16)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_I_UNORM8 ************************************************************/
-
-/* Fetch texel from 1D, 2D or 3D i8 texture, return 4 GLchans */
 static void FETCH(I_UNORM8)( const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -957,11 +654,6 @@ static void FETCH(I_UNORM8)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_I_UNORM16 ***********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D i16 texture, return 4 GLchans */
 static void FETCH(I_UNORM16)( const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -973,10 +665,6 @@ static void FETCH(I_UNORM16)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* Fetch texel from 1D, 2D or 3D BGR_SRGB8 texture, return 4 GLfloats */
-/* Note: component order is same as for MESA_FORMAT_BGR_UNORM8 */
 static void FETCH(BGR_SRGB8)(const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -988,8 +676,6 @@ static void FETCH(BGR_SRGB8)(const struct swrast_texture_image *texImage,
 }
 
 
-
-/* Fetch texel from 1D, 2D or 3D A8B8G8R8_SRGB texture, return 4 GLfloats */
 static void FETCH(A8B8G8R8_SRGB)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1001,8 +687,6 @@ static void FETCH(A8B8G8R8_SRGB)(const struct swrast_texture_image *texImage,
 }
 
 
-
-/* Fetch texel from 1D, 2D or 3D B8G8R8A8_SRGB texture, return 4 GLfloats */
 static void FETCH(B8G8R8A8_SRGB)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1014,8 +698,6 @@ static void FETCH(B8G8R8A8_SRGB)(const struct swrast_texture_image *texImage,
 }
 
 
-
-/* Fetch texel from 1D, 2D or 3D R8G8B8A8_SRGB texture, return 4 GLfloats */
 static void FETCH(R8G8B8A8_SRGB)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1027,7 +709,6 @@ static void FETCH(R8G8B8A8_SRGB)(const struct swrast_texture_image *texImage,
 }
 
 
-/* Fetch texel from 1D, 2D or 3D R8G8B8A8_SRGB texture, return 4 GLfloats */
 static void FETCH(R8G8B8X8_SRGB)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1039,7 +720,6 @@ static void FETCH(R8G8B8X8_SRGB)(const struct swrast_texture_image *texImage,
 }
 
 
-/* Fetch texel from 1D, 2D or 3D L_SRGB8 texture, return 4 GLfloats */
 static void FETCH(L_SRGB8)(const struct swrast_texture_image *texImage,
                        GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1051,8 +731,6 @@ static void FETCH(L_SRGB8)(const struct swrast_texture_image *texImage,
 }
 
 
-
-/* Fetch texel from 1D, 2D or 3D L8A8_SRGB texture, return 4 GLfloats */
 static void FETCH(L8A8_SRGB)(const struct swrast_texture_image *texImage,
                        GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1063,10 +741,6 @@ static void FETCH(L8A8_SRGB)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = UBYTE_TO_FLOAT(src[1]); /* linear */
 }
 
-
-
-
-/* MESA_FORMAT_RGBA_SINT8 **************************************************/
 
 static void
 FETCH(rgba_int8)(const struct swrast_texture_image *texImage,
@@ -1080,10 +754,6 @@ FETCH(rgba_int8)(const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_RGBA_SINT16 **************************************************/
-
 static void
 FETCH(rgba_int16)(const struct swrast_texture_image *texImage,
                   GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1095,10 +765,6 @@ FETCH(rgba_int16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = (GLfloat) src[3];
 }
 
-
-
-
-/* MESA_FORMAT_RGBA_SINT32 **************************************************/
 
 static void
 FETCH(rgba_int32)(const struct swrast_texture_image *texImage,
@@ -1112,10 +778,6 @@ FETCH(rgba_int32)(const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_RGBA_UINT8 **************************************************/
-
 static void
 FETCH(rgba_uint8)(const struct swrast_texture_image *texImage,
                  GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1127,10 +789,6 @@ FETCH(rgba_uint8)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = (GLfloat) src[3];
 }
 
-
-
-
-/* MESA_FORMAT_RGBA_UINT16 **************************************************/
 
 static void
 FETCH(rgba_uint16)(const struct swrast_texture_image *texImage,
@@ -1144,10 +802,6 @@ FETCH(rgba_uint16)(const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_RGBA_UINT32 **************************************************/
-
 static void
 FETCH(rgba_uint32)(const struct swrast_texture_image *texImage,
                   GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1160,12 +814,10 @@ FETCH(rgba_uint32)(const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_DUDV8 ********************************************************/
-
-/* this format by definition produces 0,0,0,1 as rgba values,
-   however we'll return the dudv values as rg and fix up elsewhere */
+/**
+ * This format by definition produces 0,0,0,1 as rgba values,
+ * however we'll return the dudv values as rg and fix up elsewhere.
+ */
 static void FETCH(DUDV8)(const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1176,8 +828,6 @@ static void FETCH(DUDV8)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 0;
 }
 
-
-/* MESA_FORMAT_R_SNORM8 ***********************************************/
 
 static void FETCH(R_SNORM8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1190,10 +840,6 @@ static void FETCH(R_SNORM8)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_A_SNORM8 ***********************************************/
-
 static void FETCH(A_SNORM8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1204,10 +850,6 @@ static void FETCH(A_SNORM8)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = BYTE_TO_FLOAT_TEX( s );
 }
 
-
-
-
-/* MESA_FORMAT_L_SNORM8 ***********************************************/
 
 static void FETCH(L_SNORM8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1220,10 +862,6 @@ static void FETCH(L_SNORM8)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_I_SNORM8 ***********************************************/
-
 static void FETCH(I_SNORM8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1234,10 +872,6 @@ static void FETCH(I_SNORM8)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = BYTE_TO_FLOAT_TEX( s );
 }
 
-
-
-
-/* MESA_FORMAT_R8G8_SNORM ***********************************************/
 
 static void FETCH(R8G8_SNORM)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1250,10 +884,6 @@ static void FETCH(R8G8_SNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_L8A8_SNORM ***********************************************/
-
 static void FETCH(L8A8_SNORM)( const struct swrast_texture_image *texImage,
                                 GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1264,10 +894,6 @@ static void FETCH(L8A8_SNORM)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >> 8) );
 }
 
-
-
-
-/* MESA_FORMAT_X8B8G8R8_SNORM ***********************************************/
 
 static void FETCH(X8B8G8R8_SNORM)( const struct swrast_texture_image *texImage,
 			            GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1280,10 +906,6 @@ static void FETCH(X8B8G8R8_SNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_A8B8G8R8_SNORM ***********************************************/
-
 static void FETCH(A8B8G8R8_SNORM)( const struct swrast_texture_image *texImage,
 			            GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1293,7 +915,6 @@ static void FETCH(A8B8G8R8_SNORM)( const struct swrast_texture_image *texImage,
    texel[BCOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s >>  8) );
    texel[ACOMP] = BYTE_TO_FLOAT_TEX( (GLbyte) (s      ) );
 }
-
 
 
 static void FETCH(R8G8B8A8_SNORM)( const struct swrast_texture_image *texImage,
@@ -1307,11 +928,6 @@ static void FETCH(R8G8B8A8_SNORM)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-
-/* MESA_FORMAT_R_SNORM16 ***********************************************/
-
 static void
 FETCH(R_SNORM16)(const struct swrast_texture_image *texImage,
                   GLint i, GLint j, GLint k, GLfloat *texel)
@@ -1323,10 +939,6 @@ FETCH(R_SNORM16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-
-
-
-/* MESA_FORMAT_A_SNORM16 ***********************************************/
 
 static void
 FETCH(A_SNORM16)(const struct swrast_texture_image *texImage,
@@ -1340,10 +952,6 @@ FETCH(A_SNORM16)(const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_L_SNORM16 ***********************************************/
-
 static void
 FETCH(L_SNORM16)(const struct swrast_texture_image *texImage,
                   GLint i, GLint j, GLint k, GLfloat *texel)
@@ -1355,10 +963,6 @@ FETCH(L_SNORM16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-
-
-
-/* MESA_FORMAT_I_SNORM16 ***********************************************/
 
 static void
 FETCH(I_SNORM16)(const struct swrast_texture_image *texImage,
@@ -1372,10 +976,6 @@ FETCH(I_SNORM16)(const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_G16R16_SNORM ***********************************************/
-
 static void
 FETCH(R16G16_SNORM)(const struct swrast_texture_image *texImage,
                     GLint i, GLint j, GLint k, GLfloat *texel)
@@ -1387,10 +987,6 @@ FETCH(R16G16_SNORM)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-
-
-
-/* MESA_FORMAT_LA_SNORM16 ***********************************************/
 
 static void
 FETCH(LA_SNORM16)(const struct swrast_texture_image *texImage,
@@ -1404,10 +1000,6 @@ FETCH(LA_SNORM16)(const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_RGB_SNORM16 ***********************************************/
-
 static void 
 FETCH(RGB_SNORM16)(const struct swrast_texture_image *texImage,
                      GLint i, GLint j, GLint k, GLfloat *texel)
@@ -1419,10 +1011,6 @@ FETCH(RGB_SNORM16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-
-
-
-/* MESA_FORMAT_RGBA_SNORM16 ***********************************************/
 
 static void
 FETCH(RGBA_SNORM16)(const struct swrast_texture_image *texImage,
@@ -1436,11 +1024,6 @@ FETCH(RGBA_SNORM16)(const struct swrast_texture_image *texImage,
 }
 
 
-
-
-
-/* MESA_FORMAT_RGBA_UNORM16 ***********************************************/
-
 static void
 FETCH(rgba_16)(const struct swrast_texture_image *texImage,
                GLint i, GLint j, GLint k, GLfloat *texel)
@@ -1453,9 +1036,6 @@ FETCH(rgba_16)(const struct swrast_texture_image *texImage,
 }
 
 
-
-/* MESA_FORMAT_XBGR.... **********************************************/
-
 static void
 FETCH(RGBX_UNORM16)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel)
@@ -1466,6 +1046,7 @@ FETCH(RGBX_UNORM16)(const struct swrast_texture_image *texImage,
    texel[BCOMP] = USHORT_TO_FLOAT(s[2]);
    texel[ACOMP] = 1.0f;
 }
+
 
 static void
 FETCH(RGBX_FLOAT16)(const struct swrast_texture_image *texImage,
@@ -1478,6 +1059,7 @@ FETCH(RGBX_FLOAT16)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0f;
 }
 
+
 static void
 FETCH(RGBX_FLOAT32)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel)
@@ -1489,14 +1071,9 @@ FETCH(RGBX_FLOAT32)(const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0f;
 }
 
-/* XXX other XBGR formats need to be implemented here */
 
-
-
-/* MESA_FORMAT_YCBCR *********************************************************/
-
-/* Fetch texel from 1D, 2D or 3D ycbcr texture, return 4 GLfloats.
- * We convert YCbCr to RGB here.
+/**
+ * Fetch texel from 1D, 2D or 3D ycbcr texture, returning RGBA.
  */
 static void FETCH(YCBCR)( const struct swrast_texture_image *texImage,
                             GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1521,12 +1098,8 @@ static void FETCH(YCBCR)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_YCBCR_REV *****************************************************/
-
-/* Fetch texel from 1D, 2D or 3D ycbcr_rev texture, return 4 GLfloats.
- * We convert YCbCr to RGB here.
+/**
+ * Fetch texel from 1D, 2D or 3D ycbcr texture, returning RGBA.
  */
 static void FETCH(YCBCR_REV)( const struct swrast_texture_image *texImage,
                                 GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1551,10 +1124,6 @@ static void FETCH(YCBCR_REV)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_TEXFORMAT_Z24_S8 ***************************************************/
-
 static void FETCH(S8_UINT_Z24_UNORM)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1568,10 +1137,6 @@ static void FETCH(S8_UINT_Z24_UNORM)( const struct swrast_texture_image *texImag
    ASSERT(texel[0] <= 1.0F);
 }
 
-
-
-
-/* MESA_TEXFORMAT_S8_Z24 ***************************************************/
 
 static void FETCH(Z24_UNORM_S8_UINT)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
@@ -1587,10 +1152,6 @@ static void FETCH(Z24_UNORM_S8_UINT)( const struct swrast_texture_image *texImag
 }
 
 
-
-
-/* MESA_FORMAT_RGB9_E5 ******************************************************/
-
 static void FETCH(R9G9B9E5_FLOAT)( const struct swrast_texture_image *texImage,
                             GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1600,10 +1161,6 @@ static void FETCH(R9G9B9E5_FLOAT)( const struct swrast_texture_image *texImage,
 }
 
 
-
-
-/* MESA_FORMAT_R11G11B10_FLOAT *********************************************/
-
 static void FETCH(R11G11B10_FLOAT)( const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel )
 {
@@ -1612,10 +1169,6 @@ static void FETCH(R11G11B10_FLOAT)( const struct swrast_texture_image *texImage,
    texel[ACOMP] = 1.0F;
 }
 
-
-
-
-/* MESA_FORMAT_Z32_FLOAT_S8X24_UINT ***********************************************/
 
 static void FETCH(Z32_FLOAT_S8X24_UINT)(const struct swrast_texture_image *texImage,
 			      GLint i, GLint j, GLint k, GLfloat *texel)
