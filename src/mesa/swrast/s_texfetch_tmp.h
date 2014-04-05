@@ -1179,7 +1179,7 @@ static void FETCH(dudv8)(const struct swrast_texture_image *texImage,
 
 /* MESA_FORMAT_R_SNORM8 ***********************************************/
 
-static void FETCH(signed_r8)( const struct swrast_texture_image *texImage,
+static void FETCH(R_SNORM8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLbyte s = *TEXEL_ADDR(GLbyte, texImage, i, j, k, 1);
@@ -1194,7 +1194,7 @@ static void FETCH(signed_r8)( const struct swrast_texture_image *texImage,
 
 /* MESA_FORMAT_A_SNORM8 ***********************************************/
 
-static void FETCH(signed_a8)( const struct swrast_texture_image *texImage,
+static void FETCH(A_SNORM8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLbyte s = *TEXEL_ADDR(GLbyte, texImage, i, j, k, 1);
@@ -1209,7 +1209,7 @@ static void FETCH(signed_a8)( const struct swrast_texture_image *texImage,
 
 /* MESA_FORMAT_L_SNORM8 ***********************************************/
 
-static void FETCH(signed_l8)( const struct swrast_texture_image *texImage,
+static void FETCH(L_SNORM8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLbyte s = *TEXEL_ADDR(GLbyte, texImage, i, j, k, 1);
@@ -1224,7 +1224,7 @@ static void FETCH(signed_l8)( const struct swrast_texture_image *texImage,
 
 /* MESA_FORMAT_I_SNORM8 ***********************************************/
 
-static void FETCH(signed_i8)( const struct swrast_texture_image *texImage,
+static void FETCH(I_SNORM8)( const struct swrast_texture_image *texImage,
                               GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLbyte s = *TEXEL_ADDR(GLbyte, texImage, i, j, k, 1);
@@ -1239,7 +1239,7 @@ static void FETCH(signed_i8)( const struct swrast_texture_image *texImage,
 
 /* MESA_FORMAT_R8G8_SNORM ***********************************************/
 
-static void FETCH(signed_rg88_rev)( const struct swrast_texture_image *texImage,
+static void FETCH(R8G8_SNORM)( const struct swrast_texture_image *texImage,
                                     GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
@@ -1254,7 +1254,7 @@ static void FETCH(signed_rg88_rev)( const struct swrast_texture_image *texImage,
 
 /* MESA_FORMAT_L8A8_SNORM ***********************************************/
 
-static void FETCH(signed_al88)( const struct swrast_texture_image *texImage,
+static void FETCH(L8A8_SNORM)( const struct swrast_texture_image *texImage,
                                 GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
@@ -1313,7 +1313,7 @@ static void FETCH(R8G8B8A8_SNORM)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_R_SNORM16 ***********************************************/
 
 static void
-FETCH(signed_r16)(const struct swrast_texture_image *texImage,
+FETCH(R_SNORM16)(const struct swrast_texture_image *texImage,
                   GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLshort s = *TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
@@ -1329,7 +1329,7 @@ FETCH(signed_r16)(const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_A_SNORM16 ***********************************************/
 
 static void
-FETCH(signed_a16)(const struct swrast_texture_image *texImage,
+FETCH(A_SNORM16)(const struct swrast_texture_image *texImage,
                   GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLshort s = *TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
@@ -1345,7 +1345,7 @@ FETCH(signed_a16)(const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_L_SNORM16 ***********************************************/
 
 static void
-FETCH(signed_l16)(const struct swrast_texture_image *texImage,
+FETCH(L_SNORM16)(const struct swrast_texture_image *texImage,
                   GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLshort s = *TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
@@ -1361,7 +1361,7 @@ FETCH(signed_l16)(const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_I_SNORM16 ***********************************************/
 
 static void
-FETCH(signed_i16)(const struct swrast_texture_image *texImage,
+FETCH(I_SNORM16)(const struct swrast_texture_image *texImage,
                   GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLshort s = *TEXEL_ADDR(GLshort, texImage, i, j, k, 1);
@@ -1377,7 +1377,7 @@ FETCH(signed_i16)(const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_G16R16_SNORM ***********************************************/
 
 static void
-FETCH(signed_rg1616)(const struct swrast_texture_image *texImage,
+FETCH(R16G16_SNORM)(const struct swrast_texture_image *texImage,
                     GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLshort *s = TEXEL_ADDR(GLshort, texImage, i, j, k, 2);
@@ -1393,7 +1393,7 @@ FETCH(signed_rg1616)(const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_LA_SNORM16 ***********************************************/
 
 static void
-FETCH(signed_al1616)(const struct swrast_texture_image *texImage,
+FETCH(LA_SNORM16)(const struct swrast_texture_image *texImage,
                     GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLshort *s = TEXEL_ADDR(GLshort, texImage, i, j, k, 2);
@@ -1409,7 +1409,7 @@ FETCH(signed_al1616)(const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_RGB_SNORM16 ***********************************************/
 
 static void 
-FETCH(signed_rgb_16)(const struct swrast_texture_image *texImage,
+FETCH(RGB_SNORM16)(const struct swrast_texture_image *texImage,
                      GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLshort *s = TEXEL_ADDR(GLshort, texImage, i, j, k, 3);
@@ -1425,7 +1425,7 @@ FETCH(signed_rgb_16)(const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_RGBA_SNORM16 ***********************************************/
 
 static void
-FETCH(signed_rgba_16)(const struct swrast_texture_image *texImage,
+FETCH(RGBA_SNORM16)(const struct swrast_texture_image *texImage,
                       GLint i, GLint j, GLint k, GLfloat *texel)
 {
    const GLshort *s = TEXEL_ADDR(GLshort, texImage, i, j, k, 4);
