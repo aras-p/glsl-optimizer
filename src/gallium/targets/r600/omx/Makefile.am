@@ -23,13 +23,7 @@
 include $(top_srcdir)/src/gallium/Automake.inc
 
 AM_CFLAGS = \
-	$(GALLIUM_CFLAGS) \
-	$(VISIBILITY_CFLAGS) \
-	$(PTHREAD_CFLAGS) \
-	$(LIBDRM_CFLAGS)
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/src/gallium/drivers \
-	-I$(top_srcdir)/src/gallium/winsys
+	$(GALLIUM_VIDEO_CFLAGS)
 
 omxdir = $(OMX_LIB_INSTALL_DIR)
 omx_LTLIBRARIES = libomx_r600.la
