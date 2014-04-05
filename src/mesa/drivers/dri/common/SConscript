@@ -30,6 +30,7 @@ drienv.Replace(CPPPATH = [
 driswenv = drienv.Clone()
 driswenv.Append(CPPDEFINES = [
     '__NOT_HAVE_DRM_H',
+    'HAVE_DLADDR',
 ])
 
 drienv.PkgUseModules('DRM')

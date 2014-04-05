@@ -28,10 +28,9 @@
 
 /* We need GNU extensions to dlfcn.h in order to provide backward
  * compatibility for the older DRI driver loader mechanism. (dladdr,
- * Dl_info, and RTLD_DEFAULT are only defined when _GNU_SOURCE is
- * defined.)
+ * Dl_info, and RTLD_DEFAULT)
  */
-#ifdef RTLD_DEFAULT
+#if defined(RTLD_DEFAULT) && defined(HAVE_DLADDR)
 
 #define MEGADRIVER_STUB_MAX_EXTENSIONS 10
 #define LIB_PATH_SUFFIX "_dri.so"
@@ -148,7 +147,7 @@ megadriver_stub_init(void)
    }
 }
 
-#endif /* RTLD_DEFAULT */
+#endif /* RTLD_DEFAULT && HAVE_DLADDR */
 
 static const
 __DRIconfig **stub_error_init_screen(__DRIscreen *psp)

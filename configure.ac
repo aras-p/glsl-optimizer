@@ -480,6 +480,12 @@ AC_CHECK_FUNC([dlopen], [DEFINES="$DEFINES -DHAVE_DLOPEN"],
        [DEFINES="$DEFINES -DHAVE_DLOPEN"; DLOPEN_LIBS="-ldl"])])
 AC_SUBST([DLOPEN_LIBS])
 
+dnl Check if that library also has dladdr
+save_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $DLOPEN_LIBS"
+AC_CHECK_FUNCS([dladdr])
+LDFLAGS="$save_LDFLAGS"
+
 case "$host_os" in
 darwin*|mingw*)
     ;;
