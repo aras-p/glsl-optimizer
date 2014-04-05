@@ -199,33 +199,33 @@ texfetch_funcs[] =
    },
    {
       MESA_FORMAT_L16A16_UNORM,
-      fetch_texel_1d_f_al1616,
-      fetch_texel_2d_f_al1616,
-      fetch_texel_3d_f_al1616
+      fetch_texel_1d_L16A16_UNORM,
+      fetch_texel_2d_L16A16_UNORM,
+      fetch_texel_3d_L16A16_UNORM
    },
    {
       MESA_FORMAT_A16L16_UNORM,
-      fetch_texel_1d_f_al1616_rev,
-      fetch_texel_2d_f_al1616_rev,
-      fetch_texel_3d_f_al1616_rev
+      fetch_texel_1d_A16L16_UNORM,
+      fetch_texel_2d_A16L16_UNORM,
+      fetch_texel_3d_A16L16_UNORM
    },
    {
       MESA_FORMAT_B5G6R5_UNORM,
-      fetch_texel_1d_f_rgb565,
-      fetch_texel_2d_f_rgb565,
-      fetch_texel_3d_f_rgb565
+      fetch_texel_1d_B5G6R5_UNORM,
+      fetch_texel_2d_B5G6R5_UNORM,
+      fetch_texel_3d_B5G6R5_UNORM
    },
    {
       MESA_FORMAT_R5G6B5_UNORM,
-      fetch_texel_1d_f_rgb565_rev,
-      fetch_texel_2d_f_rgb565_rev,
-      fetch_texel_3d_f_rgb565_rev
+      fetch_texel_1d_R5G6B5_UNORM,
+      fetch_texel_2d_R5G6B5_UNORM,
+      fetch_texel_3d_R5G6B5_UNORM
    },
    {
       MESA_FORMAT_B4G4R4A4_UNORM,
-      fetch_texel_1d_f_argb4444,
-      fetch_texel_2d_f_argb4444,
-      fetch_texel_3d_f_argb4444
+      fetch_texel_1d_B4G4R4A4_UNORM,
+      fetch_texel_2d_B4G4R4A4_UNORM,
+      fetch_texel_3d_B4G4R4A4_UNORM
    },
    {
       MESA_FORMAT_B4G4R4X4_UNORM,
@@ -235,21 +235,21 @@ texfetch_funcs[] =
    },
    {
       MESA_FORMAT_A4R4G4B4_UNORM,
-      fetch_texel_1d_f_argb4444_rev,
-      fetch_texel_2d_f_argb4444_rev,
-      fetch_texel_3d_f_argb4444_rev
+      fetch_texel_1d_A4R4G4B4_UNORM,
+      fetch_texel_2d_A4R4G4B4_UNORM,
+      fetch_texel_3d_A4R4G4B4_UNORM
    },
    {
       MESA_FORMAT_A1B5G5R5_UNORM,
-      fetch_texel_1d_f_rgba5551,
-      fetch_texel_2d_f_rgba5551,
-      fetch_texel_3d_f_rgba5551
+      fetch_texel_1d_A1B5G5R5_UNORM,
+      fetch_texel_2d_A1B5G5R5_UNORM,
+      fetch_texel_3d_A1B5G5R5_UNORM
    },
    {
       MESA_FORMAT_B5G5R5A1_UNORM,
-      fetch_texel_1d_f_argb1555,
-      fetch_texel_2d_f_argb1555,
-      fetch_texel_3d_f_argb1555
+      fetch_texel_1d_B5G5R5A1_UNORM,
+      fetch_texel_2d_B5G5R5A1_UNORM,
+      fetch_texel_3d_B5G5R5A1_UNORM
    },
    {
       MESA_FORMAT_B5G5R5X1_UNORM,
@@ -259,45 +259,45 @@ texfetch_funcs[] =
    },
    {
       MESA_FORMAT_A1R5G5B5_UNORM,
-      fetch_texel_1d_f_argb1555_rev,
-      fetch_texel_2d_f_argb1555_rev,
-      fetch_texel_3d_f_argb1555_rev
+      fetch_texel_1d_A1R5G5B5_UNORM,
+      fetch_texel_2d_A1R5G5B5_UNORM,
+      fetch_texel_3d_A1R5G5B5_UNORM
    },
    {
       MESA_FORMAT_L8A8_UNORM,
-      fetch_texel_1d_f_al88,
-      fetch_texel_2d_f_al88,
-      fetch_texel_3d_f_al88
+      fetch_texel_1d_L8A8_UNORM,
+      fetch_texel_2d_L8A8_UNORM,
+      fetch_texel_3d_L8A8_UNORM
    },
    {
       MESA_FORMAT_A8L8_UNORM,
-      fetch_texel_1d_f_al88_rev,
-      fetch_texel_2d_f_al88_rev,
-      fetch_texel_3d_f_al88_rev
+      fetch_texel_1d_A8L8_UNORM,
+      fetch_texel_2d_A8L8_UNORM,
+      fetch_texel_3d_A8L8_UNORM
    },
    {
       MESA_FORMAT_R8G8_UNORM,
-      fetch_texel_1d_f_gr88,
-      fetch_texel_2d_f_gr88,
-      fetch_texel_3d_f_gr88
+      fetch_texel_1d_R8G8_UNORM,
+      fetch_texel_2d_R8G8_UNORM,
+      fetch_texel_3d_R8G8_UNORM
    },
    {
       MESA_FORMAT_G8R8_UNORM,
-      fetch_texel_1d_f_rg88,
-      fetch_texel_2d_f_rg88,
-      fetch_texel_3d_f_rg88
+      fetch_texel_1d_G8R8_UNORM,
+      fetch_texel_2d_G8R8_UNORM,
+      fetch_texel_3d_G8R8_UNORM
    },
    {
       MESA_FORMAT_L4A4_UNORM,
-      fetch_texel_1d_f_al44,
-      fetch_texel_2d_f_al44,
-      fetch_texel_3d_f_al44
+      fetch_texel_1d_L4A4_UNORM,
+      fetch_texel_2d_L4A4_UNORM,
+      fetch_texel_3d_L4A4_UNORM
    },
    {
       MESA_FORMAT_B2G3R3_UNORM,
-      fetch_texel_1d_f_rgb332,
-      fetch_texel_2d_f_rgb332,
-      fetch_texel_3d_f_rgb332
+      fetch_texel_1d_B2G3R3_UNORM,
+      fetch_texel_2d_B2G3R3_UNORM,
+      fetch_texel_3d_B2G3R3_UNORM
    },
    {
       MESA_FORMAT_R16G16_UNORM,

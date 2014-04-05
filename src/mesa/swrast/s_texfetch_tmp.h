@@ -556,7 +556,7 @@ static void FETCH(f_bgr888)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_B5G6R5_UNORM ********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rgb565 texture, return 4 GLchans */
-static void FETCH(f_rgb565)( const struct swrast_texture_image *texImage,
+static void FETCH(B5G6R5_UNORM)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -573,7 +573,7 @@ static void FETCH(f_rgb565)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_R5G6B5_UNORM ****************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rgb565_rev texture, return 4 GLchans */
-static void FETCH(f_rgb565_rev)( const struct swrast_texture_image *texImage,
+static void FETCH(R5G6B5_UNORM)( const struct swrast_texture_image *texImage,
                                  GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -590,7 +590,7 @@ static void FETCH(f_rgb565_rev)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_B4G4R4A4_UNORM ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb444 texture, return 4 GLchans */
-static void FETCH(f_argb4444)( const struct swrast_texture_image *texImage,
+static void FETCH(B4G4R4A4_UNORM)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -607,7 +607,7 @@ static void FETCH(f_argb4444)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_A4R4G4B4_UNORM **************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb4444_rev texture, return 4 GLchans */
-static void FETCH(f_argb4444_rev)( const struct swrast_texture_image *texImage,
+static void FETCH(A4R4G4B4_UNORM)( const struct swrast_texture_image *texImage,
                                    GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -622,7 +622,7 @@ static void FETCH(f_argb4444_rev)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_A1B5G5R5_UNORM ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb1555 texture, return 4 GLchans */
-static void FETCH(f_rgba5551)( const struct swrast_texture_image *texImage,
+static void FETCH(A1B5G5R5_UNORM)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -638,7 +638,7 @@ static void FETCH(f_rgba5551)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_B5G5R5A1_UNORM ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb1555 texture, return 4 GLchans */
-static void FETCH(f_argb1555)( const struct swrast_texture_image *texImage,
+static void FETCH(B5G5R5A1_UNORM)( const struct swrast_texture_image *texImage,
 			     GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -655,7 +655,7 @@ static void FETCH(f_argb1555)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_A1R5G5B5_UNORM **************************************************/
 
 /* Fetch texel from 1D, 2D or 3D argb1555_rev texture, return 4 GLchans */
-static void FETCH(f_argb1555_rev)( const struct swrast_texture_image *texImage,
+static void FETCH(A1R5G5B5_UNORM)( const struct swrast_texture_image *texImage,
                                    GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -689,7 +689,7 @@ static void FETCH(f_argb2101010)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_R8G8_UNORM **********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rg88 texture, return 4 GLchans */
-static void FETCH(f_gr88)( const struct swrast_texture_image *texImage,
+static void FETCH(R8G8_UNORM)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -705,7 +705,7 @@ static void FETCH(f_gr88)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_G8R8_UNORM ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rg88_rev texture, return 4 GLchans */
-static void FETCH(f_rg88)( const struct swrast_texture_image *texImage,
+static void FETCH(G8R8_UNORM)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -721,7 +721,7 @@ static void FETCH(f_rg88)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_L4A4_UNORM **********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D al44 texture, return 4 GLchans */
-static void FETCH(f_al44)( const struct swrast_texture_image *texImage,
+static void FETCH(L4A4_UNORM)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte s = *TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
@@ -737,7 +737,7 @@ static void FETCH(f_al44)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_L8A8_UNORM **********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D al88 texture, return 4 GLchans */
-static void FETCH(f_al88)( const struct swrast_texture_image *texImage,
+static void FETCH(L8A8_UNORM)( const struct swrast_texture_image *texImage,
                            GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -785,7 +785,7 @@ static void FETCH(f_r16)(const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_A8L8_UNORM ******************************************************/
 
 /* Fetch texel from 1D, 2D or 3D al88_rev texture, return 4 GLchans */
-static void FETCH(f_al88_rev)( const struct swrast_texture_image *texImage,
+static void FETCH(A8L8_UNORM)( const struct swrast_texture_image *texImage,
                                GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLushort s = *TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
@@ -833,7 +833,7 @@ static void FETCH(f_rg1616_rev)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_L16A16_UNORM ********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D al1616 texture, return 4 GLchans */
-static void FETCH(f_al1616)( const struct swrast_texture_image *texImage,
+static void FETCH(L16A16_UNORM)( const struct swrast_texture_image *texImage,
 			     GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
@@ -849,7 +849,7 @@ static void FETCH(f_al1616)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_A16L16_UNORM ****************************************************/
 
 /* Fetch texel from 1D, 2D or 3D al1616_rev texture, return 4 GLchans */
-static void FETCH(f_al1616_rev)( const struct swrast_texture_image *texImage,
+static void FETCH(A16L16_UNORM)( const struct swrast_texture_image *texImage,
 				 GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
@@ -865,7 +865,7 @@ static void FETCH(f_al1616_rev)( const struct swrast_texture_image *texImage,
 /* MESA_FORMAT_B2G3R3_UNORM ********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D rgb332 texture, return 4 GLchans */
-static void FETCH(f_rgb332)( const struct swrast_texture_image *texImage,
+static void FETCH(B2G3R3_UNORM)( const struct swrast_texture_image *texImage,
                              GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
