@@ -975,9 +975,9 @@ static void FETCH(I_UNORM16)( const struct swrast_texture_image *texImage,
 
 
 
-/* Fetch texel from 1D, 2D or 3D srgb8 texture, return 4 GLfloats */
+/* Fetch texel from 1D, 2D or 3D BGR_SRGB8 texture, return 4 GLfloats */
 /* Note: component order is same as for MESA_FORMAT_BGR_UNORM8 */
-static void FETCH(srgb8)(const struct swrast_texture_image *texImage,
+static void FETCH(BGR_SRGB8)(const struct swrast_texture_image *texImage,
                          GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 3);
@@ -989,8 +989,8 @@ static void FETCH(srgb8)(const struct swrast_texture_image *texImage,
 
 
 
-/* Fetch texel from 1D, 2D or 3D srgba8 texture, return 4 GLfloats */
-static void FETCH(srgba8)(const struct swrast_texture_image *texImage,
+/* Fetch texel from 1D, 2D or 3D A8B8G8R8_SRGB texture, return 4 GLfloats */
+static void FETCH(A8B8G8R8_SRGB)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
@@ -1002,8 +1002,8 @@ static void FETCH(srgba8)(const struct swrast_texture_image *texImage,
 
 
 
-/* Fetch texel from 1D, 2D or 3D sargb8 texture, return 4 GLfloats */
-static void FETCH(sargb8)(const struct swrast_texture_image *texImage,
+/* Fetch texel from 1D, 2D or 3D B8G8R8A8_SRGB texture, return 4 GLfloats */
+static void FETCH(B8G8R8A8_SRGB)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
@@ -1015,8 +1015,8 @@ static void FETCH(sargb8)(const struct swrast_texture_image *texImage,
 
 
 
-/* Fetch texel from 1D, 2D or 3D sabgr8 texture, return 4 GLfloats */
-static void FETCH(sabgr8)(const struct swrast_texture_image *texImage,
+/* Fetch texel from 1D, 2D or 3D R8G8B8A8_SRGB texture, return 4 GLfloats */
+static void FETCH(R8G8B8A8_SRGB)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
@@ -1027,8 +1027,8 @@ static void FETCH(sabgr8)(const struct swrast_texture_image *texImage,
 }
 
 
-/* Fetch texel from 1D, 2D or 3D sabgr8 texture, return 4 GLfloats */
-static void FETCH(sxbgr8)(const struct swrast_texture_image *texImage,
+/* Fetch texel from 1D, 2D or 3D R8G8B8A8_SRGB texture, return 4 GLfloats */
+static void FETCH(R8G8B8X8_SRGB)(const struct swrast_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLuint s = *TEXEL_ADDR(GLuint, texImage, i, j, k, 1);
@@ -1039,8 +1039,8 @@ static void FETCH(sxbgr8)(const struct swrast_texture_image *texImage,
 }
 
 
-/* Fetch texel from 1D, 2D or 3D sl8 texture, return 4 GLfloats */
-static void FETCH(sl8)(const struct swrast_texture_image *texImage,
+/* Fetch texel from 1D, 2D or 3D L_SRGB8 texture, return 4 GLfloats */
+static void FETCH(L_SRGB8)(const struct swrast_texture_image *texImage,
                        GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
@@ -1052,8 +1052,8 @@ static void FETCH(sl8)(const struct swrast_texture_image *texImage,
 
 
 
-/* Fetch texel from 1D, 2D or 3D sla8 texture, return 4 GLfloats */
-static void FETCH(sla8)(const struct swrast_texture_image *texImage,
+/* Fetch texel from 1D, 2D or 3D L8A8_SRGB texture, return 4 GLfloats */
+static void FETCH(L8A8_SRGB)(const struct swrast_texture_image *texImage,
                        GLint i, GLint j, GLint k, GLfloat *texel )
 {
    const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 2);
