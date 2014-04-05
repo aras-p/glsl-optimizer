@@ -645,7 +645,7 @@ unpack_R10G10B10A2_UINT(const void *src, GLfloat dst[][4], GLuint n)
 
 
 static void
-unpack_Z24_S8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_S8_UINT_Z24_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
    /* only return Z, not stencil data */
    const GLuint *s = ((const GLuint *) src);
@@ -662,7 +662,7 @@ unpack_Z24_S8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_S8_Z24(const void *src, GLfloat dst[][4], GLuint n)
+unpack_Z24_UNORM_S8_UINT(const void *src, GLfloat dst[][4], GLuint n)
 {
    /* only return Z, not stencil data */
    const GLuint *s = ((const GLuint *) src);
@@ -679,7 +679,7 @@ unpack_S8_Z24(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_Z16(const void *src, GLfloat dst[][4], GLuint n)
+unpack_Z_UNORM16(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLushort *s = ((const GLushort *) src);
    GLuint i;
@@ -692,19 +692,19 @@ unpack_Z16(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_X8_Z24(const void *src, GLfloat dst[][4], GLuint n)
+unpack_Z24_UNORM_X8_UINT(const void *src, GLfloat dst[][4], GLuint n)
 {
-   unpack_S8_Z24(src, dst, n);
+   unpack_Z24_UNORM_S8_UINT(src, dst, n);
 }
 
 static void
-unpack_Z24_X8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_X8_UINT_Z24_UNORM(const void *src, GLfloat dst[][4], GLuint n)
 {
-   unpack_Z24_S8(src, dst, n);
+   unpack_S8_UINT_Z24_UNORM(src, dst, n);
 }
 
 static void
-unpack_Z32(const void *src, GLfloat dst[][4], GLuint n)
+unpack_Z_UNORM32(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLuint *s = ((const GLuint *) src);
    GLuint i;
@@ -717,7 +717,7 @@ unpack_Z32(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_Z32_FLOAT_X24S8(const void *src, GLfloat dst[][4], GLuint n)
+unpack_Z32_FLOAT_S8X24_UINT(const void *src, GLfloat dst[][4], GLuint n)
 {
    const struct z32f_x24s8 *s = (const struct z32f_x24s8 *) src;
    GLuint i;
@@ -730,7 +730,7 @@ unpack_Z32_FLOAT_X24S8(const void *src, GLfloat dst[][4], GLuint n)
 }
 
 static void
-unpack_Z32_FLOAT(const void *src, GLfloat dst[][4], GLuint n)
+unpack_Z_FLOAT32(const void *src, GLfloat dst[][4], GLuint n)
 {
    const GLfloat *s = ((const GLfloat *) src);
    GLuint i;
@@ -2391,12 +2391,12 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_B10G10R10A2_UNORM] = unpack_B10G10R10A2_UNORM;
       table[MESA_FORMAT_B10G10R10A2_UINT] = unpack_B10G10R10A2_UINT;
       table[MESA_FORMAT_R10G10B10A2_UINT] = unpack_R10G10B10A2_UINT;
-      table[MESA_FORMAT_S8_UINT_Z24_UNORM] = unpack_Z24_S8;
-      table[MESA_FORMAT_Z24_UNORM_S8_UINT] = unpack_S8_Z24;
-      table[MESA_FORMAT_Z_UNORM16] = unpack_Z16;
-      table[MESA_FORMAT_Z24_UNORM_X8_UINT] = unpack_X8_Z24;
-      table[MESA_FORMAT_X8_UINT_Z24_UNORM] = unpack_Z24_X8;
-      table[MESA_FORMAT_Z_UNORM32] = unpack_Z32;
+      table[MESA_FORMAT_S8_UINT_Z24_UNORM] = unpack_S8_UINT_Z24_UNORM;
+      table[MESA_FORMAT_Z24_UNORM_S8_UINT] = unpack_Z24_UNORM_S8_UINT;
+      table[MESA_FORMAT_Z_UNORM16] = unpack_Z_UNORM16;
+      table[MESA_FORMAT_Z24_UNORM_X8_UINT] = unpack_Z24_UNORM_X8_UINT;
+      table[MESA_FORMAT_X8_UINT_Z24_UNORM] = unpack_X8_UINT_Z24_UNORM;
+      table[MESA_FORMAT_Z_UNORM32] = unpack_Z_UNORM32;
       table[MESA_FORMAT_S_UINT8] = unpack_S8;
       table[MESA_FORMAT_BGR_SRGB8] = unpack_BGR_SRGB8;
       table[MESA_FORMAT_A8B8G8R8_SRGB] = unpack_A8B8G8R8_SRGB;
@@ -2533,8 +2533,8 @@ get_unpack_rgba_function(mesa_format format)
       table[MESA_FORMAT_R9G9B9E5_FLOAT] = unpack_R9G9B9E5_FLOAT;
       table[MESA_FORMAT_R11G11B10_FLOAT] = unpack_R11G11B10_FLOAT;
 
-      table[MESA_FORMAT_Z_FLOAT32] = unpack_Z32_FLOAT;
-      table[MESA_FORMAT_Z32_FLOAT_S8X24_UINT] = unpack_Z32_FLOAT_X24S8;
+      table[MESA_FORMAT_Z_FLOAT32] = unpack_Z_FLOAT32;
+      table[MESA_FORMAT_Z32_FLOAT_S8X24_UINT] = unpack_Z32_FLOAT_S8X24_UINT;
 
       table[MESA_FORMAT_B4G4R4X4_UNORM] = unpack_XRGB4444_UNORM;
       table[MESA_FORMAT_B5G5R5X1_UNORM] = unpack_XRGB1555_UNORM;
@@ -3935,7 +3935,7 @@ _mesa_unpack_rgba_block(mesa_format format,
 typedef void (*unpack_float_z_func)(GLuint n, const void *src, GLfloat *dst);
 
 static void
-unpack_float_z_Z24_X8(GLuint n, const void *src, GLfloat *dst)
+unpack_float_z_X8_UINT_Z24_UNORM(GLuint n, const void *src, GLfloat *dst)
 {
    /* only return Z, not stencil data */
    const GLuint *s = ((const GLuint *) src);
@@ -3949,7 +3949,7 @@ unpack_float_z_Z24_X8(GLuint n, const void *src, GLfloat *dst)
 }
 
 static void
-unpack_float_z_X8_Z24(GLuint n, const void *src, GLfloat *dst)
+unpack_float_z_Z24_UNORM_X8_UINT(GLuint n, const void *src, GLfloat *dst)
 {
    /* only return Z, not stencil data */
    const GLuint *s = ((const GLuint *) src);
@@ -3983,7 +3983,7 @@ unpack_float_Z_UNORM32(GLuint n, const void *src, GLfloat *dst)
 }
 
 static void
-unpack_float_z_Z32F(GLuint n, const void *src, GLfloat *dst)
+unpack_float_Z_FLOAT32(GLuint n, const void *src, GLfloat *dst)
 {
    memcpy(dst, src, n * sizeof(float));
 }
@@ -4013,11 +4013,11 @@ _mesa_unpack_float_z_row(mesa_format format, GLuint n,
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
    case MESA_FORMAT_X8_UINT_Z24_UNORM:
-      unpack = unpack_float_z_Z24_X8;
+      unpack = unpack_float_z_X8_UINT_Z24_UNORM;
       break;
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
    case MESA_FORMAT_Z24_UNORM_X8_UINT:
-      unpack = unpack_float_z_X8_Z24;
+      unpack = unpack_float_z_Z24_UNORM_X8_UINT;
       break;
    case MESA_FORMAT_Z_UNORM16:
       unpack = unpack_float_Z_UNORM16;
@@ -4026,7 +4026,7 @@ _mesa_unpack_float_z_row(mesa_format format, GLuint n,
       unpack = unpack_float_Z_UNORM32;
       break;
    case MESA_FORMAT_Z_FLOAT32:
-      unpack = unpack_float_z_Z32F;
+      unpack = unpack_float_Z_FLOAT32;
       break;
    case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
       unpack = unpack_float_z_Z32X24S8;
@@ -4045,7 +4045,7 @@ _mesa_unpack_float_z_row(mesa_format format, GLuint n,
 typedef void (*unpack_uint_z_func)(const void *src, GLuint *dst, GLuint n);
 
 static void
-unpack_uint_z_Z24_X8(const void *src, GLuint *dst, GLuint n)
+unpack_uint_z_X8_UINT_Z24_UNORM(const void *src, GLuint *dst, GLuint n)
 {
    /* only return Z, not stencil data */
    const GLuint *s = ((const GLuint *) src);
@@ -4056,7 +4056,7 @@ unpack_uint_z_Z24_X8(const void *src, GLuint *dst, GLuint n)
 }
 
 static void
-unpack_uint_z_X8_Z24(const void *src, GLuint *dst, GLuint n)
+unpack_uint_z_Z24_UNORM_X8_UINT(const void *src, GLuint *dst, GLuint n)
 {
    /* only return Z, not stencil data */
    const GLuint *s = ((const GLuint *) src);
@@ -4118,11 +4118,11 @@ _mesa_unpack_uint_z_row(mesa_format format, GLuint n,
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
    case MESA_FORMAT_X8_UINT_Z24_UNORM:
-      unpack = unpack_uint_z_Z24_X8;
+      unpack = unpack_uint_z_X8_UINT_Z24_UNORM;
       break;
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
    case MESA_FORMAT_Z24_UNORM_X8_UINT:
-      unpack = unpack_uint_z_X8_Z24;
+      unpack = unpack_uint_z_Z24_UNORM_X8_UINT;
       break;
    case MESA_FORMAT_Z_UNORM16:
       unpack = unpack_uint_Z_UNORM16;
@@ -4147,13 +4147,13 @@ _mesa_unpack_uint_z_row(mesa_format format, GLuint n,
 
 
 static void
-unpack_ubyte_s_S8(const void *src, GLubyte *dst, GLuint n)
+unpack_ubyte_s_S_UINT8(const void *src, GLubyte *dst, GLuint n)
 {
    memcpy(dst, src, n);
 }
 
 static void
-unpack_ubyte_s_Z24_S8(const void *src, GLubyte *dst, GLuint n)
+unpack_ubyte_s_S8_UINT_Z24_UNORM(const void *src, GLubyte *dst, GLuint n)
 {
    GLuint i;
    const GLuint *src32 = src;
@@ -4163,7 +4163,7 @@ unpack_ubyte_s_Z24_S8(const void *src, GLubyte *dst, GLuint n)
 }
 
 static void
-unpack_ubyte_s_S8_Z24(const void *src, GLubyte *dst, GLuint n)
+unpack_ubyte_s_Z24_UNORM_S8_UINT(const void *src, GLubyte *dst, GLuint n)
 {
    GLuint i;
    const GLuint *src32 = src;
@@ -4173,7 +4173,7 @@ unpack_ubyte_s_S8_Z24(const void *src, GLubyte *dst, GLuint n)
 }
 
 static void
-unpack_ubyte_s_Z32_FLOAT_X24S8(const void *src, GLubyte *dst, GLuint n)
+unpack_ubyte_s_Z32_FLOAT_S8X24_UINT(const void *src, GLubyte *dst, GLuint n)
 {
    GLuint i;
    const struct z32f_x24s8 *s = (const struct z32f_x24s8 *) src;
@@ -4188,16 +4188,16 @@ _mesa_unpack_ubyte_stencil_row(mesa_format format, GLuint n,
 {
    switch (format) {
    case MESA_FORMAT_S_UINT8:
-      unpack_ubyte_s_S8(src, dst, n);
+      unpack_ubyte_s_S_UINT8(src, dst, n);
       break;
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
-      unpack_ubyte_s_Z24_S8(src, dst, n);
+      unpack_ubyte_s_S8_UINT_Z24_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
-      unpack_ubyte_s_S8_Z24(src, dst, n);
+      unpack_ubyte_s_Z24_UNORM_S8_UINT(src, dst, n);
       break;
    case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
-      unpack_ubyte_s_Z32_FLOAT_X24S8(src, dst, n);
+      unpack_ubyte_s_Z32_FLOAT_S8X24_UINT(src, dst, n);
       break;
    default:
       _mesa_problem(NULL, "bad format %s in _mesa_unpack_ubyte_s_row",
@@ -4207,7 +4207,7 @@ _mesa_unpack_ubyte_stencil_row(mesa_format format, GLuint n,
 }
 
 static void
-unpack_uint_24_8_depth_stencil_S8_Z24(const GLuint *src, GLuint *dst, GLuint n)
+unpack_uint_24_8_depth_stencil_Z24_UNORM_S8_UINT(const GLuint *src, GLuint *dst, GLuint n)
 {
    GLuint i;
 
@@ -4233,7 +4233,7 @@ unpack_uint_24_8_depth_stencil_Z32_S8X24(const GLuint *src,
 }
 
 static void
-unpack_uint_24_8_depth_stencil_Z24_S8(const GLuint *src, GLuint *dst, GLuint n)
+unpack_uint_24_8_depth_stencil_S8_UINT_Z24_UNORM(const GLuint *src, GLuint *dst, GLuint n)
 {
    memcpy(dst, src, n * 4);
 }
@@ -4248,10 +4248,10 @@ _mesa_unpack_uint_24_8_depth_stencil_row(mesa_format format, GLuint n,
 {
    switch (format) {
    case MESA_FORMAT_S8_UINT_Z24_UNORM:
-      unpack_uint_24_8_depth_stencil_Z24_S8(src, dst, n);
+      unpack_uint_24_8_depth_stencil_S8_UINT_Z24_UNORM(src, dst, n);
       break;
    case MESA_FORMAT_Z24_UNORM_S8_UINT:
-      unpack_uint_24_8_depth_stencil_S8_Z24(src, dst, n);
+      unpack_uint_24_8_depth_stencil_Z24_UNORM_S8_UINT(src, dst, n);
       break;
    case MESA_FORMAT_Z32_FLOAT_S8X24_UINT:
       unpack_uint_24_8_depth_stencil_Z32_S8X24(src, dst, n);
