@@ -813,7 +813,7 @@ static void brw_upload_indices(struct brw_context *brw)
    struct gl_context *ctx = &brw->ctx;
    const struct _mesa_index_buffer *index_buffer = brw->ib.ib;
    GLuint ib_size;
-   drm_intel_bo *bo = NULL;
+   drm_intel_bo *old_bo = brw->ib.bo;
    struct gl_buffer_object *bufferobj;
    GLuint offset;
    GLuint ib_type_size;
@@ -831,7 +831,7 @@ static void brw_upload_indices(struct brw_context *brw)
       /* Get new bufferobj, offset:
        */
       intel_upload_data(brw, index_buffer->ptr, ib_size, ib_type_size,
-			&bo, &offset);
+			&brw->ib.bo, &offset);
    } else {
       offset = (GLuint) (unsigned long) index_buffer->ptr;
 
@@ -849,13 +849,19 @@ static void brw_upload_indices(struct brw_context *brw)
                                                    bufferobj,
                                                    MAP_INTERNAL);
 
-         intel_upload_data(brw, map, ib_size, ib_type_size, &bo, &offset);
+         intel_upload_data(brw, map, ib_size, ib_type_size,
+                           &brw->ib.bo, &offset);
 
          ctx->Driver.UnmapBuffer(ctx, bufferobj, MAP_INTERNAL);
       } else {
-         bo = intel_bufferobj_buffer(brw, intel_buffer_object(bufferobj),
-                                     offset, ib_size);
-         drm_intel_bo_reference(bo);
+         drm_intel_bo *bo =
+            intel_bufferobj_buffer(brw, intel_buffer_object(bufferobj),
+                                   offset, ib_size);
+         if (bo != brw->ib.bo) {
+            drm_intel_bo_unreference(brw->ib.bo);
+            brw->ib.bo = bo;
+            drm_intel_bo_reference(bo);
+         }
       }
    }
 
@@ -865,14 +871,8 @@ static void brw_upload_indices(struct brw_context *brw)
     */
    brw->ib.start_vertex_offset = offset / ib_type_size;
 
-   if (brw->ib.bo != bo) {
-      drm_intel_bo_unreference(brw->ib.bo);
-      brw->ib.bo = bo;
-
+   if (brw->ib.bo != old_bo)
       brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
-   } else {
-      drm_intel_bo_unreference(bo);
-   }
 
    if (index_buffer->type != brw->ib.type) {
       brw->ib.type = index_buffer->type;
