@@ -62,6 +62,12 @@
 #include "program/prog_instruction.h"
 #include <limits>
 
+#define f(x) join(x)
+#define join(x) x ## f
+#define M_PIf f(M_PI)
+#define M_PI_2f f(M_PI_2)
+#define M_PI_4f f(M_PI_4)
+
 using namespace ir_builder;
 
 /**
@@ -2538,11 +2544,11 @@ ir_expression *
 builtin_builder::asin_expr(ir_variable *x)
 {
    return mul(sign(x),
-              sub(imm(1.5707964f),
+              sub(imm(M_PI_2f),
                   mul(sqrt(sub(imm(1.0f), abs(x))),
-                      add(imm(1.5707964f),
+                      add(imm(M_PI_2f),
                           mul(abs(x),
-                              add(imm(-0.21460183f),
+                              add(imm(M_PI_4f - 1.0f),
                                   mul(abs(x),
                                       add(imm(0.086566724f),
                                           mul(abs(x), imm(-0.03102955f))))))))));
@@ -2586,7 +2592,7 @@ builtin_builder::_acos(const glsl_type *type)
    ir_variable *x = in_var(type, "x");
    MAKE_SIG(type, always_available, 1, x);
 
-   body.emit(ret(sub(imm(1.5707964f), asin_expr(x))));
+   body.emit(ret(sub(imm(M_PI_2f), asin_expr(x))));
 
    return sig;
 }
@@ -2623,13 +2629,13 @@ builtin_builder::_atan2(const glsl_type *type)
       ir_if *inner_if = new(mem_ctx) ir_if(less(x, imm(0.0f)));
       inner_if->then_instructions.push_tail(
          if_tree(gequal(y, imm(0.0f)),
-                 assign(r, add(r, imm(3.141593f))),
-                 assign(r, sub(r, imm(3.141593f)))));
+                 assign(r, add(r, imm(M_PIf))),
+                 assign(r, sub(r, imm(M_PIf)))));
       outer_then.emit(inner_if);
 
       /* Else... */
       outer_if->else_instructions.push_tail(
-         assign(r, mul(sign(y), imm(1.5707965f))));
+         assign(r, mul(sign(y), imm(M_PI_2f))));
 
       body.emit(outer_if);
 
