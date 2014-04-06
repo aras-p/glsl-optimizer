@@ -54,10 +54,16 @@
 #include "entrypoint.h"
 #include "vid_enc.h"
 
-struct input_buf_private {
+struct encode_task {
+   struct list_head list;
+
    struct pipe_video_buffer *buf;
    struct pipe_resource *bitstream;
    void *feedback;
+};
+
+struct input_buf_private {
+   struct list_head tasks;
 };
 
 struct output_buf_private {
@@ -78,6 +84,8 @@ static OMX_ERRORTYPE vid_enc_AllocateOutBuffer(omx_base_PortType *comp, OMX_INOU
                                                OMX_IN OMX_U32 idx, OMX_IN OMX_PTR private, OMX_IN OMX_U32 size);
 static OMX_ERRORTYPE vid_enc_FreeOutBuffer(omx_base_PortType *port, OMX_U32 idx, OMX_BUFFERHEADERTYPE *buf);
 static void vid_enc_BufferEncoded(OMX_COMPONENTTYPE *comp, OMX_BUFFERHEADERTYPE* input, OMX_BUFFERHEADERTYPE* output);
+
+static void enc_ReleaseTasks(struct list_head *head);
 
 static void vid_enc_name(char str[OMX_MAX_STRINGNAME_SIZE])
 {
@@ -243,6 +251,9 @@ static OMX_ERRORTYPE vid_enc_Constructor(OMX_COMPONENTTYPE *comp, OMX_STRING nam
    priv->scale.xWidth = OMX_VID_ENC_SCALING_WIDTH_DEFAULT;
    priv->scale.xHeight = OMX_VID_ENC_SCALING_WIDTH_DEFAULT;
 
+   LIST_INITHEAD(&priv->free_tasks);
+   LIST_INITHEAD(&priv->used_tasks);
+
    return OMX_ErrorNone;
 }
 
@@ -250,6 +261,9 @@ static OMX_ERRORTYPE vid_enc_Destructor(OMX_COMPONENTTYPE *comp)
 {
    vid_enc_PrivateType* priv = comp->pComponentPrivate;
    int i;
+
+   enc_ReleaseTasks(&priv->free_tasks);
+   enc_ReleaseTasks(&priv->used_tasks);
 
    if (priv->ports) {
       for (i = 0; i < priv->sPortTypesParam[OMX_PortDomainVideo].nPorts; ++i) {
@@ -563,9 +577,10 @@ static OMX_ERRORTYPE vid_enc_MessageHandler(OMX_COMPONENTTYPE* comp, internalReq
 static OMX_ERRORTYPE vid_enc_FreeInBuffer(omx_base_PortType *port, OMX_U32 idx, OMX_BUFFERHEADERTYPE *buf)
 {
    struct input_buf_private *inp = buf->pInputPortPrivate;
-   pipe_resource_reference(&inp->bitstream, NULL);
-   inp->buf->destroy(inp->buf);
-   FREE(inp);
+   if (inp) {
+      enc_ReleaseTasks(&inp->tasks);
+      FREE(inp);
+   }
    return base_port_FreeBuffer(port, idx, buf);
 }
 
@@ -607,22 +622,25 @@ static OMX_ERRORTYPE vid_enc_FreeOutBuffer(omx_base_PortType *port, OMX_U32 idx,
    return base_port_FreeBuffer(port, idx, buf);
 }
 
-static OMX_ERRORTYPE enc_NeedInputPortPrivate(omx_base_PortType *port, OMX_BUFFERHEADERTYPE *buf)
+static struct encode_task *enc_NeedTask(omx_base_PortType *port)
 {
+   OMX_VIDEO_PORTDEFINITIONTYPE *def = &port->sPortParam.format.video;
    OMX_COMPONENTTYPE* comp = port->standCompContainer;
    vid_enc_PrivateType *priv = comp->pComponentPrivate;
-   OMX_VIDEO_PORTDEFINITIONTYPE *def = &port->sPortParam.format.video;
-   struct input_buf_private **inp = (struct input_buf_private **)&buf->pInputPortPrivate;
+
    struct pipe_video_buffer templat = {};
+   struct encode_task *task;
 
-   if (*inp) {
-      pipe_resource_reference(&(*inp)->bitstream, NULL);
-      return OMX_ErrorNone;
+   if (!LIST_IS_EMPTY(&priv->free_tasks)) {
+      task = LIST_ENTRY(struct encode_task, priv->free_tasks.next, list);
+      LIST_DEL(&task->list);
+      return task;
    }
 
-   if (!(*inp = CALLOC(1, sizeof(struct input_buf_private)))) {
-      return OMX_ErrorInsufficientResources;
-   }
+   /* allocate a new one */
+   task = CALLOC_STRUCT(encode_task);
+   if (!task)
+      return NULL;
 
    templat.buffer_format = PIPE_FORMAT_NV12;
    templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
@@ -630,25 +648,46 @@ static OMX_ERRORTYPE enc_NeedInputPortPrivate(omx_base_PortType *port, OMX_BUFFE
    templat.height = def->nFrameHeight;
    templat.interlaced = false;
 
-   if (!((*inp)->buf = priv->s_pipe->create_video_buffer(priv->s_pipe, &templat))) {
-      FREE(*inp);
-      return OMX_ErrorInsufficientResources;
+   task->buf = priv->s_pipe->create_video_buffer(priv->s_pipe, &templat);
+   if (!task->buf) {
+      FREE(task);
+      return NULL;
    }
 
-   return OMX_ErrorNone;
+   return task;
 }
 
-static OMX_ERRORTYPE enc_LoadImage(omx_base_PortType *port, OMX_BUFFERHEADERTYPE *buf)
+static void enc_MoveTasks(struct list_head *from, struct list_head *to)
+{
+   to->prev->next = from->next;
+   from->next->prev = to->prev;
+   from->prev->next = to;
+   to->prev = from->prev;
+   LIST_INITHEAD(from);
+}
+
+static void enc_ReleaseTasks(struct list_head *head)
+{
+   struct encode_task *i, *next;
+
+   LIST_FOR_EACH_ENTRY_SAFE(i, next, head, list) {
+      pipe_resource_reference(&i->bitstream, NULL);
+      i->buf->destroy(i->buf);
+      FREE(i);
+   }
+}
+
+static OMX_ERRORTYPE enc_LoadImage(omx_base_PortType *port, OMX_BUFFERHEADERTYPE *buf,
+                                   struct pipe_video_buffer *vbuf)
 {
    OMX_COMPONENTTYPE* comp = port->standCompContainer;
    vid_enc_PrivateType *priv = comp->pComponentPrivate;
    OMX_VIDEO_PORTDEFINITIONTYPE *def = &port->sPortParam.format.video;
-   struct input_buf_private *inp = buf->pInputPortPrivate;
    struct pipe_sampler_view **views;
    struct pipe_box box = {};
    void *ptr;
 
-   views = inp->buf->get_sampler_view_planes(inp->buf);
+   views = vbuf->get_sampler_view_planes(vbuf);
    if (!views)
       return OMX_ErrorInsufficientResources;
 
@@ -669,14 +708,12 @@ static OMX_ERRORTYPE enc_LoadImage(omx_base_PortType *port, OMX_BUFFERHEADERTYPE
    return OMX_ErrorNone;
 }
 
-static void enc_ScaleInput(omx_base_PortType *port,
-            OMX_BUFFERHEADERTYPE *buf, struct pipe_video_buffer **vbuf, unsigned *size)
+static void enc_ScaleInput(omx_base_PortType *port, struct pipe_video_buffer **vbuf, unsigned *size)
 {
    OMX_COMPONENTTYPE* comp = port->standCompContainer;
    vid_enc_PrivateType *priv = comp->pComponentPrivate;
    OMX_VIDEO_PORTDEFINITIONTYPE *def = &port->sPortParam.format.video;
-   struct pipe_video_buffer *src_buf =
-          ((struct input_buf_private *)buf->pInputPortPrivate)->buf;
+   struct pipe_video_buffer *src_buf = *vbuf;
    struct vl_compositor *compositor = &priv->compositor;
    struct vl_compositor_state *s = &priv->cstate;
    struct pipe_sampler_view **views;
@@ -711,8 +748,7 @@ static void enc_ScaleInput(omx_base_PortType *port,
    priv->current_scale_buffer %= OMX_VID_ENC_NUM_SCALING_BUFFERS;
 }
 
-static void enc_ControlPicture(omx_base_PortType *port,
-            struct pipe_h264_enc_picture_desc *picture)
+static void enc_ControlPicture(omx_base_PortType *port, struct pipe_h264_enc_picture_desc *picture)
 {
    OMX_COMPONENTTYPE* comp = port->standCompContainer;
    vid_enc_PrivateType *priv = comp->pComponentPrivate;
@@ -783,19 +819,48 @@ static void enc_ControlPicture(omx_base_PortType *port,
    priv->force_pic_type.IntraRefreshVOP = OMX_FALSE; 
 }
 
-static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEADERTYPE *buf)
+static void enc_HandleTask(omx_base_PortType *port, struct encode_task *task)
 {
    OMX_COMPONENTTYPE* comp = port->standCompContainer;
    vid_enc_PrivateType *priv = comp->pComponentPrivate;
    unsigned size = priv->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize;
-   struct pipe_h264_enc_picture_desc picture;
-   struct input_buf_private *inp;
-   struct pipe_video_buffer *vbuf;
+   struct pipe_video_buffer *vbuf = task->buf;
+   struct pipe_h264_enc_picture_desc picture = {};
+ 
+   /* -------------- scale input image --------- */
+   enc_ScaleInput(port, &vbuf, &size);
+   priv->s_pipe->flush(priv->s_pipe, NULL, 0);
+
+   /* -------------- allocate output buffer --------- */
+   task->bitstream = pipe_buffer_create(priv->s_pipe->screen, PIPE_BIND_VERTEX_BUFFER,
+                                        PIPE_USAGE_STREAM, size);
+   enc_ControlPicture(port, &picture);
+
+   /* -------------- encode frame --------- */
+   priv->codec->begin_frame(priv->codec, vbuf, &picture.base);
+   priv->codec->encode_bitstream(priv->codec, vbuf, task->bitstream, &task->feedback);
+   priv->codec->end_frame(priv->codec, vbuf, &picture.base);
+}
+
+static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEADERTYPE *buf)
+{
+   OMX_COMPONENTTYPE* comp = port->standCompContainer;
+   vid_enc_PrivateType *priv = comp->pComponentPrivate;
+   struct input_buf_private *inp = buf->pInputPortPrivate;
+   struct encode_task *task;
    OMX_ERRORTYPE err;
 
-   err = enc_NeedInputPortPrivate(port, buf);
-   if (err != OMX_ErrorNone)
-      return err;
+   if (!inp) {
+      inp = buf->pInputPortPrivate = CALLOC_STRUCT(input_buf_private);
+      if (!inp)
+         return OMX_ErrorInsufficientResources;
+      LIST_INITHEAD(&inp->tasks);
+   } else
+      enc_MoveTasks(&inp->tasks, &priv->free_tasks);
+
+   task = enc_NeedTask(port);
+   if (!task)
+      return OMX_ErrorInsufficientResources;
 
    if (buf->nFilledLen == 0) {
       if (buf->nFlags & OMX_BUFFERFLAG_EOS)
@@ -803,47 +868,45 @@ static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEAD
       return base_port_SendBufferFunction(port, buf);
    }
 
-   inp = buf->pInputPortPrivate;
    if (buf->pOutputPortPrivate) {
-      vbuf = buf->pOutputPortPrivate;
-      buf->pOutputPortPrivate = inp->buf;
-      inp->buf = vbuf;
+      struct pipe_video_buffer *vbuf = buf->pOutputPortPrivate;
+      buf->pOutputPortPrivate = task->buf;
+      task->buf = vbuf;
    } else {
       /* ------- load input image into video buffer ---- */
-      err = enc_LoadImage(port, buf);
+      err = enc_LoadImage(port, buf, task->buf);
       if (err != OMX_ErrorNone)
          return err;
    }
-   vbuf = inp->buf;
 
-   /* -------------- scale input image --------- */
-   enc_ScaleInput(port, buf, &vbuf, &size);
-   priv->s_pipe->flush(priv->s_pipe, NULL, 0);
+   enc_HandleTask(port, task);
 
-   /* -------------- allocate output buffer --------- */
-   inp->bitstream = pipe_buffer_create(priv->s_pipe->screen, PIPE_BIND_VERTEX_BUFFER,
-                                       PIPE_USAGE_STREAM, size);
-   enc_ControlPicture(port, &picture);
-
-   /* -------------- encode frame --------- */
-   priv->codec->begin_frame(priv->codec, vbuf, &picture.base);
-   priv->codec->encode_bitstream(priv->codec, vbuf, inp->bitstream, &inp->feedback);
-   priv->codec->end_frame(priv->codec, vbuf, &picture.base);
+   /* put list of encode operations on input buffer */
+   LIST_ADDTAIL(&task->list, &inp->tasks);
  
    return base_port_SendBufferFunction(port, buf);
 }
 
 static void vid_enc_BufferEncoded(OMX_COMPONENTTYPE *comp, OMX_BUFFERHEADERTYPE* input, OMX_BUFFERHEADERTYPE* output)
 {
-   struct input_buf_private *inp = input->pInputPortPrivate;
    vid_enc_PrivateType *priv = comp->pComponentPrivate;
    struct output_buf_private *outp = output->pOutputPortPrivate;
+   struct input_buf_private *inp = input->pInputPortPrivate;
+   struct encode_task *task;
    struct pipe_box box = {};
    unsigned size;
 
-   input->nFilledLen = 0; /* mark buffer as empty */
+   if (!inp || LIST_IS_EMPTY(&inp->tasks)) {
+      input->nFilledLen = 0; /* mark buffer as empty */
+      enc_MoveTasks(&priv->used_tasks, &inp->tasks);
+      return;
+   }
 
-   if (!inp->bitstream)
+   task = LIST_ENTRY(struct encode_task, inp->tasks.next, list);
+   LIST_DEL(&task->list);
+   LIST_ADDTAIL(&task->list, &priv->used_tasks);
+
+   if (!task->bitstream)
       return;
 
    /* ------------- map result buffer ----------------- */
@@ -851,11 +914,12 @@ static void vid_enc_BufferEncoded(OMX_COMPONENTTYPE *comp, OMX_BUFFERHEADERTYPE*
    if (outp->transfer)
       pipe_transfer_unmap(priv->t_pipe, outp->transfer);
 
-   pipe_resource_reference(&outp->bitstream, inp->bitstream);
+   pipe_resource_reference(&outp->bitstream, task->bitstream);
+   pipe_resource_reference(&task->bitstream, NULL);
 
-   box.width = inp->bitstream->width0;
-   box.height = inp->bitstream->height0;
-   box.depth = inp->bitstream->depth0;
+   box.width = outp->bitstream->width0;
+   box.height = outp->bitstream->height0;
+   box.depth = outp->bitstream->depth0;
 
    output->pBuffer = priv->t_pipe->transfer_map(priv->t_pipe, outp->bitstream, 0,
                                                 PIPE_TRANSFER_READ_WRITE,
@@ -863,7 +927,7 @@ static void vid_enc_BufferEncoded(OMX_COMPONENTTYPE *comp, OMX_BUFFERHEADERTYPE*
  
    /* ------------- get size of result ----------------- */
 
-   priv->codec->get_feedback(priv->codec, inp->feedback, &size);
+   priv->codec->get_feedback(priv->codec, task->feedback, &size);
 
    output->nOffset = 0;
    output->nFilledLen = size; /* mark buffer as full */

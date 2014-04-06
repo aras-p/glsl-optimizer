@@ -41,6 +41,8 @@
 #include <bellagio/st_static_component_loader.h>
 #include <bellagio/omx_base_filter.h>
 
+#include "util/u_double_list.h"
+
 #include "vl/vl_defines.h"
 #include "vl/vl_compositor.h"
 
@@ -67,6 +69,8 @@ DERIVEDCLASS(vid_enc_PrivateType, omx_base_filter_PrivateType)
 	struct pipe_context *s_pipe; \
 	struct pipe_context *t_pipe; \
 	struct pipe_video_codec *codec; \
+	struct list_head free_tasks; \
+	struct list_head used_tasks; \
 	OMX_U32 frame_rate; \
 	OMX_U32 frame_num; \
 	OMX_VIDEO_PARAM_BITRATETYPE bitrate; \
