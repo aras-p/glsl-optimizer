@@ -1119,6 +1119,9 @@ struct brw_context
    /* Whether a meta-operation is in progress. */
    bool meta_in_progress;
 
+   /* Whether the last depth/stencil packets were both NULL. */
+   bool no_depth_or_stencil;
+
    struct {
       struct brw_vertex_element inputs[VERT_ATTRIB_MAX];
       struct brw_vertex_buffer buffers[VERT_ATTRIB_MAX];

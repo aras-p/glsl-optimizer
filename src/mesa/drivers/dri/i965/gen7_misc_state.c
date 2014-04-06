@@ -52,6 +52,12 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
    const struct intel_renderbuffer *irb = NULL;
    const struct gl_renderbuffer *rb = NULL;
 
+   /* Skip repeated NULL depth/stencil emits (think 2D rendering). */
+   if (!mt && brw->no_depth_or_stencil) {
+      assert(brw->hw_ctx);
+      return;
+   }
+
    intel_emit_depth_stall_flushes(brw);
 
    irb = intel_get_renderbuffer(fb, BUFFER_DEPTH);
@@ -190,6 +196,8 @@ gen7_emit_depth_stencil_hiz(struct brw_context *brw,
    OUT_BATCH(depth_mt ? depth_mt->depth_clear_value : 0);
    OUT_BATCH(1);
    ADVANCE_BATCH();
+
+   brw->no_depth_or_stencil = !mt;
 }
 
 /**

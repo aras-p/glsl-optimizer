@@ -49,6 +49,12 @@ emit_depth_packets(struct brw_context *brw,
                    uint32_t lod,
                    uint32_t min_array_element)
 {
+   /* Skip repeated NULL depth/stencil emits (think 2D rendering). */
+   if (!depth_mt && !stencil_mt && brw->no_depth_or_stencil) {
+      assert(brw->hw_ctx);
+      return;
+   }
+
    intel_emit_depth_stall_flushes(brw);
 
    /* _NEW_BUFFERS, _NEW_DEPTH, _NEW_STENCIL */
@@ -130,6 +136,8 @@ emit_depth_packets(struct brw_context *brw,
    OUT_BATCH(depth_mt ? depth_mt->depth_clear_value : 0);
    OUT_BATCH(1);
    ADVANCE_BATCH();
+
+   brw->no_depth_or_stencil = !depth_mt && !stencil_mt;
 }
 
 /* Awful vtable-compatible function; should be cleaned up in the future. */

@@ -278,6 +278,7 @@ retry:
     */
    brw->state.dirty.brw = ~0;
    brw->state.dirty.cache = ~0;
+   brw->no_depth_or_stencil = false;
    brw->ib.type = -1;
 
    /* Flush the sampler cache so any texturing from the destination is
