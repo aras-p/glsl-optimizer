@@ -291,7 +291,6 @@ static void brw_merge_inputs( struct brw_context *brw,
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       brw->vb.inputs[i].buffer = -1;
       brw->vb.inputs[i].glarray = arrays[i];
-      brw->vb.inputs[i].attrib = (gl_vert_attrib) i;
    }
 }
 

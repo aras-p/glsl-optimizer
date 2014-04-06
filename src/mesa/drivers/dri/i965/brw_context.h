@@ -833,8 +833,6 @@ struct brw_vertex_element {
 
    int buffer;
 
-   /** The corresponding Mesa vertex attribute */
-   gl_vert_attrib attrib;
    /** Offset of the first element within the buffer object */
    unsigned int offset;
 };

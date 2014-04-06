@@ -713,7 +713,7 @@ static void brw_emit_vertices(struct brw_context *brw)
       uint32_t comp2 = BRW_VE1_COMPONENT_STORE_SRC;
       uint32_t comp3 = BRW_VE1_COMPONENT_STORE_SRC;
 
-      if (input->attrib == VERT_ATTRIB_EDGEFLAG) {
+      if (input == &brw->vb.inputs[VERT_ATTRIB_EDGEFLAG]) {
          /* Gen6+ passes edgeflag as sideband along with the vertex, instead
           * of in the VUE.  We have to upload it sideband as the last vertex
           * element according to the B-Spec.

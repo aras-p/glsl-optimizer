@@ -139,7 +139,7 @@ gen8_emit_vertices(struct brw_context *brw)
        * glEdgeFlagPointer, on the other hand, gives us an unnormalized
        * integer ubyte.  Just rewrite that to convert to a float.
        */
-      if (input->attrib == VERT_ATTRIB_EDGEFLAG) {
+      if (input == &brw->vb.inputs[VERT_ATTRIB_EDGEFLAG]) {
          /* Gen6+ passes edgeflag as sideband along with the vertex, instead
           * of in the VUE.  We have to upload it sideband as the last vertex
           * element according to the B-Spec.
