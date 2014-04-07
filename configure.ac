@@ -2000,9 +2000,14 @@ AC_SUBST([VDPAU_MINOR], 0)
 AC_SUBST([XVMC_MAJOR], 1)
 AC_SUBST([XVMC_MINOR], 0)
 
-AC_SUBST([XA_MAJOR], 2)
-AC_SUBST([XA_MINOR], 2)
-AC_SUBST([XA_TINY], 0)
+XA_HEADER="$srcdir/src/gallium/state_trackers/xa/xa_tracker.h"
+XA_MAJOR=`grep "#define XA_TRACKER_VERSION_MAJOR" $XA_HEADER | $SED 's/^#define XA_TRACKER_VERSION_MAJOR //'`
+XA_MINOR=`grep "#define XA_TRACKER_VERSION_MINOR" $XA_HEADER | $SED 's/^#define XA_TRACKER_VERSION_MINOR //'`
+XA_TINY=`grep "#define XA_TRACKER_VERSION_PATCH" $XA_HEADER | $SED 's/^#define XA_TRACKER_VERSION_PATCH //'`
+
+AC_SUBST([XA_MAJOR], $XA_MAJOR)
+AC_SUBST([XA_MINOR], $XA_MINOR)
+AC_SUBST([XA_TINY], $XA_TINY)
 AC_SUBST([XA_VERSION], "$XA_MAJOR.$XA_MINOR.$XA_TINY")
 
 dnl Restore LDFLAGS and CPPFLAGS
@@ -2061,7 +2066,6 @@ AC_CONFIG_FILES([Makefile
 		src/gallium/state_trackers/vdpau/Makefile
 		src/gallium/state_trackers/vega/Makefile
 		src/gallium/state_trackers/xa/Makefile
-                src/gallium/state_trackers/xa/xa_tracker.h
 		src/gallium/state_trackers/xvmc/Makefile
 		src/gallium/targets/Makefile
 		src/gallium/targets/dri-freedreno/Makefile
