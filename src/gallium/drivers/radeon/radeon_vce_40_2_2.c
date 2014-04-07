@@ -224,9 +224,8 @@ static void frame_offset(struct rvce_encoder *enc, unsigned frame_num,
 	unsigned pitch = align(enc->luma->level[0].pitch_bytes, 128);
 	unsigned vpitch = align(enc->luma->npix_y, 16);
 	unsigned fsize = pitch * (vpitch + vpitch / 2);
-	unsigned base_offset = RVCE_NUM_CPB_EXTRA_FRAMES * fsize;
 
-	*luma_offset = base_offset + (frame_num % RVCE_NUM_CPB_FRAMES) * fsize;
+	*luma_offset = (frame_num % RVCE_NUM_CPB_FRAMES) * fsize;
 	*chroma_offset = *luma_offset + pitch * vpitch;
 }
 

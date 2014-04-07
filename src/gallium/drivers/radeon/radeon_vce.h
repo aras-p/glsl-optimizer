@@ -44,7 +44,6 @@
 #define RVCE_END() *begin = (&enc->cs->buf[enc->cs->cdw] - begin) * 4; }
 
 #define RVCE_NUM_CPB_FRAMES 2
-#define RVCE_NUM_CPB_EXTRA_FRAMES 2
 
 struct r600_common_screen;
 

@@ -262,7 +262,7 @@ struct pipe_video_codec *rvce_create_encoder(struct pipe_context *context,
 	vpitch = align(tmp_surf->npix_y, 16);
 	tmp_buf->destroy(tmp_buf);
 	if (!rvid_create_buffer(enc->ws, &enc->cpb,
-			pitch * vpitch * 1.5 * (RVCE_NUM_CPB_FRAMES + RVCE_NUM_CPB_EXTRA_FRAMES),
+			pitch * vpitch * 1.5 * RVCE_NUM_CPB_FRAMES,
 			RADEON_DOMAIN_VRAM)) {
 		RVID_ERR("Can't create CPB buffer.\n");
 		goto error;
