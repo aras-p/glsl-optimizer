@@ -1714,6 +1714,9 @@ fs_visitor::split_virtual_grfs()
 void
 fs_visitor::compact_virtual_grfs()
 {
+   if (unlikely(INTEL_DEBUG & DEBUG_OPTIMIZER))
+      return;
+
    /* Mark which virtual GRFs are used, and count how many. */
    int remap_table[this->virtual_grf_count];
    memset(remap_table, -1, sizeof(remap_table));
@@ -3020,24 +3023,50 @@ fs_visitor::run()
 
       opt_drop_redundant_mov_to_flags();
 
+#define OPT(pass, args...) do {                                            \
+      pass_num++;                                                          \
+      bool this_progress = pass(args);                                     \
+                                                                           \
+      if (unlikely(INTEL_DEBUG & DEBUG_OPTIMIZER) && this_progress) {      \
+         char filename[64];                                                \
+         snprintf(filename, 64, "fs%d-%04d-%02d-%02d-" #pass,              \
+                  dispatch_width, shader_prog->Name, iteration, pass_num); \
+                                                                           \
+         backend_visitor::dump_instructions(filename);                     \
+      }                                                                    \
+                                                                           \
+      progress = progress || this_progress;                                \
+   } while (false)
+
+      if (unlikely(INTEL_DEBUG & DEBUG_OPTIMIZER)) {
+         char filename[64];
+         snprintf(filename, 64, "fs%d-%04d-00-start",
+                  dispatch_width, shader_prog->Name);
+
+         backend_visitor::dump_instructions(filename);
+      }
+
       bool progress;
+      int iteration = 0;
       do {
 	 progress = false;
+         iteration++;
+         int pass_num = 0;
 
          compact_virtual_grfs();
 
-	 progress = remove_duplicate_mrf_writes() || progress;
+         OPT(remove_duplicate_mrf_writes);
 
-	 progress = opt_algebraic() || progress;
-	 progress = opt_cse() || progress;
-	 progress = opt_copy_propagate() || progress;
-         progress = opt_peephole_predicated_break() || progress;
-         progress = dead_code_eliminate() || progress;
-         progress = opt_peephole_sel() || progress;
-         progress = dead_control_flow_eliminate(this) || progress;
-         progress = opt_saturate_propagation() || progress;
-         progress = register_coalesce() || progress;
-	 progress = compute_to_mrf() || progress;
+         OPT(opt_algebraic);
+         OPT(opt_cse);
+         OPT(opt_copy_propagate);
+         OPT(opt_peephole_predicated_break);
+         OPT(dead_code_eliminate);
+         OPT(opt_peephole_sel);
+         OPT(dead_control_flow_eliminate, this);
+         OPT(opt_saturate_propagation);
+         OPT(register_coalesce);
+         OPT(compute_to_mrf);
       } while (progress);
 
       lower_uniform_pull_constant_loads();
