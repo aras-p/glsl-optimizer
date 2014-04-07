@@ -1430,12 +1430,6 @@ struct brw_context
    struct intel_screen *intelScreen;
 };
 
-static inline bool
-is_power_of_two(uint32_t value)
-{
-   return (value & (value - 1)) == 0;
-}
-
 /*======================================================================
  * brw_vtbl.c
  */

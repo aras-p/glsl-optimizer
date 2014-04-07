@@ -685,6 +685,17 @@ minify(unsigned value, unsigned levels)
 }
 
 /**
+ * Return true if the given value is a power of two.
+ *
+ * Note that this considers 0 a power of two.
+ */
+static inline bool
+is_power_of_two(unsigned value)
+{
+   return (value & (value - 1)) == 0;
+}
+
+/**
  * Align a value up to an alignment value
  *
  * If \c value is not already aligned to the requested alignment value, it
