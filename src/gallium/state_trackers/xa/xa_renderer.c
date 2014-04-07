@@ -406,6 +406,9 @@ renderer_copy_prepare(struct xa_context *r,
 				       PIPE_BIND_RENDER_TARGET));
     (void)screen;
 
+    renderer_bind_destination(r, dst_surface,
+			      dst_surface->width, dst_surface->height);
+
     /* set misc state we care about */
     {
 	struct pipe_blend_state blend;
@@ -434,9 +437,6 @@ renderer_copy_prepare(struct xa_context *r,
 	cso_single_sampler(r->cso, PIPE_SHADER_FRAGMENT, 0, &sampler);
 	cso_single_sampler_done(r->cso, PIPE_SHADER_FRAGMENT);
     }
-
-    renderer_bind_destination(r, dst_surface,
-			      dst_surface->width, dst_surface->height);
 
     /* texture/sampler view */
     {
