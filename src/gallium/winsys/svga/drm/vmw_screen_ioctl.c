@@ -37,6 +37,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "svgadump/svga_dump.h"
+#include "state_tracker/drm_driver.h"
 #include "vmw_screen.h"
 #include "vmw_context.h"
 #include "vmw_fence.h"
@@ -251,6 +252,63 @@ out_fail_create:
 }
 
 /**
+ * vmw_ioctl_surface_req - Fill in a struct surface_req
+ *
+ * @vws: Winsys screen
+ * @whandle: Surface handle
+ * @req: The struct surface req to fill in
+ * @needs_unref: This call takes a kernel surface reference that needs to
+ * be unreferenced.
+ *
+ * Returns 0 on success, negative error type otherwise.
+ * Fills in the surface_req structure according to handle type and kernel
+ * capabilities.
+ */
+static int
+vmw_ioctl_surface_req(const struct vmw_winsys_screen *vws,
+                      const struct winsys_handle *whandle,
+                      struct drm_vmw_surface_arg *req,
+                      boolean *needs_unref)
+{
+   int ret;
+
+   switch(whandle->type) {
+   case DRM_API_HANDLE_TYPE_SHARED:
+   case DRM_API_HANDLE_TYPE_KMS:
+      *needs_unref = FALSE;
+      req->handle_type = DRM_VMW_HANDLE_LEGACY;
+      req->sid = whandle->handle;
+      break;
+   case DRM_API_HANDLE_TYPE_FD:
+      if (!vws->ioctl.have_drm_2_6) {
+         uint32_t handle;
+
+         ret = drmPrimeFDToHandle(vws->ioctl.drm_fd, whandle->handle, &handle);
+         if (ret) {
+            vmw_error("Failed to get handle from prime fd %d.\n",
+                      (int) whandle->handle);
+            return -EINVAL;
+         }
+
+         *needs_unref = TRUE;
+         req->handle_type = DRM_VMW_HANDLE_LEGACY;
+         req->sid = handle;
+      } else {
+         *needs_unref = FALSE;
+         req->handle_type = DRM_VMW_HANDLE_PRIME;
+         req->sid = whandle->handle;
+      }
+      break;
+   default:
+      vmw_error("Attempt to import unsupported handle type %d.\n",
+                whandle->type);
+      return -EINVAL;
+   }
+
+   return 0;
+}
+
+/**
  * vmw_ioctl_gb_surface_ref - Put a reference on a guest-backed surface and
  * get surface information
  *
@@ -266,16 +324,18 @@ out_fail_create:
  */
 int
 vmw_ioctl_gb_surface_ref(struct vmw_winsys_screen *vws,
-                         uint32_t handle,
+                         const struct winsys_handle *whandle,
                          SVGA3dSurfaceFlags *flags,
                          SVGA3dSurfaceFormat *format,
                          uint32_t *numMipLevels,
+                         uint32_t *handle,
                          struct vmw_region **p_region)
 {
    union drm_vmw_gb_surface_reference_arg s_arg;
    struct drm_vmw_surface_arg *req = &s_arg.req;
    struct drm_vmw_gb_surface_ref_rep *rep = &s_arg.rep;
    struct vmw_region *region = NULL;
+   boolean needs_unref = FALSE;
    int ret;
 
    vmw_printf("%s flags %d format %d\n", __FUNCTION__, flags, format);
@@ -286,8 +346,11 @@ vmw_ioctl_gb_surface_ref(struct vmw_winsys_screen *vws,
       return -ENOMEM;
 
    memset(&s_arg, 0, sizeof(s_arg));
-   req->sid = handle;
+   ret = vmw_ioctl_surface_req(vws, whandle, req, &needs_unref);
+   if (ret)
+      goto out_fail_req;
 
+   *handle = req->sid;
    ret = drmCommandWriteRead(vws->ioctl.drm_fd, DRM_VMW_GB_SURFACE_REF,
 			     &s_arg, sizeof(s_arg));
 
@@ -300,12 +363,19 @@ vmw_ioctl_gb_surface_ref(struct vmw_winsys_screen *vws,
    region->size = rep->crep.backup_size;
    *p_region = region;
 
+   *handle = rep->crep.handle;
    *flags = rep->creq.svga3d_flags;
    *format = rep->creq.format;
    *numMipLevels = rep->creq.mip_levels;
 
+   if (needs_unref)
+      vmw_ioctl_surface_destroy(vws, *handle);
+
    return 0;
 out_fail_ref:
+   if (needs_unref)
+      vmw_ioctl_surface_destroy(vws, *handle);
+out_fail_req:
    if (region)
       FREE(region);
    return ret;
@@ -772,6 +842,8 @@ vmw_ioctl_init(struct vmw_winsys_screen *vws)
 
    have_drm_2_5 = version->version_major > 2 ||
       (version->version_major == 2 && version->version_minor > 4);
+   vws->ioctl.have_drm_2_6 = version->version_major > 2 ||
+      (version->version_major == 2 && version->version_minor > 5);
 
    memset(&gp_arg, 0, sizeof(gp_arg));
    gp_arg.param = DRM_VMW_PARAM_3D;

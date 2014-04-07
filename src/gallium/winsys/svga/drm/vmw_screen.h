@@ -74,6 +74,7 @@ struct vmw_winsys_screen
       struct vmw_cap_3d *cap_3d;
       uint64_t max_mob_memory;
       uint64_t max_surface_memory;
+      boolean have_drm_2_6;
    } ioctl;
 
    struct {
@@ -138,10 +139,11 @@ vmw_ioctl_gb_surface_create(struct vmw_winsys_screen *vws,
 
 int
 vmw_ioctl_gb_surface_ref(struct vmw_winsys_screen *vws,
-                         uint32_t handle,
+                         const struct winsys_handle *whandle,
                          SVGA3dSurfaceFlags *flags,
                          SVGA3dSurfaceFormat *format,
                          uint32_t *numMipLevels,
+                         uint32_t *handle,
                          struct vmw_region **p_region);
 
 void

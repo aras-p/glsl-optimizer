@@ -183,10 +183,11 @@ vmw_drm_gb_surface_from_handle(struct svga_winsys_screen *sws,
     struct vmw_buffer_desc desc;
     struct pb_manager *provider = vws->pools.gmr;
     struct pb_buffer *pb_buf;
+    uint32_t handle;
     int ret;
 
-    ret = vmw_ioctl_gb_surface_ref(vws, whandle->handle, &flags, format,
-                                   &mip_levels, &desc.region);
+    ret = vmw_ioctl_gb_surface_ref(vws, whandle, &flags, format,
+                                   &mip_levels, &handle, &desc.region);
 
     if (ret) {
 	fprintf(stderr, "Failed referencing shared surface. SID %d.\n"
@@ -209,7 +210,7 @@ vmw_drm_gb_surface_from_handle(struct svga_winsys_screen *sws,
     pipe_reference_init(&vsrf->refcnt, 1);
     p_atomic_set(&vsrf->validated, 0);
     vsrf->screen = vws;
-    vsrf->sid = whandle->handle;
+    vsrf->sid = handle;
     vsrf->size = vmw_region_size(desc.region);
 
     /*
