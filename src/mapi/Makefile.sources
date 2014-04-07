@@ -41,6 +41,7 @@ MAPI_FILES = \
 	$(MAPI_UTIL_FILES)
 
 MAPI_GLAPI_FILES = \
+	$(TOP)/src/mapi/entry.c \
 	$(TOP)/src/mapi/mapi_glapi.c \
 	$(TOP)/src/mapi/stub.c \
 	$(TOP)/src/mapi/stub.h \
