@@ -155,6 +155,12 @@ void
 fs_visitor::visit(ir_dereference_variable *ir)
 {
    fs_reg *reg = variable_storage(ir->var);
+
+   if (!reg) {
+      fail("Failed to find variable storage for %s\n", ir->var->name);
+      this->result = fs_reg(reg_null_d);
+      return;
+   }
    this->result = *reg;
 }
 
