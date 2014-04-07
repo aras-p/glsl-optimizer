@@ -1530,7 +1530,7 @@ do_common_optimization(exec_list *ir, bool linked,
       progress = do_constant_variable_unlinked(ir) || progress;
    progress = do_constant_folding(ir) || progress;
    progress = do_cse(ir) || progress;
-   progress = do_algebraic(ir) || progress;
+   progress = do_algebraic(ir, native_integers) || progress;
    progress = do_lower_jumps(ir) || progress;
    progress = do_vec_index_to_swizzle(ir) || progress;
    progress = lower_vector_insert(ir, false) || progress;
