@@ -29,6 +29,7 @@
 #include "main/macros.h"
 #include "main/format_unpack.h"
 #include "main/format_pack.h"
+#include "main/condrender.h"
 #include "s_context.h"
 
 
@@ -747,6 +748,13 @@ _swrast_BlitFramebuffer(struct gl_context *ctx,
       GL_STENCIL,
    };
    GLint i;
+
+   /* Page 679 of OpenGL 4.4 spec says:
+    *    "Added BlitFramebuffer to commands affected by conditional rendering in
+    *     section 10.10 (Bug 9562)."
+    */
+   if (!_mesa_check_conditional_render(ctx))
+      return; /* Do not blit */
 
    if (!_mesa_clip_blit(ctx, &srcX0, &srcY0, &srcX1, &srcY1,
                         &dstX0, &dstY0, &dstX1, &dstY1)) {
