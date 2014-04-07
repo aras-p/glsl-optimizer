@@ -1174,20 +1174,6 @@ vec4_visitor::emit_lrp(const dst_reg &dst,
    }
 }
 
-static bool
-is_16bit_constant(ir_rvalue *rvalue)
-{
-   ir_constant *constant = rvalue->as_constant();
-   if (!constant)
-      return false;
-
-   if (constant->type != glsl_type::int_type &&
-       constant->type != glsl_type::uint_type)
-      return false;
-
-   return constant->value.u[0] < (1 << 16);
-}
-
 void
 vec4_visitor::visit(ir_expression *ir)
 {
@@ -1371,12 +1357,12 @@ vec4_visitor::visit(ir_expression *ir)
 	  * operand.  If we can determine that one of the args is in the low
 	  * 16 bits, though, we can just emit a single MUL.
           */
-         if (is_16bit_constant(ir->operands[0])) {
+         if (ir->operands[0]->is_uint16_constant()) {
             if (brw->gen < 7)
                emit(MUL(result_dst, op[0], op[1]));
             else
                emit(MUL(result_dst, op[1], op[0]));
-         } else if (is_16bit_constant(ir->operands[1])) {
+         } else if (ir->operands[1]->is_uint16_constant()) {
             if (brw->gen < 7)
                emit(MUL(result_dst, op[1], op[0]));
             else

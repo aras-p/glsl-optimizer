@@ -265,6 +265,13 @@ public:
     */
    virtual bool is_basis() const;
 
+   /**
+    * Determine if an r-value is an unsigned integer constant which can be
+    * stored in 16 bits.
+    *
+    * \sa ir_constant::is_uint16_constant.
+    */
+   virtual bool is_uint16_constant() const { return false; }
 
    /**
     * Return a generic value of error_type.
@@ -2163,6 +2170,14 @@ public:
    virtual bool is_one() const;
    virtual bool is_negative_one() const;
    virtual bool is_basis() const;
+
+   /**
+    * Return true for constants that could be stored as 16-bit unsigned values.
+    *
+    * Note that this will return true even for signed integer ir_constants, as
+    * long as the value is non-negative and fits in 16-bits.
+    */
+   virtual bool is_uint16_constant() const;
 
    /**
     * Value of the constant.
