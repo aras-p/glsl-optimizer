@@ -381,6 +381,9 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_binop_min:
    case ir_binop_max:
    case ir_binop_pow:
+      assert(ir->operands[0]->type->base_type ==
+             ir->operands[1]->type->base_type);
+
       if (ir->operands[0]->type->is_scalar())
 	 assert(ir->operands[1]->type == ir->type);
       else if (ir->operands[1]->type->is_scalar())
