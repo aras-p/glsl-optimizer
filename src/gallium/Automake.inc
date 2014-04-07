@@ -55,6 +55,7 @@ DRI_VERSION_SCRIPT ?= $(top_srcdir)/src/gallium/state_trackers/dri/dri.link
 
 GALLIUM_DRI_LINKER_FLAGS = \
 	-shared \
+	-shrext .so \
 	-module \
 	-avoid-version \
 	$(GC_SECTIONS) \

@@ -12,7 +12,7 @@ all-local : .libs/install-gallium-links
 		link_dir=$(top_builddir)/$(LIB_DIR)/egl;	\
 	fi;							\
 	$(MKDIR_P) $$link_dir;					\
-	file_list=$(dri_LTLIBRARIES:%.la=.libs/%.$(LIB_EXT)*);	\
+	file_list=$(dri_LTLIBRARIES:%.la=.libs/%.so);		\
 	file_list+=$(vdpau_LTLIBRARIES:%.la=.libs/%.$(LIB_EXT)*); \
 	file_list+=$(egl_LTLIBRARIES:%.la=.libs/%.$(LIB_EXT)*);	\
 	file_list+=$(lib_LTLIBRARIES:%.la=.libs/%.$(LIB_EXT)*);	\
