@@ -697,7 +697,7 @@ fs_visitor::no16(const char *format, ...)
    } else {
       simd16_unsupported = true;
 
-      if (INTEL_DEBUG & DEBUG_PERF) {
+      if (brw->perf_debug) {
          if (no16_msg)
             ralloc_vasprintf_append(&no16_msg, format, va);
          else
