@@ -458,18 +458,27 @@ fs_visitor::visit(ir_expression *ir)
 	  * of one of the operands (src0 on gen6, src1 on gen7).  The
 	  * MACH accumulates in the contribution of the upper 16 bits
 	  * of that operand.
-	  *
-	  * FINISHME: Emit just the MUL if we know an operand is small
-	  * enough.
-	  */
-	 if (brw->gen >= 7)
-	    no16("SIMD16 explicit accumulator operands unsupported\n");
+          */
+         if (ir->operands[0]->is_uint16_constant()) {
+            if (brw->gen < 7)
+               emit(MUL(this->result, op[0], op[1]));
+            else
+               emit(MUL(this->result, op[1], op[0]));
+         } else if (ir->operands[1]->is_uint16_constant()) {
+            if (brw->gen < 7)
+               emit(MUL(this->result, op[1], op[0]));
+            else
+               emit(MUL(this->result, op[0], op[1]));
+         } else {
+            if (brw->gen >= 7)
+               no16("SIMD16 explicit accumulator operands unsupported\n");
 
-	 struct brw_reg acc = retype(brw_acc_reg(), this->result.type);
+            struct brw_reg acc = retype(brw_acc_reg(), this->result.type);
 
-	 emit(MUL(acc, op[0], op[1]));
-	 emit(MACH(reg_null_d, op[0], op[1]));
-	 emit(MOV(this->result, fs_reg(acc)));
+            emit(MUL(acc, op[0], op[1]));
+            emit(MACH(reg_null_d, op[0], op[1]));
+            emit(MOV(this->result, fs_reg(acc)));
+         }
       } else {
 	 emit(MUL(this->result, op[0], op[1]));
       }
