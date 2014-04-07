@@ -58,6 +58,21 @@ is_dominated_by_previous_instruction(vec4_instruction *inst)
 }
 
 static bool
+is_channel_updated(vec4_instruction *inst, src_reg *values[4], int ch)
+{
+   const src_reg *src = values[ch];
+
+   /* consider GRF only */
+   assert(inst->dst.file == GRF);
+   if (!src || src->file != GRF)
+      return false;
+
+   return (src->reg == inst->dst.reg &&
+	   src->reg_offset == inst->dst.reg_offset &&
+	   inst->dst.writemask & (1 << BRW_GET_SWZ(src->swizzle, ch)));
+}
+
+static bool
 try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
 {
    /* For constant propagation, we only handle the same constant
@@ -357,11 +372,7 @@ vec4_visitor::opt_copy_propagation()
 	 else {
 	    for (int i = 0; i < virtual_grf_reg_count; i++) {
 	       for (int j = 0; j < 4; j++) {
-		  if (inst->dst.writemask & (1 << j) &&
-		      cur_value[i][j] &&
-		      cur_value[i][j]->file == GRF &&
-		      cur_value[i][j]->reg == inst->dst.reg &&
-		      cur_value[i][j]->reg_offset == inst->dst.reg_offset) {
+		  if (is_channel_updated(inst, cur_value[i], j)){
 		     cur_value[i][j] = NULL;
 		  }
 	       }
