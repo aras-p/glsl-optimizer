@@ -202,7 +202,8 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 				   ) || progress;
 
 	 progress = do_common_optimization(shader->base.ir, true, true, 32,
-                                           &ctx->ShaderCompilerOptions[stage])
+                                           &ctx->ShaderCompilerOptions[stage],
+                                           ctx->Const.NativeIntegers)
 	   || progress;
       } while (progress);
 

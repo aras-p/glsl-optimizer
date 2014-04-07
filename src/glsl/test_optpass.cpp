@@ -64,7 +64,7 @@ do_optimization(struct exec_list *ir, const char *optimization,
 
    if (sscanf(optimization, "do_common_optimization ( %d , %d ) ",
               &int_0, &int_1) == 2) {
-      return do_common_optimization(ir, int_0 != 0, false, int_1, options);
+      return do_common_optimization(ir, int_0 != 0, false, int_1, options, true);
    } else if (strcmp(optimization, "do_algebraic") == 0) {
       return do_algebraic(ir);
    } else if (strcmp(optimization, "do_constant_folding") == 0) {

@@ -3008,7 +3008,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
 	 progress = do_common_optimization(ir, true, true,
 					   options->MaxUnrollIterations,
-                                           options)
+                                           options, ctx->Const.NativeIntegers)
 	   || progress;
 
 	 progress = lower_quadop_vector(ir, true) || progress;
