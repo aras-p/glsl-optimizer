@@ -371,10 +371,10 @@ firmware_present(struct pipe_screen *pscreen, enum pipe_video_profile profile)
       int size, oclass;
       if (chipset < 0xc0)
          oclass = 0x85b1;
-      else if (vp5)
-         oclass = 0x95b1;
-      else
+      else if (chipset < 0xe0)
          oclass = 0x90b1;
+      else
+         oclass = 0x95b1;
 
       if (chipset < 0xc0) {
          data = &nv04_data;
