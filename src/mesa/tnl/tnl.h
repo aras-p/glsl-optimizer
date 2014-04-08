@@ -77,15 +77,6 @@ struct _mesa_index_buffer;
 
 void
 _tnl_draw_prims( struct gl_context *ctx,
-		 const struct gl_client_array *arrays[],
-		 const struct _mesa_prim *prim,
-		 GLuint nr_prims,
-		 const struct _mesa_index_buffer *ib,
-		 GLuint min_index,
-		 GLuint max_index);
-
-void
-_tnl_vbo_draw_prims( struct gl_context *ctx,
 		     const struct _mesa_prim *prim,
 		     GLuint nr_prims,
 		     const struct _mesa_index_buffer *ib,

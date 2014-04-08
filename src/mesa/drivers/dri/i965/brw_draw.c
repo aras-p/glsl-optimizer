@@ -550,17 +550,6 @@ void brw_draw_prims( struct gl_context *ctx,
       return;
    }
 
-   /* If we're going to have to upload any of the user's vertex arrays, then
-    * get the minimum and maximum of their index buffer so we know what range
-    * to upload.
-    */
-   if (!index_bounds_valid &&
-       (ctx->RenderMode != GL_RENDER || !vbo_all_varyings_in_vbos(arrays))) {
-      perf_debug("Scanning index buffer to compute index buffer bounds.  "
-                 "Use glDrawRangeElements() to avoid this.\n");
-      vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index, nr_prims);
-   }
-
    /* Do GL_SELECT and GL_FEEDBACK rendering using swrast, even though it
     * won't support all the extensions we support.
     */
@@ -569,8 +558,19 @@ void brw_draw_prims( struct gl_context *ctx,
                  _mesa_lookup_enum_by_nr(ctx->RenderMode));
       _swsetup_Wakeup(ctx);
       _tnl_wakeup(ctx);
-      _tnl_draw_prims(ctx, arrays, prims, nr_prims, ib, min_index, max_index);
+      _tnl_draw_prims(ctx, prims, nr_prims, ib,
+                      index_bounds_valid, min_index, max_index, NULL, NULL);
       return;
+   }
+
+   /* If we're going to have to upload any of the user's vertex arrays, then
+    * get the minimum and maximum of their index buffer so we know what range
+    * to upload.
+    */
+   if (!index_bounds_valid && !vbo_all_varyings_in_vbos(arrays)) {
+      perf_debug("Scanning index buffer to compute index buffer bounds.  "
+                 "Use glDrawRangeElements() to avoid this.\n");
+      vbo_get_minmax_indices(ctx, prims, ib, &min_index, &max_index, nr_prims);
    }
 
    /* Try drawing with the hardware, but don't do anything else if we can't

@@ -411,7 +411,11 @@ static void unmap_vbos( struct gl_context *ctx,
 }
 
 
-void _tnl_vbo_draw_prims(struct gl_context *ctx,
+/* This is the main entrypoint into the slimmed-down software tnl
+ * module.  In a regular swtnl driver, this can be plugged straight
+ * into the vbo->Driver.DrawPrims() callback.
+ */
+void _tnl_draw_prims(struct gl_context *ctx,
 			 const struct _mesa_prim *prim,
 			 GLuint nr_prims,
 			 const struct _mesa_index_buffer *ib,
@@ -421,31 +425,15 @@ void _tnl_vbo_draw_prims(struct gl_context *ctx,
 			 struct gl_transform_feedback_object *tfb_vertcount,
 			 struct gl_buffer_object *indirect)
 {
-   const struct gl_client_array **arrays = ctx->Array._DrawArrays;
-
-   if (!index_bounds_valid)
-      vbo_get_minmax_indices(ctx, prim, ib, &min_index, &max_index, nr_prims);
-
-   _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
-}
-
-/* This is the main entrypoint into the slimmed-down software tnl
- * module.  In a regular swtnl driver, this can be plugged straight
- * into the vbo->Driver.DrawPrims() callback.
- */
-void _tnl_draw_prims( struct gl_context *ctx,
-		      const struct gl_client_array *arrays[],
-		      const struct _mesa_prim *prim,
-		      GLuint nr_prims,
-		      const struct _mesa_index_buffer *ib,
-		      GLuint min_index,
-		      GLuint max_index)
-{
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   const struct gl_client_array **arrays = ctx->Array._DrawArrays;
    const GLuint TEST_SPLIT = 0;
    const GLint max = TEST_SPLIT ? 8 : tnl->vb.Size - MAX_CLIPPED_VERTICES;
    GLint max_basevertex = prim->basevertex;
    GLuint i;
+
+   if (!index_bounds_valid)
+      vbo_get_minmax_indices(ctx, prim, ib, &min_index, &max_index, nr_prims);
 
    /* Mesa core state should have been validated already */
    assert(ctx->NewState == 0x0);
@@ -471,7 +459,7 @@ void _tnl_draw_prims( struct gl_context *ctx,
        */
       vbo_rebase_prims( ctx, arrays, prim, nr_prims, ib, 
 			min_index, max_index,
-			_tnl_vbo_draw_prims );
+			_tnl_draw_prims );
       return;
    }
    else if ((GLint)max_index + max_basevertex > max) {
@@ -489,7 +477,7 @@ void _tnl_draw_prims( struct gl_context *ctx,
        */
       vbo_split_prims( ctx, arrays, prim, nr_prims, ib, 
 		       0, max_index + prim->basevertex,
-		       _tnl_vbo_draw_prims,
+		       _tnl_draw_prims,
 		       &limits );
    }
    else {

@@ -504,9 +504,9 @@ TAG(vbo_check_render_prims)(struct gl_context *ctx,
 				      tfb_vertcount, indirect);
 
 	if (nctx->fallback == SWTNL)
-		_tnl_vbo_draw_prims(ctx, prims, nr_prims, ib,
-				    index_bounds_valid, min_index, max_index,
-				    tfb_vertcount, indirect);
+		_tnl_draw_prims(ctx, prims, nr_prims, ib,
+				index_bounds_valid, min_index, max_index,
+				tfb_vertcount, indirect);
 }
 
 void
