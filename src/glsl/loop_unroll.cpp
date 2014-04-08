@@ -63,12 +63,13 @@ is_break(ir_instruction *ir)
 class loop_unroll_count : public ir_hierarchical_visitor {
 public:
    int nodes;
-   bool fail;
+   /* If there are nested loops, the node count will be inaccurate. */
+   bool nested_loop;
 
    loop_unroll_count(exec_list *list)
    {
       nodes = 0;
-      fail = false;
+      nested_loop = false;
 
       run(list);
    }
@@ -87,7 +88,7 @@ public:
 
    virtual ir_visitor_status visit_enter(ir_loop *)
    {
-      fail = true;
+      nested_loop = true;
       return visit_continue;
    }
 };
@@ -258,7 +259,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
     */
    loop_unroll_count count(&ir->body_instructions);
 
-   if (count.fail || count.nodes * iterations > max_iterations * 5)
+   if (count.nested_loop || count.nodes * iterations > max_iterations * 5)
       return visit_continue;
 
    /* Note: the limiting terminator contributes 1 to ls->num_loop_jumps.
