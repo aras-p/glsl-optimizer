@@ -722,6 +722,8 @@ dri_device_create(int fd)
    int ret;
 
    dri = calloc(1, sizeof *dri);
+   if (!dri)
+      return NULL;
 
    dri->base.base.fd = fd;
    dri->base.base.bo_create = gbm_dri_bo_create;
