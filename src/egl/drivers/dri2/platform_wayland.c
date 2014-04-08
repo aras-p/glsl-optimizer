@@ -1049,7 +1049,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 
    if (dri2_dpy->image->base.version < 7 ||
        dri2_dpy->image->createImageFromFds == NULL)
-      dri2_dpy->capabilities &= WL_DRM_CAPABILITY_PRIME;
+      dri2_dpy->capabilities &= ~WL_DRM_CAPABILITY_PRIME;
 
    types = EGL_WINDOW_BIT;
    for (i = 0; dri2_dpy->driver_configs[i]; i++) {
