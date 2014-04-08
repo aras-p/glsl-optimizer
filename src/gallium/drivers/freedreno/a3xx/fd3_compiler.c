@@ -2054,12 +2054,6 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 	}
 }
 
-static void
-decl_samp(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
-{
-	ctx->so->samplers_count++;
-}
-
 /* from TGSI perspective, we actually have inputs.  But most of the "inputs"
  * for a fragment shader are just bary.f instructions.  The *actual* inputs
  * from the hw perspective are the frag_pos and optionally frag_coord and
@@ -2160,8 +2154,6 @@ compile_instructions(struct fd3_compile_context *ctx)
 				decl_out(ctx, decl);
 			} else if (decl->Declaration.File == TGSI_FILE_INPUT) {
 				decl_in(ctx, decl);
-			} else if (decl->Declaration.File == TGSI_FILE_SAMPLER) {
-				decl_samp(ctx, decl);
 			}
 			break;
 		}
@@ -2320,7 +2312,7 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 	}
 
 	ret = ir3_block_ra(block, so->type, key.half_precision,
-			so->frag_coord, so->frag_face);
+			so->frag_coord, so->frag_face, &so->has_samp);
 	if (ret)
 		goto out;
 

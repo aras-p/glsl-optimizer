@@ -177,7 +177,7 @@ emit_textures(struct fd_ringbuffer *ring,
 				CP_LOAD_STATE_1_EXT_SRC_ADDR(0));
 		for (i = 0; i < tex->num_samplers; i++) {
 			static const struct fd3_sampler_stateobj dummy_sampler = {};
-			struct fd3_sampler_stateobj *sampler = tex->samplers[i] ?
+			const struct fd3_sampler_stateobj *sampler = tex->samplers[i] ?
 					fd3_sampler_stateobj(tex->samplers[i]) :
 					&dummy_sampler;
 			OUT_RING(ring, sampler->texsamp0);
@@ -542,11 +542,19 @@ fd3_emit_state(struct fd_context *ctx, struct fd_ringbuffer *ring,
 	if (dirty & (FD_DIRTY_VERTTEX | FD_DIRTY_FRAGTEX))
 		fd_wfi(ctx, ring);
 
-	if (dirty & FD_DIRTY_VERTTEX)
-		emit_textures(ring, SB_VERT_TEX, &ctx->verttex);
+	if (dirty & FD_DIRTY_VERTTEX) {
+		if (vp->has_samp)
+			emit_textures(ring, SB_VERT_TEX, &ctx->verttex);
+		else
+			dirty &= ~FD_DIRTY_VERTTEX;
+	}
 
-	if (dirty & FD_DIRTY_FRAGTEX)
-		emit_textures(ring, SB_FRAG_TEX, &ctx->fragtex);
+	if (dirty & FD_DIRTY_FRAGTEX) {
+		if (fp->has_samp)
+			emit_textures(ring, SB_FRAG_TEX, &ctx->fragtex);
+		else
+			dirty &= ~FD_DIRTY_FRAGTEX;
+	}
 
 	ctx->dirty &= ~dirty;
 }

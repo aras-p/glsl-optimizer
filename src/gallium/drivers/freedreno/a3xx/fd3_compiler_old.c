@@ -1417,7 +1417,7 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 static void
 decl_samp(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 {
-	ctx->so->samplers_count++;
+	ctx->so->has_samp = true;
 }
 
 static void

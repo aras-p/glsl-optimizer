@@ -120,7 +120,7 @@ create_variant(struct fd3_shader_stateobj *so, struct fd3_shader_key key)
 			v->inputs_count = 0;
 			v->outputs_count = 0;
 			v->total_in = 0;
-			v->samplers_count = 0;
+			v->has_samp = false;
 			v->immediates_count = 0;
 		}
 	} else {
@@ -397,7 +397,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 			A3XX_SP_VS_CTRL_REG0_INOUTREGOVERLAP(0) |
 			A3XX_SP_VS_CTRL_REG0_THREADSIZE(TWO_QUADS) |
 			A3XX_SP_VS_CTRL_REG0_SUPERTHREADMODE |
-			COND(vp->samplers_count > 0, A3XX_SP_VS_CTRL_REG0_PIXLODENABLE) |
+			COND(vp->has_samp, A3XX_SP_VS_CTRL_REG0_PIXLODENABLE) |
 			A3XX_SP_VS_CTRL_REG0_LENGTH(vp->instrlen));
 	OUT_RING(ring, A3XX_SP_VS_CTRL_REG1_CONSTLENGTH(vp->constlen) |
 			A3XX_SP_VS_CTRL_REG1_INITIALOUTSTANDING(vp->total_in) |
@@ -475,7 +475,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 				A3XX_SP_FS_CTRL_REG0_INOUTREGOVERLAP(1) |
 				A3XX_SP_FS_CTRL_REG0_THREADSIZE(FOUR_QUADS) |
 				A3XX_SP_FS_CTRL_REG0_SUPERTHREADMODE |
-				COND(fp->samplers_count > 0, A3XX_SP_FS_CTRL_REG0_PIXLODENABLE) |
+				COND(fp->has_samp > 0, A3XX_SP_FS_CTRL_REG0_PIXLODENABLE) |
 				A3XX_SP_FS_CTRL_REG0_LENGTH(fp->instrlen));
 		OUT_RING(ring, A3XX_SP_FS_CTRL_REG1_CONSTLENGTH(fp->constlen) |
 				A3XX_SP_FS_CTRL_REG1_INITIALOUTSTANDING(fp->total_in) |

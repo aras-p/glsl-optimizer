@@ -56,6 +56,7 @@ struct ir3_ra_ctx {
 	bool half_precision;
 	bool frag_coord;
 	bool frag_face;
+	bool has_samp;
 	int cnt;
 	bool error;
 };
@@ -654,8 +655,17 @@ static void legalize(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 		if (is_sfu(n))
 			regmask_set(&needs_ss, n->regs[0]);
 
-		if (is_tex(n))
+		if (is_tex(n)) {
+			/* this ends up being the # of samp instructions.. but that
+			 * is ok, everything else only cares whether it is zero or
+			 * not.  We do this here, rather than when we encounter a
+			 * SAMP decl, because (especially in binning pass shader)
+			 * the samp instruction(s) could get eliminated if the
+			 * result is not used.
+			 */
+			ctx->has_samp = true;
 			regmask_set(&needs_sy, n->regs[0]);
+		}
 
 		/* both tex/sfu appear to not always immediately consume
 		 * their src register(s):
@@ -730,7 +740,8 @@ static int block_ra(struct ir3_ra_ctx *ctx, struct ir3_block *block)
 }
 
 int ir3_block_ra(struct ir3_block *block, enum shader_t type,
-		bool half_precision, bool frag_coord, bool frag_face)
+		bool half_precision, bool frag_coord, bool frag_face,
+		bool *has_samp)
 {
 	struct ir3_ra_ctx ctx = {
 			.block = block,
@@ -739,6 +750,11 @@ int ir3_block_ra(struct ir3_block *block, enum shader_t type,
 			.frag_coord = frag_coord,
 			.frag_face = frag_face,
 	};
+	int ret;
+
 	ir3_shader_clear_mark(block->shader);
-	return block_ra(&ctx, block);
+	ret = block_ra(&ctx, block);
+	*has_samp = ctx.has_samp;
+
+	return ret;
 }

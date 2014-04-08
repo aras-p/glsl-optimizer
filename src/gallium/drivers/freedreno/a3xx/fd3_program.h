@@ -107,8 +107,8 @@ struct fd3_shader_variant {
 
 	unsigned total_in;       /* sum of inputs (scalar) */
 
-	/* samplers: */
-	unsigned samplers_count;
+	/* do we have one or more texture sample instructions: */
+	bool has_samp;
 
 	/* const reg # of first immediate, ie. 1 == c1
 	 * (not regid, because TGSI thinks in terms of vec4 registers,
