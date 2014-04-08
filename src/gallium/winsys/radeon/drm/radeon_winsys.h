@@ -211,13 +211,12 @@ struct radeon_info {
     uint32_t                    r600_clock_crystal_freq;
     uint32_t                    r600_tiling_config;
     uint32_t                    r600_num_tile_pipes;
-    uint32_t                    r600_backend_map;
-    uint32_t                    r600_va_start;
-    uint32_t                    r600_ib_vm_max_size;
     uint32_t                    r600_max_pipes;
-    boolean                     r600_backend_map_valid;
     boolean                     r600_virtual_address;
     boolean                     r600_has_dma;
+
+    uint32_t                    r600_backend_map;
+    boolean                     r600_backend_map_valid;
 
     boolean                     si_tile_mode_array_valid;
     uint32_t                    si_tile_mode_array[32];

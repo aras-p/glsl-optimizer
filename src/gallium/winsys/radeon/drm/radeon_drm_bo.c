@@ -654,7 +654,7 @@ struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws)
     pipe_mutex_init(mgr->bo_va_mutex);
 
     mgr->va = rws->info.r600_virtual_address;
-    mgr->va_offset = rws->info.r600_va_start;
+    mgr->va_offset = rws->va_start;
     list_inithead(&mgr->va_holes);
 
     return &mgr->base;
