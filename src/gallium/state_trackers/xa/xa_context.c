@@ -238,6 +238,8 @@ xa_copy(struct xa_context *ctx,
 {
     struct pipe_box src_box;
 
+    xa_scissor_update(ctx, dx, dy, dx + width, dy + height);
+
     if (ctx->simple_copy) {
 	u_box_2d(sx, sy, width, height, &src_box);
 	ctx->pipe->resource_copy_region(ctx->pipe,
@@ -324,6 +326,7 @@ xa_solid_prepare(struct xa_context *ctx, struct xa_surface *dst,
 XA_EXPORT void
 xa_solid(struct xa_context *ctx, int x, int y, int width, int height)
 {
+    xa_scissor_update(ctx, x, y, x + width, y + height);
     renderer_solid(ctx, x, y, x + width, y + height, ctx->solid_color);
 }
 

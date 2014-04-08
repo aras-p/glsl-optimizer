@@ -512,6 +512,8 @@ xa_composite_rect(struct xa_context *ctx,
 	const float *src_matrix = NULL;
 	const float *mask_matrix = NULL;
 
+	xa_scissor_update(ctx, dstX, dstY, dstX + width, dstY + height);
+
 	if (comp->src->has_transform)
 	    src_matrix = comp->src->transform;
 	if (comp->mask && comp->mask->has_transform)

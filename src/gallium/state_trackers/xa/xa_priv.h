@@ -38,6 +38,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 
+#include "util/u_math.h"
+
 #if defined(__GNUC__) && __GNUC__ >= 4
 #define XA_EXPORT __attribute__ ((visibility("default")))
 #else
@@ -105,6 +107,12 @@ struct xa_context {
     struct xa_surface *dst;
     struct pipe_surface *srf;
 
+    /* destination scissor state.. we scissor out untouched parts
+     * of the dst for the benefit of tilers:
+     */
+    struct pipe_scissor_state scissor;
+    int scissor_valid;
+
     int simple_copy;
 
     int has_solid_color;
@@ -114,6 +122,27 @@ struct xa_context {
     struct pipe_sampler_view *bound_sampler_views[XA_MAX_SAMPLERS];
     const struct xa_composite *comp;
 };
+
+static INLINE void
+xa_scissor_reset(struct xa_context *ctx)
+{
+    ctx->scissor.maxx = 0;
+    ctx->scissor.maxy = 0;
+    ctx->scissor.minx = ~0;
+    ctx->scissor.miny = ~0;
+    ctx->scissor_valid = FALSE;
+}
+
+static INLINE void
+xa_scissor_update(struct xa_context *ctx, unsigned minx, unsigned miny,
+		unsigned maxx, unsigned maxy)
+{
+    ctx->scissor.maxx = MAX2(ctx->scissor.maxx, maxx);
+    ctx->scissor.maxy = MAX2(ctx->scissor.maxy, maxy);
+    ctx->scissor.minx = MIN2(ctx->scissor.minx, minx);
+    ctx->scissor.miny = MIN2(ctx->scissor.miny, miny);
+    ctx->scissor_valid = TRUE;
+}
 
 enum xa_vs_traits {
     VS_COMPOSITE = 1 << 0,

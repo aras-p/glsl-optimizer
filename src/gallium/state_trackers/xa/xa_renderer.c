@@ -79,11 +79,22 @@ renderer_draw(struct xa_context *r)
     if (!r->buffer_size)
 	return;
 
+    if (!r->scissor_valid) {
+	r->scissor.minx = 0;
+	r->scissor.miny = 0;
+	r->scissor.maxx = r->dst->tex->width0;
+	r->scissor.maxy = r->dst->tex->height0;
+    }
+
+    r->pipe->set_scissor_states(r->pipe, 0, 1, &r->scissor);
+
     cso_set_vertex_elements(r->cso, r->attrs_per_vertex, r->velems);
     util_draw_user_vertex_buffer(r->cso, r->buffer, PIPE_PRIM_QUADS,
                                  num_verts,	/* verts */
                                  r->attrs_per_vertex);	/* attribs/vert */
     r->buffer_size = 0;
+
+    xa_scissor_reset(r);
 }
 
 static INLINE void
@@ -111,6 +122,7 @@ renderer_init_state(struct xa_context *r)
     raster.half_pixel_center = 1;
     raster.bottom_edge_rule = 1;
     raster.depth_clip = 1;
+    raster.scissor = 1;
     cso_set_rasterizer(r->cso, &raster);
 
     /* vertex elements state */
@@ -332,6 +344,8 @@ renderer_bind_destination(struct xa_context *r,
 
     struct pipe_framebuffer_state fb;
     struct pipe_viewport_state viewport;
+
+    xa_scissor_reset(r);
 
     /* Framebuffer uses actual surface width/height
      */
