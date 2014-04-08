@@ -74,6 +74,7 @@
 #include "link_varyings.h"
 #include "ir_optimization.h"
 #include "ir_rvalue_visitor.h"
+#include "ir_uniform.h"
 
 extern "C" {
 #include "main/shaderobj.h"
@@ -2224,6 +2225,115 @@ check_image_resources(struct gl_context *ctx, struct gl_shader_program *prog)
       linker_error(prog, "Too many combined image uniforms and fragment outputs");
 }
 
+
+/**
+ * Initializes explicit location slots to INACTIVE_UNIFORM_EXPLICIT_LOCATION
+ * for a variable, checks for overlaps between other uniforms using explicit
+ * locations.
+ */
+static bool
+reserve_explicit_locations(struct gl_shader_program *prog,
+                           string_to_uint_map *map, ir_variable *var)
+{
+   unsigned slots = var->type->uniform_locations();
+   unsigned max_loc = var->data.location + slots - 1;
+
+   /* Resize remap table if locations do not fit in the current one. */
+   if (max_loc + 1 > prog->NumUniformRemapTable) {
+      prog->UniformRemapTable =
+         reralloc(prog, prog->UniformRemapTable,
+                  gl_uniform_storage *,
+                  max_loc + 1);
+
+      if (!prog->UniformRemapTable) {
+         linker_error(prog, "Out of memory during linking.");
+         return false;
+      }
+
+      /* Initialize allocated space. */
+      for (unsigned i = prog->NumUniformRemapTable; i < max_loc + 1; i++)
+         prog->UniformRemapTable[i] = NULL;
+
+      prog->NumUniformRemapTable = max_loc + 1;
+   }
+
+   for (unsigned i = 0; i < slots; i++) {
+      unsigned loc = var->data.location + i;
+
+      /* Check if location is already used. */
+      if (prog->UniformRemapTable[loc] == INACTIVE_UNIFORM_EXPLICIT_LOCATION) {
+
+         /* Possibly same uniform from a different stage, this is ok. */
+         unsigned hash_loc;
+         if (map->get(hash_loc, var->name) && hash_loc == loc - i)
+               continue;
+
+         /* ARB_explicit_uniform_location specification states:
+          *
+          *     "No two default-block uniform variables in the program can have
+          *     the same location, even if they are unused, otherwise a compiler
+          *     or linker error will be generated."
+          */
+         linker_error(prog,
+                      "location qualifier for uniform %s overlaps"
+                      "previously used location",
+                      var->name);
+         return false;
+      }
+
+      /* Initialize location as inactive before optimization
+       * rounds and location assignment.
+       */
+      prog->UniformRemapTable[loc] = INACTIVE_UNIFORM_EXPLICIT_LOCATION;
+   }
+
+   /* Note, base location used for arrays. */
+   map->put(var->data.location, var->name);
+
+   return true;
+}
+
+/**
+ * Check and reserve all explicit uniform locations, called before
+ * any optimizations happen to handle also inactive uniforms and
+ * inactive array elements that may get trimmed away.
+ */
+static void
+check_explicit_uniform_locations(struct gl_context *ctx,
+                                 struct gl_shader_program *prog)
+{
+   if (!ctx->Extensions.ARB_explicit_uniform_location)
+      return;
+
+   /* This map is used to detect if overlapping explicit locations
+    * occur with the same uniform (from different stage) or a different one.
+    */
+   string_to_uint_map *uniform_map = new string_to_uint_map;
+
+   if (!uniform_map) {
+      linker_error(prog, "Out of memory during linking.");
+      return;
+   }
+
+   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
+      struct gl_shader *sh = prog->_LinkedShaders[i];
+
+      if (!sh)
+         continue;
+
+      foreach_list(node, sh->ir) {
+         ir_variable *var = ((ir_instruction *)node)->as_variable();
+         if ((var && var->data.mode == ir_var_uniform) &&
+             var->data.explicit_location) {
+            if (!reserve_explicit_locations(prog, uniform_map, var))
+               return;
+         }
+      }
+   }
+
+   delete uniform_map;
+}
+
 void
 link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 {
@@ -2371,6 +2481,10 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
       if (prog->_LinkedShaders[prev] != NULL)
          break;
    }
+
+   check_explicit_uniform_locations(ctx, prog);
+   if (!prog->LinkStatus)
+      goto done;
 
    /* Validate the inputs of each stage with the output of the preceding
     * stage.

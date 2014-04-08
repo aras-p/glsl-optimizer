@@ -32,6 +32,11 @@
 
 #include "program/prog_parameter.h"  /* For union gl_constant_value. */
 
+/**
+ * Used by GL_ARB_explicit_uniform_location extension code in the linker
+ * and glUniform* functions to identify inactive explicit uniform locations.
+ */
+#define INACTIVE_UNIFORM_EXPLICIT_LOCATION ((gl_uniform_storage *) -1)
 
 #ifdef __cplusplus
 extern "C" {
