@@ -8,19 +8,9 @@ static struct pipe_screen *
 create_screen(int fd)
 {
    struct radeon_winsys *sws;
-   struct pipe_screen *screen;
 
-   sws = radeon_drm_winsys_create(fd);
-   if (!sws)
-      return NULL;
-
-   screen = r300_screen_create(sws);
-   if (!screen)
-      return NULL;
-
-   screen = debug_screen_wrap(screen);
-
-   return screen;
+   sws = radeon_drm_winsys_create(fd, r300_screen_create);
+   return sws ? debug_screen_wrap(sws->screen) : NULL;
 }
 
 PUBLIC

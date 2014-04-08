@@ -586,7 +586,8 @@ static bool radeon_winsys_unref(struct radeon_winsys *ws)
     return destroy;
 }
 
-PUBLIC struct radeon_winsys *radeon_drm_winsys_create(int fd)
+PUBLIC struct radeon_winsys *
+radeon_drm_winsys_create(int fd, radeon_screen_create_t screen_create)
 {
     struct radeon_drm_winsys *ws;
 
@@ -609,7 +610,6 @@ PUBLIC struct radeon_winsys *radeon_drm_winsys_create(int fd)
     }
 
     ws->fd = fd;
-    util_hash_table_set(fd_tab, intptr_to_pointer(fd), ws);
 
     if (!do_winsys_init(ws))
         goto fail;
@@ -651,6 +651,20 @@ PUBLIC struct radeon_winsys *radeon_drm_winsys_create(int fd)
     pipe_semaphore_init(&ws->cs_queued, 0);
     if (ws->num_cpus > 1 && debug_get_option_thread())
         ws->thread = pipe_thread_create(radeon_drm_cs_emit_ioctl, ws);
+
+    /* Create the screen at the end. The winsys must be initialized
+     * completely.
+     *
+     * Alternatively, we could create the screen based on "ws->gen"
+     * and link all drivers into one binary blob. */
+    ws->base.screen = screen_create(&ws->base);
+    if (!ws->base.screen) {
+        radeon_winsys_destroy(&ws->base);
+        pipe_mutex_unlock(fd_tab_mutex);
+        return NULL;
+    }
+
+    util_hash_table_set(fd_tab, intptr_to_pointer(fd), ws);
 
     /* We must unlock the mutex once the winsys is fully initialized, so that
      * other threads attempting to create the winsys from the same fd will

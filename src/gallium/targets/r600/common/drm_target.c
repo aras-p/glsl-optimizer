@@ -35,19 +35,8 @@ static struct pipe_screen *create_screen(int fd)
 {
    struct radeon_winsys *radeon;
 
-   radeon = radeon_drm_winsys_create(fd);
-   if (!radeon)
-      return NULL;
-
-   if (!radeon->screen) {
-      radeon->screen = r600_screen_create(radeon);
-      if (!radeon->screen)
-         return NULL;
-
-      radeon->screen = debug_screen_wrap(radeon->screen);
-   }
-
-   return radeon->screen;
+   radeon = radeon_drm_winsys_create(fd, r600_screen_create);
+   return radeon ? debug_screen_wrap(radeon->screen) : NULL;
 }
 
 static const struct drm_conf_ret throttle_ret = {

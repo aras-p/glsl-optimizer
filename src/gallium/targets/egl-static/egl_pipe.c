@@ -119,19 +119,9 @@ pipe_r300_create_screen(int fd)
 {
 #if _EGL_PIPE_R300
    struct radeon_winsys *sws;
-   struct pipe_screen *screen;
 
-   sws = radeon_drm_winsys_create(fd);
-   if (!sws)
-      return NULL;
-
-   screen = r300_screen_create(sws);
-   if (!screen)
-      return NULL;
-
-   screen = debug_screen_wrap(screen);
-
-   return screen;
+   sws = radeon_drm_winsys_create(fd, r300_screen_create);
+   return sws ? debug_screen_wrap(sws->screen) : NULL;
 #else
    return NULL;
 #endif
@@ -142,19 +132,9 @@ pipe_r600_create_screen(int fd)
 {
 #if _EGL_PIPE_R600
    struct radeon_winsys *rw;
-   struct pipe_screen *screen;
 
-   rw = radeon_drm_winsys_create(fd);
-   if (!rw)
-      return NULL;
-
-   screen = r600_screen_create(rw);
-   if (!screen)
-      return NULL;
-
-   screen = debug_screen_wrap(screen);
-
-   return screen;
+   rw = radeon_drm_winsys_create(fd, r600_screen_create);
+   return rw ? debug_screen_wrap(rw->screen) : NULL;
 #else
    return NULL;
 #endif
@@ -165,19 +145,9 @@ pipe_radeonsi_create_screen(int fd)
 {
 #if _EGL_PIPE_RADEONSI
    struct radeon_winsys *rw;
-   struct pipe_screen *screen;
 
-   rw = radeon_drm_winsys_create(fd);
-   if (!rw)
-      return NULL;
-
-   screen = radeonsi_screen_create(rw);
-   if (!screen)
-      return NULL;
-
-   screen = debug_screen_wrap(screen);
-
-   return screen;
+   rw = radeon_drm_winsys_create(fd, radeonsi_screen_create);
+   return rw ? debug_screen_wrap(rw->screen) : NULL;
 #else
    return NULL;
 #endif

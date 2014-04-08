@@ -36,19 +36,8 @@ create_screen(int fd)
 {
    struct radeon_winsys *sws;
 
-   sws = radeon_drm_winsys_create(fd);
-   if (!sws)
-      return NULL;
-
-   if (!sws->screen) {
-      sws->screen = r300_screen_create(sws);
-      if (!sws->screen)
-         return NULL;
-
-      sws->screen = debug_screen_wrap(sws->screen);
-   }
-
-   return sws->screen;
+   sws = radeon_drm_winsys_create(fd, r300_screen_create);
+   return sws ? debug_screen_wrap(sws->screen) : NULL;
 }
 
 /* Technically this is only true for kernels >= 3.12, which
