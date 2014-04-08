@@ -260,6 +260,7 @@ ir_vectorize_visitor::visit_enter(ir_assignment *ir)
    if (ir->condition ||
        this->channels >= 4 ||
        !single_channel_write_mask(ir->write_mask) ||
+       this->assignment[write_mask_to_swizzle(ir->write_mask)] != NULL ||
        (lhs && !ir->lhs->equals(lhs)) ||
        (rhs && !ir->rhs->equals(rhs, ir_type_swizzle))) {
       try_vectorize();
