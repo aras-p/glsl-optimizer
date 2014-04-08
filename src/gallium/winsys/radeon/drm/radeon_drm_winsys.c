@@ -392,12 +392,6 @@ static void radeon_winsys_destroy(struct radeon_winsys *rws)
 {
     struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
 
-    pipe_mutex_lock(fd_tab_mutex);
-    if (fd_tab) {
-        util_hash_table_remove(fd_tab, intptr_to_pointer(ws->fd));
-    }
-    pipe_mutex_unlock(fd_tab_mutex);
-
     if (ws->thread) {
         ws->kill_thread = 1;
         pipe_semaphore_signal(&ws->cs_queued);
@@ -573,6 +567,25 @@ static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param)
 DEBUG_GET_ONCE_BOOL_OPTION(thread, "RADEON_THREAD", TRUE)
 static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param);
 
+static bool radeon_winsys_unref(struct radeon_winsys *ws)
+{
+    struct radeon_drm_winsys *rws = (struct radeon_drm_winsys*)ws;
+    bool destroy;
+
+    /* When the reference counter drops to zero, remove the fd from the table.
+     * This must happen while the mutex is locked, so that
+     * radeon_drm_winsys_create in another thread doesn't get the winsys
+     * from the table when the counter drops to 0. */
+    pipe_mutex_lock(fd_tab_mutex);
+
+    destroy = pipe_reference(&rws->reference, NULL);
+    if (destroy && fd_tab)
+        util_hash_table_remove(fd_tab, intptr_to_pointer(rws->fd));
+
+    pipe_mutex_unlock(fd_tab_mutex);
+    return destroy;
+}
+
 PUBLIC struct radeon_winsys *radeon_drm_winsys_create(int fd)
 {
     struct radeon_drm_winsys *ws;
@@ -584,8 +597,8 @@ PUBLIC struct radeon_winsys *radeon_drm_winsys_create(int fd)
 
     ws = util_hash_table_get(fd_tab, intptr_to_pointer(fd));
     if (ws) {
+        pipe_reference(NULL, &ws->reference);
         pipe_mutex_unlock(fd_tab_mutex);
-        pipe_reference(NULL, &ws->base.reference);
         return &ws->base;
     }
 
@@ -616,9 +629,10 @@ PUBLIC struct radeon_winsys *radeon_drm_winsys_create(int fd)
     }
 
     /* init reference */
-    pipe_reference_init(&ws->base.reference, 1);
+    pipe_reference_init(&ws->reference, 1);
 
     /* Set functions. */
+    ws->base.unref = radeon_winsys_unref;
     ws->base.destroy = radeon_winsys_destroy;
     ws->base.query_info = radeon_query_info;
     ws->base.cs_request_feature = radeon_cs_request_feature;

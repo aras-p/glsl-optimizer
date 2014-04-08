@@ -232,14 +232,17 @@ enum radeon_feature_id {
 
 struct radeon_winsys {
     /**
-     * Reference counting
-     */
-    struct pipe_reference reference;
-
-    /**
      * The screen object this winsys was created for
      */
     struct pipe_screen *screen;
+
+    /**
+     * Decrement the winsys reference count.
+     *
+     * \param ws  The winsys this function is called for.
+     * \return    True if the winsys and screen should be destroyed.
+     */
+    bool (*unref)(struct radeon_winsys *ws);
 
     /**
      * Destroy this winsys.
@@ -568,15 +571,6 @@ struct radeon_winsys {
                             enum radeon_value_id value);
 };
 
-/**
- * Decrement the winsys reference count.
- *
- * \param ws The winsys this function is called for.
- */
-static INLINE boolean radeon_winsys_unref(struct radeon_winsys *ws)
-{
-   return pipe_reference(&ws->reference, NULL);
-}
 
 static INLINE void radeon_emit(struct radeon_winsys_cs *cs, uint32_t value)
 {

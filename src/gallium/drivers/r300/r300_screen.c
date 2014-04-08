@@ -552,7 +552,7 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     struct r300_screen* r300screen = r300_screen(pscreen);
     struct radeon_winsys *rws = radeon_winsys(pscreen);
 
-    if (rws && !radeon_winsys_unref(rws))
+    if (rws && !rws->unref(rws))
       return;
 
     pipe_mutex_destroy(r300screen->cmask_mutex);

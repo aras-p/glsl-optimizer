@@ -424,7 +424,7 @@ static void si_destroy_screen(struct pipe_screen* pscreen)
 	if (sscreen == NULL)
 		return;
 
-	if (!radeon_winsys_unref(sscreen->b.ws))
+	if (!sscreen->b.ws->unref(sscreen->b.ws))
 		return;
 
 	r600_destroy_common_screen(&sscreen->b);

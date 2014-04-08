@@ -43,6 +43,7 @@ enum radeon_generation {
 
 struct radeon_drm_winsys {
     struct radeon_winsys base;
+    struct pipe_reference reference;
 
     int fd; /* DRM file descriptor */
     int num_cs; /* The number of command streams created. */
