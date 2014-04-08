@@ -236,8 +236,7 @@ void renderer_draw_yuv(struct xa_context *r,
 		       struct xa_surface *srf[]);
 
 void renderer_bind_destination(struct xa_context *r,
-			       struct pipe_surface *surface, int width,
-			       int height);
+			       struct pipe_surface *surface);
 
 void renderer_init_state(struct xa_context *r);
 void renderer_copy_prepare(struct xa_context *r,

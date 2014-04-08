@@ -477,8 +477,7 @@ xa_composite_prepare(struct xa_context *ctx,
 	return ret;
 
     ctx->dst = dst_srf;
-    renderer_bind_destination(ctx, ctx->srf, ctx->srf->width,
-			      ctx->srf->height);
+    renderer_bind_destination(ctx, ctx->srf);
 
     ret = bind_composite_blend_state(ctx, comp);
     if (ret != XA_ERR_NONE)

@@ -325,8 +325,10 @@ setup_vertex_data_yuv(struct xa_context *r,
  */
 void
 renderer_bind_destination(struct xa_context *r,
-			  struct pipe_surface *surface, int width, int height)
+			  struct pipe_surface *surface)
 {
+    int width = surface->width;
+    int height = surface->height;
 
     struct pipe_framebuffer_state fb;
     struct pipe_viewport_state viewport;
@@ -406,8 +408,7 @@ renderer_copy_prepare(struct xa_context *r,
 				       PIPE_BIND_RENDER_TARGET));
     (void)screen;
 
-    renderer_bind_destination(r, dst_surface,
-			      dst_surface->width, dst_surface->height);
+    renderer_bind_destination(r, dst_surface);
 
     /* set misc state we care about */
     {

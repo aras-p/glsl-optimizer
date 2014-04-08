@@ -131,7 +131,7 @@ xa_yuv_planar_blit(struct xa_context *r,
     if (ret != XA_ERR_NONE)
 	return -XA_ERR_NORES;
 
-    renderer_bind_destination(r, r->srf, r->srf->width, r->srf->height);
+    renderer_bind_destination(r, r->srf);
     xa_yuv_bind_blend_state(r);
     xa_yuv_bind_shaders(r);
     xa_yuv_bind_samplers(r, yuv);
