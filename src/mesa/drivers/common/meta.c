@@ -110,6 +110,7 @@ _mesa_meta_bind_fbo_image(struct gl_texture_image *texImage, GLuint layer)
       break;
    case GL_TEXTURE_1D_ARRAY:
    case GL_TEXTURE_2D_ARRAY:
+   case GL_TEXTURE_CUBE_MAP_ARRAY:
    case GL_TEXTURE_3D:
       _mesa_FramebufferTextureLayer(GL_FRAMEBUFFER,
                                     GL_COLOR_ATTACHMENT0,
@@ -2456,6 +2457,9 @@ _mesa_meta_setup_texture_coords(GLenum faceTarget,
    };
    GLuint i;
    GLfloat r;
+
+   if (faceTarget == GL_TEXTURE_CUBE_MAP_ARRAY)
+      faceTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice % 6;
 
    /* Currently all texture targets want the W component to be 1.0.
     */
