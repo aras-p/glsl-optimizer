@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "gbm.h"
 #include "gbmint.h"
@@ -109,7 +110,7 @@ _gbm_mesa_get_device(int fd)
    int i;
 
    if (fd < 0 || fstat(fd, &buf) < 0 || !S_ISCHR(buf.st_mode)) {
-      fprintf(stderr, "_gbm_mesa_get_device: invalid fd: %d\n", fd);
+      errno = EINVAL;
       return NULL;
    }
 
@@ -145,7 +146,7 @@ gbm_create_device(int fd)
    struct stat buf;
 
    if (fd < 0 || fstat(fd, &buf) < 0 || !S_ISCHR(buf.st_mode)) {
-      fprintf(stderr, "gbm_create_device: invalid fd: %d\n", fd);
+      errno = EINVAL;
       return NULL;
    }
 
@@ -258,7 +259,7 @@ gbm_bo_get_fd(struct gbm_bo *bo)
  * \param bo The buffer object
  * \param buf The data to write
  * \param count The number of bytes to write
- * \return Returns -1 on error, 0 otherwise
+ * \return Returns 0 on success, otherwise -1 is returned an errno set
  */
 GBM_EXPORT int
 gbm_bo_write(struct gbm_bo *bo, const void *buf, size_t count)
@@ -332,7 +333,7 @@ gbm_bo_destroy(struct gbm_bo *bo)
  *
  * \return A newly allocated buffer that should be freed with gbm_bo_destroy()
  * when no longer needed. If an error occurs during allocation %NULL will be
- * returned.
+ * returned and errno set.
  *
  * \sa enum gbm_bo_format for the list of formats
  * \sa enum gbm_bo_flags for the list of usage flags
@@ -342,12 +343,16 @@ gbm_bo_create(struct gbm_device *gbm,
               uint32_t width, uint32_t height,
               uint32_t format, uint32_t usage)
 {
-   if (width == 0 || height == 0)
+   if (width == 0 || height == 0) {
+      errno = EINVAL;
       return NULL;
+   }
 
    if (usage & GBM_BO_USE_CURSOR_64X64 &&
-       (width != 64 || height != 64))
+       (width != 64 || height != 64)) {
+      errno = EINVAL;
       return NULL;
+   }
 
    return gbm->bo_create(gbm, width, height, format, usage);
 }
@@ -373,7 +378,8 @@ gbm_bo_create(struct gbm_device *gbm,
  * \param usage The union of the usage flags for this buffer
  *
  * \return A newly allocated buffer object that should be freed with
- * gbm_bo_destroy() when no longer needed.
+ * gbm_bo_destroy() when no longer needed. On error, %NULL is returned
+ * and errno is set.
  *
  * \sa enum gbm_bo_flags for the list of usage flags
  */
