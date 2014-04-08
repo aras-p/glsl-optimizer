@@ -5357,9 +5357,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
          progress = do_lower_jumps(ir, true, true, options->EmitNoMainReturn, options->EmitNoCont, options->EmitNoLoops) || progress;
 
-         progress = do_common_optimization(ir, true, true,
-					   options->MaxUnrollIterations,
-                                           options,
+         progress = do_common_optimization(ir, true, true, options,
                                            ctx->Const.NativeIntegers)
 	   || progress;
 

@@ -1444,7 +1444,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
       /* Do some optimization at compile time to reduce shader IR size
        * and reduce later work if the same shader is linked multiple times
        */
-      while (do_common_optimization(shader->ir, false, false, 32, options,
+      while (do_common_optimization(shader->ir, false, false, options,
                                     ctx->Const.NativeIntegers))
          ;
 
@@ -1492,7 +1492,6 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
 bool
 do_common_optimization(exec_list *ir, bool linked,
 		       bool uniform_locations_assigned,
-		       unsigned max_unroll_iterations,
                        const struct gl_shader_compiler_options *options,
                        bool native_integers)
 {
@@ -1543,7 +1542,7 @@ do_common_optimization(exec_list *ir, bool linked,
    loop_state *ls = analyze_loop_variables(ir);
    if (ls->loop_found) {
       progress = set_loop_controls(ir, ls) || progress;
-      progress = unroll_loops(ir, ls, max_unroll_iterations) || progress;
+      progress = unroll_loops(ir, ls, options->MaxUnrollIterations) || progress;
    }
    delete ls;
 

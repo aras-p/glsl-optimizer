@@ -2296,10 +2296,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
          lower_clip_distance(prog->_LinkedShaders[i]);
       }
 
-      unsigned max_unroll = ctx->ShaderCompilerOptions[i].MaxUnrollIterations;
-
       while (do_common_optimization(prog->_LinkedShaders[i]->ir, true, false,
-                                    max_unroll, &ctx->ShaderCompilerOptions[i],
+                                    &ctx->ShaderCompilerOptions[i],
                                     ctx->Const.NativeIntegers))
 	 ;
    }
