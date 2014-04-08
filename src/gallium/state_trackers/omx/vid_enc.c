@@ -72,10 +72,6 @@ static OMX_ERRORTYPE vid_enc_GetParameter(OMX_HANDLETYPE handle, OMX_INDEXTYPE i
 static OMX_ERRORTYPE vid_enc_SetConfig(OMX_HANDLETYPE handle, OMX_INDEXTYPE idx, OMX_PTR config);
 static OMX_ERRORTYPE vid_enc_GetConfig(OMX_HANDLETYPE handle, OMX_INDEXTYPE idx, OMX_PTR config);
 static OMX_ERRORTYPE vid_enc_MessageHandler(OMX_COMPONENTTYPE *comp, internalRequestMessageType *msg);
-static OMX_ERRORTYPE vid_enc_AllocateInBuffer(omx_base_PortType *port, OMX_INOUT OMX_BUFFERHEADERTYPE **buf,
-                                              OMX_IN OMX_U32 idx, OMX_IN OMX_PTR private, OMX_IN OMX_U32 size);
-static OMX_ERRORTYPE vid_enc_UseInBuffer(omx_base_PortType *port, OMX_BUFFERHEADERTYPE **buf, OMX_U32 idx,
-                                         OMX_PTR private, OMX_U32 size, OMX_U8 *mem);
 static OMX_ERRORTYPE vid_enc_FreeInBuffer(omx_base_PortType *port, OMX_U32 idx, OMX_BUFFERHEADERTYPE *buf);
 static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEADERTYPE *buf);
 static OMX_ERRORTYPE vid_enc_AllocateOutBuffer(omx_base_PortType *comp, OMX_INOUT OMX_BUFFERHEADERTYPE **buf,
@@ -222,8 +218,6 @@ static OMX_ERRORTYPE vid_enc_Constructor(OMX_COMPONENTTYPE *comp, OMX_STRING nam
    port->sPortParam.nBufferCountMin = 4;
 
    port->Port_SendBufferFunction = vid_enc_EncodeFrame;
-   port->Port_AllocateBuffer = vid_enc_AllocateInBuffer;
-   port->Port_UseBuffer = vid_enc_UseInBuffer;
    port->Port_FreeBuffer = vid_enc_FreeInBuffer;
 
    port = (omx_base_video_PortType *)priv->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX];
@@ -566,78 +560,6 @@ static OMX_ERRORTYPE vid_enc_MessageHandler(OMX_COMPONENTTYPE* comp, internalReq
    return omx_base_component_MessageHandler(comp, msg);
 }
 
-static OMX_ERRORTYPE vid_enc_AllocateInBuffer(omx_base_PortType *port, OMX_INOUT OMX_BUFFERHEADERTYPE **buf,
-                                              OMX_IN OMX_U32 idx, OMX_IN OMX_PTR private, OMX_IN OMX_U32 size)
-{
-   OMX_VIDEO_PORTDEFINITIONTYPE *def = &port->sPortParam.format.video;
-   OMX_COMPONENTTYPE* comp = port->standCompContainer;
-   vid_enc_PrivateType *priv = comp->pComponentPrivate;
-   struct pipe_video_buffer templat = {};
-   struct input_buf_private *inp;
-   OMX_ERRORTYPE r;
-
-   r = base_port_AllocateBuffer(port, buf, idx, private, size);
-   if (r)
-      return r;
-
-   inp = (*buf)->pInputPortPrivate = CALLOC(1, sizeof(struct input_buf_private));
-   if (!inp) {
-      base_port_FreeBuffer(port, idx, *buf);
-      return OMX_ErrorInsufficientResources;
-   }
-
-   templat.buffer_format = PIPE_FORMAT_NV12;
-   templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
-   templat.width = def->nFrameWidth;
-   templat.height = def->nFrameHeight;
-   templat.interlaced = false;
-
-   inp->buf = priv->s_pipe->create_video_buffer(priv->s_pipe, &templat);
-   if (!inp->buf) {
-      FREE(inp);
-      base_port_FreeBuffer(port, idx, *buf);
-      return OMX_ErrorInsufficientResources;
-   }
-
-   return OMX_ErrorNone;
-}
-
-static OMX_ERRORTYPE vid_enc_UseInBuffer(omx_base_PortType *port, OMX_BUFFERHEADERTYPE **buf, OMX_U32 idx,
-                                         OMX_PTR private, OMX_U32 size, OMX_U8 *mem)
-{
-   OMX_VIDEO_PORTDEFINITIONTYPE *def = &port->sPortParam.format.video;
-   OMX_COMPONENTTYPE* comp = port->standCompContainer;
-   vid_enc_PrivateType *priv = comp->pComponentPrivate;
-   struct pipe_video_buffer templat = {};
-   struct input_buf_private *inp;
-   OMX_ERRORTYPE r;
-
-   r = base_port_UseBuffer(port, buf, idx, private, size, mem);
-   if (r)
-      return r;
-
-   inp = (*buf)->pInputPortPrivate = CALLOC(1, sizeof(struct input_buf_private));
-   if (!inp) {
-      base_port_FreeBuffer(port, idx, *buf);
-      return OMX_ErrorInsufficientResources;
-   }
-
-   templat.buffer_format = PIPE_FORMAT_NV12;
-   templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
-   templat.width = def->nFrameWidth;
-   templat.height = def->nFrameHeight;
-   templat.interlaced = false;
-
-   inp->buf = priv->s_pipe->create_video_buffer(priv->s_pipe, &templat);
-   if (!inp->buf) {
-      FREE(inp);
-      base_port_FreeBuffer(port, idx, *buf);
-      return OMX_ErrorInsufficientResources;
-   }
-
-   return OMX_ErrorNone;
-}
-
 static OMX_ERRORTYPE vid_enc_FreeInBuffer(omx_base_PortType *port, OMX_U32 idx, OMX_BUFFERHEADERTYPE *buf)
 {
    struct input_buf_private *inp = buf->pInputPortPrivate;
@@ -685,18 +607,52 @@ static OMX_ERRORTYPE vid_enc_FreeOutBuffer(omx_base_PortType *port, OMX_U32 idx,
    return base_port_FreeBuffer(port, idx, buf);
 }
 
+static OMX_ERRORTYPE enc_NeedInputPortPrivate(omx_base_PortType *port, OMX_BUFFERHEADERTYPE *buf)
+{
+   OMX_COMPONENTTYPE* comp = port->standCompContainer;
+   vid_enc_PrivateType *priv = comp->pComponentPrivate;
+   OMX_VIDEO_PORTDEFINITIONTYPE *def = &port->sPortParam.format.video;
+   struct input_buf_private **inp = (struct input_buf_private **)&buf->pInputPortPrivate;
+   struct pipe_video_buffer templat = {};
+
+   if (*inp) {
+      pipe_resource_reference(&(*inp)->bitstream, NULL);
+      return OMX_ErrorNone;
+   }
+
+   if (!(*inp = CALLOC(1, sizeof(struct input_buf_private)))) {
+      return OMX_ErrorInsufficientResources;
+   }
+
+   templat.buffer_format = PIPE_FORMAT_NV12;
+   templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
+   templat.width = def->nFrameWidth;
+   templat.height = def->nFrameHeight;
+   templat.interlaced = false;
+
+   if (!((*inp)->buf = priv->s_pipe->create_video_buffer(priv->s_pipe, &templat))) {
+      FREE(*inp);
+      return OMX_ErrorInsufficientResources;
+   }
+
+   return OMX_ErrorNone;
+}
+
 static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEADERTYPE *buf)
 {
    OMX_COMPONENTTYPE* comp = port->standCompContainer;
    vid_enc_PrivateType *priv = comp->pComponentPrivate;
-   struct input_buf_private *inp = buf->pInputPortPrivate;
    unsigned size = priv->ports[OMX_BASE_FILTER_OUTPUTPORT_INDEX]->sPortParam.nBufferSize;
    OMX_VIDEO_PORTDEFINITIONTYPE *def = &port->sPortParam.format.video;
    struct pipe_h264_enc_picture_desc picture;
    struct pipe_h264_enc_rate_control *rate_ctrl = &picture.rate_ctrl;
-   struct pipe_video_buffer *vbuf = inp->buf;
+   struct input_buf_private *inp;
+   struct pipe_video_buffer *vbuf;
+   OMX_ERRORTYPE err;
 
-   pipe_resource_reference(&inp->bitstream, NULL);
+   err = enc_NeedInputPortPrivate(port, buf);
+   if (err != OMX_ErrorNone)
+      return err;
 
    if (buf->nFilledLen == 0) {
       if (buf->nFlags & OMX_BUFFERFLAG_EOS)
@@ -704,15 +660,18 @@ static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEAD
       return base_port_SendBufferFunction(port, buf);
    }
 
+   inp = buf->pInputPortPrivate;
    if (buf->pOutputPortPrivate) {
       vbuf = buf->pOutputPortPrivate;
+      buf->pOutputPortPrivate = inp->buf;
+      inp->buf = vbuf;
    } else {
       /* ------- load input image into video buffer ---- */
       struct pipe_sampler_view **views;
       struct pipe_box box = {};
       void *ptr;
 
-      views = inp->buf->get_sampler_view_planes(vbuf);
+      views = inp->buf->get_sampler_view_planes(inp->buf);
       if (!views)
          return OMX_ErrorInsufficientResources;
 
@@ -736,6 +695,7 @@ static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEAD
       priv->s_pipe->transfer_inline_write(priv->s_pipe, views[1]->texture, 0,
                                           PIPE_TRANSFER_WRITE, &box,
                                           ptr, def->nStride, 0);
+      vbuf = inp->buf;
    }
 
    /* -------------- scale input image --------- */
