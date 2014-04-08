@@ -678,14 +678,25 @@ etc2_unpack_rgb8(uint8_t *dst_row,
 
    for (y = 0; y < height; y += bh) {
       const uint8_t *src = src_row;
+      /*
+       * Destination texture may not be a multiple of four texels in
+       * height. Compute a safe height to avoid writing outside the texture.
+       */
+      const unsigned h = MIN2(bh, height - y);
 
       for (x = 0; x < width; x+= bw) {
          etc2_rgb8_parse_block(&block, src,
                                false /* punchthrough_alpha */);
 
-         for (j = 0; j < bh; j++) {
+         /*
+          * Destination texture may not be a multiple of four texels in
+          * width. Compute a safe width to avoid writing outside the texture.
+          */
+         const unsigned w = MIN2(bw, width - x);
+
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_rgb8_fetch_texel(&block, i, j, dst,
                                      false /* punchthrough_alpha */);
                dst[3] = 255;
@@ -715,14 +726,17 @@ etc2_unpack_srgb8(uint8_t *dst_row,
 
    for (y = 0; y < height; y += bh) {
       const uint8_t *src = src_row;
+      const unsigned h = MIN2(bh, height - y);
 
       for (x = 0; x < width; x+= bw) {
+         const unsigned w = MIN2(bw, width - x);
          etc2_rgb8_parse_block(&block, src,
                                false /* punchthrough_alpha */);
 
-         for (j = 0; j < bh; j++) {
+
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_rgb8_fetch_texel(&block, i, j, dst,
                                      false /* punchthrough_alpha */);
                /* Convert to MESA_FORMAT_B8G8R8A8_SRGB */
@@ -759,13 +773,15 @@ etc2_unpack_rgba8(uint8_t *dst_row,
 
    for (y = 0; y < height; y += bh) {
       const uint8_t *src = src_row;
+      const unsigned h = MIN2(bh, height - y);
 
       for (x = 0; x < width; x+= bw) {
+         const unsigned w = MIN2(bw, width - x);
          etc2_rgba8_parse_block(&block, src);
 
-         for (j = 0; j < bh; j++) {
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_rgba8_fetch_texel(&block, i, j, dst);
                dst += comps;
             }
@@ -795,14 +811,16 @@ etc2_unpack_srgb8_alpha8(uint8_t *dst_row,
    uint8_t tmp;
 
    for (y = 0; y < height; y += bh) {
+      const unsigned h = MIN2(bh, height - y);
       const uint8_t *src = src_row;
 
       for (x = 0; x < width; x+= bw) {
+         const unsigned w = MIN2(bw, width - x);
          etc2_rgba8_parse_block(&block, src);
 
-         for (j = 0; j < bh; j++) {
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_rgba8_fetch_texel(&block, i, j, dst);
 
                /* Convert to MESA_FORMAT_B8G8R8A8_SRGB */
@@ -837,14 +855,16 @@ etc2_unpack_r11(uint8_t *dst_row,
    unsigned x, y, i, j;
 
    for (y = 0; y < height; y += bh) {
+      const unsigned h = MIN2(bh, height - y);
       const uint8_t *src = src_row;
 
       for (x = 0; x < width; x+= bw) {
+         const unsigned w = MIN2(bw, width - x);
          etc2_r11_parse_block(&block, src);
 
-         for (j = 0; j < bh; j++) {
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps * comp_size;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_r11_fetch_texel(&block, i, j, dst);
                dst += comps * comp_size;
             }
@@ -872,16 +892,18 @@ etc2_unpack_rg11(uint8_t *dst_row,
    unsigned x, y, i, j;
 
    for (y = 0; y < height; y += bh) {
+      const unsigned h = MIN2(bh, height - y);
       const uint8_t *src = src_row;
 
       for (x = 0; x < width; x+= bw) {
+         const unsigned w = MIN2(bw, width - x);
          /* red component */
          etc2_r11_parse_block(&block, src);
 
-         for (j = 0; j < bh; j++) {
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride +
                            x * comps * comp_size;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_r11_fetch_texel(&block, i, j, dst);
                dst += comps * comp_size;
             }
@@ -889,10 +911,10 @@ etc2_unpack_rg11(uint8_t *dst_row,
          /* green component */
          etc2_r11_parse_block(&block, src + 8);
 
-         for (j = 0; j < bh; j++) {
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride +
                            x * comps * comp_size;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_r11_fetch_texel(&block, i, j, dst + comp_size);
                dst += comps * comp_size;
             }
@@ -920,15 +942,17 @@ etc2_unpack_signed_r11(uint8_t *dst_row,
    unsigned x, y, i, j;
 
    for (y = 0; y < height; y += bh) {
+      const unsigned h = MIN2(bh, height - y);
       const uint8_t *src = src_row;
 
       for (x = 0; x < width; x+= bw) {
+         const unsigned w = MIN2(bw, width - x);
          etc2_r11_parse_block(&block, src);
 
-         for (j = 0; j < bh; j++) {
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride +
                            x * comps * comp_size;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_signed_r11_fetch_texel(&block, i, j, dst);
                dst += comps * comp_size;
             }
@@ -956,16 +980,18 @@ etc2_unpack_signed_rg11(uint8_t *dst_row,
    unsigned x, y, i, j;
 
    for (y = 0; y < height; y += bh) {
+      const unsigned h = MIN2(bh, height - y);
       const uint8_t *src = src_row;
 
       for (x = 0; x < width; x+= bw) {
+         const unsigned w = MIN2(bw, width - x);
          /* red component */
          etc2_r11_parse_block(&block, src);
 
-         for (j = 0; j < bh; j++) {
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride +
                           x * comps * comp_size;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_signed_r11_fetch_texel(&block, i, j, dst);
                dst += comps * comp_size;
             }
@@ -973,10 +999,10 @@ etc2_unpack_signed_rg11(uint8_t *dst_row,
          /* green component */
          etc2_r11_parse_block(&block, src + 8);
 
-         for (j = 0; j < bh; j++) {
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride +
                            x * comps * comp_size;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_signed_r11_fetch_texel(&block, i, j, dst + comp_size);
                dst += comps * comp_size;
             }
@@ -1001,14 +1027,16 @@ etc2_unpack_rgb8_punchthrough_alpha1(uint8_t *dst_row,
    unsigned x, y, i, j;
 
    for (y = 0; y < height; y += bh) {
+      const unsigned h = MIN2(bh, height - y);
       const uint8_t *src = src_row;
 
       for (x = 0; x < width; x+= bw) {
+         const unsigned w = MIN2(bw, width - x);
          etc2_rgb8_parse_block(&block, src,
                                true /* punchthrough_alpha */);
-         for (j = 0; j < bh; j++) {
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_rgb8_fetch_texel(&block, i, j, dst,
                                      true /* punchthrough_alpha */);
                dst += comps;
@@ -1036,14 +1064,16 @@ etc2_unpack_srgb8_punchthrough_alpha1(uint8_t *dst_row,
    uint8_t tmp;
 
    for (y = 0; y < height; y += bh) {
+      const unsigned h = MIN2(bh, height - y);
       const uint8_t *src = src_row;
 
       for (x = 0; x < width; x+= bw) {
+         const unsigned w = MIN2(bw, width - x);
          etc2_rgb8_parse_block(&block, src,
                                true /* punchthrough_alpha */);
-         for (j = 0; j < bh; j++) {
+         for (j = 0; j < h; j++) {
             uint8_t *dst = dst_row + (y + j) * dst_stride + x * comps;
-            for (i = 0; i < bw; i++) {
+            for (i = 0; i < w; i++) {
                etc2_rgb8_fetch_texel(&block, i, j, dst,
                                      true /* punchthrough_alpha */);
                /* Convert to MESA_FORMAT_B8G8R8A8_SRGB */
