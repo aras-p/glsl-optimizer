@@ -46,6 +46,7 @@
 #include <unistd.h>
 
 static struct util_hash_table *fd_tab = NULL;
+pipe_static_mutex(fd_tab_mutex);
 
 /* Enable/disable feature access for one command stream.
  * If enable == TRUE, return TRUE on success.
@@ -391,6 +392,12 @@ static void radeon_winsys_destroy(struct radeon_winsys *rws)
 {
     struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
 
+    pipe_mutex_lock(fd_tab_mutex);
+    if (fd_tab) {
+        util_hash_table_remove(fd_tab, intptr_to_pointer(ws->fd));
+    }
+    pipe_mutex_unlock(fd_tab_mutex);
+
     if (ws->thread) {
         ws->kill_thread = 1;
         pipe_semaphore_signal(&ws->cs_queued);
@@ -406,9 +413,6 @@ static void radeon_winsys_destroy(struct radeon_winsys *rws)
     ws->kman->destroy(ws->kman);
     if (ws->gen >= DRV_R600) {
         radeon_surface_manager_free(ws->surf_man);
-    }
-    if (fd_tab) {
-        util_hash_table_remove(fd_tab, intptr_to_pointer(ws->fd));
     }
     FREE(rws);
 }
@@ -573,20 +577,24 @@ PUBLIC struct radeon_winsys *radeon_drm_winsys_create(int fd)
 {
     struct radeon_drm_winsys *ws;
 
+    pipe_mutex_lock(fd_tab_mutex);
     if (!fd_tab) {
         fd_tab = util_hash_table_create(hash_fd, compare_fd);
     }
 
     ws = util_hash_table_get(fd_tab, intptr_to_pointer(fd));
     if (ws) {
+        pipe_mutex_unlock(fd_tab_mutex);
         pipe_reference(NULL, &ws->base.reference);
         return &ws->base;
     }
 
     ws = CALLOC_STRUCT(radeon_drm_winsys);
     if (!ws) {
+        pipe_mutex_unlock(fd_tab_mutex);
         return NULL;
     }
+
     ws->fd = fd;
     util_hash_table_set(fd_tab, intptr_to_pointer(fd), ws);
 
@@ -630,9 +638,15 @@ PUBLIC struct radeon_winsys *radeon_drm_winsys_create(int fd)
     if (ws->num_cpus > 1 && debug_get_option_thread())
         ws->thread = pipe_thread_create(radeon_drm_cs_emit_ioctl, ws);
 
+    /* We must unlock the mutex once the winsys is fully initialized, so that
+     * other threads attempting to create the winsys from the same fd will
+     * get a fully initialized winsys and not just half-way initialized. */
+    pipe_mutex_unlock(fd_tab_mutex);
+
     return &ws->base;
 
 fail:
+    pipe_mutex_unlock(fd_tab_mutex);
     if (ws->cman)
         ws->cman->destroy(ws->cman);
     if (ws->kman)
