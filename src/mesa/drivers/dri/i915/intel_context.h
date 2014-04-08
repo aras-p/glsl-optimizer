@@ -504,12 +504,6 @@ intel_context(struct gl_context * ctx)
    return (struct intel_context *) ctx;
 }
 
-static INLINE bool
-is_power_of_two(uint32_t value)
-{
-   return (value & (value - 1)) == 0;
-}
-
 #ifdef __cplusplus
 }
 #endif
