@@ -78,6 +78,8 @@ xa_context_destroy(struct xa_context *r)
     }
 
     xa_ctx_sampler_views_destroy(r);
+    if (r->srf)
+        pipe_surface_reference(&r->srf, NULL);
 
     if (r->cso) {
 	cso_release_all(r->cso);
@@ -185,8 +187,15 @@ xa_ctx_srf_create(struct xa_context *ctx, struct xa_surface *dst)
     struct pipe_screen *screen = ctx->pipe->screen;
     struct pipe_surface srf_templ;
 
-    if (ctx->srf)
-	return -XA_ERR_INVAL;
+    /*
+     * Cache surfaces unless we change render target
+     */
+    if (ctx->srf) {
+        if (ctx->srf->texture == dst->tex)
+            return XA_ERR_NONE;
+
+        pipe_surface_reference(&ctx->srf, NULL);
+    }
 
     if (!screen->is_format_supported(screen,  dst->tex->format,
 				     PIPE_TEXTURE_2D, 0,
@@ -204,7 +213,10 @@ xa_ctx_srf_create(struct xa_context *ctx, struct xa_surface *dst)
 void
 xa_ctx_srf_destroy(struct xa_context *ctx)
 {
-    pipe_surface_reference(&ctx->srf, NULL);
+    /*
+     * Cache surfaces unless we change render target.
+     * Final destruction on context destroy.
+     */
 }
 
 XA_EXPORT int
