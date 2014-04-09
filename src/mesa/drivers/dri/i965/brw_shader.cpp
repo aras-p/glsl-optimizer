@@ -120,6 +120,8 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
    unsigned int stage;
 
    for (stage = 0; stage < ARRAY_SIZE(shProg->_LinkedShaders); stage++) {
+      const struct gl_shader_compiler_options *options =
+         &ctx->ShaderCompilerOptions[stage];
       struct brw_shader *shader =
 	 (struct brw_shader *)shProg->_LinkedShaders[stage];
 
@@ -170,14 +172,12 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
       lower_noise(shader->base.ir);
       lower_quadop_vector(shader->base.ir, false);
 
-      bool input = true;
-      bool output = stage == MESA_SHADER_FRAGMENT;
-      bool temp = stage == MESA_SHADER_FRAGMENT;
-      bool uniform = false;
-
       bool lowered_variable_indexing =
          lower_variable_index_to_cond_assign(shader->base.ir,
-                                             input, output, temp, uniform);
+                                             options->EmitNoIndirectInput,
+                                             options->EmitNoIndirectOutput,
+                                             options->EmitNoIndirectTemp,
+                                             options->EmitNoIndirectUniform);
 
       if (unlikely(brw->perf_debug && lowered_variable_indexing)) {
          perf_debug("Unsupported form of variable indexing in FS; falling "
@@ -201,8 +201,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 				   ) || progress;
 
 	 progress = do_common_optimization(shader->base.ir, true, true, 32,
-                                           &ctx->ShaderCompilerOptions[stage],
-                                           ctx->Const.NativeIntegers)
+                                           options, ctx->Const.NativeIntegers)
 	   || progress;
       } while (progress);
 
