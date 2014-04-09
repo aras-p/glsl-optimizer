@@ -1730,6 +1730,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(FLR,          instr_cat2, .opc = OPC_FLOOR_F),
 	INSTR(ROUND,        instr_cat2, .opc = OPC_RNDNE_F),
 	INSTR(SSG,          instr_cat2, .opc = OPC_SIGN_F),
+	INSTR(CEIL,         instr_cat2, .opc = OPC_CEIL_F),
 	INSTR(ARL,          trans_arl),
 	INSTR(EX2,          instr_cat4, .opc = OPC_EXP2),
 	INSTR(LG2,          instr_cat4, .opc = OPC_LOG2),
