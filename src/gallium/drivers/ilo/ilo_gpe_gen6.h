@@ -47,59 +47,6 @@
    (0x3 << 29 | (pipeline) << 27 | (op) << 24 | (subop) << 16)
 
 /**
- * Commands that GEN6 GPE could emit.
- */
-enum ilo_gpe_gen6_command {
-   ILO_GPE_GEN6_MI_STORE_DATA_IMM,                   /* ILO_GPE_MI(0x20) */
-   ILO_GPE_GEN6_MI_LOAD_REGISTER_IMM,                /* ILO_GPE_MI(0x22) */
-   ILO_GPE_GEN6_MI_STORE_REGISTER_MEM,               /* ILO_GPE_MI(0x24) */
-   ILO_GPE_GEN6_MI_REPORT_PERF_COUNT,                /* ILO_GPE_MI(0x28) */
-   ILO_GPE_GEN6_STATE_BASE_ADDRESS,                  /* (0x0, 0x1, 0x01) */
-   ILO_GPE_GEN6_STATE_SIP,                           /* (0x0, 0x1, 0x02) */
-   ILO_GPE_GEN6_3DSTATE_VF_STATISTICS,               /* (0x1, 0x0, 0x0b) */
-   ILO_GPE_GEN6_PIPELINE_SELECT,                     /* (0x1, 0x1, 0x04) */
-   ILO_GPE_GEN6_MEDIA_VFE_STATE,                     /* (0x2, 0x0, 0x00) */
-   ILO_GPE_GEN6_MEDIA_CURBE_LOAD,                    /* (0x2, 0x0, 0x01) */
-   ILO_GPE_GEN6_MEDIA_INTERFACE_DESCRIPTOR_LOAD,     /* (0x2, 0x0, 0x02) */
-   ILO_GPE_GEN6_MEDIA_GATEWAY_STATE,                 /* (0x2, 0x0, 0x03) */
-   ILO_GPE_GEN6_MEDIA_STATE_FLUSH,                   /* (0x2, 0x0, 0x04) */
-   ILO_GPE_GEN6_MEDIA_OBJECT_WALKER,                 /* (0x2, 0x1, 0x03) */
-   ILO_GPE_GEN6_3DSTATE_BINDING_TABLE_POINTERS,      /* (0x3, 0x0, 0x01) */
-   ILO_GPE_GEN6_3DSTATE_SAMPLER_STATE_POINTERS,      /* (0x3, 0x0, 0x02) */
-   ILO_GPE_GEN6_3DSTATE_URB,                         /* (0x3, 0x0, 0x05) */
-   ILO_GPE_GEN6_3DSTATE_VERTEX_BUFFERS,              /* (0x3, 0x0, 0x08) */
-   ILO_GPE_GEN6_3DSTATE_VERTEX_ELEMENTS,             /* (0x3, 0x0, 0x09) */
-   ILO_GPE_GEN6_3DSTATE_INDEX_BUFFER,                /* (0x3, 0x0, 0x0a) */
-   ILO_GPE_GEN6_3DSTATE_VIEWPORT_STATE_POINTERS,     /* (0x3, 0x0, 0x0d) */
-   ILO_GPE_GEN6_3DSTATE_CC_STATE_POINTERS,           /* (0x3, 0x0, 0x0e) */
-   ILO_GPE_GEN6_3DSTATE_SCISSOR_STATE_POINTERS,      /* (0x3, 0x0, 0x0f) */
-   ILO_GPE_GEN6_3DSTATE_VS,                          /* (0x3, 0x0, 0x10) */
-   ILO_GPE_GEN6_3DSTATE_GS,                          /* (0x3, 0x0, 0x11) */
-   ILO_GPE_GEN6_3DSTATE_CLIP,                        /* (0x3, 0x0, 0x12) */
-   ILO_GPE_GEN6_3DSTATE_SF,                          /* (0x3, 0x0, 0x13) */
-   ILO_GPE_GEN6_3DSTATE_WM,                          /* (0x3, 0x0, 0x14) */
-   ILO_GPE_GEN6_3DSTATE_CONSTANT_VS,                 /* (0x3, 0x0, 0x15) */
-   ILO_GPE_GEN6_3DSTATE_CONSTANT_GS,                 /* (0x3, 0x0, 0x16) */
-   ILO_GPE_GEN6_3DSTATE_CONSTANT_PS,                 /* (0x3, 0x0, 0x17) */
-   ILO_GPE_GEN6_3DSTATE_SAMPLE_MASK,                 /* (0x3, 0x0, 0x18) */
-   ILO_GPE_GEN6_3DSTATE_DRAWING_RECTANGLE,           /* (0x3, 0x1, 0x00) */
-   ILO_GPE_GEN6_3DSTATE_DEPTH_BUFFER,                /* (0x3, 0x1, 0x05) */
-   ILO_GPE_GEN6_3DSTATE_POLY_STIPPLE_OFFSET,         /* (0x3, 0x1, 0x06) */
-   ILO_GPE_GEN6_3DSTATE_POLY_STIPPLE_PATTERN,        /* (0x3, 0x1, 0x07) */
-   ILO_GPE_GEN6_3DSTATE_LINE_STIPPLE,                /* (0x3, 0x1, 0x08) */
-   ILO_GPE_GEN6_3DSTATE_AA_LINE_PARAMETERS,          /* (0x3, 0x1, 0x0a) */
-   ILO_GPE_GEN6_3DSTATE_GS_SVB_INDEX,                /* (0x3, 0x1, 0x0b) */
-   ILO_GPE_GEN6_3DSTATE_MULTISAMPLE,                 /* (0x3, 0x1, 0x0d) */
-   ILO_GPE_GEN6_3DSTATE_STENCIL_BUFFER,              /* (0x3, 0x1, 0x0e) */
-   ILO_GPE_GEN6_3DSTATE_HIER_DEPTH_BUFFER,           /* (0x3, 0x1, 0x0f) */
-   ILO_GPE_GEN6_3DSTATE_CLEAR_PARAMS,                /* (0x3, 0x1, 0x10) */
-   ILO_GPE_GEN6_PIPE_CONTROL,                        /* (0x3, 0x2, 0x00) */
-   ILO_GPE_GEN6_3DPRIMITIVE,                         /* (0x3, 0x3, 0x00) */
-
-   ILO_GPE_GEN6_COMMAND_COUNT,
-};
-
-/**
  * Indirect states that GEN6 GPE could emit.
  */
 enum ilo_gpe_gen6_state {
@@ -119,11 +66,6 @@ enum ilo_gpe_gen6_state {
 
    ILO_GPE_GEN6_STATE_COUNT,
 };
-
-int
-ilo_gpe_gen6_estimate_command_size(const struct ilo_dev_info *dev,
-                                   enum ilo_gpe_gen6_command cmd,
-                                   int arg);
 
 int
 ilo_gpe_gen6_estimate_state_size(const struct ilo_dev_info *dev,

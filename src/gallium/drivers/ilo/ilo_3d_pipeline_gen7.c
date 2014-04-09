@@ -885,46 +885,48 @@ gen7_pipeline_estimate_commands(const struct ilo_3d_pipeline *p,
                                 const struct ilo_context *ilo)
 {
    static int size;
-   enum ilo_gpe_gen7_command cmd;
 
-   if (size)
-      return size;
+   if (!size) {
+      size += GEN7_3DSTATE_URB_ANY__SIZE * 4;
+      size += GEN7_3DSTATE_PUSH_CONSTANT_ALLOC_ANY__SIZE * 5;
+      size += GEN6_3DSTATE_CONSTANT_ANY__SIZE * 5;
+      size += GEN7_3DSTATE_POINTERS_ANY__SIZE * (5 + 5 + 4);
+      size += GEN7_3DSTATE_SO_BUFFER__SIZE * 4;
+      size += GEN6_PIPE_CONTROL__SIZE * 5;
 
-   for (cmd = 0; cmd < ILO_GPE_GEN7_COMMAND_COUNT; cmd++) {
-      int count;
-
-      switch (cmd) {
-      case ILO_GPE_GEN7_PIPE_CONTROL:
-         /* for the workaround */
-         count = 2;
-         /* another one after 3DSTATE_URB */
-         count += 1;
-         /* and another one after 3DSTATE_CONSTANT_VS */
-         count += 1;
-         break;
-      case ILO_GPE_GEN7_3DSTATE_VERTEX_BUFFERS:
-         count = 33;
-         break;
-      case ILO_GPE_GEN7_3DSTATE_VERTEX_ELEMENTS:
-         count = 34;
-         break;
-      case ILO_GPE_GEN7_MEDIA_VFE_STATE:
-      case ILO_GPE_GEN7_MEDIA_CURBE_LOAD:
-      case ILO_GPE_GEN7_MEDIA_INTERFACE_DESCRIPTOR_LOAD:
-      case ILO_GPE_GEN7_MEDIA_STATE_FLUSH:
-      case ILO_GPE_GEN7_GPGPU_WALKER:
-         /* media commands */
-         count = 0;
-         break;
-      default:
-         count = 1;
-         break;
-      }
-
-      if (count) {
-         size += ilo_gpe_gen7_estimate_command_size(p->dev,
-               cmd, count);
-      }
+      size +=
+         GEN6_STATE_BASE_ADDRESS__SIZE +
+         GEN6_STATE_SIP__SIZE +
+         GEN6_3DSTATE_VF_STATISTICS__SIZE +
+         GEN6_PIPELINE_SELECT__SIZE +
+         GEN6_3DSTATE_CLEAR_PARAMS__SIZE +
+         GEN6_3DSTATE_DEPTH_BUFFER__SIZE +
+         GEN6_3DSTATE_STENCIL_BUFFER__SIZE +
+         GEN6_3DSTATE_HIER_DEPTH_BUFFER__SIZE +
+         GEN6_3DSTATE_VERTEX_BUFFERS__SIZE +
+         GEN6_3DSTATE_VERTEX_ELEMENTS__SIZE +
+         GEN6_3DSTATE_INDEX_BUFFER__SIZE +
+         GEN75_3DSTATE_VF__SIZE +
+         GEN6_3DSTATE_VS__SIZE +
+         GEN6_3DSTATE_GS__SIZE +
+         GEN6_3DSTATE_CLIP__SIZE +
+         GEN6_3DSTATE_SF__SIZE +
+         GEN6_3DSTATE_WM__SIZE +
+         GEN6_3DSTATE_SAMPLE_MASK__SIZE +
+         GEN7_3DSTATE_HS__SIZE +
+         GEN7_3DSTATE_TE__SIZE +
+         GEN7_3DSTATE_DS__SIZE +
+         GEN7_3DSTATE_STREAMOUT__SIZE +
+         GEN7_3DSTATE_SBE__SIZE +
+         GEN7_3DSTATE_PS__SIZE +
+         GEN6_3DSTATE_DRAWING_RECTANGLE__SIZE +
+         GEN6_3DSTATE_POLY_STIPPLE_OFFSET__SIZE +
+         GEN6_3DSTATE_POLY_STIPPLE_PATTERN__SIZE +
+         GEN6_3DSTATE_LINE_STIPPLE__SIZE +
+         GEN6_3DSTATE_AA_LINE_PARAMETERS__SIZE +
+         GEN6_3DSTATE_MULTISAMPLE__SIZE +
+         GEN7_3DSTATE_SO_DECL_LIST__SIZE +
+         GEN6_3DPRIMITIVE__SIZE;
    }
 
    return size;
@@ -1036,20 +1038,16 @@ ilo_3d_pipeline_estimate_size_gen7(struct ilo_3d_pipeline *p,
    case ILO_3D_PIPELINE_FLUSH:
    case ILO_3D_PIPELINE_WRITE_TIMESTAMP:
    case ILO_3D_PIPELINE_WRITE_DEPTH_COUNT:
-      size = ilo_gpe_gen7_estimate_command_size(p->dev,
-            ILO_GPE_GEN7_PIPE_CONTROL, 1);
+      size = GEN6_PIPE_CONTROL__SIZE;
       break;
    case ILO_3D_PIPELINE_WRITE_STATISTICS:
       {
          const int num_regs = 10;
          const int num_pads = 1;
 
-         size = ilo_gpe_gen7_estimate_command_size(p->dev,
-               ILO_GPE_GEN7_PIPE_CONTROL, 1);
-         size += ilo_gpe_gen7_estimate_command_size(p->dev,
-               ILO_GPE_GEN7_MI_STORE_REGISTER_MEM, 1) * 2 * num_regs;
-         size += ilo_gpe_gen7_estimate_command_size(p->dev,
-               ILO_GPE_GEN7_MI_STORE_DATA_IMM, 1) * num_pads;
+         size = GEN6_PIPE_CONTROL__SIZE;
+         size += GEN6_MI_STORE_REGISTER_MEM__SIZE * 2 * num_regs;
+         size += GEN6_MI_STORE_DATA_IMM__SIZE * num_pads;
       }
       break;
    case ILO_3D_PIPELINE_RECTLIST:

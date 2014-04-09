@@ -37,87 +37,6 @@
 #include "ilo_gpe_gen6.h"
 
 /**
- * Commands that GEN7 GPE could emit.
- */
-enum ilo_gpe_gen7_command {
-   ILO_GPE_GEN7_MI_STORE_DATA_IMM,                   /* ILO_GPE_MI(0x20) */
-   ILO_GPE_GEN7_MI_LOAD_REGISTER_IMM,                /* ILO_GPE_MI(0x22) */
-   ILO_GPE_GEN7_MI_STORE_REGISTER_MEM,               /* ILO_GPE_MI(0x24) */
-   ILO_GPE_GEN7_MI_REPORT_PERF_COUNT,                /* ILO_GPE_MI(0x28) */
-   ILO_GPE_GEN7_STATE_BASE_ADDRESS,                  /* (0x0, 0x1, 0x01) */
-   ILO_GPE_GEN7_STATE_SIP,                           /* (0x0, 0x1, 0x02) */
-   ILO_GPE_GEN7_3DSTATE_VF_STATISTICS,               /* (0x1, 0x0, 0x0b) */
-   ILO_GPE_GEN7_PIPELINE_SELECT,                     /* (0x1, 0x1, 0x04) */
-   ILO_GPE_GEN7_MEDIA_VFE_STATE,                     /* (0x2, 0x0, 0x00) */
-   ILO_GPE_GEN7_MEDIA_CURBE_LOAD,                    /* (0x2, 0x0, 0x01) */
-   ILO_GPE_GEN7_MEDIA_INTERFACE_DESCRIPTOR_LOAD,     /* (0x2, 0x0, 0x02) */
-   ILO_GPE_GEN7_MEDIA_STATE_FLUSH,                   /* (0x2, 0x0, 0x04) */
-   ILO_GPE_GEN7_GPGPU_WALKER,                        /* (0x2, 0x1, 0x05) */
-   ILO_GPE_GEN7_3DSTATE_CLEAR_PARAMS,                /* (0x3, 0x0, 0x04) */
-   ILO_GPE_GEN7_3DSTATE_DEPTH_BUFFER,                /* (0x3, 0x0, 0x05) */
-   ILO_GPE_GEN7_3DSTATE_STENCIL_BUFFER,              /* (0x3, 0x0, 0x06) */
-   ILO_GPE_GEN7_3DSTATE_HIER_DEPTH_BUFFER,           /* (0x3, 0x0, 0x07) */
-   ILO_GPE_GEN7_3DSTATE_VERTEX_BUFFERS,              /* (0x3, 0x0, 0x08) */
-   ILO_GPE_GEN7_3DSTATE_VERTEX_ELEMENTS,             /* (0x3, 0x0, 0x09) */
-   ILO_GPE_GEN7_3DSTATE_INDEX_BUFFER,                /* (0x3, 0x0, 0x0a) */
-   ILO_GPE_GEN7_3DSTATE_VF,                          /* (0x3, 0x0, 0x0c) */
-   ILO_GPE_GEN7_3DSTATE_CC_STATE_POINTERS,           /* (0x3, 0x0, 0x0e) */
-   ILO_GPE_GEN7_3DSTATE_SCISSOR_STATE_POINTERS,      /* (0x3, 0x0, 0x0f) */
-   ILO_GPE_GEN7_3DSTATE_VS,                          /* (0x3, 0x0, 0x10) */
-   ILO_GPE_GEN7_3DSTATE_GS,                          /* (0x3, 0x0, 0x11) */
-   ILO_GPE_GEN7_3DSTATE_CLIP,                        /* (0x3, 0x0, 0x12) */
-   ILO_GPE_GEN7_3DSTATE_SF,                          /* (0x3, 0x0, 0x13) */
-   ILO_GPE_GEN7_3DSTATE_WM,                          /* (0x3, 0x0, 0x14) */
-   ILO_GPE_GEN7_3DSTATE_CONSTANT_VS,                 /* (0x3, 0x0, 0x15) */
-   ILO_GPE_GEN7_3DSTATE_CONSTANT_GS,                 /* (0x3, 0x0, 0x16) */
-   ILO_GPE_GEN7_3DSTATE_CONSTANT_PS,                 /* (0x3, 0x0, 0x17) */
-   ILO_GPE_GEN7_3DSTATE_SAMPLE_MASK,                 /* (0x3, 0x0, 0x18) */
-   ILO_GPE_GEN7_3DSTATE_CONSTANT_HS,                 /* (0x3, 0x0, 0x19) */
-   ILO_GPE_GEN7_3DSTATE_CONSTANT_DS,                 /* (0x3, 0x0, 0x1a) */
-   ILO_GPE_GEN7_3DSTATE_HS,                          /* (0x3, 0x0, 0x1b) */
-   ILO_GPE_GEN7_3DSTATE_TE,                          /* (0x3, 0x0, 0x1c) */
-   ILO_GPE_GEN7_3DSTATE_DS,                          /* (0x3, 0x0, 0x1d) */
-   ILO_GPE_GEN7_3DSTATE_STREAMOUT,                   /* (0x3, 0x0, 0x1e) */
-   ILO_GPE_GEN7_3DSTATE_SBE,                         /* (0x3, 0x0, 0x1f) */
-   ILO_GPE_GEN7_3DSTATE_PS,                          /* (0x3, 0x0, 0x20) */
-   ILO_GPE_GEN7_3DSTATE_VIEWPORT_STATE_POINTERS_SF_CLIP, /* (0x3, 0x0, 0x21) */
-   ILO_GPE_GEN7_3DSTATE_VIEWPORT_STATE_POINTERS_CC,  /* (0x3, 0x0, 0x23) */
-   ILO_GPE_GEN7_3DSTATE_BLEND_STATE_POINTERS,        /* (0x3, 0x0, 0x24) */
-   ILO_GPE_GEN7_3DSTATE_DEPTH_STENCIL_STATE_POINTERS, /* (0x3, 0x0, 0x25) */
-   ILO_GPE_GEN7_3DSTATE_BINDING_TABLE_POINTERS_VS,   /* (0x3, 0x0, 0x26) */
-   ILO_GPE_GEN7_3DSTATE_BINDING_TABLE_POINTERS_HS,   /* (0x3, 0x0, 0x27) */
-   ILO_GPE_GEN7_3DSTATE_BINDING_TABLE_POINTERS_DS,   /* (0x3, 0x0, 0x28) */
-   ILO_GPE_GEN7_3DSTATE_BINDING_TABLE_POINTERS_GS,   /* (0x3, 0x0, 0x29) */
-   ILO_GPE_GEN7_3DSTATE_BINDING_TABLE_POINTERS_PS,   /* (0x3, 0x0, 0x2a) */
-   ILO_GPE_GEN7_3DSTATE_SAMPLER_STATE_POINTERS_VS,   /* (0x3, 0x0, 0x2b) */
-   ILO_GPE_GEN7_3DSTATE_SAMPLER_STATE_POINTERS_HS,   /* (0x3, 0x0, 0x2c) */
-   ILO_GPE_GEN7_3DSTATE_SAMPLER_STATE_POINTERS_DS,   /* (0x3, 0x0, 0x2d) */
-   ILO_GPE_GEN7_3DSTATE_SAMPLER_STATE_POINTERS_GS,   /* (0x3, 0x0, 0x2e) */
-   ILO_GPE_GEN7_3DSTATE_SAMPLER_STATE_POINTERS_PS,   /* (0x3, 0x0, 0x2f) */
-   ILO_GPE_GEN7_3DSTATE_URB_VS,                      /* (0x3, 0x0, 0x30) */
-   ILO_GPE_GEN7_3DSTATE_URB_HS,                      /* (0x3, 0x0, 0x31) */
-   ILO_GPE_GEN7_3DSTATE_URB_DS,                      /* (0x3, 0x0, 0x32) */
-   ILO_GPE_GEN7_3DSTATE_URB_GS,                      /* (0x3, 0x0, 0x33) */
-   ILO_GPE_GEN7_3DSTATE_DRAWING_RECTANGLE,           /* (0x3, 0x1, 0x00) */
-   ILO_GPE_GEN7_3DSTATE_POLY_STIPPLE_OFFSET,         /* (0x3, 0x1, 0x06) */
-   ILO_GPE_GEN7_3DSTATE_POLY_STIPPLE_PATTERN,        /* (0x3, 0x1, 0x07) */
-   ILO_GPE_GEN7_3DSTATE_LINE_STIPPLE,                /* (0x3, 0x1, 0x08) */
-   ILO_GPE_GEN7_3DSTATE_AA_LINE_PARAMETERS,          /* (0x3, 0x1, 0x0a) */
-   ILO_GPE_GEN7_3DSTATE_MULTISAMPLE,                 /* (0x3, 0x1, 0x0d) */
-   ILO_GPE_GEN7_3DSTATE_PUSH_CONSTANT_ALLOC_VS,      /* (0x3, 0x1, 0x12) */
-   ILO_GPE_GEN7_3DSTATE_PUSH_CONSTANT_ALLOC_HS,      /* (0x3, 0x1, 0x13) */
-   ILO_GPE_GEN7_3DSTATE_PUSH_CONSTANT_ALLOC_DS,      /* (0x3, 0x1, 0x14) */
-   ILO_GPE_GEN7_3DSTATE_PUSH_CONSTANT_ALLOC_GS,      /* (0x3, 0x1, 0x15) */
-   ILO_GPE_GEN7_3DSTATE_PUSH_CONSTANT_ALLOC_PS,      /* (0x3, 0x1, 0x16) */
-   ILO_GPE_GEN7_3DSTATE_SO_DECL_LIST,                /* (0x3, 0x1, 0x17) */
-   ILO_GPE_GEN7_3DSTATE_SO_BUFFER,                   /* (0x3, 0x1, 0x18) */
-   ILO_GPE_GEN7_PIPE_CONTROL,                        /* (0x3, 0x2, 0x00) */
-   ILO_GPE_GEN7_3DPRIMITIVE,                         /* (0x3, 0x3, 0x00) */
-
-   ILO_GPE_GEN7_COMMAND_COUNT,
-};
-
-/**
  * Indirect states that GEN7 GPE could emit.
  */
 enum ilo_gpe_gen7_state {
@@ -136,11 +55,6 @@ enum ilo_gpe_gen7_state {
 
    ILO_GPE_GEN7_STATE_COUNT,
 };
-
-int
-ilo_gpe_gen7_estimate_command_size(const struct ilo_dev_info *dev,
-                                   enum ilo_gpe_gen7_command cmd,
-                                   int arg);
 
 int
 ilo_gpe_gen7_estimate_state_size(const struct ilo_dev_info *dev,
