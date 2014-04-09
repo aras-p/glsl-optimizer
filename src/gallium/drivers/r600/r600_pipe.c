@@ -424,9 +424,11 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return rscreen->b.info.drm_minor >= 20 &&
 		       rscreen->b.info.r600_clock_crystal_freq != 0;
 
+	case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
 	case PIPE_CAP_MIN_TEXEL_OFFSET:
 		return -8;
 
+	case PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET:
 	case PIPE_CAP_MAX_TEXEL_OFFSET:
 		return 7;
 

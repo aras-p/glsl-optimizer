@@ -176,8 +176,10 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_SEAMLESS_CUBE_MAP_PER_TEXTURE:
       return 1;
    /* this is a lie could support arbitrary large offsets */
+   case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
    case PIPE_CAP_MIN_TEXEL_OFFSET:
       return -8;
+   case PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET:
    case PIPE_CAP_MAX_TEXEL_OFFSET:
       return 7;
    case PIPE_CAP_CONDITIONAL_RENDER:

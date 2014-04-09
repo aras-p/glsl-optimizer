@@ -193,6 +193,10 @@ The integer capabilities:
   for buffers.
 * ``PIPE_CAP_TEXTURE_QUERY_LOD``: Whether the ``LODQ`` instruction is
   supported.
+* ``PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET``: The minimum offset that can be used
+  in conjunction with a texture gather opcode.
+* ``PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET``: The maximum offset that can be used
+  in conjunction with a texture gather opcode.
 
 
 .. _pipe_capf:

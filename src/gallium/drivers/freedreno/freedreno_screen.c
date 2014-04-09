@@ -240,9 +240,11 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_QUERY_TIMESTAMP:
 		return 0;
 
+	case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
 	case PIPE_CAP_MIN_TEXEL_OFFSET:
 		return -8;
 
+	case PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET:
 	case PIPE_CAP_MAX_TEXEL_OFFSET:
 		return 7;
 

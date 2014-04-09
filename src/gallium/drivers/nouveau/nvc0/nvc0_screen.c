@@ -82,6 +82,10 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return -8;
    case PIPE_CAP_MAX_TEXEL_OFFSET:
       return 7;
+   case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
+      return -32;
+   case PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET:
+      return 31;
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
    case PIPE_CAP_TEXTURE_SWIZZLE:
    case PIPE_CAP_TEXTURE_SHADOW_MAP:

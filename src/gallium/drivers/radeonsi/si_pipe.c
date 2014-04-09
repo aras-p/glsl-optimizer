@@ -335,9 +335,11 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_QUERY_TIME_ELAPSED:
 		return sscreen->b.info.r600_clock_crystal_freq != 0;
 
+ 	case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
 	case PIPE_CAP_MIN_TEXEL_OFFSET:
 		return -8;
 
+ 	case PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET:
 	case PIPE_CAP_MAX_TEXEL_OFFSET:
 		return 7;
 	case PIPE_CAP_ENDIANNESS:
