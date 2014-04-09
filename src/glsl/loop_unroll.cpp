@@ -25,15 +25,18 @@
 #include "loop_analysis.h"
 #include "ir_hierarchical_visitor.h"
 
+#include "main/mtypes.h"
+
 namespace {
 
 class loop_unroll_visitor : public ir_hierarchical_visitor {
 public:
-   loop_unroll_visitor(loop_state *state, unsigned max_iterations)
+   loop_unroll_visitor(loop_state *state,
+                       const struct gl_shader_compiler_options *options)
    {
       this->state = state;
       this->progress = false;
-      this->max_iterations = max_iterations;
+      this->options = options;
    }
 
    virtual ir_visitor_status visit_leave(ir_loop *ir);
@@ -45,7 +48,7 @@ public:
    loop_state *state;
 
    bool progress;
-   unsigned max_iterations;
+   const struct gl_shader_compiler_options *options;
 };
 
 } /* anonymous namespace */
@@ -244,16 +247,18 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 
    iterations = ls->limiting_terminator->iterations;
 
+   const int max_iterations = options->MaxUnrollIterations;
+
    /* Don't try to unroll loops that have zillions of iterations either.
     */
-   if (iterations > (int) max_iterations)
+   if (iterations > max_iterations)
       return visit_continue;
 
    /* Don't try to unroll nested loops and loops with a huge body.
     */
    loop_unroll_count count(&ir->body_instructions);
 
-   if (count.fail || count.nodes * iterations > (int)max_iterations * 5)
+   if (count.fail || count.nodes * iterations > max_iterations * 5)
       return visit_continue;
 
    /* Note: the limiting terminator contributes 1 to ls->num_loop_jumps.
@@ -338,9 +343,10 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 
 
 bool
-unroll_loops(exec_list *instructions, loop_state *ls, unsigned max_iterations)
+unroll_loops(exec_list *instructions, loop_state *ls,
+             const struct gl_shader_compiler_options *options)
 {
-   loop_unroll_visitor v(ls, max_iterations);
+   loop_unroll_visitor v(ls, options);
 
    v.run(instructions);
 

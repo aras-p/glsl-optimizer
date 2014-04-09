@@ -53,7 +53,8 @@ set_loop_controls(exec_list *instructions, loop_state *ls);
 
 
 extern bool
-unroll_loops(exec_list *instructions, loop_state *ls, unsigned max_iterations);
+unroll_loops(exec_list *instructions, loop_state *ls,
+             const struct gl_shader_compiler_options *options);
 
 ir_rvalue *
 find_initial_value(ir_loop *loop, ir_variable *var);
