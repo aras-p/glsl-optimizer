@@ -663,6 +663,19 @@ backend_instruction::can_do_saturate() const
 }
 
 bool
+backend_instruction::reads_accumulator_implicitly() const
+{
+   switch (opcode) {
+   case BRW_OPCODE_MAC:
+   case BRW_OPCODE_MACH:
+   case BRW_OPCODE_SADA2:
+      return true;
+   default:
+      return false;
+   }
+}
+
+bool
 backend_instruction::has_side_effects() const
 {
    switch (opcode) {
