@@ -63,13 +63,17 @@ is_break(ir_instruction *ir)
 class loop_unroll_count : public ir_hierarchical_visitor {
 public:
    int nodes;
+   bool unsupported_variable_indexing;
    /* If there are nested loops, the node count will be inaccurate. */
    bool nested_loop;
 
-   loop_unroll_count(exec_list *list)
+   loop_unroll_count(exec_list *list, loop_variable_state *ls,
+                     const struct gl_shader_compiler_options *options)
+      : ls(ls), options(options)
    {
       nodes = 0;
       nested_loop = false;
+      unsupported_variable_indexing = false;
 
       run(list);
    }
@@ -91,6 +95,54 @@ public:
       nested_loop = true;
       return visit_continue;
    }
+
+   virtual ir_visitor_status visit_enter(ir_dereference_array *ir)
+   {
+      /* Check for arrays variably-indexed by a loop induction variable.
+       * Unrolling the loop may convert that access into constant-indexing.
+       *
+       * Many drivers don't support particular kinds of variable indexing,
+       * and have to resort to using lower_variable_index_to_cond_assign to
+       * handle it.  This results in huge amounts of horrible code, so we'd
+       * like to avoid that if possible.  Here, we just note that it will
+       * happen.
+       */
+      if ((ir->array->type->is_array() || ir->array->type->is_matrix()) &&
+          !ir->array_index->as_constant()) {
+         ir_variable *array = ir->array->variable_referenced();
+         loop_variable *lv = ls->get(ir->array_index->variable_referenced());
+         if (array && lv && lv->is_induction_var()) {
+            switch (array->data.mode) {
+            case ir_var_auto:
+            case ir_var_temporary:
+            case ir_var_const_in:
+            case ir_var_function_in:
+            case ir_var_function_out:
+            case ir_var_function_inout:
+               if (options->EmitNoIndirectTemp)
+                  unsupported_variable_indexing = true;
+               break;
+            case ir_var_uniform:
+               if (options->EmitNoIndirectUniform)
+                  unsupported_variable_indexing = true;
+               break;
+            case ir_var_shader_in:
+               if (options->EmitNoIndirectInput)
+                  unsupported_variable_indexing = true;
+               break;
+            case ir_var_shader_out:
+               if (options->EmitNoIndirectOutput)
+                  unsupported_variable_indexing = true;
+               break;
+            }
+         }
+      }
+      return visit_continue;
+   }
+
+private:
+   loop_variable_state *ls;
+   const struct gl_shader_compiler_options *options;
 };
 
 
@@ -257,9 +309,12 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 
    /* Don't try to unroll nested loops and loops with a huge body.
     */
-   loop_unroll_count count(&ir->body_instructions);
+   loop_unroll_count count(&ir->body_instructions, ls, options);
 
-   if (count.nested_loop || count.nodes * iterations > max_iterations * 5)
+   bool loop_too_large =
+      count.nested_loop || count.nodes * iterations > max_iterations * 5;
+
+   if (loop_too_large && !count.unsupported_variable_indexing)
       return visit_continue;
 
    /* Note: the limiting terminator contributes 1 to ls->num_loop_jumps.
