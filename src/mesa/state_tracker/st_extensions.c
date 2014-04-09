@@ -275,6 +275,9 @@ void st_init_limits(struct st_context *st)
    c->MaxProgramTexelOffset = screen->get_param(screen, PIPE_CAP_MAX_TEXEL_OFFSET);
 
    c->MaxProgramTextureGatherComponents = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS);
+   c->MinProgramTextureGatherOffset = screen->get_param(screen, PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET);
+   c->MaxProgramTextureGatherOffset = screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET);
+
    c->UniformBooleanTrue = ~0;
 
    c->MaxTransformFeedbackBuffers =
