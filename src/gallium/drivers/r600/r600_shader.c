@@ -155,7 +155,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 	r = r600_shader_from_tgsi(rctx, shader, key);
 	if (r) {
 		R600_ERR("translation from TGSI failed !\n");
-		return r;
+		goto error;
 	}
 
 	/* disable SB for geom shaders - it can't handle the CF_EMIT instructions */
@@ -169,7 +169,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		r = r600_bytecode_build(&shader->shader.bc);
 		if (r) {
 			R600_ERR("building bytecode failed !\n");
-			return r;
+			goto error;
 		}
 	}
 
@@ -182,7 +182,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		                             dump, use_sb);
 		if (r) {
 			R600_ERR("r600_sb_bytecode_process failed !\n");
-			return r;
+			goto error;
 		}
 	}
 
@@ -192,16 +192,16 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 			r = r600_sb_bytecode_process(rctx, &shader->gs_copy_shader->shader.bc,
 						     &shader->gs_copy_shader->shader, dump, 0);
 			if (r)
-				return r;
+				goto error;
 		}
 
 		if ((r = store_shader(ctx, shader->gs_copy_shader)))
-			return r;
+			goto error;
 	}
 
 	/* Store the shader in a buffer. */
 	if ((r = store_shader(ctx, shader)))
-		return r;
+		goto error;
 
 	/* Build state. */
 	switch (shader->shader.processor_type) {
@@ -235,9 +235,14 @@ int r600_pipe_shader_create(struct pipe_context *ctx,
 		}
 		break;
 	default:
-		return -EINVAL;
+		r = -EINVAL;
+		goto error;
 	}
 	return 0;
+
+error:
+	r600_pipe_shader_destroy(ctx, shader);
+	return r;
 }
 
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader)
