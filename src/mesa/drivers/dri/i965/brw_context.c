@@ -485,12 +485,11 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->ShaderCompilerOptions[i].EmitNoNoise = true;
       ctx->ShaderCompilerOptions[i].EmitNoMainReturn = true;
       ctx->ShaderCompilerOptions[i].EmitNoIndirectInput = true;
-      ctx->ShaderCompilerOptions[i].EmitNoIndirectOutput = true;
-
-      ctx->ShaderCompilerOptions[i].EmitNoIndirectUniform =
+      ctx->ShaderCompilerOptions[i].EmitNoIndirectOutput =
 	 (i == MESA_SHADER_FRAGMENT);
       ctx->ShaderCompilerOptions[i].EmitNoIndirectTemp =
 	 (i == MESA_SHADER_FRAGMENT);
+      ctx->ShaderCompilerOptions[i].EmitNoIndirectUniform = false;
       ctx->ShaderCompilerOptions[i].LowerClipDistance = true;
    }
 
