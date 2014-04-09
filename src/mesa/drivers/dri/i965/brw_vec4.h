@@ -128,6 +128,7 @@ public:
    bool equals(src_reg *r);
    bool is_zero() const;
    bool is_one() const;
+   bool is_accumulator() const;
 
    src_reg(class vec4_visitor *v, const struct glsl_type *type);
 
@@ -195,6 +196,7 @@ public:
    explicit dst_reg(src_reg reg);
 
    bool is_null() const;
+   bool is_accumulator() const;
 
    int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
 

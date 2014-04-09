@@ -83,6 +83,7 @@ public:
    bool is_null() const;
    bool is_valid_3src() const;
    bool is_contiguous() const;
+   bool is_accumulator() const;
 
    fs_reg &apply_stride(unsigned stride);
    /** Smear a channel of the reg to all channels. */

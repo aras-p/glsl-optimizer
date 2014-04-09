@@ -501,6 +501,14 @@ fs_reg::is_valid_3src() const
    return file == GRF || file == UNIFORM;
 }
 
+bool
+fs_reg::is_accumulator() const
+{
+   return file == HW_REG &&
+          fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
+          fixed_hw_reg.nr == BRW_ARF_ACCUMULATOR;
+}
+
 int
 fs_visitor::type_size(const struct glsl_type *type)
 {

@@ -151,6 +151,15 @@ src_reg::src_reg(dst_reg reg)
                                 swizzles[2], swizzles[3]);
 }
 
+bool
+src_reg::is_accumulator() const
+{
+   return file == HW_REG &&
+          fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
+          fixed_hw_reg.nr == BRW_ARF_ACCUMULATOR;
+}
+
+
 void
 dst_reg::init()
 {
@@ -218,6 +227,14 @@ dst_reg::is_null() const
    return file == HW_REG &&
           fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
           fixed_hw_reg.nr == BRW_ARF_NULL;
+}
+
+bool
+dst_reg::is_accumulator() const
+{
+   return file == HW_REG &&
+          fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE &&
+          fixed_hw_reg.nr == BRW_ARF_ACCUMULATOR;
 }
 
 bool
