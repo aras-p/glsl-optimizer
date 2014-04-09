@@ -162,6 +162,7 @@ fs_visitor::register_coalesce()
          if (!can_coalesce_vars(live_intervals, &instructions, inst,
                                 var_to[i], var_from[i])) {
             can_coalesce = false;
+            reg_from = -1;
             break;
          }
       }
