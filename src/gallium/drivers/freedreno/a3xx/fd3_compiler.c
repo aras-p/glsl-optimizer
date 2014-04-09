@@ -1599,26 +1599,7 @@ instr_cat1(const struct instr_translater *t,
 {
 	struct tgsi_dst_register *dst = get_dst(ctx, inst);
 	struct tgsi_src_register *src = &inst->Src[0].Register;
-
-	/* mov instructions can't handle a negate on src: */
-	if (src->Negate) {
-		struct tgsi_src_register constval;
-		struct ir3_instruction *instr;
-
-		/* since right now, we are using uniformly either TYPE_F16 or
-		 * TYPE_F32, and we don't utilize the conversion possibilities
-		 * of mov instructions, we can get away with substituting an
-		 * add.f which can handle negate.  Might need to revisit this
-		 * in the future if we start supporting widening/narrowing or
-		 * conversion to/from integer..
-		 */
-		instr = instr_create(ctx, 2, OPC_ADD_F);
-		get_immediate(ctx, &constval, fui(0.0));
-		vectorize(ctx, instr, dst, 2, src, 0, &constval, 0);
-	} else {
-		create_mov(ctx, dst, src);
-		/* create_mov() generates vector sequence, so no vectorize() */
-	}
+	create_mov(ctx, dst, src);
 	put_dst(ctx, inst, dst);
 }
 
