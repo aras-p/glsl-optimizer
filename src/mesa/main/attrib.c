@@ -217,7 +217,7 @@ push_attrib(struct gl_context *ctx, struct gl_attrib_node **head,
 {
    void *attribute;
 
-   attribute = MALLOC(attr_size);
+   attribute = malloc(attr_size);
    if (attribute == NULL) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
       return false;
@@ -227,7 +227,7 @@ push_attrib(struct gl_context *ctx, struct gl_attrib_node **head,
       memcpy(attribute, attr_data, attr_size);
    }
    else {
-      FREE(attribute);
+      free(attribute);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
       return false;
    }
@@ -277,7 +277,7 @@ _mesa_PushAttrib(GLbitfield mask)
             attr->DrawBuffer[i] = ctx->DrawBuffer->ColorDrawBuffer[i];
       }
       else {
-         FREE(attr);
+         free(attr);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
          goto end;
       }
@@ -374,7 +374,7 @@ _mesa_PushAttrib(GLbitfield mask)
       attr->FragmentProgram = ctx->FragmentProgram.Enabled;
 
       if (!save_attrib_data(&head, GL_ENABLE_BIT, attr)) {
-         FREE(attr);
+         free(attr);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
          goto end;
       }
@@ -440,7 +440,7 @@ _mesa_PushAttrib(GLbitfield mask)
          attr->ReadBuffer = ctx->ReadBuffer->ColorReadBuffer;
       }
       else {
-         FREE(attr);
+         free(attr);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib");
          goto end;
       }
@@ -491,7 +491,7 @@ _mesa_PushAttrib(GLbitfield mask)
       }
 
       if (!save_attrib_data(&head, GL_TEXTURE_BIT, texstate)) {
-         FREE(texstate);
+         free(texstate);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushAttrib(GL_TEXTURE_BIT)");
          goto end;
       }
@@ -1626,7 +1626,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
       }
       else {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib" );
-         FREE(attr);
+         free(attr);
          goto end;
       }
 
@@ -1642,7 +1642,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
       }
       else {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib" );
-         FREE(attr);
+         free(attr);
          goto end;
        }
    }
@@ -1656,7 +1656,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
       }
 
       if (!init_array_attrib_data(ctx, attr)) {
-         FREE(attr);
+         free(attr);
          goto end;
       }
 
@@ -1666,7 +1666,7 @@ _mesa_PushClientAttrib(GLbitfield mask)
       else {
          free_array_attrib_data(ctx, attr);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glPushClientAttrib");
-         FREE(attr);
+         free(attr);
          /* goto to keep safe from possible later changes */
          goto end;
       }
