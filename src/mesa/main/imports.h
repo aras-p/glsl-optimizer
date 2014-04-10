@@ -49,16 +49,10 @@ extern "C" {
 /** Memory macros */
 /*@{*/
 
-/** Allocate \p BYTES bytes */
-#define MALLOC(BYTES)      malloc(BYTES)
-/** Allocate and zero \p BYTES bytes */
-#define CALLOC(BYTES)      calloc(1, BYTES)
 /** Allocate a structure of type \p T */
 #define MALLOC_STRUCT(T)   (struct T *) malloc(sizeof(struct T))
 /** Allocate and zero a structure of type \p T */
 #define CALLOC_STRUCT(T)   (struct T *) calloc(1, sizeof(struct T))
-/** Free memory */
-#define FREE(PTR)          free(PTR)
 
 /*@}*/
 
