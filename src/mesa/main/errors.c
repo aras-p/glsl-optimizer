@@ -980,7 +980,7 @@ _mesa_free_errors_data(struct gl_context *ctx)
       for (i = 0; i <= ctx->Debug->GroupStackDepth; i++) {
          free_errors_data(ctx, i);
       }
-      FREE(ctx->Debug);
+      free(ctx->Debug);
       /* set to NULL just in case it is used before context is completely gone. */
       ctx->Debug = NULL;
    }
