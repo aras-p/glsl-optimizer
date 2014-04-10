@@ -483,3 +483,15 @@ st_texture_release_all_sampler_views(struct st_texture_object *stObj)
    for (i = 0; i < stObj->num_sampler_views; ++i)
       pipe_sampler_view_reference(&stObj->sampler_views[i], NULL);
 }
+
+
+void
+st_texture_free_sampler_views(struct st_texture_object *stObj)
+{
+   /* NOTE:
+    * We use FREE() here to match REALLOC() above.  Both come from
+    * u_memory.h, not imports.h.  If we mis-match MALLOC/FREE from
+    * those two headers we can trash the heap.
+    */
+   FREE(stObj->sampler_views);
+}

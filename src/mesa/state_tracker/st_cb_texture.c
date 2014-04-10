@@ -155,7 +155,7 @@ st_DeleteTextureObject(struct gl_context *ctx,
 
    pipe_resource_reference(&stObj->pt, NULL);
    st_texture_release_all_sampler_views(stObj);
-   FREE(stObj->sampler_views);
+   st_texture_free_sampler_views(stObj);
    _mesa_delete_texture_object(ctx, texObj);
 }
 
