@@ -2394,9 +2394,9 @@ sample_compare(struct sp_sampler_view *sp_sview,
                float rgba[TGSI_NUM_CHANNELS][TGSI_QUAD_SIZE])
 {
    const struct pipe_sampler_state *sampler = &sp_samp->base;
-   int j, k0, k1, k2, k3;
-   float val;
-   float pc0, pc1, pc2, pc3;
+   int j;
+   int k[4];
+   float pc[4];
    const struct util_format_description *format_desc;
    unsigned chan_type;
 
@@ -2409,20 +2409,20 @@ sample_compare(struct sp_sampler_view *sp_sview,
 
    if (sp_sview->base.texture->target == PIPE_TEXTURE_2D_ARRAY ||
        sp_sview->base.texture->target == PIPE_TEXTURE_CUBE) {
-      pc0 = c0[0];
-      pc1 = c0[1];
-      pc2 = c0[2];
-      pc3 = c0[3];
+      pc[0] = c0[0];
+      pc[1] = c0[1];
+      pc[2] = c0[2];
+      pc[3] = c0[3];
    } else if (sp_sview->base.texture->target == PIPE_TEXTURE_CUBE_ARRAY) {
-      pc0 = c1[0];
-      pc1 = c1[1];
-      pc2 = c1[2];
-      pc3 = c1[3];
+      pc[0] = c1[0];
+      pc[1] = c1[1];
+      pc[2] = c1[2];
+      pc[3] = c1[3];
    } else {
-      pc0 = p[0];
-      pc1 = p[1];
-      pc2 = p[2];
-      pc3 = p[3];
+      pc[0] = p[0];
+      pc[1] = p[1];
+      pc[2] = p[2];
+      pc[3] = p[3];
    }
 
    format_desc = util_format_description(sp_sview->base.format);
@@ -2436,84 +2436,67 @@ sample_compare(struct sp_sampler_view *sp_sview,
        * doesn't happen with floats. Technically also should do comparison
        * in texture format (quantization!).
        */
-      pc0 = CLAMP(pc0, 0.0F, 1.0F);
-      pc1 = CLAMP(pc1, 0.0F, 1.0F);
-      pc2 = CLAMP(pc2, 0.0F, 1.0F);
-      pc3 = CLAMP(pc3, 0.0F, 1.0F);
+      pc[0] = CLAMP(pc[0], 0.0F, 1.0F);
+      pc[1] = CLAMP(pc[1], 0.0F, 1.0F);
+      pc[2] = CLAMP(pc[2], 0.0F, 1.0F);
+      pc[3] = CLAMP(pc[3], 0.0F, 1.0F);
    }
 
    /* compare four texcoords vs. four texture samples */
    switch (sampler->compare_func) {
    case PIPE_FUNC_LESS:
-      k0 = pc0 < rgba[0][0];
-      k1 = pc1 < rgba[0][1];
-      k2 = pc2 < rgba[0][2];
-      k3 = pc3 < rgba[0][3];
+      k[0] = pc[0] < rgba[0][0];
+      k[1] = pc[1] < rgba[0][1];
+      k[2] = pc[2] < rgba[0][2];
+      k[3] = pc[3] < rgba[0][3];
       break;
    case PIPE_FUNC_LEQUAL:
-      k0 = pc0 <= rgba[0][0];
-      k1 = pc1 <= rgba[0][1];
-      k2 = pc2 <= rgba[0][2];
-      k3 = pc3 <= rgba[0][3];
+      k[0] = pc[0] <= rgba[0][0];
+      k[1] = pc[1] <= rgba[0][1];
+      k[2] = pc[2] <= rgba[0][2];
+      k[3] = pc[3] <= rgba[0][3];
       break;
    case PIPE_FUNC_GREATER:
-      k0 = pc0 > rgba[0][0];
-      k1 = pc1 > rgba[0][1];
-      k2 = pc2 > rgba[0][2];
-      k3 = pc3 > rgba[0][3];
+      k[0] = pc[0] > rgba[0][0];
+      k[1] = pc[1] > rgba[0][1];
+      k[2] = pc[2] > rgba[0][2];
+      k[3] = pc[3] > rgba[0][3];
       break;
    case PIPE_FUNC_GEQUAL:
-      k0 = pc0 >= rgba[0][0];
-      k1 = pc1 >= rgba[0][1];
-      k2 = pc2 >= rgba[0][2];
-      k3 = pc3 >= rgba[0][3];
+      k[0] = pc[0] >= rgba[0][0];
+      k[1] = pc[1] >= rgba[0][1];
+      k[2] = pc[2] >= rgba[0][2];
+      k[3] = pc[3] >= rgba[0][3];
       break;
    case PIPE_FUNC_EQUAL:
-      k0 = pc0 == rgba[0][0];
-      k1 = pc1 == rgba[0][1];
-      k2 = pc2 == rgba[0][2];
-      k3 = pc3 == rgba[0][3];
+      k[0] = pc[0] == rgba[0][0];
+      k[1] = pc[1] == rgba[0][1];
+      k[2] = pc[2] == rgba[0][2];
+      k[3] = pc[3] == rgba[0][3];
       break;
    case PIPE_FUNC_NOTEQUAL:
-      k0 = pc0 != rgba[0][0];
-      k1 = pc1 != rgba[0][1];
-      k2 = pc2 != rgba[0][2];
-      k3 = pc3 != rgba[0][3];
+      k[0] = pc[0] != rgba[0][0];
+      k[1] = pc[1] != rgba[0][1];
+      k[2] = pc[2] != rgba[0][2];
+      k[3] = pc[3] != rgba[0][3];
       break;
    case PIPE_FUNC_ALWAYS:
-      k0 = k1 = k2 = k3 = 1;
+      k[0] = k[1] = k[2] = k[3] = 1;
       break;
    case PIPE_FUNC_NEVER:
-      k0 = k1 = k2 = k3 = 0;
+      k[0] = k[1] = k[2] = k[3] = 0;
       break;
    default:
-      k0 = k1 = k2 = k3 = 0;
+      k[0] = k[1] = k[2] = k[3] = 0;
       assert(0);
       break;
    }
 
-   if (sampler->mag_img_filter == PIPE_TEX_FILTER_LINEAR) {
-      /* convert four pass/fail values to an intensity in [0,1] */
-      /*
-       * XXX this doesn't actually make much sense.
-       * We just average the result of four _pixels_ and output the same
-       * value for all of the four pixels of the quad.
-       * This really needs to work on the _samples_ i.e. inside the img filter.
-       */
-      val = 0.25F * (k0 + k1 + k2 + k3);
-
-      /* XXX returning result for default GL_DEPTH_TEXTURE_MODE = GL_LUMINANCE */
-      for (j = 0; j < 4; j++) {
-         rgba[0][j] = rgba[1][j] = rgba[2][j] = val;
-         rgba[3][j] = 1.0F;
-      }
-   } else {
-      for (j = 0; j < 4; j++) {
-         rgba[0][j] = k0;
-         rgba[1][j] = k1;
-         rgba[2][j] = k2;
-         rgba[3][j] = 1.0F;
-      }
+   for (j = 0; j < TGSI_QUAD_SIZE; j++) {
+      rgba[0][j] = k[j];
+      rgba[1][j] = k[j];
+      rgba[2][j] = k[j];
+      rgba[3][j] = 1.0F;
    }
 }
 
