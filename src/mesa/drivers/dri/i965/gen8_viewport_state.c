@@ -86,7 +86,7 @@ gen8_upload_sf_clip_viewport(struct brw_context *brw)
       vp[10] = -gby; /* y-min */
       vp[11] =  gby; /* y-max */
 
-      /* Screen Space Viewport */
+      /* _NEW_SCISSOR | _NEW_VIEWPORT | _NEW_BUFFERS: Screen Space Viewport */
       if (render_to_fbo) {
          vp[12] = ctx->DrawBuffer->_Xmin;
          vp[13] = ctx->DrawBuffer->_Xmax - 1;
@@ -110,7 +110,7 @@ gen8_upload_sf_clip_viewport(struct brw_context *brw)
 
 const struct brw_tracked_state gen8_sf_clip_viewport = {
    .dirty = {
-      .mesa = _NEW_VIEWPORT | _NEW_BUFFERS,
+      .mesa = _NEW_BUFFERS | _NEW_SCISSOR | _NEW_VIEWPORT,
       .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
