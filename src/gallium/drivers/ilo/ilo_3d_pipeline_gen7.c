@@ -881,8 +881,7 @@ ilo_3d_pipeline_emit_rectlist_gen7(struct ilo_3d_pipeline *p,
 }
 
 static int
-gen7_pipeline_estimate_commands(const struct ilo_3d_pipeline *p,
-                                const struct ilo_context *ilo)
+gen7_pipeline_max_command_size(const struct ilo_3d_pipeline *p)
 {
    static int size;
 
@@ -933,93 +932,6 @@ gen7_pipeline_estimate_commands(const struct ilo_3d_pipeline *p,
 }
 
 static int
-gen7_pipeline_estimate_states(const struct ilo_3d_pipeline *p,
-                              const struct ilo_context *ilo)
-{
-   static int static_size;
-   int shader_type, count, size;
-
-   if (!static_size) {
-      struct {
-         enum ilo_gpe_gen7_state state;
-         int count;
-      } static_states[] = {
-         /* viewports */
-         { ILO_GPE_GEN7_SF_CLIP_VIEWPORT,            1 },
-         { ILO_GPE_GEN7_CC_VIEWPORT,                 1 },
-         /* cc */
-         { ILO_GPE_GEN7_COLOR_CALC_STATE,            1 },
-         { ILO_GPE_GEN7_BLEND_STATE,                 ILO_MAX_DRAW_BUFFERS },
-         { ILO_GPE_GEN7_DEPTH_STENCIL_STATE,         1 },
-         /* scissors */
-         { ILO_GPE_GEN7_SCISSOR_RECT,                1 },
-         /* binding table (vs, gs, fs) */
-         { ILO_GPE_GEN7_BINDING_TABLE_STATE,         ILO_MAX_VS_SURFACES },
-         { ILO_GPE_GEN7_BINDING_TABLE_STATE,         ILO_MAX_GS_SURFACES },
-         { ILO_GPE_GEN7_BINDING_TABLE_STATE,         ILO_MAX_WM_SURFACES },
-      };
-      int i;
-
-      for (i = 0; i < Elements(static_states); i++) {
-         static_size += ilo_gpe_gen7_estimate_state_size(p->dev,
-               static_states[i].state,
-               static_states[i].count);
-      }
-   }
-
-   size = static_size;
-
-   /*
-    * render targets (fs)
-    * sampler views (vs, fs)
-    * constant buffers (vs, fs)
-    */
-   count = ilo->fb.state.nr_cbufs;
-   for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
-      count += ilo->view[shader_type].count;
-      count += util_bitcount(ilo->cbuf[shader_type].enabled_mask);
-   }
-
-   if (count) {
-      size += ilo_gpe_gen7_estimate_state_size(p->dev,
-            ILO_GPE_GEN7_SURFACE_STATE, count);
-   }
-
-   /* samplers (vs, fs) */
-   for (shader_type = 0; shader_type < PIPE_SHADER_TYPES; shader_type++) {
-      count = ilo->sampler[shader_type].count;
-      if (count) {
-         size += ilo_gpe_gen7_estimate_state_size(p->dev,
-               ILO_GPE_GEN7_SAMPLER_BORDER_COLOR_STATE, count);
-         size += ilo_gpe_gen7_estimate_state_size(p->dev,
-               ILO_GPE_GEN7_SAMPLER_STATE, count);
-      }
-   }
-
-   /* pcb (vs) */
-   if (ilo->vs) {
-      const int cbuf0_size =
-         ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_PCB_CBUF0_SIZE);
-      const int ucp_size =
-         ilo_shader_get_kernel_param(ilo->vs, ILO_KERNEL_VS_PCB_UCP_SIZE);
-
-      size += ilo_gpe_gen7_estimate_state_size(p->dev,
-            ILO_GPE_GEN7_PUSH_CONSTANT_BUFFER, cbuf0_size + ucp_size);
-   }
-
-   /* pcb (fs) */
-   if (ilo->fs) {
-      const int cbuf0_size =
-         ilo_shader_get_kernel_param(ilo->fs, ILO_KERNEL_PCB_CBUF0_SIZE);
-
-      size += ilo_gpe_gen7_estimate_state_size(p->dev,
-            ILO_GPE_GEN7_PUSH_CONSTANT_BUFFER, cbuf0_size);
-   }
-
-   return size;
-}
-
-static int
 ilo_3d_pipeline_estimate_size_gen7(struct ilo_3d_pipeline *p,
                                    enum ilo_3d_pipeline_action action,
                                    const void *arg)
@@ -1031,8 +943,8 @@ ilo_3d_pipeline_estimate_size_gen7(struct ilo_3d_pipeline *p,
       {
          const struct ilo_context *ilo = arg;
 
-         size = gen7_pipeline_estimate_commands(p, ilo) +
-            gen7_pipeline_estimate_states(p, ilo);
+         size = gen7_pipeline_max_command_size(p) +
+            gen6_pipeline_estimate_state_size(p, ilo);
       }
       break;
    case ILO_3D_PIPELINE_FLUSH:

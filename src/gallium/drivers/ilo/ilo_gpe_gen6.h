@@ -47,32 +47,6 @@
    (0x3 << 29 | (pipeline) << 27 | (op) << 24 | (subop) << 16)
 
 /**
- * Indirect states that GEN6 GPE could emit.
- */
-enum ilo_gpe_gen6_state {
-   ILO_GPE_GEN6_INTERFACE_DESCRIPTOR_DATA,
-   ILO_GPE_GEN6_SF_VIEWPORT,
-   ILO_GPE_GEN6_CLIP_VIEWPORT,
-   ILO_GPE_GEN6_CC_VIEWPORT,
-   ILO_GPE_GEN6_COLOR_CALC_STATE,
-   ILO_GPE_GEN6_BLEND_STATE,
-   ILO_GPE_GEN6_DEPTH_STENCIL_STATE,
-   ILO_GPE_GEN6_SCISSOR_RECT,
-   ILO_GPE_GEN6_BINDING_TABLE_STATE,
-   ILO_GPE_GEN6_SURFACE_STATE,
-   ILO_GPE_GEN6_SAMPLER_STATE,
-   ILO_GPE_GEN6_SAMPLER_BORDER_COLOR_STATE,
-   ILO_GPE_GEN6_PUSH_CONSTANT_BUFFER,
-
-   ILO_GPE_GEN6_STATE_COUNT,
-};
-
-int
-ilo_gpe_gen6_estimate_state_size(const struct ilo_dev_info *dev,
-                                 enum ilo_gpe_gen6_state state,
-                                 int arg);
-
-/**
  * Translate winsys tiling to hardware tiling.
  */
 static inline int

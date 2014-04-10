@@ -36,31 +36,6 @@
 #include "ilo_shader.h"
 #include "ilo_gpe_gen6.h"
 
-/**
- * Indirect states that GEN7 GPE could emit.
- */
-enum ilo_gpe_gen7_state {
-   ILO_GPE_GEN7_INTERFACE_DESCRIPTOR_DATA,
-   ILO_GPE_GEN7_SF_CLIP_VIEWPORT,
-   ILO_GPE_GEN7_CC_VIEWPORT,
-   ILO_GPE_GEN7_COLOR_CALC_STATE,
-   ILO_GPE_GEN7_BLEND_STATE,
-   ILO_GPE_GEN7_DEPTH_STENCIL_STATE,
-   ILO_GPE_GEN7_SCISSOR_RECT,
-   ILO_GPE_GEN7_BINDING_TABLE_STATE,
-   ILO_GPE_GEN7_SURFACE_STATE,
-   ILO_GPE_GEN7_SAMPLER_STATE,
-   ILO_GPE_GEN7_SAMPLER_BORDER_COLOR_STATE,
-   ILO_GPE_GEN7_PUSH_CONSTANT_BUFFER,
-
-   ILO_GPE_GEN7_STATE_COUNT,
-};
-
-int
-ilo_gpe_gen7_estimate_state_size(const struct ilo_dev_info *dev,
-                                 enum ilo_gpe_gen7_state state,
-                                 int arg);
-
 static inline void
 gen7_emit_GPGPU_WALKER(const struct ilo_dev_info *dev,
                        struct ilo_cp *cp)
