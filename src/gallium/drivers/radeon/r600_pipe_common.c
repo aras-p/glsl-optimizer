@@ -67,13 +67,6 @@ static void r600_flush_dma_ring(void *ctx, unsigned flags)
 	rctx->rings.dma.flushing = false;
 }
 
-static void r600_flush_dma_from_winsys(void *ctx, unsigned flags)
-{
-	struct r600_common_context *rctx = (struct r600_common_context *)ctx;
-
-	rctx->rings.dma.flush(rctx, flags);
-}
-
 bool r600_common_context_init(struct r600_common_context *rctx,
 			      struct r600_common_screen *rscreen)
 {
@@ -110,7 +103,7 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 
 	if (rscreen->info.r600_has_dma && !(rscreen->debug_flags & DBG_NO_ASYNC_DMA)) {
 		rctx->rings.dma.cs = rctx->ws->cs_create(rctx->ws, RING_DMA,
-							 r600_flush_dma_from_winsys,
+							 r600_flush_dma_ring,
 							 rctx, NULL);
 		rctx->rings.dma.flush = r600_flush_dma_ring;
 	}
