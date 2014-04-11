@@ -46,7 +46,12 @@ struct fs_compile_context {
    int dispatch_mode;
 
    struct {
-      int barycentric_interps[BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT];
+      int interp_perspective_pixel;
+      int interp_perspective_centroid;
+      int interp_perspective_sample;
+      int interp_nonperspective_pixel;
+      int interp_nonperspective_centroid;
+      int interp_nonperspective_sample;
       int source_depth;
       int source_w;
       int pos_offset;
@@ -157,7 +162,7 @@ fetch_attr(struct fs_compile_context *fcc, struct toy_dst dst, int slot)
    struct toy_compiler *tc = &fcc->tc;
    struct toy_dst real_dst[4];
    bool is_const = false;
-   int grf, mode, ch;
+   int grf, interp, ch;
 
    tdst_transpose(dst, real_dst);
 
@@ -169,9 +174,9 @@ fetch_attr(struct fs_compile_context *fcc, struct toy_dst dst, int slot)
       break;
    case TGSI_INTERPOLATE_LINEAR:
       if (fcc->tgsi.inputs[slot].centroid)
-         mode = BRW_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC;
+         interp = fcc->payloads[0].interp_nonperspective_centroid;
       else
-         mode = BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC;
+         interp = fcc->payloads[0].interp_nonperspective_pixel;
       break;
    case TGSI_INTERPOLATE_COLOR:
       if (fcc->variant->u.fs.flatshade) {
@@ -181,13 +186,13 @@ fetch_attr(struct fs_compile_context *fcc, struct toy_dst dst, int slot)
       /* fall through */
    case TGSI_INTERPOLATE_PERSPECTIVE:
       if (fcc->tgsi.inputs[slot].centroid)
-         mode = BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC;
+         interp = fcc->payloads[0].interp_perspective_centroid;
       else
-         mode = BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+         interp = fcc->payloads[0].interp_perspective_pixel;
       break;
    default:
       assert(!"unexpected FS interpolation");
-      mode = BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC;
+      interp = fcc->payloads[0].interp_perspective_pixel;
       break;
    }
 
@@ -210,7 +215,7 @@ fetch_attr(struct fs_compile_context *fcc, struct toy_dst dst, int slot)
       attr[2] = tsrc(TOY_FILE_GRF, grf + 1, 0);
       attr[3] = tsrc(TOY_FILE_GRF, grf + 1, 4 * 4);
 
-      uv = tsrc(TOY_FILE_GRF, fcc->payloads[0].barycentric_interps[mode], 0);
+      uv = tsrc(TOY_FILE_GRF, interp, 0);
 
       for (ch = 0; ch < 4; ch++) {
          tc_add2(tc, BRW_OPCODE_PLN, real_dst[ch],
@@ -1667,27 +1672,51 @@ fs_setup_payloads(struct fs_compile_context *fcc)
    grf += (fcc->dispatch_mode == GEN6_WM_32_DISPATCH_ENABLE) ? 2 : 1;
 
    for (i = 0; i < Elements(fcc->payloads); i++) {
-      int interp;
+      const int reg_scale =
+         (fcc->dispatch_mode == GEN6_WM_8_DISPATCH_ENABLE) ? 1 : 2;
 
       /* r3-r26 or r32-r55: barycentric interpolation parameters */
-      for (interp = 0; interp < BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT; interp++) {
-         if (!(sh->in.barycentric_interpolation_mode & (1 << interp)))
-            continue;
-
-         fcc->payloads[i].barycentric_interps[interp] = grf;
-         grf += (fcc->dispatch_mode == GEN6_WM_8_DISPATCH_ENABLE) ? 2 : 4;
+      if (sh->in.barycentric_interpolation_mode &
+            (1 << BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC)) {
+         fcc->payloads[i].interp_perspective_pixel = grf;
+         grf += 2 * reg_scale;
+      }
+      if (sh->in.barycentric_interpolation_mode &
+            (1 << BRW_WM_PERSPECTIVE_CENTROID_BARYCENTRIC)) {
+         fcc->payloads[i].interp_perspective_centroid = grf;
+         grf += 2 * reg_scale;
+      }
+      if (sh->in.barycentric_interpolation_mode &
+            (1 << BRW_WM_PERSPECTIVE_SAMPLE_BARYCENTRIC)) {
+         fcc->payloads[i].interp_perspective_sample = grf;
+         grf += 2 * reg_scale;
+      }
+      if (sh->in.barycentric_interpolation_mode &
+            (1 << BRW_WM_NONPERSPECTIVE_PIXEL_BARYCENTRIC)) {
+         fcc->payloads[i].interp_nonperspective_pixel = grf;
+         grf += 2 * reg_scale;
+      }
+      if (sh->in.barycentric_interpolation_mode &
+            (1 << BRW_WM_NONPERSPECTIVE_CENTROID_BARYCENTRIC)) {
+         fcc->payloads[i].interp_nonperspective_centroid = grf;
+         grf += 2 * reg_scale;
+      }
+      if (sh->in.barycentric_interpolation_mode &
+            (1 << BRW_WM_NONPERSPECTIVE_SAMPLE_BARYCENTRIC)) {
+         fcc->payloads[i].interp_nonperspective_sample = grf;
+         grf += 2 * reg_scale;
       }
 
       /* r27-r28 or r56-r57: interpoloated depth */
       if (sh->in.has_pos) {
          fcc->payloads[i].source_depth = grf;
-         grf += (fcc->dispatch_mode == GEN6_WM_8_DISPATCH_ENABLE) ? 1 : 2;
+         grf += 1 * reg_scale;
       }
 
       /* r29-r30 or r58-r59: interpoloated w */
       if (sh->in.has_pos) {
          fcc->payloads[i].source_w = grf;
-         grf += (fcc->dispatch_mode == GEN6_WM_8_DISPATCH_ENABLE) ? 1 : 2;
+         grf += 1 * reg_scale;
       }
 
       /* r31 or r60: position offset */
