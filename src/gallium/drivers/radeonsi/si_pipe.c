@@ -66,17 +66,19 @@ static void si_flush_from_st(struct pipe_context *ctx,
 			     unsigned flags)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
+	unsigned rflags = 0;
+
+	if (flags & PIPE_FLUSH_END_OF_FRAME)
+		rflags |= RADEON_FLUSH_END_OF_FRAME;
 
 	if (sctx->b.rings.dma.cs) {
-		sctx->b.rings.dma.flush(sctx,
-					flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0);
+		sctx->b.rings.dma.flush(sctx, rflags);
 	}
 
-	si_flush(ctx, fence,
-		 flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0);
+	si_flush(ctx, fence, rflags);
 }
 
-static void si_flush_from_winsys(void *ctx, unsigned flags)
+static void si_flush_gfx_ring(void *ctx, unsigned flags)
 {
 	si_flush((struct pipe_context*)ctx, NULL, flags);
 }
@@ -146,7 +148,8 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 	}
 
 	sctx->b.rings.gfx.cs = sctx->b.ws->cs_create(sctx->b.ws, RING_GFX, NULL);
-	sctx->b.rings.gfx.flush = si_flush_from_winsys;
+	sctx->b.rings.gfx.flush = si_flush_gfx_ring;
+	sctx->b.ws->cs_set_flush_callback(sctx->b.rings.gfx.cs, si_flush_gfx_ring, sctx);
 
 	si_init_all_descriptors(sctx);
 
@@ -167,8 +170,6 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 		R600_ERR("Unsupported chip class %d.\n", sctx->b.chip_class);
 		goto fail;
 	}
-
-	sctx->b.ws->cs_set_flush_callback(sctx->b.rings.gfx.cs, si_flush_from_winsys, sctx);
 
 	sctx->blitter = util_blitter_create(&sctx->b.b);
 	if (sctx->blitter == NULL)
