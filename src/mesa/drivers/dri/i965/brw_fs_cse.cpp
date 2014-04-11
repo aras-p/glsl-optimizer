@@ -103,7 +103,7 @@ is_expression(const fs_inst *const inst)
    case SHADER_OPCODE_LOAD_PAYLOAD:
       return !is_copy_payload(inst);
    default:
-      return false;
+      return inst->is_tex();
    }
 }
 
@@ -153,6 +153,15 @@ instructions_match(fs_inst *a, fs_inst *b)
           a->conditional_mod == b->conditional_mod &&
           a->dst.type == b->dst.type &&
           a->sources == b->sources &&
+          (a->is_tex() ? (a->texture_offset == b->texture_offset &&
+                          a->mlen == b->mlen &&
+                          a->regs_written == b->regs_written &&
+                          a->base_mrf == b->base_mrf &&
+                          a->sampler == b->sampler &&
+                          a->eot == b->eot &&
+                          a->header_present == b->header_present &&
+                          a->shadow_compare == b->shadow_compare)
+                       : true) &&
           operands_match(a, b);
 }
 
