@@ -192,6 +192,9 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 0;
    case PIPE_CAP_FAKE_SW_MSAA:
       return 1;
+   case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
+   case PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET:
+      return 0;
    }
    /* should only get here on unhandled cases */
    debug_printf("Unexpected PIPE_CAP %d query\n", param);
