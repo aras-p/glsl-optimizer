@@ -137,9 +137,12 @@ static void radeon_destroy_cs_context(struct radeon_cs_context *csc)
 }
 
 
-static struct radeon_winsys_cs *radeon_drm_cs_create(struct radeon_winsys *rws,
-                                                     enum ring_type ring_type,
-                                                     struct radeon_winsys_cs_handle *trace_buf)
+static struct radeon_winsys_cs *
+radeon_drm_cs_create(struct radeon_winsys *rws,
+                     enum ring_type ring_type,
+                     void (*flush)(void *ctx, unsigned flags),
+                     void *flush_ctx,
+                     struct radeon_winsys_cs_handle *trace_buf)
 {
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
     struct radeon_drm_cs *cs;
@@ -151,6 +154,8 @@ static struct radeon_winsys_cs *radeon_drm_cs_create(struct radeon_winsys *rws,
     pipe_semaphore_init(&cs->flush_completed, 1);
 
     cs->ws = ws;
+    cs->flush_cs = flush;
+    cs->flush_data = flush_ctx;
     cs->trace_buf = (struct radeon_bo*)trace_buf;
 
     if (!radeon_init_cs_context(&cs->csc1, cs->ws)) {
@@ -551,16 +556,6 @@ static void radeon_drm_cs_destroy(struct radeon_winsys_cs *rcs)
     FREE(cs);
 }
 
-static void radeon_drm_cs_set_flush(struct radeon_winsys_cs *rcs,
-                                    void (*flush)(void *ctx, unsigned flags),
-                                    void *user)
-{
-    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
-
-    cs->flush_cs = flush;
-    cs->flush_data = user;
-}
-
 static boolean radeon_bo_is_referenced(struct radeon_winsys_cs *rcs,
                                        struct radeon_winsys_cs_handle *_buf,
                                        enum radeon_bo_usage usage)
@@ -646,7 +641,6 @@ void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws)
     ws->base.cs_validate = radeon_drm_cs_validate;
     ws->base.cs_memory_below_limit = radeon_drm_cs_memory_below_limit;
     ws->base.cs_flush = radeon_drm_cs_flush;
-    ws->base.cs_set_flush_callback = radeon_drm_cs_set_flush;
     ws->base.cs_is_buffer_referenced = radeon_bo_is_referenced;
     ws->base.cs_sync_flush = radeon_drm_cs_sync_flush;
     ws->base.cs_create_fence = radeon_cs_create_fence;

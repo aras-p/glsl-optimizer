@@ -806,7 +806,7 @@ struct pipe_video_codec *ruvd_create_decoder(struct pipe_context *context,
 	dec->set_dtb = set_dtb;
 	dec->stream_handle = rvid_alloc_stream_handle();
 	dec->ws = ws;
-	dec->cs = ws->cs_create(ws, RING_UVD, NULL);
+	dec->cs = ws->cs_create(ws, RING_UVD, NULL, NULL, NULL);
 	if (!dec->cs) {
 		RVID_ERR("Can't get command submission context.\n");
 		goto error;

@@ -109,9 +109,10 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 		return false;
 
 	if (rscreen->info.r600_has_dma && !(rscreen->debug_flags & DBG_NO_ASYNC_DMA)) {
-		rctx->rings.dma.cs = rctx->ws->cs_create(rctx->ws, RING_DMA, NULL);
+		rctx->rings.dma.cs = rctx->ws->cs_create(rctx->ws, RING_DMA,
+							 r600_flush_dma_from_winsys,
+							 rctx, NULL);
 		rctx->rings.dma.flush = r600_flush_dma_ring;
-		rctx->ws->cs_set_flush_callback(rctx->rings.dma.cs, r600_flush_dma_from_winsys, rctx);
 	}
 
 	return true;

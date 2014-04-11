@@ -122,6 +122,7 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 {
 	struct si_context *sctx = CALLOC_STRUCT(si_context);
 	struct si_screen* sscreen = (struct si_screen *)screen;
+	struct radeon_winsys *ws = sscreen->b.ws;
 	int shader, i;
 
 	if (sctx == NULL)
@@ -147,9 +148,9 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 		sctx->b.b.create_video_buffer = vl_video_buffer_create;
 	}
 
-	sctx->b.rings.gfx.cs = sctx->b.ws->cs_create(sctx->b.ws, RING_GFX, NULL);
+	sctx->b.rings.gfx.cs = ws->cs_create(ws, RING_GFX, si_flush_gfx_ring,
+					     sctx, NULL);
 	sctx->b.rings.gfx.flush = si_flush_gfx_ring;
-	sctx->b.ws->cs_set_flush_callback(sctx->b.rings.gfx.cs, si_flush_gfx_ring, sctx);
 
 	si_init_all_descriptors(sctx);
 

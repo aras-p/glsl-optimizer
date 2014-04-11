@@ -379,7 +379,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                      sizeof(struct pipe_transfer), 64,
                      UTIL_SLAB_SINGLETHREADED);
 
-    r300->cs = rws->cs_create(rws, RING_GFX, NULL);
+    r300->cs = rws->cs_create(rws, RING_GFX, r300_flush_callback, r300, NULL);
     if (r300->cs == NULL)
         goto fail;
 
@@ -419,8 +419,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     if (r300->blitter == NULL)
         goto fail;
     r300->blitter->draw_rectangle = r300_blitter_draw_rectangle;
-
-    rws->cs_set_flush_callback(r300->cs, r300_flush_callback, r300);
 
     /* The KIL opcode needs the first texture unit to be enabled
      * on r3xx-r4xx. In order to calm down the CS checker, we bind this

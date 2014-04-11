@@ -167,6 +167,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 {
 	struct r600_context *rctx = CALLOC_STRUCT(r600_context);
 	struct r600_screen* rscreen = (struct r600_screen *)screen;
+	struct radeon_winsys *ws = rscreen->b.ws;
 
 	if (rctx == NULL)
 		return NULL;
@@ -231,13 +232,11 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		goto fail;
 	}
 
-	if (rscreen->b.trace_bo) {
-		rctx->b.rings.gfx.cs = rctx->b.ws->cs_create(rctx->b.ws, RING_GFX, rscreen->b.trace_bo->cs_buf);
-	} else {
-		rctx->b.rings.gfx.cs = rctx->b.ws->cs_create(rctx->b.ws, RING_GFX, NULL);
-	}
+	rctx->b.rings.gfx.cs = ws->cs_create(ws, RING_GFX,
+					     r600_flush_gfx_ring, rctx,
+					     rscreen->b.trace_bo ?
+						     rscreen->b.trace_bo->cs_buf : NULL);
 	rctx->b.rings.gfx.flush = r600_flush_gfx_ring;
-	rctx->b.ws->cs_set_flush_callback(rctx->b.rings.gfx.cs, r600_flush_gfx_ring, rctx);
 	rctx->b.rings.gfx.flushing = false;
 
 	rctx->allocator_fetch_shader = u_suballocator_create(&rctx->b.b, 64 * 1024, 256,
