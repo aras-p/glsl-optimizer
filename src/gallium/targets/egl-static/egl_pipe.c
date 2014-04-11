@@ -38,6 +38,7 @@
 /* for nouveau */
 #include "nouveau/drm/nouveau_drm_public.h"
 /* for r300 */
+#include "radeon/drm/radeon_winsys.h"
 #include "radeon/drm/radeon_drm_public.h"
 #include "r300/r300_public.h"
 /* for r600 */

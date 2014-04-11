@@ -1,6 +1,7 @@
 #include "state_tracker/drm_driver.h"
 #include "target-helpers/inline_debug_helper.h"
 #include "radeon/drm/radeon_drm_public.h"
+#include "radeon/drm/radeon_winsys.h"
 #include "r600/r600_public.h"
 
 static struct pipe_screen *
