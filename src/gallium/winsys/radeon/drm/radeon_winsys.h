@@ -450,6 +450,16 @@ struct radeon_winsys {
                              enum radeon_bo_priority priority);
 
     /**
+     * Return the index of an already-added buffer.
+     *
+     * \param cs        Command stream
+     * \param buf       Buffer
+     * \return          The buffer index, or -1 if the buffer has not been added.
+     */
+    int (*cs_get_reloc)(struct radeon_winsys_cs *cs,
+                        struct radeon_winsys_cs_handle *buf);
+
+    /**
      * Return TRUE if there is enough memory in VRAM and GTT for the relocs
      * added so far. If the validation fails, all the relocations which have
      * been added since the last call of cs_validate will be removed and
@@ -468,15 +478,6 @@ struct radeon_winsys {
      * \param gtt       GTT memory size pending to be use
      */
     boolean (*cs_memory_below_limit)(struct radeon_winsys_cs *cs, uint64_t vram, uint64_t gtt);
-
-    /**
-     * Write a relocated dword to a command buffer.
-     *
-     * \param cs        A command stream the relocation is written to.
-     * \param buf       A winsys buffer to write the relocation for.
-     */
-    void (*cs_write_reloc)(struct radeon_winsys_cs *cs,
-                           struct radeon_winsys_cs_handle *buf);
 
     /**
      * Flush a command stream.

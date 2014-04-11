@@ -313,6 +313,14 @@ static unsigned radeon_drm_cs_add_reloc(struct radeon_winsys_cs *rcs,
     return index;
 }
 
+static int radeon_drm_cs_get_reloc(struct radeon_winsys_cs *rcs,
+                                   struct radeon_winsys_cs_handle *buf)
+{
+    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
+
+    return radeon_get_reloc(cs->csc, (struct radeon_bo*)buf, NULL);
+}
+
 static boolean radeon_drm_cs_validate(struct radeon_winsys_cs *rcs)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
@@ -357,22 +365,6 @@ static boolean radeon_drm_cs_memory_below_limit(struct radeon_winsys_cs *rcs, ui
         (cs->csc->used_vram + vram) < cs->ws->info.vram_size * 0.7;
 
     return status;
-}
-
-static void radeon_drm_cs_write_reloc(struct radeon_winsys_cs *rcs,
-                                      struct radeon_winsys_cs_handle *buf)
-{
-    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
-    struct radeon_bo *bo = (struct radeon_bo*)buf;
-    unsigned index = radeon_get_reloc(cs->csc, bo, NULL);
-
-    if (index == -1) {
-        fprintf(stderr, "radeon: Cannot get a relocation in %s.\n", __func__);
-        return;
-    }
-
-    OUT_CS(&cs->base, 0xc0001000);
-    OUT_CS(&cs->base, index * RELOC_DWORDS);
 }
 
 void radeon_drm_cs_emit_ioctl_oneshot(struct radeon_drm_cs *cs, struct radeon_cs_context *csc)
@@ -650,9 +642,9 @@ void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws)
     ws->base.cs_create = radeon_drm_cs_create;
     ws->base.cs_destroy = radeon_drm_cs_destroy;
     ws->base.cs_add_reloc = radeon_drm_cs_add_reloc;
+    ws->base.cs_get_reloc = radeon_drm_cs_get_reloc;
     ws->base.cs_validate = radeon_drm_cs_validate;
     ws->base.cs_memory_below_limit = radeon_drm_cs_memory_below_limit;
-    ws->base.cs_write_reloc = radeon_drm_cs_write_reloc;
     ws->base.cs_flush = radeon_drm_cs_flush;
     ws->base.cs_set_flush_callback = radeon_drm_cs_set_flush;
     ws->base.cs_is_buffer_referenced = radeon_bo_is_referenced;

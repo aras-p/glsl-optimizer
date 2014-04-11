@@ -1043,8 +1043,8 @@ void r300_emit_vertex_arrays_swtcl(struct r300_context *r300, boolean indexed)
     OUT_CS(0);
 
     assert(r300->vbo_cs);
-    cs_winsys->cs_write_reloc(cs_copy, r300->vbo_cs);
-    CS_USED_DW(2);
+    OUT_CS(0xc0001000); /* PKT3_NOP */
+    OUT_CS(r300->rws->cs_get_reloc(r300->cs, r300->vbo_cs) * 4);
     END_CS;
 }
 
