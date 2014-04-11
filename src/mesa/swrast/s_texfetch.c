@@ -163,9 +163,9 @@ texfetch_funcs[] =
    },
    {
       MESA_FORMAT_R8G8B8A8_UNORM,
-      fetch_texel_1d_R8G8B8A_UNORM,
-      fetch_texel_2d_R8G8B8A_UNORM,
-      fetch_texel_3d_R8G8B8A_UNORM
+      fetch_texel_1d_R8G8B8A8_UNORM,
+      fetch_texel_2d_R8G8B8A8_UNORM,
+      fetch_texel_3d_R8G8B8A8_UNORM
    },
    {
       MESA_FORMAT_R8G8B8X8_UNORM,
@@ -435,9 +435,9 @@ texfetch_funcs[] =
    },
    {
       MESA_FORMAT_RGBA_UNORM16,
-      fetch_texel_1d_rgba_16,
-      fetch_texel_2d_rgba_16,
-      fetch_texel_3d_rgba_16
+      fetch_texel_1d_RGBA_UNORM16,
+      fetch_texel_2d_RGBA_UNORM16,
+      fetch_texel_3d_RGBA_UNORM16
    },
    {
       MESA_FORMAT_RGBX_UNORM16,
@@ -1051,39 +1051,39 @@ texfetch_funcs[] =
    },
    {
       MESA_FORMAT_RGBA_UINT8,
-      fetch_texel_1d_rgba_uint8,
-      fetch_texel_2d_rgba_uint8,
-      fetch_texel_3d_rgba_uint8
+      fetch_texel_1d_RGBA_UINT8,
+      fetch_texel_2d_RGBA_UINT8,
+      fetch_texel_3d_RGBA_UINT8
    },
    {
       MESA_FORMAT_RGBA_UINT16,
-      fetch_texel_1d_rgba_uint16,
-      fetch_texel_2d_rgba_uint16,
-      fetch_texel_3d_rgba_uint16
+      fetch_texel_1d_RGBA_UINT16,
+      fetch_texel_2d_RGBA_UINT16,
+      fetch_texel_3d_RGBA_UINT16
    },
    {
       MESA_FORMAT_RGBA_UINT32,
-      fetch_texel_1d_rgba_uint32,
-      fetch_texel_2d_rgba_uint32,
-      fetch_texel_3d_rgba_uint32
+      fetch_texel_1d_RGBA_UINT32,
+      fetch_texel_2d_RGBA_UINT32,
+      fetch_texel_3d_RGBA_UINT32
    },
    {
       MESA_FORMAT_RGBA_SINT8,
-      fetch_texel_1d_rgba_int8,
-      fetch_texel_2d_rgba_int8,
-      fetch_texel_3d_rgba_int8
+      fetch_texel_1d_RGBA_SINT8,
+      fetch_texel_2d_RGBA_SINT8,
+      fetch_texel_3d_RGBA_SINT8
    },
    {
       MESA_FORMAT_RGBA_SINT16,
-      fetch_texel_1d_rgba_int16,
-      fetch_texel_2d_rgba_int16,
-      fetch_texel_3d_rgba_int16
+      fetch_texel_1d_RGBA_SINT16,
+      fetch_texel_2d_RGBA_SINT16,
+      fetch_texel_3d_RGBA_SINT16
    },
    {
       MESA_FORMAT_RGBA_SINT32,
-      fetch_texel_1d_rgba_int32,
-      fetch_texel_2d_rgba_int32,
-      fetch_texel_3d_rgba_int32
+      fetch_texel_1d_RGBA_SINT32,
+      fetch_texel_2d_RGBA_SINT32,
+      fetch_texel_3d_RGBA_SINT32
    },
    {
       MESA_FORMAT_RGBX_UINT8,
