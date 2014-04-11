@@ -188,41 +188,40 @@ static INLINE void update_reloc(struct drm_radeon_cs_reloc *reloc,
     reloc->flags = MAX2(reloc->flags, priority);
 }
 
-int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo)
+int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo,
+                     struct drm_radeon_cs_reloc **out_reloc)
 {
-    struct drm_radeon_cs_reloc *reloc;
-    unsigned i;
+    struct drm_radeon_cs_reloc *reloc = NULL;
     unsigned hash = bo->handle & (sizeof(csc->is_handle_added)-1);
+    int i = -1;
 
     if (csc->is_handle_added[hash]) {
         i = csc->reloc_indices_hashlist[hash];
         reloc = &csc->relocs[i];
-        if (reloc->handle == bo->handle) {
-            return i;
-        }
 
-        /* Hash collision, look for the BO in the list of relocs linearly. */
-        for (i = csc->crelocs; i != 0;) {
-            --i;
-            reloc = &csc->relocs[i];
-            if (reloc->handle == bo->handle) {
-                /* Put this reloc in the hash list.
-                 * This will prevent additional hash collisions if there are
-                 * several consecutive get_reloc calls for the same buffer.
-                 *
-                 * Example: Assuming buffers A,B,C collide in the hash list,
-                 * the following sequence of relocs:
-                 *         AAAAAAAAAAABBBBBBBBBBBBBBCCCCCCCC
-                 * will collide here: ^ and here:   ^,
-                 * meaning that we should get very few collisions in the end. */
-                csc->reloc_indices_hashlist[hash] = i;
-                /*printf("write_reloc collision, hash: %i, handle: %i\n", hash, bo->handle);*/
-                return i;
+        if (reloc->handle != bo->handle) {
+            /* Hash collision, look for the BO in the list of relocs linearly. */
+            for (i = csc->crelocs - 1; i >= 0; i--) {
+                reloc = &csc->relocs[i];
+                if (reloc->handle == bo->handle) {
+                    /* Put this reloc in the hash list.
+                     * This will prevent additional hash collisions if there are
+                     * several consecutive get_reloc calls for the same buffer.
+                     *
+                     * Example: Assuming buffers A,B,C collide in the hash list,
+                     * the following sequence of relocs:
+                     *         AAAAAAAAAAABBBBBBBBBBBBBBCCCCCCCC
+                     * will collide here: ^ and here:   ^,
+                     * meaning that we should get very few collisions in the end. */
+                    csc->reloc_indices_hashlist[hash] = i;
+                    break;
+                }
             }
         }
     }
-
-    return -1;
+    if (out_reloc)
+        *out_reloc = reloc;
+    return i;
 }
 
 static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
@@ -237,45 +236,28 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
     unsigned hash = bo->handle & (sizeof(csc->is_handle_added)-1);
     enum radeon_bo_domain rd = usage & RADEON_USAGE_READ ? domains : 0;
     enum radeon_bo_domain wd = usage & RADEON_USAGE_WRITE ? domains : 0;
-    bool update_hash = TRUE;
-    int i;
+    int i = -1;
 
     priority = MIN2(priority, 15);
     *added_domains = 0;
 
-    if (csc->is_handle_added[hash]) {
-        i = csc->reloc_indices_hashlist[hash];
-        reloc = &csc->relocs[i];
+    i = radeon_get_reloc(csc, bo, &reloc);
 
-        if (reloc->handle != bo->handle) {
-            /* Hash collision, look for the BO in the list of relocs linearly. */
-            for (i = csc->crelocs - 1; i >= 0; i--) {
-                reloc = &csc->relocs[i];
-                if (reloc->handle == bo->handle) {
-                    /*printf("write_reloc collision, hash: %i, handle: %i\n", hash, bo->handle);*/
-                    break;
-                }
-            }
-        }
+    if (i >= 0) {
+        update_reloc(reloc, rd, wd, priority, added_domains);
 
-        if (i >= 0) {
-            update_reloc(reloc, rd, wd, priority, added_domains);
-
-            /* For async DMA, every add_reloc call must add a buffer to the list
-             * no matter how many duplicates there are. This is due to the fact
-             * the DMA CS checker doesn't use NOP packets for offset patching,
-             * but always uses the i-th buffer from the list to patch the i-th
-             * offset. If there are N offsets in a DMA CS, there must also be N
-             * buffers in the relocation list.
-             *
-             * This doesn't have to be done if virtual memory is enabled,
-             * because there is no offset patching with virtual memory.
-             */
-            if (cs->base.ring_type != RING_DMA || cs->ws->info.r600_virtual_address) {
-                csc->reloc_indices_hashlist[hash] = i;
-                return i;
-            }
-            update_hash = FALSE;
+        /* For async DMA, every add_reloc call must add a buffer to the list
+         * no matter how many duplicates there are. This is due to the fact
+         * the DMA CS checker doesn't use NOP packets for offset patching,
+         * but always uses the i-th buffer from the list to patch the i-th
+         * offset. If there are N offsets in a DMA CS, there must also be N
+         * buffers in the relocation list.
+         *
+         * This doesn't have to be done if virtual memory is enabled,
+         * because there is no offset patching with virtual memory.
+         */
+        if (cs->base.ring_type != RING_DMA || cs->ws->info.r600_virtual_address) {
+            return i;
         }
     }
 
@@ -304,9 +286,7 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
     reloc->flags = priority;
 
     csc->is_handle_added[hash] = TRUE;
-    if (update_hash) {
-        csc->reloc_indices_hashlist[hash] = csc->crelocs;
-    }
+    csc->reloc_indices_hashlist[hash] = csc->crelocs;
 
     csc->chunks[1].length_dw += RELOC_DWORDS;
 
@@ -384,7 +364,7 @@ static void radeon_drm_cs_write_reloc(struct radeon_winsys_cs *rcs,
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_bo *bo = (struct radeon_bo*)buf;
-    unsigned index = radeon_get_reloc(cs->csc, bo);
+    unsigned index = radeon_get_reloc(cs->csc, bo, NULL);
 
     if (index == -1) {
         fprintf(stderr, "radeon: Cannot get a relocation in %s.\n", __func__);
@@ -600,7 +580,7 @@ static boolean radeon_bo_is_referenced(struct radeon_winsys_cs *rcs,
     if (!bo->num_cs_references)
         return FALSE;
 
-    index = radeon_get_reloc(cs->csc, bo);
+    index = radeon_get_reloc(cs->csc, bo, NULL);
     if (index == -1)
         return FALSE;
 

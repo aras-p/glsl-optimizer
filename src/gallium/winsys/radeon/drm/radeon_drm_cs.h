@@ -80,7 +80,8 @@ struct radeon_drm_cs {
     struct radeon_bo                    *trace_buf;
 };
 
-int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo);
+int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo,
+                     struct drm_radeon_cs_reloc **out_reloc);
 
 static INLINE struct radeon_drm_cs *
 radeon_drm_cs(struct radeon_winsys_cs *base)
@@ -94,7 +95,7 @@ radeon_bo_is_referenced_by_cs(struct radeon_drm_cs *cs,
 {
     int num_refs = bo->num_cs_references;
     return num_refs == bo->rws->num_cs ||
-           (num_refs && radeon_get_reloc(cs->csc, bo) != -1);
+           (num_refs && radeon_get_reloc(cs->csc, bo, NULL) != -1);
 }
 
 static INLINE boolean
@@ -106,7 +107,7 @@ radeon_bo_is_referenced_by_cs_for_write(struct radeon_drm_cs *cs,
     if (!bo->num_cs_references)
         return FALSE;
 
-    index = radeon_get_reloc(cs->csc, bo);
+    index = radeon_get_reloc(cs->csc, bo, NULL);
     if (index == -1)
         return FALSE;
 
