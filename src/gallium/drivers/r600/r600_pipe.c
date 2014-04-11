@@ -120,13 +120,6 @@ static void r600_flush_gfx_ring(void *ctx, unsigned flags)
 	r600_flush((struct pipe_context*)ctx, flags);
 }
 
-static void r600_flush_from_winsys(void *ctx, unsigned flags)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-
-	rctx->b.rings.gfx.flush(rctx, flags);
-}
-
 static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_context *rctx = (struct r600_context *)context;
@@ -244,7 +237,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		rctx->b.rings.gfx.cs = rctx->b.ws->cs_create(rctx->b.ws, RING_GFX, NULL);
 	}
 	rctx->b.rings.gfx.flush = r600_flush_gfx_ring;
-	rctx->b.ws->cs_set_flush_callback(rctx->b.rings.gfx.cs, r600_flush_from_winsys, rctx);
+	rctx->b.ws->cs_set_flush_callback(rctx->b.rings.gfx.cs, r600_flush_gfx_ring, rctx);
 	rctx->b.rings.gfx.flushing = false;
 
 	rctx->allocator_fetch_shader = u_suballocator_create(&rctx->b.b, 64 * 1024, 256,
