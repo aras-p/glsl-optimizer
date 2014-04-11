@@ -123,6 +123,7 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
 
       /* gl_PointSize is stored in VARYING_SLOT_PSIZ.w
        * gl_Layer is stored in VARYING_SLOT_PSIZ.y
+       * gl_ViewportIndex is stored in VARYING_SLOT_PSIZ.z
        */
       if (varying == VARYING_SLOT_PSIZ) {
          assert(components == 1);
@@ -130,6 +131,9 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
       } else if (varying == VARYING_SLOT_LAYER) {
          assert(components == 1);
          component_mask <<= 1;
+      } else if (varying == VARYING_SLOT_VIEWPORT) {
+         assert(components == 1);
+         component_mask <<= 2;
       } else {
          component_mask <<= linked_xfb_info->Outputs[i].ComponentOffset;
       }
@@ -137,7 +141,7 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
       buffer_mask |= 1 << buffer;
 
       decl |= buffer << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT;
-      if (varying == VARYING_SLOT_LAYER) {
+      if (varying == VARYING_SLOT_LAYER || varying == VARYING_SLOT_VIEWPORT) {
          decl |= vue_map->varying_to_slot[VARYING_SLOT_PSIZ] <<
             SO_DECL_REGISTER_INDEX_SHIFT;
       } else {
