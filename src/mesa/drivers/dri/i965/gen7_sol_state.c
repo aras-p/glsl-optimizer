@@ -121,10 +121,15 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
       const unsigned components = linked_xfb_info->Outputs[i].NumComponents;
       unsigned component_mask = (1 << components) - 1;
 
-      /* gl_PointSize is stored in VARYING_SLOT_PSIZ.w. */
+      /* gl_PointSize is stored in VARYING_SLOT_PSIZ.w
+       * gl_Layer is stored in VARYING_SLOT_PSIZ.y
+       */
       if (varying == VARYING_SLOT_PSIZ) {
          assert(components == 1);
          component_mask <<= 3;
+      } else if (varying == VARYING_SLOT_LAYER) {
+         assert(components == 1);
+         component_mask <<= 1;
       } else {
          component_mask <<= linked_xfb_info->Outputs[i].ComponentOffset;
       }
@@ -132,9 +137,14 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
       buffer_mask |= 1 << buffer;
 
       decl |= buffer << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT;
-      assert(vue_map->varying_to_slot[varying] >= 0);
-      decl |= vue_map->varying_to_slot[varying] <<
-	 SO_DECL_REGISTER_INDEX_SHIFT;
+      if (varying == VARYING_SLOT_LAYER) {
+         decl |= vue_map->varying_to_slot[VARYING_SLOT_PSIZ] <<
+            SO_DECL_REGISTER_INDEX_SHIFT;
+      } else {
+         assert(vue_map->varying_to_slot[varying] >= 0);
+         decl |= vue_map->varying_to_slot[varying] <<
+            SO_DECL_REGISTER_INDEX_SHIFT;
+      }
       decl |= component_mask << SO_DECL_COMPONENT_MASK_SHIFT;
 
       /* Mesa doesn't store entries for gl_SkipComponents in the Outputs[]
