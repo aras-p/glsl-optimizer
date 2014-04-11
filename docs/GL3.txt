@@ -103,7 +103,7 @@ GL 4.0:
   GL_ARB_gpu_shader5                                   started
   - 'precise' qualifier                                not started
   - Dynamically uniform sampler array indices          not started
-  - Unrestricted UBO array indices                     not started
+  - Dynamically uniform UBO array indices              not started
   - Implicit signed -> unsigned conversions            not started
   - Fused multiply-add                                 DONE
   - Packing/bitfield/conversion functions              DONE
