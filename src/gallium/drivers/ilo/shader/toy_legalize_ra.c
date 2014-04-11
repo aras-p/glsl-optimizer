@@ -351,7 +351,7 @@ linear_scan_init_live_intervals(struct linear_scan *ls,
             struct toy_inst *inst2;
             int loop_level = 1;
 
-            assert(inst->opcode == BRW_OPCODE_DO);
+            assert(inst->opcode == TOY_OPCODE_DO);
             do_pc = pc;
             while_pc = pc + 1;
 
@@ -359,7 +359,7 @@ linear_scan_init_live_intervals(struct linear_scan *ls,
             LIST_FOR_EACH_ENTRY_FROM(inst2, tc->iter_next,
                   &tc->instructions, list) {
                if (inst2->marker) {
-                  assert(inst->opcode == BRW_OPCODE_DO);
+                  assert(inst->opcode == TOY_OPCODE_DO);
                   loop_level++;
                   continue;
                }

@@ -804,7 +804,7 @@ get_num_prims_static(struct gs_compile_context *gcc)
       case BRW_OPCODE_ENDIF:
          if_depth--;
          break;
-      case BRW_OPCODE_DO:
+      case TOY_OPCODE_DO:
          do_depth++;
          break;
       case BRW_OPCODE_WHILE:

@@ -312,6 +312,7 @@ get_opcode_name(unsigned opcode)
    case BRW_OPCODE_PLN:                   return "pln";
    case BRW_OPCODE_MAD:                   return "mad";
    case BRW_OPCODE_NOP:                   return "nop";
+   case TOY_OPCODE_DO:                    return "do";
    /* TGSI */
    case TOY_OPCODE_TGSI_IN:               return "tgsi.in";
    case TOY_OPCODE_TGSI_CONST:            return "tgsi.const";

@@ -788,7 +788,7 @@ aos_BGNLOOP(struct toy_compiler *tc,
 {
    struct toy_inst *inst;
 
-   inst = tc_add0(tc, BRW_OPCODE_DO);
+   inst = tc_add0(tc, TOY_OPCODE_DO);
    /* this is just a marker */
    inst->marker = true;
 }

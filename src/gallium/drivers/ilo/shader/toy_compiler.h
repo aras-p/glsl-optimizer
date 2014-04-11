@@ -41,6 +41,8 @@ enum toy_opcode {
    /* 0..127 are reserved for BRW_OPCODE_x */
    TOY_OPCODE_LAST_HW = 127,
 
+   TOY_OPCODE_DO,
+
    /* TGSI register functions */
    TOY_OPCODE_TGSI_IN,
    TOY_OPCODE_TGSI_CONST,

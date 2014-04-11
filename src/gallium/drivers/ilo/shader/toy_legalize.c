@@ -315,7 +315,7 @@ patch_while_jip(struct toy_compiler *tc, struct toy_inst *inst)
    LIST_FOR_EACH_ENTRY_FROM_REV(inst2, inst->list.prev,
          &tc->instructions, list) {
       if (inst2->marker) {
-         if (inst2->opcode == BRW_OPCODE_DO) {
+         if (inst2->opcode == TOY_OPCODE_DO) {
             if (nest_level) {
                nest_level--;
             }
@@ -455,7 +455,7 @@ patch_break_continue_jip(struct toy_compiler *tc, struct toy_inst *inst)
    /* search forward */
    LIST_FOR_EACH_ENTRY_FROM(inst2, inst->list.next, &tc->instructions, list) {
       if (inst2->marker) {
-         if (inst2->opcode == BRW_OPCODE_DO)
+         if (inst2->opcode == TOY_OPCODE_DO)
             nest_level++;
          continue;
       }
@@ -474,7 +474,7 @@ patch_break_continue_jip(struct toy_compiler *tc, struct toy_inst *inst)
    inst3 = inst2;
    LIST_FOR_EACH_ENTRY_FROM(inst2, &inst3->list, &tc->instructions, list) {
       if (inst2->marker) {
-         if (inst2->opcode == BRW_OPCODE_DO)
+         if (inst2->opcode == TOY_OPCODE_DO)
             nest_level++;
          continue;
       }
