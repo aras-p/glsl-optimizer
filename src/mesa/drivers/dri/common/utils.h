@@ -34,10 +34,10 @@
 
 struct dri_debug_control {
     const char * string;
-    unsigned     flag;
+    uint64_t     flag;
 };
 
-extern unsigned driParseDebugString( const char * debug,
+extern uint64_t driParseDebugString( const char * debug,
     const struct dri_debug_control * control );
 
 extern unsigned driGetRendererString( char * buffer,

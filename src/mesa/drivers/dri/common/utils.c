@@ -32,6 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/cpuinfo.h"
@@ -40,14 +41,12 @@
 #include "dri_util.h"
 
 
-unsigned
+uint64_t
 driParseDebugString( const char * debug, 
 		     const struct dri_debug_control * control  )
 {
-   unsigned   flag;
+   uint64_t flag = 0;
 
-
-   flag = 0;
    if ( debug != NULL ) {
       while( control->string != NULL ) {
 	 if ( !strcmp( debug, "all" ) ||
