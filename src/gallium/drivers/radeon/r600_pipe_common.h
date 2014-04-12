@@ -407,6 +407,8 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 bool r600_common_screen_init(struct r600_common_screen *rscreen,
 			     struct radeon_winsys *ws);
 void r600_destroy_common_screen(struct r600_common_screen *rscreen);
+void r600_preflush_suspend_features(struct r600_common_context *ctx);
+void r600_postflush_resume_features(struct r600_common_context *ctx);
 bool r600_common_context_init(struct r600_common_context *rctx,
 			      struct r600_common_screen *rscreen);
 void r600_common_context_cleanup(struct r600_common_context *rctx);

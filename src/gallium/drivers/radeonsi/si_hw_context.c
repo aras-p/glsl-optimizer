@@ -88,30 +88,7 @@ void si_context_gfx_flush(void *context, unsigned flags,
 
 	ctx->b.rings.gfx.flushing = true;
 
-	/* Disable render condition. */
-	ctx->b.saved_render_cond = NULL;
-	ctx->b.saved_render_cond_cond = FALSE;
-	ctx->b.saved_render_cond_mode = 0;
-	if (ctx->b.current_render_cond) {
-		ctx->b.saved_render_cond = ctx->b.current_render_cond;
-		ctx->b.saved_render_cond_cond = ctx->b.current_render_cond_cond;
-		ctx->b.saved_render_cond_mode = ctx->b.current_render_cond_mode;
-		ctx->b.b.render_condition(&ctx->b.b, NULL, FALSE, 0);
-	}
-
-	/* suspend queries */
-	ctx->b.nontimer_queries_suspended = false;
-	if (ctx->b.num_cs_dw_nontimer_queries_suspend) {
-		r600_suspend_nontimer_queries(&ctx->b);
-		ctx->b.nontimer_queries_suspended = true;
-	}
-
-	ctx->b.streamout.suspended = false;
-
-	if (ctx->b.streamout.begin_emitted) {
-		r600_emit_streamout_end(&ctx->b);
-		ctx->b.streamout.suspended = true;
-	}
+	r600_preflush_suspend_features(&ctx->b);
 
 	ctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV_CB |
 			R600_CONTEXT_FLUSH_AND_INV_CB_META |
@@ -182,26 +159,11 @@ void si_begin_new_cs(struct si_context *ctx)
 	si_pm4_emit(ctx, ctx->queued.named.init);
 	ctx->emitted.named.init = ctx->queued.named.init;
 
-	if (ctx->b.streamout.suspended) {
-		ctx->b.streamout.append_bitmask = ctx->b.streamout.enabled_mask;
-		r600_streamout_buffers_dirty(&ctx->b);
-	}
-
-	/* resume queries */
-	if (ctx->b.nontimer_queries_suspended) {
-		r600_resume_nontimer_queries(&ctx->b);
-	}
-
-	/* Re-enable render condition. */
-	if (ctx->b.saved_render_cond) {
-		ctx->b.b.render_condition(&ctx->b.b, ctx->b.saved_render_cond,
-					  ctx->b.saved_render_cond_cond,
-					  ctx->b.saved_render_cond_mode);
-	}
-
 	ctx->framebuffer.atom.dirty = true;
 	ctx->b.streamout.enable_atom.dirty = true;
 	si_all_descriptors_begin_new_cs(ctx);
+
+	r600_postflush_resume_features(&ctx->b);
 
 	ctx->b.initial_gfx_cs_size = ctx->b.rings.gfx.cs->cdw;
 }

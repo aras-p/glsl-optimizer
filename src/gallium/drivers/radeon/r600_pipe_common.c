@@ -53,6 +53,53 @@ static void r600_memory_barrier(struct pipe_context *ctx, unsigned flags)
 {
 }
 
+void r600_preflush_suspend_features(struct r600_common_context *ctx)
+{
+	/* Disable render condition. */
+	ctx->saved_render_cond = NULL;
+	ctx->saved_render_cond_cond = FALSE;
+	ctx->saved_render_cond_mode = 0;
+	if (ctx->current_render_cond) {
+		ctx->saved_render_cond = ctx->current_render_cond;
+		ctx->saved_render_cond_cond = ctx->current_render_cond_cond;
+		ctx->saved_render_cond_mode = ctx->current_render_cond_mode;
+		ctx->b.render_condition(&ctx->b, NULL, FALSE, 0);
+	}
+
+	/* suspend queries */
+	ctx->nontimer_queries_suspended = false;
+	if (ctx->num_cs_dw_nontimer_queries_suspend) {
+		r600_suspend_nontimer_queries(ctx);
+		ctx->nontimer_queries_suspended = true;
+	}
+
+	ctx->streamout.suspended = false;
+	if (ctx->streamout.begin_emitted) {
+		r600_emit_streamout_end(ctx);
+		ctx->streamout.suspended = true;
+	}
+}
+
+void r600_postflush_resume_features(struct r600_common_context *ctx)
+{
+	if (ctx->streamout.suspended) {
+		ctx->streamout.append_bitmask = ctx->streamout.enabled_mask;
+		r600_streamout_buffers_dirty(ctx);
+	}
+
+	/* resume queries */
+	if (ctx->nontimer_queries_suspended) {
+		r600_resume_nontimer_queries(ctx);
+	}
+
+	/* Re-enable render condition. */
+	if (ctx->saved_render_cond) {
+		ctx->b.render_condition(&ctx->b, ctx->saved_render_cond,
+					  ctx->saved_render_cond_cond,
+					  ctx->saved_render_cond_mode);
+	}
+}
+
 static void r600_flush_from_st(struct pipe_context *ctx,
 			       struct pipe_fence_handle **fence,
 			       unsigned flags)

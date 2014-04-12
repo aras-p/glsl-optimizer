@@ -236,35 +236,12 @@ void r600_context_gfx_flush(void *context, unsigned flags,
 	struct r600_context *ctx = context;
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 
-	if (ctx->b.rings.gfx.cs->cdw == ctx->b.initial_gfx_cs_size)
+	if (cs->cdw == ctx->b.initial_gfx_cs_size)
 		return;
 
 	ctx->b.rings.gfx.flushing = true;
 
-	/* Disable render condition. */
-	ctx->b.saved_render_cond = NULL;
-	ctx->b.saved_render_cond_cond = FALSE;
-	ctx->b.saved_render_cond_mode = 0;
-	if (ctx->b.current_render_cond) {
-		ctx->b.saved_render_cond = ctx->b.current_render_cond;
-		ctx->b.saved_render_cond_cond = ctx->b.current_render_cond_cond;
-		ctx->b.saved_render_cond_mode = ctx->b.current_render_cond_mode;
-		ctx->b.b.render_condition(&ctx->b.b, NULL, FALSE, 0);
-	}
-
-	ctx->b.nontimer_queries_suspended = false;
-	ctx->b.streamout.suspended = false;
-
-	/* suspend queries */
-	if (ctx->b.num_cs_dw_nontimer_queries_suspend) {
-		r600_suspend_nontimer_queries(&ctx->b);
-		ctx->b.nontimer_queries_suspended = true;
-	}
-
-	if (ctx->b.streamout.begin_emitted) {
-		r600_emit_streamout_end(&ctx->b);
-		ctx->b.streamout.suspended = true;
-	}
+	r600_preflush_suspend_features(&ctx->b);
 
 	/* flush the framebuffer cache */
 	ctx->b.flags |= R600_CONTEXT_FLUSH_AND_INV |
@@ -362,22 +339,7 @@ void r600_begin_new_cs(struct r600_context *ctx)
 		r600_sampler_states_dirty(ctx, &samplers->states);
 	}
 
-	if (ctx->b.streamout.suspended) {
-		ctx->b.streamout.append_bitmask = ctx->b.streamout.enabled_mask;
-		r600_streamout_buffers_dirty(&ctx->b);
-	}
-
-	/* resume queries */
-	if (ctx->b.nontimer_queries_suspended) {
-		r600_resume_nontimer_queries(&ctx->b);
-	}
-
-	/* Re-enable render condition. */
-	if (ctx->b.saved_render_cond) {
-		ctx->b.b.render_condition(&ctx->b.b, ctx->b.saved_render_cond,
-					  ctx->b.saved_render_cond_cond,
-					  ctx->b.saved_render_cond_mode);
-	}
+	r600_postflush_resume_features(&ctx->b);
 
 	/* Re-emit the draw state. */
 	ctx->last_primitive_type = -1;
