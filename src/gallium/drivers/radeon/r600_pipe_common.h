@@ -352,6 +352,10 @@ struct r600_common_context {
 	unsigned			current_render_cond_mode;
 	boolean				current_render_cond_cond;
 	boolean				predicate_drawing;
+	/* For context flushing. */
+	struct pipe_query		*saved_render_cond;
+	boolean				saved_render_cond_cond;
+	unsigned			saved_render_cond_mode;
 
 	/* Copy one resource to another using async DMA. */
 	void (*dma_copy)(struct pipe_context *ctx,

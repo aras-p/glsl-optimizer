@@ -77,13 +77,27 @@ void si_need_cs_space(struct si_context *ctx, unsigned num_dw,
 	}
 }
 
-void si_context_flush(struct si_context *ctx, unsigned flags,
-		      struct pipe_fence_handle **fence)
+void si_context_gfx_flush(void *context, unsigned flags,
+			  struct pipe_fence_handle **fence)
 {
+	struct si_context *ctx = context;
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 
 	if (cs->cdw == ctx->b.initial_gfx_cs_size)
 		return;
+
+	ctx->b.rings.gfx.flushing = true;
+
+	/* Disable render condition. */
+	ctx->b.saved_render_cond = NULL;
+	ctx->b.saved_render_cond_cond = FALSE;
+	ctx->b.saved_render_cond_mode = 0;
+	if (ctx->b.current_render_cond) {
+		ctx->b.saved_render_cond = ctx->b.current_render_cond;
+		ctx->b.saved_render_cond_cond = ctx->b.current_render_cond_cond;
+		ctx->b.saved_render_cond_mode = ctx->b.current_render_cond_mode;
+		ctx->b.b.render_condition(&ctx->b.b, NULL, FALSE, 0);
+	}
 
 	/* suspend queries */
 	ctx->b.nontimer_queries_suspended = false;
@@ -125,6 +139,7 @@ void si_context_flush(struct si_context *ctx, unsigned flags,
 
 	/* Flush the CS. */
 	ctx->b.ws->cs_flush(cs, flags, fence, 0);
+	ctx->b.rings.gfx.flushing = false;
 
 #if SI_TRACE_CS
 	if (ctx->screen->b.trace_bo) {
@@ -175,6 +190,13 @@ void si_begin_new_cs(struct si_context *ctx)
 	/* resume queries */
 	if (ctx->b.nontimer_queries_suspended) {
 		r600_resume_nontimer_queries(&ctx->b);
+	}
+
+	/* Re-enable render condition. */
+	if (ctx->b.saved_render_cond) {
+		ctx->b.b.render_condition(&ctx->b.b, ctx->b.saved_render_cond,
+					  ctx->b.saved_render_cond_cond,
+					  ctx->b.saved_render_cond_mode);
 	}
 
 	ctx->framebuffer.atom.dirty = true;

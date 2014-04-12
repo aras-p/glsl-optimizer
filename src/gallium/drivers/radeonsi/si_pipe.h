@@ -177,8 +177,8 @@ void si_dma_copy(struct pipe_context *ctx,
 		 const struct pipe_box *src_box);
 
 /* si_hw_context.c */
-void si_context_flush(struct si_context *ctx, unsigned flags,
-		      struct pipe_fence_handle **fence);
+void si_context_gfx_flush(void *context, unsigned flags,
+			  struct pipe_fence_handle **fence);
 void si_begin_new_cs(struct si_context *ctx);
 void si_need_cs_space(struct si_context *ctx, unsigned num_dw, boolean count_draw_in);
 

@@ -33,30 +33,6 @@
 /*
  * pipe_context
  */
-static void si_flush(struct pipe_context *ctx, unsigned flags,
-		     struct pipe_fence_handle **fence)
-{
-	struct si_context *sctx = (struct si_context *)ctx;
-	struct pipe_query *render_cond = NULL;
-	boolean render_cond_cond = FALSE;
-	unsigned render_cond_mode = 0;
-
-	/* Disable render condition. */
-	if (sctx->b.current_render_cond) {
-		render_cond = sctx->b.current_render_cond;
-		render_cond_cond = sctx->b.current_render_cond_cond;
-		render_cond_mode = sctx->b.current_render_cond_mode;
-		ctx->render_condition(ctx, NULL, FALSE, 0);
-	}
-
-	si_context_flush(sctx, flags, fence);
-
-	/* Re-enable render condition. */
-	if (render_cond) {
-		ctx->render_condition(ctx, render_cond, render_cond_cond, render_cond_mode);
-	}
-}
-
 static void si_flush_from_st(struct pipe_context *ctx,
 			     struct pipe_fence_handle **fence,
 			     unsigned flags)
@@ -70,14 +46,7 @@ static void si_flush_from_st(struct pipe_context *ctx,
 	if (sctx->b.rings.dma.cs) {
 		sctx->b.rings.dma.flush(sctx, rflags, NULL);
 	}
-
-	si_flush(ctx, rflags, fence);
-}
-
-static void si_flush_gfx_ring(void *ctx, unsigned flags,
-			      struct pipe_fence_handle **fence)
-{
-	si_flush(ctx, flags, fence);
+	sctx->b.rings.gfx.flush(sctx, rflags, fence);
 }
 
 static void si_destroy_context(struct pipe_context *context)
@@ -145,9 +114,9 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 		sctx->b.b.create_video_buffer = vl_video_buffer_create;
 	}
 
-	sctx->b.rings.gfx.cs = ws->cs_create(ws, RING_GFX, si_flush_gfx_ring,
+	sctx->b.rings.gfx.cs = ws->cs_create(ws, RING_GFX, si_context_gfx_flush,
 					     sctx, NULL);
-	sctx->b.rings.gfx.flush = si_flush_gfx_ring;
+	sctx->b.rings.gfx.flush = si_context_gfx_flush;
 
 	si_init_all_descriptors(sctx);
 
