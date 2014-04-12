@@ -109,7 +109,7 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       /* these buffers must exist */
       if (!_mesa_dest_buffer_exists(ctx, format)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glDrawPixels(missing deest buffer)");
+                     "glDrawPixels(missing dest buffer)");
          goto end;
       }
       break;
