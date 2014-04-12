@@ -40,15 +40,26 @@
 int
 intel_translate_shadow_compare_func(GLenum func)
 {
+   /* GL specifies the result of shadow comparisons as:
+    *     1     if   ref <op> texel,
+    *     0     otherwise.
+    *
+    * The hardware does:
+    *     0     if texel <op> ref,
+    *     1     otherwise.
+    *
+    * So, these look a bit strange because there's both a negation
+    * and swapping of the arguments involved.
+    */
    switch (func) {
    case GL_NEVER:
-       return BRW_COMPAREFUNCTION_ALWAYS;
+      return BRW_COMPAREFUNCTION_ALWAYS;
    case GL_LESS:
-       return BRW_COMPAREFUNCTION_LEQUAL;
+      return BRW_COMPAREFUNCTION_LEQUAL;
    case GL_LEQUAL:
-       return BRW_COMPAREFUNCTION_LESS;
+      return BRW_COMPAREFUNCTION_LESS;
    case GL_GREATER:
-       return BRW_COMPAREFUNCTION_GEQUAL;
+      return BRW_COMPAREFUNCTION_GEQUAL;
    case GL_GEQUAL:
       return BRW_COMPAREFUNCTION_GREATER;
    case GL_NOTEQUAL:
@@ -56,7 +67,7 @@ intel_translate_shadow_compare_func(GLenum func)
    case GL_EQUAL:
       return BRW_COMPAREFUNCTION_NOTEQUAL;
    case GL_ALWAYS:
-       return BRW_COMPAREFUNCTION_NEVER;
+      return BRW_COMPAREFUNCTION_NEVER;
    }
 
    assert(!"Invalid shadow comparison function.");
