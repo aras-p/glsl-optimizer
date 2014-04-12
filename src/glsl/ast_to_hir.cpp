@@ -2649,6 +2649,36 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    const bool uses_deprecated_qualifier = qual->flags.q.attribute
       || qual->flags.q.varying;
 
+
+   /* Validate auxiliary storage qualifiers */
+
+   /* From section 4.3.4 of the GLSL 1.30 spec:
+    *    "It is an error to use centroid in in a vertex shader."
+    *
+    * From section 4.3.4 of the GLSL ES 3.00 spec:
+    *    "It is an error to use centroid in or interpolation qualifiers in
+    *    a vertex shader input."
+    */
+
+   /* Section 4.3.6 of the GLSL 1.30 specification states:
+    * "It is an error to use centroid out in a fragment shader."
+    *
+    * The GL_ARB_shading_language_420pack extension specification states:
+    * "It is an error to use auxiliary storage qualifiers or interpolation
+    *  qualifiers on an output in a fragment shader."
+    */
+   if (qual->flags.q.sample && (!is_varying_var(var, state->stage) || uses_deprecated_qualifier)) {
+      _mesa_glsl_error(loc, state,
+                       "sample qualifier may only be used on `in` or `out` "
+                       "variables between shader stages");
+   }
+   if (qual->flags.q.centroid && !is_varying_var(var, state->stage)) {
+      _mesa_glsl_error(loc, state,
+                       "centroid qualifier may only be used with `in', "
+                       "`out' or `varying' variables between shader stages");
+   }
+
+
    /* Is the 'layout' keyword used with parameters that allow relaxed checking.
     * Many implementations of GL_ARB_fragment_coord_conventions_enable and some
     * implementations (only Mesa?) GL_ARB_explicit_attrib_location_enable
@@ -3605,45 +3635,6 @@ ast_declarator_list::hir(exec_list *instructions,
          }
       }
 
-
-      /* From section 4.3.4 of the GLSL 1.30 spec:
-       *    "It is an error to use centroid in in a vertex shader."
-       *
-       * From section 4.3.4 of the GLSL ES 3.00 spec:
-       *    "It is an error to use centroid in or interpolation qualifiers in
-       *    a vertex shader input."
-       */
-      if (state->is_version(130, 300)
-          && this->type->qualifier.flags.q.centroid
-          && this->type->qualifier.flags.q.in
-          && state->stage == MESA_SHADER_VERTEX) {
-
-         _mesa_glsl_error(&loc, state,
-                          "'centroid in' cannot be used in a vertex shader");
-      }
-
-      if (state->stage == MESA_SHADER_VERTEX
-          && this->type->qualifier.flags.q.sample
-          && this->type->qualifier.flags.q.in) {
-
-         _mesa_glsl_error(&loc, state,
-                        "'sample in' cannot be used in a vertex shader");
-      }
-
-      /* Section 4.3.6 of the GLSL 1.30 specification states:
-       * "It is an error to use centroid out in a fragment shader."
-       *
-       * The GL_ARB_shading_language_420pack extension specification states:
-       * "It is an error to use auxiliary storage qualifiers or interpolation
-       *  qualifiers on an output in a fragment shader."
-       */
-      if (state->stage == MESA_SHADER_FRAGMENT &&
-          this->type->qualifier.flags.q.out &&
-          this->type->qualifier.has_auxiliary_storage()) {
-         _mesa_glsl_error(&loc, state,
-                          "auxiliary storage qualifiers cannot be used on "
-                          "fragment shader outputs");
-      }
 
       /* Precision qualifiers exists only in GLSL versions 1.00 and >= 1.30.
        */
@@ -5039,6 +5030,13 @@ ast_process_structure_or_interface_block(exec_list *instructions,
             _mesa_glsl_error(&loc, state,
                              "interpolation qualifiers cannot be used "
                              "with uniform interface blocks");
+         }
+
+         if ((qual->flags.q.uniform || !is_interface) &&
+             qual->has_auxiliary_storage()) {
+            _mesa_glsl_error(&loc, state,
+                             "auxiliary storage qualifiers cannot be used "
+                             "in uniform blocks or structures.");
          }
 
          if (field_type->is_matrix() ||
