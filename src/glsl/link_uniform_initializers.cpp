@@ -296,8 +296,10 @@ link_set_uniform_initializers(struct gl_shader_program *prog)
                   linker::set_block_binding(prog, iface_type->name,
                                             var->data.binding);
                }
+            } else if (type->contains_atomic()) {
+               /* we don't actually need to do anything. */
             } else {
-               assert(!"Explicit binding not on a sampler or UBO.");
+               assert(!"Explicit binding not on a sampler, UBO or atomic.");
             }
          } else if (var->constant_value) {
             linker::set_uniform_initializer(mem_ctx, prog, var->name,
