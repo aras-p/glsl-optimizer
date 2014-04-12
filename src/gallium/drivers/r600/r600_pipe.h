@@ -582,8 +582,8 @@ boolean r600_is_format_supported(struct pipe_screen *screen,
 void r600_update_db_shader_control(struct r600_context * rctx);
 
 /* r600_hw_context.c */
-void r600_context_flush(struct r600_context *ctx, unsigned flags,
-			struct pipe_fence_handle **fence);
+void r600_context_gfx_flush(void *context, unsigned flags,
+			    struct pipe_fence_handle **fence);
 void r600_begin_new_cs(struct r600_context *ctx);
 void r600_flush_emit(struct r600_context *ctx);
 void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw, boolean count_draw_in);

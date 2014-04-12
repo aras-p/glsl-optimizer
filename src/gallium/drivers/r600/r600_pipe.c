@@ -66,38 +66,6 @@ static const struct debug_named_value r600_debug_options[] = {
  * pipe_context
  */
 
-static void r600_flush(struct pipe_context *ctx, unsigned flags,
-		       struct pipe_fence_handle **fence)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	struct pipe_query *render_cond = NULL;
-	unsigned render_cond_mode = 0;
-	boolean render_cond_cond = FALSE;
-
-	if (rctx->b.rings.gfx.cs->cdw == rctx->b.initial_gfx_cs_size)
-		return;
-
-	rctx->b.rings.gfx.flushing = true;
-	/* Disable render condition. */
-	if (rctx->b.current_render_cond) {
-		render_cond = rctx->b.current_render_cond;
-		render_cond_cond = rctx->b.current_render_cond_cond;
-		render_cond_mode = rctx->b.current_render_cond_mode;
-		ctx->render_condition(ctx, NULL, FALSE, 0);
-	}
-
-	r600_context_flush(rctx, flags, fence);
-	rctx->b.rings.gfx.flushing = false;
-	r600_begin_new_cs(rctx);
-
-	/* Re-enable render condition. */
-	if (render_cond) {
-		ctx->render_condition(ctx, render_cond, render_cond_cond, render_cond_mode);
-	}
-
-	rctx->b.initial_gfx_cs_size = rctx->b.rings.gfx.cs->cdw;
-}
-
 static void r600_flush_from_st(struct pipe_context *ctx,
 			       struct pipe_fence_handle **fence,
 			       unsigned flags)
@@ -112,12 +80,6 @@ static void r600_flush_from_st(struct pipe_context *ctx,
 		rctx->b.rings.dma.flush(rctx, fflags, NULL);
 	}
 	rctx->b.rings.gfx.flush(rctx, fflags, fence);
-}
-
-static void r600_flush_gfx_ring(void *ctx, unsigned flags,
-				struct pipe_fence_handle **fence)
-{
-	r600_flush((struct pipe_context*)ctx, flags, fence);
 }
 
 static void r600_destroy_context(struct pipe_context *context)
@@ -233,11 +195,10 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	}
 
 	rctx->b.rings.gfx.cs = ws->cs_create(ws, RING_GFX,
-					     r600_flush_gfx_ring, rctx,
+					     r600_context_gfx_flush, rctx,
 					     rscreen->b.trace_bo ?
 						     rscreen->b.trace_bo->cs_buf : NULL);
-	rctx->b.rings.gfx.flush = r600_flush_gfx_ring;
-	rctx->b.rings.gfx.flushing = false;
+	rctx->b.rings.gfx.flush = r600_context_gfx_flush;
 
 	rctx->allocator_fetch_shader = u_suballocator_create(&rctx->b.b, 64 * 1024, 256,
 							     0, PIPE_USAGE_DEFAULT, FALSE);
