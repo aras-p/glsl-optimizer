@@ -73,7 +73,7 @@ struct radeon_drm_cs {
     struct radeon_drm_winsys *ws;
 
     /* Flush CS. */
-    void (*flush_cs)(void *ctx, unsigned flags);
+    void (*flush_cs)(void *ctx, unsigned flags, struct pipe_fence_handle **fence);
     void *flush_data;
 
     pipe_semaphore flush_completed;

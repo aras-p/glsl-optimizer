@@ -408,8 +408,8 @@ static void compute_emit_cs(struct r600_context *ctx, const uint *block_layout,
 	int i;
 
 	/* make sure that the gfx ring is only one active */
-	if (ctx->b.rings.dma.cs) {
-		ctx->b.rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
+	if (ctx->b.rings.dma.cs && ctx->b.rings.dma.cs->cdw) {
+		ctx->b.rings.dma.flush(ctx, RADEON_FLUSH_ASYNC, NULL);
 	}
 
 	/* Initialize all the compute-related registers.

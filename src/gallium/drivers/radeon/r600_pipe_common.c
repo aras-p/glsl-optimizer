@@ -45,7 +45,7 @@ void r600_need_dma_space(struct r600_common_context *ctx, unsigned num_dw)
 	num_dw += ctx->rings.dma.cs->cdw;
 	/* Flush if there's not enough space. */
 	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {
-		ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
+		ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC, NULL);
 	}
 }
 
@@ -53,7 +53,8 @@ static void r600_memory_barrier(struct pipe_context *ctx, unsigned flags)
 {
 }
 
-static void r600_flush_dma_ring(void *ctx, unsigned flags)
+static void r600_flush_dma_ring(void *ctx, unsigned flags,
+				struct pipe_fence_handle **fence)
 {
 	struct r600_common_context *rctx = (struct r600_common_context *)ctx;
 	struct radeon_winsys_cs *cs = rctx->rings.dma.cs;
@@ -63,7 +64,7 @@ static void r600_flush_dma_ring(void *ctx, unsigned flags)
 	}
 
 	rctx->rings.dma.flushing = true;
-	rctx->ws->cs_flush(cs, flags, 0);
+	rctx->ws->cs_flush(cs, flags, fence, 0);
 	rctx->rings.dma.flushing = false;
 }
 

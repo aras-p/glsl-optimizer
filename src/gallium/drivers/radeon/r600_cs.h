@@ -57,11 +57,11 @@ static INLINE unsigned r600_context_bo_reloc(struct r600_common_context *rctx,
 		if (ring == &rctx->rings.gfx) {
 			if (rctx->rings.dma.cs) {
 				/* flush dma ring */
-				rctx->rings.dma.flush(rctx, RADEON_FLUSH_ASYNC);
+				rctx->rings.dma.flush(rctx, RADEON_FLUSH_ASYNC, NULL);
 			}
 		} else {
 			/* flush gfx ring */
-			rctx->rings.gfx.flush(rctx, RADEON_FLUSH_ASYNC);
+			rctx->rings.gfx.flush(rctx, RADEON_FLUSH_ASYNC, NULL);
 		}
 	}
 	return rctx->ws->cs_add_reloc(ring->cs, rbo->cs_buf, usage,

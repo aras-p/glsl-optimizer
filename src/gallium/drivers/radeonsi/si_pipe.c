@@ -33,17 +33,13 @@
 /*
  * pipe_context
  */
-void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
-	      unsigned flags)
+static void si_flush(struct pipe_context *ctx, unsigned flags,
+		     struct pipe_fence_handle **fence)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct pipe_query *render_cond = NULL;
 	boolean render_cond_cond = FALSE;
 	unsigned render_cond_mode = 0;
-
-	if (fence) {
-		*fence = sctx->b.ws->cs_create_fence(sctx->b.rings.gfx.cs);
-	}
 
 	/* Disable render condition. */
 	if (sctx->b.current_render_cond) {
@@ -53,7 +49,7 @@ void si_flush(struct pipe_context *ctx, struct pipe_fence_handle **fence,
 		ctx->render_condition(ctx, NULL, FALSE, 0);
 	}
 
-	si_context_flush(sctx, flags);
+	si_context_flush(sctx, flags, fence);
 
 	/* Re-enable render condition. */
 	if (render_cond) {
@@ -72,15 +68,16 @@ static void si_flush_from_st(struct pipe_context *ctx,
 		rflags |= RADEON_FLUSH_END_OF_FRAME;
 
 	if (sctx->b.rings.dma.cs) {
-		sctx->b.rings.dma.flush(sctx, rflags);
+		sctx->b.rings.dma.flush(sctx, rflags, NULL);
 	}
 
-	si_flush(ctx, fence, rflags);
+	si_flush(ctx, rflags, fence);
 }
 
-static void si_flush_gfx_ring(void *ctx, unsigned flags)
+static void si_flush_gfx_ring(void *ctx, unsigned flags,
+			      struct pipe_fence_handle **fence)
 {
-	si_flush((struct pipe_context*)ctx, NULL, flags);
+	si_flush(ctx, flags, fence);
 }
 
 static void si_destroy_context(struct pipe_context *context)

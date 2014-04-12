@@ -73,11 +73,12 @@ void si_need_cs_space(struct si_context *ctx, unsigned num_dw,
 
 	/* Flush if there's not enough space. */
 	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {
-		si_flush(&ctx->b.b, NULL, RADEON_FLUSH_ASYNC);
+		ctx->b.rings.gfx.flush(ctx, RADEON_FLUSH_ASYNC, NULL);
 	}
 }
 
-void si_context_flush(struct si_context *ctx, unsigned flags)
+void si_context_flush(struct si_context *ctx, unsigned flags,
+		      struct pipe_fence_handle **fence)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 
@@ -123,7 +124,7 @@ void si_context_flush(struct si_context *ctx, unsigned flags)
 #endif
 
 	/* Flush the CS. */
-	ctx->b.ws->cs_flush(ctx->b.rings.gfx.cs, flags, 0);
+	ctx->b.ws->cs_flush(cs, flags, fence, 0);
 
 #if SI_TRACE_CS
 	if (ctx->screen->b.trace_bo) {

@@ -66,7 +66,8 @@ static const struct debug_named_value r600_debug_options[] = {
  * pipe_context
  */
 
-static void r600_flush(struct pipe_context *ctx, unsigned flags)
+static void r600_flush(struct pipe_context *ctx, unsigned flags,
+		       struct pipe_fence_handle **fence)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;
 	struct pipe_query *render_cond = NULL;
@@ -85,7 +86,7 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags)
 		ctx->render_condition(ctx, NULL, FALSE, 0);
 	}
 
-	r600_context_flush(rctx, flags);
+	r600_context_flush(rctx, flags, fence);
 	rctx->b.rings.gfx.flushing = false;
 	r600_begin_new_cs(rctx);
 
@@ -105,19 +106,18 @@ static void r600_flush_from_st(struct pipe_context *ctx,
 	unsigned fflags;
 
 	fflags = flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0;
-	if (fence) {
-		*fence = rctx->b.ws->cs_create_fence(rctx->b.rings.gfx.cs);
-	}
+
 	/* flush gfx & dma ring, order does not matter as only one can be live */
 	if (rctx->b.rings.dma.cs) {
-		rctx->b.rings.dma.flush(rctx, fflags);
+		rctx->b.rings.dma.flush(rctx, fflags, NULL);
 	}
-	rctx->b.rings.gfx.flush(rctx, fflags);
+	rctx->b.rings.gfx.flush(rctx, fflags, fence);
 }
 
-static void r600_flush_gfx_ring(void *ctx, unsigned flags)
+static void r600_flush_gfx_ring(void *ctx, unsigned flags,
+				struct pipe_fence_handle **fence)
 {
-	r600_flush((struct pipe_context*)ctx, flags);
+	r600_flush((struct pipe_context*)ctx, flags, fence);
 }
 
 static void r600_destroy_context(struct pipe_context *context)

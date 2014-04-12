@@ -34,7 +34,8 @@
 #include "r300_emit.h"
 
 
-static void r300_flush_and_cleanup(struct r300_context *r300, unsigned flags)
+static void r300_flush_and_cleanup(struct r300_context *r300, unsigned flags,
+                                   struct pipe_fence_handle **fence)
 {
     struct r300_atom *atom;
 
@@ -52,7 +53,7 @@ static void r300_flush_and_cleanup(struct r300_context *r300, unsigned flags)
     }
 
     r300->flush_counter++;
-    r300->rws->cs_flush(r300->cs, flags, 0);
+    r300->rws->cs_flush(r300->cs, flags, fence, 0);
     r300->dirty_hw = 0;
 
     /* New kitchen sink, baby. */
@@ -81,23 +82,19 @@ void r300_flush(struct pipe_context *pipe,
         flags |= RADEON_FLUSH_KEEP_TILING_FLAGS;
     }
 
-    if (fence) {
-        *fence = r300->rws->cs_create_fence(r300->cs);
-    }
-
     if (r300->dirty_hw) {
-        r300_flush_and_cleanup(r300, flags);
+        r300_flush_and_cleanup(r300, flags, fence);
     } else {
         if (fence) {
             /* We have to create a fence object, but the command stream is empty
              * and we cannot emit an empty CS. Let's write to some reg. */
             CS_LOCALS(r300);
             OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0);
-            r300->rws->cs_flush(r300->cs, flags, 0);
+            r300->rws->cs_flush(r300->cs, flags, fence, 0);
         } else {
             /* Even if hw is not dirty, we should at least reset the CS in case
              * the space checking failed for the first draw operation. */
-            r300->rws->cs_flush(r300->cs, flags, 0);
+            r300->rws->cs_flush(r300->cs, flags, NULL, 0);
         }
     }
 
@@ -119,7 +116,9 @@ void r300_flush(struct pipe_context *pipe,
                     r300_decompress_zmask(r300);
                 }
 
-                r300_flush_and_cleanup(r300, flags);
+                if (fence && *fence)
+                    r300->rws->fence_reference(fence, NULL);
+                r300_flush_and_cleanup(r300, flags, fence);
             }
 
             /* Revoke Hyper-Z access, so that some other process can take it. */

@@ -50,7 +50,7 @@
  */
 static void flush(struct rvce_encoder *enc)
 {
-	enc->ws->cs_flush(enc->cs, RADEON_FLUSH_ASYNC, 0);
+	enc->ws->cs_flush(enc->cs, RADEON_FLUSH_ASYNC, NULL, 0);
 }
 
 #if 0
@@ -267,7 +267,8 @@ static void rvce_flush(struct pipe_video_codec *encoder)
 {
 }
 
-static void rvce_cs_flush(void *ctx, unsigned flags)
+static void rvce_cs_flush(void *ctx, unsigned flags,
+			  struct pipe_fence_handle **fence)
 {
 	// just ignored
 }

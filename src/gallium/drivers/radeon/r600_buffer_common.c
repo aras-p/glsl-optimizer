@@ -37,7 +37,7 @@ boolean r600_rings_is_buffer_referenced(struct r600_common_context *ctx,
 	if (ctx->ws->cs_is_buffer_referenced(ctx->rings.gfx.cs, buf, usage)) {
 		return TRUE;
 	}
-	if (ctx->rings.dma.cs &&
+	if (ctx->rings.dma.cs && ctx->rings.dma.cs->cdw &&
 	    ctx->ws->cs_is_buffer_referenced(ctx->rings.dma.cs, buf, usage)) {
 		return TRUE;
 	}
@@ -64,10 +64,10 @@ void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
 	    ctx->ws->cs_is_buffer_referenced(ctx->rings.gfx.cs,
 					     resource->cs_buf, rusage)) {
 		if (usage & PIPE_TRANSFER_DONTBLOCK) {
-			ctx->rings.gfx.flush(ctx, RADEON_FLUSH_ASYNC);
+			ctx->rings.gfx.flush(ctx, RADEON_FLUSH_ASYNC, NULL);
 			return NULL;
 		} else {
-			ctx->rings.gfx.flush(ctx, 0);
+			ctx->rings.gfx.flush(ctx, 0, NULL);
 			busy = true;
 		}
 	}
@@ -76,10 +76,10 @@ void *r600_buffer_map_sync_with_rings(struct r600_common_context *ctx,
 	    ctx->ws->cs_is_buffer_referenced(ctx->rings.dma.cs,
 					     resource->cs_buf, rusage)) {
 		if (usage & PIPE_TRANSFER_DONTBLOCK) {
-			ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC);
+			ctx->rings.dma.flush(ctx, RADEON_FLUSH_ASYNC, NULL);
 			return NULL;
 		} else {
-			ctx->rings.dma.flush(ctx, 0);
+			ctx->rings.dma.flush(ctx, 0, NULL);
 			busy = true;
 		}
 	}

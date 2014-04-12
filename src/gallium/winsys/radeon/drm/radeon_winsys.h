@@ -424,7 +424,8 @@ struct radeon_winsys {
      */
     struct radeon_winsys_cs *(*cs_create)(struct radeon_winsys *ws,
                                           enum ring_type ring_type,
-                                          void (*flush)(void *ctx, unsigned flags),
+                                          void (*flush)(void *ctx, unsigned flags,
+							struct pipe_fence_handle **fence),
                                           void *flush_ctx,
                                           struct radeon_winsys_cs_handle *trace_buf);
 
@@ -488,9 +489,14 @@ struct radeon_winsys {
      *
      * \param cs          A command stream to flush.
      * \param flags,      RADEON_FLUSH_ASYNC or 0.
-     * \param cs_trace_id A unique identifiant for the cs
+     * \param fence       Pointer to a fence. If non-NULL, a fence is inserted
+     *                    after the CS and is returned through this parameter.
+     * \param cs_trace_id A unique identifier of the cs, used for tracing.
      */
-    void (*cs_flush)(struct radeon_winsys_cs *cs, unsigned flags, uint32_t cs_trace_id);
+    void (*cs_flush)(struct radeon_winsys_cs *cs,
+                     unsigned flags,
+                     struct pipe_fence_handle **fence,
+                     uint32_t cs_trace_id);
 
     /**
      * Return TRUE if a buffer is referenced by a command stream.
@@ -518,13 +524,6 @@ struct radeon_winsys {
       * \param cs        A command stream.
       */
     void (*cs_sync_flush)(struct radeon_winsys_cs *cs);
-
-    /**
-     * Return a fence associated with the CS. The fence will be signalled
-     * once the CS is flushed and all commands in the CS are completed
-     * by the GPU.
-     */
-    struct pipe_fence_handle *(*cs_create_fence)(struct radeon_winsys_cs *cs);
 
     /**
      * Wait for the fence and return true if the fence has been signalled.

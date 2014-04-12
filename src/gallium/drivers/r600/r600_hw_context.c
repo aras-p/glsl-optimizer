@@ -37,7 +37,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	if (!ctx->b.ws->cs_memory_below_limit(ctx->b.rings.gfx.cs, ctx->b.vram, ctx->b.gtt)) {
 		ctx->b.gtt = 0;
 		ctx->b.vram = 0;
-		ctx->b.rings.gfx.flush(ctx, RADEON_FLUSH_ASYNC);
+		ctx->b.rings.gfx.flush(ctx, RADEON_FLUSH_ASYNC, NULL);
 		return;
 	}
 	/* all will be accounted once relocation are emited */
@@ -93,7 +93,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 
 	/* Flush if there's not enough space. */
 	if (num_dw > RADEON_MAX_CMDBUF_DWORDS) {
-		ctx->b.rings.gfx.flush(ctx, RADEON_FLUSH_ASYNC);
+		ctx->b.rings.gfx.flush(ctx, RADEON_FLUSH_ASYNC, NULL);
 	}
 }
 
@@ -230,7 +230,8 @@ void r600_flush_emit(struct r600_context *rctx)
 	rctx->b.flags = 0;
 }
 
-void r600_context_flush(struct r600_context *ctx, unsigned flags)
+void r600_context_flush(struct r600_context *ctx, unsigned flags,
+			struct pipe_fence_handle **fence)
 {
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 
@@ -270,7 +271,7 @@ void r600_context_flush(struct r600_context *ctx, unsigned flags)
 	}
 
 	/* Flush the CS. */
-	ctx->b.ws->cs_flush(ctx->b.rings.gfx.cs, flags, ctx->screen->b.cs_count++);
+	ctx->b.ws->cs_flush(cs, flags, fence, ctx->screen->b.cs_count++);
 }
 
 void r600_begin_new_cs(struct r600_context *ctx)

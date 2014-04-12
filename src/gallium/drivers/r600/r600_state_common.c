@@ -1335,8 +1335,8 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 	}
 
 	/* make sure that the gfx ring is only one active */
-	if (rctx->b.rings.dma.cs) {
-		rctx->b.rings.dma.flush(rctx, RADEON_FLUSH_ASYNC);
+	if (rctx->b.rings.dma.cs && rctx->b.rings.dma.cs->cdw) {
+		rctx->b.rings.dma.flush(rctx, RADEON_FLUSH_ASYNC, NULL);
 	}
 
 	if (!r600_update_derived_state(rctx)) {

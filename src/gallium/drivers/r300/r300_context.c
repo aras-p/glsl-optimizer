@@ -123,11 +123,12 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300);
 }
 
-static void r300_flush_callback(void *data, unsigned flags)
+static void r300_flush_callback(void *data, unsigned flags,
+				struct pipe_fence_handle **fence)
 {
     struct r300_context* const cs_context_copy = data;
 
-    r300_flush(&cs_context_copy->context, flags, NULL);
+    r300_flush(&cs_context_copy->context, flags, fence);
 }
 
 #define R300_INIT_ATOM(atomname, atomsize) \

@@ -75,6 +75,11 @@
 
 #define RELOC_DWORDS (sizeof(struct drm_radeon_cs_reloc) / sizeof(uint32_t))
 
+static struct pipe_fence_handle *
+radeon_cs_create_fence(struct radeon_winsys_cs *rcs);
+static void radeon_fence_reference(struct pipe_fence_handle **dst,
+                                   struct pipe_fence_handle *src);
+
 static boolean radeon_init_cs_context(struct radeon_cs_context *csc,
                                       struct radeon_drm_winsys *ws)
 {
@@ -140,7 +145,8 @@ static void radeon_destroy_cs_context(struct radeon_cs_context *csc)
 static struct radeon_winsys_cs *
 radeon_drm_cs_create(struct radeon_winsys *rws,
                      enum ring_type ring_type,
-                     void (*flush)(void *ctx, unsigned flags),
+                     void (*flush)(void *ctx, unsigned flags,
+				   struct pipe_fence_handle **fence),
                      void *flush_ctx,
                      struct radeon_winsys_cs_handle *trace_buf)
 {
@@ -349,7 +355,7 @@ static boolean radeon_drm_cs_validate(struct radeon_winsys_cs *rcs)
 
         /* Flush if there are any relocs. Clean up otherwise. */
         if (cs->csc->crelocs) {
-            cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
+            cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC, NULL);
         } else {
             radeon_cs_context_cleanup(cs->csc);
 
@@ -417,7 +423,10 @@ void radeon_drm_cs_sync_flush(struct radeon_winsys_cs *rcs)
 
 DEBUG_GET_ONCE_BOOL_OPTION(noop, "RADEON_NOOP", FALSE)
 
-static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags, uint32_t cs_trace_id)
+static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs,
+                                unsigned flags,
+                                struct pipe_fence_handle **fence,
+                                uint32_t cs_trace_id)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_cs_context *tmp;
@@ -457,9 +466,14 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags, ui
        fprintf(stderr, "radeon: command stream overflowed\n");
     }
 
+    if (fence) {
+        radeon_fence_reference(fence, NULL);
+        *fence = radeon_cs_create_fence(rcs);
+    }
+
     radeon_drm_cs_sync_flush(rcs);
 
-    /* Flip command streams. */
+    /* Swap command streams. */
     tmp = cs->csc;
     cs->csc = cs->cst;
     cs->cst = tmp;
@@ -468,7 +482,9 @@ static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags, ui
 
     /* If the CS is not empty or overflowed, emit it in a separate thread. */
     if (cs->base.cdw && cs->base.cdw <= RADEON_MAX_CMDBUF_DWORDS && !debug_get_option_noop()) {
-        unsigned i, crelocs = cs->cst->crelocs;
+        unsigned i, crelocs;
+
+        crelocs = cs->cst->crelocs;
 
         cs->cst->chunks[0].length_dw = cs->base.cdw;
 
@@ -643,7 +659,6 @@ void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws)
     ws->base.cs_flush = radeon_drm_cs_flush;
     ws->base.cs_is_buffer_referenced = radeon_bo_is_referenced;
     ws->base.cs_sync_flush = radeon_drm_cs_sync_flush;
-    ws->base.cs_create_fence = radeon_cs_create_fence;
     ws->base.fence_wait = radeon_fence_wait;
     ws->base.fence_reference = radeon_fence_reference;
 }

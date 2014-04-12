@@ -405,7 +405,7 @@ static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
                  *
                  * Only check whether the buffer is being used for write. */
                 if (cs && radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
-                    cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
+                    cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC, NULL);
                     return NULL;
                 }
 
@@ -415,7 +415,7 @@ static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
                 }
             } else {
                 if (cs && radeon_bo_is_referenced_by_cs(cs, bo)) {
-                    cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC);
+                    cs->flush_cs(cs->flush_data, RADEON_FLUSH_ASYNC, NULL);
                     return NULL;
                 }
 
@@ -436,7 +436,7 @@ static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
                  *
                  * Only check whether the buffer is being used for write. */
                 if (cs && radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
-                    cs->flush_cs(cs->flush_data, 0);
+                    cs->flush_cs(cs->flush_data, 0, NULL);
                 }
                 radeon_bo_wait((struct pb_buffer*)bo,
                                RADEON_USAGE_WRITE);
@@ -444,7 +444,7 @@ static void *radeon_bo_map(struct radeon_winsys_cs_handle *buf,
                 /* Mapping for write. */
                 if (cs) {
                     if (radeon_bo_is_referenced_by_cs(cs, bo)) {
-                        cs->flush_cs(cs->flush_data, 0);
+                        cs->flush_cs(cs->flush_data, 0, NULL);
                     } else {
                         /* Try to avoid busy-waiting in radeon_bo_wait. */
                         if (p_atomic_read(&bo->num_active_ioctls))
@@ -751,7 +751,7 @@ static void radeon_bo_set_tiling(struct pb_buffer *_buf,
     /* Tiling determines how DRM treats the buffer data.
      * We must flush CS when changing it if the buffer is referenced. */
     if (cs && radeon_bo_is_referenced_by_cs(cs, bo)) {
-        cs->flush_cs(cs->flush_data, 0);
+        cs->flush_cs(cs->flush_data, 0, NULL);
     }
 
     while (p_atomic_read(&bo->num_active_ioctls)) {
