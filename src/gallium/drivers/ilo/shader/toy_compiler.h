@@ -28,8 +28,8 @@
 #ifndef TOY_COMPILER_H
 #define TOY_COMPILER_H
 
+#include "genhw/genhw.h"
 #include "util/u_slab.h"
-#include "brw_defines.h"
 
 #include "ilo_common.h"
 #include "toy_compiler_reg.h"

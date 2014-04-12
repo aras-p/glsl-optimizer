@@ -25,8 +25,8 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "genhw/genhw.h"
 #include "util/u_pack_color.h"
-#include "intel_reg.h"
 
 #include "ilo_3d.h"
 #include "ilo_context.h"

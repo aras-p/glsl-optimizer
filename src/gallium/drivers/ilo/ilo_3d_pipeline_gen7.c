@@ -25,8 +25,8 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "genhw/genhw.h"
 #include "util/u_dual_blend.h"
-#include "intel_reg.h"
 
 #include "ilo_blitter.h"
 #include "ilo_context.h"

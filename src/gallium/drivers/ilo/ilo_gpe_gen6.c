@@ -25,11 +25,10 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "genhw/genhw.h"
 #include "util/u_dual_blend.h"
 #include "util/u_framebuffer.h"
 #include "util/u_half.h"
-#include "brw_defines.h"
-#include "intel_reg.h"
 
 #include "ilo_context.h"
 #include "ilo_format.h"

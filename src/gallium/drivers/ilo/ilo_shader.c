@@ -25,9 +25,9 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "genhw/genhw.h" /* for SBE setup */
 #include "tgsi/tgsi_parse.h"
 #include "intel_winsys.h"
-#include "brw_defines.h" /* for SBE setup */
 
 #include "shader/ilo_shader_internal.h"
 #include "ilo_state.h"

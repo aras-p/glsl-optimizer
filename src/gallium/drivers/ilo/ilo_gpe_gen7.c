@@ -25,9 +25,8 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "genhw/genhw.h"
 #include "util/u_resource.h"
-#include "brw_defines.h"
-#include "intel_reg.h"
 
 #include "ilo_format.h"
 #include "ilo_resource.h"

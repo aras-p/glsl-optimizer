@@ -28,7 +28,7 @@
 #ifndef ILO_FORMAT_H
 #define ILO_FORMAT_H
 
-#include "brw_defines.h"
+#include "genhw/genhw.h"
 
 #include "ilo_common.h"
 

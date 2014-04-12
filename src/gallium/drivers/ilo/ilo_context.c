@@ -26,7 +26,6 @@
  */
 
 #include "util/u_upload_mgr.h"
-#include "intel_chipset.h"
 
 #include "ilo_3d.h"
 #include "ilo_blit.h"

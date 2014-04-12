@@ -28,8 +28,7 @@
 #ifndef ILO_GPE_GEN6_H
 #define ILO_GPE_GEN6_H
 
-#include "brw_defines.h"
-#include "intel_reg.h"
+#include "genhw/genhw.h"
 #include "intel_winsys.h"
 
 #include "ilo_common.h"

@@ -25,8 +25,8 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "genhw/genhw.h"
 #include "vl/vl_video_buffer.h"
-#include "brw_defines.h"
 
 #include "ilo_screen.h"
 #include "ilo_format.h"

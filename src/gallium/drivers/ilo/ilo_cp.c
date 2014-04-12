@@ -25,7 +25,7 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "intel_reg.h" /* for MI_xxx */
+#include "genhw/genhw.h" /* for MI_xxx */
 #include "intel_winsys.h"
 
 #include "ilo_cp.h"
