@@ -31,7 +31,7 @@
  * list of debugging flags, as well as some macros for handling them.
  */
 
-extern int INTEL_DEBUG;
+extern uint64_t INTEL_DEBUG;
 
 #define DEBUG_TEXTURE	  0x1
 #define DEBUG_STATE	  0x2
