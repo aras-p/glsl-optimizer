@@ -76,6 +76,21 @@ _mesa_BindAttribLocation(GLhandleARB program, GLuint index,
     */
 }
 
+static bool
+is_active_attrib(const ir_variable *var)
+{
+   if (!var)
+      return false;
+
+   switch (var->data.mode) {
+   case ir_var_shader_in:
+      return var->data.location != -1;
+
+   default:
+      return false;
+   }
+}
+
 void GLAPIENTRY
 _mesa_GetActiveAttrib(GLhandleARB program, GLuint desired_index,
                          GLsizei maxLength, GLsizei * length, GLint * size,
@@ -105,10 +120,8 @@ _mesa_GetActiveAttrib(GLhandleARB program, GLuint desired_index,
    foreach_list(node, ir) {
       const ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var == NULL
-	  || var->data.mode != ir_var_shader_in
-	  || var->data.location == -1)
-	 continue;
+      if (!is_active_attrib(var))
+         continue;
 
       if (current_index == desired_index) {
 	 _mesa_copy_string(name, maxLength, length, var->name);
@@ -196,10 +209,8 @@ _mesa_count_active_attribs(struct gl_shader_program *shProg)
    foreach_list(node, ir) {
       const ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var == NULL
-	  || var->data.mode != ir_var_shader_in
-	  || var->data.location == -1)
-	 continue;
+      if (!is_active_attrib(var))
+         continue;
 
       i++;
    }
