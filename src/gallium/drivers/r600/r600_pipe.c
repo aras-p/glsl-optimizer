@@ -66,22 +66,6 @@ static const struct debug_named_value r600_debug_options[] = {
  * pipe_context
  */
 
-static void r600_flush_from_st(struct pipe_context *ctx,
-			       struct pipe_fence_handle **fence,
-			       unsigned flags)
-{
-	struct r600_context *rctx = (struct r600_context *)ctx;
-	unsigned fflags;
-
-	fflags = flags & PIPE_FLUSH_END_OF_FRAME ? RADEON_FLUSH_END_OF_FRAME : 0;
-
-	/* flush gfx & dma ring, order does not matter as only one can be live */
-	if (rctx->b.rings.dma.cs) {
-		rctx->b.rings.dma.flush(rctx, fflags, NULL);
-	}
-	rctx->b.rings.gfx.flush(rctx, fflags, fence);
-}
-
 static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_context *rctx = (struct r600_context *)context;
@@ -137,7 +121,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->b.b.screen = screen;
 	rctx->b.b.priv = priv;
 	rctx->b.b.destroy = r600_destroy_context;
-	rctx->b.b.flush = r600_flush_from_st;
 
 	if (!r600_common_context_init(&rctx->b, &rscreen->b))
 		goto fail;

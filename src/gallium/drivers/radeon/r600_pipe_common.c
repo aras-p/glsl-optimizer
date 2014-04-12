@@ -53,6 +53,22 @@ static void r600_memory_barrier(struct pipe_context *ctx, unsigned flags)
 {
 }
 
+static void r600_flush_from_st(struct pipe_context *ctx,
+			       struct pipe_fence_handle **fence,
+			       unsigned flags)
+{
+	struct r600_common_context *rctx = (struct r600_common_context *)ctx;
+	unsigned rflags = 0;
+
+	if (flags & PIPE_FLUSH_END_OF_FRAME)
+		rflags |= RADEON_FLUSH_END_OF_FRAME;
+
+	if (rctx->rings.dma.cs) {
+		rctx->rings.dma.flush(rctx, rflags, NULL);
+	}
+	rctx->rings.gfx.flush(rctx, rflags, fence);
+}
+
 static void r600_flush_dma_ring(void *ctx, unsigned flags,
 				struct pipe_fence_handle **fence)
 {
@@ -86,6 +102,7 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 	rctx->b.transfer_unmap = u_transfer_unmap_vtbl;
 	rctx->b.transfer_inline_write = u_default_transfer_inline_write;
         rctx->b.memory_barrier = r600_memory_barrier;
+	rctx->b.flush = r600_flush_from_st;
 
 	r600_init_context_texture_functions(rctx);
 	r600_streamout_init(rctx);

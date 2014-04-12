@@ -33,22 +33,6 @@
 /*
  * pipe_context
  */
-static void si_flush_from_st(struct pipe_context *ctx,
-			     struct pipe_fence_handle **fence,
-			     unsigned flags)
-{
-	struct si_context *sctx = (struct si_context *)ctx;
-	unsigned rflags = 0;
-
-	if (flags & PIPE_FLUSH_END_OF_FRAME)
-		rflags |= RADEON_FLUSH_END_OF_FRAME;
-
-	if (sctx->b.rings.dma.cs) {
-		sctx->b.rings.dma.flush(sctx, rflags, NULL);
-	}
-	sctx->b.rings.gfx.flush(sctx, rflags, fence);
-}
-
 static void si_destroy_context(struct pipe_context *context)
 {
 	struct si_context *sctx = (struct si_context *)context;
@@ -97,7 +81,6 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 	sctx->b.b.screen = screen; /* this must be set first */
 	sctx->b.b.priv = priv;
 	sctx->b.b.destroy = si_destroy_context;
-	sctx->b.b.flush = si_flush_from_st;
 	sctx->screen = sscreen; /* Easy accessing of screen/winsys. */
 
 	if (!r600_common_context_init(&sctx->b, &sscreen->b))
