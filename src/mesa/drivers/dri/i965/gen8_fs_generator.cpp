@@ -1268,6 +1268,15 @@ gen8_fs_generator::generate_code(exec_list *instructions)
    }
 
    patch_jump_targets();
+
+   /* OK, while the INTEL_DEBUG=fs above is very nice for debugging FS
+    * emit issues, it doesn't get the jump distances into the output,
+    * which is often something we want to debug.  So this is here in
+    * case you're doing that.
+    */
+   if (0 && unlikely(INTEL_DEBUG & DEBUG_WM)) {
+      disassemble(stderr, 0, next_inst_offset);
+   }
 }
 
 const unsigned *
