@@ -1228,8 +1228,10 @@ static boolean
 incr_inputs(struct translate_sse *p, unsigned index_size)
 {
    if (!index_size && p->nr_buffer_variants == 1) {
+      const unsigned buffer_index = p->buffer_variant[0].buffer_index;
       struct x86_reg stride =
-         x86_make_disp(p->machine_EDI, get_offset(p, &p->buffer[0].stride));
+         x86_make_disp(p->machine_EDI,
+                       get_offset(p, &p->buffer[buffer_index].stride));
 
       if (p->buffer_variant[0].instance_divisor == 0) {
          x64_rexw(p->func);
