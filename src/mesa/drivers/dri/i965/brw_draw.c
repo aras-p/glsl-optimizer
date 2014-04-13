@@ -315,7 +315,8 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
       intel_renderbuffer_resolve_hiz(brw, depth_irb);
 
    /* Resolve depth buffer and render cache of each enabled texture. */
-   for (int i = 0; i < ctx->Const.MaxCombinedTextureImageUnits; i++) {
+   int maxEnabledUnit = ctx->Texture._MaxEnabledTexImageUnit;
+   for (int i = 0; i <= maxEnabledUnit; i++) {
       if (!ctx->Texture.Unit[i]._ReallyEnabled)
 	 continue;
       tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
