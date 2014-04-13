@@ -58,6 +58,7 @@ i965_FILES = \
 	brw_fs_channel_expressions.cpp \
 	brw_fs_copy_propagation.cpp \
 	brw_fs_cse.cpp \
+	brw_fs_dead_code_eliminate.cpp \
 	brw_fs_fp.cpp \
 	brw_fs_generator.cpp \
 	brw_fs_live_variables.cpp \

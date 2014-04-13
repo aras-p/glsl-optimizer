@@ -2085,61 +2085,6 @@ fs_visitor::opt_algebraic()
    return progress;
 }
 
-/**
- * Removes any instructions writing a VGRF where that VGRF is not used by any
- * later instruction.
- */
-bool
-fs_visitor::dead_code_eliminate()
-{
-   bool progress = false;
-   int pc = 0;
-
-   calculate_live_intervals();
-
-   foreach_list_safe(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
-
-      if (inst->dst.file == GRF && !inst->has_side_effects()) {
-         bool dead = true;
-
-         for (int i = 0; i < inst->regs_written; i++) {
-            int var = live_intervals->var_from_vgrf[inst->dst.reg];
-            assert(live_intervals->end[var + inst->dst.reg_offset + i] >= pc);
-            if (live_intervals->end[var + inst->dst.reg_offset + i] != pc) {
-               dead = false;
-               break;
-            }
-         }
-
-         if (dead) {
-            /* Don't dead code eliminate instructions that write to the
-             * accumulator as a side-effect. Instead just set the destination
-             * to the null register to free it.
-             */
-            switch (inst->opcode) {
-            case BRW_OPCODE_ADDC:
-            case BRW_OPCODE_SUBB:
-            case BRW_OPCODE_MACH:
-               inst->dst = fs_reg(retype(brw_null_reg(), inst->dst.type));
-               break;
-            default:
-               inst->remove();
-               progress = true;
-               break;
-            }
-         }
-      }
-
-      pc++;
-   }
-
-   if (progress)
-      invalidate_live_intervals();
-
-   return progress;
-}
-
 struct dead_code_hash_key
 {
    int vgrf;
@@ -3249,8 +3194,8 @@ fs_visitor::run()
 	 progress = opt_cse() || progress;
 	 progress = opt_copy_propagate() || progress;
          progress = opt_peephole_predicated_break() || progress;
-	 progress = dead_code_eliminate() || progress;
 	 progress = dead_code_eliminate_local() || progress;
+         progress = dead_code_eliminate() || progress;
          progress = opt_peephole_sel() || progress;
          progress = dead_control_flow_eliminate(this) || progress;
          progress = opt_saturate_propagation() || progress;
