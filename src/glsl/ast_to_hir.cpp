@@ -5328,7 +5328,7 @@ ast_interface_block::hir(exec_list *instructions,
       }
    } else {
       /* In order to have an array size, the block must also be declared with
-       * an instane name.
+       * an instance name.
        */
       assert(this->array_specifier == NULL);
 
