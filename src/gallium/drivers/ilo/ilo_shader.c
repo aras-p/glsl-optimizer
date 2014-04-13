@@ -309,8 +309,8 @@ ilo_shader_variant_init(struct ilo_shader_variant *variant,
 
       /*
        * When non-nearest filter and PIPE_TEX_WRAP_CLAMP wrap mode is used,
-       * the HW wrap mode is set to GEN6_TEXCOORDMODE_CLAMP_BORDER, and we need
-       * to manually saturate the texture coordinates.
+       * the HW wrap mode is set to GEN6_TEXCOORDMODE_CLAMP_BORDER, and we
+       * need to manually saturate the texture coordinates.
        */
       if (sampler) {
          variant->saturate_tex_coords[0] |= sampler->saturate_s << i;
@@ -991,8 +991,7 @@ ilo_shader_select_kernel_routing(struct ilo_shader_state *shader,
           src_slot + 1 < routing->source_len &&
           src_semantics[src_slot + 1] == TGSI_SEMANTIC_BCOLOR &&
           src_indices[src_slot + 1] == index) {
-         routing->swizzles[dst_slot] |= ATTRIBUTE_SWIZZLE_INPUTATTR_FACING <<
-            ATTRIBUTE_SWIZZLE_SHIFT;
+         routing->swizzles[dst_slot] |= GEN7_SBE_ATTR_INPUTATTR_FACING;
          src_slot++;
       }
 

@@ -35,13 +35,12 @@
 #include "ilo_resource.h"
 #include "ilo_blitter.h"
 
-#ifndef COLOR_BLT_CMD
-#define COLOR_BLT_CMD (CMD_2D | (0x40 << 22))
-#endif
-
-#ifndef SRC_COPY_BLT_CMD
-#define SRC_COPY_BLT_CMD (CMD_2D | (0x43 << 22))
-#endif
+#define MI_FLUSH_DW           GEN_MI_CMD(MI_FLUSH_DW)
+#define MI_LOAD_REGISTER_IMM  GEN_MI_CMD(MI_LOAD_REGISTER_IMM)
+#define COLOR_BLT             GEN_BLITTER_CMD(COLOR_BLT)
+#define XY_COLOR_BLT          GEN_BLITTER_CMD(XY_COLOR_BLT)
+#define SRC_COPY_BLT          GEN_BLITTER_CMD(SRC_COPY_BLT)
+#define XY_SRC_COPY_BLT       GEN_BLITTER_CMD(XY_SRC_COPY_BLT)
 
 enum gen6_blt_mask {
    GEN6_BLT_MASK_8,
@@ -137,7 +136,7 @@ gen6_emit_COLOR_BLT(struct ilo_dev_info *dev,
    const int cpp = gen6_translate_blt_cpp(value_mask);
    uint32_t dw0, dw1;
 
-   dw0 = COLOR_BLT_CMD |
+   dw0 = COLOR_BLT |
          gen6_translate_blt_write_mask(write_mask) |
          (cmd_len - 2);
 
@@ -146,7 +145,7 @@ gen6_emit_COLOR_BLT(struct ilo_dev_info *dev,
    /* offsets are naturally aligned and pitches are dword-aligned */
    assert(dst_offset % cpp == 0 && dst_pitch % 4 == 0);
 
-   dw1 = rop << 16 |
+   dw1 = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
          gen6_translate_blt_value_mask(value_mask) |
          dst_pitch;
 
@@ -176,7 +175,7 @@ gen6_emit_XY_COLOR_BLT(struct ilo_dev_info *dev,
    int dst_align, dst_pitch_shift;
    uint32_t dw0, dw1;
 
-   dw0 = XY_COLOR_BLT_CMD |
+   dw0 = XY_COLOR_BLT |
          gen6_translate_blt_write_mask(write_mask) |
          (cmd_len - 2);
 
@@ -196,7 +195,7 @@ gen6_emit_XY_COLOR_BLT(struct ilo_dev_info *dev,
    assert(y2 - y1 < gen6_max_scanlines);
    assert(dst_offset % dst_align == 0 && dst_pitch % dst_align == 0);
 
-   dw1 = rop << 16 |
+   dw1 = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
          gen6_translate_blt_value_mask(value_mask) |
          dst_pitch >> dst_pitch_shift;
 
@@ -227,7 +226,7 @@ gen6_emit_SRC_COPY_BLT(struct ilo_dev_info *dev,
    const int cpp = gen6_translate_blt_cpp(value_mask);
    uint32_t dw0, dw1;
 
-   dw0 = SRC_COPY_BLT_CMD |
+   dw0 = SRC_COPY_BLT |
          gen6_translate_blt_write_mask(write_mask) |
          (cmd_len - 2);
 
@@ -237,12 +236,12 @@ gen6_emit_SRC_COPY_BLT(struct ilo_dev_info *dev,
    assert(dst_offset % cpp == 0 && dst_pitch % 4 == 0);
    assert(src_offset % cpp == 0 && src_pitch % 4 == 0);
 
-   dw1 = rop << 16 |
+   dw1 = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
          gen6_translate_blt_value_mask(value_mask) |
          dst_pitch;
 
    if (dir_rtl)
-      dw1 |= 1 << 30;
+      dw1 |= GEN6_BLITTER_BR13_DIR_RTL;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, dw0);
@@ -275,7 +274,7 @@ gen6_emit_XY_SRC_COPY_BLT(struct ilo_dev_info *dev,
    int src_align, src_pitch_shift;
    uint32_t dw0, dw1;
 
-   dw0 = XY_SRC_COPY_BLT_CMD |
+   dw0 = XY_SRC_COPY_BLT |
          gen6_translate_blt_write_mask(write_mask) |
          (cmd_len - 2);
 
@@ -308,7 +307,7 @@ gen6_emit_XY_SRC_COPY_BLT(struct ilo_dev_info *dev,
    assert(dst_offset % dst_align == 0 && dst_pitch % dst_align == 0);
    assert(src_offset % src_align == 0 && src_pitch % src_align == 0);
 
-   dw1 = rop << 16 |
+   dw1 = rop << GEN6_BLITTER_BR13_ROP__SHIFT |
          gen6_translate_blt_value_mask(value_mask) |
          dst_pitch >> dst_pitch_shift;
 
@@ -352,7 +351,7 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
    if (!intel_winsys_can_submit_bo(ilo->winsys, aper_check, count))
       ilo_cp_flush(ilo->cp, "out of aperture");
 
-   /* set GEN6_REG_BCS_SWCTRL */
+   /* set BCS_SWCTRL */
    swctrl = 0x0;
 
    if (dst_tiling == INTEL_TILING_Y) {
@@ -368,7 +367,7 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
    if (swctrl) {
       /*
        * Most clients expect BLT engine to be stateless.  If we have to set
-       * GEN6_REG_BCS_SWCTRL to a non-default value, we have to set it back in the same
+       * BCS_SWCTRL to a non-default value, we have to set it back in the same
        * batch buffer.
        */
       if (ilo_cp_space(ilo->cp) < (4 + 3) * 2 + max_cmd_size)
@@ -383,9 +382,11 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
        *      this bit (Tile Y Destination/Source)."
        */
       gen6_emit_MI_FLUSH_DW(ilo->dev, ilo->cp);
-      gen6_emit_MI_LOAD_REGISTER_IMM(ilo->dev, GEN6_REG_BCS_SWCTRL, swctrl, ilo->cp);
+      gen6_emit_MI_LOAD_REGISTER_IMM(ilo->dev,
+            GEN6_REG_BCS_SWCTRL, swctrl, ilo->cp);
 
-      swctrl &= ~(GEN6_REG_BCS_SWCTRL_DST_TILING_Y | GEN6_REG_BCS_SWCTRL_SRC_TILING_Y);
+      swctrl &= ~(GEN6_REG_BCS_SWCTRL_DST_TILING_Y |
+                  GEN6_REG_BCS_SWCTRL_SRC_TILING_Y);
    }
 
    return swctrl;
@@ -396,7 +397,7 @@ ilo_blitter_blt_end(struct ilo_blitter *blitter, uint32_t swctrl)
 {
    struct ilo_context *ilo = blitter->ilo;
 
-   /* set GEN6_REG_BCS_SWCTRL back */
+   /* set BCS_SWCTRL back */
    if (swctrl) {
       gen6_emit_MI_FLUSH_DW(ilo->dev, ilo->cp);
       gen6_emit_MI_LOAD_REGISTER_IMM(ilo->dev, GEN6_REG_BCS_SWCTRL, swctrl, ilo->cp);

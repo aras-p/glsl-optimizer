@@ -33,6 +33,8 @@
 #include "ilo_shader.h"
 #include "ilo_gpe_gen7.h"
 
+#define SET_FIELD(value, field) (((value) << field ## __SHIFT) & field ## __MASK)
+
 void
 ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,
                          const struct ilo_shader_state *gs,
@@ -63,14 +65,14 @@ ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,
 
    dw2 = (true) ? 0 : GEN6_THREADDISP_FP_MODE_ALT;
 
-   dw4 = vue_read_len << GEN6_GS_DW4_URB_READ_LEN__SHIFT |
+   dw4 = vue_read_len << GEN7_GS_DW4_URB_READ_LEN__SHIFT |
          GEN7_GS_DW4_INCLUDE_VERTEX_HANDLES |
-         0 << GEN6_GS_DW4_URB_READ_OFFSET__SHIFT |
-         start_grf << GEN6_GS_DW4_URB_GRF_START__SHIFT;
+         0 << GEN7_GS_DW4_URB_READ_OFFSET__SHIFT |
+         start_grf << GEN7_GS_DW4_URB_GRF_START__SHIFT;
 
-   dw5 = (max_threads - 1) << GEN6_GS_DW5_MAX_THREADS__SHIFT |
-         GEN6_GS_DW5_STATISTICS |
-         GEN6_GS_DW6_GS_ENABLE;
+   dw5 = (max_threads - 1) << GEN7_GS_DW5_MAX_THREADS__SHIFT |
+         GEN7_GS_DW5_STATISTICS |
+         GEN7_GS_DW5_GS_ENABLE;
 
    STATIC_ASSERT(Elements(cso->payload) >= 3);
    cso->payload[0] = dw2;
@@ -275,16 +277,16 @@ ilo_gpe_init_view_surface_null_gen7(const struct ilo_dev_info *dev,
    STATIC_ASSERT(Elements(surf->payload) >= 8);
    dw = surf->payload;
 
-   dw[0] = GEN6_SURFTYPE_NULL << GEN6_SURFACE_DW0_TYPE__SHIFT |
-           GEN6_FORMAT_B8G8R8A8_UNORM << GEN6_SURFACE_DW0_FORMAT__SHIFT |
+   dw[0] = GEN6_SURFTYPE_NULL << GEN7_SURFACE_DW0_TYPE__SHIFT |
+           GEN6_FORMAT_B8G8R8A8_UNORM << GEN7_SURFACE_DW0_FORMAT__SHIFT |
            GEN6_TILING_X << 13;
 
    dw[1] = 0;
 
-   dw[2] = SET_FIELD(height - 1, GEN7_SURFACE_HEIGHT) |
-           SET_FIELD(width  - 1, GEN7_SURFACE_WIDTH);
+   dw[2] = SET_FIELD(height - 1, GEN7_SURFACE_DW2_HEIGHT) |
+           SET_FIELD(width  - 1, GEN7_SURFACE_DW2_WIDTH);
 
-   dw[3] = SET_FIELD(depth - 1, BRW_SURFACE_DEPTH);
+   dw[3] = SET_FIELD(depth - 1, GEN7_SURFACE_DW3_DEPTH);
 
    dw[4] = 0;
    dw[5] = level;
@@ -314,7 +316,7 @@ ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
-   surface_type = (structured) ? 5 : GEN6_SURFTYPE_BUFFER;
+   surface_type = (structured) ? GEN7_SURFTYPE_STRBUF : GEN6_SURFTYPE_BUFFER;
 
    surface_format = (typed) ?
       ilo_translate_color_format(elem_format) : GEN6_FORMAT_RAW;
@@ -390,17 +392,17 @@ ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
    STATIC_ASSERT(Elements(surf->payload) >= 8);
    dw = surf->payload;
 
-   dw[0] = surface_type << GEN6_SURFACE_DW0_TYPE__SHIFT |
-           surface_format << GEN6_SURFACE_DW0_FORMAT__SHIFT;
+   dw[0] = surface_type << GEN7_SURFACE_DW0_TYPE__SHIFT |
+           surface_format << GEN7_SURFACE_DW0_FORMAT__SHIFT;
    if (render_cache_rw)
-      dw[0] |= GEN6_SURFACE_DW0_RENDER_CACHE_RW;
+      dw[0] |= GEN7_SURFACE_DW0_RENDER_CACHE_RW;
 
    dw[1] = offset;
 
-   dw[2] = SET_FIELD(height, GEN7_SURFACE_HEIGHT) |
-           SET_FIELD(width, GEN7_SURFACE_WIDTH);
+   dw[2] = SET_FIELD(height, GEN7_SURFACE_DW2_HEIGHT) |
+           SET_FIELD(width, GEN7_SURFACE_DW2_WIDTH);
 
-   dw[3] = SET_FIELD(depth, BRW_SURFACE_DEPTH) |
+   dw[3] = SET_FIELD(depth, GEN7_SURFACE_DW3_DEPTH) |
            pitch;
 
    dw[4] = 0;
@@ -410,10 +412,10 @@ ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
    dw[7] = 0;
 
    if (dev->gen >= ILO_GEN(7.5)) {
-      dw[7] |= SET_FIELD(GEN75_SCS_RED,   GEN7_SURFACE_SCS_R) |
-               SET_FIELD(GEN75_SCS_GREEN, GEN7_SURFACE_SCS_G) |
-               SET_FIELD(GEN75_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
-               SET_FIELD(GEN75_SCS_ALPHA, GEN7_SURFACE_SCS_A);
+      dw[7] |= SET_FIELD(GEN75_SCS_RED,   GEN75_SURFACE_DW7_SCS_R) |
+               SET_FIELD(GEN75_SCS_GREEN, GEN75_SURFACE_DW7_SCS_G) |
+               SET_FIELD(GEN75_SCS_BLUE,  GEN75_SURFACE_DW7_SCS_B) |
+               SET_FIELD(GEN75_SCS_ALPHA, GEN75_SURFACE_DW7_SCS_A);
    }
 
    /* do not increment reference count */
@@ -580,8 +582,8 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    STATIC_ASSERT(Elements(surf->payload) >= 8);
    dw = surf->payload;
 
-   dw[0] = surface_type << GEN6_SURFACE_DW0_TYPE__SHIFT |
-           surface_format << GEN6_SURFACE_DW0_FORMAT__SHIFT |
+   dw[0] = surface_type << GEN7_SURFACE_DW0_TYPE__SHIFT |
+           surface_format << GEN7_SURFACE_DW0_FORMAT__SHIFT |
            ilo_gpe_gen6_translate_winsys_tiling(tex->tiling) << 13;
 
    /*
@@ -614,17 +616,17 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
       dw[0] |= GEN7_SURFACE_DW0_ARYSPC_LOD0;
 
    if (is_rt)
-      dw[0] |= GEN6_SURFACE_DW0_RENDER_CACHE_RW;
+      dw[0] |= GEN7_SURFACE_DW0_RENDER_CACHE_RW;
 
    if (surface_type == GEN6_SURFTYPE_CUBE && !is_rt)
-      dw[0] |= GEN6_SURFACE_DW0_CUBE_FACE_ENABLES__MASK;
+      dw[0] |= GEN7_SURFACE_DW0_CUBE_FACE_ENABLES__MASK;
 
    dw[1] = layer_offset;
 
-   dw[2] = SET_FIELD(height - 1, GEN7_SURFACE_HEIGHT) |
-           SET_FIELD(width - 1, GEN7_SURFACE_WIDTH);
+   dw[2] = SET_FIELD(height - 1, GEN7_SURFACE_DW2_HEIGHT) |
+           SET_FIELD(width - 1, GEN7_SURFACE_DW2_WIDTH);
 
-   dw[3] = SET_FIELD(depth - 1, BRW_SURFACE_DEPTH) |
+   dw[3] = SET_FIELD(depth - 1, GEN7_SURFACE_DW3_DEPTH) |
            (pitch - 1);
 
    dw[4] = first_layer << 18 |
@@ -650,19 +652,19 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    else
       dw[4] |= GEN7_SURFACE_DW4_MULTISAMPLECOUNT_1;
 
-   dw[5] = x_offset << GEN6_SURFACE_DW5_X_OFFSET__SHIFT |
-           y_offset << GEN6_SURFACE_DW5_Y_OFFSET__SHIFT |
-           SET_FIELD(first_level, GEN7_SURFACE_MIN_LOD) |
+   dw[5] = x_offset << GEN7_SURFACE_DW5_X_OFFSET__SHIFT |
+           y_offset << GEN7_SURFACE_DW5_Y_OFFSET__SHIFT |
+           SET_FIELD(first_level, GEN7_SURFACE_DW5_MIN_LOD) |
            lod;
 
    dw[6] = 0;
    dw[7] = 0;
 
    if (dev->gen >= ILO_GEN(7.5)) {
-      dw[7] |= SET_FIELD(GEN75_SCS_RED,   GEN7_SURFACE_SCS_R) |
-               SET_FIELD(GEN75_SCS_GREEN, GEN7_SURFACE_SCS_G) |
-               SET_FIELD(GEN75_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
-               SET_FIELD(GEN75_SCS_ALPHA, GEN7_SURFACE_SCS_A);
+      dw[7] |= SET_FIELD(GEN75_SCS_RED,   GEN75_SURFACE_DW7_SCS_R) |
+               SET_FIELD(GEN75_SCS_GREEN, GEN75_SURFACE_DW7_SCS_G) |
+               SET_FIELD(GEN75_SCS_BLUE,  GEN75_SURFACE_DW7_SCS_B) |
+               SET_FIELD(GEN75_SCS_ALPHA, GEN75_SURFACE_DW7_SCS_A);
    }
 
    /* do not increment reference count */

@@ -138,14 +138,14 @@ ilo_gpe_gen6_translate_winsys_tiling(enum intel_tiling_mode tiling)
 {
    switch (tiling) {
    case INTEL_TILING_NONE:
-      return 0;
+      return GEN6_TILING_NONE;
    case INTEL_TILING_X:
       return GEN6_TILING_X;
    case INTEL_TILING_Y:
       return GEN6_TILING_Y;
    default:
       assert(!"unknown tiling");
-      return 0;
+      return GEN6_TILING_NONE;
    }
 }
 
@@ -275,12 +275,7 @@ ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
 
    if (!fs) {
       memset(dw, 0, sizeof(dw[0]) * num_dwords);
-
-      if (dev->gen >= ILO_GEN(7))
-         dw[0] = 1 << GEN7_SBE_DW1_URB_READ_LEN__SHIFT;
-      else
-         dw[0] = 1 << GEN7_SBE_DW1_URB_READ_LEN__SHIFT;
-
+      dw[0] = 1 << GEN7_SBE_DW1_URB_READ_LEN__SHIFT;
       return;
    }
 
@@ -297,20 +292,11 @@ ilo_gpe_gen6_fill_3dstate_sf_sbe(const struct ilo_dev_info *dev,
    if (!vue_len)
       vue_len = 1;
 
-   if (dev->gen >= ILO_GEN(7)) {
-      dw[0] = output_count << GEN7_SBE_DW1_ATTR_COUNT__SHIFT |
-              vue_len << GEN7_SBE_DW1_URB_READ_LEN__SHIFT |
-              vue_offset << GEN7_SBE_DW1_URB_READ_OFFSET__SHIFT;
-      if (routing->swizzle_enable)
-         dw[0] |= GEN7_SBE_DW1_ATTR_SWIZZLE_ENABLE;
-   }
-   else {
-      dw[0] = output_count << GEN7_SBE_DW1_ATTR_COUNT__SHIFT |
-              vue_len << GEN7_SBE_DW1_URB_READ_LEN__SHIFT |
-              vue_offset << GEN7_SBE_DW1_URB_READ_OFFSET__SHIFT;
-      if (routing->swizzle_enable)
-         dw[0] |= GEN7_SBE_DW1_ATTR_SWIZZLE_ENABLE;
-   }
+   dw[0] = output_count << GEN7_SBE_DW1_ATTR_COUNT__SHIFT |
+           vue_len << GEN7_SBE_DW1_URB_READ_LEN__SHIFT |
+           vue_offset << GEN7_SBE_DW1_URB_READ_OFFSET__SHIFT;
+   if (routing->swizzle_enable)
+      dw[0] |= GEN7_SBE_DW1_ATTR_SWIZZLE_ENABLE;
 
    switch (rasterizer->state.sprite_coord_mode) {
    case PIPE_SPRITE_COORD_UPPER_LEFT:
@@ -914,9 +900,7 @@ ve_set_cso_edgeflag(const struct ilo_dev_info *dev,
     */
    format = (cso->payload[0] >> GEN6_VE_STATE_DW0_FORMAT__SHIFT) & 0x1ff;
    if (format == GEN6_FORMAT_R32_FLOAT) {
-      STATIC_ASSERT(GEN6_FORMAT_R32_UINT ==
-            GEN6_FORMAT_R32_FLOAT - 1);
-
+      STATIC_ASSERT(GEN6_FORMAT_R32_UINT == GEN6_FORMAT_R32_FLOAT - 1);
       cso->payload[0] -= (1 << GEN6_VE_STATE_DW0_FORMAT__SHIFT);
    }
    else {
@@ -1022,17 +1006,17 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
 
    switch (ib->hw_index_size) {
    case 4:
-      format = GEN6_IB_DW0_FORMAT_DWORD >> GEN6_IB_DW0_FORMAT__SHIFT;
+      format = GEN6_IB_DW0_FORMAT_DWORD;
       break;
    case 2:
-      format = GEN6_IB_DW0_FORMAT_WORD >> GEN6_IB_DW0_FORMAT__SHIFT;
+      format = GEN6_IB_DW0_FORMAT_WORD;
       break;
    case 1:
-      format = GEN6_IB_DW0_FORMAT_BYTE >> GEN6_IB_DW0_FORMAT__SHIFT;
+      format = GEN6_IB_DW0_FORMAT_BYTE;
       break;
    default:
       assert(!"unknown index size");
-      format = GEN6_IB_DW0_FORMAT_BYTE >> GEN6_IB_DW0_FORMAT__SHIFT;
+      format = GEN6_IB_DW0_FORMAT_BYTE;
       break;
    }
 
@@ -1050,7 +1034,7 @@ gen6_emit_3DSTATE_INDEX_BUFFER(const struct ilo_dev_info *dev,
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2) |
                     ((enable_cut_index) ? GEN6_IB_DW0_CUT_INDEX_ENABLE : 0) |
-                    format << 8);
+                    format);
    ilo_cp_write_bo(cp, start_offset, buf->bo, INTEL_DOMAIN_VERTEX, 0);
    ilo_cp_write_bo(cp, end_offset, buf->bo, INTEL_DOMAIN_VERTEX, 0);
    ilo_cp_end(cp);
@@ -1355,10 +1339,8 @@ gen6_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
    assert(!hiz_op);
    dw4 |= GEN6_WM_DW4_STATISTICS;
 
-   if (cc_may_kill) {
-      dw5 |= GEN6_WM_DW5_PS_KILL |
-             GEN6_WM_DW5_PS_ENABLE;
-   }
+   if (cc_may_kill)
+      dw5 |= GEN6_WM_DW5_PS_KILL | GEN6_WM_DW5_PS_ENABLE;
 
    if (dual_blend)
       dw5 |= GEN6_WM_DW5_DUAL_SOURCE_BLEND;
@@ -1960,8 +1942,7 @@ gen6_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
    const int prim = (rectlist) ?
       GEN6_3DPRIM_RECTLIST : ilo_gpe_gen6_translate_pipe_prim(info->mode);
    const int vb_access = (info->indexed) ?
-      GEN6_3DPRIM_DW0_ACCESS_RANDOM :
-      GEN6_3DPRIM_DW0_ACCESS_SEQUENTIAL;
+      GEN6_3DPRIM_DW0_ACCESS_RANDOM : GEN6_3DPRIM_DW0_ACCESS_SEQUENTIAL;
    const uint32_t vb_start = info->start +
       ((info->indexed) ? ib->draw_start_offset : 0);
 

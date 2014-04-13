@@ -233,7 +233,7 @@ gen7_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
       ilo_cp_write(cp, 0);
       ilo_cp_write(cp, 0);
       ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, GEN6_GS_DW5_STATISTICS);
+      ilo_cp_write(cp, GEN7_GS_DW5_STATISTICS);
       ilo_cp_write(cp, 0);
       ilo_cp_end(cp);
       return;
@@ -313,10 +313,8 @@ gen7_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
       dw1 |= fs_cso->payload[3];
    }
 
-   if (cc_may_kill) {
-      dw1 |= GEN7_WM_DW1_PS_ENABLE |
-             GEN7_WM_DW1_PS_KILL;
-   }
+   if (cc_may_kill)
+      dw1 |= GEN7_WM_DW1_PS_ENABLE | GEN7_WM_DW1_PS_KILL;
 
    if (num_samples > 1) {
       dw1 |= rasterizer->wm.dw_msaa_rast;

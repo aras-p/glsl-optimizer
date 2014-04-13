@@ -25,10 +25,13 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include "genhw/genhw.h" /* for MI_xxx */
+#include "genhw/genhw.h"
 #include "intel_winsys.h"
 
 #include "ilo_cp.h"
+
+#define MI_NOOP             GEN_MI_CMD(MI_NOOP)
+#define MI_BATCH_BUFFER_END GEN_MI_CMD(MI_BATCH_BUFFER_END)
 
 /* the size of the private space */
 static const int ilo_cp_private = 2;

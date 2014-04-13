@@ -28,9 +28,6 @@
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
 
-#include "intel_reg.h"
-#include "brw_defines.h"
-
 #include "gen_regs.xml.h"
 #include "gen_mi.xml.h"
 #include "gen_blitter.xml.h"
