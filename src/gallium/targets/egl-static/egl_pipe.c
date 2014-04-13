@@ -51,10 +51,14 @@
 #endif
 /* for r600 */
 #if _EGL_PIPE_R600
+#include "radeon/drm/radeon_winsys.h"
+#include "radeon/drm/radeon_drm_public.h"
 #include "r600/r600_public.h"
 #endif
 /* for radeonsi */
 #if _EGL_PIPE_RADEONSI
+#include "radeon/drm/radeon_winsys.h"
+#include "radeon/drm/radeon_drm_public.h"
 #include "radeonsi/si_public.h"
 #endif
 /* for vmwgfx */
