@@ -608,7 +608,6 @@ brw_init_surface_formats(struct brw_context *brw)
    brw->format_supported_as_render_target[MESA_FORMAT_Z24_UNORM_S8_UINT] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_Z24_UNORM_X8_UINT] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_S_UINT8] = true;
-   brw->format_supported_as_render_target[MESA_FORMAT_Z_UNORM16] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_Z_FLOAT32] = true;
    brw->format_supported_as_render_target[MESA_FORMAT_Z32_FLOAT_S8X24_UINT] = true;
 
@@ -630,12 +629,7 @@ brw_init_surface_formats(struct brw_context *brw)
     *
     * Other speculation is that we may be hitting increased fragment shader
     * execution from GL_LEQUAL/GL_EQUAL depth tests at reduced precision.
-    *
-    * However, desktop GL 3.0+ require that you get exactly 16 bits when
-    * asking for DEPTH_COMPONENT16, so we have to respect that.
     */
-   if (_mesa_is_desktop_gl(ctx))
-      ctx->TextureFormatSupported[MESA_FORMAT_Z_UNORM16] = true;
 
    /* On hardware that lacks support for ETC1, we map ETC1 to RGBX
     * during glCompressedTexImage2D(). See intel_mipmap_tree::wraps_etc1.
