@@ -1402,6 +1402,9 @@ struct gl_texture_attrib
 
    /** Bitwise-OR of all Texture.Unit[i]._GenFlags */
    GLbitfield _GenFlags;
+
+   /** Upper bound on _ReallyEnabled texunits. */
+   GLint _MaxEnabledTexImageUnit;
 };
 
 

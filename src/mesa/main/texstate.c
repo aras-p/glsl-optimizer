@@ -550,6 +550,7 @@ update_texture_state( struct gl_context *ctx )
    ctx->Texture._GenFlags = 0x0;
    ctx->Texture._TexMatEnabled = 0x0;
    ctx->Texture._TexGenEnabled = 0x0;
+   ctx->Texture._MaxEnabledTexImageUnit = -1;
 
    /*
     * Update texture unit state.
@@ -636,6 +637,7 @@ update_texture_state( struct gl_context *ctx )
       /* if we get here, we know this texture unit is enabled */
 
       ctx->Texture._EnabledUnits |= (1 << unit);
+      ctx->Texture._MaxEnabledTexImageUnit = unit;
 
       if (enabledTargetsByStage[MESA_SHADER_FRAGMENT])
          enabledFragUnits |= (1 << unit);
