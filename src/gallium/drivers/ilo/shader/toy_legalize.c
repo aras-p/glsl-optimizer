@@ -32,7 +32,7 @@
 #include "toy_legalize.h"
 
 /**
- * Lower an instruction to BRW_OPCODE_SEND(C).
+ * Lower an instruction to GEN6_OPCODE_SEND(C).
  */
 void
 toy_compiler_lower_to_send(struct toy_compiler *tc, struct toy_inst *inst,
@@ -40,12 +40,12 @@ toy_compiler_lower_to_send(struct toy_compiler *tc, struct toy_inst *inst,
 {
    assert(inst->opcode >= 128);
 
-   inst->opcode = (sendc) ? BRW_OPCODE_SENDC : BRW_OPCODE_SEND;
+   inst->opcode = (sendc) ? GEN6_OPCODE_SENDC : GEN6_OPCODE_SEND;
 
    /* thread control is reserved */
    assert(inst->thread_ctrl == 0);
 
-   assert(inst->cond_modifier == BRW_CONDITIONAL_NONE);
+   assert(inst->cond_modifier == GEN6_COND_NORMAL);
    inst->cond_modifier = sfid;
 }
 
@@ -53,17 +53,17 @@ static int
 math_op_to_func(unsigned opcode)
 {
    switch (opcode) {
-   case TOY_OPCODE_INV:    return BRW_MATH_FUNCTION_INV;
-   case TOY_OPCODE_LOG:    return BRW_MATH_FUNCTION_LOG;
-   case TOY_OPCODE_EXP:    return BRW_MATH_FUNCTION_EXP;
-   case TOY_OPCODE_SQRT:   return BRW_MATH_FUNCTION_SQRT;
-   case TOY_OPCODE_RSQ:    return BRW_MATH_FUNCTION_RSQ;
-   case TOY_OPCODE_SIN:    return BRW_MATH_FUNCTION_SIN;
-   case TOY_OPCODE_COS:    return BRW_MATH_FUNCTION_COS;
-   case TOY_OPCODE_FDIV:   return BRW_MATH_FUNCTION_FDIV;
-   case TOY_OPCODE_POW:    return BRW_MATH_FUNCTION_POW;
-   case TOY_OPCODE_INT_DIV_QUOTIENT:   return BRW_MATH_FUNCTION_INT_DIV_QUOTIENT;
-   case TOY_OPCODE_INT_DIV_REMAINDER:  return BRW_MATH_FUNCTION_INT_DIV_REMAINDER;
+   case TOY_OPCODE_INV:    return GEN6_MATH_INV;
+   case TOY_OPCODE_LOG:    return GEN6_MATH_LOG;
+   case TOY_OPCODE_EXP:    return GEN6_MATH_EXP;
+   case TOY_OPCODE_SQRT:   return GEN6_MATH_SQRT;
+   case TOY_OPCODE_RSQ:    return GEN6_MATH_RSQ;
+   case TOY_OPCODE_SIN:    return GEN6_MATH_SIN;
+   case TOY_OPCODE_COS:    return GEN6_MATH_COS;
+   case TOY_OPCODE_FDIV:   return GEN6_MATH_FDIV;
+   case TOY_OPCODE_POW:    return GEN6_MATH_POW;
+   case TOY_OPCODE_INT_DIV_QUOTIENT:   return GEN6_MATH_INT_DIV_QUOTIENT;
+   case TOY_OPCODE_INT_DIV_REMAINDER:  return GEN6_MATH_INT_DIV_REMAINDER;
    default:
        assert(!"unknown math opcode");
        return -1;
@@ -71,7 +71,7 @@ math_op_to_func(unsigned opcode)
 }
 
 /**
- * Lower virtual math opcodes to BRW_OPCODE_MATH.
+ * Lower virtual math opcodes to GEN6_OPCODE_MATH.
  */
 void
 toy_compiler_lower_math(struct toy_compiler *tc, struct toy_inst *inst)
@@ -98,13 +98,13 @@ toy_compiler_lower_math(struct toy_compiler *tc, struct toy_inst *inst)
    }
 
    /* FC[0:3] */
-   assert(inst->cond_modifier == BRW_CONDITIONAL_NONE);
+   assert(inst->cond_modifier == GEN6_COND_NORMAL);
    inst->cond_modifier = math_op_to_func(inst->opcode);
    /* FC[4:5] */
    assert(inst->thread_ctrl == 0);
    inst->thread_ctrl = 0;
 
-   inst->opcode = BRW_OPCODE_MATH;
+   inst->opcode = GEN6_OPCODE_MATH;
    tc_move_inst(tc, inst);
 
    /* no writemask in align1 */
@@ -223,7 +223,7 @@ lower_opcode_mul(struct toy_compiler *tc, struct toy_inst *inst)
 {
    const enum toy_type inst_type = inst->dst.type;
    const struct toy_dst acc0 =
-      tdst_type(tdst(TOY_FILE_ARF, BRW_ARF_ACCUMULATOR, 0), inst_type);
+      tdst_type(tdst(TOY_FILE_ARF, GEN6_ARF_ACC0, 0), inst_type);
    struct toy_inst *inst2;
 
    /* only need to take care of integer multiplications */
@@ -234,7 +234,7 @@ lower_opcode_mul(struct toy_compiler *tc, struct toy_inst *inst)
    tc_MUL(tc, acc0, inst->src[0], inst->src[1]);
 
    /* acc0 = (src0 & 0xffff0000) * src1 + acc0 */
-   inst2 = tc_add2(tc, BRW_OPCODE_MACH, tdst_type(tdst_null(), inst_type),
+   inst2 = tc_add2(tc, GEN6_OPCODE_MACH, tdst_type(tdst_null(), inst_type),
          inst->src[0], inst->src[1]);
    inst2->acc_wr_ctrl = true;
 
@@ -250,7 +250,7 @@ lower_opcode_mac(struct toy_compiler *tc, struct toy_inst *inst)
    const enum toy_type inst_type = inst->dst.type;
 
    if (inst_type != TOY_TYPE_UD && inst_type != TOY_TYPE_D) {
-      const struct toy_dst acc0 = tdst(TOY_FILE_ARF, BRW_ARF_ACCUMULATOR, 0);
+      const struct toy_dst acc0 = tdst(TOY_FILE_ARF, GEN6_ARF_ACC0, 0);
 
       tc_MOV(tc, acc0, inst->src[2]);
       inst->src[2] = tsrc_null();
@@ -280,13 +280,13 @@ toy_compiler_legalize_for_ra(struct toy_compiler *tc)
    tc_head(tc);
    while ((inst = tc_next(tc)) != NULL) {
       switch (inst->opcode) {
-      case BRW_OPCODE_MAC:
+      case GEN6_OPCODE_MAC:
          lower_opcode_mac(tc, inst);
          break;
-      case BRW_OPCODE_MAD:
+      case GEN6_OPCODE_MAD:
          /* TODO operands must be floats */
          break;
-      case BRW_OPCODE_MUL:
+      case GEN6_OPCODE_MUL:
          lower_opcode_mul(tc, inst);
          break;
       default:
@@ -329,7 +329,7 @@ patch_while_jip(struct toy_compiler *tc, struct toy_inst *inst)
          continue;
       }
 
-      if (inst2->opcode == BRW_OPCODE_WHILE)
+      if (inst2->opcode == GEN6_OPCODE_WHILE)
          nest_level++;
 
       dist--;
@@ -358,7 +358,7 @@ patch_if_else_jip(struct toy_compiler *tc, struct toy_inst *inst)
       if (inst2->marker)
          continue;
 
-      if (inst2->opcode == BRW_OPCODE_ENDIF) {
+      if (inst2->opcode == GEN6_OPCODE_ENDIF) {
          if (nest_level) {
             nest_level--;
          }
@@ -369,8 +369,8 @@ patch_if_else_jip(struct toy_compiler *tc, struct toy_inst *inst)
             break;
          }
       }
-      else if (inst2->opcode == BRW_OPCODE_ELSE &&
-               inst->opcode == BRW_OPCODE_IF) {
+      else if (inst2->opcode == GEN6_OPCODE_ELSE &&
+               inst->opcode == GEN6_OPCODE_IF) {
          if (!nest_level) {
             /* the following instruction */
             jip = (dist + 1) * 2;
@@ -381,7 +381,7 @@ patch_if_else_jip(struct toy_compiler *tc, struct toy_inst *inst)
             }
          }
       }
-      else if (inst2->opcode == BRW_OPCODE_IF) {
+      else if (inst2->opcode == GEN6_OPCODE_IF) {
          nest_level++;
       }
 
@@ -398,7 +398,7 @@ patch_if_else_jip(struct toy_compiler *tc, struct toy_inst *inst)
       inst->dst = tdst_imm_w(jip);
    }
 
-   inst->thread_ctrl = BRW_THREAD_SWITCH;
+   inst->thread_ctrl = GEN6_THREADCTRL_SWITCH;
 }
 
 static void
@@ -414,9 +414,9 @@ patch_endif_jip(struct toy_compiler *tc, struct toy_inst *inst)
          continue;
 
       switch (inst2->opcode) {
-      case BRW_OPCODE_ENDIF:
-      case BRW_OPCODE_ELSE:
-      case BRW_OPCODE_WHILE:
+      case GEN6_OPCODE_ENDIF:
+      case GEN6_OPCODE_ELSE:
+      case GEN6_OPCODE_WHILE:
          found = true;
          break;
       default:
@@ -438,7 +438,7 @@ patch_endif_jip(struct toy_compiler *tc, struct toy_inst *inst)
    else
       inst->dst = tdst_imm_w(dist * 2);
 
-   inst->thread_ctrl = BRW_THREAD_SWITCH;
+   inst->thread_ctrl = GEN6_THREADCTRL_SWITCH;
 }
 
 static void
@@ -460,9 +460,9 @@ patch_break_continue_jip(struct toy_compiler *tc, struct toy_inst *inst)
          continue;
       }
 
-      if (inst2->opcode == BRW_OPCODE_ELSE ||
-          inst2->opcode == BRW_OPCODE_ENDIF ||
-          inst2->opcode == BRW_OPCODE_WHILE) {
+      if (inst2->opcode == GEN6_OPCODE_ELSE ||
+          inst2->opcode == GEN6_OPCODE_ENDIF ||
+          inst2->opcode == GEN6_OPCODE_WHILE) {
          jip = dist * 2;
          break;
       }
@@ -479,13 +479,13 @@ patch_break_continue_jip(struct toy_compiler *tc, struct toy_inst *inst)
          continue;
       }
 
-      if (inst2->opcode == BRW_OPCODE_WHILE) {
+      if (inst2->opcode == GEN6_OPCODE_WHILE) {
          if (nest_level) {
             nest_level--;
          }
          else {
             /* the following instruction */
-            if (tc->dev->gen == ILO_GEN(6) && inst->opcode == BRW_OPCODE_BREAK)
+            if (tc->dev->gen == ILO_GEN(6) && inst->opcode == GEN6_OPCODE_BREAK)
                dist++;
 
             uip = dist * 2;
@@ -536,26 +536,26 @@ toy_compiler_legalize_for_asm(struct toy_compiler *tc)
          inst->src[1].type = inst->src[0].type;
 
       switch (inst->opcode) {
-      case BRW_OPCODE_MATH:
+      case GEN6_OPCODE_MATH:
          /* math does not support align16 nor exec_size > 8 */
-         inst->access_mode = BRW_ALIGN_1;
+         inst->access_mode = GEN6_ALIGN_1;
 
-         if (inst->exec_size == BRW_EXECUTE_16) {
+         if (inst->exec_size == GEN6_EXECSIZE_16) {
             /*
              * From the Ivy Bridge PRM, volume 4 part 3, page 192:
              *
              *     "INT DIV function does not support SIMD16."
              */
             if (tc->dev->gen < ILO_GEN(7) ||
-                inst->cond_modifier == BRW_MATH_FUNCTION_INT_DIV_QUOTIENT ||
-                inst->cond_modifier == BRW_MATH_FUNCTION_INT_DIV_REMAINDER) {
+                inst->cond_modifier == GEN6_MATH_INT_DIV_QUOTIENT ||
+                inst->cond_modifier == GEN6_MATH_INT_DIV_REMAINDER) {
                struct toy_inst *inst2;
 
-               inst->exec_size = BRW_EXECUTE_8;
-               inst->qtr_ctrl = GEN6_COMPRESSION_1Q;
+               inst->exec_size = GEN6_EXECSIZE_8;
+               inst->qtr_ctrl = GEN6_QTRCTRL_1Q;
 
                inst2 = tc_duplicate_inst(tc, inst);
-               inst2->qtr_ctrl = GEN6_COMPRESSION_2Q;
+               inst2->qtr_ctrl = GEN6_QTRCTRL_2Q;
                inst2->dst = tdst_offset(inst2->dst, 1, 0);
                inst2->src[0] = tsrc_offset(inst2->src[0], 1, 0);
                if (!tsrc_is_null(inst2->src[1]))
@@ -565,22 +565,22 @@ toy_compiler_legalize_for_asm(struct toy_compiler *tc)
             }
          }
          break;
-      case BRW_OPCODE_IF:
+      case GEN6_OPCODE_IF:
          if (tc->dev->gen >= ILO_GEN(7) &&
-             inst->cond_modifier != BRW_CONDITIONAL_NONE) {
+             inst->cond_modifier != GEN6_COND_NORMAL) {
             struct toy_inst *inst2;
 
             inst2 = tc_duplicate_inst(tc, inst);
 
             /* replace the original IF by CMP */
-            inst->opcode = BRW_OPCODE_CMP;
+            inst->opcode = GEN6_OPCODE_CMP;
 
             /* predicate control instead of condition modifier */
             inst2->dst = tdst_null();
             inst2->src[0] = tsrc_null();
             inst2->src[1] = tsrc_null();
-            inst2->cond_modifier = BRW_CONDITIONAL_NONE;
-            inst2->pred_ctrl = BRW_PREDICATE_NORMAL;
+            inst2->cond_modifier = GEN6_COND_NORMAL;
+            inst2->pred_ctrl = GEN6_PREDCTRL_NORMAL;
 
             pc++;
          }
@@ -611,18 +611,18 @@ toy_compiler_legalize_for_asm(struct toy_compiler *tc)
    tc_head(tc);
    while ((inst = tc_next(tc)) != NULL) {
       switch (inst->opcode) {
-      case BRW_OPCODE_IF:
-      case BRW_OPCODE_ELSE:
+      case GEN6_OPCODE_IF:
+      case GEN6_OPCODE_ELSE:
          patch_if_else_jip(tc, inst);
          break;
-      case BRW_OPCODE_ENDIF:
+      case GEN6_OPCODE_ENDIF:
          patch_endif_jip(tc, inst);
          break;
-      case BRW_OPCODE_WHILE:
+      case GEN6_OPCODE_WHILE:
          patch_while_jip(tc, inst);
          break;
-      case BRW_OPCODE_BREAK:
-      case BRW_OPCODE_CONTINUE:
+      case GEN6_OPCODE_BREAK:
+      case GEN6_OPCODE_CONT:
          patch_break_continue_jip(tc, inst);
          break;
       default:

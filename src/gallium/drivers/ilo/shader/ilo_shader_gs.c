@@ -114,8 +114,8 @@ gs_COPY8(struct toy_compiler *tc, struct toy_dst dst, struct toy_src src)
    struct toy_inst *inst;
 
    inst = tc_MOV(tc, dst, src);
-   inst->exec_size = BRW_EXECUTE_8;
-   inst->mask_ctrl = BRW_MASK_DISABLE;
+   inst->exec_size = GEN6_EXECSIZE_8;
+   inst->mask_ctrl = GEN6_MASKCTRL_NOMASK;
 }
 
 static void
@@ -128,8 +128,8 @@ gs_COPY4(struct toy_compiler *tc,
    inst = tc_MOV(tc,
          tdst_offset(dst, 0, dst_ch),
          tsrc_offset(src, 0, src_ch));
-   inst->exec_size = BRW_EXECUTE_4;
-   inst->mask_ctrl = BRW_MASK_DISABLE;
+   inst->exec_size = GEN6_EXECSIZE_4;
+   inst->mask_ctrl = GEN6_MASKCTRL_NOMASK;
 }
 
 static void
@@ -142,8 +142,8 @@ gs_COPY1(struct toy_compiler *tc,
    inst = tc_MOV(tc,
          tdst_offset(dst, 0, dst_ch),
          tsrc_rect(tsrc_offset(src, 0, src_ch), TOY_RECT_010));
-   inst->exec_size = BRW_EXECUTE_1;
-   inst->mask_ctrl = BRW_MASK_DISABLE;
+   inst->exec_size = GEN6_EXECSIZE_1;
+   inst->mask_ctrl = GEN6_MASKCTRL_NOMASK;
 }
 
 static void
@@ -161,13 +161,13 @@ gs_init_vars(struct gs_compile_context *gcc)
    gcc->vars.prim_end = false;
    switch (gcc->out_vue_min_count) {
    case 1:
-      gcc->vars.prim_type = _3DPRIM_POINTLIST;
+      gcc->vars.prim_type = GEN6_3DPRIM_POINTLIST;
       break;
    case 2:
-      gcc->vars.prim_type = _3DPRIM_LINESTRIP;
+      gcc->vars.prim_type = GEN6_3DPRIM_LINESTRIP;
       break;
    case 3:
-      gcc->vars.prim_type = _3DPRIM_TRISTRIP;
+      gcc->vars.prim_type = GEN6_3DPRIM_TRISTRIP;
       break;
    }
 
@@ -212,11 +212,11 @@ gs_write_so(struct gs_compile_context *gcc,
    desc = tsrc_imm_mdesc_data_port(tc, false,
          1, send_write_commit_message,
          true, send_write_commit_message,
-         GEN6_DATAPORT_WRITE_MESSAGE_STREAMED_VB_WRITE, 0,
+         GEN6_MSG_DP_SVB_WRITE, 0,
          binding_table_index);
 
    tc_SEND(tc, dst, tsrc_from(mrf_header), desc,
-         GEN6_SFID_DATAPORT_RENDER_CACHE);
+         GEN6_SFID_DP_RC);
 }
 
 static void
@@ -262,12 +262,12 @@ gs_write_vue(struct gs_compile_context *gcc,
       if (complete) {
          desc = tsrc_imm_mdesc_urb(tc,
                eot, msg_len, !eot, true, true, !eot,
-               BRW_URB_SWIZZLE_NONE, sent, 0);
+               false, sent, 0);
       }
       else {
          desc = tsrc_imm_mdesc_urb(tc,
                false, msg_len, 0, false, true, false,
-               BRW_URB_SWIZZLE_NONE, sent, 0);
+               false, sent, 0);
       }
 
       tc_add2(tc, TOY_OPCODE_URB_WRITE,
@@ -323,9 +323,9 @@ gs_ff_sync(struct gs_compile_context *gcc, struct toy_dst dst,
    allocate = true;
    desc = tsrc_imm_mdesc_urb(tc, false, 1, 1,
          false, false, allocate,
-         BRW_URB_SWIZZLE_NONE, 0, 1);
+         false, 0, 1);
 
-   tc_SEND(tc, dst, tsrc_from(mrf_header), desc, BRW_SFID_URB);
+   tc_SEND(tc, dst, tsrc_from(mrf_header), desc, GEN6_SFID_URB);
 }
 
 static void
@@ -341,7 +341,7 @@ gs_discard(struct gs_compile_context *gcc)
 
    desc = tsrc_imm_mdesc_urb(tc,
          true, 1, 0, true, false, false,
-         BRW_URB_SWIZZLE_NONE, 0, 0);
+         false, 0, 0);
 
    tc_add2(tc, TOY_OPCODE_URB_WRITE,
          tdst_null(), tsrc_from(mrf_header), desc);
@@ -374,7 +374,7 @@ gs_lower_opcode_emit_so_dynamic(struct gs_compile_context *gcc)
    tc_IF(tc, tdst_null(),
          tsrc_from(gcc->dynamic_data.num_vertices_in_prim),
          tsrc_imm_d(gcc->out_vue_min_count),
-         BRW_CONDITIONAL_GE);
+         GEN6_COND_GE);
 
    {
       tc_ADD(tc, gcc->vars.tmp, tsrc_from(gcc->vars.so_index), tsrc_imm_d(0x03020100));
@@ -407,7 +407,7 @@ gs_lower_opcode_emit_vue_static(struct gs_compile_context *gcc)
             tsrc_imm_d(gcc->vars.prim_type << 2 |
                        gcc->vars.prim_start << 1 |
                        gcc->vars.prim_end));
-      inst2->exec_size = BRW_EXECUTE_1;
+      inst2->exec_size = GEN6_EXECSIZE_1;
       inst2->src[0] = tsrc_rect(inst2->src[0], TOY_RECT_010);
       inst2->src[1] = tsrc_rect(inst2->src[1], TOY_RECT_010);
    }
@@ -443,8 +443,8 @@ gs_lower_opcode_emit_so_static(struct gs_compile_context *gcc)
       return;
 
    inst = tc_MOV(tc, tdst_w(gcc->vars.tmp), tsrc_imm_v(0x03020100));
-   inst->exec_size = BRW_EXECUTE_8;
-   inst->mask_ctrl = BRW_MASK_DISABLE;
+   inst->exec_size = GEN6_EXECSIZE_8;
+   inst->mask_ctrl = GEN6_MASKCTRL_NOMASK;
 
    tc_ADD(tc, tdst_d(gcc->vars.tmp), tsrc_from(tdst_d(gcc->vars.tmp)),
          tsrc_rect(tsrc_from(gcc->vars.so_index), TOY_RECT_010));
@@ -452,7 +452,7 @@ gs_lower_opcode_emit_so_static(struct gs_compile_context *gcc)
    tc_IF(tc, tdst_null(),
          tsrc_rect(tsrc_offset(tsrc_from(tdst_d(gcc->vars.tmp)), 0, gcc->out_vue_min_count - 1), TOY_RECT_010),
          tsrc_rect(tsrc_offset(gcc->payload.svbi, 0, 4), TOY_RECT_010),
-         BRW_CONDITIONAL_LE);
+         GEN6_COND_LE);
    {
       for (i = 0; i < gcc->out_vue_min_count; i++) {
          for (j = 0; j < gcc->so_info->num_outputs; j++) {
@@ -594,31 +594,31 @@ gs_lower_opcode_tgsi_in(struct gs_compile_context *gcc,
       return;
    }
 
-   /* fix vertex ordering for _3DPRIM_TRISTRIP_REVERSE */
+   /* fix vertex ordering for GEN6_3DPRIM_TRISTRIP_REVERSE */
    if (gcc->in_vue_count == 3 && dim < 2) {
       struct toy_inst *inst;
 
       /* get PrimType */
       inst = tc_AND(tc, tdst_d(gcc->vars.tmp),
             tsrc_offset(gcc->payload.header, 0, 2), tsrc_imm_d(0x1f));
-      inst->exec_size = BRW_EXECUTE_1;
+      inst->exec_size = GEN6_EXECSIZE_1;
       inst->src[0] = tsrc_rect(inst->src[0], TOY_RECT_010);
       inst->src[1] = tsrc_rect(inst->src[1], TOY_RECT_010);
 
       inst = tc_CMP(tc, tdst_null(), tsrc_from(tdst_d(gcc->vars.tmp)),
-            tsrc_imm_d(_3DPRIM_TRISTRIP_REVERSE), BRW_CONDITIONAL_NEQ);
+            tsrc_imm_d(GEN6_3DPRIM_TRISTRIP_REVERSE), GEN6_COND_NZ);
       inst->src[0] = tsrc_rect(inst->src[0], TOY_RECT_010);
 
       attr = tsrc_offset(gcc->payload.vues[dim], reg, subreg);
       inst = tc_MOV(tc, dst, attr);
-      inst->pred_ctrl = BRW_PREDICATE_NORMAL;
+      inst->pred_ctrl = GEN6_PREDCTRL_NORMAL;
 
-      /* swap IN[0] and IN[1] for _3DPRIM_TRISTRIP_REVERSE */
+      /* swap IN[0] and IN[1] for GEN6_3DPRIM_TRISTRIP_REVERSE */
       dim = !dim;
 
       attr = tsrc_offset(gcc->payload.vues[dim], reg, subreg);
       inst = tc_MOV(tc, dst, attr);
-      inst->pred_ctrl = BRW_PREDICATE_NORMAL;
+      inst->pred_ctrl = GEN6_PREDCTRL_NORMAL;
       inst->pred_inv = true;
    }
    else {
@@ -645,7 +645,7 @@ gs_lower_opcode_tgsi_imm(struct gs_compile_context *gcc,
       inst = tc_MOV(&gcc->tc,
             tdst_writemask(tdst_ud(dst), 1 << ch),
             tsrc_imm_ud(imm[ch]));
-      inst->access_mode = BRW_ALIGN_16;
+      inst->access_mode = GEN6_ALIGN_16;
    }
 }
 
@@ -773,7 +773,7 @@ gs_lower_virtual_opcodes(struct gs_compile_context *gcc)
          toy_compiler_lower_math(tc, inst);
          break;
       case TOY_OPCODE_URB_WRITE:
-         toy_compiler_lower_to_send(tc, inst, false, BRW_SFID_URB);
+         toy_compiler_lower_to_send(tc, inst, false, GEN6_SFID_URB);
          break;
       default:
          if (inst->opcode > 127)
@@ -798,16 +798,16 @@ get_num_prims_static(struct gs_compile_context *gcc)
    tc_head(tc);
    while ((inst = tc_next_no_skip(tc)) != NULL) {
       switch (inst->opcode) {
-      case BRW_OPCODE_IF:
+      case GEN6_OPCODE_IF:
          if_depth++;
          break;
-      case BRW_OPCODE_ENDIF:
+      case GEN6_OPCODE_ENDIF:
          if_depth--;
          break;
       case TOY_OPCODE_DO:
          do_depth++;
          break;
-      case BRW_OPCODE_WHILE:
+      case GEN6_OPCODE_WHILE:
          do_depth--;
          break;
       case TOY_OPCODE_EMIT:
@@ -1265,8 +1265,8 @@ gs_setup(struct gs_compile_context *gcc,
    gcc->write_so = (state->info.stream_output.num_outputs > 0);
    gcc->write_vue = !gcc->variant->u.gs.rasterizer_discard;
 
-   gcc->tc.templ.access_mode = BRW_ALIGN_16;
-   gcc->tc.templ.exec_size = BRW_EXECUTE_4;
+   gcc->tc.templ.access_mode = GEN6_ALIGN_16;
+   gcc->tc.templ.exec_size = GEN6_EXECSIZE_4;
    gcc->tc.rect_linear_width = 4;
 
    if (state->info.tokens) {
@@ -1331,7 +1331,7 @@ gs_setup(struct gs_compile_context *gcc,
       }
    }
 
-   gcc->tc.templ.access_mode = BRW_ALIGN_1;
+   gcc->tc.templ.access_mode = GEN6_ALIGN_1;
 
    gs_setup_shader_in(gcc->shader, gcc->variant);
    gs_setup_shader_out(gcc->shader, &gcc->tgsi, false, gcc->output_map);

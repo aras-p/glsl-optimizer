@@ -208,7 +208,7 @@ tsrc_imm_mdesc_data_port(const struct toy_compiler *tc,
    }
    else {
       assert(!send_write_commit_message ||
-             message_type == GEN6_DATAPORT_WRITE_MESSAGE_STREAMED_VB_WRITE);
+             message_type == GEN6_MSG_DP_SVB_WRITE);
       assert((message_specific_control & 0x1f00) == message_specific_control);
 
       ctrl = send_write_commit_message << 17 |

@@ -213,7 +213,7 @@ toy_type_size(enum toy_type type)
 static inline bool
 tdst_is_null(struct toy_dst dst)
 {
-   /* BRW_ARF_NULL happens to be 0 */
+   /* GEN6_ARF_NULL happens to be 0 */
    return (dst.file == TOY_FILE_ARF && dst.val32 == 0);
 }
 
@@ -431,7 +431,7 @@ tdst_imm_w(int16_t w)
 static inline bool
 tsrc_is_null(struct toy_src src)
 {
-   /* BRW_ARF_NULL happens to be 0 */
+   /* GEN6_ARF_NULL happens to be 0 */
    return (src.file == TOY_FILE_ARF && src.val32 == 0);
 }
 

@@ -71,30 +71,30 @@ tc_dump_operand(struct toy_compiler *tc,
       break;
    case TOY_FILE_ARF:
       switch (reg) {
-      case BRW_ARF_NULL:
+      case GEN6_ARF_NULL:
          ilo_printf("null");
          break;
-      case BRW_ARF_ADDRESS:
+      case GEN6_ARF_A0:
          ilo_printf("a0.%d", subreg);
          break;
-      case BRW_ARF_ACCUMULATOR:
-      case BRW_ARF_ACCUMULATOR + 1:
+      case GEN6_ARF_ACC0:
+      case GEN6_ARF_ACC0 + 1:
          ilo_printf("acc%d.%d", (reg & 1), subreg);
          break;
-      case BRW_ARF_FLAG:
+      case GEN6_ARF_F0:
          ilo_printf("f0.%d", subreg);
          break;
-      case BRW_ARF_STATE:
+      case GEN6_ARF_SR0:
          ilo_printf("sr0.%d", subreg);
          break;
-      case BRW_ARF_CONTROL:
+      case GEN6_ARF_CR0:
          ilo_printf("cr0.%d", subreg);
          break;
-      case BRW_ARF_NOTIFICATION_COUNT:
-      case BRW_ARF_NOTIFICATION_COUNT + 1:
+      case GEN6_ARF_N0:
+      case GEN6_ARF_N0 + 1:
          ilo_printf("n%d.%d", (reg & 1), subreg);
          break;
-      case BRW_ARF_IP:
+      case GEN6_ARF_IP:
          ilo_printf("ip");
          break;
       }
@@ -259,59 +259,59 @@ static const char *
 get_opcode_name(unsigned opcode)
 {
    switch (opcode) {
-   case BRW_OPCODE_MOV:                   return "mov";
-   case BRW_OPCODE_SEL:                   return "sel";
-   case BRW_OPCODE_NOT:                   return "not";
-   case BRW_OPCODE_AND:                   return "and";
-   case BRW_OPCODE_OR:                    return "or";
-   case BRW_OPCODE_XOR:                   return "xor";
-   case BRW_OPCODE_SHR:                   return "shr";
-   case BRW_OPCODE_SHL:                   return "shl";
-   case BRW_OPCODE_RSR:                   return "rsr";
-   case BRW_OPCODE_RSL:                   return "rsl";
-   case BRW_OPCODE_ASR:                   return "asr";
-   case BRW_OPCODE_CMP:                   return "cmp";
-   case BRW_OPCODE_CMPN:                  return "cmpn";
-   case BRW_OPCODE_JMPI:                  return "jmpi";
-   case BRW_OPCODE_IF:                    return "if";
-   case BRW_OPCODE_IFF:                   return "iff";
-   case BRW_OPCODE_ELSE:                  return "else";
-   case BRW_OPCODE_ENDIF:                 return "endif";
-   case BRW_OPCODE_DO:                    return "do";
-   case BRW_OPCODE_WHILE:                 return "while";
-   case BRW_OPCODE_BREAK:                 return "break";
-   case BRW_OPCODE_CONTINUE:              return "continue";
-   case BRW_OPCODE_HALT:                  return "halt";
-   case BRW_OPCODE_MSAVE:                 return "msave";
-   case BRW_OPCODE_MRESTORE:              return "mrestore";
-   case BRW_OPCODE_PUSH:                  return "push";
-   case BRW_OPCODE_POP:                   return "pop";
-   case BRW_OPCODE_WAIT:                  return "wait";
-   case BRW_OPCODE_SEND:                  return "send";
-   case BRW_OPCODE_SENDC:                 return "sendc";
-   case BRW_OPCODE_MATH:                  return "math";
-   case BRW_OPCODE_ADD:                   return "add";
-   case BRW_OPCODE_MUL:                   return "mul";
-   case BRW_OPCODE_AVG:                   return "avg";
-   case BRW_OPCODE_FRC:                   return "frc";
-   case BRW_OPCODE_RNDU:                  return "rndu";
-   case BRW_OPCODE_RNDD:                  return "rndd";
-   case BRW_OPCODE_RNDE:                  return "rnde";
-   case BRW_OPCODE_RNDZ:                  return "rndz";
-   case BRW_OPCODE_MAC:                   return "mac";
-   case BRW_OPCODE_MACH:                  return "mach";
-   case BRW_OPCODE_LZD:                   return "lzd";
-   case BRW_OPCODE_SAD2:                  return "sad2";
-   case BRW_OPCODE_SADA2:                 return "sada2";
-   case BRW_OPCODE_DP4:                   return "dp4";
-   case BRW_OPCODE_DPH:                   return "dph";
-   case BRW_OPCODE_DP3:                   return "dp3";
-   case BRW_OPCODE_DP2:                   return "dp2";
-   case BRW_OPCODE_DPA2:                  return "dpa2";
-   case BRW_OPCODE_LINE:                  return "line";
-   case BRW_OPCODE_PLN:                   return "pln";
-   case BRW_OPCODE_MAD:                   return "mad";
-   case BRW_OPCODE_NOP:                   return "nop";
+   case GEN6_OPCODE_MOV:                   return "mov";
+   case GEN6_OPCODE_SEL:                   return "sel";
+   case GEN6_OPCODE_NOT:                   return "not";
+   case GEN6_OPCODE_AND:                   return "and";
+   case GEN6_OPCODE_OR:                    return "or";
+   case GEN6_OPCODE_XOR:                   return "xor";
+   case GEN6_OPCODE_SHR:                   return "shr";
+   case GEN6_OPCODE_SHL:                   return "shl";
+   case 0xa:                   return "rsr";
+   case 0xb:                   return "rsl";
+   case GEN6_OPCODE_ASR:                   return "asr";
+   case GEN6_OPCODE_CMP:                   return "cmp";
+   case GEN6_OPCODE_CMPN:                  return "cmpn";
+   case GEN6_OPCODE_JMPI:                  return "jmpi";
+   case GEN6_OPCODE_IF:                    return "if";
+   case 0x23:                   return "iff";
+   case GEN6_OPCODE_ELSE:                  return "else";
+   case GEN6_OPCODE_ENDIF:                 return "endif";
+   case 0x26:                    return "do";
+   case GEN6_OPCODE_WHILE:                 return "while";
+   case GEN6_OPCODE_BREAK:                 return "break";
+   case GEN6_OPCODE_CONT:              return "continue";
+   case GEN6_OPCODE_HALT:                  return "halt";
+   case 0x2c:                 return "msave";
+   case 0x2d:              return "mrestore";
+   case 0x2e:                  return "push";
+   case 0x2f:                   return "pop";
+   case GEN6_OPCODE_WAIT:                  return "wait";
+   case GEN6_OPCODE_SEND:                  return "send";
+   case GEN6_OPCODE_SENDC:                 return "sendc";
+   case GEN6_OPCODE_MATH:                  return "math";
+   case GEN6_OPCODE_ADD:                   return "add";
+   case GEN6_OPCODE_MUL:                   return "mul";
+   case GEN6_OPCODE_AVG:                   return "avg";
+   case GEN6_OPCODE_FRC:                   return "frc";
+   case GEN6_OPCODE_RNDU:                  return "rndu";
+   case GEN6_OPCODE_RNDD:                  return "rndd";
+   case GEN6_OPCODE_RNDE:                  return "rnde";
+   case GEN6_OPCODE_RNDZ:                  return "rndz";
+   case GEN6_OPCODE_MAC:                   return "mac";
+   case GEN6_OPCODE_MACH:                  return "mach";
+   case GEN6_OPCODE_LZD:                   return "lzd";
+   case GEN6_OPCODE_SAD2:                  return "sad2";
+   case GEN6_OPCODE_SADA2:                 return "sada2";
+   case GEN6_OPCODE_DP4:                   return "dp4";
+   case GEN6_OPCODE_DPH:                   return "dph";
+   case GEN6_OPCODE_DP3:                   return "dp3";
+   case GEN6_OPCODE_DP2:                   return "dp2";
+   case 0x58:                  return "dpa2";
+   case GEN6_OPCODE_LINE:                  return "line";
+   case GEN6_OPCODE_PLN:                   return "pln";
+   case GEN6_OPCODE_MAD:                   return "mad";
+   case GEN6_OPCODE_NOP:                   return "nop";
    case TOY_OPCODE_DO:                    return "do";
    /* TGSI */
    case TOY_OPCODE_TGSI_IN:               return "tgsi.in";
@@ -373,47 +373,47 @@ static const char *
 get_cond_modifier_name(unsigned opcode, unsigned cond_modifier)
 {
    switch (opcode) {
-   case BRW_OPCODE_SEND:
-   case BRW_OPCODE_SENDC:
+   case GEN6_OPCODE_SEND:
+   case GEN6_OPCODE_SENDC:
       /* SFID */
       switch (cond_modifier) {
-      case BRW_SFID_NULL:                       return "Null";
-      case BRW_SFID_SAMPLER:                    return "Sampling Engine";
-      case BRW_SFID_MESSAGE_GATEWAY:            return "Message Gateway";
-      case GEN6_SFID_DATAPORT_SAMPLER_CACHE:    return "Data Port Sampler Cache";
-      case GEN6_SFID_DATAPORT_RENDER_CACHE:     return "Data Port Render Cache";
-      case BRW_SFID_URB:                        return "URB";
-      case BRW_SFID_THREAD_SPAWNER:             return "Thread Spawner";
-      case GEN6_SFID_DATAPORT_CONSTANT_CACHE:   return "Constant Cache";
+      case GEN6_SFID_NULL:                       return "Null";
+      case GEN6_SFID_SAMPLER:                    return "Sampling Engine";
+      case GEN6_SFID_GATEWAY:            return "Message Gateway";
+      case GEN6_SFID_DP_SAMPLER:    return "Data Port Sampler Cache";
+      case GEN6_SFID_DP_RC:     return "Data Port Render Cache";
+      case GEN6_SFID_URB:                        return "URB";
+      case GEN6_SFID_SPAWNER:             return "Thread Spawner";
+      case GEN6_SFID_DP_CC:   return "Constant Cache";
       default:                                  return "Unknown";
       }
       break;
-   case BRW_OPCODE_MATH:
+   case GEN6_OPCODE_MATH:
       /* FC */
       switch (cond_modifier) {
-      case BRW_MATH_FUNCTION_INV:               return "INV";
-      case BRW_MATH_FUNCTION_LOG:               return "LOG";
-      case BRW_MATH_FUNCTION_EXP:               return "EXP";
-      case BRW_MATH_FUNCTION_SQRT:              return "SQRT";
-      case BRW_MATH_FUNCTION_RSQ:               return "RSQ";
-      case BRW_MATH_FUNCTION_SIN:               return "SIN";
-      case BRW_MATH_FUNCTION_COS:               return "COS";
-      case BRW_MATH_FUNCTION_FDIV:              return "FDIV";
-      case BRW_MATH_FUNCTION_POW:               return "POW";
-      case BRW_MATH_FUNCTION_INT_DIV_QUOTIENT:  return "INT DIV (quotient)";
-      case BRW_MATH_FUNCTION_INT_DIV_REMAINDER: return "INT DIV (remainder)";
+      case GEN6_MATH_INV:               return "INV";
+      case GEN6_MATH_LOG:               return "LOG";
+      case GEN6_MATH_EXP:               return "EXP";
+      case GEN6_MATH_SQRT:              return "SQRT";
+      case GEN6_MATH_RSQ:               return "RSQ";
+      case GEN6_MATH_SIN:               return "SIN";
+      case GEN6_MATH_COS:               return "COS";
+      case GEN6_MATH_FDIV:              return "FDIV";
+      case GEN6_MATH_POW:               return "POW";
+      case GEN6_MATH_INT_DIV_QUOTIENT:  return "INT DIV (quotient)";
+      case GEN6_MATH_INT_DIV_REMAINDER: return "INT DIV (remainder)";
       default:                                  return "UNK";
       }
       break;
    default:
       switch (cond_modifier) {
-      case BRW_CONDITIONAL_NONE:                return NULL;
-      case BRW_CONDITIONAL_Z:                   return "z";
-      case BRW_CONDITIONAL_NZ:                  return "nz";
-      case BRW_CONDITIONAL_G:                   return "g";
-      case BRW_CONDITIONAL_GE:                  return "ge";
-      case BRW_CONDITIONAL_L:                   return "l";
-      case BRW_CONDITIONAL_LE:                  return "le";
+      case GEN6_COND_NORMAL:                return NULL;
+      case GEN6_COND_Z:                   return "z";
+      case GEN6_COND_NZ:                  return "nz";
+      case GEN6_COND_G:                   return "g";
+      case GEN6_COND_GE:                  return "ge";
+      case GEN6_COND_L:                   return "l";
+      case GEN6_COND_LE:                  return "le";
       default:                                  return "unk";
       }
       break;
@@ -433,7 +433,7 @@ tc_dump_inst(struct toy_compiler *tc, const struct toy_inst *inst)
 
    ilo_printf("  %s", name);
 
-   if (inst->opcode == BRW_OPCODE_NOP) {
+   if (inst->opcode == GEN6_OPCODE_NOP) {
       ilo_printf("\n");
       return;
    }
@@ -506,16 +506,16 @@ tc_init_inst_templ(struct toy_compiler *tc)
    struct toy_inst *templ = &tc->templ;
    int i;
 
-   templ->opcode = BRW_OPCODE_NOP;
-   templ->access_mode = BRW_ALIGN_1;
-   templ->mask_ctrl = BRW_MASK_ENABLE;
-   templ->dep_ctrl = BRW_DEPENDENCY_NORMAL;
-   templ->qtr_ctrl = GEN6_COMPRESSION_1Q;
-   templ->thread_ctrl = BRW_THREAD_NORMAL;
-   templ->pred_ctrl = BRW_PREDICATE_NONE;
+   templ->opcode = GEN6_OPCODE_NOP;
+   templ->access_mode = GEN6_ALIGN_1;
+   templ->mask_ctrl = GEN6_MASKCTRL_NORMAL;
+   templ->dep_ctrl = GEN6_DEPCTRL_NORMAL;
+   templ->qtr_ctrl = GEN6_QTRCTRL_1Q;
+   templ->thread_ctrl = GEN6_THREADCTRL_NORMAL;
+   templ->pred_ctrl = GEN6_PREDCTRL_NONE;
    templ->pred_inv = false;
-   templ->exec_size = BRW_EXECUTE_1;
-   templ->cond_modifier = BRW_CONDITIONAL_NONE;
+   templ->exec_size = GEN6_EXECSIZE_1;
+   templ->cond_modifier = GEN6_COND_NORMAL;
    templ->acc_wr_ctrl = false;
    templ->saturate = false;
 

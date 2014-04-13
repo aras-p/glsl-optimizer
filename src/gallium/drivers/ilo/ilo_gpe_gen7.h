@@ -184,7 +184,7 @@ gen7_emit_3DSTATE_VF(const struct ilo_dev_info *dev,
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2) |
-                    ((enable_cut_index) ? HSW_CUT_INDEX_ENABLE : 0));
+                    ((enable_cut_index) ? GEN75_VF_DW0_CUT_INDEX_ENABLE : 0));
    ilo_cp_write(cp, cut_index);
    ilo_cp_end(cp);
 }
@@ -233,7 +233,7 @@ gen7_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
       ilo_cp_write(cp, 0);
       ilo_cp_write(cp, 0);
       ilo_cp_write(cp, 0);
-      ilo_cp_write(cp, GEN6_GS_STATISTICS_ENABLE);
+      ilo_cp_write(cp, GEN6_GS_DW5_STATISTICS);
       ilo_cp_write(cp, 0);
       ilo_cp_end(cp);
       return;
@@ -244,7 +244,7 @@ gen7_emit_3DSTATE_GS(const struct ilo_dev_info *dev,
    dw4 = cso->payload[1];
    dw5 = cso->payload[2];
 
-   dw2 |= ((num_samplers + 3) / 4) << GEN6_GS_SAMPLER_COUNT_SHIFT;
+   dw2 |= ((num_samplers + 3) / 4) << GEN6_THREADDISP_SAMPLER_COUNT__SHIFT;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
@@ -300,7 +300,7 @@ gen7_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
       dw2 = rasterizer->wm.payload[1];
 
       assert(!hiz_op);
-      dw1 |= GEN7_WM_STATISTICS_ENABLE;
+      dw1 |= GEN7_WM_DW1_STATISTICS;
    }
    else {
       dw1 = hiz_op;
@@ -314,8 +314,8 @@ gen7_emit_3DSTATE_WM(const struct ilo_dev_info *dev,
    }
 
    if (cc_may_kill) {
-      dw1 |= GEN7_WM_DISPATCH_ENABLE |
-             GEN7_WM_KILL_ENABLE;
+      dw1 |= GEN7_WM_DW1_PS_ENABLE |
+             GEN7_WM_DW1_PS_KILL;
    }
 
    if (num_samples > 1) {
@@ -553,9 +553,9 @@ gen7_emit_3DSTATE_STREAMOUT(const struct ilo_dev_info *dev,
    ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
    if (!enable) {
-      dw1 = 0 << SO_RENDER_STREAM_SELECT_SHIFT;
+      dw1 = 0 << GEN7_SO_DW1_RENDER_STREAM_SELECT__SHIFT;
       if (rasterizer_discard)
-         dw1 |= SO_RENDERING_DISABLE;
+         dw1 |= GEN7_SO_DW1_RENDER_DISABLE;
 
       dw2 = 0;
 
@@ -571,26 +571,26 @@ gen7_emit_3DSTATE_STREAMOUT(const struct ilo_dev_info *dev,
    if (!read_len)
       read_len = 1;
 
-   dw1 = SO_FUNCTION_ENABLE |
-         0 << SO_RENDER_STREAM_SELECT_SHIFT |
-         SO_STATISTICS_ENABLE |
+   dw1 = GEN7_SO_DW1_SO_ENABLE |
+         0 << GEN7_SO_DW1_RENDER_STREAM_SELECT__SHIFT |
+         GEN7_SO_DW1_STATISTICS |
          buffer_mask << 8;
 
    if (rasterizer_discard)
-      dw1 |= SO_RENDERING_DISABLE;
+      dw1 |= GEN7_SO_DW1_RENDER_DISABLE;
 
    /* API_OPENGL */
    if (true)
-      dw1 |= SO_REORDER_TRAILING;
+      dw1 |= GEN7_SO_DW1_REORDER_TRAILING;
 
-   dw2 = 0 << SO_STREAM_3_VERTEX_READ_OFFSET_SHIFT |
-         0 << SO_STREAM_3_VERTEX_READ_LENGTH_SHIFT |
-         0 << SO_STREAM_2_VERTEX_READ_OFFSET_SHIFT |
-         0 << SO_STREAM_2_VERTEX_READ_LENGTH_SHIFT |
-         0 << SO_STREAM_1_VERTEX_READ_OFFSET_SHIFT |
-         0 << SO_STREAM_1_VERTEX_READ_LENGTH_SHIFT |
-         0 << SO_STREAM_0_VERTEX_READ_OFFSET_SHIFT |
-         (read_len - 1) << SO_STREAM_0_VERTEX_READ_LENGTH_SHIFT;
+   dw2 = 0 << GEN7_SO_DW2_STREAM3_READ_OFFSET__SHIFT |
+         0 << GEN7_SO_DW2_STREAM3_READ_LEN__SHIFT |
+         0 << GEN7_SO_DW2_STREAM2_READ_OFFSET__SHIFT |
+         0 << GEN7_SO_DW2_STREAM2_READ_LEN__SHIFT |
+         0 << GEN7_SO_DW2_STREAM1_READ_OFFSET__SHIFT |
+         0 << GEN7_SO_DW2_STREAM1_READ_LEN__SHIFT |
+         0 << GEN7_SO_DW2_STREAM0_READ_OFFSET__SHIFT |
+         (read_len - 1) << GEN7_SO_DW2_STREAM0_READ_LEN__SHIFT;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
@@ -636,18 +636,18 @@ gen7_emit_3DSTATE_PS(const struct ilo_dev_info *dev,
       int max_threads;
 
       /* GPU hangs if none of the dispatch enable bits is set */
-      dw4 = GEN7_PS_8_DISPATCH_ENABLE;
+      dw4 = GEN7_PS_DW4_8_PIXEL_DISPATCH;
 
       /* see brwCreateContext() */
       switch (dev->gen) {
       case ILO_GEN(7.5):
          max_threads = (dev->gt == 3) ? 408 : (dev->gt == 2) ? 204 : 102;
-         dw4 |= (max_threads - 1) << HSW_PS_MAX_THREADS_SHIFT;
+         dw4 |= (max_threads - 1) << GEN75_PS_DW4_MAX_THREADS__SHIFT;
          break;
       case ILO_GEN(7):
       default:
          max_threads = (dev->gt == 2) ? 172 : 48;
-         dw4 |= (max_threads - 1) << IVB_PS_MAX_THREADS_SHIFT;
+         dw4 |= (max_threads - 1) << GEN7_PS_DW4_MAX_THREADS__SHIFT;
          break;
       }
 
@@ -670,10 +670,10 @@ gen7_emit_3DSTATE_PS(const struct ilo_dev_info *dev,
    dw4 = cso->payload[1];
    dw5 = cso->payload[2];
 
-   dw2 |= (num_samplers + 3) / 4 << GEN7_PS_SAMPLER_COUNT_SHIFT;
+   dw2 |= (num_samplers + 3) / 4 << GEN6_THREADDISP_SAMPLER_COUNT__SHIFT;
 
    if (dual_blend)
-      dw4 |= GEN7_PS_DUAL_SOURCE_BLEND_ENABLE;
+      dw4 |= GEN7_PS_DW4_DUAL_SOURCE_BLEND;
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
@@ -884,8 +884,8 @@ gen7_emit_3dstate_urb(const struct ilo_dev_info *dev,
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, offset << GEN7_URB_STARTING_ADDRESS_SHIFT |
-                    (alloc_size - 1) << GEN7_URB_ENTRY_SIZE_SHIFT |
+   ilo_cp_write(cp, offset << GEN7_URB_ANY_DW1_OFFSET__SHIFT |
+                    (alloc_size - 1) << GEN7_URB_ANY_DW1_ENTRY_SIZE__SHIFT |
                     num_entries);
    ilo_cp_end(cp);
 }
@@ -976,7 +976,7 @@ gen7_emit_3dstate_push_constant_alloc(const struct ilo_dev_info *dev,
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, offset << GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT |
+   ilo_cp_write(cp, offset << GEN7_PCB_ALLOC_ANY_DW1_OFFSET__SHIFT |
                     size);
    ilo_cp_end(cp);
 }
@@ -1055,9 +1055,9 @@ gen7_emit_3DSTATE_SO_DECL_LIST(const struct ilo_dev_info *dev,
             if (num_dwords > 4)
                num_dwords = 4;
 
-            decl = buf << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT |
-                   SO_DECL_HOLE_FLAG |
-                   ((1 << num_dwords) - 1) << SO_DECL_COMPONENT_MASK_SHIFT;
+            decl = buf << GEN7_SO_DECL_OUTPUT_SLOT__SHIFT |
+                   GEN7_SO_DECL_HOLE_FLAG |
+                   ((1 << num_dwords) - 1) << GEN7_SO_DECL_COMPONENT_MASK__SHIFT;
 
             so_decls[num_entries++] = decl;
             buffer_offsets[buf] += num_dwords;
@@ -1067,9 +1067,9 @@ gen7_emit_3DSTATE_SO_DECL_LIST(const struct ilo_dev_info *dev,
          mask = ((1 << so_info->output[i].num_components) - 1) <<
             so_info->output[i].start_component;
 
-         decl = buf << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT |
-                reg << SO_DECL_REGISTER_INDEX_SHIFT |
-                mask << SO_DECL_COMPONENT_MASK_SHIFT;
+         decl = buf << GEN7_SO_DECL_OUTPUT_SLOT__SHIFT |
+                reg << GEN7_SO_DECL_REG_INDEX__SHIFT |
+                mask << GEN7_SO_DECL_COMPONENT_MASK__SHIFT;
 
          so_decls[num_entries++] = decl;
          buffer_selects |= 1 << buf;
@@ -1091,14 +1091,14 @@ gen7_emit_3DSTATE_SO_DECL_LIST(const struct ilo_dev_info *dev,
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, 0 << SO_STREAM_TO_BUFFER_SELECTS_3_SHIFT |
-                    0 << SO_STREAM_TO_BUFFER_SELECTS_2_SHIFT |
-                    0 << SO_STREAM_TO_BUFFER_SELECTS_1_SHIFT |
-                    buffer_selects << SO_STREAM_TO_BUFFER_SELECTS_0_SHIFT);
-   ilo_cp_write(cp, 0 << SO_NUM_ENTRIES_3_SHIFT |
-                    0 << SO_NUM_ENTRIES_2_SHIFT |
-                    0 << SO_NUM_ENTRIES_1_SHIFT |
-                    num_entries << SO_NUM_ENTRIES_0_SHIFT);
+   ilo_cp_write(cp, 0 << GEN7_SO_DECL_DW1_STREAM3_BUFFER_SELECTS__SHIFT |
+                    0 << GEN7_SO_DECL_DW1_STREAM2_BUFFER_SELECTS__SHIFT |
+                    0 << GEN7_SO_DECL_DW1_STREAM1_BUFFER_SELECTS__SHIFT |
+                    buffer_selects << GEN7_SO_DECL_DW1_STREAM0_BUFFER_SELECTS__SHIFT);
+   ilo_cp_write(cp, 0 << GEN7_SO_DECL_DW2_STREAM3_ENTRY_COUNT__SHIFT |
+                    0 << GEN7_SO_DECL_DW2_STREAM2_ENTRY_COUNT__SHIFT |
+                    0 << GEN7_SO_DECL_DW2_STREAM1_ENTRY_COUNT__SHIFT |
+                    num_entries << GEN7_SO_DECL_DW2_STREAM0_ENTRY_COUNT__SHIFT);
 
    for (i = 0; i < num_entries; i++) {
       ilo_cp_write(cp, so_decls[i]);
@@ -1128,7 +1128,7 @@ gen7_emit_3DSTATE_SO_BUFFER(const struct ilo_dev_info *dev,
    if (!so_target || !so_target->buffer) {
       ilo_cp_begin(cp, cmd_len);
       ilo_cp_write(cp, cmd | (cmd_len - 2));
-      ilo_cp_write(cp, index << SO_BUFFER_INDEX_SHIFT);
+      ilo_cp_write(cp, index << GEN7_SO_BUF_DW1_INDEX__SHIFT);
       ilo_cp_write(cp, 0);
       ilo_cp_write(cp, 0);
       ilo_cp_end(cp);
@@ -1147,7 +1147,7 @@ gen7_emit_3DSTATE_SO_BUFFER(const struct ilo_dev_info *dev,
 
    ilo_cp_begin(cp, cmd_len);
    ilo_cp_write(cp, cmd | (cmd_len - 2));
-   ilo_cp_write(cp, index << SO_BUFFER_INDEX_SHIFT |
+   ilo_cp_write(cp, index << GEN7_SO_BUF_DW1_INDEX__SHIFT |
                     stride);
    ilo_cp_write_bo(cp, base, buf->bo, INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
    ilo_cp_write_bo(cp, end, buf->bo, INTEL_DOMAIN_RENDER, INTEL_DOMAIN_RENDER);
@@ -1164,10 +1164,10 @@ gen7_emit_3DPRIMITIVE(const struct ilo_dev_info *dev,
    const uint32_t cmd = ILO_GPE_CMD(0x3, 0x3, 0x00);
    const uint8_t cmd_len = 7;
    const int prim = (rectlist) ?
-      _3DPRIM_RECTLIST : ilo_gpe_gen6_translate_pipe_prim(info->mode);
+      GEN6_3DPRIM_RECTLIST : ilo_gpe_gen6_translate_pipe_prim(info->mode);
    const int vb_access = (info->indexed) ?
-      GEN7_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM :
-      GEN7_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL;
+      GEN7_3DPRIM_DW1_ACCESS_RANDOM :
+      GEN7_3DPRIM_DW1_ACCESS_SEQUENTIAL;
    const uint32_t vb_start = info->start +
       ((info->indexed) ? ib->draw_start_offset : 0);
 

@@ -44,7 +44,7 @@ gen7_wa_pipe_control_cs_stall(struct ilo_3d_pipeline *p,
                               bool change_depth_state)
 {
    struct intel_bo *bo = NULL;
-   uint32_t dw1 = PIPE_CONTROL_CS_STALL;
+   uint32_t dw1 = GEN6_PIPE_CONTROL_CS_STALL;
 
    assert(p->dev->gen == ILO_GEN(7) || p->dev->gen == ILO_GEN(7.5));
 
@@ -81,10 +81,10 @@ gen7_wa_pipe_control_cs_stall(struct ilo_3d_pipeline *p,
     */
 
    if (change_multisample_state)
-      dw1 |= PIPE_CONTROL_DEPTH_CACHE_FLUSH;
+      dw1 |= GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH;
 
    if (change_depth_state) {
-      dw1 |= PIPE_CONTROL_WRITE_IMMEDIATE;
+      dw1 |= GEN6_PIPE_CONTROL_WRITE_IMM;
       bo = p->workaround_bo;
    }
 
@@ -106,8 +106,8 @@ gen7_wa_pipe_control_vs_depth_stall(struct ilo_3d_pipeline *p)
     *      needs to be sent before any combination of VS associated 3DSTATE."
     */
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_DEPTH_STALL |
-         PIPE_CONTROL_WRITE_IMMEDIATE,
+         GEN6_PIPE_CONTROL_DEPTH_STALL |
+         GEN6_PIPE_CONTROL_WRITE_IMM,
          p->workaround_bo, 0, false, p->cp);
 }
 
@@ -145,18 +145,18 @@ gen7_wa_pipe_control_wm_depth_stall(struct ilo_3d_pipeline *p,
     *      (e.g., via a preceding MI_FLUSH)."
     */
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_DEPTH_STALL,
+         GEN6_PIPE_CONTROL_DEPTH_STALL,
          NULL, 0, false, p->cp);
 
    if (!change_depth_buffer)
       return;
 
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_DEPTH_CACHE_FLUSH,
+         GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH,
          NULL, 0, false, p->cp);
 
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_DEPTH_STALL,
+         GEN6_PIPE_CONTROL_DEPTH_STALL,
          NULL, 0, false, p->cp);
 }
 
@@ -173,7 +173,7 @@ gen7_wa_pipe_control_ps_max_threads_stall(struct ilo_3d_pipeline *p)
     *      Pixel Scoreboard set is required to be issued."
     */
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_STALL_AT_SCOREBOARD,
+         GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL,
          NULL, 0, false, p->cp);
 
 }
@@ -726,13 +726,13 @@ gen7_rectlist_wm(struct ilo_3d_pipeline *p,
 
    switch (blitter->op) {
    case ILO_BLITTER_RECTLIST_CLEAR_ZS:
-      hiz_op = GEN7_WM_DEPTH_CLEAR;
+      hiz_op = GEN7_WM_DW1_DEPTH_CLEAR;
       break;
    case ILO_BLITTER_RECTLIST_RESOLVE_Z:
-      hiz_op = GEN7_WM_DEPTH_RESOLVE;
+      hiz_op = GEN7_WM_DW1_DEPTH_RESOLVE;
       break;
    case ILO_BLITTER_RECTLIST_RESOLVE_HIZ:
-      hiz_op = GEN7_WM_HIERARCHICAL_DEPTH_RESOLVE;
+      hiz_op = GEN7_WM_DW1_HIZ_RESOLVE;
       break;
    default:
       hiz_op = 0;

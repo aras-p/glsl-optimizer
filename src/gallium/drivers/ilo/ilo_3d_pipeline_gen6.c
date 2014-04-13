@@ -67,8 +67,8 @@ gen6_wa_pipe_control_post_sync(struct ilo_3d_pipeline *p,
     * The workaround below necessitates this workaround.
     */
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_CS_STALL |
-         PIPE_CONTROL_STALL_AT_SCOREBOARD,
+         GEN6_PIPE_CONTROL_CS_STALL |
+         GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL,
          NULL, 0, false, p->cp);
 
    /* the caller will emit the post-sync op */
@@ -86,7 +86,7 @@ gen6_wa_pipe_control_post_sync(struct ilo_3d_pipeline *p,
     *      PIPE_CONTROL with any non-zero post-sync-op is required."
     */
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_WRITE_IMMEDIATE,
+         GEN6_PIPE_CONTROL_WRITE_IMM,
          p->workaround_bo, 0, false, p->cp);
 }
 
@@ -106,8 +106,8 @@ gen6_wa_pipe_control_wm_multisample_flush(struct ilo_3d_pipeline *p)
     *      Depth Flush prior to this command."
     */
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_DEPTH_CACHE_FLUSH |
-         PIPE_CONTROL_CS_STALL,
+         GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+         GEN6_PIPE_CONTROL_CS_STALL,
          0, 0, false, p->cp);
 }
 
@@ -124,15 +124,15 @@ gen6_wa_pipe_control_wm_depth_flush(struct ilo_3d_pipeline *p)
     * commands.
     */
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_DEPTH_STALL,
+         GEN6_PIPE_CONTROL_DEPTH_STALL,
          NULL, 0, false, p->cp);
 
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_DEPTH_CACHE_FLUSH,
+         GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH,
          NULL, 0, false, p->cp);
 
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_DEPTH_STALL,
+         GEN6_PIPE_CONTROL_DEPTH_STALL,
          NULL, 0, false, p->cp);
 }
 
@@ -153,7 +153,7 @@ gen6_wa_pipe_control_wm_max_threads_stall(struct ilo_3d_pipeline *p)
     *      value in this field (Maximum Number of Threads in 3DSTATE_WM)"
     */
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_STALL_AT_SCOREBOARD,
+         GEN6_PIPE_CONTROL_PIXEL_SCOREBOARD_STALL,
          NULL, 0, false, p->cp);
 
 }
@@ -171,9 +171,9 @@ gen6_wa_pipe_control_vs_const_flush(struct ilo_3d_pipeline *p)
     * buffered by VS FF, to the point that the FF dies.
     */
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_DEPTH_STALL |
-         PIPE_CONTROL_INSTRUCTION_FLUSH |
-         PIPE_CONTROL_STATE_CACHE_INVALIDATE,
+         GEN6_PIPE_CONTROL_DEPTH_STALL |
+         GEN6_PIPE_CONTROL_INSTRUCTION_CACHE_INVALIDATE |
+         GEN6_PIPE_CONTROL_STATE_CACHE_INVALIDATE,
          NULL, 0, false, p->cp);
 }
 
@@ -1487,13 +1487,13 @@ ilo_3d_pipeline_emit_flush_gen6(struct ilo_3d_pipeline *p)
       gen6_wa_pipe_control_post_sync(p, false);
 
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_INSTRUCTION_FLUSH |
-         PIPE_CONTROL_WRITE_FLUSH |
-         PIPE_CONTROL_DEPTH_CACHE_FLUSH |
-         PIPE_CONTROL_VF_CACHE_INVALIDATE |
-         PIPE_CONTROL_TC_FLUSH |
-         PIPE_CONTROL_NO_WRITE |
-         PIPE_CONTROL_CS_STALL,
+         GEN6_PIPE_CONTROL_INSTRUCTION_CACHE_INVALIDATE |
+         GEN6_PIPE_CONTROL_RENDER_CACHE_FLUSH |
+         GEN6_PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+         GEN6_PIPE_CONTROL_VF_CACHE_INVALIDATE |
+         GEN6_PIPE_CONTROL_TEXTURE_CACHE_INVALIDATE |
+         GEN6_PIPE_CONTROL_WRITE_NONE |
+         GEN6_PIPE_CONTROL_CS_STALL,
          0, 0, false, p->cp);
 }
 
@@ -1505,7 +1505,7 @@ ilo_3d_pipeline_emit_write_timestamp_gen6(struct ilo_3d_pipeline *p,
       gen6_wa_pipe_control_post_sync(p, true);
 
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_WRITE_TIMESTAMP,
+         GEN6_PIPE_CONTROL_WRITE_TIMESTAMP,
          bo, index * sizeof(uint64_t),
          true, p->cp);
 }
@@ -1518,8 +1518,8 @@ ilo_3d_pipeline_emit_write_depth_count_gen6(struct ilo_3d_pipeline *p,
       gen6_wa_pipe_control_post_sync(p, false);
 
    gen6_emit_PIPE_CONTROL(p->dev,
-         PIPE_CONTROL_DEPTH_STALL |
-         PIPE_CONTROL_WRITE_DEPTH_COUNT,
+         GEN6_PIPE_CONTROL_DEPTH_STALL |
+         GEN6_PIPE_CONTROL_WRITE_PS_DEPTH_COUNT,
          bo, index * sizeof(uint64_t),
          true, p->cp);
 }
@@ -1529,16 +1529,16 @@ ilo_3d_pipeline_emit_write_statistics_gen6(struct ilo_3d_pipeline *p,
                                            struct intel_bo *bo, int index)
 {
    uint32_t regs[] = {
-      IA_VERTICES_COUNT,
-      IA_PRIMITIVES_COUNT,
-      VS_INVOCATION_COUNT,
-      GS_INVOCATION_COUNT,
-      GS_PRIMITIVES_COUNT,
-      CL_INVOCATION_COUNT,
-      CL_PRIMITIVES_COUNT,
-      PS_INVOCATION_COUNT,
-      p->dev->gen >= ILO_GEN(7) ? HS_INVOCATION_COUNT : 0,
-      p->dev->gen >= ILO_GEN(7) ? DS_INVOCATION_COUNT : 0,
+      GEN6_REG_IA_VERTICES_COUNT,
+      GEN6_REG_IA_PRIMITIVES_COUNT,
+      GEN6_REG_VS_INVOCATION_COUNT,
+      GEN6_REG_GS_INVOCATION_COUNT,
+      GEN6_REG_GS_PRIMITIVES_COUNT,
+      GEN6_REG_CL_INVOCATION_COUNT,
+      GEN6_REG_CL_PRIMITIVES_COUNT,
+      GEN6_REG_PS_INVOCATION_COUNT,
+      p->dev->gen >= ILO_GEN(7) ? GEN6_REG_HS_INVOCATION_COUNT : 0,
+      p->dev->gen >= ILO_GEN(7) ? GEN6_REG_DS_INVOCATION_COUNT : 0,
       0,
    };
    int i;
@@ -1589,13 +1589,13 @@ gen6_rectlist_wm(struct ilo_3d_pipeline *p,
 
    switch (blitter->op) {
    case ILO_BLITTER_RECTLIST_CLEAR_ZS:
-      hiz_op = GEN6_WM_DEPTH_CLEAR;
+      hiz_op = GEN6_WM_DW4_DEPTH_CLEAR;
       break;
    case ILO_BLITTER_RECTLIST_RESOLVE_Z:
-      hiz_op = GEN6_WM_DEPTH_RESOLVE;
+      hiz_op = GEN6_WM_DW4_DEPTH_RESOLVE;
       break;
    case ILO_BLITTER_RECTLIST_RESOLVE_HIZ:
-      hiz_op = GEN6_WM_HIERARCHICAL_DEPTH_RESOLVE;
+      hiz_op = GEN6_WM_DW4_HIZ_RESOLVE;
       break;
    default:
       hiz_op = 0;

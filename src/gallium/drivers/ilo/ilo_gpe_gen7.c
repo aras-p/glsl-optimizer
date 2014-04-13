@@ -61,16 +61,16 @@ ilo_gpe_init_gs_cso_gen7(const struct ilo_dev_info *dev,
       break;
    }
 
-   dw2 = (true) ? 0 : GEN6_GS_FLOATING_POINT_MODE_ALT;
+   dw2 = (true) ? 0 : GEN6_THREADDISP_FP_MODE_ALT;
 
-   dw4 = vue_read_len << GEN6_GS_URB_READ_LENGTH_SHIFT |
-         GEN7_GS_INCLUDE_VERTEX_HANDLES |
-         0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT |
-         start_grf << GEN6_GS_DISPATCH_START_GRF_SHIFT;
+   dw4 = vue_read_len << GEN6_GS_DW4_URB_READ_LEN__SHIFT |
+         GEN7_GS_DW4_INCLUDE_VERTEX_HANDLES |
+         0 << GEN6_GS_DW4_URB_READ_OFFSET__SHIFT |
+         start_grf << GEN6_GS_DW4_URB_GRF_START__SHIFT;
 
-   dw5 = (max_threads - 1) << GEN6_GS_MAX_THREADS_SHIFT |
-         GEN6_GS_STATISTICS_ENABLE |
-         GEN6_GS_ENABLE;
+   dw5 = (max_threads - 1) << GEN6_GS_DW5_MAX_THREADS__SHIFT |
+         GEN6_GS_DW5_STATISTICS |
+         GEN6_GS_DW6_GS_ENABLE;
 
    STATIC_ASSERT(Elements(cso->payload) >= 3);
    cso->payload[0] = dw2;
@@ -87,23 +87,23 @@ ilo_gpe_init_rasterizer_wm_gen7(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
-   dw1 = GEN7_WM_POSITION_ZW_PIXEL |
-         GEN7_WM_LINE_AA_WIDTH_2_0 |
-         GEN7_WM_MSRAST_OFF_PIXEL;
+   dw1 = GEN7_WM_DW1_ZW_INTERP_PIXEL |
+         GEN7_WM_DW1_AA_LINE_WIDTH_2_0 |
+         GEN7_WM_DW1_MSRASTMODE_OFF_PIXEL;
 
    /* same value as in 3DSTATE_SF */
    if (state->line_smooth)
-      dw1 |= GEN7_WM_LINE_END_CAP_AA_WIDTH_1_0;
+      dw1 |= GEN7_WM_DW1_AA_LINE_CAP_1_0;
 
    if (state->poly_stipple_enable)
-      dw1 |= GEN7_WM_POLYGON_STIPPLE_ENABLE;
+      dw1 |= GEN7_WM_DW1_POLY_STIPPLE_ENABLE;
    if (state->line_stipple_enable)
-      dw1 |= GEN7_WM_LINE_STIPPLE_ENABLE;
+      dw1 |= GEN7_WM_DW1_LINE_STIPPLE_ENABLE;
 
    if (state->bottom_edge_rule)
-      dw1 |= GEN7_WM_POINT_RASTRULE_UPPER_RIGHT;
+      dw1 |= GEN7_WM_DW1_POINT_RASTRULE_UPPER_RIGHT;
 
-   dw2 = GEN7_WM_MSDISPMODE_PERSAMPLE;
+   dw2 = GEN7_WM_DW2_MSDISPMODE_PERSAMPLE;
 
    /*
     * assertion that makes sure
@@ -113,12 +113,12 @@ ilo_gpe_init_rasterizer_wm_gen7(const struct ilo_dev_info *dev,
     *
     * is valid
     */
-   STATIC_ASSERT(GEN7_WM_MSRAST_OFF_PIXEL == 0 &&
-                 GEN7_WM_MSDISPMODE_PERSAMPLE == 0);
+   STATIC_ASSERT(GEN7_WM_DW1_MSRASTMODE_OFF_PIXEL == 0 &&
+                 GEN7_WM_DW2_MSDISPMODE_PERSAMPLE == 0);
 
    wm->dw_msaa_rast =
-      (state->multisample) ? GEN7_WM_MSRAST_ON_PATTERN : 0;
-   wm->dw_msaa_disp = GEN7_WM_MSDISPMODE_PERPIXEL;
+      (state->multisample) ? GEN7_WM_DW1_MSRASTMODE_ON_PATTERN : 0;
+   wm->dw_msaa_disp = GEN7_WM_DW2_MSDISPMODE_PERPIXEL;
 
    STATIC_ASSERT(Elements(wm->payload) >= 2);
    wm->payload[0] = dw1;
@@ -138,36 +138,36 @@ ilo_gpe_init_fs_cso_gen7(const struct ilo_dev_info *dev,
 
    start_grf = ilo_shader_get_kernel_param(fs, ILO_KERNEL_URB_DATA_START_REG);
 
-   dw2 = (true) ? 0 : GEN7_PS_FLOATING_POINT_MODE_ALT;
+   dw2 = (true) ? 0 : GEN6_THREADDISP_FP_MODE_ALT;
 
-   dw4 = GEN7_PS_POSOFFSET_NONE;
+   dw4 = GEN7_PS_DW4_POSOFFSET_NONE;
 
    /* see brwCreateContext() */
    switch (dev->gen) {
    case ILO_GEN(7.5):
       max_threads = (dev->gt == 3) ? 408 : (dev->gt == 2) ? 204 : 102;
-      dw4 |= (max_threads - 1) << HSW_PS_MAX_THREADS_SHIFT;
-      dw4 |= 1 << HSW_PS_SAMPLE_MASK_SHIFT;
+      dw4 |= (max_threads - 1) << GEN75_PS_DW4_MAX_THREADS__SHIFT;
+      dw4 |= 1 << GEN75_PS_DW4_SAMPLE_MASK__SHIFT;
       break;
    case ILO_GEN(7):
    default:
       max_threads = (dev->gt == 2) ? 172 : 48;
-      dw4 |= (max_threads - 1) << IVB_PS_MAX_THREADS_SHIFT;
+      dw4 |= (max_threads - 1) << GEN7_PS_DW4_MAX_THREADS__SHIFT;
       break;
    }
 
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_PCB_CBUF0_SIZE))
-      dw4 |= GEN7_PS_PUSH_CONSTANT_ENABLE;
+      dw4 |= GEN7_PS_DW4_PUSH_CONSTANT_ENABLE;
 
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_INPUT_COUNT))
-      dw4 |= GEN7_PS_ATTRIBUTE_ENABLE;
+      dw4 |= GEN7_PS_DW4_ATTR_ENABLE;
 
    assert(!ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_DISPATCH_16_OFFSET));
-   dw4 |= GEN7_PS_8_DISPATCH_ENABLE;
+   dw4 |= GEN7_PS_DW4_8_PIXEL_DISPATCH;
 
-   dw5 = start_grf << GEN7_PS_DISPATCH_START_GRF_SHIFT_0 |
-         0 << GEN7_PS_DISPATCH_START_GRF_SHIFT_1 |
-         0 << GEN7_PS_DISPATCH_START_GRF_SHIFT_2;
+   dw5 = start_grf << GEN7_PS_DW5_URB_GRF_START0__SHIFT |
+         0 << GEN7_PS_DW5_URB_GRF_START1__SHIFT |
+         0 << GEN7_PS_DW5_URB_GRF_START2__SHIFT;
 
    /* FS affects 3DSTATE_WM too */
    wm_dw1 = 0;
@@ -179,7 +179,7 @@ ilo_gpe_init_fs_cso_gen7(const struct ilo_dev_info *dev,
     *  b) fs writes depth, or
     *  c) fs or cc kills
     */
-   wm_dw1 |= GEN7_WM_DISPATCH_ENABLE;
+   wm_dw1 |= GEN7_WM_DW1_PS_ENABLE;
 
    /*
     * From the Ivy Bridge PRM, volume 2 part 1, page 278:
@@ -208,21 +208,21 @@ ilo_gpe_init_fs_cso_gen7(const struct ilo_dev_info *dev,
     *      to ENABLE this bit due to ClipDistance clipping."
     */
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_USE_KILL))
-      wm_dw1 |= GEN7_WM_KILL_ENABLE;
+      wm_dw1 |= GEN7_WM_DW1_PS_KILL;
 
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_OUTPUT_Z))
-      wm_dw1 |= GEN7_WM_PSCDEPTH_ON;
+      wm_dw1 |= GEN7_WM_DW1_PSCDEPTH_ON;
 
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_INPUT_Z))
-      wm_dw1 |= GEN7_WM_USES_SOURCE_DEPTH;
+      wm_dw1 |= GEN7_WM_DW1_PS_USE_DEPTH;
 
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_INPUT_W))
-      wm_dw1 |= GEN7_WM_USES_SOURCE_W;
+      wm_dw1 |= GEN7_WM_DW1_PS_USE_W;
 
    wm_interps = ilo_shader_get_kernel_param(fs,
          ILO_KERNEL_FS_BARYCENTRIC_INTERPOLATIONS);
 
-   wm_dw1 |= wm_interps << GEN7_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
+   wm_dw1 |= wm_interps << GEN7_WM_DW1_BARYCENTRIC_INTERP__SHIFT;
 
    STATIC_ASSERT(Elements(cso->payload) >= 4);
    cso->payload[0] = dw2;
@@ -275,9 +275,9 @@ ilo_gpe_init_view_surface_null_gen7(const struct ilo_dev_info *dev,
    STATIC_ASSERT(Elements(surf->payload) >= 8);
    dw = surf->payload;
 
-   dw[0] = BRW_SURFACE_NULL << BRW_SURFACE_TYPE_SHIFT |
-           BRW_SURFACEFORMAT_B8G8R8A8_UNORM << BRW_SURFACE_FORMAT_SHIFT |
-           BRW_SURFACE_TILED << 13;
+   dw[0] = GEN6_SURFTYPE_NULL << GEN6_SURFACE_DW0_TYPE__SHIFT |
+           GEN6_FORMAT_B8G8R8A8_UNORM << GEN6_SURFACE_DW0_FORMAT__SHIFT |
+           GEN6_TILING_X << 13;
 
    dw[1] = 0;
 
@@ -314,10 +314,10 @@ ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
-   surface_type = (structured) ? 5 : BRW_SURFACE_BUFFER;
+   surface_type = (structured) ? 5 : GEN6_SURFTYPE_BUFFER;
 
    surface_format = (typed) ?
-      ilo_translate_color_format(elem_format) : BRW_SURFACEFORMAT_RAW;
+      ilo_translate_color_format(elem_format) : GEN6_FORMAT_RAW;
 
    num_entries = size / struct_size;
    /* see if there is enough space to fit another element */
@@ -390,10 +390,10 @@ ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
    STATIC_ASSERT(Elements(surf->payload) >= 8);
    dw = surf->payload;
 
-   dw[0] = surface_type << BRW_SURFACE_TYPE_SHIFT |
-           surface_format << BRW_SURFACE_FORMAT_SHIFT;
+   dw[0] = surface_type << GEN6_SURFACE_DW0_TYPE__SHIFT |
+           surface_format << GEN6_SURFACE_DW0_FORMAT__SHIFT;
    if (render_cache_rw)
-      dw[0] |= BRW_SURFACE_RC_READ_WRITE;
+      dw[0] |= GEN6_SURFACE_DW0_RENDER_CACHE_RW;
 
    dw[1] = offset;
 
@@ -410,10 +410,10 @@ ilo_gpe_init_view_surface_for_buffer_gen7(const struct ilo_dev_info *dev,
    dw[7] = 0;
 
    if (dev->gen >= ILO_GEN(7.5)) {
-      dw[7] |= SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |
-               SET_FIELD(HSW_SCS_GREEN, GEN7_SURFACE_SCS_G) |
-               SET_FIELD(HSW_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
-               SET_FIELD(HSW_SCS_ALPHA, GEN7_SURFACE_SCS_A);
+      dw[7] |= SET_FIELD(GEN75_SCS_RED,   GEN7_SURFACE_SCS_R) |
+               SET_FIELD(GEN75_SCS_GREEN, GEN7_SURFACE_SCS_G) |
+               SET_FIELD(GEN75_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
+               SET_FIELD(GEN75_SCS_ALPHA, GEN7_SURFACE_SCS_A);
    }
 
    /* do not increment reference count */
@@ -439,7 +439,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    ILO_GPE_VALID_GEN(dev, 7, 7.5);
 
    surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
-   assert(surface_type != BRW_SURFACE_BUFFER);
+   assert(surface_type != GEN6_SURFTYPE_BUFFER);
 
    if (format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT && tex->separate_s8)
       format = PIPE_FORMAT_Z32_FLOAT;
@@ -456,7 +456,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
       tex->base.depth0 : num_layers;
    pitch = tex->bo_stride;
 
-   if (surface_type == BRW_SURFACE_CUBE) {
+   if (surface_type == GEN6_SURFTYPE_CUBE) {
       /*
        * From the Ivy Bridge PRM, volume 4 part 1, page 70:
        *
@@ -469,7 +469,7 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
        * restriction.
        */
       if (is_rt) {
-         surface_type = BRW_SURFACE_2D;
+         surface_type = GEN6_SURFTYPE_2D;
       }
       else {
          assert(num_layers % 6 == 0);
@@ -481,18 +481,18 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    assert(width >= 1 && height >= 1 && depth >= 1 && pitch >= 1);
    assert(first_layer < 2048 && num_layers <= 2048);
    switch (surface_type) {
-   case BRW_SURFACE_1D:
+   case GEN6_SURFTYPE_1D:
       assert(width <= 16384 && height == 1 && depth <= 2048);
       break;
-   case BRW_SURFACE_2D:
+   case GEN6_SURFTYPE_2D:
       assert(width <= 16384 && height <= 16384 && depth <= 2048);
       break;
-   case BRW_SURFACE_3D:
+   case GEN6_SURFTYPE_3D:
       assert(width <= 2048 && height <= 2048 && depth <= 2048);
       if (!is_rt)
          assert(first_layer == 0);
       break;
-   case BRW_SURFACE_CUBE:
+   case GEN6_SURFTYPE_CUBE:
       assert(width <= 16384 && height <= 16384 && depth <= 86);
       assert(width == height);
       if (is_rt)
@@ -580,8 +580,8 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    STATIC_ASSERT(Elements(surf->payload) >= 8);
    dw = surf->payload;
 
-   dw[0] = surface_type << BRW_SURFACE_TYPE_SHIFT |
-           surface_format << BRW_SURFACE_FORMAT_SHIFT |
+   dw[0] = surface_type << GEN6_SURFACE_DW0_TYPE__SHIFT |
+           surface_format << GEN6_SURFACE_DW0_FORMAT__SHIFT |
            ilo_gpe_gen6_translate_winsys_tiling(tex->tiling) << 13;
 
    /*
@@ -595,29 +595,29 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
     * For non-3D sampler surfaces, resinfo (the sampler message) always
     * returns zero for the number of layers when this field is not set.
     */
-   if (surface_type != BRW_SURFACE_3D) {
+   if (surface_type != GEN6_SURFTYPE_3D) {
       if (util_resource_is_array_texture(&tex->base))
-         dw[0] |= GEN7_SURFACE_IS_ARRAY;
+         dw[0] |= GEN7_SURFACE_DW0_IS_ARRAY;
       else
          assert(depth == 1);
    }
 
    if (tex->valign_4)
-      dw[0] |= GEN7_SURFACE_VALIGN_4;
+      dw[0] |= GEN7_SURFACE_DW0_VALIGN_4;
 
    if (tex->halign_8)
-      dw[0] |= GEN7_SURFACE_HALIGN_8;
+      dw[0] |= GEN7_SURFACE_DW0_HALIGN_8;
 
    if (tex->array_spacing_full)
-      dw[0] |= GEN7_SURFACE_ARYSPC_FULL;
+      dw[0] |= GEN7_SURFACE_DW0_ARYSPC_FULL;
    else
-      dw[0] |= GEN7_SURFACE_ARYSPC_LOD0;
+      dw[0] |= GEN7_SURFACE_DW0_ARYSPC_LOD0;
 
    if (is_rt)
-      dw[0] |= BRW_SURFACE_RC_READ_WRITE;
+      dw[0] |= GEN6_SURFACE_DW0_RENDER_CACHE_RW;
 
-   if (surface_type == BRW_SURFACE_CUBE && !is_rt)
-      dw[0] |= BRW_SURFACE_CUBEFACE_ENABLES;
+   if (surface_type == GEN6_SURFTYPE_CUBE && !is_rt)
+      dw[0] |= GEN6_SURFACE_DW0_CUBE_FACE_ENABLES__MASK;
 
    dw[1] = layer_offset;
 
@@ -637,21 +637,21 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
     */
    if (tex->interleaved && tex->base.nr_samples > 1) {
       assert(!is_rt);
-      dw[4] |= GEN7_SURFACE_MSFMT_DEPTH_STENCIL;
+      dw[4] |= GEN7_SURFACE_DW4_MSFMT_DEPTH_STENCIL;
    }
    else {
-      dw[4] |= GEN7_SURFACE_MSFMT_MSS;
+      dw[4] |= GEN7_SURFACE_DW4_MSFMT_MSS;
    }
 
    if (tex->base.nr_samples > 4)
-      dw[4] |= GEN7_SURFACE_MULTISAMPLECOUNT_8;
+      dw[4] |= GEN7_SURFACE_DW4_MULTISAMPLECOUNT_8;
    else if (tex->base.nr_samples > 2)
-      dw[4] |= GEN7_SURFACE_MULTISAMPLECOUNT_4;
+      dw[4] |= GEN7_SURFACE_DW4_MULTISAMPLECOUNT_4;
    else
-      dw[4] |= GEN7_SURFACE_MULTISAMPLECOUNT_1;
+      dw[4] |= GEN7_SURFACE_DW4_MULTISAMPLECOUNT_1;
 
-   dw[5] = x_offset << BRW_SURFACE_X_OFFSET_SHIFT |
-           y_offset << BRW_SURFACE_Y_OFFSET_SHIFT |
+   dw[5] = x_offset << GEN6_SURFACE_DW5_X_OFFSET__SHIFT |
+           y_offset << GEN6_SURFACE_DW5_Y_OFFSET__SHIFT |
            SET_FIELD(first_level, GEN7_SURFACE_MIN_LOD) |
            lod;
 
@@ -659,10 +659,10 @@ ilo_gpe_init_view_surface_for_texture_gen7(const struct ilo_dev_info *dev,
    dw[7] = 0;
 
    if (dev->gen >= ILO_GEN(7.5)) {
-      dw[7] |= SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |
-               SET_FIELD(HSW_SCS_GREEN, GEN7_SURFACE_SCS_G) |
-               SET_FIELD(HSW_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
-               SET_FIELD(HSW_SCS_ALPHA, GEN7_SURFACE_SCS_A);
+      dw[7] |= SET_FIELD(GEN75_SCS_RED,   GEN7_SURFACE_SCS_R) |
+               SET_FIELD(GEN75_SCS_GREEN, GEN7_SURFACE_SCS_G) |
+               SET_FIELD(GEN75_SCS_BLUE,  GEN7_SURFACE_SCS_B) |
+               SET_FIELD(GEN75_SCS_ALPHA, GEN7_SURFACE_SCS_A);
    }
 
    /* do not increment reference count */

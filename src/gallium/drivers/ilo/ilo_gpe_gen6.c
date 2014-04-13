@@ -44,25 +44,25 @@ static int
 gen6_translate_pipe_logicop(unsigned logicop)
 {
    switch (logicop) {
-   case PIPE_LOGICOP_CLEAR:         return BRW_LOGICOPFUNCTION_CLEAR;
-   case PIPE_LOGICOP_NOR:           return BRW_LOGICOPFUNCTION_NOR;
-   case PIPE_LOGICOP_AND_INVERTED:  return BRW_LOGICOPFUNCTION_AND_INVERTED;
-   case PIPE_LOGICOP_COPY_INVERTED: return BRW_LOGICOPFUNCTION_COPY_INVERTED;
-   case PIPE_LOGICOP_AND_REVERSE:   return BRW_LOGICOPFUNCTION_AND_REVERSE;
-   case PIPE_LOGICOP_INVERT:        return BRW_LOGICOPFUNCTION_INVERT;
-   case PIPE_LOGICOP_XOR:           return BRW_LOGICOPFUNCTION_XOR;
-   case PIPE_LOGICOP_NAND:          return BRW_LOGICOPFUNCTION_NAND;
-   case PIPE_LOGICOP_AND:           return BRW_LOGICOPFUNCTION_AND;
-   case PIPE_LOGICOP_EQUIV:         return BRW_LOGICOPFUNCTION_EQUIV;
-   case PIPE_LOGICOP_NOOP:          return BRW_LOGICOPFUNCTION_NOOP;
-   case PIPE_LOGICOP_OR_INVERTED:   return BRW_LOGICOPFUNCTION_OR_INVERTED;
-   case PIPE_LOGICOP_COPY:          return BRW_LOGICOPFUNCTION_COPY;
-   case PIPE_LOGICOP_OR_REVERSE:    return BRW_LOGICOPFUNCTION_OR_REVERSE;
-   case PIPE_LOGICOP_OR:            return BRW_LOGICOPFUNCTION_OR;
-   case PIPE_LOGICOP_SET:           return BRW_LOGICOPFUNCTION_SET;
+   case PIPE_LOGICOP_CLEAR:         return GEN6_LOGICOP_CLEAR;
+   case PIPE_LOGICOP_NOR:           return GEN6_LOGICOP_NOR;
+   case PIPE_LOGICOP_AND_INVERTED:  return GEN6_LOGICOP_AND_INVERTED;
+   case PIPE_LOGICOP_COPY_INVERTED: return GEN6_LOGICOP_COPY_INVERTED;
+   case PIPE_LOGICOP_AND_REVERSE:   return GEN6_LOGICOP_AND_REVERSE;
+   case PIPE_LOGICOP_INVERT:        return GEN6_LOGICOP_INVERT;
+   case PIPE_LOGICOP_XOR:           return GEN6_LOGICOP_XOR;
+   case PIPE_LOGICOP_NAND:          return GEN6_LOGICOP_NAND;
+   case PIPE_LOGICOP_AND:           return GEN6_LOGICOP_AND;
+   case PIPE_LOGICOP_EQUIV:         return GEN6_LOGICOP_EQUIV;
+   case PIPE_LOGICOP_NOOP:          return GEN6_LOGICOP_NOOP;
+   case PIPE_LOGICOP_OR_INVERTED:   return GEN6_LOGICOP_OR_INVERTED;
+   case PIPE_LOGICOP_COPY:          return GEN6_LOGICOP_COPY;
+   case PIPE_LOGICOP_OR_REVERSE:    return GEN6_LOGICOP_OR_REVERSE;
+   case PIPE_LOGICOP_OR:            return GEN6_LOGICOP_OR;
+   case PIPE_LOGICOP_SET:           return GEN6_LOGICOP_SET;
    default:
       assert(!"unknown logicop function");
-      return BRW_LOGICOPFUNCTION_CLEAR;
+      return GEN6_LOGICOP_CLEAR;
    }
 }
 
@@ -73,14 +73,14 @@ static int
 gen6_translate_pipe_blend(unsigned blend)
 {
    switch (blend) {
-   case PIPE_BLEND_ADD:                return BRW_BLENDFUNCTION_ADD;
-   case PIPE_BLEND_SUBTRACT:           return BRW_BLENDFUNCTION_SUBTRACT;
-   case PIPE_BLEND_REVERSE_SUBTRACT:   return BRW_BLENDFUNCTION_REVERSE_SUBTRACT;
-   case PIPE_BLEND_MIN:                return BRW_BLENDFUNCTION_MIN;
-   case PIPE_BLEND_MAX:                return BRW_BLENDFUNCTION_MAX;
+   case PIPE_BLEND_ADD:                return GEN6_BLENDFUNCTION_ADD;
+   case PIPE_BLEND_SUBTRACT:           return GEN6_BLENDFUNCTION_SUBTRACT;
+   case PIPE_BLEND_REVERSE_SUBTRACT:   return GEN6_BLENDFUNCTION_REVERSE_SUBTRACT;
+   case PIPE_BLEND_MIN:                return GEN6_BLENDFUNCTION_MIN;
+   case PIPE_BLEND_MAX:                return GEN6_BLENDFUNCTION_MAX;
    default:
       assert(!"unknown blend function");
-      return BRW_BLENDFUNCTION_ADD;
+      return GEN6_BLENDFUNCTION_ADD;
    };
 }
 
@@ -91,28 +91,28 @@ static int
 gen6_translate_pipe_blendfactor(unsigned blendfactor)
 {
    switch (blendfactor) {
-   case PIPE_BLENDFACTOR_ONE:                return BRW_BLENDFACTOR_ONE;
-   case PIPE_BLENDFACTOR_SRC_COLOR:          return BRW_BLENDFACTOR_SRC_COLOR;
-   case PIPE_BLENDFACTOR_SRC_ALPHA:          return BRW_BLENDFACTOR_SRC_ALPHA;
-   case PIPE_BLENDFACTOR_DST_ALPHA:          return BRW_BLENDFACTOR_DST_ALPHA;
-   case PIPE_BLENDFACTOR_DST_COLOR:          return BRW_BLENDFACTOR_DST_COLOR;
-   case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE: return BRW_BLENDFACTOR_SRC_ALPHA_SATURATE;
-   case PIPE_BLENDFACTOR_CONST_COLOR:        return BRW_BLENDFACTOR_CONST_COLOR;
-   case PIPE_BLENDFACTOR_CONST_ALPHA:        return BRW_BLENDFACTOR_CONST_ALPHA;
-   case PIPE_BLENDFACTOR_SRC1_COLOR:         return BRW_BLENDFACTOR_SRC1_COLOR;
-   case PIPE_BLENDFACTOR_SRC1_ALPHA:         return BRW_BLENDFACTOR_SRC1_ALPHA;
-   case PIPE_BLENDFACTOR_ZERO:               return BRW_BLENDFACTOR_ZERO;
-   case PIPE_BLENDFACTOR_INV_SRC_COLOR:      return BRW_BLENDFACTOR_INV_SRC_COLOR;
-   case PIPE_BLENDFACTOR_INV_SRC_ALPHA:      return BRW_BLENDFACTOR_INV_SRC_ALPHA;
-   case PIPE_BLENDFACTOR_INV_DST_ALPHA:      return BRW_BLENDFACTOR_INV_DST_ALPHA;
-   case PIPE_BLENDFACTOR_INV_DST_COLOR:      return BRW_BLENDFACTOR_INV_DST_COLOR;
-   case PIPE_BLENDFACTOR_INV_CONST_COLOR:    return BRW_BLENDFACTOR_INV_CONST_COLOR;
-   case PIPE_BLENDFACTOR_INV_CONST_ALPHA:    return BRW_BLENDFACTOR_INV_CONST_ALPHA;
-   case PIPE_BLENDFACTOR_INV_SRC1_COLOR:     return BRW_BLENDFACTOR_INV_SRC1_COLOR;
-   case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:     return BRW_BLENDFACTOR_INV_SRC1_ALPHA;
+   case PIPE_BLENDFACTOR_ONE:                return GEN6_BLENDFACTOR_ONE;
+   case PIPE_BLENDFACTOR_SRC_COLOR:          return GEN6_BLENDFACTOR_SRC_COLOR;
+   case PIPE_BLENDFACTOR_SRC_ALPHA:          return GEN6_BLENDFACTOR_SRC_ALPHA;
+   case PIPE_BLENDFACTOR_DST_ALPHA:          return GEN6_BLENDFACTOR_DST_ALPHA;
+   case PIPE_BLENDFACTOR_DST_COLOR:          return GEN6_BLENDFACTOR_DST_COLOR;
+   case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE: return GEN6_BLENDFACTOR_SRC_ALPHA_SATURATE;
+   case PIPE_BLENDFACTOR_CONST_COLOR:        return GEN6_BLENDFACTOR_CONST_COLOR;
+   case PIPE_BLENDFACTOR_CONST_ALPHA:        return GEN6_BLENDFACTOR_CONST_ALPHA;
+   case PIPE_BLENDFACTOR_SRC1_COLOR:         return GEN6_BLENDFACTOR_SRC1_COLOR;
+   case PIPE_BLENDFACTOR_SRC1_ALPHA:         return GEN6_BLENDFACTOR_SRC1_ALPHA;
+   case PIPE_BLENDFACTOR_ZERO:               return GEN6_BLENDFACTOR_ZERO;
+   case PIPE_BLENDFACTOR_INV_SRC_COLOR:      return GEN6_BLENDFACTOR_INV_SRC_COLOR;
+   case PIPE_BLENDFACTOR_INV_SRC_ALPHA:      return GEN6_BLENDFACTOR_INV_SRC_ALPHA;
+   case PIPE_BLENDFACTOR_INV_DST_ALPHA:      return GEN6_BLENDFACTOR_INV_DST_ALPHA;
+   case PIPE_BLENDFACTOR_INV_DST_COLOR:      return GEN6_BLENDFACTOR_INV_DST_COLOR;
+   case PIPE_BLENDFACTOR_INV_CONST_COLOR:    return GEN6_BLENDFACTOR_INV_CONST_COLOR;
+   case PIPE_BLENDFACTOR_INV_CONST_ALPHA:    return GEN6_BLENDFACTOR_INV_CONST_ALPHA;
+   case PIPE_BLENDFACTOR_INV_SRC1_COLOR:     return GEN6_BLENDFACTOR_INV_SRC1_COLOR;
+   case PIPE_BLENDFACTOR_INV_SRC1_ALPHA:     return GEN6_BLENDFACTOR_INV_SRC1_ALPHA;
    default:
       assert(!"unknown blend factor");
-      return BRW_BLENDFACTOR_ONE;
+      return GEN6_BLENDFACTOR_ONE;
    };
 }
 
@@ -123,17 +123,17 @@ static int
 gen6_translate_pipe_stencil_op(unsigned stencil_op)
 {
    switch (stencil_op) {
-   case PIPE_STENCIL_OP_KEEP:       return BRW_STENCILOP_KEEP;
-   case PIPE_STENCIL_OP_ZERO:       return BRW_STENCILOP_ZERO;
-   case PIPE_STENCIL_OP_REPLACE:    return BRW_STENCILOP_REPLACE;
-   case PIPE_STENCIL_OP_INCR:       return BRW_STENCILOP_INCRSAT;
-   case PIPE_STENCIL_OP_DECR:       return BRW_STENCILOP_DECRSAT;
-   case PIPE_STENCIL_OP_INCR_WRAP:  return BRW_STENCILOP_INCR;
-   case PIPE_STENCIL_OP_DECR_WRAP:  return BRW_STENCILOP_DECR;
-   case PIPE_STENCIL_OP_INVERT:     return BRW_STENCILOP_INVERT;
+   case PIPE_STENCIL_OP_KEEP:       return GEN6_STENCILOP_KEEP;
+   case PIPE_STENCIL_OP_ZERO:       return GEN6_STENCILOP_ZERO;
+   case PIPE_STENCIL_OP_REPLACE:    return GEN6_STENCILOP_REPLACE;
+   case PIPE_STENCIL_OP_INCR:       return GEN6_STENCILOP_INCRSAT;
+   case PIPE_STENCIL_OP_DECR:       return GEN6_STENCILOP_DECRSAT;
+   case PIPE_STENCIL_OP_INCR_WRAP:  return GEN6_STENCILOP_INCR;
+   case PIPE_STENCIL_OP_DECR_WRAP:  return GEN6_STENCILOP_DECR;
+   case PIPE_STENCIL_OP_INVERT:     return GEN6_STENCILOP_INVERT;
    default:
       assert(!"unknown stencil op");
-      return BRW_STENCILOP_KEEP;
+      return GEN6_STENCILOP_KEEP;
    }
 }
 
@@ -144,12 +144,12 @@ static int
 gen6_translate_tex_mipfilter(unsigned filter)
 {
    switch (filter) {
-   case PIPE_TEX_MIPFILTER_NEAREST: return BRW_MIPFILTER_NEAREST;
-   case PIPE_TEX_MIPFILTER_LINEAR:  return BRW_MIPFILTER_LINEAR;
-   case PIPE_TEX_MIPFILTER_NONE:    return BRW_MIPFILTER_NONE;
+   case PIPE_TEX_MIPFILTER_NEAREST: return GEN6_MIPFILTER_NEAREST;
+   case PIPE_TEX_MIPFILTER_LINEAR:  return GEN6_MIPFILTER_LINEAR;
+   case PIPE_TEX_MIPFILTER_NONE:    return GEN6_MIPFILTER_NONE;
    default:
       assert(!"unknown mipfilter");
-      return BRW_MIPFILTER_NONE;
+      return GEN6_MIPFILTER_NONE;
    }
 }
 
@@ -160,11 +160,11 @@ static int
 gen6_translate_tex_filter(unsigned filter)
 {
    switch (filter) {
-   case PIPE_TEX_FILTER_NEAREST: return BRW_MAPFILTER_NEAREST;
-   case PIPE_TEX_FILTER_LINEAR:  return BRW_MAPFILTER_LINEAR;
+   case PIPE_TEX_FILTER_NEAREST: return GEN6_MAPFILTER_NEAREST;
+   case PIPE_TEX_FILTER_LINEAR:  return GEN6_MAPFILTER_LINEAR;
    default:
       assert(!"unknown sampler filter");
-      return BRW_MAPFILTER_NEAREST;
+      return GEN6_MAPFILTER_NEAREST;
    }
 }
 
@@ -182,17 +182,17 @@ gen6_translate_tex_wrap(unsigned wrap, bool clamp_to_edge)
    }
 
    switch (wrap) {
-   case PIPE_TEX_WRAP_REPEAT:             return BRW_TEXCOORDMODE_WRAP;
-   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:      return BRW_TEXCOORDMODE_CLAMP;
-   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:    return BRW_TEXCOORDMODE_CLAMP_BORDER;
-   case PIPE_TEX_WRAP_MIRROR_REPEAT:      return BRW_TEXCOORDMODE_MIRROR;
+   case PIPE_TEX_WRAP_REPEAT:             return GEN6_TEXCOORDMODE_WRAP;
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:      return GEN6_TEXCOORDMODE_CLAMP;
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:    return GEN6_TEXCOORDMODE_CLAMP_BORDER;
+   case PIPE_TEX_WRAP_MIRROR_REPEAT:      return GEN6_TEXCOORDMODE_MIRROR;
    case PIPE_TEX_WRAP_CLAMP:
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
    default:
       assert(!"unknown sampler wrap mode");
-      return BRW_TEXCOORDMODE_WRAP;
+      return GEN6_TEXCOORDMODE_WRAP;
    }
 }
 
@@ -207,21 +207,21 @@ gen6_translate_shadow_func(unsigned func)
     * For PIPE_FUNC_x, the reference value is on the left-hand side of the
     * comparison, and 1.0 is returned when the comparison is true.
     *
-    * For BRW_PREFILTER_x, the reference value is on the right-hand side of
+    * For GEN6_COMPAREFUNCTION_x, the reference value is on the right-hand side of
     * the comparison, and 0.0 is returned when the comparison is true.
     */
    switch (func) {
-   case PIPE_FUNC_NEVER:      return BRW_PREFILTER_ALWAYS;
-   case PIPE_FUNC_LESS:       return BRW_PREFILTER_LEQUAL;
-   case PIPE_FUNC_EQUAL:      return BRW_PREFILTER_NOTEQUAL;
-   case PIPE_FUNC_LEQUAL:     return BRW_PREFILTER_LESS;
-   case PIPE_FUNC_GREATER:    return BRW_PREFILTER_GEQUAL;
-   case PIPE_FUNC_NOTEQUAL:   return BRW_PREFILTER_EQUAL;
-   case PIPE_FUNC_GEQUAL:     return BRW_PREFILTER_GREATER;
-   case PIPE_FUNC_ALWAYS:     return BRW_PREFILTER_NEVER;
+   case PIPE_FUNC_NEVER:      return GEN6_COMPAREFUNCTION_ALWAYS;
+   case PIPE_FUNC_LESS:       return GEN6_COMPAREFUNCTION_LEQUAL;
+   case PIPE_FUNC_EQUAL:      return GEN6_COMPAREFUNCTION_NOTEQUAL;
+   case PIPE_FUNC_LEQUAL:     return GEN6_COMPAREFUNCTION_LESS;
+   case PIPE_FUNC_GREATER:    return GEN6_COMPAREFUNCTION_GEQUAL;
+   case PIPE_FUNC_NOTEQUAL:   return GEN6_COMPAREFUNCTION_EQUAL;
+   case PIPE_FUNC_GEQUAL:     return GEN6_COMPAREFUNCTION_GREATER;
+   case PIPE_FUNC_ALWAYS:     return GEN6_COMPAREFUNCTION_NEVER;
    default:
       assert(!"unknown shadow compare function");
-      return BRW_PREFILTER_NEVER;
+      return GEN6_COMPAREFUNCTION_NEVER;
    }
 }
 
@@ -233,17 +233,17 @@ static int
 gen6_translate_dsa_func(unsigned func)
 {
    switch (func) {
-   case PIPE_FUNC_NEVER:      return BRW_COMPAREFUNCTION_NEVER;
-   case PIPE_FUNC_LESS:       return BRW_COMPAREFUNCTION_LESS;
-   case PIPE_FUNC_EQUAL:      return BRW_COMPAREFUNCTION_EQUAL;
-   case PIPE_FUNC_LEQUAL:     return BRW_COMPAREFUNCTION_LEQUAL;
-   case PIPE_FUNC_GREATER:    return BRW_COMPAREFUNCTION_GREATER;
-   case PIPE_FUNC_NOTEQUAL:   return BRW_COMPAREFUNCTION_NOTEQUAL;
-   case PIPE_FUNC_GEQUAL:     return BRW_COMPAREFUNCTION_GEQUAL;
-   case PIPE_FUNC_ALWAYS:     return BRW_COMPAREFUNCTION_ALWAYS;
+   case PIPE_FUNC_NEVER:      return GEN6_COMPAREFUNCTION_NEVER;
+   case PIPE_FUNC_LESS:       return GEN6_COMPAREFUNCTION_LESS;
+   case PIPE_FUNC_EQUAL:      return GEN6_COMPAREFUNCTION_EQUAL;
+   case PIPE_FUNC_LEQUAL:     return GEN6_COMPAREFUNCTION_LEQUAL;
+   case PIPE_FUNC_GREATER:    return GEN6_COMPAREFUNCTION_GREATER;
+   case PIPE_FUNC_NOTEQUAL:   return GEN6_COMPAREFUNCTION_NOTEQUAL;
+   case PIPE_FUNC_GEQUAL:     return GEN6_COMPAREFUNCTION_GEQUAL;
+   case PIPE_FUNC_ALWAYS:     return GEN6_COMPAREFUNCTION_ALWAYS;
    default:
       assert(!"unknown depth/stencil/alpha test function");
-      return BRW_COMPAREFUNCTION_NEVER;
+      return GEN6_COMPAREFUNCTION_NEVER;
    }
 }
 
@@ -254,37 +254,37 @@ ve_init_cso(const struct ilo_dev_info *dev,
             struct ilo_ve_cso *cso)
 {
    int comp[4] = {
-      BRW_VE1_COMPONENT_STORE_SRC,
-      BRW_VE1_COMPONENT_STORE_SRC,
-      BRW_VE1_COMPONENT_STORE_SRC,
-      BRW_VE1_COMPONENT_STORE_SRC,
+      GEN6_VFCOMP_STORE_SRC,
+      GEN6_VFCOMP_STORE_SRC,
+      GEN6_VFCOMP_STORE_SRC,
+      GEN6_VFCOMP_STORE_SRC,
    };
    int format;
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
    switch (util_format_get_nr_components(state->src_format)) {
-   case 1: comp[1] = BRW_VE1_COMPONENT_STORE_0;
-   case 2: comp[2] = BRW_VE1_COMPONENT_STORE_0;
+   case 1: comp[1] = GEN6_VFCOMP_STORE_0;
+   case 2: comp[2] = GEN6_VFCOMP_STORE_0;
    case 3: comp[3] = (util_format_is_pure_integer(state->src_format)) ?
-                     BRW_VE1_COMPONENT_STORE_1_INT :
-                     BRW_VE1_COMPONENT_STORE_1_FLT;
+                     GEN6_VFCOMP_STORE_1_INT :
+                     GEN6_VFCOMP_STORE_1_FP;
    }
 
    format = ilo_translate_vertex_format(state->src_format);
 
    STATIC_ASSERT(Elements(cso->payload) >= 2);
    cso->payload[0] =
-      vb_index << GEN6_VE0_INDEX_SHIFT |
-      GEN6_VE0_VALID |
-      format << BRW_VE0_FORMAT_SHIFT |
-      state->src_offset << BRW_VE0_SRC_OFFSET_SHIFT;
+      vb_index << GEN6_VE_STATE_DW0_VB_INDEX__SHIFT |
+      GEN6_VE_STATE_DW0_VALID |
+      format << GEN6_VE_STATE_DW0_FORMAT__SHIFT |
+      state->src_offset << GEN6_VE_STATE_DW0_VB_OFFSET__SHIFT;
 
    cso->payload[1] =
-         comp[0] << BRW_VE1_COMPONENT_0_SHIFT |
-         comp[1] << BRW_VE1_COMPONENT_1_SHIFT |
-         comp[2] << BRW_VE1_COMPONENT_2_SHIFT |
-         comp[3] << BRW_VE1_COMPONENT_3_SHIFT;
+         comp[0] << GEN6_VE_STATE_DW1_COMP0__SHIFT |
+         comp[1] << GEN6_VE_STATE_DW1_COMP1__SHIFT |
+         comp[2] << GEN6_VE_STATE_DW1_COMP2__SHIFT |
+         comp[3] << GEN6_VE_STATE_DW1_COMP3__SHIFT;
 }
 
 void
@@ -384,19 +384,19 @@ ilo_gpe_init_vs_cso(const struct ilo_dev_info *dev,
       break;
    }
 
-   dw2 = (true) ? 0 : GEN6_VS_FLOATING_POINT_MODE_ALT;
+   dw2 = (true) ? 0 : GEN6_THREADDISP_FP_MODE_ALT;
 
-   dw4 = start_grf << GEN6_VS_DISPATCH_START_GRF_SHIFT |
-         vue_read_len << GEN6_VS_URB_READ_LENGTH_SHIFT |
-         0 << GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT;
+   dw4 = start_grf << GEN6_VS_DW4_URB_GRF_START__SHIFT |
+         vue_read_len << GEN6_VS_DW4_URB_READ_LEN__SHIFT |
+         0 << GEN6_VS_DW4_URB_READ_OFFSET__SHIFT;
 
-   dw5 = GEN6_VS_STATISTICS_ENABLE |
-         GEN6_VS_ENABLE;
+   dw5 = GEN6_VS_DW5_STATISTICS |
+         GEN6_VS_DW5_VS_ENABLE;
 
    if (dev->gen >= ILO_GEN(7.5))
-      dw5 |= (max_threads - 1) << HSW_VS_MAX_THREADS_SHIFT;
+      dw5 |= (max_threads - 1) << GEN75_VS_DW5_MAX_THREADS__SHIFT;
    else
-      dw5 |= (max_threads - 1) << GEN6_VS_MAX_THREADS_SHIFT;
+      dw5 |= (max_threads - 1) << GEN6_VS_DW5_MAX_THREADS__SHIFT;
 
    STATIC_ASSERT(Elements(cso->payload) >= 3);
    cso->payload[0] = dw2;
@@ -466,16 +466,16 @@ ilo_gpe_init_gs_cso_gen6(const struct ilo_dev_info *dev,
       max_threads = 21;
    }
 
-   dw2 = GEN6_GS_SPF_MODE;
+   dw2 = GEN6_THREADDISP_SPF;
 
-   dw4 = vue_read_len << GEN6_GS_URB_READ_LENGTH_SHIFT |
-         0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT |
-         start_grf << GEN6_GS_DISPATCH_START_GRF_SHIFT;
+   dw4 = vue_read_len << GEN6_GS_DW4_URB_READ_LEN__SHIFT |
+         0 << GEN6_GS_DW4_URB_READ_OFFSET__SHIFT |
+         start_grf << GEN6_GS_DW4_URB_GRF_START__SHIFT;
 
-   dw5 = (max_threads - 1) << GEN6_GS_MAX_THREADS_SHIFT |
-         GEN6_GS_STATISTICS_ENABLE |
-         GEN6_GS_SO_STATISTICS_ENABLE |
-         GEN6_GS_RENDERING_ENABLE;
+   dw5 = (max_threads - 1) << GEN6_GS_DW5_MAX_THREADS__SHIFT |
+         GEN6_GS_DW5_STATISTICS |
+         GEN6_GS_DW5_SO_STATISTICS |
+         GEN6_GS_DW5_RENDER_ENABLE;
 
    /*
     * we cannot make use of GEN6_GS_REORDER because it will reorder
@@ -483,19 +483,19 @@ ilo_gpe_init_gs_cso_gen6(const struct ilo_dev_info *dev,
     * (2N+1, 2N+3, 2N+2)), instead of GL rules (triangle 2N+1 uses vertices
     * (2N+2, 2N+1, 2N+3)).
     */
-   dw6 = GEN6_GS_ENABLE;
+   dw6 = GEN6_GS_DW6_GS_ENABLE;
 
    if (ilo_shader_get_kernel_param(gs, ILO_KERNEL_GS_DISCARD_ADJACENCY))
-      dw6 |= GEN6_GS_DISCARD_ADJACENCY;
+      dw6 |= GEN6_GS_DW6_DISCARD_ADJACENCY;
 
    if (ilo_shader_get_kernel_param(gs, ILO_KERNEL_VS_GEN6_SO)) {
       const uint32_t svbi_post_inc =
          ilo_shader_get_kernel_param(gs, ILO_KERNEL_GS_GEN6_SVBI_POST_INC);
 
-      dw6 |= GEN6_GS_SVBI_PAYLOAD_ENABLE;
+      dw6 |= GEN6_GS_DW6_SVBI_PAYLOAD_ENABLE;
       if (svbi_post_inc) {
-         dw6 |= GEN6_GS_SVBI_POSTINCREMENT_ENABLE |
-                svbi_post_inc << GEN6_GS_SVBI_POSTINCREMENT_VALUE_SHIFT;
+         dw6 |= GEN6_GS_DW6_SVBI_POST_INC_ENABLE |
+                svbi_post_inc << GEN6_GS_DW6_SVBI_POST_INC_VAL__SHIFT;
       }
    }
 
@@ -515,7 +515,7 @@ ilo_gpe_init_rasterizer_clip(const struct ilo_dev_info *dev,
 
    ILO_GPE_VALID_GEN(dev, 6, 7.5);
 
-   dw1 = GEN6_CLIP_STATISTICS_ENABLE;
+   dw1 = GEN6_CLIP_DW1_STATISTICS;
 
    if (dev->gen >= ILO_GEN(7)) {
       /*
@@ -528,53 +528,53 @@ ilo_gpe_init_rasterizer_clip(const struct ilo_dev_info *dev,
        * What does this mean?
        */
       dw1 |= 0 << 19 |
-             GEN7_CLIP_EARLY_CULL;
+             GEN7_CLIP_DW1_EARLY_CULL_ENABLE;
 
       if (state->front_ccw)
-         dw1 |= GEN7_CLIP_WINDING_CCW;
+         dw1 |= GEN7_CLIP_DW1_FRONTWINDING_CCW;
 
       switch (state->cull_face) {
       case PIPE_FACE_NONE:
-         dw1 |= GEN7_CLIP_CULLMODE_NONE;
+         dw1 |= GEN7_CLIP_DW1_CULLMODE_NONE;
          break;
       case PIPE_FACE_FRONT:
-         dw1 |= GEN7_CLIP_CULLMODE_FRONT;
+         dw1 |= GEN7_CLIP_DW1_CULLMODE_FRONT;
          break;
       case PIPE_FACE_BACK:
-         dw1 |= GEN7_CLIP_CULLMODE_BACK;
+         dw1 |= GEN7_CLIP_DW1_CULLMODE_BACK;
          break;
       case PIPE_FACE_FRONT_AND_BACK:
-         dw1 |= GEN7_CLIP_CULLMODE_BOTH;
+         dw1 |= GEN7_CLIP_DW1_CULLMODE_BOTH;
          break;
       }
    }
 
-   dw2 = GEN6_CLIP_ENABLE |
-         GEN6_CLIP_XY_TEST |
-         state->clip_plane_enable << GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT |
-         GEN6_CLIP_MODE_NORMAL;
+   dw2 = GEN6_CLIP_DW2_CLIP_ENABLE |
+         GEN6_CLIP_DW2_XY_TEST_ENABLE |
+         state->clip_plane_enable << GEN6_CLIP_DW2_UCP_CLIP_ENABLES__SHIFT |
+         GEN6_CLIP_DW2_CLIPMODE_NORMAL;
 
    if (state->clip_halfz)
-      dw2 |= GEN6_CLIP_API_D3D;
+      dw2 |= GEN6_CLIP_DW2_APIMODE_D3D;
    else
-      dw2 |= GEN6_CLIP_API_OGL;
+      dw2 |= GEN6_CLIP_DW2_APIMODE_OGL;
 
    if (state->depth_clip)
-      dw2 |= GEN6_CLIP_Z_TEST;
+      dw2 |= GEN6_CLIP_DW2_Z_TEST_ENABLE;
 
    if (state->flatshade_first) {
-      dw2 |= 0 << GEN6_CLIP_TRI_PROVOKE_SHIFT |
-             0 << GEN6_CLIP_LINE_PROVOKE_SHIFT |
-             1 << GEN6_CLIP_TRIFAN_PROVOKE_SHIFT;
+      dw2 |= 0 << GEN6_CLIP_DW2_TRI_PROVOKE__SHIFT |
+             0 << GEN6_CLIP_DW2_LINE_PROVOKE__SHIFT |
+             1 << GEN6_CLIP_DW2_TRIFAN_PROVOKE__SHIFT;
    }
    else {
-      dw2 |= 2 << GEN6_CLIP_TRI_PROVOKE_SHIFT |
-             1 << GEN6_CLIP_LINE_PROVOKE_SHIFT |
-             2 << GEN6_CLIP_TRIFAN_PROVOKE_SHIFT;
+      dw2 |= 2 << GEN6_CLIP_DW2_TRI_PROVOKE__SHIFT |
+             1 << GEN6_CLIP_DW2_LINE_PROVOKE__SHIFT |
+             2 << GEN6_CLIP_DW2_TRIFAN_PROVOKE__SHIFT;
    }
 
-   dw3 = 0x1 << GEN6_CLIP_MIN_POINT_WIDTH_SHIFT |
-         0x7ff << GEN6_CLIP_MAX_POINT_WIDTH_SHIFT;
+   dw3 = 0x1 << GEN6_CLIP_DW3_MIN_POINT_WIDTH__SHIFT |
+         0x7ff << GEN6_CLIP_DW3_MAX_POINT_WIDTH__SHIFT;
 
    clip->payload[0] = dw1;
    clip->payload[1] = dw2;
@@ -622,8 +622,8 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
     *      should be cleared if clipping is disabled or Statistics Enable in
     *      CLIP_STATE is clear."
     */
-   dw1 = GEN6_SF_STATISTICS_ENABLE |
-         GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
+   dw1 = GEN7_SF_DW1_STATISTICS |
+         GEN7_SF_DW1_VIEWPORT_ENABLE;
 
    /* XXX GEN6 path seems to work fine for GEN7 */
    if (false && dev->gen >= ILO_GEN(7)) {
@@ -638,11 +638,11 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
        */
       if (state->offset_tri || state->offset_line || state->offset_point) {
          /* XXX need to scale offset_const according to the depth format */
-         dw1 |= GEN6_SF_LEGACY_GLOBAL_DEPTH_BIAS;
+         dw1 |= GEN7_SF_DW1_LEGACY_DEPTH_OFFSET;
 
-         dw1 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_SOLID |
-                GEN6_SF_GLOBAL_DEPTH_OFFSET_WIREFRAME |
-                GEN6_SF_GLOBAL_DEPTH_OFFSET_POINT;
+         dw1 |= GEN7_SF_DW1_DEPTH_OFFSET_SOLID |
+                GEN7_SF_DW1_DEPTH_OFFSET_WIREFRAME |
+                GEN7_SF_DW1_DEPTH_OFFSET_POINT;
       }
       else {
          offset_const = 0.0f;
@@ -652,39 +652,39 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
    }
    else {
       if (state->offset_tri)
-         dw1 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_SOLID;
+         dw1 |= GEN7_SF_DW1_DEPTH_OFFSET_SOLID;
       if (state->offset_line)
-         dw1 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_WIREFRAME;
+         dw1 |= GEN7_SF_DW1_DEPTH_OFFSET_WIREFRAME;
       if (state->offset_point)
-         dw1 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_POINT;
+         dw1 |= GEN7_SF_DW1_DEPTH_OFFSET_POINT;
    }
 
    switch (state->fill_front) {
    case PIPE_POLYGON_MODE_FILL:
-      dw1 |= GEN6_SF_FRONT_SOLID;
+      dw1 |= GEN7_SF_DW1_FRONTFACE_SOLID;
       break;
    case PIPE_POLYGON_MODE_LINE:
-      dw1 |= GEN6_SF_FRONT_WIREFRAME;
+      dw1 |= GEN7_SF_DW1_FRONTFACE_WIREFRAME;
       break;
    case PIPE_POLYGON_MODE_POINT:
-      dw1 |= GEN6_SF_FRONT_POINT;
+      dw1 |= GEN7_SF_DW1_FRONTFACE_POINT;
       break;
    }
 
    switch (state->fill_back) {
    case PIPE_POLYGON_MODE_FILL:
-      dw1 |= GEN6_SF_BACK_SOLID;
+      dw1 |= GEN7_SF_DW1_BACKFACE_SOLID;
       break;
    case PIPE_POLYGON_MODE_LINE:
-      dw1 |= GEN6_SF_BACK_WIREFRAME;
+      dw1 |= GEN7_SF_DW1_BACKFACE_WIREFRAME;
       break;
    case PIPE_POLYGON_MODE_POINT:
-      dw1 |= GEN6_SF_BACK_POINT;
+      dw1 |= GEN7_SF_DW1_BACKFACE_POINT;
       break;
    }
 
    if (state->front_ccw)
-      dw1 |= GEN6_SF_WINDING_CCW;
+      dw1 |= GEN7_SF_DW1_FRONTWINDING_CCW;
 
    dw2 = 0;
 
@@ -702,22 +702,22 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
        *
        * TODO We do not check those yet.
        */
-      dw2 |= GEN6_SF_LINE_AA_ENABLE |
-             GEN6_SF_LINE_END_CAP_WIDTH_1_0;
+      dw2 |= GEN7_SF_DW2_AA_LINE_ENABLE |
+             GEN7_SF_DW2_AA_LINE_CAP_1_0;
    }
 
    switch (state->cull_face) {
    case PIPE_FACE_NONE:
-      dw2 |= GEN6_SF_CULL_NONE;
+      dw2 |= GEN7_SF_DW2_CULLMODE_NONE;
       break;
    case PIPE_FACE_FRONT:
-      dw2 |= GEN6_SF_CULL_FRONT;
+      dw2 |= GEN7_SF_DW2_CULLMODE_FRONT;
       break;
    case PIPE_FACE_BACK:
-      dw2 |= GEN6_SF_CULL_BACK;
+      dw2 |= GEN7_SF_DW2_CULLMODE_BACK;
       break;
    case PIPE_FACE_FRONT_AND_BACK:
-      dw2 |= GEN6_SF_CULL_BOTH;
+      dw2 |= GEN7_SF_DW2_CULLMODE_BOTH;
       break;
    }
 
@@ -738,33 +738,33 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
       line_width = 0;
    }
 
-   dw2 |= line_width << GEN6_SF_LINE_WIDTH_SHIFT;
+   dw2 |= line_width << GEN7_SF_DW2_LINE_WIDTH__SHIFT;
 
    if (dev->gen >= ILO_GEN(7.5) && state->line_stipple_enable)
-      dw2 |= HSW_SF_LINE_STIPPLE_ENABLE;
+      dw2 |= GEN75_SF_DW2_LINE_STIPPLE_ENABLE;
 
    if (state->scissor)
-      dw2 |= GEN6_SF_SCISSOR_ENABLE;
+      dw2 |= GEN7_SF_DW2_SCISSOR_ENABLE;
 
-   dw3 = GEN6_SF_LINE_AA_MODE_TRUE |
-         GEN6_SF_VERTEX_SUBPIXEL_8BITS;
+   dw3 = GEN7_SF_DW3_TRUE_AA_LINE_DISTANCE |
+         GEN7_SF_DW3_SUBPIXEL_8BITS;
 
    if (state->line_last_pixel)
       dw3 |= 1 << 31;
 
    if (state->flatshade_first) {
-      dw3 |= 0 << GEN6_SF_TRI_PROVOKE_SHIFT |
-             0 << GEN6_SF_LINE_PROVOKE_SHIFT |
-             1 << GEN6_SF_TRIFAN_PROVOKE_SHIFT;
+      dw3 |= 0 << GEN7_SF_DW3_TRI_PROVOKE__SHIFT |
+             0 << GEN7_SF_DW3_LINE_PROVOKE__SHIFT |
+             1 << GEN7_SF_DW3_TRIFAN_PROVOKE__SHIFT;
    }
    else {
-      dw3 |= 2 << GEN6_SF_TRI_PROVOKE_SHIFT |
-             1 << GEN6_SF_LINE_PROVOKE_SHIFT |
-             2 << GEN6_SF_TRIFAN_PROVOKE_SHIFT;
+      dw3 |= 2 << GEN7_SF_DW3_TRI_PROVOKE__SHIFT |
+             1 << GEN7_SF_DW3_LINE_PROVOKE__SHIFT |
+             2 << GEN7_SF_DW3_TRIFAN_PROVOKE__SHIFT;
    }
 
    if (!state->point_size_per_vertex)
-      dw3 |= GEN6_SF_USE_STATE_POINT_WIDTH;
+      dw3 |= GEN7_SF_DW3_USE_POINT_WIDTH;
 
    /* in U8.3 */
    point_width = (int) (state->point_size * 8.0f + 0.5f);
@@ -781,7 +781,7 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
    sf->payload[5] = fui(offset_clamp);
 
    if (state->multisample) {
-      sf->dw_msaa = GEN6_SF_MSRAST_ON_PATTERN;
+      sf->dw_msaa = GEN7_SF_DW2_MSRASTMODE_ON_PATTERN;
 
       /*
        * From the Sandy Bridge PRM, volume 2 part 1, page 251:
@@ -793,7 +793,7 @@ ilo_gpe_init_rasterizer_sf(const struct ilo_dev_info *dev,
       if (!line_width) {
          line_width = 128; /* 1.0f */
 
-         sf->dw_msaa |= line_width << GEN6_SF_LINE_WIDTH_SHIFT;
+         sf->dw_msaa |= line_width << GEN7_SF_DW2_LINE_WIDTH__SHIFT;
       }
    }
    else {
@@ -812,23 +812,23 @@ ilo_gpe_init_rasterizer_wm_gen6(const struct ilo_dev_info *dev,
 
    /* only the FF unit states are set, as in GEN7 */
 
-   dw5 = GEN6_WM_LINE_AA_WIDTH_2_0;
+   dw5 = GEN6_WM_DW5_AA_LINE_WIDTH_2_0;
 
    /* same value as in 3DSTATE_SF */
    if (state->line_smooth)
-      dw5 |= GEN6_WM_LINE_END_CAP_AA_WIDTH_1_0;
+      dw5 |= GEN6_WM_DW5_AA_LINE_CAP_1_0;
 
    if (state->poly_stipple_enable)
-      dw5 |= GEN6_WM_POLYGON_STIPPLE_ENABLE;
+      dw5 |= GEN6_WM_DW5_POLY_STIPPLE_ENABLE;
    if (state->line_stipple_enable)
-      dw5 |= GEN6_WM_LINE_STIPPLE_ENABLE;
+      dw5 |= GEN6_WM_DW5_LINE_STIPPLE_ENABLE;
 
-   dw6 = GEN6_WM_POSITION_ZW_PIXEL |
-         GEN6_WM_MSRAST_OFF_PIXEL |
-         GEN6_WM_MSDISPMODE_PERSAMPLE;
+   dw6 = GEN6_WM_DW6_ZW_INTERP_PIXEL |
+         GEN6_WM_DW6_MSRASTMODE_OFF_PIXEL |
+         GEN6_WM_DW6_MSDISPMODE_PERSAMPLE;
 
    if (state->bottom_edge_rule)
-      dw6 |= GEN6_WM_POINT_RASTRULE_UPPER_RIGHT;
+      dw6 |= GEN6_WM_DW6_POINT_RASTRULE_UPPER_RIGHT;
 
    /*
     * assertion that makes sure
@@ -837,12 +837,12 @@ ilo_gpe_init_rasterizer_wm_gen6(const struct ilo_dev_info *dev,
     *
     * is valid
     */
-   STATIC_ASSERT(GEN6_WM_MSRAST_OFF_PIXEL == 0 &&
-                 GEN6_WM_MSDISPMODE_PERSAMPLE == 0);
+   STATIC_ASSERT(GEN6_WM_DW6_MSRASTMODE_OFF_PIXEL == 0 &&
+                 GEN6_WM_DW6_MSDISPMODE_PERSAMPLE == 0);
 
    wm->dw_msaa_rast =
-      (state->multisample) ? GEN6_WM_MSRAST_ON_PATTERN : 0;
-   wm->dw_msaa_disp = GEN6_WM_MSDISPMODE_PERPIXEL;
+      (state->multisample) ? GEN6_WM_DW6_MSRASTMODE_ON_PATTERN : 0;
+   wm->dw_msaa_disp = GEN6_WM_DW6_MSDISPMODE_PERPIXEL;
 
    STATIC_ASSERT(Elements(wm->payload) >= 2);
    wm->payload[0] = dw5;
@@ -867,13 +867,13 @@ ilo_gpe_init_fs_cso_gen6(const struct ilo_dev_info *dev,
    /* see brwCreateContext() */
    max_threads = (dev->gt == 2) ? 80 : 40;
 
-   dw2 = (true) ? 0 : GEN6_WM_FLOATING_POINT_MODE_ALT;
+   dw2 = (true) ? 0 : GEN6_THREADDISP_FP_MODE_ALT;
 
-   dw4 = start_grf << GEN6_WM_DISPATCH_START_GRF_SHIFT_0 |
-         0 << GEN6_WM_DISPATCH_START_GRF_SHIFT_1 |
-         0 << GEN6_WM_DISPATCH_START_GRF_SHIFT_2;
+   dw4 = start_grf << GEN6_WM_DW4_URB_GRF_START0__SHIFT |
+         0 << GEN6_WM_DW4_URB_GRF_START1__SHIFT |
+         0 << GEN6_WM_DW4_URB_GRF_START2__SHIFT;
 
-   dw5 = (max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
+   dw5 = (max_threads - 1) << GEN6_WM_DW5_MAX_THREADS__SHIFT;
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 275:
@@ -901,7 +901,7 @@ ilo_gpe_init_fs_cso_gen6(const struct ilo_dev_info *dev,
     *      ENABLE this bit due to ClipDistance clipping."
     */
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_USE_KILL))
-      dw5 |= GEN6_WM_KILL_ENABLE;
+      dw5 |= GEN6_WM_DW5_PS_KILL;
 
    /*
     * From the Sandy Bridge PRM, volume 2 part 1, page 275:
@@ -912,13 +912,13 @@ ilo_gpe_init_fs_cso_gen6(const struct ilo_dev_info *dev,
     * TODO This is not checked yet.
     */
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_OUTPUT_Z))
-      dw5 |= GEN6_WM_COMPUTED_DEPTH;
+      dw5 |= GEN6_WM_DW5_PS_COMPUTE_DEPTH;
 
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_INPUT_Z))
-      dw5 |= GEN6_WM_USES_SOURCE_DEPTH;
+      dw5 |= GEN6_WM_DW5_PS_USE_DEPTH;
 
    if (ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_INPUT_W))
-      dw5 |= GEN6_WM_USES_SOURCE_W;
+      dw5 |= GEN6_WM_DW5_PS_USE_W;
 
    /*
     * TODO set this bit only when
@@ -928,14 +928,14 @@ ilo_gpe_init_fs_cso_gen6(const struct ilo_dev_info *dev,
     *  c) fs or cc kills
     */
    if (true)
-      dw5 |= GEN6_WM_DISPATCH_ENABLE;
+      dw5 |= GEN6_WM_DW5_PS_ENABLE;
 
    assert(!ilo_shader_get_kernel_param(fs, ILO_KERNEL_FS_DISPATCH_16_OFFSET));
-   dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
+   dw5 |= GEN6_WM_DW5_8_PIXEL_DISPATCH;
 
-   dw6 = input_count << GEN6_WM_NUM_SF_OUTPUTS_SHIFT |
-         GEN6_WM_POSOFFSET_NONE |
-         interps << GEN6_WM_BARYCENTRIC_INTERPOLATION_MODE_SHIFT;
+   dw6 = input_count << GEN6_WM_DW6_SF_ATTR_COUNT__SHIFT |
+         GEN6_WM_DW6_POSOFFSET_NONE |
+         interps << GEN6_WM_DW6_BARYCENTRIC_INTERP__SHIFT;
 
    STATIC_ASSERT(Elements(cso->payload) >= 4);
    cso->payload[0] = dw2;
@@ -968,8 +968,8 @@ zs_init_info_null(const struct ilo_dev_info *dev,
 
    memset(info, 0, sizeof(*info));
 
-   info->surface_type = BRW_SURFACE_NULL;
-   info->format = BRW_DEPTHFORMAT_D32_FLOAT;
+   info->surface_type = GEN6_SURFTYPE_NULL;
+   info->format = GEN6_ZFORMAT_D32_FLOAT;
    info->width = 1;
    info->height = 1;
    info->depth = 1;
@@ -992,7 +992,7 @@ zs_init_info(const struct ilo_dev_info *dev,
 
    info->surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
 
-   if (info->surface_type == BRW_SURFACE_CUBE) {
+   if (info->surface_type == GEN6_SURFTYPE_CUBE) {
       /*
        * From the Sandy Bridge PRM, volume 2 part 1, page 325-326:
        *
@@ -1005,7 +1005,7 @@ zs_init_info(const struct ilo_dev_info *dev,
        * As such, we cannot set first_layer and num_layers on cube surfaces.
        * To work around that, treat it as a 2D surface.
        */
-      info->surface_type = BRW_SURFACE_2D;
+      info->surface_type = GEN6_SURFTYPE_2D;
    }
 
    if (dev->gen >= ILO_GEN(7)) {
@@ -1044,25 +1044,25 @@ zs_init_info(const struct ilo_dev_info *dev,
     */
    switch (format) {
    case PIPE_FORMAT_Z16_UNORM:
-      info->format = BRW_DEPTHFORMAT_D16_UNORM;
+      info->format = GEN6_ZFORMAT_D16_UNORM;
       break;
    case PIPE_FORMAT_Z32_FLOAT:
-      info->format = BRW_DEPTHFORMAT_D32_FLOAT;
+      info->format = GEN6_ZFORMAT_D32_FLOAT;
       break;
    case PIPE_FORMAT_Z24X8_UNORM:
    case PIPE_FORMAT_Z24_UNORM_S8_UINT:
       info->format = (separate_stencil) ?
-         BRW_DEPTHFORMAT_D24_UNORM_X8_UINT :
-         BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
+         GEN6_ZFORMAT_D24_UNORM_X8_UINT :
+         GEN6_ZFORMAT_D24_UNORM_S8_UINT;
       break;
    case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
       info->format = (separate_stencil) ?
-         BRW_DEPTHFORMAT_D32_FLOAT :
-         BRW_DEPTHFORMAT_D32_FLOAT_S8X24_UINT;
+         GEN6_ZFORMAT_D32_FLOAT :
+         GEN6_ZFORMAT_D32_FLOAT_S8X24_UINT;
       break;
    case PIPE_FORMAT_S8_UINT:
       if (separate_stencil) {
-         info->format = BRW_DEPTHFORMAT_D32_FLOAT;
+         info->format = GEN6_ZFORMAT_D32_FLOAT;
          break;
       }
       /* fall through */
@@ -1141,7 +1141,7 @@ zs_init_info(const struct ilo_dev_info *dev,
       /* the size of the layer */
       info->width = u_minify(info->width, level);
       info->height = u_minify(info->height, level);
-      if (info->surface_type == BRW_SURFACE_3D)
+      if (info->surface_type == GEN6_SURFTYPE_3D)
          info->depth = u_minify(info->depth, level);
       else
          info->depth = 1;
@@ -1194,14 +1194,14 @@ zs_init_info(const struct ilo_dev_info *dev,
       info->height += info->y_offset;
 
       /* we have to treat them as 2D surfaces */
-      if (info->surface_type == BRW_SURFACE_CUBE) {
+      if (info->surface_type == GEN6_SURFTYPE_CUBE) {
          assert(tex->base.width0 == tex->base.height0);
          /* we will set slice_offset to point to the single face */
-         info->surface_type = BRW_SURFACE_2D;
+         info->surface_type = GEN6_SURFTYPE_2D;
       }
-      else if (info->surface_type == BRW_SURFACE_1D && info->height > 1) {
+      else if (info->surface_type == GEN6_SURFTYPE_1D && info->height > 1) {
          assert(tex->base.height0 == 1);
-         info->surface_type = BRW_SURFACE_2D;
+         info->surface_type = GEN6_SURFTYPE_2D;
       }
    }
 }
@@ -1229,26 +1229,26 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
    }
 
    switch (info.surface_type) {
-   case BRW_SURFACE_NULL:
+   case GEN6_SURFTYPE_NULL:
       break;
-   case BRW_SURFACE_1D:
+   case GEN6_SURFTYPE_1D:
       assert(info.width <= max_2d_size && info.height == 1 &&
              info.depth <= max_array_size);
       assert(info.first_layer < max_array_size - 1 &&
              info.num_layers <= max_array_size);
       break;
-   case BRW_SURFACE_2D:
+   case GEN6_SURFTYPE_2D:
       assert(info.width <= max_2d_size && info.height <= max_2d_size &&
              info.depth <= max_array_size);
       assert(info.first_layer < max_array_size - 1 &&
              info.num_layers <= max_array_size);
       break;
-   case BRW_SURFACE_3D:
+   case GEN6_SURFTYPE_3D:
       assert(info.width <= 2048 && info.height <= 2048 && info.depth <= 2048);
       assert(info.first_layer < 2048 && info.num_layers <= max_array_size);
       assert(info.x_offset == 0 && info.y_offset == 0);
       break;
-   case BRW_SURFACE_CUBE:
+   case GEN6_SURFTYPE_CUBE:
       assert(info.width <= max_2d_size && info.height <= max_2d_size &&
              info.depth == 1);
       assert(info.first_layer == 0 && info.num_layers == 1);
@@ -1311,7 +1311,7 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
       dw3 = (info.height - 1) << 19 |
             (info.width - 1) << 6 |
             info.lod << 2 |
-            BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1;
+            GEN6_DEPTH_DW3_MIPLAYOUT_BELOW;
 
       dw4 = (info.depth - 1) << 21 |
             info.first_layer << 10 |
@@ -1343,7 +1343,7 @@ ilo_gpe_init_zs_surface(const struct ilo_dev_info *dev,
       zs->payload[7] = info.stencil.offset;
 
       if (dev->gen >= ILO_GEN(7.5))
-         zs->payload[6] |= HSW_STENCIL_ENABLED;
+         zs->payload[6] |= GEN75_STENCIL_DW1_STENCIL_BUFFER_ENABLE;
 
       /* do not increment reference count */
       zs->separate_s8_bo = info.stencil.bo;
@@ -1472,11 +1472,11 @@ static int
 gen6_blend_factor_dst_alpha_forced_one(int factor)
 {
    switch (factor) {
-   case BRW_BLENDFACTOR_DST_ALPHA:
-      return BRW_BLENDFACTOR_ONE;
-   case BRW_BLENDFACTOR_INV_DST_ALPHA:
-   case BRW_BLENDFACTOR_SRC_ALPHA_SATURATE:
-      return BRW_BLENDFACTOR_ZERO;
+   case GEN6_BLENDFACTOR_DST_ALPHA:
+      return GEN6_BLENDFACTOR_ONE;
+   case GEN6_BLENDFACTOR_INV_DST_ALPHA:
+   case GEN6_BLENDFACTOR_SRC_ALPHA_SATURATE:
+      return GEN6_BLENDFACTOR_ZERO;
    default:
       return factor;
    }
@@ -1547,7 +1547,7 @@ ilo_gpe_init_blend(const struct ilo_dev_info *dev,
       bool dual_blend;
 
       cso->payload[0] = 0;
-      cso->payload[1] = BRW_RENDERTARGET_CLAMPRANGE_FORMAT << 2 |
+      cso->payload[1] = GEN6_BLEND_DW1_COLORCLAMP_RTFORMAT |
                             0x3;
 
       if (!(rt->colormask & PIPE_MASK_A))
@@ -1692,7 +1692,7 @@ ilo_gpe_init_dsa(const struct ilo_dev_info *dev,
    if (depth->enabled)
       dw[2] |= gen6_translate_dsa_func(depth->func) << 27;
    else
-      dw[2] |= BRW_COMPAREFUNCTION_ALWAYS << 27;
+      dw[2] |= GEN6_COMPAREFUNCTION_ALWAYS << 27;
 
    /* dw_alpha will be ORed to BLEND_STATE */
    if (alpha->enabled) {
@@ -1792,17 +1792,17 @@ ilo_gpe_init_view_surface_null_gen6(const struct ilo_dev_info *dev,
    STATIC_ASSERT(Elements(surf->payload) >= 6);
    dw = surf->payload;
 
-   dw[0] = BRW_SURFACE_NULL << BRW_SURFACE_TYPE_SHIFT |
-           BRW_SURFACEFORMAT_B8G8R8A8_UNORM << BRW_SURFACE_FORMAT_SHIFT;
+   dw[0] = GEN6_SURFTYPE_NULL << GEN6_SURFACE_DW0_TYPE__SHIFT |
+           GEN6_FORMAT_B8G8R8A8_UNORM << GEN6_SURFACE_DW0_FORMAT__SHIFT;
 
    dw[1] = 0;
 
-   dw[2] = (height - 1) << BRW_SURFACE_HEIGHT_SHIFT |
-           (width  - 1) << BRW_SURFACE_WIDTH_SHIFT |
-           level << BRW_SURFACE_LOD_SHIFT;
+   dw[2] = (height - 1) << GEN6_SURFACE_DW2_HEIGHT__SHIFT |
+           (width  - 1) << GEN6_SURFACE_DW2_WIDTH__SHIFT |
+           level << GEN6_SURFACE_DW2_MIP_COUNT_LOD__SHIFT;
 
-   dw[3] = (depth - 1) << BRW_SURFACE_DEPTH_SHIFT |
-           BRW_SURFACE_TILED;
+   dw[3] = (depth - 1) << GEN6_SURFACE_DW3_DEPTH__SHIFT |
+           GEN6_TILING_X;
 
    dw[4] = 0;
    dw[5] = 0;
@@ -1884,18 +1884,18 @@ ilo_gpe_init_view_surface_for_buffer_gen6(const struct ilo_dev_info *dev,
    STATIC_ASSERT(Elements(surf->payload) >= 6);
    dw = surf->payload;
 
-   dw[0] = BRW_SURFACE_BUFFER << BRW_SURFACE_TYPE_SHIFT |
-           surface_format << BRW_SURFACE_FORMAT_SHIFT;
+   dw[0] = GEN6_SURFTYPE_BUFFER << GEN6_SURFACE_DW0_TYPE__SHIFT |
+           surface_format << GEN6_SURFACE_DW0_FORMAT__SHIFT;
    if (render_cache_rw)
-      dw[0] |= BRW_SURFACE_RC_READ_WRITE;
+      dw[0] |= GEN6_SURFACE_DW0_RENDER_CACHE_RW;
 
    dw[1] = offset;
 
-   dw[2] = height << BRW_SURFACE_HEIGHT_SHIFT |
-           width << BRW_SURFACE_WIDTH_SHIFT;
+   dw[2] = height << GEN6_SURFACE_DW2_HEIGHT__SHIFT |
+           width << GEN6_SURFACE_DW2_WIDTH__SHIFT;
 
-   dw[3] = depth << BRW_SURFACE_DEPTH_SHIFT |
-           pitch << BRW_SURFACE_PITCH_SHIFT;
+   dw[3] = depth << GEN6_SURFACE_DW3_DEPTH__SHIFT |
+           pitch << GEN6_SURFACE_DW3_PITCH__SHIFT;
 
    dw[4] = 0;
    dw[5] = 0;
@@ -1923,7 +1923,7 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
    ILO_GPE_VALID_GEN(dev, 6, 6);
 
    surface_type = ilo_gpe_gen6_translate_texture(tex->base.target);
-   assert(surface_type != BRW_SURFACE_BUFFER);
+   assert(surface_type != GEN6_SURFTYPE_BUFFER);
 
    if (format == PIPE_FORMAT_Z32_FLOAT_S8X24_UINT && tex->separate_s8)
       format = PIPE_FORMAT_Z32_FLOAT;
@@ -1940,7 +1940,7 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
       tex->base.depth0 : num_layers;
    pitch = tex->bo_stride;
 
-   if (surface_type == BRW_SURFACE_CUBE) {
+   if (surface_type == GEN6_SURFTYPE_CUBE) {
       /*
        * From the Sandy Bridge PRM, volume 4 part 1, page 81:
        *
@@ -1954,7 +1954,7 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
        * restriction.
        */
       if (is_rt) {
-         surface_type = BRW_SURFACE_2D;
+         surface_type = GEN6_SURFTYPE_2D;
       }
       else {
          assert(num_layers % 6 == 0);
@@ -1965,21 +1965,21 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
    /* sanity check the size */
    assert(width >= 1 && height >= 1 && depth >= 1 && pitch >= 1);
    switch (surface_type) {
-   case BRW_SURFACE_1D:
+   case GEN6_SURFTYPE_1D:
       assert(width <= 8192 && height == 1 && depth <= 512);
       assert(first_layer < 512 && num_layers <= 512);
       break;
-   case BRW_SURFACE_2D:
+   case GEN6_SURFTYPE_2D:
       assert(width <= 8192 && height <= 8192 && depth <= 512);
       assert(first_layer < 512 && num_layers <= 512);
       break;
-   case BRW_SURFACE_3D:
+   case GEN6_SURFTYPE_3D:
       assert(width <= 2048 && height <= 2048 && depth <= 2048);
       assert(first_layer < 2048 && num_layers <= 512);
       if (!is_rt)
          assert(first_layer == 0);
       break;
-   case BRW_SURFACE_CUBE:
+   case GEN6_SURFTYPE_CUBE:
       assert(width <= 8192 && height <= 8192 && depth <= 85);
       assert(width == height);
       assert(first_layer < 512 && num_layers <= 512);
@@ -2069,38 +2069,38 @@ ilo_gpe_init_view_surface_for_texture_gen6(const struct ilo_dev_info *dev,
    STATIC_ASSERT(Elements(surf->payload) >= 6);
    dw = surf->payload;
 
-   dw[0] = surface_type << BRW_SURFACE_TYPE_SHIFT |
-           surface_format << BRW_SURFACE_FORMAT_SHIFT |
-           BRW_SURFACE_MIPMAPLAYOUT_BELOW << BRW_SURFACE_MIPLAYOUT_SHIFT;
+   dw[0] = surface_type << GEN6_SURFACE_DW0_TYPE__SHIFT |
+           surface_format << GEN6_SURFACE_DW0_FORMAT__SHIFT |
+           GEN6_SURFACE_DW0_MIPLAYOUT_BELOW;
 
-   if (surface_type == BRW_SURFACE_CUBE && !is_rt) {
+   if (surface_type == GEN6_SURFTYPE_CUBE && !is_rt) {
       dw[0] |= 1 << 9 |
-               BRW_SURFACE_CUBEFACE_ENABLES;
+               GEN6_SURFACE_DW0_CUBE_FACE_ENABLES__MASK;
    }
 
    if (is_rt)
-      dw[0] |= BRW_SURFACE_RC_READ_WRITE;
+      dw[0] |= GEN6_SURFACE_DW0_RENDER_CACHE_RW;
 
    dw[1] = layer_offset;
 
-   dw[2] = (height - 1) << BRW_SURFACE_HEIGHT_SHIFT |
-           (width - 1) << BRW_SURFACE_WIDTH_SHIFT |
-           lod << BRW_SURFACE_LOD_SHIFT;
+   dw[2] = (height - 1) << GEN6_SURFACE_DW2_HEIGHT__SHIFT |
+           (width - 1) << GEN6_SURFACE_DW2_WIDTH__SHIFT |
+           lod << GEN6_SURFACE_DW2_MIP_COUNT_LOD__SHIFT;
 
-   dw[3] = (depth - 1) << BRW_SURFACE_DEPTH_SHIFT |
-           (pitch - 1) << BRW_SURFACE_PITCH_SHIFT |
+   dw[3] = (depth - 1) << GEN6_SURFACE_DW3_DEPTH__SHIFT |
+           (pitch - 1) << GEN6_SURFACE_DW3_PITCH__SHIFT |
            ilo_gpe_gen6_translate_winsys_tiling(tex->tiling);
 
-   dw[4] = first_level << BRW_SURFACE_MIN_LOD_SHIFT |
+   dw[4] = first_level << GEN6_SURFACE_DW4_MIN_LOD__SHIFT |
            first_layer << 17 |
            (num_layers - 1) << 8 |
-           ((tex->base.nr_samples > 1) ? BRW_SURFACE_MULTISAMPLECOUNT_4 :
-                                         BRW_SURFACE_MULTISAMPLECOUNT_1);
+           ((tex->base.nr_samples > 1) ? GEN6_SURFACE_DW4_MULTISAMPLECOUNT_4 :
+                                         GEN6_SURFACE_DW4_MULTISAMPLECOUNT_1);
 
-   dw[5] = x_offset << BRW_SURFACE_X_OFFSET_SHIFT |
-           y_offset << BRW_SURFACE_Y_OFFSET_SHIFT;
+   dw[5] = x_offset << GEN6_SURFACE_DW5_X_OFFSET__SHIFT |
+           y_offset << GEN6_SURFACE_DW5_Y_OFFSET__SHIFT;
    if (tex->valign_4)
-      dw[5] |= BRW_SURFACE_VERTICAL_ALIGN_ENABLE;
+      dw[5] |= GEN6_SURFACE_DW5_VALIGN_4;
 
    /* do not increment reference count */
    surf->bo = tex->bo;
@@ -2197,9 +2197,9 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
    if (state->max_anisotropy >= 2 && state->max_anisotropy <= 16)
       max_aniso = state->max_anisotropy / 2 - 1;
    else if (state->max_anisotropy > 16)
-      max_aniso = BRW_ANISORATIO_16;
+      max_aniso = GEN6_ANISORATIO_16;
    else
-      max_aniso = BRW_ANISORATIO_2;
+      max_aniso = GEN6_ANISORATIO_2;
 
    /*
     *
@@ -2300,10 +2300,10 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
    if (state->seamless_cube_map &&
        (state->min_img_filter != PIPE_TEX_FILTER_NEAREST ||
         state->mag_img_filter != PIPE_TEX_FILTER_NEAREST)) {
-      wrap_cube = BRW_TEXCOORDMODE_CUBE;
+      wrap_cube = GEN6_TEXCOORDMODE_CUBE;
    }
    else {
-      wrap_cube = BRW_TEXCOORDMODE_CLAMP;
+      wrap_cube = GEN6_TEXCOORDMODE_CLAMP;
    }
 
    if (!state->normalized_coords) {
@@ -2327,22 +2327,22 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
        *      - Surface Min LOD must be 0.
        *      - Texture LOD Bias must be 0."
        */
-      assert(wrap_s == BRW_TEXCOORDMODE_CLAMP ||
-             wrap_s == BRW_TEXCOORDMODE_CLAMP_BORDER);
-      assert(wrap_t == BRW_TEXCOORDMODE_CLAMP ||
-             wrap_t == BRW_TEXCOORDMODE_CLAMP_BORDER);
-      assert(wrap_r == BRW_TEXCOORDMODE_CLAMP ||
-             wrap_r == BRW_TEXCOORDMODE_CLAMP_BORDER);
+      assert(wrap_s == GEN6_TEXCOORDMODE_CLAMP ||
+             wrap_s == GEN6_TEXCOORDMODE_CLAMP_BORDER);
+      assert(wrap_t == GEN6_TEXCOORDMODE_CLAMP ||
+             wrap_t == GEN6_TEXCOORDMODE_CLAMP_BORDER);
+      assert(wrap_r == GEN6_TEXCOORDMODE_CLAMP ||
+             wrap_r == GEN6_TEXCOORDMODE_CLAMP_BORDER);
 
-      assert(mag_filter == BRW_MAPFILTER_NEAREST ||
-             mag_filter == BRW_MAPFILTER_LINEAR);
-      assert(min_filter == BRW_MAPFILTER_NEAREST ||
-             min_filter == BRW_MAPFILTER_LINEAR);
+      assert(mag_filter == GEN6_MAPFILTER_NEAREST ||
+             mag_filter == GEN6_MAPFILTER_LINEAR);
+      assert(min_filter == GEN6_MAPFILTER_NEAREST ||
+             min_filter == GEN6_MAPFILTER_LINEAR);
 
       /* work around a bug in util_blitter */
-      mip_filter = BRW_MIPFILTER_NONE;
+      mip_filter = GEN6_MIPFILTER_NONE;
 
-      assert(mip_filter == BRW_MIPFILTER_NONE);
+      assert(mip_filter == GEN6_MIPFILTER_NONE);
    }
 
    if (dev->gen >= ILO_GEN(7)) {
@@ -2353,8 +2353,8 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
       sampler->dw_filter = mag_filter << 17 |
                            min_filter << 14;
 
-      sampler->dw_filter_aniso = BRW_MAPFILTER_ANISOTROPIC << 17 |
-                                 BRW_MAPFILTER_ANISOTROPIC << 14 |
+      sampler->dw_filter_aniso = GEN6_MAPFILTER_ANISOTROPIC << 17 |
+                                 GEN6_MAPFILTER_ANISOTROPIC << 14 |
                                  1;
 
       dw1 = min_lod << 20 |
@@ -2366,15 +2366,15 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
       dw3 = max_aniso << 19;
 
       /* round the coordinates for linear filtering */
-      if (min_filter != BRW_MAPFILTER_NEAREST) {
-         dw3 |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
-                 BRW_ADDRESS_ROUNDING_ENABLE_V_MIN |
-                 BRW_ADDRESS_ROUNDING_ENABLE_R_MIN) << 13;
+      if (min_filter != GEN6_MAPFILTER_NEAREST) {
+         dw3 |= (GEN6_SAMPLER_DW3_U_MIN_ROUND |
+                 GEN6_SAMPLER_DW3_V_MIN_ROUND |
+                 GEN6_SAMPLER_DW3_R_MIN_ROUND);
       }
-      if (mag_filter != BRW_MAPFILTER_NEAREST) {
-         dw3 |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MAG |
-                 BRW_ADDRESS_ROUNDING_ENABLE_V_MAG |
-                 BRW_ADDRESS_ROUNDING_ENABLE_R_MAG) << 13;
+      if (mag_filter != GEN6_MAPFILTER_NEAREST) {
+         dw3 |= (GEN6_SAMPLER_DW3_U_MAG_ROUND |
+                 GEN6_SAMPLER_DW3_V_MAG_ROUND |
+                 GEN6_SAMPLER_DW3_R_MAG_ROUND);
       }
 
       if (!state->normalized_coords)
@@ -2390,8 +2390,8 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
        * mode
        */
       sampler->dw_wrap_1d = wrap_s << 6 |
-                            BRW_TEXCOORDMODE_WRAP << 3 |
-                            BRW_TEXCOORDMODE_WRAP;
+                            GEN6_TEXCOORDMODE_WRAP << 3 |
+                            GEN6_TEXCOORDMODE_WRAP;
 
       sampler->dw_wrap_cube = wrap_cube << 6 |
                               wrap_cube << 3 |
@@ -2418,8 +2418,8 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
                            mag_filter << 17 |
                            min_filter << 14;
 
-      sampler->dw_filter_aniso = BRW_MAPFILTER_ANISOTROPIC << 17 |
-                                 BRW_MAPFILTER_ANISOTROPIC << 14;
+      sampler->dw_filter_aniso = GEN6_MAPFILTER_ANISOTROPIC << 17 |
+                                 GEN6_MAPFILTER_ANISOTROPIC << 14;
 
       dw1 = min_lod << 22 |
             max_lod << 12;
@@ -2429,8 +2429,8 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
                          wrap_r;
 
       sampler->dw_wrap_1d = wrap_s << 6 |
-                            BRW_TEXCOORDMODE_WRAP << 3 |
-                            BRW_TEXCOORDMODE_WRAP;
+                            GEN6_TEXCOORDMODE_WRAP << 3 |
+                            GEN6_TEXCOORDMODE_WRAP;
 
       sampler->dw_wrap_cube = wrap_cube << 6 |
                               wrap_cube << 3 |
@@ -2439,15 +2439,15 @@ ilo_gpe_init_sampler_cso(const struct ilo_dev_info *dev,
       dw3 = max_aniso << 19;
 
       /* round the coordinates for linear filtering */
-      if (min_filter != BRW_MAPFILTER_NEAREST) {
-         dw3 |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MIN |
-                 BRW_ADDRESS_ROUNDING_ENABLE_V_MIN |
-                 BRW_ADDRESS_ROUNDING_ENABLE_R_MIN) << 13;
+      if (min_filter != GEN6_MAPFILTER_NEAREST) {
+         dw3 |= (GEN6_SAMPLER_DW3_U_MIN_ROUND |
+                 GEN6_SAMPLER_DW3_V_MIN_ROUND |
+                 GEN6_SAMPLER_DW3_R_MIN_ROUND);
       }
-      if (mag_filter != BRW_MAPFILTER_NEAREST) {
-         dw3 |= (BRW_ADDRESS_ROUNDING_ENABLE_U_MAG |
-                 BRW_ADDRESS_ROUNDING_ENABLE_V_MAG |
-                 BRW_ADDRESS_ROUNDING_ENABLE_R_MAG) << 13;
+      if (mag_filter != GEN6_MAPFILTER_NEAREST) {
+         dw3 |= (GEN6_SAMPLER_DW3_U_MAG_ROUND |
+                 GEN6_SAMPLER_DW3_V_MAG_ROUND |
+                 GEN6_SAMPLER_DW3_R_MAG_ROUND);
       }
 
       if (!state->normalized_coords)

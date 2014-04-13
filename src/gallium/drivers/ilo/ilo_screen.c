@@ -28,7 +28,7 @@
 #include "util/u_format_s3tc.h"
 #include "vl/vl_decoder.h"
 #include "vl/vl_video_buffer.h"
-#include "genhw/genhw.h" /* for TIMESTAMP */
+#include "genhw/genhw.h" /* for GEN6_REG_TIMESTAMP */
 #include "intel_winsys.h"
 
 #include "ilo_context.h"
@@ -425,7 +425,7 @@ ilo_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
       return 0;
    case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
-      /* a BRW_SURFACE_BUFFER can have up to 2^27 elements */
+      /* a GEN6_SURFTYPE_BUFFER can have up to 2^27 elements */
       return 1 << 27;
    case PIPE_CAP_MAX_VIEWPORTS:
       return ILO_MAX_VIEWPORTS;
@@ -501,7 +501,7 @@ ilo_get_timestamp(struct pipe_screen *screen)
       uint32_t dw[2];
    } timestamp;
 
-   intel_winsys_read_reg(is->winsys, TIMESTAMP, &timestamp.val);
+   intel_winsys_read_reg(is->winsys, GEN6_REG_TIMESTAMP, &timestamp.val);
 
    /*
     * From the Ivy Bridge PRM, volume 1 part 3, page 107:

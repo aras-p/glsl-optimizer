@@ -74,10 +74,10 @@ ilo_blitter_set_invariants(struct ilo_blitter *blitter)
 
    /* override first VE to be VUE header */
    ve_init_cso_with_components(blitter->ilo->dev,
-         BRW_VE1_COMPONENT_STORE_0, /* Reserved */
-         BRW_VE1_COMPONENT_STORE_0, /* Render Target Array Index */
-         BRW_VE1_COMPONENT_STORE_0, /* Viewport Index */
-         BRW_VE1_COMPONENT_STORE_0, /* Point Width */
+         GEN6_VFCOMP_STORE_0, /* Reserved */
+         GEN6_VFCOMP_STORE_0, /* Render Target Array Index */
+         GEN6_VFCOMP_STORE_0, /* Viewport Index */
+         GEN6_VFCOMP_STORE_0, /* Point Width */
          &blitter->ve.cso[0]);
 
    /* a rectangle has 3 vertices in a RECTLIST */

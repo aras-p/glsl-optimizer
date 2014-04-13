@@ -244,7 +244,7 @@ linear_scan_run(struct linear_scan *ls)
       int reg, count;
 
       /*
-       * BRW_OPCODE_SEND may write to multiple consecutive registers and we need to
+       * GEN6_OPCODE_SEND may write to multiple consecutive registers and we need to
        * support that
        */
       for (count = 1; i + count < ls->num_vrfs; count++) {
@@ -355,7 +355,7 @@ linear_scan_init_live_intervals(struct linear_scan *ls,
             do_pc = pc;
             while_pc = pc + 1;
 
-            /* find the matching BRW_OPCODE_WHILE */
+            /* find the matching GEN6_OPCODE_WHILE */
             LIST_FOR_EACH_ENTRY_FROM(inst2, tc->iter_next,
                   &tc->instructions, list) {
                if (inst2->marker) {
@@ -364,7 +364,7 @@ linear_scan_init_live_intervals(struct linear_scan *ls,
                   continue;
                }
 
-               if (inst2->opcode == BRW_OPCODE_WHILE) {
+               if (inst2->opcode == GEN6_OPCODE_WHILE) {
                   loop_level--;
                   if (!loop_level)
                      break;
@@ -380,13 +380,13 @@ linear_scan_init_live_intervals(struct linear_scan *ls,
          int num_dst;
 
          /* TODO this is a hack */
-         if (inst->opcode == BRW_OPCODE_SEND ||
-             inst->opcode == BRW_OPCODE_SENDC) {
+         if (inst->opcode == GEN6_OPCODE_SEND ||
+             inst->opcode == GEN6_OPCODE_SENDC) {
             const uint32_t mdesc = inst->src[1].val32;
             int response_length = (mdesc >> 20) & 0x1f;
 
             num_dst = response_length;
-            if (num_dst > 1 && inst->exec_size == BRW_EXECUTE_16)
+            if (num_dst > 1 && inst->exec_size == GEN6_EXECSIZE_16)
                num_dst /= 2;
          }
          else {

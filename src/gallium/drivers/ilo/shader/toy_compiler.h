@@ -38,7 +38,7 @@
  * Toy opcodes.
  */
 enum toy_opcode {
-   /* 0..127 are reserved for BRW_OPCODE_x */
+   /* 0..127 are reserved for GEN6_OPCODE_x */
    TOY_OPCODE_LAST_HW = 127,
 
    TOY_OPCODE_DO,
@@ -108,15 +108,15 @@ enum toy_opcode {
  */
 struct toy_inst {
    unsigned opcode:8;            /* enum toy_opcode      */
-   unsigned access_mode:1;       /* BRW_ALIGN_x          */
-   unsigned mask_ctrl:1;         /* BRW_MASK_x           */
-   unsigned dep_ctrl:2;          /* BRW_DEPENDENCY_x     */
-   unsigned qtr_ctrl:2;          /* GEN6_COMPRESSION_x   */
-   unsigned thread_ctrl:2;       /* BRW_THREAD_x         */
-   unsigned pred_ctrl:4;         /* BRW_PREDICATE_x      */
+   unsigned access_mode:1;       /* GEN6_ALIGN_x          */
+   unsigned mask_ctrl:1;         /* GEN6_MASKCTRL_x           */
+   unsigned dep_ctrl:2;          /* GEN6_DEPCTRL_x     */
+   unsigned qtr_ctrl:2;          /* GEN6_QTRCTRL_x   */
+   unsigned thread_ctrl:2;       /* GEN6_THREADCTRL_x         */
+   unsigned pred_ctrl:4;         /* GEN6_PREDCTRL_x      */
    unsigned pred_inv:1;          /* true or false        */
-   unsigned exec_size:3;         /* BRW_EXECUTE_x        */
-   unsigned cond_modifier:4;     /* BRW_CONDITIONAL_x    */
+   unsigned exec_size:3;         /* GEN6_EXECSIZE_x        */
+   unsigned cond_modifier:4;     /* GEN6_COND_x    */
    unsigned acc_wr_ctrl:1;       /* true or false        */
    unsigned saturate:1;          /* true or false        */
 
@@ -351,30 +351,30 @@ func(struct toy_compiler *tc,             \
    return inst;                           \
 }
 
-TC_ALU0(tc_NOP, BRW_OPCODE_NOP)
-TC_ALU0(tc_ELSE, BRW_OPCODE_ELSE)
-TC_ALU0(tc_ENDIF, BRW_OPCODE_ENDIF)
-TC_ALU1(tc_MOV, BRW_OPCODE_MOV)
-TC_ALU1(tc_RNDD, BRW_OPCODE_RNDD)
+TC_ALU0(tc_NOP, GEN6_OPCODE_NOP)
+TC_ALU0(tc_ELSE, GEN6_OPCODE_ELSE)
+TC_ALU0(tc_ENDIF, GEN6_OPCODE_ENDIF)
+TC_ALU1(tc_MOV, GEN6_OPCODE_MOV)
+TC_ALU1(tc_RNDD, GEN6_OPCODE_RNDD)
 TC_ALU1(tc_INV, TOY_OPCODE_INV)
-TC_ALU1(tc_FRC, BRW_OPCODE_FRC)
+TC_ALU1(tc_FRC, GEN6_OPCODE_FRC)
 TC_ALU1(tc_EXP, TOY_OPCODE_EXP)
 TC_ALU1(tc_LOG, TOY_OPCODE_LOG)
-TC_ALU2(tc_ADD, BRW_OPCODE_ADD)
-TC_ALU2(tc_MUL, BRW_OPCODE_MUL)
-TC_ALU2(tc_AND, BRW_OPCODE_AND)
-TC_ALU2(tc_OR, BRW_OPCODE_OR)
-TC_ALU2(tc_DP2, BRW_OPCODE_DP2)
-TC_ALU2(tc_DP3, BRW_OPCODE_DP3)
-TC_ALU2(tc_DP4, BRW_OPCODE_DP4)
-TC_ALU2(tc_SHL, BRW_OPCODE_SHL)
-TC_ALU2(tc_SHR, BRW_OPCODE_SHR)
+TC_ALU2(tc_ADD, GEN6_OPCODE_ADD)
+TC_ALU2(tc_MUL, GEN6_OPCODE_MUL)
+TC_ALU2(tc_AND, GEN6_OPCODE_AND)
+TC_ALU2(tc_OR, GEN6_OPCODE_OR)
+TC_ALU2(tc_DP2, GEN6_OPCODE_DP2)
+TC_ALU2(tc_DP3, GEN6_OPCODE_DP3)
+TC_ALU2(tc_DP4, GEN6_OPCODE_DP4)
+TC_ALU2(tc_SHL, GEN6_OPCODE_SHL)
+TC_ALU2(tc_SHR, GEN6_OPCODE_SHR)
 TC_ALU2(tc_POW, TOY_OPCODE_POW)
-TC_ALU3(tc_MAC, BRW_OPCODE_MAC)
-TC_CND2(tc_SEL, BRW_OPCODE_SEL)
-TC_CND2(tc_CMP, BRW_OPCODE_CMP)
-TC_CND2(tc_IF, BRW_OPCODE_IF)
-TC_CND2(tc_SEND, BRW_OPCODE_SEND)
+TC_ALU3(tc_MAC, GEN6_OPCODE_MAC)
+TC_CND2(tc_SEL, GEN6_OPCODE_SEL)
+TC_CND2(tc_CMP, GEN6_OPCODE_CMP)
+TC_CND2(tc_IF, GEN6_OPCODE_IF)
+TC_CND2(tc_SEND, GEN6_OPCODE_SEND)
 
 /**
  * Upcast a list_head to an instruction.

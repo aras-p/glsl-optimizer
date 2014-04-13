@@ -40,22 +40,22 @@ eliminate_dead_code(struct toy_compiler *tc)
    tc_head(tc);
    while ((inst = tc_next(tc)) != NULL) {
       switch (inst->opcode) {
-      case BRW_OPCODE_IF:
-      case BRW_OPCODE_ELSE:
-      case BRW_OPCODE_ENDIF:
-      case BRW_OPCODE_WHILE:
-      case BRW_OPCODE_BREAK:
-      case BRW_OPCODE_CONTINUE:
-      case BRW_OPCODE_SEND:
-      case BRW_OPCODE_SENDC:
-      case BRW_OPCODE_NOP:
+      case GEN6_OPCODE_IF:
+      case GEN6_OPCODE_ELSE:
+      case GEN6_OPCODE_ENDIF:
+      case GEN6_OPCODE_WHILE:
+      case GEN6_OPCODE_BREAK:
+      case GEN6_OPCODE_CONT:
+      case GEN6_OPCODE_SEND:
+      case GEN6_OPCODE_SENDC:
+      case GEN6_OPCODE_NOP:
          /* never eliminated */
          break;
       default:
          if (tdst_is_null(inst->dst) || !inst->dst.writemask) {
-            /* math is always BRW_CONDITIONAL_NONE */
-            if ((inst->opcode == BRW_OPCODE_MATH ||
-                 inst->cond_modifier == BRW_CONDITIONAL_NONE) &&
+            /* math is always GEN6_COND_NORMAL */
+            if ((inst->opcode == GEN6_OPCODE_MATH ||
+                 inst->cond_modifier == GEN6_COND_NORMAL) &&
                 !inst->acc_wr_ctrl)
                tc_discard_inst(tc, inst);
          }

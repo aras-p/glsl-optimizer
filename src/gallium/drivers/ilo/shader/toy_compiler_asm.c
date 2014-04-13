@@ -73,8 +73,8 @@ src_is_null(const struct codegen *cg, int idx)
 {
    const struct codegen_src *src = &cg->src[idx];
 
-   return (src->file == BRW_ARCHITECTURE_REGISTER_FILE &&
-           src->origin == BRW_ARF_NULL << CG_REG_SHIFT);
+   return (src->file == GEN6_FILE_ARF &&
+           src->origin == GEN6_ARF_NULL << CG_REG_SHIFT);
 }
 
 /**
@@ -87,7 +87,7 @@ translate_src(const struct codegen *cg, int idx)
    uint32_t dw;
 
    /* special treatment may be needed if any of the operand is immediate */
-   if (cg->src[0].file == BRW_IMMEDIATE_VALUE) {
+   if (cg->src[0].file == GEN6_FILE_IMM) {
       assert(!cg->src[0].absolute && !cg->src[0].negate);
       /* only the last src operand can be an immediate */
       assert(src_is_null(cg, 1));
@@ -97,22 +97,22 @@ translate_src(const struct codegen *cg, int idx)
       else
          return cg->src[0].origin;
    }
-   else if (idx && cg->src[1].file == BRW_IMMEDIATE_VALUE) {
+   else if (idx && cg->src[1].file == GEN6_FILE_IMM) {
       assert(!cg->src[1].absolute && !cg->src[1].negate);
       return cg->src[1].origin;
    }
 
-   assert(src->file != BRW_IMMEDIATE_VALUE);
+   assert(src->file != GEN6_FILE_IMM);
 
    if (src->indirect) {
       const int offset = (int) src->origin;
 
-      assert(src->file == BRW_GENERAL_REGISTER_FILE);
+      assert(src->file == GEN6_FILE_GRF);
       assert(offset < 512 && offset >= -512);
 
-      if (cg->inst->access_mode == BRW_ALIGN_16) {
-         assert(src->width == BRW_WIDTH_4);
-         assert(src->horz_stride == BRW_HORIZONTAL_STRIDE_1);
+      if (cg->inst->access_mode == GEN6_ALIGN_16) {
+         assert(src->width == GEN6_WIDTH_4);
+         assert(src->horz_stride == GEN6_HORZSTRIDE_1);
 
          /* the lower 4 bits are reserved for the swizzle_[xy] */
          assert(!(src->origin & 0xf));
@@ -120,7 +120,7 @@ translate_src(const struct codegen *cg, int idx)
          dw = src->vert_stride << 21 |
               src->swizzle[3] << 18 |
               src->swizzle[2] << 16 |
-              BRW_ADDRESS_REGISTER_INDIRECT_REGISTER << 15 |
+              GEN6_ADDRMODE_INDIRECT << 15 |
               src->negate << 14 |
               src->absolute << 13 |
               src->indirect_subreg << 10 |
@@ -137,7 +137,7 @@ translate_src(const struct codegen *cg, int idx)
          dw = src->vert_stride << 21 |
               src->width << 18 |
               src->horz_stride << 16 |
-              BRW_ADDRESS_REGISTER_INDIRECT_REGISTER << 15 |
+              GEN6_ADDRMODE_INDIRECT << 15 |
               src->negate << 14 |
               src->absolute << 13 |
               src->indirect_subreg << 10 |
@@ -146,25 +146,25 @@ translate_src(const struct codegen *cg, int idx)
    }
    else {
       switch (src->file) {
-      case BRW_ARCHITECTURE_REGISTER_FILE:
+      case GEN6_FILE_ARF:
          break;
-      case BRW_GENERAL_REGISTER_FILE:
+      case GEN6_FILE_GRF:
          assert(CG_REG_NUM(src->origin) < 128);
          break;
-      case BRW_MESSAGE_REGISTER_FILE:
-         assert(cg->inst->opcode == BRW_OPCODE_SEND ||
-                cg->inst->opcode == BRW_OPCODE_SENDC);
+      case GEN6_FILE_MRF:
+         assert(cg->inst->opcode == GEN6_OPCODE_SEND ||
+                cg->inst->opcode == GEN6_OPCODE_SENDC);
          assert(CG_REG_NUM(src->origin) < 16);
          break;
-      case BRW_IMMEDIATE_VALUE:
+      case GEN6_FILE_IMM:
       default:
          assert(!"invalid src file");
          break;
       }
 
-      if (cg->inst->access_mode == BRW_ALIGN_16) {
-         assert(src->width == BRW_WIDTH_4);
-         assert(src->horz_stride == BRW_HORIZONTAL_STRIDE_1);
+      if (cg->inst->access_mode == GEN6_ALIGN_16) {
+         assert(src->width == GEN6_WIDTH_4);
+         assert(src->horz_stride == GEN6_HORZSTRIDE_1);
 
          /* the lower 4 bits are reserved for the swizzle_[xy] */
          assert(!(src->origin & 0xf));
@@ -172,7 +172,7 @@ translate_src(const struct codegen *cg, int idx)
          dw = src->vert_stride << 21 |
               src->swizzle[3] << 18 |
               src->swizzle[2] << 16 |
-              BRW_ADDRESS_DIRECT << 15 |
+              GEN6_ADDRMODE_DIRECT << 15 |
               src->negate << 14 |
               src->absolute << 13 |
               src->origin |
@@ -188,7 +188,7 @@ translate_src(const struct codegen *cg, int idx)
          dw = src->vert_stride << 21 |
               src->width << 18 |
               src->horz_stride << 16 |
-              BRW_ADDRESS_DIRECT << 15 |
+              GEN6_ADDRMODE_DIRECT << 15 |
               src->negate << 14 |
               src->absolute << 13 |
               src->origin;
@@ -211,14 +211,14 @@ translate_dst_region(const struct codegen *cg)
    const struct codegen_dst *dst = &cg->dst;
    uint16_t dw1_region;
 
-   if (dst->file == BRW_IMMEDIATE_VALUE) {
+   if (dst->file == GEN6_FILE_IMM) {
       /* dst is immediate (JIP) when the opcode is a conditional branch */
       switch (cg->inst->opcode) {
-      case BRW_OPCODE_IF:
-      case BRW_OPCODE_ELSE:
-      case BRW_OPCODE_ENDIF:
-      case BRW_OPCODE_WHILE:
-         assert(dst->type == BRW_REGISTER_TYPE_W);
+      case GEN6_OPCODE_IF:
+      case GEN6_OPCODE_ELSE:
+      case GEN6_OPCODE_ENDIF:
+      case GEN6_OPCODE_WHILE:
+         assert(dst->type == GEN6_TYPE_W);
          dw1_region = (dst->origin & 0xffff);
          break;
       default:
@@ -233,21 +233,21 @@ translate_dst_region(const struct codegen *cg)
    if (dst->indirect) {
       const int offset = (int) dst->origin;
 
-      assert(dst->file == BRW_GENERAL_REGISTER_FILE);
+      assert(dst->file == GEN6_FILE_GRF);
       assert(offset < 512 && offset >= -512);
 
-      if (cg->inst->access_mode == BRW_ALIGN_16) {
+      if (cg->inst->access_mode == GEN6_ALIGN_16) {
          /*
           * From the Sandy Bridge PRM, volume 4 part 2, page 144:
           *
           *     "Allthough Dst.HorzStride is a don't care for Align16, HW
           *      needs this to be programmed as 01."
           */
-         assert(dst->horz_stride == BRW_HORIZONTAL_STRIDE_1);
+         assert(dst->horz_stride == GEN6_HORZSTRIDE_1);
          /* the lower 4 bits are reserved for the writemask */
          assert(!(dst->origin & 0xf));
 
-         dw1_region = BRW_ADDRESS_REGISTER_INDIRECT_REGISTER << 15 |
+         dw1_region = GEN6_ADDRMODE_INDIRECT << 15 |
                       dst->horz_stride << 13 |
                       dst->indirect_subreg << 10 |
                       (dst->origin & 0x3f0) |
@@ -256,25 +256,25 @@ translate_dst_region(const struct codegen *cg)
       else {
          assert(dst->writemask == TOY_WRITEMASK_XYZW);
 
-         dw1_region = BRW_ADDRESS_REGISTER_INDIRECT_REGISTER << 15 |
+         dw1_region = GEN6_ADDRMODE_INDIRECT << 15 |
                       dst->horz_stride << 13 |
                       dst->indirect_subreg << 10 |
                       (dst->origin & 0x3ff);
       }
    }
    else {
-      assert((dst->file == BRW_GENERAL_REGISTER_FILE &&
+      assert((dst->file == GEN6_FILE_GRF &&
               CG_REG_NUM(dst->origin) < 128) ||
-             (dst->file == BRW_MESSAGE_REGISTER_FILE &&
+             (dst->file == GEN6_FILE_MRF &&
               CG_REG_NUM(dst->origin) < 16) ||
-             (dst->file == BRW_ARCHITECTURE_REGISTER_FILE));
+             (dst->file == GEN6_FILE_ARF));
 
-      if (cg->inst->access_mode == BRW_ALIGN_16) {
+      if (cg->inst->access_mode == GEN6_ALIGN_16) {
          /* similar to the indirect case */
-         assert(dst->horz_stride == BRW_HORIZONTAL_STRIDE_1);
+         assert(dst->horz_stride == GEN6_HORZSTRIDE_1);
          assert(!(dst->origin & 0xf));
 
-         dw1_region = BRW_ADDRESS_DIRECT << 15 |
+         dw1_region = GEN6_ADDRMODE_DIRECT << 15 |
                       dst->horz_stride << 13 |
                       dst->origin |
                       dst->writemask;
@@ -282,7 +282,7 @@ translate_dst_region(const struct codegen *cg)
       else {
          assert(dst->writemask == TOY_WRITEMASK_XYZW);
 
-         dw1_region = BRW_ADDRESS_DIRECT << 15 |
+         dw1_region = GEN6_ADDRMODE_DIRECT << 15 |
                       dst->horz_stride << 13 |
                       dst->origin;
       }
@@ -368,15 +368,15 @@ codegen_inst_3src(const struct codegen *cg, uint32_t *code)
     *  - no regioning except replication control
     *    (vert_stride == 0 && horz_stride == 0)
     */
-   assert(cg->inst->access_mode == BRW_ALIGN_16);
+   assert(cg->inst->access_mode == GEN6_ALIGN_16);
 
    assert(!dst->indirect);
-   assert((dst->file == BRW_GENERAL_REGISTER_FILE &&
+   assert((dst->file == GEN6_FILE_GRF &&
            CG_REG_NUM(dst->origin) < 128) ||
-          (dst->file == BRW_MESSAGE_REGISTER_FILE &&
+          (dst->file == GEN6_FILE_MRF &&
            CG_REG_NUM(dst->origin) < 16));
    assert(!(dst->origin & 0x3));
-   assert(dst->horz_stride == BRW_HORIZONTAL_STRIDE_1);
+   assert(dst->horz_stride == GEN6_HORZSTRIDE_1);
 
    dw1 = dst->origin << 19 |
          dst->writemask << 17 |
@@ -387,29 +387,29 @@ codegen_inst_3src(const struct codegen *cg, uint32_t *code)
          cg->src[0].negate << 5 |
          cg->src[0].absolute << 4 |
          cg->flag_sub_reg_num << 1 |
-         (dst->file == BRW_MESSAGE_REGISTER_FILE);
+         (dst->file == GEN6_FILE_MRF);
 
    for (i = 0; i < 3; i++) {
       const struct codegen_src *src = &cg->src[i];
 
       assert(!src->indirect);
-      assert(src->file == BRW_GENERAL_REGISTER_FILE &&
+      assert(src->file == GEN6_FILE_GRF &&
              CG_REG_NUM(src->origin) < 128);
       assert(!(src->origin & 0x3));
 
-      assert((src->vert_stride == BRW_VERTICAL_STRIDE_4 &&
-              src->horz_stride == BRW_HORIZONTAL_STRIDE_1) ||
-             (src->vert_stride == BRW_VERTICAL_STRIDE_0 &&
-              src->horz_stride == BRW_HORIZONTAL_STRIDE_0));
-      assert(src->width == BRW_WIDTH_4);
+      assert((src->vert_stride == GEN6_VERTSTRIDE_4 &&
+              src->horz_stride == GEN6_HORZSTRIDE_1) ||
+             (src->vert_stride == GEN6_VERTSTRIDE_0 &&
+              src->horz_stride == GEN6_HORZSTRIDE_0));
+      assert(src->width == GEN6_WIDTH_4);
 
       dw_src[i] = src->origin << 7 |
                   src->swizzle[3] << 7 |
                   src->swizzle[2] << 5 |
                   src->swizzle[1] << 3 |
                   src->swizzle[0] << 1 |
-                  (src->vert_stride == BRW_VERTICAL_STRIDE_0 &&
-                   src->horz_stride == BRW_HORIZONTAL_STRIDE_0);
+                  (src->vert_stride == GEN6_VERTSTRIDE_0 &&
+                   src->horz_stride == GEN6_HORZSTRIDE_0);
 
       /* only the lower 20 bits are used */
       assert((dw_src[i] & 0xfffff) == dw_src[i]);
@@ -429,38 +429,38 @@ static void
 codegen_validate_region_restrictions(const struct codegen *cg)
 {
    const int exec_size_map[] = {
-      [BRW_EXECUTE_1] = 1,
-      [BRW_EXECUTE_2] = 2,
-      [BRW_EXECUTE_4] = 4,
-      [BRW_EXECUTE_8] = 8,
-      [BRW_EXECUTE_16] = 16,
-      [BRW_EXECUTE_32] = 32,
+      [GEN6_EXECSIZE_1] = 1,
+      [GEN6_EXECSIZE_2] = 2,
+      [GEN6_EXECSIZE_4] = 4,
+      [GEN6_EXECSIZE_8] = 8,
+      [GEN6_EXECSIZE_16] = 16,
+      [GEN6_EXECSIZE_32] = 32,
    };
    const int width_map[] = {
-      [BRW_WIDTH_1] = 1,
-      [BRW_WIDTH_2] = 2,
-      [BRW_WIDTH_4] = 4,
-      [BRW_WIDTH_8] = 8,
-      [BRW_WIDTH_16] = 16,
+      [GEN6_WIDTH_1] = 1,
+      [GEN6_WIDTH_2] = 2,
+      [GEN6_WIDTH_4] = 4,
+      [GEN6_WIDTH_8] = 8,
+      [GEN6_WIDTH_16] = 16,
    };
    const int horz_stride_map[] = {
-      [BRW_HORIZONTAL_STRIDE_0] = 0,
-      [BRW_HORIZONTAL_STRIDE_1] = 1,
-      [BRW_HORIZONTAL_STRIDE_2] = 2,
-      [BRW_HORIZONTAL_STRIDE_4] = 4,
+      [GEN6_HORZSTRIDE_0] = 0,
+      [GEN6_HORZSTRIDE_1] = 1,
+      [GEN6_HORZSTRIDE_2] = 2,
+      [GEN6_HORZSTRIDE_4] = 4,
    };
    const int vert_stride_map[] = {
-      [BRW_VERTICAL_STRIDE_0] = 0,
-      [BRW_VERTICAL_STRIDE_1] = 1,
-      [BRW_VERTICAL_STRIDE_2] = 2,
-      [BRW_VERTICAL_STRIDE_4] = 4,
-      [BRW_VERTICAL_STRIDE_8] = 8,
-      [BRW_VERTICAL_STRIDE_16] = 16,
-      [BRW_VERTICAL_STRIDE_32] = 32,
-      [BRW_VERTICAL_STRIDE_64] = 64,
-      [BRW_VERTICAL_STRIDE_128] = 128,
-      [BRW_VERTICAL_STRIDE_256] = 256,
-      [BRW_VERTICAL_STRIDE_ONE_DIMENSIONAL] = 0,
+      [GEN6_VERTSTRIDE_0] = 0,
+      [GEN6_VERTSTRIDE_1] = 1,
+      [GEN6_VERTSTRIDE_2] = 2,
+      [GEN6_VERTSTRIDE_4] = 4,
+      [GEN6_VERTSTRIDE_8] = 8,
+      [GEN6_VERTSTRIDE_16] = 16,
+      [GEN6_VERTSTRIDE_32] = 32,
+      [7] = 64,
+      [8] = 128,
+      [9] = 256,
+      [GEN6_VERTSTRIDE_VXH] = 0,
    };
    const int exec_size = exec_size_map[cg->inst->exec_size];
    int i;
@@ -502,20 +502,20 @@ codegen_validate_region_restrictions(const struct codegen *cg)
    }
 
    /* derived from 10.1.2. & 10.2. */
-   assert(cg->dst.horz_stride != BRW_HORIZONTAL_STRIDE_0);
+   assert(cg->dst.horz_stride != GEN6_HORZSTRIDE_0);
 }
 
 static unsigned
 translate_vfile(enum toy_file file)
 {
    switch (file) {
-   case TOY_FILE_ARF:   return BRW_ARCHITECTURE_REGISTER_FILE;
-   case TOY_FILE_GRF:   return BRW_GENERAL_REGISTER_FILE;
-   case TOY_FILE_MRF:   return BRW_MESSAGE_REGISTER_FILE;
-   case TOY_FILE_IMM:   return BRW_IMMEDIATE_VALUE;
+   case TOY_FILE_ARF:   return GEN6_FILE_ARF;
+   case TOY_FILE_GRF:   return GEN6_FILE_GRF;
+   case TOY_FILE_MRF:   return GEN6_FILE_MRF;
+   case TOY_FILE_IMM:   return GEN6_FILE_IMM;
    default:
       assert(!"unhandled toy file");
-      return BRW_GENERAL_REGISTER_FILE;
+      return GEN6_FILE_GRF;
    }
 }
 
@@ -523,15 +523,15 @@ static unsigned
 translate_vtype(enum toy_type type)
 {
    switch (type) {
-   case TOY_TYPE_F:     return BRW_REGISTER_TYPE_F;
-   case TOY_TYPE_D:     return BRW_REGISTER_TYPE_D;
-   case TOY_TYPE_UD:    return BRW_REGISTER_TYPE_UD;
-   case TOY_TYPE_W:     return BRW_REGISTER_TYPE_W;
-   case TOY_TYPE_UW:    return BRW_REGISTER_TYPE_UW;
-   case TOY_TYPE_V:     return BRW_REGISTER_TYPE_V;
+   case TOY_TYPE_F:     return GEN6_TYPE_F;
+   case TOY_TYPE_D:     return GEN6_TYPE_D;
+   case TOY_TYPE_UD:    return GEN6_TYPE_UD;
+   case TOY_TYPE_W:     return GEN6_TYPE_W;
+   case TOY_TYPE_UW:    return GEN6_TYPE_UW;
+   case TOY_TYPE_V:     return GEN6_TYPE_V_IMM;
    default:
       assert(!"unhandled toy type");
-      return BRW_REGISTER_TYPE_F;
+      return GEN6_TYPE_F;
    }
 }
 
@@ -594,11 +594,11 @@ codegen_prepare(struct codegen *cg, const struct toy_inst *inst,
 
    switch (inst->dst.rect) {
    case TOY_RECT_LINEAR:
-      cg->dst.horz_stride = BRW_HORIZONTAL_STRIDE_1;
+      cg->dst.horz_stride = GEN6_HORZSTRIDE_1;
       break;
    default:
       assert(!"unsupported dst region");
-      cg->dst.horz_stride = BRW_HORIZONTAL_STRIDE_1;
+      cg->dst.horz_stride = GEN6_HORZSTRIDE_1;
       break;
    }
 
@@ -635,63 +635,63 @@ codegen_prepare(struct codegen *cg, const struct toy_inst *inst,
       case TOY_RECT_LINEAR:
          switch (rect_linear_width) {
          case 1:
-            src->vert_stride = BRW_VERTICAL_STRIDE_1;
-            src->width = BRW_WIDTH_1;
+            src->vert_stride = GEN6_VERTSTRIDE_1;
+            src->width = GEN6_WIDTH_1;
             break;
          case 2:
-            src->vert_stride = BRW_VERTICAL_STRIDE_2;
-            src->width = BRW_WIDTH_2;
+            src->vert_stride = GEN6_VERTSTRIDE_2;
+            src->width = GEN6_WIDTH_2;
             break;
          case 4:
-            src->vert_stride = BRW_VERTICAL_STRIDE_4;
-            src->width = BRW_WIDTH_4;
+            src->vert_stride = GEN6_VERTSTRIDE_4;
+            src->width = GEN6_WIDTH_4;
             break;
          case 8:
-            src->vert_stride = BRW_VERTICAL_STRIDE_8;
-            src->width = BRW_WIDTH_8;
+            src->vert_stride = GEN6_VERTSTRIDE_8;
+            src->width = GEN6_WIDTH_8;
             break;
          case 16:
-            src->vert_stride = BRW_VERTICAL_STRIDE_16;
-            src->width = BRW_WIDTH_16;
+            src->vert_stride = GEN6_VERTSTRIDE_16;
+            src->width = GEN6_WIDTH_16;
             break;
          default:
             assert(!"unsupported TOY_RECT_LINEAR width");
-            src->vert_stride = BRW_VERTICAL_STRIDE_1;
-            src->width = BRW_WIDTH_1;
+            src->vert_stride = GEN6_VERTSTRIDE_1;
+            src->width = GEN6_WIDTH_1;
             break;
          }
-         src->horz_stride = BRW_HORIZONTAL_STRIDE_1;
+         src->horz_stride = GEN6_HORZSTRIDE_1;
          break;
       case TOY_RECT_041:
-         src->vert_stride = BRW_VERTICAL_STRIDE_0;
-         src->width = BRW_WIDTH_4;
-         src->horz_stride = BRW_HORIZONTAL_STRIDE_1;
+         src->vert_stride = GEN6_VERTSTRIDE_0;
+         src->width = GEN6_WIDTH_4;
+         src->horz_stride = GEN6_HORZSTRIDE_1;
          break;
       case TOY_RECT_010:
-         src->vert_stride = BRW_VERTICAL_STRIDE_0;
-         src->width = BRW_WIDTH_1;
-         src->horz_stride = BRW_HORIZONTAL_STRIDE_0;
+         src->vert_stride = GEN6_VERTSTRIDE_0;
+         src->width = GEN6_WIDTH_1;
+         src->horz_stride = GEN6_HORZSTRIDE_0;
          break;
       case TOY_RECT_220:
-         src->vert_stride = BRW_VERTICAL_STRIDE_2;
-         src->width = BRW_WIDTH_2;
-         src->horz_stride = BRW_HORIZONTAL_STRIDE_0;
+         src->vert_stride = GEN6_VERTSTRIDE_2;
+         src->width = GEN6_WIDTH_2;
+         src->horz_stride = GEN6_HORZSTRIDE_0;
          break;
       case TOY_RECT_440:
-         src->vert_stride = BRW_VERTICAL_STRIDE_4;
-         src->width = BRW_WIDTH_4;
-         src->horz_stride = BRW_HORIZONTAL_STRIDE_0;
+         src->vert_stride = GEN6_VERTSTRIDE_4;
+         src->width = GEN6_WIDTH_4;
+         src->horz_stride = GEN6_HORZSTRIDE_0;
          break;
       case TOY_RECT_240:
-         src->vert_stride = BRW_VERTICAL_STRIDE_2;
-         src->width = BRW_WIDTH_4;
-         src->horz_stride = BRW_HORIZONTAL_STRIDE_0;
+         src->vert_stride = GEN6_VERTSTRIDE_2;
+         src->width = GEN6_WIDTH_4;
+         src->horz_stride = GEN6_HORZSTRIDE_0;
          break;
       default:
          assert(!"unsupported src region");
-         src->vert_stride = BRW_VERTICAL_STRIDE_1;
-         src->width = BRW_WIDTH_1;
-         src->horz_stride = BRW_HORIZONTAL_STRIDE_1;
+         src->vert_stride = GEN6_VERTSTRIDE_1;
+         src->width = GEN6_WIDTH_1;
+         src->horz_stride = GEN6_HORZSTRIDE_1;
          break;
       }
    }
@@ -726,7 +726,7 @@ toy_compiler_assemble(struct toy_compiler *tc, int *size)
       codegen_validate_region_restrictions(&cg);
 
       switch (inst->opcode) {
-      case BRW_OPCODE_MAD:
+      case GEN6_OPCODE_MAD:
          codegen_inst_3src(&cg, dw);
          break;
       default:

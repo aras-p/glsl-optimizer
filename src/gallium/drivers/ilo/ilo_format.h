@@ -59,7 +59,7 @@ ilo_translate_format(enum pipe_format format, unsigned bind)
        */
       switch (format) {
       case PIPE_FORMAT_B8G8R8X8_UNORM:
-         return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+         return GEN6_FORMAT_B8G8R8A8_UNORM;
       default:
          return ilo_translate_color_format(format);
       }
@@ -76,16 +76,16 @@ ilo_translate_format(enum pipe_format format, unsigned bind)
        */
       switch (format) {
       case PIPE_FORMAT_Z16_UNORM:
-         return BRW_SURFACEFORMAT_I16_UNORM;
+         return GEN6_FORMAT_I16_UNORM;
       case PIPE_FORMAT_Z32_FLOAT:
-         return BRW_SURFACEFORMAT_I32_FLOAT;
+         return GEN6_FORMAT_I32_FLOAT;
       case PIPE_FORMAT_Z24X8_UNORM:
       case PIPE_FORMAT_Z24_UNORM_S8_UINT:
-         return BRW_SURFACEFORMAT_I24X8_UNORM;
+         return GEN6_FORMAT_I24X8_UNORM;
       case PIPE_FORMAT_Z32_FLOAT_S8X24_UINT:
-         return BRW_SURFACEFORMAT_I32X32_FLOAT;
+         return GEN6_FORMAT_I32X32_FLOAT;
       case PIPE_FORMAT_ETC1_RGB8:
-         return BRW_SURFACEFORMAT_R8G8B8X8_UNORM;
+         return GEN6_FORMAT_R8G8B8X8_UNORM;
       default:
          return ilo_translate_color_format(format);
       }
@@ -100,15 +100,15 @@ ilo_translate_format(enum pipe_format format, unsigned bind)
        */
       switch (format) {
       case PIPE_FORMAT_R16G16B16_FLOAT:
-         return BRW_SURFACEFORMAT_R16G16B16A16_FLOAT;
+         return GEN6_FORMAT_R16G16B16A16_FLOAT;
       case PIPE_FORMAT_R16G16B16_UINT:
-         return BRW_SURFACEFORMAT_R16G16B16A16_UINT;
+         return GEN6_FORMAT_R16G16B16A16_UINT;
       case PIPE_FORMAT_R16G16B16_SINT:
-         return BRW_SURFACEFORMAT_R16G16B16A16_SINT;
+         return GEN6_FORMAT_R16G16B16A16_SINT;
       case PIPE_FORMAT_R8G8B8_UINT:
-         return BRW_SURFACEFORMAT_R8G8B8A8_UINT;
+         return GEN6_FORMAT_R8G8B8A8_UINT;
       case PIPE_FORMAT_R8G8B8_SINT:
-         return BRW_SURFACEFORMAT_R8G8B8A8_SINT;
+         return GEN6_FORMAT_R8G8B8A8_SINT;
       default:
          return ilo_translate_color_format(format);
       }

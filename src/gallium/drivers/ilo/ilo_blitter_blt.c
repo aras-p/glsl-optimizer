@@ -95,9 +95,9 @@ static uint32_t
 gen6_translate_blt_value_mask(enum gen6_blt_mask value_mask)
 {
    switch (value_mask) {
-   case GEN6_BLT_MASK_8:  return BR13_8;
-   case GEN6_BLT_MASK_16: return BR13_565;
-   default:               return BR13_8888;
+   case GEN6_BLT_MASK_8:  return GEN6_BLITTER_BR13_FORMAT_8;
+   case GEN6_BLT_MASK_16: return GEN6_BLITTER_BR13_FORMAT_565;
+   default:               return GEN6_BLITTER_BR13_FORMAT_8888;
    }
 }
 
@@ -105,10 +105,10 @@ static uint32_t
 gen6_translate_blt_write_mask(enum gen6_blt_mask write_mask)
 {
    switch (write_mask) {
-   case GEN6_BLT_MASK_32:    return XY_BLT_WRITE_RGB |
-                                    XY_BLT_WRITE_ALPHA;
-   case GEN6_BLT_MASK_32_LO: return XY_BLT_WRITE_RGB;
-   case GEN6_BLT_MASK_32_HI: return XY_BLT_WRITE_ALPHA;
+   case GEN6_BLT_MASK_32:    return GEN6_BLITTER_BR00_WRITE_RGB |
+                                    GEN6_BLITTER_BR00_WRITE_A;
+   case GEN6_BLT_MASK_32_LO: return GEN6_BLITTER_BR00_WRITE_RGB;
+   case GEN6_BLT_MASK_32_HI: return GEN6_BLITTER_BR00_WRITE_A;
    default:                  return 0;
    }
 }
@@ -185,7 +185,7 @@ gen6_emit_XY_COLOR_BLT(struct ilo_dev_info *dev,
       dst_pitch_shift = 0;
    }
    else {
-      dw0 |= XY_DST_TILED;
+      dw0 |= GEN6_BLITTER_BR00_DST_TILED;
 
       dst_align = (dst_tiling == INTEL_TILING_Y) ? 128 : 512;
       /* in dwords when tiled */
@@ -284,7 +284,7 @@ gen6_emit_XY_SRC_COPY_BLT(struct ilo_dev_info *dev,
       dst_pitch_shift = 0;
    }
    else {
-      dw0 |= XY_DST_TILED;
+      dw0 |= GEN6_BLITTER_BR00_DST_TILED;
 
       dst_align = (dst_tiling == INTEL_TILING_Y) ? 128 : 512;
       /* in dwords when tiled */
@@ -296,7 +296,7 @@ gen6_emit_XY_SRC_COPY_BLT(struct ilo_dev_info *dev,
       src_pitch_shift = 0;
    }
    else {
-      dw0 |= XY_SRC_TILED;
+      dw0 |= GEN6_BLITTER_BR00_SRC_TILED;
 
       src_align = (src_tiling == INTEL_TILING_Y) ? 128 : 512;
       /* in dwords when tiled */
@@ -352,23 +352,23 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
    if (!intel_winsys_can_submit_bo(ilo->winsys, aper_check, count))
       ilo_cp_flush(ilo->cp, "out of aperture");
 
-   /* set BCS_SWCTRL */
+   /* set GEN6_REG_BCS_SWCTRL */
    swctrl = 0x0;
 
    if (dst_tiling == INTEL_TILING_Y) {
-      swctrl |= BCS_SWCTRL_DST_Y << 16 |
-                BCS_SWCTRL_DST_Y;
+      swctrl |= GEN6_REG_BCS_SWCTRL_DST_TILING_Y << 16 |
+                GEN6_REG_BCS_SWCTRL_DST_TILING_Y;
    }
 
    if (src && src_tiling == INTEL_TILING_Y) {
-      swctrl |= BCS_SWCTRL_SRC_Y << 16 |
-                BCS_SWCTRL_SRC_Y;
+      swctrl |= GEN6_REG_BCS_SWCTRL_SRC_TILING_Y << 16 |
+                GEN6_REG_BCS_SWCTRL_SRC_TILING_Y;
    }
 
    if (swctrl) {
       /*
        * Most clients expect BLT engine to be stateless.  If we have to set
-       * BCS_SWCTRL to a non-default value, we have to set it back in the same
+       * GEN6_REG_BCS_SWCTRL to a non-default value, we have to set it back in the same
        * batch buffer.
        */
       if (ilo_cp_space(ilo->cp) < (4 + 3) * 2 + max_cmd_size)
@@ -383,9 +383,9 @@ ilo_blitter_blt_begin(struct ilo_blitter *blitter, int max_cmd_size,
        *      this bit (Tile Y Destination/Source)."
        */
       gen6_emit_MI_FLUSH_DW(ilo->dev, ilo->cp);
-      gen6_emit_MI_LOAD_REGISTER_IMM(ilo->dev, BCS_SWCTRL, swctrl, ilo->cp);
+      gen6_emit_MI_LOAD_REGISTER_IMM(ilo->dev, GEN6_REG_BCS_SWCTRL, swctrl, ilo->cp);
 
-      swctrl &= ~(BCS_SWCTRL_DST_Y | BCS_SWCTRL_SRC_Y);
+      swctrl &= ~(GEN6_REG_BCS_SWCTRL_DST_TILING_Y | GEN6_REG_BCS_SWCTRL_SRC_TILING_Y);
    }
 
    return swctrl;
@@ -396,10 +396,10 @@ ilo_blitter_blt_end(struct ilo_blitter *blitter, uint32_t swctrl)
 {
    struct ilo_context *ilo = blitter->ilo;
 
-   /* set BCS_SWCTRL back */
+   /* set GEN6_REG_BCS_SWCTRL back */
    if (swctrl) {
       gen6_emit_MI_FLUSH_DW(ilo->dev, ilo->cp);
-      gen6_emit_MI_LOAD_REGISTER_IMM(ilo->dev, BCS_SWCTRL, swctrl, ilo->cp);
+      gen6_emit_MI_LOAD_REGISTER_IMM(ilo->dev, GEN6_REG_BCS_SWCTRL, swctrl, ilo->cp);
 
       ilo_cp_assert_no_implicit_flush(ilo->cp, false);
    }
