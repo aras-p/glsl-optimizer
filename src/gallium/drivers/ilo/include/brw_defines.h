@@ -1723,6 +1723,4 @@ enum brw_wm_barycentric_interp_mode {
  */
 #define BRW_MAX_NUM_BUFFER_ENTRIES	(1 << 27)
 
-#include "intel_chipset.h"
-
 #endif
