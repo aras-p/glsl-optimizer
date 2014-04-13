@@ -620,13 +620,16 @@ brw_init_surface_formats(struct brw_context *brw)
    ctx->TextureFormatSupported[MESA_FORMAT_Z_FLOAT32] = true;
    ctx->TextureFormatSupported[MESA_FORMAT_Z32_FLOAT_S8X24_UINT] = true;
 
-   /* It appears that Z16 is slower than Z24 (on Intel Ivybridge and newer
-    * hardware at least), so there's no real reason to prefer it unless you're
-    * under memory (not memory bandwidth) pressure.  Our speculation is that
-    * this is due to either increased fragment shader execution from
-    * GL_LEQUAL/GL_EQUAL depth tests at the reduced precision, or due to
-    * increased depth stalls from a cacheline-based heuristic for detecting
-    * depth stalls.
+   /* Benchmarking shows that Z16 is slower than Z24, so there's no reason to
+    * use it unless you're under memory (not memory bandwidth) pressure.
+    *
+    * Apparently, the GPU's depth scoreboarding works on a 32-bit granularity,
+    * which corresponds to one pixel in the depth buffer for Z24 or Z32 formats.
+    * However, it corresponds to two pixels with Z16, which means both need to
+    * hit the early depth case in order for it to happen.
+    *
+    * Other speculation is that we may be hitting increased fragment shader
+    * execution from GL_LEQUAL/GL_EQUAL depth tests at reduced precision.
     *
     * However, desktop GL 3.0+ require that you get exactly 16 bits when
     * asking for DEPTH_COMPONENT16, so we have to respect that.
