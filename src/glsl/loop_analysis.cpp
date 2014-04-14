@@ -348,6 +348,11 @@ loop_analysis::visit_leave(ir_loop *ir)
    foreach_list_safe(node, &ls->variables) {
       loop_variable *lv = (loop_variable *) node;
 
+       ir_variable *var = lv->var;
+       if (var != NULL) {
+           lv->initial_value = find_initial_value(ir, var);
+       }
+
       /* Move variables that are already marked as being loop constant to
        * a separate list.  These trivially don't need to be tested.
        */
@@ -487,12 +492,9 @@ loop_analysis::visit_leave(ir_loop *ir)
 
 	 ir_variable *var = counter->variable_referenced();
 
-	 ir_rvalue *init = find_initial_value(ir, var);
-
          loop_variable *lv = ls->get(var);
          if (lv != NULL && lv->is_induction_var()) {
-            lv->initial_value = init;
-            t->iterations = calculate_iterations(init, limit, lv->increment,
+            t->iterations = calculate_iterations(lv->initial_value, limit, lv->increment,
                                                  cmp);
 
             if (t->iterations >= 0 &&
