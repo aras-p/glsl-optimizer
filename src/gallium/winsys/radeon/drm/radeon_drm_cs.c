@@ -199,8 +199,7 @@ static INLINE void update_reloc(struct drm_radeon_cs_reloc *reloc,
     reloc->flags = MAX2(reloc->flags, priority);
 }
 
-int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo,
-                     struct drm_radeon_cs_reloc **out_reloc)
+int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo)
 {
     struct drm_radeon_cs_reloc *reloc = NULL;
     unsigned hash = bo->handle & (sizeof(csc->is_handle_added)-1);
@@ -230,8 +229,6 @@ int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo,
             }
         }
     }
-    if (out_reloc)
-        *out_reloc = reloc;
     return i;
 }
 
@@ -252,9 +249,10 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
     priority = MIN2(priority, 15);
     *added_domains = 0;
 
-    i = radeon_get_reloc(csc, bo, &reloc);
+    i = radeon_get_reloc(csc, bo);
 
     if (i >= 0) {
+        reloc = &csc->relocs[i];
         update_reloc(reloc, rd, wd, priority, added_domains);
 
         /* For async DMA, every add_reloc call must add a buffer to the list
@@ -329,7 +327,7 @@ static int radeon_drm_cs_get_reloc(struct radeon_winsys_cs *rcs,
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
 
-    return radeon_get_reloc(cs->csc, (struct radeon_bo*)buf, NULL);
+    return radeon_get_reloc(cs->csc, (struct radeon_bo*)buf);
 }
 
 static boolean radeon_drm_cs_validate(struct radeon_winsys_cs *rcs)
@@ -583,7 +581,7 @@ static boolean radeon_bo_is_referenced(struct radeon_winsys_cs *rcs,
     if (!bo->num_cs_references)
         return FALSE;
 
-    index = radeon_get_reloc(cs->csc, bo, NULL);
+    index = radeon_get_reloc(cs->csc, bo);
     if (index == -1)
         return FALSE;
 
