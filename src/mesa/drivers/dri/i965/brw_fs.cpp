@@ -2056,6 +2056,72 @@ fs_visitor::opt_algebraic()
 }
 
 bool
+fs_visitor::opt_register_renaming()
+{
+   bool progress = false;
+   int depth = 0;
+
+   int remap[virtual_grf_count];
+   memset(remap, -1, sizeof(int) * virtual_grf_count);
+
+   foreach_in_list(fs_inst, inst, &this->instructions) {
+      if (inst->opcode == BRW_OPCODE_IF || inst->opcode == BRW_OPCODE_DO) {
+         depth++;
+      } else if (inst->opcode == BRW_OPCODE_ENDIF ||
+                 inst->opcode == BRW_OPCODE_WHILE) {
+         depth--;
+      }
+
+      /* Rewrite instruction sources. */
+      for (int i = 0; i < inst->sources; i++) {
+         if (inst->src[i].file == GRF &&
+             remap[inst->src[i].reg] != -1 &&
+             remap[inst->src[i].reg] != inst->src[i].reg) {
+            inst->src[i].reg = remap[inst->src[i].reg];
+            progress = true;
+         }
+      }
+
+      const int dst = inst->dst.reg;
+
+      if (depth == 0 &&
+          inst->dst.file == GRF &&
+          virtual_grf_sizes[inst->dst.reg] == 1 &&
+          !inst->is_partial_write()) {
+         if (remap[dst] == -1) {
+            remap[dst] = dst;
+         } else {
+            remap[dst] = virtual_grf_alloc(1);
+            inst->dst.reg = remap[dst];
+            progress = true;
+         }
+      } else if (inst->dst.file == GRF &&
+                 remap[dst] != -1 &&
+                 remap[dst] != dst) {
+         inst->dst.reg = remap[dst];
+         progress = true;
+      }
+   }
+
+   if (progress) {
+      invalidate_live_intervals();
+
+      for (unsigned i = 0; i < ARRAY_SIZE(delta_x); i++) {
+         if (delta_x[i].file == GRF && remap[delta_x[i].reg] != -1) {
+            delta_x[i].reg = remap[delta_x[i].reg];
+         }
+      }
+      for (unsigned i = 0; i < ARRAY_SIZE(delta_y); i++) {
+         if (delta_y[i].file == GRF && remap[delta_y[i].reg] != -1) {
+            delta_y[i].reg = remap[delta_y[i].reg];
+         }
+      }
+   }
+
+   return progress;
+}
+
+bool
 fs_visitor::compute_to_mrf()
 {
    bool progress = false;
@@ -3080,6 +3146,7 @@ fs_visitor::run()
          OPT(dead_code_eliminate);
          OPT(opt_peephole_sel);
          OPT(dead_control_flow_eliminate, this);
+         OPT(opt_register_renaming);
          OPT(opt_saturate_propagation);
          OPT(register_coalesce);
          OPT(compute_to_mrf);
