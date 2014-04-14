@@ -83,6 +83,8 @@ static void radeon_fence_reference(struct pipe_fence_handle **dst,
 static boolean radeon_init_cs_context(struct radeon_cs_context *csc,
                                       struct radeon_drm_winsys *ws)
 {
+    int i;
+
     csc->fd = ws->fd;
     csc->nrelocs = 512;
     csc->relocs_bo = (struct radeon_bo**)
@@ -113,6 +115,10 @@ static boolean radeon_init_cs_context(struct radeon_cs_context *csc,
     csc->chunk_array[2] = (uint64_t)(uintptr_t)&csc->chunks[2];
 
     csc->cs.chunks = (uint64_t)(uintptr_t)csc->chunk_array;
+
+    for (i = 0; i < Elements(csc->reloc_indices_hashlist); i++) {
+        csc->reloc_indices_hashlist[i] = -1;
+    }
     return TRUE;
 }
 
@@ -131,7 +137,10 @@ static void radeon_cs_context_cleanup(struct radeon_cs_context *csc)
     csc->chunks[1].length_dw = 0;
     csc->used_gart = 0;
     csc->used_vram = 0;
-    memset(csc->is_handle_added, 0, sizeof(csc->is_handle_added));
+
+    for (i = 0; i < Elements(csc->reloc_indices_hashlist); i++) {
+        csc->reloc_indices_hashlist[i] = -1;
+    }
 }
 
 static void radeon_destroy_cs_context(struct radeon_cs_context *csc)
@@ -201,32 +210,30 @@ static INLINE void update_reloc(struct drm_radeon_cs_reloc *reloc,
 
 int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo)
 {
-    unsigned hash = bo->handle & (sizeof(csc->is_handle_added)-1);
-    int i = -1;
+    unsigned hash = bo->handle & (Elements(csc->reloc_indices_hashlist)-1);
+    int i = csc->reloc_indices_hashlist[hash];
 
-    if (csc->is_handle_added[hash]) {
-        i = csc->reloc_indices_hashlist[hash];
+    /* not found or found */
+    if (i == -1 || csc->relocs_bo[i] == bo)
+        return i;
 
-        if (csc->relocs_bo[i] != bo) {
-            /* Hash collision, look for the BO in the list of relocs linearly. */
-            for (i = csc->crelocs - 1; i >= 0; i--) {
-                if (csc->relocs_bo[i] == bo) {
-                    /* Put this reloc in the hash list.
-                     * This will prevent additional hash collisions if there are
-                     * several consecutive get_reloc calls for the same buffer.
-                     *
-                     * Example: Assuming buffers A,B,C collide in the hash list,
-                     * the following sequence of relocs:
-                     *         AAAAAAAAAAABBBBBBBBBBBBBBCCCCCCCC
-                     * will collide here: ^ and here:   ^,
-                     * meaning that we should get very few collisions in the end. */
-                    csc->reloc_indices_hashlist[hash] = i;
-                    break;
-                }
-            }
+    /* Hash collision, look for the BO in the list of relocs linearly. */
+    for (i = csc->crelocs - 1; i >= 0; i--) {
+        if (csc->relocs_bo[i] == bo) {
+            /* Put this reloc in the hash list.
+             * This will prevent additional hash collisions if there are
+             * several consecutive get_reloc calls for the same buffer.
+             *
+             * Example: Assuming buffers A,B,C collide in the hash list,
+             * the following sequence of relocs:
+             *         AAAAAAAAAAABBBBBBBBBBBBBBCCCCCCCC
+             * will collide here: ^ and here:   ^,
+             * meaning that we should get very few collisions in the end. */
+            csc->reloc_indices_hashlist[hash] = i;
+            return i;
         }
     }
-    return i;
+    return -1;
 }
 
 static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
@@ -238,7 +245,7 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
 {
     struct radeon_cs_context *csc = cs->csc;
     struct drm_radeon_cs_reloc *reloc;
-    unsigned hash = bo->handle & (sizeof(csc->is_handle_added)-1);
+    unsigned hash = bo->handle & (Elements(csc->reloc_indices_hashlist)-1);
     enum radeon_bo_domain rd = usage & RADEON_USAGE_READ ? domains : 0;
     enum radeon_bo_domain wd = usage & RADEON_USAGE_WRITE ? domains : 0;
     int i = -1;
@@ -291,7 +298,6 @@ static unsigned radeon_add_reloc(struct radeon_drm_cs *cs,
     reloc->write_domain = wd;
     reloc->flags = priority;
 
-    csc->is_handle_added[hash] = TRUE;
     csc->reloc_indices_hashlist[hash] = csc->crelocs;
 
     csc->chunks[1].length_dw += RELOC_DWORDS;

@@ -48,9 +48,7 @@ struct radeon_cs_context {
     struct radeon_bo            **relocs_bo;
     struct drm_radeon_cs_reloc  *relocs;
 
-    /* 0 = BO not added, 1 = BO added */
-    char                        is_handle_added[512];
-    unsigned                    reloc_indices_hashlist[512];
+    int                         reloc_indices_hashlist[512];
 
     unsigned                    used_vram;
     unsigned                    used_gart;
