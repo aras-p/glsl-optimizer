@@ -374,7 +374,6 @@ public:
    bool register_coalesce();
    bool compute_to_mrf();
    bool dead_code_eliminate();
-   bool dead_code_eliminate_local();
    bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);
    void schedule_instructions(instruction_scheduler_mode mode);
