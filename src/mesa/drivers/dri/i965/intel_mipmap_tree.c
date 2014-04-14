@@ -1219,7 +1219,7 @@ intel_miptree_alloc_mcs(struct brw_context *brw,
     * Note: the clear value for MCS buffers is all 1's, so we memset to 0xff.
     */
    void *data = intel_miptree_map_raw(brw, mt->mcs_mt);
-   memset(data, 0xff, mt->mcs_mt->region->bo->size);
+   memset(data, 0xff, mt->mcs_mt->region->height * mt->mcs_mt->region->pitch);
    intel_miptree_unmap_raw(brw, mt->mcs_mt);
    mt->fast_clear_state = INTEL_FAST_CLEAR_STATE_CLEAR;
 
