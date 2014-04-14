@@ -201,19 +201,16 @@ static INLINE void update_reloc(struct drm_radeon_cs_reloc *reloc,
 
 int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo)
 {
-    struct drm_radeon_cs_reloc *reloc = NULL;
     unsigned hash = bo->handle & (sizeof(csc->is_handle_added)-1);
     int i = -1;
 
     if (csc->is_handle_added[hash]) {
         i = csc->reloc_indices_hashlist[hash];
-        reloc = &csc->relocs[i];
 
-        if (reloc->handle != bo->handle) {
+        if (csc->relocs_bo[i] != bo) {
             /* Hash collision, look for the BO in the list of relocs linearly. */
             for (i = csc->crelocs - 1; i >= 0; i--) {
-                reloc = &csc->relocs[i];
-                if (reloc->handle == bo->handle) {
+                if (csc->relocs_bo[i] == bo) {
                     /* Put this reloc in the hash list.
                      * This will prevent additional hash collisions if there are
                      * several consecutive get_reloc calls for the same buffer.
