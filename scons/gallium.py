@@ -467,6 +467,18 @@ def generate(env):
             env.Append(CCFLAGS = ['/MT'])
             env.Append(SHCCFLAGS = ['/LD'])
     
+    # Static code analysis
+    if env['analyze']:
+        if env['msvc']:
+            # http://msdn.microsoft.com/en-us/library/ms173498.aspx
+            env.Append(CCFLAGS = [
+                '/analyze',
+                #'/analyze:log', '${TARGET.base}.xml',
+            ])
+        if env['clang']:
+            # scan-build will produce more comprehensive output
+            env.Append(CCFLAGS = ['--analyze'])
+
     # Assembler options
     if gcc_compat:
         if env['machine'] == 'x86':

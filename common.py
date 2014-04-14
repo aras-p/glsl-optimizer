@@ -91,6 +91,7 @@ def AddOptions(opts):
 	opts.Add(EnumOption('platform', 'target platform', host_platform,
 											 allowed_values=('cygwin', 'darwin', 'freebsd', 'haiku', 'linux', 'sunos', 'windows')))
 	opts.Add(BoolOption('embedded', 'embedded build', 'no'))
+	opts.Add(BoolOption('analyze', 'enable static code analysis where available', 'no'))
 	opts.Add('toolchain', 'compiler toolchain', default_toolchain)
 	opts.Add(BoolOption('gles', 'EXPERIMENTAL: enable OpenGL ES support', 'no'))
 	opts.Add(BoolOption('llvm', 'use LLVM', default_llvm))
