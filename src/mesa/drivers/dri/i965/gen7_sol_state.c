@@ -132,6 +132,7 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
       buffer_mask |= 1 << buffer;
 
       decl |= buffer << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT;
+      assert(vue_map->varying_to_slot[varying] >= 0);
       decl |= vue_map->varying_to_slot[varying] <<
 	 SO_DECL_REGISTER_INDEX_SHIFT;
       decl |= component_mask << SO_DECL_COMPONENT_MASK_SHIFT;
