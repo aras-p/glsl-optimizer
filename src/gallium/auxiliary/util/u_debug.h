@@ -154,7 +154,11 @@ debug_get_num_option(const char *name, long dfault);
 void _debug_assert_fail(const char *expr, 
                         const char *file, 
                         unsigned line, 
-                        const char *function);
+                        const char *function)
+#ifdef __GNUC__
+   __attribute__((__noreturn__))
+#endif
+;
 
 
 /** 
