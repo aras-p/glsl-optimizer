@@ -206,6 +206,23 @@ inst_token_predicated(unsigned opcode)
 
 
 /**
+ * Generate a SVGA3dShaderInstToken for a SETP instruction (set predicate)
+ * using the given comparison operator (one of SVGA3DOPCOMP_xx).
+ */
+static INLINE SVGA3dShaderInstToken
+inst_token_setp(unsigned operator)
+{
+   SVGA3dShaderInstToken inst;
+
+   inst.value = 0;
+   inst.op = SVGA3DOP_SETP;
+   inst.control = operator;
+
+   return inst;
+}
+
+
+/**
  * Create an instance of a SVGA3dShaderDestToken.
  * Note that this function is used to create tokens for output registers,
  * temp registers AND constants (see emit_def_const()).

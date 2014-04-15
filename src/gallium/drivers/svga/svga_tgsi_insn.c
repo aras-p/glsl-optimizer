@@ -1531,7 +1531,6 @@ emit_conditional(struct svga_shader_emitter *emit,
 {
    SVGA3dShaderDestToken pred_reg = dst_register( SVGA3DREG_PREDICATE, 0 );
    SVGA3dShaderInstToken setp_token;
-   setp_token = inst_token( SVGA3DOP_SETP );
 
    switch (compare_func) {
    case PIPE_FUNC_NEVER:
@@ -1539,22 +1538,22 @@ emit_conditional(struct svga_shader_emitter *emit,
                          dst, fail );
       break;
    case PIPE_FUNC_LESS:
-      setp_token.control = SVGA3DOPCOMP_LT;
+      setp_token = inst_token_setp(SVGA3DOPCOMP_LT);
       break;
    case PIPE_FUNC_EQUAL:
-      setp_token.control = SVGA3DOPCOMP_EQ;
+      setp_token = inst_token_setp(SVGA3DOPCOMP_EQ);
       break;
    case PIPE_FUNC_LEQUAL:
-      setp_token.control = SVGA3DOPCOMP_LE;
+      setp_token = inst_token_setp(SVGA3DOPCOMP_LE);
       break;
    case PIPE_FUNC_GREATER:
-      setp_token.control = SVGA3DOPCOMP_GT;
+      setp_token = inst_token_setp(SVGA3DOPCOMP_GT);
       break;
    case PIPE_FUNC_NOTEQUAL:
-      setp_token.control = SVGA3DOPCOMPC_NE;
+      setp_token = inst_token_setp(SVGA3DOPCOMPC_NE);
       break;
    case PIPE_FUNC_GEQUAL:
-      setp_token.control = SVGA3DOPCOMP_GE;
+      setp_token = inst_token_setp(SVGA3DOPCOMP_GE);
       break;
    case PIPE_FUNC_ALWAYS:
       return submit_op1( emit, inst_token( SVGA3DOP_MOV ),
@@ -2557,11 +2556,7 @@ emit_lit(struct svga_shader_emitter *emit,
        */
       {
          SVGA3dShaderDestToken pred_reg = dst_register( SVGA3DREG_PREDICATE, 0 );
-         SVGA3dShaderInstToken setp_token;
          struct src_register predsrc;
-
-         setp_token = inst_token( SVGA3DOP_SETP );
-         setp_token.control = SVGA3DOPCOMP_GT;
 
          /* D3D vs GL semantics:
           */
@@ -2571,7 +2566,9 @@ emit_lit(struct svga_shader_emitter *emit,
             predsrc = swizzle(src0, 0, 0, 0, 0); /* GL */
 
          /* SETP src0.xxyy, GT, {0}.x */
-         if (!submit_op2( emit, setp_token, pred_reg,
+         if (!submit_op2( emit,
+                          inst_token_setp(SVGA3DOPCOMP_GT),
+                          pred_reg,
                           predsrc,
                           get_zero_immediate(emit)))
             return FALSE;
