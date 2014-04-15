@@ -25,13 +25,11 @@
 
 #include "svga_cmd.h"
 
-#include "os/os_process.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_bitmask.h"
-#include "util/u_string.h"
 
 #include "svga_context.h"
 #include "svga_screen.h"
@@ -81,35 +79,6 @@ static void svga_destroy( struct pipe_context *pipe )
    FREE( svga );
 }
 
-
-/**
- * Check the process name to see if we're running with an app that
- * needs any particular work-arounds.
- */
-static void
-check_for_workarounds(struct svga_context *svga)
-{
-   char name[1000];
-
-   if (!os_get_process_name(name, sizeof(name)))
-      return;
-
-   if (util_strcmp(name, "sauer_client") == 0) {
-      /*
-       * Sauerbraten uses a two-pass rendering algorithm.  The first pass
-       * draws a depth map.  The second pass draws the colors.  On the second
-       * pass we wind up using the swtnl path because the game tries to use
-       * a GLbyte[3] normal vector array (which the SVGA3D protocol does not
-       * support.)  The vertices of the first and second passes don't quite
-       * match so we see some depth/Z-fighting issues.  This work-around
-       * causes us to map GLbyte[3] to SVGA3D_DECLTYPE_UBYTE4N and avoid the
-       * swtnl path.  Despite not correctly converting normal vectors from
-       * GLbyte[3] to float[4], the rendering looks OK.
-       */
-      debug_printf("Enabling sauerbraten GLbyte[3] work-around\n");
-      svga->workaround.use_decltype_ubyte4n = TRUE;
-   }
-}
 
 
 struct pipe_context *svga_context_create( struct pipe_screen *screen,
@@ -186,8 +155,6 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    memset(&svga->state.hw_draw.hw_cb, 0x0, sizeof(svga->state.hw_draw.hw_cb));
 
    svga->dirty = ~0;
-
-   check_for_workarounds(svga);
 
    return &svga->pipe;
 
