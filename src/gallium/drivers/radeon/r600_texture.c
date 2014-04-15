@@ -1039,6 +1039,8 @@ static void *r600_texture_transfer_map(struct pipe_context *ctx,
 
 	if (trans->staging) {
 		buf = trans->staging;
+		if (!rtex->is_depth && !(usage & PIPE_TRANSFER_READ))
+			usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
 	} else {
 		buf = &rtex->resource;
 	}
