@@ -170,6 +170,8 @@ fs_visitor::register_coalesce()
       if (!can_coalesce)
          continue;
 
+      progress = true;
+
       for (int i = 0; i < src_size; i++) {
          if (mov[i]) {
             mov[i]->opcode = BRW_OPCODE_NOP;
@@ -215,17 +217,17 @@ fs_visitor::register_coalesce()
       reg_from = -1;
    }
 
-   foreach_list_safe(node, &this->instructions) {
-      fs_inst *inst = (fs_inst *)node;
+   if (progress) {
+      foreach_list_safe(node, &this->instructions) {
+         fs_inst *inst = (fs_inst *)node;
 
-      if (inst->opcode == BRW_OPCODE_NOP) {
-         inst->remove();
-         progress = true;
+         if (inst->opcode == BRW_OPCODE_NOP) {
+            inst->remove();
+         }
       }
-   }
 
-   if (progress)
       invalidate_live_intervals();
+   }
 
    return progress;
 }
