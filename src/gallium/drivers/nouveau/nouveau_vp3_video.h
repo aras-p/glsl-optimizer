@@ -107,6 +107,7 @@ struct nouveau_vp3_decoder {
       unsigned field_pic_flag : 1;
       unsigned decoded_top : 1;
       unsigned decoded_bottom : 1;
+      unsigned decoded_first : 1;
    } refs[17];
    unsigned fence_seq, fw_sizes, last_frame_num, tmp_stride, ref_stride;
 

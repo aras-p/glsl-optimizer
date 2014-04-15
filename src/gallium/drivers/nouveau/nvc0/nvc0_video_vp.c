@@ -39,7 +39,7 @@ static void dump_comm_vp(struct nouveau_vp3_decoder *dec, struct comm *comm, u32
 		debug_printf("parse_endpos[%i] = { @ %08x}\n", i, comm->parse_endpos[i]);
 #endif
 	debug_printf("mb_y = %u\n", comm->mb_y[idx]);
-	if (comm->status_vp[idx] == 1)
+	if (comm->status_vp[idx] <= 1)
 		return;
 
 	if ((comm->pvp_stage & 0xff) != 0xff) {
@@ -112,7 +112,7 @@ nvc0_decoder_vp(struct nouveau_vp3_decoder *dec, union pipe_desc desc,
       else
          pic_addr[i] = null_addr;
    }
-   if (!is_ref)
+   if (!is_ref && (dec->refs[target->valid_ref].decoded_top && dec->refs[target->valid_ref].decoded_bottom))
       nvc0_decoder_kick_ref(dec, target);
 
    nouveau_pushbuf_space(push, 8 + 3 * (codec != PIPE_VIDEO_FORMAT_MPEG12) +

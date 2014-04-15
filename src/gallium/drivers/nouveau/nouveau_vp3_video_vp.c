@@ -169,19 +169,14 @@ struct h264_picparm_vp { // 700..a00
 static void
 nouveau_vp3_handle_references(struct nouveau_vp3_decoder *dec, struct nouveau_vp3_video_buffer *refs[16], unsigned seq, struct nouveau_vp3_video_buffer *target)
 {
-   unsigned h264 = u_reduce_video_profile(dec->base.profile) == PIPE_VIDEO_FORMAT_MPEG4_AVC;
-   unsigned i, idx, empty_spot = dec->base.max_references + 1;
+   unsigned i, idx, empty_spot = ~0;
+
    for (i = 0; i < dec->base.max_references; ++i) {
       if (!refs[i])
          continue;
 
       idx = refs[i]->valid_ref;
       //debug_printf("ref[%i] %p in slot %i\n", i, refs[i], idx);
-      assert(target != refs[i] ||
-             (h264 && empty_spot &&
-              (!dec->refs[idx].decoded_bottom || !dec->refs[idx].decoded_top)));
-      if (target == refs[i])
-         empty_spot = 0;
 
       if (dec->refs[idx].vidbuf != refs[i]) {
          debug_printf("%p is not a real ref\n", refs[i]);
@@ -192,26 +187,23 @@ nouveau_vp3_handle_references(struct nouveau_vp3_decoder *dec, struct nouveau_vp
       assert(dec->refs[idx].vidbuf == refs[i]);
       dec->refs[idx].last_used = seq;
    }
-   if (!empty_spot)
+
+   if (dec->refs[target->valid_ref].vidbuf == target) {
+      dec->refs[target->valid_ref].last_used = seq;
       return;
+   }
 
    /* Try to find a real empty spot first, there should be one..
     */
    for (i = 0; i < dec->base.max_references + 1; ++i) {
-      if (dec->refs[i].last_used < seq) {
-         if (!dec->refs[i].vidbuf) {
-            empty_spot = i;
-            break;
-         }
-         if (empty_spot < dec->base.max_references+1 &&
-             dec->refs[empty_spot].last_used < dec->refs[i].last_used)
-            continue;
+      if (dec->refs[i].last_used != seq) {
          empty_spot = i;
+         break;
       }
    }
    assert(empty_spot < dec->base.max_references+1);
    dec->refs[empty_spot].last_used = seq;
-//   debug_printf("Kicked %p to add %p to slot %i\n", dec->refs[empty_spot].vidbuf, target, i);
+//   debug_printf("Kicked %p to add %p to slot %i\n", dec->refs[empty_spot].vidbuf, target, empty_spot);
    dec->refs[empty_spot].vidbuf = target;
    dec->refs[empty_spot].decoded_bottom = dec->refs[empty_spot].decoded_top = 0;
    target->valid_ref = empty_spot;
@@ -335,7 +327,7 @@ nouveau_vp3_fill_picparm_h264_vp(struct nouveau_vp3_decoder *dec,
    h->ofs[0] = h->ofs[2] = 0;
    h->tmp_stride = dec->tmp_stride >> 8;
    assert(h->tmp_stride);
-   nouveau_vp3_inter_sizes(dec, 1, &ring, &h->bucket_size, &h->inter_ring_data_size);
+   nouveau_vp3_inter_sizes(dec, d->slice_count, &ring, &h->bucket_size, &h->inter_ring_data_size);
 
    h->u220 = 0;
    h->mb_adaptive_frame_field_flag = d->pps->sps->mb_adaptive_frame_field_flag;
@@ -345,7 +337,8 @@ nouveau_vp3_fill_picparm_h264_vp(struct nouveau_vp3_decoder *dec,
    h->is_reference = d->is_reference;
    h->interlace = d->field_pic_flag;
    h->bottom_field_flag = d->bottom_field_flag;
-   h->second_field = 0; // TODO: figure out when set..
+   h->second_field = 0; // set in nouveau_vp3_fill_picparm_h264_vp_refs
+
    h->log2_max_frame_num_minus4 = d->pps->sps->log2_max_frame_num_minus4;
    h->chroma_format_idc = 1;
 
@@ -360,7 +353,6 @@ nouveau_vp3_fill_picparm_h264_vp(struct nouveau_vp3_decoder *dec,
    h->u34_3030 = h->u34_3131 = 0;
    h->field_order_cnt[0] = d->field_order_cnt[0];
    h->field_order_cnt[1] = d->field_order_cnt[1];
-   memset(h->refs, 0, sizeof(h->refs));
    memcpy(h->m4x4, d->pps->ScalingList4x4, sizeof(h->m4x4));
    memcpy(h->m8x8, d->pps->ScalingList8x8, sizeof(h->m8x8));
    h->u220 = 0;
@@ -370,6 +362,7 @@ nouveau_vp3_fill_picparm_h264_vp(struct nouveau_vp3_decoder *dec,
       refs[j] = (struct nouveau_vp3_video_buffer *)d->ref[i];
       h->refs[j].fifo_idx = j + 1;
       h->refs[j].tmp_idx = refs[j]->valid_ref;
+      assert(dec->refs[refs[j]->valid_ref].vidbuf == refs[j]);
       h->refs[j].field_order_cnt[0] = d->field_order_cnt_list[i][0];
       h->refs[j].field_order_cnt[1] = d->field_order_cnt_list[i][1];
       h->refs[j].frame_idx = d->frame_num_list[i];
@@ -410,6 +403,12 @@ nouveau_vp3_fill_picparm_h264_vp_refs(struct nouveau_vp3_decoder *dec,
    struct h264_picparm_vp *h = (struct h264_picparm_vp *)map;
    assert(dec->refs[target->valid_ref].vidbuf == target);
 //    debug_printf("Target: %p\n", target);
+
+   if (!dec->refs[target->valid_ref].decoded_top &&
+       !dec->refs[target->valid_ref].decoded_bottom)
+      dec->refs[target->valid_ref].decoded_first = d->bottom_field_flag;
+   else if (dec->refs[target->valid_ref].decoded_first != d->bottom_field_flag)
+      h->second_field = 1;
 
    h->tmp_idx = target->valid_ref;
    dec->refs[target->valid_ref].field_pic_flag = d->field_pic_flag;
