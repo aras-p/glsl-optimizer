@@ -189,6 +189,23 @@ inst_token(unsigned opcode)
 
 
 /**
+ * Generate a SVGA3dShaderInstToken for the given SVGA3D shader opcode
+ * with the predication flag set.
+ */
+static INLINE SVGA3dShaderInstToken
+inst_token_predicated(unsigned opcode)
+{
+   SVGA3dShaderInstToken inst;
+
+   inst.value = 0;
+   inst.op = opcode;
+   inst.predicated = 1;
+
+   return inst;
+}
+
+
+/**
  * Create an instance of a SVGA3dShaderDestToken.
  * Note that this function is used to create tokens for output registers,
  * temp registers AND constants (see emit_def_const()).

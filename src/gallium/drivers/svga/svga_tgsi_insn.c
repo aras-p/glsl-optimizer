@@ -1530,7 +1530,7 @@ emit_conditional(struct svga_shader_emitter *emit,
                  struct src_register fail)
 {
    SVGA3dShaderDestToken pred_reg = dst_register( SVGA3DREG_PREDICATE, 0 );
-   SVGA3dShaderInstToken setp_token, mov_token;
+   SVGA3dShaderInstToken setp_token;
    setp_token = inst_token( SVGA3DOP_SETP );
 
    switch (compare_func) {
@@ -1577,11 +1577,8 @@ emit_conditional(struct svga_shader_emitter *emit,
                     src0, src1 ))
       return FALSE;
 
-   mov_token = inst_token( SVGA3DOP_MOV );
-
    /* MOV dst, fail */
-   if (!submit_op1( emit, mov_token, dst,
-                    fail ))
+   if (!submit_op1(emit, inst_token(SVGA3DOP_MOV), dst, fail))
       return FALSE;
 
    /* MOV dst, pass (predicated)
@@ -1589,9 +1586,9 @@ emit_conditional(struct svga_shader_emitter *emit,
     * Note that the predicate reg (and possible modifiers) is passed
     * as the first source argument.
     */
-   mov_token.predicated = 1;
-   if (!submit_op2( emit, mov_token, dst,
-                    src( pred_reg ), pass ))
+   if (!submit_op2(emit,
+                   inst_token_predicated(SVGA3DOP_MOV), dst,
+                   src(pred_reg), pass))
       return FALSE;
 
    return TRUE;
@@ -2560,12 +2557,10 @@ emit_lit(struct svga_shader_emitter *emit,
        */
       {
          SVGA3dShaderDestToken pred_reg = dst_register( SVGA3DREG_PREDICATE, 0 );
-         SVGA3dShaderInstToken setp_token, mov_token;
+         SVGA3dShaderInstToken setp_token;
          struct src_register predsrc;
 
          setp_token = inst_token( SVGA3DOP_SETP );
-         mov_token = inst_token( SVGA3DOP_MOV );
-
          setp_token.control = SVGA3DOPCOMP_GT;
 
          /* D3D vs GL semantics:
@@ -2592,8 +2587,8 @@ emit_lit(struct svga_shader_emitter *emit,
           * as the first source argument.
           */
          if (dst.mask & TGSI_WRITEMASK_YZ) {
-            mov_token.predicated = 1;
-            if (!submit_op2( emit, mov_token,
+            if (!submit_op2( emit,
+                             inst_token_predicated(SVGA3DOP_MOV),
                              writemask(dst, TGSI_WRITEMASK_YZ),
                              src( pred_reg ), src( tmp ) ))
                return FALSE;
