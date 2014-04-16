@@ -1538,7 +1538,7 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 	bool pos_emitted = false;
 
 #ifdef R600_USE_LLVM
-	use_llvm = !(rscreen->b.debug_flags & DBG_NO_LLVM);
+	use_llvm = rscreen->b.debug_flags & DBG_LLVM;
 #endif
 	ctx.bc = &shader->bc;
 	ctx.shader = shader;

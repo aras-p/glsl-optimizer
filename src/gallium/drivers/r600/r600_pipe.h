@@ -195,7 +195,7 @@ struct r600_gs_rings_state {
 
 /* This must start from 16. */
 /* features */
-#define DBG_NO_LLVM		(1 << 17)
+#define DBG_LLVM		(1 << 17)
 #define DBG_NO_CP_DMA		(1 << 18)
 /* shader backend */
 #define DBG_NO_SB		(1 << 21)
