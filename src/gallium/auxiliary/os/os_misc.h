@@ -67,7 +67,7 @@ extern "C" {
  * Abort the program.
  */
 #if defined(DEBUG)
-#  define os_abort() os_break()
+#  define os_abort() do { os_break(); abort(); } while(0)
 #else
 #  define os_abort() abort()
 #endif

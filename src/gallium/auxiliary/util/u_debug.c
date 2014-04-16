@@ -274,10 +274,7 @@ void _debug_assert_fail(const char *expr,
                         const char *function) 
 {
    _debug_printf("%s:%u:%s: Assertion `%s' failed.\n", file, line, function, expr);
-   if (debug_get_bool_option("GALLIUM_ABORT_ON_ASSERT", TRUE))
-      os_abort();
-   else
-      _debug_printf("continuing...\n");
+   os_abort();
 }
 
 
