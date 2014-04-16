@@ -60,6 +60,10 @@
 #include <llvm/ADT/OwningPtr.h>
 #endif
 
+#if HAVE_LLVM >= 0x0305
+#include <llvm/MC/MCContext.h>
+#endif
+
 #include "util/u_math.h"
 #include "util/u_debug.h"
 
@@ -226,17 +230,6 @@ disassemble(const void* func, llvm::raw_ostream & Out)
    }
 
 #if HAVE_LLVM >= 0x0300
-   const MCSubtargetInfo *STI = T->createMCSubtargetInfo(Triple, sys::getHostCPUName(), "");
-   OwningPtr<const MCDisassembler> DisAsm(T->createMCDisassembler(*STI));
-#else 
-   OwningPtr<const MCDisassembler> DisAsm(T->createMCDisassembler());
-#endif 
-   if (!DisAsm) {
-      Out << "error: no disassembler for target " << Triple << "\n";
-      return 0;
-   }
-
-#if HAVE_LLVM >= 0x0300
    unsigned int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
 #else
    int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
@@ -255,6 +248,22 @@ disassemble(const void* func, llvm::raw_ostream & Out)
       return 0;
    }
 #endif
+
+#if HAVE_LLVM >= 0x0305
+   OwningPtr<const MCSubtargetInfo> STI(T->createMCSubtargetInfo(Triple, sys::getHostCPUName(), ""));
+   OwningPtr<MCContext> MCCtx(new MCContext(AsmInfo.get(), MRI.get(), 0));
+   OwningPtr<const MCDisassembler> DisAsm(T->createMCDisassembler(*STI, *MCCtx));
+#elif HAVE_LLVM >= 0x0300
+   const MCSubtargetInfo *STI = T->createMCSubtargetInfo(Triple, sys::getHostCPUName(), "");
+   OwningPtr<const MCDisassembler> DisAsm(T->createMCDisassembler(*STI));
+#else
+   OwningPtr<const MCDisassembler> DisAsm(T->createMCDisassembler());
+#endif
+   if (!DisAsm) {
+      Out << "error: no disassembler for target " << Triple << "\n";
+      return 0;
+   }
+
 
 #if HAVE_LLVM >= 0x0301
    OwningPtr<MCInstPrinter> Printer(
