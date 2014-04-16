@@ -105,50 +105,30 @@ static struct radeon_bo *get_radeon_bo(struct pb_buffer *_buf)
 static void radeon_bo_wait(struct pb_buffer *_buf, enum radeon_bo_usage usage)
 {
     struct radeon_bo *bo = get_radeon_bo(_buf);
+    struct drm_radeon_gem_wait_idle args = {0};
 
     while (p_atomic_read(&bo->num_active_ioctls)) {
         sched_yield();
     }
 
-    /* XXX use this when it's ready */
-    /*if (bo->rws->info.drm_minor >= 12) {
-        struct drm_radeon_gem_wait args = {};
-        args.handle = bo->handle;
-        args.flags = usage;
-        while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT,
-                                   &args, sizeof(args)) == -EBUSY);
-    } else*/ {
-        struct drm_radeon_gem_wait_idle args;
-        memset(&args, 0, sizeof(args));
-        args.handle = bo->handle;
-        while (drmCommandWrite(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
-                                   &args, sizeof(args)) == -EBUSY);
-    }
+    args.handle = bo->handle;
+    while (drmCommandWrite(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
+                           &args, sizeof(args)) == -EBUSY);
 }
 
 static boolean radeon_bo_is_busy(struct pb_buffer *_buf,
                                  enum radeon_bo_usage usage)
 {
     struct radeon_bo *bo = get_radeon_bo(_buf);
+    struct drm_radeon_gem_busy args = {0};
 
     if (p_atomic_read(&bo->num_active_ioctls)) {
         return TRUE;
     }
 
-    /* XXX use this when it's ready */
-    /*if (bo->rws->info.drm_minor >= 12) {
-        struct drm_radeon_gem_wait args = {};
-        args.handle = bo->handle;
-        args.flags = usage | RADEON_GEM_NO_WAIT;
-        return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT,
-                                   &args, sizeof(args)) != 0;
-    } else*/ {
-        struct drm_radeon_gem_busy args;
-        memset(&args, 0, sizeof(args));
-        args.handle = bo->handle;
-        return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
-                                   &args, sizeof(args)) != 0;
-    }
+    args.handle = bo->handle;
+    return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
+                               &args, sizeof(args)) != 0;
 }
 
 static enum radeon_bo_domain get_valid_domain(enum radeon_bo_domain domain)
