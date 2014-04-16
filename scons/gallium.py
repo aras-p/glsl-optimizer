@@ -104,19 +104,6 @@ def num_jobs():
     return 1
 
 
-def get_cc_version(env):
-    # Get the first line of `$CC --version`
-    pipe = SCons.Action._subproc(env, [env['CC'], '--version'],
-                                 stdin = 'devnull',
-                                 stderr = 'devnull',
-                                 stdout = subprocess.PIPE)
-    if pipe.wait() != 0:
-        return ''
-
-    line = pipe.stdout.readline()
-    return line
-
-
 def generate(env):
     """Common environment generation code"""
 
@@ -132,8 +119,12 @@ def generate(env):
     if os.environ.has_key('CC'):
         env['CC'] = os.environ['CC']
         # Update CCVERSION to match
-        line = get_cc_version(env)
-        if line:
+        pipe = SCons.Action._subproc(env, [env['CC'], '--version'],
+                                     stdin = 'devnull',
+                                     stderr = 'devnull',
+                                     stdout = subprocess.PIPE)
+        if pipe.wait() == 0:
+            line = pipe.stdout.readline()
             match = re.search(r'[0-9]+(\.[0-9]+)+', line)
             if match:
                 env['CCVERSION'] = match.group(0)
@@ -146,16 +137,10 @@ def generate(env):
     if os.environ.has_key('LDFLAGS'):
         env['LINKFLAGS'] += SCons.Util.CLVar(os.environ['LDFLAGS'])
 
-    # Detect gcc/clang not by executable name, but through `--version` option,
-    # to avoid drawing wrong conclusions when using tools that overrice CC/CXX
-    # like scan-build.
-    cc_version = get_cc_version(env)
-    cc_version_words = cc_version.split()
-
-    env['gcc'] = 'gcc' in cc_version_words
+    env['gcc'] = 'gcc' in os.path.basename(env['CC']).split('-')
     env['msvc'] = env['CC'] == 'cl'
     env['suncc'] = env['platform'] == 'sunos' and os.path.basename(env['CC']) == 'cc'
-    env['clang'] = 'clang' in cc_version_words
+    env['clang'] = env['CC'] == 'clang'
     env['icc'] = 'icc' == os.path.basename(env['CC'])
 
     if env['msvc'] and env['toolchain'] == 'default' and env['machine'] == 'x86_64':
