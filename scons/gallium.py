@@ -36,6 +36,8 @@ import os.path
 import re
 import subprocess
 import platform as _platform
+import sys
+import tempfile
 
 import SCons.Action
 import SCons.Builder
@@ -104,6 +106,28 @@ def num_jobs():
     return 1
 
 
+def check_cc(env, cc, expr, cpp_opt = '-E'):
+    # Invoke C-preprocessor to determine whether the specified expression is
+    # true or not.
+
+    sys.stdout.write('Checking for %s ... ' % cc)
+
+    source = tempfile.NamedTemporaryFile(suffix='.c', delete=False)
+    source.write('#if !(%s)\n#error\n#endif\n' % expr)
+    source.close()
+
+    pipe = SCons.Action._subproc(env, [env['CC'], cpp_opt, source.name],
+                                 stdin = 'devnull',
+                                 stderr = 'devnull',
+                                 stdout = 'devnull')
+    result = pipe.wait() == 0
+
+    os.unlink(source.name)
+
+    sys.stdout.write(' %s\n' % ['no', 'yes'][int(bool(result))])
+    return result
+
+
 def generate(env):
     """Common environment generation code"""
 
@@ -137,10 +161,18 @@ def generate(env):
     if os.environ.has_key('LDFLAGS'):
         env['LINKFLAGS'] += SCons.Util.CLVar(os.environ['LDFLAGS'])
 
-    env['gcc'] = 'gcc' in os.path.basename(env['CC']).split('-')
-    env['msvc'] = env['CC'] == 'cl'
+    # Detect gcc/clang not by executable name, but through pre-defined macros
+    # as autoconf does, to avoid drawing wrong conclusions when using tools
+    # that overrice CC/CXX like scan-build.
+    env['gcc'] = 0
+    env['clang'] = 0
+    env['msvc'] = 0
+    if _platform.system() == 'Windows':
+        env['msvc'] = check_cc(env, 'MSVC', 'defined(_MSC_VER)', '/E')
+    if not env['msvc']:
+        env['gcc'] = check_cc(env, 'GCC', 'defined(__GNUC__) && !defined(__clang__)')
+        env['clang'] = check_cc(env, 'Clang', '__clang__')
     env['suncc'] = env['platform'] == 'sunos' and os.path.basename(env['CC']) == 'cc'
-    env['clang'] = env['CC'] == 'clang'
     env['icc'] = 'icc' == os.path.basename(env['CC'])
 
     if env['msvc'] and env['toolchain'] == 'default' and env['machine'] == 'x86_64':
