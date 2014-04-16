@@ -215,18 +215,17 @@ fs_visitor::register_coalesce()
       reg_from = -1;
    }
 
-   if (progress) {
-      foreach_list_safe(node, &this->instructions) {
-         fs_inst *inst = (fs_inst *)node;
+   foreach_list_safe(node, &this->instructions) {
+      fs_inst *inst = (fs_inst *)node;
 
-         if (inst->opcode == BRW_OPCODE_NOP) {
-            inst->remove();
-            progress = true;
-         }
+      if (inst->opcode == BRW_OPCODE_NOP) {
+         inst->remove();
+         progress = true;
       }
-
-      invalidate_live_intervals();
    }
+
+   if (progress)
+      invalidate_live_intervals();
 
    return progress;
 }
