@@ -2783,6 +2783,13 @@ copytexsubimage_using_blit_framebuffer(struct gl_context *ctx, GLuint dims,
       goto out;
 
    ctx->Meta->Blit.no_ctsi_fallback = true;
+
+   /* Since we've bound a new draw framebuffer, we need to update
+    * its derived state -- _Xmin, etc -- for BlitFramebuffer's clipping to
+    * be correct.
+    */
+   _mesa_update_state(ctx);
+
    /* We skip the core BlitFramebuffer checks for format consistency, which
     * are too strict for CopyTexImage.  We know meta will be fine with format
     * changes.

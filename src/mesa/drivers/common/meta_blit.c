@@ -33,11 +33,13 @@
 #include "main/enable.h"
 #include "main/enums.h"
 #include "main/fbobject.h"
+#include "main/image.h"
 #include "main/macros.h"
 #include "main/matrix.h"
 #include "main/multisample.h"
 #include "main/objectlabel.h"
 #include "main/readpix.h"
+#include "main/scissor.h"
 #include "main/shaderapi.h"
 #include "main/texobj.h"
 #include "main/texenv.h"
@@ -627,6 +629,15 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    const GLint dstH = abs(dstY1 - dstY0);
    const GLint dstFlipX = (dstX1 - dstX0) / dstW;
    const GLint dstFlipY = (dstY1 - dstY0) / dstH;
+
+   struct {
+      GLint srcX0, srcY0, srcX1, srcY1;
+      GLint dstX0, dstY0, dstX1, dstY1;
+   } clip = {
+      srcX0, srcY0, srcX1, srcY1,
+      dstX0, dstY0, dstX1, dstY1
+   };
+
    const GLboolean use_glsl_version = ctx->Extensions.ARB_vertex_shader &&
                                       ctx->Extensions.ARB_fragment_shader;
 
@@ -636,8 +647,31 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
       goto fallback;
    }
 
-   /* only scissor effects blit so save/clear all other relevant state */
-   _mesa_meta_begin(ctx, ~MESA_META_SCISSOR);
+   /* Clip a copy of the blit coordinates. If these differ from the input
+    * coordinates, then we'll set the scissor.
+    */
+   if (!_mesa_clip_blit(ctx, &clip.srcX0, &clip.srcY0, &clip.srcX1, &clip.srcY1,
+                        &clip.dstX0, &clip.dstY0, &clip.dstX1, &clip.dstY1)) {
+      /* clipped/scissored everything away */
+      return;
+   }
+
+   /* Only scissor affects blit, but we're doing to set a custom scissor if
+    * necessary anyway, so save/clear state.
+    */
+   _mesa_meta_begin(ctx, MESA_META_ALL);
+
+   /* If the clipping earlier changed the destination rect at all, then
+    * enable the scissor to clip to it.
+    */
+   if (clip.dstX0 != dstX0 || clip.dstY0 != dstY0 ||
+       clip.dstX1 != dstX1 || clip.dstY1 != dstY1) {
+      _mesa_set_enable(ctx, GL_SCISSOR_TEST, GL_TRUE);
+      _mesa_Scissor(MIN2(clip.dstX0, clip.dstX1),
+                    MIN2(clip.dstY0, clip.dstY1),
+                    abs(clip.dstX0 - clip.dstX1),
+                    abs(clip.dstY0 - clip.dstY1));
+   }
 
    /* Try faster, direct texture approach first */
    if (mask & GL_COLOR_BUFFER_BIT) {
