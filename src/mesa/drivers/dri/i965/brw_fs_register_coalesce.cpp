@@ -44,6 +44,16 @@
 #include "brw_fs_live_variables.h"
 
 static bool
+is_nop_mov(const fs_inst *inst)
+{
+   if (inst->opcode == BRW_OPCODE_MOV) {
+      return inst->dst.equals(inst->src[0]);
+   }
+
+   return false;
+}
+
+static bool
 is_coalesce_candidate(const fs_inst *inst, const int *virtual_grf_sizes)
 {
    if (inst->opcode != BRW_OPCODE_MOV ||
@@ -70,9 +80,7 @@ can_coalesce_vars(brw::fs_live_variables *live_intervals,
                   const exec_list *instructions, const fs_inst *inst,
                   int var_to, int var_from)
 {
-   if (live_intervals->vars_interfere(var_from, var_to) &&
-       !inst->dst.equals(inst->src[0])) {
-
+   if (live_intervals->vars_interfere(var_from, var_to)) {
       /* We know that the live ranges of A (var_from) and B (var_to)
        * interfere because of the ->vars_interfere() call above. If the end
        * of B's live range is after the end of A's range, then we know two
@@ -130,6 +138,12 @@ fs_visitor::register_coalesce()
 
       if (!is_coalesce_candidate(inst, virtual_grf_sizes))
          continue;
+
+      if (is_nop_mov(inst)) {
+         inst->opcode = BRW_OPCODE_NOP;
+         progress = true;
+         continue;
+      }
 
       if (reg_from != inst->src[0].reg) {
          reg_from = inst->src[0].reg;
