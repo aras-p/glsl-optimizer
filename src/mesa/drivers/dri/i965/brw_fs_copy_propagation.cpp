@@ -42,6 +42,7 @@ namespace { /* avoid conflict with opt_copy_propagation_elements */
 struct acp_entry : public exec_node {
    fs_reg dst;
    fs_reg src;
+   enum opcode opcode;
 };
 
 struct block_data {
@@ -285,6 +286,10 @@ bool
 fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
 {
    if (entry->src.file == IMM)
+      return false;
+
+   if (entry->opcode == SHADER_OPCODE_LOAD_PAYLOAD &&
+       inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD)
       return false;
 
    /* Bail if inst is reading more than entry is writing. */
@@ -569,7 +574,24 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
 	 acp_entry *entry = ralloc(copy_prop_ctx, acp_entry);
 	 entry->dst = inst->dst;
 	 entry->src = inst->src[0];
+         entry->opcode = inst->opcode;
 	 acp[entry->dst.reg % ACP_HASH_SIZE].push_tail(entry);
+      } else if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD &&
+                 inst->dst.file == GRF) {
+         for (int i = 0; i < inst->sources; i++) {
+            if (inst->src[i].file == GRF) {
+               acp_entry *entry = ralloc(copy_prop_ctx, acp_entry);
+               entry->dst = inst->dst;
+               entry->dst.reg_offset = i;
+               entry->src = inst->src[i];
+               entry->opcode = inst->opcode;
+               if (!entry->dst.equals(inst->src[i])) {
+                  acp[entry->dst.reg % ACP_HASH_SIZE].push_tail(entry);
+               } else {
+                  ralloc_free(entry);
+               }
+            }
+         }
       }
    }
 
