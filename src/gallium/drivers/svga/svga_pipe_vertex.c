@@ -161,6 +161,7 @@ svga_create_vertex_elements_state(struct pipe_context *pipe,
       velems->count = count;
       memcpy(velems->velem, attribs, sizeof(*attribs) * count);
 
+      velems->need_swvfetch = FALSE;
       velems->adjust_attrib_range = 0x0;
       velems->adjust_attrib_w_1 = 0x0;
 
@@ -168,6 +169,11 @@ svga_create_vertex_elements_state(struct pipe_context *pipe,
       for (i = 0; i < count; i++) {
          enum pipe_format f = attribs[i].src_format;
          velems->decl_type[i] = translate_vertex_format(f);
+         if (velems->decl_type[i] == SVGA3D_DECLTYPE_MAX) {
+            /* Unsupported format - use software fetch */
+            velems->need_swvfetch = TRUE;
+            break;
+         }
 
          if (attrib_needs_range_adjustment(f)) {
             velems->adjust_attrib_range |= (1 << i);

@@ -34,24 +34,13 @@
 static enum pipe_error
 update_need_swvfetch(struct svga_context *svga, unsigned dirty)
 {
-   unsigned i;
-   boolean need_swvfetch = FALSE;
-
    if (!svga->curr.velems) {
       /* No vertex elements bound. */
       return PIPE_OK;
    }
 
-   for (i = 0; i < svga->curr.velems->count; i++) {
-      if (svga->curr.velems->decl_type[i] == SVGA3D_DECLTYPE_MAX) {
-         /* Unsupported format - use software fetch */
-         need_swvfetch = TRUE;
-         break;
-      }
-   }
-
-   if (need_swvfetch != svga->state.sw.need_swvfetch) {
-      svga->state.sw.need_swvfetch = need_swvfetch;
+   if (svga->state.sw.need_swvfetch != svga->curr.velems->need_swvfetch) {
+      svga->state.sw.need_swvfetch = svga->curr.velems->need_swvfetch;
       svga->dirty |= SVGA_NEW_NEED_SWVFETCH;
    }
 
