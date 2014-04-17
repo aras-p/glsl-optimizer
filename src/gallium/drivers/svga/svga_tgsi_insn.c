@@ -3532,57 +3532,78 @@ emit_inverted_texcoords(struct svga_shader_emitter *emit)
 static boolean
 emit_adjusted_vertex_attribs(struct svga_shader_emitter *emit)
 {
-   unsigned adjust_attrib_range = emit->key.vkey.adjust_attrib_range;
-
-   while (adjust_attrib_range) {
-      /* The vertex input/attribute is supposed to be a signed value in
-       * the range [-1,1] but we actually fetched/converted it to the
-       * range [0,1].  This most likely happens when the app specifies a
-       * signed byte attribute but we interpreted it as unsigned bytes.
-       * See also svga_translate_vertex_format().
-       *
-       * Here, we emit some extra instructions to adjust
-       * the attribute values from [0,1] to [-1,1].
-       *
-       * The adjustment we implement is:
-       *   new_attrib = attrib * 2.0;
-       *   if (attrib >= 0.5)
-       *      new_attrib = new_attrib - 2.0;
-       * This isn't exactly right (it's off by a bit or so) but close enough.
-       */
-      const unsigned index = u_bit_scan(&adjust_attrib_range);
+   unsigned adjust_mask = (emit->key.vkey.adjust_attrib_range |
+                           emit->key.vkey.adjust_attrib_w_1);
+ 
+   while (adjust_mask) {
+      /* Adjust vertex attrib range and/or set W component = 1 */
+      const unsigned index = u_bit_scan(&adjust_mask);
       struct src_register tmp;
-
-      SVGA3dShaderDestToken pred_reg = dst_register(SVGA3DREG_PREDICATE, 0);
 
       /* allocate a temp reg */
       tmp = src_register(SVGA3DREG_TEMP, emit->nr_hw_temp);
       emit->nr_hw_temp++;
 
-      /* tmp = attrib * 2.0 */
-      if (!submit_op2(emit,
-                      inst_token(SVGA3DOP_MUL),
-                      dst(tmp),
-                      emit->input_map[index],
-                      get_two_immediate(emit)))
-         return FALSE;
+      if (emit->key.vkey.adjust_attrib_range & (1 << index)) {
+         /* The vertex input/attribute is supposed to be a signed value in
+          * the range [-1,1] but we actually fetched/converted it to the
+          * range [0,1].  This most likely happens when the app specifies a
+          * signed byte attribute but we interpreted it as unsigned bytes.
+          * See also svga_translate_vertex_format().
+          *
+          * Here, we emit some extra instructions to adjust
+          * the attribute values from [0,1] to [-1,1].
+          *
+          * The adjustment we implement is:
+          *   new_attrib = attrib * 2.0;
+          *   if (attrib >= 0.5)
+          *      new_attrib = new_attrib - 2.0;
+          * This isn't exactly right (it's off by a bit or so) but close enough.
+          */
+         SVGA3dShaderDestToken pred_reg = dst_register(SVGA3DREG_PREDICATE, 0);
 
-      /* pred = (attrib >= 0.5) */
-      if (!submit_op2(emit,
-                      inst_token_setp(SVGA3DOPCOMP_GE),
-                      pred_reg,
-                      emit->input_map[index],  /* vert attrib */
-                      get_half_immediate(emit)))  /* 0.5 */
-         return FALSE;
+         /* tmp = attrib * 2.0 */
+         if (!submit_op2(emit,
+                         inst_token(SVGA3DOP_MUL),
+                         dst(tmp),
+                         emit->input_map[index],
+                         get_two_immediate(emit)))
+            return FALSE;
 
-      /* sub(pred) tmp, tmp, 2.0 */
-      if (!submit_op3(emit,
-                      inst_token_predicated(SVGA3DOP_SUB),
-                      dst(tmp),
-                      src(pred_reg),
-                      tmp,
-                      get_two_immediate(emit)))
-         return FALSE;
+         /* pred = (attrib >= 0.5) */
+         if (!submit_op2(emit,
+                         inst_token_setp(SVGA3DOPCOMP_GE),
+                         pred_reg,
+                         emit->input_map[index],  /* vert attrib */
+                         get_half_immediate(emit)))  /* 0.5 */
+            return FALSE;
+
+         /* sub(pred) tmp, tmp, 2.0 */
+         if (!submit_op3(emit,
+                         inst_token_predicated(SVGA3DOP_SUB),
+                         dst(tmp),
+                         src(pred_reg),
+                         tmp,
+                         get_two_immediate(emit)))
+            return FALSE;
+      }
+      else {
+         /* just copy the vertex input attrib to the temp register */
+         if (!submit_op1(emit,
+                         inst_token(SVGA3DOP_MOV),
+                         dst(tmp),
+                         emit->input_map[index]))
+            return FALSE;
+      }
+
+      if (emit->key.vkey.adjust_attrib_w_1 & (1 << index)) {
+         /* move 1 into W position of tmp */
+         if (!submit_op1(emit,
+                         inst_token(SVGA3DOP_MOV),
+                         writemask(dst(tmp), TGSI_WRITEMASK_W),
+                         get_one_immediate(emit)))
+            return FALSE;
+      }
 
       /* Reassign the input_map entry to the new tmp register */
       emit->input_map[index] = tmp;
@@ -3640,7 +3661,8 @@ needs_to_create_common_immediate(const struct svga_shader_emitter *emit)
    else if (emit->unit == PIPE_SHADER_VERTEX) {
       if (emit->info.opcode_count[TGSI_OPCODE_CMP] >= 1)
          return TRUE;
-      if (emit->key.vkey.adjust_attrib_range)
+      if (emit->key.vkey.adjust_attrib_range ||
+          emit->key.vkey.adjust_attrib_w_1)
          return TRUE;
    }
 
@@ -3803,7 +3825,8 @@ svga_shader_emit_helpers(struct svga_shader_emitter *emit)
    }
    else {
       assert(emit->unit == PIPE_SHADER_VERTEX);
-      if (emit->key.vkey.adjust_attrib_range) {
+      if (emit->key.vkey.adjust_attrib_range ||
+          emit->key.vkey.adjust_attrib_w_1) {
          if (!emit_adjusted_vertex_attribs(emit))
             return FALSE;
       }

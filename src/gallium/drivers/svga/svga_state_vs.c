@@ -162,6 +162,7 @@ make_vs_key(struct svga_context *svga, struct svga_vs_compile_key *key)
 
    /* SVGA_NEW_VELEMENT */
    key->adjust_attrib_range = svga->curr.velems->adjust_attrib_range;
+   key->adjust_attrib_w_1 = svga->curr.velems->adjust_attrib_w_1;
 }
 
 

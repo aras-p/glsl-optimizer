@@ -94,8 +94,13 @@ translate_vertex_format(enum pipe_format format)
    case PIPE_FORMAT_R16G16_FLOAT:         return SVGA3D_DECLTYPE_FLOAT16_2;
    case PIPE_FORMAT_R16G16B16A16_FLOAT:   return SVGA3D_DECLTYPE_FLOAT16_4;
 
-   /* See attrib_needs_adjustment() below */
+   /* See attrib_needs_adjustment() and attrib_needs_w_to_1() below */
    case PIPE_FORMAT_R8G8B8_SNORM:         return SVGA3D_DECLTYPE_UBYTE4N;
+
+   /* See attrib_needs_w_to_1() below */
+   case PIPE_FORMAT_R16G16B16_SNORM:      return SVGA3D_DECLTYPE_SHORT4N;
+   case PIPE_FORMAT_R16G16B16_UNORM:      return SVGA3D_DECLTYPE_USHORT4N;
+   case PIPE_FORMAT_R8G8B8_UNORM:         return SVGA3D_DECLTYPE_UBYTE4N;
 
    default:
       /* There are many formats without hardware support.  This case
@@ -123,6 +128,25 @@ attrib_needs_range_adjustment(enum pipe_format format)
 }
 
 
+/**
+ * Does the given vertex attrib format need to have the W component set
+ * to one in the VS?
+ */
+static boolean
+attrib_needs_w_to_1(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_R8G8B8_SNORM:
+   case PIPE_FORMAT_R8G8B8_UNORM:
+   case PIPE_FORMAT_R16G16B16_SNORM:
+   case PIPE_FORMAT_R16G16B16_UNORM:
+      return TRUE;
+   default:
+      return FALSE;
+   }
+}
+
+
 static void *
 svga_create_vertex_elements_state(struct pipe_context *pipe,
                                   unsigned count,
@@ -138,6 +162,7 @@ svga_create_vertex_elements_state(struct pipe_context *pipe,
       memcpy(velems->velem, attribs, sizeof(*attribs) * count);
 
       velems->adjust_attrib_range = 0x0;
+      velems->adjust_attrib_w_1 = 0x0;
 
       /* Translate Gallium vertex format to SVGA3dDeclType */
       for (i = 0; i < count; i++) {
@@ -146,6 +171,9 @@ svga_create_vertex_elements_state(struct pipe_context *pipe,
 
          if (attrib_needs_range_adjustment(f)) {
             velems->adjust_attrib_range |= (1 << i);
+         }
+         if (attrib_needs_w_to_1(f)) {
+            velems->adjust_attrib_w_1 |= (1 << i);
          }
       }
    }
