@@ -3525,9 +3525,9 @@ emit_inverted_texcoords(struct svga_shader_emitter *emit)
 
 
 /**
- * Emit code to invert the T component of the incoming texture coordinate.
- * This is used for drawing point sprites when
- * pipe_rasterizer_state::sprite_coord_mode == PIPE_SPRITE_COORD_LOWER_LEFT.
+ * Emit code to adjust vertex shader inputs/attributes:
+ * - Change range from [0,1] to [-1,1] (for normalized byte/short attribs).
+ * - Set attrib W component = 1.
  */
 static boolean
 emit_adjusted_vertex_attribs(struct svga_shader_emitter *emit)
