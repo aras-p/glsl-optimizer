@@ -204,6 +204,31 @@ _mesa_meta_link_program_with_debug(struct gl_context *ctx, GLuint program)
    return 0;
 }
 
+void
+_mesa_meta_compile_and_link_program(struct gl_context *ctx,
+                                    const char *vs_source,
+                                    const char *fs_source,
+                                    const char *name,
+                                    GLuint *program)
+{
+   GLuint vs = _mesa_meta_compile_shader_with_debug(ctx, GL_VERTEX_SHADER,
+                                                    vs_source);
+   GLuint fs = _mesa_meta_compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER,
+                                                    fs_source);
+
+   *program = _mesa_CreateProgram();
+   _mesa_AttachShader(*program, fs);
+   _mesa_DeleteShader(fs);
+   _mesa_AttachShader(*program, vs);
+   _mesa_DeleteShader(vs);
+   _mesa_BindAttribLocation(*program, 0, "position");
+   _mesa_BindAttribLocation(*program, 1, "texcoords");
+   _mesa_meta_link_program_with_debug(ctx, *program);
+   _mesa_ObjectLabel(GL_PROGRAM, *program, -1, name);
+
+   _mesa_UseProgram(*program);
+}
+
 /**
  * Generate a generic shader to blit from a texture to a framebuffer
  *
@@ -219,10 +244,8 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
 {
    const char *vs_source;
    char *fs_source;
-   GLuint vs, fs;
    void *const mem_ctx = ralloc_context(NULL);
    struct blit_shader *shader = choose_blit_shader(target, table);
-   char *name;
 
    assert(shader != NULL);
 
@@ -282,22 +305,12 @@ _mesa_meta_setup_blit_shader(struct gl_context *ctx,
                                   shader->texcoords);
    }
 
-   vs = _mesa_meta_compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
-   fs = _mesa_meta_compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
 
-   shader->shader_prog = _mesa_CreateProgram();
-   _mesa_AttachShader(shader->shader_prog, fs);
-   _mesa_DeleteShader(fs);
-   _mesa_AttachShader(shader->shader_prog, vs);
-   _mesa_DeleteShader(vs);
-   _mesa_BindAttribLocation(shader->shader_prog, 0, "position");
-   _mesa_BindAttribLocation(shader->shader_prog, 1, "texcoords");
-   _mesa_meta_link_program_with_debug(ctx, shader->shader_prog);
-   name = ralloc_asprintf(mem_ctx, "%s blit", shader->type);
-   _mesa_ObjectLabel(GL_PROGRAM, shader->shader_prog, -1, name);
+   _mesa_meta_compile_and_link_program(ctx, vs_source, fs_source,
+                                       ralloc_asprintf(mem_ctx, "%s blit",
+                                                       shader->type),
+                                       &shader->shader_prog);
    ralloc_free(mem_ctx);
-
-   _mesa_UseProgram(shader->shader_prog);
 }
 
 /**

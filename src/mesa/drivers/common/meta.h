@@ -455,6 +455,13 @@ _mesa_meta_compile_shader_with_debug(struct gl_context *ctx, GLenum target,
 GLuint
 _mesa_meta_link_program_with_debug(struct gl_context *ctx, GLuint program);
 
+void
+_mesa_meta_compile_and_link_program(struct gl_context *ctx,
+                                    const char *vs_source,
+                                    const char *fs_source,
+                                    const char *name,
+                                    GLuint *program);
+
 GLboolean
 _mesa_meta_alloc_texture(struct temp_texture *tex,
                          GLsizei width, GLsizei height, GLenum intFormat);

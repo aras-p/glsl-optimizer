@@ -62,7 +62,6 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
 {
    const char *vs_source;
    char *fs_source;
-   GLuint vs, fs;
    void *mem_ctx;
    enum blit_msaa_shader shader_index;
    bool dst_is_msaa = false;
@@ -314,21 +313,10 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
                                   sample_resolve);
    }
 
-   vs = _mesa_meta_compile_shader_with_debug(ctx, GL_VERTEX_SHADER, vs_source);
-   fs = _mesa_meta_compile_shader_with_debug(ctx, GL_FRAGMENT_SHADER, fs_source);
+   _mesa_meta_compile_and_link_program(ctx, vs_source, fs_source, name,
+                                       &blit->msaa_shaders[shader_index]);
 
-   blit->msaa_shaders[shader_index] = _mesa_CreateProgram();
-   _mesa_AttachShader(blit->msaa_shaders[shader_index], fs);
-   _mesa_DeleteShader(fs);
-   _mesa_AttachShader(blit->msaa_shaders[shader_index], vs);
-   _mesa_DeleteShader(vs);
-   _mesa_BindAttribLocation(blit->msaa_shaders[shader_index], 0, "position");
-   _mesa_BindAttribLocation(blit->msaa_shaders[shader_index], 1, "texcoords");
-   _mesa_meta_link_program_with_debug(ctx, blit->msaa_shaders[shader_index]);
-   _mesa_ObjectLabel(GL_PROGRAM, blit->msaa_shaders[shader_index], -1, name);
    ralloc_free(mem_ctx);
-
-   _mesa_UseProgram(blit->msaa_shaders[shader_index]);
 }
 
 static void
