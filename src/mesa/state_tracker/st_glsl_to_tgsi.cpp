@@ -632,7 +632,10 @@ glsl_to_tgsi_visitor::get_opcode(ir_instruction *ir, unsigned op,
         		 st_src_reg src0, st_src_reg src1)
 {
    int type = GLSL_TYPE_FLOAT;
-   
+
+   if (op == TGSI_OPCODE_MOV)
+       return op;
+
    assert(src0.type != GLSL_TYPE_ARRAY);
    assert(src0.type != GLSL_TYPE_STRUCT);
    assert(src1.type != GLSL_TYPE_ARRAY);
