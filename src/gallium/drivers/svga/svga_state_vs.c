@@ -159,6 +159,9 @@ make_vs_key(struct svga_context *svga, struct svga_vs_compile_key *key)
 
    /* SVGA_NEW_FS */
    key->fs_generic_inputs = svga->curr.fs->generic_inputs;
+
+   /* SVGA_NEW_VELEMENT */
+   key->adjust_attrib_range = svga->curr.velems->adjust_attrib_range;
 }
 
 
@@ -248,6 +251,7 @@ struct svga_tracked_state svga_hw_vs =
    (SVGA_NEW_VS |
     SVGA_NEW_FS |
     SVGA_NEW_PRESCALE |
+    SVGA_NEW_VELEMENT |
     SVGA_NEW_NEED_SWTNL),
    emit_hw_vs
 };

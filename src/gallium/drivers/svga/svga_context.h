@@ -201,6 +201,7 @@ struct svga_velems_state {
    unsigned count;
    struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
    SVGA3dDeclType decl_type[PIPE_MAX_ATTRIBS]; /**< vertex attrib formats */
+   unsigned adjust_attrib_range; /* bitmask of attrs needing range adjustment */
 };
 
 /* Use to calculate differences between state emitted to hardware and

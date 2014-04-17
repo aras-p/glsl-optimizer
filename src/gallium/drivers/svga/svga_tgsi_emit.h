@@ -86,7 +86,7 @@ struct svga_shader_emitter
    boolean in_main_func;
 
    boolean created_common_immediate;
-   int common_immediate_idx;
+   int common_immediate_idx[2];
 
    boolean created_loop_const;
    int loop_const_idx;

@@ -94,11 +94,31 @@ translate_vertex_format(enum pipe_format format)
    case PIPE_FORMAT_R16G16_FLOAT:         return SVGA3D_DECLTYPE_FLOAT16_2;
    case PIPE_FORMAT_R16G16B16A16_FLOAT:   return SVGA3D_DECLTYPE_FLOAT16_4;
 
+   /* See attrib_needs_adjustment() below */
+   case PIPE_FORMAT_R8G8B8_SNORM:         return SVGA3D_DECLTYPE_UBYTE4N;
+
    default:
       /* There are many formats without hardware support.  This case
        * will be hit regularly, meaning we'll need swvfetch.
        */
       return SVGA3D_DECLTYPE_MAX;
+   }
+}
+
+
+/**
+ * Does the given vertex attrib format need range adjustment in the VS?
+ * Range adjustment scales and biases values from [0,1] to [-1,1].
+ * This lets us avoid the swtnl path.
+ */
+static boolean
+attrib_needs_range_adjustment(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_R8G8B8_SNORM:
+      return TRUE;
+   default:
+      return FALSE;
    }
 }
 
@@ -117,9 +137,16 @@ svga_create_vertex_elements_state(struct pipe_context *pipe,
       velems->count = count;
       memcpy(velems->velem, attribs, sizeof(*attribs) * count);
 
+      velems->adjust_attrib_range = 0x0;
+
       /* Translate Gallium vertex format to SVGA3dDeclType */
       for (i = 0; i < count; i++) {
-         velems->decl_type[i] = translate_vertex_format(attribs[i].src_format);
+         enum pipe_format f = attribs[i].src_format;
+         velems->decl_type[i] = translate_vertex_format(f);
+
+         if (attrib_needs_range_adjustment(f)) {
+            velems->adjust_attrib_range |= (1 << i);
+         }
       }
    }
    return velems;

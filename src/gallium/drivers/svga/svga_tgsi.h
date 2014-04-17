@@ -49,6 +49,7 @@ struct svga_vs_compile_key
    unsigned fs_generic_inputs;
    unsigned need_prescale:1;
    unsigned allow_psiz:1;
+   unsigned adjust_attrib_range:16;
 };
 
 struct svga_fs_compile_key

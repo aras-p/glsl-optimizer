@@ -859,8 +859,20 @@ create_common_immediate( struct svga_shader_emitter *emit )
    if (!emit_def_const( emit, SVGA3D_CONST_TYPE_FLOAT,
                         idx, 0.0f, 0.5f, -1.0f, 1.0f ))
       return FALSE;
+   emit->common_immediate_idx[0] = idx;
+   idx++;
 
-   emit->common_immediate_idx = idx;
+   /* Emit constant {2, 0, 0, 0} (only the 2 is used for now) */
+   if (emit->key.vkey.adjust_attrib_range) {
+      if (!emit_def_const( emit, SVGA3D_CONST_TYPE_FLOAT,
+                           idx, 2.0f, 0.0f, 0.0f, 0.0f ))
+         return FALSE;
+      emit->common_immediate_idx[1] = idx;
+   }
+   else {
+      emit->common_immediate_idx[1] = -1;
+   }
+
    emit->created_common_immediate = TRUE;
 
    return TRUE;
@@ -889,7 +901,7 @@ common_immediate_swizzle(float value)
 
 
 /**
- * Returns an immediate reg where all the terms are either 0, 1, -1 or 0.5
+ * Returns an immediate reg where all the terms are either 0, 1, 2 or 0.5
  */
 static struct src_register
 get_immediate(struct svga_shader_emitter *emit,
@@ -900,8 +912,8 @@ get_immediate(struct svga_shader_emitter *emit,
    unsigned sz = common_immediate_swizzle(z);
    unsigned sw = common_immediate_swizzle(w);
    assert(emit->created_common_immediate);
-   assert(emit->common_immediate_idx >= 0);
-   return swizzle(src_register(SVGA3DREG_CONST, emit->common_immediate_idx),
+   assert(emit->common_immediate_idx[0] >= 0);
+   return swizzle(src_register(SVGA3DREG_CONST, emit->common_immediate_idx[0]),
                   sx, sy, sz, sw);
 }
 
@@ -913,9 +925,9 @@ static struct src_register
 get_zero_immediate( struct svga_shader_emitter *emit )
 {
    assert(emit->created_common_immediate);
-   assert(emit->common_immediate_idx >= 0);
+   assert(emit->common_immediate_idx[0] >= 0);
    return swizzle(src_register( SVGA3DREG_CONST,
-                                emit->common_immediate_idx),
+                                emit->common_immediate_idx[0]),
                   0, 0, 0, 0);
 }
 
@@ -927,9 +939,9 @@ static struct src_register
 get_one_immediate( struct svga_shader_emitter *emit )
 {
    assert(emit->created_common_immediate);
-   assert(emit->common_immediate_idx >= 0);
+   assert(emit->common_immediate_idx[0] >= 0);
    return swizzle(src_register( SVGA3DREG_CONST,
-                                emit->common_immediate_idx),
+                                emit->common_immediate_idx[0]),
                   3, 3, 3, 3);
 }
 
@@ -941,9 +953,24 @@ static struct src_register
 get_half_immediate( struct svga_shader_emitter *emit )
 {
    assert(emit->created_common_immediate);
-   assert(emit->common_immediate_idx >= 0);
-   return swizzle(src_register(SVGA3DREG_CONST, emit->common_immediate_idx),
+   assert(emit->common_immediate_idx[0] >= 0);
+   return swizzle(src_register(SVGA3DREG_CONST, emit->common_immediate_idx[0]),
                   1, 1, 1, 1);
+}
+
+
+/**
+ * returns {2, 2, 2, 2} immediate
+ */
+static struct src_register
+get_two_immediate( struct svga_shader_emitter *emit )
+{
+   /* Note we use the second common immediate here */
+   assert(emit->created_common_immediate);
+   assert(emit->common_immediate_idx[1] >= 0);
+   return swizzle(src_register( SVGA3DREG_CONST,
+                                emit->common_immediate_idx[1]),
+                  0, 0, 0, 0);
 }
 
 
@@ -3498,6 +3525,74 @@ emit_inverted_texcoords(struct svga_shader_emitter *emit)
 
 
 /**
+ * Emit code to invert the T component of the incoming texture coordinate.
+ * This is used for drawing point sprites when
+ * pipe_rasterizer_state::sprite_coord_mode == PIPE_SPRITE_COORD_LOWER_LEFT.
+ */
+static boolean
+emit_adjusted_vertex_attribs(struct svga_shader_emitter *emit)
+{
+   unsigned adjust_attrib_range = emit->key.vkey.adjust_attrib_range;
+
+   while (adjust_attrib_range) {
+      /* The vertex input/attribute is supposed to be a signed value in
+       * the range [-1,1] but we actually fetched/converted it to the
+       * range [0,1].  This most likely happens when the app specifies a
+       * signed byte attribute but we interpreted it as unsigned bytes.
+       * See also svga_translate_vertex_format().
+       *
+       * Here, we emit some extra instructions to adjust
+       * the attribute values from [0,1] to [-1,1].
+       *
+       * The adjustment we implement is:
+       *   new_attrib = attrib * 2.0;
+       *   if (attrib >= 0.5)
+       *      new_attrib = new_attrib - 2.0;
+       * This isn't exactly right (it's off by a bit or so) but close enough.
+       */
+      const unsigned index = u_bit_scan(&adjust_attrib_range);
+      struct src_register tmp;
+
+      SVGA3dShaderDestToken pred_reg = dst_register(SVGA3DREG_PREDICATE, 0);
+
+      /* allocate a temp reg */
+      tmp = src_register(SVGA3DREG_TEMP, emit->nr_hw_temp);
+      emit->nr_hw_temp++;
+
+      /* tmp = attrib * 2.0 */
+      if (!submit_op2(emit,
+                      inst_token(SVGA3DOP_MUL),
+                      dst(tmp),
+                      emit->input_map[index],
+                      get_two_immediate(emit)))
+         return FALSE;
+
+      /* pred = (attrib >= 0.5) */
+      if (!submit_op2(emit,
+                      inst_token_setp(SVGA3DOPCOMP_GE),
+                      pred_reg,
+                      emit->input_map[index],  /* vert attrib */
+                      get_half_immediate(emit)))  /* 0.5 */
+         return FALSE;
+
+      /* sub(pred) tmp, tmp, 2.0 */
+      if (!submit_op3(emit,
+                      inst_token_predicated(SVGA3DOP_SUB),
+                      dst(tmp),
+                      src(pred_reg),
+                      tmp,
+                      get_two_immediate(emit)))
+         return FALSE;
+
+      /* Reassign the input_map entry to the new tmp register */
+      emit->input_map[index] = tmp;
+   }
+
+   return TRUE;
+}
+
+
+/**
  * Determine if we need to create the "common" immediate value which is
  * used for generating useful vector constants such as {0,0,0,0} and
  * {1,1,1,1}.
@@ -3542,9 +3637,10 @@ needs_to_create_common_immediate(const struct svga_shader_emitter *emit)
             return TRUE;
       }
    }
-
-   if (emit->unit == PIPE_SHADER_VERTEX) {
+   else if (emit->unit == PIPE_SHADER_VERTEX) {
       if (emit->info.opcode_count[TGSI_OPCODE_CMP] >= 1)
+         return TRUE;
+      if (emit->key.vkey.adjust_attrib_range)
          return TRUE;
    }
 
@@ -3705,6 +3801,14 @@ svga_shader_emit_helpers(struct svga_shader_emitter *emit)
             return FALSE;
       }
    }
+   else {
+      assert(emit->unit == PIPE_SHADER_VERTEX);
+      if (emit->key.vkey.adjust_attrib_range) {
+         if (!emit_adjusted_vertex_attribs(emit))
+            return FALSE;
+      }
+   }
+
 
    return TRUE;
 }
