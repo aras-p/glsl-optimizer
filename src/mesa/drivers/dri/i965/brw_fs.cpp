@@ -1311,8 +1311,8 @@ fs_visitor::emit_sampleid_setup(ir_variable *ir)
        * These computations hold good for 4x multisampling as well.
        */
       emit(BRW_OPCODE_AND, t1,
-           fs_reg(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_D)),
-           fs_reg(brw_imm_d(0xc0)));
+           fs_reg(retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UD)),
+           fs_reg(0xc0));
       emit(BRW_OPCODE_SHR, t1, t1, fs_reg(5));
       /* This works for both SIMD8 and SIMD16 */
       emit(MOV(t2, brw_imm_v(0x3210)));

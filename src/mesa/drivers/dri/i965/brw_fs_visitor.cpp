@@ -1523,7 +1523,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
 	    fs_reg chan = coordinate;
 	    chan.reg_offset += i;
 
-	    inst = emit(BRW_OPCODE_SEL, chan, chan, brw_imm_f(0.0));
+	    inst = emit(BRW_OPCODE_SEL, chan, chan, fs_reg(0.0f));
 	    inst->conditional_mod = BRW_CONDITIONAL_G;
 
 	    /* Our parameter comes in as 1.0/width or 1.0/height,
@@ -2386,7 +2386,7 @@ fs_visitor::emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
    unsigned mlen = 0;
 
    /* Initialize the sample mask in the message header. */
-   emit(MOV(brw_uvec_mrf(8, mlen, 0), brw_imm_ud(0)))
+   emit(MOV(brw_uvec_mrf(8, mlen, 0), fs_reg(0u)))
       ->force_writemask_all = true;
 
    if (fp->UsesKill) {
@@ -2432,7 +2432,7 @@ fs_visitor::emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
    unsigned mlen = 0;
 
    /* Initialize the sample mask in the message header. */
-   emit(MOV(brw_uvec_mrf(8, mlen, 0), brw_imm_ud(0)))
+   emit(MOV(brw_uvec_mrf(8, mlen, 0), fs_reg(0u)))
       ->force_writemask_all = true;
 
    if (fp->UsesKill) {
