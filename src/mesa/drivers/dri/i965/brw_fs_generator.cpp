@@ -912,7 +912,7 @@ fs_generator::generate_varying_pull_constant_load(fs_inst *inst,
 
    struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
    send->header.compression_control = BRW_COMPRESSION_NONE;
-   brw_set_dest(p, send, dst);
+   brw_set_dest(p, send, retype(dst, BRW_REGISTER_TYPE_UW));
    brw_set_src0(p, send, header);
    if (brw->gen < 6)
       send->header.destreg__conditionalmod = inst->base_mrf;
