@@ -100,7 +100,7 @@ emit_hw_vs_vdecl(struct svga_context *svga, unsigned dirty)
 
       /* SVGA_NEW_VELEMENT
        */
-      decl.identity.type = svga->state.sw.ve_format[i];
+      decl.identity.type = svga->curr.velems->decl_type[i];
       decl.identity.method = SVGA3D_DECLMETHOD_DEFAULT;
       decl.identity.usage = usage;
       decl.identity.usageIndex = index;
