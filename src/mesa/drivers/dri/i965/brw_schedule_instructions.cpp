@@ -805,7 +805,9 @@ fs_instruction_scheduler::calculate_deps()
             add_dep(last_accumulator_write, n);
 	 } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
-		    inst->src[i].file != UNIFORM) {
+		    inst->src[i].file != UNIFORM &&
+                    (inst->src[i].file != HW_REG ||
+                     inst->src[i].fixed_hw_reg.file != IMM)) {
 	    assert(inst->src[i].file != MRF);
 	    add_barrier_deps(n);
 	 }
@@ -928,7 +930,9 @@ fs_instruction_scheduler::calculate_deps()
             add_dep(n, last_accumulator_write);
          } else if (inst->src[i].file != BAD_FILE &&
 		    inst->src[i].file != IMM &&
-		    inst->src[i].file != UNIFORM) {
+		    inst->src[i].file != UNIFORM &&
+                    (inst->src[i].file != HW_REG ||
+                     inst->src[i].fixed_hw_reg.file != IMM)) {
 	    assert(inst->src[i].file != MRF);
 	    add_barrier_deps(n);
 	 }
@@ -1053,7 +1057,9 @@ vec4_instruction_scheduler::calculate_deps()
             add_dep(last_accumulator_write, n);
          } else if (inst->src[i].file != BAD_FILE &&
                     inst->src[i].file != IMM &&
-                    inst->src[i].file != UNIFORM) {
+                    inst->src[i].file != UNIFORM &&
+                    (inst->src[i].file != HW_REG ||
+                     inst->src[i].fixed_hw_reg.file != IMM)) {
             /* No reads from MRF, and ATTR is already translated away */
             assert(inst->src[i].file != MRF &&
                    inst->src[i].file != ATTR);
@@ -1143,7 +1149,9 @@ vec4_instruction_scheduler::calculate_deps()
             add_dep(n, last_accumulator_write);
          } else if (inst->src[i].file != BAD_FILE &&
                     inst->src[i].file != IMM &&
-                    inst->src[i].file != UNIFORM) {
+                    inst->src[i].file != UNIFORM &&
+                    (inst->src[i].file != HW_REG ||
+                     inst->src[i].fixed_hw_reg.file != IMM)) {
             assert(inst->src[i].file != MRF &&
                    inst->src[i].file != ATTR);
             add_barrier_deps(n);
