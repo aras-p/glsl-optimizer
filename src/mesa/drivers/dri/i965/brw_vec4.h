@@ -784,8 +784,6 @@ private:
                                     struct brw_reg index,
                                     struct brw_reg offset);
 
-   void mark_surface_used(unsigned surf_index);
-
    struct brw_vec4_prog_data *prog_data;
 
    const bool debug_flag;

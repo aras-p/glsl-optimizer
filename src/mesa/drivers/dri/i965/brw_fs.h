@@ -754,8 +754,6 @@ private:
 
    void patch_discard_jumps_to_fb_writes();
 
-   void mark_surface_used(unsigned surf_index);
-
    struct brw_wm_compile *c;
    const struct gl_fragment_program *fp;
 

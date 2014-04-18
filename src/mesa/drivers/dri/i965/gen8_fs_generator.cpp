@@ -50,15 +50,6 @@ gen8_fs_generator::~gen8_fs_generator()
 }
 
 void
-gen8_fs_generator::mark_surface_used(unsigned surf_index)
-{
-   assert(surf_index < BRW_MAX_SURFACES);
-
-   c->prog_data.base.binding_table.size_bytes =
-      MAX2(c->prog_data.base.binding_table.size_bytes, (surf_index + 1) * 4);
-}
-
-void
 gen8_fs_generator::generate_fb_write(fs_inst *ir)
 {
    /* Disable the discard condition while setting up the header. */
@@ -140,7 +131,7 @@ gen8_fs_generator::generate_fb_write(fs_inst *ir)
                        ir->header_present,
                        ir->eot);
 
-   mark_surface_used(surf_index);
+   brw_mark_surface_used(&c->prog_data.base, surf_index);
 }
 
 void
@@ -301,7 +292,7 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
                             ir->header_present,
                             simd_mode);
 
-   mark_surface_used(surf_index);
+   brw_mark_surface_used(&c->prog_data.base, surf_index);
 }
 
 
@@ -573,7 +564,7 @@ gen8_fs_generator::generate_uniform_pull_constant_load(fs_inst *inst,
                             false, /* no header */
                             BRW_SAMPLER_SIMD_MODE_SIMD4X2);
 
-   mark_surface_used(surf_index);
+   brw_mark_surface_used(&c->prog_data.base, surf_index);
 }
 
 void
@@ -615,7 +606,7 @@ gen8_fs_generator::generate_varying_pull_constant_load(fs_inst *ir,
                             false, /* no header */
                             simd_mode);
 
-   mark_surface_used(surf_index);
+   brw_mark_surface_used(&c->prog_data.base, surf_index);
 }
 
 /**

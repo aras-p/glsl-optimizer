@@ -49,15 +49,6 @@ gen8_vec4_generator::~gen8_vec4_generator()
 }
 
 void
-gen8_vec4_generator::mark_surface_used(unsigned surf_index)
-{
-   assert(surf_index < BRW_MAX_SURFACES);
-
-   prog_data->base.binding_table.size_bytes =
-      MAX2(prog_data->base.binding_table.size_bytes, (surf_index + 1) * 4);
-}
-
-void
 gen8_vec4_generator::generate_tex(vec4_instruction *ir, struct brw_reg dst)
 {
    int msg_type = 0;
@@ -157,7 +148,7 @@ gen8_vec4_generator::generate_tex(vec4_instruction *ir, struct brw_reg dst)
                             ir->header_present,
                             BRW_SAMPLER_SIMD_MODE_SIMD4X2);
 
-   mark_surface_used(surf_index);
+   brw_mark_surface_used(&prog_data->base, surf_index);
 }
 
 void
@@ -461,7 +452,7 @@ gen8_vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
                        false,  /* no header */
                        false); /* EOT */
 
-   mark_surface_used(surf_index);
+   brw_mark_surface_used(&prog_data->base, surf_index);
 }
 
 void
