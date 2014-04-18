@@ -47,21 +47,29 @@ static void si_init_atom(struct r600_atom *atom, struct r600_atom **list_elem,
 	*list_elem = atom;
 }
 
-static uint32_t cik_num_banks(struct si_screen *sscreen, unsigned bpe, unsigned tile_split)
+uint32_t cik_num_banks(struct si_screen *sscreen, unsigned bpe, unsigned tile_split)
 {
-	if (sscreen->b.info.cik_macrotile_mode_array_valid) {
-		unsigned index, tileb;
+	unsigned index, tileb;
 
-		tileb = 8 * 8 * bpe;
-		tileb = MIN2(tile_split, tileb);
+	tileb = 8 * 8 * bpe;
+	tileb = MIN2(tile_split, tileb);
 
-		for (index = 0; tileb > 64; index++) {
-			tileb >>= 1;
-		}
+	for (index = 0; tileb > 64; index++) {
+		tileb >>= 1;
+	}
 
+	if ((sscreen->b.chip_class == CIK) &&
+	    sscreen->b.info.cik_macrotile_mode_array_valid) {
 		assert(index < 16);
 
 		return (sscreen->b.info.cik_macrotile_mode_array[index] >> 6) & 0x3;
+	}
+
+	if ((sscreen->b.chip_class == SI) &&
+	    sscreen->b.info.si_tile_mode_array_valid) {
+		assert(index < 16);
+
+		return (sscreen->b.info.si_tile_mode_array[index] >> 20) & 0x3;
 	}
 
 	/* The old way. */
