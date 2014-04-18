@@ -222,6 +222,39 @@ static const char *const m_sfid[16] = {
    [HSW_SFID_CRE]                      = "cre",
 };
 
+static const char *const dp_dc1_msg_type[16] = {
+   [HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_READ]      = "untyped surface read",
+   [HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP]         = "DC untyped atomic op",
+   [HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP_SIMD4X2] = "DC untyped 4x2 atomic op",
+   [HSW_DATAPORT_DC_PORT1_MEDIA_BLOCK_READ]          = "DC media block read",
+   [HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_READ]        = "DC typed surface read",
+   [HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP]           = "DC typed atomic",
+   [HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP_SIMD4X2]   = "DC typed 4x2 atomic op",
+   [HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_WRITE]     = "DC untyped surface write",
+   [HSW_DATAPORT_DC_PORT1_MEDIA_BLOCK_WRITE]         = "DC media block write",
+   [HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP]         = "DC atomic counter op",
+   [HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP_SIMD4X2] = "DC 4x2 atomic counter op",
+   [HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_WRITE]       = "DC typed surface write",
+};
+
+static const char * const aop[16] = {
+   [BRW_AOP_AND]    = "and",
+   [BRW_AOP_OR]     = "or",
+   [BRW_AOP_XOR]    = "xor",
+   [BRW_AOP_MOV]    = "mov",
+   [BRW_AOP_INC]    = "inc",
+   [BRW_AOP_DEC]    = "dec",
+   [BRW_AOP_ADD]    = "add",
+   [BRW_AOP_SUB]    = "sub",
+   [BRW_AOP_REVSUB] = "revsub",
+   [BRW_AOP_IMAX]   = "imax",
+   [BRW_AOP_IMIN]   = "imin",
+   [BRW_AOP_UMAX]   = "umax",
+   [BRW_AOP_UMIN]   = "umin",
+   [BRW_AOP_CMPWR]  = "cmpwr",
+   [BRW_AOP_PREDEC] = "predec",
+};
+
 static const char *const m_math_function[16] = {
    [BRW_MATH_FUNCTION_INV]                            = "inv",
    [BRW_MATH_FUNCTION_LOG]                            = "log",
@@ -907,6 +940,38 @@ gen8_disassemble(FILE *file, struct gen8_instruction *inst, int gen)
          format(file, " (%d, 0x%x)",
                 gen8_binding_table_index(inst),
                 gen8_function_control(inst));
+         break;
+
+      case HSW_SFID_DATAPORT_DATA_CACHE_1:
+         err |= control(file, "DP DC1 message type",
+                        dp_dc1_msg_type, gen8_dp_message_type(inst), &space);
+         format(file, ", Surface = %d, ", gen8_binding_table_index(inst));
+         switch (gen8_dp_message_type(inst)) {
+         case HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP:
+         case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP:
+         case HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP:
+            format(file, "SIMD%d,",
+                   (gen8_dp_message_control(inst) & (1 << 4)) ? 8 : 16);
+            /* fallthrough */
+         case HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP_SIMD4X2:
+         case HSW_DATAPORT_DC_PORT1_TYPED_ATOMIC_OP_SIMD4X2:
+         case HSW_DATAPORT_DC_PORT1_ATOMIC_COUNTER_OP_SIMD4X2:
+            control(file, "atomic op", aop,
+                    gen8_dp_message_control(inst) & 0xf, &space);
+            break;
+         case HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_READ:
+         case HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_WRITE:
+         case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_READ:
+         case HSW_DATAPORT_DC_PORT1_TYPED_SURFACE_WRITE: {
+            static const char *simd_modes[] = { "4x2", "16", "8" };
+            unsigned msg_ctrl = gen8_dp_message_control(inst);
+            format(file, "SIMD%s, Mask = 0x%x",
+                   simd_modes[msg_ctrl >> 4], msg_ctrl & 0xf);
+            break;
+         }
+         default:
+            format(file, "0x%x", gen8_dp_message_control(inst));
+         }
          break;
 
       default:
