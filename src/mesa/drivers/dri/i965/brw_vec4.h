@@ -783,6 +783,9 @@ private:
                                     struct brw_reg dst,
                                     struct brw_reg index,
                                     struct brw_reg offset);
+   void generate_untyped_surface_read(vec4_instruction *ir,
+                                      struct brw_reg dst,
+                                      struct brw_reg surf_index);
 
    struct brw_vec4_prog_data *prog_data;
 
