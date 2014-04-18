@@ -783,6 +783,10 @@ private:
                                     struct brw_reg dst,
                                     struct brw_reg index,
                                     struct brw_reg offset);
+   void generate_untyped_atomic(vec4_instruction *ir,
+                                struct brw_reg dst,
+                                struct brw_reg atomic_op,
+                                struct brw_reg surf_index);
    void generate_untyped_surface_read(vec4_instruction *ir,
                                       struct brw_reg dst,
                                       struct brw_reg surf_index);
