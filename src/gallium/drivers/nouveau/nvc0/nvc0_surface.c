@@ -1066,8 +1066,8 @@ nvc0_blit_eng2d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
 
    if (src->base.base.nr_samples > dst->base.base.nr_samples) {
       /* center src coorinates for proper MS resolve filtering */
-      srcx += (int64_t)(src->ms_x + 0) << 32;
-      srcy += (int64_t)(src->ms_y + 1) << 31;
+      srcx += (int64_t)1 << (src->ms_x + 31);
+      srcy += (int64_t)1 << (src->ms_y + 31);
    }
 
    dstx = info->dst.box.x << dst->ms_x;
