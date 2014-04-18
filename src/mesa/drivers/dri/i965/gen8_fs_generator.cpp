@@ -920,6 +920,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
       default_state.predicate = ir->predicate;
       default_state.predicate_inverse = ir->predicate_inverse;
       default_state.saturate = ir->saturate;
+      default_state.mask_control = ir->force_writemask_all;
       default_state.flag_subreg_nr = ir->flag_subreg;
 
       if (dispatch_width == 16 && !ir->force_uncompressed)
