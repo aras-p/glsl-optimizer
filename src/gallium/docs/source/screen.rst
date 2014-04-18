@@ -313,6 +313,8 @@ pipe_screen::get_compute_param.
   resource.  Value type: ``uint64_t``.
 * ``PIPE_COMPUTE_CAP_MAX_MEM_ALLOC_SIZE``: Maximum size of a memory object
   allocation in bytes.  Value type: ``uint64_t``.
+* ``PIPE_COMPUTE_CAP_MAX_CLOCK_FREQUENCY``: Maximum frequency of the GPU
+  clock in MHz. Value type: ``uint32_t``
 
 .. _pipe_bind:
 
