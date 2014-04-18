@@ -1292,8 +1292,8 @@ nv50_blit_eng2d(struct nv50_context *nv50, const struct pipe_blit_info *info)
 
    if (src->base.base.nr_samples > dst->base.base.nr_samples) {
       /* center src coorinates for proper MS resolve filtering */
-      srcx += (int64_t)src->ms_x << 32;
-      srcy += (int64_t)src->ms_y << 32;
+      srcx += (int64_t)1 << (src->ms_x + 31);
+      srcy += (int64_t)1 << (src->ms_y + 31);
    }
 
    dstx = info->dst.box.x << dst->ms_x;
@@ -1431,8 +1431,8 @@ nv50_blit(struct pipe_context *pipe, const struct pipe_blit_info *info)
       eng3d = TRUE;
 
    /* FIXME: can't make this work with eng2d anymore */
-   if (info->src.resource->nr_samples > 1 ||
-       info->dst.resource->nr_samples > 1)
+   if ((info->src.resource->nr_samples | 1) !=
+       (info->dst.resource->nr_samples | 1))
       eng3d = TRUE;
 
    /* FIXME: find correct src coordinate adjustments */
