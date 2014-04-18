@@ -443,7 +443,7 @@ struct pipe_sampler_view **
 st_texture_get_sampler_view(struct st_context *st,
                             struct st_texture_object *stObj)
 {
-   struct pipe_sampler_view **used = NULL, **free = NULL;
+   struct pipe_sampler_view *used = NULL, **free = NULL;
    GLuint i;
 
    for (i = 0; i < stObj->num_sampler_views; ++i) {
@@ -455,7 +455,7 @@ st_texture_get_sampler_view(struct st_context *st,
             return sv;
 
          /* Wasn't the right one, but remember it as template */
-         used = sv;
+         used = *sv;
       } else {
          /* Found a free slot, remember that */
          free = sv;
@@ -475,7 +475,7 @@ st_texture_get_sampler_view(struct st_context *st,
 
    /* Add just any sampler view to be used as a template */
    if (used)
-      pipe_sampler_view_reference(free, *used);
+      pipe_sampler_view_reference(free, used);
 
    return free;
 }
