@@ -83,7 +83,7 @@ void si_context_gfx_flush(void *context, unsigned flags,
 	struct si_context *ctx = context;
 	struct radeon_winsys_cs *cs = ctx->b.rings.gfx.cs;
 
-	if (cs->cdw == ctx->b.initial_gfx_cs_size)
+	if (cs->cdw == ctx->b.initial_gfx_cs_size && !fence)
 		return;
 
 	ctx->b.rings.gfx.flushing = true;
