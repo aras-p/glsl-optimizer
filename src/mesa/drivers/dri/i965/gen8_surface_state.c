@@ -217,6 +217,22 @@ gen8_update_texture_surface(struct gl_context *ctx,
                            I915_GEM_DOMAIN_SAMPLER, 0);
 }
 
+static void
+gen8_create_raw_surface(struct brw_context *brw, drm_intel_bo *bo,
+                        uint32_t offset, uint32_t size,
+                        uint32_t *out_offset, bool rw)
+{
+   gen8_emit_buffer_surface_state(brw,
+                                  out_offset,
+                                  bo,
+                                  offset,
+                                  BRW_SURFACEFORMAT_RAW,
+                                  size,
+                                  1,
+                                  0 /* mocs */,
+                                  true /* rw */);
+}
+
 /**
  * Create the constant buffer surface.  Vertex/fragment shader constants will be
  * read from this buffer with Data Port Read instructions/messages.
@@ -358,5 +374,6 @@ gen8_init_vtable_surface_functions(struct brw_context *brw)
    brw->vtbl.update_renderbuffer_surface = gen8_update_renderbuffer_surface;
    brw->vtbl.update_null_renderbuffer_surface =
       gen8_update_null_renderbuffer_surface;
+   brw->vtbl.create_raw_surface = gen8_create_raw_surface;
    brw->vtbl.emit_buffer_surface_state = gen8_emit_buffer_surface_state;
 }
