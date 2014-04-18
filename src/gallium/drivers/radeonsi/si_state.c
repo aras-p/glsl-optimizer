@@ -1336,6 +1336,9 @@ static uint32_t si_translate_buffer_dataformat(struct pipe_screen *screen,
 	if (type == UTIL_FORMAT_TYPE_FIXED)
 		return V_008F0C_BUF_DATA_FORMAT_INVALID;
 
+	if (desc->format == PIPE_FORMAT_R11G11B10_FLOAT)
+		return V_008F0C_BUF_DATA_FORMAT_10_11_11;
+
 	if (desc->nr_channels == 4 &&
 	    desc->channel[0].size == 10 &&
 	    desc->channel[1].size == 10 &&
@@ -1401,6 +1404,9 @@ static uint32_t si_translate_buffer_numformat(struct pipe_screen *screen,
 					      const struct util_format_description *desc,
 					      int first_non_void)
 {
+	if (desc->format == PIPE_FORMAT_R11G11B10_FLOAT)
+		return V_008F0C_BUF_NUM_FORMAT_FLOAT;
+
 	switch (desc->channel[first_non_void].type) {
 	case UTIL_FORMAT_TYPE_SIGNED:
 		if (desc->channel[first_non_void].normalized)
