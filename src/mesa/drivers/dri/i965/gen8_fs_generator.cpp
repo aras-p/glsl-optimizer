@@ -821,6 +821,32 @@ gen8_fs_generator::generate_unpack_half_2x16_split(fs_inst *inst,
 }
 
 void
+gen8_fs_generator::generate_untyped_surface_read(fs_inst *ir,
+                                                 struct brw_reg dst,
+                                                 struct brw_reg surf_index)
+{
+   assert(surf_index.file == BRW_IMMEDIATE_VALUE &&
+          surf_index.type == BRW_REGISTER_TYPE_UD);
+
+   unsigned msg_control = 0xe | /* Enable only the R channel */
+     ((dispatch_width == 16 ? 1 : 2) << 4); /* SIMD Mode */
+
+   gen8_instruction *inst = next_inst(BRW_OPCODE_SEND);
+   gen8_set_dst(brw, inst, retype(dst, BRW_REGISTER_TYPE_UD));
+   gen8_set_src0(brw, inst, brw_message_reg(ir->base_mrf));
+   gen8_set_dp_message(brw, inst, HSW_SFID_DATAPORT_DATA_CACHE_1,
+                       surf_index.dw1.ud,
+                       HSW_DATAPORT_DC_PORT1_UNTYPED_SURFACE_READ,
+                       msg_control,
+                       ir->mlen,
+                       dispatch_width / 8,
+                       ir->header_present,
+                       false);
+
+   brw_mark_surface_used(&c->prog_data.base, surf_index.dw1.ud);
+}
+
+void
 gen8_fs_generator::generate_code(exec_list *instructions)
 {
    int last_native_inst_offset = next_inst_offset;
@@ -1193,7 +1219,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
          break;
 
       case SHADER_OPCODE_UNTYPED_SURFACE_READ:
-         assert(!"XXX: Missing Gen8 scalar support for untyped surface reads");
+         generate_untyped_surface_read(ir, dst, src[0]);
          break;
 
       case FS_OPCODE_SET_SIMD4X2_OFFSET:

@@ -750,6 +750,9 @@ private:
    void generate_unpack_half_2x16_split(fs_inst *inst,
                                         struct brw_reg dst,
                                         struct brw_reg src);
+   void generate_untyped_surface_read(fs_inst *inst,
+                                      struct brw_reg dst,
+                                      struct brw_reg surf_index);
    void generate_discard_jump(fs_inst *ir);
 
    void patch_discard_jumps_to_fb_writes();
