@@ -821,6 +821,38 @@ gen8_fs_generator::generate_unpack_half_2x16_split(fs_inst *inst,
 }
 
 void
+gen8_fs_generator::generate_untyped_atomic(fs_inst *ir,
+                                           struct brw_reg dst,
+                                           struct brw_reg atomic_op,
+                                           struct brw_reg surf_index)
+{
+   assert(atomic_op.file == BRW_IMMEDIATE_VALUE &&
+          atomic_op.type == BRW_REGISTER_TYPE_UD &&
+          surf_index.file == BRW_IMMEDIATE_VALUE &&
+          surf_index.type == BRW_REGISTER_TYPE_UD);
+   assert((atomic_op.dw1.ud & ~0xf) == 0);
+
+   unsigned msg_control =
+      atomic_op.dw1.ud | /* Atomic Operation Type: BRW_AOP_* */
+      ((dispatch_width == 16 ? 0 : 1) << 4) | /* SIMD Mode */
+      (1 << 5); /* Return data expected */
+
+   gen8_instruction *inst = next_inst(BRW_OPCODE_SEND);
+   gen8_set_dst(brw, inst, retype(dst, BRW_REGISTER_TYPE_UD));
+   gen8_set_src0(brw, inst, brw_message_reg(ir->base_mrf));
+   gen8_set_dp_message(brw, inst, HSW_SFID_DATAPORT_DATA_CACHE_1,
+                       surf_index.dw1.ud,
+                       HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP,
+                       msg_control,
+                       ir->mlen,
+                       dispatch_width / 8,
+                       ir->header_present,
+                       false);
+
+   brw_mark_surface_used(&c->prog_data.base, surf_index.dw1.ud);
+}
+
+void
 gen8_fs_generator::generate_untyped_surface_read(fs_inst *ir,
                                                  struct brw_reg dst,
                                                  struct brw_reg surf_index)
@@ -1215,7 +1247,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
          break;
 
       case SHADER_OPCODE_UNTYPED_ATOMIC:
-         assert(!"XXX: Missing Gen8 scalar support for untyped atomics");
+         generate_untyped_atomic(ir, dst, src[0], src[1]);
          break;
 
       case SHADER_OPCODE_UNTYPED_SURFACE_READ:
