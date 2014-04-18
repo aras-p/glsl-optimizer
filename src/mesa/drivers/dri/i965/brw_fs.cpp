@@ -2021,7 +2021,13 @@ fs_visitor::opt_algebraic()
          }
          break;
       case BRW_OPCODE_SEL:
-         if (inst->saturate && inst->src[1].file == IMM) {
+         if (inst->src[0].equals(inst->src[1])) {
+            inst->opcode = BRW_OPCODE_MOV;
+            inst->src[1] = reg_undef;
+            inst->predicate = BRW_PREDICATE_NONE;
+            inst->predicate_inverse = false;
+            progress = true;
+         } else if (inst->saturate && inst->src[1].file == IMM) {
             switch (inst->conditional_mod) {
             case BRW_CONDITIONAL_LE:
             case BRW_CONDITIONAL_L:
