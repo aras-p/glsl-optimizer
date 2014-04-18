@@ -153,7 +153,7 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
       break;
 
    case CL_DEVICE_MAX_CLOCK_FREQUENCY:
-      buf.as_scalar<cl_uint>() = 0;
+      buf.as_scalar<cl_uint>() = dev.max_clock_frequency();
       break;
 
    case CL_DEVICE_ADDRESS_BITS:
