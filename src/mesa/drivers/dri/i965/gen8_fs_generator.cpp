@@ -927,10 +927,12 @@ gen8_fs_generator::generate_code(exec_list *instructions)
       else
          default_state.exec_size = BRW_EXECUTE_8;
 
-      /* fs_inst::force_sechalf is only used for original Gen4 code, so we
-       * don't handle it.  Add qtr_control to default_state if that changes.
-       */
-      assert(!ir->force_sechalf);
+      if (ir->force_uncompressed || dispatch_width == 8)
+         default_state.qtr_control = GEN6_COMPRESSION_1Q;
+      else if (ir->force_sechalf)
+         default_state.qtr_control = GEN6_COMPRESSION_2Q;
+      else
+         default_state.qtr_control = GEN6_COMPRESSION_1H;
 
       switch (ir->opcode) {
       case BRW_OPCODE_MOV:

@@ -87,6 +87,7 @@ gen8_generator::next_inst(unsigned opcode)
    gen8_set_exec_size(inst, default_state.exec_size);
    gen8_set_access_mode(inst, default_state.access_mode);
    gen8_set_mask_control(inst, default_state.mask_control);
+   gen8_set_qtr_control(inst, default_state.qtr_control);
    gen8_set_cond_modifier(inst, default_state.conditional_mod);
    gen8_set_pred_control(inst, default_state.predicate);
    gen8_set_pred_inv(inst, default_state.predicate_inverse);

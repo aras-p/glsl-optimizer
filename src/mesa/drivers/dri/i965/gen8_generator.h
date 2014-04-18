@@ -186,6 +186,7 @@ protected:
       unsigned exec_size;
       unsigned access_mode;
       unsigned mask_control;
+      unsigned qtr_control;
       unsigned flag_subreg_nr;
       unsigned conditional_mod;
       unsigned predicate;
