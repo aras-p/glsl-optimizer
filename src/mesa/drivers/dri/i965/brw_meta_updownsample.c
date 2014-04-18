@@ -45,8 +45,10 @@
  *
  * Clobbers the current renderbuffer binding (ctx->CurrentRenderbuffer).
  */
-static GLuint
-brw_get_rb_for_first_slice(struct brw_context *brw, struct intel_mipmap_tree *mt)
+GLuint
+brw_get_rb_for_slice(struct brw_context *brw,
+                     struct intel_mipmap_tree *mt,
+                     unsigned level, unsigned layer, bool flat)
 {
    struct gl_context *ctx = &brw->ctx;
    GLuint rbo;
@@ -65,9 +67,25 @@ brw_get_rb_for_first_slice(struct brw_context *brw, struct intel_mipmap_tree *mt
    rb->Format = mt->format;
    rb->_BaseFormat = _mesa_get_format_base_format(mt->format);
 
-   rb->NumSamples = mt->num_samples;
-   rb->Width = mt->logical_width0;
-   rb->Height = mt->logical_height0;
+   /* Program takes care of msaa and mip-level access manually for stencil.
+    * The surface is also treated as Y-tiled instead of as W-tiled calling for
+    * twice the width and half the height in dimensions.
+    */
+   if (flat) {
+      const unsigned halign_stencil = 8;
+
+      rb->NumSamples = 0;
+      rb->Width = ALIGN(mt->total_width, halign_stencil) * 2;
+      rb->Height = (mt->total_height / mt->physical_depth0) / 2;
+      irb->mt_level = 0;
+   } else {
+      rb->NumSamples = mt->num_samples;
+      rb->Width = mt->logical_width0;
+      rb->Height = mt->logical_height0;
+      irb->mt_level = level;
+   }
+
+   irb->mt_layer = layer;
 
    intel_miptree_reference(&irb->mt, mt);
 
@@ -102,8 +120,8 @@ brw_meta_updownsample(struct brw_context *brw,
 
    _mesa_meta_begin(ctx, MESA_META_ALL);
    _mesa_GenFramebuffers(2, fbos);
-   src_rbo = brw_get_rb_for_first_slice(brw, src_mt);
-   dst_rbo = brw_get_rb_for_first_slice(brw, dst_mt);
+   src_rbo = brw_get_rb_for_slice(brw, src_mt, 0, 0, false);
+   dst_rbo = brw_get_rb_for_slice(brw, dst_mt, 0, 0, false);
    src_fbo = fbos[0];
    dst_fbo = fbos[1];
 
