@@ -2414,6 +2414,7 @@ fs_visitor::emit_untyped_atomic(unsigned atomic_op, unsigned surf_index,
                                         atomic_op, surf_index);
    inst->base_mrf = 0;
    inst->mlen = mlen;
+   inst->header_present = true;
    emit(inst);
 }
 
@@ -2448,6 +2449,7 @@ fs_visitor::emit_untyped_surface_read(unsigned surf_index, fs_reg dst,
       fs_inst(SHADER_OPCODE_UNTYPED_SURFACE_READ, dst, surf_index);
    inst->base_mrf = 0;
    inst->mlen = mlen;
+   inst->header_present = true;
    emit(inst);
 }
 
