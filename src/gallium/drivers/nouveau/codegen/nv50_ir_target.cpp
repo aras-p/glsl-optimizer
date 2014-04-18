@@ -25,7 +25,7 @@
 
 namespace nv50_ir {
 
-const uint8_t Target::operationSrcNr[OP_LAST + 1] =
+const uint8_t Target::operationSrcNr[] =
 {
    0, 0,                   // NOP, PHI
    0, 0, 0, 0,             // UNION, SPLIT, MERGE, CONSTRAINT
@@ -44,7 +44,7 @@ const uint8_t Target::operationSrcNr[OP_LAST + 1] =
    1, 1, 2, 1, 2,          // VFETCH, PFETCH, EXPORT, LINTERP, PINTERP
    1, 1,                   // EMIT, RESTART
    1, 1, 1,                // TEX, TXB, TXL,
-   1, 1, 1, 1, 1, 2,       // TXF, TXQ, TXD, TXG, TEXCSAA, TEXPREP
+   1, 1, 1, 1, 1, 1, 2,    // TXF, TXQ, TXD, TXG, TXLQ, TEXCSAA, TEXPREP
    1, 1, 2, 2, 2, 2, 2,    // SULDB, SULDP, SUSTB, SUSTP, SUREDB, SUREDP, SULEA
    3, 3, 3, 3,             // SUBFM, SUCLAMP, SUEAU, MADSP
    0,                      // TEXBAR
@@ -57,7 +57,7 @@ const uint8_t Target::operationSrcNr[OP_LAST + 1] =
    0
 };
 
-const OpClass Target::operationClass[OP_LAST + 1] =
+const OpClass Target::operationClass[] =
 {
    // NOP; PHI; UNION, SPLIT, MERGE, CONSTRAINT
    OPCLASS_OTHER,
@@ -101,10 +101,10 @@ const OpClass Target::operationClass[OP_LAST + 1] =
    OPCLASS_SFU, OPCLASS_SFU,
    // EMIT, RESTART
    OPCLASS_CONTROL, OPCLASS_CONTROL,
-   // TEX, TXB, TXL, TXF; TXQ, TXD, TXG, TEXCSAA; TEXPREP
+   // TEX, TXB, TXL, TXF; TXQ, TXD, TXG, TXLQ; TEXCSAA, TEXPREP
    OPCLASS_TEXTURE, OPCLASS_TEXTURE, OPCLASS_TEXTURE, OPCLASS_TEXTURE,
    OPCLASS_TEXTURE, OPCLASS_TEXTURE, OPCLASS_TEXTURE, OPCLASS_TEXTURE,
-   OPCLASS_TEXTURE,
+   OPCLASS_TEXTURE, OPCLASS_TEXTURE,
    // SULDB, SULDP, SUSTB, SUSTP; SUREDB, SUREDP, SULEA
    OPCLASS_SURFACE, OPCLASS_SURFACE, OPCLASS_ATOMIC, OPCLASS_SURFACE,
    OPCLASS_SURFACE, OPCLASS_SURFACE, OPCLASS_SURFACE,
@@ -134,6 +134,8 @@ extern Target *getTargetNV50(unsigned int chipset);
 
 Target *Target::create(unsigned int chipset)
 {
+   STATIC_ASSERT(Elements(operationSrcNr) == OP_LAST + 1);
+   STATIC_ASSERT(Elements(operationClass) == OP_LAST + 1);
    switch (chipset & ~0xf) {
    case 0xc0:
    case 0xd0:

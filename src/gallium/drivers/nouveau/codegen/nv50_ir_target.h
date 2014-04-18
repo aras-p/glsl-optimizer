@@ -195,8 +195,8 @@ public:
    const bool joinAnterior; // true if join is executed before the op
    const bool hasSWSched;   // true if code should provide scheduling data
 
-   static const uint8_t operationSrcNr[OP_LAST + 1];
-   static const OpClass operationClass[OP_LAST + 1];
+   static const uint8_t operationSrcNr[];
+   static const OpClass operationClass[];
 
    static inline uint8_t getOpSrcNr(operation op)
    {
