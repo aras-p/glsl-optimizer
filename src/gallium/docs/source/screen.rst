@@ -168,8 +168,8 @@ The integer capabilities:
 * ``PIPE_CAP_MAX_VIEWPORTS``: The maximum number of viewports (and scissors
   since they are linked) a driver can support. Returning 0 is equivalent
   to returning 1 because every driver has to support at least a single
-  viewport/scissor combination.  
-* ''PIPE_CAP_ENDIANNESS``:: The endianness of the device.  Either
+  viewport/scissor combination.
+* ``PIPE_CAP_ENDIANNESS``:: The endianness of the device.  Either
   PIPE_ENDIAN_BIG or PIPE_ENDIAN_LITTLE.
 * ``PIPE_CAP_MIXED_FRAMEBUFFER_SIZES``: Whether it is allowed to have
   different sizes for fb color/zs attachments. This controls whether
@@ -239,7 +239,7 @@ support different features.
   to any shader stage using ``set_constant_buffer``. If 0 or 1, the pipe will
   only permit binding one constant buffer per shader, and the shaders will
   not permit two-dimensional access to constants.
-  
+
 If a value greater than 0 is returned, the driver can have multiple
 constant buffers bound to shader stages. The CONST register file can
 be accessed with two-dimensional indices, like in the example below.
@@ -251,7 +251,7 @@ MOV OUT[0], CONST[0][3]  # copy vector 3 of constbuf 0
 For backwards compatibility, one-dimensional access to CONST register
 file is still supported. In that case, the constbuf index is assumed
 to be 0.
-  
+
 * ``PIPE_SHADER_CAP_MAX_TEMPS``: The maximum number of temporary registers.
 * ``PIPE_SHADER_CAP_MAX_ADDRS``: The maximum number of address registers.
 * ``PIPE_SHADER_CAP_MAX_PREDS``: The maximum number of predicate registers.
