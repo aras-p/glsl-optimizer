@@ -317,6 +317,11 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     ws->info.gart_size = gem_info.gart_size;
     ws->info.vram_size = gem_info.vram_size;
 
+    /* Get max clock frequency info and convert it to MHz */
+    radeon_get_drm_value(ws->fd, RADEON_INFO_MAX_SCLK, NULL,
+                         &ws->info.max_sclk);
+    ws->info.max_sclk /= 1000;
+
     ws->num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
 
     /* Generation-specific queries. */

@@ -196,6 +196,7 @@ struct radeon_info {
     enum chip_class             chip_class;
     uint32_t                    gart_size;
     uint32_t                    vram_size;
+    uint32_t                    max_sclk;
 
     uint32_t                    drm_major; /* version */
     uint32_t                    drm_minor;
