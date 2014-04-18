@@ -391,6 +391,7 @@ public:
    void fail(const char *msg, ...);
    void no16(const char *msg, ...);
    void lower_uniform_pull_constant_loads();
+   bool lower_load_payload();
 
    void push_force_uncompressed();
    void pop_force_uncompressed();

@@ -2580,6 +2580,39 @@ fs_visitor::lower_uniform_pull_constant_loads()
    }
 }
 
+bool
+fs_visitor::lower_load_payload()
+{
+   bool progress = false;
+
+   foreach_list_safe(node, &instructions) {
+      fs_inst *inst = (fs_inst *)node;
+
+      if (inst->opcode == SHADER_OPCODE_LOAD_PAYLOAD) {
+         fs_reg dst = inst->dst;
+
+         /* src[0] represents the (optional) message header. */
+         if (inst->src[0].file != BAD_FILE) {
+            inst->insert_before(MOV(dst, inst->src[0]));
+         }
+         dst.reg_offset++;
+
+         for (int i = 1; i < inst->sources; i++) {
+            inst->insert_before(MOV(dst, inst->src[i]));
+            dst.reg_offset++;
+         }
+
+         inst->remove();
+         progress = true;
+      }
+   }
+
+   if (progress)
+      invalidate_live_intervals();
+
+   return progress;
+}
+
 void
 fs_visitor::dump_instructions()
 {
@@ -3077,6 +3110,11 @@ fs_visitor::run()
          OPT(register_coalesce);
          OPT(compute_to_mrf);
       } while (progress);
+
+      if (lower_load_payload()) {
+         register_coalesce();
+         dead_code_eliminate();
+      }
 
       lower_uniform_pull_constant_loads();
 
