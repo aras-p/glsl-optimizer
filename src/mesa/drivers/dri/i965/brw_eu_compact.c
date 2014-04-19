@@ -461,6 +461,33 @@ static const uint16_t gen8_src_index_table[32] = {
    0b010110001000
 };
 
+/* This is actually the control index table for Cherryview (26 bits), but the
+ * only difference from Broadwell (24 bits) is that it has two extra 0-bits at
+ * the start.
+ *
+ * The low 24 bits have the same mappings on both hardware.
+ */
+static const uint32_t gen8_3src_control_index_table[4] = {
+   0b00100000000110000000000001,
+   0b00000000000110000000000001,
+   0b00000000001000000000000001,
+   0b00000000001000000000100001
+};
+
+/* This is actually the control index table for Cherryview (49 bits), but the
+ * only difference from Broadwell (46 bits) is that it has three extra 0-bits
+ * at the start.
+ *
+ * The low 44 bits have the same mappings on both hardware, and since the high
+ * three bits on Broadwell are zero, we can reuse Cherryview's table.
+ */
+static const uint64_t gen8_3src_source_index_table[4] = {
+   0b0000001110010011100100111001000001111000000000000,
+   0b0000001110010011100100111001000001111000000000010,
+   0b0000001110010011100100111001000001111000000001000,
+   0b0000001110010011100100111001000001111000000100000
+};
+
 static const uint32_t *control_index_table;
 static const uint32_t *datatype_table;
 static const uint16_t *subreg_table;
