@@ -282,7 +282,8 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
 
     /* Check for dma */
     ws->info.r600_has_dma = FALSE;
-    if (ws->info.chip_class >= R700 && ws->info.drm_minor >= 27) {
+    /* DMA is disabled on R700. There is IB corruption and hangs. */
+    if (ws->info.chip_class >= EVERGREEN && ws->info.drm_minor >= 27) {
         ws->info.r600_has_dma = TRUE;
     }
 
