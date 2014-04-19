@@ -289,6 +289,12 @@ void r600_texture_get_fmask_info(struct r600_common_screen *rscreen,
 	fmask.nsamples = 1;
 	fmask.flags |= RADEON_SURF_FMASK;
 
+	/* Force 2D tiling if it wasn't set. This may occur when creating
+	 * FMASK for MSAA resolve on R6xx. On R6xx, the single-sample
+	 * destination buffer must have an FMASK too. */
+	fmask.flags = RADEON_SURF_CLR(fmask.flags, MODE);
+	fmask.flags |= RADEON_SURF_SET(RADEON_SURF_MODE_2D, MODE);
+
 	if (rscreen->chip_class >= SI) {
 		fmask.flags |= RADEON_SURF_HAS_TILE_MODE_INDEX;
 	}
