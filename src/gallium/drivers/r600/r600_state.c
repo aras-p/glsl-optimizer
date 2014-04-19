@@ -2568,8 +2568,10 @@ void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 		S_02881C_VS_OUT_CCDIST0_VEC_ENA((rshader->clip_dist_write & 0x0F) != 0) |
 		S_02881C_VS_OUT_CCDIST1_VEC_ENA((rshader->clip_dist_write & 0xF0) != 0) |
 		S_02881C_VS_OUT_MISC_VEC_ENA(rshader->vs_out_misc_write) |
-		S_02881C_USE_VTX_VIEWPORT_INDX(rshader->vs_out_viewport) |
-		S_02881C_USE_VTX_POINT_SIZE(rshader->vs_out_point_size);
+		S_02881C_USE_VTX_POINT_SIZE(rshader->vs_out_point_size) |
+		S_02881C_USE_VTX_EDGE_FLAG(rshader->vs_out_edgeflag) |
+		S_02881C_USE_VTX_RENDER_TARGET_INDX(rshader->vs_out_layer) |
+		S_02881C_USE_VTX_VIEWPORT_INDX(rshader->vs_out_viewport);
 }
 
 static unsigned r600_conv_prim_to_gs_out(unsigned mode)
