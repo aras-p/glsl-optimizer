@@ -879,6 +879,15 @@ intel_blit_framebuffer(struct gl_context *ctx,
    if (mask == 0x0)
       return;
 
+   if (mask & GL_STENCIL_BUFFER_BIT) {
+      brw_meta_fbo_stencil_blit(brw_context(ctx),
+                                srcX0, srcY0, srcX1, srcY1,
+                                dstX0, dstY0, dstX1, dstY1);
+      mask &= ~GL_STENCIL_BUFFER_BIT;
+      if (mask == 0x0)
+         return;
+   }
+
    /* Try using the BLT engine. */
    mask = intel_blit_framebuffer_with_blitter(ctx,
                                               srcX0, srcY0, srcX1, srcY1,
