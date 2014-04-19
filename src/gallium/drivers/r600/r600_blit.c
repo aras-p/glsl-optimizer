@@ -500,6 +500,12 @@ static void r600_copy_buffer(struct pipe_context *ctx, struct pipe_resource *dst
 	} else {
 		util_resource_copy_region(ctx, dst, 0, dstx, 0, 0, src, 0, src_box);
 	}
+
+	/* The index buffer (VGT) doesn't seem to see the result of the copying.
+	 * Can we somehow flush the index buffer cache? Starting a new IB seems
+	 * to do the trick. */
+	if (rctx->b.chip_class <= R700)
+		rctx->b.rings.gfx.flush(ctx, RADEON_FLUSH_ASYNC, NULL);
 }
 
 /**
