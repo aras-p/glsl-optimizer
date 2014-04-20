@@ -579,16 +579,17 @@ static void r300_set_blend_color(struct pipe_context* pipe,
     struct r300_blend_color_state *state =
         (struct r300_blend_color_state*)r300->blend_color_state.state;
     struct pipe_blend_color c;
-    enum pipe_format format = fb->nr_cbufs ? fb->cbufs[0]->format : 0;
+    struct pipe_surface *cb;
     float tmp;
     CB_LOCALS;
 
     state->state = *color; /* Save it, so that we can reuse it in set_fb_state */
     c = *color;
+    cb = fb->nr_cbufs ? r300_get_nonnull_cb(fb, 0) : NULL;
 
     /* The blend color is dependent on the colorbuffer format. */
-    if (fb->nr_cbufs) {
-        switch (format) {
+    if (cb) {
+        switch (cb->format) {
         case PIPE_FORMAT_R8_UNORM:
         case PIPE_FORMAT_L8_UNORM:
         case PIPE_FORMAT_I8_UNORM:
@@ -623,7 +624,7 @@ static void r300_set_blend_color(struct pipe_context* pipe,
         BEGIN_CB(state->cb, 3);
         OUT_CB_REG_SEQ(R500_RB3D_CONSTANT_COLOR_AR, 2);
 
-        switch (format) {
+        switch (cb ? cb->format : 0) {
         case PIPE_FORMAT_R16G16B16A16_FLOAT:
         case PIPE_FORMAT_R16G16B16X16_FLOAT:
             OUT_CB(util_float_to_half(c.color[2]) |
@@ -858,6 +859,9 @@ static void r300_fb_set_tiling_flags(struct r300_context *r300,
 
     /* Set tiling flags for new surfaces. */
     for (i = 0; i < state->nr_cbufs; i++) {
+        if (!state->cbufs[i])
+            continue;
+
         r300_tex_set_tiling_flags(r300,
                                   r300_resource(state->cbufs[i]->texture),
                                   state->cbufs[i]->u.tex.level);
@@ -950,7 +954,8 @@ static unsigned r300_get_num_samples(struct r300_context *r300)
     num_samples = 6;
 
     for (i = 0; i < fb->nr_cbufs; i++)
-        num_samples = MIN2(num_samples, fb->cbufs[i]->texture->nr_samples);
+        if (fb->cbufs[i])
+            num_samples = MIN2(num_samples, fb->cbufs[i]->texture->nr_samples);
 
     if (fb->zsbuf)
         num_samples = MIN2(num_samples, fb->zsbuf->texture->nr_samples);
@@ -967,7 +972,7 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
-    struct pipe_framebuffer_state *old_state = r300->fb_state.state;
+    struct pipe_framebuffer_state *current_state = r300->fb_state.state;
     unsigned max_width, max_height, i;
     uint32_t zbuffer_bpp = 0;
     boolean unlock_zbuffer = FALSE;
@@ -986,17 +991,17 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
         return;
     }
 
-    if (old_state->zsbuf && r300->zmask_in_use && !r300->locked_zbuffer) {
+    if (current_state->zsbuf && r300->zmask_in_use && !r300->locked_zbuffer) {
         /* There is a zmask in use, what are we gonna do? */
         if (state->zsbuf) {
-            if (!pipe_surface_equal(old_state->zsbuf, state->zsbuf)) {
+            if (!pipe_surface_equal(current_state->zsbuf, state->zsbuf)) {
                 /* Decompress the currently bound zbuffer before we bind another one. */
                 r300_decompress_zmask(r300);
                 r300->hiz_in_use = FALSE;
             }
         } else {
             /* We don't bind another zbuffer, so lock the current one. */
-            pipe_surface_reference(&r300->locked_zbuffer, old_state->zsbuf);
+            pipe_surface_reference(&r300->locked_zbuffer, current_state->zsbuf);
         }
     } else if (r300->locked_zbuffer) {
         /* We have a locked zbuffer now, what are we gonna do? */
@@ -1014,9 +1019,20 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
     }
     assert(state->zsbuf || (r300->locked_zbuffer && !unlock_zbuffer) || !r300->zmask_in_use);
 
+    /* If zsbuf is set from NULL to non-NULL or vice versa.. */
+    if (!!current_state->zsbuf != !!state->zsbuf) {
+        r300_mark_atom_dirty(r300, &r300->dsa_state);
+    }
+
+    util_copy_framebuffer_state(r300->fb_state.state, state);
+
+    /* Remove trailing NULL colorbuffers. */
+    while (current_state->nr_cbufs && !current_state->cbufs[current_state->nr_cbufs-1])
+        current_state->nr_cbufs--;
+
     /* Set whether CMASK can be used. */
     r300->cmask_in_use =
-        state->nr_cbufs == 1 &&
+        state->nr_cbufs == 1 && state->cbufs[0] &&
         r300->screen->cmask_resource == state->cbufs[0]->texture;
 
     /* Need to reset clamping or colormask. */
@@ -1025,19 +1041,12 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
     /* Re-swizzle the blend color. */
     r300_set_blend_color(pipe, &((struct r300_blend_color_state*)r300->blend_color_state.state)->state);
 
-    /* If zsbuf is set from NULL to non-NULL or vice versa.. */
-    if (!!old_state->zsbuf != !!state->zsbuf) {
-        r300_mark_atom_dirty(r300, &r300->dsa_state);
-    }
-
     if (r300->screen->info.drm_minor < 12) {
        /* The tiling flags are dependent on the surface miplevel, unfortunately.
         * This workarounds a bad design decision in old kernels which were
         * rewriting tile fields in registers. */
         r300_fb_set_tiling_flags(r300, state);
     }
-
-    util_copy_framebuffer_state(r300->fb_state.state, state);
 
     if (unlock_zbuffer) {
         pipe_surface_reference(&r300->locked_zbuffer, NULL);
@@ -1089,7 +1098,8 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
     if (DBG_ON(r300, DBG_FB)) {
         fprintf(stderr, "r300: set_framebuffer_state:\n");
         for (i = 0; i < state->nr_cbufs; i++) {
-            r300_print_fb_surf_info(state->cbufs[i], i, "CB");
+            if (state->cbufs[i])
+                r300_print_fb_surf_info(state->cbufs[i], i, "CB");
         }
         if (state->zsbuf) {
             r300_print_fb_surf_info(state->zsbuf, 0, "ZB");

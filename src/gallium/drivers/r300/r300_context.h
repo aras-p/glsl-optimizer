@@ -688,6 +688,20 @@ static INLINE void r300_mark_atom_dirty(struct r300_context *r300,
     }
 }
 
+static INLINE struct pipe_surface *
+r300_get_nonnull_cb(struct pipe_framebuffer_state *fb, unsigned i)
+{
+    if (fb->cbufs[i])
+        return fb->cbufs[i];
+
+    /* The i-th framebuffer is NULL, return any non-NULL one. */
+    for (i = 0; i < fb->nr_cbufs; i++)
+        if (fb->cbufs[i])
+            return fb->cbufs[i];
+
+    return NULL;
+}
+
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          void *priv);
 

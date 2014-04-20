@@ -130,7 +130,7 @@ static boolean r300_cbzb_clear_allowed(struct r300_context *r300,
         (struct pipe_framebuffer_state*)r300->fb_state.state;
 
     /* Only color clear allowed, and only one colorbuffer. */
-    if ((clear_buffers & ~PIPE_CLEAR_COLOR) != 0 || fb->nr_cbufs != 1)
+    if ((clear_buffers & ~PIPE_CLEAR_COLOR) != 0 || fb->nr_cbufs != 1 || !fb->cbufs[0])
         return FALSE;
 
     return r300_surface(fb->cbufs[0])->cbzb_allowed;
@@ -313,7 +313,7 @@ static void r300_clear(struct pipe_context* pipe,
     /* Use fast color clear for an AA colorbuffer.
      * The CMASK is shared between all colorbuffers, so we use it
      * if there is only one colorbuffer bound. */
-    if ((buffers & PIPE_CLEAR_COLOR) && fb->nr_cbufs == 1 &&
+    if ((buffers & PIPE_CLEAR_COLOR) && fb->nr_cbufs == 1 && fb->cbufs[0] &&
         r300_resource(fb->cbufs[0]->texture)->tex.cmask_dwords) {
         /* Try to obtain the access to the CMASK if we don't have one. */
         if (!r300->cmask_access) {
