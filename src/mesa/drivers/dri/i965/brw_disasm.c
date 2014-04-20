@@ -1085,19 +1085,10 @@ static int src1 (FILE *file, struct brw_instruction *inst)
     }
 }
 
-int esize[6] = {
-	[0] = 1,
-	[1] = 2,
-	[2] = 4,
-	[3] = 8,
-	[4] = 16,
-	[5] = 32,
-};
-
 static int qtr_ctrl(FILE *file, struct brw_instruction *inst)
 {
     int qtr_ctl = inst->header.compression_control;
-    int exec_size = esize[inst->header.execution_size];
+    int exec_size = 1 << inst->header.execution_size;
 
     if (exec_size == 8) {
 	switch (qtr_ctl) {

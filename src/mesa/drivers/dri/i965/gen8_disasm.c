@@ -742,13 +742,11 @@ src1(FILE *file, struct gen8_instruction *inst)
    }
 }
 
-static int esize[6] = { 1, 2, 4, 8, 16, 32 };
-
 static int
 qtr_ctrl(FILE *file, struct gen8_instruction *inst)
 {
    int qtr_ctl = gen8_qtr_control(inst);
-   int exec_size = esize[gen8_exec_size(inst)];
+   int exec_size = 1 << gen8_exec_size(inst);
 
    if (exec_size == 8) {
       switch (qtr_ctl) {
