@@ -111,7 +111,6 @@
     assert((r)->cs_buf); \
     OUT_CS(0xc0001000); /* PKT3_NOP */ \
     OUT_CS(cs_winsys->cs_get_reloc(cs_copy, (r)->cs_buf) * 4); \
-    CS_USED_DW(2); \
 } while (0)
 
 
