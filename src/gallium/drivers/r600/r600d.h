@@ -818,6 +818,9 @@
 #define   S_028D10_IGNORE_SC_ZRANGE(x)                 (((x) & 0x1) << 17)
 #define   G_028D10_IGNORE_SC_ZRANGE(x)                 (((x) >> 17) & 0x1)
 #define   C_028D10_IGNORE_SC_ZRANGE                    0xFFFDFFFF
+#define   S_028D10_MAX_TILES_IN_DTT(x)                 (((x) & 0x1F) << 21)
+#define   G_028D10_MAX_TILES_IN_DTT(x)                 (((x) >> 21) & 0x1F)
+#define   C_028D10_MAX_TILES_IN_DTT                    0xFC1FFFFF
 #define R_02880C_DB_SHADER_CONTROL                    0x02880C
 #define   S_02880C_Z_EXPORT_ENABLE(x)                  (((x) & 0x1) << 0)
 #define   G_02880C_Z_EXPORT_ENABLE(x)                  (((x) >> 0) & 0x1)

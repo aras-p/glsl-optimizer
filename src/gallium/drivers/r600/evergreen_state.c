@@ -1381,7 +1381,10 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 
 	log_samples = util_logbase2(rctx->framebuffer.nr_samples);
-	if (rctx->b.chip_class == CAYMAN && rctx->db_misc_state.log_samples != log_samples) {
+	/* This is for Cayman to program SAMPLE_RATE, and for RV770 to fix a hw bug. */
+	if ((rctx->b.chip_class == CAYMAN ||
+	     rctx->b.family == CHIP_RV770) &&
+	    rctx->db_misc_state.log_samples != log_samples) {
 		rctx->db_misc_state.log_samples = log_samples;
 		rctx->db_misc_state.atom.dirty = true;
 	}

@@ -1615,6 +1615,11 @@ static void r600_emit_db_misc_state(struct r600_context *rctx, struct r600_atom 
 		db_render_control |= S_028D0C_DEPTH_CLEAR_ENABLE(1);
 	}
 
+	/* RV770 workaround for a hang with 8x MSAA. */
+	if (rctx->b.family == CHIP_RV770 && a->log_samples == 3) {
+		db_render_override |= S_028D10_MAX_TILES_IN_DTT(6);
+	}
+
 	r600_write_context_reg_seq(cs, R_028D0C_DB_RENDER_CONTROL, 2);
 	radeon_emit(cs, db_render_control); /* R_028D0C_DB_RENDER_CONTROL */
 	radeon_emit(cs, db_render_override); /* R_028D10_DB_RENDER_OVERRIDE */
