@@ -113,6 +113,12 @@ update_framebuffer_state( struct st_context *st )
       pipe_surface_reference(&framebuffer->cbufs[i], NULL);
    }
 
+   /* Remove trailing GL_NONE draw buffers. */
+   while (framebuffer->nr_cbufs &&
+          !framebuffer->cbufs[framebuffer->nr_cbufs-1]) {
+      framebuffer->nr_cbufs--;
+   }
+
    /*
     * Depth/Stencil renderbuffer/surface.
     */
