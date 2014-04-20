@@ -517,18 +517,21 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 			       S_028C08_PIX_CENTER_HALF(state->half_pixel_center) |
 			       S_028C08_QUANT_MODE(V_028C08_X_1_256TH));
 	r600_store_context_reg(&rs->buffer, R_028DFC_PA_SU_POLY_OFFSET_CLAMP, fui(state->offset_clamp));
-	r600_store_context_reg(&rs->buffer, R_028814_PA_SU_SC_MODE_CNTL,
-			       S_028814_PROVOKING_VTX_LAST(!state->flatshade_first) |
-			       S_028814_CULL_FRONT(state->cull_face & PIPE_FACE_FRONT ? 1 : 0) |
-			       S_028814_CULL_BACK(state->cull_face & PIPE_FACE_BACK ? 1 : 0) |
-			       S_028814_FACE(!state->front_ccw) |
-			       S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
-			       S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
-			       S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri) |
-			       S_028814_POLY_MODE(state->fill_front != PIPE_POLYGON_MODE_FILL ||
-						  state->fill_back != PIPE_POLYGON_MODE_FILL) |
-			       S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
-			       S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back)));
+
+	rs->pa_su_sc_mode_cntl = S_028814_PROVOKING_VTX_LAST(!state->flatshade_first) |
+				 S_028814_CULL_FRONT(state->cull_face & PIPE_FACE_FRONT ? 1 : 0) |
+				 S_028814_CULL_BACK(state->cull_face & PIPE_FACE_BACK ? 1 : 0) |
+				 S_028814_FACE(!state->front_ccw) |
+				 S_028814_POLY_OFFSET_FRONT_ENABLE(state->offset_tri) |
+				 S_028814_POLY_OFFSET_BACK_ENABLE(state->offset_tri) |
+				 S_028814_POLY_OFFSET_PARA_ENABLE(state->offset_tri) |
+				 S_028814_POLY_MODE(state->fill_front != PIPE_POLYGON_MODE_FILL ||
+									 state->fill_back != PIPE_POLYGON_MODE_FILL) |
+				 S_028814_POLYMODE_FRONT_PTYPE(r600_translate_fill(state->fill_front)) |
+				 S_028814_POLYMODE_BACK_PTYPE(r600_translate_fill(state->fill_back));
+	if (rctx->b.chip_class == R700) {
+		r600_store_context_reg(&rs->buffer, R_028814_PA_SU_SC_MODE_CNTL, rs->pa_su_sc_mode_cntl);
+	}
 	r600_store_context_reg(&rs->buffer, R_028350_SX_MISC, S_028350_MULTIPASS(state->rasterizer_discard));
 	return rs;
 }
@@ -2572,30 +2575,6 @@ void r600_update_vs_state(struct pipe_context *ctx, struct r600_pipe_shader *sha
 		S_02881C_USE_VTX_EDGE_FLAG(rshader->vs_out_edgeflag) |
 		S_02881C_USE_VTX_RENDER_TARGET_INDX(rshader->vs_out_layer) |
 		S_02881C_USE_VTX_VIEWPORT_INDX(rshader->vs_out_viewport);
-}
-
-static unsigned r600_conv_prim_to_gs_out(unsigned mode)
-{
-	static const int prim_conv[] = {
-		V_028A6C_OUTPRIM_TYPE_POINTLIST,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP
-	};
-	assert(mode < Elements(prim_conv));
-
-	return prim_conv[mode];
 }
 
 void r600_update_gs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)

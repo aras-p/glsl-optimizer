@@ -41,7 +41,7 @@
 
 /* the number of CS dwords for flushing and drawing */
 #define R600_MAX_FLUSH_CS_DWORDS	16
-#define R600_MAX_DRAW_CS_DWORDS		34
+#define R600_MAX_DRAW_CS_DWORDS		37
 #define R600_TRACE_CS_DWORDS		7
 
 #define R600_MAX_USER_CONST_BUFFERS 13
@@ -234,6 +234,7 @@ struct r600_rasterizer_state {
 	unsigned                        clip_plane_enable;
 	unsigned			pa_sc_line_stipple;
 	unsigned			pa_cl_clip_cntl;
+	unsigned			pa_su_sc_mode_cntl;
 	float				offset_units;
 	float				offset_scale;
 	bool				offset_enable;
@@ -850,6 +851,34 @@ static INLINE bool r600_can_read_depth(struct r600_texture *rtex)
 	return rtex->resource.b.b.nr_samples <= 1 &&
 	       (rtex->resource.b.b.format == PIPE_FORMAT_Z16_UNORM ||
 		rtex->resource.b.b.format == PIPE_FORMAT_Z32_FLOAT);
+}
+
+#define     V_028A6C_OUTPRIM_TYPE_POINTLIST            0
+#define     V_028A6C_OUTPRIM_TYPE_LINESTRIP            1
+#define     V_028A6C_OUTPRIM_TYPE_TRISTRIP             2
+
+static INLINE unsigned r600_conv_prim_to_gs_out(unsigned mode)
+{
+	static const int prim_conv[] = {
+		V_028A6C_OUTPRIM_TYPE_POINTLIST,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
+		V_028A6C_OUTPRIM_TYPE_TRISTRIP
+	};
+	assert(mode < Elements(prim_conv));
+
+	return prim_conv[mode];
 }
 
 #endif

@@ -2987,30 +2987,6 @@ void evergreen_update_es_state(struct pipe_context *ctx, struct r600_pipe_shader
 	/* After that, the NOP relocation packet must be emitted (shader->bo, RADEON_USAGE_READ). */
 }
 
-static unsigned r600_conv_prim_to_gs_out(unsigned mode)
-{
-	static const int prim_conv[] = {
-		V_028A6C_OUTPRIM_TYPE_POINTLIST,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_LINESTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP,
-		V_028A6C_OUTPRIM_TYPE_TRISTRIP
-	};
-	assert(mode < Elements(prim_conv));
-
-	return prim_conv[mode];
-}
-
 void evergreen_update_gs_state(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_context *rctx = (struct r600_context *)ctx;

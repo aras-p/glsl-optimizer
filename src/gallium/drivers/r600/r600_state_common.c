@@ -1413,6 +1413,25 @@ static void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info 
 		r600_emit_atom(rctx, rctx->atoms[i]);
 	}
 
+	/* On R6xx, CULL_FRONT=1 culls all points, lines, and rectangles,
+	 * even though it should have no effect on those. */
+	if (rctx->b.chip_class == R600 && rctx->rasterizer) {
+		unsigned su_sc_mode_cntl = rctx->rasterizer->pa_su_sc_mode_cntl;
+		unsigned prim = info.mode;
+
+		if (rctx->gs_shader) {
+			prim = rctx->gs_shader->current->shader.gs_output_prim;
+		}
+		prim = r600_conv_prim_to_gs_out(prim); /* decrease the number of types to 3 */
+
+		if (prim == V_028A6C_OUTPRIM_TYPE_POINTLIST ||
+		    prim == V_028A6C_OUTPRIM_TYPE_LINESTRIP ||
+		    info.mode == R600_PRIM_RECTANGLE_LIST) {
+			su_sc_mode_cntl &= C_028814_CULL_FRONT;
+		}
+		r600_write_context_reg(cs, R_028814_PA_SU_SC_MODE_CNTL, su_sc_mode_cntl);
+	}
+
 	/* Update start instance. */
 	if (rctx->last_start_instance != info.start_instance) {
 		r600_write_ctl_const(cs, R_03CFF4_SQ_VTX_START_INST_LOC, info.start_instance);
