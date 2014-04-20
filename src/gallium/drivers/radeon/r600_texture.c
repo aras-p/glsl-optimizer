@@ -542,6 +542,12 @@ static unsigned r600_texture_htile_alloc_size(struct r600_common_screen *rscreen
 		return 0;
 	}
 
+	/* HW bug on R6xx. */
+	if (rscreen->chip_class == R600 &&
+	    (rtex->surface.level[0].npix_x > 7680 ||
+	     rtex->surface.level[0].npix_y > 7680))
+		return 0;
+
 	/* this alignment and htile size only apply to linear htile buffer */
 	sw = align(sw, 16 << 3);
 	sh = align(sh, npipes << 3);
