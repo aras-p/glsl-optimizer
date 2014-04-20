@@ -460,6 +460,10 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 		S_028810_ZCLIP_NEAR_DISABLE(!state->depth_clip) |
 		S_028810_ZCLIP_FAR_DISABLE(!state->depth_clip) |
 		S_028810_DX_LINEAR_ATTR_CLIP_ENA(1);
+	if (rctx->b.chip_class == R700) {
+		rs->pa_cl_clip_cntl |=
+			S_028810_DX_RASTERIZATION_KILL(state->rasterizer_discard);
+	}
 	rs->multisample_enable = state->multisample;
 
 	/* offset */
@@ -532,7 +536,10 @@ static void *r600_create_rs_state(struct pipe_context *ctx,
 	if (rctx->b.chip_class == R700) {
 		r600_store_context_reg(&rs->buffer, R_028814_PA_SU_SC_MODE_CNTL, rs->pa_su_sc_mode_cntl);
 	}
-	r600_store_context_reg(&rs->buffer, R_028350_SX_MISC, S_028350_MULTIPASS(state->rasterizer_discard));
+	if (rctx->b.chip_class == R600) {
+		r600_store_context_reg(&rs->buffer, R_028350_SX_MISC,
+				       S_028350_MULTIPASS(state->rasterizer_discard));
+	}
 	return rs;
 }
 
@@ -2397,8 +2404,11 @@ void r600_init_atom_start_cs(struct r600_context *rctx)
 
 	r600_store_context_reg(cb, R_0288A4_SQ_PGM_RESOURCES_FS, 0);
 
+	if (rctx->b.chip_class == R700)
+		r600_store_context_reg(cb, R_028350_SX_MISC, 0);
 	if (rctx->b.chip_class == R700 && rctx->screen->b.has_streamout)
 		r600_store_context_reg(cb, R_028354_SX_SURFACE_SYNC, S_028354_SURFACE_SYNC_MASK(0xf));
+
 	r600_store_context_reg(cb, R_028800_DB_DEPTH_CONTROL, 0);
 	if (rctx->screen->b.has_streamout) {
 		r600_store_context_reg(cb, R_028B28_VGT_STRMOUT_DRAW_OPAQUE_OFFSET, 0);

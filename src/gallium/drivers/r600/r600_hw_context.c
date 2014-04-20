@@ -81,7 +81,7 @@ void r600_need_cs_space(struct r600_context *ctx, unsigned num_dw,
 	}
 
 	/* SX_MISC */
-	if (ctx->b.chip_class <= R700) {
+	if (ctx->b.chip_class == R600) {
 		num_dw += 3;
 	}
 
@@ -264,7 +264,7 @@ void r600_context_gfx_flush(void *context, unsigned flags,
 	r600_flush_emit(ctx);
 
 	/* old kernels and userspace don't set SX_MISC, so we must reset it to 0 here */
-	if (ctx->b.chip_class <= R700) {
+	if (ctx->b.chip_class == R600) {
 		r600_write_context_reg(cs, R_028350_SX_MISC, 0);
 	}
 

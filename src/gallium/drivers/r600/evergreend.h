@@ -582,6 +582,9 @@
 #define   S_028810_VTX_KILL_OR(x)                      (((x) & 0x1) << 21)
 #define   G_028810_VTX_KILL_OR(x)                      (((x) >> 21) & 0x1)
 #define   C_028810_VTX_KILL_OR                         0xFFDFFFFF
+#define   S_028810_DX_RASTERIZATION_KILL(x)            (((x) & 0x1) << 22)
+#define   G_028810_DX_RASTERIZATION_KILL(x)            (((x) >> 22) & 0x1)
+#define   C_028810_DX_RASTERIZATION_KILL               0xFFBFFFFF
 #define   S_028810_DX_LINEAR_ATTR_CLIP_ENA(x)          (((x) & 0x1) << 24)
 #define   G_028810_DX_LINEAR_ATTR_CLIP_ENA(x)          (((x) >> 24) & 0x1)
 #define   C_028810_DX_LINEAR_ATTR_CLIP_ENA             0xFEFFFFFF
