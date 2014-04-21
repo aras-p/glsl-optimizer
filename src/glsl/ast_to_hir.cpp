@@ -3219,7 +3219,7 @@ ast_declarator_list::hir(exec_list *instructions,
       /* From page 22 (page 28 of the PDF) of the GLSL 1.10 specification;
        *
        *     "Global variables can only use the qualifiers const,
-       *     attribute, uni form, or varying. Only one may be
+       *     attribute, uniform, or varying. Only one may be
        *     specified.
        *
        *     Local variables can only use the qualifier const."
