@@ -110,7 +110,7 @@ static const uint32_t gen6_datatype_table[32] = {
    0b001000001110111110,
 };
 
-static const uint32_t gen6_subreg_table[32] = {
+static const uint16_t gen6_subreg_table[32] = {
    0b000000000000000,
    0b000000000000100,
    0b000000110000000,
@@ -145,7 +145,7 @@ static const uint32_t gen6_subreg_table[32] = {
    0b000110000000000,
 };
 
-static const uint32_t gen6_src_index_table[32] = {
+static const uint16_t gen6_src_index_table[32] = {
    0b000000000000,
    0b010110001000,
    0b010001101000,
@@ -250,7 +250,7 @@ static const uint32_t gen7_datatype_table[32] = {
    0b001010110100101000
 };
 
-static const uint32_t gen7_subreg_table[32] = {
+static const uint16_t gen7_subreg_table[32] = {
    0b000000000000000,
    0b000000000000001,
    0b000000000001000,
@@ -285,7 +285,7 @@ static const uint32_t gen7_subreg_table[32] = {
    0b111000000011100
 };
 
-static const uint32_t gen7_src_index_table[32] = {
+static const uint16_t gen7_src_index_table[32] = {
    0b000000000000,
    0b000000000010,
    0b000000010000,
@@ -322,8 +322,8 @@ static const uint32_t gen7_src_index_table[32] = {
 
 static const uint32_t *control_index_table;
 static const uint32_t *datatype_table;
-static const uint32_t *subreg_table;
-static const uint32_t *src_index_table;
+static const uint16_t *subreg_table;
+static const uint16_t *src_index_table;
 
 static bool
 set_control_index(struct brw_context *brw,
@@ -374,7 +374,7 @@ static bool
 set_subreg_index(struct brw_compact_instruction *dst,
                  struct brw_instruction *src)
 {
-   uint32_t uncompacted = 0;
+   uint16_t uncompacted = 0;
 
    uncompacted |= src->bits1.da1.dest_subreg_nr << 0;
    uncompacted |= src->bits2.da1.src0_subreg_nr << 5;
@@ -391,8 +391,8 @@ set_subreg_index(struct brw_compact_instruction *dst,
 }
 
 static bool
-get_src_index(uint32_t uncompacted,
-              uint32_t *compacted)
+get_src_index(uint16_t uncompacted,
+              uint16_t *compacted)
 {
    for (int i = 0; i < 32; i++) {
       if (src_index_table[i] == uncompacted) {
@@ -408,7 +408,7 @@ static bool
 set_src0_index(struct brw_compact_instruction *dst,
                struct brw_instruction *src)
 {
-   uint32_t compacted, uncompacted = 0;
+   uint16_t compacted, uncompacted = 0;
 
    uncompacted |= (src->bits2.ud >> 13) & 0xfff;
 
@@ -425,7 +425,7 @@ static bool
 set_src1_index(struct brw_compact_instruction *dst,
                struct brw_instruction *src)
 {
-   uint32_t compacted, uncompacted = 0;
+   uint16_t compacted, uncompacted = 0;
 
    uncompacted |= (src->bits3.ud >> 13) & 0xfff;
 
@@ -527,7 +527,7 @@ static void
 set_uncompacted_subreg(struct brw_instruction *dst,
                        struct brw_compact_instruction *src)
 {
-   uint32_t uncompacted = subreg_table[src->dw0.sub_reg_index];
+   uint16_t uncompacted = subreg_table[src->dw0.sub_reg_index];
 
    dst->bits1.da1.dest_subreg_nr = (uncompacted >> 0)  & 0x1f;
    dst->bits2.da1.src0_subreg_nr = (uncompacted >> 5)  & 0x1f;
@@ -539,7 +539,7 @@ set_uncompacted_src0(struct brw_instruction *dst,
                      struct brw_compact_instruction *src)
 {
    uint32_t compacted = src->dw0.src0_index | src->dw1.src0_index << 2;
-   uint32_t uncompacted = src_index_table[compacted];
+   uint16_t uncompacted = src_index_table[compacted];
 
    dst->bits2.ud |= uncompacted << 13;
 }
@@ -548,7 +548,7 @@ static void
 set_uncompacted_src1(struct brw_instruction *dst,
                      struct brw_compact_instruction *src)
 {
-   uint32_t uncompacted = src_index_table[src->dw1.src1_index];
+   uint16_t uncompacted = src_index_table[src->dw1.src1_index];
 
    dst->bits3.ud |= uncompacted << 13;
 }
