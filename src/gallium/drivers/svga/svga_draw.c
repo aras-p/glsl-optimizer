@@ -287,6 +287,140 @@ svga_hwtnl_set_index_bias(struct svga_hwtnl *hwtnl, int index_bias)
  * Internal functions:
  */
 
+/**
+ * For debugging only.
+ */
+static void
+check_draw_params(struct svga_hwtnl *hwtnl,
+                  const SVGA3dPrimitiveRange *range,
+                  unsigned min_index, unsigned max_index,
+                  struct pipe_resource *ib)
+{
+   unsigned i;
+
+   for (i = 0; i < hwtnl->cmd.vdecl_count; i++) {
+      struct pipe_resource *vb = hwtnl->cmd.vdecl_vb[i];
+      unsigned size = vb ? vb->width0 : 0;
+      unsigned offset = hwtnl->cmd.vdecl[i].array.offset;
+      unsigned stride = hwtnl->cmd.vdecl[i].array.stride;
+      int index_bias = (int) range->indexBias + hwtnl->index_bias;
+      unsigned width;
+
+      assert(vb);
+      assert(size);
+      assert(offset < size);
+      assert(min_index <= max_index);
+
+      switch (hwtnl->cmd.vdecl[i].identity.type) {
+      case SVGA3D_DECLTYPE_FLOAT1:
+         width = 4;
+         break;
+      case SVGA3D_DECLTYPE_FLOAT2:
+         width = 4 * 2;
+         break;
+      case SVGA3D_DECLTYPE_FLOAT3:
+         width = 4 * 3;
+         break;
+      case SVGA3D_DECLTYPE_FLOAT4:
+         width = 4 * 4;
+         break;
+      case SVGA3D_DECLTYPE_D3DCOLOR:
+         width = 4;
+         break;
+      case SVGA3D_DECLTYPE_UBYTE4:
+         width = 1 * 4;
+         break;
+      case SVGA3D_DECLTYPE_SHORT2:
+         width = 2 * 2;
+         break;
+      case SVGA3D_DECLTYPE_SHORT4:
+         width = 2 * 4;
+         break;
+      case SVGA3D_DECLTYPE_UBYTE4N:
+         width = 1 * 4;
+         break;
+      case SVGA3D_DECLTYPE_SHORT2N:
+         width = 2 * 2;
+         break;
+      case SVGA3D_DECLTYPE_SHORT4N:
+         width = 2 * 4;
+         break;
+      case SVGA3D_DECLTYPE_USHORT2N:
+         width = 2 * 2;
+         break;
+      case SVGA3D_DECLTYPE_USHORT4N:
+         width = 2 * 4;
+         break;
+      case SVGA3D_DECLTYPE_UDEC3:
+         width = 4;
+         break;
+      case SVGA3D_DECLTYPE_DEC3N:
+         width = 4;
+         break;
+      case SVGA3D_DECLTYPE_FLOAT16_2:
+         width = 2 * 2;
+         break;
+      case SVGA3D_DECLTYPE_FLOAT16_4:
+         width = 2 * 4;
+         break;
+      default:
+         assert(0);
+         width = 0;
+         break;
+      }
+
+      if (index_bias >= 0) {
+         assert(offset + index_bias * stride + width <= size);
+      }
+
+      /*
+       * min_index/max_index are merely conservative guesses, so we can't
+       * make buffer overflow detection based on their values.
+       */
+   }
+
+   assert(range->indexWidth == range->indexArray.stride);
+
+   if (ib) {
+      unsigned size = ib->width0;
+      unsigned offset = range->indexArray.offset;
+      unsigned stride = range->indexArray.stride;
+      unsigned count;
+
+      assert(size);
+      assert(offset < size);
+      assert(stride);
+
+      switch (range->primType) {
+      case SVGA3D_PRIMITIVE_POINTLIST:
+         count = range->primitiveCount;
+         break;
+      case SVGA3D_PRIMITIVE_LINELIST:
+         count = range->primitiveCount * 2;
+         break;
+      case SVGA3D_PRIMITIVE_LINESTRIP:
+         count = range->primitiveCount + 1;
+         break;
+      case SVGA3D_PRIMITIVE_TRIANGLELIST:
+         count = range->primitiveCount * 3;
+         break;
+      case SVGA3D_PRIMITIVE_TRIANGLESTRIP:
+         count = range->primitiveCount + 2;
+         break;
+      case SVGA3D_PRIMITIVE_TRIANGLEFAN:
+         count = range->primitiveCount + 2;
+         break;
+      default:
+         assert(0);
+         count = 0;
+         break;
+      }
+
+      assert(offset + count * stride <= size);
+   }
+}
+
+
 enum pipe_error
 svga_hwtnl_prim(struct svga_hwtnl *hwtnl,
                 const SVGA3dPrimitiveRange * range,
@@ -296,129 +430,7 @@ svga_hwtnl_prim(struct svga_hwtnl *hwtnl,
    enum pipe_error ret = PIPE_OK;
 
 #ifdef DEBUG
-   {
-      unsigned i;
-      for (i = 0; i < hwtnl->cmd.vdecl_count; i++) {
-         struct pipe_resource *vb = hwtnl->cmd.vdecl_vb[i];
-         unsigned size = vb ? vb->width0 : 0;
-         unsigned offset = hwtnl->cmd.vdecl[i].array.offset;
-         unsigned stride = hwtnl->cmd.vdecl[i].array.stride;
-         int index_bias = (int) range->indexBias + hwtnl->index_bias;
-         unsigned width;
-
-         assert(vb);
-         assert(size);
-         assert(offset < size);
-         assert(min_index <= max_index);
-
-         switch (hwtnl->cmd.vdecl[i].identity.type) {
-         case SVGA3D_DECLTYPE_FLOAT1:
-            width = 4;
-            break;
-         case SVGA3D_DECLTYPE_FLOAT2:
-            width = 4 * 2;
-            break;
-         case SVGA3D_DECLTYPE_FLOAT3:
-            width = 4 * 3;
-            break;
-         case SVGA3D_DECLTYPE_FLOAT4:
-            width = 4 * 4;
-            break;
-         case SVGA3D_DECLTYPE_D3DCOLOR:
-            width = 4;
-            break;
-         case SVGA3D_DECLTYPE_UBYTE4:
-            width = 1 * 4;
-            break;
-         case SVGA3D_DECLTYPE_SHORT2:
-            width = 2 * 2;
-            break;
-         case SVGA3D_DECLTYPE_SHORT4:
-            width = 2 * 4;
-            break;
-         case SVGA3D_DECLTYPE_UBYTE4N:
-            width = 1 * 4;
-            break;
-         case SVGA3D_DECLTYPE_SHORT2N:
-            width = 2 * 2;
-            break;
-         case SVGA3D_DECLTYPE_SHORT4N:
-            width = 2 * 4;
-            break;
-         case SVGA3D_DECLTYPE_USHORT2N:
-            width = 2 * 2;
-            break;
-         case SVGA3D_DECLTYPE_USHORT4N:
-            width = 2 * 4;
-            break;
-         case SVGA3D_DECLTYPE_UDEC3:
-            width = 4;
-            break;
-         case SVGA3D_DECLTYPE_DEC3N:
-            width = 4;
-            break;
-         case SVGA3D_DECLTYPE_FLOAT16_2:
-            width = 2 * 2;
-            break;
-         case SVGA3D_DECLTYPE_FLOAT16_4:
-            width = 2 * 4;
-            break;
-         default:
-            assert(0);
-            width = 0;
-            break;
-         }
-
-         if (index_bias >= 0) {
-            assert(offset + index_bias * stride + width <= size);
-         }
-
-         /*
-          * min_index/max_index are merely conservative guesses, so we can't
-          * make buffer overflow detection based on their values.
-          */
-      }
-
-      assert(range->indexWidth == range->indexArray.stride);
-
-      if (ib) {
-         unsigned size = ib->width0;
-         unsigned offset = range->indexArray.offset;
-         unsigned stride = range->indexArray.stride;
-         unsigned count;
-
-         assert(size);
-         assert(offset < size);
-         assert(stride);
-
-         switch (range->primType) {
-         case SVGA3D_PRIMITIVE_POINTLIST:
-            count = range->primitiveCount;
-            break;
-         case SVGA3D_PRIMITIVE_LINELIST:
-            count = range->primitiveCount * 2;
-            break;
-         case SVGA3D_PRIMITIVE_LINESTRIP:
-            count = range->primitiveCount + 1;
-            break;
-         case SVGA3D_PRIMITIVE_TRIANGLELIST:
-            count = range->primitiveCount * 3;
-            break;
-         case SVGA3D_PRIMITIVE_TRIANGLESTRIP:
-            count = range->primitiveCount + 2;
-            break;
-         case SVGA3D_PRIMITIVE_TRIANGLEFAN:
-            count = range->primitiveCount + 2;
-            break;
-         default:
-            assert(0);
-            count = 0;
-            break;
-         }
-
-         assert(offset + count * stride <= size);
-      }
-   }
+   check_draw_params(hwtnl, range, min_index, max_index, ib);
 #endif
 
    if (hwtnl->cmd.prim_count + 1 >= QSZ) {
