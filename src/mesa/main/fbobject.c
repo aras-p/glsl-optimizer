@@ -2770,6 +2770,7 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
    }
 
    if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
+      const struct gl_renderbuffer_attachment *depthAtt, *stencilAtt;
       if (pname == GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE) {
          /* This behavior is first specified in OpenGL 4.4 specification.
           *
@@ -2784,7 +2785,6 @@ _mesa_GetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment,
          return;
       }
       /* the depth and stencil attachments must point to the same buffer */
-      const struct gl_renderbuffer_attachment *depthAtt, *stencilAtt;
       depthAtt = get_attachment(ctx, buffer, GL_DEPTH_ATTACHMENT);
       stencilAtt = get_attachment(ctx, buffer, GL_STENCIL_ATTACHMENT);
       if (depthAtt->Renderbuffer != stencilAtt->Renderbuffer) {
