@@ -78,6 +78,8 @@ gdi_screen_create(void)
    if (strcmp(driver, "llvmpipe") == 0) {
       screen = llvmpipe_create_screen( winsys );
    }
+#else
+   (void) driver;
 #endif
 
    if (screen == NULL) {
