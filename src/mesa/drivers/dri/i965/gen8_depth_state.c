@@ -307,6 +307,9 @@ gen8_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
+   /* Mark this buffer as needing a TC flush, as we've rendered to it. */
+   brw_render_cache_set_add_bo(brw, mt->region->bo);
+
    /* We've clobbered all of the depth packets, and the drawing rectangle,
     * so we need to ensure those packets are re-emitted before the next
     * primitive.
