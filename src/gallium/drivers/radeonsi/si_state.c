@@ -47,19 +47,19 @@ static void si_init_atom(struct r600_atom *atom, struct r600_atom **list_elem,
 	*list_elem = atom;
 }
 
-uint32_t cik_num_banks(struct si_screen *sscreen, unsigned bpe, unsigned tile_split)
+uint32_t si_num_banks(struct si_screen *sscreen, unsigned bpe, unsigned tile_split,
+		      unsigned tile_mode_index)
 {
-	unsigned index, tileb;
-
-	tileb = 8 * 8 * bpe;
-	tileb = MIN2(tile_split, tileb);
-
-	for (index = 0; tileb > 64; index++) {
-		tileb >>= 1;
-	}
-
 	if ((sscreen->b.chip_class == CIK) &&
 	    sscreen->b.info.cik_macrotile_mode_array_valid) {
+		unsigned index, tileb;
+
+		tileb = 8 * 8 * bpe;
+		tileb = MIN2(tile_split, tileb);
+
+		for (index = 0; tileb > 64; index++) {
+			tileb >>= 1;
+		}
 		assert(index < 16);
 
 		return (sscreen->b.info.cik_macrotile_mode_array[index] >> 6) & 0x3;
@@ -67,9 +67,9 @@ uint32_t cik_num_banks(struct si_screen *sscreen, unsigned bpe, unsigned tile_sp
 
 	if ((sscreen->b.chip_class == SI) &&
 	    sscreen->b.info.si_tile_mode_array_valid) {
-		assert(index < 16);
+		assert(tile_mode_index < 32);
 
-		return (sscreen->b.info.si_tile_mode_array[index] >> 20) & 0x3;
+		return (sscreen->b.info.si_tile_mode_array[tile_mode_index] >> 20) & 0x3;
 	}
 
 	/* The old way. */
@@ -1785,7 +1785,8 @@ static void si_init_depth_surface(struct si_context *sctx,
 		macro_aspect = cik_macro_tile_aspect(macro_aspect);
 		bankw = cik_bank_wh(bankw);
 		bankh = cik_bank_wh(bankh);
-		nbanks = cik_num_banks(sscreen, rtex->surface.bpe, rtex->surface.tile_split);
+		nbanks = si_num_banks(sscreen, rtex->surface.bpe, rtex->surface.tile_split,
+				      ~0);
 		tile_mode_index = si_tile_mode_index(rtex, level, false);
 		pipe_config = cik_db_pipe_config(sscreen, tile_mode_index);
 
