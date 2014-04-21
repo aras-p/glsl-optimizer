@@ -166,7 +166,7 @@ _mesa_GetStringi(GLenum name, GLuint index)
       }
       return _mesa_get_enabled_extension(ctx, index);
    default:
-      _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
+      _mesa_error(ctx, GL_INVALID_ENUM, "glGetStringi");
       return (const GLubyte *) 0;
    }
 }
