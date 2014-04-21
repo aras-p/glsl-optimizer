@@ -858,6 +858,16 @@ nvc0_set_sample_mask(struct pipe_context *pipe, unsigned sample_mask)
     nvc0->dirty |= NVC0_NEW_SAMPLE_MASK;
 }
 
+static void
+nvc0_set_min_samples(struct pipe_context *pipe, unsigned min_samples)
+{
+   struct nvc0_context *nvc0 = nvc0_context(pipe);
+
+   if (nvc0->min_samples != min_samples) {
+      nvc0->min_samples = min_samples;
+      nvc0->dirty |= NVC0_NEW_MIN_SAMPLES;
+   }
+}
 
 static void
 nvc0_set_framebuffer_state(struct pipe_context *pipe,
@@ -1215,6 +1225,7 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
    pipe->set_stencil_ref = nvc0_set_stencil_ref;
    pipe->set_clip_state = nvc0_set_clip_state;
    pipe->set_sample_mask = nvc0_set_sample_mask;
+   pipe->set_min_samples = nvc0_set_min_samples;
    pipe->set_constant_buffer = nvc0_set_constant_buffer;
    pipe->set_framebuffer_state = nvc0_set_framebuffer_state;
    pipe->set_polygon_stipple = nvc0_set_polygon_stipple;
@@ -1237,4 +1248,5 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
    pipe->set_shader_resources = nvc0_set_shader_resources;
 
    nvc0->sample_mask = ~0;
+   nvc0->min_samples = 1;
 }

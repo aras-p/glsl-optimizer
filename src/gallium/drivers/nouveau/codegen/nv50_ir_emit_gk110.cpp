@@ -113,6 +113,8 @@ private:
 
    void emitQUADOP(const Instruction *, uint8_t qOp, uint8_t laneMask);
 
+   void emitPIXLD(const Instruction *);
+
    void emitFlow(const Instruction *);
 
    inline void defId(const ValueDef&, const int pos);
@@ -1130,6 +1132,14 @@ CodeEmitterGK110::emitQUADOP(const Instruction *i, uint8_t qOp, uint8_t laneMask
 }
 
 void
+CodeEmitterGK110::emitPIXLD(const Instruction *i)
+{
+   emitForm_L(i, 0x7f4, 2, Modifier(0));
+   code[1] |= i->subOp << 2;
+   code[1] |= 0x00070000;
+}
+
+void
 CodeEmitterGK110::emitFlow(const Instruction *i)
 {
    const FlowInstruction *f = i->asFlow();
@@ -1683,6 +1693,9 @@ CodeEmitterGK110::emitInstruction(Instruction *insn)
       break;
    case OP_TEXBAR:
       emitTEXBAR(insn);
+      break;
+   case OP_PIXLD:
+      emitPIXLD(insn);
       break;
    case OP_BRA:
    case OP_CALL:

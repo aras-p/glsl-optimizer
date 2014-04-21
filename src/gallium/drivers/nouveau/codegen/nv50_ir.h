@@ -136,6 +136,7 @@ enum operation
    OP_DFDY,
    OP_RDSV, // read system value
    OP_WRSV, // write system value
+   OP_PIXLD, // get info about raster object or surfaces
    OP_QUADOP,
    OP_QUADON,
    OP_QUADPOP,
@@ -214,6 +215,12 @@ enum operation
 #define NV50_IR_SUBOP_SUCLAMP_SD(r, d) (( 0 + (r)) | ((d == 2) ? 0x10 : 0))
 #define NV50_IR_SUBOP_SUCLAMP_PL(r, d) (( 5 + (r)) | ((d == 2) ? 0x10 : 0))
 #define NV50_IR_SUBOP_SUCLAMP_BL(r, d) ((10 + (r)) | ((d == 2) ? 0x10 : 0))
+#define NV50_IR_SUBOP_PIXLD_COUNT       0
+#define NV50_IR_SUBOP_PIXLD_COVMASK     1
+#define NV50_IR_SUBOP_PIXLD_COVERED     2
+#define NV50_IR_SUBOP_PIXLD_OFFSET      3
+#define NV50_IR_SUBOP_PIXLD_CENT_OFFSET 4
+#define NV50_IR_SUBOP_PIXLD_SAMPLEID    5
 #define NV50_IR_SUBOP_MADSP_SD     0xffff
 // Yes, we could represent those with DataType.
 // Or put the type into operation and have a couple 1000 values in that enum.

@@ -135,6 +135,8 @@ private:
    void emitVSHL(const Instruction *);
    void emitVectorSubOp(const Instruction *);
 
+   void emitPIXLD(const Instruction *);
+
    inline void defId(const ValueDef&, const int pos);
    inline void defId(const Instruction *, int d, const int pos);
    inline void srcId(const ValueRef&, const int pos);
@@ -2141,6 +2143,15 @@ CodeEmitterNVC0::emitVSHL(const Instruction *i)
       code[1] |= 1 << 16;
 }
 
+void
+CodeEmitterNVC0::emitPIXLD(const Instruction *i)
+{
+   assert(i->encSize == 8);
+   emitForm_A(i, HEX64(10000000, 00000006));
+   code[0] |= i->subOp << 5;
+   code[1] |= 0x00e00000;
+}
+
 bool
 CodeEmitterNVC0::emitInstruction(Instruction *insn)
 {
@@ -2389,6 +2400,9 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
       break;
    case OP_VSHL:
       emitVSHL(insn);
+      break;
+   case OP_PIXLD:
+      emitPIXLD(insn);
       break;
    case OP_PHI:
    case OP_UNION:

@@ -1426,6 +1426,27 @@ NVC0LoweringPass::handleRDSV(Instruction *i)
       bld.mkLoad(TYPE_U32, i->getDef(0),
                  bld.mkSymbol(FILE_MEMORY_CONST, 0, TYPE_U32, addr), NULL);
       break;
+   case SV_SAMPLE_INDEX:
+      // TODO: Properly pass source as an address in the PIX address space
+      // (which can be of the form [r0+offset]). But this is currently
+      // unnecessary.
+      ld = bld.mkOp1(OP_PIXLD, TYPE_U32, i->getDef(0), bld.mkImm(0));
+      ld->subOp = NV50_IR_SUBOP_PIXLD_SAMPLEID;
+      break;
+   case SV_SAMPLE_POS: {
+      Value *off = new_LValue(func, FILE_GPR);
+      ld = bld.mkOp1(OP_PIXLD, TYPE_U32, i->getDef(0), bld.mkImm(0));
+      ld->subOp = NV50_IR_SUBOP_PIXLD_SAMPLEID;
+      bld.mkOp2(OP_SHL, TYPE_U32, off, i->getDef(0), bld.mkImm(3));
+      bld.mkLoad(TYPE_F32,
+                 i->getDef(0),
+                 bld.mkSymbol(
+                       FILE_MEMORY_CONST, prog->driver->io.resInfoCBSlot,
+                       TYPE_U32, prog->driver->io.sampleInfoBase +
+                       4 * sym->reg.data.sv.index),
+                 off);
+      break;
+   }
    default:
       if (prog->getType() == Program::TYPE_TESSELLATION_EVAL)
          vtx = bld.mkOp1v(OP_PFETCH, TYPE_U32, bld.getSSA(), bld.mkImm(0));

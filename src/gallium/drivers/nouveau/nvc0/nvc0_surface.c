@@ -516,6 +516,7 @@ struct nvc0_blitctx
       unsigned num_samplers[5];
       struct pipe_sampler_view *texture[2];
       struct nv50_tsc_entry *sampler[2];
+      unsigned min_samples;
       uint32_t dirty;
    } saved;
    struct nvc0_rasterizer_stateobj rast;
@@ -746,6 +747,8 @@ nvc0_blitctx_pre_blit(struct nvc0_blitctx *ctx)
    ctx->saved.gp = nvc0->gmtyprog;
    ctx->saved.fp = nvc0->fragprog;
 
+   ctx->saved.min_samples = nvc0->min_samples;
+
    nvc0->rast = &ctx->rast;
 
    nvc0->vertprog = &blitter->vp;
@@ -772,6 +775,8 @@ nvc0_blitctx_pre_blit(struct nvc0_blitctx *ctx)
       nvc0->num_samplers[s] = 0;
    nvc0->num_samplers[4] = 2;
 
+   nvc0->min_samples = 1;
+
    ctx->saved.dirty = nvc0->dirty;
 
    nvc0->textures_dirty[4] |= 3;
@@ -781,7 +786,7 @@ nvc0_blitctx_pre_blit(struct nvc0_blitctx *ctx)
    nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_TEX(4, 0));
    nouveau_bufctx_reset(nvc0->bufctx_3d, NVC0_BIND_TEX(4, 1));
 
-   nvc0->dirty = NVC0_NEW_FRAMEBUFFER |
+   nvc0->dirty = NVC0_NEW_FRAMEBUFFER | NVC0_NEW_MIN_SAMPLES |
       NVC0_NEW_VERTPROG | NVC0_NEW_FRAGPROG |
       NVC0_NEW_TCTLPROG | NVC0_NEW_TEVLPROG | NVC0_NEW_GMTYPROG |
       NVC0_NEW_TEXTURES | NVC0_NEW_SAMPLERS;
@@ -808,6 +813,8 @@ nvc0_blitctx_post_blit(struct nvc0_blitctx *blit)
    nvc0->tevlprog = blit->saved.tep;
    nvc0->gmtyprog = blit->saved.gp;
    nvc0->fragprog = blit->saved.fp;
+
+   nvc0->min_samples = blit->saved.min_samples;
 
    pipe_sampler_view_reference(&nvc0->textures[4][0], NULL);
    pipe_sampler_view_reference(&nvc0->textures[4][1], NULL);
@@ -841,6 +848,8 @@ nvc0_blitctx_post_blit(struct nvc0_blitctx *blit)
        NVC0_NEW_VERTPROG | NVC0_NEW_FRAGPROG |
        NVC0_NEW_TCTLPROG | NVC0_NEW_TEVLPROG | NVC0_NEW_GMTYPROG |
        NVC0_NEW_TFB_TARGETS);
+
+   nvc0->base.pipe.set_min_samples(&nvc0->base.pipe, blit->saved.min_samples);
 }
 
 static void

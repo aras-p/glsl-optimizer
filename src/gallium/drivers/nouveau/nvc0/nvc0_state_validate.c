@@ -72,7 +72,7 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
 {
     struct nouveau_pushbuf *push = nvc0->base.pushbuf;
     struct pipe_framebuffer_state *fb = &nvc0->framebuffer;
-    unsigned i;
+    unsigned i, ms;
     unsigned ms_mode = NVC0_3D_MULTISAMPLE_MODE_MS1;
     boolean serialize = FALSE;
 
@@ -179,6 +179,20 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
     }
 
     IMMED_NVC0(push, NVC0_3D(MULTISAMPLE_MODE), ms_mode);
+
+    ms = 1 << ms_mode;
+    BEGIN_NVC0(push, NVC0_3D(CB_SIZE), 3);
+    PUSH_DATA (push, 512);
+    PUSH_DATAh(push, nvc0->screen->uniform_bo->offset + (5 << 16) + (4 << 9));
+    PUSH_DATA (push, nvc0->screen->uniform_bo->offset + (5 << 16) + (4 << 9));
+    BEGIN_1IC0(push, NVC0_3D(CB_POS), 1 + 2 * ms);
+    PUSH_DATA (push, 256 + 128);
+    for (i = 0; i < ms; i++) {
+       float xy[2];
+       nvc0->base.pipe.get_sample_position(&nvc0->base.pipe, ms, i, xy);
+       PUSH_DATAf(push, xy[0]);
+       PUSH_DATAf(push, xy[1]);
+    }
 
     if (serialize)
        IMMED_NVC0(push, NVC0_3D(SERIALIZE), 0);
@@ -452,8 +466,19 @@ nvc0_validate_sample_mask(struct nvc0_context *nvc0)
    PUSH_DATA (push, mask[1]);
    PUSH_DATA (push, mask[2]);
    PUSH_DATA (push, mask[3]);
-   BEGIN_NVC0(push, NVC0_3D(SAMPLE_SHADING), 1);
-   PUSH_DATA (push, 0x01);
+}
+
+static void
+nvc0_validate_min_samples(struct nvc0_context *nvc0)
+{
+   struct nouveau_pushbuf *push = nvc0->base.pushbuf;
+   int samples;
+
+   samples = util_next_power_of_two(nvc0->min_samples);
+   if (samples > 1)
+      samples |= NVC0_3D_SAMPLE_SHADING_ENABLE;
+
+   IMMED_NVC0(push, NVC0_3D(SAMPLE_SHADING), samples);
 }
 
 void
@@ -560,7 +585,8 @@ static struct state_validate {
     { nvc0_vertex_arrays_validate, NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS },
     { nvc0_validate_surfaces,      NVC0_NEW_SURFACES },
     { nvc0_idxbuf_validate,        NVC0_NEW_IDXBUF },
-    { nvc0_tfb_validate,           NVC0_NEW_TFB_TARGETS | NVC0_NEW_GMTYPROG }
+    { nvc0_tfb_validate,           NVC0_NEW_TFB_TARGETS | NVC0_NEW_GMTYPROG },
+    { nvc0_validate_min_samples,   NVC0_NEW_MIN_SAMPLES },
 };
 #define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
 

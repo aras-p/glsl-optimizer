@@ -107,6 +107,8 @@ nvc0_fragprog_validate(struct nvc0_context *nvc0)
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct nvc0_program *fp = nvc0->fragprog;
 
+   fp->fp.sample_interp = nvc0->min_samples > 1;
+
    if (!nvc0_program_validate(nvc0, fp))
          return;
    nvc0_program_update_context_state(nvc0, fp, 4);

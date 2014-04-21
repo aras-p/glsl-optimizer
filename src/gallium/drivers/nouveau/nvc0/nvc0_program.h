@@ -45,6 +45,7 @@ struct nvc0_program {
    struct {
       uint8_t early_z;
       uint8_t in_pos[PIPE_MAX_SHADER_INPUTS];
+      uint8_t sample_interp;
    } fp;
    struct {
       uint32_t tess_mode; /* ~0 if defined by the other stage */

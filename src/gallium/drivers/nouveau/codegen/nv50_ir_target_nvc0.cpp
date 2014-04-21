@@ -282,6 +282,8 @@ TargetNVC0::getSVAddress(DataFile shaderFile, const Symbol *sym) const
    case SV_NTID:           return kepler ? (0x00 + idx * 4) : ~0;
    case SV_NCTAID:         return kepler ? (0x0c + idx * 4) : ~0;
    case SV_GRIDID:         return kepler ? 0x18 : ~0;
+   case SV_SAMPLE_INDEX:   return 0;
+   case SV_SAMPLE_POS:     return 0;
    default:
       return 0xffffffff;
    }
