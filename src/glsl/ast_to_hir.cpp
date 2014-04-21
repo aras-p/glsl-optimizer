@@ -3065,16 +3065,10 @@ ast_declarator_list::hir(exec_list *instructions,
             _mesa_glsl_error(& loc, state,
                              "undeclared variable `%s' cannot be marked "
                              "invariant", decl->identifier);
-         } else if ((state->stage == MESA_SHADER_VERTEX)
-                    && (earlier->data.mode != ir_var_shader_out)) {
-            _mesa_glsl_error(& loc, state,
-                             "`%s' cannot be marked invariant, vertex shader "
-                             "outputs only", decl->identifier);
-         } else if ((state->stage == MESA_SHADER_FRAGMENT)
-                    && (earlier->data.mode != ir_var_shader_in)) {
-            _mesa_glsl_error(& loc, state,
-                             "`%s' cannot be marked invariant, fragment shader "
-                             "inputs only", decl->identifier);
+         } else if (!is_varying_var(earlier, state->stage)) {
+            _mesa_glsl_error(&loc, state,
+                             "`%s' cannot be marked invariant; interfaces between "
+                             "shader stages only.", decl->identifier);
          } else if (earlier->data.used) {
             _mesa_glsl_error(& loc, state,
                             "variable `%s' may not be redeclared "
@@ -3250,19 +3244,10 @@ ast_declarator_list::hir(exec_list *instructions,
 				       & loc, false);
 
       if (this->type->qualifier.flags.q.invariant) {
-         if ((state->stage == MESA_SHADER_VERTEX) &&
-             var->data.mode != ir_var_shader_out) {
-            _mesa_glsl_error(& loc, state,
-                             "`%s' cannot be marked invariant, vertex shader "
-                             "outputs only", var->name);
-         } else if ((state->stage == MESA_SHADER_FRAGMENT) &&
-                    var->data.mode != ir_var_shader_in) {
-            /* FINISHME: Note that this doesn't work for invariant on
-             * a function signature inval
-             */
-            _mesa_glsl_error(& loc, state,
-                             "`%s' cannot be marked invariant, fragment shader "
-                             "inputs only", var->name);
+         if (!is_varying_var(var, state->stage)) {
+            _mesa_glsl_error(&loc, state,
+                             "`%s' cannot be marked invariant; interfaces between "
+                             "shader stages only", var->name);
          }
       }
 
