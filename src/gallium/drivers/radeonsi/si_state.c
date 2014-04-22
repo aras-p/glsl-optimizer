@@ -1312,6 +1312,7 @@ static unsigned si_tex_dim(unsigned dim, unsigned nr_samples)
 	case PIPE_TEXTURE_3D:
 		return V_008F1C_SQ_RSRC_IMG_3D;
 	case PIPE_TEXTURE_CUBE:
+	case PIPE_TEXTURE_CUBE_ARRAY:
 		return V_008F1C_SQ_RSRC_IMG_CUBE;
 	}
 }
@@ -2477,7 +2478,8 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 		depth = texture->array_size;
 	} else if (texture->target == PIPE_TEXTURE_2D_ARRAY) {
 		depth = texture->array_size;
-	}
+	} else if (texture->target == PIPE_TEXTURE_CUBE_ARRAY)
+		depth = texture->array_size / 6;
 
 	va = r600_resource_va(ctx->screen, texture);
 	va += surflevel[0].offset;

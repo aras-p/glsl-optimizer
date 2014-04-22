@@ -1539,8 +1539,13 @@ static void tex_fetch_args(
 	/* Pack LOD bias value */
 	if (opcode == TGSI_OPCODE_TXB)
 		address[count++] = coords[3];
+	if (opcode == TGSI_OPCODE_TXB2)
+		address[count++] = lp_build_emit_fetch(bld_base, inst, 1, 0);
 
-	if (target == TGSI_TEXTURE_CUBE || target == TGSI_TEXTURE_SHADOWCUBE)
+	if (target == TGSI_TEXTURE_CUBE ||
+	    target == TGSI_TEXTURE_CUBE_ARRAY ||
+	    target == TGSI_TEXTURE_SHADOWCUBE ||
+	    target == TGSI_TEXTURE_SHADOWCUBE_ARRAY)
 		radeon_llvm_emit_prepare_cube_coords(bld_base, emit_data, coords);
 
 	/* Pack depth comparison value */
@@ -1577,6 +1582,8 @@ static void tex_fetch_args(
 	/* Pack LOD or sample index */
 	if (opcode == TGSI_OPCODE_TXL || opcode == TGSI_OPCODE_TXF)
 		address[count++] = coords[3];
+	if (opcode == TGSI_OPCODE_TXL2)
+		address[count++] = lp_build_emit_fetch(bld_base, inst, 1, 0);
 
 	if (count > 16) {
 		assert(!"Cannot handle more than 16 texture address parameters");
@@ -1732,6 +1739,13 @@ static void tex_fetch_args(
 		emit_data->arg_count = 4;
 	}
 
+	/* The fetch opcode has been converted to a 2D array fetch.
+	 * This simplifies the LLVM backend. */
+	if (target == TGSI_TEXTURE_CUBE_ARRAY)
+		target = TGSI_TEXTURE_2D_ARRAY;
+	else if (target == TGSI_TEXTURE_SHADOWCUBE_ARRAY)
+		target = TGSI_TEXTURE_SHADOW2D_ARRAY;
+
 	/* Dimensions */
 	emit_data->args[emit_data->arg_count - 1] =
 		lp_build_const_int32(bld_base->base.gallivm, target);
@@ -1775,8 +1789,9 @@ static void txq_fetch_args(
 	struct si_shader_context *si_shader_ctx = si_shader_context(bld_base);
 	const struct tgsi_full_instruction *inst = emit_data->inst;
 	struct gallivm_state *gallivm = bld_base->base.gallivm;
+	unsigned target = inst->Texture.Texture;
 
-	if (inst->Texture.Texture == TGSI_TEXTURE_BUFFER) {
+	if (target == TGSI_TEXTURE_BUFFER) {
 		LLVMTypeRef i32 = LLVMInt32TypeInContext(gallivm->context);
 		LLVMTypeRef v8i32 = LLVMVectorType(i32, 8);
 
@@ -1795,7 +1810,11 @@ static void txq_fetch_args(
 	/* Resource */
 	emit_data->args[1] = si_shader_ctx->resources[inst->Src[1].Register.Index];
 
-	/* Dimensions */
+	/* Texture target */
+	if (target == TGSI_TEXTURE_CUBE_ARRAY ||
+	    target == TGSI_TEXTURE_SHADOWCUBE_ARRAY)
+		target = TGSI_TEXTURE_2D_ARRAY;
+
 	emit_data->args[2] = lp_build_const_int32(bld_base->base.gallivm,
 						  inst->Texture.Texture);
 
@@ -1810,13 +1829,30 @@ static void build_txq_intrinsic(const struct lp_build_tgsi_action * action,
 				struct lp_build_tgsi_context * bld_base,
 				struct lp_build_emit_data * emit_data)
 {
-	if (emit_data->inst->Texture.Texture == TGSI_TEXTURE_BUFFER) {
+	unsigned target = emit_data->inst->Texture.Texture;
+
+	if (target == TGSI_TEXTURE_BUFFER) {
 		/* Just return the buffer size. */
 		emit_data->output[emit_data->chan] = emit_data->args[0];
 		return;
 	}
 
 	build_tgsi_intrinsic_nomem(action, bld_base, emit_data);
+
+	/* Divide the number of layers by 6 to get the number of cubes. */
+	if (target == TGSI_TEXTURE_CUBE_ARRAY ||
+	    target == TGSI_TEXTURE_SHADOWCUBE_ARRAY) {
+		LLVMBuilderRef builder = bld_base->base.gallivm->builder;
+		LLVMValueRef two = lp_build_const_int32(bld_base->base.gallivm, 2);
+		LLVMValueRef six = lp_build_const_int32(bld_base->base.gallivm, 6);
+
+		LLVMValueRef v4 = emit_data->output[emit_data->chan];
+		LLVMValueRef z = LLVMBuildExtractElement(builder, v4, two, "");
+		z = LLVMBuildSDiv(builder, z, six, "");
+
+		emit_data->output[emit_data->chan] =
+			LLVMBuildInsertElement(builder, v4, z, two, "");
+	}
 }
 
 #if HAVE_LLVM >= 0x0304
@@ -2496,12 +2532,15 @@ int si_pipe_shader_create(
 	bld_base->emit_fetch_funcs[TGSI_FILE_CONSTANT] = fetch_constant;
 
 	bld_base->op_actions[TGSI_OPCODE_TEX] = tex_action;
+	bld_base->op_actions[TGSI_OPCODE_TEX2] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXB] = txb_action;
+	bld_base->op_actions[TGSI_OPCODE_TXB2] = txb_action;
 #if HAVE_LLVM >= 0x0304
 	bld_base->op_actions[TGSI_OPCODE_TXD] = txd_action;
 #endif
 	bld_base->op_actions[TGSI_OPCODE_TXF] = txf_action;
 	bld_base->op_actions[TGSI_OPCODE_TXL] = txl_action;
+	bld_base->op_actions[TGSI_OPCODE_TXL2] = txl_action;
 	bld_base->op_actions[TGSI_OPCODE_TXP] = tex_action;
 	bld_base->op_actions[TGSI_OPCODE_TXQ] = txq_action;
 
