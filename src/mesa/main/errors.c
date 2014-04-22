@@ -181,6 +181,39 @@ enum {
    ENABLED = ENABLED_BIT | FOUND_BIT
 };
 
+static void
+debug_message_store(struct gl_debug_msg *msg,
+                    enum mesa_debug_source source,
+                    enum mesa_debug_type type, GLuint id,
+                    enum mesa_debug_severity severity,
+                    GLsizei len, const char *buf)
+{
+   assert(!msg->message && !msg->length);
+
+   msg->message = malloc(len+1);
+   if (msg->message) {
+      (void) strncpy(msg->message, buf, (size_t)len);
+      msg->message[len] = '\0';
+
+      msg->length = len+1;
+      msg->source = source;
+      msg->type = type;
+      msg->id = id;
+      msg->severity = severity;
+   } else {
+      static GLuint oom_msg_id = 0;
+      debug_get_id(&oom_msg_id);
+
+      /* malloc failed! */
+      msg->message = out_of_memory;
+      msg->length = strlen(out_of_memory)+1;
+      msg->source = MESA_DEBUG_SOURCE_OTHER;
+      msg->type = MESA_DEBUG_TYPE_ERROR;
+      msg->id = oom_msg_id;
+      msg->severity = MESA_DEBUG_SEVERITY_HIGH;
+   }
+}
+
 /**
  * Allocate and initialize context debug state.
  */
@@ -311,6 +344,40 @@ out:
    return (state & ENABLED_BIT);
 }
 
+/**
+ * 'buf' is not necessarily a null-terminated string. When logging, copy
+ * 'len' characters from it, store them in a new, null-terminated string,
+ * and remember the number of bytes used by that string, *including*
+ * the null terminator this time.
+ */
+static void
+debug_log_message(struct gl_debug_state *debug,
+                  enum mesa_debug_source source,
+                  enum mesa_debug_type type, GLuint id,
+                  enum mesa_debug_severity severity,
+                  GLsizei len, const char *buf)
+{
+   GLint nextEmpty;
+   struct gl_debug_msg *emptySlot;
+
+   assert(len >= 0 && len < MAX_DEBUG_MESSAGE_LENGTH);
+
+   if (debug->NumMessages == MAX_DEBUG_LOGGED_MESSAGES)
+      return;
+
+   nextEmpty = (debug->NextMsg + debug->NumMessages)
+                          % MAX_DEBUG_LOGGED_MESSAGES;
+   emptySlot = &debug->Log[nextEmpty];
+
+   debug_message_store(emptySlot, source, type,
+                       id, severity, len, buf);
+
+   if (debug->NumMessages == 0)
+      debug->NextMsgLength = debug->Log[debug->NextMsg].length;
+
+   debug->NumMessages++;
+}
+
 
 /**
  * Return debug state for the context.  The debug state will be allocated
@@ -366,45 +433,9 @@ set_message_state(struct gl_context *ctx,
 }
 
 
-static void
-store_message_details(struct gl_debug_msg *emptySlot,
-                      enum mesa_debug_source source,
-                      enum mesa_debug_type type, GLuint id,
-                      enum mesa_debug_severity severity, GLint len,
-                      const char *buf)
-{
-   assert(!emptySlot->message && !emptySlot->length);
-
-   emptySlot->message = malloc(len+1);
-   if (emptySlot->message) {
-      (void) strncpy(emptySlot->message, buf, (size_t)len);
-      emptySlot->message[len] = '\0';
-
-      emptySlot->length = len+1;
-      emptySlot->source = source;
-      emptySlot->type = type;
-      emptySlot->id = id;
-      emptySlot->severity = severity;
-   } else {
-      static GLuint oom_msg_id = 0;
-      debug_get_id(&oom_msg_id);
-
-      /* malloc failed! */
-      emptySlot->message = out_of_memory;
-      emptySlot->length = strlen(out_of_memory)+1;
-      emptySlot->source = MESA_DEBUG_SOURCE_OTHER;
-      emptySlot->type = MESA_DEBUG_TYPE_ERROR;
-      emptySlot->id = oom_msg_id;
-      emptySlot->severity = MESA_DEBUG_SEVERITY_HIGH;
-   }
-}
-
 
 /**
- * 'buf' is not necessarily a null-terminated string. When logging, copy
- * 'len' characters from it, store them in a new, null-terminated string,
- * and remember the number of bytes used by that string, *including*
- * the null terminator this time.
+ * Log a client or driver debug message.
  */
 static void
 log_msg(struct gl_context *ctx, enum mesa_debug_source source,
@@ -412,13 +443,9 @@ log_msg(struct gl_context *ctx, enum mesa_debug_source source,
         enum mesa_debug_severity severity, GLint len, const char *buf)
 {
    struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
-   GLint nextEmpty;
-   struct gl_debug_msg *emptySlot;
 
    if (!debug)
       return;
-
-   assert(len >= 0 && len < MAX_DEBUG_MESSAGE_LENGTH);
 
    if (!should_log(ctx, source, type, id, severity))
       return;
@@ -432,19 +459,7 @@ log_msg(struct gl_context *ctx, enum mesa_debug_source source,
       return;
    }
 
-   if (debug->NumMessages == MAX_DEBUG_LOGGED_MESSAGES)
-      return;
-
-   nextEmpty = (debug->NextMsg + debug->NumMessages)
-                          % MAX_DEBUG_LOGGED_MESSAGES;
-   emptySlot = &debug->Log[nextEmpty];
-
-   store_message_details(emptySlot, source, type, id, severity, len, buf);
-
-   if (debug->NumMessages == 0)
-      debug->NextMsgLength = debug->Log[debug->NextMsg].length;
-
-   debug->NumMessages++;
+   debug_log_message(debug, source, type, id, severity, len, buf);
 }
 
 
@@ -911,11 +926,12 @@ _mesa_PushDebugGroup(GLenum source, GLuint id, GLsizei length,
    if (length < 0)
       length = strlen(message);
    emptySlot = &debug->DebugGroupMsgs[debug->GroupStackDepth];
-   store_message_details(emptySlot, gl_enum_to_debug_source(source),
-                         gl_enum_to_debug_type(GL_DEBUG_TYPE_PUSH_GROUP),
-                         id,
-                   gl_enum_to_debug_severity(GL_DEBUG_SEVERITY_NOTIFICATION),
-                         length, message);
+   debug_message_store(emptySlot,
+                       gl_enum_to_debug_source(source),
+                       gl_enum_to_debug_type(GL_DEBUG_TYPE_PUSH_GROUP),
+                       id,
+                       gl_enum_to_debug_severity(GL_DEBUG_SEVERITY_NOTIFICATION),
+                       length, message);
 
    /* inherit the control volume of the debug group previously residing on
     * the top of the debug group stack
