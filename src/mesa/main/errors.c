@@ -719,33 +719,18 @@ error:
 }
 
 
-/**
- * This is a generic message insert function.
- * Validation of source, type and severity parameters should be done
- * before calling this funtion.
- */
-static void
-message_insert(GLenum source, GLenum type, GLuint id,
-               GLenum severity, GLint length, const GLchar *buf,
-               const char *callerstr)
+static GLboolean
+validate_length(struct gl_context *ctx, const char *callerstr, GLsizei length)
 {
-   GET_CURRENT_CONTEXT(ctx);
-
-   if (length < 0)
-      length = strlen(buf);
-
    if (length >= MAX_DEBUG_MESSAGE_LENGTH) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                  "%s(length=%d, which is not less than "
                  "GL_MAX_DEBUG_MESSAGE_LENGTH=%d)", callerstr, length,
                  MAX_DEBUG_MESSAGE_LENGTH);
-      return;
+      return GL_FALSE;
    }
 
-   log_msg(ctx,
-           gl_enum_to_debug_source(source),
-           gl_enum_to_debug_type(type), id,
-           gl_enum_to_debug_severity(severity), length, buf);
+   return GL_TRUE;
 }
 
 
@@ -761,7 +746,15 @@ _mesa_DebugMessageInsert(GLenum source, GLenum type, GLuint id,
    if (!validate_params(ctx, INSERT, callerstr, source, type, severity))
       return; /* GL_INVALID_ENUM */
 
-   message_insert(source, type, id, severity, length, buf, callerstr);
+   if (length < 0)
+      length = strlen(buf);
+   if (!validate_length(ctx, callerstr, length))
+      return; /* GL_INVALID_VALUE */
+
+   log_msg(ctx, gl_enum_to_debug_source(source),
+           gl_enum_to_debug_type(type), id,
+           gl_enum_to_debug_severity(severity),
+           length, buf);
 }
 
 
@@ -913,10 +906,13 @@ _mesa_PushDebugGroup(GLenum source, GLuint id, GLsizei length,
 
    if (length < 0)
       length = strlen(message);
+   if (!validate_length(ctx, callerstr, length))
+      return; /* GL_INVALID_VALUE */
 
-   message_insert(source, GL_DEBUG_TYPE_PUSH_GROUP, id,
-                  GL_DEBUG_SEVERITY_NOTIFICATION, length,
-                  message, callerstr);
+   log_msg(ctx, gl_enum_to_debug_source(source),
+           MESA_DEBUG_TYPE_PUSH_GROUP, id,
+           MESA_DEBUG_SEVERITY_NOTIFICATION, length,
+           message);
 
    /* pop reuses the message details from push so we store this */
    emptySlot = debug_get_group_message(debug);
@@ -950,9 +946,6 @@ _mesa_PopDebugGroup(void)
    debug_pop_group(debug);
 
    gdmessage = debug_get_group_message(debug);
-   /* using log_msg() directly here as verification of parameters
-    * already done in push
-    */
    log_msg(ctx, gdmessage->source,
            gl_enum_to_debug_type(GL_DEBUG_TYPE_POP_GROUP),
            gdmessage->id,
