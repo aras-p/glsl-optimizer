@@ -181,6 +181,42 @@ enum {
    ENABLED = ENABLED_BIT | FOUND_BIT
 };
 
+/**
+ * Allocate and initialize context debug state.
+ */
+static struct gl_debug_state *
+debug_create(void)
+{
+   struct gl_debug_state *debug;
+   int s, t, sev;
+
+   debug = CALLOC_STRUCT(gl_debug_state);
+   if (!debug)
+      return NULL;
+
+   /* Enable all the messages with severity HIGH or MEDIUM by default. */
+   memset(debug->Defaults[0][MESA_DEBUG_SEVERITY_HIGH], GL_TRUE,
+         sizeof debug->Defaults[0][MESA_DEBUG_SEVERITY_HIGH]);
+   memset(debug->Defaults[0][MESA_DEBUG_SEVERITY_MEDIUM], GL_TRUE,
+         sizeof debug->Defaults[0][MESA_DEBUG_SEVERITY_MEDIUM]);
+   memset(debug->Defaults[0][MESA_DEBUG_SEVERITY_LOW], GL_FALSE,
+         sizeof debug->Defaults[0][MESA_DEBUG_SEVERITY_LOW]);
+
+   /* Initialize state for filtering known debug messages. */
+   for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
+      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
+         debug->Namespaces[0][s][t].IDs = _mesa_NewHashTable();
+         assert(debug->Namespaces[0][s][t].IDs);
+
+         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
+            make_empty_list(&debug->Namespaces[0][s][t].Severity[sev]);
+         }
+      }
+   }
+
+   return debug;
+}
+
 
 /**
  * Return debug state for the context.  The debug state will be allocated
@@ -190,33 +226,9 @@ struct gl_debug_state *
 _mesa_get_debug_state(struct gl_context *ctx)
 {
    if (!ctx->Debug) {
-      ctx->Debug = CALLOC_STRUCT(gl_debug_state);
+      ctx->Debug = debug_create();
       if (!ctx->Debug) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "allocating debug state");
-      }
-      else {
-         struct gl_debug_state *debug = ctx->Debug;
-         int s, t, sev;
-
-         /* Enable all the messages with severity HIGH or MEDIUM by default. */
-         memset(debug->Defaults[0][MESA_DEBUG_SEVERITY_HIGH], GL_TRUE,
-                sizeof debug->Defaults[0][MESA_DEBUG_SEVERITY_HIGH]);
-         memset(debug->Defaults[0][MESA_DEBUG_SEVERITY_MEDIUM], GL_TRUE,
-                sizeof debug->Defaults[0][MESA_DEBUG_SEVERITY_MEDIUM]);
-         memset(debug->Defaults[0][MESA_DEBUG_SEVERITY_LOW], GL_FALSE,
-                sizeof debug->Defaults[0][MESA_DEBUG_SEVERITY_LOW]);
-
-         /* Initialize state for filtering known debug messages. */
-         for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
-            for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-               debug->Namespaces[0][s][t].IDs = _mesa_NewHashTable();
-               assert(debug->Namespaces[0][s][t].IDs);
-
-               for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
-                  make_empty_list(&debug->Namespaces[0][s][t].Severity[sev]);
-               }
-            }
-         }
       }
    }
 
