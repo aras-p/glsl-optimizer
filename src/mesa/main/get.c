@@ -989,24 +989,10 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
    /* GL_KHR_DEBUG */
    case GL_DEBUG_LOGGED_MESSAGES:
-      {
-         struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
-         v->value_int = debug ? debug->NumMessages : 0;
-      }
-      break;
    case GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH:
-      {
-         struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
-         v->value_int = debug ? debug->NextMsgLength : 0;
-      }
-      break;
    case GL_DEBUG_GROUP_STACK_DEPTH:
-      {
-         struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
-         v->value_int = debug ? debug->GroupStackDepth : 0;
-      }
+      v->value_int = _mesa_get_debug_state_int(ctx, d->pname);
       break;
-
    /* GL_ARB_shader_atomic_counters */
    case GL_ATOMIC_COUNTER_BUFFER_BINDING:
       v->value_int = ctx->AtomicBuffer->Name;

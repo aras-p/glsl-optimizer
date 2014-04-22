@@ -47,6 +47,45 @@ struct gl_debug_severity
    GLuint ID;
 };
 
+/**
+ * An error, warning, or other piece of debug information for an application
+ * to consume via GL_ARB_debug_output/GL_KHR_debug.
+ */
+struct gl_debug_msg
+{
+   enum mesa_debug_source source;
+   enum mesa_debug_type type;
+   GLuint id;
+   enum mesa_debug_severity severity;
+   GLsizei length;
+   GLcharARB *message;
+};
+
+struct gl_debug_namespace
+{
+   struct _mesa_HashTable *IDs;
+   unsigned ZeroID; /* a HashTable won't take zero, so store its state here */
+   /** lists of IDs in the hash table at each severity */
+   struct simple_node Severity[MESA_DEBUG_SEVERITY_COUNT];
+};
+
+struct gl_debug_state
+{
+   GLDEBUGPROC Callback;
+   const void *CallbackData;
+   GLboolean SyncOutput;
+   GLboolean DebugOutput;
+   GLboolean Defaults[MAX_DEBUG_GROUP_STACK_DEPTH][MESA_DEBUG_SEVERITY_COUNT][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
+   struct gl_debug_namespace Namespaces[MAX_DEBUG_GROUP_STACK_DEPTH][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
+   struct gl_debug_msg Log[MAX_DEBUG_LOGGED_MESSAGES];
+   struct gl_debug_msg DebugGroupMsgs[MAX_DEBUG_GROUP_STACK_DEPTH];
+   GLint GroupStackDepth;
+   GLint NumMessages;
+   GLint NextMsg;
+   GLint NextMsgLength; /* redundant, but copied here from Log[NextMsg].length
+                           for the sake of the offsetof() code in get.c */
+};
+
 static char out_of_memory[] = "Debugging error: out of memory";
 
 static const GLenum debug_source_enums[] = {
@@ -597,7 +636,7 @@ debug_pop_group(struct gl_debug_state *debug)
  * Return debug state for the context.  The debug state will be allocated
  * and initialized upon the first call.
  */
-struct gl_debug_state *
+static struct gl_debug_state *
 _mesa_get_debug_state(struct gl_context *ctx)
 {
    if (!ctx->Debug) {
@@ -608,6 +647,102 @@ _mesa_get_debug_state(struct gl_context *ctx)
    }
 
    return ctx->Debug;
+}
+
+/**
+ * Set the integer debug state specified by \p pname.  This can be called from
+ * _mesa_set_enable for example.
+ */
+bool
+_mesa_set_debug_state_int(struct gl_context *ctx, GLenum pname, GLint val)
+{
+   struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
+
+   if (!debug)
+      return false;
+
+   switch (pname) {
+   case GL_DEBUG_OUTPUT:
+      debug->DebugOutput = (val != 0);
+      break;
+   case GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB:
+      debug->SyncOutput = (val != 0);
+      break;
+   default:
+      assert(!"unknown debug output param");
+      break;
+   }
+
+   return true;
+}
+
+/**
+ * Query the integer debug state specified by \p pname.  This can be called
+ * _mesa_GetIntegerv for example.
+ */
+GLint
+_mesa_get_debug_state_int(struct gl_context *ctx, GLenum pname)
+{
+   struct gl_debug_state *debug;
+   GLint val;
+
+   debug = ctx->Debug;
+   if (!debug)
+      return 0;
+
+   switch (pname) {
+   case GL_DEBUG_OUTPUT:
+      val = debug->DebugOutput;
+      break;
+   case GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB:
+      val = debug->SyncOutput;
+      break;
+   case GL_DEBUG_LOGGED_MESSAGES:
+      val = debug->NumMessages;
+      break;
+   case GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH:
+      val = debug->NextMsgLength;
+      break;
+   case GL_DEBUG_GROUP_STACK_DEPTH:
+      val = debug->GroupStackDepth;
+      break;
+   default:
+      assert(!"unknown debug output param");
+      val = 0;
+      break;
+   }
+
+   return val;
+}
+
+/**
+ * Query the pointer debug state specified by \p pname.  This can be called
+ * _mesa_GetPointerv for example.
+ */
+void *
+_mesa_get_debug_state_ptr(struct gl_context *ctx, GLenum pname)
+{
+   struct gl_debug_state *debug;
+   void *val;
+
+   debug = ctx->Debug;
+   if (!debug)
+      return NULL;
+
+   switch (pname) {
+   case GL_DEBUG_CALLBACK_FUNCTION_ARB:
+      val = (void *) debug->Callback;
+      break;
+   case GL_DEBUG_CALLBACK_USER_PARAM_ARB:
+      val = (void *) debug->CallbackData;
+      break;
+   default:
+      assert(!"unknown debug output param");
+      val = NULL;
+      break;
+   }
+
+   return val;
 }
 
 

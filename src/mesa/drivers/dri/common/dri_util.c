@@ -449,10 +449,7 @@ driContextSetFlags(struct gl_context *ctx, uint32_t flags)
     if ((flags & __DRI_CTX_FLAG_FORWARD_COMPATIBLE) != 0)
         ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT;
     if ((flags & __DRI_CTX_FLAG_DEBUG) != 0) {
-        struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
-        if (debug) {
-            debug->DebugOutput = GL_TRUE;
-        }
+       _mesa_set_debug_state_int(ctx, GL_DEBUG_OUTPUT, GL_TRUE);
         ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_DEBUG_BIT;
     }
 }

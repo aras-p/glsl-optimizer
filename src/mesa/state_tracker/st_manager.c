@@ -663,13 +663,11 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    }
 
    if (attribs->flags & ST_CONTEXT_FLAG_DEBUG){
-      struct gl_debug_state *debug = _mesa_get_debug_state(st->ctx);
-      if (!debug) {
+      if (!_mesa_set_debug_state_int(st->ctx, GL_DEBUG_OUTPUT, GL_TRUE)) {
          *error = ST_CONTEXT_ERROR_NO_MEMORY;
          return NULL;
       }
       st->ctx->Const.ContextFlags |= GL_CONTEXT_FLAG_DEBUG_BIT;
-      debug->DebugOutput = GL_TRUE;
    }
 
    if (attribs->flags & ST_CONTEXT_FLAG_FORWARD_COMPATIBLE)
