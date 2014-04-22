@@ -182,6 +182,15 @@ enum {
 };
 
 static void
+debug_message_clear(struct gl_debug_msg *msg)
+{
+   if (msg->message != (char*)out_of_memory)
+      free(msg->message);
+   msg->message = NULL;
+   msg->length = 0;
+}
+
+static void
 debug_message_store(struct gl_debug_msg *msg,
                     enum mesa_debug_source source,
                     enum mesa_debug_type type, GLuint id,
@@ -378,6 +387,37 @@ debug_log_message(struct gl_debug_state *debug,
    debug->NumMessages++;
 }
 
+/**
+ * Return the oldest debug message out of the log.
+ */
+static const struct gl_debug_msg *
+debug_fetch_message(const struct gl_debug_state *debug)
+{
+   return (debug->NumMessages) ? &debug->Log[debug->NextMsg] : NULL;
+}
+
+/**
+ * Delete the oldest debug messages out of the log.
+ */
+static void
+debug_delete_messages(struct gl_debug_state *debug, unsigned count)
+{
+   if (count > debug->NumMessages)
+      count = debug->NumMessages;
+
+   while (count--) {
+      struct gl_debug_msg *msg = &debug->Log[debug->NextMsg];
+
+      assert(msg->length > 0 && msg->length == debug->NextMsgLength);
+      debug_message_clear(msg);
+
+      debug->NumMessages--;
+      debug->NextMsg++;
+      debug->NextMsg %= MAX_DEBUG_LOGGED_MESSAGES;
+      debug->NextMsgLength = debug->Log[debug->NextMsg].length;
+   }
+}
+
 
 /**
  * Return debug state for the context.  The debug state will be allocated
@@ -478,10 +518,14 @@ get_msg(struct gl_context *ctx, GLenum *source, GLenum *type,
         GLuint *id, GLenum *severity, GLsizei bufSize, char *buf)
 {
    struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
-   struct gl_debug_msg *msg;
+   const struct gl_debug_msg *msg;
    GLsizei length;
 
-   if (!debug || debug->NumMessages == 0)
+   if (!debug)
+      return 0;
+
+   msg = debug_fetch_message(debug);
+   if (!msg)
       return 0;
 
    msg = &debug->Log[debug->NextMsg];
@@ -513,15 +557,7 @@ get_msg(struct gl_context *ctx, GLenum *source, GLenum *type,
       (void) strncpy(buf, msg->message, (size_t)length);
    }
 
-   if (msg->message != (char*)out_of_memory)
-      free(msg->message);
-   msg->message = NULL;
-   msg->length = 0;
-
-   debug->NumMessages--;
-   debug->NextMsg++;
-   debug->NextMsg %= MAX_DEBUG_LOGGED_MESSAGES;
-   debug->NextMsgLength = debug->Log[debug->NextMsg].length;
+   debug_delete_messages(debug, 1);
 
    return length;
 }
