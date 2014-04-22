@@ -2317,12 +2317,14 @@ fd3_compile_shader(struct fd3_shader_variant *so,
 	actual_in = 0;
 	for (i = 0; i < so->inputs_count; i++) {
 		unsigned j, regid = ~0, compmask = 0;
+		so->inputs[i].ncomp = 0;
 		for (j = 0; j < 4; j++) {
 			struct ir3_instruction *in = inputs[(i*4) + j];
 			if (in) {
 				compmask |= (1 << j);
 				regid = in->regs[0]->num - j;
 				actual_in++;
+				so->inputs[i].ncomp++;
 			}
 		}
 		so->inputs[i].regid = regid;

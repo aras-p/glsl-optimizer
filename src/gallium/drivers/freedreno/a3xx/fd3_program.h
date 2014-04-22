@@ -100,6 +100,7 @@ struct fd3_shader_variant {
 		fd3_semantic semantic;
 		uint8_t regid;
 		uint8_t compmask;
+		uint8_t ncomp;
 		/* in theory inloc of fs should match outloc of vs: */
 		uint8_t inloc;
 		uint8_t bary;

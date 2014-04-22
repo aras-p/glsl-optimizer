@@ -1326,6 +1326,7 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 
 		so->inputs[n].semantic = decl_semantic(&decl->Semantic);
 		so->inputs[n].compmask = (1 << ncomp) - 1;
+		so->inputs[n].ncomp = ncomp;
 		so->inputs[n].regid = r;
 		so->inputs[n].inloc = ctx->next_inloc;
 		so->inputs[n].bary = true;   /* all that is supported */

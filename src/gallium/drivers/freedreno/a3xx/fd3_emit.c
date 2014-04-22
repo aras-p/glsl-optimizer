@@ -311,6 +311,7 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 		struct fd3_vertex_buf *vbufs, uint32_t n)
 {
 	uint32_t i, j, last = 0;
+	uint32_t total_in = 0;
 
 	n = MIN2(n, vp->inputs_count);
 
@@ -343,12 +344,13 @@ fd3_emit_vertex_bufs(struct fd_ringbuffer *ring,
 					A3XX_VFD_DECODE_INSTR_LASTCOMPVALID |
 					COND(switchnext, A3XX_VFD_DECODE_INSTR_SWITCHNEXT));
 
+			total_in += vp->inputs[i].ncomp;
 			j++;
 		}
 	}
 
 	OUT_PKT0(ring, REG_A3XX_VFD_CONTROL_0, 2);
-	OUT_RING(ring, A3XX_VFD_CONTROL_0_TOTALATTRTOVS(vp->total_in) |
+	OUT_RING(ring, A3XX_VFD_CONTROL_0_TOTALATTRTOVS(total_in) |
 			A3XX_VFD_CONTROL_0_PACKETSIZE(2) |
 			A3XX_VFD_CONTROL_0_STRMDECINSTRCNT(j) |
 			A3XX_VFD_CONTROL_0_STRMFETCHINSTRCNT(j));
