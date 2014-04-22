@@ -259,7 +259,57 @@ debug_create(void)
    return debug;
 }
 
-/*
+static void
+debug_clear_group_cb(GLuint key, void *data, void *userData)
+{
+}
+
+/**
+ * Free debug state for the given stack depth.
+ */
+static void
+debug_clear_group(struct gl_debug_state *debug, GLint gstack)
+{
+   enum mesa_debug_type t;
+   enum mesa_debug_source s;
+   enum mesa_debug_severity sev;
+
+   /* Tear down state for filtering debug messages. */
+   for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
+      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
+         struct gl_debug_namespace *nspace = &debug->Namespaces[gstack][s][t];
+
+         _mesa_HashDeleteAll(nspace->IDs, debug_clear_group_cb, NULL);
+         _mesa_DeleteHashTable(nspace->IDs);
+         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
+            struct simple_node *node, *tmp;
+            struct gl_debug_severity *entry;
+
+            foreach_s(node, tmp, &nspace->Severity[sev]) {
+               entry = (struct gl_debug_severity *)node;
+               free(entry);
+            }
+         }
+      }
+   }
+}
+
+/**
+ * Loop through debug group stack tearing down states for
+ * filtering debug messages.  Then free debug output state.
+ */
+static void
+debug_destroy(struct gl_debug_state *debug)
+{
+   GLint i;
+
+   for (i = 0; i <= debug->GroupStackDepth; i++)
+      debug_clear_group(debug, i);
+
+   free(debug);
+}
+
+/**
  * Sets the state of the given message source/type/ID tuple.
  */
 static void
@@ -531,6 +581,15 @@ debug_push_group(struct gl_debug_state *debug)
 
 out:
    debug->GroupStackDepth++;
+}
+
+static void
+debug_pop_group(struct gl_debug_state *debug)
+{
+   const GLint gstack = debug->GroupStackDepth;
+
+   debug->GroupStackDepth--;
+   debug_clear_group(debug, gstack);
 }
 
 
@@ -835,47 +894,6 @@ message_insert(GLenum source, GLenum type, GLuint id,
 }
 
 
-static void
-do_nothing(GLuint key, void *data, void *userData)
-{
-}
-
-
-/**
- * Free context state pertaining to error/debug state for the given stack
- * depth.
- */
-static void
-free_errors_data(struct gl_context *ctx, GLint gstack)
-{
-   struct gl_debug_state *debug = ctx->Debug;
-   enum mesa_debug_type t;
-   enum mesa_debug_source s;
-   enum mesa_debug_severity sev;
-
-   assert(debug);
-
-   /* Tear down state for filtering debug messages. */
-   for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
-      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-         _mesa_HashDeleteAll(debug->Namespaces[gstack][s][t].IDs,
-                             do_nothing, NULL);
-         _mesa_DeleteHashTable(debug->Namespaces[gstack][s][t].IDs);
-         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
-            struct simple_node *node, *tmp;
-            struct gl_debug_severity *entry;
-
-            foreach_s(node, tmp,
-                      &debug->Namespaces[gstack][s][t].Severity[sev]) {
-               entry = (struct gl_debug_severity *)node;
-               free(entry);
-            }
-         }
-      }
-   }
-}
-
-
 void GLAPIENTRY
 _mesa_DebugMessageInsert(GLenum source, GLenum type, GLuint id,
                          GLenum severity, GLint length,
@@ -1039,7 +1057,6 @@ _mesa_PopDebugGroup(void)
    struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
    const char *callerstr = "glPopDebugGroup";
    struct gl_debug_msg *gdmessage;
-   GLint prevStackDepth;
 
    if (!debug)
       return;
@@ -1049,8 +1066,7 @@ _mesa_PopDebugGroup(void)
       return;
    }
 
-   prevStackDepth = debug->GroupStackDepth;
-   debug->GroupStackDepth--;
+   debug_pop_group(debug);
 
    gdmessage = debug_get_group_message(debug);
    /* using log_msg() directly here as verification of parameters
@@ -1062,13 +1078,7 @@ _mesa_PopDebugGroup(void)
            gl_enum_to_debug_severity(GL_DEBUG_SEVERITY_NOTIFICATION),
            gdmessage->length, gdmessage->message);
 
-   if (gdmessage->message != (char*)out_of_memory)
-      free(gdmessage->message);
-   gdmessage->message = NULL;
-   gdmessage->length = 0;
-
-   /* free popped debug group data */
-   free_errors_data(ctx, prevStackDepth);
+   debug_message_clear(gdmessage);
 }
 
 
@@ -1079,20 +1089,11 @@ _mesa_init_errors(struct gl_context *ctx)
 }
 
 
-/**
- * Loop through debug group stack tearing down states for
- * filtering debug messages.  Then free debug output state.
- */
 void
 _mesa_free_errors_data(struct gl_context *ctx)
 {
    if (ctx->Debug) {
-      GLint i;
-
-      for (i = 0; i <= ctx->Debug->GroupStackDepth; i++) {
-         free_errors_data(ctx, i);
-      }
-      free(ctx->Debug);
+      debug_destroy(ctx->Debug);
       /* set to NULL just in case it is used before context is completely gone. */
       ctx->Debug = NULL;
    }
