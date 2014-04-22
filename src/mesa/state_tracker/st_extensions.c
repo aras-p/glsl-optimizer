@@ -635,6 +635,8 @@ void st_init_extensions(struct st_context *st)
       if (!st->options.disable_shader_bit_encoding) {
          ctx->Extensions.ARB_shader_bit_encoding = GL_TRUE;
       }
+
+      ctx->Extensions.EXT_shader_integer_mix = GL_TRUE;
    } else {
       /* Optional integer support for GLSL 1.2. */
       if (screen->get_shader_param(screen, PIPE_SHADER_VERTEX,
@@ -642,6 +644,8 @@ void st_init_extensions(struct st_context *st)
           screen->get_shader_param(screen, PIPE_SHADER_FRAGMENT,
                                    PIPE_SHADER_CAP_INTEGERS)) {
          ctx->Const.NativeIntegers = GL_TRUE;
+
+         ctx->Extensions.EXT_shader_integer_mix = GL_TRUE;
       }
    }
 
