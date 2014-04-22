@@ -110,7 +110,7 @@ struct si_context {
 			struct r600_atom *streamout_begin;
 			struct r600_atom *streamout_enable; /* must be after streamout_begin */
 			struct r600_atom *framebuffer;
-		};
+		} s;
 		struct r600_atom *array[0];
 	} atoms;
 

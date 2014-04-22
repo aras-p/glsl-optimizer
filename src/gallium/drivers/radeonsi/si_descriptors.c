@@ -987,9 +987,9 @@ void si_init_all_descriptors(struct si_context *sctx)
 
 		si_init_sampler_views(sctx, &sctx->samplers[i].views, i);
 
-		sctx->atoms.const_buffers[i] = &sctx->const_buffers[i].desc.atom;
-		sctx->atoms.rw_buffers[i] = &sctx->rw_buffers[i].desc.atom;
-		sctx->atoms.sampler_views[i] = &sctx->samplers[i].views.desc.atom;
+		sctx->atoms.s.const_buffers[i] = &sctx->const_buffers[i].desc.atom;
+		sctx->atoms.s.rw_buffers[i] = &sctx->rw_buffers[i].desc.atom;
+		sctx->atoms.s.sampler_views[i] = &sctx->samplers[i].views.desc.atom;
 	}
 
 

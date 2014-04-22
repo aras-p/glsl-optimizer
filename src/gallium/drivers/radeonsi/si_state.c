@@ -2962,7 +2962,7 @@ void si_init_state_functions(struct si_context *sctx)
 {
 	int i;
 
-	si_init_atom(&sctx->framebuffer.atom, &sctx->atoms.framebuffer, si_emit_framebuffer_state, 0);
+	si_init_atom(&sctx->framebuffer.atom, &sctx->atoms.s.framebuffer, si_emit_framebuffer_state, 0);
 
 	sctx->b.b.create_blend_state = si_create_blend_state;
 	sctx->b.b.bind_blend_state = si_bind_blend_state;

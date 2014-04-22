@@ -63,7 +63,7 @@ void si_need_cs_space(struct si_context *ctx, unsigned num_dw,
 	}
 
 	/* Count in framebuffer cache flushes at the end of CS. */
-	num_dw += ctx->atoms.cache_flush->num_dw;
+	num_dw += ctx->atoms.s.cache_flush->num_dw;
 
 #if SI_TRACE_CS
 	if (ctx->screen->b.trace_bo) {

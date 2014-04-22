@@ -105,10 +105,10 @@ static struct pipe_context *si_create_context(struct pipe_screen *screen, void *
 
 	/* Initialize cache_flush. */
 	sctx->cache_flush = si_atom_cache_flush;
-	sctx->atoms.cache_flush = &sctx->cache_flush;
+	sctx->atoms.s.cache_flush = &sctx->cache_flush;
 
-	sctx->atoms.streamout_begin = &sctx->b.streamout.begin_atom;
-	sctx->atoms.streamout_enable = &sctx->b.streamout.enable_atom;
+	sctx->atoms.s.streamout_begin = &sctx->b.streamout.begin_atom;
+	sctx->atoms.s.streamout_enable = &sctx->b.streamout.enable_atom;
 
 	switch (sctx->b.chip_class) {
 	case SI:

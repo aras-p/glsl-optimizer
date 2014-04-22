@@ -964,7 +964,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	/* Check flush flags. */
 	if (sctx->b.flags)
-		sctx->atoms.cache_flush->dirty = true;
+		sctx->atoms.s.cache_flush->dirty = true;
 
 	si_need_cs_space(sctx, 0, TRUE);
 
