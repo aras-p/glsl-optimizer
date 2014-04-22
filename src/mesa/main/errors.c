@@ -296,6 +296,67 @@ debug_set_message_enable(struct gl_debug_state *debug,
       nspace->ZeroID = state;
 }
 
+/*
+ * Set the state of all message IDs found in the given intersection of
+ * 'source', 'type', and 'severity'.  The _COUNT enum can be used for
+ * GL_DONT_CARE (include all messages in the class).
+ *
+ * This requires both setting the state of all previously seen message
+ * IDs in the hash table, and setting the default state for all
+ * applicable combinations of source/type/severity, so that all the
+ * yet-unknown message IDs that may be used in the future will be
+ * impacted as if they were already known.
+ */
+static void
+debug_set_message_enable_all(struct gl_debug_state *debug,
+                             enum mesa_debug_source source,
+                             enum mesa_debug_type type,
+                             enum mesa_debug_severity severity,
+                             GLboolean enabled)
+{
+   const GLint gstack = debug->GroupStackDepth;
+   int s, t, sev, smax, tmax, sevmax;
+
+   if (source == MESA_DEBUG_SOURCE_COUNT) {
+      source = 0;
+      smax = MESA_DEBUG_SOURCE_COUNT;
+   } else {
+      smax = source+1;
+   }
+
+   if (type == MESA_DEBUG_TYPE_COUNT) {
+      type = 0;
+      tmax = MESA_DEBUG_TYPE_COUNT;
+   } else {
+      tmax = type+1;
+   }
+
+   if (severity == MESA_DEBUG_SEVERITY_COUNT) {
+      severity = 0;
+      sevmax = MESA_DEBUG_SEVERITY_COUNT;
+   } else {
+      sevmax = severity+1;
+   }
+
+   for (sev = severity; sev < sevmax; sev++) {
+      for (s = source; s < smax; s++) {
+         for (t = type; t < tmax; t++) {
+            struct simple_node *node;
+            struct gl_debug_severity *entry;
+
+            /* change the default for IDs we've never seen before. */
+            debug->Defaults[gstack][sev][s][t] = enabled;
+
+            /* Now change the state of IDs we *have* seen... */
+            foreach(node, &debug->Namespaces[gstack][s][t].Severity[sev]) {
+               entry = (struct gl_debug_severity *)node;
+               debug_set_message_enable(debug, s, t, entry->ID, enabled);
+            }
+         }
+      }
+   }
+}
+
 /**
  * Returns if the given message source/type/ID tuple is enabled.
  */
@@ -642,17 +703,6 @@ error:
 }
 
 
-/**
- * Set the state of all message IDs found in the given intersection of
- * 'source', 'type', and 'severity'.  The _COUNT enum can be used for
- * GL_DONT_CARE (include all messages in the class).
- *
- * This requires both setting the state of all previously seen message
- * IDs in the hash table, and setting the default state for all
- * applicable combinations of source/type/severity, so that all the
- * yet-unknown message IDs that may be used in the future will be
- * impacted as if they were already known.
- */
 static void
 control_messages(struct gl_context *ctx,
                  enum mesa_debug_source source,
@@ -661,50 +711,11 @@ control_messages(struct gl_context *ctx,
                  GLboolean enabled)
 {
    struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
-   int s, t, sev, smax, tmax, sevmax;
-   const GLint gstack = debug ? debug->GroupStackDepth : 0;
 
    if (!debug)
       return;
 
-   if (source == MESA_DEBUG_SOURCE_COUNT) {
-      source = 0;
-      smax = MESA_DEBUG_SOURCE_COUNT;
-   } else {
-      smax = source+1;
-   }
-
-   if (type == MESA_DEBUG_TYPE_COUNT) {
-      type = 0;
-      tmax = MESA_DEBUG_TYPE_COUNT;
-   } else {
-      tmax = type+1;
-   }
-
-   if (severity == MESA_DEBUG_SEVERITY_COUNT) {
-      severity = 0;
-      sevmax = MESA_DEBUG_SEVERITY_COUNT;
-   } else {
-      sevmax = severity+1;
-   }
-
-   for (sev = severity; sev < sevmax; sev++) {
-      for (s = source; s < smax; s++) {
-         for (t = type; t < tmax; t++) {
-            struct simple_node *node;
-            struct gl_debug_severity *entry;
-
-            /* change the default for IDs we've never seen before. */
-            debug->Defaults[gstack][sev][s][t] = enabled;
-
-            /* Now change the state of IDs we *have* seen... */
-            foreach(node, &debug->Namespaces[gstack][s][t].Severity[sev]) {
-               entry = (struct gl_debug_severity *)node;
-               set_message_state(ctx, s, t, entry->ID, enabled);
-            }
-         }
-      }
-   }
+   debug_set_message_enable_all(debug, source, type, severity, enabled);
 }
 
 
