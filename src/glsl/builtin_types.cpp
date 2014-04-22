@@ -241,7 +241,7 @@ const static struct builtin_type_versions {
    T(atomic_uint,                     420, 999)
 };
 
-const glsl_type *const deprecated_types[] = {
+static const glsl_type *const deprecated_types[] = {
    glsl_type::struct_gl_PointParameters_type,
    glsl_type::struct_gl_MaterialParameters_type,
    glsl_type::struct_gl_LightSourceParameters_type,

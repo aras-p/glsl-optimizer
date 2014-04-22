@@ -319,7 +319,7 @@ struct gl_builtin_uniform_element {
 
 struct gl_builtin_uniform_desc {
    const char *name;
-   struct gl_builtin_uniform_element *elements;
+   const struct gl_builtin_uniform_element *elements;
    unsigned int num_elements;
 };
 

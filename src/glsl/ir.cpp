@@ -1333,7 +1333,7 @@ ir_dereference::is_lvalue() const
 }
 
 
-static const char *tex_opcode_strs[] = { "tex", "txb", "txl", "txd", "txf", "txf_ms", "txs", "lod", "tg4", "query_levels" };
+static const char * const tex_opcode_strs[] = { "tex", "txb", "txl", "txd", "txf", "txf_ms", "txs", "lod", "tg4", "query_levels" };
 
 const char *ir_texture::opcode_string()
 {

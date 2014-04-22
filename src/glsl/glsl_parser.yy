@@ -1214,7 +1214,7 @@ layout_qualifier_id:
 
       /* Layout qualifiers for GLSL 1.50 geometry shaders. */
       if (!$$.flags.i) {
-         struct {
+         static const struct {
             const char *s;
             GLenum e;
          } map[] = {
@@ -1368,7 +1368,7 @@ layout_qualifier_id:
          }
       }
 
-      static const char *local_size_qualifiers[3] = {
+      static const char * const local_size_qualifiers[3] = {
          "local_size_x",
          "local_size_y",
          "local_size_z",

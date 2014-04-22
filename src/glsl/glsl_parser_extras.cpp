@@ -49,7 +49,7 @@ glsl_compute_version_string(void *mem_ctx, bool is_es, unsigned version)
 }
 
 
-static unsigned known_desktop_glsl_versions[] =
+static const unsigned known_desktop_glsl_versions[] =
    { 110, 120, 130, 140, 150, 330, 400, 410, 420, 430, 440 };
 
 
@@ -656,7 +656,7 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
       if (extension && extension->compatible_with_state(state)) {
          extension->set_flags(state, behavior);
       } else {
-         static const char *const fmt = "extension `%s' unsupported in %s shader";
+         static const char fmt[] = "extension `%s' unsupported in %s shader";
 
          if (behavior == extension_require) {
             _mesa_glsl_error(name_locp, state, fmt,
