@@ -678,66 +678,6 @@ log_msg(struct gl_context *ctx, enum mesa_debug_source source,
 
 
 /**
- * Pop the oldest debug message out of the log.
- * Writes the message string, including the null terminator, into 'buf',
- * using up to 'bufSize' bytes. If 'bufSize' is too small, or
- * if 'buf' is NULL, nothing is written.
- *
- * Returns the number of bytes written on success, or when 'buf' is NULL,
- * the number that would have been written. A return value of 0
- * indicates failure.
- */
-static GLsizei
-get_msg(struct gl_context *ctx, GLenum *source, GLenum *type,
-        GLuint *id, GLenum *severity, GLsizei bufSize, char *buf)
-{
-   struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
-   const struct gl_debug_msg *msg;
-   GLsizei length;
-
-   if (!debug)
-      return 0;
-
-   msg = debug_fetch_message(debug);
-   if (!msg)
-      return 0;
-
-   msg = &debug->Log[debug->NextMsg];
-   length = msg->length;
-
-   assert(length > 0 && length == debug->NextMsgLength);
-
-   if (bufSize < length && buf != NULL)
-      return 0;
-
-   if (severity) {
-      *severity = debug_severity_enums[msg->severity];
-   }
-
-   if (source) {
-      *source = debug_source_enums[msg->source];
-   }
-
-   if (type) {
-      *type = debug_type_enums[msg->type];
-   }
-
-   if (id) {
-      *id = msg->id;
-   }
-
-   if (buf) {
-      assert(msg->message[length-1] == '\0');
-      (void) strncpy(buf, msg->message, (size_t)length);
-   }
-
-   debug_delete_messages(debug, 1);
-
-   return length;
-}
-
-
-/**
  * Verify that source, type, and severity are valid enums.
  *
  * The 'caller' param is used for handling values available
@@ -916,6 +856,7 @@ _mesa_GetDebugMessageLog(GLuint count, GLsizei logSize, GLenum *sources,
                          GLsizei *lengths, GLchar *messageLog)
 {
    GET_CURRENT_CONTEXT(ctx);
+   struct gl_debug_state *debug;
    GLuint ret;
 
    if (!messageLog)
@@ -928,29 +869,41 @@ _mesa_GetDebugMessageLog(GLuint count, GLsizei logSize, GLenum *sources,
       return 0;
    }
 
+   debug = _mesa_get_debug_state(ctx);
+   if (!debug)
+      return 0;
+
    for (ret = 0; ret < count; ret++) {
-      GLsizei written = get_msg(ctx, sources, types, ids, severities,
-                                logSize, messageLog);
-      if (!written)
+      const struct gl_debug_msg *msg = debug_fetch_message(debug);
+
+      if (!msg)
+         break;
+
+      assert(msg->length > 0 && msg->length == debug->NextMsgLength);
+
+      if (logSize < msg->length && messageLog != NULL)
          break;
 
       if (messageLog) {
-         messageLog += written;
-         logSize -= written;
-      }
-      if (lengths) {
-         *lengths = written;
-         lengths++;
+         assert(msg->message[msg->length-1] == '\0');
+         (void) strncpy(messageLog, msg->message, (size_t)msg->length);
+
+         messageLog += msg->length;
+         logSize -= msg->length;
       }
 
+      if (lengths)
+         *lengths++ = msg->length;
       if (severities)
-         severities++;
+         *severities++ = debug_severity_enums[msg->severity];
       if (sources)
-         sources++;
+         *sources++ = debug_source_enums[msg->source];
       if (types)
-         types++;
+         *types++ = debug_type_enums[msg->type];
       if (ids)
-         ids++;
+         *ids++ = msg->id;
+
+      debug_delete_messages(debug, 1);
    }
 
    return ret;
