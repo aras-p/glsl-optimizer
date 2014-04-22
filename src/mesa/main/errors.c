@@ -479,6 +479,60 @@ debug_delete_messages(struct gl_debug_state *debug, unsigned count)
    }
 }
 
+static struct gl_debug_msg *
+debug_get_group_message(struct gl_debug_state *debug)
+{
+   return &debug->DebugGroupMsgs[debug->GroupStackDepth];
+}
+
+static void
+debug_push_group(struct gl_debug_state *debug)
+{
+   const GLint gstack = debug->GroupStackDepth;
+   int s, t, sev;
+
+   /* inherit the control volume of the debug group previously residing on
+    * the top of the debug group stack
+    */
+   for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
+      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
+         const struct gl_debug_namespace *nspace =
+            &debug->Namespaces[gstack][s][t];
+         struct gl_debug_namespace *next =
+            &debug->Namespaces[gstack + 1][s][t];
+
+         /* copy id settings */
+         next->IDs = _mesa_HashClone(nspace->IDs);
+
+         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
+            struct simple_node *node;
+
+            /* copy default settings for unknown ids */
+            debug->Defaults[gstack + 1][sev][s][t] =
+               debug->Defaults[gstack][sev][s][t];
+
+            /* copy known id severity settings */
+            make_empty_list(&next->Severity[sev]);
+            foreach(node, &nspace->Severity[sev]) {
+               const struct gl_debug_severity *entry =
+                  (const struct gl_debug_severity *) node;
+               struct gl_debug_severity *copy;
+
+               copy = malloc(sizeof *entry);
+               if (!copy)
+                  goto out;
+
+               copy->ID = entry->ID;
+               insert_at_tail(&next->Severity[sev], &copy->link);
+            }
+         }
+      }
+   }
+
+out:
+   debug->GroupStackDepth++;
+}
+
 
 /**
  * Return debug state for the context.  The debug state will be allocated
@@ -938,9 +992,6 @@ _mesa_PushDebugGroup(GLenum source, GLuint id, GLsizei length,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
    const char *callerstr = "glPushDebugGroup";
-   int s, t, sev;
-   GLint prevStackDepth;
-   GLint currStackDepth;
    struct gl_debug_msg *emptySlot;
 
    if (!debug)
@@ -961,18 +1012,15 @@ _mesa_PushDebugGroup(GLenum source, GLuint id, GLsizei length,
       return;
    }
 
+   if (length < 0)
+      length = strlen(message);
+
    message_insert(source, GL_DEBUG_TYPE_PUSH_GROUP, id,
                   GL_DEBUG_SEVERITY_NOTIFICATION, length,
                   message, callerstr);
 
-   prevStackDepth = debug->GroupStackDepth;
-   debug->GroupStackDepth++;
-   currStackDepth = debug->GroupStackDepth;
-
    /* pop reuses the message details from push so we store this */
-   if (length < 0)
-      length = strlen(message);
-   emptySlot = &debug->DebugGroupMsgs[debug->GroupStackDepth];
+   emptySlot = debug_get_group_message(debug);
    debug_message_store(emptySlot,
                        gl_enum_to_debug_source(source),
                        gl_enum_to_debug_type(GL_DEBUG_TYPE_PUSH_GROUP),
@@ -980,37 +1028,7 @@ _mesa_PushDebugGroup(GLenum source, GLuint id, GLsizei length,
                        gl_enum_to_debug_severity(GL_DEBUG_SEVERITY_NOTIFICATION),
                        length, message);
 
-   /* inherit the control volume of the debug group previously residing on
-    * the top of the debug group stack
-    */
-   for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
-      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-         /* copy id settings */
-         debug->Namespaces[currStackDepth][s][t].IDs =
-            _mesa_HashClone(debug->Namespaces[prevStackDepth][s][t].IDs);
-
-         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
-            struct gl_debug_severity *entry, *prevEntry;
-            struct simple_node *node;
-
-            /* copy default settings for unknown ids */
-            debug->Defaults[currStackDepth][sev][s][t] =
-               debug->Defaults[prevStackDepth][sev][s][t];
-
-            /* copy known id severity settings */
-            make_empty_list(&debug->Namespaces[currStackDepth][s][t].Severity[sev]);
-            foreach(node, &debug->Namespaces[prevStackDepth][s][t].Severity[sev]) {
-               prevEntry = (struct gl_debug_severity *)node;
-               entry = malloc(sizeof *entry);
-               if (!entry)
-                  return;
-
-               entry->ID = prevEntry->ID;
-               insert_at_tail(&debug->Namespaces[currStackDepth][s][t].Severity[sev], &entry->link);
-            }
-         }
-      }
-   }
+   debug_push_group(debug);
 }
 
 
@@ -1034,7 +1052,7 @@ _mesa_PopDebugGroup(void)
    prevStackDepth = debug->GroupStackDepth;
    debug->GroupStackDepth--;
 
-   gdmessage = &debug->DebugGroupMsgs[prevStackDepth];
+   gdmessage = debug_get_group_message(debug);
    /* using log_msg() directly here as verification of parameters
     * already done in push
     */
