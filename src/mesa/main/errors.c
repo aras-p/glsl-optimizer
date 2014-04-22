@@ -217,6 +217,63 @@ debug_create(void)
    return debug;
 }
 
+/**
+ * Returns if the given message source/type/ID tuple is enabled.
+ */
+static bool
+debug_is_message_enabled(struct gl_debug_state *debug,
+                         enum mesa_debug_source source,
+                         enum mesa_debug_type type,
+                         GLuint id,
+                         enum mesa_debug_severity severity)
+{
+   const GLint gstack = debug->GroupStackDepth;
+   struct gl_debug_namespace *nspace =
+      &debug->Namespaces[gstack][source][type];
+   uintptr_t state = 0;
+
+   if (!debug->DebugOutput)
+      return false;
+
+   /* In addition to not being able to store zero as a value, HashTable also
+    * can't use zero as a key.
+    */
+   if (id)
+      state = (uintptr_t)_mesa_HashLookup(nspace->IDs, id);
+   else
+      state = nspace->ZeroID;
+
+   /* Only do this once for each ID. This makes sure the ID exists in,
+    * at most, one list, and does not pointlessly appear multiple times.
+    */
+   if (!(state & KNOWN_SEVERITY)) {
+      struct gl_debug_severity *entry;
+
+      if (state == NOT_FOUND) {
+         if (debug->Defaults[gstack][severity][source][type])
+            state = ENABLED;
+         else
+            state = DISABLED;
+      }
+
+      entry = malloc(sizeof *entry);
+      if (!entry)
+         goto out;
+
+      state |= KNOWN_SEVERITY;
+
+      if (id)
+         _mesa_HashInsert(nspace->IDs, id, (void*)state);
+      else
+         nspace->ZeroID = state;
+
+      entry->ID = id;
+      insert_at_tail(&nspace->Severity[severity], &entry->link);
+   }
+out:
+   return (state & ENABLED_BIT);
+}
+
 
 /**
  * Return debug state for the context.  The debug state will be allocated
@@ -237,9 +294,6 @@ _mesa_get_debug_state(struct gl_context *ctx)
 
 
 
-/**
- * Returns the state of the given message source/type/ID tuple.
- */
 static GLboolean
 should_log(struct gl_context *ctx,
            enum mesa_debug_source source,
@@ -248,7 +302,6 @@ should_log(struct gl_context *ctx,
            enum mesa_debug_severity severity)
 {
    struct gl_debug_state *debug;
-   uintptr_t state = 0;
 
    if (!ctx->Debug) {
       /* no debug state set so far */
@@ -256,52 +309,10 @@ should_log(struct gl_context *ctx,
    }
 
    debug = _mesa_get_debug_state(ctx);
-   if (debug) {
-      const GLint gstack = debug->GroupStackDepth;
-      struct gl_debug_namespace *nspace =
-         &debug->Namespaces[gstack][source][type];
-
-      if (!debug->DebugOutput)
-         return GL_FALSE;
-
-      /* In addition to not being able to store zero as a value, HashTable also
-       * can't use zero as a key.
-       */
-      if (id)
-         state = (uintptr_t)_mesa_HashLookup(nspace->IDs, id);
-      else
-         state = nspace->ZeroID;
-
-      /* Only do this once for each ID. This makes sure the ID exists in,
-       * at most, one list, and does not pointlessly appear multiple times.
-       */
-      if (!(state & KNOWN_SEVERITY)) {
-         struct gl_debug_severity *entry;
-
-         if (state == NOT_FOUND) {
-            if (debug->Defaults[gstack][severity][source][type])
-               state = ENABLED;
-            else
-               state = DISABLED;
-         }
-
-         entry = malloc(sizeof *entry);
-         if (!entry)
-            goto out;
-
-         state |= KNOWN_SEVERITY;
-
-         if (id)
-            _mesa_HashInsert(nspace->IDs, id, (void*)state);
-         else
-            nspace->ZeroID = state;
-
-         entry->ID = id;
-         insert_at_tail(&nspace->Severity[severity], &entry->link);
-      }
-   }
-out:
-   return !!(state & ENABLED_BIT);
+   if (debug)
+      return debug_is_message_enabled(debug, source, type, id, severity);
+   else
+      return GL_FALSE;
 }
 
 
