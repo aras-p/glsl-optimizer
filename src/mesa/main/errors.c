@@ -611,29 +611,6 @@ _mesa_get_debug_state(struct gl_context *ctx)
 }
 
 
-
-static GLboolean
-should_log(struct gl_context *ctx,
-           enum mesa_debug_source source,
-           enum mesa_debug_type type,
-           GLuint id,
-           enum mesa_debug_severity severity)
-{
-   struct gl_debug_state *debug;
-
-   if (!ctx->Debug) {
-      /* no debug state set so far */
-      return GL_FALSE;
-   }
-
-   debug = _mesa_get_debug_state(ctx);
-   if (debug)
-      return debug_is_message_enabled(debug, source, type, id, severity);
-   else
-      return GL_FALSE;
-}
-
-
 /**
  * Log a client or driver debug message.
  */
@@ -647,7 +624,7 @@ log_msg(struct gl_context *ctx, enum mesa_debug_source source,
    if (!debug)
       return;
 
-   if (!should_log(ctx, source, type, id, severity))
+   if (!debug_is_message_enabled(debug, source, type, id, severity))
       return;
 
    if (debug->Callback) {
@@ -1215,11 +1192,16 @@ _mesa_error( struct gl_context *ctx, GLenum error, const char *fmtString, ... )
    debug_get_id(&error_msg_id);
 
    do_output = should_output(ctx, error, fmtString);
-   do_log = should_log(ctx,
-                       MESA_DEBUG_SOURCE_API,
-                       MESA_DEBUG_TYPE_ERROR,
-                       error_msg_id,
-                       MESA_DEBUG_SEVERITY_HIGH);
+   if (ctx->Debug) {
+      do_log = debug_is_message_enabled(ctx->Debug,
+                                        MESA_DEBUG_SOURCE_API,
+                                        MESA_DEBUG_TYPE_ERROR,
+                                        error_msg_id,
+                                        MESA_DEBUG_SEVERITY_HIGH);
+   }
+   else {
+      do_log = GL_FALSE;
+   }
 
    if (do_output || do_log) {
       char s[MAX_DEBUG_MESSAGE_LENGTH], s2[MAX_DEBUG_MESSAGE_LENGTH];
