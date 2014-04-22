@@ -634,20 +634,6 @@ should_log(struct gl_context *ctx,
 }
 
 
-static void
-set_message_state(struct gl_context *ctx,
-                  enum mesa_debug_source source,
-                  enum mesa_debug_type type,
-                  GLuint id, GLboolean enabled)
-{
-   struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
-
-   if (debug)
-      debug_set_message_enable(debug, source, type, id, enabled);
-}
-
-
-
 /**
  * Log a client or driver debug message.
  */
@@ -753,54 +739,6 @@ error:
                source, type, severity);
 
    return GL_FALSE;
-}
-
-
-static void
-control_messages(struct gl_context *ctx,
-                 enum mesa_debug_source source,
-                 enum mesa_debug_type type,
-                 enum mesa_debug_severity severity,
-                 GLboolean enabled)
-{
-   struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
-
-   if (!debug)
-      return;
-
-   debug_set_message_enable_all(debug, source, type, severity, enabled);
-}
-
-
-/**
- * Debugging-message namespaces with the source APPLICATION or THIRD_PARTY
- * require special handling, since the IDs in them are controlled by clients,
- * not the OpenGL implementation.
- *
- * 'count' is the length of the array 'ids'. If 'count' is nonzero, all
- * the given IDs in the namespace defined by 'esource' and 'etype'
- * will be affected.
- *
- * If 'count' is zero, this sets the state of all IDs that match
- * the combination of 'esource', 'etype', and 'eseverity'.
- */
-static void
-control_app_messages(struct gl_context *ctx, GLenum esource, GLenum etype,
-                     GLenum eseverity, GLsizei count, const GLuint *ids,
-                     GLboolean enabled)
-{
-   GLsizei i;
-   enum mesa_debug_source source = gl_enum_to_debug_source(esource);
-   enum mesa_debug_type type = gl_enum_to_debug_type(etype);
-   enum mesa_debug_severity severity = gl_enum_to_debug_severity(eseverity);
-
-   for (i = 0; i < count; i++)
-      set_message_state(ctx, source, type, ids[i], enabled);
-
-   if (count)
-      return;
-
-   control_messages(ctx, source, type, severity, enabled);
 }
 
 
@@ -915,9 +853,12 @@ _mesa_DebugMessageControl(GLenum gl_source, GLenum gl_type,
                           GLenum gl_severity, GLsizei count,
                           const GLuint *ids, GLboolean enabled)
 {
-   const char *callerstr = "glDebugMessageControl";
-
    GET_CURRENT_CONTEXT(ctx);
+   enum mesa_debug_source source = gl_enum_to_debug_source(gl_source);
+   enum mesa_debug_type type = gl_enum_to_debug_type(gl_type);
+   enum mesa_debug_severity severity = gl_enum_to_debug_severity(gl_severity);
+   const char *callerstr = "glDebugMessageControl";
+   struct gl_debug_state *debug;
 
    if (count < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
@@ -939,8 +880,18 @@ _mesa_DebugMessageControl(GLenum gl_source, GLenum gl_type,
       return;
    }
 
-   control_app_messages(ctx, gl_source, gl_type, gl_severity,
-                        count, ids, enabled);
+   debug = _mesa_get_debug_state(ctx);
+   if (!debug)
+      return;
+
+   if (count) {
+      GLsizei i;
+      for (i = 0; i < count; i++)
+         debug_set_message_enable(debug, source, type, ids[i], enabled);
+   }
+   else {
+      debug_set_message_enable_all(debug, source, type, severity, enabled);
+   }
 }
 
 
