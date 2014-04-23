@@ -51,7 +51,7 @@ struct gl_debug_severity
  * An error, warning, or other piece of debug information for an application
  * to consume via GL_ARB_debug_output/GL_KHR_debug.
  */
-struct gl_debug_msg
+struct gl_debug_message
 {
    enum mesa_debug_source source;
    enum mesa_debug_type type;
@@ -59,6 +59,15 @@ struct gl_debug_msg
    enum mesa_debug_severity severity;
    GLsizei length;
    GLcharARB *message;
+};
+
+/**
+ * Debug message log.  It works like a ring buffer.
+ */
+struct gl_debug_log {
+   struct gl_debug_message Messages[MAX_DEBUG_LOGGED_MESSAGES];
+   GLint NextMessage;
+   GLint NumMessages;
 };
 
 struct gl_debug_namespace
@@ -75,15 +84,13 @@ struct gl_debug_state
    const void *CallbackData;
    GLboolean SyncOutput;
    GLboolean DebugOutput;
+
+   struct gl_debug_log Log;
+
    GLboolean Defaults[MAX_DEBUG_GROUP_STACK_DEPTH][MESA_DEBUG_SEVERITY_COUNT][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
    struct gl_debug_namespace Namespaces[MAX_DEBUG_GROUP_STACK_DEPTH][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
-   struct gl_debug_msg Log[MAX_DEBUG_LOGGED_MESSAGES];
-   struct gl_debug_msg DebugGroupMsgs[MAX_DEBUG_GROUP_STACK_DEPTH];
+   struct gl_debug_message DebugGroupMsgs[MAX_DEBUG_GROUP_STACK_DEPTH];
    GLint GroupStackDepth;
-   GLint NumMessages;
-   GLint NextMsg;
-   GLint NextMsgLength; /* redundant, but copied here from Log[NextMsg].length
-                           for the sake of the offsetof() code in get.c */
 };
 
 static char out_of_memory[] = "Debugging error: out of memory";
@@ -221,7 +228,7 @@ enum {
 };
 
 static void
-debug_message_clear(struct gl_debug_msg *msg)
+debug_message_clear(struct gl_debug_message *msg)
 {
    if (msg->message != (char*)out_of_memory)
       free(msg->message);
@@ -230,7 +237,7 @@ debug_message_clear(struct gl_debug_msg *msg)
 }
 
 static void
-debug_message_store(struct gl_debug_msg *msg,
+debug_message_store(struct gl_debug_message *msg,
                     enum mesa_debug_source source,
                     enum mesa_debug_type type, GLuint id,
                     enum mesa_debug_severity severity,
@@ -516,34 +523,34 @@ debug_log_message(struct gl_debug_state *debug,
                   enum mesa_debug_severity severity,
                   GLsizei len, const char *buf)
 {
+   struct gl_debug_log *log = &debug->Log;
    GLint nextEmpty;
-   struct gl_debug_msg *emptySlot;
+   struct gl_debug_message *emptySlot;
 
    assert(len >= 0 && len < MAX_DEBUG_MESSAGE_LENGTH);
 
-   if (debug->NumMessages == MAX_DEBUG_LOGGED_MESSAGES)
+   if (log->NumMessages == MAX_DEBUG_LOGGED_MESSAGES)
       return;
 
-   nextEmpty = (debug->NextMsg + debug->NumMessages)
-                          % MAX_DEBUG_LOGGED_MESSAGES;
-   emptySlot = &debug->Log[nextEmpty];
+   nextEmpty = (log->NextMessage + log->NumMessages)
+      % MAX_DEBUG_LOGGED_MESSAGES;
+   emptySlot = &log->Messages[nextEmpty];
 
    debug_message_store(emptySlot, source, type,
                        id, severity, len, buf);
 
-   if (debug->NumMessages == 0)
-      debug->NextMsgLength = debug->Log[debug->NextMsg].length;
-
-   debug->NumMessages++;
+   log->NumMessages++;
 }
 
 /**
  * Return the oldest debug message out of the log.
  */
-static const struct gl_debug_msg *
+static const struct gl_debug_message *
 debug_fetch_message(const struct gl_debug_state *debug)
 {
-   return (debug->NumMessages) ? &debug->Log[debug->NextMsg] : NULL;
+   const struct gl_debug_log *log = &debug->Log;
+
+   return (log->NumMessages) ? &log->Messages[log->NextMessage] : NULL;
 }
 
 /**
@@ -552,23 +559,23 @@ debug_fetch_message(const struct gl_debug_state *debug)
 static void
 debug_delete_messages(struct gl_debug_state *debug, unsigned count)
 {
-   if (count > debug->NumMessages)
-      count = debug->NumMessages;
+   struct gl_debug_log *log = &debug->Log;
+
+   if (count > log->NumMessages)
+      count = log->NumMessages;
 
    while (count--) {
-      struct gl_debug_msg *msg = &debug->Log[debug->NextMsg];
+      struct gl_debug_message *msg = &log->Messages[log->NextMessage];
 
-      assert(msg->length > 0 && msg->length == debug->NextMsgLength);
       debug_message_clear(msg);
 
-      debug->NumMessages--;
-      debug->NextMsg++;
-      debug->NextMsg %= MAX_DEBUG_LOGGED_MESSAGES;
-      debug->NextMsgLength = debug->Log[debug->NextMsg].length;
+      log->NumMessages--;
+      log->NextMessage++;
+      log->NextMessage %= MAX_DEBUG_LOGGED_MESSAGES;
    }
 }
 
-static struct gl_debug_msg *
+static struct gl_debug_message *
 debug_get_group_message(struct gl_debug_state *debug)
 {
    return &debug->DebugGroupMsgs[debug->GroupStackDepth];
@@ -698,10 +705,11 @@ _mesa_get_debug_state_int(struct gl_context *ctx, GLenum pname)
       val = debug->SyncOutput;
       break;
    case GL_DEBUG_LOGGED_MESSAGES:
-      val = debug->NumMessages;
+      val = debug->Log.NumMessages;
       break;
    case GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH:
-      val = debug->NextMsgLength;
+      val = (debug->Log.NumMessages) ?
+         debug->Log.Messages[debug->Log.NextMessage].length : 0;
       break;
    case GL_DEBUG_GROUP_STACK_DEPTH:
       val = debug->GroupStackDepth;
@@ -917,12 +925,10 @@ _mesa_GetDebugMessageLog(GLuint count, GLsizei logSize, GLenum *sources,
       return 0;
 
    for (ret = 0; ret < count; ret++) {
-      const struct gl_debug_msg *msg = debug_fetch_message(debug);
+      const struct gl_debug_message *msg = debug_fetch_message(debug);
 
       if (!msg)
          break;
-
-      assert(msg->length > 0 && msg->length == debug->NextMsgLength);
 
       if (logSize < msg->length && messageLog != NULL)
          break;
@@ -1019,7 +1025,7 @@ _mesa_PushDebugGroup(GLenum source, GLuint id, GLsizei length,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
    const char *callerstr = "glPushDebugGroup";
-   struct gl_debug_msg *emptySlot;
+   struct gl_debug_message *emptySlot;
 
    if (!debug)
       return;
@@ -1068,7 +1074,7 @@ _mesa_PopDebugGroup(void)
    GET_CURRENT_CONTEXT(ctx);
    struct gl_debug_state *debug = _mesa_get_debug_state(ctx);
    const char *callerstr = "glPopDebugGroup";
-   struct gl_debug_msg *gdmessage;
+   struct gl_debug_message *gdmessage;
 
    if (!debug)
       return;
