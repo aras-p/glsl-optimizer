@@ -12812,6 +12812,8 @@
     <enum name="SKIP_DECODE_EXT"                      value="0x8A4A"/>
 </category>
 
+<xi:include href="INTEL_performance_query.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <!-- Unnumbered extensions sorted by name. -->
 
 <category name="GL_ATI_blend_equation_separate">

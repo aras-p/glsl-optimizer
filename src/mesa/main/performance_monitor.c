@@ -639,3 +639,222 @@ _mesa_perf_monitor_counter_size(const struct gl_perf_monitor_counter *c)
       return 0;
    }
 }
+
+extern void GLAPIENTRY
+_mesa_GetFirstPerfQueryIdINTEL(GLuint *queryId)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If queryId pointer is equal to 0, INVALID_VALUE error is generated."
+    */
+   if (!queryId) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glGetFirstPerfQueryIdINTEL(queryId == NULL)");
+      return;
+   }
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If the given hardware platform doesn't support any performance
+    *    queries, then the value of 0 is returned and INVALID_OPERATION error
+    *    is raised."
+    */
+
+   *queryId = 0;
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+               "glGetFirstPerfQueryIdINTEL(no queries supported)");
+}
+
+extern void GLAPIENTRY
+_mesa_GetNextPerfQueryIdINTEL(GLuint queryId, GLuint *nextQueryId)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If nextQueryId pointer is equal to 0, an INVALID_VALUE error is
+    *    generated."
+    */
+   if (!nextQueryId) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glGetNextPerfQueryIdINTEL(nextQueryId == NULL)");
+      return;
+   }
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If the specified performance query identifier is invalid then
+    *    INVALID_VALUE error is generated. Whenever error is generated, the
+    *    value of 0 is returned."
+    *
+    * No queries are supported, so all queries are invalid.
+    */
+   *nextQueryId = 0;
+   _mesa_error(ctx, GL_INVALID_VALUE,
+               "glGetNextPerfQueryIdINTEL(invalid query)");
+}
+
+extern void GLAPIENTRY
+_mesa_GetPerfQueryIdByNameINTEL(char *queryName, GLuint *queryId)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If queryName does not reference a valid query name, an INVALID_VALUE
+    *    error is generated."
+    *
+    * No queries are supported, so all query names are invalid.
+    */
+
+   _mesa_error(ctx, GL_INVALID_VALUE,
+               "glGetPerfQueryIdByNameINTEL(invalid query name)");
+}
+
+extern void GLAPIENTRY
+_mesa_GetPerfQueryInfoINTEL(GLuint queryId,
+                            GLuint queryNameLength, char *queryName,
+                            GLuint *dataSize, GLuint *noCounters,
+                            GLuint *noActiveInstances,
+                            GLuint *capsMask)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If queryId does not reference a valid query type, an INVALID_VALUE
+    *    error is generated."
+    *
+    * No queries are supported, so all queries are invalid.
+    */
+
+   _mesa_error(ctx, GL_INVALID_VALUE,
+               "glGetPerfQueryInfoINTEL(invalid query)");
+}
+
+extern void GLAPIENTRY
+_mesa_GetPerfCounterInfoINTEL(GLuint queryId, GLuint counterId,
+                              GLuint counterNameLength, char *counterName,
+                              GLuint counterDescLength, char *counterDesc,
+                              GLuint *counterOffset, GLuint *counterDataSize, GLuint *counterTypeEnum,
+                              GLuint *counterDataTypeEnum, GLuint64 *rawCounterMaxValue)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If the pair of queryId and counterId does not reference a valid
+    *    counter, an INVALID_VALUE error is generated."
+    *
+    * No queries are supported, so all queries are invalid.
+    */
+
+   _mesa_error(ctx, GL_INVALID_VALUE,
+               "glGetPerfCounterInfoINTEL(invalid counterId)");
+}
+
+extern void GLAPIENTRY
+_mesa_CreatePerfQueryINTEL(GLuint queryId, GLuint *queryHandle)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If queryId does not reference a valid query type, an INVALID_VALUE
+    *    error is generated."
+    *
+    * No queries are supported, so all queries are invalid.
+    */
+
+   _mesa_error(ctx, GL_INVALID_VALUE,
+               "glCreatePerfQueryINTEL(invalid queryId)");
+}
+
+extern void GLAPIENTRY
+_mesa_DeletePerfQueryINTEL(GLuint queryHandle)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If a query handle doesn't reference a previously created performance
+    *    query instance, an INVALID_VALUE error is generated."
+    *
+    * No queries are supported, so all queries are invalid.
+    */
+
+   _mesa_error(ctx, GL_INVALID_VALUE,
+               "glDeletePerfQueryINTEL(invalid queryHandle)");
+}
+
+extern void GLAPIENTRY
+_mesa_BeginPerfQueryINTEL(GLuint queryHandle)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If a query handle doesn't reference a previously created performance
+    *    query instance, an INVALID_VALUE error is generated."
+    *
+    * No queries are supported, so all queries are invalid.
+    */
+
+   _mesa_error(ctx, GL_INVALID_VALUE,
+               "glBeginPerfQueryINTEL(invalid queryHandle)");
+}
+
+extern void GLAPIENTRY
+_mesa_EndPerfQueryINTEL(GLuint queryHandle)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If a performance query is not currently started, an
+    *    INVALID_OPERATION error will be generated."
+    *
+    * The specification doesn't state that an invalid handle would be an
+    * INVALID_VALUE error. Regardless, query for such a handle will not be
+    * started, so we generate an INVALID_OPERATION in that case.
+    *
+    * No queries are supported, so all handles are invalid.
+    */
+
+   _mesa_error(ctx, GL_INVALID_OPERATION,
+               "glEndPerfQueryINTEL(query not started)");
+}
+
+extern void GLAPIENTRY
+_mesa_GetPerfQueryDataINTEL(GLuint queryHandle, GLuint flags,
+                            GLsizei dataSize, void *data, GLuint *bytesWritten)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   /* The GL_INTEL_performance_query spec says:
+    *
+    *    "If bytesWritten or data pointers are NULL then an INVALID_VALUE
+    *    error is generated."
+    */
+   if (!bytesWritten || !data) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+                  "glGetPerfQueryDataINTEL(bytesWritten or data is NULL)");
+      return;
+   }
+
+   /* The specification doesn't state that an invalid handle generates an
+    * error. We could interpret that to mean the case should be handled as
+    * "measurement not ready for this query", but what should be done if
+    * `flags' equals PERFQUERY_WAIT_INTEL?
+    *
+    * To resolve this, we just generate an INVALID_VALUE from an invalid query
+    * handle.
+    *
+    * No queries are supported, so all handles are invalid.
+    */
+
+   _mesa_error(ctx, GL_INVALID_VALUE,
+               "glGetPerfQueryDataINTEL(invalid queryHandle)");
+}
