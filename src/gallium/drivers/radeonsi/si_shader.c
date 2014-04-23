@@ -223,10 +223,12 @@ static void declare_input_vs(
 		si_shader_ctx->shader->shader.uses_instanceid = true;
 		buffer_index = get_instance_index_for_fetch(&si_shader_ctx->radeon_bld, divisor);
 	} else {
-		/* Load the buffer index, which is always stored in VGPR0
-		 * for Vertex Shaders */
-		buffer_index = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
-					    si_shader_ctx->param_vertex_id);
+		/* Load the buffer index for vertices. */
+		LLVMValueRef vertex_id = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn,
+						      si_shader_ctx->param_vertex_id);
+		LLVMValueRef base_vertex = LLVMGetParam(radeon_bld->main_fn,
+							SI_PARAM_BASE_VERTEX);
+		buffer_index = LLVMBuildAdd(gallivm->builder, base_vertex, vertex_id, "");
 	}
 
 	vec4_type = LLVMVectorType(base->elem_type, 4);
@@ -2342,6 +2344,7 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 	switch (si_shader_ctx->type) {
 	case TGSI_PROCESSOR_VERTEX:
 		params[SI_PARAM_VERTEX_BUFFER] = const_array(v16i8, SI_NUM_VERTEX_BUFFERS);
+		params[SI_PARAM_BASE_VERTEX] = i32;
 		params[SI_PARAM_START_INSTANCE] = i32;
 		num_params = SI_PARAM_START_INSTANCE+1;
 		if (shader->key.vs.as_es) {

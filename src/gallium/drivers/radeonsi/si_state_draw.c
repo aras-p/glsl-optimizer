@@ -426,14 +426,8 @@ static bool si_update_draw_info_state(struct si_context *sctx,
 	}
 
 	si_pm4_set_reg(pm4, R_028A6C_VGT_GS_OUT_PRIM_TYPE, gs_out_prim);
-	si_pm4_set_reg(pm4, R_028408_VGT_INDX_OFFSET,
-		       info->indexed ? info->index_bias : info->start);
 	si_pm4_set_reg(pm4, R_02840C_VGT_MULTI_PRIM_IB_RESET_INDX, info->restart_index);
 	si_pm4_set_reg(pm4, R_028A94_VGT_MULTI_PRIM_IB_RESET_EN, info->primitive_restart);
-	si_pm4_set_reg(pm4, SI_SGPR_START_INSTANCE * 4 +
-		       (sctx->gs_shader ? R_00B330_SPI_SHADER_USER_DATA_ES_0 :
-			R_00B130_SPI_SHADER_USER_DATA_VS_0),
-		       info->start_instance);
 
         if (prim == V_008958_DI_PT_LINELIST)
                 ls_mask = 1;
@@ -730,6 +724,8 @@ static void si_state_draw(struct si_context *sctx,
 			  const struct pipe_draw_info *info,
 			  const struct pipe_index_buffer *ib)
 {
+	unsigned sh_base_reg = (sctx->gs_shader ? R_00B330_SPI_SHADER_USER_DATA_ES_0 :
+						  R_00B130_SPI_SHADER_USER_DATA_VS_0);
 	struct si_pm4_state *pm4 = si_pm4_alloc_state(sctx);
 
 	if (pm4 == NULL)
@@ -790,6 +786,13 @@ static void si_state_draw(struct si_context *sctx,
 	si_pm4_cmd_begin(pm4, PKT3_NUM_INSTANCES);
 	si_pm4_cmd_add(pm4, info->instance_count);
 	si_pm4_cmd_end(pm4, sctx->b.predicate_drawing);
+
+	if (!info->indirect) {
+		si_pm4_set_reg(pm4, sh_base_reg + SI_SGPR_BASE_VERTEX * 4,
+			       info->indexed ? info->index_bias : info->start);
+		si_pm4_set_reg(pm4, sh_base_reg + SI_SGPR_START_INSTANCE * 4,
+			       info->start_instance);
+	}
 
 	if (info->indexed) {
 		uint32_t max_size = (ib->buffer->width0 - ib->offset) /

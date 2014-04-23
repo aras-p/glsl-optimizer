@@ -3209,6 +3209,7 @@ void si_init_config(struct si_context *sctx)
 		       S_02800C_FORCE_HIS_ENABLE1(V_02800C_FORCE_DISABLE));
 	si_pm4_set_reg(pm4, R_028400_VGT_MAX_VTX_INDX, ~0);
 	si_pm4_set_reg(pm4, R_028404_VGT_MIN_VTX_INDX, 0);
+	si_pm4_set_reg(pm4, R_028408_VGT_INDX_OFFSET, 0);
 
 	if (sctx->b.chip_class >= CIK) {
 		si_pm4_set_reg(pm4, R_00B118_SPI_SHADER_PGM_RSRC3_VS, S_00B118_CU_EN(0xffff));
