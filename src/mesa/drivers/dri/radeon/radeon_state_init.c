@@ -658,8 +658,6 @@ void radeonInitState( r100ContextPtr rmesa )
    for (i = 0; i < 6; i++)
       rmesa->hw.ucp[i].emit = vec_emit;
 
-   rmesa->last_ReallyEnabled = -1;
-
    /* Initial Harware state:
     */
    rmesa->hw.ctx.cmd[CTX_PP_MISC] = (RADEON_ALPHA_TEST_PASS |

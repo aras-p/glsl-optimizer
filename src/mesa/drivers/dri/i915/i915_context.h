@@ -250,7 +250,6 @@ struct i915_context
 {
    struct intel_context intel;
 
-   GLuint last_ReallyEnabled;
    GLuint lodbias_ss2[MAX_TEXTURE_UNITS];
 
 

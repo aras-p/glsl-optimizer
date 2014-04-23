@@ -416,7 +416,6 @@ struct r100_context {
 	GLuint NeedTexMatrix;
 	GLuint TexMatColSwap;
 	GLmatrix tmpmat[RADEON_MAX_TEXTURE_UNITS];
-	GLuint last_ReallyEnabled;
 
 	/* radeon_tcl.c
 	 */
