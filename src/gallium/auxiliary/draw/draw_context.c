@@ -68,6 +68,12 @@ draw_get_option_use_llvm(void)
    }
    return value;
 }
+#else
+boolean
+draw_get_option_use_llvm(void)
+{
+   return FALSE;
+}
 #endif
 
 

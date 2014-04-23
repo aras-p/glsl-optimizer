@@ -674,11 +674,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
 void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
                                   struct draw_context *draw)
 {
-#ifdef HAVE_LLVM
    boolean use_llvm = draw_get_option_use_llvm();
-#else
-   boolean use_llvm = FALSE;
-#endif
    if (!use_llvm && shader && shader->machine->Tokens != shader->state.tokens) {
       tgsi_exec_machine_bind_shader(shader->machine,
                                     shader->state.tokens,
@@ -690,16 +686,18 @@ void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
 boolean
 draw_gs_init( struct draw_context *draw )
 {
-   draw->gs.tgsi.machine = tgsi_exec_machine_create();
-   if (!draw->gs.tgsi.machine)
-      return FALSE;
+   if (!draw_get_option_use_llvm()) {
+      draw->gs.tgsi.machine = tgsi_exec_machine_create();
+      if (!draw->gs.tgsi.machine)
+         return FALSE;
 
-   draw->gs.tgsi.machine->Primitives = align_malloc(
-      MAX_PRIMITIVES * sizeof(struct tgsi_exec_vector), 16);
-   if (!draw->gs.tgsi.machine->Primitives)
-      return FALSE;
-   memset(draw->gs.tgsi.machine->Primitives, 0,
-          MAX_PRIMITIVES * sizeof(struct tgsi_exec_vector));
+      draw->gs.tgsi.machine->Primitives = align_malloc(
+         MAX_PRIMITIVES * sizeof(struct tgsi_exec_vector), 16);
+      if (!draw->gs.tgsi.machine->Primitives)
+         return FALSE;
+      memset(draw->gs.tgsi.machine->Primitives, 0,
+             MAX_PRIMITIVES * sizeof(struct tgsi_exec_vector));
+   }
 
    return TRUE;
 }

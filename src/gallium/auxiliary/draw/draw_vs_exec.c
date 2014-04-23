@@ -63,6 +63,7 @@ vs_exec_prepare( struct draw_vertex_shader *shader,
 {
    struct exec_vertex_shader *evs = exec_vertex_shader(shader);
 
+   debug_assert(!draw_get_option_use_llvm());
    /* Specify the vertex program to interpret/execute.
     * Avoid rebinding when possible.
     */
@@ -96,6 +97,7 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
    unsigned slot;
    boolean clamp_vertex_color = shader->draw->rasterizer->clamp_vertex_color;
 
+   debug_assert(!draw_get_option_use_llvm());
    tgsi_exec_set_constant_buffers(machine, PIPE_MAX_CONSTANT_BUFFERS,
                                   constants, const_size);
 
