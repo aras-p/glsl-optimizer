@@ -280,7 +280,7 @@ struct intel_mipmap_tree
     * MESA_FORMAT_Z24_UNORM_X8_UINT.
     *
     * For ETC1/ETC2 textures, this is one of the uncompressed mesa texture
-    * formats if the hardware lacks support for ETC1/ETC2. See @ref wraps_etc.
+    * formats if the hardware lacks support for ETC1/ETC2. See @ref etc_format.
     */
    mesa_format format;
 
