@@ -165,7 +165,6 @@ struct lp_scene {
    unsigned resource_reference_size;
 
    boolean alloc_failed;
-   boolean has_depthstencil_clear;
    boolean discard;
    /**
     * Number of active tiles in each dimension.

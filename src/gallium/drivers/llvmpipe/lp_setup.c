@@ -202,25 +202,38 @@ begin_binning( struct lp_setup_context *setup )
         util_format_is_depth_and_stencil(setup->fb.zsbuf->format))
       need_zsload = TRUE;
 
-   LP_DBG(DEBUG_SETUP, "%s color: %s depth: %s\n", __FUNCTION__,
-          (setup->clear.flags & PIPE_CLEAR_COLOR) ? "clear": "load",
+   LP_DBG(DEBUG_SETUP, "%s color clear bufs: %x depth: %s\n", __FUNCTION__,
+          setup->clear.flags >> 2,
           need_zsload ? "clear": "load");
 
-   if (setup->fb.nr_cbufs) {
-      if (setup->clear.flags & PIPE_CLEAR_COLOR) {
-         ok = lp_scene_bin_everywhere( scene, 
-                                       LP_RAST_OP_CLEAR_COLOR, 
-                                       setup->clear.color );
-         if (!ok)
-            return FALSE;
+   if (setup->clear.flags & PIPE_CLEAR_COLOR) {
+      unsigned cbuf;
+      for (cbuf = 0; cbuf < setup->fb.nr_cbufs; cbuf++) {
+         assert(PIPE_CLEAR_COLOR0 == 1 << 2);
+         if (setup->clear.flags & (1 << (2 + cbuf))) {
+            union lp_rast_cmd_arg clearrb_arg;
+            struct lp_rast_clear_rb *cc_scene =
+               (struct lp_rast_clear_rb *)
+                  lp_scene_alloc(scene, sizeof(struct lp_rast_clear_rb));
+
+            if (!cc_scene) {
+               return FALSE;
+            }
+
+            cc_scene->cbuf = cbuf;
+            cc_scene->color_val = setup->clear.color_val[cbuf];
+            clearrb_arg.clear_rb = cc_scene;
+
+            if (!lp_scene_bin_everywhere(scene,
+                                         LP_RAST_OP_CLEAR_COLOR,
+                                         clearrb_arg))
+               return FALSE;
+         }
       }
    }
 
    if (setup->fb.zsbuf) {
       if (setup->clear.flags & PIPE_CLEAR_DEPTHSTENCIL) {
-         if (!need_zsload)
-            scene->has_depthstencil_clear = TRUE;
-
          ok = lp_scene_bin_everywhere( scene,
                                        LP_RAST_OP_CLEAR_ZSTENCIL,
                                        lp_rast_arg_clearzs(
@@ -367,39 +380,37 @@ lp_setup_bind_framebuffer( struct lp_setup_context *setup,
 }
 
 
+/*
+ * Try to clear one color buffer of the attached fb, either by binning a clear
+ * command or queuing up the clear for later (when binning is started).
+ */
 static boolean
-lp_setup_try_clear( struct lp_setup_context *setup,
-                    const union pipe_color_union *color,
-                    double depth,
-                    unsigned stencil,
-                    unsigned flags )
+lp_setup_try_clear_color_buffer(struct lp_setup_context *setup,
+                                const union pipe_color_union *color,
+                                unsigned cbuf)
 {
-   uint64_t zsmask = 0;
-   uint64_t zsvalue = 0;
-   union lp_rast_cmd_arg color_arg;
-   unsigned i;
+   union lp_rast_cmd_arg clearrb_arg;
+   union util_color uc;
+   enum pipe_format format = setup->fb.cbufs[cbuf]->format;
 
    LP_DBG(DEBUG_SETUP, "%s state %d\n", __FUNCTION__, setup->state);
 
-   if (flags & PIPE_CLEAR_COLOR) {
-      for (i = 0; i < 4; i++)
-         color_arg.clear_color.i[i] = color->i[i];
+   if (util_format_is_pure_integer(format)) {
+      /*
+       * We expect int/uint clear values here, though some APIs
+       * might disagree (but in any case util_pack_color()
+       * couldn't handle it)...
+       */
+      if (util_format_is_pure_sint(format)) {
+         util_format_write_4i(format, color->i, 0, &uc, 0, 0, 0, 1, 1);
+      }
+      else {
+         assert(util_format_is_pure_uint(format));
+         util_format_write_4ui(format, color->ui, 0, &uc, 0, 0, 0, 1, 1);
+      }
    }
-
-   if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
-      uint32_t zmask = (flags & PIPE_CLEAR_DEPTH) ? ~0 : 0;
-      uint8_t smask = (flags & PIPE_CLEAR_STENCIL) ? ~0 : 0;
-
-      zsvalue = util_pack64_z_stencil(setup->fb.zsbuf->format,
-                                      depth,
-                                      stencil);
-
-
-      zsmask = util_pack64_mask_z_stencil(setup->fb.zsbuf->format,
-                                          zmask,
-                                          smask);
-
-      zsvalue &= zsmask;
+   else {
+      util_pack_color(color->f, format, &uc);
    }
 
    if (setup->state == SETUP_ACTIVE) {
@@ -411,19 +422,78 @@ lp_setup_try_clear( struct lp_setup_context *setup,
        * binned scene and start again, but I don't see that as being
        * a common usage.
        */
-      if (flags & PIPE_CLEAR_COLOR) {
-         if (!lp_scene_bin_everywhere( scene, 
-                                       LP_RAST_OP_CLEAR_COLOR,
-                                       color_arg ))
-            return FALSE;
+      struct lp_rast_clear_rb *cc_scene =
+         (struct lp_rast_clear_rb *)
+            lp_scene_alloc_aligned(scene, sizeof(struct lp_rast_clear_rb), 8);
+
+      if (!cc_scene) {
+         return FALSE;
       }
 
-      if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
-         if (!lp_scene_bin_everywhere( scene,
-                                       LP_RAST_OP_CLEAR_ZSTENCIL,
-                                       lp_rast_arg_clearzs(zsvalue, zsmask) ))
-            return FALSE;
-      }
+      cc_scene->cbuf = cbuf;
+      cc_scene->color_val = uc;
+      clearrb_arg.clear_rb = cc_scene;
+
+      if (!lp_scene_bin_everywhere(scene,
+                                   LP_RAST_OP_CLEAR_COLOR,
+                                   clearrb_arg))
+         return FALSE;
+   }
+   else {
+      /* Put ourselves into the 'pre-clear' state, specifically to try
+       * and accumulate multiple clears to color and depth_stencil
+       * buffers which the app or state-tracker might issue
+       * separately.
+       */
+      set_scene_state( setup, SETUP_CLEARED, __FUNCTION__ );
+
+      assert(PIPE_CLEAR_COLOR0 == (1 << 2));
+      setup->clear.flags |= 1 << (cbuf + 2);
+      setup->clear.color_val[cbuf] = uc;
+   }
+
+   return TRUE;
+}
+
+static boolean
+lp_setup_try_clear_zs(struct lp_setup_context *setup,
+                      double depth,
+                      unsigned stencil,
+                      unsigned flags)
+{
+   uint64_t zsmask = 0;
+   uint64_t zsvalue = 0;
+   uint32_t zmask32;
+   uint8_t smask8;
+
+   LP_DBG(DEBUG_SETUP, "%s state %d\n", __FUNCTION__, setup->state);
+
+   zmask32 = (flags & PIPE_CLEAR_DEPTH) ? ~0 : 0;
+   smask8 = (flags & PIPE_CLEAR_STENCIL) ? ~0 : 0;
+
+   zsvalue = util_pack64_z_stencil(setup->fb.zsbuf->format,
+                                   depth,
+                                   stencil);
+
+   zsmask = util_pack64_mask_z_stencil(setup->fb.zsbuf->format,
+                                       zmask32,
+                                       smask8);
+
+   zsvalue &= zsmask;
+
+   if (setup->state == SETUP_ACTIVE) {
+      struct lp_scene *scene = setup->scene;
+
+      /* Add the clear to existing scene.  In the unusual case where
+       * both color and depth-stencil are being cleared when there's
+       * already been some rendering, we could discard the currently
+       * binned scene and start again, but I don't see that as being
+       * a common usage.
+       */
+      if (!lp_scene_bin_everywhere(scene,
+                                   LP_RAST_OP_CLEAR_ZSTENCIL,
+                                   lp_rast_arg_clearzs(zsvalue, zsmask)))
+         return FALSE;
    }
    else {
       /* Put ourselves into the 'pre-clear' state, specifically to try
@@ -435,19 +505,11 @@ lp_setup_try_clear( struct lp_setup_context *setup,
 
       setup->clear.flags |= flags;
 
-      if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
-         setup->clear.zsmask |= zsmask;
-         setup->clear.zsvalue =
-            (setup->clear.zsvalue & ~zsmask) | (zsvalue & zsmask);
-      }
-
-      if (flags & PIPE_CLEAR_COLOR) {
-         memcpy(&setup->clear.color.clear_color,
-                &color_arg,
-                sizeof setup->clear.color.clear_color);
-      }
+      setup->clear.zsmask |= zsmask;
+      setup->clear.zsvalue =
+         (setup->clear.zsvalue & ~zsmask) | (zsvalue & zsmask);
    }
-   
+
    return TRUE;
 }
 
@@ -458,15 +520,38 @@ lp_setup_clear( struct lp_setup_context *setup,
                 unsigned stencil,
                 unsigned flags )
 {
-   if (!lp_setup_try_clear( setup, color, depth, stencil, flags )) {
-      lp_setup_flush(setup, NULL, __FUNCTION__);
+   unsigned i;
 
-      if (!lp_setup_try_clear( setup, color, depth, stencil, flags ))
-         assert(0);
+   /*
+    * Note any of these (max 9) clears could fail (but at most there should
+    * be just one failure!). This avoids doing the previous succeeded
+    * clears again (we still clear tiles twice if a clear command succeeded
+    * partially for one buffer).
+    */
+   if (flags & PIPE_CLEAR_DEPTHSTENCIL) {
+      unsigned flagszs = flags & PIPE_CLEAR_DEPTHSTENCIL;
+      if (!lp_setup_try_clear_zs(setup, depth, stencil, flagszs)) {
+         lp_setup_flush(setup, NULL, __FUNCTION__);
+
+         if (!lp_setup_try_clear_zs(setup, depth, stencil, flagszs))
+            assert(0);
+      }
+   }
+
+   if (flags & PIPE_CLEAR_COLOR) {
+      assert(PIPE_CLEAR_COLOR0 == (1 << 2));
+      for (i = 0; i < setup->fb.nr_cbufs; i++) {
+         if ((flags & (1 << (2 + i))) && setup->fb.cbufs[i]) {
+            if (!lp_setup_try_clear_color_buffer(setup, color, i)) {
+               lp_setup_flush(setup, NULL, __FUNCTION__);
+
+               if (!lp_setup_try_clear_color_buffer(setup, color, i))
+                  assert(0);
+            }
+         }
+      }
    }
 }
-
-
 
 
 
@@ -503,7 +588,7 @@ lp_setup_set_line_state( struct lp_setup_context *setup,
 
 void 
 lp_setup_set_point_state( struct lp_setup_context *setup,
-                          float point_size,                          
+                          float point_size,
                           boolean point_size_per_vertex,
                           uint sprite_coord_enable,
                           uint sprite_coord_origin)

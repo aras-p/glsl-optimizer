@@ -110,25 +110,6 @@ lp_rast_tile_begin(struct lp_rasterizer_task *task,
 
 
 /**
- * Examine a framebuffer object to determine if any of the colorbuffers
- * use a pure integer format.
- * XXX this could be a gallium utility function if useful elsewhere.
- */
-static boolean
-is_fb_pure_integer(const struct pipe_framebuffer_state *fb)
-{
-   unsigned i;
-   for (i = 0; i < fb->nr_cbufs; i++) {
-      if (fb->cbufs[i] &&
-          util_format_is_pure_integer(fb->cbufs[i]->format)) {
-         return TRUE;
-      }
-   }
-   return FALSE;
-}
-
-
-/**
  * Clear the rasterizer's current color tile.
  * This is a bin command called during bin processing.
  * Clear commands always clear all bound layers.
@@ -138,85 +119,40 @@ lp_rast_clear_color(struct lp_rasterizer_task *task,
                     const union lp_rast_cmd_arg arg)
 {
    const struct lp_scene *scene = task->scene;
+   unsigned cbuf = arg.clear_rb->cbuf;
+   union util_color uc;
+   enum pipe_format format;
 
-   if (scene->fb.nr_cbufs) {
-      unsigned i;
-      union util_color uc;
+   /* we never bin clear commands for non-existing buffers */
+   assert(cbuf < scene->fb.nr_cbufs);
+   assert(scene->fb.cbufs[cbuf]);
 
-      if (is_fb_pure_integer(&scene->fb)) {
-         /*
-          * We expect int/uint clear values here, though some APIs
-          * might disagree (but in any case util_pack_color()
-          * couldn't handle it)...
-          */
-         LP_DBG(DEBUG_RAST, "%s pure int 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__,
-                    arg.clear_color.ui[0],
-                    arg.clear_color.ui[1],
-                    arg.clear_color.ui[2],
-                    arg.clear_color.ui[3]);
+   format = scene->fb.cbufs[cbuf]->format;
+   uc = arg.clear_rb->color_val;
 
-         for (i = 0; i < scene->fb.nr_cbufs; i++) {
-            enum pipe_format format = scene->fb.cbufs[i]->format;
+   /*
+    * this is pretty rough since we have target format (bunch of bytes...) here.
+    * dump it as raw 4 dwords.
+    */
+   LP_DBG(DEBUG_RAST, "%s clear value (target format %d) raw 0x%x,0x%x,0x%x,0x%x\n",
+          __FUNCTION__, format, uc.ui[0], uc.ui[1], uc.ui[2], uc.ui[3]);
 
-            if (util_format_is_pure_sint(format)) {
-               util_format_write_4i(format, arg.clear_color.i, 0, &uc, 0, 0, 0, 1, 1);
-            }
-            else {
-               assert(util_format_is_pure_uint(format));
-               util_format_write_4ui(format, arg.clear_color.ui, 0, &uc, 0, 0, 0, 1, 1);
-            }
 
-            util_fill_box(scene->cbufs[i].map,
-                          format,
-                          scene->cbufs[i].stride,
-                          scene->cbufs[i].layer_stride,
-                          task->x,
-                          task->y,
-                          0,
-                          task->width,
-                          task->height,
-                          scene->fb_max_layer + 1,
-                          &uc);
-         }
-      }
-      else {
-         uint8_t clear_color[4];
+   util_fill_box(scene->cbufs[cbuf].map,
+                 format,
+                 scene->cbufs[cbuf].stride,
+                 scene->cbufs[cbuf].layer_stride,
+                 task->x,
+                 task->y,
+                 0,
+                 task->width,
+                 task->height,
+                 scene->fb_max_layer + 1,
+                 &uc);
 
-         for (i = 0; i < 4; ++i) {
-            clear_color[i] = float_to_ubyte(arg.clear_color.f[i]);
-         }
-
-         LP_DBG(DEBUG_RAST, "%s 0x%x,0x%x,0x%x,0x%x\n", __FUNCTION__,
-                    clear_color[0],
-                    clear_color[1],
-                    clear_color[2],
-                    clear_color[3]);
-
-         for (i = 0; i < scene->fb.nr_cbufs; i++) {
-            if (scene->fb.cbufs[i]) {
-               util_pack_color(arg.clear_color.f,
-                               scene->fb.cbufs[i]->format, &uc);
-
-               util_fill_box(scene->cbufs[i].map,
-                             scene->fb.cbufs[i]->format,
-                             scene->cbufs[i].stride,
-                             scene->cbufs[i].layer_stride,
-                             task->x,
-                             task->y,
-                             0,
-                             task->width,
-                             task->height,
-                             scene->fb_max_layer + 1,
-                             &uc);
-            }
-         }
-      }
-   }
-
+   /* this will increase for each rb which probably doesn't mean much */
    LP_COUNT(nr_color_tile_clear);
 }
-
-
 
 
 /**

@@ -38,6 +38,7 @@
 #define LP_RAST_H
 
 #include "pipe/p_compiler.h"
+#include "util/u_pack_color.h"
 #include "lp_jit.h"
 
 
@@ -136,6 +137,12 @@ struct lp_rast_triangle {
 };
 
 
+struct lp_rast_clear_rb {
+   union util_color color_val;
+   unsigned cbuf;
+};
+
+
 #define GET_A0(inputs) ((float (*)[4])((inputs)+1))
 #define GET_DADX(inputs) ((float (*)[4])((char *)((inputs) + 1) + (inputs)->stride))
 #define GET_DADY(inputs) ((float (*)[4])((char *)((inputs) + 1) + 2 * (inputs)->stride))
@@ -164,7 +171,7 @@ union lp_rast_cmd_arg {
       unsigned plane_mask;
    } triangle;
    const struct lp_rast_state *set_state;
-   union pipe_color_union clear_color;
+   const struct lp_rast_clear_rb *clear_rb;
    struct {
       uint64_t value;
       uint64_t mask;

@@ -42,6 +42,7 @@
 
 #include "draw/draw_vbuf.h"
 #include "util/u_rect.h"
+#include "util/u_pack_color.h"
 
 #define LP_SETUP_NEW_FS          0x01
 #define LP_SETUP_NEW_CONSTANTS   0x02
@@ -116,7 +117,7 @@ struct lp_setup_context
 
    struct {
       unsigned flags;
-      union lp_rast_cmd_arg color;    /**< lp_rast_clear_color() cmd */
+      union util_color color_val[PIPE_MAX_COLOR_BUFS];
       uint64_t zsmask;
       uint64_t zsvalue;               /**< lp_rast_clear_zstencil() cmd */
    } clear;

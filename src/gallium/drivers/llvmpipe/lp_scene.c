@@ -292,7 +292,6 @@ lp_scene_end_rasterization(struct lp_scene *scene )
    scene->scene_size = 0;
    scene->resource_reference_size = 0;
 
-   scene->has_depthstencil_clear = FALSE;
    scene->alloc_failed = FALSE;
 
    util_unreference_framebuffer_state( &scene->fb );
