@@ -287,7 +287,8 @@ _swsetup_Translate( struct gl_context *ctx, const void *vertex, SWvertex *dest )
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR0,
                   dest->attrib[VARYING_SLOT_COL0] );
-   UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->color, tmp );
+
+   UNCLAMPED_FLOAT_TO_RGBA_CHAN(dest->color, dest->attrib[VARYING_SLOT_COL0]);
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR1,
                   dest->attrib[VARYING_SLOT_COL1]);
