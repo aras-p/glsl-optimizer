@@ -739,7 +739,7 @@ ilo_blitter_blt_clear_rt(struct ilo_blitter *blitter,
          size = end - offset;
 
       success = buf_clear_region(blitter, ilo_buffer(rt->texture),
-            offset, size, packed.ui, mask, mask);
+            offset, size, packed.ui[0], mask, mask);
    }
    else {
       struct pipe_box box;
@@ -748,7 +748,7 @@ ilo_blitter_blt_clear_rt(struct ilo_blitter *blitter,
             rt->u.tex.last_layer - rt->u.tex.first_layer + 1, &box);
 
       success = tex_clear_region(blitter, ilo_texture(rt->texture),
-            rt->u.tex.level, &box, packed.ui, mask, mask);
+            rt->u.tex.level, &box, packed.ui[0], mask, mask);
    }
 
    return success;

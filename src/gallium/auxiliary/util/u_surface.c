@@ -196,7 +196,7 @@ util_fill_rect(ubyte * dst,
       for (i = 0; i < height; i++) {
          uint32_t *row = (uint32_t *)dst;
          for (j = 0; j < width; j++)
-            *row++ = uc->ui;
+            *row++ = uc->ui[0];
          dst += dst_stride;
       }
       break;

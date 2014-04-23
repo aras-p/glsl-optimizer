@@ -646,7 +646,7 @@ static void r300_set_blend_color(struct pipe_context* pipe,
         util_pack_color(c.color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
 
         BEGIN_CB(state->cb, 2);
-        OUT_CB_REG(R300_RB3D_BLEND_COLOR, uc.ui);
+        OUT_CB_REG(R300_RB3D_BLEND_COLOR, uc.ui[0]);
         END_CB;
     }
 

@@ -86,7 +86,7 @@ try_clear(struct svga_context *svga,
          return ret;
    }
 
-   ret = SVGA3D_ClearRect(svga->swc, flags, uc.ui, (float) depth, stencil,
+   ret = SVGA3D_ClearRect(svga->swc, flags, uc.ui[0], (float) depth, stencil,
                           rect.x, rect.y, rect.w, rect.h);
    if (ret != PIPE_OK)
       return ret;

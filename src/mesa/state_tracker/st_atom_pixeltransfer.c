@@ -121,7 +121,7 @@ load_color_map_texture(struct gl_context *ctx, struct pipe_resource *pt)
          rgba[2] = ctx->PixelMaps.BtoB.Map[j * bSize / texSize];
          rgba[3] = ctx->PixelMaps.AtoA.Map[i * aSize / texSize];
          util_pack_color(rgba, pt->format, &uc);
-         *(dest + k) = uc.ui;
+         *(dest + k) = uc.ui[0];
       }
    }
 

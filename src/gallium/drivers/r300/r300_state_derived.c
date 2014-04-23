@@ -699,24 +699,24 @@ static uint32_t r300_get_border_color(enum pipe_format format,
             /* The Y component is used for the border color. */
             border_swizzled[1] = border_swizzled[0] + 1.0f/32;
             util_pack_color(border_swizzled, PIPE_FORMAT_B4G4R4A4_UNORM, &uc);
-            return uc.ui;
+            return uc.ui[0];
         case PIPE_FORMAT_RGTC2_SNORM:
         case PIPE_FORMAT_LATC2_SNORM:
             util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_SNORM, &uc);
-            return uc.ui;
+            return uc.ui[0];
         case PIPE_FORMAT_RGTC2_UNORM:
         case PIPE_FORMAT_LATC2_UNORM:
             util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
-            return uc.ui;
+            return uc.ui[0];
         case PIPE_FORMAT_DXT1_SRGB:
         case PIPE_FORMAT_DXT1_SRGBA:
         case PIPE_FORMAT_DXT3_SRGBA:
         case PIPE_FORMAT_DXT5_SRGBA:
             util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_SRGB, &uc);
-            return uc.ui;
+            return uc.ui[0];
         default:
             util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
-            return uc.ui;
+            return uc.ui[0];
         }
     }
 
@@ -789,7 +789,7 @@ static uint32_t r300_get_border_color(enum pipe_format format,
             break;
     }
 
-    return uc.ui;
+    return uc.ui[0];
 }
 
 static void r300_merge_textures_and_samplers(struct r300_context* r300)

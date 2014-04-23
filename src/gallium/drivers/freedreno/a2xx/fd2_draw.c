@@ -123,7 +123,7 @@ pack_rgba(enum pipe_format format, const float *rgba)
 {
 	union util_color uc;
 	util_pack_color(rgba, format, &uc);
-	return uc.ui;
+	return uc.ui[0];
 }
 
 static void

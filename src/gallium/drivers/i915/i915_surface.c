@@ -266,7 +266,7 @@ i915_clear_render_target_blitter(struct pipe_context *pipe,
                    tex->buffer, offset,
                    (short) dstx, (short) dsty,
                    (short) width, (short) height,
-                   uc.ui );
+                   uc.ui[0] );
 }
 
 static void
