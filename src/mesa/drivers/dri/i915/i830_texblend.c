@@ -440,20 +440,16 @@ void
 i830EmitTextureBlend(struct i830_context *i830)
 {
    struct gl_context *ctx = &i830->intel.ctx;
-   GLuint unit, last_stage = 0, blendunit = 0;
+   GLuint unit, blendunit = 0;
 
    I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND_ALL, false);
 
-   if (ctx->Texture._EnabledUnits) {
-      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
+   if (ctx->Texture._MaxEnabledTexImageUnit != -1) {
+      for (unit = 0; unit < ctx->Texture._MaxEnabledTexImageUnit; unit++)
          if (ctx->Texture.Unit[unit]._ReallyEnabled)
-            last_stage = unit;
-
-      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
-         if (ctx->Texture.Unit[unit]._ReallyEnabled)
-            emit_texblend(i830, unit, blendunit++, last_stage == unit);
-   }
-   else {
+            emit_texblend(i830, unit, blendunit++,
+                          unit == ctx->Texture._MaxEnabledTexImageUnit);
+   } else {
       emit_passthrough(i830);
    }
 }
