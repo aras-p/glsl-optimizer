@@ -177,8 +177,8 @@ _swrast_free_texture_image_buffer(struct gl_context *ctx,
  * Error checking for debugging only.
  */
 static void
-_mesa_check_map_teximage(struct gl_texture_image *texImage,
-                         GLuint slice, GLuint x, GLuint y, GLuint w, GLuint h)
+check_map_teximage(const struct gl_texture_image *texImage,
+                   GLuint slice, GLuint x, GLuint y, GLuint w, GLuint h)
 {
 
    if (texImage->TexObject->Target == GL_TEXTURE_1D)
@@ -216,7 +216,7 @@ _swrast_map_teximage(struct gl_context *ctx,
    GLint stride, texelSize;
    GLuint bw, bh;
 
-   _mesa_check_map_teximage(texImage, slice, x, y, w, h);
+   check_map_teximage(texImage, slice, x, y, w, h);
 
    texelSize = _mesa_get_format_bytes(texImage->TexFormat);
    stride = _mesa_format_row_stride(texImage->TexFormat, texImage->Width);
