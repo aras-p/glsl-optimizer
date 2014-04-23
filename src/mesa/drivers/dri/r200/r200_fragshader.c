@@ -362,7 +362,7 @@ static void r200UpdateFSRouting( struct gl_context *ctx ) {
 
    if (shader->NumPasses < 2) {
       for (reg = 0; reg < R200_MAX_TEXTURE_UNITS; reg++) {
-	 GLbitfield targetbit = ctx->Texture.Unit[reg]._ReallyEnabled;
+         struct gl_texture_object *texObj = ctx->Texture.Unit[reg]._Current;
          R200_STATECHANGE( rmesa, tex[reg] );
 	 rmesa->hw.tex[reg].cmd[TEX_PP_TXMULTI_CTL] = 0;
 	 if (shader->SetupInst[0][reg].Opcode) {
@@ -387,10 +387,10 @@ static void r200UpdateFSRouting( struct gl_context *ctx ) {
 	       }
 	       rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_0_ENABLE << reg;
 	    }
-	    else if (targetbit == TEXTURE_3D_BIT) {
+	    else if (texObj && texObj->Target == GL_TEXTURE_3D) {
 	       txformat_x |= R200_TEXCOORD_VOLUME;
 	    }
-	    else if (targetbit == TEXTURE_CUBE_BIT) {
+	    else if (texObj && texObj->Target == GL_TEXTURE_CUBE_MAP) {
 	       txformat_x |= R200_TEXCOORD_CUBIC_ENV;
 	    }
 	    else if (shader->SetupInst[0][reg].swizzle == GL_SWIZZLE_STR_ATI ||
@@ -403,7 +403,7 @@ static void r200UpdateFSRouting( struct gl_context *ctx ) {
 	    rmesa->hw.tex[reg].cmd[TEX_PP_TXFORMAT] = txformat;
 	    rmesa->hw.tex[reg].cmd[TEX_PP_TXFORMAT_X] = txformat_x;
 	    /* enabling texturing when unit isn't correctly configured may not be safe */
-	    if (targetbit)
+	    if (texObj)
 	       rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_0_ENABLE << reg;
 	 }
       }
@@ -411,7 +411,7 @@ static void r200UpdateFSRouting( struct gl_context *ctx ) {
    } else {
       /* setup 1st pass */
       for (reg = 0; reg < R200_MAX_TEXTURE_UNITS; reg++) {
-	 GLbitfield targetbit = ctx->Texture.Unit[reg]._ReallyEnabled;
+	 struct gl_texture_object *texObj = ctx->Texture.Unit[reg]._Current;
 	 R200_STATECHANGE( rmesa, tex[reg] );
 	 GLuint txformat_multi = 0;
 	 if (shader->SetupInst[0][reg].Opcode) {
@@ -428,10 +428,10 @@ static void r200UpdateFSRouting( struct gl_context *ctx ) {
 	       }
 	       rmesa->hw.cst.cmd[CST_PP_CNTL_X] |= R200_PPX_TEX_0_ENABLE << reg;
 	    }
-	    else if (targetbit == TEXTURE_3D_BIT) {
+	    else if (texObj && texObj->Target == GL_TEXTURE_3D) {
 	       txformat_multi |= R200_PASS1_TEXCOORD_VOLUME;
 	    }
-	    else if (targetbit == TEXTURE_CUBE_BIT) {
+	    else if (texObj && texObj->Target == GL_TEXTURE_CUBE_MAP) {
 	       txformat_multi |= R200_PASS1_TEXCOORD_CUBIC_ENV;
 	    }
 	    else if (shader->SetupInst[0][reg].swizzle == GL_SWIZZLE_STR_ATI ||
@@ -441,7 +441,7 @@ static void r200UpdateFSRouting( struct gl_context *ctx ) {
 	    else {
 	       txformat_multi |= R200_PASS1_TEXCOORD_PROJ;
 	    }
-	    if (targetbit)
+	    if (texObj)
 	       rmesa->hw.cst.cmd[CST_PP_CNTL_X] |= R200_PPX_TEX_0_ENABLE << reg;
 	 }
          rmesa->hw.tex[reg].cmd[TEX_PP_TXMULTI_CTL] = txformat_multi;
@@ -449,7 +449,7 @@ static void r200UpdateFSRouting( struct gl_context *ctx ) {
 
       /* setup 2nd pass */
       for (reg=0; reg < R200_MAX_TEXTURE_UNITS; reg++) {
-	 GLbitfield targetbit = ctx->Texture.Unit[reg]._ReallyEnabled;
+	 struct gl_texture_object *texObj = ctx->Texture.Unit[reg]._Current;
 	 if (shader->SetupInst[1][reg].Opcode) {
 	    GLuint coord = shader->SetupInst[1][reg].src;
 	    GLuint txformat = rmesa->hw.tex[reg].cmd[TEX_PP_TXFORMAT]
@@ -468,10 +468,10 @@ static void r200UpdateFSRouting( struct gl_context *ctx ) {
 	       }
 	       rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_0_ENABLE << reg;
 	    }
-	    else if (targetbit == TEXTURE_3D_BIT) {
+	    else if (texObj && texObj->Target == GL_TEXTURE_3D) {
 	       txformat_x |= R200_TEXCOORD_VOLUME;
 	    }
-	    else if (targetbit == TEXTURE_CUBE_BIT) {
+	    else if (texObj && texObj->Target == GL_TEXTURE_CUBE_MAP) {
 	       txformat_x |= R200_TEXCOORD_CUBIC_ENV;
 	    }
 	    else if (shader->SetupInst[1][reg].swizzle == GL_SWIZZLE_STR_ATI ||
@@ -492,7 +492,7 @@ static void r200UpdateFSRouting( struct gl_context *ctx ) {
 	    }
 	    rmesa->hw.tex[reg].cmd[TEX_PP_TXFORMAT_X] = txformat_x;
 	    rmesa->hw.tex[reg].cmd[TEX_PP_TXFORMAT] = txformat;
-	    if (targetbit)
+	    if (texObj)
 	       rmesa->hw.ctx.cmd[CTX_PP_CNTL] |= R200_TEX_0_ENABLE << reg;
 	 }
       }

@@ -935,8 +935,8 @@ static GLboolean r200UpdateAllTexEnv( struct gl_context *ctx )
 
    /* don't enable texture sampling for units if the result is not used */
    for (i = 0; i < R200_MAX_TEXTURE_UNITS; i++) {
-      if (ctx->Texture.Unit[i]._ReallyEnabled && !texregfree[i])
-	 rmesa->state.texture.unit[i].unitneeded = ctx->Texture.Unit[i]._ReallyEnabled;
+      if (ctx->Texture.Unit[i]._Current && !texregfree[i])
+	 rmesa->state.texture.unit[i].unitneeded = 1 << _mesa_tex_target_to_index(ctx, ctx->Texture.Unit[i]._Current->Target);
       else rmesa->state.texture.unit[i].unitneeded = 0;
    }
 
@@ -1554,7 +1554,10 @@ void r200UpdateTextureState( struct gl_context *ctx )
    if (ctx->ATIFragmentShader._Enabled) {
       GLuint i;
       for (i = 0; i < R200_MAX_TEXTURE_UNITS; i++) {
-	 rmesa->state.texture.unit[i].unitneeded = ctx->Texture.Unit[i]._ReallyEnabled;
+         if (ctx->Texture.Unit[i]._Current)
+            rmesa->state.texture.unit[i].unitneeded = 1 << _mesa_tex_target_to_index(ctx, ctx->Texture.Unit[i]._Current->Target);
+         else
+            rmesa->state.texture.unit[i].unitneeded = 0;
       }
       ok = GL_TRUE;
    }

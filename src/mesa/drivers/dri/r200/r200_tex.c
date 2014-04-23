@@ -306,7 +306,7 @@ static void r200TexEnv( struct gl_context *ctx, GLenum target,
 
    /* This is incorrect: Need to maintain this data for each of
     * GL_TEXTURE_{123}D, GL_TEXTURE_RECTANGLE_NV, etc, and switch
-    * between them according to _ReallyEnabled.
+    * between them according to _Current->Target.
     */
    switch ( pname ) {
    case GL_TEXTURE_ENV_COLOR: {

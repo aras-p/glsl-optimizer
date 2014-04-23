@@ -1850,7 +1850,9 @@ void radeonUploadTexMatrix( r100ContextPtr rmesa,
    GLfloat *src = rmesa->tmpmat[unit].m;
 
    rmesa->TexMatColSwap &= ~(1 << unit);
-   if ((tUnit._ReallyEnabled & (TEXTURE_3D_BIT | TEXTURE_CUBE_BIT)) == 0) {
+   if (!tUnit._Current ||
+       (tUnit._Current->Target != GL_TEXTURE_3D &&
+        tUnit._Current->Target != GL_TEXTURE_CUBE_MAP)) {
       if (swapcols) {
 	 rmesa->TexMatColSwap |= 1 << unit;
 	 /* attention some elems are swapped 2 times! */

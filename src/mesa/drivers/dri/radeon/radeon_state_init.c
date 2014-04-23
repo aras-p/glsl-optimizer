@@ -206,9 +206,9 @@ CHECK( tex0_mm, GL_TRUE, 3 )
 CHECK( tex1_mm, GL_TRUE, 3 )
 /* need this for the cubic_map on disabled unit 2 bug, maybe r100 only? */
 CHECK( tex2_mm, GL_TRUE, 3 )
-CHECK( cube0_mm, (ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_CUBE_BIT), 2 + 4*5 - CUBE_STATE_SIZE )
-CHECK( cube1_mm, (ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_CUBE_BIT), 2 + 4*5 - CUBE_STATE_SIZE )
-CHECK( cube2_mm, (ctx->Texture.Unit[2]._ReallyEnabled & TEXTURE_CUBE_BIT), 2 + 4*5 - CUBE_STATE_SIZE )
+CHECK( cube0_mm, (ctx->Texture.Unit[0]._Current && ctx->Texture.Unit[0]._Current->Target == GL_TEXTURE_CUBE_MAP), 2 + 4*5 - CUBE_STATE_SIZE )
+CHECK( cube1_mm, (ctx->Texture.Unit[1]._Current && ctx->Texture.Unit[1]._Current->Target == GL_TEXTURE_CUBE_MAP), 2 + 4*5 - CUBE_STATE_SIZE )
+CHECK( cube2_mm, (ctx->Texture.Unit[2]._Current && ctx->Texture.Unit[2]._Current->Target == GL_TEXTURE_CUBE_MAP), 2 + 4*5 - CUBE_STATE_SIZE )
 CHECK( fog_add4, ctx->Fog.Enabled, 4 )
 TCL_CHECK( tcl_add4, GL_TRUE, 4 )
 TCL_CHECK( tcl_tex0_add4, ctx->Texture.Unit[0]._Current, 4 )
@@ -233,9 +233,9 @@ TCL_CHECK( tcl_ucp4_add4, (ctx->Transform.ClipPlanesEnabled & 0x10), 4 )
 TCL_CHECK( tcl_ucp5_add4, (ctx->Transform.ClipPlanesEnabled & 0x20), 4 )
 TCL_CHECK( tcl_eyespace_or_fog_add4, ctx->_NeedEyeCoords || ctx->Fog.Enabled, 4 )
 
-CHECK( txr0, (ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_RECT_BIT), 0 )
-CHECK( txr1, (ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_RECT_BIT), 0 )
-CHECK( txr2, (ctx->Texture.Unit[2]._ReallyEnabled & TEXTURE_RECT_BIT), 0 )
+CHECK( txr0, (ctx->Texture.Unit[0]._Current && ctx->Texture.Unit[0]._Current->Target == GL_TEXTURE_RECTANGLE), 0 )
+CHECK( txr1, (ctx->Texture.Unit[1]._Current && ctx->Texture.Unit[1]._Current->Target == GL_TEXTURE_RECTANGLE), 0 )
+CHECK( txr2, (ctx->Texture.Unit[2]._Current && ctx->Texture.Unit[2]._Current->Target == GL_TEXTURE_RECTANGLE), 0 )
 
 #define OUT_VEC(hdr, data) do {			\
     drm_radeon_cmd_header_t h;					\
@@ -422,7 +422,8 @@ static void cube_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
    radeon_mipmap_level *lvl;
    uint32_t base_reg;
 
-   if (!(ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT))
+   if (!ctx->Texture.Unit[i]._Current ||
+       ctx->Texture.Unit[i]._Current->Target != GL_TEXTURE_CUBE_MAP)
 	return;
 
    if (!t)
@@ -477,7 +478,8 @@ static void tex_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
    if (hastexture) {
      OUT_BATCH(CP_PACKET0(RADEON_PP_TXOFFSET_0 + (24 * i), 0));
      if (t->mt && !t->image_override) {
-        if ((ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_CUBE_BIT)) {
+        if (ctx->Texture.Unit[i]._Current &&
+            ctx->Texture.Unit[i]._Current->Target == GL_TEXTURE_CUBE_MAP) {
             lvl = &t->mt->levels[t->minLod];
 	    OUT_BATCH_RELOC(lvl->faces[5].offset, t->mt->bo, lvl->faces[5].offset,
 			RADEON_GEM_DOMAIN_GTT|RADEON_GEM_DOMAIN_VRAM, 0, 0);
