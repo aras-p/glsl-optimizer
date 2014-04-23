@@ -77,7 +77,7 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, bool src_alpha_is_one)
       return false;
    }
 
-   if (ctx->Texture._EnabledUnits) {
+   if (ctx->Texture._MaxEnabledTexImageUnit != -1) {
       DBG("fallback due to texturing\n");
       return false;
    }

@@ -251,8 +251,8 @@ static int check_##NM( struct gl_context *ctx, struct radeon_state_atom *atom ) 
 CHECK( always, GL_TRUE, 0 )
 CHECK( always_add4, GL_TRUE, 4 )
 CHECK( never, GL_FALSE, 0 )
-CHECK( tex_any, ctx->Texture._EnabledUnits, 0 )
-CHECK( tf, (ctx->Texture._EnabledUnits && !ctx->ATIFragmentShader._Enabled), 0 );
+CHECK( tex_any, ctx->Texture._MaxEnabledTexImageUnit != -1, 0 )
+CHECK( tf, (ctx->Texture._MaxEnabledTexImageUnit != -1 && !ctx->ATIFragmentShader._Enabled), 0 );
 CHECK( pix_zero, !ctx->ATIFragmentShader._Enabled, 0 )
    CHECK( texenv, (rmesa->state.envneeded & (1 << (atom->idx)) && !ctx->ATIFragmentShader._Enabled), 0 )
 CHECK( afs_pass1, (ctx->ATIFragmentShader._Enabled && (ctx->ATIFragmentShader.Current->NumPasses > 1)), 0 )

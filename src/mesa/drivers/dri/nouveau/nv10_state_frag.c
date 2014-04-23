@@ -353,7 +353,7 @@ nv10_get_final_combiner(struct gl_context *ctx, uint64_t *in, int *n)
 		INPUT_ONE(&rc, E, 0);
 	}
 
-	if (ctx->Texture._EnabledUnits) {
+	if (ctx->Texture._MaxEnabledTexImageUnit != -1) {
 		INPUT_SRC(&rc, B, SPARE0, RGB);
 		INPUT_SRC(&rc, G, SPARE0, ALPHA);
 	} else {
@@ -362,7 +362,7 @@ nv10_get_final_combiner(struct gl_context *ctx, uint64_t *in, int *n)
 	}
 
 	*in = rc.in;
-	*n = log2i(ctx->Texture._EnabledUnits) + 1;
+	*n = ctx->Texture._MaxEnabledTexImageUnit + 1;
 }
 
 void

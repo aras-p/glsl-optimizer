@@ -2328,7 +2328,7 @@ _mesa_meta_Bitmap(struct gl_context *ctx,
    if (ctx->_ImageTransferState ||
        ctx->FragmentProgram._Enabled ||
        ctx->Fog.Enabled ||
-       ctx->Texture._EnabledUnits ||
+       ctx->Texture._MaxEnabledTexImageUnit != -1 ||
        width > tex->MaxSize ||
        height > tex->MaxSize) {
       _swrast_Bitmap(ctx, x, y, width, height, unpack, bitmap1);

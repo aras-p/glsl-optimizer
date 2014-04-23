@@ -97,7 +97,7 @@ void xmesa_choose_point( struct gl_context *ctx )
    if (ctx->RenderMode == GL_RENDER
        && ctx->Point.Size == 1.0F && !ctx->Point.SmoothFlag
        && swrast->_RasterMask == 0
-       && !ctx->Texture._EnabledUnits
+       && ctx->Texture._MaxEnabledTexImageUnit == -1
        && xmesa->xm_buffer->buffer != XIMAGE) {
       swrast->Point = draw_points_ANY_pixmap;
    }
@@ -456,7 +456,7 @@ get_line_func(struct gl_context *ctx)
       return (swrast_line_func) NULL;
    if (ctx->RenderMode != GL_RENDER)      return (swrast_line_func) NULL;
    if (ctx->Line.SmoothFlag)              return (swrast_line_func) NULL;
-   if (ctx->Texture._EnabledUnits)        return (swrast_line_func) NULL;
+   if (ctx->Texture._MaxEnabledTexImageUnit != -1)        return (swrast_line_func) NULL;
    if (ctx->Light.ShadeModel != GL_FLAT)  return (swrast_line_func) NULL;
    if (ctx->Line.StippleFlag)             return (swrast_line_func) NULL;
    if (swrast->_RasterMask & MULTI_DRAW_BIT) return (swrast_line_func) NULL;

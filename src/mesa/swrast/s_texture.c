@@ -359,16 +359,14 @@ _swrast_unmap_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 void
 _swrast_map_textures(struct gl_context *ctx)
 {
-   GLbitfield enabledUnits = ctx->Texture._EnabledUnits;
+   int unit;
 
-   /* loop over enabled texture units */
-   while (enabledUnits) {
-      GLuint unit = ffs(enabledUnits) - 1;
-      struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
-      
-      _swrast_map_texture(ctx, texObj);
+   for (unit = 0; unit <= ctx->Texture._MaxEnabledTexImageUnit; unit++) {
+      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+         struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
 
-      enabledUnits &= ~(1 << unit);
+         _swrast_map_texture(ctx, texObj);
+      }
    }
 }
 
@@ -379,15 +377,12 @@ _swrast_map_textures(struct gl_context *ctx)
 void
 _swrast_unmap_textures(struct gl_context *ctx)
 {
-   GLbitfield enabledUnits = ctx->Texture._EnabledUnits;
+   int unit;
+   for (unit = 0; unit <= ctx->Texture._MaxEnabledTexImageUnit; unit++) {
+      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+         struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
 
-   /* loop over enabled texture units */
-   while (enabledUnits) {
-      GLuint unit = ffs(enabledUnits) - 1;
-      struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
-      
-      _swrast_unmap_texture(ctx, texObj);
-
-      enabledUnits &= ~(1 << unit);
+         _swrast_unmap_texture(ctx, texObj);
+      }
    }
 }

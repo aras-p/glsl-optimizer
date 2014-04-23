@@ -1389,9 +1389,6 @@ struct gl_texture_attrib
    /** GL_ARB_seamless_cubemap */
    GLboolean CubeMapSeamless;
 
-   /** Texture units/samplers used by vertex or fragment texturing */
-   GLbitfield _EnabledUnits;
-
    /** Texture coord units/sets used for fragment texturing */
    GLbitfield _EnabledCoordUnits;
 

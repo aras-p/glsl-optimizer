@@ -73,7 +73,7 @@ _swrast_update_rasterflags( struct gl_context *ctx )
       }
    }
    if (ctx->Color.ColorLogicOpEnabled) rasterMask |= LOGIC_OP_BIT;
-   if (ctx->Texture._EnabledUnits)     rasterMask |= TEXTURE_BIT;
+   if (ctx->Texture._MaxEnabledTexImageUnit >= 0) rasterMask |= TEXTURE_BIT;
    if (   ctx->ViewportArray[0].X < 0
        || ctx->ViewportArray[0].X + ctx->ViewportArray[0].Width > (GLfloat) ctx->DrawBuffer->Width
        || ctx->ViewportArray[0].Y < 0
@@ -286,7 +286,7 @@ _swrast_update_specular_vertex_add(struct gl_context *ctx)
        ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR);
 
    swrast->SpecularVertexAdd = (separateSpecular
-                                && ctx->Texture._EnabledUnits == 0x0
+                                && ctx->Texture._MaxEnabledTexImageUnit == -1
                                 && !_swrast_use_fragment_program(ctx)
                                 && !ctx->ATIFragmentShader._Enabled);
 }

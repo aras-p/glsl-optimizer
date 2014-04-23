@@ -546,7 +546,6 @@ update_texture_state( struct gl_context *ctx )
    /* TODO: only set this if there are actual changes */
    ctx->NewState |= _NEW_TEXTURE;
 
-   ctx->Texture._EnabledUnits = 0x0;
    ctx->Texture._GenFlags = 0x0;
    ctx->Texture._TexMatEnabled = 0x0;
    ctx->Texture._TexGenEnabled = 0x0;
@@ -635,8 +634,6 @@ update_texture_state( struct gl_context *ctx )
       }
 
       /* if we get here, we know this texture unit is enabled */
-
-      ctx->Texture._EnabledUnits |= (1 << unit);
       ctx->Texture._MaxEnabledTexImageUnit = unit;
 
       if (enabledTargetsByStage[MESA_SHADER_FRAGMENT])
@@ -796,7 +793,6 @@ _mesa_init_texture(struct gl_context *ctx)
 
    /* Texture group */
    ctx->Texture.CurrentUnit = 0;      /* multitexture */
-   ctx->Texture._EnabledUnits = 0x0;
 
    /* Appendix F.2 of the OpenGL ES 3.0 spec says:
     *

@@ -125,7 +125,7 @@ do_blit_copypixels(struct gl_context * ctx,
    }
 
    if (ctx->Fog.Enabled ||
-       ctx->Texture._EnabledUnits ||
+       ctx->Texture._MaxEnabledTexImageUnit != -1 ||
        ctx->FragmentProgram._Enabled) {
       perf_debug("glCopyPixels(): Unsupported fragment shader state\n");
       return false;
