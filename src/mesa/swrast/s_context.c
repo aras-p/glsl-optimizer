@@ -523,7 +523,7 @@ _swrast_update_active_attribs(struct gl_context *ctx)
       if (swrast->_FogEnabled)
          attribsMask |= VARYING_BIT_FOGC;
 
-      attribsMask |= (ctx->Texture._EnabledUnits << VARYING_SLOT_TEX0);
+      attribsMask |= (ctx->Texture._EnabledCoordUnits << VARYING_SLOT_TEX0);
    }
 
    swrast->_ActiveAttribMask = attribsMask;
