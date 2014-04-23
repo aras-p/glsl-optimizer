@@ -325,7 +325,7 @@ brw_hiz_op_params::brw_hiz_op_params(struct intel_mipmap_tree *mt,
    x1 = depth.width;
    y1 = depth.height;
 
-   assert(intel_miptree_slice_has_hiz(mt, level, layer));
+   assert(intel_miptree_level_has_hiz(mt, level));
 
    switch (mt->format) {
    case MESA_FORMAT_Z_UNORM16:       depth_format = BRW_DEPTHFORMAT_D16_UNORM; break;

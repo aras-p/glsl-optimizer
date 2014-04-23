@@ -180,7 +180,7 @@ brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
    if (depth_mt) {
       intel_miptree_get_tile_masks(depth_mt, &tile_mask_x, &tile_mask_y, false);
 
-      if (intel_miptree_slice_has_hiz(depth_mt, depth_level, depth_layer)) {
+      if (intel_miptree_level_has_hiz(depth_mt, depth_level)) {
          uint32_t hiz_tile_mask_x, hiz_tile_mask_y;
          intel_miptree_get_tile_masks(depth_mt->hiz_mt,
                                       &hiz_tile_mask_x, &hiz_tile_mask_y,

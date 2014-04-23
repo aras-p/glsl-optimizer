@@ -1347,14 +1347,13 @@ intel_miptree_alloc_non_msrt_mcs(struct brw_context *brw,
 
 /**
  * Helper for intel_miptree_alloc_hiz() that sets
- * \c mt->level[level].slice[layer].has_hiz. Return true if and only if
+ * \c mt->level[level].has_hiz. Return true if and only if
  * \c has_hiz was set.
  */
 static bool
-intel_miptree_slice_enable_hiz(struct brw_context *brw,
+intel_miptree_level_enable_hiz(struct brw_context *brw,
                                struct intel_mipmap_tree *mt,
-                               uint32_t level,
-                               uint32_t layer)
+                               uint32_t level)
 {
    assert(mt->hiz_mt);
 
@@ -1373,7 +1372,7 @@ intel_miptree_slice_enable_hiz(struct brw_context *brw,
       }
    }
 
-   mt->level[level].slice[layer].has_hiz = true;
+   mt->level[level].has_hiz = true;
    return true;
 }
 
@@ -1402,10 +1401,10 @@ intel_miptree_alloc_hiz(struct brw_context *brw,
    /* Mark that all slices need a HiZ resolve. */
    struct intel_resolve_map *head = &mt->hiz_map;
    for (int level = mt->first_level; level <= mt->last_level; ++level) {
-      for (int layer = 0; layer < mt->level[level].depth; ++layer) {
-         if (!intel_miptree_slice_enable_hiz(brw, mt, level, layer))
-            continue;
+      if (!intel_miptree_level_enable_hiz(brw, mt, level))
+         continue;
 
+      for (int layer = 0; layer < mt->level[level].depth; ++layer) {
 	 head->next = malloc(sizeof(*head->next));
 	 head->next->prev = head;
 	 head->next->next = NULL;
@@ -1424,12 +1423,10 @@ intel_miptree_alloc_hiz(struct brw_context *brw,
  * Does the miptree slice have hiz enabled?
  */
 bool
-intel_miptree_slice_has_hiz(struct intel_mipmap_tree *mt,
-                            uint32_t level,
-                            uint32_t layer)
+intel_miptree_level_has_hiz(struct intel_mipmap_tree *mt, uint32_t level)
 {
-   intel_miptree_check_level_layer(mt, level, layer);
-   return mt->level[level].slice[layer].has_hiz;
+   intel_miptree_check_level_layer(mt, level, 0);
+   return mt->level[level].has_hiz;
 }
 
 void
@@ -1437,7 +1434,7 @@ intel_miptree_slice_set_needs_hiz_resolve(struct intel_mipmap_tree *mt,
 					  uint32_t level,
 					  uint32_t layer)
 {
-   if (!intel_miptree_slice_has_hiz(mt, level, layer))
+   if (!intel_miptree_level_has_hiz(mt, level))
       return;
 
    intel_resolve_map_set(&mt->hiz_map,
@@ -1450,7 +1447,7 @@ intel_miptree_slice_set_needs_depth_resolve(struct intel_mipmap_tree *mt,
                                             uint32_t level,
                                             uint32_t layer)
 {
-   if (!intel_miptree_slice_has_hiz(mt, level, layer))
+   if (!intel_miptree_level_has_hiz(mt, level))
       return;
 
    intel_resolve_map_set(&mt->hiz_map,

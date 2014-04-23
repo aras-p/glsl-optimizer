@@ -115,6 +115,15 @@ struct intel_mipmap_level
    GLuint depth;
 
    /**
+    * \brief Is HiZ enabled for this level?
+    *
+    * If \c mt->level[l].has_hiz is set, then (1) \c mt->hiz_mt has been
+    * allocated and (2) the HiZ memory for the slices in this level reside at
+    * \c mt->hiz_mt->level[l].
+    */
+   bool has_hiz;
+
+   /**
     * \brief List of 2D images in this mipmap level.
     *
     * This may be a list of cube faces, array slices in 2D array texture, or
@@ -143,15 +152,6 @@ struct intel_mipmap_level
        * intel_miptree_map/unmap on this slice.
        */
       struct intel_miptree_map *map;
-
-      /**
-       * \brief Is HiZ enabled for this slice?
-       *
-       * If \c mt->level[l].slice[s].has_hiz is set, then (1) \c mt->hiz_mt
-       * has been allocated and (2) the HiZ memory corresponding to this slice
-       * resides at \c mt->hiz_mt->level[l].slice[s].
-       */
-      bool has_hiz;
    } *slice;
 };
 
@@ -586,9 +586,7 @@ intel_miptree_alloc_hiz(struct brw_context *brw,
 			struct intel_mipmap_tree *mt);
 
 bool
-intel_miptree_slice_has_hiz(struct intel_mipmap_tree *mt,
-                            uint32_t level,
-                            uint32_t layer);
+intel_miptree_level_has_hiz(struct intel_mipmap_tree *mt, uint32_t level);
 
 void
 intel_miptree_slice_set_needs_hiz_resolve(struct intel_mipmap_tree *mt,
