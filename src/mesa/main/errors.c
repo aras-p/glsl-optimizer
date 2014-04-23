@@ -91,7 +91,7 @@ struct gl_debug_state
    GLboolean SyncOutput;
    GLboolean DebugOutput;
 
-   struct gl_debug_group Groups[MAX_DEBUG_GROUP_STACK_DEPTH];
+   struct gl_debug_group *Groups[MAX_DEBUG_GROUP_STACK_DEPTH];
    struct gl_debug_message GroupMessages[MAX_DEBUG_GROUP_STACK_DEPTH];
    GLint GroupStackDepth;
 
@@ -488,32 +488,92 @@ debug_create(void)
    if (!debug)
       return NULL;
 
+   debug->Groups[0] = malloc(sizeof(*debug->Groups[0]));
+   if (!debug->Groups[0]) {
+      free(debug);
+      return NULL;
+   }
+
    /* Initialize state for filtering known debug messages. */
    for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
-      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-         debug_namespace_init(&debug->Groups[0].Namespaces[s][t]);
-      }
+      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++)
+         debug_namespace_init(&debug->Groups[0]->Namespaces[s][t]);
    }
 
    return debug;
 }
 
 /**
- * Free debug state for the given stack depth.
+ * Return true if the top debug group points to the group below it.
  */
-static void
-debug_clear_group(struct gl_debug_state *debug, GLint gstack)
+static bool
+debug_is_group_read_only(const struct gl_debug_state *debug)
 {
-   struct gl_debug_group *grp = &debug->Groups[gstack];
-   enum mesa_debug_type t;
-   enum mesa_debug_source s;
+   const GLint gstack = debug->GroupStackDepth;
+   return (gstack > 0 && debug->Groups[gstack] == debug->Groups[gstack - 1]);
+}
 
-   /* Tear down state for filtering debug messages. */
+/**
+ * Make the top debug group writable.
+ */
+static bool
+debug_make_group_writable(struct gl_debug_state *debug)
+{
+   const GLint gstack = debug->GroupStackDepth;
+   const struct gl_debug_group *src = debug->Groups[gstack];
+   struct gl_debug_group *dst;
+   int s, t;
+
+   if (!debug_is_group_read_only(debug))
+      return true;
+
+   dst = malloc(sizeof(*dst));
+   if (!dst)
+      return false;
+
    for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
       for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-         debug_namespace_clear(&grp->Namespaces[s][t]);
+         if (!debug_namespace_copy(&dst->Namespaces[s][t],
+                                   &src->Namespaces[s][t])) {
+            /* error path! */
+            for (t = t - 1; t >= 0; t--)
+               debug_namespace_clear(&dst->Namespaces[s][t]);
+            for (s = s - 1; s >= 0; s--) {
+               for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++)
+                  debug_namespace_clear(&dst->Namespaces[s][t]);
+            }
+            free(dst);
+            return false;
+         }
       }
    }
+
+   debug->Groups[gstack] = dst;
+
+   return true;
+}
+
+/**
+ * Free the top debug group.
+ */
+static void
+debug_clear_group(struct gl_debug_state *debug)
+{
+   const GLint gstack = debug->GroupStackDepth;
+
+   if (!debug_is_group_read_only(debug)) {
+      struct gl_debug_group *grp = debug->Groups[gstack];
+      int s, t;
+
+      for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
+         for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++)
+            debug_namespace_clear(&grp->Namespaces[s][t]);
+      }
+
+      free(grp);
+   }
+
+   debug->Groups[gstack] = NULL;
 }
 
 /**
@@ -523,11 +583,12 @@ debug_clear_group(struct gl_debug_state *debug, GLint gstack)
 static void
 debug_destroy(struct gl_debug_state *debug)
 {
-   GLint i;
+   while (debug->GroupStackDepth > 0) {
+      debug_clear_group(debug);
+      debug->GroupStackDepth--;
+   }
 
-   for (i = 0; i <= debug->GroupStackDepth; i++)
-      debug_clear_group(debug, i);
-
+   debug_clear_group(debug);
    free(debug);
 }
 
@@ -541,10 +602,12 @@ debug_set_message_enable(struct gl_debug_state *debug,
                          GLuint id, GLboolean enabled)
 {
    const GLint gstack = debug->GroupStackDepth;
-   struct gl_debug_namespace *nspace =
-      &debug->Groups[gstack].Namespaces[source][type];
+   struct gl_debug_namespace *ns;
 
-   debug_namespace_set(nspace, id, enabled);
+   debug_make_group_writable(debug);
+   ns = &debug->Groups[gstack]->Namespaces[source][type];
+
+   debug_namespace_set(ns, id, enabled);
 }
 
 /*
@@ -582,10 +645,12 @@ debug_set_message_enable_all(struct gl_debug_state *debug,
       tmax = type+1;
    }
 
+   debug_make_group_writable(debug);
+
    for (s = source; s < smax; s++) {
       for (t = type; t < tmax; t++) {
          struct gl_debug_namespace *nspace =
-            &debug->Groups[gstack].Namespaces[s][t];
+            &debug->Groups[gstack]->Namespaces[s][t];
          debug_namespace_set_all(nspace, severity, enabled);
       }
    }
@@ -602,7 +667,7 @@ debug_is_message_enabled(struct gl_debug_state *debug,
                          enum mesa_debug_severity severity)
 {
    const GLint gstack = debug->GroupStackDepth;
-   struct gl_debug_group *grp = &debug->Groups[gstack];
+   struct gl_debug_group *grp = debug->Groups[gstack];
    struct gl_debug_namespace *nspace = &grp->Namespaces[source][type];
 
    if (!debug->DebugOutput)
@@ -686,34 +751,17 @@ static void
 debug_push_group(struct gl_debug_state *debug)
 {
    const GLint gstack = debug->GroupStackDepth;
-   int s, t;
 
-   /* inherit the control volume of the debug group previously residing on
-    * the top of the debug group stack
-    */
-   for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
-      for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-         const struct gl_debug_namespace *nspace =
-            &debug->Groups[gstack].Namespaces[s][t];
-         struct gl_debug_namespace *next =
-            &debug->Groups[gstack + 1].Namespaces[s][t];
-
-         if (!debug_namespace_copy(next, nspace))
-            goto out;
-      }
-   }
-
-out:
+   /* just point to the previous stack */
+   debug->Groups[gstack + 1] = debug->Groups[gstack];
    debug->GroupStackDepth++;
 }
 
 static void
 debug_pop_group(struct gl_debug_state *debug)
 {
-   const GLint gstack = debug->GroupStackDepth;
-
+   debug_clear_group(debug);
    debug->GroupStackDepth--;
-   debug_clear_group(debug, gstack);
 }
 
 
