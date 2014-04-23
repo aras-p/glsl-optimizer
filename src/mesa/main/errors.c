@@ -274,6 +274,207 @@ debug_message_store(struct gl_debug_message *msg,
    }
 }
 
+static void
+debug_namespace_init(struct gl_debug_namespace *ns)
+{
+   int sev;
+
+   memset(ns, 0, sizeof(*ns));
+
+   ns->IDs = _mesa_NewHashTable();
+   assert(ns->IDs);
+
+   for (sev = 0; sev < Elements(ns->Severity); sev++)
+      make_empty_list(&ns->Severity[sev]);
+
+   /* Enable all the messages with severity HIGH or MEDIUM by default */
+   ns->Defaults[MESA_DEBUG_SEVERITY_HIGH] = GL_TRUE;
+   ns->Defaults[MESA_DEBUG_SEVERITY_MEDIUM] = GL_TRUE;
+}
+
+static void
+debug_namespace_clear_cb(GLuint key, void *data, void *userData)
+{
+}
+
+static void
+debug_namespace_clear(struct gl_debug_namespace *ns)
+{
+   int sev;
+
+   _mesa_HashDeleteAll(ns->IDs, debug_namespace_clear_cb, NULL);
+   _mesa_DeleteHashTable(ns->IDs);
+
+   for (sev = 0; sev < Elements(ns->Severity); sev++) {
+      struct simple_node *node, *tmp;
+
+      foreach_s(node, tmp, &ns->Severity[sev])
+         free(node);
+   }
+}
+
+static bool
+debug_namespace_copy(struct gl_debug_namespace *dst,
+                     const struct gl_debug_namespace *src)
+{
+   bool err = false;
+   int sev;
+
+   /* copy id settings */
+   dst->IDs = _mesa_HashClone(src->IDs);
+   if (!dst->IDs)
+      return false;
+
+   for (sev = 0; sev < Elements(dst->Severity); sev++) {
+      struct simple_node *node;
+
+      /* copy default settings for unknown ids */
+      dst->Defaults[sev] = src->Defaults[sev];
+
+      make_empty_list(&dst->Severity[sev]);
+      if (err)
+         continue;
+
+      /* copy known id severity settings */
+      foreach(node, &src->Severity[sev]) {
+         const struct gl_debug_severity *entry =
+            (const struct gl_debug_severity *) node;
+         struct gl_debug_severity *copy;
+
+         copy = malloc(sizeof(*copy));
+         if (!copy) {
+            err = true;
+            break;
+         }
+
+         copy->ID = entry->ID;
+         insert_at_tail(&dst->Severity[sev], &copy->link);
+      }
+   }
+
+   if (err) {
+      debug_namespace_clear(dst);
+      return false;
+   }
+
+   return true;
+}
+
+/**
+ * Set the state of \p id in the namespace.
+ */
+static bool
+debug_namespace_set(struct gl_debug_namespace *ns,
+                    GLuint id, bool enabled)
+{
+   uintptr_t state;
+
+   /* In addition to not being able to store zero as a value, HashTable also
+    * can't use zero as a key.
+    */
+   if (id)
+      state = (uintptr_t) _mesa_HashLookup(ns->IDs, id);
+   else
+      state = ns->ZeroID;
+
+   if (state == NOT_FOUND)
+      state = enabled ? ENABLED : DISABLED;
+   else {
+      if (enabled)
+         state |= ENABLED_BIT;
+      else
+         state &= ~ENABLED_BIT;
+   }
+
+   if (id)
+      _mesa_HashInsert(ns->IDs, id, (void *) state);
+   else
+      ns->ZeroID = state;
+
+   return true;
+}
+
+/**
+ * Set the default state of the namespace for \p severity.  When \p severity
+ * is MESA_DEBUG_SEVERITY_COUNT, the default values for all severities are
+ * updated.
+ */
+static void
+debug_namespace_set_all(struct gl_debug_namespace *ns,
+                        enum mesa_debug_severity severity,
+                        bool enabled)
+{
+   int sev, end;
+
+   if (severity >= Elements(ns->Severity)) {
+      end = severity;
+      severity = 0;
+   } else {
+      end = severity + 1;
+   }
+
+   for (sev = severity; sev < end; sev++) {
+      struct simple_node *node;
+      struct gl_debug_severity *entry;
+
+      /* change the default for IDs we've never seen before. */
+      ns->Defaults[sev] = enabled;
+
+      /* Now change the state of IDs we *have* seen... */
+      foreach(node, &ns->Severity[sev]) {
+         entry = (struct gl_debug_severity *) node;
+         debug_namespace_set(ns, entry->ID, enabled);
+      }
+   }
+}
+
+/**
+ * Get the state of \p id in the namespace.
+ */
+static bool
+debug_namespace_get(struct gl_debug_namespace *ns, GLuint id,
+                    enum mesa_debug_severity severity)
+{
+   uintptr_t state = 0;
+
+   /* In addition to not being able to store zero as a value, HashTable also
+    * can't use zero as a key.
+    */
+   if (id)
+      state = (uintptr_t) _mesa_HashLookup(ns->IDs, id);
+   else
+      state = ns->ZeroID;
+
+   /* Only do this once for each ID. This makes sure the ID exists in,
+    * at most, one list, and does not pointlessly appear multiple times.
+    */
+   if (!(state & KNOWN_SEVERITY)) {
+      struct gl_debug_severity *entry;
+
+      if (state == NOT_FOUND) {
+         if (ns->Defaults[severity])
+            state = ENABLED;
+         else
+            state = DISABLED;
+      }
+
+      entry = malloc(sizeof *entry);
+      if (entry) {
+         state |= KNOWN_SEVERITY;
+
+         if (id)
+            _mesa_HashInsert(ns->IDs, id, (void *) state);
+         else
+            ns->ZeroID = state;
+
+         entry->ID = id;
+         insert_at_tail(&ns->Severity[severity], &entry->link);
+      }
+   }
+
+   return (state & ENABLED_BIT);
+}
+
 /**
  * Allocate and initialize context debug state.
  */
@@ -281,7 +482,7 @@ static struct gl_debug_state *
 debug_create(void)
 {
    struct gl_debug_state *debug;
-   int s, t, sev;
+   int s, t;
 
    debug = CALLOC_STRUCT(gl_debug_state);
    if (!debug)
@@ -290,27 +491,11 @@ debug_create(void)
    /* Initialize state for filtering known debug messages. */
    for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
       for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-         struct gl_debug_namespace *nspace =
-            &debug->Groups[0].Namespaces[s][t];
-
-         nspace->IDs = _mesa_NewHashTable();
-         assert(nspace->IDs);
-
-         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++)
-            make_empty_list(&nspace->Severity[sev]);
-
-         /* Enable all the messages with severity HIGH or MEDIUM by default */
-         nspace->Defaults[MESA_DEBUG_SEVERITY_HIGH] = GL_TRUE;
-         nspace->Defaults[MESA_DEBUG_SEVERITY_MEDIUM] = GL_TRUE;
+         debug_namespace_init(&debug->Groups[0].Namespaces[s][t]);
       }
    }
 
    return debug;
-}
-
-static void
-debug_clear_group_cb(GLuint key, void *data, void *userData)
-{
 }
 
 /**
@@ -322,24 +507,11 @@ debug_clear_group(struct gl_debug_state *debug, GLint gstack)
    struct gl_debug_group *grp = &debug->Groups[gstack];
    enum mesa_debug_type t;
    enum mesa_debug_source s;
-   enum mesa_debug_severity sev;
 
    /* Tear down state for filtering debug messages. */
    for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
       for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-         struct gl_debug_namespace *nspace = &grp->Namespaces[s][t];
-
-         _mesa_HashDeleteAll(nspace->IDs, debug_clear_group_cb, NULL);
-         _mesa_DeleteHashTable(nspace->IDs);
-         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
-            struct simple_node *node, *tmp;
-            struct gl_debug_severity *entry;
-
-            foreach_s(node, tmp, &nspace->Severity[sev]) {
-               entry = (struct gl_debug_severity *)node;
-               free(entry);
-            }
-         }
+         debug_namespace_clear(&grp->Namespaces[s][t]);
       }
    }
 }
@@ -371,29 +543,8 @@ debug_set_message_enable(struct gl_debug_state *debug,
    const GLint gstack = debug->GroupStackDepth;
    struct gl_debug_namespace *nspace =
       &debug->Groups[gstack].Namespaces[source][type];
-   uintptr_t state;
 
-   /* In addition to not being able to store zero as a value, HashTable also
-    * can't use zero as a key.
-    */
-   if (id)
-      state = (uintptr_t)_mesa_HashLookup(nspace->IDs, id);
-   else
-      state = nspace->ZeroID;
-
-   if (state == NOT_FOUND)
-      state = enabled ? ENABLED : DISABLED;
-   else {
-      if (enabled)
-         state |= ENABLED_BIT;
-      else
-         state &= ~ENABLED_BIT;
-   }
-
-   if (id)
-      _mesa_HashInsert(nspace->IDs, id, (void*)state);
-   else
-      nspace->ZeroID = state;
+   debug_namespace_set(nspace, id, enabled);
 }
 
 /*
@@ -415,7 +566,7 @@ debug_set_message_enable_all(struct gl_debug_state *debug,
                              GLboolean enabled)
 {
    const GLint gstack = debug->GroupStackDepth;
-   int s, t, sev, smax, tmax, sevmax;
+   int s, t, smax, tmax;
 
    if (source == MESA_DEBUG_SOURCE_COUNT) {
       source = 0;
@@ -431,31 +582,11 @@ debug_set_message_enable_all(struct gl_debug_state *debug,
       tmax = type+1;
    }
 
-   if (severity == MESA_DEBUG_SEVERITY_COUNT) {
-      severity = 0;
-      sevmax = MESA_DEBUG_SEVERITY_COUNT;
-   } else {
-      sevmax = severity+1;
-   }
-
    for (s = source; s < smax; s++) {
       for (t = type; t < tmax; t++) {
          struct gl_debug_namespace *nspace =
             &debug->Groups[gstack].Namespaces[s][t];
-
-         for (sev = severity; sev < sevmax; sev++) {
-            struct simple_node *node;
-            struct gl_debug_severity *entry;
-
-            /* change the default for IDs we've never seen before. */
-            nspace->Defaults[sev] = enabled;
-
-            /* Now change the state of IDs we *have* seen... */
-            foreach(node, &nspace->Severity[sev]) {
-               entry = (struct gl_debug_severity *)node;
-               debug_set_message_enable(debug, s, t, entry->ID, enabled);
-            }
-         }
+         debug_namespace_set_all(nspace, severity, enabled);
       }
    }
 }
@@ -473,48 +604,11 @@ debug_is_message_enabled(struct gl_debug_state *debug,
    const GLint gstack = debug->GroupStackDepth;
    struct gl_debug_group *grp = &debug->Groups[gstack];
    struct gl_debug_namespace *nspace = &grp->Namespaces[source][type];
-   uintptr_t state = 0;
 
    if (!debug->DebugOutput)
       return false;
 
-   /* In addition to not being able to store zero as a value, HashTable also
-    * can't use zero as a key.
-    */
-   if (id)
-      state = (uintptr_t)_mesa_HashLookup(nspace->IDs, id);
-   else
-      state = nspace->ZeroID;
-
-   /* Only do this once for each ID. This makes sure the ID exists in,
-    * at most, one list, and does not pointlessly appear multiple times.
-    */
-   if (!(state & KNOWN_SEVERITY)) {
-      struct gl_debug_severity *entry;
-
-      if (state == NOT_FOUND) {
-         if (nspace->Defaults[severity])
-            state = ENABLED;
-         else
-            state = DISABLED;
-      }
-
-      entry = malloc(sizeof *entry);
-      if (!entry)
-         goto out;
-
-      state |= KNOWN_SEVERITY;
-
-      if (id)
-         _mesa_HashInsert(nspace->IDs, id, (void*)state);
-      else
-         nspace->ZeroID = state;
-
-      entry->ID = id;
-      insert_at_tail(&nspace->Severity[severity], &entry->link);
-   }
-out:
-   return (state & ENABLED_BIT);
+   return debug_namespace_get(nspace, id, severity);
 }
 
 /**
@@ -592,7 +686,7 @@ static void
 debug_push_group(struct gl_debug_state *debug)
 {
    const GLint gstack = debug->GroupStackDepth;
-   int s, t, sev;
+   int s, t;
 
    /* inherit the control volume of the debug group previously residing on
     * the top of the debug group stack
@@ -604,30 +698,8 @@ debug_push_group(struct gl_debug_state *debug)
          struct gl_debug_namespace *next =
             &debug->Groups[gstack + 1].Namespaces[s][t];
 
-         /* copy id settings */
-         next->IDs = _mesa_HashClone(nspace->IDs);
-
-         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
-            struct simple_node *node;
-
-            /* copy default settings for unknown ids */
-            next->Defaults[sev] = nspace->Defaults[sev];
-
-            /* copy known id severity settings */
-            make_empty_list(&next->Severity[sev]);
-            foreach(node, &nspace->Severity[sev]) {
-               const struct gl_debug_severity *entry =
-                  (const struct gl_debug_severity *) node;
-               struct gl_debug_severity *copy;
-
-               copy = malloc(sizeof *entry);
-               if (!copy)
-                  goto out;
-
-               copy->ID = entry->ID;
-               insert_at_tail(&next->Severity[sev], &copy->link);
-            }
-         }
+         if (!debug_namespace_copy(next, nspace))
+            goto out;
       }
    }
 
