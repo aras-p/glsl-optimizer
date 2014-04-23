@@ -279,6 +279,13 @@ _swrast_map_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
             continue;
          }
 
+         if (!swImage->ImageSlices) {
+            swImage->ImageSlices =
+               calloc(texture_slices(texImage), sizeof(void *));
+            if (!swImage->ImageSlices)
+               continue;
+         }
+
          for (i = 0; i < texture_slices(texImage); i++) {
             GLubyte *map;
             GLint rowStride;
@@ -324,6 +331,9 @@ _swrast_unmap_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
 
          if (swImage->Buffer)
             return;
+
+         if (!swImage->ImageSlices)
+            continue;
 
          for (i = 0; i < texture_slices(texImage); i++) {
             if (swImage->ImageSlices[i]) {
