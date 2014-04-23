@@ -1614,7 +1614,8 @@ intel_miptree_map_raw(struct brw_context *brw, struct intel_mipmap_tree *mt)
 
    drm_intel_bo *bo = mt->region->bo;
 
-   intel_batchbuffer_flush(brw);
+   if (drm_intel_bo_references(brw->batch.bo, bo))
+      intel_batchbuffer_flush(brw);
 
    if (mt->region->tiling != I915_TILING_NONE)
       brw_bo_map_gtt(brw, bo, "miptree");
