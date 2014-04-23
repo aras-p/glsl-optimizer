@@ -47,6 +47,20 @@ struct gl_debug_severity
    GLuint ID;
 };
 
+struct gl_debug_namespace
+{
+   struct _mesa_HashTable *IDs;
+   unsigned ZeroID; /* a HashTable won't take zero, so store its state here */
+   /** lists of IDs in the hash table at each severity */
+   struct simple_node Severity[MESA_DEBUG_SEVERITY_COUNT];
+
+   GLboolean Defaults[MESA_DEBUG_SEVERITY_COUNT];
+};
+
+struct gl_debug_group {
+   struct gl_debug_namespace Namespaces[MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
+};
+
 /**
  * An error, warning, or other piece of debug information for an application
  * to consume via GL_ARB_debug_output/GL_KHR_debug.
@@ -70,14 +84,6 @@ struct gl_debug_log {
    GLint NumMessages;
 };
 
-struct gl_debug_namespace
-{
-   struct _mesa_HashTable *IDs;
-   unsigned ZeroID; /* a HashTable won't take zero, so store its state here */
-   /** lists of IDs in the hash table at each severity */
-   struct simple_node Severity[MESA_DEBUG_SEVERITY_COUNT];
-};
-
 struct gl_debug_state
 {
    GLDEBUGPROC Callback;
@@ -85,12 +91,11 @@ struct gl_debug_state
    GLboolean SyncOutput;
    GLboolean DebugOutput;
 
-   struct gl_debug_log Log;
-
-   GLboolean Defaults[MAX_DEBUG_GROUP_STACK_DEPTH][MESA_DEBUG_SEVERITY_COUNT][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
-   struct gl_debug_namespace Namespaces[MAX_DEBUG_GROUP_STACK_DEPTH][MESA_DEBUG_SOURCE_COUNT][MESA_DEBUG_TYPE_COUNT];
-   struct gl_debug_message DebugGroupMsgs[MAX_DEBUG_GROUP_STACK_DEPTH];
+   struct gl_debug_group Groups[MAX_DEBUG_GROUP_STACK_DEPTH];
+   struct gl_debug_message GroupMessages[MAX_DEBUG_GROUP_STACK_DEPTH];
    GLint GroupStackDepth;
+
+   struct gl_debug_log Log;
 };
 
 static char out_of_memory[] = "Debugging error: out of memory";
@@ -282,23 +287,21 @@ debug_create(void)
    if (!debug)
       return NULL;
 
-   /* Enable all the messages with severity HIGH or MEDIUM by default. */
-   memset(debug->Defaults[0][MESA_DEBUG_SEVERITY_HIGH], GL_TRUE,
-         sizeof debug->Defaults[0][MESA_DEBUG_SEVERITY_HIGH]);
-   memset(debug->Defaults[0][MESA_DEBUG_SEVERITY_MEDIUM], GL_TRUE,
-         sizeof debug->Defaults[0][MESA_DEBUG_SEVERITY_MEDIUM]);
-   memset(debug->Defaults[0][MESA_DEBUG_SEVERITY_LOW], GL_FALSE,
-         sizeof debug->Defaults[0][MESA_DEBUG_SEVERITY_LOW]);
-
    /* Initialize state for filtering known debug messages. */
    for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
       for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-         debug->Namespaces[0][s][t].IDs = _mesa_NewHashTable();
-         assert(debug->Namespaces[0][s][t].IDs);
+         struct gl_debug_namespace *nspace =
+            &debug->Groups[0].Namespaces[s][t];
 
-         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++) {
-            make_empty_list(&debug->Namespaces[0][s][t].Severity[sev]);
-         }
+         nspace->IDs = _mesa_NewHashTable();
+         assert(nspace->IDs);
+
+         for (sev = 0; sev < MESA_DEBUG_SEVERITY_COUNT; sev++)
+            make_empty_list(&nspace->Severity[sev]);
+
+         /* Enable all the messages with severity HIGH or MEDIUM by default */
+         nspace->Defaults[MESA_DEBUG_SEVERITY_HIGH] = GL_TRUE;
+         nspace->Defaults[MESA_DEBUG_SEVERITY_MEDIUM] = GL_TRUE;
       }
    }
 
@@ -316,6 +319,7 @@ debug_clear_group_cb(GLuint key, void *data, void *userData)
 static void
 debug_clear_group(struct gl_debug_state *debug, GLint gstack)
 {
+   struct gl_debug_group *grp = &debug->Groups[gstack];
    enum mesa_debug_type t;
    enum mesa_debug_source s;
    enum mesa_debug_severity sev;
@@ -323,7 +327,7 @@ debug_clear_group(struct gl_debug_state *debug, GLint gstack)
    /* Tear down state for filtering debug messages. */
    for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
       for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
-         struct gl_debug_namespace *nspace = &debug->Namespaces[gstack][s][t];
+         struct gl_debug_namespace *nspace = &grp->Namespaces[s][t];
 
          _mesa_HashDeleteAll(nspace->IDs, debug_clear_group_cb, NULL);
          _mesa_DeleteHashTable(nspace->IDs);
@@ -364,9 +368,9 @@ debug_set_message_enable(struct gl_debug_state *debug,
                          enum mesa_debug_type type,
                          GLuint id, GLboolean enabled)
 {
-   GLint gstack = debug->GroupStackDepth;
+   const GLint gstack = debug->GroupStackDepth;
    struct gl_debug_namespace *nspace =
-      &debug->Namespaces[gstack][source][type];
+      &debug->Groups[gstack].Namespaces[source][type];
    uintptr_t state;
 
    /* In addition to not being able to store zero as a value, HashTable also
@@ -434,17 +438,20 @@ debug_set_message_enable_all(struct gl_debug_state *debug,
       sevmax = severity+1;
    }
 
-   for (sev = severity; sev < sevmax; sev++) {
-      for (s = source; s < smax; s++) {
-         for (t = type; t < tmax; t++) {
+   for (s = source; s < smax; s++) {
+      for (t = type; t < tmax; t++) {
+         struct gl_debug_namespace *nspace =
+            &debug->Groups[gstack].Namespaces[s][t];
+
+         for (sev = severity; sev < sevmax; sev++) {
             struct simple_node *node;
             struct gl_debug_severity *entry;
 
             /* change the default for IDs we've never seen before. */
-            debug->Defaults[gstack][sev][s][t] = enabled;
+            nspace->Defaults[sev] = enabled;
 
             /* Now change the state of IDs we *have* seen... */
-            foreach(node, &debug->Namespaces[gstack][s][t].Severity[sev]) {
+            foreach(node, &nspace->Severity[sev]) {
                entry = (struct gl_debug_severity *)node;
                debug_set_message_enable(debug, s, t, entry->ID, enabled);
             }
@@ -464,8 +471,8 @@ debug_is_message_enabled(struct gl_debug_state *debug,
                          enum mesa_debug_severity severity)
 {
    const GLint gstack = debug->GroupStackDepth;
-   struct gl_debug_namespace *nspace =
-      &debug->Namespaces[gstack][source][type];
+   struct gl_debug_group *grp = &debug->Groups[gstack];
+   struct gl_debug_namespace *nspace = &grp->Namespaces[source][type];
    uintptr_t state = 0;
 
    if (!debug->DebugOutput)
@@ -486,7 +493,7 @@ debug_is_message_enabled(struct gl_debug_state *debug,
       struct gl_debug_severity *entry;
 
       if (state == NOT_FOUND) {
-         if (debug->Defaults[gstack][severity][source][type])
+         if (nspace->Defaults[severity])
             state = ENABLED;
          else
             state = DISABLED;
@@ -578,7 +585,7 @@ debug_delete_messages(struct gl_debug_state *debug, unsigned count)
 static struct gl_debug_message *
 debug_get_group_message(struct gl_debug_state *debug)
 {
-   return &debug->DebugGroupMsgs[debug->GroupStackDepth];
+   return &debug->GroupMessages[debug->GroupStackDepth];
 }
 
 static void
@@ -593,9 +600,9 @@ debug_push_group(struct gl_debug_state *debug)
    for (s = 0; s < MESA_DEBUG_SOURCE_COUNT; s++) {
       for (t = 0; t < MESA_DEBUG_TYPE_COUNT; t++) {
          const struct gl_debug_namespace *nspace =
-            &debug->Namespaces[gstack][s][t];
+            &debug->Groups[gstack].Namespaces[s][t];
          struct gl_debug_namespace *next =
-            &debug->Namespaces[gstack + 1][s][t];
+            &debug->Groups[gstack + 1].Namespaces[s][t];
 
          /* copy id settings */
          next->IDs = _mesa_HashClone(nspace->IDs);
@@ -604,8 +611,7 @@ debug_push_group(struct gl_debug_state *debug)
             struct simple_node *node;
 
             /* copy default settings for unknown ids */
-            debug->Defaults[gstack + 1][sev][s][t] =
-               debug->Defaults[gstack][sev][s][t];
+            next->Defaults[sev] = nspace->Defaults[sev];
 
             /* copy known id severity settings */
             make_empty_list(&next->Severity[sev]);
