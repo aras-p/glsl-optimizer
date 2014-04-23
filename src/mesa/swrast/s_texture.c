@@ -269,7 +269,7 @@ _swrast_map_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
       for (level = texObj->BaseLevel; level < MAX_TEXTURE_LEVELS; level++) {
          struct gl_texture_image *texImage = texObj->Image[face][level];
          struct swrast_texture_image *swImage = swrast_texture_image(texImage);
-         unsigned int i;
+         unsigned int i, slices;
 
          if (!texImage)
             continue;
@@ -289,7 +289,9 @@ _swrast_map_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
                continue;
          }
 
-         for (i = 0; i < texture_slices(texImage); i++) {
+         slices = texture_slices(texImage);
+
+         for (i = 0; i < slices; i++) {
             GLubyte *map;
             GLint rowStride;
 
@@ -327,7 +329,7 @@ _swrast_unmap_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
       for (level = texObj->BaseLevel; level < MAX_TEXTURE_LEVELS; level++) {
          struct gl_texture_image *texImage = texObj->Image[face][level];
          struct swrast_texture_image *swImage = swrast_texture_image(texImage);
-         unsigned int i;
+         unsigned int i, slices;
 
          if (!texImage)
             continue;
@@ -338,7 +340,9 @@ _swrast_unmap_texture(struct gl_context *ctx, struct gl_texture_object *texObj)
          if (!swImage->ImageSlices)
             continue;
 
-         for (i = 0; i < texture_slices(texImage); i++) {
+         slices = texture_slices(texImage);
+
+         for (i = 0; i < slices; i++) {
             if (swImage->ImageSlices[i]) {
                ctx->Driver.UnmapTextureImage(ctx, texImage, i);
                swImage->ImageSlices[i] = NULL;
