@@ -579,6 +579,7 @@ update_texture_state( struct gl_context *ctx )
       texUnit->_ReallyEnabled = 0x0;
 
       if (enabledTargets == 0x0) {
+         _mesa_reference_texobj(&texUnit->_Current, NULL);
          /* neither vertex nor fragment processing uses this unit */
          continue;
       }
@@ -629,6 +630,7 @@ update_texture_state( struct gl_context *ctx )
          }
          else {
             /* fixed-function: texture unit is really disabled */
+            _mesa_reference_texobj(&texUnit->_Current, NULL);
             continue;
          }
       }
