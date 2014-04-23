@@ -40,7 +40,7 @@
 #include "teximage.h"
 #include "texstate.h"
 #include "mtypes.h"
-
+#include "bitset.h"
 
 
 /**
@@ -515,6 +515,154 @@ update_texgen(struct gl_context *ctx)
    }
 }
 
+static void
+update_program_texture_state(struct gl_context *ctx, struct gl_program **prog,
+                             BITSET_WORD *enabled_texture_units)
+{
+   GLuint unit;
+   int i;
+
+   for (unit = 0; unit < ctx->Const.MaxCombinedTextureImageUnits; unit++) {
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+      GLbitfield enabledTargets = 0x0;
+      GLuint texIndex;
+
+      for (i = 0; i < MESA_SHADER_STAGES; i++) {
+         if (prog[i])
+            enabledTargets |= prog[i]->TexturesUsed[unit];
+      }
+
+      if (enabledTargets == 0x0) {
+         /* neither vertex nor fragment processing uses this unit */
+         continue;
+      }
+
+      for (texIndex = 0; texIndex < NUM_TEXTURE_TARGETS; texIndex++) {
+         if (enabledTargets & (1 << texIndex)) {
+            struct gl_texture_object *texObj = texUnit->CurrentTex[texIndex];
+            struct gl_sampler_object *sampler = texUnit->Sampler ?
+               texUnit->Sampler : &texObj->Sampler;
+
+            if (!_mesa_is_texture_complete(texObj, sampler)) {
+               _mesa_test_texobj_completeness(ctx, texObj);
+            }
+            if (_mesa_is_texture_complete(texObj, sampler)) {
+               _mesa_reference_texobj(&texUnit->_Current, texObj);
+               break;
+            }
+         }
+      }
+
+      if (texIndex == NUM_TEXTURE_TARGETS) {
+         /* If we get here it means the shader is expecting a texture
+          * object, but there isn't one (or it's incomplete).  Use the
+          * fallback texture.
+          */
+         struct gl_texture_object *texObj;
+         gl_texture_index texTarget;
+
+         texTarget = (gl_texture_index) (ffs(enabledTargets) - 1);
+         texObj = _mesa_get_fallback_texture(ctx, texTarget);
+
+         assert(texObj);
+         if (!texObj) {
+            /* invalid fallback texture: don't enable the texture unit */
+            continue;
+         }
+
+         _mesa_reference_texobj(&texUnit->_Current, texObj);
+      }
+
+      /* if we get here, we know this texture unit is enabled */
+      BITSET_SET(enabled_texture_units, unit);
+      ctx->Texture._MaxEnabledTexImageUnit =
+         MAX2(ctx->Texture._MaxEnabledTexImageUnit, (int)unit);
+   }
+
+   if (prog[MESA_SHADER_FRAGMENT]) {
+      const GLuint coordMask = (1 << MAX_TEXTURE_COORD_UNITS) - 1;
+      ctx->Texture._EnabledCoordUnits |=
+         (prog[MESA_SHADER_FRAGMENT]->InputsRead >> VARYING_SLOT_TEX0) &
+         coordMask;
+   }
+}
+
+static void
+update_ff_texture_state(struct gl_context *ctx,
+                        BITSET_WORD *enabled_texture_units)
+{
+   int unit;
+
+   for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+      GLuint texIndex;
+
+      if (texUnit->Enabled == 0x0)
+         continue;
+
+      /* If a shader already dictated what texture target was used for this
+       * unit, just go along with it.
+       */
+      if (BITSET_TEST(enabled_texture_units, unit))
+         continue;
+
+      /* From the GL 4.4 compat specification, section 16.2 ("Texture Application"):
+       *
+       *     "Texturing is enabled or disabled using the generic Enable and
+       *      Disable commands, respectively, with the symbolic constants
+       *      TEXTURE_1D, TEXTURE_2D, TEXTURE_RECTANGLE, TEXTURE_3D, or
+       *      TEXTURE_CUBE_MAP to enable the one-, two-, rectangular,
+       *      three-dimensional, or cube map texture, respectively. If more
+       *      than one of these textures is enabled, the first one enabled
+       *      from the following list is used:
+       *
+       *      • cube map texture
+       *      • three-dimensional texture
+       *      • rectangular texture
+       *      • two-dimensional texture
+       *      • one-dimensional texture"
+       *
+       * Note that the TEXTURE_x_INDEX values are in high to low priority.
+       * Also:
+       *
+       *     "If a texture unit is disabled or has an invalid or incomplete
+       *      texture (as defined in section 8.17) bound to it, then blending
+       *      is disabled for that texture unit. If the texture environment
+       *      for a given enabled texture unit references a disabled texture
+       *      unit, or an invalid or incomplete texture that is bound to
+       *      another unit, then the results of texture blending are
+       *      undefined."
+       */
+      for (texIndex = 0; texIndex < NUM_TEXTURE_TARGETS; texIndex++) {
+         if (texUnit->Enabled & (1 << texIndex)) {
+            struct gl_texture_object *texObj = texUnit->CurrentTex[texIndex];
+            struct gl_sampler_object *sampler = texUnit->Sampler ?
+               texUnit->Sampler : &texObj->Sampler;
+
+            if (!_mesa_is_texture_complete(texObj, sampler)) {
+               _mesa_test_texobj_completeness(ctx, texObj);
+            }
+            if (_mesa_is_texture_complete(texObj, sampler)) {
+               _mesa_reference_texobj(&texUnit->_Current, texObj);
+               break;
+            }
+         }
+      }
+
+      if (texIndex == NUM_TEXTURE_TARGETS)
+         continue;
+
+      /* if we get here, we know this texture unit is enabled */
+      BITSET_SET(enabled_texture_units, unit);
+      ctx->Texture._MaxEnabledTexImageUnit =
+         MAX2(ctx->Texture._MaxEnabledTexImageUnit, (int)unit);
+
+      ctx->Texture._EnabledCoordUnits |= 1 << unit;
+
+      update_tex_combine(ctx, texUnit);
+   }
+}
+
 /**
  * \note This routine refers to derived texture matrix values to
  * compute the ENABLE_TEXMAT flags, but is only called on
@@ -526,10 +674,10 @@ update_texgen(struct gl_context *ctx)
 static void
 update_texture_state( struct gl_context *ctx )
 {
-   GLuint unit;
    struct gl_program *prog[MESA_SHADER_STAGES];
-   GLbitfield enabledFragUnits = 0x0;
    int i;
+   int old_max_unit = ctx->Texture._MaxEnabledTexImageUnit;
+   BITSET_DECLARE(enabled_texture_units, MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
    for (i = 0; i < MESA_SHADER_STAGES; i++) {
       if (ctx->_Shader->CurrentProgram[i] &&
@@ -550,107 +698,29 @@ update_texture_state( struct gl_context *ctx )
    ctx->Texture._TexMatEnabled = 0x0;
    ctx->Texture._TexGenEnabled = 0x0;
    ctx->Texture._MaxEnabledTexImageUnit = -1;
+   ctx->Texture._EnabledCoordUnits = 0x0;
 
-   /*
-    * Update texture unit state.
+   memset(&enabled_texture_units, 0, sizeof(enabled_texture_units));
+
+   /* First, walk over our programs pulling in all the textures for them.
+    * Programs dictate specific texture targets to be enabled, and for a draw
+    * call to be valid they can't conflict about which texture targets are
+    * used.
     */
-   for (unit = 0; unit < ctx->Const.MaxCombinedTextureImageUnits; unit++) {
-      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-      GLbitfield enabledTargetsByStage[MESA_SHADER_STAGES];
-      GLbitfield enabledTargets = 0x0;
-      GLuint texIndex;
+   update_program_texture_state(ctx, prog, enabled_texture_units);
 
-      /* Get the bitmask of texture target enables.
-       * enableBits will be a mask of the TEXTURE_*_BIT flags indicating
-       * which texture targets are enabled (fixed function) or referenced
-       * by a fragment program/program.  When multiple flags are set, we'll
-       * settle on the one with highest priority (see below).
-       */
-      for (i = 0; i < MESA_SHADER_STAGES; i++) {
-         if (prog[i])
-            enabledTargetsByStage[i] = prog[i]->TexturesUsed[unit];
-         else if (i == MESA_SHADER_FRAGMENT)
-            enabledTargetsByStage[i] = texUnit->Enabled;
-         else
-            enabledTargetsByStage[i] = 0;
-         enabledTargets |= enabledTargetsByStage[i];
-      }
+   /* Also pull in any textures necessary for fixed function fragment shading.
+    */
+   if (!prog[MESA_SHADER_FRAGMENT])
+      update_ff_texture_state(ctx, enabled_texture_units);
 
-      if (enabledTargets == 0x0) {
-         _mesa_reference_texobj(&texUnit->_Current, NULL);
-         /* neither vertex nor fragment processing uses this unit */
-         continue;
-      }
-
-      /* Look for the highest priority texture target that's enabled (or used
-       * by the vert/frag shaders) and "complete".  That's the one we'll use
-       * for texturing.
-       *
-       * Note that the TEXTURE_x_INDEX values are in high to low priority.
-       */
-      for (texIndex = 0; texIndex < NUM_TEXTURE_TARGETS; texIndex++) {
-         if (enabledTargets & (1 << texIndex)) {
-            struct gl_texture_object *texObj = texUnit->CurrentTex[texIndex];
-            struct gl_sampler_object *sampler = texUnit->Sampler ?
-               texUnit->Sampler : &texObj->Sampler;
-
-            if (!_mesa_is_texture_complete(texObj, sampler)) {
-               _mesa_test_texobj_completeness(ctx, texObj);
-            }
-            if (_mesa_is_texture_complete(texObj, sampler)) {
-               _mesa_reference_texobj(&texUnit->_Current, texObj);
-               break;
-            }
-         }
-      }
-
-      if (texIndex == NUM_TEXTURE_TARGETS) {
-         if (prog[MESA_SHADER_FRAGMENT]) {
-            /* If we get here it means the shader is expecting a texture
-             * object, but there isn't one (or it's incomplete).  Use the
-             * fallback texture.
-             */
-            struct gl_texture_object *texObj;
-            gl_texture_index texTarget;
-
-            texTarget = (gl_texture_index) (ffs(enabledTargets) - 1);
-            texObj = _mesa_get_fallback_texture(ctx, texTarget);
-            
-            assert(texObj);
-            if (!texObj) {
-               /* invalid fallback texture: don't enable the texture unit */
-               continue;
-            }
-
-            _mesa_reference_texobj(&texUnit->_Current, texObj);
-         }
-         else {
-            /* fixed-function: texture unit is really disabled */
-            _mesa_reference_texobj(&texUnit->_Current, NULL);
-            continue;
-         }
-      }
-
-      /* if we get here, we know this texture unit is enabled */
-      ctx->Texture._MaxEnabledTexImageUnit = unit;
-
-      if (enabledTargetsByStage[MESA_SHADER_FRAGMENT])
-         enabledFragUnits |= (1 << unit);
-
-      if (!prog[MESA_SHADER_FRAGMENT])
-         update_tex_combine(ctx, texUnit);
+   /* Now, clear out the _Current of any disabled texture units. */
+   for (i = 0; i <= ctx->Texture._MaxEnabledTexImageUnit; i++) {
+      if (!BITSET_TEST(enabled_texture_units, i))
+         _mesa_reference_texobj(&ctx->Texture.Unit[i]._Current, NULL);
    }
-
-
-   /* Determine which texture coordinate sets are actually needed */
-   if (prog[MESA_SHADER_FRAGMENT]) {
-      const GLuint coordMask = (1 << MAX_TEXTURE_COORD_UNITS) - 1;
-      ctx->Texture._EnabledCoordUnits
-         = (prog[MESA_SHADER_FRAGMENT]->InputsRead >> VARYING_SLOT_TEX0) &
-         coordMask;
-   }
-   else {
-      ctx->Texture._EnabledCoordUnits = enabledFragUnits;
+   for (i = ctx->Texture._MaxEnabledTexImageUnit + 1; i <= old_max_unit; i++) {
+      _mesa_reference_texobj(&ctx->Texture.Unit[i]._Current, NULL);
    }
 
    if (!prog[MESA_SHADER_FRAGMENT] || !prog[MESA_SHADER_VERTEX])
