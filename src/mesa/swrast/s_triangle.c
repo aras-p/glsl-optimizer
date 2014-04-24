@@ -1072,7 +1072,7 @@ _swrast_choose_triangle( struct gl_context *ctx )
              && !_swrast_use_fragment_program(ctx)
              && !ctx->ATIFragmentShader._Enabled
              && ctx->Texture._MaxEnabledTexImageUnit == 0
-             && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
+             && ctx->Texture.Unit[0]._Current->Target == GL_TEXTURE_2D
              && samp->WrapS == GL_REPEAT
              && samp->WrapT == GL_REPEAT
              && texObj2D->_Swizzle == SWIZZLE_NOOP
