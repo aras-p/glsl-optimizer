@@ -803,6 +803,7 @@ static void si_state_draw(struct si_context *sctx,
 
 		si_pm4_add_bo(pm4, (struct r600_resource *)ib->buffer, RADEON_USAGE_READ,
 			      RADEON_PRIO_MIN);
+		va += info->start * ib->index_size;
 		si_cmd_draw_index_2(pm4, max_size, va, info->count,
 				    V_0287F0_DI_SRC_SEL_DMA,
 				    sctx->b.predicate_drawing);
@@ -917,30 +918,43 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		pipe_resource_reference(&ib.buffer, sctx->index_buffer.buffer);
 		ib.user_buffer = sctx->index_buffer.user_buffer;
 		ib.index_size = sctx->index_buffer.index_size;
-		ib.offset = sctx->index_buffer.offset + info->start * ib.index_size;
+		ib.offset = sctx->index_buffer.offset;
 
 		/* Translate or upload, if needed. */
 		if (ib.index_size == 1) {
 			struct pipe_resource *out_buffer = NULL;
-			unsigned out_offset;
+			unsigned out_offset, start, count, start_offset;
 			void *ptr;
 
-			u_upload_alloc(sctx->b.uploader, 0, info->count * 2,
+			start = info->start;
+			count = info->count;
+			start_offset = start * ib.index_size;
+
+			u_upload_alloc(sctx->b.uploader, start_offset, count * 2,
 				       &out_offset, &out_buffer, &ptr);
 
-			util_shorten_ubyte_elts_to_userptr(
-						&sctx->b.b, &ib, 0, ib.offset, info->count, ptr);
+			util_shorten_ubyte_elts_to_userptr(&sctx->b.b, &ib, 0,
+							   ib.offset + start_offset,
+							   count, ptr);
 
 			pipe_resource_reference(&ib.buffer, NULL);
 			ib.user_buffer = NULL;
 			ib.buffer = out_buffer;
-			ib.offset = out_offset;
+			/* info->start will be added by the drawing code */
+			ib.offset = out_offset - start_offset;
 			ib.index_size = 2;
-		}
+		} else if (ib.user_buffer && !ib.buffer) {
+			unsigned start, count, start_offset;
 
-		if (ib.user_buffer && !ib.buffer) {
-			u_upload_data(sctx->b.uploader, 0, info->count * ib.index_size,
-				      ib.user_buffer, &ib.offset, &ib.buffer);
+			start = info->start;
+			count = info->count;
+			start_offset = start * ib.index_size;
+
+			u_upload_data(sctx->b.uploader, start_offset, count * ib.index_size,
+				      (char*)ib.user_buffer + start_offset,
+				      &ib.offset, &ib.buffer);
+			/* info->start will be added by the drawing code */
+			ib.offset -= start_offset;
 		}
 	}
 
