@@ -829,11 +829,9 @@ void Source::scanProperty(const struct tgsi_full_property *prop)
    case TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES:
       info->prop.gp.maxVertices = prop->u[0].Data;
       break;
-#if 0
-   case TGSI_PROPERTY_GS_INSTANCE_COUNT:
+   case TGSI_PROPERTY_GS_INVOCATIONS:
       info->prop.gp.instanceCount = prop->u[0].Data;
       break;
-#endif
    case TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS:
       info->prop.fp.separateFragData = TRUE;
       break;
