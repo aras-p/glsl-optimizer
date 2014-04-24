@@ -783,15 +783,18 @@ static void si_state_draw(struct si_context *sctx,
 	}
 	si_pm4_cmd_end(pm4, sctx->b.predicate_drawing);
 
-	si_pm4_cmd_begin(pm4, PKT3_NUM_INSTANCES);
-	si_pm4_cmd_add(pm4, info->instance_count);
-	si_pm4_cmd_end(pm4, sctx->b.predicate_drawing);
-
 	if (!info->indirect) {
+		si_pm4_cmd_begin(pm4, PKT3_NUM_INSTANCES);
+		si_pm4_cmd_add(pm4, info->instance_count);
+		si_pm4_cmd_end(pm4, sctx->b.predicate_drawing);
+
 		si_pm4_set_reg(pm4, sh_base_reg + SI_SGPR_BASE_VERTEX * 4,
 			       info->indexed ? info->index_bias : info->start);
 		si_pm4_set_reg(pm4, sh_base_reg + SI_SGPR_START_INSTANCE * 4,
 			       info->start_instance);
+	} else {
+		si_pm4_add_bo(pm4, (struct r600_resource *)info->indirect,
+			      RADEON_USAGE_READ, RADEON_PRIO_MIN);
 	}
 
 	if (info->indexed) {
@@ -803,14 +806,35 @@ static void si_state_draw(struct si_context *sctx,
 
 		si_pm4_add_bo(pm4, (struct r600_resource *)ib->buffer, RADEON_USAGE_READ,
 			      RADEON_PRIO_MIN);
-		va += info->start * ib->index_size;
-		si_cmd_draw_index_2(pm4, max_size, va, info->count,
-				    V_0287F0_DI_SRC_SEL_DMA,
-				    sctx->b.predicate_drawing);
+
+		if (info->indirect) {
+			uint64_t indirect_va = r600_resource_va(&sctx->screen->b.b,
+								info->indirect);
+			si_cmd_draw_index_indirect(pm4, indirect_va, va, max_size,
+						   info->indirect_offset,
+						   sh_base_reg + SI_SGPR_BASE_VERTEX * 4,
+						   sh_base_reg + SI_SGPR_START_INSTANCE * 4,
+						   sctx->b.predicate_drawing);
+		} else {
+			va += info->start * ib->index_size;
+			si_cmd_draw_index_2(pm4, max_size, va, info->count,
+					    V_0287F0_DI_SRC_SEL_DMA,
+					    sctx->b.predicate_drawing);
+		}
 	} else {
-		uint32_t initiator = V_0287F0_DI_SRC_SEL_AUTO_INDEX;
-		initiator |= S_0287F0_USE_OPAQUE(!!info->count_from_stream_output);
-		si_cmd_draw_index_auto(pm4, info->count, initiator, sctx->b.predicate_drawing);
+		if (info->indirect) {
+			uint64_t indirect_va = r600_resource_va(&sctx->screen->b.b,
+								info->indirect);
+			si_cmd_draw_indirect(pm4, indirect_va, info->indirect_offset,
+					     sh_base_reg + SI_SGPR_BASE_VERTEX * 4,
+					     sh_base_reg + SI_SGPR_START_INSTANCE * 4,
+					     sctx->b.predicate_drawing);
+		} else {
+			si_cmd_draw_index_auto(pm4, info->count,
+					       V_0287F0_DI_SRC_SEL_AUTO_INDEX |
+					       S_0287F0_USE_OPAQUE(!!info->count_from_stream_output),
+					       sctx->b.predicate_drawing);
+		}
 	}
 
 	si_pm4_set_state(sctx, draw, pm4);
@@ -898,13 +922,32 @@ void si_emit_cache_flush(struct r600_common_context *sctx, struct r600_atom *ato
 
 const struct r600_atom si_atom_cache_flush = { si_emit_cache_flush, 13 }; /* number of CS dwords */
 
+static void si_get_draw_start_count(struct si_context *sctx,
+				    const struct pipe_draw_info *info,
+				    unsigned *start, unsigned *count)
+{
+	if (info->indirect) {
+		struct r600_resource *indirect =
+			(struct r600_resource*)info->indirect;
+		int *data = r600_buffer_map_sync_with_rings(&sctx->b,
+					indirect, PIPE_TRANSFER_READ);
+                data += info->indirect_offset/sizeof(int);
+		*start = data[2];
+		*count = data[0];
+	} else {
+		*start = info->start;
+		*count = info->count;
+	}
+}
+
 void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct pipe_index_buffer ib = {};
 	uint32_t i;
 
-	if (!info->count && (info->indexed || !info->count_from_stream_output))
+	if (!info->count && !info->indirect &&
+	    (info->indexed || !info->count_from_stream_output))
 		return;
 
 	if (!sctx->ps_shader || !sctx->vs_shader)
@@ -926,8 +969,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 			unsigned out_offset, start, count, start_offset;
 			void *ptr;
 
-			start = info->start;
-			count = info->count;
+			si_get_draw_start_count(sctx, info, &start, &count);
 			start_offset = start * ib.index_size;
 
 			u_upload_alloc(sctx->b.uploader, start_offset, count * 2,
@@ -946,8 +988,7 @@ void si_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		} else if (ib.user_buffer && !ib.buffer) {
 			unsigned start, count, start_offset;
 
-			start = info->start;
-			count = info->count;
+			si_get_draw_start_count(sctx, info, &start, &count);
 			start_offset = start * ib.index_size;
 
 			u_upload_data(sctx->b.uploader, start_offset, count * ib.index_size,

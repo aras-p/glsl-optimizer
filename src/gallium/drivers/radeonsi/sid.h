@@ -70,18 +70,27 @@
 #define R600_TEXEL_PITCH_ALIGNMENT_MASK        0x7
 
 #define PKT3_NOP                               0x10
+#define PKT3_SET_BASE                          0x11
+#define PKT3_CLEAR_STATE                       0x12
+#define PKT3_INDEX_BUFFER_SIZE                 0x13
 #define PKT3_DISPATCH_DIRECT                   0x15
 #define PKT3_DISPATCH_INDIRECT                 0x16
 #define PKT3_OCCLUSION_QUERY                   0x1F /* new for CIK */
 #define PKT3_SET_PREDICATION                   0x20
 #define PKT3_COND_EXEC                         0x22
 #define PKT3_PRED_EXEC                         0x23
+#define PKT3_DRAW_INDIRECT                     0x24
+#define PKT3_DRAW_INDEX_INDIRECT               0x25
+#define PKT3_INDEX_BASE                        0x26
 #define PKT3_DRAW_INDEX_2                      0x27
 #define PKT3_CONTEXT_CONTROL                   0x28
 #define PKT3_INDEX_TYPE                        0x2A
+#define PKT3_DRAW_INDIRECT_MULTI               0x2C
 #define PKT3_DRAW_INDEX_AUTO                   0x2D
 #define PKT3_DRAW_INDEX_IMMD                   0x2E /* not on CIK */
 #define PKT3_NUM_INSTANCES                     0x2F
+#define PKT3_DRAW_INDEX_MULTI_AUTO             0x30
+#define PKT3_INDIRECT_BUFFER                   0x32
 #define PKT3_STRMOUT_BUFFER_UPDATE             0x34
 #define PKT3_DRAW_INDEX_OFFSET_2               0x35
 #define PKT3_DRAW_PREAMBLE                     0x36 /* new on CIK, required on GFX7.2 and later */
@@ -99,12 +108,12 @@
 #define PKT3_WRITE_DATA_ENGINE_SEL_ME              0
 #define PKT3_WRITE_DATA_ENGINE_SEL_PFP             1
 #define PKT3_WRITE_DATA_ENGINE_SEL_CE              2
+#define PKT3_DRAW_INDEX_INDIRECT_MULTI         0x38
 #define PKT3_MEM_SEMAPHORE                     0x39
 #define PKT3_MPEG_INDEX                        0x3A /* not on CIK */
 #define PKT3_WAIT_REG_MEM                      0x3C
 #define		WAIT_REG_MEM_EQUAL		3
 #define PKT3_MEM_WRITE                         0x3D /* not on CIK */
-#define PKT3_INDIRECT_BUFFER                   0x32
 #define PKT3_COPY_DATA			       0x40
 #define		COPY_DATA_SRC_SEL(x)		((x) & 0xf)
 #define			COPY_DATA_REG		0

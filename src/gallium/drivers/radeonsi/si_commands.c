@@ -57,6 +57,59 @@ void si_cmd_draw_index_auto(struct si_pm4_state *pm4, uint32_t count,
 	si_pm4_cmd_end(pm4, predicate);
 }
 
+void si_cmd_draw_indirect(struct si_pm4_state *pm4, uint64_t indirect_va,
+			  uint32_t indirect_offset, uint32_t base_vtx_loc,
+			  uint32_t start_inst_loc, bool predicate)
+{
+	assert(indirect_va % 8 == 0);
+	assert(indirect_offset % 4 == 0);
+
+	si_pm4_cmd_begin(pm4, PKT3_SET_BASE);
+	si_pm4_cmd_add(pm4, 1);
+	si_pm4_cmd_add(pm4, indirect_va);
+	si_pm4_cmd_add(pm4, indirect_va >> 32);
+	si_pm4_cmd_end(pm4, predicate);
+
+	si_pm4_cmd_begin(pm4, PKT3_DRAW_INDIRECT);
+	si_pm4_cmd_add(pm4, indirect_offset);
+	si_pm4_cmd_add(pm4, (base_vtx_loc - SI_SH_REG_OFFSET) >> 2);
+	si_pm4_cmd_add(pm4, (start_inst_loc - SI_SH_REG_OFFSET) >> 2);
+	si_pm4_cmd_add(pm4, V_0287F0_DI_SRC_SEL_AUTO_INDEX);
+	si_pm4_cmd_end(pm4, predicate);
+}
+
+void si_cmd_draw_index_indirect(struct si_pm4_state *pm4, uint64_t indirect_va,
+				uint64_t index_va, uint32_t index_max_size,
+				uint32_t indirect_offset, uint32_t base_vtx_loc,
+				uint32_t start_inst_loc, bool predicate)
+{
+	assert(indirect_va % 8 == 0);
+	assert(index_va % 2 == 0);
+	assert(indirect_offset % 4 == 0);
+
+	si_pm4_cmd_begin(pm4, PKT3_SET_BASE);
+	si_pm4_cmd_add(pm4, 1);
+	si_pm4_cmd_add(pm4, indirect_va);
+	si_pm4_cmd_add(pm4, indirect_va >> 32);
+	si_pm4_cmd_end(pm4, predicate);
+
+	si_pm4_cmd_begin(pm4, PKT3_INDEX_BASE);
+	si_pm4_cmd_add(pm4, index_va);
+	si_pm4_cmd_add(pm4, index_va >> 32);
+	si_pm4_cmd_end(pm4, predicate);
+
+	si_pm4_cmd_begin(pm4, PKT3_INDEX_BUFFER_SIZE);
+	si_pm4_cmd_add(pm4, index_max_size);
+	si_pm4_cmd_end(pm4, predicate);
+
+	si_pm4_cmd_begin(pm4, PKT3_DRAW_INDEX_INDIRECT);
+	si_pm4_cmd_add(pm4, indirect_offset);
+	si_pm4_cmd_add(pm4, (base_vtx_loc - SI_SH_REG_OFFSET) >> 2);
+	si_pm4_cmd_add(pm4, (start_inst_loc - SI_SH_REG_OFFSET) >> 2);
+	si_pm4_cmd_add(pm4, V_0287F0_DI_SRC_SEL_DMA);
+	si_pm4_cmd_end(pm4, predicate);
+}
+
 void si_cmd_surface_sync(struct si_pm4_state *pm4, uint32_t cp_coher_cntl)
 {
 	if (pm4->chip_class >= CIK) {
