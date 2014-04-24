@@ -1744,6 +1744,19 @@ gallium_require_drm_loader() {
     fi
 }
 
+require_egl_drm() {
+    case "$with_egl_platforms" in
+        *drm*)
+            ;;
+         *)
+            AC_MSG_ERROR([--with-egl-platforms=drm is required to build the $1 driver.])
+            ;;
+    esac
+    if test "x$enable_gbm" != xyes; then
+            AC_MSG_ERROR([--enable-gbm is required to build the $1 driver.])
+    fi
+}
+
 radeon_llvm_check() {
     if test "x$enable_gallium_llvm" != "xyes"; then
         AC_MSG_ERROR([--enable-gallium-llvm is required when building $1])
@@ -1835,6 +1848,7 @@ if test -n "$with_gallium_drivers"; then
             gallium_require_drm_loader
             GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS radeonsi"
             radeon_llvm_check "radeonsi"
+            require_egl_drm "radeonsi"
             gallium_check_st "radeon/drm" "radeonsi/dri" "" "" "radeonsi/vdpau" "radeonsi/omx"
             DRICOMMON_NEED_LIBDRM=yes
             ;;
