@@ -147,11 +147,10 @@ update_framebuffer_state( struct st_context *st )
    }
 #endif
 
-   /* _mesa_test_framebuffer_completeness refuses framebuffers with no
-    * attachments, so this should never happen.
-    */
-   assert(framebuffer->width  != UINT_MAX);
-   assert(framebuffer->height != UINT_MAX);
+   if (framebuffer->width == UINT_MAX)
+      framebuffer->width = 0;
+   if (framebuffer->height == UINT_MAX)
+      framebuffer->height = 0;
 
    cso_set_framebuffer(st->cso_context, framebuffer);
 }
