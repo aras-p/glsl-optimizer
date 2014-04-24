@@ -331,30 +331,30 @@ i830UpdateTextureState(struct intel_context *intel)
    GLuint i;
 
    for (i = 0; i < I830_TEX_UNITS && ok; i++) {
-      switch (intel->ctx.Texture.Unit[i]._ReallyEnabled) {
-      case TEXTURE_1D_BIT:
-      case TEXTURE_2D_BIT:
-      case TEXTURE_CUBE_BIT:
-         ok = i830_update_tex_unit(intel, i, TEXCOORDS_ARE_NORMAL);
-         break;
-      case TEXTURE_RECT_BIT:
-         ok = i830_update_tex_unit(intel, i, TEXCOORDS_ARE_IN_TEXELUNITS);
-         break;
-      case 0:{
-	 struct i830_context *i830 = i830_context(&intel->ctx);
-         if (i830->state.active & I830_UPLOAD_TEX(i)) 
+      if (intel->ctx.Texture.Unit[i]._Current) {
+         switch (intel->ctx.Texture.Unit[i]._Current->Target) {
+         case GL_TEXTURE_1D:
+         case GL_TEXTURE_2D:
+         case GL_TEXTURE_CUBE_MAP:
+            ok = i830_update_tex_unit(intel, i, TEXCOORDS_ARE_NORMAL);
+            break;
+         case GL_TEXTURE_RECTANGLE:
+            ok = i830_update_tex_unit(intel, i, TEXCOORDS_ARE_IN_TEXELUNITS);
+            break;
+         case GL_TEXTURE_3D:
+         default:
+            ok = false;
+            break;
+         }
+      } else {
+         struct i830_context *i830 = i830_context(&intel->ctx);
+         if (i830->state.active & I830_UPLOAD_TEX(i))
             I830_ACTIVESTATE(i830, I830_UPLOAD_TEX(i), false);
 
-	 if (i830->state.tex_buffer[i] != NULL) {
-	    drm_intel_bo_unreference(i830->state.tex_buffer[i]);
-	    i830->state.tex_buffer[i] = NULL;
-	 }
-         break;
-      }
-      case TEXTURE_3D_BIT:
-      default:
-         ok = false;
-         break;
+         if (i830->state.tex_buffer[i] != NULL) {
+            drm_intel_bo_unreference(i830->state.tex_buffer[i]);
+            i830->state.tex_buffer[i] = NULL;
+         }
       }
    }
 

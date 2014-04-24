@@ -417,31 +417,30 @@ i915UpdateTextureState(struct intel_context *intel)
    GLuint i;
 
    for (i = 0; i < I915_TEX_UNITS && ok; i++) {
-      switch (intel->ctx.Texture.Unit[i]._ReallyEnabled) {
-      case TEXTURE_1D_BIT:
-      case TEXTURE_2D_BIT:
-      case TEXTURE_CUBE_BIT:
-      case TEXTURE_3D_BIT:
-         ok = i915_update_tex_unit(intel, i, SS3_NORMALIZED_COORDS);
-         break;
-      case TEXTURE_RECT_BIT:
-         ok = i915_update_tex_unit(intel, i, 0);
-         break;
-      case 0:{
-            struct i915_context *i915 = i915_context(&intel->ctx);
-            if (i915->state.active & I915_UPLOAD_TEX(i))
-               I915_ACTIVESTATE(i915, I915_UPLOAD_TEX(i), false);
-
-	    if (i915->state.tex_buffer[i] != NULL) {
-	       drm_intel_bo_unreference(i915->state.tex_buffer[i]);
-	       i915->state.tex_buffer[i] = NULL;
-	    }
-
+      if (intel->ctx.Texture.Unit[i]._Current) {
+         switch (intel->ctx.Texture.Unit[i]._Current->Target) {
+         case GL_TEXTURE_1D:
+         case GL_TEXTURE_2D:
+         case GL_TEXTURE_CUBE_MAP:
+         case GL_TEXTURE_3D:
+            ok = i915_update_tex_unit(intel, i, SS3_NORMALIZED_COORDS);
+            break;
+         case GL_TEXTURE_RECTANGLE:
+            ok = i915_update_tex_unit(intel, i, 0);
+            break;
+         default:
+            ok = false;
             break;
          }
-      default:
-         ok = false;
-         break;
+      } else {
+         struct i915_context *i915 = i915_context(&intel->ctx);
+         if (i915->state.active & I915_UPLOAD_TEX(i))
+            I915_ACTIVESTATE(i915, I915_UPLOAD_TEX(i), false);
+
+         if (i915->state.tex_buffer[i] != NULL) {
+            drm_intel_bo_unreference(i915->state.tex_buffer[i]);
+            i915->state.tex_buffer[i] = NULL;
+         }
       }
    }
 
