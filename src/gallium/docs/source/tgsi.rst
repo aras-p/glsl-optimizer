@@ -2765,6 +2765,14 @@ distance outputs.
 This is useful for APIs that don't have UCPs and where clip distances written
 by a shader cannot be disabled.
 
+GS_INVOCATIONS
+""""""""""""""
+
+Specifies the number of times a geometry shader should be executed for each
+input primitive. Each invocation will have a different
+TGSI_SEMANTIC_INVOCATIONID system value set. If not specified, assumed to
+be 1.
+
 
 Texture Sampling and Texture Formats
 ------------------------------------

@@ -1468,6 +1468,14 @@ static void emit_decls( struct ureg_program *ureg )
                     ureg->property_gs_max_vertices);
    }
 
+   if (ureg->property_gs_invocations != ~0) {
+      assert(ureg->processor == TGSI_PROCESSOR_GEOMETRY);
+
+      emit_property(ureg,
+                    TGSI_PROPERTY_GS_INVOCATIONS,
+                    ureg->property_gs_invocations);
+   }
+
    if (ureg->property_fs_coord_origin) {
       assert(ureg->processor == TGSI_PROCESSOR_FRAGMENT);
 
@@ -1757,6 +1765,7 @@ struct ureg_program *ureg_create( unsigned processor )
    ureg->property_gs_input_prim = ~0;
    ureg->property_gs_output_prim = ~0;
    ureg->property_gs_max_vertices = ~0;
+   ureg->property_gs_invocations = ~0;
 
    ureg->free_temps = util_bitmask_create();
    if (ureg->free_temps == NULL)
