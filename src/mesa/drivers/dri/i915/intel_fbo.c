@@ -165,17 +165,10 @@ intel_unmap_renderbuffer(struct gl_context *ctx,
    intel_miptree_unmap(intel, irb->mt, irb->mt_level, irb->mt_layer);
 }
 
-/**
- * Called via glRenderbufferStorageEXT() to set the format and allocate
- * storage for a user-created renderbuffer.
- */
-static GLboolean
-intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
-                                 GLenum internalFormat,
-                                 GLuint width, GLuint height)
+static mesa_format
+intel_renderbuffer_format(struct gl_context * ctx, GLenum internalFormat)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 
    switch (internalFormat) {
    default:
@@ -184,19 +177,28 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
        * except they're less useful because you can't texture with
        * them.
        */
-      rb->Format = intel->ctx.Driver.ChooseTextureFormat(ctx, GL_TEXTURE_2D,
-							 internalFormat,
-							 GL_NONE, GL_NONE);
-      break;
+      return intel->ctx.Driver.ChooseTextureFormat(ctx, GL_TEXTURE_2D,
+                                                   internalFormat,
+                                                   GL_NONE, GL_NONE);
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
    case GL_STENCIL_INDEX4_EXT:
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
       /* These aren't actual texture formats, so force them here. */
-      rb->Format = MESA_FORMAT_Z24_UNORM_S8_UINT;
-      break;
+      return MESA_FORMAT_Z24_UNORM_S8_UINT;
    }
+}
+
+static GLboolean
+intel_alloc_private_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
+                                         GLenum internalFormat,
+                                         GLuint width, GLuint height)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+
+   assert(rb->Format != MESA_FORMAT_NONE);
 
    rb->Width = width;
    rb->Height = height;
@@ -219,6 +221,18 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    return true;
 }
 
+/**
+ * Called via glRenderbufferStorageEXT() to set the format and allocate
+ * storage for a user-created renderbuffer.
+ */
+static GLboolean
+intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
+                                 GLenum internalFormat,
+                                 GLuint width, GLuint height)
+{
+   rb->Format = intel_renderbuffer_format(ctx, internalFormat);
+   return intel_alloc_private_renderbuffer_storage(ctx, rb, internalFormat, width, height);
+}
 
 static void
 intel_image_target_renderbuffer_storage(struct gl_context *ctx,
@@ -343,7 +357,7 @@ intel_create_private_renderbuffer(mesa_format format)
    struct intel_renderbuffer *irb;
 
    irb = intel_create_renderbuffer(format);
-   irb->Base.Base.AllocStorage = intel_alloc_renderbuffer_storage;
+   irb->Base.Base.AllocStorage = intel_alloc_private_renderbuffer_storage;
 
    return irb;
 }
