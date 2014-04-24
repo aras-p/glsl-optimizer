@@ -1683,7 +1683,10 @@ Converter::handleTEX(Value *dst[4], int R, int S, int L, int C, int Dx, int Dy)
    if (C == 0x0f)
       C = 0x00 | MAX2(tgt.getArgCount(), 2); // guess DC src
 
-   if (tgt.isShadow())
+   if (tgsi.getOpcode() == TGSI_OPCODE_TG4 &&
+       tgt == TEX_TARGET_CUBE_ARRAY_SHADOW)
+      shd = fetchSrc(1, 0);
+   else if (tgt.isShadow())
       shd = fetchSrc(C >> 4, C & 3);
 
    if (texi->op == OP_TXD) {
