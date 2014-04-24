@@ -725,7 +725,7 @@ static void lp_exec_default(struct lp_exec_mask *mask,
        * default (or could do switch analysis at switch start time instead).
        */
       unsigned opcode = bld_base->instructions[bld_base->pc - 1].Instruction.Opcode;
-      boolean ft_into = (opcode != TGSI_OPCODE_BRK ||
+      boolean ft_into = (opcode != TGSI_OPCODE_BRK &&
                          opcode != TGSI_OPCODE_SWITCH);
       /*
        * If it is not last statement and there was no fallthrough into it,
