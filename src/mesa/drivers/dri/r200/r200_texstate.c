@@ -296,12 +296,6 @@ static GLboolean r200UpdateTextureEnv( struct gl_context *ctx, int unit, int slo
       ~(R200_TXA_DOT_ALPHA | R200_TXA_SCALE_MASK | R200_TXA_OUTPUT_REG_MASK |
 	R200_TXA_TFACTOR_SEL_MASK | R200_TXA_TFACTOR1_SEL_MASK);
 
-   /* texUnit->_Current can be NULL if and only if the texture unit is
-    * not actually enabled.
-    */
-   assert( (texUnit->_ReallyEnabled == 0)
-	   || (texUnit->_Current != NULL) );
-
    if ( R200_DEBUG & RADEON_TEXTURE ) {
       fprintf( stderr, "%s( %p, %d )\n", __FUNCTION__, (void *)ctx, unit );
    }
@@ -320,7 +314,7 @@ static GLboolean r200UpdateTextureEnv( struct gl_context *ctx, int unit, int slo
 			(unit << R200_TXA_TFACTOR_SEL_SHIFT) |
 			(replaceargs << R200_TXA_TFACTOR1_SEL_SHIFT);
 
-   if ( !texUnit->_ReallyEnabled ) {
+   if ( !texUnit->_Current ) {
       assert( unit == 0);
       color_combine = R200_TXC_ARG_A_ZERO | R200_TXC_ARG_B_ZERO
 	  | R200_TXC_ARG_C_DIFFUSE_COLOR | R200_TXC_OP_MADD;
@@ -840,7 +834,7 @@ static GLboolean r200UpdateAllTexEnv( struct gl_context *ctx )
 
    /* find highest used unit */
    for ( j = 0; j < R200_MAX_TEXTURE_UNITS; j++) {
-      if (ctx->Texture.Unit[j]._ReallyEnabled) {
+      if (ctx->Texture.Unit[j]._Current) {
 	 maxunitused = j;
       }
    }
@@ -869,7 +863,7 @@ static GLboolean r200UpdateAllTexEnv( struct gl_context *ctx )
 
          nextunit[j] = currentnext;
 
-         if (!texUnit->_ReallyEnabled) {
+         if (!texUnit->_Current) {
 	 /* the not enabled stages are referenced "indirectly",
             must not cut off the lower stages */
 	    stageref[j] = REF_COLOR | REF_ALPHA;
@@ -953,7 +947,7 @@ static GLboolean r200UpdateAllTexEnv( struct gl_context *ctx )
    i = 0;
    while ((i <= maxunitused) && (i >= 0)) {
       /* only output instruction if the results are referenced */
-      if (ctx->Texture.Unit[i]._ReallyEnabled && stageref[i+1]) {
+      if (ctx->Texture.Unit[i]._Current && stageref[i+1]) {
          GLuint replaceunit = i;
 	 /* try to optimize GL_REPLACE away (only one level deep though) */
 	 if (	(ctx->Texture.Unit[i]._CurrentCombine->ModeRGB == GL_REPLACE) &&

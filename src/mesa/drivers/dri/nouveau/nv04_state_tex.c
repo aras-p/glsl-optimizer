@@ -65,7 +65,7 @@ nv04_emit_tex_obj(struct gl_context *ctx, int emit)
 	struct nouveau_surface *s;
 	uint32_t format = 0xa0, filter = 0x1010;
 
-	if (ctx->Texture.Unit[i]._ReallyEnabled) {
+	if (ctx->Texture.Unit[i]._Current) {
 		struct gl_texture_object *t = ctx->Texture.Unit[i]._Current;
 		struct gl_texture_image *ti = t->Image[0][t->BaseLevel];
 		const struct gl_sampler_object *sa = _mesa_get_samplerobj(ctx, i);

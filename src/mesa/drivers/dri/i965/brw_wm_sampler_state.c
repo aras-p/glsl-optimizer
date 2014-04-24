@@ -395,7 +395,7 @@ brw_upload_sampler_state_table(struct brw_context *brw,
    for (unsigned s = 0; s < sampler_count; s++) {
       if (SamplersUsed & (1 << s)) {
          const unsigned unit = prog->SamplerUnits[s];
-         if (ctx->Texture.Unit[unit]._ReallyEnabled)
+         if (ctx->Texture.Unit[unit]._Current)
             brw_update_sampler_state(brw, unit, s, &samplers[s],
                                      *sst_offset, &sdc_offset[s]);
       }

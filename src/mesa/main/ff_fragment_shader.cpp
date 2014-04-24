@@ -430,7 +430,7 @@ static GLuint make_state_key( struct gl_context *ctx,  struct state_key *key )
       const struct gl_sampler_object *samp;
       GLenum format;
 
-      if (!texUnit->_ReallyEnabled || !texUnit->Enabled)
+      if (!texUnit->_Current || !texUnit->Enabled)
          continue;
 
       samp = _mesa_get_samplerobj(ctx, i);

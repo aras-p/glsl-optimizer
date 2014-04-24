@@ -2167,7 +2167,7 @@ static void update_texturematrix( struct gl_context *ctx )
    rmesa->TexMatCompSel = 0;
 
    for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++) {
-      if (!ctx->Texture.Unit[unit]._ReallyEnabled)
+      if (!ctx->Texture.Unit[unit]._Current)
 	 continue;
 
       if (ctx->TextureMatrixStack[unit].Top->type != MATRIX_IDENTITY) {
@@ -2239,7 +2239,7 @@ static GLboolean r200ValidateBuffers(struct gl_context *ctx)
    for (i = 0; i < ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits; ++i) {
       radeonTexObj *t;
 
-      if (!ctx->Texture.Unit[i]._ReallyEnabled)
+      if (!ctx->Texture.Unit[i]._Current)
 	 continue;
 
       t = radeon_tex_obj(ctx->Texture.Unit[i]._Current);

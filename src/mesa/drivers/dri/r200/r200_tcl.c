@@ -412,7 +412,7 @@ static GLboolean r200_run_tcl_render( struct gl_context *ctx,
       }
 
       for (i = 0 ; i < ctx->Const.MaxTextureUnits; i++) {
-	 if (ctx->Texture.Unit[i]._ReallyEnabled) {
+	 if (ctx->Texture.Unit[i]._Current) {
 	    if (rmesa->TexGenNeedNormals[i]) {
 	       map_rev_fixed[2] = VERT_ATTRIB_NORMAL;
 	    }

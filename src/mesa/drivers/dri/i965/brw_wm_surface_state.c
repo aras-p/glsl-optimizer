@@ -778,7 +778,7 @@ update_stage_texture_surfaces(struct brw_context *brw,
          const unsigned unit = prog->SamplerUnits[s];
 
          /* _NEW_TEXTURE */
-         if (ctx->Texture.Unit[unit]._ReallyEnabled) {
+         if (ctx->Texture.Unit[unit]._Current) {
             brw->vtbl.update_texture_surface(ctx, unit, surf_offset + s, for_gather);
          }
       }

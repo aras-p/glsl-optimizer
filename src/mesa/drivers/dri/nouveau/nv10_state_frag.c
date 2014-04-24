@@ -304,7 +304,7 @@ nv10_get_general_combiner(struct gl_context *ctx, int i,
 {
 	struct combiner_state rc_a, rc_c;
 
-	if (ctx->Texture.Unit[i]._ReallyEnabled) {
+	if (ctx->Texture.Unit[i]._Current) {
 		INIT_COMBINER(RGB, ctx, &rc_c, i);
 
 		if (rc_c.mode == GL_DOT3_RGBA)

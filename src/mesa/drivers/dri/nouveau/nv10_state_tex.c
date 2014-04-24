@@ -165,7 +165,7 @@ nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 
 	PUSH_RESET(push, BUFCTX_TEX(i));
 
-	if (!ctx->Texture.Unit[i]._ReallyEnabled) {
+	if (!ctx->Texture.Unit[i]._Current) {
 		BEGIN_NV04(push, NV10_3D(TEX_ENABLE(i)), 1);
 		PUSH_DATA (push, 0);
 		return;

@@ -317,7 +317,7 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
    /* Resolve depth buffer and render cache of each enabled texture. */
    int maxEnabledUnit = ctx->Texture._MaxEnabledTexImageUnit;
    for (int i = 0; i <= maxEnabledUnit; i++) {
-      if (!ctx->Texture.Unit[i]._ReallyEnabled)
+      if (!ctx->Texture.Unit[i]._Current)
 	 continue;
       tex_obj = intel_texture_object(ctx->Texture.Unit[i]._Current);
       if (!tex_obj || !tex_obj->mt)

@@ -923,7 +923,7 @@ _swrast_print_vertex( struct gl_context *ctx, const SWvertex *v )
                   v->attrib[VARYING_SLOT_POS][3]);
 
       for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
-	 if (ctx->Texture.Unit[i]._ReallyEnabled)
+	 if (ctx->Texture.Unit[i]._Current)
 	    _mesa_debug(ctx, "texcoord[%d] %f %f %f %f\n", i,
                         v->attrib[VARYING_SLOT_TEX0 + i][0],
                         v->attrib[VARYING_SLOT_TEX0 + i][1],

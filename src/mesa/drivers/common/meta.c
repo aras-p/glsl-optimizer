@@ -3265,7 +3265,7 @@ _mesa_meta_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
          GLfloat s, t, s1, t1;
          GLuint tw, th;
 
-         if (!ctx->Texture.Unit[i]._ReallyEnabled) {
+         if (!ctx->Texture.Unit[i]._Current) {
             GLuint j;
             for (j = 0; j < 4; j++) {
                verts[j].st[i][0] = 0.0f;

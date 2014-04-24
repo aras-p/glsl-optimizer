@@ -386,7 +386,7 @@ static GLboolean radeon_run_tcl_render( struct gl_context *ctx,
    }
 
    for (i = 0 ; i < ctx->Const.MaxTextureUnits; i++) {
-      if (ctx->Texture.Unit[i]._ReallyEnabled) {
+      if (ctx->Texture.Unit[i]._Current) {
       /* TODO: probably should not emit texture coords when texgen is enabled */
 	 if (rmesa->TexGenNeedNormals[i]) {
 	    inputs |= VERT_BIT_NORMAL;

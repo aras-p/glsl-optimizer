@@ -53,9 +53,9 @@ nv04_context_engine(struct gl_context *ctx)
 	struct nouveau_pushbuf *push = context_push(ctx);
 	struct nouveau_object *fahrenheit;
 
-	if ((ctx->Texture.Unit[0]._ReallyEnabled &&
+	if ((ctx->Texture.Unit[0]._Current &&
 	     texunit_needs_combiners(&ctx->Texture.Unit[0])) ||
-	    ctx->Texture.Unit[1]._ReallyEnabled ||
+	    ctx->Texture.Unit[1]._Current ||
 	    ctx->Stencil.Enabled ||
 	    !(ctx->Color.ColorMask[0][RCOMP] &&
 	      ctx->Color.ColorMask[0][GCOMP] &&

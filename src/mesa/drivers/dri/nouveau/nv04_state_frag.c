@@ -257,7 +257,7 @@ nv04_emit_tex_env(struct gl_context *ctx, int emit)
 	struct combiner_state rc_a = {}, rc_c = {};
 
 	/* Compute the new combiner state. */
-	if (ctx->Texture.Unit[i]._ReallyEnabled) {
+	if (ctx->Texture.Unit[i]._Current) {
 		INIT_COMBINER(A, ctx, &rc_a, i);
 		setup_combiner(&rc_a);
 

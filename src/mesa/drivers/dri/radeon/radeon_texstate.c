@@ -257,12 +257,6 @@ static GLboolean radeonUpdateTextureEnv( struct gl_context *ctx, int unit )
          | RADEON_SCALE_1X | RADEON_CLAMP_TX;
 
 
-   /* texUnit->_Current can be NULL if and only if the texture unit is
-    * not actually enabled.
-    */
-   assert( (texUnit->_ReallyEnabled == 0)
-	   || (texUnit->_Current != NULL) );
-
    if ( RADEON_DEBUG & RADEON_TEXTURE ) {
       fprintf( stderr, "%s( %p, %d )\n", __FUNCTION__, (void *)ctx, unit );
    }
@@ -279,7 +273,7 @@ static GLboolean radeonUpdateTextureEnv( struct gl_context *ctx, int unit )
    rmesa->state.texture.unit[unit].format = 0;
    rmesa->state.texture.unit[unit].envMode = 0;
 
-   if ( !texUnit->_ReallyEnabled ) {
+   if ( !texUnit->_Current ) {
       color_combine = color_combine0;
       alpha_combine = alpha_combine0;
    }
@@ -1082,13 +1076,14 @@ static GLboolean radeonUpdateTextureUnit( struct gl_context *ctx, int unit )
 {
    r100ContextPtr rmesa = R100_CONTEXT(ctx);
 
-   if (ctx->Texture.Unit[unit]._ReallyEnabled & TEXTURE_3D_BIT) {
+   if (ctx->Texture.Unit[unit]._Current &&
+       ctx->Texture.Unit[unit]._Current->Target == GL_TEXTURE_3D) {
      disable_tex_obj_state(rmesa, unit);
      rmesa->state.texture.unit[unit].texobj = NULL;
      return GL_FALSE;
    }
 
-   if (!ctx->Texture.Unit[unit]._ReallyEnabled) {
+   if (!ctx->Texture.Unit[unit]._Current) {
      /* disable the unit */
      disable_tex_obj_state(rmesa, unit);
      rmesa->state.texture.unit[unit].texobj = NULL;

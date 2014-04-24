@@ -51,7 +51,7 @@ void brw_validate_textures( struct brw_context *brw )
    for (i = 0; i <= maxEnabledUnit; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
 
-      if (texUnit->_ReallyEnabled) {
+      if (texUnit->_Current) {
 	 intel_finalize_mipmap_tree(brw, i);
       }
    }

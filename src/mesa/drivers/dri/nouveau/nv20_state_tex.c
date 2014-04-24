@@ -169,7 +169,7 @@ nv20_emit_tex_obj(struct gl_context *ctx, int emit)
 
 	PUSH_RESET(push, BUFCTX_TEX(i));
 
-	if (!ctx->Texture.Unit[i]._ReallyEnabled) {
+	if (!ctx->Texture.Unit[i]._Current) {
 		BEGIN_NV04(push, NV20_3D(TEX_ENABLE(i)), 1);
 		PUSH_DATA (push, 0);
 
@@ -263,7 +263,7 @@ nv20_emit_tex_shader(struct gl_context *ctx, int emit)
 	int i;
 
 	for (i = 0; i < NV20_TEXTURE_UNITS; i++) {
-		if (!ctx->Texture.Unit[i]._ReallyEnabled)
+		if (!ctx->Texture.Unit[i]._Current)
 			continue;
 
 		tx_shader_op |= NV20_3D_TEX_SHADER_OP_TX0_TEXTURE_2D << 5 * i;

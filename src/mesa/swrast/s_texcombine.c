@@ -189,7 +189,7 @@ texture_combine( struct gl_context *ctx, GLuint unit,
             {
                const GLuint srcUnit = srcRGB - GL_TEXTURE0;
                ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
-               if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
+               if (!ctx->Texture.Unit[srcUnit]._Current)
                   goto end;
                argRGB[term] = get_texel_array(swrast, srcUnit);
             }
@@ -279,7 +279,7 @@ texture_combine( struct gl_context *ctx, GLuint unit,
             {
                const GLuint srcUnit = srcA - GL_TEXTURE0;
                ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
-               if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
+               if (!ctx->Texture.Unit[srcUnit]._Current)
                   goto end;
                argA[term] = get_texel_array(swrast, srcUnit);
             }
@@ -657,7 +657,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
-      if (texUnit->_ReallyEnabled &&
+      if (texUnit->_Current &&
          texUnit->_CurrentCombine->ModeRGB == GL_BUMP_ENVMAP_ATI) {
          const GLfloat (*texcoords)[4] = (const GLfloat (*)[4])
             span->array->attribs[VARYING_SLOT_TEX0 + unit];
@@ -723,7 +723,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
     */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
       const struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-      if (texUnit->_ReallyEnabled &&
+      if (texUnit->_Current &&
           texUnit->_CurrentCombine->ModeRGB != GL_BUMP_ENVMAP_ATI) {
          const GLfloat (*texcoords)[4] = (const GLfloat (*)[4])
             span->array->attribs[VARYING_SLOT_TEX0 + unit];
@@ -787,7 +787,7 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
     * We modify the span->color.rgba values.
     */
    for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
-      if (ctx->Texture.Unit[unit]._ReallyEnabled)
+      if (ctx->Texture.Unit[unit]._Current)
          texture_combine(ctx, unit, primary_rgba, swrast->TexelBuffer, span);
    }
 

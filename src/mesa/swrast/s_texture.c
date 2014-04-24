@@ -362,11 +362,10 @@ _swrast_map_textures(struct gl_context *ctx)
    int unit;
 
    for (unit = 0; unit <= ctx->Texture._MaxEnabledTexImageUnit; unit++) {
-      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-         struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
+      struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
 
+      if (texObj)
          _swrast_map_texture(ctx, texObj);
-      }
    }
 }
 
@@ -379,10 +378,9 @@ _swrast_unmap_textures(struct gl_context *ctx)
 {
    int unit;
    for (unit = 0; unit <= ctx->Texture._MaxEnabledTexImageUnit; unit++) {
-      if (ctx->Texture.Unit[unit]._ReallyEnabled) {
-         struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
+      struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
 
+      if (texObj)
          _swrast_unmap_texture(ctx, texObj);
-      }
    }
 }

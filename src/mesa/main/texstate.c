@@ -371,7 +371,7 @@ update_texture_matrices( struct gl_context *ctx )
       if (_math_matrix_is_dirty(ctx->TextureMatrixStack[u].Top)) {
 	 _math_matrix_analyse( ctx->TextureMatrixStack[u].Top );
 
-	 if (ctx->Texture.Unit[u]._ReallyEnabled &&
+	 if (ctx->Texture.Unit[u]._Current &&
 	     ctx->TextureMatrixStack[u].Top->type != MATRIX_IDENTITY)
 	    ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(u);
       }

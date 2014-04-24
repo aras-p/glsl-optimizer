@@ -446,7 +446,7 @@ i830EmitTextureBlend(struct i830_context *i830)
 
    if (ctx->Texture._MaxEnabledTexImageUnit != -1) {
       for (unit = 0; unit < ctx->Texture._MaxEnabledTexImageUnit; unit++)
-         if (ctx->Texture.Unit[unit]._ReallyEnabled)
+         if (ctx->Texture.Unit[unit]._Current)
             emit_texblend(i830, unit, blendunit++,
                           unit == ctx->Texture._MaxEnabledTexImageUnit);
    } else {
