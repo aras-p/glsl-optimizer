@@ -170,7 +170,8 @@ struct tgsi_declaration_interp
 #define TGSI_SEMANTIC_SAMPLEID   24
 #define TGSI_SEMANTIC_SAMPLEPOS  25
 #define TGSI_SEMANTIC_SAMPLEMASK 26
-#define TGSI_SEMANTIC_COUNT      27 /**< number of semantic values */
+#define TGSI_SEMANTIC_INVOCATIONID 27
+#define TGSI_SEMANTIC_COUNT      28 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {

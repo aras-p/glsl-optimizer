@@ -84,7 +84,8 @@ const char *tgsi_semantic_names[TGSI_SEMANTIC_COUNT] =
    "CULLDIST",
    "SAMPLEID",
    "SAMPLEPOS",
-   "SAMPLEMASK"
+   "SAMPLEMASK",
+   "INVOCATIONID",
 };
 
 const char *tgsi_texture_names[TGSI_TEXTURE_COUNT] =

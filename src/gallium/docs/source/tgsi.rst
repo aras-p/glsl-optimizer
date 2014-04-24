@@ -2641,6 +2641,12 @@ For fragment shaders, this semantic label indicates that an output contains
 the sample mask used to disable further sample processing
 (i.e. gl_SampleMask). Only the X value is used, up to 32x MS.
 
+TGSI_SEMANTIC_INVOCATIONID
+""""""""""""""""""""""""""
+
+For geometry shaders, this semantic label indicates that a system value
+contains the current invocation id (i.e. gl_InvocationID). Only the X value is
+used.
 
 Declaration Interpolate
 ^^^^^^^^^^^^^^^^^^^^^^^
