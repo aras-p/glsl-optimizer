@@ -114,19 +114,21 @@ intel_init_texture_formats(struct gl_context *ctx)
    ctx->TextureFormatSupported[MESA_FORMAT_L8A8_UNORM] = true;
 
    /* Depth and stencil */
-   ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_S8_UINT] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_X8_UINT] = true;
+   if (intel->gen == 3) {
+      ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_S8_UINT] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_Z24_UNORM_X8_UINT] = true;
 
-   /*
-    * This was disabled in initial FBO enabling to avoid combinations
-    * of depth+stencil that wouldn't work together.  We since decided
-    * that it was OK, since it's up to the app to come up with the
-    * combo that actually works, so this can probably be re-enabled.
-    */
-   /*
-   ctx->TextureFormatSupported[MESA_FORMAT_Z_UNORM16] = true;
-   ctx->TextureFormatSupported[MESA_FORMAT_Z24] = true;
-   */
+      /*
+       * This was disabled in initial FBO enabling to avoid combinations
+       * of depth+stencil that wouldn't work together.  We since decided
+       * that it was OK, since it's up to the app to come up with the
+       * combo that actually works, so this can probably be re-enabled.
+       */
+      /*
+      ctx->TextureFormatSupported[MESA_FORMAT_Z_UNORM16] = true;
+      ctx->TextureFormatSupported[MESA_FORMAT_Z24] = true;
+      */
+   }
 
    /* ctx->Extensions.MESA_ycbcr_texture */
    ctx->TextureFormatSupported[MESA_FORMAT_YCBCR] = true;
