@@ -1736,6 +1736,8 @@ Converter::handleTEX(Value *dst[4], int R, int S, int L, int C, int Dx, int Dy)
 
    if (tgsi.getOpcode() == TGSI_OPCODE_SAMPLE_C_LZ)
       texi->tex.levelZero = true;
+   if (tgsi.getOpcode() == TGSI_OPCODE_TG4 && !tgt.isShadow())
+      texi->tex.gatherComp = tgsi.getSrc(1).getValueU32(0, info);
 
    for (s = 0; s < tgsi.getNumTexOffsets(); ++s) {
       for (c = 0; c < 3; ++c) {
