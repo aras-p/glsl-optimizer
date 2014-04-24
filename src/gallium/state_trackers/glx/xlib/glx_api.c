@@ -2724,26 +2724,8 @@ glXCreateContextAttribsARB(Display *dpy, GLXFBConfig config,
    }
 
    /* check version (generate BadMatch if bad) */
-   switch (majorVersion) {
-   case 1:
-      if (minorVersion < 0 || minorVersion > 5)
-         return NULL;
-      break;
-   case 2:
-      if (minorVersion < 0 || minorVersion > 1)
-         return NULL;
-      break;
-   case 3:
-      if (minorVersion < 0 || minorVersion > 2)
-         return NULL;
-      break;
-   case 4:
-      if (minorVersion < 0 || minorVersion > 0)
-         return NULL;
-      break;
-   default:
+   if (majorVersion < 0 || minorVersion < 0)
       return NULL;
-   }
 
    if ((contextFlags & GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB) &&
        majorVersion < 3)
