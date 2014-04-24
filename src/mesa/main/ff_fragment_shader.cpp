@@ -42,6 +42,7 @@ extern "C" {
 #include "program/prog_statevars.h"
 #include "program/programopt.h"
 #include "texenvprogram.h"
+#include "texobj.h"
 }
 #include "main/uniforms.h"
 #include "../glsl/glsl_types.h"
@@ -290,18 +291,6 @@ need_saturate( GLuint mode )
    }
 }
 
-
-
-/**
- * Translate TEXTURE_x_BIT to TEXTURE_x_INDEX.
- */
-static GLuint translate_tex_src_bit( GLbitfield bit )
-{
-   ASSERT(bit);
-   return ffs(bit) - 1;
-}
-
-
 #define VERT_BIT_TEX_ANY    (0xff << VERT_ATTRIB_TEX0)
 
 /**
@@ -441,8 +430,8 @@ static GLuint make_state_key( struct gl_context *ctx,  struct state_key *key )
       key->nr_enabled_units = i + 1;
       inputs_referenced |= VARYING_BIT_TEX(i);
 
-      key->unit[i].source_index =
-         translate_tex_src_bit(texUnit->_ReallyEnabled);
+      key->unit[i].source_index = _mesa_tex_target_to_index(ctx,
+                                                            texObj->Target);
 
       key->unit[i].shadow =
          ((samp->CompareMode == GL_COMPARE_R_TO_TEXTURE) &&
