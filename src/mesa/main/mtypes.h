@@ -1086,7 +1086,6 @@ typedef enum
 
 /**
  * Bit flags for each type of texture object
- * Used for Texture.Unit[]._ReallyEnabled flags.
  */
 /*@{*/
 #define TEXTURE_2D_MULTISAMPLE_BIT (1 << TEXTURE_2D_MULTISAMPLE_INDEX)
@@ -1328,7 +1327,6 @@ struct gl_texgen
 struct gl_texture_unit
 {
    GLbitfield Enabled;          /**< bitmask of TEXTURE_*_BIT flags */
-   GLbitfield _ReallyEnabled;   /**< 0 or exactly one of TEXTURE_*_BIT flags */
 
    GLenum EnvMode;              /**< GL_MODULATE, GL_DECAL, GL_BLEND, etc. */
    GLclampf EnvColor[4];
@@ -1401,7 +1399,7 @@ struct gl_texture_attrib
    /** Bitwise-OR of all Texture.Unit[i]._GenFlags */
    GLbitfield _GenFlags;
 
-   /** Upper bound on _ReallyEnabled texunits. */
+   /** Largest index of a texture unit with _Current != NULL. */
    GLint _MaxEnabledTexImageUnit;
 };
 

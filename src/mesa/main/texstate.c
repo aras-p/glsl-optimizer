@@ -576,8 +576,6 @@ update_texture_state( struct gl_context *ctx )
          enabledTargets |= enabledTargetsByStage[i];
       }
 
-      texUnit->_ReallyEnabled = 0x0;
-
       if (enabledTargets == 0x0) {
          _mesa_reference_texobj(&texUnit->_Current, NULL);
          /* neither vertex nor fragment processing uses this unit */
@@ -600,14 +598,13 @@ update_texture_state( struct gl_context *ctx )
                _mesa_test_texobj_completeness(ctx, texObj);
             }
             if (_mesa_is_texture_complete(texObj, sampler)) {
-               texUnit->_ReallyEnabled = 1 << texIndex;
                _mesa_reference_texobj(&texUnit->_Current, texObj);
                break;
             }
          }
       }
 
-      if (!texUnit->_ReallyEnabled) {
+      if (texIndex == NUM_TEXTURE_TARGETS) {
          if (prog[MESA_SHADER_FRAGMENT]) {
             /* If we get here it means the shader is expecting a texture
              * object, but there isn't one (or it's incomplete).  Use the
@@ -626,7 +623,6 @@ update_texture_state( struct gl_context *ctx )
             }
 
             _mesa_reference_texobj(&texUnit->_Current, texObj);
-            texUnit->_ReallyEnabled = 1 << texTarget;
          }
          else {
             /* fixed-function: texture unit is really disabled */
