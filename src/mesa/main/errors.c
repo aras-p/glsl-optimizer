@@ -41,20 +41,22 @@
 static mtx_t DynamicIDMutex = _MTX_INITIALIZER_NP;
 static GLuint NextDynamicID = 1;
 
-struct gl_debug_severity
+/**
+ * A namespace element.
+ */
+struct gl_debug_element
 {
    struct simple_node link;
+
    GLuint ID;
+   /* at which severity levels (mesa_debug_severity) is the message enabled */
+   GLbitfield State;
 };
 
 struct gl_debug_namespace
 {
-   struct _mesa_HashTable *IDs;
-   unsigned ZeroID; /* a HashTable won't take zero, so store its state here */
-   /** lists of IDs in the hash table at each severity */
-   struct simple_node Severity[MESA_DEBUG_SEVERITY_COUNT];
-
-   GLboolean Defaults[MESA_DEBUG_SEVERITY_COUNT];
+   struct simple_node Elements;
+   GLbitfield DefaultState;
 };
 
 struct gl_debug_group {
@@ -190,48 +192,6 @@ debug_get_id(GLuint *id)
    }
 }
 
-
-/*
- * We store a bitfield in the hash table, with five possible values total.
- *
- * The ENABLED_BIT's purpose is self-explanatory.
- *
- * The FOUND_BIT is needed to differentiate the value of DISABLED from
- * the value returned by HashTableLookup() when it can't find the given key.
- *
- * The KNOWN_SEVERITY bit is a bit complicated:
- *
- * A client may call Control() with an array of IDs, then call Control()
- * on all message IDs of a certain severity, then Insert() one of the
- * previously specified IDs, giving us a known severity level, then call
- * Control() on all message IDs of a certain severity level again.
- *
- * After the first call, those IDs will have a FOUND_BIT, but will not
- * exist in any severity-specific list, so the second call will not
- * impact them. This is undesirable but unavoidable given the API:
- * The only entrypoint that gives a severity for a client-defined ID
- * is the Insert() call.
- *
- * For the sake of Control(), we want to maintain the invariant
- * that an ID will either appear in none of the three severity lists,
- * or appear once, to minimize pointless duplication and potential surprises.
- *
- * Because Insert() is the only place that will learn an ID's severity,
- * it should insert an ID into the appropriate list, but only if the ID
- * doesn't exist in it or any other list yet. Because searching all three
- * lists at O(n) is needlessly expensive, we store KNOWN_SEVERITY.
- */
-enum {
-   FOUND_BIT = 1 << 0,
-   ENABLED_BIT = 1 << 1,
-   KNOWN_SEVERITY = 1 << 2,
-
-   /* HashTable reserves zero as a return value meaning 'not found' */
-   NOT_FOUND = 0,
-   DISABLED = FOUND_BIT,
-   ENABLED = ENABLED_BIT | FOUND_BIT
-};
-
 static void
 debug_message_clear(struct gl_debug_message *msg)
 {
@@ -277,84 +237,45 @@ debug_message_store(struct gl_debug_message *msg,
 static void
 debug_namespace_init(struct gl_debug_namespace *ns)
 {
-   int sev;
-
-   memset(ns, 0, sizeof(*ns));
-
-   ns->IDs = _mesa_NewHashTable();
-   assert(ns->IDs);
-
-   for (sev = 0; sev < Elements(ns->Severity); sev++)
-      make_empty_list(&ns->Severity[sev]);
+   make_empty_list(&ns->Elements);
 
    /* Enable all the messages with severity HIGH or MEDIUM by default */
-   ns->Defaults[MESA_DEBUG_SEVERITY_HIGH] = GL_TRUE;
-   ns->Defaults[MESA_DEBUG_SEVERITY_MEDIUM] = GL_TRUE;
-}
-
-static void
-debug_namespace_clear_cb(GLuint key, void *data, void *userData)
-{
+   ns->DefaultState = (1 << MESA_DEBUG_SEVERITY_HIGH) |
+                      (1 << MESA_DEBUG_SEVERITY_MEDIUM);
 }
 
 static void
 debug_namespace_clear(struct gl_debug_namespace *ns)
 {
-   int sev;
+   struct simple_node *node, *tmp;
 
-   _mesa_HashDeleteAll(ns->IDs, debug_namespace_clear_cb, NULL);
-   _mesa_DeleteHashTable(ns->IDs);
-
-   for (sev = 0; sev < Elements(ns->Severity); sev++) {
-      struct simple_node *node, *tmp;
-
-      foreach_s(node, tmp, &ns->Severity[sev])
-         free(node);
-   }
+   foreach_s(node, tmp, &ns->Elements)
+      free(node);
 }
 
 static bool
 debug_namespace_copy(struct gl_debug_namespace *dst,
                      const struct gl_debug_namespace *src)
 {
-   bool err = false;
-   int sev;
+   struct simple_node *node;
 
-   /* copy id settings */
-   dst->IDs = _mesa_HashClone(src->IDs);
-   if (!dst->IDs)
-      return false;
+   dst->DefaultState = src->DefaultState;
 
-   for (sev = 0; sev < Elements(dst->Severity); sev++) {
-      struct simple_node *node;
+   make_empty_list(&dst->Elements);
+   foreach(node, &src->Elements) {
+      const struct gl_debug_element *elem =
+         (const struct gl_debug_element *) node;
+      struct gl_debug_element *copy;
 
-      /* copy default settings for unknown ids */
-      dst->Defaults[sev] = src->Defaults[sev];
-
-      make_empty_list(&dst->Severity[sev]);
-      if (err)
-         continue;
-
-      /* copy known id severity settings */
-      foreach(node, &src->Severity[sev]) {
-         const struct gl_debug_severity *entry =
-            (const struct gl_debug_severity *) node;
-         struct gl_debug_severity *copy;
-
-         copy = malloc(sizeof(*copy));
-         if (!copy) {
-            err = true;
-            break;
-         }
-
-         copy->ID = entry->ID;
-         insert_at_tail(&dst->Severity[sev], &copy->link);
+      copy = malloc(sizeof(*copy));
+      if (!copy) {
+         debug_namespace_clear(dst);
+         return false;
       }
-   }
 
-   if (err) {
-      debug_namespace_clear(dst);
-      return false;
+      copy->ID = elem->ID;
+      copy->State = elem->State;
+      insert_at_tail(&dst->Elements, &copy->link);
    }
 
    return true;
@@ -367,29 +288,39 @@ static bool
 debug_namespace_set(struct gl_debug_namespace *ns,
                     GLuint id, bool enabled)
 {
-   uintptr_t state;
+   const uint32_t state = (enabled) ?
+      ((1 << MESA_DEBUG_SEVERITY_COUNT) - 1) : 0;
+   struct gl_debug_element *elem = NULL;
+   struct simple_node *node;
 
-   /* In addition to not being able to store zero as a value, HashTable also
-    * can't use zero as a key.
-    */
-   if (id)
-      state = (uintptr_t) _mesa_HashLookup(ns->IDs, id);
-   else
-      state = ns->ZeroID;
-
-   if (state == NOT_FOUND)
-      state = enabled ? ENABLED : DISABLED;
-   else {
-      if (enabled)
-         state |= ENABLED_BIT;
-      else
-         state &= ~ENABLED_BIT;
+   /* find the element */
+   foreach(node, &ns->Elements) {
+      struct gl_debug_element *tmp = (struct gl_debug_element *) node;
+      if (tmp->ID == id) {
+         elem = tmp;
+         break;
+      }
    }
 
-   if (id)
-      _mesa_HashInsert(ns->IDs, id, (void *) state);
-   else
-      ns->ZeroID = state;
+   /* we do not need the element if it has the default state */
+   if (ns->DefaultState == state) {
+      if (elem) {
+         remove_from_list(&elem->link);
+         free(elem);
+      }
+      return true;
+   }
+
+   if (!elem) {
+      elem = malloc(sizeof(*elem));
+      if (!elem)
+         return false;
+
+      elem->ID = id;
+      insert_at_tail(&ns->Elements, &elem->link);
+   }
+
+   elem->State = state;
 
    return true;
 }
@@ -404,26 +335,29 @@ debug_namespace_set_all(struct gl_debug_namespace *ns,
                         enum mesa_debug_severity severity,
                         bool enabled)
 {
-   int sev, end;
+   struct simple_node *node, *tmp;
+   uint32_t mask, val;
 
-   if (severity >= Elements(ns->Severity)) {
-      end = severity;
-      severity = 0;
-   } else {
-      end = severity + 1;
+   /* set all elements to the same state */
+   if (severity == MESA_DEBUG_SEVERITY_COUNT) {
+      ns->DefaultState = (enabled) ? ((1 << severity) - 1) : 0;
+      debug_namespace_clear(ns);
+      make_empty_list(&ns->Elements);
+      return;
    }
 
-   for (sev = severity; sev < end; sev++) {
-      struct simple_node *node;
-      struct gl_debug_severity *entry;
+   mask = 1 << severity;
+   val = (enabled) ? mask : 0;
 
-      /* change the default for IDs we've never seen before. */
-      ns->Defaults[sev] = enabled;
+   ns->DefaultState = (ns->DefaultState & ~mask) | val;
 
-      /* Now change the state of IDs we *have* seen... */
-      foreach(node, &ns->Severity[sev]) {
-         entry = (struct gl_debug_severity *) node;
-         debug_namespace_set(ns, entry->ID, enabled);
+   foreach_s(node, tmp, &ns->Elements) {
+      struct gl_debug_element *elem = (struct gl_debug_element *) node;
+
+      elem->State = (elem->State & ~mask) | val;
+      if (elem->State == ns->DefaultState) {
+         remove_from_list(node);
+         free(node);
       }
    }
 }
@@ -432,47 +366,23 @@ debug_namespace_set_all(struct gl_debug_namespace *ns,
  * Get the state of \p id in the namespace.
  */
 static bool
-debug_namespace_get(struct gl_debug_namespace *ns, GLuint id,
+debug_namespace_get(const struct gl_debug_namespace *ns, GLuint id,
                     enum mesa_debug_severity severity)
 {
-   uintptr_t state = 0;
+   struct simple_node *node;
+   uint32_t state;
 
-   /* In addition to not being able to store zero as a value, HashTable also
-    * can't use zero as a key.
-    */
-   if (id)
-      state = (uintptr_t) _mesa_HashLookup(ns->IDs, id);
-   else
-      state = ns->ZeroID;
+   state = ns->DefaultState;
+   foreach(node, &ns->Elements) {
+      struct gl_debug_element *elem = (struct gl_debug_element *) node;
 
-   /* Only do this once for each ID. This makes sure the ID exists in,
-    * at most, one list, and does not pointlessly appear multiple times.
-    */
-   if (!(state & KNOWN_SEVERITY)) {
-      struct gl_debug_severity *entry;
-
-      if (state == NOT_FOUND) {
-         if (ns->Defaults[severity])
-            state = ENABLED;
-         else
-            state = DISABLED;
-      }
-
-      entry = malloc(sizeof *entry);
-      if (entry) {
-         state |= KNOWN_SEVERITY;
-
-         if (id)
-            _mesa_HashInsert(ns->IDs, id, (void *) state);
-         else
-            ns->ZeroID = state;
-
-         entry->ID = id;
-         insert_at_tail(&ns->Severity[severity], &entry->link);
+      if (elem->ID == id) {
+         state = elem->State;
+         break;
       }
    }
 
-   return (state & ENABLED_BIT);
+   return (state & (1 << severity));
 }
 
 /**
@@ -660,7 +570,7 @@ debug_set_message_enable_all(struct gl_debug_state *debug,
  * Returns if the given message source/type/ID tuple is enabled.
  */
 static bool
-debug_is_message_enabled(struct gl_debug_state *debug,
+debug_is_message_enabled(const struct gl_debug_state *debug,
                          enum mesa_debug_source source,
                          enum mesa_debug_type type,
                          GLuint id,
