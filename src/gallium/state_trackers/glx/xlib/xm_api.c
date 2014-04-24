@@ -899,10 +899,23 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list,
     *
     *     "The default value for GLX_CONTEXT_PROFILE_MASK_ARB is
     *     GLX_CONTEXT_CORE_PROFILE_BIT_ARB."
+    *
+    * The spec also says:
+    *
+    *     "If version 3.1 is requested, the context returned may implement
+    *     any of the following versions:
+    *
+    *       * Version 3.1. The GL_ARB_compatibility extension may or may not
+    *         be implemented, as determined by the implementation.
+    *       * The core profile of version 3.2 or greater."
+    *
+    * and because Mesa doesn't support GL_ARB_compatibility, the only chance to
+    * honour a 3.1 context is through core profile.
     */
    attribs.profile = ST_PROFILE_DEFAULT;
-   if ((major > 3 || (major == 3 && minor >= 2))
-       && ((profileMask & GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB) == 0))
+   if (((major > 3 || (major == 3 && minor >= 2))
+        && ((profileMask & GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB) == 0)) ||
+       (major == 3 && minor == 1))
       attribs.profile = ST_PROFILE_OPENGL_CORE;
 
    c->st = stapi->create_context(stapi, xmdpy->smapi, &attribs,
