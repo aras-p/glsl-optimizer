@@ -1447,6 +1447,10 @@ NVC0LoweringPass::handleRDSV(Instruction *i)
                  off);
       break;
    }
+   case SV_SAMPLE_MASK:
+      ld = bld.mkOp1(OP_PIXLD, TYPE_U32, i->getDef(0), bld.mkImm(0));
+      ld->subOp = NV50_IR_SUBOP_PIXLD_COVMASK;
+      break;
    default:
       if (prog->getType() == Program::TYPE_TESSELLATION_EVAL)
          vtx = bld.mkOp1v(OP_PFETCH, TYPE_U32, bld.getSSA(), bld.mkImm(0));

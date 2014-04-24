@@ -348,6 +348,7 @@ static nv50_ir::SVSemantic translateSysVal(uint sysval)
    case TGSI_SEMANTIC_THREAD_ID:  return nv50_ir::SV_TID;
    case TGSI_SEMANTIC_SAMPLEID:   return nv50_ir::SV_SAMPLE_INDEX;
    case TGSI_SEMANTIC_SAMPLEPOS:  return nv50_ir::SV_SAMPLE_POS;
+   case TGSI_SEMANTIC_SAMPLEMASK: return nv50_ir::SV_SAMPLE_MASK;
    default:
       assert(0);
       return nv50_ir::SV_CLOCK;

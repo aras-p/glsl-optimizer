@@ -255,6 +255,7 @@ static const char *SemanticStr[SV_LAST + 1] =
    "CLIP_DISTANCE",
    "SAMPLE_INDEX",
    "SAMPLE_POS",
+   "SAMPLE_MASK",
    "TESS_FACTOR",
    "TESS_COORD",
    "TID",
