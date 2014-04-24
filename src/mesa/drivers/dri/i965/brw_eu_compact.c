@@ -41,6 +41,146 @@
 #include "brw_eu.h"
 #include "intel_asm_annotation.h"
 
+static const uint32_t g45_control_index_table[32] = {
+   0b00000000000000000,
+   0b01000000000000000,
+   0b00110000000000000,
+   0b00000000000000010,
+   0b00100000000000000,
+   0b00010000000000000,
+   0b01000000000100000,
+   0b01000000100000000,
+   0b01010000000100000,
+   0b00000000100000010,
+   0b11000000000000000,
+   0b00001000100000010,
+   0b01001000100000000,
+   0b00000000100000000,
+   0b11000000000100000,
+   0b00001000100000000,
+   0b10110000000000000,
+   0b11010000000100000,
+   0b00110000100000000,
+   0b00100000100000000,
+   0b01000000000001000,
+   0b01000000000000100,
+   0b00111100000000000,
+   0b00101011000000000,
+   0b00110000000010000,
+   0b00010000100000000,
+   0b01000000000100100,
+   0b01000000000101000,
+   0b00110000000000110,
+   0b00000000000001010,
+   0b01010000000101000,
+   0b01010000000100100
+};
+
+static const uint32_t g45_datatype_table[32] = {
+   0b001000000000100001,
+   0b001011010110101101,
+   0b001000001000110001,
+   0b001111011110111101,
+   0b001011010110101100,
+   0b001000000110101101,
+   0b001000000000100000,
+   0b010100010110110001,
+   0b001100011000101101,
+   0b001000000000100010,
+   0b001000001000110110,
+   0b010000001000110001,
+   0b001000001000110010,
+   0b011000001000110010,
+   0b001111011110111100,
+   0b001000000100101000,
+   0b010100011000110001,
+   0b001010010100101001,
+   0b001000001000101001,
+   0b010000001000110110,
+   0b101000001000110001,
+   0b001011011000101101,
+   0b001000000100001001,
+   0b001011011000101100,
+   0b110100011000110001,
+   0b001000001110111101,
+   0b110000001000110001,
+   0b011000000100101010,
+   0b101000001000101001,
+   0b001011010110001100,
+   0b001000000110100001,
+   0b001010010100001000
+};
+
+static const uint16_t g45_subreg_table[32] = {
+   0b000000000000000,
+   0b000000010000000,
+   0b000001000000000,
+   0b000100000000000,
+   0b000000000100000,
+   0b100000000000000,
+   0b000000000010000,
+   0b001100000000000,
+   0b001010000000000,
+   0b000000100000000,
+   0b001000000000000,
+   0b000000000001000,
+   0b000000001000000,
+   0b000000000000001,
+   0b000010000000000,
+   0b000000010100000,
+   0b000000000000111,
+   0b000001000100000,
+   0b011000000000000,
+   0b000000110000000,
+   0b000000000000010,
+   0b000000000000100,
+   0b000000001100000,
+   0b000100000000010,
+   0b001110011000110,
+   0b001110100001000,
+   0b000110011000110,
+   0b000001000011000,
+   0b000110010000100,
+   0b001100000000110,
+   0b000000010000110,
+   0b000001000110000
+};
+
+static const uint16_t g45_src_index_table[32] = {
+   0b000000000000,
+   0b010001101000,
+   0b010110001000,
+   0b011010010000,
+   0b001101001000,
+   0b010110001010,
+   0b010101110000,
+   0b011001111000,
+   0b001000101000,
+   0b000000101000,
+   0b010001010000,
+   0b111101101100,
+   0b010110001100,
+   0b010001101100,
+   0b011010010100,
+   0b010001001100,
+   0b001100101000,
+   0b000000000010,
+   0b111101001100,
+   0b011001101000,
+   0b010101001000,
+   0b000000000100,
+   0b000000101100,
+   0b010001101010,
+   0b000000111000,
+   0b010101011000,
+   0b000100100000,
+   0b010110000000,
+   0b010000000100,
+   0b010000111000,
+   0b000101100000,
+   0b111101110100
+};
+
 static const uint32_t gen6_control_index_table[32] = {
    0b00000000000000000,
    0b01000000000000000,
@@ -496,7 +636,7 @@ static const uint16_t *src_index_table;
 static bool
 set_control_index(struct brw_context *brw, brw_compact_inst *dst, brw_inst *src)
 {
-   uint32_t uncompacted = brw->gen >= 8      /* 17b/SNB; 19b/IVB+ */
+   uint32_t uncompacted = brw->gen >= 8      /* 17b/G45; 19b/IVB+ */
       ? (brw_inst_bits(src, 33, 31) << 16) | /*  3b */
         (brw_inst_bits(src, 23, 12) <<  4) | /* 12b */
         (brw_inst_bits(src, 10,  9) <<  2) | /*  2b */
@@ -525,7 +665,7 @@ static bool
 set_datatype_index(struct brw_context *brw, brw_compact_inst *dst,
                    brw_inst *src)
 {
-   uint32_t uncompacted = brw->gen >= 8      /* 18b/SNB+; 21b/BDW+ */
+   uint32_t uncompacted = brw->gen >= 8      /* 18b/G45+; 21b/BDW+ */
       ? (brw_inst_bits(src, 63, 61) << 18) | /*  3b */
         (brw_inst_bits(src, 94, 89) << 12) | /*  6b */
         (brw_inst_bits(src, 46, 35))         /* 12b */
@@ -740,6 +880,7 @@ brw_try_compact_instruction(struct brw_context *brw, brw_compact_inst *dst,
    assert(brw_inst_cmpt_control(brw, src) == 0);
 
    if (brw_inst_opcode(brw, src) == BRW_OPCODE_IF ||
+       brw_inst_opcode(brw, src) == BRW_OPCODE_IFF ||
        brw_inst_opcode(brw, src) == BRW_OPCODE_ELSE ||
        brw_inst_opcode(brw, src) == BRW_OPCODE_ENDIF ||
        brw_inst_opcode(brw, src) == BRW_OPCODE_HALT ||
@@ -768,7 +909,8 @@ brw_try_compact_instruction(struct brw_context *brw, brw_compact_inst *dst,
    bool is_immediate =
       brw_inst_src0_reg_file(brw, src) == BRW_IMMEDIATE_VALUE ||
       brw_inst_src1_reg_file(brw, src) == BRW_IMMEDIATE_VALUE;
-   if (is_immediate && !is_compactable_immediate(brw_inst_imm_ud(brw, src))) {
+   if (is_immediate &&
+       (brw->gen < 6 || !is_compactable_immediate(brw_inst_imm_ud(brw, src)))) {
       return false;
    }
 
@@ -1061,9 +1203,35 @@ update_uip_jip(struct brw_context *brw, brw_inst *insn,
                     uip_compacted * (brw->gen >= 8 ? sizeof(brw_compact_inst) : 1));
 }
 
+static void
+update_gen4_jump_count(struct brw_context *brw, brw_inst *insn,
+                       int this_old_ip, int *compacted_counts)
+{
+   assert(brw->gen == 5);
+
+   /* Jump Count is in units of:
+    *    - compacted instructions on Gen5.
+    */
+   int jump_count = brw_inst_gen4_jump_count(brw, insn);
+   int jump_count_compacted = jump_count;
+   int jump_count_uncompacted = jump_count / 2;
+
+   int target_old_ip = this_old_ip + jump_count_uncompacted;
+
+   int this_compacted_count = compacted_counts[this_old_ip];
+   int target_compacted_count = compacted_counts[target_old_ip];
+
+   jump_count_compacted -= (target_compacted_count - this_compacted_count);
+   brw_inst_set_gen4_jump_count(brw, insn, jump_count_compacted);
+}
+
 void
 brw_init_compaction_tables(struct brw_context *brw)
 {
+   assert(g45_control_index_table[ARRAY_SIZE(g45_control_index_table) - 1] != 0);
+   assert(g45_datatype_table[ARRAY_SIZE(g45_datatype_table) - 1] != 0);
+   assert(g45_subreg_table[ARRAY_SIZE(g45_subreg_table) - 1] != 0);
+   assert(g45_src_index_table[ARRAY_SIZE(g45_src_index_table) - 1] != 0);
    assert(gen6_control_index_table[ARRAY_SIZE(gen6_control_index_table) - 1] != 0);
    assert(gen6_datatype_table[ARRAY_SIZE(gen6_datatype_table) - 1] != 0);
    assert(gen6_subreg_table[ARRAY_SIZE(gen6_subreg_table) - 1] != 0);
@@ -1096,6 +1264,12 @@ brw_init_compaction_tables(struct brw_context *brw)
       subreg_table = gen6_subreg_table;
       src_index_table = gen6_src_index_table;
       break;
+   case 5:
+      control_index_table = g45_control_index_table;
+      datatype_table = g45_datatype_table;
+      subreg_table = g45_subreg_table;
+      src_index_table = g45_src_index_table;
+      break;
    default:
       return;
    }
@@ -1116,7 +1290,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
     */
    int old_ip[(p->next_insn_offset - start_offset) / sizeof(brw_compact_inst)];
 
-   if (brw->gen < 6)
+   if (brw->gen == 4)
       return;
 
    int offset = 0;
@@ -1184,10 +1358,15 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
       case BRW_OPCODE_BREAK:
       case BRW_OPCODE_CONTINUE:
       case BRW_OPCODE_HALT:
-         update_uip_jip(brw, insn, this_old_ip, compacted_counts);
+         if (brw->gen >= 6) {
+            update_uip_jip(brw, insn, this_old_ip, compacted_counts);
+         } else {
+            update_gen4_jump_count(brw, insn, this_old_ip, compacted_counts);
+         }
          break;
 
       case BRW_OPCODE_IF:
+      case BRW_OPCODE_IFF:
       case BRW_OPCODE_ELSE:
       case BRW_OPCODE_ENDIF:
       case BRW_OPCODE_WHILE:
@@ -1202,6 +1381,32 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
             target_compacted_count = compacted_counts[target_old_ip];
             jump_count_compacted -= (target_compacted_count - this_compacted_count);
             brw_inst_set_gen6_jump_count(brw, insn, jump_count_compacted);
+         } else {
+            update_gen4_jump_count(brw, insn, this_old_ip, compacted_counts);
+         }
+         break;
+
+      case BRW_OPCODE_ADD:
+         /* Add instructions modifying the IP register use an immediate src1,
+          * and Gens that use this cannot compact instructions with immediate
+          * operands.
+          */
+         if (brw_inst_cmpt_control(brw, insn))
+            break;
+
+         if (brw_inst_dst_reg_file(brw, insn) == BRW_ARCHITECTURE_REGISTER_FILE &&
+             brw_inst_dst_da_reg_nr(brw, insn) == BRW_ARF_IP) {
+            assert(brw_inst_src1_reg_file(brw, insn) == BRW_IMMEDIATE_VALUE);
+
+            int jump = brw_inst_imm_d(brw, insn);
+            int jump_compacted = jump / sizeof(brw_compact_inst);
+            int jump_uncompacted = jump / sizeof(brw_inst);
+
+            target_old_ip = this_old_ip + jump_uncompacted;
+            target_compacted_count = compacted_counts[target_old_ip];
+            jump_compacted -= (target_compacted_count - this_compacted_count);
+            brw_inst_set_imm_ud(brw, insn, jump_compacted *
+                                           sizeof(brw_compact_inst));
          }
          break;
       }
