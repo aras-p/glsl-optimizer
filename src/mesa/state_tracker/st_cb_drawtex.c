@@ -123,7 +123,8 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    /* determine how many enabled sets of texcoords */
    numTexCoords = 0;
    for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-      if (ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_2D_BIT) {
+      if (ctx->Texture.Unit[i]._Current &&
+          ctx->Texture.Unit[i]._Current->Target == GL_TEXTURE_2D) {
          numTexCoords++;
       }
    }
@@ -192,7 +193,8 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
 
       /* texcoords */
       for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-         if (ctx->Texture.Unit[i]._ReallyEnabled & TEXTURE_2D_BIT) {
+         if (ctx->Texture.Unit[i]._Current &&
+             ctx->Texture.Unit[i]._Current->Target == GL_TEXTURE_2D) {
             struct gl_texture_object *obj = ctx->Texture.Unit[i]._Current;
             struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
             const GLfloat wt = (GLfloat) img->Width;
