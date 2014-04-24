@@ -515,68 +515,92 @@ update_texgen(struct gl_context *ctx)
    }
 }
 
+static struct gl_texture_object *
+update_single_program_texture(struct gl_context *ctx, struct gl_program *prog,
+                              int s)
+{
+   gl_texture_index target_index;
+   struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
+   int unit;
+
+   if (!(prog->SamplersUsed & (1 << s)))
+      return NULL;
+
+   unit = prog->SamplerUnits[s];
+   texUnit = &ctx->Texture.Unit[unit];
+
+   /* Note: If more than one bit was set in TexturesUsed[unit], then we should
+    * have had the draw call rejected already.  From the GL 4.4 specification,
+    * section 7.10 ("Samplers"):
+    *
+    *     "It is not allowed to have variables of different sampler types
+    *      pointing to the same texture image unit within a program
+    *      object. This situation can only be detected at the next rendering
+    *      command issued which triggers shader invocations, and an
+    *      INVALID_OPERATION error will then be generated."
+    */
+   target_index = ffs(prog->TexturesUsed[unit]) - 1;
+   texObj = texUnit->CurrentTex[target_index];
+
+   struct gl_sampler_object *sampler = texUnit->Sampler ?
+      texUnit->Sampler : &texObj->Sampler;
+
+   if (likely(texObj)) {
+      if (_mesa_is_texture_complete(texObj, sampler))
+         return texObj;
+
+      _mesa_test_texobj_completeness(ctx, texObj);
+      if (_mesa_is_texture_complete(texObj, sampler))
+         return texObj;
+   }
+
+   /* If we've reached this point, we didn't find a complete texture of the
+    * shader's target.  From the GL 4.4 core specification, section 11.1.3.5
+    * ("Texture Access"):
+    *
+    *     "If a sampler is used in a shader and the sampler’s associated
+    *      texture is not complete, as defined in section 8.17, (0, 0, 0, 1)
+    *      will be returned for a non-shadow sampler and 0 for a shadow
+    *      sampler."
+    *
+    * Mesa implements this by creating a hidden texture object with a pixel of
+    * that value.
+    */
+   texObj = _mesa_get_fallback_texture(ctx, target_index);
+   assert(texObj);
+
+   return texObj;
+}
+
 static void
 update_program_texture_state(struct gl_context *ctx, struct gl_program **prog,
                              BITSET_WORD *enabled_texture_units)
 {
-   GLuint unit;
    int i;
 
-   for (unit = 0; unit < ctx->Const.MaxCombinedTextureImageUnits; unit++) {
-      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-      GLbitfield enabledTargets = 0x0;
-      GLuint texIndex;
+   for (i = 0; i < MESA_SHADER_STAGES; i++) {
+      int s;
 
-      for (i = 0; i < MESA_SHADER_STAGES; i++) {
-         if (prog[i])
-            enabledTargets |= prog[i]->TexturesUsed[unit];
-      }
-
-      if (enabledTargets == 0x0) {
-         /* neither vertex nor fragment processing uses this unit */
+      if (!prog[i])
          continue;
-      }
 
-      for (texIndex = 0; texIndex < NUM_TEXTURE_TARGETS; texIndex++) {
-         if (enabledTargets & (1 << texIndex)) {
-            struct gl_texture_object *texObj = texUnit->CurrentTex[texIndex];
-            struct gl_sampler_object *sampler = texUnit->Sampler ?
-               texUnit->Sampler : &texObj->Sampler;
-
-            if (!_mesa_is_texture_complete(texObj, sampler)) {
-               _mesa_test_texobj_completeness(ctx, texObj);
-            }
-            if (_mesa_is_texture_complete(texObj, sampler)) {
-               _mesa_reference_texobj(&texUnit->_Current, texObj);
-               break;
-            }
-         }
-      }
-
-      if (texIndex == NUM_TEXTURE_TARGETS) {
-         /* If we get here it means the shader is expecting a texture
-          * object, but there isn't one (or it's incomplete).  Use the
-          * fallback texture.
-          */
+      /* We can't only do the shifting trick as the loop condition because if
+       * sampler 31 is active, the next iteration tries to shift by 32, which is
+       * undefined.
+       */
+      for (s = 0; s < MAX_SAMPLERS && (1 << s) <= prog[i]->SamplersUsed; s++) {
          struct gl_texture_object *texObj;
-         gl_texture_index texTarget;
 
-         texTarget = (gl_texture_index) (ffs(enabledTargets) - 1);
-         texObj = _mesa_get_fallback_texture(ctx, texTarget);
-
-         assert(texObj);
-         if (!texObj) {
-            /* invalid fallback texture: don't enable the texture unit */
-            continue;
+         texObj = update_single_program_texture(ctx, prog[i], s);
+         if (texObj) {
+            int unit = prog[i]->SamplerUnits[s];
+            _mesa_reference_texobj(&ctx->Texture.Unit[unit]._Current, texObj);
+            BITSET_SET(enabled_texture_units, unit);
+            ctx->Texture._MaxEnabledTexImageUnit =
+               MAX2(ctx->Texture._MaxEnabledTexImageUnit, (int)unit);
          }
-
-         _mesa_reference_texobj(&texUnit->_Current, texObj);
       }
-
-      /* if we get here, we know this texture unit is enabled */
-      BITSET_SET(enabled_texture_units, unit);
-      ctx->Texture._MaxEnabledTexImageUnit =
-         MAX2(ctx->Texture._MaxEnabledTexImageUnit, (int)unit);
    }
 
    if (prog[MESA_SHADER_FRAGMENT]) {
