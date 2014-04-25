@@ -320,25 +320,16 @@ intel_setup_image_from_mipmap_tree(struct brw_context *brw, __DRIimage *image,
                                    struct intel_mipmap_tree *mt, GLuint level,
                                    GLuint zoffset)
 {
-   unsigned int draw_x, draw_y;
-   uint32_t mask_x, mask_y;
-
    intel_miptree_make_shareable(brw, mt);
 
    intel_miptree_check_level_layer(mt, level, zoffset);
 
-   intel_region_get_tile_masks(mt->region, &mask_x, &mask_y, false);
-   intel_miptree_get_image_offset(mt, level, zoffset, &draw_x, &draw_y);
-
    image->width = minify(mt->physical_width0, level - mt->first_level);
    image->height = minify(mt->physical_height0, level - mt->first_level);
-   image->tile_x = draw_x & mask_x;
-   image->tile_y = draw_y & mask_y;
 
-   image->offset = intel_region_get_aligned_offset(mt->region,
-                                                   draw_x & ~mask_x,
-                                                   draw_y & ~mask_y,
-                                                   false);
+   image->offset = intel_miptree_get_tile_offsets(mt, level, zoffset,
+                                                  &image->tile_x,
+                                                  &image->tile_y);
 
    intel_region_reference(&image->region, mt->region);
 }
