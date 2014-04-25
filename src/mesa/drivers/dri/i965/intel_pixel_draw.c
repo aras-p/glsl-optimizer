@@ -103,9 +103,8 @@ do_blit_drawpixels(struct gl_context * ctx,
    src_offset += _mesa_image_offset(2, unpack, width, height,
 				    format, type, 0, 0, 0);
 
-   src_buffer = intel_bufferobj_buffer(brw, src,
-				       src_offset, width * height *
-                                       irb->mt->cpp);
+   src_buffer = intel_bufferobj_buffer(brw, src, src_offset,
+                                       height * src_stride);
 
    struct intel_mipmap_tree *pbo_mt =
       intel_miptree_create_for_bo(brw,
