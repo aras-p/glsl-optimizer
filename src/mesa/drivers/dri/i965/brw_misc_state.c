@@ -179,13 +179,13 @@ brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
    uint32_t tile_mask_x = 0, tile_mask_y = 0;
 
    if (depth_mt) {
-      intel_region_get_tile_masks(depth_mt->region,
-                                  &tile_mask_x, &tile_mask_y, false);
+      intel_miptree_get_tile_masks(depth_mt, &tile_mask_x, &tile_mask_y, false);
 
       if (intel_miptree_slice_has_hiz(depth_mt, depth_level, depth_layer)) {
          uint32_t hiz_tile_mask_x, hiz_tile_mask_y;
-         intel_region_get_tile_masks(depth_mt->hiz_mt->region,
-                                     &hiz_tile_mask_x, &hiz_tile_mask_y, false);
+         intel_miptree_get_tile_masks(depth_mt->hiz_mt,
+                                      &hiz_tile_mask_x, &hiz_tile_mask_y,
+                                      false);
 
          /* Each HiZ row represents 2 rows of pixels */
          hiz_tile_mask_y = hiz_tile_mask_y << 1 | 1;
@@ -205,9 +205,9 @@ brw_get_depthstencil_tile_masks(struct intel_mipmap_tree *depth_mt,
          tile_mask_y |= 63;
       } else {
          uint32_t stencil_tile_mask_x, stencil_tile_mask_y;
-         intel_region_get_tile_masks(stencil_mt->region,
-                                     &stencil_tile_mask_x,
-                                     &stencil_tile_mask_y, false);
+         intel_miptree_get_tile_masks(stencil_mt,
+                                      &stencil_tile_mask_x,
+                                      &stencil_tile_mask_y, false);
 
          tile_mask_x |= stencil_tile_mask_x;
          tile_mask_y |= stencil_tile_mask_y;

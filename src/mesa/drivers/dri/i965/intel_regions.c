@@ -278,39 +278,6 @@ intel_region_release(struct intel_region **region_handle)
 }
 
 /**
- * This function computes masks that may be used to select the bits of the X
- * and Y coordinates that indicate the offset within a tile.  If the region is
- * untiled, the masks are set to 0.
- */
-void
-intel_region_get_tile_masks(const struct intel_region *region,
-                            uint32_t *mask_x, uint32_t *mask_y,
-                            bool map_stencil_as_y_tiled)
-{
-   int cpp = region->cpp;
-   uint32_t tiling = region->tiling;
-
-   if (map_stencil_as_y_tiled)
-      tiling = I915_TILING_Y;
-
-   switch (tiling) {
-   default:
-      assert(false);
-   case I915_TILING_NONE:
-      *mask_x = *mask_y = 0;
-      break;
-   case I915_TILING_X:
-      *mask_x = 512 / cpp - 1;
-      *mask_y = 7;
-      break;
-   case I915_TILING_Y:
-      *mask_x = 128 / cpp - 1;
-      *mask_y = 31;
-      break;
-   }
-}
-
-/**
  * Compute the offset (in bytes) from the start of the region to the given x
  * and y coordinate.  For tiled regions, caller must ensure that x and y are
  * multiples of the tile size.

@@ -976,6 +976,39 @@ intel_miptree_get_image_offset(const struct intel_mipmap_tree *mt,
 }
 
 /**
+ * This function computes masks that may be used to select the bits of the X
+ * and Y coordinates that indicate the offset within a tile.  If the region is
+ * untiled, the masks are set to 0.
+ */
+void
+intel_miptree_get_tile_masks(const struct intel_mipmap_tree *mt,
+                             uint32_t *mask_x, uint32_t *mask_y,
+                             bool map_stencil_as_y_tiled)
+{
+   int cpp = mt->region->cpp;
+   uint32_t tiling = mt->region->tiling;
+
+   if (map_stencil_as_y_tiled)
+      tiling = I915_TILING_Y;
+
+   switch (tiling) {
+   default:
+      assert(false);
+   case I915_TILING_NONE:
+      *mask_x = *mask_y = 0;
+      break;
+   case I915_TILING_X:
+      *mask_x = 512 / cpp - 1;
+      *mask_y = 7;
+      break;
+   case I915_TILING_Y:
+      *mask_x = 128 / cpp - 1;
+      *mask_y = 31;
+      break;
+   }
+}
+
+/**
  * Rendering with tiled buffers requires that the base address of the buffer
  * be aligned to a page boundary.  For renderbuffers, and sometimes with
  * textures, we may want the surface to point at a texture image level that
@@ -995,7 +1028,7 @@ intel_miptree_get_tile_offsets(const struct intel_mipmap_tree *mt,
    uint32_t x, y;
    uint32_t mask_x, mask_y;
 
-   intel_region_get_tile_masks(region, &mask_x, &mask_y, false);
+   intel_miptree_get_tile_masks(mt, &mask_x, &mask_y, false);
    intel_miptree_get_image_offset(mt, level, slice, &x, &y);
 
    *tile_x = x & mask_x;
