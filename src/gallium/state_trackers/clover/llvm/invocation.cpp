@@ -64,6 +64,7 @@
 
 #include "pipe/p_state.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 
 #include <iostream>
 #include <iomanip>
@@ -308,11 +309,19 @@ namespace {
 #endif
 
             llvm::Type *arg_type = arg.getType();
-            unsigned arg_size = TD.getTypeStoreSize(arg_type);
+            const unsigned arg_store_size = TD.getTypeStoreSize(arg_type);
+
+            // OpenCL 1.2 specification, Ch. 6.1.5: "A built-in data
+            // type that is not a power of two bytes in size must be
+            // aligned to the next larger power of two".  We need this
+            // alignment for three element vectors, which have
+            // non-power-of-2 store size.
+            const unsigned arg_api_size =
+               util_next_power_of_two(arg_store_size);
 
             llvm::Type *target_type = arg_type->isIntegerTy() ?
-               TD.getSmallestLegalIntType(mod->getContext(), arg_size * 8) :
-               arg_type;
+               TD.getSmallestLegalIntType(mod->getContext(), arg_store_size * 8)
+               : arg_type;
             unsigned target_size = TD.getTypeStoreSize(target_type);
             unsigned target_align = TD.getABITypeAlignment(target_type);
 
@@ -326,19 +335,19 @@ namespace {
                if (address_space == address_spaces[clang::LangAS::opencl_local
                                                      - clang::LangAS::Offset]) {
                   args.push_back(module::argument(module::argument::local,
-                                                  arg_size, target_size,
+                                                  arg_api_size, target_size,
                                                   target_align,
                                                   module::argument::zero_ext));
                } else {
                   // XXX: Correctly handle constant address space.  There is no
                   // way for r600g to pass a handle for constant buffers back
                   // to clover like it can for global buffers, so
-                  // creating constant arguements will break r600g.  For now,
+                  // creating constant arguments will break r600g.  For now,
                   // continue treating constant buffers as global buffers
                   // until we can come up with a way to create handles for
                   // constant buffers.
                   args.push_back(module::argument(module::argument::global,
-                                                  arg_size, target_size,
+                                                  arg_api_size, target_size,
                                                   target_align,
                                                   module::argument::zero_ext));
               }
@@ -352,7 +361,7 @@ namespace {
                    module::argument::zero_ext);
 
                args.push_back(
-                  module::argument(module::argument::scalar, arg_size,
+                  module::argument(module::argument::scalar, arg_api_size,
                                    target_size, target_align, ext_type));
             }
          }
