@@ -483,7 +483,9 @@ intel_miptree_create_for_bo(struct brw_context *brw,
 void
 intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
                                          struct intel_renderbuffer *irb,
-                                         struct intel_region *region);
+                                         drm_intel_bo *bo,
+                                         uint32_t width, uint32_t height,
+                                         uint32_t pitch);
 
 /**
  * Create a miptree appropriate as the storage for a non-texture renderbuffer.

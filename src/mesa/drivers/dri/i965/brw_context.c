@@ -1229,10 +1229,9 @@ intel_query_dri2_buffers(struct brw_context *brw,
  *    DRI2BufferDepthStencil are handled as special cases.
  *
  * \param buffer_name is a human readable name, such as "dri2 front buffer",
- *        that is passed to intel_region_alloc_for_handle().
+ *        that is passed to drm_intel_bo_gem_create_from_name().
  *
  * \see intel_update_renderbuffers()
- * \see intel_region_alloc_for_handle()
  */
 static void
 intel_process_dri2_buffer(struct brw_context *brw,
@@ -1241,8 +1240,8 @@ intel_process_dri2_buffer(struct brw_context *brw,
                           struct intel_renderbuffer *rb,
                           const char *buffer_name)
 {
-   struct intel_region *region = NULL;
    struct gl_framebuffer *fb = drawable->driverPrivate;
+   drm_intel_bo *bo;
 
    if (!rb)
       return;
@@ -1259,14 +1258,15 @@ intel_process_dri2_buffer(struct brw_context *brw,
    else
       last_mt = rb->singlesample_mt;
 
-   /* Get the name for our previous RB mt.  We know it had a name already (and
-    * thus the DRM call is just a getter), because it could only have been
-    * allocated by a previous intel_process_dri2_buffer(), so
-    * drm_intel_bo_flink() is just a getter.
-    */
    uint32_t old_name = 0;
-   if (last_mt)
+   if (last_mt) {
+       /* The bo already has a name because the miptree was created by a
+	* previous call to intel_process_dri2_buffer(). If a bo already has a
+	* name, then drm_intel_bo_flink() is a low-cost getter.  It does not
+	* create a new name.
+	*/
       drm_intel_bo_flink(last_mt->region->bo, &old_name);
+   }
 
    if (old_name == buffer->name)
       return;
@@ -1279,24 +1279,21 @@ intel_process_dri2_buffer(struct brw_context *brw,
    }
 
    intel_miptree_release(&rb->mt);
-   region = intel_region_alloc_for_handle(brw->intelScreen,
-                                          buffer->cpp,
-                                          drawable->w,
-                                          drawable->h,
-                                          buffer->pitch,
-                                          buffer->name,
-                                          buffer_name);
-   if (!region) {
+   bo = drm_intel_bo_gem_create_from_name(brw->bufmgr, buffer_name,
+                                          buffer->name);
+   if (!bo) {
       fprintf(stderr,
-              "Failed to make region for returned DRI2 buffer "
-              "(%dx%d, named %d).\n"
+              "Failed to open BO for returned DRI2 buffer "
+              "(%dx%d, %s, named %d).\n"
               "This is likely a bug in the X Server that will lead to a "
               "crash soon.\n",
-              drawable->w, drawable->h, buffer->name);
+              drawable->w, drawable->h, buffer_name, buffer->name);
       return;
    }
 
-   intel_update_winsys_renderbuffer_miptree(brw, rb, region);
+   intel_update_winsys_renderbuffer_miptree(brw, rb, bo,
+                                            drawable->w, drawable->h,
+                                            buffer->pitch);
 
    if (brw_is_front_buffer_drawing(fb) &&
        (buffer->attachment == __DRI_BUFFER_FRONT_LEFT ||
@@ -1307,7 +1304,7 @@ intel_process_dri2_buffer(struct brw_context *brw,
 
    assert(rb->mt);
 
-   intel_region_release(&region);
+   drm_intel_bo_unreference(bo);
 }
 
 /**
@@ -1353,7 +1350,9 @@ intel_update_image_buffer(struct brw_context *intel,
    if (last_mt && last_mt->region->bo == region->bo)
       return;
 
-   intel_update_winsys_renderbuffer_miptree(intel, rb, region);
+   intel_update_winsys_renderbuffer_miptree(intel, rb, region->bo,
+                                            region->width, region->height,
+                                            region->pitch);
 
    if (brw_is_front_buffer_drawing(fb) &&
        buffer_type == __DRI_IMAGE_BUFFER_FRONT &&

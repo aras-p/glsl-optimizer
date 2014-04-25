@@ -690,16 +690,21 @@ intel_miptree_create_for_bo(struct brw_context *brw,
 }
 
 /**
- * For a singlesample image buffer, this simply wraps the given region with a miptree.
+ * For a singlesample renderbuffer, this simply wraps the given BO with a
+ * miptree.
  *
- * For a multisample image buffer, this wraps the given region with
- * a singlesample miptree, then creates a multisample miptree into which the
- * singlesample miptree is embedded as a child.
+ * For a multisample renderbuffer, this wraps the window system's
+ * (singlesample) BO with a singlesample miptree attached to the
+ * intel_renderbuffer, then creates a multisample miptree attached to irb->mt
+ * that will contain the actual rendering (which is lazily resolved to
+ * irb->singlesample_mt).
  */
 void
 intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
                                          struct intel_renderbuffer *irb,
-                                         struct intel_region *region)
+                                         drm_intel_bo *bo,
+                                         uint32_t width, uint32_t height,
+                                         uint32_t pitch)
 {
    struct intel_mipmap_tree *singlesample_mt = NULL;
    struct intel_mipmap_tree *multisample_mt = NULL;
@@ -714,12 +719,12 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
           _mesa_get_format_base_format(format) == GL_RGBA);
 
    singlesample_mt = intel_miptree_create_for_bo(intel,
-                                                 region->bo,
+                                                 bo,
                                                  format,
                                                  0,
-                                                 region->width,
-                                                 region->height,
-                                                 region->pitch);
+                                                 width,
+                                                 height,
+                                                 pitch);
    if (!singlesample_mt)
       goto fail;
 
@@ -741,12 +746,12 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
       irb->singlesample_mt = singlesample_mt;
 
       if (!irb->mt ||
-          irb->mt->logical_width0 != region->width ||
-          irb->mt->logical_height0 != region->height) {
+          irb->mt->logical_width0 != width ||
+          irb->mt->logical_height0 != height) {
          multisample_mt = intel_miptree_create_for_renderbuffer(intel,
                                                                 format,
-                                                                region->width,
-                                                                region->height,
+                                                                width,
+                                                                height,
                                                                 num_samples);
          if (!multisample_mt)
             goto fail;
