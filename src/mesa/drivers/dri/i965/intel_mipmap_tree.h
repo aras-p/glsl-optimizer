@@ -25,6 +25,24 @@
  *
  **************************************************************************/
 
+/** @file intel_mipmap_tree.h
+ *
+ * This file defines the structure that wraps a BO and describes how the
+ * mipmap levels and slices of a texture are laid out.
+ *
+ * The hardware has a fixed layout of a texture depending on parameters such
+ * as the target/type (2D, 3D, CUBE), width, height, pitch, and number of
+ * mipmap levels.  The individual level/layer slices are each 2D rectangles of
+ * pixels at some x/y offset from the start of the drm_intel_bo.
+ *
+ * Original OpenGL allowed texture miplevels to be specified in arbitrary
+ * order, and a texture may change size over time.  Thus, each
+ * intel_texture_image has a reference to a miptree that contains the pixel
+ * data sized appropriately for it, which will later be referenced by/copied
+ * to the intel_texture_object at draw time (intel_finalize_mipmap_tree()) so
+ * that there's a single miptree for the complete texture.
+ */
+
 #ifndef INTEL_MIPMAP_TREE_H
 #define INTEL_MIPMAP_TREE_H
 
@@ -39,32 +57,6 @@ extern "C" {
 #endif
 
 struct intel_renderbuffer;
-
-/* A layer on top of the intel_regions code which adds:
- *
- * - Code to size and layout a region to hold a set of mipmaps.
- * - Query to determine if a new image fits in an existing tree.
- * - More refcounting
- *     - maybe able to remove refcounting from intel_region?
- * - ?
- *
- * The fixed mipmap layout of intel hardware where one offset
- * specifies the position of all images in a mipmap hierachy
- * complicates the implementation of GL texture image commands,
- * compared to hardware where each image is specified with an
- * independent offset.
- *
- * In an ideal world, each texture object would be associated with a
- * single bufmgr buffer or 2d intel_region, and all the images within
- * the texture object would slot into the tree as they arrive.  The
- * reality can be a little messier, as images can arrive from the user
- * with sizes that don't fit in the existing tree, or in an order
- * where the tree layout cannot be guessed immediately.
- *
- * This structure encodes an idealized mipmap tree.  The GL image
- * commands build these where possible, otherwise store the images in
- * temporary system buffers.
- */
 
 struct intel_resolve_map;
 struct intel_texture_image;
@@ -96,7 +88,7 @@ struct intel_miptree_map {
 };
 
 /**
- * Describes the location of each texture image within a texture region.
+ * Describes the location of each texture image within a miptree.
  */
 struct intel_mipmap_level
 {
@@ -263,6 +255,13 @@ enum intel_fast_clear_state
 
 struct intel_mipmap_tree
 {
+   /** Buffer object containing the pixel data. */
+   drm_intel_bo *bo;
+
+   uint32_t pitch; /**< pitch in bytes. */
+
+   uint32_t tiling; /**< One of the I915_TILING_* flags */
+
    /* Effectively the key:
     */
    GLenum target;
@@ -306,13 +305,13 @@ struct intel_mipmap_tree
     */
    GLuint physical_width0, physical_height0, physical_depth0;
 
-   GLuint cpp;
+   GLuint cpp; /**< bytes per pixel */
    GLuint num_samples;
    bool compressed;
 
    /**
     * Level zero image dimensions.  These dimensions correspond to the
-    * logical width, height, and depth of the region as seen by client code.
+    * logical width, height, and depth of the texture as seen by client code.
     * Accordingly, they do not account for the extra width, height, and/or
     * depth that must be allocated in order to accommodate multisample
     * formats, nor do they account for the extra factor of 6 in depth that
@@ -356,11 +355,7 @@ struct intel_mipmap_tree
     */
    struct intel_mipmap_level level[MAX_TEXTURE_LEVELS];
 
-   /* The data is held here:
-    */
-   struct intel_region *region;
-
-   /* Offset into region bo where miptree starts:
+   /* Offset into bo where miptree starts:
     */
    uint32_t offset;
 

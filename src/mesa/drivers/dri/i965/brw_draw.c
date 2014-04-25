@@ -324,7 +324,7 @@ brw_predraw_resolve_buffers(struct brw_context *brw)
 	 continue;
       intel_miptree_all_slices_resolve_depth(brw, tex_obj->mt);
       intel_miptree_resolve_color(brw, tex_obj->mt);
-      brw_render_cache_set_check_flush(brw, tex_obj->mt->region->bo);
+      brw_render_cache_set_check_flush(brw, tex_obj->mt->bo);
    }
 }
 
@@ -360,12 +360,12 @@ static void brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
       back_irb->need_downsample = true;
    if (depth_irb && ctx->Depth.Mask) {
       intel_renderbuffer_att_set_needs_depth_resolve(depth_att);
-      brw_render_cache_set_add_bo(brw, depth_irb->mt->region->bo);
+      brw_render_cache_set_add_bo(brw, depth_irb->mt->bo);
    }
 
    if (ctx->Extensions.ARB_stencil_texturing &&
        stencil_irb && ctx->Stencil._WriteEnabled) {
-      brw_render_cache_set_add_bo(brw, stencil_irb->mt->region->bo);
+      brw_render_cache_set_add_bo(brw, stencil_irb->mt->bo);
    }
 
    for (int i = 0; i < fb->_NumColorDrawBuffers; i++) {
@@ -373,7 +373,7 @@ static void brw_postdraw_set_buffers_need_resolve(struct brw_context *brw)
          intel_renderbuffer(fb->_ColorDrawBuffers[i]);
 
       if (irb)
-         brw_render_cache_set_add_bo(brw, irb->mt->region->bo);
+         brw_render_cache_set_add_bo(brw, irb->mt->bo);
    }
 }
 

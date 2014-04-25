@@ -468,7 +468,7 @@ brw_workaround_depthstencil_alignment(struct brw_context *brw,
           * that the region is untiled even though it's W tiled.
           */
          brw->depthstencil.stencil_offset =
-            (stencil_draw_y & ~tile_mask_y) * stencil_mt->region->pitch +
+            (stencil_draw_y & ~tile_mask_y) * stencil_mt->pitch +
             (stencil_draw_x & ~tile_mask_x) * 64;
       }
    }
@@ -524,8 +524,8 @@ brw_emit_depthbuffer(struct brw_context *brw)
       /* Prior to Gen7, if using separate stencil, hiz must be enabled. */
       assert(brw->gen >= 7 || !separate_stencil || hiz);
 
-      assert(brw->gen < 6 || depth_mt->region->tiling == I915_TILING_Y);
-      assert(!hiz || depth_mt->region->tiling == I915_TILING_Y);
+      assert(brw->gen < 6 || depth_mt->tiling == I915_TILING_Y);
+      assert(!hiz || depth_mt->tiling == I915_TILING_Y);
 
       depthbuffer_format = brw_depthbuffer_format(brw);
       depth_surface_type = BRW_SURFACE_2D;
@@ -552,9 +552,9 @@ brw_emit_depthbuffer(struct brw_context *brw)
    }
 
    if (depth_mt)
-      brw_render_cache_set_check_flush(brw, depth_mt->region->bo);
+      brw_render_cache_set_check_flush(brw, depth_mt->bo);
    if (stencil_mt)
-      brw_render_cache_set_check_flush(brw, stencil_mt->region->bo);
+      brw_render_cache_set_check_flush(brw, stencil_mt->bo);
 
    brw->vtbl.emit_depth_stencil_hiz(brw, depth_mt, depth_offset,
                                     depthbuffer_format, depth_surface_type,
@@ -602,17 +602,17 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
 
    BEGIN_BATCH(len);
    OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
-   OUT_BATCH((depth_mt ? depth_mt->region->pitch - 1 : 0) |
+   OUT_BATCH((depth_mt ? depth_mt->pitch - 1 : 0) |
              (depthbuffer_format << 18) |
              ((enable_hiz_ss ? 1 : 0) << 21) | /* separate stencil enable */
              ((enable_hiz_ss ? 1 : 0) << 22) | /* hiz enable */
              (BRW_TILEWALK_YMAJOR << 26) |
-             ((depth_mt ? depth_mt->region->tiling != I915_TILING_NONE : 1)
+             ((depth_mt ? depth_mt->tiling != I915_TILING_NONE : 1)
               << 27) |
              (depth_surface_type << 29));
 
    if (depth_mt) {
-      OUT_RELOC(depth_mt->region->bo,
+      OUT_RELOC(depth_mt->bo,
 		I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		depth_offset);
    } else {
@@ -647,8 +647,8 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
          struct intel_mipmap_tree *hiz_mt = depth_mt->hiz_mt;
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
-	 OUT_BATCH(hiz_mt->region->pitch - 1);
-	 OUT_RELOC(hiz_mt->region->bo,
+	 OUT_BATCH(hiz_mt->pitch - 1);
+	 OUT_RELOC(hiz_mt->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		   brw->depthstencil.hiz_offset);
 	 ADVANCE_BATCH();
@@ -662,8 +662,6 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
 
       /* Emit stencil buffer. */
       if (separate_stencil) {
-	 struct intel_region *region = stencil_mt->region;
-
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_STENCIL_BUFFER << 16) | (3 - 2));
          /* The stencil buffer has quirky pitch requirements.  From Vol 2a,
@@ -671,8 +669,8 @@ brw_emit_depth_stencil_hiz(struct brw_context *brw,
           *    The pitch must be set to 2x the value computed based on width, as
           *    the stencil buffer is stored with two rows interleaved.
           */
-	 OUT_BATCH(2 * region->pitch - 1);
-	 OUT_RELOC(region->bo,
+	 OUT_BATCH(2 * stencil_mt->pitch - 1);
+	 OUT_RELOC(stencil_mt->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
 		   brw->depthstencil.stencil_offset);
 	 ADVANCE_BATCH();

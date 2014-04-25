@@ -65,9 +65,9 @@ emit_depth_packets(struct brw_context *brw,
              (stencil_mt != NULL && stencil_writable) << 27 |
              (hiz ? 1 : 0) << 22 |
              depthbuffer_format << 18 |
-             (depth_mt ? depth_mt->region->pitch - 1 : 0));
+             (depth_mt ? depth_mt->pitch - 1 : 0));
    if (depth_mt) {
-      OUT_RELOC64(depth_mt->region->bo,
+      OUT_RELOC64(depth_mt->bo,
                   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, 0);
    } else {
       OUT_BATCH(0);
@@ -90,8 +90,8 @@ emit_depth_packets(struct brw_context *brw,
    } else {
       BEGIN_BATCH(5);
       OUT_BATCH(GEN7_3DSTATE_HIER_DEPTH_BUFFER << 16 | (5 - 2));
-      OUT_BATCH((depth_mt->hiz_mt->region->pitch - 1) | BDW_MOCS_WB << 25);
-      OUT_RELOC64(depth_mt->hiz_mt->region->bo,
+      OUT_BATCH((depth_mt->hiz_mt->pitch - 1) | BDW_MOCS_WB << 25);
+      OUT_RELOC64(depth_mt->hiz_mt->bo,
                   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER, 0);
       OUT_BATCH(depth_mt->hiz_mt->qpitch >> 2);
       ADVANCE_BATCH();
@@ -123,8 +123,8 @@ emit_depth_packets(struct brw_context *brw,
        * indicate that it does.
        */
       OUT_BATCH(HSW_STENCIL_ENABLED | BDW_MOCS_WB << 22 |
-                (2 * stencil_mt->region->pitch - 1));
-      OUT_RELOC64(stencil_mt->region->bo,
+                (2 * stencil_mt->pitch - 1));
+      OUT_RELOC64(stencil_mt->bo,
                   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                   stencil_offset);
       OUT_BATCH(stencil_mt ? stencil_mt->qpitch >> 2 : 0);
@@ -308,7 +308,7 @@ gen8_hiz_exec(struct brw_context *brw, struct intel_mipmap_tree *mt,
    ADVANCE_BATCH();
 
    /* Mark this buffer as needing a TC flush, as we've rendered to it. */
-   brw_render_cache_set_add_bo(brw, mt->region->bo);
+   brw_render_cache_set_add_bo(brw, mt->bo);
 
    /* We've clobbered all of the depth packets, and the drawing rectangle,
     * so we need to ensure those packets are re-emitted before the next

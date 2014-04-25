@@ -99,7 +99,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
       return false;
 
    /* Prior to Sandybridge, the blitter can't handle Y tiling */
-   if (brw->gen < 6 && intelImage->mt->region->tiling == I915_TILING_Y)
+   if (brw->gen < 6 && intelImage->mt->tiling == I915_TILING_Y)
       return false;
 
    if (texImage->TexObject->Target != GL_TEXTURE_2D)
@@ -111,7 +111,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
    if (brw->gen >= 6)
       return false;
 
-   if (!drm_intel_bo_busy(intelImage->mt->region->bo))
+   if (!drm_intel_bo_busy(intelImage->mt->bo))
       return false;
 
    DBG("BLT subimage %s target %s level %d offset %d,%d %dx%d\n",
@@ -139,7 +139,7 @@ intel_blit_texsubimage(struct gl_context * ctx,
 
    if (!_mesa_texstore(ctx, 2, texImage->_BaseFormat,
 		       texImage->TexFormat,
-		       temp_mt->region->pitch,
+		       temp_mt->pitch,
 		       &dst,
 		       width, height, 1,
 		       format, type, pixels, packing)) {
@@ -596,8 +596,8 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
       ctx->Driver.AllocTextureImageBuffer(ctx, texImage);
 
    if (!image->mt ||
-       (image->mt->region->tiling != I915_TILING_X &&
-       image->mt->region->tiling != I915_TILING_Y)) {
+       (image->mt->tiling != I915_TILING_X &&
+       image->mt->tiling != I915_TILING_Y)) {
       /* The algorithm is written only for X- or Y-tiled memory. */
       return false;
    }
@@ -607,7 +607,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
     */
    intel_miptree_resolve_color(brw, image->mt);
 
-   bo = image->mt->region->bo;
+   bo = image->mt->bo;
 
    if (drm_intel_bo_references(brw->batch.bo, bo)) {
       perf_debug("Flushing before mapping a referenced bo.\n");
@@ -630,7 +630,7 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
        "packing=(alignment=%d row_length=%d skip_pixels=%d skip_rows=%d) "
        "for_glTexImage=%d\n",
        __FUNCTION__, texImage->Level, xoffset, yoffset, width, height,
-       format, type, texImage->TexFormat, image->mt->region->tiling,
+       format, type, texImage->TexFormat, image->mt->tiling,
        packing->Alignment, packing->RowLength, packing->SkipPixels,
        packing->SkipRows, for_glTexImage);
 
@@ -644,9 +644,9 @@ intel_texsubimage_tiled_memcpy(struct gl_context * ctx,
       xoffset * cpp, (xoffset + width) * cpp,
       yoffset, yoffset + height,
       bo->virtual, pixels - yoffset * src_pitch - xoffset * cpp,
-      image->mt->region->pitch, src_pitch,
+      image->mt->pitch, src_pitch,
       brw->has_swizzling,
-      image->mt->region->tiling,
+      image->mt->tiling,
       mem_copy
    );
 

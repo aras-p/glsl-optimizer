@@ -1265,7 +1265,7 @@ intel_process_dri2_buffer(struct brw_context *brw,
 	* name, then drm_intel_bo_flink() is a low-cost getter.  It does not
 	* create a new name.
 	*/
-      drm_intel_bo_flink(last_mt->region->bo, &old_name);
+      drm_intel_bo_flink(last_mt->bo, &old_name);
    }
 
    if (old_name == buffer->name)
@@ -1346,7 +1346,7 @@ intel_update_image_buffer(struct brw_context *intel,
    else
       last_mt = rb->singlesample_mt;
 
-   if (last_mt && last_mt->region->bo == buffer->bo)
+   if (last_mt && last_mt->bo == buffer->bo)
       return;
 
    intel_update_winsys_renderbuffer_miptree(intel, rb, buffer->bo,

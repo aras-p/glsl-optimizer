@@ -202,10 +202,10 @@ intel_miptree_blit(struct brw_context *brw,
     * pitches < 32k.
     *
     * As a result of these two limitations, we can only use the blitter to do
-    * this copy when the region's pitch is less than 32k.
+    * this copy when the miptree's pitch is less than 32k.
     */
-   if (src_mt->region->pitch >= 32768 ||
-       dst_mt->region->pitch >= 32768) {
+   if (src_mt->pitch >= 32768 ||
+       dst_mt->pitch >= 32768) {
       perf_debug("Falling back due to >=32k pitch\n");
       return false;
    }
@@ -224,7 +224,7 @@ intel_miptree_blit(struct brw_context *brw,
    if (dst_flip)
       dst_y = minify(dst_mt->physical_height0, dst_level - dst_mt->first_level) - dst_y - height;
 
-   int src_pitch = src_mt->region->pitch;
+   int src_pitch = src_mt->pitch;
    if (src_flip != dst_flip)
       src_pitch = -src_pitch;
 
@@ -263,11 +263,11 @@ intel_miptree_blit(struct brw_context *brw,
    if (!intelEmitCopyBlit(brw,
                           src_mt->cpp,
                           src_pitch,
-                          src_mt->region->bo, src_mt->offset,
-                          src_mt->region->tiling,
-                          dst_mt->region->pitch,
-                          dst_mt->region->bo, dst_mt->offset,
-                          dst_mt->region->tiling,
+                          src_mt->bo, src_mt->offset,
+                          src_mt->tiling,
+                          dst_mt->pitch,
+                          dst_mt->bo, dst_mt->offset,
+                          dst_mt->tiling,
                           src_x, src_y,
                           dst_x, dst_y,
                           width, height,
@@ -583,22 +583,21 @@ intel_miptree_set_alpha_to_one(struct brw_context *brw,
                               struct intel_mipmap_tree *mt,
                               int x, int y, int width, int height)
 {
-   struct intel_region *region = mt->region;
    uint32_t BR13, CMD;
    int pitch, cpp;
    drm_intel_bo *aper_array[2];
 
-   pitch = region->pitch;
-   cpp = region->cpp;
+   pitch = mt->pitch;
+   cpp = mt->cpp;
 
    DBG("%s dst:buf(%p)/%d %d,%d sz:%dx%d\n",
-       __FUNCTION__, region->bo, pitch, x, y, width, height);
+       __FUNCTION__, mt->bo, pitch, x, y, width, height);
 
    BR13 = br13_for_cpp(cpp) | 0xf0 << 16;
    CMD = XY_COLOR_BLT_CMD;
    CMD |= XY_BLT_WRITE_ALPHA;
 
-   if (region->tiling != I915_TILING_NONE) {
+   if (mt->tiling != I915_TILING_NONE) {
       CMD |= XY_DST_TILED;
       pitch /= 4;
    }
@@ -606,7 +605,7 @@ intel_miptree_set_alpha_to_one(struct brw_context *brw,
 
    /* do space check before going any further */
    aper_array[0] = brw->batch.bo;
-   aper_array[1] = region->bo;
+   aper_array[1] = mt->bo;
 
    if (drm_intel_bufmgr_check_aperture_space(aper_array,
 					     ARRAY_SIZE(aper_array)) != 0) {
@@ -614,7 +613,7 @@ intel_miptree_set_alpha_to_one(struct brw_context *brw,
    }
 
    unsigned length = brw->gen >= 8 ? 7 : 6;
-   bool dst_y_tiled = region->tiling == I915_TILING_Y;
+   bool dst_y_tiled = mt->tiling == I915_TILING_Y;
 
    BEGIN_BATCH_BLT_TILED(length, dst_y_tiled, false);
    OUT_BATCH(CMD | (length - 2));
@@ -622,11 +621,11 @@ intel_miptree_set_alpha_to_one(struct brw_context *brw,
    OUT_BATCH(SET_FIELD(y, BLT_Y) | SET_FIELD(x, BLT_X));
    OUT_BATCH(SET_FIELD(y + height, BLT_Y) | SET_FIELD(x + width, BLT_X));
    if (brw->gen >= 8) {
-      OUT_RELOC64(region->bo,
+      OUT_RELOC64(mt->bo,
                   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                   0);
    } else {
-      OUT_RELOC(region->bo,
+      OUT_RELOC(mt->bo,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                 0);
    }

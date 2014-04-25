@@ -367,7 +367,7 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
       width /= 2;
       height /= 2;
    }
-   struct intel_region *region = surface->mt->region;
+   struct intel_mipmap_tree *mt = surface->mt;
    uint32_t tile_x, tile_y;
 
    uint32_t *surf = (uint32_t *)
@@ -381,7 +381,7 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
 
    /* reloc */
    surf[1] = (surface->compute_tile_offsets(&tile_x, &tile_y) +
-              region->bo->offset64);
+              mt->bo->offset64);
 
    surf[2] = (0 << BRW_SURFACE_LOD_SHIFT |
               (width - 1) << BRW_SURFACE_WIDTH_SHIFT |
@@ -389,8 +389,8 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
 
    uint32_t tiling = surface->map_stencil_as_y_tiled
       ? BRW_SURFACE_TILED | BRW_SURFACE_TILED_Y
-      : brw_get_surface_tiling_bits(region->tiling);
-   uint32_t pitch_bytes = region->pitch;
+      : brw_get_surface_tiling_bits(mt->tiling);
+   uint32_t pitch_bytes = mt->pitch;
    if (surface->map_stencil_as_y_tiled)
       pitch_bytes *= 2;
    surf[3] = (tiling |
@@ -412,8 +412,8 @@ gen6_blorp_emit_surface_state(struct brw_context *brw,
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->batch.bo,
                            wm_surf_offset + 4,
-                           region->bo,
-                           surf[1] - region->bo->offset64,
+                           mt->bo,
+                           surf[1] - mt->bo->offset64,
                            read_domains, write_domain);
 
    return wm_surf_offset;
@@ -834,14 +834,14 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
 
       BEGIN_BATCH(7);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (7 - 2));
-      OUT_BATCH((params->depth.mt->region->pitch - 1) |
+      OUT_BATCH((params->depth.mt->pitch - 1) |
                 params->depth_format << 18 |
                 1 << 21 | /* separate stencil enable */
                 1 << 22 | /* hiz enable */
                 BRW_TILEWALK_YMAJOR << 26 |
                 1 << 27 | /* y-tiled */
                 BRW_SURFACE_2D << 29);
-      OUT_RELOC(params->depth.mt->region->bo,
+      OUT_RELOC(params->depth.mt->bo,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                 offset);
       OUT_BATCH(BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1 |
@@ -864,8 +864,8 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
 
       BEGIN_BATCH(3);
       OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
-      OUT_BATCH(hiz_mt->region->pitch - 1);
-      OUT_RELOC(hiz_mt->region->bo,
+      OUT_BATCH(hiz_mt->pitch - 1);
+      OUT_RELOC(hiz_mt->bo,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                 hiz_offset);
       ADVANCE_BATCH();

@@ -254,8 +254,8 @@ intel_set_texture_image_bo(struct gl_context *ctx,
    intel_texobj->needs_validate = true;
 
    intel_image->mt->offset = offset;
-   assert(pitch % intel_image->mt->region->cpp == 0);
-   intel_image->base.RowStride = pitch / intel_image->mt->region->cpp;
+   assert(pitch % intel_image->mt->cpp == 0);
+   intel_image->base.RowStride = pitch / intel_image->mt->cpp;
 
    /* Immediately validate the image to the object. */
    intel_miptree_reference(&intel_texobj->mt, intel_image->mt);
@@ -285,8 +285,8 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
       intel_update_renderbuffers(pDRICtx, dPriv);
 
    rb = intel_get_renderbuffer(fb, BUFFER_FRONT_LEFT);
-   /* If the region isn't set, then intel_update_renderbuffers was unable
-    * to get the buffers for the drawable.
+   /* If the miptree isn't set, then intel_update_renderbuffers was unable
+    * to get the BO for the drawable from the window system.
     */
    if (!rb || !rb->mt)
       return;
@@ -308,11 +308,11 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    _mesa_lock_texture(&brw->ctx, texObj);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    intel_miptree_make_shareable(brw, rb->mt);
-   intel_set_texture_image_bo(ctx, texImage, rb->mt->region->bo, target,
+   intel_set_texture_image_bo(ctx, texImage, rb->mt->bo, target,
                               internalFormat, texFormat, 0,
-                              rb->mt->region->width,
-                              rb->mt->region->height,
-                              rb->mt->region->pitch,
+                              rb->Base.Base.Width,
+                              rb->Base.Base.Height,
+                              rb->mt->pitch,
                               0, 0);
    _mesa_unlock_texture(&brw->ctx, texObj);
 }

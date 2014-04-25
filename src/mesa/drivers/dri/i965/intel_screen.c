@@ -140,14 +140,14 @@ aub_dump_bmp(struct gl_context *ctx)
 	    continue;
 	 }
 
-         assert(irb->mt->region->pitch % irb->mt->region->cpp == 0);
-	 drm_intel_gem_bo_aub_dump_bmp(irb->mt->region->bo,
+         assert(irb->mt->pitch % irb->mt->cpp == 0);
+         drm_intel_gem_bo_aub_dump_bmp(irb->mt->bo,
 				       irb->draw_x,
 				       irb->draw_y,
 				       irb->Base.Base.Width,
 				       irb->Base.Base.Height,
 				       format,
-				       irb->mt->region->pitch,
+				       irb->mt->pitch,
 				       0);
       }
    }
@@ -338,15 +338,15 @@ intel_setup_image_from_mipmap_tree(struct brw_context *brw, __DRIimage *image,
 
    image->width = minify(mt->physical_width0, level - mt->first_level);
    image->height = minify(mt->physical_height0, level - mt->first_level);
-   image->pitch = mt->region->pitch;
+   image->pitch = mt->pitch;
 
    image->offset = intel_miptree_get_tile_offsets(mt, level, zoffset,
                                                   &image->tile_x,
                                                   &image->tile_y);
 
    drm_intel_bo_unreference(image->bo);
-   image->bo = mt->region->bo;
-   drm_intel_bo_reference(mt->region->bo);
+   image->bo = mt->bo;
+   drm_intel_bo_reference(mt->bo);
 }
 
 static __DRIimage *
@@ -407,11 +407,11 @@ intel_create_image_from_renderbuffer(__DRIcontext *context,
    image->offset = 0;
    image->data = loaderPrivate;
    drm_intel_bo_unreference(image->bo);
-   image->bo = irb->mt->region->bo;
-   drm_intel_bo_reference(irb->mt->region->bo);
-   image->width = irb->mt->region->width;
-   image->height = irb->mt->region->height;
-   image->pitch = irb->mt->region->pitch;
+   image->bo = irb->mt->bo;
+   drm_intel_bo_reference(irb->mt->bo);
+   image->width = rb->Width;
+   image->height = rb->Height;
+   image->pitch = irb->mt->pitch;
    image->dri_format = driGLFormatToImageFormat(image->format);
    image->has_depthstencil = irb->mt->stencil_mt? true : false;
 

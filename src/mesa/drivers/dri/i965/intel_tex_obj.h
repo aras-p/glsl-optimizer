@@ -44,8 +44,8 @@ struct intel_texture_object
    unsigned int validated_first_level;
    unsigned int validated_last_level;
 
-   /* On validation any active images held in main memory or in other
-    * regions will be copied to this region and the old storage freed.
+   /* The miptree of pixel data for the texture (if !needs_validate).  After
+    * validation, the images will also have references to the same mt.
     */
    struct intel_mipmap_tree *mt;
 

@@ -223,7 +223,7 @@ brw_blorp_clear_params::brw_blorp_clear_params(struct brw_context *brw,
     *      accessing tiled memory.  Using this Message Type to access linear
     *      (untiled) memory is UNDEFINED."
     */
-   if (irb->mt->region->tiling == I915_TILING_NONE)
+   if (irb->mt->tiling == I915_TILING_NONE)
       wm_prog_key.use_simd16_replicated_data = false;
 
    /* Constant color writes ignore everyting in blend and color calculator

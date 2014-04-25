@@ -319,16 +319,15 @@ brw_update_texture_surface(struct gl_context *ctx,
 	      BRW_SURFACE_CUBEFACE_ENABLES |
 	      tex_format << BRW_SURFACE_FORMAT_SHIFT);
 
-   surf[1] = mt->region->bo->offset64 + mt->offset; /* reloc */
+   surf[1] = mt->bo->offset64 + mt->offset; /* reloc */
 
    surf[2] = ((intelObj->_MaxLevel - tObj->BaseLevel) << BRW_SURFACE_LOD_SHIFT |
 	      (mt->logical_width0 - 1) << BRW_SURFACE_WIDTH_SHIFT |
 	      (mt->logical_height0 - 1) << BRW_SURFACE_HEIGHT_SHIFT);
 
-   surf[3] = (brw_get_surface_tiling_bits(mt->region->tiling) |
+   surf[3] = (brw_get_surface_tiling_bits(mt->tiling) |
 	      (mt->logical_depth0 - 1) << BRW_SURFACE_DEPTH_SHIFT |
-	      (mt->region->pitch - 1) <<
-	      BRW_SURFACE_PITCH_SHIFT);
+	      (mt->pitch - 1) << BRW_SURFACE_PITCH_SHIFT);
 
    surf[4] = (brw_get_surface_num_multisamples(mt->num_samples) |
               SET_FIELD(tObj->BaseLevel - mt->first_level, BRW_SURFACE_MIN_LOD));
@@ -338,8 +337,8 @@ brw_update_texture_surface(struct gl_context *ctx,
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->batch.bo,
                            *surf_offset + 4,
-                           mt->region->bo,
-                           surf[1] - mt->region->bo->offset64,
+                           mt->bo,
+                           surf[1] - mt->bo->offset64,
                            I915_GEM_DOMAIN_SAMPLER, 0);
 }
 
@@ -613,7 +612,6 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_mipmap_tree *mt = irb->mt;
-   struct intel_region *region;
    uint32_t *surf;
    uint32_t tile_x, tile_y;
    uint32_t format = 0;
@@ -641,8 +639,6 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
    intel_miptree_used_for_rendering(irb->mt);
 
-   region = irb->mt->region;
-
    surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 6 * 4, 32,
                           &brw->wm.base.surf_offset[surf_index]);
 
@@ -657,13 +653,13 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
    /* reloc */
    surf[1] = (intel_renderbuffer_get_tile_offsets(irb, &tile_x, &tile_y) +
-	      region->bo->offset64);
+	      mt->bo->offset64);
 
    surf[2] = ((rb->Width - 1) << BRW_SURFACE_WIDTH_SHIFT |
 	      (rb->Height - 1) << BRW_SURFACE_HEIGHT_SHIFT);
 
-   surf[3] = (brw_get_surface_tiling_bits(region->tiling) |
-	      (region->pitch - 1) << BRW_SURFACE_PITCH_SHIFT);
+   surf[3] = (brw_get_surface_tiling_bits(mt->tiling) |
+	      (mt->pitch - 1) << BRW_SURFACE_PITCH_SHIFT);
 
    surf[4] = brw_get_surface_num_multisamples(mt->num_samples);
 
@@ -701,8 +697,8 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
    drm_intel_bo_emit_reloc(brw->batch.bo,
 			   brw->wm.base.surf_offset[surf_index] + 4,
-			   region->bo,
-			   surf[1] - region->bo->offset64,
+			   mt->bo,
+			   surf[1] - mt->bo->offset64,
 			   I915_GEM_DOMAIN_RENDER,
 			   I915_GEM_DOMAIN_RENDER);
 }
