@@ -732,7 +732,6 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
 {
     int width, height, offset, stride, dri_format, index;
     struct intel_image_format *f;
-    uint32_t mask_x, mask_y;
     __DRIimage *image;
 
     if (parent == NULL || parent->planar_format == NULL)
@@ -777,8 +776,7 @@ intel_from_planar(__DRIimage *parent, int plane, void *loaderPrivate)
     image->offset = offset;
     intel_setup_image_from_dimensions(image);
 
-    intel_region_get_tile_masks(image->region, &mask_x, &mask_y, false);
-    if (offset & mask_x)
+    if (offset & 0xfff)
        _mesa_warning(NULL,
                      "intel_create_sub_image: offset not on tile boundary");
 
