@@ -183,8 +183,13 @@ st_framebuffer_validate(struct st_framebuffer *stfb,
    uint width, height;
    unsigned i;
    boolean changed = FALSE;
-   int32_t new_stamp = p_atomic_read(&stfb->iface->stamp);
+   int32_t new_stamp;
 
+   /* Check for incomplete framebuffers (e.g. EGL_KHR_surfaceless_context) */
+   if (!stfb->iface)
+      return;
+
+   new_stamp = p_atomic_read(&stfb->iface->stamp);
    if (stfb->iface_stamp == new_stamp)
       return;
 
