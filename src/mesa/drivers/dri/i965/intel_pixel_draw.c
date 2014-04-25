@@ -113,7 +113,7 @@ do_blit_drawpixels(struct gl_context * ctx,
                                   irb->mt->format,
                                   src_offset,
                                   width, height,
-                                  src_stride, I915_TILING_NONE);
+                                  src_stride);
    if (!pbo_mt)
       return false;
 

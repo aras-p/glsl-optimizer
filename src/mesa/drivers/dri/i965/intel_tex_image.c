@@ -140,7 +140,7 @@ try_pbo_upload(struct gl_context *ctx,
                                   intelImage->mt->format,
                                   src_offset,
                                   image->Width, image->Height,
-                                  src_stride, I915_TILING_NONE);
+                                  src_stride);
    if (!pbo_mt)
       return false;
 

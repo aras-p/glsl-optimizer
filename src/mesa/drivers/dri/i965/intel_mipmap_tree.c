@@ -643,14 +643,16 @@ intel_miptree_create_for_bo(struct brw_context *brw,
                             uint32_t offset,
                             uint32_t width,
                             uint32_t height,
-                            int pitch,
-                            uint32_t tiling)
+                            int pitch)
 {
    struct intel_mipmap_tree *mt;
+   uint32_t tiling, swizzle;
 
    struct intel_region *region = calloc(1, sizeof(*region));
    if (!region)
       return NULL;
+
+   drm_intel_bo_get_tiling(bo, &tiling, &swizzle);
 
    /* Nothing will be able to use this miptree with the BO if the offset isn't
     * aligned.
@@ -717,8 +719,7 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
                                                  0,
                                                  region->width,
                                                  region->height,
-                                                 region->pitch,
-                                                 region->tiling);
+                                                 region->pitch);
    if (!singlesample_mt)
       goto fail;
 

@@ -389,8 +389,7 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
                                          image->offset,
                                          image->region->width,
                                          image->region->height,
-                                         image->region->pitch,
-                                         image->region->tiling);
+                                         image->region->pitch);
    if (!irb->mt)
       return;
 
