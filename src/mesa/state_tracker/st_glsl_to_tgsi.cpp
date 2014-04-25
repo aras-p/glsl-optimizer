@@ -241,7 +241,7 @@ public:
 
    unsigned op;
    st_dst_reg dst;
-   st_src_reg src[3];
+   st_src_reg src[4];
    /** Pointer to the ir source this tree came from for debugging */
    ir_instruction *ir;
    GLboolean cond_update;
@@ -411,7 +411,12 @@ public:
    glsl_to_tgsi_instruction *emit(ir_instruction *ir, unsigned op,
         		        st_dst_reg dst,
         		        st_src_reg src0, st_src_reg src1, st_src_reg src2);
-   
+
+   glsl_to_tgsi_instruction *emit(ir_instruction *ir, unsigned op,
+                                  st_dst_reg dst,
+                                  st_src_reg src0, st_src_reg src1,
+                                  st_src_reg src2, st_src_reg src3);
+
    unsigned get_opcode(ir_instruction *ir, unsigned op,
                     st_dst_reg dst,
                     st_src_reg src0, st_src_reg src1);
@@ -524,8 +529,9 @@ num_inst_src_regs(unsigned opcode)
 
 glsl_to_tgsi_instruction *
 glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
-        		 st_dst_reg dst,
-        		 st_src_reg src0, st_src_reg src1, st_src_reg src2)
+                           st_dst_reg dst,
+                           st_src_reg src0, st_src_reg src1,
+                           st_src_reg src2, st_src_reg src3)
 {
    glsl_to_tgsi_instruction *inst = new(mem_ctx) glsl_to_tgsi_instruction();
    int num_reladdr = 0, i;
@@ -540,7 +546,9 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
    num_reladdr += src0.reladdr != NULL || src0.reladdr2 != NULL;
    num_reladdr += src1.reladdr != NULL || src1.reladdr2 != NULL;
    num_reladdr += src2.reladdr != NULL || src2.reladdr2 != NULL;
+   num_reladdr += src3.reladdr != NULL || src3.reladdr2 != NULL;
 
+   reladdr_to_temp(ir, &src3, &num_reladdr);
    reladdr_to_temp(ir, &src2, &num_reladdr);
    reladdr_to_temp(ir, &src1, &num_reladdr);
    reladdr_to_temp(ir, &src0, &num_reladdr);
@@ -556,6 +564,7 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
    inst->src[0] = src0;
    inst->src[1] = src1;
    inst->src[2] = src2;
+   inst->src[3] = src3;
    inst->ir = ir;
    inst->dead_mask = 0;
 
@@ -577,7 +586,7 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
       }
    }
    else {
-      for (i=0; i<3; i++) {
+      for (i=0; i<4; i++) {
          if(inst->src[i].reladdr) {
             switch(inst->src[i].file) {
             case PROGRAM_STATE_VAR:
@@ -600,12 +609,19 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
    return inst;
 }
 
+glsl_to_tgsi_instruction *
+glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
+                           st_dst_reg dst, st_src_reg src0,
+                           st_src_reg src1, st_src_reg src2)
+{
+   return emit(ir, op, dst, src0, src1, src2, undef_src);
+}
 
 glsl_to_tgsi_instruction *
 glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
         		 st_dst_reg dst, st_src_reg src0, st_src_reg src1)
 {
-   return emit(ir, op, dst, src0, src1, undef_src);
+   return emit(ir, op, dst, src0, src1, undef_src, undef_src);
 }
 
 glsl_to_tgsi_instruction *
@@ -613,13 +629,13 @@ glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op,
         		 st_dst_reg dst, st_src_reg src0)
 {
    assert(dst.writemask != 0);
-   return emit(ir, op, dst, src0, undef_src, undef_src);
+   return emit(ir, op, dst, src0, undef_src, undef_src, undef_src);
 }
 
 glsl_to_tgsi_instruction *
 glsl_to_tgsi_visitor::emit(ir_instruction *ir, unsigned op)
 {
-   return emit(ir, op, undef_dst, undef_src, undef_src, undef_src);
+   return emit(ir, op, undef_dst, undef_src, undef_src, undef_src, undef_src);
 }
 
 /**
@@ -690,7 +706,10 @@ glsl_to_tgsi_visitor::get_opcode(ir_instruction *ir, unsigned op,
 
       case2fi(SSG, ISSG);
       case3(ABS, IABS, IABS);
-      
+
+      case2iu(IBFE, UBFE);
+      case2iu(IMSB, UMSB);
+      case2iu(IMUL_HI, UMUL_HI);
       default: break;
    }
    
@@ -1934,6 +1953,33 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
          emit(ir, TGSI_OPCODE_CMP, result_dst, op[0], op[1], op[2]);
       }
       break;
+   case ir_triop_bitfield_extract:
+      emit(ir, TGSI_OPCODE_IBFE, result_dst, op[0], op[1], op[2]);
+      break;
+   case ir_quadop_bitfield_insert:
+      emit(ir, TGSI_OPCODE_BFI, result_dst, op[0], op[1], op[2], op[3]);
+      break;
+   case ir_unop_bitfield_reverse:
+      emit(ir, TGSI_OPCODE_BREV, result_dst, op[0]);
+      break;
+   case ir_unop_bit_count:
+      emit(ir, TGSI_OPCODE_POPC, result_dst, op[0]);
+      break;
+   case ir_unop_find_msb:
+      emit(ir, TGSI_OPCODE_IMSB, result_dst, op[0]);
+      break;
+   case ir_unop_find_lsb:
+      emit(ir, TGSI_OPCODE_LSB, result_dst, op[0]);
+      break;
+   case ir_binop_imul_high:
+      emit(ir, TGSI_OPCODE_IMUL_HI, result_dst, op[0], op[1]);
+      break;
+   case ir_triop_fma:
+      /* NOTE: Perhaps there should be a special opcode that enforces fused
+       * mul-add. Just use MAD for now.
+       */
+      emit(ir, TGSI_OPCODE_MAD, result_dst, op[0], op[1], op[2]);
+      break;
    case ir_unop_pack_snorm_2x16:
    case ir_unop_pack_unorm_2x16:
    case ir_unop_pack_half_2x16:
@@ -1947,22 +1993,14 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    case ir_unop_unpack_snorm_4x8:
    case ir_unop_unpack_unorm_4x8:
    case ir_binop_pack_half_2x16_split:
-   case ir_unop_bitfield_reverse:
-   case ir_unop_bit_count:
-   case ir_unop_find_msb:
-   case ir_unop_find_lsb:
    case ir_binop_bfm:
-   case ir_triop_fma:
    case ir_triop_bfi:
-   case ir_triop_bitfield_extract:
-   case ir_quadop_bitfield_insert:
    case ir_quadop_vector:
    case ir_binop_vector_extract:
    case ir_triop_vector_insert:
    case ir_binop_ldexp:
    case ir_binop_carry:
    case ir_binop_borrow:
-   case ir_binop_imul_high:
       /* This operation is not supported, or should have already been handled.
        */
       assert(!"Invalid ir opcode in glsl_to_tgsi_visitor::visit()");
@@ -5357,6 +5395,7 @@ st_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
                          DIV_TO_MUL_RCP |
                          EXP_TO_EXP2 |
                          LOG_TO_LOG2 |
+                         LDEXP_TO_ARITH |
                          (options->EmitNoPow ? POW_TO_EXP2 : 0) |
                          (!ctx->Const.NativeIntegers ? INT_DIV_TO_MUL_RCP : 0));
 
