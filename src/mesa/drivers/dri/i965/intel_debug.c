@@ -46,7 +46,6 @@ static const struct dri_debug_control debug_control[] = {
    { "bat",   DEBUG_BATCH},
    { "pix",   DEBUG_PIXEL},
    { "buf",   DEBUG_BUFMGR},
-   { "reg",   DEBUG_REGION},
    { "fbo",   DEBUG_FBO},
    { "fs",    DEBUG_WM },
    { "gs",    DEBUG_GS},

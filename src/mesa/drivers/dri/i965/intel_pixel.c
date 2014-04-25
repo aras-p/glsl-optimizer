@@ -34,7 +34,6 @@
 
 #include "brw_context.h"
 #include "intel_pixel.h"
-#include "intel_regions.h"
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 

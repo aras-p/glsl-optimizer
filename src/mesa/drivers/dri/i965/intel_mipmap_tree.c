@@ -31,7 +31,6 @@
 #include "intel_batchbuffer.h"
 #include "intel_chipset.h"
 #include "intel_mipmap_tree.h"
-#include "intel_regions.h"
 #include "intel_resolve_map.h"
 #include "intel_tex.h"
 #include "intel_blit.h"

@@ -46,45 +46,6 @@
 extern "C" {
 #endif
 
-struct brw_context;
-struct intel_screen;
-struct intel_buffer_object;
-
-/**
- * A layer on top of the bufmgr buffers that adds a few useful things:
- *
- * - Refcounting for local buffer references.
- * - Refcounting for buffer maps
- * - Buffer dimensions - pitch and height.
- * - Blitter commands for copying 2D regions between buffers. (really???)
- */
-struct intel_region
-{
-   drm_intel_bo *bo;  /**< buffer manager's buffer */
-   GLuint refcount; /**< Reference count for region */
-   GLuint cpp;      /**< bytes per pixel */
-   GLuint width;    /**< in pixels */
-   GLuint height;   /**< in pixels */
-   GLuint pitch;    /**< in bytes */
-
-   uint32_t tiling; /**< Which tiling mode the region is in */
-};
-
-
-/* Allocate a refcounted region.  Pointers to regions should only be
- * copied by calling intel_reference_region().
- */
-struct intel_region *intel_region_alloc(struct intel_screen *screen,
-                                        uint32_t tiling,
-					GLuint cpp, GLuint width,
-                                        GLuint height,
-					bool expect_accelerated_upload);
-
-void intel_region_reference(struct intel_region **dst,
-                            struct intel_region *src);
-
-void intel_region_release(struct intel_region **ib);
-
 /**
  * Used with images created with image_from_names
  * to help support planar images.

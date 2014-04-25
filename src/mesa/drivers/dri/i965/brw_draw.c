@@ -51,7 +51,6 @@
 #include "intel_buffers.h"
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
-#include "intel_regions.h"
 #include "intel_buffer_objects.h"
 
 #define FILE_DEBUG_FLAG DEBUG_PRIMS
