@@ -32,6 +32,7 @@ MAPI_BRIDGE_FILES = \
 	$(TOP)/src/mapi/mapi_tmp.h
 
 MAPI_FILES = \
+	$(TOP)/src/mapi/entry.c \
 	$(TOP)/src/mapi/mapi.c \
 	$(TOP)/src/mapi/mapi.h \
 	$(TOP)/src/mapi/stub.c \
