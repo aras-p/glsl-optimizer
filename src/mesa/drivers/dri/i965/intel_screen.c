@@ -1376,7 +1376,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
 
 struct intel_buffer {
    __DRIbuffer base;
-   struct intel_region *region;
+   drm_intel_bo *bo;
 };
 
 static __DRIbuffer *
@@ -1395,23 +1395,27 @@ intelAllocateBuffer(__DRIscreen *screen,
       return NULL;
 
    /* The front and back buffers are color buffers, which are X tiled. */
-   intelBuffer->region = intel_region_alloc(intelScreen,
-                                            I915_TILING_X,
-                                            format / 8,
-                                            width,
-                                            height,
-                                            true);
+   uint32_t tiling = I915_TILING_X;
+   unsigned long pitch;
+   int cpp = format / 8;
+   intelBuffer->bo = drm_intel_bo_alloc_tiled(intelScreen->bufmgr,
+                                              "intelAllocateBuffer",
+                                              width,
+                                              height,
+                                              cpp,
+                                              &tiling, &pitch,
+                                              BO_ALLOC_FOR_RENDER);
 
-   if (intelBuffer->region == NULL) {
+   if (intelBuffer->bo == NULL) {
 	   free(intelBuffer);
 	   return NULL;
    }
 
-   drm_intel_bo_flink(intelBuffer->region->bo, &intelBuffer->base.name);
+   drm_intel_bo_flink(intelBuffer->bo, &intelBuffer->base.name);
 
    intelBuffer->base.attachment = attachment;
-   intelBuffer->base.cpp = intelBuffer->region->cpp;
-   intelBuffer->base.pitch = intelBuffer->region->pitch;
+   intelBuffer->base.cpp = cpp;
+   intelBuffer->base.pitch = pitch;
 
    return &intelBuffer->base;
 }
@@ -1421,7 +1425,7 @@ intelReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
 {
    struct intel_buffer *intelBuffer = (struct intel_buffer *) buffer;
 
-   intel_region_release(&intelBuffer->region);
+   drm_intel_bo_unreference(intelBuffer->bo);
    free(intelBuffer);
 }
 
