@@ -384,18 +384,18 @@ intel_image_target_renderbuffer_storage(struct gl_context *ctx,
    irb = intel_renderbuffer(rb);
    intel_miptree_release(&irb->mt);
    irb->mt = intel_miptree_create_for_bo(brw,
-                                         image->region->bo,
+                                         image->bo,
                                          image->format,
                                          image->offset,
-                                         image->region->width,
-                                         image->region->height,
-                                         image->region->pitch);
+                                         image->width,
+                                         image->height,
+                                         image->pitch);
    if (!irb->mt)
       return;
 
    rb->InternalFormat = image->internal_format;
-   rb->Width = image->region->width;
-   rb->Height = image->region->height;
+   rb->Width = image->width;
+   rb->Height = image->height;
    rb->Format = image->format;
    rb->_BaseFormat = _mesa_base_fbo_format(ctx, image->internal_format);
    rb->NeedsFinishRenderTexture = true;

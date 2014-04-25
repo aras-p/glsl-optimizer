@@ -403,11 +403,11 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
       return;
    }
 
-   intel_set_texture_image_bo(ctx, texImage, image->region->bo,
+   intel_set_texture_image_bo(ctx, texImage, image->bo,
                               target, image->internal_format,
                               image->format, image->offset,
                               image->width,  image->height,
-                              image->region->pitch,
+                              image->pitch,
                               image->tile_x, image->tile_y);
 }
 

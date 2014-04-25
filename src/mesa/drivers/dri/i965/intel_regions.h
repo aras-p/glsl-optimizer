@@ -80,19 +80,6 @@ struct intel_region *intel_region_alloc(struct intel_screen *screen,
                                         GLuint height,
 					bool expect_accelerated_upload);
 
-struct intel_region *
-intel_region_alloc_for_handle(struct intel_screen *screen,
-			      GLuint cpp,
-			      GLuint width, GLuint height, GLuint pitch,
-			      unsigned int handle, const char *name);
-
-struct intel_region *
-intel_region_alloc_for_fd(struct intel_screen *screen,
-                          GLuint cpp,
-                          GLuint width, GLuint height, GLuint pitch,
-                          GLuint size,
-                          int fd, const char *name);
-
 void intel_region_reference(struct intel_region **dst,
                             struct intel_region *src);
 
@@ -116,7 +103,8 @@ struct intel_image_format {
 };
 
 struct __DRIimageRec {
-   struct intel_region *region;
+   drm_intel_bo *bo;
+   uint32_t pitch; /**< in bytes */
    GLenum internal_format;
    uint32_t dri_format;
    GLuint format;

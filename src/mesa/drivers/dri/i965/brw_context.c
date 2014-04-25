@@ -1330,10 +1330,9 @@ intel_update_image_buffer(struct brw_context *intel,
                           __DRIimage *buffer,
                           enum __DRIimageBufferMask buffer_type)
 {
-   struct intel_region *region = buffer->region;
    struct gl_framebuffer *fb = drawable->driverPrivate;
 
-   if (!rb || !region)
+   if (!rb || !buffer->bo)
       return;
 
    unsigned num_samples = rb->Base.Base.NumSamples;
@@ -1347,12 +1346,12 @@ intel_update_image_buffer(struct brw_context *intel,
    else
       last_mt = rb->singlesample_mt;
 
-   if (last_mt && last_mt->region->bo == region->bo)
+   if (last_mt && last_mt->region->bo == buffer->bo)
       return;
 
-   intel_update_winsys_renderbuffer_miptree(intel, rb, region->bo,
-                                            region->width, region->height,
-                                            region->pitch);
+   intel_update_winsys_renderbuffer_miptree(intel, rb, buffer->bo,
+                                            buffer->width, buffer->height,
+                                            buffer->pitch);
 
    if (brw_is_front_buffer_drawing(fb) &&
        buffer_type == __DRI_IMAGE_BUFFER_FRONT &&
