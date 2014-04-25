@@ -1259,7 +1259,16 @@ intel_process_dri2_buffer(struct brw_context *brw,
    else
       last_mt = rb->singlesample_mt;
 
-   if (last_mt && last_mt->region->name == buffer->name)
+   /* Get the name for our previous RB mt.  We know it had a name already (and
+    * thus the DRM call is just a getter), because it could only have been
+    * allocated by a previous intel_process_dri2_buffer(), so
+    * drm_intel_bo_flink() is just a getter.
+    */
+   uint32_t old_name = 0;
+   if (last_mt)
+      drm_intel_bo_flink(last_mt->region->bo, &old_name);
+
+   if (old_name == buffer->name)
       return;
 
    if (unlikely(INTEL_DEBUG & DEBUG_DRI)) {

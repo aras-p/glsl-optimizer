@@ -525,7 +525,7 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
       *value = image->region->bo->handle;
       return true;
    case __DRI_IMAGE_ATTRIB_NAME:
-      return intel_region_flink(image->region, (uint32_t *) value);
+      return !drm_intel_bo_flink(image->region->bo, (uint32_t *) value);
    case __DRI_IMAGE_ATTRIB_FORMAT:
       *value = image->dri_format;
       return true;
@@ -1409,7 +1409,7 @@ intelAllocateBuffer(__DRIscreen *screen,
 	   return NULL;
    }
 
-   intel_region_flink(intelBuffer->region, &intelBuffer->base.name);
+   drm_intel_bo_flink(intelBuffer->region->bo, &intelBuffer->base.name);
 
    intelBuffer->base.attachment = attachment;
    intelBuffer->base.cpp = intelBuffer->region->cpp;

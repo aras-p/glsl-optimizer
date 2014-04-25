@@ -158,19 +158,6 @@ intel_region_alloc(struct intel_screen *screen,
    return region;
 }
 
-bool
-intel_region_flink(struct intel_region *region, uint32_t *name)
-{
-   if (region->name == 0) {
-      if (drm_intel_bo_flink(region->bo, &region->name))
-	 return false;
-   }
-
-   *name = region->name;
-
-   return true;
-}
-
 struct intel_region *
 intel_region_alloc_for_handle(struct intel_screen *screen,
 			      GLuint cpp,
@@ -199,8 +186,6 @@ intel_region_alloc_for_handle(struct intel_screen *screen,
       drm_intel_bo_unreference(buffer);
       return NULL;
    }
-
-   region->name = handle;
 
    return region;
 }

@@ -68,8 +68,6 @@ struct intel_region
    GLuint pitch;    /**< in bytes */
 
    uint32_t tiling; /**< Which tiling mode the region is in */
-
-   uint32_t name; /**< Global name for the bo */
 };
 
 
@@ -94,9 +92,6 @@ intel_region_alloc_for_fd(struct intel_screen *screen,
                           GLuint width, GLuint height, GLuint pitch,
                           GLuint size,
                           int fd, const char *name);
-
-bool
-intel_region_flink(struct intel_region *region, uint32_t *name);
 
 void intel_region_reference(struct intel_region **dst,
                             struct intel_region *src);

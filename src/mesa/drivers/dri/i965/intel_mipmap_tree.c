@@ -723,8 +723,6 @@ intel_update_winsys_renderbuffer_miptree(struct brw_context *intel,
    if (!singlesample_mt)
       goto fail;
 
-   singlesample_mt->region->name = region->name;
-
    /* If this miptree is capable of supporting fast color clears, set
     * mcs_state appropriately to ensure that fast clears will occur.
     * Allocation of the MCS miptree will be deferred until the first fast
