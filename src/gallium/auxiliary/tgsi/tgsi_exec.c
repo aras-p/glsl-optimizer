@@ -2603,6 +2603,40 @@ exec_vector_trinary(struct tgsi_exec_machine *mach,
    }
 }
 
+typedef void (* micro_quaternary_op)(union tgsi_exec_channel *dst,
+                                     const union tgsi_exec_channel *src0,
+                                     const union tgsi_exec_channel *src1,
+                                     const union tgsi_exec_channel *src2,
+                                     const union tgsi_exec_channel *src3);
+
+static void
+exec_vector_quaternary(struct tgsi_exec_machine *mach,
+                       const struct tgsi_full_instruction *inst,
+                       micro_quaternary_op op,
+                       enum tgsi_exec_datatype dst_datatype,
+                       enum tgsi_exec_datatype src_datatype)
+{
+   unsigned int chan;
+   struct tgsi_exec_vector dst;
+
+   for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+      if (inst->Dst[0].Register.WriteMask & (1 << chan)) {
+         union tgsi_exec_channel src[4];
+
+         fetch_source(mach, &src[0], &inst->Src[0], chan, src_datatype);
+         fetch_source(mach, &src[1], &inst->Src[1], chan, src_datatype);
+         fetch_source(mach, &src[2], &inst->Src[2], chan, src_datatype);
+         fetch_source(mach, &src[3], &inst->Src[3], chan, src_datatype);
+         op(&dst.xyzw[chan], &src[0], &src[1], &src[2], &src[3]);
+      }
+   }
+   for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
+      if (inst->Dst[0].Register.WriteMask & (1 << chan)) {
+         store_dest(mach, &dst.xyzw[chan], &inst->Dst[0], inst, chan, dst_datatype);
+      }
+   }
+}
+
 static void
 exec_dp3(struct tgsi_exec_machine *mach,
          const struct tgsi_full_instruction *inst)
@@ -3570,6 +3604,119 @@ micro_ucmp(union tgsi_exec_channel *dst,
    dst->u[3] = src0->u[3] ? src1->u[3] : src2->u[3];
 }
 
+/**
+ * Signed bitfield extract (i.e. sign-extend the extracted bits)
+ */
+static void
+micro_ibfe(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src0,
+           const union tgsi_exec_channel *src1,
+           const union tgsi_exec_channel *src2)
+{
+   int i;
+   for (i = 0; i < 4; i++) {
+      int width = src2->i[i] & 0x1f;
+      int offset = src1->i[i] & 0x1f;
+      if (width == 0)
+         dst->i[i] = 0;
+      else if (width + offset < 32)
+         dst->i[i] = (src0->i[i] << (32 - width - offset)) >> (32 - width);
+      else
+         dst->i[i] = src0->i[i] >> offset;
+   }
+}
+
+/**
+ * Unsigned bitfield extract
+ */
+static void
+micro_ubfe(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src0,
+           const union tgsi_exec_channel *src1,
+           const union tgsi_exec_channel *src2)
+{
+   int i;
+   for (i = 0; i < 4; i++) {
+      int width = src2->u[i] & 0x1f;
+      int offset = src1->u[i] & 0x1f;
+      if (width == 0)
+         dst->u[i] = 0;
+      else if (width + offset < 32)
+         dst->u[i] = (src0->u[i] << (32 - width - offset)) >> (32 - width);
+      else
+         dst->u[i] = src0->u[i] >> offset;
+   }
+}
+
+/**
+ * Bitfield insert: copy low bits from src1 into a region of src0.
+ */
+static void
+micro_bfi(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src0,
+          const union tgsi_exec_channel *src1,
+          const union tgsi_exec_channel *src2,
+          const union tgsi_exec_channel *src3)
+{
+   int i;
+   for (i = 0; i < 4; i++) {
+      int width = src3->u[i] & 0x1f;
+      int offset = src2->u[i] & 0x1f;
+      int bitmask = ((1 << width) - 1) << offset;
+      dst->u[i] = ((src1->u[i] << offset) & bitmask) | (src0->u[i] & ~bitmask);
+   }
+}
+
+static void
+micro_brev(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src)
+{
+   dst->u[0] = util_bitreverse(src->u[0]);
+   dst->u[1] = util_bitreverse(src->u[1]);
+   dst->u[2] = util_bitreverse(src->u[2]);
+   dst->u[3] = util_bitreverse(src->u[3]);
+}
+
+static void
+micro_popc(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src)
+{
+   dst->u[0] = util_bitcount(src->u[0]);
+   dst->u[1] = util_bitcount(src->u[1]);
+   dst->u[2] = util_bitcount(src->u[2]);
+   dst->u[3] = util_bitcount(src->u[3]);
+}
+
+static void
+micro_lsb(union tgsi_exec_channel *dst,
+          const union tgsi_exec_channel *src)
+{
+   dst->i[0] = ffs(src->u[0]) - 1;
+   dst->i[1] = ffs(src->u[1]) - 1;
+   dst->i[2] = ffs(src->u[2]) - 1;
+   dst->i[3] = ffs(src->u[3]) - 1;
+}
+
+static void
+micro_imsb(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src)
+{
+   dst->i[0] = util_last_bit_signed(src->i[0]) - 1;
+   dst->i[1] = util_last_bit_signed(src->i[1]) - 1;
+   dst->i[2] = util_last_bit_signed(src->i[2]) - 1;
+   dst->i[3] = util_last_bit_signed(src->i[3]) - 1;
+}
+
+static void
+micro_umsb(union tgsi_exec_channel *dst,
+           const union tgsi_exec_channel *src)
+{
+   dst->i[0] = util_last_bit(src->u[0]) - 1;
+   dst->i[1] = util_last_bit(src->u[1]) - 1;
+   dst->i[2] = util_last_bit(src->u[2]) - 1;
+   dst->i[3] = util_last_bit(src->u[3]) - 1;
+}
+
 static void
 exec_instruction(
    struct tgsi_exec_machine *mach,
@@ -4416,6 +4563,31 @@ exec_instruction(
       /* src[1] = lod */
       /* src[2] = sampler unit */
       exec_tex(mach, inst, TEX_MODIFIER_EXPLICIT_LOD, 2);
+      break;
+
+   case TGSI_OPCODE_IBFE:
+      exec_vector_trinary(mach, inst, micro_ibfe, TGSI_EXEC_DATA_INT, TGSI_EXEC_DATA_INT);
+      break;
+   case TGSI_OPCODE_UBFE:
+      exec_vector_trinary(mach, inst, micro_ubfe, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_UINT);
+      break;
+   case TGSI_OPCODE_BFI:
+      exec_vector_quaternary(mach, inst, micro_bfi, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_UINT);
+      break;
+   case TGSI_OPCODE_BREV:
+      exec_vector_unary(mach, inst, micro_brev, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_UINT);
+      break;
+   case TGSI_OPCODE_POPC:
+      exec_vector_unary(mach, inst, micro_popc, TGSI_EXEC_DATA_UINT, TGSI_EXEC_DATA_UINT);
+      break;
+   case TGSI_OPCODE_LSB:
+      exec_vector_unary(mach, inst, micro_lsb, TGSI_EXEC_DATA_INT, TGSI_EXEC_DATA_UINT);
+      break;
+   case TGSI_OPCODE_IMSB:
+      exec_vector_unary(mach, inst, micro_imsb, TGSI_EXEC_DATA_INT, TGSI_EXEC_DATA_INT);
+      break;
+   case TGSI_OPCODE_UMSB:
+      exec_vector_unary(mach, inst, micro_umsb, TGSI_EXEC_DATA_INT, TGSI_EXEC_DATA_UINT);
       break;
    default:
       assert( 0 );
