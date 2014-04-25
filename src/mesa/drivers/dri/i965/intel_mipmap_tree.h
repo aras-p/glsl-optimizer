@@ -546,6 +546,10 @@ intel_miptree_get_tile_offsets(const struct intel_mipmap_tree *mt,
                                GLuint level, GLuint slice,
                                uint32_t *tile_x,
                                uint32_t *tile_y);
+uint32_t
+intel_miptree_get_aligned_offset(const struct intel_mipmap_tree *mt,
+                                 uint32_t x, uint32_t y,
+                                 bool map_stencil_as_y_tiled);
 
 void intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
                                   GLuint level,

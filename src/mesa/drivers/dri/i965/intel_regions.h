@@ -103,10 +103,6 @@ void intel_region_reference(struct intel_region **dst,
 
 void intel_region_release(struct intel_region **ib);
 
-uint32_t
-intel_region_get_aligned_offset(const struct intel_region *region, uint32_t x,
-                                uint32_t y, bool map_stencil_as_y_tiled);
-
 /**
  * Used with images created with image_from_names
  * to help support planar images.

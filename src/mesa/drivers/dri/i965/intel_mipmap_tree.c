@@ -977,7 +977,7 @@ intel_miptree_get_image_offset(const struct intel_mipmap_tree *mt,
 
 /**
  * This function computes masks that may be used to select the bits of the X
- * and Y coordinates that indicate the offset within a tile.  If the region is
+ * and Y coordinates that indicate the offset within a tile.  If the BO is
  * untiled, the masks are set to 0.
  */
 void
@@ -1009,6 +1009,49 @@ intel_miptree_get_tile_masks(const struct intel_mipmap_tree *mt,
 }
 
 /**
+ * Compute the offset (in bytes) from the start of the BO to the given x
+ * and y coordinate.  For tiled BOs, caller must ensure that x and y are
+ * multiples of the tile size.
+ */
+uint32_t
+intel_miptree_get_aligned_offset(const struct intel_mipmap_tree *mt,
+                                 uint32_t x, uint32_t y,
+                                 bool map_stencil_as_y_tiled)
+{
+   int cpp = mt->region->cpp;
+   uint32_t pitch = mt->region->pitch;
+   uint32_t tiling = mt->region->tiling;
+
+   if (map_stencil_as_y_tiled) {
+      tiling = I915_TILING_Y;
+
+      /* When mapping a W-tiled stencil buffer as Y-tiled, each 64-high W-tile
+       * gets transformed into a 32-high Y-tile.  Accordingly, the pitch of
+       * the resulting surface is twice the pitch of the original miptree,
+       * since each row in the Y-tiled view corresponds to two rows in the
+       * actual W-tiled surface.  So we need to correct the pitch before
+       * computing the offsets.
+       */
+      pitch *= 2;
+   }
+
+   switch (tiling) {
+   default:
+      assert(false);
+   case I915_TILING_NONE:
+      return y * pitch + x * cpp;
+   case I915_TILING_X:
+      assert((x % (512 / cpp)) == 0);
+      assert((y % 8) == 0);
+      return y * pitch + x / (512 / cpp) * 4096;
+   case I915_TILING_Y:
+      assert((x % (128 / cpp)) == 0);
+      assert((y % 32) == 0);
+      return y * pitch + x / (128 / cpp) * 4096;
+   }
+}
+
+/**
  * Rendering with tiled buffers requires that the base address of the buffer
  * be aligned to a page boundary.  For renderbuffers, and sometimes with
  * textures, we may want the surface to point at a texture image level that
@@ -1024,7 +1067,6 @@ intel_miptree_get_tile_offsets(const struct intel_mipmap_tree *mt,
                                uint32_t *tile_x,
                                uint32_t *tile_y)
 {
-   const struct intel_region *region = mt->region;
    uint32_t x, y;
    uint32_t mask_x, mask_y;
 
@@ -1034,8 +1076,7 @@ intel_miptree_get_tile_offsets(const struct intel_mipmap_tree *mt,
    *tile_x = x & mask_x;
    *tile_y = y & mask_y;
 
-   return intel_region_get_aligned_offset(region, x & ~mask_x, y & ~mask_y,
-                                          false);
+   return intel_miptree_get_aligned_offset(mt, x & ~mask_x, y & ~mask_y, false);
 }
 
 static void

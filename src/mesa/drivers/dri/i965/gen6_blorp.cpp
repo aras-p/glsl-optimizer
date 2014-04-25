@@ -804,9 +804,9 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
       uint32_t tile_x = draw_x & tile_mask_x;
       uint32_t tile_y = draw_y & tile_mask_y;
       uint32_t offset =
-         intel_region_get_aligned_offset(params->depth.mt->region,
-                                         draw_x & ~tile_mask_x,
-                                         draw_y & ~tile_mask_y, false);
+         intel_miptree_get_aligned_offset(params->depth.mt,
+                                          draw_x & ~tile_mask_x,
+                                          draw_y & ~tile_mask_y, false);
 
       /* According to the Sandy Bridge PRM, volume 2 part 1, pp326-327
        * (3DSTATE_DEPTH_BUFFER dw5), in the documentation for "Depth
@@ -856,16 +856,16 @@ gen6_blorp_emit_depth_stencil_config(struct brw_context *brw,
 
    /* 3DSTATE_HIER_DEPTH_BUFFER */
    {
-      struct intel_region *hiz_region = params->depth.mt->hiz_mt->region;
+      struct intel_mipmap_tree *hiz_mt = params->depth.mt->hiz_mt;
       uint32_t hiz_offset =
-         intel_region_get_aligned_offset(hiz_region,
-                                         draw_x & ~tile_mask_x,
-                                         (draw_y & ~tile_mask_y) / 2, false);
+         intel_miptree_get_aligned_offset(hiz_mt,
+                                          draw_x & ~tile_mask_x,
+                                          (draw_y & ~tile_mask_y) / 2, false);
 
       BEGIN_BATCH(3);
       OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
-      OUT_BATCH(hiz_region->pitch - 1);
-      OUT_RELOC(hiz_region->bo,
+      OUT_BATCH(hiz_mt->region->pitch - 1);
+      OUT_RELOC(hiz_mt->region->bo,
                 I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
                 hiz_offset);
       ADVANCE_BATCH();
