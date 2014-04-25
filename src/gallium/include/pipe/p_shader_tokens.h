@@ -462,7 +462,16 @@ struct tgsi_property_data {
 
 #define TGSI_OPCODE_LODQ                183
 
-#define TGSI_OPCODE_LAST                184
+#define TGSI_OPCODE_IBFE                184
+#define TGSI_OPCODE_UBFE                185
+#define TGSI_OPCODE_BFI                 186
+#define TGSI_OPCODE_BREV                187
+#define TGSI_OPCODE_POPC                188
+#define TGSI_OPCODE_LSB                 189
+#define TGSI_OPCODE_IMSB                190
+#define TGSI_OPCODE_UMSB                191
+
+#define TGSI_OPCODE_LAST                192
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */

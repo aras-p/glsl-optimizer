@@ -223,6 +223,14 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 2, 0, 0, 0, 0, COMP, "UMUL_HI", TGSI_OPCODE_UMUL_HI },
    { 1, 3, 1, 0, 0, 0, OTHR, "TG4", TGSI_OPCODE_TG4 },
    { 1, 2, 1, 0, 0, 0, OTHR, "LODQ", TGSI_OPCODE_LODQ },
+   { 1, 3, 0, 0, 0, 0, COMP, "IBFE", TGSI_OPCODE_IBFE },
+   { 1, 3, 0, 0, 0, 0, COMP, "UBFE", TGSI_OPCODE_UBFE },
+   { 1, 4, 0, 0, 0, 0, COMP, "BFI", TGSI_OPCODE_BFI },
+   { 1, 1, 0, 0, 0, 0, COMP, "BREV", TGSI_OPCODE_BREV },
+   { 1, 1, 0, 0, 0, 0, COMP, "POPC", TGSI_OPCODE_POPC },
+   { 1, 1, 0, 0, 0, 0, COMP, "LSB", TGSI_OPCODE_LSB },
+   { 1, 1, 0, 0, 0, 0, COMP, "IMSB", TGSI_OPCODE_IMSB },
+   { 1, 1, 0, 0, 0, 0, COMP, "UMSB", TGSI_OPCODE_UMSB },
 };
 
 const struct tgsi_opcode_info *

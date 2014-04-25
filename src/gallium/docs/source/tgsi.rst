@@ -1558,6 +1558,81 @@ Support for these opcodes indicated by PIPE_SHADER_CAP_INTEGERS (all of them?)
 
   dst.w = |src.w|
 
+Bitwise ISA
+^^^^^^^^^^^
+These opcodes are used for bit-level manipulation of integers.
+
+.. opcode:: IBFE - Signed Bitfield Extract
+
+  See SM5 instruction of the same name. Extracts a set of bits from the input,
+  and sign-extends them if the high bit of the extracted window is set.
+
+  Pseudocode::
+
+    def ibfe(value, offset, bits):
+      offset = offset & 0x1f
+      bits = bits & 0x1f
+      if bits == 0: return 0
+      # Note: >> sign-extends
+      if width + offset < 32:
+        return (value << (32 - offset - bits)) >> (32 - bits)
+      else:
+        return value >> offset
+
+.. opcode:: UBFE - Unsigned Bitfield Extract
+
+  See SM5 instruction of the same name. Extracts a set of bits from the input,
+  without any sign-extension.
+
+  Pseudocode::
+
+    def ubfe(value, offset, bits):
+      offset = offset & 0x1f
+      bits = bits & 0x1f
+      if bits == 0: return 0
+      # Note: >> does not sign-extend
+      if width + offset < 32:
+        return (value << (32 - offset - bits)) >> (32 - bits)
+      else:
+        return value >> offset
+
+.. opcode:: BFI - Bitfield Insert
+
+  See SM5 instruction of the same name. Replaces a bit region of 'base' with
+  the low bits of 'insert'.
+
+  Pseudocode::
+
+    def bfi(base, insert, offset, bits):
+      offset = offset & 0x1f
+      bits = bits & 0x1f
+      mask = ((1 << bits) - 1) << offset
+      return ((insert << offset) & mask) | (base & ~mask)
+
+.. opcode:: BREV - Bitfield Reverse
+
+  See SM5 instruction BFREV. Reverses the bits of the argument.
+
+.. opcode:: POPC - Population Count
+
+  See SM5 instruction COUNTBITS. Counts the number of set bits in the argument.
+
+.. opcode:: LSB - Index of lowest set bit
+
+  See SM5 instruction FIRSTBIT_LO. Computes the 0-based index of the first set
+  bit of the argument. Returns -1 if none are set.
+
+.. opcode:: IMSB - Index of highest non-sign bit
+
+  See SM5 instruction FIRSTBIT_SHI. Computes the 0-based index of the highest
+  non-sign bit of the argument (i.e. highest 0 bit for negative numbers,
+  highest 1 bit for positive numbers). Returns -1 if all bits are the same
+  (i.e. for inputs 0 and -1).
+
+.. opcode:: UMSB - Index of highest set bit
+
+  See SM5 instruction FIRSTBIT_HI. Computes the 0-based index of the highest
+  set bit of the argument. Returns -1 if none are set.
 
 Geometry ISA
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
