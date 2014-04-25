@@ -985,13 +985,17 @@ intelMakeCurrent(__DRIcontext * driContextPriv,
       struct gl_context *ctx = &brw->ctx;
       struct gl_framebuffer *fb, *readFb;
 
-      if (driDrawPriv == NULL && driReadPriv == NULL) {
+      if (driDrawPriv == NULL) {
          fb = _mesa_get_incomplete_framebuffer();
-         readFb = _mesa_get_incomplete_framebuffer();
       } else {
          fb = driDrawPriv->driverPrivate;
-         readFb = driReadPriv->driverPrivate;
          driContextPriv->dri2.draw_stamp = driDrawPriv->dri2.stamp - 1;
+      }
+
+      if (driReadPriv == NULL) {
+         readFb = _mesa_get_incomplete_framebuffer();
+      } else {
+         readFb = driReadPriv->driverPrivate;
          driContextPriv->dri2.read_stamp = driReadPriv->dri2.stamp - 1;
       }
 
