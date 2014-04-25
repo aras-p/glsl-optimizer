@@ -319,8 +319,8 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    pdraw = GetGLXDRIDrawable(dpy, drawable);
 
    if (attribute == GLX_BACK_BUFFER_AGE_EXT) {
-      struct glx_screen *psc = pdraw->psc;
       struct glx_context *gc = __glXGetCurrentContext();
+      struct glx_screen *psc;
 
       /* The GLX_EXT_buffer_age spec says:
        *
@@ -328,11 +328,15 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
        *   the calling thread's current context a GLXBadDrawable error is
        *   generated."
        */
-      if (gc == NULL || gc->currentDpy != dpy ||
-         (gc->currentDrawable != drawable && gc->currentReadable != drawable)) {
-         __glXSendError(dpy, GLXBadDrawable, drawable, X_GLXGetDrawableAttributes, false);
+      if (pdraw == NULL || gc == NULL || gc->currentDpy != dpy ||
+         (gc->currentDrawable != drawable &&
+         gc->currentReadable != drawable)) {
+         __glXSendError(dpy, GLXBadDrawable, drawable,
+                        X_GLXGetDrawableAttributes, false);
          return 0;
       }
+
+      psc = pdraw->psc;
 
       if (psc->driScreen->getBufferAge != NULL)
          *value = psc->driScreen->getBufferAge(pdraw);
