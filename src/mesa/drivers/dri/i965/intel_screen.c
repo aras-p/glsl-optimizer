@@ -140,7 +140,6 @@ aub_dump_bmp(struct gl_context *ctx)
 	    continue;
 	 }
 
-         assert(irb->mt->pitch % irb->mt->cpp == 0);
          drm_intel_gem_bo_aub_dump_bmp(irb->mt->bo,
 				       irb->draw_x,
 				       irb->draw_y,
