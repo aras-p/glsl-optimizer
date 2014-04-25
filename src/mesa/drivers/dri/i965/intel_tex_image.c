@@ -201,22 +201,21 @@ intelTexImage(struct gl_context * ctx,
 
 
 /**
- * Binds a region to a texture image, like it was uploaded by glTexImage2D().
+ * Binds a BO to a texture image, as if it was uploaded by glTexImage2D().
  *
  * Used for GLX_EXT_texture_from_pixmap and EGL image extensions,
  */
 static void
-intel_set_texture_image_region(struct gl_context *ctx,
-			       struct gl_texture_image *image,
-			       struct intel_region *region,
-			       GLenum target,
-			       GLenum internalFormat,
-			       mesa_format format,
-                               uint32_t offset,
-                               GLuint width,
-                               GLuint height,
-                               GLuint tile_x,
-                               GLuint tile_y)
+intel_set_texture_image_bo(struct gl_context *ctx,
+                           struct gl_texture_image *image,
+                           drm_intel_bo *bo,
+                           GLenum target,
+                           GLenum internalFormat,
+                           mesa_format format,
+                           uint32_t offset,
+                           GLuint width, GLuint height,
+                           GLuint pitch,
+                           GLuint tile_x, GLuint tile_y)
 {
    struct brw_context *brw = brw_context(ctx);
    struct intel_texture_image *intel_image = intel_texture_image(image);
@@ -230,13 +229,10 @@ intel_set_texture_image_region(struct gl_context *ctx,
 
    ctx->Driver.FreeTextureImageBuffer(ctx, image);
 
-   intel_image->mt = intel_miptree_create_layout(brw, target, image->TexFormat,
-                                                 0, 0,
-                                                 width, height, 1,
-                                                 true, 0 /* num_samples */);
+   intel_image->mt = intel_miptree_create_for_bo(brw, bo, image->TexFormat,
+                                                 0, width, height, pitch);
    if (intel_image->mt == NULL)
        return;
-   intel_region_reference(&intel_image->mt->region, region);
    intel_image->mt->total_width = width;
    intel_image->mt->total_height = height;
    intel_image->mt->level[0].slice[0].x_offset = tile_x;
@@ -258,8 +254,8 @@ intel_set_texture_image_region(struct gl_context *ctx,
    intel_texobj->needs_validate = true;
 
    intel_image->mt->offset = offset;
-   assert(region->pitch % region->cpp == 0);
-   intel_image->base.RowStride = region->pitch / region->cpp;
+   assert(pitch % intel_image->mt->region->cpp == 0);
+   intel_image->base.RowStride = pitch / intel_image->mt->region->cpp;
 
    /* Immediately validate the image to the object. */
    intel_miptree_reference(&intel_texobj->mt, intel_image->mt);
@@ -312,11 +308,12 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    _mesa_lock_texture(&brw->ctx, texObj);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    intel_miptree_make_shareable(brw, rb->mt);
-   intel_set_texture_image_region(ctx, texImage, rb->mt->region, target,
-                                  internalFormat, texFormat, 0,
-                                  rb->mt->region->width,
-                                  rb->mt->region->height,
-                                  0, 0);
+   intel_set_texture_image_bo(ctx, texImage, rb->mt->region->bo, target,
+                              internalFormat, texFormat, 0,
+                              rb->mt->region->width,
+                              rb->mt->region->height,
+                              rb->mt->region->pitch,
+                              0, 0);
    _mesa_unlock_texture(&brw->ctx, texObj);
 }
 
@@ -406,11 +403,12 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
       return;
    }
 
-   intel_set_texture_image_region(ctx, texImage, image->region,
-				  target, image->internal_format,
-                                  image->format, image->offset,
-                                  image->width,  image->height,
-                                  image->tile_x, image->tile_y);
+   intel_set_texture_image_bo(ctx, texImage, image->region->bo,
+                              target, image->internal_format,
+                              image->format, image->offset,
+                              image->width,  image->height,
+                              image->region->pitch,
+                              image->tile_x, image->tile_y);
 }
 
 void
