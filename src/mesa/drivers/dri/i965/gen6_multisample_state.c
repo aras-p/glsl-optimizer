@@ -111,7 +111,8 @@ gen6_determine_sample_mask(struct brw_context *brw)
    float coverage_invert = false;
    unsigned sample_mask = ~0u;
 
-   unsigned num_samples = ctx->DrawBuffer->Visual.samples;
+   /* BRW_NEW_NUM_SAMPLES */
+   unsigned num_samples = brw->num_samples;
 
    if (ctx->Multisample._Enabled) {
       if (ctx->Multisample.SampleCoverage) {
@@ -150,21 +151,17 @@ gen6_emit_3dstate_sample_mask(struct brw_context *brw, unsigned mask)
 
 static void upload_multisample_state(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->ctx;
-
-   /* _NEW_BUFFERS, _NEW_MULTISAMPLE */
-   unsigned num_samples = ctx->DrawBuffer->Visual.samples;
-
-   gen6_emit_3dstate_multisample(brw, num_samples);
+   /* BRW_NEW_NUM_SAMPLES */
+   gen6_emit_3dstate_multisample(brw, brw->num_samples);
    gen6_emit_3dstate_sample_mask(brw, gen6_determine_sample_mask(brw));
 }
 
 
 const struct brw_tracked_state gen6_multisample_state = {
    .dirty = {
-      .mesa = _NEW_BUFFERS |
-              _NEW_MULTISAMPLE,
-      .brw = BRW_NEW_CONTEXT,
+      .mesa = _NEW_MULTISAMPLE,
+      .brw = (BRW_NEW_CONTEXT |
+              BRW_NEW_NUM_SAMPLES),
       .cache = 0
    },
    .emit = upload_multisample_state

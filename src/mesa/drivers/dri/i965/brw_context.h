@@ -181,6 +181,7 @@ enum brw_state_id {
    BRW_STATE_META_IN_PROGRESS,
    BRW_STATE_INTERPOLATION_MAP,
    BRW_STATE_PUSH_CONSTANT_ALLOCATION,
+   BRW_STATE_NUM_SAMPLES,
    BRW_NUM_STATE_BITS
 };
 
@@ -220,6 +221,7 @@ enum brw_state_id {
 #define BRW_NEW_META_IN_PROGRESS        (1 << BRW_STATE_META_IN_PROGRESS)
 #define BRW_NEW_INTERPOLATION_MAP       (1 << BRW_STATE_INTERPOLATION_MAP)
 #define BRW_NEW_PUSH_CONSTANT_ALLOCATION (1 << BRW_STATE_PUSH_CONSTANT_ALLOCATION)
+#define BRW_NEW_NUM_SAMPLES             (1 << BRW_STATE_NUM_SAMPLES)
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -1163,6 +1165,12 @@ struct brw_context
    const struct gl_vertex_program *vertex_program;
    const struct gl_geometry_program *geometry_program;
    const struct gl_fragment_program *fragment_program;
+
+   /**
+    * Number of samples in ctx->DrawBuffer, updated by BRW_NEW_NUM_SAMPLES so
+    * that we don't have to reemit that state every time we change FBOs.
+    */
+   int num_samples;
 
    /* hw-dependent 3DSTATE_VF_STATISTICS opcode */
    uint32_t CMD_VF_STATISTICS;

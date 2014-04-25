@@ -507,6 +507,7 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_META_IN_PROGRESS),
    DEFINE_BIT(BRW_NEW_INTERPOLATION_MAP),
    DEFINE_BIT(BRW_NEW_PUSH_CONSTANT_ALLOCATION),
+   DEFINE_BIT(BRW_NEW_NUM_SAMPLES),
    {0, 0, 0}
 };
 
@@ -602,6 +603,11 @@ void brw_upload_state(struct brw_context *brw)
    if (brw->meta_in_progress != _mesa_meta_in_progress(ctx)) {
       brw->meta_in_progress = _mesa_meta_in_progress(ctx);
       brw->state.dirty.brw |= BRW_NEW_META_IN_PROGRESS;
+   }
+
+   if (brw->num_samples != ctx->DrawBuffer->Visual.samples) {
+      brw->num_samples = ctx->DrawBuffer->Visual.samples;
+      brw->state.dirty.brw |= BRW_NEW_NUM_SAMPLES;
    }
 
    if ((state->mesa | state->cache | state->brw) == 0)

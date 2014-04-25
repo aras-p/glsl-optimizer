@@ -65,8 +65,8 @@ upload_ps_extra(struct brw_context *brw)
    if (fp->program.Base.InputsRead & VARYING_BIT_POS)
       dw1 |= GEN8_PSX_USES_SOURCE_DEPTH | GEN8_PSX_USES_SOURCE_W;
 
-   /* _NEW_BUFFERS | _NEW_MULTISAMPLE */
-   bool multisampled_fbo = ctx->DrawBuffer->Visual.samples > 1;
+   /* BRW_NEW_NUM_SAMPLES | _NEW_MULTISAMPLE */
+   bool multisampled_fbo = brw->num_samples > 1;
    if (multisampled_fbo &&
        _mesa_get_min_invocations_per_fragment(ctx, &fp->program, false) > 1)
       dw1 |= GEN8_PSX_SHADER_IS_PER_SAMPLE;
@@ -85,8 +85,8 @@ upload_ps_extra(struct brw_context *brw)
 
 const struct brw_tracked_state gen8_ps_extra = {
    .dirty = {
-      .mesa  = _NEW_BUFFERS | _NEW_MULTISAMPLE,
-      .brw   = BRW_NEW_CONTEXT | BRW_NEW_FRAGMENT_PROGRAM,
+      .mesa  = _NEW_MULTISAMPLE,
+      .brw   = BRW_NEW_CONTEXT | BRW_NEW_FRAGMENT_PROGRAM | BRW_NEW_NUM_SAMPLES,
       .cache = 0,
    },
    .emit = upload_ps_extra,
