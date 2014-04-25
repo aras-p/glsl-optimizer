@@ -430,6 +430,9 @@ blitframebuffer_texture(struct gl_context *ctx,
       srcLevel = 0;
       target = meta_temp_texture->Target;
       texObj = _mesa_lookup_texture(ctx, meta_temp_texture->TexObj);
+      if (texObj == NULL) {
+         return false;
+      }
 
       _mesa_meta_setup_copypix_texture(ctx, meta_temp_texture,
                                        srcX0, srcY0,
