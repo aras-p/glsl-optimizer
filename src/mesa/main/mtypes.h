@@ -1401,6 +1401,9 @@ struct gl_texture_attrib
 
    /** Largest index of a texture unit with _Current != NULL. */
    GLint _MaxEnabledTexImageUnit;
+
+   /** Largest index + 1 of texture units that have had any CurrentTex set. */
+   GLint NumCurrentTexUsed;
 };
 
 

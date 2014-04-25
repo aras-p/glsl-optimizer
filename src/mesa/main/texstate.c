@@ -108,6 +108,10 @@ _mesa_copy_texture_state( const struct gl_context *src, struct gl_context *dst )
          for (tex = 0; tex < NUM_TEXTURE_TARGETS; tex++) {
             _mesa_reference_texobj(&dst->Texture.Unit[u].CurrentTex[tex],
                                    src->Texture.Unit[u].CurrentTex[tex]);
+            if (src->Texture.Unit[u].CurrentTex[tex]) {
+               dst->Texture.NumCurrentTexUsed =
+                  MAX2(dst->Texture.NumCurrentTexUsed, u + 1);
+            }
          }
          _mesa_unlock_context_textures(dst);
       }
@@ -911,6 +915,8 @@ _mesa_init_texture(struct gl_context *ctx)
    /* GL_ARB_texture_buffer_object */
    _mesa_reference_buffer_object(ctx, &ctx->Texture.BufferObject,
                                  ctx->Shared->NullBufferObj);
+
+   ctx->Texture.NumCurrentTexUsed = 0;
 
    return GL_TRUE;
 }
