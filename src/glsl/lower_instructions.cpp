@@ -359,8 +359,8 @@ lower_instructions_visitor::ldexp_to_arith(ir_expression *ir)
 
    ir_constant *sign_mask = new(ir) ir_constant(0x80000000u, vec_elem);
 
-   ir_constant *exp_shift = new(ir) ir_constant(23u, vec_elem);
-   ir_constant *exp_width = new(ir) ir_constant(8u, vec_elem);
+   ir_constant *exp_shift = new(ir) ir_constant(23);
+   ir_constant *exp_width = new(ir) ir_constant(8);
 
    /* Temporary variables */
    ir_variable *x = new(ir) ir_variable(ir->type, "x", ir_var_temporary);
