@@ -215,6 +215,7 @@ gen8_upload_ps_blend(struct brw_context *brw)
    /* _NEW_BUFFERS */
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
 
+   /* _NEW_BUFFERS | _NEW_COLOR */
    if (brw_color_buffer_write_enabled(brw))
       dw1 |= GEN8_PS_BLEND_HAS_WRITEABLE_RT;
 

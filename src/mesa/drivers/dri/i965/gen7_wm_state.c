@@ -91,7 +91,7 @@ upload_wm_state(struct brw_context *brw)
       dw1 |= GEN7_WM_KILL_ENABLE;
    }
 
-   /* _NEW_BUFFERS */
+   /* _NEW_BUFFERS | _NEW_COLOR */
    if (brw_color_buffer_write_enabled(brw) || writes_depth ||
        dw1 & GEN7_WM_KILL_ENABLE) {
       dw1 |= GEN7_WM_DISPATCH_ENABLE;
