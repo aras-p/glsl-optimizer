@@ -241,6 +241,7 @@ private:
    virtual bool visit(BasicBlock *);
 
    void expr(Instruction *, ImmediateValue&, ImmediateValue&);
+   void expr(Instruction *, ImmediateValue&, ImmediateValue&, ImmediateValue&);
    void opnd(Instruction *, ImmediateValue&, int s);
 
    void unary(Instruction *, const ImmediateValue&);
@@ -278,8 +279,14 @@ ConstantFolding::visit(BasicBlock *bb)
       if (i->op == OP_MOV || i->op == OP_CALL)
          continue;
 
-      ImmediateValue src0, src1;
+      ImmediateValue src0, src1, src2;
 
+      if (i->srcExists(2) &&
+          i->src(0).getImmediate(src0) &&
+          i->src(1).getImmediate(src1) &&
+          i->src(2).getImmediate(src2))
+         expr(i, src0, src1, src2);
+      else
       if (i->srcExists(1) &&
           i->src(0).getImmediate(src0) && i->src(1).getImmediate(src1))
          expr(i, src0, src1);
@@ -497,6 +504,27 @@ ConstantFolding::expr(Instruction *i,
          return;
       res.data.u32 = a->data.u32;
       break;
+   case OP_EXTBF: {
+      int offset = b->data.u32 & 0xff;
+      int width = (b->data.u32 >> 8) & 0xff;
+      int rshift = offset;
+      int lshift = 0;
+      if (width == 0) {
+         res.data.u32 = 0;
+         break;
+      }
+      if (width + offset < 32) {
+         rshift = 32 - width;
+         lshift = 32 - width - offset;
+      }
+      switch (i->dType) {
+      case TYPE_S32: res.data.s32 = (a->data.s32 << lshift) >> rshift; break;
+      case TYPE_U32: res.data.u32 = (a->data.u32 << lshift) >> rshift; break;
+      default:
+         return;
+      }
+      break;
+   }
    default:
       return;
    }
@@ -524,6 +552,43 @@ ConstantFolding::expr(Instruction *i,
    } else {
       i->op = OP_MOV;
    }
+}
+
+void
+ConstantFolding::expr(Instruction *i,
+                      ImmediateValue &imm0,
+                      ImmediateValue &imm1,
+                      ImmediateValue &imm2)
+{
+   struct Storage *const a = &imm0.reg, *const b = &imm1.reg, *const c = &imm2.reg;
+   struct Storage res;
+
+   memset(&res.data, 0, sizeof(res.data));
+
+   switch (i->op) {
+   case OP_INSBF: {
+      int offset = b->data.u32 & 0xff;
+      int width = (b->data.u32 >> 8) & 0xff;
+      unsigned bitmask = ((1 << width) - 1) << offset;
+      res.data.u32 = ((a->data.u32 << offset) & bitmask) | (c->data.u32 & ~bitmask);
+      break;
+   }
+   default:
+      return;
+   }
+
+   ++foldCount;
+   i->src(0).mod = Modifier(0);
+   i->src(1).mod = Modifier(0);
+   i->src(2).mod = Modifier(0);
+
+   i->setSrc(0, new_ImmediateValue(i->bb->getProgram(), res.data.u32));
+   i->setSrc(1, NULL);
+   i->setSrc(2, NULL);
+
+   i->getSrc(0)->reg.data = res.data;
+
+   i->op = OP_MOV;
 }
 
 void
