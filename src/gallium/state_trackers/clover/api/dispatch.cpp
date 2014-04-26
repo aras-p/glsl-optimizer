@@ -129,8 +129,8 @@ namespace clover {
       NULL, // clEnqueueFillBuffer
       NULL, // clEnqueueFillImage
       NULL, // clEnqueueMigrateMemObjects
-      NULL, // clEnqueueMarkerWithWaitList
-      NULL, // clEnqueueBarrierWithWaitList
+      clEnqueueMarkerWithWaitList,
+      clEnqueueBarrierWithWaitList,
       NULL, // clGetExtensionFunctionAddressForPlatform
       NULL, // clCreateFromGLTexture
       NULL, // clGetDeviceIDsFromD3D11KHR

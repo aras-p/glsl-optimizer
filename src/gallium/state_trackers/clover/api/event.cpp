@@ -179,6 +179,29 @@ clEnqueueMarker(cl_command_queue d_q, cl_event *rd_ev) try {
 }
 
 CLOVER_API cl_int
+clEnqueueMarkerWithWaitList(cl_command_queue d_q, cl_uint num_deps,
+                            const cl_event *d_deps, cl_event *rd_ev) try {
+   auto &q = obj(d_q);
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
+
+   for (auto &ev : deps) {
+      if (ev.context() != q.context())
+         throw error(CL_INVALID_CONTEXT);
+   }
+
+   // Create a hard event that depends on the events in the wait list:
+   // previous commands in the same queue are implicitly serialized
+   // with respect to it -- hard events always are.
+   auto hev = create<hard_event>(q, CL_COMMAND_MARKER, deps);
+
+   ret_object(rd_ev, hev);
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
+}
+
+CLOVER_API cl_int
 clEnqueueBarrier(cl_command_queue d_q) try {
    obj(d_q);
 
@@ -191,12 +214,12 @@ clEnqueueBarrier(cl_command_queue d_q) try {
 }
 
 CLOVER_API cl_int
-clEnqueueWaitForEvents(cl_command_queue d_q, cl_uint num_evs,
-                       const cl_event *d_evs) try {
+clEnqueueBarrierWithWaitList(cl_command_queue d_q, cl_uint num_deps,
+                             const cl_event *d_deps, cl_event *rd_ev) try {
    auto &q = obj(d_q);
-   auto evs = objs(d_evs, num_evs);
+   auto deps = objs<wait_list_tag>(d_deps, num_deps);
 
-   for (auto &ev : evs) {
+   for (auto &ev : deps) {
       if (ev.context() != q.context())
          throw error(CL_INVALID_CONTEXT);
    }
@@ -204,9 +227,22 @@ clEnqueueWaitForEvents(cl_command_queue d_q, cl_uint num_evs,
    // Create a hard event that depends on the events in the wait list:
    // subsequent commands in the same queue will be implicitly
    // serialized with respect to it -- hard events always are.
-   create<hard_event>(q, 0, evs);
+   auto hev = create<hard_event>(q, CL_COMMAND_BARRIER, deps);
 
+   ret_object(rd_ev, hev);
    return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
+}
+
+CLOVER_API cl_int
+clEnqueueWaitForEvents(cl_command_queue d_q, cl_uint num_evs,
+                       const cl_event *d_evs) try {
+   // The wait list is mandatory for clEnqueueWaitForEvents().
+   objs(d_evs, num_evs);
+
+   return clEnqueueBarrierWithWaitList(d_q, num_evs, d_evs, NULL);
 
 } catch (error &e) {
    return e.get();
