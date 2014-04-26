@@ -19,12 +19,16 @@ else
 cldir = $(includedir)/CL
 cl_HEADERS = \
 	$(top_srcdir)/include/CL/cl.h \
+	$(top_srcdir)/include/CL/cl.hpp \
+	$(top_srcdir)/include/CL/cl_d3d10.h \
+	$(top_srcdir)/include/CL/cl_d3d11.h \
+	$(top_srcdir)/include/CL/cl_dx9_media_sharing.h \
+	$(top_srcdir)/include/CL/cl_egl.h \
 	$(top_srcdir)/include/CL/cl_ext.h \
 	$(top_srcdir)/include/CL/cl_gl.h \
 	$(top_srcdir)/include/CL/cl_gl_ext.h \
 	$(top_srcdir)/include/CL/cl_platform.h \
-	$(top_srcdir)/include/CL/opencl.h \
-	$(top_srcdir)/include/CL/cl.hpp
+	$(top_srcdir)/include/CL/opencl.h
 endif
 
 noinst_LTLIBRARIES = libclover.la libcltgsi.la libclllvm.la
