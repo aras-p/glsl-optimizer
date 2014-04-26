@@ -53,7 +53,7 @@ static int isnormal(double x)
 }
 #endif
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && _MSC_VER < 1800
 static double copysign(double x, double y)
 {
    return _copysign(x, y);
