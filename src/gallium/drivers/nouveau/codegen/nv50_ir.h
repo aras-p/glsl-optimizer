@@ -143,6 +143,7 @@ enum operation
    OP_POPCNT, // bitcount(src0 & src1)
    OP_INSBF,  // insert first src1[8:15] bits of src0 into src2 at src1[0:7]
    OP_EXTBF,  // place bits [K,K+N) of src0 into dst, src1 = 0xNNKK
+   OP_BFIND,  // find highest/lowest set bit
    OP_PERMT,  // dst = bytes from src2,src0 selected by src1 (nvc0's src order)
    OP_ATOM,
    OP_BAR,    // execution barrier, sources = { id, thread count, predicate }
@@ -171,6 +172,7 @@ enum operation
 #define NV50_IR_SUBOP_TEXBAR(n)    n
 #define NV50_IR_SUBOP_MOV_FINAL    1
 #define NV50_IR_SUBOP_EXTBF_REV    1
+#define NV50_IR_SUBOP_BFIND_SAMT   1
 #define NV50_IR_SUBOP_PERMT_F4E    1
 #define NV50_IR_SUBOP_PERMT_B4E    2
 #define NV50_IR_SUBOP_PERMT_RC8    3

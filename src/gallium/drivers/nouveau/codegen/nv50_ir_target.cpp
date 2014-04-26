@@ -50,7 +50,7 @@ const uint8_t Target::operationSrcNr[] =
    0,                      // TEXBAR
    1, 1,                   // DFDX, DFDY
    1, 2, 1, 2, 0, 0,       // RDSV, WRSV, PIXLD, QUADOP, QUADON, QUADPOP
-   2, 3, 2, 3,             // POPCNT, INSBF, EXTBF, PERMT
+   2, 3, 2, 1, 3,          // POPCNT, INSBF, EXTBF, BFIND, PERMT
    2, 2,                   // ATOM, BAR
    2, 2, 2, 2, 3, 2,       // VADD, VAVG, VMIN, VMAX, VSAD, VSET,
    2, 2, 2, 1,             // VSHR, VSHL, VSEL, CCTL
@@ -115,8 +115,9 @@ const OpClass Target::operationClass[] =
    // DFDX, DFDY, RDSV, WRSV; PIXLD, QUADOP, QUADON, QUADPOP
    OPCLASS_OTHER, OPCLASS_OTHER, OPCLASS_OTHER, OPCLASS_OTHER,
    OPCLASS_OTHER, OPCLASS_OTHER, OPCLASS_CONTROL, OPCLASS_CONTROL,
-   // POPCNT, INSBF, EXTBF, PERMT
+   // POPCNT, INSBF, EXTBF, BFIND; PERMT
    OPCLASS_BITFIELD, OPCLASS_BITFIELD, OPCLASS_BITFIELD, OPCLASS_BITFIELD,
+   OPCLASS_BITFIELD,
    // ATOM, BAR
    OPCLASS_ATOMIC, OPCLASS_CONTROL,
    // VADD, VAVG, VMIN, VMAX

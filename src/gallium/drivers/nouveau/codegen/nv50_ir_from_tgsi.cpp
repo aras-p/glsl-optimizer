@@ -418,6 +418,8 @@ nv50_ir::DataType Instruction::inferSrcType() const
    case TGSI_OPCODE_ATOMXOR:
    case TGSI_OPCODE_ATOMUMIN:
    case TGSI_OPCODE_ATOMUMAX:
+   case TGSI_OPCODE_UBFE:
+   case TGSI_OPCODE_UMSB:
       return nv50_ir::TYPE_U32;
    case TGSI_OPCODE_I2F:
    case TGSI_OPCODE_IDIV:
@@ -434,6 +436,8 @@ nv50_ir::DataType Instruction::inferSrcType() const
    case TGSI_OPCODE_UARL:
    case TGSI_OPCODE_ATOMIMIN:
    case TGSI_OPCODE_ATOMIMAX:
+   case TGSI_OPCODE_IBFE:
+   case TGSI_OPCODE_IMSB:
       return nv50_ir::TYPE_S32;
    default:
       return nv50_ir::TYPE_F32;
@@ -624,6 +628,15 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(TEX2, TEX);
    NV50_IR_OPCODE_CASE(TXB2, TXB);
    NV50_IR_OPCODE_CASE(TXL2, TXL);
+
+   NV50_IR_OPCODE_CASE(IBFE, EXTBF);
+   NV50_IR_OPCODE_CASE(UBFE, EXTBF);
+   NV50_IR_OPCODE_CASE(BFI, INSBF);
+   NV50_IR_OPCODE_CASE(BREV, EXTBF);
+   NV50_IR_OPCODE_CASE(POPC, POPCNT);
+   NV50_IR_OPCODE_CASE(LSB, BFIND);
+   NV50_IR_OPCODE_CASE(IMSB, BFIND);
+   NV50_IR_OPCODE_CASE(UMSB, BFIND);
 
    NV50_IR_OPCODE_CASE(END, EXIT);
 
@@ -2137,7 +2150,7 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
    Instruction *geni;
 
    Value *dst0[4], *rDst0[4];
-   Value *src0, *src1, *src2;
+   Value *src0, *src1, *src2, *src3;
    Value *val0, *val1;
    int c;
 
@@ -2687,6 +2700,55 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
    case TGSI_OPCODE_ATOMUMAX:
    case TGSI_OPCODE_ATOMIMAX:
       handleATOM(dst0, dstTy, tgsi::opcodeToSubOp(tgsi.getOpcode()));
+      break;
+   case TGSI_OPCODE_IBFE:
+   case TGSI_OPCODE_UBFE:
+      FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi) {
+         src0 = fetchSrc(0, c);
+         src1 = fetchSrc(1, c);
+         src2 = fetchSrc(2, c);
+         mkOp3(OP_INSBF, TYPE_U32, src1, src2, mkImm(0x808), src1);
+         mkOp2(OP_EXTBF, dstTy, dst0[c], src0, src1);
+      }
+      break;
+   case TGSI_OPCODE_BFI:
+      FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi) {
+         src0 = fetchSrc(0, c);
+         src1 = fetchSrc(1, c);
+         src2 = fetchSrc(2, c);
+         src3 = fetchSrc(3, c);
+         mkOp3(OP_INSBF, TYPE_U32, src2, src3, mkImm(0x808), src2);
+         mkOp3(OP_INSBF, TYPE_U32, dst0[c], src1, src2, src0);
+      }
+      break;
+   case TGSI_OPCODE_LSB:
+      FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi) {
+         src0 = fetchSrc(0, c);
+         geni = mkOp2(OP_EXTBF, TYPE_U32, src0, src0, mkImm(0x2000));
+         geni->subOp = NV50_IR_SUBOP_EXTBF_REV;
+         geni = mkOp1(OP_BFIND, TYPE_U32, dst0[c], src0);
+         geni->subOp = NV50_IR_SUBOP_BFIND_SAMT;
+      }
+      break;
+   case TGSI_OPCODE_IMSB:
+   case TGSI_OPCODE_UMSB:
+      FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi) {
+         src0 = fetchSrc(0, c);
+         mkOp1(OP_BFIND, srcTy, dst0[c], src0);
+      }
+      break;
+   case TGSI_OPCODE_BREV:
+      FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi) {
+         src0 = fetchSrc(0, c);
+         geni = mkOp2(OP_EXTBF, TYPE_U32, dst0[c], src0, mkImm(0x2000));
+         geni->subOp = NV50_IR_SUBOP_EXTBF_REV;
+      }
+      break;
+   case TGSI_OPCODE_POPC:
+      FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi) {
+         src0 = fetchSrc(0, c);
+         mkOp2(OP_POPCNT, TYPE_U32, dst0[c], src0, src0);
+      }
       break;
    default:
       ERROR("unhandled TGSI opcode: %u\n", tgsi.getOpcode());

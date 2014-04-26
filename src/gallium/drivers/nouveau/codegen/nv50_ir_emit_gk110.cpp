@@ -94,6 +94,8 @@ private:
    void emitLogicOp(const Instruction *, uint8_t subOp);
    void emitPOPC(const Instruction *);
    void emitINSBF(const Instruction *);
+   void emitEXTBF(const Instruction *);
+   void emitBFIND(const Instruction *);
    void emitShift(const Instruction *);
 
    void emitSFnOp(const Instruction *, uint8_t subOp);
@@ -693,6 +695,30 @@ void
 CodeEmitterGK110::emitINSBF(const Instruction *i)
 {
    emitForm_21(i, 0x1f8, 0xb78);
+}
+
+void
+CodeEmitterGK110::emitEXTBF(const Instruction *i)
+{
+   emitForm_21(i, 0x600, 0xc00);
+
+   if (i->dType == TYPE_S32)
+      code[1] |= 0x80000;
+   if (i->subOp == NV50_IR_SUBOP_EXTBF_REV)
+      code[1] |= 0x800;
+}
+
+void
+CodeEmitterGK110::emitBFIND(const Instruction *i)
+{
+   emitForm_21(i, 0x618, 0xc18);
+
+   if (i->dType == TYPE_S32)
+      code[1] |= 0x80000;
+   if (i->src(0).mod == Modifier(NV50_IR_MOD_NOT))
+      code[1] |= 0x800;
+   if (i->subOp == NV50_IR_SUBOP_BFIND_SAMT)
+      code[1] |= 0x1000;
 }
 
 void
@@ -1724,6 +1750,15 @@ CodeEmitterGK110::emitInstruction(Instruction *insn)
       break;
    case OP_POPCNT:
       emitPOPC(insn);
+      break;
+   case OP_INSBF:
+      emitINSBF(insn);
+      break;
+   case OP_EXTBF:
+      emitEXTBF(insn);
+      break;
+   case OP_BFIND:
+      emitBFIND(insn);
       break;
    case OP_JOIN:
       emitNOP(insn);

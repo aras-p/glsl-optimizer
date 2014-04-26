@@ -104,6 +104,7 @@ private:
    void emitPOPC(const Instruction *);
    void emitINSBF(const Instruction *);
    void emitEXTBF(const Instruction *);
+   void emitBFIND(const Instruction *);
    void emitPERMT(const Instruction *);
    void emitShift(const Instruction *);
 
@@ -801,6 +802,19 @@ CodeEmitterNVC0::emitEXTBF(const Instruction *i)
       code[0] |= 1 << 5;
    if (i->subOp == NV50_IR_SUBOP_EXTBF_REV)
       code[0] |= 1 << 8;
+}
+
+void
+CodeEmitterNVC0::emitBFIND(const Instruction *i)
+{
+   emitForm_B(i, HEX64(78000000, 00000003));
+
+   if (i->dType == TYPE_S32)
+      code[0] |= 1 << 5;
+   if (i->src(0).mod == Modifier(NV50_IR_MOD_NOT))
+      code[0] |= 1 << 8;
+   if (i->subOp == NV50_IR_SUBOP_BFIND_SAMT)
+      code[0] |= 1 << 6;
 }
 
 void
@@ -2381,6 +2395,9 @@ CodeEmitterNVC0::emitInstruction(Instruction *insn)
       break;
    case OP_EXTBF:
       emitEXTBF(insn);
+      break;
+   case OP_BFIND:
+      emitBFIND(insn);
       break;
    case OP_PERMT:
       emitPERMT(insn);
