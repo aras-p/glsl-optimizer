@@ -1763,11 +1763,11 @@ Converter::handleTEX(Value *dst[4], int R, int S, int L, int C, int Dx, int Dy)
    if (tgsi.getOpcode() == TGSI_OPCODE_TG4 && !tgt.isShadow())
       texi->tex.gatherComp = tgsi.getSrc(1).getValueU32(0, info);
 
+   texi->tex.useOffsets = tgsi.getNumTexOffsets();
    for (s = 0; s < tgsi.getNumTexOffsets(); ++s) {
       for (c = 0; c < 3; ++c) {
-         texi->tex.offset[s][c] = tgsi.getTexOffset(s).getValueU32(c, info);
-         if (texi->tex.offset[s][c])
-            texi->tex.useOffsets = s + 1;
+         texi->offset[s][c].set(fetchSrc(tgsi.getTexOffset(s), c, NULL));
+         texi->offset[s][c].setInsn(texi);
       }
    }
 
@@ -1800,11 +1800,11 @@ Converter::handleTXF(Value *dst[4], int R, int L_M)
 
    setTexRS(texi, c, R, -1);
 
+   texi->tex.useOffsets = tgsi.getNumTexOffsets();
    for (s = 0; s < tgsi.getNumTexOffsets(); ++s) {
       for (c = 0; c < 3; ++c) {
-         texi->tex.offset[s][c] = tgsi.getTexOffset(s).getValueU32(c, info);
-         if (texi->tex.offset[s][c])
-            texi->tex.useOffsets = s + 1;
+         texi->offset[s][c].set(fetchSrc(tgsi.getTexOffset(s), c, NULL));
+         texi->offset[s][c].setInsn(texi);
       }
    }
 

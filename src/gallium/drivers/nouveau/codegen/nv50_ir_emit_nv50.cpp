@@ -1475,9 +1475,9 @@ CodeEmitterNV50::emitTEX(const TexInstruction *i)
       code[0] |= 0x08000000;
    } else
    if (i->tex.useOffsets) {
-      code[1] |= (i->tex.offset[0][0] & 0xf) << 24;
-      code[1] |= (i->tex.offset[0][1] & 0xf) << 20;
-      code[1] |= (i->tex.offset[0][2] & 0xf) << 16;
+      code[1] |= (i->tex.offset[0] & 0xf) << 24;
+      code[1] |= (i->tex.offset[1] & 0xf) << 20;
+      code[1] |= (i->tex.offset[2] & 0xf) << 16;
    }
 
    code[0] |= (i->tex.mask & 0x3) << 25;

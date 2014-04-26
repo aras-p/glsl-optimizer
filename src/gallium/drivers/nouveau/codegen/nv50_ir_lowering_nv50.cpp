@@ -695,6 +695,14 @@ NV50LoweringPreSSA::handleTEX(TexInstruction *i)
    // texel offsets are 3 immediate fields in the instruction,
    // nv50 cannot do textureGatherOffsets
    assert(i->tex.useOffsets <= 1);
+   if (i->tex.useOffsets) {
+      for (int c = 0; c < 3; ++c) {
+         ImmediateValue val;
+         assert(i->offset[0][c].getImmediate(val));
+         i->tex.offset[c] = val.reg.data.u32;
+         i->offset[0][c].set(NULL);
+      }
+   }
 
    return true;
 }

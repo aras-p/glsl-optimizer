@@ -913,13 +913,14 @@ public:
       bool derivAll;
 
       int8_t useOffsets; // 0, 1, or 4 for textureGatherOffsets
-      int8_t offset[4][3];
+      int8_t offset[3]; // only used on nv50
 
       enum TexQuery query;
    } tex;
 
    ValueRef dPdx[3];
    ValueRef dPdy[3];
+   ValueRef offset[4][3];
 };
 
 class CmpInstruction : public Instruction

@@ -1208,8 +1208,10 @@ CodeEmitterNVC0::emitTEX(const TexInstruction *i)
        i->tex.target == TEX_TARGET_2D_MS_ARRAY)
       code[1] |= 1 << 23;
 
-   if (i->tex.useOffsets) // in vecSrc0.w
+   if (i->tex.useOffsets == 1)
       code[1] |= 1 << 22;
+   if (i->tex.useOffsets == 4)
+      code[1] |= 1 << 23;
 
    srcId(i, src1, 26);
 }

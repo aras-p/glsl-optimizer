@@ -911,6 +911,9 @@ TexInstruction::~TexInstruction()
       dPdx[c].set(NULL);
       dPdy[c].set(NULL);
    }
+   for (int n = 0; n < 4; ++n)
+      for (int c = 0; c < 3; ++c)
+         offset[n][c].set(NULL);
 }
 
 TexInstruction *
@@ -929,6 +932,10 @@ TexInstruction::clone(ClonePolicy<Function>& pol, Instruction *i) const
          tex->dPdy[c].set(dPdy[c]);
       }
    }
+
+   for (int n = 0; n < tex->tex.useOffsets; ++n)
+      for (int c = 0; c < 3; ++c)
+         tex->offset[n][c].set(offset[n][c]);
 
    return tex;
 }
