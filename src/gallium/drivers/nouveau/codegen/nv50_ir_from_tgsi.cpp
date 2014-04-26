@@ -402,6 +402,7 @@ nv50_ir::DataType Instruction::inferSrcType() const
    case TGSI_OPCODE_UMOD:
    case TGSI_OPCODE_UMAD:
    case TGSI_OPCODE_UMUL:
+   case TGSI_OPCODE_UMUL_HI:
    case TGSI_OPCODE_UMAX:
    case TGSI_OPCODE_UMIN:
    case TGSI_OPCODE_USEQ:
@@ -423,6 +424,7 @@ nv50_ir::DataType Instruction::inferSrcType() const
       return nv50_ir::TYPE_U32;
    case TGSI_OPCODE_I2F:
    case TGSI_OPCODE_IDIV:
+   case TGSI_OPCODE_IMUL_HI:
    case TGSI_OPCODE_IMAX:
    case TGSI_OPCODE_IMIN:
    case TGSI_OPCODE_IABS:
@@ -603,6 +605,9 @@ static nv50_ir::operation translateOpcode(uint opcode)
    NV50_IR_OPCODE_CASE(USLT, SET);
    NV50_IR_OPCODE_CASE(USNE, SET);
 
+   NV50_IR_OPCODE_CASE(IMUL_HI, MUL);
+   NV50_IR_OPCODE_CASE(UMUL_HI, MUL);
+
    NV50_IR_OPCODE_CASE(SAMPLE, TEX);
    NV50_IR_OPCODE_CASE(SAMPLE_B, TXB);
    NV50_IR_OPCODE_CASE(SAMPLE_C, TEX);
@@ -661,6 +666,9 @@ static uint16_t opcodeToSubOp(uint opcode)
    case TGSI_OPCODE_ATOMIMIN: return NV50_IR_SUBOP_ATOM_MIN;
    case TGSI_OPCODE_ATOMUMAX: return NV50_IR_SUBOP_ATOM_MAX;
    case TGSI_OPCODE_ATOMIMAX: return NV50_IR_SUBOP_ATOM_MAX;
+   case TGSI_OPCODE_IMUL_HI:
+   case TGSI_OPCODE_UMUL_HI:
+      return NV50_IR_SUBOP_MUL_HIGH;
    default:
       return 0;
    }
@@ -2188,6 +2196,8 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
    case TGSI_OPCODE_UMOD:
    case TGSI_OPCODE_MUL:
    case TGSI_OPCODE_UMUL:
+   case TGSI_OPCODE_IMUL_HI:
+   case TGSI_OPCODE_UMUL_HI:
    case TGSI_OPCODE_OR:
    case TGSI_OPCODE_POW:
    case TGSI_OPCODE_SHL:
@@ -2198,7 +2208,8 @@ Converter::handleInstruction(const struct tgsi_full_instruction *insn)
       FOR_EACH_DST_ENABLED_CHANNEL(0, c, tgsi) {
          src0 = fetchSrc(0, c);
          src1 = fetchSrc(1, c);
-         mkOp2(op, dstTy, dst0[c], src0, src1);
+         geni = mkOp2(op, dstTy, dst0[c], src0, src1);
+         geni->subOp = tgsi::opcodeToSubOp(tgsi.getOpcode());
       }
       break;
    case TGSI_OPCODE_MAD:
