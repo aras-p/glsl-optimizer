@@ -3187,6 +3187,15 @@ ast_declarator_list::hir(exec_list *instructions,
             _mesa_glsl_error(& loc, state,
                              "undeclared variable `%s' cannot be marked "
                              "precise", decl->identifier);
+         } else if (state->current_function != NULL &&
+                    !state->symbols->name_declared_this_scope(decl->identifier)) {
+            /* Note: we have to check if we're in a function, since
+             * builtins are treated as having come from another scope.
+             */
+            _mesa_glsl_error(& loc, state,
+                             "variable `%s' from an outer scope may not be "
+                             "redeclared `precise' in this scope",
+                             earlier->name);
          } else if (earlier->data.used) {
             _mesa_glsl_error(& loc, state,
                              "variable `%s' may not be redeclared "
