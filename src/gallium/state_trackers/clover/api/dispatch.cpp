@@ -117,9 +117,9 @@ namespace clover {
       NULL, // clRetainDeviceEXT
       NULL, // clReleaseDeviceEXT
       NULL, // clCreateEventFromGLsyncKHR
-      NULL, // clCreateSubDevices
-      NULL, // clRetainDevice
-      NULL, // clReleaseDevice
+      clCreateSubDevices,
+      clRetainDevice,
+      clReleaseDevice,
       NULL, // clCreateImage
       NULL, // clCreateProgramWithBuiltInKernels
       NULL, // clCompileProgram

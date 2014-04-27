@@ -640,7 +640,12 @@ struct _cl_icd_dispatch {
       cl_GLsync sync,
       cl_int *errcode_ret);
 
-   void *clCreateSubDevices;
+    CL_API_ENTRY cl_int (CL_API_CALL *clCreateSubDevices)(
+       cl_device_id in_device,
+       const cl_device_partition_property *partition_properties,
+       cl_uint num_entries,
+       cl_device_id *out_devices,
+       cl_uint *num_devices);
 
    CL_API_ENTRY cl_int (CL_API_CALL *clRetainDevice)(
       cl_device_id device);

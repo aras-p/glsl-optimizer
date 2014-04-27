@@ -63,6 +63,37 @@ clGetDeviceIDs(cl_platform_id d_platform, cl_device_type device_type,
 }
 
 CLOVER_API cl_int
+clCreateSubDevices(cl_device_id d_dev,
+                   const cl_device_partition_property *props,
+                   cl_uint num_devs, cl_device_id *rd_devs,
+                   cl_uint *rnum_devs) {
+   // There are no currently supported partitioning schemes.
+   return CL_INVALID_VALUE;
+}
+
+CLOVER_API cl_int
+clRetainDevice(cl_device_id d_dev) try {
+   obj(d_dev);
+
+   // The reference count doesn't change for root devices.
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
+}
+
+CLOVER_API cl_int
+clReleaseDevice(cl_device_id d_dev) try {
+   obj(d_dev);
+
+   // The reference count doesn't change for root devices.
+   return CL_SUCCESS;
+
+} catch (error &e) {
+   return e.get();
+}
+
+CLOVER_API cl_int
 clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
                 size_t size, void *r_buf, size_t *r_size) try {
    property_buffer buf { r_buf, size, r_size };
@@ -293,6 +324,32 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
 
    case CL_DEVICE_OPENCL_C_VERSION:
       buf.as_string() = "OpenCL C 1.1";
+      break;
+
+   case CL_DEVICE_PARENT_DEVICE:
+      buf.as_scalar<cl_device_id>() = NULL;
+      break;
+
+   case CL_DEVICE_PARTITION_MAX_SUB_DEVICES:
+      buf.as_scalar<cl_uint>() = 0;
+      break;
+
+   case CL_DEVICE_PARTITION_PROPERTIES:
+      buf.as_vector<cl_device_partition_property>() =
+         desc(property_list<cl_device_partition_property>());
+      break;
+
+   case CL_DEVICE_PARTITION_AFFINITY_DOMAIN:
+      buf.as_scalar<cl_device_affinity_domain>() = 0;
+      break;
+
+   case CL_DEVICE_PARTITION_TYPE:
+      buf.as_vector<cl_device_partition_property>() =
+         desc(property_list<cl_device_partition_property>());
+      break;
+
+   case CL_DEVICE_REFERENCE_COUNT:
+      buf.as_scalar<cl_uint>() = 1;
       break;
 
    default:
