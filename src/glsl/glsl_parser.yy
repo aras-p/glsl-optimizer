@@ -128,7 +128,7 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
 %token ATTRIBUTE CONST_TOK BOOL_TOK FLOAT_TOK INT_TOK UINT_TOK
 %token BREAK CONTINUE DO ELSE FOR IF DISCARD RETURN SWITCH CASE DEFAULT
 %token BVEC2 BVEC3 BVEC4 IVEC2 IVEC3 IVEC4 UVEC2 UVEC3 UVEC4 VEC2 VEC3 VEC4
-%token CENTROID IN_TOK OUT_TOK INOUT_TOK UNIFORM VARYING
+%token CENTROID IN_TOK OUT_TOK INOUT_TOK UNIFORM VARYING SAMPLE
 %token NOPERSPECTIVE FLAT SMOOTH
 %token MAT2X2 MAT2X3 MAT2X4
 %token MAT3X2 MAT3X3 MAT3X4
@@ -183,7 +183,7 @@ static bool match_layout_qualifier(const char *s1, const char *s2,
 %token HVEC2 HVEC3 HVEC4 DVEC2 DVEC3 DVEC4 FVEC2 FVEC3 FVEC4
 %token SAMPLER3DRECT
 %token SIZEOF CAST NAMESPACE USING
-%token RESOURCE PATCH SAMPLE
+%token RESOURCE PATCH
 %token SUBROUTINE
 
 %token ERROR_TOK
@@ -1071,7 +1071,7 @@ single_declaration:
       $$->set_location_range(@1, @2);
       $$->declarations.push_tail(&decl->link);
    }
-   | INVARIANT variable_identifier // Vertex only.
+   | INVARIANT variable_identifier
    {
       void *ctx = state;
       ast_declaration *decl = new(ctx) ast_declaration($2, NULL, NULL);
