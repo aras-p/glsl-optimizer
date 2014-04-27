@@ -180,7 +180,7 @@ struct glsl_type {
    /**@}*/
 
    /**
-    * For numeric and boolean derrived types returns the basic scalar type
+    * For numeric and boolean derived types returns the basic scalar type
     *
     * If the type is a numeric or boolean scalar, vector, or matrix type,
     * this function gets the scalar type of the individual components.  For
