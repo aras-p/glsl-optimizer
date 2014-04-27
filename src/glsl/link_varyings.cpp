@@ -622,7 +622,7 @@ public:
    ~varying_matches();
    void record(ir_variable *producer_var, ir_variable *consumer_var);
    unsigned assign_locations();
-   void store_locations(unsigned producer_base, unsigned consumer_base) const;
+   void store_locations() const;
 
 private:
    /**
@@ -842,8 +842,7 @@ varying_matches::assign_locations()
  * assignments that were made by varying_matches::assign_locations().
  */
 void
-varying_matches::store_locations(unsigned producer_base,
-                                 unsigned consumer_base) const
+varying_matches::store_locations() const
 {
    for (unsigned i = 0; i < this->num_matches; i++) {
       ir_variable *producer_var = this->matches[i].producer_var;
@@ -852,11 +851,11 @@ varying_matches::store_locations(unsigned producer_base,
       unsigned slot = generic_location / 4;
       unsigned offset = generic_location % 4;
 
-      producer_var->data.location = producer_base + slot;
+      producer_var->data.location = VARYING_SLOT_VAR0 + slot;
       producer_var->data.location_frac = offset;
       if (consumer_var) {
          assert(consumer_var->data.location == -1);
-         consumer_var->data.location = consumer_base + slot;
+         consumer_var->data.location = VARYING_SLOT_VAR0 + slot;
          consumer_var->data.location_frac = offset;
       }
    }
@@ -1069,8 +1068,6 @@ assign_varying_locations(struct gl_context *ctx,
                          tfeedback_decl *tfeedback_decls,
                          unsigned gs_input_vertices)
 {
-   const unsigned producer_base = VARYING_SLOT_VAR0;
-   const unsigned consumer_base = VARYING_SLOT_VAR0;
    varying_matches matches(ctx->Const.DisableVaryingPacking,
                            consumer && consumer->Stage == MESA_SHADER_FRAGMENT);
    hash_table *tfeedback_candidates
@@ -1162,7 +1159,7 @@ assign_varying_locations(struct gl_context *ctx,
    }
 
    const unsigned slots_used = matches.assign_locations();
-   matches.store_locations(producer_base, consumer_base);
+   matches.store_locations();
 
    for (unsigned i = 0; i < num_tfeedback_decls; ++i) {
       if (!tfeedback_decls[i].is_varying())
@@ -1187,11 +1184,11 @@ assign_varying_locations(struct gl_context *ctx,
        */
       assert(!ctx->Extensions.EXT_transform_feedback);
    } else {
-      lower_packed_varyings(mem_ctx, producer_base, slots_used,
-                            ir_var_shader_out, 0, producer);
+      lower_packed_varyings(mem_ctx, slots_used, ir_var_shader_out,
+                            0, producer);
       if (consumer) {
-         lower_packed_varyings(mem_ctx, consumer_base, slots_used,
-                               ir_var_shader_in, gs_input_vertices, consumer);
+         lower_packed_varyings(mem_ctx, slots_used, ir_var_shader_in,
+                               gs_input_vertices, consumer);
       }
    }
 

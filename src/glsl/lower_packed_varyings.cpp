@@ -160,8 +160,7 @@ namespace {
 class lower_packed_varyings_visitor
 {
 public:
-   lower_packed_varyings_visitor(void *mem_ctx, unsigned location_base,
-                                 unsigned locations_used,
+   lower_packed_varyings_visitor(void *mem_ctx, unsigned locations_used,
                                  ir_variable_mode mode,
                                  unsigned gs_input_vertices,
                                  exec_list *out_instructions);
@@ -190,18 +189,10 @@ private:
    void * const mem_ctx;
 
    /**
-    * Location representing the first generic varying slot for this shader
-    * stage (e.g. VARYING_SLOT_VAR0 if we are packing vertex shader outputs).
-    * Varyings whose location is less than this value are assumed to
-    * correspond to special fixed function hardware, so they are not lowered.
-    */
-   const unsigned location_base;
-
-   /**
     * Number of generic varying slots which are used by this shader.  This is
     * used to allocate temporary intermediate data structures.  If any varying
     * used by this shader has a location greater than or equal to
-    * location_base + locations_used, an assertion will fire.
+    * VARYING_SLOT_VAR0 + locations_used, an assertion will fire.
     */
    const unsigned locations_used;
 
@@ -235,11 +226,9 @@ private:
 } /* anonymous namespace */
 
 lower_packed_varyings_visitor::lower_packed_varyings_visitor(
-      void *mem_ctx, unsigned location_base, unsigned locations_used,
-      ir_variable_mode mode, unsigned gs_input_vertices,
-      exec_list *out_instructions)
+      void *mem_ctx, unsigned locations_used, ir_variable_mode mode,
+      unsigned gs_input_vertices, exec_list *out_instructions)
    : mem_ctx(mem_ctx),
-     location_base(location_base),
      locations_used(locations_used),
      packed_varyings((ir_variable **)
                      rzalloc_array_size(mem_ctx, sizeof(*packed_varyings),
@@ -259,7 +248,7 @@ lower_packed_varyings_visitor::run(exec_list *instructions)
          continue;
 
       if (var->data.mode != this->mode ||
-          var->data.location < (int) this->location_base ||
+          var->data.location < VARYING_SLOT_VAR0 ||
           !this->needs_lowering(var))
          continue;
 
@@ -542,7 +531,7 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
       unsigned location, ir_variable *unpacked_var, const char *name,
       unsigned vertex_index)
 {
-   unsigned slot = location - this->location_base;
+   unsigned slot = location - VARYING_SLOT_VAR0;
    assert(slot < locations_used);
    if (this->packed_varyings[slot] == NULL) {
       char *packed_name = ralloc_asprintf(this->mem_ctx, "packed:%s", name);
@@ -654,9 +643,9 @@ lower_packed_varyings_gs_splicer::visit(ir_emit_vertex *ev)
 
 
 void
-lower_packed_varyings(void *mem_ctx, unsigned location_base,
-                      unsigned locations_used, ir_variable_mode mode,
-                      unsigned gs_input_vertices, gl_shader *shader)
+lower_packed_varyings(void *mem_ctx, unsigned locations_used,
+                      ir_variable_mode mode, unsigned gs_input_vertices,
+                      gl_shader *shader)
 {
    exec_list *instructions = shader->ir;
    ir_function *main_func = shader->symbols->get_function("main");
@@ -664,8 +653,7 @@ lower_packed_varyings(void *mem_ctx, unsigned location_base,
    ir_function_signature *main_func_sig
       = main_func->matching_signature(NULL, &void_parameters);
    exec_list new_instructions;
-   lower_packed_varyings_visitor visitor(mem_ctx, location_base,
-                                         locations_used, mode,
+   lower_packed_varyings_visitor visitor(mem_ctx, locations_used, mode,
                                          gs_input_vertices, &new_instructions);
    visitor.run(instructions);
    if (mode == ir_var_shader_out) {
