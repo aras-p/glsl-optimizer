@@ -243,7 +243,8 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_TEXCOORD:
 	case PIPE_CAP_FAKE_SW_MSAA:
 	case PIPE_CAP_TEXTURE_QUERY_LOD:
-        case PIPE_CAP_SAMPLE_SHADING:
+	case PIPE_CAP_SAMPLE_SHADING:
+	case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
 		return 0;
 
 	case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:

@@ -200,6 +200,8 @@ The integer capabilities:
 * ``PIPE_CAP_SAMPLE_SHADING``: Whether there is support for per-sample
   shading. The context->set_min_samples function will be expected to be
   implemented.
+* ``PIPE_CAP_TEXTURE_GATHER_OFFSETS``: Whether the ``TG4`` instruction can
+  accept 4 offsets.
 
 
 .. _pipe_capf:

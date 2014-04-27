@@ -198,6 +198,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TGSI_VS_LAYER:
    case PIPE_CAP_TEXTURE_GATHER_SM5:
    case PIPE_CAP_FAKE_SW_MSAA:
+   case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
       return 0;
    case PIPE_CAP_MAX_VIEWPORTS:
       return NV50_MAX_VIEWPORTS;

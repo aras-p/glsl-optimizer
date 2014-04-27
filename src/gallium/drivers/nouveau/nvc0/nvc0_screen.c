@@ -186,6 +186,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_TEXTURE_QUERY_LOD:
    case PIPE_CAP_SAMPLE_SHADING:
+   case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
       return 1;
    case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
       return 4;
