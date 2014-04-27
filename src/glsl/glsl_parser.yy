@@ -931,14 +931,22 @@ parameter_qualifier:
       $$ = $2;
       $$.flags.q.constant = 1;
    }
+   | PRECISE parameter_qualifier
+   {
+      if ($2.flags.q.precise)
+         _mesa_glsl_error(&@1, state, "duplicate precise qualifier");
+
+      $$ = $2;
+      $$.flags.q.precise = 1;
+   }
    | parameter_direction_qualifier parameter_qualifier
    {
       if (($1.flags.q.in || $1.flags.q.out) && ($2.flags.q.in || $2.flags.q.out))
          _mesa_glsl_error(&@1, state, "duplicate in/out/inout qualifier");
 
       if (!state->ARB_shading_language_420pack_enable && $2.flags.q.constant)
-         _mesa_glsl_error(&@1, state, "const must be specified before "
-                          "in/out/inout");
+         _mesa_glsl_error(&@1, state, "in/out/inout must come after const "
+                                      "or precise");
 
       $$ = $1;
       $$.merge_qualifier(&@1, state, $2);
