@@ -561,6 +561,7 @@ public:
       unsigned centroid:1;
       unsigned sample:1;
       unsigned invariant:1;
+      unsigned precise:1;
 
       /**
        * Has this variable been used for reading or writing?

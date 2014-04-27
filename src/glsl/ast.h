@@ -424,6 +424,7 @@ struct ast_type_qualifier {
    union {
       struct {
 	 unsigned invariant:1;
+         unsigned precise:1;
 	 unsigned constant:1;
 	 unsigned attribute:1;
 	 unsigned varying:1;

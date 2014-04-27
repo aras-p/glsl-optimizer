@@ -2393,6 +2393,17 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       }
    }
 
+   if (qual->flags.q.precise) {
+      if (var->data.used) {
+         _mesa_glsl_error(loc, state,
+                          "variable `%s' may not be redeclared "
+                          "`precise' after being used",
+                          var->name);
+      } else {
+         var->data.precise = 1;
+      }
+   }
+
    if (qual->flags.q.constant || qual->flags.q.attribute
        || qual->flags.q.uniform
        || (qual->flags.q.varying && (state->stage == MESA_SHADER_FRAGMENT)))
@@ -3165,6 +3176,7 @@ ast_declarator_list::hir(exec_list *instructions,
 
    assert(this->type != NULL);
    assert(!this->invariant);
+   assert(!this->precise);
 
    /* The type specifier may contain a structure definition.  Process that
     * before any of the variable declarations.
