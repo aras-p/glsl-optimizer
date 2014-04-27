@@ -737,10 +737,12 @@ NVC0LoweringPass::handleTEX(TexInstruction *i)
    assert(chipset >= NVISA_GK104_CHIPSET ||
           !i->tex.useOffsets || !i->tex.target.isMS());
 
-   // offset is last source (lod 1st, dc 2nd)
+   // offset is between lod and dc
    if (i->tex.useOffsets) {
       int n, c;
       int s = i->srcCount(0xff, true);
+      if (i->tex.target.isShadow())
+         s--;
       if (i->srcExists(s)) // move potential predicate out of the way
          i->moveSources(s, 1);
       if (i->tex.useOffsets == 4 && i->srcExists(s + 1))
