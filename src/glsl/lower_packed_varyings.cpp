@@ -584,7 +584,12 @@ lower_packed_varyings_visitor::get_packed_varying_deref(
 bool
 lower_packed_varyings_visitor::needs_lowering(ir_variable *var)
 {
-   /* Things composed of vec4's don't need lowering.  Everything else does. */
+   /* Things composed of vec4's and varyings with explicitly assigned
+    * locations don't need lowering.  Everything else does.
+    */
+   if (var->data.explicit_location)
+      return false;
+
    const glsl_type *type = var->type;
    if (this->gs_input_vertices != 0) {
       assert(type->is_array());
