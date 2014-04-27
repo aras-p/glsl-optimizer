@@ -101,7 +101,7 @@ GL 4.0:
   GL_ARB_draw_buffers_blend                            DONE (i965, nv50, nvc0, r600, radeonsi, softpipe)
   GL_ARB_draw_indirect                                 DONE (i965)
   GL_ARB_gpu_shader5                                   started
-  - 'precise' qualifier                                not started
+  - 'precise' qualifier                                DONE
   - Dynamically uniform sampler array indices          not started
   - Dynamically uniform UBO array indices              not started
   - Implicit signed -> unsigned conversions            not started
