@@ -58,9 +58,14 @@ static void *rebase_##TYPE( const void *ptr,			\
 			  GLuint count, 			\
 			  TYPE min_index )			\
 {								\
-   const TYPE *in = (TYPE *)ptr;				\
-   TYPE *tmp_indices = malloc(count * sizeof(TYPE));	\
    GLuint i;							\
+   const TYPE *in = (TYPE *)ptr;				\
+   TYPE *tmp_indices = malloc(count * sizeof(TYPE));		\
+								\
+   if (tmp_indices == NULL) {                                   \
+      _mesa_error_no_memory(__func__);                          \
+      return NULL;                                              \
+   }                                                            \
 								\
    for (i = 0; i < count; i++)  				\
       tmp_indices[i] = in[i] - min_index;			\
@@ -148,6 +153,11 @@ void vbo_rebase_prims( struct gl_context *ctx,
        */
       tmp_prims = malloc(sizeof(*prim) * nr_prims);
 
+      if (tmp_prims == NULL) {
+         _mesa_error_no_memory(__func__);
+         return;
+      }
+
       for (i = 0; i < nr_prims; i++) {
 	 tmp_prims[i] = prim[i];
 	 tmp_prims[i].basevertex -= min_index;
@@ -186,6 +196,10 @@ void vbo_rebase_prims( struct gl_context *ctx,
       if (map_ib) 
 	 ctx->Driver.UnmapBuffer(ctx, ib->obj, MAP_INTERNAL);
 
+      if (tmp_indices == NULL) {
+         return;
+      }
+
       tmp_ib.obj = ctx->Shared->NullBufferObj;
       tmp_ib.ptr = tmp_indices;
       tmp_ib.count = ib->count;
@@ -197,6 +211,11 @@ void vbo_rebase_prims( struct gl_context *ctx,
       /* Otherwise the primitives need adjustment.
        */
       tmp_prims = malloc(sizeof(*prim) * nr_prims);
+
+      if (tmp_prims == NULL) {
+         _mesa_error_no_memory(__func__);
+         return;
+      }
 
       for (i = 0; i < nr_prims; i++) {
 	 /* If this fails, it could indicate an application error:
