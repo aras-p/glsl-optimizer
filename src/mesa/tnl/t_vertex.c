@@ -83,12 +83,22 @@ void _tnl_register_fastpath( struct tnl_clipspace *vtx,
    struct tnl_clipspace_fastpath *fastpath = CALLOC_STRUCT(tnl_clipspace_fastpath);
    GLuint i;
 
+   if (fastpath == NULL) {
+      _mesa_error_no_memory(__func__);
+      return;
+   }
+
    fastpath->vertex_size = vtx->vertex_size;
    fastpath->attr_count = vtx->attr_count;
    fastpath->match_strides = match_strides;
    fastpath->func = vtx->emit;
-   fastpath->attr =
-      malloc(vtx->attr_count * sizeof(fastpath->attr[0]));
+   fastpath->attr = malloc(vtx->attr_count * sizeof(fastpath->attr[0]));
+
+   if (fastpath->attr == NULL) {
+      free(fastpath);
+      _mesa_error_no_memory(__func__);
+      return;
+   }
 
    for (i = 0; i < vtx->attr_count; i++) {
       fastpath->attr[i].format = vtx->attr[i].format;
