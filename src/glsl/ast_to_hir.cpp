@@ -3174,6 +3174,33 @@ ast_declarator_list::hir(exec_list *instructions,
       return NULL;
    }
 
+   if (this->precise) {
+      assert(this->type == NULL);
+
+      foreach_list_typed (ast_declaration, decl, link, &this->declarations) {
+         assert(decl->array_specifier == NULL);
+         assert(decl->initializer == NULL);
+
+         ir_variable *const earlier =
+            state->symbols->get_variable(decl->identifier);
+         if (earlier == NULL) {
+            _mesa_glsl_error(& loc, state,
+                             "undeclared variable `%s' cannot be marked "
+                             "precise", decl->identifier);
+         } else if (earlier->data.used) {
+            _mesa_glsl_error(& loc, state,
+                             "variable `%s' may not be redeclared "
+                             "`precise' after being used",
+                             earlier->name);
+         } else {
+            earlier->data.precise = true;
+         }
+      }
+
+      /* Precise redeclarations do not have r-values either. */
+      return NULL;
+   }
+
    assert(this->type != NULL);
    assert(!this->invariant);
    assert(!this->precise);

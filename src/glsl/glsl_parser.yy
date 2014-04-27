@@ -1083,6 +1083,18 @@ single_declaration:
 
       $$->declarations.push_tail(&decl->link);
    }
+   | PRECISE variable_identifier
+   {
+      void *ctx = state;
+      ast_declaration *decl = new(ctx) ast_declaration($2, NULL, NULL);
+      decl->set_location(@2);
+
+      $$ = new(ctx) ast_declarator_list(NULL);
+      $$->set_location_range(@1, @2);
+      $$->precise = true;
+
+      $$->declarations.push_tail(&decl->link);
+   }
    ;
 
 fully_specified_type:

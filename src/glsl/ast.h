@@ -746,13 +746,11 @@ public:
    exec_list declarations;
 
    /**
-    * Special flag for vertex shader "invariant" declarations.
-    *
-    * Vertex shaders can contain "invariant" variable redeclarations that do
-    * not include a type.  For example, "invariant gl_Position;".  This flag
-    * is used to note these cases when no type is specified.
+    * Flags for redeclarations. In these cases, no type is specified, to
+    * `type` is allowed to be NULL. In all other cases, this would be an error.
     */
-   int invariant;
+   int invariant;     /** < `invariant` redeclaration */
+   int precise;       /** < `precise` redeclaration */
 };
 
 
