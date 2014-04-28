@@ -591,7 +591,7 @@ public:
 				int base_offset);
 
    bool try_emit_sat(ir_expression *ir);
-   bool try_emit_mad(ir_expression *ir, int mul_arg);
+   bool try_emit_mad(ir_expression *ir);
    void resolve_ud_negate(src_reg *reg);
 
    src_reg get_timestamp();
