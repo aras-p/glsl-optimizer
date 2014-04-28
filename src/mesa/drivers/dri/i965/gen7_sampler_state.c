@@ -182,12 +182,11 @@ gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
 static void
 gen7_upload_sampler_state_table(struct brw_context *brw,
                                 struct gl_program *prog,
-                                uint32_t sampler_count,
-                                uint32_t *sst_offset,
-                                uint32_t *sdc_offset)
+                                struct brw_stage_state *stage_state)
 {
    struct gl_context *ctx = &brw->ctx;
    struct gen7_sampler_state *samplers;
+   uint32_t sampler_count = stage_state->sampler_count;
 
    GLbitfield SamplersUsed = prog->SamplersUsed;
 
@@ -196,7 +195,7 @@ gen7_upload_sampler_state_table(struct brw_context *brw,
 
    samplers = brw_state_batch(brw, AUB_TRACE_SAMPLER_STATE,
 			      sampler_count * sizeof(*samplers),
-			      32, sst_offset);
+			      32, &stage_state->sampler_offset);
    memset(samplers, 0, sampler_count * sizeof(*samplers));
 
    for (unsigned s = 0; s < sampler_count; s++) {
@@ -204,7 +203,7 @@ gen7_upload_sampler_state_table(struct brw_context *brw,
          const unsigned unit = prog->SamplerUnits[s];
          if (ctx->Texture.Unit[unit]._Current)
             gen7_update_sampler_state(brw, unit, s, &samplers[s],
-                                      &sdc_offset[s]);
+                                      &stage_state->sdc_offset[s]);
       }
    }
 

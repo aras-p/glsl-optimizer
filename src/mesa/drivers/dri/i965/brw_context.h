@@ -994,9 +994,7 @@ struct brw_context
       /** Upload a SAMPLER_STATE table. */
       void (*upload_sampler_state_table)(struct brw_context *brw,
                                          struct gl_program *prog,
-                                         uint32_t sampler_count,
-                                         uint32_t *sst_offset,
-                                         uint32_t *sdc_offset);
+                                         struct brw_stage_state *stage_state);
 
       /**
        * Send the appropriate state packets to configure depth, stencil, and
