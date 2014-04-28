@@ -925,6 +925,7 @@ struct brw_transform_feedback_object {
  */
 struct brw_stage_state
 {
+   gl_shader_stage stage;
    struct brw_stage_prog_data *prog_data;
 
    /**

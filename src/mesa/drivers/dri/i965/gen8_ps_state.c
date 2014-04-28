@@ -136,12 +136,6 @@ upload_ps_state(struct brw_context *brw)
    struct gl_context *ctx = &brw->ctx;
    uint32_t dw3 = 0, dw6 = 0, dw7 = 0;
 
-   /* CACHE_NEW_SAMPLER */
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS_PS << 16 | (2 - 2));
-   OUT_BATCH(brw->wm.base.sampler_offset);
-   ADVANCE_BATCH();
-
    /* CACHE_NEW_WM_PROG */
    gen8_upload_constant_state(brw, &brw->wm.base, true, _3DSTATE_CONSTANT_PS);
 
@@ -254,7 +248,7 @@ const struct brw_tracked_state gen8_ps_state = {
                BRW_NEW_PS_BINDING_TABLE |
                BRW_NEW_BATCH |
                BRW_NEW_PUSH_CONSTANT_ALLOCATION,
-      .cache = CACHE_NEW_SAMPLER | CACHE_NEW_WM_PROG
+      .cache = CACHE_NEW_WM_PROG
    },
    .emit = upload_ps_state,
 };

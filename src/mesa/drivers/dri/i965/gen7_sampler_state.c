@@ -187,6 +187,11 @@ gen7_upload_sampler_state_table(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
    struct gen7_sampler_state *samplers;
    uint32_t sampler_count = stage_state->sampler_count;
+   static const uint16_t packet_headers[] = {
+      [MESA_SHADER_VERTEX] = _3DSTATE_SAMPLER_STATE_POINTERS_VS,
+      [MESA_SHADER_GEOMETRY] = _3DSTATE_SAMPLER_STATE_POINTERS_GS,
+      [MESA_SHADER_FRAGMENT] = _3DSTATE_SAMPLER_STATE_POINTERS_PS,
+   };
 
    GLbitfield SamplersUsed = prog->SamplersUsed;
 
@@ -207,7 +212,15 @@ gen7_upload_sampler_state_table(struct brw_context *brw,
       }
    }
 
-   brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
+  if (brw->gen == 7 && !brw->is_haswell &&
+      stage_state->stage == MESA_SHADER_VERTEX) {
+      gen7_emit_vs_workaround_flush(brw);
+  }
+
+   BEGIN_BATCH(2);
+   OUT_BATCH(packet_headers[stage_state->stage] << 16 | (2 - 2));
+   OUT_BATCH(stage_state->sampler_offset);
+   ADVANCE_BATCH();
 }
 
 void

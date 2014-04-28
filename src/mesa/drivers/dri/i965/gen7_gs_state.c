@@ -66,12 +66,6 @@ upload_gs_state(struct brw_context *brw)
    /* CACHE_NEW_GS_PROG */
    const struct brw_vec4_prog_data *prog_data = &brw->gs.prog_data->base;
 
-   /* CACHE_NEW_SAMPLER */
-   BEGIN_BATCH(2);
-   OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS_GS << 16 | (2 - 2));
-   OUT_BATCH(stage_state->sampler_offset);
-   ADVANCE_BATCH();
-
    gen7_upload_constant_state(brw, stage_state, active, _3DSTATE_CONSTANT_GS);
 
    /**
@@ -198,7 +192,7 @@ const struct brw_tracked_state gen7_gs_state = {
                 BRW_NEW_GS_BINDING_TABLE |
                 BRW_NEW_BATCH |
                 BRW_NEW_PUSH_CONSTANT_ALLOCATION),
-      .cache = CACHE_NEW_GS_PROG | CACHE_NEW_SAMPLER
+      .cache = CACHE_NEW_GS_PROG
    },
    .emit = upload_gs_state,
 };
