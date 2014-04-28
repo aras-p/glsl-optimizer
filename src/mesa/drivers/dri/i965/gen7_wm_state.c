@@ -154,7 +154,6 @@ upload_ps_state(struct brw_context *brw)
 
    dw2 = dw4 = dw5 = 0;
 
-   /* CACHE_NEW_SAMPLER */
    dw2 |=
       (ALIGN(brw->wm.base.sampler_count, 4) / 4) << GEN7_PS_SAMPLER_COUNT_SHIFT;
 

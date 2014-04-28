@@ -143,7 +143,6 @@ upload_wm_state(struct brw_context *brw)
    if (ctx->_Shader->CurrentProgram[MESA_SHADER_FRAGMENT] == NULL)
       dw2 |= GEN6_WM_FLOATING_POINT_MODE_ALT;
 
-   /* CACHE_NEW_SAMPLER */
    dw2 |= (ALIGN(brw->wm.base.sampler_count, 4) / 4) <<
            GEN6_WM_SAMPLER_COUNT_SHIFT;
 

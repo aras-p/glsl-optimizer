@@ -151,7 +151,6 @@ upload_ps_state(struct brw_context *brw)
     */
    dw3 |= GEN7_PS_VECTOR_MASK_ENABLE;
 
-   /* CACHE_NEW_SAMPLER */
    dw3 |=
       (ALIGN(brw->wm.base.sampler_count, 4) / 4) << GEN7_PS_SAMPLER_COUNT_SHIFT;
 
