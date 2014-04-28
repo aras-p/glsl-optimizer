@@ -97,10 +97,6 @@
 #define GLAPIENTRYP GLAPIENTRY *
 #endif
 
-#if defined(PRAGMA_EXPORT_SUPPORTED)
-#pragma export on
-#endif
-
 /*
  * End system-specific stuff.
  **********************************************************************/
@@ -2110,19 +2106,6 @@ typedef void (APIENTRYP PFNGLEGLIMAGETARGETRENDERBUFFERSTORAGEOESPROC) (GLenum t
  ** glext.h be sure to regenerate the gl_mangle.h file.  See comments
  ** in that file for details.
  **/
-
-
-
-/**********************************************************************
- * Begin system-specific stuff
- */
-#if defined(PRAGMA_EXPORT_SUPPORTED)
-#pragma export off
-#endif
-
-/*
- * End system-specific stuff
- **********************************************************************/
 
 
 #ifdef __cplusplus
