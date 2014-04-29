@@ -38,6 +38,8 @@
 #define INT_DIV_TO_MUL_RCP 0x40
 #define BITFIELD_INSERT_TO_BFM_BFI 0x80
 #define LDEXP_TO_ARITH     0x100
+#define CARRY_TO_ARITH     0x200
+#define BORROW_TO_ARITH    0x400
 
 /**
  * \see class lower_packing_builtins_visitor
