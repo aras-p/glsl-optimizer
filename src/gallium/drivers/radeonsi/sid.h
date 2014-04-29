@@ -83,6 +83,8 @@
 #define PKT3_DRAW_INDEX_IMMD                   0x2E /* not on CIK */
 #define PKT3_NUM_INSTANCES                     0x2F
 #define PKT3_STRMOUT_BUFFER_UPDATE             0x34
+#define PKT3_DRAW_INDEX_OFFSET_2               0x35
+#define PKT3_DRAW_PREAMBLE                     0x36 /* new on CIK, required on GFX7.2 and later */
 #define PKT3_WRITE_DATA                        0x37
 #define     PKT3_WRITE_DATA_DST_SEL(x)             ((x) << 8)
 #define     PKT3_WRITE_DATA_DST_SEL_REG            0
