@@ -364,6 +364,42 @@ typedef enum
    OPCODE_UNIFORM_3UIV,
    OPCODE_UNIFORM_4UIV,
 
+   /* OpenGL 4.2 / GL_ARB_separate_shader_objects */
+   OPCODE_USE_PROGRAM_STAGES,
+   OPCODE_PROGRAM_UNIFORM_1F,
+   OPCODE_PROGRAM_UNIFORM_2F,
+   OPCODE_PROGRAM_UNIFORM_3F,
+   OPCODE_PROGRAM_UNIFORM_4F,
+   OPCODE_PROGRAM_UNIFORM_1FV,
+   OPCODE_PROGRAM_UNIFORM_2FV,
+   OPCODE_PROGRAM_UNIFORM_3FV,
+   OPCODE_PROGRAM_UNIFORM_4FV,
+   OPCODE_PROGRAM_UNIFORM_1I,
+   OPCODE_PROGRAM_UNIFORM_2I,
+   OPCODE_PROGRAM_UNIFORM_3I,
+   OPCODE_PROGRAM_UNIFORM_4I,
+   OPCODE_PROGRAM_UNIFORM_1IV,
+   OPCODE_PROGRAM_UNIFORM_2IV,
+   OPCODE_PROGRAM_UNIFORM_3IV,
+   OPCODE_PROGRAM_UNIFORM_4IV,
+   OPCODE_PROGRAM_UNIFORM_1UI,
+   OPCODE_PROGRAM_UNIFORM_2UI,
+   OPCODE_PROGRAM_UNIFORM_3UI,
+   OPCODE_PROGRAM_UNIFORM_4UI,
+   OPCODE_PROGRAM_UNIFORM_1UIV,
+   OPCODE_PROGRAM_UNIFORM_2UIV,
+   OPCODE_PROGRAM_UNIFORM_3UIV,
+   OPCODE_PROGRAM_UNIFORM_4UIV,
+   OPCODE_PROGRAM_UNIFORM_MATRIX22F,
+   OPCODE_PROGRAM_UNIFORM_MATRIX33F,
+   OPCODE_PROGRAM_UNIFORM_MATRIX44F,
+   OPCODE_PROGRAM_UNIFORM_MATRIX23F,
+   OPCODE_PROGRAM_UNIFORM_MATRIX32F,
+   OPCODE_PROGRAM_UNIFORM_MATRIX24F,
+   OPCODE_PROGRAM_UNIFORM_MATRIX42F,
+   OPCODE_PROGRAM_UNIFORM_MATRIX34F,
+   OPCODE_PROGRAM_UNIFORM_MATRIX43F,
+
    /* GL_ARB_color_buffer_float */
    OPCODE_CLAMP_COLOR,
 
@@ -763,6 +799,33 @@ _mesa_delete_list(struct gl_context *ctx, struct gl_display_list *dlist)
          case OPCODE_UNIFORM_MATRIX34:
          case OPCODE_UNIFORM_MATRIX43:
             free(get_pointer(&n[4]));
+            n += InstSize[n[0].opcode];
+            break;
+         case OPCODE_PROGRAM_UNIFORM_1FV:
+         case OPCODE_PROGRAM_UNIFORM_2FV:
+         case OPCODE_PROGRAM_UNIFORM_3FV:
+         case OPCODE_PROGRAM_UNIFORM_4FV:
+         case OPCODE_PROGRAM_UNIFORM_1IV:
+         case OPCODE_PROGRAM_UNIFORM_2IV:
+         case OPCODE_PROGRAM_UNIFORM_3IV:
+         case OPCODE_PROGRAM_UNIFORM_4IV:
+         case OPCODE_PROGRAM_UNIFORM_1UIV:
+         case OPCODE_PROGRAM_UNIFORM_2UIV:
+         case OPCODE_PROGRAM_UNIFORM_3UIV:
+         case OPCODE_PROGRAM_UNIFORM_4UIV:
+            free(get_pointer(&n[4]));
+            n += InstSize[n[0].opcode];
+            break;
+         case OPCODE_PROGRAM_UNIFORM_MATRIX22F:
+         case OPCODE_PROGRAM_UNIFORM_MATRIX33F:
+         case OPCODE_PROGRAM_UNIFORM_MATRIX44F:
+         case OPCODE_PROGRAM_UNIFORM_MATRIX24F:
+         case OPCODE_PROGRAM_UNIFORM_MATRIX42F:
+         case OPCODE_PROGRAM_UNIFORM_MATRIX23F:
+         case OPCODE_PROGRAM_UNIFORM_MATRIX32F:
+         case OPCODE_PROGRAM_UNIFORM_MATRIX34F:
+         case OPCODE_PROGRAM_UNIFORM_MATRIX43F:
+            free(get_pointer(&n[5]));
             n += InstSize[n[0].opcode];
             break;
          case OPCODE_PIXEL_MAP:
@@ -6510,6 +6573,677 @@ save_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
 }
 
 static void GLAPIENTRY
+save_UseProgramStages(GLuint pipeline, GLbitfield stages, GLuint program)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_USE_PROGRAM_STAGES, 3);
+   if (n) {
+      n[1].ui = pipeline;
+      n[2].ui = stages;
+      n[3].ui = program;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_UseProgramStages(ctx->Exec, (pipeline, stages, program));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform1f(GLuint program, GLint location, GLfloat x)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_1F, 3);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].f = x;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform1f(ctx->Exec, (program, location, x));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform2f(GLuint program, GLint location, GLfloat x, GLfloat y)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_2F, 4);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].f = x;
+      n[4].f = y;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform2f(ctx->Exec, (program, location, x, y));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform3f(GLuint program, GLint location,
+                      GLfloat x, GLfloat y, GLfloat z)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_3F, 5);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].f = x;
+      n[4].f = y;
+      n[5].f = z;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform3f(ctx->Exec, (program, location, x, y, z));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform4f(GLuint program, GLint location,
+                      GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_4F, 6);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].f = x;
+      n[4].f = y;
+      n[5].f = z;
+      n[6].f = w;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform4f(ctx->Exec, (program, location, x, y, z, w));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform1fv(GLuint program, GLint location, GLsizei count,
+                       const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_1FV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 1 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform1fv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform2fv(GLuint program, GLint location, GLsizei count,
+                       const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_2FV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 2 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform2fv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform3fv(GLuint program, GLint location, GLsizei count,
+                       const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_3FV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 3 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform3fv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform4fv(GLuint program, GLint location, GLsizei count,
+                       const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_4FV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 4 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform4fv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform1i(GLuint program, GLint location, GLint x)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_1I, 3);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = x;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform1i(ctx->Exec, (program, location, x));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform2i(GLuint program, GLint location, GLint x, GLint y)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_2I, 4);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = x;
+      n[4].i = y;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform2i(ctx->Exec, (program, location, x, y));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform3i(GLuint program, GLint location,
+                      GLint x, GLint y, GLint z)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_3I, 5);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = x;
+      n[4].i = y;
+      n[5].i = z;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform3i(ctx->Exec, (program, location, x, y, z));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform4i(GLuint program, GLint location,
+                      GLint x, GLint y, GLint z, GLint w)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_4I, 6);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = x;
+      n[4].i = y;
+      n[5].i = z;
+      n[6].i = w;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform4i(ctx->Exec, (program, location, x, y, z, w));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform1iv(GLuint program, GLint location, GLsizei count,
+                       const GLint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_1IV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 1 * sizeof(GLint)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform1iv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform2iv(GLuint program, GLint location, GLsizei count,
+                       const GLint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_2IV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 2 * sizeof(GLint)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform2iv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform3iv(GLuint program, GLint location, GLsizei count,
+                       const GLint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_3IV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 3 * sizeof(GLint)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform3iv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform4iv(GLuint program, GLint location, GLsizei count,
+                       const GLint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_4IV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 4 * sizeof(GLint)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform4iv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform1ui(GLuint program, GLint location, GLuint x)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_1UI, 3);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].ui = x;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform1ui(ctx->Exec, (program, location, x));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform2ui(GLuint program, GLint location, GLuint x, GLuint y)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_2UI, 4);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].ui = x;
+      n[4].ui = y;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform2ui(ctx->Exec, (program, location, x, y));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform3ui(GLuint program, GLint location,
+                       GLuint x, GLuint y, GLuint z)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_3UI, 5);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].ui = x;
+      n[4].ui = y;
+      n[5].ui = z;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform3ui(ctx->Exec, (program, location, x, y, z));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform4ui(GLuint program, GLint location,
+                       GLuint x, GLuint y, GLuint z, GLuint w)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_4UI, 6);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].ui = x;
+      n[4].ui = y;
+      n[5].ui = z;
+      n[6].ui = w;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform4ui(ctx->Exec, (program, location, x, y, z, w));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform1uiv(GLuint program, GLint location, GLsizei count,
+                        const GLuint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_1UIV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 1 * sizeof(GLuint)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform1uiv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform2uiv(GLuint program, GLint location, GLsizei count,
+                        const GLuint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_2UIV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 2 * sizeof(GLuint)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform2uiv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform3uiv(GLuint program, GLint location, GLsizei count,
+                        const GLuint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_3UIV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 3 * sizeof(GLuint)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform3uiv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniform4uiv(GLuint program, GLint location, GLsizei count,
+                        const GLuint *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_4UIV, 3 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      save_pointer(&n[4], memdup(v, count * 4 * sizeof(GLuint)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniform4uiv(ctx->Exec, (program, location, count, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniformMatrix2fv(GLuint program, GLint location, GLsizei count,
+                             GLboolean transpose, const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_MATRIX22F,
+                         4 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      n[4].b = transpose;
+      save_pointer(&n[5], memdup(v, count * 2 * 2 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniformMatrix2fv(ctx->Exec,
+                                   (program, location, count, transpose, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniformMatrix2x3fv(GLuint program, GLint location, GLsizei count,
+                               GLboolean transpose, const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_MATRIX23F,
+                         4 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      n[4].b = transpose;
+      save_pointer(&n[5], memdup(v, count * 2 * 3 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniformMatrix2x3fv(ctx->Exec,
+                                     (program, location, count, transpose, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniformMatrix2x4fv(GLuint program, GLint location, GLsizei count,
+                               GLboolean transpose, const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_MATRIX24F,
+                         4 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      n[4].b = transpose;
+      save_pointer(&n[5], memdup(v, count * 2 * 4 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniformMatrix2x4fv(ctx->Exec,
+                                     (program, location, count, transpose, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniformMatrix3x2fv(GLuint program, GLint location, GLsizei count,
+                               GLboolean transpose, const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_MATRIX32F,
+                         4 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      n[4].b = transpose;
+      save_pointer(&n[5], memdup(v, count * 3 * 2 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniformMatrix3x2fv(ctx->Exec,
+                                     (program, location, count, transpose, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniformMatrix3fv(GLuint program, GLint location, GLsizei count,
+                             GLboolean transpose, const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_MATRIX33F,
+                         4 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      n[4].b = transpose;
+      save_pointer(&n[5], memdup(v, count * 3 * 3 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniformMatrix3fv(ctx->Exec,
+                                   (program, location, count, transpose, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniformMatrix3x4fv(GLuint program, GLint location, GLsizei count,
+                               GLboolean transpose, const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_MATRIX34F,
+                         4 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      n[4].b = transpose;
+      save_pointer(&n[5], memdup(v, count * 3 * 4 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniformMatrix3x4fv(ctx->Exec,
+                                     (program, location, count, transpose, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniformMatrix4x2fv(GLuint program, GLint location, GLsizei count,
+                               GLboolean transpose, const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_MATRIX42F,
+                         4 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      n[4].b = transpose;
+      save_pointer(&n[5], memdup(v, count * 4 * 2 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniformMatrix4x2fv(ctx->Exec,
+                                     (program, location, count, transpose, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniformMatrix4x3fv(GLuint program, GLint location, GLsizei count,
+                               GLboolean transpose, const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_MATRIX43F,
+                         4 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      n[4].b = transpose;
+      save_pointer(&n[5], memdup(v, count * 4 * 3 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniformMatrix4x3fv(ctx->Exec,
+                                     (program, location, count, transpose, v));
+   }
+}
+
+static void GLAPIENTRY
+save_ProgramUniformMatrix4fv(GLuint program, GLint location, GLsizei count,
+                             GLboolean transpose, const GLfloat *v)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_PROGRAM_UNIFORM_MATRIX44F,
+                         4 + POINTER_DWORDS);
+   if (n) {
+      n[1].ui = program;
+      n[2].i = location;
+      n[3].i = count;
+      n[4].b = transpose;
+      save_pointer(&n[5], memdup(v, count * 4 * 4 * sizeof(GLfloat)));
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramUniformMatrix4fv(ctx->Exec,
+                                   (program, location, count, transpose, v));
+   }
+}
+
+static void GLAPIENTRY
 save_ClampColorARB(GLenum target, GLenum clamp)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -7815,6 +8549,147 @@ execute_list(struct gl_context *ctx, GLuint list)
                                     (n[1].i, n[2].i, n[3].b, get_pointer(&n[4])));
 	    break;
 
+	 case OPCODE_USE_PROGRAM_STAGES:
+	    CALL_UseProgramStages(ctx->Exec, (n[1].ui, n[2].ui, n[3].ui));
+	    break;
+         case OPCODE_PROGRAM_UNIFORM_1F:
+            CALL_ProgramUniform1f(ctx->Exec, (n[1].ui, n[2].i, n[3].f));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_2F:
+            CALL_ProgramUniform2f(ctx->Exec, (n[1].ui, n[2].i, n[3].f, n[4].f));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_3F:
+            CALL_ProgramUniform3f(ctx->Exec, (n[1].ui, n[2].i,
+                                              n[3].f, n[4].f, n[5].f));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_4F:
+            CALL_ProgramUniform4f(ctx->Exec, (n[1].ui, n[2].i,
+                                              n[3].f, n[4].f, n[5].f, n[6].f));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_1FV:
+            CALL_ProgramUniform1fv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                               get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_2FV:
+            CALL_ProgramUniform2fv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                               get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_3FV:
+            CALL_ProgramUniform3fv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                               get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_4FV:
+            CALL_ProgramUniform4fv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                               get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_1I:
+            CALL_ProgramUniform1i(ctx->Exec, (n[1].ui, n[2].i, n[3].i));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_2I:
+            CALL_ProgramUniform2i(ctx->Exec, (n[1].ui, n[2].i, n[3].i, n[4].i));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_3I:
+            CALL_ProgramUniform3i(ctx->Exec, (n[1].ui, n[2].i,
+                                              n[3].i, n[4].i, n[5].i));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_4I:
+            CALL_ProgramUniform4i(ctx->Exec, (n[1].ui, n[2].i,
+                                              n[3].i, n[4].i, n[5].i, n[6].i));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_1IV:
+            CALL_ProgramUniform1iv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                               get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_2IV:
+            CALL_ProgramUniform2iv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                               get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_3IV:
+            CALL_ProgramUniform3iv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                               get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_4IV:
+            CALL_ProgramUniform4iv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                               get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_1UI:
+            CALL_ProgramUniform1ui(ctx->Exec, (n[1].ui, n[2].i, n[3].ui));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_2UI:
+            CALL_ProgramUniform2ui(ctx->Exec, (n[1].ui, n[2].i,
+                                               n[3].ui, n[4].ui));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_3UI:
+            CALL_ProgramUniform3ui(ctx->Exec, (n[1].ui, n[2].i,
+                                               n[3].ui, n[4].ui, n[5].ui));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_4UI:
+            CALL_ProgramUniform4ui(ctx->Exec, (n[1].ui, n[2].i,
+                                               n[3].ui,
+                                               n[4].ui, n[5].ui, n[6].ui));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_1UIV:
+            CALL_ProgramUniform1uiv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                                get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_2UIV:
+            CALL_ProgramUniform2uiv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                                get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_3UIV:
+            CALL_ProgramUniform3uiv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                                get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_4UIV:
+            CALL_ProgramUniform4uiv(ctx->Exec, (n[1].ui, n[2].i, n[3].i,
+                                                get_pointer(&n[4])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_MATRIX22F:
+            CALL_ProgramUniformMatrix2fv(ctx->Exec,
+                                         (n[1].ui, n[2].i, n[3].i, n[4].b,
+                                          get_pointer(&n[5])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_MATRIX23F:
+            CALL_ProgramUniformMatrix2x3fv(ctx->Exec,
+                                           (n[1].ui, n[2].i, n[3].i, n[4].b,
+                                            get_pointer(&n[5])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_MATRIX24F:
+            CALL_ProgramUniformMatrix2x4fv(ctx->Exec,
+                                           (n[1].ui, n[2].i, n[3].i, n[4].b,
+                                            get_pointer(&n[5])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_MATRIX32F:
+            CALL_ProgramUniformMatrix3x2fv(ctx->Exec,
+                                           (n[1].ui, n[2].i, n[3].i, n[4].b,
+                                            get_pointer(&n[5])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_MATRIX33F:
+            CALL_ProgramUniformMatrix3fv(ctx->Exec,
+                                         (n[1].ui, n[2].i, n[3].i, n[4].b,
+                                          get_pointer(&n[5])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_MATRIX34F:
+            CALL_ProgramUniformMatrix3x4fv(ctx->Exec,
+                                           (n[1].ui, n[2].i, n[3].i, n[4].b,
+                                            get_pointer(&n[5])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_MATRIX42F:
+            CALL_ProgramUniformMatrix4x2fv(ctx->Exec,
+                                           (n[1].ui, n[2].i, n[3].i, n[4].b,
+                                            get_pointer(&n[5])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_MATRIX43F:
+            CALL_ProgramUniformMatrix4x3fv(ctx->Exec,
+                                           (n[1].ui, n[2].i, n[3].i, n[4].b,
+                                            get_pointer(&n[5])));
+            break;
+         case OPCODE_PROGRAM_UNIFORM_MATRIX44F:
+            CALL_ProgramUniformMatrix4fv(ctx->Exec,
+                                         (n[1].ui, n[2].i, n[3].i, n[4].b,
+                                          get_pointer(&n[5])));
+            break;
+
          case OPCODE_CLAMP_COLOR:
             CALL_ClampColor(ctx->Exec, (n[1].e, n[2].e));
             break;
@@ -8856,6 +9731,42 @@ _mesa_initialize_save_table(const struct gl_context *ctx)
    SET_DrawArraysInstancedBaseInstance(table, save_DrawArraysInstancedBaseInstance);
    SET_DrawElementsInstancedBaseInstance(table, save_DrawElementsInstancedBaseInstance);
    SET_DrawElementsInstancedBaseVertexBaseInstance(table, save_DrawElementsInstancedBaseVertexBaseInstance);
+
+   /* OpenGL 4.2 / GL_ARB_separate_shader_objects */
+   SET_UseProgramStages(table, save_UseProgramStages);
+   SET_ProgramUniform1f(table, save_ProgramUniform1f);
+   SET_ProgramUniform2f(table, save_ProgramUniform2f);
+   SET_ProgramUniform3f(table, save_ProgramUniform3f);
+   SET_ProgramUniform4f(table, save_ProgramUniform4f);
+   SET_ProgramUniform1fv(table, save_ProgramUniform1fv);
+   SET_ProgramUniform2fv(table, save_ProgramUniform2fv);
+   SET_ProgramUniform3fv(table, save_ProgramUniform3fv);
+   SET_ProgramUniform4fv(table, save_ProgramUniform4fv);
+   SET_ProgramUniform1i(table, save_ProgramUniform1i);
+   SET_ProgramUniform2i(table, save_ProgramUniform2i);
+   SET_ProgramUniform3i(table, save_ProgramUniform3i);
+   SET_ProgramUniform4i(table, save_ProgramUniform4i);
+   SET_ProgramUniform1iv(table, save_ProgramUniform1iv);
+   SET_ProgramUniform2iv(table, save_ProgramUniform2iv);
+   SET_ProgramUniform3iv(table, save_ProgramUniform3iv);
+   SET_ProgramUniform4iv(table, save_ProgramUniform4iv);
+   SET_ProgramUniform1ui(table, save_ProgramUniform1ui);
+   SET_ProgramUniform2ui(table, save_ProgramUniform2ui);
+   SET_ProgramUniform3ui(table, save_ProgramUniform3ui);
+   SET_ProgramUniform4ui(table, save_ProgramUniform4ui);
+   SET_ProgramUniform1uiv(table, save_ProgramUniform1uiv);
+   SET_ProgramUniform2uiv(table, save_ProgramUniform2uiv);
+   SET_ProgramUniform3uiv(table, save_ProgramUniform3uiv);
+   SET_ProgramUniform4uiv(table, save_ProgramUniform4uiv);
+   SET_ProgramUniformMatrix2fv(table, save_ProgramUniformMatrix2fv);
+   SET_ProgramUniformMatrix3fv(table, save_ProgramUniformMatrix3fv);
+   SET_ProgramUniformMatrix4fv(table, save_ProgramUniformMatrix4fv);
+   SET_ProgramUniformMatrix2x3fv(table, save_ProgramUniformMatrix2x3fv);
+   SET_ProgramUniformMatrix3x2fv(table, save_ProgramUniformMatrix3x2fv);
+   SET_ProgramUniformMatrix2x4fv(table, save_ProgramUniformMatrix2x4fv);
+   SET_ProgramUniformMatrix4x2fv(table, save_ProgramUniformMatrix4x2fv);
+   SET_ProgramUniformMatrix3x4fv(table, save_ProgramUniformMatrix3x4fv);
+   SET_ProgramUniformMatrix4x3fv(table, save_ProgramUniformMatrix4x3fv);
 }
 
 
