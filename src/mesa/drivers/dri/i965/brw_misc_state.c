@@ -896,13 +896,17 @@ const struct brw_tracked_state brw_line_stipple = {
 void
 brw_upload_invariant_state(struct brw_context *brw)
 {
+   const bool is_965 = brw->gen == 4 && !brw->is_g4x;
+
    /* 3DSTATE_SIP, 3DSTATE_MULTISAMPLE, etc. are nonpipelined. */
    if (brw->gen == 6)
       intel_emit_post_sync_nonzero_flush(brw);
 
    /* Select the 3D pipeline (as opposed to media) */
+   const uint32_t _3DSTATE_PIPELINE_SELECT =
+      is_965 ? CMD_PIPELINE_SELECT_965 : CMD_PIPELINE_SELECT_GM45;
    BEGIN_BATCH(1);
-   OUT_BATCH(brw->CMD_PIPELINE_SELECT << 16 | 0);
+   OUT_BATCH(_3DSTATE_PIPELINE_SELECT << 16 | 0);
    ADVANCE_BATCH();
 
    if (brw->gen < 6) {
@@ -926,8 +930,10 @@ brw_upload_invariant_state(struct brw_context *brw)
       ADVANCE_BATCH();
    }
 
+   const uint32_t _3DSTATE_VF_STATISTICS =
+      is_965 ? GEN4_3DSTATE_VF_STATISTICS : GM45_3DSTATE_VF_STATISTICS;
    BEGIN_BATCH(1);
-   OUT_BATCH(brw->CMD_VF_STATISTICS << 16 |
+   OUT_BATCH(_3DSTATE_VF_STATISTICS << 16 |
 	     (unlikely(INTEL_DEBUG & DEBUG_STATS) ? 1 : 0));
    ADVANCE_BATCH();
 }

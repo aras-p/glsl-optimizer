@@ -1172,11 +1172,6 @@ struct brw_context
     */
    int num_samples;
 
-   /* hw-dependent 3DSTATE_VF_STATISTICS opcode */
-   uint32_t CMD_VF_STATISTICS;
-   /* hw-dependent 3DSTATE_PIPELINE_SELECT opcode */
-   uint32_t CMD_PIPELINE_SELECT;
-
    /**
     * Platform specific constants containing the maximum number of threads
     * for each pipeline stage.

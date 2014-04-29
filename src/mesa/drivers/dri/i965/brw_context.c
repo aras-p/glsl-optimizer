@@ -718,14 +718,6 @@ brwCreateContext(gl_api api,
 
    brw_init_surface_formats(brw);
 
-   if (brw->is_g4x || brw->gen >= 5) {
-      brw->CMD_VF_STATISTICS = GM45_3DSTATE_VF_STATISTICS;
-      brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_GM45;
-  } else {
-      brw->CMD_VF_STATISTICS = GEN4_3DSTATE_VF_STATISTICS;
-      brw->CMD_PIPELINE_SELECT = CMD_PIPELINE_SELECT_965;
-   }
-
    brw->max_vs_threads = devinfo->max_vs_threads;
    brw->max_gs_threads = devinfo->max_gs_threads;
    brw->max_wm_threads = devinfo->max_wm_threads;
