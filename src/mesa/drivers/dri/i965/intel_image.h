@@ -25,14 +25,17 @@
  *
  **************************************************************************/
 
-#ifndef INTEL_REGIONS_H
-#define INTEL_REGIONS_H
+#ifndef INTEL_IMAGE_H
+#define INTEL_IMAGE_H
 
 /** @file intel_image.h
  *
- * Structure definitions and prototypes for intel_region handling,
- * which is the basic structure for rectangular collections of pixels
- * stored in a drm_intel_bo.
+ * Structure definitions and prototypes for __DRIimage, the driver-private
+ * structure backing EGLImage or a drawable in DRI3.
+ *
+ * The __DRIimage is passed around the loader code (src/glx and src/egl), but
+ * it's opaque to that code and may only be accessed by loader extensions
+ * (mostly located in intel_screen.c).
  */
 
 #include <stdbool.h>
