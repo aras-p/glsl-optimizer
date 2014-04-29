@@ -48,7 +48,7 @@
 #include "intel_blit.h"
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
-#include "intel_regions.h"
+#include "intel_image.h"
 #include "intel_screen.h"
 #include "intel_tex.h"
 #include "brw_context.h"

@@ -28,7 +28,7 @@
 #ifndef INTEL_REGIONS_H
 #define INTEL_REGIONS_H
 
-/** @file intel_regions.h
+/** @file intel_image.h
  *
  * Structure definitions and prototypes for intel_region handling,
  * which is the basic structure for rectangular collections of pixels
