@@ -57,6 +57,26 @@ nv50_texture_barrier(struct pipe_context *pipe)
    PUSH_DATA (push, 0x20);
 }
 
+static void
+nv50_memory_barrier(struct pipe_context *pipe, unsigned flags)
+{
+   struct nv50_context *nv50 = nv50_context(pipe);
+   int i;
+
+   if (flags & PIPE_BARRIER_MAPPED_BUFFER) {
+      for (i = 0; i < nv50->num_vtxbufs; ++i) {
+         if (!nv50->vtxbuf[i].buffer)
+            continue;
+         if (nv50->vtxbuf[i].buffer->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT)
+            nv50->base.vbo_dirty = TRUE;
+      }
+
+      if (nv50->idxbuf.buffer &&
+          nv50->idxbuf.buffer->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT)
+         nv50->base.vbo_dirty = TRUE;
+   }
+}
+
 void
 nv50_default_kick_notify(struct nouveau_pushbuf *push)
 {
@@ -249,6 +269,7 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
 
    pipe->flush = nv50_flush;
    pipe->texture_barrier = nv50_texture_barrier;
+   pipe->memory_barrier = nv50_memory_barrier;
    pipe->get_sample_position = nv50_context_get_sample_position;
 
    if (!screen->cur_ctx) {

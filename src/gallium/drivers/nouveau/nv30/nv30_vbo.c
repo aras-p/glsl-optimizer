@@ -545,6 +545,7 @@ nv30_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct nv30_context *nv30 = nv30_context(pipe);
    struct nouveau_pushbuf *push = nv30->base.pushbuf;
+   int i;
 
    /* For picking only a few vertices from a large user buffer, push is better,
     * if index count is larger and we expect repeated vertices, suggest upload.
@@ -572,6 +573,17 @@ nv30_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       nv30_push_vbo(nv30, info);
       return;
    }
+
+   for (i = 0; i < nv30->num_vtxbufs && !nv30->base.vbo_dirty; ++i) {
+      if (!nv30->vtxbuf[i].buffer)
+         continue;
+      if (nv30->vtxbuf[i].buffer->flags & PIPE_RESOURCE_FLAG_MAP_COHERENT)
+         nv30->base.vbo_dirty = TRUE;
+   }
+
+   if (!nv30->base.vbo_dirty && nv30->idxbuf.buffer &&
+       nv30->idxbuf.buffer->flags & PIPE_RESOURCE_FLAG_MAP_COHERENT)
+      nv30->base.vbo_dirty = TRUE;
 
    if (nv30->base.vbo_dirty) {
       BEGIN_NV04(push, NV30_3D(VTX_CACHE_INVALIDATE_1710), 1);

@@ -31,6 +31,26 @@
 #include "nv30/nv30_resource.h"
 #include "nv30/nv30_transfer.h"
 
+static void
+nv30_memory_barrier(struct pipe_context *pipe, unsigned flags)
+{
+   struct nv30_context *nv30 = nv30_context(pipe);
+   int i;
+
+   if (flags & PIPE_BARRIER_MAPPED_BUFFER) {
+      for (i = 0; i < nv30->num_vtxbufs; ++i) {
+         if (!nv30->vtxbuf[i].buffer)
+            continue;
+         if (nv30->vtxbuf[i].buffer->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT)
+            nv30->base.vbo_dirty = TRUE;
+      }
+
+      if (nv30->idxbuf.buffer &&
+          nv30->idxbuf.buffer->flags & PIPE_RESOURCE_FLAG_MAP_PERSISTENT)
+         nv30->base.vbo_dirty = TRUE;
+   }
+}
+
 static struct pipe_resource *
 nv30_resource_create(struct pipe_screen *pscreen,
                      const struct pipe_resource *tmpl)
@@ -75,4 +95,5 @@ nv30_resource_init(struct pipe_context *pipe)
    pipe->resource_copy_region = nv30_resource_copy_region;
    pipe->blit = nv30_blit;
    pipe->flush_resource = nv30_flush_resource;
+   pipe->memory_barrier = nv30_memory_barrier;
 }

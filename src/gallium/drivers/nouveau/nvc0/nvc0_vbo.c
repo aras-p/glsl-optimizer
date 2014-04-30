@@ -797,6 +797,7 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
+   int i;
 
    /* NOTE: caller must ensure that (min_index + index_bias) is >= 0 */
    nvc0->vb_elt_first = info->min_index + info->index_bias;
@@ -845,6 +846,17 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       BEGIN_NVC0(push, NVC0_3D(VB_INSTANCE_BASE), 1);
       PUSH_DATA (push, info->start_instance);
    }
+
+   for (i = 0; i < nvc0->num_vtxbufs && !nvc0->base.vbo_dirty; ++i) {
+      if (!nvc0->vtxbuf[i].buffer)
+         continue;
+      if (nvc0->vtxbuf[i].buffer->flags & PIPE_RESOURCE_FLAG_MAP_COHERENT)
+         nvc0->base.vbo_dirty = TRUE;
+   }
+
+   if (!nvc0->base.vbo_dirty && nvc0->idxbuf.buffer &&
+       nvc0->idxbuf.buffer->flags & PIPE_RESOURCE_FLAG_MAP_COHERENT)
+      nvc0->base.vbo_dirty = TRUE;
 
    if (nvc0->base.vbo_dirty) {
       IMMED_NVC0(push, NVC0_3D(VERTEX_ARRAY_FLUSH), 0);

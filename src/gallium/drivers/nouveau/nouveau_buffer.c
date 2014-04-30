@@ -342,6 +342,8 @@ nouveau_buffer_should_discard(struct nv04_resource *buf, unsigned usage)
       return FALSE;
    if (unlikely(buf->base.bind & PIPE_BIND_SHARED))
       return FALSE;
+   if (unlikely(usage & PIPE_TRANSFER_PERSISTENT))
+      return FALSE;
    return buf->mm && nouveau_buffer_busy(buf, PIPE_TRANSFER_WRITE);
 }
 
@@ -401,6 +403,9 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
    if ((usage & PIPE_TRANSFER_WRITE) &&
        !util_ranges_intersect(&buf->valid_buffer_range, box->x, box->x + box->width))
       usage |= PIPE_TRANSFER_DISCARD_RANGE | PIPE_TRANSFER_UNSYNCHRONIZED;
+
+   if (usage & PIPE_TRANSFER_PERSISTENT)
+      usage |= PIPE_TRANSFER_UNSYNCHRONIZED;
 
    if (buf->domain == NOUVEAU_BO_VRAM) {
       if (usage & NOUVEAU_TRANSFER_DISCARD) {
@@ -645,8 +650,11 @@ nouveau_buffer_create(struct pipe_screen *pscreen,
    pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.screen = pscreen;
 
-   if (buffer->base.bind &
-       (screen->vidmem_bindings & screen->sysmem_bindings)) {
+   if (buffer->base.flags & (PIPE_RESOURCE_FLAG_MAP_PERSISTENT |
+                             PIPE_RESOURCE_FLAG_MAP_COHERENT)) {
+      buffer->domain = NOUVEAU_BO_GART;
+   } else if (buffer->base.bind &
+              (screen->vidmem_bindings & screen->sysmem_bindings)) {
       switch (buffer->base.usage) {
       case PIPE_USAGE_DEFAULT:
       case PIPE_USAGE_IMMUTABLE:
