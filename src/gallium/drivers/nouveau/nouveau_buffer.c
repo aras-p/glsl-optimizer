@@ -521,7 +521,7 @@ nouveau_buffer_transfer_flush_region(struct pipe_context *pipe,
  * was returned was not the real resource's data, this needs to transfer the
  * data back to the resource.
  *
- * Also marks vbo/cb dirty if the buffer's binding
+ * Also marks vbo dirty based on the buffer's binding
  */
 static void
 nouveau_buffer_transfer_unmap(struct pipe_context *pipe,
@@ -540,8 +540,6 @@ nouveau_buffer_transfer_unmap(struct pipe_context *pipe,
          /* make sure we invalidate dedicated caches */
          if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
             nv->vbo_dirty = TRUE;
-         if (bind & (PIPE_BIND_CONSTANT_BUFFER))
-            nv->cb_dirty = TRUE;
       }
 
       util_range_add(&buf->valid_buffer_range,

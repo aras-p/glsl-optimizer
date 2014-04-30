@@ -14,7 +14,6 @@ struct nouveau_context {
    struct nouveau_pushbuf *pushbuf;
 
    boolean vbo_dirty;
-   boolean cb_dirty;
 
    void (*copy_data)(struct nouveau_context *,
                      struct nouveau_bo *dst, unsigned, unsigned,
