@@ -619,6 +619,7 @@ driswDestroyScreen(struct glx_screen *base)
    psc->driScreen = NULL;
    if (psc->driver)
       dlclose(psc->driver);
+   free(psc);
 }
 
 #define SWRAST_DRIVER_NAME "swrast"
