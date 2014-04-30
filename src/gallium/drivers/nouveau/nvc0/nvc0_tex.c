@@ -173,7 +173,7 @@ nvc0_create_texture_view(struct pipe_context *pipe,
       tic[2] |= NV50_TIC_2_TARGET_2D;
       break;
    case PIPE_TEXTURE_RECT:
-      tic[2] |= NV50_TIC_2_TARGET_RECT;
+      tic[2] |= NV50_TIC_2_TARGET_2D;
       break;
    case PIPE_TEXTURE_3D:
       tic[2] |= NV50_TIC_2_TARGET_3D;
