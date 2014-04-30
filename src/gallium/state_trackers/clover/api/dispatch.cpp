@@ -120,7 +120,7 @@ namespace clover {
       clCreateSubDevices,
       clRetainDevice,
       clReleaseDevice,
-      NULL, // clCreateImage
+      clCreateImage,
       NULL, // clCreateProgramWithBuiltInKernels
       NULL, // clCompileProgram
       NULL, // clLinkProgram

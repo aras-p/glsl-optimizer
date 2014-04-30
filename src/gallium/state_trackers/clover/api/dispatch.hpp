@@ -653,7 +653,13 @@ struct _cl_icd_dispatch {
    CL_API_ENTRY cl_int (CL_API_CALL *clReleaseDevice)(
       cl_device_id device);
 
-   void *clCreateImage;
+   CL_API_ENTRY cl_mem (CL_API_CALL *clCreateImage)(
+      cl_context context,
+      cl_mem_flags flags,
+      const cl_image_format *image_format,
+      const cl_image_desc *image_desc,
+      void *host_ptr,
+      cl_int *errcode_ret);
 
    CL_API_ENTRY cl_program (CL_API_CALL *clCreateProgramWithBuiltInKernels)(
       cl_context context,

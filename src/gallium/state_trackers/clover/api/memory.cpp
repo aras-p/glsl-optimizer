@@ -334,3 +334,15 @@ clSetMemObjectDestructorCallback(cl_mem d_mem,
 } catch (error &e) {
    return e.get();
 }
+
+CLOVER_API cl_mem
+clCreateImage(cl_context d_ctx, cl_mem_flags flags,
+              const cl_image_format *format,
+              const cl_image_desc *image_desc,
+              void *host_ptr, cl_int *r_errcode) {
+   // This function was added in OpenCL 1.2
+   std::cerr << "CL user error: clCreateImage() not supported by OpenCL 1.1." <<
+                std::endl;
+   ret_error(r_errcode, CL_INVALID_OPERATION);
+   return NULL;
+}

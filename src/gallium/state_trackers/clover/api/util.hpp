@@ -24,6 +24,7 @@
 #define CLOVER_API_UTIL_HPP
 
 #include <cassert>
+#include <iostream>
 
 #include "core/error.hpp"
 #include "core/property.hpp"
