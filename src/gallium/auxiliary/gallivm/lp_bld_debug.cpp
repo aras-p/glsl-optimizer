@@ -36,6 +36,7 @@
 
 #if HAVE_LLVM >= 0x0300
 #include <llvm/Support/TargetRegistry.h>
+#include <llvm/MC/MCSubtargetInfo.h>
 #else /* HAVE_LLVM < 0x0300 */
 #include <llvm/Target/TargetRegistry.h>
 #endif /* HAVE_LLVM < 0x0300 */
@@ -254,7 +255,7 @@ disassemble(const void* func, llvm::raw_ostream & Out)
    OwningPtr<MCContext> MCCtx(new MCContext(AsmInfo.get(), MRI.get(), 0));
    OwningPtr<const MCDisassembler> DisAsm(T->createMCDisassembler(*STI, *MCCtx));
 #elif HAVE_LLVM >= 0x0300
-   const MCSubtargetInfo *STI = T->createMCSubtargetInfo(Triple, sys::getHostCPUName(), "");
+   OwningPtr<const MCSubtargetInfo> STI(T->createMCSubtargetInfo(Triple, sys::getHostCPUName(), ""));
    OwningPtr<const MCDisassembler> DisAsm(T->createMCDisassembler(*STI));
 #else
    OwningPtr<const MCDisassembler> DisAsm(T->createMCDisassembler());
@@ -294,11 +295,11 @@ disassemble(const void* func, llvm::raw_ostream & Out)
 #if defined(DEBUG) || defined(PROFILE)
    options.NoFramePointerElim = true;
 #endif
-   TargetMachine *TM = T->createTargetMachine(Triple, sys::getHostCPUName(), "", options);
+   OwningPtr<TargetMachine> TM(T->createTargetMachine(Triple, sys::getHostCPUName(), "", options));
 #elif HAVE_LLVM == 0x0300
-   TargetMachine *TM = T->createTargetMachine(Triple, sys::getHostCPUName(), "");
+   OwningPtr<TargetMachine> TM(T->createTargetMachine(Triple, sys::getHostCPUName(), ""));
 #else
-   TargetMachine *TM = T->createTargetMachine(Triple, "");
+   OwningPtr<TargetMachine> TM(T->createTargetMachine(Triple, ""));
 #endif
 
    const TargetInstrInfo *TII = TM->getInstrInfo();
