@@ -373,13 +373,16 @@ set_datatype_index(struct brw_compact_instruction *dst,
 
 static bool
 set_subreg_index(struct brw_compact_instruction *dst,
-                 struct brw_instruction *src)
+                 struct brw_instruction *src,
+                 bool is_immediate)
 {
    uint16_t uncompacted = 0;
 
    uncompacted |= src->bits1.da1.dest_subreg_nr << 0;
    uncompacted |= src->bits2.da1.src0_subreg_nr << 5;
-   uncompacted |= src->bits3.da1.src1_subreg_nr << 10;
+
+   if (!is_immediate)
+      uncompacted |= src->bits3.da1.src1_subreg_nr << 10;
 
    for (int i = 0; i < 32; i++) {
       if (subreg_table[i] == uncompacted) {
@@ -424,18 +427,38 @@ set_src0_index(struct brw_compact_instruction *dst,
 
 static bool
 set_src1_index(struct brw_compact_instruction *dst,
-               struct brw_instruction *src)
+               struct brw_instruction *src, bool is_immediate)
 {
-   uint16_t compacted, uncompacted = 0;
+   if (is_immediate) {
+      dst->dw1.src1_index = (src->bits3.ud >> 8) & 0x1f;
+   } else {
+      uint16_t compacted, uncompacted;
 
-   uncompacted |= (src->bits3.ud >> 13) & 0xfff;
+      uncompacted = (src->bits3.ud >> 13) & 0xfff;
 
-   if (!get_src_index(uncompacted, &compacted))
-      return false;
+      if (!get_src_index(uncompacted, &compacted))
+         return false;
 
-   dst->dw1.src1_index = compacted;
+      dst->dw1.src1_index = compacted;
+   }
 
    return true;
+}
+
+/* Compacted instructions have 12-bits for immediate sources, and a 13th bit
+ * that's replicated through the high 20 bits.
+ *
+ * Effectively this means we get 12-bit integers, 0.0f, and some limited uses
+ * of packed vectors as compactable immediates.
+ */
+static bool
+is_compactable_immediate(unsigned imm)
+{
+   /* We get the low 12 bits as-is. */
+   imm &= ~0xfff;
+
+   /* We get one bit replicated through the top 20 bits. */
+   return imm == 0 || imm == 0xfffff000;
 }
 
 /**
@@ -464,10 +487,11 @@ brw_try_compact_instruction(struct brw_compile *p,
       return false;
    }
 
-   /* FINISHME: immediates */
-   if (src->bits1.da1.src0_reg_file == BRW_IMMEDIATE_VALUE ||
-       src->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE)
+   bool is_immediate = src->bits1.da1.src0_reg_file == BRW_IMMEDIATE_VALUE ||
+                       src->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE;
+   if (is_immediate && !is_compactable_immediate(src->bits3.ud)) {
       return false;
+   }
 
    memset(&temp, 0, sizeof(temp));
 
@@ -477,7 +501,7 @@ brw_try_compact_instruction(struct brw_compile *p,
       return false;
    if (!set_datatype_index(&temp, src))
       return false;
-   if (!set_subreg_index(&temp, src))
+   if (!set_subreg_index(&temp, src, is_immediate))
       return false;
    temp.dw0.acc_wr_control = src->header.acc_wr_control;
    temp.dw0.conditionalmod = src->header.destreg__conditionalmod;
@@ -486,11 +510,15 @@ brw_try_compact_instruction(struct brw_compile *p,
    temp.dw0.cmpt_ctrl = 1;
    if (!set_src0_index(&temp, src))
       return false;
-   if (!set_src1_index(&temp, src))
+   if (!set_src1_index(&temp, src, is_immediate))
       return false;
    temp.dw1.dst_reg_nr = src->bits1.da1.dest_reg_nr;
    temp.dw1.src0_reg_nr = src->bits2.da1.src0_reg_nr;
-   temp.dw1.src1_reg_nr = src->bits3.da1.src1_reg_nr;
+   if (is_immediate) {
+      temp.dw1.src1_reg_nr = src->bits3.ud & 0xff;
+   } else {
+      temp.dw1.src1_reg_nr = src->bits3.da1.src1_reg_nr;
+   }
 
    *dst = temp;
 
@@ -547,11 +575,17 @@ set_uncompacted_src0(struct brw_instruction *dst,
 
 static void
 set_uncompacted_src1(struct brw_instruction *dst,
-                     struct brw_compact_instruction *src)
+                     struct brw_compact_instruction *src, bool is_immediate)
 {
-   uint16_t uncompacted = src_index_table[src->dw1.src1_index];
+   if (is_immediate) {
+      signed high5 = src->dw1.src1_index;
+      /* Replicate top bit of src1_index into high 20 bits of the immediate. */
+      dst->bits3.ud = (high5 << 27) >> 19;
+   } else {
+      uint16_t uncompacted = src_index_table[src->dw1.src1_index];
 
-   dst->bits3.ud |= uncompacted << 13;
+      dst->bits3.ud |= uncompacted << 13;
+   }
 }
 
 void
@@ -566,16 +600,25 @@ brw_uncompact_instruction(struct brw_context *brw,
 
    set_uncompacted_control(brw, dst, src);
    set_uncompacted_datatype(dst, src);
+
+   /* src0/1 register file fields are in the datatype table. */
+   bool is_immediate = dst->bits1.da1.src0_reg_file == BRW_IMMEDIATE_VALUE ||
+                       dst->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE;
+
    set_uncompacted_subreg(dst, src);
    dst->header.acc_wr_control = src->dw0.acc_wr_control;
    dst->header.destreg__conditionalmod = src->dw0.conditionalmod;
    if (brw->gen <= 6)
       dst->bits2.da1.flag_subreg_nr = src->dw0.flag_subreg_nr;
    set_uncompacted_src0(dst, src);
-   set_uncompacted_src1(dst, src);
+   set_uncompacted_src1(dst, src, is_immediate);
    dst->bits1.da1.dest_reg_nr = src->dw1.dst_reg_nr;
    dst->bits2.da1.src0_reg_nr = src->dw1.src0_reg_nr;
-   dst->bits3.da1.src1_reg_nr = src->dw1.src1_reg_nr;
+   if (is_immediate) {
+      dst->bits3.ud |= src->dw1.src1_reg_nr;
+   } else {
+      dst->bits3.da1.src1_reg_nr = src->dw1.src1_reg_nr;
+   }
 }
 
 void brw_debug_compact_uncompact(struct brw_context *brw,
