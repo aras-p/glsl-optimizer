@@ -231,7 +231,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 {
 	struct si_context *sctx = (struct si_context *)ctx;
 	struct si_pm4_state *pm4;
-	unsigned i, exports_ps, spi_ps_in_control, db_shader_control;
+	unsigned i, spi_ps_in_control, db_shader_control;
 	unsigned num_sgprs, num_user_sgprs;
 	unsigned spi_baryc_cntl = 0, spi_ps_input_ena, spi_shader_z_format;
 	uint64_t va;
@@ -272,17 +272,6 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	}
 	if (shader->shader.uses_kill || shader->key.ps.alpha_func != PIPE_FUNC_ALWAYS)
 		db_shader_control |= S_02880C_KILL_ENABLE(1);
-
-	exports_ps = 0;
-	for (i = 0; i < shader->shader.noutput; i++) {
-		if (shader->shader.output[i].name == TGSI_SEMANTIC_POSITION ||
-		    shader->shader.output[i].name == TGSI_SEMANTIC_STENCIL)
-			exports_ps |= 1;
-	}
-	if (!exports_ps) {
-		/* always at least export 1 component per pixel */
-		exports_ps = 2;
-	}
 
 	spi_ps_in_control = S_0286D8_NUM_INTERP(shader->shader.nparam) |
 		S_0286D8_BC_OPTIMIZE_DISABLE(1);
