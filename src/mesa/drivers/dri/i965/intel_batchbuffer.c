@@ -143,6 +143,7 @@ do_batch_dump(struct brw_context *brw)
 					 batch->used);
    }
 
+   drm_intel_decode_set_output_file(decode, stderr);
    drm_intel_decode(decode);
 
    drm_intel_decode_context_free(decode);
