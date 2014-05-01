@@ -167,6 +167,11 @@ static const char * const saturate[2] = {
     [1] = ".sat"
 };
 
+static const char * const cmpt_ctrl[2] = {
+   [0] = "",
+   [1] = "compacted"
+};
+
 static const char * const accwr[2] = {
     [0] = "",
     [1] = "AccWrEnable"
@@ -1114,7 +1119,7 @@ static int qtr_ctrl(FILE *file, struct brw_instruction *inst)
     return 0;
 }
 
-int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
+int brw_disasm (FILE *file, struct brw_instruction *inst, int gen, bool is_compacted)
 {
     int	err = 0;
     int space = 0;
@@ -1136,6 +1141,7 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 
     err |= print_opcode (file, inst->header.opcode);
     err |= control (file, "saturate", saturate, inst->header.saturate, NULL);
+
     err |= control (file, "debug control", debug_ctrl, inst->header.debug_control, NULL);
 
     if (inst->header.opcode == BRW_OPCODE_MATH) {
@@ -1449,6 +1455,7 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	    }
 	}
 
+	err |= control (file, "compaction control", cmpt_ctrl, is_compacted, &space);
 	err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);
 	if (gen >= 6)
 	    err |= control (file, "acc write control", accwr, inst->header.acc_wr_control, &space);

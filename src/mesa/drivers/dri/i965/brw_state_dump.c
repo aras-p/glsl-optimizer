@@ -530,7 +530,7 @@ dump_prog_cache(struct brw_context *brw)
 		    name,
 		    data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]);
 
-	    brw_disasm(stderr, (void *)(data + i * 4), brw->gen);
+	    brw_disasm(stderr, (void *)(data + i * 4), brw->gen, false);
 	 }
       }
    }

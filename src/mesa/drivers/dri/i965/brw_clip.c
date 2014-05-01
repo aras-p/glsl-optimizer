@@ -121,7 +121,7 @@ static void compile_clip_prog( struct brw_context *brw,
       fprintf(stderr, "clip:\n");
       for (i = 0; i < program_size / sizeof(struct brw_instruction); i++)
 	 brw_disasm(stderr, &((struct brw_instruction *)program)[i],
-		    brw->gen);
+		    brw->gen, false);
       fprintf(stderr, "\n");
    }
 

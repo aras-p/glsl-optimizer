@@ -265,6 +265,7 @@ brw_dump_compile(struct brw_compile *p, FILE *out, int start, int end)
    for (int offset = start; offset < end;) {
       struct brw_instruction *insn = store + offset;
       struct brw_instruction uncompacted;
+      bool compacted = insn->header.cmpt_control;
       fprintf(out, "0x%08x: ", offset);
 
       if (insn->header.cmpt_control) {
@@ -289,6 +290,6 @@ brw_dump_compile(struct brw_compile *p, FILE *out, int start, int end)
 	 offset += 16;
       }
 
-      brw_disasm(out, insn, p->brw->gen);
+      brw_disasm(out, insn, p->brw->gen, compacted);
    }
 }
