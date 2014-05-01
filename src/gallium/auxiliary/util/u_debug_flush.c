@@ -46,6 +46,7 @@
 #include "util/u_hash_table.h"
 #include "util/u_double_list.h"
 #include "util/u_inlines.h"
+#include "util/u_string.h"
 #include "os/os_thread.h"
 #include <stdio.h>
 
@@ -320,8 +321,8 @@ debug_flush_might_flush_cb(void *key, void *value, void *data)
    const char *reason = (const char *) data;
    char message[80];
 
-   snprintf(message, sizeof(message),
-            "%s referenced mapped buffer detected.", reason);
+   util_snprintf(message, sizeof(message),
+                 "%s referenced mapped buffer detected.", reason);
 
    pipe_mutex_lock(fbuf->mutex);
    if (fbuf->mapped_sync) {
