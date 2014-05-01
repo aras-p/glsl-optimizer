@@ -433,6 +433,12 @@ def generate(env):
         # See also:
         # - http://msdn.microsoft.com/en-us/library/19z1t1wy.aspx
         # - cl /?
+        if 'MSVC_VERSION' not in env or distutils.version.LooseVersion(env['MSVC_VERSION']) < distutils.version.LooseVersion('12.0'):
+            # Use bundled stdbool.h and stdint.h headers for older MSVC
+            # versions.  stdint.h was introduced in MSVC 2010, but stdbool.h
+            # was only introduced in MSVC 2013.
+            top_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+            env.Append(CPPPATH = [os.path.join(top_dir, 'include/c99')])
         if env['build'] == 'debug':
             ccflags += [
               '/Od', # disable optimizations

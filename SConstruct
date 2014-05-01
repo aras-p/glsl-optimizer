@@ -80,9 +80,6 @@ env.Append(CPPPATH = [
 	'#/src/gallium/winsys',
 ])
 
-if env['msvc']:
-    env.Append(CPPPATH = ['#include/c99'])
-
 # for debugging
 #print env.Dump()
 
@@ -114,9 +111,6 @@ if env['crosscompile'] and not env['embedded']:
 
     host_env['hostonly'] = True
     assert host_env['crosscompile'] == False
-
-    if host_env['msvc']:
-        host_env.Append(CPPPATH = ['#include/c99'])
 
     target_env = env
     env = host_env
