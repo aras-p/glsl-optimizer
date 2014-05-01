@@ -138,8 +138,13 @@ roundf(float x)
 }
 #endif
 
+#ifndef INFINITY
 #define INFINITY (DBL_MAX + DBL_MAX)
+#endif
+
+#ifndef NAN
 #define NAN (INFINITY - INFINITY)
+#endif
 
 #endif /* _MSC_VER */
 
