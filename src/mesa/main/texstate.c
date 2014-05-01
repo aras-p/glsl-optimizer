@@ -526,6 +526,7 @@ update_single_program_texture(struct gl_context *ctx, struct gl_program *prog,
    gl_texture_index target_index;
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
+   struct gl_sampler_object *sampler;
    int unit;
 
    if (!(prog->SamplersUsed & (1 << s)))
@@ -547,7 +548,7 @@ update_single_program_texture(struct gl_context *ctx, struct gl_program *prog,
    target_index = ffs(prog->TexturesUsed[unit]) - 1;
    texObj = texUnit->CurrentTex[target_index];
 
-   struct gl_sampler_object *sampler = texUnit->Sampler ?
+   sampler = texUnit->Sampler ?
       texUnit->Sampler : &texObj->Sampler;
 
    if (likely(texObj)) {
