@@ -162,7 +162,7 @@ static void so_emit_prim(struct pt_so_emit *so,
    for (i = 0; i < num_vertices; ++i) {
       const float (*input)[4];
       const float *pre_clip_pos = NULL;
-      int ob;
+      unsigned  ob;
 
       input = (const float (*)[4])(
          (const char *)input_ptr + (indices[i] * input_vertex_stride));
