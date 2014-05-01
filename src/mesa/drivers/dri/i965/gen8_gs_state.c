@@ -36,7 +36,7 @@ gen8_upload_gs_state(struct brw_context *brw)
    /* CACHE_NEW_GS_PROG */
    const struct brw_vec4_prog_data *prog_data = &brw->gs.prog_data->base;
 
-   gen8_upload_constant_state(brw, stage_state, active, _3DSTATE_CONSTANT_GS);
+   gen7_upload_constant_state(brw, stage_state, active, _3DSTATE_CONSTANT_GS);
 
    if (active) {
       int urb_entry_write_offset = 1;

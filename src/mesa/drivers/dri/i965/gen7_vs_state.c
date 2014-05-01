@@ -35,20 +35,30 @@ gen7_upload_constant_state(struct brw_context *brw,
                            const struct brw_stage_state *stage_state,
                            bool active, unsigned opcode)
 {
+   uint32_t mocs = brw->gen < 8 ? GEN7_MOCS_L3 : 0;
+
    /* Disable if the shader stage is inactive or there are no push constants. */
    active = active && stage_state->push_const_size != 0;
 
-   BEGIN_BATCH(7);
-   OUT_BATCH(opcode << 16 | (7 - 2));
+   int dwords = brw->gen >= 8 ? 11 : 7;
+   BEGIN_BATCH(dwords);
+   OUT_BATCH(opcode << 16 | (dwords - 2));
    OUT_BATCH(active ? stage_state->push_const_size : 0);
    OUT_BATCH(0);
    /* Pointer to the constant buffer.  Covered by the set of state flags
     * from gen6_prepare_wm_contants
     */
-   OUT_BATCH(active ? (stage_state->push_const_offset | GEN7_MOCS_L3) : 0);
+   OUT_BATCH(active ? (stage_state->push_const_offset | mocs) : 0);
    OUT_BATCH(0);
    OUT_BATCH(0);
    OUT_BATCH(0);
+   if (brw->gen >= 8) {
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+   }
+
    ADVANCE_BATCH();
 }
 

@@ -137,7 +137,7 @@ upload_ps_state(struct brw_context *brw)
    uint32_t dw3 = 0, dw6 = 0, dw7 = 0;
 
    /* CACHE_NEW_WM_PROG */
-   gen8_upload_constant_state(brw, &brw->wm.base, true, _3DSTATE_CONSTANT_PS);
+   gen7_upload_constant_state(brw, &brw->wm.base, true, _3DSTATE_CONSTANT_PS);
 
    /* Initialize the execution mask with VMask.  Otherwise, derivatives are
     * incorrect for subspans where some of the pixels are unlit.  We believe

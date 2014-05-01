@@ -29,29 +29,6 @@
 #include "program/prog_statevars.h"
 #include "intel_batchbuffer.h"
 
-void
-gen8_upload_constant_state(struct brw_context *brw,
-                           const struct brw_stage_state *stage_state,
-                           bool active, unsigned opcode)
-{
-   /* Disable if the shader stage is inactive or there are no push constants. */
-   active = active && stage_state->push_const_size != 0;
-
-   BEGIN_BATCH(11);
-   OUT_BATCH(opcode << 16 | (11 - 2));
-   OUT_BATCH(active ? stage_state->push_const_size : 0);
-   OUT_BATCH(0);
-   OUT_BATCH(active ? stage_state->push_const_offset : 0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
-}
-
 static void
 upload_vs_state(struct brw_context *brw)
 {
@@ -62,7 +39,7 @@ upload_vs_state(struct brw_context *brw)
    /* CACHE_NEW_VS_PROG */
    const struct brw_vec4_prog_data *prog_data = &brw->vs.prog_data->base;
 
-   gen8_upload_constant_state(brw, stage_state, true /* active */,
+   gen7_upload_constant_state(brw, stage_state, true /* active */,
                               _3DSTATE_CONSTANT_VS);
 
    /* Use ALT floating point mode for ARB vertex programs, because they

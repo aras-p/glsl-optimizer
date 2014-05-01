@@ -269,11 +269,6 @@ gen7_upload_constant_state(struct brw_context *brw,
                            const struct brw_stage_state *stage_state,
                            bool active, unsigned opcode);
 
-/* gen8_vs_state.c */
-void
-gen8_upload_constant_state(struct brw_context *brw,
-                           const struct brw_stage_state *stage_state,
-                           bool active, unsigned opcode);
 #ifdef __cplusplus
 }
 #endif
