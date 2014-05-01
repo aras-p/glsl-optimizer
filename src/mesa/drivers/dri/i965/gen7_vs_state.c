@@ -35,31 +35,21 @@ gen7_upload_constant_state(struct brw_context *brw,
                            const struct brw_stage_state *stage_state,
                            bool active, unsigned opcode)
 {
-   if (!active || stage_state->push_const_size == 0) {
-      /* Disable the push constant buffers. */
-      BEGIN_BATCH(7);
-      OUT_BATCH(opcode << 16 | (7 - 2));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   } else {
-      BEGIN_BATCH(7);
-      OUT_BATCH(opcode << 16 | (7 - 2));
-      OUT_BATCH(stage_state->push_const_size);
-      OUT_BATCH(0);
-      /* Pointer to the constant buffer.  Covered by the set of state flags
-       * from gen6_prepare_wm_contants
-       */
-      OUT_BATCH(stage_state->push_const_offset | GEN7_MOCS_L3);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+   /* Disable if the shader stage is inactive or there are no push constants. */
+   active = active && stage_state->push_const_size != 0;
+
+   BEGIN_BATCH(7);
+   OUT_BATCH(opcode << 16 | (7 - 2));
+   OUT_BATCH(active ? stage_state->push_const_size : 0);
+   OUT_BATCH(0);
+   /* Pointer to the constant buffer.  Covered by the set of state flags
+    * from gen6_prepare_wm_contants
+    */
+   OUT_BATCH(active ? (stage_state->push_const_offset | GEN7_MOCS_L3) : 0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
 }
 
 
