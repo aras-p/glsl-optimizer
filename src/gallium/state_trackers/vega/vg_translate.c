@@ -34,7 +34,7 @@ void _vega_pack_rgba_span_float(struct vg_context *ctx,
                                 VGImageFormat dstFormat,
                                 void *dstAddr)
 {
-   VGint i;
+   VGuint i;
 
    switch (dstFormat) {
    case VG_sRGBX_8888: {
@@ -458,7 +458,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
                                   VGImageFormat dataFormat,
                                   VGfloat rgba[][4])
 {
-   VGint i;
+   VGuint i;
    union util_color uc;
 
    switch (dataFormat) {
@@ -681,7 +681,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
       src += offset;
       for (i = 0; i < n; i += 8) {
          VGfloat clr[4];
-         VGint j;
+         VGuint j;
          for (j = 0; j < 8 && j < n ; ++j) {
             VGint shift = j;
             clr[0] = (((*src) & (1<<shift)) >> shift);
@@ -705,7 +705,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
       src += offset;
       for (i = 0; i < n; i += 8) {
          VGfloat clr[4];
-         VGint j;
+         VGuint j;
          for (j = 0; j < 8 && j < n ; ++j) {
             VGint shift = j;
             clr[0] = 0.f;
@@ -728,7 +728,7 @@ void _vega_unpack_float_span_rgba(struct vg_context *ctx,
       src += offset/2;
       for (i = 0; i < n; i += 2) {
          VGfloat clr[4];
-         VGint j;
+         VGuint j;
          for (j = 0; j < n && j < 2; ++j) {
             VGint bitter, shift;
             if (j == 0) {
