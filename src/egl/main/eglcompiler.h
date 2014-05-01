@@ -37,7 +37,8 @@
 /**
  * Get standard integer types
  */
-#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
+    (defined(_MSC_VER) && _MSC_VER >= 1600)
 #  include <stdint.h>
 #elif defined(_MSC_VER)
    typedef __int8             int8_t;
