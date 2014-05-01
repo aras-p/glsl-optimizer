@@ -3101,6 +3101,8 @@ void si_init_config(struct si_context *sctx)
 			/* XXX todo */
 		case CHIP_KABINI:
 			/* XXX todo */
+		case CHIP_MULLINS:
+			/* XXX todo */
 		default:
 			si_pm4_set_reg(pm4, R_028350_PA_SC_RASTER_CONFIG, 0x00000000);
 			si_pm4_set_reg(pm4, R_028354_PA_SC_RASTER_CONFIG_1, 0x00000000);

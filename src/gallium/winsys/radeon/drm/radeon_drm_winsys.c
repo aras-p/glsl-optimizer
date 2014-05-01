@@ -276,6 +276,7 @@ static boolean do_winsys_init(struct radeon_drm_winsys *ws)
     case CHIP_KAVERI:
     case CHIP_KABINI:
     case CHIP_HAWAII:
+    case CHIP_MULLINS:
         ws->info.chip_class = CIK;
         break;
     }
