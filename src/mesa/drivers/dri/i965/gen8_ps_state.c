@@ -245,7 +245,6 @@ const struct brw_tracked_state gen8_ps_state = {
    .dirty = {
       .mesa  = _NEW_PROGRAM_CONSTANTS | _NEW_MULTISAMPLE,
       .brw   = BRW_NEW_FRAGMENT_PROGRAM |
-               BRW_NEW_PS_BINDING_TABLE |
                BRW_NEW_BATCH |
                BRW_NEW_PUSH_CONSTANT_ALLOCATION,
       .cache = CACHE_NEW_WM_PROG
