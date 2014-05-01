@@ -30,25 +30,29 @@
 static void
 gen7_upload_gs_push_constants(struct brw_context *brw)
 {
+   const struct brw_stage_state *stage_state = &brw->gs.base;
    /* BRW_NEW_GEOMETRY_PROGRAM */
-   const struct brw_geometry_program *vp =
+   const struct brw_geometry_program *gp =
       (struct brw_geometry_program *) brw->geometry_program;
-   if (!vp)
-      return;
 
-   /* CACHE_NEW_GS_PROG */
-   const struct brw_vec4_prog_data *prog_data = &brw->gs.prog_data->base;
-   struct brw_stage_state *stage_state = &brw->gs.base;
+   if (gp) {
+      /* CACHE_NEW_GS_PROG */
+      const struct brw_vec4_prog_data *prog_data = &brw->gs.prog_data->base;
+      struct brw_stage_state *stage_state = &brw->gs.base;
 
-   gen6_upload_vec4_push_constants(brw, &vp->program.Base, prog_data,
-                                   stage_state, AUB_TRACE_VS_CONSTANTS);
+      gen6_upload_vec4_push_constants(brw, &gp->program.Base, prog_data,
+                                      stage_state, AUB_TRACE_VS_CONSTANTS);
+   }
+
+   gen7_upload_constant_state(brw, stage_state, gp, _3DSTATE_CONSTANT_GS);
 }
 
 const struct brw_tracked_state gen7_gs_push_constants = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_BATCH |
-		BRW_NEW_GEOMETRY_PROGRAM),
+                BRW_NEW_GEOMETRY_PROGRAM |
+                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
       .cache = CACHE_NEW_GS_PROG,
    },
    .emit = gen7_upload_gs_push_constants,
@@ -65,8 +69,6 @@ upload_gs_state(struct brw_context *brw)
    bool active = brw->geometry_program;
    /* CACHE_NEW_GS_PROG */
    const struct brw_vec4_prog_data *prog_data = &brw->gs.prog_data->base;
-
-   gen7_upload_constant_state(brw, stage_state, active, _3DSTATE_CONSTANT_GS);
 
    /**
     * From Graphics BSpec: 3D-Media-GPGPU Engine > 3D Pipeline Stages >
@@ -186,11 +188,10 @@ upload_gs_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_gs_state = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
+      .mesa  = _NEW_TRANSFORM,
       .brw   = (BRW_NEW_CONTEXT |
                 BRW_NEW_GEOMETRY_PROGRAM |
-                BRW_NEW_BATCH |
-                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
+                BRW_NEW_BATCH),
       .cache = CACHE_NEW_GS_PROG
    },
    .emit = upload_gs_state,

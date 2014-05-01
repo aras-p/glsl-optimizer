@@ -75,9 +75,6 @@ upload_vs_state(struct brw_context *brw)
    if (!brw->is_haswell)
       gen7_emit_vs_workaround_flush(brw);
 
-   gen7_upload_constant_state(brw, stage_state, true /* active */,
-                              _3DSTATE_CONSTANT_VS);
-
    /* Use ALT floating point mode for ARB vertex programs, because they
     * require 0^0 == 1.
     */
@@ -114,11 +111,10 @@ upload_vs_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_vs_state = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_PROGRAM_CONSTANTS,
+      .mesa  = _NEW_TRANSFORM,
       .brw   = (BRW_NEW_CONTEXT |
 		BRW_NEW_VERTEX_PROGRAM |
-		BRW_NEW_BATCH |
-                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
+		BRW_NEW_BATCH),
       .cache = CACHE_NEW_VS_PROG
    },
    .emit = upload_vs_state,

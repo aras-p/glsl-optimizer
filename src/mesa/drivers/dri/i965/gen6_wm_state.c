@@ -81,13 +81,19 @@ gen6_upload_wm_push_constants(struct brw_context *brw)
 
       brw->wm.base.push_const_size = ALIGN(prog_data->base.nr_params, 8) / 8;
    }
+
+   if (brw->gen >= 7) {
+      gen7_upload_constant_state(brw, &brw->wm.base, true,
+                                 _3DSTATE_CONSTANT_PS);
+   }
 }
 
 const struct brw_tracked_state gen6_wm_push_constants = {
    .dirty = {
       .mesa  = _NEW_PROGRAM_CONSTANTS,
       .brw   = (BRW_NEW_BATCH |
-		BRW_NEW_FRAGMENT_PROGRAM),
+                BRW_NEW_FRAGMENT_PROGRAM |
+                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
       .cache = CACHE_NEW_WM_PROG,
    },
    .emit = gen6_upload_wm_push_constants,

@@ -143,9 +143,6 @@ upload_ps_state(struct brw_context *brw)
    const int max_threads_shift = brw->is_haswell ?
       HSW_PS_MAX_THREADS_SHIFT : IVB_PS_MAX_THREADS_SHIFT;
 
-   /* CACHE_NEW_WM_PROG */
-   gen7_upload_constant_state(brw, &brw->wm.base, true, _3DSTATE_CONSTANT_PS);
-
    dw2 = dw4 = dw5 = 0;
 
    dw2 |=
@@ -267,13 +264,11 @@ upload_ps_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen7_ps_state = {
    .dirty = {
-      .mesa  = (_NEW_PROGRAM_CONSTANTS |
-		_NEW_COLOR |
+      .mesa  = (_NEW_COLOR |
                 _NEW_BUFFERS |
                 _NEW_MULTISAMPLE),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
-		BRW_NEW_BATCH |
-                BRW_NEW_PUSH_CONSTANT_ALLOCATION),
+                BRW_NEW_BATCH),
       .cache = (CACHE_NEW_WM_PROG)
    },
    .emit = upload_ps_state,

@@ -136,9 +136,6 @@ upload_ps_state(struct brw_context *brw)
    struct gl_context *ctx = &brw->ctx;
    uint32_t dw3 = 0, dw6 = 0, dw7 = 0;
 
-   /* CACHE_NEW_WM_PROG */
-   gen7_upload_constant_state(brw, &brw->wm.base, true, _3DSTATE_CONSTANT_PS);
-
    /* Initialize the execution mask with VMask.  Otherwise, derivatives are
     * incorrect for subspans where some of the pixels are unlit.  We believe
     * the bit just didn't take effect in previous generations.
@@ -243,10 +240,9 @@ upload_ps_state(struct brw_context *brw)
 
 const struct brw_tracked_state gen8_ps_state = {
    .dirty = {
-      .mesa  = _NEW_PROGRAM_CONSTANTS | _NEW_MULTISAMPLE,
+      .mesa  = _NEW_MULTISAMPLE,
       .brw   = BRW_NEW_FRAGMENT_PROGRAM |
-               BRW_NEW_BATCH |
-               BRW_NEW_PUSH_CONSTANT_ALLOCATION,
+               BRW_NEW_BATCH,
       .cache = CACHE_NEW_WM_PROG
    },
    .emit = upload_ps_state,
