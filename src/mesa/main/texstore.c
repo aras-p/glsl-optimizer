@@ -2473,6 +2473,8 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
    const GLint srcRowStride
       = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType);
    GLint img, row;
+   GLuint *depth = malloc(srcWidth * sizeof(GLuint));
+   GLubyte *stencil = malloc(srcWidth * sizeof(GLubyte));
 
    ASSERT(dstFormat == MESA_FORMAT_S8_UINT_Z24_UNORM);
    ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT ||
@@ -2481,9 +2483,6 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
    ASSERT(srcFormat != GL_DEPTH_STENCIL_EXT ||
           srcType == GL_UNSIGNED_INT_24_8_EXT ||
           srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
-
-   GLuint *depth = malloc(srcWidth * sizeof(GLuint));
-   GLubyte *stencil = malloc(srcWidth * sizeof(GLubyte));
 
    if (!depth || !stencil) {
       free(depth);
@@ -3416,6 +3415,11 @@ _mesa_texstore_r11_g11_b10f(TEXSTORE_PARAMS)
 static GLboolean
 _mesa_texstore_z32f_x24s8(TEXSTORE_PARAMS)
 {
+   GLint img, row;
+   const GLint srcRowStride
+      = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
+      / sizeof(uint64_t);
+
    ASSERT(dstFormat == MESA_FORMAT_Z32_FLOAT_S8X24_UINT);
    ASSERT(srcFormat == GL_DEPTH_STENCIL ||
           srcFormat == GL_DEPTH_COMPONENT ||
@@ -3423,11 +3427,6 @@ _mesa_texstore_z32f_x24s8(TEXSTORE_PARAMS)
    ASSERT(srcFormat != GL_DEPTH_STENCIL ||
           srcType == GL_UNSIGNED_INT_24_8 ||
           srcType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV);
-
-   GLint img, row;
-   const GLint srcRowStride
-      = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat, srcType)
-      / sizeof(uint64_t);
 
    /* In case we only upload depth we need to preserve the stencil */
    for (img = 0; img < srcDepth; img++) {
