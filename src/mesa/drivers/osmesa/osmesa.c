@@ -207,7 +207,7 @@ osmesa_choose_line_function( struct gl_context *ctx )
 
    if (ctx->RenderMode != GL_RENDER ||
        ctx->Line.SmoothFlag ||
-       ctx->Texture.MaxEnabledTexImageUnit == -1 ||
+       ctx->Texture._MaxEnabledTexImageUnit == -1 ||
        ctx->Light.ShadeModel != GL_FLAT ||
        ctx->Line.Width != 1.0F ||
        ctx->Line.StippleFlag ||
