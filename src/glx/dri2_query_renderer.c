@@ -28,7 +28,9 @@
 #include "dri2.h"
 #include "dri_interface.h"
 #include "dri2_priv.h"
+#if defined(HAVE_DRI3)
 #include "dri3_priv.h"
+#endif
 
 static int
 dri2_convert_glx_query_renderer_attribs(int attribute)
@@ -99,6 +101,7 @@ dri2_query_renderer_string(struct glx_screen *base, int attribute,
    return psc->rendererQuery->queryString(psc->driScreen, dri_attribute, value);
 }
 
+#if defined(HAVE_DRI3)
 _X_HIDDEN int
 dri3_query_renderer_integer(struct glx_screen *base, int attribute,
                             unsigned int *value)
@@ -136,5 +139,6 @@ dri3_query_renderer_string(struct glx_screen *base, int attribute,
 
    return psc->rendererQuery->queryString(psc->driScreen, dri_attribute, value);
 }
+#endif /* HAVE_DRI3 */
 
 #endif /* GLX_DIRECT_RENDERING */
