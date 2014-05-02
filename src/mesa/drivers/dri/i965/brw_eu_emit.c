@@ -388,9 +388,10 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
 }
 
 
-void brw_set_src1(struct brw_compile *p,
-		  struct brw_instruction *insn,
-		  struct brw_reg reg)
+void
+brw_set_src1(struct brw_compile *p,
+             struct brw_instruction *insn,
+             struct brw_reg reg)
 {
    assert(reg.file != BRW_MESSAGE_REGISTER_FILE);
 
