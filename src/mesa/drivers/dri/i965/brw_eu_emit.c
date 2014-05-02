@@ -357,6 +357,22 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
       } else {
          insn->bits1.da1.src1_reg_type = BRW_HW_REG_TYPE_UD;
       }
+
+      /* Compacted instructions only have 12-bits (plus 1 for the other 20)
+       * for immediate values. Presumably the hardware engineers realized
+       * that the only useful floating-point value that could be represented
+       * in this format is 0.0, which can also be represented as a VF-typed
+       * immediate, so they gave us the previously mentioned mapping on IVB+.
+       *
+       * Strangely, we do have a mapping for imm:f in src1, so we don't need
+       * to do this there.
+       *
+       * If we see a 0.0:F, change the type to VF so that it can be compacted.
+       */
+      if (insn->bits3.ud == 0x0 &&
+          insn->bits1.da1.src0_reg_type == BRW_HW_REG_TYPE_F) {
+         insn->bits1.da1.src0_reg_type = BRW_HW_REG_IMM_TYPE_VF;
+      }
    }
    else
    {
