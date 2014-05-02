@@ -181,6 +181,9 @@ struct save_state
    GLboolean TransformFeedbackNeedsResume;
 
    GLuint DrawBufferName, ReadBufferName, RenderbufferName;
+
+   /** MESA_META_DRAW_BUFFERS */
+   GLenum ColorDrawBuffers[MAX_DRAW_BUFFERS];
 };
 
 /**
