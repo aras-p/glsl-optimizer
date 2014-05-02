@@ -46,6 +46,7 @@
 #include "main/texcompress_etc.h"
 #include "main/teximage.h"
 #include "main/streaming-load-memcpy.h"
+#include "x86/common_x86_asm.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
@@ -1830,7 +1831,6 @@ intel_miptree_unmap_blit(struct brw_context *brw,
    intel_miptree_release(&map->mt);
 }
 
-#ifdef __SSE4_1__
 /**
  * "Map" a buffer by copying it to an untiled temporary using MOVNTDQA.
  */
@@ -1901,7 +1901,6 @@ intel_miptree_unmap_movntdqa(struct brw_context *brw,
    map->buffer = NULL;
    map->ptr = NULL;
 }
-#endif
 
 static void
 intel_miptree_map_s8(struct brw_context *brw,
@@ -2282,10 +2281,8 @@ intel_miptree_map(struct brw_context *brw,
               mt->bo->size >= brw->max_gtt_map_object_size) {
       assert(can_blit_slice(mt, level, slice));
       intel_miptree_map_blit(brw, mt, map, level, slice);
-#ifdef __SSE4_1__
-   } else if (!(mode & GL_MAP_WRITE_BIT) && !mt->compressed) {
+   } else if (!(mode & GL_MAP_WRITE_BIT) && !mt->compressed && cpu_has_sse4_1) {
       intel_miptree_map_movntdqa(brw, mt, map, level, slice);
-#endif
    } else {
       intel_miptree_map_gtt(brw, mt, map, level, slice);
    }
@@ -2322,10 +2319,8 @@ intel_miptree_unmap(struct brw_context *brw,
       intel_miptree_unmap_depthstencil(brw, mt, map, level, slice);
    } else if (map->mt) {
       intel_miptree_unmap_blit(brw, mt, map, level, slice);
-#ifdef __SSE4_1__
-   } else if (map->buffer) {
+   } else if (map->buffer && cpu_has_sse4_1) {
       intel_miptree_unmap_movntdqa(brw, mt, map, level, slice);
-#endif
    } else {
       intel_miptree_unmap_gtt(brw, mt, map, level, slice);
    }
