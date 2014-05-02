@@ -329,10 +329,34 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
    if (reg.file == BRW_IMMEDIATE_VALUE) {
       insn->bits3.ud = reg.dw1.ud;
 
-      /* Required to set some fields in src1 as well:
+      /* The Bspec's section titled "Non-present Operands" claims that if src0
+       * is an immediate that src1's type must be the same as that of src0.
+       *
+       * The SNB+ DataTypeIndex instruction compaction tables contain mappings
+       * that do not follow this rule. E.g., from the IVB/HSW table:
+       *
+       *  DataTypeIndex   18-Bit Mapping       Mapped Meaning
+       *        3         001000001011111101   r:f | i:vf | a:ud | <1> | dir |
+       *
+       * And from the SNB table:
+       *
+       *  DataTypeIndex   18-Bit Mapping       Mapped Meaning
+       *        8         001000000111101100   a:w | i:w | a:ud | <1> | dir |
+       *
+       * Neither of these cause warnings from the simulator when used,
+       * compacted or otherwise. In fact, all compaction mappings that have an
+       * immediate in src0 use a:ud for src1.
+       *
+       * The GM45 instruction compaction tables do not contain mapped meanings
+       * so it's not clear whether it has the restriction. We'll assume it was
+       * lifted on SNB. (FINISHME: decode the GM45 tables and check.)
        */
       insn->bits1.da1.src1_reg_file = 0; /* arf */
-      insn->bits1.da1.src1_reg_type = insn->bits1.da1.src0_reg_type;
+      if (brw->gen < 6) {
+         insn->bits1.da1.src1_reg_type = insn->bits1.da1.src0_reg_type;
+      } else {
+         insn->bits1.da1.src1_reg_type = BRW_HW_REG_TYPE_UD;
+      }
    }
    else
    {
