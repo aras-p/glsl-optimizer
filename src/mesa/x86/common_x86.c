@@ -47,6 +47,9 @@
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
 #endif
+#if defined(__x86_64__) && !defined(_MSC_VER)
+#include <cpuid.h>
+#endif
 
 #include "main/imports.h"
 #include "common_x86_asm.h"
@@ -330,6 +333,14 @@ _mesa_get_x86_features(void)
    }
 #endif
 
+#elif defined(__x86_64__) && !defined(_MSC_VER)
+   unsigned int uninitialized_var(eax), uninitialized_var(ebx),
+                uninitialized_var(ecx), uninitialized_var(edx);
+
+   /* Always available on x86-64. */
+   _mesa_x86_cpu_features |= X86_FEATURE_XMM | X86_FEATURE_XMM2;
+
+   __get_cpuid(1, &eax, &ebx, &ecx, &edx);
 #endif /* USE_X86_ASM */
 
    (void) detection_debug;

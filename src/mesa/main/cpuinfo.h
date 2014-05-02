@@ -27,7 +27,7 @@
 #define CPUINFO_H
 
 
-#if defined(USE_X86_ASM)
+#if defined USE_X86_ASM || (defined __x86_64__ && !defined _MSC_VER)
 #include "x86/common_x86_asm.h"
 #endif
 
