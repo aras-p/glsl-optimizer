@@ -43,6 +43,7 @@
 #define X86_FEATURE_XMM2	(1<<6)
 #define X86_FEATURE_3DNOWEXT	(1<<7)
 #define X86_FEATURE_3DNOW	(1<<8)
+#define X86_FEATURE_SSE4_1	(1<<9)
 
 /* standard X86 CPU features */
 #define X86_CPU_FPU		(1<<0)
@@ -50,6 +51,8 @@
 #define X86_CPU_MMX		(1<<23)
 #define X86_CPU_XMM		(1<<25)
 #define X86_CPU_XMM2		(1<<26)
+/* ECX. */
+#define X86_CPU_SSE4_1		(1<<19)
 
 /* extended X86 CPU features */
 #define X86_CPUEXT_MMX_EXT	(1<<22)
@@ -62,6 +65,7 @@
 #define cpu_has_xmm2		(_mesa_x86_cpu_features & X86_FEATURE_XMM2)
 #define cpu_has_3dnow		(_mesa_x86_cpu_features & X86_FEATURE_3DNOW)
 #define cpu_has_3dnowext	(_mesa_x86_cpu_features & X86_FEATURE_3DNOWEXT)
+#define cpu_has_sse4_1		(_mesa_x86_cpu_features & X86_FEATURE_SSE4_1)
 
 #endif
 
