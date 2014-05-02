@@ -396,6 +396,13 @@ android_surface_swap_buffers(struct native_surface *nsurf)
    struct android_surface *asurf = android_surface(nsurf);
    struct android_display *adpy = asurf->adpy;
 
+   struct native_display *ndpy = &adpy->base;
+   struct pipe_context *pipe = ndpy_get_copy_context(ndpy);
+
+   /* flush buffer */
+   pipe->flush_resource(pipe, asurf->buf_res);
+   pipe->flush(pipe, NULL, 0);
+
    android_surface_enqueue_buffer(&asurf->base);
 
    asurf->stamp++;
