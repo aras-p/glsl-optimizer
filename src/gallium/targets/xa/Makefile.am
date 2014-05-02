@@ -66,6 +66,11 @@ libxatracker_la_LDFLAGS = \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
+if HAVE_LD_VERSION_SCRIPT
+libxatracker_la_LDFLAGS += \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/xa/xa.sym
+endif
+
 if HAVE_MESA_LLVM
 libxatracker_la_LIBADD += $(LLVM_LIBS)
 libxatracker_la_LDFLAGS += $(LLVM_LDFLAGS)
