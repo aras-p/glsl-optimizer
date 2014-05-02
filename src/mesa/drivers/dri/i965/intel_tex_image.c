@@ -234,6 +234,7 @@ intel_set_texture_image_bo(struct gl_context *ctx,
                                                  0, width, height, pitch);
    if (intel_image->mt == NULL)
        return;
+   intel_image->mt->target = target;
    intel_image->mt->total_width = width;
    intel_image->mt->total_height = height;
    intel_image->mt->level[0].slice[0].x_offset = tile_x;
