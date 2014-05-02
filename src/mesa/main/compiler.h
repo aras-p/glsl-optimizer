@@ -264,6 +264,12 @@ static INLINE GLuint CPU_TO_LE32(GLuint x)
 #define unreachable()
 #endif
 
+/*
+ * A trick to suppress uninitialized variable warning without generating any
+ * code
+ */
+#define uninitialized_var(x) x = x
+
 #if (__GNUC__ >= 3)
 #define PRINTFLIKE(f, a) __attribute__ ((format(__printf__, f, a)))
 #else
