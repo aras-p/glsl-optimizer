@@ -1655,6 +1655,48 @@ meta_glsl_clear_cleanup(struct clear_state *clear)
 }
 
 /**
+ * Given a bitfield of BUFFER_BIT_x draw buffers, call glDrawBuffers to
+ * set GL to only draw to those buffers.
+ *
+ * Since the bitfield has no associated order, the assignment of draw buffer
+ * indices to color attachment indices is rather arbitrary.
+ */
+static void
+drawbuffers_from_bitfield(GLbitfield bits)
+{
+   GLenum enums[MAX_DRAW_BUFFERS];
+   int i = 0;
+   int n;
+
+   /* This function is only legal for color buffer bitfields. */
+   assert((bits & ~BUFFER_BITS_COLOR) == 0);
+
+   /* Make sure we don't overflow any arrays. */
+   assert(_mesa_bitcount(bits) <= MAX_DRAW_BUFFERS);
+
+   enums[0] = GL_NONE;
+
+   if (bits & BUFFER_BIT_FRONT_LEFT)
+      enums[i++] = GL_FRONT_LEFT;
+
+   if (bits & BUFFER_BIT_FRONT_RIGHT)
+      enums[i++] = GL_FRONT_RIGHT;
+
+   if (bits & BUFFER_BIT_BACK_LEFT)
+      enums[i++] = GL_BACK_LEFT;
+
+   if (bits & BUFFER_BIT_BACK_RIGHT)
+      enums[i++] = GL_BACK_RIGHT;
+
+   for (n = 0; n < MAX_COLOR_ATTACHMENTS; n++) {
+      if (bits & (1 << (BUFFER_COLOR0 + n)))
+         enums[i++] = GL_COLOR_ATTACHMENT0 + n;
+   }
+
+   _mesa_DrawBuffers(i, enums);
+}
+
+/**
  * Meta implementation of ctx->Driver.Clear() in terms of polygon rendering.
  */
 static void
@@ -1690,7 +1732,9 @@ meta_clear(struct gl_context *ctx, GLbitfield buffers, bool glsl)
                   MESA_META_SELECT_FEEDBACK;
    }
 
-   if (!(buffers & BUFFER_BITS_COLOR)) {
+   if (buffers & BUFFER_BITS_COLOR) {
+      metaSave |= MESA_META_DRAW_BUFFERS;
+   } else {
       /* We'll use colormask to disable color writes.  Otherwise,
        * respect color mask
        */
@@ -1730,7 +1774,10 @@ meta_clear(struct gl_context *ctx, GLbitfield buffers, bool glsl)
 
    /* GL_COLOR_BUFFER_BIT */
    if (buffers & BUFFER_BITS_COLOR) {
-      /* leave colormask, glDrawBuffer state as-is */
+      /* Only draw to the buffers we were asked to clear. */
+      drawbuffers_from_bitfield(buffers & BUFFER_BITS_COLOR);
+
+      /* leave colormask state as-is */
 
       /* Clears never have the color clamped. */
       if (ctx->Extensions.ARB_color_buffer_float)
