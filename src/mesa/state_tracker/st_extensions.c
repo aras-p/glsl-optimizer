@@ -507,6 +507,11 @@ void st_init_extensions(struct st_context *st)
 
       { { o(OES_compressed_ETC1_RGB8_texture) },
         { PIPE_FORMAT_ETC1_RGB8 } },
+
+      { { o(ARB_stencil_texturing) },
+        { PIPE_FORMAT_X24S8_UINT,
+          PIPE_FORMAT_S8X24_UINT },
+        GL_TRUE }, /* at least one format must be supported */
    };
 
    /* Required: vertex fetch support. */

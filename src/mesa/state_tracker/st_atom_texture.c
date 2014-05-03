@@ -271,6 +271,10 @@ st_get_texture_sampler_view_from_stobj(struct st_context *st,
 
    sv = st_texture_get_sampler_view(st, stObj);
 
+   if (stObj->base.StencilSampling &&
+       util_format_is_depth_and_stencil(format))
+      format = util_format_stencil_only(format);
+
    /* if sampler view has changed dereference it */
    if (*sv) {
       if (check_sampler_swizzle(stObj, *sv) ||
