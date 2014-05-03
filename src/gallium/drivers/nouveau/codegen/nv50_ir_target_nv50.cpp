@@ -275,9 +275,10 @@ TargetNV50::insnCanLoad(const Instruction *i, int s,
       return false;
 
    // NOTE: don't rely on flagsDef
-   for (int d = 0; i->defExists(d); ++d)
-      if (i->def(d).getFile() == FILE_FLAGS)
-         return false;
+   if (sf == FILE_IMMEDIATE)
+      for (int d = 0; i->defExists(d); ++d)
+         if (i->def(d).getFile() == FILE_FLAGS)
+            return false;
 
    unsigned mode = 0;
 
