@@ -585,12 +585,15 @@ nvc0_render_condition(struct pipe_context *pipe,
    if (wait)
       nvc0_query_fifo_wait(push, pq);
 
-   PUSH_SPACE(push, 4);
+   PUSH_SPACE(push, 7);
    PUSH_REFN (push, q->bo, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
    BEGIN_NVC0(push, NVC0_3D(COND_ADDRESS_HIGH), 3);
    PUSH_DATAh(push, q->bo->offset + q->offset);
    PUSH_DATA (push, q->bo->offset + q->offset);
    PUSH_DATA (push, cond);
+   BEGIN_NVC0(push, NVC0_2D(COND_ADDRESS_HIGH), 2);
+   PUSH_DATAh(push, q->bo->offset + q->offset);
+   PUSH_DATA (push, q->bo->offset + q->offset);
 }
 
 void

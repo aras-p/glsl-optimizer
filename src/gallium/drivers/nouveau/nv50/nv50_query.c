@@ -332,7 +332,7 @@ nv50_render_condition(struct pipe_context *pipe,
    nv50->cond_cond = condition;
    nv50->cond_mode = mode;
 
-   PUSH_SPACE(push, 6);
+   PUSH_SPACE(push, 9);
 
    if (!pq) {
       BEGIN_NV04(push, NV50_3D(COND_MODE), 1);
@@ -351,6 +351,10 @@ nv50_render_condition(struct pipe_context *pipe,
    PUSH_DATAh(push, q->bo->offset + q->offset);
    PUSH_DATA (push, q->bo->offset + q->offset);
    PUSH_DATA (push, NV50_3D_COND_MODE_RES_NON_ZERO);
+
+   BEGIN_NV04(push, NV50_2D(COND_ADDRESS_HIGH), 2);
+   PUSH_DATAh(push, q->bo->offset + q->offset);
+   PUSH_DATA (push, q->bo->offset + q->offset);
 }
 
 void

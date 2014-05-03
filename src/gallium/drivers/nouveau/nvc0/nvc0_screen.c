@@ -677,6 +677,8 @@ nvc0_screen_create(struct nouveau_device *dev)
    PUSH_DATA (push, 0x3f);
    BEGIN_NVC0(push, SUBC_2D(0x0888), 1);
    PUSH_DATA (push, 1);
+   BEGIN_NVC0(push, NVC0_2D(COND_MODE), 1);
+   PUSH_DATA (push, NVC0_2D_COND_MODE_ALWAYS);
 
    BEGIN_NVC0(push, SUBC_2D(NVC0_GRAPH_NOTIFY_ADDRESS_HIGH), 2);
    PUSH_DATAh(push, screen->fence.bo->offset + 16);

@@ -503,6 +503,7 @@ struct nvc0_blitctx
    uint8_t mode;
    uint16_t color_mask;
    uint8_t filter;
+   uint8_t render_condition_enable;
    enum pipe_texture_target target;
    struct {
       struct pipe_framebuffer_state fb;
@@ -691,7 +692,7 @@ nvc0_blitctx_prepare_state(struct nvc0_blitctx *blit)
 
    /* TODO: maybe make this a MACRO (if we need more logic) ? */
 
-   if (blit->nvc0->cond_query)
+   if (blit->nvc0->cond_query && !blit->render_condition_enable)
       IMMED_NVC0(push, NVC0_3D(COND_MODE), NVC0_3D_COND_MODE_ALWAYS);
 
    /* blend state */
@@ -833,7 +834,7 @@ nvc0_blitctx_post_blit(struct nvc0_blitctx *blit)
    nvc0->textures_dirty[4] |= 3;
    nvc0->samplers_dirty[4] |= 3;
 
-   if (nvc0->cond_query)
+   if (nvc0->cond_query && !blit->render_condition_enable)
       nvc0->base.pipe.render_condition(&nvc0->base.pipe, nvc0->cond_query,
                                        nvc0->cond_cond, nvc0->cond_mode);
 
@@ -868,6 +869,7 @@ nvc0_blit_3d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
    blit->mode = nv50_blit_select_mode(info);
    blit->color_mask = nv50_blit_derive_color_mask(info);
    blit->filter = nv50_blit_get_filter(info);
+   blit->render_condition_enable = info->render_condition_enable;
 
    nvc0_blit_select_fp(blit, info);
    nvc0_blitctx_pre_blit(blit);
@@ -1030,6 +1032,9 @@ nvc0_blit_eng2d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
       PUSH_DATA (push, 1); /* enable */
    }
 
+   if (nvc0->cond_query && info->render_condition_enable)
+      IMMED_NVC0(push, NVC0_2D(COND_MODE), NVC0_2D_COND_MODE_RES_NON_ZERO);
+
    if (mask != 0xffffffff) {
       IMMED_NVC0(push, NVC0_2D(ROP), 0xca); /* DPSDxax */
       IMMED_NVC0(push, NVC0_2D(PATTERN_COLOR_FORMAT),
@@ -1154,6 +1159,8 @@ nvc0_blit_eng2d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
       IMMED_NVC0(push, NVC0_2D(CLIP_ENABLE), 0);
    if (mask != 0xffffffff)
       IMMED_NVC0(push, NVC0_2D(OPERATION), NVC0_2D_OPERATION_SRCCOPY);
+   if (nvc0->cond_query && info->render_condition_enable)
+      IMMED_NVC0(push, NVC0_2D(COND_MODE), NVC0_2D_COND_MODE_ALWAYS);
 }
 
 static void
