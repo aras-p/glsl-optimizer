@@ -192,6 +192,66 @@ is_better_parameter_match(parameter_match_t a_match,
 }
 
 
+static bool
+is_best_inexact_overload(const exec_list *actual_parameters,
+                         ir_function_signature **matches,
+                         int num_matches,
+                         ir_function_signature *sig)
+{
+   /* From section 6.1 of the GLSL 4.00 spec (and the ARB_gpu_shader5 spec):
+    *
+    * "A function definition A is considered a better
+    * match than function definition B if:
+    *
+    *   * for at least one function argument, the conversion for that argument
+    *     in A is better than the corresponding conversion in B; and
+    *
+    *   * there is no function argument for which the conversion in B is better
+    *     than the corresponding conversion in A.
+    *
+    * If a single function definition is considered a better match than every
+    * other matching function definition, it will be used.  Otherwise, a
+    * semantic error occurs and the shader will fail to compile."
+    */
+   for (ir_function_signature **other = matches;
+        other < matches + num_matches; other++) {
+      if (*other == sig)
+         continue;
+
+      const exec_node *node_a = sig->parameters.head;
+      const exec_node *node_b = (*other)->parameters.head;
+      const exec_node *node_p = actual_parameters->head;
+
+      bool better_for_some_parameter = false;
+
+      for (/* empty */
+           ; !node_a->is_tail_sentinel()
+           ; node_a = node_a->next,
+             node_b = node_b->next,
+             node_p = node_p->next) {
+         parameter_match_t a_match = get_parameter_match_type(
+               (const ir_variable *)node_a,
+               (const ir_rvalue *)node_p);
+         parameter_match_t b_match = get_parameter_match_type(
+               (const ir_variable *)node_b,
+               (const ir_rvalue *)node_p);
+
+         if (is_better_parameter_match(a_match, b_match))
+               better_for_some_parameter = true;
+
+         if (is_better_parameter_match(b_match, a_match))
+               return false;     /* B is better for this parameter */
+      }
+
+      if (!better_for_some_parameter)
+         return false;     /* A must be better than B for some parameter */
+
+   }
+
+   return true;
+}
+
+
 static ir_function_signature *
 choose_best_inexact_overload(_mesa_glsl_parse_state *state,
                              const exec_list *actual_parameters,
@@ -203,6 +263,17 @@ choose_best_inexact_overload(_mesa_glsl_parse_state *state,
 
    if (num_matches == 1)
       return *matches;
+
+   /* Without GLSL 4.0 / ARB_gpu_shader5, there is no overload resolution
+    * among multiple inexact matches. Note that state may be NULL here if
+    * called from the linker; in that case we assume everything supported in
+    * any GLSL version is available. */
+   if (!state || state->is_version(400, 0) || state->ARB_gpu_shader5_enable) {
+      for (ir_function_signature **sig = matches; sig < matches + num_matches; sig++) {
+         if (is_best_inexact_overload(actual_parameters, matches, num_matches, *sig))
+            return *sig;
+      }
+   }
 
    return NULL;   /* no best candidate */
 }
