@@ -176,6 +176,14 @@ get_conversion_operation(const glsl_type *to, const glsl_type *from,
       default: return (ir_expression_operation)0;
       }
 
+   case GLSL_TYPE_UINT:
+      if (!state->is_version(400, 0) && !state->ARB_gpu_shader5_enable)
+         return (ir_expression_operation)0;
+      switch (from->base_type) {
+         case GLSL_TYPE_INT: return ir_unop_i2u;
+         default: return (ir_expression_operation)0;
+      }
+
    default: return (ir_expression_operation)0;
    }
 }
