@@ -23,6 +23,7 @@
 
 #include "glsl_types.h"
 #include "ir.h"
+#include "glsl_parser_extras.h"
 
 typedef enum {
    PARAMETER_LIST_NO_MATCH,
@@ -116,6 +117,22 @@ parameter_lists_match(_mesa_glsl_parse_state *state,
 }
 
 
+static ir_function_signature *
+choose_best_inexact_overload(_mesa_glsl_parse_state *state,
+                             const exec_list *actual_parameters,
+                             ir_function_signature **matches,
+                             int num_matches)
+{
+   if (num_matches == 0)
+      return NULL;
+
+   if (num_matches == 1)
+      return *matches;
+
+   return NULL;   /* no best candidate */
+}
+
+
 ir_function_signature *
 ir_function::matching_signature(_mesa_glsl_parse_state *state,
                                 const exec_list *actual_parameters)
@@ -127,10 +144,11 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
 ir_function_signature *
 ir_function::matching_signature(_mesa_glsl_parse_state *state,
                                 const exec_list *actual_parameters,
-			        bool *is_exact)
+                                bool *is_exact)
 {
+   ir_function_signature **inexact_matches = NULL;
    ir_function_signature *match = NULL;
-   bool multiple_inexact_matches = false;
+   int num_inexact_matches = 0;
 
    /* From page 42 (page 49 of the PDF) of the GLSL 1.20 spec:
     *
@@ -151,14 +169,16 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
 
       switch (parameter_lists_match(state, & sig->parameters, actual_parameters)) {
       case PARAMETER_LIST_EXACT_MATCH:
-	 *is_exact = true;
-	 return sig;
+         *is_exact = true;
+         free(inexact_matches);
+         return sig;
       case PARAMETER_LIST_INEXACT_MATCH:
-	 if (match == NULL)
-	    match = sig;
-	 else
-	    multiple_inexact_matches = true;
-	 continue;
+         inexact_matches = realloc(inexact_matches,
+                                   sizeof(*inexact_matches) *
+                                   (num_inexact_matches + 1));
+         assert(inexact_matches);
+         inexact_matches[num_inexact_matches++] = sig;
+         continue;
       case PARAMETER_LIST_NO_MATCH:
 	 continue;
       default:
@@ -176,9 +196,10 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
     */
    *is_exact = false;
 
-   if (multiple_inexact_matches)
-      return NULL;
+   match = choose_best_inexact_overload(state, actual_parameters,
+                                        inexact_matches, num_inexact_matches);
 
+   free(inexact_matches);
    return match;
 }
 
