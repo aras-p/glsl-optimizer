@@ -164,6 +164,23 @@ _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 }
 
 
+static ir_expression_operation
+get_conversion_operation(const glsl_type *to, const glsl_type *from,
+                         struct _mesa_glsl_parse_state *state)
+{
+   switch (to->base_type) {
+   case GLSL_TYPE_FLOAT:
+      switch (from->base_type) {
+      case GLSL_TYPE_INT: return ir_unop_i2f;
+      case GLSL_TYPE_UINT: return ir_unop_u2f;
+      default: return (ir_expression_operation)0;
+      }
+
+   default: return (ir_expression_operation)0;
+   }
+}
+
+
 /**
  * If a conversion is available, convert one operand to a different type
  *
@@ -185,9 +202,7 @@ apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
    if (to->base_type == from->type->base_type)
       return true;
 
-   /* This conversion was added in GLSL 1.20.  If the compilation mode is
-    * GLSL 1.10, the conversion is skipped.
-    */
+   /* Prior to GLSL 1.20, there are no implicit conversions */
    if (!state->is_version(120, 0))
       return false;
 
@@ -195,36 +210,25 @@ apply_implicit_conversion(const glsl_type *to, ir_rvalue * &from,
     *
     *    "There are no implicit array or structure conversions. For
     *    example, an array of int cannot be implicitly converted to an
-    *    array of float. There are no implicit conversions between
-    *    signed and unsigned integers."
+    *    array of float.
     */
-   /* FINISHME: The above comment is partially a lie.  There is int/uint
-    * FINISHME: conversion for immediate constants.
-    */
-   if (!to->is_float() || !from->type->is_numeric())
+   if (!to->is_numeric() || !from->type->is_numeric())
       return false;
 
-   /* Convert to a floating point type with the same number of components
-    * as the original type - i.e. int to float, not int to vec4.
+   /* We don't actually want the specific type `to`, we want a type
+    * with the same base type as `to`, but the same vector width as
+    * `from`.
     */
-   to = glsl_type::get_instance(GLSL_TYPE_FLOAT, from->type->vector_elements,
-			        from->type->matrix_columns);
+   to = glsl_type::get_instance(to->base_type, from->type->vector_elements,
+                                from->type->matrix_columns);
 
-   switch (from->type->base_type) {
-   case GLSL_TYPE_INT:
-      from = new(ctx) ir_expression(ir_unop_i2f, to, from, NULL);
-      break;
-   case GLSL_TYPE_UINT:
-      from = new(ctx) ir_expression(ir_unop_u2f, to, from, NULL);
-      break;
-   case GLSL_TYPE_BOOL:
-      from = new(ctx) ir_expression(ir_unop_b2f, to, from, NULL);
-      break;
-   default:
-      assert(0);
+   ir_expression_operation op = get_conversion_operation(to, from->type, state);
+   if (op) {
+      from = new(ctx) ir_expression(op, to, from, NULL);
+      return true;
+   } else {
+      return false;
    }
-
-   return true;
 }
 
 
