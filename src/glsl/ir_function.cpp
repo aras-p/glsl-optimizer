@@ -38,7 +38,8 @@ typedef enum {
  * \see matching_signature()
  */
 static parameter_list_match_t
-parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
+parameter_lists_match(_mesa_glsl_parse_state *state,
+                      const exec_list *list_a, const exec_list *list_b)
 {
    const exec_node *node_a = list_a->head;
    const exec_node *node_b = list_b->head;
@@ -148,7 +149,7 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
       if (sig->is_builtin() && !sig->is_builtin_available(state))
          continue;
 
-      switch (parameter_lists_match(& sig->parameters, actual_parameters)) {
+      switch (parameter_lists_match(state, & sig->parameters, actual_parameters)) {
       case PARAMETER_LIST_EXACT_MATCH:
 	 *is_exact = true;
 	 return sig;
