@@ -314,7 +314,8 @@ struct glsl_type {
     *     integers.
     * \endverbatim
     */
-   bool can_implicitly_convert_to(const glsl_type *desired) const;
+   bool can_implicitly_convert_to(const glsl_type *desired,
+                                  _mesa_glsl_parse_state *state) const;
 
    /**
     * Query whether or not a type is a scalar (non-vector and non-matrix).

@@ -678,7 +678,8 @@ glsl_type::component_slots() const
 }
 
 bool
-glsl_type::can_implicitly_convert_to(const glsl_type *desired) const
+glsl_type::can_implicitly_convert_to(const glsl_type *desired,
+                                     _mesa_glsl_parse_state *state) const
 {
    if (this == desired)
       return true;

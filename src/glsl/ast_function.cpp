@@ -701,7 +701,7 @@ process_vec_mat_constructor(exec_list *instructions,
             glsl_type::get_instance(GLSL_TYPE_FLOAT,
                                     ir->type->vector_elements,
                                     ir->type->matrix_columns);
-         if (result->type->can_implicitly_convert_to(desired_type)) {
+         if (result->type->can_implicitly_convert_to(desired_type, state)) {
             /* Even though convert_component() implements the constructor
              * conversion rules (not the implicit conversion rules), its safe
              * to use it here because we already checked that the implicit
@@ -830,7 +830,7 @@ process_array_constructor(exec_list *instructions,
 	    glsl_type::get_instance(GLSL_TYPE_FLOAT,
 				    ir->type->vector_elements,
 				    ir->type->matrix_columns);
-	 if (result->type->can_implicitly_convert_to(desired_type)) {
+	 if (result->type->can_implicitly_convert_to(desired_type, state)) {
 	    /* Even though convert_component() implements the constructor
 	     * conversion rules (not the implicit conversion rules), its safe
 	     * to use it here because we already checked that the implicit
