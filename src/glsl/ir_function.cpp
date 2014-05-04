@@ -117,6 +117,81 @@ parameter_lists_match(_mesa_glsl_parse_state *state,
 }
 
 
+/* Classes of parameter match, sorted (mostly) best matches first.
+ * See is_better_parameter_match() below for the exceptions.
+ * */
+typedef enum {
+   PARAMETER_EXACT_MATCH,
+   PARAMETER_FLOAT_TO_DOUBLE,
+   PARAMETER_INT_TO_FLOAT,
+   PARAMETER_INT_TO_DOUBLE,
+   PARAMETER_OTHER_CONVERSION,
+} parameter_match_t;
+
+
+static parameter_match_t
+get_parameter_match_type(const ir_variable *param,
+                         const ir_rvalue *actual)
+{
+   const glsl_type *from_type;
+   const glsl_type *to_type;
+
+   if (param->data.mode == ir_var_function_out) {
+      from_type = param->type;
+      to_type = actual->type;
+   } else {
+      from_type = actual->type;
+      to_type = param->type;
+   }
+
+   if (from_type == to_type)
+      return PARAMETER_EXACT_MATCH;
+
+   /* XXX: When ARB_gpu_shader_fp64 support is added, check for float->double,
+    * and int/uint->double conversions
+    */
+
+   if (to_type->base_type == GLSL_TYPE_FLOAT)
+      return PARAMETER_INT_TO_FLOAT;
+
+   /* int -> uint and any other oddball conversions */
+   return PARAMETER_OTHER_CONVERSION;
+}
+
+
+static bool
+is_better_parameter_match(parameter_match_t a_match,
+                          parameter_match_t b_match)
+{
+   /* From section 6.1 of the GLSL 4.00 spec (and the ARB_gpu_shader5 spec):
+    *
+    * 1. An exact match is better than a match involving any implicit
+    * conversion.
+    *
+    * 2. A match involving an implicit conversion from float to double
+    * is better than match involving any other implicit conversion.
+    *
+    * [XXX: Not in GLSL 4.0: Only in ARB_gpu_shader5:
+    * 3. A match involving an implicit conversion from either int or uint
+    * to float is better than a match involving an implicit conversion
+    * from either int or uint to double.]
+    *
+    * If none of the rules above apply to a particular pair of conversions,
+    * neither conversion is considered better than the other.
+    *
+    * --
+    *
+    * Notably, the int->uint conversion is *not* considered to be better
+    * or worse than int/uint->float or int/uint->double.
+    */
+
+   if (a_match >= PARAMETER_INT_TO_FLOAT && b_match == PARAMETER_OTHER_CONVERSION)
+      return false;
+
+   return a_match < b_match;
+}
+
+
 static ir_function_signature *
 choose_best_inexact_overload(_mesa_glsl_parse_state *state,
                              const exec_list *actual_parameters,
@@ -173,9 +248,10 @@ ir_function::matching_signature(_mesa_glsl_parse_state *state,
          free(inexact_matches);
          return sig;
       case PARAMETER_LIST_INEXACT_MATCH:
-         inexact_matches = realloc(inexact_matches,
-                                   sizeof(*inexact_matches) *
-                                   (num_inexact_matches + 1));
+         inexact_matches = (ir_function_signature **)
+               realloc(inexact_matches,
+                       sizeof(*inexact_matches) *
+                       (num_inexact_matches + 1));
          assert(inexact_matches);
          inexact_matches[num_inexact_matches++] = sig;
          continue;
