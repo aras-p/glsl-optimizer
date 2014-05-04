@@ -472,6 +472,9 @@ xa_composite_prepare(struct xa_context *ctx,
     struct xa_surface *dst_srf = comp->dst->srf;
     int ret;
 
+    if (comp->mask && !comp->mask->srf)
+	return -XA_ERR_INVAL;
+
     ret = xa_ctx_srf_create(ctx, dst_srf);
     if (ret != XA_ERR_NONE)
 	return ret;
