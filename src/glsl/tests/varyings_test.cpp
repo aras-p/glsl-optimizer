@@ -39,14 +39,14 @@ bool
 populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
                              hash_table *consumer_inputs,
                              hash_table *consumer_interface_inputs,
-                             ir_variable *consumer_inputs_with_locations[MAX_VARYING]);
+                             ir_variable *consumer_inputs_with_locations[VARYING_SLOT_MAX]);
 
 ir_variable *
 get_matching_input(void *mem_ctx,
                    const ir_variable *output_var,
                    hash_table *consumer_inputs,
                    hash_table *consumer_interface_inputs,
-                   ir_variable *consumer_inputs_with_locations[MAX_VARYING]);
+                   ir_variable *consumer_inputs_with_locations[VARYING_SLOT_MAX]);
 }
 
 class link_varyings : public ::testing::Test {
@@ -70,7 +70,7 @@ public:
    hash_table *consumer_interface_inputs;
 
    const glsl_type *simple_interface;
-   ir_variable *junk[MAX_VARYING];
+   ir_variable *junk[VARYING_SLOT_MAX];
 };
 
 link_varyings::link_varyings()
@@ -197,9 +197,8 @@ TEST_F(link_varyings, gl_ClipDistance)
                                                     consumer_interface_inputs,
                                                     junk));
 
-   EXPECT_EQ((void *) clipdistance,
-             hash_table_find(consumer_inputs, "gl_ClipDistance"));
-   EXPECT_EQ(1u, num_elements(consumer_inputs));
+   EXPECT_EQ(clipdistance, junk[VARYING_SLOT_CLIP_DIST0]);
+   EXPECT_TRUE(is_empty(consumer_inputs));
    EXPECT_TRUE(is_empty(consumer_interface_inputs));
 }
 

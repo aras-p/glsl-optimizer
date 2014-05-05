@@ -1092,11 +1092,11 @@ bool
 populate_consumer_input_sets(void *mem_ctx, exec_list *ir,
                              hash_table *consumer_inputs,
                              hash_table *consumer_interface_inputs,
-                             ir_variable *consumer_inputs_with_locations[MAX_VARYING])
+                             ir_variable *consumer_inputs_with_locations[VARYING_SLOT_MAX])
 {
    memset(consumer_inputs_with_locations,
           0,
-          sizeof(consumer_inputs_with_locations[0]) * MAX_VARYING);
+          sizeof(consumer_inputs_with_locations[0]) * VARYING_SLOT_MAX);
 
    foreach_list(node, ir) {
       ir_variable *const input_var = ((ir_instruction *) node)->as_variable();
@@ -1152,7 +1152,7 @@ get_matching_input(void *mem_ctx,
                    const ir_variable *output_var,
                    hash_table *consumer_inputs,
                    hash_table *consumer_interface_inputs,
-                   ir_variable *consumer_inputs_with_locations[MAX_VARYING])
+                   ir_variable *consumer_inputs_with_locations[VARYING_SLOT_MAX])
 {
    ir_variable *input_var;
 
@@ -1277,7 +1277,7 @@ assign_varying_locations(struct gl_context *ctx,
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
    hash_table *consumer_interface_inputs
       = hash_table_ctor(0, hash_table_string_hash, hash_table_string_compare);
-   ir_variable *consumer_inputs_with_locations[MAX_VARYING] = {
+   ir_variable *consumer_inputs_with_locations[VARYING_SLOT_MAX] = {
       NULL,
    };
 
