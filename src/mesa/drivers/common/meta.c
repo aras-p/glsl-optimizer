@@ -86,6 +86,9 @@
 /** Return offset in bytes of the field within a vertex struct */
 #define OFFSET(FIELD) ((void *) offsetof(struct vertex, FIELD))
 
+static void
+meta_clear(struct gl_context *ctx, GLbitfield buffers, bool glsl);
+
 static struct blit_shader *
 choose_blit_shader(GLenum target, struct blit_shader_table *table);
 
@@ -1459,100 +1462,13 @@ _mesa_meta_setup_ff_tnl_for_blit(GLuint *VAO, GLuint *VBO,
 void
 _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
 {
-   struct clear_state *clear = &ctx->Meta->Clear;
-   struct vertex verts[4];
-   /* save all state but scissor, pixel pack/unpack */
-   GLbitfield metaSave = (MESA_META_ALL -
-			  MESA_META_SCISSOR -
-			  MESA_META_PIXEL_STORE -
-			  MESA_META_CONDITIONAL_RENDER -
-                          MESA_META_FRAMEBUFFER_SRGB);
-   const GLuint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
+   meta_clear(ctx, buffers, false);
+}
 
-   if (buffers & BUFFER_BITS_COLOR) {
-      /* if clearing color buffers, don't save/restore colormask */
-      metaSave -= MESA_META_COLOR_MASK;
-   }
-
-   _mesa_meta_begin(ctx, metaSave);
-
-   _mesa_meta_setup_vertex_objects(&clear->VAO, &clear->VBO, false, 3, 0, 4);
-
-   /* GL_COLOR_BUFFER_BIT */
-   if (buffers & BUFFER_BITS_COLOR) {
-      /* leave colormask, glDrawBuffer state as-is */
-
-      /* Clears never have the color clamped. */
-      if (ctx->Extensions.ARB_color_buffer_float)
-         _mesa_ClampColor(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
-   }
-   else {
-      ASSERT(metaSave & MESA_META_COLOR_MASK);
-      _mesa_ColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-   }
-
-   /* GL_DEPTH_BUFFER_BIT */
-   if (buffers & BUFFER_BIT_DEPTH) {
-      _mesa_set_enable(ctx, GL_DEPTH_TEST, GL_TRUE);
-      _mesa_DepthFunc(GL_ALWAYS);
-      _mesa_DepthMask(GL_TRUE);
-   }
-   else {
-      assert(!ctx->Depth.Test);
-   }
-
-   /* GL_STENCIL_BUFFER_BIT */
-   if (buffers & BUFFER_BIT_STENCIL) {
-      _mesa_set_enable(ctx, GL_STENCIL_TEST, GL_TRUE);
-      _mesa_StencilOpSeparate(GL_FRONT_AND_BACK,
-                              GL_REPLACE, GL_REPLACE, GL_REPLACE);
-      _mesa_StencilFuncSeparate(GL_FRONT_AND_BACK, GL_ALWAYS,
-                                ctx->Stencil.Clear & stencilMax,
-                                ctx->Stencil.WriteMask[0]);
-   }
-   else {
-      assert(!ctx->Stencil.Enabled);
-   }
-
-   /* vertex positions/colors */
-   {
-      const GLfloat x0 = (GLfloat) ctx->DrawBuffer->_Xmin;
-      const GLfloat y0 = (GLfloat) ctx->DrawBuffer->_Ymin;
-      const GLfloat x1 = (GLfloat) ctx->DrawBuffer->_Xmax;
-      const GLfloat y1 = (GLfloat) ctx->DrawBuffer->_Ymax;
-      const GLfloat z = invert_z(ctx->Depth.Clear);
-      GLuint i;
-
-      verts[0].x = x0;
-      verts[0].y = y0;
-      verts[0].z = z;
-      verts[1].x = x1;
-      verts[1].y = y0;
-      verts[1].z = z;
-      verts[2].x = x1;
-      verts[2].y = y1;
-      verts[2].z = z;
-      verts[3].x = x0;
-      verts[3].y = y1;
-      verts[3].z = z;
-
-      /* vertex colors */
-      for (i = 0; i < 4; i++) {
-         verts[i].r = ctx->Color.ClearColor.f[0];
-         verts[i].g = ctx->Color.ClearColor.f[1];
-         verts[i].b = ctx->Color.ClearColor.f[2];
-         verts[i].a = ctx->Color.ClearColor.f[3];
-      }
-
-      /* upload new vertex data */
-      _mesa_BufferData(GL_ARRAY_BUFFER_ARB, sizeof(verts), verts,
-			  GL_DYNAMIC_DRAW_ARB);
-   }
-
-   /* draw quad */
-   _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-   _mesa_meta_end(ctx);
+void
+_mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
+{
+   meta_clear(ctx, buffers, true);
 }
 
 static void
@@ -1702,19 +1618,16 @@ meta_glsl_clear_cleanup(struct clear_state *clear)
 /**
  * Meta implementation of ctx->Driver.Clear() in terms of polygon rendering.
  */
-void
-_mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
+static void
+meta_clear(struct gl_context *ctx, GLbitfield buffers, bool glsl)
 {
    struct clear_state *clear = &ctx->Meta->Clear;
    GLbitfield metaSave;
    const GLuint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   const float x0 = ((float)fb->_Xmin / fb->Width)  * 2.0f - 1.0f;
-   const float y0 = ((float)fb->_Ymin / fb->Height) * 2.0f - 1.0f;
-   const float x1 = ((float)fb->_Xmax / fb->Width)  * 2.0f - 1.0f;
-   const float y1 = ((float)fb->_Ymax / fb->Height) * 2.0f - 1.0f;
-   const float z = -invert_z(ctx->Depth.Clear);
+   float x0, y0, x1, y1, z;
    struct vertex verts[4];
+   int i;
 
    metaSave = (MESA_META_ALPHA_TEST |
 	       MESA_META_BLEND |
@@ -1729,6 +1642,15 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
                MESA_META_MULTISAMPLE |
                MESA_META_OCCLUSION_QUERY);
 
+   if (!glsl) {
+      metaSave |= MESA_META_FOG |
+                  MESA_META_PIXEL_TRANSFER |
+                  MESA_META_TRANSFORM |
+                  MESA_META_TEXTURE |
+                  MESA_META_CLAMP_VERTEX_COLOR |
+                  MESA_META_SELECT_FEEDBACK;
+   }
+
    if (!(buffers & BUFFER_BITS_COLOR)) {
       /* We'll use colormask to disable color writes.  Otherwise,
        * respect color mask
@@ -1738,13 +1660,30 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
 
    _mesa_meta_begin(ctx, metaSave);
 
-   meta_glsl_clear_init(ctx, clear);
+   if (glsl) {
+      meta_glsl_clear_init(ctx, clear);
+
+      x0 = ((float) fb->_Xmin / fb->Width)  * 2.0f - 1.0f;
+      y0 = ((float) fb->_Ymin / fb->Height) * 2.0f - 1.0f;
+      x1 = ((float) fb->_Xmax / fb->Width)  * 2.0f - 1.0f;
+      y1 = ((float) fb->_Ymax / fb->Height) * 2.0f - 1.0f;
+      z = -invert_z(ctx->Depth.Clear);
+   } else {
+      _mesa_meta_setup_vertex_objects(&clear->VAO, &clear->VBO, false, 3, 0, 4);
+
+      x0 = (float) fb->_Xmin;
+      y0 = (float) fb->_Ymin;
+      x1 = (float) fb->_Xmax;
+      y1 = (float) fb->_Ymax;
+      z = invert_z(ctx->Depth.Clear);
+   }
 
    if (fb->_IntegerColor) {
+      assert(glsl);
       _mesa_UseProgram(clear->IntegerShaderProg);
       _mesa_Uniform4iv(clear->IntegerColorLocation, 1,
 			  ctx->Color.ClearColor.i);
-   } else {
+   } else if (glsl) {
       _mesa_UseProgram(clear->ShaderProg);
       _mesa_Uniform4fv(clear->ColorLocation, 1,
 			  ctx->Color.ClearColor.f);
@@ -1800,6 +1739,15 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
    verts[3].y = y1;
    verts[3].z = z;
 
+   if (!glsl) {
+      for (i = 0; i < 4; i++) {
+         verts[i].r = ctx->Color.ClearColor.f[0];
+         verts[i].g = ctx->Color.ClearColor.f[1];
+         verts[i].b = ctx->Color.ClearColor.f[2];
+         verts[i].a = ctx->Color.ClearColor.f[3];
+      }
+   }
+
    /* upload new vertex data */
    _mesa_BufferData(GL_ARRAY_BUFFER_ARB, sizeof(verts), verts,
 		       GL_DYNAMIC_DRAW_ARB);
@@ -1807,6 +1755,7 @@ _mesa_meta_glsl_Clear(struct gl_context *ctx, GLbitfield buffers)
    /* draw quad(s) */
    if (fb->MaxNumLayers > 0) {
       unsigned layer;
+      assert(glsl);
       for (layer = 0; layer < fb->MaxNumLayers; layer++) {
          if (fb->_IntegerColor)
             _mesa_Uniform1i(clear->IntegerLayerLocation, layer);
