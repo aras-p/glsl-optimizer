@@ -67,6 +67,25 @@ TBD.
 <h2>Changes</h2>
 
 <ul>
+<li>Renamed <i>--with-llvm-shared-libs</i> to <i>--enable-llvm-shared-libs</i></li>
+<p>
+The option is used to control how mesa is linked against LLVM, and now
+defaults to enabled (shared linking).
+</p>
+
+<li>Split <i>libxatracker.so</i> into a standalone library which can be used
+with any gallium driver.</li>
+<p>
+Previously the library was linked statically against vmware's virtual gpu
+driver(svga), whereas now it loads a shared pipe_*.so driver. Provide the
+following options during configure, if you would like support for svga driver
+<i>--enable-xa --with-gallium-drivers=svga</i>
+</p>
+
+<p>
+Note: The files are installed in $(libdir)/gallium-pipe/ and the interface
+between them and libxatracker.so is <strong>not</strong> stable.
+</p>
 </ul>
 
 </div>
