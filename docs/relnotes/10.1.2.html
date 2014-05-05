@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 10.1.2 Release Notes / (May 5, 2014)</h1>
+
+<p>
+Mesa 10.1.2 is a bug fix release which fixes bugs found since the 10.1.1 release.
+</p>
+<p>
+Mesa 10.1.2 implements the OpenGL 3.3 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.3.  OpenGL
+3.3 is <strong>only</strong> available if requested at context creation
+because compatibility contexts are not supported.
+</p>
+
+
+<h2>MD5 checksums</h2>
+<pre>
+37d79f94b1f41852a89d1fc3900bea76  MesaLib-10.1.2.tar.gz
+28b60d15ac9f364da1e0155911eaf44e  MesaLib-10.1.2.tar.bz2
+05300039085a65fc53c5472c4bb5747a  MesaLib-10.1.2.zip
+</pre>
+
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=27499">Bug 27499</a> - [855GM i915] GL_LINE_STIPPLE displays incorrect colors</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=75723">Bug 75723</a> - (regression since Linux 3.14?) brw_get_graphics_reset_status: Assertion `brw-&gt;hw_ctx != ((void *)0)' failed</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=76894">Bug 76894</a> - Piglit/spec/EXT_framebuffer_object/fbo-bind-renderbuffer failed</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=77702">Bug 77702</a> - [i965 Bisected]Piglit spec/NV_conditional_render_blitframebuffer fails</li>
+
+</ul>
+
+<h2>Changes</h2>
+
+<p>Ander Conselvan de Oliveira (2):</p>
+<ul>
+  <li>gbm/dri: Fix out-of-memory error path in dri_device_create()</li>
+  <li>egl: Protect use of gbm_dri with ifdef HAVE_DRM_PLATFORM</li>
+</ul>
+
+<p>Anuj Phogat (27):</p>
+<ul>
+  <li>mesa: Fix glGetVertexAttribi(GL_VERTEX_ATTRIB_ARRAY_SIZE)</li>
+  <li>swrast: Add glBlitFramebuffer to commands affected by conditional rendering</li>
+  <li>mesa: Fix error condition for multisample proxy texture targets</li>
+  <li>i965: Put an assertion to check valid varying_to_slot[varying]</li>
+  <li>i965: Fix component mask and varying_to_slot mapping for gl_Layer</li>
+  <li>i965: Fix component mask and varying_to_slot mapping for gl_ViewportIndex</li>
+  <li>mesa: Add helper function _mesa_is_format_integer()</li>
+  <li>mesa: Add error condition for integer formats in glGetTexImage()</li>
+  <li>mesa: Add an error condition in glGetFramebufferAttachmentParameteriv()</li>
+  <li>mesa: Fix error code generation in glReadPixels()</li>
+  <li>glsl: Allow overlapping locations for vertex input attributes</li>
+  <li>mesa: Fix querying location of nth element of an array variable</li>
+  <li>mesa: Use location VERT_ATTRIB_GENERIC0 for vertex attribute 0</li>
+  <li>glsl: Compile error if fs defines conflicting qualifiers for gl_FragCoord</li>
+  <li>glsl: Compile error if fs uses gl_FragCoord before first redeclaration</li>
+  <li>mesa: Add entry for extension ARB_texture_stencil8</li>
+  <li>mesa: Add error condition for format=STENCIL_INDEX in glGetTexImage()</li>
+  <li>i965: Fix crash in do_blit_readpixels()</li>
+  <li>mesa: Add missing types in _mesa_texstore_xx_xx() functions</li>
+  <li>mesa: Allow srcFormat=GL_DEPTH_STENCIL in _mesa_texstore_xx_xx() functions</li>
+  <li>mesa: Add new helper function _mesa_unpack_depth_stencil_row()</li>
+  <li>mesa: Add support to unpack depth-stencil texture in to FLOAT_32_UNSIGNED_INT_24_8_REV</li>
+  <li>mesa: Allow FLOAT_32_UNSIGNED_INT_24_8_REV in get_tex_depth_stencil()</li>
+  <li>i965: Add glBlitFramebuffer to commands affected by conditional rendering</li>
+  <li>glsl: Use switch to allow adding more shader types</li>
+  <li>glsl: Link error if fs defines conflicting qualifiers for gl_FragCoord</li>
+  <li>glsl: Apply the link error conditions to GL_ARB_fragment_coord_conventions</li>
+</ul>
+
+<p>Benjamin Bellec (1):</p>
+<ul>
+  <li>mesa: fix GetStringi error message with correct function name</li>
+</ul>
+
+<p>Brian Paul (1):</p>
+<ul>
+  <li>swrast: allocate swrast_texture_image::ImageSlices array if needed</li>
+</ul>
+
+<p>Carl Worth (4):</p>
+<ul>
+  <li>docs: Add the MD5 sums for the 10.1.1 release tar files.</li>
+  <li>cherry-ignore: Ignore a patch causing a regression</li>
+  <li>cherry-ignore: Drop an ignored patch now that piglit has been updated.</li>
+  <li>Update VERSION to 10.1.2</li>
+</ul>
+
+<p>Chris Forbes (1):</p>
+<ul>
+  <li>glsl: Only allow `invariant` on shader in/out between stages.</li>
+</ul>
+
+<p>Eric Anholt (1):</p>
+<ul>
+  <li>i965: Fix render-to-texture in non-FinishRenderTexture cases.</li>
+</ul>
+
+<p>Ian Romanick (1):</p>
+<ul>
+  <li>dri3: Enable GLX_MESA_query_renderer on DRI3 too</li>
+</ul>
+
+<p>Kenneth Graunke (2):</p>
+<ul>
+  <li>i965: Don't enable reset notification support on Gen4-5.</li>
+  <li>i965: Actually emit PIPELINE_SELECT and 3DSTATE_VF_STATISTICS.</li>
+</ul>
+
+<p>Marek Olšák (10):</p>
+<ul>
+  <li>r300g: don't crash when getting NULL colorbuffers</li>
+  <li>st/mesa: remove trailing NULL colorbuffers</li>
+  <li>r600g: fix edge flags and layered rendering on R600-R700</li>
+  <li>r600g: disable async DMA on R700</li>
+  <li>r600g: fix MSAA resolve on R6xx when the destination is 1D-tiled</li>
+  <li>r600g: fix flushing on RV670, RS780, RS880 again</li>
+  <li>r600g: fix buffer copying on R600-R700</li>
+  <li>r600g: fix for broken CULL_FRONT behavior on R6xx</li>
+  <li>r600g: fix for an MSAA hang on RV770</li>
+  <li>r600g: fix hang on RV740 by using DX_RASTERIZATION_KILL instead of SX_MISC</li>
+</ul>
+
+<p>Michel Dänzer (2):</p>
+<ul>
+  <li>r600g: Disable LLVM by default at runtime for graphics</li>
+  <li>st/mesa: Fix NULL pointer dereference for incomplete framebuffers</li>
+</ul>
+
+<p>Neil Roberts (1):</p>
+<ul>
+  <li>wayland: Fix the logic in disabling the prime capability</li>
+</ul>
+
+<p>Samuel Iglesias Gonsalvez (1):</p>
+<ul>
+  <li>mesa: fix check for dummy renderbuffer in _mesa_FramebufferRenderbufferEXT()</li>
+</ul>
+
+<p>Thomas Hellstrom (1):</p>
+<ul>
+  <li>st/xa: Cache render target surface</li>
+</ul>
+
+<p>nick (1):</p>
+<ul>
+  <li>swrast: Fix vertex color in _swsetup_Translate()</li>
+</ul>
+
+</div>
+</body>
+</html>
