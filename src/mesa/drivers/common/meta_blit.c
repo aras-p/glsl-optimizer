@@ -392,38 +392,16 @@ blitframebuffer_texture(struct gl_context *ctx,
       texObj = readAtt->Texture;
       target = texObj->Target;
    } else if (!readAtt->Texture && ctx->Driver.BindRenderbufferTexImage) {
-      /* Otherwise, we need the driver to be able to bind a renderbuffer as
-       * a texture image.
-       */
-      struct gl_texture_image *texImage;
-
-      if (rb->NumSamples > 1)
-         target = GL_TEXTURE_2D_MULTISAMPLE;
-      else
-         target = GL_TEXTURE_2D;
-
-      _mesa_GenTextures(1, &tempTex);
-      _mesa_BindTexture(target, tempTex);
-      srcLevel = 0;
-      texObj = _mesa_lookup_texture(ctx, tempTex);
-      texImage = _mesa_get_tex_image(ctx, texObj, target, srcLevel);
-
-      if (!ctx->Driver.BindRenderbufferTexImage(ctx, rb, texImage)) {
-         _mesa_DeleteTextures(1, &tempTex);
+      if (!_mesa_meta_bind_rb_as_tex_image(ctx, rb,
+                                           &tempTex, &texObj, &target))
          return false;
-      } else {
-         if (ctx->Driver.FinishRenderTexture &&
-             !rb->NeedsFinishRenderTexture) {
-            rb->NeedsFinishRenderTexture = true;
-            ctx->Driver.FinishRenderTexture(ctx, rb);
-         }
 
-         if (_mesa_is_winsys_fbo(readFb)) {
-            GLint temp = srcY0;
-            srcY0 = rb->Height - srcY1;
-            srcY1 = rb->Height - temp;
-            flipY = -flipY;
-         }
+      srcLevel = 0;
+      if (_mesa_is_winsys_fbo(readFb)) {
+         GLint temp = srcY0;
+         srcY0 = rb->Height - srcY1;
+         srcY1 = rb->Height - temp;
+         flipY = -flipY;
       }
    } else {
       GLenum tex_base_format;
@@ -599,6 +577,38 @@ blitframebuffer_texture(struct gl_context *ctx,
    _mesa_DeleteSamplers(1, &sampler);
    if (tempTex)
       _mesa_DeleteTextures(1, &tempTex);
+
+   return true;
+}
+
+GLboolean
+_mesa_meta_bind_rb_as_tex_image(struct gl_context *ctx,
+                                struct gl_renderbuffer *rb,
+                                GLuint *tex,
+                                struct gl_texture_object **texObj,
+                                GLenum *target)
+{
+   struct gl_texture_image *texImage;
+
+   if (rb->NumSamples > 1)
+      *target = GL_TEXTURE_2D_MULTISAMPLE;
+   else
+      *target = GL_TEXTURE_2D;
+
+   _mesa_GenTextures(1, tex);
+   _mesa_BindTexture(*target, *tex);
+   *texObj = _mesa_lookup_texture(ctx, *tex);
+   texImage = _mesa_get_tex_image(ctx, *texObj, *target, 0);
+
+   if (!ctx->Driver.BindRenderbufferTexImage(ctx, rb, texImage)) {
+      _mesa_DeleteTextures(1, tex);
+      return false;
+   }
+
+   if (ctx->Driver.FinishRenderTexture && !rb->NeedsFinishRenderTexture) {
+      rb->NeedsFinishRenderTexture = true;
+      ctx->Driver.FinishRenderTexture(ctx, rb);
+   }
 
    return true;
 }

@@ -395,6 +395,13 @@ _mesa_meta_end(struct gl_context *ctx);
 extern GLboolean
 _mesa_meta_in_progress(struct gl_context *ctx);
 
+extern GLboolean
+_mesa_meta_bind_rb_as_tex_image(struct gl_context *ctx,
+                                struct gl_renderbuffer *rb,
+                                GLuint *tex,
+                                struct gl_texture_object **texObj,
+                                GLenum *target);
+
 extern void
 _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
