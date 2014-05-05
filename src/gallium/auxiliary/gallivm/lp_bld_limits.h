@@ -122,11 +122,15 @@ gallivm_get_shader_param(enum pipe_shader_cap param)
       return PIPE_MAX_SAMPLERS;
    case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
       return PIPE_MAX_SHADER_SAMPLER_VIEWS;
+   case PIPE_SHADER_CAP_PREFERRED_IR:
+      return PIPE_SHADER_IR_TGSI;
    case PIPE_SHADER_CAP_TGSI_SQRT_SUPPORTED:
       return 1;
-   default:
-      return 0;
    }
+   /* if we get here, we missed a shader cap above (and should have seen
+    * a compiler warning.)
+    */
+   return 0;
 }
 
 
