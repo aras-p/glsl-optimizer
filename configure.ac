@@ -1179,6 +1179,13 @@ if test "x$enable_gbm" = xyes; then
         if test "x$enable_shared_glapi" = xno; then
             AC_MSG_ERROR([gbm_dri requires --enable-shared-glapi])
         fi
+    else
+        # Strictly speaking libgbm does not require --enable-dri, although
+        # both of its backends do. Thus one can build libgbm without any
+        # backends if --disable-dri is set.
+        # To avoid unnecessary complexity of checking if at least one backend
+        # is available when building, just mandate --enable-dri.
+        AC_MSG_ERROR([gbm requires --enable-dri])
     fi
 fi
 AM_CONDITIONAL(HAVE_GBM, test "x$enable_gbm" = xyes)
