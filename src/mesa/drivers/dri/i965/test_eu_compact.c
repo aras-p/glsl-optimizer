@@ -236,8 +236,8 @@ gen_f0_1_MOV_GRF_GRF(struct brw_compile *p)
 
    brw_push_insn_state(p);
    brw_set_predicate_control(p, true);
-   current_insn(p)->bits2.da1.flag_subreg_nr = 1;
-   brw_MOV(p, g0, g2);
+   struct brw_instruction *mov = brw_MOV(p, g0, g2);
+   mov->bits2.da1.flag_subreg_nr = 1;
    brw_pop_insn_state(p);
 }
 

@@ -90,11 +90,6 @@ struct brw_compile {
    int loop_stack_array_size;
 };
 
-static inline struct brw_instruction *current_insn( struct brw_compile *p)
-{
-   return &p->store[p->nr_insn];
-}
-
 void brw_pop_insn_state( struct brw_compile *p );
 void brw_push_insn_state( struct brw_compile *p );
 void brw_set_mask_control( struct brw_compile *p, unsigned value );
