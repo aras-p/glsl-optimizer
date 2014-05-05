@@ -1482,6 +1482,12 @@ GLuint brw_get_rb_for_slice(struct brw_context *brw,
 void brw_meta_updownsample(struct brw_context *brw,
                            struct intel_mipmap_tree *src,
                            struct intel_mipmap_tree *dst);
+
+void brw_meta_fbo_stencil_blit(struct brw_context *brw,
+                               GLfloat srcX0, GLfloat srcY0,
+                               GLfloat srcX1, GLfloat srcY1,
+                               GLfloat dstX0, GLfloat dstY0,
+                               GLfloat dstX1, GLfloat dstY1);
 /*======================================================================
  * brw_misc_state.c
  */

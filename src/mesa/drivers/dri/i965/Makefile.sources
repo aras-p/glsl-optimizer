@@ -76,6 +76,7 @@ i965_FILES = \
 	brw_lower_texture_gradients.cpp \
 	brw_lower_unnormalized_offset.cpp \
 	brw_meta_updownsample.c \
+	brw_meta_stencil_blit.c \
 	brw_meta_util.c \
 	brw_misc_state.c \
 	brw_object_purgeable.c \
