@@ -402,6 +402,11 @@ _mesa_meta_bind_rb_as_tex_image(struct gl_context *ctx,
                                 struct gl_texture_object **texObj,
                                 GLenum *target);
 
+GLuint
+_mesa_meta_setup_sampler(struct gl_context *ctx,
+                         const struct gl_texture_object *texObj,
+                         GLenum target, GLenum filter, GLuint srcLevel);
+
 extern void
 _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
                            GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,

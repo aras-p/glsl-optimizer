@@ -454,25 +454,13 @@ blitframebuffer_texture(struct gl_context *ctx,
                                        2);
    }
 
-   _mesa_GenSamplers(1, &sampler);
-   _mesa_BindSampler(ctx->Texture.CurrentUnit, sampler);
-
    /*
      printf("Blit from texture!\n");
      printf("  srcAtt %p  dstAtt %p\n", readAtt, drawAtt);
      printf("  srcTex %p  dstText %p\n", texObj, drawAtt->Texture);
    */
 
-   /* Prepare src texture state */
-   _mesa_BindTexture(target, texObj->Name);
-   _mesa_SamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, filter);
-   _mesa_SamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, filter);
-   if (target != GL_TEXTURE_RECTANGLE_ARB) {
-      _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
-      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
-   }
-   _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-   _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+   sampler = _mesa_meta_setup_sampler(ctx, texObj, target, filter, srcLevel);
 
    /* Always do our blits with no net sRGB decode or encode.
     *
@@ -611,6 +599,30 @@ _mesa_meta_bind_rb_as_tex_image(struct gl_context *ctx,
    }
 
    return true;
+}
+
+GLuint
+_mesa_meta_setup_sampler(struct gl_context *ctx,
+                         const struct gl_texture_object *texObj,
+                         GLenum target, GLenum filter, GLuint srcLevel)
+{
+   GLuint sampler;
+
+   _mesa_GenSamplers(1, &sampler);
+   _mesa_BindSampler(ctx->Texture.CurrentUnit, sampler);
+
+   /* Prepare src texture state */
+   _mesa_BindTexture(target, texObj->Name);
+   _mesa_SamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, filter);
+   _mesa_SamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, filter);
+   if (target != GL_TEXTURE_RECTANGLE_ARB) {
+      _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
+      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
+   }
+   _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+   _mesa_SamplerParameteri(sampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+   return sampler;
 }
 
 /**
