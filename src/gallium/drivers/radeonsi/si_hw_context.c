@@ -35,13 +35,13 @@ void si_need_cs_space(struct si_context *ctx, unsigned num_dw,
 	/* The number of dwords we already used in the CS so far. */
 	num_dw += ctx->b.rings.gfx.cs->cdw;
 
-	for (i = 0; i < SI_NUM_ATOMS(ctx); i++) {
-		if (ctx->atoms.array[i]->dirty) {
-			num_dw += ctx->atoms.array[i]->num_dw;
-		}
-	}
-
 	if (count_draw_in) {
+		for (i = 0; i < SI_NUM_ATOMS(ctx); i++) {
+			if (ctx->atoms.array[i]->dirty) {
+				num_dw += ctx->atoms.array[i]->num_dw;
+			}
+		}
+
 		/* The number of dwords all the dirty states would take. */
 		num_dw += ctx->pm4_dirty_cdwords;
 
