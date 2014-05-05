@@ -182,7 +182,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
       faceTarget = target;
    }
 
-   _mesa_meta_begin(ctx, MESA_META_ALL);
+   _mesa_meta_begin(ctx, MESA_META_ALL & ~MESA_META_DRAW_BUFFERS);
 
    /* Choose between glsl version and fixed function version of
     * GenerateMipmap function.

@@ -659,7 +659,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    /* Only scissor affects blit, but we're doing to set a custom scissor if
     * necessary anyway, so save/clear state.
     */
-   _mesa_meta_begin(ctx, MESA_META_ALL);
+   _mesa_meta_begin(ctx, MESA_META_ALL & ~MESA_META_DRAW_BUFFERS);
 
    /* If the clipping earlier changed the destination rect at all, then
     * enable the scissor to clip to it.

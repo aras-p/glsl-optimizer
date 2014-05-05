@@ -2723,7 +2723,7 @@ copytexsubimage_using_blit_framebuffer(struct gl_context *ctx, GLuint dims,
 
    _mesa_unlock_texture(ctx, texObj);
 
-   _mesa_meta_begin(ctx, MESA_META_ALL);
+   _mesa_meta_begin(ctx, MESA_META_ALL & ~MESA_META_DRAW_BUFFERS);
 
    _mesa_GenFramebuffers(1, &fbo);
    _mesa_BindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);
@@ -2945,7 +2945,8 @@ decompress_texture_image(struct gl_context *ctx,
       break;
    }
 
-   _mesa_meta_begin(ctx, MESA_META_ALL & ~MESA_META_PIXEL_STORE);
+   _mesa_meta_begin(ctx, MESA_META_ALL & ~(MESA_META_PIXEL_STORE |
+                                           MESA_META_DRAW_BUFFERS));
 
    samplerSave = ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
          ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
