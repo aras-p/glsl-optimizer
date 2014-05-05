@@ -3323,6 +3323,11 @@ struct gl_constants
    GLuint UniformBufferOffsetAlignment;
    /** @} */
 
+   /**
+    * GL_ARB_explicit_uniform_location
+    */
+   GLuint MaxUserAssignableUniformLocations;
+
    /** GL_ARB_geometry_shader4 */
    GLuint MaxGeometryOutputVertices;
    GLuint MaxGeometryTotalOutputComponents;

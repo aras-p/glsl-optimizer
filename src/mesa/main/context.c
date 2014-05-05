@@ -610,6 +610,10 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxUniformBlockSize = 16384;
    ctx->Const.UniformBufferOffsetAlignment = 1;
 
+   /* GL_ARB_explicit_uniform_location, GL_MAX_UNIFORM_LOCATIONS */
+   ctx->Const.MaxUserAssignableUniformLocations =
+      4 * MESA_SHADER_STAGES * MAX_UNIFORMS;
+
    for (i = 0; i < MESA_SHADER_STAGES; i++)
       init_program_limits(ctx, i, &ctx->Const.Program[i]);
 

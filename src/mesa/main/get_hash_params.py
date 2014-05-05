@@ -480,6 +480,7 @@ descriptor=[
   [ "MAX_LIST_NESTING", "CONST(MAX_LIST_NESTING), NO_EXTRA" ],
   [ "MAX_NAME_STACK_DEPTH", "CONST(MAX_NAME_STACK_DEPTH), NO_EXTRA" ],
   [ "MAX_PIXEL_MAP_TABLE", "CONST(MAX_PIXEL_MAP_TABLE), NO_EXTRA" ],
+  [ "MAX_UNIFORM_LOCATIONS", "CONTEXT_INT(Const.MaxUserAssignableUniformLocations), extra_ARB_explicit_uniform_location" ],
   [ "NAME_STACK_DEPTH", "CONTEXT_INT(Select.NameStackDepth), NO_EXTRA" ],
   [ "PACK_LSB_FIRST", "CONTEXT_BOOL(Pack.LsbFirst), NO_EXTRA" ],
   [ "PACK_SWAP_BYTES", "CONTEXT_BOOL(Pack.SwapBytes), NO_EXTRA" ],
