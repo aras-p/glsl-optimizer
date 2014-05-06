@@ -126,5 +126,6 @@ egldir = $(includedir)/EGL
 egl_HEADERS = \
 	$(top_srcdir)/include/EGL/eglext.h \
 	$(top_srcdir)/include/EGL/egl.h \
+	$(top_srcdir)/include/EGL/eglextchromium.h \
 	$(top_srcdir)/include/EGL/eglmesaext.h \
 	$(top_srcdir)/include/EGL/eglplatform.h

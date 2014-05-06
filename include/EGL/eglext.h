@@ -646,6 +646,7 @@ EGLAPI EGLuint64NV EGLAPIENTRY eglGetSystemTimeNV (void);
 #endif /* EGL_NV_system_time */
 
 #include <EGL/eglmesaext.h>
+#include <EGL/eglextchromium.h>
 
 #ifdef __cplusplus
 }
