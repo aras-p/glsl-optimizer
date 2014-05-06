@@ -421,27 +421,27 @@ static void declare_input_fs(
 					   shader->input[input_index].param_offset);
 
 	switch (decl->Interp.Interpolate) {
-	case TGSI_INTERPOLATE_COLOR:
-		if (si_shader_ctx->shader->key.ps.flatshade) {
-			interp_param = 0;
-		} else {
-			if (decl->Interp.Centroid)
-				interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_CENTROID);
-			else
-				interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_CENTER);
-		}
-		break;
 	case TGSI_INTERPOLATE_CONSTANT:
 		interp_param = 0;
 		break;
 	case TGSI_INTERPOLATE_LINEAR:
-		if (decl->Interp.Centroid)
+		if (si_shader_ctx->shader->key.ps.interp_at_sample)
+			interp_param = LLVMGetParam(main_fn, SI_PARAM_LINEAR_SAMPLE);
+		else if (decl->Interp.Centroid)
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_LINEAR_CENTROID);
 		else
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_LINEAR_CENTER);
 		break;
+	case TGSI_INTERPOLATE_COLOR:
+		if (si_shader_ctx->shader->key.ps.flatshade) {
+			interp_param = 0;
+			break;
+		}
+		/* fall through to perspective */
 	case TGSI_INTERPOLATE_PERSPECTIVE:
-		if (decl->Interp.Centroid)
+		if (si_shader_ctx->shader->key.ps.interp_at_sample)
+			interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_SAMPLE);
+		else if (decl->Interp.Centroid)
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_CENTROID);
 		else
 			interp_param = LLVMGetParam(main_fn, SI_PARAM_PERSP_CENTER);
