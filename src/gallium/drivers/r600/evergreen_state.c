@@ -1406,7 +1406,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	if (rctx->b.chip_class == EVERGREEN)
 		rctx->framebuffer.atom.num_dw += 14; /* Evergreen */
 	else
-		rctx->framebuffer.atom.num_dw += 25; /* Cayman */
+		rctx->framebuffer.atom.num_dw += 28; /* Cayman */
 
 	/* Colorbuffers. */
 	rctx->framebuffer.atom.num_dw += state->nr_cbufs * 23;
@@ -1679,7 +1679,7 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 		evergreen_emit_msaa_state(rctx, rctx->framebuffer.nr_samples);
 	} else {
 		cayman_emit_msaa_sample_locs(cs, rctx->framebuffer.nr_samples);
-		cayman_emit_msaa_config(cs, rctx->framebuffer.nr_samples);
+		cayman_emit_msaa_config(cs, rctx->framebuffer.nr_samples, 1);
 	}
 }
 
@@ -2180,8 +2180,6 @@ void cayman_init_common_regs(struct r600_command_buffer *cb,
 	r600_store_value(cb, 0); /* R_008C14_SQ_GLOBAL_GPR_RESOURCE_MGMT_2 */
 
 	r600_store_config_reg(cb, R_008D8C_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, (1 << 8));
-
-	r600_store_context_reg(cb, R_028A4C_PA_SC_MODE_CNTL_1, 0);
 
 	r600_store_context_reg_seq(cb, R_028350_SX_MISC, 2);
 	r600_store_value(cb, 0);

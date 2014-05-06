@@ -1921,7 +1921,7 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	sctx->framebuffer.atom.num_dw = state->nr_cbufs*15 + (8 - state->nr_cbufs)*3;
 	sctx->framebuffer.atom.num_dw += state->zsbuf ? 23 : 4;
 	sctx->framebuffer.atom.num_dw += 3; /* WINDOW_SCISSOR_BR */
-	sctx->framebuffer.atom.num_dw += 25; /* MSAA */
+	sctx->framebuffer.atom.num_dw += 28; /* MSAA */
 	sctx->framebuffer.atom.dirty = true;
 }
 
@@ -2026,7 +2026,7 @@ static void si_emit_framebuffer_state(struct si_context *sctx, struct r600_atom 
 			       S_028208_BR_X(state->width) | S_028208_BR_Y(state->height));
 
 	cayman_emit_msaa_sample_locs(cs, sctx->framebuffer.nr_samples);
-	cayman_emit_msaa_config(cs, sctx->framebuffer.nr_samples);
+	cayman_emit_msaa_config(cs, sctx->framebuffer.nr_samples, 1);
 }
 
 /*
@@ -3040,8 +3040,6 @@ void si_init_config(struct si_context *sctx)
 		return;
 
 	si_cmd_context_control(pm4);
-
-	si_pm4_set_reg(pm4, R_028A4C_PA_SC_MODE_CNTL_1, 0x0);
 
 	si_pm4_set_reg(pm4, R_028A10_VGT_OUTPUT_PATH_CNTL, 0x0);
 	si_pm4_set_reg(pm4, R_028A14_VGT_HOS_CNTL, 0x0);

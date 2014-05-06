@@ -160,6 +160,9 @@
 #define   G_028B98_STREAM_3_BUFFER_EN(x)                              (((x) >> 12) & 0x0F)
 #define   C_028B98_STREAM_3_BUFFER_EN                                 0xFFFF0FFF
 
+#define EG_R_028A4C_PA_SC_MODE_CNTL_1                0x028A4C
+#define   EG_S_028A4C_PS_ITER_SAMPLE(x)                 (((x) & 0x1) << 16)
+
 #define CM_R_028804_DB_EQAA                          0x00028804
 #define   S_028804_MAX_ANCHOR_SAMPLES(x)		(((x) & 0x7) << 0)
 #define   S_028804_PS_ITER_SAMPLES(x)			(((x) & 0x7) << 4)
