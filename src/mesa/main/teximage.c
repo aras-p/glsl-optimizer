@@ -3024,7 +3024,7 @@ _mesa_choose_texture_format(struct gl_context *ctx,
    }
 
    /* choose format from scratch */
-   f = ctx->Driver.ChooseTextureFormat(ctx, texObj->Target, internalFormat,
+   f = ctx->Driver.ChooseTextureFormat(ctx, target, internalFormat,
                                        format, type);
    ASSERT(f != MESA_FORMAT_NONE);
    return f;
