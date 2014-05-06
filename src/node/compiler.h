@@ -13,7 +13,7 @@ public:
 	void release();
 
 private:
-	Compiler(bool essl);
+	Compiler(glslopt_target target);
 	~Compiler();
 
 	glslopt_ctx* _binding;
