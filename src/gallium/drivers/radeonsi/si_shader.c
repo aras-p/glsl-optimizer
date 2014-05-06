@@ -529,6 +529,18 @@ static void declare_input_fs(
 	}
 }
 
+static LLVMValueRef get_sample_id(struct radeon_llvm_context *radeon_bld)
+{
+	struct gallivm_state *gallivm = &radeon_bld->gallivm;
+	LLVMValueRef value = LLVMGetParam(radeon_bld->main_fn,
+					  SI_PARAM_ANCILLARY);
+	value = LLVMBuildLShr(gallivm->builder, value,
+			      lp_build_const_int32(gallivm, 8), "");
+	value = LLVMBuildAnd(gallivm->builder, value,
+			     lp_build_const_int32(gallivm, 0xf), "");
+	return value;
+}
+
 static LLVMValueRef load_const(LLVMBuilderRef builder, LLVMValueRef resource,
 			       LLVMValueRef offset, LLVMTypeRef return_type)
 {
@@ -556,6 +568,10 @@ static void declare_system_value(
 	case TGSI_SEMANTIC_VERTEXID:
 		value = LLVMGetParam(radeon_bld->main_fn,
 				     si_shader_ctx->param_vertex_id);
+		break;
+
+	case TGSI_SEMANTIC_SAMPLEID:
+		value = get_sample_id(radeon_bld);
 		break;
 
 	default:
@@ -2186,7 +2202,7 @@ static void create_function(struct si_shader_context *si_shader_ctx)
 		params[SI_PARAM_POS_Z_FLOAT] = f32;
 		params[SI_PARAM_POS_W_FLOAT] = f32;
 		params[SI_PARAM_FRONT_FACE] = f32;
-		params[SI_PARAM_ANCILLARY] = f32;
+		params[SI_PARAM_ANCILLARY] = i32;
 		params[SI_PARAM_SAMPLE_COVERAGE] = f32;
 		params[SI_PARAM_POS_FIXED_PT] = f32;
 		num_params = SI_PARAM_POS_FIXED_PT+1;
