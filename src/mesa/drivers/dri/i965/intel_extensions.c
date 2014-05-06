@@ -284,6 +284,7 @@ intelInitExtensions(struct gl_context *ctx)
 
    if (brw->gen >= 7) {
       ctx->Extensions.ARB_conservative_depth = true;
+      ctx->Extensions.ARB_texture_view = true;
       ctx->Extensions.AMD_vertex_shader_layer = true;
       if (can_do_pipelined_register_writes(brw)) {
          ctx->Extensions.ARB_transform_feedback2 = true;
@@ -300,10 +301,6 @@ intelInitExtensions(struct gl_context *ctx)
 
       if (getenv("INTEL_COMPUTE_SHADER"))
          ctx->Extensions.ARB_compute_shader = true;
-   }
-
-   if (brw->gen == 7) {
-      ctx->Extensions.ARB_texture_view = true;
    }
 
    if (brw->gen >= 8) {

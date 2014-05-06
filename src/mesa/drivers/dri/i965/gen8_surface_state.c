@@ -134,17 +134,20 @@ gen8_update_texture_surface(struct gl_context *ctx,
    struct intel_mipmap_tree *mt = intelObj->mt;
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
+   mesa_format format = intelObj->_Format;
 
    if (tObj->Target == GL_TEXTURE_BUFFER) {
       brw_update_buffer_texture_surface(ctx, unit, surf_offset);
       return;
    }
 
-   if (tObj->StencilSampling && firstImage->_BaseFormat == GL_DEPTH_STENCIL)
+   if (tObj->StencilSampling && firstImage->_BaseFormat == GL_DEPTH_STENCIL) {
       mt = mt->stencil_mt;
+      format = MESA_FORMAT_S_UINT8;
+   }
 
    unsigned tiling_mode, pitch;
-   if (mt->format == MESA_FORMAT_S_UINT8) {
+   if (format == MESA_FORMAT_S_UINT8) {
       tiling_mode = GEN8_SURFACE_TILING_W;
       pitch = 2 * mt->pitch;
    } else {
@@ -152,9 +155,14 @@ gen8_update_texture_surface(struct gl_context *ctx,
       pitch = mt->pitch;
    }
 
-   uint32_t tex_format = translate_tex_format(brw,
-                                              mt->format,
-                                              sampler->sRGBDecode);
+   /* If this is a view with restricted NumLayers, then our effective depth
+    * is not just the miptree depth.
+    */
+   uint32_t effective_depth =
+      (tObj->Immutable && tObj->Target != GL_TEXTURE_3D) ? tObj->NumLayers
+                                                         : mt->logical_depth0;
+
+   uint32_t tex_format = translate_tex_format(brw, format, sampler->sRGBDecode);
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE,
                                     13 * 4, 64, surf_offset);
@@ -178,11 +186,15 @@ gen8_update_texture_surface(struct gl_context *ctx,
    surf[2] = SET_FIELD(mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
              SET_FIELD(mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);
 
-   surf[3] = SET_FIELD(mt->logical_depth0 - 1, BRW_SURFACE_DEPTH) | (pitch - 1);
+   surf[3] = SET_FIELD(effective_depth - 1, BRW_SURFACE_DEPTH) | (pitch - 1);
 
-   surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout);
+   surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout) |
+             SET_FIELD(tObj->MinLayer, GEN7_SURFACE_MIN_ARRAY_ELEMENT) |
+             SET_FIELD(effective_depth - 1,
+                       GEN7_SURFACE_RENDER_TARGET_VIEW_EXTENT);
 
-   surf[5] = SET_FIELD(tObj->BaseLevel - mt->first_level, GEN7_SURFACE_MIN_LOD) |
+   surf[5] = SET_FIELD(tObj->MinLevel + tObj->BaseLevel - mt->first_level,
+                       GEN7_SURFACE_MIN_LOD) |
              (intelObj->_MaxLevel - tObj->BaseLevel); /* mip count */
 
    surf[6] = 0;
