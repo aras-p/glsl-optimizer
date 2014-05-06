@@ -1413,6 +1413,7 @@ static void si_llvm_emit_fs_epilogue(struct lp_build_tgsi_context * bld_base)
 			out_ptr = si_shader_ctx->radeon_bld.soa.outputs[depth_index][2];
 			args[5] = LLVMBuildLoad(base->gallivm->builder, out_ptr, "");
 			mask |= 0x1;
+			si_shader_ctx->shader->db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
 		}
 
 		if (stencil_index >= 0) {
@@ -1422,7 +1423,14 @@ static void si_llvm_emit_fs_epilogue(struct lp_build_tgsi_context * bld_base)
 			 * breaks some stencil piglit tests
 			 */
 			mask |= 0x3;
+			si_shader_ctx->shader->db_shader_control |=
+				S_02880C_STENCIL_TEST_VAL_EXPORT_ENABLE(1);
 		}
+
+		if (stencil_index >= 0)
+			si_shader_ctx->shader->spi_shader_z_format = V_028710_SPI_SHADER_32_GR;
+		else
+			si_shader_ctx->shader->spi_shader_z_format = V_028710_SPI_SHADER_32_R;
 
 		/* Specify which components to enable */
 		args[0] = lp_build_const_int32(base->gallivm, mask);

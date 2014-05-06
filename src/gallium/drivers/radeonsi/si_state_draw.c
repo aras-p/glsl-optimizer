@@ -233,7 +233,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	struct si_pm4_state *pm4;
 	unsigned i, spi_ps_in_control, db_shader_control;
 	unsigned num_sgprs, num_user_sgprs;
-	unsigned spi_baryc_cntl = 0, spi_ps_input_ena, spi_shader_z_format;
+	unsigned spi_baryc_cntl = 0, spi_ps_input_ena;
 	uint64_t va;
 
 	si_pm4_delete_state(sctx, ps, shader->pm4);
@@ -264,12 +264,8 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 		}
 	}
 
-	for (i = 0; i < shader->shader.noutput; i++) {
-		if (shader->shader.output[i].name == TGSI_SEMANTIC_POSITION)
-			db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
-		if (shader->shader.output[i].name == TGSI_SEMANTIC_STENCIL)
-			db_shader_control |= S_02880C_STENCIL_TEST_VAL_EXPORT_ENABLE(1);
-	}
+	db_shader_control |= shader->db_shader_control;
+
 	if (shader->shader.uses_kill || shader->key.ps.alpha_func != PIPE_FUNC_ALWAYS)
 		db_shader_control |= S_02880C_KILL_ENABLE(1);
 
@@ -292,13 +288,7 @@ static void si_pipe_shader_ps(struct pipe_context *ctx, struct si_pipe_shader *s
 	si_pm4_set_reg(pm4, R_0286D0_SPI_PS_INPUT_ADDR, spi_ps_input_ena);
 	si_pm4_set_reg(pm4, R_0286D8_SPI_PS_IN_CONTROL, spi_ps_in_control);
 
-	if (G_02880C_STENCIL_TEST_VAL_EXPORT_ENABLE(db_shader_control))
-		spi_shader_z_format = V_028710_SPI_SHADER_32_GR;
-	else if (G_02880C_Z_EXPORT_ENABLE(db_shader_control))
-		spi_shader_z_format = V_028710_SPI_SHADER_32_R;
-	else
-		spi_shader_z_format = 0;
-	si_pm4_set_reg(pm4, R_028710_SPI_SHADER_Z_FORMAT, spi_shader_z_format);
+	si_pm4_set_reg(pm4, R_028710_SPI_SHADER_Z_FORMAT, shader->spi_shader_z_format);
 	si_pm4_set_reg(pm4, R_028714_SPI_SHADER_COL_FORMAT,
 		       shader->spi_shader_col_format);
 	si_pm4_set_reg(pm4, R_02823C_CB_SHADER_MASK, shader->cb_shader_mask);

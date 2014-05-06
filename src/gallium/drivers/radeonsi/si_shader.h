@@ -179,6 +179,8 @@ struct si_pipe_shader {
 	unsigned			lds_size;
 	unsigned			spi_ps_input_ena;
 	unsigned			spi_shader_col_format;
+	unsigned			spi_shader_z_format;
+	unsigned			db_shader_control;
 	unsigned			cb_shader_mask;
 	bool				cb0_is_integer;
 	unsigned			sprite_coord_enable;
