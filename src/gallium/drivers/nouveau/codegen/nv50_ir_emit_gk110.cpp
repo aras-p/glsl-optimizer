@@ -915,6 +915,9 @@ CodeEmitterGK110::emitSET(const CmpInstruction *i)
          modNegAbsF32_3b(i, 1);
       }
       FTZ_(3a);
+
+      if (i->dType == TYPE_F32)
+         code[1] |= 1 << 23;
    }
    if (i->sType == TYPE_S32)
       code[1] |= 1 << 19;
