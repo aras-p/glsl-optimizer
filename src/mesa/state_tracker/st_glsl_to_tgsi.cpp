@@ -459,8 +459,7 @@ public:
    int get_last_temp_write(int index);
 
    void copy_propagate(void);
-   void eliminate_dead_code(void);
-   int eliminate_dead_code_advanced(void);
+   int eliminate_dead_code(void);
    void merge_registers(void);
    void renumber_registers(void);
 
@@ -3672,7 +3671,8 @@ glsl_to_tgsi_visitor::copy_propagate(void)
 }
 
 /*
- * Tracks available PROGRAM_TEMPORARY registers for dead code elimination.
+ * On a basic block basis, tracks available PROGRAM_TEMPORARY registers for dead
+ * code elimination.
  *
  * The glsl_to_tgsi_visitor lazily produces code assuming that this pass
  * will occur.  As an example, a TXP production after copy propagation but 
@@ -3685,48 +3685,9 @@ glsl_to_tgsi_visitor::copy_propagate(void)
  * and after this pass:
  *
  * 0: TXP TEMP[2], INPUT[4].xyyw, texture[0], 2D;
- * 
- * FIXME: assumes that all functions are inlined (no support for BGNSUB/ENDSUB)
- * FIXME: doesn't eliminate all dead code inside of loops; it steps around them
- */
-void
-glsl_to_tgsi_visitor::eliminate_dead_code(void)
-{
-   int i;
-   
-   for (i=0; i < this->next_temp; i++) {
-      int last_read = get_last_temp_read(i);
-      int j = 0;
-      
-      foreach_list_safe(node, &this->instructions) {
-         glsl_to_tgsi_instruction *inst = (glsl_to_tgsi_instruction *) node;
-
-         if (inst->dst.file == PROGRAM_TEMPORARY && inst->dst.index == i &&
-             j > last_read)
-         {
-            inst->remove();
-            delete inst;
-         }
-         
-         j++;
-      }
-   }
-}
-
-/*
- * On a basic block basis, tracks available PROGRAM_TEMPORARY registers for dead
- * code elimination.  This is less primitive than eliminate_dead_code(), as it
- * is per-channel and can detect consecutive writes without a read between them
- * as dead code.  However, there is some dead code that can be eliminated by 
- * eliminate_dead_code() but not this function - for example, this function 
- * cannot eliminate an instruction writing to a register that is never read and
- * is the only instruction writing to that register.
- *
- * The glsl_to_tgsi_visitor lazily produces code assuming that this pass
- * will occur.
  */
 int
-glsl_to_tgsi_visitor::eliminate_dead_code_advanced(void)
+glsl_to_tgsi_visitor::eliminate_dead_code(void)
 {
    glsl_to_tgsi_instruction **writes = rzalloc_array(mem_ctx,
                                                      glsl_to_tgsi_instruction *,
@@ -5270,9 +5231,8 @@ get_mesa_program(struct gl_context *ctx,
    /* Perform optimizations on the instructions in the glsl_to_tgsi_visitor. */
    v->simplify_cmp();
    v->copy_propagate();
-   while (v->eliminate_dead_code_advanced());
+   while (v->eliminate_dead_code());
 
-   v->eliminate_dead_code();
    v->merge_registers();
    v->renumber_registers();
    
