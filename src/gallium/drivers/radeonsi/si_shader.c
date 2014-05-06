@@ -529,6 +529,15 @@ static void declare_input_fs(
 	}
 }
 
+static LLVMValueRef load_const(LLVMBuilderRef builder, LLVMValueRef resource,
+			       LLVMValueRef offset, LLVMTypeRef return_type)
+{
+	LLVMValueRef args[2] = {resource, offset};
+
+	return build_intrinsic(builder, "llvm.SI.load.const", return_type, args, 2,
+			       LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
+}
+
 static void declare_system_value(
 	struct radeon_llvm_context * radeon_bld,
 	unsigned index,
@@ -568,7 +577,6 @@ static LLVMValueRef fetch_constant(
 	const struct tgsi_ind_register *ireg = &reg->Indirect;
 	unsigned buf, idx;
 
-	LLVMValueRef args[2];
 	LLVMValueRef addr;
 	LLVMValueRef result;
 
@@ -587,15 +595,14 @@ static LLVMValueRef fetch_constant(
 	if (!reg->Register.Indirect)
 		return bitcast(bld_base, type, si_shader_ctx->constants[buf][idx]);
 
-	args[0] = si_shader_ctx->const_resource[buf];
-	args[1] = lp_build_const_int32(base->gallivm, idx * 4);
 	addr = si_shader_ctx->radeon_bld.soa.addr[ireg->Index][ireg->Swizzle];
 	addr = LLVMBuildLoad(base->gallivm->builder, addr, "load addr reg");
 	addr = lp_build_mul_imm(&bld_base->uint_bld, addr, 16);
-	args[1] = lp_build_add(&bld_base->uint_bld, addr, args[1]);
+	addr = lp_build_add(&bld_base->uint_bld, addr,
+			    lp_build_const_int32(base->gallivm, idx * 4));
 
-	result = build_intrinsic(base->gallivm->builder, "llvm.SI.load.const", base->elem_type,
-                                 args, 2, LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
+	result = load_const(base->gallivm->builder, si_shader_ctx->const_resource[buf],
+			    addr, base->elem_type);
 
 	return bitcast(bld_base, type, result);
 }
@@ -761,15 +768,11 @@ static void si_llvm_emit_clipvertex(struct lp_build_tgsi_context * bld_base,
 		/* Compute dot products of position and user clip plane vectors */
 		for (chan = 0; chan < TGSI_NUM_CHANNELS; chan++) {
 			for (const_chan = 0; const_chan < TGSI_NUM_CHANNELS; const_chan++) {
-				args[0] = const_resource;
 				args[1] = lp_build_const_int32(base->gallivm,
 							       ((reg_index * 4 + chan) * 4 +
 								const_chan) * 4);
-				base_elt = build_intrinsic(base->gallivm->builder,
-							   "llvm.SI.load.const",
-							   base->elem_type,
-							   args, 2,
-							   LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
+				base_elt = load_const(base->gallivm->builder, const_resource,
+						      args[1], base->elem_type);
 				args[5 + chan] =
 					lp_build_add(base, args[5 + chan],
 						     lp_build_mul(base, base_elt,
@@ -2249,14 +2252,11 @@ static void preload_constants(struct si_shader_context *si_shader_ctx)
 
 		/* Load the constants, we rely on the code sinking to do the rest */
 		for (i = 0; i < num_const * 4; ++i) {
-			LLVMValueRef args[2] = {
-				si_shader_ctx->const_resource[buf],
-				lp_build_const_int32(gallivm, i * 4)
-			};
 			si_shader_ctx->constants[buf][i] =
-					build_intrinsic(gallivm->builder, "llvm.SI.load.const",
-							bld_base->base.elem_type, args, 2,
-							LLVMReadNoneAttribute | LLVMNoUnwindAttribute);
+				load_const(gallivm->builder,
+					si_shader_ctx->const_resource[buf],
+					lp_build_const_int32(gallivm, i * 4),
+					bld_base->base.elem_type);
 		}
 	}
 }
