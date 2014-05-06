@@ -1346,7 +1346,7 @@ static void si_llvm_emit_fs_epilogue(struct lp_build_tgsi_context * bld_base)
 	LLVMValueRef args[9];
 	LLVMValueRef last_args[9] = { 0 };
 	unsigned semantic_name;
-	int depth_index = -1, stencil_index = -1;
+	int depth_index = -1, stencil_index = -1, samplemask_index = -1;
 	int i;
 
 	while (!tgsi_parse_end_of_tokens(parse)) {
@@ -1378,6 +1378,9 @@ static void si_llvm_emit_fs_epilogue(struct lp_build_tgsi_context * bld_base)
 				continue;
 			case TGSI_SEMANTIC_STENCIL:
 				stencil_index = index;
+				continue;
+			case TGSI_SEMANTIC_SAMPLEMASK:
+				samplemask_index = index;
 				continue;
 			case TGSI_SEMANTIC_COLOR:
 				target = V_008DFC_SQ_EXP_MRT + d->Semantic.Index;
@@ -1436,7 +1439,7 @@ static void si_llvm_emit_fs_epilogue(struct lp_build_tgsi_context * bld_base)
 		}
 	}
 
-	if (depth_index >= 0 || stencil_index >= 0) {
+	if (depth_index >= 0 || stencil_index >= 0 || samplemask_index >= 0) {
 		LLVMValueRef out_ptr;
 		unsigned mask = 0;
 
@@ -1466,7 +1469,16 @@ static void si_llvm_emit_fs_epilogue(struct lp_build_tgsi_context * bld_base)
 				S_02880C_STENCIL_TEST_VAL_EXPORT_ENABLE(1);
 		}
 
-		if (stencil_index >= 0)
+		if (samplemask_index >= 0) {
+			out_ptr = si_shader_ctx->radeon_bld.soa.outputs[samplemask_index][0];
+			args[7] = LLVMBuildLoad(base->gallivm->builder, out_ptr, "");
+			mask |= 0xf; /* Set all components. */
+			si_shader_ctx->shader->db_shader_control |= S_02880C_MASK_EXPORT_ENABLE(1);
+		}
+
+		if (samplemask_index >= 0)
+			si_shader_ctx->shader->spi_shader_z_format = V_028710_SPI_SHADER_32_ABGR;
+		else if (stencil_index >= 0)
 			si_shader_ctx->shader->spi_shader_z_format = V_028710_SPI_SHADER_32_GR;
 		else
 			si_shader_ctx->shader->spi_shader_z_format = V_028710_SPI_SHADER_32_R;
