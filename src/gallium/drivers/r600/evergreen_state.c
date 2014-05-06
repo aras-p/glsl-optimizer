@@ -1394,32 +1394,10 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	rctx->framebuffer.atom.num_dw = 4; /* SCISSOR */
 
 	/* MSAA. */
-	if (rctx->b.chip_class == EVERGREEN) {
-		switch (rctx->framebuffer.nr_samples) {
-		case 2:
-		case 4:
-			rctx->framebuffer.atom.num_dw += 6;
-			break;
-		case 8:
-			rctx->framebuffer.atom.num_dw += 10;
-			break;
-		}
-		rctx->framebuffer.atom.num_dw += 4;
-	} else {
-		switch (rctx->framebuffer.nr_samples) {
-		case 2:
-		case 4:
-			rctx->framebuffer.atom.num_dw += 12;
-			break;
-		case 8:
-			rctx->framebuffer.atom.num_dw += 16;
-			break;
-		case 16:
-			rctx->framebuffer.atom.num_dw += 18;
-			break;
-		}
-		rctx->framebuffer.atom.num_dw += 7;
-	}
+	if (rctx->b.chip_class == EVERGREEN)
+		rctx->framebuffer.atom.num_dw += 14; /* Evergreen */
+	else
+		rctx->framebuffer.atom.num_dw += 25; /* Cayman */
 
 	/* Colorbuffers. */
 	rctx->framebuffer.atom.num_dw += state->nr_cbufs * 23;
