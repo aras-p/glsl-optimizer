@@ -218,7 +218,13 @@ static LLVMValueRef fetch_system_value(
 	unsigned swizzle)
 {
 	struct radeon_llvm_context * ctx = radeon_llvm_context(bld_base);
+	struct gallivm_state *gallivm = bld_base->base.gallivm;
+
 	LLVMValueRef cval = ctx->system_values[reg->Register.Index];
+	if (LLVMGetTypeKind(LLVMTypeOf(cval)) == LLVMVectorTypeKind) {
+		cval = LLVMBuildExtractElement(gallivm->builder, cval,
+					       lp_build_const_int32(gallivm, swizzle), "");
+	}
 	return bitcast(bld_base, type, cval);
 }
 
