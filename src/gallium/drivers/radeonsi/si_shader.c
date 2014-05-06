@@ -1404,30 +1404,24 @@ static void si_llvm_emit_fs_epilogue(struct lp_build_tgsi_context * bld_base)
 		/* Specify the target we are exporting */
 		args[3] = lp_build_const_int32(base->gallivm, V_008DFC_SQ_EXP_MRTZ);
 
+		args[5] = base->zero; /* R, depth */
+		args[6] = base->zero; /* G, stencil test value[0:7], stencil op value[8:15] */
+		args[7] = base->zero; /* B, sample mask */
+		args[8] = base->zero; /* A, alpha to mask */
+
 		if (depth_index >= 0) {
 			out_ptr = si_shader_ctx->radeon_bld.soa.outputs[depth_index][2];
 			args[5] = LLVMBuildLoad(base->gallivm->builder, out_ptr, "");
 			mask |= 0x1;
-
-			if (stencil_index < 0) {
-				args[6] =
-				args[7] =
-				args[8] = args[5];
-			}
 		}
 
 		if (stencil_index >= 0) {
 			out_ptr = si_shader_ctx->radeon_bld.soa.outputs[stencil_index][1];
-			args[7] =
-			args[8] =
 			args[6] = LLVMBuildLoad(base->gallivm->builder, out_ptr, "");
 			/* Only setting the stencil component bit (0x2) here
 			 * breaks some stencil piglit tests
 			 */
 			mask |= 0x3;
-
-			if (depth_index < 0)
-				args[5] = args[6];
 		}
 
 		/* Specify which components to enable */
