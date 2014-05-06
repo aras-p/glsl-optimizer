@@ -117,6 +117,8 @@ _eglUpdateExtensionsString(_EGLDisplay *dpy)
 
    _EGL_CHECK_EXTENSION(ANDROID_image_native_buffer);
 
+   _EGL_CHECK_EXTENSION(CHROMIUM_sync_control);
+
    _EGL_CHECK_EXTENSION(EXT_create_context_robustness);
    _EGL_CHECK_EXTENSION(EXT_buffer_age);
    _EGL_CHECK_EXTENSION(EXT_swap_buffers_with_damage);

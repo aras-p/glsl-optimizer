@@ -1086,6 +1086,7 @@ eglGetProcAddress(const char *procname)
       { "eglGetPlatformDisplayEXT", (_EGLProc) eglGetPlatformDisplayEXT },
       { "eglCreatePlatformWindowSurfaceEXT", (_EGLProc) eglCreatePlatformWindowSurfaceEXT },
       { "eglCreatePlatformPixmapSurfaceEXT", (_EGLProc) eglCreatePlatformPixmapSurfaceEXT },
+      { "eglGetSyncValuesCHROMIUM", (_EGLProc) eglGetSyncValuesCHROMIUM },
       { NULL, NULL }
    };
    EGLint i;
@@ -1748,6 +1749,28 @@ eglPostSubBufferNV(EGLDisplay dpy, EGLSurface surface,
       RETURN_EGL_EVAL(disp, EGL_FALSE);
 
    ret = drv->API.PostSubBufferNV(drv, disp, surf, x, y, width, height);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+
+EGLBoolean EGLAPIENTRY
+eglGetSyncValuesCHROMIUM(EGLDisplay display, EGLSurface surface,
+                         EGLuint64KHR *ust, EGLuint64KHR *msc,
+                         EGLuint64KHR *sbc)
+{
+   _EGLDisplay *disp = _eglLockDisplay(display);
+   _EGLSurface *surf = _eglLookupSurface(surface, disp);
+   _EGLDriver *drv;
+   EGLBoolean ret;
+
+   _EGL_CHECK_SURFACE(disp, surf, EGL_FALSE, drv);
+   if (!disp->Extensions.CHROMIUM_sync_control)
+      RETURN_EGL_EVAL(disp, EGL_FALSE);
+
+   if (!ust || !msc || !sbc)
+      RETURN_EGL_ERROR(disp, EGL_BAD_PARAMETER, EGL_FALSE);
+
+   ret = drv->API.GetSyncValuesCHROMIUM(disp, surf, ust, msc, sbc);
 
    RETURN_EGL_EVAL(disp, ret);
 }

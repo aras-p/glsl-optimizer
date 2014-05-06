@@ -98,3 +98,11 @@ dri2_fallback_create_wayland_buffer_from_image(_EGLDriver *drv,
 {
    return NULL;
 }
+
+static inline EGLBoolean
+dri2_fallback_get_sync_values(_EGLDisplay *dpy, _EGLSurface *surf,
+                              EGLuint64KHR *ust, EGLuint64KHR *msc,
+                              EGLuint64KHR *sbc)
+{
+   return EGL_FALSE;
+}
