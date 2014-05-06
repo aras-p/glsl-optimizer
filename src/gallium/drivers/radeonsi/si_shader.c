@@ -557,6 +557,8 @@ static void declare_system_value(
 {
 	struct si_shader_context *si_shader_ctx =
 		si_shader_context(&radeon_bld->soa.bld_base);
+	struct lp_build_context *uint_bld = &radeon_bld->soa.bld_base.uint_bld;
+	struct gallivm_state *gallivm = &radeon_bld->gallivm;
 	LLVMValueRef value = 0;
 
 	switch (decl->Semantic.Name) {
@@ -573,6 +575,27 @@ static void declare_system_value(
 	case TGSI_SEMANTIC_SAMPLEID:
 		value = get_sample_id(radeon_bld);
 		break;
+
+	case TGSI_SEMANTIC_SAMPLEPOS:
+	{
+		LLVMBuilderRef builder = gallivm->builder;
+		LLVMValueRef desc = LLVMGetParam(si_shader_ctx->radeon_bld.main_fn, SI_PARAM_CONST);
+		LLVMValueRef buf_index = lp_build_const_int32(gallivm, NUM_PIPE_CONST_BUFFERS);
+		LLVMValueRef resource = build_indexed_load(si_shader_ctx, desc, buf_index);
+
+		/* offset = sample_id * 8  (8 = 2 floats containing samplepos.xy) */
+		LLVMValueRef offset0 = lp_build_mul_imm(uint_bld, get_sample_id(radeon_bld), 8);
+		LLVMValueRef offset1 = LLVMBuildAdd(builder, offset0, lp_build_const_int32(gallivm, 4), "");
+
+		LLVMValueRef pos[4] = {
+			load_const(builder, resource, offset0, radeon_bld->soa.bld_base.base.elem_type),
+			load_const(builder, resource, offset1, radeon_bld->soa.bld_base.base.elem_type),
+			lp_build_const_float(gallivm, 0),
+			lp_build_const_float(gallivm, 0)
+		};
+		value = lp_build_gather_values(gallivm, pos, 4);
+		break;
+	}
 
 	default:
 		assert(!"unknown system value");

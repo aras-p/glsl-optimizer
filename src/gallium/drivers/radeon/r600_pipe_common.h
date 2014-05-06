@@ -357,6 +357,15 @@ struct r600_common_context {
 	boolean				saved_render_cond_cond;
 	unsigned			saved_render_cond_mode;
 
+	/* MSAA sample locations.
+	 * The first index is the sample index.
+	 * The second index is the coordinate: X, Y. */
+	float				sample_locations_1x[1][2];
+	float				sample_locations_2x[2][2];
+	float				sample_locations_4x[4][2];
+	float				sample_locations_8x[8][2];
+	float				sample_locations_16x[16][2];
+
 	/* Copy one resource to another using async DMA. */
 	void (*dma_copy)(struct pipe_context *ctx,
 			 struct pipe_resource *dst,
@@ -472,6 +481,7 @@ extern const uint32_t eg_sample_locs_4x[4];
 extern const unsigned eg_max_dist_4x;
 void cayman_get_sample_position(struct pipe_context *ctx, unsigned sample_count,
 				unsigned sample_index, float *out_value);
+void cayman_init_msaa(struct pipe_context *ctx);
 void cayman_emit_msaa_sample_locs(struct radeon_winsys_cs *cs, int nr_samples);
 void cayman_emit_msaa_config(struct radeon_winsys_cs *cs, int nr_samples,
 			     int ps_iter_samples);

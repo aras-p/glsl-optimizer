@@ -154,6 +154,7 @@ bool r600_common_context_init(struct r600_common_context *rctx,
 	r600_init_context_texture_functions(rctx);
 	r600_streamout_init(rctx);
 	r600_query_init(rctx);
+	cayman_init_msaa(&rctx->b);
 
 	rctx->allocator_so_filled_size = u_suballocator_create(&rctx->b, 4096, 4,
 							       0, PIPE_USAGE_DEFAULT, TRUE);

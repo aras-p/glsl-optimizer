@@ -123,6 +123,23 @@ void cayman_get_sample_position(struct pipe_context *ctx, unsigned sample_count,
 	}
 }
 
+void cayman_init_msaa(struct pipe_context *ctx)
+{
+	struct r600_common_context *rctx = (struct r600_common_context*)ctx;
+	int i;
+
+	cayman_get_sample_position(ctx, 1, 0, rctx->sample_locations_1x[0]);
+
+	for (i = 0; i < 2; i++)
+		cayman_get_sample_position(ctx, 2, i, rctx->sample_locations_2x[i]);
+	for (i = 0; i < 4; i++)
+		cayman_get_sample_position(ctx, 4, i, rctx->sample_locations_4x[i]);
+	for (i = 0; i < 8; i++)
+		cayman_get_sample_position(ctx, 8, i, rctx->sample_locations_8x[i]);
+	for (i = 0; i < 16; i++)
+		cayman_get_sample_position(ctx, 16, i, rctx->sample_locations_16x[i]);
+}
+
 void cayman_emit_msaa_sample_locs(struct radeon_winsys_cs *cs, int nr_samples)
 {
 	switch (nr_samples) {
