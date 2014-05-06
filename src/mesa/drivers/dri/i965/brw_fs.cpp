@@ -1740,34 +1740,6 @@ fs_visitor::compact_virtual_grfs()
       }
    }
 
-   /* In addition to registers used in instructions, fs_visitor keeps
-    * direct references to certain special values which must be patched:
-    */
-   struct {
-      fs_reg *reg;
-      unsigned count;
-   } special[] = {
-      { &frag_depth, 1 },
-      { &pixel_x, 1 },
-      { &pixel_y, 1 },
-      { &pixel_w, 1 },
-      { &wpos_w, 1 },
-      { &dual_src_output, 1 },
-      { outputs, ARRAY_SIZE(outputs) },
-      { delta_x, ARRAY_SIZE(delta_x) },
-      { delta_y, ARRAY_SIZE(delta_y) },
-      { &sample_mask, 1 },
-      { &shader_start_time, 1 },
-   };
-
-   /* Treat all special values as used, to be conservative */
-   for (unsigned i = 0; i < ARRAY_SIZE(special); i++) {
-      for (unsigned j = 0; j < special[i].count; j++) {
-         if (special[i].reg[j].file == GRF)
-            remap_table[special[i].reg[j].reg] = 0;
-      }
-   }
-
    /* Compact the GRF arrays. */
    int new_index = 0;
    for (int i = 0; i < this->virtual_grf_count; i++) {
@@ -1791,15 +1763,6 @@ fs_visitor::compact_virtual_grfs()
       for (int i = 0; i < 3; i++) {
          if (inst->src[i].file == GRF)
             inst->src[i].reg = remap_table[inst->src[i].reg];
-      }
-   }
-
-   /* Patch all the references to special values */
-   for (unsigned i = 0; i < ARRAY_SIZE(special); i++) {
-      for (unsigned j = 0; j < special[i].count; j++) {
-         fs_reg *reg = &special[i].reg[j];
-         if (reg->file == GRF && remap_table[reg->reg] != -1)
-            reg->reg = remap_table[reg->reg];
       }
    }
 }
