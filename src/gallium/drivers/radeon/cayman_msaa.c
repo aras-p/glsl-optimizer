@@ -123,27 +123,20 @@ void cayman_get_sample_position(struct pipe_context *ctx, unsigned sample_count,
 	}
 }
 
-void cayman_emit_msaa_state(struct radeon_winsys_cs *cs, int nr_samples)
+void cayman_emit_msaa_sample_locs(struct radeon_winsys_cs *cs, int nr_samples)
 {
-	unsigned max_dist = 0;
-
 	switch (nr_samples) {
-	default:
-		nr_samples = 0;
-		break;
 	case 2:
 		r600_write_context_reg(cs, CM_R_028BF8_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_0, eg_sample_locs_2x[0]);
 		r600_write_context_reg(cs, CM_R_028C08_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_0, eg_sample_locs_2x[1]);
 		r600_write_context_reg(cs, CM_R_028C18_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_0, eg_sample_locs_2x[2]);
 		r600_write_context_reg(cs, CM_R_028C28_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_0, eg_sample_locs_2x[3]);
-		max_dist = eg_max_dist_2x;
 		break;
 	case 4:
 		r600_write_context_reg(cs, CM_R_028BF8_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_0, eg_sample_locs_4x[0]);
 		r600_write_context_reg(cs, CM_R_028C08_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y0_0, eg_sample_locs_4x[1]);
 		r600_write_context_reg(cs, CM_R_028C18_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y1_0, eg_sample_locs_4x[2]);
 		r600_write_context_reg(cs, CM_R_028C28_PA_SC_AA_SAMPLE_LOCS_PIXEL_X1Y1_0, eg_sample_locs_4x[3]);
-		max_dist = eg_max_dist_4x;
 		break;
 	case 8:
 		r600_write_context_reg_seq(cs, CM_R_028BF8_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_0, 14);
@@ -161,7 +154,6 @@ void cayman_emit_msaa_state(struct radeon_winsys_cs *cs, int nr_samples)
 		radeon_emit(cs, 0);
 		radeon_emit(cs, cm_sample_locs_8x[3]);
 		radeon_emit(cs, cm_sample_locs_8x[7]);
-		max_dist = cm_max_dist_8x;
 		break;
 	case 16:
 		r600_write_context_reg_seq(cs, CM_R_028BF8_PA_SC_AA_SAMPLE_LOCS_PIXEL_X0Y0_0, 16);
@@ -181,18 +173,30 @@ void cayman_emit_msaa_state(struct radeon_winsys_cs *cs, int nr_samples)
 		radeon_emit(cs, cm_sample_locs_16x[7]);
 		radeon_emit(cs, cm_sample_locs_16x[11]);
 		radeon_emit(cs, cm_sample_locs_16x[15]);
-		max_dist = cm_max_dist_16x;
 		break;
 	}
+}
 
+void cayman_emit_msaa_config(struct radeon_winsys_cs *cs, int nr_samples,
+			     int ps_iter_samples)
+{
 	if (nr_samples > 1) {
+		/* indexed by log2(nr_samples) */
+		unsigned max_dist[] = {
+			0,
+			eg_max_dist_2x,
+			eg_max_dist_4x,
+			cm_max_dist_8x,
+			cm_max_dist_16x
+		};
+
 		unsigned log_samples = util_logbase2(nr_samples);
 
 		r600_write_context_reg_seq(cs, CM_R_028BDC_PA_SC_LINE_CNTL, 2);
 		radeon_emit(cs, S_028BDC_LAST_PIXEL(1) |
 			    S_028BDC_EXPAND_LINE_WIDTH(1)); /* CM_R_028BDC_PA_SC_LINE_CNTL */
 		radeon_emit(cs, S_028BE0_MSAA_NUM_SAMPLES(log_samples) |
-			    S_028BE0_MAX_SAMPLE_DIST(max_dist) |
+			    S_028BE0_MAX_SAMPLE_DIST(max_dist[log_samples]) |
 			    S_028BE0_MSAA_EXPOSED_SAMPLES(log_samples)); /* CM_R_028BE0_PA_SC_AA_CONFIG */
 
 		r600_write_context_reg(cs, CM_R_028804_DB_EQAA,

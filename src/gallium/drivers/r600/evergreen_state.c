@@ -1678,7 +1678,8 @@ static void evergreen_emit_framebuffer_state(struct r600_context *rctx, struct r
 	if (rctx->b.chip_class == EVERGREEN) {
 		evergreen_emit_msaa_state(rctx, rctx->framebuffer.nr_samples);
 	} else {
-		cayman_emit_msaa_state(cs, rctx->framebuffer.nr_samples);
+		cayman_emit_msaa_sample_locs(cs, rctx->framebuffer.nr_samples);
+		cayman_emit_msaa_config(cs, rctx->framebuffer.nr_samples);
 	}
 }
 

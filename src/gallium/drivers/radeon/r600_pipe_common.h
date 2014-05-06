@@ -472,7 +472,9 @@ extern const uint32_t eg_sample_locs_4x[4];
 extern const unsigned eg_max_dist_4x;
 void cayman_get_sample_position(struct pipe_context *ctx, unsigned sample_count,
 				unsigned sample_index, float *out_value);
-void cayman_emit_msaa_state(struct radeon_winsys_cs *cs, int nr_samples);
+void cayman_emit_msaa_sample_locs(struct radeon_winsys_cs *cs, int nr_samples);
+void cayman_emit_msaa_config(struct radeon_winsys_cs *cs, int nr_samples,
+			     int ps_iter_samples);
 
 
 /* Inline helpers. */

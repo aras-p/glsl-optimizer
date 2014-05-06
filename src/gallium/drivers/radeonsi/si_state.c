@@ -2025,7 +2025,8 @@ static void si_emit_framebuffer_state(struct si_context *sctx, struct r600_atom 
 	r600_write_context_reg(cs, R_028208_PA_SC_WINDOW_SCISSOR_BR,
 			       S_028208_BR_X(state->width) | S_028208_BR_Y(state->height));
 
-	cayman_emit_msaa_state(cs, sctx->framebuffer.nr_samples);
+	cayman_emit_msaa_sample_locs(cs, sctx->framebuffer.nr_samples);
+	cayman_emit_msaa_config(cs, sctx->framebuffer.nr_samples);
 }
 
 /*
