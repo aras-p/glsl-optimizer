@@ -1921,8 +1921,9 @@ static void si_set_framebuffer_state(struct pipe_context *ctx,
 	sctx->framebuffer.atom.num_dw = state->nr_cbufs*15 + (8 - state->nr_cbufs)*3;
 	sctx->framebuffer.atom.num_dw += state->zsbuf ? 23 : 4;
 	sctx->framebuffer.atom.num_dw += 3; /* WINDOW_SCISSOR_BR */
-	sctx->framebuffer.atom.num_dw += 28; /* MSAA */
+	sctx->framebuffer.atom.num_dw += 18; /* MSAA sample locations */
 	sctx->framebuffer.atom.dirty = true;
+	sctx->msaa_config.dirty = true;
 }
 
 static void si_emit_framebuffer_state(struct si_context *sctx, struct r600_atom *atom)
@@ -2026,7 +2027,30 @@ static void si_emit_framebuffer_state(struct si_context *sctx, struct r600_atom 
 			       S_028208_BR_X(state->width) | S_028208_BR_Y(state->height));
 
 	cayman_emit_msaa_sample_locs(cs, sctx->framebuffer.nr_samples);
-	cayman_emit_msaa_config(cs, sctx->framebuffer.nr_samples, 1);
+}
+
+static void si_emit_msaa_config(struct r600_common_context *rctx, struct r600_atom *atom)
+{
+	struct si_context *sctx = (struct si_context *)rctx;
+	struct radeon_winsys_cs *cs = sctx->b.rings.gfx.cs;
+
+	cayman_emit_msaa_config(cs, sctx->framebuffer.nr_samples,
+				sctx->ps_iter_samples);
+}
+
+const struct r600_atom si_atom_msaa_config = { si_emit_msaa_config, 10 }; /* number of CS dwords */
+
+static void si_set_min_samples(struct pipe_context *ctx, unsigned min_samples)
+{
+	struct si_context *sctx = (struct si_context *)ctx;
+
+	if (sctx->ps_iter_samples == min_samples)
+		return;
+
+	sctx->ps_iter_samples = min_samples;
+
+	if (sctx->framebuffer.nr_samples > 1)
+		sctx->msaa_config.dirty = true;
 }
 
 /*
@@ -3025,6 +3049,8 @@ void si_init_state_functions(struct si_context *sctx)
 
 	sctx->b.b.texture_barrier = si_texture_barrier;
 	sctx->b.b.set_polygon_stipple = si_set_polygon_stipple;
+	sctx->b.b.set_min_samples = si_set_min_samples;
+
 	sctx->b.dma_copy = si_dma_copy;
 	sctx->b.set_occlusion_query_state = si_set_occlusion_query_state;
 	sctx->b.need_gfx_cs_space = si_need_gfx_cs_space;

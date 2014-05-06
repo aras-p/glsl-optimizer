@@ -114,6 +114,7 @@ struct si_context {
 			struct r600_atom *streamout_begin;
 			struct r600_atom *streamout_enable; /* must be after streamout_begin */
 			struct r600_atom *framebuffer;
+			struct r600_atom *msaa_config;
 		} s;
 		struct r600_atom *array[0];
 	} atoms;
@@ -135,6 +136,9 @@ struct si_context {
 	struct si_textures_info	samplers[SI_NUM_SHADERS];
 	struct r600_resource		*border_color_table;
 	unsigned			border_color_offset;
+
+	struct r600_atom		msaa_config;
+	int				ps_iter_samples;
 
 	unsigned default_ps_gprs, default_vs_gprs;
 
