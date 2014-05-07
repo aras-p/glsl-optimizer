@@ -1000,6 +1000,8 @@ draw_get_shader_param_no_llvm(unsigned shader, enum pipe_shader_cap param)
 /**
  * XXX: Results for PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS because there are two
  * different ways of setting textures, and drivers typically only support one.
+ * Drivers requesting a draw context explicitly without llvm must call
+ * draw_get_shader_param_no_llvm instead.
  */
 int
 draw_get_shader_param(unsigned shader, enum pipe_shader_cap param)

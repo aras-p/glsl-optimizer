@@ -149,7 +149,7 @@ draw_vs_init( struct draw_context *draw )
 {
    draw->dump_vs = debug_get_option_gallium_dump_vs();
 
-   if (!draw_get_option_use_llvm()) {
+   if (!draw->llvm) {
       draw->vs.tgsi.machine = tgsi_exec_machine_create();
       if (!draw->vs.tgsi.machine)
          return FALSE;
@@ -175,7 +175,7 @@ draw_vs_destroy( struct draw_context *draw )
    if (draw->vs.emit_cache)
       translate_cache_destroy(draw->vs.emit_cache);
 
-   if (!draw_get_option_use_llvm())
+   if (!draw->llvm)
       tgsi_exec_machine_destroy(draw->vs.tgsi.machine);
 }
 

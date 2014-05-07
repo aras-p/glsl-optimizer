@@ -597,7 +597,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
 
 
 #ifdef HAVE_LLVM
-   if (draw_get_option_use_llvm()) {
+   if (shader->draw->llvm) {
       shader->gs_output = output_verts->verts;
       if (max_out_prims > shader->max_out_prims) {
          unsigned i;
@@ -674,7 +674,7 @@ int draw_geometry_shader_run(struct draw_geometry_shader *shader,
 void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
                                   struct draw_context *draw)
 {
-   boolean use_llvm = draw_get_option_use_llvm();
+   boolean use_llvm = draw->llvm != NULL;
    if (!use_llvm && shader && shader->machine->Tokens != shader->state.tokens) {
       tgsi_exec_machine_bind_shader(shader->machine,
                                     shader->state.tokens,
@@ -686,7 +686,7 @@ void draw_geometry_shader_prepare(struct draw_geometry_shader *shader,
 boolean
 draw_gs_init( struct draw_context *draw )
 {
-   if (!draw_get_option_use_llvm()) {
+   if (!draw->llvm) {
       draw->gs.tgsi.machine = tgsi_exec_machine_create();
       if (!draw->gs.tgsi.machine)
          return FALSE;
@@ -715,7 +715,7 @@ draw_create_geometry_shader(struct draw_context *draw,
                             const struct pipe_shader_state *state)
 {
 #ifdef HAVE_LLVM
-   boolean use_llvm = draw_get_option_use_llvm();
+   boolean use_llvm = draw->llvm != NULL;
    struct llvm_geometry_shader *llvm_gs;
 #endif
    struct draw_geometry_shader *gs;
@@ -870,7 +870,7 @@ void draw_delete_geometry_shader(struct draw_context *draw,
       return;
    }
 #ifdef HAVE_LLVM
-   if (draw_get_option_use_llvm()) {
+   if (draw->llvm) {
       struct llvm_geometry_shader *shader = llvm_geometry_shader(dgs);
       struct draw_gs_llvm_variant_list_item *li;
 

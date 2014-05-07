@@ -47,7 +47,6 @@
 #include "tgsi/tgsi_scan.h"
 
 #ifdef HAVE_LLVM
-struct draw_llvm;
 struct gallivm_state;
 #endif
 
@@ -69,6 +68,7 @@ struct tgsi_exec_machine;
 struct tgsi_sampler;
 struct draw_pt_front_end;
 struct draw_assembler;
+struct draw_llvm;
 
 
 /**
@@ -318,9 +318,7 @@ struct draw_context
    unsigned start_instance;
    unsigned start_index;
 
-#ifdef HAVE_LLVM
    struct draw_llvm *llvm;
-#endif
 
    /** Texture sampler and sampler view state.
     * Note that we have arrays indexed by shader type.  At this time
