@@ -267,6 +267,13 @@ struct blit_state
    bool no_ctsi_fallback;
 };
 
+struct fb_tex_blit_state
+{
+   GLint baseLevelSave, maxLevelSave;
+   GLuint sampler, samplerSave;
+   GLuint tempTex;
+};
+
 
 /**
  * State for glClear()
@@ -394,6 +401,14 @@ _mesa_meta_end(struct gl_context *ctx);
 
 extern GLboolean
 _mesa_meta_in_progress(struct gl_context *ctx);
+
+extern void
+_mesa_meta_fb_tex_blit_begin(const struct gl_context *ctx,
+                             struct fb_tex_blit_state *blit);
+
+extern void
+_mesa_meta_fb_tex_blit_end(const struct gl_context *ctx, GLenum target,
+                           struct fb_tex_blit_state *blit);
 
 extern GLboolean
 _mesa_meta_bind_rb_as_tex_image(struct gl_context *ctx,

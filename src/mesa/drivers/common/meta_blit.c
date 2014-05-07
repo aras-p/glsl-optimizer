@@ -356,19 +356,14 @@ blitframebuffer_texture(struct gl_context *ctx,
    const struct gl_renderbuffer_attachment *readAtt =
       &readFb->Attachment[att_index];
    struct blit_state *blit = &ctx->Meta->Blit;
+   struct fb_tex_blit_state fb_tex_blit;
    const GLint dstX = MIN2(dstX0, dstX1);
    const GLint dstY = MIN2(dstY0, dstY1);
    const GLint dstW = abs(dstX1 - dstX0);
    const GLint dstH = abs(dstY1 - dstY0);
    struct gl_texture_object *texObj;
    GLuint srcLevel;
-   GLint baseLevelSave;
-   GLint maxLevelSave;
    GLenum target;
-   GLuint sampler, samplerSave =
-      ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
-      ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
-   GLuint tempTex = 0;
    struct gl_renderbuffer *rb = readAtt->Renderbuffer;
    struct temp_texture *meta_temp_texture;
 
@@ -379,6 +374,8 @@ blitframebuffer_texture(struct gl_context *ctx,
        filter == GL_SCALED_RESOLVE_NICEST_EXT) {
       filter = GL_LINEAR;
    }
+
+   _mesa_meta_fb_tex_blit_begin(ctx, &fb_tex_blit);
 
    if (readAtt->Texture &&
        (readAtt->Texture->Target == GL_TEXTURE_2D ||
@@ -392,8 +389,8 @@ blitframebuffer_texture(struct gl_context *ctx,
       texObj = readAtt->Texture;
       target = texObj->Target;
    } else if (!readAtt->Texture && ctx->Driver.BindRenderbufferTexImage) {
-      if (!_mesa_meta_bind_rb_as_tex_image(ctx, rb,
-                                           &tempTex, &texObj, &target))
+      if (!_mesa_meta_bind_rb_as_tex_image(ctx, rb, &fb_tex_blit.tempTex,
+                                           &texObj, &target))
          return false;
 
       srcLevel = 0;
@@ -442,8 +439,8 @@ blitframebuffer_texture(struct gl_context *ctx,
       srcY1 = srcH;
    }
 
-   baseLevelSave = texObj->BaseLevel;
-   maxLevelSave = texObj->MaxLevel;
+   fb_tex_blit.baseLevelSave = texObj->BaseLevel;
+   fb_tex_blit.maxLevelSave = texObj->MaxLevel;
 
    if (glsl_version) {
       setup_glsl_blit_framebuffer(ctx, blit, rb, target);
@@ -460,7 +457,8 @@ blitframebuffer_texture(struct gl_context *ctx,
      printf("  srcTex %p  dstText %p\n", texObj, drawAtt->Texture);
    */
 
-   sampler = _mesa_meta_setup_sampler(ctx, texObj, target, filter, srcLevel);
+   fb_tex_blit.sampler = _mesa_meta_setup_sampler(ctx, texObj, target, filter,
+                                                  srcLevel);
 
    /* Always do our blits with no net sRGB decode or encode.
     *
@@ -481,11 +479,12 @@ blitframebuffer_texture(struct gl_context *ctx,
    if (ctx->Extensions.EXT_texture_sRGB_decode) {
       if (_mesa_get_format_color_encoding(rb->Format) == GL_SRGB &&
           ctx->DrawBuffer->Visual.sRGBCapable) {
-         _mesa_SamplerParameteri(sampler, GL_TEXTURE_SRGB_DECODE_EXT,
-                                 GL_DECODE_EXT);
+         _mesa_SamplerParameteri(fb_tex_blit.sampler,
+                                 GL_TEXTURE_SRGB_DECODE_EXT, GL_DECODE_EXT);
          _mesa_set_framebuffer_srgb(ctx, GL_TRUE);
       } else {
-         _mesa_SamplerParameteri(sampler, GL_TEXTURE_SRGB_DECODE_EXT,
+         _mesa_SamplerParameteri(fb_tex_blit.sampler,
+                                 GL_TEXTURE_SRGB_DECODE_EXT,
                                  GL_SKIP_DECODE_EXT);
          /* set_framebuffer_srgb was set by _mesa_meta_begin(). */
       }
@@ -552,21 +551,37 @@ blitframebuffer_texture(struct gl_context *ctx,
    _mesa_DepthFunc(GL_ALWAYS);
 
    _mesa_DrawArrays(GL_TRIANGLE_FAN, 0, 4);
+   _mesa_meta_fb_tex_blit_end(ctx, target, &fb_tex_blit);
 
+   return true;
+}
+
+void
+_mesa_meta_fb_tex_blit_begin(const struct gl_context *ctx,
+                             struct fb_tex_blit_state *blit)
+{
+   blit->samplerSave =
+      ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler ?
+      ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler->Name : 0;
+   blit->tempTex = 0;
+}
+
+void
+_mesa_meta_fb_tex_blit_end(const struct gl_context *ctx, GLenum target,
+                           struct fb_tex_blit_state *blit)
+{
    /* Restore texture object state, the texture binding will
     * be restored by _mesa_meta_end().
     */
    if (target != GL_TEXTURE_RECTANGLE_ARB) {
-      _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
-      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
+      _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, blit->baseLevelSave);
+      _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, blit->maxLevelSave);
    }
 
-   _mesa_BindSampler(ctx->Texture.CurrentUnit, samplerSave);
-   _mesa_DeleteSamplers(1, &sampler);
-   if (tempTex)
-      _mesa_DeleteTextures(1, &tempTex);
-
-   return true;
+   _mesa_BindSampler(ctx->Texture.CurrentUnit, blit->samplerSave);
+   _mesa_DeleteSamplers(1, &blit->sampler);
+   if (blit->tempTex)
+      _mesa_DeleteTextures(1, &blit->tempTex);
 }
 
 GLboolean
