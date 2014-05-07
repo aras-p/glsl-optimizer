@@ -128,6 +128,8 @@ static void compile_ff_gs_prog(struct brw_context *brw,
       }
    }
 
+   brw_compact_instructions(&c.func);
+
    /* get the program
     */
    program = brw_get_program(&c.func, &program_size);

@@ -111,7 +111,7 @@ static void compile_clip_prog( struct brw_context *brw,
       return;
    }
 
-	
+   brw_compact_instructions(&c.func);
 
    /* get the program
     */

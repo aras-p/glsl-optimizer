@@ -249,8 +249,6 @@ brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
 const unsigned *brw_get_program( struct brw_compile *p,
 			       unsigned *sz )
 {
-   brw_compact_instructions(p);
-
    *sz = p->next_insn_offset;
    return (const unsigned *)p->store;
 }

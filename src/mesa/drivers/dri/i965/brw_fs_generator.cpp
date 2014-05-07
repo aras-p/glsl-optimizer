@@ -1852,15 +1852,10 @@ fs_generator::generate_assembly(exec_list *simd8_instructions,
    if (simd8_instructions) {
       dispatch_width = 8;
       generate_code(simd8_instructions, dump_file);
+      brw_compact_instructions(p);
    }
 
    if (simd16_instructions) {
-      /* We have to do a compaction pass now, or the one at the end of
-       * execution will squash down where our prog_offset start needs
-       * to be.
-       */
-      brw_compact_instructions(p);
-
       /* align to 64 byte boundary. */
       while ((p->nr_insn * sizeof(struct brw_instruction)) % 64) {
          brw_NOP(p);
@@ -1873,6 +1868,7 @@ fs_generator::generate_assembly(exec_list *simd8_instructions,
 
       dispatch_width = 16;
       generate_code(simd16_instructions, dump_file);
+      brw_compact_instructions(p);
    }
 
    return brw_get_program(p, assembly_size);
