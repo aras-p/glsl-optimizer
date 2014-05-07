@@ -284,6 +284,10 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_mipmap_tree *mt = irb->mt;
+   unsigned width = mt->logical_width0;
+   unsigned height = mt->logical_height0;
+   unsigned pitch = mt->pitch;
+   uint32_t tiling = mt->tiling;
    uint32_t format = 0;
    uint32_t surf_type;
    bool is_array = false;
@@ -334,15 +338,15 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
              (format << BRW_SURFACE_FORMAT_SHIFT) |
              vertical_alignment(mt) |
              horizontal_alignment(mt) |
-             surface_tiling_mode(mt->tiling);
+             surface_tiling_mode(tiling);
 
    surf[1] = SET_FIELD(BDW_MOCS_WT, GEN8_SURFACE_MOCS) | mt->qpitch >> 2;
 
-   surf[2] = SET_FIELD(mt->logical_width0 - 1, GEN7_SURFACE_WIDTH) |
-             SET_FIELD(mt->logical_height0 - 1, GEN7_SURFACE_HEIGHT);
+   surf[2] = SET_FIELD(width - 1, GEN7_SURFACE_WIDTH) |
+             SET_FIELD(height - 1, GEN7_SURFACE_HEIGHT);
 
    surf[3] = (depth - 1) << BRW_SURFACE_DEPTH_SHIFT |
-             (mt->pitch - 1); /* Surface Pitch */
+             (pitch - 1); /* Surface Pitch */
 
    surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout) |
              min_array_element << GEN7_SURFACE_MIN_ARRAY_ELEMENT_SHIFT |
