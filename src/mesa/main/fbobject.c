@@ -1058,6 +1058,8 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       if (att->Layered) {
          if (att_tex_target == GL_TEXTURE_CUBE_MAP)
             att_layer_count = 6;
+         else if (att_tex_target == GL_TEXTURE_1D_ARRAY)
+            att_layer_count = att->Renderbuffer->Height;
          else
             att_layer_count = att->Renderbuffer->Depth;
       } else {
