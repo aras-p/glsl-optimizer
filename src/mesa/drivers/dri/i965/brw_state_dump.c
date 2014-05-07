@@ -243,12 +243,11 @@ dump_sdc(struct brw_context *brw, uint32_t offset)
       batch_out(brw, name, offset, 10, "s16 ba\n");
       batch_out(brw, name, offset, 11, "s8 rgba\n");
    } else {
-      struct brw_sampler_default_color *sdc = (brw->batch.bo->virtual +
-					       offset);
-      batch_out(brw, name, offset, 0, "r %f\n", sdc->color[0]);
-      batch_out(brw, name, offset, 1, "g %f\n", sdc->color[1]);
-      batch_out(brw, name, offset, 2, "b %f\n", sdc->color[2]);
-      batch_out(brw, name, offset, 3, "a %f\n", sdc->color[3]);
+      float *sdc = brw->batch.bo->virtual + offset;
+      batch_out(brw, name, offset, 0, "r %f\n", sdc[0]);
+      batch_out(brw, name, offset, 1, "g %f\n", sdc[1]);
+      batch_out(brw, name, offset, 2, "b %f\n", sdc[2]);
+      batch_out(brw, name, offset, 3, "a %f\n", sdc[3]);
    }
 }
 

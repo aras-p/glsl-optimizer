@@ -589,10 +589,6 @@ struct brw_wm_unit_state
    } wm10;
 };
 
-struct brw_sampler_default_color {
-   float color[4];
-};
-
 struct gen5_sampler_default_color {
    uint8_t ub[4];
    float f[4];

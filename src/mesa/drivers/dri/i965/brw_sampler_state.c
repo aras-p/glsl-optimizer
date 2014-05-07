@@ -197,12 +197,9 @@ upload_default_color(struct brw_context *brw,
       sdc->f[2] = color[2];
       sdc->f[3] = color[3];
    } else {
-      struct brw_sampler_default_color *sdc;
-
-      sdc = brw_state_batch(brw, AUB_TRACE_SAMPLER_DEFAULT_COLOR,
-			    sizeof(*sdc), 32, sdc_offset);
-
-      COPY_4V(sdc->color, color);
+      float *sdc = brw_state_batch(brw, AUB_TRACE_SAMPLER_DEFAULT_COLOR,
+			           4 * 4, 32, sdc_offset);
+      memcpy(sdc, color, 4 * 4);
    }
 }
 
