@@ -48,6 +48,7 @@ public:
    bool can_do_source_mods() const;
    bool can_do_saturate() const;
    bool reads_accumulator_implicitly() const;
+   bool writes_accumulator_implicitly(int gen) const;
 
    /**
     * True if the instruction has side effects other than writing to

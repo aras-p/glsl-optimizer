@@ -676,6 +676,16 @@ backend_instruction::reads_accumulator_implicitly() const
 }
 
 bool
+backend_instruction::writes_accumulator_implicitly(int gen) const
+{
+   return writes_accumulator ||
+          (gen < 6 &&
+           ((opcode >= BRW_OPCODE_ADD && opcode < BRW_OPCODE_NOP) ||
+            (opcode >= FS_OPCODE_DDX && opcode <= FS_OPCODE_LINTERP &&
+             opcode != FS_OPCODE_CINTERP)));
+}
+
+bool
 backend_instruction::has_side_effects() const
 {
    switch (opcode) {
