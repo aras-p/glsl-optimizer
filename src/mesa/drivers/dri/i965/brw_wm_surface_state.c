@@ -101,6 +101,30 @@ brw_get_surface_num_multisamples(unsigned num_samples)
       return BRW_SURFACE_MULTISAMPLECOUNT_1;
 }
 
+void
+brw_configure_w_tiled(const struct intel_mipmap_tree *mt,
+                      bool is_render_target,
+                      unsigned *width, unsigned *height,
+                      unsigned *pitch, uint32_t *tiling, unsigned *format)
+{
+   static const unsigned halign_stencil = 8;
+
+   /* In Y-tiling row is twice as wide as in W-tiling, and subsequently
+    * there are half as many rows.
+    * In addition, mip-levels are accessed manually by the program and
+    * therefore the surface is setup to cover all the mip-levels for one slice.
+    * (Hardware is still used to access individual slices).
+    */
+   *tiling = I915_TILING_Y;
+   *pitch = mt->pitch * 2;
+   *width = ALIGN(mt->total_width, halign_stencil) * 2;
+   *height = (mt->total_height / mt->physical_depth0) / 2;
+
+   if (is_render_target) {
+      *format = BRW_SURFACEFORMAT_R8_UINT;
+   }
+}
+
 
 /**
  * Compute the combination of DEPTH_TEXTURE_MODE and EXT_texture_swizzle
