@@ -141,10 +141,10 @@ fake_queryString(__DRIscreen *screen, int attribute, const char **val)
 }
 
 static const __DRI2rendererQueryExtension rendererQueryExt = {
-   .base = { __DRI2_RENDERER_QUERY, 1 },
+   { __DRI2_RENDERER_QUERY, 1 },
 
-   .queryInteger = fake_queryInteger,
-   .queryString = fake_queryString
+   fake_queryInteger,
+   fake_queryString
 };
 
 void dri2_query_renderer_string_test::SetUp()
