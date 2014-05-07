@@ -1714,12 +1714,19 @@ link_intrastage_shaders(void *mem_ctx,
        */
       gl_shader **linking_shaders = (gl_shader **)
          calloc(num_shaders + 1, sizeof(gl_shader *));
-      memcpy(linking_shaders, shader_list, num_shaders * sizeof(gl_shader *));
-      linking_shaders[num_shaders] = _mesa_glsl_get_builtin_function_shader();
 
-      ok = link_function_calls(prog, linked, linking_shaders, num_shaders + 1);
+      ok = linking_shaders != NULL;
 
-      free(linking_shaders);
+      if (ok) {
+         memcpy(linking_shaders, shader_list, num_shaders * sizeof(gl_shader *));
+         linking_shaders[num_shaders] = _mesa_glsl_get_builtin_function_shader();
+
+         ok = link_function_calls(prog, linked, linking_shaders, num_shaders + 1);
+
+         free(linking_shaders);
+      } else {
+         _mesa_error_no_memory(__func__);
+      }
    } else {
       ok = link_function_calls(prog, linked, shader_list, num_shaders);
    }
