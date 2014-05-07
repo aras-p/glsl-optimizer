@@ -114,7 +114,7 @@ GL 4.0:
   - Interpolation functions                            started
   - New overload resolution rules                      not started
   GL_ARB_gpu_shader_fp64                               not started
-  GL_ARB_sample_shading                                DONE (i965, nv50, nvc0)
+  GL_ARB_sample_shading                                DONE (i965, nv50, nvc0, radeonsi)
   GL_ARB_shader_subroutine                             not started
   GL_ARB_tessellation_shader                           not started
   GL_ARB_texture_buffer_object_rgb32                   DONE (i965, nvc0, r600, radeonsi, softpipe)
