@@ -292,8 +292,8 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
    uint32_t surf_type;
    bool is_array = false;
    int depth = MAX2(irb->layer_count, 1);
-   int min_array_element = irb->mt_layer / MAX2(mt->num_samples, 1);
-
+   const int min_array_element = (mt->format == MESA_FORMAT_S_UINT8) ?
+      irb->mt_layer : (irb->mt_layer / MAX2(mt->num_samples, 1));
    GLenum gl_target =
       rb->TexImage ? rb->TexImage->TexObject->Target : GL_TEXTURE_2D;
 
@@ -301,9 +301,6 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
       brw->wm.prog_data->binding_table.render_target_start + unit;
 
    intel_miptree_used_for_rendering(mt);
-
-   /* Render targets can't use IMS layout. */
-   assert(mt->msaa_layout != INTEL_MSAA_LAYOUT_IMS);
 
    switch (gl_target) {
    case GL_TEXTURE_CUBE_MAP_ARRAY:
@@ -322,12 +319,21 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
    }
 
    /* _NEW_BUFFERS */
-   mesa_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
-   assert(brw_render_target_supported(brw, rb));
-   format = brw->render_target_format[rb_format];
-   if (unlikely(!brw->format_supported_as_render_target[rb_format])) {
-      _mesa_problem(ctx, "%s: renderbuffer format %s unsupported\n",
-                    __FUNCTION__, _mesa_get_format_name(rb_format));
+   /* Render targets can't use IMS layout. Stencil in turn gets configured as
+    * single sampled and indexed manually by the program.
+    */
+   if (mt->format == MESA_FORMAT_S_UINT8) {
+      brw_configure_w_tiled(mt, true, &width, &height, &pitch,
+                            &tiling, &format);
+   } else {
+      assert(mt->msaa_layout != INTEL_MSAA_LAYOUT_IMS);
+      assert(brw_render_target_supported(brw, rb));
+      mesa_format rb_format = _mesa_get_render_format(ctx,
+                                                      intel_rb_format(irb));
+      format = brw->render_target_format[rb_format];
+      if (unlikely(!brw->format_supported_as_render_target[rb_format]))
+         _mesa_problem(ctx, "%s: renderbuffer format %s unsupported\n",
+                       __FUNCTION__, _mesa_get_format_name(rb_format));
    }
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 13 * 4, 64,
@@ -348,9 +354,11 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
    surf[3] = (depth - 1) << BRW_SURFACE_DEPTH_SHIFT |
              (pitch - 1); /* Surface Pitch */
 
-   surf[4] = gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout) |
-             min_array_element << GEN7_SURFACE_MIN_ARRAY_ELEMENT_SHIFT |
+   surf[4] = min_array_element << GEN7_SURFACE_MIN_ARRAY_ELEMENT_SHIFT |
              (depth - 1) << GEN7_SURFACE_RENDER_TARGET_VIEW_EXTENT_SHIFT;
+
+   if (mt->format != MESA_FORMAT_S_UINT8)
+      surf[4] |= gen7_surface_msaa_bits(mt->num_samples, mt->msaa_layout);
 
    surf[5] = irb->mt_level - irb->mt->first_level;
 
