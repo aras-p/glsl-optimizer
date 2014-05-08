@@ -637,10 +637,10 @@ brw_init_compaction_tables(struct brw_context *brw)
    assert(gen6_datatype_table[ARRAY_SIZE(gen6_datatype_table) - 1] != 0);
    assert(gen6_subreg_table[ARRAY_SIZE(gen6_subreg_table) - 1] != 0);
    assert(gen6_src_index_table[ARRAY_SIZE(gen6_src_index_table) - 1] != 0);
-   assert(gen7_control_index_table[ARRAY_SIZE(gen6_control_index_table) - 1] != 0);
-   assert(gen7_datatype_table[ARRAY_SIZE(gen6_datatype_table) - 1] != 0);
-   assert(gen7_subreg_table[ARRAY_SIZE(gen6_subreg_table) - 1] != 0);
-   assert(gen7_src_index_table[ARRAY_SIZE(gen6_src_index_table) - 1] != 0);
+   assert(gen7_control_index_table[ARRAY_SIZE(gen7_control_index_table) - 1] != 0);
+   assert(gen7_datatype_table[ARRAY_SIZE(gen7_datatype_table) - 1] != 0);
+   assert(gen7_subreg_table[ARRAY_SIZE(gen7_subreg_table) - 1] != 0);
+   assert(gen7_src_index_table[ARRAY_SIZE(gen7_src_index_table) - 1] != 0);
 
    switch (brw->gen) {
    case 7:
