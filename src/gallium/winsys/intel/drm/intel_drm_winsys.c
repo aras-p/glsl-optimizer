@@ -181,6 +181,7 @@ intel_winsys_create_for_fd(int fd)
    pipe_mutex_init(winsys->mutex);
 
    if (!probe_winsys(winsys)) {
+      pipe_mutex_destroy(winsys->mutex);
       drm_intel_bufmgr_destroy(winsys->bufmgr);
       FREE(winsys);
       return NULL;
