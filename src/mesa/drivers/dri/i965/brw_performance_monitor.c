@@ -610,6 +610,10 @@ gather_statistics_results(struct brw_context *brw,
       ctx->PerfMonitor.Groups[PIPELINE_STATS_COUNTERS].NumCounters;
 
    monitor->pipeline_stats_results = calloc(num_counters, sizeof(uint64_t));
+   if (monitor->pipeline_stats_results == NULL) {
+      _mesa_error_no_memory(__func__);
+      return;
+   }
 
    drm_intel_bo_map(monitor->pipeline_stats_bo, false);
    uint64_t *start = monitor->pipeline_stats_bo->virtual;
@@ -1318,8 +1322,17 @@ brw_get_perf_monitor_result(struct gl_context *ctx,
       const int num_counters =
          ctx->PerfMonitor.Groups[PIPELINE_STATS_COUNTERS].NumCounters;
 
-      if (!monitor->pipeline_stats_results)
+      if (!monitor->pipeline_stats_results) {
          gather_statistics_results(brw, monitor);
+
+         /* Check if we did really get the results */
+         if (!monitor->pipeline_stats_results) {
+            if (bytes_written) {
+               *bytes_written = 0;
+            }
+            return;
+         }
+      }
 
       for (int i = 0; i < num_counters; i++) {
          if (BITSET_TEST(m->ActiveCounters[PIPELINE_STATS_COUNTERS], i)) {
