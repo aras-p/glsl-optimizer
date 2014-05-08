@@ -422,6 +422,7 @@ gen8_generator::IF(unsigned predicate)
 {
    gen8_instruction *inst = next_inst(BRW_OPCODE_IF);
    gen8_set_dst(brw, inst, vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_D)));
+   gen8_set_src0(brw, inst, brw_imm_d(0));
    gen8_set_exec_size(inst, default_state.exec_size);
    gen8_set_pred_control(inst, predicate);
    gen8_set_mask_control(inst, BRW_MASK_ENABLE);
@@ -435,6 +436,7 @@ gen8_generator::ELSE()
 {
    gen8_instruction *inst = next_inst(BRW_OPCODE_ELSE);
    gen8_set_dst(brw, inst, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+   gen8_set_src0(brw, inst, brw_imm_d(0));
    gen8_set_mask_control(inst, BRW_MASK_ENABLE);
    push_if_stack(inst);
    return inst;
@@ -456,6 +458,7 @@ gen8_generator::ENDIF()
 
    gen8_instruction *endif_inst = next_inst(BRW_OPCODE_ENDIF);
    gen8_set_mask_control(endif_inst, BRW_MASK_ENABLE);
+   gen8_set_src0(brw, endif_inst, brw_imm_d(0));
    patch_IF_ELSE(if_inst, else_inst, endif_inst);
 
    return endif_inst;
@@ -577,8 +580,7 @@ gen8_generator::BREAK()
 {
    gen8_instruction *inst = next_inst(BRW_OPCODE_BREAK);
    gen8_set_dst(brw, inst, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   gen8_set_src0(brw, inst, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   gen8_set_src1(brw, inst, brw_imm_d(0));
+   gen8_set_src0(brw, inst, brw_imm_d(0));
    gen8_set_exec_size(inst, default_state.exec_size);
    return inst;
 }
@@ -588,8 +590,7 @@ gen8_generator::CONTINUE()
 {
    gen8_instruction *inst = next_inst(BRW_OPCODE_CONTINUE);
    gen8_set_dst(brw, inst, brw_ip_reg());
-   gen8_set_src0(brw, inst, brw_ip_reg());
-   gen8_set_src1(brw, inst, brw_imm_d(0));
+   gen8_set_src0(brw, inst, brw_imm_d(0));
    gen8_set_exec_size(inst, default_state.exec_size);
    return inst;
 }
@@ -601,8 +602,7 @@ gen8_generator::WHILE()
    gen8_instruction *while_inst = next_inst(BRW_OPCODE_WHILE);
 
    gen8_set_dst(brw, while_inst, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   gen8_set_src0(brw, while_inst, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   gen8_set_src1(brw, while_inst, brw_imm_ud(0));
+   gen8_set_src0(brw, while_inst, brw_imm_d(0));
    gen8_set_jip(while_inst, 16 * (do_inst - while_inst));
    gen8_set_exec_size(while_inst, default_state.exec_size);
 
@@ -614,7 +614,7 @@ gen8_generator::HALT()
 {
    gen8_instruction *inst = next_inst(BRW_OPCODE_HALT);
    gen8_set_dst(brw, inst, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   gen8_set_src0(brw, inst, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+   gen8_set_src0(brw, inst, brw_imm_d(0));
    gen8_set_exec_size(inst, default_state.exec_size);
    gen8_set_mask_control(inst, BRW_MASK_DISABLE);
    return inst;
