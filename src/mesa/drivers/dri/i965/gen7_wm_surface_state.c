@@ -454,9 +454,11 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
    mesa_format rb_format = _mesa_get_render_format(ctx, intel_rb_format(irb));
    uint32_t surftype;
    bool is_array = false;
-   int depth = MAX2(rb->Depth, 1);
-   int min_array_element;
+   int depth = MAX2(irb->layer_count, 1);
    const uint8_t mocs = GEN7_MOCS_L3;
+
+   int min_array_element = irb->mt_layer / MAX2(mt->num_samples, 1);
+
    GLenum gl_target = rb->TexImage ?
                          rb->TexImage->TexObject->Target : GL_TEXTURE_2D;
    if (gl_target == GL_TEXTURE_1D_ARRAY)
@@ -488,18 +490,13 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
       is_array = true;
       depth *= 6;
       break;
+   case GL_TEXTURE_3D:
+      depth = MAX2(rb->Depth, 1);
+      /* fallthrough */
    default:
       surftype = translate_tex_target(gl_target);
       is_array = _mesa_tex_target_is_array(gl_target);
       break;
-   }
-
-   if (layered) {
-      min_array_element = 0;
-   } else if (irb->mt->num_samples > 1) {
-      min_array_element = irb->mt_layer / irb->mt->num_samples;
-   } else {
-      min_array_element = irb->mt_layer;
    }
 
    surf[0] = surftype << BRW_SURFACE_TYPE_SHIFT |
