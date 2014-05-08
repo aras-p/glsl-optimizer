@@ -427,7 +427,7 @@ static GLboolean
 intel_nop_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
                         GLenum internalFormat, GLuint width, GLuint height)
 {
-   _mesa_problem(ctx, "intel_op_alloc_storage should never be called.");
+   _mesa_problem(ctx, "intel_nop_alloc_storage should never be called.");
    return false;
 }
 
