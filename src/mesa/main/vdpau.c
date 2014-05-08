@@ -132,6 +132,11 @@ register_surface(struct gl_context *ctx, GLboolean isOutput,
    }
 
    surf = CALLOC_STRUCT( vdp_surface );
+   if (surf == NULL) {
+      _mesa_error_no_memory("VDPAURegisterSurfaceNV");
+      return (GLintptr)NULL;
+   }
+
    surf->vdpSurface = vdpSurface;
    surf->target = target;
    surf->access = GL_READ_WRITE;
