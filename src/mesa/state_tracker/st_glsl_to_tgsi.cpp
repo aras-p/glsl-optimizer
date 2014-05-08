@@ -1670,30 +1670,82 @@ glsl_to_tgsi_visitor::visit(ir_expression *ir)
    case ir_unop_any: {
       assert(ir->operands[0]->type->is_vector());
 
-      /* After the dot-product, the value will be an integer on the
-       * range [0,4].  Zero stays zero, and positive values become 1.0.
-       */
-      glsl_to_tgsi_instruction *const dp =
-         emit_dp(ir, result_dst, op[0], op[0],
-                 ir->operands[0]->type->vector_elements);
-      if (this->prog->Target == GL_FRAGMENT_PROGRAM_ARB &&
-          result_dst.type == GLSL_TYPE_FLOAT) {
-	      /* The clamping to [0,1] can be done for free in the fragment
-	       * shader with a saturate.
-	       */
-	      dp->saturate = true;
-      } else if (result_dst.type == GLSL_TYPE_FLOAT) {
-	      /* Negating the result of the dot-product gives values on the range
-	       * [-4, 0].  Zero stays zero, and negative values become 1.0.  This
-	       * is achieved using SLT.
-	       */
-	      st_src_reg slt_src = result_src;
-	      slt_src.negate = ~slt_src.negate;
-	      emit(ir, TGSI_OPCODE_SLT, result_dst, slt_src, st_src_reg_for_float(0.0));
-      }
-      else {
-         /* Use SNE 0 if integers are being used as boolean values. */
-         emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_int(0));
+      if (native_integers) {
+         int dst_swizzle = 0, op0_swizzle, i;
+         st_src_reg accum = op[0];
+
+         op0_swizzle = op[0].swizzle;
+         accum.swizzle = MAKE_SWIZZLE4(GET_SWZ(op0_swizzle, 0),
+                                       GET_SWZ(op0_swizzle, 0),
+                                       GET_SWZ(op0_swizzle, 0),
+                                       GET_SWZ(op0_swizzle, 0));
+         for (i = 0; i < 4; i++) {
+            if (result_dst.writemask & (1 << i)) {
+               dst_swizzle = MAKE_SWIZZLE4(i, i, i, i);
+               break;
+            }
+         }
+         assert(i != 4);
+         assert(ir->operands[0]->type->is_boolean());
+
+         /* OR all the components together, since they should be either 0 or ~0
+          */
+         switch (ir->operands[0]->type->vector_elements) {
+         case 4:
+            op[0].swizzle = MAKE_SWIZZLE4(GET_SWZ(op0_swizzle, 3),
+                                          GET_SWZ(op0_swizzle, 3),
+                                          GET_SWZ(op0_swizzle, 3),
+                                          GET_SWZ(op0_swizzle, 3));
+            emit(ir, TGSI_OPCODE_OR, result_dst, accum, op[0]);
+            accum = st_src_reg(result_dst);
+            accum.swizzle = dst_swizzle;
+            /* fallthrough */
+         case 3:
+            op[0].swizzle = MAKE_SWIZZLE4(GET_SWZ(op0_swizzle, 2),
+                                          GET_SWZ(op0_swizzle, 2),
+                                          GET_SWZ(op0_swizzle, 2),
+                                          GET_SWZ(op0_swizzle, 2));
+            emit(ir, TGSI_OPCODE_OR, result_dst, accum, op[0]);
+            accum = st_src_reg(result_dst);
+            accum.swizzle = dst_swizzle;
+            /* fallthrough */
+         case 2:
+            op[0].swizzle = MAKE_SWIZZLE4(GET_SWZ(op0_swizzle, 1),
+                                          GET_SWZ(op0_swizzle, 1),
+                                          GET_SWZ(op0_swizzle, 1),
+                                          GET_SWZ(op0_swizzle, 1));
+            emit(ir, TGSI_OPCODE_OR, result_dst, accum, op[0]);
+            break;
+         default:
+            assert(!"Unexpected vector size");
+            break;
+         }
+      } else {
+         /* After the dot-product, the value will be an integer on the
+          * range [0,4].  Zero stays zero, and positive values become 1.0.
+          */
+         glsl_to_tgsi_instruction *const dp =
+            emit_dp(ir, result_dst, op[0], op[0],
+                    ir->operands[0]->type->vector_elements);
+         if (this->prog->Target == GL_FRAGMENT_PROGRAM_ARB &&
+             result_dst.type == GLSL_TYPE_FLOAT) {
+            /* The clamping to [0,1] can be done for free in the fragment
+             * shader with a saturate.
+             */
+            dp->saturate = true;
+         } else if (result_dst.type == GLSL_TYPE_FLOAT) {
+            /* Negating the result of the dot-product gives values on the range
+             * [-4, 0].  Zero stays zero, and negative values become 1.0.  This
+             * is achieved using SLT.
+             */
+            st_src_reg slt_src = result_src;
+            slt_src.negate = ~slt_src.negate;
+            emit(ir, TGSI_OPCODE_SLT, result_dst, slt_src, st_src_reg_for_float(0.0));
+         }
+         else {
+            /* Use SNE 0 if integers are being used as boolean values. */
+            emit(ir, TGSI_OPCODE_SNE, result_dst, result_src, st_src_reg_for_int(0));
+         }
       }
       break;
    }
