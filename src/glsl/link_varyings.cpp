@@ -992,7 +992,7 @@ varying_matches::match_comparator(const void *x_generic, const void *y_generic)
  * varyings, but excludes variables such as gl_FrontFacing and gl_FragCoord.
  */
 static bool
-is_varying_var(gl_shader_stage stage, const ir_variable *var)
+var_counts_against_varying_limit(gl_shader_stage stage, const ir_variable *var)
 {
    /* Only fragment shaders will take a varying variable as an input */
    if (stage == MESA_SHADER_FRAGMENT &&
@@ -1462,7 +1462,7 @@ check_against_output_limit(struct gl_context *ctx,
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if (var && var->data.mode == ir_var_shader_out &&
-          is_varying_var(producer->Stage, var)) {
+          var_counts_against_varying_limit(producer->Stage, var)) {
          output_vectors += var->type->count_attribute_slots();
       }
    }
@@ -1501,7 +1501,7 @@ check_against_input_limit(struct gl_context *ctx,
       ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
       if (var && var->data.mode == ir_var_shader_in &&
-          is_varying_var(consumer->Stage, var)) {
+          var_counts_against_varying_limit(consumer->Stage, var)) {
          input_vectors += var->type->count_attribute_slots();
       }
    }
