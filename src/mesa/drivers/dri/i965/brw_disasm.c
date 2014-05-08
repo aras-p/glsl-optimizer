@@ -1235,6 +1235,7 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen, bool is_compa
 	pad (file, 16);
 	space = 0;
 
+	fprintf (file, "            ");
 	if (gen >= 6) {
 	   err |= control (file, "target function", target_function_gen6,
 			   target, &space);
