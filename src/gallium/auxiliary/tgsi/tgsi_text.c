@@ -735,8 +735,9 @@ parse_dst_operand(
 static boolean
 parse_optional_swizzle(
    struct translate_ctx *ctx,
-   uint swizzle[4],
-   boolean *parsed_swizzle )
+   uint *swizzle,
+   boolean *parsed_swizzle,
+   int components)
 {
    const char *cur = ctx->cur;
 
@@ -748,7 +749,7 @@ parse_optional_swizzle(
 
       cur++;
       eat_opt_white( &cur );
-      for (i = 0; i < 4; i++) {
+      for (i = 0; i < components; i++) {
          if (uprcase( *cur ) == 'X')
             swizzle[i] = TGSI_SWIZZLE_X;
          else if (uprcase( *cur ) == 'Y')
@@ -816,7 +817,7 @@ parse_src_operand(
 
    /* Parse optional swizzle.
     */
-   if (parse_optional_swizzle( ctx, swizzle, &parsed_swizzle )) {
+   if (parse_optional_swizzle( ctx, swizzle, &parsed_swizzle, 4 )) {
       if (parsed_swizzle) {
          src->Register.SwizzleX = swizzle[0];
          src->Register.SwizzleY = swizzle[1];
@@ -834,6 +835,35 @@ parse_src_operand(
       ctx->cur++;
    }
 
+
+   return TRUE;
+}
+
+static boolean
+parse_texoffset_operand(
+   struct translate_ctx *ctx,
+   struct tgsi_texture_offset *src )
+{
+   uint file;
+   uint swizzle[3];
+   boolean parsed_swizzle;
+   struct parsed_bracket bracket;
+
+   if (!parse_register_src(ctx, &file, &bracket))
+      return FALSE;
+
+   src->File = file;
+   src->Index = bracket.index;
+
+   /* Parse optional swizzle.
+    */
+   if (parse_optional_swizzle( ctx, swizzle, &parsed_swizzle, 3 )) {
+      if (parsed_swizzle) {
+         src->SwizzleX = swizzle[0];
+         src->SwizzleY = swizzle[1];
+         src->SwizzleZ = swizzle[2];
+      }
+   }
 
    return TRUE;
 }
@@ -904,7 +934,7 @@ parse_instruction(
       if (!parse_register_1d( ctx, &file, &index ))
          return FALSE;
 
-      if (parse_optional_swizzle( ctx, swizzle, &parsed_swizzle )) {
+      if (parse_optional_swizzle( ctx, swizzle, &parsed_swizzle, 4 )) {
          if (parsed_swizzle) {
             inst.Predicate.SwizzleX = swizzle[0];
             inst.Predicate.SwizzleY = swizzle[1];
@@ -1000,6 +1030,19 @@ parse_instruction(
          }
       }
    }
+
+   cur = ctx->cur;
+   eat_opt_white( &cur );
+   for (i = 0; info->is_tex && *cur == ','; i++) {
+         cur++;
+         eat_opt_white( &cur );
+         ctx->cur = cur;
+         if (!parse_texoffset_operand( ctx, &inst.TexOffsets[i] ))
+            return FALSE;
+         cur = ctx->cur;
+         eat_opt_white( &cur );
+   }
+   inst.Texture.NumOffsets = i;
 
    cur = ctx->cur;
    eat_opt_white( &cur );
