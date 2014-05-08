@@ -68,6 +68,16 @@
 void LLVMLinkInMCJIT();
 #endif
 
+/*
+ * LLVM has several global caches which pointing/derived from objects
+ * owned by the context, so if we freeing contexts causes
+ * memory leaks and false cache hits when these objects are destroyed.
+ *
+ * TODO: For thread safety on multi-threaded OpenGL we should use one LLVM
+ * context per thread, and put them in a pool when threads are destroyed.
+ */
+#define USE_GLOBAL_CONTEXT 1
+
 
 #ifdef DEBUG
 unsigned gallivm_debug = 0;
@@ -196,15 +206,11 @@ free_gallivm_state(struct gallivm_state *gallivm)
    }
 #endif
 
-   /* Never free the LLVM context.
-    */
-#if 0
-   if (gallivm->context)
-      LLVMContextDispose(gallivm->context);
-#endif
-
    if (gallivm->builder)
       LLVMDisposeBuilder(gallivm->builder);
+
+   if (!USE_GLOBAL_CONTEXT && gallivm->context)
+      LLVMContextDispose(gallivm->context);
 
    gallivm->engine = NULL;
    gallivm->target = NULL;
@@ -277,19 +283,6 @@ fail:
 
 
 /**
- * Singleton
- *
- * We must never free LLVM contexts, because LLVM has several global caches
- * which pointing/derived from objects owned by the context, causing false
- * memory leaks and false cache hits when these objects are destroyed.
- *
- * TODO: For thread safety on multi-threaded OpenGL we should use one LLVM
- * context per thread, and put them in a pool when threads are destroyed.
- */
-static LLVMContextRef gallivm_context = NULL;
-
-
-/**
  * Allocate gallivm LLVM objects.
  * \return  TRUE for success, FALSE for failure
  */
@@ -301,10 +294,11 @@ init_gallivm_state(struct gallivm_state *gallivm)
 
    lp_build_init();
 
-   if (!gallivm_context) {
-      gallivm_context = LLVMContextCreate();
+   if (USE_GLOBAL_CONTEXT) {
+      gallivm->context = LLVMGetGlobalContext();
+   } else {
+      gallivm->context = LLVMContextCreate();
    }
-   gallivm->context = gallivm_context;
    if (!gallivm->context)
       goto fail;
 
