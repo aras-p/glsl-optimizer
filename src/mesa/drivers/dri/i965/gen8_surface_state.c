@@ -287,8 +287,8 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
    uint32_t format = 0;
    uint32_t surf_type;
    bool is_array = false;
-   int depth = MAX2(rb->Depth, 1);
-   int min_array_element;
+   int depth = MAX2(irb->layer_count, 1);
+   int min_array_element = irb->mt_layer / MAX2(mt->num_samples, 1);
 
    GLenum gl_target =
       rb->TexImage ? rb->TexImage->TexObject->Target : GL_TEXTURE_2D;
@@ -311,18 +311,13 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
       is_array = true;
       depth *= 6;
       break;
+   case GL_TEXTURE_3D:
+      depth = MAX2(rb->Depth, 1);
+      /* fallthrough */
    default:
       surf_type = translate_tex_target(gl_target);
       is_array = _mesa_tex_target_is_array(gl_target);
       break;
-   }
-
-   if (layered) {
-      min_array_element = 0;
-   } else if (mt->num_samples > 1) {
-      min_array_element = irb->mt_layer / mt->num_samples;
-   } else {
-      min_array_element = irb->mt_layer;
    }
 
    /* _NEW_BUFFERS */
