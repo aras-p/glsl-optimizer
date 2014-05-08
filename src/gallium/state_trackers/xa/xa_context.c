@@ -223,7 +223,7 @@ XA_EXPORT int
 xa_copy_prepare(struct xa_context *ctx,
 		struct xa_surface *dst, struct xa_surface *src)
 {
-    if (src == dst || ctx->srf != NULL)
+    if (src == dst)
 	return -XA_ERR_INVAL;
 
     if (src->tex->format != dst->tex->format) {
