@@ -455,10 +455,6 @@ lp_build_pack2(struct gallivm_state *gallivm,
    LLVMValueRef res = NULL;
    struct lp_type intr_type = dst_type;
 
-#if HAVE_LLVM < 0x0207
-   intr_type = src_type;
-#endif
-
    assert(!src_type.floating);
    assert(!dst_type.floating);
    assert(src_type.width == dst_type.width * 2);
@@ -478,10 +474,6 @@ lp_build_pack2(struct gallivm_state *gallivm,
            else {
               if (util_cpu_caps.has_sse4_1) {
                  intrinsic = "llvm.x86.sse41.packusdw";
-#if HAVE_LLVM < 0x0207
-                 /* llvm < 2.7 has inconsistent signatures except for packusdw */
-                 intr_type = dst_type;
-#endif
               }
            }
          } else if (util_cpu_caps.has_altivec) {

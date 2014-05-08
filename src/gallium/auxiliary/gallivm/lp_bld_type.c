@@ -311,18 +311,10 @@ lp_typekind_name(LLVMTypeKind t)
       return "LLVMArrayTypeKind";
    case LLVMPointerTypeKind:
       return "LLVMPointerTypeKind";
-#if HAVE_LLVM < 0x0300
-   case LLVMOpaqueTypeKind:
-      return "LLVMOpaqueTypeKind";
-#endif
    case LLVMVectorTypeKind:
       return "LLVMVectorTypeKind";
    case LLVMMetadataTypeKind:
       return "LLVMMetadataTypeKind";
-#if HAVE_LLVM == 0x0207
-   case LLVMUnionTypeKind:
-      return "LLVMUnionTypeKind";
-#endif
    default:
       return "unknown LLVMTypeKind";
    }

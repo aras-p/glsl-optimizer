@@ -1543,16 +1543,6 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
          if (num_quads == 1 && bld->num_lods == 1) {
             lod_fpart = LLVMBuildTrunc(builder, lod_fpart, u8n_bld.elem_type, "");
             lod_fpart = lp_build_broadcast_scalar(&u8n_bld, lod_fpart);
-
-#if HAVE_LLVM == 0x208
-            /* This was a work-around for a bug in LLVM 2.8.
-             * Evidently, something goes wrong in the construction of the
-             * lod_fpart short[8] vector.  Adding this no-effect shuffle seems
-             * to force the vector to be properly constructed.
-             * Tested with mesa-demos/src/tests/mipmap_limits.c (press t, f).
-             */
-#error Unsupported
-#endif
          }
          else {
             unsigned num_chans_per_lod = 4 * bld->coord_type.length / bld->num_lods;

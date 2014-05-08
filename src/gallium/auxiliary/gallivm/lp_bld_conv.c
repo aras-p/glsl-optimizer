@@ -101,7 +101,7 @@ lp_build_half_to_float(struct gallivm_state *gallivm,
    LLVMTypeRef int_vec_type = lp_build_vec_type(gallivm, i32_type);
    LLVMValueRef h;
 
-   if (util_cpu_caps.has_f16c && HAVE_LLVM >= 0x0301 &&
+   if (util_cpu_caps.has_f16c &&
        (src_length == 4 || src_length == 8)) {
       const char *intrinsic = NULL;
       if (src_length == 4) {
@@ -143,7 +143,7 @@ lp_build_float_to_half(struct gallivm_state *gallivm,
    struct lp_type i16_type = lp_type_int_vec(16, 16 * length);
    LLVMValueRef result;
 
-   if (util_cpu_caps.has_f16c && HAVE_LLVM >= 0x0301 &&
+   if (util_cpu_caps.has_f16c &&
        (length == 4 || length == 8)) {
       struct lp_type i168_type = lp_type_int_vec(16, 16 * 8);
       unsigned mode = 3; /* same as LP_BUILD_ROUND_TRUNCATE */

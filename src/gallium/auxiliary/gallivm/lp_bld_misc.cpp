@@ -54,18 +54,12 @@
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
-#if HAVE_LLVM >= 0x0301
 #include <llvm/ADT/Triple.h>
 #include <llvm/ExecutionEngine/JITMemoryManager.h>
-#endif
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/PrettyStackTrace.h>
 
-#if HAVE_LLVM >= 0x0300
 #include <llvm/Support/TargetSelect.h>
-#else /* HAVE_LLVM < 0x0300 */
-#include <llvm/Target/TargetSelect.h>
-#endif /* HAVE_LLVM < 0x0300 */
 
 #if HAVE_LLVM >= 0x0303
 #include <llvm/IR/IRBuilder.h>
@@ -104,76 +98,6 @@ static LLVMEnsureMultithreaded lLVMEnsureMultithreaded;
 extern "C" void
 lp_set_target_options(void)
 {
-#if HAVE_LLVM <= 0x0300
-#if defined(DEBUG)
-#if HAVE_LLVM >= 0x0207
-   llvm::JITEmitDebugInfo = true;
-#endif
-#endif
-
-   /*
-    * LLVM revision 123367 switched the default stack alignment to 16 bytes on
-    * Linux (and several other Unices in later revisions), to match recent gcc
-    * versions.
-    *
-    * However our drivers can be loaded by old binary applications, still
-    * maintaining a 4 bytes stack alignment.  Therefore we must tell LLVM here
-    * to only assume a 4 bytes alignment for backwards compatibility.
-    */
-#if defined(PIPE_ARCH_X86)
-#if HAVE_LLVM == 0x0300
-   llvm::StackAlignmentOverride = 4;
-#else
-   llvm::StackAlignment = 4;
-#endif
-#endif
-
-#if defined(DEBUG) || defined(PROFILE)
-   llvm::NoFramePointerElim = true;
-#if HAVE_LLVM >= 0x0208
-   llvm::NoFramePointerElimNonLeaf = true;
-#endif
-#endif
-
-   llvm::NoExcessFPPrecision = false;
-
-   /* XXX: Investigate this */
-#if 0
-   llvm::UnsafeFPMath = true;
-#endif
-#endif  /* HAVE_LLVM <= 0x0300 */
-
-#if HAVE_LLVM < 0x0209
-   /*
-    * LLVM will generate MMX instructions for vectors <= 64 bits, leading to
-    * innefficient code, and in 32bit systems, to the corruption of the FPU
-    * stack given that it expects the user to generate the EMMS instructions.
-    *
-    * See also:
-    * - http://llvm.org/bugs/show_bug.cgi?id=3287
-    * - http://l4.me.uk/post/2009/06/07/llvm-wrinkle-3-configuration-what-configuration/
-    *
-    * The -disable-mmx global option can be specified only once  since we
-    * dynamically link against LLVM it will reside in a separate shared object,
-    * which may or not be delete when this shared object is, so we use the
-    * llvm::DisablePrettyStackTrace variable (which we set below and should
-    * reside in the same shared library) to determine whether the -disable-mmx
-    * option has been set or not.
-    *
-    * Thankfully this ugly hack is not necessary on LLVM 2.9 onwards.
-    */
-   if (!llvm::DisablePrettyStackTrace) {
-      static boolean first = TRUE;
-      static const char* options[] = {
-         "prog",
-         "-disable-mmx"
-      };
-      assert(first);
-      llvm::cl::ParseCommandLineOptions(2, const_cast<char**>(options));
-      first = FALSE;
-   }
-#endif
-
 #if HAVE_LLVM < 0x0304
    /*
     * By default LLVM adds a signal handler to output a pretty stack trace.
@@ -187,25 +111,9 @@ lp_set_target_options(void)
    // usable by the JIT.
    llvm::InitializeNativeTarget();
 
-#if HAVE_LLVM >= 0x0208
    llvm::InitializeNativeTargetAsmPrinter();
-#elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   LLVMInitializeX86AsmPrinter();
-#elif defined(PIPE_ARCH_ARM)
-   LLVMInitializeARMAsmPrinter();
-#elif defined(PIPE_ARCH_PPC)
-   LLVMInitializePowerPCAsmPrinter();
-#endif
 
-#if HAVE_LLVM >= 0x0207
-#  if HAVE_LLVM >= 0x0301
    llvm::InitializeNativeTargetDisassembler();
-#  elif defined(PIPE_ARCH_X86) || defined(PIPE_ARCH_X86_64)
-   LLVMInitializeX86Disassembler();
-#  elif defined(PIPE_ARCH_ARM)
-   LLVMInitializeARMDisassembler();
-#  endif
-#endif
 }
 
 
@@ -242,8 +150,6 @@ lp_set_store_alignment(LLVMValueRef Inst,
    llvm::unwrap<llvm::StoreInst>(Inst)->setAlignment(Align);
 }
 
-
-#if HAVE_LLVM >= 0x301
 
 /**
  * Same as LLVMCreateJITCompilerForModule, but:
@@ -335,5 +241,3 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
    *OutError = strdup(Error.c_str());
    return 1;
 }
-
-#endif /* HAVE_LLVM >= 0x301 */

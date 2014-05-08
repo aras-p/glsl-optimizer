@@ -1499,11 +1499,9 @@ lp_build_negate(struct lp_build_context *bld,
 
    assert(lp_check_value(bld->type, a));
 
-#if HAVE_LLVM >= 0x0207
    if (bld->type.floating)
       a = LLVMBuildFNeg(builder, a, "");
    else
-#endif
       a = LLVMBuildNeg(builder, a, "");
 
    return a;

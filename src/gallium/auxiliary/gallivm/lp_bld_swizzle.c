@@ -58,24 +58,14 @@ lp_build_broadcast(struct gallivm_state *gallivm,
       LLVMBuilderRef builder = gallivm->builder;
       const unsigned length = LLVMGetVectorSize(vec_type);
       LLVMValueRef undef = LLVMGetUndef(vec_type);
+      /* The shuffle vector is always made of int32 elements */
       LLVMTypeRef i32_type = LLVMInt32TypeInContext(gallivm->context);
+      LLVMTypeRef i32_vec_type = LLVMVectorType(i32_type, length);
 
       assert(LLVMGetElementType(vec_type) == LLVMTypeOf(scalar));
 
-      if (HAVE_LLVM >= 0x207) {
-         /* The shuffle vector is always made of int32 elements */
-         LLVMTypeRef i32_vec_type = LLVMVectorType(i32_type, length);
-         res = LLVMBuildInsertElement(builder, undef, scalar, LLVMConstNull(i32_type), "");
-         res = LLVMBuildShuffleVector(builder, res, undef, LLVMConstNull(i32_vec_type), "");
-      } else {
-         /* XXX: The above path provokes a bug in LLVM 2.6 */
-         unsigned i;
-         res = undef;
-         for(i = 0; i < length; ++i) {
-            LLVMValueRef index = lp_build_const_int32(gallivm, i);
-            res = LLVMBuildInsertElement(builder, res, scalar, index, "");
-         }
-      }
+      res = LLVMBuildInsertElement(builder, undef, scalar, LLVMConstNull(i32_type), "");
+      res = LLVMBuildShuffleVector(builder, res, undef, LLVMConstNull(i32_vec_type), "");
    }
 
    return res;

@@ -104,26 +104,11 @@ unsigned lp_native_vector_width;
  * See also CodeGenOpt::Level in llvm/Target/TargetMachine.h
  */
 enum LLVM_CodeGenOpt_Level {
-#if HAVE_LLVM >= 0x207
    None,        // -O0
    Less,        // -O1
    Default,     // -O2, -Os
    Aggressive   // -O3
-#else
-   Default,
-   None,
-   Aggressive
-#endif
 };
-
-
-#if HAVE_LLVM <= 0x0206
-/**
- * LLVM 2.6 permits only one ExecutionEngine to be created.  So use the
- * same gallivm state everywhere.
- */
-static struct gallivm_state *GlobalGallivm = NULL;
-#endif
 
 
 /**
@@ -153,8 +138,8 @@ create_pass_manager(struct gallivm_state *gallivm)
       LLVMAddCFGSimplificationPass(gallivm->passmgr);
       LLVMAddReassociatePass(gallivm->passmgr);
 
-      if (HAVE_LLVM >= 0x207 && sizeof(void*) == 4) {
-         /* For LLVM >= 2.7 and 32-bit build, use this order of passes to
+      if (sizeof(void*) == 4) {
+         /* XXX: For LLVM >= 2.7 and 32-bit build, use this order of passes to
           * avoid generating bad code.
           * Test with piglit glsl-vs-sqrt-zero test.
           */
@@ -192,7 +177,6 @@ create_pass_manager(struct gallivm_state *gallivm)
 static void
 free_gallivm_state(struct gallivm_state *gallivm)
 {
-#if HAVE_LLVM >= 0x207 /* XXX or 0x208? */
    /* This leads to crashes w/ some versions of LLVM */
    LLVMModuleRef mod;
    char *error;
@@ -200,7 +184,6 @@ free_gallivm_state(struct gallivm_state *gallivm)
    if (gallivm->engine && gallivm->provider)
       LLVMRemoveModuleProvider(gallivm->engine, gallivm->provider,
                                &mod, &error);
-#endif
 
    if (gallivm->passmgr) {
       LLVMDisposePassManager(gallivm->passmgr);
@@ -212,12 +195,8 @@ free_gallivm_state(struct gallivm_state *gallivm)
       LLVMDisposeModuleProvider(gallivm->provider);
 #endif
 
-   if (HAVE_LLVM >= 0x207 && gallivm->engine) {
-      /* This will already destroy any associated module */
-      LLVMDisposeExecutionEngine(gallivm->engine);
-   } else {
-      LLVMDisposeModule(gallivm->module);
-   }
+   /* This will already destroy any associated module */
+   LLVMDisposeExecutionEngine(gallivm->engine);
 
 #if !USE_MCJIT
    /* Don't free the TargetData, it's owned by the exec engine */
@@ -251,7 +230,6 @@ static boolean
 init_gallivm_engine(struct gallivm_state *gallivm)
 {
    if (1) {
-      /* We can only create one LLVMExecutionEngine (w/ LLVM 2.6 anyway) */
       enum LLVM_CodeGenOpt_Level optlevel;
       char *error = NULL;
       int ret;
@@ -263,16 +241,11 @@ init_gallivm_engine(struct gallivm_state *gallivm)
          optlevel = Default;
       }
 
-#if HAVE_LLVM >= 0x0301
       ret = lp_build_create_jit_compiler_for_module(&gallivm->engine,
                                                     gallivm->module,
                                                     (unsigned) optlevel,
                                                     USE_MCJIT,
                                                     &error);
-#else
-      ret = LLVMCreateJITCompiler(&gallivm->engine, gallivm->provider,
-                                  (unsigned) optlevel, &error);
-#endif
       if (ret) {
          _debug_printf("%s\n", error);
          LLVMDisposeMessage(error);
@@ -527,12 +500,6 @@ gallivm_create(void)
 {
    struct gallivm_state *gallivm;
 
-#if HAVE_LLVM <= 0x206
-   if (GlobalGallivm) {
-      return GlobalGallivm;
-   }
-#endif
-
    gallivm = CALLOC_STRUCT(gallivm_state);
    if (gallivm) {
       if (!init_gallivm_state(gallivm)) {
@@ -540,10 +507,6 @@ gallivm_create(void)
          gallivm = NULL;
       }
    }
-
-#if HAVE_LLVM <= 0x206
-   GlobalGallivm = gallivm;
-#endif
 
    return gallivm;
 }
@@ -555,13 +518,8 @@ gallivm_create(void)
 void
 gallivm_destroy(struct gallivm_state *gallivm)
 {
-#if HAVE_LLVM <= 0x0206
-   /* No-op: don't destroy the singleton */
-   (void) gallivm;
-#else
    free_gallivm_state(gallivm);
    FREE(gallivm);
-#endif
 }
 
 
@@ -620,9 +578,7 @@ gallivm_verify_function(struct gallivm_state *gallivm,
 void
 gallivm_compile_module(struct gallivm_state *gallivm)
 {
-#if HAVE_LLVM > 0x206
    assert(!gallivm->compiled);
-#endif
 
    /* Dump byte code to a file */
    if (0) {

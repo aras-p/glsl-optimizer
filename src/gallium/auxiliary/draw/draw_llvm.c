@@ -97,15 +97,6 @@ create_jit_dvbuffer_type(struct gallivm_state *gallivm,
    dvbuffer_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                            Elements(elem_types), 0);
 
-#if HAVE_LLVM < 0x0300
-   LLVMAddTypeName(gallivm->module, struct_name, dvbuffer_type);
-
-   /* Make sure the target's struct layout cache doesn't return
-    * stale/invalid data.
-    */
-   LLVMInvalidateStructLayout(gallivm->target, dvbuffer_type);
-#endif
-
    LP_CHECK_MEMBER_OFFSET(struct draw_vertex_buffer, map,
                           target, dvbuffer_type,
                           DRAW_JIT_DVBUFFER_MAP);
@@ -141,15 +132,6 @@ create_jit_texture_type(struct gallivm_state *gallivm, const char *struct_name)
 
    texture_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
-
-#if HAVE_LLVM < 0x0300
-   LLVMAddTypeName(gallivm->module, struct_name, texture_type);
-
-   /* Make sure the target's struct layout cache doesn't return
-    * stale/invalid data.
-    */
-   LLVMInvalidateStructLayout(gallivm->target, texture_type);
-#endif
 
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, width,
                           target, texture_type,
@@ -204,15 +186,6 @@ create_jit_sampler_type(struct gallivm_state *gallivm, const char *struct_name)
    sampler_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
 
-#if HAVE_LLVM < 0x0300
-   LLVMAddTypeName(gallivm->module, struct_name, sampler_type);
-
-   /* Make sure the target's struct layout cache doesn't return
-    * stale/invalid data.
-    */
-   LLVMInvalidateStructLayout(gallivm->target, sampler_type);
-#endif
-
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_sampler, min_lod,
                           target, sampler_type,
                           DRAW_JIT_SAMPLER_MIN_LOD);
@@ -259,12 +232,6 @@ create_jit_context_type(struct gallivm_state *gallivm,
                                  PIPE_MAX_SAMPLERS); /* samplers */
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
-#if HAVE_LLVM < 0x0300
-   LLVMAddTypeName(gallivm->module, struct_name, context_type);
-
-   LLVMInvalidateStructLayout(gallivm->target, context_type);
-#endif
-
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, vs_constants,
                           target, context_type, DRAW_JIT_CTX_CONSTANTS);
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_context, num_vs_constants,
@@ -322,11 +289,6 @@ create_gs_jit_context_type(struct gallivm_state *gallivm,
 
    context_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                           Elements(elem_types), 0);
-#if HAVE_LLVM < 0x0300
-   LLVMAddTypeName(gallivm->module, struct_name, context_type);
-
-   LLVMInvalidateStructLayout(gallivm->target, context_type);
-#endif
 
    LP_CHECK_MEMBER_OFFSET(struct draw_gs_jit_context, constants,
                           target, context_type, DRAW_GS_JIT_CTX_CONSTANTS);
@@ -390,11 +352,6 @@ create_jit_vertex_buffer_type(struct gallivm_state *gallivm,
 
    vb_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                      Elements(elem_types), 0);
-#if HAVE_LLVM < 0x0300
-   LLVMAddTypeName(gallivm->module, struct_name, vb_type);
-
-   LLVMInvalidateStructLayout(gallivm->target, vb_type);
-#endif
 
    LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, stride,
                           target, vb_type, 0);
@@ -427,11 +384,6 @@ create_jit_vertex_header(struct gallivm_state *gallivm, int data_elems)
 
    vertex_header = LLVMStructTypeInContext(gallivm->context, elem_types,
                                            Elements(elem_types), 0);
-#if HAVE_LLVM < 0x0300
-   LLVMAddTypeName(gallivm->module, struct_name, vertex_header);
-
-   LLVMInvalidateStructLayout(gallivm->target, vertex_header);
-#endif
 
    /* these are bit-fields and we can't take address of them
       LP_CHECK_MEMBER_OFFSET(struct vertex_header, clipmask,

@@ -1775,20 +1775,10 @@ lp_build_sample_common(struct lp_build_sample_context *bld,
       /* fall-through */
    case PIPE_TEX_MIPFILTER_NONE:
       /* always use mip level 0 */
-      if (HAVE_LLVM == 0x0207 && target == PIPE_TEXTURE_CUBE) {
-         /* XXX this is a work-around for an apparent bug in LLVM 2.7.
-          * We should be able to set ilevel0 = const(0) but that causes
-          * bad x86 code to be emitted.
-          */
-         assert(lod_ipart);
-         lp_build_nearest_mip_level(bld, texture_index, lod_ipart, ilevel0, NULL);
-      }
-      else {
-         first_level = bld->dynamic_state->first_level(bld->dynamic_state,
-                                                       bld->gallivm, texture_index);
-         first_level = lp_build_broadcast_scalar(&bld->leveli_bld, first_level);
-         *ilevel0 = first_level;
-      }
+      first_level = bld->dynamic_state->first_level(bld->dynamic_state,
+                                                    bld->gallivm, texture_index);
+      first_level = lp_build_broadcast_scalar(&bld->leveli_bld, first_level);
+      *ilevel0 = first_level;
       break;
    case PIPE_TEX_MIPFILTER_NEAREST:
       assert(lod_ipart);
