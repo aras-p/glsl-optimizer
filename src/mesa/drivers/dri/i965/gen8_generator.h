@@ -117,8 +117,6 @@ public:
    gen8_instruction *NOP();
    /** @} */
 
-   void disassemble(FILE *out, int start, int end);
-
 protected:
    gen8_instruction *alu3(unsigned opcode,
                           struct brw_reg dst,
@@ -196,3 +194,7 @@ protected:
 
    void *mem_ctx;
 };
+
+extern "C" void
+gen8_dump_compile(struct brw_context *brw, void *assembly,
+                  int start,int end, FILE *out);
