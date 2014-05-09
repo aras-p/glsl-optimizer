@@ -29,7 +29,8 @@ Target *getTargetNVC0(unsigned int chipset)
    return new TargetNVC0(chipset);
 }
 
-TargetNVC0::TargetNVC0(unsigned int card) : Target(false, card >= 0xe4)
+TargetNVC0::TargetNVC0(unsigned int card) :
+   Target(card < 0x110, false, card >= 0xe4)
 {
    chipset = card;
    initOpInfo();

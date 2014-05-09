@@ -29,7 +29,7 @@ Target *getTargetNV50(unsigned int chipset)
    return new TargetNV50(chipset);
 }
 
-TargetNV50::TargetNV50(unsigned int card) : Target(true, false)
+TargetNV50::TargetNV50(unsigned int card) : Target(true, true, false)
 {
    chipset = card;
 

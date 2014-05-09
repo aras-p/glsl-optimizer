@@ -2067,22 +2067,24 @@ FlatteningPass::visit(BasicBlock *bb)
       return true;
 
    // try to attach join to previous instruction
-   Instruction *insn = bb->getExit();
-   if (insn && insn->op == OP_JOIN && !insn->getPredicate()) {
-      insn = insn->prev;
-      if (insn && !insn->getPredicate() &&
-          !insn->asFlow() &&
-          insn->op != OP_TEXBAR &&
-          !isTextureOp(insn->op) && // probably just nve4
-          !isSurfaceOp(insn->op) && // not confirmed
-          insn->op != OP_LINTERP && // probably just nve4
-          insn->op != OP_PINTERP && // probably just nve4
-          ((insn->op != OP_LOAD && insn->op != OP_STORE) ||
-           typeSizeof(insn->dType) <= 4) &&
-          !insn->isNop()) {
-         insn->join = 1;
-         bb->remove(bb->getExit());
-         return true;
+   if (prog->getTarget()->hasJoin) {
+      Instruction *insn = bb->getExit();
+      if (insn && insn->op == OP_JOIN && !insn->getPredicate()) {
+         insn = insn->prev;
+         if (insn && !insn->getPredicate() &&
+             !insn->asFlow() &&
+             insn->op != OP_TEXBAR &&
+             !isTextureOp(insn->op) && // probably just nve4
+             !isSurfaceOp(insn->op) && // not confirmed
+             insn->op != OP_LINTERP && // probably just nve4
+             insn->op != OP_PINTERP && // probably just nve4
+             ((insn->op != OP_LOAD && insn->op != OP_STORE) ||
+              typeSizeof(insn->dType) <= 4) &&
+             !insn->isNop()) {
+            insn->join = 1;
+            bb->remove(bb->getExit());
+            return true;
+         }
       }
    }
 
