@@ -799,11 +799,10 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
                           "assignment to %s",
                           non_lvalue_description);
          error_emitted = true;
-      } else if (lhs->variable_referenced() != NULL
-                 && lhs->variable_referenced()->data.read_only) {
+      } else if (lhs_var != NULL && lhs_var->data.read_only) {
          _mesa_glsl_error(&lhs_loc, state,
                           "assignment to read-only variable '%s'",
-                          lhs->variable_referenced()->name);
+                          lhs_var->name);
          error_emitted = true;
       } else if (lhs->type->is_array() &&
                  !state->check_version(120, 300, &lhs_loc,
