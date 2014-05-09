@@ -949,7 +949,7 @@ nvc0_set_vertex_buffers(struct pipe_context *pipe,
 
        if (vb[i].user_buffer) {
           nvc0->vbo_user |= 1 << dst_index;
-          if (!vb[i].stride)
+          if (!vb[i].stride && nvc0->screen->eng3d->oclass < GM107_3D_CLASS)
              nvc0->constant_vbos |= 1 << dst_index;
           else
              nvc0->constant_vbos &= ~(1 << dst_index);
