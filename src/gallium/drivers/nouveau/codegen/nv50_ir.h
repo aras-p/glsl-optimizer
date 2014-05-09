@@ -157,6 +157,7 @@ enum operation
    OP_VSHL,
    OP_VSEL,
    OP_CCTL, // cache control
+   OP_SHFL, // warp shuffle
    OP_LAST
 };
 
@@ -223,6 +224,10 @@ enum operation
 #define NV50_IR_SUBOP_PIXLD_OFFSET      3
 #define NV50_IR_SUBOP_PIXLD_CENT_OFFSET 4
 #define NV50_IR_SUBOP_PIXLD_SAMPLEID    5
+#define NV50_IR_SUBOP_SHFL_IDX  0
+#define NV50_IR_SUBOP_SHFL_UP   1
+#define NV50_IR_SUBOP_SHFL_DOWN 2
+#define NV50_IR_SUBOP_SHFL_BFLY 3
 #define NV50_IR_SUBOP_MADSP_SD     0xffff
 // Yes, we could represent those with DataType.
 // Or put the type into operation and have a couple 1000 values in that enum.
@@ -379,6 +384,7 @@ enum SVSemantic
    SV_LBASE,
    SV_SBASE,
    SV_VERTEX_STRIDE,
+   SV_INVOCATION_INFO,
    SV_UNDEFINED,
    SV_LAST
 };

@@ -256,6 +256,7 @@ private:
       void texConstraintNV50(TexInstruction *);
       void texConstraintNVC0(TexInstruction *);
       void texConstraintNVE0(TexInstruction *);
+      void texConstraintGM107(TexInstruction *);
 
       std::list<Instruction *> constrList;
 
@@ -855,6 +856,7 @@ GCRA::coalesce(ArrayList& insns)
    case 0xe0:
    case 0xf0:
    case 0x100:
+   case 0x110:
       ret = doCoalesce(insns, JOIN_MASK_UNION);
       break;
    default:
@@ -1881,6 +1883,34 @@ RegAlloc::InsertConstraintsPass::condenseSrcs(Instruction *insn,
 }
 
 void
+RegAlloc::InsertConstraintsPass::texConstraintGM107(TexInstruction *tex)
+{
+   int n, s;
+
+   if (isTextureOp(tex->op))
+      textureMask(tex);
+   condenseDefs(tex);
+
+   if (tex->op == OP_SUSTB || tex->op == OP_SUSTP) {
+      condenseSrcs(tex, 3, (3 + typeSizeof(tex->dType) / 4) - 1);
+   } else
+   if (isTextureOp(tex->op)) {
+      if (tex->op != OP_TXQ) {
+         s = tex->tex.target.getArgCount() - tex->tex.target.isMS();
+         n = tex->srcCount(0xff) - s;
+      } else {
+         s = tex->srcCount(0xff);
+         n = 0;
+      }
+
+      if (s > 1)
+         condenseSrcs(tex, 0, s - 1);
+      if (n > 1) // NOTE: first call modified positions already
+         condenseSrcs(tex, 1, n);
+   }
+}
+
+void
 RegAlloc::InsertConstraintsPass::texConstraintNVE0(TexInstruction *tex)
 {
    if (isTextureOp(tex->op))
@@ -1986,6 +2016,9 @@ RegAlloc::InsertConstraintsPass::visit(BasicBlock *bb)
          case 0xf0:
          case 0x100:
             texConstraintNVE0(tex);
+            break;
+         case 0x110:
+            texConstraintGM107(tex);
             break;
          default:
             break;

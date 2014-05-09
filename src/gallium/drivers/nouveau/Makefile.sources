@@ -72,10 +72,13 @@ NV50_CODEGEN_SOURCES := \
 	codegen/nv50_ir_util.cpp
 
 NVC0_CODEGEN_SOURCES := \
-	codegen/nv50_ir_emit_gk110.cpp \
 	codegen/nv50_ir_emit_nvc0.cpp \
+	codegen/nv50_ir_emit_gk110.cpp \
+	codegen/nv50_ir_emit_gm107.cpp \
 	codegen/nv50_ir_lowering_nvc0.cpp \
-	codegen/nv50_ir_target_nvc0.cpp
+	codegen/nv50_ir_lowering_gm107.cpp \
+	codegen/nv50_ir_target_nvc0.cpp \
+	codegen/nv50_ir_target_gm107.cpp
 
 NVC0_C_SOURCES := \
 	nvc0/nvc0_compute.c \

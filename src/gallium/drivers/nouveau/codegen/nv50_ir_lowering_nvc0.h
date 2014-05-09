@@ -99,7 +99,7 @@ protected:
    bool handleTEX(TexInstruction *);
    bool handleTXD(TexInstruction *);
    bool handleTXQ(TexInstruction *);
-   bool handleManualTXD(TexInstruction *);
+   virtual bool handleManualTXD(TexInstruction *);
    bool handleTXLQ(TexInstruction *);
    bool handleATOM(Instruction *);
    bool handleCasExch(Instruction *, bool needCctl);

@@ -54,6 +54,7 @@ const uint8_t Target::operationSrcNr[] =
    2, 2,                   // ATOM, BAR
    2, 2, 2, 2, 3, 2,       // VADD, VAVG, VMIN, VMAX, VSAD, VSET,
    2, 2, 2, 1,             // VSHR, VSHL, VSEL, CCTL
+   3,                      // SHFL
    0
 };
 
@@ -126,10 +127,13 @@ const OpClass Target::operationClass[] =
    OPCLASS_VECTOR, OPCLASS_VECTOR, OPCLASS_VECTOR, OPCLASS_VECTOR,
    // VSEL, CCTL
    OPCLASS_VECTOR, OPCLASS_CONTROL,
+   // SHFL
+   OPCLASS_OTHER,
    OPCLASS_PSEUDO // LAST
 };
 
 
+extern Target *getTargetGM107(unsigned int chipset);
 extern Target *getTargetNVC0(unsigned int chipset);
 extern Target *getTargetNV50(unsigned int chipset);
 
@@ -138,6 +142,8 @@ Target *Target::create(unsigned int chipset)
    STATIC_ASSERT(Elements(operationSrcNr) == OP_LAST + 1);
    STATIC_ASSERT(Elements(operationClass) == OP_LAST + 1);
    switch (chipset & ~0xf) {
+   case 0x110:
+      return getTargetGM107(chipset);
    case 0xc0:
    case 0xd0:
    case 0xe0:

@@ -187,6 +187,7 @@ const char *operationStr[OP_LAST + 1] =
    "vshl",
    "vsel",
    "cctl",
+   "shfl",
    "(invalid)"
 };
 
@@ -271,6 +272,7 @@ static const char *SemanticStr[SV_LAST + 1] =
    "LBASE",
    "SBASE",
    "VERTEX_STRIDE",
+   "INVOCATION_INFO",
    "?",
    "(INVALID)"
 };
