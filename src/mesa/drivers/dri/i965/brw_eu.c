@@ -254,14 +254,12 @@ const unsigned *brw_get_program( struct brw_compile *p,
 }
 
 void
-brw_dump_compile(struct brw_compile *p, FILE *out, int start, int end)
+brw_dump_compile(struct brw_context *brw, void *assembly, int start, int end, FILE *out)
 {
-   struct brw_context *brw = p->brw;
-   void *store = p->store;
    bool dump_hex = false;
 
    for (int offset = start; offset < end;) {
-      struct brw_instruction *insn = store + offset;
+      struct brw_instruction *insn = assembly + offset;
       struct brw_instruction uncompacted;
       bool compacted = insn->header.cmpt_control;
       fprintf(out, "0x%08x: ", offset);
@@ -288,6 +286,6 @@ brw_dump_compile(struct brw_compile *p, FILE *out, int start, int end)
 	 offset += 16;
       }
 
-      brw_disasm(out, insn, p->brw->gen, compacted);
+      brw_disasm(out, insn, brw->gen, compacted);
    }
 }

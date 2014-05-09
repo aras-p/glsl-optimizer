@@ -105,7 +105,8 @@ void brw_set_acc_write_control(struct brw_compile *p, unsigned value);
 
 void brw_init_compile(struct brw_context *, struct brw_compile *p,
 		      void *mem_ctx);
-void brw_dump_compile(struct brw_compile *p, FILE *out, int start, int end);
+void brw_dump_compile(struct brw_context *brw, void *assembly,
+                      int start,int end, FILE *out);
 const unsigned *brw_get_program( struct brw_compile *p, unsigned *sz );
 
 struct brw_instruction *brw_next_insn(struct brw_compile *p, unsigned opcode);
