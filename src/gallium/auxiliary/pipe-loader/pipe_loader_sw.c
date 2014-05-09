@@ -145,9 +145,6 @@ pipe_loader_sw_release(struct pipe_loader_device **dev)
 {
    struct pipe_loader_sw_device *sdev = pipe_loader_sw_device(*dev);
 
-   if (sdev->ws && sdev->ws->destroy)
-      sdev->ws->destroy(sdev->ws);
-
    if (sdev->lib)
       util_dl_close(sdev->lib);
 
