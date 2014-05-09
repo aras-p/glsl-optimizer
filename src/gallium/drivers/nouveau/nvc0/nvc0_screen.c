@@ -685,6 +685,9 @@ nvc0_screen_create(struct nouveau_device *dev)
    PUSH_DATA (push, screen->fence.bo->offset + 16);
 
    switch (dev->chipset & ~0xf) {
+   case 0x110:
+      obj_class = GM107_3D_CLASS;
+      break;
    case 0x100:
    case 0xf0:
       obj_class = NVF0_3D_CLASS;
