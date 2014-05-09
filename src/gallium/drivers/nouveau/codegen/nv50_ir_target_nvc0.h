@@ -44,6 +44,7 @@ public:
    virtual bool runLegalizePass(Program *, CGStage stage) const;
 
    virtual void getBuiltinCode(const uint32_t **code, uint32_t *size) const;
+   virtual uint32_t getBuiltinOffset(int builtin) const;
 
    virtual bool insnCanLoad(const Instruction *insn, int s,
                             const Instruction *ld) const;
@@ -62,8 +63,6 @@ public:
    virtual unsigned int getFileUnit(DataFile) const;
 
    virtual uint32_t getSVAddress(DataFile shaderFile, const Symbol *sv) const;
-
-   uint32_t getBuiltinOffset(int builtin) const;
 
 private:
    void initOpInfo();

@@ -24,6 +24,7 @@
 #include "codegen/nv50_ir_build_util.h"
 
 #include "codegen/nv50_ir_target_nvc0.h"
+#include "codegen/nv50_ir_lowering_nvc0.h"
 
 #include <limits>
 
@@ -38,20 +39,6 @@ namespace nv50_ir {
 #define QUADOP(q, r, s, t)                      \
    ((QOP_##q << 6) | (QOP_##r << 4) |           \
     (QOP_##s << 2) | (QOP_##t << 0))
-
-class NVC0LegalizeSSA : public Pass
-{
-private:
-   virtual bool visit(BasicBlock *);
-   virtual bool visit(Function *);
-
-   // we want to insert calls to the builtin library only after optimization
-   void handleDIV(Instruction *); // integer division, modulus
-   void handleRCPRSQ(Instruction *); // double precision float recip/rsqrt
-
-private:
-   BuildUtil bld;
-};
 
 void
 NVC0LegalizeSSA::handleDIV(Instruction *i)
@@ -117,49 +104,6 @@ NVC0LegalizeSSA::visit(BasicBlock *bb)
    }
    return true;
 }
-
-class NVC0LegalizePostRA : public Pass
-{
-public:
-   NVC0LegalizePostRA(const Program *);
-
-private:
-   virtual bool visit(Function *);
-   virtual bool visit(BasicBlock *);
-
-   void replaceZero(Instruction *);
-   bool tryReplaceContWithBra(BasicBlock *);
-   void propagateJoin(BasicBlock *);
-
-   struct TexUse
-   {
-      TexUse(Instruction *use, const Instruction *tex)
-         : insn(use), tex(tex), level(-1) { }
-      Instruction *insn;
-      const Instruction *tex; // or split / mov
-      int level;
-   };
-   struct Limits
-   {
-      Limits() { }
-      Limits(int min, int max) : min(min), max(max) { }
-      int min, max;
-   };
-   bool insertTextureBarriers(Function *);
-   inline bool insnDominatedBy(const Instruction *, const Instruction *) const;
-   void findFirstUses(const Instruction *tex, const Instruction *def,
-                      std::list<TexUse>&);
-   void findOverwritingDefs(const Instruction *tex, Instruction *insn,
-                            const BasicBlock *term,
-                            std::list<TexUse>&);
-   void addTexUse(std::list<TexUse>&, Instruction *, const Instruction *);
-   const Instruction *recurseDef(const Instruction *);
-
-private:
-   LValue *rZero;
-   LValue *carry;
-   const bool needTexBar;
-};
 
 NVC0LegalizePostRA::NVC0LegalizePostRA(const Program *prog)
    : rZero(NULL),
@@ -575,53 +519,6 @@ NVC0LegalizePostRA::visit(BasicBlock *bb)
 
    return true;
 }
-
-class NVC0LoweringPass : public Pass
-{
-public:
-   NVC0LoweringPass(Program *);
-
-private:
-   virtual bool visit(Function *);
-   virtual bool visit(BasicBlock *);
-   virtual bool visit(Instruction *);
-
-   bool handleRDSV(Instruction *);
-   bool handleWRSV(Instruction *);
-   bool handleEXPORT(Instruction *);
-   bool handleOUT(Instruction *);
-   bool handleDIV(Instruction *);
-   bool handleMOD(Instruction *);
-   bool handleSQRT(Instruction *);
-   bool handlePOW(Instruction *);
-   bool handleTEX(TexInstruction *);
-   bool handleTXD(TexInstruction *);
-   bool handleTXQ(TexInstruction *);
-   bool handleManualTXD(TexInstruction *);
-   bool handleTXLQ(TexInstruction *);
-   bool handleATOM(Instruction *);
-   bool handleCasExch(Instruction *, bool needCctl);
-   void handleSurfaceOpNVE4(TexInstruction *);
-
-   void checkPredicate(Instruction *);
-
-   void readTessCoord(LValue *dst, int c);
-
-   Value *loadResInfo32(Value *ptr, uint32_t off);
-   Value *loadMsInfo32(Value *ptr, uint32_t off);
-   Value *loadTexHandle(Value *ptr, unsigned int slot);
-
-   void adjustCoordinatesMS(TexInstruction *);
-   void processSurfaceCoordsNVE4(TexInstruction *);
-
-private:
-   const Target *const targ;
-
-   BuildUtil bld;
-
-   Symbol *gMemBase;
-   LValue *gpEmitAddress;
-};
 
 NVC0LoweringPass::NVC0LoweringPass(Program *prog) : targ(prog->getTarget())
 {
