@@ -240,7 +240,7 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
 
       if (!(nvc0->vbo_user & (1 << b)))
          continue;
-      if (!vb->stride) {
+      if (nvc0->constant_vbos & (1 << b)) {
          nvc0_set_constant_vertex_attrib(nvc0, i);
          continue;
       }
@@ -331,7 +331,7 @@ nvc0_validate_vertex_buffers(struct nvc0_context *nvc0)
       vb = &nvc0->vtxbuf[b];
 
       if (!vb->buffer) {
-         if (vb->stride) {
+         if (!(nvc0->constant_vbos & (1 << b))) {
             if (ve->pipe.instance_divisor) {
                BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_DIVISOR(i)), 1);
                PUSH_DATA (push, ve->pipe.instance_divisor);
@@ -385,7 +385,7 @@ nvc0_validate_vertex_buffers_shared(struct nvc0_context *nvc0)
       uint32_t offset, limit;
 
       if (mask & (1 << b)) {
-         if (vb->stride) {
+         if (!(nvc0->constant_vbos & (1 << b))) {
             BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(b)), 1);
             PUSH_DATA (push, NVC0_3D_VERTEX_ARRAY_FETCH_ENABLE | vb->stride);
          }
