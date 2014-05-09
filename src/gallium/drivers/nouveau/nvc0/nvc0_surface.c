@@ -848,7 +848,7 @@ nvc0_blitctx_post_blit(struct nvc0_blitctx *blit)
        NVC0_NEW_TEXTURES | NVC0_NEW_SAMPLERS |
        NVC0_NEW_VERTPROG | NVC0_NEW_FRAGPROG |
        NVC0_NEW_TCTLPROG | NVC0_NEW_TEVLPROG | NVC0_NEW_GMTYPROG |
-       NVC0_NEW_TFB_TARGETS);
+       NVC0_NEW_TFB_TARGETS | NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS);
 
    nvc0->base.pipe.set_min_samples(&nvc0->base.pipe, blit->saved.min_samples);
 }
@@ -860,8 +860,11 @@ nvc0_blit_3d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
    struct nouveau_pushbuf *push = nvc0->base.pushbuf;
    struct pipe_resource *src = info->src.resource;
    struct pipe_resource *dst = info->dst.resource;
+   struct nouveau_bo *vtxbuf_bo;
+   uint32_t stride, length, *vbuf;
+   uint64_t vtxbuf;
    int32_t minx, maxx, miny, maxy;
-   int32_t i;
+   int32_t i, n;
    float x0, x1, y0, y1, z;
    float dz;
    float x_range, y_range;
@@ -939,43 +942,73 @@ nvc0_blit_3d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
    PUSH_DATA (push, (maxx << 16) | minx);
    PUSH_DATA (push, (maxy << 16) | miny);
 
+   stride = (3 + 2) * 4;
+   length = stride * 3 * info->dst.box.depth;
+
+   vbuf = nouveau_scratch_get(&nvc0->base, length, &vtxbuf, &vtxbuf_bo);
+   if (!vbuf) {
+      assert(vbuf);
+      return;
+   }
+
+   BCTX_REFN_bo(nvc0->bufctx_3d, VTX_TMP, NOUVEAU_BO_GART | NOUVEAU_BO_RD, vtxbuf_bo);
+   nouveau_pushbuf_validate(push);
+
+   BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_FETCH(0)), 4);
+   PUSH_DATA (push, NVC0_3D_VERTEX_ARRAY_FETCH_ENABLE | stride <<
+                    NVC0_3D_VERTEX_ARRAY_FETCH_STRIDE__SHIFT);
+   PUSH_DATAh(push, vtxbuf);
+   PUSH_DATA (push, vtxbuf);
+   PUSH_DATA (push, 0);
+   BEGIN_NVC0(push, NVC0_3D(VERTEX_ARRAY_LIMIT_HIGH(0)), 2);
+   PUSH_DATAh(push, vtxbuf + length - 1);
+   PUSH_DATA (push, vtxbuf + length - 1);
+
+   n = MAX2(2, nvc0->state.num_vtxelts);
+
+   BEGIN_NVC0(push, NVC0_3D(VERTEX_ATTRIB_FORMAT(0)), n);
+   PUSH_DATA (push, NVC0_3D_VERTEX_ATTRIB_FORMAT_TYPE_FLOAT |
+                    NVC0_3D_VERTEX_ATTRIB_FORMAT_SIZE_32_32 | 0x00 <<
+                    NVC0_3D_VERTEX_ATTRIB_FORMAT_OFFSET__SHIFT);
+   PUSH_DATA (push, NVC0_3D_VERTEX_ATTRIB_FORMAT_TYPE_FLOAT |
+                    NVC0_3D_VERTEX_ATTRIB_FORMAT_SIZE_32_32_32 | 0x08 <<
+                    NVC0_3D_VERTEX_ATTRIB_FORMAT_OFFSET__SHIFT);
+   for (i = 2; i < n; i++) {
+      PUSH_DATA(push, NVC0_3D_VERTEX_ATTRIB_FORMAT_TYPE_FLOAT |
+                      NVC0_3D_VERTEX_ATTRIB_FORMAT_SIZE_32 |
+                      NVC0_3D_VERTEX_ATTRIB_FORMAT_CONST);
+   }
+   nvc0->state.num_vtxelts = 2;
+
    for (i = 0; i < info->dst.box.depth; ++i, z += dz) {
       if (info->dst.box.z + i) {
          BEGIN_NVC0(push, NVC0_3D(LAYER), 1);
          PUSH_DATA (push, info->dst.box.z + i);
       }
 
+      *(vbuf++) = fui(0.0f);
+      *(vbuf++) = fui(0.0f);
+      *(vbuf++) = fui(x0);
+      *(vbuf++) = fui(y0);
+      *(vbuf++) = fui(z);
+
+      *(vbuf++) = fui(16384 << nv50_miptree(dst)->ms_x);
+      *(vbuf++) = fui(0.0f);
+      *(vbuf++) = fui(x1);
+      *(vbuf++) = fui(y0);
+      *(vbuf++) = fui(z);
+
+      *(vbuf++) = fui(0.0f);
+      *(vbuf++) = fui(16384 << nv50_miptree(dst)->ms_y);
+      *(vbuf++) = fui(x0);
+      *(vbuf++) = fui(y1);
+      *(vbuf++) = fui(z);
+
       IMMED_NVC0(push, NVC0_3D(VERTEX_BEGIN_GL),
                        NVC0_3D_VERTEX_BEGIN_GL_PRIMITIVE_TRIANGLES);
-
-      BEGIN_NVC0(push, NVC0_3D(VTX_ATTR_DEFINE), 4);
-      PUSH_DATA (push, 0x74301);
-      PUSH_DATAf(push, x0);
-      PUSH_DATAf(push, y0);
-      PUSH_DATAf(push, z);
-      BEGIN_NVC0(push, NVC0_3D(VTX_ATTR_DEFINE), 3);
-      PUSH_DATA (push, 0x74200);
-      PUSH_DATAf(push, 0.0f);
-      PUSH_DATAf(push, 0.0f);
-      BEGIN_NVC0(push, NVC0_3D(VTX_ATTR_DEFINE), 4);
-      PUSH_DATA (push, 0x74301);
-      PUSH_DATAf(push, x1);
-      PUSH_DATAf(push, y0);
-      PUSH_DATAf(push, z);
-      BEGIN_NVC0(push, NVC0_3D(VTX_ATTR_DEFINE), 3);
-      PUSH_DATA (push, 0x74200);
-      PUSH_DATAf(push, 16384 << nv50_miptree(dst)->ms_x);
-      PUSH_DATAf(push, 0.0f);
-      BEGIN_NVC0(push, NVC0_3D(VTX_ATTR_DEFINE), 4);
-      PUSH_DATA (push, 0x74301);
-      PUSH_DATAf(push, x0);
-      PUSH_DATAf(push, y1);
-      PUSH_DATAf(push, z);
-      BEGIN_NVC0(push, NVC0_3D(VTX_ATTR_DEFINE), 3);
-      PUSH_DATA (push, 0x74200);
-      PUSH_DATAf(push, 0.0f);
-      PUSH_DATAf(push, 16384 << nv50_miptree(dst)->ms_y);
-
+      BEGIN_NVC0(push, NVC0_3D(VERTEX_BUFFER_FIRST), 2);
+      PUSH_DATA (push, i * 3);
+      PUSH_DATA (push, 3);
       IMMED_NVC0(push, NVC0_3D(VERTEX_END_GL), 0);
    }
    if (info->dst.box.z + info->dst.box.depth - 1)
