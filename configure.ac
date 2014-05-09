@@ -1605,6 +1605,12 @@ if test "x$enable_gallium_llvm" = xyes; then
         AC_COMPUTE_INT([LLVM_VERSION_MINOR], [LLVM_VERSION_MINOR],
             [#include "${LLVM_INCLUDEDIR}/llvm/Config/llvm-config.h"])
 
+        dnl In LLVM 3.4.1 patch level was defined in config.h and not
+        dnl llvm-config.h
+        AC_COMPUTE_INT([LLVM_VERSION_PATCH], [LLVM_VERSION_PATCH],
+            [#include "${LLVM_INCLUDEDIR}/llvm/Config/config.h"],
+            LLVM_VERSION_PATCH=0) dnl Default if LLVM_VERSION_PATCH not found
+
         if test -n "${LLVM_VERSION_MAJOR}"; then
             LLVM_VERSION_INT="${LLVM_VERSION_MAJOR}0${LLVM_VERSION_MINOR}"
         else
@@ -1627,7 +1633,7 @@ if test "x$enable_gallium_llvm" = xyes; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} option"
             fi
         fi
-        DEFINES="${DEFINES} -DHAVE_LLVM=0x0$LLVM_VERSION_INT"
+        DEFINES="${DEFINES} -DHAVE_LLVM=0x0$LLVM_VERSION_INT -DLLVM_VERSION_PATCH=$LLVM_VERSION_PATCH"
         MESA_LLVM=1
 
         dnl Check for Clang internal headers
