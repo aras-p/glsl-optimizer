@@ -461,8 +461,6 @@ gen7_update_renderbuffer_surface(struct brw_context *brw,
 
    GLenum gl_target = rb->TexImage ?
                          rb->TexImage->TexObject->Target : GL_TEXTURE_2D;
-   if (gl_target == GL_TEXTURE_1D_ARRAY)
-      depth = MAX2(rb->Height, 1);
 
    uint32_t surf_index =
       brw->wm.prog_data->binding_table.render_target_start + unit;
