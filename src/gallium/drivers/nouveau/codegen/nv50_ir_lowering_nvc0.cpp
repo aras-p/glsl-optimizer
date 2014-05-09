@@ -494,6 +494,7 @@ NVC0LegalizePostRA::visit(BasicBlock *bb)
             i->setDef(0, NULL);
          if (i->src(0).getFile() == FILE_IMMEDIATE)
             i->setSrc(0, rZero); // initial value must be 0
+         replaceZero(i);
       } else
       if (i->isNop()) {
          bb->remove(i);
