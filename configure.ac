@@ -902,26 +902,12 @@ if test "x$enable_dri" = xyes; then
     fi
 fi
 
-dnl Direct rendering or just indirect rendering
-case "$host_os" in
-gnu*)
-    dnl Disable by default on GNU/Hurd
-    driglx_direct_default="no"
-    ;;
-cygwin*)
-    dnl Disable by default on cygwin
-    driglx_direct_default="no"
-    ;;
-*)
-    driglx_direct_default="yes"
-    ;;
-esac
 AC_ARG_ENABLE([driglx-direct],
     [AS_HELP_STRING([--disable-driglx-direct],
         [disable direct rendering in GLX and EGL for DRI \
             @<:@default=auto@:>@])],
     [driglx_direct="$enableval"],
-    [driglx_direct="$driglx_direct_default"])
+    [driglx_direct="yes"])
 
 dnl
 dnl libGL configuration per driver
