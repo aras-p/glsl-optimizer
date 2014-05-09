@@ -1,0 +1,225 @@
+/* extrinsrt r1, r2, src, size, dst: replace bits [dst:dst+size) in r1
+ *  with bits [src:src+size) in r2
+ *
+ * bra(n)z annul: no delay slot
+ */
+
+/* Bitfield version of NVC0_3D_VERTEX_ARRAY_PER_INSTANCE[].
+ * Args: size, bitfield
+ */
+.section #mme9097_per_instance_bf
+   parm $r3
+   mov $r2 0x0
+   maddr 0x1620
+loop:
+   mov $r1 (add $r1 -1)
+   send (extrshl $r3 $r2 0x1 0x0)
+   exit branz $r1 #loop
+   mov $r2 (add $r2 0x1)
+
+/* The comments above the macros describe what they *should* be doing,
+ * but we use less functionality for now.
+ */
+
+/*
+ * for (i = 0; i < 8; ++i)
+ *    [NVC0_3D_BLEND_ENABLE(i)] = BIT(i of arg);
+ *
+ * [3428] = arg;
+ *
+ * if (arg == 0 || [NVC0_3D_MULTISAMPLE_ENABLE] == 0)
+ *    [0d9c] = 0;
+ * else
+ *    [0d9c] = [342c];
+ */
+.section #mme9097_blend_enables
+   maddr 0x14d8
+   send (extrinsrt 0x0 $r1 0x0 0x1 0x0)
+   send (extrinsrt 0x0 $r1 0x1 0x1 0x0)
+   send (extrinsrt 0x0 $r1 0x2 0x1 0x0)
+   send (extrinsrt 0x0 $r1 0x3 0x1 0x0)
+   send (extrinsrt 0x0 $r1 0x4 0x1 0x0)
+   send (extrinsrt 0x0 $r1 0x5 0x1 0x0)
+   exit send (extrinsrt 0x0 $r1 0x6 0x1 0x0)
+   send (extrinsrt 0x0 $r1 0x7 0x1 0x0)
+
+/*
+ * uint64 limit = (parm(0) << 32) | parm(1);
+ * uint64 start = (parm(2) << 32);
+ *
+ * if (limit) {
+ *    start |= parm(3);
+ *    --limit;
+ * } else {
+ *    start |= 1;
+ * }
+ *
+ * [0x1c04 + (arg & 0xf) * 16 + 0] = (start >> 32) & 0xff;
+ * [0x1c04 + (arg & 0xf) * 16 + 4] = start & 0xffffffff;
+ * [0x1f00 + (arg & 0xf) * 8 + 0] = (limit >> 32) & 0xff;
+ * [0x1f00 + (arg & 0xf) * 8 + 4] = limit & 0xffffffff;
+ */
+.section #mme9097_vertex_array_select
+   parm $r2
+   parm $r3
+   parm $r4
+   parm $r5
+   mov $r6 (extrinsrt 0x0 $r1 0x0 0x4 0x2)
+   mov $r7 (extrinsrt 0x0 $r1 0x0 0x4 0x1)
+   maddr $r6 (add $r6 0x1701)
+   send $r4
+   send $r5
+   maddr $r7 (add $r7 0x17c0)
+   exit send $r2
+   send $r3
+
+/*
+ * [GL_POLYGON_MODE_FRONT] = arg;
+ *
+ * if (BIT(31 of [0x3410]))
+ *    [1a24] = 0x7353;
+ *
+ * if ([NVC0_3D_SP_SELECT(3)] == 0x31 || [NVC0_3D_SP_SELECT(4)] == 0x41)
+ *    [02ec] = 0;
+ * else
+ * if ([GL_POLYGON_MODE_BACK] == GL_LINE || arg == GL_LINE)
+ *    [02ec] = BYTE(1 of [0x3410]) << 4;
+ * else
+ *    [02ec] = BYTE(0 of [0x3410]) << 4;
+ */
+.section #mme9097_poly_mode_front
+   read $r2 0x36c
+   read $r3 0x830
+   mov $r7 (or $r1 $r2)
+   read $r4 0x840
+   mov $r2 0x1
+   mov $r6 0x60
+   mov $r7 (and $r7 $r2)
+   braz $r7 #locn_0a_pmf
+   maddr 0x36b
+   mov $r6 0x200
+locn_0a_pmf:
+   mov $r7 (or $r3 $r4)
+   mov $r7 (and $r7 $r2)
+   braz $r7 #locn_0f_pmf
+   send $r1
+   mov $r6 0x0
+locn_0f_pmf:
+   exit maddr 0xbb
+   send $r6
+
+/*
+ * [GL_POLYGON_MODE_BACK] = arg;
+ *
+ * if (BIT(31 of [0x3410]))
+ *    [1a24] = 0x7353;
+ *
+ * if ([NVC0_3D_SP_SELECT(3)] == 0x31 || [NVC0_3D_SP_SELECT(4)] == 0x41)
+ *    [02ec] = 0;
+ * else
+ * if ([GL_POLYGON_MODE_FRONT] == GL_LINE || arg == GL_LINE)
+ *    [02ec] = BYTE(1 of [0x3410]) << 4;
+ * else
+ *    [02ec] = BYTE(0 of [0x3410]) << 4;
+ */
+/* NOTE: 0x3410 = 0x80002006 by default,
+ *  POLYGON_MODE == GL_LINE check replaced by (MODE & 1)
+ *  SP_SELECT(i) == (i << 4) | 1 check replaced by SP_SELECT(i) & 1
+ */
+.section #mme9097_poly_mode_back
+   read $r2 0x36b
+   read $r3 0x830
+   mov $r7 (or $r1 $r2)
+   read $r4 0x840
+   mov $r2 0x1
+   mov $r6 0x60
+   mov $r7 (and $r7 $r2)
+   braz $r7 #locn_0a_pmb
+   maddr 0x36c
+   mov $r6 0x200
+locn_0a_pmb:
+   mov $r7 (or $r3 $r4)
+   mov $r7 (and $r7 $r2)
+   braz $r7 #locn_0f_pmb
+   send $r1
+   mov $r6 0x0
+locn_0f_pmb:
+   exit maddr 0xbb
+   send $r6
+
+/*
+ * [NVC0_3D_SP_SELECT(4)] = arg
+ *
+ * if BIT(31 of [0x3410]) == 0
+ *    [1a24] = 0x7353;
+ *
+ * if ([NVC0_3D_SP_SELECT(3)] == 0x31 || arg == 0x41)
+ *    [02ec] = 0
+ * else
+ * if (any POLYGON MODE == LINE)
+ *    [02ec] = BYTE(1 of [3410]) << 4;
+ * else
+ *    [02ec] = BYTE(0 of [3410]) << 4; // 02ec valid bits are 0xff1
+ */
+.section #mme9097_gp_select
+   read $r2 0x36b
+   read $r3 0x36c
+   mov $r7 (or $r2 $r3)
+   read $r4 0x830
+   mov $r2 0x1
+   mov $r6 0x60
+   mov $r7 (and $r7 $r2)
+   braz $r7 #locn_0a_gs
+   maddr 0x840
+   mov $r6 0x200
+locn_0a_gs:
+   mov $r7 (or $r1 $r4)
+   mov $r7 (and $r7 $r2)
+   braz $r7 #locn_0f_gs
+   send $r1
+   mov $r6 0x0
+locn_0f_gs:
+   exit maddr 0xbb
+   send $r6
+
+/*
+ * [NVC0_3D_SP_SELECT(3)] = arg
+ *
+ * if BIT(31 of [0x3410]) == 0
+ *    [1a24] = 0x7353;
+ *
+ * if (arg == 0x31) {
+ *    if (BIT(2 of [0x3430])) {
+ *       int i = 15; do { --i; } while(i);
+ *       [0x1a2c] = 0;
+ *    }
+ * }
+ *
+ * if ([NVC0_3D_SP_SELECT(4)] == 0x41 || arg == 0x31)
+ *    [02ec] = 0
+ * else
+ * if ([any POLYGON_MODE] == GL_LINE)
+ *    [02ec] = BYTE(1 of [3410]) << 4;
+ * else
+ *    [02ec] = BYTE(0 of [3410]) << 4;
+ */
+.section #mme9097_tep_select
+   read $r2 0x36b
+   read $r3 0x36c
+   mov $r7 (or $r2 $r3)
+   read $r4 0x840
+   mov $r2 0x1
+   mov $r6 0x60
+   mov $r7 (and $r7 $r2)
+   braz $r7 #locn_0a_ts
+   maddr 0x830
+   mov $r6 0x200
+locn_0a_ts:
+   mov $r7 (or $r1 $r4)
+   mov $r7 (and $r7 $r2)
+   braz $r7 #locn_0f_ts
+   send $r1
+   mov $r6 0x0
+locn_0f_ts:
+   exit maddr 0xbb
+   send $r6

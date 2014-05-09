@@ -32,7 +32,7 @@
 #include "nvc0/nvc0_context.h"
 #include "nvc0/nvc0_screen.h"
 
-#include "nvc0/nvc0_graph_macros.h"
+#include "nvc0/mme/com9097.mme.h"
 
 #ifndef NOUVEAU_GETPARAM_GRAPH_UNITS
 # define NOUVEAU_GETPARAM_GRAPH_UNITS 13
@@ -921,13 +921,13 @@ nvc0_screen_create(struct nouveau_device *dev)
 #define MK_MACRO(m, n) i = nvc0_graph_set_macro(screen, m, i, sizeof(n), n);
 
    i = 0;
-   MK_MACRO(NVC0_3D_MACRO_VERTEX_ARRAY_PER_INSTANCE, nvc0_9097_per_instance_bf);
-   MK_MACRO(NVC0_3D_MACRO_BLEND_ENABLES, nvc0_9097_blend_enables);
-   MK_MACRO(NVC0_3D_MACRO_VERTEX_ARRAY_SELECT, nvc0_9097_vertex_array_select);
-   MK_MACRO(NVC0_3D_MACRO_TEP_SELECT, nvc0_9097_tep_select);
-   MK_MACRO(NVC0_3D_MACRO_GP_SELECT, nvc0_9097_gp_select);
-   MK_MACRO(NVC0_3D_MACRO_POLYGON_MODE_FRONT, nvc0_9097_poly_mode_front);
-   MK_MACRO(NVC0_3D_MACRO_POLYGON_MODE_BACK, nvc0_9097_poly_mode_back);
+   MK_MACRO(NVC0_3D_MACRO_VERTEX_ARRAY_PER_INSTANCE, mme9097_per_instance_bf);
+   MK_MACRO(NVC0_3D_MACRO_BLEND_ENABLES, mme9097_blend_enables);
+   MK_MACRO(NVC0_3D_MACRO_VERTEX_ARRAY_SELECT, mme9097_vertex_array_select);
+   MK_MACRO(NVC0_3D_MACRO_TEP_SELECT, mme9097_tep_select);
+   MK_MACRO(NVC0_3D_MACRO_GP_SELECT, mme9097_gp_select);
+   MK_MACRO(NVC0_3D_MACRO_POLYGON_MODE_FRONT, mme9097_poly_mode_front);
+   MK_MACRO(NVC0_3D_MACRO_POLYGON_MODE_BACK, mme9097_poly_mode_back);
 
    BEGIN_NVC0(push, NVC0_3D(RASTERIZE_ENABLE), 1);
    PUSH_DATA (push, 1);
