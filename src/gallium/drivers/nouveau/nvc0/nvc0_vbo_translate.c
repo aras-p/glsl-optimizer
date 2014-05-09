@@ -488,7 +488,8 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       if (unlikely(ctx.need_vertex_id))
          nvc0_push_upload_vertex_ids(&ctx, nvc0, info);
 
-      IMMED_NVC0(ctx.push, NVC0_3D(VERTEX_ARRAY_FLUSH), 0);
+      if (nvc0->screen->eng3d->oclass < GM107_3D_CLASS)
+         IMMED_NVC0(ctx.push, NVC0_3D(VERTEX_ARRAY_FLUSH), 0);
       BEGIN_NVC0(ctx.push, NVC0_3D(VERTEX_BEGIN_GL), 1);
       PUSH_DATA (ctx.push, prim);
       switch (index_size) {

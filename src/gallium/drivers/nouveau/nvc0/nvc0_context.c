@@ -329,7 +329,8 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
 
    flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR;
 
-   BCTX_REFN_bo(nvc0->bufctx_3d, SCREEN, flags, screen->poly_cache);
+   if (screen->poly_cache)
+      BCTX_REFN_bo(nvc0->bufctx_3d, SCREEN, flags, screen->poly_cache);
    if (screen->compute)
       BCTX_REFN_bo(nvc0->bufctx_cp, CP_SCREEN, flags, screen->tls);
 

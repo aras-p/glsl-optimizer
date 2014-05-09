@@ -543,9 +543,23 @@ nvc0_blitter_make_vp(struct nvc0_blitter *blit)
       0x03f01c46, 0x0a7e0080, /* export b96 o[0x80] $r0:$r1:$r2 */
       0x00001de7, 0x80000000, /* exit */
    };
+   static const uint32_t code_gm107[] =
+   {
+      0xfc0007e0, 0x001f8000, /* sched 0x7e0 0x7e0 0x7e0 */
+      0x0807ff04, 0xefd8ff80, /* ld b64 $r4 a[0x80] 0x0 */
+      0x0907ff00, 0xefd97f80, /* ld b96 $r0 a[0x90] 0x0 */
+      0x0707ff04, 0xeff0ff80, /* st b64 a[0x70] $r4 0x0 */
+      0xfc0007e0, 0x00000000, /* sched 0x7e0 0x7e0 0x0 */
+      0x0807ff00, 0xeff17f80, /* st b96 a[0x80] $r0 0x0 */
+      0x0007000f, 0xe3000000, /* exit */
+   };
 
    blit->vp.type = PIPE_SHADER_VERTEX;
    blit->vp.translated = TRUE;
+   if (blit->screen->base.class_3d >= GM107_3D_CLASS) {
+      blit->vp.code = (uint32_t *)code_gm107; /* const_cast */
+      blit->vp.code_size = sizeof(code_gm107);
+   } else
    if (blit->screen->base.class_3d >= NVE4_3D_CLASS) {
       blit->vp.code = (uint32_t *)code_nve4; /* const_cast */
       blit->vp.code_size = sizeof(code_nve4);

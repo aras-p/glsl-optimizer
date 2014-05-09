@@ -435,8 +435,10 @@ nvc0_magic_3d_init(struct nouveau_pushbuf *push, uint16_t obj_class)
    BEGIN_NVC0(push, SUBC_3D(0x0de8), 1);
    PUSH_DATA (push, 1);
 
-   BEGIN_NVC0(push, SUBC_3D(0x12ac), 1);
-   PUSH_DATA (push, 0);
+   if (obj_class < GM107_3D_CLASS) {
+      BEGIN_NVC0(push, SUBC_3D(0x12ac), 1);
+      PUSH_DATA (push, 0);
+   }
    BEGIN_NVC0(push, SUBC_3D(0x0218), 1);
    PUSH_DATA (push, 0x10);
    BEGIN_NVC0(push, SUBC_3D(0x10fc), 1);
@@ -464,12 +466,15 @@ nvc0_magic_3d_init(struct nouveau_pushbuf *push, uint16_t obj_class)
    PUSH_DATA (push, 1);
    BEGIN_NVC0(push, SUBC_3D(0x19c0), 1);
    PUSH_DATA (push, 1);
-   BEGIN_NVC0(push, SUBC_3D(0x075c), 1);
-   PUSH_DATA (push, 3);
 
-   if (obj_class >= NVE4_3D_CLASS) {
-      BEGIN_NVC0(push, SUBC_3D(0x07fc), 1);
-      PUSH_DATA (push, 1);
+   if (obj_class < GM107_3D_CLASS) {
+      BEGIN_NVC0(push, SUBC_3D(0x075c), 1);
+      PUSH_DATA (push, 3);
+
+      if (obj_class >= NVE4_3D_CLASS) {
+         BEGIN_NVC0(push, SUBC_3D(0x07fc), 1);
+         PUSH_DATA (push, 1);
+      }
    }
 
    /* TODO: find out what software methods 0x1528, 0x1280 and (on nve4) 0x02dc
@@ -518,6 +523,8 @@ nvc0_screen_init_compute(struct nvc0_screen *screen)
    case 0xf0:
    case 0x100:
       return nve4_screen_compute_setup(screen, screen->base.pushbuf);
+   case 0x110:
+      return 0;
    default:
       return -1;
    }
@@ -579,6 +586,7 @@ nvc0_screen_create(struct nouveau_device *dev)
    case 0xe0:
    case 0xf0:
    case 0x100:
+   case 0x110:
       break;
    default:
       return NULL;
@@ -635,6 +643,7 @@ nvc0_screen_create(struct nouveau_device *dev)
 
 
    switch (dev->chipset & ~0xf) {
+   case 0x110:
    case 0x100:
    case 0xf0:
       obj_class = NVF0_P2MF_CLASS;
@@ -858,15 +867,17 @@ nvc0_screen_create(struct nouveau_device *dev)
    BEGIN_NVC0(push, NVC0_3D(LOCAL_BASE), 1);
    PUSH_DATA (push, 0);
 
-   ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 20, NULL,
-                        &screen->poly_cache);
-   if (ret)
-      goto fail;
+   if (screen->eng3d->oclass < GM107_3D_CLASS) {
+      ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 20, NULL,
+                           &screen->poly_cache);
+      if (ret)
+         goto fail;
 
-   BEGIN_NVC0(push, NVC0_3D(VERTEX_QUARANTINE_ADDRESS_HIGH), 3);
-   PUSH_DATAh(push, screen->poly_cache->offset);
-   PUSH_DATA (push, screen->poly_cache->offset);
-   PUSH_DATA (push, 3);
+      BEGIN_NVC0(push, NVC0_3D(VERTEX_QUARANTINE_ADDRESS_HIGH), 3);
+      PUSH_DATAh(push, screen->poly_cache->offset);
+      PUSH_DATA (push, screen->poly_cache->offset);
+      PUSH_DATA (push, 3);
+   }
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 17, NULL,
                         &screen->txc);
