@@ -152,7 +152,7 @@ static void si_update_descriptors(struct si_context *sctx,
 			7 + /* copy */
 			(4 + desc->element_dw_size) * util_bitcount(desc->dirty_mask) + /* update */
 			4; /* pointer update */
-#if HAVE_LLVM >= 0x0305
+#if LLVM_SUPPORTS_GEOM_SHADERS
 		if (desc->shader_userdata_reg >= R_00B130_SPI_SHADER_USER_DATA_VS_0 &&
 		    desc->shader_userdata_reg < R_00B230_SPI_SHADER_USER_DATA_GS_0)
 			desc->atom.num_dw += 4; /* second pointer update */
@@ -177,7 +177,7 @@ static void si_emit_shader_pointer(struct si_context *sctx,
 	radeon_emit(cs, va);
 	radeon_emit(cs, va >> 32);
 
-#if HAVE_LLVM >= 0x0305
+#if LLVM_SUPPORTS_GEOM_SHADERS
 	if (desc->shader_userdata_reg >= R_00B130_SPI_SHADER_USER_DATA_VS_0 &&
 	    desc->shader_userdata_reg < R_00B230_SPI_SHADER_USER_DATA_GS_0) {
 		radeon_emit(cs, PKT3(PKT3_SET_SH_REG, 2, 0));
