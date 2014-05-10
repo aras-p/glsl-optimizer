@@ -78,16 +78,16 @@
 /* 8 user clip planes, at 4 32-bit floats each */
 #define NV50_CB_AUX_UCP_OFFSET    0x0000
 #define NV50_CB_AUX_UCP_SIZE      (8 * 4 * 4)
-/* 256 textures, each with ms_x, ms_y u32 pairs */
+/* 16 textures * 3 shaders, each with ms_x, ms_y u32 pairs */
 #define NV50_CB_AUX_TEX_MS_OFFSET 0x0080
-#define NV50_CB_AUX_TEX_MS_SIZE   (256 * 2 * 4)
+#define NV50_CB_AUX_TEX_MS_SIZE   (16 * 3 * 2 * 4)
 /* For each MS level (4), 8 sets of 32-bit integer pairs sample offsets */
-#define NV50_CB_AUX_MS_OFFSET     0x880
+#define NV50_CB_AUX_MS_OFFSET     0x200
 #define NV50_CB_AUX_MS_SIZE       (4 * 8 * 4 * 2)
 /* Sample position pairs for the current output MS level */
-#define NV50_CB_AUX_SAMPLE_OFFSET 0x980
+#define NV50_CB_AUX_SAMPLE_OFFSET 0x300
 #define NV50_CB_AUX_SAMPLE_OFFSET_SIZE (4 * 8 * 2)
-/* next spot: 0x9c0 */
+/* next spot: 0x340 */
 /* 4 32-bit floats for the vertex runout, put at the end */
 #define NV50_CB_AUX_RUNOUT_OFFSET (NV50_CB_AUX_SIZE - 0x10)
 

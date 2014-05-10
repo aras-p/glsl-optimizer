@@ -286,7 +286,7 @@ nv50_validate_tic(struct nv50_context *nv50, int s)
    }
    if (nv50->num_textures[s]) {
       BEGIN_NV04(push, NV50_3D(CB_ADDR), 1);
-      PUSH_DATA (push, (NV50_CB_AUX_TEX_MS_OFFSET << (8 - 2)) | NV50_CB_AUX);
+      PUSH_DATA (push, ((NV50_CB_AUX_TEX_MS_OFFSET + 16 * s * 2 * 4) << (8 - 2)) | NV50_CB_AUX);
       BEGIN_NI04(push, NV50_3D(CB_DATA(0)), nv50->num_textures[s] * 2);
       for (i = 0; i < nv50->num_textures[s]; i++) {
          struct nv50_tic_entry *tic = nv50_tic_entry(nv50->textures[s][i]);

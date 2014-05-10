@@ -591,6 +591,10 @@ void NV50LoweringPreSSA::loadTexMsInfo(uint32_t off, Value **ms,
    Value *tmp = new_LValue(func, FILE_GPR);
    uint8_t b = prog->driver->io.resInfoCBSlot;
    off += prog->driver->io.suInfoBase;
+   if (prog->getType() > Program::TYPE_VERTEX)
+      off += 16 * 2 * 4;
+   if (prog->getType() > Program::TYPE_GEOMETRY)
+      off += 16 * 2 * 4;
    *ms_x = bld.mkLoadv(TYPE_U32, bld.mkSymbol(
                              FILE_MEMORY_CONST, b, TYPE_U32, off + 0), NULL);
    *ms_y = bld.mkLoadv(TYPE_U32, bld.mkSymbol(
