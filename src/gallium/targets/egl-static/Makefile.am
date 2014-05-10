@@ -68,16 +68,11 @@ egl_gallium_la_LIBADD = \
 	$(top_builddir)/src/gallium/drivers/rbug/librbug.la \
 	$(top_builddir)/src/gallium/state_trackers/egl/libegl.la \
 	$(top_builddir)/src/egl/main/libEGL.la \
-	$(top_builddir)/src/loader/libloader.la \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
 if HAVE_MESA_LLVM
 AM_LDFLAGS += $(LLVM_LDFLAGS)
 endif
-
-egl_gallium_la_LDFLAGS = \
-	$(AM_LDFLAGS) \
-	-Wl,--allow-multiple-definition
 
 if HAVE_EGL_PLATFORM_X11
 AM_CPPFLAGS += $(LIBDRM_CFLAGS)
@@ -183,6 +178,11 @@ egl_gallium_la_LIBADD += \
 	$(NOUVEAU_LIBS)
 endif
 
+if NEED_RADEON_DRM_WINSYS
+egl_gallium_la_LIBADD += \
+	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la
+endif
+
 if HAVE_GALLIUM_RADEON_COMMON
 egl_gallium_la_LIBADD += \
 	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la
@@ -191,7 +191,6 @@ endif
 if HAVE_GALLIUM_R300
 AM_CPPFLAGS += -D_EGL_PIPE_R300=1
 egl_gallium_la_LIBADD += \
-	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(top_builddir)/src/gallium/drivers/r300/libr300.la \
 	$(RADEON_LIBS)
 endif
@@ -199,7 +198,6 @@ endif
 if HAVE_GALLIUM_R600
 AM_CPPFLAGS += -D_EGL_PIPE_R600=1
 egl_gallium_la_LIBADD += \
-	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
 	$(RADEON_LIBS)
 endif
@@ -207,7 +205,6 @@ endif
 if HAVE_GALLIUM_RADEONSI
 AM_CPPFLAGS += -D_EGL_PIPE_RADEONSI=1
 egl_gallium_la_LIBADD += \
-	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
 	$(RADEON_LIBS)
 endif
