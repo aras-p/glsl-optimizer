@@ -165,6 +165,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y,
       goto fallback;
    }
 
+   memset(&blit, 0, sizeof(blit));
    blit.src.resource = src;
    blit.src.level = strb->surface->u.tex.level;
    blit.src.format = src_format;

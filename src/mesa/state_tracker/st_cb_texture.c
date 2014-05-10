@@ -765,6 +765,7 @@ st_TexSubImage(struct gl_context *ctx, GLuint dims,
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
    /* Blit. */
+   memset(&blit, 0, sizeof(blit));
    blit.src.resource = src;
    blit.src.level = 0;
    blit.src.format = src_format;
@@ -998,6 +999,7 @@ st_GetTexImage(struct gl_context * ctx,
       height = 1;
    }
 
+   memset(&blit, 0, sizeof(blit));
    blit.src.resource = src;
    blit.src.level = texImage->Level;
    blit.src.format = src_format;
