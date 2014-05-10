@@ -87,11 +87,6 @@ create_sw_screen(struct sw_winsys *ws)
 static const struct egl_g3d_loader *
 loader_init(void)
 {
-   int i;
-
-   for (i = 0; i < ST_API_COUNT; i++)
-      egl_g3d_loader.profile_masks[i] = egl_st_get_profile_mask(i);
-
    egl_g3d_loader.get_st_api = get_st_api;
    egl_g3d_loader.create_drm_screen = create_drm_screen;
    egl_g3d_loader.create_sw_screen = create_sw_screen;

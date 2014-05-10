@@ -63,11 +63,6 @@ if env['platform'] == 'windows':
 
 # OpenGL ES and OpenGL
 if env['gles']:
-    env.Append(CPPDEFINES = [
-        'FEATURE_GL=1',
-        'FEATURE_ES1=1',
-        'FEATURE_ES2=1'
-    ])
     env.Prepend(LIBPATH = [shared_glapi.dir])
     # manually add LIBPREFIX on windows
     glapi_name = 'glapi' if env['platform'] != 'windows' else 'libglapi'
@@ -75,7 +70,6 @@ if env['gles']:
 
 # OpenVG
 if True:
-    env.Append(CPPDEFINES = ['FEATURE_VG=1'])
     env.Prepend(LIBPATH = [openvg.dir])
     # manually add LIBPREFIX on windows
     openvg_name = 'OpenVG' if env['platform'] != 'windows' else 'libOpenVG'

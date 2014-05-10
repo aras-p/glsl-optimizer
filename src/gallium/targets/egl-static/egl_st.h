@@ -36,7 +36,4 @@ egl_st_create_api(enum st_api_type api);
 void
 egl_st_destroy_api(struct st_api *stapi);
 
-uint
-egl_st_get_profile_mask(enum st_api_type api);
-
 #endif /* _EGL_ST_H_ */

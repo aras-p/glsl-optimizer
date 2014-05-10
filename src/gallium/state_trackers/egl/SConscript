@@ -14,6 +14,18 @@ env.Append(CPPPATH = [
 
 sources = env.ParseSourceList('Makefile.sources', 'common_FILES')
 
+# OpenGL ES and OpenGL
+if env['gles']:
+    env.Append(CPPDEFINES = [
+        'FEATURE_GL=1',
+        'FEATURE_ES1=1',
+        'FEATURE_ES2=1'
+    ])
+
+# OpenVG
+if True:
+    env.Append(CPPDEFINES = ['FEATURE_VG=1'])
+
 if env['platform'] == 'windows':
     env.Append(CPPDEFINES = ['HAVE_GDI_BACKEND'])
     sources.append(env.ParseSourceList('Makefile.sources', 'gdi_FILES'))

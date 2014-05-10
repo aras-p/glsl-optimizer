@@ -165,32 +165,3 @@ egl_st_destroy_api(struct st_api *stapi)
    stapi->destroy(stapi);
 #endif
 }
-
-uint
-egl_st_get_profile_mask(enum st_api_type api)
-{
-   uint mask = 0x0;
-
-   switch (api) {
-   case ST_API_OPENGL:
-#if FEATURE_GL
-      mask |= ST_PROFILE_DEFAULT_MASK;
-#endif
-#if FEATURE_ES1
-      mask |= ST_PROFILE_OPENGL_ES1_MASK;
-#endif
-#if FEATURE_ES2
-      mask |= ST_PROFILE_OPENGL_ES2_MASK;
-#endif
-      break;
-   case ST_API_OPENVG:
-#if FEATURE_VG
-      mask |= ST_PROFILE_DEFAULT_MASK;
-#endif
-      break;
-   default:
-      break;
-   }
-
-   return mask;
-}
