@@ -249,6 +249,10 @@ glx_display_free(struct glx_display *priv)
    if (priv->dri2Display)
       (*priv->dri2Display->destroyDisplay) (priv->dri2Display);
    priv->dri2Display = NULL;
+
+   if (priv->dri3Display)
+      (*priv->dri3Display->destroyDisplay) (priv->dri3Display);
+   priv->dri3Display = NULL;
 #endif
 
    free((char *) priv);
