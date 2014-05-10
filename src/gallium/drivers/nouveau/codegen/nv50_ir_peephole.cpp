@@ -187,7 +187,8 @@ LoadPropagation::checkSwapSrc01(Instruction *insn)
       return;
    }
 
-   if (insn->op == OP_SET)
+   if (insn->op == OP_SET || insn->op == OP_SET_AND ||
+       insn->op == OP_SET_OR || insn->op == OP_SET_XOR)
       insn->asCmp()->setCond = reverseCondCode(insn->asCmp()->setCond);
    else
    if (insn->op == OP_SLCT)
