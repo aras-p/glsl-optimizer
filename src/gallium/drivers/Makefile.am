@@ -5,22 +5,6 @@ SUBDIRS = . galahad identity noop trace rbug
 
 ################################################################################
 
-if HAVE_GALLIUM_R600
-
-SUBDIRS += radeon
-
-else
-
-if HAVE_GALLIUM_RADEONSI
-
-SUBDIRS += radeon
-
-endif
-
-endif
-
-################################################################################
-
 if HAVE_GALLIUM_FREEDRENO
 
 SUBDIRS += freedreno
@@ -56,6 +40,14 @@ endif
 if HAVE_GALLIUM_SVGA
 
 SUBDIRS += svga
+
+endif
+
+################################################################################
+
+if HAVE_GALLIUM_RADEON_COMMON
+
+SUBDIRS += radeon
 
 endif
 

@@ -36,6 +36,7 @@ libomx_radeonsi_la_SOURCES = \
 libomx_radeonsi_la_LDFLAGS = $(GALLIUM_OMX_LINKER_FLAGS)
 
 libomx_radeonsi_la_LIBADD = \
+	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(GALLIUM_OMX_LIB_DEPS) \

@@ -42,6 +42,7 @@ r600_dri_la_LDFLAGS = \
 
 r600_dri_la_LIBADD = \
 	$(top_builddir)/src/mesa/drivers/dri/common/libdricommon.la \
+	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
 	$(top_builddir)/src/gallium/state_trackers/dri/drm/libdridrm.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \

@@ -183,6 +183,11 @@ egl_gallium_la_LIBADD += \
 	$(NOUVEAU_LIBS)
 endif
 
+if HAVE_GALLIUM_RADEON_COMMON
+egl_gallium_la_LIBADD += \
+	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la
+endif
+
 if HAVE_GALLIUM_R300
 AM_CPPFLAGS += -D_EGL_PIPE_R300=1
 egl_gallium_la_LIBADD += \

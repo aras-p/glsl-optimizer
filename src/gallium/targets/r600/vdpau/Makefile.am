@@ -38,6 +38,7 @@ libvdpau_r600_la_LDFLAGS = \
 	-Wl,--dynamic-list=$(srcdir)/../../r300/dri/radeon.dyn
 
 libvdpau_r600_la_LIBADD = \
+	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(GALLIUM_VDPAU_LIB_DEPS) \

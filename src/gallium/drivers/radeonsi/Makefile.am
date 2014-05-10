@@ -32,5 +32,3 @@ AM_CFLAGS = \
 noinst_LTLIBRARIES = libradeonsi.la
 
 libradeonsi_la_SOURCES = $(C_SOURCES)
-libradeonsi_la_LIBADD = \
-	../radeon/libradeon.la

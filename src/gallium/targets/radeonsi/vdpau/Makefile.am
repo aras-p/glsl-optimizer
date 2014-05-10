@@ -39,6 +39,7 @@ libvdpau_radeonsi_la_LDFLAGS = \
 
 
 libvdpau_radeonsi_la_LIBADD = \
+	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(GALLIUM_VDPAU_LIB_DEPS) \

@@ -107,6 +107,7 @@ nodist_EXTRA_pipe_r600_la_SOURCES = dummy.cpp
 pipe_r600_la_LIBADD = \
 	$(PIPE_LIBS) \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
+	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
 	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)
@@ -121,6 +122,7 @@ nodist_EXTRA_pipe_radeonsi_la_SOURCES = dummy.cpp
 pipe_radeonsi_la_LIBADD = \
 	$(PIPE_LIBS) \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
+	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la \
 	$(top_builddir)/src/gallium/drivers/radeonsi/libradeonsi.la \
 	$(LIBDRM_LIBS) \
 	$(RADEON_LIBS)

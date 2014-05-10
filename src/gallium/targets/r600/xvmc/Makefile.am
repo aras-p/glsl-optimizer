@@ -37,6 +37,7 @@ libXvMCr600_la_LDFLAGS = \
 	$(GALLIUM_XVMC_LINKER_FLAGS)
 
 libXvMCr600_la_LIBADD = \
+	$(top_builddir)/src/gallium/drivers/radeon/libradeon.la \
 	$(top_builddir)/src/gallium/drivers/r600/libr600.la \
 	$(top_builddir)/src/gallium/winsys/radeon/drm/libradeonwinsys.la \
 	$(GALLIUM_XVMC_LIB_DEPS) \
