@@ -13,22 +13,18 @@ libradeon_la_SOURCES = \
 
 if NEED_RADEON_LLVM
 
-noinst_LTLIBRARIES += libllvmradeon.la
-
-libllvmradeon_la_CFLAGS = \
-	$(GALLIUM_DRIVER_CFLAGS) \
-	$(RADEON_CFLAGS) \
+AM_CFLAGS += \
 	$(LLVM_CFLAGS)
 
-libllvmradeon_la_SOURCES = \
+libradeon_la_SOURCES += \
 	$(LLVM_C_FILES)
 
-libllvmradeon_la_LIBADD = \
+libradeon_la_LIBADD = \
 	$(CLOCK_LIB) \
 	$(LLVM_LIBS) \
 	$(ELF_LIB)
 
-libllvmradeon_la_LDFLAGS = \
+libradeon_la_LDFLAGS = \
 	$(LLVM_LDFLAGS)
 
 endif

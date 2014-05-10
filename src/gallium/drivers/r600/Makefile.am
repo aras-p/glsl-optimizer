@@ -28,8 +28,6 @@ AM_CFLAGS += \
 libr600_la_SOURCES += \
 	$(LLVM_C_SOURCES)
 
-libr600_la_LIBADD += ../radeon/libllvmradeon.la
-
 endif
 
 if USE_R600_LLVM_COMPILER
