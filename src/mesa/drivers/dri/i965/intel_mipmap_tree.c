@@ -87,9 +87,7 @@ compute_msaa_layout(struct brw_context *brw, mesa_format format, GLenum target)
        * would require converting between CMS and UMS MSAA layouts on the fly,
        * which is expensive.
        */
-      if (_mesa_get_format_datatype(format) == GL_INT) {
-         /* TODO: is this workaround needed for future chipsets? */
-         assert(brw->gen == 7);
+      if (brw->gen == 7 && _mesa_get_format_datatype(format) == GL_INT) {
          return INTEL_MSAA_LAYOUT_UMS;
       } else {
          return INTEL_MSAA_LAYOUT_CMS;
