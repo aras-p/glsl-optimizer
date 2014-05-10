@@ -157,6 +157,11 @@ gen8_update_texture_surface(struct gl_context *ctx,
       pitch = mt->pitch;
    }
 
+   if (mt->mcs_mt) {
+      aux_mt = mt->mcs_mt;
+      aux_mode = GEN8_SURFACE_AUX_MODE_MCS;
+   }
+
    /* If this is a view with restricted NumLayers, then our effective depth
     * is not just the miptree depth.
     */
@@ -353,6 +358,11 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
       if (unlikely(!brw->format_supported_as_render_target[rb_format]))
          _mesa_problem(ctx, "%s: renderbuffer format %s unsupported\n",
                        __FUNCTION__, _mesa_get_format_name(rb_format));
+   }
+
+   if (mt->mcs_mt) {
+      aux_mt = mt->mcs_mt;
+      aux_mode = GEN8_SURFACE_AUX_MODE_MCS;
    }
 
    uint32_t *surf = brw_state_batch(brw, AUB_TRACE_SURFACE_STATE, 13 * 4, 64,
