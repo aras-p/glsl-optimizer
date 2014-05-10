@@ -134,6 +134,8 @@ gen8_update_texture_surface(struct gl_context *ctx,
    struct intel_mipmap_tree *mt = intelObj->mt;
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
+   struct intel_mipmap_tree *aux_mt = NULL;
+   uint32_t aux_mode = 0;
    mesa_format format = intelObj->_Format;
 
    if (tObj->Target == GL_TEXTURE_BUFFER) {
@@ -197,7 +199,13 @@ gen8_update_texture_surface(struct gl_context *ctx,
                        GEN7_SURFACE_MIN_LOD) |
              (intelObj->_MaxLevel - tObj->BaseLevel); /* mip count */
 
-   surf[6] = 0;
+   if (aux_mt) {
+      surf[6] = SET_FIELD(mt->qpitch / 4, GEN8_SURFACE_AUX_QPITCH) |
+                SET_FIELD((aux_mt->pitch / 128) - 1, GEN8_SURFACE_AUX_PITCH) |
+                aux_mode;
+   } else {
+      surf[6] = 0;
+   }
 
    /* Handling GL_ALPHA as a surface format override breaks 1.30+ style
     * texturing functions that return a float, as our code generation always
@@ -219,8 +227,15 @@ gen8_update_texture_surface(struct gl_context *ctx,
 
    *((uint64_t *) &surf[8]) = mt->bo->offset64 + mt->offset; /* reloc */
 
-   surf[10] = 0;
-   surf[11] = 0;
+   if (aux_mt) {
+      *((uint64_t *) &surf[10]) = aux_mt->bo->offset64;
+      drm_intel_bo_emit_reloc(brw->batch.bo, *surf_offset + 10 * 4,
+                              aux_mt->bo, 0,
+                              I915_GEM_DOMAIN_SAMPLER, 0);
+   } else {
+      surf[10] = 0;
+      surf[11] = 0;
+   }
    surf[12] = 0;
 
    /* Emit relocation to surface contents */
@@ -286,6 +301,8 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
    struct gl_context *ctx = &brw->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_mipmap_tree *mt = irb->mt;
+   struct intel_mipmap_tree *aux_mt = NULL;
+   uint32_t aux_mode = 0;
    unsigned width = mt->logical_width0;
    unsigned height = mt->logical_height0;
    unsigned pitch = mt->pitch;
@@ -364,7 +381,13 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
 
    surf[5] = irb->mt_level - irb->mt->first_level;
 
-   surf[6] = 0; /* Nothing of relevance. */
+   if (aux_mt) {
+      surf[6] = SET_FIELD(mt->qpitch / 4, GEN8_SURFACE_AUX_QPITCH) |
+                SET_FIELD((aux_mt->pitch / 128) - 1, GEN8_SURFACE_AUX_PITCH) |
+                aux_mode;
+   } else {
+      surf[6] = 0;
+   }
 
    surf[7] = mt->fast_clear_color_value |
              SET_FIELD(HSW_SCS_RED,   GEN7_SURFACE_SCS_R) |
@@ -374,9 +397,16 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
 
    *((uint64_t *) &surf[8]) = mt->bo->offset64; /* reloc */
 
-   /* Nothing of relevance. */
-   surf[10] = 0;
-   surf[11] = 0;
+   if (aux_mt) {
+      *((uint64_t *) &surf[10]) = aux_mt->bo->offset64;
+      drm_intel_bo_emit_reloc(brw->batch.bo,
+                              brw->wm.base.surf_offset[surf_index] + 10 * 4,
+                              aux_mt->bo, 0,
+                              I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
+   } else {
+      surf[10] = 0;
+      surf[11] = 0;
+   }
    surf[12] = 0;
 
    drm_intel_bo_emit_reloc(brw->batch.bo,
