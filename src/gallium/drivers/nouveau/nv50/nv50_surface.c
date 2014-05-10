@@ -698,6 +698,12 @@ nv50_blitter_make_fp(struct pipe_context *pipe,
    tc = ureg_DECL_fs_input(
       ureg, TGSI_SEMANTIC_GENERIC, 0, TGSI_INTERPOLATE_LINEAR);
 
+   if (ptarg == PIPE_TEXTURE_1D_ARRAY) {
+      /* Adjust coordinates. Depth is in z, but TEX expects it to be in y. */
+      tc = ureg_swizzle(tc, TGSI_SWIZZLE_X, TGSI_SWIZZLE_Z,
+                        TGSI_SWIZZLE_Z, TGSI_SWIZZLE_Z);
+   }
+
    data = ureg_DECL_temporary(ureg);
 
    if (tex_s) {
