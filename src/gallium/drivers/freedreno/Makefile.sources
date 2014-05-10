@@ -3,6 +3,7 @@ C_SOURCES := \
 	freedreno_lowering.c \
 	freedreno_program.c \
 	freedreno_query.c \
+	freedreno_query_hw.c \
 	freedreno_query_sw.c \
 	freedreno_fence.c \
 	freedreno_resource.c \

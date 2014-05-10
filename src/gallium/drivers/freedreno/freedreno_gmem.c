@@ -35,6 +35,7 @@
 #include "freedreno_gmem.h"
 #include "freedreno_context.h"
 #include "freedreno_resource.h"
+#include "freedreno_query_hw.h"
 #include "freedreno_util.h"
 
 /*
@@ -273,17 +274,24 @@ render_tiles(struct fd_context *ctx)
 
 		ctx->emit_tile_prep(ctx, tile);
 
-		if (ctx->restore)
+		if (ctx->restore) {
+			fd_hw_query_set_stage(ctx, ctx->ring, FD_STAGE_MEM2GMEM);
 			ctx->emit_tile_mem2gmem(ctx, tile);
+			fd_hw_query_set_stage(ctx, ctx->ring, FD_STAGE_NULL);
+		}
 
 		ctx->emit_tile_renderprep(ctx, tile);
+
+		fd_hw_query_prepare_tile(ctx, i, ctx->ring);
 
 		/* emit IB to drawcmds: */
 		OUT_IB(ctx->ring, ctx->draw_start, ctx->draw_end);
 		fd_reset_wfi(ctx);
 
 		/* emit gmem2mem to transfer tile back to system memory: */
+		fd_hw_query_set_stage(ctx, ctx->ring, FD_STAGE_GMEM2MEM);
 		ctx->emit_tile_gmem2mem(ctx, tile);
+		fd_hw_query_set_stage(ctx, ctx->ring, FD_STAGE_NULL);
 	}
 }
 
@@ -291,6 +299,8 @@ static void
 render_sysmem(struct fd_context *ctx)
 {
 	ctx->emit_sysmem_prep(ctx);
+
+	fd_hw_query_prepare_tile(ctx, 0, ctx->ring);
 
 	/* emit IB to drawcmds: */
 	OUT_IB(ctx->ring, ctx->draw_start, ctx->draw_end);
@@ -314,6 +324,11 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 		}
 	}
 
+	/* close out the draw cmds by making sure any active queries are
+	 * paused:
+	 */
+	fd_hw_query_set_stage(ctx, ctx->ring, FD_STAGE_NULL);
+
 	/* mark the end of the clear/draw cmds before emitting per-tile cmds: */
 	fd_ringmarker_mark(ctx->draw_end);
 	fd_ringmarker_mark(ctx->binning_end);
@@ -326,6 +341,7 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 		DBG("rendering sysmem (%s/%s)",
 			util_format_short_name(pipe_surface_format(pfb->cbufs[0])),
 			util_format_short_name(pipe_surface_format(pfb->zsbuf)));
+		fd_hw_query_prepare(ctx, 1);
 		render_sysmem(ctx);
 		ctx->stats.batch_sysmem++;
 	} else {
@@ -334,6 +350,7 @@ fd_gmem_render_tiles(struct pipe_context *pctx)
 		DBG("rendering %dx%d tiles (%s/%s)", gmem->nbins_x, gmem->nbins_y,
 			util_format_short_name(pipe_surface_format(pfb->cbufs[0])),
 			util_format_short_name(pipe_surface_format(pfb->zsbuf)));
+		fd_hw_query_prepare(ctx, gmem->nbins_x * gmem->nbins_y);
 		render_tiles(ctx);
 		ctx->stats.batch_gmem++;
 	}

@@ -33,6 +33,7 @@
 #include "pipe/p_context.h"
 #include "indices/u_primconvert.h"
 #include "util/u_blitter.h"
+#include "util/u_double_list.h"
 #include "util/u_slab.h"
 #include "util/u_string.h"
 
@@ -82,15 +83,79 @@ struct fd_vertex_stateobj {
 	unsigned num_elements;
 };
 
+/* Bitmask of stages in rendering that a particular query query is
+ * active.  Queries will be automatically started/stopped (generating
+ * additional fd_hw_sample_period's) on entrance/exit from stages that
+ * are applicable to the query.
+ *
+ * NOTE: set the stage to NULL at end of IB to ensure no query is still
+ * active.  Things aren't going to work out the way you want if a query
+ * is active across IB's (or between tile IB and draw IB)
+ */
+enum fd_render_stage {
+	FD_STAGE_NULL     = 0x00,
+	FD_STAGE_DRAW     = 0x01,
+	FD_STAGE_CLEAR    = 0x02,
+	/* TODO before queries which include MEM2GMEM or GMEM2MEM will
+	 * work we will need to call fd_hw_query_prepare() from somewhere
+	 * appropriate so that queries in the tiling IB get backed with
+	 * memory to write results to.
+	 */
+	FD_STAGE_MEM2GMEM = 0x04,
+	FD_STAGE_GMEM2MEM = 0x08,
+	/* used for driver internal draws (ie. util_blitter_blit()): */
+	FD_STAGE_BLIT     = 0x10,
+};
+
+#define MAX_HW_SAMPLE_PROVIDERS 4
+struct fd_hw_sample_provider;
+struct fd_hw_sample;
+
 struct fd_context {
 	struct pipe_context base;
 
 	struct fd_device *dev;
 	struct fd_screen *screen;
+
 	struct blitter_context *blitter;
 	struct primconvert_context *primconvert;
 
+	/* slab for pipe_transfer allocations: */
 	struct util_slab_mempool transfer_pool;
+
+	/* slabs for fd_hw_sample and fd_hw_sample_period allocations: */
+	struct util_slab_mempool sample_pool;
+	struct util_slab_mempool sample_period_pool;
+
+	/* next sample offset.. incremented for each sample in the batch/
+	 * submit, reset to zero on next submit.
+	 */
+	uint32_t next_sample_offset;
+
+	/* sample-providers for hw queries: */
+	const struct fd_hw_sample_provider *sample_providers[MAX_HW_SAMPLE_PROVIDERS];
+
+	/* cached samples (in case multiple queries need to reference
+	 * the same sample snapshot)
+	 */
+	struct fd_hw_sample *sample_cache[MAX_HW_SAMPLE_PROVIDERS];
+
+	/* tracking for current stage, to know when to start/stop
+	 * any active queries:
+	 */
+	enum fd_render_stage stage;
+
+	/* list of active queries: */
+	struct list_head active_queries;
+
+	/* list of queries that are not active, but were active in the
+	 * current submit:
+	 */
+	struct list_head current_queries;
+
+	/* current query result bo and tile stride: */
+	struct fd_bo *query_bo;
+	uint32_t query_tile_stride;
 
 	/* table with PIPE_PRIM_MAX entries mapping PIPE_PRIM_x to
 	 * DI_PT_x value to use for draw initiator.  There are some
@@ -258,10 +323,6 @@ struct fd_context {
 	void (*draw)(struct fd_context *pctx, const struct pipe_draw_info *info);
 	void (*clear)(struct fd_context *ctx, unsigned buffers,
 			const union pipe_color_union *color, double depth, unsigned stencil);
-
-	/* queries: */
-	struct fd_query * (*create_query)(struct fd_context *ctx,
-			unsigned query_type);
 };
 
 static INLINE struct fd_context *

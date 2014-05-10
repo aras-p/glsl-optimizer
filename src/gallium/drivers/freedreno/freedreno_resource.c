@@ -36,6 +36,7 @@
 #include "freedreno_screen.h"
 #include "freedreno_surface.h"
 #include "freedreno_context.h"
+#include "freedreno_query_hw.h"
 #include "freedreno_util.h"
 
 #include <errno.h>
@@ -401,7 +402,9 @@ render_blit(struct pipe_context *pctx, struct pipe_blit_info *info)
 	util_blitter_save_fragment_sampler_views(ctx->blitter,
 			ctx->fragtex.num_textures, ctx->fragtex.textures);
 
+	fd_hw_query_set_stage(ctx, ctx->ring, FD_STAGE_BLIT);
 	util_blitter_blit(ctx->blitter, info);
+	fd_hw_query_set_stage(ctx, ctx->ring, FD_STAGE_NULL);
 
 	return true;
 }

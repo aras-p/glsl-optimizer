@@ -223,11 +223,18 @@ OUT_IB(struct fd_ringbuffer *ring, struct fd_ringmarker *start,
 	emit_marker(ring, 6);
 }
 
+/* CP_SCRATCH_REG4 is used to hold base address for query results: */
+#define HW_QUERY_BASE_REG REG_AXXX_CP_SCRATCH_REG4
+
 static inline void
 emit_marker(struct fd_ringbuffer *ring, int scratch_idx)
 {
 	extern unsigned marker_cnt;
-	OUT_PKT0(ring, REG_AXXX_CP_SCRATCH_REG0 + scratch_idx, 1);
+	unsigned reg = REG_AXXX_CP_SCRATCH_REG0 + scratch_idx;
+	assert(reg != HW_QUERY_BASE_REG);
+	if (reg == HW_QUERY_BASE_REG)
+		return;
+	OUT_PKT0(ring, reg, 1);
 	OUT_RING(ring, ++marker_cnt);
 }
 

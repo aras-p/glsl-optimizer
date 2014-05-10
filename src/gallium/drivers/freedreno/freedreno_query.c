@@ -31,6 +31,7 @@
 
 #include "freedreno_query.h"
 #include "freedreno_query_sw.h"
+#include "freedreno_query_hw.h"
 #include "freedreno_context.h"
 #include "freedreno_util.h"
 
@@ -45,8 +46,8 @@ fd_create_query(struct pipe_context *pctx, unsigned query_type)
 	struct fd_query *q;
 
 	q = fd_sw_create_query(ctx, query_type);
-	if (ctx->create_query && !q)
-		q = ctx->create_query(ctx, query_type);
+	if (!q)
+		q = fd_hw_create_query(ctx, query_type);
 
 	return (struct pipe_query *) q;
 }
