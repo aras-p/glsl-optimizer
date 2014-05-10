@@ -1591,7 +1591,8 @@ strip_unwanted_llvm_flags() {
 	-e 's/-fno-exceptions\>//g' \
 	-e 's/-fomit-frame-pointer\>//g' \
 	-e 's/-fvisibility-inlines-hidden\>//g' \
-	-e 's/-fPIC\>//g'
+	-e 's/-fPIC\>//g' \
+	-e 's/-fstack-protector-strong\>//g'
 }
 
 
