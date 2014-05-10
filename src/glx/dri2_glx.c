@@ -1263,8 +1263,10 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    configs = driConvertConfigs(psc->core, psc->base.configs, driver_configs);
    visuals = driConvertConfigs(psc->core, psc->base.visuals, driver_configs);
 
-   if (!configs || !visuals)
+   if (!configs || !visuals) {
+       ErrorMessageF("No matching fbConfigs or visuals found\n");
        goto handle_error;
+   }
 
    glx_config_destroy_list(psc->base.configs);
    psc->base.configs = configs;
