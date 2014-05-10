@@ -313,7 +313,7 @@ gen8_update_renderbuffer_surface(struct brw_context *brw,
       depth *= 6;
       break;
    case GL_TEXTURE_3D:
-      depth = MAX2(rb->Depth, 1);
+      depth = MAX2(irb->mt->logical_depth0, 1);
       /* fallthrough */
    default:
       surf_type = translate_tex_target(gl_target);
