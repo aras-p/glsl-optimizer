@@ -40,6 +40,7 @@ a3xx_SOURCES := \
 	a3xx/fd3_emit.c \
 	a3xx/fd3_gmem.c \
 	a3xx/fd3_program.c \
+	a3xx/fd3_query.c \
 	a3xx/fd3_rasterizer.c \
 	a3xx/fd3_screen.c \
 	a3xx/fd3_texture.c \

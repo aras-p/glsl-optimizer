@@ -33,6 +33,7 @@
 #include "fd3_emit.h"
 #include "fd3_gmem.h"
 #include "fd3_program.h"
+#include "fd3_query.h"
 #include "fd3_rasterizer.h"
 #include "fd3_texture.h"
 #include "fd3_zsa.h"
@@ -133,6 +134,8 @@ fd3_context_create(struct pipe_screen *pscreen, void *priv)
 
 	fd3_ctx->solid_vbuf = create_solid_vertexbuf(pctx);
 	fd3_ctx->blit_texcoord_vbuf = create_blit_texcoord_vertexbuf(pctx);
+
+	fd3_query_context_init(pctx);
 
 	return pctx;
 }

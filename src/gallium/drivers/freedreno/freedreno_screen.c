@@ -143,6 +143,8 @@ tables for things that differ if the delta is not too much..
 static int
 fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 {
+	struct fd_screen *screen = fd_screen(pscreen);
+
 	/* this is probably not totally correct.. but it's a start: */
 	switch (param) {
 	/* Supported features (boolean caps). */
@@ -236,11 +238,12 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_RENDER_TARGETS:
 		return 1;
 
-	/* Timer queries. */
+	/* Queries. */
 	case PIPE_CAP_QUERY_TIME_ELAPSED:
-	case PIPE_CAP_OCCLUSION_QUERY:
 	case PIPE_CAP_QUERY_TIMESTAMP:
 		return 0;
+	case PIPE_CAP_OCCLUSION_QUERY:
+		return (screen->gpu_id >= 300) ? 1: 0;
 
 	case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
 	case PIPE_CAP_MIN_TEXEL_OFFSET:
@@ -253,7 +256,7 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_ENDIANNESS:
 		return PIPE_ENDIAN_LITTLE;
 
-        case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
+	case PIPE_CAP_MIN_MAP_BUFFER_ALIGNMENT:
 		return 64;
 
 	default:
