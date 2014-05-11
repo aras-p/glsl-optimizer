@@ -10,11 +10,11 @@ git clone https://github.com/freedreno/envytools.git
 The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno.xml               (    364 bytes, from 2013-11-30 14:47:15)
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml  (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32840 bytes, from 2014-01-05 14:44:21)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   9009 bytes, from 2014-01-11 16:56:35)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  12362 bytes, from 2014-01-07 14:47:36)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  56545 bytes, from 2014-02-26 16:32:11)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (   8344 bytes, from 2013-11-30 14:49:47)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32580 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (  10186 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  14477 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  57702 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  26293 bytes, from 2014-05-09 14:56:06)
 
 Copyright (C) 2013-2014 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -114,6 +114,39 @@ enum adreno_rb_dither_mode {
 enum adreno_rb_depth_format {
 	DEPTHX_16 = 0,
 	DEPTHX_24_8 = 1,
+};
+
+enum adreno_rb_copy_control_mode {
+	RB_COPY_RESOLVE = 1,
+	RB_COPY_CLEAR = 2,
+	RB_COPY_DEPTH_STENCIL = 5,
+};
+
+enum a3xx_render_mode {
+	RB_RENDERING_PASS = 0,
+	RB_TILING_PASS = 1,
+	RB_RESOLVE_PASS = 2,
+	RB_COMPUTE_PASS = 3,
+};
+
+enum a3xx_msaa_samples {
+	MSAA_ONE = 0,
+	MSAA_TWO = 1,
+	MSAA_FOUR = 2,
+};
+
+enum a3xx_threadmode {
+	MULTI = 0,
+	SINGLE = 1,
+};
+
+enum a3xx_instrbuffermode {
+	BUFFER = 1,
+};
+
+enum a3xx_threadsize {
+	TWO_QUADS = 0,
+	FOUR_QUADS = 1,
 };
 
 #define REG_AXXX_CP_RB_BASE					0x000001c0

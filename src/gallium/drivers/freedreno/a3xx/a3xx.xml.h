@@ -10,11 +10,11 @@ git clone https://github.com/freedreno/envytools.git
 The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno.xml               (    364 bytes, from 2013-11-30 14:47:15)
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml  (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32840 bytes, from 2014-01-05 14:44:21)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   9009 bytes, from 2014-01-11 16:56:35)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  12362 bytes, from 2014-01-07 14:47:36)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  56545 bytes, from 2014-02-26 16:32:11)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (   8344 bytes, from 2013-11-30 14:49:47)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32580 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (  10186 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  14477 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  57702 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  26293 bytes, from 2014-05-09 14:56:06)
 
 Copyright (C) 2013-2014 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -41,29 +41,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 
-enum a3xx_render_mode {
-	RB_RENDERING_PASS = 0,
-	RB_TILING_PASS = 1,
-	RB_RESOLVE_PASS = 2,
-};
-
 enum a3xx_tile_mode {
 	LINEAR = 0,
 	TILE_32X32 = 2,
-};
-
-enum a3xx_threadmode {
-	MULTI = 0,
-	SINGLE = 1,
-};
-
-enum a3xx_instrbuffermode {
-	BUFFER = 1,
-};
-
-enum a3xx_threadsize {
-	TWO_QUADS = 0,
-	FOUR_QUADS = 1,
 };
 
 enum a3xx_state_block_id {
@@ -180,12 +160,6 @@ enum a3xx_color_swap {
 	XYZW = 3,
 };
 
-enum a3xx_msaa_samples {
-	MSAA_ONE = 0,
-	MSAA_TWO = 1,
-	MSAA_FOUR = 2,
-};
-
 enum a3xx_sp_perfcounter_select {
 	SP_FS_CFLOW_INSTRUCTIONS = 12,
 	SP_FS_FULL_ALU_INSTRUCTIONS = 14,
@@ -210,11 +184,6 @@ enum a3xx_rop_code {
 	ROP_OR_REVERSE = 13,
 	ROP_OR = 14,
 	ROP_SET = 15,
-};
-
-enum adreno_rb_copy_control_mode {
-	RB_COPY_RESOLVE = 1,
-	RB_COPY_DEPTH_STENCIL = 5,
 };
 
 enum a3xx_tex_filter {
@@ -337,6 +306,7 @@ enum a3xx_tex_type {
 #define REG_A3XX_RBBM_INT_0_STATUS				0x00000064
 
 #define REG_A3XX_RBBM_PERFCTR_CTL				0x00000080
+#define A3XX_RBBM_PERFCTR_CTL_ENABLE				0x00000001
 
 #define REG_A3XX_RBBM_PERFCTR_LOAD_CMD0				0x00000081
 
@@ -570,6 +540,10 @@ static inline uint32_t REG_A3XX_CP_PROTECT_REG(uint32_t i0) { return 0x00000460 
 
 #define REG_A3XX_CP_AHB_FAULT					0x0000054d
 
+#define REG_A3XX_SP_GLOBAL_MEM_SIZE				0x00000e22
+
+#define REG_A3XX_SP_GLOBAL_MEM_ADDR				0x00000e23
+
 #define REG_A3XX_GRAS_CL_CLIP_CNTL				0x00002040
 #define A3XX_GRAS_CL_CLIP_CNTL_IJ_PERSP_CENTER			0x00001000
 #define A3XX_GRAS_CL_CLIP_CNTL_CLIP_DISABLE			0x00010000
@@ -644,8 +618,26 @@ static inline uint32_t A3XX_GRAS_CL_VPORT_ZSCALE(float val)
 }
 
 #define REG_A3XX_GRAS_SU_POINT_MINMAX				0x00002068
+#define A3XX_GRAS_SU_POINT_MINMAX_MIN__MASK			0x0000ffff
+#define A3XX_GRAS_SU_POINT_MINMAX_MIN__SHIFT			0
+static inline uint32_t A3XX_GRAS_SU_POINT_MINMAX_MIN(float val)
+{
+	return ((((uint32_t)(val * 8.0))) << A3XX_GRAS_SU_POINT_MINMAX_MIN__SHIFT) & A3XX_GRAS_SU_POINT_MINMAX_MIN__MASK;
+}
+#define A3XX_GRAS_SU_POINT_MINMAX_MAX__MASK			0xffff0000
+#define A3XX_GRAS_SU_POINT_MINMAX_MAX__SHIFT			16
+static inline uint32_t A3XX_GRAS_SU_POINT_MINMAX_MAX(float val)
+{
+	return ((((uint32_t)(val * 8.0))) << A3XX_GRAS_SU_POINT_MINMAX_MAX__SHIFT) & A3XX_GRAS_SU_POINT_MINMAX_MAX__MASK;
+}
 
 #define REG_A3XX_GRAS_SU_POINT_SIZE				0x00002069
+#define A3XX_GRAS_SU_POINT_SIZE__MASK				0xffffffff
+#define A3XX_GRAS_SU_POINT_SIZE__SHIFT				0
+static inline uint32_t A3XX_GRAS_SU_POINT_SIZE(float val)
+{
+	return ((((uint32_t)(val * 8.0))) << A3XX_GRAS_SU_POINT_SIZE__SHIFT) & A3XX_GRAS_SU_POINT_SIZE__MASK;
+}
 
 #define REG_A3XX_GRAS_SU_POLY_OFFSET_SCALE			0x0000206c
 #define A3XX_GRAS_SU_POLY_OFFSET_SCALE_VAL__MASK		0x00ffffff
@@ -992,6 +984,12 @@ static inline uint32_t A3XX_RB_COPY_CONTROL_MODE(enum adreno_rb_copy_control_mod
 {
 	return ((val) << A3XX_RB_COPY_CONTROL_MODE__SHIFT) & A3XX_RB_COPY_CONTROL_MODE__MASK;
 }
+#define A3XX_RB_COPY_CONTROL_FASTCLEAR__MASK			0x00000f00
+#define A3XX_RB_COPY_CONTROL_FASTCLEAR__SHIFT			8
+static inline uint32_t A3XX_RB_COPY_CONTROL_FASTCLEAR(uint32_t val)
+{
+	return ((val) << A3XX_RB_COPY_CONTROL_FASTCLEAR__SHIFT) & A3XX_RB_COPY_CONTROL_FASTCLEAR__MASK;
+}
 #define A3XX_RB_COPY_CONTROL_GMEM_BASE__MASK			0xffffc000
 #define A3XX_RB_COPY_CONTROL_GMEM_BASE__SHIFT			14
 static inline uint32_t A3XX_RB_COPY_CONTROL_GMEM_BASE(uint32_t val)
@@ -1033,6 +1031,12 @@ static inline uint32_t A3XX_RB_COPY_DEST_INFO_FORMAT(enum a3xx_color_fmt val)
 static inline uint32_t A3XX_RB_COPY_DEST_INFO_SWAP(enum a3xx_color_swap val)
 {
 	return ((val) << A3XX_RB_COPY_DEST_INFO_SWAP__SHIFT) & A3XX_RB_COPY_DEST_INFO_SWAP__MASK;
+}
+#define A3XX_RB_COPY_DEST_INFO_DITHER_MODE__MASK		0x00000c00
+#define A3XX_RB_COPY_DEST_INFO_DITHER_MODE__SHIFT		10
+static inline uint32_t A3XX_RB_COPY_DEST_INFO_DITHER_MODE(enum adreno_rb_dither_mode val)
+{
+	return ((val) << A3XX_RB_COPY_DEST_INFO_DITHER_MODE__SHIFT) & A3XX_RB_COPY_DEST_INFO_DITHER_MODE__MASK;
 }
 #define A3XX_RB_COPY_DEST_INFO_COMPONENT_ENABLE__MASK		0x0003c000
 #define A3XX_RB_COPY_DEST_INFO_COMPONENT_ENABLE__SHIFT		14
@@ -1202,6 +1206,8 @@ static inline uint32_t A3XX_RB_WINDOW_OFFSET_Y(uint32_t val)
 }
 
 #define REG_A3XX_RB_SAMPLE_COUNT_CONTROL			0x00002110
+#define A3XX_RB_SAMPLE_COUNT_CONTROL_RESET			0x00000001
+#define A3XX_RB_SAMPLE_COUNT_CONTROL_COPY			0x00000002
 
 #define REG_A3XX_RB_SAMPLE_COUNT_ADDR				0x00002111
 
@@ -1366,10 +1372,36 @@ static inline uint32_t A3XX_HLSQ_CONST_FSPRESV_RANGE_REG_ENDENTRY(uint32_t val)
 }
 
 #define REG_A3XX_HLSQ_CL_NDRANGE_0_REG				0x0000220a
+#define A3XX_HLSQ_CL_NDRANGE_0_REG_WORKDIM__MASK		0x00000003
+#define A3XX_HLSQ_CL_NDRANGE_0_REG_WORKDIM__SHIFT		0
+static inline uint32_t A3XX_HLSQ_CL_NDRANGE_0_REG_WORKDIM(uint32_t val)
+{
+	return ((val) << A3XX_HLSQ_CL_NDRANGE_0_REG_WORKDIM__SHIFT) & A3XX_HLSQ_CL_NDRANGE_0_REG_WORKDIM__MASK;
+}
+#define A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE0__MASK		0x00000ffc
+#define A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE0__SHIFT		2
+static inline uint32_t A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE0(uint32_t val)
+{
+	return ((val) << A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE0__SHIFT) & A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE0__MASK;
+}
+#define A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE1__MASK		0x003ff000
+#define A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE1__SHIFT		12
+static inline uint32_t A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE1(uint32_t val)
+{
+	return ((val) << A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE1__SHIFT) & A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE1__MASK;
+}
+#define A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE2__MASK		0xffc00000
+#define A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE2__SHIFT		22
+static inline uint32_t A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE2(uint32_t val)
+{
+	return ((val) << A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE2__SHIFT) & A3XX_HLSQ_CL_NDRANGE_0_REG_LOCALSIZE2__MASK;
+}
 
-#define REG_A3XX_HLSQ_CL_NDRANGE_1_REG				0x0000220b
+static inline uint32_t REG_A3XX_HLSQ_CL_GLOBAL_WORK(uint32_t i0) { return 0x0000220b + 0x2*i0; }
 
-#define REG_A3XX_HLSQ_CL_NDRANGE_2_REG				0x0000220c
+static inline uint32_t REG_A3XX_HLSQ_CL_GLOBAL_WORK_SIZE(uint32_t i0) { return 0x0000220b + 0x2*i0; }
+
+static inline uint32_t REG_A3XX_HLSQ_CL_GLOBAL_WORK_OFFSET(uint32_t i0) { return 0x0000220c + 0x2*i0; }
 
 #define REG_A3XX_HLSQ_CL_CONTROL_0_REG				0x00002211
 
@@ -1377,7 +1409,9 @@ static inline uint32_t A3XX_HLSQ_CONST_FSPRESV_RANGE_REG_ENDENTRY(uint32_t val)
 
 #define REG_A3XX_HLSQ_CL_KERNEL_CONST_REG			0x00002214
 
-#define REG_A3XX_HLSQ_CL_KERNEL_GROUP_X_REG			0x00002215
+static inline uint32_t REG_A3XX_HLSQ_CL_KERNEL_GROUP(uint32_t i0) { return 0x00002215 + 0x1*i0; }
+
+static inline uint32_t REG_A3XX_HLSQ_CL_KERNEL_GROUP_RATIO(uint32_t i0) { return 0x00002215 + 0x1*i0; }
 
 #define REG_A3XX_HLSQ_CL_KERNEL_GROUP_Y_REG			0x00002216
 
@@ -1624,6 +1658,7 @@ static inline uint32_t A3XX_SP_VS_CTRL_REG0_THREADSIZE(enum a3xx_threadsize val)
 }
 #define A3XX_SP_VS_CTRL_REG0_SUPERTHREADMODE			0x00200000
 #define A3XX_SP_VS_CTRL_REG0_PIXLODENABLE			0x00400000
+#define A3XX_SP_VS_CTRL_REG0_COMPUTEMODE			0x00800000
 #define A3XX_SP_VS_CTRL_REG0_LENGTH__MASK			0xff000000
 #define A3XX_SP_VS_CTRL_REG0_LENGTH__SHIFT			24
 static inline uint32_t A3XX_SP_VS_CTRL_REG0_LENGTH(uint32_t val)
@@ -1797,6 +1832,7 @@ static inline uint32_t A3XX_SP_FS_CTRL_REG0_THREADSIZE(enum a3xx_threadsize val)
 }
 #define A3XX_SP_FS_CTRL_REG0_SUPERTHREADMODE			0x00200000
 #define A3XX_SP_FS_CTRL_REG0_PIXLODENABLE			0x00400000
+#define A3XX_SP_FS_CTRL_REG0_COMPUTEMODE			0x00800000
 #define A3XX_SP_FS_CTRL_REG0_LENGTH__MASK			0xff000000
 #define A3XX_SP_FS_CTRL_REG0_LENGTH__SHIFT			24
 static inline uint32_t A3XX_SP_FS_CTRL_REG0_LENGTH(uint32_t val)
@@ -1975,6 +2011,42 @@ static inline uint32_t A3XX_TPL1_TP_FS_TEX_OFFSET_BASETABLEPTR(uint32_t val)
 #define REG_A3XX_VBIF_OUT_AXI_AOOO_EN				0x0000305e
 
 #define REG_A3XX_VBIF_OUT_AXI_AOOO				0x0000305f
+
+#define REG_A3XX_VBIF_PERF_CNT_EN				0x00003070
+#define A3XX_VBIF_PERF_CNT_EN_CNT0				0x00000001
+#define A3XX_VBIF_PERF_CNT_EN_CNT1				0x00000002
+#define A3XX_VBIF_PERF_CNT_EN_PWRCNT0				0x00000004
+#define A3XX_VBIF_PERF_CNT_EN_PWRCNT1				0x00000008
+#define A3XX_VBIF_PERF_CNT_EN_PWRCNT2				0x00000010
+
+#define REG_A3XX_VBIF_PERF_CNT_CLR				0x00003071
+#define A3XX_VBIF_PERF_CNT_CLR_CNT0				0x00000001
+#define A3XX_VBIF_PERF_CNT_CLR_CNT1				0x00000002
+#define A3XX_VBIF_PERF_CNT_CLR_PWRCNT0				0x00000004
+#define A3XX_VBIF_PERF_CNT_CLR_PWRCNT1				0x00000008
+#define A3XX_VBIF_PERF_CNT_CLR_PWRCNT2				0x00000010
+
+#define REG_A3XX_VBIF_PERF_CNT_SEL				0x00003072
+
+#define REG_A3XX_VBIF_PERF_CNT0_LO				0x00003073
+
+#define REG_A3XX_VBIF_PERF_CNT0_HI				0x00003074
+
+#define REG_A3XX_VBIF_PERF_CNT1_LO				0x00003075
+
+#define REG_A3XX_VBIF_PERF_CNT1_HI				0x00003076
+
+#define REG_A3XX_VBIF_PERF_PWR_CNT0_LO				0x00003077
+
+#define REG_A3XX_VBIF_PERF_PWR_CNT0_HI				0x00003078
+
+#define REG_A3XX_VBIF_PERF_PWR_CNT1_LO				0x00003079
+
+#define REG_A3XX_VBIF_PERF_PWR_CNT1_HI				0x0000307a
+
+#define REG_A3XX_VBIF_PERF_PWR_CNT2_LO				0x0000307b
+
+#define REG_A3XX_VBIF_PERF_PWR_CNT2_HI				0x0000307c
 
 #define REG_A3XX_VSC_BIN_SIZE					0x00000c01
 #define A3XX_VSC_BIN_SIZE_WIDTH__MASK				0x0000001f
@@ -2303,6 +2375,7 @@ static inline uint32_t A3XX_TEX_CONST_0_FMT(enum a3xx_tex_fmt val)
 {
 	return ((val) << A3XX_TEX_CONST_0_FMT__SHIFT) & A3XX_TEX_CONST_0_FMT__MASK;
 }
+#define A3XX_TEX_CONST_0_NOCONVERT				0x20000000
 #define A3XX_TEX_CONST_0_TYPE__MASK				0xc0000000
 #define A3XX_TEX_CONST_0_TYPE__SHIFT				30
 static inline uint32_t A3XX_TEX_CONST_0_TYPE(enum a3xx_tex_type val)

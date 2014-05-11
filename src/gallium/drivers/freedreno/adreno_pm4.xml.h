@@ -10,11 +10,11 @@ git clone https://github.com/freedreno/envytools.git
 The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno.xml               (    364 bytes, from 2013-11-30 14:47:15)
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml  (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32840 bytes, from 2014-01-05 14:44:21)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   9009 bytes, from 2014-01-11 16:56:35)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  12362 bytes, from 2014-01-07 14:47:36)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  56545 bytes, from 2014-02-26 16:32:11)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (   8344 bytes, from 2013-11-30 14:49:47)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32580 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (  10186 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  14477 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  57702 bytes, from 2014-05-09 14:56:06)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  26293 bytes, from 2014-05-09 14:56:06)
 
 Copyright (C) 2013-2014 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -164,6 +164,11 @@ enum adreno_pm4_type3_packets {
 	CP_SET_BIN = 76,
 	CP_TEST_TWO_MEMS = 113,
 	CP_WAIT_FOR_ME = 19,
+	CP_SET_DRAW_STATE = 67,
+	CP_DRAW_INDX_OFFSET = 56,
+	CP_DRAW_INDIRECT = 40,
+	CP_DRAW_INDX_INDIRECT = 41,
+	CP_DRAW_AUTO = 36,
 	IN_IB_PREFETCH_END = 23,
 	IN_SUBBLK_PREFETCH = 31,
 	IN_INSTR_PREFETCH = 32,
@@ -349,6 +354,93 @@ static inline uint32_t CP_DRAW_INDX_2_1_NUM_INDICES(uint32_t val)
 static inline uint32_t CP_DRAW_INDX_2_2_NUM_INDICES(uint32_t val)
 {
 	return ((val) << CP_DRAW_INDX_2_2_NUM_INDICES__SHIFT) & CP_DRAW_INDX_2_2_NUM_INDICES__MASK;
+}
+
+#define REG_CP_DRAW_INDX_OFFSET_0				0x00000000
+#define CP_DRAW_INDX_OFFSET_0_PRIM_TYPE__MASK			0x0000003f
+#define CP_DRAW_INDX_OFFSET_0_PRIM_TYPE__SHIFT			0
+static inline uint32_t CP_DRAW_INDX_OFFSET_0_PRIM_TYPE(enum pc_di_primtype val)
+{
+	return ((val) << CP_DRAW_INDX_OFFSET_0_PRIM_TYPE__SHIFT) & CP_DRAW_INDX_OFFSET_0_PRIM_TYPE__MASK;
+}
+#define CP_DRAW_INDX_OFFSET_0_SOURCE_SELECT__MASK		0x000000c0
+#define CP_DRAW_INDX_OFFSET_0_SOURCE_SELECT__SHIFT		6
+static inline uint32_t CP_DRAW_INDX_OFFSET_0_SOURCE_SELECT(enum pc_di_src_sel val)
+{
+	return ((val) << CP_DRAW_INDX_OFFSET_0_SOURCE_SELECT__SHIFT) & CP_DRAW_INDX_OFFSET_0_SOURCE_SELECT__MASK;
+}
+#define CP_DRAW_INDX_OFFSET_0_VIS_CULL__MASK			0x00000700
+#define CP_DRAW_INDX_OFFSET_0_VIS_CULL__SHIFT			8
+static inline uint32_t CP_DRAW_INDX_OFFSET_0_VIS_CULL(enum pc_di_vis_cull_mode val)
+{
+	return ((val) << CP_DRAW_INDX_OFFSET_0_VIS_CULL__SHIFT) & CP_DRAW_INDX_OFFSET_0_VIS_CULL__MASK;
+}
+#define CP_DRAW_INDX_OFFSET_0_INDEX_SIZE__MASK			0x00000800
+#define CP_DRAW_INDX_OFFSET_0_INDEX_SIZE__SHIFT			11
+static inline uint32_t CP_DRAW_INDX_OFFSET_0_INDEX_SIZE(enum pc_di_index_size val)
+{
+	return ((val) << CP_DRAW_INDX_OFFSET_0_INDEX_SIZE__SHIFT) & CP_DRAW_INDX_OFFSET_0_INDEX_SIZE__MASK;
+}
+#define CP_DRAW_INDX_OFFSET_0_NOT_EOP				0x00001000
+#define CP_DRAW_INDX_OFFSET_0_SMALL_INDEX			0x00002000
+#define CP_DRAW_INDX_OFFSET_0_PRE_DRAW_INITIATOR_ENABLE		0x00004000
+#define CP_DRAW_INDX_OFFSET_0_NUM_INDICES__MASK			0xffff0000
+#define CP_DRAW_INDX_OFFSET_0_NUM_INDICES__SHIFT		16
+static inline uint32_t CP_DRAW_INDX_OFFSET_0_NUM_INDICES(uint32_t val)
+{
+	return ((val) << CP_DRAW_INDX_OFFSET_0_NUM_INDICES__SHIFT) & CP_DRAW_INDX_OFFSET_0_NUM_INDICES__MASK;
+}
+
+#define REG_CP_DRAW_INDX_OFFSET_1				0x00000001
+
+#define REG_CP_DRAW_INDX_OFFSET_2				0x00000002
+#define CP_DRAW_INDX_OFFSET_2_NUM_INDICES__MASK			0xffffffff
+#define CP_DRAW_INDX_OFFSET_2_NUM_INDICES__SHIFT		0
+static inline uint32_t CP_DRAW_INDX_OFFSET_2_NUM_INDICES(uint32_t val)
+{
+	return ((val) << CP_DRAW_INDX_OFFSET_2_NUM_INDICES__SHIFT) & CP_DRAW_INDX_OFFSET_2_NUM_INDICES__MASK;
+}
+
+#define REG_CP_DRAW_INDX_OFFSET_2				0x00000002
+#define CP_DRAW_INDX_OFFSET_2_INDX_BASE__MASK			0xffffffff
+#define CP_DRAW_INDX_OFFSET_2_INDX_BASE__SHIFT			0
+static inline uint32_t CP_DRAW_INDX_OFFSET_2_INDX_BASE(uint32_t val)
+{
+	return ((val) << CP_DRAW_INDX_OFFSET_2_INDX_BASE__SHIFT) & CP_DRAW_INDX_OFFSET_2_INDX_BASE__MASK;
+}
+
+#define REG_CP_DRAW_INDX_OFFSET_2				0x00000002
+#define CP_DRAW_INDX_OFFSET_2_INDX_SIZE__MASK			0xffffffff
+#define CP_DRAW_INDX_OFFSET_2_INDX_SIZE__SHIFT			0
+static inline uint32_t CP_DRAW_INDX_OFFSET_2_INDX_SIZE(uint32_t val)
+{
+	return ((val) << CP_DRAW_INDX_OFFSET_2_INDX_SIZE__SHIFT) & CP_DRAW_INDX_OFFSET_2_INDX_SIZE__MASK;
+}
+
+#define REG_CP_SET_DRAW_STATE_0					0x00000000
+#define CP_SET_DRAW_STATE_0_COUNT__MASK				0x0000ffff
+#define CP_SET_DRAW_STATE_0_COUNT__SHIFT			0
+static inline uint32_t CP_SET_DRAW_STATE_0_COUNT(uint32_t val)
+{
+	return ((val) << CP_SET_DRAW_STATE_0_COUNT__SHIFT) & CP_SET_DRAW_STATE_0_COUNT__MASK;
+}
+#define CP_SET_DRAW_STATE_0_DIRTY				0x00010000
+#define CP_SET_DRAW_STATE_0_DISABLE				0x00020000
+#define CP_SET_DRAW_STATE_0_DISABLE_ALL_GROUPS			0x00040000
+#define CP_SET_DRAW_STATE_0_LOAD_IMMED				0x00080000
+#define CP_SET_DRAW_STATE_0_GROUP_ID__MASK			0x1f000000
+#define CP_SET_DRAW_STATE_0_GROUP_ID__SHIFT			24
+static inline uint32_t CP_SET_DRAW_STATE_0_GROUP_ID(uint32_t val)
+{
+	return ((val) << CP_SET_DRAW_STATE_0_GROUP_ID__SHIFT) & CP_SET_DRAW_STATE_0_GROUP_ID__MASK;
+}
+
+#define REG_CP_SET_DRAW_STATE_1					0x00000001
+#define CP_SET_DRAW_STATE_1_ADDR__MASK				0xffffffff
+#define CP_SET_DRAW_STATE_1_ADDR__SHIFT				0
+static inline uint32_t CP_SET_DRAW_STATE_1_ADDR(uint32_t val)
+{
+	return ((val) << CP_SET_DRAW_STATE_1_ADDR__SHIFT) & CP_SET_DRAW_STATE_1_ADDR__MASK;
 }
 
 #define REG_CP_SET_BIN_0					0x00000000
