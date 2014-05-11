@@ -56,7 +56,9 @@ GALLIUM_DRI_LINKER_FLAGS = \
 	-shrext .so \
 	-module \
 	-avoid-version \
+if HAVE_LD_VERSION_SCRIPT
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/dri.sym \
+endif
 	$(GC_SECTIONS)
 
 GALLIUM_VDPAU_LINKER_FLAGS = \
@@ -64,7 +66,9 @@ GALLIUM_VDPAU_LINKER_FLAGS = \
 	-module \
 	-no-undefined \
 	-version-number $(VDPAU_MAJOR):$(VDPAU_MINOR) \
+if HAVE_LD_VERSION_SCRIPT
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/vdpau.sym \
+endif
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
@@ -73,7 +77,9 @@ GALLIUM_XVMC_LINKER_FLAGS = \
 	-module \
 	-no-undefined \
 	-version-number $(XVMC_MAJOR):$(XVMC_MINOR) \
+if HAVE_LD_VERSION_SCRIPT
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/xvmc.sym \
+endif
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
@@ -82,7 +88,9 @@ GALLIUM_OMX_LINKER_FLAGS = \
 	-module \
 	-no-undefined \
 	-avoid-version \
+if HAVE_LD_VERSION_SCRIPT
 	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/omx.sym \
+endif
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 

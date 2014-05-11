@@ -75,7 +75,7 @@ libEGL_la_LIBADD = \
 libEGL_la_LDFLAGS = \
 	-no-undefined \
 	-version-number 1:0 \
-	-Wl,-Bsymbolic \
+	$(BSYMBOLIC) \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 

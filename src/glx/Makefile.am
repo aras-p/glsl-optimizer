@@ -111,7 +111,7 @@ GL_LIBS = \
 GL_LDFLAGS = \
 	-no-undefined \
 	-version-number 1:2 \
-	-Wl,-Bsymbolic \
+	$(BSYMBOLIC) \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
