@@ -308,8 +308,7 @@ private:
        */
       const unsigned values = values_for_type(type);
       if (type->contains_sampler()) {
-	 this->num_shader_samplers +=
-	    type->is_array() ? type->array_size() : 1;
+         this->num_shader_samplers += values;
       } else if (type->contains_image()) {
          this->num_shader_images += values;
 
