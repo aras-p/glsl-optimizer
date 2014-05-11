@@ -125,7 +125,7 @@ emit_texture(struct fd_ringbuffer *ring, struct fd_context *ctx,
 {
 	unsigned const_idx = fd2_get_const_idx(ctx, tex, samp_id);
 	static const struct fd2_sampler_stateobj dummy_sampler = {};
-	struct fd2_sampler_stateobj *sampler;
+	const struct fd2_sampler_stateobj *sampler;
 	struct fd2_pipe_sampler_view *view;
 
 	if (emitted & (1 << const_idx))
