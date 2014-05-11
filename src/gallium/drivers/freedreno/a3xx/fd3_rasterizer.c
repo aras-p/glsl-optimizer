@@ -40,6 +40,7 @@ fd3_rasterizer_state_create(struct pipe_context *pctx,
 		const struct pipe_rasterizer_state *cso)
 {
 	struct fd3_rasterizer_stateobj *so;
+	float psize_min, psize_max;
 
 	so = CALLOC_STRUCT(fd3_rasterizer_stateobj);
 	if (!so)
@@ -47,19 +48,28 @@ fd3_rasterizer_state_create(struct pipe_context *pctx,
 
 	so->base = *cso;
 
+	if (cso->point_size_per_vertex) {
+		psize_min = util_get_min_point_size(cso);
+		psize_max = 8192;
+	} else {
+		/* Force the point size to be as if the vertex output was disabled. */
+		psize_min = cso->point_size;
+		psize_max = cso->point_size;
+	}
+
 /*
 	if (cso->line_stipple_enable) {
 		??? TODO line stipple
 	}
 	TODO cso->half_pixel_center
-	TODO cso->point_size
-	TODO psize_min/psize_max
 	if (cso->multisample)
 		TODO
 */
 	so->gras_cl_clip_cntl = A3XX_GRAS_CL_CLIP_CNTL_IJ_PERSP_CENTER; /* ??? */
-	so->gras_su_point_minmax = 0xffc00010;  /* ??? */
-	so->gras_su_point_size   = 0x00000008;  /* ??? */
+	so->gras_su_point_minmax =
+			A3XX_GRAS_SU_POINT_MINMAX_MIN(psize_min/2) |
+			A3XX_GRAS_SU_POINT_MINMAX_MAX(psize_max/2);
+	so->gras_su_point_size   = A3XX_GRAS_SU_POINT_SIZE(cso->point_size/2);
 	so->gras_su_poly_offset_scale =
 			A3XX_GRAS_SU_POLY_OFFSET_SCALE_VAL(cso->offset_scale);
 	so->gras_su_poly_offset_offset =
