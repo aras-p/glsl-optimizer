@@ -488,3 +488,37 @@ brw_meta_fbo_stencil_blit(struct brw_context *brw,
                          dst_mt, dst_irb->mt_level, dst_irb->mt_layer, &dims);
    intel_batchbuffer_emit_mi_flush(brw);
 }
+
+void
+brw_meta_stencil_updownsample(struct brw_context *brw,
+                              struct intel_mipmap_tree *src,
+                              struct intel_mipmap_tree *dst)
+{
+   struct gl_context *ctx = &brw->ctx;
+   struct blit_dims dims = {
+      .src_x0 = 0, .src_y0 = 0,
+      .src_x1 = src->logical_width0, .src_y1 = src->logical_height0,
+      .dst_x0 = 0, .dst_y0 = 0,
+      .dst_x1 = dst->logical_width0, .dst_y1 = dst->logical_height0,
+      .mirror_x = 0, .mirror_y = 0 };
+   GLuint fbo, rbo;
+
+   if (dst->stencil_mt)
+      dst = dst->stencil_mt;
+
+   intel_batchbuffer_emit_mi_flush(brw);
+   _mesa_meta_begin(ctx, MESA_META_ALL);
+
+   _mesa_GenFramebuffers(1, &fbo);
+   rbo = brw_get_rb_for_slice(brw, src, 0, 0, false);
+
+   _mesa_BindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+   _mesa_FramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
+                                 GL_RENDERBUFFER, rbo);
+
+   brw_meta_stencil_blit(brw, dst, 0, 0, &dims);
+   intel_batchbuffer_emit_mi_flush(brw);
+
+   _mesa_DeleteRenderbuffers(1, &rbo);
+   _mesa_DeleteFramebuffers(1, &fbo);
+}
