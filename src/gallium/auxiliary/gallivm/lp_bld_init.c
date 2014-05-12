@@ -499,32 +499,6 @@ gallivm_destroy(struct gallivm_state *gallivm)
 
 
 /**
- * Validate and optimze a function.
- */
-static void
-gallivm_optimize_function(struct gallivm_state *gallivm,
-                          LLVMValueRef func)
-{
-   if (0) {
-      debug_printf("optimizing %s...\n", LLVMGetValueName(func));
-   }
-
-   assert(gallivm->passmgr);
-
-   /* Apply optimizations to LLVM IR */
-   LLVMRunFunctionPassManager(gallivm->passmgr, func);
-
-   if (0) {
-      if (gallivm_debug & GALLIVM_DEBUG_IR) {
-         /* Print the LLVM IR to stderr */
-         lp_debug_dump_value(func);
-         debug_printf("\n");
-      }
-   }
-}
-
-
-/**
  * Validate a function.
  */
 void
@@ -540,8 +514,6 @@ gallivm_verify_function(struct gallivm_state *gallivm,
    }
 #endif
 
-   gallivm_optimize_function(gallivm, func);
-
    if (gallivm_debug & GALLIVM_DEBUG_IR) {
       /* Print the LLVM IR to stderr */
       lp_debug_dump_value(func);
@@ -553,7 +525,26 @@ gallivm_verify_function(struct gallivm_state *gallivm,
 void
 gallivm_compile_module(struct gallivm_state *gallivm)
 {
+   LLVMValueRef func;
+
    assert(!gallivm->compiled);
+
+   if (gallivm->builder) {
+      LLVMDisposeBuilder(gallivm->builder);
+      gallivm->builder = NULL;
+   }
+
+   /* Run optimization passes */
+   LLVMInitializeFunctionPassManager(gallivm->passmgr);
+   func = LLVMGetFirstFunction(gallivm->module);
+   while (func) {
+      if (0) {
+	 debug_printf("optimizing %s...\n", LLVMGetValueName(func));
+      }
+      LLVMRunFunctionPassManager(gallivm->passmgr, func);
+      func = LLVMGetNextFunction(func);
+   }
+   LLVMFinalizeFunctionPassManager(gallivm->passmgr);
 
    /* Dump byte code to a file */
    if (0) {
