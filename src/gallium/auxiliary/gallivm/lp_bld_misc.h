@@ -46,10 +46,6 @@ extern void
 lp_set_target_options(void);
 
 
-extern void
-lp_func_delete_body(LLVMValueRef func);
-
-
 extern LLVMValueRef
 lp_build_load_volatile(LLVMBuilderRef B, LLVMValueRef PointerVal,
                        const char *Name);

@@ -605,8 +605,5 @@ gallivm_jit_function(struct gallivm_state *gallivm,
    lp_profile(func, code);
 #endif
 
-   /* Free the function body to save memory */
-   lp_func_delete_body(func);
-
    return jit_func;
 }
