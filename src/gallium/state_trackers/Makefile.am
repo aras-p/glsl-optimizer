@@ -29,7 +29,7 @@ if HAVE_GALLIUM_OSMESA
 SUBDIRS += osmesa
 endif
 
-if HAVE_DRI
+if HAVE_DRICOMMON
 SUBDIRS += dri
 endif
 

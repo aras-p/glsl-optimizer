@@ -40,7 +40,7 @@ AM_CFLAGS += $(WAYLAND_CFLAGS)
 libgbm_la_LIBADD += $(top_builddir)/src/egl/wayland/wayland-drm/libwayland-drm.la $(WAYLAND_LIBS)
 endif
 
-if HAVE_DRI
+if HAVE_DRI2
 noinst_LTLIBRARIES = libgbm_dri.la
 libgbm_dri_la_SOURCES = \
 	backends/dri/gbm_dri.c \

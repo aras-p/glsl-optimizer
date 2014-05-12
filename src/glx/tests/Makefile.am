@@ -20,8 +20,12 @@ glx_test_SOURCES =			\
 	enum_sizes.cpp			\
 	fake_glx_screen.cpp		\
 	indirect_api.cpp		\
-	query_renderer_implementation_unittest.cpp	\
 	query_renderer_unittest.cpp
+
+if HAVE_DRI2
+glx_test_SOURCES += \
+	query_renderer_implementation_unittest.cpp
+endif
 
 glx_test_LDADD = \
 	$(top_builddir)/src/glx/libglx.la \

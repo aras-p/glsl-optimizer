@@ -786,8 +786,22 @@ fi
 
 AM_CONDITIONAL(HAVE_DRI_GLX, test "x$enable_glx" = xyes -a \
                                   "x$enable_dri" = xyes)
-AM_CONDITIONAL(HAVE_DRI, test "x$enable_dri" = xyes)
-AM_CONDITIONAL(HAVE_DRI3, test "x$enable_dri3" = xyes)
+
+# Select which platform-dependent DRI code gets built
+case "$host_os" in
+darwin*)
+    dri_platform='apple' ;;
+gnu*|mingw*|cygwin*)
+    dri_platform='none' ;;
+*)
+    dri_platform='drm' ;;
+esac
+
+AM_CONDITIONAL(HAVE_DRICOMMON, test "x$enable_dri" = xyes )
+AM_CONDITIONAL(HAVE_DRISW, test "x$enable_dri" = xyes )
+AM_CONDITIONAL(HAVE_DRI2, test "x$enable_dri" = xyes && test "x$dri_platform" = xdrm )
+AM_CONDITIONAL(HAVE_DRI3, test "x$enable_dri3" = xyes && test "x$dri_platform" = xdrm )
+AM_CONDITIONAL(HAVE_APPLEDRI, test "x$enable_dri" = xyes && test "x$dri_platform" = xapple )
 
 AC_ARG_ENABLE([shared-glapi],
     [AS_HELP_STRING([--enable-shared-glapi],
@@ -912,23 +926,30 @@ xyesyes)
 xyesno)
     # DRI-based GLX
     PKG_CHECK_MODULES([GLPROTO], [glproto >= $GLPROTO_REQUIRED])
-    if test x"$driglx_direct" = xyes; then
-        if test "x$have_libdrm" != xyes; then
-            AC_MSG_ERROR([Direct rendering requires libdrm >= $LIBDRM_REQUIRED])
-        fi
-        PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
-        GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV libdrm >= $LIBDRM_REQUIRED"
-        if test x"$enable_dri3" = xyes; then
-            PKG_CHECK_MODULES([DRI3PROTO], [dri3proto >= $DRI3PROTO_REQUIRED])
-            PKG_CHECK_MODULES([PRESENTPROTO], [presentproto >= $PRESENTPROTO_REQUIRED])
-        fi
-    fi
 
     # find the DRI deps for libGL
-    dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx >= $XCBGLX_REQUIRED xcb-dri2 >= $XCBDRI2_REQUIRED"
+    dri_modules="x11 xext xdamage xfixes x11-xcb xcb-glx >= $XCBGLX_REQUIRED"
 
-    if test x"$enable_dri3" = xyes; then
-        dri_modules="$dri_modules xcb-dri3 xcb-present xcb-sync xshmfence >= $XSHMFENCE_REQUIRED"
+    if test x"$driglx_direct" = xyes; then
+        if test x"$dri_platform" = xdrm ; then
+            if test "x$have_libdrm" != xyes; then
+               AC_MSG_ERROR([Direct rendering requires libdrm >= $LIBDRM_REQUIRED])
+            fi
+
+            PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
+            GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV libdrm >= $LIBDRM_REQUIRED"
+            if test x"$enable_dri3" = xyes; then
+               PKG_CHECK_MODULES([DRI3PROTO], [dri3proto >= $DRI3PROTO_REQUIRED])
+               PKG_CHECK_MODULES([PRESENTPROTO], [presentproto >= $PRESENTPROTO_REQUIRED])
+            fi
+
+            if test x"$enable_dri" = xyes; then
+               dri_modules="$dri_modules xcb-dri2 >= $XCBDRI2_REQUIRED"
+            fi
+
+            if test x"$enable_dri3" = xyes; then
+               dri_modules="$dri_modules xcb-dri3 xcb-present xcb-sync xshmfence >= $XSHMFENCE_REQUIRED"
+            fi
     fi
 
     # add xf86vidmode if available
@@ -2283,7 +2304,9 @@ xnono)
         ;;
 esac
 
+echo ""
 if test "x$enable_dri" != xno; then
+        echo "        DRI platform:    $dri_platform"
         if test -z "$DRI_DIRS"; then
             echo "        DRI drivers:     no"
         else

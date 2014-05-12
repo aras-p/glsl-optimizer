@@ -48,7 +48,7 @@ libxatracker_la_LIBADD = \
 	$(LIBDRM_LIBS) \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
-if HAVE_DRI
+if HAVE_DRISW
 libxatracker_la_LIBADD += \
 	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la
 endif

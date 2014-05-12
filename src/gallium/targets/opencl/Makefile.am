@@ -35,7 +35,7 @@ lib@OPENCL_LIBNAME@_la_LIBADD = \
 	-lclangBasic \
 	$(LLVM_LIBS)
 
-if HAVE_DRI
+if HAVE_DRISW
 lib@OPENCL_LIBNAME@_la_LIBADD += \
 	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la
 endif

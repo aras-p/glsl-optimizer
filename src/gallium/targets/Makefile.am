@@ -43,37 +43,37 @@ SUBDIRS += opencl
 endif
 
 if HAVE_GALLIUM_SVGA
-if HAVE_DRI
+if HAVE_DRI2
 SUBDIRS += dri-vmwgfx
 endif
 endif
 
 if HAVE_GALLIUM_FREEDRENO
-if HAVE_DRI
+if HAVE_DRI2
 SUBDIRS += dri-freedreno
 endif
 endif
 
 if HAVE_GALLIUM_I915
-if HAVE_DRI
+if HAVE_DRI2
 SUBDIRS += dri-i915
 endif
 endif
 
 if HAVE_GALLIUM_ILO
-if HAVE_DRI
+if HAVE_DRI2
 SUBDIRS += dri-ilo
 endif
 endif
 
 if HAVE_GALLIUM_R300
-if HAVE_DRI
+if HAVE_DRI2
 SUBDIRS += r300/dri
 endif
 endif
 
 if HAVE_GALLIUM_R600
-if HAVE_DRI
+if HAVE_DRI2
 SUBDIRS += r600/dri
 endif
 
@@ -91,7 +91,7 @@ endif
 endif
 
 if HAVE_GALLIUM_RADEONSI
-if HAVE_DRI
+if HAVE_DRI2
 SUBDIRS += radeonsi/dri
 endif
 
@@ -105,7 +105,7 @@ endif
 endif
 
 if HAVE_GALLIUM_NOUVEAU
-if HAVE_DRI
+if HAVE_DRI2
 SUBDIRS += dri-nouveau
 endif
 
@@ -123,7 +123,7 @@ endif
 endif
 
 if HAVE_GALLIUM_SOFTPIPE
-if HAVE_DRI
+if HAVE_DRISW
 SUBDIRS += dri-swrast
 endif
 endif

@@ -25,7 +25,7 @@ if HAVE_X11_DRIVER
 SUBDIRS += drivers/x11
 endif
 
-if HAVE_DRI
+if HAVE_DRICOMMON
 SUBDIRS += drivers/dri
 endif
 

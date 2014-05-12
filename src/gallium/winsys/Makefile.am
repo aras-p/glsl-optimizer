@@ -26,7 +26,7 @@ if NEED_WINSYS_XLIB
 SUBDIRS += sw/xlib
 endif
 
-if HAVE_DRI
+if HAVE_DRISW
 SUBDIRS += sw/dri
 endif
 

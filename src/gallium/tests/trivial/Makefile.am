@@ -17,7 +17,7 @@ LDADD = $(GALLIUM_PIPE_LOADER_CLIENT_LIBS) \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(GALLIUM_COMMON_LIB_DEPS)
 
-if HAVE_DRI
+if HAVE_DRISW
 LDADD += \
 	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la
 endif
