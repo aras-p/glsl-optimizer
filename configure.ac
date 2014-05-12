@@ -1624,6 +1624,12 @@ if test "x$enable_gallium_llvm" = xyes; then
             LLVM_VERSION_INT=`echo $LLVM_VERSION | sed -e 's/\([[0-9]]\)\.\([[0-9]]\)/\10\2/g'`
         fi
 
+        LLVM_REQUIRED_VERSION_MAJOR="3"
+        LLVM_REQUIRED_VERSION_MINOR="1"
+        if test "$LLVM_VERSION_INT" -lt "${LLVM_REQUIRED_VERSION_MAJOR}0${LLVM_REQUIRED_VERSION_MINOR}"; then
+            AC_MSG_ERROR([LLVM $LLVM_REQUIRED_VERSION_MAJOR.$LLVM_REQUIRED_VERSION_MINOR or newer is required])
+        fi
+
         LLVM_COMPONENTS="engine bitwriter"
         if $LLVM_CONFIG --components | grep -qw 'mcjit'; then
             LLVM_COMPONENTS="${LLVM_COMPONENTS} mcjit"
