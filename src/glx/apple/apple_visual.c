@@ -167,4 +167,9 @@ apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const struct glx_config * m
       fprintf(stderr, "error: %s\n", apple_cgl.error_string(error));
       abort();
    }
+
+   if (!*pfobj) {
+      fprintf(stderr, "No matching pixelformats found, perhaps try using LIBGL_ALLOW_SOFTWARE\n");
+      abort();
+   }
 }
