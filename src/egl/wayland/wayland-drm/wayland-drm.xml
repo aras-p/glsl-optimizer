@@ -135,22 +135,6 @@
       <arg name="stride2" type="int"/>
     </request>
 
-    <!-- Create a wayland buffer for the prime fd.  Use for regular and planar
-         buffers.  Pass 0 for offset and stride for unused planes. -->
-    <request name="create_prime_buffer" since="2">
-      <arg name="id" type="new_id" interface="wl_buffer"/>
-      <arg name="name" type="fd"/>
-      <arg name="width" type="int"/>
-      <arg name="height" type="int"/>
-      <arg name="format" type="uint"/>
-      <arg name="offset0" type="int"/>
-      <arg name="stride0" type="int"/>
-      <arg name="offset1" type="int"/>
-      <arg name="stride1" type="int"/>
-      <arg name="offset2" type="int"/>
-      <arg name="stride2" type="int"/>
-    </request>
-
     <!-- Notification of the path of the drm device which is used by
          the server.  The client should use this device for creating
          local buffers.  Only buffers created from this device should
@@ -177,6 +161,25 @@
     <event name="capabilities">
       <arg name="value" type="uint"/>
     </event>
+
+    <!-- Version 2 additions -->
+
+    <!-- Create a wayland buffer for the prime fd.  Use for regular and planar
+         buffers.  Pass 0 for offset and stride for unused planes. -->
+    <request name="create_prime_buffer" since="2">
+      <arg name="id" type="new_id" interface="wl_buffer"/>
+      <arg name="name" type="fd"/>
+      <arg name="width" type="int"/>
+      <arg name="height" type="int"/>
+      <arg name="format" type="uint"/>
+      <arg name="offset0" type="int"/>
+      <arg name="stride0" type="int"/>
+      <arg name="offset1" type="int"/>
+      <arg name="stride1" type="int"/>
+      <arg name="offset2" type="int"/>
+      <arg name="stride2" type="int"/>
+    </request>
+
   </interface>
 
 </protocol>
