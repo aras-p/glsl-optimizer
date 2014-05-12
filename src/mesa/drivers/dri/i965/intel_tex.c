@@ -147,6 +147,9 @@ intel_alloc_texture_storage(struct gl_context *ctx,
                                               num_samples,
                                               INTEL_MIPTREE_TILING_ANY);
 
+      if (intel_texobj->mt == NULL) {
+         return false;
+      }
    }
 
    for (face = 0; face < numFaces; face++) {
