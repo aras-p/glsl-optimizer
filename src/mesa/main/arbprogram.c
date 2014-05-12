@@ -38,6 +38,7 @@
 #include "main/arbprogram.h"
 #include "program/arbprogparse.h"
 #include "program/program.h"
+#include "program/prog_print.h"
 
 
 /**
@@ -308,6 +309,7 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
                        const GLvoid *string)
 {
    struct gl_program *base;
+   bool failed;
    GET_CURRENT_CONTEXT(ctx);
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
@@ -341,12 +343,35 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
       return;
    }
 
-   if (ctx->Program.ErrorPos == -1) {
+   failed = ctx->Program.ErrorPos != -1;
+
+   if (!failed) {
       /* finally, give the program to the driver for translation/checking */
       if (!ctx->Driver.ProgramStringNotify(ctx, target, base)) {
+         failed = true;
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glProgramStringARB(rejected by driver");
       }
+   }
+
+   if (ctx->_Shader->Flags & GLSL_DUMP) {
+      const char *shader_type =
+         target == GL_FRAGMENT_PROGRAM_ARB ? "fragment" : "vertex";
+
+      fprintf(stderr, "ARB_%s_program source for program %d:\n",
+              shader_type, base->Id);
+      fprintf(stderr, "%s\n", (const char *) string);
+
+      if (failed) {
+         fprintf(stderr, "ARB_%s_program %d failed to compile.\n",
+                 shader_type, base->Id);
+      } else {
+         fprintf(stderr, "Mesa IR for ARB_%s_program %d:\n",
+                 shader_type, base->Id);
+         _mesa_print_program(base);
+         fprintf(stderr, "\n");
+      }
+      fflush(stderr);
    }
 }
 
