@@ -1652,7 +1652,7 @@ intel_miptree_updownsample(struct brw_context *brw,
                            struct intel_mipmap_tree *src,
                            struct intel_mipmap_tree *dst)
 {
-   if (brw->gen < 8 || src->format == MESA_FORMAT_S_UINT8) {
+   if (brw->gen < 8) {
       brw_blorp_blit_miptrees(brw,
                               src, 0 /* level */, 0 /* layer */,
                               dst, 0 /* level */, 0 /* layer */,
@@ -1661,11 +1661,18 @@ intel_miptree_updownsample(struct brw_context *brw,
                               0, 0,
                               dst->logical_width0, dst->logical_height0,
                               GL_NEAREST, false, false /*mirror x, y*/);
+   } else if (src->format == MESA_FORMAT_S_UINT8) {
+      brw_meta_stencil_updownsample(brw, src, dst);
    } else {
       brw_meta_updownsample(brw, src, dst);
    }
 
    if (src->stencil_mt) {
+      if (brw->gen >= 8) {
+         brw_meta_stencil_updownsample(brw, src->stencil_mt, dst);
+         return;
+      }
+
       brw_blorp_blit_miptrees(brw,
                               src->stencil_mt, 0 /* level */, 0 /* layer */,
                               dst->stencil_mt, 0 /* level */, 0 /* layer */,
