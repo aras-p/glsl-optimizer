@@ -31,35 +31,43 @@
 
 #include "brw_shader.h"
 
-class bblock_t;
+struct bblock_t;
 
-class bblock_link : public exec_node {
-public:
+struct bblock_link : public exec_node {
+#ifdef __cplusplus
+   DECLARE_RALLOC_CXX_OPERATORS(bblock_link)
+
    bblock_link(bblock_t *block)
       : block(block)
    {
    }
+#endif
 
-   bblock_t *block;
+   struct bblock_t *block;
 };
 
-class bblock_t {
-public:
+#ifndef __cplusplus
+struct backend_instruction;
+#endif
+
+struct bblock_t {
+#ifdef __cplusplus
    DECLARE_RALLOC_CXX_OPERATORS(bblock_t)
 
    bblock_t();
 
    void add_successor(void *mem_ctx, bblock_t *successor);
    void dump(backend_visitor *v);
+#endif
 
-   backend_instruction *start;
-   backend_instruction *end;
+   struct backend_instruction *start;
+   struct backend_instruction *end;
 
    int start_ip;
    int end_ip;
 
-   exec_list parents;
-   exec_list children;
+   struct exec_list parents;
+   struct exec_list children;
    int block_num;
 
    /* If the current basic block ends in an IF, ELSE, or ENDIF instruction,
@@ -68,11 +76,12 @@ public:
     *
     * Otherwise they are NULL.
     */
-   backend_instruction *if_inst;
-   backend_instruction *else_inst;
-   backend_instruction *endif_inst;
+   struct backend_instruction *if_inst;
+   struct backend_instruction *else_inst;
+   struct backend_instruction *endif_inst;
 };
 
+#ifdef __cplusplus
 class cfg_t {
 public:
    DECLARE_RALLOC_CXX_OPERATORS(cfg_t)
@@ -93,5 +102,6 @@ public:
    bblock_t **blocks;
    int num_blocks;
 };
+#endif
 
 #endif /* BRW_CFG_H */
