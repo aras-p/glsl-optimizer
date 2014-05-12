@@ -180,11 +180,6 @@ _mesa_Clear( GLbitfield mask )
       return;
    }
 
-   if (ctx->DrawBuffer->Width == 0 || ctx->DrawBuffer->Height == 0 ||
-       ctx->DrawBuffer->_Xmin >= ctx->DrawBuffer->_Xmax ||
-       ctx->DrawBuffer->_Ymin >= ctx->DrawBuffer->_Ymax)
-      return;
-
    if (ctx->RasterDiscard)
       return;
 
