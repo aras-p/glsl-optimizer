@@ -232,8 +232,7 @@ fs_copy_prop_dataflow::run()
             const BITSET_WORD old_livein = bd[b].livein[i];
 
             bd[b].livein[i] = ~0u;
-            foreach_list(block_node, &cfg->blocks[b]->parents) {
-               bblock_link *link = (bblock_link *)block_node;
+            foreach_list_typed(bblock_link, link, link, &cfg->blocks[b]->parents) {
                bblock_t *block = link->block;
                bd[b].livein[i] &= bd[block->block_num].liveout[i];
             }
@@ -252,8 +251,8 @@ fs_copy_prop_dataflow::dump_block_data() const
       bblock_t *block = cfg->blocks[b];
       fprintf(stderr, "Block %d [%d, %d] (parents ", block->block_num,
              block->start_ip, block->end_ip);
-      foreach_list(block_node, &block->parents) {
-         bblock_t *parent = ((bblock_link *) block_node)->block;
+      foreach_list_typed(bblock_link, link, link, &block->parents) {
+         bblock_t *parent = link->block;
          fprintf(stderr, "%d ", parent->block_num);
       }
       fprintf(stderr, "):\n");

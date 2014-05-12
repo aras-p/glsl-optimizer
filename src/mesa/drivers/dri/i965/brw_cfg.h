@@ -33,7 +33,7 @@
 
 struct bblock_t;
 
-struct bblock_link : public exec_node {
+struct bblock_link {
 #ifdef __cplusplus
    DECLARE_RALLOC_CXX_OPERATORS(bblock_link)
 
@@ -43,6 +43,7 @@ struct bblock_link : public exec_node {
    }
 #endif
 
+   struct exec_node link;
    struct bblock_t *block;
 };
 

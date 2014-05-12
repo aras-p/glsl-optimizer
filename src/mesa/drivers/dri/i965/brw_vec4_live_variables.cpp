@@ -136,8 +136,7 @@ vec4_live_variables::compute_live_variables()
 	 }
 
 	 /* Update liveout */
-	 foreach_list(block_node, &cfg->blocks[b]->children) {
-	    bblock_link *link = (bblock_link *)block_node;
+	 foreach_list_typed(bblock_link, link, link, &cfg->blocks[b]->children) {
 	    bblock_t *block = link->block;
 
 	    for (int i = 0; i < bitset_words; i++) {
