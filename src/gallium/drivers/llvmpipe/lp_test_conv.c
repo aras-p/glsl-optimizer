@@ -219,6 +219,8 @@ test_one(unsigned verbose,
 
    conv_test_ptr = (conv_test_ptr_t)gallivm_jit_function(gallivm, func);
 
+   gallivm_free_ir(gallivm);
+
    success = TRUE;
    for(i = 0; i < n && success; ++i) {
       unsigned src_stride = src_type.length*src_type.width/8;
@@ -318,8 +320,6 @@ test_one(unsigned verbose,
 
    if(fp)
       write_tsv_row(fp, src_type, dst_type, cycles_avg, success);
-
-   gallivm_free_function(gallivm, func, conv_test_ptr);
 
    gallivm_destroy(gallivm);
 

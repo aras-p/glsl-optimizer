@@ -800,6 +800,8 @@ generate_setup_variant(struct lp_setup_variant_key *key,
    if (!variant->jit_function)
       goto fail;
 
+   gallivm_free_ir(variant->gallivm);
+
    /*
     * Update timing information:
     */
@@ -813,11 +815,6 @@ generate_setup_variant(struct lp_setup_variant_key *key,
 
 fail:
    if (variant) {
-      if (variant->function) {
-         gallivm_free_function(gallivm,
-                               variant->function,
-                               variant->jit_function);
-      }
       if (variant->gallivm) {
          gallivm_destroy(variant->gallivm);
       }
@@ -891,12 +888,6 @@ remove_setup_variant(struct llvmpipe_context *lp,
    if (gallivm_debug & GALLIVM_DEBUG_IR) {
       debug_printf("llvmpipe: del setup_variant #%u total %u\n",
 		   variant->no, lp->nr_setup_variants);
-   }
-
-   if (variant->function) {
-      gallivm_free_function(variant->gallivm,
-                            variant->function,
-                            variant->jit_function);
    }
 
    if (variant->gallivm) {

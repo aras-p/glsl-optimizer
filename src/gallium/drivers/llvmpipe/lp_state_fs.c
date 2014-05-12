@@ -2639,6 +2639,8 @@ generate_variant(struct llvmpipe_context *lp,
       variant->jit_function[RAST_WHOLE] = variant->jit_function[RAST_EDGE_TEST];
    }
 
+   gallivm_free_ir(variant->gallivm);
+
    return variant;
 }
 
@@ -2763,8 +2765,6 @@ void
 llvmpipe_remove_shader_variant(struct llvmpipe_context *lp,
                                struct lp_fragment_shader_variant *variant)
 {
-   unsigned i;
-
    if (gallivm_debug & GALLIVM_DEBUG_IR) {
       debug_printf("llvmpipe: del fs #%u var #%u v created #%u v cached"
                    " #%u v total cached #%u\n",
@@ -2773,15 +2773,6 @@ llvmpipe_remove_shader_variant(struct llvmpipe_context *lp,
                    variant->shader->variants_created,
                    variant->shader->variants_cached,
                    lp->nr_fs_variants);
-   }
-
-   /* free all the variant's JIT'd functions */
-   for (i = 0; i < Elements(variant->function); i++) {
-      if (variant->function[i]) {
-         gallivm_free_function(variant->gallivm,
-                               variant->function[i],
-                               variant->jit_function[i]);
-      }
    }
 
    gallivm_destroy(variant->gallivm);
