@@ -610,21 +610,3 @@ gallivm_jit_function(struct gallivm_state *gallivm,
 
    return jit_func;
 }
-
-
-/**
- * Free the function (and its machine code).
- */
-void
-gallivm_free_function(struct gallivm_state *gallivm,
-                      LLVMValueRef func,
-                      const void *code)
-{
-#if !USE_MCJIT
-   if (code) {
-      LLVMFreeMachineCodeForFunction(gallivm->engine, func);
-   }
-
-   LLVMDeleteFunction(func);
-#endif
-}
