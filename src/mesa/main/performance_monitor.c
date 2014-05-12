@@ -1036,6 +1036,11 @@ _mesa_CreatePerfQueryINTEL(GLuint queryId, GLuint *queryHandle)
    }
 
    m = new_performance_monitor(ctx, first);
+   if (m == NULL) {
+      _mesa_error_no_memory(__func__);
+      return;
+   }
+
    _mesa_HashInsert(ctx->PerfMonitor.Monitors, first, m);
    *queryHandle = first;
 
