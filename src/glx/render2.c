@@ -28,6 +28,8 @@
  * Silicon Graphics, Inc.
  */
 
+#ifndef GLX_USE_APPLEGL
+
 #include "packrender.h"
 #include "indirect.h"
 #include "indirect_size.h"
@@ -379,3 +381,5 @@ __indirect_glDisable(GLenum cap)
    __GLX_PUT_LONG(4, cap);
    __GLX_END(8);
 }
+
+#endif

@@ -1,9 +1,11 @@
 # src/mapi/glapi/Makefile.sources
 
+GLAPI_UTIL_SOURCES = \
+	glapi_gentable.c
+
 GLAPI_SOURCES = \
 	glapi_dispatch.c \
 	glapi_entrypoint.c \
-	glapi_gentable.c \
 	glapi_getproc.c \
 	glapi_nop.c \
 	glapi.c \

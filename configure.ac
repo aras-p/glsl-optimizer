@@ -950,6 +950,10 @@ xyesno)
             if test x"$enable_dri3" = xyes; then
                dri_modules="$dri_modules xcb-dri3 xcb-present xcb-sync xshmfence >= $XSHMFENCE_REQUIRED"
             fi
+        fi
+        if test x"$dri_platform" = xapple ; then
+            DEFINES="$DEFINES -DGLX_USE_APPLEGL"
+        fi
     fi
 
     # add xf86vidmode if available
@@ -2235,6 +2239,7 @@ AC_CONFIG_FILES([Makefile
 		src/gbm/main/gbm.pc
 		src/glsl/Makefile
 		src/glx/Makefile
+		src/glx/apple/Makefile
 		src/glx/tests/Makefile
 		src/gtest/Makefile
 		src/loader/Makefile

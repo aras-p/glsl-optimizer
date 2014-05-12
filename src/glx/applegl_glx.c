@@ -37,9 +37,9 @@
 #include <dlfcn.h>
 
 #include "glxclient.h"
-#include "apple_glx_context.h"
-#include "apple_glx.h"
-#include "apple_cgl.h"
+#include "apple/apple_glx_context.h"
+#include "apple/apple_glx.h"
+#include "apple/apple_cgl.h"
 #include "glx_error.h"
 
 static void

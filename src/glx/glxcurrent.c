@@ -38,12 +38,6 @@
 #endif
 
 #include "glxclient.h"
-#ifdef GLX_USE_APPLEGL
-#include <stdlib.h>
-
-#include "apple_glx.h"
-#include "apple_glx_context.h"
-#endif
 
 #include "glapi.h"
 

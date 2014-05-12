@@ -48,13 +48,13 @@ if HAVE_SHARED_GLAPI
 AM_CPPFLAGS += \
 	-DMAPI_MODE_BRIDGE \
 	-DMAPI_ABI_HEADER=\"glapi/glapi_mapi_tmp.h\"
-glapi_GLAPI_sources =
+glapi_GLAPI_sources = $(GLAPI_UTIL_SOURCES)
 glapi_ASM_sources =
 glapi_MAPI_sources = $(MAPI_BRIDGE_FILES)
 else
 AM_CPPFLAGS += \
 	-DMAPI_MODE_UTIL
-glapi_GLAPI_sources = $(GLAPI_SOURCES)
+glapi_GLAPI_sources = $(GLAPI_SOURCES) $(GLAPI_UTIL_SOURCES)
 glapi_ASM_sources = $(GLAPI_ASM_SOURCES)
 glapi_MAPI_sources = $(MAPI_UTIL_FILES)
 endif

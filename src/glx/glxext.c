@@ -42,8 +42,8 @@
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
 #ifdef GLX_USE_APPLEGL
-#include "apple_glx.h"
-#include "apple_visual.h"
+#include "apple/apple_glx.h"
+#include "apple/apple_visual.h"
 #endif
 #include "glxextensions.h"
 

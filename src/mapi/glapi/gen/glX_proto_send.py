@@ -947,6 +947,7 @@ class PrintGlxProtoInit_c(gl_XML.gl_print_base):
 #include "glapi.h"
 #include <assert.h>
 
+#ifndef GLX_USE_APPLEGL
 
 /**
  * No-op function used to initialize functions that have no GLX protocol
@@ -984,6 +985,8 @@ struct _glapi_table * __glXNewIndirectAPI( void )
         print """
     return (struct _glapi_table *) table;
 }
+
+#endif
 """
         return
 

@@ -41,8 +41,8 @@
 
 #ifdef GLX_DIRECT_RENDERING
 #ifdef GLX_USE_APPLEGL
-#include "apple_glx_context.h"
-#include "apple_glx.h"
+#include "apple/apple_glx_context.h"
+#include "apple/apple_glx.h"
 #else
 #include <sys/time.h>
 #ifdef XF86VIDMODE

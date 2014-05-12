@@ -39,7 +39,7 @@
 
 #ifdef GLX_USE_APPLEGL
 #include <pthread.h>
-#include "apple_glx_drawable.h"
+#include "apple/apple_glx_drawable.h"
 #endif
 
 #include "glx_error.h"
