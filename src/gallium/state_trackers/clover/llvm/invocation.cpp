@@ -187,6 +187,11 @@ namespace {
       c.getLangOpts().NoBuiltin = true;
       c.getTargetOpts().Triple = triple;
       c.getTargetOpts().CPU = processor;
+
+      // This is a workaround for a Clang bug which causes the number
+      // of warnings and errors to be printed to stderr.
+      // http://www.llvm.org/bugs/show_bug.cgi?id=19735
+      c.getDiagnosticOpts().ShowCarets = false;
 #if HAVE_LLVM <= 0x0301
       c.getInvocation().setLangDefaults(clang::IK_OpenCL);
 #else
