@@ -300,6 +300,8 @@ Queries can be created with ``create_query`` and deleted with
 ``destroy_query``. To start a query, use ``begin_query``, and when finished,
 use ``end_query`` to end the query.
 
+``begin_query`` will clear/reset previous query results.
+
 ``get_query_result`` is used to retrieve the results of a query.  If
 the ``wait`` parameter is TRUE, then the ``get_query_result`` call
 will block until the results of the query are ready (and TRUE will be
