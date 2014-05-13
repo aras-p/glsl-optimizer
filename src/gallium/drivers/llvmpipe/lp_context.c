@@ -47,10 +47,6 @@
 #include "lp_setup.h"
 
 
-/** shared by all contexts */
-unsigned llvmpipe_variant_count;
-
-
 static void llvmpipe_destroy( struct pipe_context *pipe )
 {
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );

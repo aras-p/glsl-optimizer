@@ -946,7 +946,7 @@ llvmpipe_update_setup(struct llvmpipe_context *lp)
 
    foreach(li, &lp->setup_variants_list) {
       if(li->base->key.size == key->size &&
-	 memcmp(&li->base->key, key, key->size) == 0) {
+         memcmp(&li->base->key, key, key->size) == 0) {
          variant = li->base;
          break;
       }
@@ -957,19 +957,17 @@ llvmpipe_update_setup(struct llvmpipe_context *lp)
    }
    else {
       if (lp->nr_setup_variants >= LP_MAX_SETUP_VARIANTS) {
-	 cull_setup_variants(lp);
+         cull_setup_variants(lp);
       }
 
       variant = generate_setup_variant(key, lp);
       if (variant) {
          insert_at_head(&lp->setup_variants_list, &variant->list_item_global);
          lp->nr_setup_variants++;
-         llvmpipe_variant_count++;
       }
    }
 
-   lp_setup_set_setup_variant(lp->setup,
-			      variant);
+   lp_setup_set_setup_variant(lp->setup, variant);
 }
 
 void
