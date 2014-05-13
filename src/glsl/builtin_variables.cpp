@@ -908,14 +908,14 @@ builtin_variable_generator::generate_fs_special_vars()
       ir_variable *const var =
          add_output(FRAG_RESULT_STENCIL, int_t, "gl_FragStencilRefARB");
       if (state->ARB_shader_stencil_export_warn)
-         var->warn_extension = "GL_ARB_shader_stencil_export";
+         var->enable_extension_warning("GL_ARB_shader_stencil_export");
    }
 
    if (state->AMD_shader_stencil_export_enable) {
       ir_variable *const var =
          add_output(FRAG_RESULT_STENCIL, int_t, "gl_FragStencilRefAMD");
       if (state->AMD_shader_stencil_export_warn)
-         var->warn_extension = "GL_AMD_shader_stencil_export";
+         var->enable_extension_warning("GL_AMD_shader_stencil_export");
    }
 
    if (state->ARB_sample_shading_enable) {

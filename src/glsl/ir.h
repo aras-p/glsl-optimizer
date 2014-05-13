@@ -527,6 +527,18 @@ public:
    }
 
    /**
+    * Enable emitting extension warnings for this variable
+    */
+   void enable_extension_warning(const char *extension);
+
+   /**
+    * Get the extension warning string for this variable
+    *
+    * If warnings are not enabled, \c NULL is returned.
+    */
+   const char *get_extension_warning() const;
+
+   /**
     * Declared type of the variable
     */
    const struct glsl_type *type;
@@ -783,11 +795,6 @@ public:
    /*@}*/
 
    /**
-    * Emit a warning if this variable is accessed.
-    */
-   const char *warn_extension;
-
-   /**
     * Value assigned in the initializer of a variable declared "const"
     */
    ir_constant *constant_value;
@@ -810,6 +817,11 @@ private:
     * \sa ir_variable::location
     */
    const glsl_type *interface_type;
+
+   /**
+    * Emit a warning if this variable is accessed.
+    */
+   const char *warn_extension;
 };
 
 /**

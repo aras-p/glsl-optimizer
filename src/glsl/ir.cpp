@@ -1617,6 +1617,17 @@ ir_variable::determine_interpolation_mode(bool flat_shade)
       return INTERP_QUALIFIER_SMOOTH;
 }
 
+void
+ir_variable::enable_extension_warning(const char *extension)
+{
+   this->warn_extension = extension;
+}
+
+const char *
+ir_variable::get_extension_warning() const
+{
+   return this->warn_extension;
+}
 
 ir_function_signature::ir_function_signature(const glsl_type *return_type,
                                              builtin_available_predicate b)
