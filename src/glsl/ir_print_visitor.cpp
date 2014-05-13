@@ -76,6 +76,13 @@ _mesa_print_ir(FILE *f, exec_list *instructions,
    fprintf(f, "\n)");
 }
 
+void
+fprint_ir(FILE *f, const void *instruction)
+{
+   const ir_instruction *ir = (const ir_instruction *)instruction;
+   ir->fprint(f);
+}
+
 } /* extern "C" */
 
 ir_print_visitor::ir_print_visitor(FILE *f)

@@ -2348,6 +2348,9 @@ extern "C" {
 extern void _mesa_print_ir(FILE *f, struct exec_list *instructions,
                            struct _mesa_glsl_parse_state *state);
 
+extern void
+fprint_ir(FILE *f, const void *instruction);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
