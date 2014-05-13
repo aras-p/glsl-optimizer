@@ -533,6 +533,7 @@ draw_llvm_create_variant(struct draw_llvm *llvm,
       return NULL;
 
    variant->llvm = llvm;
+   variant->shader = shader;
 
    variant->gallivm = gallivm_create();
 
@@ -557,7 +558,6 @@ draw_llvm_create_variant(struct draw_llvm *llvm,
 
    gallivm_free_ir(variant->gallivm);
 
-   variant->shader = shader;
    variant->list_item_global.base = variant;
    variant->list_item_local.base = variant;
    /*variant->no = */shader->variants_created++;
@@ -1476,6 +1476,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
    LLVMValueRef context_ptr;
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder;
+   char func_name[64];
    struct lp_type vs_type;
    LLVMValueRef end, start;
    LLVMValueRef count, fetch_elts, fetch_elt_max, fetch_count;
@@ -1512,6 +1513,9 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
 
    memset(&system_values, 0, sizeof(system_values));
 
+   util_snprintf(func_name, sizeof(func_name), "draw_llvm_vs_variant%u%s",
+                 variant->shader->variants_cached, elts ? "_elts" : "");
+
    i = 0;
    arg_types[i++] = get_context_ptr_type(variant);       /* context */
    arg_types[i++] = get_vertex_header_ptr_type(variant); /* vertex_header */
@@ -1529,9 +1533,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
 
    func_type = LLVMFunctionType(int32_type, arg_types, num_arg_types, 0);
 
-   variant_func = LLVMAddFunction(gallivm->module,
-                                  elts ? "draw_llvm_shader_elts" : "draw_llvm_shader",
-                                  func_type);
+   variant_func = LLVMAddFunction(gallivm->module, func_name, func_type);
 
    if (elts)
       variant->function_elts = variant_func;
@@ -2042,6 +2044,7 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    struct lp_build_sampler_soa *sampler = 0;
    struct lp_build_context bld;
    struct lp_bld_tgsi_system_values system_values;
+   char func_name[64];
    struct lp_type gs_type;
    unsigned i;
    struct draw_gs_llvm_iface gs_iface;
@@ -2053,6 +2056,9 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
    unsigned vector_length = variant->shader->base.vector_length;
 
    memset(&system_values, 0, sizeof(system_values));
+
+   util_snprintf(func_name, sizeof(func_name), "draw_llvm_gs_variant%u",
+                 variant->shader->variants_cached);
 
    assert(variant->vertex_header_ptr_type);
 
@@ -2066,8 +2072,8 @@ draw_gs_llvm_generate(struct draw_llvm *llvm,
 
    func_type = LLVMFunctionType(int32_type, arg_types, Elements(arg_types), 0);
 
-   variant_func = LLVMAddFunction(gallivm->module, "draw_geometry_shader",
-                                  func_type);
+   variant_func = LLVMAddFunction(gallivm->module, func_name, func_type);
+
    variant->function = variant_func;
 
    LLVMSetFunctionCallConv(variant_func, LLVMCCallConv);
