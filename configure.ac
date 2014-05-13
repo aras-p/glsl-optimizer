@@ -332,6 +332,19 @@ LDFLAGS=$save_LDFLAGS
 AC_SUBST([GC_SECTIONS])
 
 dnl
+dnl OpenBSD does not have DT_NEEDED entries for libc by design
+dnl so when these flags are passed to ld via libtool the checks will fail
+dnl
+case "$host_os" in
+openbsd*)
+    LD_NO_UNDEFINED="" ;;
+*)
+    LD_NO_UNDEFINED="-Wl,--no-undefined" ;;
+esac
+
+AC_SUBST([LD_NO_UNDEFINED])
+
+dnl
 dnl compatibility symlinks
 dnl
 case "$host_os" in
