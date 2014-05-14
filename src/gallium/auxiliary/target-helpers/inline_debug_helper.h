@@ -26,6 +26,10 @@
 #include "noop/noop_public.h"
 #endif
 
+/*
+ * TODO: Audit the following *screen_create() - all of
+ * them should return the original screen on failuire.
+ */
 static INLINE struct pipe_screen *
 debug_screen_wrap(struct pipe_screen *screen)
 {
