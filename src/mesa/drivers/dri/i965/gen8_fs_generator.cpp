@@ -43,6 +43,7 @@ gen8_fs_generator::gen8_fs_generator(struct brw_context *brw,
    : gen8_generator(brw, shader_prog, fp ? &fp->Base : NULL, c), c(c), fp(fp),
      dual_source_output(dual_source_output)
 {
+   prog_data = &c->prog_data;
 }
 
 gen8_fs_generator::~gen8_fs_generator()
@@ -119,7 +120,7 @@ gen8_fs_generator::generate_fb_write(fs_inst *ir)
       msg_control |= (1 << 4); /* Last Render Target Select */
 
    uint32_t surf_index =
-      c->prog_data.binding_table.render_target_start + ir->target;
+      prog_data->binding_table.render_target_start + ir->target;
 
    gen8_set_dp_message(brw, inst,
                        GEN6_SFID_DATAPORT_RENDER_CACHE,
@@ -131,7 +132,7 @@ gen8_fs_generator::generate_fb_write(fs_inst *ir)
                        ir->header_present,
                        ir->eot);
 
-   brw_mark_surface_used(&c->prog_data.base, surf_index);
+   brw_mark_surface_used(&prog_data->base, surf_index);
 }
 
 void
@@ -278,7 +279,7 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
    }
 
    uint32_t surf_index =
-      c->prog_data.base.binding_table.texture_start + ir->sampler;
+      prog_data->base.binding_table.texture_start + ir->sampler;
 
    gen8_instruction *inst = next_inst(BRW_OPCODE_SEND);
    gen8_set_dst(brw, inst, dst);
@@ -292,7 +293,7 @@ gen8_fs_generator::generate_tex(fs_inst *ir,
                             ir->header_present,
                             simd_mode);
 
-   brw_mark_surface_used(&c->prog_data.base, surf_index);
+   brw_mark_surface_used(&prog_data->base, surf_index);
 }
 
 
@@ -564,7 +565,7 @@ gen8_fs_generator::generate_uniform_pull_constant_load(fs_inst *inst,
                             false, /* no header */
                             BRW_SAMPLER_SIMD_MODE_SIMD4X2);
 
-   brw_mark_surface_used(&c->prog_data.base, surf_index);
+   brw_mark_surface_used(&prog_data->base, surf_index);
 }
 
 void
@@ -606,7 +607,7 @@ gen8_fs_generator::generate_varying_pull_constant_load(fs_inst *ir,
                             false, /* no header */
                             simd_mode);
 
-   brw_mark_surface_used(&c->prog_data.base, surf_index);
+   brw_mark_surface_used(&prog_data->base, surf_index);
 }
 
 /**
@@ -849,7 +850,7 @@ gen8_fs_generator::generate_untyped_atomic(fs_inst *ir,
                        ir->header_present,
                        false);
 
-   brw_mark_surface_used(&c->prog_data.base, surf_index.dw1.ud);
+   brw_mark_surface_used(&prog_data->base, surf_index.dw1.ud);
 }
 
 void
@@ -875,7 +876,7 @@ gen8_fs_generator::generate_untyped_surface_read(fs_inst *ir,
                        ir->header_present,
                        false);
 
-   brw_mark_surface_used(&c->prog_data.base, surf_index.dw1.ud);
+   brw_mark_surface_used(&prog_data->base, surf_index.dw1.ud);
 }
 
 void
@@ -1349,7 +1350,7 @@ gen8_fs_generator::generate_assembly(exec_list *simd8_instructions,
          NOP();
 
       /* Save off the start of this SIMD16 program */
-      c->prog_data.prog_offset_16 = nr_inst * sizeof(gen8_instruction);
+      prog_data->prog_offset_16 = nr_inst * sizeof(gen8_instruction);
 
       dispatch_width = 16;
       generate_code(simd16_instructions);
