@@ -104,7 +104,7 @@ def generate(env):
                 'LLVMBitWriter', 'LLVMX86Disassembler', 'LLVMX86AsmParser',
                 'LLVMX86CodeGen', 'LLVMX86Desc', 'LLVMSelectionDAG',
                 'LLVMAsmPrinter', 'LLVMMCParser', 'LLVMX86AsmPrinter',
-                'LLVMX86Utils', 'LLVMX86Info', 'LLVMJIT',
+                'LLVMX86Utils', 'LLVMX86Info', 'LLVMMCJIT', 'LLVMJIT',
                 'LLVMExecutionEngine', 'LLVMCodeGen', 'LLVMScalarOpts',
                 'LLVMInstCombine', 'LLVMTransformUtils', 'LLVMipa',
                 'LLVMAnalysis', 'LLVMTarget', 'LLVMMC', 'LLVMCore',
@@ -116,7 +116,7 @@ def generate(env):
                 'LLVMBitWriter', 'LLVMX86Disassembler', 'LLVMX86AsmParser',
                 'LLVMX86CodeGen', 'LLVMX86Desc', 'LLVMSelectionDAG',
                 'LLVMAsmPrinter', 'LLVMMCParser', 'LLVMX86AsmPrinter',
-                'LLVMX86Utils', 'LLVMX86Info', 'LLVMJIT',
+                'LLVMX86Utils', 'LLVMX86Info', 'LLVMMCJIT', 'LLVMJIT',
                 'LLVMExecutionEngine', 'LLVMCodeGen', 'LLVMScalarOpts',
                 'LLVMInstCombine', 'LLVMTransformUtils', 'LLVMipa',
                 'LLVMAnalysis', 'LLVMTarget', 'LLVMMC', 'LLVMCore',
@@ -165,9 +165,7 @@ def generate(env):
             if '-fno-rtti' in cxxflags:
                 env.Append(CXXFLAGS = ['-fno-rtti'])
 
-            components = ['engine', 'bitwriter', 'x86asmprinter']
-
-            components.append('mcjit')
+            components = ['engine', 'mcjit', 'bitwriter', 'x86asmprinter']
 
             env.ParseConfig('llvm-config --libs ' + ' '.join(components))
             env.ParseConfig('llvm-config --ldflags')

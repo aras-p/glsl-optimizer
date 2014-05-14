@@ -57,6 +57,7 @@
 #include <llvm/ADT/Triple.h>
 #include <llvm/ExecutionEngine/JITMemoryManager.h>
 #include <llvm/Support/CommandLine.h>
+#include <llvm/Support/Host.h>
 #include <llvm/Support/PrettyStackTrace.h>
 
 #include <llvm/Support/TargetSelect.h>
@@ -452,6 +453,14 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
 
    if (useMCJIT) {
        builder.setUseMCJIT(true);
+#ifdef _WIN32
+       /*
+        * MCJIT works on Windows, but currently only through ELF object format.
+        */
+       std::string targetTriple = llvm::sys::getProcessTriple();
+       targetTriple.append("-elf");
+       unwrap(M)->setTargetTriple(targetTriple);
+#endif
    }
 
    llvm::SmallVector<std::string, 1> MAttrs;
