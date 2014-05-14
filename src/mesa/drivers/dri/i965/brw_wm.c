@@ -174,14 +174,12 @@ bool do_wm_prog(struct brw_context *brw,
       rzalloc_array(NULL, const float *, param_count);
    c->prog_data.base.nr_params = param_count;
 
-   memcpy(&c->key, key, sizeof(*key));
-
    c->prog_data.barycentric_interp_modes =
-      brw_compute_barycentric_interp_modes(brw, c->key.flat_shade,
-                                           c->key.persample_shading,
+      brw_compute_barycentric_interp_modes(brw, key->flat_shade,
+                                           key->persample_shading,
                                            &fp->program);
 
-   program = brw_wm_fs_emit(brw, mem_ctx, &c->key, &c->prog_data,
+   program = brw_wm_fs_emit(brw, mem_ctx, key, &c->prog_data,
                             &fp->program, prog, &program_size);
    if (program == NULL) {
       ralloc_free(mem_ctx);
@@ -197,7 +195,7 @@ bool do_wm_prog(struct brw_context *brw,
       fprintf(stderr, "\n");
 
    brw_upload_cache(&brw->cache, BRW_WM_PROG,
-		    &c->key, sizeof(c->key),
+		    key, sizeof(struct brw_wm_prog_key),
 		    program, program_size,
 		    &c->prog_data, sizeof(c->prog_data),
 		    &brw->wm.base.prog_offset, &brw->wm.prog_data);
