@@ -69,6 +69,7 @@ static const struct debug_named_value debug_options[] = {
 		{"noopt",     FD_DBG_NOOPT , "Disable optimization passes in compiler"},
 		{"optmsgs",   FD_DBG_OPTMSGS,"Enable optimizater debug messages"},
 		{"optdump",   FD_DBG_OPTDUMP,"Dump shader DAG to .dot files"},
+		{"glsl130",   FD_DBG_GLSL130,"Temporary flag to enable GLSL 130 on a3xx+"},
 		DEBUG_NAMED_VALUE_END
 };
 
@@ -76,6 +77,7 @@ DEBUG_GET_ONCE_FLAGS_OPTION(fd_mesa_debug, "FD_MESA_DEBUG", debug_options, 0)
 
 int fd_mesa_debug = 0;
 bool fd_binning_enabled = true;
+static bool glsl130 = false;
 
 static const char *
 fd_screen_get_name(struct pipe_screen *pscreen)
@@ -188,7 +190,7 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 256;
 
 	case PIPE_CAP_GLSL_FEATURE_LEVEL:
-		return 120;
+		return ((screen->gpu_id >= 300) && glsl130) ? 130 : 120;
 
 	/* Unsupported features. */
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
@@ -243,7 +245,7 @@ fd_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 	case PIPE_CAP_QUERY_TIMESTAMP:
 		return 0;
 	case PIPE_CAP_OCCLUSION_QUERY:
-		return (screen->gpu_id >= 300) ? 1: 0;
+		return (screen->gpu_id >= 300) ? 1 : 0;
 
 	case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
 	case PIPE_CAP_MIN_TEXEL_OFFSET:
@@ -345,7 +347,7 @@ fd_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
 		/* we should be able to support this on a3xx, but not
 		 * implemented yet:
 		 */
-		return 0;
+		return ((screen->gpu_id >= 300) && glsl130) ? 1 : 0;
 	case PIPE_SHADER_CAP_MAX_TEXTURE_SAMPLERS:
 	case PIPE_SHADER_CAP_MAX_SAMPLER_VIEWS:
 		return 16;
@@ -411,6 +413,8 @@ fd_screen_create(struct fd_device *dev)
 
 	if (fd_mesa_debug & FD_DBG_NOBIN)
 		fd_binning_enabled = false;
+
+	glsl130 = !!(fd_mesa_debug & FD_DBG_GLSL130);
 
 	if (!screen)
 		return NULL;
