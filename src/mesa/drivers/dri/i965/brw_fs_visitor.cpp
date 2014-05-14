@@ -138,7 +138,9 @@ fs_visitor::visit(ir_variable *ir)
       } else if (ir->data.location == SYSTEM_VALUE_SAMPLE_ID) {
 	 reg = emit_sampleid_setup(ir);
       } else if (ir->data.location == SYSTEM_VALUE_SAMPLE_MASK_IN) {
-         reg = emit_samplemaskin_setup(ir);
+         assert(brw->gen >= 7);
+         reg = new(mem_ctx) fs_reg(retype(brw_vec8_grf(c->sample_mask_in_reg, 0),
+                                          BRW_REGISTER_TYPE_D));
       }
    }
 

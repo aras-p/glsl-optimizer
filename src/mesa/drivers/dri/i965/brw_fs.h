@@ -397,7 +397,6 @@ public:
    fs_reg *emit_frontfacing_interpolation(ir_variable *ir);
    fs_reg *emit_samplepos_setup(ir_variable *ir);
    fs_reg *emit_sampleid_setup(ir_variable *ir);
-   fs_reg *emit_samplemaskin_setup(ir_variable *ir);
    fs_reg *emit_general_interpolation(ir_variable *ir);
    void emit_interpolation_setup_gen4();
    void emit_interpolation_setup_gen6();

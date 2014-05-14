@@ -1331,16 +1331,6 @@ fs_visitor::emit_sampleid_setup(ir_variable *ir)
    return reg;
 }
 
-fs_reg *
-fs_visitor::emit_samplemaskin_setup(ir_variable *ir)
-{
-   assert(brw->gen >= 7);
-   this->current_annotation = "compute gl_SampleMaskIn";
-   fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
-   emit(MOV(*reg, fs_reg(retype(brw_vec8_grf(c->sample_mask_in_reg, 0), BRW_REGISTER_TYPE_D))));
-   return reg;
-}
-
 fs_reg
 fs_visitor::fix_math_operand(fs_reg src)
 {
