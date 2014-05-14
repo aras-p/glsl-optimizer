@@ -77,7 +77,7 @@ fs_visitor::visit(ir_variable *ir)
          this->do_dual_src = true;
       } else if (ir->data.location == FRAG_RESULT_COLOR) {
 	 /* Writing gl_FragColor outputs to all color regions. */
-	 for (unsigned int i = 0; i < MAX2(c->key.nr_color_regions, 1); i++) {
+	 for (unsigned int i = 0; i < MAX2(key->nr_color_regions, 1); i++) {
 	    this->outputs[i] = *reg;
 	    this->output_components[i] = 4;
 	 }
@@ -1467,8 +1467,8 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
     */
    if (is_rect &&
        (brw->gen < 6 ||
-	(brw->gen >= 6 && (c->key.tex.gl_clamp_mask[0] & (1 << sampler) ||
-			     c->key.tex.gl_clamp_mask[1] & (1 << sampler))))) {
+	(brw->gen >= 6 && (key->tex.gl_clamp_mask[0] & (1 << sampler) ||
+			     key->tex.gl_clamp_mask[1] & (1 << sampler))))) {
       struct gl_program_parameter_list *params = prog->Parameters;
       int tokens[STATE_LENGTH] = {
 	 STATE_INTERNAL,
@@ -1516,7 +1516,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
       needs_gl_clamp = false;
 
       for (int i = 0; i < 2; i++) {
-	 if (c->key.tex.gl_clamp_mask[i] & (1 << sampler)) {
+	 if (key->tex.gl_clamp_mask[i] & (1 << sampler)) {
 	    fs_reg chan = coordinate;
 	    chan.reg_offset += i;
 
@@ -1542,7 +1542,7 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
    if (ir->coordinate && needs_gl_clamp) {
       for (unsigned int i = 0;
 	   i < MIN2(ir->coordinate->type->vector_elements, 3); i++) {
-	 if (c->key.tex.gl_clamp_mask[i] & (1 << sampler)) {
+	 if (key->tex.gl_clamp_mask[i] & (1 << sampler)) {
 	    fs_reg chan = coordinate;
 	    chan.reg_offset += i;
 
@@ -1601,7 +1601,7 @@ fs_visitor::visit(ir_texture *ir)
        * emitting anything other than setting up the constant result.
        */
       ir_constant *chan = ir->lod_info.component->as_constant();
-      int swiz = GET_SWZ(c->key.tex.swizzles[sampler], chan->value.i[0]);
+      int swiz = GET_SWZ(key->tex.swizzles[sampler], chan->value.i[0]);
       if (swiz == SWIZZLE_ZERO || swiz == SWIZZLE_ONE) {
 
          fs_reg res = fs_reg(this, glsl_type::vec4_type);
@@ -1669,7 +1669,7 @@ fs_visitor::visit(ir_texture *ir)
       ir->lod_info.sample_index->accept(this);
       sample_index = this->result;
 
-      if (brw->gen >= 7 && c->key.tex.compressed_multisample_layout_mask & (1<<sampler))
+      if (brw->gen >= 7 && key->tex.compressed_multisample_layout_mask & (1<<sampler))
          mcs = emit_mcs_fetch(ir, coordinate, sampler);
       else
          mcs = fs_reg(0u);
@@ -1717,7 +1717,7 @@ fs_visitor::visit(ir_texture *ir)
    }
 
    if (brw->gen == 6 && ir->op == ir_tg4) {
-      emit_gen6_gather_wa(c->key.tex.gen6_gather_wa[sampler], dst);
+      emit_gen6_gather_wa(key->tex.gen6_gather_wa[sampler], dst);
    }
 
    swizzle_result(ir, dst, sampler);
@@ -1760,14 +1760,14 @@ uint32_t
 fs_visitor::gather_channel(ir_texture *ir, int sampler)
 {
    ir_constant *chan = ir->lod_info.component->as_constant();
-   int swiz = GET_SWZ(c->key.tex.swizzles[sampler], chan->value.i[0]);
+   int swiz = GET_SWZ(key->tex.swizzles[sampler], chan->value.i[0]);
    switch (swiz) {
       case SWIZZLE_X: return 0;
       case SWIZZLE_Y:
          /* gather4 sampler is broken for green channel on RG32F --
           * we must ask for blue instead.
           */
-         if (c->key.tex.gather_channel_quirk_mask & (1<<sampler))
+         if (key->tex.gather_channel_quirk_mask & (1<<sampler))
             return 2;
          return 1;
       case SWIZZLE_Z: return 2;
@@ -1803,11 +1803,11 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
    if (ir->type == glsl_type::float_type) {
       /* Ignore DEPTH_TEXTURE_MODE swizzling. */
       assert(ir->sampler->type->sampler_shadow);
-   } else if (c->key.tex.swizzles[sampler] != SWIZZLE_NOOP) {
+   } else if (key->tex.swizzles[sampler] != SWIZZLE_NOOP) {
       fs_reg swizzled_result = fs_reg(this, glsl_type::vec4_type);
 
       for (int i = 0; i < 4; i++) {
-	 int swiz = GET_SWZ(c->key.tex.swizzles[sampler], i);
+	 int swiz = GET_SWZ(key->tex.swizzles[sampler], i);
 	 fs_reg l = swizzled_result;
 	 l.reg_offset += i;
 
@@ -1817,7 +1817,7 @@ fs_visitor::swizzle_result(ir_texture *ir, fs_reg orig_val, int sampler)
 	    emit(MOV(l, fs_reg(1.0f)));
 	 } else {
 	    fs_reg r = orig_val;
-	    r.reg_offset += GET_SWZ(c->key.tex.swizzles[sampler], i);
+	    r.reg_offset += GET_SWZ(key->tex.swizzles[sampler], i);
 	    emit(MOV(l, r));
 	 }
       }
@@ -2636,7 +2636,7 @@ fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
       inst = emit(MOV(fs_reg(MRF, first_color_mrf + index * reg_width,
                              color.type),
                       color));
-      inst->saturate = c->key.clamp_fragment_color;
+      inst->saturate = key->clamp_fragment_color;
    } else {
       /* pre-gen6 SIMD16 single source DP write looks like:
        * m + 0: r0
@@ -2657,18 +2657,18 @@ fs_visitor::emit_color_write(int target, int index, int first_color_mrf)
 	 inst = emit(MOV(fs_reg(MRF, BRW_MRF_COMPR4 + first_color_mrf + index,
                                 color.type),
                          color));
-	 inst->saturate = c->key.clamp_fragment_color;
+	 inst->saturate = key->clamp_fragment_color;
       } else {
 	 push_force_uncompressed();
 	 inst = emit(MOV(fs_reg(MRF, first_color_mrf + index, color.type),
                          color));
-	 inst->saturate = c->key.clamp_fragment_color;
+	 inst->saturate = key->clamp_fragment_color;
 	 pop_force_uncompressed();
 
 	 inst = emit(MOV(fs_reg(MRF, first_color_mrf + index + 4, color.type),
                          half(color, 1)));
 	 inst->force_sechalf = true;
-	 inst->saturate = c->key.clamp_fragment_color;
+	 inst->saturate = key->clamp_fragment_color;
       }
    }
 }
@@ -2705,10 +2705,10 @@ fs_visitor::emit_alpha_test()
    this->current_annotation = "Alpha test";
 
    fs_inst *cmp;
-   if (c->key.alpha_test_func == GL_ALWAYS)
+   if (key->alpha_test_func == GL_ALWAYS)
       return;
 
-   if (c->key.alpha_test_func == GL_NEVER) {
+   if (key->alpha_test_func == GL_NEVER) {
       /* f0.1 = 0 */
       fs_reg some_reg = fs_reg(retype(brw_vec8_grf(0, 0),
                                       BRW_REGISTER_TYPE_UW));
@@ -2720,8 +2720,8 @@ fs_visitor::emit_alpha_test()
       color.reg_offset += 3;
 
       /* f0.1 &= func(color, ref) */
-      cmp = emit(CMP(reg_null_f, color, fs_reg(c->key.alpha_test_ref),
-                     cond_for_alpha_func(c->key.alpha_test_func)));
+      cmp = emit(CMP(reg_null_f, color, fs_reg(key->alpha_test_ref),
+                     cond_for_alpha_func(key->alpha_test_func)));
    }
    cmp->predicate = BRW_PREDICATE_NORMAL;
    cmp->flag_subreg = 1;
@@ -2756,14 +2756,14 @@ fs_visitor::emit_fb_writes()
    if (brw->gen >= 6 &&
        (brw->is_haswell || brw->gen >= 8 || !this->fp->UsesKill) &&
        !do_dual_src &&
-       c->key.nr_color_regions == 1) {
+       key->nr_color_regions == 1) {
       header_present = false;
    }
 
    if (header_present) {
       src0_alpha_to_render_target = brw->gen >= 6 &&
 				    !do_dual_src &&
-                                    c->key.replicate_alpha;
+                                    key->replicate_alpha;
       /* m2, m3 header */
       nr += 2;
    }
@@ -2830,7 +2830,7 @@ fs_visitor::emit_fb_writes()
       for (int i = 0; i < 4; i++) {
 	 fs_inst *inst = emit(MOV(fs_reg(MRF, color_mrf + i, src0.type), src0));
 	 src0.reg_offset++;
-	 inst->saturate = c->key.clamp_fragment_color;
+	 inst->saturate = key->clamp_fragment_color;
       }
 
       this->current_annotation = ralloc_asprintf(this->mem_ctx,
@@ -2839,7 +2839,7 @@ fs_visitor::emit_fb_writes()
 	 fs_inst *inst = emit(MOV(fs_reg(MRF, color_mrf + 4 + i, src1.type),
                                   src1));
 	 src1.reg_offset++;
-	 inst->saturate = c->key.clamp_fragment_color;
+	 inst->saturate = key->clamp_fragment_color;
       }
 
       if (INTEL_DEBUG & DEBUG_SHADER_TIME)
@@ -2861,7 +2861,7 @@ fs_visitor::emit_fb_writes()
       return;
    }
 
-   for (int target = 0; target < c->key.nr_color_regions; target++) {
+   for (int target = 0; target < key->nr_color_regions; target++) {
       this->current_annotation = ralloc_asprintf(this->mem_ctx,
 						 "FB write target %d",
 						 target);
@@ -2876,7 +2876,7 @@ fs_visitor::emit_fb_writes()
 
          inst = emit(MOV(fs_reg(MRF, write_color_mrf, color.type),
                          color));
-         inst->saturate = c->key.clamp_fragment_color;
+         inst->saturate = key->clamp_fragment_color;
          write_color_mrf = color_mrf + reg_width;
       }
 
@@ -2884,7 +2884,7 @@ fs_visitor::emit_fb_writes()
          emit_color_write(target, i, write_color_mrf);
 
       bool eot = false;
-      if (target == c->key.nr_color_regions - 1) {
+      if (target == key->nr_color_regions - 1) {
          eot = true;
 
          if (INTEL_DEBUG & DEBUG_SHADER_TIME)
@@ -2906,7 +2906,7 @@ fs_visitor::emit_fb_writes()
       }
    }
 
-   if (c->key.nr_color_regions == 0) {
+   if (key->nr_color_regions == 0) {
       /* Even if there's no color buffers enabled, we still need to send
        * alpha out the pipeline to our null renderbuffer to support
        * alpha-testing, alpha-to-coverage, and so on.
@@ -2960,6 +2960,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
                        unsigned dispatch_width)
    : backend_visitor(brw, shader_prog, &fp->Base, &c->prog_data.base,
                      MESA_SHADER_FRAGMENT),
+     key(&c->key),
      dispatch_width(dispatch_width)
 {
    this->c = c;

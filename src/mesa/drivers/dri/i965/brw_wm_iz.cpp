@@ -124,7 +124,7 @@ void fs_visitor::setup_payload_gen4()
 {
    GLuint reg = 2;
    bool kill_stats_promoted_workaround = false;
-   int lookup = c->key.iz_lookup;
+   int lookup = key->iz_lookup;
    bool uses_depth =
       (fp->Base.InputsRead & (1 << VARYING_SLOT_POS)) != 0;
 
@@ -135,7 +135,7 @@ void fs_visitor::setup_payload_gen4()
     * statistics are enabled..." paragraph of 11.5.3.2: Early Depth
     * Test Cases [Pre-DevGT] of the 3D Pipeline - Windower B-Spec.
     */
-   if (c->key.stats_wm &&
+   if (key->stats_wm &&
        (lookup & IZ_PS_KILL_ALPHATEST_BIT) &&
        wm_iz_table[lookup].mode == P) {
       kill_stats_promoted_workaround = true;
@@ -150,10 +150,10 @@ void fs_visitor::setup_payload_gen4()
    if (wm_iz_table[lookup].sd_to_rt || kill_stats_promoted_workaround)
       source_depth_to_render_target = true;
 
-   if (wm_iz_table[lookup].ds_present || c->key.line_aa != AA_NEVER) {
+   if (wm_iz_table[lookup].ds_present || key->line_aa != AA_NEVER) {
       payload.aa_dest_stencil_reg = reg;
       runtime_check_aads_emit =
-         !wm_iz_table[lookup].ds_present && c->key.line_aa == AA_SOMETIMES;
+         !wm_iz_table[lookup].ds_present && key->line_aa == AA_SOMETIMES;
       reg++;
    }
 

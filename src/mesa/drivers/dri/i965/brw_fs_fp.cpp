@@ -652,7 +652,7 @@ fs_visitor::get_fp_dst_reg(const prog_dst_register *dst)
             /* Tell emit_fb_writes() to smear fragment.color across all the
              * color attachments.
              */
-            for (int i = 1; i < c->key.nr_color_regions; i++) {
+            for (int i = 1; i < key->nr_color_regions; i++) {
                outputs[i] = outputs[0];
                output_components[i] = output_components[0];
             }

@@ -1031,7 +1031,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 {
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
    fs_reg wpos = *reg;
-   bool flip = !ir->data.origin_upper_left ^ c->key.render_to_fbo;
+   bool flip = !ir->data.origin_upper_left ^ key->render_to_fbo;
 
    /* gl_FragCoord.x */
    if (ir->data.pixel_center_integer) {
@@ -1050,7 +1050,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 
       if (flip) {
 	 pixel_y.negate = true;
-	 offset += c->key.drawable_height - 1.0;
+	 offset += key->drawable_height - 1.0;
       }
 
       emit(ADD(wpos, pixel_y, fs_reg(offset)));
@@ -1131,7 +1131,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
    }
 
    glsl_interp_qualifier interpolation_mode =
-      ir->determine_interpolation_mode(c->key.flat_shade);
+      ir->determine_interpolation_mode(key->flat_shade);
 
    int location = ir->data.location;
    for (unsigned int i = 0; i < array_elements; i++) {
@@ -1162,8 +1162,8 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	    for (unsigned int k = 0; k < type->vector_elements; k++) {
                struct brw_reg interp = interp_reg(location, k);
                emit_linterp(attr, fs_reg(interp), interpolation_mode,
-                            ir->data.centroid && !c->key.persample_shading,
-                            ir->data.sample || c->key.persample_shading);
+                            ir->data.centroid && !key->persample_shading,
+                            ir->data.sample || key->persample_shading);
                if (brw->needs_unlit_centroid_workaround && ir->data.centroid) {
                   /* Get the pixel/sample mask into f0 so that we know
                    * which pixels are lit.  Then, for each channel that is
@@ -1220,7 +1220,7 @@ fs_visitor::compute_sample_position(fs_reg dst, fs_reg int_sample_pos)
 {
    assert(dst.type == BRW_REGISTER_TYPE_F);
 
-   if (c->key.compute_pos_offset) {
+   if (key->compute_pos_offset) {
       /* Convert int_sample_pos to floating point */
       emit(MOV(dst, int_sample_pos));
       /* Scale to the range [0, 1] */
@@ -1291,7 +1291,7 @@ fs_visitor::emit_sampleid_setup(ir_variable *ir)
    this->current_annotation = "compute sample id";
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
 
-   if (c->key.compute_sample_id) {
+   if (key->compute_sample_id) {
       fs_reg t1 = fs_reg(this, glsl_type::int_type);
       fs_reg t2 = fs_reg(this, glsl_type::int_type);
       t2.type = BRW_REGISTER_TYPE_UW;
@@ -1521,7 +1521,7 @@ fs_visitor::calculate_urb_setup()
           */
          struct brw_vue_map prev_stage_vue_map;
          brw_compute_vue_map(brw, &prev_stage_vue_map,
-                             c->key.input_slots_valid);
+                             key->input_slots_valid);
          int first_slot = 2 * BRW_SF_URB_ENTRY_READ_OFFSET;
          assert(prev_stage_vue_map.num_slots <= first_slot + 32);
          for (int slot = first_slot; slot < prev_stage_vue_map.num_slots;
@@ -1545,7 +1545,7 @@ fs_visitor::calculate_urb_setup()
          if (i == VARYING_SLOT_PSIZ)
             continue;
 
-	 if (c->key.input_slots_valid & BITFIELD64_BIT(i)) {
+	 if (key->input_slots_valid & BITFIELD64_BIT(i)) {
 	    /* The back color slot is skipped when the front color is
 	     * also written to.  In addition, some slots can be
 	     * written in the vertex shader and not read in the
@@ -2841,7 +2841,7 @@ fs_visitor::setup_payload_gen6()
       }
    }
 
-   prog_data->uses_pos_offset = c->key.compute_pos_offset;
+   prog_data->uses_pos_offset = key->compute_pos_offset;
    /* R31: MSAA position offsets. */
    if (prog_data->uses_pos_offset) {
       payload.sample_pos_reg = payload.num_regs;
@@ -2876,7 +2876,7 @@ fs_visitor::assign_binding_table_offsets()
     * renderbuffer, which we place at surface index 0.
     */
    prog_data->binding_table.render_target_start = next_binding_table_offset;
-   next_binding_table_offset += MAX2(c->key.nr_color_regions, 1);
+   next_binding_table_offset += MAX2(key->nr_color_regions, 1);
 
    assign_common_binding_table_offsets(next_binding_table_offset);
 }
@@ -2961,7 +2961,7 @@ fs_visitor::run()
       /* We handle discards by keeping track of the still-live pixels in f0.1.
        * Initialize it with the dispatched pixels.
        */
-      if (fp->UsesKill || c->key.alpha_test_func) {
+      if (fp->UsesKill || key->alpha_test_func) {
          fs_inst *discard_init = emit(FS_OPCODE_MOV_DISPATCH_TO_FLAGS);
          discard_init->flag_subreg = 1;
       }
@@ -2985,7 +2985,7 @@ fs_visitor::run()
 
       emit(FS_OPCODE_PLACEHOLDER_HALT);
 
-      if (c->key.alpha_test_func)
+      if (key->alpha_test_func)
          emit_alpha_test();
 
       emit_fb_writes();
