@@ -56,8 +56,7 @@ TEST_LIBS = \
 TESTS = \
         test_eu_compact \
         test_vec4_copy_propagation \
-        test_vec4_register_coalesce \
-        test_blorp_blit_eu_gen
+        test_vec4_register_coalesce
 
 check_PROGRAMS = $(TESTS)
 
@@ -77,7 +76,3 @@ test_eu_compact_SOURCES = \
 	test_eu_compact.c
 nodist_EXTRA_test_eu_compact_SOURCES = dummy.cpp
 test_eu_compact_LDADD = $(TEST_LIBS)
-
-test_blorp_blit_eu_gen_SOURCES = \
-        test_blorp_blit_eu_gen.cpp
-test_blorp_blit_eu_gen_LDADD = $(TEST_LIBS)

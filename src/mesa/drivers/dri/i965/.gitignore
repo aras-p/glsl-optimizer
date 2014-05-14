@@ -2,4 +2,3 @@ i965_symbols_test
 test_eu_compact
 test_vec4_copy_propagation
 test_vec4_register_coalesce
-test_blorp_blit_eu_gen
