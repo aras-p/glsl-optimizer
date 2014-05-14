@@ -94,8 +94,6 @@ struct brw_wm_compile {
    uint8_t nr_payload_regs;
    GLuint source_depth_to_render_target:1;
    GLuint runtime_check_aads_emit:1;
-
-   GLuint last_scratch;
 };
 
 /**

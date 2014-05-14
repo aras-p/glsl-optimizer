@@ -647,7 +647,7 @@ fs_visitor::spill_reg(int spill_reg)
 {
    int reg_size = dispatch_width * sizeof(float);
    int size = virtual_grf_sizes[spill_reg];
-   unsigned int spill_offset = c->last_scratch;
+   unsigned int spill_offset = last_scratch;
    assert(ALIGN(spill_offset, 16) == spill_offset); /* oword read/write req. */
    int spill_base_mrf = dispatch_width > 8 ? 13 : 14;
 
@@ -672,7 +672,7 @@ fs_visitor::spill_reg(int spill_reg)
       spilled_any_registers = true;
    }
 
-   c->last_scratch += size * reg_size;
+   last_scratch += size * reg_size;
 
    /* Generate spill/unspill instructions for the objects being
     * spilled.  Right now, we spill or unspill the whole thing to a

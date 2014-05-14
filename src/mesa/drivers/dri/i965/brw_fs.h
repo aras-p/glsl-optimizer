@@ -511,6 +511,9 @@ public:
    /** Number of uniform variable components visited. */
    unsigned uniforms;
 
+   /** Byte-offset for the next available spot in the scratch space buffer. */
+   unsigned last_scratch;
+
    /**
     * Array mapping UNIFORM register numbers to the pull parameter index,
     * or -1 if this uniform register isn't being uploaded as a pull constant.
