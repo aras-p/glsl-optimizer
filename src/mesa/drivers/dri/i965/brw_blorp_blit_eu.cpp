@@ -27,7 +27,7 @@
 
 brw_blorp_eu_emitter::brw_blorp_eu_emitter(struct brw_context *brw)
    : mem_ctx(ralloc_context(NULL)), c(rzalloc(mem_ctx, struct brw_wm_compile)),
-     generator(brw, c, NULL, NULL, false)
+     generator(brw, mem_ctx, c, NULL, NULL, false)
 {
 }
 

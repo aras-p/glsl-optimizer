@@ -250,6 +250,7 @@ class fs_visitor : public backend_visitor
 public:
 
    fs_visitor(struct brw_context *brw,
+              void *mem_ctx,
               struct brw_wm_compile *c,
               struct gl_shader_program *shader_prog,
               struct gl_fragment_program *fp,
@@ -596,6 +597,7 @@ class fs_generator
 {
 public:
    fs_generator(struct brw_context *brw,
+                void *mem_ctx,
                 struct brw_wm_compile *c,
                 struct gl_shader_program *prog,
                 struct gl_fragment_program *fp,
@@ -722,6 +724,7 @@ class gen8_fs_generator : public gen8_generator
 {
 public:
    gen8_fs_generator(struct brw_context *brw,
+                     void *mem_ctx,
                      struct brw_wm_compile *c,
                      struct gl_shader_program *prog,
                      struct gl_fragment_program *fp,

@@ -91,6 +91,7 @@ struct brw_wm_compile {
  * Returns the final assembly and the program's size.
  */
 const unsigned *brw_wm_fs_emit(struct brw_context *brw,
+                               void *mem_ctx,
                                struct brw_wm_compile *c,
                                struct gl_fragment_program *fp,
                                struct gl_shader_program *prog,

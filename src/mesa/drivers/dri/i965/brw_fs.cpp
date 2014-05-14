@@ -3103,7 +3103,9 @@ fs_visitor::run()
 }
 
 const unsigned *
-brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
+brw_wm_fs_emit(struct brw_context *brw,
+               void *mem_ctx,
+               struct brw_wm_compile *c,
                struct gl_fragment_program *fp,
                struct gl_shader_program *prog,
                unsigned *final_assembly_size)
@@ -3126,7 +3128,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
 
    /* Now the main event: Visit the shader IR and generate our FS IR for it.
     */
-   fs_visitor v(brw, c, prog, fp, 8);
+   fs_visitor v(brw, mem_ctx, c, prog, fp, 8);
    if (!v.run()) {
       if (prog) {
          prog->LinkStatus = false;
@@ -3140,7 +3142,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
    }
 
    exec_list *simd16_instructions = NULL;
-   fs_visitor v2(brw, c, prog, fp, 16);
+   fs_visitor v2(brw, mem_ctx, c, prog, fp, 16);
    if (brw->gen >= 5 && likely(!(INTEL_DEBUG & DEBUG_NO16))) {
       if (!v.simd16_unsupported) {
          /* Try a SIMD16 compile */
@@ -3159,11 +3161,11 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c,
 
    const unsigned *assembly = NULL;
    if (brw->gen >= 8) {
-      gen8_fs_generator g(brw, c, prog, fp, v.do_dual_src);
+      gen8_fs_generator g(brw, mem_ctx, c, prog, fp, v.do_dual_src);
       assembly = g.generate_assembly(&v.instructions, simd16_instructions,
                                      final_assembly_size);
    } else {
-      fs_generator g(brw, c, prog, fp, v.do_dual_src);
+      fs_generator g(brw, mem_ctx, c, prog, fp, v.do_dual_src);
       assembly = g.generate_assembly(&v.instructions, simd16_instructions,
                                      final_assembly_size);
    }

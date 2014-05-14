@@ -2954,6 +2954,7 @@ fs_visitor::resolve_bool_comparison(ir_rvalue *rvalue, fs_reg *reg)
 }
 
 fs_visitor::fs_visitor(struct brw_context *brw,
+                       void *mem_ctx,
                        struct brw_wm_compile *c,
                        struct gl_shader_program *shader_prog,
                        struct gl_fragment_program *fp,
@@ -2966,7 +2967,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->c = c;
    this->prog_data = &c->prog_data;
    this->fp = fp;
-   this->mem_ctx = c;
+   this->mem_ctx = mem_ctx;
    this->failed = false;
    this->simd16_unsupported = false;
    this->no16_msg = NULL;

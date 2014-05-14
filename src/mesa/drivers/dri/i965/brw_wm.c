@@ -146,6 +146,7 @@ bool do_wm_prog(struct brw_context *brw,
 		struct brw_wm_prog_key *key)
 {
    struct gl_context *ctx = &brw->ctx;
+   void *mem_ctx = ralloc_context(NULL);
    struct brw_wm_compile *c;
    const GLuint *program;
    struct gl_shader *fs = NULL;
@@ -154,7 +155,7 @@ bool do_wm_prog(struct brw_context *brw,
    if (prog)
       fs = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
-   c = rzalloc(NULL, struct brw_wm_compile);
+   c = rzalloc(mem_ctx, struct brw_wm_compile);
 
    /* Allocate the references to the uniforms that will end up in the
     * prog_data associated with the compiled program, and which will be freed
@@ -180,9 +181,9 @@ bool do_wm_prog(struct brw_context *brw,
                                            c->key.persample_shading,
                                            &fp->program);
 
-   program = brw_wm_fs_emit(brw, c, &fp->program, prog, &program_size);
+   program = brw_wm_fs_emit(brw, mem_ctx, c, &fp->program, prog, &program_size);
    if (program == NULL) {
-      ralloc_free(c);
+      ralloc_free(mem_ctx);
       return false;
    }
 
@@ -200,7 +201,7 @@ bool do_wm_prog(struct brw_context *brw,
 		    &c->prog_data, sizeof(c->prog_data),
 		    &brw->wm.base.prog_offset, &brw->wm.prog_data);
 
-   ralloc_free(c);
+   ralloc_free(mem_ctx);
 
    return true;
 }
