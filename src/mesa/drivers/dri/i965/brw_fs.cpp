@@ -3064,6 +3064,10 @@ fs_visitor::run()
          if (dispatch_width == 16) {
             fail("Failure to register allocate.  Reduce number of "
                  "live scalar values to avoid this.");
+         } else {
+            perf_debug("Fragment shader triggered register spilling.  "
+                       "Try reducing the number of live scalar values to "
+                       "improve performance.\n");
          }
 
          /* Since we're out of heuristics, just go spill registers until we

@@ -186,10 +186,6 @@ bool do_wm_prog(struct brw_context *brw,
 
    /* Scratch space is used for register spilling */
    if (c->last_scratch) {
-      perf_debug("Fragment shader triggered register spilling.  "
-                 "Try reducing the number of live scalar values to "
-                 "improve performance.\n");
-
       c->prog_data.total_scratch = brw_get_scratch_size(c->last_scratch);
 
       brw_get_scratch_bo(brw, &brw->wm.base.scratch_bo,
