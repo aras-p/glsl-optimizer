@@ -406,7 +406,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 			A3XX_SP_VS_PARAM_REG_PSIZEREGID(psize_regid) |
 			A3XX_SP_VS_PARAM_REG_TOTALVSOUTVAR(align(fp->total_in, 4) / 4));
 
-	for (i = 0, j = -1; j < (int)fp->inputs_count; i++) {
+	for (i = 0, j = -1; (i < 8) && (j < (int)fp->inputs_count); i++) {
 		uint32_t reg = 0;
 
 		OUT_PKT0(ring, REG_A3XX_SP_VS_OUT_REG(i), 1);
@@ -428,7 +428,7 @@ fd3_program_emit(struct fd_ringbuffer *ring,
 		OUT_RING(ring, reg);
 	}
 
-	for (i = 0, j = -1; j < (int)fp->inputs_count; i++) {
+	for (i = 0, j = -1; (i < 4) && (j < (int)fp->inputs_count); i++) {
 		uint32_t reg = 0;
 
 		OUT_PKT0(ring, REG_A3XX_SP_VS_VPC_DST_REG(i), 1);
