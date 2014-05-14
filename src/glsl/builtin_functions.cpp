@@ -62,11 +62,9 @@
 #include "program/prog_instruction.h"
 #include <limits>
 
-#define f(x) join(x)
-#define join(x) x ## f
-#define M_PIf f(M_PI)
-#define M_PI_2f f(M_PI_2)
-#define M_PI_4f f(M_PI_4)
+#define M_PIf   ((float) M_PI)
+#define M_PI_2f ((float) M_PI_2)
+#define M_PI_4f ((float) M_PI_4)
 
 using namespace ir_builder;
 
