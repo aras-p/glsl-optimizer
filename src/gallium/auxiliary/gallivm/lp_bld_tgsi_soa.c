@@ -1213,7 +1213,6 @@ emit_fetch_constant(
    LLVMBuilderRef builder = gallivm->builder;
    struct lp_build_context *uint_bld = &bld_base->uint_bld;
    unsigned dimension = 0;
-   LLVMValueRef dimension_index;
    LLVMValueRef consts_ptr;
    LLVMValueRef num_consts;
    LLVMValueRef res;
@@ -1227,11 +1226,8 @@ emit_fetch_constant(
       assert(dimension < LP_MAX_TGSI_CONST_BUFFERS);
    }
 
-   dimension_index = lp_build_const_int32(gallivm, dimension);
-   consts_ptr =
-      lp_build_array_get(gallivm, bld->consts_ptr, dimension_index);
-   num_consts =
-      lp_build_array_get(gallivm, bld->const_sizes_ptr, dimension_index);
+   consts_ptr = bld->consts[dimension];
+   num_consts = bld->consts_sizes[dimension];
 
    if (reg->Register.Indirect) {
       LLVMValueRef indirect_index;
@@ -2677,56 +2673,86 @@ lp_emit_declaration_soa(
    const unsigned last = decl->Range.Last;
    unsigned idx, i;
 
-   for (idx = first; idx <= last; ++idx) {
-      assert(last <= bld->bld_base.info->file_max[decl->Declaration.File]);
-      switch (decl->Declaration.File) {
-      case TGSI_FILE_TEMPORARY:
-         if (!(bld->indirect_files & (1 << TGSI_FILE_TEMPORARY))) {
-            assert(idx < LP_MAX_INLINED_TEMPS);
+   assert(last <= bld->bld_base.info->file_max[decl->Declaration.File]);
+
+   switch (decl->Declaration.File) {
+   case TGSI_FILE_TEMPORARY:
+      if (!(bld->indirect_files & (1 << TGSI_FILE_TEMPORARY))) {
+         assert(last < LP_MAX_INLINED_TEMPS);
+         for (idx = first; idx <= last; ++idx) {
             for (i = 0; i < TGSI_NUM_CHANNELS; i++)
                bld->temps[idx][i] = lp_build_alloca(gallivm, vec_type, "temp");
          }
-         break;
+      }
+      break;
 
-      case TGSI_FILE_OUTPUT:
-         if (!(bld->indirect_files & (1 << TGSI_FILE_OUTPUT))) {
+   case TGSI_FILE_OUTPUT:
+      if (!(bld->indirect_files & (1 << TGSI_FILE_OUTPUT))) {
+         for (idx = first; idx <= last; ++idx) {
             for (i = 0; i < TGSI_NUM_CHANNELS; i++)
                bld->outputs[idx][i] = lp_build_alloca(gallivm,
                                                       vec_type, "output");
          }
-         break;
+      }
+      break;
 
-      case TGSI_FILE_ADDRESS:
-	 /* ADDR registers are only allocated with an integer LLVM IR type,
-	  * as they are guaranteed to always have integers.
-	  * XXX: Not sure if this exception is worthwhile (or the whole idea of
-	  * an ADDR register for that matter).
-	  */
+   case TGSI_FILE_ADDRESS:
+      /* ADDR registers are only allocated with an integer LLVM IR type,
+       * as they are guaranteed to always have integers.
+       * XXX: Not sure if this exception is worthwhile (or the whole idea of
+       * an ADDR register for that matter).
+       */
+      assert(last < LP_MAX_TGSI_ADDRS);
+      for (idx = first; idx <= last; ++idx) {
          assert(idx < LP_MAX_TGSI_ADDRS);
          for (i = 0; i < TGSI_NUM_CHANNELS; i++)
             bld->addr[idx][i] = lp_build_alloca(gallivm, bld_base->base.int_vec_type, "addr");
-         break;
+      }
+      break;
 
-      case TGSI_FILE_PREDICATE:
-         assert(idx < LP_MAX_TGSI_PREDS);
+   case TGSI_FILE_PREDICATE:
+      assert(last < LP_MAX_TGSI_PREDS);
+      for (idx = first; idx <= last; ++idx) {
          for (i = 0; i < TGSI_NUM_CHANNELS; i++)
             bld->preds[idx][i] = lp_build_alloca(gallivm, vec_type,
                                                  "predicate");
-         break;
-
-      case TGSI_FILE_SAMPLER_VIEW:
-         /*
-          * The target stored here MUST match whatever there actually
-          * is in the set sampler views (what about return type?).
-          */
-         assert(idx < PIPE_MAX_SHADER_SAMPLER_VIEWS);
-         bld->sv[idx] = decl->SamplerView;
-         break;
-
-      default:
-         /* don't need to declare other vars */
-         break;
       }
+      break;
+
+   case TGSI_FILE_SAMPLER_VIEW:
+      /*
+       * The target stored here MUST match whatever there actually
+       * is in the set sampler views (what about return type?).
+       */
+      assert(last < PIPE_MAX_SHADER_SAMPLER_VIEWS);
+      for (idx = first; idx <= last; ++idx) {
+         bld->sv[idx] = decl->SamplerView;
+      }
+      break;
+
+   case TGSI_FILE_CONSTANT:
+   {
+      /*
+       * We could trivially fetch the per-buffer pointer when fetching the
+       * constant, relying on llvm to figure out it's always the same pointer
+       * anyway. However, doing so results in a huge (more than factor of 10)
+       * slowdown in llvm compilation times for some (but not all) shaders
+       * (more specifically, the IR optimization spends way more time in
+       * DominatorTree::dominates). At least with llvm versions 3.1, 3.3.
+       */
+      unsigned idx2D = decl->Dim.Index2D;
+      LLVMValueRef index2D = lp_build_const_int32(gallivm, idx2D);
+      assert(idx2D < LP_MAX_TGSI_CONST_BUFFERS);
+      bld->consts[idx2D] =
+         lp_build_array_get(gallivm, bld->consts_ptr, index2D);
+      bld->consts_sizes[idx2D] =
+         lp_build_array_get(gallivm, bld->const_sizes_ptr, index2D);
+   }
+      break;
+
+   default:
+      /* don't need to declare other vars */
+      break;
    }
 }
 
