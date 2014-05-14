@@ -1231,15 +1231,19 @@ trans_cmp(const struct instr_translater *t,
 
 	switch (t->tgsi_opc) {
 	case TGSI_OPCODE_SEQ:
+	case TGSI_OPCODE_FSEQ:
 		condition = IR3_COND_EQ;
 		break;
 	case TGSI_OPCODE_SNE:
+	case TGSI_OPCODE_FSNE:
 		condition = IR3_COND_NE;
 		break;
 	case TGSI_OPCODE_SGE:
+	case TGSI_OPCODE_FSGE:
 		condition = IR3_COND_GE;
 		break;
 	case TGSI_OPCODE_SLT:
+	case TGSI_OPCODE_FSLT:
 		condition = IR3_COND_LT;
 		break;
 	case TGSI_OPCODE_SLE:
@@ -1269,11 +1273,15 @@ trans_cmp(const struct instr_translater *t,
 
 	switch (t->tgsi_opc) {
 	case TGSI_OPCODE_SEQ:
+	case TGSI_OPCODE_FSEQ:
 	case TGSI_OPCODE_SGE:
+	case TGSI_OPCODE_FSGE:
 	case TGSI_OPCODE_SLE:
 	case TGSI_OPCODE_SNE:
+	case TGSI_OPCODE_FSNE:
 	case TGSI_OPCODE_SGT:
 	case TGSI_OPCODE_SLT:
+	case TGSI_OPCODE_FSLT:
 		/* cov.u16f16 dst, tmp0 */
 		instr = instr_create(ctx, 1, 0);
 		instr->cat1.src_type = get_utype(ctx);
@@ -1290,6 +1298,96 @@ trans_cmp(const struct instr_translater *t,
 		break;
 	}
 
+	put_dst(ctx, inst, dst);
+}
+
+/*
+ * USNE(a,b) = (a != b) ? 1 : 0
+ *   cmps.u32.ne dst, a, b
+ *
+ * USEQ(a,b) = (a == b) ? 1 : 0
+ *   cmps.u32.eq dst, a, b
+ *
+ * ISGE(a,b) = (a > b) ? 1 : 0
+ *   cmps.s32.ge dst, a, b
+ *
+ * USGE(a,b) = (a > b) ? 1 : 0
+ *   cmps.u32.ge dst, a, b
+ *
+ * ISLT(a,b) = (a < b) ? 1 : 0
+ *   cmps.s32.lt dst, a, b
+ *
+ * USLT(a,b) = (a < b) ? 1 : 0
+ *   cmps.u32.lt dst, a, b
+ *
+ * UCMP(a,b,c) = (a < 0) ? b : c
+ *   cmps.u32.lt tmp0, a, {0}
+ *   sel.b16 dst, b, tmp0, c
+ */
+static void
+trans_icmp(const struct instr_translater *t,
+		struct fd3_compile_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct ir3_instruction *instr;
+	struct tgsi_dst_register *dst = get_dst(ctx, inst);
+	struct tgsi_src_register constval0;
+	struct tgsi_src_register *a0, *a1, *a2;
+	unsigned condition;
+
+	a0 = &inst->Src[0].Register;  /* a */
+	a1 = &inst->Src[1].Register;  /* b */
+
+	switch (t->tgsi_opc) {
+	case TGSI_OPCODE_USNE:
+		condition = IR3_COND_NE;
+		break;
+	case TGSI_OPCODE_USEQ:
+		condition = IR3_COND_EQ;
+		break;
+	case TGSI_OPCODE_ISGE:
+	case TGSI_OPCODE_USGE:
+		condition = IR3_COND_GE;
+		break;
+	case TGSI_OPCODE_ISLT:
+	case TGSI_OPCODE_USLT:
+		condition = IR3_COND_LT;
+		break;
+	case TGSI_OPCODE_UCMP:
+		get_immediate(ctx, &constval0, 0);
+		a0 = &inst->Src[0].Register;  /* a */
+		a1 = &constval0;              /* {0} */
+		condition = IR3_COND_LT;
+		break;
+
+	default:
+		compile_assert(ctx, 0);
+		return;
+	}
+
+	if (is_const(a0) && is_const(a1))
+		a0 = get_unconst(ctx, a0);
+
+	if (t->tgsi_opc == TGSI_OPCODE_UCMP) {
+		struct tgsi_dst_register tmp_dst;
+		struct tgsi_src_register *tmp_src;
+		tmp_src = get_internal_temp(ctx, &tmp_dst);
+		/* cmps.u32.lt tmp, a0, a1 */
+		instr = instr_create(ctx, 2, t->opc);
+		instr->cat2.condition = condition;
+		vectorize(ctx, instr, &tmp_dst, 2, a0, 0, a1, 0);
+
+		a1 = &inst->Src[1].Register;
+		a2 = &inst->Src[2].Register;
+		/* sel.{b32,b16} dst, src2, tmp, src1 */
+		instr = instr_create(ctx, 3, OPC_SEL_B32);
+		vectorize(ctx, instr, dst, 3, a1, 0, tmp_src, 0, a2, 0);
+	} else {
+		/* cmps.{u32,s32}.<cond> dst, a0, a1 */
+		instr = instr_create(ctx, 2, t->opc);
+		instr->cat2.condition = condition;
+		vectorize(ctx, instr, dst, 2, a0, 0, a1, 0);
+	}
 	put_dst(ctx, inst, dst);
 }
 
@@ -1580,6 +1678,43 @@ trans_kill(const struct instr_translater *t,
 }
 
 /*
+ * I2F / U2F / F2I / F2U
+ */
+
+static void
+trans_cov(const struct instr_translater *t,
+		struct fd3_compile_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct ir3_instruction *instr;
+	struct tgsi_dst_register *dst = get_dst(ctx, inst);
+	struct tgsi_src_register *src = &inst->Src[0].Register;
+
+	// cov.f32s32 dst, tmp0 /
+	instr = instr_create(ctx, 1, 0);
+	switch (t->tgsi_opc) {
+	case TGSI_OPCODE_U2F:
+		instr->cat1.src_type = TYPE_U32;
+		instr->cat1.dst_type = TYPE_F32;
+		break;
+	case TGSI_OPCODE_I2F:
+		instr->cat1.src_type = TYPE_S32;
+		instr->cat1.dst_type = TYPE_F32;
+		break;
+	case TGSI_OPCODE_F2U:
+		instr->cat1.src_type = TYPE_F32;
+		instr->cat1.dst_type = TYPE_U32;
+		break;
+	case TGSI_OPCODE_F2I:
+		instr->cat1.src_type = TYPE_F32;
+		instr->cat1.dst_type = TYPE_S32;
+		break;
+
+	}
+	vectorize(ctx, instr, dst, 1, src, 0);
+}
+
+/*
  * Handlers for TGSI instructions which do have 1:1 mapping to native
  * instructions:
  */
@@ -1616,9 +1751,11 @@ instr_cat2(const struct instr_translater *t,
 
 	switch (t->tgsi_opc) {
 	case TGSI_OPCODE_ABS:
+	case TGSI_OPCODE_IABS:
 		src0_flags = IR3_REG_ABS;
 		break;
 	case TGSI_OPCODE_SUB:
+	case TGSI_OPCODE_INEG:
 		src1_flags = IR3_REG_NEGATE;
 		break;
 	}
@@ -1724,6 +1861,22 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(SUB,          instr_cat2, .opc = OPC_ADD_F),
 	INSTR(MIN,          instr_cat2, .opc = OPC_MIN_F),
 	INSTR(MAX,          instr_cat2, .opc = OPC_MAX_F),
+	INSTR(UADD,         instr_cat2, .opc = OPC_ADD_U),
+	INSTR(IMIN,         instr_cat2, .opc = OPC_MIN_S),
+	INSTR(UMIN,         instr_cat2, .opc = OPC_MIN_U),
+	INSTR(IMAX,         instr_cat2, .opc = OPC_MAX_S),
+	INSTR(UMAX,         instr_cat2, .opc = OPC_MAX_U),
+	INSTR(AND,          instr_cat2, .opc = OPC_AND_B),
+	INSTR(OR,           instr_cat2, .opc = OPC_OR_B),
+	INSTR(NOT,          instr_cat2, .opc = OPC_NOT_B),
+	INSTR(XOR,          instr_cat2, .opc = OPC_XOR_B),
+	INSTR(UMUL,         instr_cat2, .opc = OPC_MUL_U),
+	INSTR(SHL,          instr_cat2, .opc = OPC_SHL_B),
+	INSTR(USHR,         instr_cat2, .opc = OPC_SHR_B),
+	INSTR(ISHR,         instr_cat2, .opc = OPC_ASHR_B),
+	INSTR(IABS,         instr_cat2, .opc = OPC_ABSNEG_S),
+	INSTR(INEG,         instr_cat2, .opc = OPC_ABSNEG_S),
+	INSTR(AND,          instr_cat2, .opc = OPC_AND_B),
 	INSTR(MAD,          instr_cat3, .opc = OPC_MAD_F32, .hopc = OPC_MAD_F16),
 	INSTR(TRUNC,        instr_cat2, .opc = OPC_TRUNC_F),
 	INSTR(CLAMP,        trans_clamp),
@@ -1741,16 +1894,32 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(TXP,          trans_samp, .opc = OPC_SAM, .arg = TGSI_OPCODE_TXP),
 	INSTR(SGT,          trans_cmp),
 	INSTR(SLT,          trans_cmp),
+	INSTR(FSLT,         trans_cmp),
 	INSTR(SGE,          trans_cmp),
+	INSTR(FSGE,         trans_cmp),
 	INSTR(SLE,          trans_cmp),
 	INSTR(SNE,          trans_cmp),
+	INSTR(FSNE,         trans_cmp),
 	INSTR(SEQ,          trans_cmp),
+	INSTR(FSEQ,         trans_cmp),
 	INSTR(CMP,          trans_cmp),
+	INSTR(USNE,         trans_icmp, .opc = OPC_CMPS_U),
+	INSTR(USEQ,         trans_icmp, .opc = OPC_CMPS_U),
+	INSTR(ISGE,         trans_icmp, .opc = OPC_CMPS_S),
+	INSTR(USGE,         trans_icmp, .opc = OPC_CMPS_U),
+	INSTR(ISLT,         trans_icmp, .opc = OPC_CMPS_S),
+	INSTR(USLT,         trans_icmp, .opc = OPC_CMPS_U),
+	INSTR(UCMP,         trans_icmp, .opc = OPC_CMPS_U),
 	INSTR(IF,           trans_if),
+	INSTR(UIF,          trans_if),
 	INSTR(ELSE,         trans_else),
 	INSTR(ENDIF,        trans_endif),
 	INSTR(END,          instr_cat0, .opc = OPC_END),
 	INSTR(KILL,         trans_kill, .opc = OPC_KILL),
+	INSTR(I2F,          trans_cov),
+	INSTR(U2F,          trans_cov),
+	INSTR(F2I,          trans_cov),
+	INSTR(F2U,          trans_cov),
 };
 
 static fd3_semantic
