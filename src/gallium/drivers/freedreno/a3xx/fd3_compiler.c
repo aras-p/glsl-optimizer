@@ -1631,7 +1631,7 @@ trans_endif(const struct instr_translater *t,
 }
 
 /*
- * Kill / Kill-if
+ * Kill
  */
 
 static void
@@ -1677,6 +1677,39 @@ trans_kill(const struct instr_translater *t,
 	ctx->kill[ctx->kill_count++] = instr;
 }
 
+/*
+ * Kill-If
+ */
+
+static void
+trans_killif(const struct instr_translater *t,
+		struct fd3_compile_context *ctx,
+		struct tgsi_full_instruction *inst)
+{
+	struct tgsi_src_register *src = &inst->Src[0].Register;
+	struct ir3_instruction *instr, *immed, *cond = NULL;
+	bool inv = false;
+
+	immed = create_immed(ctx, 0.0);
+
+	/* cmps.f.ne p0.x, cond, {0.0} */
+	instr = instr_create(ctx, 2, OPC_CMPS_F);
+	instr->cat2.condition = IR3_COND_NE;
+	ir3_reg_create(instr, regid(REG_P0, 0), 0);
+	ir3_reg_create(instr, 0, IR3_REG_SSA)->instr = immed;
+	add_src_reg(ctx, instr, src, src->SwizzleX);
+
+	cond = instr;
+
+	/* kill p0.x */
+	instr = instr_create(ctx, 0, OPC_KILL);
+	instr->cat0.inv = inv;
+	ir3_reg_create(instr, 0, 0);  /* dummy dst */
+	ir3_reg_create(instr, 0, IR3_REG_SSA)->instr = cond;
+
+	ctx->kill[ctx->kill_count++] = instr;
+
+}
 /*
  * I2F / U2F / F2I / F2U
  */
@@ -1916,6 +1949,7 @@ static const struct instr_translater translaters[TGSI_OPCODE_LAST] = {
 	INSTR(ENDIF,        trans_endif),
 	INSTR(END,          instr_cat0, .opc = OPC_END),
 	INSTR(KILL,         trans_kill, .opc = OPC_KILL),
+	INSTR(KILL_IF,      trans_killif, .opc = OPC_KILL),
 	INSTR(I2F,          trans_cov),
 	INSTR(U2F,          trans_cov),
 	INSTR(F2I,          trans_cov),
