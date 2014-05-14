@@ -201,6 +201,7 @@ disassemble(const void* func, llvm::raw_ostream & Out)
 
    if (!AsmInfo) {
       Out << "error: no assembly info for target " << Triple << "\n";
+      Out.flush();
       return 0;
    }
 
@@ -209,12 +210,14 @@ disassemble(const void* func, llvm::raw_ostream & Out)
    OwningPtr<const MCRegisterInfo> MRI(T->createMCRegInfo(Triple));
    if (!MRI) {
       Out << "error: no register info for target " << Triple.c_str() << "\n";
+      Out.flush();
       return 0;
    }
 
    OwningPtr<const MCInstrInfo> MII(T->createMCInstrInfo());
    if (!MII) {
       Out << "error: no instruction info for target " << Triple.c_str() << "\n";
+      Out.flush();
       return 0;
    }
 
@@ -228,6 +231,7 @@ disassemble(const void* func, llvm::raw_ostream & Out)
 #endif
    if (!DisAsm) {
       Out << "error: no disassembler for target " << Triple << "\n";
+      Out.flush();
       return 0;
    }
 
@@ -236,6 +240,7 @@ disassemble(const void* func, llvm::raw_ostream & Out)
          T->createMCInstPrinter(AsmPrinterVariant, *AsmInfo, *MII, *MRI, *STI));
    if (!Printer) {
       Out << "error: no instruction printer for target " << Triple.c_str() << "\n";
+      Out.flush();
       return 0;
    }
 
