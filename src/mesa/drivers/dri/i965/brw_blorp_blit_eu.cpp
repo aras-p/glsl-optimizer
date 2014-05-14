@@ -25,12 +25,13 @@
 #include "brw_blorp_blit_eu.h"
 #include "brw_blorp.h"
 
-brw_blorp_eu_emitter::brw_blorp_eu_emitter(struct brw_context *brw)
+brw_blorp_eu_emitter::brw_blorp_eu_emitter(struct brw_context *brw,
+                                           bool debug_flag)
    : mem_ctx(ralloc_context(NULL)),
      generator(brw, mem_ctx,
                rzalloc(mem_ctx, struct brw_wm_prog_key),
                rzalloc(mem_ctx, struct brw_wm_prog_data),
-               NULL, NULL, false)
+               NULL, NULL, false, debug_flag)
 {
 }
 
@@ -42,17 +43,7 @@ brw_blorp_eu_emitter::~brw_blorp_eu_emitter()
 const unsigned *
 brw_blorp_eu_emitter::get_program(unsigned *program_size, FILE *dump_file)
 {
-   const unsigned *res;
-
-   if (unlikely(INTEL_DEBUG & DEBUG_BLORP)) {
-      fprintf(stderr, "Native code for BLORP blit:\n");
-      res = generator.generate_assembly(NULL, &insts, program_size, dump_file);
-      fprintf(stderr, "\n");
-   } else {
-      res = generator.generate_assembly(NULL, &insts, program_size);
-   }
-
-   return res;
+   return generator.generate_assembly(NULL, &insts, program_size, dump_file);
 }
 
 /**

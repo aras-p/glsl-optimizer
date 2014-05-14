@@ -30,7 +30,7 @@
 class brw_blorp_eu_emitter
 {
 protected:
-   explicit brw_blorp_eu_emitter(struct brw_context *brw);
+   explicit brw_blorp_eu_emitter(struct brw_context *brw, bool debug_flag);
    ~brw_blorp_eu_emitter();
 
    const unsigned *get_program(unsigned *program_size, FILE *dump_file);

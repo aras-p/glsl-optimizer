@@ -42,10 +42,12 @@ fs_generator::fs_generator(struct brw_context *brw,
                            struct brw_wm_prog_data *prog_data,
                            struct gl_shader_program *prog,
                            struct gl_fragment_program *fp,
-                           bool dual_source_output)
+                           bool dual_source_output,
+                           bool debug_flag)
 
    : brw(brw), key(key), prog_data(prog_data), prog(prog), fp(fp),
-     dual_source_output(dual_source_output), mem_ctx(mem_ctx)
+     dual_source_output(dual_source_output), debug_flag(debug_flag),
+     mem_ctx(mem_ctx)
 {
    ctx = &brw->ctx;
 
@@ -1325,7 +1327,7 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
    const char *last_annotation_string = NULL;
    const void *last_annotation_ir = NULL;
 
-   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
+   if (unlikely(debug_flag)) {
       if (prog) {
          fprintf(stderr,
                  "Native code for %s fragment shader %d (SIMD%d dispatch):\n",
@@ -1342,14 +1344,14 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
    }
 
    cfg_t *cfg = NULL;
-   if (unlikely(INTEL_DEBUG & DEBUG_WM))
+   if (unlikely(debug_flag))
       cfg = new(mem_ctx) cfg_t(instructions);
 
    foreach_list(node, instructions) {
       fs_inst *inst = (fs_inst *)node;
       struct brw_reg src[3], dst;
 
-      if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
+      if (unlikely(debug_flag)) {
 	 foreach_list(node, &cfg->block_list) {
 	    bblock_link *link = (bblock_link *)node;
 	    bblock_t *block = link->block;
@@ -1802,7 +1804,7 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
 	 abort();
       }
 
-      if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
+      if (unlikely(debug_flag)) {
 	 brw_disassemble(brw, p->store, last_native_insn_offset, p->next_insn_offset, stderr);
 
 	 foreach_list(node, &cfg->block_list) {
@@ -1825,7 +1827,7 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
       last_native_insn_offset = p->next_insn_offset;
    }
 
-   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
+   if (unlikely(debug_flag)) {
       fprintf(stderr, "\n");
    }
 

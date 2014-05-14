@@ -517,7 +517,7 @@ class brw_blorp_blit_program : public brw_blorp_eu_emitter
 {
 public:
    brw_blorp_blit_program(struct brw_context *brw,
-                          const brw_blorp_blit_prog_key *key);
+                          const brw_blorp_blit_prog_key *key, bool debug_flag);
 
    const GLuint *compile(struct brw_context *brw, GLuint *program_size,
                          FILE *dump_file = stderr);
@@ -624,8 +624,9 @@ private:
 
 brw_blorp_blit_program::brw_blorp_blit_program(
       struct brw_context *brw,
-      const brw_blorp_blit_prog_key *key)
-   : brw_blorp_eu_emitter(brw),
+      const brw_blorp_blit_prog_key *key,
+      bool debug_flag)
+   : brw_blorp_eu_emitter(brw, debug_flag),
      brw(brw),
      key(key)
 {
@@ -2142,7 +2143,8 @@ brw_blorp_blit_params::get_wm_prog(struct brw_context *brw,
    if (!brw_search_cache(&brw->cache, BRW_BLORP_BLIT_PROG,
                          &this->wm_prog_key, sizeof(this->wm_prog_key),
                          &prog_offset, prog_data)) {
-      brw_blorp_blit_program prog(brw, &this->wm_prog_key);
+      brw_blorp_blit_program prog(brw, &this->wm_prog_key,
+                                  INTEL_DEBUG & DEBUG_BLORP);
       GLuint program_size;
       const GLuint *program = prog.compile(brw, &program_size, stderr);
       brw_upload_cache(&brw->cache, BRW_BLORP_BLIT_PROG,

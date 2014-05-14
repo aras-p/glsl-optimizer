@@ -602,7 +602,8 @@ public:
                 struct brw_wm_prog_data *prog_data,
                 struct gl_shader_program *prog,
                 struct gl_fragment_program *fp,
-                bool dual_source_output);
+                bool dual_source_output,
+                bool debug_flag);
    ~fs_generator();
 
    const unsigned *generate_assembly(exec_list *simd8_instructions,
@@ -712,6 +713,7 @@ private:
 
    exec_list discard_halt_patches;
    bool dual_source_output;
+   const bool debug_flag;
    void *mem_ctx;
 };
 
