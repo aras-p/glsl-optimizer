@@ -723,6 +723,13 @@ public:
       uint16_t image_format;
 
       /**
+       * Emit a warning if this variable is accessed.
+       */
+   private:
+      uint8_t warn_extension_index;
+
+   public:
+      /**
        * \brief Layout qualifier for gl_FragDepth.
        *
        * This is not equal to \c ir_depth_layout_none if and only if this
@@ -776,6 +783,10 @@ public:
        */
       unsigned max_array_access;
 
+      /**
+       * Allow (only) ir_variable direct access private members.
+       */
+      friend class ir_variable;
    } data;
 
    /**
@@ -810,6 +821,8 @@ public:
    ir_constant *constant_initializer;
 
 private:
+   static const char *const warn_extension_table[];
+
    /**
     * For variables that are in an interface block or are an instance of an
     * interface block, this is the \c GLSL_TYPE_INTERFACE type for that block.
@@ -817,11 +830,6 @@ private:
     * \sa ir_variable::location
     */
    const glsl_type *interface_type;
-
-   /**
-    * Emit a warning if this variable is accessed.
-    */
-   const char *warn_extension;
 };
 
 /**

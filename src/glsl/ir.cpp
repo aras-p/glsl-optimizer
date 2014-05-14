@@ -1554,7 +1554,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->data.location = -1;
    this->data.location_frac = 0;
    this->data.binding = 0;
-   this->warn_extension = NULL;
+   this->data.warn_extension_index = 0;
    this->constant_value = NULL;
    this->constant_initializer = NULL;
    this->data.origin_upper_left = false;
@@ -1617,16 +1617,31 @@ ir_variable::determine_interpolation_mode(bool flat_shade)
       return INTERP_QUALIFIER_SMOOTH;
 }
 
+const char *const ir_variable::warn_extension_table[] = {
+   "",
+   "GL_ARB_shader_stencil_export",
+   "GL_AMD_shader_stencil_export",
+};
+
 void
 ir_variable::enable_extension_warning(const char *extension)
 {
-   this->warn_extension = extension;
+   for (unsigned i = 0; i < Elements(warn_extension_table); i++) {
+      if (strcmp(warn_extension_table[i], extension) == 0) {
+         this->data.warn_extension_index = i;
+         return;
+      }
+   }
+
+   assert(!"Should not get here.");
+   this->data.warn_extension_index = 0;
 }
 
 const char *
 ir_variable::get_extension_warning() const
 {
-   return this->warn_extension;
+   return this->data.warn_extension_index == 0
+      ? NULL : warn_extension_table[this->data.warn_extension_index];
 }
 
 ir_function_signature::ir_function_signature(const glsl_type *return_type,

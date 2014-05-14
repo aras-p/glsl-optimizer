@@ -53,8 +53,6 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
 
    memcpy(&var->data, &this->data, sizeof(var->data));
 
-   var->warn_extension = this->warn_extension;
-
    var->num_state_slots = this->num_state_slots;
    if (this->state_slots) {
       /* FINISHME: This really wants to use something like talloc_reference, but
