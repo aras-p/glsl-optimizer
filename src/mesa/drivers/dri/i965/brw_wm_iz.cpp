@@ -143,7 +143,7 @@ void fs_visitor::setup_payload_gen4()
 
    if (wm_iz_table[lookup].sd_present || uses_depth ||
        kill_stats_promoted_workaround) {
-      c->source_depth_reg = reg;
+      payload.source_depth_reg = reg;
       reg += 2;
    }
 
@@ -151,17 +151,17 @@ void fs_visitor::setup_payload_gen4()
       c->source_depth_to_render_target = 1;
 
    if (wm_iz_table[lookup].ds_present || c->key.line_aa != AA_NEVER) {
-      c->aa_dest_stencil_reg = reg;
+      payload.aa_dest_stencil_reg = reg;
       c->runtime_check_aads_emit = (!wm_iz_table[lookup].ds_present &&
                                     c->key.line_aa == AA_SOMETIMES);
       reg++;
    }
 
    if (wm_iz_table[lookup].dd_present) {
-      c->dest_depth_reg = reg;
+      payload.dest_depth_reg = reg;
       reg+=2;
    }
 
-   c->nr_payload_regs = reg;
+   payload.num_regs = reg;
 }
 

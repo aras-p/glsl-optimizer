@@ -552,6 +552,20 @@ public:
    /* Result of last visit() method. */
    fs_reg result;
 
+   /** Register numbers for thread payload fields. */
+   struct {
+      uint8_t source_depth_reg;
+      uint8_t source_w_reg;
+      uint8_t aa_dest_stencil_reg;
+      uint8_t dest_depth_reg;
+      uint8_t sample_pos_reg;
+      uint8_t sample_mask_in_reg;
+      uint8_t barycentric_coord_reg[BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT];
+
+      /** The number of thread payload registers the hardware will supply. */
+      uint8_t num_regs;
+   } payload;
+
    fs_reg pixel_x;
    fs_reg pixel_y;
    fs_reg wpos_w;

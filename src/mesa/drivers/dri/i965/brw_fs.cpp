@@ -1059,7 +1059,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
 
    /* gl_FragCoord.z */
    if (brw->gen >= 6) {
-      emit(MOV(wpos, fs_reg(brw_vec8_grf(c->source_depth_reg, 0))));
+      emit(MOV(wpos, fs_reg(brw_vec8_grf(payload.source_depth_reg, 0))));
    } else {
       emit(FS_OPCODE_LINTERP, wpos,
            this->delta_x[BRW_WM_PERSPECTIVE_PIXEL_BARYCENTRIC],
@@ -1260,7 +1260,7 @@ fs_visitor::emit_samplepos_setup(ir_variable *ir)
     * the positions using vstride=16, width=8, hstride=2.
     */
    struct brw_reg sample_pos_reg =
-      stride(retype(brw_vec1_grf(c->sample_pos_reg, 0),
+      stride(retype(brw_vec1_grf(payload.sample_pos_reg, 0),
                     BRW_REGISTER_TYPE_B), 16, 8, 2);
 
    emit(MOV(int_sample_x, fs_reg(sample_pos_reg)));
@@ -1447,9 +1447,9 @@ void
 fs_visitor::assign_curb_setup()
 {
    if (dispatch_width == 8) {
-      c->prog_data.first_curbe_grf = c->nr_payload_regs;
+      c->prog_data.first_curbe_grf = payload.num_regs;
    } else {
-      c->prog_data.first_curbe_grf_16 = c->nr_payload_regs;
+      c->prog_data.first_curbe_grf_16 = payload.num_regs;
    }
 
    c->prog_data.curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
@@ -1473,7 +1473,7 @@ fs_visitor::assign_curb_setup()
                constant_nr = 0;
             }
 
-	    struct brw_reg brw_reg = brw_vec1_grf(c->nr_payload_regs +
+	    struct brw_reg brw_reg = brw_vec1_grf(payload.num_regs +
 						  constant_nr / 8,
 						  constant_nr % 8);
 
@@ -1574,7 +1574,7 @@ fs_visitor::calculate_urb_setup()
 void
 fs_visitor::assign_urb_setup()
 {
-   int urb_start = c->nr_payload_regs + c->prog_data.curb_read_length;
+   int urb_start = payload.num_regs + c->prog_data.curb_read_length;
 
    /* Offset all the urb_setup[] index by the actual position of the
     * setup regs, now that the location of the constants has been chosen.
@@ -2802,7 +2802,7 @@ fs_visitor::setup_payload_gen6()
    assert(brw->gen >= 6);
 
    /* R0-1: masks, pixel X/Y coordinates. */
-   c->nr_payload_regs = 2;
+   payload.num_regs = 2;
    /* R2: only for 32-pixel dispatch.*/
 
    /* R3-26: barycentric interpolation coordinates.  These appear in the
@@ -2814,48 +2814,48 @@ fs_visitor::setup_payload_gen6()
     */
    for (int i = 0; i < BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT; ++i) {
       if (barycentric_interp_modes & (1 << i)) {
-         c->barycentric_coord_reg[i] = c->nr_payload_regs;
-         c->nr_payload_regs += 2;
+         payload.barycentric_coord_reg[i] = payload.num_regs;
+         payload.num_regs += 2;
          if (dispatch_width == 16) {
-            c->nr_payload_regs += 2;
+            payload.num_regs += 2;
          }
       }
    }
 
    /* R27: interpolated depth if uses source depth */
    if (uses_depth) {
-      c->source_depth_reg = c->nr_payload_regs;
-      c->nr_payload_regs++;
+      payload.source_depth_reg = payload.num_regs;
+      payload.num_regs++;
       if (dispatch_width == 16) {
          /* R28: interpolated depth if not SIMD8. */
-         c->nr_payload_regs++;
+         payload.num_regs++;
       }
    }
    /* R29: interpolated W set if GEN6_WM_USES_SOURCE_W. */
    if (uses_depth) {
-      c->source_w_reg = c->nr_payload_regs;
-      c->nr_payload_regs++;
+      payload.source_w_reg = payload.num_regs;
+      payload.num_regs++;
       if (dispatch_width == 16) {
          /* R30: interpolated W if not SIMD8. */
-         c->nr_payload_regs++;
+         payload.num_regs++;
       }
    }
 
    c->prog_data.uses_pos_offset = c->key.compute_pos_offset;
    /* R31: MSAA position offsets. */
    if (c->prog_data.uses_pos_offset) {
-      c->sample_pos_reg = c->nr_payload_regs;
-      c->nr_payload_regs++;
+      payload.sample_pos_reg = payload.num_regs;
+      payload.num_regs++;
    }
 
    /* R32: MSAA input coverage mask */
    if (fp->Base.SystemValuesRead & SYSTEM_BIT_SAMPLE_MASK_IN) {
       assert(brw->gen >= 7);
-      c->sample_mask_in_reg = c->nr_payload_regs;
-      c->nr_payload_regs++;
+      payload.sample_mask_in_reg = payload.num_regs;
+      payload.num_regs++;
       if (dispatch_width == 16) {
          /* R33: input coverage mask if not SIMD8. */
-         c->nr_payload_regs++;
+         payload.num_regs++;
       }
    }
 

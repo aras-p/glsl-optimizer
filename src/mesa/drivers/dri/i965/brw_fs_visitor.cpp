@@ -139,8 +139,9 @@ fs_visitor::visit(ir_variable *ir)
 	 reg = emit_sampleid_setup(ir);
       } else if (ir->data.location == SYSTEM_VALUE_SAMPLE_MASK_IN) {
          assert(brw->gen >= 7);
-         reg = new(mem_ctx) fs_reg(retype(brw_vec8_grf(c->sample_mask_in_reg, 0),
-                                          BRW_REGISTER_TYPE_D));
+         reg = new(mem_ctx)
+            fs_reg(retype(brw_vec8_grf(payload.sample_mask_in_reg, 0),
+                          BRW_REGISTER_TYPE_D));
       }
    }
 
@@ -2588,12 +2589,12 @@ fs_visitor::emit_interpolation_setup_gen6()
    emit(MOV(this->pixel_y, int_pixel_y));
 
    this->current_annotation = "compute pos.w";
-   this->pixel_w = fs_reg(brw_vec8_grf(c->source_w_reg, 0));
+   this->pixel_w = fs_reg(brw_vec8_grf(payload.source_w_reg, 0));
    this->wpos_w = fs_reg(this, glsl_type::float_type);
    emit_math(SHADER_OPCODE_RCP, this->wpos_w, this->pixel_w);
 
    for (int i = 0; i < BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT; ++i) {
-      uint8_t reg = c->barycentric_coord_reg[i];
+      uint8_t reg = payload.barycentric_coord_reg[i];
       this->delta_x[i] = fs_reg(brw_vec8_grf(reg, 0));
       this->delta_y[i] = fs_reg(brw_vec8_grf(reg + 1, 0));
    }
@@ -2767,10 +2768,10 @@ fs_visitor::emit_fb_writes()
       nr += 2;
    }
 
-   if (c->aa_dest_stencil_reg) {
+   if (payload.aa_dest_stencil_reg) {
       push_force_uncompressed();
       emit(MOV(fs_reg(MRF, nr++),
-               fs_reg(brw_vec8_grf(c->aa_dest_stencil_reg, 0))));
+               fs_reg(brw_vec8_grf(payload.aa_dest_stencil_reg, 0))));
       pop_force_uncompressed();
    }
 
@@ -2809,14 +2810,14 @@ fs_visitor::emit_fb_writes()
       } else {
 	 /* Pass through the payload depth. */
 	 emit(MOV(fs_reg(MRF, nr),
-                  fs_reg(brw_vec8_grf(c->source_depth_reg, 0))));
+                  fs_reg(brw_vec8_grf(payload.source_depth_reg, 0))));
       }
       nr += reg_width;
    }
 
-   if (c->dest_depth_reg) {
+   if (payload.dest_depth_reg) {
       emit(MOV(fs_reg(MRF, nr),
-               fs_reg(brw_vec8_grf(c->dest_depth_reg, 0))));
+               fs_reg(brw_vec8_grf(payload.dest_depth_reg, 0))));
       nr += reg_width;
    }
 
@@ -2971,6 +2972,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
                                        hash_table_pointer_hash,
                                        hash_table_pointer_compare);
 
+   memset(&this->payload, 0, sizeof(this->payload));
    memset(this->outputs, 0, sizeof(this->outputs));
    memset(this->output_components, 0, sizeof(this->output_components));
    this->first_non_payload_grf = 0;

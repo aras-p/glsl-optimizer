@@ -222,9 +222,9 @@ count_to_loop_end(fs_inst *do_inst)
  *
  * The layout of the payload registers is:
  *
- * 0..nr_payload_regs-1: fixed function setup (including bary coordinates).
- * nr_payload_regs..nr_payload_regs+curb_read_lengh-1: uniform data
- * nr_payload_regs+curb_read_lengh..first_non_payload_grf-1: setup coefficients.
+ * 0..payload.num_regs-1: fixed function setup (including bary coordinates).
+ * payload.num_regs..payload.num_regs+curb_read_lengh-1: uniform data
+ * payload.num_regs+curb_read_lengh..first_non_payload_grf-1: setup coefficients.
  *
  * And we have payload_node_count nodes covering these registers in order
  * (note that in SIMD16, a node is two registers).
