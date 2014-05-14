@@ -181,8 +181,10 @@ bool do_wm_prog(struct brw_context *brw,
                                            &fp->program);
 
    program = brw_wm_fs_emit(brw, c, &fp->program, prog, &program_size);
-   if (program == NULL)
+   if (program == NULL) {
+      ralloc_free(c);
       return false;
+   }
 
    if (c->prog_data.total_scratch) {
       brw_get_scratch_bo(brw, &brw->wm.base.scratch_bo,
