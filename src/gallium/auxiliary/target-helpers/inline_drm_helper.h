@@ -1,0 +1,206 @@
+#ifndef INLINE_DRM_HELPER_H
+#define INLINE_DRM_HELPER_H
+
+#include "state_tracker/drm_driver.h"
+#include "target-helpers/inline_debug_helper.h"
+#include "loader.h"
+
+#if GALLIUM_I915
+#include "i915/drm/i915_drm_public.h"
+#include "i915/i915_public.h"
+#endif
+
+#if GALLIUM_ILO
+#include "intel/intel_winsys.h"
+#include "ilo/ilo_public.h"
+#endif
+
+#if GALLIUM_NOUVEAU
+#include "nouveau/drm/nouveau_drm_public.h"
+#endif
+
+#if GALLIUM_R300
+#include "radeon/drm/radeon_winsys.h"
+#include "radeon/drm/radeon_drm_public.h"
+#include "r300/r300_public.h"
+#endif
+
+#if GALLIUM_R600
+#include "radeon/drm/radeon_winsys.h"
+#include "radeon/drm/radeon_drm_public.h"
+#include "r600/r600_public.h"
+#endif
+
+#if GALLIUM_RADEONSI
+#include "radeon/drm/radeon_winsys.h"
+#include "radeon/drm/radeon_drm_public.h"
+#include "radeonsi/si_public.h"
+#endif
+
+#if GALLIUM_VMWGFX
+#include "svga/drm/svga_drm_public.h"
+#include "svga/svga_public.h"
+#endif
+
+#if GALLIUM_FREEDRENO
+#include "freedreno/drm/freedreno_drm_public.h"
+#endif
+
+static char* driver_name = NULL;
+
+/* XXX: We need to teardown the winsys if *screen_create() fails. */
+
+#if defined(GALLIUM_I915)
+static struct pipe_screen *
+pipe_i915_create_screen(int fd)
+{
+   struct i915_winsys *iws;
+   struct pipe_screen *screen;
+
+   iws = i915_drm_winsys_create(fd);
+   if (!iws)
+      return NULL;
+
+   screen = i915_screen_create(iws);
+   return screen ? debug_screen_wrap(screen) : NULL;
+}
+#endif
+
+#if defined(GALLIUM_ILO)
+static struct pipe_screen *
+pipe_ilo_create_screen(int fd)
+{
+   struct intel_winsys *iws;
+   struct pipe_screen *screen;
+
+   iws = intel_winsys_create_for_fd(fd);
+   if (!iws)
+      return NULL;
+
+   screen = ilo_screen_create(iws);
+   return screen ? debug_screen_wrap(screen) : NULL;
+}
+#endif
+
+#if defined(GALLIUM_NOUVEAU)
+static struct pipe_screen *
+pipe_nouveau_create_screen(int fd)
+{
+   struct pipe_screen *screen;
+
+   screen = nouveau_drm_screen_create(fd);
+   return screen ? debug_screen_wrap(screen) : NULL;
+}
+#endif
+
+#if defined(GALLIUM_R300)
+static struct pipe_screen *
+pipe_r300_create_screen(int fd)
+{
+   struct radeon_winsys *rw;
+
+   rw = radeon_drm_winsys_create(fd, r300_screen_create);
+   return rw ? debug_screen_wrap(rw->screen) : NULL;
+}
+#endif
+
+#if defined(GALLIUM_R600)
+static struct pipe_screen *
+pipe_r600_create_screen(int fd)
+{
+   struct radeon_winsys *rw;
+
+   rw = radeon_drm_winsys_create(fd, r600_screen_create);
+   return rw ? debug_screen_wrap(rw->screen) : NULL;
+}
+#endif
+
+#if defined(GALLIUM_RADEONSI)
+static struct pipe_screen *
+pipe_radeonsi_create_screen(int fd)
+{
+   struct radeon_winsys *rw;
+
+   rw = radeon_drm_winsys_create(fd, radeonsi_screen_create);
+   return rw ? debug_screen_wrap(rw->screen) : NULL;
+}
+#endif
+
+#if defined(GALLIUM_VMWGFX)
+static struct pipe_screen *
+pipe_vmwgfx_create_screen(int fd)
+{
+   struct svga_winsys_screen *sws;
+   struct pipe_screen *screen;
+
+   sws = svga_drm_winsys_screen_create(fd);
+   if (!sws)
+      return NULL;
+
+   screen = svga_screen_create(sws);
+   return screen ? debug_screen_wrap(screen) : NULL;
+}
+#endif
+
+#if defined(GALLIUM_FREEDRENO)
+static struct pipe_screen *
+pipe_freedreno_create_screen(int fd)
+{
+   struct pipe_screen *screen;
+
+   screen = fd_drm_screen_create(fd);
+   return screen ? debug_screen_wrap(screen) : NULL;
+}
+#endif
+
+inline struct pipe_screen *
+dd_create_screen(int fd)
+{
+   driver_name = loader_get_driver_for_fd(fd, _LOADER_GALLIUM);
+   if (!driver_name)
+      return NULL;
+
+#if defined(GALLIUM_I915)
+   if (strcmp(driver_name, "i915") == 0)
+      return pipe_i915_create_screen(fd);
+   else
+#endif
+#if defined(GALLIUM_ILO)
+   if (strcmp(driver_name, "i965") == 0)
+      return pipe_ilo_create_screen(fd);
+   else
+#endif
+#if defined(GALLIUM_NOUVEAU)
+   if (strcmp(driver_name, "nouveau") == 0)
+      return pipe_nouveau_create_screen(fd);
+   else
+#endif
+#if defined(GALLIUM_R300)
+   if (strcmp(driver_name, "r300") == 0)
+      return pipe_r300_create_screen(fd);
+   else
+#endif
+#if defined(GALLIUM_R600)
+   if (strcmp(driver_name, "r600") == 0)
+      return pipe_r600_create_screen(fd);
+   else
+#endif
+#if defined(GALLIUM_RADEONSI)
+   if (strcmp(driver_name, "radeonsi") == 0)
+      return pipe_radeonsi_create_screen(fd);
+   else
+#endif
+#if defined(GALLIUM_VMWGFX)
+   if (strcmp(driver_name, "vmwgfx") == 0)
+      return pipe_vmwgfx_create_screen(fd);
+   else
+#endif
+#if defined(GALLIUM_FREEDRENO)
+   if ((strcmp(driver_name, "kgsl") == 0) || (strcmp(driver_name, "msm") == 0))
+      return pipe_freedreno_create_screen(fd);
+   else
+#endif
+      return NULL;
+}
+
+#endif /* INLINE_DRM_HELPER_H */
