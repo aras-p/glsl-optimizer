@@ -42,7 +42,7 @@ fs_generator::fs_generator(struct brw_context *brw,
                            struct gl_fragment_program *fp,
                            bool dual_source_output)
 
-   : brw(brw), c(c), prog(prog), fp(fp), dual_source_output(dual_source_output)
+   : brw(brw), c(c), key(&c->key), prog(prog), fp(fp), dual_source_output(dual_source_output)
 {
    ctx = &brw->ctx;
    prog_data = &c->prog_data;
@@ -111,7 +111,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
       /* On HSW, the GPU will use the predicate on SENDC, unless the header is
        * present.
        */
-      if ((fp && fp->UsesKill) || c->key.alpha_test_func) {
+      if ((fp && fp->UsesKill) || key->alpha_test_func) {
          struct brw_reg pixel_mask;
 
          if (brw->gen >= 6)
@@ -129,7 +129,7 @@ fs_generator::generate_fb_write(fs_inst *inst)
 		 retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
 	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 
-         if (inst->target > 0 && c->key.replicate_alpha) {
+         if (inst->target > 0 && key->replicate_alpha) {
             /* Set "Source0 Alpha Present to RenderTarget" bit in message
              * header.
              */
@@ -648,7 +648,7 @@ fs_generator::generate_ddx(fs_inst *inst, struct brw_reg dst, struct brw_reg src
 {
    unsigned vstride, width;
 
-   if (c->key.high_quality_derivatives) {
+   if (key->high_quality_derivatives) {
       /* produce accurate derivatives */
       vstride = BRW_VERTICAL_STRIDE_2;
       width = BRW_WIDTH_2;
@@ -682,7 +682,7 @@ void
 fs_generator::generate_ddy(fs_inst *inst, struct brw_reg dst, struct brw_reg src,
                          bool negate_value)
 {
-   if (c->key.high_quality_derivatives) {
+   if (key->high_quality_derivatives) {
       /* From the Ivy Bridge PRM, volume 4 part 3, section 3.3.9 (Register
        * Region Restrictions):
        *
@@ -1702,10 +1702,10 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
 	 break;
       case FS_OPCODE_DDY:
          /* Make sure fp->UsesDFdy flag got set (otherwise there's no
-          * guarantee that c->key.render_to_fbo is set).
+          * guarantee that key->render_to_fbo is set).
           */
          assert(fp->UsesDFdy);
-	 generate_ddy(inst, dst, src[0], c->key.render_to_fbo);
+	 generate_ddy(inst, dst, src[0], key->render_to_fbo);
 	 break;
 
       case SHADER_OPCODE_GEN4_SCRATCH_WRITE:

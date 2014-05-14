@@ -40,8 +40,9 @@ gen8_fs_generator::gen8_fs_generator(struct brw_context *brw,
                                      struct gl_shader_program *shader_prog,
                                      struct gl_fragment_program *fp,
                                      bool dual_source_output)
-   : gen8_generator(brw, shader_prog, fp ? &fp->Base : NULL, c), c(c), fp(fp),
-     dual_source_output(dual_source_output)
+   : gen8_generator(brw, shader_prog, fp ? &fp->Base : NULL, c),
+     c(c), key(&c->key),
+     fp(fp), dual_source_output(dual_source_output)
 {
    prog_data = &c->prog_data;
 }
@@ -72,7 +73,7 @@ gen8_fs_generator::generate_fb_write(fs_inst *ir)
          MOV_RAW(brw_message_reg(ir->base_mrf), brw_vec8_grf(0, 0));
       gen8_set_exec_size(mov, BRW_EXECUTE_16);
 
-      if (ir->target > 0 && c->key.replicate_alpha) {
+      if (ir->target > 0 && key->replicate_alpha) {
          /* Set "Source0 Alpha Present to RenderTarget" bit in the header. */
          OR(vec1(retype(brw_message_reg(ir->base_mrf), BRW_REGISTER_TYPE_UD)),
             vec1(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD)),
@@ -116,7 +117,7 @@ gen8_fs_generator::generate_fb_write(fs_inst *ir)
    /* "Last Render Target Select" must be set on all writes to the last of
     * the render targets (if using MRT), or always for a single RT scenario.
     */
-   if ((ir->target == c->key.nr_color_regions - 1) || !c->key.nr_color_regions)
+   if ((ir->target == key->nr_color_regions - 1) || !key->nr_color_regions)
       msg_control |= (1 << 4); /* Last Render Target Select */
 
    uint32_t surf_index =
@@ -330,7 +331,7 @@ gen8_fs_generator::generate_ddx(fs_inst *inst,
 {
    unsigned vstride, width;
 
-   if (c->key.high_quality_derivatives) {
+   if (key->high_quality_derivatives) {
       /* Produce accurate derivatives. */
       vstride = BRW_VERTICAL_STRIDE_2;
       width = BRW_WIDTH_2;
@@ -370,7 +371,7 @@ gen8_fs_generator::generate_ddy(fs_inst *inst,
    unsigned src1_swizzle;
    unsigned src1_subnr;
 
-   if (c->key.high_quality_derivatives) {
+   if (key->high_quality_derivatives) {
       /* Produce accurate derivatives. */
       hstride = BRW_HORIZONTAL_STRIDE_1;
       src0_swizzle = BRW_SWIZZLE_XYXY;
@@ -1205,10 +1206,10 @@ gen8_fs_generator::generate_code(exec_list *instructions)
          break;
       case FS_OPCODE_DDY:
          /* Make sure fp->UsesDFdy flag got set (otherwise there's no
-          * guarantee that c->key.render_to_fbo is set).
+          * guarantee that key->render_to_fbo is set).
           */
          assert(fp->UsesDFdy);
-         generate_ddy(ir, dst, src[0], c->key.render_to_fbo);
+         generate_ddy(ir, dst, src[0], key->render_to_fbo);
          break;
 
       case SHADER_OPCODE_GEN4_SCRATCH_WRITE:

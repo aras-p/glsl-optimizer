@@ -700,6 +700,7 @@ private:
 
    struct brw_compile *p;
    struct brw_wm_compile *c;
+   const struct brw_wm_prog_key *const key;
    struct brw_wm_prog_data *prog_data;
 
    struct gl_shader_program *prog;
@@ -785,6 +786,7 @@ private:
    void patch_discard_jumps_to_fb_writes();
 
    struct brw_wm_compile *c;
+   const struct brw_wm_prog_key *const key;
    struct brw_wm_prog_data *prog_data;
    const struct gl_fragment_program *fp;
 
