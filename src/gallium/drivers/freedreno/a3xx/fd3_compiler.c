@@ -2138,6 +2138,8 @@ decl_in(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 
 		DBG("decl in -> r%d", i);
 
+		compile_assert(ctx, n < ARRAY_SIZE(so->inputs));
+
 		so->inputs[n].semantic = decl_semantic(&decl->Semantic);
 		so->inputs[n].compmask = (1 << ncomp) - 1;
 		so->inputs[n].regid = r;
@@ -2226,6 +2228,8 @@ decl_out(struct fd3_compile_context *ctx, struct tgsi_full_declaration *decl)
 		unsigned ncomp, j;
 
 		ncomp = 4;
+
+		compile_assert(ctx, n < ARRAY_SIZE(so->outputs));
 
 		so->outputs[n].semantic = decl_semantic(&decl->Semantic);
 		so->outputs[n].regid = regid(i, comp);
@@ -2350,6 +2354,7 @@ compile_instructions(struct fd3_compile_context *ctx)
 			struct tgsi_full_immediate *imm =
 					&ctx->parser.FullToken.FullImmediate;
 			unsigned n = ctx->so->immediates_count++;
+			compile_assert(ctx, n < ARRAY_SIZE(ctx->so->immediates));
 			memcpy(ctx->so->immediates[n].val, imm->u, 16);
 			break;
 		}
