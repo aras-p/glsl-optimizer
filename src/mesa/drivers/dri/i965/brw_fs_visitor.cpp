@@ -2966,7 +2966,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    this->c = c;
    this->prog_data = &c->prog_data;
    this->fp = fp;
-   this->mem_ctx = ralloc_context(NULL);
+   this->mem_ctx = c;
    this->failed = false;
    this->simd16_unsupported = false;
    this->no16_msg = NULL;
@@ -3009,6 +3009,5 @@ fs_visitor::fs_visitor(struct brw_context *brw,
 
 fs_visitor::~fs_visitor()
 {
-   ralloc_free(this->mem_ctx);
    hash_table_dtor(this->variable_ht);
 }
