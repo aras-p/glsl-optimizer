@@ -494,6 +494,7 @@ public:
 
    struct gl_fragment_program *fp;
    struct brw_wm_compile *c;
+   struct brw_wm_prog_data *prog_data;
    unsigned int sanity_param_count;
 
    int *param_size;

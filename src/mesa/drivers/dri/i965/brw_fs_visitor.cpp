@@ -751,7 +751,7 @@ fs_visitor::visit(ir_expression *ir)
        */
       ir_constant *uniform_block = ir->operands[0]->as_constant();
       ir_constant *const_offset = ir->operands[1]->as_constant();
-      fs_reg surf_index = fs_reg(c->prog_data.base.binding_table.ubo_start +
+      fs_reg surf_index = fs_reg(prog_data->base.binding_table.ubo_start +
                                  uniform_block->value.u[0]);
       if (const_offset) {
          fs_reg packed_consts = fs_reg(this, glsl_type::float_type);
@@ -2277,7 +2277,7 @@ fs_visitor::visit_atomic_counter_intrinsic(ir_call *ir)
    ir_dereference *deref = static_cast<ir_dereference *>(
       ir->actual_parameters.get_head());
    ir_variable *location = deref->variable_referenced();
-   unsigned surf_index = (c->prog_data.base.binding_table.abo_start +
+   unsigned surf_index = (prog_data->base.binding_table.abo_start +
                           location->data.atomic.buffer_index);
 
    /* Calculate the surface offset */
@@ -2506,10 +2506,10 @@ fs_visitor::emit_dummy_fs()
 struct brw_reg
 fs_visitor::interp_reg(int location, int channel)
 {
-   int regnr = c->prog_data.urb_setup[location] * 2 + channel / 2;
+   int regnr = prog_data->urb_setup[location] * 2 + channel / 2;
    int stride = (channel & 1) * 4;
 
-   assert(c->prog_data.urb_setup[location] != -1);
+   assert(prog_data->urb_setup[location] != -1);
 
    return brw_vec1_grf(regnr, stride);
 }
@@ -2775,9 +2775,9 @@ fs_visitor::emit_fb_writes()
       pop_force_uncompressed();
    }
 
-   c->prog_data.uses_omask =
+   prog_data->uses_omask =
       fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_SAMPLE_MASK);
-   if(c->prog_data.uses_omask) {
+   if (prog_data->uses_omask) {
       this->current_annotation = "FB write oMask";
       assert(this->sample_mask.file != BAD_FILE);
       /* Hand over gl_SampleMask. Only lower 16 bits are relevant. */
@@ -2856,7 +2856,7 @@ fs_visitor::emit_fb_writes()
          inst->flag_subreg = 1;
       }
 
-      c->prog_data.dual_src_blend = true;
+      prog_data->dual_src_blend = true;
       this->current_annotation = NULL;
       return;
    }
@@ -2963,6 +2963,7 @@ fs_visitor::fs_visitor(struct brw_context *brw,
      dispatch_width(dispatch_width)
 {
    this->c = c;
+   this->prog_data = &c->prog_data;
    this->fp = fp;
    this->mem_ctx = ralloc_context(NULL);
    this->failed = false;

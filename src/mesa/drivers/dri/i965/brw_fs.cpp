@@ -1136,7 +1136,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
    int location = ir->data.location;
    for (unsigned int i = 0; i < array_elements; i++) {
       for (unsigned int j = 0; j < type->matrix_columns; j++) {
-	 if (c->prog_data.urb_setup[location] == -1) {
+	 if (prog_data->urb_setup[location] == -1) {
 	    /* If there's no incoming setup data for this slot, don't
 	     * emit interpolation for it.
 	     */
@@ -1447,12 +1447,12 @@ void
 fs_visitor::assign_curb_setup()
 {
    if (dispatch_width == 8) {
-      c->prog_data.first_curbe_grf = payload.num_regs;
+      prog_data->first_curbe_grf = payload.num_regs;
    } else {
-      c->prog_data.first_curbe_grf_16 = payload.num_regs;
+      prog_data->first_curbe_grf_16 = payload.num_regs;
    }
 
-   c->prog_data.curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
+   prog_data->curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
 
    /* Map the offsets in the UNIFORM file to fixed HW regs. */
    foreach_list(node, &this->instructions) {
@@ -1490,7 +1490,7 @@ void
 fs_visitor::calculate_urb_setup()
 {
    for (unsigned int i = 0; i < VARYING_SLOT_MAX; i++) {
-      c->prog_data.urb_setup[i] = -1;
+      prog_data->urb_setup[i] = -1;
    }
 
    int urb_next = 0;
@@ -1510,7 +1510,7 @@ fs_visitor::calculate_urb_setup()
          for (unsigned int i = 0; i < VARYING_SLOT_MAX; i++) {
             if (fp->Base.InputsRead & BRW_FS_VARYING_INPUT_MASK &
                 BITFIELD64_BIT(i)) {
-               c->prog_data.urb_setup[i] = urb_next++;
+               prog_data->urb_setup[i] = urb_next++;
             }
          }
       } else {
@@ -1533,7 +1533,7 @@ fs_visitor::calculate_urb_setup()
             if (varying != BRW_VARYING_SLOT_COUNT &&
                 (fp->Base.InputsRead & BRW_FS_VARYING_INPUT_MASK &
                  BITFIELD64_BIT(varying))) {
-               c->prog_data.urb_setup[varying] = slot - first_slot;
+               prog_data->urb_setup[varying] = slot - first_slot;
             }
          }
          urb_next = prev_stage_vue_map.num_slots - first_slot;
@@ -1553,7 +1553,7 @@ fs_visitor::calculate_urb_setup()
 	     * incremented, mapped or not.
 	     */
 	    if (_mesa_varying_slot_in_fs((gl_varying_slot) i))
-	       c->prog_data.urb_setup[i] = urb_next;
+	       prog_data->urb_setup[i] = urb_next;
             urb_next++;
 	 }
       }
@@ -1565,16 +1565,16 @@ fs_visitor::calculate_urb_setup()
        * See compile_sf_prog() for more info.
        */
       if (fp->Base.InputsRead & BITFIELD64_BIT(VARYING_SLOT_PNTC))
-         c->prog_data.urb_setup[VARYING_SLOT_PNTC] = urb_next++;
+         prog_data->urb_setup[VARYING_SLOT_PNTC] = urb_next++;
    }
 
-   c->prog_data.num_varying_inputs = urb_next;
+   prog_data->num_varying_inputs = urb_next;
 }
 
 void
 fs_visitor::assign_urb_setup()
 {
-   int urb_start = payload.num_regs + c->prog_data.curb_read_length;
+   int urb_start = payload.num_regs + prog_data->curb_read_length;
 
    /* Offset all the urb_setup[] index by the actual position of the
     * setup regs, now that the location of the constants has been chosen.
@@ -1595,7 +1595,7 @@ fs_visitor::assign_urb_setup()
 
    /* Each attribute is 4 setup channels, each of which is half a reg. */
    this->first_non_payload_grf =
-      urb_start + c->prog_data.num_varying_inputs * 2;
+      urb_start + prog_data->num_varying_inputs * 2;
 }
 
 /**
@@ -2797,7 +2797,7 @@ fs_visitor::setup_payload_gen6()
 {
    bool uses_depth =
       (fp->Base.InputsRead & (1 << VARYING_SLOT_POS)) != 0;
-   unsigned barycentric_interp_modes = c->prog_data.barycentric_interp_modes;
+   unsigned barycentric_interp_modes = prog_data->barycentric_interp_modes;
 
    assert(brw->gen >= 6);
 
@@ -2841,9 +2841,9 @@ fs_visitor::setup_payload_gen6()
       }
    }
 
-   c->prog_data.uses_pos_offset = c->key.compute_pos_offset;
+   prog_data->uses_pos_offset = c->key.compute_pos_offset;
    /* R31: MSAA position offsets. */
-   if (c->prog_data.uses_pos_offset) {
+   if (prog_data->uses_pos_offset) {
       payload.sample_pos_reg = payload.num_regs;
       payload.num_regs++;
    }
@@ -2875,7 +2875,7 @@ fs_visitor::assign_binding_table_offsets()
    /* If there are no color regions, we still perform an FB write to a null
     * renderbuffer, which we place at surface index 0.
     */
-   c->prog_data.binding_table.render_target_start = next_binding_table_offset;
+   prog_data->binding_table.render_target_start = next_binding_table_offset;
    next_binding_table_offset += MAX2(c->key.nr_color_regions, 1);
 
    assign_common_binding_table_offsets(next_binding_table_offset);
@@ -3084,13 +3084,13 @@ fs_visitor::run()
       schedule_instructions(SCHEDULE_POST);
 
    if (last_scratch > 0) {
-      c->prog_data.total_scratch = brw_get_scratch_size(last_scratch);
+      prog_data->total_scratch = brw_get_scratch_size(last_scratch);
    }
 
    if (dispatch_width == 8)
-      c->prog_data.reg_blocks = brw_register_blocks(grf_used);
+      prog_data->reg_blocks = brw_register_blocks(grf_used);
    else
-      c->prog_data.reg_blocks_16 = brw_register_blocks(grf_used);
+      prog_data->reg_blocks_16 = brw_register_blocks(grf_used);
 
    /* If any state parameters were appended, then ParameterValues could have
     * been realloced, in which case the driver uniform storage set up by
