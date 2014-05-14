@@ -147,7 +147,7 @@ bool do_wm_prog(struct brw_context *brw,
 {
    struct gl_context *ctx = &brw->ctx;
    void *mem_ctx = ralloc_context(NULL);
-   struct brw_wm_compile *c;
+   struct brw_wm_prog_data prog_data;
    const GLuint *program;
    struct gl_shader *fs = NULL;
    GLuint program_size;
@@ -155,7 +155,7 @@ bool do_wm_prog(struct brw_context *brw,
    if (prog)
       fs = prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
-   c = rzalloc(mem_ctx, struct brw_wm_compile);
+   memset(&prog_data, 0, sizeof(prog_data));
 
    /* Allocate the references to the uniforms that will end up in the
     * prog_data associated with the compiled program, and which will be freed
@@ -169,26 +169,26 @@ bool do_wm_prog(struct brw_context *brw,
    }
    /* The backend also sometimes adds params for texture size. */
    param_count += 2 * ctx->Const.Program[MESA_SHADER_FRAGMENT].MaxTextureImageUnits;
-   c->prog_data.base.param = rzalloc_array(NULL, const float *, param_count);
-   c->prog_data.base.pull_param =
-      rzalloc_array(NULL, const float *, param_count);
-   c->prog_data.base.nr_params = param_count;
+   prog_data.base.param = rzalloc_array(NULL, const float *, param_count);
+   prog_data.base.pull_param =
+   rzalloc_array(NULL, const float *, param_count);
+   prog_data.base.nr_params = param_count;
 
-   c->prog_data.barycentric_interp_modes =
+   prog_data.barycentric_interp_modes =
       brw_compute_barycentric_interp_modes(brw, key->flat_shade,
                                            key->persample_shading,
                                            &fp->program);
 
-   program = brw_wm_fs_emit(brw, mem_ctx, key, &c->prog_data,
+   program = brw_wm_fs_emit(brw, mem_ctx, key, &prog_data,
                             &fp->program, prog, &program_size);
    if (program == NULL) {
       ralloc_free(mem_ctx);
       return false;
    }
 
-   if (c->prog_data.total_scratch) {
+   if (prog_data.total_scratch) {
       brw_get_scratch_bo(brw, &brw->wm.base.scratch_bo,
-			 c->prog_data.total_scratch * brw->max_wm_threads);
+			 prog_data.total_scratch * brw->max_wm_threads);
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM))
@@ -197,7 +197,7 @@ bool do_wm_prog(struct brw_context *brw,
    brw_upload_cache(&brw->cache, BRW_WM_PROG,
 		    key, sizeof(struct brw_wm_prog_key),
 		    program, program_size,
-		    &c->prog_data, sizeof(c->prog_data),
+		    &prog_data, sizeof(prog_data),
 		    &brw->wm.base.prog_offset, &brw->wm.prog_data);
 
    ralloc_free(mem_ctx);
