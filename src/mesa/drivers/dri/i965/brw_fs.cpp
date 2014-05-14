@@ -1337,7 +1337,7 @@ fs_visitor::emit_samplemaskin_setup(ir_variable *ir)
    assert(brw->gen >= 7);
    this->current_annotation = "compute gl_SampleMaskIn";
    fs_reg *reg = new(this->mem_ctx) fs_reg(this, ir->type);
-   emit(MOV(*reg, fs_reg(retype(brw_vec8_grf(c->sample_mask_reg, 0), BRW_REGISTER_TYPE_D))));
+   emit(MOV(*reg, fs_reg(retype(brw_vec8_grf(c->sample_mask_in_reg, 0), BRW_REGISTER_TYPE_D))));
    return reg;
 }
 
@@ -2861,7 +2861,7 @@ fs_visitor::setup_payload_gen6()
    /* R32: MSAA input coverage mask */
    if (fp->Base.SystemValuesRead & SYSTEM_BIT_SAMPLE_MASK_IN) {
       assert(brw->gen >= 7);
-      c->sample_mask_reg = c->nr_payload_regs;
+      c->sample_mask_in_reg = c->nr_payload_regs;
       c->nr_payload_regs++;
       if (dispatch_width == 16) {
          /* R33: input coverage mask if not SIMD8. */

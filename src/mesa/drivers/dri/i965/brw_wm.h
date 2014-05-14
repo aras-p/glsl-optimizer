@@ -89,7 +89,7 @@ struct brw_wm_compile {
    uint8_t aa_dest_stencil_reg;
    uint8_t dest_depth_reg;
    uint8_t sample_pos_reg;
-   uint8_t sample_mask_reg;
+   uint8_t sample_mask_in_reg;
    uint8_t barycentric_coord_reg[BRW_WM_BARYCENTRIC_INTERP_MODE_COUNT];
    uint8_t nr_payload_regs;
    GLuint source_depth_to_render_target:1;
