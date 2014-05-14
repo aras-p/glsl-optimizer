@@ -829,15 +829,6 @@ static INLINE uint32_t S_FIXED(float value, uint32_t frac_bits)
 }
 #define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
 
-static inline unsigned r600_tex_aniso_filter(unsigned filter)
-{
-	if (filter <= 1)   return 0;
-	if (filter <= 2)   return 1;
-	if (filter <= 4)   return 2;
-	if (filter <= 8)   return 3;
-	 /* else */        return 4;
-}
-
 /* 12.4 fixed-point */
 static INLINE unsigned r600_pack_float_12p4(float x)
 {

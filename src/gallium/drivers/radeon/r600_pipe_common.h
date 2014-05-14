@@ -489,6 +489,15 @@ r600_resource_reference(struct r600_resource **ptr, struct r600_resource *res)
 				(struct pipe_resource *)res);
 }
 
+static inline unsigned r600_tex_aniso_filter(unsigned filter)
+{
+	if (filter <= 1)   return 0;
+	if (filter <= 2)   return 1;
+	if (filter <= 4)   return 2;
+	if (filter <= 8)   return 3;
+	 /* else */        return 4;
+}
+
 #define R600_ERR(fmt, args...) \
 	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
 
