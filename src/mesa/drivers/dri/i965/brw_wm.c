@@ -181,7 +181,8 @@ bool do_wm_prog(struct brw_context *brw,
                                            c->key.persample_shading,
                                            &fp->program);
 
-   program = brw_wm_fs_emit(brw, mem_ctx, c, &fp->program, prog, &program_size);
+   program = brw_wm_fs_emit(brw, mem_ctx, &c->key, &c->prog_data,
+                            &fp->program, prog, &program_size);
    if (program == NULL) {
       ralloc_free(mem_ctx);
       return false;

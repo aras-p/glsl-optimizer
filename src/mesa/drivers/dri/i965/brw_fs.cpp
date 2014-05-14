@@ -3105,7 +3105,8 @@ fs_visitor::run()
 const unsigned *
 brw_wm_fs_emit(struct brw_context *brw,
                void *mem_ctx,
-               struct brw_wm_compile *c,
+               const struct brw_wm_prog_key *key,
+               struct brw_wm_prog_data *prog_data,
                struct gl_fragment_program *fp,
                struct gl_shader_program *prog,
                unsigned *final_assembly_size)
@@ -3128,7 +3129,7 @@ brw_wm_fs_emit(struct brw_context *brw,
 
    /* Now the main event: Visit the shader IR and generate our FS IR for it.
     */
-   fs_visitor v(brw, mem_ctx, c, prog, fp, 8);
+   fs_visitor v(brw, mem_ctx, key, prog_data, prog, fp, 8);
    if (!v.run()) {
       if (prog) {
          prog->LinkStatus = false;
@@ -3142,7 +3143,7 @@ brw_wm_fs_emit(struct brw_context *brw,
    }
 
    exec_list *simd16_instructions = NULL;
-   fs_visitor v2(brw, mem_ctx, c, prog, fp, 16);
+   fs_visitor v2(brw, mem_ctx, key, prog_data, prog, fp, 16);
    if (brw->gen >= 5 && likely(!(INTEL_DEBUG & DEBUG_NO16))) {
       if (!v.simd16_unsupported) {
          /* Try a SIMD16 compile */
@@ -3161,18 +3162,18 @@ brw_wm_fs_emit(struct brw_context *brw,
 
    const unsigned *assembly = NULL;
    if (brw->gen >= 8) {
-      gen8_fs_generator g(brw, mem_ctx, c, prog, fp, v.do_dual_src);
+      gen8_fs_generator g(brw, mem_ctx, key, prog_data, prog, fp, v.do_dual_src);
       assembly = g.generate_assembly(&v.instructions, simd16_instructions,
                                      final_assembly_size);
    } else {
-      fs_generator g(brw, mem_ctx, c, prog, fp, v.do_dual_src);
+      fs_generator g(brw, mem_ctx, key, prog_data, prog, fp, v.do_dual_src);
       assembly = g.generate_assembly(&v.instructions, simd16_instructions,
                                      final_assembly_size);
    }
 
    if (unlikely(brw->perf_debug) && shader) {
       if (shader->compiled_once)
-         brw_wm_debug_recompile(brw, prog, &c->key);
+         brw_wm_debug_recompile(brw, prog, key);
       shader->compiled_once = true;
 
       if (start_busy && !drm_intel_bo_busy(brw->batch.last_bo)) {

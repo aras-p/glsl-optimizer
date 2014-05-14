@@ -37,15 +37,15 @@ extern "C" {
 
 gen8_fs_generator::gen8_fs_generator(struct brw_context *brw,
                                      void *mem_ctx,
-                                     struct brw_wm_compile *c,
+                                     const struct brw_wm_prog_key *key,
+                                     struct brw_wm_prog_data *prog_data,
                                      struct gl_shader_program *shader_prog,
                                      struct gl_fragment_program *fp,
                                      bool dual_source_output)
    : gen8_generator(brw, shader_prog, fp ? &fp->Base : NULL, mem_ctx),
-     c(c), key(&c->key),
+     key(key), prog_data(prog_data),
      fp(fp), dual_source_output(dual_source_output)
 {
-   prog_data = &c->prog_data;
 }
 
 gen8_fs_generator::~gen8_fs_generator()

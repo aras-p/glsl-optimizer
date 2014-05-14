@@ -251,7 +251,8 @@ public:
 
    fs_visitor(struct brw_context *brw,
               void *mem_ctx,
-              struct brw_wm_compile *c,
+              const struct brw_wm_prog_key *key,
+              struct brw_wm_prog_data *prog_data,
               struct gl_shader_program *shader_prog,
               struct gl_fragment_program *fp,
               unsigned dispatch_width);
@@ -494,7 +495,6 @@ public:
    void visit_atomic_counter_intrinsic(ir_call *ir);
 
    struct gl_fragment_program *fp;
-   struct brw_wm_compile *c;
    const struct brw_wm_prog_key *const key;
    struct brw_wm_prog_data *prog_data;
    unsigned int sanity_param_count;
@@ -598,7 +598,8 @@ class fs_generator
 public:
    fs_generator(struct brw_context *brw,
                 void *mem_ctx,
-                struct brw_wm_compile *c,
+                const struct brw_wm_prog_key *key,
+                struct brw_wm_prog_data *prog_data,
                 struct gl_shader_program *prog,
                 struct gl_fragment_program *fp,
                 bool dual_source_output);
@@ -701,7 +702,6 @@ private:
    struct gl_context *ctx;
 
    struct brw_compile *p;
-   struct brw_wm_compile *c;
    const struct brw_wm_prog_key *const key;
    struct brw_wm_prog_data *prog_data;
 
@@ -725,7 +725,8 @@ class gen8_fs_generator : public gen8_generator
 public:
    gen8_fs_generator(struct brw_context *brw,
                      void *mem_ctx,
-                     struct brw_wm_compile *c,
+                     const struct brw_wm_prog_key *key,
+                     struct brw_wm_prog_data *prog_data,
                      struct gl_shader_program *prog,
                      struct gl_fragment_program *fp,
                      bool dual_source_output);
@@ -788,7 +789,6 @@ private:
 
    void patch_discard_jumps_to_fb_writes();
 
-   struct brw_wm_compile *c;
    const struct brw_wm_prog_key *const key;
    struct brw_wm_prog_data *prog_data;
    const struct gl_fragment_program *fp;

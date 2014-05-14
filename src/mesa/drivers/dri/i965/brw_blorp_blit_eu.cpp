@@ -26,8 +26,11 @@
 #include "brw_blorp.h"
 
 brw_blorp_eu_emitter::brw_blorp_eu_emitter(struct brw_context *brw)
-   : mem_ctx(ralloc_context(NULL)), c(rzalloc(mem_ctx, struct brw_wm_compile)),
-     generator(brw, mem_ctx, c, NULL, NULL, false)
+   : mem_ctx(ralloc_context(NULL)),
+     generator(brw, mem_ctx,
+               rzalloc(mem_ctx, struct brw_wm_prog_key),
+               rzalloc(mem_ctx, struct brw_wm_prog_data),
+               NULL, NULL, false)
 {
 }
 

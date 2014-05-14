@@ -38,15 +38,16 @@ extern "C" {
 
 fs_generator::fs_generator(struct brw_context *brw,
                            void *mem_ctx,
-                           struct brw_wm_compile *c,
+                           const struct brw_wm_prog_key *key,
+                           struct brw_wm_prog_data *prog_data,
                            struct gl_shader_program *prog,
                            struct gl_fragment_program *fp,
                            bool dual_source_output)
 
-   : brw(brw), c(c), key(&c->key), prog(prog), fp(fp), dual_source_output(dual_source_output), mem_ctx(mem_ctx)
+   : brw(brw), key(key), prog_data(prog_data), prog(prog), fp(fp),
+     dual_source_output(dual_source_output), mem_ctx(mem_ctx)
 {
    ctx = &brw->ctx;
-   prog_data = &c->prog_data;
 
    p = rzalloc(mem_ctx, struct brw_compile);
    brw_init_compile(brw, p, mem_ctx);

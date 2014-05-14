@@ -2955,17 +2955,16 @@ fs_visitor::resolve_bool_comparison(ir_rvalue *rvalue, fs_reg *reg)
 
 fs_visitor::fs_visitor(struct brw_context *brw,
                        void *mem_ctx,
-                       struct brw_wm_compile *c,
+                       const struct brw_wm_prog_key *key,
+                       struct brw_wm_prog_data *prog_data,
                        struct gl_shader_program *shader_prog,
                        struct gl_fragment_program *fp,
                        unsigned dispatch_width)
-   : backend_visitor(brw, shader_prog, &fp->Base, &c->prog_data.base,
+   : backend_visitor(brw, shader_prog, &fp->Base, &prog_data->base,
                      MESA_SHADER_FRAGMENT),
-     key(&c->key),
+     key(key), prog_data(prog_data),
      dispatch_width(dispatch_width)
 {
-   this->c = c;
-   this->prog_data = &c->prog_data;
    this->fp = fp;
    this->mem_ctx = mem_ctx;
    this->failed = false;
