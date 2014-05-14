@@ -3093,6 +3093,10 @@ fs_visitor::run()
    if (!allocated_without_spills)
       schedule_instructions(SCHEDULE_POST);
 
+   if (c->last_scratch > 0) {
+      c->prog_data.total_scratch = brw_get_scratch_size(c->last_scratch);
+   }
+
    if (dispatch_width == 8)
       c->prog_data.reg_blocks = brw_register_blocks(grf_used);
    else

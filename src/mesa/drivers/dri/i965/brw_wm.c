@@ -184,10 +184,7 @@ bool do_wm_prog(struct brw_context *brw,
    if (program == NULL)
       return false;
 
-   /* Scratch space is used for register spilling */
-   if (c->last_scratch) {
-      c->prog_data.total_scratch = brw_get_scratch_size(c->last_scratch);
-
+   if (c->prog_data.total_scratch) {
       brw_get_scratch_bo(brw, &brw->wm.base.scratch_bo,
 			 c->prog_data.total_scratch * brw->max_wm_threads);
    }
