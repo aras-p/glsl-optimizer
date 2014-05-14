@@ -484,11 +484,11 @@ lp_build_create_jit_compiler_for_module(LLVMExecutionEngineRef *OutJIT,
    builder.setJITMemoryManager(MM);
 
    ExecutionEngine *JIT;
-#if 0
+#if HAVE_LLVM >= 0x0302
    JIT = builder.create();
 #else
    /*
-    * Workaround http://llvm.org/bugs/show_bug.cgi?id=12833
+    * Workaround http://llvm.org/PR12833
     */
    StringRef MArch = "";
    StringRef MCPU = "";
