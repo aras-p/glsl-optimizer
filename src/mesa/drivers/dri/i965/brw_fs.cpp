@@ -2863,7 +2863,7 @@ fs_visitor::setup_payload_gen6()
    /* R58-59: interp W for 32-pixel. */
 
    if (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
-      c->source_depth_to_render_target = true;
+      source_depth_to_render_target = true;
    }
 }
 

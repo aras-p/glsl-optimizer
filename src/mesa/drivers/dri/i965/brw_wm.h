@@ -83,9 +83,6 @@ struct brw_wm_prog_key {
 struct brw_wm_compile {
    struct brw_wm_prog_key key;
    struct brw_wm_prog_data prog_data;
-
-   GLuint source_depth_to_render_target:1;
-   GLuint runtime_check_aads_emit:1;
 };
 
 /**

@@ -566,6 +566,9 @@ public:
       uint8_t num_regs;
    } payload;
 
+   bool source_depth_to_render_target;
+   bool runtime_check_aads_emit;
+
    fs_reg pixel_x;
    fs_reg pixel_y;
    fs_reg wpos_w;

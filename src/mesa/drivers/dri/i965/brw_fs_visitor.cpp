@@ -2793,7 +2793,7 @@ fs_visitor::emit_fb_writes()
    if (src0_alpha_to_render_target)
       nr += reg_width;
 
-   if (c->source_depth_to_render_target) {
+   if (source_depth_to_render_target) {
       if (brw->gen == 6) {
 	 /* For outputting oDepth on gen6, SIMD8 writes have to be
 	  * used.  This would require SIMD8 moves of each half to
@@ -2975,6 +2975,8 @@ fs_visitor::fs_visitor(struct brw_context *brw,
    memset(&this->payload, 0, sizeof(this->payload));
    memset(this->outputs, 0, sizeof(this->outputs));
    memset(this->output_components, 0, sizeof(this->output_components));
+   this->source_depth_to_render_target = false;
+   this->runtime_check_aads_emit = false;
    this->first_non_payload_grf = 0;
    this->max_grf = brw->gen >= 7 ? GEN7_MRF_HACK_START : BRW_MAX_GRF;
 
