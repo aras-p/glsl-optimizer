@@ -3155,6 +3155,7 @@ glsl_to_tgsi_visitor::glsl_to_tgsi_visitor()
    ctx = NULL;
    prog = NULL;
    shader_program = NULL;
+   shader = NULL;
    options = NULL;
 }
 
@@ -3988,6 +3989,7 @@ get_pixel_transfer_visitor(struct st_fragment_program *fp,
    v->ctx = original->ctx;
    v->prog = prog;
    v->shader_program = NULL;
+   v->shader = NULL;
    v->glsl_version = original->glsl_version;
    v->native_integers = original->native_integers;
    v->options = original->options;
@@ -4118,6 +4120,7 @@ get_bitmap_visitor(struct st_fragment_program *fp,
    v->ctx = original->ctx;
    v->prog = prog;
    v->shader_program = NULL;
+   v->shader = NULL;
    v->glsl_version = original->glsl_version;
    v->native_integers = original->native_integers;
    v->options = original->options;
