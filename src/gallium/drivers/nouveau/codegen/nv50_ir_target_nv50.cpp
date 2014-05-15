@@ -332,6 +332,8 @@ TargetNV50::insnCanLoad(const Instruction *i, int s,
          return false;
       if (sf == FILE_IMMEDIATE)
          return false;
+      if (i->subOp == NV50_IR_SUBOP_MUL_HIGH && sf == FILE_MEMORY_CONST)
+         return false;
       ldSize = 2;
    } else {
       ldSize = typeSizeof(ld->dType);
