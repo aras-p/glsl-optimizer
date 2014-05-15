@@ -85,15 +85,6 @@ if env['HAVE_X11']:
 if env['HAVE_DRM']:
     env.PkgUseModules('DRM')
 
-    if env['HAVE_DRM_INTEL']:
-        env.PkgUseModules('DRM_INTEL')
-        env.Append(CPPDEFINES = ['_EGL_PIPE_I915'])
-        env.Prepend(LIBS = [
-            i915drm,
-            i915,
-            ws_wrapper,
-        ])
-
     env.Append(CPPDEFINES = ['_EGL_PIPE_VMWGFX'])
     env.Prepend(LIBS = [
         svgadrm,

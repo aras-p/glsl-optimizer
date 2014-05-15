@@ -85,11 +85,6 @@ if env['dri']:
         'winsys/svga/drm/SConscript',
     ])
 
-    if env['drm_intel']:
-        SConscript([
-            'winsys/i915/drm/SConscript',
-        ])
-
 #
 # Targets
 #
@@ -126,10 +121,6 @@ if not env['embedded']:
             'targets/dri-swrast/SConscript',
             'targets/dri-vmwgfx/SConscript',
         ])
-        if env['drm_intel']:
-            SConscript([
-                'targets/dri-i915/SConscript',
-            ])
 
 
 #
