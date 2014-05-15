@@ -32,6 +32,7 @@
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 #include "util/u_simple_list.h"
+#include "os/os_time.h"
 #include "lp_bld.h"
 #include "lp_bld_debug.h"
 #include "lp_bld_misc.h"
@@ -498,6 +499,7 @@ gallivm_destroy(struct gallivm_state *gallivm)
 
 /**
  * Validate a function.
+ * Verification is only done with debug builds.
  */
 void
 gallivm_verify_function(struct gallivm_state *gallivm,
@@ -520,10 +522,15 @@ gallivm_verify_function(struct gallivm_state *gallivm,
 }
 
 
+/**
+ * Compile a module.
+ * This does IR optimization on all functions in the module.
+ */
 void
 gallivm_compile_module(struct gallivm_state *gallivm)
 {
    LLVMValueRef func;
+   int64_t time_begin;
 
    assert(!gallivm->compiled);
 
@@ -532,17 +539,27 @@ gallivm_compile_module(struct gallivm_state *gallivm)
       gallivm->builder = NULL;
    }
 
+   if (gallivm_debug & GALLIVM_DEBUG_PERF)
+      time_begin = os_time_get();
+
    /* Run optimization passes */
    LLVMInitializeFunctionPassManager(gallivm->passmgr);
    func = LLVMGetFirstFunction(gallivm->module);
    while (func) {
       if (0) {
-	 debug_printf("optimizing %s...\n", LLVMGetValueName(func));
+         debug_printf("optimizing func %s...\n", LLVMGetValueName(func));
       }
       LLVMRunFunctionPassManager(gallivm->passmgr, func);
       func = LLVMGetNextFunction(func);
    }
    LLVMFinalizeFunctionPassManager(gallivm->passmgr);
+
+   if (gallivm_debug & GALLIVM_DEBUG_PERF) {
+      int64_t time_end = os_time_get();
+      int time_msec = (int)(time_end - time_begin) / 1000;
+      debug_printf("optimizing module %s took %d msec\n",
+                   lp_get_module_id(gallivm->module), time_msec);
+   }
 
    /* Dump byte code to a file */
    if (0) {

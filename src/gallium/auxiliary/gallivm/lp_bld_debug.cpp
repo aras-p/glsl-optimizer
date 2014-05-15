@@ -39,6 +39,8 @@
 
 #include <llvm/Support/Host.h>
 
+#include <llvm/IR/Module.h>
+
 #include <llvm/MC/MCDisassembler.h>
 #include <llvm/MC/MCAsmInfo.h>
 #include <llvm/MC/MCInst.h>
@@ -108,6 +110,13 @@ raw_debug_ostream::write_impl(const char *Ptr, size_t Size)
       *lastPtr = last;
       pos += Size;
    }
+}
+
+
+extern "C" const char *
+lp_get_module_id(LLVMModuleRef module)
+{
+   return llvm::unwrap(module)->getModuleIdentifier().c_str();
 }
 
 
