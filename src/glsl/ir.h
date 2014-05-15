@@ -709,6 +709,13 @@ public:
        */
       unsigned index:1;
 
+      /**
+       * \brief Layout qualifier for gl_FragDepth.
+       *
+       * This is not equal to \c ir_depth_layout_none if and only if this
+       * variable is \c gl_FragDepth and a layout qualifier is specified.
+       */
+      ir_depth_layout depth_layout:3;
 
       /**
        * ARB_shader_image_load_store qualifiers.
@@ -719,9 +726,6 @@ public:
       unsigned image_volatile:1;
       unsigned image_restrict:1;
 
-      /** Image internal format if specified explicitly, otherwise GL_NONE. */
-      uint16_t image_format;
-
       /**
        * Emit a warning if this variable is accessed.
        */
@@ -729,13 +733,8 @@ public:
       uint8_t warn_extension_index;
 
    public:
-      /**
-       * \brief Layout qualifier for gl_FragDepth.
-       *
-       * This is not equal to \c ir_depth_layout_none if and only if this
-       * variable is \c gl_FragDepth and a layout qualifier is specified.
-       */
-      ir_depth_layout depth_layout;
+      /** Image internal format if specified explicitly, otherwise GL_NONE. */
+      uint16_t image_format;
 
       /**
        * Storage location of the base of this variable
