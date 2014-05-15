@@ -1852,7 +1852,7 @@ fs_generator::generate_assembly(exec_list *simd8_instructions,
    if (simd8_instructions) {
       dispatch_width = 8;
       generate_code(simd8_instructions, dump_file);
-      brw_compact_instructions(p);
+      brw_compact_instructions(p, 0);
    }
 
    if (simd16_instructions) {
@@ -1868,7 +1868,7 @@ fs_generator::generate_assembly(exec_list *simd8_instructions,
 
       dispatch_width = 16;
       generate_code(simd16_instructions, dump_file);
-      brw_compact_instructions(p);
+      brw_compact_instructions(p, prog_data->prog_offset_16);
    }
 
    return brw_get_program(p, assembly_size);

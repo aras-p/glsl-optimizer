@@ -128,7 +128,7 @@ static void compile_ff_gs_prog(struct brw_context *brw,
       }
    }
 
-   brw_compact_instructions(&c.func);
+   brw_compact_instructions(&c.func, 0);
 
    /* get the program
     */

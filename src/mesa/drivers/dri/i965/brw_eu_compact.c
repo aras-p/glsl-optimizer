@@ -661,18 +661,18 @@ brw_init_compaction_tables(struct brw_context *brw)
 }
 
 void
-brw_compact_instructions(struct brw_compile *p)
+brw_compact_instructions(struct brw_compile *p, int start_offset)
 {
    struct brw_context *brw = p->brw;
-   void *store = p->store;
+   void *store = p->store + start_offset / 16;
    /* For an instruction at byte offset 8*i before compaction, this is the number
     * of compacted instructions that preceded it.
     */
-   int compacted_counts[p->next_insn_offset / 8];
+   int compacted_counts[(p->next_insn_offset - start_offset) / 8];
    /* For an instruction at byte offset 8*i after compaction, this is the
     * 8-byte offset it was at before compaction.
     */
-   int old_ip[p->next_insn_offset / 8];
+   int old_ip[(p->next_insn_offset - start_offset) / 8];
 
    if (brw->gen < 6)
       return;
@@ -680,7 +680,7 @@ brw_compact_instructions(struct brw_compile *p)
    int src_offset;
    int offset = 0;
    int compacted_count = 0;
-   for (src_offset = 0; src_offset < p->nr_insn * 16;) {
+   for (src_offset = 0; src_offset < p->next_insn_offset - start_offset;) {
       struct brw_instruction *src = store + src_offset;
       void *dst = store + offset;
 
@@ -734,8 +734,8 @@ brw_compact_instructions(struct brw_compile *p)
    }
 
    /* Fix up control flow offsets. */
-   p->next_insn_offset = offset;
-   for (offset = 0; offset < p->next_insn_offset;) {
+   p->next_insn_offset = start_offset + offset;
+   for (offset = 0; offset < p->next_insn_offset - start_offset;) {
       struct brw_instruction *insn = store + offset;
       int this_old_ip = old_ip[offset / 8];
       int this_compacted_count = compacted_counts[this_old_ip];
@@ -786,10 +786,10 @@ brw_compact_instructions(struct brw_compile *p)
 
    if (0) {
       fprintf(stderr, "dumping compacted program\n");
-      brw_disassemble(brw, p->store, 0, p->next_insn_offset, stderr);
+      brw_disassemble(brw, store, 0, p->next_insn_offset - start_offset, stderr);
 
       int cmp = 0;
-      for (offset = 0; offset < p->next_insn_offset;) {
+      for (offset = 0; offset < p->next_insn_offset - start_offset;) {
          struct brw_instruction *insn = store + offset;
 
          if (insn->header.cmpt_control) {
