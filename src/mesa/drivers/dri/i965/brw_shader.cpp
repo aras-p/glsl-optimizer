@@ -220,10 +220,10 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *shProg)
 	     || (strncmp(var->name, "gl_", 3) != 0))
 	    continue;
 
-	 const ir_state_slot *const slots = var->state_slots;
-	 assert(var->state_slots != NULL);
+	 const ir_state_slot *const slots = var->get_state_slots();
+	 assert(slots != NULL);
 
-	 for (unsigned int i = 0; i < var->num_state_slots; i++) {
+	 for (unsigned int i = 0; i < var->get_num_state_slots(); i++) {
 	    _mesa_add_state_reference(prog->Parameters,
 				      (gl_state_index *) slots[i].tokens);
 	 }

@@ -478,12 +478,9 @@ builtin_variable_generator::add_uniform(const glsl_type *type,
       &_mesa_builtin_uniform_desc[i];
 
    const unsigned array_count = type->is_array() ? type->length : 1;
-   uni->num_state_slots = array_count * statevar->num_elements;
 
    ir_state_slot *slots =
-      ralloc_array(uni, ir_state_slot, uni->num_state_slots);
-
-   uni->state_slots = slots;
+      uni->allocate_state_slots(array_count * statevar->num_elements);
 
    for (unsigned a = 0; a < array_count; a++) {
       for (unsigned j = 0; j < statevar->num_elements; j++) {

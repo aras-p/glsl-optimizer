@@ -1072,8 +1072,8 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
 
    if (ir->data.mode == ir_var_uniform && strncmp(ir->name, "gl_", 3) == 0) {
       unsigned int i;
-      const ir_state_slot *const slots = ir->state_slots;
-      assert(ir->state_slots != NULL);
+      const ir_state_slot *const slots = ir->get_state_slots();
+      assert(slots != NULL);
 
       /* Check if this statevar's setup in the STATE file exactly
        * matches how we'll want to reference it as a
@@ -1081,7 +1081,7 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
        * temporary storage and hope that it'll get copy-propagated
        * out.
        */
-      for (i = 0; i < ir->num_state_slots; i++) {
+      for (i = 0; i < ir->get_num_state_slots(); i++) {
          if (slots[i].swizzle != SWIZZLE_XYZW) {
             break;
          }
@@ -1089,7 +1089,7 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
 
       variable_storage *storage;
       st_dst_reg dst;
-      if (i == ir->num_state_slots) {
+      if (i == ir->get_num_state_slots()) {
          /* We'll set the index later. */
          storage = new(mem_ctx) variable_storage(ir, PROGRAM_STATE_VAR, -1);
          this->variables.push_tail(storage);
@@ -1100,7 +1100,7 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
           * of the type.  However, this had better match the number of state
           * elements that we're going to copy into the new temporary.
           */
-         assert((int) ir->num_state_slots == type_size(ir->type));
+         assert((int) ir->get_num_state_slots() == type_size(ir->type));
 
          dst = st_dst_reg(get_temp(ir->type));
 
@@ -1110,7 +1110,7 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
       }
 
 
-      for (unsigned int i = 0; i < ir->num_state_slots; i++) {
+      for (unsigned int i = 0; i < ir->get_num_state_slots(); i++) {
          int index = _mesa_add_state_reference(this->prog->Parameters,
         				       (gl_state_index *)slots[i].tokens);
 
@@ -1135,7 +1135,7 @@ glsl_to_tgsi_visitor::visit(ir_variable *ir)
       }
 
       if (storage->file == PROGRAM_TEMPORARY &&
-          dst.index != storage->index + (int) ir->num_state_slots) {
+          dst.index != storage->index + (int) ir->get_num_state_slots()) {
          fail_link(this->shader_program,
         	   "failed to load builtin uniform `%s'  (%d/%d regs loaded)\n",
         	   ir->name, dst.index - storage->index,

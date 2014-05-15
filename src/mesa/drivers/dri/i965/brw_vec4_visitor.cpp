@@ -745,10 +745,10 @@ vec4_visitor::setup_uniform_clipplane_values()
 void
 vec4_visitor::setup_builtin_uniform_values(ir_variable *ir)
 {
-   const ir_state_slot *const slots = ir->state_slots;
-   assert(ir->state_slots != NULL);
+   const ir_state_slot *const slots = ir->get_state_slots();
+   assert(slots != NULL);
 
-   for (unsigned int i = 0; i < ir->num_state_slots; i++) {
+   for (unsigned int i = 0; i < ir->get_num_state_slots(); i++) {
       /* This state reference has already been setup by ir_to_mesa,
        * but we'll get the same index back here.  We can reference
        * ParameterValues directly, since unlike brw_fs.cpp, we never

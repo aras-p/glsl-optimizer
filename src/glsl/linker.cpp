@@ -1832,9 +1832,10 @@ update_array_sizes(struct gl_shader_program *prog)
 	     * Determine the number of slots per array element by dividing by
 	     * the old (total) size.
 	     */
-	    if (var->num_state_slots > 0) {
-	       var->num_state_slots = (size + 1)
-		  * (var->num_state_slots / var->type->length);
+            const unsigned num_slots = var->get_num_state_slots();
+	    if (num_slots > 0) {
+	       var->set_num_state_slots((size + 1)
+                                        * (num_slots / var->type->length));
 	    }
 
 	    var->type = glsl_type::get_array_instance(var->type->fields.array,

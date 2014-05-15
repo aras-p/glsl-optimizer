@@ -537,6 +537,37 @@ public:
       return this->max_ifc_array_access;
    }
 
+   inline unsigned get_num_state_slots() const
+   {
+      return this->data._num_state_slots;
+   }
+
+   inline void set_num_state_slots(unsigned n)
+   {
+      this->data._num_state_slots = n;
+   }
+
+   inline ir_state_slot *get_state_slots()
+   {
+      return this->state_slots;
+   }
+
+   inline const ir_state_slot *get_state_slots() const
+   {
+      return this->state_slots;
+   }
+
+   inline ir_state_slot *allocate_state_slots(unsigned n)
+   {
+      this->state_slots = ralloc_array(this, ir_state_slot, n);
+      this->data._num_state_slots = 0;
+
+      if (this->state_slots != NULL)
+         this->data._num_state_slots = n;
+
+      return this->state_slots;
+   }
+
    /**
     * Enable emitting extension warnings for this variable
     */
@@ -734,6 +765,10 @@ public:
       /** Image internal format if specified explicitly, otherwise GL_NONE. */
       uint16_t image_format;
 
+   private:
+      unsigned _num_state_slots;    /**< Number of state slots used */
+
+   public:
       /**
        * Storage location of the base of this variable
        *
@@ -787,22 +822,6 @@ public:
    } data;
 
    /**
-    * Built-in state that backs this uniform
-    *
-    * Once set at variable creation, \c state_slots must remain invariant.
-    * This is because, ideally, this array would be shared by all clones of
-    * this variable in the IR tree.  In other words, we'd really like for it
-    * to be a fly-weight.
-    *
-    * If the variable is not a uniform, \c num_state_slots will be zero and
-    * \c state_slots will be \c NULL.
-    */
-   /*@{*/
-   unsigned num_state_slots;    /**< Number of state slots used */
-   ir_state_slot *state_slots;  /**< State descriptors. */
-   /*@}*/
-
-   /**
     * Value assigned in the initializer of a variable declared "const"
     */
    ir_constant *constant_value;
@@ -832,6 +851,16 @@ private:
     * NULL.
     */
    unsigned *max_ifc_array_access;
+
+   /**
+    * Built-in state that backs this uniform
+    *
+    * Once set at variable creation, \c state_slots must remain invariant.
+    *
+    * If the variable is not a uniform, \c _num_state_slots will be zero and
+    * \c state_slots will be \c NULL.
+    */
+   ir_state_slot *state_slots;
 
    /**
     * For variables that are in an interface block or are an instance of an
