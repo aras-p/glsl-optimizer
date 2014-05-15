@@ -151,3 +151,19 @@ GALLIUM_XVMC_LIB_DEPS += $(LLVM_LIBS)
 GALLIUM_OMX_LIB_DEPS += $(LLVM_LIBS)
 
 endif
+
+
+GALLIUM_PIPE_LOADER_WINSYS_LIBS = \
+	$(top_builddir)/src/gallium/winsys/sw/null/libws_null.la
+
+if HAVE_DRISW
+GALLIUM_PIPE_LOADER_WINSYS_LIBS += \
+	$(top_builddir)/src/gallium/winsys/sw/dri/libswdri.la
+endif
+
+if NEED_WINSYS_XLIB
+GALLIUM_PIPE_LOADER_WINSYS_LIBS += \
+	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
+	-lX11 -lXext -lXfixes \
+	$(LIBDRM_LIBS)
+endif
