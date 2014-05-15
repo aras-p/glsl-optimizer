@@ -525,6 +525,7 @@ draw_llvm_create_variant(struct draw_llvm *llvm,
    struct llvm_vertex_shader *shader =
       llvm_vertex_shader(llvm->draw->vs.vertex_shader);
    LLVMTypeRef vertex_header;
+   char module_name[64];
 
    variant = MALLOC(sizeof *variant +
                     shader->variant_key_size -
@@ -535,7 +536,10 @@ draw_llvm_create_variant(struct draw_llvm *llvm,
    variant->llvm = llvm;
    variant->shader = shader;
 
-   variant->gallivm = gallivm_create();
+   util_snprintf(module_name, sizeof(module_name), "draw_llvm_vs_variant%u",
+                 variant->shader->variants_cached);
+
+   variant->gallivm = gallivm_create(module_name);
 
    create_jit_types(variant);
 
@@ -1513,8 +1517,8 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant,
 
    memset(&system_values, 0, sizeof(system_values));
 
-   util_snprintf(func_name, sizeof(func_name), "draw_llvm_vs_variant%u%s",
-                 variant->shader->variants_cached, elts ? "_elts" : "");
+   util_snprintf(func_name, sizeof(func_name), "draw_llvm_vs_variant%u_%s",
+                 variant->shader->variants_cached, elts ? "elts" : "linear");
 
    i = 0;
    arg_types[i++] = get_context_ptr_type(variant);       /* context */
@@ -2177,6 +2181,7 @@ draw_gs_llvm_create_variant(struct draw_llvm *llvm,
    struct llvm_geometry_shader *shader =
       llvm_geometry_shader(llvm->draw->gs.geometry_shader);
    LLVMTypeRef vertex_header;
+   char module_name[64];
 
    variant = MALLOC(sizeof *variant +
                     shader->variant_key_size -
@@ -2187,7 +2192,10 @@ draw_gs_llvm_create_variant(struct draw_llvm *llvm,
    variant->llvm = llvm;
    variant->shader = shader;
 
-   variant->gallivm = gallivm_create();
+   util_snprintf(module_name, sizeof(module_name), "draw_llvm_gs_variant%u",
+                 variant->shader->variants_cached);
+
+   variant->gallivm = gallivm_create(module_name);
 
    create_gs_jit_types(variant);
 

@@ -284,7 +284,7 @@ fail:
  * \return  TRUE for success, FALSE for failure
  */
 static boolean
-init_gallivm_state(struct gallivm_state *gallivm)
+init_gallivm_state(struct gallivm_state *gallivm, const char *name)
 {
    assert(!gallivm->context);
    assert(!gallivm->module);
@@ -299,7 +299,7 @@ init_gallivm_state(struct gallivm_state *gallivm)
    if (!gallivm->context)
       goto fail;
 
-   gallivm->module = LLVMModuleCreateWithNameInContext("gallivm",
+   gallivm->module = LLVMModuleCreateWithNameInContext(name,
                                                        gallivm->context);
    if (!gallivm->module)
       goto fail;
@@ -466,16 +466,15 @@ lp_build_init(void)
 
 /**
  * Create a new gallivm_state object.
- * Note that we return a singleton.
  */
 struct gallivm_state *
-gallivm_create(void)
+gallivm_create(const char *name)
 {
    struct gallivm_state *gallivm;
 
    gallivm = CALLOC_STRUCT(gallivm_state);
    if (gallivm) {
-      if (!init_gallivm_state(gallivm)) {
+      if (!init_gallivm_state(gallivm, name)) {
          FREE(gallivm);
          gallivm = NULL;
       }

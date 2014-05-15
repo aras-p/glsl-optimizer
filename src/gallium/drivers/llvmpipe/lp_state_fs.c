@@ -2160,7 +2160,7 @@ generate_fragment(struct llvmpipe_context *lp,
    struct gallivm_state *gallivm = variant->gallivm;
    const struct lp_fragment_shader_variant_key *key = &variant->key;
    struct lp_shader_input inputs[PIPE_MAX_SHADER_INPUTS];
-   char func_name[256];
+   char func_name[64];
    struct lp_type fs_type;
    struct lp_type blend_type;
    LLVMTypeRef fs_elem_type;
@@ -2247,8 +2247,8 @@ generate_fragment(struct llvmpipe_context *lp,
 
    blend_vec_type = lp_build_vec_type(gallivm, blend_type);
 
-   util_snprintf(func_name, sizeof(func_name), "fs%u_variant%u_%s", 
-		 shader->no, variant->no, partial_mask ? "partial" : "whole");
+   util_snprintf(func_name, sizeof(func_name), "fs%u_variant%u_%s",
+                 shader->no, variant->no, partial_mask ? "partial" : "whole");
 
    arg_types[0] = variant->jit_context_ptr_type;       /* context */
    arg_types[1] = int32_type;                          /* x */
@@ -2558,12 +2558,16 @@ generate_variant(struct llvmpipe_context *lp,
    struct lp_fragment_shader_variant *variant;
    const struct util_format_description *cbuf0_format_desc;
    boolean fullcolormask;
+   char module_name[64];
 
    variant = CALLOC_STRUCT(lp_fragment_shader_variant);
    if(!variant)
       return NULL;
 
-   variant->gallivm = gallivm_create();
+   util_snprintf(module_name, sizeof(module_name), "fs%u_variant%u",
+                 shader->no, shader->variants_created);
+
+   variant->gallivm = gallivm_create(module_name);
    if (!variant->gallivm) {
       FREE(variant);
       return NULL;

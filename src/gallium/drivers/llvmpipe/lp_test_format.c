@@ -138,7 +138,7 @@ test_format_float(unsigned verbose, FILE *fp,
    boolean success = TRUE;
    unsigned i, j, k, l;
 
-   gallivm = gallivm_create();
+   gallivm = gallivm_create("test_module_float");
 
    fetch = add_fetch_rgba_test(gallivm, verbose, desc, lp_float32_vec4_type());
 
@@ -223,7 +223,7 @@ test_format_unorm8(unsigned verbose, FILE *fp,
    boolean success = TRUE;
    unsigned i, j, k, l;
 
-   gallivm = gallivm_create();
+   gallivm = gallivm_create("test_module_unorm8");
 
    fetch = add_fetch_rgba_test(gallivm, verbose, desc, lp_unorm8_vec4_type());
 

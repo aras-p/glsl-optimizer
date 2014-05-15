@@ -711,7 +711,7 @@ generate_setup_variant(struct lp_setup_variant_key *key,
    struct lp_setup_variant *variant = NULL;
    struct gallivm_state *gallivm;
    struct lp_setup_args args;
-   char func_name[256];
+   char func_name[64];
    LLVMTypeRef vec4f_type;
    LLVMTypeRef func_type;
    LLVMTypeRef arg_types[7];
@@ -726,13 +726,17 @@ generate_setup_variant(struct lp_setup_variant_key *key,
    if (variant == NULL)
       goto fail;
 
-   variant->gallivm = gallivm = gallivm_create();
+   variant->no = setup_no++;
+
+   util_snprintf(func_name, sizeof(func_name), "setup_variant_%u",
+                 variant->no);
+
+   variant->gallivm = gallivm = gallivm_create(func_name);
    if (!variant->gallivm) {
       goto fail;
    }
 
    builder = gallivm->builder;
-   variant->no = setup_no++;
 
    if (LP_DEBUG & DEBUG_COUNTERS) {
       t0 = os_time_get();
@@ -740,9 +744,6 @@ generate_setup_variant(struct lp_setup_variant_key *key,
 
    memcpy(&variant->key, key, key->size);
    variant->list_item_global.base = variant;
-
-   util_snprintf(func_name, sizeof(func_name), "setup_variant_%u",
-                 variant->no);
 
    /* Currently always deal with full 4-wide vertex attributes from
     * the vertices.

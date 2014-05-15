@@ -54,7 +54,7 @@ lp_build_init(void);
 
 
 struct gallivm_state *
-gallivm_create(void);
+gallivm_create(const char *name);
 
 void
 gallivm_destroy(struct gallivm_state *gallivm);
