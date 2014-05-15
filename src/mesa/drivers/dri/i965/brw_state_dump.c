@@ -30,6 +30,7 @@
 
 #include "brw_context.h"
 #include "brw_defines.h"
+#include "brw_eu.h"
 
 static void
 batch_out(struct brw_context *brw, const char *name, uint32_t offset,
@@ -486,8 +487,7 @@ static void
 dump_prog_cache(struct brw_context *brw)
 {
    struct brw_cache *cache = &brw->cache;
-   unsigned int b, i;
-   uint32_t *data;
+   unsigned int b;
 
    drm_intel_bo_map(brw->cache.bo, false);
 
@@ -496,9 +496,6 @@ dump_prog_cache(struct brw_context *brw)
 
       for (item = cache->items[b]; item; item = item->next) {
 	 const char *name;
-	 uint32_t offset = item->offset;
-
-	 data = brw->cache.bo->virtual + item->offset;
 
 	 switch (item->cache_id) {
 	 case BRW_VS_PROG:
@@ -524,14 +521,9 @@ dump_prog_cache(struct brw_context *brw)
 	    break;
 	 }
 
-	 for (i = 0; i < item->size / 4 / 4; i++) {
-	    fprintf(stderr, "0x%08x: %8s: 0x%08x 0x%08x 0x%08x 0x%08x ",
-		    offset + i * 4 * 4,
-		    name,
-		    data[i * 4], data[i * 4 + 1], data[i * 4 + 2], data[i * 4 + 3]);
-
-	    brw_disasm(stderr, (void *)(data + i * 4), brw->gen, false);
-	 }
+         fprintf(stderr, "%s:\n", name);
+         brw_dump_compile(brw, brw->cache.bo->virtual, item->offset, item->size,
+                          stderr);
       }
    }
 
