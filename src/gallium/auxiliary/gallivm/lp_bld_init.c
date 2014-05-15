@@ -147,19 +147,8 @@ create_pass_manager(struct gallivm_state *gallivm)
       LLVMAddLICMPass(gallivm->passmgr);
       LLVMAddCFGSimplificationPass(gallivm->passmgr);
       LLVMAddReassociatePass(gallivm->passmgr);
-
-      if (sizeof(void*) == 4) {
-         /* XXX: For LLVM >= 2.7 and 32-bit build, use this order of passes to
-          * avoid generating bad code.
-          * Test with piglit glsl-vs-sqrt-zero test.
-          */
-         LLVMAddConstantPropagationPass(gallivm->passmgr);
-         LLVMAddPromoteMemoryToRegisterPass(gallivm->passmgr);
-      }
-      else {
-         LLVMAddPromoteMemoryToRegisterPass(gallivm->passmgr);
-         LLVMAddConstantPropagationPass(gallivm->passmgr);
-      }
+      LLVMAddPromoteMemoryToRegisterPass(gallivm->passmgr);
+      LLVMAddConstantPropagationPass(gallivm->passmgr);
 
       if (util_cpu_caps.has_sse4_1) {
          /* FIXME: There is a bug in this pass, whereby the combination
