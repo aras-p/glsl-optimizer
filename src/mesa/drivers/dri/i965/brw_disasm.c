@@ -1119,7 +1119,9 @@ static int qtr_ctrl(FILE *file, struct brw_instruction *inst)
     return 0;
 }
 
-int brw_disasm (FILE *file, struct brw_instruction *inst, int gen, bool is_compacted)
+int
+brw_disassemble_inst(FILE *file,
+                     struct brw_instruction *inst, int gen, bool is_compacted)
 {
     int	err = 0;
     int space = 0;

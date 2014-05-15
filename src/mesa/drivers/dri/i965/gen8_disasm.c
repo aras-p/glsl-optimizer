@@ -806,7 +806,7 @@ qtr_ctrl(FILE *file, struct gen8_instruction *inst)
 }
 
 int
-gen8_disassemble(FILE *file, struct gen8_instruction *inst, int gen)
+gen8_disassemble_inst(FILE *file, struct gen8_instruction *inst, int gen)
 {
    int err = 0;
    int space = 0;

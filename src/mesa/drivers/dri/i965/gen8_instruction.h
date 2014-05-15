@@ -367,7 +367,7 @@ void gen8_set_dp_scratch_message(const struct brw_context *brw,
                                  bool end_of_thread);
 
 /** Disassemble the instruction. */
-int gen8_disassemble(FILE *file, struct gen8_instruction *inst, int gen);
+int gen8_disassemble_inst(FILE *file, struct gen8_instruction *inst, int gen);
 
 
 /**

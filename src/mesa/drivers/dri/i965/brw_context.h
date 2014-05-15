@@ -1573,7 +1573,8 @@ void brw_fs_alloc_reg_sets(struct intel_screen *screen);
 void brw_vec4_alloc_reg_set(struct intel_screen *screen);
 
 /* brw_disasm.c */
-int brw_disasm (FILE *file, struct brw_instruction *inst, int gen, bool is_compacted);
+int brw_disassemble_inst(FILE *file, struct brw_instruction *inst,
+                         int gen, bool is_compacted);
 
 /* brw_vs.c */
 gl_clip_plane *brw_select_clip_planes(struct gl_context *ctx);

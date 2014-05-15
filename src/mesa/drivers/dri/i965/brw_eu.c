@@ -286,6 +286,6 @@ brw_dump_compile(struct brw_context *brw, void *assembly, int start, int end, FI
 	 offset += 16;
       }
 
-      brw_disasm(out, insn, brw->gen, compacted);
+      brw_disassemble_inst(out, insn, brw->gen, compacted);
    }
 }

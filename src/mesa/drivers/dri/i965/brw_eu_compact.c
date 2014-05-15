@@ -585,10 +585,10 @@ void brw_debug_compact_uncompact(struct brw_context *brw,
            brw->gen);
 
    fprintf(stderr, "  before: ");
-   brw_disasm(stderr, orig, brw->gen, true);
+   brw_disassemble_inst(stderr, orig, brw->gen, true);
 
    fprintf(stderr, "  after:  ");
-   brw_disasm(stderr, uncompacted, brw->gen, false);
+   brw_disassemble_inst(stderr, uncompacted, brw->gen, false);
 
    uint32_t *before_bits = (uint32_t *)orig;
    uint32_t *after_bits = (uint32_t *)uncompacted;

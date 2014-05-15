@@ -638,6 +638,6 @@ gen8_dump_compile(struct brw_context *brw, void *assembly,
                  ((uint32_t *) inst)[0]);
       }
 
-      gen8_disassemble(stderr, inst, brw->gen);
+      gen8_disassemble_inst(stderr, inst, brw->gen);
    }
 }
