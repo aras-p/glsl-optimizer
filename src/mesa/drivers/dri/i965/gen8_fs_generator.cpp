@@ -1293,7 +1293,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
       }
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-         gen8_dump_compile(brw, store, last_native_inst_offset, next_inst_offset, stderr);
+         gen8_disassemble(brw, store, last_native_inst_offset, next_inst_offset, stderr);
 
          foreach_list(node, &cfg->block_list) {
             bblock_link *link = (bblock_link *)node;
@@ -1327,7 +1327,7 @@ gen8_fs_generator::generate_code(exec_list *instructions)
     * case you're doing that.
     */
    if (0 && unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      gen8_dump_compile(brw, store, 0, next_inst_offset, stderr);
+      gen8_disassemble(brw, store, 0, next_inst_offset, stderr);
    }
 }
 

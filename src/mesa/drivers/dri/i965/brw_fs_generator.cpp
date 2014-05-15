@@ -1802,7 +1802,7 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
       }
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-	 brw_dump_compile(brw, p->store, last_native_insn_offset, p->next_insn_offset, stderr);
+	 brw_disassemble(brw, p->store, last_native_insn_offset, p->next_insn_offset, stderr);
 
 	 foreach_list(node, &cfg->block_list) {
 	    bblock_link *link = (bblock_link *)node;
@@ -1836,7 +1836,7 @@ fs_generator::generate_code(exec_list *instructions, FILE *dump_file)
     * case you're doing that.
     */
    if (dump_file) {
-      brw_dump_compile(brw, p->store, 0, p->next_insn_offset, dump_file);
+      brw_disassemble(brw, p->store, 0, p->next_insn_offset, dump_file);
    }
 }
 

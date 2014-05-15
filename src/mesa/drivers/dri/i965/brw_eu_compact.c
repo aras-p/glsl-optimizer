@@ -786,7 +786,7 @@ brw_compact_instructions(struct brw_compile *p)
 
    if (0) {
       fprintf(stderr, "dumping compacted program\n");
-      brw_dump_compile(brw, p->store, 0, p->next_insn_offset, stderr);
+      brw_disassemble(brw, p->store, 0, p->next_insn_offset, stderr);
 
       int cmp = 0;
       for (offset = 0; offset < p->next_insn_offset;) {

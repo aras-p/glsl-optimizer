@@ -910,7 +910,7 @@ gen8_vec4_generator::generate_code(exec_list *instructions)
       }
 
       if (unlikely(debug_flag)) {
-         gen8_dump_compile(brw, store, last_native_inst_offset, next_inst_offset, stderr);
+         gen8_disassemble(brw, store, last_native_inst_offset, next_inst_offset, stderr);
       }
 
       last_native_inst_offset = next_inst_offset;
@@ -928,7 +928,7 @@ gen8_vec4_generator::generate_code(exec_list *instructions)
     * case you're doing that.
     */
    if (0 && unlikely(debug_flag)) {
-      gen8_dump_compile(brw, store, 0, next_inst_offset, stderr);
+      gen8_disassemble(brw, store, 0, next_inst_offset, stderr);
    }
 }
 

@@ -522,8 +522,8 @@ dump_prog_cache(struct brw_context *brw)
 	 }
 
          fprintf(stderr, "%s:\n", name);
-         brw_dump_compile(brw, brw->cache.bo->virtual, item->offset, item->size,
-                          stderr);
+         brw_disassemble(brw, brw->cache.bo->virtual, item->offset, item->size,
+                         stderr);
       }
    }
 

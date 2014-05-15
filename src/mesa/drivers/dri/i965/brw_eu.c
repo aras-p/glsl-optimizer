@@ -254,7 +254,8 @@ const unsigned *brw_get_program( struct brw_compile *p,
 }
 
 void
-brw_dump_compile(struct brw_context *brw, void *assembly, int start, int end, FILE *out)
+brw_disassemble(struct brw_context *brw,
+                void *assembly, int start, int end, FILE *out)
 {
    bool dump_hex = false;
 

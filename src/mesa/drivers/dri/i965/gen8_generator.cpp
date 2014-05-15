@@ -621,8 +621,8 @@ gen8_generator::HALT()
 }
 
 extern "C" void
-gen8_dump_compile(struct brw_context *brw, void *assembly,
-                  int start,int end, FILE *out)
+gen8_disassemble(struct brw_context *brw, void *assembly,
+                 int start, int end, FILE *out)
 {
    bool dump_hex = false;
 

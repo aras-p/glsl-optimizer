@@ -1334,8 +1334,8 @@ vec4_generator::generate_code(exec_list *instructions)
       }
 
       if (unlikely(debug_flag)) {
-	 brw_dump_compile(brw, p->store,
-			  last_native_insn_offset, p->next_insn_offset, stderr);
+	 brw_disassemble(brw, p->store,
+			 last_native_insn_offset, p->next_insn_offset, stderr);
       }
 
       last_native_insn_offset = p->next_insn_offset;
@@ -1353,7 +1353,7 @@ vec4_generator::generate_code(exec_list *instructions)
     * case you're doing that.
     */
    if (0 && unlikely(debug_flag)) {
-      brw_dump_compile(brw, p->store, 0, p->next_insn_offset, stderr);
+      brw_disassemble(brw, p->store, 0, p->next_insn_offset, stderr);
    }
 }
 
