@@ -27,6 +27,7 @@
 
 #include "main/blit.h"
 #include "main/buffers.h"
+#include "main/enums.h"
 #include "main/fbobject.h"
 
 #include "drivers/common/meta.h"
@@ -62,7 +63,7 @@ brw_get_rb_for_first_slice(struct brw_context *brw, struct intel_mipmap_tree *mt
    irb = intel_renderbuffer(rb);
 
    rb->Format = mt->format;
-   rb->_BaseFormat = _mesa_base_fbo_format(ctx, mt->format);
+   rb->_BaseFormat = _mesa_get_format_base_format(mt->format);
 
    rb->NumSamples = mt->num_samples;
    rb->Width = mt->logical_width0;
