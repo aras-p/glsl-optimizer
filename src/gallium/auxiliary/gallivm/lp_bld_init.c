@@ -149,14 +149,7 @@ create_pass_manager(struct gallivm_state *gallivm)
       LLVMAddReassociatePass(gallivm->passmgr);
       LLVMAddPromoteMemoryToRegisterPass(gallivm->passmgr);
       LLVMAddConstantPropagationPass(gallivm->passmgr);
-
-      if (util_cpu_caps.has_sse4_1) {
-         /* FIXME: There is a bug in this pass, whereby the combination
-          * of fptosi and sitofp (necessary for trunc/floor/ceil/round
-          * implementation) somehow becomes invalid code.
-          */
-         LLVMAddInstructionCombiningPass(gallivm->passmgr);
-      }
+      LLVMAddInstructionCombiningPass(gallivm->passmgr);
       LLVMAddGVNPass(gallivm->passmgr);
    }
    else {
