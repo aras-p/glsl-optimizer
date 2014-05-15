@@ -1141,7 +1141,7 @@ _mesa_initialize_context(struct gl_context *ctx,
 fail:
    _mesa_reference_shared_state(ctx, &ctx->Shared, NULL);
    free(ctx->BeginEnd);
-   free(ctx->Exec);
+   free(ctx->OutsideBeginEnd);
    free(ctx->Save);
    return GL_FALSE;
 }
@@ -1242,7 +1242,7 @@ _mesa_free_context_data( struct gl_context *ctx )
 
    /* free dispatch tables */
    free(ctx->BeginEnd);
-   free(ctx->Exec);
+   free(ctx->OutsideBeginEnd);
    free(ctx->Save);
 
    /* Shared context state (display lists, textures, etc) */
