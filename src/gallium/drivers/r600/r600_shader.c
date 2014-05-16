@@ -809,7 +809,9 @@ static void tgsi_src(struct r600_shader_ctx *ctx,
 	}
 }
 
-static int tgsi_fetch_rel_const(struct r600_shader_ctx *ctx, unsigned int cb_idx, unsigned int offset, unsigned int dst_reg)
+static int tgsi_fetch_rel_const(struct r600_shader_ctx *ctx,
+                                unsigned int cb_idx, unsigned int offset, unsigned ar_chan,
+                                unsigned int dst_reg)
 {
 	struct r600_bytecode_vtx vtx;
 	unsigned int ar_reg;
@@ -822,11 +824,13 @@ static int tgsi_fetch_rel_const(struct r600_shader_ctx *ctx, unsigned int cb_idx
 
 		alu.op = ALU_OP2_ADD_INT;
 		alu.src[0].sel = ctx->bc->ar_reg;
+		alu.src[0].chan = ar_chan;
 
 		alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
 		alu.src[1].value = offset;
 
 		alu.dst.sel = dst_reg;
+		alu.dst.chan = ar_chan;
 		alu.dst.write = 1;
 		alu.last = 1;
 
@@ -842,6 +846,7 @@ static int tgsi_fetch_rel_const(struct r600_shader_ctx *ctx, unsigned int cb_idx
 	vtx.buffer_id = cb_idx;
 	vtx.fetch_type = 2;		/* VTX_FETCH_NO_INDEX_OFFSET */
 	vtx.src_gpr = ar_reg;
+	vtx.src_sel_x = ar_chan;
 	vtx.mega_fetch_count = 16;
 	vtx.dst_gpr = dst_reg;
 	vtx.dst_sel_x = 0;		/* SEL_X */
@@ -982,8 +987,9 @@ static int tgsi_split_constant(struct r600_shader_ctx *ctx)
 		}
 
 		if (ctx->src[i].rel) {
+			int chan = inst->Src[i].Indirect.Swizzle;
 			int treg = r600_get_temp(ctx);
-			if ((r = tgsi_fetch_rel_const(ctx, ctx->src[i].kc_bank, ctx->src[i].sel - 512, treg)))
+			if ((r = tgsi_fetch_rel_const(ctx, ctx->src[i].kc_bank, ctx->src[i].sel - 512, chan, treg)))
 				return r;
 
 			ctx->src[i].kc_bank = 0;
@@ -5771,6 +5777,7 @@ static int tgsi_eg_arl(struct r600_shader_ctx *ctx)
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bytecode_alu alu;
 	int r;
+	int i, lasti = tgsi_last_instruction(inst->Dst[0].Register.WriteMask);
 
 	memset(&alu, 0, sizeof(struct r600_bytecode_alu));
 
@@ -5789,13 +5796,18 @@ static int tgsi_eg_arl(struct r600_shader_ctx *ctx)
 		return -1;
 	}
 
-	r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
-	alu.last = 1;
-	alu.dst.sel = ctx->bc->ar_reg;
-	alu.dst.write = 1;
-	r = r600_bytecode_add_alu(ctx->bc, &alu);
-	if (r)
-		return r;
+	for (i = 0; i <= lasti; ++i) {
+		if (!(inst->Dst[0].Register.WriteMask & (1 << i)))
+			continue;
+		r600_bytecode_src(&alu.src[0], &ctx->src[0], i);
+		alu.last = i == lasti;
+		alu.dst.sel = ctx->bc->ar_reg;
+	        alu.dst.chan = i;
+		alu.dst.write = 1;
+		r = r600_bytecode_add_alu(ctx->bc, &alu);
+		if (r)
+			return r;
+	}
 
 	ctx->bc->ar_loaded = 0;
 	return 0;
@@ -5805,50 +5817,68 @@ static int tgsi_r600_arl(struct r600_shader_ctx *ctx)
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
 	struct r600_bytecode_alu alu;
 	int r;
+	int i, lasti = tgsi_last_instruction(inst->Dst[0].Register.WriteMask);
 
 	switch (inst->Instruction.Opcode) {
 	case TGSI_OPCODE_ARL:
 		memset(&alu, 0, sizeof(alu));
 		alu.op = ALU_OP1_FLOOR;
-		r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
 		alu.dst.sel = ctx->bc->ar_reg;
 		alu.dst.write = 1;
-		alu.last = 1;
-
-		if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
-			return r;
+		for (i = 0; i <= lasti; ++i) {
+			if (inst->Dst[0].Register.WriteMask & (1 << i))  {
+				alu.dst.chan = i;
+				r600_bytecode_src(&alu.src[0], &ctx->src[0], i);
+				alu.last = i == lasti;
+				if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
+					return r;
+			}
+		}
 
 		memset(&alu, 0, sizeof(alu));
 		alu.op = ALU_OP1_FLT_TO_INT;
 		alu.src[0].sel = ctx->bc->ar_reg;
 		alu.dst.sel = ctx->bc->ar_reg;
 		alu.dst.write = 1;
-		alu.last = 1;
-
-		if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
-			return r;
+		/* FLT_TO_INT is trans-only on r600/r700 */
+		alu.last = TRUE;
+		for (i = 0; i <= lasti; ++i) {
+			alu.dst.chan = i;
+			alu.src[0].chan = i;
+			if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
+				return r;
+		}
 		break;
 	case TGSI_OPCODE_ARR:
 		memset(&alu, 0, sizeof(alu));
 		alu.op = ALU_OP1_FLT_TO_INT;
-		r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
 		alu.dst.sel = ctx->bc->ar_reg;
 		alu.dst.write = 1;
-		alu.last = 1;
-
-		if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
-			return r;
+		/* FLT_TO_INT is trans-only on r600/r700 */
+		alu.last = TRUE;
+		for (i = 0; i <= lasti; ++i) {
+			if (inst->Dst[0].Register.WriteMask & (1 << i)) {
+				alu.dst.chan = i;
+				r600_bytecode_src(&alu.src[0], &ctx->src[0], i);
+				if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
+					return r;
+			}
+		}
 		break;
 	case TGSI_OPCODE_UARL:
 		memset(&alu, 0, sizeof(alu));
 		alu.op = ALU_OP1_MOV;
-		r600_bytecode_src(&alu.src[0], &ctx->src[0], 0);
 		alu.dst.sel = ctx->bc->ar_reg;
 		alu.dst.write = 1;
-		alu.last = 1;
-
-		if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
-			return r;
+		for (i = 0; i <= lasti; ++i) {
+			if (inst->Dst[0].Register.WriteMask & (1 << i)) {
+				alu.dst.chan = i;
+				r600_bytecode_src(&alu.src[0], &ctx->src[0], i);
+				alu.last = i == lasti;
+				if ((r = r600_bytecode_add_alu(ctx->bc, &alu)))
+					return r;
+			}
+		}
 		break;
 	default:
 		assert(0);
