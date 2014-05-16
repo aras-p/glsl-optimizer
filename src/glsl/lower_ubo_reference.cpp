@@ -69,9 +69,11 @@ public:
  * \c UniformBlocks array.
  */
 static const char *
-interface_field_name(void *mem_ctx, char *base_name, ir_dereference *d)
+interface_field_name(void *mem_ctx, char *base_name, ir_dereference *d,
+                     ir_rvalue **nonconst_block_index)
 {
-   ir_constant *previous_index = NULL;
+   ir_rvalue *previous_index = NULL;
+   *nonconst_block_index = NULL;
 
    while (d != NULL) {
       switch (d->ir_type) {
@@ -79,13 +81,21 @@ interface_field_name(void *mem_ctx, char *base_name, ir_dereference *d)
          ir_dereference_variable *v = (ir_dereference_variable *) d;
          if (previous_index
              && v->var->is_interface_instance()
-             && v->var->type->is_array())
-            return ralloc_asprintf(mem_ctx,
-                                   "%s[%d]",
-                                   base_name,
-                                   previous_index->get_uint_component(0));
-         else
+             && v->var->type->is_array()) {
+
+            ir_constant *const_index = previous_index->as_constant();
+            if (!const_index) {
+               *nonconst_block_index = previous_index;
+               return ralloc_asprintf(mem_ctx, "%s[0]", base_name);
+            } else {
+               return ralloc_asprintf(mem_ctx,
+                                      "%s[%d]",
+                                      base_name,
+                                      const_index->get_uint_component(0));
+            }
+         } else {
             return base_name;
+         }
 
          break;
       }
@@ -101,7 +111,8 @@ interface_field_name(void *mem_ctx, char *base_name, ir_dereference *d)
          ir_dereference_array *a = (ir_dereference_array *) d;
 
          d = a->array->as_dereference();
-         previous_index = a->array_index->as_constant();
+         previous_index = a->array_index;
+
          break;
       }
 
@@ -131,14 +142,24 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
 
    mem_ctx = ralloc_parent(*rvalue);
 
+   ir_rvalue *nonconst_block_index;
    const char *const field_name =
       interface_field_name(mem_ctx, (char *) var->get_interface_type()->name,
-                           deref);
+                           deref, &nonconst_block_index);
 
    this->uniform_block = NULL;
    for (unsigned i = 0; i < shader->NumUniformBlocks; i++) {
       if (strcmp(field_name, shader->UniformBlocks[i].Name) == 0) {
-         this->uniform_block = new(mem_ctx) ir_constant(i);
+
+         ir_constant *index = new(mem_ctx) ir_constant(i);
+
+         if (nonconst_block_index) {
+            if (nonconst_block_index->type != glsl_type::uint_type)
+               nonconst_block_index = i2u(nonconst_block_index);
+            this->uniform_block = add(nonconst_block_index, index);
+         } else {
+            this->uniform_block = index;
+         }
 
          struct gl_uniform_block *block = &shader->UniformBlocks[i];
 
