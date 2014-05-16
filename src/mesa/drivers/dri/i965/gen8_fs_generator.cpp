@@ -640,11 +640,11 @@ gen8_fs_generator::generate_discard_jump(fs_inst *ir)
    HALT();
 }
 
-void
+bool
 gen8_fs_generator::patch_discard_jumps_to_fb_writes()
 {
    if (discard_halt_patches.is_empty())
-      return;
+      return false;
 
    /* There is a somewhat strange undocumented requirement of using
     * HALT, according to the simulator.  If some channel has HALTed to
@@ -673,6 +673,7 @@ gen8_fs_generator::patch_discard_jumps_to_fb_writes()
    }
 
    this->discard_halt_patches.make_empty();
+   return true;
 }
 
 /**

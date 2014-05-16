@@ -696,7 +696,7 @@ private:
                                       struct brw_reg dst,
                                       struct brw_reg surf_index);
 
-   void patch_discard_jumps_to_fb_writes();
+   bool patch_discard_jumps_to_fb_writes();
 
    struct brw_context *brw;
    struct gl_context *ctx;
@@ -788,7 +788,7 @@ private:
                                       struct brw_reg surf_index);
    void generate_discard_jump(fs_inst *ir);
 
-   void patch_discard_jumps_to_fb_writes();
+   bool patch_discard_jumps_to_fb_writes();
 
    const struct brw_wm_prog_key *const key;
    struct brw_wm_prog_data *prog_data;

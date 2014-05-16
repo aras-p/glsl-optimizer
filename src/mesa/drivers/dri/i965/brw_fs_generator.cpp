@@ -59,11 +59,11 @@ fs_generator::~fs_generator()
 {
 }
 
-void
+bool
 fs_generator::patch_discard_jumps_to_fb_writes()
 {
    if (brw->gen < 6 || this->discard_halt_patches.is_empty())
-      return;
+      return false;
 
    /* There is a somewhat strange undocumented requirement of using
     * HALT, according to the simulator.  If some channel has HALTed to
@@ -92,6 +92,7 @@ fs_generator::patch_discard_jumps_to_fb_writes()
    }
 
    this->discard_halt_patches.make_empty();
+   return true;
 }
 
 void
