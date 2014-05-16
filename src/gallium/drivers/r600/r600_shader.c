@@ -6265,6 +6265,29 @@ static int tgsi_endloop(struct r600_shader_ctx *ctx)
 	return 0;
 }
 
+static int tgsi_loop_breakc(struct r600_shader_ctx *ctx)
+{
+	int r;
+	unsigned int fscp;
+
+	for (fscp = ctx->bc->fc_sp; fscp > 0; fscp--)
+	{
+		if (FC_LOOP == ctx->bc->fc_stack[fscp].type)
+			break;
+	}
+	if (fscp == 0) {
+		R600_ERR("BREAKC not inside loop/endloop pair\n");
+		return -EINVAL;
+	}
+
+	r = emit_logic_pred(ctx, ALU_OP2_PRED_SETE_INT, CF_OP_ALU_BREAK);
+	if (r)
+		return r;
+	fc_set_mid(ctx, fscp);
+
+	return 0;
+}
+
 static int tgsi_loop_brk_cont(struct r600_shader_ctx *ctx)
 {
 	unsigned int fscp;
@@ -6496,7 +6519,7 @@ static struct r600_shader_tgsi_instruction r600_shader_tgsi_instruction[] = {
 	{TGSI_OPCODE_CALLNZ,	0, ALU_OP0_NOP, tgsi_unsupported},
 	/* gap */
 	{114,			0, ALU_OP0_NOP, tgsi_unsupported},
-	{TGSI_OPCODE_BREAKC,	0, ALU_OP0_NOP, tgsi_unsupported},
+	{TGSI_OPCODE_BREAKC,	0, ALU_OP0_NOP, tgsi_loop_breakc},
 	{TGSI_OPCODE_KILL_IF,	0, ALU_OP2_KILLGT, tgsi_kill},  /* conditional kill */
 	{TGSI_OPCODE_END,	0, ALU_OP0_NOP, tgsi_end},  /* aka HALT */
 	/* gap */
