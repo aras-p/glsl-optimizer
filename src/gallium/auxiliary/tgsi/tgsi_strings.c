@@ -122,6 +122,7 @@ const char *tgsi_property_names[TGSI_PROPERTY_COUNT] =
    "FS_DEPTH_LAYOUT",
    "VS_PROHIBIT_UCPS",
    "GS_INVOCATIONS",
+   "VS_POSITION_WINDOW_SPACE"
 };
 
 const char *tgsi_type_names[5] =

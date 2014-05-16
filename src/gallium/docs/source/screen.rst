@@ -202,6 +202,9 @@ The integer capabilities:
   implemented.
 * ``PIPE_CAP_TEXTURE_GATHER_OFFSETS``: Whether the ``TG4`` instruction can
   accept 4 offsets.
+* ``PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION``: Whether
+  TGSI_PROPERTY_VS_WINDOW_SPACE_POSITION is supported, which disables clipping
+  and viewport transformation.
 
 
 .. _pipe_capf:

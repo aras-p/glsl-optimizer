@@ -2848,6 +2848,15 @@ input primitive. Each invocation will have a different
 TGSI_SEMANTIC_INVOCATIONID system value set. If not specified, assumed to
 be 1.
 
+VS_WINDOW_SPACE_POSITION
+""""""""""""""""""""""""""
+If this property is set on the vertex shader, the TGSI_SEMANTIC_POSITION output
+is assumed to contain window space coordinates.
+Division of X,Y,Z by W and the viewport transformation are disabled, and 1/W is
+directly taken from the 4-th component of the shader output.
+Naturally, clipping is not performed on window coordinates either.
+The effect of this property is undefined if a geometry or tessellation shader
+are in use.
 
 Texture Sampling and Texture Formats
 ------------------------------------

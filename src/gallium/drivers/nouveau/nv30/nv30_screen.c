@@ -137,6 +137,7 @@ nv30_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_TEXTURE_QUERY_LOD:
    case PIPE_CAP_SAMPLE_SHADING:
    case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
+   case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
       return 0;
    case PIPE_CAP_VERTEX_BUFFER_OFFSET_4BYTE_ALIGNED_ONLY:
    case PIPE_CAP_VERTEX_BUFFER_STRIDE_4BYTE_ALIGNED_ONLY:

@@ -237,7 +237,8 @@ union tgsi_immediate_data
 #define TGSI_PROPERTY_FS_DEPTH_LAYOUT        6
 #define TGSI_PROPERTY_VS_PROHIBIT_UCPS       7
 #define TGSI_PROPERTY_GS_INVOCATIONS         8
-#define TGSI_PROPERTY_COUNT                  9
+#define TGSI_PROPERTY_VS_WINDOW_SPACE_POSITION 9
+#define TGSI_PROPERTY_COUNT                  10
 
 struct tgsi_property {
    unsigned Type         : 4;  /**< TGSI_TOKEN_TYPE_PROPERTY */

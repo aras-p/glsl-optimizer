@@ -222,6 +222,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_TEXTURE_QUERY_LOD:
    case PIPE_CAP_SAMPLE_SHADING:
    case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
+   case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
       return 0;
 
    case PIPE_CAP_MAX_DUAL_SOURCE_RENDER_TARGETS:

@@ -175,6 +175,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_FAKE_SW_MSAA:
         case PIPE_CAP_SAMPLE_SHADING:
         case PIPE_CAP_TEXTURE_GATHER_OFFSETS:
+        case PIPE_CAP_TGSI_VS_WINDOW_SPACE_POSITION:
             return 0;
 
         /* SWTCL-only features. */

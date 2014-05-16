@@ -173,6 +173,7 @@ struct ureg_program
    unsigned char property_fs_coord_pixel_center; /* = TGSI_FS_COORD_PIXEL_CENTER_* */
    unsigned char property_fs_color0_writes_all_cbufs; /* = TGSI_FS_COLOR0_WRITES_ALL_CBUFS * */
    unsigned char property_fs_depth_layout; /* TGSI_FS_DEPTH_LAYOUT */
+   boolean property_vs_window_space_position; /* TGSI_VS_WINDOW_SPACE_POSITION */
 
    unsigned nr_addrs;
    unsigned nr_preds;
@@ -329,6 +330,13 @@ ureg_property_fs_depth_layout(struct ureg_program *ureg,
                               unsigned fs_depth_layout)
 {
    ureg->property_fs_depth_layout = fs_depth_layout;
+}
+
+void
+ureg_property_vs_window_space_position(struct ureg_program *ureg,
+                                       boolean vs_window_space_position)
+{
+   ureg->property_vs_window_space_position = vs_window_space_position;
 }
 
 struct ureg_src
@@ -1506,6 +1514,14 @@ static void emit_decls( struct ureg_program *ureg )
       emit_property(ureg,
                     TGSI_PROPERTY_FS_DEPTH_LAYOUT,
                     ureg->property_fs_depth_layout);
+   }
+
+   if (ureg->property_vs_window_space_position) {
+      assert(ureg->processor == TGSI_PROCESSOR_VERTEX);
+
+      emit_property(ureg,
+                    TGSI_PROPERTY_VS_WINDOW_SPACE_POSITION,
+                    ureg->property_vs_window_space_position);
    }
 
    if (ureg->processor == TGSI_PROCESSOR_VERTEX) {

@@ -184,6 +184,10 @@ void
 ureg_property_fs_depth_layout(struct ureg_program *ureg,
                               unsigned fs_depth_layout);
 
+void
+ureg_property_vs_window_space_position(struct ureg_program *ureg,
+                                       boolean vs_window_space_position);
+
 
 /***********************************************************************
  * Build shader declarations:
