@@ -42,6 +42,13 @@ brw_get_graphics_reset_status(struct gl_context *ctx)
     */
    assert(brw->hw_ctx != NULL);
 
+   /* A reset status other than NO_ERROR was returned last time. I915 returns
+    * nonzero active/pending only if reset has been encountered and completed.
+    * Return NO_ERROR from now on.
+    */
+   if (brw->reset_count != 0)
+      return GL_NO_ERROR;
+
    err = drm_intel_get_reset_stats(brw->hw_ctx, &reset_count, &active,
                                    &pending);
    if (err)
@@ -50,18 +57,19 @@ brw_get_graphics_reset_status(struct gl_context *ctx)
    /* A reset was observed while a batch from this context was executing.
     * Assume that this context was at fault.
     */
-   if (active != 0)
+   if (active != 0) {
+      brw->reset_count = reset_count;
       return GL_GUILTY_CONTEXT_RESET_ARB;
+   }
 
    /* A reset was observed while a batch from this context was in progress,
     * but the batch was not executing.  In this case, assume that the context
     * was not at fault.
     */
-   if (pending != 0)
+   if (pending != 0) {
+      brw->reset_count = reset_count;
       return GL_INNOCENT_CONTEXT_RESET_ARB;
-
-   /* FINISHME: Should we report anything if reset_count > brw->reset_count?
-    */
+   }
 
    return GL_NO_ERROR;
 }
