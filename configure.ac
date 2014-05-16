@@ -2057,6 +2057,10 @@ AM_CONDITIONAL(NEED_GALLIUM_SOFTPIPE_DRIVER, test "x$HAVE_GALLIUM_SVGA" = xyes -
 AM_CONDITIONAL(NEED_GALLIUM_LLVMPIPE_DRIVER, test "x$HAVE_GALLIUM_SOFTPIPE" = xyes \
                                                   && test "x$MESA_LLVM" = x1)
 
+# Enable static gallium targets for now.
+# Do not touch this unless you know what you are doing.
+AM_CONDITIONAL(HAVE_GALLIUM_STATIC_TARGETS, test "xyes" = xyes)
+
 # NOTE: anything using xcb or other client side libs ends up in separate
 #       _CLIENT variables.  The pipe loader is built in two variants,
 #       one that is standalone and does not link any x client libs (for
