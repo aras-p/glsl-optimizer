@@ -109,32 +109,44 @@ link_uniform_block_active_visitor::visit_enter(ir_dereference_array *ir)
    assert((b->num_array_elements == 0) == (b->array_elements == NULL));
    assert(b->type != NULL);
 
-   /* Determine whether or not this array index has already been added to the
-    * list of active array indices.  At this point all constant folding must
-    * have occured, and the array index must be a constant.
-    */
    ir_constant *c = ir->array_index->as_constant();
-   assert(c != NULL);
 
-   const unsigned idx = c->get_uint_component(0);
+   if (c) {
+      /* Index is a constant, so mark just that element used, if not already */
+      const unsigned idx = c->get_uint_component(0);
 
-   unsigned i;
-   for (i = 0; i < b->num_array_elements; i++) {
-      if (b->array_elements[i] == idx)
-	 break;
-   }
+      unsigned i;
+      for (i = 0; i < b->num_array_elements; i++) {
+         if (b->array_elements[i] == idx)
+            break;
+      }
 
-   assert(i <= b->num_array_elements);
+      assert(i <= b->num_array_elements);
 
-   if (i == b->num_array_elements) {
-      b->array_elements = reralloc(this->mem_ctx,
-				   b->array_elements,
-				   unsigned,
-				   b->num_array_elements + 1);
+      if (i == b->num_array_elements) {
+         b->array_elements = reralloc(this->mem_ctx,
+                                      b->array_elements,
+                                      unsigned,
+                                      b->num_array_elements + 1);
 
-      b->array_elements[b->num_array_elements] = idx;
+         b->array_elements[b->num_array_elements] = idx;
 
-      b->num_array_elements++;
+         b->num_array_elements++;
+      }
+   } else {
+      /* The array index is not a constant, so mark the entire array used. */
+      assert(b->type->is_array());
+      if (b->num_array_elements < b->type->length) {
+         b->num_array_elements = b->type->length;
+         b->array_elements = reralloc(this->mem_ctx,
+                                      b->array_elements,
+                                      unsigned,
+                                      b->num_array_elements);
+
+         for (unsigned i = 0; i < b->num_array_elements; i++) {
+            b->array_elements[i] = i;
+         }
+      }
    }
 
    return visit_continue_with_parent;
