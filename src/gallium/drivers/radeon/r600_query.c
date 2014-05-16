@@ -113,6 +113,7 @@ static struct r600_resource *r600_new_query_buffer(struct r600_common_context *c
 		}
 		ctx->ws->buffer_unmap(buf->cs_buf);
 		break;
+	case PIPE_QUERY_GPU_FINISHED:
 	case PIPE_QUERY_TIME_ELAPSED:
 	case PIPE_QUERY_TIMESTAMP:
 		break;
@@ -274,6 +275,8 @@ static void r600_emit_query_end(struct r600_common_context *ctx, struct r600_que
 		radeon_emit(cs, va);
 		radeon_emit(cs, (va >> 32UL) & 0xFF);
 		break;
+        case PIPE_QUERY_GPU_FINISHED:
+		break;
 	default:
 		assert(0);
 	}
@@ -356,6 +359,9 @@ static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned q
 	case PIPE_QUERY_OCCLUSION_PREDICATE:
 		query->result_size = 16 * rctx->max_db;
 		query->num_cs_dw = 6;
+		break;
+	case PIPE_QUERY_GPU_FINISHED:
+		query->num_cs_dw = 2;
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		query->result_size = 16;
@@ -582,6 +588,9 @@ static boolean r600_get_query_buffer_result(struct r600_common_context *ctx,
 				r600_query_read_result(map + results_base, 0, 2, true) != 0;
 			results_base += 16;
 		}
+		break;
+	case PIPE_QUERY_GPU_FINISHED:
+		result->b = TRUE;
 		break;
 	case PIPE_QUERY_TIME_ELAPSED:
 		while (results_base != qbuf->results_end) {
