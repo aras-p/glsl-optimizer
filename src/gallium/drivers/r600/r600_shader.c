@@ -1708,6 +1708,10 @@ static int r600_shader_from_tgsi(struct r600_context *rctx,
 				if (property->u[0].Data == 1)
 					shader->fs_write_all = TRUE;
 				break;
+			case TGSI_PROPERTY_VS_WINDOW_SPACE_POSITION:
+				if (property->u[0].Data == 1)
+					shader->vs_position_window_space = TRUE;
+				break;
 			case TGSI_PROPERTY_VS_PROHIBIT_UCPS:
 				/* we don't need this one */
 				break;

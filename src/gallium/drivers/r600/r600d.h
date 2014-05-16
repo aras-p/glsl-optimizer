@@ -2321,6 +2321,12 @@
 #define   S_028818_VPORT_Z_OFFSET_ENA(x)               (((x) & 0x1) << 5)
 #define   G_028818_VPORT_Z_OFFSET_ENA(x)               (((x) >> 5 & 0x1)
 #define   C_028818_VPORT_Z_OFFSET_ENA                  0xFFFFFFDF
+#define   S_028818_VTX_XY_FMT(x)                       (((x) & 0x1) << 8)
+#define   G_028818_VTX_XY_FMT(x)                       (((x) >> 8) & 0x1)
+#define   C_028818_VTX_XY_FMT                          0xFFFFFEFF
+#define   S_028818_VTX_Z_FMT(x)                        (((x) & 0x1) << 9)
+#define   G_028818_VTX_Z_FMT(x)                        (((x) >> 9) & 0x1)
+#define   C_028818_VTX_Z_FMT                           0xFFFFFDFF
 #define   S_028818_VTX_W0_FMT(x)                       (((x) & 0x1) << 10)
 #define   G_028818_VTX_W0_FMT(x)                       (((x) >> 10) & 0x1)
 #define   C_028818_VTX_W0_FMT                          0xFFFFFBFF

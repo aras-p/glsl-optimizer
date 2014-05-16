@@ -1178,9 +1178,11 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 			update_shader_atom(ctx, &rctx->vertex_shader, rctx->gs_shader->current->gs_copy_shader);
 			/* Update clip misc state. */
 			if (rctx->gs_shader->current->gs_copy_shader->pa_cl_vs_out_cntl != rctx->clip_misc_state.pa_cl_vs_out_cntl ||
-					rctx->gs_shader->current->gs_copy_shader->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write) {
+					rctx->gs_shader->current->gs_copy_shader->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write ||
+					rctx->clip_misc_state.clip_disable != rctx->gs_shader->current->shader.vs_position_window_space) {
 				rctx->clip_misc_state.pa_cl_vs_out_cntl = rctx->gs_shader->current->gs_copy_shader->pa_cl_vs_out_cntl;
 				rctx->clip_misc_state.clip_dist_write = rctx->gs_shader->current->gs_copy_shader->shader.clip_dist_write;
+				rctx->clip_misc_state.clip_disable = rctx->gs_shader->current->shader.vs_position_window_space;
 				rctx->clip_misc_state.atom.dirty = true;
 			}
 		}
@@ -1210,9 +1212,11 @@ static bool r600_update_derived_state(struct r600_context *rctx)
 
 			/* Update clip misc state. */
 			if (rctx->vs_shader->current->pa_cl_vs_out_cntl != rctx->clip_misc_state.pa_cl_vs_out_cntl ||
-					rctx->vs_shader->current->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write) {
+					rctx->vs_shader->current->shader.clip_dist_write != rctx->clip_misc_state.clip_dist_write ||
+					rctx->clip_misc_state.clip_disable != rctx->vs_shader->current->shader.vs_position_window_space) {
 				rctx->clip_misc_state.pa_cl_vs_out_cntl = rctx->vs_shader->current->pa_cl_vs_out_cntl;
 				rctx->clip_misc_state.clip_dist_write = rctx->vs_shader->current->shader.clip_dist_write;
+				rctx->clip_misc_state.clip_disable = rctx->vs_shader->current->shader.vs_position_window_space;
 				rctx->clip_misc_state.atom.dirty = true;
 			}
 		}
@@ -1310,7 +1314,8 @@ void r600_emit_clip_misc_state(struct r600_context *rctx, struct r600_atom *atom
 
 	r600_write_context_reg(cs, R_028810_PA_CL_CLIP_CNTL,
 			       state->pa_cl_clip_cntl |
-			       (state->clip_dist_write ? 0 : state->clip_plane_enable & 0x3F));
+			       (state->clip_dist_write ? 0 : state->clip_plane_enable & 0x3F) |
+                               S_028810_CLIP_DISABLE(state->clip_disable));
 	r600_write_context_reg(cs, R_02881C_PA_CL_VS_OUT_CNTL,
 			       state->pa_cl_vs_out_cntl |
 			       (state->clip_plane_enable & state->clip_dist_write));
