@@ -447,7 +447,7 @@ lp_build_context_init(struct lp_build_context *bld,
 
 
 unsigned
-lp_build_count_instructions(LLVMValueRef function);
+lp_build_count_ir_module(LLVMModuleRef module);
 
 
 #endif /* !LP_BLD_TYPE_H */

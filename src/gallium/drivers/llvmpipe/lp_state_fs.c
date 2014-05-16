@@ -2438,8 +2438,6 @@ generate_fragment(struct llvmpipe_context *lp,
    LLVMBuildRetVoid(builder);
 
    gallivm_verify_function(gallivm, function);
-
-   variant->nr_instrs += lp_build_count_instructions(function);
 }
 
 
@@ -2628,6 +2626,8 @@ generate_variant(struct llvmpipe_context *lp,
     */
 
    gallivm_compile_module(variant->gallivm);
+
+   variant->nr_instrs += lp_build_count_ir_module(variant->gallivm->module);
 
    if (variant->function[RAST_EDGE_TEST]) {
       variant->jit_function[RAST_EDGE_TEST] = (lp_jit_frag_func)

@@ -394,7 +394,7 @@ lp_build_context_init(struct lp_build_context *bld,
 /**
  * Count the number of instructions in a function.
  */
-unsigned
+static unsigned
 lp_build_count_instructions(LLVMValueRef function)
 {
    unsigned num_instrs = 0;
@@ -412,5 +412,23 @@ lp_build_count_instructions(LLVMValueRef function)
       block = LLVMGetNextBasicBlock(block);
    }
 
+   return num_instrs;
+}
+
+
+/**
+ * Count the number of instructions in a module.
+ */
+unsigned
+lp_build_count_ir_module(LLVMModuleRef module)
+{
+   LLVMValueRef func;
+   unsigned num_instrs = 0;
+
+   func = LLVMGetFirstFunction(module);
+   while (func) {
+      num_instrs += lp_build_count_instructions(func);
+      func = LLVMGetNextFunction(func);
+   }
    return num_instrs;
 }
