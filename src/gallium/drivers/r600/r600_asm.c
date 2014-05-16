@@ -143,6 +143,7 @@ void r600_bytecode_init(struct r600_bytecode *bc,
 
 	LIST_INITHEAD(&bc->cf);
 	bc->chip_class = chip_class;
+	bc->family = family;
 	bc->has_compressed_msaa_texturing = has_compressed_msaa_texturing;
 	bc->stack.entry_size = stack_entry_size(family);
 }

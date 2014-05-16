@@ -6280,10 +6280,26 @@ static int tgsi_loop_breakc(struct r600_shader_ctx *ctx)
 		return -EINVAL;
 	}
 
-	r = emit_logic_pred(ctx, ALU_OP2_PRED_SETE_INT, CF_OP_ALU_BREAK);
-	if (r)
-		return r;
-	fc_set_mid(ctx, fscp);
+	if (ctx->bc->chip_class == EVERGREEN &&
+	    ctx->bc->family != CHIP_CYPRESS &&
+	    ctx->bc->family != CHIP_JUNIPER) {
+		/* HW bug: ALU_BREAK does not save the active mask correctly */
+		r = tgsi_uif(ctx);
+		if (r)
+			return r;
+
+		r = r600_bytecode_add_cfinst(ctx->bc, CF_OP_LOOP_BREAK);
+		if (r)
+			return r;
+		fc_set_mid(ctx, fscp);
+
+		return tgsi_endif(ctx);
+	} else {
+		r = emit_logic_pred(ctx, ALU_OP2_PRED_SETE_INT, CF_OP_ALU_BREAK);
+		if (r)
+			return r;
+		fc_set_mid(ctx, fscp);
+	}
 
 	return 0;
 }

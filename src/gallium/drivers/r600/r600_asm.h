@@ -196,6 +196,7 @@ struct r600_stack_info {
 
 struct r600_bytecode {
 	enum chip_class			chip_class;
+	enum radeon_family		family;
 	bool				has_compressed_msaa_texturing;
 	int				type;
 	struct list_head		cf;
