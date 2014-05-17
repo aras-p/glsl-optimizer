@@ -424,6 +424,18 @@ void brw_debug_compact_uncompact(struct brw_context *brw,
 				 struct brw_instruction *orig,
 				 struct brw_instruction *uncompacted);
 
+static inline int
+next_offset(void *store, int offset)
+{
+   struct brw_instruction *insn =
+      (struct brw_instruction *)((char *)store + offset);
+
+   if (insn->header.cmpt_control)
+      return offset + 8;
+   else
+      return offset + 16;
+}
+
 #ifdef __cplusplus
 }
 #endif

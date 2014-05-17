@@ -2383,17 +2383,6 @@ void brw_urb_WRITE(struct brw_compile *p,
 }
 
 static int
-next_offset(void *store, int offset)
-{
-   struct brw_instruction *insn = (void *)store + offset;
-
-   if (insn->header.cmpt_control)
-      return offset + 8;
-   else
-      return offset + 16;
-}
-
-static int
 brw_find_next_block_end(struct brw_compile *p, int start_offset)
 {
    int offset;
