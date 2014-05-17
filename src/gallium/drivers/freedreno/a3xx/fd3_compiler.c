@@ -1091,14 +1091,18 @@ trans_samp(const struct instr_translater *t,
 	switch (t->arg) {
 	case TGSI_OPCODE_TEX:
 		switch (tex) {
+		case TGSI_TEXTURE_1D:
+			order = (int8_t[4]){ 0, -1, -1, -1 };  /* coord.x */
+			src_wrmask = TGSI_WRITEMASK_XY;
+			break;
 		case TGSI_TEXTURE_2D:
 		case TGSI_TEXTURE_RECT:
-			order = (int8_t[4]){ 0,  1, -1, -1 };
+			order = (int8_t[4]){ 0,  1, -1, -1 };  /* coord.xy */
 			src_wrmask = TGSI_WRITEMASK_XY;
 			break;
 		case TGSI_TEXTURE_3D:
 		case TGSI_TEXTURE_CUBE:
-			order = (int8_t[4]){ 0,  1,  2, -1 };
+			order = (int8_t[4]){ 0,  1,  2, -1 };  /* coord.xyz */
 			src_wrmask = TGSI_WRITEMASK_XYZ;
 			flags |= IR3_INSTR_3D;
 			break;
@@ -1110,14 +1114,18 @@ trans_samp(const struct instr_translater *t,
 		break;
 	case TGSI_OPCODE_TXP:
 		switch (tex) {
+		case TGSI_TEXTURE_1D:
+			order = (int8_t[4]){ 0, -1,  3, -1 };  /* coord.xw */
+			src_wrmask = TGSI_WRITEMASK_XYZ;
+			break;
 		case TGSI_TEXTURE_2D:
 		case TGSI_TEXTURE_RECT:
-			order = (int8_t[4]){ 0,  1,  3, -1 };
+			order = (int8_t[4]){ 0,  1,  3, -1 };  /* coord.xyw */
 			src_wrmask = TGSI_WRITEMASK_XYZ;
 			break;
 		case TGSI_TEXTURE_3D:
 		case TGSI_TEXTURE_CUBE:
-			order = (int8_t[4]){ 0,  1,  2,  3 };
+			order = (int8_t[4]){ 0,  1,  2,  3 };  /* coord.xyzw */
 			src_wrmask = TGSI_WRITEMASK_XYZW;
 			flags |= IR3_INSTR_3D;
 			break;
@@ -1135,6 +1143,10 @@ trans_samp(const struct instr_translater *t,
 
 	/* cat5 instruction cannot seem to handle const or relative: */
 	if (is_rel_or_const(coord))
+		needs_mov = true;
+
+	/* 1D textures we fix up w/ 0.0 as 2nd coord: */
+	if (tex == TGSI_TEXTURE_1D)
 		needs_mov = true;
 
 	/* The texture sample instructions need to coord in successive
@@ -1164,6 +1176,15 @@ trans_samp(const struct instr_translater *t,
 			add_dst_reg(ctx, instr, &tmp_dst, j);
 			add_src_reg(ctx, instr, coord,
 					src_swiz(coord, order[j]));
+		}
+
+		/* fix up .y coord: */
+		if (tex == TGSI_TEXTURE_1D) {
+			instr = instr_create(ctx, 1, 0);
+			instr->cat1.src_type = type_mov;
+			instr->cat1.dst_type = type_mov;
+			add_dst_reg(ctx, instr, &tmp_dst, 1);  /* .y */
+			ir3_reg_create(instr, 0, IR3_REG_IMMED)->fim_val = 0.5;
 		}
 
 		coord = tmp_src;
