@@ -72,6 +72,7 @@ enum dri3_buffer_type {
 
 struct dri3_buffer {
    __DRIimage   *image;
+   __DRIimage   *linear_buffer;
    uint32_t     pixmap;
 
    /* Synchronization between the client and X server is done using an
@@ -135,6 +136,7 @@ struct dri3_screen {
 
    void *driver;
    int fd;
+   int is_different_gpu;
 
    Bool show_fps;
 };
