@@ -203,4 +203,82 @@ dd_create_screen(int fd)
       return NULL;
 }
 
+inline const char *
+dd_driver_name(void)
+{
+   return driver_name;
+}
+
+static const struct drm_conf_ret throttle_ret = {
+   .type = DRM_CONF_INT,
+   .val.val_int = 2,
+};
+
+static const struct drm_conf_ret share_fd_ret = {
+   .type = DRM_CONF_BOOL,
+   .val.val_int = true,
+};
+
+static const struct drm_conf_ret *
+configuration_query(enum drm_conf conf)
+{
+   switch (conf) {
+   case DRM_CONF_THROTTLE:
+      return &throttle_ret;
+   case DRM_CONF_SHARE_FD:
+      return &share_fd_ret;
+   default:
+      break;
+   }
+   return NULL;
+}
+
+inline const struct drm_conf_ret *
+dd_configuration(enum drm_conf conf)
+{
+   if (!driver_name)
+      return NULL;
+
+#if defined(GALLIUM_I915)
+   if (strcmp(driver_name, "i915") == 0)
+      return NULL;
+   else
+#endif
+#if defined(GALLIUM_ILO)
+   if (strcmp(driver_name, "i965") == 0)
+      return configuration_query(conf);
+   else
+#endif
+#if defined(GALLIUM_NOUVEAU)
+   if (strcmp(driver_name, "nouveau") == 0)
+      return configuration_query(conf);
+   else
+#endif
+#if defined(GALLIUM_R300)
+   if (strcmp(driver_name, "r300") == 0)
+      return configuration_query(conf);
+   else
+#endif
+#if defined(GALLIUM_R600)
+   if (strcmp(driver_name, "r600") == 0)
+      return configuration_query(conf);
+   else
+#endif
+#if defined(GALLIUM_RADEONSI)
+   if (strcmp(driver_name, "radeonsi") == 0)
+      return configuration_query(conf);
+   else
+#endif
+#if defined(GALLIUM_VMWGFX)
+   if (strcmp(driver_name, "vmwgfx") == 0)
+      return configuration_query(conf);
+   else
+#endif
+#if defined(GALLIUM_FREEDRENO)
+   if ((strcmp(driver_name, "kgsl") == 0) || (strcmp(driver_name, "msm") == 0))
+      return NULL;
+   else
+#endif
+      return NULL;
+}
 #endif /* INLINE_DRM_HELPER_H */
