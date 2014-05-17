@@ -71,7 +71,7 @@ fd_draw_emit(struct fd_context *ctx, struct fd_ringbuffer *ring,
 		idx_bo = fd_resource(idx->buffer)->bo;
 		idx_type = size2indextype(idx->index_size);
 		idx_size = idx->index_size * info->count;
-		idx_offset = idx->offset;
+		idx_offset = idx->offset + (info->start * idx->index_size);
 		src_sel = DI_SRC_SEL_DMA;
 	} else {
 		idx_bo = NULL;
