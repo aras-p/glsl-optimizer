@@ -98,7 +98,7 @@ cfg_t::cfg_t(exec_list *instructions)
    bblock_t *cur_if = NULL;    /**< BB ending with IF. */
    bblock_t *cur_else = NULL;  /**< BB ending with ELSE. */
    bblock_t *cur_endif = NULL; /**< BB starting with ENDIF. */
-   bblock_t *cur_do = NULL;    /**< BB ending with DO. */
+   bblock_t *cur_do = NULL;    /**< BB starting with DO. */
    bblock_t *cur_while = NULL; /**< BB immediately following WHILE. */
    exec_list if_stack, else_stack, do_stack, while_stack;
    bblock_t *next;
@@ -205,15 +205,18 @@ cfg_t::cfg_t(exec_list *instructions)
 	  */
 	 cur_while = new_block();
 
-	 /* Set up our immediately following block, full of "then"
-	  * instructions.
-	  */
-	 next = new_block();
-	 next->start = (backend_instruction *)inst->next;
-	 cur->add_successor(mem_ctx, next);
-	 cur_do = next;
+         if (cur->start == inst) {
+            /* New block was just created; use it. */
+            cur_do = cur;
+         } else {
+            cur_do = new_block();
+            cur_do->start = inst;
 
-	 set_next_block(&cur, next, ip);
+            cur->end = (backend_instruction *)inst->prev;
+            cur->add_successor(mem_ctx, cur_do);
+
+            set_next_block(&cur, cur_do, ip - 1);
+         }
 	 break;
 
       case BRW_OPCODE_CONTINUE:
