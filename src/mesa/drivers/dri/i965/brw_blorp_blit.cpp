@@ -519,8 +519,7 @@ public:
    brw_blorp_blit_program(struct brw_context *brw,
                           const brw_blorp_blit_prog_key *key, bool debug_flag);
 
-   const GLuint *compile(struct brw_context *brw, GLuint *program_size,
-                         FILE *dump_file = stderr);
+   const GLuint *compile(struct brw_context *brw, GLuint *program_size);
 
    brw_blorp_prog_data prog_data;
 
@@ -634,8 +633,7 @@ brw_blorp_blit_program::brw_blorp_blit_program(
 
 const GLuint *
 brw_blorp_blit_program::compile(struct brw_context *brw,
-                                GLuint *program_size,
-                                FILE *dump_file)
+                                GLuint *program_size)
 {
    /* Sanity checks */
    if (key->dst_tiled_w && key->rt_samples > 0) {
@@ -790,7 +788,7 @@ brw_blorp_blit_program::compile(struct brw_context *brw,
     */
    render_target_write();
 
-   return get_program(program_size, dump_file);
+   return get_program(program_size);
 }
 
 void
@@ -2146,7 +2144,7 @@ brw_blorp_blit_params::get_wm_prog(struct brw_context *brw,
       brw_blorp_blit_program prog(brw, &this->wm_prog_key,
                                   INTEL_DEBUG & DEBUG_BLORP);
       GLuint program_size;
-      const GLuint *program = prog.compile(brw, &program_size, stderr);
+      const GLuint *program = prog.compile(brw, &program_size);
       brw_upload_cache(&brw->cache, BRW_BLORP_BLIT_PROG,
                        &this->wm_prog_key, sizeof(this->wm_prog_key),
                        program, program_size,

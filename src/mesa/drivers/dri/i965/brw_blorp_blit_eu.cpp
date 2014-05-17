@@ -41,9 +41,9 @@ brw_blorp_eu_emitter::~brw_blorp_eu_emitter()
 }
 
 const unsigned *
-brw_blorp_eu_emitter::get_program(unsigned *program_size, FILE *dump_file)
+brw_blorp_eu_emitter::get_program(unsigned *program_size)
 {
-   return generator.generate_assembly(NULL, &insts, program_size, dump_file);
+   return generator.generate_assembly(NULL, &insts, program_size);
 }
 
 /**
