@@ -2383,31 +2383,32 @@ void brw_urb_WRITE(struct brw_compile *p,
 }
 
 static int
-next_ip(struct brw_compile *p, int ip)
+next_offset(void *store, int offset)
 {
-   struct brw_instruction *insn = (void *)p->store + ip;
+   struct brw_instruction *insn = (void *)store + offset;
 
    if (insn->header.cmpt_control)
-      return ip + 8;
+      return offset + 8;
    else
-      return ip + 16;
+      return offset + 16;
 }
 
 static int
-brw_find_next_block_end(struct brw_compile *p, int start)
+brw_find_next_block_end(struct brw_compile *p, int start_offset)
 {
-   int ip;
+   int offset;
    void *store = p->store;
 
-   for (ip = next_ip(p, start); ip < p->next_insn_offset; ip = next_ip(p, ip)) {
-      struct brw_instruction *insn = store + ip;
+   for (offset = next_offset(store, start_offset); offset < p->next_insn_offset;
+        offset = next_offset(store, offset)) {
+      struct brw_instruction *insn = store + offset;
 
       switch (insn->header.opcode) {
       case BRW_OPCODE_ENDIF:
       case BRW_OPCODE_ELSE:
       case BRW_OPCODE_WHILE:
       case BRW_OPCODE_HALT:
-	 return ip;
+	 return offset;
       }
    }
 
@@ -2419,28 +2420,29 @@ brw_find_next_block_end(struct brw_compile *p, int start)
  * instruction.
  */
 static int
-brw_find_loop_end(struct brw_compile *p, int start)
+brw_find_loop_end(struct brw_compile *p, int start_offset)
 {
    struct brw_context *brw = p->brw;
-   int ip;
+   int offset;
    int scale = 8;
    void *store = p->store;
 
    /* Always start after the instruction (such as a WHILE) we're trying to fix
     * up.
     */
-   for (ip = next_ip(p, start); ip < p->next_insn_offset; ip = next_ip(p, ip)) {
-      struct brw_instruction *insn = store + ip;
+   for (offset = next_offset(store, start_offset); offset < p->next_insn_offset;
+        offset = next_offset(store, offset)) {
+      struct brw_instruction *insn = store + offset;
 
       if (insn->header.opcode == BRW_OPCODE_WHILE) {
 	 int jip = brw->gen == 6 ? insn->bits1.branch_gen6.jump_count
 				   : insn->bits3.break_cont.jip;
-	 if (ip + jip * scale <= start)
-	    return ip;
+	 if (offset + jip * scale <= start_offset)
+	    return offset;
       }
    }
    assert(!"not reached");
-   return start;
+   return start_offset;
 }
 
 /* After program generation, go back and update the UIP and JIP of
@@ -2450,15 +2452,16 @@ void
 brw_set_uip_jip(struct brw_compile *p)
 {
    struct brw_context *brw = p->brw;
-   int ip;
+   int offset;
    int scale = 8;
    void *store = p->store;
 
    if (brw->gen < 6)
       return;
 
-   for (ip = 0; ip < p->next_insn_offset; ip = next_ip(p, ip)) {
-      struct brw_instruction *insn = store + ip;
+   for (offset = 0; offset < p->next_insn_offset;
+        offset = next_offset(store, offset)) {
+      struct brw_instruction *insn = store + offset;
 
       if (insn->header.cmpt_control) {
 	 /* Fixups for compacted BREAK/CONTINUE not supported yet. */
@@ -2468,31 +2471,31 @@ brw_set_uip_jip(struct brw_compile *p)
 	 continue;
       }
 
-      int block_end_ip = brw_find_next_block_end(p, ip);
+      int block_end_offset = brw_find_next_block_end(p, offset);
       switch (insn->header.opcode) {
       case BRW_OPCODE_BREAK:
-         assert(block_end_ip != 0);
-	 insn->bits3.break_cont.jip = (block_end_ip - ip) / scale;
+         assert(block_end_offset != 0);
+	 insn->bits3.break_cont.jip = (block_end_offset - offset) / scale;
 	 /* Gen7 UIP points to WHILE; Gen6 points just after it */
 	 insn->bits3.break_cont.uip =
-	    (brw_find_loop_end(p, ip) - ip +
+	    (brw_find_loop_end(p, offset) - offset +
              (brw->gen == 6 ? 16 : 0)) / scale;
 	 break;
       case BRW_OPCODE_CONTINUE:
-         assert(block_end_ip != 0);
-	 insn->bits3.break_cont.jip = (block_end_ip - ip) / scale;
+         assert(block_end_offset != 0);
+	 insn->bits3.break_cont.jip = (block_end_offset - offset) / scale;
 	 insn->bits3.break_cont.uip =
-            (brw_find_loop_end(p, ip) - ip) / scale;
+            (brw_find_loop_end(p, offset) - offset) / scale;
 
 	 assert(insn->bits3.break_cont.uip != 0);
 	 assert(insn->bits3.break_cont.jip != 0);
 	 break;
 
       case BRW_OPCODE_ENDIF:
-         if (block_end_ip == 0)
+         if (block_end_offset == 0)
             insn->bits3.break_cont.jip = 2;
          else
-            insn->bits3.break_cont.jip = (block_end_ip - ip) / scale;
+            insn->bits3.break_cont.jip = (block_end_offset - offset) / scale;
 	 break;
 
       case BRW_OPCODE_HALT:
@@ -2507,10 +2510,10 @@ brw_set_uip_jip(struct brw_compile *p)
 	  * The uip will have already been set by whoever set up the
 	  * instruction.
 	  */
-	 if (block_end_ip == 0) {
+	 if (block_end_offset == 0) {
 	    insn->bits3.break_cont.jip = insn->bits3.break_cont.uip;
 	 } else {
-	    insn->bits3.break_cont.jip = (block_end_ip - ip) / scale;
+	    insn->bits3.break_cont.jip = (block_end_offset - offset) / scale;
 	 }
 	 assert(insn->bits3.break_cont.uip != 0);
 	 assert(insn->bits3.break_cont.jip != 0);
