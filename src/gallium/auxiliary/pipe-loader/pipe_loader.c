@@ -61,6 +61,13 @@ pipe_loader_release(struct pipe_loader_device **devs, int ndev)
       devs[i]->ops->release(&devs[i]);
 }
 
+const struct drm_conf_ret *
+pipe_loader_configuration(struct pipe_loader_device *dev,
+                          enum drm_conf conf)
+{
+   return dev->ops->configuration(dev, conf);
+}
+
 struct pipe_screen *
 pipe_loader_create_screen(struct pipe_loader_device *dev,
                           const char *library_paths)

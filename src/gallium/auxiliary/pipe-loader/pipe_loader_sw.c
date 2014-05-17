@@ -152,6 +152,13 @@ pipe_loader_sw_release(struct pipe_loader_device **dev)
    *dev = NULL;
 }
 
+static const struct drm_conf_ret *
+pipe_loader_sw_configuration(struct pipe_loader_device *dev,
+                             enum drm_conf conf)
+{
+   return NULL;
+}
+
 static struct pipe_screen *
 pipe_loader_sw_create_screen(struct pipe_loader_device *dev,
                              const char *library_paths)
@@ -176,5 +183,6 @@ pipe_loader_sw_create_screen(struct pipe_loader_device *dev,
 
 static struct pipe_loader_ops pipe_loader_sw_ops = {
    .create_screen = pipe_loader_sw_create_screen,
+   .configuration = pipe_loader_sw_configuration,
    .release = pipe_loader_sw_release
 };
