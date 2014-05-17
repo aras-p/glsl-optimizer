@@ -295,6 +295,16 @@ validate_reg(struct brw_instruction *insn, struct brw_reg reg)
    /* 10. Check destination issues. */
 }
 
+static bool
+is_compactable_immediate(unsigned imm)
+{
+   /* We get the low 12 bits as-is. */
+   imm &= ~0xfff;
+
+   /* We get one bit replicated through the top 20 bits. */
+   return imm == 0 || imm == 0xfffff000;
+}
+
 void
 brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
 	     struct brw_reg reg)
@@ -372,6 +382,17 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
       if (insn->bits3.ud == 0x0 &&
           insn->bits1.da1.src0_reg_type == BRW_HW_REG_TYPE_F) {
          insn->bits1.da1.src0_reg_type = BRW_HW_REG_IMM_TYPE_VF;
+      }
+
+      /* There are no mappings for dst:d | i:d, so if the immediate is suitable
+       * set the types to :UD so the instruction can be compacted.
+       */
+      if (is_compactable_immediate(insn->bits3.ud) &&
+          insn->header.destreg__conditionalmod == BRW_CONDITIONAL_NONE &&
+          insn->bits1.da1.src0_reg_type == BRW_HW_REG_TYPE_D &&
+          insn->bits1.da1.dest_reg_type == BRW_HW_REG_TYPE_D) {
+         insn->bits1.da1.src0_reg_type = BRW_HW_REG_TYPE_UD;
+         insn->bits1.da1.dest_reg_type = BRW_HW_REG_TYPE_UD;
       }
    }
    else
