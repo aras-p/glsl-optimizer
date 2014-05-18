@@ -900,10 +900,34 @@ fs_visitor::visit(ir_expression *ir)
       /* This IR node takes a constant uniform block and a constant or
        * variable byte offset within the block and loads a vector from that.
        */
-      ir_constant *uniform_block = ir->operands[0]->as_constant();
+      ir_constant *const_uniform_block = ir->operands[0]->as_constant();
       ir_constant *const_offset = ir->operands[1]->as_constant();
-      fs_reg surf_index = fs_reg(prog_data->base.binding_table.ubo_start +
-                                 uniform_block->value.u[0]);
+      fs_reg surf_index;
+
+      if (const_uniform_block) {
+         /* The block index is a constant, so just emit the binding table entry
+          * as an immediate.
+          */
+         surf_index = fs_reg(prog_data->base.binding_table.ubo_start +
+                                 const_uniform_block->value.u[0]);
+      } else {
+         /* The block index is not a constant. Evaluate the index expression
+          * per-channel and add the base UBO index; the generator will select
+          * a value from any live channel.
+          */
+         surf_index = fs_reg(this, glsl_type::uint_type);
+         emit(ADD(surf_index, op[0],
+                  fs_reg(prog_data->base.binding_table.ubo_start)))
+            ->force_writemask_all = true;
+
+         /* Assume this may touch any UBO. It would be nice to provide
+          * a tighter bound, but the array information is already lowered away.
+          */
+         brw_mark_surface_used(&prog_data->base,
+                               prog_data->base.binding_table.ubo_start +
+                               shader_prog->NumUniformBlocks - 1);
+      }
+
       if (const_offset) {
          fs_reg packed_consts = fs_reg(this, glsl_type::float_type);
          packed_consts.type = result.type;
