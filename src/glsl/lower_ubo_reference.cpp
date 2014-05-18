@@ -57,7 +57,7 @@ public:
    void *mem_ctx;
    struct gl_shader *shader;
    struct gl_uniform_buffer_variable *ubo_var;
-   unsigned uniform_block;
+   ir_rvalue *uniform_block;
    bool progress;
 };
 
@@ -135,10 +135,10 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
       interface_field_name(mem_ctx, (char *) var->get_interface_type()->name,
                            deref);
 
-   this->uniform_block = -1;
+   this->uniform_block = NULL;
    for (unsigned i = 0; i < shader->NumUniformBlocks; i++) {
       if (strcmp(field_name, shader->UniformBlocks[i].Name) == 0) {
-         this->uniform_block = i;
+         this->uniform_block = new(mem_ctx) ir_constant(i);
 
          struct gl_uniform_block *block = &shader->UniformBlocks[i];
 
@@ -149,7 +149,7 @@ lower_ubo_reference_visitor::handle_rvalue(ir_rvalue **rvalue)
       }
    }
 
-   assert(this->uniform_block != (unsigned) -1);
+   assert(this->uniform_block);
 
    ir_rvalue *offset = new(mem_ctx) ir_constant(0u);
    unsigned const_offset = 0;
@@ -267,11 +267,12 @@ ir_expression *
 lower_ubo_reference_visitor::ubo_load(const glsl_type *type,
 				      ir_rvalue *offset)
 {
+   ir_rvalue *block_ref = this->uniform_block->clone(mem_ctx, NULL);
    return new(mem_ctx)
       ir_expression(ir_binop_ubo_load,
-		    type,
-		    new(mem_ctx) ir_constant(this->uniform_block),
-		    offset);
+                    type,
+                    block_ref,
+                    offset);
 
 }
 
