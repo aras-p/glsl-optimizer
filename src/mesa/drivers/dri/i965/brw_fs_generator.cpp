@@ -1796,12 +1796,12 @@ fs_generator::generate_assembly(exec_list *simd8_instructions,
 
    if (simd16_instructions) {
       /* align to 64 byte boundary. */
-      while ((p->nr_insn * sizeof(struct brw_instruction)) % 64) {
+      while (p->next_insn_offset % 64) {
          brw_NOP(p);
       }
 
       /* Save off the start of this SIMD16 program */
-      prog_data->prog_offset_16 = p->nr_insn * sizeof(struct brw_instruction);
+      prog_data->prog_offset_16 = p->next_insn_offset;
 
       brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
 

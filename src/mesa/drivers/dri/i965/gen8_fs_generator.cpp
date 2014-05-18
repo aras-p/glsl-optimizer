@@ -1284,11 +1284,11 @@ gen8_fs_generator::generate_assembly(exec_list *simd8_instructions,
 
    if (simd16_instructions) {
       /* Align to a 64-byte boundary. */
-      while ((nr_inst * sizeof(gen8_instruction)) % 64)
+      while (next_inst_offset % 64)
          NOP();
 
       /* Save off the start of this SIMD16 program */
-      prog_data->prog_offset_16 = nr_inst * sizeof(gen8_instruction);
+      prog_data->prog_offset_16 = next_inst_offset;
 
       struct annotation_info annotation;
       memset(&annotation, 0, sizeof(annotation));
