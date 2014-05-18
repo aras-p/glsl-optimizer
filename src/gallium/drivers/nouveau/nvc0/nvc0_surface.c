@@ -913,6 +913,11 @@ nvc0_blit_3d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
    y0 *= (float)(1 << nv50_miptree(src)->ms_y);
    y1 *= (float)(1 << nv50_miptree(src)->ms_y);
 
+   dz = (float)info->src.box.depth / (float)info->dst.box.depth;
+   z = (float)info->src.box.z;
+   if (nv50_miptree(src)->layout_3d)
+      z += 0.5f * dz;
+
    if (src->last_level > 0) {
       /* If there are mip maps, GPU always assumes normalized coordinates. */
       const unsigned l = info->src.level;
@@ -922,12 +927,11 @@ nvc0_blit_3d(struct nvc0_context *nvc0, const struct pipe_blit_info *info)
       x1 /= fh;
       y0 /= fv;
       y1 /= fv;
+      if (nv50_miptree(src)->layout_3d) {
+         z /= u_minify(src->depth0, l);
+         dz /= u_minify(src->depth0, l);
+      }
    }
-
-   dz = (float)info->src.box.depth / (float)info->dst.box.depth;
-   z = (float)info->src.box.z;
-   if (nv50_miptree(src)->layout_3d)
-      z += 0.5f * dz;
 
    IMMED_NVC0(push, NVC0_3D(VIEWPORT_TRANSFORM_EN), 0);
    IMMED_NVC0(push, NVC0_3D(VIEW_VOLUME_CLIP_CTRL), 0x2 |
