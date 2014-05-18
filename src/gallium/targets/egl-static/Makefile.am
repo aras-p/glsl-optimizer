@@ -48,7 +48,7 @@ AM_LDFLAGS = \
 	-module \
 	-no-undefined \
 	-avoid-version \
-	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/egl-static/egl.sym
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/egl-static/egl.sym \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
