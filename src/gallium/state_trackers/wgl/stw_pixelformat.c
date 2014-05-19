@@ -158,7 +158,7 @@ stw_pixelformat_add(
    pfi->pfd.dwFlags |= PFD_SUPPORT_COMPOSITION;
 
    if (doublebuffer)
-      pfi->pfd.dwFlags |= PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
+      pfi->pfd.dwFlags |= PFD_DOUBLEBUFFER | PFD_SWAP_EXCHANGE;
    
    pfi->pfd.iPixelType = PFD_TYPE_RGBA;
 
