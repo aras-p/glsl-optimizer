@@ -29,6 +29,25 @@
   *   Keith Whitwell <keithw@vmware.com>
   */
 
+/** @file brw_curbe.c
+ *
+ * Push constant handling for gen4/5.
+ *
+ * Push constants are constant values (such as GLSL uniforms) that are
+ * pre-loaded into a shader stage's register space at thread spawn time.  On
+ * gen4 and gen5, we create a blob in memory containing all the push constants
+ * for all the stages in order.  At CMD_CONST_BUFFER time that blob is loaded
+ * into URB space as a constant URB entry (CURBE) so that it can be accessed
+ * quickly at thread setup time.  Each individual fixed function unit's state
+ * (brw_vs_state.c for example) tells the hardware which subset of the CURBE
+ * it wants in its register space, and we calculate those areas here under the
+ * BRW_NEW_CURBE_OFFSETS state flag.  The brw_urb.c allocation will control
+ * how many CURBEs can be loaded into the hardware at once before a pipeline
+ * stall occurs at CMD_CONST_BUFFER time.
+ *
+ * On gen6+, constant handling becomes a much simpler set of per-unit state.
+ * See gen6_upload_vec4_push_constants() in gen6_vs_state.c for that code.
+ */
 
 
 #include "main/glheader.h"
@@ -47,11 +66,11 @@
 
 
 /**
- * Partition the CURBE between the various users of constant values:
- * Note that vertex and fragment shaders can now fetch constants out
- * of constant buffers.  We no longer allocatea block of the GRF for
- * constants.  That greatly reduces the demand for space in the CURBE.
- * Some of the comments within are dated...
+ * Partition the CURBE between the various users of constant values.
+ *
+ * If the users all fit within the previous allocatation, we avoid changing
+ * the layout because that means reuploading all unit state and uploading new
+ * constant buffers.
  */
 static void calculate_curbe_offsets( struct brw_context *brw )
 {
@@ -73,22 +92,15 @@ static void calculate_curbe_offsets( struct brw_context *brw )
 
    total_regs = nr_fp_regs + nr_vp_regs + nr_clip_regs;
 
-   /* This can happen - what to do?  Probably rather than falling
-    * back, the best thing to do is emit programs which code the
-    * constants as immediate values.  Could do this either as a static
-    * cap on WM and VS, or adaptively.
+   /* The CURBE allocation size is limited to 32 512-bit units (128 EU
+    * registers, or 1024 floats).  See CS_URB_STATE in the gen4 or gen5
+    * (volume 1, part 1) PRMs.
     *
-    * Unfortunately, this is currently dependent on the results of the
-    * program generation process (in the case of wm), so this would
-    * introduce the need to re-generate programs in the event of a
-    * curbe allocation failure.
-    */
-   /* Max size is 32 - just large enough to
-    * hold the 128 parameters allowed by
-    * the fragment and vertex program
-    * api's.  It's not clear what happens
-    * when both VP and FP want to use 128
-    * parameters, though.
+    * Note that in brw_fs.cpp we're only loading up to 16 EU registers of
+    * values as push constants before spilling to pull constants, and in
+    * brw_vec4.cpp we're loading up to 32 registers of push constants.  An EU
+    * register is 1/2 of one of these URB entry units, so that leaves us 16 EU
+    * regs for clip.
     */
    assert(total_regs <= 32);
 
@@ -139,18 +151,17 @@ const struct brw_tracked_state brw_curbe_offsets = {
 
 
 
-/* Define the number of curbes within CS's urb allocation.  Multiple
- * urb entries -> multiple curbes.  These will be used by
- * fixed-function hardware in a double-buffering scheme to avoid a
- * pipeline stall each time the contents of the curbe is changed.
+/** Uploads the CS_URB_STATE packet.
+ *
+ * Just like brw_vs_state.c and brw_wm_state.c define a URB entry size and
+ * number of entries for their stages, constant buffers do so using this state
+ * packet.  Having multiple CURBEs in the URB at the same time allows the
+ * hardware to avoid a pipeline stall between primitives using different
+ * constant buffer contents.
  */
 void brw_upload_cs_urb_state(struct brw_context *brw)
 {
    BEGIN_BATCH(2);
-   /* It appears that this is the state packet for the CS unit, ie. the
-    * urb entries detailed here are housed in the CS range from the
-    * URB_FENCE command.
-    */
    OUT_BATCH(CMD_CS_URB_STATE << 16 | (2-2));
 
    /* BRW_NEW_URB_FENCE */
@@ -173,14 +184,16 @@ static GLfloat fixed_plane[6][4] = {
    { 1,    0,    0, 1 }
 };
 
-/* Upload a new set of constants.  Too much variability to go into the
- * cache mechanism, but maybe would benefit from a comparison against
- * the current uploaded set of constants.
+/**
+ * Gathers together all the uniform values into a block of memory to be
+ * uploaded into the CURBE, then emits the state packet telling the hardware
+ * the new location.
  */
 static void
 brw_upload_constant_buffer(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
+   /* BRW_NEW_CURBE_OFFSETS */
    const GLuint sz = brw->curbe.total_size;
    const GLuint bufsz = sz * 16 * sizeof(GLfloat);
    GLfloat *buf;
@@ -196,6 +209,7 @@ brw_upload_constant_buffer(struct brw_context *brw)
 
    /* fragment shader constants */
    if (brw->curbe.wm_size) {
+      /* BRW_NEW_CURBE_OFFSETS */
       GLuint offset = brw->curbe.wm_start * 16;
 
       /* CACHE_NEW_WM_PROG | _NEW_PROGRAM_CONSTANTS: copy uniform values */
@@ -264,6 +278,14 @@ brw_upload_constant_buffer(struct brw_context *brw)
     */
 
 emit:
+   /* BRW_NEW_URB_FENCE: From the gen4 PRM, volume 1, section 3.9.8
+    * (CONSTANT_BUFFER (CURBE Load)):
+    *
+    *     "Modifying the CS URB allocation via URB_FENCE invalidates any
+    *      previous CURBE entries. Therefore software must subsequently
+    *      [re]issue a CONSTANT_BUFFER command before CURBE data can be used
+    *      in the pipeline."
+    */
    BEGIN_BATCH(2);
    if (brw->curbe.total_size == 0) {
       OUT_BATCH((CMD_CONST_BUFFER << 16) | (2 - 2));
@@ -280,7 +302,7 @@ emit:
 const struct brw_tracked_state brw_constant_buffer = {
    .dirty = {
       .mesa = _NEW_PROGRAM_CONSTANTS,
-      .brw  = (BRW_NEW_URB_FENCE | /* Implicit - hardware requires this, not used above */
+      .brw  = (BRW_NEW_URB_FENCE |
 	       BRW_NEW_PSP | /* Implicit - hardware requires this, not used above */
 	       BRW_NEW_CURBE_OFFSETS |
 	       BRW_NEW_BATCH),

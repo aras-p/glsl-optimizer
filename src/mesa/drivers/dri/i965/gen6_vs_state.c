@@ -102,6 +102,20 @@ gen6_upload_push_constants(struct brw_context *brw,
 
       stage_state->push_const_size = ALIGN(prog_data->nr_params, 8) / 8;
       /* We can only push 32 registers of constants at a time. */
+
+      /* From the SNB PRM (vol2, part 1, section 3.2.1.4: 3DSTATE_CONSTANT_VS:
+       *
+       *     "The sum of all four read length fields (each incremented to
+       *      represent the actual read length) must be less than or equal to
+       *      32"
+       *
+       * From the IVB PRM (vol2, part 1, section 3.2.1.3: 3DSTATE_CONSTANT_VS:
+       *
+       *     "The sum of all four read length fields must be less than or
+       *      equal to the size of 64"
+       *
+       * The other shader stages all match the VS's limits.
+       */
       assert(stage_state->push_const_size <= 32);
    }
 }

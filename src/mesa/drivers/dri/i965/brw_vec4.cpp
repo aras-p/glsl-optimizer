@@ -702,6 +702,9 @@ vec4_visitor::move_push_constants_to_pull_constants()
 
    /* Only allow 32 registers (256 uniform components) as push constants,
     * which is the limit on gen6.
+    *
+    * If changing this value, note the limitation about total_regs in
+    * brw_curbe.c.
     */
    int max_uniform_components = 32 * 8;
    if (this->uniforms * 4 <= max_uniform_components)
