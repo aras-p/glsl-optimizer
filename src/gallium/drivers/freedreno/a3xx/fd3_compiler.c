@@ -1092,25 +1092,50 @@ get_tex_info(struct fd3_compile_context *ctx,
 		.src_wrmask = TGSI_WRITEMASK_XY,
 		.flags = 0,
 	};
+	static const struct tex_info tex1ds = {
+		.order = { 0, -1,  2, -1 },  /* coord.xz */
+		.src_wrmask = TGSI_WRITEMASK_XYZ,
+		.flags = IR3_INSTR_S,
+	};
 	static const struct tex_info tex2d = {
 		.order = { 0,  1, -1, -1 },  /* coord.xy */
 		.src_wrmask = TGSI_WRITEMASK_XY,
 		.flags = 0,
+	};
+	static const struct tex_info tex2ds = {
+		.order = { 0,  1,  2, -1 },  /* coord.xyz */
+		.src_wrmask = TGSI_WRITEMASK_XYZ,
+		.flags = IR3_INSTR_S,
 	};
 	static const struct tex_info tex3d = {
 		.order = { 0,  1,  2, -1 },  /* coord.xyz */
 		.src_wrmask = TGSI_WRITEMASK_XYZ,
 		.flags = IR3_INSTR_3D,
 	};
+	static const struct tex_info tex3ds = {
+		.order = { 0,  1,  2,  3 },  /* coord.xyzw */
+		.src_wrmask = TGSI_WRITEMASK_XYZW,
+		.flags = IR3_INSTR_S | IR3_INSTR_3D,
+	};
 	static const struct tex_info txp1d = {
 		.order = { 0, -1,  3, -1 },  /* coord.xw */
 		.src_wrmask = TGSI_WRITEMASK_XYZ,
 		.flags = IR3_INSTR_P,
 	};
+	static const struct tex_info txp1ds = {
+		.order = { 0, -1,  2,  3 },  /* coord.xzw */
+		.src_wrmask = TGSI_WRITEMASK_XYZW,
+		.flags = IR3_INSTR_P | IR3_INSTR_S,
+	};
 	static const struct tex_info txp2d = {
 		.order = { 0,  1,  3, -1 },  /* coord.xyw */
 		.src_wrmask = TGSI_WRITEMASK_XYZ,
 		.flags = IR3_INSTR_P,
+	};
+	static const struct tex_info txp2ds = {
+		.order = { 0,  1,  2,  3 },  /* coord.xyzw */
+		.src_wrmask = TGSI_WRITEMASK_XYZW,
+		.flags = IR3_INSTR_P | IR3_INSTR_S,
 	};
 	static const struct tex_info txp3d = {
 		.order = { 0,  1,  2,  3 },  /* coord.xyzw */
@@ -1125,12 +1150,19 @@ get_tex_info(struct fd3_compile_context *ctx,
 		switch (tex) {
 		case TGSI_TEXTURE_1D:
 			return &tex1d;
+		case TGSI_TEXTURE_SHADOW1D:
+			return &tex1ds;
 		case TGSI_TEXTURE_2D:
 		case TGSI_TEXTURE_RECT:
 			return &tex2d;
+		case TGSI_TEXTURE_SHADOW2D:
+		case TGSI_TEXTURE_SHADOWRECT:
+			return &tex2ds;
 		case TGSI_TEXTURE_3D:
 		case TGSI_TEXTURE_CUBE:
 			return &tex3d;
+		case TGSI_TEXTURE_SHADOWCUBE:
+			return &tex3ds;
 		default:
 			compile_error(ctx, "unknown texture type: %s\n",
 					tgsi_texture_names[tex]);
@@ -1141,9 +1173,14 @@ get_tex_info(struct fd3_compile_context *ctx,
 		switch (tex) {
 		case TGSI_TEXTURE_1D:
 			return &txp1d;
+		case TGSI_TEXTURE_SHADOW1D:
+			return &txp1ds;
 		case TGSI_TEXTURE_2D:
 		case TGSI_TEXTURE_RECT:
 			return &txp2d;
+		case TGSI_TEXTURE_SHADOW2D:
+		case TGSI_TEXTURE_SHADOWRECT:
+			return &txp2ds;
 		case TGSI_TEXTURE_3D:
 		case TGSI_TEXTURE_CUBE:
 			return &txp3d;
@@ -1174,7 +1211,7 @@ get_tex_coord(struct fd3_compile_context *ctx,
 		needs_mov = true;
 
 	/* 1D textures we fix up w/ 0.0 as 2nd coord: */
-	if (tex == TGSI_TEXTURE_1D)
+	if ((tex == TGSI_TEXTURE_1D) || (tex == TGSI_TEXTURE_SHADOW1D))
 		needs_mov = true;
 
 	/* The texture sample instructions need to coord in successive
@@ -1197,7 +1234,9 @@ get_tex_coord(struct fd3_compile_context *ctx,
 		/* need to move things around: */
 		tmp_src = get_internal_temp(ctx, &tmp_dst);
 
-		for (j = 0; (j < 4) && (tinf->order[j] >= 0); j++) {
+		for (j = 0; j < 4; j++) {
+			if (tinf->order[j] < 0)
+				continue;
 			instr = instr_create(ctx, 1, 0);  /* mov */
 			instr->cat1.src_type = type_mov;
 			instr->cat1.dst_type = type_mov;
@@ -1207,7 +1246,8 @@ get_tex_coord(struct fd3_compile_context *ctx,
 		}
 
 		/* fix up .y coord: */
-		if (tex == TGSI_TEXTURE_1D) {
+		if ((tex == TGSI_TEXTURE_1D) ||
+				(tex == TGSI_TEXTURE_SHADOW1D)) {
 			instr = instr_create(ctx, 1, 0);  /* mov */
 			instr->cat1.src_type = type_mov;
 			instr->cat1.dst_type = type_mov;

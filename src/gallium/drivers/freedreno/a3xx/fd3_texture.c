@@ -100,6 +100,9 @@ fd3_sampler_state_create(struct pipe_context *pctx,
 			A3XX_TEX_SAMP_0_WRAP_T(tex_clamp(cso->wrap_t)) |
 			A3XX_TEX_SAMP_0_WRAP_R(tex_clamp(cso->wrap_r));
 
+	if (cso->compare_mode)
+		so->texsamp0 |= A3XX_TEX_SAMP_0_COMPARE_FUNC(cso->compare_func); /* maps 1:1 */
+
 	if (cso->min_mip_filter != PIPE_TEX_MIPFILTER_NONE) {
 		so->texsamp1 =
 				A3XX_TEX_SAMP_1_MIN_LOD(cso->min_lod) |
