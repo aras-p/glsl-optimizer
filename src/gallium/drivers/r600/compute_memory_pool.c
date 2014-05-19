@@ -49,6 +49,8 @@ struct compute_memory_pool* compute_memory_pool_new(
 {
 	struct compute_memory_pool* pool = (struct compute_memory_pool*)
 				CALLOC(sizeof(struct compute_memory_pool), 1);
+	if (pool == NULL)
+		return NULL;
 
 	COMPUTE_DBG(rscreen, "* compute_memory_pool_new()\n");
 
@@ -64,6 +66,9 @@ static void compute_memory_pool_init(struct compute_memory_pool * pool,
 		initial_size_in_dw);
 
 	pool->shadow = (uint32_t*)CALLOC(initial_size_in_dw, 4);
+	if (pool->shadow == NULL)
+		return;
+
 	pool->next_id = 1;
 	pool->size_in_dw = initial_size_in_dw;
 	pool->bo = (struct r600_resource*)r600_compute_buffer_alloc_vram(pool->screen,
@@ -400,6 +405,9 @@ struct compute_memory_item* compute_memory_alloc(
 
 	new_item = (struct compute_memory_item *)
 				CALLOC(sizeof(struct compute_memory_item), 1);
+	if (new_item == NULL)
+		return NULL;
+
 	new_item->size_in_dw = size_in_dw;
 	new_item->start_in_dw = -1; /* mark pending */
 	new_item->id = pool->next_id++;
