@@ -898,11 +898,17 @@ intel_blit_framebuffer(struct gl_context *ctx,
    if (mask == 0x0)
       return;
 
+   mask = _mesa_meta_BlitFramebuffer(ctx,
+                                     srcX0, srcY0, srcX1, srcY1,
+                                     dstX0, dstY0, dstX1, dstY1,
+                                     mask, filter);
+   if (mask == 0x0)
+      return;
 
-   _mesa_meta_BlitFramebuffer(ctx,
-                              srcX0, srcY0, srcX1, srcY1,
-                              dstX0, dstY0, dstX1, dstY1,
-                              mask, filter);
+   _swrast_BlitFramebuffer(ctx,
+                           srcX0, srcY0, srcX1, srcY1,
+                           dstX0, dstY0, dstX1, dstY1,
+                           mask, filter);
 }
 
 /**

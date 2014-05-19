@@ -841,7 +841,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    if (TEST_META_FUNCS) {
       driver->Clear = _mesa_meta_Clear;
       driver->CopyPixels = _mesa_meta_CopyPixels;
-      driver->BlitFramebuffer = _mesa_meta_BlitFramebuffer;
+      driver->BlitFramebuffer = _mesa_meta_and_swrast_BlitFramebuffer;
       driver->DrawPixels = _mesa_meta_DrawPixels;
       driver->Bitmap = _mesa_meta_Bitmap;
    }

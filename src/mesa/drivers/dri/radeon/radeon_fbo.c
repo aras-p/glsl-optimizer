@@ -873,7 +873,7 @@ void radeon_fbo_init(struct radeon_context *radeon)
   radeon->glCtx.Driver.RenderTexture = radeon_render_texture;
   radeon->glCtx.Driver.FinishRenderTexture = radeon_finish_render_texture;
   radeon->glCtx.Driver.ValidateFramebuffer = radeon_validate_framebuffer;
-  radeon->glCtx.Driver.BlitFramebuffer = _mesa_meta_BlitFramebuffer;
+  radeon->glCtx.Driver.BlitFramebuffer = _mesa_meta_and_swrast_BlitFramebuffer;
   radeon->glCtx.Driver.EGLImageTargetRenderbufferStorage =
 	  radeon_image_target_renderbuffer_storage;
 }
