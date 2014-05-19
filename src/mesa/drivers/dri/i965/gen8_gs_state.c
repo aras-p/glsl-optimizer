@@ -76,7 +76,7 @@ gen8_upload_gs_state(struct brw_context *brw)
                 (prog_data->urb_read_length <<
                  GEN6_GS_URB_READ_LENGTH_SHIFT) |
                 (0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT) |
-                (prog_data->dispatch_grf_start_reg <<
+                (prog_data->base.dispatch_grf_start_reg <<
                  GEN6_GS_DISPATCH_START_GRF_SHIFT));
 
       /* DW7 */

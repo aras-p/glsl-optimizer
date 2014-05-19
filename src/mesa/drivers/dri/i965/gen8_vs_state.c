@@ -64,7 +64,7 @@ upload_vs_state(struct brw_context *brw)
       OUT_BATCH(0);
    }
 
-   OUT_BATCH((prog_data->dispatch_grf_start_reg <<
+   OUT_BATCH((prog_data->base.dispatch_grf_start_reg <<
               GEN6_VS_DISPATCH_START_GRF_SHIFT) |
              (prog_data->urb_read_length << GEN6_VS_URB_READ_LENGTH_SHIFT) |
              (0 << GEN6_VS_URB_ENTRY_READ_OFFSET_SHIFT));

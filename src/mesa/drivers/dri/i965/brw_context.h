@@ -297,6 +297,12 @@ struct brw_stage_prog_data {
    GLuint nr_params;       /**< number of float params/constants */
    GLuint nr_pull_params;
 
+   /**
+    * Register where the thread expects to find input data from the URB
+    * (typically uniforms, followed by vertex or fragment attributes).
+    */
+   unsigned dispatch_grf_start_reg;
+
    /* Pointers to tracked values (only valid once
     * _mesa_load_state_parameters has been called at runtime).
     *
@@ -321,8 +327,7 @@ struct brw_wm_prog_data {
    GLuint curb_read_length;
    GLuint num_varying_inputs;
 
-   GLuint first_curbe_grf;
-   GLuint first_curbe_grf_16;
+   GLuint dispatch_grf_start_reg_16;
    GLuint reg_blocks;
    GLuint reg_blocks_16;
    GLuint total_scratch;
@@ -523,12 +528,6 @@ struct brw_ff_gs_prog_data {
 struct brw_vec4_prog_data {
    struct brw_stage_prog_data base;
    struct brw_vue_map vue_map;
-
-   /**
-    * Register where the thread expects to find input data from the URB
-    * (typically uniforms, followed by per-vertex inputs).
-    */
-   unsigned dispatch_grf_start_reg;
 
    GLuint curb_read_length;
    GLuint urb_read_length;

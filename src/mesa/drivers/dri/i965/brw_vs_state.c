@@ -96,7 +96,7 @@ brw_upload_vs_unit(struct brw_context *brw)
    vs->thread3.const_urb_entry_read_length
       = brw->vs.prog_data->base.curb_read_length;
    vs->thread3.dispatch_grf_start_reg =
-      brw->vs.prog_data->base.dispatch_grf_start_reg;
+      brw->vs.prog_data->base.base.dispatch_grf_start_reg;
    vs->thread3.urb_entry_read_offset = 0;
 
    /* BRW_NEW_CURBE_OFFSETS, _NEW_TRANSFORM, BRW_NEW_VERTEX_PROGRAM */

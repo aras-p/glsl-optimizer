@@ -69,7 +69,8 @@ gen6_upload_wm_push_constants(struct brw_context *brw)
 	 fprintf(stderr, "WM constants:\n");
 	 for (i = 0; i < prog_data->base.nr_params; i++) {
 	    if ((i & 7) == 0)
-	       fprintf(stderr, "g%d: ", prog_data->first_curbe_grf + i / 8);
+	       fprintf(stderr, "g%d: ",
+                       prog_data->base.dispatch_grf_start_reg + i / 8);
 	    fprintf(stderr, "%8f ", constants[i]);
 	    if ((i & 7) == 7)
 	       fprintf(stderr, "\n");
@@ -174,17 +175,17 @@ upload_wm_state(struct brw_context *brw)
 
       if (min_inv_per_frag == 1) {
          dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
-         dw4 |= (brw->wm.prog_data->first_curbe_grf <<
+         dw4 |= (brw->wm.prog_data->base.dispatch_grf_start_reg <<
                  GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
-         dw4 |= (brw->wm.prog_data->first_curbe_grf_16 <<
+         dw4 |= (brw->wm.prog_data->dispatch_grf_start_reg_16 <<
                  GEN6_WM_DISPATCH_START_GRF_SHIFT_2);
       } else
-         dw4 |= (brw->wm.prog_data->first_curbe_grf_16 <<
+         dw4 |= (brw->wm.prog_data->dispatch_grf_start_reg_16 <<
                 GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
    }
    else {
       dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
-      dw4 |= (brw->wm.prog_data->first_curbe_grf <<
+      dw4 |= (brw->wm.prog_data->base.dispatch_grf_start_reg <<
               GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
    }
 

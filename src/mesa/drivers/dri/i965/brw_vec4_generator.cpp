@@ -98,7 +98,7 @@ vec4_instruction::get_src(const struct brw_vec4_prog_data *prog_data, int i)
       break;
 
    case UNIFORM:
-      brw_reg = stride(brw_vec4_grf(prog_data->dispatch_grf_start_reg +
+      brw_reg = stride(brw_vec4_grf(prog_data->base.dispatch_grf_start_reg +
                                     (src[i].reg + src[i].reg_offset) / 2,
 				    ((src[i].reg + src[i].reg_offset) % 2) * 4),
 		       0, 4, 1);

@@ -87,8 +87,8 @@ brw_upload_wm_unit(struct brw_context *brw)
        * only have one hardware field to program for both dispatch
        * widths.
        */
-      assert(brw->wm.prog_data->first_curbe_grf ==
-	     brw->wm.prog_data->first_curbe_grf_16);
+      assert(brw->wm.prog_data->base.dispatch_grf_start_reg ==
+	     brw->wm.prog_data->dispatch_grf_start_reg_16);
    }
 
    /* BRW_NEW_PROGRAM_CACHE | CACHE_NEW_WM_PROG */
@@ -134,7 +134,8 @@ brw_upload_wm_unit(struct brw_context *brw)
       wm->thread2.per_thread_scratch_space = 0;
    }
 
-   wm->thread3.dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
+   wm->thread3.dispatch_grf_start_reg =
+      brw->wm.prog_data->base.dispatch_grf_start_reg;
    wm->thread3.urb_entry_read_length =
       brw->wm.prog_data->num_varying_inputs * 2;
    wm->thread3.urb_entry_read_offset = 0;

@@ -1465,9 +1465,9 @@ void
 fs_visitor::assign_curb_setup()
 {
    if (dispatch_width == 8) {
-      prog_data->first_curbe_grf = payload.num_regs;
+      prog_data->base.dispatch_grf_start_reg = payload.num_regs;
    } else {
-      prog_data->first_curbe_grf_16 = payload.num_regs;
+      prog_data->dispatch_grf_start_reg_16 = payload.num_regs;
    }
 
    prog_data->curb_read_length = ALIGN(stage_prog_data->nr_params, 8) / 8;
