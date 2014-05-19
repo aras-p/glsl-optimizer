@@ -25,6 +25,7 @@
 #include "brw_defines.h"
 #include "main/compiler.h"
 #include "glsl/ir.h"
+#include "intel_asm_printer.h"
 
 #pragma once
 
@@ -39,6 +40,8 @@ enum PACKED register_file {
 };
 
 #ifdef __cplusplus
+
+class cfg_t;
 
 class backend_instruction : public exec_node {
 public:
@@ -62,6 +65,13 @@ public:
    uint8_t predicate;
    bool predicate_inverse;
    bool writes_accumulator; /**< instruction implicitly writes accumulator */
+
+   /** @{
+    * Annotation for the generated IR.  One of the two can be set.
+    */
+   const void *ir;
+   const char *annotation;
+   /** @} */
 };
 
 enum instruction_scheduler_mode {
@@ -107,6 +117,11 @@ public:
 };
 
 uint32_t brw_texture_offset(struct gl_context *ctx, ir_constant *offset);
+
+void annotate(struct brw_context *brw,
+              struct annotation_info *annotation, cfg_t *cfg,
+              backend_instruction *inst, unsigned offset);
+void annotation_finalize(struct annotation_info *annotation, unsigned offset);
 
 #endif /* __cplusplus */
 

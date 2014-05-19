@@ -36,6 +36,7 @@ extern "C" {
 
 #include "brw_context.h"
 #include "brw_eu.h"
+#include "intel_asm_printer.h"
 
 #ifdef __cplusplus
 }; /* extern "C" */
@@ -260,12 +261,6 @@ public:
    int base_mrf; /**< First MRF in the SEND message, if mlen is nonzero. */
 
    uint32_t offset; /* spill/unspill offset */
-   /** @{
-    * Annotation for the generated IR.  One of the two can be set.
-    */
-   const void *ir;
-   const char *annotation;
-   /** @} */
 
    bool is_send_from_grf();
    bool can_reswizzle_dst(int dst_writemask, int swizzle, int swizzle_mask);
@@ -650,7 +645,8 @@ public:
    const unsigned *generate_assembly(exec_list *insts, unsigned *asm_size);
 
 private:
-   void generate_code(exec_list *instructions);
+   void generate_code(exec_list *instructions,
+                      struct annotation_info *annotation);
    void generate_vec4_instruction(vec4_instruction *inst,
                                   struct brw_reg dst,
                                   struct brw_reg *src);
@@ -751,7 +747,8 @@ public:
    const unsigned *generate_assembly(exec_list *insts, unsigned *asm_size);
 
 private:
-   void generate_code(exec_list *instructions);
+   void generate_code(exec_list *instructions,
+                      struct annotation_info *annotation);
    void generate_vec4_instruction(vec4_instruction *inst,
                                   struct brw_reg dst,
                                   struct brw_reg *src);

@@ -24,6 +24,10 @@
 #ifndef _INTEL_ASM_ANNOTATION_H
 #define _INTEL_ASM_ANNOTATION_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct bblock_t;
 struct brw_context;
 struct gl_program;
@@ -42,6 +46,16 @@ struct annotation {
    const char *annotation;
 };
 
+struct annotation_info {
+   void *mem_ctx;
+   struct annotation *ann;
+   int ann_count;
+   int ann_size;
+
+   /** Block index in the cfg. */
+   int cur_block;
+};
+
 typedef void (*disassemble_func)(struct brw_context *brw, void *assembly,
                                  int start, int end, FILE *out);
 
@@ -49,5 +63,9 @@ void
 dump_assembly(void *assembly, int num_annotations, struct annotation *annotation,
               struct brw_context *brw, const struct gl_program *prog,
               disassemble_func disassemble);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* _INTEL_ASM_ANNOTATION_H */
