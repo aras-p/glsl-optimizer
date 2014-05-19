@@ -30,6 +30,7 @@
 #include "util/u_transfer.h"
 #include "util/u_surface.h"
 #include "util/u_pack_color.h"
+#include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "util/u_framebuffer.h"
@@ -41,6 +42,7 @@
 #include "evergreen_compute_internal.h"
 #include <inttypes.h>
 
+#define ITEM_ALIGNMENT 1024
 /**
  * Creates a new pool
  */
@@ -112,8 +114,7 @@ int64_t compute_memory_prealloc_chunk(
 				return last_end;
 			}
 
-			last_end = item->start_in_dw + item->size_in_dw;
-			last_end += (1024 - last_end % 1024);
+			last_end = item->start_in_dw + align(item->size_in_dw, ITEM_ALIGNMENT);
 		}
 	}
 
@@ -177,7 +178,7 @@ int compute_memory_grow_pool(struct compute_memory_pool* pool,
 		if (pool->shadow == NULL)
 			return -1;
 	} else {
-		new_size_in_dw += 1024 - (new_size_in_dw % 1024);
+		new_size_in_dw = align(new_size_in_dw, ITEM_ALIGNMENT);
 
 		COMPUTE_DBG(pool->screen, "  Aligned size = %d (%d bytes)\n",
 			new_size_in_dw, new_size_in_dw * 4);
@@ -323,7 +324,7 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 				need = pool->size_in_dw / 10;
 			}
 
-			need += 1024 - (need % 1024);
+			need = align(need, ITEM_ALIGNMENT);
 
 			err = compute_memory_grow_pool(pool,
 					pipe,
