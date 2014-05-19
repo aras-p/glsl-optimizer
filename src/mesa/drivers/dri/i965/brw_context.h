@@ -1780,11 +1780,11 @@ brw_setup_vec4_key_clip_info(struct brw_context *brw,
                              bool program_uses_clip_distance);
 
 void
-gen6_upload_vec4_push_constants(struct brw_context *brw,
-                                const struct gl_program *prog,
-                                const struct brw_vec4_prog_data *prog_data,
-                                struct brw_stage_state *stage_state,
-                                enum aub_state_struct_type type);
+gen6_upload_push_constants(struct brw_context *brw,
+                           const struct gl_program *prog,
+                           const struct brw_stage_prog_data *prog_data,
+                           struct brw_stage_state *stage_state,
+                           enum aub_state_struct_type type);
 
 /* ================================================================
  * From linux kernel i386 header files, copes with odd sizes better

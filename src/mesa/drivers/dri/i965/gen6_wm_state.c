@@ -38,50 +38,15 @@
 static void
 gen6_upload_wm_push_constants(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->ctx;
+   struct brw_stage_state *stage_state = &brw->wm.base;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
    /* CACHE_NEW_WM_PROG */
    const struct brw_wm_prog_data *prog_data = brw->wm.prog_data;
 
-   /* Updates the ParameterValues[i] pointers for all parameters of the
-    * basic type of PROGRAM_STATE_VAR.
-    */
-   /* XXX: Should this happen somewhere before to get our state flag set? */
-   _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
-
-   if (prog_data->base.nr_params == 0) {
-      brw->wm.base.push_const_size = 0;
-   } else {
-      float *constants;
-      unsigned int i;
-
-      constants = brw_state_batch(brw, AUB_TRACE_WM_CONSTANTS,
-				  prog_data->base.nr_params * sizeof(float),
-				  32, &brw->wm.base.push_const_offset);
-
-      for (i = 0; i < prog_data->base.nr_params; i++) {
-	 constants[i] = *prog_data->base.param[i];
-      }
-
-      if (0) {
-	 fprintf(stderr, "WM constants:\n");
-	 for (i = 0; i < prog_data->base.nr_params; i++) {
-	    if ((i & 7) == 0)
-	       fprintf(stderr, "g%d: ",
-                       prog_data->base.dispatch_grf_start_reg + i / 8);
-	    fprintf(stderr, "%8f ", constants[i]);
-	    if ((i & 7) == 7)
-	       fprintf(stderr, "\n");
-	 }
-	 if ((i & 7) != 0)
-	    fprintf(stderr, "\n");
-	 fprintf(stderr, "\n");
-      }
-
-      brw->wm.base.push_const_size = ALIGN(prog_data->base.nr_params, 8) / 8;
-   }
+   gen6_upload_push_constants(brw, &fp->program.Base, &prog_data->base,
+                              stage_state, AUB_TRACE_WM_CONSTANTS);
 
    if (brw->gen >= 7) {
       gen7_upload_constant_state(brw, &brw->wm.base, true,
