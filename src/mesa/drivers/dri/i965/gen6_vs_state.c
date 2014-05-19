@@ -38,7 +38,7 @@ gen6_upload_vec4_push_constants(struct brw_context *brw,
                                 const struct gl_program *prog,
                                 const struct brw_vec4_prog_data *prog_data,
                                 struct brw_stage_state *stage_state,
-                                enum state_struct_type type)
+                                enum aub_state_struct_type type)
 {
    struct gl_context *ctx = &brw->ctx;
 

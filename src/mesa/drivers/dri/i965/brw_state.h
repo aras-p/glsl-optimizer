@@ -196,7 +196,7 @@ void brw_destroy_caches( struct brw_context *brw );
    intel_batchbuffer_data(brw, (s), sizeof(*(s)), RENDER_RING)
 
 void *brw_state_batch(struct brw_context *brw,
-		      enum state_struct_type type,
+		      enum aub_state_struct_type type,
 		      int size,
 		      int alignment,
 		      uint32_t *out_offset);

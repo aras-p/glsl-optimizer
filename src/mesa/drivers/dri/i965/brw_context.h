@@ -40,6 +40,7 @@
 #include "main/mm.h"
 #include "main/mtypes.h"
 #include "brw_structs.h"
+#include "intel_aub.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -240,71 +241,6 @@ struct brw_state_flags {
     */
    GLuint cache;
 };
-
-#define AUB_TRACE_TYPE_MASK		0x0000ff00
-#define AUB_TRACE_TYPE_NOTYPE		(0 << 8)
-#define AUB_TRACE_TYPE_BATCH		(1 << 8)
-#define AUB_TRACE_TYPE_VERTEX_BUFFER	(5 << 8)
-#define AUB_TRACE_TYPE_2D_MAP		(6 << 8)
-#define AUB_TRACE_TYPE_CUBE_MAP		(7 << 8)
-#define AUB_TRACE_TYPE_VOLUME_MAP	(9 << 8)
-#define AUB_TRACE_TYPE_1D_MAP		(10 << 8)
-#define AUB_TRACE_TYPE_CONSTANT_BUFFER	(11 << 8)
-#define AUB_TRACE_TYPE_CONSTANT_URB	(12 << 8)
-#define AUB_TRACE_TYPE_INDEX_BUFFER	(13 << 8)
-#define AUB_TRACE_TYPE_GENERAL		(14 << 8)
-#define AUB_TRACE_TYPE_SURFACE		(15 << 8)
-
-/**
- * state_struct_type enum values are encoded with the top 16 bits representing
- * the type to be delivered to the .aub file, and the bottom 16 bits
- * representing the subtype.  This macro performs the encoding.
- */
-#define ENCODE_SS_TYPE(type, subtype) (((type) << 16) | (subtype))
-
-enum state_struct_type {
-   AUB_TRACE_VS_STATE =			ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 1),
-   AUB_TRACE_GS_STATE =			ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 2),
-   AUB_TRACE_CLIP_STATE =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 3),
-   AUB_TRACE_SF_STATE =			ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 4),
-   AUB_TRACE_WM_STATE =			ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 5),
-   AUB_TRACE_CC_STATE =			ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 6),
-   AUB_TRACE_CLIP_VP_STATE =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 7),
-   AUB_TRACE_SF_VP_STATE =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 8),
-   AUB_TRACE_CC_VP_STATE =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 0x9),
-   AUB_TRACE_SAMPLER_STATE =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 0xa),
-   AUB_TRACE_KERNEL_INSTRUCTIONS =	ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 0xb),
-   AUB_TRACE_SCRATCH_SPACE =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 0xc),
-   AUB_TRACE_SAMPLER_DEFAULT_COLOR =    ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 0xd),
-
-   AUB_TRACE_SCISSOR_STATE =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 0x15),
-   AUB_TRACE_BLEND_STATE =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 0x16),
-   AUB_TRACE_DEPTH_STENCIL_STATE =	ENCODE_SS_TYPE(AUB_TRACE_TYPE_GENERAL, 0x17),
-
-   AUB_TRACE_VERTEX_BUFFER =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_VERTEX_BUFFER, 0),
-   AUB_TRACE_BINDING_TABLE =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_SURFACE, 0x100),
-   AUB_TRACE_SURFACE_STATE =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_SURFACE, 0x200),
-   AUB_TRACE_VS_CONSTANTS =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_CONSTANT_BUFFER, 0),
-   AUB_TRACE_WM_CONSTANTS =		ENCODE_SS_TYPE(AUB_TRACE_TYPE_CONSTANT_BUFFER, 1),
-};
-
-/**
- * Decode a state_struct_type value to determine the type that should be
- * stored in the .aub file.
- */
-static inline uint32_t AUB_TRACE_TYPE(enum state_struct_type ss_type)
-{
-   return (ss_type & 0xFFFF0000) >> 16;
-}
-
-/**
- * Decode a state_struct_type value to determine the subtype that should be
- * stored in the .aub file.
- */
-static inline uint32_t AUB_TRACE_SUBTYPE(enum state_struct_type ss_type)
-{
-   return ss_type & 0xFFFF;
-}
 
 /** Subclass of Mesa vertex program */
 struct brw_vertex_program {
@@ -1382,7 +1318,7 @@ struct brw_context
    struct {
       uint32_t offset;
       uint32_t size;
-      enum state_struct_type type;
+      enum aub_state_struct_type type;
    } *state_batch_list;
    int state_batch_count;
 
@@ -1851,7 +1787,7 @@ gen6_upload_vec4_push_constants(struct brw_context *brw,
                                 const struct gl_program *prog,
                                 const struct brw_vec4_prog_data *prog_data,
                                 struct brw_stage_state *stage_state,
-                                enum state_struct_type type);
+                                enum aub_state_struct_type type);
 
 /* ================================================================
  * From linux kernel i386 header files, copes with odd sizes better
