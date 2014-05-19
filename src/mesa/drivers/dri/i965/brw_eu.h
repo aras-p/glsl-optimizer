@@ -37,6 +37,7 @@
 #include "brw_structs.h"
 #include "brw_defines.h"
 #include "brw_reg.h"
+#include "intel_asm_printer.h"
 #include "program/prog_instruction.h"
 
 #ifdef __cplusplus
@@ -410,7 +411,8 @@ uint32_t brw_swap_cmod(uint32_t cmod);
 
 /* brw_eu_compact.c */
 void brw_init_compaction_tables(struct brw_context *brw);
-void brw_compact_instructions(struct brw_compile *p, int start_offset);
+void brw_compact_instructions(struct brw_compile *p, int start_offset,
+                              int num_annotations, struct annotation *annotation);
 void brw_uncompact_instruction(struct brw_context *brw,
 			       struct brw_instruction *dst,
 			       struct brw_compact_instruction *src);

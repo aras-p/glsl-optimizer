@@ -3,6 +3,7 @@ i965_INCLUDES = \
 	$(MESA_TOP)/src/mesa/drivers/dri/intel
 
 i965_FILES = \
+	intel_asm_printer.c \
 	intel_batchbuffer.c \
 	intel_blit.c \
 	intel_buffer_objects.c \

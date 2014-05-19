@@ -109,7 +109,7 @@ static void compile_sf_prog( struct brw_context *brw,
       return;
    }
 
-   brw_compact_instructions(&c.func, 0);
+   brw_compact_instructions(&c.func, 0, 0, NULL);
 
    /* get the program
     */

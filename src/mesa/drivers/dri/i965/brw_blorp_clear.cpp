@@ -490,7 +490,7 @@ brw_blorp_const_color_program::compile(struct brw_context *brw,
       fprintf(stderr, "\n");
    }
 
-   brw_compact_instructions(&func, 0);
+   brw_compact_instructions(&func, 0, 0, NULL);
    return brw_get_program(&func, program_size);
 }
 

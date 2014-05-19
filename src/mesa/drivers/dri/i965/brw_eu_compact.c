@@ -39,6 +39,7 @@
 
 #include "brw_context.h"
 #include "brw_eu.h"
+#include "intel_asm_printer.h"
 
 static const uint32_t gen6_control_index_table[32] = {
    0b00000000000000000,
@@ -661,7 +662,8 @@ brw_init_compaction_tables(struct brw_context *brw)
 }
 
 void
-brw_compact_instructions(struct brw_compile *p, int start_offset)
+brw_compact_instructions(struct brw_compile *p, int start_offset,
+                         int num_annotations, struct annotation *annotation)
 {
    struct brw_context *brw = p->brw;
    void *store = p->store + start_offset / 16;
@@ -783,6 +785,33 @@ brw_compact_instructions(struct brw_compile *p, int start_offset)
       p->next_insn_offset += 8;
    }
    p->nr_insn = p->next_insn_offset / 16;
+
+   /* Update the instruction offsets for each annotation. */
+   if (annotation) {
+      for (int offset = 0, i = 0; i < num_annotations; i++) {
+         while (start_offset + old_ip[offset / 8] * 8 != annotation[i].offset) {
+            assert(start_offset + old_ip[offset / 8] * 8 <
+                   annotation[i].offset);
+            struct brw_instruction *insn = store + offset;
+            if (insn->header.cmpt_control) {
+               offset += 8;
+            } else {
+               offset += 16;
+            }
+         }
+
+         annotation[i].offset = start_offset + offset;
+
+         struct brw_instruction *insn = store + offset;
+         if (insn->header.cmpt_control) {
+            offset += 8;
+         } else {
+            offset += 16;
+         }
+      }
+
+      annotation[num_annotations].offset = p->next_insn_offset;
+   }
 
    if (0) {
       fprintf(stderr, "dumping compacted program\n");

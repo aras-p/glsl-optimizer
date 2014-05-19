@@ -1363,7 +1363,7 @@ vec4_generator::generate_assembly(exec_list *instructions,
 {
    brw_set_access_mode(p, BRW_ALIGN_16);
    generate_code(instructions);
-   brw_compact_instructions(p, 0);
+   brw_compact_instructions(p, 0, 0, NULL);
    return brw_get_program(p, assembly_size);
 }
 
