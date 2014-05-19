@@ -732,7 +732,7 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
    _mesa_meta_end(ctx);
 
 fallback:
-   if (mask && !ctx->Meta->Blit.no_ctsi_fallback) {
+   if (mask) {
       _swrast_BlitFramebuffer(ctx, srcX0, srcY0, srcX1, srcY1,
                               dstX0, dstY0, dstX1, dstY1, mask, filter);
    }
