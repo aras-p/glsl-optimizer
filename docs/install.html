@@ -34,16 +34,25 @@
 
 <h2>1.1 General</h2>
 <ul>
+<li><a href="http://www.python.org/">Python</a> - Python is required.
+Version 2.6.4 or later should work.
+</li>
+<br>
+<li><a href="http://www.scons.org/">SCons</a> is required for building on
+Windows and optional for Linux (it's an alternative to autoconf/automake.)
+</li>
+<br>
 <li>lex / yacc - for building the GLSL compiler.
+<br>
+<br>
 On Linux systems, flex and bison are used.
 Versions 2.5.35 and 2.4.1, respectively, (or later) should work.
 <br>
 <br>
 On Windows with MinGW, install flex and bison with:
 <pre>mingw-get install msys-flex msys-bison</pre>
-</li>
-<li>python - Python is needed for building the Gallium components.
-Version 2.6.4 or later should work.
+For MSVC on Windows, you can find flex/bison programs on the
+<a href="ftp://ftp.freedesktop.org/pub/mesa/windows-utils/">Mesa ftp site</a>.
 </li>
 </ul>
 
