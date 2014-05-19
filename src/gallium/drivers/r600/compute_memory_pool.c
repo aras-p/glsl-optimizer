@@ -319,20 +319,15 @@ int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 			int64_t need = item->size_in_dw+2048 -
 						(pool->size_in_dw - allocated);
 
+			if (need < 0) {
+				need = pool->size_in_dw / 10;
+			}
+
 			need += 1024 - (need % 1024);
 
-			if (need > 0) {
-				err = compute_memory_grow_pool(pool,
-						pipe,
-						pool->size_in_dw + need);
-			}
-			else {
-				need = pool->size_in_dw / 10;
-				need += 1024 - (need % 1024);
-				err = compute_memory_grow_pool(pool,
-						pipe,
-						pool->size_in_dw + need);
-			}
+			err = compute_memory_grow_pool(pool,
+					pipe,
+					pool->size_in_dw + need);
 
 			if (err == -1)
 				return -1;
