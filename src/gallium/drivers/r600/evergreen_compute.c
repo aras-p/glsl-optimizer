@@ -323,7 +323,7 @@ void evergreen_compute_upload_input(
 	memcpy(kernel_parameters_start, input, shader->input_size);
 
 	for (i = 0; i < (input_size / 4); i++) {
-		COMPUTE_DBG(ctx->screen, "input %i : %i\n", i,
+		COMPUTE_DBG(ctx->screen, "input %i : %u\n", i,
 			((unsigned*)num_work_groups_start)[i]);
 	}
 
