@@ -233,6 +233,4 @@ const struct brw_tracked_state gen6_binding_table_pointers = {
    .emit = gen6_upload_binding_table_pointers,
 };
 
-/* Gen7+ code lives in gen7_{vs,gs,wm}_state.c. */
-
 /** @} */
