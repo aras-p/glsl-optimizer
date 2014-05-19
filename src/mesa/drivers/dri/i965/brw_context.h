@@ -230,7 +230,14 @@ struct brw_state_flags {
     * State update flags signalled as the result of brw_tracked_state updates
     */
    GLuint brw;
-   /** State update flags signalled by brw_state_cache.c searches */
+   /**
+    * State update flags that used to be signalled by brw_state_cache.c
+    * searches.
+    *
+    * Now almost all of that state is just streamed out on demand, but the
+    * flags for those state blobs updating have stayed in the same bitfield.
+    * brw_state_cache.c still flags CACHE_NEW_*_PROG.
+    */
    GLuint cache;
 };
 
