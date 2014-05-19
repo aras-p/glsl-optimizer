@@ -59,7 +59,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
    /* CACHE_NEW_WM_PROG */
    const GLuint nr_fp_regs = (brw->wm.prog_data->base.nr_params + 15) / 16;
 
-   /* BRW_NEW_VERTEX_PROGRAM */
+   /* CACHE_NEW_VS_PROG */
    const GLuint nr_vp_regs = (brw->vs.prog_data->base.base.nr_params + 15) / 16;
    GLuint nr_clip_regs = 0;
    GLuint total_regs;
@@ -130,8 +130,8 @@ static void calculate_curbe_offsets( struct brw_context *brw )
 const struct brw_tracked_state brw_curbe_offsets = {
    .dirty = {
       .mesa = _NEW_TRANSFORM,
-      .brw  = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_CONTEXT,
-      .cache = CACHE_NEW_WM_PROG
+      .brw  = BRW_NEW_CONTEXT,
+      .cache = CACHE_NEW_VS_PROG | CACHE_NEW_WM_PROG
    },
    .emit = calculate_curbe_offsets
 };
@@ -198,7 +198,7 @@ brw_upload_constant_buffer(struct brw_context *brw)
    if (brw->curbe.wm_size) {
       GLuint offset = brw->curbe.wm_start * 16;
 
-      /* copy float constants */
+      /* CACHE_NEW_WM_PROG | _NEW_PROGRAM_CONSTANTS: copy uniform values */
       for (i = 0; i < brw->wm.prog_data->base.nr_params; i++) {
 	 buf[offset + i] = *brw->wm.prog_data->base.param[i];
       }
@@ -237,6 +237,7 @@ brw_upload_constant_buffer(struct brw_context *brw)
    if (brw->curbe.vs_size) {
       GLuint offset = brw->curbe.vs_start * 16;
 
+      /* CACHE_NEW_VS_PROG | _NEW_PROGRAM_CONSTANTS: copy uniform values */
       for (i = 0; i < brw->vs.prog_data->base.base.nr_params; i++) {
          buf[offset + i] = *brw->vs.prog_data->base.base.param[i];
       }
@@ -279,13 +280,12 @@ emit:
 const struct brw_tracked_state brw_constant_buffer = {
    .dirty = {
       .mesa = _NEW_PROGRAM_CONSTANTS,
-      .brw  = (BRW_NEW_FRAGMENT_PROGRAM |
-	       BRW_NEW_VERTEX_PROGRAM |
-	       BRW_NEW_URB_FENCE | /* Implicit - hardware requires this, not used above */
+      .brw  = (BRW_NEW_URB_FENCE | /* Implicit - hardware requires this, not used above */
 	       BRW_NEW_PSP | /* Implicit - hardware requires this, not used above */
 	       BRW_NEW_CURBE_OFFSETS |
 	       BRW_NEW_BATCH),
-      .cache = (CACHE_NEW_WM_PROG)
+      .cache = (CACHE_NEW_VS_PROG |
+                CACHE_NEW_WM_PROG)
    },
    .emit = brw_upload_constant_buffer,
 };
