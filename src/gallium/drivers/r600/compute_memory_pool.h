@@ -66,8 +66,9 @@ struct compute_memory_item* compute_memory_postalloc_chunk(struct compute_memory
 
 /** 
  * reallocates pool, conserves data
+ * @returns -1 if it fails, 0 otherwise
  */
-void compute_memory_grow_pool(struct compute_memory_pool* pool, struct pipe_context * pipe,
+int compute_memory_grow_pool(struct compute_memory_pool* pool, struct pipe_context * pipe,
 	int new_size_in_dw);
 
 /**
@@ -78,8 +79,9 @@ void compute_memory_shadow(struct compute_memory_pool* pool,
 
 /**
  * Allocates pending allocations in the pool
+ * @returns -1 if it fails, 0 otherwise
  */
-void compute_memory_finalize_pending(struct compute_memory_pool* pool,
+int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	struct pipe_context * pipe);
 void compute_memory_defrag(struct compute_memory_pool* pool); ///Defragment the memory pool, always heavy memory usage
 void compute_memory_free(struct compute_memory_pool* pool, int64_t id);

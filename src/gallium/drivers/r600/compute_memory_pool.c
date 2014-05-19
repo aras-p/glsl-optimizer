@@ -160,9 +160,10 @@ struct compute_memory_item* compute_memory_postalloc_chunk(
 }
 
 /**
- * Reallocates pool, conserves data
+ * Reallocates pool, conserves data.
+ * @returns -1 if it fails, 0 otherwise
  */
-void compute_memory_grow_pool(struct compute_memory_pool* pool,
+int compute_memory_grow_pool(struct compute_memory_pool* pool,
 	struct pipe_context * pipe, int new_size_in_dw)
 {
 	COMPUTE_DBG(pool->screen, "* compute_memory_grow_pool() "
@@ -173,6 +174,8 @@ void compute_memory_grow_pool(struct compute_memory_pool* pool,
 
 	if (!pool->bo) {
 		compute_memory_pool_init(pool, MAX2(new_size_in_dw, 1024 * 16));
+		if (pool->shadow == NULL)
+			return -1;
 	} else {
 		new_size_in_dw += 1024 - (new_size_in_dw % 1024);
 
@@ -181,6 +184,9 @@ void compute_memory_grow_pool(struct compute_memory_pool* pool,
 
 		compute_memory_shadow(pool, pipe, 1);
 		pool->shadow = realloc(pool->shadow, new_size_in_dw*4);
+		if (pool->shadow == NULL)
+			return -1;
+
 		pool->size_in_dw = new_size_in_dw;
 		pool->screen->b.b.resource_destroy(
 			(struct pipe_screen *)pool->screen,
@@ -190,6 +196,8 @@ void compute_memory_grow_pool(struct compute_memory_pool* pool,
 							pool->size_in_dw * 4);
 		compute_memory_shadow(pool, pipe, 0);
 	}
+
+	return 0;
 }
 
 /**
@@ -213,8 +221,9 @@ void compute_memory_shadow(struct compute_memory_pool* pool,
 
 /**
  * Allocates pending allocations in the pool
+ * @returns -1 if it fails, 0 otherwise
  */
-void compute_memory_finalize_pending(struct compute_memory_pool* pool,
+int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	struct pipe_context * pipe)
 {
 	struct compute_memory_item *pending_list = NULL, *end_p = NULL;
@@ -224,6 +233,8 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	int64_t unallocated = 0;
 
 	int64_t start_in_dw = 0;
+
+	int err = 0;
 
 	COMPUTE_DBG(pool->screen, "* compute_memory_finalize_pending()\n");
 
@@ -292,7 +303,9 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	 * they aren't contiguous, so it will be impossible to allocate Item D.
 	 */
 	if (pool->size_in_dw < allocated+unallocated) {
-		compute_memory_grow_pool(pool, pipe, allocated+unallocated);
+		err = compute_memory_grow_pool(pool, pipe, allocated+unallocated);
+		if (err == -1)
+			return -1;
 	}
 
 	/* Loop through all the pending items, allocate space for them and
@@ -309,17 +322,20 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 			need += 1024 - (need % 1024);
 
 			if (need > 0) {
-				compute_memory_grow_pool(pool,
+				err = compute_memory_grow_pool(pool,
 						pipe,
 						pool->size_in_dw + need);
 			}
 			else {
 				need = pool->size_in_dw / 10;
 				need += 1024 - (need % 1024);
-				compute_memory_grow_pool(pool,
+				err = compute_memory_grow_pool(pool,
 						pipe,
 						pool->size_in_dw + need);
 			}
+
+			if (err == -1)
+				return -1;
 		}
 		COMPUTE_DBG(pool->screen, "  + Found space for Item %p id = %u "
 			"start_in_dw = %u (%u bytes) size_in_dw = %u (%u bytes)\n",
@@ -355,6 +371,8 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 
 		allocated += item->size_in_dw;
 	}
+
+	return 0;
 }
 
 
