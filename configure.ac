@@ -1728,6 +1728,13 @@ if test "x$enable_gallium_llvm" = xyes; then
             if $LLVM_CONFIG --components | grep -qw 'option'; then
                 LLVM_COMPONENTS="${LLVM_COMPONENTS} option"
             fi
+            # Current OpenCL/Clover and LLVM 3.5 require ObjCARCOpts and ProfileData
+            if $LLVM_CONFIG --components | grep -qw 'objcarcopts'; then
+                LLVM_COMPONENTS="${LLVM_COMPONENTS} objcarcopts"
+            fi
+            if $LLVM_CONFIG --components | grep -qw 'profiledata'; then
+                LLVM_COMPONENTS="${LLVM_COMPONENTS} profiledata"
+            fi
         fi
         DEFINES="${DEFINES} -DHAVE_LLVM=0x0$LLVM_VERSION_INT -DLLVM_VERSION_PATCH=$LLVM_VERSION_PATCH"
         MESA_LLVM=1
