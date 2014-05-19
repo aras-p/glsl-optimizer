@@ -64,32 +64,17 @@ int64_t compute_memory_prealloc_chunk(struct compute_memory_pool* pool, int64_t 
 
 struct compute_memory_item* compute_memory_postalloc_chunk(struct compute_memory_pool* pool, int64_t start_in_dw); ///search for the chunk where we can link our new chunk after it
 
-/** 
- * reallocates pool, conserves data
- * @returns -1 if it fails, 0 otherwise
- */
 int compute_memory_grow_pool(struct compute_memory_pool* pool, struct pipe_context * pipe,
 	int new_size_in_dw);
 
-/**
- * Copy pool from device to host, or host to device
- */
 void compute_memory_shadow(struct compute_memory_pool* pool,
 	struct pipe_context * pipe, int device_to_host);
 
-/**
- * Allocates pending allocations in the pool
- * @returns -1 if it fails, 0 otherwise
- */
 int compute_memory_finalize_pending(struct compute_memory_pool* pool,
 	struct pipe_context * pipe);
-void compute_memory_defrag(struct compute_memory_pool* pool); ///Defragment the memory pool, always heavy memory usage
 void compute_memory_free(struct compute_memory_pool* pool, int64_t id);
 struct compute_memory_item* compute_memory_alloc(struct compute_memory_pool* pool, int64_t size_in_dw); ///Creates pending allocations
 
-/**
- * Transfer data host<->device, offset and size is in bytes
- */
 void compute_memory_transfer(struct compute_memory_pool* pool,
 	struct pipe_context * pipe, int device_to_host,
 	struct compute_memory_item* chunk, void* data,
