@@ -141,8 +141,6 @@ extern "C" {
  * Handles blending and (presumably) depth and stencil testing.
  */
 
-#define BRW_MAX_CURBE                    (32*16)
-
 struct brw_context;
 struct brw_inst;
 struct brw_vs_prog_key;
