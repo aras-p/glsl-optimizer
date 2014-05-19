@@ -719,6 +719,22 @@ void brw_emit_point_setup(struct brw_sf_compile *c, bool allocate)
    }
 }
 
+static void
+brw_land_fwd_jump(struct brw_compile *p, int jmp_insn_idx)
+{
+   struct brw_context *brw = p->brw;
+   struct brw_instruction *jmp_insn = &p->store[jmp_insn_idx];
+   unsigned jmpi = 1;
+
+   if (brw->gen >= 5)
+      jmpi = 2;
+
+   assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);
+   assert(jmp_insn->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE);
+
+   jmp_insn->bits3.ud = jmpi * (p->nr_insn - jmp_insn_idx - 1);
+}
+
 void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
