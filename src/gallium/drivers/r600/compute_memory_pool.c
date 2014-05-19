@@ -263,7 +263,7 @@ void compute_memory_finalize_pending(struct compute_memory_pool* pool,
 			unallocated += item->size_in_dw+1024;
 		}
 		else {
-			/* The item is not pendng, so update the amount of space
+			/* The item is not pending, so update the amount of space
 			 * that has already been allocated. */
 			allocated += item->size_in_dw;
 		}
@@ -451,7 +451,7 @@ void compute_memory_transfer(
 		map = pipe->transfer_map(pipe, gart, 0, PIPE_TRANSFER_READ,
 			&(struct pipe_box) { .width = aligned_size * 4,
 			.height = 1, .depth = 1 }, &xfer);
-                assert(xfer);
+		assert(xfer);
 		assert(map);
 		memcpy(data, map + internal_offset, size);
 		pipe->transfer_unmap(pipe, xfer);
