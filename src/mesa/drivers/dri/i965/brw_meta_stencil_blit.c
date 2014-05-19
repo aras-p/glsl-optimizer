@@ -276,7 +276,7 @@ setup_program(struct gl_context *ctx, bool msaa_tex)
 {
    struct blit_state *blit = &ctx->Meta->Blit;
    static GLuint prog_cache[] = { 0, 0 };
-   const char *fs_source;
+   char *fs_source;
    const struct sampler_and_fetch *sampler = &samplers[msaa_tex];
 
    _mesa_meta_setup_vertex_objects(&blit->VAO, &blit->VBO, true, 2, 2, 0);
