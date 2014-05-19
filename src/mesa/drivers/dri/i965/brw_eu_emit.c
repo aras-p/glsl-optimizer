@@ -821,15 +821,9 @@ brw_next_insn(struct brw_compile *p, unsigned opcode)
    struct brw_instruction *insn;
 
    if (p->nr_insn + 1 > p->store_size) {
-      if (0) {
-         fprintf(stderr, "incresing the store size to %d\n",
-                 p->store_size << 1);
-      }
       p->store_size <<= 1;
       p->store = reralloc(p->mem_ctx, p->store,
                           struct brw_instruction, p->store_size);
-      if (!p->store)
-         assert(!"realloc eu store memeory failed");
    }
 
    p->next_insn_offset += 16;
