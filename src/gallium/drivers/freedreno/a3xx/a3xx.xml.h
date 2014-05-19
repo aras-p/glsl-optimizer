@@ -13,7 +13,7 @@ The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32580 bytes, from 2014-05-16 11:51:57)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (  10186 bytes, from 2014-05-16 11:51:57)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  14477 bytes, from 2014-05-16 11:51:57)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  57751 bytes, from 2014-05-17 00:05:23)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  57831 bytes, from 2014-05-19 21:02:34)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  26293 bytes, from 2014-05-16 11:51:57)
 
 Copyright (C) 2013-2014 by the following authors:
@@ -2320,6 +2320,12 @@ static inline uint32_t A3XX_TEX_SAMP_0_WRAP_T(enum a3xx_tex_clamp val)
 static inline uint32_t A3XX_TEX_SAMP_0_WRAP_R(enum a3xx_tex_clamp val)
 {
 	return ((val) << A3XX_TEX_SAMP_0_WRAP_R__SHIFT) & A3XX_TEX_SAMP_0_WRAP_R__MASK;
+}
+#define A3XX_TEX_SAMP_0_COMPARE_FUNC__MASK			0x00700000
+#define A3XX_TEX_SAMP_0_COMPARE_FUNC__SHIFT			20
+static inline uint32_t A3XX_TEX_SAMP_0_COMPARE_FUNC(enum adreno_compare_func val)
+{
+	return ((val) << A3XX_TEX_SAMP_0_COMPARE_FUNC__SHIFT) & A3XX_TEX_SAMP_0_COMPARE_FUNC__MASK;
 }
 #define A3XX_TEX_SAMP_0_UNNORM_COORDS				0x80000000
 
