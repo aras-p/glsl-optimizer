@@ -705,10 +705,6 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
                                   filter, dstFlipX, dstFlipY,
                                   use_glsl_version, false)) {
          mask &= ~GL_COLOR_BUFFER_BIT;
-         if (mask == 0x0) {
-            _mesa_meta_end(ctx);
-            return;
-         }
       }
    }
 
@@ -718,10 +714,6 @@ _mesa_meta_BlitFramebuffer(struct gl_context *ctx,
                                   filter, dstFlipX, dstFlipY,
                                   use_glsl_version, true)) {
          mask &= ~GL_DEPTH_BUFFER_BIT;
-         if (mask == 0x0) {
-            _mesa_meta_end(ctx);
-            return;
-         }
       }
    }
 
