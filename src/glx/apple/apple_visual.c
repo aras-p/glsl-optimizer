@@ -73,11 +73,15 @@ apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const struct glx_config * m
    GLint vsref = 0;
    CGLError error = 0;
 
-   /* Request an OpenGL 3.2 profile if one is available */
-   if(apple_cgl.version_major > 1 || (apple_cgl.version_major == 1 && apple_cgl.version_minor >= 3)) {
-      attr[numattr++] = kCGLPFAOpenGLProfile;
-      attr[numattr++] = kCGLOGLPVersion_3_2_Core;
-   }
+   /* Request an OpenGL 3.2 profile if one is available and supported */
+   attr[numattr++] = kCGLPFAOpenGLProfile;
+   attr[numattr++] = kCGLOGLPVersion_3_2_Core;
+
+   /* Test for kCGLPFAOpenGLProfile support at runtime and roll it out if not supported */
+   attr[numattr] = 0;
+   error = apple_cgl.choose_pixel_format(attr, pfobj, &vsref);
+   if (error == kCGLBadAttribute)
+      numattr -= 2;
 
    if (offscreen) {
       apple_glx_diagnostic
