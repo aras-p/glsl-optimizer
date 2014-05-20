@@ -326,6 +326,12 @@ _mesa_TexStorage3DMultisample(GLenum target, GLsizei samples,
                               GLsizei height, GLsizei depth,
                               GLboolean fixedsamplelocations);
 
+bool
+_mesa_compressed_texture_pixel_storage_error_check(struct gl_context *ctx,
+                                             GLint dimensions,
+                                             struct gl_pixelstore_attrib *packing,
+                                             const char *caller);
+
 /*@}*/
 
 #ifdef __cplusplus

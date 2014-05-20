@@ -963,7 +963,7 @@ getcompressedteximage_error_check(struct gl_context *ctx, GLenum target,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    const GLint maxLevels = _mesa_max_texture_levels(ctx, target);
-   GLuint compressedSize;
+   GLuint compressedSize, dimensions;
 
    if (!legal_getteximage_target(ctx, target)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetCompressedTexImage(target=0x%x)",
@@ -1003,6 +1003,14 @@ getcompressedteximage_error_check(struct gl_context *ctx, GLenum target,
                                             texImage->Width,
                                             texImage->Height,
                                             texImage->Depth);
+
+   /* Check for invalid pixel storage modes */
+   dimensions = _mesa_get_texture_dimensions(texImage->TexObject->Target);
+   if (!_mesa_compressed_texture_pixel_storage_error_check(ctx, dimensions,
+                                                           &ctx->Pack,
+                                                           "glGetCompressedTexImageARB")) {
+      return GL_TRUE;
+   }
 
    if (!_mesa_is_bufferobj(ctx->Pack.BufferObj)) {
       /* do bounds checking on writing to client memory */
