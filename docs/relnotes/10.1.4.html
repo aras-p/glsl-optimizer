@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Mesa Release Notes</title>
+  <link rel="stylesheet" type="text/css" href="../mesa.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>The Mesa 3D Graphics Library</h1>
+</div>
+
+<iframe src="../contents.html"></iframe>
+<div class="content">
+
+<h1>Mesa 10.1.4 Release Notes / (May 20, 2014)</h1>
+
+<p>
+Mesa 10.1.4 is a bug fix release which fixes bugs found since the 10.1.3 release.
+</p>
+
+<p>
+Mesa 10.1.4 implements the OpenGL 3.3 API, but the version reported by
+glGetString(GL_VERSION) or glGetIntegerv(GL_MAJOR_VERSION) /
+glGetIntegerv(GL_MINOR_VERSION) depends on the particular driver being used.
+Some drivers don't support all the features required in OpenGL 3.3.  OpenGL
+3.3 is <strong>only</strong> available if requested at context creation
+because compatibility contexts are not supported.
+</p>
+
+
+<h2>MD5 checksums</h2>
+<pre>
+e934365d77f384bfaec844999440bef8  MesaLib-10.1.4.tar.gz
+6fddee101f49b7409cd29994c34ddee7  MesaLib-10.1.4.tar.bz2
+ba5f48e7d5e373922c804c2651fec6c1  MesaLib-10.1.4.zip
+</pre>
+
+
+<h2>New features</h2>
+<p>None</p>
+
+<h2>Bug fixes</h2>
+
+<p>This list is likely incomplete.</p>
+
+<ul>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=78225">Bug 78225</a> - Compile error due to undefined reference to `gbm_dri_backend', fix attached</li>
+
+<li><a href="https://bugs.freedesktop.org/show_bug.cgi?id=78537">Bug 78537</a> - no anisotropic filtering in a native Half-Life 2</li>
+
+</ul>
+
+<h2>Changes</h2>
+
+<p>Brian Paul (1):</p>
+<ul>
+  <li>mesa: fix double-freeing of dispatch tables inside glBegin/End.</li>
+</ul>
+
+<p>Carl Worth (3):</p>
+<ul>
+  <li>docs: Add MD5 sums for 10.1.3</li>
+  <li>cherry-ignore: Roland and Michel agreed to drop these patches.</li>
+  <li>VERSION: Update to 10.1.4</li>
+</ul>
+
+<p>Emil Velikov (1):</p>
+<ul>
+  <li>configure: error out if building GBM without dri</li>
+</ul>
+
+<p>Eric Anholt (1):</p>
+<ul>
+  <li>i965/vs: Use samplers for UBOs in the VS like we do for non-UBO pulls.</li>
+</ul>
+
+<p>Ilia Mirkin (3):</p>
+<ul>
+  <li>nv50/ir: make sure to reverse cond codes on all the OP_SET variants</li>
+  <li>nv50: fix setting of texture ms info to be per-stage</li>
+  <li>nv50/ir: fix integer mul lowering for u32 x u32 -&gt; high u32</li>
+</ul>
+
+<p>Michel Dänzer (1):</p>
+<ul>
+  <li>radeonsi: Fix anisotropic filtering state setup</li>
+</ul>
+
+<p>Tom Stellard (2):</p>
+<ul>
+  <li>configure.ac: Add LLVM_VERSION_PATCH to DEFINES</li>
+  <li>radeonsi: Enable geometry shaders with LLVM 3.4.1</li>
+</ul>
+
+</div>
+</body>
+</html>
