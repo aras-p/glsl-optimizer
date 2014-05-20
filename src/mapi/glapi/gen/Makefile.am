@@ -113,6 +113,7 @@ API_XML = \
 	ARB_blend_func_extended.xml \
 	ARB_clear_buffer_object.xml \
 	ARB_color_buffer_float.xml \
+	ARB_compressed_texture_pixel_storage.xml \
 	ARB_compute_shader.xml \
 	ARB_copy_buffer.xml \
 	ARB_debug_output.xml \

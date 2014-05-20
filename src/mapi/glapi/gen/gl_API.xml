@@ -8276,7 +8276,9 @@
   </function>
 </category>
 
-<!-- ARB extensions #110...#116 -->
+<xi:include href="ARB_compressed_texture_pixel_storage.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
+<!-- ARB extensions #111...#116 -->
 
 <xi:include href="ARB_internalformat_query.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
