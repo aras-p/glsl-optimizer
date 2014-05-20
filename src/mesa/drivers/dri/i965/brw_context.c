@@ -757,11 +757,6 @@ brwCreateContext(gl_api api,
    brw->prim_restart.enable_cut_index = false;
    brw->gs.enabled = false;
 
-   if (brw->gen < 6) {
-      brw->curbe.last_buf = calloc(1, 4096);
-      brw->curbe.next_buf = calloc(1, 4096);
-   }
-
    ctx->VertexProgram._MaintainTnlProgram = true;
    ctx->FragmentProgram._MaintainTexEnvProgram = true;
 
@@ -824,9 +819,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
    brw_draw_destroy(brw);
 
    drm_intel_bo_unreference(brw->curbe.curbe_bo);
-
-   free(brw->curbe.last_buf);
-   free(brw->curbe.next_buf);
 
    drm_intel_gem_context_destroy(brw->hw_ctx);
 

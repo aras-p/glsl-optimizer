@@ -1234,20 +1234,6 @@ struct brw_context
       drm_intel_bo *curbe_bo;
       /** Offset within curbe_bo of space for current curbe entry */
       GLuint curbe_offset;
-
-      /**
-       * Copy of the last set of CURBEs uploaded.  Frequently we'll end up
-       * in brw_curbe.c with the same set of constant data to be uploaded,
-       * so we'd rather not upload new constants in that case (it can cause
-       * a pipeline bubble since only up to 4 can be pipelined at a time).
-       */
-      GLfloat *last_buf;
-      /**
-       * Allocation for where to calculate the next set of CURBEs.
-       * It's a hot enough path that malloc/free of that data matters.
-       */
-      GLfloat *next_buf;
-      GLuint last_bufsz;
    } curbe;
 
    /**

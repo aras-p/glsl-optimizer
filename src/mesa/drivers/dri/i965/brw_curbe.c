@@ -188,11 +188,11 @@ brw_upload_constant_buffer(struct brw_context *brw)
    gl_clip_plane *clip_planes;
 
    if (sz == 0) {
-      brw->curbe.last_bufsz  = 0;
       goto emit;
    }
 
-   buf = brw->curbe.next_buf;
+   buf = intel_upload_space(brw, bufsz, 64,
+                            &brw->curbe.curbe_bo, &brw->curbe.curbe_offset);
 
    /* fragment shader constants */
    if (brw->curbe.wm_size) {
@@ -246,27 +246,6 @@ brw_upload_constant_buffer(struct brw_context *brw)
       for (i = 0; i < sz*16; i+=4)
 	 fprintf(stderr, "curbe %d.%d: %f %f %f %f\n", i/8, i&4,
                  buf[i+0], buf[i+1], buf[i+2], buf[i+3]);
-
-      fprintf(stderr, "last_buf %p buf %p sz %d/%d cmp %d\n",
-              brw->curbe.last_buf, buf,
-              bufsz, brw->curbe.last_bufsz,
-              brw->curbe.last_buf ? memcmp(buf, brw->curbe.last_buf, bufsz) : -1);
-   }
-
-   if (brw->curbe.curbe_bo != NULL &&
-       bufsz == brw->curbe.last_bufsz &&
-       memcmp(buf, brw->curbe.last_buf, bufsz) == 0) {
-      /* constants have not changed */
-   } else {
-      /* Update the record of what our last set of constants was.  We
-       * don't just flip the pointers because we don't fill in the
-       * data in the padding between the entries.
-       */
-      memcpy(brw->curbe.last_buf, buf, bufsz);
-      brw->curbe.last_bufsz = bufsz;
-
-      intel_upload_data(brw, buf, bufsz, 64,
-                        &brw->curbe.curbe_bo, &brw->curbe.curbe_offset);
    }
 
    /* Because this provokes an action (ie copy the constants into the
