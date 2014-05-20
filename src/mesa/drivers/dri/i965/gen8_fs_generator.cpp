@@ -76,16 +76,17 @@ gen8_fs_generator::generate_fb_write(fs_inst *ir)
 
       if (ir->target > 0 && key->replicate_alpha) {
          /* Set "Source0 Alpha Present to RenderTarget" bit in the header. */
-         OR(vec1(retype(brw_message_reg(ir->base_mrf), BRW_REGISTER_TYPE_UD)),
-            vec1(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD)),
-            brw_imm_ud(1 << 11));
+         gen8_instruction *inst =
+            OR(get_element_ud(brw_message_reg(ir->base_mrf), 0),
+               vec1(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD)),
+               brw_imm_ud(1 << 11));
+         gen8_set_mask_control(inst, BRW_MASK_DISABLE);
       }
 
       if (ir->target > 0) {
          /* Set the render target index for choosing BLEND_STATE. */
-         MOV(retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, ir->base_mrf, 2),
-                    BRW_REGISTER_TYPE_UD),
-             brw_imm_ud(ir->target));
+         MOV_RAW(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, ir->base_mrf, 2),
+                 brw_imm_ud(ir->target));
       }
    }
 
