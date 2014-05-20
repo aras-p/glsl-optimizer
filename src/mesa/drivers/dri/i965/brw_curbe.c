@@ -39,6 +39,7 @@
 #include "program/prog_print.h"
 #include "program/prog_statevars.h"
 #include "intel_batchbuffer.h"
+#include "intel_buffer_objects.h"
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_state.h"
@@ -264,34 +265,8 @@ brw_upload_constant_buffer(struct brw_context *brw)
       memcpy(brw->curbe.last_buf, buf, bufsz);
       brw->curbe.last_bufsz = bufsz;
 
-      if (brw->curbe.curbe_bo != NULL &&
-	  brw->curbe.curbe_next_offset + bufsz > brw->curbe.curbe_bo->size)
-      {
-	 drm_intel_gem_bo_unmap_gtt(brw->curbe.curbe_bo);
-	 drm_intel_bo_unreference(brw->curbe.curbe_bo);
-	 brw->curbe.curbe_bo = NULL;
-      }
-
-      if (brw->curbe.curbe_bo == NULL) {
-	 /* Allocate a single page for CURBE entries for this batchbuffer.
-	  * They're generally around 64b.
-	  */
-	 brw->curbe.curbe_bo = drm_intel_bo_alloc(brw->bufmgr, "CURBE",
-						  4096, 1 << 6);
-	 brw->curbe.curbe_next_offset = 0;
-	 drm_intel_gem_bo_map_gtt(brw->curbe.curbe_bo);
-	 assert(bufsz < 4096);
-      }
-
-      brw->curbe.curbe_offset = brw->curbe.curbe_next_offset;
-      brw->curbe.curbe_next_offset += bufsz;
-      brw->curbe.curbe_next_offset = ALIGN(brw->curbe.curbe_next_offset, 64);
-
-      /* Copy data to the buffer:
-       */
-      memcpy(brw->curbe.curbe_bo->virtual + brw->curbe.curbe_offset,
-	     buf,
-	     bufsz);
+      intel_upload_data(brw, buf, bufsz, 64,
+                        &brw->curbe.curbe_bo, &brw->curbe.curbe_offset);
    }
 
    /* Because this provokes an action (ie copy the constants into the

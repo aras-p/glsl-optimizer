@@ -1227,11 +1227,13 @@ struct brw_context
       GLuint vs_size;
       GLuint total_size;
 
+      /**
+       * Pointer to the (intel_upload.c-generated) BO containing the uniforms
+       * for upload to the CURBE.
+       */
       drm_intel_bo *curbe_bo;
       /** Offset within curbe_bo of space for current curbe entry */
       GLuint curbe_offset;
-      /** Offset within curbe_bo of space for next curbe entry */
-      GLuint curbe_next_offset;
 
       /**
        * Copy of the last set of CURBEs uploaded.  Frequently we'll end up
