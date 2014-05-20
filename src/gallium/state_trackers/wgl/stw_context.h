@@ -46,8 +46,11 @@ struct stw_context
    struct hud_context *hud;
 };
 
-DHGLRC stw_create_context_attribs( HDC hdc, INT iLayerPlane, DHGLRC hShareContext,
-                                   int majorVersion, int minorVersion, int contextFlags, int profileMask );
+DHGLRC stw_create_context_attribs(HDC hdc, INT iLayerPlane,
+                                  DHGLRC hShareContext,
+                                  int majorVersion, int minorVersion,
+                                  int contextFlags, int profileMask,
+                                  DHGLRC handle);
 
 DHGLRC stw_get_current_context( void );
 

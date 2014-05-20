@@ -128,16 +128,23 @@ DrvCreateLayerContext(
    INT iLayerPlane )
 {
    return stw_create_context_attribs(hdc, iLayerPlane, 0, 1, 0, 0,
-                                     WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB);
+                                     WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
+                                     0);
 }
 
+
+/**
+ * Called via DrvCreateContext(), DrvCreateLayerContext() and
+ * wglCreateContextAttribsARB() to actually create a rendering context.
+ * \param handle  the desired DHGLRC handle to use for the context, or zero
+ *                if a new handle should be allocated.
+ * \return the handle for the new context or zero if there was a problem.
+ */
 DHGLRC
-stw_create_context_attribs(
-   HDC hdc,
-   INT iLayerPlane,
-   DHGLRC hShareContext,
-   int majorVersion, int minorVersion,
-   int contextFlags, int profileMask)
+stw_create_context_attribs(HDC hdc, INT iLayerPlane, DHGLRC hShareContext,
+                           int majorVersion, int minorVersion,
+                           int contextFlags, int profileMask,
+                           DHGLRC handle)
 {
    int iPixelFormat;
    struct stw_framebuffer *fb;
@@ -236,7 +243,31 @@ stw_create_context_attribs(
    }
 
    pipe_mutex_lock( stw_dev->ctx_mutex );
-   ctx->dhglrc = handle_table_add(stw_dev->ctx_table, ctx);
+   if (handle) {
+      /* We're replacing the context data for this handle. See the
+       * wglCreateContextAttribsARB() function.
+       */
+      struct stw_context *old_ctx =
+         stw_lookup_context_locked((unsigned) handle);
+      if (old_ctx) {
+         /* free the old context data associated with this handle */
+         if (old_ctx->hud) {
+            hud_destroy(old_ctx->hud);
+         }
+         ctx->st->destroy(old_ctx->st);
+         FREE(old_ctx);
+      }
+
+      /* replace table entry */
+      handle_table_set(stw_dev->ctx_table, (unsigned) handle, ctx);
+   }
+   else {
+      /* create new table entry */
+      handle = (DHGLRC) handle_table_add(stw_dev->ctx_table, ctx);
+   }
+
+   ctx->dhglrc = handle;
+
    pipe_mutex_unlock( stw_dev->ctx_mutex );
    if (!ctx->dhglrc)
       goto no_hglrc;
