@@ -106,9 +106,17 @@ emit_mrt(struct fd_ringbuffer *ring, unsigned nr_bufs,
 }
 
 static uint32_t
-depth_base(struct fd_gmem_stateobj *gmem)
+depth_base(struct fd_context *ctx)
 {
-	return align(gmem->bin_w * gmem->bin_h, 0x4000);
+	struct fd_gmem_stateobj *gmem = &ctx->gmem;
+	struct pipe_framebuffer_state *pfb = &ctx->framebuffer;
+	uint32_t cpp = 4;
+	if (pfb->cbufs[0]) {
+		struct fd_resource *rsc =
+				fd_resource(pfb->cbufs[0]->texture);
+		cpp = rsc->cpp;
+	}
+	return align(gmem->bin_w * gmem->bin_h * cpp, 0x4000);
 }
 
 static bool
@@ -399,12 +407,7 @@ fd3_emit_tile_gmem2mem(struct fd_context *ctx, struct fd_tile *tile)
 			}}, 1);
 
 	if (ctx->resolve & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL)) {
-		uint32_t base = 0;
-		if (pfb->cbufs[0]) {
-			struct fd_resource *rsc =
-					fd_resource(pfb->cbufs[0]->texture);
-			base = depth_base(&ctx->gmem) * rsc->cpp;
-		}
+		uint32_t base = depth_base(ctx);
 		emit_gmem2mem_surf(ctx, RB_COPY_DEPTH_STENCIL, base, pfb->zsbuf);
 	}
 
@@ -558,7 +561,7 @@ fd3_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 	bin_h = gmem->bin_h;
 
 	if (ctx->restore & (FD_BUFFER_DEPTH | FD_BUFFER_STENCIL))
-		emit_mem2gmem_surf(ctx, depth_base(gmem), pfb->zsbuf, bin_w);
+		emit_mem2gmem_surf(ctx, depth_base(ctx), pfb->zsbuf, bin_w);
 
 	if (ctx->restore & FD_BUFFER_COLOR)
 		emit_mem2gmem_surf(ctx, 0, pfb->cbufs[0], bin_w);
@@ -789,6 +792,7 @@ fd3_emit_tile_init(struct fd_context *ctx)
 {
 	struct fd_ringbuffer *ring = ctx->ring;
 	struct fd_gmem_stateobj *gmem = &ctx->gmem;
+	uint32_t rb_render_control;
 
 	fd3_emit_restore(ctx);
 
@@ -813,8 +817,10 @@ fd3_emit_tile_init(struct fd_context *ctx)
 		patch_draws(ctx, IGNORE_VISIBILITY);
 	}
 
-	patch_rbrc(ctx, A3XX_RB_RENDER_CONTROL_ENABLE_GMEM |
-			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(gmem->bin_w));
+	rb_render_control = A3XX_RB_RENDER_CONTROL_ENABLE_GMEM |
+			A3XX_RB_RENDER_CONTROL_BIN_WIDTH(gmem->bin_w);
+
+	patch_rbrc(ctx, rb_render_control);
 }
 
 /* before mem2gmem */
@@ -827,7 +833,7 @@ fd3_emit_tile_prep(struct fd_context *ctx, struct fd_tile *tile)
 	uint32_t reg;
 
 	OUT_PKT0(ring, REG_A3XX_RB_DEPTH_INFO, 2);
-	reg = A3XX_RB_DEPTH_INFO_DEPTH_BASE(depth_base(gmem));
+	reg = A3XX_RB_DEPTH_INFO_DEPTH_BASE(depth_base(ctx));
 	if (pfb->zsbuf) {
 		reg |= A3XX_RB_DEPTH_INFO_DEPTH_FORMAT(fd_pipe2depth(pfb->zsbuf->format));
 	}
