@@ -97,6 +97,34 @@ _mesa_PixelStorei( GLenum pname, GLint param )
             goto invalid_enum_error;
          ctx->Pack.Invert = param;
          break;
+      case GL_PACK_COMPRESSED_BLOCK_WIDTH:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         if (param<0)
+            goto invalid_value_error;
+         ctx->Pack.CompressedBlockWidth = param;
+         break;
+      case GL_PACK_COMPRESSED_BLOCK_HEIGHT:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         if (param<0)
+            goto invalid_value_error;
+         ctx->Pack.CompressedBlockHeight = param;
+         break;
+      case GL_PACK_COMPRESSED_BLOCK_DEPTH:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         if (param<0)
+            goto invalid_value_error;
+         ctx->Pack.CompressedBlockDepth = param;
+         break;
+      case GL_PACK_COMPRESSED_BLOCK_SIZE:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         if (param<0)
+            goto invalid_value_error;
+         ctx->Pack.CompressedBlockSize = param;
+         break;
 
       case GL_UNPACK_SWAP_BYTES:
          if (!_mesa_is_desktop_gl(ctx))
@@ -148,6 +176,34 @@ _mesa_PixelStorei( GLenum pname, GLint param )
             goto invalid_value_error;
          ctx->Unpack.Alignment = param;
          break;
+      case GL_UNPACK_COMPRESSED_BLOCK_WIDTH:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         if (param<0)
+            goto invalid_value_error;
+         ctx->Unpack.CompressedBlockWidth = param;
+         break;
+      case GL_UNPACK_COMPRESSED_BLOCK_HEIGHT:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         if (param<0)
+            goto invalid_value_error;
+         ctx->Unpack.CompressedBlockHeight = param;
+         break;
+      case GL_UNPACK_COMPRESSED_BLOCK_DEPTH:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         if (param<0)
+            goto invalid_value_error;
+         ctx->Unpack.CompressedBlockDepth = param;
+         break;
+      case GL_UNPACK_COMPRESSED_BLOCK_SIZE:
+         if (!_mesa_is_desktop_gl(ctx))
+            goto invalid_enum_error;
+         if (param<0)
+            goto invalid_value_error;
+         ctx->Unpack.CompressedBlockSize = param;
+         break;
       default:
          goto invalid_enum_error;
    }
@@ -188,6 +244,10 @@ _mesa_init_pixelstore( struct gl_context *ctx )
    ctx->Pack.SwapBytes = GL_FALSE;
    ctx->Pack.LsbFirst = GL_FALSE;
    ctx->Pack.Invert = GL_FALSE;
+   ctx->Pack.CompressedBlockWidth = 0;
+   ctx->Pack.CompressedBlockHeight = 0;
+   ctx->Pack.CompressedBlockDepth = 0;
+   ctx->Pack.CompressedBlockSize = 0;
    _mesa_reference_buffer_object(ctx, &ctx->Pack.BufferObj,
                                  ctx->Shared->NullBufferObj);
    ctx->Unpack.Alignment = 4;
@@ -199,6 +259,10 @@ _mesa_init_pixelstore( struct gl_context *ctx )
    ctx->Unpack.SwapBytes = GL_FALSE;
    ctx->Unpack.LsbFirst = GL_FALSE;
    ctx->Unpack.Invert = GL_FALSE;
+   ctx->Unpack.CompressedBlockWidth = 0;
+   ctx->Unpack.CompressedBlockHeight = 0;
+   ctx->Unpack.CompressedBlockDepth = 0;
+   ctx->Unpack.CompressedBlockSize = 0;
    _mesa_reference_buffer_object(ctx, &ctx->Unpack.BufferObj,
                                  ctx->Shared->NullBufferObj);
 

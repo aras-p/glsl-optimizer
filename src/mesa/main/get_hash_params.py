@@ -541,6 +541,16 @@ descriptor=[
   [ "ARRAY_ELEMENT_LOCK_FIRST_EXT", "CONTEXT_INT(Array.LockFirst), NO_EXTRA" ],
   [ "ARRAY_ELEMENT_LOCK_COUNT_EXT", "CONTEXT_INT(Array.LockCount), NO_EXTRA" ],
 
+# GL_ARB_compressed_texture_pixel_storage
+  [ "UNPACK_COMPRESSED_BLOCK_WIDTH", "CONTEXT_INT(Unpack.CompressedBlockWidth), NO_EXTRA" ],
+  [ "UNPACK_COMPRESSED_BLOCK_HEIGHT", "CONTEXT_INT(Unpack.CompressedBlockHeight), NO_EXTRA" ],
+  [ "UNPACK_COMPRESSED_BLOCK_DEPTH", "CONTEXT_INT(Unpack.CompressedBlockDepth), NO_EXTRA" ],
+  [ "UNPACK_COMPRESSED_BLOCK_SIZE", "CONTEXT_INT(Unpack.CompressedBlockSize), NO_EXTRA" ],
+  [ "PACK_COMPRESSED_BLOCK_WIDTH", "CONTEXT_INT(Pack.CompressedBlockWidth), NO_EXTRA" ],
+  [ "PACK_COMPRESSED_BLOCK_HEIGHT", "CONTEXT_INT(Pack.CompressedBlockHeight), NO_EXTRA" ],
+  [ "PACK_COMPRESSED_BLOCK_DEPTH", "CONTEXT_INT(Pack.CompressedBlockDepth), NO_EXTRA" ],
+  [ "PACK_COMPRESSED_BLOCK_SIZE", "CONTEXT_INT(Pack.CompressedBlockSize), NO_EXTRA" ],
+
 # GL_ARB_transpose_matrix
   [ "TRANSPOSE_MODELVIEW_MATRIX_ARB", "CONTEXT_MATRIX_T(ModelviewMatrixStack), NO_EXTRA" ],
   [ "TRANSPOSE_PROJECTION_MATRIX_ARB", "CONTEXT_MATRIX_T(ProjectionMatrixStack.Top), NO_EXTRA" ],
