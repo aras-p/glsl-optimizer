@@ -581,9 +581,9 @@ vbo_handle_primitive_restart(struct gl_context *ctx,
 {
    struct vbo_context *vbo = vbo_context(ctx);
 
-   if ((ib != NULL) &&
-       ctx->Const.PrimitiveRestartInSoftware &&
-       ctx->Array._PrimitiveRestart) {
+   if (ctx->Const.PrimitiveRestartInSoftware &&
+       ctx->Array._PrimitiveRestart &&
+       (ib != NULL)) {
       /* Handle primitive restart in software */
       vbo_sw_primitive_restart(ctx, prim, nr_prims, ib, NULL);
    } else {
