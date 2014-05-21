@@ -34,6 +34,27 @@
 #include "fd3_context.h"
 #include "fd3_util.h"
 
+
+static enum a3xx_rb_blend_opcode
+blend_func(unsigned func)
+{
+	switch (func) {
+	case PIPE_BLEND_ADD:
+		return BLEND_DST_PLUS_SRC;
+	case PIPE_BLEND_MIN:
+		return BLEND_MIN_DST_SRC;
+	case PIPE_BLEND_MAX:
+		return BLEND_MAX_DST_SRC;
+	case PIPE_BLEND_SUBTRACT:
+		return BLEND_SRC_MINUS_DST;
+	case PIPE_BLEND_REVERSE_SUBTRACT:
+		return BLEND_DST_MINUS_SRC;
+	default:
+		DBG("invalid blend func: %x", func);
+		return 0;
+	}
+}
+
 void *
 fd3_blend_state_create(struct pipe_context *pctx,
 		const struct pipe_blend_state *cso)
@@ -80,10 +101,10 @@ fd3_blend_state_create(struct pipe_context *pctx,
 
 		so->rb_mrt[i].blend_control =
 				A3XX_RB_MRT_BLEND_CONTROL_RGB_SRC_FACTOR(fd_blend_factor(rt->rgb_src_factor)) |
-				A3XX_RB_MRT_BLEND_CONTROL_RGB_BLEND_OPCODE(fd_blend_func(rt->rgb_func)) |
+				A3XX_RB_MRT_BLEND_CONTROL_RGB_BLEND_OPCODE(blend_func(rt->rgb_func)) |
 				A3XX_RB_MRT_BLEND_CONTROL_RGB_DEST_FACTOR(fd_blend_factor(rt->rgb_dst_factor)) |
 				A3XX_RB_MRT_BLEND_CONTROL_ALPHA_SRC_FACTOR(fd_blend_factor(rt->alpha_src_factor)) |
-				A3XX_RB_MRT_BLEND_CONTROL_ALPHA_BLEND_OPCODE(fd_blend_func(rt->alpha_func)) |
+				A3XX_RB_MRT_BLEND_CONTROL_ALPHA_BLEND_OPCODE(blend_func(rt->alpha_func)) |
 				A3XX_RB_MRT_BLEND_CONTROL_ALPHA_DEST_FACTOR(fd_blend_factor(rt->alpha_dst_factor)) |
 				A3XX_RB_MRT_BLEND_CONTROL_CLAMP_ENABLE;
 

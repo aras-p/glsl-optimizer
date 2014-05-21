@@ -34,6 +34,27 @@
 #include "fd2_context.h"
 #include "fd2_util.h"
 
+
+static enum a2xx_rb_blend_opcode
+blend_func(unsigned func)
+{
+	switch (func) {
+	case PIPE_BLEND_ADD:
+		return BLEND_DST_PLUS_SRC;
+	case PIPE_BLEND_MIN:
+		return BLEND_MIN_DST_SRC;
+	case PIPE_BLEND_MAX:
+		return BLEND_MAX_DST_SRC;
+	case PIPE_BLEND_SUBTRACT:
+		return BLEND_SRC_MINUS_DST;
+	case PIPE_BLEND_REVERSE_SUBTRACT:
+		return BLEND_DST_MINUS_SRC;
+	default:
+		DBG("invalid blend func: %x", func);
+		return 0;
+	}
+}
+
 void *
 fd2_blend_state_create(struct pipe_context *pctx,
 		const struct pipe_blend_state *cso)
@@ -61,10 +82,10 @@ fd2_blend_state_create(struct pipe_context *pctx,
 
 	so->rb_blendcontrol =
 		A2XX_RB_BLEND_CONTROL_COLOR_SRCBLEND(fd_blend_factor(rt->rgb_src_factor)) |
-		A2XX_RB_BLEND_CONTROL_COLOR_COMB_FCN(fd_blend_func(rt->rgb_func)) |
+		A2XX_RB_BLEND_CONTROL_COLOR_COMB_FCN(blend_func(rt->rgb_func)) |
 		A2XX_RB_BLEND_CONTROL_COLOR_DESTBLEND(fd_blend_factor(rt->rgb_dst_factor)) |
 		A2XX_RB_BLEND_CONTROL_ALPHA_SRCBLEND(fd_blend_factor(rt->alpha_src_factor)) |
-		A2XX_RB_BLEND_CONTROL_ALPHA_COMB_FCN(fd_blend_func(rt->alpha_func)) |
+		A2XX_RB_BLEND_CONTROL_ALPHA_COMB_FCN(blend_func(rt->alpha_func)) |
 		A2XX_RB_BLEND_CONTROL_ALPHA_DESTBLEND(fd_blend_factor(rt->alpha_dst_factor));
 
 	if (rt->colormask & PIPE_MASK_R)

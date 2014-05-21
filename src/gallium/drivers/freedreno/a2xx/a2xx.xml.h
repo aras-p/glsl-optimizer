@@ -10,11 +10,11 @@ git clone https://github.com/freedreno/envytools.git
 The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno.xml               (    364 bytes, from 2013-11-30 14:47:15)
 - /home/robclark/src/freedreno/envytools/rnndb/freedreno_copyright.xml  (   1453 bytes, from 2013-03-31 16:51:27)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32580 bytes, from 2014-05-16 11:51:57)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (  10186 bytes, from 2014-05-16 11:51:57)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32901 bytes, from 2014-05-21 20:40:21)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   9859 bytes, from 2014-05-21 20:39:42)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  14477 bytes, from 2014-05-16 11:51:57)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  57830 bytes, from 2014-05-20 22:44:52)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  26293 bytes, from 2014-05-16 11:51:57)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  57856 bytes, from 2014-05-21 20:43:33)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  26602 bytes, from 2014-05-21 20:46:17)
 
 Copyright (C) 2013-2014 by the following authors:
 - Rob Clark <robdclark@gmail.com> (robclark)
@@ -201,6 +201,15 @@ enum a2xx_rb_copy_sample_select {
 	SAMPLE_01 = 4,
 	SAMPLE_23 = 5,
 	SAMPLE_0123 = 6,
+};
+
+enum a2xx_rb_blend_opcode {
+	BLEND_DST_PLUS_SRC = 0,
+	BLEND_SRC_MINUS_DST = 1,
+	BLEND_MIN_DST_SRC = 2,
+	BLEND_MAX_DST_SRC = 3,
+	BLEND_DST_MINUS_SRC = 4,
+	BLEND_DST_PLUS_SRC_BIAS = 5,
 };
 
 enum adreno_mmu_clnt_beh {
@@ -996,7 +1005,7 @@ static inline uint32_t A2XX_RB_BLEND_CONTROL_COLOR_SRCBLEND(enum adreno_rb_blend
 }
 #define A2XX_RB_BLEND_CONTROL_COLOR_COMB_FCN__MASK		0x000000e0
 #define A2XX_RB_BLEND_CONTROL_COLOR_COMB_FCN__SHIFT		5
-static inline uint32_t A2XX_RB_BLEND_CONTROL_COLOR_COMB_FCN(enum adreno_rb_blend_opcode val)
+static inline uint32_t A2XX_RB_BLEND_CONTROL_COLOR_COMB_FCN(enum a2xx_rb_blend_opcode val)
 {
 	return ((val) << A2XX_RB_BLEND_CONTROL_COLOR_COMB_FCN__SHIFT) & A2XX_RB_BLEND_CONTROL_COLOR_COMB_FCN__MASK;
 }
@@ -1014,7 +1023,7 @@ static inline uint32_t A2XX_RB_BLEND_CONTROL_ALPHA_SRCBLEND(enum adreno_rb_blend
 }
 #define A2XX_RB_BLEND_CONTROL_ALPHA_COMB_FCN__MASK		0x00e00000
 #define A2XX_RB_BLEND_CONTROL_ALPHA_COMB_FCN__SHIFT		21
-static inline uint32_t A2XX_RB_BLEND_CONTROL_ALPHA_COMB_FCN(enum adreno_rb_blend_opcode val)
+static inline uint32_t A2XX_RB_BLEND_CONTROL_ALPHA_COMB_FCN(enum a2xx_rb_blend_opcode val)
 {
 	return ((val) << A2XX_RB_BLEND_CONTROL_ALPHA_COMB_FCN__SHIFT) & A2XX_RB_BLEND_CONTROL_ALPHA_COMB_FCN__MASK;
 }

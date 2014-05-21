@@ -111,26 +111,6 @@ fd_blend_factor(unsigned factor)
 	}
 }
 
-enum adreno_rb_blend_opcode
-fd_blend_func(unsigned func)
-{
-	switch (func) {
-	case PIPE_BLEND_ADD:
-		return BLEND_DST_PLUS_SRC;
-	case PIPE_BLEND_MIN:
-		return BLEND_MIN_DST_SRC;
-	case PIPE_BLEND_MAX:
-		return BLEND_MAX_DST_SRC;
-	case PIPE_BLEND_SUBTRACT:
-		return BLEND_SRC_MINUS_DST;
-	case PIPE_BLEND_REVERSE_SUBTRACT:
-		return BLEND_DST_MINUS_SRC;
-	default:
-		DBG("invalid blend func: %x", func);
-		return 0;
-	}
-}
-
 enum adreno_pa_su_sc_draw
 fd_polygon_mode(unsigned mode)
 {
