@@ -16,6 +16,7 @@ extern "C" {
 #include "main/renderbuffer.h"
 #include "pipe/p_format.h"
 #include "state_tracker/st_manager.h"
+#include "util/u_memory.h"
 }
 
 #include "GalliumContext.h"

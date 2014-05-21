@@ -26,6 +26,7 @@ extern "C" {
 #include "state_tracker/st_gl_api.h"
 #include "state_tracker/st_manager.h"
 #include "state_tracker/sw_winsys.h"
+#include "util/u_memory.h"
 #include "hgl_sw_winsys.h"
 
 #include "target-helpers/inline_sw_helper.h"
