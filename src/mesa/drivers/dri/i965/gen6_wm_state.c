@@ -76,7 +76,14 @@ upload_wm_state(struct brw_context *brw)
    /* _NEW_BUFFERS */
    bool multisampled_fbo = ctx->DrawBuffer->Visual.samples > 1;
 
-    /* CACHE_NEW_WM_PROG */
+   /* CACHE_NEW_WM_PROG
+    *
+    * We can't fold this into gen6_upload_wm_push_constants(), because
+    * according to the SNB PRM, vol 2 part 1 section 7.2.2
+    * (3DSTATE_CONSTANT_PS [DevSNB]):
+    *
+    *     "[DevSNB]: This packet must be followed by WM_STATE."
+    */
    if (brw->wm.prog_data->base.nr_params == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
