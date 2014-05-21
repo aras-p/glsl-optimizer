@@ -270,7 +270,7 @@ struct blit_state
 struct fb_tex_blit_state
 {
    GLint baseLevelSave, maxLevelSave;
-   GLuint sampler, samplerSave;
+   GLuint sampler, samplerSave, stencilSamplingSave;
    GLuint tempTex;
 };
 
@@ -407,7 +407,7 @@ _mesa_meta_fb_tex_blit_begin(const struct gl_context *ctx,
                              struct fb_tex_blit_state *blit);
 
 extern void
-_mesa_meta_fb_tex_blit_end(const struct gl_context *ctx, GLenum target,
+_mesa_meta_fb_tex_blit_end(struct gl_context *ctx, GLenum target,
                            struct fb_tex_blit_state *blit);
 
 extern GLboolean

@@ -446,6 +446,7 @@ blitframebuffer_texture(struct gl_context *ctx,
 
    fb_tex_blit.baseLevelSave = texObj->BaseLevel;
    fb_tex_blit.maxLevelSave = texObj->MaxLevel;
+   fb_tex_blit.stencilSamplingSave = texObj->StencilSampling;
 
    if (glsl_version) {
       setup_glsl_blit_framebuffer(ctx, blit, rb, target);
@@ -576,7 +577,7 @@ _mesa_meta_fb_tex_blit_begin(const struct gl_context *ctx,
 }
 
 void
-_mesa_meta_fb_tex_blit_end(const struct gl_context *ctx, GLenum target,
+_mesa_meta_fb_tex_blit_end(struct gl_context *ctx, GLenum target,
                            struct fb_tex_blit_state *blit)
 {
    /* Restore texture object state, the texture binding will
@@ -585,6 +586,16 @@ _mesa_meta_fb_tex_blit_end(const struct gl_context *ctx, GLenum target,
    if (target != GL_TEXTURE_RECTANGLE_ARB) {
       _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, blit->baseLevelSave);
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, blit->maxLevelSave);
+
+      if (ctx->Extensions.ARB_stencil_texturing) {
+         const struct gl_texture_object *texObj =
+            _mesa_get_current_tex_object(ctx, target);
+
+         if (texObj->StencilSampling != blit->stencilSamplingSave)
+            _mesa_TexParameteri(target, GL_DEPTH_STENCIL_TEXTURE_MODE,
+                                blit->stencilSamplingSave ?
+                                   GL_STENCIL_INDEX : GL_DEPTH_COMPONENT);
+      }
    }
 
    _mesa_BindSampler(ctx->Texture.CurrentUnit, blit->samplerSave);
