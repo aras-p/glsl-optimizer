@@ -480,41 +480,16 @@ static void
 brw_upload_wm_pull_constants(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->ctx;
+   struct brw_stage_state *stage_state = &brw->wm.base;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    struct brw_fragment_program *fp =
       (struct brw_fragment_program *) brw->fragment_program;
-   struct gl_program_parameter_list *params = fp->program.Base.Parameters;
-   const int size = brw->wm.prog_data->base.nr_pull_params * sizeof(float);
-   const int surf_index =
-      brw->wm.prog_data->base.binding_table.pull_constants_start;
-   unsigned int i;
-
-   _mesa_load_state_parameters(ctx, params);
-
    /* CACHE_NEW_WM_PROG */
-   if (brw->wm.prog_data->base.nr_pull_params == 0) {
-      if (brw->wm.base.surf_offset[surf_index]) {
-	 brw->wm.base.surf_offset[surf_index] = 0;
-	 brw->state.dirty.brw |= BRW_NEW_SURFACES;
-      }
-      return;
-   }
+   struct gl_stage_prog_data *prog_data = &brw->wm.prog_data->base;
 
    /* _NEW_PROGRAM_CONSTANTS */
-   drm_intel_bo *const_bo = NULL;
-   uint32_t const_offset;
-   float *constants = intel_upload_space(brw, size, 64,
-                                         &const_bo, &const_offset);
-   for (i = 0; i < brw->wm.prog_data->base.nr_pull_params; i++) {
-      constants[i] = *brw->wm.prog_data->base.pull_param[i];
-   }
-
-   brw_create_constant_surface(brw, const_bo, const_offset, size,
-                               &brw->wm.base.surf_offset[surf_index],
-                               true);
-   drm_intel_bo_unreference(const_bo);
-
-   brw->state.dirty.brw |= BRW_NEW_SURFACES;
+   brw_upload_pull_constants(brw, BRW_NEW_SURFACES, &fp->program.Base,
+                             stage_state, prog_data, true);
 }
 
 const struct brw_tracked_state brw_wm_pull_constants = {

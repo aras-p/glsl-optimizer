@@ -264,11 +264,12 @@ calculate_attr_overrides(const struct brw_context *brw,
 
 /* brw_vs_surface_state.c */
 void
-brw_upload_vec4_pull_constants(struct brw_context *brw,
-                               GLbitfield brw_new_constbuf,
-                               const struct gl_program *prog,
-                               struct brw_stage_state *stage_state,
-                               const struct brw_vec4_prog_data *prog_data);
+brw_upload_pull_constants(struct brw_context *brw,
+                          GLbitfield brw_new_constbuf,
+                          const struct gl_program *prog,
+                          struct brw_stage_state *stage_state,
+                          const struct brw_stage_prog_data *prog_data,
+                          bool dword_pitch);
 
 /* gen7_vs_state.c */
 void

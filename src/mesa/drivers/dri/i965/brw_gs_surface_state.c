@@ -47,11 +47,11 @@ brw_upload_gs_pull_constants(struct brw_context *brw)
       return;
 
    /* CACHE_NEW_GS_PROG */
-   const struct brw_vec4_prog_data *prog_data = &brw->gs.prog_data->base;
+   const struct brw_stage_prog_data *prog_data = &brw->gs.prog_data->base.base;
 
    /* _NEW_PROGRAM_CONSTANTS */
-   brw_upload_vec4_pull_constants(brw, BRW_NEW_GS_CONSTBUF, &gp->program.Base,
-                                  stage_state, prog_data);
+   brw_upload_pull_constants(brw, BRW_NEW_GS_CONSTBUF, &gp->program.Base,
+                             stage_state, prog_data, false);
 }
 
 const struct brw_tracked_state brw_gs_pull_constants = {
