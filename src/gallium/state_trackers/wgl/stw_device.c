@@ -190,19 +190,6 @@ stw_cleanup(void)
 }
 
 
-struct stw_context *
-stw_lookup_context_locked( DHGLRC dhglrc )
-{
-   if (dhglrc == 0)
-      return NULL;
-
-   if (stw_dev == NULL)
-      return NULL;
-
-   return (struct stw_context *) handle_table_get(stw_dev->ctx_table, dhglrc);
-}
-
-
 void APIENTRY
 DrvSetCallbackProcs(
    INT nProcs,

@@ -76,10 +76,17 @@ struct stw_device
 #endif
 };
 
-struct stw_context *
-stw_lookup_context_locked( DHGLRC hglrc );
 
 extern struct stw_device *stw_dev;
+
+
+static INLINE struct stw_context *
+stw_lookup_context_locked( DHGLRC dhglrc )
+{
+   if (dhglrc == 0 || stw_dev == NULL)
+      return NULL;
+   return (struct stw_context *) handle_table_get(stw_dev->ctx_table, dhglrc);
+}
 
 
 #endif /* STW_DEVICE_H_ */
