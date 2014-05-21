@@ -156,7 +156,7 @@ emit_binning_workaround(struct fd_context *ctx)
 	OUT_RING(ring, A3XX_RB_COPY_CONTROL_MSAA_RESOLVE(MSAA_ONE) |
 			A3XX_RB_COPY_CONTROL_MODE(0) |
 			A3XX_RB_COPY_CONTROL_GMEM_BASE(0));
-	OUT_RELOC(ring, fd_resource(fd3_ctx->solid_vbuf)->bo, 0x20, 0, -1);  /* RB_COPY_DEST_BASE */
+	OUT_RELOCW(ring, fd_resource(fd3_ctx->solid_vbuf)->bo, 0x20, 0, -1);  /* RB_COPY_DEST_BASE */
 	OUT_RING(ring, A3XX_RB_COPY_DEST_PITCH_PITCH(128));
 	OUT_RING(ring, A3XX_RB_COPY_DEST_INFO_TILE(LINEAR) |
 			A3XX_RB_COPY_DEST_INFO_FORMAT(RB_R8G8B8A8_UNORM) |
@@ -458,7 +458,7 @@ fd3_emit_tile_mem2gmem(struct fd_context *ctx, struct fd_tile *tile)
 	y1 = ((float)tile->yoff + bin_h) / ((float)pfb->height);
 
 	OUT_PKT3(ring, CP_MEM_WRITE, 5);
-	OUT_RELOC(ring, fd_resource(fd3_ctx->blit_texcoord_vbuf)->bo, 0, 0, 0);
+	OUT_RELOCW(ring, fd_resource(fd3_ctx->blit_texcoord_vbuf)->bo, 0, 0, 0);
 	OUT_RING(ring, fui(x0));
 	OUT_RING(ring, fui(y0));
 	OUT_RING(ring, fui(x1));
@@ -639,7 +639,7 @@ update_vsc_pipe(struct fd_context *ctx)
 	int i;
 
 	OUT_PKT0(ring, REG_A3XX_VSC_SIZE_ADDRESS, 1);
-	OUT_RELOC(ring, fd3_ctx->vsc_size_mem, 0, 0, 0); /* VSC_SIZE_ADDRESS */
+	OUT_RELOCW(ring, fd3_ctx->vsc_size_mem, 0, 0, 0); /* VSC_SIZE_ADDRESS */
 
 	for (i = 0; i < 8; i++) {
 		struct fd_vsc_pipe *pipe = &ctx->pipe[i];
@@ -654,7 +654,7 @@ update_vsc_pipe(struct fd_context *ctx)
 				A3XX_VSC_PIPE_CONFIG_Y(pipe->y) |
 				A3XX_VSC_PIPE_CONFIG_W(pipe->w) |
 				A3XX_VSC_PIPE_CONFIG_H(pipe->h));
-		OUT_RELOC(ring, pipe->bo, 0, 0, 0);        /* VSC_PIPE[i].DATA_ADDRESS */
+		OUT_RELOCW(ring, pipe->bo, 0, 0, 0);       /* VSC_PIPE[i].DATA_ADDRESS */
 		OUT_RING(ring, fd_bo_size(pipe->bo) - 32); /* VSC_PIPE[i].DATA_LENGTH */
 	}
 }
