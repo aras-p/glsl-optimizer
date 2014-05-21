@@ -328,7 +328,10 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
    /* target = GL_TEXTURE_RECTANGLE is not supported in GLES 3.0 */
    assert(_mesa_is_desktop_gl(ctx) || target == GL_TEXTURE_2D);
 
-   _mesa_meta_setup_vertex_objects(&blit->VAO, &blit->VBO, true, 2, 2, 0);
+   unsigned texcoord_size = 2 + (src_rb->Depth > 1 ? 1 : 0);
+
+   _mesa_meta_setup_vertex_objects(&blit->VAO, &blit->VBO, true,
+                                   2, texcoord_size, 0);
 
    if (target == GL_TEXTURE_2D_MULTISAMPLE ||
        target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY) {
@@ -533,12 +536,16 @@ blitframebuffer_texture(struct gl_context *ctx,
 
       verts[0].tex[0] = s0;
       verts[0].tex[1] = t0;
+      verts[0].tex[2] = readAtt->Zoffset;
       verts[1].tex[0] = s1;
       verts[1].tex[1] = t0;
+      verts[1].tex[2] = readAtt->Zoffset;
       verts[2].tex[0] = s1;
       verts[2].tex[1] = t1;
+      verts[2].tex[2] = readAtt->Zoffset;
       verts[3].tex[0] = s0;
       verts[3].tex[1] = t1;
+      verts[3].tex[2] = readAtt->Zoffset;
 
       _mesa_BufferSubData(GL_ARRAY_BUFFER_ARB, 0, sizeof(verts), verts);
    }
