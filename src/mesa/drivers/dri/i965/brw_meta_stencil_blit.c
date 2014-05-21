@@ -391,6 +391,7 @@ set_read_rb_tex_image(struct gl_context *ctx, struct fb_tex_blit_state *blit,
 
    blit->baseLevelSave = tex_obj->BaseLevel;
    blit->maxLevelSave = tex_obj->MaxLevel;
+   blit->stencilSamplingSave = tex_obj->StencilSampling;
    blit->sampler = _mesa_meta_setup_sampler(ctx, tex_obj, *target,
                                             GL_NEAREST, level);
 }
