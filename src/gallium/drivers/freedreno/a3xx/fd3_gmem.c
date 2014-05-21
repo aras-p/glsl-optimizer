@@ -82,7 +82,7 @@ emit_mrt(struct fd_ringbuffer *ring, unsigned nr_bufs,
 				stride = bin_w * rsc->cpp;
 
 				if (bases) {
-					base = bases[i] * rsc->cpp;
+					base = bases[i];
 				}
 			} else {
 				stride = slice->pitch * rsc->cpp;
