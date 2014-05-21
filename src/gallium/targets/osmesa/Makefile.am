@@ -45,6 +45,7 @@ lib@OSMESA_LIB@_la_LDFLAGS = \
 	-module \
 	-no-undefined \
 	-version-number @OSMESA_VERSION@ \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/osmesa/osmesa.sym \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 

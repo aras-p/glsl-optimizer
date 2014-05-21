@@ -1,0 +1,18 @@
+{
+	global:
+		OSMesaColorClamp;
+		OSMesaCreateContext;
+		OSMesaCreateContextExt;
+		OSMesaDestroyContext;
+		OSMesaGetColorBuffer;
+		OSMesaGetCurrentContext;
+		OSMesaGetDepthBuffer;
+		OSMesaGetIntegerv;
+		OSMesaGetProcAddress;
+		OSMesaMakeCurrent;
+		OSMesaPixelStore;
+		OSMesaPostprocess;
+		gl*;
+	local:
+		*;
+};
