@@ -501,6 +501,14 @@ const struct brw_tracked_state brw_wm_pull_constants = {
    .emit = brw_upload_wm_pull_constants,
 };
 
+/**
+ * Creates a null renderbuffer surface.
+ *
+ * This is used when the shader doesn't write to any color output.  An FB
+ * write to target 0 will still be emitted, because that's how the thread is
+ * terminated (and computed depth is returned), so we need to have the
+ * hardware discard the target 0 color output..
+ */
 static void
 brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 {
