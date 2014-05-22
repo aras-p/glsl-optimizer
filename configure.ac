@@ -336,7 +336,7 @@ dnl OpenBSD does not have DT_NEEDED entries for libc by design
 dnl so when these flags are passed to ld via libtool the checks will fail
 dnl
 case "$host_os" in
-openbsd*)
+openbsd* | darwin* )
     LD_NO_UNDEFINED="" ;;
 *)
     LD_NO_UNDEFINED="-Wl,--no-undefined" ;;
