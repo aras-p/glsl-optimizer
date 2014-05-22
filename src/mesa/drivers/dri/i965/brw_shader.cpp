@@ -794,8 +794,10 @@ void annotate(struct brw_context *brw,
 
    struct annotation *ann = &annotation->ann[annotation->ann_count++];
    ann->offset = offset;
-   ann->ir = inst->ir;
-   ann->annotation = inst->annotation;
+   if ((INTEL_DEBUG & DEBUG_NO_ANNOTATION) == 0) {
+      ann->ir = inst->ir;
+      ann->annotation = inst->annotation;
+   }
 
    if (cfg->blocks[annotation->cur_block]->start == inst) {
       ann->block_start = cfg->blocks[annotation->cur_block];

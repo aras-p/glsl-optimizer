@@ -65,6 +65,7 @@ static const struct dri_debug_control debug_control[] = {
    { "blorp", DEBUG_BLORP },
    { "nodualobj", DEBUG_NO_DUAL_OBJECT_GS },
    { "optimizer", DEBUG_OPTIMIZER },
+   { "noann", DEBUG_NO_ANNOTATION },
    { NULL,    0 }
 };
 
