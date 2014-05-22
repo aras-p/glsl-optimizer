@@ -34,7 +34,7 @@
 void
 _mesa_get_cpu_features(void)
 {
-#if defined USE_X86_ASM || (defined __x86_64__ && !defined _MSC_VER)
+#if defined USE_X86_ASM || defined USE_X86_64_ASM
    _mesa_get_x86_features();
 #endif
 }

@@ -47,7 +47,7 @@
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
 #endif
-#if defined(__x86_64__) && !defined(_MSC_VER)
+#if defined(USE_X86_64_ASM)
 #include <cpuid.h>
 #endif
 
@@ -336,7 +336,7 @@ _mesa_get_x86_features(void)
    }
 #endif
 
-#elif defined(__x86_64__) && !defined(_MSC_VER)
+#elif defined(USE_X86_64_ASM)
    unsigned int uninitialized_var(eax), uninitialized_var(ebx),
                 uninitialized_var(ecx), uninitialized_var(edx);
 
@@ -347,7 +347,7 @@ _mesa_get_x86_features(void)
 
    if (ecx & bit_SSE4_1)
       _mesa_x86_cpu_features |= X86_FEATURE_SSE4_1;
-#endif /* USE_X86_ASM */
+#endif /* USE_X86_64_ASM */
 
    (void) detection_debug;
 }
