@@ -224,15 +224,18 @@ fs_visitor::emit_lrp(const fs_reg &dst, const fs_reg &x, const fs_reg &y,
        !y.is_valid_3src() ||
        !a.is_valid_3src()) {
       /* We can't use the LRP instruction.  Emit x*(1-a) + y*a. */
+      fs_reg y_times_a           = fs_reg(this, glsl_type::float_type);
       fs_reg one_minus_a         = fs_reg(this, glsl_type::float_type);
+      fs_reg x_times_one_minus_a = fs_reg(this, glsl_type::float_type);
+
+      emit(MUL(y_times_a, y, a));
 
       fs_reg negative_a = a;
       negative_a.negate = !a.negate;
-
       emit(ADD(one_minus_a, negative_a, fs_reg(1.0f)));
-      fs_inst *mul = emit(MUL(reg_null_f, y, a));
-      mul->writes_accumulator = true;
-      emit(MAC(dst, x, one_minus_a));
+      emit(MUL(x_times_one_minus_a, x, one_minus_a));
+
+      emit(ADD(dst, x_times_one_minus_a, y_times_a));
    } else {
       /* The LRP instruction actually does op1 * op0 + op2 * (1 - op0), so
        * we need to reorder the operands.
