@@ -392,6 +392,7 @@ if (env['gcc'] or env['clang']) and \
             'USE_X86_64_ASM',
         ])
         mesa_sources += [
+            'x86/common_x86.c',
             'x86-64/x86-64.c',
             'x86-64/xform4.S',
         ]
