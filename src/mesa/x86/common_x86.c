@@ -226,7 +226,7 @@ _mesa_get_x86_features(void)
        _mesa_debug(NULL, "CPUID not detected\n");
    }
    else {
-       GLuint cpu_features;
+       GLuint cpu_features, cpu_features_ecx;
        GLuint cpu_ext_features;
        GLuint cpu_ext_info;
        char cpu_vendor[13];
