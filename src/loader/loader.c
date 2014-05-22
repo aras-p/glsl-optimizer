@@ -113,8 +113,8 @@ udev_dlopen_handle(void)
          udev_handle = dlopen("libudev.so.0", RTLD_LOCAL | RTLD_LAZY);
 
          if (!udev_handle) {
-            log_(_LOADER_FATAL, "Couldn't dlopen libudev.so.1 or libudev.so.0, "
-                 "driver detection may be broken.\n");
+            log_(_LOADER_WARNING, "Couldn't dlopen libudev.so.1 or "
+                 "libudev.so.0, driver detection may be broken.\n");
          }
       }
    }
@@ -122,16 +122,19 @@ udev_dlopen_handle(void)
    return udev_handle;
 }
 
+static int dlsym_failed = 0;
+
 static void *
-asserted_dlsym(void *dlopen_handle, const char *name)
+checked_dlsym(void *dlopen_handle, const char *name)
 {
    void *result = dlsym(dlopen_handle, name);
-   assert(result);
+   if (!result)
+      dlsym_failed = 1;
    return result;
 }
 
 #define UDEV_SYMBOL(ret, name, args) \
-   ret (*name) args = asserted_dlsym(udev_dlopen_handle(), #name);
+   ret (*name) args = checked_dlsym(udev_dlopen_handle(), #name);
 
 
 static inline struct udev_device *
@@ -141,6 +144,9 @@ udev_device_new_from_fd(struct udev *udev, int fd)
    struct stat buf;
    UDEV_SYMBOL(struct udev_device *, udev_device_new_from_devnum,
                (struct udev *udev, char type, dev_t devnum));
+
+   if (dlsym_failed)
+      return NULL;
 
    if (fstat(fd, &buf) < 0) {
       log_(_LOADER_WARNING, "MESA-LOADER: failed to stat fd %d\n", fd);
@@ -157,8 +163,8 @@ udev_device_new_from_fd(struct udev *udev, int fd)
    return device;
 }
 
-int
-loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
+static int
+libudev_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
 {
    struct udev *udev = NULL;
    struct udev_device *device = NULL, *parent;
@@ -173,6 +179,9 @@ loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
    UDEV_SYMBOL(struct udev *, udev_unref, (struct udev *));
 
    *chip_id = -1;
+
+   if (dlsym_failed)
+      return 0;
 
    udev = udev_new();
    device = udev_device_new_from_fd(udev, fd);
@@ -201,16 +210,16 @@ out:
 
    return (*chip_id >= 0);
 }
+#endif
 
-#elif !defined(__NOT_HAVE_DRM_H)
-
+#if !defined(__NOT_HAVE_DRM_H)
 /* for i915 */
 #include <i915_drm.h>
 /* for radeon */
 #include <radeon_drm.h>
 
-int
-loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
+static int
+drm_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
 {
    drmVersionPtr version;
 
@@ -272,23 +281,29 @@ loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
 
    return (*chip_id >= 0);
 }
+#endif
 
-#else
 
 int
 loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
 {
+#if HAVE_LIBUDEV
+   if (libudev_get_pci_id_for_fd(fd, vendor_id, chip_id))
+      return 1;
+#endif
+#if !defined(__NOT_HAVE_DRM_H)
+   if (drm_get_pci_id_for_fd(fd, vendor_id, chip_id))
+      return 1;
+#endif
    return 0;
 }
 
-#endif
 
-
-char *
-loader_get_device_name_for_fd(int fd)
+#ifdef HAVE_LIBUDEV
+static char *
+libudev_get_device_name_for_fd(int fd)
 {
    char *device_name = NULL;
-#ifdef HAVE_LIBUDEV
    struct udev *udev;
    struct udev_device *device;
    const char *const_device_name;
@@ -312,8 +327,21 @@ loader_get_device_name_for_fd(int fd)
 out:
    udev_device_unref(device);
    udev_unref(udev);
-#endif
    return device_name;
+}
+#endif
+
+
+char *
+loader_get_device_name_for_fd(int fd)
+{
+   char *result = NULL;
+
+#if HAVE_LIBUDEV
+   if ((result = libudev_get_device_name_for_fd(fd)))
+      return result;
+#endif
+   return result;
 }
 
 char *
