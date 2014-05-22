@@ -870,13 +870,20 @@ fi
 
 case "$host_os" in
 linux*)
-    need_libudev=yes ;;
+    need_pci_id=yes ;;
 *)
-    need_libudev=no ;;
+    need_pci_id=no ;;
 esac
 
 PKG_CHECK_MODULES([LIBUDEV], [libudev >= $LIBUDEV_REQUIRED],
                   have_libudev=yes, have_libudev=no)
+
+AC_ARG_ENABLE([sysfs],
+    [AS_HELP_STRING([--enable-sysfs],
+        [enable /sys PCI identification @<:@default=disabled@:>@])],
+    [have_sysfs="$enableval"],
+    [have_sysfs=no]
+)
 
 if test "x$enable_dri" = xyes; then
     if test "$enable_static" = yes; then
@@ -973,8 +980,15 @@ xyesno)
     ;;
 esac
 
+have_pci_id=no
 if test "$have_libudev" = yes; then
     DEFINES="$DEFINES -DHAVE_LIBUDEV"
+    have_pci_id=yes
+fi
+
+if test "$have_sysfs" = yes; then
+    DEFINES="$DEFINES -DHAVE_SYSFS"
+    have_pci_id=yes
 fi
 
 # This is outside the case (above) so that it is invoked even for non-GLX
@@ -1076,8 +1090,8 @@ if test "x$enable_dri" = xyes; then
             DEFINES="$DEFINES -DHAVE_DRI3"
         fi
 
-        if test "x$have_libudev" != xyes; then
-            AC_MSG_ERROR([libudev-dev required for building DRI])
+        if test "x$have_pci_id" != xyes; then
+            AC_MSG_ERROR([libudev-dev or sysfs required for building DRI])
         fi
 
         case "$host_cpu" in
@@ -1252,8 +1266,8 @@ if test "x$enable_gbm" = xauto; then
     esac
 fi
 if test "x$enable_gbm" = xyes; then
-    if test "x$need_libudev$have_libudev" = xyesno; then
-        AC_MSG_ERROR([gbm requires udev >= $LIBUDEV_REQUIRED])
+    if test "x$need_pci_id$have_pci_id" = xyesno; then
+        AC_MSG_ERROR([gbm requires udev >= $LIBUDEV_REQUIRED or sysfs])
     fi
 
     if test "x$enable_dri" = xyes; then
@@ -1271,7 +1285,7 @@ if test "x$enable_gbm" = xyes; then
     fi
 fi
 AM_CONDITIONAL(HAVE_GBM, test "x$enable_gbm" = xyes)
-if test "x$need_libudev" = xyes; then
+if test "x$need_pci_id$have_libudev" = xyesyes; then
     GBM_PC_REQ_PRIV="libudev >= $LIBUDEV_REQUIRED"
 else
     GBM_PC_REQ_PRIV=""
@@ -1560,9 +1574,9 @@ for plat in $egl_platforms; do
 		;;
 	esac
 
-        case "$plat$need_libudev$have_libudev" in
+        case "$plat$need_pci_id$have_pci_id" in
                 waylandyesno|drmyesno)
-                    AC_MSG_ERROR([cannot build $plat platform without udev >= $LIBUDEV_REQUIRED]) ;;
+                    AC_MSG_ERROR([cannot build $plat platform without udev >= $LIBUDEV_REQUIRED or sysfs]) ;;
         esac
 done
 
@@ -1843,8 +1857,8 @@ gallium_require_llvm() {
 
 gallium_require_drm_loader() {
     if test "x$enable_gallium_loader" = xyes; then
-        if test "x$need_libudev$have_libudev" = xyesno; then
-            AC_MSG_ERROR([Gallium drm loader requires libudev >= $LIBUDEV_REQUIRED])
+        if test "x$need_pci_id$have_pci_id" = xyesno; then
+            AC_MSG_ERROR([Gallium drm loader requires libudev >= $LIBUDEV_REQUIRED or sysfs])
         fi
         if test "x$have_libdrm" != xyes; then
             AC_MSG_ERROR([Gallium drm loader requires libdrm >= $LIBDRM_REQUIRED])

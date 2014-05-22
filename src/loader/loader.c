@@ -71,6 +71,10 @@
 #include <assert.h>
 #include <dlfcn.h>
 #endif
+#ifdef HAVE_SYSFS
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
 #include "loader.h"
 
 #ifndef __NOT_HAVE_DRM_H
@@ -212,6 +216,66 @@ out:
 }
 #endif
 
+#if defined(HAVE_SYSFS)
+static int
+dev_node_from_fd(int fd, unsigned int *maj, unsigned int *min)
+{
+   struct stat buf;
+
+   if (fstat(fd, &buf) < 0) {
+      log_(_LOADER_WARNING, "MESA-LOADER: failed to stat fd %d\n", fd);
+      return -1;
+   }
+
+   if (!S_ISCHR(buf.st_mode)) {
+      log_(_LOADER_WARNING, "MESA-LOADER: fd %d not a character device\n", fd);
+      return -1;
+   }
+
+   *maj = major(buf.st_rdev);
+   *min = minor(buf.st_rdev);
+
+   return 0;
+}
+
+static int
+sysfs_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
+{
+   unsigned int maj, min;
+   FILE *f;
+   char buf[0x40];
+
+   if (dev_node_from_fd(fd, &maj, &min) < 0) {
+      *chip_id = -1;
+      return 0;
+   }
+
+   snprintf(buf, sizeof(buf), "/sys/dev/char/%d:%d/device/vendor", maj, min);
+   if (!(f = fopen(buf, "r"))) {
+      *chip_id = -1;
+      return 0;
+   }
+   if (fscanf(f, "%x", vendor_id) != 1) {
+      *chip_id = -1;
+      fclose(f);
+      return 0;
+   }
+   fclose(f);
+   snprintf(buf, sizeof(buf), "/sys/dev/char/%d:%d/device/device", maj, min);
+   if (!(f = fopen(buf, "r"))) {
+      *chip_id = -1;
+      return 0;
+   }
+   if (fscanf(f, "%x", chip_id) != 1) {
+      *chip_id = -1;
+      fclose(f);
+      return 0;
+   }
+   fclose(f);
+   return 1;
+}
+#endif
+
 #if !defined(__NOT_HAVE_DRM_H)
 /* for i915 */
 #include <i915_drm.h>
@@ -291,6 +355,10 @@ loader_get_pci_id_for_fd(int fd, int *vendor_id, int *chip_id)
    if (libudev_get_pci_id_for_fd(fd, vendor_id, chip_id))
       return 1;
 #endif
+#if HAVE_SYSFS
+   if (sysfs_get_pci_id_for_fd(fd, vendor_id, chip_id))
+      return 1;
+#endif
 #if !defined(__NOT_HAVE_DRM_H)
    if (drm_get_pci_id_for_fd(fd, vendor_id, chip_id))
       return 1;
@@ -332,6 +400,46 @@ out:
 #endif
 
 
+#if HAVE_SYSFS
+static char *
+sysfs_get_device_name_for_fd(int fd)
+{
+   char *device_name = NULL;
+   unsigned int maj, min;
+   FILE *f;
+   char buf[0x40];
+   static const char match[9] = "\0DEVNAME=";
+   int expected = 1;
+
+   if (dev_node_from_fd(fd, &maj, &min) < 0)
+      return NULL;
+
+   snprintf(buf, sizeof(buf), "/sys/dev/char/%d:%d/uevent", maj, min);
+   if (!(f = fopen(buf, "r")))
+       return NULL;
+
+   while (expected < sizeof(match)) {
+      int c = getc(f);
+
+      if (c == EOF) {
+         fclose(f);
+         return NULL;
+      } else if (c == match[expected] )
+         expected++;
+      else
+         expected = 0;
+   }
+
+   strcpy(buf, "/dev/");
+   if (fgets(buf + 5, sizeof(buf) - 5, f))
+      device_name = strdup(buf);
+
+   fclose(f);
+   return device_name;
+}
+#endif
+
+
 char *
 loader_get_device_name_for_fd(int fd)
 {
@@ -339,6 +447,10 @@ loader_get_device_name_for_fd(int fd)
 
 #if HAVE_LIBUDEV
    if ((result = libudev_get_device_name_for_fd(fd)))
+      return result;
+#endif
+#if HAVE_SYSFS
+   if ((result = sysfs_get_device_name_for_fd(fd)))
       return result;
 #endif
    return result;
