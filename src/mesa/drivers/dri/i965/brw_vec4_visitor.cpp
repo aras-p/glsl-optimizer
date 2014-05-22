@@ -1171,13 +1171,17 @@ vec4_visitor::emit_lrp(const dst_reg &dst,
       /* Earlier generations don't support three source operations, so we
        * need to emit x*(1-a) + y*a.
        */
-      dst_reg one_minus_a   = dst_reg(this, glsl_type::vec4_type);
-      one_minus_a.writemask = dst.writemask;
+      dst_reg y_times_a           = dst_reg(this, glsl_type::vec4_type);
+      dst_reg one_minus_a         = dst_reg(this, glsl_type::vec4_type);
+      dst_reg x_times_one_minus_a = dst_reg(this, glsl_type::vec4_type);
+      y_times_a.writemask           = dst.writemask;
+      one_minus_a.writemask         = dst.writemask;
+      x_times_one_minus_a.writemask = dst.writemask;
 
+      emit(MUL(y_times_a, y, a));
       emit(ADD(one_minus_a, negate(a), src_reg(1.0f)));
-      vec4_instruction *mul = emit(MUL(dst_null_f(), y, a));
-      mul->writes_accumulator = true;
-      emit(MAC(dst, x, src_reg(one_minus_a)));
+      emit(MUL(x_times_one_minus_a, x, src_reg(one_minus_a)));
+      emit(ADD(dst, src_reg(x_times_one_minus_a), src_reg(y_times_a)));
    }
 }
 
