@@ -500,6 +500,12 @@ _mesa_framebuffer_renderbuffer(struct gl_context *ctx,
    }
    else {
       remove_attachment(ctx, att);
+      if (attachment == GL_DEPTH_STENCIL_ATTACHMENT) {
+         /* detach stencil (depth was detached above) */
+         att = get_attachment(ctx, fb, GL_STENCIL_ATTACHMENT_EXT);
+         assert(att);
+         remove_attachment(ctx, att);
+      }
    }
 
    invalidate_framebuffer(fb);
