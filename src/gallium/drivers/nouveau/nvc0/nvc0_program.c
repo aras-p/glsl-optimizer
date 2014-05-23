@@ -133,17 +133,12 @@ static int
 nvc0_fp_assign_output_slots(struct nv50_ir_prog_info *info)
 {
    unsigned count = info->prop.fp.numColourResults * 4;
-   unsigned i, c, ci;
+   unsigned i, c;
 
-   for (i = 0, ci = 0; i < info->numOutputs; ++i) {
-      if (info->out[i].sn == TGSI_SEMANTIC_COLOR) {
+   for (i = 0; i < info->numOutputs; ++i)
+      if (info->out[i].sn == TGSI_SEMANTIC_COLOR)
          for (c = 0; c < 4; ++c)
-            info->out[i].slot[c] = ci * 4 + c;
-         ci++;
-      }
-   }
-
-   assert(ci == info->prop.fp.numColourResults);
+            info->out[i].slot[c] = info->out[i].si * 4 + c;
 
    if (info->io.sampleMask < PIPE_MAX_SHADER_OUTPUTS)
       info->out[info->io.sampleMask].slot[0] = count++;
