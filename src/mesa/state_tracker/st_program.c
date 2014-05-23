@@ -679,31 +679,35 @@ st_translate_fragment_program(struct st_context *st,
          outputsWritten &= ~(1 << FRAG_RESULT_STENCIL);
       }
 
+      if (outputsWritten & BITFIELD64_BIT(FRAG_RESULT_SAMPLE_MASK)) {
+         fs_output_semantic_name[fs_num_outputs] = TGSI_SEMANTIC_SAMPLEMASK;
+         fs_output_semantic_index[fs_num_outputs] = 0;
+         outputMapping[FRAG_RESULT_SAMPLE_MASK] = fs_num_outputs;
+         fs_num_outputs++;
+         outputsWritten &= ~(1 << FRAG_RESULT_SAMPLE_MASK);
+      }
+
       /* handle remaining outputs (color) */
       for (attr = 0; attr < FRAG_RESULT_MAX; attr++) {
          if (outputsWritten & BITFIELD64_BIT(attr)) {
-            int semantic = TGSI_SEMANTIC_COLOR;
             switch (attr) {
             case FRAG_RESULT_DEPTH:
             case FRAG_RESULT_STENCIL:
+            case FRAG_RESULT_SAMPLE_MASK:
                /* handled above */
                assert(0);
                break;
             case FRAG_RESULT_COLOR:
-               write_all = GL_TRUE;
-               break;
-            case FRAG_RESULT_SAMPLE_MASK:
-               semantic = TGSI_SEMANTIC_SAMPLEMASK;
+               write_all = GL_TRUE; /* fallthrough */
+            default:
+               assert(attr == FRAG_RESULT_COLOR ||
+                      (FRAG_RESULT_DATA0 <= attr && attr < FRAG_RESULT_MAX));
+               fs_output_semantic_name[fs_num_outputs] = TGSI_SEMANTIC_COLOR;
+               fs_output_semantic_index[fs_num_outputs] = numColors;
+               outputMapping[attr] = fs_num_outputs;
+               numColors++;
                break;
             }
-
-            assert(attr == FRAG_RESULT_COLOR ||
-                   attr == FRAG_RESULT_SAMPLE_MASK ||
-                   (FRAG_RESULT_DATA0 <= attr && attr < FRAG_RESULT_MAX));
-            fs_output_semantic_name[fs_num_outputs] = semantic;
-            fs_output_semantic_index[fs_num_outputs] = numColors;
-            outputMapping[attr] = fs_num_outputs;
-            numColors++;
 
             fs_num_outputs++;
          }
