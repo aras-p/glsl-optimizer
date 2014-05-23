@@ -258,8 +258,8 @@ _mesa_get_x86_features(void)
 	   _mesa_x86_cpu_features |= X86_FEATURE_XMM;
        if (cpu_features & X86_CPU_XMM2)
 	   _mesa_x86_cpu_features |= X86_FEATURE_XMM2;
-       if (cpu_features & x86_CPU_SSE4_1)
-	   _mesa_x86_features |= X86_FEATURE_SSE4_1;
+       if (cpu_features_ecx & X86_CPU_SSE4_1)
+	   _mesa_x86_cpu_features |= X86_FEATURE_SSE4_1;
 #endif
 
        /* query extended cpu features */
