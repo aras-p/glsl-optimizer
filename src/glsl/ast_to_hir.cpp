@@ -3078,7 +3078,7 @@ validate_identifier(const char *identifier, YYLTYPE loc,
     *   OpenGL, and may not be declared in a shader as either a
     *   variable or a function."
     */
-   if (strncmp(identifier, "gl_", 3) == 0) {
+   if (is_gl_identifier(identifier)) {
       _mesa_glsl_error(&loc, state,
                        "identifier `%s' uses reserved `gl_' prefix",
                        identifier);
@@ -3653,7 +3653,7 @@ ast_declarator_list::hir(exec_list *instructions,
       exec_list initializer_instructions;
 
       /* Examine var name here since var may get deleted in the next call */
-      bool var_is_gl_id = (strncmp(var->name, "gl_", 3) == 0);
+      bool var_is_gl_id = is_gl_identifier(var->name);
 
       ir_variable *earlier =
          get_variable_being_redeclared(var, decl->get_location(), state,
@@ -5403,7 +5403,7 @@ ast_interface_block::hir(exec_list *instructions,
             ir_variable *earlier =
                get_variable_being_redeclared(var, loc, state,
                                              true /* allow_all_redeclarations */);
-            if (strncmp(var->name, "gl_", 3) != 0 || earlier == NULL) {
+            if (!is_gl_identifier(var->name) || earlier == NULL) {
                _mesa_glsl_error(&loc, state,
                                 "redeclaration of gl_PerVertex can only "
                                 "include built-in variables");
@@ -5638,7 +5638,7 @@ detect_conflicting_assignments(struct _mesa_glsl_parse_state *state,
          gl_FragColor_assigned = true;
       else if (strcmp(var->name, "gl_FragData") == 0)
          gl_FragData_assigned = true;
-      else if (strncmp(var->name, "gl_", 3) != 0) {
+      else if (!is_gl_identifier(var->name)) {
          if (state->stage == MESA_SHADER_FRAGMENT &&
              var->data.mode == ir_var_shader_out) {
             user_defined_fs_output_assigned = true;

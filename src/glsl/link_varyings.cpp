@@ -77,8 +77,7 @@ cross_validate_types_and_qualifiers(struct gl_shader_program *prog,
        *     correspondence between the vertex language and the
        *     fragment language."
        */
-      if (!output->type->is_array()
-          || (strncmp("gl_", output->name, 3) != 0)) {
+      if (!output->type->is_array() || !is_gl_identifier(output->name)) {
          linker_error(prog,
                       "%s shader output `%s' declared as type `%s', "
                       "but %s shader input declared as type `%s'\n",

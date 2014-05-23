@@ -848,7 +848,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 
 	 /* FINISHME: Update code to process built-in uniforms!
 	  */
-	 if (strncmp("gl_", var->name, 3) == 0) {
+	 if (is_gl_identifier(var->name)) {
 	    uniform_size.num_shader_uniform_components +=
 	       var->type->component_slots();
 	    continue;
@@ -900,7 +900,7 @@ link_assign_uniform_locations(struct gl_shader_program *prog)
 
 	 /* FINISHME: Update code to process built-in uniforms!
 	  */
-	 if (strncmp("gl_", var->name, 3) == 0)
+	 if (is_gl_identifier(var->name))
 	    continue;
 
 	 parcel.set_and_process(prog, var);
