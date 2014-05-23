@@ -325,10 +325,12 @@ setup_glsl_blit_framebuffer(struct gl_context *ctx,
                             struct gl_renderbuffer *src_rb,
                             GLenum target)
 {
+   unsigned texcoord_size;
+
    /* target = GL_TEXTURE_RECTANGLE is not supported in GLES 3.0 */
    assert(_mesa_is_desktop_gl(ctx) || target == GL_TEXTURE_2D);
 
-   unsigned texcoord_size = 2 + (src_rb->Depth > 1 ? 1 : 0);
+   texcoord_size = 2 + (src_rb->Depth > 1 ? 1 : 0);
 
    _mesa_meta_setup_vertex_objects(&blit->VAO, &blit->VBO, true,
                                    2, texcoord_size, 0);
