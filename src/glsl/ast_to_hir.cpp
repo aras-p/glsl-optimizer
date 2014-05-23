@@ -3651,11 +3651,15 @@ ast_declarator_list::hir(exec_list *instructions,
        * instruction stream.
        */
       exec_list initializer_instructions;
+
+      /* Examine var name here since var may get deleted in the next call */
+      bool var_is_gl_id = (strncmp(var->name, "gl_", 3) == 0);
+
       ir_variable *earlier =
          get_variable_being_redeclared(var, decl->get_location(), state,
                                        false /* allow_all_redeclarations */);
       if (earlier != NULL) {
-         if (strncmp(var->name, "gl_", 3) == 0 &&
+         if (var_is_gl_id &&
              earlier->data.how_declared == ir_var_declared_in_block) {
             _mesa_glsl_error(&loc, state,
                              "`%s' has already been redeclared using "
