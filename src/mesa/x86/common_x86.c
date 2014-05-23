@@ -49,6 +49,10 @@
 #endif
 #if defined(USE_X86_64_ASM)
 #include <cpuid.h>
+#if !defined(bit_SSE4_1) && defined(bit_SSE41)
+/* XXX: clang defines bit_SSE41 instead of bit_SSE4_1 */
+#define bit_SSE4_1 bit_SSE41
+#endif
 #endif
 
 #include "main/imports.h"
