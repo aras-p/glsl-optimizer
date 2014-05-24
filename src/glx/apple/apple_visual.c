@@ -82,16 +82,7 @@ apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const struct glx_config * m
    int numattr = 0;
    GLint vsref = 0;
    CGLError error = 0;
-
-   /* Request an OpenGL 3.2 profile if one is available and supported */
-   attr[numattr++] = kCGLPFAOpenGLProfile;
-   attr[numattr++] = kCGLOGLPVersion_3_2_Core;
-
-   /* Test for kCGLPFAOpenGLProfile support at runtime and roll it out if not supported */
-   attr[numattr] = 0;
-   error = apple_cgl.choose_pixel_format(attr, pfobj, &vsref);
-   if (error == kCGLBadAttribute)
-      numattr -= 2;
+   bool use_core_profile = getenv("LIBGL_PROFILE_CORE");
 
    if (offscreen) {
       apple_glx_diagnostic
@@ -167,11 +158,30 @@ apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const struct glx_config * m
       attr[numattr++] = mode->samples;
    }
 
+   /* Debugging support for Core profiles to support newer versions of OpenGL */
+   if (use_core_profile) {
+      attr[numattr++] = kCGLPFAOpenGLProfile;
+      attr[numattr++] = kCGLOGLPVersion_3_2_Core;
+   }
+
    attr[numattr++] = 0;
 
    assert(numattr < MAX_ATTR);
 
    error = apple_cgl.choose_pixel_format(attr, pfobj, &vsref);
+
+   if ((error == kCGLBadAttribute || vsref == 0) && use_core_profile) {
+      apple_glx_diagnostic
+         ("Trying again without CoreProfile: error=%s, vsref=%d\n", apple_cgl.error_string(error), vsref);
+
+      if (!error)
+         apple_cgl.destroy_pixel_format(*pfobj);
+
+      numattr -= 3;
+      attr[numattr++] = 0;
+
+      error = apple_cgl.choose_pixel_format(attr, pfobj, &vsref);
+   }
 
    if (error) {
       snprintf(__crashreporter_info_buff__, sizeof(__crashreporter_info_buff__),
