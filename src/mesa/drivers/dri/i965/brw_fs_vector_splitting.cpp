@@ -363,12 +363,17 @@ brw_do_vector_splitting(exec_list *instructions)
       entry->mem_ctx = ralloc_parent(entry->var);
 
       for (unsigned int i = 0; i < entry->var->type->vector_elements; i++) {
-	 const char *name = ralloc_asprintf(mem_ctx, "%s_%c",
-					    entry->var->name,
-					    "xyzw"[i]);
+         char *const name = ir_variable::temporaries_allocate_names
+            ? ralloc_asprintf(mem_ctx, "%s_%c",
+                              entry->var->name,
+                              "xyzw"[i])
+            : NULL;
 
 	 entry->components[i] = new(entry->mem_ctx) ir_variable(type, name,
 								ir_var_temporary);
+
+         ralloc_free(name);
+
 	 entry->var->insert_before(entry->components[i]);
       }
 
