@@ -527,6 +527,17 @@ public:
    }
 
    /**
+    * Get the max_ifc_array_access pointer
+    *
+    * A "set" function is not needed because the array is dynmically allocated
+    * as necessary.
+    */
+   inline unsigned *get_max_ifc_array_access()
+   {
+      return this->max_ifc_array_access;
+   }
+
+   /**
     * Enable emitting extension warnings for this variable
     */
    void enable_extension_warning(const char *extension);
@@ -547,19 +558,6 @@ public:
     * Declared name of the variable
     */
    const char *name;
-
-   /**
-    * For variables which satisfy the is_interface_instance() predicate, this
-    * points to an array of integers such that if the ith member of the
-    * interface block is an array, max_ifc_array_access[i] is the maximum
-    * array element of that member that has been accessed.  If the ith member
-    * of the interface block is not an array, max_ifc_array_access[i] is
-    * unused.
-    *
-    * For variables whose type is not an interface block, this pointer is
-    * NULL.
-    */
-   unsigned *max_ifc_array_access;
 
    struct ir_variable_data {
 
@@ -821,6 +819,19 @@ public:
 
 private:
    static const char *const warn_extension_table[];
+
+   /**
+    * For variables which satisfy the is_interface_instance() predicate, this
+    * points to an array of integers such that if the ith member of the
+    * interface block is an array, max_ifc_array_access[i] is the maximum
+    * array element of that member that has been accessed.  If the ith member
+    * of the interface block is not an array, max_ifc_array_access[i] is
+    * unused.
+    *
+    * For variables whose type is not an interface block, this pointer is
+    * NULL.
+    */
+   unsigned *max_ifc_array_access;
 
    /**
     * For variables that are in an interface block or are an instance of an

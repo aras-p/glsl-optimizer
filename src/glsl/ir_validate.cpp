@@ -682,10 +682,15 @@ ir_validate::visit(ir_variable *ir)
          ir->get_interface_type()->fields.structure;
       for (unsigned i = 0; i < ir->get_interface_type()->length; i++) {
          if (fields[i].type->array_size() > 0) {
-            if (ir->max_ifc_array_access[i] >= fields[i].type->length) {
+            const unsigned *const max_ifc_array_access =
+               ir->get_max_ifc_array_access();
+
+            assert(max_ifc_array_access != NULL);
+
+            if (max_ifc_array_access[i] >= fields[i].type->length) {
                printf("ir_variable has maximum access out of bounds for "
                       "field %s (%d vs %d)\n", fields[i].name,
-                      ir->max_ifc_array_access[i], fields[i].type->length);
+                      max_ifc_array_access[i], fields[i].type->length);
                ir->print();
                abort();
             }

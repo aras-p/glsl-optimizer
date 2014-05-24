@@ -1173,7 +1173,8 @@ public:
       if (var->type->is_interface()) {
          if (interface_contains_unsized_arrays(var->type)) {
             const glsl_type *new_type =
-               resize_interface_members(var->type, var->max_ifc_array_access);
+               resize_interface_members(var->type,
+                                        var->get_max_ifc_array_access());
             var->type = new_type;
             var->change_interface_type(new_type);
          }
@@ -1182,7 +1183,7 @@ public:
          if (interface_contains_unsized_arrays(var->type->fields.array)) {
             const glsl_type *new_type =
                resize_interface_members(var->type->fields.array,
-                                        var->max_ifc_array_access);
+                                        var->get_max_ifc_array_access());
             var->change_interface_type(new_type);
             var->type =
                glsl_type::get_array_instance(new_type, var->type->length);
