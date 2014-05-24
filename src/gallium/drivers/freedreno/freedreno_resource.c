@@ -48,6 +48,10 @@ realloc_bo(struct fd_resource *rsc, uint32_t size)
 	uint32_t flags = DRM_FREEDRENO_GEM_CACHE_WCOMBINE |
 			DRM_FREEDRENO_GEM_TYPE_KMEM; /* TODO */
 
+	/* if we start using things other than write-combine,
+	 * be sure to check for PIPE_RESOURCE_FLAG_MAP_COHERENT
+	 */
+
 	if (rsc->bo)
 		fd_bo_del(rsc->bo);
 
