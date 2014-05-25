@@ -886,6 +886,8 @@ gen8_vec4_generator::generate_code(exec_list *instructions)
    patch_jump_targets();
    annotation_finalize(&annotation, next_inst_offset);
 
+   int before_size = next_inst_offset;
+
    if (unlikely(debug_flag)) {
       if (shader_prog) {
          fprintf(stderr, "Native code for %s vertex shader %d:\n",
@@ -894,6 +896,7 @@ gen8_vec4_generator::generate_code(exec_list *instructions)
       } else {
          fprintf(stderr, "Native code for vertex program %d:\n", prog->Id);
       }
+      fprintf(stderr, "vec4 shader: %d instructions.\n", before_size / 16);
 
       dump_assembly(store, annotation.ann_count, annotation.ann,
                     brw, prog, gen8_disassemble);

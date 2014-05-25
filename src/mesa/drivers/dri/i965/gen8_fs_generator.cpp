@@ -886,6 +886,8 @@ gen8_fs_generator::generate_untyped_surface_read(fs_inst *ir,
 void
 gen8_fs_generator::generate_code(exec_list *instructions)
 {
+   int start_offset = next_inst_offset;
+
    struct annotation_info annotation;
    memset(&annotation, 0, sizeof(annotation));
 
@@ -1250,6 +1252,8 @@ gen8_fs_generator::generate_code(exec_list *instructions)
    patch_jump_targets();
    annotation_finalize(&annotation, next_inst_offset);
 
+   int before_size = next_inst_offset - start_offset;
+
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       if (prog) {
          fprintf(stderr,
@@ -1264,6 +1268,8 @@ gen8_fs_generator::generate_code(exec_list *instructions)
          fprintf(stderr, "Native code for blorp program (SIMD%d dispatch):\n",
                  dispatch_width);
       }
+      fprintf(stderr, "SIMD%d shader: %d instructions.\n",
+              dispatch_width, before_size / 16);
 
       dump_assembly(store, annotation.ann_count, annotation.ann, brw, prog,
                     gen8_disassemble);
