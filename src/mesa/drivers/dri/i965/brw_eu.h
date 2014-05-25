@@ -97,7 +97,6 @@ void brw_set_mask_control( struct brw_compile *p, unsigned value );
 void brw_set_saturate( struct brw_compile *p, bool enable );
 void brw_set_access_mode( struct brw_compile *p, unsigned access_mode );
 void brw_set_compression_control(struct brw_compile *p, enum brw_compression c);
-void brw_set_predicate_control_flag_value( struct brw_compile *p, unsigned value );
 void brw_set_predicate_control( struct brw_compile *p, unsigned pc );
 void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse);
 void brw_set_conditionalmod( struct brw_compile *p, unsigned conditional );

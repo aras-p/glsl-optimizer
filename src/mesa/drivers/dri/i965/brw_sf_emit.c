@@ -413,7 +413,21 @@ calculate_point_sprite_mask(struct brw_sf_compile *c, GLuint reg)
    return pc;
 }
 
+static void
+brw_set_predicate_control_flag_value(struct brw_compile *p,
+                                     unsigned value)
+{
+   p->current->header.predicate_control = BRW_PREDICATE_NONE;
 
+   if (value != 0xff) {
+      if (value != p->flag_value) {
+         brw_MOV(p, brw_flag_reg(0, 0), brw_imm_uw(value));
+         p->flag_value = value;
+      }
+
+      p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
+   }
+}
 
 void brw_emit_tri_setup(struct brw_sf_compile *c, bool allocate)
 {

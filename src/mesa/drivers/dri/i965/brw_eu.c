@@ -88,24 +88,6 @@ brw_swap_cmod(uint32_t cmod)
    }
 }
 
-
-/* How does predicate control work when execution_size != 8?  Do I
- * need to test/set for 0xffff when execution_size is 16?
- */
-void brw_set_predicate_control_flag_value( struct brw_compile *p, unsigned value )
-{
-   p->current->header.predicate_control = BRW_PREDICATE_NONE;
-
-   if (value != 0xff) {
-      if (value != p->flag_value) {
-	 brw_MOV(p, brw_flag_reg(0, 0), brw_imm_uw(value));
-	 p->flag_value = value;
-      }
-
-      p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
-   }
-}
-
 void brw_set_predicate_control( struct brw_compile *p, unsigned pc )
 {
    p->current->header.predicate_control = pc;
