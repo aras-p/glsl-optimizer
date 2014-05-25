@@ -615,8 +615,7 @@ public:
                                      unsigned *assembly_size);
 
 private:
-   void generate_code(exec_list *instructions,
-                      struct annotation_info *annotation);
+   void generate_code(exec_list *instructions);
    void generate_fb_write(fs_inst *inst);
    void generate_blorp_fb_write(fs_inst *inst);
    void generate_pixel_xy(struct brw_reg dst, bool is_x);
@@ -743,8 +742,7 @@ public:
                                      unsigned *assembly_size);
 
 private:
-   void generate_code(exec_list *instructions,
-                      struct annotation_info *annotation);
+   void generate_code(exec_list *instructions);
    void generate_fb_write(fs_inst *inst);
    void generate_linterp(fs_inst *inst, struct brw_reg dst,
                          struct brw_reg *src);

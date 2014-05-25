@@ -884,8 +884,7 @@ gen8_fs_generator::generate_untyped_surface_read(fs_inst *ir,
 }
 
 void
-gen8_fs_generator::generate_code(exec_list *instructions,
-                                 struct annotation_info *annotation)
+gen8_fs_generator::generate_code(exec_list *instructions)
 {
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       if (prog) {
@@ -903,6 +902,9 @@ gen8_fs_generator::generate_code(exec_list *instructions,
       }
    }
 
+   struct annotation_info annotation;
+   memset(&annotation, 0, sizeof(annotation));
+
    cfg_t *cfg = NULL;
    if (unlikely(INTEL_DEBUG & DEBUG_WM))
       cfg = new(mem_ctx) cfg_t(instructions);
@@ -912,7 +914,7 @@ gen8_fs_generator::generate_code(exec_list *instructions,
       struct brw_reg src[3], dst;
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM))
-         annotate(brw, annotation, cfg, ir, next_inst_offset);
+         annotate(brw, &annotation, cfg, ir, next_inst_offset);
 
       for (unsigned int i = 0; i < 3; i++) {
          src[i] = brw_reg_from_fs_reg(&ir->src[i]);
@@ -1245,7 +1247,7 @@ gen8_fs_generator::generate_code(exec_list *instructions,
           */
          if (!patch_discard_jumps_to_fb_writes()) {
             if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-               annotation->ann_count--;
+               annotation.ann_count--;
             }
          }
          break;
@@ -1262,7 +1264,13 @@ gen8_fs_generator::generate_code(exec_list *instructions,
    }
 
    patch_jump_targets();
-   annotation_finalize(annotation, next_inst_offset);
+   annotation_finalize(&annotation, next_inst_offset);
+
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
+      dump_assembly(store, annotation.ann_count, annotation.ann, brw, prog,
+                    gen8_disassemble);
+      ralloc_free(annotation.ann);
+   }
 }
 
 const unsigned *
@@ -1273,17 +1281,8 @@ gen8_fs_generator::generate_assembly(exec_list *simd8_instructions,
    assert(simd8_instructions || simd16_instructions);
 
    if (simd8_instructions) {
-      struct annotation_info annotation;
-      memset(&annotation, 0, sizeof(annotation));
-
       dispatch_width = 8;
-      generate_code(simd8_instructions, &annotation);
-
-      if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-         dump_assembly(store, annotation.ann_count, annotation.ann, brw, prog,
-                       gen8_disassemble);
-         ralloc_free(annotation.ann);
-      }
+      generate_code(simd8_instructions);
    }
 
    if (simd16_instructions) {
@@ -1294,17 +1293,8 @@ gen8_fs_generator::generate_assembly(exec_list *simd8_instructions,
       /* Save off the start of this SIMD16 program */
       prog_data->prog_offset_16 = next_inst_offset;
 
-      struct annotation_info annotation;
-      memset(&annotation, 0, sizeof(annotation));
-
       dispatch_width = 16;
-      generate_code(simd16_instructions, &annotation);
-
-      if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-         dump_assembly(store, annotation.ann_count, annotation.ann,
-                       brw, prog, gen8_disassemble);
-         ralloc_free(annotation.ann);
-      }
+      generate_code(simd16_instructions);
    }
 
    *assembly_size = next_inst_offset;

@@ -1322,8 +1322,7 @@ fs_generator::generate_untyped_surface_read(fs_inst *inst, struct brw_reg dst,
 }
 
 void
-fs_generator::generate_code(exec_list *instructions,
-                            struct annotation_info *annotation)
+fs_generator::generate_code(exec_list *instructions)
 {
    if (unlikely(debug_flag)) {
       if (prog) {
@@ -1341,6 +1340,11 @@ fs_generator::generate_code(exec_list *instructions,
       }
    }
 
+   int start_offset = p->next_insn_offset;
+
+   struct annotation_info annotation;
+   memset(&annotation, 0, sizeof(annotation));
+
    cfg_t *cfg = NULL;
    if (unlikely(debug_flag))
       cfg = new(mem_ctx) cfg_t(instructions);
@@ -1351,7 +1355,7 @@ fs_generator::generate_code(exec_list *instructions,
       unsigned int last_insn_offset = p->next_insn_offset;
 
       if (unlikely(debug_flag))
-         annotate(brw, annotation, cfg, inst, p->next_insn_offset);
+         annotate(brw, &annotation, cfg, inst, p->next_insn_offset);
 
       for (unsigned int i = 0; i < inst->sources; i++) {
 	 src[i] = brw_reg_from_fs_reg(&inst->src[i]);
@@ -1752,7 +1756,7 @@ fs_generator::generate_code(exec_list *instructions,
           */
          if (!patch_discard_jumps_to_fb_writes()) {
             if (unlikely(debug_flag)) {
-               annotation->ann_count--;
+               annotation.ann_count--;
             }
          }
          break;
@@ -1779,7 +1783,18 @@ fs_generator::generate_code(exec_list *instructions,
    }
 
    brw_set_uip_jip(p);
-   annotation_finalize(annotation, p->next_insn_offset);
+   annotation_finalize(&annotation, p->next_insn_offset);
+
+   brw_compact_instructions(p, start_offset, annotation.ann_count,
+                            annotation.ann);
+
+   if (unlikely(debug_flag)) {
+      const struct gl_program *prog = fp ? &fp->Base : NULL;
+
+      dump_assembly(p->store, annotation.ann_count, annotation.ann,
+                    brw, prog, brw_disassemble);
+      ralloc_free(annotation.ann);
+   }
 }
 
 const unsigned *
@@ -1789,21 +1804,9 @@ fs_generator::generate_assembly(exec_list *simd8_instructions,
 {
    assert(simd8_instructions || simd16_instructions);
 
-   const struct gl_program *prog = fp ? &fp->Base : NULL;
-
    if (simd8_instructions) {
-      struct annotation_info annotation;
-      memset(&annotation, 0, sizeof(annotation));
-
       dispatch_width = 8;
-      generate_code(simd8_instructions, &annotation);
-      brw_compact_instructions(p, 0, annotation.ann_count, annotation.ann);
-
-      if (unlikely(debug_flag)) {
-         dump_assembly(p->store, annotation.ann_count, annotation.ann,
-                       brw, prog, brw_disassemble);
-         ralloc_free(annotation.ann);
-      }
+      generate_code(simd8_instructions);
    }
 
    if (simd16_instructions) {
@@ -1817,19 +1820,8 @@ fs_generator::generate_assembly(exec_list *simd8_instructions,
 
       brw_set_default_compression_control(p, BRW_COMPRESSION_COMPRESSED);
 
-      struct annotation_info annotation;
-      memset(&annotation, 0, sizeof(annotation));
-
       dispatch_width = 16;
-      generate_code(simd16_instructions, &annotation);
-      brw_compact_instructions(p, prog_data->prog_offset_16,
-                               annotation.ann_count, annotation.ann);
-
-      if (unlikely(debug_flag)) {
-         dump_assembly(p->store, annotation.ann_count, annotation.ann,
-                       brw, prog, brw_disassemble);
-         ralloc_free(annotation.ann);
-      }
+      generate_code(simd16_instructions);
    }
 
    return brw_get_program(p, assembly_size);

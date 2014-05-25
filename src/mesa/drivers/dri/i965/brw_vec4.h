@@ -646,8 +646,7 @@ public:
    const unsigned *generate_assembly(exec_list *insts, unsigned *asm_size);
 
 private:
-   void generate_code(exec_list *instructions,
-                      struct annotation_info *annotation);
+   void generate_code(exec_list *instructions);
    void generate_vec4_instruction(vec4_instruction *inst,
                                   struct brw_reg dst,
                                   struct brw_reg *src);
@@ -748,8 +747,7 @@ public:
    const unsigned *generate_assembly(exec_list *insts, unsigned *asm_size);
 
 private:
-   void generate_code(exec_list *instructions,
-                      struct annotation_info *annotation);
+   void generate_code(exec_list *instructions);
    void generate_vec4_instruction(vec4_instruction *inst,
                                   struct brw_reg dst,
                                   struct brw_reg *src);

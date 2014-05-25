@@ -842,8 +842,7 @@ gen8_vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 }
 
 void
-gen8_vec4_generator::generate_code(exec_list *instructions,
-                                   struct annotation_info *annotation)
+gen8_vec4_generator::generate_code(exec_list *instructions)
 {
    if (unlikely(debug_flag)) {
       if (shader_prog) {
@@ -855,6 +854,9 @@ gen8_vec4_generator::generate_code(exec_list *instructions,
       }
    }
 
+   struct annotation_info annotation;
+   memset(&annotation, 0, sizeof(annotation));
+
    cfg_t *cfg = NULL;
    if (unlikely(debug_flag))
       cfg = new(mem_ctx) cfg_t(instructions);
@@ -864,7 +866,7 @@ gen8_vec4_generator::generate_code(exec_list *instructions,
       struct brw_reg src[3], dst;
 
       if (unlikely(debug_flag))
-         annotate(brw, annotation, cfg, ir, next_inst_offset);
+         annotate(brw, &annotation, cfg, ir, next_inst_offset);
 
       for (unsigned int i = 0; i < 3; i++) {
          src[i] = ir->get_src(prog_data, i);
@@ -892,25 +894,22 @@ gen8_vec4_generator::generate_code(exec_list *instructions,
    }
 
    patch_jump_targets();
-   annotation_finalize(annotation, next_inst_offset);
-}
-
-const unsigned *
-gen8_vec4_generator::generate_assembly(exec_list *instructions,
-                                       unsigned *assembly_size)
-{
-   struct annotation_info annotation;
-   memset(&annotation, 0, sizeof(annotation));
-
-   default_state.access_mode = BRW_ALIGN_16;
-   default_state.exec_size = BRW_EXECUTE_8;
-   generate_code(instructions, &annotation);
+   annotation_finalize(&annotation, next_inst_offset);
 
    if (unlikely(debug_flag)) {
       dump_assembly(store, annotation.ann_count, annotation.ann,
                     brw, prog, gen8_disassemble);
       ralloc_free(annotation.ann);
    }
+}
+
+const unsigned *
+gen8_vec4_generator::generate_assembly(exec_list *instructions,
+                                       unsigned *assembly_size)
+{
+   default_state.access_mode = BRW_ALIGN_16;
+   default_state.exec_size = BRW_EXECUTE_8;
+   generate_code(instructions);
 
    *assembly_size = next_inst_offset;
    return (const unsigned *) store;

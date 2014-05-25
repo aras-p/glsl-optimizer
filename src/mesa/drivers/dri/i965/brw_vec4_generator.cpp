@@ -1261,8 +1261,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 }
 
 void
-vec4_generator::generate_code(exec_list *instructions,
-                              struct annotation_info *annotation)
+vec4_generator::generate_code(exec_list *instructions)
 {
    if (unlikely(debug_flag)) {
       if (shader_prog) {
@@ -1274,6 +1273,9 @@ vec4_generator::generate_code(exec_list *instructions,
       }
    }
 
+   struct annotation_info annotation;
+   memset(&annotation, 0, sizeof(annotation));
+
    cfg_t *cfg = NULL;
    if (unlikely(debug_flag))
       cfg = new(mem_ctx) cfg_t(instructions);
@@ -1283,7 +1285,7 @@ vec4_generator::generate_code(exec_list *instructions,
       struct brw_reg src[3], dst;
 
       if (unlikely(debug_flag))
-         annotate(brw, annotation, cfg, inst, p->next_insn_offset);
+         annotate(brw, &annotation, cfg, inst, p->next_insn_offset);
 
       for (unsigned int i = 0; i < 3; i++) {
 	 src[i] = inst->get_src(this->prog_data, i);
@@ -1317,18 +1319,8 @@ vec4_generator::generate_code(exec_list *instructions,
    }
 
    brw_set_uip_jip(p);
-   annotation_finalize(annotation, p->next_insn_offset);
-}
+   annotation_finalize(&annotation, p->next_insn_offset);
 
-const unsigned *
-vec4_generator::generate_assembly(exec_list *instructions,
-                                  unsigned *assembly_size)
-{
-   struct annotation_info annotation;
-   memset(&annotation, 0, sizeof(annotation));
-
-   brw_set_default_access_mode(p, BRW_ALIGN_16);
-   generate_code(instructions, &annotation);
    brw_compact_instructions(p, 0, annotation.ann_count, annotation.ann);
 
    if (unlikely(debug_flag)) {
@@ -1336,6 +1328,14 @@ vec4_generator::generate_assembly(exec_list *instructions,
                     brw, prog, brw_disassemble);
       ralloc_free(annotation.ann);
    }
+}
+
+const unsigned *
+vec4_generator::generate_assembly(exec_list *instructions,
+                                  unsigned *assembly_size)
+{
+   brw_set_default_access_mode(p, BRW_ALIGN_16);
+   generate_code(instructions);
 
    return brw_get_program(p, assembly_size);
 }
