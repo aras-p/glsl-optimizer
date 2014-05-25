@@ -50,6 +50,11 @@ lib@GL_LIB@_la_LDFLAGS = \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
+if HAVE_LD_VERSION_SCRIPT
+lib@GL_LIB@_la_LDFLAGS += \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/libgl-xlib/libgl-xlib.sym
+endif
+
 lib@GL_LIB@_la_LIBADD = \
 	$(top_builddir)/src/gallium/state_trackers/glx/xlib/libxlib.la \
 	$(top_builddir)/src/gallium/winsys/sw/xlib/libws_xlib.la \
