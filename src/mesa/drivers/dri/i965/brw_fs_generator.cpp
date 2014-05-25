@@ -1324,22 +1324,6 @@ fs_generator::generate_untyped_surface_read(fs_inst *inst, struct brw_reg dst,
 void
 fs_generator::generate_code(exec_list *instructions)
 {
-   if (unlikely(debug_flag)) {
-      if (prog) {
-         fprintf(stderr,
-                 "Native code for %s fragment shader %d (SIMD%d dispatch):\n",
-                 prog->Label ? prog->Label : "unnamed",
-                 prog->Name, dispatch_width);
-      } else if (fp) {
-         fprintf(stderr,
-                 "Native code for fragment program %d (SIMD%d dispatch):\n",
-                 fp->Base.Id, dispatch_width);
-      } else {
-         fprintf(stderr, "Native code for blorp program (SIMD%d dispatch):\n",
-                 dispatch_width);
-      }
-   }
-
    int start_offset = p->next_insn_offset;
 
    struct annotation_info annotation;
@@ -1789,6 +1773,20 @@ fs_generator::generate_code(exec_list *instructions)
                             annotation.ann);
 
    if (unlikely(debug_flag)) {
+      if (prog) {
+         fprintf(stderr,
+                 "Native code for %s fragment shader %d (SIMD%d dispatch):\n",
+                 prog->Label ? prog->Label : "unnamed",
+                 prog->Name, dispatch_width);
+      } else if (fp) {
+         fprintf(stderr,
+                 "Native code for fragment program %d (SIMD%d dispatch):\n",
+                 fp->Base.Id, dispatch_width);
+      } else {
+         fprintf(stderr, "Native code for blorp program (SIMD%d dispatch):\n",
+                 dispatch_width);
+      }
+
       const struct gl_program *prog = fp ? &fp->Base : NULL;
 
       dump_assembly(p->store, annotation.ann_count, annotation.ann,

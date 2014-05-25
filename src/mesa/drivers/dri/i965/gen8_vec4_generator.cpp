@@ -844,16 +844,6 @@ gen8_vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
 void
 gen8_vec4_generator::generate_code(exec_list *instructions)
 {
-   if (unlikely(debug_flag)) {
-      if (shader_prog) {
-         fprintf(stderr, "Native code for %s vertex shader %d:\n",
-                 shader_prog->Label ? shader_prog->Label : "unnamed",
-                 shader_prog->Name);
-      } else {
-         fprintf(stderr, "Native code for vertex program %d:\n", prog->Id);
-      }
-   }
-
    struct annotation_info annotation;
    memset(&annotation, 0, sizeof(annotation));
 
@@ -897,6 +887,14 @@ gen8_vec4_generator::generate_code(exec_list *instructions)
    annotation_finalize(&annotation, next_inst_offset);
 
    if (unlikely(debug_flag)) {
+      if (shader_prog) {
+         fprintf(stderr, "Native code for %s vertex shader %d:\n",
+                 shader_prog->Label ? shader_prog->Label : "unnamed",
+                 shader_prog->Name);
+      } else {
+         fprintf(stderr, "Native code for vertex program %d:\n", prog->Id);
+      }
+
       dump_assembly(store, annotation.ann_count, annotation.ann,
                     brw, prog, gen8_disassemble);
       ralloc_free(annotation.ann);
