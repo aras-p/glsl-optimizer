@@ -98,10 +98,8 @@ void brw_set_predicate_control_flag_value( struct brw_compile *p, unsigned value
 
    if (value != 0xff) {
       if (value != p->flag_value) {
-	 brw_push_insn_state(p);
 	 brw_MOV(p, brw_flag_reg(0, 0), brw_imm_uw(value));
 	 p->flag_value = value;
-	 brw_pop_insn_state(p);
       }
 
       p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
