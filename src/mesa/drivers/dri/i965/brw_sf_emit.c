@@ -501,6 +501,8 @@ void brw_emit_tri_setup(struct brw_sf_compile *c, bool allocate)
 		       BRW_URB_SWIZZLE_TRANSPOSE); /* XXX: Swizzle control "SF to windower" */
       }
    }
+
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
 
@@ -573,6 +575,8 @@ void brw_emit_line_setup(struct brw_sf_compile *c, bool allocate)
 		       BRW_URB_SWIZZLE_TRANSPOSE);
       }
    }
+
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
 void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
@@ -661,6 +665,8 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
 		    i*4,	/* urb destination offset */
 		    BRW_URB_SWIZZLE_TRANSPOSE);
    }
+
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
 /* Points setup - several simplifications as all attributes are
@@ -721,6 +727,8 @@ void brw_emit_point_setup(struct brw_sf_compile *c, bool allocate)
 		       BRW_URB_SWIZZLE_TRANSPOSE);
       }
    }
+
+   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
 static void
@@ -766,11 +774,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_RECTLIST) |
 					       (1<<_3DPRIM_TRIFAN_NOSTIPPLE)));
    jmp = brw_JMPI(p, ip, ip, brw_imm_d(0)) - p->store;
-   {
-      brw_push_insn_state(p);
-      brw_emit_tri_setup( c, false );
-      brw_pop_insn_state(p);
-   }
+   brw_emit_tri_setup(c, false);
    brw_land_fwd_jump(p, jmp);
 
    brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
@@ -781,21 +785,13 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_LINESTRIP_BF) |
 					       (1<<_3DPRIM_LINESTRIP_CONT_BF)));
    jmp = brw_JMPI(p, ip, ip, brw_imm_d(0)) - p->store;
-   {
-      brw_push_insn_state(p);
-      brw_emit_line_setup( c, false );
-      brw_pop_insn_state(p);
-   }
+   brw_emit_line_setup(c, false);
    brw_land_fwd_jump(p, jmp);
 
    brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
    brw_AND(p, v1_null_ud, payload_attr, brw_imm_ud(1<<BRW_SPRITE_POINT_ENABLE));
    jmp = brw_JMPI(p, ip, ip, brw_imm_d(0)) - p->store;
-   {
-      brw_push_insn_state(p);
-      brw_emit_point_sprite_setup( c, false );
-      brw_pop_insn_state(p);
-   }
+   brw_emit_point_sprite_setup(c, false);
    brw_land_fwd_jump(p, jmp);
 
    brw_emit_point_setup( c, false );
