@@ -60,7 +60,6 @@ struct brw_compile {
    bool compressed_stack[BRW_EU_MAX_INSN_STACK];
    struct brw_instruction *current;
 
-   unsigned flag_value;
    bool single_program_flow;
    bool compressed;
    struct brw_context *brw;

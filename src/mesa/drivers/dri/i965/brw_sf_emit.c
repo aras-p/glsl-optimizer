@@ -414,15 +414,16 @@ calculate_point_sprite_mask(struct brw_sf_compile *c, GLuint reg)
 }
 
 static void
-brw_set_predicate_control_flag_value(struct brw_compile *p,
-                                     unsigned value)
+set_predicate_control_flag_value(struct brw_compile *p,
+                                 struct brw_sf_compile *c,
+                                 unsigned value)
 {
    p->current->header.predicate_control = BRW_PREDICATE_NONE;
 
    if (value != 0xff) {
-      if (value != p->flag_value) {
+      if (value != c->flag_value) {
          brw_MOV(p, brw_flag_reg(0, 0), brw_imm_uw(value));
-         p->flag_value = value;
+         c->flag_value = value;
       }
 
       p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
@@ -434,7 +435,7 @@ void brw_emit_tri_setup(struct brw_sf_compile *c, bool allocate)
    struct brw_compile *p = &c->func;
    GLuint i;
 
-   p->flag_value = 0xff;
+   c->flag_value = 0xff;
    c->nr_verts = 3;
 
    if (allocate)
@@ -462,7 +463,7 @@ void brw_emit_tri_setup(struct brw_sf_compile *c, bool allocate)
 
       if (pc_persp)
       {
-	 brw_set_predicate_control_flag_value(p, pc_persp);
+	 set_predicate_control_flag_value(p, c, pc_persp);
 	 brw_MUL(p, a0, a0, c->inv_w[0]);
 	 brw_MUL(p, a1, a1, c->inv_w[1]);
 	 brw_MUL(p, a2, a2, c->inv_w[2]);
@@ -473,7 +474,7 @@ void brw_emit_tri_setup(struct brw_sf_compile *c, bool allocate)
        */
       if (pc_linear)
       {
-	 brw_set_predicate_control_flag_value(p, pc_linear);
+	 set_predicate_control_flag_value(p, c, pc_linear);
 
 	 brw_ADD(p, c->a1_sub_a0, a1, negate(a0));
 	 brw_ADD(p, c->a2_sub_a0, a2, negate(a0));
@@ -492,7 +493,7 @@ void brw_emit_tri_setup(struct brw_sf_compile *c, bool allocate)
       }
 
       {
-	 brw_set_predicate_control_flag_value(p, pc);
+	 set_predicate_control_flag_value(p, c, pc);
 	 /* start point for interpolation
 	  */
 	 brw_MOV(p, c->m3C0, a0);
@@ -521,7 +522,7 @@ void brw_emit_line_setup(struct brw_sf_compile *c, bool allocate)
    struct brw_compile *p = &c->func;
    GLuint i;
 
-   p->flag_value = 0xff;
+   c->flag_value = 0xff;
    c->nr_verts = 2;
 
    if (allocate)
@@ -544,7 +545,7 @@ void brw_emit_line_setup(struct brw_sf_compile *c, bool allocate)
 
       if (pc_persp)
       {
-	 brw_set_predicate_control_flag_value(p, pc_persp);
+	 set_predicate_control_flag_value(p, c, pc_persp);
 	 brw_MUL(p, a0, a0, c->inv_w[0]);
 	 brw_MUL(p, a1, a1, c->inv_w[1]);
       }
@@ -552,7 +553,7 @@ void brw_emit_line_setup(struct brw_sf_compile *c, bool allocate)
       /* Calculate coefficients for position, color:
        */
       if (pc_linear) {
-	 brw_set_predicate_control_flag_value(p, pc_linear);
+	 set_predicate_control_flag_value(p, c, pc_linear);
 
 	 brw_ADD(p, c->a1_sub_a0, a1, negate(a0));
 
@@ -564,7 +565,7 @@ void brw_emit_line_setup(struct brw_sf_compile *c, bool allocate)
       }
 
       {
-	 brw_set_predicate_control_flag_value(p, pc);
+	 set_predicate_control_flag_value(p, c, pc);
 
 	 /* start point for interpolation
 	  */
@@ -591,7 +592,7 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
    struct brw_compile *p = &c->func;
    GLuint i;
 
-   p->flag_value = 0xff;
+   c->flag_value = 0xff;
    c->nr_verts = 1;
 
    if (allocate)
@@ -608,7 +609,7 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
       pc_persp &= ~pc_coord_replace;
 
       if (pc_persp) {
-	 brw_set_predicate_control_flag_value(p, pc_persp);
+	 set_predicate_control_flag_value(p, c, pc_persp);
 	 brw_MUL(p, a0, a0, c->inv_w[0]);
       }
 
@@ -618,7 +619,7 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
        * point.
        */
       if (pc_coord_replace) {
-	 brw_set_predicate_control_flag_value(p, pc_coord_replace);
+	 set_predicate_control_flag_value(p, c, pc_coord_replace);
 	 /* Caculate 1.0/PointWidth */
 	 brw_math(&c->func,
 		  c->tmp,
@@ -652,14 +653,14 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
       }
 
       if (pc & ~pc_coord_replace) {
-	 brw_set_predicate_control_flag_value(p, pc & ~pc_coord_replace);
+	 set_predicate_control_flag_value(p, c, pc & ~pc_coord_replace);
 	 brw_MOV(p, c->m1Cx, brw_imm_ud(0));
 	 brw_MOV(p, c->m2Cy, brw_imm_ud(0));
 	 brw_MOV(p, c->m3C0, a0); /* constant value */
       }
 
 
-      brw_set_predicate_control_flag_value(p, pc);
+      set_predicate_control_flag_value(p, c, pc);
       /* Copy m0..m3 to URB. */
       brw_urb_WRITE(p,
 		    brw_null_reg(),
@@ -682,7 +683,7 @@ void brw_emit_point_setup(struct brw_sf_compile *c, bool allocate)
    struct brw_compile *p = &c->func;
    GLuint i;
 
-   p->flag_value = 0xff;
+   c->flag_value = 0xff;
    c->nr_verts = 1;
 
    if (allocate)
@@ -704,7 +705,7 @@ void brw_emit_point_setup(struct brw_sf_compile *c, bool allocate)
 	 /* This seems odd as the values are all constant, but the
 	  * fragment shader will be expecting it:
 	  */
-	 brw_set_predicate_control_flag_value(p, pc_persp);
+	 set_predicate_control_flag_value(p, c, pc_persp);
 	 brw_MUL(p, a0, a0, c->inv_w[0]);
       }
 
@@ -714,7 +715,7 @@ void brw_emit_point_setup(struct brw_sf_compile *c, bool allocate)
        * code in the fragment shader.
        */
       {
-	 brw_set_predicate_control_flag_value(p, pc);
+	 set_predicate_control_flag_value(p, c, pc);
 
 	 brw_MOV(p, c->m3C0, a0); /* constant value */
 

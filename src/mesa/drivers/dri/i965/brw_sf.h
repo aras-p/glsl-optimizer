@@ -94,6 +94,9 @@ struct brw_sf_compile {
    GLuint nr_setup_regs;
    int urb_entry_read_offset;
 
+   /** The last known value of the f0.0 flag register. */
+   unsigned flag_value;
+
    struct brw_vue_map vue_map;
    bool has_flat_shading;
 };
