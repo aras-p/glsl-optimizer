@@ -545,11 +545,8 @@ static void brw_clip_test( struct brw_clip_compile *c )
     /* test nearz, xmin, ymin plane */
     /* clip.xyz < -clip.w */
     brw_CMP(p, t1, BRW_CONDITIONAL_L, v0, negate(get_element(v0, 3)));
-    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
     brw_CMP(p, t2, BRW_CONDITIONAL_L, v1, negate(get_element(v1, 3)));
-    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
     brw_CMP(p, t3, BRW_CONDITIONAL_L, v2, negate(get_element(v2, 3)));
-    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
     /* All vertices are outside of a plane, rejected */
     brw_AND(p, t, t1, t2);
@@ -586,11 +583,8 @@ static void brw_clip_test( struct brw_clip_compile *c )
     /* test farz, xmax, ymax plane */
     /* clip.xyz > clip.w */
     brw_CMP(p, t1, BRW_CONDITIONAL_G, v0, get_element(v0, 3));
-    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
     brw_CMP(p, t2, BRW_CONDITIONAL_G, v1, get_element(v1, 3));
-    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
     brw_CMP(p, t3, BRW_CONDITIONAL_G, v2, get_element(v2, 3));
-    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 
     /* All vertices are outside of a plane, rejected */
     brw_AND(p, t, t1, t2);
