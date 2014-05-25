@@ -312,14 +312,10 @@ static void copy_z_inv_w( struct brw_sf_compile *c )
    struct brw_compile *p = &c->func;
    GLuint i;
 
-   brw_push_insn_state(p);
-	
    /* Copy both scalars with a single MOV:
     */
    for (i = 0; i < c->nr_verts; i++)
       brw_MOV(p, vec2(suboffset(c->vert[i], 2)), vec2(c->z[i]));
-	
-   brw_pop_insn_state(p);
 }
 
 
