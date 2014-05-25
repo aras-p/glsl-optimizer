@@ -1243,7 +1243,11 @@ gen8_fs_generator::generate_code(exec_list *instructions,
          /* This is the place where the final HALT needs to be inserted if
           * we've emitted any discards.  If not, this will emit no code.
           */
-         patch_discard_jumps_to_fb_writes();
+         if (!patch_discard_jumps_to_fb_writes()) {
+            if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
+               annotation->ann_count--;
+            }
+         }
          break;
 
       default:

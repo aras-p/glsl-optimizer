@@ -1751,7 +1751,9 @@ fs_generator::generate_code(exec_list *instructions,
           * we've emitted any discards.  If not, this will emit no code.
           */
          if (!patch_discard_jumps_to_fb_writes()) {
-            annotation->ann_count--;
+            if (unlikely(debug_flag)) {
+               annotation->ann_count--;
+            }
          }
          break;
 
