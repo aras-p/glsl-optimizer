@@ -13,6 +13,7 @@
 		OSMesaPixelStore;
 		OSMesaPostprocess;
 		gl*;
+		mgl*;
 	local:
 		*;
 };
