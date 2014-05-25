@@ -1769,8 +1769,10 @@ fs_generator::generate_code(exec_list *instructions)
    brw_set_uip_jip(p);
    annotation_finalize(&annotation, p->next_insn_offset);
 
+   int before_size = p->next_insn_offset - start_offset;
    brw_compact_instructions(p, start_offset, annotation.ann_count,
                             annotation.ann);
+   int after_size = p->next_insn_offset - start_offset;
 
    if (unlikely(debug_flag)) {
       if (prog) {
@@ -1786,6 +1788,10 @@ fs_generator::generate_code(exec_list *instructions)
          fprintf(stderr, "Native code for blorp program (SIMD%d dispatch):\n",
                  dispatch_width);
       }
+      fprintf(stderr, "SIMD%d shader: %d instructions. Compacted %d to %d"
+                      " bytes (%.0f%%)\n",
+              dispatch_width, before_size / 16, before_size, after_size,
+              100.0f * (before_size - after_size) / before_size);
 
       const struct gl_program *prog = fp ? &fp->Base : NULL;
 

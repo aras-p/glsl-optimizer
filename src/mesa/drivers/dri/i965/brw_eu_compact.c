@@ -841,23 +841,4 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
 
       annotation[num_annotations].offset = p->next_insn_offset;
    }
-
-   if (0) {
-      fprintf(stderr, "dumping compacted program\n");
-      brw_disassemble(brw, store, 0, p->next_insn_offset - start_offset, stderr);
-
-      int cmp = 0;
-      for (offset = 0; offset < p->next_insn_offset - start_offset;) {
-         struct brw_instruction *insn = store + offset;
-
-         if (insn->header.cmpt_control) {
-            offset += 8;
-            cmp++;
-         } else {
-            offset += 16;
-         }
-      }
-      fprintf(stderr, "%db/%db saved (%d%%)\n", cmp * 8, offset + cmp * 8,
-              cmp * 8 * 100 / (offset + cmp * 8));
-   }
 }

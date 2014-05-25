@@ -1311,7 +1311,9 @@ vec4_generator::generate_code(exec_list *instructions)
    brw_set_uip_jip(p);
    annotation_finalize(&annotation, p->next_insn_offset);
 
+   int before_size = p->next_insn_offset;
    brw_compact_instructions(p, 0, annotation.ann_count, annotation.ann);
+   int after_size = p->next_insn_offset;
 
    if (unlikely(debug_flag)) {
       if (shader_prog) {
@@ -1321,6 +1323,10 @@ vec4_generator::generate_code(exec_list *instructions)
       } else {
          fprintf(stderr, "Native code for vertex program %d:\n", prog->Id);
       }
+      fprintf(stderr, "vec4 shader: %d instructions. Compacted %d to %d"
+                      " bytes (%.0f%%)\n",
+              before_size / 16, before_size, after_size,
+              100.0f * (before_size - after_size) / before_size);
 
       dump_assembly(p->store, annotation.ann_count, annotation.ann,
                     brw, prog, brw_disassemble);
