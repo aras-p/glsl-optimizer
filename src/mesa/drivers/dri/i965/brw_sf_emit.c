@@ -207,8 +207,6 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
 
    nr = count_flatshaded_attributes(c);
 
-   brw_push_insn_state(p);
-
    brw_MUL(p, c->pv, c->pv, brw_imm_d(jmpi*(nr*2+1)));
    brw_JMPI(p, ip, ip, c->pv);
 
@@ -222,8 +220,6 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
 
    copy_flatshaded_attributes(c, c->vert[0], c->vert[2]);
    copy_flatshaded_attributes(c, c->vert[1], c->vert[2]);
-
-   brw_pop_insn_state(p);
 }
 	
 
@@ -245,16 +241,12 @@ static void do_flatshade_line( struct brw_sf_compile *c )
 
    nr = count_flatshaded_attributes(c);
 
-   brw_push_insn_state(p);
-
    brw_MUL(p, c->pv, c->pv, brw_imm_d(jmpi*(nr+1)));
    brw_JMPI(p, ip, ip, c->pv);
    copy_flatshaded_attributes(c, c->vert[1], c->vert[0]);
 
    brw_JMPI(p, ip, ip, brw_imm_ud(jmpi*nr));
    copy_flatshaded_attributes(c, c->vert[0], c->vert[1]);
-
-   brw_pop_insn_state(p);
 }
 
 	
