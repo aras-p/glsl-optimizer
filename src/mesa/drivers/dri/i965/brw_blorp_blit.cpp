@@ -2153,14 +2153,3 @@ brw_blorp_blit_params::get_wm_prog(struct brw_context *brw,
    }
    return prog_offset;
 }
-
-void
-brw_blorp_blit_test_compile(struct brw_context *brw,
-                            const brw_blorp_blit_prog_key *key,
-                            FILE *out)
-{
-   GLuint program_size;
-   brw_blorp_blit_program prog(brw, key);
-   INTEL_DEBUG |= DEBUG_BLORP;
-   prog.compile(brw, &program_size, out);
-}
