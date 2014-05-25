@@ -6,12 +6,13 @@ lib@OPENCL_LIBNAME@_la_LDFLAGS = \
 	$(LLVM_LDFLAGS) \
 	-no-undefined \
 	-version-number 1:0 \
-if HAVE_LD_VERSION_SCRIPT
-	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/opencl/opencl.sym \
-endif
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
+if HAVE_LD_VERSION_SCRIPT
+lib@OPENCL_LIBNAME@_la_LDFLAGS += \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/opencl/opencl.sym
+endif
 
 lib@OPENCL_LIBNAME@_la_LIBADD = \
 	$(top_builddir)/src/gallium/auxiliary/pipe-loader/libpipe_loader_client.la \

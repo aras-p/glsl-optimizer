@@ -48,11 +48,13 @@ AM_LDFLAGS = \
 	-module \
 	-no-undefined \
 	-avoid-version \
-if HAVE_LD_VERSION_SCRIPT
-	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/egl-static/egl.sym \
-endif
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
+
+if HAVE_LD_VERSION_SCRIPT
+AM_LDFLAGS += \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/egl-static/egl.sym
+endif
 
 egldir = $(EGL_DRIVER_INSTALL_DIR)
 egl_LTLIBRARIES = egl_gallium.la

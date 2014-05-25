@@ -45,10 +45,13 @@ lib@OSMESA_LIB@_la_LDFLAGS = \
 	-module \
 	-no-undefined \
 	-version-number @OSMESA_VERSION@ \
-	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/osmesa/osmesa.sym \
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
 
+if HAVE_LD_VERSION_SCRIPT
+lib@OSMESA_LIB@_la_LDFLAGS += \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/osmesa/osmesa.sym
+endif
 
 if HAVE_SHARED_GLAPI
 SHARED_GLAPI_LIB = $(top_builddir)/src/mapi/shared-glapi/libglapi.la

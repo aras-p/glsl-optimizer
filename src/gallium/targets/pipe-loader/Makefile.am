@@ -47,11 +47,13 @@ AM_LDFLAGS = \
 	-module \
 	-no-undefined \
 	-avoid-version \
-if HAVE_LD_VERSION_SCRIPT
-	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/pipe-loader/pipe.sym \
-endif
 	$(GC_SECTIONS) \
 	$(LD_NO_UNDEFINED)
+
+if HAVE_LD_VERSION_SCRIPT
+AM_LDFLAGS += \
+	-Wl,--version-script=$(top_srcdir)/src/gallium/targets/pipe-loader/pipe.sym
+endif
 
 if HAVE_MESA_LLVM
 PIPE_LIBS += $(LLVM_LIBS)
