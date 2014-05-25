@@ -230,7 +230,6 @@ brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
    brw_set_mask_control(p, BRW_MASK_ENABLE); /* what does this do? */
    brw_set_saturate(p, 0);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_set_predicate_control_flag_value(p, 0xff);
 
    /* Set up control flow stack */
    p->if_stack_depth = 0;
