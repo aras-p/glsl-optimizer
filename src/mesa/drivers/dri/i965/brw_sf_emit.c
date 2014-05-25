@@ -137,7 +137,6 @@ static void do_twoside_color( struct brw_sf_compile *c )
     * we run with NoMask, so it's not an option and we can use
     * BRW_EXECUTE_1 for all comparisions.
     */
-   brw_push_insn_state(p);
    brw_CMP(p, vec4(brw_null_reg()), backface_conditional, c->det, brw_imm_f(0));
    brw_IF(p, BRW_EXECUTE_4);
    {
@@ -148,7 +147,6 @@ static void do_twoside_color( struct brw_sf_compile *c )
       }
    }
    brw_ENDIF(p);
-   brw_pop_insn_state(p);
 }
 
 
