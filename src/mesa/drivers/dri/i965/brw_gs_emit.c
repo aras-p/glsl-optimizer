@@ -346,6 +346,7 @@ gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
 	         unsigned num_verts, bool check_edge_flags)
 {
    struct brw_compile *p = &c->func;
+   struct brw_instruction *inst;
    c->prog_data.svbi_postincrement_value = num_verts;
 
    brw_ff_gs_alloc_regs(c, num_verts, true);
@@ -407,10 +408,10 @@ gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
          /* If so, then overwrite destination_indices_uw with the appropriate
           * reordering.
           */
-         brw_MOV(p, destination_indices_uw,
-                 brw_imm_v(key->pv_first ? 0x00010200    /* (0, 2, 1) */
-                                         : 0x00020001)); /* (1, 0, 2) */
-         brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+         inst = brw_MOV(p, destination_indices_uw,
+                        brw_imm_v(key->pv_first ? 0x00010200    /* (0, 2, 1) */
+                                                : 0x00020001)); /* (1, 0, 2) */
+         inst->header.predicate_control = BRW_PREDICATE_NORMAL;
       }
       brw_ADD(p, c->reg.destination_indices,
               c->reg.destination_indices, get_element_ud(c->reg.SVBI, 0));

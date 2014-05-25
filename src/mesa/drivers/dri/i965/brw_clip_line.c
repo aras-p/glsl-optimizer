@@ -130,6 +130,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
    struct brw_context *brw = p->brw;
+   struct brw_instruction *inst;
    struct brw_indirect vtx0     = brw_indirect(0, 0);
    struct brw_indirect vtx1      = brw_indirect(1, 0);
    struct brw_indirect newvtx0   = brw_indirect(2, 0);
@@ -228,8 +229,8 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
              brw_MUL(p, c->reg.t, c->reg.t, c->reg.dp1);
 
              brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_G, c->reg.t, c->reg.t1 );
-             brw_MOV(p, c->reg.t1, c->reg.t);
-             brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+             inst = brw_MOV(p, c->reg.t1, c->reg.t);
+             inst->header.predicate_control = BRW_PREDICATE_NORMAL;
 	 }
 	 brw_ELSE(p);
 	 {
@@ -250,8 +251,8 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
                  brw_MUL(p, c->reg.t, c->reg.t, c->reg.dp0);
 
                  brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_G, c->reg.t, c->reg.t0 );
-                 brw_MOV(p, c->reg.t0, c->reg.t);
-                 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+                 inst = brw_MOV(p, c->reg.t0, c->reg.t);
+                 inst->header.predicate_control = BRW_PREDICATE_NORMAL;
              }
 
              if (brw->has_negative_rhw_bug) {

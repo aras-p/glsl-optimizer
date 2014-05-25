@@ -1802,19 +1802,6 @@ void brw_CMP(struct brw_compile *p,
    brw_set_src0(p, insn, src0);
    brw_set_src1(p, insn, src1);
 
-/*    guess_execution_size(insn, src0); */
-
-
-   /* Make it so that future instructions will use the computed flag
-    * value until brw_set_predicate_control_flag_value() is called
-    * again.
-    */
-   if (dest.file == BRW_ARCHITECTURE_REGISTER_FILE &&
-       dest.nr == 0) {
-      p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
-      p->flag_value = 0xff;
-   }
-
    /* Item WaCMPInstNullDstForcesThreadSwitch in the Haswell Bspec workarounds
     * page says:
     *    "Any CMP instruction with a null destination must use a {switch}."
