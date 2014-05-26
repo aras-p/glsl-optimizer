@@ -77,7 +77,7 @@ is_coalesce_candidate(const fs_inst *inst, const int *virtual_grf_sizes)
 
 static bool
 can_coalesce_vars(brw::fs_live_variables *live_intervals,
-                  const exec_list *instructions, const fs_inst *inst, int ip,
+                  const exec_list *instructions, const fs_inst *inst,
                   int var_to, int var_from)
 {
    if (!live_intervals->vars_interfere(var_from, var_to))
@@ -96,14 +96,20 @@ can_coalesce_vars(brw::fs_live_variables *live_intervals,
    if (live_intervals->end[var_to] > live_intervals->end[var_from])
       return false;
 
-   assert(ip >= live_intervals->start[var_to]);
+   int scan_ip = -1;
 
-   fs_inst *scan_inst;
-   for (scan_inst = (fs_inst *)inst->next;
-        !scan_inst->is_tail_sentinel() && ip <= live_intervals->end[var_to];
-        scan_inst = (fs_inst *)scan_inst->next, ip++) {
+   foreach_list(n, instructions) {
+      fs_inst *scan_inst = (fs_inst *)n;
+      scan_ip++;
+
       if (scan_inst->is_control_flow())
          return false;
+
+      if (scan_ip <= live_intervals->start[var_to])
+         continue;
+
+      if (scan_ip > live_intervals->end[var_to])
+         break;
 
       if (scan_inst->dst.equals(inst->dst) ||
           scan_inst->dst.equals(inst->src[0]))
@@ -127,11 +133,9 @@ fs_visitor::register_coalesce()
    fs_inst *mov[MAX_SAMPLER_MESSAGE_SIZE];
    int var_to[MAX_SAMPLER_MESSAGE_SIZE];
    int var_from[MAX_SAMPLER_MESSAGE_SIZE];
-   int ip = -1;
 
    foreach_list(node, &this->instructions) {
       fs_inst *inst = (fs_inst *)node;
-      ip++;
 
       if (!is_coalesce_candidate(inst, virtual_grf_sizes))
          continue;
@@ -170,7 +174,7 @@ fs_visitor::register_coalesce()
          var_to[i] = live_intervals->var_from_vgrf[reg_to] + reg_to_offset[i];
          var_from[i] = live_intervals->var_from_vgrf[reg_from] + i;
 
-         if (!can_coalesce_vars(live_intervals, &instructions, inst, ip,
+         if (!can_coalesce_vars(live_intervals, &instructions, inst,
                                 var_to[i], var_from[i])) {
             can_coalesce = false;
             reg_from = -1;
