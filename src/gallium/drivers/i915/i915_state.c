@@ -42,6 +42,7 @@
 #include "i915_state_inlines.h"
 #include "i915_fpc.h"
 #include "i915_resource.h"
+#include "i915_state.h"
 
 /* The i915 (and related graphics cores) do not support GL_CLAMP.  The
  * Intel drivers for "other operating systems" implement GL_CLAMP as
@@ -811,6 +812,26 @@ i915_set_sampler_views(struct pipe_context *pipe, unsigned shader,
    }
 }
 
+
+struct pipe_sampler_view *
+i915_create_sampler_view_custom(struct pipe_context *pipe,
+                                struct pipe_resource *texture,
+                                const struct pipe_sampler_view *templ,
+                                unsigned width0,
+                                unsigned height0)
+{
+   struct pipe_sampler_view *view = CALLOC_STRUCT(pipe_sampler_view);
+
+   if (view) {
+      *view = *templ;
+      view->reference.count = 1;
+      view->texture = NULL;
+      pipe_resource_reference(&view->texture, texture);
+      view->context = pipe;
+   }
+
+   return view;
+}
 
 static struct pipe_sampler_view *
 i915_create_sampler_view(struct pipe_context *pipe,

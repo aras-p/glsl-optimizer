@@ -53,5 +53,11 @@ extern struct i915_tracked_state i915_hw_constants;
 
 void i915_update_derived(struct i915_context *i915);
 void i915_emit_hardware_state(struct i915_context *i915);
+struct pipe_sampler_view *
+i915_create_sampler_view_custom(struct pipe_context *pipe,
+                                struct pipe_resource *texture,
+                                const struct pipe_sampler_view *templ,
+                                unsigned width0,
+                                unsigned height0);
 
 #endif
