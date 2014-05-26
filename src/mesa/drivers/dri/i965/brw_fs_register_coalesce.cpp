@@ -83,6 +83,19 @@ can_coalesce_vars(brw::fs_live_variables *live_intervals,
    if (!live_intervals->vars_interfere(var_from, var_to))
       return true;
 
+   /* We know that the live ranges of A (var_from) and B (var_to)
+    * interfere because of the ->vars_interfere() call above. If the end
+    * of B's live range is after the end of A's range, then we know two
+    * things:
+    *  - the start of B's live range must be in A's live range (since we
+    *    already know the two ranges interfere, this is the only remaining
+    *    possibility)
+    *  - the interference isn't of the form we're looking for (where B is
+    *    entirely inside A)
+    */
+   if (live_intervals->end[var_to] > live_intervals->end[var_from])
+      return false;
+
    assert(ip >= live_intervals->start[var_to]);
 
    fs_inst *scan_inst;
