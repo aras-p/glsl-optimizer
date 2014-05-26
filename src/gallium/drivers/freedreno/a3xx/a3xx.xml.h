@@ -13,7 +13,7 @@ The rules-ng-ng source files this header was generated from are:
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/a2xx.xml          (  32901 bytes, from 2014-05-21 20:40:21)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_common.xml (   9859 bytes, from 2014-05-21 20:39:42)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/adreno_pm4.xml    (  14477 bytes, from 2014-05-16 11:51:57)
-- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  57856 bytes, from 2014-05-21 20:43:33)
+- /home/robclark/src/freedreno/envytools/rnndb/adreno/a3xx.xml          (  57954 bytes, from 2014-05-26 12:57:46)
 - /home/robclark/src/freedreno/envytools/rnndb/adreno/a4xx.xml          (  26602 bytes, from 2014-05-21 20:46:17)
 
 Copyright (C) 2013-2014 by the following authors:
@@ -197,13 +197,15 @@ enum a3xx_rb_blend_opcode {
 enum a3xx_tex_filter {
 	A3XX_TEX_NEAREST = 0,
 	A3XX_TEX_LINEAR = 1,
+	A3XX_TEX_ANISO = 2,
 };
 
 enum a3xx_tex_clamp {
 	A3XX_TEX_REPEAT = 0,
 	A3XX_TEX_CLAMP_TO_EDGE = 1,
 	A3XX_TEX_MIRROR_REPEAT = 2,
-	A3XX_TEX_CLAMP_NONE = 3,
+	A3XX_TEX_CLAMP_TO_BORDER = 3,
+	A3XX_TEX_MIRROR_CLAMP = 4,
 };
 
 enum a3xx_tex_swiz {
