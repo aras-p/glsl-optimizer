@@ -102,7 +102,7 @@ can_coalesce_vars(brw::fs_live_variables *live_intervals,
    for (scan_inst = (fs_inst *)inst->next;
         !scan_inst->is_tail_sentinel() && ip <= live_intervals->end[var_to];
         scan_inst = (fs_inst *)scan_inst->next, ip++) {
-      if (scan_inst->opcode == BRW_OPCODE_WHILE)
+      if (scan_inst->is_control_flow())
          return false;
 
       if (scan_inst->dst.equals(inst->dst) ||
