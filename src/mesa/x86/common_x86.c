@@ -52,6 +52,8 @@
 #if !defined(bit_SSE4_1) && defined(bit_SSE41)
 /* XXX: clang defines bit_SSE41 instead of bit_SSE4_1 */
 #define bit_SSE4_1 bit_SSE41
+#elif !defined(bit_SSE4_1) && !defined(bit_SSE41)
+#define bit_SSE4_1 0x00080000
 #endif
 #endif
 
