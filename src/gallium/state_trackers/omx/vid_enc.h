@@ -77,6 +77,7 @@ DERIVEDCLASS(vid_enc_PrivateType, omx_base_filter_PrivateType)
 	OMX_U32 frame_num; \
 	OMX_U32 pic_order_cnt; \
 	OMX_U32 ref_idx_l0, ref_idx_l1; \
+	OMX_BOOL restricted_b_frames; \
 	OMX_VIDEO_PARAM_BITRATETYPE bitrate; \
 	OMX_VIDEO_PARAM_QUANTIZATIONTYPE quant; \
 	OMX_CONFIG_INTRAREFRESHVOPTYPE force_pic_type; \

@@ -259,6 +259,7 @@ static OMX_ERRORTYPE vid_enc_Constructor(OMX_COMPONENTTYPE *comp, OMX_STRING nam
    priv->force_pic_type.IntraRefreshVOP = OMX_FALSE; 
    priv->frame_num = 0;
    priv->pic_order_cnt = 0;
+   priv->restricted_b_frames = debug_get_bool_option("OMX_USE_RESTRICTED_B_FRAMES", FALSE);
 
    priv->scale.xWidth = OMX_VID_ENC_SCALING_WIDTH_DEFAULT;
    priv->scale.xHeight = OMX_VID_ENC_SCALING_WIDTH_DEFAULT;
@@ -994,6 +995,8 @@ static void enc_HandleTask(omx_base_PortType *port, struct encode_task *task,
 
    picture.picture_type = picture_type;
    picture.pic_order_cnt = task->pic_order_cnt;
+   if (priv->restricted_b_frames && picture_type == PIPE_H264_ENC_PICTURE_TYPE_B)
+      picture.not_referenced = true;
    enc_ControlPicture(port, &picture);
 
    /* -------------- encode frame --------- */
@@ -1023,7 +1026,9 @@ static void enc_ClearBframes(omx_base_PortType *port, struct input_buf_private *
    /* handle B frames */
    LIST_FOR_EACH_ENTRY(task, &priv->b_frames, list) {
       enc_HandleTask(port, task, PIPE_H264_ENC_PICTURE_TYPE_B);
-      priv->ref_idx_l0 = priv->frame_num++;
+      if (!priv->restricted_b_frames)
+         priv->ref_idx_l0 = priv->frame_num;
+      priv->frame_num++;
    }
 
    enc_MoveTasks(&priv->b_frames, &inp->tasks);
@@ -1091,7 +1096,9 @@ static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEAD
       /* handle B frames */
       LIST_FOR_EACH_ENTRY(task, &priv->b_frames, list) {
          enc_HandleTask(port, task, PIPE_H264_ENC_PICTURE_TYPE_B);
-         priv->ref_idx_l0 = priv->frame_num++;
+         if (!priv->restricted_b_frames)
+            priv->ref_idx_l0 = priv->frame_num;
+         priv->frame_num++;
       }
 
       enc_MoveTasks(&priv->b_frames, &inp->tasks);
