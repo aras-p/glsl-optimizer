@@ -49,9 +49,12 @@ TargetNVC0::getBuiltinCode(const uint32_t **code, uint32_t *size) const
 {
    switch (chipset & ~0xf) {
    case 0xe0:
-      *code = (const uint32_t *)&gk104_builtin_code[0];
-      *size = sizeof(gk104_builtin_code);
-      break;
+      if (chipset < NVISA_GK20A_CHIPSET) {
+         *code = (const uint32_t *)&gk104_builtin_code[0];
+         *size = sizeof(gk104_builtin_code);
+         break;
+      }
+      /* fall-through for GK20A */
    case 0xf0:
    case 0x100:
       *code = (const uint32_t *)&gk110_builtin_code[0];
@@ -71,7 +74,9 @@ TargetNVC0::getBuiltinOffset(int builtin) const
 
    switch (chipset & ~0xf) {
    case 0xe0:
-      return gk104_builtin_offsets[builtin];
+      if (chipset < NVISA_GK20A_CHIPSET)
+         return gk104_builtin_offsets[builtin];
+      /* fall-through for GK20A */
    case 0xf0:
    case 0x100:
       return gk110_builtin_offsets[builtin];
@@ -235,7 +240,7 @@ TargetNVC0::getFileSize(DataFile file) const
 {
    switch (file) {
    case FILE_NULL:          return 0;
-   case FILE_GPR:           return (chipset >= NVISA_GK110_CHIPSET) ? 255 : 63;
+   case FILE_GPR:           return (chipset >= NVISA_GK20A_CHIPSET) ? 255 : 63;
    case FILE_PREDICATE:     return 7;
    case FILE_FLAGS:         return 1;
    case FILE_ADDRESS:       return 0;

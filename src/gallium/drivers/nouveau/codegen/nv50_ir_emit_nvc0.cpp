@@ -3027,7 +3027,7 @@ TargetNVC0::createCodeEmitterNVC0(Program::Type type)
 CodeEmitter *
 TargetNVC0::getCodeEmitter(Program::Type type)
 {
-   if (chipset >= NVISA_GK110_CHIPSET)
+   if (chipset >= NVISA_GK20A_CHIPSET)
       return createCodeEmitterGK110(type);
    return createCodeEmitterNVC0(type);
 }
