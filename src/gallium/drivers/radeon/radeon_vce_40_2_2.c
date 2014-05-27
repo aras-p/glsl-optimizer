@@ -283,7 +283,7 @@ static void encode(struct rvce_encoder *enc)
 	RVCE_CS(enc->pic.picture_type == PIPE_H264_ENC_PICTURE_TYPE_IDR); // encIdrFlag
 	RVCE_CS(0x00000000); // encIdrPicId
 	RVCE_CS(0x00000000); // encMGSKeyPic
-	RVCE_CS(0x00000001); // encReferenceFlag
+	RVCE_CS(!enc->pic.not_referenced); // encReferenceFlag
 	RVCE_CS(0x00000000); // encTemporalLayerIndex
 	RVCE_CS(0x00000000); // num_ref_idx_active_override_flag
 	RVCE_CS(0x00000000); // num_ref_idx_l0_active_minus1

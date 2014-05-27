@@ -231,11 +231,13 @@ static void rvce_end_frame(struct pipe_video_codec *encoder,
 	flush(enc);
 
 	/* update the CPB backtrack with the just encoded frame */
-	LIST_DEL(&slot->list);
 	slot->picture_type = enc->pic.picture_type;
 	slot->frame_num = enc->pic.frame_num;
 	slot->pic_order_cnt = enc->pic.pic_order_cnt;
-	LIST_ADD(&slot->list, &enc->cpb_slots);
+	if (!enc->pic.not_referenced) {
+		LIST_DEL(&slot->list);
+		LIST_ADD(&slot->list, &enc->cpb_slots);
+	}
 }
 
 static void rvce_get_feedback(struct pipe_video_codec *encoder,
