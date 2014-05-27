@@ -1591,9 +1591,9 @@ fs_visitor::emit_mcs_fetch(ir_texture *ir, fs_reg coordinate, int sampler)
    inst->base_mrf = -1;
    inst->mlen = next.reg_offset * reg_width;
    inst->header_present = false;
-   inst->regs_written = 4 * reg_width; /* we only care about one reg of response,
-                                        * but the sampler always writes 4/8
-                                        */
+   inst->regs_written = 4; /* we only care about one reg of response,
+                            * but the sampler always writes 4/8
+                            */
    inst->sampler = sampler;
 
    return dest;
