@@ -101,6 +101,11 @@ fs_inst::fs_inst(enum opcode opcode, const fs_reg &dst, const fs_reg &src0,
    init(opcode, dst, src, 3);
 }
 
+fs_inst::fs_inst(enum opcode opcode, const fs_reg &dst, fs_reg src[], int sources)
+{
+   init(opcode, dst, src, sources);
+}
+
 fs_inst::fs_inst(const fs_inst &that)
 {
    memcpy(this, &that, sizeof(that));
@@ -738,6 +743,13 @@ fs_visitor::emit(enum opcode opcode, fs_reg dst,
                  fs_reg src0, fs_reg src1, fs_reg src2)
 {
    return emit(new(mem_ctx) fs_inst(opcode, dst, src0, src1, src2));
+}
+
+fs_inst *
+fs_visitor::emit(enum opcode opcode, fs_reg dst,
+                 fs_reg src[], int sources)
+{
+   return emit(new(mem_ctx) fs_inst(opcode, dst, src, sources));
 }
 
 void

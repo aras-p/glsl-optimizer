@@ -198,6 +198,7 @@ public:
            const fs_reg &src1);
    fs_inst(enum opcode opcode, const fs_reg &dst, const fs_reg &src0,
            const fs_reg &src1, const fs_reg &src2);
+   fs_inst(enum opcode opcode, const fs_reg &dst, fs_reg src[], int sources);
    fs_inst(const fs_inst &that);
 
    void resize_sources(uint8_t num_sources);
@@ -295,6 +296,8 @@ public:
    fs_inst *emit(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1);
    fs_inst *emit(enum opcode opcode, fs_reg dst,
                  fs_reg src0, fs_reg src1, fs_reg src2);
+   fs_inst *emit(enum opcode opcode, fs_reg dst,
+                 fs_reg src[], int sources);
 
    fs_inst *MOV(fs_reg dst, fs_reg src);
    fs_inst *NOT(fs_reg dst, fs_reg src);
