@@ -94,8 +94,9 @@ i915_surface_copy_render(struct pipe_context *pipe,
    struct pipe_sampler_view src_templ, *src_view;
    struct pipe_surface dst_templ, *dst_view;
 
-   /* Fallback for buffers. */
-   if ((dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER)) {
+   /* Fallback for buffers and npot. */
+   if ((dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) ||
+       !util_is_power_of_two(src_width0) || !util_is_power_of_two(src_height0)) {
       util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
                                 src, src_level, src_box);
       return;
