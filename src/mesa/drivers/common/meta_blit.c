@@ -273,7 +273,7 @@ setup_glsl_msaa_blit_shader(struct gl_context *ctx,
                                    samples);
          } else {
             ralloc_asprintf_append(&sample_resolve,
-                                   "   out_color = sample_%d_0 / %f;\n",
+                                   "   gl_FragColor = sample_%d_0 / %f;\n",
                                    samples, (float)samples);
          }
       }
