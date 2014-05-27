@@ -190,15 +190,14 @@ class fs_inst : public backend_instruction {
 public:
    DECLARE_RALLOC_CXX_OPERATORS(fs_inst)
 
-   void init(int sources);
+   void init(enum opcode opcode, const fs_reg &dst, fs_reg *src, int sources);
 
-   fs_inst();
-   fs_inst(enum opcode opcode);
-   fs_inst(enum opcode opcode, fs_reg dst);
-   fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0);
-   fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1);
-   fs_inst(enum opcode opcode, fs_reg dst,
-           fs_reg src0, fs_reg src1,fs_reg src2);
+   fs_inst(enum opcode opcode = BRW_OPCODE_NOP, const fs_reg &dst = reg_undef);
+   fs_inst(enum opcode opcode, const fs_reg &dst, const fs_reg &src0);
+   fs_inst(enum opcode opcode, const fs_reg &dst, const fs_reg &src0,
+           const fs_reg &src1);
+   fs_inst(enum opcode opcode, const fs_reg &dst, const fs_reg &src0,
+           const fs_reg &src1, const fs_reg &src2);
    fs_inst(const fs_inst &that);
 
    bool equals(fs_inst *inst) const;

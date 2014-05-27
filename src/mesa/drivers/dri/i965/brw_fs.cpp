@@ -52,19 +52,16 @@ extern "C" {
 #include "glsl/glsl_types.h"
 
 void
-fs_inst::init(int sources)
+fs_inst::init(enum opcode opcode, const fs_reg &dst, fs_reg *src, int sources)
 {
    memset(this, 0, sizeof(*this));
 
+   this->opcode = opcode;
+   this->dst = dst;
+   this->src = src;
    this->sources = sources;
-   this->src = ralloc_array(this, fs_reg, sources);
 
    this->conditional_mod = BRW_CONDITIONAL_NONE;
-
-   this->dst = reg_undef;
-   this->src[0] = reg_undef;
-   this->src[1] = reg_undef;
-   this->src[2] = reg_undef;
 
    /* This will be the case for almost all instructions. */
    this->regs_written = 1;
@@ -72,75 +69,36 @@ fs_inst::init(int sources)
    this->writes_accumulator = false;
 }
 
-fs_inst::fs_inst()
+fs_inst::fs_inst(enum opcode opcode, const fs_reg &dst)
 {
-   init(3);
-   this->opcode = BRW_OPCODE_NOP;
+   fs_reg *src = ralloc_array(this, fs_reg, 3);
+   init(opcode, dst, src, 0);
 }
 
-fs_inst::fs_inst(enum opcode opcode)
+fs_inst::fs_inst(enum opcode opcode, const fs_reg &dst, const fs_reg &src0)
 {
-   init(3);
-   this->opcode = opcode;
+   fs_reg *src = ralloc_array(this, fs_reg, 3);
+   src[0] = src0;
+   init(opcode, dst, src, 1);
 }
 
-fs_inst::fs_inst(enum opcode opcode, fs_reg dst)
+fs_inst::fs_inst(enum opcode opcode, const fs_reg &dst, const fs_reg &src0,
+                 const fs_reg &src1)
 {
-   init(3);
-   this->opcode = opcode;
-   this->dst = dst;
-
-   if (dst.file == GRF)
-      assert(dst.reg_offset >= 0);
+   fs_reg *src = ralloc_array(this, fs_reg, 3);
+   src[0] = src0;
+   src[1] = src1;
+   init(opcode, dst, src, 2);
 }
 
-fs_inst::fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0)
+fs_inst::fs_inst(enum opcode opcode, const fs_reg &dst, const fs_reg &src0,
+                 const fs_reg &src1, const fs_reg &src2)
 {
-   init(3);
-   this->opcode = opcode;
-   this->dst = dst;
-   this->src[0] = src0;
-
-   if (dst.file == GRF)
-      assert(dst.reg_offset >= 0);
-   if (src[0].file == GRF)
-      assert(src[0].reg_offset >= 0);
-}
-
-fs_inst::fs_inst(enum opcode opcode, fs_reg dst, fs_reg src0, fs_reg src1)
-{
-   init(3);
-   this->opcode = opcode;
-   this->dst = dst;
-   this->src[0] = src0;
-   this->src[1] = src1;
-
-   if (dst.file == GRF)
-      assert(dst.reg_offset >= 0);
-   if (src[0].file == GRF)
-      assert(src[0].reg_offset >= 0);
-   if (src[1].file == GRF)
-      assert(src[1].reg_offset >= 0);
-}
-
-fs_inst::fs_inst(enum opcode opcode, fs_reg dst,
-		 fs_reg src0, fs_reg src1, fs_reg src2)
-{
-   init(3);
-   this->opcode = opcode;
-   this->dst = dst;
-   this->src[0] = src0;
-   this->src[1] = src1;
-   this->src[2] = src2;
-
-   if (dst.file == GRF)
-      assert(dst.reg_offset >= 0);
-   if (src[0].file == GRF)
-      assert(src[0].reg_offset >= 0);
-   if (src[1].file == GRF)
-      assert(src[1].reg_offset >= 0);
-   if (src[2].file == GRF)
-      assert(src[2].reg_offset >= 0);
+   fs_reg *src = ralloc_array(this, fs_reg, 3);
+   src[0] = src0;
+   src[1] = src1;
+   src[2] = src2;
+   init(opcode, dst, src, 3);
 }
 
 fs_inst::fs_inst(const fs_inst &that)
