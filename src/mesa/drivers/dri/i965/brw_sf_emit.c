@@ -207,15 +207,15 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    nr = count_flatshaded_attributes(c);
 
    brw_MUL(p, c->pv, c->pv, brw_imm_d(jmpi*(nr*2+1)));
-   brw_JMPI(p, c->pv);
+   brw_JMPI(p, c->pv, BRW_PREDICATE_NONE);
 
    copy_flatshaded_attributes(c, c->vert[1], c->vert[0]);
    copy_flatshaded_attributes(c, c->vert[2], c->vert[0]);
-   brw_JMPI(p, brw_imm_d(jmpi*(nr*4+1)));
+   brw_JMPI(p, brw_imm_d(jmpi*(nr*4+1)), BRW_PREDICATE_NONE);
 
    copy_flatshaded_attributes(c, c->vert[0], c->vert[1]);
    copy_flatshaded_attributes(c, c->vert[2], c->vert[1]);
-   brw_JMPI(p, brw_imm_d(jmpi*nr*2));
+   brw_JMPI(p, brw_imm_d(jmpi*nr*2), BRW_PREDICATE_NONE);
 
    copy_flatshaded_attributes(c, c->vert[0], c->vert[2]);
    copy_flatshaded_attributes(c, c->vert[1], c->vert[2]);
@@ -240,10 +240,10 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    nr = count_flatshaded_attributes(c);
 
    brw_MUL(p, c->pv, c->pv, brw_imm_d(jmpi*(nr+1)));
-   brw_JMPI(p, c->pv);
+   brw_JMPI(p, c->pv, BRW_PREDICATE_NONE);
    copy_flatshaded_attributes(c, c->vert[1], c->vert[0]);
 
-   brw_JMPI(p, brw_imm_ud(jmpi*nr));
+   brw_JMPI(p, brw_imm_ud(jmpi*nr), BRW_PREDICATE_NONE);
    copy_flatshaded_attributes(c, c->vert[0], c->vert[1]);
 }
 
@@ -770,7 +770,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_POLYGON) |
 					       (1<<_3DPRIM_RECTLIST) |
 					       (1<<_3DPRIM_TRIFAN_NOSTIPPLE)));
-   jmp = brw_JMPI(p, brw_imm_d(0)) - p->store;
+   jmp = brw_JMPI(p, brw_imm_d(0), BRW_PREDICATE_NORMAL) - p->store;
    brw_emit_tri_setup(c, false);
    brw_land_fwd_jump(p, jmp);
 
@@ -781,13 +781,13 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_LINESTRIP_CONT) |
 					       (1<<_3DPRIM_LINESTRIP_BF) |
 					       (1<<_3DPRIM_LINESTRIP_CONT_BF)));
-   jmp = brw_JMPI(p, brw_imm_d(0)) - p->store;
+   jmp = brw_JMPI(p, brw_imm_d(0), BRW_PREDICATE_NORMAL) - p->store;
    brw_emit_line_setup(c, false);
    brw_land_fwd_jump(p, jmp);
 
    brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
    brw_AND(p, v1_null_ud, payload_attr, brw_imm_ud(1<<BRW_SPRITE_POINT_ENABLE));
-   jmp = brw_JMPI(p, brw_imm_d(0)) - p->store;
+   jmp = brw_JMPI(p, brw_imm_d(0), BRW_PREDICATE_NORMAL) - p->store;
    brw_emit_point_sprite_setup(c, false);
    brw_land_fwd_jump(p, jmp);
 

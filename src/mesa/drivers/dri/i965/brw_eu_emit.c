@@ -1189,7 +1189,8 @@ void brw_NOP(struct brw_compile *p)
  */
 
 struct brw_instruction *brw_JMPI(struct brw_compile *p,
-                                 struct brw_reg index)
+                                 struct brw_reg index,
+                                 unsigned predicate_control)
 {
    struct brw_reg ip = brw_ip_reg();
    struct brw_instruction *insn = brw_alu2(p, BRW_OPCODE_JMPI, ip, ip, index);
@@ -1197,6 +1198,7 @@ struct brw_instruction *brw_JMPI(struct brw_compile *p,
    insn->header.execution_size = 1;
    insn->header.compression_control = BRW_COMPRESSION_NONE;
    insn->header.mask_control = BRW_MASK_DISABLE;
+   insn->header.predicate_control = predicate_control;
 
    p->current->header.predicate_control = BRW_PREDICATE_NONE;
 

@@ -335,7 +335,8 @@ struct brw_instruction *brw_CONT(struct brw_compile *p);
 struct brw_instruction *gen6_CONT(struct brw_compile *p);
 struct brw_instruction *gen6_HALT(struct brw_compile *p);
 
-struct brw_instruction *brw_JMPI(struct brw_compile *p, struct brw_reg index);
+struct brw_instruction *brw_JMPI(struct brw_compile *p, struct brw_reg index,
+                                 unsigned predicate_control);
 
 void brw_NOP(struct brw_compile *p);
 
