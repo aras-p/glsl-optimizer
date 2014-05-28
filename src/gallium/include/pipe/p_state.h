@@ -592,8 +592,8 @@ struct pipe_blit_info
    boolean scissor_enable;
    struct pipe_scissor_state scissor;
 
-   boolean render_condition_enable; /**< whether to leave current render
-                                    condition enabled */
+   boolean render_condition_enable; /**< whether the blit should honor the
+                                    current render condition */
 };
 
 
