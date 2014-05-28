@@ -9,6 +9,14 @@ fi
 total=0
 pass=0
 
+echo "======       Generating tests      ======"
+for dir in tests/*/; do
+    if [ -e "${dir}create_test_cases.py" ]; then
+        cd $dir; $PYTHON2 create_test_cases.py; cd ..
+    fi
+    echo "$dir"
+done
+
 echo "====== Testing optimization passes ======"
 for test in `find . -iname '*.opt_test'`; do
     echo -n "Testing $test..."
