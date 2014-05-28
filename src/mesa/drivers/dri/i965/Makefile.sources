@@ -119,6 +119,7 @@ i965_FILES = \
 	gen6_blorp.cpp \
 	gen6_cc.c \
 	gen6_clip_state.c \
+	gen6_depth_state.c \
 	gen6_depthstencil.c \
 	gen6_gs_state.c \
         gen6_multisample_state.c \
