@@ -1,1 +1,3 @@
+*.opt_test
+*.expected
 *.out
