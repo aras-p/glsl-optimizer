@@ -773,9 +773,24 @@ public:
       uint16_t image_format;
 
    private:
-      unsigned _num_state_slots;    /**< Number of state slots used */
+      /**
+       * Number of state slots used
+       *
+       * \note
+       * This could be stored in as few as 7-bits, if necessary.  If it is made
+       * smaller, add an assertion to \c ir_variable::allocate_state_slots to
+       * be safe.
+       */
+      uint16_t _num_state_slots;
 
    public:
+      /**
+       * Initial binding point for a sampler, atomic, or UBO.
+       *
+       * For array types, this represents the binding point for the first element.
+       */
+      int16_t binding;
+
       /**
        * Storage location of the base of this variable
        *
@@ -800,13 +815,6 @@ public:
        * Vertex stream output identifier.
        */
       unsigned stream;
-
-      /**
-       * Initial binding point for a sampler, atomic, or UBO.
-       *
-       * For array types, this represents the binding point for the first element.
-       */
-      int binding;
 
       /**
        * Location an atomic counter is stored at.
