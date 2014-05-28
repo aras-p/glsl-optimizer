@@ -252,7 +252,6 @@ load_clip_distance(struct brw_clip_compile *c, struct brw_indirect vtx,
    }
    brw_ENDIF(p);
 
-   brw_set_conditionalmod(p, cond);
    brw_CMP(p, brw_null_reg(), cond, vec1(dst), brw_imm_f(0.0f));
 }
 
