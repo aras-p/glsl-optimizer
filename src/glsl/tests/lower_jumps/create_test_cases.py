@@ -126,7 +126,7 @@ def loop(statements):
     body.
     """
     check_sexp(statements)
-    return [['loop', [], [], [], [], statements]]
+    return [['loop', statements]]
 
 def declare_temp(var_type, var_name):
     """Create a declaration of the form
