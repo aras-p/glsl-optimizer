@@ -162,12 +162,22 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
       /* Emit hiz buffer. */
       if (hiz) {
          struct intel_mipmap_tree *hiz_mt = depth_mt->hiz_mt;
+         uint32_t offset = 0;
+
+         if (hiz_mt->array_layout == ALL_SLICES_AT_EACH_LOD) {
+            offset = intel_miptree_get_aligned_offset(
+                        hiz_mt,
+                        hiz_mt->level[lod].level_x,
+                        hiz_mt->level[lod].level_y,
+                        false);
+         }
+
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_HIER_DEPTH_BUFFER << 16) | (3 - 2));
 	 OUT_BATCH(hiz_mt->pitch - 1);
 	 OUT_RELOC(hiz_mt->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		   0);
+		   offset);
 	 ADVANCE_BATCH();
       } else {
 	 BEGIN_BATCH(3);
@@ -179,6 +189,26 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
 
       /* Emit stencil buffer. */
       if (separate_stencil) {
+         uint32_t offset = 0;
+
+         if (stencil_mt->array_layout == ALL_SLICES_AT_EACH_LOD) {
+            if (stencil_mt->format == MESA_FORMAT_S_UINT8) {
+               /* Note: we can't compute the stencil offset using
+                * intel_region_get_aligned_offset(), because stencil_region
+                * claims that the region is untiled even though it's W tiled.
+                */
+               offset =
+                  stencil_mt->level[lod].level_y * stencil_mt->pitch +
+                  stencil_mt->level[lod].level_x * 64;
+            } else {
+               offset = intel_miptree_get_aligned_offset(
+                           stencil_mt,
+                           stencil_mt->level[lod].level_x,
+                           stencil_mt->level[lod].level_y,
+                           false);
+            }
+         }
+
 	 BEGIN_BATCH(3);
 	 OUT_BATCH((_3DSTATE_STENCIL_BUFFER << 16) | (3 - 2));
          /* The stencil buffer has quirky pitch requirements.  From Vol 2a,
@@ -189,7 +219,7 @@ gen6_emit_depth_stencil_hiz(struct brw_context *brw,
 	 OUT_BATCH(2 * stencil_mt->pitch - 1);
 	 OUT_RELOC(stencil_mt->bo,
 		   I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
-		   0);
+		   offset);
 	 ADVANCE_BATCH();
       } else {
 	 BEGIN_BATCH(3);
