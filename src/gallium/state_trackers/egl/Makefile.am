@@ -65,7 +65,6 @@ endif
 
 if HAVE_EGL_PLATFORM_DRM
 libegl_la_SOURCES += $(drm_FILES)
-libegl_la_LIBADD = $(top_builddir)/src/loader/libloader.la
 AM_CFLAGS += \
 	$(LIBDRM_CFLAGS)
 AM_CPPFLAGS += \
