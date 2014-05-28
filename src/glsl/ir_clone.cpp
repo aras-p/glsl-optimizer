@@ -45,9 +45,9 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
 
    var->data.max_array_access = this->data.max_array_access;
    if (this->is_interface_instance()) {
-      var->max_ifc_array_access =
+      var->u.max_ifc_array_access =
          rzalloc_array(var, unsigned, this->interface_type->length);
-      memcpy(var->max_ifc_array_access, this->max_ifc_array_access,
+      memcpy(var->u.max_ifc_array_access, this->u.max_ifc_array_access,
              this->interface_type->length * sizeof(unsigned));
    }
 

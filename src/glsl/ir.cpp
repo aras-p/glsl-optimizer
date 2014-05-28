@@ -1545,10 +1545,13 @@ ir_swizzle::variable_referenced() const
 
 ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 			 ir_variable_mode mode)
-   : ir_instruction(ir_type_variable), max_ifc_array_access(NULL)
+   : ir_instruction(ir_type_variable)
 {
    this->type = type;
    this->name = ralloc_strdup(this, name);
+
+   this->u.max_ifc_array_access = NULL;
+
    this->data.explicit_location = false;
    this->data.has_initializer = false;
    this->data.location = -1;

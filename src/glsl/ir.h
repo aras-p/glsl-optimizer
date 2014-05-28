@@ -475,7 +475,7 @@ public:
       assert(this->interface_type == NULL);
       this->interface_type = type;
       if (this->is_interface_instance()) {
-         this->max_ifc_array_access =
+         this->u.max_ifc_array_access =
             rzalloc_array(this, unsigned, type->length);
       }
    }
@@ -487,7 +487,7 @@ public:
     */
    void change_interface_type(const struct glsl_type *type)
    {
-      if (this->max_ifc_array_access != NULL) {
+      if (this->u.max_ifc_array_access != NULL) {
          /* max_ifc_array_access has already been allocated, so make sure the
           * new interface has the same number of fields as the old one.
           */
@@ -504,7 +504,7 @@ public:
     */
    void reinit_interface_type(const struct glsl_type *type)
    {
-      if (this->max_ifc_array_access != NULL) {
+      if (this->u.max_ifc_array_access != NULL) {
 #ifndef NDEBUG
          /* Redeclaring gl_PerVertex is only allowed if none of the built-ins
           * it defines have been accessed yet; so it's safe to throw away the
@@ -512,10 +512,10 @@ public:
           * zero.
           */
          for (unsigned i = 0; i < this->interface_type->length; i++)
-            assert(this->max_ifc_array_access[i] == 0);
+            assert(this->u.max_ifc_array_access[i] == 0);
 #endif
-         ralloc_free(this->max_ifc_array_access);
-         this->max_ifc_array_access = NULL;
+         ralloc_free(this->u.max_ifc_array_access);
+         this->u.max_ifc_array_access = NULL;
       }
       this->interface_type = NULL;
       init_interface_type(type);
@@ -534,38 +534,45 @@ public:
     */
    inline unsigned *get_max_ifc_array_access()
    {
-      return this->max_ifc_array_access;
+      assert(this->data._num_state_slots == 0);
+      return this->u.max_ifc_array_access;
    }
 
    inline unsigned get_num_state_slots() const
    {
+      assert(!this->is_interface_instance()
+             || this->data._num_state_slots == 0);
       return this->data._num_state_slots;
    }
 
    inline void set_num_state_slots(unsigned n)
    {
+      assert(!this->is_interface_instance()
+             || n == 0);
       this->data._num_state_slots = n;
    }
 
    inline ir_state_slot *get_state_slots()
    {
-      return this->state_slots;
+      return this->is_interface_instance() ? NULL : this->u.state_slots;
    }
 
    inline const ir_state_slot *get_state_slots() const
    {
-      return this->state_slots;
+      return this->is_interface_instance() ? NULL : this->u.state_slots;
    }
 
    inline ir_state_slot *allocate_state_slots(unsigned n)
    {
-      this->state_slots = ralloc_array(this, ir_state_slot, n);
+      assert(!this->is_interface_instance());
+
+      this->u.state_slots = ralloc_array(this, ir_state_slot, n);
       this->data._num_state_slots = 0;
 
-      if (this->state_slots != NULL)
+      if (this->u.state_slots != NULL)
          this->data._num_state_slots = n;
 
-      return this->state_slots;
+      return this->u.state_slots;
    }
 
    /**
@@ -839,28 +846,30 @@ public:
 private:
    static const char *const warn_extension_table[];
 
-   /**
-    * For variables which satisfy the is_interface_instance() predicate, this
-    * points to an array of integers such that if the ith member of the
-    * interface block is an array, max_ifc_array_access[i] is the maximum
-    * array element of that member that has been accessed.  If the ith member
-    * of the interface block is not an array, max_ifc_array_access[i] is
-    * unused.
-    *
-    * For variables whose type is not an interface block, this pointer is
-    * NULL.
-    */
-   unsigned *max_ifc_array_access;
+   union {
+      /**
+       * For variables which satisfy the is_interface_instance() predicate,
+       * this points to an array of integers such that if the ith member of
+       * the interface block is an array, max_ifc_array_access[i] is the
+       * maximum array element of that member that has been accessed.  If the
+       * ith member of the interface block is not an array,
+       * max_ifc_array_access[i] is unused.
+       *
+       * For variables whose type is not an interface block, this pointer is
+       * NULL.
+       */
+      unsigned *max_ifc_array_access;
 
-   /**
-    * Built-in state that backs this uniform
-    *
-    * Once set at variable creation, \c state_slots must remain invariant.
-    *
-    * If the variable is not a uniform, \c _num_state_slots will be zero and
-    * \c state_slots will be \c NULL.
-    */
-   ir_state_slot *state_slots;
+      /**
+       * Built-in state that backs this uniform
+       *
+       * Once set at variable creation, \c state_slots must remain invariant.
+       *
+       * If the variable is not a uniform, \c _num_state_slots will be zero
+       * and \c state_slots will be \c NULL.
+       */
+      ir_state_slot *state_slots;
+   } u;
 
    /**
     * For variables that are in an interface block or are an instance of an
