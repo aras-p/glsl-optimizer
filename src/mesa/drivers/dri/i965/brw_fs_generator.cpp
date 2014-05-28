@@ -1749,6 +1749,10 @@ fs_generator::generate_code(exec_list *instructions)
 	    _mesa_problem(ctx, "Unsupported opcode %d in FS", inst->opcode);
 	 }
 	 abort();
+
+      case SHADER_OPCODE_LOAD_PAYLOAD:
+         assert(!"Should be lowered by lower_load_payload()");
+         break;
       }
 
       if (inst->conditional_mod) {

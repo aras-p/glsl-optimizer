@@ -241,6 +241,16 @@ fs_visitor::CMP(fs_reg dst, fs_reg src0, fs_reg src1, uint32_t condition)
    return inst;
 }
 
+fs_inst *
+fs_visitor::LOAD_PAYLOAD(const fs_reg &dst, fs_reg *src, int sources)
+{
+   fs_inst *inst = new(mem_ctx) fs_inst(SHADER_OPCODE_LOAD_PAYLOAD, dst, src,
+                                        sources);
+   inst->regs_written = sources;
+
+   return inst;
+}
+
 exec_list
 fs_visitor::VARYING_PULL_CONSTANT_LOAD(const fs_reg &dst,
                                        const fs_reg &surf_index,

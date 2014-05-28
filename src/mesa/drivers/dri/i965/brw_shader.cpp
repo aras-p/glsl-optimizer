@@ -454,6 +454,9 @@ brw_instruction_name(enum opcode op)
    case SHADER_OPCODE_SHADER_TIME_ADD:
       return "shader_time_add";
 
+   case SHADER_OPCODE_LOAD_PAYLOAD:
+      return "load_payload";
+
    case SHADER_OPCODE_GEN4_SCRATCH_READ:
       return "gen4_scratch_read";
    case SHADER_OPCODE_GEN4_SCRATCH_WRITE:

@@ -798,6 +798,20 @@ enum opcode {
    SHADER_OPCODE_TG4,
    SHADER_OPCODE_TG4_OFFSET,
 
+   /**
+    * Combines multiple sources of size 1 into a larger virtual GRF.
+    * For example, parameters for a send-from-GRF message.  Or, updating
+    * channels of a size 4 VGRF used to store vec4s such as texturing results.
+    *
+    * This will be lowered into MOVs from each source to consecutive reg_offsets
+    * of the destination VGRF.
+    *
+    * src[0] may be BAD_FILE.  If so, the lowering pass skips emitting the MOV,
+    * but still reserves the first channel of the destination VGRF.  This can be
+    * used to reserve space for, say, a message header set up by the generators.
+    */
+   SHADER_OPCODE_LOAD_PAYLOAD,
+
    SHADER_OPCODE_SHADER_TIME_ADD,
 
    SHADER_OPCODE_UNTYPED_ATOMIC,

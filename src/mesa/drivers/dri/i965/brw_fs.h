@@ -338,6 +338,8 @@ public:
 					   fs_inst *end,
 					   const fs_reg &reg);
 
+   fs_inst *LOAD_PAYLOAD(const fs_reg &dst, fs_reg *src, int sources);
+
    exec_list VARYING_PULL_CONSTANT_LOAD(const fs_reg &dst,
                                         const fs_reg &surf_index,
                                         const fs_reg &varying_offset,
