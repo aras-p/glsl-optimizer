@@ -270,6 +270,9 @@ calculate_attr_overrides(const struct brw_context *brw,
                          uint32_t *flat_enables,
                          uint32_t *urb_entry_read_length);
 
+/* gen6_surface_state.c */
+void gen6_init_vtable_surface_functions(struct brw_context *brw);
+
 /* brw_vs_surface_state.c */
 void
 brw_upload_pull_constants(struct brw_context *brw,

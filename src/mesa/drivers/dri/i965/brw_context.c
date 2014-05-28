@@ -672,6 +672,9 @@ brwCreateContext(gl_api api,
    } else if (brw->gen >= 7) {
       gen7_init_vtable_surface_functions(brw);
       brw->vtbl.emit_depth_stencil_hiz = gen7_emit_depth_stencil_hiz;
+   } else if (brw->gen >= 6) {
+      gen6_init_vtable_surface_functions(brw);
+      brw->vtbl.emit_depth_stencil_hiz = brw_emit_depth_stencil_hiz;
    } else {
       gen4_init_vtable_surface_functions(brw);
       brw->vtbl.emit_depth_stencil_hiz = brw_emit_depth_stencil_hiz;

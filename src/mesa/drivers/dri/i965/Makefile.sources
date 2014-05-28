@@ -127,6 +127,7 @@ i965_FILES = \
 	gen6_scissor_state.c \
 	gen6_sf_state.c \
         gen6_sol.c \
+	gen6_surface_state.c \
 	gen6_urb.c \
 	gen6_viewport_state.c \
 	gen6_vs_state.c \
