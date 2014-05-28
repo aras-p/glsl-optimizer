@@ -262,7 +262,6 @@ load_clip_distance(struct brw_clip_compile *c, struct brw_indirect vtx,
 void brw_clip_tri( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
-   struct brw_instruction *inst;
    struct brw_indirect vtx = brw_indirect(0, 0);
    struct brw_indirect vtxPrev = brw_indirect(1, 0);
    struct brw_indirect vtxOut = brw_indirect(2, 0);
@@ -338,8 +337,8 @@ void brw_clip_tri( struct brw_clip_compile *c )
 		  /* If (vtxOut == 0) vtxOut = vtxPrev
 		   */
 		  brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_EQ, get_addr_reg(vtxOut), brw_imm_uw(0) );
-                  inst = brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtxPrev));
-                  inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+                  brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtxPrev));
+                  brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
 
 		  brw_clip_interp_vertex(c, vtxOut, vtxPrev, vtx, c->reg.t, false);
 
@@ -379,8 +378,8 @@ void brw_clip_tri( struct brw_clip_compile *c )
 		  /* If (vtxOut == 0) vtxOut = vtx
 		   */
 		  brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_EQ, get_addr_reg(vtxOut), brw_imm_uw(0) );
-                  inst = brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtx));
-                  inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+                  brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtx));
+                  brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
 
 		  brw_clip_interp_vertex(c, vtxOut, vtx, vtxPrev, c->reg.t, true);
 
@@ -517,7 +516,6 @@ static void maybe_do_clip_tri( struct brw_clip_compile *c )
 
 static void brw_clip_test( struct brw_clip_compile *c )
 {
-    struct brw_instruction *inst;
     struct brw_reg t = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
     struct brw_reg t1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
     struct brw_reg t2 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
@@ -572,16 +570,16 @@ static void brw_clip_test( struct brw_clip_compile *c )
     brw_AND(p, t, t, brw_imm_ud(0x1));
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 0), brw_imm_ud(0));
-    inst = brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<5)));
-    inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<5)));
+    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 1), brw_imm_ud(0));
-    inst = brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<3)));
-    inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<3)));
+    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 2), brw_imm_ud(0));
-    inst = brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<1)));
-    inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<1)));
+    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
 
     /* test farz, xmax, ymax plane */
     /* clip.xyz > clip.w */
@@ -610,16 +608,16 @@ static void brw_clip_test( struct brw_clip_compile *c )
     brw_AND(p, t, t, brw_imm_ud(0x1));
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 0), brw_imm_ud(0));
-    inst = brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<4)));
-    inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<4)));
+    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 1), brw_imm_ud(0));
-    inst = brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<2)));
-    inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<2)));
+    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 2), brw_imm_ud(0));
-    inst = brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<0)));
-    inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<0)));
+    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
 
     release_tmps(c);
 }
