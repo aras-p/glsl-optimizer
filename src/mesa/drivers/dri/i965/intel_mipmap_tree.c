@@ -379,6 +379,7 @@ intel_miptree_create_layout(struct brw_context *brw,
        _mesa_get_format_base_format(format) == GL_DEPTH_STENCIL &&
        (brw->must_use_separate_stencil ||
 	(brw->has_separate_stencil && brw_is_hiz_depth_format(brw, format)))) {
+      const bool force_all_slices_at_each_lod = brw->gen == 6;
       mt->stencil_mt = intel_miptree_create(brw,
                                             mt->target,
                                             MESA_FORMAT_S_UINT8,
@@ -390,7 +391,7 @@ intel_miptree_create_layout(struct brw_context *brw,
                                             true,
                                             num_samples,
                                             INTEL_MIPTREE_TILING_ANY,
-                                            false);
+                                            force_all_slices_at_each_lod);
       if (!mt->stencil_mt) {
 	 intel_miptree_release(&mt);
 	 return NULL;
@@ -1407,6 +1408,7 @@ intel_miptree_alloc_hiz(struct brw_context *brw,
 			struct intel_mipmap_tree *mt)
 {
    assert(mt->hiz_mt == NULL);
+   const bool force_all_slices_at_each_lod = brw->gen == 6;
    mt->hiz_mt = intel_miptree_create(brw,
                                      mt->target,
                                      mt->format,
@@ -1418,7 +1420,7 @@ intel_miptree_alloc_hiz(struct brw_context *brw,
                                      true,
                                      mt->num_samples,
                                      INTEL_MIPTREE_TILING_ANY,
-                                     false);
+                                     force_all_slices_at_each_lod);
 
    if (!mt->hiz_mt)
       return false;
