@@ -73,7 +73,7 @@ i915_util_blitter_save_states(struct i915_context *i915)
                                             i915->num_fragment_sampler_views,
                                             i915->fragment_sampler_views);
 }
-
+#
 static void
 i915_surface_copy_render(struct pipe_context *pipe,
                          struct pipe_resource *dst, unsigned dst_level,
@@ -81,52 +81,27 @@ i915_surface_copy_render(struct pipe_context *pipe,
                          struct pipe_resource *src, unsigned src_level,
                          const struct pipe_box *src_box)
 {
-   struct pipe_screen *screen = pipe->screen;
    struct i915_context *i915 = i915_context(pipe);
-   struct i915_texture *dst_tex = i915_texture(dst);
-   struct i915_texture *src_tex = i915_texture(src);
    unsigned src_width0 = src->width0;
    unsigned src_height0 = src->height0;
    unsigned dst_width0 = dst->width0;
    unsigned dst_height0 = dst->height0;
-   unsigned layout;
    struct pipe_box dstbox;
    struct pipe_sampler_view src_templ, *src_view;
    struct pipe_surface dst_templ, *dst_view;
 
    /* Fallback for buffers and npot. */
    if ((dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) ||
-       !util_is_power_of_two(src_width0) || !util_is_power_of_two(src_height0)) {
-      util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
-                                src, src_level, src_box);
-      return;
-   }
-
-   layout = util_format_description(dst_templ.format)->layout;
- 
-   if (!util_blitter_is_copy_supported(i915->blitter, dst, src)) {
-      switch (util_format_get_blocksize(dst_templ.format)) {
-         case 1:
-            dst_templ.format = PIPE_FORMAT_I8_UNORM;
-            break;
-         case 2:
-            dst_templ.format = PIPE_FORMAT_B5G6R5_UNORM;
-            break;
-         case 4:
-            dst_templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
-            break;
-         default:
-            debug_printf("i915: copy_region: Unhandled format: %s. Falling back to software.\n"
-                         "i915: copy_region: Software fallback doesn't work for tiled textures.\n",
-                         util_format_short_name(dst_templ.format));
-      }
-      src_templ.format = dst_templ.format;
-   }
-
-   i915_util_blitter_save_states(i915);
+       !util_is_power_of_two(src_width0) || !util_is_power_of_two(src_height0))
+      goto fallback;
 
    util_blitter_default_dst_texture(&dst_templ, dst, dst_level, dstz);
    util_blitter_default_src_texture(&src_templ, src, src_level);
+
+   if (!util_blitter_is_copy_supported(i915->blitter, dst, src))
+      goto fallback;
+
+   i915_util_blitter_save_states(i915);
 
    dst_view = i915_create_surface_custom(pipe, dst, &dst_templ, dst_width0, dst_height0);
    src_view = i915_create_sampler_view_custom(pipe, src, &src_templ, src_width0, src_height0);
@@ -137,7 +112,12 @@ i915_surface_copy_render(struct pipe_context *pipe,
    util_blitter_blit_generic(i915->blitter, dst_view, &dstbox,
                              src_view, src_box, src_width0, src_height0,
                              PIPE_MASK_RGBAZS, PIPE_TEX_FILTER_NEAREST, NULL);
-}
+   return;
+
+fallback:
+   util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
+                             src, src_level, src_box);
+ }
 
 static void
 i915_clear_render_target_render(struct pipe_context *pipe,
