@@ -35,7 +35,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
-#ifdef HAVE_DRM_PLATFORM
+#ifdef HAVE_LIBDRM
 #include <xf86drm.h>
 #include <drm_fourcc.h>
 #endif
@@ -2001,7 +2001,7 @@ dri2_bind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *disp,
 			     struct wl_display *wl_dpy)
 {
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
-   int ret, flags = 0;
+   int flags = 0;
    uint64_t cap;
 
    (void) drv;
@@ -2012,11 +2012,13 @@ dri2_bind_wayland_display_wl(_EGLDriver *drv, _EGLDisplay *disp,
    wl_drm_callbacks.authenticate =
       (int(*)(void *, uint32_t)) dri2_dpy->vtbl->authenticate;
 
-   ret = drmGetCap(dri2_dpy->fd, DRM_CAP_PRIME, &cap);
-   if (ret == 0 && cap == (DRM_PRIME_CAP_IMPORT | DRM_PRIME_CAP_EXPORT) &&
+#ifdef HAVE_LIBDRM
+   if (drmGetCap(dri2_dpy->fd, DRM_CAP_PRIME, &cap) == 0 &&
+       cap == (DRM_PRIME_CAP_IMPORT | DRM_PRIME_CAP_EXPORT) &&
        dri2_dpy->image->base.version >= 7 &&
        dri2_dpy->image->createImageFromFds != NULL)
       flags |= WAYLAND_DRM_PRIME;
+#endif
 
    dri2_dpy->wl_server_drm =
 	   wayland_drm_init(wl_dpy, dri2_dpy->device_name,
