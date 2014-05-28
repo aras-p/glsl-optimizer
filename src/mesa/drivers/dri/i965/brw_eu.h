@@ -46,6 +46,12 @@ extern "C" {
 
 #define BRW_EU_MAX_INSN_STACK 5
 
+/* A helper for accessing the last instruction emitted.  This makes it easy
+ * to set various bits on an instruction without having to create temporary
+ * variable and assign the emitted instruction to those.
+ */
+#define brw_last_inst (&p->store[p->nr_insn - 1])
+
 struct brw_compile {
    struct brw_instruction *store;
    int store_size;
