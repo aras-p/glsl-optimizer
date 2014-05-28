@@ -1189,11 +1189,10 @@ void brw_NOP(struct brw_compile *p)
  */
 
 struct brw_instruction *brw_JMPI(struct brw_compile *p,
-                                 struct brw_reg dest,
-                                 struct brw_reg src0,
-                                 struct brw_reg src1)
+                                 struct brw_reg index)
 {
-   struct brw_instruction *insn = brw_alu2(p, BRW_OPCODE_JMPI, dest, src0, src1);
+   struct brw_reg ip = brw_ip_reg();
+   struct brw_instruction *insn = brw_alu2(p, BRW_OPCODE_JMPI, ip, ip, index);
 
    insn->header.execution_size = 1;
    insn->header.compression_control = BRW_COMPRESSION_NONE;

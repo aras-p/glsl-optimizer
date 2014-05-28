@@ -152,7 +152,6 @@ ALU2(SHL)
 ALU2(ASR)
 ALU1(F32TO16)
 ALU1(F16TO32)
-ALU2(JMPI)
 ALU2(ADD)
 ALU2(AVG)
 ALU2(MUL)
@@ -336,7 +335,7 @@ struct brw_instruction *brw_CONT(struct brw_compile *p);
 struct brw_instruction *gen6_CONT(struct brw_compile *p);
 struct brw_instruction *gen6_HALT(struct brw_compile *p);
 
-
+struct brw_instruction *brw_JMPI(struct brw_compile *p, struct brw_reg index);
 
 void brw_NOP(struct brw_compile *p);
 
