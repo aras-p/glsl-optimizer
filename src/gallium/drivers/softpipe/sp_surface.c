@@ -36,6 +36,9 @@ static void sp_blit(struct pipe_context *pipe,
 {
    struct softpipe_context *sp = softpipe_context(pipe);
 
+   if (info->render_condition_enable && !softpipe_check_render_cond(sp))
+      return;
+
    if (info->src.resource->nr_samples > 1 &&
        info->dst.resource->nr_samples <= 1 &&
        !util_format_is_depth_or_stencil(info->src.resource->format) &&
