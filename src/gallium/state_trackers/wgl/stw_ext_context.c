@@ -23,7 +23,6 @@
  */
 
 #include <stdio.h>
-#include <assert.h>
 #include <windows.h>
 
 #define WGL_WGLEXT_PROTOTYPES
@@ -143,8 +142,7 @@ wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList)
       /* Open the OPENGL32.DLL library */
       opengl_lib = LoadLibraryA("OPENGL32.DLL");
       if (!opengl_lib) {
-         fprintf(stderr, "wgl: LoadLibrary(OPENGL32.DLL) failed\n");
-         fflush(stderr);
+         _debug_printf("wgl: LoadLibrary(OPENGL32.DLL) failed\n");
          return 0;
       }
 
@@ -152,8 +150,7 @@ wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList)
       wglCreateContext_func = (wglCreateContext_t)
          GetProcAddress(opengl_lib, "wglCreateContext");
       if (!wglCreateContext_func) {
-         fprintf(stderr, "wgl: failed to get wglCreateContext()\n");
-         fflush(stderr);
+         _debug_printf("wgl: failed to get wglCreateContext()\n");
          return 0;
       }
 
@@ -161,8 +158,7 @@ wglCreateContextAttribsARB(HDC hDC, HGLRC hShareContext, const int *attribList)
       wglDeleteContext_func = (wglDeleteContext_t)
          GetProcAddress(opengl_lib, "wglDeleteContext");
       if (!wglDeleteContext_func) {
-         fprintf(stderr, "wgl: failed to get wglDeleteContext()\n");
-         fflush(stderr);
+         _debug_printf("wgl: failed to get wglDeleteContext()\n");
          return 0;
       }
    }
