@@ -503,7 +503,8 @@ struct intel_mipmap_tree *intel_miptree_create(struct brw_context *brw,
                                                GLuint depth0,
 					       bool expect_accelerated_upload,
                                                GLuint num_samples,
-                                               enum intel_miptree_tiling_mode);
+                                               enum intel_miptree_tiling_mode,
+                                               bool force_all_slices_at_each_lod);
 
 struct intel_mipmap_tree *
 intel_miptree_create_layout(struct brw_context *brw,
@@ -515,7 +516,8 @@ intel_miptree_create_layout(struct brw_context *brw,
                             GLuint height0,
                             GLuint depth0,
                             bool for_bo,
-                            GLuint num_samples);
+                            GLuint num_samples,
+                            bool force_all_slices_at_each_lod);
 
 struct intel_mipmap_tree *
 intel_miptree_create_for_bo(struct brw_context *brw,

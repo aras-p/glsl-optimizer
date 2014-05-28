@@ -980,7 +980,8 @@ intel_renderbuffer_move_to_temp(struct brw_context *brw,
                                  width, height, depth,
                                  true,
                                  irb->mt->num_samples,
-                                 INTEL_MIPTREE_TILING_ANY);
+                                 INTEL_MIPTREE_TILING_ANY,
+                                 false);
 
    if (brw_is_hiz_depth_format(brw, new_mt->format)) {
       intel_miptree_alloc_hiz(brw, new_mt);

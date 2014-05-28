@@ -232,7 +232,8 @@ intel_miptree_create_layout(struct brw_context *brw,
                             GLuint height0,
                             GLuint depth0,
                             bool for_bo,
-                            GLuint num_samples)
+                            GLuint num_samples,
+                            bool force_all_slices_at_each_lod)
 {
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
    if (!mt)
@@ -388,7 +389,8 @@ intel_miptree_create_layout(struct brw_context *brw,
                                             mt->logical_depth0,
                                             true,
                                             num_samples,
-                                            INTEL_MIPTREE_TILING_ANY);
+                                            INTEL_MIPTREE_TILING_ANY,
+                                            false);
       if (!mt->stencil_mt) {
 	 intel_miptree_release(&mt);
 	 return NULL;
@@ -405,6 +407,9 @@ intel_miptree_create_layout(struct brw_context *brw,
                        _mesa_get_format_name(mt->format));
       }
    }
+
+   if (force_all_slices_at_each_lod)
+      mt->array_layout = ALL_SLICES_AT_EACH_LOD;
 
    brw_miptree_layout(brw, mt);
 
@@ -560,7 +565,8 @@ intel_miptree_create(struct brw_context *brw,
 		     GLuint depth0,
 		     bool expect_accelerated_upload,
                      GLuint num_samples,
-                     enum intel_miptree_tiling_mode requested_tiling)
+                     enum intel_miptree_tiling_mode requested_tiling,
+                     bool force_all_slices_at_each_lod)
 {
    struct intel_mipmap_tree *mt;
    mesa_format tex_format = format;
@@ -574,7 +580,8 @@ intel_miptree_create(struct brw_context *brw,
    mt = intel_miptree_create_layout(brw, target, format,
 				      first_level, last_level, width0,
 				      height0, depth0,
-				      false, num_samples);
+                                    false, num_samples,
+                                    force_all_slices_at_each_lod);
    /*
     * pitch == 0 || height == 0  indicates the null texture
     */
@@ -685,7 +692,7 @@ intel_miptree_create_for_bo(struct brw_context *brw,
    mt = intel_miptree_create_layout(brw, GL_TEXTURE_2D, format,
                                     0, 0,
                                     width, height, 1,
-                                    true, 0 /* num_samples */);
+                                    true, 0, false);
    if (!mt) {
       free(mt);
       return mt;
@@ -794,7 +801,7 @@ intel_miptree_create_for_renderbuffer(struct brw_context *brw,
 
    mt = intel_miptree_create(brw, target, format, 0, 0,
 			     width, height, depth, true, num_samples,
-                             INTEL_MIPTREE_TILING_ANY);
+                             INTEL_MIPTREE_TILING_ANY, false);
    if (!mt)
       goto fail;
 
@@ -1295,7 +1302,8 @@ intel_miptree_alloc_mcs(struct brw_context *brw,
                                      mt->logical_depth0,
                                      true,
                                      0 /* num_samples */,
-                                     INTEL_MIPTREE_TILING_Y);
+                                     INTEL_MIPTREE_TILING_Y,
+                                     false);
 
    /* From the Ivy Bridge PRM, Vol 2 Part 1 p326:
     *
@@ -1352,7 +1360,8 @@ intel_miptree_alloc_non_msrt_mcs(struct brw_context *brw,
                                      mt->logical_depth0,
                                      true,
                                      0 /* num_samples */,
-                                     INTEL_MIPTREE_TILING_Y);
+                                     INTEL_MIPTREE_TILING_Y,
+                                     false);
 
    return mt->mcs_mt;
 }
@@ -1408,7 +1417,8 @@ intel_miptree_alloc_hiz(struct brw_context *brw,
                                      mt->logical_depth0,
                                      true,
                                      mt->num_samples,
-                                     INTEL_MIPTREE_TILING_ANY);
+                                     INTEL_MIPTREE_TILING_ANY,
+                                     false);
 
    if (!mt->hiz_mt)
       return false;
@@ -1785,7 +1795,8 @@ intel_miptree_map_blit(struct brw_context *brw,
                                   0, 0,
                                   map->w, map->h, 1,
                                   false, 0,
-                                  INTEL_MIPTREE_TILING_NONE);
+                                  INTEL_MIPTREE_TILING_NONE,
+                                  false);
    if (!map->mt) {
       fprintf(stderr, "Failed to allocate blit temporary\n");
       goto fail;
