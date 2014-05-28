@@ -180,6 +180,9 @@ static void lp_blit(struct pipe_context *pipe,
    struct llvmpipe_context *lp = llvmpipe_context(pipe);
    struct pipe_blit_info info = *blit_info;
 
+   if (blit_info->render_condition_enable && !llvmpipe_check_render_cond(lp))
+      return;
+
    if (info.src.resource->nr_samples > 1 &&
        info.dst.resource->nr_samples <= 1 &&
        !util_format_is_depth_or_stencil(info.src.resource->format) &&
