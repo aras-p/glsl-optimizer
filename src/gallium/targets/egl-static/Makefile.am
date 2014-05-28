@@ -66,6 +66,7 @@ egl_gallium_la_SOURCES = \
 	egl_st.c
 
 egl_gallium_la_LIBADD = \
+	$(top_builddir)/src/loader/libloader.la \
 	$(top_builddir)/src/gallium/auxiliary/libgallium.la \
 	$(top_builddir)/src/gallium/drivers/identity/libidentity.la \
 	$(top_builddir)/src/gallium/drivers/trace/libtrace.la \
