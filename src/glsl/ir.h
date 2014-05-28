@@ -152,9 +152,15 @@ public:
    virtual bool equals(ir_instruction *ir, enum ir_node_type ignore = ir_type_unset);
 
 protected:
+   ir_instruction(enum ir_node_type t)
+      : ir_type(t)
+   {
+   }
+
+private:
    ir_instruction()
    {
-      ir_type = ir_type_unset;
+      assert(!"Should not get here.");
    }
 };
 
@@ -281,7 +287,7 @@ public:
    static ir_rvalue *error_value(void *mem_ctx);
 
 protected:
-   ir_rvalue();
+   ir_rvalue(enum ir_node_type t);
 };
 
 
@@ -984,9 +990,8 @@ inline const char *ir_function_signature::function_name() const
 class ir_if : public ir_instruction {
 public:
    ir_if(ir_rvalue *condition)
-      : condition(condition)
+      : ir_instruction(ir_type_if), condition(condition)
    {
-      ir_type = ir_type_if;
    }
 
    virtual ir_if *clone(void *mem_ctx, struct hash_table *ht) const;
@@ -1514,9 +1519,8 @@ public:
    ir_call(ir_function_signature *callee,
 	   ir_dereference_variable *return_deref,
 	   exec_list *actual_parameters)
-      : return_deref(return_deref), callee(callee)
+      : ir_instruction(ir_type_call), return_deref(return_deref), callee(callee)
    {
-      ir_type = ir_type_call;
       assert(callee->return_type != NULL);
       actual_parameters->move_nodes_to(& this->actual_parameters);
       this->use_builtin = callee->is_builtin();
@@ -1579,9 +1583,9 @@ public:
 /*@{*/
 class ir_jump : public ir_instruction {
 protected:
-   ir_jump()
+   ir_jump(enum ir_node_type t)
+      : ir_instruction(t)
    {
-      ir_type = ir_type_unset;
    }
 
 public:
@@ -1594,15 +1598,13 @@ public:
 class ir_return : public ir_jump {
 public:
    ir_return()
-      : value(NULL)
+      : ir_jump(ir_type_return), value(NULL)
    {
-      this->ir_type = ir_type_return;
    }
 
    ir_return(ir_rvalue *value)
-      : value(value)
+      : ir_jump(ir_type_return), value(value)
    {
-      this->ir_type = ir_type_return;
    }
 
    virtual ir_return *clone(void *mem_ctx, struct hash_table *) const;
@@ -1644,8 +1646,8 @@ public:
    };
 
    ir_loop_jump(jump_mode mode)
+      : ir_jump(ir_type_loop_jump)
    {
-      this->ir_type = ir_type_loop_jump;
       this->mode = mode;
    }
 
@@ -1678,14 +1680,14 @@ public:
 class ir_discard : public ir_jump {
 public:
    ir_discard()
+      : ir_jump(ir_type_discard)
    {
-      this->ir_type = ir_type_discard;
       this->condition = NULL;
    }
 
    ir_discard(ir_rvalue *cond)
+      : ir_jump(ir_type_discard)
    {
-      this->ir_type = ir_type_discard;
       this->condition = cond;
    }
 
@@ -1752,10 +1754,10 @@ enum ir_texture_opcode {
 class ir_texture : public ir_rvalue {
 public:
    ir_texture(enum ir_texture_opcode op)
-      : op(op), sampler(NULL), coordinate(NULL), projector(NULL),
+      : ir_rvalue(ir_type_texture),
+        op(op), sampler(NULL), coordinate(NULL), projector(NULL),
         shadow_comparitor(NULL), offset(NULL)
    {
-      this->ir_type = ir_type_texture;
       memset(&lod_info, 0, sizeof(lod_info));
    }
 
@@ -1921,6 +1923,12 @@ public:
     * Get the variable that is ultimately referenced by an r-value
     */
    virtual ir_variable *variable_referenced() const = 0;
+
+protected:
+   ir_dereference(enum ir_node_type t)
+      : ir_rvalue(t)
+   {
+   }
 };
 
 
@@ -2207,8 +2215,8 @@ private:
 class ir_emit_vertex : public ir_instruction {
 public:
    ir_emit_vertex()
+      : ir_instruction(ir_type_emit_vertex)
    {
-      ir_type = ir_type_emit_vertex;
    }
 
    virtual void accept(ir_visitor *v)
@@ -2231,8 +2239,8 @@ public:
 class ir_end_primitive : public ir_instruction {
 public:
    ir_end_primitive()
+      : ir_instruction(ir_type_end_primitive)
    {
-      ir_type = ir_type_end_primitive;
    }
 
    virtual void accept(ir_visitor *v)
