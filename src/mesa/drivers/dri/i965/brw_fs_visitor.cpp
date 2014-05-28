@@ -1486,15 +1486,28 @@ fs_visitor::rescale_texcoord(ir_texture *ir, fs_reg coordinate,
 	 return coordinate;
       }
 
-      scale_x = fs_reg(UNIFORM, uniforms);
-      scale_y = fs_reg(UNIFORM, uniforms + 1);
-
       GLuint index = _mesa_add_state_reference(params,
 					       (gl_state_index *)tokens);
-      stage_prog_data->param[uniforms++] =
-         &prog->Parameters->ParameterValues[index][0].f;
-      stage_prog_data->param[uniforms++] =
-         &prog->Parameters->ParameterValues[index][1].f;
+      /* Try to find existing copies of the texrect scale uniforms. */
+      for (unsigned i = 0; i < uniforms; i++) {
+         if (stage_prog_data->param[i] ==
+             &prog->Parameters->ParameterValues[index][0].f) {
+            scale_x = fs_reg(UNIFORM, i);
+            scale_y = fs_reg(UNIFORM, i + 1);
+            break;
+         }
+      }
+
+      /* If we didn't already set them up, do so now. */
+      if (scale_x.file == BAD_FILE) {
+         scale_x = fs_reg(UNIFORM, uniforms);
+         scale_y = fs_reg(UNIFORM, uniforms + 1);
+
+         stage_prog_data->param[uniforms++] =
+            &prog->Parameters->ParameterValues[index][0].f;
+         stage_prog_data->param[uniforms++] =
+            &prog->Parameters->ParameterValues[index][1].f;
+      }
    }
 
    /* The 965 requires the EU to do the normalization of GL rectangle
