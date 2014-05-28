@@ -203,6 +203,11 @@ brw_miptree_layout_2d(struct intel_mipmap_tree *mt)
       if (mt->compressed)
 	 img_height /= mt->align_h;
 
+      if (mt->array_layout == ALL_SLICES_AT_EACH_LOD) {
+         /* Compact arrays with separated miplevels */
+         img_height *= depth;
+      }
+
       /* Because the images are packed better, the final offset
        * might not be the maximal one:
        */
@@ -238,6 +243,7 @@ brw_miptree_layout_texture_array(struct brw_context *brw,
 				 struct intel_mipmap_tree *mt)
 {
    int h0, h1;
+   unsigned height = mt->physical_height0;
 
    h0 = ALIGN(mt->physical_height0, mt->align_h);
    h1 = ALIGN(minify(mt->physical_height0, 1), mt->align_h);
@@ -251,11 +257,22 @@ brw_miptree_layout_texture_array(struct brw_context *brw,
    brw_miptree_layout_2d(mt);
 
    for (unsigned level = mt->first_level; level <= mt->last_level; level++) {
+      unsigned img_height;
+      img_height = ALIGN(height, mt->align_h);
+      if (mt->compressed)
+         img_height /= mt->align_h;
+
       for (int q = 0; q < mt->physical_depth0; q++) {
-	 intel_miptree_set_image_offset(mt, level, q, 0, q * physical_qpitch);
+         if (mt->array_layout == ALL_SLICES_AT_EACH_LOD) {
+            intel_miptree_set_image_offset(mt, level, q, 0, q * img_height);
+         } else {
+            intel_miptree_set_image_offset(mt, level, q, 0, q * physical_qpitch);
+         }
       }
+      height = minify(height, 1);
    }
-   mt->total_height = physical_qpitch * mt->physical_depth0;
+   if (mt->array_layout == ALL_LOD_IN_EACH_SLICE)
+      mt->total_height = physical_qpitch * mt->physical_depth0;
 
    align_cube(mt);
 }
