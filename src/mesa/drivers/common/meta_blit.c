@@ -624,13 +624,20 @@ _mesa_meta_bind_rb_as_tex_image(struct gl_context *ctx,
                                 GLenum *target)
 {
    struct gl_texture_image *texImage;
+   GLuint tempTex;
 
    if (rb->NumSamples > 1)
       *target = GL_TEXTURE_2D_MULTISAMPLE;
    else
       *target = GL_TEXTURE_2D;
 
-   _mesa_GenTextures(1, tex);
+   tempTex = 0;
+   _mesa_GenTextures(1, &tempTex);
+   if (tempTex == 0)
+      return false;
+
+   *tex = tempTex;
+
    _mesa_BindTexture(*target, *tex);
    *texObj = _mesa_lookup_texture(ctx, *tex);
    texImage = _mesa_get_tex_image(ctx, *texObj, *target, 0);
