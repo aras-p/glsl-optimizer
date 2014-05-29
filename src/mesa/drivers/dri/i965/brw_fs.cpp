@@ -2587,181 +2587,187 @@ fs_visitor::dump_instructions()
 void
 fs_visitor::dump_instruction(backend_instruction *be_inst)
 {
+   dump_instruction(be_inst, stderr);
+}
+
+void
+fs_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
+{
    fs_inst *inst = (fs_inst *)be_inst;
 
    if (inst->predicate) {
-      fprintf(stderr, "(%cf0.%d) ",
+      fprintf(file, "(%cf0.%d) ",
              inst->predicate_inverse ? '-' : '+',
              inst->flag_subreg);
    }
 
-   fprintf(stderr, "%s", brw_instruction_name(inst->opcode));
+   fprintf(file, "%s", brw_instruction_name(inst->opcode));
    if (inst->saturate)
-      fprintf(stderr, ".sat");
+      fprintf(file, ".sat");
    if (inst->conditional_mod) {
-      fprintf(stderr, "%s", conditional_modifier[inst->conditional_mod]);
+      fprintf(file, "%s", conditional_modifier[inst->conditional_mod]);
       if (!inst->predicate &&
           (brw->gen < 5 || (inst->opcode != BRW_OPCODE_SEL &&
                               inst->opcode != BRW_OPCODE_IF &&
                               inst->opcode != BRW_OPCODE_WHILE))) {
-         fprintf(stderr, ".f0.%d", inst->flag_subreg);
+         fprintf(file, ".f0.%d", inst->flag_subreg);
       }
    }
-   fprintf(stderr, " ");
+   fprintf(file, " ");
 
 
    switch (inst->dst.file) {
    case GRF:
-      fprintf(stderr, "vgrf%d", inst->dst.reg);
+      fprintf(file, "vgrf%d", inst->dst.reg);
       if (virtual_grf_sizes[inst->dst.reg] != 1 ||
           inst->dst.subreg_offset)
-         fprintf(stderr, "+%d.%d",
+         fprintf(file, "+%d.%d",
                  inst->dst.reg_offset, inst->dst.subreg_offset);
       break;
    case MRF:
-      fprintf(stderr, "m%d", inst->dst.reg);
+      fprintf(file, "m%d", inst->dst.reg);
       break;
    case BAD_FILE:
-      fprintf(stderr, "(null)");
+      fprintf(file, "(null)");
       break;
    case UNIFORM:
-      fprintf(stderr, "***u%d***", inst->dst.reg + inst->dst.reg_offset);
+      fprintf(file, "***u%d***", inst->dst.reg + inst->dst.reg_offset);
       break;
    case HW_REG:
       if (inst->dst.fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE) {
          switch (inst->dst.fixed_hw_reg.nr) {
          case BRW_ARF_NULL:
-            fprintf(stderr, "null");
+            fprintf(file, "null");
             break;
          case BRW_ARF_ADDRESS:
-            fprintf(stderr, "a0.%d", inst->dst.fixed_hw_reg.subnr);
+            fprintf(file, "a0.%d", inst->dst.fixed_hw_reg.subnr);
             break;
          case BRW_ARF_ACCUMULATOR:
-            fprintf(stderr, "acc%d", inst->dst.fixed_hw_reg.subnr);
+            fprintf(file, "acc%d", inst->dst.fixed_hw_reg.subnr);
             break;
          case BRW_ARF_FLAG:
-            fprintf(stderr, "f%d.%d", inst->dst.fixed_hw_reg.nr & 0xf,
+            fprintf(file, "f%d.%d", inst->dst.fixed_hw_reg.nr & 0xf,
                              inst->dst.fixed_hw_reg.subnr);
             break;
          default:
-            fprintf(stderr, "arf%d.%d", inst->dst.fixed_hw_reg.nr & 0xf,
+            fprintf(file, "arf%d.%d", inst->dst.fixed_hw_reg.nr & 0xf,
                                inst->dst.fixed_hw_reg.subnr);
             break;
          }
       } else {
-         fprintf(stderr, "hw_reg%d", inst->dst.fixed_hw_reg.nr);
+         fprintf(file, "hw_reg%d", inst->dst.fixed_hw_reg.nr);
       }
       if (inst->dst.fixed_hw_reg.subnr)
-         fprintf(stderr, "+%d", inst->dst.fixed_hw_reg.subnr);
+         fprintf(file, "+%d", inst->dst.fixed_hw_reg.subnr);
       break;
    default:
-      fprintf(stderr, "???");
+      fprintf(file, "???");
       break;
    }
-   fprintf(stderr, ":%s, ", brw_reg_type_letters(inst->dst.type));
+   fprintf(file, ":%s, ", brw_reg_type_letters(inst->dst.type));
 
    for (int i = 0; i < 3 && inst->src[i].file != BAD_FILE; i++) {
       if (inst->src[i].negate)
-         fprintf(stderr, "-");
+         fprintf(file, "-");
       if (inst->src[i].abs)
-         fprintf(stderr, "|");
+         fprintf(file, "|");
       switch (inst->src[i].file) {
       case GRF:
-         fprintf(stderr, "vgrf%d", inst->src[i].reg);
+         fprintf(file, "vgrf%d", inst->src[i].reg);
          if (virtual_grf_sizes[inst->src[i].reg] != 1 ||
              inst->src[i].subreg_offset)
-            fprintf(stderr, "+%d.%d", inst->src[i].reg_offset,
+            fprintf(file, "+%d.%d", inst->src[i].reg_offset,
                     inst->src[i].subreg_offset);
          break;
       case MRF:
-         fprintf(stderr, "***m%d***", inst->src[i].reg);
+         fprintf(file, "***m%d***", inst->src[i].reg);
          break;
       case UNIFORM:
-         fprintf(stderr, "u%d", inst->src[i].reg + inst->src[i].reg_offset);
+         fprintf(file, "u%d", inst->src[i].reg + inst->src[i].reg_offset);
          if (inst->src[i].reladdr) {
-            fprintf(stderr, "+reladdr");
+            fprintf(file, "+reladdr");
          } else if (virtual_grf_sizes[inst->src[i].reg] != 1 ||
              inst->src[i].subreg_offset) {
-            fprintf(stderr, "+%d.%d", inst->src[i].reg_offset,
+            fprintf(file, "+%d.%d", inst->src[i].reg_offset,
                     inst->src[i].subreg_offset);
          }
          break;
       case BAD_FILE:
-         fprintf(stderr, "(null)");
+         fprintf(file, "(null)");
          break;
       case IMM:
          switch (inst->src[i].type) {
          case BRW_REGISTER_TYPE_F:
-            fprintf(stderr, "%ff", inst->src[i].imm.f);
+            fprintf(file, "%ff", inst->src[i].imm.f);
             break;
          case BRW_REGISTER_TYPE_D:
-            fprintf(stderr, "%dd", inst->src[i].imm.i);
+            fprintf(file, "%dd", inst->src[i].imm.i);
             break;
          case BRW_REGISTER_TYPE_UD:
-            fprintf(stderr, "%uu", inst->src[i].imm.u);
+            fprintf(file, "%uu", inst->src[i].imm.u);
             break;
          default:
-            fprintf(stderr, "???");
+            fprintf(file, "???");
             break;
          }
          break;
       case HW_REG:
          if (inst->src[i].fixed_hw_reg.negate)
-            fprintf(stderr, "-");
+            fprintf(file, "-");
          if (inst->src[i].fixed_hw_reg.abs)
-            fprintf(stderr, "|");
+            fprintf(file, "|");
          if (inst->src[i].fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE) {
             switch (inst->src[i].fixed_hw_reg.nr) {
             case BRW_ARF_NULL:
-               fprintf(stderr, "null");
+               fprintf(file, "null");
                break;
             case BRW_ARF_ADDRESS:
-               fprintf(stderr, "a0.%d", inst->src[i].fixed_hw_reg.subnr);
+               fprintf(file, "a0.%d", inst->src[i].fixed_hw_reg.subnr);
                break;
             case BRW_ARF_ACCUMULATOR:
-               fprintf(stderr, "acc%d", inst->src[i].fixed_hw_reg.subnr);
+               fprintf(file, "acc%d", inst->src[i].fixed_hw_reg.subnr);
                break;
             case BRW_ARF_FLAG:
-               fprintf(stderr, "f%d.%d", inst->src[i].fixed_hw_reg.nr & 0xf,
+               fprintf(file, "f%d.%d", inst->src[i].fixed_hw_reg.nr & 0xf,
                                 inst->src[i].fixed_hw_reg.subnr);
                break;
             default:
-               fprintf(stderr, "arf%d.%d", inst->src[i].fixed_hw_reg.nr & 0xf,
+               fprintf(file, "arf%d.%d", inst->src[i].fixed_hw_reg.nr & 0xf,
                                   inst->src[i].fixed_hw_reg.subnr);
                break;
             }
          } else {
-            fprintf(stderr, "hw_reg%d", inst->src[i].fixed_hw_reg.nr);
+            fprintf(file, "hw_reg%d", inst->src[i].fixed_hw_reg.nr);
          }
          if (inst->src[i].fixed_hw_reg.subnr)
-            fprintf(stderr, "+%d", inst->src[i].fixed_hw_reg.subnr);
+            fprintf(file, "+%d", inst->src[i].fixed_hw_reg.subnr);
          if (inst->src[i].fixed_hw_reg.abs)
-            fprintf(stderr, "|");
+            fprintf(file, "|");
          break;
       default:
-         fprintf(stderr, "???");
+         fprintf(file, "???");
          break;
       }
       if (inst->src[i].abs)
-         fprintf(stderr, "|");
+         fprintf(file, "|");
 
       if (inst->src[i].file != IMM) {
-         fprintf(stderr, ":%s", brw_reg_type_letters(inst->src[i].type));
+         fprintf(file, ":%s", brw_reg_type_letters(inst->src[i].type));
       }
 
       if (i < 2 && inst->src[i + 1].file != BAD_FILE)
-         fprintf(stderr, ", ");
+         fprintf(file, ", ");
    }
 
-   fprintf(stderr, " ");
+   fprintf(file, " ");
 
    if (inst->force_uncompressed)
-      fprintf(stderr, "1sthalf ");
+      fprintf(file, "1sthalf ");
 
    if (inst->force_sechalf)
-      fprintf(stderr, "2ndhalf ");
+      fprintf(file, "2ndhalf ");
 
-   fprintf(stderr, "\n");
+   fprintf(file, "\n");
 }
 
 /**

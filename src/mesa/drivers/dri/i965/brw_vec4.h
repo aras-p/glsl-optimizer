@@ -594,6 +594,7 @@ public:
    bool process_move_condition(ir_rvalue *ir);
 
    void dump_instruction(backend_instruction *inst);
+   void dump_instruction(backend_instruction *inst, FILE *file);
 
    void visit_atomic_counter_intrinsic(ir_call *ir);
 

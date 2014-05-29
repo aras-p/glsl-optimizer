@@ -1261,168 +1261,174 @@ vec4_visitor::split_virtual_grfs()
 void
 vec4_visitor::dump_instruction(backend_instruction *be_inst)
 {
+   dump_instruction(be_inst, stderr);
+}
+
+void
+vec4_visitor::dump_instruction(backend_instruction *be_inst, FILE *file)
+{
    vec4_instruction *inst = (vec4_instruction *)be_inst;
 
    if (inst->predicate) {
-      fprintf(stderr, "(%cf0) ",
+      fprintf(file, "(%cf0) ",
              inst->predicate_inverse ? '-' : '+');
    }
 
-   fprintf(stderr, "%s", brw_instruction_name(inst->opcode));
+   fprintf(file, "%s", brw_instruction_name(inst->opcode));
    if (inst->conditional_mod) {
-      fprintf(stderr, "%s", conditional_modifier[inst->conditional_mod]);
+      fprintf(file, "%s", conditional_modifier[inst->conditional_mod]);
    }
-   fprintf(stderr, " ");
+   fprintf(file, " ");
 
    switch (inst->dst.file) {
    case GRF:
-      fprintf(stderr, "vgrf%d.%d", inst->dst.reg, inst->dst.reg_offset);
+      fprintf(file, "vgrf%d.%d", inst->dst.reg, inst->dst.reg_offset);
       break;
    case MRF:
-      fprintf(stderr, "m%d", inst->dst.reg);
+      fprintf(file, "m%d", inst->dst.reg);
       break;
    case HW_REG:
       if (inst->dst.fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE) {
          switch (inst->dst.fixed_hw_reg.nr) {
          case BRW_ARF_NULL:
-            fprintf(stderr, "null");
+            fprintf(file, "null");
             break;
          case BRW_ARF_ADDRESS:
-            fprintf(stderr, "a0.%d", inst->dst.fixed_hw_reg.subnr);
+            fprintf(file, "a0.%d", inst->dst.fixed_hw_reg.subnr);
             break;
          case BRW_ARF_ACCUMULATOR:
-            fprintf(stderr, "acc%d", inst->dst.fixed_hw_reg.subnr);
+            fprintf(file, "acc%d", inst->dst.fixed_hw_reg.subnr);
             break;
          case BRW_ARF_FLAG:
-            fprintf(stderr, "f%d.%d", inst->dst.fixed_hw_reg.nr & 0xf,
+            fprintf(file, "f%d.%d", inst->dst.fixed_hw_reg.nr & 0xf,
                              inst->dst.fixed_hw_reg.subnr);
             break;
          default:
-            fprintf(stderr, "arf%d.%d", inst->dst.fixed_hw_reg.nr & 0xf,
+            fprintf(file, "arf%d.%d", inst->dst.fixed_hw_reg.nr & 0xf,
                                inst->dst.fixed_hw_reg.subnr);
             break;
          }
       } else {
-         fprintf(stderr, "hw_reg%d", inst->dst.fixed_hw_reg.nr);
+         fprintf(file, "hw_reg%d", inst->dst.fixed_hw_reg.nr);
       }
       if (inst->dst.fixed_hw_reg.subnr)
-         fprintf(stderr, "+%d", inst->dst.fixed_hw_reg.subnr);
+         fprintf(file, "+%d", inst->dst.fixed_hw_reg.subnr);
       break;
    case BAD_FILE:
-      fprintf(stderr, "(null)");
+      fprintf(file, "(null)");
       break;
    default:
-      fprintf(stderr, "???");
+      fprintf(file, "???");
       break;
    }
    if (inst->dst.writemask != WRITEMASK_XYZW) {
-      fprintf(stderr, ".");
+      fprintf(file, ".");
       if (inst->dst.writemask & 1)
-         fprintf(stderr, "x");
+         fprintf(file, "x");
       if (inst->dst.writemask & 2)
-         fprintf(stderr, "y");
+         fprintf(file, "y");
       if (inst->dst.writemask & 4)
-         fprintf(stderr, "z");
+         fprintf(file, "z");
       if (inst->dst.writemask & 8)
-         fprintf(stderr, "w");
+         fprintf(file, "w");
    }
-   fprintf(stderr, ":%s, ", brw_reg_type_letters(inst->dst.type));
+   fprintf(file, ":%s, ", brw_reg_type_letters(inst->dst.type));
 
    for (int i = 0; i < 3 && inst->src[i].file != BAD_FILE; i++) {
       if (inst->src[i].negate)
-         fprintf(stderr, "-");
+         fprintf(file, "-");
       if (inst->src[i].abs)
-         fprintf(stderr, "|");
+         fprintf(file, "|");
       switch (inst->src[i].file) {
       case GRF:
-         fprintf(stderr, "vgrf%d", inst->src[i].reg);
+         fprintf(file, "vgrf%d", inst->src[i].reg);
          break;
       case ATTR:
-         fprintf(stderr, "attr%d", inst->src[i].reg);
+         fprintf(file, "attr%d", inst->src[i].reg);
          break;
       case UNIFORM:
-         fprintf(stderr, "u%d", inst->src[i].reg);
+         fprintf(file, "u%d", inst->src[i].reg);
          break;
       case IMM:
          switch (inst->src[i].type) {
          case BRW_REGISTER_TYPE_F:
-            fprintf(stderr, "%fF", inst->src[i].imm.f);
+            fprintf(file, "%fF", inst->src[i].imm.f);
             break;
          case BRW_REGISTER_TYPE_D:
-            fprintf(stderr, "%dD", inst->src[i].imm.i);
+            fprintf(file, "%dD", inst->src[i].imm.i);
             break;
          case BRW_REGISTER_TYPE_UD:
-            fprintf(stderr, "%uU", inst->src[i].imm.u);
+            fprintf(file, "%uU", inst->src[i].imm.u);
             break;
          default:
-            fprintf(stderr, "???");
+            fprintf(file, "???");
             break;
          }
          break;
       case HW_REG:
          if (inst->src[i].fixed_hw_reg.negate)
-            fprintf(stderr, "-");
+            fprintf(file, "-");
          if (inst->src[i].fixed_hw_reg.abs)
-            fprintf(stderr, "|");
+            fprintf(file, "|");
          if (inst->src[i].fixed_hw_reg.file == BRW_ARCHITECTURE_REGISTER_FILE) {
             switch (inst->src[i].fixed_hw_reg.nr) {
             case BRW_ARF_NULL:
-               fprintf(stderr, "null");
+               fprintf(file, "null");
                break;
             case BRW_ARF_ADDRESS:
-               fprintf(stderr, "a0.%d", inst->src[i].fixed_hw_reg.subnr);
+               fprintf(file, "a0.%d", inst->src[i].fixed_hw_reg.subnr);
                break;
             case BRW_ARF_ACCUMULATOR:
-               fprintf(stderr, "acc%d", inst->src[i].fixed_hw_reg.subnr);
+               fprintf(file, "acc%d", inst->src[i].fixed_hw_reg.subnr);
                break;
             case BRW_ARF_FLAG:
-               fprintf(stderr, "f%d.%d", inst->src[i].fixed_hw_reg.nr & 0xf,
+               fprintf(file, "f%d.%d", inst->src[i].fixed_hw_reg.nr & 0xf,
                                 inst->src[i].fixed_hw_reg.subnr);
                break;
             default:
-               fprintf(stderr, "arf%d.%d", inst->src[i].fixed_hw_reg.nr & 0xf,
+               fprintf(file, "arf%d.%d", inst->src[i].fixed_hw_reg.nr & 0xf,
                                   inst->src[i].fixed_hw_reg.subnr);
                break;
             }
          } else {
-            fprintf(stderr, "hw_reg%d", inst->src[i].fixed_hw_reg.nr);
+            fprintf(file, "hw_reg%d", inst->src[i].fixed_hw_reg.nr);
          }
          if (inst->src[i].fixed_hw_reg.subnr)
-            fprintf(stderr, "+%d", inst->src[i].fixed_hw_reg.subnr);
+            fprintf(file, "+%d", inst->src[i].fixed_hw_reg.subnr);
          if (inst->src[i].fixed_hw_reg.abs)
-            fprintf(stderr, "|");
+            fprintf(file, "|");
          break;
       case BAD_FILE:
-         fprintf(stderr, "(null)");
+         fprintf(file, "(null)");
          break;
       default:
-         fprintf(stderr, "???");
+         fprintf(file, "???");
          break;
       }
 
       if (virtual_grf_sizes[inst->src[i].reg] != 1)
-         fprintf(stderr, ".%d", inst->src[i].reg_offset);
+         fprintf(file, ".%d", inst->src[i].reg_offset);
 
       if (inst->src[i].file != IMM) {
          static const char *chans[4] = {"x", "y", "z", "w"};
-         fprintf(stderr, ".");
+         fprintf(file, ".");
          for (int c = 0; c < 4; c++) {
-            fprintf(stderr, "%s", chans[BRW_GET_SWZ(inst->src[i].swizzle, c)]);
+            fprintf(file, "%s", chans[BRW_GET_SWZ(inst->src[i].swizzle, c)]);
          }
       }
 
       if (inst->src[i].abs)
-         fprintf(stderr, "|");
+         fprintf(file, "|");
 
       if (inst->src[i].file != IMM) {
-         fprintf(stderr, ":%s", brw_reg_type_letters(inst->src[i].type));
+         fprintf(file, ":%s", brw_reg_type_letters(inst->src[i].type));
       }
 
       if (i < 2 && inst->src[i + 1].file != BAD_FILE)
-         fprintf(stderr, ", ");
+         fprintf(file, ", ");
    }
 
-   fprintf(stderr, "\n");
+   fprintf(file, "\n");
 }
 
 
