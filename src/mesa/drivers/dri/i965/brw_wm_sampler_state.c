@@ -55,9 +55,16 @@ translate_wrap_mode(struct brw_context *brw, GLenum wrap, bool using_nearest)
       /* GL_CLAMP is the weird mode where coordinates are clamped to
        * [0.0, 1.0], so linear filtering of coordinates outside of
        * [0.0, 1.0] give you half edge texel value and half border
-       * color.  The fragment shader will clamp the coordinates, and
-       * we set clamp_border here, which gets the result desired.  We
-       * just use clamp(_to_edge) for nearest, because for nearest
+       * color.
+       *
+       * Gen8+ supports this natively.
+       */
+      if (brw->gen >= 8)
+         return GEN8_TEXCOORDMODE_HALF_BORDER;
+
+      /* On Gen4-7.5, we clamp the coordinates in the fragment shader
+       * and set clamp_border here, which gets the result desired.
+       * We just use clamp(_to_edge) for nearest, because for nearest
        * clamping to 1.0 gives border color instead of the desired
        * edge texels.
        */

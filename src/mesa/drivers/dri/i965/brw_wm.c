@@ -347,7 +347,8 @@ brw_populate_sampler_prog_key_data(struct gl_context *ctx,
          if (alpha_depth || (brw->gen < 8 && !brw->is_haswell))
             key->swizzles[s] = brw_get_texture_swizzle(ctx, t);
 
-	 if (sampler->MinFilter != GL_NEAREST &&
+	 if (brw->gen < 8 &&
+             sampler->MinFilter != GL_NEAREST &&
 	     sampler->MagFilter != GL_NEAREST) {
 	    if (sampler->WrapS == GL_CLAMP)
 	       key->gl_clamp_mask[0] |= 1 << s;
