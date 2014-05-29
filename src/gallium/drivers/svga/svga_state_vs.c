@@ -100,6 +100,29 @@ get_dummy_vertex_shader(void)
 
 
 /**
+ * Replace the given shader's instruction with a simple / dummy shader.
+ * We use this when normal shader translation fails.
+ */
+static struct svga_shader_variant *
+get_compiled_dummy_vertex_shader(struct svga_vertex_shader *vs,
+                                 const struct svga_vs_compile_key *key)
+{
+   const struct tgsi_token *dummy = get_dummy_vertex_shader();
+   struct svga_shader_variant *variant;
+
+   if (!dummy) {
+      return NULL;
+   }
+
+   FREE((void *) vs->base.tokens);
+   vs->base.tokens = dummy;
+
+   variant = svga_translate_vertex_program(vs, key);
+   return variant;
+}
+
+
+/**
  * Translate TGSI shader into an svga shader variant.
  */
 static enum pipe_error
@@ -114,16 +137,21 @@ compile_vs(struct svga_context *svga,
    variant = svga_translate_vertex_program( vs, key );
    if (variant == NULL) {
       /* some problem during translation, try the dummy shader */
-      const struct tgsi_token *dummy = get_dummy_vertex_shader();
-      if (!dummy) {
-         ret = PIPE_ERROR_OUT_OF_MEMORY;
+      variant = get_compiled_dummy_vertex_shader(vs, key);
+      if (!variant) {
+         ret = PIPE_ERROR;
          goto fail;
       }
-      debug_printf("Failed to compile vertex shader, using dummy shader instead.\n");
-      FREE((void *) vs->base.tokens);
-      vs->base.tokens = dummy;
-      variant = svga_translate_vertex_program(vs, key);
-      if (variant == NULL) {
+   }
+
+   if (svga_shader_too_large(svga, variant)) {
+      /* too big, use dummy shader */
+      debug_printf("Shader too large (%lu bytes),"
+                   " using dummy shader instead.\n",
+                   (unsigned long ) variant->nr_tokens
+                   * sizeof(variant->tokens[0]));
+      variant = get_compiled_dummy_vertex_shader(vs, key);
+      if (!variant) {
          ret = PIPE_ERROR;
          goto fail;
       }
