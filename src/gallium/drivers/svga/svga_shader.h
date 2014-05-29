@@ -41,4 +41,25 @@ svga_destroy_shader_variant(struct svga_context *svga,
                             struct svga_shader_variant *variant);
 
 
+/**
+ * Check if a shader's bytecode exceeds the device limits.
+ */
+static INLINE boolean
+svga_shader_too_large(const struct svga_context *svga,
+                      const struct svga_shader_variant *variant)
+{
+   if (svga_have_gb_objects(svga)) {
+      return FALSE;
+   }
+
+   if (variant->nr_tokens * sizeof(variant->tokens[0])
+       + sizeof(SVGA3dCmdDefineShader) + sizeof(SVGA3dCmdHeader)
+       < SVGA_CB_MAX_COMMAND_SIZE) {
+      return FALSE;
+   }
+
+   return TRUE;
+}
+
+
 #endif /* SVGA_SHADER_H */
