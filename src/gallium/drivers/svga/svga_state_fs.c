@@ -157,9 +157,7 @@ compile_fs(struct svga_context *svga,
       }
    }
 
-   if (variant->nr_tokens * sizeof(variant->tokens[0])
-       + sizeof(SVGA3dCmdDefineShader) + sizeof(SVGA3dCmdHeader)
-       >= SVGA_CB_MAX_COMMAND_SIZE) {
+   if (svga_shader_too_large(svga, variant)) {
       /* too big, use dummy shader */
       debug_printf("Shader too large (%lu bytes),"
                    " using dummy shader instead.\n",
