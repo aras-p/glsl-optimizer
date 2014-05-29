@@ -103,11 +103,11 @@ gen7_update_sampler_state(struct brw_context *brw, int unit, int ss_index,
       }
    }
 
-   sampler->ss3.r_wrap_mode = translate_wrap_mode(gl_sampler->WrapR,
+   sampler->ss3.r_wrap_mode = translate_wrap_mode(brw, gl_sampler->WrapR,
 						  using_nearest);
-   sampler->ss3.s_wrap_mode = translate_wrap_mode(gl_sampler->WrapS,
+   sampler->ss3.s_wrap_mode = translate_wrap_mode(brw, gl_sampler->WrapS,
 						  using_nearest);
-   sampler->ss3.t_wrap_mode = translate_wrap_mode(gl_sampler->WrapT,
+   sampler->ss3.t_wrap_mode = translate_wrap_mode(brw, gl_sampler->WrapT,
 						  using_nearest);
 
    /* Cube-maps on 965 and later must use the same wrap mode for all 3

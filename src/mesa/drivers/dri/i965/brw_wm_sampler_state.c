@@ -46,7 +46,7 @@
 
 
 uint32_t
-translate_wrap_mode(GLenum wrap, bool using_nearest)
+translate_wrap_mode(struct brw_context *brw, GLenum wrap, bool using_nearest)
 {
    switch( wrap ) {
    case GL_REPEAT:
@@ -276,11 +276,11 @@ static void brw_update_sampler_state(struct brw_context *brw,
       }
    }
 
-   sampler->ss1.r_wrap_mode = translate_wrap_mode(gl_sampler->WrapR,
+   sampler->ss1.r_wrap_mode = translate_wrap_mode(brw, gl_sampler->WrapR,
 						  using_nearest);
-   sampler->ss1.s_wrap_mode = translate_wrap_mode(gl_sampler->WrapS,
+   sampler->ss1.s_wrap_mode = translate_wrap_mode(brw, gl_sampler->WrapS,
 						  using_nearest);
-   sampler->ss1.t_wrap_mode = translate_wrap_mode(gl_sampler->WrapT,
+   sampler->ss1.t_wrap_mode = translate_wrap_mode(brw, gl_sampler->WrapT,
 						  using_nearest);
 
    if (brw->gen >= 6 &&

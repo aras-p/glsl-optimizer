@@ -243,7 +243,8 @@ void gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
 void gen8_init_vtable_surface_functions(struct brw_context *brw);
 
 /* brw_wm_sampler_state.c */
-uint32_t translate_wrap_mode(GLenum wrap, bool using_nearest);
+uint32_t translate_wrap_mode(struct brw_context *brw,
+                             GLenum wrap, bool using_nearest);
 void upload_default_color(struct brw_context *brw,
 			  struct gl_sampler_object *sampler,
 			  int unit,
