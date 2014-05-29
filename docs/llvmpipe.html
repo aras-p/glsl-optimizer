@@ -43,11 +43,7 @@ It's the fastest software rasterizer for Mesa.
    </p>
 </li>
 <li>
-   <p>LLVM: version 2.9 recommended; 2.6 or later required.</p>
-   <p><b>NOTE</b>: LLVM 2.8 and earlier will not work on systems that support the
-   Intel AVX extensions (e.g. Sandybridge).  LLVM's code generator will
-   fail when trying to emit AVX instructions.  This was fixed in LLVM 2.9.
-   </p>
+   <p>LLVM: version 3.4 recommended; 3.1 or later required.</p>
    <p>
    For Linux, on a recent Debian based distribution do:
    </p>
@@ -101,13 +97,15 @@ but the rest of these instructions assume that scons is used.
 For Windows the procedure is similar except the target:
 
 <pre>
-  scons build=debug libgl-gdi
+  scons platform=windows build=debug libgl-gdi
 </pre>
 
 
 <h1>Using</h1>
 
-On Linux, building will create a drop-in alternative for libGL.so into
+<h2>Linux</h2>
+
+<p>On Linux, building will create a drop-in alternative for libGL.so into</p>
 
 <pre>
   build/foo/gallium/targets/libgl-xlib/libGL.so
@@ -117,15 +115,45 @@ or
   lib/gallium/libGL.so
 </pre>
 
-To use it set the LD_LIBRARY_PATH environment variable accordingly.
+<p>To use it set the LD_LIBRARY_PATH environment variable accordingly.</p>
 
-For performance evaluation pass debug=no to scons, and use the corresponding
-lib directory without the "-debug" suffix.
+<p>For performance evaluation pass build=release to scons, and use the corresponding
+lib directory without the "-debug" suffix.</p>
 
-On Windows, building will create a drop-in alternative for opengl32.dll. To use
-it put it in the same directory as the application. It can also be used by
+
+<h2>Windows</h2>
+
+<p>
+On Windows, building will create
+<code>build/windows-x86-debug/gallium/targets/libgl-gdi/opengl32.dll</code>
+which is a drop-in alternative for system's <code>opengl32.dll</code>.  To use
+it put it in the same directory as your application.  It can also be used by
 replacing the native ICD driver, but it's quite an advanced usage, so if you
 need to ask, don't even try it.
+</p>
+
+<p>
+There is however an easy way to replace the OpenGL software renderer that comes
+with Microsoft Windows 7 (or later) with llvmpipe (that is, on systems without
+any OpenGL drivers):
+</p>
+
+<ul>
+  <li><p>copy build/windows-x86-debug/gallium/targets/libgl-gdi/opengl32.dll to C:\Windows\SysWOW64\mesadrv.dll</p></li>
+  <li><p>load this registry settings:</p>
+  <pre>REGEDIT4
+
+; http://technet.microsoft.com/en-us/library/cc749368.aspx
+; http://www.msfn.org/board/topic/143241-portable-windows-7-build-from-winpe-30/page-5#entry942596
+[HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows NT\CurrentVersion\OpenGLDrivers\MSOGL]
+"DLL"="mesadrv.dll"
+"DriverVersion"=dword:00000001
+"Flags"=dword:00000001
+"Version"=dword:00000002
+</pre>
+  </li>
+  <li>Ditto for 64 bits drivers if you need them.</li>
+</ul>
 
 
 <h1>Profiling</h1>
