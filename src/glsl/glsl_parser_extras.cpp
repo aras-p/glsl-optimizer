@@ -1483,6 +1483,26 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
          ;
 
       validate_ir_tree(shader->ir);
+
+      enum ir_variable_mode other;
+      switch (shader->Stage) {
+      case MESA_SHADER_VERTEX:
+         other = ir_var_shader_in;
+         break;
+      case MESA_SHADER_FRAGMENT:
+         other = ir_var_shader_out;
+         break;
+      default:
+         /* Something invalid to ensure optimize_dead_builtin_uniforms
+          * doesn't remove anything other than uniforms or constants.
+          */
+         other = ir_var_mode_count;
+         break;
+      }
+
+      optimize_dead_builtin_variables(shader->ir, other);
+
+      validate_ir_tree(shader->ir);
    }
 
    if (shader->InfoLog)

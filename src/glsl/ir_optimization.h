@@ -125,6 +125,8 @@ void lower_named_interface_blocks(void *mem_ctx, gl_shader *shader);
 bool optimize_redundant_jumps(exec_list *instructions);
 bool optimize_split_arrays(exec_list *instructions, bool linked);
 bool lower_offset_arrays(exec_list *instructions);
+void optimize_dead_builtin_variables(exec_list *instructions,
+                                     enum ir_variable_mode other);
 
 bool lower_vertex_id(gl_shader *shader);
 
