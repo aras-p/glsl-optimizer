@@ -700,6 +700,14 @@ ir_validate::visit(ir_variable *ir)
       abort();
    }
 
+   if (ir->data.mode == ir_var_uniform
+       && strncmp(ir->name, "gl_", 3) == 0
+       && ir->state_slots == NULL) {
+      printf("built-in uniform has no state\n");
+      ir->print();
+      abort();
+   }
+
    return visit_continue;
 }
 
