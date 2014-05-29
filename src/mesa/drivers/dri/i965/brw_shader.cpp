@@ -700,11 +700,29 @@ backend_instruction::has_side_effects() const
 void
 backend_visitor::dump_instructions()
 {
+   dump_instructions(NULL);
+}
+
+void
+backend_visitor::dump_instructions(const char *name)
+{
+   FILE *file = stderr;
+   if (name && geteuid() != 0) {
+      file = fopen(name, "w");
+      if (!file)
+         file = stderr;
+   }
+
    int ip = 0;
    foreach_list(node, &this->instructions) {
       backend_instruction *inst = (backend_instruction *)node;
-      fprintf(stderr, "%d: ", ip++);
-      dump_instruction(inst);
+      if (!name)
+         fprintf(stderr, "%d: ", ip++);
+      dump_instruction(inst, file);
+   }
+
+   if (file != stderr) {
+      fclose(file);
    }
 }
 

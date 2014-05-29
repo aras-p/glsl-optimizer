@@ -484,6 +484,7 @@ public:
    int implied_mrf_writes(fs_inst *inst);
 
    virtual void dump_instructions();
+   virtual void dump_instructions(const char *name);
    void dump_instruction(backend_instruction *inst);
    void dump_instruction(backend_instruction *inst, FILE *file);
 

@@ -2571,17 +2571,33 @@ fs_visitor::lower_uniform_pull_constant_loads()
 void
 fs_visitor::dump_instructions()
 {
+   dump_instructions(NULL);
+}
+
+void
+fs_visitor::dump_instructions(const char *name)
+{
    calculate_register_pressure();
+   FILE *file = stderr;
+   if (name && geteuid() != 0) {
+      file = fopen(name, "w");
+      if (!file)
+         file = stderr;
+   }
 
    int ip = 0, max_pressure = 0;
    foreach_list(node, &this->instructions) {
       backend_instruction *inst = (backend_instruction *)node;
       max_pressure = MAX2(max_pressure, regs_live_at_ip[ip]);
-      fprintf(stderr, "{%3d} %4d: ", regs_live_at_ip[ip], ip);
-      dump_instruction(inst);
+      fprintf(file, "{%3d} %4d: ", regs_live_at_ip[ip], ip);
+      dump_instruction(inst, file);
       ++ip;
    }
-   fprintf(stderr, "Maximum %3d registers live at once.\n", max_pressure);
+   fprintf(file, "Maximum %3d registers live at once.\n", max_pressure);
+
+   if (file != stderr) {
+      fclose(file);
+   }
 }
 
 void

@@ -111,6 +111,7 @@ public:
    virtual void dump_instruction(backend_instruction *inst) = 0;
    virtual void dump_instruction(backend_instruction *inst, FILE *file) = 0;
    virtual void dump_instructions();
+   virtual void dump_instructions(const char *name);
 
    void assign_common_binding_table_offsets(uint32_t next_binding_table_offset);
 

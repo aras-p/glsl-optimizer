@@ -498,7 +498,7 @@ fs_visitor::assign_regs(bool allow_spilling)
 
       if (reg == -1) {
          fail("no register to spill:\n");
-         dump_instructions();
+         dump_instructions(NULL);
       } else if (allow_spilling) {
          spill_reg(reg);
       }
