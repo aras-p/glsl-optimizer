@@ -185,7 +185,7 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
 
    if (scene->fb.zsbuf) {
       unsigned layer;
-      uint8_t *dst_layer = lp_rast_get_unswizzled_depth_tile_pointer(task, LP_TEX_USAGE_READ_WRITE);
+      uint8_t *dst_layer = lp_rast_get_depth_tile_pointer(task, LP_TEX_USAGE_READ_WRITE);
       block_size = util_format_get_blocksize(scene->fb.zsbuf->format);
 
       clear_value &= clear_mask;
@@ -314,8 +314,8 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
          for (i = 0; i < scene->fb.nr_cbufs; i++){
             if (scene->fb.cbufs[i]) {
                stride[i] = scene->cbufs[i].stride;
-               color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, tile_x + x,
-                                                                     tile_y + y, inputs->layer);
+               color[i] = lp_rast_get_color_block_pointer(task, i, tile_x + x,
+                                                          tile_y + y, inputs->layer);
             }
             else {
                stride[i] = 0;
@@ -325,8 +325,8 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
 
          /* depth buffer */
          if (scene->zsbuf.map) {
-            depth = lp_rast_get_unswizzled_depth_block_pointer(task, tile_x + x,
-                                                               tile_y + y, inputs->layer);
+            depth = lp_rast_get_depth_block_pointer(task, tile_x + x,
+                                                    tile_y + y, inputs->layer);
             depth_stride = scene->zsbuf.stride;
          }
 
@@ -409,8 +409,8 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       if (scene->fb.cbufs[i]) {
          stride[i] = scene->cbufs[i].stride;
-         color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, x, y,
-                                                               inputs->layer);
+         color[i] = lp_rast_get_color_block_pointer(task, i, x, y,
+                                                    inputs->layer);
       }
       else {
          stride[i] = 0;
@@ -421,7 +421,7 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
    /* depth buffer */
    if (scene->zsbuf.map) {
       depth_stride = scene->zsbuf.stride;
-      depth = lp_rast_get_unswizzled_depth_block_pointer(task, x, y, inputs->layer);
+      depth = lp_rast_get_depth_block_pointer(task, x, y, inputs->layer);
    }
 
    assert(lp_check_alignment(state->jit_context.u8_blend_color, 16));
