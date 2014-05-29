@@ -763,8 +763,13 @@ backend_visitor::assign_common_binding_table_offsets(uint32_t next_binding_table
    }
 
    if (prog->UsesGather) {
-      stage_prog_data->binding_table.gather_texture_start = next_binding_table_offset;
-      next_binding_table_offset += num_textures;
+      if (brw->gen >= 8) {
+         stage_prog_data->binding_table.gather_texture_start =
+            stage_prog_data->binding_table.texture_start;
+      } else {
+         stage_prog_data->binding_table.gather_texture_start = next_binding_table_offset;
+         next_binding_table_offset += num_textures;
+      }
    } else {
       stage_prog_data->binding_table.gather_texture_start = 0xd0d0d0d0;
    }

@@ -829,12 +829,14 @@ brw_update_texture_surfaces(struct brw_context *brw)
    /* emit alternate set of surface state for gather. this
     * allows the surface format to be overriden for only the
     * gather4 messages. */
-   if (vs && vs->UsesGather)
-      update_stage_texture_surfaces(brw, vs, &brw->vs.base, true);
-   if (gs && gs->UsesGather)
-      update_stage_texture_surfaces(brw, gs, &brw->gs.base, true);
-   if (fs && fs->UsesGather)
-      update_stage_texture_surfaces(brw, fs, &brw->wm.base, true);
+   if (brw->gen < 8) {
+      if (vs && vs->UsesGather)
+         update_stage_texture_surfaces(brw, vs, &brw->vs.base, true);
+      if (gs && gs->UsesGather)
+         update_stage_texture_surfaces(brw, gs, &brw->gs.base, true);
+      if (fs && fs->UsesGather)
+         update_stage_texture_surfaces(brw, fs, &brw->wm.base, true);
+   }
 
    brw->state.dirty.brw |= BRW_NEW_SURFACES;
 }
