@@ -326,7 +326,7 @@ vec4_visitor::emit_math1_gen6(enum opcode opcode, dst_reg dst, src_reg src)
 {
    src = fix_math_operand(src);
 
-   if (dst.writemask != WRITEMASK_XYZW) {
+   if (brw->gen == 6 && dst.writemask != WRITEMASK_XYZW) {
       /* The gen6 math instruction must be align1, so we can't do
        * writemasks.
        */
@@ -379,7 +379,7 @@ vec4_visitor::emit_math2_gen6(enum opcode opcode,
    src0 = fix_math_operand(src0);
    src1 = fix_math_operand(src1);
 
-   if (dst.writemask != WRITEMASK_XYZW) {
+   if (brw->gen == 6 && dst.writemask != WRITEMASK_XYZW) {
       /* The gen6 math instruction must be align1, so we can't do
        * writemasks.
        */
