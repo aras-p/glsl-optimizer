@@ -312,9 +312,15 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
 
          /* color buffer */
          for (i = 0; i < scene->fb.nr_cbufs; i++){
-            stride[i] = scene->cbufs[i].stride;
-            color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, tile_x + x,
-                                                                  tile_y + y, inputs->layer);
+            if (scene->fb.cbufs[i]) {
+               stride[i] = scene->cbufs[i].stride;
+               color[i] = lp_rast_get_unswizzled_color_block_pointer(task, i, tile_x + x,
+                                                                     tile_y + y, inputs->layer);
+            }
+            else {
+               stride[i] = 0;
+               color[i] = NULL;
+            }
          }
 
          /* depth buffer */
