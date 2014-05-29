@@ -45,8 +45,8 @@
 #ifndef RTLD_NOW
 #define RTLD_NOW 0
 #endif
-#ifndef RTLD_GLOBAL
-#define RTLD_GLOBAL 0
+#ifndef RTLD_LOCAL
+#define RTLD_LOCAL 0
 #endif
 
 _X_HIDDEN void
@@ -99,7 +99,7 @@ driOpenDriver(const char *driverName)
    int len;
 
    /* Attempt to make sure libGL symbols will be visible to the driver */
-   glhandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
+   glhandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_LOCAL);
 
    libPaths = NULL;
    if (geteuid() == getuid()) {
@@ -127,14 +127,14 @@ driOpenDriver(const char *driverName)
       snprintf(realDriverName, sizeof realDriverName,
                "%.*s/tls/%s_dri.so", len, p, driverName);
       InfoMessageF("OpenDriver: trying %s\n", realDriverName);
-      handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
+      handle = dlopen(realDriverName, RTLD_NOW | RTLD_LOCAL);
 #endif
 
       if (handle == NULL) {
          snprintf(realDriverName, sizeof realDriverName,
                   "%.*s/%s_dri.so", len, p, driverName);
          InfoMessageF("OpenDriver: trying %s\n", realDriverName);
-         handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
+         handle = dlopen(realDriverName, RTLD_NOW | RTLD_LOCAL);
       }
 
       if (handle != NULL)
