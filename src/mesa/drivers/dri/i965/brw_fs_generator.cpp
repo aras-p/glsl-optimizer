@@ -1348,6 +1348,7 @@ fs_generator::generate_code(exec_list *instructions,
    foreach_list(node, instructions) {
       fs_inst *inst = (fs_inst *)node;
       struct brw_reg src[3], dst;
+      unsigned int last_insn_offset = p->next_insn_offset;
 
       if (unlikely(debug_flag))
          annotate(brw, annotation, cfg, inst, p->next_insn_offset);
@@ -1367,7 +1368,6 @@ fs_generator::generate_code(exec_list *instructions,
       }
       dst = brw_reg_from_fs_reg(&inst->dst);
 
-      brw_set_conditionalmod(p, inst->conditional_mod);
       brw_set_predicate_control(p, inst->predicate);
       brw_set_predicate_inverse(p, inst->predicate_inverse);
       brw_set_flag_reg(p, 0, inst->flag_subreg);
@@ -1765,6 +1765,16 @@ fs_generator::generate_code(exec_list *instructions,
 	    _mesa_problem(ctx, "Unsupported opcode %d in FS", inst->opcode);
 	 }
 	 abort();
+      }
+
+      if (inst->conditional_mod) {
+         /* Set the conditional modifier on the last instruction we generated.
+          * Also, make sure we only emitted one instruction - anything else
+          * doesn't make sense.
+          */
+         assert(p->next_insn_offset == last_insn_offset + 16);
+         struct brw_instruction *last = &p->store[last_insn_offset / 16];
+         last->header.destreg__conditionalmod = inst->conditional_mod;
       }
    }
 

@@ -1290,7 +1290,6 @@ vec4_generator::generate_code(exec_list *instructions,
       }
       dst = inst->get_dst();
 
-      brw_set_conditionalmod(p, inst->conditional_mod);
       brw_set_predicate_control(p, inst->predicate);
       brw_set_predicate_inverse(p, inst->predicate_inverse);
       brw_set_saturate(p, inst->saturate);
@@ -1301,13 +1300,15 @@ vec4_generator::generate_code(exec_list *instructions,
 
       generate_vec4_instruction(inst, dst, src);
 
-      if (inst->no_dd_clear || inst->no_dd_check) {
+      if (inst->no_dd_clear || inst->no_dd_check || inst->conditional_mod) {
          assert(p->nr_insn == pre_emit_nr_insn + 1 ||
-                !"no_dd_check or no_dd_clear set for IR emitting more "
-                "than 1 instruction");
+                !"conditional_mod, no_dd_check, or no_dd_clear set for IR "
+                 "emitting more than 1 instruction");
 
          struct brw_instruction *last = &p->store[pre_emit_nr_insn];
 
+         if (inst->conditional_mod)
+            last->header.destreg__conditionalmod = inst->conditional_mod;
          if (inst->no_dd_clear)
             last->header.dependency_control |= BRW_DEPENDENCY_NOTCLEARED;
          if (inst->no_dd_check)
