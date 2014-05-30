@@ -106,6 +106,6 @@ env.Alias('glsl_compiler', glsl_compiler)
 
 glcpp = env.Program(
     target = 'glcpp/glcpp',
-    source = ['glcpp/glcpp.c'] + mesa_objs,
+    source = ['glcpp/glcpp.c', 'tests/common.c'] + mesa_objs,
 )
 env.Alias('glcpp', glcpp)
