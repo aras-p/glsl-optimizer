@@ -34,5 +34,7 @@ Random list of problems with i915g:
 
 - Fix fragment discard
 
+- Fix 4444 and 5551 formats
+
 Other bugs can be found here:
 https://bugs.freedesktop.org/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&component=Drivers/Gallium/i915g
