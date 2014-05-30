@@ -62,6 +62,7 @@ namespace clover {
       size_t max_threads_per_block() const;
       cl_ulong max_mem_alloc_size() const;
       cl_uint max_clock_frequency() const;
+      cl_uint max_compute_units() const;
 
       std::vector<size_t> max_block_size() const;
       std::string device_name() const;

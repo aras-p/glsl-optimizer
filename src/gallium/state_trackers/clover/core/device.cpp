@@ -163,6 +163,12 @@ device::max_clock_frequency() const {
                                       PIPE_COMPUTE_CAP_MAX_CLOCK_FREQUENCY)[0];
 }
 
+cl_uint
+device::max_compute_units() const {
+   return get_compute_param<uint32_t>(pipe,
+                                      PIPE_COMPUTE_CAP_MAX_COMPUTE_UNITS)[0];
+}
+
 std::vector<size_t>
 device::max_block_size() const {
    auto v = get_compute_param<uint64_t>(pipe, PIPE_COMPUTE_CAP_MAX_BLOCK_SIZE);

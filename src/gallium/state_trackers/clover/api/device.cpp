@@ -109,7 +109,7 @@ clGetDeviceInfo(cl_device_id d_dev, cl_device_info param,
       break;
 
    case CL_DEVICE_MAX_COMPUTE_UNITS:
-      buf.as_scalar<cl_uint>() = 1;
+      buf.as_scalar<cl_uint>() = dev.max_compute_units();
       break;
 
    case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS:
