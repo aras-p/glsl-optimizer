@@ -1694,7 +1694,7 @@ enum brw_message_target {
 /* GEN7/DW1: */
 # define GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT	12
 /* GEN7/DW2: */
-# define HSW_SF_LINE_STIPPLE_ENABLE			14
+# define HSW_SF_LINE_STIPPLE_ENABLE			(1 << 14)
 
 # define GEN8_SF_SMOOTH_POINT_ENABLE                    (1 << 13)
 
