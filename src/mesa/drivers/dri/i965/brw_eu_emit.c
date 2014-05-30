@@ -856,7 +856,6 @@ brw_next_insn(struct brw_compile *p, unsigned opcode)
 
    if (p->current->header.destreg__conditionalmod) {
       p->current->header.destreg__conditionalmod = 0;
-      p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
    }
 
    insn->header.opcode = opcode;

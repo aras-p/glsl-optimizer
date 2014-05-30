@@ -237,7 +237,7 @@ static void merge_edgeflags( struct brw_clip_compile *c )
                              brw_varying_to_offset(&c->vue_map,
                                                    VARYING_SLOT_EDGE)),
               brw_imm_f(0));
-      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
 
       brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<9));
@@ -245,7 +245,7 @@ static void merge_edgeflags( struct brw_clip_compile *c )
                              brw_varying_to_offset(&c->vue_map,
                                                    VARYING_SLOT_EDGE)),
               brw_imm_f(0));
-      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
    }
    brw_ENDIF(p);
 }
@@ -295,6 +295,7 @@ static void emit_lines(struct brw_clip_compile *c,
 	 brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
       }
       brw_WHILE(p);
+      brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
    }
 
    /* v1ptr = &inlist[nr_verts]
@@ -333,6 +334,7 @@ static void emit_lines(struct brw_clip_compile *c,
       brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
    }
    brw_WHILE(p);
+   brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
 }
 
 
@@ -375,6 +377,7 @@ static void emit_points(struct brw_clip_compile *c,
       brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
    }
    brw_WHILE(p);
+   brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
 }
 
 

@@ -407,6 +407,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	    brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
 	 }
 	 brw_WHILE(p);
+         brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
 
 	 /* vtxPrev = *(outlist_ptr-1)  OR: outlist[nr_verts-1]
 	  * inlist = outlist
@@ -485,6 +486,7 @@ void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
 	 brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
       }
       brw_WHILE(p);
+      brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
 
       brw_clip_emit_vue(c, v0, BRW_URB_WRITE_EOT_COMPLETE,
                         ((_3DPRIM_TRIFAN << URB_WRITE_PRIM_TYPE_SHIFT)
