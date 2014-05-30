@@ -256,6 +256,9 @@ static OMX_ERRORTYPE vid_enc_Constructor(OMX_COMPONENTTYPE *comp, OMX_STRING nam
    priv->quant.nQpP = OMX_VID_ENC_QUANT_P_FRAMES_DEFAULT;
    priv->quant.nQpB = OMX_VID_ENC_QUANT_B_FRAMES_DEFAULT;
 
+   priv->profile_level.eProfile = OMX_VIDEO_AVCProfileBaseline;
+   priv->profile_level.eLevel = OMX_VIDEO_AVCLevel42;
+
    priv->force_pic_type.IntraRefreshVOP = OMX_FALSE; 
    priv->frame_num = 0;
    priv->pic_order_cnt = 0;
@@ -424,6 +427,17 @@ static OMX_ERRORTYPE vid_enc_SetParameter(OMX_HANDLETYPE handle, OMX_INDEXTYPE i
 
       break;
    }
+   case OMX_IndexParamVideoProfileLevelCurrent: {
+      OMX_VIDEO_PARAM_PROFILELEVELTYPE *profile_level = param;
+
+      r = checkHeader(param, sizeof(OMX_VIDEO_PARAM_PROFILELEVELTYPE));
+      if (r)
+         return r;
+
+      priv->profile_level = *profile_level;
+
+      break;
+   }
    default:
       return omx_base_component_SetParameter(handle, idx, param);
    }
@@ -498,10 +512,20 @@ static OMX_ERRORTYPE vid_enc_GetParameter(OMX_HANDLETYPE handle, OMX_INDEXTYPE i
 
       break;
    }
+   case OMX_IndexParamVideoProfileLevelCurrent: {
+      OMX_VIDEO_PARAM_PROFILELEVELTYPE *profile_level = param;
 
+      r = checkHeader(param, sizeof(OMX_VIDEO_PARAM_PROFILELEVELTYPE));
+      if (r)
+         return r;
+
+      profile_level->eProfile = priv->profile_level.eProfile;
+      profile_level->eLevel = priv->profile_level.eLevel;
+
+      break;
+   }
    default:
       return omx_base_component_GetParameter(handle, idx, param);
-
    }
    return OMX_ErrorNone;
 }
@@ -599,6 +623,28 @@ static OMX_ERRORTYPE vid_enc_GetConfig(OMX_HANDLETYPE handle, OMX_INDEXTYPE idx,
    return OMX_ErrorNone;
 }
 
+static enum pipe_video_profile enc_TranslateOMXProfileToPipe(unsigned omx_profile)
+{
+   switch (omx_profile) {
+      case OMX_VIDEO_AVCProfileBaseline:
+         return PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE;
+      case OMX_VIDEO_AVCProfileMain:
+         return PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN;
+      case OMX_VIDEO_AVCProfileExtended:
+         return PIPE_VIDEO_PROFILE_MPEG4_AVC_EXTENDED;
+      case OMX_VIDEO_AVCProfileHigh:
+         return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH;
+      case OMX_VIDEO_AVCProfileHigh10:
+         return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH10;
+      case OMX_VIDEO_AVCProfileHigh422:
+         return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH422;
+      case OMX_VIDEO_AVCProfileHigh444:
+         return PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH444;
+      default:
+         return PIPE_VIDEO_PROFILE_UNKNOWN;
+   }
+}
+
 static OMX_ERRORTYPE vid_enc_MessageHandler(OMX_COMPONENTTYPE* comp, internalRequestMessageType *msg)
 {
    vid_enc_PrivateType* priv = comp->pComponentPrivate;
@@ -611,7 +657,7 @@ static OMX_ERRORTYPE vid_enc_MessageHandler(OMX_COMPONENTTYPE* comp, internalReq
 
          port = (omx_base_video_PortType *)priv->ports[OMX_BASE_FILTER_INPUTPORT_INDEX];
 
-         templat.profile = PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE;
+         templat.profile = enc_TranslateOMXProfileToPipe(priv->profile_level.eProfile);
          templat.entrypoint = PIPE_VIDEO_ENTRYPOINT_ENCODE;
          templat.chroma_format = PIPE_VIDEO_CHROMA_FORMAT_420;
          templat.width = priv->scale_buffer[priv->current_scale_buffer] ?

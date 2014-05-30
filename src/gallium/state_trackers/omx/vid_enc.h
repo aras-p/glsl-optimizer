@@ -80,6 +80,7 @@ DERIVEDCLASS(vid_enc_PrivateType, omx_base_filter_PrivateType)
 	OMX_BOOL restricted_b_frames; \
 	OMX_VIDEO_PARAM_BITRATETYPE bitrate; \
 	OMX_VIDEO_PARAM_QUANTIZATIONTYPE quant; \
+	OMX_VIDEO_PARAM_PROFILELEVELTYPE profile_level; \
 	OMX_CONFIG_INTRAREFRESHVOPTYPE force_pic_type; \
 	struct vl_compositor compositor; \
 	struct vl_compositor_state cstate; \
