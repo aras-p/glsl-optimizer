@@ -53,6 +53,13 @@
 static GLboolean
 legal_texobj_target(struct gl_context *ctx, GLuint dims, GLenum target)
 {
+   if (_mesa_is_gles3(ctx)
+       && target != GL_TEXTURE_2D
+       && target != GL_TEXTURE_CUBE_MAP
+       && target != GL_TEXTURE_3D
+       && target != GL_TEXTURE_2D_ARRAY)
+      return GL_FALSE;
+
    switch (dims) {
    case 1:
       switch (target) {
