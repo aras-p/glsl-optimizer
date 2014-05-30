@@ -664,7 +664,8 @@ static OMX_ERRORTYPE vid_enc_MessageHandler(OMX_COMPONENTTYPE* comp, internalReq
                             priv->scale.xWidth : port->sPortParam.format.video.nFrameWidth;
          templat.height = priv->scale_buffer[priv->current_scale_buffer] ?
                             priv->scale.xHeight : port->sPortParam.format.video.nFrameHeight;
-         templat.max_references = OMX_VID_ENC_P_PERIOD_DEFAULT;
+         templat.max_references = (templat.profile == PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE) ?
+                            1 : OMX_VID_ENC_P_PERIOD_DEFAULT;
 
          priv->codec = priv->s_pipe->create_video_codec(priv->s_pipe, &templat);
 
@@ -1120,7 +1121,8 @@ static OMX_ERRORTYPE vid_enc_EncodeFrame(omx_base_PortType *port, OMX_BUFFERHEAD
       picture_type = PIPE_H264_ENC_PICTURE_TYPE_IDR;
       priv->force_pic_type.IntraRefreshVOP = OMX_FALSE; 
       priv->frame_num = 0;
-   } else if (!(priv->pic_order_cnt % OMX_VID_ENC_P_PERIOD_DEFAULT) ||
+   } else if (priv->codec->profile == PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE ||
+              !(priv->pic_order_cnt % OMX_VID_ENC_P_PERIOD_DEFAULT) ||
               (buf->nFlags & OMX_BUFFERFLAG_EOS)) {
       picture_type = PIPE_H264_ENC_PICTURE_TYPE_P;
    } else {
