@@ -114,6 +114,7 @@ libglcpp_la_SOURCES =					\
 
 glcpp_glcpp_SOURCES =					\
 	glcpp/glcpp.c					\
+	tests/common.c					\
 	$(top_srcdir)/src/mesa/program/prog_hash_table.c
 glcpp_glcpp_LDADD =					\
 	libglcpp.la					\
