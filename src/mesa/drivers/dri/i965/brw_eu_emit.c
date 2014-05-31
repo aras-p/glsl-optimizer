@@ -851,13 +851,6 @@ brw_next_insn(struct brw_compile *p, unsigned opcode)
    insn = &p->store[p->nr_insn++];
    memcpy(insn, p->current, sizeof(*insn));
 
-   /* Reset this one-shot flag:
-    */
-
-   if (p->current->header.destreg__conditionalmod) {
-      p->current->header.destreg__conditionalmod = 0;
-   }
-
    insn->header.opcode = opcode;
    return insn;
 }

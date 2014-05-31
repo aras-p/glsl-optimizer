@@ -98,11 +98,6 @@ void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse)
    p->current->header.predicate_inverse = predicate_inverse;
 }
 
-void brw_set_conditionalmod( struct brw_compile *p, unsigned conditional )
-{
-   p->current->header.destreg__conditionalmod = conditional;
-}
-
 void brw_set_flag_reg(struct brw_compile *p, int reg, int subreg)
 {
    p->current->bits2.da1.flag_reg_nr = reg;
