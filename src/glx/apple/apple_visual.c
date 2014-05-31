@@ -89,8 +89,6 @@ apple_visual_create_pfobj(CGLPixelFormatObj * pfobj, const struct glx_config * m
          ("offscreen rendering enabled.  Using kCGLPFAOffScreen\n");
 
       attr[numattr++] = kCGLPFAOffScreen;
-      attr[numattr++] = kCGLPFAColorSize;
-      attr[numattr++] = 32;
    }
    else if (getenv("LIBGL_ALWAYS_SOFTWARE") != NULL) {
       apple_glx_diagnostic
