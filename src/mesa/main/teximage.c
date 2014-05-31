@@ -2299,7 +2299,14 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
 
    if (!_mesa_target_can_be_compressed(ctx, target, internalFormat)) {
       reason = "target";
-      error = GL_INVALID_ENUM;
+      /* From section 3.8.6, page 146 of OpenGL ES 3.0 spec:
+       *
+       *    "The ETC2/EAC texture compression algorithm supports only
+       *     two-dimensional images. If internalformat is an ETC2/EAC format,
+       *     CompressedTexImage3D will generate an INVALID_OPERATION error if
+       *     target is not TEXTURE_2D_ARRAY."
+       */
+      error = _mesa_is_desktop_gl(ctx) ? GL_INVALID_ENUM : GL_INVALID_OPERATION;
       goto error;
    }
 
