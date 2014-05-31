@@ -59,11 +59,6 @@
  * types, this allows writing very straightforward, readable code.
  */
 enum ir_node_type {
-   /**
-    * Zero is unused so that the IR validator can detect cases where
-    * \c ir_instruction::ir_type has not been initialized.
-    */
-   ir_type_unset,
    ir_type_dereference_array,
    ir_type_dereference_record,
    ir_type_dereference_variable,
@@ -83,7 +78,8 @@ enum ir_node_type {
    ir_type_discard,
    ir_type_emit_vertex,
    ir_type_end_primitive,
-   ir_type_max /**< maximum ir_type enum number, for validation */
+   ir_type_max, /**< maximum ir_type enum number, for validation */
+   ir_type_unset = ir_type_max
 };
 
 
