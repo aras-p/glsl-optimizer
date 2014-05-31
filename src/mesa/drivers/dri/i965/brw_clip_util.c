@@ -447,8 +447,8 @@ void brw_clip_ff_sync(struct brw_clip_compile *c)
     struct brw_context *brw = p->brw;
 
     if (brw->gen == 5) {
-        brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
         brw_AND(p, brw_null_reg(), c->reg.ff_sync, brw_imm_ud(0x1));
+        brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_Z;
         brw_IF(p, BRW_EXECUTE_1);
         {
             brw_OR(p, c->reg.ff_sync, c->reg.ff_sync, brw_imm_ud(0x1));

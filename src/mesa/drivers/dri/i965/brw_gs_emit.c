@@ -498,10 +498,10 @@ gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
          /* Only emit vertices 0 and 1 if this is the first triangle of the
           * polygon.  Otherwise they are redundant.
           */
-         brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
          brw_AND(p, retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
                  get_element_ud(c->reg.R0, 2),
                  brw_imm_ud(BRW_GS_EDGE_INDICATOR_0));
+         brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
          brw_IF(p, BRW_EXECUTE_1);
       }
       brw_ff_gs_offset_header_dw2(c, URB_WRITE_PRIM_START);
@@ -514,10 +514,10 @@ gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
           * of the polygon.  Otherwise leave the primitive incomplete because
           * there are more polygon vertices coming.
           */
-         brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
          brw_AND(p, retype(brw_null_reg(), BRW_REGISTER_TYPE_UD),
                  get_element_ud(c->reg.R0, 2),
                  brw_imm_ud(BRW_GS_EDGE_INDICATOR_1));
+         brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
          brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
       }
       brw_ff_gs_offset_header_dw2(c, URB_WRITE_PRIM_END);

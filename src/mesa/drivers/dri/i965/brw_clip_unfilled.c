@@ -231,16 +231,16 @@ static void merge_edgeflags( struct brw_clip_compile *c )
     */
    brw_IF(p, BRW_EXECUTE_1);
    {
-      brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<8));
+      brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_EQ;
       brw_MOV(p, byte_offset(c->reg.vertex[0],
                              brw_varying_to_offset(&c->vue_map,
                                                    VARYING_SLOT_EDGE)),
               brw_imm_f(0));
       brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
 
-      brw_set_conditionalmod(p, BRW_CONDITIONAL_EQ);
       brw_AND(p, vec1(brw_null_reg()), get_element_ud(c->reg.R0, 2), brw_imm_ud(1<<9));
+      brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_EQ;
       brw_MOV(p, byte_offset(c->reg.vertex[2],
                              brw_varying_to_offset(&c->vue_map,
                                                    VARYING_SLOT_EDGE)),
@@ -291,8 +291,8 @@ static void emit_lines(struct brw_clip_compile *c,
 	
 	 apply_one_offset(c, v0);
 	
-	 brw_set_conditionalmod(p, BRW_CONDITIONAL_G);
 	 brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
+         brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_G;
       }
       brw_WHILE(p);
       brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
@@ -330,8 +330,8 @@ static void emit_lines(struct brw_clip_compile *c,
       }
       brw_ENDIF(p);
 
-      brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
+      brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
    }
    brw_WHILE(p);
    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
@@ -373,8 +373,8 @@ static void emit_points(struct brw_clip_compile *c,
       }
       brw_ENDIF(p);
 
-      brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
+      brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
    }
    brw_WHILE(p);
    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;

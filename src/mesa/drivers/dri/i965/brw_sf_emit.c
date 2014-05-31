@@ -762,7 +762,6 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
    brw_MOV(p, primmask, brw_imm_ud(1));
    brw_SHL(p, primmask, primmask, payload_prim);
 
-   brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
    brw_AND(p, v1_null_ud, primmask, brw_imm_ud((1<<_3DPRIM_TRILIST) |
 					       (1<<_3DPRIM_TRISTRIP) |
 					       (1<<_3DPRIM_TRIFAN) |
@@ -770,23 +769,24 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_POLYGON) |
 					       (1<<_3DPRIM_RECTLIST) |
 					       (1<<_3DPRIM_TRIFAN_NOSTIPPLE)));
+   brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_Z;
    jmp = brw_JMPI(p, brw_imm_d(0), BRW_PREDICATE_NORMAL) - p->store;
    brw_emit_tri_setup(c, false);
    brw_land_fwd_jump(p, jmp);
 
-   brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
    brw_AND(p, v1_null_ud, primmask, brw_imm_ud((1<<_3DPRIM_LINELIST) |
 					       (1<<_3DPRIM_LINESTRIP) |
 					       (1<<_3DPRIM_LINELOOP) |
 					       (1<<_3DPRIM_LINESTRIP_CONT) |
 					       (1<<_3DPRIM_LINESTRIP_BF) |
 					       (1<<_3DPRIM_LINESTRIP_CONT_BF)));
+   brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_Z;
    jmp = brw_JMPI(p, brw_imm_d(0), BRW_PREDICATE_NORMAL) - p->store;
    brw_emit_line_setup(c, false);
    brw_land_fwd_jump(p, jmp);
 
-   brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
    brw_AND(p, v1_null_ud, payload_attr, brw_imm_ud(1<<BRW_SPRITE_POINT_ENABLE));
+   brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_Z;
    jmp = brw_JMPI(p, brw_imm_d(0), BRW_PREDICATE_NORMAL) - p->store;
    brw_emit_point_sprite_setup(c, false);
    brw_land_fwd_jump(p, jmp);
