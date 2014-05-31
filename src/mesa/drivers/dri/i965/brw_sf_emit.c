@@ -500,7 +500,7 @@ void brw_emit_tri_setup(struct brw_sf_compile *c, bool allocate)
       }
    }
 
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
 
@@ -574,7 +574,7 @@ void brw_emit_line_setup(struct brw_sf_compile *c, bool allocate)
       }
    }
 
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
 void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
@@ -619,7 +619,7 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
 		  BRW_MATH_DATA_SCALAR,
 		  BRW_MATH_PRECISION_FULL);
 
-	 brw_set_access_mode(p, BRW_ALIGN_16);
+	 brw_set_default_access_mode(p, BRW_ALIGN_16);
 
 	 /* dA/dx, dA/dy */
 	 brw_MOV(p, c->m1Cx, brw_imm_f(0.0));
@@ -639,7 +639,7 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
 	    brw_MOV(p, brw_writemask(c->m3C0, WRITEMASK_W), brw_imm_f(1.0));
 	 }
 
-	 brw_set_access_mode(p, BRW_ALIGN_1);
+	 brw_set_default_access_mode(p, BRW_ALIGN_1);
       }
 
       if (pc & ~pc_coord_replace) {
@@ -664,7 +664,7 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
 		    BRW_URB_SWIZZLE_TRANSPOSE);
    }
 
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
 /* Points setup - several simplifications as all attributes are
@@ -726,7 +726,7 @@ void brw_emit_point_setup(struct brw_sf_compile *c, bool allocate)
       }
    }
 
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
 static void

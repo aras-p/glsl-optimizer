@@ -86,7 +86,7 @@ static void compile_clip_prog( struct brw_context *brw,
    /* For some reason the thread is spawned with only 4 channels
     * unmasked.
     */
-   brw_set_mask_control(&c.func, BRW_MASK_DISABLE);
+   brw_set_default_mask_control(&c.func, BRW_MASK_DISABLE);
 
 
    /* Would ideally have the option of producing a program which could

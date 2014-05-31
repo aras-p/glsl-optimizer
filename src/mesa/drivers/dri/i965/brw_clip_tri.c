@@ -433,7 +433,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	      BRW_CONDITIONAL_GE,
 	      c->reg.nr_verts,
 	      brw_imm_ud(3));
-      brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
+      brw_set_default_predicate_control(p, BRW_PREDICATE_NORMAL);
 
       /* && (planemask>>=1) != 0
        */
@@ -562,7 +562,7 @@ static void brw_clip_test( struct brw_clip_compile *c )
         brw_clip_kill_thread(c);
     }
     brw_ENDIF(p);
-    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+    brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
 
     /* some vertices are inside a plane, some are outside,need to clip */
     brw_XOR(p, t, t1, t2);
@@ -600,7 +600,7 @@ static void brw_clip_test( struct brw_clip_compile *c )
         brw_clip_kill_thread(c);
     }
     brw_ENDIF(p);
-    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+    brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
 
     /* some vertices are inside a plane, some are outside,need to clip */
     brw_XOR(p, t, t1, t2);

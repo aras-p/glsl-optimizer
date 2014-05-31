@@ -85,10 +85,10 @@ static void compute_tri_direction( struct brw_clip_compile *c )
 
    /* Take their crossproduct:
     */
-   brw_set_access_mode(p, BRW_ALIGN_16);
+   brw_set_default_access_mode(p, BRW_ALIGN_16);
    brw_MUL(p, vec4(brw_null_reg()), brw_swizzle(e, 1,2,0,3),  brw_swizzle(f,2,0,1,3));
    brw_MAC(p, vec4(e),  negate(brw_swizzle(e, 2,0,1,3)), brw_swizzle(f,1,2,0,3));
-   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
 
    brw_MUL(p, c->reg.dir, c->reg.dir, vec4(e));
 }

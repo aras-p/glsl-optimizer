@@ -72,8 +72,8 @@ gen6_resolve_implied_move(struct brw_compile *p,
 
    if (src->file != BRW_ARCHITECTURE_REGISTER_FILE || src->nr != BRW_ARF_NULL) {
       brw_push_insn_state(p);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
       brw_MOV(p, retype(brw_message_reg(msg_reg_nr), BRW_REGISTER_TYPE_UD),
 	      retype(*src, BRW_REGISTER_TYPE_UD));
       brw_pop_insn_state(p);
@@ -1982,8 +1982,8 @@ void brw_oword_block_write_scratch(struct brw_compile *p,
     */
    {
       brw_push_insn_state(p);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_set_default_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
 
       brw_MOV(p, mrf, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
 
@@ -2090,8 +2090,8 @@ brw_oword_block_read_scratch(struct brw_compile *p,
 
    {
       brw_push_insn_state(p);
-      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_set_default_mask_control(p, BRW_MASK_DISABLE);
 
       brw_MOV(p, mrf, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
 
@@ -2193,9 +2193,9 @@ void brw_oword_block_read(struct brw_compile *p,
    mrf = retype(mrf, BRW_REGISTER_TYPE_UD);
 
    brw_push_insn_state(p);
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
+   brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
 
    brw_MOV(p, mrf, retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
 
@@ -2368,8 +2368,8 @@ void brw_urb_WRITE(struct brw_compile *p,
    if (brw->gen == 7 && !(flags & BRW_URB_WRITE_USE_CHANNEL_MASKS)) {
       /* Enable Channel Masks in the URB_WRITE_HWORD message header */
       brw_push_insn_state(p);
-      brw_set_access_mode(p, BRW_ALIGN_1);
-      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_default_access_mode(p, BRW_ALIGN_1);
+      brw_set_default_mask_control(p, BRW_MASK_DISABLE);
       brw_OR(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, msg_reg_nr, 5),
 		       BRW_REGISTER_TYPE_UD),
 	        retype(brw_vec1_grf(0, 5), BRW_REGISTER_TYPE_UD),
@@ -2735,8 +2735,8 @@ void brw_shader_time_add(struct brw_compile *p,
    assert(brw->gen >= 7);
 
    brw_push_insn_state(p);
-   brw_set_access_mode(p, BRW_ALIGN_1);
-   brw_set_mask_control(p, BRW_MASK_DISABLE);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
+   brw_set_default_mask_control(p, BRW_MASK_DISABLE);
    struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
    brw_pop_insn_state(p);
 

@@ -98,14 +98,14 @@ struct brw_compile {
 
 void brw_pop_insn_state( struct brw_compile *p );
 void brw_push_insn_state( struct brw_compile *p );
-void brw_set_mask_control( struct brw_compile *p, unsigned value );
-void brw_set_saturate( struct brw_compile *p, bool enable );
-void brw_set_access_mode( struct brw_compile *p, unsigned access_mode );
-void brw_set_compression_control(struct brw_compile *p, enum brw_compression c);
-void brw_set_predicate_control( struct brw_compile *p, unsigned pc );
-void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse);
-void brw_set_flag_reg(struct brw_compile *p, int reg, int subreg);
-void brw_set_acc_write_control(struct brw_compile *p, unsigned value);
+void brw_set_default_mask_control( struct brw_compile *p, unsigned value );
+void brw_set_default_saturate( struct brw_compile *p, bool enable );
+void brw_set_default_access_mode( struct brw_compile *p, unsigned access_mode );
+void brw_set_default_compression_control(struct brw_compile *p, enum brw_compression c);
+void brw_set_default_predicate_control( struct brw_compile *p, unsigned pc );
+void brw_set_default_predicate_inverse(struct brw_compile *p, bool predicate_inverse);
+void brw_set_default_flag_reg(struct brw_compile *p, int reg, int subreg);
+void brw_set_default_acc_write_control(struct brw_compile *p, unsigned value);
 
 void brw_init_compile(struct brw_context *, struct brw_compile *p,
 		      void *mem_ctx);

@@ -444,10 +444,10 @@ gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
             /* gl_PointSize is stored in VARYING_SLOT_PSIZ.w. */
             vertex_slot.dw1.bits.swizzle = varying == VARYING_SLOT_PSIZ
                ? BRW_SWIZZLE_WWWW : key->transform_feedback_swizzles[binding];
-            brw_set_access_mode(p, BRW_ALIGN_16);
+            brw_set_default_access_mode(p, BRW_ALIGN_16);
             brw_MOV(p, stride(c->reg.header, 4, 4, 1),
                     retype(vertex_slot, BRW_REGISTER_TYPE_UD));
-            brw_set_access_mode(p, BRW_ALIGN_1);
+            brw_set_default_access_mode(p, BRW_ALIGN_1);
             brw_svb_write(p,
                           final_write ? c->reg.temp : brw_null_reg(), /* dest */
                           1, /* msg_reg_nr */
@@ -518,10 +518,10 @@ gen6_sol_program(struct brw_ff_gs_compile *c, struct brw_ff_gs_prog_key *key,
                  get_element_ud(c->reg.R0, 2),
                  brw_imm_ud(BRW_GS_EDGE_INDICATOR_1));
          brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
-         brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
+         brw_set_default_predicate_control(p, BRW_PREDICATE_NORMAL);
       }
       brw_ff_gs_offset_header_dw2(c, URB_WRITE_PRIM_END);
-      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+      brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
       brw_ff_gs_emit_vue(c, c->reg.vertex[2], true);
       break;
    }

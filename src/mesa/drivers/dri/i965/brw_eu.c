@@ -88,29 +88,29 @@ brw_swap_cmod(uint32_t cmod)
    }
 }
 
-void brw_set_predicate_control( struct brw_compile *p, unsigned pc )
+void brw_set_default_predicate_control( struct brw_compile *p, unsigned pc )
 {
    p->current->header.predicate_control = pc;
 }
 
-void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse)
+void brw_set_default_predicate_inverse(struct brw_compile *p, bool predicate_inverse)
 {
    p->current->header.predicate_inverse = predicate_inverse;
 }
 
-void brw_set_flag_reg(struct brw_compile *p, int reg, int subreg)
+void brw_set_default_flag_reg(struct brw_compile *p, int reg, int subreg)
 {
    p->current->bits2.da1.flag_reg_nr = reg;
    p->current->bits2.da1.flag_subreg_nr = subreg;
 }
 
-void brw_set_access_mode( struct brw_compile *p, unsigned access_mode )
+void brw_set_default_access_mode( struct brw_compile *p, unsigned access_mode )
 {
    p->current->header.access_mode = access_mode;
 }
 
 void
-brw_set_compression_control(struct brw_compile *p,
+brw_set_default_compression_control(struct brw_compile *p,
 			    enum brw_compression compression_control)
 {
    p->compressed = (compression_control == BRW_COMPRESSION_COMPRESSED);
@@ -146,17 +146,17 @@ brw_set_compression_control(struct brw_compile *p,
    }
 }
 
-void brw_set_mask_control( struct brw_compile *p, unsigned value )
+void brw_set_default_mask_control( struct brw_compile *p, unsigned value )
 {
    p->current->header.mask_control = value;
 }
 
-void brw_set_saturate( struct brw_compile *p, bool enable )
+void brw_set_default_saturate( struct brw_compile *p, bool enable )
 {
    p->current->header.saturate = enable;
 }
 
-void brw_set_acc_write_control(struct brw_compile *p, unsigned value)
+void brw_set_default_acc_write_control(struct brw_compile *p, unsigned value)
 {
    if (p->brw->gen >= 6)
       p->current->header.acc_wr_control = value;
@@ -202,9 +202,9 @@ brw_init_compile(struct brw_context *brw, struct brw_compile *p, void *mem_ctx)
 
    /* Some defaults?
     */
-   brw_set_mask_control(p, BRW_MASK_ENABLE); /* what does this do? */
-   brw_set_saturate(p, 0);
-   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+   brw_set_default_mask_control(p, BRW_MASK_ENABLE); /* what does this do? */
+   brw_set_default_saturate(p, 0);
+   brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
 
    /* Set up control flow stack */
    p->if_stack_depth = 0;

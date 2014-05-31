@@ -98,9 +98,9 @@ void brw_clip_project_position(struct brw_clip_compile *c, struct brw_reg pos )
 
    /* value.xyz *= value.rhw
     */
-   brw_set_access_mode(p, BRW_ALIGN_16);
+   brw_set_default_access_mode(p, BRW_ALIGN_16);
    brw_MUL(p, brw_writemask(pos, WRITEMASK_XYZ), pos, brw_swizzle1(pos, W));
-   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_set_default_access_mode(p, BRW_ALIGN_1);
 }
 
 
@@ -192,7 +192,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
       /* t_nopersp = vec4(v1.xy, dest.xy) */
       brw_MOV(p, t_nopersp, deref_4f(v1_ptr, delta));
       brw_MOV(p, tmp, deref_4f(dest_ptr, delta));
-      brw_set_access_mode(p, BRW_ALIGN_16);
+      brw_set_default_access_mode(p, BRW_ALIGN_16);
       brw_MOV(p,
               brw_writemask(t_nopersp, WRITEMASK_ZW),
               brw_swizzle(tmp, 0, 1, 0, 1));
@@ -215,7 +215,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
               brw_writemask(t_nopersp, WRITEMASK_XY),
               brw_abs(brw_swizzle(t_nopersp, 0, 2, 0, 0)),
               brw_abs(brw_swizzle(t_nopersp, 1, 3, 0, 0)));
-      brw_set_access_mode(p, BRW_ALIGN_1);
+      brw_set_default_access_mode(p, BRW_ALIGN_1);
 
       /* If the points are in the same place, just substitute a
        * value to avoid divide-by-zero
@@ -231,9 +231,9 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
       brw_math_invert(p, get_element(t_nopersp, 0), get_element(t_nopersp, 0));
       brw_MUL(p, vec1(t_nopersp), vec1(t_nopersp),
             vec1(suboffset(t_nopersp, 1)));
-      brw_set_access_mode(p, BRW_ALIGN_16);
+      brw_set_default_access_mode(p, BRW_ALIGN_16);
       brw_MOV(p, t_nopersp, brw_swizzle(t_nopersp, 0, 0, 0, 0));
-      brw_set_access_mode(p, BRW_ALIGN_1);
+      brw_set_default_access_mode(p, BRW_ALIGN_1);
 
       release_tmp(c, tmp);
       release_tmp(c, v0_ndc_copy);
@@ -461,7 +461,7 @@ void brw_clip_ff_sync(struct brw_clip_compile *c)
 			0 /* eot */);
         }
         brw_ENDIF(p);
-        brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+        brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
     }
 }
 

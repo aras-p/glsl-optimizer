@@ -70,7 +70,7 @@ static void compile_ff_gs_prog(struct brw_context *brw,
    /* For some reason the thread is spawned with only 4 channels
     * unmasked.
     */
-   brw_set_mask_control(&c.func, BRW_MASK_DISABLE);
+   brw_set_default_mask_control(&c.func, BRW_MASK_DISABLE);
 
    if (brw->gen >= 6) {
       unsigned num_verts;
