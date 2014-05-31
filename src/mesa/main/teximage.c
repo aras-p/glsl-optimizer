@@ -1770,9 +1770,9 @@ compressedteximage_only_format(const struct gl_context *ctx, GLenum format)
  * Helper function to determine whether a target and specific compression
  * format are supported.
  */
-static GLboolean
-target_can_be_compressed(const struct gl_context *ctx, GLenum target,
-                         GLenum intFormat)
+GLboolean
+_mesa_target_can_be_compressed(const struct gl_context *ctx, GLenum target,
+                               GLenum intFormat)
 {
    (void) intFormat;  /* not used yet */
 
@@ -2211,7 +2211,7 @@ texture_error_check( struct gl_context *ctx,
 
    /* additional checks for compressed textures */
    if (_mesa_is_compressed_format(ctx, internalFormat)) {
-      if (!target_can_be_compressed(ctx, target, internalFormat)) {
+      if (!_mesa_target_can_be_compressed(ctx, target, internalFormat)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glTexImage%dD(target can't be compressed)", dimensions);
          return GL_TRUE;
@@ -2297,7 +2297,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    GLenum error = GL_NO_ERROR;
    char *reason = ""; /* no error */
 
-   if (!target_can_be_compressed(ctx, target, internalFormat)) {
+   if (!_mesa_target_can_be_compressed(ctx, target, internalFormat)) {
       reason = "target";
       error = GL_INVALID_ENUM;
       goto error;
@@ -2738,7 +2738,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
    }
 
    if (_mesa_is_compressed_format(ctx, internalFormat)) {
-      if (!target_can_be_compressed(ctx, target, internalFormat)) {
+      if (!_mesa_target_can_be_compressed(ctx, target, internalFormat)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glCopyTexImage%dD(target)", dimensions);
          return GL_TRUE;
