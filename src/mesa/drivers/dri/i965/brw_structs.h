@@ -1385,18 +1385,18 @@ struct brw_instruction
        * section 4.1.1.1.
        */
       struct {
-         GLuint msg_data:8;
-         GLuint pad1:3;
-         GLuint slot_group:1;
-         GLuint msg_type:2;
-         GLuint interpolation_mode:1;
-         GLuint pad2:1;
-         GLuint simd_mode:1;
-         GLuint pad3:1;
-         GLuint response_length:5;
-         GLuint msg_length:4;
-         GLuint pad4:2;
-         GLuint end_of_thread:1;
+         unsigned msg_data:8;
+         unsigned pad1:3;
+         unsigned slot_group:1;
+         unsigned msg_type:2;
+         unsigned interpolation_mode:1;
+         unsigned pad2:1;
+         unsigned simd_mode:1;
+         unsigned pad3:1;
+         unsigned response_length:5;
+         unsigned msg_length:4;
+         unsigned pad4:2;
+         unsigned end_of_thread:1;
       } gen7_pi;
       /** @} */
 
