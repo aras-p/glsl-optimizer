@@ -52,7 +52,7 @@ def print_header():
           (prime_factor, prime_step)
 
 def print_params(params):
-   print "static struct value_desc values[] = {"
+   print "static const struct value_desc values[] = {"
    for p in params:
       print "    { %s, %s }," % (p[0], p[1])
 
