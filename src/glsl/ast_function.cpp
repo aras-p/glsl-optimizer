@@ -1560,7 +1560,7 @@ ast_function_expression::hir(exec_list *instructions,
 
       foreach_list (n, &this->expressions) {
 	 ast_node *ast = exec_node_data(ast_node, n, link);
-	 ir_rvalue *result = ast->hir(instructions, state)->as_rvalue();
+	 ir_rvalue *result = ast->hir(instructions, state);
 
 	 /* From page 50 (page 56 of the PDF) of the GLSL 1.50 spec:
 	  *
