@@ -27,8 +27,6 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-#include "main/mtypes.h"
-
 #include "brw_context.h"
 #include "brw_defines.h"
 
