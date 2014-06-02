@@ -38,12 +38,11 @@ enum si_blitter_op /* bitmask */
 	SI_COPY          = SI_SAVE_FRAMEBUFFER | SI_SAVE_TEXTURES |
 			   SI_DISABLE_RENDER_COND,
 
-	SI_BLIT          = SI_SAVE_FRAMEBUFFER | SI_SAVE_TEXTURES |
-			   SI_DISABLE_RENDER_COND,
+	SI_BLIT          = SI_SAVE_FRAMEBUFFER | SI_SAVE_TEXTURES,
 
 	SI_DECOMPRESS    = SI_SAVE_FRAMEBUFFER | SI_DISABLE_RENDER_COND,
 
-	SI_COLOR_RESOLVE = SI_SAVE_FRAMEBUFFER | SI_DISABLE_RENDER_COND
+	SI_COLOR_RESOLVE = SI_SAVE_FRAMEBUFFER
 };
 
 static void si_blitter_begin(struct pipe_context *ctx, enum si_blitter_op op)
@@ -690,7 +689,8 @@ static bool do_hardware_msaa_resolve(struct pipe_context *ctx,
 	    info->src.box.depth == 1 &&
 	    dst->surface.level[info->dst.level].mode >= RADEON_SURF_MODE_1D &&
 	    !(dst->surface.flags & RADEON_SURF_SCANOUT)) {
-		si_blitter_begin(ctx, SI_COLOR_RESOLVE);
+		si_blitter_begin(ctx, SI_COLOR_RESOLVE |
+				 (info->render_condition_enable ? 0 : SI_DISABLE_RENDER_COND));
 		util_blitter_custom_resolve_color(sctx->blitter,
 						  info->dst.resource, info->dst.level,
 						  info->dst.box.z,
@@ -720,7 +720,8 @@ static void si_blit(struct pipe_context *ctx,
 				  info->src.box.z,
 				  info->src.box.z + info->src.box.depth - 1);
 
-	si_blitter_begin(ctx, SI_BLIT);
+	si_blitter_begin(ctx, SI_BLIT |
+			 (info->render_condition_enable ? 0 : SI_DISABLE_RENDER_COND));
 	util_blitter_blit(sctx->blitter, info);
 	si_blitter_end(ctx);
 }
