@@ -42,12 +42,11 @@ enum r600_blitter_op /* bitmask */
 	R600_COPY_TEXTURE  = R600_SAVE_FRAGMENT_STATE | R600_SAVE_FRAMEBUFFER | R600_SAVE_TEXTURES |
 			     R600_DISABLE_RENDER_COND,
 
-	R600_BLIT          = R600_SAVE_FRAGMENT_STATE | R600_SAVE_FRAMEBUFFER | R600_SAVE_TEXTURES |
-			     R600_DISABLE_RENDER_COND,
+	R600_BLIT          = R600_SAVE_FRAGMENT_STATE | R600_SAVE_FRAMEBUFFER | R600_SAVE_TEXTURES,
 
 	R600_DECOMPRESS    = R600_SAVE_FRAGMENT_STATE | R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND,
 
-	R600_COLOR_RESOLVE = R600_SAVE_FRAGMENT_STATE | R600_SAVE_FRAMEBUFFER | R600_DISABLE_RENDER_COND
+	R600_COLOR_RESOLVE = R600_SAVE_FRAGMENT_STATE | R600_SAVE_FRAMEBUFFER
 };
 
 static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op)
@@ -790,7 +789,8 @@ static bool do_hardware_msaa_resolve(struct pipe_context *ctx,
 	    info->src.box.height == dst_height &&
 	    info->src.box.depth == 1 &&
 	    dst->surface.level[info->dst.level].mode >= RADEON_SURF_MODE_1D) {
-		r600_blitter_begin(ctx, R600_COLOR_RESOLVE);
+		r600_blitter_begin(ctx, R600_COLOR_RESOLVE |
+				   (info->render_condition_enable ? 0 : R600_DISABLE_RENDER_COND));
 		util_blitter_custom_resolve_color(rctx->blitter,
 						  info->dst.resource, info->dst.level,
 						  info->dst.box.z,
@@ -822,7 +822,8 @@ static void r600_blit(struct pipe_context *ctx,
 		return; /* error */
 	}
 
-	r600_blitter_begin(ctx, R600_BLIT);
+	r600_blitter_begin(ctx, R600_BLIT |
+			   (info->render_condition_enable ? 0 : R600_DISABLE_RENDER_COND));
 	util_blitter_blit(rctx->blitter, info);
 	r600_blitter_end(ctx);
 }
