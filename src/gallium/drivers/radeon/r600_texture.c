@@ -1235,6 +1235,9 @@ void evergreen_do_fast_color_clear(struct r600_common_context *rctx,
 {
 	int i;
 
+	if (rctx->current_render_cond)
+		return;
+
 	for (i = 0; i < fb->nr_cbufs; i++) {
 		struct r600_texture *tex;
 		unsigned clear_bit = PIPE_CLEAR_COLOR0 << i;
