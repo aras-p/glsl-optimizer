@@ -45,7 +45,7 @@ enum r300_blitter_op /* bitmask */
                          R300_SAVE_TEXTURES | R300_IGNORE_RENDER_COND,
 
     R300_BLIT          = R300_STOP_QUERY | R300_SAVE_FRAMEBUFFER |
-                         R300_SAVE_TEXTURES | R300_IGNORE_RENDER_COND,
+                         R300_SAVE_TEXTURES,
 
     R300_DECOMPRESS    = R300_STOP_QUERY | R300_IGNORE_RENDER_COND,
 };
@@ -786,7 +786,7 @@ static void r300_msaa_resolve(struct pipe_context *pipe,
     blit.src.resource = tmp;
     blit.src.box.z = 0;
 
-    r300_blitter_begin(r300, R300_BLIT);
+    r300_blitter_begin(r300, R300_BLIT | R300_IGNORE_RENDER_COND);
     util_blitter_blit(r300->blitter, &blit);
     r300_blitter_end(r300);
 
@@ -845,7 +845,8 @@ static void r300_blit(struct pipe_context *pipe,
         }
     }
 
-    r300_blitter_begin(r300, R300_BLIT);
+    r300_blitter_begin(r300, R300_BLIT |
+		       (info.render_condition_enable ? 0 : R300_IGNORE_RENDER_COND));
     util_blitter_blit(r300->blitter, &info);
     r300_blitter_end(r300);
 }
