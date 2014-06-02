@@ -2581,7 +2581,7 @@ static const struct name_address_pair GLX_functions[] = {
    GLX_FUNCTION2(glXReleaseTexImageEXT, __glXReleaseTexImageEXT),
 #endif
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
+#if defined(GLX_DIRECT_RENDERING) && defined(GLX_USE_DRM)
    /*** DRI configuration ***/
    GLX_FUNCTION(glXGetScreenDriver),
    GLX_FUNCTION(glXGetDriverConfig),

@@ -945,6 +945,7 @@ xyesno)
 
     if test x"$driglx_direct" = xyes; then
         if test x"$dri_platform" = xdrm ; then
+            DEFINES="$DEFINES -DGLX_USE_DRM"
             if test "x$have_libdrm" != xyes; then
                AC_MSG_ERROR([Direct rendering requires libdrm >= $LIBDRM_REQUIRED])
             fi
