@@ -159,20 +159,13 @@ solaris*)
     DEFINES="$DEFINES -DHAVE_PTHREAD -DSVR4"
     ;;
 cygwin*)
-    DEFINES="$DEFINES -DHAVE_PTHREAD"
+    DEFINES="$DEFINES -D_XOPEN_SOURCE=500 -DHAVE_PTHREAD"
     ;;
 esac
 
 dnl Add flags for gcc and g++
 if test "x$GCC" = xyes; then
-    case "$host_os" in
-    cygwin*)
-        CFLAGS="$CFLAGS -Wall -std=gnu99"
-        ;;
-    *)
-        CFLAGS="$CFLAGS -Wall -std=c99"
-        ;;
-    esac
+    CFLAGS="$CFLAGS -Wall -std=c99"
 
     # Enable -Werror=implicit-function-declaration and
     # -Werror=missing-prototypes, if available, or otherwise, just
