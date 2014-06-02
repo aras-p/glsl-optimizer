@@ -4212,6 +4212,41 @@ _mesa_compute_compressed_pixelstore(GLuint dims, struct gl_texture_image *texIma
    store->TotalRowsPerSlice = store->CopyRowsPerSlice =
          (height + bh - 1) / bh;
    store->CopySlices = depth;
+
+   if (packing->CompressedBlockWidth &&
+       packing->CompressedBlockSize) {
+
+      bw = packing->CompressedBlockWidth;
+
+      if (packing->RowLength) {
+         store->TotalBytesPerRow = packing->CompressedBlockSize *
+            (packing->RowLength + bw - 1) / bw;
+      }
+
+      store->SkipBytes += packing->SkipPixels * packing->CompressedBlockSize / bw;
+   }
+
+   if (dims > 1 && packing->CompressedBlockHeight &&
+       packing->CompressedBlockSize) {
+
+      bh = packing->CompressedBlockHeight;
+
+      store->SkipBytes += packing->SkipRows * store->TotalBytesPerRow / bh;
+      store->CopyRowsPerSlice = (height + bh - 1) / bh;  /* rows in blocks */
+
+      if (packing->ImageHeight) {
+         store->TotalRowsPerSlice = (packing->ImageHeight + bh - 1) / bh;
+      }
+   }
+
+   if (dims > 2 && packing->CompressedBlockDepth &&
+       packing->CompressedBlockSize) {
+
+      int bd = packing->CompressedBlockDepth;
+
+      store->SkipBytes += packing->SkipImages * store->TotalBytesPerRow *
+            store->TotalRowsPerSlice / bd;
+   }
 }
 
 
