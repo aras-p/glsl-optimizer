@@ -4195,6 +4195,26 @@ _mesa_store_compressed_teximage(struct gl_context *ctx, GLuint dims,
 }
 
 
+void
+_mesa_compute_compressed_pixelstore(GLuint dims, struct gl_texture_image *texImage,
+                              GLsizei width, GLsizei height, GLsizei depth,
+                              const struct gl_pixelstore_attrib *packing,
+                              struct compressed_pixelstore *store)
+{
+   GLuint bw, bh;
+   const mesa_format texFormat = texImage->TexFormat;
+
+   _mesa_get_format_block_size(texFormat, &bw, &bh);
+
+   store->SkipBytes = 0;
+   store->TotalBytesPerRow = store->CopyBytesPerRow =
+         _mesa_format_row_stride(texFormat, width);
+   store->TotalRowsPerSlice = store->CopyRowsPerSlice =
+         (height + bh - 1) / bh;
+   store->CopySlices = depth;
+}
+
+
 /**
  * Fallback for Driver.CompressedTexSubImage()
  */
@@ -4206,20 +4226,19 @@ _mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
                                    GLenum format,
                                    GLsizei imageSize, const GLvoid *data)
 {
-   GLint bytesPerRow, dstRowStride, srcRowStride;
-   GLint i, rows;
+   struct compressed_pixelstore store;
+   GLint dstRowStride;
+   GLint i, slice;
    GLubyte *dstMap;
    const GLubyte *src;
-   const mesa_format texFormat = texImage->TexFormat;
-   GLuint bw, bh;
-   GLint slice;
 
    if (dims == 1) {
       _mesa_problem(ctx, "Unexpected 1D compressed texsubimage call");
       return;
    }
 
-   _mesa_get_format_block_size(texFormat, &bw, &bh);
+   _mesa_compute_compressed_pixelstore(dims, texImage, width, height, depth,
+                                 &ctx->Unpack, &store);
 
    /* get pointer to src pixels (may be in a pbo which we'll map here) */
    data = _mesa_validate_pbo_compressed_teximage(ctx, dims, imageSize, data,
@@ -4228,10 +4247,9 @@ _mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
    if (!data)
       return;
 
-   srcRowStride = _mesa_format_row_stride(texFormat, width);
-   src = (const GLubyte *) data;
+   src = (const GLubyte *) data + store.SkipBytes;
 
-   for (slice = 0; slice < depth; slice++) {
+   for (slice = 0; slice < store.CopySlices; slice++) {
       /* Map dest texture buffer */
       ctx->Driver.MapTextureImage(ctx, texImage, slice + zoffset,
                                   xoffset, yoffset, width, height,
@@ -4239,17 +4257,18 @@ _mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
                                   &dstMap, &dstRowStride);
 
       if (dstMap) {
-         bytesPerRow = srcRowStride;  /* bytes per row of blocks */
-         rows = (height + bh - 1) / bh;  /* rows in blocks */
 
          /* copy rows of blocks */
-         for (i = 0; i < rows; i++) {
-            memcpy(dstMap, src, bytesPerRow);
+         for (i = 0; i < store.CopyRowsPerSlice; i++) {
+            memcpy(dstMap, src, store.CopyBytesPerRow);
             dstMap += dstRowStride;
-            src += srcRowStride;
+            src += store.TotalBytesPerRow;
          }
 
          ctx->Driver.UnmapTextureImage(ctx, texImage, slice + zoffset);
+
+         /* advance to next slice */
+         src += store.TotalBytesPerRow * (store.TotalRowsPerSlice - store.CopyRowsPerSlice);
       }
       else {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage%uD",

@@ -132,4 +132,21 @@ _mesa_store_compressed_texsubimage(struct gl_context *ctx, GLuint dims,
                                    GLsizei imageSize, const GLvoid *data);
 
 
+struct compressed_pixelstore {
+   int SkipBytes;
+   int CopyBytesPerRow;
+   int CopyRowsPerSlice;
+   int TotalBytesPerRow;
+   int TotalRowsPerSlice;
+   int CopySlices;
+};
+
+
+extern void
+_mesa_compute_compressed_pixelstore(GLuint dims, struct gl_texture_image *texImage,
+                              GLsizei width, GLsizei height, GLsizei depth,
+                              const struct gl_pixelstore_attrib *packing,
+                              struct compressed_pixelstore *store);
+
+
 #endif
