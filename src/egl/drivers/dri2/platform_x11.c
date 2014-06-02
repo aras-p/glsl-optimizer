@@ -1076,6 +1076,11 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
       goto cleanup_dpy;
    }
 
+   /*
+    * Every hardware driver_name is set using strdup. Doing the same in
+    * here will allow is to simply free the memory at dri2_terminate().
+    */
+   dri2_dpy->driver_name = strdup("swrast");
    if (!dri2_load_driver_swrast(disp))
       goto cleanup_conn;
 
@@ -1114,6 +1119,7 @@ dri2_initialize_x11_swrast(_EGLDriver *drv, _EGLDisplay *disp)
  cleanup_driver:
    dlclose(dri2_dpy->driver);
  cleanup_conn:
+   free(dri2_dpy->driver_name);
    if (disp->PlatformDisplay == NULL)
       xcb_disconnect(dri2_dpy->conn);
  cleanup_dpy:

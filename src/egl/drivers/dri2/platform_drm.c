@@ -526,7 +526,7 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 
    dri2_dpy->fd = fd;
    dri2_dpy->device_name = loader_get_device_name_for_fd(dri2_dpy->fd);
-   dri2_dpy->driver_name = dri2_dpy->gbm_dri->base.driver_name;
+   dri2_dpy->driver_name = strdup(dri2_dpy->gbm_dri->base.driver_name);
 
    dri2_dpy->dri_screen = dri2_dpy->gbm_dri->screen;
    dri2_dpy->core = dri2_dpy->gbm_dri->core;
