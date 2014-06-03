@@ -219,7 +219,7 @@ gen_f0_0_MOV_GRF_GRF(struct brw_compile *p)
    struct brw_reg g2 = brw_vec8_grf(2, 0);
 
    brw_push_insn_state(p);
-   brw_set_predicate_control(p, true);
+   brw_set_default_predicate_control(p, true);
    brw_MOV(p, g0, g2);
    brw_pop_insn_state(p);
 }
@@ -235,7 +235,7 @@ gen_f0_1_MOV_GRF_GRF(struct brw_compile *p)
    struct brw_reg g2 = brw_vec8_grf(2, 0);
 
    brw_push_insn_state(p);
-   brw_set_predicate_control(p, true);
+   brw_set_default_predicate_control(p, true);
    struct brw_instruction *mov = brw_MOV(p, g0, g2);
    mov->bits2.da1.flag_subreg_nr = 1;
    brw_pop_insn_state(p);
@@ -265,11 +265,11 @@ run_tests(struct brw_context *brw)
 	 struct brw_compile *p = rzalloc(NULL, struct brw_compile);
 	 brw_init_compile(brw, p, p);
 
-	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+	 brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
 	 if (align_16)
-	    brw_set_access_mode(p, BRW_ALIGN_16);
+	    brw_set_default_access_mode(p, BRW_ALIGN_16);
 	 else
-	    brw_set_access_mode(p, BRW_ALIGN_1);
+	    brw_set_default_access_mode(p, BRW_ALIGN_1);
 
 	 tests[i].func(p);
 	 assert(p->nr_insn == 1);
