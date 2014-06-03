@@ -563,6 +563,7 @@ ConstantFolding::expr(Instruction *i,
    } else {
       i->op = i->saturate ? OP_SAT : OP_MOV; /* SAT handled by unary() */
    }
+   i->subOp = 0;
 }
 
 void
