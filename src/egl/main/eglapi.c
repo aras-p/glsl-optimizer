@@ -571,6 +571,10 @@ _eglCreateWindowSurfaceCommon(_EGLDisplay *disp, EGLConfig config,
    EGLSurface ret;
 
    _EGL_CHECK_CONFIG(disp, conf, EGL_NO_SURFACE, drv);
+
+   if (native_window == NULL)
+      RETURN_EGL_ERROR(disp, EGL_BAD_NATIVE_WINDOW, EGL_NO_SURFACE);
+
    surf = drv->API.CreateWindowSurface(drv, disp, conf, native_window,
                                        attrib_list);
    ret = (surf) ? _eglLinkSurface(surf) : EGL_NO_SURFACE;
