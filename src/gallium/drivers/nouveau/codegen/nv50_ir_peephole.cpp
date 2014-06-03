@@ -540,6 +540,9 @@ ConstantFolding::expr(Instruction *i,
       }
       break;
    }
+   case OP_POPCNT:
+      res.data.u32 = util_bitcount(a->data.u32 & b->data.u32);
+      break;
    default:
       return;
    }
@@ -955,6 +958,16 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
       i->setSrc(1, NULL);
       i->op = OP_MOV;
       i->subOp = 0;
+      break;
+   }
+   case OP_POPCNT: {
+      // Only deal with 1-arg POPCNT here
+      if (i->srcExists(1))
+         break;
+      uint32_t res = util_bitcount(imm0.reg.data.u32);
+      i->setSrc(0, new_ImmediateValue(i->bb->getProgram(), res));
+      i->setSrc(1, NULL);
+      i->op = OP_MOV;
       break;
    }
    default:
