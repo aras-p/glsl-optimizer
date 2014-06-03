@@ -46,6 +46,12 @@
 #include <limits.h> /* CHAR_BIT */
 #include <ctype.h> /* isalnum */
 
+#ifdef _WIN32
+#include <windows.h>
+#include <stdlib.h>
+#endif
+
+
 void _debug_vprintf(const char *format, va_list ap)
 {
    static char buf[4096] = {'\0'};
@@ -61,6 +67,32 @@ void _debug_vprintf(const char *format, va_list ap)
    util_vsnprintf(buf, sizeof(buf), format, ap);
    os_log_message(buf);
 #endif
+}
+
+
+void
+debug_disable_error_message_boxes(void)
+{
+#ifdef _WIN32
+   /* When Windows' error message boxes are disabled for this process (as is
+    * typically the case when running tests in an automated fashion) we disable
+    * CRT message boxes too.
+    */
+   UINT uMode = SetErrorMode(0);
+   SetErrorMode(uMode);
+   if (uMode & SEM_FAILCRITICALERRORS) {
+      /* Disable assertion failure message box.
+       * http://msdn.microsoft.com/en-us/library/sas1dkb2.aspx
+       */
+      _set_error_mode(_OUT_TO_STDERR);
+#ifdef _MSC_VER
+      /* Disable abort message box.
+       * http://msdn.microsoft.com/en-us/library/e631wekh.aspx
+       */
+      _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+#endif
+   }
+#endif /* _WIN32 */
 }
 
 

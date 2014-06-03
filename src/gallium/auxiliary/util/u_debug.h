@@ -139,6 +139,15 @@ void debug_print_format(const char *msg, unsigned fmt );
 
 
 /**
+ * Disable interactive error message boxes.
+ *
+ * Should be called as soon as possible for effectiveness.
+ */
+void
+debug_disable_error_message_boxes(void);
+
+
+/**
  * Hard-coded breakpoint.
  */
 #ifdef DEBUG
