@@ -348,12 +348,6 @@ gbm_bo_create(struct gbm_device *gbm,
       return NULL;
    }
 
-   if (usage & GBM_BO_USE_CURSOR_64X64 &&
-       (width != 64 || height != 64)) {
-      errno = EINVAL;
-      return NULL;
-   }
-
    return gbm->bo_create(gbm, width, height, format, usage);
 }
 

@@ -346,7 +346,7 @@ gbm_dri_is_format_supported(struct gbm_device *gbm,
       return 0;
    }
 
-   if (usage & GBM_BO_USE_CURSOR_64X64 &&
+   if (usage & GBM_BO_USE_CURSOR &&
        usage & GBM_BO_USE_RENDERING)
       return 0;
 
@@ -532,7 +532,7 @@ gbm_dri_bo_import(struct gbm_device *gbm,
 
    if (usage & GBM_BO_USE_SCANOUT)
       dri_use |= __DRI_IMAGE_USE_SCANOUT;
-   if (usage & GBM_BO_USE_CURSOR_64X64)
+   if (usage & GBM_BO_USE_CURSOR)
       dri_use |= __DRI_IMAGE_USE_CURSOR;
    if (dri->image->base.version >= 2 &&
        !dri->image->validateUsage(bo->image, dri_use)) {
@@ -568,7 +568,7 @@ create_dumb(struct gbm_device *gbm,
    struct drm_mode_destroy_dumb destroy_arg;
    int ret;
 
-   if (!(usage & GBM_BO_USE_CURSOR_64X64)) {
+   if (!(usage & GBM_BO_USE_CURSOR)) {
       errno = EINVAL;
       return NULL;
    }
@@ -672,7 +672,7 @@ gbm_dri_bo_create(struct gbm_device *gbm,
 
    if (usage & GBM_BO_USE_SCANOUT)
       dri_use |= __DRI_IMAGE_USE_SCANOUT;
-   if (usage & GBM_BO_USE_CURSOR_64X64)
+   if (usage & GBM_BO_USE_CURSOR)
       dri_use |= __DRI_IMAGE_USE_CURSOR;
 
    /* Gallium drivers requires shared in order to get the handle/stride */

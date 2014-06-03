@@ -66,7 +66,7 @@ gbm_usage_to_gallium(uint usage)
    if (usage & GBM_BO_USE_RENDERING)
       resource_usage |= PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
 
-   if (usage & GBM_BO_USE_CURSOR_64X64)
+   if (usage & GBM_BO_USE_CURSOR)
       resource_usage |= PIPE_BIND_CURSOR;
 
    return resource_usage;
