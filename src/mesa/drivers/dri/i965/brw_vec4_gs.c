@@ -81,10 +81,11 @@ do_gs_prog(struct brw_context *brw,
        */
       c.prog_data.control_data_format = GEN7_GS_CONTROL_DATA_FORMAT_GSCTL_SID;
 
-      /* However, StreamID is not yet supported, so we output zero bits of
-       * control data per vertex.
-       */
-      c.control_data_bits_per_vertex = 0;
+      /* We only have to emit control bits if we are using streams */
+      if (prog->Geom.UsesStreams)
+         c.control_data_bits_per_vertex = 2;
+      else
+         c.control_data_bits_per_vertex = 0;
    } else {
       /* When the output type is triangle_strip or line_strip, EndPrimitive()
        * may be used to terminate the current strip and start a new one
