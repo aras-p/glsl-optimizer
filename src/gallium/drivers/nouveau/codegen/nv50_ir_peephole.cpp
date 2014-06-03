@@ -940,6 +940,23 @@ ConstantFolding::opnd(Instruction *i, ImmediateValue &imm0, int s)
    case OP_EX2:
       unary(i, imm0);
       break;
+   case OP_BFIND: {
+      int32_t res;
+      switch (i->dType) {
+      case TYPE_S32: res = util_last_bit_signed(imm0.reg.data.s32) - 1; break;
+      case TYPE_U32: res = util_last_bit(imm0.reg.data.u32) - 1; break;
+      default:
+         return;
+      }
+      if (i->subOp == NV50_IR_SUBOP_BFIND_SAMT && res >= 0)
+         res = 31 - res;
+      bld.setPosition(i, false); /* make sure bld is init'ed */
+      i->setSrc(0, bld.mkImm(res));
+      i->setSrc(1, NULL);
+      i->op = OP_MOV;
+      i->subOp = 0;
+      break;
+   }
    default:
       return;
    }
