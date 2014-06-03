@@ -528,9 +528,13 @@ ConstantFolding::expr(Instruction *i,
          rshift = 32 - width;
          lshift = 32 - width - offset;
       }
+      if (i->subOp == NV50_IR_SUBOP_EXTBF_REV)
+         res.data.u32 = util_bitreverse(a->data.u32);
+      else
+         res.data.u32 = a->data.u32;
       switch (i->dType) {
-      case TYPE_S32: res.data.s32 = (a->data.s32 << lshift) >> rshift; break;
-      case TYPE_U32: res.data.u32 = (a->data.u32 << lshift) >> rshift; break;
+      case TYPE_S32: res.data.s32 = (res.data.s32 << lshift) >> rshift; break;
+      case TYPE_U32: res.data.u32 = (res.data.u32 << lshift) >> rshift; break;
       default:
          return;
       }
