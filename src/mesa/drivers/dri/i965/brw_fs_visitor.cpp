@@ -189,7 +189,7 @@ fs_visitor::visit(ir_dereference_array *ir)
    src.type = brw_type_for_base_type(ir->type);
 
    if (constant_index) {
-      assert(src.file == UNIFORM || src.file == GRF);
+      assert(src.file == UNIFORM || src.file == GRF || src.file == HW_REG);
       src.reg_offset += constant_index->value.i[0] * element_size;
    } else {
       /* Variable index array dereference.  We attach the variable index
