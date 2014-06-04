@@ -178,8 +178,7 @@ brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
 	 if (dest.hstride == BRW_HORIZONTAL_STRIDE_0)
 	    dest.hstride = BRW_HORIZONTAL_STRIDE_1;
 	 insn->bits1.da1.dest_horiz_stride = dest.hstride;
-      }
-      else {
+      } else {
 	 insn->bits1.da16.dest_subreg_nr = dest.subnr / 16;
 	 insn->bits1.da16.dest_writemask = dest.dw1.bits.writemask;
          if (dest.file == BRW_GENERAL_REGISTER_FILE ||
@@ -192,8 +191,7 @@ brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
 	  */
 	 insn->bits1.da16.dest_horiz_stride = 1;
       }
-   }
-   else {
+   } else {
       insn->bits1.ia1.dest_subreg_nr = dest.subnr;
 
       /* These are different sizes in align1 vs align16:
@@ -203,8 +201,7 @@ brw_set_dest(struct brw_compile *p, struct brw_instruction *insn,
 	 if (dest.hstride == BRW_HORIZONTAL_STRIDE_0)
 	    dest.hstride = BRW_HORIZONTAL_STRIDE_1;
 	 insn->bits1.ia1.dest_horiz_stride = dest.hstride;
-      }
-      else {
+      } else {
 	 insn->bits1.ia16.dest_indirect_offset = dest.dw1.bits.indirect_offset;
 	 /* even ignored in da16, still need to set as '01' */
 	 insn->bits1.ia16.dest_horiz_stride = 1;
@@ -394,26 +391,21 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
          insn->bits1.da1.src0_reg_type = BRW_HW_REG_TYPE_UD;
          insn->bits1.da1.dest_reg_type = BRW_HW_REG_TYPE_UD;
       }
-   }
-   else
-   {
+   } else {
       if (reg.address_mode == BRW_ADDRESS_DIRECT) {
 	 if (insn->header.access_mode == BRW_ALIGN_1) {
 	    insn->bits2.da1.src0_subreg_nr = reg.subnr;
 	    insn->bits2.da1.src0_reg_nr = reg.nr;
-	 }
-	 else {
+	 } else {
 	    insn->bits2.da16.src0_subreg_nr = reg.subnr / 16;
 	    insn->bits2.da16.src0_reg_nr = reg.nr;
 	 }
-      }
-      else {
+      } else {
 	 insn->bits2.ia1.src0_subreg_nr = reg.subnr;
 
 	 if (insn->header.access_mode == BRW_ALIGN_1) {
 	    insn->bits2.ia1.src0_indirect_offset = reg.dw1.bits.indirect_offset;
-	 }
-	 else {
+	 } else {
 	    insn->bits2.ia16.src0_subreg_nr = reg.dw1.bits.indirect_offset;
 	 }
       }
@@ -424,14 +416,12 @@ brw_set_src0(struct brw_compile *p, struct brw_instruction *insn,
 	    insn->bits2.da1.src0_horiz_stride = BRW_HORIZONTAL_STRIDE_0;
 	    insn->bits2.da1.src0_width = BRW_WIDTH_1;
 	    insn->bits2.da1.src0_vert_stride = BRW_VERTICAL_STRIDE_0;
-	 }
-	 else {
+	 } else {
 	    insn->bits2.da1.src0_horiz_stride = reg.hstride;
 	    insn->bits2.da1.src0_width = reg.width;
 	    insn->bits2.da1.src0_vert_stride = reg.vstride;
 	 }
-      }
-      else {
+      } else {
 	 insn->bits2.da16.src0_swz_x = BRW_GET_SWZ(reg.dw1.bits.swizzle, BRW_CHANNEL_X);
 	 insn->bits2.da16.src0_swz_y = BRW_GET_SWZ(reg.dw1.bits.swizzle, BRW_CHANNEL_Y);
 	 insn->bits2.da16.src0_swz_z = BRW_GET_SWZ(reg.dw1.bits.swizzle, BRW_CHANNEL_Z);
@@ -475,8 +465,7 @@ brw_set_src1(struct brw_compile *p,
 
    if (reg.file == BRW_IMMEDIATE_VALUE) {
       insn->bits3.ud = reg.dw1.ud;
-   }
-   else {
+   } else {
       /* This is a hardware restriction, which may or may not be lifted
        * in the future:
        */
@@ -486,8 +475,7 @@ brw_set_src1(struct brw_compile *p,
       if (insn->header.access_mode == BRW_ALIGN_1) {
 	 insn->bits3.da1.src1_subreg_nr = reg.subnr;
 	 insn->bits3.da1.src1_reg_nr = reg.nr;
-      }
-      else {
+      } else {
 	 insn->bits3.da16.src1_subreg_nr = reg.subnr / 16;
 	 insn->bits3.da16.src1_reg_nr = reg.nr;
       }
@@ -498,14 +486,12 @@ brw_set_src1(struct brw_compile *p,
 	    insn->bits3.da1.src1_horiz_stride = BRW_HORIZONTAL_STRIDE_0;
 	    insn->bits3.da1.src1_width = BRW_WIDTH_1;
 	    insn->bits3.da1.src1_vert_stride = BRW_VERTICAL_STRIDE_0;
-	 }
-	 else {
+	 } else {
 	    insn->bits3.da1.src1_horiz_stride = reg.hstride;
 	    insn->bits3.da1.src1_width = reg.width;
 	    insn->bits3.da1.src1_vert_stride = reg.vstride;
 	 }
-      }
-      else {
+      } else {
 	 insn->bits3.da16.src1_swz_x = BRW_GET_SWZ(reg.dw1.bits.swizzle, BRW_CHANNEL_X);
 	 insn->bits3.da16.src1_swz_y = BRW_GET_SWZ(reg.dw1.bits.swizzle, BRW_CHANNEL_Y);
 	 insn->bits3.da16.src1_swz_z = BRW_GET_SWZ(reg.dw1.bits.swizzle, BRW_CHANNEL_Z);
@@ -2613,7 +2599,6 @@ brw_set_dp_untyped_atomic_message(struct brw_compile *p,
          insn->bits3.gen7_dp.msg_type =
             HSW_DATAPORT_DC_PORT1_UNTYPED_ATOMIC_OP_SIMD4X2;
       }
-
    } else {
       brw_set_message_descriptor(p, insn, GEN7_SFID_DATAPORT_DATA_CACHE,
                                  msg_length, response_length,
