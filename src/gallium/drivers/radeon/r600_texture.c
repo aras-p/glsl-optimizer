@@ -737,9 +737,8 @@ static unsigned r600_choose_tiling(struct r600_common_screen *rscreen,
 	 * Compressed textures must always be tiled. */
 	if (!(templ->flags & R600_RESOURCE_FLAG_FORCE_TILING) &&
 	    !util_format_is_compressed(templ->format)) {
-		/* Tiling doesn't work with the 422 (SUBSAMPLED) formats on R600-Cayman. */
-		if (rscreen->chip_class <= CAYMAN &&
-		    desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED)
+		/* Tiling doesn't work with the 422 (SUBSAMPLED) formats on R600+. */
+		if (desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED)
 			return RADEON_SURF_MODE_LINEAR_ALIGNED;
 
 		/* Cursors are linear on SI.

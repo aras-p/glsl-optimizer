@@ -1102,6 +1102,19 @@ static uint32_t si_translate_texformat(struct pipe_screen *screen,
 		}
 	}
 
+	if (desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED) {
+		switch (format) {
+		case PIPE_FORMAT_R8G8_B8G8_UNORM:
+		case PIPE_FORMAT_G8R8_B8R8_UNORM:
+			return V_008F14_IMG_DATA_FORMAT_GB_GR;
+		case PIPE_FORMAT_G8R8_G8B8_UNORM:
+		case PIPE_FORMAT_R8G8_R8B8_UNORM:
+			return V_008F14_IMG_DATA_FORMAT_BG_RG;
+		default:
+			goto out_unknown;
+		}
+	}
+
 	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
 
 		if (!enable_s3tc)
@@ -2481,6 +2494,8 @@ static struct pipe_sampler_view *si_create_sampler_view(struct pipe_context *ctx
 					num_format = V_008F14_IMG_NUM_FORMAT_UNORM;
 					break;
 				}
+			} else if (desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED) {
+				num_format = V_008F14_IMG_NUM_FORMAT_UNORM;
 			} else {
 				num_format = V_008F14_IMG_NUM_FORMAT_FLOAT;
 			}

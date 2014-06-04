@@ -548,46 +548,63 @@ static void si_resource_copy_region(struct pipe_context *ctx,
 		dstx = util_format_get_nblocksx(orig_info[1].format, dstx);
 		dsty = util_format_get_nblocksy(orig_info[1].format, dsty);
 	} else if (!util_blitter_is_copy_supported(sctx->blitter, dst, src)) {
-		unsigned blocksize = util_format_get_blocksize(src->format);
+		if (util_format_is_subsampled_422(src->format)) {
+			/* XXX untested */
+			si_change_format(src, src_level, &orig_info[0],
+					 PIPE_FORMAT_R8G8B8A8_UINT);
+			si_change_format(dst, dst_level, &orig_info[1],
+					 PIPE_FORMAT_R8G8B8A8_UINT);
 
-		switch (blocksize) {
-		case 1:
-			si_change_format(src, src_level, &orig_info[0],
-					 PIPE_FORMAT_R8_UNORM);
-			si_change_format(dst, dst_level, &orig_info[1],
-					 PIPE_FORMAT_R8_UNORM);
-			break;
-		case 2:
-			si_change_format(src, src_level, &orig_info[0],
-					 PIPE_FORMAT_R8G8_UNORM);
-			si_change_format(dst, dst_level, &orig_info[1],
-					 PIPE_FORMAT_R8G8_UNORM);
-			break;
-		case 4:
-			si_change_format(src, src_level, &orig_info[0],
-					 PIPE_FORMAT_R8G8B8A8_UNORM);
-			si_change_format(dst, dst_level, &orig_info[1],
-					 PIPE_FORMAT_R8G8B8A8_UNORM);
-			break;
-		case 8:
-			si_change_format(src, src_level, &orig_info[0],
-					 PIPE_FORMAT_R16G16B16A16_UINT);
-			si_change_format(dst, dst_level, &orig_info[1],
-					 PIPE_FORMAT_R16G16B16A16_UINT);
-			break;
-		case 16:
-			si_change_format(src, src_level, &orig_info[0],
-					 PIPE_FORMAT_R32G32B32A32_UINT);
-			si_change_format(dst, dst_level, &orig_info[1],
-					 PIPE_FORMAT_R32G32B32A32_UINT);
-			break;
-		default:
-			fprintf(stderr, "Unhandled format %s with blocksize %u\n",
-				util_format_short_name(src->format), blocksize);
-			assert(0);
+			sbox = *src_box;
+			sbox.x = util_format_get_nblocksx(orig_info[0].format, src_box->x);
+			sbox.width = util_format_get_nblocksx(orig_info[0].format, src_box->width);
+			src_box = &sbox;
+			dstx = util_format_get_nblocksx(orig_info[1].format, dstx);
+
+			restore_orig[0] = TRUE;
+			restore_orig[1] = TRUE;
+		} else {
+			unsigned blocksize = util_format_get_blocksize(src->format);
+
+			switch (blocksize) {
+			case 1:
+				si_change_format(src, src_level, &orig_info[0],
+						PIPE_FORMAT_R8_UNORM);
+				si_change_format(dst, dst_level, &orig_info[1],
+						PIPE_FORMAT_R8_UNORM);
+				break;
+			case 2:
+				si_change_format(src, src_level, &orig_info[0],
+						PIPE_FORMAT_R8G8_UNORM);
+				si_change_format(dst, dst_level, &orig_info[1],
+						PIPE_FORMAT_R8G8_UNORM);
+				break;
+			case 4:
+				si_change_format(src, src_level, &orig_info[0],
+						PIPE_FORMAT_R8G8B8A8_UNORM);
+				si_change_format(dst, dst_level, &orig_info[1],
+						PIPE_FORMAT_R8G8B8A8_UNORM);
+				break;
+			case 8:
+				si_change_format(src, src_level, &orig_info[0],
+						PIPE_FORMAT_R16G16B16A16_UINT);
+				si_change_format(dst, dst_level, &orig_info[1],
+						PIPE_FORMAT_R16G16B16A16_UINT);
+				break;
+			case 16:
+				si_change_format(src, src_level, &orig_info[0],
+						PIPE_FORMAT_R32G32B32A32_UINT);
+				si_change_format(dst, dst_level, &orig_info[1],
+						PIPE_FORMAT_R32G32B32A32_UINT);
+				break;
+			default:
+				fprintf(stderr, "Unhandled format %s with blocksize %u\n",
+					util_format_short_name(src->format), blocksize);
+				assert(0);
+			}
+			restore_orig[0] = TRUE;
+			restore_orig[1] = TRUE;
 		}
-		restore_orig[0] = TRUE;
-		restore_orig[1] = TRUE;
 	}
 
 	/* Initialize the surface. */
