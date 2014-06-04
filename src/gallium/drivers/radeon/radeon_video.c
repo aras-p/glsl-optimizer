@@ -242,7 +242,10 @@ int rvid_get_video_param(struct pipe_screen *screen,
 		switch (param) {
 		case PIPE_VIDEO_CAP_SUPPORTED:
 			/* no support for MPEG4 */
-			return codec != PIPE_VIDEO_FORMAT_MPEG4;
+			return codec != PIPE_VIDEO_FORMAT_MPEG4 &&
+			       /* FIXME: VC-1 simple/main profile is broken */
+			       profile != PIPE_VIDEO_PROFILE_VC1_SIMPLE &&
+			       profile != PIPE_VIDEO_PROFILE_VC1_MAIN;
 		case PIPE_VIDEO_CAP_PREFERS_INTERLACED:
 		case PIPE_VIDEO_CAP_SUPPORTS_INTERLACED:
 			/* and MPEG2 only with shaders */
