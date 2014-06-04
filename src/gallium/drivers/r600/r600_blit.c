@@ -563,16 +563,6 @@ static void r600_clear_buffer(struct pipe_context *ctx, struct pipe_resource *ds
 	}
 }
 
-static bool util_format_is_subsampled_2x1_32bpp(enum pipe_format format)
-{
-	const struct util_format_description *desc = util_format_description(format);
-
-	return desc->layout == UTIL_FORMAT_LAYOUT_SUBSAMPLED &&
-	       desc->block.width == 2 &&
-	       desc->block.height == 1 &&
-	       desc->block.bits == 32;
-}
-
 static void r600_resource_copy_region(struct pipe_context *ctx,
 				      struct pipe_resource *dst,
 				      unsigned dst_level,
@@ -647,7 +637,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 		src_force_level = src_level;
 	} else if (!util_blitter_is_copy_supported(rctx->blitter, dst, src)) {
-		if (util_format_is_subsampled_2x1_32bpp(src->format)) {
+		if (util_format_is_subsampled_422(src->format)) {
 
 			src_templ.format = PIPE_FORMAT_R8G8B8A8_UINT;
 			dst_templ.format = PIPE_FORMAT_R8G8B8A8_UINT;

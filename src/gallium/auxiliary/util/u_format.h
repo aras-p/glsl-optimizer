@@ -664,6 +664,9 @@ boolean
 util_format_is_intensity(enum pipe_format format);
 
 boolean
+util_format_is_subsampled_422(enum pipe_format format);
+
+boolean
 util_format_is_pure_integer(enum pipe_format format);
 
 boolean
