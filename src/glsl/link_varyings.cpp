@@ -1345,6 +1345,14 @@ assign_varying_locations(struct gl_context *ctx,
          if (input_var || (prog->SeparateShader && consumer == NULL)) {
             matches.record(output_var, input_var);
          }
+
+         /* Only stream 0 outputs can be consumed in the next stage */
+         if (input_var && output_var->data.stream != 0) {
+            linker_error(prog, "output %s is assigned to stream=%d but "
+                         "is linked to an input, which requires stream=0",
+                         output_var->name, output_var->data.stream);
+            return false;
+         }
       }
    } else {
       /* If there's no producer stage, then this must be a separable program.
