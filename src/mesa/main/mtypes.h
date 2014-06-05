@@ -1791,6 +1791,7 @@ struct gl_transform_feedback_output
    unsigned OutputRegister;
    unsigned OutputBuffer;
    unsigned NumComponents;
+   unsigned StreamId;
 
    /** offset (in DWORDs) of this output within the interleaved structure */
    unsigned DstOffset;
