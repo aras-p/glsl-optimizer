@@ -256,6 +256,12 @@ struct glsl_type {
    unsigned component_slots() const;
 
    /**
+    * Calculate the number of unique values from glGetUniformLocation for the
+    * elements of the type.
+    */
+   unsigned uniform_locations() const;
+
+   /**
     * Calculate the number of attribute slots required to hold this type
     *
     * This implements the language rules of GLSL 1.50 for counting the number
