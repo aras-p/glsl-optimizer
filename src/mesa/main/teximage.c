@@ -3626,6 +3626,28 @@ copytexsubimage_by_slice(struct gl_context *ctx,
    }
 }
 
+static GLboolean
+formats_differ_in_component_sizes (mesa_format f1,
+                                   mesa_format f2)
+{
+   GLint f1_r_bits = _mesa_get_format_bits(f1, GL_RED_BITS);
+   GLint f1_g_bits = _mesa_get_format_bits(f1, GL_GREEN_BITS);
+   GLint f1_b_bits = _mesa_get_format_bits(f1, GL_BLUE_BITS);
+   GLint f1_a_bits = _mesa_get_format_bits(f1, GL_ALPHA_BITS);
+
+   GLint f2_r_bits = _mesa_get_format_bits(f2, GL_RED_BITS);
+   GLint f2_g_bits = _mesa_get_format_bits(f2, GL_GREEN_BITS);
+   GLint f2_b_bits = _mesa_get_format_bits(f2, GL_BLUE_BITS);
+   GLint f2_a_bits = _mesa_get_format_bits(f2, GL_ALPHA_BITS);
+
+   if ((f1_r_bits && f2_r_bits && f1_r_bits != f2_r_bits)
+       || (f1_g_bits && f2_g_bits && f1_g_bits != f2_g_bits)
+       || (f1_b_bits && f2_b_bits && f1_b_bits != f2_b_bits)
+       || (f1_a_bits && f2_a_bits && f1_a_bits != f2_a_bits))
+      return GL_TRUE;
+
+   return GL_FALSE;
+}
 
 /**
  * Implement the glCopyTexImage1/2D() functions.
@@ -3639,6 +3661,7 @@ copyteximage(struct gl_context *ctx, GLuint dims,
    struct gl_texture_image *texImage;
    const GLuint face = _mesa_tex_target_to_face(target);
    mesa_format texFormat;
+   struct gl_renderbuffer *rb;
 
    FLUSH_VERTICES(ctx, 0);
 
@@ -3668,6 +3691,29 @@ copyteximage(struct gl_context *ctx, GLuint dims,
 
    texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
                                            internalFormat, GL_NONE, GL_NONE);
+
+   rb = _mesa_get_read_renderbuffer_for_format(ctx, internalFormat);
+
+   /* From Page 139 of OpenGL ES 3.0 spec:
+    *    "If internalformat is sized, the internal format of the new texel
+    *    array is internalformat, and this is also the new texel array’s
+    *    effective internal format. If the component sizes of internalformat
+    *    do not exactly match the corresponding component sizes of the source
+    *    buffer’s effective internal format, described below, an
+    *    INVALID_OPERATION error is generated. If internalformat is unsized,
+    *    the internal format of the new texel array is the effective internal
+    *    format of the source buffer, and this is also the new texel array’s
+    *    effective internal format.
+    */
+   if (_mesa_is_gles3(ctx)
+       && !_mesa_is_enum_format_unsized(internalFormat)
+       && formats_differ_in_component_sizes (texFormat, rb->Format)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glCopyTexImage%uD(componenet size changed in"
+                  " internal format)", dims);
+      return;
+   }
+
    assert(texFormat != MESA_FORMAT_NONE);
 
    if (!ctx->Driver.TestProxyTexImage(ctx, proxy_target(target),
