@@ -617,6 +617,10 @@ public:
 
 private:
    void generate_code(exec_list *instructions);
+   void fire_fb_write(fs_inst *inst,
+                      GLuint base_reg,
+                      struct brw_reg implied_header,
+                      GLuint nr);
    void generate_fb_write(fs_inst *inst);
    void generate_blorp_fb_write(fs_inst *inst);
    void generate_pixel_xy(struct brw_reg dst, bool is_x);

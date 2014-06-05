@@ -98,11 +98,47 @@ fs_generator::patch_discard_jumps_to_fb_writes()
 }
 
 void
+fs_generator::fire_fb_write(fs_inst *inst,
+                            GLuint base_reg,
+                            struct brw_reg implied_header,
+                            GLuint nr)
+{
+   uint32_t msg_control;
+
+   if (brw->gen < 6) {
+      brw_MOV(p,
+              brw_message_reg(base_reg + 1),
+              brw_vec8_grf(1, 0));
+   }
+
+   if (this->dual_source_output)
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN01;
+   else if (dispatch_width == 16)
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
+   else
+      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01;
+
+   uint32_t surf_index =
+      prog_data->binding_table.render_target_start + inst->target;
+
+   brw_fb_WRITE(p,
+                dispatch_width,
+                base_reg,
+                implied_header,
+                msg_control,
+                surf_index,
+                nr,
+                0,
+                inst->eot,
+                inst->header_present);
+
+   brw_mark_surface_used(&prog_data->base, surf_index);
+}
+
+void
 fs_generator::generate_fb_write(fs_inst *inst)
 {
-   bool eot = inst->eot;
    struct brw_reg implied_header;
-   uint32_t msg_control;
 
    /* Header is 2 regs, g0 and g1 are the contents. g0 will be implied
     * move, here's g1.
@@ -155,38 +191,38 @@ fs_generator::generate_fb_write(fs_inst *inst)
 	 implied_header = brw_null_reg();
       } else {
 	 implied_header = retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW);
-
-	 brw_MOV(p,
-		 brw_message_reg(inst->base_mrf + 1),
-		 brw_vec8_grf(1, 0));
       }
    } else {
       implied_header = brw_null_reg();
    }
 
-   if (this->dual_source_output)
-      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_DUAL_SOURCE_SUBSPAN01;
-   else if (dispatch_width == 16)
-      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD16_SINGLE_SOURCE;
-   else
-      msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01;
+   if (!runtime_check_aads_emit) {
+      fire_fb_write(inst, inst->base_mrf, implied_header, inst->mlen);
+   } else {
+      /* This can only happen in gen < 6 */
+      assert(brw->gen < 6);
+
+      struct brw_reg v1_null_ud = vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
+
+      /* Check runtime bit to detect if we have to send AA data or not */
+      brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_AND(p,
+              v1_null_ud,
+              retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD),
+              brw_imm_ud(1<<26));
+      brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+
+      int jmp = brw_JMPI(p, brw_imm_ud(0), BRW_PREDICATE_NORMAL) - p->store;
+      brw_last_inst->header.execution_size = BRW_EXECUTE_1;
+      {
+         /* Don't send AA data */
+         fire_fb_write(inst, inst->base_mrf+1, implied_header, inst->mlen-1);
+      }
+      brw_land_fwd_jump(p, jmp);
+      fire_fb_write(inst, inst->base_mrf, implied_header, inst->mlen);
+   }
 
    brw_pop_insn_state(p);
-
-   uint32_t surf_index =
-      prog_data->binding_table.render_target_start + inst->target;
-   brw_fb_WRITE(p,
-		dispatch_width,
-		inst->base_mrf,
-		implied_header,
-		msg_control,
-		surf_index,
-		inst->mlen,
-		0,
-		eot,
-		inst->header_present);
-
-   brw_mark_surface_used(&prog_data->base, surf_index);
 }
 
 void
