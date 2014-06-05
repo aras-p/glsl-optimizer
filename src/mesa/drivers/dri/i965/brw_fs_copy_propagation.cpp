@@ -272,6 +272,15 @@ fs_copy_prop_dataflow::dump_block_data() const
    }
 }
 
+static bool
+is_logic_op(enum opcode opcode)
+{
+   return (opcode == BRW_OPCODE_AND ||
+           opcode == BRW_OPCODE_OR  ||
+           opcode == BRW_OPCODE_XOR ||
+           opcode == BRW_OPCODE_NOT);
+}
+
 bool
 fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
 {
@@ -329,6 +338,14 @@ fs_visitor::try_copy_propagate(fs_inst *inst, int arg, acp_entry *entry)
 
    if (has_source_modifiers && entry->dst.type != inst->src[arg].type)
       return false;
+
+   if (brw->gen >= 8) {
+      if (entry->src.negate) {
+         if (is_logic_op(inst->opcode)) {
+            return false;
+         }
+      }
+   }
 
    inst->src[arg].file = entry->src.file;
    inst->src[arg].reg = entry->src.reg;
