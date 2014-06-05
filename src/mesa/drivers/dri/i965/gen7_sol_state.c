@@ -104,12 +104,14 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
       ctx->TransformFeedback.CurrentObject;
    const struct gl_transform_feedback_info *linked_xfb_info =
       &xfb_obj->shader_program->LinkedTransformFeedback;
-   uint16_t so_decl[128];
-   int buffer_mask = 0;
-   int next_offset[4] = {0, 0, 0, 0};
-   int decls = 0;
+   uint16_t so_decl[MAX_VERTEX_STREAMS][128];
+   int buffer_mask[MAX_VERTEX_STREAMS] = {0, 0, 0, 0};
+   int next_offset[MAX_VERTEX_STREAMS] = {0, 0, 0, 0};
+   int decls[MAX_VERTEX_STREAMS] = {0, 0, 0, 0};
+   int max_decls = 0;
+   STATIC_ASSERT(ARRAY_SIZE(so_decl[0]) >= MAX_PROGRAM_OUTPUTS);
 
-   STATIC_ASSERT(ARRAY_SIZE(so_decl) >= MAX_PROGRAM_OUTPUTS);
+   memset(so_decl, 0, sizeof(so_decl));
 
    /* Construct the list of SO_DECLs to be emitted.  The formatting of the
     * command is feels strange -- each dword pair contains a SO_DECL per stream.
@@ -120,6 +122,9 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
       int varying = linked_xfb_info->Outputs[i].OutputRegister;
       const unsigned components = linked_xfb_info->Outputs[i].NumComponents;
       unsigned component_mask = (1 << components) - 1;
+      unsigned stream_id = linked_xfb_info->Outputs[i].StreamId;
+
+      assert(stream_id < MAX_VERTEX_STREAMS);
 
       /* gl_PointSize is stored in VARYING_SLOT_PSIZ.w
        * gl_Layer is stored in VARYING_SLOT_PSIZ.y
@@ -138,7 +143,7 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
          component_mask <<= linked_xfb_info->Outputs[i].ComponentOffset;
       }
 
-      buffer_mask |= 1 << buffer;
+      buffer_mask[stream_id] |= 1 << buffer;
 
       decl |= buffer << SO_DECL_OUTPUT_BUFFER_SLOT_SHIFT;
       if (varying == VARYING_SLOT_LAYER || varying == VARYING_SLOT_VIEWPORT) {
@@ -167,35 +172,41 @@ gen7_upload_3dstate_so_decl_list(struct brw_context *brw,
       next_offset[buffer] += skip_components;
 
       while (skip_components >= 4) {
-         so_decl[decls++] = SO_DECL_HOLE_FLAG | 0xf;
+         so_decl[stream_id][decls[stream_id]++] = SO_DECL_HOLE_FLAG | 0xf;
          skip_components -= 4;
       }
       if (skip_components > 0)
-         so_decl[decls++] = SO_DECL_HOLE_FLAG | ((1 << skip_components) - 1);
+         so_decl[stream_id][decls[stream_id]++] =
+            SO_DECL_HOLE_FLAG | ((1 << skip_components) - 1);
 
       assert(linked_xfb_info->Outputs[i].DstOffset == next_offset[buffer]);
 
       next_offset[buffer] += components;
 
-      so_decl[decls++] = decl;
+      so_decl[stream_id][decls[stream_id]++] = decl;
+
+      if (decls[stream_id] > max_decls)
+         max_decls = decls[stream_id];
    }
 
-   BEGIN_BATCH(decls * 2 + 3);
-   OUT_BATCH(_3DSTATE_SO_DECL_LIST << 16 | (decls * 2 + 1));
+   BEGIN_BATCH(max_decls * 2 + 3);
+   OUT_BATCH(_3DSTATE_SO_DECL_LIST << 16 | (max_decls * 2 + 1));
 
-   OUT_BATCH((buffer_mask << SO_STREAM_TO_BUFFER_SELECTS_0_SHIFT) |
-	     (0 << SO_STREAM_TO_BUFFER_SELECTS_1_SHIFT) |
-	     (0 << SO_STREAM_TO_BUFFER_SELECTS_2_SHIFT) |
-	     (0 << SO_STREAM_TO_BUFFER_SELECTS_3_SHIFT));
+   OUT_BATCH((buffer_mask[0] << SO_STREAM_TO_BUFFER_SELECTS_0_SHIFT) |
+             (buffer_mask[1] << SO_STREAM_TO_BUFFER_SELECTS_1_SHIFT) |
+             (buffer_mask[2] << SO_STREAM_TO_BUFFER_SELECTS_2_SHIFT) |
+             (buffer_mask[3] << SO_STREAM_TO_BUFFER_SELECTS_3_SHIFT));
 
-   OUT_BATCH((decls << SO_NUM_ENTRIES_0_SHIFT) |
-	     (0 << SO_NUM_ENTRIES_1_SHIFT) |
-	     (0 << SO_NUM_ENTRIES_2_SHIFT) |
-	     (0 << SO_NUM_ENTRIES_3_SHIFT));
+   OUT_BATCH((decls[0] << SO_NUM_ENTRIES_0_SHIFT) |
+             (decls[1] << SO_NUM_ENTRIES_1_SHIFT) |
+             (decls[2] << SO_NUM_ENTRIES_2_SHIFT) |
+             (decls[3] << SO_NUM_ENTRIES_3_SHIFT));
 
-   for (int i = 0; i < decls; i++) {
-      OUT_BATCH(so_decl[i]);
-      OUT_BATCH(0);
+   for (int i = 0; i < max_decls; i++) {
+      /* Stream 1 | Stream 0 */
+      OUT_BATCH(((uint32_t) so_decl[1][i]) << 16 | so_decl[0][i]);
+      /* Stream 3 | Stream 2 */
+      OUT_BATCH(((uint32_t) so_decl[3][i]) << 16 | so_decl[2][i]);
    }
 
    ADVANCE_BATCH();
@@ -235,8 +246,16 @@ upload_3dstate_streamout(struct brw_context *brw, bool active,
        * SO_DECLs.
        */
       dw2 |= urb_entry_read_offset << SO_STREAM_0_VERTEX_READ_OFFSET_SHIFT;
-      dw2 |= (urb_entry_read_length - 1) <<
-	 SO_STREAM_0_VERTEX_READ_LENGTH_SHIFT;
+      dw2 |= (urb_entry_read_length - 1) << SO_STREAM_0_VERTEX_READ_LENGTH_SHIFT;
+
+      dw2 |= urb_entry_read_offset << SO_STREAM_1_VERTEX_READ_OFFSET_SHIFT;
+      dw2 |= (urb_entry_read_length - 1) << SO_STREAM_1_VERTEX_READ_LENGTH_SHIFT;
+
+      dw2 |= urb_entry_read_offset << SO_STREAM_2_VERTEX_READ_OFFSET_SHIFT;
+      dw2 |= (urb_entry_read_length - 1) << SO_STREAM_2_VERTEX_READ_LENGTH_SHIFT;
+
+      dw2 |= urb_entry_read_offset << SO_STREAM_3_VERTEX_READ_OFFSET_SHIFT;
+      dw2 |= (urb_entry_read_length - 1) << SO_STREAM_3_VERTEX_READ_LENGTH_SHIFT;
    }
 
    BEGIN_BATCH(3);
