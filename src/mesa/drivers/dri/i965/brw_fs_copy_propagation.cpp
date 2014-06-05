@@ -478,6 +478,22 @@ fs_visitor::try_constant_propagate(fs_inst *inst, acp_entry *entry)
 
    return progress;
 }
+
+static bool
+can_propagate_from(fs_inst *inst)
+{
+   return (inst->opcode == BRW_OPCODE_MOV &&
+           inst->dst.file == GRF &&
+           ((inst->src[0].file == GRF &&
+             (inst->src[0].reg != inst->dst.reg ||
+              inst->src[0].reg_offset != inst->dst.reg_offset)) ||
+            inst->src[0].file == UNIFORM ||
+            inst->src[0].file == IMM) &&
+           inst->src[0].type == inst->dst.type &&
+           !inst->saturate &&
+           !inst->is_partial_write());
+}
+
 /* Walks a basic block and does copy propagation on it using the acp
  * list.
  */
@@ -532,16 +548,7 @@ fs_visitor::opt_copy_propagate_local(void *copy_prop_ctx, bblock_t *block,
       /* If this instruction's source could potentially be folded into the
        * operand of another instruction, add it to the ACP.
        */
-      if (inst->opcode == BRW_OPCODE_MOV &&
-	  inst->dst.file == GRF &&
-	  ((inst->src[0].file == GRF &&
-	    (inst->src[0].reg != inst->dst.reg ||
-	     inst->src[0].reg_offset != inst->dst.reg_offset)) ||
-           inst->src[0].file == UNIFORM ||
-           inst->src[0].file == IMM) &&
-	  inst->src[0].type == inst->dst.type &&
-	  !inst->saturate &&
-	  !inst->is_partial_write()) {
+      if (can_propagate_from(inst)) {
 	 acp_entry *entry = ralloc(copy_prop_ctx, acp_entry);
 	 entry->dst = inst->dst;
 	 entry->src = inst->src[0];
