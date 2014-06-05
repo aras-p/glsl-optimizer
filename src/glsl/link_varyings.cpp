@@ -291,6 +291,7 @@ tfeedback_decl::init(struct gl_context *ctx, const void *mem_ctx,
    this->skip_components = 0;
    this->next_buffer_separator = false;
    this->matched_candidate = NULL;
+   this->stream_id = 0;
 
    if (ctx->Extensions.ARB_transform_feedback3) {
       /* Parse gl_NextBuffer. */
@@ -355,8 +356,8 @@ tfeedback_decl::is_same(const tfeedback_decl &x, const tfeedback_decl &y)
 
 
 /**
- * Assign a location for this tfeedback_decl object based on the transform
- * feedback candidate found by find_candidate.
+ * Assign a location and stream ID for this tfeedback_decl object based on the
+ * transform feedback candidate found by find_candidate.
  *
  * If an error occurs, the error is reported through linker_error() and false
  * is returned.
@@ -437,6 +438,11 @@ tfeedback_decl::assign_location(struct gl_context *ctx,
       return false;
    }
 
+   /* Only transform feedback varyings can be assigned to non-zero streams,
+    * so assign the stream id here.
+    */
+   this->stream_id = this->matched_candidate->toplevel_var->data.stream;
+
    return true;
 }
 
@@ -495,7 +501,7 @@ tfeedback_decl::store(struct gl_context *ctx, struct gl_shader_program *prog,
       info->Outputs[info->NumOutputs].ComponentOffset = location_frac;
       info->Outputs[info->NumOutputs].OutputRegister = location;
       info->Outputs[info->NumOutputs].NumComponents = output_size;
-      info->Outputs[info->NumOutputs].StreamId = 0;
+      info->Outputs[info->NumOutputs].StreamId = stream_id;
       info->Outputs[info->NumOutputs].OutputBuffer = buffer;
       info->Outputs[info->NumOutputs].DstOffset = info->BufferStride[buffer];
       ++info->NumOutputs;

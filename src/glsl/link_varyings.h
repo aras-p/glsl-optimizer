@@ -210,6 +210,13 @@ private:
     * data structure that was found.  Otherwise NULL.
     */
    const tfeedback_candidate *matched_candidate;
+
+   /**
+    * StreamId assigned to this varying (defaults to 0). Can only be set to
+    * values other than 0 in geometry shaders that use the stream layout
+    * modifier. Accepted values must be in the range [0, MAX_VERTEX_STREAMS-1].
+    */
+   unsigned stream_id;
 };
 
 
