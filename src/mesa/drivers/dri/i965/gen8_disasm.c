@@ -50,6 +50,8 @@ static const char *const m_negate[2] = { "", "-" };
 
 static const char *const m_abs[2] = { "", "(abs)" };
 
+static const char *const m_bitnot[2] = { "", "~" };
+
 static const char *const m_vert_stride[16] = {
    "0",
    "1",
@@ -511,13 +513,23 @@ src_swizzle(FILE *file, unsigned x, unsigned y, unsigned z, unsigned w)
    return err;
 }
 
+static bool
+is_logic_instruction(unsigned opcode)
+{
+   return (opcode == BRW_OPCODE_AND ||
+           opcode == BRW_OPCODE_NOT ||
+           opcode == BRW_OPCODE_OR  ||
+           opcode == BRW_OPCODE_XOR);
+}
+
 static int
-src_da1(FILE *file, unsigned type, unsigned reg_file,
+src_da1(FILE *file, unsigned opcode, unsigned type, unsigned reg_file,
         unsigned vert_stride, unsigned _width, unsigned horiz_stride,
         unsigned reg_num, unsigned sub_reg_num, unsigned _abs, unsigned negate)
 {
    int err = 0;
-   err |= control(file, "negate", m_negate, negate, NULL);
+   err |= control(file, "negate", is_logic_instruction(opcode) ?
+                  m_bitnot : m_negate, negate, NULL);
    err |= control(file, "abs", m_abs, _abs, NULL);
 
    err |= reg(file, reg_file, reg_num);
@@ -532,6 +544,7 @@ src_da1(FILE *file, unsigned type, unsigned reg_file,
 
 static int
 src_da16(FILE *file,
+         unsigned opcode,
          unsigned _reg_type,
          unsigned reg_file,
          unsigned vert_stride,
@@ -545,7 +558,8 @@ src_da16(FILE *file,
          unsigned swz_w)
 {
    int err = 0;
-   err |= control(file, "negate", m_negate, negate, NULL);
+   err |= control(file, "negate", is_logic_instruction(opcode) ?
+                  m_bitnot : m_negate, negate, NULL);
    err |= control(file, "abs", m_abs, _abs, NULL);
 
    err |= reg(file, reg_file, _reg_nr);
@@ -714,6 +728,7 @@ src0(FILE *file, struct gen8_instruction *inst)
    if (gen8_access_mode(inst) == BRW_ALIGN_1) {
       assert(gen8_src0_address_mode(inst) == BRW_ADDRESS_DIRECT);
       return src_da1(file,
+                     gen8_opcode(inst),
                      gen8_src0_reg_type(inst),
                      gen8_src0_reg_file(inst),
                      gen8_src0_vert_stride(inst),
@@ -726,6 +741,7 @@ src0(FILE *file, struct gen8_instruction *inst)
    } else {
       assert(gen8_src0_address_mode(inst) == BRW_ADDRESS_DIRECT);
       return src_da16(file,
+                      gen8_opcode(inst),
                       gen8_src0_reg_type(inst),
                       gen8_src0_reg_file(inst),
                       gen8_src0_vert_stride(inst),
@@ -749,6 +765,7 @@ src1(FILE *file, struct gen8_instruction *inst)
    if (gen8_access_mode(inst) == BRW_ALIGN_1) {
       assert(gen8_src1_address_mode(inst) == BRW_ADDRESS_DIRECT);
       return src_da1(file,
+                     gen8_opcode(inst),
                      gen8_src1_reg_type(inst),
                      gen8_src1_reg_file(inst),
                      gen8_src1_vert_stride(inst),
@@ -761,6 +778,7 @@ src1(FILE *file, struct gen8_instruction *inst)
    } else {
       assert(gen8_src1_address_mode(inst) == BRW_ADDRESS_DIRECT);
       return src_da16(file,
+                      gen8_opcode(inst),
                       gen8_src1_reg_type(inst),
                       gen8_src1_reg_file(inst),
                       gen8_src1_vert_stride(inst),
