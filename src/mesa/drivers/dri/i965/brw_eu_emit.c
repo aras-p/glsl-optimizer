@@ -1758,6 +1758,23 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p)
    return insn;
 }
 
+/* FORWARD JUMPS:
+ */
+void brw_land_fwd_jump(struct brw_compile *p, int jmp_insn_idx)
+{
+   struct brw_context *brw = p->brw;
+   struct brw_instruction *jmp_insn = &p->store[jmp_insn_idx];
+   unsigned jmpi = 1;
+
+   if (brw->gen >= 5)
+      jmpi = 2;
+
+   assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);
+   assert(jmp_insn->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE);
+
+   jmp_insn->bits3.ud = jmpi * (p->nr_insn - jmp_insn_idx - 1);
+}
+
 /* To integrate with the above, it makes sense that the comparison
  * instruction should populate the flag register.  It might be simpler
  * just to use the flag reg for most WM tasks?

@@ -340,6 +340,10 @@ struct brw_instruction *brw_CONT(struct brw_compile *p);
 struct brw_instruction *gen6_CONT(struct brw_compile *p);
 struct brw_instruction *gen6_HALT(struct brw_compile *p);
 
+/* Forward jumps:
+ */
+void brw_land_fwd_jump(struct brw_compile *p, int jmp_insn_idx);
+
 struct brw_instruction *brw_JMPI(struct brw_compile *p, struct brw_reg index,
                                  unsigned predicate_control);
 
