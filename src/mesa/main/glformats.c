@@ -354,6 +354,62 @@ _mesa_bytes_per_vertex_attrib(GLint comps, GLenum type)
 }
 
 /**
+ * Test if the given format is unsized.
+ */
+GLboolean
+_mesa_is_enum_format_unsized(GLenum format)
+{
+   switch (format) {
+   case GL_RGBA:
+   case GL_BGRA:
+   case GL_ABGR_EXT:
+   case GL_RGB:
+   case GL_BGR:
+   case GL_RG:
+   case GL_RED:
+   case GL_GREEN:
+   case GL_BLUE:
+   case GL_ALPHA:
+   case GL_INTENSITY:
+   case GL_LUMINANCE:
+   case GL_LUMINANCE_ALPHA:
+
+   case GL_SRGB:
+   case GL_SRGB_ALPHA:
+   case GL_SLUMINANCE:
+   case GL_SLUMINANCE_ALPHA:
+
+   case GL_RGBA_SNORM:
+   case GL_RGB_SNORM:
+   case GL_RG_SNORM:
+   case GL_RED_SNORM:
+   case GL_ALPHA_SNORM:
+   case GL_INTENSITY_SNORM:
+   case GL_LUMINANCE_SNORM:
+   case GL_LUMINANCE_ALPHA_SNORM:
+
+   case GL_RED_INTEGER:
+   case GL_GREEN_INTEGER:
+   case GL_BLUE_INTEGER:
+   case GL_ALPHA_INTEGER:
+   case GL_RGB_INTEGER:
+   case GL_RGBA_INTEGER:
+   case GL_BGR_INTEGER:
+   case GL_BGRA_INTEGER:
+   case GL_RG_INTEGER:
+   case GL_LUMINANCE_INTEGER_EXT:
+   case GL_LUMINANCE_ALPHA_INTEGER_EXT:
+
+   case GL_DEPTH_COMPONENT:
+   case GL_DEPTH_STENCIL:
+   case GL_STENCIL_INDEX:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+/**
  * Test if the given format is a SNORM (signed-normalized) format.
  */
 GLboolean

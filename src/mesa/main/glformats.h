@@ -57,6 +57,9 @@ extern GLboolean
 _mesa_is_type_unsigned(GLenum type);
 
 extern GLboolean
+_mesa_is_enum_format_unsized(GLenum format);
+
+extern GLboolean
 _mesa_is_enum_format_snorm(GLenum format);
 
 extern GLboolean
