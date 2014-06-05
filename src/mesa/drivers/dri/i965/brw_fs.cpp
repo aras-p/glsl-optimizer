@@ -3211,7 +3211,7 @@ brw_wm_fs_emit(struct brw_context *brw,
                                      final_assembly_size);
    } else {
       fs_generator g(brw, mem_ctx, key, prog_data, prog, fp, v.do_dual_src,
-                     INTEL_DEBUG & DEBUG_WM);
+                     v.runtime_check_aads_emit, INTEL_DEBUG & DEBUG_WM);
       assembly = g.generate_assembly(&v.instructions, simd16_instructions,
                                      final_assembly_size);
    }

@@ -31,7 +31,7 @@ brw_blorp_eu_emitter::brw_blorp_eu_emitter(struct brw_context *brw,
      generator(brw, mem_ctx,
                rzalloc(mem_ctx, struct brw_wm_prog_key),
                rzalloc(mem_ctx, struct brw_wm_prog_data),
-               NULL, NULL, false, debug_flag)
+               NULL, NULL, false, false, debug_flag)
 {
 }
 

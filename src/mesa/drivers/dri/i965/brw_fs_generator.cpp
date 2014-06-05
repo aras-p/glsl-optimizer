@@ -43,10 +43,12 @@ fs_generator::fs_generator(struct brw_context *brw,
                            struct gl_shader_program *prog,
                            struct gl_fragment_program *fp,
                            bool dual_source_output,
+                           bool runtime_check_aads_emit,
                            bool debug_flag)
 
    : brw(brw), key(key), prog_data(prog_data), prog(prog), fp(fp),
-     dual_source_output(dual_source_output), debug_flag(debug_flag),
+     dual_source_output(dual_source_output),
+     runtime_check_aads_emit(runtime_check_aads_emit), debug_flag(debug_flag),
      mem_ctx(mem_ctx)
 {
    ctx = &brw->ctx;
