@@ -1874,7 +1874,7 @@ intel_miptree_map_movntdqa(struct brw_context *brw,
 
    map->stride = ALIGN(misalignment + width_bytes, 16);
 
-   map->buffer = malloc(map->stride * map->h);
+   map->buffer = _mesa_align_malloc(map->stride * map->h, 16);
    /* Offset the destination so it has the same misalignment as src. */
    map->ptr = map->buffer + misalignment;
 
@@ -1897,7 +1897,7 @@ intel_miptree_unmap_movntdqa(struct brw_context *brw,
                              unsigned int level,
                              unsigned int slice)
 {
-   free(map->buffer);
+   _mesa_align_free(map->buffer);
    map->buffer = NULL;
    map->ptr = NULL;
 }
