@@ -195,6 +195,15 @@ try_constant_propagation(vec4_instruction *inst, int arg, src_reg *values[4])
    return false;
 }
 
+static bool
+is_logic_op(enum opcode opcode)
+{
+   return (opcode == BRW_OPCODE_AND ||
+           opcode == BRW_OPCODE_OR  ||
+           opcode == BRW_OPCODE_XOR ||
+           opcode == BRW_OPCODE_NOT);
+}
+
 bool
 vec4_visitor::try_copy_propagation(vec4_instruction *inst, int arg,
                                    src_reg *values[4])
@@ -232,6 +241,14 @@ vec4_visitor::try_copy_propagation(vec4_instruction *inst, int arg,
        value.file != GRF &&
        value.file != ATTR)
       return false;
+
+   if (brw->gen >= 8) {
+      if (value.negate) {
+         if (is_logic_op(inst->opcode)) {
+            return false;
+         }
+      }
+   }
 
    if (inst->src[arg].abs) {
       value.negate = false;
