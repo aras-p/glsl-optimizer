@@ -1392,7 +1392,7 @@ _mesa_LinkProgram(GLhandleARB programObj)
 static GLcharARB *
 read_shader(const char *fname)
 {
-   const int max = 50*1000;
+   int shader_size = 0;
    FILE *f = fopen(fname, "r");
    GLcharARB *buffer, *shader;
    int len;
@@ -1401,8 +1401,19 @@ read_shader(const char *fname)
       return NULL;
    }
 
-   buffer = malloc(max);
-   len = fread(buffer, 1, max, f);
+   /* allocate enough room for the entire shader */
+   fseek(f, 0, SEEK_END);
+   shader_size = ftell(f);
+   rewind(f);
+   assert(shader_size);
+
+   /* add one for terminating zero */
+   shader_size++;
+
+   buffer = malloc(shader_size);
+   assert(buffer);
+
+   len = fread(buffer, 1, shader_size, f);
    buffer[len] = 0;
 
    fclose(f);
