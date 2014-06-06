@@ -234,6 +234,11 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_BUFFER_SIZE:
 		return MIN2(sscreen->b.info.vram_size, 0xFFFFFFFF);
 
+	case PIPE_CAP_TEXTURE_GATHER_SM5:
+		return HAVE_LLVM >= 0x0305;
+	case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
+		return HAVE_LLVM >= 0x0305 ? 4 : 0;
+
 	/* Unsupported features. */
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
@@ -242,8 +247,6 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_VERTEX_COLOR_CLAMPED:
 	case PIPE_CAP_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION:
 	case PIPE_CAP_USER_VERTEX_BUFFERS:
-	case PIPE_CAP_MAX_TEXTURE_GATHER_COMPONENTS:
-	case PIPE_CAP_TEXTURE_GATHER_SM5:
 	case PIPE_CAP_TGSI_TEXCOORD:
 	case PIPE_CAP_FAKE_SW_MSAA:
 	case PIPE_CAP_TEXTURE_QUERY_LOD:
@@ -294,11 +297,12 @@ static int si_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
  	case PIPE_CAP_MIN_TEXTURE_GATHER_OFFSET:
 	case PIPE_CAP_MIN_TEXEL_OFFSET:
-		return -8;
+		return -32;
 
  	case PIPE_CAP_MAX_TEXTURE_GATHER_OFFSET:
 	case PIPE_CAP_MAX_TEXEL_OFFSET:
-		return 7;
+		return 31;
+
 	case PIPE_CAP_ENDIANNESS:
 		return PIPE_ENDIAN_LITTLE;
 	}
