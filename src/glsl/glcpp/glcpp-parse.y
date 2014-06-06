@@ -939,14 +939,16 @@ _token_list_equal_ignoring_space (token_list_t *a, token_list_t *b)
 
 		if (node_a == NULL || node_b == NULL)
 			return 0;
-
-		if (node_a->token->type == SPACE) {
-			node_a = node_a->next;
-			continue;
-		}
-
-		if (node_b->token->type == SPACE) {
-			node_b = node_b->next;
+		/* Make sure whitespace appears in the same places in both.
+		 * It need not be exactly the same amount of whitespace,
+		 * though.
+		 */
+		if (node_a->token->type == SPACE
+		    && node_b->token->type == SPACE) {
+			while (node_a->token->type == SPACE)
+				node_a = node_a->next;
+			while (node_b->token->type == SPACE)
+				node_b = node_b->next;
 			continue;
 		}
 
