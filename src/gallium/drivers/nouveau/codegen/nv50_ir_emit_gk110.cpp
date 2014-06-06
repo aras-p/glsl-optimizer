@@ -967,7 +967,7 @@ void CodeEmitterGK110::emitSELP(const Instruction *i)
 
 void CodeEmitterGK110::emitTEXBAR(const Instruction *i)
 {
-   code[0] = 0x00000002 | (i->subOp << 23);
+   code[0] = 0x0000003e | (i->subOp << 23);
    code[1] = 0x77000000;
 
    emitPredicate(i);
