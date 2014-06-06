@@ -86,3 +86,20 @@ $(intermediates)/xmlpool/options.h: $$(PRIVATE_SCRIPT) $$(PRIVATE_TEMPLATE_HEADE
 
 include $(MESA_COMMON_MK)
 include $(BUILD_STATIC_LIBRARY)
+
+#
+# Build libmegadriver_stub
+#
+
+include $(CLEAR_VARS)
+include $(LOCAL_PATH)/Makefile.sources
+
+LOCAL_MODULE := libmegadriver_stub
+LOCAL_MODULE_CLASS := STATIC_LIBRARIES
+LOCAL_C_INCLUDES := \
+    $(MESA_DRI_C_INCLUDES)
+
+LOCAL_SRC_FILES := $(megadriver_stub_FILES)
+
+include $(MESA_COMMON_MK)
+include $(BUILD_STATIC_LIBRARY)

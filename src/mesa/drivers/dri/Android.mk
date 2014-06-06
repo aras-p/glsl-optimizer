@@ -43,6 +43,7 @@ MESA_DRI_C_INCLUDES := \
 
 MESA_DRI_WHOLE_STATIC_LIBRARIES := \
 	libmesa_glsl \
+	libmegadriver_stub \
 	libmesa_dri_common \
 	libmesa_dricore
 
