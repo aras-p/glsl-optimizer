@@ -1347,6 +1347,11 @@ assign_varying_locations(struct gl_context *ctx,
              (output_var->data.mode != ir_var_shader_out))
             continue;
 
+         /* Only geometry shaders can use non-zero streams */
+         assert(output_var->data.stream == 0 ||
+                (output_var->data.stream < MAX_VERTEX_STREAMS &&
+                 producer->Stage == MESA_SHADER_GEOMETRY));
+
          tfeedback_candidate_generator g(mem_ctx, tfeedback_candidates);
          g.process(output_var);
 
