@@ -154,10 +154,13 @@ LOCAL_STATIC_LIBRARIES := \
 	libmesa_glsl \
 	libmesa_glsl_utils \
 	libmesa_gallium \
-	libloader \
 	$(LOCAL_STATIC_LIBRARIES)
 
 endif # MESA_BUILD_GALLIUM
+
+LOCAL_STATIC_LIBRARIES := \
+	$(LOCAL_STATIC_LIBRARIES) \
+	libloader
 
 LOCAL_MODULE := libGLES_mesa
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/egl

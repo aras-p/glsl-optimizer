@@ -42,6 +42,9 @@ LOCAL_C_INCLUDES := \
 	$(MESA_TOP)/src/loader \
 	$(DRM_GRALLOC_TOP)
 
+LOCAL_STATIC_LIBRARIES := \
+	libloader
+
 LOCAL_MODULE := libmesa_egl_dri2
 
 include $(MESA_COMMON_MK)
