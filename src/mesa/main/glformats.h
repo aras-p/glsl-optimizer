@@ -60,6 +60,9 @@ extern GLboolean
 _mesa_is_enum_format_unsized(GLenum format);
 
 extern GLboolean
+_mesa_is_enum_format_unorm(GLenum format);
+
+extern GLboolean
 _mesa_is_enum_format_snorm(GLenum format);
 
 extern GLboolean
