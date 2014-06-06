@@ -112,6 +112,16 @@ public:
       return !this->next_buffer_separator && !this->skip_components;
    }
 
+   const char *name() const
+   {
+      return this->orig_name;
+   }
+
+   unsigned get_stream_id() const
+   {
+      return this->stream_id;
+   }
+
    /**
     * The total number of varying components taken up by this variable.  Only
     * valid if assign_location() has been called.
