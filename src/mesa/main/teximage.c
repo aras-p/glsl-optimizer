@@ -3694,24 +3694,35 @@ copyteximage(struct gl_context *ctx, GLuint dims,
 
    rb = _mesa_get_read_renderbuffer_for_format(ctx, internalFormat);
 
-   /* From Page 139 of OpenGL ES 3.0 spec:
-    *    "If internalformat is sized, the internal format of the new texel
-    *    array is internalformat, and this is also the new texel array’s
-    *    effective internal format. If the component sizes of internalformat
-    *    do not exactly match the corresponding component sizes of the source
-    *    buffer’s effective internal format, described below, an
-    *    INVALID_OPERATION error is generated. If internalformat is unsized,
-    *    the internal format of the new texel array is the effective internal
-    *    format of the source buffer, and this is also the new texel array’s
-    *    effective internal format.
-    */
-   if (_mesa_is_gles3(ctx)
-       && !_mesa_is_enum_format_unsized(internalFormat)
-       && formats_differ_in_component_sizes (texFormat, rb->Format)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glCopyTexImage%uD(componenet size changed in"
-                  " internal format)", dims);
-      return;
+   if (_mesa_is_gles3(ctx)) {
+      if (_mesa_is_enum_format_unsized(internalFormat)) {
+      /* Conversion from GL_RGB10_A2 source buffer format is not allowed in
+       * OpenGL ES 3.0. Khronos bug# 9807.
+       */
+         if (rb->InternalFormat == GL_RGB10_A2) {
+               _mesa_error(ctx, GL_INVALID_OPERATION,
+                           "glCopyTexImage%uD(Reading from GL_RGB10_A2 buffer and"
+                           " writing to unsized internal format)", dims);
+               return;
+         }
+      }
+      /* From Page 139 of OpenGL ES 3.0 spec:
+       *    "If internalformat is sized, the internal format of the new texel
+       *    array is internalformat, and this is also the new texel array’s
+       *    effective internal format. If the component sizes of internalformat
+       *    do not exactly match the corresponding component sizes of the source
+       *    buffer’s effective internal format, described below, an
+       *    INVALID_OPERATION error is generated. If internalformat is unsized,
+       *    the internal format of the new texel array is the effective internal
+       *    format of the source buffer, and this is also the new texel array’s
+       *    effective internal format.
+       */
+      else if (formats_differ_in_component_sizes (texFormat, rb->Format)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glCopyTexImage%uD(componenet size changed in"
+                        " internal format)", dims);
+            return;
+      }
    }
 
    assert(texFormat != MESA_FORMAT_NONE);
