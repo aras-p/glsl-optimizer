@@ -1888,6 +1888,7 @@ _mesa_copy_linked_program_data(gl_shader_stage type,
       dst_gp->OutputType = src->Geom.OutputType;
       dst->UsesClipDistanceOut = src->Geom.UsesClipDistance;
       dst_gp->UsesEndPrimitive = src->Geom.UsesEndPrimitive;
+      dst_gp->UsesStreams = src->Geom.UsesStreams;
    }
       break;
    case MESA_SHADER_FRAGMENT: {
