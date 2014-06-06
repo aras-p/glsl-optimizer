@@ -404,7 +404,7 @@ set_predicate_control_flag_value(struct brw_compile *p,
                                  struct brw_sf_compile *c,
                                  unsigned value)
 {
-   p->current->header.predicate_control = BRW_PREDICATE_NONE;
+   brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
 
    if (value != 0xff) {
       if (value != c->flag_value) {
@@ -412,7 +412,7 @@ set_predicate_control_flag_value(struct brw_compile *p,
          c->flag_value = value;
       }
 
-      p->current->header.predicate_control = BRW_PREDICATE_NORMAL;
+      brw_set_default_predicate_control(p, BRW_PREDICATE_NORMAL);
    }
 }
 
