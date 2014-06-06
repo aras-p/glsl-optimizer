@@ -1204,7 +1204,7 @@ CodeEmitterGK110::emitFlow(const Instruction *i)
    case OP_PRECONT:  code[1] = 0x15800000; mask = 2; break;
    case OP_PRERET:   code[1] = 0x13800000; mask = 2; break;
 
-   case OP_QUADON:  code[1] = 0x1b000000; mask = 0; break;
+   case OP_QUADON:  code[1] = 0x1b800000; mask = 0; break;
    case OP_QUADPOP: code[1] = 0x1c000000; mask = 0; break;
    case OP_BRKPT:   code[1] = 0x00000000; mask = 0; break;
    default:
