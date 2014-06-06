@@ -1641,18 +1641,13 @@ static void tex_fetch_args(
 		radeon_llvm_emit_prepare_cube_coords(bld_base, emit_data, coords);
 
 	/* Pack depth comparison value */
-	switch (target) {
-	case TGSI_TEXTURE_SHADOW1D:
-	case TGSI_TEXTURE_SHADOW1D_ARRAY:
-	case TGSI_TEXTURE_SHADOW2D:
-	case TGSI_TEXTURE_SHADOWRECT:
-	case TGSI_TEXTURE_SHADOWCUBE:
-	case TGSI_TEXTURE_SHADOW2D_ARRAY:
-		assert(ref_pos >= 0);
-		address[count++] = coords[ref_pos];
-		break;
-	case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
-		address[count++] = lp_build_emit_fetch(bld_base, inst, 1, 0);
+	if (tgsi_is_shadow_sampler(target)) {
+		if (target == TGSI_TEXTURE_SHADOWCUBE_ARRAY) {
+			address[count++] = lp_build_emit_fetch(bld_base, inst, 1, 0);
+		} else {
+			assert(ref_pos >= 0);
+			address[count++] = coords[ref_pos];
+		}
 	}
 
 	/* Pack user derivatives */
@@ -1674,7 +1669,7 @@ static void tex_fetch_args(
 	/* Pack LOD or sample index */
 	if (opcode == TGSI_OPCODE_TXL || opcode == TGSI_OPCODE_TXF)
 		address[count++] = coords[3];
-	if (opcode == TGSI_OPCODE_TXL2)
+	else if (opcode == TGSI_OPCODE_TXL2)
 		address[count++] = lp_build_emit_fetch(bld_base, inst, 1, 0);
 
 	if (count > 16) {
@@ -1724,10 +1719,10 @@ static void tex_fetch_args(
 		/* Read FMASK using TXF. */
 		txf_emit_data.chan = 0;
 		txf_emit_data.dst_type = LLVMVectorType(
-			LLVMInt32TypeInContext(bld_base->base.gallivm->context), 4);
+			LLVMInt32TypeInContext(gallivm->context), 4);
 		txf_emit_data.args[0] = lp_build_gather_values(gallivm, txf_address, txf_count);
 		txf_emit_data.args[1] = si_shader_ctx->resources[FMASK_TEX_OFFSET + sampler_index];
-		txf_emit_data.args[2] = lp_build_const_int32(bld_base->base.gallivm,
+		txf_emit_data.args[2] = lp_build_const_int32(gallivm,
 			target == TGSI_TEXTURE_2D_MSAA ? TGSI_TEXTURE_2D : TGSI_TEXTURE_2D_ARRAY);
 		txf_emit_data.arg_count = 3;
 
@@ -1819,7 +1814,7 @@ static void tex_fetch_args(
 		emit_data->arg_count = 3;
 
 		emit_data->dst_type = LLVMVectorType(
-			LLVMInt32TypeInContext(bld_base->base.gallivm->context),
+			LLVMInt32TypeInContext(gallivm->context),
 			4);
 	} else if (opcode == TGSI_OPCODE_TG4) {
 		unsigned is_array = target == TGSI_TEXTURE_1D_ARRAY ||
@@ -1865,7 +1860,7 @@ static void tex_fetch_args(
 		emit_data->arg_count = 11;
 
 		emit_data->dst_type = LLVMVectorType(
-			LLVMFloatTypeInContext(bld_base->base.gallivm->context),
+			LLVMFloatTypeInContext(gallivm->context),
 			4);
 	} else {
 		emit_data->args[2] = si_shader_ctx->samplers[sampler_index];
@@ -1972,7 +1967,7 @@ static void txq_fetch_args(
 		target = TGSI_TEXTURE_2D_ARRAY;
 
 	emit_data->args[2] = lp_build_const_int32(bld_base->base.gallivm,
-						  inst->Texture.Texture);
+						  target);
 
 	emit_data->arg_count = 3;
 
