@@ -443,6 +443,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
       brw_ADD(p, c->reg.clipdistance_offset, c->reg.clipdistance_offset, brw_imm_w(sizeof(float)));
    }
    brw_WHILE(p);
+   brw_set_default_predicate_control(p, BRW_PREDICATE_NONE);
 }
 
 

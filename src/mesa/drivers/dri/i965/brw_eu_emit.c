@@ -1192,8 +1192,6 @@ struct brw_instruction *brw_JMPI(struct brw_compile *p,
    insn->header.mask_control = BRW_MASK_DISABLE;
    insn->header.predicate_control = predicate_control;
 
-   p->current->header.predicate_control = BRW_PREDICATE_NONE;
-
    return insn;
 }
 
@@ -1285,8 +1283,6 @@ brw_IF(struct brw_compile *p, unsigned execute_size)
    insn->header.mask_control = BRW_MASK_ENABLE;
    if (!p->single_program_flow)
       insn->header.thread_control = BRW_THREAD_SWITCH;
-
-   p->current->header.predicate_control = BRW_PREDICATE_NONE;
 
    push_if_stack(p, insn);
    p->if_depth_in_loop[p->loop_stack_depth]++;
@@ -1770,7 +1766,6 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p)
       }
    }
    insn->header.compression_control = BRW_COMPRESSION_NONE;
-   p->current->header.predicate_control = BRW_PREDICATE_NONE;
 
    p->loop_stack_depth--;
 
