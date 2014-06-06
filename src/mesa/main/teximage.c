@@ -2711,6 +2711,17 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
                      "glCopyTexImage%dD(srgb usage mismatch)", dimensions);
          return GL_TRUE;
       }
+
+      /* Page 139, Table 3.15 of OpenGL ES 3.0 spec does not define ReadPixels
+       * types for SNORM formats. Also, conversion to SNORM formats is not
+       * allowed by Table 3.2 on Page 110.
+       */
+      if(_mesa_is_enum_format_snorm(internalFormat)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glCopyTexImage%dD(internalFormat=%s)", dimensions,
+                     _mesa_lookup_enum_by_nr(internalFormat));
+         return GL_TRUE;
+      }
    }
 
    if (!_mesa_source_buffer_exists(ctx, baseFormat)) {
