@@ -633,7 +633,7 @@ CodeEmitterGK110::emitISAD(const Instruction *i)
 {
    assert(i->dType == TYPE_S32 || i->dType == TYPE_U32);
 
-   emitForm_21(i, 0x1fc, 0xb74);
+   emitForm_21(i, 0x1f4, 0xb74);
 
    if (i->dType == TYPE_S32)
       code[1] |= 1 << 19;
