@@ -353,6 +353,43 @@ _mesa_bytes_per_vertex_attrib(GLint comps, GLenum type)
    }
 }
 
+/**
+ * Test if the given format is a SNORM (signed-normalized) format.
+ */
+GLboolean
+_mesa_is_enum_format_snorm(GLenum format)
+{
+   switch (format) {
+   /* signed, normalized texture formats */
+   case GL_RED_SNORM:
+   case GL_R8_SNORM:
+   case GL_R16_SNORM:
+   case GL_RG_SNORM:
+   case GL_RG8_SNORM:
+   case GL_RG16_SNORM:
+   case GL_RGB_SNORM:
+   case GL_RGB8_SNORM:
+   case GL_RGB16_SNORM:
+   case GL_RGBA_SNORM:
+   case GL_RGBA8_SNORM:
+   case GL_RGBA16_SNORM:
+   case GL_ALPHA_SNORM:
+   case GL_ALPHA8_SNORM:
+   case GL_ALPHA16_SNORM:
+   case GL_LUMINANCE_SNORM:
+   case GL_LUMINANCE8_SNORM:
+   case GL_LUMINANCE16_SNORM:
+   case GL_LUMINANCE_ALPHA_SNORM:
+   case GL_LUMINANCE8_ALPHA8_SNORM:
+   case GL_LUMINANCE16_ALPHA16_SNORM:
+   case GL_INTENSITY_SNORM:
+   case GL_INTENSITY8_SNORM:
+   case GL_INTENSITY16_SNORM:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
 
 /**
  * Test if the given format is an integer (non-normalized) format.
