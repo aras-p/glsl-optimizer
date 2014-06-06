@@ -171,7 +171,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_VERTEX_ELEMENT_SRC_OFFSET_4BYTE_ALIGNED_ONLY:
       return 0;
    case PIPE_CAP_COMPUTE:
-      return (class_3d >= NVE4_3D_CLASS) ? 1 : 0;
+      return (class_3d == NVE4_3D_CLASS) ? 1 : 0;
    case PIPE_CAP_PREFER_BLIT_BASED_TEXTURE_TRANSFER:
       return 1;
    case PIPE_CAP_TEXTURE_BORDER_COLOR_QUIRK:
@@ -214,7 +214,7 @@ nvc0_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
    case PIPE_SHADER_FRAGMENT:
       break;
    case PIPE_SHADER_COMPUTE:
-      if (class_3d < NVE4_3D_CLASS)
+      if (class_3d != NVE4_3D_CLASS)
          return 0;
       break;
    default:
@@ -528,9 +528,9 @@ nvc0_screen_init_compute(struct nvc0_screen *screen)
          return nvc0_screen_compute_setup(screen, screen->base.pushbuf);
       return 0;
    case 0xe0:
+      return nve4_screen_compute_setup(screen, screen->base.pushbuf);
    case 0xf0:
    case 0x100:
-      return nve4_screen_compute_setup(screen, screen->base.pushbuf);
    case 0x110:
       return 0;
    default:
