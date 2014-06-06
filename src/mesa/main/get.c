@@ -1005,7 +1005,11 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
    /* GL_ARB_shader_atomic_counters */
    case GL_ATOMIC_COUNTER_BUFFER_BINDING:
-      v->value_int = ctx->AtomicBuffer->Name;
+      if (ctx->AtomicBuffer) {
+         v->value_int = ctx->AtomicBuffer->Name;
+      } else {
+         v->value_int = 0;
+      }
       break;
    /* GL_ARB_draw_indirect */
    case GL_DRAW_INDIRECT_BUFFER_BINDING:
