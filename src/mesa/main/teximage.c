@@ -2740,6 +2740,8 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
    if (_mesa_is_color_format(internalFormat)) {
       bool is_int = _mesa_is_enum_format_integer(internalFormat);
       bool is_rbint = _mesa_is_enum_format_integer(rb_internal_format);
+      bool is_unorm = _mesa_is_enum_format_unorm(internalFormat);
+      bool is_rbunorm = _mesa_is_enum_format_unorm(rb_internal_format);
       if (is_int || is_rbint) {
          if (is_int != is_rbint) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -2753,6 +2755,19 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
             return GL_TRUE;
          }
       }
+
+      /* From page 138 of OpenGL ES 3.0 spec:
+       *    "The error INVALID_OPERATION is generated if floating-point RGBA
+       *    data is required; if signed integer RGBA data is required and the
+       *    format of the current color buffer is not signed integer; if
+       *    unsigned integer RGBA data is required and the format of the
+       *    current color buffer is not unsigned integer; or if fixed-point
+       *    RGBA data is required and the format of the current color buffer
+       *    is not fixed-point.
+       */
+      if (_mesa_is_gles(ctx) && is_unorm != is_rbunorm)
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glCopyTexImage%dD(unorm vs non-unorm)", dimensions);
    }
 
    if (_mesa_is_compressed_format(ctx, internalFormat)) {
