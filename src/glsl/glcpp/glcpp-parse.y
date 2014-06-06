@@ -260,6 +260,12 @@ control_line:
 |	HASH_UNDEF {
 		glcpp_parser_resolve_implicit_version(parser);
 	} IDENTIFIER NEWLINE {
+		if (strcmp("__LINE__", $3) == 0
+		    || strcmp("__FILE__", $3) == 0
+		    || strcmp("__VERSION__", $3) == 0)
+			glcpp_error(& @1, parser, "Built-in (pre-defined)"
+				    " macro names can not be undefined.");
+
 		macro_t *macro = hash_table_find (parser->defines, $3);
 		if (macro) {
 			hash_table_remove (parser->defines, $3);
