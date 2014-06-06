@@ -683,6 +683,15 @@ nvc0_blitter_make_vp(struct nvc0_blitter *blit)
       0x03f01c46, 0x0a7e0080, /* export b96 o[0x80] $r0:$r1:$r2 */
       0x00001de7, 0x80000000, /* exit */
    };
+   static const uint32_t code_gk110[] =
+   {
+      0x00000000, 0x08000000, /* sched */
+      0x401ffc12, 0x7ec7fc00, /* ld b64 $r4d a[0x80] 0x0 0x0 */
+      0x481ffc02, 0x7ecbfc00, /* ld b96 $r0t a[0x90] 0x0 0x0 */
+      0x381ffc12, 0x7f07fc00, /* st b64 a[0x70] $r4d 0x0 0x0 */
+      0x401ffc02, 0x7f0bfc00, /* st b96 a[0x80] $r0t 0x0 0x0 */
+      0x001c003c, 0x18000000, /* exit */
+   };
    static const uint32_t code_gm107[] =
    {
       0xfc0007e0, 0x001f8000, /* sched 0x7e0 0x7e0 0x7e0 */
@@ -699,6 +708,10 @@ nvc0_blitter_make_vp(struct nvc0_blitter *blit)
    if (blit->screen->base.class_3d >= GM107_3D_CLASS) {
       blit->vp.code = (uint32_t *)code_gm107; /* const_cast */
       blit->vp.code_size = sizeof(code_gm107);
+   } else
+   if (blit->screen->base.class_3d >= NVF0_3D_CLASS) {
+      blit->vp.code = (uint32_t *)code_gk110; /* const_cast */
+      blit->vp.code_size = sizeof(code_gk110);
    } else
    if (blit->screen->base.class_3d >= NVE4_3D_CLASS) {
       blit->vp.code = (uint32_t *)code_nve4; /* const_cast */
