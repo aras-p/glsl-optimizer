@@ -47,6 +47,11 @@ ifeq ($(TARGET_ARCH),x86)
 endif # x86
 endif # MESA_ENABLE_ASM
 
+ifeq ($(ARCH_X86_HAVE_SSE4_1),true)
+LOCAL_SRC_FILES += \
+	$(SRCDIR)main/streaming-load-memcpy.c
+endif
+
 LOCAL_C_INCLUDES := \
 	$(call intermediates-dir-for STATIC_LIBRARIES,libmesa_program,,) \
 	$(MESA_TOP)/src/mapi \
