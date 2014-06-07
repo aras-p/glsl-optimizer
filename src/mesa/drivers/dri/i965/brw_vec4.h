@@ -665,10 +665,6 @@ private:
 			    struct brw_reg dst,
 			    struct brw_reg src0,
 			    struct brw_reg src1);
-   void generate_math2_gen7(vec4_instruction *inst,
-			    struct brw_reg dst,
-			    struct brw_reg src0,
-			    struct brw_reg src1);
 
    void generate_tex(vec4_instruction *inst,
 		     struct brw_reg dst,

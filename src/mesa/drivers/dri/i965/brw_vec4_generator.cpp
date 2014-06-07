@@ -191,15 +191,6 @@ vec4_generator::generate_math1_gen6(vec4_instruction *inst,
 }
 
 void
-vec4_generator::generate_math2_gen7(vec4_instruction *inst,
-                                    struct brw_reg dst,
-                                    struct brw_reg src0,
-                                    struct brw_reg src1)
-{
-   gen6_math(p, dst, brw_math_function(inst->opcode), src0, src1);
-}
-
-void
 vec4_generator::generate_math2_gen6(vec4_instruction *inst,
                                     struct brw_reg dst,
                                     struct brw_reg src0,
@@ -1148,7 +1139,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
    case SHADER_OPCODE_INT_QUOTIENT:
    case SHADER_OPCODE_INT_REMAINDER:
       if (brw->gen >= 7) {
-	 generate_math2_gen7(inst, dst, src[0], src[1]);
+         gen6_math(p, dst, brw_math_function(inst->opcode), src[0], src[1]);
       } else if (brw->gen == 6) {
 	 generate_math2_gen6(inst, dst, src[0], src[1]);
       } else {
