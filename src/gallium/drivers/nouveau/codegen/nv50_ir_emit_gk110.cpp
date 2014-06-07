@@ -952,7 +952,7 @@ CodeEmitterGK110::emitSLCT(const CmpInstruction *i)
       FTZ_(32);
       emitCondCode(cc, 0x33, 0xf);
    } else {
-      emitForm_21(i, 0x1a4, 0xb20);
+      emitForm_21(i, 0x1a0, 0xb20);
       emitCondCode(cc, 0x34, 0x7);
    }
 }
