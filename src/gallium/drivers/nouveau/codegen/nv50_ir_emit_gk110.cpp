@@ -1326,7 +1326,8 @@ CodeEmitterGK110::emitOUT(const Instruction *i)
 void
 CodeEmitterGK110::emitInterpMode(const Instruction *i)
 {
-   code[1] |= i->ipa << 21; // TODO: INTERP_SAMPLEID
+   code[1] |= (i->ipa & 0x3) << 21; // TODO: INTERP_SAMPLEID
+   code[1] |= (i->ipa & 0xc) << (19 - 2);
 }
 
 void
