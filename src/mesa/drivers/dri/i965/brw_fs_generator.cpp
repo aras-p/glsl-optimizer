@@ -293,38 +293,21 @@ fs_generator::generate_linterp(fs_inst *inst,
 }
 
 void
-fs_generator::generate_math1_gen6(fs_inst *inst,
-			        struct brw_reg dst,
-			        struct brw_reg src0)
+fs_generator::generate_math_gen6(fs_inst *inst,
+                                 struct brw_reg dst,
+                                 struct brw_reg src0,
+                                 struct brw_reg src1)
 {
    int op = brw_math_function(inst->opcode);
-
-   assert(inst->mlen == 0);
-
-   brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
-   gen6_math(p, dst, op, src0, brw_null_reg());
-
-   if (dispatch_width == 16) {
-      brw_set_default_compression_control(p, BRW_COMPRESSION_2NDHALF);
-      gen6_math(p, sechalf(dst), op, sechalf(src0), brw_null_reg());
-      brw_set_default_compression_control(p, BRW_COMPRESSION_COMPRESSED);
-   }
-}
-
-void
-fs_generator::generate_math2_gen6(fs_inst *inst,
-			        struct brw_reg dst,
-			        struct brw_reg src0,
-			        struct brw_reg src1)
-{
-   int op = brw_math_function(inst->opcode);
+   bool binop = src1.file == BRW_GENERAL_REGISTER_FILE;
 
    brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
    gen6_math(p, dst, op, src0, src1);
 
    if (dispatch_width == 16) {
       brw_set_default_compression_control(p, BRW_COMPRESSION_2NDHALF);
-      gen6_math(p, sechalf(dst), op, sechalf(src0), sechalf(src1));
+      gen6_math(p, sechalf(dst), op, sechalf(src0),
+                binop ? sechalf(src1) : brw_null_reg());
       brw_set_default_compression_control(p, BRW_COMPRESSION_COMPRESSED);
    }
 }
@@ -1609,7 +1592,7 @@ fs_generator::generate_code(exec_list *instructions)
             gen6_math(p, dst, brw_math_function(inst->opcode), src[0],
                       brw_null_reg());
 	 } else if (brw->gen == 6) {
-	    generate_math1_gen6(inst, dst, src[0]);
+	    generate_math_gen6(inst, dst, src[0], brw_null_reg());
 	 } else if (brw->gen == 5 || brw->is_g4x) {
 	    generate_math_g45(inst, dst, src[0]);
 	 } else {
@@ -1623,7 +1606,7 @@ fs_generator::generate_code(exec_list *instructions)
 	 if (brw->gen >= 7) {
             gen6_math(p, dst, brw_math_function(inst->opcode), src[0], src[1]);
 	 } else if (brw->gen == 6) {
-	    generate_math2_gen6(inst, dst, src[0], src[1]);
+	    generate_math_gen6(inst, dst, src[0], src[1]);
 	 } else {
 	    generate_math_gen4(inst, dst, src[0]);
 	 }
