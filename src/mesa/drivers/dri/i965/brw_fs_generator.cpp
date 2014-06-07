@@ -293,25 +293,6 @@ fs_generator::generate_linterp(fs_inst *inst,
 }
 
 void
-fs_generator::generate_math1_gen7(fs_inst *inst,
-			        struct brw_reg dst,
-			        struct brw_reg src0)
-{
-   assert(inst->mlen == 0);
-   gen6_math(p, dst, brw_math_function(inst->opcode), src0, brw_null_reg());
-}
-
-void
-fs_generator::generate_math2_gen7(fs_inst *inst,
-			        struct brw_reg dst,
-			        struct brw_reg src0,
-			        struct brw_reg src1)
-{
-   assert(inst->mlen == 0);
-   gen6_math(p, dst, brw_math_function(inst->opcode), src0, src1);
-}
-
-void
 fs_generator::generate_math1_gen6(fs_inst *inst,
 			        struct brw_reg dst,
 			        struct brw_reg src0)
@@ -337,8 +318,6 @@ fs_generator::generate_math2_gen6(fs_inst *inst,
 			        struct brw_reg src1)
 {
    int op = brw_math_function(inst->opcode);
-
-   assert(inst->mlen == 0);
 
    brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
    gen6_math(p, dst, op, src0, src1);
@@ -1625,8 +1604,10 @@ fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_LOG2:
       case SHADER_OPCODE_SIN:
       case SHADER_OPCODE_COS:
+         assert(brw->gen < 6 || inst->mlen == 0);
 	 if (brw->gen >= 7) {
-	    generate_math1_gen7(inst, dst, src[0]);
+            gen6_math(p, dst, brw_math_function(inst->opcode), src[0],
+                      brw_null_reg());
 	 } else if (brw->gen == 6) {
 	    generate_math1_gen6(inst, dst, src[0]);
 	 } else if (brw->gen == 5 || brw->is_g4x) {
@@ -1638,8 +1619,9 @@ fs_generator::generate_code(exec_list *instructions)
       case SHADER_OPCODE_INT_QUOTIENT:
       case SHADER_OPCODE_INT_REMAINDER:
       case SHADER_OPCODE_POW:
+         assert(brw->gen < 6 || inst->mlen == 0);
 	 if (brw->gen >= 7) {
-	    generate_math2_gen7(inst, dst, src[0], src[1]);
+            gen6_math(p, dst, brw_math_function(inst->opcode), src[0], src[1]);
 	 } else if (brw->gen == 6) {
 	    generate_math2_gen6(inst, dst, src[0], src[1]);
 	 } else {
