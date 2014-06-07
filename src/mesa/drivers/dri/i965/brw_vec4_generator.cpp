@@ -177,30 +177,17 @@ check_gen6_math_src_arg(struct brw_reg src)
 }
 
 void
-vec4_generator::generate_math1_gen6(vec4_instruction *inst,
-                                    struct brw_reg dst,
-                                    struct brw_reg src)
-{
-   /* Can't do writemask because math can't be align16. */
-   assert(dst.dw1.bits.writemask == WRITEMASK_XYZW);
-   check_gen6_math_src_arg(src);
-
-   brw_set_default_access_mode(p, BRW_ALIGN_1);
-   gen6_math(p, dst, brw_math_function(inst->opcode), src, brw_null_reg());
-   brw_set_default_access_mode(p, BRW_ALIGN_16);
-}
-
-void
-vec4_generator::generate_math2_gen6(vec4_instruction *inst,
-                                    struct brw_reg dst,
-                                    struct brw_reg src0,
-                                    struct brw_reg src1)
+vec4_generator::generate_math_gen6(vec4_instruction *inst,
+                                   struct brw_reg dst,
+                                   struct brw_reg src0,
+                                   struct brw_reg src1)
 {
    /* Can't do writemask because math can't be align16. */
    assert(dst.dw1.bits.writemask == WRITEMASK_XYZW);
    /* Source swizzles are ignored. */
    check_gen6_math_src_arg(src0);
-   check_gen6_math_src_arg(src1);
+   if (src1.file == BRW_GENERAL_REGISTER_FILE)
+      check_gen6_math_src_arg(src1);
 
    brw_set_default_access_mode(p, BRW_ALIGN_1);
    gen6_math(p, dst, brw_math_function(inst->opcode), src0, src1);
@@ -1129,7 +1116,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
          gen6_math(p, dst, brw_math_function(inst->opcode), src[0],
                    brw_null_reg());
       } else if (brw->gen == 6) {
-	 generate_math1_gen6(inst, dst, src[0]);
+	 generate_math_gen6(inst, dst, src[0], brw_null_reg());
       } else {
 	 generate_math1_gen4(inst, dst, src[0]);
       }
@@ -1141,7 +1128,7 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
       if (brw->gen >= 7) {
          gen6_math(p, dst, brw_math_function(inst->opcode), src[0], src[1]);
       } else if (brw->gen == 6) {
-	 generate_math2_gen6(inst, dst, src[0], src[1]);
+	 generate_math_gen6(inst, dst, src[0], src[1]);
       } else {
 	 generate_math2_gen4(inst, dst, src[0], src[1]);
       }
