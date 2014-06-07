@@ -1828,7 +1828,7 @@ void brw_WAIT (struct brw_compile *p)
 
 /** Extended math function, float[8].
  */
-void brw_math( struct brw_compile *p,
+void gen4_math(struct brw_compile *p,
 	       struct brw_reg dest,
 	       unsigned function,
 	       unsigned msg_reg_nr,

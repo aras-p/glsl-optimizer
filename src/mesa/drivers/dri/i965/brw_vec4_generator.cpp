@@ -158,13 +158,13 @@ vec4_generator::generate_math1_gen4(vec4_instruction *inst,
                                     struct brw_reg dst,
                                     struct brw_reg src)
 {
-   brw_math(p,
-	    dst,
-	    brw_math_function(inst->opcode),
-	    inst->base_mrf,
-	    src,
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
+   gen4_math(p,
+	     dst,
+	     brw_math_function(inst->opcode),
+	     inst->base_mrf,
+	     src,
+	     BRW_MATH_DATA_VECTOR,
+	     BRW_MATH_PRECISION_FULL);
 }
 
 static void
@@ -241,13 +241,13 @@ vec4_generator::generate_math2_gen4(vec4_instruction *inst,
    brw_MOV(p, retype(brw_message_reg(inst->base_mrf + 1), op1.type), op1);
    brw_pop_insn_state(p);
 
-   brw_math(p,
-	    dst,
-	    brw_math_function(inst->opcode),
-	    inst->base_mrf,
-	    op0,
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
+   gen4_math(p,
+	     dst,
+	     brw_math_function(inst->opcode),
+	     inst->base_mrf,
+	     op0,
+	     BRW_MATH_DATA_VECTOR,
+	     BRW_MATH_PRECISION_FULL);
 }
 
 void

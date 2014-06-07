@@ -277,7 +277,7 @@ void brw_SAMPLE(struct brw_compile *p,
 		unsigned simd_mode,
 		unsigned return_format);
 
-void brw_math( struct brw_compile *p,
+void gen4_math(struct brw_compile *p,
 	       struct brw_reg dest,
 	       unsigned function,
 	       unsigned msg_reg_nr,

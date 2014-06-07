@@ -322,13 +322,13 @@ static void invert_det( struct brw_sf_compile *c)
    /* Looks like we invert all 8 elements just to get 1/det in
     * position 2 !?!
     */
-   brw_math(&c->func,
-	    c->inv_det,
-	    BRW_MATH_FUNCTION_INV,
-	    0,
-	    c->det,
-	    BRW_MATH_DATA_SCALAR,
-	    BRW_MATH_PRECISION_FULL);
+   gen4_math(&c->func,
+	     c->inv_det,
+	     BRW_MATH_FUNCTION_INV,
+	     0,
+	     c->det,
+	     BRW_MATH_DATA_SCALAR,
+	     BRW_MATH_PRECISION_FULL);
 
 }
 
@@ -611,13 +611,13 @@ void brw_emit_point_sprite_setup(struct brw_sf_compile *c, bool allocate)
       if (pc_coord_replace) {
 	 set_predicate_control_flag_value(p, c, pc_coord_replace);
 	 /* Caculate 1.0/PointWidth */
-	 brw_math(&c->func,
-		  c->tmp,
-		  BRW_MATH_FUNCTION_INV,
-		  0,
-		  c->dx0,
-		  BRW_MATH_DATA_SCALAR,
-		  BRW_MATH_PRECISION_FULL);
+	 gen4_math(&c->func,
+		   c->tmp,
+		   BRW_MATH_FUNCTION_INV,
+		   0,
+		   c->dx0,
+		   BRW_MATH_DATA_SCALAR,
+		   BRW_MATH_PRECISION_FULL);
 
 	 brw_set_default_access_mode(p, BRW_ALIGN_16);
 
