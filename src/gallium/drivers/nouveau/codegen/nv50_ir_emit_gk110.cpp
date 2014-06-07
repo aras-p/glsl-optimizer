@@ -555,6 +555,7 @@ CodeEmitterGK110::emitFADD(const Instruction *i)
       RND_(2a, F);
       ABS_(31, 0);
       NEG_(33, 0);
+      SAT_(35);
 
       if (code[0] & 0x1) {
          modNegAbsF32_3b(i, 1);
