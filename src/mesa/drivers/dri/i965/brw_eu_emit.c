@@ -1837,63 +1837,27 @@ void brw_math( struct brw_compile *p,
 	       unsigned precision )
 {
    struct brw_context *brw = p->brw;
+   struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
 
-   if (brw->gen >= 6) {
-      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
+   assert(brw->gen < 6);
 
-      assert(dest.file == BRW_GENERAL_REGISTER_FILE ||
-             (brw->gen >= 7 && dest.file == BRW_MESSAGE_REGISTER_FILE));
-      assert(src.file == BRW_GENERAL_REGISTER_FILE);
+   /* Example code doesn't set predicate_control for send
+    * instructions.
+    */
+   insn->header.predicate_control = 0;
+   insn->header.destreg__conditionalmod = msg_reg_nr;
 
-      assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
-      if (brw->gen == 6)
-	 assert(src.hstride == BRW_HORIZONTAL_STRIDE_1);
-
-      /* Source modifiers are ignored for extended math instructions on Gen6. */
-      if (brw->gen == 6) {
-	 assert(!src.negate);
-	 assert(!src.abs);
-      }
-
-      if (function == BRW_MATH_FUNCTION_INT_DIV_QUOTIENT ||
-	  function == BRW_MATH_FUNCTION_INT_DIV_REMAINDER ||
-	  function == BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
-	 assert(src.type != BRW_REGISTER_TYPE_F);
-      } else {
-	 assert(src.type == BRW_REGISTER_TYPE_F);
-      }
-
-      /* Math is the same ISA format as other opcodes, except that CondModifier
-       * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
-       */
-      insn->header.destreg__conditionalmod = function;
-
-      brw_set_dest(p, insn, dest);
-      brw_set_src0(p, insn, src);
-      brw_set_src1(p, insn, brw_null_reg());
-   } else {
-      struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
-
-      /* Example code doesn't set predicate_control for send
-       * instructions.
-       */
-      insn->header.predicate_control = 0;
-      insn->header.destreg__conditionalmod = msg_reg_nr;
-
-      brw_set_dest(p, insn, dest);
-      brw_set_src0(p, insn, src);
-      brw_set_math_message(p,
-			   insn,
-			   function,
-			   src.type == BRW_REGISTER_TYPE_D,
-			   precision,
-			   data_type);
-   }
+   brw_set_dest(p, insn, dest);
+   brw_set_src0(p, insn, src);
+   brw_set_math_message(p,
+                        insn,
+                        function,
+                        src.type == BRW_REGISTER_TYPE_D,
+                        precision,
+                        data_type);
 }
 
-/** Extended math function, float[8].
- */
-void brw_math2(struct brw_compile *p,
+void gen6_math(struct brw_compile *p,
 	       struct brw_reg dest,
 	       unsigned function,
 	       struct brw_reg src0,
@@ -1902,10 +1866,11 @@ void brw_math2(struct brw_compile *p,
    struct brw_context *brw = p->brw;
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_MATH);
 
+   assert(brw->gen >= 6);
+
    assert(dest.file == BRW_GENERAL_REGISTER_FILE ||
           (brw->gen >= 7 && dest.file == BRW_MESSAGE_REGISTER_FILE));
    assert(src0.file == BRW_GENERAL_REGISTER_FILE);
-   assert(src1.file == BRW_GENERAL_REGISTER_FILE);
 
    assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
    if (brw->gen == 6) {
@@ -1918,9 +1883,16 @@ void brw_math2(struct brw_compile *p,
        function == BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
       assert(src0.type != BRW_REGISTER_TYPE_F);
       assert(src1.type != BRW_REGISTER_TYPE_F);
+      assert(src1.file == BRW_GENERAL_REGISTER_FILE);
    } else {
       assert(src0.type == BRW_REGISTER_TYPE_F);
       assert(src1.type == BRW_REGISTER_TYPE_F);
+      if (function == BRW_MATH_FUNCTION_POW) {
+         assert(src1.file == BRW_GENERAL_REGISTER_FILE);
+      } else {
+         assert(src1.file == BRW_ARCHITECTURE_REGISTER_FILE &&
+                src1.nr == BRW_ARF_NULL);
+      }
    }
 
    /* Source modifiers are ignored for extended math instructions on Gen6. */

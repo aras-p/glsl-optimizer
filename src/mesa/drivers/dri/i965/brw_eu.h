@@ -285,7 +285,7 @@ void brw_math( struct brw_compile *p,
 	       unsigned data_type,
 	       unsigned precision );
 
-void brw_math2(struct brw_compile *p,
+void gen6_math(struct brw_compile *p,
 	       struct brw_reg dest,
 	       unsigned function,
 	       struct brw_reg src0,

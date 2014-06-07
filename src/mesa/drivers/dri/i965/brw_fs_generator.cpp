@@ -298,11 +298,7 @@ fs_generator::generate_math1_gen7(fs_inst *inst,
 			        struct brw_reg src0)
 {
    assert(inst->mlen == 0);
-   brw_math(p, dst,
-	    brw_math_function(inst->opcode),
-	    0, src0,
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
+   gen6_math(p, dst, brw_math_function(inst->opcode), src0, brw_null_reg());
 }
 
 void
@@ -312,7 +308,7 @@ fs_generator::generate_math2_gen7(fs_inst *inst,
 			        struct brw_reg src1)
 {
    assert(inst->mlen == 0);
-   brw_math2(p, dst, brw_math_function(inst->opcode), src0, src1);
+   gen6_math(p, dst, brw_math_function(inst->opcode), src0, src1);
 }
 
 void
@@ -325,19 +321,11 @@ fs_generator::generate_math1_gen6(fs_inst *inst,
    assert(inst->mlen == 0);
 
    brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_math(p, dst,
-	    op,
-	    0, src0,
-	    BRW_MATH_DATA_VECTOR,
-	    BRW_MATH_PRECISION_FULL);
+   gen6_math(p, dst, op, src0, brw_null_reg());
 
    if (dispatch_width == 16) {
       brw_set_default_compression_control(p, BRW_COMPRESSION_2NDHALF);
-      brw_math(p, sechalf(dst),
-	       op,
-	       0, sechalf(src0),
-	       BRW_MATH_DATA_VECTOR,
-	       BRW_MATH_PRECISION_FULL);
+      gen6_math(p, sechalf(dst), op, sechalf(src0), brw_null_reg());
       brw_set_default_compression_control(p, BRW_COMPRESSION_COMPRESSED);
    }
 }
@@ -353,11 +341,11 @@ fs_generator::generate_math2_gen6(fs_inst *inst,
    assert(inst->mlen == 0);
 
    brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_math2(p, dst, op, src0, src1);
+   gen6_math(p, dst, op, src0, src1);
 
    if (dispatch_width == 16) {
       brw_set_default_compression_control(p, BRW_COMPRESSION_2NDHALF);
-      brw_math2(p, sechalf(dst), op, sechalf(src0), sechalf(src1));
+      gen6_math(p, sechalf(dst), op, sechalf(src0), sechalf(src1));
       brw_set_default_compression_control(p, BRW_COMPRESSION_COMPRESSED);
    }
 }

@@ -186,13 +186,7 @@ vec4_generator::generate_math1_gen6(vec4_instruction *inst,
    check_gen6_math_src_arg(src);
 
    brw_set_default_access_mode(p, BRW_ALIGN_1);
-   brw_math(p,
-	    dst,
-	    brw_math_function(inst->opcode),
-	    inst->base_mrf,
-	    src,
-	    BRW_MATH_DATA_SCALAR,
-	    BRW_MATH_PRECISION_FULL);
+   gen6_math(p, dst, brw_math_function(inst->opcode), src, brw_null_reg());
    brw_set_default_access_mode(p, BRW_ALIGN_16);
 }
 
@@ -202,10 +196,7 @@ vec4_generator::generate_math2_gen7(vec4_instruction *inst,
                                     struct brw_reg src0,
                                     struct brw_reg src1)
 {
-   brw_math2(p,
-	     dst,
-	     brw_math_function(inst->opcode),
-	     src0, src1);
+   gen6_math(p, dst, brw_math_function(inst->opcode), src0, src1);
 }
 
 void
@@ -221,10 +212,7 @@ vec4_generator::generate_math2_gen6(vec4_instruction *inst,
    check_gen6_math_src_arg(src1);
 
    brw_set_default_access_mode(p, BRW_ALIGN_1);
-   brw_math2(p,
-	     dst,
-	     brw_math_function(inst->opcode),
-	     src0, src1);
+   gen6_math(p, dst, brw_math_function(inst->opcode), src0, src1);
    brw_set_default_access_mode(p, BRW_ALIGN_16);
 }
 
@@ -1146,10 +1134,12 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
    case SHADER_OPCODE_LOG2:
    case SHADER_OPCODE_SIN:
    case SHADER_OPCODE_COS:
-      if (brw->gen == 6) {
+      if (brw->gen >= 7) {
+         gen6_math(p, dst, brw_math_function(inst->opcode), src[0],
+                   brw_null_reg());
+      } else if (brw->gen == 6) {
 	 generate_math1_gen6(inst, dst, src[0]);
       } else {
-	 /* Also works for Gen7. */
 	 generate_math1_gen4(inst, dst, src[0]);
       }
       break;
