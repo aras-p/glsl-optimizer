@@ -713,7 +713,7 @@ CodeEmitterGK110::emitEXTBF(const Instruction *i)
 void
 CodeEmitterGK110::emitBFIND(const Instruction *i)
 {
-   emitForm_21(i, 0x618, 0xc18);
+   emitForm_C(i, 0x218, 0x2);
 
    if (i->dType == TYPE_S32)
       code[1] |= 0x80000;
