@@ -475,10 +475,27 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
 
 /**
  * Either enable or disable the named extension.
+ * \return offset of extensions withint `ext' or 0 if extension is not known
+ */
+static size_t
+set_extension(struct gl_extensions *ext, const char *name, GLboolean state)
+{
+   size_t offset;
+
+   offset = name_to_offset(name);
+   if (offset != 0 && (offset != o(dummy_true) || state != GL_FALSE)) {
+      ((GLboolean *) ext)[offset] = state;
+   }
+
+   return offset;
+}
+
+/**
+ * Either enable or disable the named extension.
  * \return GL_TRUE for success, GL_FALSE if invalid extension name
  */
 static GLboolean
-set_extension( struct gl_context *ctx, const char *name, GLboolean state )
+set_ctx_extension(struct gl_context *ctx, const char *name, GLboolean state)
 {
    size_t offset;
 
@@ -489,7 +506,7 @@ set_extension( struct gl_context *ctx, const char *name, GLboolean state )
       return GL_FALSE;
    }
 
-   offset = name_to_offset(name);
+   offset = set_extension(&ctx->Extensions, name, state);
    if (offset == 0) {
       _mesa_problem(ctx, "Trying to enable/disable unknown extension %s",
 	            name);
@@ -499,8 +516,6 @@ set_extension( struct gl_context *ctx, const char *name, GLboolean state )
 	                  "%s", name);
       return GL_FALSE;
    } else {
-      GLboolean *base = (GLboolean *) &ctx->Extensions;
-      base[offset] = state;
       return GL_TRUE;
    }
 }
@@ -554,7 +569,7 @@ get_extension_override( struct gl_context *ctx )
          enable = 1;
          break;
       }
-      recognized = set_extension(ctx, ext, enable);
+      recognized = set_ctx_extension(ctx, ext, enable);
       if (!recognized && enable) {
          strcat(extra_exts, ext);
          strcat(extra_exts, " ");
