@@ -40,6 +40,7 @@
 struct gl_extensions _mesa_extension_override_enables;
 struct gl_extensions _mesa_extension_override_disables;
 static char *extra_extensions = NULL;
+static char *cant_disable_extensions = NULL;
 
 enum {
    DISABLE = 0,
@@ -592,15 +593,16 @@ get_extension_override( struct gl_context *ctx )
 
 
 /**
- * \brief Free extra_extensions string
+ * \brief Free extra_extensions and cant_disable_extensions strings
  *
- * This string is allocated early during the first context creation by
+ * These strings are allocated early during the first context creation by
  * _mesa_one_time_init_extension_overrides.
  */
 static void
 free_unknown_extensions_strings(void)
 {
    free(extra_extensions);
+   free(cant_disable_extensions);
 }
 
 
@@ -629,6 +631,7 @@ _mesa_one_time_init_extension_overrides(void)
 
    /* extra_exts: List of unrecognized extensions. */
    extra_extensions = calloc(ALIGN(strlen(env_const) + 2, 4), sizeof(char));
+   cant_disable_extensions = calloc(ALIGN(strlen(env_const) + 2, 4), sizeof(char));
 
    /* Copy env_const because strtok() is destructive. */
    env = strdup(env_const);
@@ -657,9 +660,14 @@ _mesa_one_time_init_extension_overrides(void)
          recognized = false;
       }
 
-      if (!recognized && enable) {
-         strcat(extra_extensions, ext);
-         strcat(extra_extensions, " ");
+      if (!recognized) {
+         if (enable) {
+            strcat(extra_extensions, ext);
+            strcat(extra_extensions, " ");
+         } else if (offset == o(dummy_true)) {
+            strcat(cant_disable_extensions, ext);
+            strcat(cant_disable_extensions, " ");
+         }
       }
    }
 
@@ -672,6 +680,13 @@ _mesa_one_time_init_extension_overrides(void)
       extra_extensions = NULL;
    } else if (extra_extensions[len - 1] == ' ') {
       extra_extensions[len - 1] = '\0';
+   }
+   len = strlen(cant_disable_extensions);
+   if (len == 0) {
+      free(cant_disable_extensions);
+      cant_disable_extensions = NULL;
+   } else if (cant_disable_extensions[len - 1] == ' ') {
+      cant_disable_extensions[len - 1] = '\0';
    }
 }
 
