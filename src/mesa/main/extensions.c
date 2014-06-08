@@ -39,6 +39,7 @@
 
 struct gl_extensions _mesa_extension_override_enables;
 struct gl_extensions _mesa_extension_override_disables;
+static char *extra_extensions = NULL;
 
 enum {
    DISABLE = 0,
@@ -591,6 +592,19 @@ get_extension_override( struct gl_context *ctx )
 
 
 /**
+ * \brief Free extra_extensions string
+ *
+ * This string is allocated early during the first context creation by
+ * _mesa_one_time_init_extension_overrides.
+ */
+static void
+free_unknown_extensions_strings(void)
+{
+   free(extra_extensions);
+}
+
+
+/**
  * \brief Initialize extension override tables.
  *
  * This should be called one time early during first context initialization.
@@ -601,7 +615,10 @@ _mesa_one_time_init_extension_overrides(void)
    const char *env_const = _mesa_getenv("MESA_EXTENSION_OVERRIDE");
    char *env;
    char *ext;
+   int len;
    size_t offset;
+
+   atexit(free_unknown_extensions_strings);
 
    memset(&_mesa_extension_override_enables, 0, sizeof(struct gl_extensions));
    memset(&_mesa_extension_override_disables, 0, sizeof(struct gl_extensions));
@@ -610,10 +627,14 @@ _mesa_one_time_init_extension_overrides(void)
       return;
    }
 
+   /* extra_exts: List of unrecognized extensions. */
+   extra_extensions = calloc(ALIGN(strlen(env_const) + 2, 4), sizeof(char));
+
    /* Copy env_const because strtok() is destructive. */
    env = strdup(env_const);
    for (ext = strtok(env, " "); ext != NULL; ext = strtok(NULL, " ")) {
       int enable;
+      bool recognized;
       switch (ext[0]) {
       case '+':
          enable = 1;
@@ -631,10 +652,27 @@ _mesa_one_time_init_extension_overrides(void)
       offset = set_extension(&_mesa_extension_override_enables, ext, enable);
       if (offset != 0 && (offset != o(dummy_true) || enable != GL_FALSE)) {
          ((GLboolean *) &_mesa_extension_override_disables)[offset] = !enable;
+         recognized = true;
+      } else {
+         recognized = false;
+      }
+
+      if (!recognized && enable) {
+         strcat(extra_extensions, ext);
+         strcat(extra_extensions, " ");
       }
    }
 
    free(env);
+
+   /* Remove trailing space, and free if unused. */
+   len = strlen(extra_extensions);
+   if (len == 0) {
+      free(extra_extensions);
+      extra_extensions = NULL;
+   } else if (extra_extensions[len - 1] == ' ') {
+      extra_extensions[len - 1] = '\0';
+   }
 }
 
 
