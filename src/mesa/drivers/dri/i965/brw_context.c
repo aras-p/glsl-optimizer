@@ -34,6 +34,7 @@
 #include "main/api_exec.h"
 #include "main/context.h"
 #include "main/fbobject.h"
+#include "main/extensions.h"
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/points.h"
@@ -302,7 +303,7 @@ brw_initialize_context_constants(struct brw_context *brw)
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = max_samplers;
    else
       ctx->Const.Program[MESA_SHADER_GEOMETRY].MaxTextureImageUnits = 0;
-   if (getenv("INTEL_COMPUTE_SHADER")) {
+   if (_mesa_extension_override_enables.ARB_compute_shader) {
       ctx->Const.Program[MESA_SHADER_COMPUTE].MaxTextureImageUnits = BRW_MAX_TEX_UNIT;
       ctx->Const.MaxUniformBufferBindings += 12;
    } else {
