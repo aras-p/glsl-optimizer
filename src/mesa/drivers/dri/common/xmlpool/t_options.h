@@ -321,3 +321,17 @@ DRI_CONF_SECTION_BEGIN \
 DRI_CONF_OPT_BEGIN_B(always_have_depth_buffer, def) \
         DRI_CONF_DESC(en,gettext("Create all visuals with a depth buffer")) \
 DRI_CONF_OPT_END
+
+
+
+/**
+ * \brief Initialization configuration options
+ */
+#define DRI_CONF_SECTION_INITIALIZATION \
+DRI_CONF_SECTION_BEGIN \
+        DRI_CONF_DESC(en,gettext("Initialization"))
+
+#define DRI_CONF_DEVICE_ID_PATH_TAG(def) \
+DRI_CONF_OPT_BEGIN(device_id, string, def) \
+        DRI_CONF_DESC(en,gettext("Define the graphic device to use if possible")) \
+DRI_CONF_OPT_END
