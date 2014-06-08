@@ -555,7 +555,7 @@ get_extension_override( struct gl_context *ctx )
          break;
       }
       recognized = set_extension(ctx, ext, enable);
-      if (!recognized) {
+      if (!recognized && enable) {
          strcat(extra_exts, ext);
          strcat(extra_exts, " ");
       }
