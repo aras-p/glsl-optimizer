@@ -395,6 +395,31 @@ name_to_offset(const char* name)
    return 0;
 }
 
+/**
+ * Overrides extensions in \c ctx based on the values in
+ * _mesa_extension_override_enables and _mesa_extension_override_disables.
+ */
+static void
+override_extensions_in_context(struct gl_context *ctx)
+{
+   const struct extension *i;
+   const GLboolean *enables =
+      (GLboolean*) &_mesa_extension_override_enables;
+   const GLboolean *disables =
+      (GLboolean*) &_mesa_extension_override_disables;
+   GLboolean *ctx_ext = (GLboolean*)&ctx->Extensions;
+
+   for (i = extension_table; i->name != 0; ++i) {
+      size_t offset = i->offset;
+      assert(!enables[offset] || !disables[offset]);
+      if (enables[offset]) {
+         ctx_ext[offset] = 1;
+      } else if (disables[offset]) {
+         ctx_ext[offset] = 0;
+      }
+   }
+}
+
 
 /**
  * Enable all extensions suitable for a software-only renderer.
@@ -496,36 +521,6 @@ set_extension(struct gl_extensions *ext, const char *name, GLboolean state)
 }
 
 /**
- * Either enable or disable the named extension.
- * \return GL_TRUE for success, GL_FALSE if invalid extension name
- */
-static GLboolean
-set_ctx_extension(struct gl_context *ctx, const char *name, GLboolean state)
-{
-   size_t offset;
-
-   if (ctx->Extensions.String) {
-      /* The string was already queried - can't change it now! */
-      _mesa_problem(ctx, "Trying to enable/disable extension after "
-                    "glGetString(GL_EXTENSIONS): %s", name);
-      return GL_FALSE;
-   }
-
-   offset = set_extension(&ctx->Extensions, name, state);
-   if (offset == 0) {
-      _mesa_problem(ctx, "Trying to enable/disable unknown extension %s",
-	            name);
-      return GL_FALSE;
-   } else if (offset == o(dummy_true) && state == GL_FALSE) {
-      _mesa_problem(ctx, "Trying to disable a permanently enabled extension: "
-	                  "%s", name);
-      return GL_FALSE;
-   } else {
-      return GL_TRUE;
-   }
-}
-
-/**
  * \brief Apply the \c MESA_EXTENSION_OVERRIDE environment variable.
  *
  * \c MESA_EXTENSION_OVERRIDE is a space-separated list of extensions to
@@ -535,60 +530,31 @@ set_ctx_extension(struct gl_context *ctx, const char *name, GLboolean state)
  *    - Enable recognized extension names that are not prefixed.
  *    - Collect unrecognized extension names in a new string.
  *
+ * \c MESA_EXTENSION_OVERRIDE was previously parsed during
+ * _mesa_one_time_init_extension_overrides. We just use the results of that
+ * parsing in this function.
+ *
  * \return Space-separated list of unrecognized extension names (which must
  *    be freed). Does not return \c NULL.
  */
 static char *
 get_extension_override( struct gl_context *ctx )
 {
-   const char *env_const = _mesa_getenv("MESA_EXTENSION_OVERRIDE");
-   char *env;
-   char *ext;
-   char *extra_exts;
-   int len;
+   override_extensions_in_context(ctx);
 
-   if (env_const == NULL) {
-      /* Return the empty string rather than NULL. This simplifies the logic
-       * of client functions. */
-      return calloc(4, sizeof(char));
+   if (cant_disable_extensions != NULL) {
+      _mesa_problem(ctx,
+                    "Trying to disable permanently enabled extensions: %s",
+	            cant_disable_extensions);
    }
 
-   /* extra_exts: List of unrecognized extensions. */
-   extra_exts = calloc(ALIGN(strlen(env_const) + 2, 4), sizeof(char));
-
-   /* Copy env_const because strtok() is destructive. */
-   env = strdup(env_const);
-   for (ext = strtok(env, " "); ext != NULL; ext = strtok(NULL, " ")) {
-      int enable;
-      int recognized;
-      switch (ext[0]) {
-      case '+':
-         enable = 1;
-         ++ext;
-         break;
-      case '-':
-         enable = 0;
-         ++ext;
-         break;
-      default:
-         enable = 1;
-         break;
-      }
-      recognized = set_ctx_extension(ctx, ext, enable);
-      if (!recognized && enable) {
-         strcat(extra_exts, ext);
-         strcat(extra_exts, " ");
-      }
+   if (extra_extensions == NULL) {
+      return calloc(1, sizeof(char));
+   } else {
+      _mesa_problem(ctx, "Trying to enable unknown extensions: %s",
+                    extra_extensions);
+      return strdup(extra_extensions);
    }
-
-   free(env);
-
-   /* Remove trailing space. */
-   len = strlen(extra_exts);
-   if (len > 0 && extra_exts[len - 1] == ' ')
-      extra_exts[len - 1] = '\0';
-
-   return extra_exts;
 }
 
 
