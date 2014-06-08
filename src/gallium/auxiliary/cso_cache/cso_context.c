@@ -332,7 +332,7 @@ void cso_release_all( struct cso_context *ctx )
       ctx->pipe->bind_vs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vertex_elements_state( ctx->pipe, NULL );
 
-      if (ctx->pipe->set_stream_output_targets)
+      if (ctx->has_streamout)
          ctx->pipe->set_stream_output_targets(ctx->pipe, 0, NULL, NULL);
    }
 
