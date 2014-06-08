@@ -43,6 +43,7 @@
 #include "main/varray.h"
 #include "main/viewport.h"
 #include "drivers/common/meta.h"
+#include "program/prog_instruction.h"
 
 
 /**
@@ -168,6 +169,8 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    GLenum faceTarget;
    GLuint dstLevel;
    GLuint samplerSave;
+   GLint swizzle[4];
+   GLboolean swizzleSaved = GL_FALSE;
 
    if (fallback_required(ctx, target, texObj)) {
       _mesa_generate_mipmap(ctx, target, texObj);
@@ -230,6 +233,13 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    _mesa_BindFramebuffer(GL_FRAMEBUFFER_EXT, mipmap->FBO);
 
    _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
+
+   if (texObj->_Swizzle != SWIZZLE_NOOP) {
+      static const GLint swizzleNoop[4] = { GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA };
+      memcpy(swizzle, texObj->Swizzle, sizeof(swizzle));
+      swizzleSaved = GL_TRUE;
+      _mesa_TexParameteriv(target, GL_TEXTURE_SWIZZLE_RGBA, swizzleNoop);
+   }
 
    /* Silence valgrind warnings about reading uninitialized stack. */
    memset(verts, 0, sizeof(verts));
@@ -347,4 +357,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
    if (genMipmapSave)
       _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, genMipmapSave);
+   if (swizzleSaved)
+      _mesa_TexParameteriv(target, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
 }
