@@ -1109,10 +1109,17 @@ ir_reader::read_texture(s_expression *expr)
 ir_emit_vertex *
 ir_reader::read_emit_vertex(s_expression *expr)
 {
-   s_pattern pat[] = { "emit-vertex" };
+   s_expression *s_stream = NULL;
+
+   s_pattern pat[] = { "emit-vertex", s_stream };
 
    if (MATCH(expr, pat)) {
-      return new(mem_ctx) ir_emit_vertex();
+      ir_rvalue *stream = read_dereference(s_stream);
+      if (stream == NULL) {
+         ir_read_error(NULL, "when reading stream info in emit-vertex");
+         return NULL;
+      }
+      return new(mem_ctx) ir_emit_vertex(stream);
    }
    ir_read_error(NULL, "when reading emit-vertex");
    return NULL;
@@ -1121,10 +1128,17 @@ ir_reader::read_emit_vertex(s_expression *expr)
 ir_end_primitive *
 ir_reader::read_end_primitive(s_expression *expr)
 {
-   s_pattern pat[] = { "end-primitive" };
+   s_expression *s_stream = NULL;
+
+   s_pattern pat[] = { "end-primitive", s_stream };
 
    if (MATCH(expr, pat)) {
-      return new(mem_ctx) ir_end_primitive();
+      ir_rvalue *stream = read_dereference(s_stream);
+      if (stream == NULL) {
+         ir_read_error(NULL, "when reading stream info in end-primitive");
+         return NULL;
+      }
+      return new(mem_ctx) ir_end_primitive(stream);
    }
    ir_read_error(NULL, "when reading end-primitive");
    return NULL;

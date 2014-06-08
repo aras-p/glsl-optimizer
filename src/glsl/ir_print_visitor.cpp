@@ -560,13 +560,18 @@ ir_print_visitor::visit(ir_loop_jump *ir)
 }
 
 void
-ir_print_visitor::visit(ir_emit_vertex *)
+ir_print_visitor::visit(ir_emit_vertex *ir)
 {
-   fprintf(f, "(emit-vertex)");
+   fprintf(f, "(emit-vertex ");
+   ir->stream->accept(this);
+   fprintf(f, ")\n");
 }
 
 void
-ir_print_visitor::visit(ir_end_primitive *)
+ir_print_visitor::visit(ir_end_primitive *ir)
 {
-   fprintf(f, "(end-primitive)");
+   fprintf(f, "(end-primitive ");
+   ir->stream->accept(this);
+   fprintf(f, ")\n");
+
 }
