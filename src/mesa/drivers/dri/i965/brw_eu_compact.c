@@ -808,7 +808,7 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
          break;
       }
 
-      offset = next_offset(store, offset);
+      offset = next_offset(brw, store, offset);
    }
 
    /* p->nr_insn is counting the number of uncompacted instructions still, so
@@ -831,12 +831,12 @@ brw_compact_instructions(struct brw_compile *p, int start_offset,
          while (start_offset + old_ip[offset / 8] * 8 != annotation[i].offset) {
             assert(start_offset + old_ip[offset / 8] * 8 <
                    annotation[i].offset);
-            offset = next_offset(store, offset);
+            offset = next_offset(brw, store, offset);
          }
 
          annotation[i].offset = start_offset + offset;
 
-         offset = next_offset(store, offset);
+         offset = next_offset(brw, store, offset);
       }
 
       annotation[num_annotations].offset = p->next_insn_offset;

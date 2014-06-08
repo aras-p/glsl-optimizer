@@ -427,7 +427,7 @@ void brw_debug_compact_uncompact(struct brw_context *brw,
 				 struct brw_instruction *uncompacted);
 
 static inline int
-next_offset(void *store, int offset)
+next_offset(const struct brw_context *brw, void *store, int offset)
 {
    struct brw_instruction *insn =
       (struct brw_instruction *)((char *)store + offset);

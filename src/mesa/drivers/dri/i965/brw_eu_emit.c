@@ -2355,9 +2355,11 @@ brw_find_next_block_end(struct brw_compile *p, int start_offset)
 {
    int offset;
    void *store = p->store;
+   const struct brw_context *brw = p->brw;
 
-   for (offset = next_offset(store, start_offset); offset < p->next_insn_offset;
-        offset = next_offset(store, offset)) {
+   for (offset = next_offset(brw, store, start_offset);
+        offset < p->next_insn_offset;
+        offset = next_offset(brw, store, offset)) {
       struct brw_instruction *insn = store + offset;
 
       switch (insn->header.opcode) {
@@ -2387,8 +2389,9 @@ brw_find_loop_end(struct brw_compile *p, int start_offset)
    /* Always start after the instruction (such as a WHILE) we're trying to fix
     * up.
     */
-   for (offset = next_offset(store, start_offset); offset < p->next_insn_offset;
-        offset = next_offset(store, offset)) {
+   for (offset = next_offset(brw, store, start_offset);
+        offset < p->next_insn_offset;
+        offset = next_offset(brw, store, offset)) {
       struct brw_instruction *insn = store + offset;
 
       if (insn->header.opcode == BRW_OPCODE_WHILE) {
@@ -2417,7 +2420,7 @@ brw_set_uip_jip(struct brw_compile *p)
       return;
 
    for (offset = 0; offset < p->next_insn_offset;
-        offset = next_offset(store, offset)) {
+        offset = next_offset(brw, store, offset)) {
       struct brw_instruction *insn = store + offset;
 
       if (insn->header.cmpt_control) {
