@@ -235,10 +235,11 @@ load_clip_distance(struct brw_clip_compile *c, struct brw_indirect vtx,
                 struct brw_reg dst, GLuint hpos_offset, int cond)
 {
    struct brw_compile *p = &c->func;
+   const struct brw_context *brw = p->brw;
 
    dst = vec4(dst);
    brw_AND(p, vec1(brw_null_reg()), c->reg.vertex_src_mask, brw_imm_ud(1));
-   brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+   brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_NZ);
    brw_IF(p, BRW_EXECUTE_1);
    {
       struct brw_indirect temp_ptr = brw_indirect(7, 0);
@@ -261,6 +262,7 @@ load_clip_distance(struct brw_clip_compile *c, struct brw_indirect vtx,
 void brw_clip_tri( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
+   const struct brw_context *brw = p->brw;
    struct brw_indirect vtx = brw_indirect(0, 0);
    struct brw_indirect vtxPrev = brw_indirect(1, 0);
    struct brw_indirect vtxOut = brw_indirect(2, 0);
@@ -294,7 +296,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
       /* if (planemask & 1)
        */
       brw_AND(p, vec1(brw_null_reg()), c->reg.planemask, brw_imm_ud(1));
-      brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+      brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_NZ);
 
       brw_IF(p, BRW_EXECUTE_1);
       {
@@ -337,7 +339,8 @@ void brw_clip_tri( struct brw_clip_compile *c )
 		   */
 		  brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_EQ, get_addr_reg(vtxOut), brw_imm_uw(0) );
                   brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtxPrev));
-                  brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+                  brw_inst_set_pred_control(brw, brw_last_inst,
+                                            BRW_PREDICATE_NORMAL);
 
 		  brw_clip_interp_vertex(c, vtxOut, vtxPrev, vtx, c->reg.t, false);
 
@@ -378,7 +381,8 @@ void brw_clip_tri( struct brw_clip_compile *c )
 		   */
 		  brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_EQ, get_addr_reg(vtxOut), brw_imm_uw(0) );
                   brw_MOV(p, get_addr_reg(vtxOut), get_addr_reg(vtx));
-                  brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+                  brw_inst_set_pred_control(brw, brw_last_inst,
+                                            BRW_PREDICATE_NORMAL);
 
 		  brw_clip_interp_vertex(c, vtxOut, vtx, vtxPrev, c->reg.t, true);
 
@@ -404,10 +408,10 @@ void brw_clip_tri( struct brw_clip_compile *c )
 	    /* while (--loopcount != 0)
 	     */
 	    brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
-            brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+            brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_NZ);
 	 }
 	 brw_WHILE(p);
-         brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+         brw_inst_set_pred_control(brw, brw_last_inst, BRW_PREDICATE_NORMAL);
 
 	 /* vtxPrev = *(outlist_ptr-1)  OR: outlist[nr_verts-1]
 	  * inlist = outlist
@@ -438,7 +442,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
       /* && (planemask>>=1) != 0
        */
       brw_SHR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud(1));
-      brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+      brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_NZ);
       brw_SHR(p, c->reg.vertex_src_mask, c->reg.vertex_src_mask, brw_imm_ud(1));
       brw_ADD(p, c->reg.clipdistance_offset, c->reg.clipdistance_offset, brw_imm_w(sizeof(float)));
    }
@@ -451,6 +455,7 @@ void brw_clip_tri( struct brw_clip_compile *c )
 void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
 {
    struct brw_compile *p = &c->func;
+   const struct brw_context *brw = p->brw;
 
    /* for (loopcount = nr_verts-2; loopcount > 0; loopcount--)
     */
@@ -458,7 +463,7 @@ void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
 	   c->reg.loopcount,
 	   c->reg.nr_verts,
 	   brw_imm_d(-2));
-   brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_G;
+   brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_G);
 
    brw_IF(p, BRW_EXECUTE_1);
    {
@@ -484,10 +489,10 @@ void brw_clip_tri_emit_polygon(struct brw_clip_compile *c)
 	 brw_MOV(p, get_addr_reg(v0), deref_1uw(vptr, 0));
 
 	 brw_ADD(p, c->reg.loopcount, c->reg.loopcount, brw_imm_d(-1));
-         brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+         brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_NZ);
       }
       brw_WHILE(p);
-      brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+      brw_inst_set_pred_control(brw, brw_last_inst, BRW_PREDICATE_NORMAL);
 
       brw_clip_emit_vue(c, v0, BRW_URB_WRITE_EOT_COMPLETE,
                         ((_3DPRIM_TRIFAN << URB_WRITE_PRIM_TYPE_SHIFT)
@@ -532,6 +537,7 @@ static void brw_clip_test( struct brw_clip_compile *c )
     struct brw_indirect vt2 = brw_indirect(2, 0);
 
     struct brw_compile *p = &c->func;
+    const struct brw_context *brw = p->brw;
     struct brw_reg tmp0 = c->reg.loopcount; /* handy temporary */
 
     GLuint hpos_offset = brw_varying_to_offset(&c->vue_map,
@@ -557,7 +563,7 @@ static void brw_clip_test( struct brw_clip_compile *c )
     brw_OR(p, tmp0, get_element(t, 0), get_element(t, 1));
     brw_OR(p, tmp0, tmp0, get_element(t, 2));
     brw_AND(p, brw_null_reg(), tmp0, brw_imm_ud(0x1));
-    brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+    brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_NZ);
     brw_IF(p, BRW_EXECUTE_1);
     {
         brw_clip_kill_thread(c);
@@ -573,15 +579,15 @@ static void brw_clip_test( struct brw_clip_compile *c )
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 0), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<5)));
-    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_inst_set_pred_control(brw, brw_last_inst, BRW_PREDICATE_NORMAL);
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 1), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<3)));
-    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_inst_set_pred_control(brw, brw_last_inst, BRW_PREDICATE_NORMAL);
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 2), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<1)));
-    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_inst_set_pred_control(brw, brw_last_inst, BRW_PREDICATE_NORMAL);
 
     /* test farz, xmax, ymax plane */
     /* clip.xyz > clip.w */
@@ -595,7 +601,7 @@ static void brw_clip_test( struct brw_clip_compile *c )
     brw_OR(p, tmp0, get_element(t, 0), get_element(t, 1));
     brw_OR(p, tmp0, tmp0, get_element(t, 2));
     brw_AND(p, brw_null_reg(), tmp0, brw_imm_ud(0x1));
-    brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+    brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_NZ);
     brw_IF(p, BRW_EXECUTE_1);
     {
         brw_clip_kill_thread(c);
@@ -611,15 +617,15 @@ static void brw_clip_test( struct brw_clip_compile *c )
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 0), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<4)));
-    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_inst_set_pred_control(brw, brw_last_inst, BRW_PREDICATE_NORMAL);
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 1), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<2)));
-    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_inst_set_pred_control(brw, brw_last_inst, BRW_PREDICATE_NORMAL);
     brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_NZ,
             get_element(t, 2), brw_imm_ud(0));
     brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud((1<<0)));
-    brw_last_inst->header.predicate_control = BRW_PREDICATE_NORMAL;
+    brw_inst_set_pred_control(brw, brw_last_inst, BRW_PREDICATE_NORMAL);
 
     release_tmps(c);
 }
@@ -639,7 +645,7 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
    if (brw->has_negative_rhw_bug) {
       brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2),
               brw_imm_ud(1<<20));
-      brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+      brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_NZ);
       brw_IF(p, BRW_EXECUTE_1);
       {
          brw_clip_test(c);
