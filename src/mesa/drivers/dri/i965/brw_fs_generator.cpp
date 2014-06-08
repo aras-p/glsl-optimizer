@@ -79,8 +79,8 @@ fs_generator::patch_discard_jumps_to_fb_writes()
     * tests.
     */
    struct brw_instruction *last_halt = gen6_HALT(p);
-   last_halt->bits3.break_cont.uip = 2;
-   last_halt->bits3.break_cont.jip = 2;
+   brw_inst_set_uip(brw, last_halt, 2);
+   brw_inst_set_jip(brw, last_halt, 2);
 
    int ip = p->nr_insn;
 
@@ -88,9 +88,9 @@ fs_generator::patch_discard_jumps_to_fb_writes()
       ip_record *patch_ip = (ip_record *)node;
       struct brw_instruction *patch = &p->store[patch_ip->ip];
 
-      assert(patch->header.opcode == BRW_OPCODE_HALT);
+      assert(brw_inst_opcode(brw, patch) == BRW_OPCODE_HALT);
       /* HALT takes a half-instruction distance from the pre-incremented IP. */
-      patch->bits3.break_cont.uip = (ip - patch_ip->ip) * 2;
+      brw_inst_set_uip(brw, patch, (ip - patch_ip->ip) * 2);
    }
 
    this->discard_halt_patches.make_empty();
@@ -217,10 +217,10 @@ fs_generator::generate_fb_write(fs_inst *inst)
               v1_null_ud,
               retype(brw_vec1_grf(1, 6), BRW_REGISTER_TYPE_UD),
               brw_imm_ud(1<<26));
-      brw_last_inst->header.destreg__conditionalmod = BRW_CONDITIONAL_NZ;
+      brw_inst_set_cond_modifier(brw, brw_last_inst, BRW_CONDITIONAL_NZ);
 
       int jmp = brw_JMPI(p, brw_imm_ud(0), BRW_PREDICATE_NORMAL) - p->store;
-      brw_last_inst->header.execution_size = BRW_EXECUTE_1;
+      brw_inst_set_exec_size(brw, brw_last_inst, BRW_EXECUTE_1);
       {
          /* Don't send AA data */
          fire_fb_write(inst, inst->base_mrf+1, implied_header, inst->mlen-1);
@@ -908,11 +908,11 @@ fs_generator::generate_varying_pull_constant_load(fs_inst *inst,
    gen6_resolve_implied_move(p, &header, inst->base_mrf);
 
    struct brw_instruction *send = brw_next_insn(p, BRW_OPCODE_SEND);
-   send->header.compression_control = BRW_COMPRESSION_NONE;
+   brw_inst_set_qtr_control(brw, send, BRW_COMPRESSION_NONE);
    brw_set_dest(p, send, retype(dst, BRW_REGISTER_TYPE_UW));
    brw_set_src0(p, send, header);
    if (brw->gen < 6)
-      send->header.destreg__conditionalmod = inst->base_mrf;
+      brw_inst_set_base_mrf(brw, send, inst->base_mrf);
 
    /* Our surface is set up as floats, regardless of what actual data is
     * stored in it.
@@ -1762,7 +1762,7 @@ fs_generator::generate_code(exec_list *instructions)
           */
          assert(p->next_insn_offset == last_insn_offset + 16);
          struct brw_instruction *last = &p->store[last_insn_offset / 16];
-         last->header.destreg__conditionalmod = inst->conditional_mod;
+         brw_inst_set_cond_modifier(brw, last, inst->conditional_mod);
       }
    }
 
