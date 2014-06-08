@@ -699,7 +699,7 @@ vec4_generator::generate_scratch_read(vec4_instruction *inst,
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, header);
    if (brw->gen < 6)
-      send->header.destreg__conditionalmod = inst->base_mrf;
+      brw_inst_set_cond_modifier(brw, send, inst->base_mrf);
    brw_set_dp_read_message(p, send,
 			   255, /* binding table index: stateless access */
 			   BRW_DATAPORT_OWORD_DUAL_BLOCK_1OWORD,
@@ -770,7 +770,7 @@ vec4_generator::generate_scratch_write(vec4_instruction *inst,
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, header);
    if (brw->gen < 6)
-      send->header.destreg__conditionalmod = inst->base_mrf;
+      brw_inst_set_cond_modifier(brw, send, inst->base_mrf);
    brw_set_dp_write_message(p, send,
 			    255, /* binding table index: stateless access */
 			    BRW_DATAPORT_OWORD_DUAL_BLOCK_1OWORD,
@@ -817,7 +817,7 @@ vec4_generator::generate_pull_constant_load(vec4_instruction *inst,
    brw_set_dest(p, send, dst);
    brw_set_src0(p, send, header);
    if (brw->gen < 6)
-      send->header.destreg__conditionalmod = inst->base_mrf;
+      brw_inst_set_cond_modifier(brw, send, inst->base_mrf);
    brw_set_dp_read_message(p, send,
 			   surf_index,
 			   BRW_DATAPORT_OWORD_DUAL_BLOCK_1OWORD,
@@ -1072,8 +1072,8 @@ vec4_generator::generate_vec4_instruction(vec4_instruction *instruction,
          assert(brw->gen == 6);
          gen6_IF(p, inst->conditional_mod, src[0], src[1]);
       } else {
-         struct brw_instruction *brw_inst = brw_IF(p, BRW_EXECUTE_8);
-         brw_inst->header.predicate_control = inst->predicate;
+         struct brw_instruction *if_inst = brw_IF(p, BRW_EXECUTE_8);
+         brw_inst_set_pred_control(brw, if_inst, inst->predicate);
       }
       break;
 
@@ -1268,11 +1268,11 @@ vec4_generator::generate_code(exec_list *instructions)
          struct brw_instruction *last = &p->store[pre_emit_nr_insn];
 
          if (inst->conditional_mod)
-            last->header.destreg__conditionalmod = inst->conditional_mod;
+            brw_inst_set_cond_modifier(brw, last, inst->conditional_mod);
          if (inst->no_dd_clear)
-            last->header.dependency_control |= BRW_DEPENDENCY_NOTCLEARED;
+            brw_inst_set_no_dd_clear(brw, last, true);
          if (inst->no_dd_check)
-            last->header.dependency_control |= BRW_DEPENDENCY_NOTCHECKED;
+            brw_inst_set_no_dd_check(brw, last, true);
       }
    }
 
