@@ -34,6 +34,7 @@
 #define BRW_EU_H
 
 #include <stdbool.h>
+#include "brw_inst.h"
 #include "brw_structs.h"
 #include "brw_defines.h"
 #include "brw_reg.h"
@@ -432,7 +433,7 @@ next_offset(const struct brw_context *brw, void *store, int offset)
    struct brw_instruction *insn =
       (struct brw_instruction *)((char *)store + offset);
 
-   if (insn->header.cmpt_control)
+   if (brw_inst_cmpt_control(brw, insn))
       return offset + 8;
    else
       return offset + 16;
