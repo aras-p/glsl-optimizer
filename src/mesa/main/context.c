@@ -396,6 +396,8 @@ one_time_init( struct gl_context *ctx )
       assert( sizeof(GLint) == 4 );
       assert( sizeof(GLuint) == 4 );
 
+      _mesa_one_time_init_extension_overrides();
+
       _mesa_get_cpu_features();
 
       for (i = 0; i < 256; i++) {

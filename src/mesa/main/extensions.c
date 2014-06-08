@@ -37,6 +37,9 @@
 #include "macros.h"
 #include "mtypes.h"
 
+struct gl_extensions _mesa_extension_override_enables;
+struct gl_extensions _mesa_extension_override_disables;
+
 enum {
    DISABLE = 0,
    GLL = 1 << API_OPENGL_COMPAT,       /* GL Legacy / Compatibility */
@@ -584,6 +587,54 @@ get_extension_override( struct gl_context *ctx )
       extra_exts[len - 1] = '\0';
 
    return extra_exts;
+}
+
+
+/**
+ * \brief Initialize extension override tables.
+ *
+ * This should be called one time early during first context initialization.
+ */
+void
+_mesa_one_time_init_extension_overrides(void)
+{
+   const char *env_const = _mesa_getenv("MESA_EXTENSION_OVERRIDE");
+   char *env;
+   char *ext;
+   size_t offset;
+
+   memset(&_mesa_extension_override_enables, 0, sizeof(struct gl_extensions));
+   memset(&_mesa_extension_override_disables, 0, sizeof(struct gl_extensions));
+
+   if (env_const == NULL) {
+      return;
+   }
+
+   /* Copy env_const because strtok() is destructive. */
+   env = strdup(env_const);
+   for (ext = strtok(env, " "); ext != NULL; ext = strtok(NULL, " ")) {
+      int enable;
+      switch (ext[0]) {
+      case '+':
+         enable = 1;
+         ++ext;
+         break;
+      case '-':
+         enable = 0;
+         ++ext;
+         break;
+      default:
+         enable = 1;
+         break;
+      }
+
+      offset = set_extension(&_mesa_extension_override_enables, ext, enable);
+      if (offset != 0 && (offset != o(dummy_true) || enable != GL_FALSE)) {
+         ((GLboolean *) &_mesa_extension_override_disables)[offset] = !enable;
+      }
+   }
+
+   free(env);
 }
 
 

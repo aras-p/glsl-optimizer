@@ -39,8 +39,11 @@
 #include "glheader.h"
 
 struct gl_context;
+struct gl_extensions;
 
 extern void _mesa_enable_sw_extensions(struct gl_context *ctx);
+
+extern void _mesa_one_time_init_extension_overrides(void);
 
 extern void _mesa_init_extensions(struct gl_context *ctx);
 
@@ -51,5 +54,8 @@ _mesa_get_extension_count(struct gl_context *ctx);
 
 extern const GLubyte *
 _mesa_get_enabled_extension(struct gl_context *ctx, GLuint index);
+
+extern struct gl_extensions _mesa_extension_override_enables;
+extern struct gl_extensions _mesa_extension_override_disables;
 
 #endif
