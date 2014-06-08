@@ -248,7 +248,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
       case SHADER_OPCODE_TXD:
          if (inst->shadow_compare) {
             /* Gen7.5+.  Otherwise, lowered by brw_lower_texture_gradients(). */
-            assert(brw->is_haswell);
+            assert(brw->gen >= 8 || brw->is_haswell);
             msg_type = HSW_SAMPLER_MESSAGE_SAMPLE_DERIV_COMPARE;
          } else {
             msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
@@ -355,7 +355,7 @@ vec4_generator::generate_tex(vec4_instruction *inst,
              * offset, and each sampler state is only 16-bytes, so we can't
              * exclusively use the offset - we have to use both.
              */
-            assert(brw->is_haswell); /* field only exists on Haswell */
+            assert(brw->gen >= 8 || brw->is_haswell);
             brw_ADD(p,
                     get_element_ud(header, 3),
                     get_element_ud(brw_vec8_grf(0, 0), 3),

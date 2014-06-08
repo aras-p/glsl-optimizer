@@ -421,7 +421,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
       case SHADER_OPCODE_TXD:
          if (inst->shadow_compare) {
             /* Gen7.5+.  Otherwise, lowered by brw_lower_texture_gradients(). */
-            assert(brw->is_haswell);
+            assert(brw->gen >= 8 || brw->is_haswell);
             msg_type = HSW_SAMPLER_MESSAGE_SAMPLE_DERIV_COMPARE;
          } else {
             msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_DERIVS;
@@ -578,7 +578,7 @@ fs_generator::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src
              * offset, and each sampler state is only 16-bytes, so we can't
              * exclusively use the offset - we have to use both.
              */
-            assert(brw->is_haswell); /* field only exists on Haswell */
+            assert(brw->gen >= 8 || brw->is_haswell);
             brw_ADD(p,
                     get_element_ud(header_reg, 3),
                     get_element_ud(brw_vec8_grf(0, 0), 3),
@@ -1384,7 +1384,7 @@ fs_generator::generate_code(exec_list *instructions)
       case BRW_OPCODE_MAD:
          assert(brw->gen >= 6);
 	 brw_set_default_access_mode(p, BRW_ALIGN_16);
-         if (dispatch_width == 16 && !brw->is_haswell) {
+         if (dispatch_width == 16 && brw->gen < 8 && !brw->is_haswell) {
 	    brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
 	    brw_MAD(p, dst, src[0], src[1], src[2]);
 	    brw_set_default_compression_control(p, BRW_COMPRESSION_2NDHALF);
@@ -1399,7 +1399,7 @@ fs_generator::generate_code(exec_list *instructions)
       case BRW_OPCODE_LRP:
          assert(brw->gen >= 6);
 	 brw_set_default_access_mode(p, BRW_ALIGN_16);
-         if (dispatch_width == 16 && !brw->is_haswell) {
+         if (dispatch_width == 16 && brw->gen < 8 && !brw->is_haswell) {
 	    brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
 	    brw_LRP(p, dst, src[0], src[1], src[2]);
 	    brw_set_default_compression_control(p, BRW_COMPRESSION_2NDHALF);
@@ -1495,7 +1495,7 @@ fs_generator::generate_code(exec_list *instructions)
       case BRW_OPCODE_BFE:
          assert(brw->gen >= 7);
          brw_set_default_access_mode(p, BRW_ALIGN_16);
-         if (dispatch_width == 16 && !brw->is_haswell) {
+         if (dispatch_width == 16 && brw->gen < 8 && !brw->is_haswell) {
             brw_set_default_compression_control(p, BRW_COMPRESSION_NONE);
             brw_BFE(p, dst, src[0], src[1], src[2]);
             brw_set_default_compression_control(p, BRW_COMPRESSION_2NDHALF);
