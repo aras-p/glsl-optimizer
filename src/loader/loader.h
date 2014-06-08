@@ -41,6 +41,13 @@ loader_get_driver_for_fd(int fd, unsigned driver_types);
 char *
 loader_get_device_name_for_fd(int fd);
 
+/* Function to get a different device than the one we are to use by default,
+ * if the user requests so and it is possible. The initial fd will be closed
+ * if neccessary. The returned fd is potentially a render-node.
+ */
+
+int
+loader_get_user_preferred_fd(int default_fd, int *different_device);
 
 /* for logging.. keep this aligned with egllog.h so we can just use
  * _eglLog directly.

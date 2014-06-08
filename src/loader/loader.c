@@ -70,6 +70,10 @@
 #ifdef HAVE_LIBUDEV
 #include <assert.h>
 #include <dlfcn.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
 #endif
 #ifdef HAVE_SYSFS
 #include <sys/stat.h>
@@ -213,6 +217,187 @@ out:
       udev_unref(udev);
 
    return (*chip_id >= 0);
+}
+
+static char *
+get_render_node_from_id_path_tag(struct udev *udev,
+                                 char *id_path_tag,
+                                 char another_tag)
+{
+   struct udev_device *device;
+   struct udev_enumerate *e;
+   struct udev_list_entry *entry;
+   const char *path, *id_path_tag_tmp;
+   char *path_res;
+   char found = 0;
+   UDEV_SYMBOL(struct udev_enumerate *, udev_enumerate_new,
+               (struct udev *));
+   UDEV_SYMBOL(int, udev_enumerate_add_match_subsystem,
+               (struct udev_enumerate *, const char *));
+   UDEV_SYMBOL(int, udev_enumerate_add_match_sysname,
+               (struct udev_enumerate *, const char *));
+   UDEV_SYMBOL(int, udev_enumerate_scan_devices,
+               (struct udev_enumerate *));
+   UDEV_SYMBOL(struct udev_list_entry *, udev_enumerate_get_list_entry,
+               (struct udev_enumerate *));
+   UDEV_SYMBOL(struct udev_list_entry *, udev_list_entry_get_next,
+               (struct udev_list_entry *));
+   UDEV_SYMBOL(const char *, udev_list_entry_get_name,
+               (struct udev_list_entry *));
+   UDEV_SYMBOL(struct udev_device *, udev_device_new_from_syspath,
+               (struct udev *, const char *));
+   UDEV_SYMBOL(const char *, udev_device_get_property_value,
+               (struct udev_device *, const char *));
+   UDEV_SYMBOL(const char *, udev_device_get_devnode,
+               (struct udev_device *));
+   UDEV_SYMBOL(struct udev_device *, udev_device_unref,
+               (struct udev_device *));
+
+   e = udev_enumerate_new(udev);
+   udev_enumerate_add_match_subsystem(e, "drm");
+   udev_enumerate_add_match_sysname(e, "render*");
+
+   udev_enumerate_scan_devices(e);
+   udev_list_entry_foreach(entry, udev_enumerate_get_list_entry(e)) {
+      path = udev_list_entry_get_name(entry);
+      device = udev_device_new_from_syspath(udev, path);
+      if (!device)
+         continue;
+      id_path_tag_tmp = udev_device_get_property_value(device, "ID_PATH_TAG");
+      if (id_path_tag_tmp) {
+         if ((!another_tag && !strcmp(id_path_tag, id_path_tag_tmp)) ||
+             (another_tag && strcmp(id_path_tag, id_path_tag_tmp))) {
+            found = 1;
+            break;
+         }
+      }
+      udev_device_unref(device);
+   }
+
+   if (found) {
+      path_res = strdup(udev_device_get_devnode(device));
+      udev_device_unref(device);
+      return path_res;
+   }
+   return NULL;
+}
+
+static char *
+get_id_path_tag_from_fd(struct udev *udev, int fd)
+{
+   struct udev_device *device;
+   const char *id_path_tag_tmp;
+   char *id_path_tag;
+   UDEV_SYMBOL(const char *, udev_device_get_property_value,
+               (struct udev_device *, const char *));
+   UDEV_SYMBOL(struct udev_device *, udev_device_unref,
+               (struct udev_device *));
+
+   device = udev_device_new_from_fd(udev, fd);
+   if (!device)
+      return NULL;
+
+   id_path_tag_tmp = udev_device_get_property_value(device, "ID_PATH_TAG");
+   if (!id_path_tag_tmp)
+      return NULL;
+
+   id_path_tag = strdup(id_path_tag_tmp);
+
+   udev_device_unref(device);
+   return id_path_tag;
+}
+
+static int
+drm_open_device(const char *device_name)
+{
+   int fd;
+#ifdef O_CLOEXEC
+   fd = open(device_name, O_RDWR | O_CLOEXEC);
+   if (fd == -1 && errno == EINVAL)
+#endif
+   {
+      fd = open(device_name, O_RDWR);
+      if (fd != -1)
+         fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
+   }
+   return fd;
+}
+
+int loader_get_user_preferred_fd(int default_fd, int *different_device)
+{
+   struct udev *udev;
+   const char *dri_prime = getenv("DRI_PRIME");
+   char *prime = NULL;
+   int is_different_device = 0, fd = default_fd;
+   char *default_device_id_path_tag;
+   char *device_name = NULL;
+   char another_tag = 0;
+   UDEV_SYMBOL(struct udev *, udev_new, (void));
+   UDEV_SYMBOL(struct udev *, udev_unref, (struct udev *));
+
+   if (dri_prime)
+      prime = strdup(dri_prime);
+
+   if (prime == NULL) {
+      *different_device = 0;
+      return default_fd;
+   }
+
+   udev = udev_new();
+   if (!udev)
+      goto prime_clean;
+
+   default_device_id_path_tag = get_id_path_tag_from_fd(udev, default_fd);
+   if (!default_device_id_path_tag)
+      goto udev_clean;
+
+   is_different_device = 1;
+   /* two format are supported:
+    * "1": choose any other card than the card used by default.
+    * id_path_tag: (for example "pci-0000_02_00_0") choose the card
+    * with this id_path_tag.
+    */
+   if (!strcmp(prime,"1")) {
+      free(prime);
+      prime = strdup(default_device_id_path_tag);
+      /* request a card with a different card than the default card */
+      another_tag = 1;
+   } else if (!strcmp(default_device_id_path_tag, prime))
+      /* we are to get a new fd (render-node) of the same device */
+      is_different_device = 0;
+
+   device_name = get_render_node_from_id_path_tag(udev,
+                                                  prime,
+                                                  another_tag);
+   if (device_name == NULL) {
+      is_different_device = 0;
+      goto default_device_clean;
+   }
+
+   fd = drm_open_device(device_name);
+   if (fd > 0) {
+      close(default_fd);
+   } else {
+      fd = default_fd;
+      is_different_device = 0;
+   }
+   free(device_name);
+
+ default_device_clean:
+   free(default_device_id_path_tag);
+ udev_clean:
+   udev_unref(udev);
+ prime_clean:
+   free(prime);
+
+   *different_device = is_different_device;
+   return fd;
+}
+#else
+int loader_get_user_preferred_fd(int default_fd, int *different_device)
+{
+   *different_device = 0;
+   return default_fd;
 }
 #endif
 
