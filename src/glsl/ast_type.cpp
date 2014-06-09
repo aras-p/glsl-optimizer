@@ -247,7 +247,7 @@ ast_type_qualifier::merge_in_qualifier(YYLTYPE *loc,
          q.flags.q.local_size != 0 &&
          state->in_qualifier->flags.q.local_size == 0;
 
-      valid_in_mask.flags.q.local_size = 1;
+      valid_in_mask.flags.q.local_size = 7;
       break;
    default:
       _mesa_glsl_error(loc, state,
